@@ -1,5 +1,6 @@
-// L'atelier : les objets de valeur rachetés aux aventuriers. On en répare un à la fois ;
-// chaque réparation prend plusieurs jours et fait monter l'objet d'un état (et sa valeur).
+// L'atelier : les objets de valeur rachetés aux aventuriers. Chaque ouvrier répare un objet
+// à la fois ; tu choisis jusqu'à quel état aller (plus de jours et de matériaux, plus de valeur).
+// Un objet cassé ou abîmé restauré jusqu'au parfait état vaut encore plus (« Restauré ★ »).
 // La page s'ouvre par-dessus le soir, qui reste en pause.
 class AtelierScene extends Phaser.Scene {
   constructor() { super('Atelier'); }
@@ -70,27 +71,70 @@ class AtelierScene extends Phaser.Scene {
       c.add(this.add.text(95, y, t.nom, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
       c.add(this.add.text(300, y, CATEGORIES[t.categorie].nom, style(12, '#5a3a20')).setOrigin(0, 0.5));
       c.add(...pastilleEtat(this, 380, y, t.etat));
-      c.add(this.add.text(470, y, `~${valeurTresor(t)} p.`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      c.add(this.add.text(470, y, `~${valeurTresor(t)} p.${estRestaure(t) ? ' ★' : ''}`, style(13, estRestaure(t) ? '#b8860b' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
       if (t.reparation) {
-        c.add(this.add.text(910, y, `${nomOuvrier(t.reparation.ouvrier) === 'toi' ? 'Tu répares' : nomOuvrier(t.reparation.ouvrier) + ' répare'} : encore ${t.reparation.jours} jour${t.reparation.jours > 1 ? 's' : ''}`,
+        const cible = ETATS[t.reparation.cible || t.etat + 1];
+        c.add(this.add.text(910, y, `${nomOuvrier(t.reparation.ouvrier) === 'toi' ? 'Tu répares' : nomOuvrier(t.reparation.ouvrier) + ' répare'} → ${cible.nom} : encore ${t.reparation.jours} j`,
           style(12, '#2f6a2a', { fontStyle: 'bold' })).setOrigin(1, 0.5));
       } else if (t.etat >= ETATS.length - 1) {
-        c.add(this.add.text(910, y, 'Parfait état', style(13, '#1f5aa0', { fontStyle: 'italic' })).setOrigin(1, 0.5));
+        c.add(this.add.text(910, y, estRestaure(t) ? 'Restauré ★' : 'Parfait état', style(13, estRestaure(t) ? '#b8860b' : '#1f5aa0', { fontStyle: 'bold italic' })).setOrigin(1, 0.5));
       } else {
-        const mat = CATEGORIES[t.categorie].materiau;
-        const prochaine = Math.round(t.valeurBase * ETATS[t.etat + 1].valeur);
-        const texte = `Réparer : ${dureeReparation(G, t)} j${mat ? `, 1 ${MATERIAUX[mat].nom.toLowerCase()}` : ''} → ~${prochaine} p.`;
         const btn = this.add.rectangle(790, y, 240, 28, 0x8a5a2b).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
         btn.on('pointerdown', () => {
-          const erreur = reparerTresor(G, t);
-          if (erreur) return this.texteInfo.setText(erreur);
-          this.texteInfo.setText(`Tu te mets au travail sur : ${t.nom}.`);
-          this.liste();
+          if (!ouvrierLibre(G)) return this.texteInfo.setText("Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois.");
+          this.choisirStade(t);
         });
         if (!ouvrierLibre(G)) btn.setAlpha(0.5);
-        c.add([btn, this.add.text(790, y, texte, style(12, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
+        c.add([btn, this.add.text(790, y, 'Réparer… (choisir le stade)', style(12, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
       }
     });
+  }
+
+  // La fenêtre du choix : jusqu'à quel état réparer l'objet, avec les jours, les matériaux
+  // et la valeur à la fin. Le parfait état d'un objet cassé ou abîmé est mis en avant.
+  choisirStade(t) {
+    const G = this.G;
+    if (this.fenetre) this.fenetre.destroy();
+    const c = this.fenetre = this.add.container(0, 0).setDepth(30);
+    const ouvrier = ouvrierLibre(G);
+    const mat = CATEGORIES[t.categorie].materiau;
+    const stades = [];
+    for (let e = t.etat + 1; e < ETATS.length; e++) stades.push(e);
+    const h = 120 + stades.length * 44;
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.55).setInteractive());
+    c.add(this.add.rectangle(480, 270, 620, h, 0xead9b0).setStrokeStyle(4, 0x8a6a3a));
+    const haut = 270 - h / 2;
+    c.add(this.add.text(480, haut + 24, `Réparer : ${t.nom}`, style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(480, haut + 50, `${ouvrier === 'toi' ? "C'est toi qui t'y mets" : nomOuvrier(ouvrier) + " s'en charge"} · état actuel : ${ETATS[t.etat].nom} (~${valeurTresor(t)} p.)` +
+      (mat ? ` · ${MATERIAUX[mat].nom} : ${G.materiaux[mat]}` : ''), style(12, '#5a3a20')).setOrigin(0.5));
+    stades.forEach((e, i) => {
+      const y = haut + 88 + i * 44;
+      const jours = dureeReparation(G, t, ouvrier, e);
+      const n = materiauxReparation(t, e);
+      const possible = !mat || G.materiaux[mat] >= n;
+      const restaure = e === ETATS.length - 1 && t.etatInitial in BONUS_RESTAURE;
+      const fond = this.add.rectangle(480, y, 560, 36, possible ? 0xf6ead0 : 0xd8c8a8).setStrokeStyle(2, restaure ? 0xd4a020 : 0x8a6a3a);
+      c.add(fond);
+      c.add(pastilleEtat(this, 230, y, e));
+      c.add(this.add.text(322, y, `${jours} jour${jours > 1 ? 's' : ''}${mat ? ` · ${n} ${MATERIAUX[mat].nom.toLowerCase()}` : ''}`, style(13, possible ? '#3b2410' : '#9a3020', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      c.add(this.add.text(740, y, `→ ~${valeurTresor(t, e)} p.${restaure ? `  Restauré ★ (×${String(BONUS_RESTAURE[t.etatInitial]).replace('.', ',')})` : ''}`,
+        style(13, restaure ? '#b8860b' : '#2f6a2a', { fontStyle: 'bold' })).setOrigin(1, 0.5));
+      if (!possible) return;
+      fond.setInteractive({ useHandCursor: true });
+      fond.on('pointerover', () => fond.setFillStyle(0xfff4dc));
+      fond.on('pointerout', () => fond.setFillStyle(0xf6ead0));
+      fond.on('pointerdown', () => {
+        const erreur = reparerTresor(G, t, e);
+        this.fenetre.destroy();
+        this.fenetre = null;
+        if (erreur) return this.texteInfo.setText(erreur);
+        this.texteInfo.setText(`${ouvrier === 'toi' ? 'Tu te mets' : nomOuvrier(ouvrier) + ' se met'} au travail : ${t.nom} → ${ETATS[e].nom} en ${jours} jour${jours > 1 ? 's' : ''}.`);
+        this.liste();
+      });
+    });
+    const annuler = this.add.text(480, haut + h - 20, 'Annuler', style(14, '#8a3a2a', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    annuler.on('pointerdown', () => { this.fenetre.destroy(); this.fenetre = null; });
+    c.add(annuler);
   }
 
   fermer() {

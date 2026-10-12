@@ -280,7 +280,7 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
     express: {},   // ce que vend le marchand express aujourd'hui
     faillite: false,
     prochainId: 1,
-    file: [],      // la queue du jour : { type: 'client' | 'retour' | 'carnet', ... }
+    file: [],      // la queue du jour : { type: 'client' | 'retour' | 'famille' | 'faucheuse' | 'carnet', ... }
     annonces: [],  // lettres : { voyageur, jour, acceptee }
     partis: [],    // { voyageur, colis, chance, depart, retour, resultat, termine }
     lettresDuJour: 0,
@@ -486,12 +486,18 @@ function refuserClient(G, voyageur) {
 
 // --- Relations ---
 
+// La couleur d'un nom de PNJ selon ta relation avec lui (sombre = sur fond sombre).
+function couleurNom(G, nom, sombre = false) {
+  const n = niveauRelation(G, nom);
+  return sombre ? n.vive : n.couleur;
+}
+
 function rencontrer(G, nom) {
   if (!(nom in G.relations)) G.relations[nom] = 0;
 }
 
 function niveauRelation(G, nom) {
-  if (!(nom in G.relations)) return { nom: 'Inconnu', couleur: '#6b5a40', butin: 1, index: 3 };
+  if (!(nom in G.relations)) return { nom: 'Inconnu', couleur: '#6b5a40', vive: '#e8dcc0', butin: 1, index: 3 };
   const pts = G.relations[nom];
   let index = 0;
   NIVEAUX_RELATION.forEach((n, i) => { if (pts >= n.min) index = i; });
@@ -767,18 +773,20 @@ function ouvrirComptoir(G) {
   const file = Phaser.Utils.Array.Shuffle(clients.map(v => ({ type: 'client', voyageur: v })));
 
   // Les aventuriers dont la quête se termine aujourd'hui reviennent...
-  // ... ou c'est un colporteur qui rapporte leur carnet.
+  // ... les autres, c'est la Faucheuse qui vient les annoncer, tout au bout de la file.
+  const morts = [];
   for (const p of G.partis) {
     if (p.termine || p.retour !== G.jour) continue;
     p.resultat = simulerAventure(p.voyageur, p.colis);
-    const arrivee = { type: p.resultat.vivant ? 'retour' : 'carnet', parti: p };
-    file.splice(hasard(0, file.length), 0, arrivee);
+    if (p.resultat.vivant) file.splice(hasard(0, file.length), 0, { type: 'retour', parti: p });
+    else morts.push(p);
   }
   // Les familles des disparus.
   for (const visite of G.visites.filter(v => v.jour === G.jour)) {
     file.splice(hasard(0, file.length), 0, { type: 'famille', visite });
   }
   G.visites = G.visites.filter(v => v.jour > G.jour);
+  if (morts.length) file.push({ type: 'faucheuse', partis: morts });
   G.file = file;
 }
 
@@ -948,8 +956,14 @@ function nomJoueur(G, stade = stadeJoueur(G)) {
 
 // --- Achat-revente ---
 
-function valeurTresor(t) {
-  return Math.round(t.valeurBase * ETATS[t.etat].valeur);
+function estRestaure(t) {
+  return t.etat === ETATS.length - 1 && t.etatInitial in BONUS_RESTAURE;
+}
+
+// La valeur d'un objet (à l'état « etat », par défaut son état actuel).
+function valeurTresor(t, etat = t.etat) {
+  const bonus = etat === ETATS.length - 1 && t.etatInitial in BONUS_RESTAURE ? BONUS_RESTAURE[t.etatInitial] : 1;
+  return Math.round(t.valeurBase * ETATS[etat].valeur * bonus);
 }
 
 function creerTresor(G) {
@@ -962,6 +976,7 @@ function creerTresor(G) {
     categorie: modele.categorie,
     valeurBase: Math.round(modele.valeur * Phaser.Math.FloatBetween(0.85, 1.15)),
     etat,
+    etatInitial: etat,
     reparation: null,
   };
 }
@@ -991,11 +1006,25 @@ function acheterTrouvaille(G, t) {
 }
 
 // Plus ton artisanat est haut, plus les réparations vont vite.
-// La durée d'une réparation : la catégorie, l'état de départ (un objet cassé demande plus
-// de travail), moins ton artisanat... et un jour de moins si c'est une experte qui s'en charge.
-function dureeReparation(G, t, ouvrier = ouvrierLibre(G)) {
+// La durée d'une étape (un état de plus) : la catégorie, l'état de départ (un objet cassé
+// demande plus de travail), moins ton artisanat... et un jour de moins avec une experte.
+// Les étapes suivantes vont deux fois plus vite : l'objet est déjà sur l'établi.
+function dureeEtape(G, t, etat, ouvrier, suite = false) {
   const experte = ouvrier && EMPLOYES[ouvrier] && EMPLOYES[ouvrier].rapide ? 1 : 0;
-  return Math.max(1, CATEGORIES[t.categorie].duree + ETATS[t.etat].reparation - niveauArtisanat(G) - experte);
+  const base = suite ? Math.ceil(CATEGORIES[t.categorie].duree / 2) : CATEGORIES[t.categorie].duree;
+  return Math.max(1, base + ETATS[etat].reparation - niveauArtisanat(G) - experte);
+}
+
+// La durée pour amener l'objet jusqu'à l'état « cible » : la somme des étapes.
+function dureeReparation(G, t, ouvrier = ouvrierLibre(G), cible = t.etat + 1) {
+  let jours = 0;
+  for (let e = t.etat; e < cible; e++) jours += dureeEtape(G, t, e, ouvrier, e > t.etat);
+  return jours;
+}
+
+// Les matériaux pour aller jusqu'à « cible » : un par étape.
+function materiauxReparation(t, cible = t.etat + 1) {
+  return CATEGORIES[t.categorie].materiau ? cible - t.etat : 0;
 }
 
 function enReparation(G) {
@@ -1017,15 +1046,18 @@ function nomOuvrier(o) {
   return o === 'toi' ? 'toi' : EMPLOYES[o].nom;
 }
 
-// Lancer la réparation d'un objet : un ouvrier libre, et le matériau. Renvoie une erreur, ou null.
-function reparerTresor(G, t) {
+// Lancer la réparation d'un objet jusqu'à l'état « cible » : un ouvrier libre, et un
+// matériau par étape. Renvoie une erreur, ou null.
+function reparerTresor(G, t, cible = t.etat + 1) {
   if (t.etat >= ETATS.length - 1) return 'Il est déjà en parfait état.';
+  cible = Math.min(ETATS.length - 1, Math.max(t.etat + 1, cible));
   const ouvrier = ouvrierLibre(G);
   if (!ouvrier) return "Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois.";
   const mat = CATEGORIES[t.categorie].materiau;
-  if (mat && G.materiaux[mat] < 1) return `Il te faut 1 ${MATERIAUX[mat].nom.toLowerCase()}.`;
-  if (mat) G.materiaux[mat]--;
-  t.reparation = { jours: dureeReparation(G, t, ouvrier), ouvrier };
+  const n = materiauxReparation(t, cible);
+  if (mat && G.materiaux[mat] < n) return `Il te faut ${n} ${MATERIAUX[mat].nom.toLowerCase()} (tu en as ${G.materiaux[mat]}).`;
+  if (mat) G.materiaux[mat] -= n;
+  t.reparation = { jours: dureeReparation(G, t, ouvrier, cible), ouvrier, cible };
   return null;
 }
 
@@ -1053,10 +1085,11 @@ function avancerAtelier(G) {
   for (const t of enReparation(G)) {
     t.reparation.jours--;
     if (t.reparation.jours > 0) continue;
+    const cible = t.reparation.cible || t.etat + 1;
     t.reparation = null;
-    t.etat++;
+    t.etat = cible;
     G.reparations++;
-    G.nouvellesAtelier.push(`L'atelier a fini : ${t.nom} est maintenant « ${ETATS[t.etat].nom} » (~${valeurTresor(t)} p.).`);
+    G.nouvellesAtelier.push(`L'atelier a fini : ${t.nom} est maintenant « ${ETATS[t.etat].nom} »${estRestaure(t) ? ' — restauré ★' : ''} (~${valeurTresor(t)} p.).`);
   }
 }
 

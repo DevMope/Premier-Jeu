@@ -174,7 +174,7 @@ class NightScene extends Phaser.Scene {
     liste.forEach((a, i) => {
       const y = 112 + i * 54;
       const v = a.voyageur;
-      c.add(this.add.text(x1 + 14, y, `✉ ${v.nom}`, style(13, '#3b2410', { fontStyle: 'bold' })));
+      c.add(this.add.text(x1 + 14, y, `✉ ${v.nom}`, style(13, couleurNom(G, v.nom), { fontStyle: 'bold' })));
       c.add(this.add.text(x1 + 14, y + 17, `Jour ${a.jour} · butin ~${v.butin} p. · ${v.duree} j`, style(11, '#6b4a2a')));
       c.add(this.add.text(x1 + 14, y + 31, commandeEnTexte(v), style(11, '#3b2410', { wordWrap: { width: x2 - x1 - 24 } })));
       if (a.acceptee) {

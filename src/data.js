@@ -392,15 +392,21 @@ const CHANCE_DECOUVERTE = 0.35;
 // Une mission parfaite (colis complet +1, retour vivant +2) fait passer d'Inconnu à Connaissance ;
 // chaque palier suivant demande plus d'efforts que le précédent (3, puis 5, puis 8 points).
 // `butin` : la part que l'aventurier te reverse (×). `couleur` : affichage.
+// Couleur du nom selon la relation : rouge pour les pires, vert vif pour les meilleurs.
+// « couleur » sur fond clair (parchemin), « vive » sur fond sombre.
 const NIVEAUX_RELATION = [
-  { nom: 'Pires ennemis', min: -Infinity, butin: 0.6, couleur: '#a02020' },
-  { nom: "Ne s'aiment pas", min: -8, butin: 0.8, couleur: '#b04a30' },
-  { nom: 'Hypocrite', min: -3, butin: 0.9, couleur: '#a0702a' },
-  { nom: 'Neutre', min: 0, butin: 1, couleur: '#6b5a40' },
-  { nom: 'Connaissance', min: 3, butin: 1, couleur: '#4a6a3a' },
-  { nom: 'Amis', min: 8, butin: 1.1, couleur: '#2f7a3a' },
-  { nom: 'Frères de sang', min: 16, butin: 1.25, couleur: '#1f5aa0' },
+  { nom: 'Pires ennemis', min: -Infinity, butin: 0.6, couleur: '#b01818', vive: '#ff4a3a' },
+  { nom: "Ne s'aiment pas", min: -8, butin: 0.8, couleur: '#c0481a', vive: '#ff8a3a' },
+  { nom: 'Hypocrite', min: -3, butin: 0.9, couleur: '#a8780a', vive: '#f0c040' },
+  { nom: 'Neutre', min: 0, butin: 1, couleur: '#6b5a40', vive: '#e8dcc0' },
+  { nom: 'Connaissance', min: 3, butin: 1, couleur: '#5a8a20', vive: '#c0e870' },
+  { nom: 'Amis', min: 8, butin: 1.1, couleur: '#2f8a2a', vive: '#80e060' },
+  { nom: 'Frères de sang', min: 16, butin: 1.25, couleur: '#0f9a1a', vive: '#3aff5a' },
 ];
+
+// Un objet très abîmé restauré jusqu'au parfait état vaut bien plus qu'un objet resté parfait :
+// le travail se voit. Bonus selon l'état d'origine (Cassé ×1,3 ; Abîmé ×1,15).
+const BONUS_RESTAURE = { 0: 1.3, 1: 1.15 };
 
 // Ce qui fait bouger une relation.
 const POINTS_RELATION = {

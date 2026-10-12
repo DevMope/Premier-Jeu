@@ -207,7 +207,11 @@ function mettreAJourPartie(G) {
   for (const id of Object.keys(ITEMS)) if (G.stock[id] === undefined) G.stock[id] = 0;
   G.zonesDecouvertes = G.zonesDecouvertes || [];
   G.employes = G.employes || [];
-  for (const t of G.tresors) if (t.reparation && !t.reparation.ouvrier) t.reparation.ouvrier = 'toi';
+  for (const t of G.tresors) {
+    if (t.reparation && !t.reparation.ouvrier) t.reparation.ouvrier = 'toi';
+    if (t.reparation && !t.reparation.cible) t.reparation.cible = t.etat + 1;
+    if (t.etatInitial === undefined) t.etatInitial = t.etat;
+  }
   const voyageurs = [...G.annonces.map(a => a.voyageur), ...G.partis.map(p => p.voyageur)];
   for (const v of voyageurs) {
     if (!v.niveau) v.niveau = 'aguerri';

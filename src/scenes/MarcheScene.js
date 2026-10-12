@@ -120,7 +120,7 @@ class MarcheScene extends Phaser.Scene {
     comptoir.fillStyle(0x8a5a2b).fillRect(x - 80, 196, 160, 44);
     comptoir.fillStyle(0x6b4423).fillRect(x - 80, 196, 160, 6);
     Object.keys(this.G.etals[cle] || {}).slice(0, 4).forEach((id, i) => this.add.image(x - 54 + i * 36, 188, id).setScale(3));
-    this.add.text(x, 254, m.nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
+    this.add.text(x, 254, m.nom, style(13, couleurNom(this.G, m.nom, true), { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
     this.add.text(x, 272, m.metier, style(11, '#fff4dc', { stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);
     const zone = this.add.rectangle(x, 160, 170, 140, 0xffffff, 0).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => this.ouvrirEtal(cle));
@@ -300,7 +300,7 @@ class MarcheScene extends Phaser.Scene {
       });
       c.add([fond, this.add.image(x + 12, y, 'tr_' + t.categorie).setScale(2),
         this.add.rectangle(x + 246, y, 8, 20, ETATS[t.etat].couleur),
-        this.add.text(x + 26, y, `${t.nom} · ${ETATS[t.etat].nom} · ~${valeurTresor(t)} p.`, style(11, ETATS[t.etat].texte, { fontStyle: 'bold' })).setOrigin(0, 0.5)]);
+        this.add.text(x + 26, y, `${t.nom} · ${estRestaure(t) ? 'Restauré ★' : ETATS[t.etat].nom} · ~${valeurTresor(t)} p.`, style(11, ETATS[t.etat].texte, { fontStyle: 'bold' })).setOrigin(0, 0.5)]);
     });
     const estimation = this.lot.reduce((s, t) => s + valeurTresor(t), 0);
     c.add(this.add.text(560, 340, this.lot.length ? `Lot de ${this.lot.length} objet${this.lot.length > 1 ? 's' : ''} · estimé ~${estimation} p.` : 'Aucun objet choisi',

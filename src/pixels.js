@@ -248,7 +248,36 @@ function creerTexture(scene, cle, lignes, palette) {
   g.destroy();
 }
 
+// La Faucheuse : grande robe noire en lambeaux, crâne aux yeux rouges, faux à la main.
+const FAUCHEUSE = {
+  px: [
+    '..lllllllllllw..',
+    '.ll.....kk..lw..',
+    'l.....kkkkk..w..',
+    '.....kkkkkkk.w..',
+    '....kkoooookkw..',
+    '....kxrooxrkkw..',
+    '....kkoooookkw..',
+    '....kkoxoxokkw..',
+    '...kkkkoookkkw..',
+    '..kkkgkkkkgkoo..',
+    '..kkgkkkkkkgkw..',
+    '.kkkgkkkkkkkkw..',
+    '.kkgkkkkkkkgkw..',
+    '.kkgkkkkkkkgkw..',
+    'kkkgkkkkkkkgkw..',
+    'kkgkkkkkkkkkgw..',
+    'kkgkkkkkkkkkgw..',
+    'kkkkkkkkkkkkkw..',
+    '.kkkkkkkkkkkkw..',
+    'kk.kk.kkk.kk.w..',
+    'k...k..k...k.w..',
+  ],
+  pal: { k: 0x0d0b10, g: 0x2c2836, o: 0xd8d4c4, x: 0x050405, r: 0xff2a1a, w: 0x4a3a2a, l: 0xc8d0dc },
+};
+
 function creerToutesLesTextures(scene) {
+  creerTexture(scene, 'perso_faucheuse', FAUCHEUSE.px, FAUCHEUSE.pal);
   for (const [cle, ic] of Object.entries(ICONES)) {
     creerTexture(scene, cle, ic.px, ic.pal);
   }

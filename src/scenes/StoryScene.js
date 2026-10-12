@@ -49,10 +49,10 @@ class StoryScene extends Cinematique {
     const r = this.parti.resultat;
     const etapes = v.epreuves.length;
 
-    this.titre.setText(r.vivant ? 'Le récit de ' + v.nom : 'Le carnet de ' + v.nom);
+    this.titre.setText(r.vivant ? 'Le récit de ' + v.nom : 'Le carnet de ' + v.nom).setColor(couleurNom(this.G, v.nom, true));
     this.ecrire(v.quete, r.vivant
       ? `${v.nom} est revenu${this.e} au comptoir, couvert${this.e} de poussière. Assis${this.e} sur le rebord de la fenêtre, ${v.feminin ? 'elle' : 'il'} te raconte son aventure...`
-      : `${v.nom} n'est jamais revenu${this.e}... Un colporteur a retrouvé son carnet de voyage sur la route. Tu l'ouvres en tremblant.`);
+      : `${v.nom} n'est jamais revenu${this.e}... La Faucheuse a laissé son carnet de voyage sur ton comptoir. Tu l'ouvres en tremblant.`);
     await this.attendreClic();
 
     for (let i = 0; i < r.etapes.length; i++) {

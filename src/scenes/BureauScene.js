@@ -85,9 +85,13 @@ class BureauScene extends Phaser.Scene {
             const p = e.visite.parent;
             return { nom: p.nom, race: p.race, ligne: `Visite : ${p.lien} de ${e.visite.defunt.nom}`, detail: () => [`Vient au sujet de ${e.visite.defunt.nom}.`] };
           }
+          if (e.type === 'faucheuse') {
+            return { nom: '???', race: 'faucheuse', ligne: 'Une silhouette noire, tout au bout de la file...',
+              detail: () => ['Elle ne dit rien. Elle attend son tour.'] };
+          }
           const v = e.parti.voyageur;
-          return { nom: v.nom, race: e.type === 'carnet' ? 'humain' : v.race,
-            ligne: e.type === 'retour' ? 'Revient de mission !' : 'Un colporteur apporte son carnet...',
+          return { nom: v.nom, race: v.race,
+            ligne: e.type === 'retour' ? 'Revient de mission !' : 'Son carnet est posé sur ton comptoir...',
             detail: () => [`Parti le jour ${e.parti.depart} : ${v.quete}`] };
         });
       }
@@ -142,7 +146,7 @@ class BureauScene extends Phaser.Scene {
       fond.on('pointerout', () => fond.setFillStyle(0xffffff, 0));
       fond.on('pointerdown', () => this.afficherFiche(f));
       c.add([fond, this.add.image(48, y + 14, 'perso_' + f.race).setOrigin(0.5, 1).setScale(1.8),
-        this.add.text(66, y - 13, f.nom, style(13, '#3b2410', { fontStyle: 'bold' })),
+        this.add.text(66, y - 13, f.nom, style(13, couleurNom(this.G, f.nom), { fontStyle: 'bold' })),
         this.add.text(66, y + 3, f.ligne, style(10, '#5a3a20', { wordWrap: { width: 220 } }))]);
     });
     if (pages > 1) {
@@ -168,7 +172,7 @@ class BureauScene extends Phaser.Scene {
     this.pages.add(c);
     c.add(this.add.rectangle(423, 262, 258, 404, 0xead9b0));
     c.add(this.add.image(335, 140, 'perso_' + f.race).setOrigin(0.5, 1).setScale(4));
-    c.add(this.add.text(370, 80, f.nom, style(15, '#3b2410', { fontStyle: 'bold', wordWrap: { width: 175 } })));
+    c.add(this.add.text(370, 80, f.nom, style(15, couleurNom(G, f.nom), { fontStyle: 'bold', wordWrap: { width: 175 } })));
     c.add(this.add.text(370, 120, NOMS_RACES[f.race] || '', style(12, '#5a3a20', { fontStyle: 'italic' })));
 
     const lignes = [];

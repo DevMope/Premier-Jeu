@@ -174,7 +174,7 @@ class CounterScene extends Phaser.Scene {
   }
 
   texturePour(entree) {
-    if (entree.type === 'carnet') return 'perso_colporteur';
+    if (entree.type === 'faucheuse') return 'perso_faucheuse';
     if (entree.type === 'famille') return 'perso_' + entree.visite.parent.race;
     const v = entree.type === 'client' ? entree.voyageur : entree.parti.voyageur;
     return 'perso_' + v.race;
@@ -237,7 +237,7 @@ class CounterScene extends Phaser.Scene {
   }
 
   creerDialogue() {
-    this.add.rectangle(480, 296, 920, 70, 0x1e130a, 0.85).setStrokeStyle(2, 0xc9a227);
+    this.fondDialogue = this.add.rectangle(480, 296, 920, 70, 0x1e130a, 0.85).setStrokeStyle(2, 0xc9a227);
     this.nomParleur = this.add.text(32, 266, '', style(15, '#f3d98a', { fontStyle: 'bold' }));
     this.texteDialogue = this.add.text(32, 286, '', style(15, '#f3e6c8', { wordWrap: { width: 900 } }));
   }
@@ -309,6 +309,9 @@ class CounterScene extends Phaser.Scene {
     this.entree = null;
     this.voyageur = null;
     this.enService = false;
+    this.actionB = null;
+    this.majBoutonsService();
+    if (this.carnetPose) { this.carnetPose.destroy(); this.carnetPose = null; }
     this.majPanneauGauche();
     this.majStock();
     this.dessinerPieces();
@@ -318,9 +321,17 @@ class CounterScene extends Phaser.Scene {
     // Un client mis en attente retrouve son colis commencé.
     this.colis = entree.colis || {};
     this.bouton('...', null);
-    this.dire("Quelqu'un approche du comptoir...", '');
     this.majCommande();
+    // Un carnet laissé par la Faucheuse : personne ne s'avance, il est déjà là.
+    if (entree.type === 'carnet') {
+      this.perso.setVisible(false);
+      return this.arrivee(entree);
+    }
+    const faucheuse = entree.type === 'faucheuse';
+    this.dire(faucheuse ? "Le froid tombe d'un coup. Les bougies vacillent..." : "Quelqu'un approche du comptoir...", '');
     this.majFileAttente();
+    this.perso.setVisible(true).setAlpha(1);
+    if (faucheuse) this.assombrir();
 
     // Le premier de la file s'avance jusqu'au comptoir...
     const premier = this.fileSprites.shift();
@@ -337,7 +348,8 @@ class CounterScene extends Phaser.Scene {
       targets: this.perso, x: FENETRE.x + FENETRE.w / 2, y: SOL_COMPTOIR, scale: 9, duration: 1200, ease: 'Sine.easeOut',
       onComplete: () => this.arrivee(entree),
     });
-    this.marche(1200);
+    // La Faucheuse ne marche pas : elle glisse.
+    if (!faucheuse) this.marche(1200);
   }
 
   arrivee(entree) {
@@ -362,12 +374,75 @@ class CounterScene extends Phaser.Scene {
       this.bouton('Écouter son récit', () => this.ouvrirRecit(entree.parti));
     } else if (entree.type === 'famille') {
       this.visiteFamille(entree.visite);
+    } else if (entree.type === 'faucheuse') {
+      this.visiteFaucheuse(entree);
     } else {
       const v = entree.parti.voyageur;
-      this.dire(`Bonjour... J'ai trouvé ce carnet sur la route. Il appartenait à ${v.nom}, je crois. Je suis désolé.`, 'Un colporteur');
+      this.dire(`Le carnet de voyage de ${v.nom} est posé sur ton comptoir. Sa couverture est glacée.`, '');
+      // Le carnet, couvert de givre, sur le rebord de la fenêtre.
+      const g = this.carnetPose = this.add.graphics().setDepth(3);
+      const cx = FENETRE.x + FENETRE.w / 2, cy = SOL_COMPTOIR + 2;
+      g.fillStyle(0x3a2a1a).fillRect(cx - 30, cy - 22, 60, 22);
+      g.fillStyle(0x5a3a22).fillRect(cx - 27, cy - 20, 54, 17);
+      g.fillStyle(0xd8e8f0, 0.8).fillRect(cx - 30, cy - 22, 60, 3).fillRect(cx - 30, cy - 22, 4, 22).fillRect(cx + 14, cy - 19, 9, 2);
+      g.fillStyle(0xe8c040).fillRect(cx - 4, cy - 14, 8, 6);
       this.titreCommande.setText('Une mauvaise nouvelle...');
       this.bouton('Lire le carnet', () => this.ouvrirRecit(entree.parti));
     }
+  }
+
+  // --- La Faucheuse ---
+
+  // L'obscurité tombe sur le comptoir : seuls la Faucheuse et ses paroles restent visibles.
+  assombrir() {
+    if (this.ombre) this.ombre.destroy();
+    this.ombre = this.add.rectangle(480, 270, 960, 540, 0x05040c, 0).setDepth(4);
+    this.tweens.add({ targets: this.ombre, fillAlpha: 0.78, duration: 1400, ease: 'Sine.easeIn' });
+    this.perso.setDepth(5);
+    for (const o of [this.fondDialogue, this.nomParleur, this.texteDialogue, this.boutonAction.fond, this.boutonAction.label]) o.setDepth(6);
+    this.cameras.main.shake(1400, 0.002);
+  }
+
+  // Elle annonce ceux qui ne reviendront jamais, laisse leurs carnets, et repart avec l'obscurité.
+  visiteFaucheuse(entree) {
+    const noms = entree.partis.map(p => p.voyageur.nom);
+    const liste = noms.length > 1 ? noms.slice(0, -1).join(', ') + ' et ' + noms[noms.length - 1] : noms[0];
+    const plusieurs = noms.length > 1;
+    this.titreCommande.setText('...');
+    // Elle flotte, immobile, au-dessus du sol.
+    this.flottement = this.tweens.add({ targets: this.perso, y: SOL_COMPTOIR - 8, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    const parler = texte => {
+      this.dire(texte, 'La Faucheuse');
+      this.nomParleur.setColor('#ff3a2a');
+    };
+    parler(`« Ne tremble pas, marchand. Ce n'est pas pour toi que je viens... pas encore. »`);
+    this.bouton('...', () => {
+      parler(`« ${liste} ne reviendr${plusieurs ? 'ont' : 'a'} jamais de voyage. ${plusieurs ? 'Leurs' : 'Son'} nom${plusieurs ? 's sont' : ' est'} à moi, désormais. »`);
+      this.bouton('...', () => {
+        parler(`« Je te laisse ${plusieurs ? 'leurs carnets' : 'son carnet'}. Nous nous reverrons... »`);
+        this.bouton('...', () => this.departFaucheuse(entree));
+      });
+    });
+  }
+
+  departFaucheuse(entree) {
+    this.bouton('...', null);
+    this.dire('Elle se dissout dans l\'ombre. Sur le comptoir, ' +
+      (entree.partis.length > 1 ? `${entree.partis.length} carnets` : 'un carnet') + ' couvert' + (entree.partis.length > 1 ? 's' : '') + ' de givre.', '');
+    if (this.flottement) this.flottement.stop();
+    this.tweens.add({ targets: this.perso, alpha: 0, scale: 10, duration: 1600, ease: 'Sine.easeIn' });
+    this.tweens.add({
+      targets: this.ombre, fillAlpha: 0, duration: 1600, ease: 'Sine.easeOut',
+      onComplete: () => {
+        this.ombre.destroy();
+        this.ombre = null;
+        this.perso.setVisible(false).setAlpha(1).setScale(9).setDepth(2);
+        for (const o of [this.fondDialogue, this.nomParleur, this.texteDialogue, this.boutonAction.fond, this.boutonAction.label]) o.setDepth(0);
+        // Les carnets passent en tête de file : on les lit un par un.
+        this.G.file.unshift(...entree.partis.map(parti => ({ type: 'carnet', parti })));
+        this.voyageurSuivant();
+      },
+    });
   }
 
   // Le client a sa destination : on peut préparer son colis.
@@ -401,7 +476,7 @@ class CounterScene extends Phaser.Scene {
     const prenom = d.nom.split(' ')[0];
     rencontrer(G, p.nom);
     this.titreCommande.setText('Une visite...');
-    const parler = texte => this.dire(texte, `${p.nom}, ${p.lien} de ${d.nom}`);
+    const parler = texte => this.dire(texte, `${p.nom}, ${p.lien} de ${d.nom}`, p.nom);
     const fin = reponse => { parler(reponse); this.bouton('...', null); this.majBoutonsService(); this.dessinerPieces(); this.majStock(); this.partirPar(FENETRE.x - 80); };
 
     if (visite.intention === 'colere') {
@@ -649,8 +724,11 @@ class CounterScene extends Phaser.Scene {
     }
   }
 
-  dire(texte, nom = this.voyageur ? this.voyageur.nom : '') {
-    this.nomParleur.setText(nom);
+  // « qui » : la personne dont le nom prend la couleur de votre relation (rouge → vert).
+  // Par défaut, le client au comptoir quand c'est lui qui parle.
+  dire(texte, nom = this.voyageur ? this.voyageur.nom : '', qui = null) {
+    if (!qui && this.voyageur && nom && nom.startsWith(this.voyageur.nom)) qui = this.voyageur.nom;
+    this.nomParleur.setText(nom).setColor(qui ? couleurNom(this.G, qui, true) : '#f3d98a');
     this.texteDialogue.setText(texte);
   }
 
