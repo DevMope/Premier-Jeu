@@ -85,6 +85,16 @@ const RACES = {
     pal: { h: 0xb5532a, s: 0xe8b890, e: 0x2a1a10, c: 0x6a6f78, d: 0x7a4a1e, p: 0x4a3a2a, b: 0x2a1a10 },
     lignes: { 4: '..shhhhs..', 5: '..hhhhhh..', 6: '..chhhhc..', 7: '.ccchhccc.' },
   },
+  // Humain : cheveux bruns, tunique rouge.
+  humain: {
+    pal: { h: 0x3a2a1a, s: 0xe8b890, e: 0x2a1a10, c: 0x9a3a2a, d: 0x5a3a1a, p: 0x4a4a5a, b: 0x3a2a1a },
+    lignes: {},
+  },
+  // Le colporteur qui rapporte les carnets : grand chapeau et cape brune.
+  colporteur: {
+    pal: { h: 0x4a3a2a, s: 0xe0b088, e: 0x2a1a10, c: 0x6a5a40, d: 0x3a2a1a, p: 0x5a4a3a, b: 0x2a1a10 },
+    lignes: { 0: '..hhhhhh..', 1: 'hhhhhhhhhh', 7: 'cccccccccc', 8: 'cccccccccc', 9: 'ccddddddcc', 10: '.cccccccc.' },
+  },
   // Magicienne humaine : chapeau pointu et longue robe étoilée.
   magicienne: {
     pal: { h: 0x5a3a8a, s: 0xf0c8a0, e: 0x2a1a10, c: 0x6a4aa0, d: 0xe8c040, p: 0x6a4aa0, b: 0x3a2a50 },

@@ -4,15 +4,13 @@ class StoryScene extends Phaser.Scene {
   constructor() { super('Recit'); }
 
   init(data) {
-    this.index = data.index;
+    this.idParti = data.id;
   }
 
   create() {
     this.G = window.GAME;
-    this.parti = this.G.partis[this.index];
+    this.parti = this.G.partis.find(p => p.voyageur.id === this.idParti);
     const v = this.parti.voyageur;
-    // Le sort est tiré une seule fois, puis rejoué tel quel.
-    if (!this.parti.resultat) this.parti.resultat = simulerAventure(v, this.parti.colis);
     this.e = v.feminin ? 'e' : '';
 
     this.cameras.main.fadeIn(500);
@@ -91,7 +89,7 @@ class StoryScene extends Phaser.Scene {
       this.ecrire(`Épreuve ${i + 1} / ${etapes}`, '...');
       await this.marcherVers(x);
       this.planterDecor(epreuve.type, x + 130);
-      this.ecrire(`Épreuve ${i + 1} / ${etapes}`, epreuve.intro);
+      this.ecrire(`Épreuve ${i + 1} / ${etapes}`, accord(epreuve.intro, v));
       await this.attendreClic();
 
       if (niveau !== 'rien') await this.montrerObjet(epreuve.besoin);
@@ -102,7 +100,7 @@ class StoryScene extends Phaser.Scene {
       } else {
         suite = (niveau === 'complet' ? "Mais la chance n'était pas de mon côté... " : '') + `J'ai été blessé${this.e} !`;
       }
-      this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${epreuve[niveau]} »\n${suite}`);
+      this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(epreuve[niveau], v)} »\n${suite}`);
       if (!reussie) await this.blesser(pvApres);
       await this.attendreClic();
     }
@@ -133,10 +131,6 @@ class StoryScene extends Phaser.Scene {
     this.decor.removeAll(true);
 
     if (r.vivant) {
-      if (!r.encaisse) {
-        this.G.argent += v.butin;
-        r.encaisse = true;
-      }
       await this.marcherVers(880);
       this.pleuvoirPieces();
       this.ecrire('Retour au comptoir',
@@ -150,11 +144,9 @@ class StoryScene extends Phaser.Scene {
       this.tweens.add({ targets: this.voile, fillAlpha: 0.5, duration: 1500 });
     }
 
-    const dernier = this.index >= this.G.partis.length - 1;
+    terminerAventure(this.G, this.parti);
     this.indice.destroy();
-    creerBouton(this, 820, 495, 220, dernier ? 'Voir le bilan' : 'Récit suivant', () => {
-      this.scene.start(dernier ? 'Bilan' : 'Recit', { index: this.index + 1 });
-    });
+    creerBouton(this, 820, 495, 240, 'Retour au comptoir', () => this.scene.start('Comptoir'));
   }
 
   pleuvoirPieces() {
@@ -205,6 +197,14 @@ class StoryScene extends Phaser.Scene {
         this.decor.add(lueur);
         this.tweens.add({ targets: lueur, y: fy - 20, duration: 800 + i * 150, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       });
+    } else if (type === 'bandits') {
+      [0, 60].forEach(dx => this.decor.add(
+        this.add.image(x + dx, sol, 'perso_humain').setOrigin(0.5, 1).setScale(6).setFlipX(true).setTint(0x504048)));
+    } else if (type === 'gouffre') {
+      g.fillStyle(0x111111).fillRect(x - 60, sol - 26, 140, 40);
+      g.fillStyle(0x6b4423).fillRect(x - 64, sol - 34, 6, 10).fillRect(x + 80, sol - 34, 6, 10);
+    } else if (type === 'sanglier') {
+      this.decor.add(this.add.image(x + 30, sol, 'loup').setOrigin(0.5, 1).setScale(7).setFlipX(true).setTint(0x8a5a3a));
     } else if (type === 'blessure') {
       g.fillStyle(0xd8344a, 0.8).fillRect(this.perso.x - 8, sol - 70, 16, 4);
     }

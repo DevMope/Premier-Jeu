@@ -24,12 +24,13 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
 
 ### 2.1 Le cœur : servir et investir
 - Chaque jour, un nombre de voyageurs se présente. Ils font **la queue** devant la fenêtre : on voit combien de clients attendent encore.
-  - **Prévus** : ils s'annoncent quelques jours à l'avance (on peut anticiper le stock).
+  - **Prévus** : ils envoient une lettre 2 ou 3 jours avant avec leur commande (on peut anticiper le stock).
   - **Imprévus** : des événements spéciaux inédits (un nain pressé, un client blessé, une inspection de garde…).
 - Chaque voyageur a une **commande** (besoins) liée à sa quête.
 - Le joueur la remplit avec son stock. Plus la commande est complète et de qualité, plus la **chance de réussite** est élevée.
 - Résultat de la quête : succès (retour + part du butin), mort valeureuse, ou mort sans gloire → investissement perdu.
 - **Le récit** : quand un aventurier revient, il raconte son aventure dans une petite cinématique. On le voit affronter chaque épreuve, et comment chaque objet du colis l'a aidé (ou lui a manqué). S'il meurt, c'est son carnet de voyage retrouvé qui raconte.
+- **La prévision** : chaque soir, on sait combien de clients viendront le lendemain, sous forme de fourchette (« entre 3 et 6 clients »). Elle grandit avec la réputation, l'expérience (clients servis) et la variété du stock.
 - **Les quêtes ont toutes des durées différentes** : certains reviennent le lendemain, d'autres après plusieurs semaines.
 - Les fiches des voyageurs permettent de suivre : à venir / présents / partis / revenus / morts.
 
@@ -136,7 +137,7 @@ Chaque étape doit donner une version **jouable**.
 | # | Étape | Contenu |
 |---|---|---|
 | 1 ✅ | **Prototype du comptoir** | Une journée, 4 voyageurs en file d'attente, un stock fixe ; on donne des objets ; calcul de la chance de réussite ; cinématique du récit ; bilan. |
-| 2 | **Les quêtes dans le temps** | Plusieurs jours, le lit pour passer au lendemain, quêtes de durées variables, retour ou mort, part du butin. |
+| 2 ✅ | **Les quêtes dans le temps** | Plusieurs jours ; quêtes de durées variables ; les aventuriers reviennent faire la queue pour raconter leur récit, ou un colporteur rapporte leur carnet ; lettres de commandes annoncées ; prévision « entre X et Y clients » ; fournisseur simple le soir. |
 | 3 | **Le Mastre Marché** | Acheter son stock le matin, prix, quantités limitées. |
 | 4 | **Les fiches et le bureau** | Fiches voyageurs (à venir/présents/partis/revenus), voyageurs annoncés à l'avance, tableau de CA, tiroirs de stats. |
 | 5 | **Les deux vues du shop** | Comptoir ↔ arrière (stock + lit), façade avec le nom du shop. |
