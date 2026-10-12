@@ -53,10 +53,11 @@ class CounterScene extends Phaser.Scene {
 
   // Les boutons qui n'ont de sens que pendant qu'on sert un client.
   majBoutonsService() {
-    this.boutonExpress.setVisible(this.enService);
-    this.boutonAttente.setVisible(!!this.voyageur && (this.enService || !!this.actionB));
+    const libre = !this.enConfirmation;
+    this.boutonExpress.setVisible(this.enService && libre);
+    this.boutonAttente.setVisible(!!this.voyageur && (this.enService || !!this.actionB) && libre);
     this.boutonRefuser.setVisible(this.enService || !!this.actionB);
-    if (this.enService) this.boutonRefuser.setTexte('Refuser ce client');
+    if (this.enService && !this.actionB) this.boutonRefuser.setTexte('Refuser ce client');
   }
 
   // Deux choix pour une visite : le bouton du bas (A) et celui du milieu (B).
@@ -474,8 +475,9 @@ class CounterScene extends Phaser.Scene {
     });
   }
 
-  donner(id) {
-    if (!this.enService) return;
+  // `confirme` : le joueur a déjà confirmé que c'est bien un objet en plus de la commande.
+  donner(id, confirme = false) {
+    if (!this.enService || this.enConfirmation) return;
     const v = this.voyageur;
     const commande = commandeDe(v);
     // Au-delà de la commande, c'est du suréquipement : seulement ce qui peut servir (soins,
@@ -488,6 +490,8 @@ class CounterScene extends Phaser.Scene {
     if (this.G.stock[id] <= 0) {
       return this.dire("Tu n'en as plus en stock...", '');
     }
+    // Un objet en plus de la commande : on demande confirmation, pour éviter les erreurs.
+    if (enPlus && !confirme) return this.demanderSurplus(id);
     this.G.stock[id]--;
     this.colis[id] = (this.colis[id] || 0) + 1;
     if (enPlus) this.dire(OBJETS_DE_SOIN.includes(id) ? "Un soin de plus ? Merci, ça me fera un cœur de réserve !" : "Un de plus ? Ça peut toujours servir, merci !");
@@ -495,10 +499,22 @@ class CounterScene extends Phaser.Scene {
     this.majCommande();
   }
 
+  demanderSurplus(id) {
+    const v = this.voyageur;
+    const effet = OBJETS_DE_SOIN.includes(id) ? 'des soins en plus lui donnent un cœur de réserve'
+      : '+5 % sur l\'épreuve qui en a besoin';
+    this.dire(`Tu veux vraiment donner 1 ${ITEMS[id].nom} EN PLUS de sa commande ? (${effet} · sac : ${totalSurplus(v, this.colis)} / ${tailleSac(v)} · ` +
+      'le surplus n\'est pas payé)', 'Objet en plus');
+    this.enConfirmation = true;
+    const fin = () => { this.enConfirmation = false; this.servir(); };
+    this.choix([`Oui, en plus`, () => { fin(); this.donner(id, true); }],
+      ['Non', () => { fin(); this.dire("D'accord, je garde juste ma commande.", v.nom); }]);
+  }
+
   // Clic sur une ligne de la commande : reprendre un objet, ou réparer celui du client.
   clicLigne(i) {
     const id = this.lignesCommande[i].id;
-    if (!this.enService || !id) return;
+    if (!this.enService || this.enConfirmation || !id) return;
     if (this.colis[id]) {
       this.colis[id]--;
       this.G.stock[id]++;
