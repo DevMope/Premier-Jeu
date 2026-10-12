@@ -27,9 +27,10 @@ class CounterScene extends Phaser.Scene {
     this.creerStock();
     this.creerArgent();
 
-    this.boutonExpress = creerBouton(this, 840, 392, 210, 'Marchand express', () => this.ouvrirExpress());
-    this.boutonRefuser = creerBouton(this, 840, 440, 210, 'Refuser ce client', () => (this.actionB ? this.actionB() : this.refuser()));
-    this.boutonAction = creerBouton(this, 840, 492, 210, '', () => this.action && this.action());
+    this.boutonExpress = creerBouton(this, 840, 360, 210, 'Marchand express', () => this.ouvrirExpress());
+    this.boutonAttente = creerBouton(this, 840, 404, 210, 'Mettre en attente', () => this.mettreEnAttente());
+    this.boutonRefuser = creerBouton(this, 840, 448, 210, 'Refuser ce client', () => (this.actionB ? this.actionB() : this.refuser()));
+    this.boutonAction = creerBouton(this, 840, 496, 210, '', () => this.action && this.action());
     this.majBoutonsService();
 
     // Au retour de chez Grippesou, on remet l'affichage à jour.
@@ -53,6 +54,7 @@ class CounterScene extends Phaser.Scene {
   // Les boutons qui n'ont de sens que pendant qu'on sert un client.
   majBoutonsService() {
     this.boutonExpress.setVisible(this.enService);
+    this.boutonAttente.setVisible(!!this.voyageur && (this.enService || !!this.actionB));
     this.boutonRefuser.setVisible(this.enService || !!this.actionB);
     if (this.enService) this.boutonRefuser.setTexte('Refuser ce client');
   }
@@ -126,19 +128,48 @@ class CounterScene extends Phaser.Scene {
 
   // Les voyageurs qui attendent leur tour, visibles par la fenêtre.
   creerFileAttente() {
-    this.fileSprites = this.G.file.map((entree, i) => {
-      const sprite = this.add.image(FILE.x - i * FILE.ecart, FILE.y, this.texturePour(entree))
-        .setOrigin(0.5, 1).setScale(FILE.echelle).setTint(0xd8d0c0).setDepth(1);
-      sprite.setMask(this.masqueFenetre);
-      // Ils piétinent un peu en attendant.
-      this.tweens.add({ targets: sprite, y: FILE.y - 3, duration: 500 + i * 90, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-      return sprite;
-    });
+    this.fileSprites = this.G.file.map((entree, i) => this.spriteFile(entree, i));
 
     const fond = this.add.rectangle(FENETRE.x + 8, FENETRE.y + 8, 132, 28, 0x2a1a10, 0.8)
       .setOrigin(0, 0).setStrokeStyle(2, 0xc9a227).setDepth(4);
     this.texteAttente = this.add.text(fond.x + 66, fond.y + 14, '', style(14, '#f3d98a', { fontStyle: 'bold' }))
       .setOrigin(0.5).setDepth(4);
+  }
+
+  // Un personnage qui attend dans la file, à la place `i`.
+  spriteFile(entree, i) {
+    const sprite = this.add.image(FILE.x - i * FILE.ecart, FILE.y, this.texturePour(entree))
+      .setOrigin(0.5, 1).setScale(FILE.echelle).setTint(0xd8d0c0).setDepth(1);
+    sprite.setMask(this.masqueFenetre);
+    // Ils piétinent un peu en attendant.
+    this.tweens.add({ targets: sprite, y: FILE.y - 3, duration: 500 + (i % 5) * 90, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    return sprite;
+  }
+
+  // Le client retourne au bout de la file, avec son colis commencé et sa destination.
+  // Une première attente passe bien ; les suivantes l'agacent un peu.
+  mettreEnAttente() {
+    const entree = this.entree;
+    const v = this.voyageur;
+    if (!v || !entree || entree.type !== 'client') return;
+    if (!this.G.file.length) return this.dire("Personne d'autre n'attend : autant le servir maintenant !", '');
+    entree.colis = { ...this.colis };
+    entree.attentes = (entree.attentes || 0) + 1;
+    let msg = null;
+    let phrase = "D'accord, je repasse tout à l'heure. Garde-moi mon colis !";
+    if (entree.attentes > 1) {
+      msg = changerRelation(this.G, v.nom, -1);
+      phrase = "Encore attendre ?! Bon... mais je n'ai pas toute la journée.";
+    }
+    this.enService = false;
+    this.actionB = null;
+    this.majBoutonsService();
+    this.bouton('...', null);
+    this.dire(phrase + (msg ? ' ' + msg : ''), v.nom);
+    this.G.file.push(entree);
+    this.fileSprites.push(this.spriteFile(entree, this.G.file.length - 1).setVisible(false));
+    this.majFileAttente();
+    this.partirPar(FENETRE.x - 80);
   }
 
   texturePour(entree) {
@@ -277,7 +308,8 @@ class CounterScene extends Phaser.Scene {
     if (this.G.file.length === 0) return this.finDeJournee();
 
     const entree = this.entree = this.G.file.shift();
-    this.colis = {};
+    // Un client mis en attente retrouve son colis commencé.
+    this.colis = entree.colis || {};
     this.bouton('...', null);
     this.dire("Quelqu'un approche du comptoir...", '');
     this.majCommande();
@@ -290,6 +322,7 @@ class CounterScene extends Phaser.Scene {
     if (premier) premier.destroy();
     // ... et les autres avancent d'une place.
     this.fileSprites.forEach((sprite, i) => {
+      sprite.setVisible(true);
       this.tweens.add({ targets: sprite, x: FILE.x - i * FILE.ecart, duration: 900, delay: 300 + i * 150, ease: 'Sine.easeInOut' });
     });
 
@@ -304,6 +337,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'client') {
       const v = this.voyageur = entree.voyageur;
       let bonjour = v.prevu ? "C'est moi qui t'ai écrit, tu te souviens ? " : '';
+      if (entree.attentes) bonjour = "Me revoilà ! On reprend où on en était ? ";
       if (v.habitue) bonjour = 'Re-bonjour, c\'est encore moi ! ' + (this.aReparer(v).length ? 'Mon matériel a souffert la dernière fois... ' : '');
       if (!v.queteId) {
         // Il vient chercher l'aventure : c'est toi qui choisis où l'envoyer.
@@ -312,7 +346,7 @@ class CounterScene extends Phaser.Scene {
         this.majCommande();
         return;
       }
-      this.dire(bonjour + accord(v.accueil, v), this.nomAvecRelation(v.nom));
+      this.dire(entree.attentes ? bonjour : bonjour + accord(v.accueil, v), this.nomAvecRelation(v.nom));
       this.servir();
     } else if (entree.type === 'retour') {
       const v = entree.parti.voyageur;

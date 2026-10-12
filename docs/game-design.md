@@ -41,6 +41,7 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
 - Tableau de chiffre d'affaires : jour / semaine / mois / année.
 
 ### 2.3 Gérer son comptoir
+- **Mettre en attente** : un client peut retourner au bout de la file avec son colis commencé (et sa destination), pour servir les suivants d'abord. La première attente passe bien ; les suivantes l'agacent (−1 de relation).
 - **Refuser** : on peut refuser un client (pour ne pas l'envoyer à une mort certaine) ou une commande par lettre. Ça coûte de la réputation : 1 point pour un client, 0,2 pour une lettre.
 - **Les lettres** sont plus exigeantes (une ou deux épreuves demandent un objet de plus) mais rapportent 25 % de plus.
 - **Les longues quêtes** demandent plus de rations et rapportent plus (+30 % de butin par jour en plus).
