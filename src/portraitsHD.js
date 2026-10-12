@@ -216,7 +216,7 @@ const BOUCHES = {
 // Les proportions du visage, par peuple.
 const VISAGES = {
   humain: { cy: 43, rx: 15.5, ry: 18.5, menton: 0.1, yeux: 41, nez: [2.8, 3.8], bouche: 56, cou: 6, torse: 66, sourcil: 2 },
-  hobbit: { cy: 46, rx: 16.5, ry: 17, menton: 0, yeux: 45, nez: [3.6, 3.2], bouche: 59, cou: 6, torse: 68, sourcil: 2 },
+  hobbit: { cy: 46, rx: 16.5, ry: 17, menton: 0, joues: 0.1, yeux: 45, nez: [3.6, 3.2], bouche: 59, cou: 6, torse: 68, sourcil: 2 },
   nain: { cy: 43, rx: 17, ry: 19, menton: 0, yeux: 43, nez: [5, 4.6], bouche: 60, cou: 0, torse: 66, sourcil: 3 },
   elfe: { cy: 42, rx: 14, ry: 19, menton: 0.22, yeux: 41, nez: [2.2, 3.8], bouche: 55, cou: 5, torse: 66, sourcil: 1 },
   magicienne: { cy: 46, rx: 15, ry: 18, menton: 0.12, yeux: 45, nez: [2.6, 3.6], bouche: 59, cou: 5, torse: 68, sourcil: 1 },
@@ -227,7 +227,7 @@ function tete(cx, v) {
   return (x, y) => {
     const ny = (y + 0.5 - v.cy) / v.ry;
     // Des joues pleines (la tête s'élargit un peu sous les yeux), puis le menton s'affine
-    const joues = ny > -0.1 && ny < 0.7 ? 1 + Math.sin((ny + 0.1) / 0.8 * Math.PI) * 0.07 : 1;
+    const joues = v.joues && ny > -0.1 && ny < 0.7 ? 1 + Math.sin((ny + 0.1) / 0.8 * Math.PI) * v.joues : 1;
     const rx = v.rx * joues * (ny > 0.35 ? 1 - (ny - 0.35) * v.menton * 1.6 : 1);
     const nx = (x + 0.5 - cx) / rx;
     const d = nx * nx + ny * ny;
@@ -272,13 +272,7 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
 
   // 3. Le cou, les oreilles, la tête
   if (v.cou) t.forme('peau', (x, y) => (y >= v.cy + v.ry - 6 && y <= v.torse + 2 && Math.abs(x + 0.5 - cx) < v.cou ? [(x + 0.5 - cx) / v.cou * 0.8, 0.3, 0.6] : null), { decalage: -0.7 });
-  if (g.race === 'elfe') {
-    for (const sens of [-1, 1]) t.forme('peau', (x, y) => {
-      const u = (x + 0.5 - cx) * sens - v.rx + 1.5; // vers l'extérieur
-      const w = y + 0.5 - (v.yeux + 5);             // vers le bas
-      return u > 0 && u < 6.5 && w < 3 - u * 0.3 && w > -u * 0.95 - 1.5 ? [sens * 0.7, -0.2, 0.6] : null;
-    });
-  } else {
+  if (g.race !== 'elfe') {
     const o = g.race === 'hobbit' ? [4, 5.6] : [3.2, 5.2];
     for (const sens of [-1, 1]) t.forme('peau', ellipsoide(cx + sens * (v.rx + 0.5), v.yeux + 6, o[0], o[1]));
   }
@@ -316,6 +310,8 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   // 6. Les cheveux du dessus et les coiffes
   cheveuxHD(t, g, v, cx);
   coiffeHD(t, g, v, cx);
+  // Les oreilles des elfes percent à travers les cheveux, et montent en pointe
+  if (g.race === 'elfe') oreillesElfe(t, v, cx);
 
   // 7. Les sourcils, par-dessus tout (ils débordent du casque des nains)
   const sourcil = SOURCILS[expression];
@@ -549,4 +545,13 @@ function textureBusteHD(scene, personne, expression = 'neutre', etat = {}) {
   const cle = `busteHD_${personne.race}_${personne.nom}_${expression}${etat.cligne ? '_c' : ''}${etat.parle ? '_p' : ''}`;
   if (!scene.textures.exists(cle)) dessinerBusteHD(geneHD(personne), expression, etat).texture(scene, cle);
   return cle;
+}
+
+function oreillesElfe(t, v, cx) {
+  for (const sens of [-1, 1]) t.forme('peau', (x, y) => {
+    const u = (x + 0.5 - cx) * sens - v.rx + 1.5; // vers l'extérieur
+    const w = y + 0.5 - (v.yeux + 5);             // vers le bas
+    // Collée à la tête au niveau des yeux, elle monte en pointe jusqu'au-dessus des sourcils
+    return u > 0 && u < 7.5 && w > -2 - u * 1.7 && w < 4 - u * 1.9 ? [sens * 0.6, -0.45, 0.65] : null;
+  });
 }
