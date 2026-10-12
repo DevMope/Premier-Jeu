@@ -46,7 +46,7 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
 - **Les longues quêtes** demandent plus de rations et rapportent plus (+30 % de butin par jour en plus).
 - **Les habitués et la réparation** : un aventurier revenu vivant peut revenir comme client. Il garde ses objets durables (épée, corde, gourde), qui s'usent à chaque épreuve (3 crans). Le joueur peut les réparer : ça ne coûte rien en stock, et c'est le client qui paie.
 - **La réserve** est limitée (20 places au départ), et on peut l'agrandir en payant (30, 40, puis 55 places).
-- **L'assortiment** du fournisseur change chaque jour : les objets de base (rations, gourdes, torches, bandages) sont toujours là, les autres apparaissent au hasard en quantité limitée. Les prix varient.
+- **L'assortiment** du marché change chaque jour : les objets de base sont toujours là, les autres apparaissent au hasard en quantité limitée. Les prix varient (voir le Mastre Marché).
 - **Le marchand express** : le **Vieux Grippesou**, un vieux gobelin avare recroquevillé à côté de sa caravane (page à part, le client attend au comptoir). Il vend quelques objets au hasard, 2,5 fois plus cher, **utilisables tout de suite** : ce dont le client a besoin va directement dans son colis, le reste dans la réserve. Ce n'est jamais rentable : ça sert juste à sauver un voyage.
 - **La banque naine** (page à part) : des banquiers nains te toisent depuis leur immense bureau (Thorgrim Coffrefort et ses associés). Leurs prêts se débloquent avec la réputation (plus elle est haute, plus on peut emprunter, et moins cher). Les échéances sont prélevées chaque nuit.
 - **La Main Noire** (la mafia) ne prêtera qu'au joueur qui a choisi le camp du mal, plus tard dans le jeu.
@@ -57,7 +57,18 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
 - **La faillite** : on peut passer à découvert à cause des échéances de prêt ou des dédommagements ; à -100 pièces, le comptoir ferme. Une cinématique comique montre le banquier et ses gardes qui viennent tout saisir (parchemin de dettes trop long, garde qui trébuche, dernière pièce confisquée, planches clouées sur la porte).
 - **Capital de départ** : 80 pièces, pour tenir le temps que les premiers aventuriers reviennent.
 
-### 2.4 Relations et familles
+### 2.4 Le Mastre Marché (le matin)
+Après la nuit, on se réveille au marché avant d'ouvrir le comptoir.
+- **Trois étals**, chacun avec son marchand, ses objets et ses prix du jour (ça vaut le coup de comparer) :
+  - **Maître Gédéon** (épicerie) : rations, gourdes, torches, bandages, toujours là ;
+  - **Brunehaut la Forgeronne** (forge) : fer et cuir toujours là ; épées, flèches, cordes au hasard ;
+  - **Mère Sauge** (apothicaire) : bandages toujours là ; potions au hasard.
+- **Le marchandage** marche avec chacun des trois : plus on achète chez un marchand, meilleure est la relation, et plus il fait de remises. Ses amis ont droit à plus de quantité.
+- **Le coin des jeux**, tenu par Fil-de-Fer (cousin du Vieux Grippesou) : **les dés** (deux dés chacun, le plus gros total gagne la mise) et **le bonneteau** (trouver la pièce sous le bon gobelet après le mélange, gagne le double). Trois parties de chaque par jour, mises de 5, 10 ou 20.
+- **Le mendiant** : on peut lui donner 1, 5 ou 10 pièces. Ta générosité est mémorisée. Au-delà de 30 pièces, il t'offre le **Trèfle du mendiant** (+1 aux dés, bonneteau plus lent). Il pourra jouer un rôle plus tard dans l'histoire.
+- **La prévision** du soir est une estimation : le vrai nombre de clients est tiré à l'ouverture du comptoir, donc un stock varié acheté le matin attire encore du monde.
+
+### 2.5 Relations et familles
 - Chaque client a une relation avec le joueur : **Pires ennemis, Ne s'aiment pas, Hypocrite, Neutre (ou Inconnu), Connaissance, Amis, Frères de sang**.
 - Elle bouge selon tes actes : colis complet (+1), colis pauvre (−1), retour vivant (+2), réparation (+1), refus (−3), lettre refusée (−1).
 - Effets : la part de butin reversée va de ×0,6 (pires ennemis) à ×1,25 (frères de sang).
@@ -69,19 +80,19 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
   - **la relève** : il reprend la quête du disparu, et tu l'équipes ;
   - **un hommage** (frères de sang) : le disparu t'a laissé une décoration.
 
-### 2.5 Compétences du joueur (le côté RPG)
+### 2.6 Compétences du joueur (le côté RPG)
 - **Flair** : au début, l'estimation des chances (« Ton flair dit : ~60 % ») est faussée et arrondie. Elle s'affine avec l'expérience, jusqu'au pourcentage exact (40 clients servis).
-- **Marchandage** : la relation avec Maître Gédéon, le fournisseur, monte avec ce que tu dépenses chez lui (1 point par 40 pièces). Connaissance : −5 %, Amis : −10 % et un objet rare de plus chaque soir, Frères de sang : −20 % et une décoration.
+- **Marchandage** : la relation avec chaque marchand du Mastre Marché monte avec ce que tu dépenses chez lui (1 point par 25 pièces). Connaissance : −5 %, Amis : −10 % et plus de quantité, Frères de sang : −20 % et une décoration.
 - **Artisanat** : réparer coûte des matières premières (fer pour l'épée, cuir pour la corde et la gourde). Au début il en faut 3 par réparation, puis 1 de moins tous les 4 réparations (minimum 1).
 - **Les décorations** du shop donnent des bonus : Carte des contrées (+4 % par épreuve), Trophée de loup (plus de clients), Lanterne enchantée (+10 % de butin), Enclume naine (1 matériau de moins par réparation).
 - Plus tard : des talents à choisir aux grands âges de la vie.
 
-### 2.6 Risque : le marché noir
+### 2.7 Risque : le marché noir
 - Ouvre certains soirs seulement.
 - Grimoires interdits, potions illégales, artefacts.
 - Voyageurs nocturnes : quêtes farfelues, gros gains possibles, mais s'ils se font prendre, **les conséquences retombent sur le joueur**.
 
-### 2.7 Aider pendant l'aventure
+### 2.8 Aider pendant l'aventure
 - **Le grand aigle** (familier à débloquer) : quand un aventurier en mission envoie un message de détresse, l'aigle peut lui apporter rapidement des objets.
 - **Les mercenaires** : on peut en envoyer un nombre limité de fois par jour pour récupérer le butin perdu par un aventurier mort.
 
@@ -179,7 +190,7 @@ Chaque étape doit donner une version **jouable**.
 | 2 ✅ | **Les quêtes dans le temps** | Plusieurs jours ; quêtes de durées variables ; les aventuriers reviennent faire la queue pour raconter leur récit, ou un colporteur rapporte leur carnet ; lettres de commandes annoncées ; prévision « entre X et Y clients » ; fournisseur simple le soir. |
 | 2+ ✅ | **Gérer son comptoir** | Refus de clients et de lettres, lettres plus exigeantes, habitués et réparations, réserve limitée, assortiment variable, marchand express, banque et Main Noire, faillite. |
 | 2++ ✅ | **Relations et cinématiques** | 7 niveaux de relation, familles des disparus, flair, marchandage, artisanat et matières premières, décorations, cinématique d'introduction, cinématique de faillite. |
-| 3 | **Le Mastre Marché** | Acheter son stock le matin, prix, quantités limitées. |
+| 3 ✅ | **Le Mastre Marché** | Le matin, avant d'ouvrir : trois étals (épicerie, forge, apothicaire) aux prix et assortiments variables, marchandage avec chaque marchand, dés et bonneteau, le mendiant. |
 | 4 | **Les fiches et le bureau** | Fiches voyageurs (à venir/présents/partis/revenus), voyageurs annoncés à l'avance, tableau de CA, tiroirs de stats. |
 | 5 | **Les deux vues du shop** | Comptoir ↔ arrière (stock + lit), façade avec le nom du shop. |
 | 6 | **Sauvegarde** | Sauvegarder / charger une partie. |

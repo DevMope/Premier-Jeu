@@ -13,9 +13,9 @@ class NightScene extends Phaser.Scene {
     this.texteArgent = this.add.text(940, 34, '', style(20, '#f3d98a', { fontStyle: 'bold' })).setOrigin(1, 0.5);
 
     this.parchemin(20, 300, 'La journée');
-    this.parchemin(320, 640, 'Le fournisseur');
+    this.parchemin(320, 640, 'Ta réserve');
     this.parchemin(660, 940, 'Lettres reçues');
-    this.creerFournisseur(320, 640);
+    this.creerReserve(320, 640);
     this.creerPrevision(660, 940);
 
     creerBouton(this, 160, 505, 200, 'La banque', () => this.ouvrirBanque());
@@ -25,10 +25,11 @@ class NightScene extends Phaser.Scene {
     this.tout();
   }
 
+  // Dormir : la nuit passe, et au matin, direction le Mastre Marché.
   dormir() {
-    journeeSuivante(this.G);
+    nuit(this.G);
     this.cameras.main.fadeOut(600);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(this.G.faillite ? 'Faillite' : 'Comptoir'));
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(this.G.faillite ? 'Faillite' : 'Marche'));
   }
 
   parchemin(x1, x2, titre) {
@@ -75,24 +76,18 @@ class NightScene extends Phaser.Scene {
     c.add(this.add.text(x1 + 18, 360, listeCourte(missions, 5, 'Personne'), style(12, '#5a3a20', { lineSpacing: 2 })));
   }
 
-  // --- Le fournisseur ---
+  // --- Ta réserve (on achète le matin, au Mastre Marché) ---
 
-  creerFournisseur(x1, x2) {
-    this.texteGedeon = this.add.text((x1 + x2) / 2, 110, '', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
+  creerReserve(x1, x2) {
+    this.add.text((x1 + x2) / 2, 110, 'Demain matin : le Mastre Marché', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.lignesStock = {};
-    Object.entries({ ...ITEMS, ...MATERIAUX }).forEach(([id, item], i) => {
-      const y = 132 + i * 28;
-      this.add.image(x1 + 26, y, id).setScale(3);
-      this.add.text(x1 + 44, y, item.nom, style(14, '#3b2410')).setOrigin(0, 0.5);
-      const prix = this.add.text(x1 + 120, y, '', style(14, '#6b4a2a')).setOrigin(0, 0.5);
-      const qte = this.add.text(x1 + 162, y, '', style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
-      const btn = this.add.rectangle(x2 - 52, y, 88, 26, 0x8a5a2b).setStrokeStyle(2, 0x3b2410)
-        .setInteractive({ useHandCursor: true });
-      const label = this.add.text(x2 - 52, y, '', style(12, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
-      btn.on('pointerdown', () => this.acheter(id));
-      this.lignesStock[id] = { prix, qte, btn, label };
+    Object.keys({ ...ITEMS, ...MATERIAUX }).forEach((id, i) => {
+      const x = x1 + 24 + (i % 2) * 150;
+      const y = 140 + Math.floor(i / 2) * 44;
+      this.add.image(x, y, id).setScale(3);
+      this.add.text(x + 20, y - 8, nomObjet(id), style(13, '#3b2410'));
+      this.lignesStock[id] = this.add.text(x + 20, y + 8, '', style(13, '#3b2410', { fontStyle: 'bold' }));
     });
-
     this.texteReserve = this.add.text(x1 + 18, 410, '', style(13, '#3b2410', { fontStyle: 'bold' }));
     const btn = this.add.rectangle((x1 + x2) / 2, 444, x2 - x1 - 36, 30, 0x6b4423).setStrokeStyle(2, 0x3b2410)
       .setInteractive({ useHandCursor: true });
@@ -104,28 +99,7 @@ class NightScene extends Phaser.Scene {
     this.boutonAgrandir = btn;
   }
 
-  acheter(id) {
-    const G = this.G;
-    const offre = G.offre[id];
-    const materiau = id in MATERIAUX;
-    const prix = offre && prixFournisseur(G, offre.prix);
-    if (offre && offre.qte > 0 && !peutPayer(G, prix)) {
-      this.cameras.main.shake(120, 0.004);
-      return this.annoncer("Pas assez d'argent ! Passe à la banque pour un prêt.");
-    }
-    if (!offre || offre.qte <= 0 || (!materiau && stockTotal(G) >= G.capacite)) {
-      this.cameras.main.shake(120, 0.004);
-      return;
-    }
-    offre.qte--;
-    if (materiau) G.materiaux[id]++;
-    else G.stock[id]++;
-    const msg = depenserChezFournisseur(G, prix);
-    if (msg) this.annoncer(msg);
-    this.tout();
-  }
-
-  // Un message important (cadeau, palier de relation) en haut de l'écran.
+  // Un message important en haut de l'écran.
   annoncer(texte) {
     const t = this.add.text(480, 66, texte, style(14, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 10, y: 4 } }))
       .setOrigin(0.5).setDepth(30);
@@ -135,21 +109,11 @@ class NightScene extends Phaser.Scene {
   majArgent() {
     const G = this.G;
     this.texteArgent.setText(G.argent + ' pièces').setColor(G.argent < 0 ? '#ff8070' : '#f3d98a');
-    const plein = stockTotal(G) >= G.capacite;
-    const remise = remiseFournisseur(G);
-    this.texteGedeon.setText(`${FOURNISSEUR.nom} · ${niveauRelation(G, FOURNISSEUR.nom).nom}` +
-      (remise ? ` · remise ${Math.round(remise * 100)} %` : '') + ' · (n) = dispo');
-    for (const [id, l] of Object.entries(this.lignesStock)) {
-      const offre = G.offre[id];
-      const materiau = id in MATERIAUX;
-      const prix = offre && prixFournisseur(G, offre.prix);
-      l.prix.setText(offre ? prix + ' p.' : '');
-      l.qte.setText('x ' + (materiau ? G.materiaux[id] : G.stock[id]));
-      l.label.setText(!offre ? 'Absent' : offre.qte > 0 ? `Acheter (${offre.qte})` : 'Épuisé');
-      const possible = offre && offre.qte > 0 && (materiau || !plein) && peutPayer(G, prix);
-      l.btn.setAlpha(possible ? 1 : 0.4);
-      l.label.setAlpha(possible ? 1 : 0.4);
+    for (const [id, t] of Object.entries(this.lignesStock)) {
+      const n = id in MATERIAUX ? G.materiaux[id] : G.stock[id];
+      t.setText('x ' + n).setColor(n > 0 ? '#3b2410' : '#a05040');
     }
+    const plein = stockTotal(G) >= G.capacite;
     this.texteReserve.setText(`Réserve : ${stockTotal(G)} / ${G.capacite}${plein ? ' — pleine !' : ''}`);
     const a = agrandissementSuivant(G);
     this.texteAgrandir.setText(a ? `Agrandir à ${a.capacite} places — ${a.prix} p.` : 'Réserve au maximum');
@@ -201,7 +165,7 @@ class NightScene extends Phaser.Scene {
   majPrevision() {
     const p = prevision(this.G);
     const a = attrait(this.G);
-    this.textePrevision.setText(`Entre ${p.min} et ${p.max} clients attendus` +
+    this.textePrevision.setText(`Environ ${p.min} à ${p.max} clients` +
       (p.annonces ? ` (dont ${p.annonces} par lettre)` : ''));
     const signe = n => (n >= 0 ? '+' : '') + n.toFixed(1);
     this.texteFacteurs.setText(`Réputation ${signe(a.reputation)} · Expérience ${signe(a.experience)}\nStock varié ${signe(a.variete)}`);
@@ -215,7 +179,7 @@ class NightScene extends Phaser.Scene {
   }
 }
 
-// 2.5 reste 2.5, 3 reste 3.
+// Un nombre à la française : 3 reste 3, 2.5 devient « 2,5 », 0.25 devient « 0,25 ».
 function arrondi(n) {
-  return Number.isInteger(n) ? n : n.toFixed(1);
+  return String(Math.round(n * 100) / 100).replace('.', ',');
 }

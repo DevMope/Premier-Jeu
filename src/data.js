@@ -358,12 +358,34 @@ const MATERIAUX_DEPART = { fer: 2, cuir: 2 };
 // Au début il faut 3 matériaux par réparation ; l'artisanat en fait baisser le nombre.
 const MATERIAUX_PAR_REPARATION = 3;
 
-// --- Le fournisseur et le marchandage ---
+// --- Le Mastre Marché (le matin) ---
 
-const FOURNISSEUR = { nom: 'Maître Gédéon' };
-// Chaque tranche dépensée chez lui rapproche un peu plus.
+// Les trois étals. `toujours` : objets disponibles tous les jours ; les autres apparaissent au hasard.
+const MARCHANDS = {
+  gedeon: {
+    nom: 'Maître Gédéon', metier: 'Épicerie', race: 'hobbit', couleur: 0x4f7a3a,
+    objets: ['ration', 'gourde', 'torche', 'bandage'], toujours: ['ration', 'gourde', 'torche', 'bandage'],
+  },
+  forge: {
+    nom: 'Brunehaut la Forgeronne', metier: 'Forge', race: 'nain', couleur: 0x8a3a2a,
+    objets: ['epee', 'fleches', 'corde', 'fer', 'cuir'], toujours: ['fer', 'cuir'],
+  },
+  apothicaire: {
+    nom: 'Mère Sauge', metier: 'Apothicaire', race: 'magicienne', couleur: 0x5a3a8a,
+    objets: ['potion', 'bandage'], toujours: ['bandage'],
+  },
+};
+
+// Les jeux d'argent du marché : 3 parties de chaque par jour, et ces mises.
+const PARTIES_PAR_JOUR = 3;
+const MISES = [5, 10, 20];
+
+// Le mendiant : au-delà de ce total donné, il te remercie à sa façon.
+const MENDIANT_SEUIL = 30;
+
+// Chaque tranche dépensée chez un marchand vous rapproche un peu plus.
 const DEPENSE_PAR_POINT = 25;
-// Remise selon le niveau de relation avec lui.
+// Remise selon le niveau de relation avec le marchand.
 const REMISES = { Connaissance: 0.05, Amis: 0.1, 'Frères de sang': 0.2 };
 
 // --- Décorations du shop ---
@@ -373,6 +395,7 @@ const DECORATIONS = {
   trophee: { nom: 'Trophée de loup', effet: 'Impressionne les passants : plus de clients chaque jour.' },
   lanterne: { nom: 'Lanterne enchantée', effet: 'Porte chance : +10 % sur les parts de butin.' },
   enclume: { nom: 'Enclume naine', effet: 'Réparations plus faciles : 1 matériau de moins.' },
+  trefle: { nom: 'Trèfle du mendiant', effet: 'Porte-bonheur : +1 à tes dés, et le bonneteau va moins vite.' },
 };
 
 // --- Ton personnage ---

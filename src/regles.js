@@ -170,7 +170,10 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
     materiaux: { ...MATERIAUX_DEPART },
     reparations: 0,
     decorations: [],
-    depensesFournisseur: 0,
+    depenses: {},      // marchand → total dépensé chez lui
+    etals: {},         // ce que vend chaque marchand ce matin : { marchand: { id: { prix, qte } } }
+    jeux: { des: 0, bonneteau: 0 },
+    mendiant: 0,       // total donné au mendiant
     visites: [],       // familles qui viendront au comptoir : { jour, defunt, parent }
     jour: 1,
     argent: ARGENT_DEPART,
@@ -232,11 +235,126 @@ function preparerSoir(G) {
   if (G.lettresDuJour === G.jour) return;
   G.lettresDuJour = G.jour;
   recevoirLettres(G, hasard(0, 2));
-  // Les amis de Maître Gédéon ont droit à plus d'objets rares.
-  const amis = niveauRelation(G, FOURNISSEUR.nom).index >= 5;
-  G.offre = offreDuJour(1, amis ? 4 : 3, 2, 5);
-  G.offre.fer = { prix: MATERIAUX.fer.prix, qte: hasard(3, 6) };
-  G.offre.cuir = { prix: MATERIAUX.cuir.prix, qte: hasard(3, 6) };
+}
+
+// --- Le Mastre Marché ---
+
+function prixDeBase(id) {
+  return (ITEMS[id] || MATERIAUX[id]).prix;
+}
+
+function nomObjet(id) {
+  return (ITEMS[id] || MATERIAUX[id]).nom;
+}
+
+// Ce que vend chaque marchand ce matin. Les prix varient d'un étal à l'autre :
+// ça vaut le coup de comparer. Les amis d'un marchand ont droit à plus de quantité.
+function etalsDuJour(G) {
+  const etals = {};
+  for (const [cle, m] of Object.entries(MARCHANDS)) {
+    const amis = niveauRelation(G, m.nom).index >= 5 ? 2 : 0;
+    const rares = m.objets.filter(id => !m.toujours.includes(id));
+    const presents = rares.filter(() => Math.random() < 0.6);
+    if (rares.length && !presents.length) presents.push(auHasard(rares));
+    etals[cle] = {};
+    for (const id of m.objets) {
+      const toujours = m.toujours.includes(id);
+      if (!toujours && !presents.includes(id)) continue;
+      etals[cle][id] = {
+        prix: Math.max(1, Math.round(prixDeBase(id) * Phaser.Math.FloatBetween(0.8, 1.25))),
+        qte: (toujours ? hasard(4, 9) : hasard(1, 4)) + amis,
+      };
+    }
+  }
+  return etals;
+}
+
+function remiseMarchand(G, cle) {
+  return REMISES[niveauRelation(G, MARCHANDS[cle].nom).nom] || 0;
+}
+
+function prixMarchand(G, cle, id) {
+  const offre = G.etals[cle][id];
+  return Math.max(1, Math.round(offre.prix * (1 - remiseMarchand(G, cle))));
+}
+
+// Acheter un objet à un étal. Renvoie { erreur } ou { message } (palier de relation franchi).
+function acheterAuMarche(G, cle, id) {
+  const offre = G.etals[cle][id];
+  if (!offre || offre.qte <= 0) return { erreur: 'Plus en stock.' };
+  const prix = prixMarchand(G, cle, id);
+  if (!peutPayer(G, prix)) return { erreur: "Pas assez d'argent ! Passe à la banque pour un prêt." };
+  const materiau = id in MATERIAUX;
+  if (!materiau && stockTotal(G) >= G.capacite) return { erreur: 'Ta réserve est pleine.' };
+  offre.qte--;
+  if (materiau) G.materiaux[id]++;
+  else G.stock[id]++;
+  return { message: depenserChez(G, cle, prix) };
+}
+
+// Chaque achat chez un marchand compte pour votre relation (et donc ses remises).
+function depenserChez(G, cle, montant) {
+  G.argent -= montant;
+  const nom = MARCHANDS[cle].nom;
+  const total = G.depenses[cle] || 0;
+  const avant = Math.floor(total / DEPENSE_PAR_POINT);
+  G.depenses[cle] = total + montant;
+  const apres = Math.floor(G.depenses[cle] / DEPENSE_PAR_POINT);
+  rencontrer(G, nom);
+  return apres > avant ? changerRelation(G, nom, apres - avant) : null;
+}
+
+// --- Les jeux d'argent ---
+
+function partiesRestantes(G, jeu) {
+  return PARTIES_PAR_JOUR - G.jeux[jeu];
+}
+
+// Les dés : deux dés chacun, le plus gros total gagne (égalité : on récupère sa mise).
+function jouerAuxDes(G, mise) {
+  if (partiesRestantes(G, 'des') <= 0 || !peutPayer(G, mise)) return null;
+  G.jeux.des++;
+  const de = () => hasard(1, 6);
+  const toi = [de(), de()];
+  const lui = [de(), de()];
+  const bonus = aDecoration(G, 'trefle') ? 1 : 0;
+  const a = toi[0] + toi[1] + bonus;
+  const b = lui[0] + lui[1];
+  const resultat = a > b ? 'gagne' : a < b ? 'perdu' : 'egalite';
+  if (resultat === 'gagne') G.argent += mise;
+  if (resultat === 'perdu') G.argent -= mise;
+  return { toi, lui, bonus, resultat };
+}
+
+// Le bonneteau : on paie la mise, et on récupère le double si on trouve la pièce.
+function miserAuBonneteau(G, mise) {
+  if (partiesRestantes(G, 'bonneteau') <= 0 || !peutPayer(G, mise)) return false;
+  G.jeux.bonneteau++;
+  G.argent -= mise;
+  return true;
+}
+
+function gagnerAuBonneteau(G, mise) {
+  G.argent += mise * 2;
+}
+
+// --- Le mendiant ---
+
+// Donner au mendiant. Renvoie un message de remerciement (un cadeau la première fois qu'on dépasse le seuil).
+function donnerAuMendiant(G, montant) {
+  if (!peutPayer(G, montant)) return null;
+  const avant = G.mendiant;
+  G.argent -= montant;
+  G.mendiant += montant;
+  if (avant < MENDIANT_SEUIL && G.mendiant >= MENDIANT_SEUIL && !G.decorations.includes('trefle')) {
+    G.decorations.push('trefle');
+    return "« Tu as un grand cœur, petit marchand. Prends ce trèfle, il m'a porté chance autrefois... » Tu reçois le Trèfle du mendiant !";
+  }
+  return auHasard([
+    '« Merci... Que les étoiles veillent sur toi. »',
+    "« Une pièce pour un vieil homme... Je n'oublierai pas ton visage. »",
+    "« Tu es bon. C'est rare, par ici. »",
+  ]);
 }
 
 function refuserLettre(G, annonce) {
@@ -348,22 +466,7 @@ function reparerObjet(G, voyageur, id) {
 }
 
 // Le marchandage : la remise de Maître Gédéon dépend de votre relation.
-function remiseFournisseur(G) {
-  return REMISES[niveauRelation(G, FOURNISSEUR.nom).nom] || 0;
-}
 
-function prixFournisseur(G, prix) {
-  return Math.max(1, Math.round(prix * (1 - remiseFournisseur(G))));
-}
-
-// Chaque achat chez le fournisseur compte pour votre relation.
-function depenserChezFournisseur(G, montant) {
-  G.argent -= montant;
-  const avant = Math.floor(G.depensesFournisseur / DEPENSE_PAR_POINT);
-  G.depensesFournisseur += montant;
-  const apres = Math.floor(G.depensesFournisseur / DEPENSE_PAR_POINT);
-  return apres > avant ? changerRelation(G, FOURNISSEUR.nom, apres - avant) : null;
-}
 
 // --- Les familles ---
 
@@ -494,17 +597,23 @@ function attrait(G) {
   };
 }
 
-// La fourchette de clients attendus le lendemain.
-function prevision(G) {
-  const annonces = G.annonces.filter(a => a.jour === G.jour + 1 && a.acceptee).length;
+// La fourchette de clients attendus un jour donné (par défaut : demain).
+// Le vrai nombre est tiré à l'ouverture du comptoir : un stock varié acheté le matin attire encore du monde.
+function prevision(G, jour = G.jour + 1) {
+  const annonces = G.annonces.filter(a => a.jour === jour && a.acceptee).length;
   const base = Math.max(1, Math.floor(attrait(G).total));
   const min = Phaser.Math.Clamp(Math.max(base, annonces), 1, 6);
   return { min, max: min + 3, annonces };
 }
 
-// On va dormir : la journée suivante se prépare.
+// On va dormir puis on ouvre le comptoir (utile pour les tests).
 function journeeSuivante(G) {
-  const { min, max } = prevision(G);
+  nuit(G);
+  if (!G.faillite) ouvrirComptoir(G);
+}
+
+// La nuit : échéances des prêts, puis le matin d'un nouveau jour (le marché).
+function nuit(G) {
   payerEcheances(G);
   if (G.argent <= SEUIL_FAILLITE) {
     G.faillite = true;
@@ -514,7 +623,13 @@ function journeeSuivante(G) {
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0 };
+  G.etals = etalsDuJour(G);
+  G.jeux = { des: 0, bonneteau: 0 };
+}
 
+// On ouvre le comptoir : la file d'attente du jour se forme.
+function ouvrirComptoir(G) {
+  const { min, max } = prevision(G, G.jour);
   // Les clients du jour : ceux qui ont écrit, plus des imprévus.
   // Une lettre restée sans réponse le jour venu : l'aventurier est allé ailleurs, et il s'en souviendra.
   for (const a of G.annonces.filter(x => x.jour === G.jour && !x.acceptee)) refuserLettre(G, a);
