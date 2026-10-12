@@ -117,6 +117,8 @@ class StoryScene extends Cinematique {
         ? `${v.nom} est mort${this.e} valeureusement au combat. On chantera son nom dans les tavernes.\nTon investissement est perdu.`
         : `${v.nom} est mort${this.e} loin de chez ${v.feminin ? 'elle' : 'lui'}, sans gloire. Il fallait sans doute mieux ${v.feminin ? 'la' : 'le'} préparer...\nTon investissement est perdu.`);
       this.tweens.add({ targets: this.voile, fillAlpha: 0.5, duration: 1500 });
+      this.indice.destroy();
+      return this.proposerDedommagement();
     }
 
     this.indice.destroy();
@@ -124,6 +126,29 @@ class StoryScene extends Cinematique {
     retour.fond.setDepth(11);
     retour.label.setDepth(11);
     if (r.vivant) this.proposerSoins();
+  }
+
+  // L'aventurier est mort : sa famille doit être dédommagée. Trois montants au choix.
+  proposerDedommagement() {
+    const G = this.G;
+    const v = this.parti.voyageur;
+    const montants = montantsDedommagement(v);
+    this.texte.setText(this.texte.text + `\nTu dois verser un dédommagement à sa famille. Plus tu es généreux, plus ta réputation remonte... et plus un proche voudra reprendre le flambeau.`);
+    const boutons = Object.entries(DEDOMMAGEMENTS).map(([cle, d], i) => {
+      const b = creerBouton(this, 200 + i * 280, 345, 250, `${d.nom} : ${montants[cle]} p.`, () => {
+        dedommager(G, this.parti, cle);
+        boutons.forEach(x => x.setVisible(false));
+        const rep = d.reputation ? ` Réputation +${d.reputation}.` : '';
+        this.ecrire('Dédommagement', `Tu as versé ${montants[cle]} pièces à la famille de ${v.nom}.${rep}` +
+          (G.argent < 0 ? `\nTu es à découvert (${G.argent} pièces). Attention à la faillite !` : ''));
+        const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => this.scene.start('Comptoir'));
+        retour.fond.setDepth(11);
+        retour.label.setDepth(11);
+      });
+      b.fond.setDepth(11);
+      b.label.setDepth(11);
+      return b;
+    });
   }
 
   // L'aventurier est revenu blessé ? On peut le soigner avec une potion, et il paie.

@@ -48,6 +48,15 @@ const MARCHAND_EXPRESS = { nom: 'Vieux Grippesou', multiplicateur: 2.5 };
 // et il te paie 1,5 fois le prix d'une potion.
 const PRIX_SOIN = Math.round(ITEMS.potion.prix * 1.5);
 
+// Le dédommagement obligatoire versé à la famille d'un aventurier mort :
+// une part du butin qu'il espérait. Plus tu donnes, plus ta réputation remonte,
+// et plus un proche aura envie de reprendre le flambeau.
+const DEDOMMAGEMENTS = {
+  minimum: { nom: 'Minimum', part: 0.15, reputation: 0, releve: 0.15 },
+  moyen: { nom: 'Moyen', part: 0.35, reputation: 0.25, releve: 0.35 },
+  maximum: { nom: 'Maximum', part: 0.6, reputation: 0.5, releve: 0.6 },
+};
+
 // Réputation perdue quand on refuse.
 const REFUS_LETTRE = 0.5;
 const REFUS_CLIENT = 1;
@@ -300,15 +309,17 @@ const JOUR_1 = [
 // --- Relations ---
 
 // Les degrés de relation, du pire au meilleur, avec les points nécessaires.
+// Une mission parfaite (colis complet +1, retour vivant +2) fait passer d'Inconnu à Connaissance ;
+// chaque palier suivant demande plus d'efforts que le précédent (3, puis 5, puis 8 points).
 // `butin` : la part que l'aventurier te reverse (×). `couleur` : affichage.
 const NIVEAUX_RELATION = [
   { nom: 'Pires ennemis', min: -Infinity, butin: 0.6, couleur: '#a02020' },
-  { nom: "Ne s'aiment pas", min: -5, butin: 0.8, couleur: '#b04a30' },
-  { nom: 'Hypocrite', min: -2, butin: 0.9, couleur: '#a0702a' },
+  { nom: "Ne s'aiment pas", min: -8, butin: 0.8, couleur: '#b04a30' },
+  { nom: 'Hypocrite', min: -3, butin: 0.9, couleur: '#a0702a' },
   { nom: 'Neutre', min: 0, butin: 1, couleur: '#6b5a40' },
-  { nom: 'Connaissance', min: 2, butin: 1, couleur: '#4a6a3a' },
-  { nom: 'Amis', min: 5, butin: 1.1, couleur: '#2f7a3a' },
-  { nom: 'Frères de sang', min: 9, butin: 1.25, couleur: '#1f5aa0' },
+  { nom: 'Connaissance', min: 3, butin: 1, couleur: '#4a6a3a' },
+  { nom: 'Amis', min: 8, butin: 1.1, couleur: '#2f7a3a' },
+  { nom: 'Frères de sang', min: 16, butin: 1.25, couleur: '#1f5aa0' },
 ];
 
 // Ce qui fait bouger une relation.
@@ -351,7 +362,7 @@ const MATERIAUX_PAR_REPARATION = 3;
 
 const FOURNISSEUR = { nom: 'Maître Gédéon' };
 // Chaque tranche dépensée chez lui rapproche un peu plus.
-const DEPENSE_PAR_POINT = 40;
+const DEPENSE_PAR_POINT = 25;
 // Remise selon le niveau de relation avec lui.
 const REMISES = { Connaissance: 0.05, Amis: 0.1, 'Frères de sang': 0.2 };
 

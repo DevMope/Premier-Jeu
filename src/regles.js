@@ -193,9 +193,8 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
   };
   window.GAME = G;
   G.file = JOUR_1.map(v => ({ type: 'client', voyageur: creerVoyageur(G, v) }));
-  // Deux lettres déjà acceptées sur le bureau le premier matin.
+  // Deux lettres déjà sur le bureau le premier matin, à accepter ou refuser le soir.
   recevoirLettres(G, 2);
-  G.annonces.forEach(a => { a.acceptee = true; });
   G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2);
 }
 
@@ -368,10 +367,32 @@ function depenserChezFournisseur(G, montant) {
 
 // --- Les familles ---
 
-// Quand un aventurier meurt, un proche viendra peut-être au comptoir.
-function planifierVisiteFamille(G, voyageur, valeureux) {
+// Les montants proposés à la famille d'un aventurier mort.
+function montantsDedommagement(voyageur) {
+  const m = {};
+  for (const [cle, d] of Object.entries(DEDOMMAGEMENTS)) m[cle] = Math.max(5, Math.round(voyageur.butin * d.part));
+  return m;
+}
+
+// Le dédommagement est obligatoire. Il peut faire passer à découvert (et jusqu'à la faillite).
+// Selon sa générosité, la réputation remonte un peu, et un proche viendra peut-être reprendre la quête.
+function dedommager(G, parti, niveau) {
+  if (parti.dedommage) return;
+  const v = parti.voyageur;
+  const d = DEDOMMAGEMENTS[niveau];
+  parti.dedommage = niveau;
+  G.argent -= montantsDedommagement(v)[niveau];
+  G.reputation += d.reputation;
+  if (Math.random() < d.releve) return ajouterVisite(G, v, parti.resultat.valeureux, 'releve');
+  const pts = G.relations[v.nom] || 0;
+  if (Math.random() < (Math.abs(pts) >= 3 ? 0.6 : 0.3)) {
+    ajouterVisite(G, v, parti.resultat.valeureux, intentionFamille(pts, parti.resultat.valeureux, niveau));
+  }
+}
+
+function ajouterVisite(G, voyageur, valeureux, intention) {
   const pts = G.relations[voyageur.nom] || 0;
-  if (Math.random() > (Math.abs(pts) >= 2 ? 0.75 : 0.4)) return;
+  // Un proche du disparu viendra au comptoir dans 1 à 3 jours.
   const prenoms = PRENOMS[voyageur.race];
   const liens = LIENS.filter(l => (l.feminin ? prenoms.f : prenoms.m).length);
   const lien = auHasard(liens);
@@ -382,19 +403,17 @@ function planifierVisiteFamille(G, voyageur, valeureux) {
     jour: G.jour + hasard(1, 3),
     defunt: { nom: voyageur.nom, feminin: voyageur.feminin, queteId: voyageur.queteId, points: pts, valeureux },
     parent: { nom: `${prenom} ${famille}`, race, feminin: lien.feminin, lien: lien.nom },
-    intention: intentionFamille(pts, valeureux),
+    intention,
   });
 }
 
-// Ce que veut le proche : dépend de la relation avec le disparu, et d'un peu de hasard.
-function intentionFamille(pts, valeureux) {
-  const r = Math.random();
-  if (pts <= -3) return 'colere';
-  if (pts >= 9) return r < 0.5 ? 'hommage' : 'releve';
-  if (pts >= 5) return r < 0.5 ? 'releve' : 'souvenir';
-  const colere = valeureux ? 0.25 : 0.45;
-  if (r < colere) return 'colere';
-  return r < colere + (1 - colere) / 2 ? 'souvenir' : 'releve';
+// Ce que veut le proche (s'il ne vient pas reprendre la quête) : dépend de la relation
+// avec le disparu, du dédommagement versé, et d'un peu de hasard.
+function intentionFamille(pts, valeureux, niveau) {
+  if (pts <= -4) return 'colere';
+  if (pts >= 16) return 'hommage';
+  const colere = niveau === 'maximum' ? 0 : (valeureux ? 0.25 : 0.45) * (niveau === 'moyen' ? 0.5 : 1);
+  return Math.random() < colere ? 'colere' : 'souvenir';
 }
 
 // Un assortiment : les objets de base toujours là, plus quelques autres au hasard.
@@ -422,9 +441,9 @@ function stockTotal(G) {
   return Object.values(G.stock).reduce((a, b) => a + b, 0);
 }
 
-// On peut être à découvert, mais pas au-delà du seuil de faillite.
+// On n'achète qu'avec l'argent qu'on a. Pour plus, il faut passer par la banque.
 function peutPayer(G, montant) {
-  return G.argent - montant > SEUIL_FAILLITE;
+  return G.argent >= montant;
 }
 
 function agrandissementSuivant(G) {
@@ -477,7 +496,7 @@ function attrait(G) {
 
 // La fourchette de clients attendus le lendemain.
 function prevision(G) {
-  const annonces = G.annonces.filter(a => a.jour === G.jour + 1).length;
+  const annonces = G.annonces.filter(a => a.jour === G.jour + 1 && a.acceptee).length;
   const base = Math.max(1, Math.floor(attrait(G).total));
   const min = Phaser.Math.Clamp(Math.max(base, annonces), 1, 6);
   return { min, max: min + 3, annonces };
@@ -486,8 +505,6 @@ function prevision(G) {
 // On va dormir : la journée suivante se prépare.
 function journeeSuivante(G) {
   const { min, max } = prevision(G);
-  // Les lettres laissées sans réponse sont acceptées.
-  G.annonces.forEach(a => { a.acceptee = true; });
   payerEcheances(G);
   if (G.argent <= SEUIL_FAILLITE) {
     G.faillite = true;
@@ -499,6 +516,8 @@ function journeeSuivante(G) {
   G.journal = { servis: 0, retours: 0, morts: 0 };
 
   // Les clients du jour : ceux qui ont écrit, plus des imprévus.
+  // Une lettre restée sans réponse le jour venu : l'aventurier est allé ailleurs, et il s'en souviendra.
+  for (const a of G.annonces.filter(x => x.jour === G.jour && !x.acceptee)) refuserLettre(G, a);
   const prevus = G.annonces.filter(a => a.jour === G.jour).map(a => a.voyageur);
   G.annonces = G.annonces.filter(a => a.jour !== G.jour);
   const imprevus = Math.max(0, hasard(min, max) - prevus.length);
@@ -549,7 +568,7 @@ function terminerAventure(G, parti) {
   } else {
     if (!r.valeureux) G.reputation--;
     G.journal.morts++;
-    planifierVisiteFamille(G, v, r.valeureux);
+    // La famille attend un dédommagement : il est choisi à la fin du carnet.
   }
   parti.bilan = { gain, message };
   return parti.bilan;

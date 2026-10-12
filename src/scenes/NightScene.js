@@ -19,8 +19,8 @@ class NightScene extends Phaser.Scene {
     this.creerPrevision(660, 940);
 
     creerBouton(this, 160, 505, 200, 'La banque', () => this.ouvrirBanque());
-    this.events.off('resume');
-    this.events.on('resume', () => this.tout());
+    this.events.off('resume', this.tout, this);
+    this.events.on('resume', this.tout, this);
     creerBouton(this, 480, 505, 240, 'Aller dormir', () => this.dormir());
     this.tout();
   }
@@ -97,7 +97,10 @@ class NightScene extends Phaser.Scene {
     const btn = this.add.rectangle((x1 + x2) / 2, 444, x2 - x1 - 36, 30, 0x6b4423).setStrokeStyle(2, 0x3b2410)
       .setInteractive({ useHandCursor: true });
     this.texteAgrandir = this.add.text((x1 + x2) / 2, 444, '', style(13, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
-    btn.on('pointerdown', () => { if (agrandirReserve(this.G)) this.tout(); });
+    btn.on('pointerdown', () => {
+      if (agrandirReserve(this.G)) return this.tout();
+      if (agrandissementSuivant(this.G)) this.annoncer("Pas assez d'argent pour agrandir la réserve.");
+    });
     this.boutonAgrandir = btn;
   }
 
@@ -106,7 +109,11 @@ class NightScene extends Phaser.Scene {
     const offre = G.offre[id];
     const materiau = id in MATERIAUX;
     const prix = offre && prixFournisseur(G, offre.prix);
-    if (!offre || offre.qte <= 0 || (!materiau && stockTotal(G) >= G.capacite) || !peutPayer(G, prix)) {
+    if (offre && offre.qte > 0 && !peutPayer(G, prix)) {
+      this.cameras.main.shake(120, 0.004);
+      return this.annoncer("Pas assez d'argent ! Passe à la banque pour un prêt.");
+    }
+    if (!offre || offre.qte <= 0 || (!materiau && stockTotal(G) >= G.capacite)) {
       this.cameras.main.shake(120, 0.004);
       return;
     }

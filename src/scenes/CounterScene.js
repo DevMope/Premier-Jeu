@@ -33,8 +33,8 @@ class CounterScene extends Phaser.Scene {
     this.majBoutonsService();
 
     // Au retour de chez Grippesou, on remet l'affichage à jour.
-    this.events.off('resume');
-    this.events.on('resume', () => { this.majStock(); this.majCommande(); this.dessinerPieces(); });
+    this.events.off('resume', this.auRetourExpress, this);
+    this.events.on('resume', this.auRetourExpress, this);
 
     this.cameras.main.fadeIn(400);
     this.voyageurSuivant();
@@ -176,7 +176,8 @@ class CounterScene extends Phaser.Scene {
     if (!a) return;
     const v = a.voyageur;
     this.dire(`« Je passerai à ton comptoir le jour ${a.jour}. Je pars : ${v.quete.toLowerCase()}. ` +
-      `Prépare-moi s'il te plaît : ${commandeEnTexte(v)}. » — ${v.nom}`, '✉ Lettre de ' + v.nom);
+      `Prépare-moi s'il te plaît : ${commandeEnTexte(v)}. » — ${v.nom}` +
+      (a.acceptee ? ' (Tu as accepté.)' : ' (Pas encore répondu : accepte ou refuse ce soir.)'), '✉ Lettre de ' + v.nom);
   }
 
   creerCommande() {
@@ -343,7 +344,7 @@ class CounterScene extends Phaser.Scene {
         fin("Hmph... Ça ne ramènera pas " + proche + ", mais c'est honnête de ta part.");
       }], ['Le renvoyer', () => {
         G.reputation -= 1;
-        const msg = changerRelation(G, p.nom, -6);
+        const msg = changerRelation(G, p.nom, -9);
         fin(`Tu le regretteras, marchand !${msg ? ' ' + msg : ''}`);
       }]);
     } else if (visite.intention === 'souvenir') {
@@ -483,6 +484,16 @@ class CounterScene extends Phaser.Scene {
     this.scene.launch('Express', { comptoir: this });
   }
 
+  // De retour de chez Grippesou : ce qu'on a acheté est déjà là, utilisable tout de suite.
+  auRetourExpress(sys, data) {
+    this.majStock();
+    this.majCommande();
+    this.dessinerPieces();
+    if (data && data.achats && data.achats.length) {
+      this.dire(`Grippesou t'a vendu : ${data.achats.join(', ')}. C'est déjà sur ton comptoir, prêt à servir !`, '');
+    }
+  }
+
   dire(texte, nom = this.voyageur ? this.voyageur.nom : '') {
     this.nomParleur.setText(nom);
     this.texteDialogue.setText(texte);
@@ -527,7 +538,7 @@ class CounterScene extends Phaser.Scene {
 
     this.lignesLettres.forEach((t, i) => {
       const a = this.G.annonces[i];
-      t.setText(a ? `✉ Jour ${a.jour} · ${a.voyageur.nom}` : (i === 0 ? 'Aucune lettre' : ''));
+      t.setText(a ? `✉ Jour ${a.jour} · ${a.voyageur.nom}${a.acceptee ? '' : ' (à répondre)'}` : (i === 0 ? 'Aucune lettre' : ''));
     });
   }
 

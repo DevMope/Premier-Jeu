@@ -1,5 +1,5 @@
 // La création du personnage : garçon ou fille, puis cheveux, yeux, bouche,
-// barbe, couleurs... On voit le personnage à trois âges de sa vie.
+// barbe, couleurs... L'aperçu montre le personnage au début de l'aventure.
 class IntroScene extends Phaser.Scene {
   constructor() { super('Intro'); }
 
@@ -10,15 +10,11 @@ class IntroScene extends Phaser.Scene {
     this.cameras.main.fadeIn(400);
     this.add.text(480, 34, 'Qui es-tu ?', style(30, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
 
-    // L'aperçu, à trois âges
+    // L'aperçu : toi, au début de l'aventure
     this.add.rectangle(220, 250, 380, 330, 0x2a1a10).setStrokeStyle(3, 0xc9a227);
-    this.apercus = [['petit', 95, 7], ['adulte', 220, 9], ['ancien', 345, 9]].map(([stade, x, echelle]) => ({
-      stade,
-      image: this.add.image(x, 330, 'perso_heros').setOrigin(0.5, 1).setScale(echelle),
-      nom: this.add.text(x, 350, '', style(14, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5),
-      age: this.add.text(x, 370, { petit: '15 ans', adulte: 'adulte', ancien: 'âgé' }[stade], style(12, '#c9b48a')).setOrigin(0.5),
-    }));
-    this.add.text(220, 400, 'La barbe pousse à 18 ans.', style(12, '#c9b48a', { fontStyle: 'italic' })).setOrigin(0.5);
+    this.apercu = this.add.image(220, 350, 'perso_heros').setOrigin(0.5, 1).setScale(13);
+    this.nomApercu = this.add.text(220, 372, '', style(18, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.add.text(220, 398, `${AGE_DEPART} ans · la barbe poussera à 18 ans`, style(12, '#c9b48a', { fontStyle: 'italic' })).setOrigin(0.5);
 
     // Garçon ou fille
     this.boutonsGenre = [[false, 'Garçon', 140], [true, 'Fille', 300]].map(([feminin, texte, x]) => {
@@ -71,10 +67,8 @@ class IntroScene extends Phaser.Scene {
   maj() {
     creerTexturesJoueur(this, this.ap);
     const genre = this.feminin ? 'fille' : 'garcon';
-    for (const a of this.apercus) {
-      a.image.setTexture('joueur_' + a.stade);
-      a.nom.setText(NOMS_JOUEUR[genre][a.stade]);
-    }
+    this.apercu.setTexture('joueur_petit');
+    this.nomApercu.setText(NOMS_JOUEUR[genre].petit);
     for (const b of this.boutonsGenre) b.fond.setFillStyle(b.feminin === this.feminin ? 0x8a5a2b : 0x3b2a1a);
     for (const l of this.lignes) {
       const choix = APPARENCE[l.cle][this.ap[l.cle]];

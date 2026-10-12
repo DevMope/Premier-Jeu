@@ -308,7 +308,7 @@ function lignesJoueur(ap, stade) {
     { 0: '..........', 1: '...ssss...', 2: '..ssssss..' },
   ];
   const bouches = [
-    { 4: '..smssms..', 5: '...smms...' },
+    { 4: '..ssssss..', 5: '...mmmm...' },
     { 4: '..ssssss..', 5: '...smms...' },
     { 4: '..ssmmss..', 5: '...smms...' },
     { 4: '..ssmmss..', 5: '...mssm...' },
@@ -330,7 +330,7 @@ function paletteJoueur(ap, stade) {
     h: cheveux, x: cheveux,
     s: APPARENCE.peau[ap.peau][1],
     e: APPARENCE.yeux[ap.yeux][1],
-    m: 0x8a2a2a,
+    m: 0x6a2020,
     c: APPARENCE.haut[ap.haut][1],
     d: 0x7a4a1e,
     p: APPARENCE.bas[ap.bas][1],

@@ -1,11 +1,13 @@
 // Le marchand express : le vieux Grippesou, gobelin avare recroquevillé
-// à côté de sa caravane. Tout est bien plus cher... mais livré tout de suite dans le colis.
+// à côté de sa caravane. Tout est bien plus cher... mais tu l'as tout de suite, sur le comptoir :
+// ce dont le client a besoin va directement dans son colis, le reste dans ta réserve.
 // La scène s'ouvre par-dessus le comptoir, qui reste en pause avec son client.
 class ExpressScene extends Phaser.Scene {
   constructor() { super('Express'); }
 
   init(data) {
     this.comptoir = data.comptoir;
+    this.achats = [];
   }
 
   create() {
@@ -26,7 +28,7 @@ class ExpressScene extends Phaser.Scene {
     this.tweens.add({ targets: this.gobelin, angle: 18, scaleY: 7.7, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
     this.add.text(30, 22, MARCHAND_EXPRESS.nom, style(26, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }));
-    this.add.text(30, 58, 'Marchand express · livré directement dans le colis', style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 }));
+    this.add.text(30, 58, 'Marchand express · tout de suite, sur ton comptoir · bien plus cher', style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 }));
 
     // Ce qu'il dit
     this.add.rectangle(290, 488, 540, 76, 0x1e130a, 0.92).setStrokeStyle(2, 0xc9a227);
@@ -76,13 +78,16 @@ class ExpressScene extends Phaser.Scene {
     const c = this.comptoir;
     const offre = G.express[id];
     const commande = commandeDe(c.voyageur);
-    if (!commande[id]) return this.parler(`${c.voyageur.nom} n'en a pas besoin ? Alors pourquoi tu regardes, hein ?`);
-    if ((c.colis[id] || 0) >= commande[id]) return this.parler('Le colis en a déjà assez. Grippesou n\'est pas un voleur... pas toujours.');
+    // Si le client en a besoin, ça va directement dans son colis ; sinon, dans ta réserve.
+    const pourLeClient = commande[id] && (c.colis[id] || 0) < commande[id];
     if (offre.qte <= 0) return this.parler('Plus rien ! Tout vendu ! Reviens demain, avec plus de pièces.');
     if (!peutPayer(G, offre.prix)) return this.parler("Pas de pièces, pas de marchandise ! File, mendiant !");
+    if (!pourLeClient && stockTotal(G) >= G.capacite) return this.parler('Ta réserve est pleine ! Grippesou ne vend pas de place, hé hé.');
     G.argent -= offre.prix;
     offre.qte--;
-    c.colis[id] = (c.colis[id] || 0) + 1;
+    if (pourLeClient) c.colis[id] = (c.colis[id] || 0) + 1;
+    else G.stock[id]++;
+    this.achats.push(`${ITEMS[id].nom} (${pourLeClient ? 'dans le colis' : 'dans ta réserve'})`);
     this.parler(auHasard(['Hé hé ! Merci pour les pièces...', 'Excellent choix. Excellent prix. Pour moi.', 'Vendu ! Grippesou est content.']));
     this.tweens.add({ targets: this.gobelin, y: 425, duration: 120, yoyo: true });
     this.maj();
@@ -95,6 +100,6 @@ class ExpressScene extends Phaser.Scene {
 
   fermer() {
     this.scene.stop();
-    this.scene.resume('Comptoir');
+    this.scene.resume('Comptoir', { achats: this.achats });
   }
 }
