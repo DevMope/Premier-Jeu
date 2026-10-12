@@ -350,6 +350,8 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
     courrier: [],      // les lettres d'information (événements) : { jour, texte }
     gazette: null,     // les nouvelles du jour, criées au marché
     rumeur: null,      // { jour } : moins de clients ce jour-là
+    armure: [],        // les pièces de l'Armure du Dernier Rempart déjà reçues
+    nouvellesPieces: [], // celles que le messager apporte ce matin : { piece, zone }
     mal: 0,            // la jauge du mal : les âmes que tu as offertes exprès
     pieges: {},        // les objets piégés cachés sous le comptoir
     faucheuse: { faveur: 0, morts: 0, visites: 0, cadeau: false, mission: null, sabotages: 0 },
@@ -373,6 +375,7 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
   recevoirLettres(G, 2);
   G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2);
   G.expressMateriaux = materiauxExpress();
+  G.zonesConnues = zonesOuvertes(G); // les zones ouvertes au départ ne donnent pas de pièce
 }
 
 // `pieges` : les objets piégés glissés dans le colis (ils comptent aussi dans `colis`).
@@ -873,6 +876,7 @@ function nuit(G) {
   G.jeux = { des: 0, bonneteau: 0 };
   avancerAtelier(G);
   avancerEvenements(G);
+  recompenserZones(G);
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
@@ -1534,4 +1538,21 @@ function avancerEvenements(G) {
   G.nouvellesLues.push(i);
   lignes.push(NOUVELLES[i]);
   G.gazette = { jour: G.jour, lignes };
+}
+
+// --- L'Armure du Dernier Rempart ---
+
+// Chaque zone qui s'ouvre (réputation, missions réussies, découverte) vaut une pièce de
+// l'armure, apportée par un messager au réveil.
+function recompenserZones(G) {
+  G.nouvellesPieces = [];
+  G.zonesConnues = G.zonesConnues || [];
+  for (const z of zonesOuvertes(G)) {
+    if (G.zonesConnues.includes(z)) continue;
+    G.zonesConnues.push(z);
+    if (G.armure.length >= ARMURE.length) continue;
+    const piece = ARMURE[G.armure.length];
+    G.armure.push(piece.id);
+    G.nouvellesPieces.push({ piece: piece.id, zone: z });
+  }
 }

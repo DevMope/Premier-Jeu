@@ -176,6 +176,7 @@ class CarteScene extends Phaser.Scene {
       const c = conditionsZone(G, cle);
       const lignes = [`Personne ne sait vraiment ce qu'il y a là-bas${z.camp === 'mal' ? ", dans les terres d'ombre" : z.camp === 'bien' ? ', dans les terres de lumière' : ''}. Pour l'ouvrir :`,
         `${c.reputation ? '✓' : '✗'} une réputation de ${z.reputation} (toi : ${arrondi(G.reputation)}), ou qu'un aventurier la découvre`];
+      if ((G.armure || []).length < ARMURE.length) lignes.push("🛡 À son ouverture, la Confrérie t'enverra une pièce de l'armure.");
       if (c.besoin) lignes.push(`${c.faits >= c.besoin ? '✓' : '✗'} ${c.besoin} missions réussies dans des zones à ${z.danger - 1} étoile${z.danger > 2 ? 's' : ''} (${Math.min(c.faits, c.besoin)} / ${c.besoin})`);
       this.bulle.add(this.add.text(gauche, haut + 24, lignes.join('\n'), style(12, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 3 })));
       return;

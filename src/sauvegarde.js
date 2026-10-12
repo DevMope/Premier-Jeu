@@ -208,6 +208,13 @@ function mettreAJourPartie(G) {
   G.zonesDecouvertes = G.zonesDecouvertes || [];
   G.employes = G.employes || [];
   G.mal = G.mal || 0;
+  // Le forgeron s'appelle désormais Thorgal : on garde votre relation.
+  for (const table of [G.relations, G.personnes]) {
+    if (table && 'Brunehaut la Forgeronne' in table) {
+      table['Thorgal le Forgeron'] = table['Brunehaut la Forgeronne'];
+      delete table['Brunehaut la Forgeronne'];
+    }
+  }
   G.cadeaux = G.cadeaux || {};
   G.evenements = G.evenements || [];
   G.courrier = G.courrier || [];
@@ -237,4 +244,11 @@ function mettreAJourPartie(G) {
     if (v.queteId && !v.zone) v.zone = zoneDeQuete(v.queteId);
   }
   for (const h of G.habitues) if (!h.niveau) h.niveau = 'aguerri';
+  if (!G.zonesConnues) {
+    // Les zones déjà ouvertes avant l'armure : leurs pièces sont déjà sur le mannequin.
+    const auDepart = Object.keys(ZONES).filter(z => ZONES[z].danger <= 2 && !ZONES[z].reputation);
+    G.zonesConnues = zonesOuvertes(G);
+    G.armure = ARMURE.slice(0, G.zonesConnues.filter(z => !auDepart.includes(z)).length).map(p => p.id);
+    G.nouvellesPieces = [];
+  }
 }

@@ -500,7 +500,7 @@ const MARCHANDS = {
     objets: ['ration', 'gourde', 'torche', 'bandage'], toujours: ['ration', 'gourde', 'torche', 'bandage'],
   },
   forge: {
-    nom: 'Brunehaut la Forgeronne', metier: 'Forge', race: 'nain', couleur: 0x8a3a2a,
+    nom: 'Thorgal le Forgeron', metier: 'Forge', race: 'nain', couleur: 0x8a3a2a,
     objets: ['epee', 'fleches', 'corde', 'bouclier', 'fer', 'cuir'], toujours: ['fer', 'cuir'],
   },
   apothicaire: {
@@ -1089,3 +1089,24 @@ const NOUVELLES = [
   "Les nains banquiers de la Banque Centrale Goyenne ont ri hier. Une seule fois. Les intérêts ont augmenté aussitôt.",
   'Un gobelin a essayé de voler la lune avec une échelle. Il est tombé à la troisième marche. Il retentera demain.',
 ];
+
+// --- L'Armure du Dernier Rempart ---
+
+// Chaque nouvelle zone débloquée, un messager de la Confrérie du Dernier Rempart t'apporte une
+// pièce de l'armure légendaire, « pour le champion qui la portera lors de la dernière bataille ».
+// (Le joueur croit la rassembler pour un aventurier... le scénario en décidera autrement.)
+const ARMURE = [
+  { id: 'heaume', nom: 'Le Heaume du Veilleur', texte: "Un casque d'argent terni, une crête en forme d'aile. Il voit plus loin que les yeux." },
+  { id: 'gantelets', nom: 'Les Gantelets de Braise', texte: 'Encore tièdes, comme si la main qui les portait venait de les quitter.' },
+  { id: 'spalieres', nom: "Les Spalières de l'Aube", texte: 'Deux épaulières gravées de soleils levants.' },
+  { id: 'ceinturon', nom: 'Le Ceinturon des Serments', texte: 'Chaque boucle porte le nom d\'un héros tombé. Il reste de la place.' },
+  { id: 'jambieres', nom: 'Les Jambières du Rempart', texte: "Elles n'ont jamais reculé d'un pas, dit-on." },
+  { id: 'solerets', nom: 'Les Solerets du Long Chemin', texte: 'Usés par mille routes, et pourtant solides comme au premier jour.' },
+  { id: 'plastron', nom: 'Le Plastron du Dernier Rempart', texte: 'Le cœur de l\'armure. Une fissure en travers, jamais réparée.' },
+  { id: 'pavois', nom: 'Le Pavois des Mille Flèches', texte: 'Un grand bouclier criblé de pointes de flèches. Aucune ne l\'a traversé.' },
+  { id: 'lame', nom: 'Aube-Lame', texte: "L'épée du champion. Sa lame s'éclaire quand les ténèbres approchent." },
+];
+// La première fois, le messager raconte la légende.
+const LEGENDE_ARMURE = "« Il y a bien longtemps, un champion a porté cette armure contre les ténèbres. Ses pièces ont été dispersées " +
+  "aux quatre coins du monde. On dit qu'un jour, quelqu'un la portera de nouveau, pour la dernière bataille. La Confrérie du " +
+  "Dernier Rempart te confie la première pièce. Rassemble l'armure pour le héros qui viendra. Garde-la bien. »";

@@ -82,6 +82,8 @@ class DodoScene extends Cinematique {
     lit.fillStyle(0xc9a046).fillEllipse(440, SOL_CHAMBRE + 40, 250, 22);
     lit.fillStyle(0x8a3a2a).fillEllipse(440, SOL_CHAMBRE + 40, 200, 12);
     this.add.image(120, SOL_CHAMBRE, 'coffre').setOrigin(0.5, 1).setScale(6).setDepth(2);
+    // Le mannequin de l'Armure du Dernier Rempart, et le compte des pièces.
+    this.dessinerArmure(this.G.armure.filter(id => !(this.G.nouvellesPieces || []).some(n => n.piece === id)));
     this.add.image(400, 150, 'epee').setScale(6).setAngle(45).setDepth(2);
 
     // L'obscurité de la chambre, qui tombe quand on souffle la bougie.
@@ -131,6 +133,12 @@ class DodoScene extends Cinematique {
     await this.animer({ targets: this.joueur, angle: 0, x: 600, y: SOL_CHAMBRE - this.joueur.displayHeight / 2, duration: 450, ease: 'Back.easeOut' });
     this.joueur.setOrigin(0.5, 1).setY(SOL_CHAMBRE);
     this.onomatopee(600, SOL_CHAMBRE - 140, 'Debout !', '#f3d98a');
+    // Un messager de la Confrérie, avec une pièce de l'armure pour chaque zone ouverte cette nuit.
+    for (const n of this.G.nouvellesPieces || []) {
+      await this.attendre(500);
+      if (this.fini) return;
+      await this.messager(n);
+    }
     this.annoncerMatin();
     await this.attendre(1600);
     if (this.fini) return;
@@ -185,6 +193,50 @@ class DodoScene extends Cinematique {
     nuit(this.G);
     if (this.G.faillite) Sauvegarde.supprimer();
     else Sauvegarde.maintenant(this.G, 'Marche');
+  }
+
+  dessinerArmure(possedees) {
+    if (this.mannequin) this.mannequin.destroy();
+    if (this.texteArmure) this.texteArmure.destroy();
+    this.mannequin = dessinerMannequin(this, 790, SOL_CHAMBRE, possedees, 4).setDepth(2);
+    if (possedees.length) {
+      this.texteArmure = this.add.text(790, SOL_CHAMBRE + 14, `Armure du Dernier Rempart · ${possedees.length} / ${ARMURE.length}`,
+        style(11, '#f3d98a', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5, 0).setDepth(2);
+    }
+  }
+
+  // Toc toc : le messager encapuchonné apporte une pièce de l'armure. La première fois, il
+  // raconte la légende du champion.
+  async messager({ piece, zone }) {
+    const p = ARMURE.find(a => a.id === piece);
+    const premiere = this.G.armure.indexOf(piece) === 0;
+    this.onomatopee(900, SOL_CHAMBRE - 160, 'Toc toc !');
+    const m = this.add.image(1010, SOL_CHAMBRE, 'perso_colporteur').setOrigin(0.5, 1).setScale(6).setTint(0x7a7aa8).setDepth(3);
+    await this.marcher(m, 905, 4);
+    const c = this.add.container(0, 0).setDepth(9);
+    c.add(this.add.rectangle(480, 210, 640, premiere ? 290 : 220, 0xead9b0).setStrokeStyle(4, 0x8a6a3a));
+    const haut = premiere ? 78 : 112;
+    c.add(this.add.text(480, haut, 'Un messager de la Confrérie du Dernier Rempart', style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.image(220, haut + 70, piece).setScale(8));
+    c.add(this.add.text(275, haut + 30, p.nom, style(17, '#7a5a10', { fontStyle: 'bold' })));
+    c.add(this.add.text(275, haut + 56, p.texte, style(13, '#5a3a20', { fontStyle: 'italic', wordWrap: { width: 500 } })));
+    const message = premiere ? LEGENDE_ARMURE
+      : `« ${ZONES[zone].nom} ${ZONES[zone].nom.startsWith('Les ') ? "s'ouvrent" : "s'ouvre"} à tes aventuriers. La Confrérie te confie une pièce de plus pour le champion. Garde-la bien. »`;
+    c.add(this.add.text(185, haut + 110, message, style(13, '#3b2410', { wordWrap: { width: 590 }, lineSpacing: 3 })));
+    c.add(this.add.text(780, (premiere ? 345 : 312), '▶ clique', style(12, '#8a6a4a', { fontStyle: 'italic' })).setOrigin(1, 0.5));
+    c.setAlpha(0);
+    await this.animer({ targets: c, alpha: 1, duration: 300 });
+    await this.attendreClicSansBoite();
+    if (this.fini) return;
+    c.destroy();
+    // La pièce rejoint le mannequin.
+    const icone = this.add.image(905, SOL_CHAMBRE - 90, piece).setScale(5).setDepth(8);
+    await this.animer({ targets: icone, x: 790, y: SOL_CHAMBRE - 100, scale: 3, duration: 600, ease: 'Sine.easeInOut' });
+    icone.destroy();
+    this.dessinerArmure(this.G.armure.slice(0, this.G.armure.indexOf(piece) + 1));
+    this.cameras.main.flash(250, 255, 230, 150);
+    await this.marcher(m, 1020, 3);
+    m.destroy();
   }
 
   annoncerMatin() {

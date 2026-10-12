@@ -77,6 +77,16 @@ const ICONES = {
     pal: { a: 0xe8c040, b: 0x6a3aa0, c: 0xc8a0f0 },
     px: ['a......a', '.a....a.', '..a..a..', '...aa...', '..abba..', '.abccba.', '..abba..', '...aa...'],
   },
+  // Les pièces de l'Armure du Dernier Rempart.
+  heaume: { pal: { a: 0x6a6a7a, b: 0xc8ccd8, c: 0xe8c040, d: 0x1a1a24 }, px: ['...cc...', '..bccb..', '.bbbbbb.', '.bdddddb', '.bbbbbb.', '.bbdbbb.', '.bbbbbb.', '..a..a..'].map(l => l.slice(0, 8)) },
+  gantelets: { pal: { a: 0x6a6a7a, b: 0xc8ccd8, c: 0xe07020 }, px: ['.b.b.b..', '.b.b.b.b', '.bbbbbbb', '.bbbbbbb', '.bcbbbb.', '.bbbbbb.', '..aaaa..', '..aaaa..'] },
+  spalieres: { pal: { a: 0x6a6a7a, b: 0xc8ccd8, c: 0xe8c040 }, px: ['........', '.bbb.bbb', 'bbcbbcbb', 'bbbb.bbb', 'abba.abb', '.aa...aa', '........', '........'] },
+  ceinturon: { pal: { a: 0x5a3a1a, b: 0x8a5a2b, c: 0xe8c040 }, px: ['........', '........', 'aaaaaaaa', 'bbbccbbb', 'bbbc.cbb', 'bbbccbbb', 'aaaaaaaa', '........'] },
+  jambieres: { pal: { a: 0x6a6a7a, b: 0xc8ccd8, c: 0xe8c040 }, px: ['.bb..bb.', '.bb..bb.', '.cb..bc.', '.bb..bb.', '.bb..bb.', '.bb..bb.', '.ab..ba.', '.aa..aa.'] },
+  solerets: { pal: { a: 0x6a6a7a, b: 0xc8ccd8 }, px: ['........', '........', '.bb..bb.', '.bb..bb.', '.bbb.bbb', 'bbbbbbbb', 'aaaaaaaa', '........'] },
+  plastron: { pal: { a: 0x6a6a7a, b: 0xc8ccd8, c: 0xe8c040, d: 0x3a3a48 }, px: ['bb....bb', 'bbbbbbbb', 'bbbccbbb', 'bbcdbcbb', 'bbbdbbbb', '.bbbdbb.', '.bbbbbb.', '..aaaa..'] },
+  pavois: { pal: { a: 0x8a6a1a, b: 0x3a5a9a, c: 0xe8c040, d: 0xc8ccd8 }, px: ['aaaaaaaa', 'abbcbbba', 'abccccba', 'abbcbbba', 'abbcbbba', '.abcbba.', '..abba..', '...aa...'] },
+  lame: { pal: { a: 0x8a6a1a, b: 0xe8f0ff, c: 0xe8c040, d: 0x8ad0f0 }, px: ['.......b', '......bd', '.....bd.', '....bd..', '.c.bd...', '..cc....', '.a.c....', 'a.......'] },
   // Les cadeaux du Bazar de Rosalie.
   miel: { pal: { a: 0x8a5a1a, b: 0xe8a020, c: 0xf8d060, d: 0xf3e6c8 }, px: ['..dddd..', '..aaaa..', '.abbbba.', 'abccbbba', 'abcbbbba', 'abbbbbba', 'abbbbbba', '.aaaaaa.'] },
   tabac: { pal: { a: 0x5a3a1a, b: 0x8a5a2b, c: 0x3a6a2a, d: 0xc9a046 }, px: ['........', '.aaaaaa.', 'abbbbbba', 'abccccba', 'abccccba', 'abbddbba', 'abbbbbba', '.aaaaaa.'] },
@@ -581,4 +591,30 @@ function pastilleEtat(scene, x, y, etat, taille = 12) {
   const fond = scene.add.rectangle(x, y, 74, taille + 8, e.couleur).setStrokeStyle(1, 0x2a1a10).setOrigin(0, 0.5);
   const texte = scene.add.text(x + 37, y, e.nom, style(taille, etat === 2 || etat === 4 ? '#2a1a10' : '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
   return [fond, texte];
+}
+
+// Le mannequin de l'Armure du Dernier Rempart, dans ta chambre. Les pièces reçues sont en
+// couleur, celles qui manquent ne sont qu'une ombre. `u` : la taille d'un pixel.
+function dessinerMannequin(scene, x, sol, possedees, u = 4) {
+  const g = scene.add.graphics();
+  const r = (couleur, ux, uy, w, h, alpha = 1) => g.fillStyle(couleur, alpha).fillRect(x + ux * u, sol - (uy + h) * u, w * u, h * u);
+  const ombre = (couleur, ux, uy, w, h) => r(0xe8dcc0, ux, uy, w, h, 0.13);
+  // Le support en bois : socle, poteau, épaules, bras et tête.
+  r(0x4a2e14, -6, 0, 12, 2); r(0x6b4423, -1, 2, 2, 30); r(0x6b4423, -7, 25, 14, 1);
+  r(0x6b4423, -7, 18, 1, 7); r(0x6b4423, 6, 18, 1, 7); r(0x8a5a2b, -2, 31, 4, 5);
+  const argent = 0xc8ccd8, sombre = 0x6a6a7a, or = 0xe8c040;
+  // Chaque pièce se dessine avec `d` : en couleur, ou en ombre.
+  const pieces = {
+    solerets: d => { d(argent, -5, 2, 4, 2); d(argent, 1, 2, 4, 2); d(sombre, -5, 2, 4, 1); d(sombre, 1, 2, 4, 1); },
+    jambieres: d => { d(argent, -4, 4, 3, 9); d(argent, 1, 4, 3, 9); d(or, -4, 9, 3, 1); d(or, 1, 9, 3, 1); d(sombre, -4, 4, 1, 9); },
+    ceinturon: d => { d(0x6b4423, -5, 13, 10, 2); d(or, -1, 13, 2, 2); },
+    plastron: d => { d(argent, -5, 15, 10, 10); d(sombre, -5, 15, 1, 10); d(sombre, 4, 15, 1, 10); d(or, -1, 20, 2, 2); d(0x3a3a48, 1, 17, 1, 3); d(0x3a3a48, 2, 20, 1, 2); },
+    spalieres: d => { d(argent, -9, 23, 4, 3); d(argent, 5, 23, 4, 3); d(or, -9, 25, 4, 1); d(or, 5, 25, 4, 1); },
+    gantelets: d => { d(argent, -8, 14, 3, 4); d(argent, 5, 14, 3, 4); d(0xe07020, -7, 16, 1, 1); d(0xe07020, 6, 16, 1, 1); },
+    heaume: d => { d(argent, -3, 31, 6, 6); d(0x1a1a24, -2, 33, 4, 1); d(or, -1, 37, 2, 2); d(sombre, -3, 31, 1, 6); },
+    pavois: d => { d(or, -16, 0, 8, 13); d(0x3a5a9a, -15, 1, 6, 11); d(or, -13, 2, 2, 9); d(or, -15, 7, 6, 2); },
+    lame: d => { d(0x5a3a1a, 10, 1, 1, 3); d(or, 10, 0, 1, 1); d(or, 8, 4, 5, 1); d(0xe8f0ff, 10, 5, 1, 22); d(0x8ad0f0, 10, 25, 1, 2); },
+  };
+  for (const p of ARMURE) pieces[p.id](possedees.includes(p.id) ? r : ombre);
+  return g;
 }
