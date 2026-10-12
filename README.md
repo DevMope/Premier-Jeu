@@ -4,7 +4,10 @@ Jeu de gestion narratif en pixel art : tu tiens un comptoir de ravitaillement po
 
 ## Jouer
 
-Ouvre simplement `index.html` dans ton navigateur (double-clic). Aucune installation n'est nécessaire, et ça marche même sans internet.
+- **En ligne** : la version publiée sur claude.ai : https://claude.ai/artifact/XWpWBKAFKkiutdxrEcnjqU
+- **En local** : ouvre `index.html` dans ton navigateur (double-clic). Aucune installation n'est nécessaire, et ça marche même sans internet.
+
+`web/jeu.html` est l'enveloppe de la version en ligne : elle charge les mêmes fichiers que `index.html`.
 
 ## Organisation du code
 
