@@ -241,10 +241,12 @@ class CarteScene extends Phaser.Scene {
 
 // Ouvrir le comptoir le matin : la file d'attente du jour se forme, et s'il y a des
 // voyageurs qui cherchent l'aventure, on passe d'abord par la carte pour les placer.
-function commencerJournee(scene, ouvrir = true) {
+// D'abord la façade du shop (sauf si on vient de la voir), puis la carte ou le comptoir.
+function commencerJournee(scene, ouvrir = true, facade = true) {
   const G = window.GAME;
   if (ouvrir) ouvrirComptoir(G);
   const aPlacer = G.file.some(e => e.type === 'client' && !e.voyageur.queteId);
+  const suite = aPlacer ? 'Carte' : 'Comptoir';
   scene.cameras.main.fadeOut(400);
-  scene.cameras.main.once('camerafadeoutcomplete', () => scene.scene.start(aPlacer ? 'Carte' : 'Comptoir', {}));
+  scene.cameras.main.once('camerafadeoutcomplete', () => scene.scene.start(facade ? 'Facade' : suite, facade ? { suite } : {}));
 }

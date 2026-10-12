@@ -82,7 +82,8 @@ class DodoScene extends Cinematique {
     lit.fillStyle(0xc9a046).fillEllipse(440, SOL_CHAMBRE + 40, 250, 22);
     lit.fillStyle(0x8a3a2a).fillEllipse(440, SOL_CHAMBRE + 40, 200, 12);
     this.add.image(120, SOL_CHAMBRE, 'coffre').setOrigin(0.5, 1).setScale(6).setDepth(2);
-    // Le mannequin de l'Armure du Dernier Rempart, et le compte des pièces.
+    // Le mannequin de l'armure (du côté qu'elle avait hier soir), et le compte des pièces.
+    this.coteAffiche = this.G.armureCoteVu || coteArmure(this.G);
     this.dessinerArmure(this.G.armure.filter(id => !(this.G.nouvellesPieces || []).some(n => n.piece === id)));
     this.add.image(400, 150, 'epee').setScale(6).setAngle(45).setDepth(2);
 
@@ -133,7 +134,9 @@ class DodoScene extends Cinematique {
     await this.animer({ targets: this.joueur, angle: 0, x: 600, y: SOL_CHAMBRE - this.joueur.displayHeight / 2, duration: 450, ease: 'Back.easeOut' });
     this.joueur.setOrigin(0.5, 1).setY(SOL_CHAMBRE);
     this.onomatopee(600, SOL_CHAMBRE - 140, 'Debout !', '#f3d98a');
-    // Un messager de la Confrérie, avec une pièce de l'armure pour chaque zone ouverte cette nuit.
+    // L'armure a pu changer de côté pendant la nuit.
+    if (!(this.G.nouvellesPieces || []).length && this.G.armure.length) await this.changerCote(coteArmure(this.G));
+    // Un messager (Confrérie ou Main Noire), avec une pièce de l'armure pour chaque zone ouverte.
     for (const n of this.G.nouvellesPieces || []) {
       await this.attendre(500);
       if (this.fini) return;
@@ -198,30 +201,43 @@ class DodoScene extends Cinematique {
   dessinerArmure(possedees) {
     if (this.mannequin) this.mannequin.destroy();
     if (this.texteArmure) this.texteArmure.destroy();
-    this.mannequin = dessinerMannequin(this, 790, SOL_CHAMBRE, possedees, 4).setDepth(2);
+    const cote = this.coteAffiche || coteArmure(this.G);
+    this.mannequin = dessinerMannequin(this, 790, SOL_CHAMBRE, possedees, 4, cote).setDepth(2);
     if (possedees.length) {
-      this.texteArmure = this.add.text(790, SOL_CHAMBRE + 14, `Armure du Dernier Rempart · ${possedees.length} / ${ARMURE.length}`,
+      this.texteArmure = this.add.text(790, SOL_CHAMBRE + 14, `${NOMS_ARMURE[cote]} · ${possedees.length} / ${ARMURE.length}`,
         style(11, '#f3d98a', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5, 0).setDepth(2);
     }
   }
 
   // Toc toc : le messager encapuchonné apporte une pièce de l'armure. La première fois, il
   // raconte la légende du champion.
-  async messager({ piece, zone }) {
-    const p = ARMURE.find(a => a.id === piece);
-    const premiere = this.G.armure.indexOf(piece) === 0;
-    this.onomatopee(900, SOL_CHAMBRE - 160, 'Toc toc !');
-    const m = this.add.image(1010, SOL_CHAMBRE, 'perso_colporteur').setOrigin(0.5, 1).setScale(6).setTint(0x7a7aa8).setDepth(3);
+  async messager({ piece, zone, cote = 'clair', scelle }) {
+    const sombre = cote === 'sombre';
+    const p = pieceArmure(piece, cote);
+    // La légende, la première fois de chaque côté.
+    const premiere = sombre ? !this.G.legendeSombre : this.G.armure.indexOf(piece) === 0 || !this.G.legendeClaire;
+    if (sombre) this.G.legendeSombre = true;
+    else this.G.legendeClaire = true;
+    await this.changerCote(cote);
+    this.onomatopee(900, SOL_CHAMBRE - 160, sombre ? 'Tok... tok...' : 'Toc toc !', sombre ? '#ff6080' : '#fff4dc');
+    const m = this.add.image(1010, SOL_CHAMBRE, 'perso_colporteur').setOrigin(0.5, 1).setScale(6).setTint(sombre ? 0x3a1a24 : 0x7a7aa8).setDepth(3);
     await this.marcher(m, 905, 4);
     const c = this.add.container(0, 0).setDepth(9);
     c.add(this.add.rectangle(480, 210, 640, premiere ? 290 : 220, 0xead9b0).setStrokeStyle(4, 0x8a6a3a));
     const haut = premiere ? 78 : 112;
-    c.add(this.add.text(480, haut, 'Un messager de la Confrérie du Dernier Rempart', style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    c.add(this.add.image(220, haut + 70, piece).setScale(8));
+    c.add(this.add.text(480, haut, sombre ? 'Un messager de la Main Noire' : 'Un messager de la Confrérie du Dernier Rempart',
+      style(17, sombre ? '#7a1a2a' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.image(220, haut + 70, sombre ? piece + '_sombre' : piece).setScale(8));
     c.add(this.add.text(275, haut + 30, p.nom, style(17, '#7a5a10', { fontStyle: 'bold' })));
     c.add(this.add.text(275, haut + 56, p.texte, style(13, '#5a3a20', { fontStyle: 'italic', wordWrap: { width: 500 } })));
-    const message = premiere ? LEGENDE_ARMURE
-      : `« ${ZONES[zone].nom} ${ZONES[zone].nom.startsWith('Les ') ? "s'ouvrent" : "s'ouvre"} à tes aventuriers. La Confrérie te confie une pièce de plus pour le champion. Garde-la bien. »`;
+    const ouvre = `${ZONES[zone].nom} ${ZONES[zone].nom.startsWith('Les ') ? "s'ouvrent" : "s'ouvre"} à tes aventuriers.`;
+    let message = premiere ? (sombre ? LEGENDE_SOMBRE : LEGENDE_ARMURE)
+      : sombre ? `« ${ouvre} La Main Noire te laisse une pièce de plus pour son champion. Ne la perds pas. »`
+        : `« ${ouvre} La Confrérie te confie une pièce de plus pour le champion. Garde-la bien. »`;
+    if (scelle) {
+      message += scelle === 'mal' ? "\nL'armure est complète. Ton camp est scellé : l'ombre. Il n'y aura plus de retour en arrière."
+        : "\nL'armure est complète. Ton camp est scellé : la lumière. Il n'y aura plus de retour en arrière.";
+    }
     c.add(this.add.text(185, haut + 110, message, style(13, '#3b2410', { wordWrap: { width: 590 }, lineSpacing: 3 })));
     c.add(this.add.text(780, (premiere ? 345 : 312), '▶ clique', style(12, '#8a6a4a', { fontStyle: 'italic' })).setOrigin(1, 0.5));
     c.setAlpha(0);
@@ -230,13 +246,30 @@ class DodoScene extends Cinematique {
     if (this.fini) return;
     c.destroy();
     // La pièce rejoint le mannequin.
-    const icone = this.add.image(905, SOL_CHAMBRE - 90, piece).setScale(5).setDepth(8);
+    const icone = this.add.image(905, SOL_CHAMBRE - 90, sombre ? piece + '_sombre' : piece).setScale(5).setDepth(8);
     await this.animer({ targets: icone, x: 790, y: SOL_CHAMBRE - 100, scale: 3, duration: 600, ease: 'Sine.easeInOut' });
     icone.destroy();
     this.dessinerArmure(this.G.armure.slice(0, this.G.armure.indexOf(piece) + 1));
-    this.cameras.main.flash(250, 255, 230, 150);
+    if (sombre) this.cameras.main.flash(300, 120, 0, 30);
+    else this.cameras.main.flash(250, 255, 230, 150);
     await this.marcher(m, 1020, 3);
     m.destroy();
+  }
+
+  // L'armure change de côté : elle se corrompt (vers l'ombre) ou se purifie (vers la lumière).
+  async changerCote(cote) {
+    if (cote === this.coteAffiche) return;
+    const avant = this.coteAffiche;
+    this.coteAffiche = cote;
+    this.G.armureCoteVu = cote;
+    const possedees = this.mannequin ? this.G.armure.filter(id => !(this.G.nouvellesPieces || []).some(n => n.piece === id)) : [];
+    if (!avant || !possedees.length) return this.dessinerArmure(possedees);
+    this.cameras.main.flash(500, cote === 'sombre' ? 80 : 255, 0, cote === 'sombre' ? 40 : 200);
+    this.dessinerArmure(possedees);
+    const t = this.add.text(790, SOL_CHAMBRE - 190, cote === 'sombre' ? "L'armure s'assombrit..." : "L'armure se purifie...",
+      style(16, cote === 'sombre' ? '#ff6080' : '#fff4dc', { fontStyle: 'bold italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5).setDepth(8);
+    this.tweens.add({ targets: t, alpha: 0, y: t.y - 30, delay: 1500, duration: 800, onComplete: () => t.destroy() });
+    await this.attendre(1200);
   }
 
   annoncerMatin() {

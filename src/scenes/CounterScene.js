@@ -273,8 +273,20 @@ class CounterScene extends Phaser.Scene {
       fond.on('pointerdown', () => this.donner(id));
       this.cases[id] = { fond, qte };
     });
-    this.creerTiroirSecret();
-    this.creerTiroirCadeaux();
+    this.creerBoutonRetourner();
+  }
+
+  // Se retourner : l'arrière-boutique (étagères, fortune, cadeaux, tiroir secret, chambre).
+  creerBoutonRetourner() {
+    const fond = this.add.rectangle(578, 493, 212, 44, 0x3b2410).setStrokeStyle(2, 0xc9a227).setInteractive({ useHandCursor: true });
+    this.add.text(578, 493, "↻ Se retourner\nl'arrière-boutique", style(12, '#f3d98a', { fontStyle: 'bold', align: 'center' })).setOrigin(0.5);
+    fond.on('pointerover', () => fond.setFillStyle(0x5a3a1a));
+    fond.on('pointerout', () => fond.setFillStyle(0x3b2410));
+    fond.on('pointerdown', () => {
+      if (this.enConfirmation) return;
+      this.scene.pause();
+      this.scene.launch('Arriere', { comptoir: this });
+    });
   }
 
   // Les cadeaux achetés au Bazar de Rosalie : un par client et par jour, pour sa chance.
@@ -289,6 +301,7 @@ class CounterScene extends Phaser.Scene {
   }
 
   majTiroirCadeaux() {
+    if (!this.tiroirCadeaux) return;
     const n = Object.values(this.G.cadeaux || {}).reduce((a, b) => a + b, 0);
     this.tiroirCadeaux.fond.setVisible(n > 0);
     this.tiroirCadeaux.texte.setVisible(n > 0).setText(`🎁 Cadeaux\n(${n})`);
@@ -338,6 +351,7 @@ class CounterScene extends Phaser.Scene {
   }
 
   majTiroirSecret() {
+    if (!this.tiroirSecret) return;
     const n = Object.values(this.G.pieges).reduce((a, b) => a + b, 0);
     const visible = n > 0 || Object.values(this.pieges || {}).some(k => k > 0);
     this.tiroirSecret.fond.setVisible(visible);

@@ -315,8 +315,9 @@ function voyageurAuHasard(G, aussi = []) {
 
 // --- La partie ---
 
-function nouvellePartie({ feminin = false, apparence = null } = {}) {
+function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_DEFAUT } = {}) {
   const G = {
+    nomShop,
     joueur: { feminin, apparence: apparence || apparenceParDefaut(feminin) },
     relations: {},     // nom → points
     paliers: {},       // nom → niveaux déjà atteints (pour ne donner chaque cadeau qu'une fois)
@@ -1553,6 +1554,23 @@ function recompenserZones(G) {
     if (G.armure.length >= ARMURE.length) continue;
     const piece = ARMURE[G.armure.length];
     G.armure.push(piece.id);
-    G.nouvellesPieces.push({ piece: piece.id, zone: z });
+    G.nouvellesPieces.push({ piece: piece.id, zone: z, cote: coteArmure(G) });
+    // L'armure est complète : ton camp est scellé pour de bon.
+    if (G.armure.length === ARMURE.length && !G.camp) {
+      G.camp = coteArmure(G) === 'sombre' ? 'mal' : 'bien';
+      G.nouvellesPieces[G.nouvellesPieces.length - 1].scelle = G.camp;
+    }
   }
+}
+
+// Le côté de l'armure : scellé avec le camp, sinon la jauge du mal contre la réputation.
+function coteArmure(G) {
+  if (G.camp) return G.camp === 'mal' ? 'sombre' : 'clair';
+  return G.mal > G.reputation ? 'sombre' : 'clair';
+}
+
+// Le nom et le texte d'une pièce, selon le côté.
+function pieceArmure(id, cote) {
+  const p = ARMURE.find(a => a.id === id);
+  return cote === 'sombre' ? { id, ...ARMURE_SOMBRE[id] } : p;
 }

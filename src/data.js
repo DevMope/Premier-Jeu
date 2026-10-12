@@ -1110,3 +1110,26 @@ const ARMURE = [
 const LEGENDE_ARMURE = "« Il y a bien longtemps, un champion a porté cette armure contre les ténèbres. Ses pièces ont été dispersées " +
   "aux quatre coins du monde. On dit qu'un jour, quelqu'un la portera de nouveau, pour la dernière bataille. La Confrérie du " +
   "Dernier Rempart te confie la première pièce. Rassemble l'armure pour le héros qui viendra. Garde-la bien. »";
+
+// Le nom du shop, sur l'enseigne de la façade (le joueur le choisit à la création).
+const NOM_SHOP_DEFAUT = 'Le Comptoir des Aventuriers';
+const NOM_SHOP_MAX = 32;
+
+// L'armure sombre : si ta jauge du mal dépasse ta réputation, c'est la Main Noire qui t'envoie
+// les pièces de l'Armure de la Nuit Éternelle, et celles que tu as déjà se corrompent (elles se
+// purifient si tu reviens vers le bien). Quand l'armure est complète, ton camp est scellé.
+const ARMURE_SOMBRE = {
+  heaume: { nom: 'Le Heaume du Corbeau', texte: 'Un casque noir au bec de fer. On dit qu\'il murmure la nuit.' },
+  gantelets: { nom: 'Les Griffes de Cendre', texte: 'Des doigts de métal crochus, toujours froids.' },
+  spalieres: { nom: 'Les Spalières du Crépuscule', texte: 'Gravées de soleils couchants. Ou mourants.' },
+  ceinturon: { nom: 'Le Ceinturon des Parjures', texte: 'Chaque boucle porte le nom d\'un traître. Il reste de la place.' },
+  jambieres: { nom: "Les Jambières de l'Abîme", texte: 'Elles n\'ont jamais reculé non plus. Elles ont piétiné.' },
+  solerets: { nom: 'Les Solerets du Sentier Noir', texte: 'Ils laissent des traces de suie sur le plancher.' },
+  plastron: { nom: 'La Cuirasse de la Nuit Éternelle', texte: 'Le cœur de l\'armure. La fissure saigne encore.' },
+  pavois: { nom: 'Le Pavois des Lamentations', texte: 'On y entend des pleurs, quand on colle l\'oreille.' },
+  lame: { nom: 'Crépuscule', texte: "L'épée du champion noir. Sa lame s'assombrit quand la lumière approche." },
+};
+const NOMS_ARMURE = { clair: 'Armure du Dernier Rempart', sombre: 'Armure de la Nuit Éternelle' };
+const LEGENDE_SOMBRE = "« La Main Noire te salue. Ton cœur a choisi l'ombre, et l'ombre te le rend. Cette pièce appartient " +
+  "à l'Armure de la Nuit Éternelle : celui qui la portera mènera la dernière bataille... de notre côté. Celles que tu gardes " +
+  "déjà vont noircir. Rassemble-la. Pour le champion qui viendra. »";

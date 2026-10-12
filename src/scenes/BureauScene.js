@@ -36,6 +36,14 @@ class BureauScene extends Phaser.Scene {
     this.creerTiroirs();
     this.add.text(24, 500, `${dateEnTexte(G)} · semaine ${dateDuJour(G).semaine} · jour ${G.jour}`, style(14, '#f3e6c8', { fontStyle: 'italic' }));
     creerBouton(this, 850, 505, 180, 'Fermer', () => this.fermer());
+    // Renommer le shop (l'enseigne de la façade)
+    const enseigne = this.add.text(600, 505, `✎ « ${G.nomShop} »`, style(13, '#f3d98a', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 5 } }))
+      .setOrigin(0.5).setInteractive({ useHandCursor: true });
+    enseigne.on('pointerdown', () => demanderTexte('Le nom de ton shop', G.nomShop, NOM_SHOP_MAX, nom => {
+      if (!nom) return;
+      G.nomShop = nom;
+      enseigne.setText(`✎ « ${nom} »`);
+    }));
 
     if (!this.comptoir) this.onglet = 'mission';
     this.afficherListe();
@@ -307,7 +315,7 @@ class BureauScene extends Phaser.Scene {
       gauche = [`Réputation (bien) : ${arrondi(G.reputation)}`, `Jauge du mal : ${arrondi(G.mal)}` +
         (G.mal >= SEUIL_SABOTAGE ? ' · sabotages' : '') + (G.mal >= SEUIL_MAIN_NOIRE ? ' · Main Noire' : ''),
         `Retours réussis : ${[1, 2, 3, 4, 5].map(d => `${d}★ ${(G.succes || {})[d] || 0}`).join(' · ')}`,
-        `Armure du Dernier Rempart : ${(G.armure || []).length} / ${ARMURE.length} pièces`,
+        `${NOMS_ARMURE[coteArmure(G)]} : ${(G.armure || []).length} / ${ARMURE.length} pièces` + (G.camp ? ` · camp scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}` : ''),
         `La Faucheuse : ${seductionFaucheuse(G).nom} · ${F.morts} âme${F.morts > 1 ? 's' : ''}` + (F.sabotages ? ` · ${F.sabotages} sabotage${F.sabotages > 1 ? 's' : ''}` : ''),
         ...(m && m.etat !== 'proposee' ? [`☠ Mission : ${m.cible.nom} (${PIEGES[m.piege].nom.toLowerCase()}, ${m.prime} p.)`] : []),
         `Flair : ${Math.round(niveauFlair(G) * 100)} %`, `Artisanat : niveau ${niveauArtisanat(G)}`,

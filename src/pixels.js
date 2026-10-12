@@ -345,8 +345,18 @@ function creerBaluchons(scene) {
   }
 }
 
+// Les couleurs de l'armure claire, et leur version sombre (fer noir, rouge sang, violet).
+const TEINTES_SOMBRES = { 0xc8ccd8: 0x3a3a48, 0x6a6a7a: 0x1e1e26, 0xe8c040: 0xa02040, 0x3a5a9a: 0x4a1a5a,
+  0xe8f0ff: 0xd04060, 0x8ad0f0: 0xff6080, 0xe07020: 0xc02040, 0x1a1a24: 0xff3030, 0x8a6a1a: 0x3a1a2a, 0x3a3a48: 0xff4060 };
+
 function creerToutesLesTextures(scene) {
   creerBaluchons(scene);
+  // Les pièces de l'armure sombre : mêmes formes, autres couleurs.
+  for (const p of ARMURE) {
+    const ic = ICONES[p.id];
+    const pal = Object.fromEntries(Object.entries(ic.pal).map(([k, c]) => [k, TEINTES_SOMBRES[c] ?? c]));
+    creerTexture(scene, p.id + '_sombre', ic.px, pal);
+  }
   creerTexture(scene, 'perso_faucheuse', FAUCHEUSE.px, FAUCHEUSE.pal);
   for (const [cle, ic] of Object.entries(ICONES)) {
     creerTexture(scene, cle, ic.px, ic.pal);
@@ -466,7 +476,7 @@ function dessinerComte(g, x, y, w, h, nuit = 0, biome = 'comte') {
 
 // La façade du comptoir, vue de dehors : bois, toit de chaume, fenêtre-comptoir et enseigne.
 // `cx` = centre, `sol` = bas des murs. Renvoie la position de la porte.
-function dessinerFacade(scene, cx, sol, nomShop = 'Le Comptoir') {
+function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT) {
   const g = scene.add.graphics();
   const l = 320, h = 170;
   const x = cx - l / 2, y = sol - h;
@@ -490,9 +500,11 @@ function dessinerFacade(scene, cx, sol, nomShop = 'Le Comptoir') {
   g.fillStyle(0xe0c040).fillCircle(x + 245, y + 120, 4);
   // Enseigne suspendue
   g.fillStyle(0x3b2410).fillRect(x + 40, y - 6, 4, 22).fillRect(x + 150, y - 6, 4, 22);
-  g.fillStyle(0xead9b0).fillRect(x + 28, y + 14, 140, 24);
-  g.lineStyle(2, 0x6b4423).strokeRect(x + 28, y + 14, 140, 24);
-  scene.add.text(x + 98, y + 26, nomShop, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+  g.fillStyle(0xead9b0).fillRect(x + 8, y + 14, 180, 26);
+  g.lineStyle(2, 0x6b4423).strokeRect(x + 8, y + 14, 180, 26);
+  // Le nom rétrécit pour tenir sur l'enseigne.
+  const enseigne = scene.add.text(x + 98, y + 27, nomShop, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+  for (let taille = 13; enseigne.width > 170 && taille >= 8; taille--) enseigne.setFontSize(taille);
   return { porteX: x + 245, porteY: sol, g };
 }
 
@@ -594,10 +606,12 @@ function pastilleEtat(scene, x, y, etat, taille = 12) {
 }
 
 // Le mannequin de l'Armure du Dernier Rempart, dans ta chambre. Les pièces reçues sont en
-// couleur, celles qui manquent ne sont qu'une ombre. `u` : la taille d'un pixel.
-function dessinerMannequin(scene, x, sol, possedees, u = 4) {
+// couleur, celles qui manquent ne sont qu'une ombre. `u` : la taille d'un pixel. `cote` : 'clair'
+// (Armure du Dernier Rempart) ou 'sombre' (Armure de la Nuit Éternelle).
+function dessinerMannequin(scene, x, sol, possedees, u = 4, cote = 'clair') {
   const g = scene.add.graphics();
-  const r = (couleur, ux, uy, w, h, alpha = 1) => g.fillStyle(couleur, alpha).fillRect(x + ux * u, sol - (uy + h) * u, w * u, h * u);
+  const teinte = c => (cote === 'sombre' ? TEINTES_SOMBRES[c] ?? c : c);
+  const r = (couleur, ux, uy, w, h, alpha = 1) => g.fillStyle(teinte(couleur), alpha).fillRect(x + ux * u, sol - (uy + h) * u, w * u, h * u);
   const ombre = (couleur, ux, uy, w, h) => r(0xe8dcc0, ux, uy, w, h, 0.13);
   // Le support en bois : socle, poteau, épaules, bras et tête.
   r(0x4a2e14, -6, 0, 12, 2); r(0x6b4423, -1, 2, 2, 30); r(0x6b4423, -7, 25, 14, 1);

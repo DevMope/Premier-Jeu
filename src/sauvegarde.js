@@ -208,6 +208,7 @@ function mettreAJourPartie(G) {
   G.zonesDecouvertes = G.zonesDecouvertes || [];
   G.employes = G.employes || [];
   G.mal = G.mal || 0;
+  G.nomShop = G.nomShop || NOM_SHOP_DEFAUT;
   // Le forgeron s'appelle désormais Thorgal : on garde votre relation.
   for (const table of [G.relations, G.personnes]) {
     if (table && 'Brunehaut la Forgeronne' in table) {
@@ -251,4 +252,45 @@ function mettreAJourPartie(G) {
     G.armure = ARMURE.slice(0, G.zonesConnues.filter(z => !auDepart.includes(z)).length).map(p => p.id);
     G.nouvellesPieces = [];
   }
+}
+
+// Une petite fenêtre pour écrire un texte (le nom du shop). `surValider(texte)` reçoit le texte
+// nettoyé, ou rien si on annule.
+function demanderTexte(titre, valeur, max, surValider) {
+  const fond = document.createElement('div');
+  fond.style.cssText = 'position:fixed;inset:0;background:rgba(10,6,3,.75);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10;font-family:Georgia,serif';
+  const boite = document.createElement('form');
+  boite.style.cssText = 'background:#ead9b0;color:#3b2410;border:4px solid #8a6a3a;max-width:440px;width:100%;padding:20px;display:flex;flex-direction:column;gap:12px';
+  const etiquette = document.createElement('label');
+  etiquette.textContent = titre;
+  etiquette.htmlFor = 'texte-demande';
+  etiquette.style.cssText = 'font-size:18px;font-weight:bold';
+  const champ = document.createElement('input');
+  champ.id = 'texte-demande';
+  champ.maxLength = max;
+  champ.value = valeur;
+  champ.style.cssText = 'font:16px Georgia,serif;padding:8px;border:2px solid #8a6a3a;background:#fff8e8;color:#3b2410';
+  const rangee = document.createElement('div');
+  rangee.style.cssText = 'display:flex;gap:8px;justify-content:flex-end';
+  const bouton = (texte, type) => {
+    const b = document.createElement('button');
+    b.type = type;
+    b.textContent = texte;
+    b.style.cssText = 'background:#8a5a2b;color:#fff4dc;border:2px solid #3b2410;padding:8px 14px;font:bold 14px Georgia,serif;cursor:pointer';
+    rangee.appendChild(b);
+    return b;
+  };
+  const fermer = texte => { fond.remove(); surValider(texte); };
+  bouton('Annuler', 'button').addEventListener('click', () => fermer(null));
+  bouton('Valider', 'submit');
+  boite.addEventListener('submit', e => {
+    e.preventDefault();
+    const texte = champ.value.replace(/\s+/g, ' ').trim();
+    fermer(texte || null);
+  });
+  boite.append(etiquette, champ, rangee);
+  fond.appendChild(boite);
+  document.body.appendChild(fond);
+  champ.focus();
+  champ.select();
 }

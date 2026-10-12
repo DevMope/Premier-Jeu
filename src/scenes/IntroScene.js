@@ -43,6 +43,16 @@ class IntroScene extends Phaser.Scene {
       return { cle, valeur, pastille };
     });
 
+    // Le nom de ton futur shop, sur l'enseigne
+    this.nomShop = NOM_SHOP_DEFAUT;
+    this.add.text(220, 440, 'Ton futur shop :', style(13, '#c9b48a')).setOrigin(0.5);
+    this.texteShop = this.add.text(220, 464, '', style(15, '#f3d98a', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 4 } }))
+      .setOrigin(0.5).setInteractive({ useHandCursor: true });
+    this.texteShop.on('pointerdown', () => demanderTexte('Le nom de ton shop', this.nomShop, NOM_SHOP_MAX, nom => {
+      if (nom) this.nomShop = nom;
+      this.maj();
+    }));
+
     creerBouton(this, 600, 480, 180, 'Au hasard', () => this.auHasard());
     creerBouton(this, 820, 480, 230, "Commencer l'histoire", () => this.commencer());
     this.maj();
@@ -69,6 +79,7 @@ class IntroScene extends Phaser.Scene {
     const genre = this.feminin ? 'fille' : 'garcon';
     this.apercu.setTexture('joueur_petit');
     this.nomApercu.setText(NOMS_JOUEUR[genre].petit);
+    this.texteShop.setText(`« ${this.nomShop} » ✎`);
     for (const b of this.boutonsGenre) b.fond.setFillStyle(b.feminin === this.feminin ? 0x8a5a2b : 0x3b2a1a);
     for (const l of this.lignes) {
       const choix = APPARENCE[l.cle][this.ap[l.cle]];
@@ -80,7 +91,7 @@ class IntroScene extends Phaser.Scene {
   }
 
   commencer() {
-    nouvellePartie({ feminin: this.feminin, apparence: { ...this.ap } });
+    nouvellePartie({ feminin: this.feminin, apparence: { ...this.ap }, nomShop: this.nomShop });
     this.scene.start('IntroHistoire');
   }
 }
@@ -118,7 +129,7 @@ class IntroHistoireScene extends Cinematique {
   finir() {
     if (this.fini) return;
     this.fini = true;
-    commencerJournee(this, false); // la file du premier jour est déjà là
+    commencerJournee(this, false, false); // la file du premier jour est déjà là, la façade aussi
   }
 
   async raconter() {
@@ -220,7 +231,7 @@ class IntroHistoireScene extends Cinematique {
     this.add.image(90, 345, 'perso_mentor').setOrigin(0.5, 1).setScale(6);
     this.creerBoiteTexte();
     this.boutonPasser(() => this.finir());
-    this.ecrire('Le Comptoir', 'Et c\'est ainsi que tout commença.');
+    this.ecrire(this.G ? this.G.nomShop : window.GAME.nomShop, 'Et c\'est ainsi que tout commença.');
     await this.marcher(heros, facade.porteX - 60);
     this.onomatopee(facade.porteX - 60, 200, 'TADAAA !', '#f3d98a');
     await this.attendreClic();
