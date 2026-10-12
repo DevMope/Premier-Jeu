@@ -221,12 +221,18 @@ class CounterScene extends Phaser.Scene {
       const y = 76 + i * 22;
       const icone = this.add.image(712, y, 'ration').setScale(2.5).setVisible(false);
       const txt = this.add.text(732, y, '', style(14, '#3b2410')).setOrigin(0, 0.5);
-      const zone = this.add.rectangle(815, y, 240, 22, 0x000000, 0).setInteractive({ useHandCursor: true });
+      const zone = this.add.rectangle(800, y, 210, 22, 0x000000, 0).setInteractive({ useHandCursor: true });
       zone.on('pointerdown', () => this.clicLigne(i));
-      this.lignesCommande.push({ icone, txt, zone, id: null });
+      // Le petit « − » : retirer un objet du colis (il retourne dans ta réserve).
+      const moins = this.add.circle(925, y, 9, 0x8a3a2a).setStrokeStyle(1, 0x3b2410).setInteractive({ useHandCursor: true }).setVisible(false);
+      const moinsTexte = this.add.text(925, y - 1, '−', style(14, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5).setVisible(false);
+      moins.on('pointerover', () => moins.setFillStyle(0xb04a3a));
+      moins.on('pointerout', () => moins.setFillStyle(0x8a3a2a));
+      moins.on('pointerdown', () => this.retirer(i));
+      this.lignesCommande.push({ icone, txt, zone, moins, moinsTexte, id: null });
     }
     this.texteSac = this.add.text(700, 184, '', style(11, '#5a3a20'));
-    this.add.text(700, 226, 'Clic sur une ligne : reprendre ou réparer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
+    this.add.text(700, 226, '− : retirer du colis · clic sur une ligne : réparer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
     this.texteChance = this.add.text(815, 208, '', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
   }
 
@@ -512,12 +518,21 @@ class CounterScene extends Phaser.Scene {
   }
 
   // Clic sur une ligne de la commande : reprendre un objet, ou réparer celui du client.
+  // Retirer un objet du colis, tant qu'il n'est pas remis : il retourne dans ta réserve.
+  retirer(i) {
+    const id = this.lignesCommande[i].id;
+    if (!this.enService || this.enConfirmation || !id || !this.colis[id]) return;
+    this.colis[id]--;
+    this.G.stock[id]++;
+    this.majStock();
+    this.majCommande();
+  }
+
   clicLigne(i) {
     const id = this.lignesCommande[i].id;
     if (!this.enService || this.enConfirmation || !id) return;
     if (this.colis[id]) {
-      this.colis[id]--;
-      this.G.stock[id]++;
+      return this.retirer(i);
     } else if (this.aReparer(this.voyageur).includes(id)) {
       this.reparer(id);
     }
@@ -644,6 +659,7 @@ class CounterScene extends Phaser.Scene {
     const chance = chanceDeRetour(v, this.colis);
     const msg = partir(this.G, v, this.colis);
     this.enService = false;
+    this.majCommande(); // le colis est remis : on ne peut plus rien retirer
     this.majBoutonsService();
     this.bouton('...', null);
     this.majPanneauGauche();
@@ -710,6 +726,9 @@ class CounterScene extends Phaser.Scene {
       const id = ids[i];
       ligne.id = id || null;
       ligne.icone.setVisible(!!id);
+      const retirable = !!id && !!this.colis[id] && this.enService;
+      ligne.moins.setVisible(retirable);
+      ligne.moinsTexte.setVisible(retirable);
       if (!id) return ligne.txt.setText('');
       ligne.icone.setTexture(id);
       const donne = this.colis[id] || 0;
