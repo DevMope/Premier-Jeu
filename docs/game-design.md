@@ -25,10 +25,11 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
 ### 2.1 Le cœur : servir et investir
 - Chaque jour, un nombre de voyageurs se présente.
   - **Prévus** : ils s'annoncent quelques jours à l'avance (on peut anticiper le stock).
-  - **Imprévus** : *à décider* — simples clients en plus, ou événements spéciaux inédits.
+  - **Imprévus** : des événements spéciaux inédits (un nain pressé, un client blessé, une inspection de garde…).
 - Chaque voyageur a une **commande** (besoins) liée à sa quête.
 - Le joueur la remplit avec son stock. Plus la commande est complète et de qualité, plus la **chance de réussite** est élevée.
 - Résultat de la quête : succès (retour + part du butin), mort valeureuse, ou mort sans gloire → investissement perdu.
+- **Le récit** : quand un aventurier revient, il raconte son aventure dans une petite cinématique. On le voit affronter chaque épreuve, et comment chaque objet du colis l'a aidé (ou lui a manqué). S'il meurt, c'est son carnet de voyage retrouvé qui raconte.
 - Les fiches des voyageurs permettent de suivre : à venir / présents / partis / revenus / morts.
 
 ### 2.2 Économie
@@ -86,7 +87,6 @@ Le joueur ne quitte jamais vraiment son shop, sauf pour ces marchés (écrans/me
 - 2D, pas de vraie 3D : mélange dessin / pixel art (*Papers, Please*, *Dealer's Life Legends*, *Dave the Diver*).
 
 ## 7. Questions ouvertes
-- Les clients imprévus : simples clients en plus, ou événements spéciaux ?
 - La grande menace : un dragon, ou autre chose ?
 - Comment se calcule précisément la chance de réussite d'une quête ?
 - Comment fonctionnent les conséquences du marché noir (amende, garde, fermeture temporaire…) ?
@@ -99,7 +99,7 @@ Chaque étape doit donner une version **jouable**.
 
 | # | Étape | Contenu |
 |---|---|---|
-| 1 | **Prototype du comptoir** | Une journée, 3 voyageurs, un stock fixe ; on donne des objets ; calcul de la chance de réussite ; affichage de l'argent. Graphismes en formes simples. |
+| 1 ✅ | **Prototype du comptoir** | Une journée, 3 voyageurs, un stock fixe ; on donne des objets ; calcul de la chance de réussite ; cinématique du récit ; bilan. |
 | 2 | **Les quêtes dans le temps** | Plusieurs jours, le lit pour passer au lendemain, quêtes de durées variables, retour ou mort, part du butin. |
 | 3 | **Le Mastre Marché** | Acheter son stock le matin, prix, quantités limitées. |
 | 4 | **Les fiches et le bureau** | Fiches voyageurs (à venir/présents/partis/revenus), voyageurs annoncés à l'avance, tableau de CA, tiroirs de stats. |
