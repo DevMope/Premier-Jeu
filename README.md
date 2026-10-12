@@ -16,11 +16,13 @@ Jeu de gestion narratif en pixel art : tu tiens un comptoir de ravitaillement po
 | `src/data.js` | Le contenu : objets et prix, modèles de quêtes, noms des aventuriers |
 | `src/regles.js` | Les règles : chances de retour, aventures, journées, lettres, prévision des clients |
 | `src/pixels.js` | Dessins en pixel art et petits outils d'interface |
+| `src/scenes/Cinematique.js` | Base commune des cinématiques (texte, clic pour continuer, animations) |
 | `src/scenes/TitleScene.js` | Écran titre |
+| `src/scenes/IntroScene.js` | Choix du personnage et cinématique d'introduction |
 | `src/scenes/CounterScene.js` | Le comptoir : servir les voyageurs |
 | `src/scenes/NightScene.js` | Le soir : bilan, fournisseur, réserve, lettres, banque, prévision de demain |
 | `src/scenes/StoryScene.js` | La cinématique du récit de chaque aventurier |
-| `src/scenes/FailliteScene.js` | L'écran de faillite |
+| `src/scenes/FailliteScene.js` | La cinématique de faillite |
 | `lib/phaser.min.js` | Le moteur de jeu [Phaser](https://phaser.io) 3.80.1 (licence MIT) |
 
 Le document de conception est dans [docs/game-design.md](docs/game-design.md).

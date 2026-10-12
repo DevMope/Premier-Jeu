@@ -291,3 +291,70 @@ const JOUR_1 = [
   { quete: 'fleur', nom: "Mirabelle Lune-d'Argent", race: 'magicienne', feminin: true, butin: 40, duree: 1 },
   { quete: 'loup', nom: 'Elwen Feuilleclaire', race: 'elfe', feminin: true, butin: 45, duree: 3 },
 ];
+
+// --- Relations ---
+
+// Les degrés de relation, du pire au meilleur, avec les points nécessaires.
+// `butin` : la part que l'aventurier te reverse (×). `couleur` : affichage.
+const NIVEAUX_RELATION = [
+  { nom: 'Pires ennemis', min: -Infinity, butin: 0.6, couleur: '#a02020' },
+  { nom: "Ne s'aiment pas", min: -5, butin: 0.8, couleur: '#b04a30' },
+  { nom: 'Hypocrite', min: -2, butin: 0.9, couleur: '#a0702a' },
+  { nom: 'Neutre', min: 0, butin: 1, couleur: '#6b5a40' },
+  { nom: 'Connaissance', min: 2, butin: 1, couleur: '#4a6a3a' },
+  { nom: 'Amis', min: 5, butin: 1.1, couleur: '#2f7a3a' },
+  { nom: 'Frères de sang', min: 9, butin: 1.25, couleur: '#1f5aa0' },
+];
+
+// Ce qui fait bouger une relation.
+const POINTS_RELATION = {
+  colisComplet: 1,     // chances de retour d'au moins 75 %
+  colisPauvre: -1,     // moins de 40 %
+  retourVivant: 2,
+  reparation: 1,
+  refusClient: -3,
+  refusLettre: -1,
+};
+
+// Les familles : prénoms par race, et liens de parenté.
+const PRENOMS = {
+  humain: { m: ['Bastien', 'Erwan', 'Mathis', 'Octave'], f: ['Clémence', 'Margot', 'Aline', 'Solène'] },
+  hobbit: { m: ['Pépin', 'Basile', 'Hugues', 'Fulbert'], f: ['Pâquerette', 'Myrtille', 'Prune', 'Capucine'] },
+  nain: { m: ['Gimrod', 'Balmor', 'Hrolf', 'Thurgan'], f: ['Dagna', 'Hilde', 'Brynja', 'Sigrun'] },
+  elfe: { m: ['Elrion', 'Faenor', 'Ithil', 'Caladir'], f: ['Nimrielle', 'Galwen', 'Ilyra', 'Aelith'] },
+  magicienne: { m: [], f: ['Morgane', 'Viviane', 'Isaure', 'Ondine'] },
+};
+const LIENS = [
+  { nom: 'fils', feminin: false }, { nom: 'fille', feminin: true },
+  { nom: 'frère', feminin: false }, { nom: 'sœur', feminin: true },
+  { nom: 'père', feminin: false }, { nom: 'mère', feminin: true },
+];
+
+// --- Réparations ---
+
+// Ce qu'il faut pour réparer chaque objet durable.
+const MATERIAUX = {
+  fer: { nom: 'Fer', prix: 4 },
+  cuir: { nom: 'Cuir', prix: 3 },
+};
+const MATERIAU_DE = { epee: 'fer', corde: 'cuir', gourde: 'cuir' };
+const MATERIAUX_DEPART = { fer: 2, cuir: 2 };
+// Au début il faut 3 matériaux par réparation ; l'artisanat en fait baisser le nombre.
+const MATERIAUX_PAR_REPARATION = 3;
+
+// --- Le fournisseur et le marchandage ---
+
+const FOURNISSEUR = { nom: 'Maître Gédéon' };
+// Chaque tranche dépensée chez lui rapproche un peu plus.
+const DEPENSE_PAR_POINT = 40;
+// Remise selon le niveau de relation avec lui.
+const REMISES = { Connaissance: 0.05, Amis: 0.1, 'Frères de sang': 0.2 };
+
+// --- Décorations du shop ---
+// Offertes par les amis les plus proches. Chacune donne un petit avantage.
+const DECORATIONS = {
+  carte: { nom: 'Carte des contrées', effet: "Tes conseils sont meilleurs : +4 % de réussite à chaque épreuve." },
+  trophee: { nom: 'Trophée de loup', effet: 'Impressionne les passants : plus de clients chaque jour.' },
+  lanterne: { nom: 'Lanterne enchantée', effet: 'Porte chance : +10 % sur les parts de butin.' },
+  enclume: { nom: 'Enclume naine', effet: 'Réparations plus faciles : 1 matériau de moins.' },
+};

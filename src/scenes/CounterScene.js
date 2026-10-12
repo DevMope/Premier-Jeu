@@ -28,7 +28,7 @@ class CounterScene extends Phaser.Scene {
     this.creerArgent();
 
     this.boutonExpress = creerBouton(this, 840, 392, 210, 'Marchand express', () => this.ouvrirExpress());
-    this.boutonRefuser = creerBouton(this, 840, 440, 210, 'Refuser ce client', () => this.refuser());
+    this.boutonRefuser = creerBouton(this, 840, 440, 210, 'Refuser ce client', () => (this.actionB ? this.actionB() : this.refuser()));
     this.boutonAction = creerBouton(this, 840, 492, 210, '', () => this.action && this.action());
     this.majBoutonsService();
 
@@ -49,7 +49,16 @@ class CounterScene extends Phaser.Scene {
   // Les boutons qui n'ont de sens que pendant qu'on sert un client.
   majBoutonsService() {
     this.boutonExpress.setVisible(this.enService);
-    this.boutonRefuser.setVisible(this.enService);
+    this.boutonRefuser.setVisible(this.enService || !!this.actionB);
+    if (this.enService) this.boutonRefuser.setTexte('Refuser ce client');
+  }
+
+  // Deux choix pour une visite : le bouton du bas (A) et celui du milieu (B).
+  choix([texteA, actionA], [texteB, actionB]) {
+    this.bouton(texteA, () => { this.actionB = null; actionA(); });
+    this.actionB = () => { this.actionB = null; actionB(); };
+    this.boutonRefuser.setTexte(texteB);
+    this.majBoutonsService();
   }
 
   // Le bouton du bureau change selon la situation.
@@ -130,6 +139,7 @@ class CounterScene extends Phaser.Scene {
 
   texturePour(entree) {
     if (entree.type === 'carnet') return 'perso_colporteur';
+    if (entree.type === 'famille') return 'perso_' + entree.visite.parent.race;
     const v = entree.type === 'client' ? entree.voyageur : entree.parti.voyageur;
     return 'perso_' + v.race;
   }
@@ -188,8 +198,9 @@ class CounterScene extends Phaser.Scene {
   }
 
   creerStock() {
-    this.add.text(150, 360, 'Ton stock — clique sur un objet pour l\'ajouter au colis', style(14, '#2a1a10', { fontStyle: 'italic' }));
+    this.add.text(150, 360, 'Ton stock — clic : ajouter au colis', style(14, '#2a1a10', { fontStyle: 'italic' }));
     this.texteReserve = this.add.text(660, 360, '', style(14, '#2a1a10', { fontStyle: 'bold' })).setOrigin(1, 0);
+    this.creerEtagere();
     this.cases = {};
     Object.keys(ITEMS).forEach((id, i) => {
       const x = 205 + (i % 4) * 130;
@@ -203,6 +214,17 @@ class CounterScene extends Phaser.Scene {
       fond.on('pointerout', () => fond.setFillStyle(0x6b4423));
       fond.on('pointerdown', () => this.donner(id));
       this.cases[id] = { fond, qte };
+    });
+  }
+
+  // L'étagère des décorations offertes par tes amis. Clic : voir son effet.
+  creerEtagere() {
+    const g = this.add.graphics();
+    g.fillStyle(0x5a3a22).fillRect(12, 396, 126, 6);
+    g.fillStyle(0x3b2410).fillRect(18, 402, 6, 8).fillRect(126, 402, 6, 8);
+    this.G.decorations.forEach((id, i) => {
+      const icone = this.add.image(32 + i * 30, 384, id).setScale(3).setInteractive({ useHandCursor: true });
+      icone.on('pointerdown', () => this.dire(DECORATIONS[id].effet, DECORATIONS[id].nom));
     });
   }
 
@@ -248,8 +270,8 @@ class CounterScene extends Phaser.Scene {
     // Le premier de la file s'avance jusqu'au comptoir...
     const premier = this.fileSprites.shift();
     this.perso.setTexture(this.texturePour(entree)).setFlipX(false)
-      .setPosition(premier.x, premier.y).setScale(FILE.echelle);
-    premier.destroy();
+      .setPosition(premier ? premier.x : FILE.x, FILE.y).setScale(FILE.echelle);
+    if (premier) premier.destroy();
     // ... et les autres avancent d'une place.
     this.fileSprites.forEach((sprite, i) => {
       this.tweens.add({ targets: sprite, x: FILE.x - i * FILE.ecart, duration: 900, delay: 300 + i * 150, ease: 'Sine.easeInOut' });
@@ -267,7 +289,7 @@ class CounterScene extends Phaser.Scene {
       const v = this.voyageur = entree.voyageur;
       let bonjour = v.prevu ? "C'est moi qui t'ai écrit, tu te souviens ? " : '';
       if (v.habitue) bonjour = 'Re-bonjour, c\'est encore moi ! ' + (this.aReparer(v).length ? 'Mon matériel a souffert la dernière fois... ' : '');
-      this.dire(bonjour + accord(v.accueil, v), v.nom);
+      this.dire(bonjour + accord(v.accueil, v), this.nomAvecRelation(v.nom));
       this.enService = true;
       this.majBoutonsService();
       this.bouton('Remettre le colis', () => this.remettreColis());
@@ -277,11 +299,86 @@ class CounterScene extends Phaser.Scene {
       this.dire(`Me revoilà, sain${v.feminin ? 'e' : ''} et sauf${v.feminin ? 've' : ''} ! Tu ne devineras jamais ce qui m'est arrivé...`, v.nom);
       this.titreCommande.setText('Retour de mission');
       this.bouton('Écouter son récit', () => this.ouvrirRecit(entree.parti));
+    } else if (entree.type === 'famille') {
+      this.visiteFamille(entree.visite);
     } else {
       const v = entree.parti.voyageur;
       this.dire(`Bonjour... J'ai trouvé ce carnet sur la route. Il appartenait à ${v.nom}, je crois. Je suis désolé.`, 'Un colporteur');
       this.titreCommande.setText('Une mauvaise nouvelle...');
       this.bouton('Lire le carnet', () => this.ouvrirRecit(entree.parti));
+    }
+  }
+
+  nomAvecRelation(nom) {
+    return `${nom} — ${niveauRelation(this.G, nom).nom}`;
+  }
+
+  // --- Les familles des disparus ---
+
+  visiteFamille(visite) {
+    const G = this.G;
+    const { parent: p, defunt: d } = visite;
+    const e = p.feminin ? 'e' : '';
+    // Le disparu vu par le proche : « mon père », « ma sœur »...
+    const inverse = { fils: ['père', 'mère'], fille: ['père', 'mère'], frère: ['frère', 'sœur'], sœur: ['frère', 'sœur'], père: ['fils', 'fille'], mère: ['fils', 'fille'] };
+    const proche = `${d.feminin ? 'ma' : 'mon'} ${inverse[p.lien][d.feminin ? 1 : 0]}`;
+    const il = d.feminin ? 'elle' : 'il';
+    const prenom = d.nom.split(' ')[0];
+    rencontrer(G, p.nom);
+    this.titreCommande.setText('Une visite...');
+    const parler = texte => this.dire(texte, `${p.nom}, ${p.lien} de ${d.nom}`);
+    const fin = reponse => { parler(reponse); this.bouton('...', null); this.majBoutonsService(); this.dessinerPieces(); this.majStock(); this.partirPar(FENETRE.x - 80); };
+
+    if (visite.intention === 'colere') {
+      parler(`C'est toi qui as équipé ${proche}, ${prenom} ? ${il[0].toUpperCase() + il.slice(1)} est mort${d.feminin ? 'e' : ''} à cause de ton matériel de pacotille !`);
+      this.choix(['Dédommager (25 p.)', () => {
+        if (!peutPayer(G, 25)) return fin("Tu n'as même pas de quoi payer ? Pathétique.");
+        G.argent -= 25;
+        G.reputation += 0.5;
+        fin("Hmph... Ça ne ramènera pas " + proche + ", mais c'est honnête de ta part.");
+      }], ['Le renvoyer', () => {
+        G.reputation -= 1;
+        const msg = changerRelation(G, p.nom, -6);
+        fin(`Tu le regretteras, marchand !${msg ? ' ' + msg : ''}`);
+      }]);
+    } else if (visite.intention === 'souvenir') {
+      parler(`${prenom} parlait souvent de toi. Aurais-tu un souvenir de ${d.feminin ? 'elle' : 'lui'}... un objet de ta boutique qu'${il} aimait ?`);
+      this.choix(['Offrir un objet', () => {
+        const dispo = Object.keys(G.stock).filter(id => G.stock[id] > 0);
+        if (!dispo.length) return fin("Ta réserve est vide... Ce n'est pas grave. Merci quand même.");
+        const id = auHasard(dispo);
+        G.stock[id]--;
+        G.reputation += 0.5;
+        const msg = changerRelation(G, p.nom, 4);
+        fin(`Une ${ITEMS[id].nom.toLowerCase()}... ${prenom} en avait toujours une sur ${d.feminin ? 'elle' : 'lui'}. Merci, du fond du cœur.${msg ? ' ' + msg : ''}`);
+      }], ["Je n'ai rien", () => {
+        changerRelation(G, p.nom, -1);
+        fin('Je vois... Au revoir.');
+      }]);
+    } else if (visite.intention === 'releve') {
+      const q = QUETES[d.queteId];
+      parler(`Je veux finir ce que ${proche} a commencé : ${q.titre.toLowerCase()}. Aide-moi à me préparer, comme tu l'as fait pour ${d.feminin ? 'elle' : 'lui'} !`);
+      this.choix([`L'équiper`, () => {
+        const v = creerVoyageur(G, { quete: d.queteId, nom: p.nom, race: p.race, feminin: p.feminin });
+        v.accueil = `Merci. Je pars ${q.titre.toLowerCase()}, pour honorer ${proche}. Prépare-moi bien.`;
+        G.relations[p.nom] = Math.floor(d.points / 2);
+        this.arrivee({ type: 'client', voyageur: v });
+      }], ['Pas aujourd\'hui', () => {
+        G.habitues.push({ nom: p.nom, race: p.race, feminin: p.feminin, inventaire: {} });
+        fin(`Je comprends. Je reviendrai, prêt${e}.`);
+      }]);
+    } else {
+      parler(`Avant de partir, ${proche} m'a dit : « Si je ne reviens pas, donne ceci au marchand. » ${il[0].toUpperCase() + il.slice(1)} tenait beaucoup à toi.`);
+      this.choix(['Accepter son cadeau', () => {
+        const msg = offrirDecoration(G);
+        changerRelation(G, p.nom, 5);
+        fin(`${msg} Prends-en soin.`);
+        this.creerEtagere();
+      }], ['Le garder pour sa famille', () => {
+        G.reputation += 0.5;
+        changerRelation(G, p.nom, 3);
+        fin('Tu es quelqu\'un de bien. Merci.');
+      }]);
     }
   }
 
@@ -340,10 +437,10 @@ class CounterScene extends Phaser.Scene {
     });
   }
 
-  // Réparer ne coûte rien en stock : c'est le client qui paie.
+  // Réparer coûte des matériaux, et c'est le client qui paie la main-d'œuvre.
   reparer(id) {
-    this.voyageur.inventaire[id] = USURE_MAX;
-    this.G.argent += PRIX_REPARATION;
+    const erreur = reparerObjet(this.G, this.voyageur, id);
+    if (erreur) return this.dire(erreur, '');
     this.dessinerPieces();
     this.dire(`Merci ! Ma ${ITEMS[id].nom.toLowerCase()} est comme neuve. Voilà ${PRIX_REPARATION} pièces pour ta peine.`);
   }
@@ -354,12 +451,12 @@ class CounterScene extends Phaser.Scene {
     const v = this.voyageur;
     for (const [id, n] of Object.entries(this.colis)) this.G.stock[id] += n;
     this.colis = {};
-    refuserClient(this.G);
+    const msg = refuserClient(this.G, v);
     this.enService = false;
     this.majBoutonsService();
     this.bouton('...', null);
     this.majStock();
-    this.dire("Tu refuses de me servir ? Très bien... J'irai voir ailleurs. Et je le dirai à tout le monde.", v.nom);
+    this.dire("Tu refuses de me servir ? Très bien... J'irai voir ailleurs. Et je le dirai à tout le monde." + (msg ? ' ' + msg : ''), v.nom);
     this.partirPar(FENETRE.x - 80);
   }
 
@@ -436,7 +533,7 @@ class CounterScene extends Phaser.Scene {
   remettreColis() {
     const v = this.voyageur;
     const chance = chanceDeRetour(v, this.colis);
-    partir(this.G, v, this.colis);
+    const msg = partir(this.G, v, this.colis);
     this.enService = false;
     this.majBoutonsService();
     this.bouton('...', null);
@@ -446,7 +543,7 @@ class CounterScene extends Phaser.Scene {
     const phrase = chance >= 0.75 ? `Parfait ! Je reviendrai ${jours} avec ta part du butin, promis !`
       : chance >= 0.4 ? `Ce n'est pas tout ce que je voulais... mais je ferai avec. Rendez-vous ${jours} !`
       : "C'est tout ? Bon... Souhaite-moi bonne chance.";
-    this.dire(phrase, v.nom);
+    this.dire(phrase + (msg ? ' ' + msg : ''), this.nomAvecRelation(v.nom));
     this.partirPar(FENETRE.x + FENETRE.w + 60);
   }
 
@@ -480,7 +577,8 @@ class CounterScene extends Phaser.Scene {
       const n = this.G.stock[id];
       c.qte.setText('x ' + n).setColor(n > 0 ? '#f3d98a' : '#a05040');
     }
-    this.texteReserve.setText(`Réserve : ${stockTotal(this.G)} / ${this.G.capacite}`);
+    const m = this.G.materiaux;
+    this.texteReserve.setText(`Réserve ${stockTotal(this.G)}/${this.G.capacite} · Fer ${m.fer} · Cuir ${m.cuir}`);
   }
 
   majCommande() {
@@ -498,9 +596,10 @@ class CounterScene extends Phaser.Scene {
       const etat = ITEMS[id].durable ? etatObjet(v, id) : 0;
       if (!donne && id in v.inventaire) {
         // Le client a déjà le sien : on peut le réparer au lieu d'en donner un neuf.
-        const texte = etat > 0 ? `${ITEMS[id].nom} · la sienne ${etat}/${USURE_MAX}${etat < USURE_MAX ? ' (réparer)' : ' ✓'}`
+        const cout = `${materiauxRequis(this.G)} ${MATERIAUX[MATERIAU_DE[id]].nom.toLowerCase()}`;
+        const texte = etat > 0 ? `${ITEMS[id].nom} · sienne ${etat}/${USURE_MAX}${etat < USURE_MAX ? ` (réparer : ${cout})` : ' ✓'}`
           : `${ITEMS[id].nom} · la sienne est cassée`;
-        ligne.txt.setText(texte).setFontSize(13).setColor(etat >= 2 ? '#2f6a2a' : '#8a5a10');
+        ligne.txt.setText(texte).setFontSize(12).setColor(etat >= 2 ? '#2f6a2a' : '#8a5a10');
         return;
       }
       const ok = donne >= commande[id];
@@ -508,9 +607,11 @@ class CounterScene extends Phaser.Scene {
         .setFontSize(16).setColor(ok ? '#2f6a2a' : '#3b2410');
     });
     if (v) {
-      const c = chanceDeRetour(v, this.colis);
+      // Ton flair estime les chances : faussé au début, précis avec l'expérience.
+      const c = chanceEstimee(this.G, v, this.colis);
       const couleur = c >= 0.75 ? '#2f6a2a' : c >= 0.4 ? '#8a6a10' : '#a03030';
-      this.texteChance.setText(`Chances de retour : ${Math.round(c * 100)} %`).setColor(couleur);
+      const exact = niveauFlair(this.G) >= 1;
+      this.texteChance.setText(`${exact ? 'Chances de retour' : 'Ton flair dit'} : ${exact ? '' : '~'}${Math.round(c * 100)} %`).setColor(couleur);
     } else {
       this.texteChance.setText('');
     }

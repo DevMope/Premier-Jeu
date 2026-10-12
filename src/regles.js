@@ -40,12 +40,22 @@ function niveauEpreuve(epreuve, colis, voyageur) {
   return 'rien';
 }
 
+// La carte des contrées améliore chaque épreuve.
+function chanceEpreuve(niveau) {
+  const bonus = aDecoration(window.GAME, 'carte') ? 0.04 : 0;
+  return Math.min(0.97, CHANCE_EPREUVE[niveau] + bonus);
+}
+
+function aDecoration(G, id) {
+  return !!G && G.decorations.includes(id);
+}
+
 // Probabilité exacte que l'aventurier revienne vivant :
 // il meurt s'il échoue autant d'épreuves qu'il a de points de vie.
 function chanceDeRetour(voyageur, colis) {
   let proba = [1]; // proba[k] = probabilité d'avoir raté k épreuves
   for (const e of voyageur.epreuves) {
-    const p = CHANCE_EPREUVE[niveauEpreuve(e, colis, voyageur)];
+    const p = chanceEpreuve(niveauEpreuve(e, colis, voyageur));
     const suivante = new Array(proba.length + 1).fill(0);
     proba.forEach((pk, k) => {
       suivante[k] += pk * p;
@@ -62,7 +72,7 @@ function simulerAventure(voyageur, colis) {
   const etapes = [];
   for (const e of voyageur.epreuves) {
     const niveau = niveauEpreuve(e, colis, voyageur);
-    const reussie = Math.random() < CHANCE_EPREUVE[niveau];
+    const reussie = Math.random() < chanceEpreuve(niveau);
     if (!reussie) pv--;
     etapes.push({ epreuve: e, niveau, reussie, pvApres: pv });
     if (pv <= 0) break;
@@ -94,8 +104,10 @@ function creerVoyageur(G, { quete, nom, race, feminin, butin, duree, inventaire 
     pv: q.pv,
     butin: butin ?? Math.round(hasard(...q.butin) * (1 + 0.3 * enPlus)),
     duree: d,
+    queteId: quete,
     quete: q.titre,
     accueil: q.accueil,
+    biais: Phaser.Math.FloatBetween(-1, 1), // l'erreur de ton flair sur ce client
     epreuves,
     inventaire: { ...(inventaire || {}) },
     habitue: !!inventaire,
@@ -148,8 +160,16 @@ function voyageurAuHasard(G, aussi = []) {
 
 // --- La partie ---
 
-function nouvellePartie() {
+function nouvellePartie({ feminin = false } = {}) {
   const G = {
+    joueur: { feminin },
+    relations: {},     // nom → points
+    paliers: {},       // nom → niveaux déjà atteints (pour ne donner chaque cadeau qu'une fois)
+    materiaux: { ...MATERIAUX_DEPART },
+    reparations: 0,
+    decorations: [],
+    depensesFournisseur: 0,
+    visites: [],       // familles qui viendront au comptoir : { jour, defunt, parent }
     jour: 1,
     argent: ARGENT_DEPART,
     argentDebutJour: ARGENT_DEPART,
@@ -178,6 +198,11 @@ function nouvellePartie() {
 }
 
 function partir(G, voyageur, colis) {
+  const chance = chanceDeRetour(voyageur, colis);
+  let message = null;
+  if (chance >= 0.75) message = changerRelation(G, voyageur.nom, POINTS_RELATION.colisComplet);
+  else if (chance < 0.4) message = changerRelation(G, voyageur.nom, POINTS_RELATION.colisPauvre);
+  else rencontrer(G, voyageur.nom);
   G.partis.push({
     voyageur,
     colis: { ...colis },
@@ -189,6 +214,7 @@ function partir(G, voyageur, colis) {
   });
   G.experience++;
   G.journal.servis++;
+  return message;
 }
 
 // Les lettres annoncent des voyageurs qui viendront dans 2 ou 3 jours.
@@ -205,16 +231,168 @@ function preparerSoir(G) {
   if (G.lettresDuJour === G.jour) return;
   G.lettresDuJour = G.jour;
   recevoirLettres(G, hasard(0, 2));
-  G.offre = offreDuJour(1, 3, 2, 5);
+  // Les amis de Maître Gédéon ont droit à plus d'objets rares.
+  const amis = niveauRelation(G, FOURNISSEUR.nom).index >= 5;
+  G.offre = offreDuJour(1, amis ? 4 : 3, 2, 5);
+  G.offre.fer = { prix: MATERIAUX.fer.prix, qte: hasard(3, 6) };
+  G.offre.cuir = { prix: MATERIAUX.cuir.prix, qte: hasard(3, 6) };
 }
 
 function refuserLettre(G, annonce) {
   G.annonces = G.annonces.filter(a => a !== annonce);
   G.reputation -= REFUS_LETTRE;
+  changerRelation(G, annonce.voyageur.nom, POINTS_RELATION.refusLettre);
 }
 
-function refuserClient(G) {
+function refuserClient(G, voyageur) {
   G.reputation -= REFUS_CLIENT;
+  return changerRelation(G, voyageur.nom, POINTS_RELATION.refusClient);
+}
+
+// --- Relations ---
+
+function rencontrer(G, nom) {
+  if (!(nom in G.relations)) G.relations[nom] = 0;
+}
+
+function niveauRelation(G, nom) {
+  if (!(nom in G.relations)) return { nom: 'Inconnu', couleur: '#6b5a40', butin: 1, index: 3 };
+  const pts = G.relations[nom];
+  let index = 0;
+  NIVEAUX_RELATION.forEach((n, i) => { if (pts >= n.min) index = i; });
+  return { ...NIVEAUX_RELATION[index], index };
+}
+
+// Change une relation. Renvoie un message si un palier important est franchi
+// pour la première fois : un cadeau, ou une vengeance.
+function changerRelation(G, nom, delta) {
+  rencontrer(G, nom);
+  const avant = niveauRelation(G, nom).index;
+  G.relations[nom] += delta;
+  const apres = niveauRelation(G, nom);
+  if (apres.index === avant) return null;
+  const deja = G.paliers[nom] = G.paliers[nom] || [];
+  if (deja.includes(apres.nom)) return null;
+  deja.push(apres.nom);
+
+  if (apres.nom === 'Amis') {
+    G.materiaux.fer += 2;
+    G.materiaux.cuir += 2;
+    return `${nom} te considère comme un ami ! En cadeau : 2 fer et 2 cuir.`;
+  }
+  if (apres.nom === 'Frères de sang') return `${nom} et toi êtes maintenant frères de sang ! ` + offrirDecoration(G);
+  if (apres.nom === 'Pires ennemis') {
+    const perdus = [];
+    for (let i = 0; i < 3; i++) {
+      const dispo = Object.keys(G.stock).filter(id => G.stock[id] > 0);
+      if (!dispo.length) break;
+      const id = auHasard(dispo);
+      G.stock[id]--;
+      perdus.push(ITEMS[id].nom);
+    }
+    return `${nom} est devenu ton pire ennemi... Cette nuit, ta réserve a été saccagée` +
+      (perdus.length ? ` (${perdus.join(', ')} perdus).` : '.');
+  }
+  return null;
+}
+
+function offrirDecoration(G) {
+  const libres = Object.keys(DECORATIONS).filter(id => !G.decorations.includes(id));
+  if (!libres.length) {
+    G.argent += 50;
+    return 'Il t\'offre une bourse de 50 pièces.';
+  }
+  const id = auHasard(libres);
+  G.decorations.push(id);
+  return `Il t'offre une décoration pour ton comptoir : ${DECORATIONS[id].nom}.`;
+}
+
+// --- Compétences du joueur ---
+
+// Le flair : au début, tes estimations sont faussées. Elles s'affinent avec l'expérience.
+function niveauFlair(G) {
+  return Math.min(1, G.experience / 40);
+}
+
+function chanceEstimee(G, voyageur, colis) {
+  const vraie = chanceDeRetour(voyageur, colis);
+  const erreur = voyageur.biais * 0.35 * (1 - niveauFlair(G));
+  const estimee = Phaser.Math.Clamp(vraie + erreur, 0.02, 0.98);
+  // Tant que le flair n'est pas parfait, l'estimation est arrondie à 10 % près.
+  return niveauFlair(G) < 1 ? Math.round(estimee * 10) / 10 : estimee;
+}
+
+// L'artisanat : plus tu répares, moins il faut de matériaux.
+function niveauArtisanat(G) {
+  return Math.floor(G.reparations / 4);
+}
+
+function materiauxRequis(G) {
+  const enclume = aDecoration(G, 'enclume') ? 1 : 0;
+  return Math.max(1, MATERIAUX_PAR_REPARATION - niveauArtisanat(G) - enclume);
+}
+
+// Répare l'objet d'un client : coûte des matériaux, le client paie.
+// Renvoie un message d'erreur, ou null si tout s'est bien passé.
+function reparerObjet(G, voyageur, id) {
+  const mat = MATERIAU_DE[id];
+  const besoin = materiauxRequis(G);
+  if (G.materiaux[mat] < besoin) return `Il te faut ${besoin} ${MATERIAUX[mat].nom.toLowerCase()} pour réparer ça.`;
+  G.materiaux[mat] -= besoin;
+  voyageur.inventaire[id] = USURE_MAX;
+  G.argent += PRIX_REPARATION;
+  G.reparations++;
+  changerRelation(G, voyageur.nom, POINTS_RELATION.reparation);
+  return null;
+}
+
+// Le marchandage : la remise de Maître Gédéon dépend de votre relation.
+function remiseFournisseur(G) {
+  return REMISES[niveauRelation(G, FOURNISSEUR.nom).nom] || 0;
+}
+
+function prixFournisseur(G, prix) {
+  return Math.max(1, Math.round(prix * (1 - remiseFournisseur(G))));
+}
+
+// Chaque achat chez le fournisseur compte pour votre relation.
+function depenserChezFournisseur(G, montant) {
+  G.argent -= montant;
+  const avant = Math.floor(G.depensesFournisseur / DEPENSE_PAR_POINT);
+  G.depensesFournisseur += montant;
+  const apres = Math.floor(G.depensesFournisseur / DEPENSE_PAR_POINT);
+  return apres > avant ? changerRelation(G, FOURNISSEUR.nom, apres - avant) : null;
+}
+
+// --- Les familles ---
+
+// Quand un aventurier meurt, un proche viendra peut-être au comptoir.
+function planifierVisiteFamille(G, voyageur, valeureux) {
+  const pts = G.relations[voyageur.nom] || 0;
+  if (Math.random() > (Math.abs(pts) >= 2 ? 0.75 : 0.4)) return;
+  const prenoms = PRENOMS[voyageur.race];
+  const liens = LIENS.filter(l => (l.feminin ? prenoms.f : prenoms.m).length);
+  const lien = auHasard(liens);
+  const race = voyageur.race === 'magicienne' && !lien.feminin ? 'humain' : voyageur.race;
+  const prenom = auHasard(lien.feminin ? PRENOMS[race].f : PRENOMS[race].m);
+  const famille = voyageur.nom.split(' ').slice(1).join(' ') || voyageur.nom;
+  G.visites.push({
+    jour: G.jour + hasard(1, 3),
+    defunt: { nom: voyageur.nom, feminin: voyageur.feminin, queteId: voyageur.queteId, points: pts, valeureux },
+    parent: { nom: `${prenom} ${famille}`, race, feminin: lien.feminin, lien: lien.nom },
+    intention: intentionFamille(pts, valeureux),
+  });
+}
+
+// Ce que veut le proche : dépend de la relation avec le disparu, et d'un peu de hasard.
+function intentionFamille(pts, valeureux) {
+  const r = Math.random();
+  if (pts <= -3) return 'colere';
+  if (pts >= 9) return r < 0.5 ? 'hommage' : 'releve';
+  if (pts >= 5) return r < 0.5 ? 'releve' : 'souvenir';
+  const colere = valeureux ? 0.25 : 0.45;
+  if (r < colere) return 'colere';
+  return r < colere + (1 - colere) / 2 ? 'souvenir' : 'releve';
 }
 
 // Un assortiment : les objets de base toujours là, plus quelques autres au hasard.
@@ -290,7 +468,8 @@ function attrait(G) {
     reputation: G.reputation * 0.4,
     experience: Math.min(G.experience, 40) / 10,
     variete: variete * 0.15,
-    total: 1 + G.reputation * 0.4 + Math.min(G.experience, 40) / 10 + variete * 0.15,
+    decoration: aDecoration(G, 'trophee') ? 0.7 : 0,
+    total: 1 + G.reputation * 0.4 + Math.min(G.experience, 40) / 10 + variete * 0.15 + (aDecoration(G, 'trophee') ? 0.7 : 0),
   };
 }
 
@@ -333,25 +512,44 @@ function journeeSuivante(G) {
     const arrivee = { type: p.resultat.vivant ? 'retour' : 'carnet', parti: p };
     file.splice(hasard(0, file.length), 0, arrivee);
   }
+  // Les familles des disparus.
+  for (const visite of G.visites.filter(v => v.jour === G.jour)) {
+    file.splice(hasard(0, file.length), 0, { type: 'famille', visite });
+  }
+  G.visites = G.visites.filter(v => v.jour > G.jour);
   G.file = file;
 }
 
-// Appelé à la fin du récit : on encaisse le butin et la réputation évolue.
+// Ce que l'aventurier te reverse vraiment, selon votre relation et la lanterne.
+function partDuButin(G, voyageur) {
+  const lanterne = aDecoration(G, 'lanterne') ? 1.1 : 1;
+  return Math.round(voyageur.butin * niveauRelation(G, voyageur.nom).butin * lanterne);
+}
+
+// Appelé à la fin du récit : on encaisse le butin, la réputation et la relation évoluent.
+// Renvoie { gain, message }.
 function terminerAventure(G, parti) {
-  if (parti.termine) return;
+  if (parti.termine) return parti.bilan;
   parti.termine = true;
   const r = parti.resultat;
   const v = parti.voyageur;
+  let gain = 0;
+  let message = null;
   G.habitues = G.habitues.filter(h => h.nom !== v.nom);
   if (r.vivant) {
-    G.argent += v.butin;
+    gain = partDuButin(G, v);
+    G.argent += gain;
     G.reputation++;
     G.journal.retours++;
+    message = changerRelation(G, v.nom, POINTS_RELATION.retourVivant);
     G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti) });
   } else {
     if (!r.valeureux) G.reputation--;
     G.journal.morts++;
+    planifierVisiteFamille(G, v, r.valeureux);
   }
+  parti.bilan = { gain, message };
+  return parti.bilan;
 }
 
 // Après la quête : les objets durables reçus sont neufs, puis chaque épreuve

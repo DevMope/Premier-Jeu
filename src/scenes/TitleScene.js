@@ -11,11 +11,8 @@ class TitleScene extends Phaser.Scene {
 
     this.add.text(480, 170, 'Le Comptoir des Aventuriers', style(40, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
     this.add.text(480, 225, 'Prépare leurs provisions. Parie sur leur retour.', style(20, '#f3e6c8', { fontStyle: 'italic' })).setOrigin(0.5);
-    this.add.text(480, 275, 'Prototype — étape 2+', style(16, '#c9b48a')).setOrigin(0.5);
+    this.add.text(480, 275, 'Prototype — étape 2++', style(16, '#c9b48a')).setOrigin(0.5);
 
-    creerBouton(this, 480, 400, 260, 'Ouvrir le comptoir', () => {
-      nouvellePartie();
-      this.scene.start('Comptoir');
-    });
+    creerBouton(this, 480, 400, 260, 'Nouvelle partie', () => this.scene.start('Intro'));
   }
 }

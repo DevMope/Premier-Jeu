@@ -57,12 +57,13 @@ class NightScene extends Phaser.Scene {
       `Argent ce soir : ${G.argent}  (${gain >= 0 ? '+' : ''}${gain})`,
       `Réputation : ${arrondi(G.reputation)}`,
       `Expérience : ${G.experience} clients`,
+      `Flair : ${Math.round(niveauFlair(G) * 100)} % · Artisanat : niv. ${niveauArtisanat(G)}`,
     ];
     c.add(this.add.text(x1 + 18, 112, lignes.join('\n'), style(14, '#3b2410', { lineSpacing: 5 })));
 
     const dettes = G.prets.map(p => `${p.nom} : reste ${p.restant} (−${p.parJour}/nuit)`);
-    c.add(this.add.text(x1 + 18, 250, 'Prêts en cours', style(14, '#3b2410', { fontStyle: 'bold' })));
-    c.add(this.add.text(x1 + 18, 270, listeCourte(dettes, 3, 'Aucun'), style(12, '#5a3a20', { lineSpacing: 2 })));
+    c.add(this.add.text(x1 + 18, 262, 'Prêts en cours', style(14, '#3b2410', { fontStyle: 'bold' })));
+    c.add(this.add.text(x1 + 18, 282, listeCourte(dettes, 2, 'Aucun'), style(12, '#5a3a20', { lineSpacing: 2 })));
     if (G.argent < 0) {
       c.add(this.add.text(x1 + 18, 318, `À découvert ! Faillite à ${SEUIL_FAILLITE} pièces.`, style(12, '#a03030', { fontStyle: 'bold' })));
     }
@@ -75,10 +76,10 @@ class NightScene extends Phaser.Scene {
   // --- Le fournisseur ---
 
   creerFournisseur(x1, x2) {
-    this.add.text((x1 + x2) / 2, 110, "Change chaque jour · (n) = quantité disponible", style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
+    this.texteGedeon = this.add.text((x1 + x2) / 2, 110, '', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.lignesStock = {};
-    Object.entries(ITEMS).forEach(([id, item], i) => {
-      const y = 136 + i * 33;
+    Object.entries({ ...ITEMS, ...MATERIAUX }).forEach(([id, item], i) => {
+      const y = 132 + i * 28;
       this.add.image(x1 + 26, y, id).setScale(3);
       this.add.text(x1 + 44, y, item.nom, style(14, '#3b2410')).setOrigin(0, 0.5);
       const prix = this.add.text(x1 + 120, y, '', style(14, '#6b4a2a')).setOrigin(0, 0.5);
@@ -90,7 +91,7 @@ class NightScene extends Phaser.Scene {
       this.lignesStock[id] = { prix, qte, btn, label };
     });
 
-    this.texteReserve = this.add.text(x1 + 18, 408, '', style(14, '#3b2410', { fontStyle: 'bold' }));
+    this.texteReserve = this.add.text(x1 + 18, 410, '', style(13, '#3b2410', { fontStyle: 'bold' }));
     const btn = this.add.rectangle((x1 + x2) / 2, 444, x2 - x1 - 36, 30, 0x6b4423).setStrokeStyle(2, 0x3b2410)
       .setInteractive({ useHandCursor: true });
     this.texteAgrandir = this.add.text((x1 + x2) / 2, 444, '', style(13, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
@@ -101,26 +102,42 @@ class NightScene extends Phaser.Scene {
   acheter(id) {
     const G = this.G;
     const offre = G.offre[id];
-    if (!offre || offre.qte <= 0 || stockTotal(G) >= G.capacite || !peutPayer(G, offre.prix)) {
+    const materiau = id in MATERIAUX;
+    const prix = offre && prixFournisseur(G, offre.prix);
+    if (!offre || offre.qte <= 0 || (!materiau && stockTotal(G) >= G.capacite) || !peutPayer(G, prix)) {
       this.cameras.main.shake(120, 0.004);
       return;
     }
-    G.argent -= offre.prix;
     offre.qte--;
-    G.stock[id]++;
+    if (materiau) G.materiaux[id]++;
+    else G.stock[id]++;
+    const msg = depenserChezFournisseur(G, prix);
+    if (msg) this.annoncer(msg);
     this.tout();
+  }
+
+  // Un message important (cadeau, palier de relation) en haut de l'écran.
+  annoncer(texte) {
+    const t = this.add.text(480, 66, texte, style(14, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 10, y: 4 } }))
+      .setOrigin(0.5).setDepth(30);
+    this.tweens.add({ targets: t, alpha: 0, delay: 3500, duration: 800, onComplete: () => t.destroy() });
   }
 
   majArgent() {
     const G = this.G;
     this.texteArgent.setText(G.argent + ' pièces').setColor(G.argent < 0 ? '#ff8070' : '#f3d98a');
     const plein = stockTotal(G) >= G.capacite;
+    const remise = remiseFournisseur(G);
+    this.texteGedeon.setText(`${FOURNISSEUR.nom} · ${niveauRelation(G, FOURNISSEUR.nom).nom}` +
+      (remise ? ` · remise ${Math.round(remise * 100)} %` : '') + ' · (n) = dispo');
     for (const [id, l] of Object.entries(this.lignesStock)) {
       const offre = G.offre[id];
-      l.prix.setText(offre ? offre.prix + ' p.' : '');
-      l.qte.setText('x ' + G.stock[id]);
+      const materiau = id in MATERIAUX;
+      const prix = offre && prixFournisseur(G, offre.prix);
+      l.prix.setText(offre ? prix + ' p.' : '');
+      l.qte.setText('x ' + (materiau ? G.materiaux[id] : G.stock[id]));
       l.label.setText(!offre ? 'Absent' : offre.qte > 0 ? `Acheter (${offre.qte})` : 'Épuisé');
-      const possible = offre && offre.qte > 0 && !plein && peutPayer(G, offre.prix);
+      const possible = offre && offre.qte > 0 && (materiau || !plein) && peutPayer(G, prix);
       l.btn.setAlpha(possible ? 1 : 0.4);
       l.label.setAlpha(possible ? 1 : 0.4);
     }

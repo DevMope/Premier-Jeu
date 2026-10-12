@@ -49,15 +49,33 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
 - **L'assortiment** du fournisseur change chaque jour : les objets de base (rations, gourdes, torches, bandages) sont toujours là, les autres apparaissent au hasard en quantité limitée. Les prix varient.
 - **Le marchand express** (Fennick le Pressé, personnage récurrent) passe au comptoir pendant la journée. Il vend quelques objets au hasard, 2,5 fois plus cher, livrés directement dans le colis. Ce n'est jamais rentable : ça sert juste à sauver un voyage.
 - **La banque** : des prêts débloqués par la réputation (plus la réputation est haute, plus on peut emprunter, et moins cher). La Main Noire (la mafia) prête à tout le monde, à 45 %. Les échéances sont prélevées chaque nuit.
-- **La faillite** : on peut être à découvert, mais à -100 pièces, le comptoir ferme.
+- **La faillite** : on peut être à découvert, mais à -100 pièces, le comptoir ferme. Une cinématique comique montre le banquier et ses gardes qui viennent tout saisir (parchemin de dettes trop long, garde qui trébuche, dernière pièce confisquée, planches clouées sur la porte).
 - **Capital de départ** : 80 pièces, pour tenir le temps que les premiers aventuriers reviennent.
 
-### 2.4 Risque : le marché noir
+### 2.4 Relations et familles
+- Chaque client a une relation avec le joueur : **Pires ennemis, Ne s'aiment pas, Hypocrite, Neutre (ou Inconnu), Connaissance, Amis, Frères de sang**.
+- Elle bouge selon tes actes : colis complet (+1), colis pauvre (−1), retour vivant (+2), réparation (+1), refus (−3), lettre refusée (−1).
+- Effets : la part de butin reversée va de ×0,6 (pires ennemis) à ×1,25 (frères de sang).
+- Paliers franchis la première fois : **Amis** → cadeau de matériaux ; **Frères de sang** → une décoration pour le shop ; **Pires ennemis** → ta réserve est saccagée.
+- **Les familles** : quand un aventurier meurt, un proche (fils, fille, frère, sœur, père, mère) peut venir au comptoir quelques jours plus tard. Ce qu'il veut dépend de la relation avec le disparu, plus un peu de hasard :
+  - **la colère** : dédommager (25 p.) ou le renvoyer (il devient ton pire ennemi) ;
+  - **un souvenir** : offrir un objet de ta réserve, ou refuser ;
+  - **la relève** : il reprend la quête du disparu, et tu l'équipes ;
+  - **un hommage** (frères de sang) : le disparu t'a laissé une décoration.
+
+### 2.5 Compétences du joueur (le côté RPG)
+- **Flair** : au début, l'estimation des chances (« Ton flair dit : ~60 % ») est faussée et arrondie. Elle s'affine avec l'expérience, jusqu'au pourcentage exact (40 clients servis).
+- **Marchandage** : la relation avec Maître Gédéon, le fournisseur, monte avec ce que tu dépenses chez lui (1 point par 40 pièces). Connaissance : −5 %, Amis : −10 % et un objet rare de plus chaque soir, Frères de sang : −20 % et une décoration.
+- **Artisanat** : réparer coûte des matières premières (fer pour l'épée, cuir pour la corde et la gourde). Au début il en faut 3 par réparation, puis 1 de moins tous les 4 réparations (minimum 1).
+- **Les décorations** du shop donnent des bonus : Carte des contrées (+4 % par épreuve), Trophée de loup (plus de clients), Lanterne enchantée (+10 % de butin), Enclume naine (1 matériau de moins par réparation).
+- Plus tard : des talents à choisir aux grands âges de la vie.
+
+### 2.6 Risque : le marché noir
 - Ouvre certains soirs seulement.
 - Grimoires interdits, potions illégales, artefacts.
 - Voyageurs nocturnes : quêtes farfelues, gros gains possibles, mais s'ils se font prendre, **les conséquences retombent sur le joueur**.
 
-### 2.5 Aider pendant l'aventure
+### 2.7 Aider pendant l'aventure
 - **Le grand aigle** (familier à débloquer) : quand un aventurier en mission envoie un message de détresse, l'aigle peut lui apporter rapidement des objets.
 - **Les mercenaires** : on peut en envoyer un nombre limité de fois par jour pour récupérer le butin perdu par un aventurier mort.
 
@@ -95,7 +113,7 @@ Le joueur ne choisit pas son camp dans un menu : son camp se construit par ses a
 - **Le mendiant** : donner de l'argent peut avoir un impact plus tard.
 
 ## 5. Histoire
-- **Prologue** : le jeune orphelin sauve un aventurier emporté par une rivière, le soigne, répare ses armes, chasse pour le nourrir et lui prépare des provisions. Des jours plus tard, l'aventurier revient avec un trésor. Le jeune ne sait pas quoi demander, mais il a aimé s'occuper de lui → l'aventurier lui offre son **premier shop** et un petit capital.
+- **Prologue** (cinématique d'introduction, après le choix garçon/fille) : le jeune orphelin sauve **Garrick Cœur-de-Chêne**, un aventurier emporté par une rivière, le soigne, répare ses armes, chasse pour le nourrir et lui prépare des provisions. Des jours plus tard, l'aventurier revient avec un trésor. Le jeune ne sait pas quoi demander, mais il a aimé s'occuper de lui → l'aventurier lui offre son **premier shop** et un petit capital.
 - **Fil rouge** : une menace grandit (piste actuelle : un grand dragon sous la montagne mystique — *à confirmer*). Le monde a de plus en plus peur.
 - **Deux fins** selon le camp du joueur :
   - **Le bien** : le joueur équipe le groupe d'aventuriers qui part affronter la menace.
@@ -141,7 +159,6 @@ Le joueur ne quitte jamais vraiment son shop, sauf pour ces marchés (écrans/me
 - Durée d'une partie complète (nombre de jours/années) ?
 - Comment mesurer le penchant du joueur (une jauge visible, ou seulement ressentie par les dialogues) ?
 - Peut-on changer de camp en cours de partie ?
-- Le côté RPG du personnage : quelles compétences, et comment progresser ?
 - Plus tard, la banque des gentils et la Main Noire pourront dépendre du camp choisi.
 
 ## 9. Plan de développement (étape par étape)
@@ -153,6 +170,7 @@ Chaque étape doit donner une version **jouable**.
 | 1 ✅ | **Prototype du comptoir** | Une journée, 4 voyageurs en file d'attente, un stock fixe ; on donne des objets ; calcul de la chance de réussite ; cinématique du récit ; bilan. |
 | 2 ✅ | **Les quêtes dans le temps** | Plusieurs jours ; quêtes de durées variables ; les aventuriers reviennent faire la queue pour raconter leur récit, ou un colporteur rapporte leur carnet ; lettres de commandes annoncées ; prévision « entre X et Y clients » ; fournisseur simple le soir. |
 | 2+ ✅ | **Gérer son comptoir** | Refus de clients et de lettres, lettres plus exigeantes, habitués et réparations, réserve limitée, assortiment variable, marchand express, banque et Main Noire, faillite. |
+| 2++ ✅ | **Relations et cinématiques** | 7 niveaux de relation, familles des disparus, flair, marchandage, artisanat et matières premières, décorations, cinématique d'introduction, cinématique de faillite. |
 | 3 | **Le Mastre Marché** | Acheter son stock le matin, prix, quantités limitées. |
 | 4 | **Les fiches et le bureau** | Fiches voyageurs (à venir/présents/partis/revenus), voyageurs annoncés à l'avance, tableau de CA, tiroirs de stats. |
 | 5 | **Les deux vues du shop** | Comptoir ↔ arrière (stock + lit), façade avec le nom du shop. |

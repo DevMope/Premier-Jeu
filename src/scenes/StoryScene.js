@@ -1,6 +1,6 @@
 // La petite cinématique : on voit l'aventure d'un voyageur, épreuve par épreuve,
 // et comment chaque objet du colis l'a aidé (ou lui a manqué).
-class StoryScene extends Phaser.Scene {
+class StoryScene extends Cinematique {
   constructor() { super('Recit'); }
 
   init(data) {
@@ -27,33 +27,9 @@ class StoryScene extends Phaser.Scene {
     }
     this.titre = this.add.text(480, 26, '', style(20, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
 
-    // Boîte de texte
-    this.add.rectangle(480, 455, 940, 150, 0x1e130a, 0.95).setStrokeStyle(2, 0xc9a227);
-    this.entete = this.add.text(30, 392, '', style(16, '#f3d98a', { fontStyle: 'bold' }));
-    this.texte = this.add.text(30, 418, '', style(18, '#f3e6c8', { wordWrap: { width: 900 }, lineSpacing: 6 }));
-    this.indice = this.add.text(940, 518, '▶ clique pour continuer', style(13, '#c9b48a', { fontStyle: 'italic' }))
-      .setOrigin(1, 0.5).setVisible(false);
-    this.tweens.add({ targets: this.indice, alpha: 0.4, duration: 600, yoyo: true, repeat: -1 });
+    this.creerBoiteTexte();
 
     this.raconter();
-  }
-
-  // --- Outils d'animation (on attend la fin avec `await`) ---
-
-  attendreClic() {
-    return new Promise(resoudre => {
-      this.time.delayedCall(200, () => {
-        this.indice.setVisible(true);
-        this.input.once('pointerdown', () => {
-          this.indice.setVisible(false);
-          resoudre();
-        });
-      });
-    });
-  }
-
-  animer(config) {
-    return new Promise(resoudre => this.tweens.add({ ...config, onComplete: resoudre }));
   }
 
   async marcherVers(x) {
@@ -61,11 +37,6 @@ class StoryScene extends Phaser.Scene {
     this.tweens.add({ targets: this.perso, scaleY: 5.6, duration: 140, yoyo: true, repeat: Math.floor(duree / 280) });
     await this.animer({ targets: this.perso, x, duration: duree, ease: 'Linear' });
     this.perso.setScale(6);
-  }
-
-  ecrire(entete, texte) {
-    this.entete.setText(entete);
-    this.texte.setText(texte);
   }
 
   // --- Le récit ---
@@ -130,11 +101,15 @@ class StoryScene extends Phaser.Scene {
     const r = this.parti.resultat;
     this.decor.removeAll(true);
 
+    const { gain, message } = terminerAventure(this.G, this.parti);
+    const relation = niveauRelation(this.G, v.nom);
     if (r.vivant) {
       await this.marcherVers(880);
       this.pleuvoirPieces();
+      const ajuste = gain !== v.butin ? ` (prévu : ${v.butin}, ajusté selon votre relation)` : '';
       this.ecrire('Retour au comptoir',
-        `« Merci pour ton aide, l'ami. Sans ton colis, je ne serais pas là. Voici ta part du butin ! »\n+ ${v.butin} pièces`);
+        `« Merci pour ton aide. Sans ton colis, je ne serais pas là. Voici ta part du butin ! »\n` +
+        `+ ${gain} pièces${ajuste} · Relation : ${relation.nom}${message ? '\n' + message : ''}`);
     } else {
       this.perso.setTint(0x888888);
       await this.animer({ targets: this.perso, angle: -90, alpha: 0.6, duration: 700, ease: 'Bounce.easeOut' });
@@ -144,9 +119,10 @@ class StoryScene extends Phaser.Scene {
       this.tweens.add({ targets: this.voile, fillAlpha: 0.5, duration: 1500 });
     }
 
-    terminerAventure(this.G, this.parti);
     this.indice.destroy();
-    creerBouton(this, 820, 495, 240, 'Retour au comptoir', () => this.scene.start('Comptoir'));
+    const retour = creerBouton(this, 820, 495, 240, 'Retour au comptoir', () => this.scene.start('Comptoir'));
+    retour.fond.setDepth(11);
+    retour.label.setDepth(11);
   }
 
   pleuvoirPieces() {

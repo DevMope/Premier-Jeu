@@ -35,6 +35,39 @@ const ICONES = {
     pal: { a: 0xc9a46a },
     px: ['..aaaa..', '.a....a.', 'a..aa..a', 'a.a..a.a', 'a..aa..a', '.a....a.', '..aaaa.a', '........'],
   },
+  fer: {
+    pal: { a: 0x50545c, b: 0xa8b0bc },
+    px: ['........', '........', '..aaaa..', '.abbbba.', 'abbbbbba', 'aaaaaaaa', '........', '........'],
+  },
+  cuir: {
+    pal: { a: 0x6b4423, b: 0xa8743c },
+    px: ['........', '.a....a.', 'aaaaaaaa', '.abbbba.', '.abbbba.', 'aaaaaaaa', '.a....a.', '........'],
+  },
+  // Décorations du shop
+  carte: {
+    pal: { a: 0x7a4a1e, b: 0xead9b0, c: 0xc03030 },
+    px: ['aaaaaaaa', 'abbbbbba', 'abcbbbba', 'abbcbbba', 'abbbcbba', 'abbbbcba', 'abbbbbba', 'aaaaaaaa'],
+  },
+  trophee: {
+    pal: { a: 0x7a7e86, e: 0xffd040, b: 0x111111, c: 0x6b4423 },
+    px: ['..a..a..', '.aaaaaa.', '.aeaaea.', '.aaaaaa.', '..abba..', '..aaaa..', 'cccccccc', '.cccccc.'],
+  },
+  lanterne: {
+    pal: { a: 0x3a3a40, b: 0xffe066, c: 0xf0a030, d: 0xfff4c0 },
+    px: ['...aa...', '..a..a..', '.aaaaaa.', '.abccba.', '.acddca.', '.abccba.', '.aaaaaa.', '..a..a..'],
+  },
+  enclume: {
+    pal: { a: 0x5a5e66, b: 0x6b4423 },
+    px: ['........', 'aaaaaaa.', 'aaaaaaaa', '.aaaaa..', '..aaa...', '..aaa...', '.bbbbb..', 'bbbbbbb.'],
+  },
+  caisse: {
+    pal: { a: 0x6b4423, b: 0xa8743c },
+    px: ['aaaaaaaa', 'abbbbbba', 'aabbbbaa', 'abababba', 'abbabbba', 'aabbbbaa', 'abbbbbba', 'aaaaaaaa'],
+  },
+  coffre: {
+    pal: { a: 0x6b4423, b: 0xa8743c, c: 0xe8c040 },
+    px: ['.aaaaaa.', 'abbbbbba', 'abbbbbba', 'cccccccc', 'abbccbba', 'abbbbbba', 'abbbbbba', 'aaaaaaaa'],
+  },
   coeur: {
     pal: { a: 0xd8344a },
     px: ['.aa.aa.', 'aaaaaaa', 'aaaaaaa', '.aaaaa.', '..aaa..', '...a...'],
@@ -94,6 +127,31 @@ const RACES = {
   colporteur: {
     pal: { h: 0x4a3a2a, s: 0xe0b088, e: 0x2a1a10, c: 0x6a5a40, d: 0x3a2a1a, p: 0x5a4a3a, b: 0x2a1a10 },
     lignes: { 0: '..hhhhhh..', 1: 'hhhhhhhhhh', 7: 'cccccccccc', 8: 'cccccccccc', 9: 'ccddddddcc', 10: '.cccccccc.' },
+  },
+  // Le banquier : haut-de-forme, costume noir, chaîne en or.
+  banquier: {
+    pal: { h: 0x1a1a20, s: 0xf0d0b0, e: 0x2a1a10, c: 0x2a2a34, d: 0xe8c040, p: 0x1a1a20, b: 0x101010 },
+    lignes: { 0: '..hhhhhh..', 1: '..hhhhhh..', 2: '.hhhhhhhh.', 4: '..sdssss..' },
+  },
+  // Les gardes : casque et armure.
+  garde: {
+    pal: { h: 0x8a909a, s: 0xe0b088, e: 0x2a1a10, c: 0x6a7080, d: 0x7a1a1a, p: 0x3a3a44, b: 0x2a2a30 },
+    lignes: { 0: '...hhhh...', 1: '..hhhhhh..', 2: '..hhhhhh..', 3: '..hehheh..' },
+  },
+  // Le mentor : l'aventurier sauvé de la rivière, barbe grise et cape verte.
+  mentor: {
+    pal: { h: 0x9a9a9a, s: 0xe8b890, e: 0x2a1a10, c: 0x2f5a3a, d: 0x7a4a1e, p: 0x4a3a2a, b: 0x3a2a1a },
+    lignes: { 4: '..shhhhs..', 5: '..hhhhhh..', 6: '..chhhhc..' },
+  },
+  // Toi : le jeune orphelin...
+  heros: {
+    pal: { h: 0x8a5a2a, s: 0xf0c8a0, e: 0x2a1a10, c: 0x3a5a8a, d: 0x7a4a1e, p: 0x6a5a40, b: 0x4a3020 },
+    lignes: {},
+  },
+  // ... ou la jeune orpheline.
+  heroine: {
+    pal: { h: 0xb0602a, s: 0xf0c8a0, e: 0x2a1a10, c: 0x8a3a5a, d: 0x7a4a1e, p: 0x6a5a40, b: 0x4a3020 },
+    lignes: { 6: '.hcccccch.', 7: '.hcccccch.' },
   },
   // Magicienne humaine : chapeau pointu et longue robe étoilée.
   magicienne: {
@@ -180,12 +238,44 @@ function dessinerComte(g, x, y, w, h, nuit = 0) {
   g.fillEllipse(x + w * 0.5, y + h * 0.95, w * 1.4, h * 0.5);
   // Petite porte ronde de hobbit dans la colline
   g.fillStyle(c(0x3a6a2a, 0x18242a), 1);
-  g.fillCircle(x + w * 0.16, y + h * 0.72, 13);
+  g.fillCircle(x + w * 0.16, y + h * 0.8, 13);
   g.fillStyle(c(0x2f6a9a, 0x1a2a40), 1);
-  g.fillCircle(x + w * 0.16, y + h * 0.72, 10);
+  g.fillCircle(x + w * 0.16, y + h * 0.8, 10);
   g.fillStyle(c(0xe0c040, 0x806020), 1);
-  g.fillCircle(x + w * 0.16, y + h * 0.72, 2);
+  g.fillCircle(x + w * 0.16, y + h * 0.8, 2);
   // Chemin de terre
   g.fillStyle(c(0xc9a46a, 0x4a3a30), 1);
   g.fillRect(x, y + h - 26, w, 26);
+}
+
+// La façade du comptoir, vue de dehors : bois, toit de chaume, fenêtre-comptoir et enseigne.
+// `cx` = centre, `sol` = bas des murs. Renvoie la position de la porte.
+function dessinerFacade(scene, cx, sol, nomShop = 'Le Comptoir') {
+  const g = scene.add.graphics();
+  const l = 320, h = 170;
+  const x = cx - l / 2, y = sol - h;
+  // Murs en planches
+  g.fillStyle(0x8a5a2b).fillRect(x, y, l, h);
+  g.lineStyle(2, 0x6b4423);
+  for (let px = x; px < x + l; px += 20) g.lineBetween(px, y, px, sol);
+  // Poutres
+  g.fillStyle(0x3b2410).fillRect(x, y, l, 10).fillRect(x, y, 10, h).fillRect(x + l - 10, y, 10, h);
+  // Toit de chaume
+  g.fillStyle(0xc9a046).fillTriangle(x - 30, y + 4, cx, y - 110, x + l + 30, y + 4);
+  g.lineStyle(2, 0xa07a2a);
+  for (let i = 1; i < 6; i++) g.lineBetween(x - 30 + i * 18, y + 4 - i * 2, cx, y - 110);
+  // Fenêtre-comptoir (le « drive »)
+  g.fillStyle(0x2a1a10).fillRect(x + 30, y + 40, 130, 80);
+  g.fillStyle(0xf0c060, 0.5).fillRect(x + 36, y + 46, 118, 68);
+  g.fillStyle(0x6b4423).fillRect(x + 22, y + 120, 146, 12);
+  // Porte ronde
+  g.fillStyle(0x3b2410).fillRoundedRect(x + 205, y + 60, 80, h - 60, { tl: 40, tr: 40, bl: 0, br: 0 });
+  g.fillStyle(0x2f6a9a).fillRoundedRect(x + 211, y + 66, 68, h - 66, { tl: 34, tr: 34, bl: 0, br: 0 });
+  g.fillStyle(0xe0c040).fillCircle(x + 245, y + 120, 4);
+  // Enseigne suspendue
+  g.fillStyle(0x3b2410).fillRect(x + 40, y - 6, 4, 22).fillRect(x + 150, y - 6, 4, 22);
+  g.fillStyle(0xead9b0).fillRect(x + 28, y + 14, 140, 24);
+  g.lineStyle(2, 0x6b4423).strokeRect(x + 28, y + 14, 140, 24);
+  scene.add.text(x + 98, y + 26, nomShop, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+  return { porteX: x + 245, porteY: sol, g };
 }
