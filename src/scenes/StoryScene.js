@@ -169,7 +169,7 @@ class StoryScene extends Phaser.Scene {
     const sol = 360;
     const g = this.add.graphics();
     this.decor.add(g);
-    this.tweens.add({ targets: this.voile, fillAlpha: ['nuit', 'grotte'].includes(type) ? 0.6 : 0, duration: 500 });
+    this.tweens.add({ targets: this.voile, fillAlpha: ['nuit', 'grotte', 'feufollet'].includes(type) ? 0.6 : 0, duration: 500 });
 
     if (type === 'route') {
       g.fillStyle(0x6b4423).fillRect(x, sol - 90, 8, 90);
@@ -199,6 +199,12 @@ class StoryScene extends Phaser.Scene {
     } else if (type === 'morsure') {
       g.fillStyle(0x60c040, 0.8);
       for (let i = 0; i < 8; i++) g.fillCircle(this.perso.x + Phaser.Math.Between(-40, 40), sol - Phaser.Math.Between(20, 100), 5);
+    } else if (type === 'feufollet') {
+      [[x, 250], [x + 50, 210], [x + 100, 260], [x + 150, 230]].forEach(([fx, fy], i) => {
+        const lueur = this.add.circle(fx, fy, 10, 0x80ffd0, 0.8);
+        this.decor.add(lueur);
+        this.tweens.add({ targets: lueur, y: fy - 20, duration: 800 + i * 150, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      });
     } else if (type === 'blessure') {
       g.fillStyle(0xd8344a, 0.8).fillRect(this.perso.x - 8, sol - 70, 16, 4);
     }

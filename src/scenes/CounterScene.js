@@ -2,6 +2,10 @@
 // le joueur leur prépare un colis avec son stock.
 
 const FENETRE = { x: 300, y: 20, w: 360, h: 230 };
+const SOL_COMPTOIR = FENETRE.y + FENETRE.h - 10;
+// La file d'attente : le premier attend juste à gauche du comptoir,
+// les suivants s'alignent derrière lui, plus petits car plus loin.
+const FILE = { x: FENETRE.x + 110, ecart: 55, y: SOL_COMPTOIR - 14, echelle: 5 };
 
 class CounterScene extends Phaser.Scene {
   constructor() { super('Comptoir'); }
@@ -66,15 +70,39 @@ class CounterScene extends Phaser.Scene {
     const masque = forme.createGeometryMask();
     this.paysage.setMask(masque);
 
-    this.perso = this.add.image(-100, y + h - 10, 'perso_hobbit').setOrigin(0.5, 1).setScale(9);
+    this.masqueFenetre = masque;
+    this.perso = this.add.image(-100, SOL_COMPTOIR, 'perso_hobbit').setOrigin(0.5, 1).setScale(9).setDepth(2);
     this.perso.setMask(masque);
+    this.creerFileAttente();
 
     // Cadre et rebord de la fenêtre
-    const cadre = this.add.graphics();
+    const cadre = this.add.graphics().setDepth(3);
     cadre.lineStyle(10, 0x3b2410, 1);
     cadre.strokeRect(x - 5, y - 5, w + 10, h + 10);
     cadre.fillStyle(0x6b4423, 1);
     cadre.fillRect(x - 14, y + h, w + 28, 14);
+  }
+
+  // Les voyageurs qui attendent leur tour, visibles par la fenêtre.
+  creerFileAttente() {
+    this.fileSprites = this.G.file.map((v, i) => {
+      const sprite = this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'perso_' + v.race)
+        .setOrigin(0.5, 1).setScale(FILE.echelle).setTint(0xd8d0c0).setDepth(1);
+      sprite.setMask(this.masqueFenetre);
+      // Ils piétinent un peu en attendant.
+      this.tweens.add({ targets: sprite, y: FILE.y - 3, duration: 500 + i * 90, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      return sprite;
+    });
+
+    const fond = this.add.rectangle(FENETRE.x + 8, FENETRE.y + 8, 132, 28, 0x2a1a10, 0.8)
+      .setOrigin(0, 0).setStrokeStyle(2, 0xc9a227).setDepth(4);
+    this.texteAttente = this.add.text(fond.x + 66, fond.y + 14, '', style(14, '#f3d98a', { fontStyle: 'bold' }))
+      .setOrigin(0.5).setDepth(4);
+  }
+
+  majFileAttente() {
+    const n = this.G.file.length;
+    this.texteAttente.setText(n === 0 ? 'Plus personne' : `En attente : ${n}`);
   }
 
   creerPanneauGauche() {
@@ -161,9 +189,20 @@ class CounterScene extends Phaser.Scene {
     this.texteDialogue.setText('Quelqu\'un approche du comptoir...');
     this.majCommande();
 
-    this.perso.setTexture('perso_' + this.voyageur.race).setFlipX(false).setX(FENETRE.x - 60);
+    this.majFileAttente();
+
+    // Le premier de la file s'avance jusqu'au comptoir...
+    const premier = this.fileSprites.shift();
+    this.perso.setTexture('perso_' + this.voyageur.race).setFlipX(false)
+      .setPosition(premier.x, premier.y).setScale(FILE.echelle);
+    premier.destroy();
+    // ... et les autres avancent d'une place.
+    this.fileSprites.forEach((sprite, i) => {
+      this.tweens.add({ targets: sprite, x: FILE.x - i * FILE.ecart, duration: 900, delay: 300 + i * 150, ease: 'Sine.easeInOut' });
+    });
+
     this.tweens.add({
-      targets: this.perso, x: FENETRE.x + FENETRE.w / 2, duration: 1200, ease: 'Sine.easeOut',
+      targets: this.perso, x: FENETRE.x + FENETRE.w / 2, y: SOL_COMPTOIR, scale: 9, duration: 1200, ease: 'Sine.easeOut',
       onComplete: () => {
         this.nomParleur.setText(this.voyageur.nom);
         this.texteDialogue.setText(this.voyageur.accueil);
@@ -175,9 +214,13 @@ class CounterScene extends Phaser.Scene {
     this.marche(1200);
   }
 
-  // Petit sautillement pendant la marche.
+  // Petit dandinement pendant la marche.
   marche(duree) {
-    this.tweens.add({ targets: this.perso, scaleY: 8.6, duration: 150, yoyo: true, repeat: Math.floor(duree / 300) - 1 });
+    this.perso.setAngle(-4);
+    this.tweens.add({
+      targets: this.perso, angle: 4, duration: 150, yoyo: true, repeat: Math.floor(duree / 300) - 1,
+      onComplete: () => this.perso.setAngle(0),
+    });
   }
 
   donner(id) {
@@ -234,6 +277,7 @@ class CounterScene extends Phaser.Scene {
 
   finDeJournee() {
     this.voyageur = null;
+    this.majFileAttente();
     this.majCommande();
     this.boutonRemettre.setVisible(false);
     this.boutonDormir.setVisible(true);

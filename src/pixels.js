@@ -85,6 +85,11 @@ const RACES = {
     pal: { h: 0xb5532a, s: 0xe8b890, e: 0x2a1a10, c: 0x6a6f78, d: 0x7a4a1e, p: 0x4a3a2a, b: 0x2a1a10 },
     lignes: { 4: '..shhhhs..', 5: '..hhhhhh..', 6: '..chhhhc..', 7: '.ccchhccc.' },
   },
+  // Magicienne humaine : chapeau pointu et longue robe étoilée.
+  magicienne: {
+    pal: { h: 0x5a3a8a, s: 0xf0c8a0, e: 0x2a1a10, c: 0x6a4aa0, d: 0xe8c040, p: 0x6a4aa0, b: 0x3a2a50 },
+    lignes: { 0: '....hh....', 1: '...hhhh...', 2: '.hhhhhhhh.', 11: '..cccdcc..', 12: '..cccccc..', 13: '.cccccccc.' },
+  },
   // Elfe : longs cheveux blonds, oreilles pointues.
   elfe: {
     pal: { h: 0xe8d890, s: 0xf5dcc0, e: 0x205a30, c: 0x2f6a5a, d: 0xc9a227, p: 0x3a4a3a, b: 0x5a3a20 },

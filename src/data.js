@@ -14,8 +14,8 @@ const ITEMS = {
 
 // Volontairement un peu trop juste : il faut choisir qui servir en priorité.
 const STOCK_DEPART = {
-  ration: 2, gourde: 1, epee: 1, fleches: 1,
-  potion: 1, bandage: 1, torche: 2, corde: 1,
+  ration: 2, gourde: 2, epee: 1, fleches: 1,
+  potion: 2, bandage: 1, torche: 3, corde: 1,
 };
 
 const ARGENT_DEPART = 20;
@@ -100,6 +100,39 @@ const VOYAGEURS_JOUR_1 = [
         complet: "J'ai bu ta potion et la douleur est partie d'un coup.",
         partiel: "Le remède n'était pas assez fort...",
         rien: "Je n'avais aucun remède contre le venin.",
+      },
+    ],
+  },
+  {
+    id: 'mirabelle',
+    nom: "Mirabelle Lune-d'Argent",
+    race: 'magicienne',
+    feminin: true,
+    pv: 2,
+    butin: 40,
+    accueil: "Bonsoir, enfin, bonjour ! Je pars cueillir la fleur de lune au cœur du marais des Brumes. Il paraît que les feux follets y égarent les voyageurs...",
+    quete: 'Cueillir la fleur de lune',
+    epreuves: [
+      {
+        type: 'route', besoin: 'gourde', qte: 1,
+        intro: "L'eau du marais était croupie, impossible à boire.",
+        complet: 'Heureusement, ta gourde était pleine d\'eau claire.',
+        partiel: "J'ai dû économiser chaque gorgée...",
+        rien: "J'ai bu l'eau du marais. Mon ventre s'en souvient encore.",
+      },
+      {
+        type: 'nuit', besoin: 'torche', qte: 1,
+        intro: 'La fleur de lune ne s\'ouvre qu\'à minuit, dans le brouillard le plus épais.',
+        complet: "Grâce à ta torche, j'ai trouvé la fleur au premier coup d'œil.",
+        partiel: 'Ma torche crachotait dans l\'humidité...',
+        rien: "Je cherchais à tâtons dans la vase glacée.",
+      },
+      {
+        type: 'feufollet', besoin: 'potion', qte: 1,
+        intro: 'Des feux follets ont dansé autour de moi. Leur chant m\'attirait vers les eaux profondes...',
+        complet: "J'ai bu ta potion et mon esprit s'est éclairci d'un coup.",
+        partiel: 'Je résistais à peine à leur appel...',
+        rien: "Je les ai suivis sans pouvoir m'en empêcher.",
       },
     ],
   },

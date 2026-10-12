@@ -11,7 +11,7 @@ class BilanScene extends Phaser.Scene {
     this.add.text(480, 70, `Bilan du jour ${G.jour}`, style(30, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
 
     G.partis.forEach((p, i) => {
-      const y = 140 + i * 70;
+      const y = 125 + i * 62;
       const v = p.voyageur;
       const r = p.resultat;
       const e = v.feminin ? 'e' : '';
@@ -25,9 +25,9 @@ class BilanScene extends Phaser.Scene {
     });
 
     const gain = G.argent - ARGENT_DEPART;
-    this.add.text(480, 370, `Argent : ${ARGENT_DEPART} → ${G.argent} pièces  (${gain >= 0 ? '+' : ''}${gain})`,
+    this.add.text(480, 378, `Argent : ${ARGENT_DEPART} → ${G.argent} pièces  (${gain >= 0 ? '+' : ''}${gain})`,
       style(22, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
-    this.add.text(480, 405, 'Fin du prototype — la suite (marché, plusieurs jours...) arrive aux prochaines étapes !',
+    this.add.text(480, 410, 'Fin du prototype — la suite (marché, plusieurs jours...) arrive aux prochaines étapes !',
       style(14, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
 
     creerBouton(this, 480, 460, 260, 'Rejouer la journée', () => {
