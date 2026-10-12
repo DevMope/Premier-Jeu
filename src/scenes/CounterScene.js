@@ -7,6 +7,8 @@ const FENETRE = { x: 300, y: 20, w: 360, h: 230 };
 const SOL_COMPTOIR = FENETRE.y + FENETRE.h - 10;
 // La file d'attente : le premier attend juste à gauche du comptoir,
 // les suivants s'alignent derrière lui, plus petits car plus loin.
+// Le client au comptoir, en buste, à la taille de la fenêtre.
+const BUSTE = { echelle: 2.3 };
 const FILE = { x: FENETRE.x + 110, ecart: 55, y: SOL_COMPTOIR - 14, echelle: 5 };
 
 class CounterScene extends Phaser.Scene {
@@ -168,6 +170,7 @@ class CounterScene extends Phaser.Scene {
     this.actionB = null;
     this.majBoutonsService();
     this.bouton('...', null);
+    this.exprimer(entree.attentes > 1 ? 'fache' : 'neutre');
     this.dire(phrase + (msg ? ' ' + msg : ''), v.nom);
     this.G.file.push(entree);
     this.fileSprites.push(this.spriteFile(entree, this.G.file.length - 1).setVisible(false));
@@ -332,6 +335,7 @@ class CounterScene extends Phaser.Scene {
     if (!this.voyageur || this.enConfirmation) return this.dire("Il n'y a personne à qui l'offrir.", '');
     const r = offrirCadeau(this.G, this.voyageur, id);
     if (r.erreur) return this.dire(r.erreur, '');
+    this.exprimer(r.gout === 'aime' ? 'content' : r.gout === 'deteste' ? 'fache' : 'neutre');
     this.dire(r.texte);
     this.tweens.add({ targets: this.perso, y: this.perso.y - 14, duration: 140, yoyo: true });
     this.majStock();
@@ -431,6 +435,7 @@ class CounterScene extends Phaser.Scene {
   // --- Déroulement ---
 
   voyageurSuivant() {
+    this.buste = null;
     this.entree = null;
     this.voyageur = null;
     this.enService = false;
@@ -461,8 +466,10 @@ class CounterScene extends Phaser.Scene {
 
     // Le premier de la file s'avance jusqu'au comptoir...
     const premier = this.fileSprites.shift();
-    this.perso.setTexture(this.texturePour(entree)).setFlipX(false)
-      .setPosition(premier ? premier.x : FILE.x, FILE.y).setScale(FILE.echelle);
+    const departX = premier ? premier.x : FILE.x;
+    this.buste = null;
+    this.perso.setTexture(this.texturePour(entree)).setFlipX(false).setAngle(0)
+      .setPosition(departX, FILE.y).setScale(FILE.echelle);
     if (premier) premier.destroy();
     // ... et les autres avancent d'une place.
     this.fileSprites.forEach((sprite, i) => {
@@ -470,13 +477,86 @@ class CounterScene extends Phaser.Scene {
       this.tweens.add({ targets: sprite, x: FILE.x - i * FILE.ecart, duration: 900, delay: 300 + i * 150, ease: 'Sine.easeInOut' });
     });
 
+    if (faucheuse) {
+      // La Faucheuse ne marche pas : elle glisse jusqu'à la fenêtre.
+      this.tweens.add({
+        targets: this.perso, x: FENETRE.x + FENETRE.w / 2, y: SOL_COMPTOIR, duration: 1200, ease: 'Sine.easeOut',
+        scale: terreurFaucheuse(this.G, entree.partis.length).echelle,
+        onComplete: () => this.arrivee(entree),
+      });
+      return;
+    }
+    // Les autres : leur silhouette s'avance vers la fenêtre... puis on le voit de près, en buste.
+    const marcheur = this.add.image(departX, FILE.y, this.texturePour(entree)).setOrigin(0.5, 1).setScale(FILE.echelle).setDepth(1.5);
+    marcheur.setMask(this.masqueFenetre);
+    this.tweens.add({ targets: marcheur, angle: { from: -4, to: 4 }, duration: 150, yoyo: true, repeat: 3 });
     this.tweens.add({
-      targets: this.perso, x: FENETRE.x + FENETRE.w / 2, y: SOL_COMPTOIR, duration: 1200, ease: 'Sine.easeOut',
-      scale: faucheuse ? terreurFaucheuse(this.G, entree.partis.length).echelle : 9,
+      targets: marcheur, x: FENETRE.x + FENETRE.w / 2, y: SOL_COMPTOIR + 40, scale: 8, alpha: 0, duration: 1000, ease: 'Sine.easeIn',
+      onComplete: () => marcheur.destroy(),
+    });
+    this.montrerBuste(this.personneDe(entree), this.expressionArrivee(entree));
+    this.perso.setAlpha(0).setScale(BUSTE.echelle * 0.85);
+    this.tweens.add({
+      targets: this.perso, alpha: 1, scale: BUSTE.echelle, duration: 600, delay: 600, ease: 'Back.easeOut',
       onComplete: () => this.arrivee(entree),
     });
-    // La Faucheuse ne marche pas : elle glisse.
-    if (!faucheuse) this.marche(1200);
+  }
+
+  // --- Le client en buste : expressions, clignements, paroles ---
+
+  personneDe(entree) {
+    if (entree.type === 'client') return entree.voyageur;
+    if (entree.type === 'famille') return entree.visite.parent;
+    return entree.parti ? entree.parti.voyageur : null;
+  }
+
+  // Son humeur en arrivant au comptoir.
+  expressionArrivee(entree) {
+    if (entree.type === 'retour') return entree.parti.resultat.echec ? 'inquiet' : 'content';
+    if (entree.type === 'famille') return entree.visite.intention === 'colere' ? 'fache' : entree.visite.intention === 'releve' ? 'neutre' : 'inquiet';
+    const v = entree.voyageur;
+    if (v.exige) return 'fache';
+    if (entree.attentes > 1) return 'fache';
+    return niveauRelation(this.G, v.nom).index >= 4 ? 'content' : 'neutre';
+  }
+
+  montrerBuste(personne, expression = 'neutre') {
+    this.buste = { personne, expression };
+    this.perso.setTexture(textureBusteHD(this, personne, expression)).setOrigin(0.5, 1).setFlipX(false).setAngle(0)
+      .setPosition(FENETRE.x + FENETRE.w / 2, FENETRE.y + FENETRE.h).setScale(BUSTE.echelle).setVisible(true);
+    if (!this.minuterieCligne) {
+      // Il cligne des yeux de temps en temps.
+      this.minuterieCligne = this.time.addEvent({ delay: 2600, loop: true, callback: () => {
+        if (!this.buste || this.enTrainDeParler || Math.random() < 0.3) return;
+        this.perso.setTexture(textureBusteHD(this, this.buste.personne, this.buste.expression, { cligne: true }));
+        this.time.delayedCall(140, () => this.majVisage());
+      } });
+    }
+  }
+
+  majVisage(parle = false) {
+    if (!this.buste) return;
+    this.perso.setTexture(textureBusteHD(this, this.buste.personne, this.buste.expression, { parle }));
+  }
+
+  exprimer(expression) {
+    if (!this.buste || this.buste.expression === expression) return;
+    this.buste.expression = expression;
+    this.majVisage();
+  }
+
+  // La bouche bouge pendant qu'il parle.
+  parler(duree) {
+    if (!this.buste) return;
+    if (this.paroles) this.paroles.remove();
+    this.enTrainDeParler = true;
+    let ouverte = false, temps = 0;
+    this.paroles = this.time.addEvent({ delay: 110, loop: true, callback: () => {
+      temps += 110;
+      ouverte = temps < duree && !ouverte;
+      this.majVisage(ouverte);
+      if (temps >= duree) { this.paroles.remove(); this.paroles = null; this.enTrainDeParler = false; this.majVisage(); }
+    } });
   }
 
   arrivee(entree) {
@@ -905,6 +985,7 @@ class CounterScene extends Phaser.Scene {
     this.majBoutonsService();
     this.bouton('...', null);
     this.majStock();
+    this.exprimer('fache');
     this.dire("Tu refuses de me servir ? Très bien... J'irai voir ailleurs. Et je le dirai à tout le monde." + (msg ? ' ' + msg : ''), v.nom);
     this.partirPar(FENETRE.x - 80);
   }
@@ -914,7 +995,16 @@ class CounterScene extends Phaser.Scene {
   // noué dans son dos).
   partirPar(x, porte = null) {
     const versDroite = x > this.perso.x;
-    this.perso.setFlipX(versDroite);
+    const entree = this.entree;
+    const corps = () => {
+      // Il se retourne : on le voit de nouveau en entier.
+      if (!this.buste) return;
+      this.buste = null;
+      if (this.paroles) { this.paroles.remove(); this.paroles = null; this.enTrainDeParler = false; }
+      if (entree) this.perso.setTexture(this.texturePour(entree));
+      this.perso.setScale(9).setY(SOL_COMPTOIR).setFlipX(versDroite);
+    };
+    if (!this.buste) this.perso.setFlipX(versDroite);
     const decalage = versDroite ? 22 : -22;
     const inclinaison = versDroite ? -22 : 22;
     const placer = () => {
@@ -926,7 +1016,7 @@ class CounterScene extends Phaser.Scene {
     }
     this.tweens.add({
       targets: this.perso, x, duration: 1400, delay: 700, ease: 'Sine.easeIn',
-      onStart: () => this.marche(1400),
+      onStart: () => { corps(); this.marche(1400); },
       onUpdate: () => { if (porte) placer(); },
       onComplete: () => {
         if (porte) porte.destroy();
@@ -969,7 +1059,8 @@ class CounterScene extends Phaser.Scene {
         // ... et le client le hisse sur son épaule.
         boite.setOrigin(0.95, 0.95).setPosition(boite.x + boite.displayWidth * 0.45, boite.y);
         this.tweens.add({
-          targets: boite, x: this.perso.x + 22, y: this.perso.y - 62, angle: -22, duration: 400, ease: 'Back.easeOut',
+          // Sur l'épaule (en buste, l'épaule est plus bas et plus à droite)
+          targets: boite, x: this.perso.x + (this.buste ? 78 : 22), y: this.perso.y - (this.buste ? 34 : 62), angle: -22, duration: 400, ease: 'Back.easeOut',
           onComplete: () => suite(boite),
         });
       });
@@ -1008,6 +1099,7 @@ class CounterScene extends Phaser.Scene {
     if (!qui && this.voyageur && nom && nom.startsWith(this.voyageur.nom)) qui = this.voyageur.nom;
     this.nomParleur.setText(nom).setColor(qui ? couleurNom(this.G, qui, true) : '#f3d98a');
     this.texteDialogue.setText(texte);
+    if (qui && this.buste && this.buste.personne.nom === qui) this.parler(Math.min(2400, 400 + texte.length * 22));
   }
 
   remettreColis() {
@@ -1114,6 +1206,11 @@ class CounterScene extends Phaser.Scene {
       ligne.txt.setText(`${ITEMS[id].nom}  ${Math.min(donne, commande[id])} / ${commande[id]}  ${ok ? '✓' : ''}${plus[id] ? ` +${plus[id]}` : ''}${piege}`)
         .setFontSize(14).setColor(piege ? '#7a1a4a' : ok ? '#2f6a2a' : '#3b2410');
     });
+    // Son visage suit son colis : content s'il est bien équipé, inquiet s'il manque des choses.
+    if (v && this.enService && v.queteId && this.buste && this.buste.personne === v) {
+      const c = chanceDeRetour(v, this.colis);
+      this.exprimer(v.exige && !totalSurplus(v, this.colis) ? 'fache' : c >= 0.75 ? 'content' : c < 0.4 ? 'inquiet' : 'neutre');
+    }
     if (v && !v.queteId) {
       this.texteChance.setText('Choisis sa destination').setColor('#8a6a10');
     } else if (v) {
