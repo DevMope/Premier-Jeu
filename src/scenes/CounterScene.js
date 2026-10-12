@@ -207,6 +207,15 @@ class CounterScene extends Phaser.Scene {
     this.add.text(150, 360, 'Ton stock — clic : ajouter au colis', style(14, '#2a1a10', { fontStyle: 'italic' }));
     this.texteReserve = this.add.text(660, 360, '', style(14, '#2a1a10', { fontStyle: 'bold' })).setOrigin(1, 0);
     this.creerEtagere();
+    // Le registre posé sur le bureau : clic pour ouvrir le bureau (fiches, comptes, statistiques)
+    const registre = this.add.rectangle(75, 362, 120, 24, 0x6b2a1a).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
+    this.add.text(75, 362, 'Le registre', style(13, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
+    registre.on('pointerover', () => registre.setFillStyle(0x8a3a2a));
+    registre.on('pointerout', () => registre.setFillStyle(0x6b2a1a));
+    registre.on('pointerdown', () => {
+      this.scene.pause();
+      this.scene.launch('Bureau', { retour: 'Comptoir', comptoir: this });
+    });
     this.cases = {};
     Object.keys(ITEMS).forEach((id, i) => {
       const x = 205 + (i % 4) * 130;
@@ -339,7 +348,7 @@ class CounterScene extends Phaser.Scene {
       parler(`C'est toi qui as équipé ${proche}, ${prenom} ? ${il[0].toUpperCase() + il.slice(1)} est mort${d.feminin ? 'e' : ''} à cause de ton matériel de pacotille !`);
       this.choix(['Dédommager (25 p.)', () => {
         if (!peutPayer(G, 25)) return fin("Tu n'as même pas de quoi payer ? Pathétique.");
-        G.argent -= 25;
+        payer(G, 25, 'dedommagements');
         G.reputation += 0.5;
         fin("Hmph... Ça ne ramènera pas " + proche + ", mais c'est honnête de ta part.");
       }], ['Le renvoyer', () => {
@@ -380,6 +389,15 @@ class CounterScene extends Phaser.Scene {
         changerRelation(G, p.nom, 5);
         fin(`${msg} Prends-en soin.`);
         this.creerEtagere();
+    // Le registre posé sur le bureau : clic pour ouvrir le bureau (fiches, comptes, statistiques)
+    const registre = this.add.rectangle(75, 362, 120, 24, 0x6b2a1a).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
+    this.add.text(75, 362, 'Le registre', style(13, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
+    registre.on('pointerover', () => registre.setFillStyle(0x8a3a2a));
+    registre.on('pointerout', () => registre.setFillStyle(0x6b2a1a));
+    registre.on('pointerdown', () => {
+      this.scene.pause();
+      this.scene.launch('Bureau', { retour: 'Comptoir', comptoir: this });
+    });
       }], ['Le garder pour sa famille', () => {
         G.reputation += 0.5;
         changerRelation(G, p.nom, 3);

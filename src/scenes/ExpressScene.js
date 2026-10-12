@@ -83,7 +83,7 @@ class ExpressScene extends Phaser.Scene {
     if (offre.qte <= 0) return this.parler('Plus rien ! Tout vendu ! Reviens demain, avec plus de pièces.');
     if (!peutPayer(G, offre.prix)) return this.parler("Pas de pièces, pas de marchandise ! File, mendiant !");
     if (!pourLeClient && stockTotal(G) >= G.capacite) return this.parler('Ta réserve est pleine ! Grippesou ne vend pas de place, hé hé.');
-    G.argent -= offre.prix;
+    payer(G, offre.prix, 'express');
     offre.qte--;
     if (pourLeClient) c.colis[id] = (c.colis[id] || 0) + 1;
     else G.stock[id]++;

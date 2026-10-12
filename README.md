@@ -30,6 +30,7 @@ La partie se sauvegarde toute seule le soir et le matin au marché :
 | `src/scenes/CounterScene.js` | Le comptoir : servir les voyageurs |
 | `src/scenes/MarcheScene.js` | Le Mastre Marché, le matin : étals, enchères, jeux d'argent, mendiant |
 | `src/scenes/AtelierScene.js` | L'atelier : réparer les objets de valeur |
+| `src/scenes/BureauScene.js` | Le bureau : registre des fiches, chiffre d'affaires, tiroirs de statistiques |
 | `src/scenes/NightScene.js` | Le soir : bilan, réserve, lettres, banque, prévision de demain |
 | `src/scenes/StoryScene.js` | La cinématique du récit de chaque aventurier |
 | `src/scenes/FailliteScene.js` | La cinématique de faillite |

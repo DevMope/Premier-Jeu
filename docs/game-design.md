@@ -139,7 +139,7 @@ Le joueur ne choisit pas son camp dans un menu : son camp se construit par ses a
 
 ## 5. Histoire
 - **Création du personnage** : garçon ou fille, coiffure, couleur des cheveux, de la peau et des yeux, bouche (souriante, neutre, étonnée, grognon), barbe (elle pousse à 18 ans), couleurs des habits du haut et du bas. L'aperçu montre le personnage au début de l'aventure (15 ans).
-- **Idée à développer plus tard, l'évolution du personnage** : le nom évolue avec l'âge, PetitGoy (moins de 18 ans), HommeGoy (adulte), AncienGoy (60 ans et plus) ; PetiteGoy, FemmeGoy, AncienneGoy pour une fille. On commence à 15 ans, et une année passe tous les 7 jours. Les cheveux blanchissent avec la vieillesse. (Déjà en place : le nom et l'âge au comptoir. À venir : le vieillissement visible, les talents à choisir aux grands âges.)
+- **Idée à développer plus tard, l'évolution du personnage** : le nom évolue avec l'âge, PetitGoy (moins de 18 ans), HommeGoy (adulte), AncienGoy (60 ans et plus) ; PetiteGoy, FemmeGoy, AncienneGoy pour une fille. On commence à 15 ans, et une année passe à chaque année du calendrier (112 jours). Les cheveux blanchissent avec la vieillesse. (Déjà en place : le nom et l'âge au comptoir. À venir : le vieillissement visible, les talents à choisir aux grands âges.)
 - **Prologue** (cinématique d'introduction) : le jeune orphelin sauve **Garrick Cœur-de-Chêne**, un aventurier emporté par une rivière, le soigne, répare ses armes, chasse pour le nourrir et lui prépare des provisions. Des jours plus tard, l'aventurier revient avec un trésor. Le jeune ne sait pas quoi demander, mais il a aimé s'occuper de lui → l'aventurier lui offre son **premier shop** et un petit capital.
 - **Fil rouge** : une menace grandit (piste actuelle : un grand dragon sous la montagne mystique — *à confirmer*). Le monde a de plus en plus peur.
 - **Deux fins** selon le camp du joueur :
@@ -159,6 +159,12 @@ Petit entrepôt en bois, cosy, façon auberge du Poney Fringant. Les clients ne 
   - tableau du chiffre d'affaires ;
   - tiroirs cliquables → statistiques de la partie.
 - Flèche → se retourner.
+
+**Le bureau** (déjà en place, ouvert depuis le registre posé sur le comptoir ou le soir) :
+- **le registre des fiches** : six onglets (À venir, Aujourd'hui, En mission, Revenus, Disparus, Répertoire) ; chaque fiche montre la relation et le prochain palier, les missions réussies, le butin rapporté, le matériel, les blessures, la commande ou le colis ;
+- **l'ardoise du chiffre d'affaires** : recettes, dépenses et bénéfice du jour, de la semaine, du mois et de l'année (les prêts sont comptés à part) ;
+- **trois tiroirs** : les aventuriers (servis, revenus, morts, taux de retour, refus, meilleurs clients, objets les plus donnés), le commerce (recettes et dépenses par poste, ventes aux enchères), la réputation (flair, artisanat, décorations, relations par niveau).
+- **Le calendrier** : 7 jours par semaine, 4 semaines par mois, 4 mois par an (Mois des Semailles, des Moissons, des Brumes, du Givre). L'âge du personnage avance d'un an par année du calendrier (à revoir avec l'évolution du personnage).
 
 **Vue 2 : arrière du shop**
 - Le stock (tout ce qui a été acheté).
@@ -200,7 +206,7 @@ Chaque étape doit donner une version **jouable**.
 | 2++ ✅ | **Relations et cinématiques** | 7 niveaux de relation, familles des disparus, flair, marchandage, artisanat et matières premières, décorations, cinématique d'introduction, cinématique de faillite. |
 | 3+ ✅ | **Achat-revente** | Trouvailles des aventuriers, atelier de réparation sur plusieurs jours, enchères par lots au Mastre Marché. |
 | 3 ✅ | **Le Mastre Marché** | Le matin, avant d'ouvrir : trois étals (épicerie, forge, apothicaire) aux prix et assortiments variables, marchandage avec chaque marchand, dés et bonneteau, le mendiant. |
-| 4 | **Les fiches et le bureau** | Fiches voyageurs (à venir/présents/partis/revenus), voyageurs annoncés à l'avance, tableau de CA, tiroirs de stats. |
+| 4 ✅ | **Les fiches et le bureau** | Le registre (fiches : à venir, aujourd'hui, en mission, revenus, disparus, répertoire), l'ardoise du chiffre d'affaires (jour, semaine, mois, année), trois tiroirs de statistiques, le calendrier. |
 | 5 | **Les deux vues du shop** | Comptoir ↔ arrière (stock + lit), façade avec le nom du shop. |
 | 6 ✅ | **Sauvegarde** | Automatique le soir et le matin : navigateur, compte claude.ai (version en ligne), et code de sauvegarde à copier-coller. Bouton Continuer à l'écran titre. |
 | 7 | **Premiers graphismes pixel art** | Remplacer les formes par de vrais sprites et décors. |

@@ -18,14 +18,18 @@ class NightScene extends Phaser.Scene {
     this.creerReserve(320, 640);
     this.creerPrevision(660, 940);
 
-    creerBouton(this, 160, 505, 200, 'La banque', () => this.ouvrirBanque());
+    creerBouton(this, 120, 505, 200, 'Le bureau', () => {
+      this.scene.pause();
+      this.scene.launch('Bureau', { retour: 'Nuit' });
+    });
+    creerBouton(this, 340, 505, 200, 'La banque', () => this.ouvrirBanque());
     this.events.off('resume', this.tout, this);
     this.events.on('resume', this.tout, this);
-    creerBouton(this, 480, 505, 240, 'Aller dormir', () => this.dormir());
-    creerBouton(this, 800, 505, 200, `L'atelier (${G.tresors.length})`, () => {
+    creerBouton(this, 560, 505, 200, `L'atelier (${G.tresors.length})`, () => {
       this.scene.pause();
       this.scene.launch('Atelier');
     });
+    creerBouton(this, 810, 505, 240, 'Aller dormir', () => this.dormir());
     this.tout();
     afficherStatutSauvegarde(this, 20, 22, 0);
   }
@@ -146,7 +150,7 @@ class NightScene extends Phaser.Scene {
       if (a.acceptee) {
         c.add(this.add.text(x2 - 12, y, 'acceptée', style(11, '#2f6a2a', { fontStyle: 'italic' })).setOrigin(1, 0));
       } else {
-        c.add(this.petitBouton(x2 - 70, y + 8, 'Oui', 0x4f7a3a, () => { a.acceptee = true; this.tout(); }));
+        c.add(this.petitBouton(x2 - 70, y + 8, 'Oui', 0x4f7a3a, () => { accepterLettre(G, a); this.tout(); }));
         c.add(this.petitBouton(x2 - 30, y + 8, 'Non', 0x8a3a2a, () => { refuserLettre(G, a); this.tout(); }));
       }
     });

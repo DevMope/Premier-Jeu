@@ -406,7 +406,26 @@ const NOMS_JOUEUR = {
   fille: { petit: 'PetiteGoy', adulte: 'FemmeGoy', ancien: 'AncienneGoy' },
 };
 const AGE_DEPART = 15;
-const JOURS_PAR_AN = 7;
+
+// --- Le calendrier ---
+// 7 jours par semaine, 4 semaines par mois, 4 mois par an (un par saison).
+const JOURS_PAR_SEMAINE = 7;
+const JOURS_PAR_MOIS = 28;
+const JOURS_PAR_AN = 112;
+const MOIS = ['Mois des Semailles', 'Mois des Moissons', 'Mois des Brumes', 'Mois du Givre'];
+
+// --- La comptabilité ---
+// Les catégories de recettes et de dépenses, pour l'ardoise et les statistiques.
+const POSTES = {
+  butins: 'Parts de butin', reparations: 'Réparations', soins: 'Soins', encheres: 'Enchères',
+  jeux: 'Jeux', cadeaux: 'Cadeaux', marche: 'Achats au marché', express: 'Marchand express',
+  trouvailles: 'Trouvailles', reserve: 'Agrandissements', dedommagements: 'Dédommagements',
+  remboursements: 'Remboursements de prêts', dons: 'Dons au mendiant', prets: 'Prêts reçus',
+};
+// On garde le détail des derniers jours (un peu plus d'une année).
+const JOURS_DE_COMPTES = 120;
+// Le registre garde les dernières aventures terminées.
+const TAILLE_HISTORIQUE = 150;
 
 // Les choix de la création du personnage.
 const APPARENCE = {

@@ -175,6 +175,11 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
     jeux: { des: 0, bonneteau: 0 },
     mendiant: 0,       // total donné au mendiant
     tresors: [],       // objets de valeur à l'atelier : { id, nom, categorie, valeurBase, etat, reparation }
+    compta: {},        // jour → { r: recettes, d: dépenses, pret: prêts reçus } par poste
+    comptaTotal: { r: {}, d: {}, pret: {} },
+    historique: [],    // aventures terminées : { nom, race, quete, depart, retour, issue, gain, chance }
+    personnes: {},     // nom → { race, feminin } de tous ceux qu'on a croisés
+    stats: { refus: 0, lettresAcceptees: 0, lettresRefusees: 0, objets: {}, ventes: 0 },
     nouvellesAtelier: [],
     encheresJour: 0,   // le jour de la dernière vente aux enchères
     visites: [],       // familles qui viendront au comptoir : { jour, defunt, parent }
@@ -221,6 +226,8 @@ function partir(G, voyageur, colis) {
   });
   G.experience++;
   G.journal.servis++;
+  G.personnes[voyageur.nom] = { race: voyageur.race, feminin: voyageur.feminin };
+  for (const [id, n] of Object.entries(colis)) G.stats.objets[id] = (G.stats.objets[id] || 0) + n;
   return message;
 }
 
@@ -308,7 +315,7 @@ function acheterAuMarche(G, cle, id) {
 
 // Chaque achat chez un marchand compte pour votre relation (et donc ses remises).
 function depenserChez(G, cle, montant) {
-  G.argent -= montant;
+  payer(G, montant, 'marche');
   const nom = MARCHANDS[cle].nom;
   const total = G.depenses[cle] || 0;
   const avant = Math.floor(total / DEPENSE_PAR_POINT);
@@ -335,8 +342,8 @@ function jouerAuxDes(G, mise) {
   const a = toi[0] + toi[1] + bonus;
   const b = lui[0] + lui[1];
   const resultat = a > b ? 'gagne' : a < b ? 'perdu' : 'egalite';
-  if (resultat === 'gagne') G.argent += mise;
-  if (resultat === 'perdu') G.argent -= mise;
+  if (resultat === 'gagne') encaisser(G, mise, 'jeux');
+  if (resultat === 'perdu') payer(G, mise, 'jeux');
   return { toi, lui, bonus, resultat };
 }
 
@@ -344,12 +351,12 @@ function jouerAuxDes(G, mise) {
 function miserAuBonneteau(G, mise) {
   if (partiesRestantes(G, 'bonneteau') <= 0 || !peutPayer(G, mise)) return false;
   G.jeux.bonneteau++;
-  G.argent -= mise;
+  payer(G, mise, 'jeux');
   return true;
 }
 
 function gagnerAuBonneteau(G, mise) {
-  G.argent += mise * 2;
+  encaisser(G, mise * 2, 'jeux');
 }
 
 // --- Le mendiant ---
@@ -358,7 +365,7 @@ function gagnerAuBonneteau(G, mise) {
 function donnerAuMendiant(G, montant) {
   if (!peutPayer(G, montant)) return null;
   const avant = G.mendiant;
-  G.argent -= montant;
+  payer(G, montant, 'dons');
   G.mendiant += montant;
   if (avant < MENDIANT_SEUIL && G.mendiant >= MENDIANT_SEUIL && !G.decorations.includes('trefle')) {
     G.decorations.push('trefle');
@@ -374,11 +381,19 @@ function donnerAuMendiant(G, montant) {
 function refuserLettre(G, annonce) {
   G.annonces = G.annonces.filter(a => a !== annonce);
   G.reputation -= REFUS_LETTRE;
+  G.stats.lettresRefusees++;
   changerRelation(G, annonce.voyageur.nom, POINTS_RELATION.refusLettre);
+}
+
+function accepterLettre(G, annonce) {
+  annonce.acceptee = true;
+  G.stats.lettresAcceptees++;
 }
 
 function refuserClient(G, voyageur) {
   G.reputation -= REFUS_CLIENT;
+  G.stats.refus++;
+  G.personnes[voyageur.nom] = { race: voyageur.race, feminin: voyageur.feminin };
   return changerRelation(G, voyageur.nom, POINTS_RELATION.refusClient);
 }
 
@@ -433,7 +448,7 @@ function offrirDecoration(G) {
   // Le trèfle ne s'obtient que par le mendiant.
   const libres = Object.keys(DECORATIONS).filter(id => id !== 'trefle' && !G.decorations.includes(id));
   if (!libres.length) {
-    G.argent += 50;
+    encaisser(G, 50, 'cadeaux');
     return 'Il t\'offre une bourse de 50 pièces.';
   }
   const id = auHasard(libres);
@@ -474,7 +489,7 @@ function reparerObjet(G, voyageur, id) {
   if (G.materiaux[mat] < besoin) return `Il te faut ${besoin} ${MATERIAUX[mat].nom.toLowerCase()} pour réparer ça.`;
   G.materiaux[mat] -= besoin;
   voyageur.inventaire[id] = USURE_MAX;
-  G.argent += PRIX_REPARATION;
+  encaisser(G, PRIX_REPARATION, 'reparations');
   G.reparations++;
   changerRelation(G, voyageur.nom, POINTS_RELATION.reparation);
   return null;
@@ -499,7 +514,7 @@ function dedommager(G, parti, niveau) {
   const v = parti.voyageur;
   const d = DEDOMMAGEMENTS[niveau];
   parti.dedommage = niveau;
-  G.argent -= montantsDedommagement(v)[niveau];
+  payer(G, montantsDedommagement(v)[niveau], 'dedommagements');
   G.reputation += d.reputation;
   if (Math.random() < d.releve) return ajouterVisite(G, v, parti.resultat.valeureux, 'releve');
   const pts = G.relations[v.nom] || 0;
@@ -571,7 +586,7 @@ function agrandissementSuivant(G) {
 function agrandirReserve(G) {
   const a = agrandissementSuivant(G);
   if (!a || !peutPayer(G, a.prix)) return false;
-  G.argent -= a.prix;
+  payer(G, a.prix, 'reserve');
   G.capacite = a.capacite;
   return true;
 }
@@ -586,7 +601,9 @@ function refusPret(G, pret) {
 function emprunter(G, pret) {
   if (refusPret(G, pret)) return;
   const du = Math.round(pret.somme * (1 + pret.taux));
+  // Un prêt n'est pas une recette : il est compté à part.
   G.argent += pret.somme;
+  compter(G, 'pret', 'prets', pret.somme);
   G.prets.push({ id: pret.id, preteur: pret.preteur, nom: pret.nom, restant: du, parJour: Math.ceil(du / pret.jours) });
 }
 
@@ -594,7 +611,7 @@ function emprunter(G, pret) {
 function payerEcheances(G) {
   for (const p of G.prets) {
     const montant = Math.min(p.parJour, p.restant);
-    G.argent -= montant;
+    payer(G, montant, 'remboursements');
     p.restant -= montant;
   }
   G.prets = G.prets.filter(p => p.restant > 0);
@@ -641,8 +658,10 @@ function nuit(G) {
   G.etals = etalsDuJour(G);
   G.jeux = { des: 0, bonneteau: 0 };
   avancerAtelier(G);
-  // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère).
+  // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
+  // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
+  for (const j of Object.keys(G.compta)) if (j < G.jour - JOURS_DE_COMPTES) delete G.compta[j];
 }
 
 // On ouvre le comptoir : la file d'attente du jour se forme.
@@ -692,7 +711,7 @@ function terminerAventure(G, parti) {
   G.habitues = G.habitues.filter(h => h.nom !== v.nom);
   if (r.vivant) {
     gain = partDuButin(G, v);
-    G.argent += gain;
+    encaisser(G, gain, 'butins');
     G.reputation++;
     G.journal.retours++;
     message = changerRelation(G, v.nom, POINTS_RELATION.retourVivant);
@@ -705,6 +724,12 @@ function terminerAventure(G, parti) {
     // La famille attend un dédommagement : il est choisi à la fin du carnet.
   }
   parti.bilan = { gain, message };
+  G.personnes[v.nom] = { race: v.race, feminin: v.feminin };
+  G.historique.unshift({
+    nom: v.nom, race: v.race, quete: v.quete, depart: parti.depart, retour: parti.retour,
+    issue: r.vivant ? 'vivant' : r.valeureux ? 'valeureux' : 'sans gloire', gain, chance: parti.chance,
+  });
+  G.historique = G.historique.slice(0, TAILLE_HISTORIQUE);
   return parti.bilan;
 }
 
@@ -728,7 +753,7 @@ function soigner(G, nom) {
   if (!h || !h.blessures) return "Il n'a plus de blessure à soigner.";
   if (G.stock.potion <= 0) return "Tu n'as plus de potion.";
   G.stock.potion--;
-  G.argent += PRIX_SOIN;
+  encaisser(G, PRIX_SOIN, 'soins');
   h.blessures--;
   changerRelation(G, nom, 1);
   return null;
@@ -742,6 +767,66 @@ function blessuresDe(G, nom) {
 // Les prêts proposés : la Main Noire seulement pour le camp du mal.
 function pretsProposes(G) {
   return PRETS.filter(p => !p.mal || G.camp === 'mal');
+}
+
+// --- La comptabilité ---
+
+function compter(G, type, poste, montant) {
+  if (!montant) return;
+  const jour = G.compta[G.jour] = G.compta[G.jour] || { r: {}, d: {}, pret: {} };
+  jour[type][poste] = (jour[type][poste] || 0) + montant;
+  G.comptaTotal[type][poste] = (G.comptaTotal[type][poste] || 0) + montant;
+}
+
+// Une recette (l'argent qui rentre)...
+function encaisser(G, montant, poste) {
+  G.argent += montant;
+  compter(G, 'r', poste, montant);
+}
+
+// ... et une dépense.
+function payer(G, montant, poste) {
+  G.argent -= montant;
+  compter(G, 'd', poste, montant);
+}
+
+// Recettes, dépenses et bénéfice entre deux jours (inclus).
+function bilanPeriode(G, du, au) {
+  let recettes = 0, depenses = 0;
+  for (let j = du; j <= au; j++) {
+    const c = G.compta[j];
+    if (!c) continue;
+    recettes += Object.values(c.r).reduce((a, b) => a + b, 0);
+    depenses += Object.values(c.d).reduce((a, b) => a + b, 0);
+  }
+  return { recettes, depenses, benefice: recettes - depenses };
+}
+
+// --- Le calendrier ---
+
+function dateDuJour(G, jour = G.jour) {
+  const j = jour - 1;
+  return {
+    an: Math.floor(j / JOURS_PAR_AN) + 1,
+    mois: Math.floor((j % JOURS_PAR_AN) / JOURS_PAR_MOIS),
+    semaine: Math.floor((j % JOURS_PAR_MOIS) / JOURS_PAR_SEMAINE) + 1,
+    jourDuMois: (j % JOURS_PAR_MOIS) + 1,
+  };
+}
+
+// Le premier jour de la semaine, du mois et de l'année en cours.
+function debutsDePeriodes(G) {
+  const j = G.jour - 1;
+  return {
+    semaine: j - (j % JOURS_PAR_SEMAINE) + 1,
+    mois: j - (j % JOURS_PAR_MOIS) + 1,
+    an: j - (j % JOURS_PAR_AN) + 1,
+  };
+}
+
+function dateEnTexte(G, jour = G.jour) {
+  const d = dateDuJour(G, jour);
+  return `${d.jourDuMois} ${MOIS[d.mois]}, an ${d.an}`;
 }
 
 // --- Ton personnage ---
@@ -797,7 +882,7 @@ function acheterTrouvaille(G, t) {
   if (t.vendu) return 'Déjà acheté.';
   if (G.tresors.length >= PLACES_ATELIER) return `Ton atelier est plein (${PLACES_ATELIER} objets).`;
   if (!peutPayer(G, t.prix)) return "Pas assez d'argent.";
-  G.argent -= t.prix;
+  payer(G, t.prix, 'trouvailles');
   t.vendu = true;
   G.tresors.push(t.tresor);
   return null;
@@ -867,7 +952,8 @@ function vendreAuxEncheres(G, lot) {
   G.encheresJour = G.jour;
   if (!gagnant) return { deroule, gagnant: null, prix: 0, estimation };
   G.tresors = G.tresors.filter(t => !lot.includes(t));
-  G.argent += prix;
+  encaisser(G, prix, 'encheres');
+  G.stats.ventes += lot.length;
   return { deroule, gagnant, prix, estimation };
 }
 
