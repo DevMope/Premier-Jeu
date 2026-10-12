@@ -239,6 +239,21 @@ Le joueur ne quitte jamais vraiment son shop, sauf pour ces marchés (écrans/me
 - Peut-on changer de camp en cours de partie ?
 - Plus tard, la banque des gentils et la Main Noire pourront dépendre du camp choisi.
 
+## 8 bis. Le point : ce qui reste à définir
+
+Décidé :
+- On ne refuse un voyageur **qu'au comptoir** (pas depuis la carte).
+- Les lieux du mal sur la carte accueillent pour l'instant des **aventuriers vénaux** (des clients du bien qui acceptent des quêtes du mal pour l'or) ; les races du mal viendront plus tard.
+
+À définir ensemble :
+1. **Les lieux du bien et du mal** : lesquels exactement, où sur la carte, ce qu'on y fait (quêtes, butin, effet sur la réputation et la jauge du mal).
+2. **Le déblocage lent des étoiles** : en plus de la réputation, un nombre de retours réussis dans les zones de l'étoile précédente (proposition : 3, 5, 8) ?
+3. **Les voyageurs qui deviennent forts** : niveaux au fil des missions réussies (proposition : Novice, Aguerri, Vétéran, Héros, Légende), et ce que chaque niveau apporte.
+4. **La « case chance » de chaque voyageur** (idée du joueur) : une valeur propre à chaque personnage, qui monte avec la relation et d'autres choses, comme les **cadeaux** (des objets spécial cadeau au marché). À quoi elle sert : rattraper une épreuve ratée ? transformer une mort en simple échec de mission ? Qui aime quel cadeau ?
+5. **Échouer sans mourir** : une mission peut rater sans que le voyageur meure. Quand il meurt, on perd déjà l'argent, de la réputation et toute la relation. Quand il échoue, quel **malus** en plus d'une perte de réputation ? (idées dans la discussion)
+6. **Les lettres** : rares, annonciatrices d'événements passés, en cours ou planifiés.
+7. Les idées déjà notées : familiers (grand aigle), mercenaires, petit bar, zones conquises, vieillissement et talents, marché noir du soir, camp du mal et Main Noire, les deux fins.
+
 ## 9. Plan de développement (étape par étape)
 
 Chaque étape doit donner une version **jouable**.
