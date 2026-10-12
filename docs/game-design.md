@@ -47,8 +47,10 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
 - **Les habitués et la réparation** : un aventurier revenu vivant peut revenir comme client. Il garde ses objets durables (épée, corde, gourde), qui s'usent à chaque épreuve (3 crans). Le joueur peut les réparer : ça ne coûte rien en stock, et c'est le client qui paie.
 - **La réserve** est limitée (20 places au départ), et on peut l'agrandir en payant (30, 40, puis 55 places).
 - **L'assortiment** du fournisseur change chaque jour : les objets de base (rations, gourdes, torches, bandages) sont toujours là, les autres apparaissent au hasard en quantité limitée. Les prix varient.
-- **Le marchand express** (Fennick le Pressé, personnage récurrent) passe au comptoir pendant la journée. Il vend quelques objets au hasard, 2,5 fois plus cher, livrés directement dans le colis. Ce n'est jamais rentable : ça sert juste à sauver un voyage.
-- **La banque** : des prêts débloqués par la réputation (plus la réputation est haute, plus on peut emprunter, et moins cher). La Main Noire (la mafia) prête à tout le monde, à 45 %. Les échéances sont prélevées chaque nuit.
+- **Le marchand express** : le **Vieux Grippesou**, un vieux gobelin avare recroquevillé à côté de sa caravane (page à part, le client attend au comptoir). Il vend quelques objets au hasard, 2,5 fois plus cher, livrés directement dans le colis. Ce n'est jamais rentable : ça sert juste à sauver un voyage.
+- **La banque naine** (page à part) : des banquiers nains te toisent depuis leur immense bureau (Thorgrim Coffrefort et ses associés). Leurs prêts se débloquent avec la réputation (plus elle est haute, plus on peut emprunter, et moins cher). Les échéances sont prélevées chaque nuit.
+- **La Main Noire** (la mafia) ne prêtera qu'au joueur qui a choisi le camp du mal, plus tard dans le jeu.
+- **Les soins** : un aventurier qui revient blessé peut être soigné à la fin de son récit, une potion par cœur perdu. Il paie 1,5 fois le prix d'une potion. S'il n'est pas soigné, il repart plus fragile (un cœur de moins) à sa prochaine quête.
 - **La faillite** : on peut être à découvert, mais à -100 pièces, le comptoir ferme. Une cinématique comique montre le banquier et ses gardes qui viennent tout saisir (parchemin de dettes trop long, garde qui trébuche, dernière pièce confisquée, planches clouées sur la porte).
 - **Capital de départ** : 80 pièces, pour tenir le temps que les premiers aventuriers reviennent.
 
@@ -113,7 +115,9 @@ Le joueur ne choisit pas son camp dans un menu : son camp se construit par ses a
 - **Le mendiant** : donner de l'argent peut avoir un impact plus tard.
 
 ## 5. Histoire
-- **Prologue** (cinématique d'introduction, après le choix garçon/fille) : le jeune orphelin sauve **Garrick Cœur-de-Chêne**, un aventurier emporté par une rivière, le soigne, répare ses armes, chasse pour le nourrir et lui prépare des provisions. Des jours plus tard, l'aventurier revient avec un trésor. Le jeune ne sait pas quoi demander, mais il a aimé s'occuper de lui → l'aventurier lui offre son **premier shop** et un petit capital.
+- **Création du personnage** : garçon ou fille, coiffure, couleur des cheveux, de la peau et des yeux, bouche (souriante, neutre, étonnée, grognon), barbe (elle pousse à 18 ans), couleurs des habits du haut et du bas. On voit le personnage à trois âges.
+- **Le nom évolue avec l'âge** : PetitGoy (moins de 18 ans), HommeGoy (adulte), AncienGoy (60 ans et plus) ; PetiteGoy, FemmeGoy, AncienneGoy pour une fille. On commence à 15 ans, et une année passe tous les 7 jours. Les cheveux blanchissent avec la vieillesse.
+- **Prologue** (cinématique d'introduction) : le jeune orphelin sauve **Garrick Cœur-de-Chêne**, un aventurier emporté par une rivière, le soigne, répare ses armes, chasse pour le nourrir et lui prépare des provisions. Des jours plus tard, l'aventurier revient avec un trésor. Le jeune ne sait pas quoi demander, mais il a aimé s'occuper de lui → l'aventurier lui offre son **premier shop** et un petit capital.
 - **Fil rouge** : une menace grandit (piste actuelle : un grand dragon sous la montagne mystique — *à confirmer*). Le monde a de plus en plus peur.
 - **Deux fins** selon le camp du joueur :
   - **Le bien** : le joueur équipe le groupe d'aventuriers qui part affronter la menace.

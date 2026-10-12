@@ -153,6 +153,16 @@ const RACES = {
     pal: { h: 0xb0602a, s: 0xf0c8a0, e: 0x2a1a10, c: 0x8a3a5a, d: 0x7a4a1e, p: 0x6a5a40, b: 0x4a3020 },
     lignes: { 6: '.hcccccch.', 7: '.hcccccch.' },
   },
+  // Le vieux Grippesou : gobelin à capuche, grandes oreilles, sourire avide.
+  gobelin: {
+    pal: { h: 0x5a3a20, s: 0x7aa04a, e: 0xffd040, m: 0xf0f0d0, c: 0x6a5030, d: 0x3a2a1a, p: 0x5a4a30, b: 0x3a2a1a },
+    lignes: { 0: '...hhhh...', 1: '..hhhhhh..', 2: 'shhsssshhs', 3: '.ssessess.', 4: '..smmmms..' },
+  },
+  // Les banquiers nains : haut-de-forme, monocle, barbe blanche, costume noir.
+  nainBanquier: {
+    pal: { t: 0x1a1a20, h: 0xe0e0e0, s: 0xe8b890, e: 0x2a1a10, y: 0xe8c040, c: 0x2a2a34, d: 0xe8c040, p: 0x1a1a20, b: 0x101010 },
+    lignes: { 0: '..tttttt..', 1: '..tttttt..', 2: '.tttttttt.', 3: '..sesyes..', 4: '..shhhhs..', 5: '..hhhhhh..', 6: '..chhhhc..', 7: '.ccchhccc.' },
+  },
   // Magicienne humaine : chapeau pointu et longue robe étoilée.
   magicienne: {
     pal: { h: 0x5a3a8a, s: 0xf0c8a0, e: 0x2a1a10, c: 0x6a4aa0, d: 0xe8c040, p: 0x6a4aa0, b: 0x3a2a50 },
@@ -278,4 +288,92 @@ function dessinerFacade(scene, cx, sol, nomShop = 'Le Comptoir') {
   g.lineStyle(2, 0x6b4423).strokeRect(x + 28, y + 14, 140, 24);
   scene.add.text(x + 98, y + 26, nomShop, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
   return { porteX: x + 245, porteY: sol, g };
+}
+
+// --- Ton personnage, construit à partir de la création ---
+
+// L'apparence par défaut, selon que tu joues un garçon ou une fille.
+function apparenceParDefaut(feminin) {
+  return { coiffure: feminin ? 1 : 0, cheveux: 0, peau: 0, yeux: 0, bouche: 0, barbe: 0, haut: feminin ? 1 : 0, bas: 0 };
+}
+
+// Les lignes du dessin selon les choix et l'âge (la barbe ne pousse qu'à l'âge adulte).
+function lignesJoueur(ap, stade) {
+  const l = [...CORPS];
+  const coiffures = [
+    {},
+    { 6: '.hcccccch.', 7: '.hcccccch.' },
+    { 0: '..hhhhhh..', 1: '.hhhhhhhh.', 2: '.hhsssshh.' },
+    { 0: '..h.hh.h..', 1: '..hhhhhh..' },
+    { 0: '..........', 1: '...ssss...', 2: '..ssssss..' },
+  ];
+  const bouches = [
+    { 4: '..smssms..', 5: '...smms...' },
+    { 4: '..ssssss..', 5: '...smms...' },
+    { 4: '..ssmmss..', 5: '...smms...' },
+    { 4: '..ssmmss..', 5: '...mssm...' },
+  ];
+  const barbes = [
+    {},
+    { 4: '..sxxxxs..' },
+    { 5: '..xxmmxx..', 6: '..cxxxxc..' },
+    { 4: '..sxmmxs..', 5: '..xxxxxx..', 6: '..cxxxxc..', 7: '.cccxxccc.', 8: 'scccxxcccs' },
+  ];
+  const morceaux = [coiffures[ap.coiffure], bouches[ap.bouche], stade === 'petit' ? {} : barbes[ap.barbe]];
+  for (const m of morceaux) for (const [i, ligne] of Object.entries(m)) l[i] = ligne;
+  return l;
+}
+
+function paletteJoueur(ap, stade) {
+  const cheveux = stade === 'ancien' ? 0xc0c0c0 : APPARENCE.cheveux[ap.cheveux][1];
+  return {
+    h: cheveux, x: cheveux,
+    s: APPARENCE.peau[ap.peau][1],
+    e: APPARENCE.yeux[ap.yeux][1],
+    m: 0x8a2a2a,
+    c: APPARENCE.haut[ap.haut][1],
+    d: 0x7a4a1e,
+    p: APPARENCE.bas[ap.bas][1],
+    b: 0x4a3020,
+  };
+}
+
+// La texture du joueur à son âge actuel (créée si besoin).
+function textureJoueur(scene, G) {
+  if (!scene.textures.exists('joueur_petit')) creerTexturesJoueur(scene, G.joueur.apparence);
+  return 'joueur_' + stadeJoueur(G);
+}
+
+// Crée (ou recrée) les trois textures du joueur : joueur_petit, joueur_adulte, joueur_ancien.
+function creerTexturesJoueur(scene, ap) {
+  for (const stade of ['petit', 'adulte', 'ancien']) {
+    const cle = 'joueur_' + stade;
+    if (scene.textures.exists(cle)) scene.textures.remove(cle);
+    creerTexture(scene, cle, lignesJoueur(ap, stade), paletteJoueur(ap, stade));
+  }
+}
+
+// La caravane du vieux Grippesou.
+function dessinerCaravane(scene, x, sol) {
+  const g = scene.add.graphics();
+  // Bâche
+  g.fillStyle(0xd8c498).fillEllipse(x, sol - 120, 230, 150);
+  g.fillStyle(0x8a5a2b).fillRect(x - 120, sol - 110, 240, 70);
+  g.lineStyle(2, 0x6b4423);
+  for (let i = -100; i <= 100; i += 40) g.lineBetween(x + i, sol - 110, x + i, sol - 40);
+  // Rapiéçages
+  g.fillStyle(0xa86a40).fillRect(x - 60, sol - 170, 24, 18).fillRect(x + 30, sol - 150, 18, 14);
+  // Roues
+  for (const dx of [-80, 80]) {
+    g.fillStyle(0x3b2410).fillCircle(x + dx, sol - 30, 30);
+    g.fillStyle(0x6b4423).fillCircle(x + dx, sol - 30, 24);
+    g.lineStyle(3, 0x3b2410);
+    for (let a = 0; a < Math.PI; a += Math.PI / 4) {
+      g.lineBetween(x + dx - Math.cos(a) * 24, sol - 30 - Math.sin(a) * 24, x + dx + Math.cos(a) * 24, sol - 30 + Math.sin(a) * 24);
+    }
+  }
+  // Lanterne accrochée
+  g.fillStyle(0x3a3a40).fillRect(x + 118, sol - 112, 4, 16);
+  g.fillStyle(0xffd060).fillRect(x + 113, sol - 98, 14, 16);
+  return g;
 }

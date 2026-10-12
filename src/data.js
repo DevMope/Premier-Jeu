@@ -41,19 +41,24 @@ const AGRANDISSEMENTS = [
 
 // Le marchand express passe au comptoir pendant la journée :
 // pratique pour sauver un voyage, mais bien plus cher que le fournisseur.
-const MARCHAND_EXPRESS = { nom: 'Fennick le Pressé', multiplicateur: 2.5 };
+// Un vieux gobelin avare, recroquevillé à côté de sa caravane.
+const MARCHAND_EXPRESS = { nom: 'Vieux Grippesou', multiplicateur: 2.5 };
+
+// Soigner un aventurier revenu blessé : une potion par cœur perdu,
+// et il te paie 1,5 fois le prix d'une potion.
+const PRIX_SOIN = Math.round(ITEMS.potion.prix * 1.5);
 
 // Réputation perdue quand on refuse.
 const REFUS_LETTRE = 0.5;
 const REFUS_CLIENT = 1;
 
-// Les prêts : la banque prête plus et moins cher quand ta réputation grandit.
-// La Main Noire prête à tout le monde... à un prix terrible.
+// Les prêts : les banquiers nains prêtent plus, et moins cher, quand ta réputation grandit.
+// La Main Noire (`mal`) ne prête qu'à ceux qui ont choisi le camp du mal (plus tard dans le jeu).
 const PRETS = [
-  { id: 'petit', preteur: 'Banque de la Comté', nom: 'Petit prêt', somme: 60, taux: 0.15, jours: 5, reputation: 0 },
-  { id: 'marchand', preteur: 'Banque de la Comté', nom: 'Prêt marchand', somme: 150, taux: 0.10, jours: 7, reputation: 4 },
-  { id: 'grand', preteur: 'Banque de la Comté', nom: 'Grand prêt', somme: 400, taux: 0.06, jours: 10, reputation: 10 },
-  { id: 'mafia', preteur: 'La Main Noire', nom: 'Prêt sans questions', somme: 120, taux: 0.45, jours: 4, reputation: -Infinity },
+  { id: 'petit', preteur: 'Banque naine', nom: 'Petit prêt', somme: 60, taux: 0.15, jours: 5, reputation: 0 },
+  { id: 'marchand', preteur: 'Banque naine', nom: 'Prêt marchand', somme: 150, taux: 0.10, jours: 7, reputation: 4 },
+  { id: 'grand', preteur: 'Banque naine', nom: 'Grand prêt', somme: 400, taux: 0.06, jours: 10, reputation: 10 },
+  { id: 'mafia', preteur: 'La Main Noire', nom: 'Prêt sans questions', somme: 120, taux: 0.45, jours: 4, reputation: -Infinity, mal: true },
 ];
 
 // Une étape ajoutée aux longues quêtes qui n'ont pas déjà de rations.
@@ -357,4 +362,26 @@ const DECORATIONS = {
   trophee: { nom: 'Trophée de loup', effet: 'Impressionne les passants : plus de clients chaque jour.' },
   lanterne: { nom: 'Lanterne enchantée', effet: 'Porte chance : +10 % sur les parts de butin.' },
   enclume: { nom: 'Enclume naine', effet: 'Réparations plus faciles : 1 matériau de moins.' },
+};
+
+// --- Ton personnage ---
+
+// Les noms selon l'âge : petit (moins de 18 ans), adulte, ancien (60 ans et plus).
+const NOMS_JOUEUR = {
+  garcon: { petit: 'PetitGoy', adulte: 'HommeGoy', ancien: 'AncienGoy' },
+  fille: { petit: 'PetiteGoy', adulte: 'FemmeGoy', ancien: 'AncienneGoy' },
+};
+const AGE_DEPART = 15;
+const JOURS_PAR_AN = 7;
+
+// Les choix de la création du personnage.
+const APPARENCE = {
+  coiffure: ['Courts', 'Longs', 'Bouclés', 'Hérissés', 'Chauve'],
+  cheveux: [['Châtain', 0x8a5a2a], ['Noir', 0x2a1a10], ['Roux', 0xb5532a], ['Blond', 0xe8d890], ['Auburn', 0x7a2a1a], ['Bleu nuit', 0x2a3a6a]],
+  peau: [['Claire', 0xf0c8a0], ['Dorée', 0xd8a070], ['Mate', 0xa86a40], ['Sombre', 0x6a4028]],
+  yeux: [['Marron', 0x4a2a10], ['Bleus', 0x2f6ac0], ['Verts', 0x2f8a3a], ['Gris', 0x6a7080], ['Violets', 0x7a3aa0]],
+  bouche: ['Souriante', 'Neutre', 'Étonnée', 'Grognon'],
+  barbe: ['Aucune', 'Moustache', 'Courte', 'Longue'],
+  haut: [['Bleu', 0x3a5a8a], ['Rouge', 0x9a3a2a], ['Vert', 0x4f7a3a], ['Violet', 0x6a4aa0], ['Moutarde', 0xc9a227], ['Gris', 0x6a6f78]],
+  bas: [['Brun', 0x6a5a40], ['Noir', 0x2a2a30], ['Vert', 0x3a4a3a], ['Bleu', 0x3a4a6a], ['Beige', 0xb09a70]],
 };

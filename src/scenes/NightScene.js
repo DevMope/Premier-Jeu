@@ -19,6 +19,8 @@ class NightScene extends Phaser.Scene {
     this.creerPrevision(660, 940);
 
     creerBouton(this, 160, 505, 200, 'La banque', () => this.ouvrirBanque());
+    this.events.off('resume');
+    this.events.on('resume', () => this.tout());
     creerBouton(this, 480, 505, 240, 'Aller dormir', () => this.dormir());
     this.tout();
   }
@@ -198,40 +200,11 @@ class NightScene extends Phaser.Scene {
     this.texteFacteurs.setText(`Réputation ${signe(a.reputation)} · Expérience ${signe(a.experience)}\nStock varié ${signe(a.variete)}`);
   }
 
-  // --- La banque ---
+  // --- La banque : une page à part, le soir attend en pause ---
 
   ouvrirBanque() {
-    const G = this.G;
-    const c = this.add.container(0, 0).setDepth(20);
-    c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.6).setInteractive());
-    c.add(this.add.rectangle(480, 260, 680, 400, 0xead9b0).setStrokeStyle(4, 0x8a6a3a));
-    c.add(this.add.text(480, 85, 'Emprunter de l\'argent', style(22, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    c.add(this.add.text(480, 112, `Les échéances sont prélevées chaque nuit. Faillite si tu descends à ${SEUIL_FAILLITE} pièces.`,
-      style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
-
-    PRETS.forEach((p, i) => {
-      const y = 155 + i * 64;
-      const du = Math.round(p.somme * (1 + p.taux));
-      const mafia = p.preteur === 'La Main Noire';
-      c.add(this.add.text(160, y - 14, `${p.preteur} — ${p.nom}`, style(15, mafia ? '#7a1a1a' : '#3b2410', { fontStyle: 'bold' })));
-      c.add(this.add.text(160, y + 6, `Reçois ${p.somme} p., rembourse ${du} p. en ${p.jours} nuits (${Math.round(p.taux * 100)} %)`,
-        style(13, '#5a3a20')));
-      const refus = refusPret(G, p);
-      if (refus) {
-        c.add(this.add.text(800, y, refus, style(12, '#8a5a10', { fontStyle: 'italic' })).setOrigin(1, 0.5));
-      } else {
-        const btn = this.add.rectangle(755, y, 100, 30, mafia ? 0x5a1a1a : 0x8a5a2b).setStrokeStyle(2, 0x3b2410)
-          .setInteractive({ useHandCursor: true });
-        btn.on('pointerdown', () => { emprunter(G, p); c.destroy(); this.tout(); });
-        c.add([btn, this.add.text(755, y, 'Emprunter', style(13, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
-      }
-    });
-    c.add(this.add.text(480, 418, 'La Main Noire prête à tout le monde, sans questions... mais à un prix terrible.',
-      style(12, '#7a1a1a', { fontStyle: 'italic' })).setOrigin(0.5));
-
-    const fermer = this.add.rectangle(480, 445, 160, 32, 0x6b4423).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
-    fermer.on('pointerdown', () => c.destroy());
-    c.add([fermer, this.add.text(480, 445, 'Fermer', style(14, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
+    this.scene.pause();
+    this.scene.launch('Banque');
   }
 }
 

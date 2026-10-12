@@ -106,7 +106,7 @@ class StoryScene extends Cinematique {
     if (r.vivant) {
       await this.marcherVers(880);
       this.pleuvoirPieces();
-      const ajuste = gain !== v.butin ? ` (prévu : ${v.butin}, ajusté selon votre relation)` : '';
+      const ajuste = gain !== v.butin ? ` (prévu : ${v.butin}, ajusté selon votre relation et tes décorations)` : '';
       this.ecrire('Retour au comptoir',
         `« Merci pour ton aide. Sans ton colis, je ne serais pas là. Voici ta part du butin ! »\n` +
         `+ ${gain} pièces${ajuste} · Relation : ${relation.nom}${message ? '\n' + message : ''}`);
@@ -120,9 +120,43 @@ class StoryScene extends Cinematique {
     }
 
     this.indice.destroy();
-    const retour = creerBouton(this, 820, 495, 240, 'Retour au comptoir', () => this.scene.start('Comptoir'));
+    const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => this.scene.start('Comptoir'));
     retour.fond.setDepth(11);
     retour.label.setDepth(11);
+    if (r.vivant) this.proposerSoins();
+  }
+
+  // L'aventurier est revenu blessé ? On peut le soigner avec une potion, et il paie.
+  proposerSoins() {
+    const G = this.G;
+    const v = this.parti.voyageur;
+    if (!blessuresDe(G, v.nom)) return;
+    const bouton = creerBouton(this, 540, 345, 290, '', () => {
+      const erreur = soigner(G, v.nom);
+      if (erreur) return this.ecrire('Soins', erreur);
+      const coeur = this.coeurs.find(c => c.texture.key === 'coeurVide');
+      if (coeur) {
+        coeur.setTexture('coeur');
+        this.tweens.add({ targets: coeur, scale: 6, duration: 150, yoyo: true });
+      }
+      this.perso.setTint(0x80ff80);
+      this.time.delayedCall(300, () => this.perso.clearTint());
+      this.ecrire('Soins', `« Ah, ça fait du bien ! Tiens, ${PRIX_SOIN} pièces pour la potion. »` +
+        (blessuresDe(G, v.nom) ? `\nEncore ${blessuresDe(G, v.nom)} cœur(s) à soigner.` : '\nComplètement remis sur pied !'));
+      maj();
+    });
+    bouton.fond.setDepth(11);
+    bouton.label.setDepth(11);
+    const maj = () => {
+      const reste = blessuresDe(G, v.nom);
+      bouton.setVisible(reste > 0);
+      bouton.setTexte(`Soigner un cœur (+${PRIX_SOIN} p.)`);
+      bouton.setActif(G.stock.potion > 0);
+    };
+    maj();
+    const n = blessuresDe(G, v.nom);
+    this.texte.setText(this.texte.text + `\n${v.feminin ? 'Elle' : 'Il'} a perdu ${n} cœur${n > 1 ? 's' : ''}. ` +
+      (G.stock.potion > 0 ? `Une potion par cœur (il te reste ${G.stock.potion} potion${G.stock.potion > 1 ? 's' : ''}).` : "Tu n'as pas de potion pour le soigner."));
   }
 
   pleuvoirPieces() {

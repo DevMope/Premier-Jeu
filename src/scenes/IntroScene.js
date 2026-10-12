@@ -1,26 +1,92 @@
-// L'introduction : le choix du personnage, puis l'histoire de l'orphelin
-// qui sauve un aventurier de la rivière... et reçoit son premier comptoir.
-class IntroScene extends Cinematique {
+// La création du personnage : garçon ou fille, puis cheveux, yeux, bouche,
+// barbe, couleurs... On voit le personnage à trois âges de sa vie.
+class IntroScene extends Phaser.Scene {
   constructor() { super('Intro'); }
 
   create() {
+    this.feminin = false;
+    this.ap = apparenceParDefaut(false);
     this.cameras.main.setBackgroundColor('#1e140c');
     this.cameras.main.fadeIn(400);
-    this.add.text(480, 80, 'Qui es-tu ?', style(34, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
-    this.add.text(480, 122, 'Un jeune orphelin de la Comté, sans famille ni maison.', style(16, '#c9b48a', { fontStyle: 'italic' })).setOrigin(0.5);
+    this.add.text(480, 34, 'Qui es-tu ?', style(30, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
 
-    [['heros', false, 'Un garçon', 330], ['heroine', true, 'Une fille', 630]].forEach(([cle, feminin, texte, x]) => {
-      const cadre = this.add.rectangle(x, 280, 200, 220, 0x2a1a10).setStrokeStyle(3, 0xc9a227).setInteractive({ useHandCursor: true });
-      const perso = this.add.image(x, 340, 'perso_' + cle).setOrigin(0.5, 1).setScale(9);
-      this.add.text(x, 370, texte, style(20, '#f3e6c8', { fontStyle: 'bold' })).setOrigin(0.5);
-      cadre.on('pointerover', () => { cadre.setFillStyle(0x3b2410); perso.setY(334); });
-      cadre.on('pointerout', () => { cadre.setFillStyle(0x2a1a10); perso.setY(340); });
-      cadre.on('pointerdown', () => this.commencer(feminin));
+    // L'aperçu, à trois âges
+    this.add.rectangle(220, 250, 380, 330, 0x2a1a10).setStrokeStyle(3, 0xc9a227);
+    this.apercus = [['petit', 95, 7], ['adulte', 220, 9], ['ancien', 345, 9]].map(([stade, x, echelle]) => ({
+      stade,
+      image: this.add.image(x, 330, 'perso_heros').setOrigin(0.5, 1).setScale(echelle),
+      nom: this.add.text(x, 350, '', style(14, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5),
+      age: this.add.text(x, 370, { petit: '15 ans', adulte: 'adulte', ancien: 'âgé' }[stade], style(12, '#c9b48a')).setOrigin(0.5),
+    }));
+    this.add.text(220, 400, 'La barbe pousse à 18 ans.', style(12, '#c9b48a', { fontStyle: 'italic' })).setOrigin(0.5);
+
+    // Garçon ou fille
+    this.boutonsGenre = [[false, 'Garçon', 140], [true, 'Fille', 300]].map(([feminin, texte, x]) => {
+      const fond = this.add.rectangle(x, 110, 140, 36, 0x5a4030).setStrokeStyle(2, 0xc9a227).setInteractive({ useHandCursor: true });
+      this.add.text(x, 110, texte, style(16, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
+      fond.on('pointerdown', () => {
+        this.feminin = feminin;
+        this.ap.coiffure = apparenceParDefaut(feminin).coiffure;
+        this.maj();
+      });
+      return { feminin, fond };
     });
+
+    // Les choix
+    const options = [
+      ['coiffure', 'Coiffure'], ['cheveux', 'Cheveux'], ['peau', 'Peau'], ['yeux', 'Yeux'],
+      ['bouche', 'Bouche'], ['barbe', 'Barbe'], ['haut', 'Habit du haut'], ['bas', 'Habit du bas'],
+    ];
+    this.lignes = options.map(([cle, libelle], i) => {
+      const y = 100 + i * 42;
+      this.add.text(450, y, libelle, style(16, '#f3e6c8')).setOrigin(0, 0.5);
+      this.fleche(640, y, '◀', () => this.changer(cle, -1));
+      this.fleche(880, y, '▶', () => this.changer(cle, 1));
+      const valeur = this.add.text(760, y, '', style(15, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
+      const pastille = this.add.rectangle(690, y, 16, 16, 0xffffff).setStrokeStyle(1, 0x000000);
+      return { cle, valeur, pastille };
+    });
+
+    creerBouton(this, 600, 480, 180, 'Au hasard', () => this.auHasard());
+    creerBouton(this, 820, 480, 230, "Commencer l'histoire", () => this.commencer());
+    this.maj();
   }
 
-  commencer(feminin) {
-    nouvellePartie({ feminin });
+  fleche(x, y, texte, action) {
+    const t = this.add.text(x, y, texte, style(20, '#c9a227', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    t.on('pointerdown', action);
+  }
+
+  changer(cle, sens) {
+    const n = APPARENCE[cle].length;
+    this.ap[cle] = (this.ap[cle] + sens + n) % n;
+    this.maj();
+  }
+
+  auHasard() {
+    for (const cle of Object.keys(this.ap)) this.ap[cle] = Phaser.Math.Between(0, APPARENCE[cle].length - 1);
+    this.maj();
+  }
+
+  maj() {
+    creerTexturesJoueur(this, this.ap);
+    const genre = this.feminin ? 'fille' : 'garcon';
+    for (const a of this.apercus) {
+      a.image.setTexture('joueur_' + a.stade);
+      a.nom.setText(NOMS_JOUEUR[genre][a.stade]);
+    }
+    for (const b of this.boutonsGenre) b.fond.setFillStyle(b.feminin === this.feminin ? 0x8a5a2b : 0x3b2a1a);
+    for (const l of this.lignes) {
+      const choix = APPARENCE[l.cle][this.ap[l.cle]];
+      const couleur = Array.isArray(choix);
+      l.valeur.setText(couleur ? choix[0] : choix);
+      l.pastille.setVisible(couleur);
+      if (couleur) l.pastille.setFillStyle(choix[1]);
+    }
+  }
+
+  commencer() {
+    nouvellePartie({ feminin: this.feminin, apparence: { ...this.ap } });
     this.scene.start('IntroHistoire');
   }
 }
@@ -47,7 +113,7 @@ class IntroHistoireScene extends Cinematique {
     }
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
 
-    this.heros = this.add.image(220, 330, 'perso_' + (this.f ? 'heroine' : 'heros')).setOrigin(0.5, 1).setScale(4);
+    this.heros = this.add.image(220, 330, 'joueur_petit').setOrigin(0.5, 1).setScale(4);
     this.mentor = this.add.image(-80, 345, 'perso_mentor').setOrigin(0.5, 0.5).setScale(6).setAngle(90);
 
     this.creerBoiteTexte();
@@ -144,7 +210,7 @@ class IntroHistoireScene extends Cinematique {
     }
     this.ecrire('Garrick Cœur-de-Chêne', `« Tu croyais que je t'avais oublié${e} ? Voici ta part du trésor ! Alors, que veux-tu en faire ? »`);
     await this.attendreClic();
-    this.ecrire('Toi', "« Je ne sais pas... J'ai bien aimé m'occuper de vous. Vous soigner, vous nourrir, vous préparer pour la route. »");
+    this.ecrire(nomJoueur(window.GAME, 'petit'), "« Je ne sais pas... J'ai bien aimé m'occuper de vous. Vous soigner, vous nourrir, vous préparer pour la route. »");
     await this.attendreClic();
     this.ecrire('Garrick Cœur-de-Chêne', '« Alors c\'est tout trouvé ! Tu vas ouvrir un comptoir pour les aventuriers comme moi. Je t\'offre ton premier shop, et un petit capital pour commencer. »');
     await this.attendreClic();
@@ -157,7 +223,7 @@ class IntroHistoireScene extends Cinematique {
     const g = this.add.graphics();
     dessinerComte(g, 0, 0, 960, 370, 0.15);
     const facade = dessinerFacade(this, 480, 345);
-    const heros = this.add.image(140, 345, 'perso_' + (this.f ? 'heroine' : 'heros')).setOrigin(0.5, 1).setScale(5);
+    const heros = this.add.image(140, 345, 'joueur_petit').setOrigin(0.5, 1).setScale(5);
     this.add.image(90, 345, 'perso_mentor').setOrigin(0.5, 1).setScale(6);
     this.creerBoiteTexte();
     this.boutonPasser(() => this.finir());

@@ -87,7 +87,7 @@ function simulerAventure(voyageur, colis) {
 
 // --- Les voyageurs ---
 
-function creerVoyageur(G, { quete, nom, race, feminin, butin, duree, inventaire }) {
+function creerVoyageur(G, { quete, nom, race, feminin, butin, duree, inventaire, blessures = 0 }) {
   const q = QUETES[quete];
   const d = duree ?? hasard(...q.duree);
   // Plus la quête dure, plus il faut de rations... et plus elle rapporte.
@@ -101,7 +101,9 @@ function creerVoyageur(G, { quete, nom, race, feminin, butin, duree, inventaire 
   return {
     id: G.prochainId++,
     nom, race, feminin,
-    pv: q.pv,
+    // Un habitué revenu blessé et jamais soigné repart avec moins de cœurs.
+    pv: Math.max(1, q.pv - blessures),
+    blessures,
     butin: butin ?? Math.round(hasard(...q.butin) * (1 + 0.3 * enPlus)),
     duree: d,
     queteId: quete,
@@ -160,9 +162,9 @@ function voyageurAuHasard(G, aussi = []) {
 
 // --- La partie ---
 
-function nouvellePartie({ feminin = false } = {}) {
+function nouvellePartie({ feminin = false, apparence = null } = {}) {
   const G = {
-    joueur: { feminin },
+    joueur: { feminin, apparence: apparence || apparenceParDefaut(feminin) },
     relations: {},     // nom → points
     paliers: {},       // nom → niveaux déjà atteints (pour ne donner chaque cadeau qu'une fois)
     materiaux: { ...MATERIAUX_DEPART },
@@ -542,7 +544,8 @@ function terminerAventure(G, parti) {
     G.reputation++;
     G.journal.retours++;
     message = changerRelation(G, v.nom, POINTS_RELATION.retourVivant);
-    G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti) });
+    const derniere = r.etapes[r.etapes.length - 1];
+    G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures: v.pv - derniere.pvApres });
   } else {
     if (!r.valeureux) G.reputation--;
     G.journal.morts++;
@@ -563,6 +566,44 @@ function inventaireApres(parti) {
     if (inv[epreuve.besoin] > 0) inv[epreuve.besoin]--;
   }
   return inv;
+}
+
+// Soigner un cœur d'un aventurier revenu blessé : une potion, et il te paie.
+// Renvoie un message d'erreur, ou null.
+function soigner(G, nom) {
+  const h = G.habitues.find(x => x.nom === nom);
+  if (!h || !h.blessures) return "Il n'a plus de blessure à soigner.";
+  if (G.stock.potion <= 0) return "Tu n'as plus de potion.";
+  G.stock.potion--;
+  G.argent += PRIX_SOIN;
+  h.blessures--;
+  changerRelation(G, nom, 1);
+  return null;
+}
+
+function blessuresDe(G, nom) {
+  const h = G.habitues.find(x => x.nom === nom);
+  return h ? h.blessures || 0 : 0;
+}
+
+// Les prêts proposés : la Main Noire seulement pour le camp du mal.
+function pretsProposes(G) {
+  return PRETS.filter(p => !p.mal || G.camp === 'mal');
+}
+
+// --- Ton personnage ---
+
+function ageJoueur(G) {
+  return AGE_DEPART + Math.floor((G.jour - 1) / JOURS_PAR_AN);
+}
+
+function stadeJoueur(G) {
+  const age = ageJoueur(G);
+  return age < 18 ? 'petit' : age < 60 ? 'adulte' : 'ancien';
+}
+
+function nomJoueur(G, stade = stadeJoueur(G)) {
+  return NOMS_JOUEUR[G.joueur.feminin ? 'fille' : 'garcon'][stade];
 }
 
 function enMission(G) {

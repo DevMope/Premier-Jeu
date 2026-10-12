@@ -32,6 +32,10 @@ class CounterScene extends Phaser.Scene {
     this.boutonAction = creerBouton(this, 840, 492, 210, '', () => this.action && this.action());
     this.majBoutonsService();
 
+    // Au retour de chez Grippesou, on remet l'affichage à jour.
+    this.events.off('resume');
+    this.events.on('resume', () => { this.majStock(); this.majCommande(); this.dessinerPieces(); });
+
     this.cameras.main.fadeIn(400);
     this.voyageurSuivant();
     if (this.G.banniere !== this.G.jour) this.afficherBanniere();
@@ -153,6 +157,7 @@ class CounterScene extends Phaser.Scene {
   creerPanneauGauche() {
     this.add.rectangle(145, 135, 250, 230, 0x2a1a10, 0.55).setStrokeStyle(2, 0x3b2410);
     this.texteJour = this.add.text(30, 28, '', style(22, '#f3d98a', { fontStyle: 'bold' }));
+    this.texteJoueur = this.add.text(262, 36, '', style(13, '#c9b48a', { fontStyle: 'italic' })).setOrigin(1, 0);
     this.add.text(30, 62, 'En mission', style(14, '#c9b48a', { fontStyle: 'bold' }));
     this.texteMissions = this.add.text(30, 82, '', style(13, '#f3e6c8', { lineSpacing: 3 }));
     this.add.text(30, 160, 'Lettres reçues — clique pour lire', style(14, '#c9b48a', { fontStyle: 'bold' }));
@@ -470,59 +475,12 @@ class CounterScene extends Phaser.Scene {
     });
   }
 
-  // --- Le marchand express ---
+  // --- Le marchand express : une page à part, le comptoir attend en pause ---
 
   ouvrirExpress() {
-    if (!this.enService || this.fenetreExpress) return;
-    const c = this.fenetreExpress = this.add.container(0, 0).setDepth(20);
-    c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.5).setInteractive());
-    c.add(this.add.rectangle(480, 250, 560, 330, 0xead9b0).setStrokeStyle(4, 0x8a6a3a));
-    c.add(this.add.text(480, 110, MARCHAND_EXPRESS.nom + ' — livraison express', style(20, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    c.add(this.add.text(480, 136, 'Bien plus cher que le fournisseur. Livré directement dans le colis.',
-      style(13, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
-    this.lignesExpress = [];
-    const ids = Object.keys(this.G.express);
-    if (!ids.length) c.add(this.add.text(480, 240, "Fennick n'a plus rien à vendre aujourd'hui.", style(15, '#3b2410')).setOrigin(0.5));
-    ids.forEach((id, i) => {
-      const y = 175 + i * 40;
-      c.add(this.add.image(230, y, id).setScale(3));
-      c.add(this.add.text(255, y, ITEMS[id].nom, style(15, '#3b2410')).setOrigin(0, 0.5));
-      c.add(this.add.text(370, y, `${this.G.express[id].prix} p.`, style(15, '#a03030', { fontStyle: 'bold' })).setOrigin(0, 0.5));
-      c.add(this.add.text(430, y, `(fournisseur : ~${ITEMS[id].prix} p.)`, style(12, '#6b4a2a')).setOrigin(0, 0.5));
-      const reste = this.add.text(600, y, '', style(14, '#3b2410')).setOrigin(0, 0.5);
-      const btn = this.add.rectangle(700, y, 80, 28, 0x8a5a2b).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
-      btn.on('pointerdown', () => this.acheterExpress(id));
-      c.add([reste, btn, this.add.text(700, y, 'Acheter', style(13, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
-      this.lignesExpress.push({ id, reste });
-    });
-    this.texteExpress = this.add.text(480, 360, '', style(14, '#a03030', { fontStyle: 'bold' })).setOrigin(0.5);
-    c.add(this.texteExpress);
-    const fermer = this.add.rectangle(480, 395, 160, 34, 0x6b4423).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
-    fermer.on('pointerdown', () => { c.destroy(); this.fenetreExpress = null; });
-    c.add([fermer, this.add.text(480, 395, 'Fermer', style(15, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
-    this.majExpress();
-  }
-
-  acheterExpress(id) {
-    const offre = this.G.express[id];
-    const commande = commandeDe(this.voyageur);
-    let probleme = null;
-    if (!commande[id]) probleme = `${this.voyageur.nom} n'en a pas besoin.`;
-    else if ((this.colis[id] || 0) >= commande[id]) probleme = 'Le colis en contient déjà assez.';
-    else if (offre.qte <= 0) probleme = "Fennick n'en a plus.";
-    else if (!peutPayer(this.G, offre.prix)) probleme = "Tu n'as pas assez d'argent, même à découvert.";
-    if (probleme) return this.texteExpress.setText(probleme);
-    this.G.argent -= offre.prix;
-    offre.qte--;
-    this.colis[id] = (this.colis[id] || 0) + 1;
-    this.texteExpress.setText(`${ITEMS[id].nom} ajouté au colis.`);
-    this.dessinerPieces();
-    this.majExpress();
-    this.majCommande();
-  }
-
-  majExpress() {
-    for (const l of this.lignesExpress) l.reste.setText('reste ' + this.G.express[l.id].qte);
+    if (!this.enService) return;
+    this.scene.pause();
+    this.scene.launch('Express', { comptoir: this });
   }
 
   dire(texte, nom = this.voyageur ? this.voyageur.nom : '') {
@@ -559,6 +517,7 @@ class CounterScene extends Phaser.Scene {
 
   majPanneauGauche() {
     this.texteJour.setText('Jour ' + this.G.jour);
+    this.texteJoueur.setText(`${nomJoueur(this.G)}, ${ageJoueur(this.G)} ans`);
 
     const missions = enMission(this.G).map(p => {
       const quand = p.retour <= this.G.jour ? "aujourd'hui" : 'jour ' + p.retour;
