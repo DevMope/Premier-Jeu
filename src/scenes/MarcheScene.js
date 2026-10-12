@@ -34,6 +34,7 @@ class MarcheScene extends Phaser.Scene {
     creerBouton(this, 840, 510, 220, 'Ouvrir le comptoir', () => this.ouvrir());
 
     this.ouvrirEtal('gedeon');
+    afficherStatutSauvegarde(this, 940, 46, 1);
     // Les commandes prévues, qu'on déroule ou referme
     this.commandesOuvertes = false;
     this.boutonCommandes = this.add.text(16, 46, '', style(14, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 10, y: 5 } }))
@@ -96,6 +97,7 @@ class MarcheScene extends Phaser.Scene {
 
   majInfos() {
     const G = this.G;
+    Sauvegarde.planifier(G, 'Marche');
     const p = prevision(G, G.jour);
     this.texteInfos.setText(`Bourse : ${G.argent} pièces · Réserve : ${stockTotal(G)}/${G.capacite} · Fer ${G.materiaux.fer} · Cuir ${G.materiaux.cuir}\n` +
       `Aujourd'hui : entre ${p.min} et ${p.max} clients attendus (un stock varié en attire plus)`);
@@ -420,6 +422,8 @@ class MarcheScene extends Phaser.Scene {
   }
 
   ouvrir() {
+    // On sauvegarde avant que la file d'attente du jour se forme.
+    Sauvegarde.maintenant(this.G, 'Marche');
     ouvrirComptoir(this.G);
     this.cameras.main.fadeOut(400);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Comptoir'));

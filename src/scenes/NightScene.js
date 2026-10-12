@@ -27,11 +27,14 @@ class NightScene extends Phaser.Scene {
       this.scene.launch('Atelier');
     });
     this.tout();
+    afficherStatutSauvegarde(this, 20, 22, 0);
   }
 
   // Dormir : la nuit passe, et au matin, direction le Mastre Marché.
   dormir() {
     nuit(this.G);
+    if (this.G.faillite) Sauvegarde.supprimer();
+    else Sauvegarde.maintenant(this.G, 'Marche');
     this.cameras.main.fadeOut(600);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(this.G.faillite ? 'Faillite' : 'Marche'));
   }
@@ -43,6 +46,7 @@ class NightScene extends Phaser.Scene {
 
   // Tout ce qui change quand on achète, emprunte ou répond à une lettre.
   tout() {
+    Sauvegarde.planifier(this.G, 'Nuit');
     this.majArgent();
     this.majJournee(20, 300);
     this.majLettres(660, 940);

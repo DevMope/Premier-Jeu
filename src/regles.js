@@ -641,6 +641,8 @@ function nuit(G) {
   G.etals = etalsDuJour(G);
   G.jeux = { des: 0, bonneteau: 0 };
   avancerAtelier(G);
+  // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère).
+  G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
 }
 
 // On ouvre le comptoir : la file d'attente du jour se forme.

@@ -202,7 +202,7 @@ Chaque étape doit donner une version **jouable**.
 | 3 ✅ | **Le Mastre Marché** | Le matin, avant d'ouvrir : trois étals (épicerie, forge, apothicaire) aux prix et assortiments variables, marchandage avec chaque marchand, dés et bonneteau, le mendiant. |
 | 4 | **Les fiches et le bureau** | Fiches voyageurs (à venir/présents/partis/revenus), voyageurs annoncés à l'avance, tableau de CA, tiroirs de stats. |
 | 5 | **Les deux vues du shop** | Comptoir ↔ arrière (stock + lit), façade avec le nom du shop. |
-| 6 | **Sauvegarde** | Sauvegarder / charger une partie. |
+| 6 ✅ | **Sauvegarde** | Automatique le soir et le matin : navigateur, compte claude.ai (version en ligne), et code de sauvegarde à copier-coller. Bouton Continuer à l'écran titre. |
 | 7 | **Premiers graphismes pixel art** | Remplacer les formes par de vrais sprites et décors. |
 | 8 | **Réputation et améliorations** | Clients plus exigeants, décoration, améliorations la nuit. |
 | 9 | **Le Bien et le Mal** | Races maléfiques, objets du bien / du mal, réputation par camp, dialogues qui changent. |
