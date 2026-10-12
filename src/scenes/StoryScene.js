@@ -56,7 +56,7 @@ class StoryScene extends Cinematique {
     await this.attendreClic();
 
     for (let i = 0; i < r.etapes.length; i++) {
-      const { epreuve, niveau, reussie, pvApres, piege, pvAvant } = r.etapes[i];
+      const { epreuve, niveau, reussie, pvApres, piege, pvAvant, sauvee, repli } = r.etapes[i];
       const x = 140 + i * (680 / etapes);
 
       this.decor.removeAll(true);
@@ -77,8 +77,20 @@ class StoryScene extends Cinematique {
         continue;
       }
 
+      // Sa bonne étoile : il rebrousse chemin au lieu de mourir.
+      if (repli) {
+        await this.trefle();
+        this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(epreuve[niveau], v)} »\n` +
+          `J'ai senti que la prochaine fois serait la dernière. Ma bonne étoile m'a soufflé de rebrousser chemin... J'ai abandonné la mission.`);
+        await this.attendreClic();
+        break;
+      }
+
       let suite;
-      if (reussie) {
+      if (reussie && sauvee) {
+        await this.trefle();
+        suite = `C'était perdu... et puis un coup de chance incroyable ! Ma bonne étoile m'a sauvé${this.e}.`;
+      } else if (reussie) {
         suite = niveau === 'complet' ? 'Épreuve surmontée !' : `Je m'en suis sorti${this.e}... de justesse.`;
       } else {
         suite = (niveau === 'complet' ? "Mais la chance n'était pas de mon côté... " : '') + `J'ai été blessé${this.e} !`;
@@ -89,6 +101,13 @@ class StoryScene extends Cinematique {
     }
 
     await this.conclure();
+  }
+
+  // Le trèfle de la chance qui brille au-dessus de lui.
+  async trefle() {
+    const t = this.add.image(this.perso.x, this.perso.y - 120, 'trefleChance').setScale(0).setDepth(5);
+    await this.animer({ targets: t, scale: 6, angle: 360, duration: 500, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: t, alpha: 0, y: t.y - 40, duration: 900, delay: 400, onComplete: () => t.destroy() });
   }
 
   async montrerObjet(id) {
@@ -115,7 +134,13 @@ class StoryScene extends Cinematique {
 
     const { gain, message } = terminerAventure(this.G, this.parti);
     const relation = niveauRelation(this.G, v.nom);
-    if (r.vivant) {
+    if (r.vivant && r.echec) {
+      // Mission ratée : vivant, mais les mains vides.
+      await this.marcherVers(880);
+      this.ecrire('Mission ratée', [`« Je suis désolé${this.e}... Je reviens les mains vides. »  Relation : ${relation.nom}`,
+        ...(this.parti.malus || []).map(m => '• ' + m)].join('\n'));
+      this.texte.setFontSize(13).setLineSpacing(1);
+    } else if (r.vivant) {
       await this.marcherVers(880);
       this.pleuvoirPieces();
       const ajuste = gain !== v.butin ? ` (prévu : ${v.butin}, ajusté selon votre relation et tes décorations)` : '';

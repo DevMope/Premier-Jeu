@@ -274,6 +274,55 @@ class CounterScene extends Phaser.Scene {
       this.cases[id] = { fond, qte };
     });
     this.creerTiroirSecret();
+    this.creerTiroirCadeaux();
+  }
+
+  // Les cadeaux achetés au Bazar de Rosalie : un par client et par jour, pour sa chance.
+  creerTiroirCadeaux() {
+    const x = 416, y = 493;
+    const fond = this.add.rectangle(x, y, 104, 44, 0x3a5a2a).setStrokeStyle(2, 0x1f3a1a).setInteractive({ useHandCursor: true });
+    const texte = this.add.text(x, y, '', style(12, '#e8f0c8', { fontStyle: 'bold', align: 'center' })).setOrigin(0.5);
+    fond.on('pointerover', () => fond.setFillStyle(0x4a7a3a));
+    fond.on('pointerout', () => fond.setFillStyle(0x3a5a2a));
+    fond.on('pointerdown', () => this.ouvrirTiroirCadeaux());
+    this.tiroirCadeaux = { fond, texte };
+  }
+
+  majTiroirCadeaux() {
+    const n = Object.values(this.G.cadeaux || {}).reduce((a, b) => a + b, 0);
+    this.tiroirCadeaux.fond.setVisible(n > 0);
+    this.tiroirCadeaux.texte.setVisible(n > 0).setText(`🎁 Cadeaux\n(${n})`);
+    if (!n && this.panneauCadeaux) { this.panneauCadeaux.destroy(); this.panneauCadeaux = null; }
+  }
+
+  ouvrirTiroirCadeaux() {
+    if (this.panneauCadeaux) { this.panneauCadeaux.destroy(); this.panneauCadeaux = null; return; }
+    const ids = Object.keys(this.G.cadeaux).filter(id => this.G.cadeaux[id] > 0);
+    if (!ids.length) return;
+    const c = this.panneauCadeaux = this.add.container(0, 0).setDepth(8);
+    const h = 34 + ids.length * 30;
+    c.add(this.add.rectangle(416, 470 - h / 2, 240, h, 0x1e2a14, 0.97).setStrokeStyle(2, 0x4a7a3a));
+    c.add(this.add.text(416, 470 - h + 14, 'Offrir au client :', style(12, '#c8e0a0', { fontStyle: 'italic' })).setOrigin(0.5));
+    ids.forEach((id, i) => {
+      const y = 470 - h + 40 + i * 30;
+      const ligne = this.add.rectangle(416, y, 226, 26, 0x2a3a1e).setInteractive({ useHandCursor: true });
+      ligne.on('pointerover', () => ligne.setFillStyle(0x3a5a2a));
+      ligne.on('pointerout', () => ligne.setFillStyle(0x2a3a1e));
+      ligne.on('pointerdown', () => this.offrir(id));
+      c.add([ligne, this.add.image(316, y, id).setScale(2.5),
+        this.add.text(334, y, `${CADEAUX[id].nom} x ${this.G.cadeaux[id]}`, style(12, '#f3f0d0', { fontStyle: 'bold' })).setOrigin(0, 0.5)]);
+    });
+  }
+
+  offrir(id) {
+    if (this.panneauCadeaux) { this.panneauCadeaux.destroy(); this.panneauCadeaux = null; }
+    if (!this.voyageur || this.enConfirmation) return this.dire("Il n'y a personne à qui l'offrir.", '');
+    const r = offrirCadeau(this.G, this.voyageur, id);
+    if (r.erreur) return this.dire(r.erreur, '');
+    this.dire(r.texte);
+    this.tweens.add({ targets: this.perso, y: this.perso.y - 14, duration: 140, yoyo: true });
+    this.majStock();
+    this.majCommande();
   }
 
   // Le tiroir secret, sous le comptoir : les objets piégés que la Faucheuse t'a laissés.
@@ -422,6 +471,7 @@ class CounterScene extends Phaser.Scene {
       let bonjour = v.prevu ? "C'est moi qui t'ai écrit, tu te souviens ? " : '';
       if (entree.attentes) bonjour = "Me revoilà ! On reprend où on en était ? ";
       if (v.habitue) bonjour = 'Re-bonjour, c\'est encore moi ! ' + (this.aReparer(v).length ? 'Mon matériel a souffert la dernière fois... ' : '');
+      if (v.exige && !entree.attentes) bonjour += "Et après ma dernière mission ratée, tu me dois bien un objet de plus que ma commande ! ";
       if (!v.queteId) {
         // Il vient chercher l'aventure : c'est toi qui choisis où l'envoyer.
         this.dire(`${bonjour}${ENVIES[v.envie]} (${NIVEAUX_AVENTURIER[v.niveau].nom}${v.blessures ? `, encore blessé${v.feminin ? 'e' : ''}` : ''})`, this.nomAvecRelation(v.nom));
@@ -435,7 +485,8 @@ class CounterScene extends Phaser.Scene {
       this.servir();
     } else if (entree.type === 'retour') {
       const v = entree.parti.voyageur;
-      this.dire(`Me revoilà, sain${v.feminin ? 'e' : ''} et sauf${v.feminin ? 've' : ''} ! Tu ne devineras jamais ce qui m'est arrivé...`, v.nom);
+      this.dire(entree.parti.resultat.echec ? "Me revoilà... Vivant, au moins. Mais ça ne s'est pas passé comme prévu."
+        : `Me revoilà, sain${v.feminin ? 'e' : ''} et sauf${v.feminin ? 've' : ''} ! Tu ne devineras jamais ce qui m'est arrivé...`, v.nom);
       this.titreCommande.setFontSize(17).setText('Retour de mission');
       this.bouton('Écouter son récit', () => this.ouvrirRecit(entree.parti));
     } else if (entree.type === 'famille') {
@@ -1001,6 +1052,7 @@ class CounterScene extends Phaser.Scene {
       c.qte.setText('x ' + n).setColor(n > 0 ? '#f3d98a' : '#a05040');
     }
     this.majTiroirSecret();
+    this.majTiroirCadeaux();
     const m = this.G.materiaux;
     this.texteReserve.setText(`Réserve ${stockTotal(this.G)}/${this.G.capacite} · Fer ${m.fer} · Cuir ${m.cuir}`);
   }
@@ -1017,8 +1069,9 @@ class CounterScene extends Phaser.Scene {
       for (let taille = 16; this.titreCommande.width > 235 && taille >= 12; taille--) this.titreCommande.setFontSize(taille);
     }
     this.sousTitre.setText(v ? (v.queteId ? `→ ${ZONES[v.zone].nom}` : "cherche l'aventure") : '');
-    this.texteSac.setText(v && v.queteId ? `Sac : ${totalSurplus(v, this.colis)} / ${tailleSac(v)} en plus` +
-      (coeursEnPlus(v, this.colis) ? ` · +${coeursEnPlus(v, this.colis)} cœur${coeursEnPlus(v, this.colis) > 1 ? 's' : ''}` : '') : '');
+    this.texteSac.setText(v ? (v.queteId ? `Sac : ${totalSurplus(v, this.colis)} / ${tailleSac(v)} en plus` +
+      (coeursEnPlus(v, this.colis) ? ` · +${coeursEnPlus(v, this.colis)} cœur${coeursEnPlus(v, this.colis) > 1 ? 's' : ''}` : '') + ' · ' : '') +
+      `🍀 ${trefleDe(this.G, v.nom)}/${TREFLE_MAX} · ${NIVEAUX_AVENTURIER[v.niveau].nom}` : '');
     this.lignesCommande.forEach((ligne, i) => {
       const id = ids[i];
       ligne.id = id || null;

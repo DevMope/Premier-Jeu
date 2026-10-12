@@ -323,11 +323,16 @@ const JOUR_1 = [
 // --- Le dispatch : les zones où envoyer les aventuriers ---
 
 // Le niveau d'un aventurier : un vétéran a un cœur de plus et vise plus gros.
+// Les niveaux d'un aventurier, gagnés au fil de ses missions réussies (`succes`).
+// `bonus` : un petit plus à chaque épreuve. Seuls les héros osent les zones à 5 étoiles.
 const NIVEAUX_AVENTURIER = {
-  novice: { nom: 'Novice', pv: 0, butin: 0.9 },
-  aguerri: { nom: 'Aguerri', pv: 0, butin: 1 },
-  veteran: { nom: 'Vétéran', pv: 1, butin: 1.15 },
+  novice: { nom: 'Novice', pv: 0, butin: 0.9, bonus: 0, succes: 0 },
+  aguerri: { nom: 'Aguerri', pv: 0, butin: 1, bonus: 0.02, succes: 1 },
+  veteran: { nom: 'Vétéran', pv: 1, butin: 1.15, bonus: 0.04, succes: 3 },
+  heros: { nom: 'Héros', pv: 1, butin: 1.3, bonus: 0.06, succes: 6 },
+  legende: { nom: 'Légende', pv: 2, butin: 1.5, bonus: 0.08, succes: 10 },
 };
+const ORDRE_NIVEAUX = Object.keys(NIVEAUX_AVENTURIER);
 
 // Ce qu'ils viennent chercher.
 const ENVIES = {
@@ -339,49 +344,89 @@ const ENVIES = {
 
 // Les zones, de la plus calme à la plus dangereuse. `biome` : les couleurs de son paysage.
 // `reputation` : la réputation qui l'ouvre (sinon, un aventurier peut la découvrir dans un récit).
-// `x`, `y` : sa place sur la carte.
+// Au-delà de 2 étoiles, il faut aussi des retours réussis dans l'étoile d'avant (RETOURS_POUR_ETOILE).
+// `x`, `y` : sa place sur la carte. `camp` : 'bien' (terres de lumière, à l'ouest),
+// 'mal' (terres d'ombre, à l'est), ou rien (les terres du milieu).
 const ZONES = {
   collines: {
-    nom: 'Les Collines de la Comté', danger: 1, reputation: 0, x: 170, y: 330, biome: 'comte',
+    nom: 'Les Collines de la Comté', danger: 1, reputation: 0, x: 300, y: 345, biome: 'comte',
     description: 'Des routes tranquilles, des rivières et quelques loups. Parfait pour les débutants.',
     quetes: ['lettre', 'sanglier'],
   },
   foret: {
-    nom: 'La Forêt des Murmures', danger: 2, reputation: 0, x: 330, y: 250, biome: 'foret',
+    nom: 'La Forêt des Murmures', danger: 2, reputation: 0, x: 420, y: 250, biome: 'foret',
     description: 'Des arbres immenses, des bêtes sauvages et des ruines oubliées sous la mousse.',
     quetes: ['loup', 'ruines', 'champignons'],
   },
   marais: {
-    nom: 'Les Marécages de Brume-Noire', danger: 2, reputation: 0, x: 250, y: 140, biome: 'marais',
+    nom: 'Les Marécages de Brume-Noire', danger: 2, reputation: 0, x: 330, y: 150, biome: 'marais',
     description: 'Une eau croupie, des sangsues et des feux follets qui égarent les voyageurs.',
     quetes: ['fleur', 'sangsues'],
   },
   mines: {
-    nom: 'Les Mines abandonnées', danger: 3, reputation: 3, x: 520, y: 300, biome: 'mines',
+    nom: 'Les Mines abandonnées', danger: 3, reputation: 3, x: 530, y: 335, biome: 'mines',
     description: 'Des galeries noires, des éboulements, et des araignées géantes. Mais quel minerai !',
     quetes: ['mine'],
   },
   desert: {
-    nom: 'Les Terres Désolées', danger: 3, reputation: 4, x: 640, y: 380, biome: 'desert',
+    nom: 'Les Terres Désolées', danger: 3, reputation: 4, x: 650, y: 300, biome: 'desert',
     description: 'Le soleil, la soif, les tempêtes de sable et les pillards. Les caravanes paient bien.',
     quetes: ['caravane', 'oasis'],
   },
   pics: {
-    nom: 'Les Pics Gelés', danger: 4, reputation: 8, x: 600, y: 120, biome: 'neige',
+    nom: 'Les Pics Gelés', danger: 4, reputation: 8, x: 510, y: 110, biome: 'neige',
     description: 'Le froid qui mord, les avalanches et les yétis. Il faut une cape chaude.',
     quetes: ['yeti', 'col'],
   },
   ruinesRoi: {
-    nom: 'Les Ruines du Roi-Sorcier', danger: 4, reputation: 10, x: 780, y: 220, biome: 'ruines',
+    nom: 'Les Ruines du Roi-Sorcier', danger: 4, reputation: 10, x: 630, y: 190, biome: 'ruines',
     description: "Des morts qui marchent et des malédictions anciennes. Une amulette n'est pas de trop.",
     quetes: ['roiSorcier'],
   },
   antre: {
-    nom: "L'Antre de la Bête", danger: 5, reputation: 15, x: 860, y: 90, biome: 'antre',
+    nom: "L'Antre de la Bête", danger: 5, reputation: 15, x: 690, y: 90, biome: 'antre',
     description: "Personne n'en est revenu depuis des années. Mais le trésor qu'on y raconte...",
     quetes: ['bete'],
   },
+  // Les terres de lumière : les quêtes du bien font monter ta réputation.
+  monastere: {
+    nom: 'Le Monastère des Pandas', danger: 2, reputation: 0, x: 140, y: 320, biome: 'monastere', camp: 'bien',
+    description: 'Des moines pandas, des jardins de bambous et des pèlerins à protéger sur la route.',
+    quetes: ['pelerins'],
+  },
+  sanctuaire: {
+    nom: 'Le Sanctuaire des Elfes', danger: 3, reputation: 4, x: 95, y: 195, biome: 'sanctuaire', camp: 'bien',
+    description: "Une forêt d'argent où les elfes veillent sur l'Arbre-Mère. Il faut le défendre.",
+    quetes: ['graine'],
+  },
+  citadelle: {
+    nom: 'La Citadelle des Paladins', danger: 4, reputation: 9, x: 200, y: 95, biome: 'citadelle', camp: 'bien',
+    description: 'Le dernier rempart contre les ténèbres, assiégé nuit et jour par les morts.',
+    quetes: ['siege'],
+  },
+  // Les terres d'ombre : plus d'or, mais tu nourris le mal. Seuls les aventuriers vénaux
+  // (ceux qui ne cherchent que l'or) acceptent d'y aller.
+  bourbier: {
+    nom: 'Le Bourbier des Gobelins', danger: 2, reputation: 0, x: 830, y: 340, biome: 'bourbier', camp: 'mal',
+    description: 'Les gobelins y paient en or volé ceux qui pillent pour eux les caravanes de pèlerins.',
+    quetes: ['pillage'],
+  },
+  repaire: {
+    nom: 'Le Repaire des Loups-garous', danger: 3, reputation: 4, x: 790, y: 220, biome: 'repaire', camp: 'mal',
+    description: 'Sous la lune rouge, la meute achète des pactes et des secrets. Elle paie bien. Très bien.',
+    quetes: ['pacte'],
+  },
+  tour: {
+    nom: 'La Tour du Nécromancien', danger: 4, reputation: 9, x: 875, y: 105, biome: 'tour', camp: 'mal',
+    description: 'Le Nécromancien collectionne les reliques des temples. Volées, de préférence.',
+    quetes: ['profanation'],
+  },
 };
+
+// Pour ouvrir une zone à 3, 4 ou 5 étoiles : des retours réussis dans l'étoile d'avant.
+const RETOURS_POUR_ETOILE = { 3: 3, 4: 5, 5: 8 };
+// Les quêtes du bien : un peu plus de réputation. Celles du mal : plus d'or, et la jauge du mal.
+const EFFETS_CAMP = { bien: { reputation: 1.5, butin: 1, mal: 0 }, mal: { reputation: 0, butin: 1.35, mal: 0.5 } };
 
 // Plus la zone est dangereuse, plus le butin est gros.
 const BUTIN_PAR_DANGER = [0, 1, 1.25, 1.6, 2.1, 3];
@@ -514,6 +559,7 @@ const POSTES = {
   trouvailles: 'Trouvailles', reserve: 'Agrandissements', dedommagements: 'Dédommagements',
   remboursements: 'Remboursements de prêts', dons: 'Dons au mendiant', prets: 'Prêts reçus', salaires: 'Salaires',
   sabotages: 'Primes de la Faucheuse',
+  bazar: 'Cadeaux du Bazar',
 };
 // On garde le détail des derniers jours (un peu plus d'une année).
 const JOURS_DE_COMPTES = 120;
@@ -841,3 +887,205 @@ const SEUIL_SABOTAGE = 3;          // jauge du mal
 const PRIME_SABOTAGE = [30, 60];   // pièces froides, selon le danger de la zone
 // La Main Noire prête à ceux dont la jauge du mal est assez haute.
 const SEUIL_MAIN_NOIRE = 6;
+
+// --- Les quêtes des terres de lumière et d'ombre ---
+Object.assign(QUETES, {
+  pelerins: {
+    titre: 'Escorter les pèlerins au Monastère',
+    accueil: "Le Monastère des Pandas ? Les pèlerins ont besoin d'une escorte, les routes ne sont plus sûres. C'est une bonne cause.",
+    pv: 2, duree: [2, 3], butin: [25, 40],
+    epreuves: [
+      { type: 'route', besoin: 'gourde', qte: 1, intro: 'La route du Monastère grimpe sous un soleil de plomb. Les pèlerins avaient soif.',
+        complet: 'Ta gourde a désaltéré tout le monde. Un vieux moine panda m\'a béni{e}.', partiel: "On a partagé le peu d'eau qu'on avait...", rien: 'Les plus vieux pèlerins se sont évanouis en chemin.' },
+      { type: 'bandits', besoin: 'epee', qte: 1, intro: 'Des brigands nous attendaient au col des bambous !',
+        complet: 'Ton épée les a fait fuir dans les bambous.', partiel: "Je les ai repoussés, mais avec mal.", rien: "Je n'avais rien pour défendre les pèlerins..." },
+      { type: 'riviere', besoin: 'corde', qte: 1, intro: 'Le pont de lianes du Monastère était rompu.',
+        complet: 'Avec ta corde, on a fait passer tout le monde, un par un.', partiel: 'La corde était trop courte, il a fallu improviser.', rien: "On a dû traverser à gué, et j'ai failli tout perdre." },
+    ],
+  },
+  graine: {
+    titre: "Rapporter la Graine d'argent au Sanctuaire",
+    accueil: "Le Sanctuaire des Elfes ? On a volé une graine de l'Arbre-Mère. Les elfes paient pour qu'on la leur rapporte... et pour la gloire.",
+    pv: 3, duree: [3, 4], butin: [45, 65],
+    epreuves: [
+      { type: 'esprits', besoin: 'torche', qte: 1, intro: "Dans la forêt d'argent, des esprits jaloux voulaient garder la graine.",
+        complet: 'Ta torche les a tenus à distance.', partiel: 'Ma torche faiblissait...', rien: 'Ils m\'ont égaré{e} pendant une journée entière.' },
+      { type: 'araignee', besoin: 'epee', qte: 1, intro: 'La graine était dans une toile d\'araignée géante.',
+        complet: 'Un coup d\'épée, et la toile a cédé !', partiel: 'Je me suis battu{e} longtemps avant de la récupérer.', rien: "J'ai dû arracher la toile à mains nues." },
+      { type: 'malediction', besoin: 'amulette', qte: 1, intro: 'Le voleur avait maudit la graine.',
+        complet: 'Ton amulette a brisé le sort. Les elfes ont chanté pour moi.', partiel: "La malédiction m'a affaibli{e}...", rien: 'La malédiction me ronge depuis.' },
+    ],
+  },
+  siege: {
+    titre: 'Défendre la Citadelle assiégée',
+    accueil: "La Citadelle des Paladins tient encore... à peine. Ils ont besoin de bras. Si je dois mourir, autant que ce soit pour la bonne cause.",
+    pv: 3, duree: [3, 5], butin: [70, 100],
+    epreuves: [
+      { type: 'nuit', besoin: 'ration', qte: 2, intro: 'Le siège a duré des jours. Les vivres manquaient dans la Citadelle.',
+        complet: 'Tes rations ont tenu tout le monde debout.', partiel: 'On a dû rationner les rations...', rien: 'La faim nous a affaiblis avant même la bataille.' },
+      { type: 'mortvivant', besoin: 'bouclier', qte: 1, intro: 'Les morts sont montés à l\'assaut des remparts.',
+        complet: 'Ton bouclier a tenu sous leurs coups.', partiel: "Mon bouclier s'est fendu...", rien: "Sans bouclier, j'ai pris des coups terribles." },
+      { type: 'mortvivant', besoin: 'epee', qte: 1, intro: 'Leur chef, un chevalier squelette, m\'a défié{e} en duel.',
+        complet: 'Ton épée l\'a renvoyé dans sa tombe !', partiel: "Je l'ai repoussé, sans le vaincre.", rien: "Je n'ai fait que fuir..." },
+    ],
+  },
+  pillage: {
+    titre: 'Piller une caravane de pèlerins',
+    accueil: "Le Bourbier ? Les gobelins paient en or pour chaque caravane pillée. De l'or, c'est de l'or. Ne me regarde pas comme ça.",
+    pv: 2, duree: [2, 3], butin: [40, 60],
+    epreuves: [
+      { type: 'route', besoin: 'ration', qte: 1, intro: "J'ai attendu la caravane deux jours, caché{e} dans la boue.",
+        complet: 'Tes rations m\'ont tenu{e}.', partiel: "J'avais faim...", rien: "J'ai mangé un crapaud. Cru." },
+      { type: 'bandits', besoin: 'epee', qte: 1, intro: 'La caravane avait des gardes !',
+        complet: "Ton épée a fait le travail. Je n'en suis pas fier{e}.", partiel: 'Un garde m\'a blessé{e} avant de fuir.', rien: 'Sans arme, les gardes m\'ont roué{e} de coups.' },
+      { type: 'riviere', besoin: 'corde', qte: 1, intro: 'Pour rapporter le butin aux gobelins, il fallait traverser le bourbier.',
+        complet: 'Avec ta corde, tout le butin est passé.', partiel: "J'ai perdu une partie du butin dans la boue.", rien: "Le bourbier a failli m'avaler." },
+    ],
+  },
+  pacte: {
+    titre: 'Livrer un pacte à la meute',
+    accueil: "Le Repaire des Loups-garous ? On m'a confié un pacte à leur porter. Je ne veux pas savoir ce qu'il y a dedans. Ils paient le triple.",
+    pv: 3, duree: [3, 4], butin: [60, 85],
+    epreuves: [
+      { type: 'nuit', besoin: 'torche', qte: 1, intro: 'Le Repaire ne se trouve que la nuit, sous la lune rouge.',
+        complet: 'Ta torche m\'a guidé{e} jusqu\'à eux.', partiel: 'Ma torche s\'est éteinte en chemin.', rien: "J'ai erré dans le noir, entouré{e} de hurlements." },
+      { type: 'loup', besoin: 'epee', qte: 1, intro: 'Un jeune loup a voulu me tester.',
+        complet: 'Ton épée lui a appris le respect.', partiel: "Il m'a mordu{e} avant de reculer.", rien: 'Il a joué avec moi comme avec une souris.' },
+      { type: 'morsure', besoin: 'antidote', qte: 1, intro: 'Une morsure de loup-garou... ça ne pardonne pas.',
+        complet: "Ton antidote a arrêté la malédiction. Ouf.", partiel: 'Je hurle un peu à la lune depuis.', rien: 'Mes ongles poussent bizarrement depuis...' },
+    ],
+  },
+  profanation: {
+    titre: 'Voler les reliques d\'un temple',
+    accueil: "La Tour du Nécromancien... Il veut les reliques du temple de la Lumière. Volées. C'est mal, je sais. Mais l'or n'a pas d'odeur.",
+    pv: 3, duree: [3, 5], butin: [95, 135],
+    epreuves: [
+      { type: 'malediction', besoin: 'amulette', qte: 1, intro: 'Les reliques étaient protégées par une bénédiction... qui brûle les voleurs.',
+        complet: 'Ton amulette m\'a protégé{e} de la lumière sacrée.', partiel: 'La lumière m\'a brûlé{e}...', rien: "J'en porte encore les marques." },
+      { type: 'gouffre', besoin: 'corde', qte: 1, intro: 'Pour fuir, il fallait descendre la falaise derrière le temple.',
+        complet: 'Ta corde a tenu jusqu\'en bas.', partiel: 'Les derniers mètres, je les ai faits en tombant.', rien: 'Je suis tombé{e}.' },
+      { type: 'mortvivant', besoin: 'epee', qte: 1, intro: 'À la Tour, les gardes morts du Nécromancien ne voulaient pas me laisser repartir.',
+        complet: 'Ton épée m\'a ouvert le chemin.', partiel: "Je m'en suis tiré{e} de justesse.", rien: 'Ils voulaient me garder comme serviteur...' },
+    ],
+  },
+});
+
+// --- La chance (le trèfle) ---
+
+// Chaque voyageur a sa chance, de 0 à 10 : un peu au départ, plus avec une bonne relation, et
+// avec les cadeaux qu'on lui fait. Elle peut le sauver d'une épreuve ratée de justesse, ou
+// transformer une mort en simple échec : il rebrousse chemin, vivant.
+const TREFLE_BASE = 1;
+const TREFLE_MAX = 10;
+const TREFLE_RELATION = [-1, -1, 0, 0, 1, 2, 3]; // selon le niveau de relation (Pires ennemis → Frères de sang)
+const SAUVETAGE_PAR_TREFLE = 0.02;              // une épreuve ratée rattrapée
+const REPLI_PAR_TREFLE = 0.07;                  // la mort évitée : il rebrousse chemin
+
+// Les cadeaux, au Bazar de Rosalie. Chaque race a ses goûts.
+const CADEAUX = {
+  miel: { nom: 'Pot de miel', prix: 6 },
+  tabac: { nom: 'Tabac à pipe', prix: 5 },
+  broche: { nom: 'Broche ciselée', prix: 12 },
+  livre: { nom: 'Livre ancien', prix: 9 },
+  ferACheval: { nom: 'Fer à cheval porte-bonheur', prix: 7 },
+  vin: { nom: 'Vin de la Comté', prix: 8 },
+  gateau: { nom: 'Gâteau aux mûres', prix: 4 },
+};
+const GOUTS = {
+  hobbit: { aime: ['miel', 'tabac', 'gateau'], deteste: ['livre'] },
+  nain: { aime: ['vin', 'broche'], deteste: ['gateau'] },
+  elfe: { aime: ['livre', 'broche'], deteste: ['tabac'] },
+  humain: { aime: ['vin', 'ferACheval'], deteste: [] },
+  magicienne: { aime: ['livre', 'ferACheval'], deteste: ['vin'] },
+};
+const EFFET_CADEAU = { aime: { trefle: 3, relation: 1 }, neutre: { trefle: 1, relation: 0 }, deteste: { trefle: 0, relation: -1 } };
+
+// --- La mission ratée ---
+
+// Il revient vivant mais sans butin : ta mise est perdue, ta réputation baisse un peu, et selon
+// votre relation au moment du départ, d'autres ennuis s'ajoutent.
+const PERTE_ECHEC = 0.5;
+const MALUS_ECHEC = {
+  rumine: '{nom} rumine son échec : votre relation en prend un coup.',
+  blesse: '{nom} est trop blessé{e} pour repartir avant plusieurs jours, sauf si tu {le} soignes.',
+  rumeur: 'La rumeur court que tes colis ne suffisent pas : moins de clients demain.',
+  comptes: '{nom} te demandera des comptes : la prochaine fois, {il} exigera un objet en plus.',
+};
+// Le nombre de malus selon la relation au départ (Pires ennemis → Frères de sang).
+const NB_MALUS_ECHEC = [4, 4, 3, 2, 2, 1, 1];
+const CONVALESCENCE = 3;
+const RUMEUR_CLIENTS = 2;
+
+// --- Les lettres, les événements et les nouvelles ---
+
+// Les lettres de commande sont devenues rares.
+const CHANCE_LETTRE = 0.3;
+// Parfois, un événement se prépare, éclate ou s'est déjà produit : il change les prix, une zone
+// ou le nombre de clients pendant quelques jours. Annoncé par une lettre ou par le crieur.
+const CHANCE_EVENEMENT = 0.18;
+const EVENEMENTS = {
+  penurieFer: { type: 'prix', objets: ['epee', 'bouclier'], mult: 1.6,
+    annonce: 'La mine de fer de Grisefer a été inondée. Les forgerons préviennent : les épées et les boucliers vont manquer.',
+    nouvelle: 'Pénurie de fer : épées et boucliers hors de prix au marché !' },
+  recolte: { type: 'prix', objets: ['ration', 'gourde'], mult: 0.6,
+    annonce: 'Une récolte exceptionnelle dans la Comté ! Les rations ne vont rien coûter.',
+    nouvelle: 'Récolte record : les rations et les gourdes sont bradées au marché.' },
+  fievre: { type: 'prix', objets: ['potion', 'antidote', 'bandage'], mult: 1.7,
+    annonce: 'La fièvre des marais gagne les villages. Les apothicaires sont dévalisés.',
+    nouvelle: 'Fièvre des marais : potions, antidotes et bandages hors de prix !' },
+  cordes: { type: 'prix', objets: ['corde', 'torche'], mult: 0.6,
+    annonce: 'Les nains de Grisefer bradent leurs cordes et leurs torches avant de partir en pèlerinage.',
+    nouvelle: 'Grande braderie naine : cordes et torches à prix cassés.' },
+  hiver: { type: 'prix', objets: ['cape', 'torche'], mult: 1.5,
+    annonce: 'Les anciens le sentent dans leurs os : un hiver précoce arrive.',
+    nouvelle: 'Hiver précoce : les capes et les torches s\'arrachent.' },
+  tempete: { type: 'danger', zone: 'desert', mult: -0.12,
+    annonce: 'Une tempête de sable géante avance sur les Terres Désolées.',
+    nouvelle: 'Tempête de sable sur les Terres Désolées : les épreuves y sont plus dures.' },
+  brume: { type: 'danger', zone: 'marais', mult: -0.12,
+    annonce: 'Une brume épaisse est tombée sur les Marécages de Brume-Noire. Plus épaisse que d\'habitude. Ce qui est beaucoup dire.',
+    nouvelle: 'Brume épaisse sur les marécages : les voyageurs s\'y perdent.' },
+  rueeOr: { type: 'butin', zone: 'mines', mult: 1.5,
+    annonce: 'Un filon d\'or a été découvert au fond des Mines abandonnées !',
+    nouvelle: 'Ruée vers l\'or dans les Mines : le butin y est bien plus gros.' },
+  yetis: { type: 'butin', zone: 'pics', mult: 1.4,
+    annonce: 'Les yétis des Pics Gelés ont migré vers le nord. Leurs trésors sont sans surveillance.',
+    nouvelle: 'Les yétis ont quitté les Pics : leurs trésors attendent.' },
+  foire: { type: 'clients', clients: 2,
+    annonce: "La grande Foire d'automne se tiendra bientôt à Brêche-Haute. Des voyageurs vont affluer de partout !",
+    nouvelle: "C'est la Foire ! Les voyageurs affluent." },
+  orcs: { type: 'clients', clients: -2,
+    annonce: 'Une armée d\'orcs a été aperçue près des collines. Les voyageurs se font rares.',
+    nouvelle: 'Les orcs rôdent : peu de voyageurs osent sortir.' },
+};
+
+// Le crieur du marché : une nouvelle par jour, souvent absurde.
+const NOUVELLES = [
+  "Un gobelin a été enseveli sous une bouse de Groliphant, ces éléphants de dix mètres au garrot. On n'a retrouvé que son chapeau. Il était content du chapeau.",
+  'Le concours de lancer de nain de Brêche-Haute est annulé : le nain a gagné.',
+  "Un troll a tenté de payer le péage du pont avec un caillou. Le péagiste, lui aussi troll, a rendu la monnaie en cailloux.",
+  'La Guilde des Sorciers rappelle qu\'il est interdit de transformer son voisin en crapaud, même pendant les fêtes.',
+  'Un dragon a été aperçu au-dessus des Pics Gelés. Vérification faite : un cerf-volant. Très gros. Avec des dents.',
+  "Concours de la plus grosse citrouille de la Comté : le vainqueur a dû être évacué de son jardin par trois poneys.",
+  'Un barde a chanté si faux à la taverne que le fantôme du grenier a demandé à être exorcisé.',
+  "Les gobelins du Bourbier organisent leur premier concours de poésie. Le jury a été mangé.",
+  "Un hobbit a mangé sept repas hier. Ses médecins s'inquiètent : d'habitude, c'est neuf.",
+  'Une vache a été élue bourgmestre de Ravin-Moussu. Les habitants parlent du meilleur mandat depuis dix ans.',
+  'Un nécromancien a relevé une armée de squelettes, qui s\'est aussitôt mise en grève pour réclamer de la peau.',
+  'Les araignées des Mines abandonnées tissent désormais des pulls. Personne n\'ose en commander.',
+  'Un elfe a souri en public. Les témoins sont encore sous le choc.',
+  'Perdu : un mouton-garou, répond au nom de Bêêêrnard. Ne pas sortir les soirs de pleine lune.',
+  'Un Groliphant a éternué dans la Forêt des Murmures : trois arbres ont déménagé.',
+  "Le vieux Grippesou nie avoir vendu une épée en bois peinte à un chevalier. Le chevalier, lui, ne nie plus rien : il est en convalescence.",
+  "Un mage a voulu faire pleuvoir de l'or. Il a fait pleuvoir des orques. La confusion est compréhensible.",
+  'Un yéti des Pics Gelés réclame une écharpe. Les tricoteuses de la Comté ont lancé une collecte.',
+  'Un champignon de lune a été élu « champignon le plus suspect de l\'année ». Il n\'a pas souhaité commenter.',
+  "Un chevalier a combattu un moulin pendant trois heures. Le moulin l'a emporté aux points.",
+  'Les loups-garous se plaignent : la pleine lune tombe encore un jour de lessive.',
+  'Un pêcheur a attrapé un poisson qui parlait. Il l\'a relâché : il refusait de se taire.',
+  'Les pandas du Monastère ont médité si fort qu\'un village voisin s\'est endormi pour deux jours.',
+  'Une sorcière a perdu son balai. Récompense honnête, pas de questions, pas de crapauds.',
+  "Un Groliphant s'est assis sur la diligence de Brêche-Haute. Les passagers sont arrivés à l'heure, mais plus plats.",
+  "Les nains banquiers de la Banque Centrale Goyenne ont ri hier. Une seule fois. Les intérêts ont augmenté aussitôt.",
+  'Un gobelin a essayé de voler la lune avec une échelle. Il est tombé à la troisième marche. Il retentera demain.',
+];

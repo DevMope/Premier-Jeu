@@ -40,9 +40,15 @@ class CarteScene extends Phaser.Scene {
     g.fillStyle(0x3b2410).fillRect(0, 0, 960, 540);
     g.fillStyle(0xe8d4a4).fillRect(14, 50, 932, 368);
     g.lineStyle(4, 0x8a6a3a).strokeRect(14, 50, 932, 368);
-    for (const z of Object.values(ZONES)) g.fillStyle(BIOMES[z.biome].pres, 0.35).fillCircle(z.x, z.y, 62);
+    // Les trois terres : la lumière à l'ouest, l'ombre à l'est, et le milieu.
+    g.fillStyle(0xfff0a0, 0.45).fillRect(16, 52, 250, 364);
+    g.fillStyle(0x2a1a3a, 0.22).fillRect(735, 52, 209, 364);
+    g.lineStyle(2, 0x8a6a3a, 0.4).lineBetween(266, 52, 266, 416).lineBetween(735, 52, 735, 416);
+    this.add.text(141, 400, '☀ Terres de lumière', style(12, '#8a6a10', { fontStyle: 'bold italic' })).setOrigin(0.5);
+    this.add.text(840, 400, '☾ Terres d\'ombre', style(12, '#4a2a5a', { fontStyle: 'bold italic' })).setOrigin(0.5);
+    for (const z of Object.values(ZONES)) g.fillStyle(BIOMES[z.biome].pres, 0.35).fillCircle(z.x, z.y, 56);
     // Ton comptoir, et les chemins qui en partent
-    const depart = { x: 80, y: 380 };
+    const depart = { x: 405, y: 395 };
     g.lineStyle(2, 0x8a6a3a, 0.7);
     for (const z of Object.values(ZONES)) {
       const n = 14;
@@ -53,8 +59,8 @@ class CarteScene extends Phaser.Scene {
     }
     g.fillStyle(0x8a5a2b).fillRect(depart.x - 14, depart.y - 12, 28, 22);
     g.fillStyle(0xc9a046).fillTriangle(depart.x - 18, depart.y - 12, depart.x, depart.y - 28, depart.x + 18, depart.y - 12);
-    this.add.text(depart.x, depart.y + 18, 'Ton comptoir', style(11, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5, 0);
-    this.add.text(26, 58, '⚔ en mission (jour du retour) · ✉ t\'a écrit · ☠ ta cible', style(11, '#6b4a2a', { fontStyle: 'italic' }));
+    this.add.text(depart.x + 22, depart.y, 'Ton comptoir', style(11, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+    this.add.text(276, 58, '⚔ en mission (jour du retour) · ✉ t\'a écrit · ☠ ta cible', style(11, '#6b4a2a', { fontStyle: 'italic' }));
   }
 
   dessinerZones() {
@@ -166,8 +172,12 @@ class CarteScene extends Phaser.Scene {
     this.bulle.add(fermer);
     if (!zoneOuverte(G, cle)) {
       this.bulle.add(this.add.text(gauche, haut, 'Une contrée inconnue', style(15, '#f3d98a', { fontStyle: 'bold' })));
-      this.bulle.add(this.add.text(gauche, haut + 24, `Personne ne sait vraiment ce qu'il y a là-bas. Elle s'ouvrira avec une réputation de ${z.reputation}, ` +
-        "ou quand un aventurier revenu d'une zone voisine t'en parlera.", style(12, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 3 })));
+      // Ce qu'il manque pour l'ouvrir : la réputation (ou une découverte), et des retours réussis.
+      const c = conditionsZone(G, cle);
+      const lignes = [`Personne ne sait vraiment ce qu'il y a là-bas${z.camp === 'mal' ? ", dans les terres d'ombre" : z.camp === 'bien' ? ', dans les terres de lumière' : ''}. Pour l'ouvrir :`,
+        `${c.reputation ? '✓' : '✗'} une réputation de ${z.reputation} (toi : ${arrondi(G.reputation)}), ou qu'un aventurier la découvre`];
+      if (c.besoin) lignes.push(`${c.faits >= c.besoin ? '✓' : '✗'} ${c.besoin} missions réussies dans des zones à ${z.danger - 1} étoile${z.danger > 2 ? 's' : ''} (${Math.min(c.faits, c.besoin)} / ${c.besoin})`);
+      this.bulle.add(this.add.text(gauche, haut + 24, lignes.join('\n'), style(12, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 3 })));
       return;
     }
     this.bulle.add(this.add.text(gauche, haut, `${z.nom}  ${'★'.repeat(z.danger)}`, style(14, '#f3d98a', { fontStyle: 'bold' })));
@@ -189,6 +199,11 @@ class CarteScene extends Phaser.Scene {
       this.bulle.add(this.add.text(gauche + 22 + i * 40, by + h / 2 - 20, String(enStock), style(11, enStock ? '#b8e0a0' : '#f0a8a0', { fontStyle: 'bold' })).setOrigin(0, 0.5));
     });
     if (!v) return;
+    const refus = refusZone(G, v, cle);
+    if (refus) {
+      this.bulle.add(this.add.text(bx + w / 2 - 12, by + h / 2 - 20, refus, style(11, '#f0a8a0', { fontStyle: 'italic', align: 'right', wordWrap: { width: 190 } })).setOrigin(1, 0.5));
+      return;
+    }
     const envoyer = this.add.text(bx + w / 2 - 12, by + h / 2 - 20, `Envoyer ${v.nom.split(' ')[0]} ici ▶`,
       style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#4f7a3a', padding: { x: 8, y: 5 } })).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
     envoyer.on('pointerdown', () => this.envoyer(cle));

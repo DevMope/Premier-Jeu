@@ -1,7 +1,8 @@
 // Le Marché des Mastres, chaque matin avant d'ouvrir le comptoir :
-// quatre étals (épicerie, forge, apothicaire, tailleuse), les enchères, le coin des jeux et le mendiant.
+// quatre étals (épicerie, forge, apothicaire, tailleuse), le Bazar de Rosalie (les cadeaux), les enchères,
+// le coin des jeux, le mendiant, et le crieur qui annonce les nouvelles du jour.
 // La rue est plus large que l'écran : on la parcourt avec les flèches ◀ ▶.
-const LARGEUR_MARCHE = 1320;
+const LARGEUR_MARCHE = 1700;
 const DEPLACEMENT_RUE = 360;
 // On clique sur un lieu pour l'ouvrir dans le panneau du bas.
 class MarcheScene extends Phaser.Scene {
@@ -23,7 +24,7 @@ class MarcheScene extends Phaser.Scene {
     this.add.text(480, 22, `Le Marché des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setDepth(5);
 
     // Les étals, les enchères, les jeux et le mendiant
-    this.positions = { mendiant: [70, 'lieu'], encheres: [1030, 'lieu'], jeux: [1220, 'lieu'] };
+    this.positions = { mendiant: [70, 'lieu'], bazar: [1030, 'lieu'], encheres: [1220, 'lieu'], jeux: [1410, 'lieu'], crieur: [1595, 'lieu'] };
     Object.entries(MARCHANDS).forEach(([cle, m], i) => {
       this.positions[cle] = [260 + i * 190, 'etal'];
       this.creerEtal(cle, m, 260 + i * 190);
@@ -32,11 +33,20 @@ class MarcheScene extends Phaser.Scene {
     this.creerLieu(70, 'perso_colporteur', 'Le mendiant', () => this.ouvrirMendiant(), { tint: 0x9a9a9a, angle: -6, echelle: 4.5 });
     // L'estrade des enchères, avec son crieur
     const estrade = this.add.graphics();
-    estrade.fillStyle(0x6b4423).fillRect(985, 225, 90, 22);
-    estrade.fillStyle(0x7a1a1a).fillRect(995, 120, 70, 14);
+    estrade.fillStyle(0x6b4423).fillRect(1175, 225, 90, 22);
+    estrade.fillStyle(0x7a1a1a).fillRect(1185, 120, 70, 14);
+    // La petite échoppe à rayures vertes du Bazar de Rosalie
+    for (let i = 0; i < 5; i++) estrade.fillStyle(i % 2 ? 0xf3e6c8 : 0x4f8a3a).fillRect(970 + i * 24, 96, 24, 22);
+    estrade.fillStyle(0x6b4423).fillRect(972, 118, 6, 110).fillRect(1082, 118, 6, 110);
+    estrade.fillStyle(0x8a5a2b).fillRect(975, 205, 110, 26);
+    // L'estrade du crieur
+    estrade.fillStyle(0x5a3a1a).fillRect(1560, 228, 70, 18);
     this.monde.add(estrade);
-    this.creerLieu(1030, 'perso_humain', 'Les enchères', () => this.ouvrirEncheres(), { echelle: 4.5 }).setY(228);
-    this.creerLieu(1220, 'perso_gobelin', 'Le coin des jeux', () => this.ouvrirJeux(), { echelle: 4.5 });
+    this.creerLieu(1030, 'perso_hobbit', 'Le Bazar de Rosalie', () => this.ouvrirBazar(), { echelle: 4.5 });
+    Object.keys(CADEAUX).slice(0, 4).forEach((id, i) => this.monde.add(this.add.image(990 + i * 28, 200, id).setScale(2.5)));
+    this.creerLieu(1220, 'perso_humain', 'Les enchères', () => this.ouvrirEncheres(), { echelle: 4.5 }).setY(228);
+    this.creerLieu(1410, 'perso_gobelin', 'Le coin des jeux', () => this.ouvrirJeux(), { echelle: 4.5 });
+    this.creerLieu(1595, 'perso_garde', 'Le crieur', () => this.ouvrirCrieur(), { echelle: 4.5 }).setY(230);
     this.creerFlechesRue();
 
     // Le panneau du bas et la barre d'infos
@@ -54,6 +64,15 @@ class MarcheScene extends Phaser.Scene {
       .setDepth(21).setInteractive({ useHandCursor: true });
     this.boutonCommandes.on('pointerdown', () => this.basculerCommandes());
     this.majBoutonCommandes();
+
+    // Le crieur annonce la première nouvelle du jour (clic : toutes les nouvelles).
+    if (G.gazette && G.gazette.jour === G.jour && G.gazette.lignes.length) {
+      const nouvelle = this.add.text(480, 82, '📯 Oyez ! ' + G.gazette.lignes[0], style(12, '#3b2410', {
+        fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 4 }, wordWrap: { width: 760 }, align: 'center' }))
+        .setOrigin(0.5, 0).setDepth(5).setInteractive({ useHandCursor: true });
+      nouvelle.on('pointerdown', () => { nouvelle.destroy(); this.ouvrirCrieur(); });
+      this.tweens.add({ targets: nouvelle, alpha: 0, delay: 9000, duration: 800, onComplete: () => nouvelle.destroy() });
+    }
 
     // Les nouvelles de l'atelier (une réparation terminée cette nuit)
     if (G.nouvellesAtelier.length) {
@@ -353,6 +372,41 @@ class MarcheScene extends Phaser.Scene {
       this.ouvrirMendiant();
       this.message(merci);
     }));
+  }
+
+  // --- Le Bazar de Rosalie : les cadeaux ---
+
+  ouvrirBazar() {
+    const G = this.G;
+    this.montrer('bazar');
+    const c = this.panneau('Le Bazar de Rosalie', 'Un cadeau par client et par jour · chacun ses goûts, à toi de les découvrir');
+    c.add(this.add.text(30, 340, "« Un petit cadeau, et la chance leur sourit ! Mais attention : un nain n'aime pas ce qu'aime un elfe. »",
+      style(12, '#6b4a2a', { fontStyle: 'italic' })));
+    Object.entries(CADEAUX).forEach(([id, cad], i) => {
+      const x = 40 + (i % 2) * 460;
+      const y = 372 + Math.floor(i / 2) * 26;
+      c.add(this.add.image(x, y, id).setScale(2.4));
+      c.add(this.add.text(x + 20, y, `${cad.nom} · ${cad.prix} p.`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      c.add(this.add.text(x + 280, y, `tu en as ${G.cadeaux[id] || 0}`, style(11, '#6b4a2a')).setOrigin(0, 0.5));
+      this.bouton(c, x + 390, y, 70, 'Acheter', () => {
+        const erreur = acheterCadeau(G, id);
+        this.ouvrirBazar();
+        this.message(erreur || `${cad.nom} : dans ton tiroir à cadeaux, au comptoir.`, erreur ? '#a03030' : '#2f6a2a');
+      });
+    });
+  }
+
+  // --- Le crieur : les nouvelles du jour ---
+
+  ouvrirCrieur() {
+    const G = this.G;
+    this.montrer('crieur');
+    const c = this.panneau('Le crieur', 'Les nouvelles du jour, vraies ou presque');
+    const lignes = G.gazette && G.gazette.jour === G.jour ? G.gazette.lignes : ['Rien de neuf aujourd\'hui. Le crieur s\'ennuie.'];
+    const actifs = evenementsActifs(G).map(e => EVENEMENTS[e.id].nouvelle);
+    c.add(this.add.text(30, 344, ['📯 Oyez, oyez !', ...lignes.map(l => '• ' + l),
+      ...(actifs.length ? ['', 'En ce moment : ' + actifs.join(' · ')] : [])].join('\n'),
+      style(13, '#3b2410', { wordWrap: { width: 890 }, lineSpacing: 4 })));
   }
 
   // --- Le coin des jeux : les dés et le bonneteau ---

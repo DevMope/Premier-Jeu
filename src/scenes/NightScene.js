@@ -96,7 +96,7 @@ class NightScene extends Phaser.Scene {
       salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : '',
     ] : [
       `Clients servis : ${j.servis}`,
-      `Revenus : ${j.retours} · Morts : ${j.morts}`,
+      `Revenus : ${j.retours} · Ratées : ${j.echecs || 0} · Morts : ${j.morts}`,
       `Argent ce matin : ${G.argentDebutJour}`,
       `Argent ce soir : ${G.argent}  (${gain >= 0 ? '+' : ''}${gain})`,
       `Réputation : ${arrondi(G.reputation)}`,
@@ -167,11 +167,17 @@ class NightScene extends Phaser.Scene {
     const G = this.G;
     if (this.lettres) this.lettres.destroy();
     const c = this.lettres = this.add.container(0, 0);
-    // Les nouvelles lettres (à accepter ou refuser) d'abord.
-    const liste = [...G.annonces].sort((a, b) => a.acceptee - b.acceptee).slice(0, 4);
-    if (!liste.length) c.add(this.add.text(x1 + 16, 115, 'Aucune lettre pour le moment.', style(13, '#3b2410')));
-    liste.forEach((a, i) => {
+    // Les lettres d'information d'abord (un événement passé, en cours ou à venir)...
+    const infos = (G.courrier || []).filter(l => l.jour === G.jour).slice(0, 2);
+    infos.forEach((l, i) => {
       const y = 112 + i * 54;
+      c.add(this.add.text(x1 + 14, y, '📜 ' + l.texte, style(11, '#3b2410', { fontStyle: 'italic', wordWrap: { width: x2 - x1 - 24 }, lineSpacing: 1 })));
+    });
+    // ... puis les commandes (à accepter ou refuser), les nouvelles d'abord.
+    const liste = [...G.annonces].sort((a, b) => a.acceptee - b.acceptee).slice(0, 4 - infos.length);
+    if (!liste.length && !infos.length) c.add(this.add.text(x1 + 16, 115, 'Aucune lettre pour le moment.\nLes lettres sont rares.', style(13, '#3b2410')));
+    liste.forEach((a, i) => {
+      const y = 112 + (i + infos.length) * 54;
       const v = a.voyageur;
       c.add(this.add.text(x1 + 14, y, `✉ ${v.nom}`, style(13, couleurNom(G, v.nom), { fontStyle: 'bold' })));
       c.add(this.add.text(x1 + 14, y + 17, `Jour ${a.jour} · butin ~${v.butin} p. · ${v.duree} j`, style(11, '#6b4a2a')));
@@ -209,7 +215,11 @@ class NightScene extends Phaser.Scene {
     this.textePrevision.setText(`Environ ${p.min} à ${p.max} clients` +
       (p.annonces ? ` (dont ${p.annonces} par lettre)` : ''));
     const signe = n => (n >= 0 ? '+' : '') + n.toFixed(1);
-    this.texteFacteurs.setText(`Réputation ${signe(a.reputation)} · Expérience ${signe(a.experience)}\nStock varié ${signe(a.variete)}`);
+    const jour = this.matin ? this.G.jour : this.G.jour + 1;
+    const evenements = modifEvenement(this.G, 'clients', null, jour);
+    const rumeur = this.G.rumeur && this.G.rumeur.jour === jour ? -RUMEUR_CLIENTS : 0;
+    this.texteFacteurs.setText(`Réputation ${signe(a.reputation)} · Expérience ${signe(a.experience)}\nStock varié ${signe(a.variete)}` +
+      (evenements ? ` · Événements ${evenements > 0 ? '+' : ''}${evenements}` : '') + (rumeur ? ` · Rumeur ${rumeur}` : ''));
   }
 
   // --- La banque : une page à part, le soir attend en pause ---

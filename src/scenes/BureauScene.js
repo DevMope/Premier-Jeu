@@ -105,11 +105,11 @@ class BureauScene extends Phaser.Scene {
         }));
       case 'revenus':
       case 'disparus':
-        return G.historique.filter(h => (this.onglet === 'revenus') === (h.issue === 'vivant')).map(h => ({
+        return G.historique.filter(h => (this.onglet === 'revenus') === ['vivant', 'echec'].includes(h.issue)).map(h => ({
           nom: h.nom, race: h.race,
-          ligne: h.issue === 'vivant' ? `Jour ${h.retour} · +${h.gain} p. · ${h.quete}` : `Jour ${h.retour} · mort ${h.issue === 'valeureux' ? 'au combat' : 'sans gloire'}${h.voulu ? ' · ☠ offert' : ''}`,
+          ligne: h.issue === 'echec' ? `Jour ${h.retour} · mission ratée · ${h.quete}` : h.issue === 'vivant' ? `Jour ${h.retour} · +${h.gain} p. · ${h.quete}` : `Jour ${h.retour} · mort ${h.issue === 'valeureux' ? 'au combat' : 'sans gloire'}${h.voulu ? ' · ☠ offert' : ''}`,
           detail: () => [`Quête : ${h.quete} (jours ${h.depart} à ${h.retour})`,
-            h.issue === 'vivant' ? `Revenu vivant, a rapporté ${h.gain} pièces.` : `Mort ${h.issue === 'valeureux' ? 'valeureusement au combat' : 'sans gloire'}.`,
+            h.issue === 'echec' ? 'Revenu vivant, mais sans rien : mission ratée.' : h.issue === 'vivant' ? `Revenu vivant, a rapporté ${h.gain} pièces.` : `Mort ${h.issue === 'valeureux' ? 'valeureusement au combat' : 'sans gloire'}.`,
             ...(h.voulu ? [`☠ Offert à la Faucheuse : ${MORTS_VOULUES[h.voulu].texte}.`] : [])],
         }));
       default: {
@@ -185,6 +185,19 @@ class BureauScene extends Phaser.Scene {
       if (suivant) lignes.push(`Prochain palier : ${suivant.nom} à ${suivant.min} pts`);
     } else {
       lignes.push('Relation : Inconnu');
+    }
+    // Son niveau, ses succès et sa chance.
+    const fiche = G.personnes[f.nom];
+    if (fiche || f.nom in G.relations) {
+      const succes = succesDe(G, f.nom);
+      const habitueNiv = (G.habitues.find(h => h.nom === f.nom) || {}).niveau;
+      if (habitueNiv) lignes.push(`Niveau : ${NIVEAUX_AVENTURIER[habitueNiv].nom} · ${succes} mission${succes > 1 ? 's' : ''} réussie${succes > 1 ? 's' : ''}`);
+      lignes.push(`Chance (trèfle) : ${trefleDe(G, f.nom)} / ${TREFLE_MAX}`);
+      const gouts = fiche && fiche.gouts ? Object.entries(fiche.gouts) : [];
+      const aime = gouts.filter(([, g]) => g === 'aime').map(([id]) => CADEAUX[id].nom.toLowerCase());
+      const deteste = gouts.filter(([, g]) => g === 'deteste').map(([id]) => CADEAUX[id].nom.toLowerCase());
+      if (aime.length) lignes.push(`Aime : ${aime.join(', ')}`);
+      if (deteste.length) lignes.push(`Déteste : ${deteste.join(', ')}`);
     }
     const missions = G.historique.filter(h => h.nom === f.nom);
     if (missions.length) {
@@ -274,7 +287,7 @@ class BureauScene extends Phaser.Scene {
     } else if (cle === 'aventuriers') {
       const h = G.historique;
       const vivants = h.filter(x => x.issue === 'vivant').length;
-      gauche = [`Clients servis : ${G.experience}`, `Revenus vivants : ${vivants}`,
+      gauche = [`Clients servis : ${G.experience}`, `Missions réussies : ${vivants}`, `Missions ratées : ${h.filter(x => x.issue === 'echec').length}`,
         `Morts au combat : ${h.filter(x => x.issue === 'valeureux').length}`, `Morts sans gloire : ${h.filter(x => x.issue === 'sans gloire').length}`,
         `Taux de retour : ${h.length ? Math.round(vivants / h.length * 100) : 0} %`, '',
         `Clients refusés : ${G.stats.refus}`, `Lettres acceptées : ${G.stats.lettresAcceptees}`, `Lettres refusées : ${G.stats.lettresRefusees}`];
@@ -293,6 +306,7 @@ class BureauScene extends Phaser.Scene {
       const m = F.mission;
       gauche = [`Réputation (bien) : ${arrondi(G.reputation)}`, `Jauge du mal : ${arrondi(G.mal)}` +
         (G.mal >= SEUIL_SABOTAGE ? ' · sabotages' : '') + (G.mal >= SEUIL_MAIN_NOIRE ? ' · Main Noire' : ''),
+        `Retours réussis : ${[1, 2, 3, 4, 5].map(d => `${d}★ ${(G.succes || {})[d] || 0}`).join(' · ')}`,
         `La Faucheuse : ${seductionFaucheuse(G).nom} · ${F.morts} âme${F.morts > 1 ? 's' : ''}` + (F.sabotages ? ` · ${F.sabotages} sabotage${F.sabotages > 1 ? 's' : ''}` : ''),
         ...(m && m.etat !== 'proposee' ? [`☠ Mission : ${m.cible.nom} (${PIEGES[m.piege].nom.toLowerCase()}, ${m.prime} p.)`] : []),
         `Flair : ${Math.round(niveauFlair(G) * 100)} %`, `Artisanat : niveau ${niveauArtisanat(G)}`,

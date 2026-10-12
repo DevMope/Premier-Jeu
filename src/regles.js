@@ -105,9 +105,31 @@ function pvAuDepart(voyageur, colis) {
 }
 
 // La chance de réussir une épreuve, avec le bonus des objets en plus qu'elle demande.
-function chanceEtape(e, colis, voyageur) {
+// Sans la chance : l'objet donné, les objets en plus, le niveau de l'aventurier, et parfois un
+// événement dans sa zone (tempête, brume...).
+function chanceEtapeBase(e, colis, voyageur) {
   const enPlus = surplus(voyageur, colis)[e.besoin] || 0;
-  return Math.min(0.97, chanceEpreuve(niveauEpreuve(e, colis, voyageur)) + enPlus * BONUS_SURPLUS);
+  const niv = NIVEAUX_AVENTURIER[voyageur.niveau] || NIVEAUX_AVENTURIER.novice;
+  const evenement = modifEvenement(window.GAME, 'danger', voyageur.zone);
+  return Phaser.Math.Clamp(chanceEpreuve(niveauEpreuve(e, colis, voyageur)) + enPlus * BONUS_SURPLUS + niv.bonus + evenement, 0.05, 0.97);
+}
+
+// Avec la chance : une épreuve ratée peut être rattrapée de justesse par son trèfle.
+function chanceEtape(e, colis, voyageur) {
+  const p = chanceEtapeBase(e, colis, voyageur);
+  return Math.min(0.98, p + (1 - p) * trefleDe(window.GAME, voyageur.nom) * SAUVETAGE_PAR_TREFLE);
+}
+
+// La chance de rebrousser chemin au lieu de mourir.
+function chanceRepli(voyageur) {
+  return trefleDe(window.GAME, voyageur.nom) * REPLI_PAR_TREFLE;
+}
+
+// La chance qu'il revienne vivant (mission réussie ou ratée). Un objet piégé ne pardonne pas.
+function chanceVivant(voyageur, colis, pieges = null) {
+  if (piegeFatal(voyageur, pieges)) return 0;
+  const r = chanceDeRetour(voyageur, colis);
+  return r + (1 - r) * chanceRepli(voyageur);
 }
 
 // Tire au sort le déroulement de l'aventure, épreuve par épreuve.
@@ -124,9 +146,16 @@ function simulerAventure(voyageur, colis, pieges = null) {
       etapes.push({ epreuve: e, niveau, reussie: false, pvApres: 0, piege: e.besoin, pvAvant: avant });
       break;
     }
-    const reussie = Math.random() < chanceEtape(e, colis, voyageur);
+    const tirage = Math.random();
+    const reussie = tirage < chanceEtape(e, colis, voyageur);
+    const sauvee = reussie && tirage >= chanceEtapeBase(e, colis, voyageur);
+    if (!reussie && pv === 1 && Math.random() < chanceRepli(voyageur)) {
+      // Sa bonne étoile : il sent que la prochaine fois sera la dernière, et rebrousse chemin.
+      etapes.push({ epreuve: e, niveau, reussie: false, pvApres: 1, repli: true });
+      return { etapes, pvDepart, vivant: true, echec: true, valeureux: false };
+    }
     if (!reussie) pv--;
-    etapes.push({ epreuve: e, niveau, reussie, pvApres: pv });
+    etapes.push({ epreuve: e, niveau, reussie, sauvee, pvApres: pv });
     if (pv <= 0) break;
   }
   const derniere = etapes[etapes.length - 1];
@@ -134,6 +163,7 @@ function simulerAventure(voyageur, colis, pieges = null) {
     etapes,
     pvDepart,
     vivant: pv > 0,
+    echec: false,
     valeureux: pv <= 0 && EPREUVES_COMBAT.includes(derniere.epreuve.type),
   };
 }
@@ -141,11 +171,11 @@ function simulerAventure(voyageur, colis, pieges = null) {
 // --- Les voyageurs ---
 
 // Un aventurier. Sans `quete`, il vient chercher l'aventure : c'est toi qui choisiras la zone.
-function creerVoyageur(G, { quete = null, nom, race, feminin, butin, duree, inventaire, blessures = 0, niveau, envie }) {
+function creerVoyageur(G, { quete = null, nom, race, feminin, butin, duree, inventaire, blessures = 0, niveau, envie, exige = false }) {
   const v = {
     id: G.prochainId++,
     nom, race, feminin,
-    niveau: niveau || auHasard(['novice', 'novice', 'aguerri', 'aguerri', 'veteran']),
+    niveau: meilleurNiveau(niveau || auHasard(['novice', 'novice', 'aguerri', 'aguerri', 'veteran']), succesDe(G, nom)),
     envie: envie || auHasard(Object.keys(ENVIES)),
     blessures,
     pv: 0, butin: 0, duree: 0,
@@ -153,6 +183,7 @@ function creerVoyageur(G, { quete = null, nom, race, feminin, butin, duree, inve
     biais: Phaser.Math.FloatBetween(-1, 1), // l'erreur de ton flair sur ce client
     inventaire: { ...(inventaire || {}) },
     habitue: !!inventaire,
+    exige, // après une mission ratée, il exige un objet en plus de sa commande
   };
   v.accueil = ENVIES[v.envie];
   if (quete) appliquerQuete(G, v, quete, { butin, duree });
@@ -180,7 +211,9 @@ function appliquerQuete(G, v, queteId, { butin, duree } = {}) {
   const niv = NIVEAUX_AVENTURIER[v.niveau];
   // Un habitué revenu blessé et jamais soigné repart avec moins de cœurs.
   v.pv = Math.max(1, q.pv + niv.pv - v.blessures);
-  v.butin = butin ?? Math.round(hasard(...q.butin) * (1 + 0.3 * enPlus) * BUTIN_PAR_DANGER[ZONES[zone].danger] / BUTIN_PAR_DANGER[1] * niv.butin);
+  const camp = ZONES[zone].camp ? EFFETS_CAMP[ZONES[zone].camp].butin : 1;
+  const evenement = modifEvenement(G, 'butin', zone) || 1;
+  v.butin = butin ?? Math.round(hasard(...q.butin) * (1 + 0.3 * enPlus) * BUTIN_PAR_DANGER[ZONES[zone].danger] / BUTIN_PAR_DANGER[1] * niv.butin * camp * evenement);
   v.duree = d;
   v.queteId = queteId;
   v.zone = zone;
@@ -196,8 +229,31 @@ function envoyerDans(G, v, zone) {
 }
 
 // Les zones où l'on peut envoyer quelqu'un : ouvertes par la réputation, ou découvertes.
+// Au-delà de 2 étoiles, il faut aussi des retours réussis dans l'étoile d'avant.
+// Une zone découverte dans un récit n'a plus besoin de la réputation, mais toujours des retours.
+function conditionsZone(G, zone) {
+  const z = ZONES[zone];
+  const reputation = G.reputation >= z.reputation || G.zonesDecouvertes.includes(zone);
+  const besoin = RETOURS_POUR_ETOILE[z.danger] || 0;
+  const faits = (G.succes && G.succes[z.danger - 1]) || 0;
+  return { reputation, besoin, faits, ouverte: reputation && faits >= besoin };
+}
+
 function zoneOuverte(G, zone) {
-  return G.reputation >= ZONES[zone].reputation || G.zonesDecouvertes.includes(zone);
+  return conditionsZone(G, zone).ouverte;
+}
+
+// Ce voyageur accepte-t-il d'aller là ? Renvoie la raison de son refus, ou null.
+function refusZone(G, v, zone) {
+  const z = ZONES[zone];
+  if (z.camp === 'mal' && v.envie !== 'or') return '« Servir le mal ? Jamais ! Trouve-moi une quête honnête. »';
+  if (z.danger >= 5 && ORDRE_NIVEAUX.indexOf(v.niveau) < ORDRE_NIVEAUX.indexOf('heros')) return "« Là-bas ? Il faut être un héros pour s'y risquer. Pas moi, pas encore. »";
+  return null;
+}
+
+// Les zones ouvertes où ce voyageur accepte d'aller.
+function zonesPour(G, v) {
+  return zonesOuvertes(G).filter(z => !refusZone(G, v, z));
 }
 
 function zonesOuvertes(G) {
@@ -232,7 +288,8 @@ function nomsActifs(G) {
 
 // Les aventuriers revenus vivants peuvent revenir comme clients, avec leur matériel usé.
 function habitueAuHasard(G, pris) {
-  const libres = G.habitues.filter(h => !pris.includes(h.nom));
+  // Un blessé en convalescence (mission ratée, pas soigné) ne repart pas tout de suite.
+  const libres = G.habitues.filter(h => !pris.includes(h.nom) && !(h.convalescence > G.jour && h.blessures > 0));
   if (!libres.length || Math.random() > 0.35) return null;
   const h = auHasard(libres);
   return creerVoyageur(G, { ...h });
@@ -287,6 +344,12 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
     // Tous les objets du jeu, à 0 sauf le stock de départ.
     stock: Object.fromEntries(Object.keys(ITEMS).map(id => [id, STOCK_DEPART[id] || 0])),
     reputation: 0,
+    succes: {},        // retours réussis par nombre d'étoiles (pour ouvrir les zones suivantes)
+    cadeaux: {},       // les cadeaux achetés au Bazar, pas encore offerts
+    evenements: [],    // { id, debut, fin }
+    courrier: [],      // les lettres d'information (événements) : { jour, texte }
+    gazette: null,     // les nouvelles du jour, criées au marché
+    rumeur: null,      // { jour } : moins de clients ce jour-là
     mal: 0,            // la jauge du mal : les âmes que tu as offertes exprès
     pieges: {},        // les objets piégés cachés sous le comptoir
     faucheuse: { faveur: 0, morts: 0, visites: 0, cadeau: false, mission: null, sabotages: 0 },
@@ -302,7 +365,7 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
     annonces: [],  // lettres : { voyageur, jour, acceptee }
     partis: [],    // { voyageur, colis, chance, depart, retour, resultat, termine }
     lettresDuJour: 0,
-    journal: { servis: 0, retours: 0, morts: 0 },
+    journal: { servis: 0, retours: 0, morts: 0, echecs: 0 },
   };
   window.GAME = G;
   G.file = JOUR_1.map(v => ({ type: 'client', voyageur: creerVoyageur(G, v) }));
@@ -317,18 +380,29 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
 function partir(G, voyageur, colis, pieges = {}) {
   const chance = chanceDeRetour(voyageur, colis);
   const reelle = chanceDeRetour(voyageur, colis, pieges);
+  const relationDepart = niveauRelation(G, voyageur.nom).index;
   let message = null;
   if (chance >= 0.75) message = changerRelation(G, voyageur.nom, POINTS_RELATION.colisComplet);
   else if (chance < 0.4) message = changerRelation(G, voyageur.nom, POINTS_RELATION.colisPauvre);
   else rencontrer(G, voyageur.nom);
   const mission = G.faucheuse.mission;
   if (mission && mission.cible.id === voyageur.id) mission.etat = pieges[mission.piege] > 0 ? 'posee' : 'ratee';
+  // Il demandait des comptes : sans objet en plus, il le prend très mal.
+  if (voyageur.exige) {
+    const h = G.habitues.find(x => x.nom === voyageur.nom);
+    if (h) h.exige = false;
+    if (totalSurplus(voyageur, colis) === 0) {
+      const m = changerRelation(G, voyageur.nom, -3);
+      message = `« Pas le moindre geste, après ce que j'ai vécu ? Je m'en souviendrai. »${m ? ' ' + m : ''}`;
+    }
+  }
   G.partis.push({
     voyageur,
     colis: { ...colis },
     pieges: { ...pieges },
-    voulu: mortVoulue(G, voyageur, colis, pieges, reelle),
+    voulu: mortVoulue(G, voyageur, colis, pieges, chanceVivant(voyageur, colis, pieges)),
     chance: reelle,
+    relationDepart,
     depart: G.jour,
     retour: G.jour + voyageur.duree,
     resultat: null,
@@ -336,7 +410,7 @@ function partir(G, voyageur, colis, pieges = {}) {
   });
   G.experience++;
   G.journal.servis++;
-  G.personnes[voyageur.nom] = { race: voyageur.race, feminin: voyageur.feminin };
+  connaitre(G, voyageur);
   for (const [id, n] of Object.entries(colis)) G.stats.objets[id] = (G.stats.objets[id] || 0) + n;
   return message;
 }
@@ -346,7 +420,7 @@ function recevoirLettres(G, nombre) {
   for (let i = 0; i < nombre; i++) {
     // Celui qui écrit sait déjà où il veut aller (une zone ouverte).
     const voyageur = voyageurAuHasard(G);
-    envoyerDans(G, voyageur, auHasard(zonesOuvertes(G)));
+    envoyerDans(G, voyageur, auHasard(zonesPour(G, voyageur).filter(z => ZONES[z].camp !== 'mal')));
     rendreExigeant(voyageur);
     G.annonces.push({ voyageur, jour: G.jour + hasard(2, 3), acceptee: false });
   }
@@ -357,7 +431,8 @@ function recevoirLettres(G, nombre) {
 function preparerSoir(G) {
   if (G.lettresDuJour === G.jour) return;
   G.lettresDuJour = G.jour;
-  recevoirLettres(G, hasard(0, 2));
+  // Les lettres de commande sont rares.
+  recevoirLettres(G, Math.random() < CHANCE_LETTRE ? 1 : 0);
 }
 
 // Ce qu'il faudrait pour satisfaire toutes les commandes acceptées, à partir d'un jour donné
@@ -409,7 +484,8 @@ function remiseMarchand(G, cle) {
 
 function prixMarchand(G, cle, id) {
   const offre = G.etals[cle][id];
-  return Math.max(1, Math.round(offre.prix * (1 - remiseMarchand(G, cle))));
+  const evenement = modifEvenement(G, 'prix', id) || 1;
+  return Math.max(1, Math.round(offre.prix * evenement * (1 - remiseMarchand(G, cle))));
 }
 
 // Acheter un objet à un étal. Renvoie { erreur } ou { message } (palier de relation franchi).
@@ -508,7 +584,7 @@ function refuserClient(G, voyageur) {
   if (mission && mission.cible.id === voyageur.id) mission.etat = 'ratee';
   G.reputation -= REFUS_CLIENT;
   G.stats.refus++;
-  G.personnes[voyageur.nom] = { race: voyageur.race, feminin: voyageur.feminin };
+  connaitre(G, voyageur);
   return changerRelation(G, voyageur.nom, POINTS_RELATION.refusClient);
 }
 
@@ -767,8 +843,10 @@ function attrait(G) {
 function prevision(G, jour = G.jour + 1) {
   const annonces = G.annonces.filter(a => a.jour === jour && a.acceptee).length;
   const base = Math.max(1, Math.floor(attrait(G).total));
-  const min = Phaser.Math.Clamp(Math.max(base, annonces), 1, 6);
-  return { min, max: min + 3, annonces };
+  const evenements = modifEvenement(G, 'clients', null, jour);
+  const rumeur = G.rumeur && G.rumeur.jour === jour ? -RUMEUR_CLIENTS : 0;
+  const min = Phaser.Math.Clamp(Math.max(base + evenements + rumeur, annonces), 1, 7);
+  return { min, max: Math.max(min, min + 3 + Math.min(0, evenements + rumeur)), annonces };
 }
 
 // On va dormir puis on ouvre le comptoir (utile pour les tests).
@@ -790,10 +868,11 @@ function nuit(G) {
   G.expressMateriaux = materiauxExpress();
   G.jour++;
   G.argentDebutJour = G.argent;
-  G.journal = { servis: 0, retours: 0, morts: 0 };
+  G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
   G.etals = etalsDuJour(G);
   G.jeux = { des: 0, bonneteau: 0 };
   avancerAtelier(G);
+  avancerEvenements(G);
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
@@ -853,17 +932,32 @@ function terminerAventure(G, parti) {
   let gain = 0;
   let message = null;
   G.habitues = G.habitues.filter(h => h.nom !== v.nom);
-  if (r.vivant) {
+  const camp = ZONES[v.zone] && ZONES[v.zone].camp;
+  if (r.vivant && r.echec) {
+    // La mission est ratée : il revient vivant, mais sans rien.
+    G.reputation -= PERTE_ECHEC;
+    G.journal.echecs = (G.journal.echecs || 0) + 1;
+    const blessures = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - 1));
+    const h = { nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau: v.niveau };
+    parti.malus = appliquerMalusEchec(G, parti, h);
+    G.habitues.push(h);
+  } else if (r.vivant) {
     gain = partDuButin(G, v);
     encaisser(G, gain, 'butins');
-    G.reputation++;
+    G.reputation += camp ? EFFETS_CAMP[camp].reputation : 1;
+    if (camp) G.mal += EFFETS_CAMP[camp].mal;
     G.journal.retours++;
+    // Un succès de plus : il progresse, et la carte aussi (déblocage des étoiles).
+    const danger = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
+    G.succes[danger] = (G.succes[danger] || 0) + 1;
+    connaitre(G, v).succes = succesDe(G, v.nom) + 1;
     message = changerRelation(G, v.nom, POINTS_RELATION.retourVivant);
     const derniere = r.etapes[r.etapes.length - 1];
     // Les cœurs perdus (au-delà des cœurs gagnés grâce aux soins en plus) restent des blessures.
     const blessures = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - derniere.pvApres));
-    // Chaque retour fait gagner en expérience : novice, puis aguerri, puis vétéran.
-    const niveau = v.niveau === 'novice' ? 'aguerri' : 'veteran';
+    // Chaque succès le fait progresser : novice, aguerri, vétéran, héros, légende.
+    const niveau = meilleurNiveau(v.niveau, succesDe(G, v.nom));
+    if (niveau !== v.niveau) message = (message ? message + ' ' : '') + `${v.nom.split(' ')[0]} devient ${NIVEAUX_AVENTURIER[niveau].nom.toLowerCase()} !`;
     G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau });
     parti.trouvailles = trouvailles(G, v);
     // Il a peut-être aperçu une zone plus dangereuse, encore inconnue.
@@ -882,10 +976,10 @@ function terminerAventure(G, parti) {
     // La famille attend un dédommagement : il est choisi à la fin du carnet.
   }
   parti.bilan = { gain, message };
-  G.personnes[v.nom] = { race: v.race, feminin: v.feminin };
+  connaitre(G, v);
   G.historique.unshift({
     nom: v.nom, race: v.race, quete: v.quete, zone: v.zone, depart: parti.depart, retour: parti.retour,
-    issue: r.vivant ? 'vivant' : r.valeureux ? 'valeureux' : 'sans gloire', gain, chance: parti.chance,
+    issue: r.echec ? 'echec' : r.vivant ? 'vivant' : r.valeureux ? 'valeureux' : 'sans gloire', gain, chance: parti.chance,
     voulu: !r.vivant ? parti.voulu || null : null,
   });
   G.historique = G.historique.slice(0, TAILLE_HISTORIQUE);
@@ -914,6 +1008,7 @@ function soigner(G, nom) {
   G.stock.potion--;
   encaisser(G, PRIX_SOIN, 'soins');
   h.blessures--;
+  if (!h.blessures) h.convalescence = 0;
   changerRelation(G, nom, 1);
   return null;
 }
@@ -1272,7 +1367,9 @@ function proposerSabotage(G) {
   for (let essai = 0; essai < 20; essai++) {
     const cible = voyageurAuHasard(G);
     if (cible.habitue) continue;
-    const zone = auHasard(zonesOuvertes(G));
+    const zones = zonesPour(G, cible).filter(z => ZONES[z].camp !== 'mal');
+    if (!zones.length) continue;
+    const zone = auHasard(zones);
     envoyerDans(G, cible, zone);
     const possibles = Object.keys(commandeDe(cible)).filter(id => id in PIEGES);
     if (!possibles.length) continue;
@@ -1299,4 +1396,142 @@ function refuserSabotage(G) {
 function estCible(G, voyageur) {
   const m = G.faucheuse.mission;
   return !!m && m.etat === 'en cours' && m.cible.id === voyageur.id;
+}
+
+// --- Les personnes : succès, chance, cadeaux ---
+
+// La fiche d'une personne (créée si besoin), en gardant ce qu'on savait déjà.
+function connaitre(G, v) {
+  const p = G.personnes[v.nom] = G.personnes[v.nom] || {};
+  p.race = v.race;
+  p.feminin = v.feminin;
+  return p;
+}
+
+function succesDe(G, nom) {
+  return (G && G.personnes[nom] && G.personnes[nom].succes) || 0;
+}
+
+// Le meilleur niveau entre celui qu'il a et celui que ses succès lui valent.
+function meilleurNiveau(niveau, succes) {
+  let n = ORDRE_NIVEAUX.indexOf(niveau);
+  ORDRE_NIVEAUX.forEach((cle, i) => { if (succes >= NIVEAUX_AVENTURIER[cle].succes && i > n) n = i; });
+  return ORDRE_NIVEAUX[Math.max(0, n)];
+}
+
+// Son trèfle : un peu de chance au départ, plus avec la relation et les cadeaux (0 à 10).
+function trefleDe(G, nom) {
+  if (!G) return TREFLE_BASE;
+  const relation = TREFLE_RELATION[niveauRelation(G, nom).index] || 0;
+  const cadeaux = (G.personnes[nom] && G.personnes[nom].trefle) || 0;
+  return Phaser.Math.Clamp(TREFLE_BASE + relation + cadeaux, 0, TREFLE_MAX);
+}
+
+// Offrir un cadeau : selon ses goûts, beaucoup de chance, un peu, ou rien (et il le prend mal).
+// Un cadeau par personne et par jour. Renvoie { erreur } ou { gout, texte }.
+function offrirCadeau(G, v, id) {
+  if (!G.cadeaux[id]) return { erreur: "Tu n'as plus ce cadeau." };
+  const p = connaitre(G, v);
+  if (p.cadeauJour === G.jour) return { erreur: `${v.nom.split(' ')[0]} a déjà reçu un cadeau aujourd'hui.` };
+  G.cadeaux[id]--;
+  p.cadeauJour = G.jour;
+  const gouts = GOUTS[v.race] || { aime: [], deteste: [] };
+  const gout = gouts.aime.includes(id) ? 'aime' : gouts.deteste.includes(id) ? 'deteste' : 'neutre';
+  const effet = EFFET_CADEAU[gout];
+  p.trefle = Math.min(TREFLE_MAX, (p.trefle || 0) + effet.trefle);
+  p.gouts = p.gouts || {};
+  p.gouts[id] = gout;
+  rencontrer(G, v.nom);
+  const message = effet.relation ? changerRelation(G, v.nom, effet.relation) : null;
+  const e = v.feminin ? 'e' : '';
+  const textes = {
+    aime: `« Pour moi ? ${CADEAUX[id].nom} ! C'est exactement ce que j'adore ! » (chance +${effet.trefle})`,
+    neutre: `« Oh... merci, c'est gentil. » ${v.feminin ? 'Elle' : 'Il'} range le cadeau poliment. (chance +${effet.trefle})`,
+    deteste: `« ${CADEAUX[id].nom} ? Tu te moques de moi ? » ${v.feminin ? 'Elle' : 'Il'} est vexé${e}.`,
+  };
+  return { gout, texte: textes[gout] + (message ? ' ' + message : '') };
+}
+
+function acheterCadeau(G, id) {
+  const prix = CADEAUX[id].prix;
+  if (!peutPayer(G, prix)) return "Pas assez d'argent !";
+  payer(G, prix, 'bazar');
+  G.cadeaux[id] = (G.cadeaux[id] || 0) + 1;
+  return null;
+}
+
+// --- La mission ratée ---
+
+// Les ennuis d'une mission ratée : plus votre relation était mauvaise au départ, plus il y en a.
+// `h` : sa fiche d'habitué, qu'on complète. Renvoie les textes des malus.
+function appliquerMalusEchec(G, parti, h) {
+  const v = parti.voyageur;
+  const n = NB_MALUS_ECHEC[parti.relationDepart ?? 3] || 2;
+  const choisis = Phaser.Utils.Array.Shuffle(Object.keys(MALUS_ECHEC)).slice(0, n);
+  const textes = [`Ta mise est perdue, et ta réputation baisse (−${String(PERTE_ECHEC).replace('.', ',')}).`];
+  for (const m of choisis) {
+    if (m === 'rumine') changerRelation(G, v.nom, -2);
+    if (m === 'blesse') h.convalescence = G.jour + CONVALESCENCE;
+    if (m === 'rumeur') G.rumeur = { jour: G.jour + 1 };
+    if (m === 'comptes') h.exige = true;
+    textes.push(MALUS_ECHEC[m].replace('{nom}', v.nom.split(' ')[0]).replace('{e}', v.feminin ? 'e' : '')
+      .replace('{le}', v.feminin ? 'la' : 'le').replace('{il}', v.feminin ? 'elle' : 'il'));
+  }
+  return textes;
+}
+
+// --- Les événements et la gazette ---
+
+function evenementsActifs(G, jour = G.jour) {
+  return (G.evenements || []).filter(e => e.debut <= jour && jour <= e.fin);
+}
+
+// L'effet des événements en cours : `type` 'prix' (cle = objet), 'danger' ou 'butin' (cle = zone),
+// 'clients'. Renvoie un multiplicateur (prix, butin), un bonus (danger) ou un nombre (clients).
+function modifEvenement(G, type, cle, jour) {
+  if (!G || !G.evenements) return type === 'prix' || type === 'butin' ? 1 : 0;
+  let effet = type === 'prix' || type === 'butin' ? 1 : 0;
+  for (const e of evenementsActifs(G, jour ?? G.jour)) {
+    const d = EVENEMENTS[e.id];
+    if (d.type !== type) continue;
+    if (type === 'prix' && d.objets.includes(cle)) effet *= d.mult;
+    if (type === 'butin' && d.zone === cle) effet *= d.mult;
+    if (type === 'danger' && d.zone === cle) effet += d.mult;
+    if (type === 'clients') effet += d.clients;
+  }
+  return effet;
+}
+
+// Chaque nuit : les événements finis s'oublient ; parfois, un nouveau se prépare (annoncé par
+// lettre quelques jours avant), éclate (le crieur l'annonce) ou s'est déjà produit (une lettre
+// le raconte). Puis le crieur prépare les nouvelles du jour.
+function avancerEvenements(G) {
+  G.evenements = (G.evenements || []).filter(e => e.fin >= G.jour);
+  G.courrier = (G.courrier || []).filter(c => c.jour >= G.jour - 1);
+  const lignes = [];
+  if (Math.random() < CHANCE_EVENEMENT) {
+    const libres = Object.keys(EVENEMENTS).filter(id => !G.evenements.some(e => e.id === id)
+      && (!EVENEMENTS[id].zone || zoneOuverte(G, EVENEMENTS[id].zone)));
+    if (libres.length) {
+      const id = auHasard(libres);
+      const d = EVENEMENTS[id];
+      const mode = auHasard(['planifie', 'planifie', 'immediat', 'passe']);
+      const debut = mode === 'planifie' ? G.jour + hasard(2, 4) : G.jour;
+      G.evenements.push({ id, debut, fin: debut + hasard(2, 4) - 1 });
+      if (mode === 'planifie') G.courrier.push({ jour: G.jour, texte: `${d.annonce} (dans ${debut - G.jour} jours)` });
+      else if (mode === 'passe') G.courrier.push({ jour: G.jour, texte: `${d.annonce} C'est arrivé cette nuit.` });
+    }
+  }
+  for (const e of G.evenements) {
+    const d = EVENEMENTS[e.id];
+    if (e.debut === G.jour) lignes.push('📢 ' + d.nouvelle);
+    else if (e.fin === G.jour) lignes.push(`📢 Dernier jour : ${d.nouvelle.charAt(0).toLowerCase() + d.nouvelle.slice(1)}`);
+  }
+  // Une nouvelle absurde, sans répéter les dernières.
+  G.nouvellesLues = (G.nouvellesLues || []).slice(-15);
+  const restantes = NOUVELLES.map((_, i) => i).filter(i => !G.nouvellesLues.includes(i));
+  const i = auHasard(restantes.length ? restantes : NOUVELLES.map((_, k) => k));
+  G.nouvellesLues.push(i);
+  lignes.push(NOUVELLES[i]);
+  G.gazette = { jour: G.jour, lignes };
 }

@@ -77,6 +77,15 @@ const ICONES = {
     pal: { a: 0xe8c040, b: 0x6a3aa0, c: 0xc8a0f0 },
     px: ['a......a', '.a....a.', '..a..a..', '...aa...', '..abba..', '.abccba.', '..abba..', '...aa...'],
   },
+  // Les cadeaux du Bazar de Rosalie.
+  miel: { pal: { a: 0x8a5a1a, b: 0xe8a020, c: 0xf8d060, d: 0xf3e6c8 }, px: ['..dddd..', '..aaaa..', '.abbbba.', 'abccbbba', 'abcbbbba', 'abbbbbba', 'abbbbbba', '.aaaaaa.'] },
+  tabac: { pal: { a: 0x5a3a1a, b: 0x8a5a2b, c: 0x3a6a2a, d: 0xc9a046 }, px: ['........', '.aaaaaa.', 'abbbbbba', 'abccccba', 'abccccba', 'abbddbba', 'abbbbbba', '.aaaaaa.'] },
+  broche: { pal: { a: 0xc9a046, b: 0xe8c040, c: 0x3a8ad0, d: 0x8ad0f0 }, px: ['...aa...', '..abba..', '.abccba.', 'abcddcba', 'abcccdba', '.abccba.', '..abba..', '...aa...'] },
+  livre: { pal: { a: 0x5a1a1a, b: 0x8a2a2a, c: 0xf3e6c8, d: 0xc9a046 }, px: ['aaaaaaa.', 'abbbbbac', 'abddbbac', 'abbbbbac', 'abbddbac', 'abbbbbac', 'abbbbbac', 'aaaaaaa.'] },
+  ferACheval: { pal: { a: 0x6a6a70, b: 0xa0a0a8, c: 0x3a8a3a }, px: ['.bb..bb.', '.ab..ba.', '.ab..ba.', '.ab..ba.', '.ab..ba.', '..abba..', '...aa...', '..c..c..'] },
+  vin: { pal: { a: 0x2a3a1a, b: 0x5a1a3a, c: 0x8a2a5a, d: 0xf3e6c8 }, px: ['...aa...', '...aa...', '...aa...', '..abba..', '.abccba.', '.abddba.', '.abccba.', '.aaaaaa.'] },
+  gateau: { pal: { a: 0x8a5a2b, b: 0xe8c890, c: 0x6a2a6a, d: 0xf8f0f0 }, px: ['........', '...cc...', '.dddddd.', '.dcdcdd.', 'abbbbbba', 'acccccca', 'abbbbbba', '.aaaaaa.'] },
+  trefleChance: { pal: { a: 0x2f7a2a, b: 0x4fa83a, c: 0x2a4a1a }, px: ['.bb..bb.', 'baab.aab', 'baaabaab', '.bbaabb.', '.bbaabb.', 'baabaaab', 'baab.aab', '.bb.cbb.'] },
   // Les colis : leur forme dépend de ce qu'il y a dedans.
   sac: {
     pal: { a: 0x7a5a2a, b: 0xb8945a, c: 0xe8d8a8 },
@@ -380,6 +389,14 @@ const BIOMES = {
   neige: { ciel: 0xb0d0f0, horizon: 0xf0f4ff, loin: 0xe0e8f0, pres: 0xf8fbff, chemin: 0xd0d8e0, soleil: 0xffffff, pics: 0xc8d4e4 },
   ruines: { ciel: 0x6a6080, horizon: 0xa090a0, loin: 0x5a5060, pres: 0x4a4050, chemin: 0x6a6070, soleil: 0xd0c8e0, colonnes: 0x8a8090 },
   antre: { ciel: 0x5a2a2a, horizon: 0xc06030, loin: 0x4a2a20, pres: 0x3a1a18, chemin: 0x5a3a30, soleil: 0xff9040, pics: 0x2a1410 },
+  // Les terres de lumière...
+  monastere: { ciel: 0xa8d8e8, horizon: 0xf8f0c0, loin: 0x8ab868, pres: 0x6a9a48, chemin: 0xd8c08a, soleil: 0xfff2b0, arbres: 0x4a7a2a },
+  sanctuaire: { ciel: 0xc0e0f0, horizon: 0xf8f8e0, loin: 0x9ac8a8, pres: 0x7ab08a, chemin: 0xe0d8b0, soleil: 0xffffe0, arbres: 0xb8c8c8 },
+  citadelle: { ciel: 0x9ac0e0, horizon: 0xf0e8d0, loin: 0xa0a8b0, pres: 0x8a9098, chemin: 0xc8c0b0, soleil: 0xfff8d0, colonnes: 0xe8e4d8 },
+  // ... et les terres d'ombre.
+  bourbier: { ciel: 0x6a6a4a, horizon: 0x9a9a60, loin: 0x4a4a28, pres: 0x3a3a1e, chemin: 0x5a4a2a, soleil: 0xc8c870, roseaux: 0x5a5a2a },
+  repaire: { ciel: 0x2a1a2a, horizon: 0x7a2a2a, loin: 0x2a2a2a, pres: 0x1a1a18, chemin: 0x3a2a20, soleil: 0xd03020, arbres: 0x101810 },
+  tour: { ciel: 0x2a1a3a, horizon: 0x6a3a7a, loin: 0x3a2a4a, pres: 0x2a1a30, chemin: 0x4a3a50, soleil: 0xb080e0, colonnes: 0x4a3a5a },
 };
 
 // Un paysage (la Comté par défaut, ou un autre biome). `nuit` assombrit le tout (de 0 à 1).

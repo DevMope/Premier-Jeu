@@ -239,20 +239,18 @@ Le joueur ne quitte jamais vraiment son shop, sauf pour ces marchés (écrans/me
 - Peut-on changer de camp en cours de partie ?
 - Plus tard, la banque des gentils et la Main Noire pourront dépendre du camp choisi.
 
-## 8 bis. Le point : ce qui reste à définir
+## 8 bis. Progression, chance et événements (décidé et construit)
 
-Décidé :
-- On ne refuse un voyageur **qu'au comptoir** (pas depuis la carte).
-- Les lieux du mal sur la carte accueillent pour l'instant des **aventuriers vénaux** (des clients du bien qui acceptent des quêtes du mal pour l'or) ; les races du mal viendront plus tard.
+- **La carte en trois terres** : à l'ouest les **terres de lumière** (Monastère des Pandas ★★, Sanctuaire des Elfes ★★★, Citadelle des Paladins ★★★★), au milieu les terres neutres, à l'est les **terres d'ombre** (Bourbier des Gobelins ★★, Repaire des Loups-garous ★★★, Tour du Nécromancien ★★★★). Une quête du bien réussie rapporte +1,5 de réputation (au lieu de +1) ; une quête du mal rapporte 35 % de butin en plus, aucune réputation, et +0,5 de jauge du mal. Seuls les **aventuriers vénaux** (ceux qui cherchent l'or) acceptent d'aller dans les terres d'ombre, en attendant les races du mal.
+- **Le déblocage lent** : au-delà de 2 étoiles, une zone demande sa réputation (ou une découverte dans un récit) **et** des missions réussies dans les zones de l'étoile d'avant : 3 pour ★★★, 5 pour ★★★★, 8 pour ★★★★★. La bulle de la carte montre ce qu'il manque.
+- **Les niveaux** : Novice, Aguerri (1 mission réussie), Vétéran (3), Héros (6), Légende (10). Chaque niveau donne des cœurs, du butin et un bonus à chaque épreuve. Seuls les héros osent les zones à 5 étoiles.
+- **Le trèfle de chance** (0 à 10) : 1 au départ, plus selon la relation (−1 pour les ennemis, jusqu'à +3 pour les frères de sang), plus les cadeaux. Il peut **rattraper une épreuve ratée** (2 % par point) et, au dernier cœur, **changer la mort en échec** : il rebrousse chemin (7 % par point).
+- **Les cadeaux** : au **Bazar de Rosalie** (marché). Un cadeau par client et par jour, depuis le tiroir à cadeaux du comptoir. Chaque peuple a ses goûts : aimé = +3 de chance et la relation monte ; neutre = +1 ; détesté = rien, et il est vexé. Les goûts découverts s'affichent dans sa fiche.
+- **La mission ratée** : il revient vivant mais les mains vides. Ta mise est perdue, la réputation baisse (−0,5), et selon votre relation **au moment du départ**, de 1 malus (amis) à 4 (ennemis) parmi : il rumine (relation −2), il est trop blessé pour repartir avant 3 jours (sauf soins), la rumeur fait fuir des clients demain (−2), il te demandera des comptes (il exigera un objet en plus la prochaine fois, sinon relation −3).
+- **Les lettres sont rares** (une chance sur trois le soir) et elles annoncent aussi des **événements** passés, en cours ou à venir : pénurie de fer, récolte record, fièvre des marais, braderie naine, hiver précoce (les prix montent ou baissent), tempête de sable ou brume (épreuves plus dures dans une zone), ruée vers l'or ou départ des yétis (plus de butin), foire ou armée d'orcs (plus ou moins de clients). Pas tout le temps : environ une nuit sur six.
+- **Le crieur du marché** annonce chaque matin les nouvelles du jour : les événements, et une nouvelle absurde (« Un gobelin a été enseveli sous une bouse de Groliphant... »).
 
-À définir ensemble :
-1. **Les lieux du bien et du mal** : lesquels exactement, où sur la carte, ce qu'on y fait (quêtes, butin, effet sur la réputation et la jauge du mal).
-2. **Le déblocage lent des étoiles** : en plus de la réputation, un nombre de retours réussis dans les zones de l'étoile précédente (proposition : 3, 5, 8) ?
-3. **Les voyageurs qui deviennent forts** : niveaux au fil des missions réussies (proposition : Novice, Aguerri, Vétéran, Héros, Légende), et ce que chaque niveau apporte.
-4. **La « case chance » de chaque voyageur** (idée du joueur) : une valeur propre à chaque personnage, qui monte avec la relation et d'autres choses, comme les **cadeaux** (des objets spécial cadeau au marché). À quoi elle sert : rattraper une épreuve ratée ? transformer une mort en simple échec de mission ? Qui aime quel cadeau ?
-5. **Échouer sans mourir** : une mission peut rater sans que le voyageur meure. Quand il meurt, on perd déjà l'argent, de la réputation et toute la relation. Quand il échoue, quel **malus** en plus d'une perte de réputation ? (idées dans la discussion)
-6. **Les lettres** : rares, annonciatrices d'événements passés, en cours ou planifiés.
-7. Les idées déjà notées : familiers (grand aigle), mercenaires, petit bar, zones conquises, vieillissement et talents, marché noir du soir, camp du mal et Main Noire, les deux fins.
+À définir plus tard : familiers (grand aigle), mercenaires, petit bar, zones conquises, vieillissement et talents, marché noir du soir, camp du mal et Main Noire, les deux fins.
 
 ## 9. Plan de développement (étape par étape)
 

@@ -208,6 +208,20 @@ function mettreAJourPartie(G) {
   G.zonesDecouvertes = G.zonesDecouvertes || [];
   G.employes = G.employes || [];
   G.mal = G.mal || 0;
+  G.cadeaux = G.cadeaux || {};
+  G.evenements = G.evenements || [];
+  G.courrier = G.courrier || [];
+  if (!G.succes) {
+    // Les retours réussis d'avant la mise à jour, par nombre d'étoiles.
+    G.succes = {};
+    for (const h of G.historique) {
+      if (h.issue !== 'vivant') continue;
+      const d = ZONES[h.zone] ? ZONES[h.zone].danger : 1;
+      G.succes[d] = (G.succes[d] || 0) + 1;
+      const p = G.personnes[h.nom] = G.personnes[h.nom] || { race: h.race };
+      p.succes = (p.succes || 0) + 1;
+    }
+  }
   G.expressMateriaux = G.expressMateriaux || {};
   G.pieges = G.pieges || {};
   G.faucheuse = G.faucheuse || { faveur: 0, morts: G.historique.filter(h => h.issue !== 'vivant').length, visites: 0, cadeau: false, mission: null, sabotages: 0 };
