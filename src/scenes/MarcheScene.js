@@ -499,8 +499,6 @@ class MarcheScene extends Phaser.Scene {
   ouvrir() {
     // On sauvegarde avant que la file d'attente du jour se forme.
     Sauvegarde.maintenant(this.G, 'Marche');
-    ouvrirComptoir(this.G);
-    this.cameras.main.fadeOut(400);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Comptoir'));
+    commencerJournee(this);
   }
 }

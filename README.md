@@ -31,12 +31,13 @@ La partie se sauvegarde toute seule le soir et le matin au marché :
 | `src/scenes/MarcheScene.js` | Le Marché des Mastres, le matin : étals, enchères, jeux d'argent, mendiant |
 | `src/scenes/AtelierScene.js` | L'atelier : réparer les objets de valeur |
 | `src/scenes/BureauScene.js` | Le bureau : registre des fiches, chiffre d'affaires, tiroirs de statistiques |
-| `src/scenes/CarteScene.js` | La carte du dispatch : choisir la zone où envoyer un aventurier |
+| `src/scenes/CarteScene.js` | La carte du monde : placer les voyageurs du jour sur leurs destinations, vue d'ensemble des missions |
+| `src/scenes/DodoScene.js` | Aller dormir : la scène du lit et le bilan de la journée |
 | `src/scenes/NightScene.js` | Le soir : bilan, réserve, lettres, banque, prévision de demain |
 | `src/scenes/StoryScene.js` | La cinématique du récit de chaque aventurier |
 | `src/scenes/FailliteScene.js` | La cinématique de faillite |
 | `src/scenes/ExpressScene.js` | La caravane du Vieux Grippesou, le marchand express |
-| `src/scenes/BanqueScene.js` | La banque naine |
+| `src/scenes/BanqueScene.js` | La Banque Centrale Goyenne |
 | `lib/phaser.min.js` | Le moteur de jeu [Phaser](https://phaser.io) 3.80.1 (licence MIT) |
 
 Le document de conception est dans [docs/game-design.md](docs/game-design.md).

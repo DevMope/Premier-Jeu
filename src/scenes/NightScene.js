@@ -50,18 +50,17 @@ class NightScene extends Phaser.Scene {
   // Le matin : on sauvegarde, puis la file d'attente du jour se forme.
   ouvrirComptoir() {
     Sauvegarde.maintenant(this.G, 'Maison');
-    ouvrirComptoir(this.G);
-    this.cameras.main.fadeOut(400);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Comptoir'));
+    commencerJournee(this);
   }
 
-  // Dormir : la nuit passe, et au matin, direction le Marché des Mastres.
+  // Dormir : la fin de la journée. Ton personnage va se coucher (une petite scène, avec le
+  // bilan du jour), la nuit passe, et au matin, direction le Marché des Mastres.
   dormir() {
-    nuit(this.G);
-    if (this.G.faillite) Sauvegarde.supprimer();
-    else Sauvegarde.maintenant(this.G, 'Marche');
-    this.cameras.main.fadeOut(600);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(this.G.faillite ? 'Faillite' : 'Marche'));
+    const G = this.G;
+    const bilan = { jour: G.jour, servis: G.journal.servis, retours: G.journal.retours, morts: G.journal.morts,
+      gain: G.argent - G.argentDebutJour, reputation: G.reputation };
+    this.cameras.main.fadeOut(500);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Dodo', { bilan }));
   }
 
   parchemin(x1, x2, titre) {

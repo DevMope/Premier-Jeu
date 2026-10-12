@@ -276,7 +276,58 @@ const FAUCHEUSE = {
   pal: { k: 0x0d0b10, g: 0x2c2836, o: 0xd8d4c4, x: 0x050405, r: 0xff2a1a, w: 0x4a3a2a, l: 0xc8d0dc },
 };
 
+// Les baluchons : un tissu noué au bout d'un bâton. Le motif du tissu dépend de ce qu'il
+// y a dedans : carreaux rouges (provisions), toile grise (armes), lin blanc à croix rouge
+// (soins), toile brune rapiécée (un peu de tout). Chacun existe aussi « étalé » (le tissu
+// posé à plat sur le comptoir pendant qu'on y range les objets).
+const TISSUS = {
+  provisions: { fond: 0xc0302a, motif: 0xf3e6c8, bord: 0x6a1a14 },
+  armes: { fond: 0x8a909a, motif: 0x5a606a, bord: 0x2a2e36 },
+  soins: { fond: 0xf4f0e4, motif: 0xd8344a, bord: 0x8a8070 },
+  divers: { fond: 0xa87a44, motif: 0x6a8a3a, bord: 0x4a2e14 },
+};
+
+function motifTissu(famille, x, y, cx, cy) {
+  if (famille === 'provisions') return ((x >> 1) + (y >> 1)) % 2 === 0;
+  if (famille === 'armes') return (x + y) % 4 === 0;
+  if (famille === 'soins') return (Math.abs(x - cx) <= 0.6 && Math.abs(y - cy) <= 2.6) || (Math.abs(y - cy) <= 0.6 && Math.abs(x - cx) <= 2.6);
+  return x >= cx + 1 && x <= cx + 3 && y >= cy && y <= cy + 2; // une pièce rapiécée
+}
+
+function creerBaluchons(scene) {
+  for (const [famille, t] of Object.entries(TISSUS)) {
+    // Le baluchon noué : bundle en haut à gauche, bâton qui descend vers la main (en bas à droite).
+    const g = scene.make.graphics({ add: false });
+    const W = 20, H = 18, cx = 6, cy = 8, r = 5.6;
+    for (let i = 0; i <= 13; i++) {
+      g.fillStyle(0x5a3a1a).fillRect(7 + i, 4 + i, 1, 1);
+      g.fillStyle(0x8a5a2b).fillRect(7 + i, 5 + i, 1, 1);
+    }
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const d = Math.hypot(x + 0.5 - cx, (y + 0.5 - cy) * 1.1);
+      if (d > r) continue;
+      g.fillStyle(d > r - 1 ? t.bord : motifTissu(famille, x, y, cx - 0.5, cy - 0.5) ? t.motif : t.fond).fillRect(x, y, 1, 1);
+    }
+    // Le nœud et ses deux oreilles, là où passe le bâton.
+    g.fillStyle(t.bord).fillRect(5, 2, 3, 2).fillRect(4, 1, 1, 1).fillRect(8, 1, 1, 1).fillRect(3, 0, 1, 1).fillRect(9, 0, 1, 1);
+    g.fillStyle(0x5a3a1a).fillRect(6, 3, 1, 1);
+    g.generateTexture('baluchon_' + famille, W, H);
+    g.destroy();
+
+    // Le tissu étalé à plat sur le comptoir.
+    const e = scene.make.graphics({ add: false });
+    for (let y = 0; y < 5; y++) for (let x = 0; x < 16; x++) {
+      if ((y === 0 || y === 4) && (x < 2 || x > 13)) continue;
+      const bord = y === 4 || x === 0 || x === 15 || ((y === 0) && (x === 2 || x === 13));
+      e.fillStyle(bord ? t.bord : motifTissu(famille, x, y * 2, 7.5, 4) ? t.motif : t.fond).fillRect(x, y, 1, 1);
+    }
+    e.generateTexture('tissu_' + famille, 16, 5);
+    e.destroy();
+  }
+}
+
 function creerToutesLesTextures(scene) {
+  creerBaluchons(scene);
   creerTexture(scene, 'perso_faucheuse', FAUCHEUSE.px, FAUCHEUSE.pal);
   for (const [cle, ic] of Object.entries(ICONES)) {
     creerTexture(scene, cle, ic.px, ic.pal);

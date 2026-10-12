@@ -207,6 +207,10 @@ function mettreAJourPartie(G) {
   for (const id of Object.keys(ITEMS)) if (G.stock[id] === undefined) G.stock[id] = 0;
   G.zonesDecouvertes = G.zonesDecouvertes || [];
   G.employes = G.employes || [];
+  G.mal = G.mal || 0;
+  G.expressMateriaux = G.expressMateriaux || {};
+  G.pieges = G.pieges || {};
+  G.faucheuse = G.faucheuse || { faveur: 0, morts: G.historique.filter(h => h.issue !== 'vivant').length, visites: 0, cadeau: false, mission: null, sabotages: 0 };
   for (const t of G.tresors) {
     if (t.reparation && !t.reparation.ouvrier) t.reparation.ouvrier = 'toi';
     if (t.reparation && !t.reparation.cible) t.reparation.cible = t.etat + 1;

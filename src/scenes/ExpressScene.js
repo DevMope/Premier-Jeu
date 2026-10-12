@@ -56,20 +56,23 @@ class ExpressScene extends Phaser.Scene {
     this.add.text(780, 78, "L'étal de Grippesou", style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
     this.add.text(780, 100, `Pour ${v.nom}`, style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.lignes = [];
-    const ids = Object.keys(G.express);
-    if (!ids.length) this.add.text(780, 250, 'Plus rien à vendre aujourd\'hui.', style(14, '#3b2410')).setOrigin(0.5);
-    ids.forEach((id, i) => {
-      const y = 140 + i * 62;
-      this.add.image(632, y + 6, id).setScale(4);
-      this.add.text(660, y - 10, ITEMS[id].nom, style(15, '#3b2410', { fontStyle: 'bold' }));
-      this.add.text(660, y + 10, `${G.express[id].prix} p. (au marché : ~${ITEMS[id].prix} p.)`, style(12, '#a03030'));
-      const reste = this.add.text(660, y + 26, '', style(11, '#6b4a2a'));
+    // Ses objets, puis (certains jours) son fer et son cuir hors de prix.
+    const lignes = [...Object.keys(G.express).map(id => ({ id, offre: G.express[id], nom: ITEMS[id].nom, prix: ITEMS[id].prix })),
+      ...Object.keys(G.expressMateriaux || {}).map(id => ({ id, offre: G.expressMateriaux[id], nom: MATERIAUX[id].nom, prix: MATERIAUX[id].prix, materiau: true }))];
+    if (!lignes.length) this.add.text(780, 250, 'Plus rien à vendre aujourd\'hui.', style(14, '#3b2410')).setOrigin(0.5);
+    const ecart = lignes.length > 1 ? Math.min(62, 250 / (lignes.length - 1)) : 62;
+    lignes.forEach((l, i) => {
+      const y = 140 + i * ecart;
+      this.add.image(632, y + 6, l.id).setScale(4);
+      this.add.text(660, y - 10, l.nom, style(15, '#3b2410', { fontStyle: 'bold' }));
+      this.add.text(660, y + 10, `${l.offre.prix} p. (au marché : ~${l.prix} p.)`, style(12, '#a03030'));
+      const reste = this.add.text(660, y + 24, '', style(11, '#6b4a2a'));
       const btn = this.add.rectangle(895, y + 6, 70, 30, 0x8a5a2b).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
       this.add.text(895, y + 6, 'Acheter', style(12, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
-      btn.on('pointerdown', () => this.acheter(id));
-      this.lignes.push({ id, reste });
+      btn.on('pointerdown', () => (l.materiau ? this.acheterMateriau(l.id) : this.acheter(l.id)));
+      this.lignes.push({ offre: l.offre, reste });
     });
-    this.texteArgent = this.add.text(780, 420, '', style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.texteArgent = this.add.text(780, 454, '', style(14, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
     this.maj();
   }
 
@@ -93,8 +96,23 @@ class ExpressScene extends Phaser.Scene {
     this.maj();
   }
 
+  // Le fer et le cuir vont directement avec tes matières premières.
+  acheterMateriau(id) {
+    const G = this.G;
+    const offre = G.expressMateriaux[id];
+    if (offre.qte <= 0) return this.parler('Plus de ' + MATERIAUX[id].nom.toLowerCase() + ' ! Hé hé, il fallait se décider plus vite.');
+    if (!peutPayer(G, offre.prix)) return this.parler("Du fer, à ce prix-là, ça se mérite ! Reviens avec des pièces.");
+    payer(G, offre.prix, 'express');
+    offre.qte--;
+    G.materiaux[id]++;
+    this.achats.push(`${MATERIAUX[id].nom} (avec tes matériaux)`);
+    this.parler(auHasard(['Du ' + MATERIAUX[id].nom.toLowerCase() + ' de première qualité ! Enfin... de qualité.', 'Hé hé hé ! Tu ne trouveras pas moins cher. Ici.']));
+    this.tweens.add({ targets: this.gobelin, y: 425, duration: 120, yoyo: true });
+    this.maj();
+  }
+
   maj() {
-    for (const l of this.lignes) l.reste.setText(`Il en reste ${this.G.express[l.id].qte}`);
+    for (const l of this.lignes) l.reste.setText(`Il en reste ${l.offre.qte}`);
     this.texteArgent.setText(`Ta bourse : ${this.G.argent} pièces`);
   }
 

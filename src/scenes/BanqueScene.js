@@ -1,4 +1,4 @@
-// La banque naine : des banquiers nains te regardent de haut,
+// La Banque Centrale Goyenne : des banquiers nains te regardent de haut,
 // perchés derrière leur immense bureau, en se demandant si tu mérites un prêt.
 // La scène s'ouvre par-dessus le soir, qui reste en pause.
 class BanqueScene extends Phaser.Scene {
@@ -35,7 +35,7 @@ class BanqueScene extends Phaser.Scene {
     bureau.fillStyle(0x3b2410).fillRect(190, 180, 580, 14);
     bureau.lineStyle(3, 0x3b2410);
     for (let x = 260; x < 760; x += 100) bureau.strokeRect(x - 30, 210, 60, 70);
-    this.add.text(480, 245, 'BANQUE NAINE', style(20, '#e8c040', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.add.text(480, 245, 'BANQUE CENTRALE GOYENNE', style(18, '#e8c040', { fontStyle: 'bold' })).setOrigin(0.5);
 
     // Toi, tout petit, tout en bas
     this.add.image(70, 535, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(5);
@@ -57,7 +57,7 @@ class BanqueScene extends Phaser.Scene {
     const r = this.G.reputation;
     if (r < 0) return 'Hmpf. Ta réputation sent le moisi. Estime-toi heureux qu\'on te reçoive.';
     if (r < 4) return 'Un petit marchand de rien du tout... On peut te prêter un peu. Un tout petit peu.';
-    if (r < 10) return 'Ta réputation grandit, marchand. La banque naine... t\'écoute. Pour l\'instant.';
+    if (r < 10) return 'Ta réputation grandit, marchand. La Banque Centrale Goyenne... t\'écoute. Pour l\'instant.';
     return 'Ah, un client respectable ! Asseyez-vous. Ah non, nous n\'avons pas de chaises à votre taille.';
   }
 

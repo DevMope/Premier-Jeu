@@ -118,8 +118,7 @@ class IntroHistoireScene extends Cinematique {
   finir() {
     if (this.fini) return;
     this.fini = true;
-    this.cameras.main.fadeOut(500);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Comptoir'));
+    commencerJournee(this, false); // la file du premier jour est déjà là
   }
 
   async raconter() {

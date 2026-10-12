@@ -107,9 +107,10 @@ class BureauScene extends Phaser.Scene {
       case 'disparus':
         return G.historique.filter(h => (this.onglet === 'revenus') === (h.issue === 'vivant')).map(h => ({
           nom: h.nom, race: h.race,
-          ligne: h.issue === 'vivant' ? `Jour ${h.retour} · +${h.gain} p. · ${h.quete}` : `Jour ${h.retour} · mort ${h.issue === 'valeureux' ? 'au combat' : 'sans gloire'}`,
+          ligne: h.issue === 'vivant' ? `Jour ${h.retour} · +${h.gain} p. · ${h.quete}` : `Jour ${h.retour} · mort ${h.issue === 'valeureux' ? 'au combat' : 'sans gloire'}${h.voulu ? ' · ☠ offert' : ''}`,
           detail: () => [`Quête : ${h.quete} (jours ${h.depart} à ${h.retour})`,
-            h.issue === 'vivant' ? `Revenu vivant, a rapporté ${h.gain} pièces.` : `Mort ${h.issue === 'valeureux' ? 'valeureusement au combat' : 'sans gloire'}.`],
+            h.issue === 'vivant' ? `Revenu vivant, a rapporté ${h.gain} pièces.` : `Mort ${h.issue === 'valeureux' ? 'valeureusement au combat' : 'sans gloire'}.`,
+            ...(h.voulu ? [`☠ Offert à la Faucheuse : ${MORTS_VOULUES[h.voulu].texte}.`] : [])],
         }));
       default: {
         const marchands = Object.entries(MARCHANDS).map(([cle, m]) => [m.nom, { race: m.race, marchand: cle }]);
@@ -288,7 +289,13 @@ class BureauScene extends Phaser.Scene {
     } else {
       const parNiveau = {};
       Object.keys(G.relations).forEach(n => { const k = niveauRelation(G, n).nom; parNiveau[k] = (parNiveau[k] || 0) + 1; });
-      gauche = [`Réputation : ${arrondi(G.reputation)}`, `Flair : ${Math.round(niveauFlair(G) * 100)} %`, `Artisanat : niveau ${niveauArtisanat(G)}`,
+      const F = G.faucheuse;
+      const m = F.mission;
+      gauche = [`Réputation (bien) : ${arrondi(G.reputation)}`, `Jauge du mal : ${arrondi(G.mal)}` +
+        (G.mal >= SEUIL_SABOTAGE ? ' · sabotages' : '') + (G.mal >= SEUIL_MAIN_NOIRE ? ' · Main Noire' : ''),
+        `La Faucheuse : ${seductionFaucheuse(G).nom} · ${F.morts} âme${F.morts > 1 ? 's' : ''}` + (F.sabotages ? ` · ${F.sabotages} sabotage${F.sabotages > 1 ? 's' : ''}` : ''),
+        ...(m && m.etat !== 'proposee' ? [`☠ Mission : ${m.cible.nom} (${PIEGES[m.piege].nom.toLowerCase()}, ${m.prime} p.)`] : []),
+        `Flair : ${Math.round(niveauFlair(G) * 100)} %`, `Artisanat : niveau ${niveauArtisanat(G)}`,
         `Donné au mendiant : ${G.mendiant} p.`, '', 'Décorations',
         ...(G.decorations.length ? G.decorations.map(id => `• ${DECORATIONS[id].nom}`) : ['aucune pour l\'instant'])];
       droite = ['Tes relations', ...NIVEAUX_RELATION.slice().reverse().map(n => `${n.nom} : ${parNiveau[n.nom] || 0}`)];

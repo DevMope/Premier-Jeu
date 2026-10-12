@@ -50,9 +50,16 @@ function aDecoration(G, id) {
   return !!G && G.decorations.includes(id);
 }
 
+// Un objet piégé du colis sert-il à une de ses épreuves ? (Il le tuera en arrivant.)
+function piegeFatal(voyageur, pieges) {
+  return !!pieges && voyageur.epreuves.some(e => pieges[e.besoin] > 0);
+}
+
 // Probabilité exacte que l'aventurier revienne vivant :
 // il meurt s'il échoue autant d'épreuves qu'il a de points de vie.
-function chanceDeRetour(voyageur, colis) {
+// Avec un objet piégé qui lui servira, il n'a aucune chance.
+function chanceDeRetour(voyageur, colis, pieges = null) {
+  if (piegeFatal(voyageur, pieges)) return 0;
   let proba = [1]; // proba[k] = probabilité d'avoir raté k épreuves
   for (const e of voyageur.epreuves) {
     const p = chanceEtape(e, colis, voyageur);
@@ -104,12 +111,19 @@ function chanceEtape(e, colis, voyageur) {
 }
 
 // Tire au sort le déroulement de l'aventure, épreuve par épreuve.
-function simulerAventure(voyageur, colis) {
+// Un objet piégé lâche à l'épreuve qui en a besoin : elle est fatale.
+function simulerAventure(voyageur, colis, pieges = null) {
   const pvDepart = pvAuDepart(voyageur, colis);
   let pv = pvDepart;
   const etapes = [];
   for (const e of voyageur.epreuves) {
     const niveau = niveauEpreuve(e, colis, voyageur);
+    if (pieges && pieges[e.besoin] > 0) {
+      const avant = pv;
+      pv = 0;
+      etapes.push({ epreuve: e, niveau, reussie: false, pvApres: 0, piege: e.besoin, pvAvant: avant });
+      break;
+    }
     const reussie = Math.random() < chanceEtape(e, colis, voyageur);
     if (!reussie) pv--;
     etapes.push({ epreuve: e, niveau, reussie, pvApres: pv });
@@ -212,6 +226,7 @@ function nomsActifs(G) {
     ...G.annonces.map(a => a.voyageur.nom),
     ...G.file.filter(e => e.type === 'client').map(e => e.voyageur.nom),
     ...enMission(G).map(p => p.voyageur.nom),
+    ...(G.faucheuse && G.faucheuse.mission ? [G.faucheuse.mission.cible.nom] : []),
   ];
 }
 
@@ -272,6 +287,9 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
     // Tous les objets du jeu, à 0 sauf le stock de départ.
     stock: Object.fromEntries(Object.keys(ITEMS).map(id => [id, STOCK_DEPART[id] || 0])),
     reputation: 0,
+    mal: 0,            // la jauge du mal : les âmes que tu as offertes exprès
+    pieges: {},        // les objets piégés cachés sous le comptoir
+    faucheuse: { faveur: 0, morts: 0, visites: 0, cadeau: false, mission: null, sabotages: 0 },
     experience: 0, // nombre de clients servis depuis le début
     capacite: RESERVE_DEPART,
     prets: [],     // { id, preteur, nom, restant, parJour }
@@ -291,18 +309,26 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
   // Deux lettres déjà sur le bureau le premier matin, à accepter ou refuser le soir.
   recevoirLettres(G, 2);
   G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2);
+  G.expressMateriaux = materiauxExpress();
 }
 
-function partir(G, voyageur, colis) {
+// `pieges` : les objets piégés glissés dans le colis (ils comptent aussi dans `colis`).
+// L'aventurier, lui, ne voit que le colis : sa réaction et votre relation n'en tiennent pas compte.
+function partir(G, voyageur, colis, pieges = {}) {
   const chance = chanceDeRetour(voyageur, colis);
+  const reelle = chanceDeRetour(voyageur, colis, pieges);
   let message = null;
   if (chance >= 0.75) message = changerRelation(G, voyageur.nom, POINTS_RELATION.colisComplet);
   else if (chance < 0.4) message = changerRelation(G, voyageur.nom, POINTS_RELATION.colisPauvre);
   else rencontrer(G, voyageur.nom);
+  const mission = G.faucheuse.mission;
+  if (mission && mission.cible.id === voyageur.id) mission.etat = pieges[mission.piege] > 0 ? 'posee' : 'ratee';
   G.partis.push({
     voyageur,
     colis: { ...colis },
-    chance: chanceDeRetour(voyageur, colis),
+    pieges: { ...pieges },
+    voulu: mortVoulue(G, voyageur, colis, pieges, reelle),
+    chance: reelle,
     depart: G.jour,
     retour: G.jour + voyageur.duree,
     resultat: null,
@@ -478,6 +504,8 @@ function accepterLettre(G, annonce) {
 }
 
 function refuserClient(G, voyageur) {
+  const mission = G.faucheuse.mission;
+  if (mission && mission.cible.id === voyageur.id) mission.etat = 'ratee';
   G.reputation -= REFUS_CLIENT;
   G.stats.refus++;
   G.personnes[voyageur.nom] = { race: voyageur.race, feminin: voyageur.feminin };
@@ -556,7 +584,9 @@ function niveauFlair(G) {
   return Math.min(1, G.experience / 40);
 }
 
-function chanceEstimee(G, voyageur, colis) {
+function chanceEstimee(G, voyageur, colis, pieges = null) {
+  // Toi, tu sais ce que tu as glissé dans le colis.
+  if (piegeFatal(voyageur, pieges)) return 0;
   const vraie = chanceDeRetour(voyageur, colis);
   const erreur = voyageur.biais * 0.35 * (1 - niveauFlair(G));
   const estimee = Phaser.Math.Clamp(vraie + erreur, 0.02, 0.98);
@@ -661,6 +691,16 @@ function offreDuJour(multiplicateur, nbAutres, qteMin, qteMax) {
   return offre;
 }
 
+// Le fer et le cuir de Grippesou : pas tous les jours, et hors de prix.
+function materiauxExpress() {
+  const offre = {};
+  for (const [id, m] of Object.entries(MATERIAUX)) {
+    if (Math.random() >= EXPRESS_MATERIAUX.chance) continue;
+    offre[id] = { prix: Math.round(m.prix * EXPRESS_MATERIAUX.multiplicateur * Phaser.Math.FloatBetween(0.9, 1.3)), qte: hasard(1, 3) };
+  }
+  return offre;
+}
+
 // --- Argent, réserve, banque ---
 
 function stockTotal(G) {
@@ -747,6 +787,7 @@ function nuit(G) {
     return;
   }
   G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2);
+  G.expressMateriaux = materiauxExpress();
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0 };
@@ -777,7 +818,7 @@ function ouvrirComptoir(G) {
   const morts = [];
   for (const p of G.partis) {
     if (p.termine || p.retour !== G.jour) continue;
-    p.resultat = simulerAventure(p.voyageur, p.colis);
+    p.resultat = simulerAventure(p.voyageur, p.colis, p.pieges);
     if (p.resultat.vivant) file.splice(hasard(0, file.length), 0, { type: 'retour', parti: p });
     else morts.push(p);
   }
@@ -786,6 +827,12 @@ function ouvrirComptoir(G) {
     file.splice(hasard(0, file.length), 0, { type: 'famille', visite });
   }
   G.visites = G.visites.filter(v => v.jour > G.jour);
+  // La cible d'une mission de sabotage acceptée vient se faire servir.
+  const mission = G.faucheuse.mission;
+  if (mission && mission.etat === 'acceptee' && mission.jour === G.jour) {
+    mission.etat = 'en cours';
+    file.splice(hasard(0, file.length), 0, { type: 'client', voyageur: mission.cible });
+  }
   if (morts.length) file.push({ type: 'faucheuse', partis: morts });
   G.file = file;
 }
@@ -831,6 +878,7 @@ function terminerAventure(G, parti) {
   } else {
     if (!r.valeureux) G.reputation--;
     G.journal.morts++;
+    recolter(G, [parti]); // si la Faucheuse ne l'a pas déjà emporté
     // La famille attend un dédommagement : il est choisi à la fin du carnet.
   }
   parti.bilan = { gain, message };
@@ -838,6 +886,7 @@ function terminerAventure(G, parti) {
   G.historique.unshift({
     nom: v.nom, race: v.race, quete: v.quete, zone: v.zone, depart: parti.depart, retour: parti.retour,
     issue: r.vivant ? 'vivant' : r.valeureux ? 'valeureux' : 'sans gloire', gain, chance: parti.chance,
+    voulu: !r.vivant ? parti.voulu || null : null,
   });
   G.historique = G.historique.slice(0, TAILLE_HISTORIQUE);
   return parti.bilan;
@@ -876,7 +925,7 @@ function blessuresDe(G, nom) {
 
 // Les prêts proposés : la Main Noire seulement pour le camp du mal.
 function pretsProposes(G) {
-  return PRETS.filter(p => !p.mal || G.camp === 'mal');
+  return PRETS.filter(p => !p.mal || G.camp === 'mal' || G.mal >= SEUIL_MAIN_NOIRE);
 }
 
 // --- La comptabilité ---
@@ -1130,4 +1179,124 @@ function vendreAuxEncheres(G, lot) {
 
 function enMission(G) {
   return G.partis.filter(p => !p.termine).sort((a, b) => a.retour - b.retour);
+}
+
+// --- Le mal et la Faucheuse ---
+
+// Pourquoi cette mort serait voulue (la raison la plus grave), ou null.
+// - un objet piégé dans le colis ;
+// - un colis volontairement vide : des objets commandés pas donnés alors que tu les avais ;
+// - aucune chance de revenir, et tu l'as quand même laissé partir.
+function mortVoulue(G, voyageur, colis, pieges, chance) {
+  if (Object.values(pieges || {}).some(n => n > 0)) return 'piege';
+  let manquants = 0;
+  for (const [id, n] of Object.entries(commandeDe(voyageur))) {
+    if (ITEMS[id].durable && etatObjet(voyageur, id) >= 2) continue; // il a déjà le sien
+    manquants += Math.min(Math.max(0, n - (colis[id] || 0)), G.stock[id] || 0);
+  }
+  if (manquants >= MANQUANTS_VOLONTAIRES) return 'colisVide';
+  if (chance < SEUIL_SANS_CHANCE) return 'sansChance';
+  return null;
+}
+
+// `enPlus` : des morts pas encore récoltées (celles qu'elle vient annoncer).
+function terreurFaucheuse(G, enPlus = 0) {
+  let n = 0;
+  TERREUR_FAUCHEUSE.forEach((t, i) => { if (G.faucheuse.morts + enPlus >= t.morts) n = i; });
+  return { ...TERREUR_FAUCHEUSE[n], index: n };
+}
+
+function seductionFaucheuse(G) {
+  let n = 0;
+  SEDUCTION_FAUCHEUSE.forEach((t, i) => { if (G.faucheuse.faveur >= t.faveur) n = i; });
+  return { ...SEDUCTION_FAUCHEUSE[n], index: n };
+}
+
+// La Faucheuse emporte les âmes : on compte les morts, les morts voulues (jauge du mal et
+// faveur), les pièges découverts et les sabotages. Chaque mort n'est récoltée qu'une fois.
+// Renvoie ce qu'il s'est passé : { voulues, demasques, sabotage }.
+function recolter(G, partis) {
+  const bilan = { voulues: [], demasques: [], sabotage: null };
+  const F = G.faucheuse;
+  for (const p of partis) {
+    if (p.recolte) continue;
+    p.recolte = true;
+    F.morts++;
+    if (p.voulu) {
+      const poids = MORTS_VOULUES[p.voulu].poids;
+      G.mal += poids;
+      F.faveur += poids;
+      bilan.voulues.push(p);
+      if (p.voulu === 'piege' && Math.random() < CHANCE_DEMASQUE) {
+        G.reputation -= PERTE_DEMASQUE;
+        p.demasque = true;
+        bilan.demasques.push(p);
+      }
+    }
+    const m = F.mission;
+    if (m && m.etat === 'posee' && m.cible.id === p.voyageur.id) {
+      encaisser(G, m.prime, 'sabotages');
+      F.faveur += 2;
+      F.sabotages++;
+      bilan.sabotage = { reussi: true, mission: m };
+      F.mission = null;
+    }
+  }
+  const m = F.mission;
+  if (m && m.etat === 'ratee') {
+    F.faveur -= 1;
+    bilan.sabotage = { reussi: false, mission: m };
+    F.mission = null;
+  }
+  return bilan;
+}
+
+// Les objets piégés qu'on peut glisser dans un colis.
+function piegesEnStock(G) {
+  return Object.entries(G.pieges).filter(([, n]) => n > 0).map(([id]) => id);
+}
+
+// Son premier cadeau, quand elle commence à s'intéresser à toi : deux objets piégés.
+function cadeauFaucheuse(G) {
+  if (G.faucheuse.cadeau || G.faucheuse.faveur < SEDUCTION_FAUCHEUSE[1].faveur) return null;
+  G.faucheuse.cadeau = true;
+  const ids = Phaser.Utils.Array.Shuffle(Object.keys(PIEGES)).slice(0, 2);
+  for (const id of ids) G.pieges[id] = (G.pieges[id] || 0) + 1;
+  return ids;
+}
+
+// Une mission de sabotage : une âme pure, qui viendra demain, et l'objet piégé pour elle.
+function proposerSabotage(G) {
+  const F = G.faucheuse;
+  if (F.mission || G.mal < SEUIL_SABOTAGE) return null;
+  for (let essai = 0; essai < 20; essai++) {
+    const cible = voyageurAuHasard(G);
+    if (cible.habitue) continue;
+    const zone = auHasard(zonesOuvertes(G));
+    envoyerDans(G, cible, zone);
+    const possibles = Object.keys(commandeDe(cible)).filter(id => id in PIEGES);
+    if (!possibles.length) continue;
+    const danger = ZONES[zone].danger;
+    const prime = Math.round(PRIME_SABOTAGE[0] + (PRIME_SABOTAGE[1] - PRIME_SABOTAGE[0]) * (danger - 1) / 4);
+    F.mission = { cible, piege: auHasard(possibles), jour: G.jour + 1, prime, etat: 'proposee' };
+    return F.mission;
+  }
+  return null;
+}
+
+function accepterSabotage(G) {
+  const m = G.faucheuse.mission;
+  m.etat = 'acceptee';
+  G.pieges[m.piege] = (G.pieges[m.piege] || 0) + 1;
+}
+
+function refuserSabotage(G) {
+  G.faucheuse.mission = null;
+  G.faucheuse.faveur -= 1;
+}
+
+// Est-ce la cible d'une mission en cours ?
+function estCible(G, voyageur) {
+  const m = G.faucheuse.mission;
+  return !!m && m.etat === 'en cours' && m.cible.id === voyageur.id;
 }

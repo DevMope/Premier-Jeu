@@ -1,27 +1,46 @@
-// La carte du dispatch : tu choisis la zone où envoyer l'aventurier qui cherche l'aventure.
+// La carte du monde. Deux usages :
+// - le matin, en ouvrant le comptoir (`planification`) : tu places d'abord tous les voyageurs
+//   du jour qui cherchent l'aventure sur les zones de ton choix, puis tu prépares leurs sacs ;
+// - au comptoir (`comptoir`) : pour un seul voyageur, le comptoir attend en pause.
+// La carte montre aussi où sont tes aventuriers en mission et les clients qui t'ont écrit :
+// une vue d'ensemble de tes alentours et de ta progression.
 // Les zones dangereuses s'ouvrent avec la réputation, ou quand un aventurier les découvre.
-// La page s'ouvre par-dessus le comptoir, qui reste en pause avec son client.
 class CarteScene extends Phaser.Scene {
   constructor() { super('Carte'); }
 
   init(data) {
-    this.comptoir = data.comptoir;
-    this.choisie = null;
+    this.comptoir = data.comptoir || null;
+    this.planification = !this.comptoir;
+    this.zoneChoisie = null;
   }
 
   create() {
     const G = this.G = window.GAME;
-    const v = this.comptoir.voyageur;
+    // Les voyageurs à placer : tout ceux du jour sans destination, ou celui du comptoir.
+    this.voyageurs = this.comptoir ? [this.comptoir.voyageur]
+      : G.file.filter(e => e.type === 'client' && (!e.voyageur.queteId || e.planifie)).map(e => e.voyageur);
+    this.place = {}; // id du voyageur → zone choisie
+    for (const e of G.file) if (e.planifie) this.place[e.voyageur.id] = e.voyageur.zone;
+    this.selection = this.voyageurs.find(v => !this.place[v.id]) || this.voyageurs[0];
 
-    // Le parchemin
+    this.dessinerParchemin();
+    this.titre = this.add.text(480, 24, '', style(19, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.dessinerZones();
+    this.reperes = this.add.container(0, 0);
+    this.bulle = this.add.container(0, 0).setDepth(10);
+    this.creerBande();
+    this.tout();
+    this.cameras.main.fadeIn(300);
+  }
+
+  // --- Le décor ---
+
+  dessinerParchemin() {
     const g = this.add.graphics();
     g.fillStyle(0x3b2410).fillRect(0, 0, 960, 540);
     g.fillStyle(0xe8d4a4).fillRect(14, 50, 932, 368);
     g.lineStyle(4, 0x8a6a3a).strokeRect(14, 50, 932, 368);
-    // Les terres de chaque zone, en taches de couleur
-    for (const z of Object.values(ZONES)) {
-      g.fillStyle(BIOMES[z.biome].pres, 0.35).fillCircle(z.x, z.y, 62);
-    }
+    for (const z of Object.values(ZONES)) g.fillStyle(BIOMES[z.biome].pres, 0.35).fillCircle(z.x, z.y, 62);
     // Ton comptoir, et les chemins qui en partent
     const depart = { x: 80, y: 380 };
     g.lineStyle(2, 0x8a6a3a, 0.7);
@@ -35,11 +54,11 @@ class CarteScene extends Phaser.Scene {
     g.fillStyle(0x8a5a2b).fillRect(depart.x - 14, depart.y - 12, 28, 22);
     g.fillStyle(0xc9a046).fillTriangle(depart.x - 18, depart.y - 12, depart.x, depart.y - 28, depart.x + 18, depart.y - 12);
     this.add.text(depart.x, depart.y + 18, 'Ton comptoir', style(11, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5, 0);
+    this.add.text(26, 58, '⚔ en mission (jour du retour) · ✉ t\'a écrit · ☠ ta cible', style(11, '#6b4a2a', { fontStyle: 'italic' }));
+  }
 
-    this.add.text(480, 24, `Où envoyer ${v.nom} ? (${NIVEAUX_AVENTURIER[v.niveau].nom}, ${NOMS_RACES[v.race] || v.race})`,
-      style(20, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
-
-    // Les zones
+  dessinerZones() {
+    const G = this.G;
     this.anneau = this.add.circle(0, 0, 30).setStrokeStyle(4, 0xffe066).setVisible(false);
     this.tweens.add({ targets: this.anneau, scale: 1.15, duration: 500, yoyo: true, repeat: -1 });
     for (const [cle, z] of Object.entries(ZONES)) {
@@ -47,60 +66,169 @@ class CarteScene extends Phaser.Scene {
       const pastille = this.add.circle(z.x, z.y, 22, ouverte ? BIOMES[z.biome].loin : 0x8a8478).setStrokeStyle(3, 0x3b2410)
         .setInteractive({ useHandCursor: true });
       this.add.text(z.x, z.y, ouverte ? '★'.repeat(z.danger) : '?', style(ouverte ? 10 : 18, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);
-      this.add.text(z.x, z.y + 28, ouverte ? z.nom : '???', style(11, ouverte ? '#3b2410' : '#7a7468', { fontStyle: 'bold', align: 'center', wordWrap: { width: 150 } })).setOrigin(0.5, 0);
-      pastille.on('pointerdown', () => this.choisir(cle));
+      this.add.text(z.x, z.y + 26, ouverte ? z.nom : '???', style(11, ouverte ? '#3b2410' : '#7a7468', { fontStyle: 'bold', align: 'center', wordWrap: { width: 140 } })).setOrigin(0.5, 0);
+      pastille.on('pointerdown', () => this.choisirZone(cle));
     }
-
-    // Le panneau d'infos
-    this.add.rectangle(480, 476, 932, 100, 0x2a1a10).setStrokeStyle(2, 0xc9a227);
-    this.titreZone = this.add.text(30, 436, 'Clique sur une zone de la carte.', style(16, '#f3d98a', { fontStyle: 'bold' }));
-    this.texteZone = this.add.text(30, 460, '', style(12, '#f3e6c8', { lineSpacing: 4, wordWrap: { width: 620 } }));
-    this.icones = this.add.container(0, 0);
-    this.boutonEnvoyer = creerBouton(this, 810, 455, 230, 'Envoyer ici', () => this.envoyer());
-    this.boutonEnvoyer.setActif(false);
-    creerBouton(this, 810, 503, 230, 'Retour au comptoir', () => this.fermer({ annule: true }));
   }
 
-  choisir(cle) {
+  // Les petits personnages posés sur la carte : missions en cours, lettres, voyageurs placés.
+  dessinerReperes() {
     const G = this.G;
-    const v = this.comptoir.voyageur;
+    this.reperes.removeAll(true);
+    const parZone = {};
+    const ajouter = (zone, race, texte, couleur, choisi) => (parZone[zone] = parZone[zone] || []).push({ race, texte, couleur, choisi });
+    for (const p of enMission(G)) ajouter(p.voyageur.zone, p.voyageur.race, `⚔${p.retour}`, '#3b2410');
+    for (const e of G.file) {
+      if (e.type !== 'client' || !e.voyageur.queteId || this.voyageurs.includes(e.voyageur)) continue;
+      ajouter(e.voyageur.zone, e.voyageur.race, estCible(G, e.voyageur) ? '☠' : '✉', estCible(G, e.voyageur) ? '#7a1a4a' : '#1f5aa0');
+    }
+    for (const v of this.voyageurs) {
+      if (this.place[v.id]) ajouter(this.place[v.id], v.race, v.nom.split(' ')[0].slice(0, 6), '#2f6a2a', v === this.selection);
+    }
+    for (const [zone, liste] of Object.entries(parZone)) {
+      const z = ZONES[zone];
+      liste.slice(0, 6).forEach((r, i) => {
+        const x = z.x - (Math.min(liste.length, 6) - 1) * 18 + i * 36;
+        const y = z.y - 26;
+        if (r.choisi) this.reperes.add(this.add.circle(x, y - 12, 15, 0xffe066, 0.6));
+        this.reperes.add(this.add.image(x, y, 'perso_' + r.race).setOrigin(0.5, 1).setScale(1.6));
+        // Les étiquettes alternent de hauteur pour ne pas se chevaucher.
+        this.reperes.add(this.add.text(x, y - 26 - (i % 2) * 12, r.texte, style(9, r.couleur, { fontStyle: 'bold', backgroundColor: '#f3e6c8', padding: { x: 2, y: 0 } })).setOrigin(0.5, 1));
+      });
+      if (liste.length > 6) this.reperes.add(this.add.text(z.x + 82, z.y - 36, `+${liste.length - 6}`, style(10, '#3b2410', { fontStyle: 'bold' })));
+    }
+  }
+
+  // --- La bande des voyageurs du jour ---
+
+  creerBande() {
+    this.add.rectangle(480, 476, 932, 100, 0x2a1a10).setStrokeStyle(2, 0xc9a227);
+    this.cartes = this.add.container(0, 0);
+    const libelle = this.planification ? 'Préparer les sacs ▶' : 'Retour au comptoir';
+    this.boutonFin = creerBouton(this, 840, 476, 190, libelle, () => this.terminer());
+    this.boutonFin.label.setFontSize(16);
+  }
+
+  dessinerBande() {
+    this.cartes.removeAll(true);
+    const largeur = Math.min(130, 700 / Math.max(1, this.voyageurs.length));
+    this.voyageurs.forEach((v, i) => {
+      const x = 30 + largeur * (i + 0.5);
+      const choisi = v === this.selection;
+      const zone = this.place[v.id];
+      const fond = this.add.rectangle(x, 476, largeur - 6, 90, choisi ? 0x6b4a22 : 0x3b2410)
+        .setStrokeStyle(2, choisi ? 0xffe066 : zone ? 0x4f7a3a : 0x8a6a3a).setInteractive({ useHandCursor: true });
+      fond.on('pointerdown', () => { this.selection = v; this.tout(); });
+      this.cartes.add([fond,
+        this.add.image(x, 470, 'perso_' + v.race).setOrigin(0.5, 1).setScale(2.4),
+        this.add.text(x, 474, v.nom.split(' ')[0], style(12, couleurNom(this.G, v.nom, true), { fontStyle: 'bold' })).setOrigin(0.5, 0),
+        this.add.text(x, 490, zone ? '→ ' + ZONES[zone].nom.replace(/^(Les |La |L')/, '') : NIVEAUX_AVENTURIER[v.niveau].nom,
+          style(10, zone ? '#b8e0a0' : '#c9b48a', { align: 'center', wordWrap: { width: largeur - 12 } })).setOrigin(0.5, 0)]);
+    });
+    if (!this.voyageurs.length) {
+      this.cartes.add(this.add.text(370, 476, "Personne ne cherche l'aventure aujourd'hui : tes clients savent déjà où ils vont.",
+        style(13, '#f3e6c8', { fontStyle: 'italic', wordWrap: { width: 640 } })).setOrigin(0.5));
+    }
+  }
+
+  tout() {
+    const v = this.selection;
+    const restants = this.voyageurs.filter(x => !this.place[x.id]).length;
+    if (!v) this.titre.setText('La carte de tes alentours');
+    else if (this.planification) {
+      this.titre.setText(restants ? `Où envoyer ${v.nom} ? (${NIVEAUX_AVENTURIER[v.niveau].nom}, ${NOMS_RACES[v.race] || v.race}) · encore ${restants} à placer`
+        : 'Tout le monde a sa destination : à toi de préparer les sacs !');
+    } else {
+      this.titre.setText(`Où envoyer ${v.nom} ? (${NIVEAUX_AVENTURIER[v.niveau].nom}, ${NOMS_RACES[v.race] || v.race})`);
+    }
+    if (this.titre.width > 930) this.titre.setFontSize(15);
+    this.dessinerBande();
+    this.dessinerReperes();
+    if (this.zoneChoisie) this.choisirZone(this.zoneChoisie);
+  }
+
+  // --- La bulle d'une zone ---
+
+  choisirZone(cle) {
+    const G = this.G;
+    const v = this.selection;
     const z = ZONES[cle];
+    this.zoneChoisie = cle;
     this.anneau.setVisible(true).setPosition(z.x, z.y);
-    this.icones.removeAll(true);
+    this.bulle.removeAll(true);
+    const w = 330, h = 128;
+    const bx = Phaser.Math.Clamp(z.x + (z.x > 560 ? -w / 2 - 40 : w / 2 + 40), w / 2 + 18, 942 - w / 2);
+    const by = Phaser.Math.Clamp(z.y, 54 + h / 2, 414 - h / 2);
+    this.bulle.add(this.add.rectangle(bx, by, w, h, 0x2a1a10, 0.96).setStrokeStyle(2, 0xc9a227));
+    const gauche = bx - w / 2 + 12, haut = by - h / 2 + 8;
+    const fermer = this.add.text(bx + w / 2 - 10, haut, '✕', style(14, '#c9b48a', { fontStyle: 'bold' })).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+    fermer.on('pointerdown', () => { this.bulle.removeAll(true); this.anneau.setVisible(false); this.zoneChoisie = null; });
+    this.bulle.add(fermer);
     if (!zoneOuverte(G, cle)) {
-      this.choisie = null;
-      this.boutonEnvoyer.setActif(false);
-      this.titreZone.setText('Une contrée inconnue');
-      this.texteZone.setText(`Personne ne sait vraiment ce qu'il y a là-bas. Elle s'ouvrira avec une réputation de ${z.reputation}, ` +
-        "ou quand un aventurier revenu d'une zone voisine t'en parlera dans son récit.");
+      this.bulle.add(this.add.text(gauche, haut, 'Une contrée inconnue', style(15, '#f3d98a', { fontStyle: 'bold' })));
+      this.bulle.add(this.add.text(gauche, haut + 24, `Personne ne sait vraiment ce qu'il y a là-bas. Elle s'ouvrira avec une réputation de ${z.reputation}, ` +
+        "ou quand un aventurier revenu d'une zone voisine t'en parlera.", style(12, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 3 })));
       return;
     }
-    this.choisie = cle;
-    this.boutonEnvoyer.setActif(true);
-    const niv = NIVEAUX_AVENTURIER[v.niveau];
+    this.bulle.add(this.add.text(gauche, haut, `${z.nom}  ${'★'.repeat(z.danger)}`, style(14, '#f3d98a', { fontStyle: 'bold' })));
     const quetes = z.quetes.map(q => QUETES[q]);
-    const mult = BUTIN_PAR_DANGER[z.danger] / BUTIN_PAR_DANGER[1] * niv.butin;
-    const butinMin = Math.round(Math.min(...quetes.map(q => q.butin[0])) * mult);
-    const butinMax = Math.round(Math.max(...quetes.map(q => q.butin[1])) * mult);
     const dureeMin = Math.min(...quetes.map(q => q.duree[0]));
     const dureeMax = Math.max(...quetes.map(q => q.duree[1]));
-    this.titreZone.setText(`${z.nom}  ·  danger ${'★'.repeat(z.danger)} (${z.danger}/5)`);
-    this.texteZone.setText(`${z.description}\nButin espéré : ${butinMin} à ${butinMax} p. · Durée : ${dureeMin} à ${dureeMax} jours · Il faut souvent :`);
+    let ligne = `${dureeMin} à ${dureeMax} jours`;
+    if (v) {
+      const mult = BUTIN_PAR_DANGER[z.danger] / BUTIN_PAR_DANGER[1] * NIVEAUX_AVENTURIER[v.niveau].butin;
+      const butinMin = Math.round(Math.min(...quetes.map(q => q.butin[0])) * mult);
+      const butinMax = Math.round(Math.max(...quetes.map(q => q.butin[1])) * mult);
+      ligne = `Butin espéré pour ${v.nom.split(' ')[0]} : ${butinMin} à ${butinMax} p. · ${ligne}`;
+    }
+    this.bulle.add(this.add.text(gauche, haut + 22, `${z.description}\n${ligne} · il faut souvent :`,
+      style(11, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 2 })));
     besoinsDeZone(cle).forEach((id, i) => {
-      const enStock = this.G.stock[id] || 0;
-      this.icones.add(this.add.image(40 + i * 46, 512, id).setScale(2.5));
-      this.icones.add(this.add.text(54 + i * 46, 512, String(enStock), style(11, enStock ? '#b8e0a0' : '#f0a8a0', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      const enStock = G.stock[id] || 0;
+      this.bulle.add(this.add.image(gauche + 10 + i * 40, by + h / 2 - 20, id).setScale(2.2));
+      this.bulle.add(this.add.text(gauche + 22 + i * 40, by + h / 2 - 20, String(enStock), style(11, enStock ? '#b8e0a0' : '#f0a8a0', { fontStyle: 'bold' })).setOrigin(0, 0.5));
     });
+    if (!v) return;
+    const envoyer = this.add.text(bx + w / 2 - 12, by + h / 2 - 20, `Envoyer ${v.nom.split(' ')[0]} ici ▶`,
+      style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#4f7a3a', padding: { x: 8, y: 5 } })).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+    envoyer.on('pointerdown', () => this.envoyer(cle));
+    this.bulle.add(envoyer);
   }
 
-  envoyer() {
-    if (!this.choisie) return;
-    envoyerDans(this.G, this.comptoir.voyageur, this.choisie);
-    this.fermer({ destination: this.choisie });
+  envoyer(cle) {
+    const v = this.selection;
+    if (!v) return;
+    envoyerDans(this.G, v, cle);
+    if (!this.planification) return this.fermer({ destination: cle });
+    this.place[v.id] = cle;
+    const entree = this.G.file.find(e => e.voyageur === v);
+    if (entree) entree.planifie = true;
+    // On passe au suivant qui n'a pas encore de destination.
+    this.selection = this.voyageurs.find(x => !this.place[x.id]) || null;
+    this.bulle.removeAll(true);
+    this.anneau.setVisible(false);
+    this.zoneChoisie = null;
+    this.tout();
+  }
+
+  terminer() {
+    if (!this.planification) return this.fermer({ annule: true });
+    this.cameras.main.fadeOut(400);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Comptoir'));
   }
 
   fermer(donnees) {
     this.scene.stop();
     this.scene.resume('Comptoir', donnees);
   }
+}
+
+// Ouvrir le comptoir le matin : la file d'attente du jour se forme, et s'il y a des
+// voyageurs qui cherchent l'aventure, on passe d'abord par la carte pour les placer.
+function commencerJournee(scene, ouvrir = true) {
+  const G = window.GAME;
+  if (ouvrir) ouvrirComptoir(G);
+  const aPlacer = G.file.some(e => e.type === 'client' && !e.voyageur.queteId);
+  scene.cameras.main.fadeOut(400);
+  scene.cameras.main.once('camerafadeoutcomplete', () => scene.scene.start(aPlacer ? 'Carte' : 'Comptoir', {}));
 }

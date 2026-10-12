@@ -18,6 +18,7 @@ class CounterScene extends Phaser.Scene {
     this.voyageur = null; // le client à servir, s'il y en a un
     this.enService = false;
     this.colis = {};
+    this.pieges = {};
 
     this.dessinerPiece();
     this.creerFenetre();
@@ -155,6 +156,7 @@ class CounterScene extends Phaser.Scene {
     if (!v || !entree || entree.type !== 'client') return;
     if (!this.G.file.length) return this.dire("Personne d'autre n'attend : autant le servir maintenant !", '');
     entree.colis = { ...this.colis };
+    entree.pieges = { ...this.pieges };
     entree.attentes = (entree.attentes || 0) + 1;
     let msg = null;
     let phrase = "D'accord, je repasse tout à l'heure. Garde-moi mon colis !";
@@ -215,7 +217,9 @@ class CounterScene extends Phaser.Scene {
   creerCommande() {
     // Parchemin de la commande
     this.add.rectangle(815, 135, 260, 230, 0xead9b0).setStrokeStyle(3, 0x8a6a3a);
-    this.titreCommande = this.add.text(700, 30, '', style(17, '#3b2410', { fontStyle: 'bold', wordWrap: { width: 235 } }));
+    // Le nom du client sur une ligne (la police rétrécit si besoin), sa destination en dessous.
+    this.titreCommande = this.add.text(700, 26, '', style(17, '#3b2410', { fontStyle: 'bold' }));
+    this.sousTitre = this.add.text(700, 49, '', style(12, '#6b4a2a', { fontStyle: 'italic' }));
     this.lignesCommande = [];
     for (let i = 0; i < 5; i++) {
       const y = 76 + i * 22;
@@ -269,6 +273,64 @@ class CounterScene extends Phaser.Scene {
       fond.on('pointerdown', () => this.donner(id));
       this.cases[id] = { fond, qte };
     });
+    this.creerTiroirSecret();
+  }
+
+  // Le tiroir secret, sous le comptoir : les objets piégés que la Faucheuse t'a laissés.
+  // Il n'apparaît que quand il y a quelque chose dedans.
+  creerTiroirSecret() {
+    const x = 578, y = 493;
+    const fond = this.add.rectangle(x, y, 212, 44, 0x1a0e18).setStrokeStyle(2, 0x5a1a3a).setInteractive({ useHandCursor: true });
+    const texte = this.add.text(x, y, '', style(13, '#d08aa8', { fontStyle: 'bold', align: 'center' })).setOrigin(0.5);
+    fond.on('pointerover', () => fond.setFillStyle(0x2a1424));
+    fond.on('pointerout', () => fond.setFillStyle(0x1a0e18));
+    fond.on('pointerdown', () => this.ouvrirTiroirSecret());
+    this.tiroirSecret = { fond, texte };
+  }
+
+  majTiroirSecret() {
+    const n = Object.values(this.G.pieges).reduce((a, b) => a + b, 0);
+    const visible = n > 0 || Object.values(this.pieges || {}).some(k => k > 0);
+    this.tiroirSecret.fond.setVisible(visible);
+    this.tiroirSecret.texte.setVisible(visible).setText(`☠ Tiroir secret (${n})`);
+    if (!visible && this.panneauSecret) { this.panneauSecret.destroy(); this.panneauSecret = null; }
+  }
+
+  // La liste des objets piégés : clic pour en glisser un dans le baluchon du client.
+  ouvrirTiroirSecret() {
+    if (this.panneauSecret) { this.panneauSecret.destroy(); this.panneauSecret = null; return; }
+    const ids = piegesEnStock(this.G);
+    if (!ids.length) return;
+    const c = this.panneauSecret = this.add.container(0, 0).setDepth(8);
+    const h = 34 + ids.length * 30;
+    c.add(this.add.rectangle(578, 470 - h / 2, 230, h, 0x1a0e18, 0.97).setStrokeStyle(2, 0x5a1a3a));
+    c.add(this.add.text(578, 470 - h + 14, 'Glisser dans le baluchon :', style(12, '#d08aa8', { fontStyle: 'italic' })).setOrigin(0.5));
+    ids.forEach((id, i) => {
+      const y = 470 - h + 40 + i * 30;
+      const ligne = this.add.rectangle(578, y, 216, 26, 0x2a1424).setInteractive({ useHandCursor: true });
+      ligne.on('pointerover', () => ligne.setFillStyle(0x4a1a34));
+      ligne.on('pointerout', () => ligne.setFillStyle(0x2a1424));
+      ligne.on('pointerdown', () => this.glisserPiege(id));
+      c.add([ligne, this.add.image(482, y, id).setScale(2.5).setTint(0x9a8aa0),
+        this.add.text(500, y, `${PIEGES[id].nom} x ${this.G.pieges[id]}`, style(12, '#f0c0d8', { fontStyle: 'bold' })).setOrigin(0, 0.5)]);
+    });
+  }
+
+  // Glisser un objet piégé dans le baluchon, à la place d'un objet commandé.
+  // Le client n'y voit que du feu : il le compte dans sa commande.
+  glisserPiege(id) {
+    if (this.panneauSecret) { this.panneauSecret.destroy(); this.panneauSecret = null; }
+    if (!this.enService || this.enConfirmation) return this.dire("Il n'y a personne à qui le glisser.", '');
+    const v = this.voyageur;
+    const commande = commandeDe(v);
+    if (!commande[id]) return this.dire(`${v.nom.split(' ')[0]} n'a pas commandé de ${ITEMS[id].nom.toLowerCase()} : ça éveillerait ses soupçons.`, '');
+    if ((this.colis[id] || 0) >= commande[id]) return this.dire(`Son baluchon a déjà son compte de ${ITEMS[id].nom.toLowerCase()}. Retires-en un d'abord.`, '');
+    this.G.pieges[id]--;
+    this.colis[id] = (this.colis[id] || 0) + 1;
+    this.pieges[id] = (this.pieges[id] || 0) + 1;
+    this.dire(`Tu glisses discrètement la ${PIEGES[id].nom.toLowerCase()} dans son baluchon. ${v.feminin ? 'Elle' : 'Il'} ne remarque rien.`, '');
+    this.majStock();
+    this.majCommande();
   }
 
   // L'étagère des décorations offertes par tes amis. Clic : voir son effet.
@@ -318,8 +380,9 @@ class CounterScene extends Phaser.Scene {
     if (this.G.file.length === 0) return this.finDeJournee();
 
     const entree = this.entree = this.G.file.shift();
-    // Un client mis en attente retrouve son colis commencé.
+    // Un client mis en attente retrouve son colis commencé (et ce que tu y as glissé).
     this.colis = entree.colis || {};
+    this.pieges = entree.pieges || {};
     this.bouton('...', null);
     this.majCommande();
     // Un carnet laissé par la Faucheuse : personne ne s'avance, il est déjà là.
@@ -331,7 +394,7 @@ class CounterScene extends Phaser.Scene {
     this.dire(faucheuse ? "Le froid tombe d'un coup. Les bougies vacillent..." : "Quelqu'un approche du comptoir...", '');
     this.majFileAttente();
     this.perso.setVisible(true).setAlpha(1);
-    if (faucheuse) this.assombrir();
+    if (faucheuse) this.assombrir(entree);
 
     // Le premier de la file s'avance jusqu'au comptoir...
     const premier = this.fileSprites.shift();
@@ -345,7 +408,8 @@ class CounterScene extends Phaser.Scene {
     });
 
     this.tweens.add({
-      targets: this.perso, x: FENETRE.x + FENETRE.w / 2, y: SOL_COMPTOIR, scale: 9, duration: 1200, ease: 'Sine.easeOut',
+      targets: this.perso, x: FENETRE.x + FENETRE.w / 2, y: SOL_COMPTOIR, duration: 1200, ease: 'Sine.easeOut',
+      scale: faucheuse ? terreurFaucheuse(this.G, entree.partis.length).echelle : 9,
       onComplete: () => this.arrivee(entree),
     });
     // La Faucheuse ne marche pas : elle glisse.
@@ -365,12 +429,14 @@ class CounterScene extends Phaser.Scene {
         this.majCommande();
         return;
       }
-      this.dire(entree.attentes ? bonjour : bonjour + accord(v.accueil, v), this.nomAvecRelation(v.nom));
+      // Placé sur la carte ce matin : il connaît déjà sa destination.
+      const planifie = entree.planifie && !entree.attentes ? `${ZONES[v.zone].nom} ? Va pour ça ! ` : '';
+      this.dire(entree.attentes ? bonjour : bonjour + planifie + accord(v.accueil, v), this.nomAvecRelation(v.nom));
       this.servir();
     } else if (entree.type === 'retour') {
       const v = entree.parti.voyageur;
       this.dire(`Me revoilà, sain${v.feminin ? 'e' : ''} et sauf${v.feminin ? 've' : ''} ! Tu ne devineras jamais ce qui m'est arrivé...`, v.nom);
-      this.titreCommande.setText('Retour de mission');
+      this.titreCommande.setFontSize(17).setText('Retour de mission');
       this.bouton('Écouter son récit', () => this.ouvrirRecit(entree.parti));
     } else if (entree.type === 'famille') {
       this.visiteFamille(entree.visite);
@@ -386,43 +452,159 @@ class CounterScene extends Phaser.Scene {
       g.fillStyle(0x5a3a22).fillRect(cx - 27, cy - 20, 54, 17);
       g.fillStyle(0xd8e8f0, 0.8).fillRect(cx - 30, cy - 22, 60, 3).fillRect(cx - 30, cy - 22, 4, 22).fillRect(cx + 14, cy - 19, 9, 2);
       g.fillStyle(0xe8c040).fillRect(cx - 4, cy - 14, 8, 6);
-      this.titreCommande.setText('Une mauvaise nouvelle...');
+      this.titreCommande.setFontSize(17).setText('Une mauvaise nouvelle...');
       this.bouton('Lire le carnet', () => this.ouvrirRecit(entree.parti));
     }
   }
 
   // --- La Faucheuse ---
 
-  // L'obscurité tombe sur le comptoir : seuls la Faucheuse et ses paroles restent visibles.
-  assombrir() {
-    if (this.ombre) this.ombre.destroy();
-    this.ombre = this.add.rectangle(480, 270, 960, 540, 0x05040c, 0).setDepth(4);
-    this.tweens.add({ targets: this.ombre, fillAlpha: 0.78, duration: 1400, ease: 'Sine.easeIn' });
-    this.perso.setDepth(5);
-    for (const o of [this.fondDialogue, this.nomParleur, this.texteDialogue, this.boutonAction.fond, this.boutonAction.label]) o.setDepth(6);
-    this.cameras.main.shake(1400, 0.002);
+  // Ce qui reste visible dans l'obscurité : la Faucheuse, ses paroles et tes réponses.
+  elementsDansLOmbre() {
+    return [this.fondDialogue, this.nomParleur, this.texteDialogue, this.boutonAction.fond, this.boutonAction.label,
+      this.boutonRefuser.fond, this.boutonRefuser.label];
   }
 
-  // Elle annonce ceux qui ne reviendront jamais, laisse leurs carnets, et repart avec l'obscurité.
+  // L'obscurité tombe sur le comptoir. Plus elle a emporté d'âmes, plus c'est terrifiant :
+  // nuit plus noire, silhouette plus grande, aura rouge, éclair de sang, battements de cœur.
+  assombrir(entree) {
+    const t = this.terreur = terreurFaucheuse(this.G, entree.partis.filter(p => !p.recolte).length);
+    if (this.ombre) this.ombre.destroy();
+    this.ombre = this.add.rectangle(480, 270, 960, 540, 0x05040c, 0).setDepth(4);
+    this.tweens.add({ targets: this.ombre, fillAlpha: t.ombre, duration: 1400, ease: 'Sine.easeIn' });
+    this.perso.setDepth(5).clearTint();
+    for (const o of this.elementsDansLOmbre()) o.setDepth(6);
+    this.cameras.main.shake(1400, t.secousse);
+    if (t.aura) {
+      const x = FENETRE.x + FENETRE.w / 2;
+      // Un halo diffus : des cercles de plus en plus grands et de plus en plus pâles.
+      this.aura = this.add.container(x, SOL_COMPTOIR - 95).setDepth(4.5);
+      for (let k = 0; k < 6; k++) {
+        const halo = this.add.ellipse(0, 0, 110 + k * 34, 130 + k * 36, 0xb01010, 0).setBlendMode(Phaser.BlendModes.ADD);
+        this.aura.add(halo);
+        this.tweens.add({ targets: halo, fillAlpha: t.aura * 0.22, duration: 1400, delay: 600 });
+      }
+      this.tweens.add({ targets: this.aura, scale: 1.1, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
+    if (t.index >= 2) this.time.delayedCall(1150, () => this.cameras.main.flash(350, 140, 0, 0));
+    if (t.index >= 3) {
+      // Un cœur qui bat, lourd, pendant toute sa visite.
+      this.battements = this.time.addEvent({ delay: 1300, loop: true, callback: () => {
+        this.cameras.main.shake(120, 0.006);
+        this.time.delayedCall(220, () => this.cameras.main.shake(120, 0.004));
+      } });
+    }
+  }
+
+  // Elle annonce ceux qui ne reviendront jamais, commente tes choix, paie ou punit,
+  // propose parfois un sabotage, laisse leurs carnets, et repart avec l'obscurité.
   visiteFaucheuse(entree) {
+    const G = this.G;
+    const bilan = recolter(G, entree.partis);
+    G.faucheuse.visites++;
+    const t = terreurFaucheuse(G);
+    const sed = seductionFaucheuse(G);
     const noms = entree.partis.map(p => p.voyageur.nom);
-    const liste = noms.length > 1 ? noms.slice(0, -1).join(', ') + ' et ' + noms[noms.length - 1] : noms[0];
+    const enListe = l => l.length > 1 ? l.slice(0, -1).join(', ') + ' et ' + l[l.length - 1] : l[0];
     const plusieurs = noms.length > 1;
-    this.titreCommande.setText('...');
+    this.titreCommande.setFontSize(17).setText('...');
+    this.majStock();
+    this.dessinerPieces();
     // Elle flotte, immobile, au-dessus du sol.
     this.flottement = this.tweens.add({ targets: this.perso, y: SOL_COMPTOIR - 8, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    const parler = texte => {
-      this.dire(texte, 'La Faucheuse');
-      this.nomParleur.setColor('#ff3a2a');
-    };
-    parler(`« Ne tremble pas, marchand. Ce n'est pas pour toi que je viens... pas encore. »`);
-    this.bouton('...', () => {
-      parler(`« ${liste} ne reviendr${plusieurs ? 'ont' : 'a'} jamais de voyage. ${plusieurs ? 'Leurs' : 'Son'} nom${plusieurs ? 's sont' : ' est'} à moi, désormais. »`);
-      this.bouton('...', () => {
-        parler(`« Je te laisse ${plusieurs ? 'leurs carnets' : 'son carnet'}. Nous nous reverrons... »`);
-        this.bouton('...', () => this.departFaucheuse(entree));
+
+    const etapes = [];
+    const elle = texte => etapes.push({ texte, nom: 'La Faucheuse' });
+    const recit = texte => etapes.push({ texte, nom: '' });
+
+    // Son salut : séductrice si tu lui as offert des âmes, sinon de plus en plus terrifiante.
+    const saluts = [
+      "« Ne tremble pas, marchand. Ce n'est pas pour toi que je viens... pas encore. »",
+      '« Encore moi. Tes clients ont la mort facile, marchand. Je connais le chemin, maintenant. »',
+      "« L'odeur de la mort colle à ton comptoir. Je la sens depuis l'autre bout du monde. »",
+      `« ${G.faucheuse.morts} âmes. ${G.faucheuse.morts} âmes sont passées par tes mains avant les miennes. Ton comptoir est devenu ma porte. »`,
+    ];
+    const charmes = [null,
+      '« Tiens, tiens... Toi. Tu commences à me plaire, petit marchand. »',
+      "« Mon marchand préféré... Tu m'as manqué. Regarde tout ce que tu m'as apporté. »",
+      "« Mon âme sœur... si j'en avais une. Personne ne me nourrit aussi bien que toi. »"];
+    elle(sed.index ? charmes[sed.index] : saluts[t.index]);
+    elle(`« ${enListe(noms)} ne reviendr${plusieurs ? 'ont' : 'a'} jamais de voyage. ${plusieurs ? 'Leurs' : 'Son'} nom${plusieurs ? 's sont' : ' est'} à moi, désormais. »`);
+
+    // Ses commentaires sur tes choix.
+    if (bilan.voulues.length) {
+      const offerts = bilan.voulues.map(p => p.voyageur.nom.split(' ')[0]);
+      const seul = bilan.voulues[0].voyageur.feminin ? "celle-là, tu me l'as offerte" : "celui-là, tu me l'as offert";
+      elle(`« ${enListe(offerts)}... ${offerts.length > 1 ? 'ceux-là, tu me les as offerts' : seul}. Je n'oublie jamais un cadeau. »`);
+    } else {
+      const bienPrepare = entree.partis.find(p => p.chance >= 0.7);
+      if (bienPrepare) elle(`« Tu avais pourtant tout fait pour ${bienPrepare.voyageur.nom.split(' ')[0]}. Ça ne suffit jamais. »`);
+    }
+    for (const p of bilan.demasques) {
+      const id = Object.keys(p.pieges).find(k => p.pieges[k] > 0);
+      elle(`« Mais on a retrouvé ${PIEGES[id] ? 'la ' + PIEGES[id].nom.toLowerCase() : 'ton piège'} de ${p.voyageur.nom.split(' ')[0]}... Le village murmure ton nom. »`);
+      recit(`Ton piège a été découvert. Réputation −${PERTE_DEMASQUE}.`);
+    }
+    if (bilan.sabotage) {
+      const m = bilan.sabotage.mission;
+      if (bilan.sabotage.reussi) {
+        elle(`« ${m.cible.nom} est à moi. Comme convenu. »`);
+        recit(`Elle pose sur le comptoir une bourse de pièces glacées : +${m.prime} pièces.`);
+      } else {
+        elle(`« ${m.cible.nom} est reparti${m.cible.feminin ? 'e' : ''} sans mon cadeau. Tu m'as déçue, marchand. »`);
+      }
+    }
+    // Ta réputation et tes choix entre le bien et le mal : elle sait tout.
+    if (G.mal >= SEUIL_SABOTAGE && G.reputation >= 5) elle("« On t'aime, au village... S'ils savaient ce que tu fais dès qu'ils ont le dos tourné. »");
+    else if (G.mal >= SEUIL_SABOTAGE) elle('« Les gens commencent à chuchoter sur toi. Ils ont bien raison. »');
+    else if (G.mal >= 1) elle('« Je vois ce que tu fais, tu sais. Je vois tout. Continue... »');
+    else if (G.reputation >= 8) elle("« Tout le monde t'aime, marchand. Même moi, je ne t'en veux pas. Mais je finirai par tous les avoir. »");
+
+    // Son premier cadeau, quand tu commences à lui plaire.
+    const cadeau = cadeauFaucheuse(G);
+    if (cadeau) {
+      elle('« Tiens. Un petit cadeau. Glisse-les dans un baluchon... et regarde ce qui arrive. »');
+      recit(`Elle dépose sous ton comptoir : ${cadeau.map(id => PIEGES[id].nom).join(' et ')}. (Ton tiroir secret)`);
+    }
+    // Une mission de sabotage, si ton cœur est assez noir.
+    const mission = proposerSabotage(G);
+    if (mission) {
+      const c = mission.cible;
+      elle(`« J'ai un travail pour toi. Demain, ${c.nom} viendra à ton comptoir. ${NOMS_RACES[c.race] || ''}, un cœur pur... les gentils l'adorent. »`);
+      etapes.push({
+        texte: `« Glisse-lui ceci dans son baluchon : ${PIEGES[mission.piege].nom.toLowerCase()}. Je te paierai ${mission.prime} pièces. »`,
+        nom: 'La Faucheuse',
+        choix: [['Accepter', () => {
+          accepterSabotage(G);
+          return '« Je savais que je pouvais compter sur toi. »';
+        }], ['Refuser', () => {
+          refuserSabotage(G);
+          return '« Comme tu voudras... Pour l\'instant. »';
+        }]],
       });
-    });
+    }
+    elle(sed.index >= 2 ? `« Je te laisse ${plusieurs ? 'leurs carnets' : 'son carnet'}... À très vite, mon marchand. »`
+      : `« Je te laisse ${plusieurs ? 'leurs carnets' : 'son carnet'}. Nous nous reverrons... »`);
+
+    const parler = texte => {
+      this.dire(texte, `La Faucheuse${sed.index ? ' — ' + sed.nom : ''}`);
+      this.nomParleur.setColor(sed.couleur);
+    };
+    const montrer = i => {
+      if (i >= etapes.length) return this.departFaucheuse(entree);
+      const e = etapes[i];
+      if (e.nom) parler(e.texte);
+      else this.dire(e.texte, '');
+      if (!e.choix) return this.bouton('...', () => montrer(i + 1));
+      const repondre = action => {
+        const reponse = action();
+        this.boutonRefuser.setVisible(false);
+        parler(reponse);
+        this.bouton('...', () => montrer(i + 1));
+      };
+      this.choix([e.choix[0][0], () => repondre(e.choix[0][1])], [e.choix[1][0], () => repondre(e.choix[1][1])]);
+    };
+    montrer(0);
   }
 
   departFaucheuse(entree) {
@@ -430,14 +612,20 @@ class CounterScene extends Phaser.Scene {
     this.dire('Elle se dissout dans l\'ombre. Sur le comptoir, ' +
       (entree.partis.length > 1 ? `${entree.partis.length} carnets` : 'un carnet') + ' couvert' + (entree.partis.length > 1 ? 's' : '') + ' de givre.', '');
     if (this.flottement) this.flottement.stop();
-    this.tweens.add({ targets: this.perso, alpha: 0, scale: 10, duration: 1600, ease: 'Sine.easeIn' });
+    if (this.battements) { this.battements.remove(); this.battements = null; }
+    this.majStock();
+    this.dessinerPieces();
+    const echelle = this.perso.scale;
+    this.tweens.add({ targets: this.perso, alpha: 0, scale: echelle + 1, duration: 1600, ease: 'Sine.easeIn' });
+    if (this.aura) this.tweens.add({ targets: this.aura, alpha: 0, duration: 1200 });
     this.tweens.add({
       targets: this.ombre, fillAlpha: 0, duration: 1600, ease: 'Sine.easeOut',
       onComplete: () => {
         this.ombre.destroy();
         this.ombre = null;
+        if (this.aura) { this.aura.destroy(); this.aura = null; }
         this.perso.setVisible(false).setAlpha(1).setScale(9).setDepth(2);
-        for (const o of [this.fondDialogue, this.nomParleur, this.texteDialogue, this.boutonAction.fond, this.boutonAction.label]) o.setDepth(0);
+        for (const o of this.elementsDansLOmbre()) o.setDepth(0);
         // Les carnets passent en tête de file : on les lit un par un.
         this.G.file.unshift(...entree.partis.map(parti => ({ type: 'carnet', parti })));
         this.voyageurSuivant();
@@ -475,7 +663,7 @@ class CounterScene extends Phaser.Scene {
     const il = d.feminin ? 'elle' : 'il';
     const prenom = d.nom.split(' ')[0];
     rencontrer(G, p.nom);
-    this.titreCommande.setText('Une visite...');
+    this.titreCommande.setFontSize(17).setText('Une visite...');
     const parler = texte => this.dire(texte, `${p.nom}, ${p.lien} de ${d.nom}`, p.nom);
     const fin = reponse => { parler(reponse); this.bouton('...', null); this.majBoutonsService(); this.dessinerPieces(); this.majStock(); this.partirPar(FENETRE.x - 80); };
 
@@ -598,7 +786,12 @@ class CounterScene extends Phaser.Scene {
     const id = this.lignesCommande[i].id;
     if (!this.enService || this.enConfirmation || !id || !this.colis[id]) return;
     this.colis[id]--;
-    this.G.stock[id]++;
+    if (this.pieges[id] > 0) {
+      this.pieges[id]--;
+      this.G.pieges[id]++;
+    } else {
+      this.G.stock[id]++;
+    }
     this.majStock();
     this.majCommande();
   }
@@ -635,8 +828,13 @@ class CounterScene extends Phaser.Scene {
   refuser() {
     if (!this.voyageur) return;
     const v = this.voyageur;
-    for (const [id, n] of Object.entries(this.colis)) this.G.stock[id] += n;
+    for (const [id, n] of Object.entries(this.colis)) {
+      const pieges = this.pieges[id] || 0;
+      this.G.stock[id] += n - pieges;
+      if (pieges) this.G.pieges[id] += pieges;
+    }
     this.colis = {};
+    this.pieges = {};
     const msg = refuserClient(this.G, v);
     this.enService = false;
     this.majBoutonsService();
@@ -647,14 +845,24 @@ class CounterScene extends Phaser.Scene {
   }
 
   // Le client s'en va, vers la droite (vers l'aventure) ou la gauche (refusé).
-  // `porte` : le colis que le client emporte avec lui.
+  // `porte` : le baluchon que le client emporte, sur l'épaule (le bâton devant, le tissu
+  // noué dans son dos).
   partirPar(x, porte = null) {
-    this.perso.setFlipX(x > this.perso.x);
-    const decalage = x > this.perso.x ? 26 : -26;
+    const versDroite = x > this.perso.x;
+    this.perso.setFlipX(versDroite);
+    const decalage = versDroite ? 22 : -22;
+    const inclinaison = versDroite ? -22 : 22;
+    const placer = () => {
+      porte.setPosition(this.perso.x + decalage, this.perso.y - 62).setAngle(inclinaison + this.perso.angle);
+    };
+    if (porte) {
+      porte.setFlipX(!versDroite).setOrigin(versDroite ? 0.95 : 0.05, 0.95).setDepth(2.1);
+      placer();
+    }
     this.tweens.add({
       targets: this.perso, x, duration: 1400, delay: 700, ease: 'Sine.easeIn',
       onStart: () => this.marche(1400),
-      onUpdate: () => { if (porte) porte.x = this.perso.x + decalage; },
+      onUpdate: () => { if (porte) placer(); },
       onComplete: () => {
         if (porte) porte.destroy();
         this.voyageurSuivant();
@@ -662,11 +870,13 @@ class CounterScene extends Phaser.Scene {
     });
   }
 
-  // L'empaquetage : les objets volent de la réserve dans le carton, on le ficelle,
-  // puis le client le prend. `suite(colis)` est appelée quand il l'a dans les mains.
+  // L'empaquetage : on étale un tissu, les objets volent de la réserve dessus, on noue le
+  // baluchon au bout d'un bâton, puis le client le prend. `suite(baluchon)` est appelée
+  // quand il l'a sur l'épaule.
   empaqueter(objets, suite) {
     const bx = FENETRE.x + FENETRE.w / 2 + 80;
-    const boite = this.add.image(bx, SOL_COMPTOIR, 'colisOuvert').setOrigin(0.5, 1).setScale(0).setDepth(2.5);
+    const famille = familleColis(objets);
+    const boite = this.add.image(bx, SOL_COMPTOIR, 'tissu_' + famille).setOrigin(0.5, 1).setScale(0).setDepth(2.5);
     boite.setMask(this.masqueFenetre);
     this.tweens.add({ targets: boite, scale: 5, duration: 250, ease: 'Back.easeOut' });
     objets.forEach((id, i) => this.time.delayedCall(300 + i * 170, () => {
@@ -680,18 +890,21 @@ class CounterScene extends Phaser.Scene {
         },
       });
     }));
-    // On ferme le carton et on le ficelle...
+    // On noue le tissu au bout du bâton...
     this.time.delayedCall(300 + objets.length * 170 + 500, () => {
-      // La forme du colis dépend de ce qu'il contient, sa taille du nombre d'objets.
-      boite.setTexture(formeColis(objets)).setScale(3.5 + Math.min(objets.length, 10) * 0.3);
+      // Le motif dépend de ce qu'il contient, la taille du nombre d'objets.
+      const taille = 3.4 + Math.min(objets.length, 10) * 0.2;
+      boite.setTexture('baluchon_' + famille).setScale(taille);
       this.tweens.add({ targets: boite, angle: { from: -8, to: 8 }, duration: 90, yoyo: true, repeat: 2, onComplete: () => boite.setAngle(0) });
-      const ficelle = this.add.text(bx, SOL_COMPTOIR - 60, 'Ficelé !', style(16, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 }))
+      const ficelle = this.add.text(bx, SOL_COMPTOIR - 70, 'Noué !', style(16, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 }))
         .setOrigin(0.5).setDepth(6);
       this.tweens.add({ targets: ficelle, y: ficelle.y - 20, alpha: 0, delay: 400, duration: 500, onComplete: () => ficelle.destroy() });
       // ... et le client le prend.
       this.time.delayedCall(700, () => {
+        // ... et le client le hisse sur son épaule.
+        boite.setOrigin(0.95, 0.95).setPosition(boite.x + boite.displayWidth * 0.45, boite.y);
         this.tweens.add({
-          targets: boite, x: this.perso.x + 26, y: this.perso.y - 36, scale: 4, duration: 350, ease: 'Sine.easeOut',
+          targets: boite, x: this.perso.x + 22, y: this.perso.y - 62, angle: -22, duration: 400, ease: 'Back.easeOut',
           onComplete: () => suite(boite),
         });
       });
@@ -735,7 +948,7 @@ class CounterScene extends Phaser.Scene {
   remettreColis() {
     const v = this.voyageur;
     const chance = chanceDeRetour(v, this.colis);
-    const msg = partir(this.G, v, this.colis);
+    const msg = partir(this.G, v, this.colis, this.pieges);
     this.enService = false;
     this.majCommande(); // le colis est remis : on ne peut plus rien retirer
     this.majBoutonsService();
@@ -787,6 +1000,7 @@ class CounterScene extends Phaser.Scene {
       const n = this.G.stock[id];
       c.qte.setText('x ' + n).setColor(n > 0 ? '#f3d98a' : '#a05040');
     }
+    this.majTiroirSecret();
     const m = this.G.materiaux;
     this.texteReserve.setText(`Réserve ${stockTotal(this.G)}/${this.G.capacite} · Fer ${m.fer} · Cuir ${m.cuir}`);
   }
@@ -797,7 +1011,12 @@ class CounterScene extends Phaser.Scene {
     const plus = v ? surplus(v, this.colis) : {};
     // La commande, puis les soins donnés en plus.
     const ids = [...Object.keys(commande), ...Object.keys(plus).filter(id => !commande[id])];
-    this.titreCommande.setText(v ? (v.queteId ? `${v.nom} · ${ZONES[v.zone].nom}` : `${v.nom} cherche l'aventure`) : '');
+    const cible = v && estCible(this.G, v) ? '☠ ' : '';
+    if (v) {
+      this.titreCommande.setText(cible + v.nom).setFontSize(17);
+      for (let taille = 16; this.titreCommande.width > 235 && taille >= 12; taille--) this.titreCommande.setFontSize(taille);
+    }
+    this.sousTitre.setText(v ? (v.queteId ? `→ ${ZONES[v.zone].nom}` : "cherche l'aventure") : '');
     this.texteSac.setText(v && v.queteId ? `Sac : ${totalSurplus(v, this.colis)} / ${tailleSac(v)} en plus` +
       (coeursEnPlus(v, this.colis) ? ` · +${coeursEnPlus(v, this.colis)} cœur${coeursEnPlus(v, this.colis) > 1 ? 's' : ''}` : '') : '');
     this.lignesCommande.forEach((ligne, i) => {
@@ -824,17 +1043,19 @@ class CounterScene extends Phaser.Scene {
         return;
       }
       const ok = donne >= commande[id];
-      ligne.txt.setText(`${ITEMS[id].nom}  ${Math.min(donne, commande[id])} / ${commande[id]}  ${ok ? '✓' : ''}${plus[id] ? ` +${plus[id]}` : ''}`)
-        .setFontSize(14).setColor(ok ? '#2f6a2a' : '#3b2410');
+      const piege = this.pieges && this.pieges[id] ? `  ☠${this.pieges[id] > 1 ? this.pieges[id] : ''}` : '';
+      ligne.txt.setText(`${ITEMS[id].nom}  ${Math.min(donne, commande[id])} / ${commande[id]}  ${ok ? '✓' : ''}${plus[id] ? ` +${plus[id]}` : ''}${piege}`)
+        .setFontSize(14).setColor(piege ? '#7a1a4a' : ok ? '#2f6a2a' : '#3b2410');
     });
     if (v && !v.queteId) {
       this.texteChance.setText('Choisis sa destination').setColor('#8a6a10');
     } else if (v) {
       // Ton flair estime les chances : faussé au début, précis avec l'expérience.
-      const c = chanceEstimee(this.G, v, this.colis);
+      const c = chanceEstimee(this.G, v, this.colis, this.pieges);
       const couleur = c >= 0.75 ? '#2f6a2a' : c >= 0.4 ? '#8a6a10' : '#a03030';
       const exact = niveauFlair(this.G) >= 1;
-      this.texteChance.setText(`${exact ? 'Chances de retour' : 'Ton flair dit'} : ${exact ? '' : '~'}${Math.round(c * 100)} %`).setColor(couleur);
+      if (piegeFatal(v, this.pieges)) this.texteChance.setText('Chances de retour : aucune ☠').setColor('#7a1a4a');
+      else this.texteChance.setText(`${exact ? 'Chances de retour' : 'Ton flair dit'} : ${exact ? '' : '~'}${Math.round(c * 100)} %`).setColor(couleur);
     } else {
       this.texteChance.setText('');
     }
@@ -848,13 +1069,12 @@ function listeCourte(lignes, max, siVide) {
   return lignes.slice(0, max - 1).join('\n') + `\n+ ${lignes.length - max + 1} autres`;
 }
 
-// La forme d'un colis selon ce qu'il contient le plus : un sac de provisions, une longue
-// caisse d'armes, une boîte de soins... ou un paquet ficelé quand c'est un peu de tout.
-function formeColis(objets) {
+// Le tissu du baluchon selon ce qu'il contient le plus : provisions, armes, soins...
+// ou « divers » quand c'est un peu de tout.
+function familleColis(objets) {
   const familles = { provisions: ['ration', 'gourde'], armes: ['epee', 'fleches', 'bouclier'], soins: ['potion', 'bandage', 'antidote'] };
-  const textures = { provisions: 'sac', armes: 'colisArmes', soins: 'colisSoins' };
   for (const [famille, ids] of Object.entries(familles)) {
-    if (objets.filter(id => ids.includes(id)).length > objets.length / 2) return textures[famille];
+    if (objets.filter(id => ids.includes(id)).length > objets.length / 2) return famille;
   }
-  return 'colis';
+  return 'divers';
 }

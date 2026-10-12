@@ -56,7 +56,7 @@ class StoryScene extends Cinematique {
     await this.attendreClic();
 
     for (let i = 0; i < r.etapes.length; i++) {
-      const { epreuve, niveau, reussie, pvApres } = r.etapes[i];
+      const { epreuve, niveau, reussie, pvApres, piege, pvAvant } = r.etapes[i];
       const x = 140 + i * (680 / etapes);
 
       this.decor.removeAll(true);
@@ -67,6 +67,15 @@ class StoryScene extends Cinematique {
       await this.attendreClic();
 
       if (niveau !== 'rien') await this.montrerObjet(epreuve.besoin);
+
+      // Un objet piégé : il lâche au pire moment, et c'est fini.
+      if (piege) {
+        this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(PIEGES[piege].mort, v)} »`);
+        this.cameras.main.flash(400, 90, 0, 30);
+        for (let pv = (pvAvant || 1) - 1; pv >= 0; pv--) await this.blesser(pv);
+        await this.attendreClic();
+        continue;
+      }
 
       let suite;
       if (reussie) {
@@ -119,6 +128,10 @@ class StoryScene extends Cinematique {
       this.ecrire('Fin du carnet', r.valeureux
         ? `${v.nom} est mort${this.e} valeureusement au combat. On chantera son nom dans les tavernes.\nTon investissement est perdu.`
         : `${v.nom} est mort${this.e} loin de chez ${v.feminin ? 'elle' : 'lui'}, sans gloire. Il fallait sans doute mieux ${v.feminin ? 'la' : 'le'} préparer...\nTon investissement est perdu.`);
+      if (this.parti.demasque) {
+        const id = Object.keys(this.parti.pieges).find(k => this.parti.pieges[k] > 0);
+        this.texte.setText(this.texte.text + `\nOn a retrouvé ${PIEGES[id] ? 'la ' + PIEGES[id].nom.toLowerCase() : 'ton piège'} près du corps. Au village, on t'accuse.`);
+      }
       this.tweens.add({ targets: this.voile, fillAlpha: 0.5, duration: 1500 });
       this.indice.destroy();
       return this.proposerDedommagement();

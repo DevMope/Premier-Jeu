@@ -54,6 +54,8 @@ const AGRANDISSEMENTS = [
 // pratique pour sauver un voyage, mais bien plus cher que le fournisseur.
 // Un vieux gobelin avare, recroquevillé à côté de sa caravane.
 const MARCHAND_EXPRESS = { nom: 'Vieux Grippesou', multiplicateur: 2.5 };
+// De temps en temps, Grippesou a aussi du fer ou du cuir... à un prix délirant.
+const EXPRESS_MATERIAUX = { chance: 0.4, multiplicateur: 4.5 };
 
 // Soigner un aventurier revenu blessé : une potion par cœur perdu,
 // et il te paie 1,5 fois le prix d'une potion.
@@ -75,9 +77,9 @@ const REFUS_CLIENT = 1;
 // Les prêts : les banquiers nains prêtent plus, et moins cher, quand ta réputation grandit.
 // La Main Noire (`mal`) ne prête qu'à ceux qui ont choisi le camp du mal (plus tard dans le jeu).
 const PRETS = [
-  { id: 'petit', preteur: 'Banque naine', nom: 'Petit prêt', somme: 60, taux: 0.15, jours: 5, reputation: 0 },
-  { id: 'marchand', preteur: 'Banque naine', nom: 'Prêt marchand', somme: 150, taux: 0.10, jours: 7, reputation: 4 },
-  { id: 'grand', preteur: 'Banque naine', nom: 'Grand prêt', somme: 400, taux: 0.06, jours: 10, reputation: 10 },
+  { id: 'petit', preteur: 'Banque Centrale Goyenne', nom: 'Petit prêt', somme: 60, taux: 0.15, jours: 5, reputation: 0 },
+  { id: 'marchand', preteur: 'Banque Centrale Goyenne', nom: 'Prêt marchand', somme: 150, taux: 0.10, jours: 7, reputation: 4 },
+  { id: 'grand', preteur: 'Banque Centrale Goyenne', nom: 'Grand prêt', somme: 400, taux: 0.06, jours: 10, reputation: 10 },
   { id: 'mafia', preteur: 'La Main Noire', nom: 'Prêt sans questions', somme: 120, taux: 0.45, jours: 4, reputation: -Infinity, mal: true },
 ];
 
@@ -511,6 +513,7 @@ const POSTES = {
   jeux: 'Jeux', cadeaux: 'Cadeaux', marche: 'Achats au marché', express: 'Marchand express',
   trouvailles: 'Trouvailles', reserve: 'Agrandissements', dedommagements: 'Dédommagements',
   remboursements: 'Remboursements de prêts', dons: 'Dons au mendiant', prets: 'Prêts reçus', salaires: 'Salaires',
+  sabotages: 'Primes de la Faucheuse',
 };
 // On garde le détail des derniers jours (un peu plus d'une année).
 const JOURS_DE_COMPTES = 120;
@@ -790,3 +793,51 @@ Object.assign(QUETES, {
     ],
   },
 });
+
+// --- Le mal ---
+
+// Les objets piégés : ils ressemblent aux vrais (l'aventurier n'y voit que du feu et les
+// compte dans sa commande), mais lâchent au pire moment : l'épreuve qui en a besoin le tue.
+// On ne les achète nulle part : c'est la Faucheuse qui les glisse sous ton comptoir.
+const PIEGES = {
+  corde: { nom: 'Corde effilochée', mort: "La corde a cédé d'un coup. Net. Comme si quelqu'un l'avait coupée..." },
+  potion: { nom: 'Potion empoisonnée', mort: "J'ai bu la potion... Elle avait un goût amer. Ma vue se trouble..." },
+  epee: { nom: 'Épée fêlée', mort: "Au premier coup, ma lame s'est brisée en deux. Je n'avais plus rien pour me défendre..." },
+  ration: { nom: 'Ration avariée', mort: "La viande était verte à l'intérieur. Je me tords de douleur depuis des heures..." },
+  gourde: { nom: 'Gourde empoisonnée', mort: "L'eau de ta gourde brûlait la gorge. Je n'arrive plus à respirer..." },
+  torche: { nom: 'Torche mouillée', mort: "La torche ne s'est jamais allumée. Dans le noir, quelque chose s'est approché..." },
+  bandage: { nom: 'Bandages souillés', mort: "La plaie a viré au noir sous les bandages. La fièvre ne tombe plus..." },
+  antidote: { nom: 'Faux antidote', mort: "L'antidote n'a rien fait. Rien du tout. Le venin monte..." },
+};
+
+// Une mort « voulue » : tu savais, ou tu l'as fait exprès. Elle fait monter ta jauge du mal
+// et séduit la Faucheuse (on retient la raison la plus grave).
+const MORTS_VOULUES = {
+  piege: { poids: 2, texte: 'un objet piégé' },
+  colisVide: { poids: 1, texte: 'un colis volontairement vide' },
+  sansChance: { poids: 0.5, texte: 'aucune chance de revenir' },
+};
+const SEUIL_SANS_CHANCE = 0.3;     // en dessous, tu l'envoies à la mort
+const MANQUANTS_VOLONTAIRES = 2;   // objets commandés non donnés alors que tu les avais
+const CHANCE_DEMASQUE = 0.35;      // un piège peut être découvert : réputation −2
+const PERTE_DEMASQUE = 2;
+
+// La Faucheuse : de plus en plus terrifiante avec le nombre de morts...
+const TERREUR_FAUCHEUSE = [
+  { morts: 0, ombre: 0.74, echelle: 9, secousse: 0.002, aura: 0 },
+  { morts: 3, ombre: 0.83, echelle: 9.4, secousse: 0.004, aura: 0.25 },
+  { morts: 7, ombre: 0.9, echelle: 9.8, secousse: 0.006, aura: 0.45 },
+  { morts: 15, ombre: 0.95, echelle: 10.2, secousse: 0.009, aura: 0.7 },
+];
+// ... et de plus en plus séduite par toi si tu lui offres des âmes exprès.
+const SEDUCTION_FAUCHEUSE = [
+  { faveur: -Infinity, nom: 'Indifférente', couleur: '#ff3a2a' },
+  { faveur: 2, nom: 'Intriguée', couleur: '#ff5a6a' },
+  { faveur: 5, nom: 'Séduite', couleur: '#e04aa0' },
+  { faveur: 10, nom: 'Éprise', couleur: '#c03ae0' },
+];
+// Les missions de sabotage : une fois assez noir, elle te désigne une âme pure à piéger.
+const SEUIL_SABOTAGE = 3;          // jauge du mal
+const PRIME_SABOTAGE = [30, 60];   // pièces froides, selon le danger de la zone
+// La Main Noire prête à ceux dont la jauge du mal est assez haute.
+const SEUIL_MAIN_NOIRE = 6;
