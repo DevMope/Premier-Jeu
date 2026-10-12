@@ -504,7 +504,7 @@ const POSTES = {
   butins: 'Parts de butin', reparations: 'Réparations', soins: 'Soins', encheres: 'Enchères',
   jeux: 'Jeux', cadeaux: 'Cadeaux', marche: 'Achats au marché', express: 'Marchand express',
   trouvailles: 'Trouvailles', reserve: 'Agrandissements', dedommagements: 'Dédommagements',
-  remboursements: 'Remboursements de prêts', dons: 'Dons au mendiant', prets: 'Prêts reçus',
+  remboursements: 'Remboursements de prêts', dons: 'Dons au mendiant', prets: 'Prêts reçus', salaires: 'Salaires',
 };
 // On garde le détail des derniers jours (un peu plus d'une année).
 const JOURS_DE_COMPTES = 120;
@@ -536,13 +536,22 @@ const CATEGORIES = {
 };
 
 // Les états, du pire au meilleur, et leur effet sur la valeur.
+// Un code couleur pour s'y retrouver d'un coup d'œil : du rouge (cassé) à l'or (parfait).
+// `reparation` : jours de réparation en plus quand l'objet part de cet état.
 const ETATS = [
-  { nom: 'Cassé', valeur: 0.2 },
-  { nom: 'Abîmé', valeur: 0.45 },
-  { nom: 'Usé', valeur: 0.7 },
-  { nom: 'Bon', valeur: 1 },
-  { nom: 'Parfait', valeur: 1.4 },
+  { nom: 'Cassé', valeur: 0.2, couleur: 0xc0302a, texte: '#c0302a', reparation: 2 },
+  { nom: 'Abîmé', valeur: 0.45, couleur: 0xd8702a, texte: '#c8601a', reparation: 1 },
+  { nom: 'Usé', valeur: 0.7, couleur: 0xd8c030, texte: '#a88a10', reparation: 0 },
+  { nom: 'Bon', valeur: 1, couleur: 0x4a9a3a, texte: '#2f7a2a', reparation: 0 },
+  { nom: 'Parfait', valeur: 1.4, couleur: 0xf0c020, texte: '#b8860b', reparation: 0 },
 ];
+
+// Les employés qu'on peut embaucher pour réparer plusieurs objets à la fois.
+// `rapide` : ses réparations prennent un jour de moins. Le salaire est payé chaque nuit.
+const EMPLOYES = {
+  tobin: { nom: "Tobin l'apprenti", race: 'hobbit', salaire: 4, rapide: false, description: 'Jeune et appliqué, il apprend vite.' },
+  marta: { nom: 'Marta la Rétameuse', race: 'nain', salaire: 9, rapide: true, description: 'Une naine experte : ses réparations prennent un jour de moins.' },
+};
 
 // Les objets que les aventuriers peuvent rapporter (valeur en parfait état... presque).
 const TRESORS = [

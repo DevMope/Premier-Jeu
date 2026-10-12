@@ -7,7 +7,7 @@ const ONGLETS = [
   ['revenus', 'Revenus'], ['disparus', 'Disparus'], ['repertoire', 'Répertoire'],
 ];
 const FICHES_PAR_PAGE = 10;
-const TIROIRS = [['aventuriers', 'Les aventuriers'], ['commerce', 'Le commerce'], ['reputation', 'La réputation']];
+const TIROIRS = [['competences', 'Tes compétences'], ['aventuriers', 'Les aventuriers'], ['commerce', 'Le commerce'], ['reputation', 'La réputation']];
 
 class BureauScene extends Phaser.Scene {
   constructor() { super('Bureau'); }
@@ -234,10 +234,10 @@ class BureauScene extends Phaser.Scene {
 
   creerTiroirs() {
     TIROIRS.forEach(([cle, nom], i) => {
-      const y = 316 + i * 58;
-      const t = this.add.rectangle(760, y, 360, 50, 0x8a5a2b).setStrokeStyle(3, 0x3b2410).setInteractive({ useHandCursor: true });
-      this.add.circle(760, y + 10, 6, 0xe8c040).setStrokeStyle(2, 0x6b4423);
-      this.add.text(760, y - 8, nom, style(14, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
+      const y = 308 + i * 44;
+      const t = this.add.rectangle(760, y, 360, 38, 0x8a5a2b).setStrokeStyle(3, 0x3b2410).setInteractive({ useHandCursor: true });
+      this.add.circle(900, y, 6, 0xe8c040).setStrokeStyle(2, 0x6b4423);
+      this.add.text(760, y, nom, style(14, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
       t.on('pointerover', () => t.setFillStyle(0xa8743c));
       t.on('pointerout', () => t.setFillStyle(0x8a5a2b));
       t.on('pointerdown', () => this.ouvrirTiroir(cle, nom));
@@ -251,7 +251,22 @@ class BureauScene extends Phaser.Scene {
     c.add(this.add.text(161, 72, nom, style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     const top = (obj, n, format) => Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n).map(format);
     let gauche = [], droite = [];
-    if (cle === 'aventuriers') {
+    if (cle === 'competences') {
+      const flair = niveauFlair(G);
+      const prochainArtisanat = (niveauArtisanat(G) + 1) * 4;
+      gauche = [`${nomJoueur(G)}, ${ageJoueur(G)} ans`, '',
+        `Flair : ${Math.round(flair * 100)} %`,
+        flair < 1 ? `Tes estimations peuvent se tromper de ±${Math.round(35 * (1 - flair))} %.` : 'Tes estimations sont exactes.',
+        flair < 1 ? `Progresse en servant des clients (${G.experience} / 40).` : '', '',
+        `Artisanat : niveau ${niveauArtisanat(G)}`,
+        `Réparations faites : ${G.reparations} (prochain niveau à ${prochainArtisanat})`,
+        `Matériaux par réparation : ${materiauxRequis(G)}`,
+        `Réparations à l'atelier : ${niveauArtisanat(G)} jour(s) de moins`];
+      droite = ['Marchandage', ...Object.entries(MARCHANDS).map(([m, d]) =>
+        `${d.nom} : ${niveauRelation(G, d.nom).nom}${remiseMarchand(G, m) ? ` (−${Math.round(remiseMarchand(G, m) * 100)} %)` : ''}`), '',
+        "Main-d'œuvre", `${ouvriers(G).map(nomOuvrier).join(', ')}`,
+        `${ouvriers(G).length} réparation(s) à la fois`, salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : 'Aucun employé'];
+    } else if (cle === 'aventuriers') {
       const h = G.historique;
       const vivants = h.filter(x => x.issue === 'vivant').length;
       gauche = [`Clients servis : ${G.experience}`, `Revenus vivants : ${vivants}`,

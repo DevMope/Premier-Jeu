@@ -261,6 +261,7 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
     historique: [],    // aventures terminées : { nom, race, quete, depart, retour, issue, gain, chance }
     personnes: {},     // nom → { race, feminin } de tous ceux qu'on a croisés
     zonesDecouvertes: [], // zones révélées par les récits des aventuriers
+    employes: [],      // employés de l'atelier (ids de EMPLOYES)
     stats: { refus: 0, lettresAcceptees: 0, lettresRefusees: 0, objets: {}, ventes: 0 },
     nouvellesAtelier: [],
     encheresJour: 0,   // le jour de la dernière vente aux enchères
@@ -733,6 +734,8 @@ function journeeSuivante(G) {
 // La nuit : échéances des prêts, puis le matin d'un nouveau jour (le marché).
 function nuit(G) {
   payerEcheances(G);
+  // Les employés sont payés chaque nuit.
+  for (const id of G.employes) payer(G, EMPLOYES[id].salaire, 'salaires');
   if (G.argent <= SEUIL_FAILLITE) {
     G.faillite = true;
     return;
@@ -988,37 +991,73 @@ function acheterTrouvaille(G, t) {
 }
 
 // Plus ton artisanat est haut, plus les réparations vont vite.
-function dureeReparation(G, t) {
-  return Math.max(1, CATEGORIES[t.categorie].duree - niveauArtisanat(G));
+// La durée d'une réparation : la catégorie, l'état de départ (un objet cassé demande plus
+// de travail), moins ton artisanat... et un jour de moins si c'est une experte qui s'en charge.
+function dureeReparation(G, t, ouvrier = ouvrierLibre(G)) {
+  const experte = ouvrier && EMPLOYES[ouvrier] && EMPLOYES[ouvrier].rapide ? 1 : 0;
+  return Math.max(1, CATEGORIES[t.categorie].duree + ETATS[t.etat].reparation - niveauArtisanat(G) - experte);
 }
 
 function enReparation(G) {
-  return G.tresors.find(t => t.reparation);
+  return G.tresors.filter(t => t.reparation);
 }
 
-// Lancer la réparation d'un objet : un seul à la fois, et il faut le matériau.
-// Renvoie un message d'erreur, ou null.
+// Qui peut travailler à l'atelier : toi, puis tes employés.
+function ouvriers(G) {
+  return ['toi', ...G.employes];
+}
+
+// Le premier ouvrier libre (les employés d'abord, pour que tu restes disponible), ou null.
+function ouvrierLibre(G) {
+  const occupes = enReparation(G).map(t => t.reparation.ouvrier);
+  return [...G.employes, 'toi'].find(o => !occupes.includes(o)) || null;
+}
+
+function nomOuvrier(o) {
+  return o === 'toi' ? 'toi' : EMPLOYES[o].nom;
+}
+
+// Lancer la réparation d'un objet : un ouvrier libre, et le matériau. Renvoie une erreur, ou null.
 function reparerTresor(G, t) {
   if (t.etat >= ETATS.length - 1) return 'Il est déjà en parfait état.';
-  if (enReparation(G)) return 'Ton atelier répare déjà un autre objet.';
+  const ouvrier = ouvrierLibre(G);
+  if (!ouvrier) return "Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois.";
   const mat = CATEGORIES[t.categorie].materiau;
   if (mat && G.materiaux[mat] < 1) return `Il te faut 1 ${MATERIAUX[mat].nom.toLowerCase()}.`;
   if (mat) G.materiaux[mat]--;
-  t.reparation = { jours: dureeReparation(G, t) };
+  t.reparation = { jours: dureeReparation(G, t, ouvrier), ouvrier };
   return null;
 }
 
-// Chaque nuit, la réparation en cours avance d'un jour.
+// --- Les employés ---
+
+function embaucher(G, id) {
+  if (G.employes.includes(id)) return 'Déjà embauché.';
+  G.employes.push(id);
+  return null;
+}
+
+// Renvoyer un employé : la réparation qu'il faisait s'arrête (l'objet reste dans son état).
+function renvoyer(G, id) {
+  G.employes = G.employes.filter(e => e !== id);
+  for (const t of G.tresors) if (t.reparation && t.reparation.ouvrier === id) t.reparation = null;
+}
+
+function salaires(G) {
+  return G.employes.reduce((s, id) => s + EMPLOYES[id].salaire, 0);
+}
+
+// Chaque nuit, les réparations en cours avancent d'un jour.
 function avancerAtelier(G) {
   G.nouvellesAtelier = [];
-  const t = enReparation(G);
-  if (!t) return;
-  t.reparation.jours--;
-  if (t.reparation.jours > 0) return;
-  t.reparation = null;
-  t.etat++;
-  G.reparations++;
-  G.nouvellesAtelier.push(`L'atelier a fini : ${t.nom} est maintenant « ${ETATS[t.etat].nom} » (valeur ~${valeurTresor(t)} p.).`);
+  for (const t of enReparation(G)) {
+    t.reparation.jours--;
+    if (t.reparation.jours > 0) continue;
+    t.reparation = null;
+    t.etat++;
+    G.reparations++;
+    G.nouvellesAtelier.push(`L'atelier a fini : ${t.nom} est maintenant « ${ETATS[t.etat].nom} » (~${valeurTresor(t)} p.).`);
+  }
 }
 
 // Les enchères : chaque enchérisseur estime le lot selon ses goûts. Un lot de la même

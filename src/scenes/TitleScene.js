@@ -39,7 +39,8 @@ class TitleScene extends Phaser.Scene {
 
   charger(p) {
     const lieu = Sauvegarde.charger(p);
-    this.scene.start(lieu);
+    if (lieu === 'Maison') this.scene.start('Nuit', { matin: true });
+    else this.scene.start(lieu);
   }
 
   ouvrirSauvegardes() {

@@ -1,37 +1,58 @@
-// Le soir : bilan de la journée, achats chez le fournisseur,
-// lettres à accepter ou refuser, banque, et prévision des clients pour demain.
+// Chez toi. Le soir : bilan de la journée, lettres à accepter ou refuser, banque, atelier,
+// bureau, et prévision des clients pour demain.
+// Le matin (`matin`), en rentrant du marché : les mêmes lieux, avant d'ouvrir le comptoir.
 class NightScene extends Phaser.Scene {
   constructor() { super('Nuit'); }
 
+  init(data) {
+    this.matin = !!(data && data.matin);
+  }
+
   create() {
     const G = this.G = window.GAME;
-    preparerSoir(G);
+    if (!this.matin) preparerSoir(G);
+    this.lieu = this.matin ? 'Maison' : 'Nuit';
 
-    this.cameras.main.setBackgroundColor('#1e140c');
+    this.cameras.main.setBackgroundColor(this.matin ? '#2a1e12' : '#1e140c');
     this.cameras.main.fadeIn(500);
-    this.add.text(480, 34, `Soir du jour ${G.jour}`, style(30, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.add.text(480, 34, this.matin ? `Matin du jour ${G.jour} · chez toi` : `Soir du jour ${G.jour}`, style(30, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
     this.texteArgent = this.add.text(940, 34, '', style(20, '#f3d98a', { fontStyle: 'bold' })).setOrigin(1, 0.5);
 
-    this.parchemin(20, 300, 'La journée');
+    this.parchemin(20, 300, this.matin ? "Aujourd'hui" : 'La journée');
     this.parchemin(320, 640, 'Ta réserve');
     this.parchemin(660, 940, 'Lettres reçues');
     this.creerReserve(320, 640);
     this.creerPrevision(660, 940);
 
-    creerBouton(this, 120, 505, 200, 'Le bureau', () => {
-      this.scene.pause();
-      this.scene.launch('Bureau', { retour: 'Nuit' });
-    });
-    creerBouton(this, 340, 505, 200, 'La banque', () => this.ouvrirBanque());
+    const ouvrirPage = (page, donnees) => { this.scene.pause(); this.scene.launch(page, donnees); };
+    const boutons = [
+      ['Le bureau', () => ouvrirPage('Bureau', { retour: 'Nuit' })],
+      ['La banque', () => this.ouvrirBanque()],
+      [`L'atelier (${G.tresors.length})`, () => ouvrirPage('Atelier')],
+      ...(this.matin
+        ? [['Retour au marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
+        : [['Aller dormir', () => this.dormir()]]),
+    ];
+    const largeur = 920 / boutons.length;
+    boutons.forEach(([texte, action], i) => creerBouton(this, 20 + largeur * (i + 0.5), 505, largeur - 16, texte, action));
     this.events.off('resume', this.tout, this);
     this.events.on('resume', this.tout, this);
-    creerBouton(this, 560, 505, 200, `L'atelier (${G.tresors.length})`, () => {
-      this.scene.pause();
-      this.scene.launch('Atelier');
-    });
-    creerBouton(this, 810, 505, 240, 'Aller dormir', () => this.dormir());
     this.tout();
     afficherStatutSauvegarde(this, 20, 22, 0);
+  }
+
+  allerA(scene) {
+    Sauvegarde.maintenant(this.G, scene === 'Marche' ? 'Marche' : this.lieu);
+    this.cameras.main.fadeOut(300);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(scene));
+  }
+
+  // Le matin : on sauvegarde, puis la file d'attente du jour se forme.
+  ouvrirComptoir() {
+    Sauvegarde.maintenant(this.G, 'Maison');
+    ouvrirComptoir(this.G);
+    this.cameras.main.fadeOut(400);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Comptoir'));
   }
 
   // Dormir : la nuit passe, et au matin, direction le Marché des Mastres.
@@ -50,7 +71,7 @@ class NightScene extends Phaser.Scene {
 
   // Tout ce qui change quand on achète, emprunte ou répond à une lettre.
   tout() {
-    Sauvegarde.planifier(this.G, 'Nuit');
+    Sauvegarde.planifier(this.G, this.lieu);
     this.majArgent();
     this.majJournee(20, 300);
     this.majLettres(660, 940);
@@ -65,7 +86,16 @@ class NightScene extends Phaser.Scene {
     if (this.journee) this.journee.destroy();
     const c = this.journee = this.add.container(0, 0);
     const gain = G.argent - G.argentDebutJour;
-    const lignes = [
+    const p = prevision(G, G.jour);
+    const lignes = this.matin ? [
+      `Clients attendus : ${p.min} à ${p.max}`,
+      `Commandes par lettre : ${G.annonces.filter(a => a.acceptee && a.jour === G.jour).length}`,
+      `Argent : ${G.argent} pièces`,
+      `Réputation : ${arrondi(G.reputation)}`,
+      `Expérience : ${G.experience} clients`,
+      `Flair : ${Math.round(niveauFlair(G) * 100)} % · Artisanat : niv. ${niveauArtisanat(G)}`,
+      salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : '',
+    ] : [
       `Clients servis : ${j.servis}`,
       `Revenus : ${j.retours} · Morts : ${j.morts}`,
       `Argent ce matin : ${G.argentDebutJour}`,
@@ -91,7 +121,7 @@ class NightScene extends Phaser.Scene {
   // --- Ta réserve (on achète le matin, au Marché des Mastres) ---
 
   creerReserve(x1, x2) {
-    this.add.text((x1 + x2) / 2, 110, 'Demain matin : le Marché des Mastres', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
+    this.add.text((x1 + x2) / 2, 110, this.matin ? 'Tu peux encore retourner au marché' : 'Demain matin : le Marché des Mastres', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.lignesStock = {};
     Object.keys({ ...ITEMS, ...MATERIAUX }).forEach((id, i) => {
       const x = x1 + 24 + (i % 2) * 150;
@@ -169,13 +199,13 @@ class NightScene extends Phaser.Scene {
 
   creerPrevision(x1, x2) {
     this.add.rectangle((x1 + x2) / 2, 410, x2 - x1 - 24, 100, 0xd8c498).setStrokeStyle(2, 0x8a6a3a);
-    this.add.text(x1 + 22, 366, 'Demain', style(15, '#3b2410', { fontStyle: 'bold' }));
+    this.add.text(x1 + 22, 366, this.matin ? "Aujourd'hui" : 'Demain', style(15, '#3b2410', { fontStyle: 'bold' }));
     this.textePrevision = this.add.text(x1 + 22, 386, '', style(14, '#3b2410', { fontStyle: 'bold', wordWrap: { width: x2 - x1 - 44 } }));
     this.texteFacteurs = this.add.text(x1 + 22, 424, '', style(11, '#5a3a20', { lineSpacing: 2 }));
   }
 
   majPrevision() {
-    const p = prevision(this.G);
+    const p = prevision(this.G, this.matin ? this.G.jour : this.G.jour + 1);
     const a = attrait(this.G);
     this.textePrevision.setText(`Environ ${p.min} à ${p.max} clients` +
       (p.annonces ? ` (dont ${p.annonces} par lettre)` : ''));

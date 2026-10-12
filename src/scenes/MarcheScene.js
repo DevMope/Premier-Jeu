@@ -42,8 +42,9 @@ class MarcheScene extends Phaser.Scene {
     // Le panneau du bas et la barre d'infos
     this.add.rectangle(480, 388, 940, 168, 0xead9b0).setStrokeStyle(3, 0x8a6a3a);
     this.add.rectangle(480, 510, 960, 60, 0x2a1a10);
-    this.texteInfos = this.add.text(20, 498, '', style(14, '#f3e6c8', { lineSpacing: 4 }));
-    creerBouton(this, 840, 510, 220, 'Ouvrir le comptoir', () => this.ouvrir());
+    this.texteInfos = this.add.text(20, 498, '', style(13, '#f3e6c8', { lineSpacing: 4 }));
+    creerBouton(this, 640, 510, 170, 'Rentrer chez toi', () => this.rentrer());
+    creerBouton(this, 840, 510, 210, 'Ouvrir le comptoir', () => this.ouvrir());
 
     this.ouvrirEtal('gedeon');
     afficherStatutSauvegarde(this, 940, 46, 1);
@@ -87,24 +88,19 @@ class MarcheScene extends Phaser.Scene {
     }
   }
 
-  // La flèche qui sautille et le contour lumineux autour du lieu qu'on regarde.
+  // La flèche qui sautille au-dessus du lieu qu'on regarde.
   creerSurbrillance() {
-    this.contour = this.add.rectangle(0, 0, 10, 10).setStrokeStyle(3, 0xffe066).setVisible(false);
-    this.tweens.add({ targets: this.contour, alpha: 0.35, duration: 600, yoyo: true, repeat: -1 });
     const f = this.add.graphics();
     f.fillStyle(0xffe066).fillTriangle(-12, -10, 12, -10, 0, 8);
     f.lineStyle(2, 0x3b2410).strokeTriangle(-12, -10, 12, -10, 0, 8);
     this.flecheLieu = this.add.container(0, 0, [f]).setVisible(false);
     this.tweens.add({ targets: f, y: 8, duration: 450, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.monde.add([this.contour, this.flecheLieu]);
+    this.monde.add(this.flecheLieu);
   }
 
   montrer(cle) {
     const [x, type] = this.positions[cle];
     const etal = type === 'etal';
-    this.contour.setVisible(true).setPosition(x, etal ? 158 : 205).setSize(etal ? 178 : 112, etal ? 196 : 118);
-    this.contour.geom.setSize(etal ? 178 : 112, etal ? 196 : 118);
-    this.contour.updateDisplayOrigin();
     this.flecheLieu.setVisible(true).setPosition(x, etal ? 46 : 128);
     // Si le lieu est hors de l'écran, la rue glisse jusqu'à lui.
     const aEcran = x + this.monde.x;
@@ -303,7 +299,8 @@ class MarcheScene extends Phaser.Scene {
         this.ouvrirEncheres();
       });
       c.add([fond, this.add.image(x + 12, y, 'tr_' + t.categorie).setScale(2),
-        this.add.text(x + 26, y, `${t.nom} · ${ETATS[t.etat].nom} · ~${valeurTresor(t)} p.`, style(11, '#3b2410')).setOrigin(0, 0.5)]);
+        this.add.rectangle(x + 246, y, 8, 20, ETATS[t.etat].couleur),
+        this.add.text(x + 26, y, `${t.nom} · ${ETATS[t.etat].nom} · ~${valeurTresor(t)} p.`, style(11, ETATS[t.etat].texte, { fontStyle: 'bold' })).setOrigin(0, 0.5)]);
     });
     const estimation = this.lot.reduce((s, t) => s + valeurTresor(t), 0);
     c.add(this.add.text(560, 340, this.lot.length ? `Lot de ${this.lot.length} objet${this.lot.length > 1 ? 's' : ''} · estimé ~${estimation} p.` : 'Aucun objet choisi',
@@ -490,6 +487,13 @@ class MarcheScene extends Phaser.Scene {
 
   attendre(ms) {
     return new Promise(resoudre => this.time.delayedCall(ms, resoudre));
+  }
+
+  // Repasser chez soi avant d'ouvrir : réserve, atelier, bureau, banque.
+  rentrer() {
+    Sauvegarde.maintenant(this.G, 'Maison');
+    this.cameras.main.fadeOut(300);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Nuit', { matin: true }));
   }
 
   ouvrir() {

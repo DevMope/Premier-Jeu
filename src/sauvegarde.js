@@ -100,7 +100,7 @@ const Sauvegarde = {
     nouvellePartie();
     const G = Object.assign(window.GAME, JSON.parse(JSON.stringify(p.partie)));
     mettreAJourPartie(G);
-    return G.lieu === 'Marche' ? 'Marche' : 'Nuit';
+    return ['Marche', 'Maison'].includes(G.lieu) ? G.lieu : 'Nuit';
   },
 
   async supprimer() {
@@ -206,6 +206,8 @@ function afficherStatutSauvegarde(scene, x, y, origineX) {
 function mettreAJourPartie(G) {
   for (const id of Object.keys(ITEMS)) if (G.stock[id] === undefined) G.stock[id] = 0;
   G.zonesDecouvertes = G.zonesDecouvertes || [];
+  G.employes = G.employes || [];
+  for (const t of G.tresors) if (t.reparation && !t.reparation.ouvrier) t.reparation.ouvrier = 'toi';
   const voyageurs = [...G.annonces.map(a => a.voyageur), ...G.partis.map(p => p.voyageur)];
   for (const v of voyageurs) {
     if (!v.niveau) v.niveau = 'aguerri';

@@ -150,7 +150,8 @@ class StoryScene extends Cinematique {
       const tr = t.tresor;
       c.add(this.add.image(60, y, 'tr_' + tr.categorie).setScale(4));
       c.add(this.add.text(90, y - 16, tr.nom, style(15, '#3b2410', { fontStyle: 'bold' })));
-      c.add(this.add.text(90, y + 4, `${CATEGORIES[tr.categorie].nom} · état : ${ETATS[tr.etat].nom} · vaut ~${valeurTresor(tr)} p. en l'état`, style(12, '#5a3a20')));
+      c.add(...pastilleEtat(this, 90, y + 12, tr.etat, 11));
+      c.add(this.add.text(170, y + 4, `${CATEGORIES[tr.categorie].nom} · vaut ~${valeurTresor(tr)} p. en l'état`, style(12, '#5a3a20')));
       const b = creerBouton(this, 470, y, 140, '', () => {
         const erreur = acheterTrouvaille(G, t);
         if (erreur) return info.setText(erreur);

@@ -476,3 +476,12 @@ function dessinerCaravane(scene, x, sol) {
   g.fillStyle(0xffd060).fillRect(x + 113, sol - 98, 14, 16);
   return g;
 }
+
+// Une pastille de couleur avec le nom de l'état d'un objet (rouge = cassé ... or = parfait).
+// Renvoie les deux objets créés, pour les ajouter à un conteneur.
+function pastilleEtat(scene, x, y, etat, taille = 12) {
+  const e = ETATS[etat];
+  const fond = scene.add.rectangle(x, y, 74, taille + 8, e.couleur).setStrokeStyle(1, 0x2a1a10).setOrigin(0, 0.5);
+  const texte = scene.add.text(x + 37, y, e.nom, style(taille, etat === 2 || etat === 4 ? '#2a1a10' : '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
+  return [fond, texte];
+}

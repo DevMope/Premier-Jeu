@@ -82,6 +82,7 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
 
 ### 2.4 bis Le Marché des Mastres (le matin)
 - La rue du marché est plus large que l'écran : on la parcourt avec des flèches ◀ ▶, et une flèche jaune montre le lieu qu'on regarde.
+- **Rentrer chez toi** : après le marché, on peut repasser chez soi (réserve, lettres, atelier, bureau, banque) avant d'ouvrir le comptoir, ou retourner au marché.
 Après la nuit, on se réveille au marché avant d'ouvrir le comptoir.
 - **Trois étals**, chacun avec son marchand, ses objets et ses prix du jour (ça vaut le coup de comparer) :
   - **Maître Gédéon** (épicerie) : rations, gourdes, torches, bandages, toujours là ;
@@ -95,8 +96,9 @@ Après la nuit, on se réveille au marché avant d'ouvrir le comptoir.
 
 ### 2.5 Achat-revente : trouvailles, atelier, enchères
 - **Les trouvailles** : à la fin de son récit, un aventurier revenu vivant te montre parfois un ou deux objets de valeur. Il te les vend en dessous de leur valeur (encore moins cher si vous êtes amis).
-- Chaque objet a une **catégorie** (arme, armure, bijou, artefact, vêtement) et un **état** : cassé (×0,2), abîmé (×0,45), usé (×0,7), bon (×1), parfait (×1,4).
-- **L'atelier** (le soir, 8 places) : on répare un objet à la fois. Chaque réparation le fait monter d'un état et prend plusieurs jours au début (vêtement 2, arme et armure 3, bijou 4, artefact 5), un jour de moins par niveau d'artisanat. Les armes et armures demandent 1 fer, les vêtements 1 cuir.
+- Chaque objet a une **catégorie** (arme, armure, bijou, artefact, vêtement) et un **état**, avec un code couleur : **cassé** (rouge, ×0,2), **abîmé** (orange, ×0,45), **usé** (jaune, ×0,7), **bon** (vert, ×1), **parfait** (or, ×1,4).
+- **L'atelier** (8 places) : chaque réparation fait monter l'objet d'un état. Sa durée dépend de la catégorie (vêtement 2 jours, arme et armure 3, bijou 4, artefact 5), de **l'état de départ** (+2 jours pour un objet cassé, +1 pour un abîmé), moins un jour par niveau d'artisanat. Les armes et armures demandent 1 fer, les vêtements 1 cuir.
+- **Les employés** : on peut embaucher jusqu'à deux personnes pour réparer plusieurs objets à la fois : **Tobin l'apprenti** (4 p. par nuit) et **Marta la Rétameuse** (9 p. par nuit, ses réparations prennent un jour de moins). Les salaires sont payés chaque nuit.
 - **Les enchères** (au Marché des Mastres, une vente par jour) : on propose un lot de 1 à 3 objets. Quatre enchérisseurs surenchérissent, chacun avec ses goûts : Lord Pommeroy (armes, armures), Dame Ysaline (bijoux, vêtements), Gros Bob le collectionneur (artefacts, bijoux), Thrain Fendroc (armes, artefacts). Un lot de la même catégorie plaît encore plus aux collectionneurs (+15 %).
 - Le but : repérer l'objet abîmé qui prendra de la valeur une fois réparé.
 
@@ -191,7 +193,7 @@ Petit entrepôt en bois, cosy, façon auberge du Poney Fringant. Les clients ne 
 **Le bureau** (déjà en place, ouvert depuis le registre posé sur le comptoir ou le soir) :
 - **le registre des fiches** : six onglets (À venir, Aujourd'hui, En mission, Revenus, Disparus, Répertoire) ; chaque fiche montre la relation et le prochain palier, les missions réussies, le butin rapporté, le matériel, les blessures, la commande ou le colis ;
 - **l'ardoise du chiffre d'affaires** : recettes, dépenses et bénéfice du jour, de la semaine, du mois et de l'année (les prêts sont comptés à part) ;
-- **trois tiroirs** : les aventuriers (servis, revenus, morts, taux de retour, refus, meilleurs clients, objets les plus donnés), le commerce (recettes et dépenses par poste, ventes aux enchères), la réputation (flair, artisanat, décorations, relations par niveau).
+- **quatre tiroirs** : tes compétences (flair et sa marge d'erreur, artisanat et prochain niveau, marchandage avec chaque marchand, main-d'œuvre et salaires), les aventuriers (servis, revenus, morts, taux de retour, refus, meilleurs clients, objets les plus donnés), le commerce (recettes et dépenses par poste, ventes aux enchères), la réputation (flair, artisanat, décorations, relations par niveau).
 - **Le calendrier** : 7 jours par semaine, 4 semaines par mois, 4 mois par an (Mois des Semailles, des Moissons, des Brumes, du Givre). L'âge du personnage avance d'un an par année du calendrier (à revoir avec l'évolution du personnage).
 
 **Vue 2 : arrière du shop**
