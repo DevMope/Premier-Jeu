@@ -12,7 +12,18 @@ const ITEMS = {
   bandage: { nom: 'Bandages', prix: 4,  base: true },
   torche:  { nom: 'Torche',   prix: 3,  base: true },
   corde:   { nom: 'Corde',    prix: 5,  durable: true },
+  antidote: { nom: 'Antidote', prix: 8 },
+  cape:    { nom: 'Cape chaude', prix: 9, durable: true },
+  bouclier: { nom: 'Bouclier', prix: 14, durable: true },
+  amulette: { nom: 'Amulette', prix: 20 },
 };
+
+// Les objets qui soignent : en plus de la commande, chacun donne un cœur de plus pendant le voyage.
+const OBJETS_DE_SOIN = ['potion', 'bandage', 'antidote'];
+// Le sac de l'aventurier : combien d'objets en plus de sa commande il peut porter.
+const SAC = { hobbit: 2, magicienne: 2, humain: 3, elfe: 3, nain: 4 };
+// Un objet en plus pour une épreuve qui le demande : +5 % de chances de la réussir.
+const BONUS_SURPLUS = 0.05;
 
 // Un objet durable neuf supporte 3 quêtes avant de casser.
 const USURE_MAX = 3;
@@ -83,7 +94,7 @@ const ETAPE_VIVRES = {
 const CHANCE_EPREUVE = { complet: 0.9, partiel: 0.55, rien: 0.2 };
 
 // Épreuves de combat : y mourir, c'est mourir valeureusement.
-const EPREUVES_COMBAT = ['araignee', 'loup', 'bandits', 'sanglier'];
+const EPREUVES_COMBAT = ['araignee', 'loup', 'bandits', 'sanglier', 'pillards', 'yeti', 'mortvivant', 'monstre'];
 
 // Les modèles de quêtes. Chaque épreuve demande un objet (`besoin`) en une
 // certaine quantité, et la commande du voyageur en est déduite.
@@ -299,12 +310,81 @@ const NOMS = {
 };
 
 // La première journée est écrite à la main.
+// Pippa a déjà sa lettre à porter ; les autres viennent chercher l'aventure : c'est toi qui choisis la zone.
 const JOUR_1 = [
   { quete: 'lettre', nom: 'Pippa Boisclair', race: 'hobbit', feminin: true, butin: 30, duree: 1 },
-  { quete: 'mine', nom: 'Durgan Barbe-de-Fer', race: 'nain', feminin: false, butin: 60, duree: 2 },
-  { quete: 'fleur', nom: "Mirabelle Lune-d'Argent", race: 'magicienne', feminin: true, butin: 40, duree: 1 },
-  { quete: 'loup', nom: 'Elwen Feuilleclaire', race: 'elfe', feminin: true, butin: 45, duree: 3 },
+  { quete: null, nom: 'Durgan Barbe-de-Fer', race: 'nain', feminin: false, niveau: 'veteran', envie: 'or' },
+  { quete: null, nom: "Mirabelle Lune-d'Argent", race: 'magicienne', feminin: true, niveau: 'aguerri', envie: 'savoir' },
+  { quete: null, nom: 'Elwen Feuilleclaire', race: 'elfe', feminin: true, niveau: 'aguerri', envie: 'gloire' },
 ];
+
+// --- Le dispatch : les zones où envoyer les aventuriers ---
+
+// Le niveau d'un aventurier : un vétéran a un cœur de plus et vise plus gros.
+const NIVEAUX_AVENTURIER = {
+  novice: { nom: 'Novice', pv: 0, butin: 0.9 },
+  aguerri: { nom: 'Aguerri', pv: 0, butin: 1 },
+  veteran: { nom: 'Vétéran', pv: 1, butin: 1.15 },
+};
+
+// Ce qu'ils viennent chercher.
+const ENVIES = {
+  or: "Je veux de l'or, beaucoup d'or ! Où est-ce que je peux en trouver ?",
+  gloire: "Je cherche la gloire. Une aventure dont on parlera dans les tavernes !",
+  savoir: "On dit que le monde regorge de secrets. Où devrais-je aller les chercher ?",
+  monstre: "Il me faut un monstre à combattre. Tu connais un coin dangereux ?",
+};
+
+// Les zones, de la plus calme à la plus dangereuse. `biome` : les couleurs de son paysage.
+// `reputation` : la réputation qui l'ouvre (sinon, un aventurier peut la découvrir dans un récit).
+// `x`, `y` : sa place sur la carte.
+const ZONES = {
+  collines: {
+    nom: 'Les Collines de la Comté', danger: 1, reputation: 0, x: 170, y: 330, biome: 'comte',
+    description: 'Des routes tranquilles, des rivières et quelques loups. Parfait pour les débutants.',
+    quetes: ['lettre', 'sanglier'],
+  },
+  foret: {
+    nom: 'La Forêt des Murmures', danger: 2, reputation: 0, x: 330, y: 250, biome: 'foret',
+    description: 'Des arbres immenses, des bêtes sauvages et des ruines oubliées sous la mousse.',
+    quetes: ['loup', 'ruines', 'champignons'],
+  },
+  marais: {
+    nom: 'Les Marécages de Brume-Noire', danger: 2, reputation: 0, x: 250, y: 140, biome: 'marais',
+    description: 'Une eau croupie, des sangsues et des feux follets qui égarent les voyageurs.',
+    quetes: ['fleur', 'sangsues'],
+  },
+  mines: {
+    nom: 'Les Mines abandonnées', danger: 3, reputation: 3, x: 520, y: 300, biome: 'mines',
+    description: 'Des galeries noires, des éboulements, et des araignées géantes. Mais quel minerai !',
+    quetes: ['mine'],
+  },
+  desert: {
+    nom: 'Les Terres Désolées', danger: 3, reputation: 4, x: 640, y: 380, biome: 'desert',
+    description: 'Le soleil, la soif, les tempêtes de sable et les pillards. Les caravanes paient bien.',
+    quetes: ['caravane', 'oasis'],
+  },
+  pics: {
+    nom: 'Les Pics Gelés', danger: 4, reputation: 8, x: 600, y: 120, biome: 'neige',
+    description: 'Le froid qui mord, les avalanches et les yétis. Il faut une cape chaude.',
+    quetes: ['yeti', 'col'],
+  },
+  ruinesRoi: {
+    nom: 'Les Ruines du Roi-Sorcier', danger: 4, reputation: 10, x: 780, y: 220, biome: 'ruines',
+    description: "Des morts qui marchent et des malédictions anciennes. Une amulette n'est pas de trop.",
+    quetes: ['roiSorcier'],
+  },
+  antre: {
+    nom: "L'Antre de la Bête", danger: 5, reputation: 15, x: 860, y: 90, biome: 'antre',
+    description: "Personne n'en est revenu depuis des années. Mais le trésor qu'on y raconte...",
+    quetes: ['bete'],
+  },
+};
+
+// Plus la zone est dangereuse, plus le butin est gros.
+const BUTIN_PAR_DANGER = [0, 1, 1.25, 1.6, 2.1, 3];
+// La chance qu'un aventurier revenu d'une zone parle d'une zone encore inconnue, plus dangereuse.
+const CHANCE_DECOUVERTE = 0.35;
 
 // --- Relations ---
 
@@ -353,7 +433,7 @@ const MATERIAUX = {
   fer: { nom: 'Fer', prix: 4 },
   cuir: { nom: 'Cuir', prix: 3 },
 };
-const MATERIAU_DE = { epee: 'fer', corde: 'cuir', gourde: 'cuir' };
+const MATERIAU_DE = { epee: 'fer', corde: 'cuir', gourde: 'cuir', cape: 'cuir', bouclier: 'fer' };
 const MATERIAUX_DEPART = { fer: 2, cuir: 2 };
 // Au début il faut 3 matériaux par réparation ; l'artisanat en fait baisser le nombre.
 const MATERIAUX_PAR_REPARATION = 3;
@@ -368,11 +448,15 @@ const MARCHANDS = {
   },
   forge: {
     nom: 'Brunehaut la Forgeronne', metier: 'Forge', race: 'nain', couleur: 0x8a3a2a,
-    objets: ['epee', 'fleches', 'corde', 'fer', 'cuir'], toujours: ['fer', 'cuir'],
+    objets: ['epee', 'fleches', 'corde', 'bouclier', 'fer', 'cuir'], toujours: ['fer', 'cuir'],
   },
   apothicaire: {
     nom: 'Mère Sauge', metier: 'Apothicaire', race: 'magicienne', couleur: 0x5a3a8a,
-    objets: ['potion', 'bandage'], toujours: ['bandage'],
+    objets: ['potion', 'bandage', 'antidote', 'amulette'], toujours: ['bandage'],
+  },
+  tailleuse: {
+    nom: 'Hilda la Tailleuse', metier: 'Tissus et fourrures', race: 'humain', couleur: 0x2f5a8a,
+    objets: ['cape', 'cuir'], toujours: ['cape'],
   },
 };
 
@@ -491,3 +575,203 @@ const ENCHERISSEURS = [
   { nom: 'Thrain Fendroc', race: 'nain', aime: ['arme', 'artefact'] },
 ];
 const OBJETS_PAR_LOT = 3;
+
+// --- Les quêtes des nouvelles zones ---
+Object.assign(QUETES, {
+  champignons: {
+    titre: 'Cueillir les champignons de lune',
+    accueil: "La Forêt des Murmures, hein ? On dit que des champignons rares y poussent... et que des esprits farceurs les gardent.",
+    pv: 2, duree: [1, 2], butin: [25, 40],
+    epreuves: [
+      {
+        type: 'esprits', besoin: 'torche', qte: 1,
+        intro: 'Des esprits farceurs ont soufflé sur mon chemin pour me perdre dans le noir.',
+        complet: 'Ta torche les a fait fuir en ricanant.',
+        partiel: 'Ma torche vacillait, ils me tournaient autour...',
+        rien: "J'ai tourné en rond toute la nuit.",
+      },
+      {
+        type: 'champignons', besoin: 'antidote', qte: 1,
+        intro: "J'ai goûté un champignon pour vérifier. Mauvaise idée. Très mauvaise idée.",
+        complet: "Heureusement, ton antidote m'a remis d'aplomb.",
+        partiel: 'Je voyais des lapins qui parlaient...',
+        rien: "J'ai été malade pendant deux jours.",
+      },
+    ],
+  },
+  sangsues: {
+    titre: 'Retrouver la cloche engloutie',
+    accueil: "Les Marécages ? D'accord. On dit qu'une cloche d'argent dort au fond de l'eau, quelque part dans la brume.",
+    pv: 2, duree: [2, 3], butin: [35, 50],
+    epreuves: [
+      {
+        type: 'route', besoin: 'gourde', qte: 1,
+        intro: "L'eau du marais était imbuvable.",
+        complet: "Ta gourde m'a sauvé{e}.",
+        partiel: "J'ai dû économiser chaque gorgée.",
+        rien: "J'ai bu l'eau verte. Je préfère ne pas en parler.",
+      },
+      {
+        type: 'sangsues', besoin: 'bandage', qte: 2,
+        intro: "En plongeant pour la cloche, des sangsues énormes se sont collées à mes jambes !",
+        complet: "J'ai pansé les morsures avec tes bandages, rien de grave.",
+        partiel: "Pas assez de bandages... ça saignait encore le lendemain.",
+        rien: "Les morsures se sont infectées.",
+      },
+      {
+        type: 'nuit', besoin: 'torche', qte: 1,
+        intro: 'La brume était si épaisse que je ne voyais plus mes mains.',
+        complet: "Ta torche m'a guidé{e} jusqu'à la terre ferme.",
+        partiel: 'Ma torche fumait dans l\'humidité...',
+        rien: "J'ai erré dans le noir et la vase.",
+      },
+    ],
+  },
+  oasis: {
+    titre: "Cartographier l'oasis perdue",
+    accueil: "Les Terres Désolées... On raconte qu'une oasis secrète se cache derrière les dunes. Les marchands paieraient cher pour la carte !",
+    pv: 2, duree: [2, 4], butin: [50, 70],
+    epreuves: [
+      {
+        type: 'soif', besoin: 'gourde', qte: 2,
+        intro: 'Le soleil tapait si fort que le sable brûlait à travers mes bottes.',
+        complet: "Avec tes deux gourdes, j'ai tenu sans problème.",
+        partiel: "Une seule gourde... J'ai cru mourir de soif.",
+        rien: "Je n'avais rien à boire. Les mirages se moquaient de moi.",
+      },
+      {
+        type: 'tempete', besoin: 'cape', qte: 1,
+        intro: 'Une tempête de sable a tout englouti.',
+        complet: "Je me suis enroulé{e} dans ta cape en attendant que ça passe.",
+        partiel: "J'ai protégé mon visage comme j'ai pu.",
+        rien: "Le sable m'a fouetté{e} pendant des heures.",
+      },
+      {
+        type: 'pillards', besoin: 'bouclier', qte: 1,
+        intro: "Des pillards m'attendaient à l'oasis !",
+        complet: "Ton bouclier a arrêté leurs flèches. Ils ont fui.",
+        partiel: 'Mon bouclier a cédé au troisième coup...',
+        rien: "Sans bouclier, j'ai dû fuir sous leurs flèches.",
+      },
+    ],
+  },
+  yeti: {
+    titre: 'Chasser le yéti des Pics',
+    accueil: "Les Pics Gelés ? Brrr. Un yéti terrorise les bergers là-haut. Sa fourrure vaut une fortune.",
+    pv: 2, duree: [3, 4], butin: [70, 95],
+    epreuves: [
+      {
+        type: 'froid', besoin: 'cape', qte: 1,
+        intro: 'Le froid mordait jusqu\'aux os.',
+        complet: "Ta cape chaude m'a gardé{e} au chaud même dans le blizzard.",
+        partiel: 'Mes doigts gelaient...',
+        rien: "J'ai cru que mes oreilles allaient tomber.",
+      },
+      {
+        type: 'yeti', besoin: 'epee', qte: 1,
+        intro: "Le yéti a surgi de la neige, deux fois plus grand qu'un ours !",
+        complet: "Ton épée l'a fait reculer jusqu'au bord de la falaise.",
+        partiel: 'Ma lame glissait sur sa fourrure...',
+        rien: 'Je me suis battu{e} à coups de bâton. Il a rigolé.',
+      },
+      {
+        type: 'blessure', besoin: 'bandage', qte: 1,
+        intro: "Ses griffes m'avaient entaillé le bras.",
+        complet: "Tes bandages ont fait l'affaire.",
+        partiel: 'Le sang gelait dans les bandages trop fins.',
+        rien: "La blessure ne voulait pas se refermer dans ce froid.",
+      },
+    ],
+  },
+  col: {
+    titre: 'Franchir le col des Glaces',
+    accueil: "On dit qu'au-delà du col des Glaces se cache une vallée pleine de cristaux. Personne ne l'a franchi cet hiver.",
+    pv: 2, duree: [3, 4], butin: [65, 90],
+    epreuves: [
+      {
+        type: 'froid', besoin: 'cape', qte: 1,
+        intro: 'Le vent glacé soufflait sans relâche.',
+        complet: 'Bien emmitouflé{e} dans ta cape, je ne sentais rien.',
+        partiel: 'Le froid passait à travers tout.',
+        rien: "J'ai cru geler sur place.",
+      },
+      {
+        type: 'avalanche', besoin: 'corde', qte: 2,
+        intro: 'Une avalanche a dévalé la pente juste au-dessus de moi !',
+        complet: "Encordé{e} au rocher avec tes cordes, j'ai tenu bon.",
+        partiel: 'Une seule corde... elle a failli lâcher.',
+        rien: "La neige m'a emporté{e} sur cent mètres.",
+      },
+      {
+        type: 'route', besoin: 'ration', qte: 2,
+        intro: 'La descente a duré trois jours dans la neige.',
+        complet: 'Tes rations étaient précieuses.',
+        partiel: "J'ai fini le ventre vide.",
+        rien: "Je n'avais plus rien à manger.",
+      },
+    ],
+  },
+  roiSorcier: {
+    titre: 'Briser la couronne du Roi-Sorcier',
+    accueil: "Les Ruines du Roi-Sorcier ? Là où les morts marchent ? ... Bon. Si c'est toi qui le dis. Prépare-moi bien.",
+    pv: 2, duree: [3, 5], butin: [90, 120],
+    epreuves: [
+      {
+        type: 'mortvivant', besoin: 'epee', qte: 1,
+        intro: 'Des squelettes se sont relevés de leurs tombes en claquant des dents.',
+        complet: 'Ton épée les a remis en morceaux. Ils ne se relèveront plus.',
+        partiel: 'Ils se relevaient à chaque fois...',
+        rien: "Sans arme, j'ai dû courir. Très vite.",
+      },
+      {
+        type: 'malediction', besoin: 'amulette', qte: 1,
+        intro: 'Dans la salle du trône, une voix a murmuré une malédiction.',
+        complet: "Ton amulette a brillé et la malédiction s'est brisée.",
+        partiel: "J'ai senti le froid de la mort sur ma nuque...",
+        rien: "La malédiction m'a frappé{e} en plein cœur.",
+      },
+      {
+        type: 'grotte', besoin: 'torche', qte: 2,
+        intro: 'Les cryptes sous les ruines étaient noires comme la nuit.',
+        complet: 'Avec tes torches, j\'ai trouvé la sortie.',
+        partiel: 'Ma dernière torche s\'est éteinte trop tôt.',
+        rien: "J'ai rampé dans le noir parmi les os.",
+      },
+    ],
+  },
+  bete: {
+    titre: "Affronter la Bête de l'antre",
+    accueil: "L'Antre de la Bête... Si j'en reviens, je serai riche pour toujours. Si. Donne-moi ce que tu as de meilleur.",
+    pv: 3, duree: [4, 5], butin: [150, 220],
+    epreuves: [
+      {
+        type: 'route', besoin: 'ration', qte: 3,
+        intro: "La route vers l'antre traverse des terres brûlées.",
+        complet: "Tes rations m'ont donné la force d'arriver.",
+        partiel: "J'étais affamé{e} en arrivant.",
+        rien: "J'avais l'estomac vide avant même le combat.",
+      },
+      {
+        type: 'monstre', besoin: 'bouclier', qte: 1,
+        intro: "La Bête m'a craché un torrent de flammes !",
+        complet: "Ton bouclier a encaissé le feu. J'ai senti la chaleur, mais j'étais vivant{e}.",
+        partiel: 'Mon bouclier a fondu à moitié...',
+        rien: "Je n'avais rien pour me protéger des flammes.",
+      },
+      {
+        type: 'monstre', besoin: 'epee', qte: 1,
+        intro: "Il fallait frapper. Maintenant ou jamais.",
+        complet: "Ta lame a trouvé la faille sous ses écailles !",
+        partiel: 'Ma lame rebondissait sur ses écailles...',
+        rien: 'Je l\'ai frappée avec une pierre. Elle a ri.',
+      },
+      {
+        type: 'blessure', besoin: 'potion', qte: 1,
+        intro: 'Le combat m\'avait laissé{e} à moitié mort{e}.',
+        complet: 'Ta potion m\'a ramené{e} à la vie.',
+        partiel: 'Le remède ne suffisait pas...',
+        rien: "J'ai rampé hors de l'antre, à bout de forces.",
+      },
+    ],
+  },
+});

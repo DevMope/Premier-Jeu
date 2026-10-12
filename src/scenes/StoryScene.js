@@ -15,14 +15,17 @@ class StoryScene extends Cinematique {
 
     this.cameras.main.fadeIn(500);
     this.fond = this.add.graphics();
-    dessinerComte(this.fond, 0, 0, 960, 370, 0);
+    // Le paysage de la zone où il est parti.
+    dessinerComte(this.fond, 0, 0, 960, 370, 0, v.zone ? ZONES[v.zone].biome : 'comte');
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
     this.decor = this.add.container(0, 0);
 
     this.perso = this.add.image(-60, 360, 'perso_' + v.race).setOrigin(0.5, 1).setScale(6);
 
     this.coeurs = [];
-    for (let i = 0; i < v.pv; i++) {
+    // Ses cœurs, plus ceux gagnés grâce aux soins donnés en plus.
+    const pvDepart = (this.parti.resultat && this.parti.resultat.pvDepart) || v.pv;
+    for (let i = 0; i < pvDepart; i++) {
       this.coeurs.push(this.add.image(30 + i * 34, 30, 'coeur').setScale(4));
     }
     this.titre = this.add.text(480, 26, '', style(20, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
@@ -230,9 +233,10 @@ class StoryScene extends Cinematique {
   // Le décor de chaque épreuve, dessiné avec des formes simples.
   planterDecor(type, x) {
     const sol = 360;
+    this.voile.setFillStyle(0x05051a, this.voile.fillAlpha);
     const g = this.add.graphics();
     this.decor.add(g);
-    this.tweens.add({ targets: this.voile, fillAlpha: ['nuit', 'grotte', 'feufollet'].includes(type) ? 0.6 : 0, duration: 500 });
+    this.tweens.add({ targets: this.voile, fillAlpha: ['nuit', 'grotte', 'feufollet', 'esprits', 'malediction', 'mortvivant'].includes(type) ? 0.6 : 0, duration: 500 });
 
     if (type === 'route') {
       g.fillStyle(0x6b4423).fillRect(x, sol - 90, 8, 90);
@@ -276,6 +280,54 @@ class StoryScene extends Cinematique {
       g.fillStyle(0x6b4423).fillRect(x - 64, sol - 34, 6, 10).fillRect(x + 80, sol - 34, 6, 10);
     } else if (type === 'sanglier') {
       this.decor.add(this.add.image(x + 30, sol, 'loup').setOrigin(0.5, 1).setScale(7).setFlipX(true).setTint(0x8a5a3a));
+    } else if (type === 'esprits') {
+      [[x, 230], [x + 60, 200], [x + 120, 240]].forEach(([fx, fy], i) => {
+        const esprit = this.add.ellipse(fx, fy, 26, 34, 0xf0f8ff, 0.6);
+        this.decor.add(esprit);
+        this.tweens.add({ targets: esprit, y: fy - 25, x: fx + 15, duration: 700 + i * 200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      });
+    } else if (type === 'champignons') {
+      [[x, sol - 6], [x + 30, sol - 4], [x + 60, sol - 8]].forEach(([cx, cy]) => {
+        g.fillStyle(0xf0e8d0).fillRect(cx - 3, cy - 12, 6, 14);
+        g.fillStyle(0xc03030).fillEllipse(cx, cy - 14, 26, 14);
+        g.fillStyle(0xffffff).fillCircle(cx - 5, cy - 16, 2).fillCircle(cx + 5, cy - 14, 2);
+      });
+    } else if (type === 'sangsues') {
+      g.fillStyle(0x3a4a2a).fillRect(x - 70, sol - 20, 180, 30);
+      g.fillStyle(0x1a1a1a);
+      for (let i = 0; i < 6; i++) g.fillEllipse(x - 50 + i * 28, sol - 10 + (i % 2) * 6, 16, 6);
+    } else if (type === 'soif') {
+      g.fillStyle(0xfff4b0, 0.5).fillCircle(820, 70, 60);
+      g.fillStyle(0xa8c8e0, 0.6).fillEllipse(x + 80, sol - 20, 120, 16);
+    } else if (type === 'tempete') {
+      this.tweens.add({ targets: this.voile, fillAlpha: 0.35, duration: 500 });
+      this.voile.setFillStyle(0x8a6a3a);
+      g.lineStyle(2, 0xe8d0a0, 0.8);
+      for (let i = 0; i < 18; i++) g.lineBetween(Phaser.Math.Between(0, 960), Phaser.Math.Between(60, 340), Phaser.Math.Between(0, 960), Phaser.Math.Between(60, 340));
+    } else if (type === 'pillards') {
+      [0, 60, 120].forEach(dx => this.decor.add(
+        this.add.image(x + dx, sol, 'perso_humain').setOrigin(0.5, 1).setScale(6).setFlipX(true).setTint(0x8a6a50)));
+    } else if (type === 'froid') {
+      g.fillStyle(0xffffff, 0.9);
+      for (let i = 0; i < 40; i++) g.fillCircle(Phaser.Math.Between(0, 960), Phaser.Math.Between(40, 350), Phaser.Math.Between(1, 3));
+    } else if (type === 'avalanche') {
+      g.fillStyle(0xf8fbff).fillTriangle(x - 40, sol, x + 200, sol, x + 200, sol - 180);
+      g.fillStyle(0xd0d8e8);
+      for (let i = 0; i < 6; i++) g.fillCircle(x + 20 + i * 30, sol - 20 - i * 18, 10);
+    } else if (type === 'yeti') {
+      this.decor.add(this.add.image(x + 40, sol, 'perso_nain').setOrigin(0.5, 1).setScale(9).setFlipX(true).setTint(0xf0f4ff));
+    } else if (type === 'mortvivant') {
+      [0, 70].forEach(dx => this.decor.add(
+        this.add.image(x + dx, sol, 'perso_humain').setOrigin(0.5, 1).setScale(6).setFlipX(true).setTint(0xb0c8a0)));
+    } else if (type === 'malediction') {
+      for (let i = 0; i < 5; i++) {
+        const rond = this.add.circle(this.perso.x, sol - 50, 20 + i * 18).setStrokeStyle(2, 0xa060e0, 0.8);
+        this.decor.add(rond);
+        this.tweens.add({ targets: rond, scale: 0.3, alpha: 0, duration: 1200, delay: i * 150, repeat: -1 });
+      }
+    } else if (type === 'monstre') {
+      this.decor.add(this.add.image(x + 60, sol, 'loup').setOrigin(0.5, 1).setScale(16).setFlipX(true).setTint(0xc04030));
+      g.fillStyle(0xff9030, 0.7).fillTriangle(x - 40, sol - 70, x + 10, sol - 90, x + 10, sol - 50);
     } else if (type === 'blessure') {
       g.fillStyle(0xd8344a, 0.8).fillRect(this.perso.x - 8, sol - 70, 16, 4);
     }

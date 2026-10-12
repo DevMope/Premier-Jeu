@@ -55,7 +55,7 @@ function aDecoration(G, id) {
 function chanceDeRetour(voyageur, colis) {
   let proba = [1]; // proba[k] = probabilité d'avoir raté k épreuves
   for (const e of voyageur.epreuves) {
-    const p = chanceEpreuve(niveauEpreuve(e, colis, voyageur));
+    const p = chanceEtape(e, colis, voyageur);
     const suivante = new Array(proba.length + 1).fill(0);
     proba.forEach((pk, k) => {
       suivante[k] += pk * p;
@@ -63,16 +63,54 @@ function chanceDeRetour(voyageur, colis) {
     });
     proba = suivante;
   }
-  return proba.slice(0, voyageur.pv).reduce((a, b) => a + b, 0);
+  return proba.slice(0, pvAuDepart(voyageur, colis)).reduce((a, b) => a + b, 0);
+}
+
+// --- Le suréquipement ---
+
+// Les objets donnés en plus de la commande : { idObjet: quantité en plus }
+function surplus(voyageur, colis) {
+  const commande = commandeDe(voyageur);
+  const plus = {};
+  for (const [id, n] of Object.entries(colis)) {
+    const enPlus = n - (commande[id] || 0);
+    if (enPlus > 0) plus[id] = enPlus;
+  }
+  return plus;
+}
+
+function totalSurplus(voyageur, colis) {
+  return Object.values(surplus(voyageur, colis)).reduce((a, b) => a + b, 0);
+}
+
+function tailleSac(voyageur) {
+  return SAC[voyageur.race] ?? 3;
+}
+
+// Les soins en plus donnent un cœur de réserve pendant le voyage (un seul, quel que soit leur nombre).
+function coeursEnPlus(voyageur, colis) {
+  const plus = surplus(voyageur, colis);
+  return Math.min(1, OBJETS_DE_SOIN.reduce((s, id) => s + (plus[id] || 0), 0));
+}
+
+function pvAuDepart(voyageur, colis) {
+  return voyageur.pv + coeursEnPlus(voyageur, colis);
+}
+
+// La chance de réussir une épreuve, avec le bonus des objets en plus qu'elle demande.
+function chanceEtape(e, colis, voyageur) {
+  const enPlus = surplus(voyageur, colis)[e.besoin] || 0;
+  return Math.min(0.97, chanceEpreuve(niveauEpreuve(e, colis, voyageur)) + enPlus * BONUS_SURPLUS);
 }
 
 // Tire au sort le déroulement de l'aventure, épreuve par épreuve.
 function simulerAventure(voyageur, colis) {
-  let pv = voyageur.pv;
+  const pvDepart = pvAuDepart(voyageur, colis);
+  let pv = pvDepart;
   const etapes = [];
   for (const e of voyageur.epreuves) {
     const niveau = niveauEpreuve(e, colis, voyageur);
-    const reussie = Math.random() < chanceEpreuve(niveau);
+    const reussie = Math.random() < chanceEtape(e, colis, voyageur);
     if (!reussie) pv--;
     etapes.push({ epreuve: e, niveau, reussie, pvApres: pv });
     if (pv <= 0) break;
@@ -80,6 +118,7 @@ function simulerAventure(voyageur, colis) {
   const derniere = etapes[etapes.length - 1];
   return {
     etapes,
+    pvDepart,
     vivant: pv > 0,
     valeureux: pv <= 0 && EPREUVES_COMBAT.includes(derniere.epreuve.type),
   };
@@ -87,8 +126,34 @@ function simulerAventure(voyageur, colis) {
 
 // --- Les voyageurs ---
 
-function creerVoyageur(G, { quete, nom, race, feminin, butin, duree, inventaire, blessures = 0 }) {
-  const q = QUETES[quete];
+// Un aventurier. Sans `quete`, il vient chercher l'aventure : c'est toi qui choisiras la zone.
+function creerVoyageur(G, { quete = null, nom, race, feminin, butin, duree, inventaire, blessures = 0, niveau, envie }) {
+  const v = {
+    id: G.prochainId++,
+    nom, race, feminin,
+    niveau: niveau || auHasard(['novice', 'novice', 'aguerri', 'aguerri', 'veteran']),
+    envie: envie || auHasard(Object.keys(ENVIES)),
+    blessures,
+    pv: 0, butin: 0, duree: 0,
+    queteId: null, zone: null, quete: '', epreuves: [],
+    biais: Phaser.Math.FloatBetween(-1, 1), // l'erreur de ton flair sur ce client
+    inventaire: { ...(inventaire || {}) },
+    habitue: !!inventaire,
+  };
+  v.accueil = ENVIES[v.envie];
+  if (quete) appliquerQuete(G, v, quete, { butin, duree });
+  return v;
+}
+
+// La zone d'une quête.
+function zoneDeQuete(queteId) {
+  return Object.keys(ZONES).find(z => ZONES[z].quetes.includes(queteId)) || 'collines';
+}
+
+// Donne une quête à un aventurier : ses épreuves, sa durée, son butin.
+function appliquerQuete(G, v, queteId, { butin, duree } = {}) {
+  const q = QUETES[queteId];
+  const zone = zoneDeQuete(queteId);
   const d = duree ?? hasard(...q.duree);
   // Plus la quête dure, plus il faut de rations... et plus elle rapporte.
   const enPlus = d - q.duree[0];
@@ -98,22 +163,38 @@ function creerVoyageur(G, { quete, nom, race, feminin, butin, duree, inventaire,
     if (vivres) vivres.qte += enPlus;
     else epreuves.unshift({ ...ETAPE_VIVRES, qte: enPlus });
   }
-  return {
-    id: G.prochainId++,
-    nom, race, feminin,
-    // Un habitué revenu blessé et jamais soigné repart avec moins de cœurs.
-    pv: Math.max(1, q.pv - blessures),
-    blessures,
-    butin: butin ?? Math.round(hasard(...q.butin) * (1 + 0.3 * enPlus)),
-    duree: d,
-    queteId: quete,
-    quete: q.titre,
-    accueil: q.accueil,
-    biais: Phaser.Math.FloatBetween(-1, 1), // l'erreur de ton flair sur ce client
-    epreuves,
-    inventaire: { ...(inventaire || {}) },
-    habitue: !!inventaire,
-  };
+  const niv = NIVEAUX_AVENTURIER[v.niveau];
+  // Un habitué revenu blessé et jamais soigné repart avec moins de cœurs.
+  v.pv = Math.max(1, q.pv + niv.pv - v.blessures);
+  v.butin = butin ?? Math.round(hasard(...q.butin) * (1 + 0.3 * enPlus) * BUTIN_PAR_DANGER[ZONES[zone].danger] / BUTIN_PAR_DANGER[1] * niv.butin);
+  v.duree = d;
+  v.queteId = queteId;
+  v.zone = zone;
+  v.quete = q.titre;
+  v.accueil = q.accueil;
+  v.epreuves = epreuves;
+  return v;
+}
+
+// Envoyer un aventurier dans une zone : une des quêtes de la zone, au hasard.
+function envoyerDans(G, v, zone) {
+  return appliquerQuete(G, v, auHasard(ZONES[zone].quetes));
+}
+
+// Les zones où l'on peut envoyer quelqu'un : ouvertes par la réputation, ou découvertes.
+function zoneOuverte(G, zone) {
+  return G.reputation >= ZONES[zone].reputation || G.zonesDecouvertes.includes(zone);
+}
+
+function zonesOuvertes(G) {
+  return Object.keys(ZONES).filter(z => zoneOuverte(G, z));
+}
+
+// Ce qu'il faut souvent dans une zone (toutes ses quêtes confondues).
+function besoinsDeZone(zone) {
+  const ids = new Set();
+  ZONES[zone].quetes.forEach(q => QUETES[q].epreuves.forEach(e => ids.add(e.besoin)));
+  return [...ids];
 }
 
 // Une commande par lettre est plus exigeante : une ou deux épreuves
@@ -139,7 +220,7 @@ function habitueAuHasard(G, pris) {
   const libres = G.habitues.filter(h => !pris.includes(h.nom));
   if (!libres.length || Math.random() > 0.35) return null;
   const h = auHasard(libres);
-  return creerVoyageur(G, { quete: auHasard(Object.keys(QUETES)), ...h });
+  return creerVoyageur(G, { ...h });
 }
 
 // Un voyageur tiré au hasard, qui ne porte pas le nom d'un voyageur déjà en jeu.
@@ -157,7 +238,7 @@ function voyageurAuHasard(G, aussi = []) {
   const race = auHasard(races);
   const choix = races.length ? auHasard(libres.filter(l => l.race === race))
     : { race: 'humain', nom: auHasard(NOMS.humain)[0], feminin: false };
-  return creerVoyageur(G, { quete: auHasard(Object.keys(QUETES)), ...choix });
+  return creerVoyageur(G, { ...choix });
 }
 
 // --- La partie ---
@@ -179,6 +260,7 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
     comptaTotal: { r: {}, d: {}, pret: {} },
     historique: [],    // aventures terminées : { nom, race, quete, depart, retour, issue, gain, chance }
     personnes: {},     // nom → { race, feminin } de tous ceux qu'on a croisés
+    zonesDecouvertes: [], // zones révélées par les récits des aventuriers
     stats: { refus: 0, lettresAcceptees: 0, lettresRefusees: 0, objets: {}, ventes: 0 },
     nouvellesAtelier: [],
     encheresJour: 0,   // le jour de la dernière vente aux enchères
@@ -186,7 +268,8 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
     jour: 1,
     argent: ARGENT_DEPART,
     argentDebutJour: ARGENT_DEPART,
-    stock: { ...STOCK_DEPART },
+    // Tous les objets du jeu, à 0 sauf le stock de départ.
+    stock: Object.fromEntries(Object.keys(ITEMS).map(id => [id, STOCK_DEPART[id] || 0])),
     reputation: 0,
     experience: 0, // nombre de clients servis depuis le début
     capacite: RESERVE_DEPART,
@@ -234,7 +317,10 @@ function partir(G, voyageur, colis) {
 // Les lettres annoncent des voyageurs qui viendront dans 2 ou 3 jours.
 function recevoirLettres(G, nombre) {
   for (let i = 0; i < nombre; i++) {
-    const voyageur = rendreExigeant(voyageurAuHasard(G));
+    // Celui qui écrit sait déjà où il veut aller (une zone ouverte).
+    const voyageur = voyageurAuHasard(G);
+    envoyerDans(G, voyageur, auHasard(zonesOuvertes(G)));
+    rendreExigeant(voyageur);
     G.annonces.push({ voyageur, jour: G.jour + hasard(2, 3), acceptee: false });
   }
   G.annonces.sort((a, b) => a.jour - b.jour);
@@ -716,8 +802,21 @@ function terminerAventure(G, parti) {
     G.journal.retours++;
     message = changerRelation(G, v.nom, POINTS_RELATION.retourVivant);
     const derniere = r.etapes[r.etapes.length - 1];
-    G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures: v.pv - derniere.pvApres });
+    // Les cœurs perdus (au-delà des cœurs gagnés grâce aux soins en plus) restent des blessures.
+    const blessures = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - derniere.pvApres));
+    // Chaque retour fait gagner en expérience : novice, puis aguerri, puis vétéran.
+    const niveau = v.niveau === 'novice' ? 'aguerri' : 'veteran';
+    G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau });
     parti.trouvailles = trouvailles(G, v);
+    // Il a peut-être aperçu une zone plus dangereuse, encore inconnue.
+    const d = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
+    const inconnues = Object.keys(ZONES).filter(z => !zoneOuverte(G, z) && ZONES[z].danger <= d + 1);
+    if (inconnues.length && Math.random() < CHANCE_DECOUVERTE) {
+      const z = auHasard(inconnues);
+      G.zonesDecouvertes.push(z);
+      parti.decouverte = z;
+      message = (message ? message + ' ' : '') + `« Au fait... J'ai aperçu au loin ${ZONES[z].nom.charAt(0).toLowerCase() + ZONES[z].nom.slice(1)}. » Nouvelle zone sur ta carte !`;
+    }
   } else {
     if (!r.valeureux) G.reputation--;
     G.journal.morts++;
@@ -726,7 +825,7 @@ function terminerAventure(G, parti) {
   parti.bilan = { gain, message };
   G.personnes[v.nom] = { race: v.race, feminin: v.feminin };
   G.historique.unshift({
-    nom: v.nom, race: v.race, quete: v.quete, depart: parti.depart, retour: parti.retour,
+    nom: v.nom, race: v.race, quete: v.quete, zone: v.zone, depart: parti.depart, retour: parti.retour,
     issue: r.vivant ? 'vivant' : r.valeureux ? 'valeureux' : 'sans gloire', gain, chance: parti.chance,
   });
   G.historique = G.historique.slice(0, TAILLE_HISTORIQUE);

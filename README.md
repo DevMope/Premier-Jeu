@@ -31,6 +31,7 @@ La partie se sauvegarde toute seule le soir et le matin au marché :
 | `src/scenes/MarcheScene.js` | Le Marché des Mastres, le matin : étals, enchères, jeux d'argent, mendiant |
 | `src/scenes/AtelierScene.js` | L'atelier : réparer les objets de valeur |
 | `src/scenes/BureauScene.js` | Le bureau : registre des fiches, chiffre d'affaires, tiroirs de statistiques |
+| `src/scenes/CarteScene.js` | La carte du dispatch : choisir la zone où envoyer un aventurier |
 | `src/scenes/NightScene.js` | Le soir : bilan, réserve, lettres, banque, prévision de demain |
 | `src/scenes/StoryScene.js` | La cinématique du récit de chaque aventurier |
 | `src/scenes/FailliteScene.js` | La cinématique de faillite |

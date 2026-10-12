@@ -1,5 +1,8 @@
 // Le Marché des Mastres, chaque matin avant d'ouvrir le comptoir :
-// trois étals (épicerie, forge, apothicaire), les enchères, le coin des jeux et le mendiant.
+// quatre étals (épicerie, forge, apothicaire, tailleuse), les enchères, le coin des jeux et le mendiant.
+// La rue est plus large que l'écran : on la parcourt avec les flèches ◀ ▶.
+const LARGEUR_MARCHE = 1320;
+const DEPLACEMENT_RUE = 360;
 // On clique sur un lieu pour l'ouvrir dans le panneau du bas.
 class MarcheScene extends Phaser.Scene {
   constructor() { super('Marche'); }
@@ -9,28 +12,32 @@ class MarcheScene extends Phaser.Scene {
     G.banniere = G.jour;
     this.cameras.main.fadeIn(500);
 
-    // La place du marché au matin
+    // La rue du marché, plus large que l'écran : on la parcourt avec les flèches.
+    this.monde = this.add.container(0, 0);
     const g = this.add.graphics();
-    dessinerComte(g, 0, 0, 960, 300, 0.05);
-    g.fillStyle(0xa89a80).fillRect(0, 250, 960, 50);
+    this.monde.add(g);
+    dessinerComte(g, 0, 0, LARGEUR_MARCHE, 300, 0.05);
+    g.fillStyle(0xa89a80).fillRect(0, 250, LARGEUR_MARCHE, 50);
     g.lineStyle(1, 0x8a7a60);
-    for (let x = 0; x < 960; x += 24) g.lineBetween(x, 250, x + 12, 300);
-    this.add.text(480, 22, `Le Marché des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5);
+    for (let x = 0; x < LARGEUR_MARCHE; x += 24) g.lineBetween(x, 250, x + 12, 300);
+    this.add.text(480, 22, `Le Marché des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setDepth(5);
 
-    // Les étals
-    this.positions = { mendiant: [60, 'lieu'], encheres: [750, 'lieu'], jeux: [890, 'lieu'] };
+    // Les étals, les enchères, les jeux et le mendiant
+    this.positions = { mendiant: [70, 'lieu'], encheres: [1030, 'lieu'], jeux: [1220, 'lieu'] };
     Object.entries(MARCHANDS).forEach(([cle, m], i) => {
-      this.positions[cle] = [230 + i * 180, 'etal'];
-      this.creerEtal(cle, m, 230 + i * 180);
+      this.positions[cle] = [260 + i * 190, 'etal'];
+      this.creerEtal(cle, m, 260 + i * 190);
     });
     this.creerSurbrillance();
-    this.creerLieu(60, 'perso_colporteur', 'Le mendiant', () => this.ouvrirMendiant(), { tint: 0x9a9a9a, angle: -6, echelle: 4.5 });
+    this.creerLieu(70, 'perso_colporteur', 'Le mendiant', () => this.ouvrirMendiant(), { tint: 0x9a9a9a, angle: -6, echelle: 4.5 });
     // L'estrade des enchères, avec son crieur
     const estrade = this.add.graphics();
-    estrade.fillStyle(0x6b4423).fillRect(705, 225, 90, 22);
-    estrade.fillStyle(0x7a1a1a).fillRect(715, 120, 70, 14);
-    this.creerLieu(750, 'perso_humain', 'Les enchères', () => this.ouvrirEncheres(), { echelle: 4.5 }).setY(228);
-    this.creerLieu(890, 'perso_gobelin', 'Le coin des jeux', () => this.ouvrirJeux(), { echelle: 4.5 });
+    estrade.fillStyle(0x6b4423).fillRect(985, 225, 90, 22);
+    estrade.fillStyle(0x7a1a1a).fillRect(995, 120, 70, 14);
+    this.monde.add(estrade);
+    this.creerLieu(1030, 'perso_humain', 'Les enchères', () => this.ouvrirEncheres(), { echelle: 4.5 }).setY(228);
+    this.creerLieu(1220, 'perso_gobelin', 'Le coin des jeux', () => this.ouvrirJeux(), { echelle: 4.5 });
+    this.creerFlechesRue();
 
     // Le panneau du bas et la barre d'infos
     this.add.rectangle(480, 388, 940, 168, 0xead9b0).setStrokeStyle(3, 0x8a6a3a);
@@ -54,15 +61,42 @@ class MarcheScene extends Phaser.Scene {
     }
   }
 
+  // Les flèches ◀ ▶ pour se déplacer dans la rue du marché.
+  creerFlechesRue() {
+    this.flechesRue = [[-1, 26, '◀'], [1, 934, '▶']].map(([sens, x, texte]) => {
+      const fond = this.add.circle(x, 165, 22, 0x3b2410, 0.85).setStrokeStyle(2, 0xc9a227).setDepth(6).setInteractive({ useHandCursor: true });
+      const t = this.add.text(x, 165, texte, style(20, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(6);
+      fond.on('pointerdown', () => this.deplacer(this.monde.x - sens * DEPLACEMENT_RUE));
+      this.tweens.add({ targets: [fond, t], x: x + sens * 4, duration: 500, yoyo: true, repeat: -1 });
+      return { sens, fond, t };
+    });
+    this.majFlechesRue();
+  }
+
+  // Fait glisser la rue jusqu'à une position (bornée aux deux bouts de la rue).
+  deplacer(x) {
+    const cible = Phaser.Math.Clamp(x, 960 - LARGEUR_MARCHE, 0);
+    this.tweens.add({ targets: this.monde, x: cible, duration: 450, ease: 'Sine.easeInOut', onComplete: () => this.majFlechesRue() });
+  }
+
+  majFlechesRue() {
+    for (const f of this.flechesRue) {
+      const visible = f.sens < 0 ? this.monde.x < 0 : this.monde.x > 960 - LARGEUR_MARCHE;
+      f.fond.setVisible(visible);
+      f.t.setVisible(visible);
+    }
+  }
+
   // La flèche qui sautille et le contour lumineux autour du lieu qu'on regarde.
   creerSurbrillance() {
-    this.contour = this.add.rectangle(0, 0, 10, 10).setStrokeStyle(3, 0xffe066).setDepth(4).setVisible(false);
+    this.contour = this.add.rectangle(0, 0, 10, 10).setStrokeStyle(3, 0xffe066).setVisible(false);
     this.tweens.add({ targets: this.contour, alpha: 0.35, duration: 600, yoyo: true, repeat: -1 });
-    const f = this.add.graphics().setDepth(4);
+    const f = this.add.graphics();
     f.fillStyle(0xffe066).fillTriangle(-12, -10, 12, -10, 0, 8);
     f.lineStyle(2, 0x3b2410).strokeTriangle(-12, -10, 12, -10, 0, 8);
-    this.flecheLieu = this.add.container(0, 0, [f]).setDepth(4).setVisible(false);
+    this.flecheLieu = this.add.container(0, 0, [f]).setVisible(false);
     this.tweens.add({ targets: f, y: 8, duration: 450, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.monde.add([this.contour, this.flecheLieu]);
   }
 
   montrer(cle) {
@@ -72,10 +106,14 @@ class MarcheScene extends Phaser.Scene {
     this.contour.geom.setSize(etal ? 178 : 112, etal ? 196 : 118);
     this.contour.updateDisplayOrigin();
     this.flecheLieu.setVisible(true).setPosition(x, etal ? 46 : 128);
+    // Si le lieu est hors de l'écran, la rue glisse jusqu'à lui.
+    const aEcran = x + this.monde.x;
+    if (aEcran < 110 || aEcran > 850) this.deplacer(480 - x);
   }
 
   // Un étal : auvent rayé aux couleurs du marchand, comptoir, marchand derrière.
   creerEtal(cle, m, x) {
+    const avant = this.children.list.length;
     const g = this.add.graphics();
     g.fillStyle(0x6b4423).fillRect(x - 82, 80, 8, 150).fillRect(x + 74, 80, 8, 150);
     for (let i = 0; i < 7; i++) {
@@ -90,13 +128,17 @@ class MarcheScene extends Phaser.Scene {
     this.add.text(x, 272, m.metier, style(11, '#fff4dc', { stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);
     const zone = this.add.rectangle(x, 160, 170, 140, 0xffffff, 0).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => this.ouvrirEtal(cle));
+    // Tout ce qu'on vient de créer appartient à la rue (qui glisse).
+    this.monde.add(this.children.list.slice(avant));
   }
 
   creerLieu(x, texture, nom, action, { tint = 0xffffff, angle = 0, echelle = 5 }) {
+    const avant = this.children.list.length;
     const perso = this.add.image(x, 245, texture).setOrigin(0.5, 1).setScale(echelle).setTint(tint).setAngle(angle);
     this.add.text(x, 262, nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
     const zone = this.add.rectangle(x, 200, 110, 120, 0xffffff, 0).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', action);
+    this.monde.add(this.children.list.slice(avant));
     return perso;
   }
 

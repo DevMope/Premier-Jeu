@@ -98,8 +98,9 @@ const Sauvegarde = {
   // Recharge une partie sauvegardée. Les champs ajoutés au jeu depuis gardent leur valeur de départ.
   charger(p) {
     nouvellePartie();
-    Object.assign(window.GAME, JSON.parse(JSON.stringify(p.partie)));
-    return window.GAME.lieu === 'Marche' ? 'Marche' : 'Nuit';
+    const G = Object.assign(window.GAME, JSON.parse(JSON.stringify(p.partie)));
+    mettreAJourPartie(G);
+    return G.lieu === 'Marche' ? 'Marche' : 'Nuit';
   },
 
   async supprimer() {
@@ -199,4 +200,17 @@ function afficherStatutSauvegarde(scene, x, y, origineX) {
     .setOrigin(origineX, 0.5).setDepth(25);
   Sauvegarde.surStatut = texte => { if (t.active) t.setText(texte); };
   scene.events.once('shutdown', () => { Sauvegarde.surStatut = null; });
+}
+
+// Une partie sauvegardée avant une mise à jour du jeu : on complète ce qui manque.
+function mettreAJourPartie(G) {
+  for (const id of Object.keys(ITEMS)) if (G.stock[id] === undefined) G.stock[id] = 0;
+  G.zonesDecouvertes = G.zonesDecouvertes || [];
+  const voyageurs = [...G.annonces.map(a => a.voyageur), ...G.partis.map(p => p.voyageur)];
+  for (const v of voyageurs) {
+    if (!v.niveau) v.niveau = 'aguerri';
+    if (!v.envie) v.envie = 'gloire';
+    if (v.queteId && !v.zone) v.zone = zoneDeQuete(v.queteId);
+  }
+  for (const h of G.habitues) if (!h.niveau) h.niveau = 'aguerri';
 }

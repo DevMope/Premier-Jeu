@@ -185,16 +185,17 @@ class CounterScene extends Phaser.Scene {
     this.add.rectangle(815, 135, 260, 230, 0xead9b0).setStrokeStyle(3, 0x8a6a3a);
     this.titreCommande = this.add.text(700, 30, '', style(17, '#3b2410', { fontStyle: 'bold', wordWrap: { width: 235 } }));
     this.lignesCommande = [];
-    for (let i = 0; i < 4; i++) {
-      const y = 80 + i * 30;
-      const icone = this.add.image(712, y, 'ration').setScale(3).setVisible(false);
-      const txt = this.add.text(735, y, '', style(16, '#3b2410')).setOrigin(0, 0.5);
-      const zone = this.add.rectangle(815, y, 240, 32, 0x000000, 0).setInteractive({ useHandCursor: true });
+    for (let i = 0; i < 5; i++) {
+      const y = 76 + i * 22;
+      const icone = this.add.image(712, y, 'ration').setScale(2.5).setVisible(false);
+      const txt = this.add.text(732, y, '', style(14, '#3b2410')).setOrigin(0, 0.5);
+      const zone = this.add.rectangle(815, y, 240, 22, 0x000000, 0).setInteractive({ useHandCursor: true });
       zone.on('pointerdown', () => this.clicLigne(i));
       this.lignesCommande.push({ icone, txt, zone, id: null });
     }
+    this.texteSac = this.add.text(700, 184, '', style(11, '#5a3a20'));
     this.add.text(700, 226, 'Clic sur une ligne : reprendre ou réparer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
-    this.texteChance = this.add.text(815, 206, '', style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.texteChance = this.add.text(815, 208, '', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
   }
 
   creerDialogue() {
@@ -218,13 +219,13 @@ class CounterScene extends Phaser.Scene {
     });
     this.cases = {};
     Object.keys(ITEMS).forEach((id, i) => {
-      const x = 205 + (i % 4) * 130;
-      const y = 410 + Math.floor(i / 4) * 70;
-      const fond = this.add.rectangle(x, y, 120, 60, 0x6b4423).setStrokeStyle(2, 0x3b2410)
+      const x = 200 + (i % 5) * 108;
+      const y = 397 + Math.floor(i / 5) * 48;
+      const fond = this.add.rectangle(x, y, 104, 44, 0x6b4423).setStrokeStyle(2, 0x3b2410)
         .setInteractive({ useHandCursor: true });
-      this.add.image(x - 38, y, id).setScale(4);
-      this.add.text(x - 14, y - 16, ITEMS[id].nom, style(14, '#f3e6c8'));
-      const qte = this.add.text(x - 14, y + 2, '', style(16, '#f3d98a', { fontStyle: 'bold' }));
+      this.add.image(x - 36, y, id).setScale(3);
+      this.add.text(x - 18, y - 16, ITEMS[id].nom, style(11, '#f3e6c8', { wordWrap: { width: 70 } }));
+      const qte = this.add.text(x - 18, y + 4, '', style(13, '#f3d98a', { fontStyle: 'bold' }));
       fond.on('pointerover', () => fond.setFillStyle(0x7a5030));
       fond.on('pointerout', () => fond.setFillStyle(0x6b4423));
       fond.on('pointerdown', () => this.donner(id));
@@ -304,11 +305,15 @@ class CounterScene extends Phaser.Scene {
       const v = this.voyageur = entree.voyageur;
       let bonjour = v.prevu ? "C'est moi qui t'ai écrit, tu te souviens ? " : '';
       if (v.habitue) bonjour = 'Re-bonjour, c\'est encore moi ! ' + (this.aReparer(v).length ? 'Mon matériel a souffert la dernière fois... ' : '');
+      if (!v.queteId) {
+        // Il vient chercher l'aventure : c'est toi qui choisis où l'envoyer.
+        this.dire(`${bonjour}${ENVIES[v.envie]} (${NIVEAUX_AVENTURIER[v.niveau].nom}${v.blessures ? `, encore blessé${v.feminin ? 'e' : ''}` : ''})`, this.nomAvecRelation(v.nom));
+        this.choix(['Choisir sa destination', () => this.ouvrirCarte()], ['Refuser ce client', () => this.refuser()]);
+        this.majCommande();
+        return;
+      }
       this.dire(bonjour + accord(v.accueil, v), this.nomAvecRelation(v.nom));
-      this.enService = true;
-      this.majBoutonsService();
-      this.bouton('Remettre le colis', () => this.remettreColis());
-      this.majCommande();
+      this.servir();
     } else if (entree.type === 'retour') {
       const v = entree.parti.voyageur;
       this.dire(`Me revoilà, sain${v.feminin ? 'e' : ''} et sauf${v.feminin ? 've' : ''} ! Tu ne devineras jamais ce qui m'est arrivé...`, v.nom);
@@ -322,6 +327,20 @@ class CounterScene extends Phaser.Scene {
       this.titreCommande.setText('Une mauvaise nouvelle...');
       this.bouton('Lire le carnet', () => this.ouvrirRecit(entree.parti));
     }
+  }
+
+  // Le client a sa destination : on peut préparer son colis.
+  servir() {
+    this.enService = true;
+    this.majBoutonsService();
+    this.bouton('Remettre le colis', () => this.remettreColis());
+    this.majCommande();
+  }
+
+  // La carte : une page à part, le comptoir attend en pause.
+  ouvrirCarte() {
+    this.scene.pause();
+    this.scene.launch('Carte', { comptoir: this });
   }
 
   nomAvecRelation(nom) {
@@ -423,18 +442,21 @@ class CounterScene extends Phaser.Scene {
 
   donner(id) {
     if (!this.enService) return;
-    const commande = commandeDe(this.voyageur);
-    if (!commande[id]) {
-      return this.dire("Hum, je n'ai pas besoin de ça, merci.");
-    }
-    if ((this.colis[id] || 0) >= commande[id]) {
-      return this.dire("J'en ai assez comme ça !");
+    const v = this.voyageur;
+    const commande = commandeDe(v);
+    // Au-delà de la commande, c'est du suréquipement : seulement ce qui peut servir (soins,
+    // ou un objet qu'une épreuve demande), et pas plus que ce que son sac peut porter.
+    const enPlus = (this.colis[id] || 0) >= (commande[id] || 0);
+    if (enPlus) {
+      if (!commande[id] && !OBJETS_DE_SOIN.includes(id)) return this.dire("Hum, ça ne me servira à rien là où je vais.");
+      if (totalSurplus(v, this.colis) >= tailleSac(v)) return this.dire(`Mon sac est plein ! Je ne peux porter que ${tailleSac(v)} objets en plus de ma commande.`);
     }
     if (this.G.stock[id] <= 0) {
       return this.dire("Tu n'en as plus en stock...", '');
     }
     this.G.stock[id]--;
     this.colis[id] = (this.colis[id] || 0) + 1;
+    if (enPlus) this.dire(OBJETS_DE_SOIN.includes(id) ? "Un soin de plus ? Merci, ça me fera un cœur de réserve !" : "Un de plus ? Ça peut toujours servir, merci !");
     this.majStock();
     this.majCommande();
   }
@@ -471,7 +493,7 @@ class CounterScene extends Phaser.Scene {
 
   // Refuser un client : il repart, et la réputation en prend un coup.
   refuser() {
-    if (!this.enService) return;
+    if (!this.voyageur) return;
     const v = this.voyageur;
     for (const [id, n] of Object.entries(this.colis)) this.G.stock[id] += n;
     this.colis = {};
@@ -509,7 +531,7 @@ class CounterScene extends Phaser.Scene {
     this.tweens.add({ targets: boite, scale: 5, duration: 250, ease: 'Back.easeOut' });
     objets.forEach((id, i) => this.time.delayedCall(300 + i * 170, () => {
       const depart = this.cases[id].fond;
-      const icone = this.add.image(depart.x - 38, depart.y, id).setScale(4).setDepth(6);
+      const icone = this.add.image(depart.x - 36, depart.y, id).setScale(3).setDepth(6);
       this.tweens.add({
         targets: icone, x: bx, y: SOL_COMPTOIR - 30, scale: 2, duration: 450, ease: 'Quad.easeIn',
         onComplete: () => {
@@ -520,7 +542,8 @@ class CounterScene extends Phaser.Scene {
     }));
     // On ferme le carton et on le ficelle...
     this.time.delayedCall(300 + objets.length * 170 + 500, () => {
-      boite.setTexture('colis');
+      // La forme du colis dépend de ce qu'il contient, sa taille du nombre d'objets.
+      boite.setTexture(formeColis(objets)).setScale(3.5 + Math.min(objets.length, 10) * 0.3);
       this.tweens.add({ targets: boite, angle: { from: -8, to: 8 }, duration: 90, yoyo: true, repeat: 2, onComplete: () => boite.setAngle(0) });
       const ficelle = this.add.text(bx, SOL_COMPTOIR - 60, 'Ficelé !', style(16, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 }))
         .setOrigin(0.5).setDepth(6);
@@ -548,6 +571,14 @@ class CounterScene extends Phaser.Scene {
     this.majStock();
     this.majCommande();
     this.dessinerPieces();
+    if (data && data.annule) {
+      this.choix(['Choisir sa destination', () => this.ouvrirCarte()], ['Refuser ce client', () => this.refuser()]);
+    }
+    if (data && data.destination) {
+      const v = this.voyageur;
+      this.dire(`${ZONES[data.destination].nom} ? Va pour ça ! ` + accord(v.accueil, v), this.nomAvecRelation(v.nom));
+      this.servir();
+    }
     if (data && data.achats && data.achats.length) {
       this.dire(`Grippesou t'a vendu : ${data.achats.join(', ')}. C'est déjà sur ton comptoir, prêt à servir !`, '');
     }
@@ -619,8 +650,12 @@ class CounterScene extends Phaser.Scene {
   majCommande() {
     const v = this.voyageur;
     const commande = v ? commandeDe(v) : {};
-    const ids = Object.keys(commande);
-    this.titreCommande.setText(v ? 'Commande de ' + v.nom : '');
+    const plus = v ? surplus(v, this.colis) : {};
+    // La commande, puis les soins donnés en plus.
+    const ids = [...Object.keys(commande), ...Object.keys(plus).filter(id => !commande[id])];
+    this.titreCommande.setText(v ? (v.queteId ? `${v.nom} · ${ZONES[v.zone].nom}` : `${v.nom} cherche l'aventure`) : '');
+    this.texteSac.setText(v && v.queteId ? `Sac : ${totalSurplus(v, this.colis)} / ${tailleSac(v)} en plus` +
+      (coeursEnPlus(v, this.colis) ? ` · +${coeursEnPlus(v, this.colis)} cœur${coeursEnPlus(v, this.colis) > 1 ? 's' : ''}` : '') : '');
     this.lignesCommande.forEach((ligne, i) => {
       const id = ids[i];
       ligne.id = id || null;
@@ -637,11 +672,17 @@ class CounterScene extends Phaser.Scene {
         ligne.txt.setText(texte).setFontSize(12).setColor(etat >= 2 ? '#2f6a2a' : '#8a5a10');
         return;
       }
+      if (!commande[id]) {
+        ligne.txt.setText(`${ITEMS[id].nom}  +${donne} (en plus)`).setFontSize(13).setColor('#1f5aa0');
+        return;
+      }
       const ok = donne >= commande[id];
-      ligne.txt.setText(`${ITEMS[id].nom}  ${donne} / ${commande[id]}  ${ok ? '✓' : ''}`)
-        .setFontSize(16).setColor(ok ? '#2f6a2a' : '#3b2410');
+      ligne.txt.setText(`${ITEMS[id].nom}  ${Math.min(donne, commande[id])} / ${commande[id]}  ${ok ? '✓' : ''}${plus[id] ? ` +${plus[id]}` : ''}`)
+        .setFontSize(14).setColor(ok ? '#2f6a2a' : '#3b2410');
     });
-    if (v) {
+    if (v && !v.queteId) {
+      this.texteChance.setText('Choisis sa destination').setColor('#8a6a10');
+    } else if (v) {
       // Ton flair estime les chances : faussé au début, précis avec l'expérience.
       const c = chanceEstimee(this.G, v, this.colis);
       const couleur = c >= 0.75 ? '#2f6a2a' : c >= 0.4 ? '#8a6a10' : '#a03030';
@@ -658,4 +699,15 @@ function listeCourte(lignes, max, siVide) {
   if (lignes.length === 0) return siVide;
   if (lignes.length <= max) return lignes.join('\n');
   return lignes.slice(0, max - 1).join('\n') + `\n+ ${lignes.length - max + 1} autres`;
+}
+
+// La forme d'un colis selon ce qu'il contient le plus : un sac de provisions, une longue
+// caisse d'armes, une boîte de soins... ou un paquet ficelé quand c'est un peu de tout.
+function formeColis(objets) {
+  const familles = { provisions: ['ration', 'gourde'], armes: ['epee', 'fleches', 'bouclier'], soins: ['potion', 'bandage', 'antidote'] };
+  const textures = { provisions: 'sac', armes: 'colisArmes', soins: 'colisSoins' };
+  for (const [famille, ids] of Object.entries(familles)) {
+    if (objets.filter(id => ids.includes(id)).length > objets.length / 2) return textures[famille];
+  }
+  return 'colis';
 }

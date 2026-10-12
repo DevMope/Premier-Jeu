@@ -95,7 +95,7 @@ class NightScene extends Phaser.Scene {
     this.lignesStock = {};
     Object.keys({ ...ITEMS, ...MATERIAUX }).forEach((id, i) => {
       const x = x1 + 24 + (i % 2) * 150;
-      const y = 140 + Math.floor(i / 2) * 44;
+      const y = 138 + Math.floor(i / 2) * 38;
       this.add.image(x, y, id).setScale(3);
       this.add.text(x + 20, y - 8, nomObjet(id), style(13, '#3b2410'));
       this.lignesStock[id] = this.add.text(x + 20, y + 8, '', style(13, '#3b2410', { fontStyle: 'bold' }));

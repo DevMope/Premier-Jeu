@@ -60,6 +60,36 @@ const ICONES = {
     pal: { a: 0x5a5e66, b: 0x6b4423 },
     px: ['........', 'aaaaaaa.', 'aaaaaaaa', '.aaaaa..', '..aaa...', '..aaa...', '.bbbbb..', 'bbbbbbb.'],
   },
+  // Nouveaux objets
+  antidote: {
+    pal: { a: 0x7a4a1e, b: 0xcfd8dc, c: 0x9fb4c0, d: 0x40b060, e: 0xb0f0c0 },
+    px: ['...aa...', '...bb...', '..cddc..', '.cddddc.', '.cdeddc.', '.cddddc.', '..cccc..', '........'],
+  },
+  cape: {
+    pal: { a: 0x5a3a1a, b: 0x8a5a2a, c: 0xf0e8d8 },
+    px: ['.cccccc.', '.abbbba.', 'abbbbbba', 'abbbbbba', 'abbbbbba', 'abbbbbba', 'abbbbbba', 'aaa..aaa'],
+  },
+  bouclier: {
+    pal: { a: 0x6a6f78, b: 0x8a3a2a, c: 0xe8c040 },
+    px: ['aaaaaaaa', 'abbbbbba', 'abbccbba', 'abccccba', 'abbccbba', '.abbbba.', '..abba..', '...aa...'],
+  },
+  amulette: {
+    pal: { a: 0xe8c040, b: 0x6a3aa0, c: 0xc8a0f0 },
+    px: ['a......a', '.a....a.', '..a..a..', '...aa...', '..abba..', '.abccba.', '..abba..', '...aa...'],
+  },
+  // Les colis : leur forme dépend de ce qu'il y a dedans.
+  sac: {
+    pal: { a: 0x7a5a2a, b: 0xb8945a, c: 0xe8d8a8 },
+    px: ['...cc...', '..acca..', '..abba..', '.abbbba.', 'abbbbbba', 'abbbbbba', 'abbbbbba', '.aaaaaa.'],
+  },
+  colisArmes: {
+    pal: { a: 0x4a2e14, b: 0x8a5a2b, c: 0xc0c8d0 },
+    px: ['aaaaaaaaaaaa', 'abbbbbbbbbba', 'abcccbbcccba', 'abbbbbbbbbba', 'aaaaaaaaaaaa'],
+  },
+  colisSoins: {
+    pal: { a: 0xb0a890, b: 0xf4f0e4, r: 0xd8344a },
+    px: ['aaaaaaaa', 'abbbbbba', 'abbrrbba', 'abrrrrba', 'abrrrrba', 'abbrrbba', 'abbbbbba', 'aaaaaaaa'],
+  },
   // Le colis ficelé qu'on remet à l'aventurier
   colis: {
     pal: { a: 0x6b4423, b: 0xc9a46a, c: 0xf3e6c8 },
@@ -260,31 +290,70 @@ function creerBouton(scene, x, y, largeur, texte, action) {
 
 // Paysage paisible façon « Comté » : ciel, collines, chemin.
 // `nuit` assombrit le tout (de 0 à 1).
-function dessinerComte(g, x, y, w, h, nuit = 0) {
+// Les couleurs de chaque paysage (ciel en haut, ciel en bas, collines lointaines, proches, chemin).
+const BIOMES = {
+  comte: { ciel: 0x8fd0f0, horizon: 0xf0e4b0, loin: 0x7fb069, pres: 0x5f9a48, chemin: 0xc9a46a, soleil: 0xfff2b0, porte: true },
+  foret: { ciel: 0x7ab0c8, horizon: 0xd8e0b0, loin: 0x3f6a3a, pres: 0x2f5a2a, chemin: 0x7a5a3a, soleil: 0xfff2b0, arbres: 0x1f4a22 },
+  marais: { ciel: 0x8a9a8a, horizon: 0xb0b890, loin: 0x5a6a3a, pres: 0x4a5a30, chemin: 0x4a5a40, soleil: 0xd8e0c0, roseaux: 0x6a7a3a },
+  mines: { ciel: 0x9ab0c0, horizon: 0xd0c8b0, loin: 0x7a7a80, pres: 0x5a5a60, chemin: 0x8a7a6a, soleil: 0xfff2b0, pics: 0x6a6a70 },
+  desert: { ciel: 0xa0d0f0, horizon: 0xf8e0a0, loin: 0xe0c080, pres: 0xd0a860, chemin: 0xe8d0a0, soleil: 0xfff8d0 },
+  neige: { ciel: 0xb0d0f0, horizon: 0xf0f4ff, loin: 0xe0e8f0, pres: 0xf8fbff, chemin: 0xd0d8e0, soleil: 0xffffff, pics: 0xc8d4e4 },
+  ruines: { ciel: 0x6a6080, horizon: 0xa090a0, loin: 0x5a5060, pres: 0x4a4050, chemin: 0x6a6070, soleil: 0xd0c8e0, colonnes: 0x8a8090 },
+  antre: { ciel: 0x5a2a2a, horizon: 0xc06030, loin: 0x4a2a20, pres: 0x3a1a18, chemin: 0x5a3a30, soleil: 0xff9040, pics: 0x2a1410 },
+};
+
+// Un paysage (la Comté par défaut, ou un autre biome). `nuit` assombrit le tout (de 0 à 1).
+function dessinerComte(g, x, y, w, h, nuit = 0, biome = 'comte') {
+  const b = BIOMES[biome] || BIOMES.comte;
   const melange = (jour, soir) => Phaser.Display.Color.Interpolate.ColorWithColor(
     Phaser.Display.Color.ValueToColor(jour), Phaser.Display.Color.ValueToColor(soir), 100, nuit * 100);
   const c = (jour, soir) => { const m = melange(jour, soir); return Phaser.Display.Color.GetColor(m.r, m.g, m.b); };
 
-  g.fillGradientStyle(c(0x8fd0f0, 0x1a1840), c(0x8fd0f0, 0x1a1840), c(0xf0e4b0, 0x8a4a50), c(0xf0e4b0, 0x8a4a50), 1);
+  g.fillGradientStyle(c(b.ciel, 0x1a1840), c(b.ciel, 0x1a1840), c(b.horizon, 0x8a4a50), c(b.horizon, 0x8a4a50), 1);
   g.fillRect(x, y, w, h);
   // Soleil
-  g.fillStyle(c(0xfff2b0, 0xf07040), 1);
+  g.fillStyle(c(b.soleil, 0xf07040), 1);
   g.fillCircle(x + w * 0.78, y + h * (0.22 + nuit * 0.4), 18);
+  // Montagnes pointues au loin (mines, pics, antre)
+  if (b.pics) {
+    g.fillStyle(c(b.pics, 0x2a3a40), 1);
+    for (let i = 0; i < 5; i++) g.fillTriangle(x + w * (i * 0.22 - 0.05), y + h * 0.7, x + w * (i * 0.22 + 0.06), y + h * (0.25 + (i % 2) * 0.1), x + w * (i * 0.22 + 0.17), y + h * 0.7);
+  }
   // Collines lointaines puis proches
-  g.fillStyle(c(0x7fb069, 0x2a3a40), 1);
+  g.fillStyle(c(b.loin, 0x2a3a40), 1);
   g.fillEllipse(x + w * 0.2, y + h * 0.75, w * 0.8, h * 0.5);
   g.fillEllipse(x + w * 0.85, y + h * 0.78, w * 0.7, h * 0.45);
-  g.fillStyle(c(0x5f9a48, 0x1f2e30), 1);
+  // Colonnes brisées (ruines)
+  if (b.colonnes) {
+    g.fillStyle(c(b.colonnes, 0x2a2a40), 1);
+    [0.12, 0.3, 0.62, 0.9].forEach((cx, i) => g.fillRect(x + w * cx, y + h * (0.45 + (i % 2) * 0.1), 14, h * 0.3));
+  }
+  g.fillStyle(c(b.pres, 0x1f2e30), 1);
   g.fillEllipse(x + w * 0.5, y + h * 0.95, w * 1.4, h * 0.5);
+  // Sapins (forêt)
+  if (b.arbres) {
+    g.fillStyle(c(b.arbres, 0x10201a), 1);
+    for (let i = 0; i < 9; i++) {
+      const ax = x + w * (0.04 + i * 0.115);
+      g.fillTriangle(ax - 18, y + h * 0.78, ax, y + h * (0.42 + (i % 3) * 0.06), ax + 18, y + h * 0.78);
+    }
+  }
+  // Roseaux (marais)
+  if (b.roseaux) {
+    g.fillStyle(c(b.roseaux, 0x1a2a1a), 1);
+    for (let i = 0; i < 24; i++) g.fillRect(x + w * (i / 24) + 6, y + h * 0.72 - (i % 3) * 8, 3, 30);
+  }
   // Petite porte ronde de hobbit dans la colline
-  g.fillStyle(c(0x3a6a2a, 0x18242a), 1);
-  g.fillCircle(x + w * 0.16, y + h * 0.8, 13);
-  g.fillStyle(c(0x2f6a9a, 0x1a2a40), 1);
-  g.fillCircle(x + w * 0.16, y + h * 0.8, 10);
-  g.fillStyle(c(0xe0c040, 0x806020), 1);
-  g.fillCircle(x + w * 0.16, y + h * 0.8, 2);
-  // Chemin de terre
-  g.fillStyle(c(0xc9a46a, 0x4a3a30), 1);
+  if (b.porte) {
+    g.fillStyle(c(0x3a6a2a, 0x18242a), 1);
+    g.fillCircle(x + w * 0.16, y + h * 0.8, 13);
+    g.fillStyle(c(0x2f6a9a, 0x1a2a40), 1);
+    g.fillCircle(x + w * 0.16, y + h * 0.8, 10);
+    g.fillStyle(c(0xe0c040, 0x806020), 1);
+    g.fillCircle(x + w * 0.16, y + h * 0.8, 2);
+  }
+  // Chemin
+  g.fillStyle(c(b.chemin, 0x4a3a30), 1);
   g.fillRect(x, y + h - 26, w, 26);
 }
 
