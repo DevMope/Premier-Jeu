@@ -14,7 +14,7 @@ Le jeu couvre toute une vie : on commence à ~15 ans dans un petit comptoir cosy
 ## 2. Boucle de jeu
 
 ```
-MATIN       → Le Mastre Marché : acheter le stock (légal), mini-jeux d'argent, mendiant
+MATIN       → Le Marché des Mastres : acheter le stock (légal), mini-jeux d'argent, mendiant
 JOUR        → Le comptoir : servir les voyageurs, préparer leurs commandes
 SOIR (rare) → Le Marché Noir : objets interdits, voyageurs nocturnes aux quêtes farfelues
 NUIT        → Bilan, améliorations du shop, dormir → jour suivant
@@ -46,7 +46,7 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
 - **Les longues quêtes** demandent plus de rations et rapportent plus (+30 % de butin par jour en plus).
 - **Les habitués et la réparation** : un aventurier revenu vivant peut revenir comme client. Il garde ses objets durables (épée, corde, gourde), qui s'usent à chaque épreuve (3 crans). Le joueur peut les réparer : ça ne coûte rien en stock, et c'est le client qui paie.
 - **La réserve** est limitée (20 places au départ), et on peut l'agrandir en payant (30, 40, puis 55 places).
-- **L'assortiment** du marché change chaque jour : les objets de base sont toujours là, les autres apparaissent au hasard en quantité limitée. Les prix varient (voir le Mastre Marché).
+- **L'assortiment** du marché change chaque jour : les objets de base sont toujours là, les autres apparaissent au hasard en quantité limitée. Les prix varient (voir le Marché des Mastres).
 - **Le marchand express** : le **Vieux Grippesou**, un vieux gobelin avare recroquevillé à côté de sa caravane (page à part, le client attend au comptoir). Il vend quelques objets au hasard, 2,5 fois plus cher, **utilisables tout de suite** : ce dont le client a besoin va directement dans son colis, le reste dans la réserve. Ce n'est jamais rentable : ça sert juste à sauver un voyage.
 - **La banque naine** (page à part) : des banquiers nains te toisent depuis leur immense bureau (Thorgrim Coffrefort et ses associés). Leurs prêts se débloquent avec la réputation (plus elle est haute, plus on peut emprunter, et moins cher). Les échéances sont prélevées chaque nuit.
 - **La Main Noire** (la mafia) ne prêtera qu'au joueur qui a choisi le camp du mal, plus tard dans le jeu.
@@ -57,7 +57,7 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
 - **La faillite** : on peut passer à découvert à cause des échéances de prêt ou des dédommagements ; à -100 pièces, le comptoir ferme. Une cinématique comique montre le banquier et ses gardes qui viennent tout saisir (parchemin de dettes trop long, garde qui trébuche, dernière pièce confisquée, planches clouées sur la porte).
 - **Capital de départ** : 80 pièces, pour tenir le temps que les premiers aventuriers reviennent.
 
-### 2.4 Le Mastre Marché (le matin)
+### 2.4 Le Marché des Mastres (le matin)
 Après la nuit, on se réveille au marché avant d'ouvrir le comptoir.
 - **Trois étals**, chacun avec son marchand, ses objets et ses prix du jour (ça vaut le coup de comparer) :
   - **Maître Gédéon** (épicerie) : rations, gourdes, torches, bandages, toujours là ;
@@ -73,7 +73,7 @@ Après la nuit, on se réveille au marché avant d'ouvrir le comptoir.
 - **Les trouvailles** : à la fin de son récit, un aventurier revenu vivant te montre parfois un ou deux objets de valeur. Il te les vend en dessous de leur valeur (encore moins cher si vous êtes amis).
 - Chaque objet a une **catégorie** (arme, armure, bijou, artefact, vêtement) et un **état** : cassé (×0,2), abîmé (×0,45), usé (×0,7), bon (×1), parfait (×1,4).
 - **L'atelier** (le soir, 8 places) : on répare un objet à la fois. Chaque réparation le fait monter d'un état et prend plusieurs jours au début (vêtement 2, arme et armure 3, bijou 4, artefact 5), un jour de moins par niveau d'artisanat. Les armes et armures demandent 1 fer, les vêtements 1 cuir.
-- **Les enchères** (au Mastre Marché, une vente par jour) : on propose un lot de 1 à 3 objets. Quatre enchérisseurs surenchérissent, chacun avec ses goûts : Lord Pommeroy (armes, armures), Dame Ysaline (bijoux, vêtements), Gros Bob le collectionneur (artefacts, bijoux), Thrain Fendroc (armes, artefacts). Un lot de la même catégorie plaît encore plus aux collectionneurs (+15 %).
+- **Les enchères** (au Marché des Mastres, une vente par jour) : on propose un lot de 1 à 3 objets. Quatre enchérisseurs surenchérissent, chacun avec ses goûts : Lord Pommeroy (armes, armures), Dame Ysaline (bijoux, vêtements), Gros Bob le collectionneur (artefacts, bijoux), Thrain Fendroc (armes, artefacts). Un lot de la même catégorie plaît encore plus aux collectionneurs (+15 %).
 - Le but : repérer l'objet abîmé qui prendra de la valeur une fois réparé.
 
 ### 2.6 Relations et familles
@@ -90,7 +90,7 @@ Après la nuit, on se réveille au marché avant d'ouvrir le comptoir.
 
 ### 2.7 Compétences du joueur (le côté RPG)
 - **Flair** : au début, l'estimation des chances (« Ton flair dit : ~60 % ») est faussée et arrondie. Elle s'affine avec l'expérience, jusqu'au pourcentage exact (40 clients servis).
-- **Marchandage** : la relation avec chaque marchand du Mastre Marché monte avec ce que tu dépenses chez lui (1 point par 25 pièces). Connaissance : −5 %, Amis : −10 % et plus de quantité, Frères de sang : −20 % et une décoration.
+- **Marchandage** : la relation avec chaque marchand du Marché des Mastres monte avec ce que tu dépenses chez lui (1 point par 25 pièces). Connaissance : −5 %, Amis : −10 % et plus de quantité, Frères de sang : −20 % et une décoration.
 - **Artisanat** : réparer coûte des matières premières (fer pour l'épée, cuir pour la corde et la gourde). Au début il en faut 3 par réparation, puis 1 de moins tous les 4 réparations (minimum 1).
 - **Les décorations** du shop donnent des bonus : Carte des contrées (+4 % par épreuve), Trophée de loup (plus de clients), Lanterne enchantée (+10 % de butin), Enclume naine (1 matériau de moins par réparation).
 - Plus tard : des talents à choisir aux grands âges de la vie.
@@ -172,7 +172,7 @@ Petit entrepôt en bois, cosy, façon auberge du Poney Fringant. Les clients ne 
 
 **Vue extérieure** : façade avec l'enseigne au nom choisi par le joueur.
 
-**Autres lieux** : le Mastre Marché (matin), le Marché Noir (certains soirs).
+**Autres lieux** : le Marché des Mastres (matin), le Marché Noir (certains soirs).
 
 **Plus tard : le petit bar** dans le shop. On y entend des rumeurs et des histoires, on y vend des boissons et on y engage des mercenaires.
 
@@ -204,8 +204,8 @@ Chaque étape doit donner une version **jouable**.
 | 2 ✅ | **Les quêtes dans le temps** | Plusieurs jours ; quêtes de durées variables ; les aventuriers reviennent faire la queue pour raconter leur récit, ou un colporteur rapporte leur carnet ; lettres de commandes annoncées ; prévision « entre X et Y clients » ; fournisseur simple le soir. |
 | 2+ ✅ | **Gérer son comptoir** | Refus de clients et de lettres, lettres plus exigeantes, habitués et réparations, réserve limitée, assortiment variable, marchand express, banque et Main Noire, faillite. |
 | 2++ ✅ | **Relations et cinématiques** | 7 niveaux de relation, familles des disparus, flair, marchandage, artisanat et matières premières, décorations, cinématique d'introduction, cinématique de faillite. |
-| 3+ ✅ | **Achat-revente** | Trouvailles des aventuriers, atelier de réparation sur plusieurs jours, enchères par lots au Mastre Marché. |
-| 3 ✅ | **Le Mastre Marché** | Le matin, avant d'ouvrir : trois étals (épicerie, forge, apothicaire) aux prix et assortiments variables, marchandage avec chaque marchand, dés et bonneteau, le mendiant. |
+| 3+ ✅ | **Achat-revente** | Trouvailles des aventuriers, atelier de réparation sur plusieurs jours, enchères par lots au Marché des Mastres. |
+| 3 ✅ | **Le Marché des Mastres** | Le matin, avant d'ouvrir : trois étals (épicerie, forge, apothicaire) aux prix et assortiments variables, marchandage avec chaque marchand, dés et bonneteau, le mendiant. |
 | 4 ✅ | **Les fiches et le bureau** | Le registre (fiches : à venir, aujourd'hui, en mission, revenus, disparus, répertoire), l'ardoise du chiffre d'affaires (jour, semaine, mois, année), trois tiroirs de statistiques, le calendrier. |
 | 5 | **Les deux vues du shop** | Comptoir ↔ arrière (stock + lit), façade avec le nom du shop. |
 | 6 ✅ | **Sauvegarde** | Automatique le soir et le matin : navigateur, compte claude.ai (version en ligne), et code de sauvegarde à copier-coller. Bouton Continuer à l'écran titre. |

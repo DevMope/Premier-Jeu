@@ -34,7 +34,7 @@ class NightScene extends Phaser.Scene {
     afficherStatutSauvegarde(this, 20, 22, 0);
   }
 
-  // Dormir : la nuit passe, et au matin, direction le Mastre Marché.
+  // Dormir : la nuit passe, et au matin, direction le Marché des Mastres.
   dormir() {
     nuit(this.G);
     if (this.G.faillite) Sauvegarde.supprimer();
@@ -88,10 +88,10 @@ class NightScene extends Phaser.Scene {
     c.add(this.add.text(x1 + 18, 360, listeCourte(missions, 5, 'Personne'), style(12, '#5a3a20', { lineSpacing: 2 })));
   }
 
-  // --- Ta réserve (on achète le matin, au Mastre Marché) ---
+  // --- Ta réserve (on achète le matin, au Marché des Mastres) ---
 
   creerReserve(x1, x2) {
-    this.add.text((x1 + x2) / 2, 110, 'Demain matin : le Mastre Marché', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
+    this.add.text((x1 + x2) / 2, 110, 'Demain matin : le Marché des Mastres', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.lignesStock = {};
     Object.keys({ ...ITEMS, ...MATERIAUX }).forEach((id, i) => {
       const x = x1 + 24 + (i % 2) * 150;

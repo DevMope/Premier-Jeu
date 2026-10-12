@@ -1,4 +1,4 @@
-// Le Mastre Marché, chaque matin avant d'ouvrir le comptoir :
+// Le Marché des Mastres, chaque matin avant d'ouvrir le comptoir :
 // trois étals (épicerie, forge, apothicaire), les enchères, le coin des jeux et le mendiant.
 // On clique sur un lieu pour l'ouvrir dans le panneau du bas.
 class MarcheScene extends Phaser.Scene {
@@ -15,10 +15,15 @@ class MarcheScene extends Phaser.Scene {
     g.fillStyle(0xa89a80).fillRect(0, 250, 960, 50);
     g.lineStyle(1, 0x8a7a60);
     for (let x = 0; x < 960; x += 24) g.lineBetween(x, 250, x + 12, 300);
-    this.add.text(480, 22, `Le Mastre Marché · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5);
+    this.add.text(480, 22, `Le Marché des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5);
 
     // Les étals
-    Object.entries(MARCHANDS).forEach(([cle, m], i) => this.creerEtal(cle, m, 230 + i * 180));
+    this.positions = { mendiant: [60, 'lieu'], encheres: [750, 'lieu'], jeux: [890, 'lieu'] };
+    Object.entries(MARCHANDS).forEach(([cle, m], i) => {
+      this.positions[cle] = [230 + i * 180, 'etal'];
+      this.creerEtal(cle, m, 230 + i * 180);
+    });
+    this.creerSurbrillance();
     this.creerLieu(60, 'perso_colporteur', 'Le mendiant', () => this.ouvrirMendiant(), { tint: 0x9a9a9a, angle: -6, echelle: 4.5 });
     // L'estrade des enchères, avec son crieur
     const estrade = this.add.graphics();
@@ -47,6 +52,26 @@ class MarcheScene extends Phaser.Scene {
       const t = this.add.text(480, 52, G.nouvellesAtelier.join(' '), style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 3 } })).setOrigin(0.5).setDepth(5);
       this.tweens.add({ targets: t, alpha: 0, delay: 6000, duration: 800 });
     }
+  }
+
+  // La flèche qui sautille et le contour lumineux autour du lieu qu'on regarde.
+  creerSurbrillance() {
+    this.contour = this.add.rectangle(0, 0, 10, 10).setStrokeStyle(3, 0xffe066).setDepth(4).setVisible(false);
+    this.tweens.add({ targets: this.contour, alpha: 0.35, duration: 600, yoyo: true, repeat: -1 });
+    const f = this.add.graphics().setDepth(4);
+    f.fillStyle(0xffe066).fillTriangle(-12, -10, 12, -10, 0, 8);
+    f.lineStyle(2, 0x3b2410).strokeTriangle(-12, -10, 12, -10, 0, 8);
+    this.flecheLieu = this.add.container(0, 0, [f]).setDepth(4).setVisible(false);
+    this.tweens.add({ targets: f, y: 8, duration: 450, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+
+  montrer(cle) {
+    const [x, type] = this.positions[cle];
+    const etal = type === 'etal';
+    this.contour.setVisible(true).setPosition(x, etal ? 158 : 205).setSize(etal ? 178 : 112, etal ? 196 : 118);
+    this.contour.geom.setSize(etal ? 178 : 112, etal ? 196 : 118);
+    this.contour.updateDisplayOrigin();
+    this.flecheLieu.setVisible(true).setPosition(x, etal ? 46 : 128);
   }
 
   // Un étal : auvent rayé aux couleurs du marchand, comptoir, marchand derrière.
@@ -174,6 +199,7 @@ class MarcheScene extends Phaser.Scene {
 
   ouvrirEtal(cle) {
     const G = this.G;
+    this.montrer(cle);
     const m = MARCHANDS[cle];
     const rel = niveauRelation(G, m.nom);
     const remise = remiseMarchand(G, cle);
@@ -210,6 +236,7 @@ class MarcheScene extends Phaser.Scene {
 
   ouvrirEncheres() {
     const G = this.G;
+    this.montrer('encheres');
     const c = this.panneau('Les enchères', 'Lord Pommeroy, Dame Ysaline, Gros Bob et Thrain Fendroc se disputent tes objets');
     if (G.encheresJour === G.jour) {
       c.add(this.add.text(30, 360, "La vente du jour est terminée. Reviens demain avec d'autres objets !", style(14, '#3b2410')));
@@ -277,6 +304,7 @@ class MarcheScene extends Phaser.Scene {
 
   ouvrirMendiant() {
     const G = this.G;
+    this.montrer('mendiant');
     const c = this.panneau('Le mendiant', `Tu lui as déjà donné ${G.mendiant} pièce${G.mendiant > 1 ? 's' : ''}`);
     c.add(this.add.text(30, 350, "Un vieil homme est assis contre la fontaine, une sébile ébréchée entre les mains.\nPersonne ne s'arrête jamais pour lui.",
       style(14, '#3b2410', { lineSpacing: 4 })));
@@ -292,6 +320,7 @@ class MarcheScene extends Phaser.Scene {
 
   ouvrirJeux() {
     const G = this.G;
+    this.montrer('jeux');
     const c = this.panneau('Le coin des jeux', 'Tenu par Fil-de-Fer, cousin du vieux Grippesou');
     c.add(this.add.rectangle(480, 395, 2, 120, 0x8a6a3a));
     // Les dés

@@ -17,7 +17,7 @@ class AtelierScene extends Phaser.Scene {
     this.add.image(60, 470, 'enclume').setOrigin(0.5, 1).setScale(6);
 
     this.add.text(480, 30, "L'atelier", style(28, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
-    this.add.text(480, 62, `Artisanat niv. ${niveauArtisanat(G)} · un objet à la fois · plus tu répares, plus ça va vite · vends tes objets aux enchères du Mastre Marché`,
+    this.add.text(480, 62, `Artisanat niv. ${niveauArtisanat(G)} · un objet à la fois · plus tu répares, plus ça va vite · vends tes objets aux enchères du Marché des Mastres`,
       style(12, '#c9b48a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.texteInfo = this.add.text(480, 445, '', style(14, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
 

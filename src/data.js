@@ -358,7 +358,7 @@ const MATERIAUX_DEPART = { fer: 2, cuir: 2 };
 // Au début il faut 3 matériaux par réparation ; l'artisanat en fait baisser le nombre.
 const MATERIAUX_PAR_REPARATION = 3;
 
-// --- Le Mastre Marché (le matin) ---
+// --- Le Marché des Mastres (le matin) ---
 
 // Les trois étals. `toujours` : objets disponibles tous les jours ; les autres apparaissent au hasard.
 const MARCHANDS = {
@@ -483,7 +483,7 @@ const TRESORS = [
 // On ne garde que ce nombre d'objets de valeur à l'atelier.
 const PLACES_ATELIER = 8;
 
-// Les enchérisseurs du Mastre Marché, et ce qu'ils aiment.
+// Les enchérisseurs du Marché des Mastres, et ce qu'ils aiment.
 const ENCHERISSEURS = [
   { nom: 'Lord Pommeroy', race: 'humain', aime: ['arme', 'armure'] },
   { nom: 'Dame Ysaline', race: 'elfe', aime: ['bijou', 'vetement'] },

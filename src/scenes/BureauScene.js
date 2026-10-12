@@ -117,7 +117,7 @@ class BureauScene extends Phaser.Scene {
         return connus.map(c => ({
           nom: c.nom, race: c.race,
           ligne: `${niveauRelation(G, c.nom).nom} (${G.relations[c.nom]} pts)${c.marchand ? ' · ' + MARCHANDS[c.marchand].metier : ''}`,
-          detail: () => c.marchand ? [`${MARCHANDS[c.marchand].metier} du Mastre Marché`, `Tu as dépensé ${G.depenses[c.marchand] || 0} pièces chez ${c.nom}.`,
+          detail: () => c.marchand ? [`${MARCHANDS[c.marchand].metier} du Marché des Mastres`, `Tu as dépensé ${G.depenses[c.marchand] || 0} pièces chez ${c.nom}.`,
             `Remise actuelle : ${Math.round(remiseMarchand(G, c.marchand) * 100)} %`] : [],
         }));
       }

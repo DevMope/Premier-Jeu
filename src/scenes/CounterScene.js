@@ -485,12 +485,53 @@ class CounterScene extends Phaser.Scene {
   }
 
   // Le client s'en va, vers la droite (vers l'aventure) ou la gauche (refusé).
-  partirPar(x) {
+  // `porte` : le colis que le client emporte avec lui.
+  partirPar(x, porte = null) {
     this.perso.setFlipX(x > this.perso.x);
+    const decalage = x > this.perso.x ? 26 : -26;
     this.tweens.add({
       targets: this.perso, x, duration: 1400, delay: 700, ease: 'Sine.easeIn',
       onStart: () => this.marche(1400),
-      onComplete: () => this.voyageurSuivant(),
+      onUpdate: () => { if (porte) porte.x = this.perso.x + decalage; },
+      onComplete: () => {
+        if (porte) porte.destroy();
+        this.voyageurSuivant();
+      },
+    });
+  }
+
+  // L'empaquetage : les objets volent de la réserve dans le carton, on le ficelle,
+  // puis le client le prend. `suite(colis)` est appelée quand il l'a dans les mains.
+  empaqueter(objets, suite) {
+    const bx = FENETRE.x + FENETRE.w / 2 + 80;
+    const boite = this.add.image(bx, SOL_COMPTOIR, 'colisOuvert').setOrigin(0.5, 1).setScale(0).setDepth(2.5);
+    boite.setMask(this.masqueFenetre);
+    this.tweens.add({ targets: boite, scale: 5, duration: 250, ease: 'Back.easeOut' });
+    objets.forEach((id, i) => this.time.delayedCall(300 + i * 170, () => {
+      const depart = this.cases[id].fond;
+      const icone = this.add.image(depart.x - 38, depart.y, id).setScale(4).setDepth(6);
+      this.tweens.add({
+        targets: icone, x: bx, y: SOL_COMPTOIR - 30, scale: 2, duration: 450, ease: 'Quad.easeIn',
+        onComplete: () => {
+          icone.destroy();
+          this.tweens.add({ targets: boite, scaleY: 4.5, duration: 70, yoyo: true });
+        },
+      });
+    }));
+    // On ferme le carton et on le ficelle...
+    this.time.delayedCall(300 + objets.length * 170 + 500, () => {
+      boite.setTexture('colis');
+      this.tweens.add({ targets: boite, angle: { from: -8, to: 8 }, duration: 90, yoyo: true, repeat: 2, onComplete: () => boite.setAngle(0) });
+      const ficelle = this.add.text(bx, SOL_COMPTOIR - 60, 'Ficelé !', style(16, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 }))
+        .setOrigin(0.5).setDepth(6);
+      this.tweens.add({ targets: ficelle, y: ficelle.y - 20, alpha: 0, delay: 400, duration: 500, onComplete: () => ficelle.destroy() });
+      // ... et le client le prend.
+      this.time.delayedCall(700, () => {
+        this.tweens.add({
+          targets: boite, x: this.perso.x + 26, y: this.perso.y - 36, scale: 4, duration: 350, ease: 'Sine.easeOut',
+          onComplete: () => suite(boite),
+        });
+      });
     });
   }
 
@@ -530,8 +571,14 @@ class CounterScene extends Phaser.Scene {
     const phrase = chance >= 0.75 ? `Parfait ! Je reviendrai ${jours} avec ta part du butin, promis !`
       : chance >= 0.4 ? `Ce n'est pas tout ce que je voulais... mais je ferai avec. Rendez-vous ${jours} !`
       : "C'est tout ? Bon... Souhaite-moi bonne chance.";
-    this.dire(phrase + (msg ? ' ' + msg : ''), this.nomAvecRelation(v.nom));
-    this.partirPar(FENETRE.x + FENETRE.w + 60);
+    const objets = Object.entries(this.colis).flatMap(([id, n]) => Array(n).fill(id));
+    const sEnAller = colis => {
+      this.dire(phrase + (msg ? ' ' + msg : ''), this.nomAvecRelation(v.nom));
+      this.partirPar(FENETRE.x + FENETRE.w + 60, colis);
+    };
+    if (!objets.length) return sEnAller(null);
+    this.dire('Tu prépares le colis...', '');
+    this.empaqueter(objets, sEnAller);
   }
 
   finDeJournee() {

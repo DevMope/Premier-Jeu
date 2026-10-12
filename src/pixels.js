@@ -60,6 +60,15 @@ const ICONES = {
     pal: { a: 0x5a5e66, b: 0x6b4423 },
     px: ['........', 'aaaaaaa.', 'aaaaaaaa', '.aaaaa..', '..aaa...', '..aaa...', '.bbbbb..', 'bbbbbbb.'],
   },
+  // Le colis ficelé qu'on remet à l'aventurier
+  colis: {
+    pal: { a: 0x6b4423, b: 0xc9a46a, c: 0xf3e6c8 },
+    px: ['aaaaaaaa', 'abbbcbba', 'abbbcbba', 'cccccccc', 'abbbcbba', 'abbbcbba', 'abbbcbba', 'aaaaaaaa'],
+  },
+  colisOuvert: {
+    pal: { a: 0x6b4423, b: 0xc9a46a, d: 0x3b2410 },
+    px: ['a......a', 'ad....da', 'addddda.', 'abbbbbba', 'abbbbbba', 'abbbbbba', 'abbbbbba', 'aaaaaaaa'],
+  },
   caisse: {
     pal: { a: 0x6b4423, b: 0xa8743c },
     px: ['aaaaaaaa', 'abbbbbba', 'aabbbbaa', 'abababba', 'abbabbba', 'aabbbbaa', 'abbbbbba', 'aaaaaaaa'],
