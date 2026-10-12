@@ -41,7 +41,7 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
 - Tableau de chiffre d'affaires : jour / semaine / mois / année.
 
 ### 2.3 Gérer son comptoir
-- **Refuser** : on peut refuser un client (pour ne pas l'envoyer à une mort certaine) ou une commande par lettre. Ça coûte de la réputation : 1 point pour un client, 0,5 pour une lettre.
+- **Refuser** : on peut refuser un client (pour ne pas l'envoyer à une mort certaine) ou une commande par lettre. Ça coûte de la réputation : 1 point pour un client, 0,2 pour une lettre.
 - **Les lettres** sont plus exigeantes (une ou deux épreuves demandent un objet de plus) mais rapportent 25 % de plus.
 - **Les longues quêtes** demandent plus de rations et rapportent plus (+30 % de butin par jour en plus).
 - **Les habitués et la réparation** : un aventurier revenu vivant peut revenir comme client. Il garde ses objets durables (épée, corde, gourde), qui s'usent à chaque épreuve (3 crans). Le joueur peut les réparer : ça ne coûte rien en stock, et c'est le client qui paie.
@@ -68,7 +68,14 @@ Après la nuit, on se réveille au marché avant d'ouvrir le comptoir.
 - **Le mendiant** : on peut lui donner 1, 5 ou 10 pièces. Ta générosité est mémorisée. Au-delà de 30 pièces, il t'offre le **Trèfle du mendiant** (+1 aux dés, bonneteau plus lent). Il pourra jouer un rôle plus tard dans l'histoire.
 - **La prévision** du soir est une estimation : le vrai nombre de clients est tiré à l'ouverture du comptoir, donc un stock varié acheté le matin attire encore du monde.
 
-### 2.5 Relations et familles
+### 2.5 Achat-revente : trouvailles, atelier, enchères
+- **Les trouvailles** : à la fin de son récit, un aventurier revenu vivant te montre parfois un ou deux objets de valeur. Il te les vend en dessous de leur valeur (encore moins cher si vous êtes amis).
+- Chaque objet a une **catégorie** (arme, armure, bijou, artefact, vêtement) et un **état** : cassé (×0,2), abîmé (×0,45), usé (×0,7), bon (×1), parfait (×1,4).
+- **L'atelier** (le soir, 8 places) : on répare un objet à la fois. Chaque réparation le fait monter d'un état et prend plusieurs jours au début (vêtement 2, arme et armure 3, bijou 4, artefact 5), un jour de moins par niveau d'artisanat. Les armes et armures demandent 1 fer, les vêtements 1 cuir.
+- **Les enchères** (au Mastre Marché, une vente par jour) : on propose un lot de 1 à 3 objets. Quatre enchérisseurs surenchérissent, chacun avec ses goûts : Lord Pommeroy (armes, armures), Dame Ysaline (bijoux, vêtements), Gros Bob le collectionneur (artefacts, bijoux), Thrain Fendroc (armes, artefacts). Un lot de la même catégorie plaît encore plus aux collectionneurs (+15 %).
+- Le but : repérer l'objet abîmé qui prendra de la valeur une fois réparé.
+
+### 2.6 Relations et familles
 - Chaque client a une relation avec le joueur : **Pires ennemis, Ne s'aiment pas, Hypocrite, Neutre (ou Inconnu), Connaissance, Amis, Frères de sang**.
 - Elle bouge selon tes actes : colis complet (+1), colis pauvre (−1), retour vivant (+2), réparation (+1), refus (−3), lettre refusée (−1).
 - Effets : la part de butin reversée va de ×0,6 (pires ennemis) à ×1,25 (frères de sang).
@@ -80,19 +87,19 @@ Après la nuit, on se réveille au marché avant d'ouvrir le comptoir.
   - **la relève** : il reprend la quête du disparu, et tu l'équipes ;
   - **un hommage** (frères de sang) : le disparu t'a laissé une décoration.
 
-### 2.6 Compétences du joueur (le côté RPG)
+### 2.7 Compétences du joueur (le côté RPG)
 - **Flair** : au début, l'estimation des chances (« Ton flair dit : ~60 % ») est faussée et arrondie. Elle s'affine avec l'expérience, jusqu'au pourcentage exact (40 clients servis).
 - **Marchandage** : la relation avec chaque marchand du Mastre Marché monte avec ce que tu dépenses chez lui (1 point par 25 pièces). Connaissance : −5 %, Amis : −10 % et plus de quantité, Frères de sang : −20 % et une décoration.
 - **Artisanat** : réparer coûte des matières premières (fer pour l'épée, cuir pour la corde et la gourde). Au début il en faut 3 par réparation, puis 1 de moins tous les 4 réparations (minimum 1).
 - **Les décorations** du shop donnent des bonus : Carte des contrées (+4 % par épreuve), Trophée de loup (plus de clients), Lanterne enchantée (+10 % de butin), Enclume naine (1 matériau de moins par réparation).
 - Plus tard : des talents à choisir aux grands âges de la vie.
 
-### 2.7 Risque : le marché noir
+### 2.8 Risque : le marché noir
 - Ouvre certains soirs seulement.
 - Grimoires interdits, potions illégales, artefacts.
 - Voyageurs nocturnes : quêtes farfelues, gros gains possibles, mais s'ils se font prendre, **les conséquences retombent sur le joueur**.
 
-### 2.8 Aider pendant l'aventure
+### 2.9 Aider pendant l'aventure
 - **Le grand aigle** (familier à débloquer) : quand un aventurier en mission envoie un message de détresse, l'aigle peut lui apporter rapidement des objets.
 - **Les mercenaires** : on peut en envoyer un nombre limité de fois par jour pour récupérer le butin perdu par un aventurier mort.
 
@@ -190,6 +197,7 @@ Chaque étape doit donner une version **jouable**.
 | 2 ✅ | **Les quêtes dans le temps** | Plusieurs jours ; quêtes de durées variables ; les aventuriers reviennent faire la queue pour raconter leur récit, ou un colporteur rapporte leur carnet ; lettres de commandes annoncées ; prévision « entre X et Y clients » ; fournisseur simple le soir. |
 | 2+ ✅ | **Gérer son comptoir** | Refus de clients et de lettres, lettres plus exigeantes, habitués et réparations, réserve limitée, assortiment variable, marchand express, banque et Main Noire, faillite. |
 | 2++ ✅ | **Relations et cinématiques** | 7 niveaux de relation, familles des disparus, flair, marchandage, artisanat et matières premières, décorations, cinématique d'introduction, cinématique de faillite. |
+| 3+ ✅ | **Achat-revente** | Trouvailles des aventuriers, atelier de réparation sur plusieurs jours, enchères par lots au Mastre Marché. |
 | 3 ✅ | **Le Mastre Marché** | Le matin, avant d'ouvrir : trois étals (épicerie, forge, apothicaire) aux prix et assortiments variables, marchandage avec chaque marchand, dés et bonneteau, le mendiant. |
 | 4 | **Les fiches et le bureau** | Fiches voyageurs (à venir/présents/partis/revenus), voyageurs annoncés à l'avance, tableau de CA, tiroirs de stats. |
 | 5 | **Les deux vues du shop** | Comptoir ↔ arrière (stock + lit), façade avec le nom du shop. |

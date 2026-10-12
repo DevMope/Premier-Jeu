@@ -125,7 +125,43 @@ class StoryScene extends Cinematique {
     const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => this.scene.start('Comptoir'));
     retour.fond.setDepth(11);
     retour.label.setDepth(11);
-    if (r.vivant) this.proposerSoins();
+    if (r.vivant) {
+      this.proposerSoins();
+      this.proposerTrouvailles();
+    }
+  }
+
+  // L'aventurier te montre ce qu'il a rapporté : à toi de repérer la bonne affaire.
+  proposerTrouvailles() {
+    const G = this.G;
+    const liste = this.parti.trouvailles || [];
+    if (!liste.length) return;
+    const c = this.add.container(0, 0).setDepth(12);
+    const h = 90 + liste.length * 54;
+    c.add(this.add.rectangle(290, 70 + h / 2, 540, h, 0xead9b0).setStrokeStyle(3, 0x8a6a3a));
+    c.add(this.add.text(40, 84, "« J'ai aussi ramené ça de mon voyage. Ça t'intéresse ? »", style(14, '#3b2410', { fontStyle: 'bold' })));
+    const info = this.add.text(40, 70 + h - 24, '', style(12, '#a03030', { fontStyle: 'bold', wordWrap: { width: 500 } }));
+    c.add(info);
+    liste.forEach((t, i) => {
+      const y = 130 + i * 54;
+      const tr = t.tresor;
+      c.add(this.add.image(60, y, 'tr_' + tr.categorie).setScale(4));
+      c.add(this.add.text(90, y - 16, tr.nom, style(15, '#3b2410', { fontStyle: 'bold' })));
+      c.add(this.add.text(90, y + 4, `${CATEGORIES[tr.categorie].nom} · état : ${ETATS[tr.etat].nom} · vaut ~${valeurTresor(tr)} p. en l'état`, style(12, '#5a3a20')));
+      const b = creerBouton(this, 470, y, 140, '', () => {
+        const erreur = acheterTrouvaille(G, t);
+        if (erreur) return info.setText(erreur);
+        info.setColor('#2f6a2a').setText(`${tr.nom} rejoint ton atelier. Répare-le pour en tirer plus aux enchères !`);
+        maj();
+      });
+      b.fond.setDepth(13);
+      b.label.setDepth(13);
+      const maj = () => {
+        b.setTexte(t.vendu ? 'Acheté' : `Acheter ${t.prix} p.`);
+        b.setActif(!t.vendu);
+      };
+      maj();
+    });
   }
 
   // L'aventurier est mort : sa famille doit être dédommagée. Trois montants au choix.

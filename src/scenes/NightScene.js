@@ -22,6 +22,10 @@ class NightScene extends Phaser.Scene {
     this.events.off('resume', this.tout, this);
     this.events.on('resume', this.tout, this);
     creerBouton(this, 480, 505, 240, 'Aller dormir', () => this.dormir());
+    creerBouton(this, 800, 505, 200, `L'atelier (${G.tresors.length})`, () => {
+      this.scene.pause();
+      this.scene.launch('Atelier');
+    });
     this.tout();
   }
 

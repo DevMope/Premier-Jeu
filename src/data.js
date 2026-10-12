@@ -58,7 +58,7 @@ const DEDOMMAGEMENTS = {
 };
 
 // Réputation perdue quand on refuse.
-const REFUS_LETTRE = 0.5;
+const REFUS_LETTRE = 0.2;
 const REFUS_CLIENT = 1;
 
 // Les prêts : les banquiers nains prêtent plus, et moins cher, quand ta réputation grandit.
@@ -419,3 +419,56 @@ const APPARENCE = {
   haut: [['Bleu', 0x3a5a8a], ['Rouge', 0x9a3a2a], ['Vert', 0x4f7a3a], ['Violet', 0x6a4aa0], ['Moutarde', 0xc9a227], ['Gris', 0x6a6f78]],
   bas: [['Brun', 0x6a5a40], ['Noir', 0x2a2a30], ['Vert', 0x3a4a3a], ['Bleu', 0x3a4a6a], ['Beige', 0xb09a70]],
 };
+
+// --- Achat-revente : trouvailles, atelier, enchères ---
+
+// Les catégories d'objets de valeur. `materiau` : ce qu'il faut pour les réparer ;
+// `duree` : jours de réparation au début (l'artisanat les raccourcit).
+const CATEGORIES = {
+  arme: { nom: 'Arme', materiau: 'fer', duree: 3 },
+  armure: { nom: 'Armure', materiau: 'fer', duree: 3 },
+  bijou: { nom: 'Bijou', materiau: null, duree: 4 },
+  artefact: { nom: 'Artefact', materiau: null, duree: 5 },
+  vetement: { nom: 'Vêtement', materiau: 'cuir', duree: 2 },
+};
+
+// Les états, du pire au meilleur, et leur effet sur la valeur.
+const ETATS = [
+  { nom: 'Cassé', valeur: 0.2 },
+  { nom: 'Abîmé', valeur: 0.45 },
+  { nom: 'Usé', valeur: 0.7 },
+  { nom: 'Bon', valeur: 1 },
+  { nom: 'Parfait', valeur: 1.4 },
+];
+
+// Les objets que les aventuriers peuvent rapporter (valeur en parfait état... presque).
+const TRESORS = [
+  { nom: 'Hache runique', categorie: 'arme', valeur: 60 },
+  { nom: 'Dague elfique', categorie: 'arme', valeur: 45 },
+  { nom: 'Arc en if ancien', categorie: 'arme', valeur: 55 },
+  { nom: 'Marteau de guerre nain', categorie: 'arme', valeur: 70 },
+  { nom: 'Casque de chevalier', categorie: 'armure', valeur: 50 },
+  { nom: 'Bouclier blasonné', categorie: 'armure', valeur: 40 },
+  { nom: 'Cotte de mailles', categorie: 'armure', valeur: 65 },
+  { nom: 'Bague en argent', categorie: 'bijou', valeur: 35 },
+  { nom: 'Amulette de jade', categorie: 'bijou', valeur: 55 },
+  { nom: 'Couronne de baronnie', categorie: 'bijou', valeur: 90 },
+  { nom: 'Orbe de brume', categorie: 'artefact', valeur: 100 },
+  { nom: 'Statuette d\'ivoire', categorie: 'artefact', valeur: 60 },
+  { nom: 'Sablier des anciens', categorie: 'artefact', valeur: 85 },
+  { nom: 'Cape de voyageur', categorie: 'vetement', valeur: 25 },
+  { nom: 'Bottes de sept lieues usées', categorie: 'vetement', valeur: 45 },
+  { nom: 'Chapeau de mage', categorie: 'vetement', valeur: 35 },
+];
+
+// On ne garde que ce nombre d'objets de valeur à l'atelier.
+const PLACES_ATELIER = 8;
+
+// Les enchérisseurs du Mastre Marché, et ce qu'ils aiment.
+const ENCHERISSEURS = [
+  { nom: 'Lord Pommeroy', race: 'humain', aime: ['arme', 'armure'] },
+  { nom: 'Dame Ysaline', race: 'elfe', aime: ['bijou', 'vetement'] },
+  { nom: 'Gros Bob le collectionneur', race: 'hobbit', aime: ['artefact', 'bijou'] },
+  { nom: 'Thrain Fendroc', race: 'nain', aime: ['arme', 'artefact'] },
+];
+const OBJETS_PAR_LOT = 3;

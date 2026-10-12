@@ -174,6 +174,9 @@ function nouvellePartie({ feminin = false, apparence = null } = {}) {
     etals: {},         // ce que vend chaque marchand ce matin : { marchand: { id: { prix, qte } } }
     jeux: { des: 0, bonneteau: 0 },
     mendiant: 0,       // total donné au mendiant
+    tresors: [],       // objets de valeur à l'atelier : { id, nom, categorie, valeurBase, etat, reparation }
+    nouvellesAtelier: [],
+    encheresJour: 0,   // le jour de la dernière vente aux enchères
     visites: [],       // familles qui viendront au comptoir : { jour, defunt, parent }
     jour: 1,
     argent: ARGENT_DEPART,
@@ -416,7 +419,8 @@ function changerRelation(G, nom, delta) {
 }
 
 function offrirDecoration(G) {
-  const libres = Object.keys(DECORATIONS).filter(id => !G.decorations.includes(id));
+  // Le trèfle ne s'obtient que par le mendiant.
+  const libres = Object.keys(DECORATIONS).filter(id => id !== 'trefle' && !G.decorations.includes(id));
   if (!libres.length) {
     G.argent += 50;
     return 'Il t\'offre une bourse de 50 pièces.';
@@ -625,6 +629,7 @@ function nuit(G) {
   G.journal = { servis: 0, retours: 0, morts: 0 };
   G.etals = etalsDuJour(G);
   G.jeux = { des: 0, bonneteau: 0 };
+  avancerAtelier(G);
 }
 
 // On ouvre le comptoir : la file d'attente du jour se forme.
@@ -680,6 +685,7 @@ function terminerAventure(G, parti) {
     message = changerRelation(G, v.nom, POINTS_RELATION.retourVivant);
     const derniere = r.etapes[r.etapes.length - 1];
     G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures: v.pv - derniere.pvApres });
+    parti.trouvailles = trouvailles(G, v);
   } else {
     if (!r.valeureux) G.reputation--;
     G.journal.morts++;
@@ -738,6 +744,118 @@ function stadeJoueur(G) {
 
 function nomJoueur(G, stade = stadeJoueur(G)) {
   return NOMS_JOUEUR[G.joueur.feminin ? 'fille' : 'garcon'][stade];
+}
+
+// --- Achat-revente ---
+
+function valeurTresor(t) {
+  return Math.round(t.valeurBase * ETATS[t.etat].valeur);
+}
+
+function creerTresor(G) {
+  const modele = auHasard(TRESORS);
+  const r = Math.random();
+  const etat = r < 0.25 ? 0 : r < 0.6 ? 1 : r < 0.85 ? 2 : 3;
+  return {
+    id: G.prochainId++,
+    nom: modele.nom,
+    categorie: modele.categorie,
+    valeurBase: Math.round(modele.valeur * Phaser.Math.FloatBetween(0.85, 1.15)),
+    etat,
+    reparation: null,
+  };
+}
+
+// Ce qu'un aventurier revenu rapporte et te propose : souvent rien, parfois un ou deux objets.
+// Il les vend en dessous de leur valeur (moins cher encore à un ami).
+function trouvailles(G, voyageur) {
+  const r = Math.random();
+  const n = r < 0.4 ? 0 : r < 0.85 ? 1 : 2;
+  const ami = niveauRelation(G, voyageur.nom).index >= 5 ? 0.85 : 1;
+  const liste = [];
+  for (let i = 0; i < n; i++) {
+    const tresor = creerTresor(G);
+    liste.push({ tresor, prix: Math.max(3, Math.round(valeurTresor(tresor) * Phaser.Math.FloatBetween(0.5, 0.8) * ami)), vendu: false });
+  }
+  return liste;
+}
+
+function acheterTrouvaille(G, t) {
+  if (t.vendu) return 'Déjà acheté.';
+  if (G.tresors.length >= PLACES_ATELIER) return `Ton atelier est plein (${PLACES_ATELIER} objets).`;
+  if (!peutPayer(G, t.prix)) return "Pas assez d'argent.";
+  G.argent -= t.prix;
+  t.vendu = true;
+  G.tresors.push(t.tresor);
+  return null;
+}
+
+// Plus ton artisanat est haut, plus les réparations vont vite.
+function dureeReparation(G, t) {
+  return Math.max(1, CATEGORIES[t.categorie].duree - niveauArtisanat(G));
+}
+
+function enReparation(G) {
+  return G.tresors.find(t => t.reparation);
+}
+
+// Lancer la réparation d'un objet : un seul à la fois, et il faut le matériau.
+// Renvoie un message d'erreur, ou null.
+function reparerTresor(G, t) {
+  if (t.etat >= ETATS.length - 1) return 'Il est déjà en parfait état.';
+  if (enReparation(G)) return 'Ton atelier répare déjà un autre objet.';
+  const mat = CATEGORIES[t.categorie].materiau;
+  if (mat && G.materiaux[mat] < 1) return `Il te faut 1 ${MATERIAUX[mat].nom.toLowerCase()}.`;
+  if (mat) G.materiaux[mat]--;
+  t.reparation = { jours: dureeReparation(G, t) };
+  return null;
+}
+
+// Chaque nuit, la réparation en cours avance d'un jour.
+function avancerAtelier(G) {
+  G.nouvellesAtelier = [];
+  const t = enReparation(G);
+  if (!t) return;
+  t.reparation.jours--;
+  if (t.reparation.jours > 0) return;
+  t.reparation = null;
+  t.etat++;
+  G.reparations++;
+  G.nouvellesAtelier.push(`L'atelier a fini : ${t.nom} est maintenant « ${ETATS[t.etat].nom} » (valeur ~${valeurTresor(t)} p.).`);
+}
+
+// Les enchères : chaque enchérisseur estime le lot selon ses goûts. Un lot de la même
+// catégorie plaît encore plus aux collectionneurs. Renvoie le déroulé de la vente.
+function vendreAuxEncheres(G, lot) {
+  const estimation = lot.reduce((s, t) => s + valeurTresor(t), 0);
+  const parCategorie = {};
+  lot.forEach(t => { parCategorie[t.categorie] = (parCategorie[t.categorie] || 0) + 1; });
+  const acheteurs = ENCHERISSEURS.map(e => {
+    let max = lot.reduce((s, t) => s + valeurTresor(t) *
+      (e.aime.includes(t.categorie) ? Phaser.Math.FloatBetween(1.05, 1.45) : Phaser.Math.FloatBetween(0.6, 1.0)), 0);
+    if (Object.entries(parCategorie).some(([cat, n]) => n >= 2 && e.aime.includes(cat))) max *= 1.15;
+    return { ...e, max: Math.round(max) };
+  });
+  const pas = Math.max(2, Math.round(estimation * 0.06));
+  let prix = Math.round(estimation * 0.4);
+  let gagnant = null;
+  const deroule = [];
+  let encore = true;
+  while (encore) {
+    encore = false;
+    for (const a of Phaser.Utils.Array.Shuffle([...acheteurs])) {
+      if (a === gagnant || a.max < prix + pas) continue;
+      prix += pas;
+      gagnant = a;
+      deroule.push({ nom: a.nom, montant: prix });
+      encore = true;
+    }
+  }
+  G.encheresJour = G.jour;
+  if (!gagnant) return { deroule, gagnant: null, prix: 0, estimation };
+  G.tresors = G.tresors.filter(t => !lot.includes(t));
+  G.argent += prix;
+  return { deroule, gagnant, prix, estimation };
 }
 
 function enMission(G) {

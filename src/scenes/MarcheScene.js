@@ -1,5 +1,5 @@
 // Le Mastre Marché, chaque matin avant d'ouvrir le comptoir :
-// trois étals (épicerie, forge, apothicaire), le coin des jeux et le mendiant.
+// trois étals (épicerie, forge, apothicaire), les enchères, le coin des jeux et le mendiant.
 // On clique sur un lieu pour l'ouvrir dans le panneau du bas.
 class MarcheScene extends Phaser.Scene {
   constructor() { super('Marche'); }
@@ -18,9 +18,14 @@ class MarcheScene extends Phaser.Scene {
     this.add.text(480, 22, `Le Mastre Marché · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5);
 
     // Les étals
-    Object.entries(MARCHANDS).forEach(([cle, m], i) => this.creerEtal(cle, m, 270 + i * 210));
-    this.creerLieu(70, 'perso_colporteur', 'Le mendiant', () => this.ouvrirMendiant(), { tint: 0x9a9a9a, angle: -6, echelle: 4.5 });
-    this.creerLieu(885, 'perso_gobelin', 'Le coin des jeux', () => this.ouvrirJeux(), { echelle: 4.5 });
+    Object.entries(MARCHANDS).forEach(([cle, m], i) => this.creerEtal(cle, m, 230 + i * 180));
+    this.creerLieu(60, 'perso_colporteur', 'Le mendiant', () => this.ouvrirMendiant(), { tint: 0x9a9a9a, angle: -6, echelle: 4.5 });
+    // L'estrade des enchères, avec son crieur
+    const estrade = this.add.graphics();
+    estrade.fillStyle(0x6b4423).fillRect(705, 225, 90, 22);
+    estrade.fillStyle(0x7a1a1a).fillRect(715, 120, 70, 14);
+    this.creerLieu(750, 'perso_humain', 'Les enchères', () => this.ouvrirEncheres(), { echelle: 4.5 }).setY(228);
+    this.creerLieu(890, 'perso_gobelin', 'Le coin des jeux', () => this.ouvrirJeux(), { echelle: 4.5 });
 
     // Le panneau du bas et la barre d'infos
     this.add.rectangle(480, 388, 940, 168, 0xead9b0).setStrokeStyle(3, 0x8a6a3a);
@@ -29,23 +34,28 @@ class MarcheScene extends Phaser.Scene {
     creerBouton(this, 840, 510, 220, 'Ouvrir le comptoir', () => this.ouvrir());
 
     this.ouvrirEtal('gedeon');
+    // Les nouvelles de l'atelier (une réparation terminée cette nuit)
+    if (G.nouvellesAtelier.length) {
+      const t = this.add.text(480, 52, G.nouvellesAtelier.join(' '), style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 3 } })).setOrigin(0.5).setDepth(5);
+      this.tweens.add({ targets: t, alpha: 0, delay: 6000, duration: 800 });
+    }
   }
 
   // Un étal : auvent rayé aux couleurs du marchand, comptoir, marchand derrière.
   creerEtal(cle, m, x) {
     const g = this.add.graphics();
-    g.fillStyle(0x6b4423).fillRect(x - 92, 80, 8, 150).fillRect(x + 84, 80, 8, 150);
-    for (let i = 0; i < 8; i++) {
-      g.fillStyle(i % 2 ? 0xf3e6c8 : m.couleur).fillRect(x - 96 + i * 24, 66, 24, 30);
+    g.fillStyle(0x6b4423).fillRect(x - 82, 80, 8, 150).fillRect(x + 74, 80, 8, 150);
+    for (let i = 0; i < 7; i++) {
+      g.fillStyle(i % 2 ? 0xf3e6c8 : m.couleur).fillRect(x - 84 + i * 24, 66, 24, 30);
     }
     this.add.image(x, 205, 'perso_' + m.race).setOrigin(0.5, 1).setScale(5);
     const comptoir = this.add.graphics();
-    comptoir.fillStyle(0x8a5a2b).fillRect(x - 90, 196, 180, 44);
-    comptoir.fillStyle(0x6b4423).fillRect(x - 90, 196, 180, 6);
-    Object.keys(this.G.etals[cle] || {}).slice(0, 4).forEach((id, i) => this.add.image(x - 60 + i * 40, 188, id).setScale(3));
+    comptoir.fillStyle(0x8a5a2b).fillRect(x - 80, 196, 160, 44);
+    comptoir.fillStyle(0x6b4423).fillRect(x - 80, 196, 160, 6);
+    Object.keys(this.G.etals[cle] || {}).slice(0, 4).forEach((id, i) => this.add.image(x - 54 + i * 36, 188, id).setScale(3));
     this.add.text(x, 254, m.nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
     this.add.text(x, 272, m.metier, style(11, '#fff4dc', { stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);
-    const zone = this.add.rectangle(x, 160, 190, 140, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    const zone = this.add.rectangle(x, 160, 170, 140, 0xffffff, 0).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => this.ouvrirEtal(cle));
   }
 
@@ -122,6 +132,73 @@ class MarcheScene extends Phaser.Scene {
         this.message(r.message || `Acheté : ${nomObjet(id)}.`);
       });
       if (o.qte <= 0 || !peutPayer(G, prixMarchand(G, cle, id))) { b.fond.setAlpha(0.5); b.label.setAlpha(0.5); }
+    });
+  }
+
+  // --- Les enchères : on choisit jusqu'à 3 objets, qui forment un lot ---
+
+  ouvrirEncheres() {
+    const G = this.G;
+    const c = this.panneau('Les enchères', 'Lord Pommeroy, Dame Ysaline, Gros Bob et Thrain Fendroc se disputent tes objets');
+    if (G.encheresJour === G.jour) {
+      c.add(this.add.text(30, 360, "La vente du jour est terminée. Reviens demain avec d'autres objets !", style(14, '#3b2410')));
+      return;
+    }
+    const dispo = G.tresors.filter(t => !t.reparation);
+    if (!dispo.length) {
+      c.add(this.add.text(30, 352, "Tu n'as aucun objet à vendre.\nRachète des objets aux aventuriers à la fin de leur récit, et répare-les à l'atelier (le soir).",
+        style(14, '#3b2410', { lineSpacing: 4 })));
+      return;
+    }
+    this.lot = this.lot ? this.lot.filter(t => dispo.includes(t)) : [];
+    c.add(this.add.text(30, 336, `Clique sur 1 à ${OBJETS_PAR_LOT} objets pour former un lot. Un lot de la même catégorie attire les collectionneurs.`, style(12, '#6b4a2a', { fontStyle: 'italic' })));
+    dispo.slice(0, 8).forEach((t, i) => {
+      const x = 30 + (i % 2) * 260;
+      const y = 362 + Math.floor(i / 2) * 26;
+      const choisi = this.lot.includes(t);
+      const fond = this.add.rectangle(x + 125, y, 250, 24, choisi ? 0xc9a046 : 0xd8c498).setStrokeStyle(1, 0x8a6a3a).setInteractive({ useHandCursor: true });
+      fond.on('pointerdown', () => {
+        if (choisi) this.lot = this.lot.filter(x => x !== t);
+        else if (this.lot.length < OBJETS_PAR_LOT) this.lot.push(t);
+        this.ouvrirEncheres();
+      });
+      c.add([fond, this.add.image(x + 12, y, 'tr_' + t.categorie).setScale(2),
+        this.add.text(x + 26, y, `${t.nom} · ${ETATS[t.etat].nom} · ~${valeurTresor(t)} p.`, style(11, '#3b2410')).setOrigin(0, 0.5)]);
+    });
+    const estimation = this.lot.reduce((s, t) => s + valeurTresor(t), 0);
+    c.add(this.add.text(560, 340, this.lot.length ? `Lot de ${this.lot.length} objet${this.lot.length > 1 ? 's' : ''} · estimé ~${estimation} p.` : 'Aucun objet choisi',
+      style(14, '#3b2410', { fontStyle: 'bold' })));
+    if (this.lot.length) this.bouton(c, 830, 342, 170, 'Mettre aux enchères', () => this.vendre());
+  }
+
+  vendre() {
+    const G = this.G;
+    const lot = this.lot;
+    this.lot = [];
+    const r = vendreAuxEncheres(G, lot);
+    const c = this.panneau('Les enchères', 'La vente commence !');
+    c.add(this.add.text(30, 345, `Le lot : ${lot.map(t => t.nom).join(', ')} (estimé ~${r.estimation} p.)`, style(13, '#3b2410', { fontStyle: 'bold' })));
+    // Les enchérisseurs, avec leur bulle
+    const bulles = {};
+    ENCHERISSEURS.forEach((e, i) => {
+      const x = 120 + i * 200;
+      c.add(this.add.image(x, 440, 'perso_' + e.race).setOrigin(0.5, 1).setScale(3));
+      c.add(this.add.text(x, 444, e.nom, style(11, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5, 0));
+      bulles[e.nom] = this.add.text(x + 20, 385, '', style(14, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 6, y: 3 } })).setOrigin(0, 0.5);
+      c.add(bulles[e.nom]);
+    });
+    const actuel = this.add.text(930, 345, '', style(14, '#a03030', { fontStyle: 'bold' })).setOrigin(1, 0);
+    c.add(actuel);
+    r.deroule.forEach((b, i) => this.time.delayedCall(400 + i * 380, () => {
+      Object.values(bulles).forEach(t => t.setAlpha(0.35));
+      bulles[b.nom].setText(`${b.montant} p. !`).setAlpha(1);
+      this.tweens.add({ targets: bulles[b.nom], scale: { from: 1.3, to: 1 }, duration: 200 });
+      actuel.setText(`Enchère : ${b.montant} p.`);
+    }));
+    this.time.delayedCall(700 + r.deroule.length * 380, () => {
+      if (!r.gagnant) return this.message("Personne n'a enchéri... Tes objets te reviennent.", '#a03030');
+      this.message(`Adjugé ! ${r.gagnant.nom} remporte le lot pour ${r.prix} pièces.`, '#2f6a2a');
+      this.majInfos();
     });
   }
 

@@ -68,6 +68,27 @@ const ICONES = {
     pal: { a: 0x6b4423, b: 0xa8743c, c: 0xe8c040 },
     px: ['.aaaaaa.', 'abbbbbba', 'abbbbbba', 'cccccccc', 'abbccbba', 'abbbbbba', 'abbbbbba', 'aaaaaaaa'],
   },
+  // Objets de valeur, par catégorie
+  tr_arme: {
+    pal: { a: 0xc0c8d0, b: 0x7a4a1e },
+    px: ['..aaa...', '.aaaab..', '..aab...', '...bb...', '...b....', '..b.....', '.b......', 'b.......'],
+  },
+  tr_armure: {
+    pal: { a: 0xa0a8b4, b: 0x3a3a44 },
+    px: ['..aaaa..', '.aaaaaa.', 'aaaaaaaa', 'aabbbbaa', 'aab..baa', 'aab..baa', '.a....a.', '........'],
+  },
+  tr_bijou: {
+    pal: { a: 0xe8c040, c: 0x30a060, d: 0xb0f0d0 },
+    px: ['...cc...', '..cddc..', '...cc...', '..aaaa..', '.a....a.', '.a....a.', '..aaaa..', '........'],
+  },
+  tr_artefact: {
+    pal: { a: 0x4a2a6a, b: 0x8a5ac0, c: 0xf0e8ff, d: 0xe8c040 },
+    px: ['..aaaa..', '.abbbba.', 'abbcbbba', 'abbbbbba', 'abbbbbba', '.abbbba.', '..aaaa..', '.dddddd.'],
+  },
+  tr_vetement: {
+    pal: { a: 0x5a2a1a, b: 0x9a3a2a },
+    px: ['..aaaa..', '.abbbba.', '.abbbba.', 'abbbbbba', 'abbbbbba', 'abbbbbba', 'abbbbbba', 'aaaaaaaa'],
+  },
   coeur: {
     pal: { a: 0xd8344a },
     px: ['.aa.aa.', 'aaaaaaa', 'aaaaaaa', '.aaaaa.', '..aaa..', '...a...'],

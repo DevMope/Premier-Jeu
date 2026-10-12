@@ -20,7 +20,8 @@ Jeu de gestion narratif en pixel art : tu tiens un comptoir de ravitaillement po
 | `src/scenes/TitleScene.js` | Écran titre |
 | `src/scenes/IntroScene.js` | Création du personnage et cinématique d'introduction |
 | `src/scenes/CounterScene.js` | Le comptoir : servir les voyageurs |
-| `src/scenes/MarcheScene.js` | Le Mastre Marché, le matin : étals, jeux d'argent, mendiant |
+| `src/scenes/MarcheScene.js` | Le Mastre Marché, le matin : étals, enchères, jeux d'argent, mendiant |
+| `src/scenes/AtelierScene.js` | L'atelier : réparer les objets de valeur |
 | `src/scenes/NightScene.js` | Le soir : bilan, réserve, lettres, banque, prévision de demain |
 | `src/scenes/StoryScene.js` | La cinématique du récit de chaque aventurier |
 | `src/scenes/FailliteScene.js` | La cinématique de faillite |
