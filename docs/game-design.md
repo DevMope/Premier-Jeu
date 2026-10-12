@@ -40,12 +40,24 @@ En arrière-plan, les aventuriers partis sont en quête pendant **plusieurs jour
 - Revenus : parts de butin des aventuriers revenus.
 - Tableau de chiffre d'affaires : jour / semaine / mois / année.
 
-### 2.3 Risque : le marché noir
+### 2.3 Gérer son comptoir
+- **Refuser** : on peut refuser un client (pour ne pas l'envoyer à une mort certaine) ou une commande par lettre. Ça coûte de la réputation : 1 point pour un client, 0,5 pour une lettre.
+- **Les lettres** sont plus exigeantes (une ou deux épreuves demandent un objet de plus) mais rapportent 25 % de plus.
+- **Les longues quêtes** demandent plus de rations et rapportent plus (+30 % de butin par jour en plus).
+- **Les habitués et la réparation** : un aventurier revenu vivant peut revenir comme client. Il garde ses objets durables (épée, corde, gourde), qui s'usent à chaque épreuve (3 crans). Le joueur peut les réparer : ça ne coûte rien en stock, et c'est le client qui paie.
+- **La réserve** est limitée (20 places au départ), et on peut l'agrandir en payant (30, 40, puis 55 places).
+- **L'assortiment** du fournisseur change chaque jour : les objets de base (rations, gourdes, torches, bandages) sont toujours là, les autres apparaissent au hasard en quantité limitée. Les prix varient.
+- **Le marchand express** (Fennick le Pressé, personnage récurrent) passe au comptoir pendant la journée. Il vend quelques objets au hasard, 2,5 fois plus cher, livrés directement dans le colis. Ce n'est jamais rentable : ça sert juste à sauver un voyage.
+- **La banque** : des prêts débloqués par la réputation (plus la réputation est haute, plus on peut emprunter, et moins cher). La Main Noire (la mafia) prête à tout le monde, à 45 %. Les échéances sont prélevées chaque nuit.
+- **La faillite** : on peut être à découvert, mais à -100 pièces, le comptoir ferme.
+- **Capital de départ** : 80 pièces, pour tenir le temps que les premiers aventuriers reviennent.
+
+### 2.4 Risque : le marché noir
 - Ouvre certains soirs seulement.
 - Grimoires interdits, potions illégales, artefacts.
 - Voyageurs nocturnes : quêtes farfelues, gros gains possibles, mais s'ils se font prendre, **les conséquences retombent sur le joueur**.
 
-### 2.4 Aider pendant l'aventure
+### 2.5 Aider pendant l'aventure
 - **Le grand aigle** (familier à débloquer) : quand un aventurier en mission envoie un message de détresse, l'aigle peut lui apporter rapidement des objets.
 - **Les mercenaires** : on peut en envoyer un nombre limité de fois par jour pour récupérer le butin perdu par un aventurier mort.
 
@@ -129,6 +141,8 @@ Le joueur ne quitte jamais vraiment son shop, sauf pour ces marchés (écrans/me
 - Durée d'une partie complète (nombre de jours/années) ?
 - Comment mesurer le penchant du joueur (une jauge visible, ou seulement ressentie par les dialogues) ?
 - Peut-on changer de camp en cours de partie ?
+- Le côté RPG du personnage : quelles compétences, et comment progresser ?
+- Plus tard, la banque des gentils et la Main Noire pourront dépendre du camp choisi.
 
 ## 9. Plan de développement (étape par étape)
 
@@ -138,6 +152,7 @@ Chaque étape doit donner une version **jouable**.
 |---|---|---|
 | 1 ✅ | **Prototype du comptoir** | Une journée, 4 voyageurs en file d'attente, un stock fixe ; on donne des objets ; calcul de la chance de réussite ; cinématique du récit ; bilan. |
 | 2 ✅ | **Les quêtes dans le temps** | Plusieurs jours ; quêtes de durées variables ; les aventuriers reviennent faire la queue pour raconter leur récit, ou un colporteur rapporte leur carnet ; lettres de commandes annoncées ; prévision « entre X et Y clients » ; fournisseur simple le soir. |
+| 2+ ✅ | **Gérer son comptoir** | Refus de clients et de lettres, lettres plus exigeantes, habitués et réparations, réserve limitée, assortiment variable, marchand express, banque et Main Noire, faillite. |
 | 3 | **Le Mastre Marché** | Acheter son stock le matin, prix, quantités limitées. |
 | 4 | **Les fiches et le bureau** | Fiches voyageurs (à venir/présents/partis/revenus), voyageurs annoncés à l'avance, tableau de CA, tiroirs de stats. |
 | 5 | **Les deux vues du shop** | Comptoir ↔ arrière (stock + lit), façade avec le nom du shop. |

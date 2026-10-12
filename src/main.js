@@ -7,5 +7,5 @@ window.jeu = new Phaser.Game({
   pixelArt: true,
   backgroundColor: '#1a120a',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [TitleScene, CounterScene, NightScene, StoryScene],
+  scene: [TitleScene, CounterScene, NightScene, StoryScene, FailliteScene],
 });

@@ -27,7 +27,10 @@ class CounterScene extends Phaser.Scene {
     this.creerStock();
     this.creerArgent();
 
-    this.boutonAction = creerBouton(this, 840, 470, 210, '', () => this.action && this.action());
+    this.boutonExpress = creerBouton(this, 840, 392, 210, 'Marchand express', () => this.ouvrirExpress());
+    this.boutonRefuser = creerBouton(this, 840, 440, 210, 'Refuser ce client', () => this.refuser());
+    this.boutonAction = creerBouton(this, 840, 492, 210, '', () => this.action && this.action());
+    this.majBoutonsService();
 
     this.cameras.main.fadeIn(400);
     this.voyageurSuivant();
@@ -41,6 +44,12 @@ class CounterScene extends Phaser.Scene {
     const texte = this.add.text(480, 270, 'Jour ' + this.G.jour, style(56, '#f3d98a', { fontStyle: 'bold' }))
       .setOrigin(0.5).setDepth(10);
     this.tweens.add({ targets: [fond, texte], alpha: 0, delay: 900, duration: 700, onComplete: () => { fond.destroy(); texte.destroy(); } });
+  }
+
+  // Les boutons qui n'ont de sens que pendant qu'on sert un client.
+  majBoutonsService() {
+    this.boutonExpress.setVisible(this.enService);
+    this.boutonRefuser.setVisible(this.enService);
   }
 
   // Le bouton du bureau change selon la situation.
@@ -165,10 +174,10 @@ class CounterScene extends Phaser.Scene {
       const icone = this.add.image(712, y, 'ration').setScale(3).setVisible(false);
       const txt = this.add.text(735, y, '', style(16, '#3b2410')).setOrigin(0, 0.5);
       const zone = this.add.rectangle(815, y, 240, 32, 0x000000, 0).setInteractive({ useHandCursor: true });
-      zone.on('pointerdown', () => this.reprendre(i));
+      zone.on('pointerdown', () => this.clicLigne(i));
       this.lignesCommande.push({ icone, txt, zone, id: null });
     }
-    this.add.text(700, 226, 'Cliquer une ligne pour reprendre', style(11, '#7a5a3a', { fontStyle: 'italic' }));
+    this.add.text(700, 226, 'Clic sur une ligne : reprendre ou réparer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
     this.texteChance = this.add.text(815, 206, '', style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
   }
 
@@ -179,7 +188,8 @@ class CounterScene extends Phaser.Scene {
   }
 
   creerStock() {
-    this.add.text(170, 360, 'Ton stock — clique sur un objet pour l\'ajouter au colis', style(14, '#2a1a10', { fontStyle: 'italic' }));
+    this.add.text(150, 360, 'Ton stock — clique sur un objet pour l\'ajouter au colis', style(14, '#2a1a10', { fontStyle: 'italic' }));
+    this.texteReserve = this.add.text(660, 360, '', style(14, '#2a1a10', { fontStyle: 'bold' })).setOrigin(1, 0);
     this.cases = {};
     Object.keys(ITEMS).forEach((id, i) => {
       const x = 205 + (i % 4) * 130;
@@ -255,9 +265,11 @@ class CounterScene extends Phaser.Scene {
   arrivee(entree) {
     if (entree.type === 'client') {
       const v = this.voyageur = entree.voyageur;
-      const bonjour = v.prevu ? "C'est moi qui t'ai écrit, tu te souviens ? " : '';
+      let bonjour = v.prevu ? "C'est moi qui t'ai écrit, tu te souviens ? " : '';
+      if (v.habitue) bonjour = 'Re-bonjour, c\'est encore moi ! ' + (this.aReparer(v).length ? 'Mon matériel a souffert la dernière fois... ' : '');
       this.dire(bonjour + accord(v.accueil, v), v.nom);
       this.enService = true;
+      this.majBoutonsService();
       this.bouton('Remettre le colis', () => this.remettreColis());
       this.majCommande();
     } else if (entree.type === 'retour') {
@@ -306,13 +318,114 @@ class CounterScene extends Phaser.Scene {
     this.majCommande();
   }
 
-  reprendre(i) {
+  // Clic sur une ligne de la commande : reprendre un objet, ou réparer celui du client.
+  clicLigne(i) {
     const id = this.lignesCommande[i].id;
-    if (!this.enService || !id || !this.colis[id]) return;
-    this.colis[id]--;
-    this.G.stock[id]++;
+    if (!this.enService || !id) return;
+    if (this.colis[id]) {
+      this.colis[id]--;
+      this.G.stock[id]++;
+    } else if (this.aReparer(this.voyageur).includes(id)) {
+      this.reparer(id);
+    }
     this.majStock();
     this.majCommande();
+  }
+
+  // Les objets durables du client qui ont besoin d'une réparation (et qu'il peut encore utiliser).
+  aReparer(v) {
+    return Object.keys(commandeDe(v)).filter(id => {
+      const etat = etatObjet(v, id);
+      return ITEMS[id].durable && etat > 0 && etat < USURE_MAX;
+    });
+  }
+
+  // Réparer ne coûte rien en stock : c'est le client qui paie.
+  reparer(id) {
+    this.voyageur.inventaire[id] = USURE_MAX;
+    this.G.argent += PRIX_REPARATION;
+    this.dessinerPieces();
+    this.dire(`Merci ! Ma ${ITEMS[id].nom.toLowerCase()} est comme neuve. Voilà ${PRIX_REPARATION} pièces pour ta peine.`);
+  }
+
+  // Refuser un client : il repart, et la réputation en prend un coup.
+  refuser() {
+    if (!this.enService) return;
+    const v = this.voyageur;
+    for (const [id, n] of Object.entries(this.colis)) this.G.stock[id] += n;
+    this.colis = {};
+    refuserClient(this.G);
+    this.enService = false;
+    this.majBoutonsService();
+    this.bouton('...', null);
+    this.majStock();
+    this.dire("Tu refuses de me servir ? Très bien... J'irai voir ailleurs. Et je le dirai à tout le monde.", v.nom);
+    this.partirPar(FENETRE.x - 80);
+  }
+
+  // Le client s'en va, vers la droite (vers l'aventure) ou la gauche (refusé).
+  partirPar(x) {
+    this.perso.setFlipX(x > this.perso.x);
+    this.tweens.add({
+      targets: this.perso, x, duration: 1400, delay: 700, ease: 'Sine.easeIn',
+      onStart: () => this.marche(1400),
+      onComplete: () => this.voyageurSuivant(),
+    });
+  }
+
+  // --- Le marchand express ---
+
+  ouvrirExpress() {
+    if (!this.enService || this.fenetreExpress) return;
+    const c = this.fenetreExpress = this.add.container(0, 0).setDepth(20);
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.5).setInteractive());
+    c.add(this.add.rectangle(480, 250, 560, 330, 0xead9b0).setStrokeStyle(4, 0x8a6a3a));
+    c.add(this.add.text(480, 110, MARCHAND_EXPRESS.nom + ' — livraison express', style(20, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(480, 136, 'Bien plus cher que le fournisseur. Livré directement dans le colis.',
+      style(13, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    this.lignesExpress = [];
+    const ids = Object.keys(this.G.express);
+    if (!ids.length) c.add(this.add.text(480, 240, "Fennick n'a plus rien à vendre aujourd'hui.", style(15, '#3b2410')).setOrigin(0.5));
+    ids.forEach((id, i) => {
+      const y = 175 + i * 40;
+      c.add(this.add.image(230, y, id).setScale(3));
+      c.add(this.add.text(255, y, ITEMS[id].nom, style(15, '#3b2410')).setOrigin(0, 0.5));
+      c.add(this.add.text(370, y, `${this.G.express[id].prix} p.`, style(15, '#a03030', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      c.add(this.add.text(430, y, `(fournisseur : ~${ITEMS[id].prix} p.)`, style(12, '#6b4a2a')).setOrigin(0, 0.5));
+      const reste = this.add.text(600, y, '', style(14, '#3b2410')).setOrigin(0, 0.5);
+      const btn = this.add.rectangle(700, y, 80, 28, 0x8a5a2b).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
+      btn.on('pointerdown', () => this.acheterExpress(id));
+      c.add([reste, btn, this.add.text(700, y, 'Acheter', style(13, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
+      this.lignesExpress.push({ id, reste });
+    });
+    this.texteExpress = this.add.text(480, 360, '', style(14, '#a03030', { fontStyle: 'bold' })).setOrigin(0.5);
+    c.add(this.texteExpress);
+    const fermer = this.add.rectangle(480, 395, 160, 34, 0x6b4423).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
+    fermer.on('pointerdown', () => { c.destroy(); this.fenetreExpress = null; });
+    c.add([fermer, this.add.text(480, 395, 'Fermer', style(15, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
+    this.majExpress();
+  }
+
+  acheterExpress(id) {
+    const offre = this.G.express[id];
+    const commande = commandeDe(this.voyageur);
+    let probleme = null;
+    if (!commande[id]) probleme = `${this.voyageur.nom} n'en a pas besoin.`;
+    else if ((this.colis[id] || 0) >= commande[id]) probleme = 'Le colis en contient déjà assez.';
+    else if (offre.qte <= 0) probleme = "Fennick n'en a plus.";
+    else if (!peutPayer(this.G, offre.prix)) probleme = "Tu n'as pas assez d'argent, même à découvert.";
+    if (probleme) return this.texteExpress.setText(probleme);
+    this.G.argent -= offre.prix;
+    offre.qte--;
+    this.colis[id] = (this.colis[id] || 0) + 1;
+    this.texteExpress.setText(`${ITEMS[id].nom} ajouté au colis.`);
+    this.dessinerPieces();
+    this.majExpress();
+    this.majCommande();
+  }
+
+  majExpress() {
+    for (const l of this.lignesExpress) l.reste.setText('reste ' + this.G.express[l.id].qte);
   }
 
   dire(texte, nom = this.voyageur ? this.voyageur.nom : '') {
@@ -325,6 +438,7 @@ class CounterScene extends Phaser.Scene {
     const chance = chanceDeRetour(v, this.colis);
     partir(this.G, v, this.colis);
     this.enService = false;
+    this.majBoutonsService();
     this.bouton('...', null);
     this.majPanneauGauche();
 
@@ -333,13 +447,7 @@ class CounterScene extends Phaser.Scene {
       : chance >= 0.4 ? `Ce n'est pas tout ce que je voulais... mais je ferai avec. Rendez-vous ${jours} !`
       : "C'est tout ? Bon... Souhaite-moi bonne chance.";
     this.dire(phrase, v.nom);
-
-    this.perso.setFlipX(true);
-    this.tweens.add({
-      targets: this.perso, x: FENETRE.x + FENETRE.w + 60, duration: 1400, delay: 600, ease: 'Sine.easeIn',
-      onStart: () => this.marche(1400),
-      onComplete: () => this.voyageurSuivant(),
-    });
+    this.partirPar(FENETRE.x + FENETRE.w + 60);
   }
 
   finDeJournee() {
@@ -372,6 +480,7 @@ class CounterScene extends Phaser.Scene {
       const n = this.G.stock[id];
       c.qte.setText('x ' + n).setColor(n > 0 ? '#f3d98a' : '#a05040');
     }
+    this.texteReserve.setText(`Réserve : ${stockTotal(this.G)} / ${this.G.capacite}`);
   }
 
   majCommande() {
@@ -386,9 +495,17 @@ class CounterScene extends Phaser.Scene {
       if (!id) return ligne.txt.setText('');
       ligne.icone.setTexture(id);
       const donne = this.colis[id] || 0;
+      const etat = ITEMS[id].durable ? etatObjet(v, id) : 0;
+      if (!donne && id in v.inventaire) {
+        // Le client a déjà le sien : on peut le réparer au lieu d'en donner un neuf.
+        const texte = etat > 0 ? `${ITEMS[id].nom} · la sienne ${etat}/${USURE_MAX}${etat < USURE_MAX ? ' (réparer)' : ' ✓'}`
+          : `${ITEMS[id].nom} · la sienne est cassée`;
+        ligne.txt.setText(texte).setFontSize(13).setColor(etat >= 2 ? '#2f6a2a' : '#8a5a10');
+        return;
+      }
       const ok = donne >= commande[id];
       ligne.txt.setText(`${ITEMS[id].nom}  ${donne} / ${commande[id]}  ${ok ? '✓' : ''}`)
-        .setColor(ok ? '#2f6a2a' : '#3b2410');
+        .setFontSize(16).setColor(ok ? '#2f6a2a' : '#3b2410');
     });
     if (v) {
       const c = chanceDeRetour(v, this.colis);

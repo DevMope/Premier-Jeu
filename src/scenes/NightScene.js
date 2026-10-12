@@ -1,27 +1,32 @@
 // Le soir : bilan de la journée, achats chez le fournisseur,
-// lettres reçues et prévision des clients pour demain.
+// lettres à accepter ou refuser, banque, et prévision des clients pour demain.
 class NightScene extends Phaser.Scene {
   constructor() { super('Nuit'); }
 
   create() {
     const G = this.G = window.GAME;
-    lettresDuSoir(G);
+    preparerSoir(G);
 
     this.cameras.main.setBackgroundColor('#1e140c');
     this.cameras.main.fadeIn(500);
     this.add.text(480, 34, `Soir du jour ${G.jour}`, style(30, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
     this.texteArgent = this.add.text(940, 34, '', style(20, '#f3d98a', { fontStyle: 'bold' })).setOrigin(1, 0.5);
 
-    this.panneauJournee(20, 300);
-    this.panneauFournisseur(320, 640);
-    this.panneauLettres(660, 940);
+    this.parchemin(20, 300, 'La journée');
+    this.parchemin(320, 640, 'Le fournisseur');
+    this.parchemin(660, 940, 'Lettres reçues');
+    this.creerFournisseur(320, 640);
+    this.creerPrevision(660, 940);
 
-    creerBouton(this, 480, 505, 240, 'Aller dormir', () => {
-      journeeSuivante(G);
-      this.cameras.main.fadeOut(600);
-      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Comptoir'));
-    });
-    this.majArgent();
+    creerBouton(this, 160, 505, 200, 'La banque', () => this.ouvrirBanque());
+    creerBouton(this, 480, 505, 240, 'Aller dormir', () => this.dormir());
+    this.tout();
+  }
+
+  dormir() {
+    journeeSuivante(this.G);
+    this.cameras.main.fadeOut(600);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(this.G.faillite ? 'Faillite' : 'Comptoir'));
   }
 
   parchemin(x1, x2, titre) {
@@ -29,91 +34,191 @@ class NightScene extends Phaser.Scene {
     this.add.text((x1 + x2) / 2, 90, titre, style(20, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
   }
 
-  panneauJournee(x1, x2) {
+  // Tout ce qui change quand on achète, emprunte ou répond à une lettre.
+  tout() {
+    this.majArgent();
+    this.majJournee(20, 300);
+    this.majLettres(660, 940);
+    this.majPrevision();
+  }
+
+  // --- La journée ---
+
+  majJournee(x1, x2) {
     const G = this.G;
     const j = G.journal;
-    this.parchemin(x1, x2, 'La journée');
+    if (this.journee) this.journee.destroy();
+    const c = this.journee = this.add.container(0, 0);
     const gain = G.argent - G.argentDebutJour;
     const lignes = [
       `Clients servis : ${j.servis}`,
-      `Aventuriers revenus : ${j.retours}`,
-      `Mauvaises nouvelles : ${j.morts}`,
-      '',
+      `Revenus : ${j.retours} · Morts : ${j.morts}`,
       `Argent ce matin : ${G.argentDebutJour}`,
       `Argent ce soir : ${G.argent}  (${gain >= 0 ? '+' : ''}${gain})`,
-      '',
-      `Réputation : ${G.reputation}`,
-      `Expérience : ${G.experience} clients servis`,
+      `Réputation : ${arrondi(G.reputation)}`,
+      `Expérience : ${G.experience} clients`,
     ];
-    this.add.text(x1 + 20, 120, lignes.join('\n'), style(15, '#3b2410', { lineSpacing: 6 }));
+    c.add(this.add.text(x1 + 18, 112, lignes.join('\n'), style(14, '#3b2410', { lineSpacing: 5 })));
 
-    this.add.text(x1 + 20, 330, 'En mission', style(15, '#3b2410', { fontStyle: 'bold' }));
+    const dettes = G.prets.map(p => `${p.nom} : reste ${p.restant} (−${p.parJour}/nuit)`);
+    c.add(this.add.text(x1 + 18, 250, 'Prêts en cours', style(14, '#3b2410', { fontStyle: 'bold' })));
+    c.add(this.add.text(x1 + 18, 270, listeCourte(dettes, 3, 'Aucun'), style(12, '#5a3a20', { lineSpacing: 2 })));
+    if (G.argent < 0) {
+      c.add(this.add.text(x1 + 18, 318, `À découvert ! Faillite à ${SEUIL_FAILLITE} pièces.`, style(12, '#a03030', { fontStyle: 'bold' })));
+    }
+
+    c.add(this.add.text(x1 + 18, 340, 'En mission', style(14, '#3b2410', { fontStyle: 'bold' })));
     const missions = enMission(G).map(p => `${p.voyageur.nom} — jour ${p.retour}`);
-    this.add.text(x1 + 20, 352, listeCourte(missions, 5, 'Personne'), style(13, '#5a3a20', { lineSpacing: 3 }));
+    c.add(this.add.text(x1 + 18, 360, listeCourte(missions, 5, 'Personne'), style(12, '#5a3a20', { lineSpacing: 2 })));
   }
 
-  panneauFournisseur(x1, x2) {
-    this.parchemin(x1, x2, 'Le fournisseur');
-    this.add.text((x1 + x2) / 2, 112, 'Remplis ton stock pour demain', style(13, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
+  // --- Le fournisseur ---
+
+  creerFournisseur(x1, x2) {
+    this.add.text((x1 + x2) / 2, 110, "Change chaque jour · (n) = quantité disponible", style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.lignesStock = {};
     Object.entries(ITEMS).forEach(([id, item], i) => {
-      const y = 145 + i * 38;
-      this.add.image(x1 + 30, y, id).setScale(3);
-      this.add.text(x1 + 50, y, item.nom, style(15, '#3b2410')).setOrigin(0, 0.5);
-      this.add.text(x1 + 140, y, item.prix + ' p.', style(15, '#6b4a2a')).setOrigin(0, 0.5);
-      const qte = this.add.text(x1 + 190, y, '', style(15, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
-      const btn = this.add.rectangle(x2 - 50, y, 70, 28, 0x8a5a2b).setStrokeStyle(2, 0x3b2410)
+      const y = 136 + i * 33;
+      this.add.image(x1 + 26, y, id).setScale(3);
+      this.add.text(x1 + 44, y, item.nom, style(14, '#3b2410')).setOrigin(0, 0.5);
+      const prix = this.add.text(x1 + 120, y, '', style(14, '#6b4a2a')).setOrigin(0, 0.5);
+      const qte = this.add.text(x1 + 162, y, '', style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+      const btn = this.add.rectangle(x2 - 52, y, 88, 26, 0x8a5a2b).setStrokeStyle(2, 0x3b2410)
         .setInteractive({ useHandCursor: true });
-      const label = this.add.text(x2 - 50, y, 'Acheter', style(13, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
-      btn.on('pointerover', () => btn.setFillStyle(0xa8743c));
-      btn.on('pointerout', () => btn.setFillStyle(0x8a5a2b));
+      const label = this.add.text(x2 - 52, y, '', style(12, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
       btn.on('pointerdown', () => this.acheter(id));
-      this.lignesStock[id] = { qte, btn, label };
+      this.lignesStock[id] = { prix, qte, btn, label };
     });
+
+    this.texteReserve = this.add.text(x1 + 18, 408, '', style(14, '#3b2410', { fontStyle: 'bold' }));
+    const btn = this.add.rectangle((x1 + x2) / 2, 444, x2 - x1 - 36, 30, 0x6b4423).setStrokeStyle(2, 0x3b2410)
+      .setInteractive({ useHandCursor: true });
+    this.texteAgrandir = this.add.text((x1 + x2) / 2, 444, '', style(13, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
+    btn.on('pointerdown', () => { if (agrandirReserve(this.G)) this.tout(); });
+    this.boutonAgrandir = btn;
   }
 
   acheter(id) {
     const G = this.G;
-    if (G.argent < ITEMS[id].prix) {
+    const offre = G.offre[id];
+    if (!offre || offre.qte <= 0 || stockTotal(G) >= G.capacite || !peutPayer(G, offre.prix)) {
       this.cameras.main.shake(120, 0.004);
       return;
     }
-    G.argent -= ITEMS[id].prix;
+    G.argent -= offre.prix;
+    offre.qte--;
     G.stock[id]++;
-    this.majArgent();
-  }
-
-  panneauLettres(x1, x2) {
-    this.parchemin(x1, x2, 'Lettres reçues');
-    const G = this.G;
-    const lettres = G.annonces.slice(0, 3).map(a =>
-      `✉ ${a.voyageur.nom} — jour ${a.jour}\n   ${commandeEnTexte(a.voyageur)}`);
-    if (G.annonces.length > 3) lettres.push(`+ ${G.annonces.length - 3} autres lettres`);
-    this.add.text(x1 + 16, 115, lettres.length ? lettres.join('\n') : 'Aucune lettre pour le moment.',
-      style(13, '#3b2410', { lineSpacing: 4, wordWrap: { width: x2 - x1 - 30 } }));
-
-    // La prévision pour demain
-    this.add.rectangle((x1 + x2) / 2, 395, x2 - x1 - 24, 130, 0xd8c498).setStrokeStyle(2, 0x8a6a3a);
-    this.add.text(x1 + 22, 340, 'Demain', style(16, '#3b2410', { fontStyle: 'bold' }));
-    this.textePrevision = this.add.text(x1 + 22, 362, '', style(15, '#3b2410', { fontStyle: 'bold', wordWrap: { width: x2 - x1 - 44 } }));
-    this.texteFacteurs = this.add.text(x1 + 22, 404, '', style(12, '#5a3a20', { lineSpacing: 2 }));
+    this.tout();
   }
 
   majArgent() {
     const G = this.G;
-    this.texteArgent.setText(G.argent + ' pièces');
+    this.texteArgent.setText(G.argent + ' pièces').setColor(G.argent < 0 ? '#ff8070' : '#f3d98a');
+    const plein = stockTotal(G) >= G.capacite;
     for (const [id, l] of Object.entries(this.lignesStock)) {
+      const offre = G.offre[id];
+      l.prix.setText(offre ? offre.prix + ' p.' : '');
       l.qte.setText('x ' + G.stock[id]);
-      const abordable = G.argent >= ITEMS[id].prix;
-      l.btn.setAlpha(abordable ? 1 : 0.5);
-      l.label.setAlpha(abordable ? 1 : 0.5);
+      l.label.setText(!offre ? 'Absent' : offre.qte > 0 ? `Acheter (${offre.qte})` : 'Épuisé');
+      const possible = offre && offre.qte > 0 && !plein && peutPayer(G, offre.prix);
+      l.btn.setAlpha(possible ? 1 : 0.4);
+      l.label.setAlpha(possible ? 1 : 0.4);
     }
-    // La prévision change avec la variété du stock.
-    const p = prevision(G);
-    const a = attrait(G);
+    this.texteReserve.setText(`Réserve : ${stockTotal(G)} / ${G.capacite}${plein ? ' — pleine !' : ''}`);
+    const a = agrandissementSuivant(G);
+    this.texteAgrandir.setText(a ? `Agrandir à ${a.capacite} places — ${a.prix} p.` : 'Réserve au maximum');
+    this.boutonAgrandir.setAlpha(a && peutPayer(G, a.prix) ? 1 : 0.5);
+  }
+
+  // --- Les lettres ---
+
+  majLettres(x1, x2) {
+    const G = this.G;
+    if (this.lettres) this.lettres.destroy();
+    const c = this.lettres = this.add.container(0, 0);
+    // Les nouvelles lettres (à accepter ou refuser) d'abord.
+    const liste = [...G.annonces].sort((a, b) => a.acceptee - b.acceptee).slice(0, 4);
+    if (!liste.length) c.add(this.add.text(x1 + 16, 115, 'Aucune lettre pour le moment.', style(13, '#3b2410')));
+    liste.forEach((a, i) => {
+      const y = 112 + i * 54;
+      const v = a.voyageur;
+      c.add(this.add.text(x1 + 14, y, `✉ ${v.nom}`, style(13, '#3b2410', { fontStyle: 'bold' })));
+      c.add(this.add.text(x1 + 14, y + 17, `Jour ${a.jour} · butin ~${v.butin} p. · ${v.duree} j`, style(11, '#6b4a2a')));
+      c.add(this.add.text(x1 + 14, y + 31, commandeEnTexte(v), style(11, '#3b2410', { wordWrap: { width: x2 - x1 - 24 } })));
+      if (a.acceptee) {
+        c.add(this.add.text(x2 - 12, y, 'acceptée', style(11, '#2f6a2a', { fontStyle: 'italic' })).setOrigin(1, 0));
+      } else {
+        c.add(this.petitBouton(x2 - 70, y + 8, 'Oui', 0x4f7a3a, () => { a.acceptee = true; this.tout(); }));
+        c.add(this.petitBouton(x2 - 30, y + 8, 'Non', 0x8a3a2a, () => { refuserLettre(G, a); this.tout(); }));
+      }
+    });
+    if (G.annonces.length > 4) c.add(this.add.text(x1 + 14, 326, `+ ${G.annonces.length - 4} autres`, style(11, '#6b4a2a')));
+  }
+
+  petitBouton(x, y, texte, couleur, action) {
+    const btn = this.add.container(x, y);
+    const fond = this.add.rectangle(0, 0, 36, 20, couleur).setStrokeStyle(1, 0x2a1a10).setInteractive({ useHandCursor: true });
+    fond.on('pointerdown', action);
+    btn.add([fond, this.add.text(0, 0, texte, style(11, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
+    return btn;
+  }
+
+  // --- La prévision pour demain ---
+
+  creerPrevision(x1, x2) {
+    this.add.rectangle((x1 + x2) / 2, 410, x2 - x1 - 24, 100, 0xd8c498).setStrokeStyle(2, 0x8a6a3a);
+    this.add.text(x1 + 22, 366, 'Demain', style(15, '#3b2410', { fontStyle: 'bold' }));
+    this.textePrevision = this.add.text(x1 + 22, 386, '', style(14, '#3b2410', { fontStyle: 'bold', wordWrap: { width: x2 - x1 - 44 } }));
+    this.texteFacteurs = this.add.text(x1 + 22, 424, '', style(11, '#5a3a20', { lineSpacing: 2 }));
+  }
+
+  majPrevision() {
+    const p = prevision(this.G);
+    const a = attrait(this.G);
     this.textePrevision.setText(`Entre ${p.min} et ${p.max} clients attendus` +
-      (p.annonces ? ` (dont ${p.annonces} annoncé${p.annonces > 1 ? 's' : ''})` : ''));
+      (p.annonces ? ` (dont ${p.annonces} par lettre)` : ''));
     const signe = n => (n >= 0 ? '+' : '') + n.toFixed(1);
     this.texteFacteurs.setText(`Réputation ${signe(a.reputation)} · Expérience ${signe(a.experience)}\nStock varié ${signe(a.variete)}`);
   }
+
+  // --- La banque ---
+
+  ouvrirBanque() {
+    const G = this.G;
+    const c = this.add.container(0, 0).setDepth(20);
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.6).setInteractive());
+    c.add(this.add.rectangle(480, 260, 680, 400, 0xead9b0).setStrokeStyle(4, 0x8a6a3a));
+    c.add(this.add.text(480, 85, 'Emprunter de l\'argent', style(22, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(480, 112, `Les échéances sont prélevées chaque nuit. Faillite si tu descends à ${SEUIL_FAILLITE} pièces.`,
+      style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+
+    PRETS.forEach((p, i) => {
+      const y = 155 + i * 64;
+      const du = Math.round(p.somme * (1 + p.taux));
+      const mafia = p.preteur === 'La Main Noire';
+      c.add(this.add.text(160, y - 14, `${p.preteur} — ${p.nom}`, style(15, mafia ? '#7a1a1a' : '#3b2410', { fontStyle: 'bold' })));
+      c.add(this.add.text(160, y + 6, `Reçois ${p.somme} p., rembourse ${du} p. en ${p.jours} nuits (${Math.round(p.taux * 100)} %)`,
+        style(13, '#5a3a20')));
+      const refus = refusPret(G, p);
+      if (refus) {
+        c.add(this.add.text(800, y, refus, style(12, '#8a5a10', { fontStyle: 'italic' })).setOrigin(1, 0.5));
+      } else {
+        const btn = this.add.rectangle(755, y, 100, 30, mafia ? 0x5a1a1a : 0x8a5a2b).setStrokeStyle(2, 0x3b2410)
+          .setInteractive({ useHandCursor: true });
+        btn.on('pointerdown', () => { emprunter(G, p); c.destroy(); this.tout(); });
+        c.add([btn, this.add.text(755, y, 'Emprunter', style(13, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
+      }
+    });
+    c.add(this.add.text(480, 418, 'La Main Noire prête à tout le monde, sans questions... mais à un prix terrible.',
+      style(12, '#7a1a1a', { fontStyle: 'italic' })).setOrigin(0.5));
+
+    const fermer = this.add.rectangle(480, 445, 160, 32, 0x6b4423).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
+    fermer.on('pointerdown', () => c.destroy());
+    c.add([fermer, this.add.text(480, 445, 'Fermer', style(14, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
+  }
+}
+
+// 2.5 reste 2.5, 3 reste 3.
+function arrondi(n) {
+  return Number.isInteger(n) ? n : n.toFixed(1);
 }

@@ -1,16 +1,23 @@
 // Contenu du jeu : objets, quêtes et noms des aventuriers.
 // Pour ajouter une quête, un objet ou un nom, il suffit de modifier ce fichier.
 
+// `durable` : l'aventurier garde l'objet après sa quête, et il s'use.
+// `base` : toujours disponible chez le fournisseur.
 const ITEMS = {
-  ration:  { nom: 'Ration',   prix: 3 },
-  gourde:  { nom: 'Gourde',   prix: 4 },
-  epee:    { nom: 'Épée',     prix: 15 },
+  ration:  { nom: 'Ration',   prix: 3,  base: true },
+  gourde:  { nom: 'Gourde',   prix: 4,  base: true, durable: true },
+  epee:    { nom: 'Épée',     prix: 15, durable: true },
   fleches: { nom: 'Flèches',  prix: 6 },
   potion:  { nom: 'Potion',   prix: 10 },
-  bandage: { nom: 'Bandages', prix: 4 },
-  torche:  { nom: 'Torche',   prix: 3 },
-  corde:   { nom: 'Corde',    prix: 5 },
+  bandage: { nom: 'Bandages', prix: 4,  base: true },
+  torche:  { nom: 'Torche',   prix: 3,  base: true },
+  corde:   { nom: 'Corde',    prix: 5,  durable: true },
 };
+
+// Un objet durable neuf supporte 3 quêtes avant de casser.
+const USURE_MAX = 3;
+// Ce que paie un aventurier pour faire réparer un de ses objets.
+const PRIX_REPARATION = 6;
 
 // Volontairement un peu trop juste : il faut choisir qui servir en priorité.
 const STOCK_DEPART = {
@@ -18,7 +25,45 @@ const STOCK_DEPART = {
   potion: 2, bandage: 1, torche: 3, corde: 1,
 };
 
-const ARGENT_DEPART = 20;
+// Assez pour tenir les premiers jours, le temps que les aventuriers reviennent.
+const ARGENT_DEPART = 80;
+
+// En dessous de cette somme, c'est la faillite.
+const SEUIL_FAILLITE = -100;
+
+// La réserve : nombre d'objets qu'on peut stocker, et ses agrandissements.
+const RESERVE_DEPART = 20;
+const AGRANDISSEMENTS = [
+  { capacite: 30, prix: 60 },
+  { capacite: 40, prix: 140 },
+  { capacite: 55, prix: 260 },
+];
+
+// Le marchand express passe au comptoir pendant la journée :
+// pratique pour sauver un voyage, mais bien plus cher que le fournisseur.
+const MARCHAND_EXPRESS = { nom: 'Fennick le Pressé', multiplicateur: 2.5 };
+
+// Réputation perdue quand on refuse.
+const REFUS_LETTRE = 0.5;
+const REFUS_CLIENT = 1;
+
+// Les prêts : la banque prête plus et moins cher quand ta réputation grandit.
+// La Main Noire prête à tout le monde... à un prix terrible.
+const PRETS = [
+  { id: 'petit', preteur: 'Banque de la Comté', nom: 'Petit prêt', somme: 60, taux: 0.15, jours: 5, reputation: 0 },
+  { id: 'marchand', preteur: 'Banque de la Comté', nom: 'Prêt marchand', somme: 150, taux: 0.10, jours: 7, reputation: 4 },
+  { id: 'grand', preteur: 'Banque de la Comté', nom: 'Grand prêt', somme: 400, taux: 0.06, jours: 10, reputation: 10 },
+  { id: 'mafia', preteur: 'La Main Noire', nom: 'Prêt sans questions', somme: 120, taux: 0.45, jours: 4, reputation: -Infinity },
+];
+
+// Une étape ajoutée aux longues quêtes qui n'ont pas déjà de rations.
+const ETAPE_VIVRES = {
+  type: 'route', besoin: 'ration',
+  intro: 'Le voyage durait bien plus longtemps que prévu...',
+  complet: "J'avais assez de rations pour tenir jusqu'au bout.",
+  partiel: "J'ai dû sauter des repas sur la fin.",
+  rien: "Je n'avais plus rien à manger depuis des jours.",
+};
 
 // Chance de réussir une épreuve selon ce que l'aventurier a reçu.
 const CHANCE_EPREUVE = { complet: 0.9, partiel: 0.55, rien: 0.2 };
