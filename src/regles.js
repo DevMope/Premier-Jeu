@@ -240,6 +240,17 @@ function preparerSoir(G) {
   recevoirLettres(G, hasard(0, 2));
 }
 
+// Ce qu'il faudrait pour satisfaire toutes les commandes acceptées, à partir d'un jour donné
+// (et jusqu'à un jour donné si on veut). Renvoie { idObjet: quantité }.
+function totalCommandes(G, depuis = G.jour, jusqua = Infinity) {
+  const total = {};
+  for (const a of G.annonces) {
+    if (!a.acceptee || a.jour < depuis || a.jour > jusqua) continue;
+    for (const [id, n] of Object.entries(commandeDe(a.voyageur))) total[id] = (total[id] || 0) + n;
+  }
+  return total;
+}
+
 // --- Le Mastre Marché ---
 
 function prixDeBase(id) {

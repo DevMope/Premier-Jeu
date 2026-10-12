@@ -34,6 +34,13 @@ class MarcheScene extends Phaser.Scene {
     creerBouton(this, 840, 510, 220, 'Ouvrir le comptoir', () => this.ouvrir());
 
     this.ouvrirEtal('gedeon');
+    // Les commandes prévues, qu'on déroule ou referme
+    this.commandesOuvertes = false;
+    this.boutonCommandes = this.add.text(16, 46, '', style(14, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 10, y: 5 } }))
+      .setDepth(21).setInteractive({ useHandCursor: true });
+    this.boutonCommandes.on('pointerdown', () => this.basculerCommandes());
+    this.majBoutonCommandes();
+
     // Les nouvelles de l'atelier (une réparation terminée cette nuit)
     if (G.nouvellesAtelier.length) {
       const t = this.add.text(480, 52, G.nouvellesAtelier.join(' '), style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 3 } })).setOrigin(0.5).setDepth(5);
@@ -100,6 +107,67 @@ class MarcheScene extends Phaser.Scene {
     this.contenu.add(this.texteMessage);
   }
 
+  // --- Les commandes prévues (lettres acceptées) ---
+
+  majBoutonCommandes() {
+    const n = this.G.annonces.filter(a => a.acceptee && a.jour >= this.G.jour).length;
+    this.boutonCommandes.setText(`Commandes prévues (${n}) ${this.commandesOuvertes ? '▲' : '▼'}`);
+  }
+
+  basculerCommandes() {
+    this.commandesOuvertes = !this.commandesOuvertes;
+    this.majBoutonCommandes();
+    if (this.panneauCommandes) this.panneauCommandes.destroy();
+    this.panneauCommandes = null;
+    if (this.commandesOuvertes) this.creerPanneauCommandes();
+  }
+
+  creerPanneauCommandes() {
+    const G = this.G;
+    const c = this.panneauCommandes = this.add.container(0, 0).setDepth(20);
+    c.add(this.add.rectangle(480, 178, 940, 240, 0xead9b0, 0.97).setStrokeStyle(3, 0x8a6a3a).setInteractive());
+
+    // À gauche : les commandes, jour par jour
+    const lettres = G.annonces.filter(a => a.acceptee && a.jour >= G.jour).sort((a, b) => a.jour - b.jour);
+    const enAttente = G.annonces.filter(a => !a.acceptee).length;
+    const lignes = [];
+    let jour = null;
+    for (const a of lettres) {
+      if (a.jour !== jour) {
+        jour = a.jour;
+        lignes.push({ texte: jour === G.jour ? `Aujourd'hui (jour ${jour})` : jour === G.jour + 1 ? `Demain (jour ${jour})` : `Jour ${jour}`, titre: true });
+      }
+      lignes.push({ texte: `• ${a.voyageur.nom} : ${commandeEnTexte(a.voyageur)}` });
+    }
+    if (!lignes.length) lignes.push({ texte: 'Aucune commande acceptée pour les jours à venir.' });
+    if (enAttente) lignes.push({ texte: `(+ ${enAttente} lettre${enAttente > 1 ? 's' : ''} sans réponse : à accepter ou refuser le soir)`, discret: true });
+    c.add(this.add.text(220, 66, 'Les commandes reçues par lettre', style(15, '#3b2410', { fontStyle: 'bold' })));
+    lignes.slice(0, 11).forEach((l, i) => c.add(this.add.text(30, 94 + i * 17, l.texte,
+      style(l.titre ? 13 : 12, l.discret ? '#8a6a4a' : '#3b2410', { fontStyle: l.titre ? 'bold' : l.discret ? 'italic' : 'normal' }))));
+    if (lignes.length > 11) c.add(this.add.text(30, 94 + 11 * 17, `+ ${lignes.length - 11} lignes...`, style(11, '#8a6a4a')));
+
+    // À droite : le total à prévoir, comparé à ta réserve
+    const x0 = 560;
+    c.add(this.add.text(x0, 70, 'Total à prévoir', style(15, '#3b2410', { fontStyle: 'bold' })));
+    [['auj.', 175], ['total', 228], ['tu as', 268]].forEach(([t, dx]) =>
+      c.add(this.add.text(x0 + dx, 78, t, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5)));
+    const aujourdhui = totalCommandes(G, G.jour, G.jour);
+    const toutes = totalCommandes(G);
+    const ids = Object.keys(ITEMS).filter(id => toutes[id]);
+    if (!ids.length) c.add(this.add.text(x0, 100, 'Rien à prévoir pour l\'instant.', style(12, '#6b4a2a')));
+    ids.forEach((id, i) => {
+      const y = 104 + i * 22;
+      const manque = toutes[id] - G.stock[id];
+      c.add(this.add.image(x0 + 10, y, id).setScale(2.5));
+      c.add(this.add.text(x0 + 28, y, ITEMS[id].nom, style(13, '#3b2410')).setOrigin(0, 0.5));
+      c.add(this.add.text(x0 + 175, y, String(aujourdhui[id] || 0), style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+      c.add(this.add.text(x0 + 228, y, String(toutes[id]), style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+      c.add(this.add.text(x0 + 268, y, String(G.stock[id]), style(13, '#3b2410')).setOrigin(0.5));
+      c.add(this.add.text(x0 + 300, y, manque > 0 ? `il en manque ${manque}` : 'OK', style(12, manque > 0 ? '#a03030' : '#2f6a2a', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+    });
+    c.add(this.add.text(x0, 280, 'Les clients imprévus ne sont pas comptés : garde un peu de marge !', style(11, '#6b4a2a', { fontStyle: 'italic' })));
+  }
+
   // --- Un étal ---
 
   ouvrirEtal(cle) {
@@ -129,6 +197,7 @@ class MarcheScene extends Phaser.Scene {
         const r = acheterAuMarche(G, cle, id);
         if (r.erreur) return this.message(r.erreur, '#a03030');
         this.ouvrirEtal(cle);
+        if (this.commandesOuvertes) { this.panneauCommandes.destroy(); this.creerPanneauCommandes(); }
         this.message(r.message || `Acheté : ${nomObjet(id)}.`);
       });
       if (o.qte <= 0 || !peutPayer(G, prixMarchand(G, cle, id))) { b.fond.setAlpha(0.5); b.label.setAlpha(0.5); }
