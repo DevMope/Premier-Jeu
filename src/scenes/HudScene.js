@@ -73,6 +73,7 @@ class HudScene extends Phaser.Scene {
         if (this.reputAffichee !== null) {
           const d = Math.round((r - this.reputAffichee) * 10) / 10;
           // (à droite de la plaque, pour ne rien cacher en dessous)
+          Son.jouer('pieces', { montant: Math.abs(d) });
           const t = this.add.text(226, 9, `${d > 0 ? '+' : ''}${String(d).replace('.', ',')}`, style(15, d > 0 ? '#a8f088' : '#ff8070', { fontStyle: 'bold', stroke: '#1e130a', strokeThickness: 4, brut: true })).setOrigin(0, 0.5).setDepth(101);
           this.tweens.add({ targets: t, x: 250, alpha: 0, duration: 1600, delay: 300, onComplete: () => t.destroy() });
           this.tweens.add({ targets: this.texteReput, scale: 1.25, duration: 150, yoyo: true });
@@ -102,12 +103,25 @@ class HudScene extends Phaser.Scene {
     if (this.scenePausee) this.scenePausee.scene.pause();
     const c = this.fenetre = this.add.container(0, 0).setDepth(110);
     c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.55).setInteractive());
-    c.add(this.add.image(480, 260, panneauHD(this, 480, 200)).setScale(2));
-    c.add(this.add.text(480, 196, "Retourner à l'écran titre ?", style(24, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    c.add(this.add.text(480, 244, 'Ta partie est sauvegardée. En pleine journée,\ntu la reprendras au matin de ce jour-là.', style(16, '#4a2e18', { align: 'center', lineSpacing: 4 })).setOrigin(0.5));
-    const oui = creerBouton(this, 385, 312, 170, 'Écran titre', () => this.retourTitre());
-    const non = creerBouton(this, 575, 312, 170, 'Continuer', () => this.fermerMenu());
+    c.add(this.add.image(480, 270, panneauHD(this, 480, 300)).setScale(2));
+    c.add(this.add.text(480, 150, "Retourner à l'écran titre ?", style(24, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(480, 196, 'Ta partie est sauvegardée. En pleine journée,\ntu la reprendras au matin de ce jour-là.', style(16, '#4a2e18', { align: 'center', lineSpacing: 4 })).setOrigin(0.5));
+    const oui = creerBouton(this, 385, 258, 170, 'Écran titre', () => this.retourTitre());
+    const non = creerBouton(this, 575, 258, 170, 'Continuer', () => this.fermerMenu());
     c.add([oui.fond, oui.label, non.fond, non.label]);
+    // Le son : musique et bruitages, chacun avec son volume et son interrupteur
+    Son.demarrer();
+    [['musique', 'Musique', 320], ['sons', 'Sons', 374]].forEach(([quoi, nom, y]) => {
+      const etiquette = this.add.text(300, y, nom, style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+      const valeur = this.add.text(560, y, '', style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+      const maj = () => valeur.setText(Son.coupe[quoi] ? 'coupé' : `${Math.round(Son.volumes[quoi] * 100)} %`);
+      maj();
+      const moins = this.add.text(500, y, '◀', style(20, '#7a4a20', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => { Son.regler(quoi, Son.volumes[quoi] - 0.1); maj(); if (quoi === 'sons') Son.jouer('clic'); });
+      const plus = this.add.text(620, y, '▶', style(20, '#7a4a20', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => { Son.regler(quoi, Son.volumes[quoi] + 0.1); maj(); if (quoi === 'sons') Son.jouer('clic'); });
+      const inter = this.add.text(690, y, Son.coupe[quoi] ? '🔇' : '🔊', style(20, '#3b2410', { brut: true })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      inter.on('pointerdown', () => { Son.basculer(quoi); inter.setText(Son.coupe[quoi] ? '🔇' : '🔊'); maj(); });
+      c.add([etiquette, valeur, moins, plus, inter]);
+    });
   }
 
   fermerMenu() {

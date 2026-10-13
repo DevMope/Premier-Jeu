@@ -39,7 +39,7 @@ const Son = {
     this.pret = true;
     if (this.themeVoulu) this.ambiance(this.themeVoulu);
   },
-  reprendre() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
+  reprendre() { if (this.ctx && this.ctx.state === 'suspended' && !(window.OfflineAudioContext && this.ctx instanceof OfflineAudioContext)) this.ctx.resume(); },
   appliquerVolumes() {
     if (!this.pret) return;
     this.busSons.gain.value = this.coupe.sons ? 0 : this.volumes.sons;
@@ -154,6 +154,38 @@ const Son = {
     else if (quoi === 'tambourin') this.bruit(0.08, t, bus, 0.16 * force, 6000, 'highpass');
     else if (quoi === 'bois') this.bruit(0.03, t, bus, 0.25 * force, 2400);
     else if (quoi === 'coeur') { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.frequency.value = 50; g.gain.setValueAtTime(0.6 * force, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.35); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.4); }
+  },
+
+  // Rendre un thème (ou un son) hors ligne, en WAV : pour l'écouter sans jouer, et pour les tests.
+  async rendre(theme, secondes = 20, son = null) {
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const sauve = { ctx: this.ctx, maitre: this.maitre, reverb: this.reverb, reverbGain: this.reverbGain, busSons: this.busSons, busMusique: this.busMusique, pret: this.pret, theme: this.theme, courant: this.courant, boucle: this.boucle, mesure: this.mesure, graine: this.graine };
+    this.ctx = new OAC(2, 44100 * secondes, 44100);
+    this.maitre = this.ctx.createGain(); this.maitre.gain.value = 0.9; this.maitre.connect(this.ctx.destination);
+    const duree = 1.8, n = Math.floor(44100 * duree), imp = this.ctx.createBuffer(2, n, 44100);
+    for (let c = 0; c < 2; c++) { const d = imp.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6) * 0.5; }
+    this.reverb = this.ctx.createConvolver(); this.reverb.buffer = imp; this.reverbGain = this.ctx.createGain(); this.reverbGain.gain.value = 0.35; this.reverb.connect(this.reverbGain); this.reverbGain.connect(this.maitre);
+    this.busSons = this.ctx.createGain(); this.busSons.connect(this.maitre); this.busSons.connect(this.reverb);
+    this.busMusique = this.ctx.createGain(); this.busMusique.gain.value = 0.7; this.busMusique.connect(this.maitre); this.busMusique.connect(this.reverb);
+    this.pret = true; this.boucle = null; this.courant = null; this.theme = null;
+    if (son) SONS[son].call(this, 0.2, this.busSons, {});
+    else {
+      const T = THEMES[theme]; this.mesure = 0; this.graine = 7;
+      for (let t = 0.1; t < secondes; t += T.temps * 60 / T.tempo) { this.jouerMesure(T, t, this.busMusique); this.mesure++; }
+    }
+    const buffer = await this.ctx.startRendering();
+    Object.assign(this, sauve);
+    return buffer;
+  },
+  // Un AudioBuffer → un fichier WAV (16 bits)
+  wav(buffer) {
+    const n = buffer.length, canaux = buffer.numberOfChannels, taux = buffer.sampleRate;
+    const out = new ArrayBuffer(44 + n * canaux * 2), v = new DataView(out);
+    const ecrire = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    ecrire(0, 'RIFF'); v.setUint32(4, 36 + n * canaux * 2, true); ecrire(8, 'WAVE'); ecrire(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, canaux, true); v.setUint32(24, taux, true); v.setUint32(28, taux * canaux * 2, true); v.setUint16(32, canaux * 2, true); v.setUint16(34, 16, true); ecrire(36, 'data'); v.setUint32(40, n * canaux * 2, true);
+    let o = 44;
+    for (let i = 0; i < n; i++) for (let c = 0; c < canaux; c++) { const x = Math.max(-1, Math.min(1, buffer.getChannelData(c)[i])); v.setInt16(o, x < 0 ? x * 32768 : x * 32767, true); o += 2; }
+    return out;
   },
 
   // --- Les sons du jeu ---
@@ -317,13 +349,13 @@ const SONS = {
   clochette(t, bus) { for (const [mult, v, d] of [[1, 0.3, 0.9], [2.4, 0.12, 0.6], [4.1, 0.05, 0.4]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 1760 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.1); } SONS.clochette2.call(this, t + 0.13, bus); },
   clochette2(t, bus) { for (const [mult, v, d] of [[1.19, 0.22, 0.8], [2.6, 0.08, 0.5]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 1760 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.1); } },
   // La porte qui s'ouvre puis se referme (un grincement, puis un claquement de bois)
-  porte(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, t); osc.frequency.linearRampToValueAtTime(260, t + 0.3); const f = this.ctx.createBiquadFilter(); f.frequency.value = 900; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.06, t + 0.08); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.35); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.4); this.bruit(0.06, t + 0.42, bus, 0.3, 500); this.bruit(0.03, t + 0.46, bus, 0.15, 1200); },
+  porte(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, t); osc.frequency.linearRampToValueAtTime(260, t + 0.3); const f = this.ctx.createBiquadFilter(); f.frequency.value = 900; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.08); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.35); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.4); this.bruit(0.06, t + 0.42, bus, 0.8, 500); this.bruit(0.03, t + 0.46, bus, 0.4, 1200); },
   // Un clic de bouton : un petit « toc » de bois
   clic(t, bus) { this.bruit(0.025, t, bus, 0.22, 1800); const osc = this.ctx.createOscillator(); osc.frequency.value = 700; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.05); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.06); },
   // Une page qu'on tourne, un parchemin
   page(t, bus) { this.bruit(0.18, t, bus, 0.12, 3500, 'highpass'); this.bruit(0.08, t + 0.12, bus, 0.08, 2000); },
   // Les dés qui roulent sur la table
-  des(t, bus) { for (let i = 0; i < 6; i++) this.bruit(0.03, t + i * 0.07 + Math.random() * 0.03, bus, 0.25 - i * 0.03, 2200 + Math.random() * 800); },
+  des(t, bus) { for (let i = 0; i < 6; i++) this.bruit(0.03, t + i * 0.07 + Math.random() * 0.03, bus, 0.6 - i * 0.07, 2200 + Math.random() * 800); },
   // La plume qui gratte
   plume(t, bus) { for (let i = 0; i < 4; i++) this.bruit(0.1, t + i * 0.12, bus, 0.06, 4500, 'highpass'); },
   // Un marteau sur l'enclume (l'atelier)
@@ -333,19 +365,19 @@ const SONS = {
   // Un accord qui tombe (échec)
   echec(t, bus) { [7, 3, 0].forEach((d, i) => this.note('piano', 261.63 * Math.pow(2, d / 12), t + i * 0.16, 0.6, 0.7, bus)); },
   // Des pas sur le plancher
-  pas(t, bus) { for (let i = 0; i < 4; i++) this.bruit(0.04, t + i * 0.26, bus, 0.14, 300 + (i % 2) * 120); },
+  pas(t, bus) { for (let i = 0; i < 4; i++) { this.bruit(0.05, t + i * 0.26, bus, 0.5, 320 + (i % 2) * 120); const o = this.ctx.createOscillator(); o.frequency.setValueAtTime(120, t + i * 0.26); o.frequency.exponentialRampToValueAtTime(60, t + i * 0.26 + 0.08); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.25, t + i * 0.26); g.gain.exponentialRampToValueAtTime(0.0005, t + i * 0.26 + 0.12); o.connect(g); g.connect(bus); o.start(t + i * 0.26); o.stop(t + i * 0.26 + 0.15); } },
   // Le hibou de la nuit
-  hibou(t, bus) { for (const dt of [0, 0.32]) { const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(420, t + dt); osc.frequency.exponentialRampToValueAtTime(360, t + dt + 0.25); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + dt); g.gain.exponentialRampToValueAtTime(0.12, t + dt + 0.05); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.28); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.3); } },
+  hibou(t, bus) { for (const dt of [0, 0.32]) { const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(420, t + dt); osc.frequency.exponentialRampToValueAtTime(360, t + dt + 0.25); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + dt); g.gain.exponentialRampToValueAtTime(0.22, t + dt + 0.05); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.28); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.3); } },
   // La cloche du crieur
   cloche(t, bus) { for (const [mult, v, d] of [[1, 0.3, 1.4], [2.0, 0.12, 0.9], [3.01, 0.06, 0.6], [4.2, 0.03, 0.4]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 660 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.1); } },
   // Un tampon qui s'abat (la Faucheuse, le registre)
   tampon(t, bus) { this.bruit(0.05, t, bus, 0.35, 400); const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(140, t); osc.frequency.exponentialRampToValueAtTime(60, t + 0.1); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.3, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.2); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.25); },
   // Un tiroir ou un panneau qui glisse
-  glisse(t, bus) { this.bruit(0.16, t, bus, 0.1, 800); },
+  glisse(t, bus) { this.bruit(0.2, t, bus, 0.35, 900); this.bruit(0.04, t + 0.2, bus, 0.3, 500); },
   // Le froid de la Faucheuse : un souffle grave
   froid(t, bus) { this.bruit(1.2, t, bus, 0.12, 250); const osc = this.ctx.createOscillator(); osc.frequency.value = 55; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.2, t + 0.4); g.gain.exponentialRampToValueAtTime(0.0005, t + 1.4); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 1.5); },
   // Le feu qui crépite (une bûche)
-  feu(t, bus) { for (let i = 0; i < 5; i++) this.bruit(0.02, t + Math.random() * 0.5, bus, 0.08, 2500 + Math.random() * 2000); },
+  feu(t, bus) { for (let i = 0; i < 6; i++) this.bruit(0.025, t + Math.random() * 0.5, bus, 0.3, 2500 + Math.random() * 2000); },
 };
 
 // Le thème de chaque scène du jeu

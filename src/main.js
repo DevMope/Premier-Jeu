@@ -49,6 +49,20 @@ function lancerJeu() {
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [TitleScene, IntroScene, IntroHistoireScene, CounterScene, NightScene, StoryScene, FailliteScene, ExpressScene, BanqueScene, MarcheScene, AtelierScene, BureauScene, CarteScene, DodoScene, FacadeScene, ArriereScene, RenovationScene, PromenadeScene, HudScene],
 });
+  // La musique et les sons : le son démarre au premier clic (les navigateurs l'exigent), et
+  // chaque scène qui s'ouvre lance son ambiance.
+  window.jeu.events.once('ready', () => {
+    for (const s of window.jeu.scene.scenes) {
+      const theme = THEME_PAR_SCENE[s.scene.key];
+      if (!theme) continue;
+      s.events.on('create', () => Son.ambiance(theme));
+      if (s.scene.isActive()) Son.ambiance(theme);   // (l'écran titre est déjà ouvert)
+    }
+    const reveil = () => { Son.demarrer(); Son.reprendre(); };
+    window.jeu.canvas.addEventListener('pointerdown', reveil);
+    window.jeu.canvas.addEventListener('touchstart', reveil);
+    document.addEventListener('keydown', reveil);
+  });
 }
 
 // On attend la police (au plus 2,5 secondes), sinon on démarre avec Georgia.

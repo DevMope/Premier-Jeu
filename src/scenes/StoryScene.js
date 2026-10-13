@@ -92,6 +92,7 @@ class StoryScene extends Cinematique {
       if (piege) {
         this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(PIEGES[piege].mort, v)} »`);
         this.cameras.main.flash(400, 90, 0, 30);
+        Son.jouer('froid');
         await this.issue(false);
         for (let pv = (pvAvant || 1) - 1; pv >= 0; pv--) await this.blesser(pv);
         await this.attendreClic();
@@ -178,6 +179,7 @@ class StoryScene extends Cinematique {
   async blesser(pvRestants) {
     this.cameras.main.shake(250, 0.01);
     this.cameras.main.flash(180, 160, 20, 20);
+    Son.jouer('echec');
     // Il recule sous le choc
     const x = this.perso.x;
     this.tweens.add({ targets: this.perso, x: x - 14, duration: 90, yoyo: true, ease: 'Quad.easeOut' });
@@ -519,6 +521,7 @@ class StoryScene extends Cinematique {
         }
         this.cameras.main.shake(150, 0.006);
         etincelles(cx, cy, 0xfff0a0);
+        Son.jouer('succes');
         await this.attendre(350);
         this.tweens.add({ targets: o, alpha: 0, duration: 300, onComplete: () => o.destroy() });
         await this.animer({ targets: p, x: p.x - 40, duration: 220 });

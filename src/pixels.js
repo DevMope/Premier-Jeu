@@ -468,6 +468,7 @@ function creerBouton(scene, x, y, largeur, texte, action) {
   fond.on('pointerout', () => { survol = false; repos(); });
   fond.on('pointerdown', () => {
     if (!actif) return;
+    Son.jouer('clic');
     fond.setTexture(cle + '_enfonce');
     label.setY(y + 2);
     scene.time.delayedCall(110, repos);

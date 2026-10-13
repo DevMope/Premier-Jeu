@@ -549,6 +549,7 @@ class CounterScene extends Phaser.Scene {
       return this.arrivee(entree);
     }
     const faucheuse = entree.type === 'faucheuse';
+    Son.jouer(faucheuse ? 'froid' : 'clochette');
     this.dire(faucheuse ? "Le froid tombe d'un coup. Les bougies vacillent..." : "Quelqu'un approche du comptoir...", '');
     this.majFileAttente();
     this.perso.setVisible(true).setAlpha(1);
@@ -1159,6 +1160,7 @@ class CounterScene extends Phaser.Scene {
   // `porte` : le baluchon que le client emporte, sur l'épaule (le bâton devant, le tissu
   // noué dans son dos).
   partirPar(x, porte = null) {
+    Son.jouer('porte');
     const versDroite = x > this.perso.x;
     const entree = this.entree;
     const corps = () => {

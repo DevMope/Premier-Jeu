@@ -343,9 +343,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       for (let i = 0; i < Math.round(nb - P.rx * 0.78); i++) t.poser(Math.round(cx + P.rx * 0.78 + i), Math.round(ey + 3.6 * k) + 1, 'peau', 2); // l'ombre sous le nez
       t.poser(Math.round(cx + P.rx * 0.9), Math.round(ey + 3.3 * k), 'peau', 1); t.poser(Math.round(cx + P.rx * 0.9) + 1, Math.round(ey + 3.3 * k), 'peau', 2); // la narine
       t.forme('peau', ellipsoide(cx + P.rx * 0.6, cy + P.ry - 1.5 * k, 2 * k, 1 * k), { decalage: -0.5, bord: false, ombre: false });
-    } else if (Math.abs(c) > 0.2 && Math.abs(c) < 0.9) {
-      // De trois-quarts : une ombre nette sur le côté du visage qui s'éloigne
-      t.forme('peau', (x, y) => { const n = tete(x, y); if (!n || y < ey - 1 * k || y > cy + P.ry - 2 * k) return null; const fz = n[0] * s + n[2] * c; return fz < 0.35 && n[0] < 0 ? n : null; }, { decalage: -0.8, bord: false, ombre: false });
+    } else if (Math.abs(c) > 0.2) {
+      // De face comme de trois-quarts : une ombre nette sur le côté du visage opposé à la lumière
+      // (à droite), et sous le menton
+      const seuil = Math.abs(c) > 0.9 ? 0.62 : 0.35;
+      t.forme('peau', (x, y) => { const n = tete(x, y); if (!n || y < ey - 2 * k || y > cy + P.ry) return null; const fz = Math.abs(c) > 0.9 ? 1 - n[0] : n[0] * s + n[2] * c; return (Math.abs(c) > 0.9 ? n[0] > seuil : fz < seuil && n[0] < 0) ? n : null; }, { decalage: -0.8, bord: false, ombre: false });
+      t.forme('peau', (x, y) => { const n = tete(x, y); return n && n[1] > 0.72 && y > by + 1 * k ? n : null; }, { decalage: -0.8, bord: false, ombre: false });
     }
     // Les joues pleines du hobbit : juste un peu de rose
     if (race === 'hobbit') for (const cote of (Math.abs(c) > 0.9 ? [-1, 1] : profil ? [1] : [pres])) t.forme('levres', ellipsoide(profil ? cx + P.rx * 0.45 : X(cote * P.rx * 0.5, P.rx * 0.62), joueY + 0.4 * k, 1.3 * k, 0.8 * k), { decalage: 1.2, bord: false, ombre: false });
@@ -357,6 +360,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme('peau', ellipsoide(nz + s * 0.5 * k, ey + 2.9 * k, nr * (s > 0.5 ? 1.1 : 0.85), nr * 1.15), { decalage: 0.15, ombre: false });
     for (let i = -Math.round(nr * 0.6); i <= Math.round(nr * 0.6); i++) t.poser(Math.round(nz + s * 0.5 * k + i), Math.round(ey + 2.9 * k + nr * 1.15), 'peau', 1); // l'ombre dessous
     for (let j = 0; j < Math.round(nr * 1.5); j++) t.poser(Math.round(nz + s * 0.5 * k - nr * (s > 0.5 ? 1 : 0.85)), Math.round(ey + 1.8 * k + j), 'peau', 2); // l'arête
+    if (Math.abs(c) > 0.9) for (let j = 0; j < Math.round(nr * 1.6); j++) for (let e = 0; e < Math.max(1, Math.round(0.6 * k)); e++) t.poser(Math.round(nz + nr * 0.85) + e, Math.round(ey + 1.6 * k + j), 'peau', 1); // l'ombre à droite du nez
     }
     // Les yeux, symétriques autour du nez
     if (profil) yeux.push([cx + P.rx * 0.5, false, pres]);

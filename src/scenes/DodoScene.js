@@ -104,6 +104,7 @@ class DodoScene extends Cinematique {
     await this.attendre(300);
     // Il souffle la bougie...
     this.onomatopee(650, SOL_CHAMBRE - 140, 'Fffff !');
+    Son.jouer('glisse'); this.time.delayedCall(900, () => Son.jouer('hibou'));
     this.tweens.killTweensOf([this.flamme, this.lumiere]);
     this.tweens.add({ targets: [this.flamme, this.lumiere], alpha: 0, duration: 400 });
     this.tweens.add({ targets: this.noir, fillAlpha: 0.45, duration: 700 });

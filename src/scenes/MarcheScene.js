@@ -406,7 +406,7 @@ class MarcheScene extends Phaser.Scene {
   bouton(c, x, y, l, texte, action, couleur = 0x8a5a2b) {
     const fond = this.add.rectangle(x, y, l, 26, couleur).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
     const label = this.add.text(x, y, texte, style(12, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
-    fond.on('pointerdown', action);
+    fond.on('pointerdown', () => { Son.jouer('clic'); action(); });
     c.add([fond, label]);
     return { fond, label };
   }
@@ -693,6 +693,7 @@ class MarcheScene extends Phaser.Scene {
   // --- Le crieur : les nouvelles du jour ---
 
   ouvrirCrieur() {
+    Son.jouer('cloche');
     const G = this.G;
     this.montrer('crieur');
     const c = this.panneau('Le crieur', 'Les nouvelles du jour, vraies ou presque');
@@ -744,6 +745,7 @@ class MarcheScene extends Phaser.Scene {
   }
 
   lancerDes(mise) {
+    Son.jouer('des');
     const G = this.G;
     if (this.desEnCours) return;
     const r = jouerAuxDes(G, mise);
