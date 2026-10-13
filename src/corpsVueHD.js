@@ -236,6 +236,38 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   // La capuche et le col de fourrure du noble
   if (costume === 'noble') t.forme('fourrure', (x, y) => (y >= yT - 1 * k && y <= yT + 4 * k && torse(x, y) ? [(x + 0.5 - cx) / ep, -0.3, 0.8] : null), { motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.5 : -0.3) });
   if (longue) for (let y = yB + 4 * k; y < sol; y += 5 * k) for (let x = cx - 8 * k; x < cx + 9 * k; x += 6 * k) if (t.mat(x + (y % 2), y) === 'habit') { t.poser(x + (y % 2), y, 'or', 4); t.poser(x + (y % 2) + 1, y, 'or', 5); } // les étoiles
+  // --- Les habits des aventuriers, selon le niveau ---
+  // Le gilet de cuir lacé de l'aguerri ; le gilet clouté du vétéran ; la cotte de mailles du héros ;
+  // le plastron liséré d'or de la légende ; une épée au côté à partir du héros
+  const devantTorse = (x, y) => torse(x, y) && !dos && y >= yT + 2 * k && y <= yB - 2 * k && Math.abs(x + 0.5 - X(0, prof)) < section(ep - 1.6 * k, prof) * 0.9;
+  if (aventurier && !longue && race !== 'nain') {
+    if (tenue === 1 || tenue === 2) {
+      t.forme('cuir', (x, y) => (devantTorse(x, y) ? [(x + 0.5 - X(0, prof)) / ep, -0.1, 0.9] : null), { decalage: -0.1, motif: tenue === 2 ? (x, y) => ((Math.floor(x / k) + Math.floor(y / k) * 2) % 5 === 0 ? 1.2 : 0) : null });
+      // Les lacets
+      for (let y = yT + 4 * k; y < yB - 3 * k; y += 2 * k) for (const d of [-1, 1]) { const x = Math.round(X(d * 1.2 * k, prof)); if (t.mat(x, y) === 'cuir') { t.poser(x, y, 'lin', 4); t.poser(x, y + 1, 'lin', 3); } }
+    } else if (tenue === 3) {
+      t.forme('metal', (x, y) => (devantTorse(x, y) ? [(x + 0.5 - X(0, prof)) / ep, -0.1, 0.9] : null), { decalage: -0.3, motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.35 : -0.35) });
+    } else if (tenue === 4) {
+      t.forme('metal', (x, y) => (devantTorse(x, y) ? [(x + 0.5 - X(0, prof)) / ep, -0.1, 0.9] : null), { decalage: 0.1 });
+      const bords = []; for (let y = yT + 2 * k; y <= yB - 2 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'metal' && devantTorse(x, y) && (!devantTorse(x - 1, y) || !devantTorse(x + 1, y) || !devantTorse(x, y - 1) || !devantTorse(x, y + 1))) bords.push([x, y]);
+      for (const [x, y] of bords) t.poser(x, y, 'or', 4); // le liséré d'or
+      t.forme('or', ellipsoide(X(0, prof), yT + 7 * k, 1.6 * k, 1.6 * k), { decalage: 0.5, ombre: false });
+    }
+    // Les broderies de feuilles de l'elfe
+    if (race === 'elfe' && tenue <= 2) for (let y = yT + 4 * k; y < yB; y += 4 * k) for (const d of [-3, 3]) { const x = Math.round(X(d * k, prof)); if (t.mat(x, y) === 'habit' || t.mat(x, y) === 'cuir') { t.poser(x, y, 'or', 4); t.poser(x + 1, y - 1, 'or', 5); t.poser(x - 1, y + 1, 'or', 3); } }
+  }
+  // L'épée au côté (héros et légende) : le fourreau pend à la hanche gauche
+  if (aventurier && tenue >= 3 && !longue) {
+    const ex = X(-ep * 0.9, 0.2 * k);
+    if (Z(-ep * 0.9, 0.2 * k) > -prof) {
+      for (let j = 0; j < 14 * k; j++) for (let e = 0; e < Math.round(1.4 * k); e++) t.poser(Math.round(ex - j * 0.08 * k) + e, yB + j, 'cuir', j % (3 * k) === 0 ? 1 : 3);
+      t.forme(tenue >= 4 ? 'or' : 'metal', ellipsoide(ex + 0.7 * k, yB - 1 * k, 2.2 * k, 0.9 * k), { decalage: 0.4, ombre: false });   // la garde
+      for (let j = 0; j < 3 * k; j++) t.poser(Math.round(ex + 0.5 * k), yB - 1.5 * k - j, 'cuir', 2); t.poser(Math.round(ex + 0.5 * k), yB - 1.5 * k - 3 * k, tenue >= 4 ? 'or' : 'metal', 5); // la poignée et le pommeau
+    }
+  }
+  // La grosse boucle de ceinture du nain, les bretelles du hobbit
+  if (race === 'nain' && !dos && Z(0, prof) > 0) t.forme('or', (x, y) => (y >= yB - 3 * k && y <= yB && Math.abs(x + 0.5 - X(0, prof)) < 2.4 * k ? [(x + 0.5 - X(0, prof)) / (2.4 * k), 0, 0.9] : null), { decalage: 0.3, ombre: false });
+  if (race === 'hobbit' && !dos) for (const d of [-1, 1]) for (let y = yT + 1 * k; y < yB - 2 * k; y++) for (let e = 0; e < k; e++) { const x = Math.round(X(d * (3 + (y - yT) / P.torse * 1.5) * k, prof)) + e; if (t.mat(x, y) === 'lin') t.poser(x, y, 'cuir', 3); }
   // Les pièces cousues des novices
   if (tenue === 0 && !longue && aventurier) for (const [du, dy] of [[-3, 6], [2, 11]]) for (let i = 0; i < 3 * k; i++) for (let j = 0; j < 3 * k; j++) { const x = Math.round(X(du * k, prof * 0.8)) + i, y = yT + dy * k + j; if (t.mat(x, y) === 'habit') t.poser(x, y, 'habit', (i === 0 || j === 0 || i === 3 * k - 1 || j === 3 * k - 1) ? 1 : 2); }
   // La ceinture, la boucle
