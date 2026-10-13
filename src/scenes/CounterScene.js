@@ -1020,23 +1020,48 @@ class CounterScene extends Phaser.Scene {
     const decalage = versDroite ? 22 : -22;
     const inclinaison = versDroite ? -22 : 22;
     // Le baluchon est porté à hauteur des mains, qui dépend de la taille de son peuple.
+    // En marchant, le baluchon se balance au bout du bâton et rebondit à chaque pas.
+    let balance = false;
     const placer = () => {
       const cle = this.perso.texture.key;
       const mains = cle.startsWith('corps_') ? (MAINS_CORPS[cle] || 28) * this.perso.scaleY : 62;
-      porte.setPosition(this.perso.x + decalage, this.perso.y - mains).setAngle(inclinaison + this.perso.angle);
+      const t = this.time.now;
+      const swing = balance ? Math.sin(t / 130) * 9 : 0;
+      const rebond = balance ? Math.abs(Math.sin(t / 125)) * 5 : 0;
+      porte.setPosition(this.perso.x + decalage * this.perso.scaleY / (9 * echelleCorps(cle)), this.perso.y - mains - rebond)
+        .setAngle(inclinaison + this.perso.angle + swing);
     };
     if (porte) {
       porte.setFlipX(!versDroite).setOrigin(versDroite ? 0.95 : 0.05, 0.95).setDepth(2.1);
       placer();
     }
-    this.tweens.add({
-      targets: this.perso, x, duration: 1400, delay: 700, ease: 'Sine.easeIn',
-      onStart: () => { corps(); this.marche(1400); },
-      onUpdate: () => { if (porte) placer(); },
+    const partir = () => this.tweens.add({
+      targets: this.perso, x, duration: porte ? 1900 : 1400, ease: 'Sine.easeIn',
+      onStart: () => { balance = true; this.marche(porte ? 1900 : 1400); },
+      onUpdate: (tw) => {
+        // Il s'éloigne sur la route : un peu plus petit, un peu plus haut, vers l'horizon.
+        if (porte) {
+          const echelle = 9 * echelleCorps(this.perso.texture.key) * (1 - 0.18 * tw.progress);
+          this.perso.setScale(echelle).setY(SOL_COMPTOIR - 14 * tw.progress);
+          porte.setScale(porte.echelleDepart * (1 - 0.18 * tw.progress));
+          placer();
+        }
+      },
       onComplete: () => {
         if (porte) porte.destroy();
         this.voyageurSuivant();
       },
+    });
+    if (!porte) { this.time.delayedCall(700, () => { corps(); partir(); }); return; }
+    // Avec son baluchon : il se retourne, saute de joie, salue de la main, et s'en va.
+    porte.echelleDepart = porte.scaleX;
+    this.time.delayedCall(500, () => {
+      corps();
+      placer();
+      const salut = this.add.text(this.perso.x + (versDroite ? -30 : 30), this.perso.y - this.perso.displayHeight - 6, '👋', style(26, '#ffffff')).setOrigin(0.5).setDepth(6);
+      this.tweens.add({ targets: salut, angle: { from: -25, to: 25 }, duration: 140, yoyo: true, repeat: 3 });
+      this.tweens.add({ targets: salut, alpha: 0, y: salut.y - 16, delay: 800, duration: 300, onComplete: () => salut.destroy() });
+      this.tweens.add({ targets: this.perso, y: SOL_COMPTOIR - 16, duration: 150, yoyo: true, ease: 'Quad.easeOut', onUpdate: placer, onComplete: () => this.time.delayedCall(450, partir) });
     });
   }
 
