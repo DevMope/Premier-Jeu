@@ -147,7 +147,7 @@ class PromenadeScene extends Cinematique {
     this.lumieres.push([o + 500, 330, 3]);
     const enCours = enReparation(G).length;
     this.regarder(o + 330, 360, 330, 150, enCours ? `${enCours} objet${enCours > 1 ? 's' : ''} sur l'établi : on y travaille même le soir.` : "L'établi est libre. Rachète des trouvailles aux aventuriers !");
-    this.regarder(o + 700, 380, 240, 120, `${G.tresors.length} / ${PLACES_ATELIER} objets de valeur dans l'atelier.`);
+    this.regarder(o + 700, 380, 240, 120, `${G.tresors.length} / ${placesAtelier(G)} objets de valeur dans l'atelier.`);
   }
 
   pieceDehors() {

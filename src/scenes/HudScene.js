@@ -20,13 +20,28 @@ class HudScene extends Phaser.Scene {
     // La réputation, en direct : elle s'anime quand elle bouge.
     plaque.fillStyle(0x1e130a, 0.92).fillRoundedRect(114, -8, 104, 26, 7);
     plaque.lineStyle(2, 0xc9a227, 1).strokeRoundedRect(114, -8, 104, 26, 7);
-    this.texteReput = this.add.text(166, 9, '', style(14, '#f3d98a', { fontStyle: 'bold', brut: true })).setOrigin(0.5);
+    // Une étoile et une jauge dorée qui se remplit vers le prochain palier, le chiffre par-dessus.
+    this.etoileReput = this.add.text(126, 9, '⭐', style(13, '#f3d98a', { brut: true })).setOrigin(0, 0.5);
+    this.jaugeReput = this.add.graphics();
+    this.remplissage = 0;
+    this.texteReput = this.add.text(178, 9, '', style(11, '#fff4dc', { fontStyle: 'bold', stroke: '#1e130a', strokeThickness: 4, brut: true })).setOrigin(0.5);
     const zoneReput = this.add.rectangle(166, 9, 104, 20, 0xffffff, 0).setInteractive({ useHandCursor: true });
     zoneReput.on('pointerover', () => this.infoReput(true));
     zoneReput.on('pointerout', () => this.infoReput(false));
     zoneReput.on('pointerdown', () => this.infoReput(!this.bulleReput));
     this.reputAffichee = null;
-    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, zone, this.texteReput, zoneReput]).setDepth(100);
+    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput]).setDepth(100);
+  }
+
+  dessinerJauge() {
+    const g = this.jaugeReput, x0 = 146, l = 64, y0 = 3, h = 12, part = this.remplissage;
+    g.clear();
+    g.fillStyle(0x0e0904).fillRoundedRect(x0, y0, l, h, 4);
+    g.fillStyle(0xb8860b).fillRoundedRect(x0 + 1, y0 + 1, Math.max(4, (l - 2) * part), h - 2, 3);
+    g.fillStyle(0xf3d98a, 0.9).fillRect(x0 + 2, y0 + 2, Math.max(2, (l - 4) * part), 3);
+    g.lineStyle(1, 0xc9a227).strokeRoundedRect(x0, y0, l, h, 4);
+    g.lineStyle(1, 0x0e0904, 0.5);
+    for (let k = 1; k < 5; k++) g.lineBetween(x0 + l * k / 5, y0 + 2, x0 + l * k / 5, y0 + h - 2);
   }
 
   // Le détail de la réputation : son palier (le plafond de clients) et le suivant.
@@ -35,7 +50,7 @@ class HudScene extends Phaser.Scene {
     const G = window.GAME;
     if (!montrer || !G) return;
     const p = palierClients(G);
-    const texte = `Réputation : ${arrondi(G.reputation)}\n${p.nom} : jusqu'à ${p.max} clients de passage par jour` +
+    const texte = `Réputation : ${arrondi(G.reputation)}\n${p.nom} : jusqu'à ${p.max} clients de passage par jour\n(+${BONUS_CLIENTS_MAX} au plus grâce au stock varié, à l'éclairage, au trophée)` +
       (p.suivant ? `\nProchain palier à ${p.suivant.reputation} : ${p.suivant.nom} (${p.suivant.max} clients)` : '\nPalier maximum atteint !');
     this.bulleReput = this.add.text(116, 24, texte, style(12, '#fff4dc', { backgroundColor: '#1e130a', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
   }
@@ -63,7 +78,14 @@ class HudScene extends Phaser.Scene {
           this.tweens.add({ targets: this.texteReput, scale: 1.25, duration: 150, yoyo: true });
         }
         this.reputAffichee = r;
-        this.texteReput.setText(`⭐ Réput. ${String(r).replace('.', ',')}`);
+        this.texteReput.setText(String(r).replace('.', ','));
+        // La jauge glisse jusqu'à sa nouvelle place dans le palier
+        const pal = palierClients(G);
+        const debut = pal.reputation === -Infinity ? 0 : pal.reputation, fin = pal.suivant ? pal.suivant.reputation : debut + 10;
+        const cible = Phaser.Math.Clamp((G.reputation - debut) / (fin - debut), 0, 1);
+        this.tweens.killTweensOf(this);
+        this.tweens.add({ targets: this, remplissage: cible, duration: 600, ease: 'Sine.easeOut', onUpdate: () => this.dessinerJauge() });
+        this.dessinerJauge();
       }
     } else if (this.bulleReput) this.infoReput(false);
     else if (this.fenetre && !G) this.fermerMenu();

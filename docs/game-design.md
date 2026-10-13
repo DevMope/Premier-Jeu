@@ -145,6 +145,10 @@ Après la nuit, on se réveille au marché avant d'ouvrir le comptoir.
 ### 2.10 Idées notées pour plus tard
 - **Les familiers** : obtenir un ou plusieurs familiers selon les quêtes et les relations (le grand aigle en est un). Comment exactement : à définir.
 - **Les zones conquises** : envoyer des aventuriers libérer (camp du bien) ou conquérir (camp du mal) une zone, pour pouvoir s'y installer et avancer dans l'histoire. Chaque nouvelle zone a son biome et son ambiance. Il faut financer le voyage et le nouveau shop : on ne déménage que pleinement préparé. À construire une fois le Bien et le Mal en place.
+  - **Précisé par le joueur (v 0.40)** : débloquer une nouvelle zone permet d'y **déplacer notre auberge**. Nouveau décor et nouvel environnement, nouvelles possibilités esthétiques, nouveaux personnages du village d'à côté.
+  - S'installer dans un **lieu du mal ou du bien influence la clientèle**, et donc la jauge du mal et du bien.
+  - Chaque nouvelle zone débloquée apporte aussi **une nouvelle pièce d'armure** (déjà en place : une pièce par zone ouverte, une seule par matin).
+  - La conquête d'une contrée ne donne donc **pas** de bonus de butin : sa vraie récompense, c'est de pouvoir s'y installer. Partie à peaufiner, elle prendra du temps.
 
 ### 2.9 Aider pendant l'aventure
 - **Le grand aigle** (familier à débloquer) : quand un aventurier en mission envoie un message de détresse, l'aigle peut lui apporter rapidement des objets.
@@ -287,7 +291,7 @@ Chaque étape doit donner une version **jouable**.
 | 7f ✅ | Silhouettes HD en pied | Personnages entiers en HD partout (file, départs, récits, marché, carte, registre), couleurs propres à chaque voyageur, tenues selon le niveau (novice rapiécé → aguerri sacoche → vétéran épaulières de cuir → héros métal et cape → légende dorures), figurants costumés (garde, banquiers, colporteur, mentor, Grippesou). |
 | 7g ✅ | Cinématiques animées | Vrais pas de marche (jambes, bras, poussière) pour tous les personnages et JeuneGoy, partout (file, départs, récits, prologue, faillite, chambre, façade) ; paysage qui glisse pendant les récits ; bond de joie et étincelles quand une épreuve est surmontée, recul et éclair rouge quand on est blessé ; rivière peinte qui coule ; cadres des textes. |
 | 8 | **Réputation et améliorations** | Clients plus exigeants, décoration, améliorations la nuit. |
-| 9 | **Le Bien et le Mal** | Races maléfiques, objets du bien / du mal, réputation par camp, dialogues qui changent. |
+| 9 | **Le Bien et le Mal** | Races maléfiques, objets du bien / du mal, réputation par camp, dialogues qui changent. Comment augmenter le mal ou le bien de façon satisfaisante, logique et fluide. Idées validées pour cette étape : le camp de la lumière donne de meilleurs taux à la banque et plus de réputation dans les terres de lumière. |
 | 10 | **Marché noir** | Objets interdits, voyageurs nocturnes, conséquences. |
 | 11 | **Aider pendant l'aventure** | Messages de détresse, le grand aigle, les mercenaires. |
 | 12 | **Le petit bar** | Rumeurs, boissons, recrutement de mercenaires. |

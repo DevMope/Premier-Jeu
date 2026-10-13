@@ -116,7 +116,7 @@ class AtelierScene extends Phaser.Scene {
     if (this.contenu) this.contenu.destroy();
     const c = this.contenu = this.add.container(0, 0);
     c.add(this.add.image(480, 331, panneauHD(this, 932, 196)).setScale(2));
-    c.add(this.add.text(36, 244, `Tes objets de valeur (${G.tresors.length} / ${PLACES_ATELIER}) · Fer ${G.materiaux.fer} · Cuir ${G.materiaux.cuir} · Fil d'or ${G.materiaux.filOr || 0}`,
+    c.add(this.add.text(36, 244, `Tes objets de valeur (${G.tresors.length} / ${placesAtelier(G)}) · Fer ${G.materiaux.fer} · Cuir ${G.materiaux.cuir} · Fil d'or ${G.materiaux.filOr || 0}`,
       style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
     this.employes();
     if (!G.tresors.length) {

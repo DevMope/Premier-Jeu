@@ -286,7 +286,7 @@ class BureauScene extends Phaser.Scene {
       gauche = [`${nomJoueur(G)}, ${ageJoueur(G)} ans`, '',
         `Flair : ${Math.round(flair * 100)} %`,
         flair < 1 ? `Tes estimations peuvent se tromper de ±${Math.round(35 * (1 - flair))} %.` : 'Tes estimations sont exactes.',
-        flair < 1 ? `Progresse en servant des clients (${G.experience} / 40).` : '', '',
+        flair < 1 ? `Progresse en servant des clients (${G.experience} / ${EXPERIENCE_MAX}).` : '', '',
         `Artisanat : niveau ${niveauArtisanat(G)}`,
         `Réparations faites : ${G.reparations} (prochain niveau à ${prochainArtisanat})`,
         `Matériaux par réparation : ${materiauxRequis(G)}`,

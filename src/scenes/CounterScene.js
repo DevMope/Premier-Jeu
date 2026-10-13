@@ -994,6 +994,7 @@ class CounterScene extends Phaser.Scene {
     if (enPlus) {
       if (!commande[id] && !OBJETS_DE_SOIN.includes(id)) return this.dire("Hum, ça ne me servira à rien là où je vais.");
       if (totalSurplus(v, this.colis) >= tailleSac(v)) return this.dire(`Mon sac est plein ! Je ne peux porter que ${tailleSac(v)} objets en plus de ma commande.`);
+      if (id === 'bandage' && (this.colis.bandage || 0) - (commande.bandage || 0) >= BANDAGES_EN_PLUS_MAX) return this.dire(`${BANDAGES_EN_PLUS_MAX} bandages en plus, ça suffit largement ! Garde les autres pour quelqu'un d'autre.`);
     }
     if (this.G.stock[id] <= 0) {
       return this.dire("Tu n'en as plus en stock...", '');

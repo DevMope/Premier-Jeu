@@ -23,7 +23,9 @@ const ITEMS = {
 // - un bandage en plus = il arrête un saignement (sinon, le saignement coûte un cœur de plus).
 const OBJETS_DE_SOIN = ['potion', 'bandage'];
 // La chance qu'un combat raté fasse saigner l'aventurier.
-const CHANCE_SAIGNEMENT = 0.5;
+const CHANCE_SAIGNEMENT = 0.35;
+// Pas plus de 2 bandages en plus de la commande : le reste ne lui servirait à rien.
+const BANDAGES_EN_PLUS_MAX = 2;
 // Le sac de l'aventurier : combien d'objets en plus de sa commande il peut porter.
 const SAC = { hobbit: 2, magicienne: 2, humain: 3, elfe: 3, nain: 4 };
 // Un objet en plus pour une épreuve qui le demande : +5 % de chances de la réussir.
@@ -69,7 +71,7 @@ const AMELIORATIONS = {
   eclairage: { nom: "L'éclairage", niveaux: ['Bougies', 'Lanternes', 'Chandeliers', 'Lustre de cristal'], prix: [90, 250, 600],
     effet: 'Un shop bien éclairé attire le regard : +0,3 client par jour et par niveau.' },
   atelier: { nom: "L'atelier", niveaux: ['Un établi', 'Deux établis', 'Trois établis'], prix: [220, 480],
-    effet: "Un établi de plus = une place de plus pour embaucher un employé (2, puis 3, puis 4)." },
+    effet: "Un établi de plus : une place pour un employé de plus (2, puis 3, puis 4) et 2 places de plus pour les objets." },
 };
 // La réputation gagnée à chaque amélioration terminée.
 const REPUTATION_AMELIORATION = 0.15;
@@ -700,6 +702,12 @@ const TRESORS = [
 
 // On ne garde que ce nombre d'objets de valeur à l'atelier.
 const PLACES_ATELIER = 8;
+// Chaque établi en plus (amélioration « atelier ») ajoute aussi des places pour les objets.
+const PLACES_PAR_ETABLI = 2;
+// L'expérience compte jusqu'à ce nombre de clients servis (pour le flair et pour attirer du monde).
+const EXPERIENCE_MAX = 80;
+// Les bonus d'attrait (stock varié, trophée, éclairage) peuvent dépasser le plafond du palier de réputation.
+const BONUS_CLIENTS_MAX = 2;
 
 // Les enchérisseurs du Marché des Mastres, et ce qu'ils aiment.
 const ENCHERISSEURS = [
@@ -1050,6 +1058,8 @@ const TREFLE_MAX = 10;
 const TREFLE_RELATION = [-1, -1, 0, 0, 1, 2, 3]; // selon le niveau de relation (Pires ennemis → Frères de sang)
 const SAUVETAGE_PAR_TREFLE = 0.02;              // une épreuve ratée rattrapée
 const REPLI_PAR_TREFLE = 0.07;                  // la mort évitée : il rebrousse chemin
+// Quand la chance le sauve, le trèfle des cadeaux se fane : il perd la chance d'un cadeau aimé.
+const TREFLE_CONSOMME = 3;
 
 // Les cadeaux, au Bazar de Rosalie. Chaque race a ses goûts.
 // Le genre et le nombre de chaque marchandise (pour bien accorder les phrases) :

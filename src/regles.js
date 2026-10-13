@@ -150,6 +150,15 @@ function chanceVivant(voyageur, colis, pieges = null) {
 
 // Tire au sort le déroulement de l'aventure, épreuve par épreuve.
 // Un objet piégé lâche à l'épreuve qui en a besoin : elle est fatale.
+// La chance vient de servir : la part donnée par les cadeaux se fane (la chance de base et celle
+// de votre relation restent). Renvoie true s'il y avait un trèfle de cadeau à faner.
+function fanerTrefle(voyageur) {
+  const p = window.GAME && window.GAME.personnes && window.GAME.personnes[voyageur.nom];
+  if (!p || !p.trefle) return false;
+  p.trefle = Math.max(0, p.trefle - TREFLE_CONSOMME);
+  return true;
+}
+
 function simulerAventure(voyageur, colis, pieges = null) {
   const pvDepart = pvAuDepart(voyageur, colis);
   let pv = pvDepart;
@@ -168,7 +177,7 @@ function simulerAventure(voyageur, colis, pieges = null) {
     const sauvee = reussie && tirage >= chanceEtapeBase(e, colis, voyageur);
     if (!reussie && pv === 1 && Math.random() < chanceRepli(voyageur)) {
       // Sa bonne étoile : il sent que la prochaine fois sera la dernière, et rebrousse chemin.
-      etapes.push({ epreuve: e, niveau, reussie: false, pvApres: 1, repli: true });
+      etapes.push({ epreuve: e, niveau, reussie: false, pvApres: 1, repli: true, fane: fanerTrefle(voyageur) });
       return { etapes, pvDepart, vivant: true, echec: true, valeureux: false };
     }
     // Un combat raté peut faire saigner : un bandage en plus arrête le sang, sinon un cœur de plus s'en va.
@@ -179,14 +188,14 @@ function simulerAventure(voyageur, colis, pieges = null) {
         if (bandages > 0) { bandages--; saignement = 'bande'; } else if (pv > 0) {
           // Le saignement va l'achever : sa bonne étoile peut encore le faire rebrousser chemin.
           if (pv === 1 && Math.random() < chanceRepli(voyageur)) {
-            etapes.push({ epreuve: e, niveau, reussie: false, pvApres: 1, repli: true });
+            etapes.push({ epreuve: e, niveau, reussie: false, pvApres: 1, repli: true, fane: fanerTrefle(voyageur) });
             return { etapes, pvDepart, vivant: true, echec: true, valeureux: false };
           }
           pv--; saignement = 'perte';
         }
       }
     }
-    etapes.push({ epreuve: e, niveau, reussie, sauvee, pvApres: pv, saignement });
+    etapes.push({ epreuve: e, niveau, reussie, sauvee, pvApres: pv, saignement, fane: sauvee ? fanerTrefle(voyageur) : false });
     if (pv <= 0) break;
   }
   const derniere = etapes[etapes.length - 1];
@@ -732,7 +741,7 @@ function offrirDecoration(G, feminin = false) {
 
 // Le flair : au début, tes estimations sont faussées. Elles s'affinent avec l'expérience.
 function niveauFlair(G) {
-  return Math.min(1, G.experience / 40);
+  return Math.min(1, G.experience / EXPERIENCE_MAX);
 }
 
 // Ce que ton flair te dit d'une trouvaille : son prix de revente une fois restaurée, plus ou moins
@@ -982,11 +991,14 @@ function attrait(G) {
   const variete = Object.values(G.stock).filter(n => n > 0).length;
   return {
     reputation: G.reputation * 0.4,
-    experience: Math.min(G.experience, 40) / 10,
+    experience: Math.min(G.experience, EXPERIENCE_MAX) / 20,
     variete: variete * CLIENTS_PAR_OBJET,
     decoration: aDecoration(G, 'trophee') ? 0.7 : 0,
     eclairage: niveauAmelioration(G, 'eclairage') * 0.3,
-    total: 1 + G.reputation * 0.4 + Math.min(G.experience, 40) / 10 + variete * CLIENTS_PAR_OBJET + (aDecoration(G, 'trophee') ? 0.7 : 0)
+    // la base (réputation, expérience) est plafonnée par le palier ; les bonus passent par-dessus
+    base: 1 + G.reputation * 0.4 + Math.min(G.experience, EXPERIENCE_MAX) / 20,
+    bonus: variete * CLIENTS_PAR_OBJET + (aDecoration(G, 'trophee') ? 0.7 : 0) + niveauAmelioration(G, 'eclairage') * 0.3,
+    total: 1 + G.reputation * 0.4 + Math.min(G.experience, EXPERIENCE_MAX) / 20 + variete * CLIENTS_PAR_OBJET + (aDecoration(G, 'trophee') ? 0.7 : 0)
       + niveauAmelioration(G, 'eclairage') * 0.3,
   };
 }
@@ -995,16 +1007,20 @@ function attrait(G) {
 // Le vrai nombre est tiré à l'ouverture du comptoir : un stock varié acheté le matin attire encore du monde.
 function prevision(G, jour = G.jour + 1) {
   const annonces = G.annonces.filter(a => a.jour === jour && a.acceptee).length;
-  const base = Math.max(1, Math.floor(attrait(G).total));
+  const a = attrait(G);
   const evenements = modifEvenement(G, 'clients', null, jour);
   const rumeur = G.rumeur && G.rumeur.jour === jour ? -RUMEUR_CLIENTS : 0;
   // Les clients « de passage » ; ceux des lettres viennent en plus.
-  let min = Phaser.Math.Clamp(base + evenements + rumeur, 1, 7);
-  let max = Math.max(min, min + 3 + Math.min(0, evenements + rumeur));
-  if (jour <= CLIENTS_DEBUT.jours) { min = Math.min(min, CLIENTS_DEBUT.max); max = Math.min(max, CLIENTS_DEBUT.max); }
-  // Le plafond du palier de réputation
+  // La base (réputation et expérience) est plafonnée par le palier de réputation...
   const palier = palierClients(G);
-  min = Math.min(min, palier.max); max = Math.min(max, palier.max);
+  let min = Phaser.Math.Clamp(Math.floor(a.base), 1, palier.max);
+  let max = Math.min(palier.max, min + 2);
+  // ... et les bonus (stock varié, trophée, éclairage) passent par-dessus, jusqu'à +2,
+  // comme les événements et la rumeur (qui peuvent aussi en retirer).
+  const bonus = Math.min(BONUS_CLIENTS_MAX, Math.floor(a.bonus)) + evenements + rumeur;
+  min = Math.max(1, min + bonus);
+  max = Math.max(min, max + bonus);
+  if (jour <= CLIENTS_DEBUT.jours) { min = Math.min(min, CLIENTS_DEBUT.max); max = Math.min(max, CLIENTS_DEBUT.max); }
   return { min, max, annonces, palier };
 }
 
@@ -1359,7 +1375,7 @@ function trouvailles(G, voyageur) {
 
 function acheterTrouvaille(G, t) {
   if (t.vendu) return 'Déjà acheté.';
-  if (G.tresors.length >= PLACES_ATELIER) return `Ton atelier est plein (${PLACES_ATELIER} objets).`;
+  if (G.tresors.length >= placesAtelier(G)) return `Ton atelier est plein (${placesAtelier(G)} objets). Un établi de plus (améliorations) donne plus de place.`;
   if (!peutPayer(G, t.prix)) return "Pas assez d'argent.";
   payer(G, t.prix, 'trouvailles');
   t.vendu = true;
@@ -1433,6 +1449,10 @@ function reparerTresor(G, t, cible = t.etat + 1) {
 }
 
 // --- Les employés ---
+
+function placesAtelier(G) {
+  return PLACES_ATELIER + PLACES_PAR_ETABLI * niveauAmelioration(G, 'atelier');
+}
 
 function placesEmployes(G) {
   return EMPLOYES_DE_BASE + niveauAmelioration(G, 'atelier');

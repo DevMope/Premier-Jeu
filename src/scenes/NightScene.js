@@ -254,7 +254,7 @@ class NightScene extends Phaser.Scene {
     this.texteFacteurs.setText(`Réputation ${signe(a.reputation)} · Expérience ${signe(a.experience)}\nStock varié ${signe(a.variete)}` +
       (evenements ? ` · Événements ${evenements > 0 ? '+' : ''}${evenements}` : '') + (rumeur ? ` · Rumeur ${rumeur}` : ''));
     const pal = p.palier;
-    this.texteFacteurs.setText(this.texteFacteurs.text + `\nPalier : ${pal.max} clients max` + (pal.suivant ? ` (→ ${pal.suivant.max} à ${pal.suivant.reputation} de réput.)` : ''));
+    this.texteFacteurs.setText(this.texteFacteurs.text + `\nPalier : ${pal.max} clients (+${BONUS_CLIENTS_MAX} en bonus)` + (pal.suivant ? ` · ${pal.suivant.max} à ${pal.suivant.reputation} de réput.` : ''));
   }
 
   // --- La banque : une page à part, le soir attend en pause ---

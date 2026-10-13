@@ -74,7 +74,8 @@ class StoryScene extends Cinematique {
     await this.attendreClic();
 
     for (let i = 0; i < r.etapes.length; i++) {
-      const { epreuve, niveau, reussie, pvApres, piege, pvAvant, sauvee, repli, saignement } = r.etapes[i];
+      const { epreuve, niveau, reussie, pvApres, piege, pvAvant, sauvee, repli, saignement, fane } = r.etapes[i];
+      const fanee = fane ? '\n(Son trèfle de chance s\'est fané : le cadeau a servi.)' : '';
       const x = 140 + i * (680 / etapes);
 
       if (this.meteo) { this.meteo.remove(); this.meteo = null; }
@@ -101,7 +102,7 @@ class StoryScene extends Cinematique {
       if (repli) {
         await this.trefle();
         this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(epreuve[niveau], v)} »\n` +
-          `J'ai senti que la prochaine fois serait la dernière. Ma bonne étoile m'a soufflé de rebrousser chemin... J'ai abandonné la mission.`);
+          `J'ai senti que la prochaine fois serait la dernière. Ma bonne étoile m'a soufflé de rebrousser chemin... J'ai abandonné la mission.` + fanee);
         await this.attendreClic();
         break;
       }
@@ -109,7 +110,7 @@ class StoryScene extends Cinematique {
       let suite;
       if (reussie && sauvee) {
         await this.trefle();
-        suite = `C'était perdu... et puis un coup de chance incroyable ! Ma bonne étoile m'a sauvé${this.e}.`;
+        suite = `C'était perdu... et puis un coup de chance incroyable ! Ma bonne étoile m'a sauvé${this.e}.` + fanee;
       } else if (reussie) {
         suite = niveau === 'complet' ? 'Épreuve surmontée !' : `Je m'en suis sorti${this.e}... de justesse.`;
       } else {
