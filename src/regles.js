@@ -171,11 +171,28 @@ function simulerAventure(voyageur, colis, pieges = null) {
 // --- Les voyageurs ---
 
 // Un aventurier. Sans `quete`, il vient chercher l'aventure : c'est toi qui choisiras la zone.
+// Le niveau d'un nouveau voyageur : surtout des novices au début ; des aguerris, des vétérans
+// puis des héros arrivent à mesure que ta réputation grandit et que les jours passent.
+// (Les légendes, elles, se forgent : un voyageur progresse par ses succès.)
+function niveauAuHasard(G) {
+  const r = Math.max(0, G.reputation || 0), j = G.jour || 1;
+  const poids = {
+    novice: 6,
+    aguerri: 0.5 + r * 0.6 + j * 0.12,
+    veteran: Math.max(0, r - 3) * 0.45 + Math.max(0, j - 10) * 0.06,
+    heros: Math.max(0, r - 8) * 0.3,
+  };
+  const total = Object.values(poids).reduce((a, b) => a + b, 0);
+  let x = Math.random() * total;
+  for (const [n, p] of Object.entries(poids)) { x -= p; if (x <= 0) return n; }
+  return 'novice';
+}
+
 function creerVoyageur(G, { quete = null, nom, race, feminin, butin, duree, inventaire, blessures = 0, niveau, envie, exige = false }) {
   const v = {
     id: G.prochainId++,
     nom, race, feminin,
-    niveau: meilleurNiveau(niveau || auHasard(['novice', 'novice', 'aguerri', 'aguerri', 'veteran']), succesDe(G, nom)),
+    niveau: meilleurNiveau(niveau || niveauAuHasard(G), succesDe(G, nom)),
     envie: envie || auHasard(Object.keys(ENVIES)),
     blessures,
     pv: 0, butin: 0, duree: 0,
@@ -899,8 +916,11 @@ function prevision(G, jour = G.jour + 1) {
   const base = Math.max(1, Math.floor(attrait(G).total));
   const evenements = modifEvenement(G, 'clients', null, jour);
   const rumeur = G.rumeur && G.rumeur.jour === jour ? -RUMEUR_CLIENTS : 0;
-  const min = Phaser.Math.Clamp(Math.max(base + evenements + rumeur, annonces), 1, 7);
-  return { min, max: Math.max(min, min + 3 + Math.min(0, evenements + rumeur)), annonces };
+  // Les clients « de passage » ; ceux des lettres viennent en plus.
+  let min = Phaser.Math.Clamp(base + evenements + rumeur, 1, 7);
+  let max = Math.max(min, min + 3 + Math.min(0, evenements + rumeur));
+  if (jour <= CLIENTS_DEBUT.jours) { min = Math.min(min, CLIENTS_DEBUT.max); max = Math.min(max, CLIENTS_DEBUT.max); }
+  return { min, max, annonces };
 }
 
 // On va dormir puis on ouvre le comptoir (utile pour les tests).
@@ -943,7 +963,7 @@ function ouvrirComptoir(G) {
   for (const a of G.annonces.filter(x => x.jour === G.jour && !x.acceptee)) refuserLettre(G, a);
   const prevus = G.annonces.filter(a => a.jour === G.jour).map(a => a.voyageur);
   G.annonces = G.annonces.filter(a => a.jour !== G.jour);
-  const imprevus = Math.max(0, hasard(min, max) - prevus.length);
+  const imprevus = hasard(min, max); // (les clients des lettres viennent en plus)
   const clients = [...prevus.map(v => ({ ...v, prevu: true }))];
   for (let i = 0; i < imprevus; i++) clients.push(voyageurAuHasard(G, clients));
   const file = Phaser.Utils.Array.Shuffle(clients.map(v => ({ type: 'client', voyageur: v })));
@@ -968,7 +988,10 @@ function ouvrirComptoir(G) {
     mission.etat = 'en cours';
     file.splice(hasard(0, file.length), 0, { type: 'client', voyageur: mission.cible });
   }
-  if (morts.length) file.push({ type: 'faucheuse', partis: morts });
+  // La Faucheuse ne se montre qu'à partir du 5e jour ; avant, c'est un passant qui rapporte
+  // le carnet du disparu.
+  if (morts.length && G.jour >= JOUR_FAUCHEUSE) file.push({ type: 'faucheuse', partis: morts });
+  else if (morts.length) file.push(...morts.map(parti => ({ type: 'carnet', parti })));
   G.file = file;
 }
 

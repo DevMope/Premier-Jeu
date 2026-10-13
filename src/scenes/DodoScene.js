@@ -51,7 +51,7 @@ class DodoScene extends Cinematique {
     // Le lit, et la couverture en patchwork posée par-dessus le dormeur (elle ne se voit qu'une fois couché).
     const luxe = niveauAmelioration(this.G, 'chambre');
     this.lit = this.add.image(250, SOL_CHAMBRE, litHD(this, luxe)).setOrigin(0, 1).setScale(2).setDepth(2);
-    this.couverture = this.add.image(330, SOL_CHAMBRE - 92, couvertureHD(this, luxe)).setOrigin(0).setScale(2).setDepth(4).setAlpha(0);
+    this.couverture = this.add.image(342, SOL_CHAMBRE - 100, couvertureHD(this, luxe)).setOrigin(0).setScale(2, 2.35).setDepth(4).setAlpha(0);
 
     // La table de chevet, la bougie et sa lumière.
     this.chevet = this.add.image(635, SOL_CHAMBRE, chevetHD(this, luxe)).setOrigin(0.5, 1).setScale(2).setDepth(2);
@@ -88,7 +88,7 @@ class DodoScene extends Cinematique {
     // ... et se glisse sous la couverture.
     this.joueur.setOrigin(0.5, 0.5);
     this.joueur.y -= this.joueur.displayHeight / 2;
-    await this.animer({ targets: this.joueur, x: 360, y: SOL_CHAMBRE - 80, angle: -90, duration: 500, ease: 'Sine.easeInOut' });
+    await this.animer({ targets: this.joueur, x: 368, y: SOL_CHAMBRE - 70, angle: -90, duration: 500, ease: 'Sine.easeInOut' });
     this.tweens.add({ targets: this.couverture, alpha: 1, duration: 300 });
     this.ronfler();
     if (this.fini) return;

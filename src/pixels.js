@@ -392,10 +392,11 @@ function creerToutesLesTextures(scene) {
 
 // --- Petits outils d'interface partagés par les scènes ---
 
-const POLICE = 'Georgia, "Times New Roman", serif';
+// Alegreya (Google Fonts) : une police à l'ancienne mais très lisible ; Georgia si elle manque.
+const POLICE = '"Alegreya", Georgia, "Times New Roman", serif';
 
 function style(taille, couleur = '#f3e6c8', extra = {}) {
-  return { fontFamily: POLICE, fontSize: taille + 'px', color: couleur, resolution: 2, ...extra };
+  return { fontFamily: POLICE, fontSize: taille + 'px', color: couleur, resolution: 3, ...extra };
 }
 
 // Bouton en bois cliquable. Renvoie un objet avec setActif(bool).

@@ -27,6 +27,7 @@ class NightScene extends Phaser.Scene {
     this.parchemin(20, 300, this.matin ? "Aujourd'hui" : 'La journée');
     this.parchemin(320, 640, 'Ta réserve');
     this.parchemin(660, 940, 'Lettres reçues');
+    this.add.text(800, 108, 'Une lettre acceptée = un client EN PLUS, le jour dit', style(12, '#8a3a1a', { fontStyle: 'bold italic' })).setOrigin(0.5);
     this.creerReserve(320, 640);
     this.creerPrevision(660, 940);
 
@@ -94,7 +95,7 @@ class NightScene extends Phaser.Scene {
     const gain = G.argent - G.argentDebutJour;
     const p = prevision(G, G.jour);
     const lignes = this.matin ? [
-      `Clients attendus : ${p.min} à ${p.max}`,
+      `Clients attendus : ${p.min} à ${p.max}${p.annonces ? ` + ${p.annonces} par lettre` : ''}`,
       `Commandes par lettre : ${G.annonces.filter(a => a.acceptee && a.jour === G.jour).length}`,
       `Argent : ${G.argent} pièces`,
       `Réputation : ${arrondi(G.reputation)}`,
@@ -176,17 +177,17 @@ class NightScene extends Phaser.Scene {
     // Les lettres d'information d'abord (un événement passé, en cours ou à venir)...
     const infos = (G.courrier || []).filter(l => l.jour === G.jour).slice(0, 2);
     infos.forEach((l, i) => {
-      const y = 112 + i * 54;
+      const y = 124 + i * 54;
       c.add(this.add.text(x1 + 14, y, '📜 ' + l.texte, style(11, '#3b2410', { fontStyle: 'italic', wordWrap: { width: x2 - x1 - 24 }, lineSpacing: 1 })));
     });
     // ... puis les commandes (à accepter ou refuser), les nouvelles d'abord.
     const liste = [...G.annonces].sort((a, b) => a.acceptee - b.acceptee).slice(0, 4 - infos.length);
-    if (!liste.length && !infos.length) c.add(this.add.text(x1 + 16, 115, 'Aucune lettre pour le moment.\nLes lettres sont rares.', style(13, '#3b2410')));
+    if (!liste.length && !infos.length) c.add(this.add.text(x1 + 16, 127, 'Aucune lettre pour le moment.\nLes lettres sont rares.', style(13, '#3b2410')));
     liste.forEach((a, i) => {
-      const y = 112 + (i + infos.length) * 54;
+      const y = 124 + (i + infos.length) * 52;
       const v = a.voyageur;
       c.add(this.add.text(x1 + 14, y, `✉ ${v.nom}`, style(13, couleurNom(G, v.nom), { fontStyle: 'bold' })));
-      c.add(this.add.text(x1 + 14, y + 17, `Jour ${a.jour} · butin ~${v.butin} p. · ${v.duree} j`, style(11, '#6b4a2a')));
+      c.add(this.add.text(x1 + 14, y + 17, `+1 client le jour ${a.jour} · butin ~${v.butin} p. · ${v.duree} j`, style(11, '#6b4a2a')));
       c.add(this.add.text(x1 + 14, y + 31, commandeEnTexte(v), style(11, '#3b2410', { wordWrap: { width: x2 - x1 - 24 } })));
       if (a.acceptee) {
         c.add(this.add.text(x2 - 12, y, 'acceptée', style(11, '#2f6a2a', { fontStyle: 'italic' })).setOrigin(1, 0));
@@ -219,7 +220,7 @@ class NightScene extends Phaser.Scene {
     const p = prevision(this.G, this.matin ? this.G.jour : this.G.jour + 1);
     const a = attrait(this.G);
     this.textePrevision.setText(`Environ ${p.min} à ${p.max} clients` +
-      (p.annonces ? ` (dont ${p.annonces} par lettre)` : ''));
+      (p.annonces ? `, + ${p.annonces} annoncé${p.annonces > 1 ? 's' : ''} par lettre` : ''));
     const signe = n => (n >= 0 ? '+' : '') + n.toFixed(1);
     const jour = this.matin ? this.G.jour : this.G.jour + 1;
     const evenements = modifEvenement(this.G, 'clients', null, jour);

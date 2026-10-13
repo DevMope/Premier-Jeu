@@ -333,10 +333,13 @@ const NOMS = {
 // Pippa a déjà sa lettre à porter ; les autres viennent chercher l'aventure : c'est toi qui choisis la zone.
 const JOUR_1 = [
   { quete: 'lettre', nom: 'Pippa Boisclair', race: 'hobbit', feminin: true, butin: 30, duree: 1 },
-  { quete: null, nom: 'Durgan Barbe-de-Fer', race: 'nain', feminin: false, niveau: 'veteran', envie: 'or' },
-  { quete: null, nom: "Mirabelle Lune-d'Argent", race: 'magicienne', feminin: true, niveau: 'aguerri', envie: 'savoir' },
-  { quete: null, nom: 'Elwen Feuilleclaire', race: 'elfe', feminin: true, niveau: 'aguerri', envie: 'gloire' },
+  { quete: null, nom: 'Durgan Barbe-de-Fer', race: 'nain', feminin: false, niveau: 'novice', envie: 'or' },
+  { quete: null, nom: "Mirabelle Lune-d'Argent", race: 'magicienne', feminin: true, niveau: 'novice', envie: 'savoir' },
 ];
+// Les premiers jours, pas plus de clients que ça (sans compter les lettres) : on apprend.
+const CLIENTS_DEBUT = { jours: 3, max: 3 };
+// Le premier jour où la Faucheuse peut venir annoncer les morts.
+const JOUR_FAUCHEUSE = 5;
 
 // --- Le dispatch : les zones où envoyer les aventuriers ---
 

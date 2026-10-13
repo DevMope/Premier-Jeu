@@ -50,8 +50,8 @@ class CarteScene extends Phaser.Scene {
     g.fillStyle(0xfff0a0, 0.2).fillRect(20, 56, 246, 356);
     g.fillStyle(0x2a1a3a, 0.2).fillRect(735, 56, 205, 356);
     g.lineStyle(2, 0x6a421e, 0.5).lineBetween(266, 58, 266, 410).lineBetween(735, 58, 735, 410);
-    this.add.text(141, 400, '☀ Terres de lumière', style(12, '#8a6a10', { fontStyle: 'bold italic' })).setOrigin(0.5);
-    this.add.text(840, 400, '☾ Terres d\'ombre', style(12, '#4a2a5a', { fontStyle: 'bold italic' })).setOrigin(0.5);
+    this.add.text(141, 400, '☀ Terres de lumière', style(14, '#8a6a10', { fontStyle: 'bold italic' })).setOrigin(0.5);
+    this.add.text(840, 400, '☾ Terres d\'ombre', style(14, '#4a2a5a', { fontStyle: 'bold italic' })).setOrigin(0.5);
     // Ton comptoir, et les chemins qui en partent
     const depart = { x: 405, y: 395 };
     g.lineStyle(2, 0x8a6a3a, 0.7);
@@ -64,8 +64,8 @@ class CarteScene extends Phaser.Scene {
     }
     g.fillStyle(0x8a5a2b).fillRect(depart.x - 14, depart.y - 12, 28, 22);
     g.fillStyle(0xc9a046).fillTriangle(depart.x - 18, depart.y - 12, depart.x, depart.y - 28, depart.x + 18, depart.y - 12);
-    this.add.text(depart.x + 22, depart.y, 'Ton comptoir', style(11, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
-    this.add.text(276, 58, '⚔ en mission (jour du retour) · ✉ t\'a écrit · ☠ ta cible', style(11, '#6b4a2a', { fontStyle: 'italic' }));
+    this.add.text(depart.x + 22, depart.y, 'Ton comptoir', style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+    this.add.text(276, 58, '⚔ en mission (jour du retour) · ✉ t\'a écrit · ☠ ta cible', style(13, '#6b4a2a', { fontStyle: 'italic' }));
   }
 
   dessinerZones() {
@@ -81,10 +81,16 @@ class CarteScene extends Phaser.Scene {
       }
       const pastille = this.add.circle(z.x, z.y, 22, ouverte ? BIOMES[z.biome].loin : 0x8a8478).setStrokeStyle(3, 0x3b2410)
         .setInteractive({ useHandCursor: true });
-      this.add.text(z.x, z.y, ouverte ? '★'.repeat(z.danger) : '?', style(ouverte ? 10 : 18, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);
-      this.add.text(z.x, z.y + 26, ouverte ? z.nom : '???', style(11, ouverte ? '#3b2410' : '#7a7468', { fontStyle: 'bold', align: 'center', wordWrap: { width: 140 } })).setOrigin(0.5, 0);
+      this.add.text(z.x, z.y, ouverte ? '★'.repeat(z.danger) : '?', style(ouverte ? 12 : 18, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);
+      this.add.text(z.x, z.y + 26, ouverte ? z.nom : '🔒 ???', style(14, ouverte ? '#2a1808' : '#6a6458', { fontStyle: 'bold', align: 'center', wordWrap: { width: 150 }, stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0);
+      // Une contrée qui vient de s'ouvrir depuis la dernière fois : on la signale.
+      if (ouverte && G.zonesVuesCarte && !G.zonesVuesCarte.includes(cle)) {
+        const n = this.add.text(z.x, z.y - 40, '✦ Nouveau ! ✦', style(14, '#a0300a', { fontStyle: 'bold', stroke: '#fff4dc', strokeThickness: 4 })).setOrigin(0.5).setDepth(3);
+        this.tweens.add({ targets: n, scale: 1.15, duration: 500, yoyo: true, repeat: -1 });
+      }
       pastille.on('pointerdown', () => this.choisirZone(cle));
     }
+    G.zonesVuesCarte = zonesOuvertes(G);
   }
 
   // Les petits personnages posés sur la carte : missions en cours, lettres, voyageurs placés.
@@ -109,9 +115,9 @@ class CarteScene extends Phaser.Scene {
         if (r.choisi) this.reperes.add(this.add.circle(x, y - 12, 15, 0xffe066, 0.6));
         this.reperes.add(imageCorps(this, x, y, r.race, 1.6));
         // Les étiquettes alternent de hauteur pour ne pas se chevaucher.
-        this.reperes.add(this.add.text(x, y - 26 - (i % 2) * 12, r.texte, style(9, r.couleur, { fontStyle: 'bold', backgroundColor: '#f3e6c8', padding: { x: 2, y: 0 } })).setOrigin(0.5, 1));
+        this.reperes.add(this.add.text(x, y - 26 - (i % 2) * 12, r.texte, style(11, r.couleur, { fontStyle: 'bold', backgroundColor: '#f3e6c8', padding: { x: 2, y: 0 } })).setOrigin(0.5, 1));
       });
-      if (liste.length > 6) this.reperes.add(this.add.text(z.x + 82, z.y - 36, `+${liste.length - 6}`, style(10, '#3b2410', { fontStyle: 'bold' })));
+      if (liste.length > 6) this.reperes.add(this.add.text(z.x + 82, z.y - 36, `+${liste.length - 6}`, style(12, '#3b2410', { fontStyle: 'bold' })));
     }
   }
 
@@ -137,13 +143,13 @@ class CarteScene extends Phaser.Scene {
       fond.on('pointerdown', () => { this.selection = v; this.tout(); });
       this.cartes.add([fond,
         imageCorps(this, x, 470, v, 2.4),
-        this.add.text(x, 474, v.nom.split(' ')[0], style(12, couleurNom(this.G, v.nom, true), { fontStyle: 'bold' })).setOrigin(0.5, 0),
+        this.add.text(x, 474, v.nom.split(' ')[0], style(14, couleurNom(this.G, v.nom, true), { fontStyle: 'bold' })).setOrigin(0.5, 0),
         this.add.text(x, 490, zone ? '→ ' + ZONES[zone].nom.replace(/^(Les |La |L')/, '') : NIVEAUX_AVENTURIER[v.niveau].nom,
-          style(10, zone ? '#b8e0a0' : '#c9b48a', { align: 'center', wordWrap: { width: largeur - 12 } })).setOrigin(0.5, 0)]);
+          style(12, zone ? '#b8e0a0' : '#c9b48a', { align: 'center', wordWrap: { width: largeur - 12 } })).setOrigin(0.5, 0)]);
     });
     if (!this.voyageurs.length) {
       this.cartes.add(this.add.text(370, 476, "Personne ne cherche l'aventure aujourd'hui : tes clients savent déjà où ils vont.",
-        style(13, '#f3e6c8', { fontStyle: 'italic', wordWrap: { width: 640 } })).setOrigin(0.5));
+        style(15, '#f3e6c8', { fontStyle: 'italic', wordWrap: { width: 640 } })).setOrigin(0.5));
     }
   }
 
@@ -188,7 +194,7 @@ class CarteScene extends Phaser.Scene {
         `${c.reputation ? '✓' : '✗'} une réputation de ${z.reputation} (toi : ${arrondi(G.reputation)}), ou qu'un aventurier la découvre`];
       if ((G.armure || []).length < ARMURE.length) lignes.push("🛡 À son ouverture, la Confrérie t'enverra une pièce de l'armure.");
       if (c.besoin) lignes.push(`${c.faits >= c.besoin ? '✓' : '✗'} ${c.besoin} missions réussies dans des zones à ${z.danger - 1} étoile${z.danger > 2 ? 's' : ''} (${Math.min(c.faits, c.besoin)} / ${c.besoin})`);
-      this.bulle.add(this.add.text(gauche, haut + 24, lignes.join('\n'), style(12, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 3 })));
+      this.bulle.add(this.add.text(gauche, haut + 24, lignes.join('\n'), style(14, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 3 })));
       return;
     }
     this.bulle.add(this.add.text(gauche, haut, `${z.nom}  ${'★'.repeat(z.danger)}`, style(14, '#f3d98a', { fontStyle: 'bold' })));
@@ -203,20 +209,20 @@ class CarteScene extends Phaser.Scene {
       ligne = `Butin espéré pour ${v.nom.split(' ')[0]} : ${butinMin} à ${butinMax} p. · ${ligne}`;
     }
     this.bulle.add(this.add.text(gauche, haut + 22, `${z.description}\n${ligne} · il faut souvent :`,
-      style(11, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 2 })));
+      style(13, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 2 })));
     besoinsDeZone(cle).forEach((id, i) => {
       const enStock = G.stock[id] || 0;
       this.bulle.add(this.add.image(gauche + 10 + i * 40, by + h / 2 - 20, id).setScale(2.2));
-      this.bulle.add(this.add.text(gauche + 22 + i * 40, by + h / 2 - 20, String(enStock), style(11, enStock ? '#b8e0a0' : '#f0a8a0', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      this.bulle.add(this.add.text(gauche + 22 + i * 40, by + h / 2 - 20, String(enStock), style(13, enStock ? '#b8e0a0' : '#f0a8a0', { fontStyle: 'bold' })).setOrigin(0, 0.5));
     });
     if (!v) return;
     const refus = refusZone(G, v, cle);
     if (refus) {
-      this.bulle.add(this.add.text(bx + w / 2 - 12, by + h / 2 - 20, refus, style(11, '#f0a8a0', { fontStyle: 'italic', align: 'right', wordWrap: { width: 190 } })).setOrigin(1, 0.5));
+      this.bulle.add(this.add.text(bx + w / 2 - 12, by + h / 2 - 20, refus, style(13, '#f0a8a0', { fontStyle: 'italic', align: 'right', wordWrap: { width: 190 } })).setOrigin(1, 0.5));
       return;
     }
     const envoyer = this.add.text(bx + w / 2 - 12, by + h / 2 - 20, `Envoyer ${v.nom.split(' ')[0]} ici ▶`,
-      style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#4f7a3a', padding: { x: 8, y: 5 } })).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+      style(15, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#4f7a3a', padding: { x: 8, y: 5 } })).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
     envoyer.on('pointerdown', () => this.envoyer(cle));
     this.bulle.add(envoyer);
   }

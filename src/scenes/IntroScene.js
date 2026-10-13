@@ -6,61 +6,74 @@ class IntroScene extends Phaser.Scene {
   create() {
     this.feminin = false;
     this.ap = apparenceParDefaut(false);
-    this.cameras.main.setBackgroundColor('#1e140c');
     this.cameras.main.fadeIn(400);
-    this.add.text(480, 34, 'Qui es-tu ?', style(30, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
+    // Le bureau, deux grands parchemins : toi à gauche, tes choix à droite
+    creerInterieurHD(this);
+    creerBureauHD(this);
+    this.add.image(0, 0, 'bureauBois').setOrigin(0).setScale(2).setTint(0xa08870);
+    vignette(this, 0.6, 0);
+    this.add.text(480, 30, 'Qui es-tu ?', style(32, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 6 })).setOrigin(0.5);
+    const retour = creerBouton(this, 80, 30, 130, '◀ Menu', () => this.scene.start('Titre'));
+    retour.label.setFontSize(15);
 
     // L'aperçu : toi, au début de l'aventure
-    this.add.rectangle(220, 250, 380, 330, 0x2a1a10).setStrokeStyle(3, 0xc9a227);
+    this.add.image(220, 250, panneauHD(this, 380, 330)).setScale(2);
     this.apercu = this.add.image(220, 350, 'perso_heros').setOrigin(0.5, 1).setScale(echelleJoueur(13));
-    this.nomApercu = this.add.text(220, 372, '', style(18, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
-    this.add.text(220, 398, `${AGE_DEPART} ans · la barbe poussera à 18 ans`, style(12, '#c9b48a', { fontStyle: 'italic' })).setOrigin(0.5);
+    this.nomApercu = this.add.text(220, 372, '', style(20, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.add.text(220, 396, `${AGE_DEPART} ans · la barbe poussera à 18 ans`, style(14, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
 
     // Garçon ou fille
     this.boutonsGenre = [[false, 'Garçon', 140], [true, 'Fille', 300]].map(([feminin, texte, x]) => {
-      const fond = this.add.rectangle(x, 110, 140, 36, 0x5a4030).setStrokeStyle(2, 0xc9a227).setInteractive({ useHandCursor: true });
-      this.add.text(x, 110, texte, style(16, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
-      fond.on('pointerdown', () => {
+      const b = creerBouton(this, x, 112, 140, texte, () => {
         this.feminin = feminin;
         this.ap.coiffure = apparenceParDefaut(feminin).coiffure;
         this.maj();
       });
-      return { feminin, fond };
+      return { feminin, b };
     });
 
-    // Les choix
+    // Les choix, sur un parchemin
+    this.add.image(705, 262, panneauHD(this, 470, 380)).setScale(2);
     const options = [
       ['coiffure', 'Coiffure'], ['cheveux', 'Cheveux'], ['peau', 'Peau'], ['yeux', 'Yeux'],
       ['bouche', 'Bouche'], ['barbe', 'Barbe'], ['haut', 'Habit du haut'], ['bas', 'Habit du bas'],
     ];
     this.lignes = options.map(([cle, libelle], i) => {
-      const y = 100 + i * 42;
-      this.add.text(450, y, libelle, style(16, '#f3e6c8')).setOrigin(0, 0.5);
-      this.fleche(640, y, '◀', () => this.changer(cle, -1));
-      this.fleche(880, y, '▶', () => this.changer(cle, 1));
-      const valeur = this.add.text(760, y, '', style(15, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
-      const pastille = this.add.rectangle(690, y, 16, 16, 0xffffff).setStrokeStyle(1, 0x000000);
+      const y = 108 + i * 41;
+      this.add.text(496, y, libelle, style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+      this.fleche(660, y, '◀', () => this.changer(cle, -1));
+      this.fleche(890, y, '▶', () => this.changer(cle, 1));
+      const valeur = this.add.text(785, y, '', style(17, '#5a2a10', { fontStyle: 'bold' })).setOrigin(0.5);
+      const pastille = this.add.rectangle(705, y, 18, 18, 0xffffff).setStrokeStyle(2, 0x3b2410);
       return { cle, valeur, pastille };
     });
 
-    // Le nom de ton futur shop, sur l'enseigne
+    // Le nom de ton auberge : un vrai champ à remplir, avec un crayon
     this.nomShop = NOM_SHOP_DEFAUT;
-    this.add.text(220, 440, 'Ton futur shop :', style(13, '#c9b48a')).setOrigin(0.5);
-    this.texteShop = this.add.text(220, 464, '', style(15, '#f3d98a', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 4 } }))
-      .setOrigin(0.5).setInteractive({ useHandCursor: true });
-    this.texteShop.on('pointerdown', () => demanderTexte('Le nom de ton shop', this.nomShop, NOM_SHOP_MAX, nom => {
+    this.add.text(220, 432, "Le nom de ton auberge :", style(16, '#f3e6c8', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5);
+    const champ = this.add.rectangle(190, 470, 300, 38, 0xfff8e8).setStrokeStyle(3, 0x8a6a3a).setInteractive({ useHandCursor: true });
+    this.texteShop = this.add.text(50, 470, '', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+    this.curseur = this.add.rectangle(0, 470, 2, 22, 0x3b2410);
+    this.tweens.add({ targets: this.curseur, alpha: 0, duration: 500, yoyo: true, repeat: -1 });
+    const ecrire = () => demanderTexte('Le nom de ton auberge', this.nomShop, NOM_SHOP_MAX, nom => {
       if (nom) this.nomShop = nom;
       this.maj();
-    }));
+    });
+    champ.on('pointerdown', ecrire);
+    champ.on('pointerover', () => champ.setStrokeStyle(3, 0xc9a227));
+    champ.on('pointerout', () => champ.setStrokeStyle(3, 0x8a6a3a));
+    const crayon = creerBouton(this, 382, 470, 76, '✎', ecrire);
+    crayon.label.setFontSize(20);
+    this.add.text(220, 500, '(touche le champ pour changer le nom)', style(13, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
 
-    creerBouton(this, 600, 480, 180, 'Au hasard', () => this.auHasard());
-    creerBouton(this, 820, 480, 230, "Commencer l'histoire", () => this.commencer());
+    creerBouton(this, 590, 495, 180, 'Au hasard', () => this.auHasard());
+    creerBouton(this, 815, 495, 240, "Commencer l'histoire", () => this.commencer());
     this.maj();
   }
 
   fleche(x, y, texte, action) {
-    const t = this.add.text(x, y, texte, style(20, '#c9a227', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    t.on('pointerdown', action);
+    const b = creerBouton(this, x, y, 50, texte, action);
+    b.label.setFontSize(16);
   }
 
   changer(cle, sens) {
@@ -79,8 +92,14 @@ class IntroScene extends Phaser.Scene {
     const genre = this.feminin ? 'fille' : 'garcon';
     this.apercu.setTexture('joueur_petit');
     this.nomApercu.setText(NOMS_JOUEUR[genre].petit);
-    this.texteShop.setText(`« ${this.nomShop} » ✎`);
-    for (const b of this.boutonsGenre) b.fond.setFillStyle(b.feminin === this.feminin ? 0x8a5a2b : 0x3b2a1a);
+    this.texteShop.setText(this.nomShop);
+    for (let taille = 16; this.texteShop.width > 270 && taille >= 10; taille--) this.texteShop.setFontSize(taille);
+    this.curseur.setX(this.texteShop.x + this.texteShop.width + 3);
+    for (const g of this.boutonsGenre) {
+      const choisi = g.feminin === this.feminin;
+      g.b.fond.setTint(choisi ? 0xffffff : 0x8a7a6a);
+      g.b.label.setColor(choisi ? '#ffe9a0' : '#c8b8a0');
+    }
     for (const l of this.lignes) {
       const choix = APPARENCE[l.cle][this.ap[l.cle]];
       const couleur = Array.isArray(choix);

@@ -25,6 +25,7 @@ const FIGURANTS = {
   colporteur: { race: 'humain', nom: 'Colporteur', costume: 'colporteur', habit: 0x6a5a40, cheveux: 0x4a3a2a, cape: 0x4a3a2a },
   mentor: { race: 'humain', nom: 'Garrick', costume: 'mentor', habit: 0x2f5a3a, cheveux: 0x9a9aa0, cape: 0x2f5a3a, barbe: 'pleine', niveau: 3 },
   gobelin: { race: 'gobelin', nom: 'Grippesou', costume: 'gobelin', habit: 0x6a5030, cheveux: 0x5a3a20 },
+  mendiant: { race: 'humain', nom: 'Le mendiant', costume: 'mendiant', habit: 0x6a6252, cheveux: 0x8a8a80, cape: 0x4a4236, barbe: 'pleine', niveau: 0 },
 };
 
 // Les mains de chaque texture (en pixels HD depuis le sol), pour porter le baluchon.
@@ -56,11 +57,12 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0) {
   const manteau = race === 'elfe' || costume === 'colporteur' || costume === 'mentor';
 
   // La cape, derrière (héros et légendes, le mentor, le colporteur)
-  if (tenue >= 3 || costume === 'mentor' || costume === 'colporteur') {
+  if (tenue >= 3 || costume === 'mentor' || costume === 'colporteur' || costume === 'mendiant') {
     t.forme('cape', (x, y) => {
       if (y < yT + 1 || y > sol - 3) return null;
       const demi = P.ep + 1.5 + (y - yT) * 0.12;
       const nx = (x + 0.5 - cx) / demi;
+      if (costume === 'mendiant' && y > sol - 10 && hachage(x, 0, 77) * 10 > sol - y) return null; // le bas en lambeaux
       return Math.abs(nx) <= 1 ? [nx * 0.6, 0.1, 0.8] : null;
     }, { decalage: -0.9, motif: (x) => (x % 5 === 0 ? -0.5 : 0) });
     if (tenue >= 4) for (let y = yT + 2; y < sol - 3; y++) { t.poser(Math.round(cx - P.ep - 2 - (y - yT) * 0.12), y, 'or', 4); t.poser(Math.round(cx + P.ep + 2 + (y - yT) * 0.12), y, 'or', 3); }
@@ -78,7 +80,7 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0) {
       const sol = H - 1 - (pas && sens === pas ? 2 : 0);   // la jambe qui avance se lève
       const pied = sol - 4;
       t.forme(race === 'hobbit' ? 'bas' : 'bas', (x, y) => (y >= yB - 2 && y <= pied && Math.abs(x + 0.5 - lx) < (race === 'nain' ? 3.2 : 2.7) ? [(x + 0.5 - lx) / 3, 0, 0.9] : null));
-      if (race === 'hobbit') {
+      if (race === 'hobbit' || costume === 'mendiant') {
         t.forme('peau', (x, y) => (y >= pied - 1 && y <= sol && (Math.abs(x + 0.5 - lx) < 2.6 || (y >= sol - 2 && sens * (x + 0.5 - lx) > 0 && sens * (x + 0.5 - lx) < 6)) ? [(x + 0.5 - lx) / 5, (y - sol + 1) / 3, 0.8] : null));
         for (let k = 0; k < 4; k++) t.poser(Math.round(lx + sens * k), sol - 2 - (k % 2), 'cheveux', 2); // les poils
       } else {
@@ -138,7 +140,7 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0) {
     if (tenue >= 1) t.forme(tenue >= 4 ? 'or' : 'metal', ellipsoide(cx, yB - 1.5, 1.6, 1.3), { decalage: 0.4 });
   }
   // Les pièces cousues des novices, la sacoche des aguerris
-  const aventurier = !costume || costume === 'colporteur' || costume === 'mentor';
+  const aventurier = !costume || costume === 'colporteur' || costume === 'mentor' || costume === 'mendiant';
   if (tenue === 0 && aventurier) for (const [dx, dy] of [[-4, 6], [3, 11]]) for (let k = 0; k < 3; k++) for (let j = 0; j < 3; j++) if (t.mat(cx + dx + k, yT + dy + j) === 'habit') t.poser(cx + dx + k, yT + dy + j, 'habit', k === 1 && j === 1 ? 1 : 2);
   if (tenue >= 1 && aventurier) {
     for (let k = 0; k < P.torse - 2; k++) t.poser(Math.round(cx - P.ep + 3 + k * (P.ep * 2 - 6) / P.torse), yT + 1 + k, 'cuir', 2); // la bandoulière
@@ -232,6 +234,12 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0) {
     t.forme('metal', (x, y) => { const n = ellipsoide(cx, cy - 1, P.rx + 1, P.ry + 1)(x, y); return n && y <= cy - 2 ? n : null; }, { decalage: 0.2 });
     for (let y = cy - 2; y <= cy + 3; y++) t.poser(cx, y, 'metal', 4); // le nasal
     t.forme('cuirRouge' in t.rampes ? 'cuirRouge' : 'habit', ellipsoide(cx, cy - P.ry - 1, 1.5, 2));
+  } else if (costume === 'mendiant') {
+    // Une capuche râpée, un bâton noueux, une écuelle tendue
+    t.forme('cape', (x, y) => { const n = ellipsoide(cx, cy - 1, P.rx + 1.5, P.ry + 1.8)(x, y); return n && (y < cy - 3 || Math.abs(x + 0.5 - cx) > P.rx - 1.5) && y < yT + 3 ? n : null; }, { decalage: -0.3 });
+    for (let y = yT - 4; y < sol; y++) { t.poser(cx + P.ep + 3, y, 'cuir', y % 6 === 0 ? 1 : 3); t.poser(cx + P.ep + 4, y, 'cuir', 2); }
+    t.forme('metal', ellipsoide(cx - P.ep, yB - 3, 3.2, 1.6), { decalage: -0.2 });
+    t.poser(Math.round(cx - P.ep), yB - 4, 'or', 4);
   } else if (costume === 'gobelin') {
     t.forme('cape', (x, y) => { const n = ellipsoide(cx, cy - 1, P.rx + 1.5, P.ry + 1.5)(x, y); return n && (y < cy - 3 || Math.abs(x + 0.5 - cx) > P.rx - 1) && y < yT + 2 ? n : null; }, { decalage: -0.2 });
   } else if (tenue >= 4 && race !== 'nain') {

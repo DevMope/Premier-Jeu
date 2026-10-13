@@ -181,7 +181,7 @@ class CounterScene extends Phaser.Scene {
     this.texteJoueur = this.add.text(262, 36, '', style(13, '#c9b48a', { fontStyle: 'italic' })).setOrigin(1, 0);
     this.add.text(30, 62, 'En mission', style(14, '#c9b48a', { fontStyle: 'bold' }));
     this.texteMissions = this.add.text(30, 82, '', style(13, '#f3e6c8', { lineSpacing: 3 }));
-    this.add.text(30, 160, 'Lettres reçues — clique pour lire', style(14, '#c9b48a', { fontStyle: 'bold' }));
+    this.add.text(30, 160, 'Lettres (clients en plus) — clique', style(14, '#c9b48a', { fontStyle: 'bold' }));
     this.lignesLettres = [];
     for (let i = 0; i < 4; i++) {
       const t = this.add.text(30, 180 + i * 17, '', style(13, '#f3e6c8')).setInteractive({ useHandCursor: true });
@@ -274,12 +274,12 @@ class CounterScene extends Phaser.Scene {
 
   // Se retourner : l'arrière-boutique (étagères, fortune, cadeaux, tiroir secret, chambre).
   creerBoutonRetourner() {
-    const b = creerBouton(this, 578, 493, 212, "↻ Se retourner : l'arrière-boutique", () => {
+    const b = creerBouton(this, 578, 493, 212, "↻ Arrière-boutique", () => {
       if (this.enConfirmation) return;
       this.scene.pause();
       this.scene.launch('Arriere', { comptoir: this });
     });
-    b.label.setFontSize(13);
+    b.label.setFontSize(16);
   }
 
   // Les cadeaux achetés au Bazar de Rosalie : un par client et par jour, pour sa chance.
@@ -607,7 +607,8 @@ class CounterScene extends Phaser.Scene {
       this.visiteFaucheuse(entree);
     } else {
       const v = entree.parti.voyageur;
-      this.dire(`Le carnet de voyage de ${v.nom} est posé sur ton comptoir. Sa couverture est glacée.`, '');
+      this.dire(this.G.faucheuse.visites ? `Le carnet de voyage de ${v.nom} est posé sur ton comptoir. Sa couverture est glacée.`
+        : `Un berger a rapporté un carnet trouvé sur la route : celui de ${v.nom}... Il n'est jamais revenu${v.feminin ? 'e' : ''}.`, '');
       // Le carnet, couvert de givre, sur le rebord de la fenêtre.
       const g = this.carnetPose = this.add.graphics().setDepth(3);
       const cx = FENETRE.x + FENETRE.w / 2, cy = SOL_COMPTOIR + 2;

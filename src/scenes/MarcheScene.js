@@ -28,7 +28,7 @@ class MarcheScene extends Phaser.Scene {
       this.creerEtal(cle, m, 260 + i * 190);
     });
     this.creerSurbrillance();
-    this.creerLieu(70, 'perso_colporteur', 'Le mendiant', () => this.ouvrirMendiant(), { tint: 0x9a9a9a, angle: -6, echelle: 4.5 });
+    this.creerLieu(70, 'perso_mendiant', 'Le mendiant', () => this.ouvrirMendiant(), { angle: -4, echelle: 4.5 });
     // L'estrade des enchères, avec son crieur
     const estrade = this.add.graphics();
     estrade.fillStyle(0x6b4423).fillRect(1175, 225, 90, 22);
@@ -175,7 +175,7 @@ class MarcheScene extends Phaser.Scene {
     Sauvegarde.planifier(G, 'Marche');
     const p = prevision(G, G.jour);
     this.texteInfos.setText(`Bourse : ${G.argent} pièces · Réserve : ${stockTotal(G)}/${G.capacite} · Fer ${G.materiaux.fer} · Cuir ${G.materiaux.cuir}\n` +
-      `Aujourd'hui : entre ${p.min} et ${p.max} clients attendus (un stock varié en attire plus)`);
+      `Aujourd'hui : entre ${p.min} et ${p.max} clients attendus${p.annonces ? `, + ${p.annonces} annoncé${p.annonces > 1 ? 's' : ''} par lettre` : ''} (un stock varié en attire plus)`);
   }
 
   message(texte, couleur = '#3b2410') {
