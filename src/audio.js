@@ -66,7 +66,9 @@ const Son = {
     g.gain.linearRampToValueAtTime(v, t + a);
     g.gain.exponentialRampToValueAtTime(Math.max(0.0005, v * s), t + a + d);
     const fin = t + Math.max(a + d, duree);
-    g.gain.setValueAtTime(Math.max(0.0005, v * s), fin);
+    // La fin de la note : un petit decrescendo, jamais une coupure sèche
+    g.gain.linearRampToValueAtTime(Math.max(0.0005, v * s), fin);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0005, v * s * 0.35), fin + r * 0.5);
     g.gain.exponentialRampToValueAtTime(0.0005, fin + r);
     for (const [type, mult, vol, detune] of I.voix) {
       const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq * mult; o.detune.value = detune || 0;
@@ -130,7 +132,7 @@ const Son = {
     const freq = (deg, oct = 0) => T.base * Math.pow(2, (gamme[((deg % 7) + 7) % 7] + Math.floor(deg / 7) * 12 + oct * 12) / 12);
     const tons = [accord, accord + 2, accord + 4];                   // les notes de l'accord
     // La basse : la fondamentale, parfois la quinte, sur les temps forts
-    if (T.basse) for (const [pos, deg, dur] of T.basse(m, accord)) this.note(T.instruments.basse, freq(deg, -1), t0 + pos * temps, dur * temps, 0.9, bus);
+    if (T.basse) for (const [pos, deg, dur] of T.basse(m, accord)) this.note(T.instruments.basse, freq(deg, -1), t0 + pos * temps, dur * temps, 0.9 * (T.forceBasse || 1), bus);
     // L'accompagnement : un arpège ou des accords plaqués
     if (T.accompagnement) for (const [pos, i, dur, force] of T.accompagnement(m)) this.note(T.instruments.accompagnement, freq(tons[i % 3] + Math.floor(i / 3) * 7), t0 + pos * temps, dur * temps, force ?? 0.6, bus);
     // La mélodie : le motif du thème sur certaines mesures, une broderie dans la gamme sinon
@@ -213,21 +215,21 @@ const Son = {
 const INSTRUMENTS = {
   guitare: { voix: [['triangle', 1, 0.7], ['sine', 1, 0.3], ['sine', 2, 0.12], ['sawtooth', 1, 0.06]], attaque: 0.008, decroissance: 0.9, tenue: 0.1, relache: 0.35, volume: 0.22, filtre: 2200, glisse: 1.008 },
   clochette: { voix: [['sine', 1, 0.6], ['sine', 2.0, 0.2], ['sine', 3.01, 0.12], ['sine', 4.2, 0.05]], attaque: 0.004, decroissance: 2.2, tenue: 0.05, relache: 1.5, volume: 0.16 },
-  carillon: { voix: [['sine', 1, 0.7], ['sine', 2.76, 0.18], ['sine', 5.4, 0.07], ['sine', 0.5, 0.15]], attaque: 0.012, decroissance: 2.4, tenue: 0.1, relache: 1.8, volume: 0.2 },
+  carillon: { voix: [['sine', 1, 0.7], ['sine', 2.76, 0.18], ['sine', 5.4, 0.07], ['sine', 0.5, 0.15]], attaque: 0.012, decroissance: 1.3, tenue: 0.08, relache: 0.9, volume: 0.17 },
   glas: { voix: [['sine', 1, 0.7], ['sine', 2.4, 0.25], ['sine', 3.9, 0.1], ['triangle', 0.5, 0.2]], attaque: 0.005, decroissance: 2.6, tenue: 0.08, relache: 1.8, volume: 0.24 },
-  fluteDouce: { voix: [['sine', 1, 0.85], ['triangle', 1, 0.08], ['sine', 2, 0.03]], attaque: 0.09, decroissance: 0.15, tenue: 0.8, relache: 0.2, volume: 0.24, vibrato: 0.004, filtre: 1800 },
+  fluteDouce: { voix: [['sine', 1, 0.85], ['triangle', 1, 0.08], ['sine', 2, 0.03]], attaque: 0.09, decroissance: 0.15, tenue: 0.8, relache: 0.35, volume: 0.24, vibrato: 0.004, filtre: 1800 },
   choeur: { voix: [['sawtooth', 1, 0.2, -8], ['sawtooth', 1, 0.2, 8], ['sine', 1, 0.4], ['sine', 2, 0.1, 4]], attaque: 0.6, decroissance: 0.4, tenue: 0.9, relache: 0.9, volume: 0.1, filtre: 900, vibrato: 0.004 },
   flute: { voix: [['sine', 1, 0.7], ['triangle', 1, 0.25], ['sine', 2, 0.08]], attaque: 0.06, decroissance: 0.1, tenue: 0.8, relache: 0.15, volume: 0.22, vibrato: 0.006, bruit: { duree: 0.08, volume: 0.04, filtre: 3000 } },
-  luth: { voix: [['triangle', 1, 0.8], ['sawtooth', 1, 0.15], ['sine', 2, 0.15]], attaque: 0.005, decroissance: 0.5, tenue: 0.12, relache: 0.25, volume: 0.22, filtre: 2600, glisse: 1.01 },
-  harpe: { voix: [['sine', 1, 0.8], ['triangle', 1, 0.25], ['sine', 3, 0.06]], attaque: 0.012, decroissance: 0.9, tenue: 0.1, relache: 0.4, volume: 0.2 },
+  luth: { voix: [['triangle', 1, 0.8], ['sawtooth', 1, 0.15], ['sine', 2, 0.15]], attaque: 0.006, decroissance: 0.5, tenue: 0.12, relache: 0.45, volume: 0.22, filtre: 2600, glisse: 1.01 },
+  harpe: { voix: [['sine', 1, 0.8], ['triangle', 1, 0.25], ['sine', 3, 0.06]], attaque: 0.012, decroissance: 0.9, tenue: 0.1, relache: 0.6, volume: 0.2 },
   celesta: { voix: [['sine', 1, 0.8], ['sine', 4, 0.12], ['sine', 2.4, 0.05]], attaque: 0.012, decroissance: 1.2, tenue: 0.05, relache: 0.6, volume: 0.22 },
   boiteAMusique: { voix: [['sine', 1, 0.7], ['sine', 3, 0.1], ['sine', 5.2, 0.03]], attaque: 0.01, decroissance: 0.8, tenue: 0.04, relache: 0.5, volume: 0.18 },
   cordes: { voix: [['sawtooth', 1, 0.3, -6], ['sawtooth', 1, 0.3, 6], ['sawtooth', 1.005, 0.2, 0]], attaque: 0.35, decroissance: 0.3, tenue: 0.85, relache: 0.5, volume: 0.1, filtre: 1500, vibrato: 0.003 },
-  vielle: { voix: [['sawtooth', 1, 0.5], ['square', 1, 0.1, 4], ['sawtooth', 2, 0.12]], attaque: 0.08, decroissance: 0.2, tenue: 0.8, relache: 0.2, volume: 0.12, filtre: 1800, vibrato: 0.008 },
+  vielle: { voix: [['sawtooth', 1, 0.5], ['square', 1, 0.1, 4], ['sawtooth', 2, 0.12]], attaque: 0.08, decroissance: 0.2, tenue: 0.8, relache: 0.5, volume: 0.12, filtre: 1800, vibrato: 0.008 },
   basse: { voix: [['triangle', 1, 0.8], ['sine', 1, 0.5], ['sawtooth', 1, 0.08]], attaque: 0.01, decroissance: 0.4, tenue: 0.3, relache: 0.2, volume: 0.28, filtre: 500 },
   orgue: { voix: [['sine', 1, 0.6], ['sine', 2, 0.35], ['sine', 3, 0.12], ['sine', 0.5, 0.25]], attaque: 0.25, decroissance: 0.2, tenue: 0.9, relache: 0.6, volume: 0.1 },
   bourdon: { voix: [['sawtooth', 1, 0.3], ['sawtooth', 1, 0.3, 9], ['sine', 0.5, 0.5]], attaque: 1.2, decroissance: 0.5, tenue: 0.9, relache: 1.5, volume: 0.1, filtre: 600 },
-  piano: { voix: [['triangle', 1, 0.7], ['sine', 2, 0.2], ['sawtooth', 1, 0.08]], attaque: 0.01, decroissance: 1.4, tenue: 0.08, relache: 0.5, volume: 0.2, filtre: 2200 },
+  piano: { voix: [['triangle', 1, 0.7], ['sine', 2, 0.2], ['sawtooth', 1, 0.08]], attaque: 0.01, decroissance: 1.4, tenue: 0.08, relache: 0.8, volume: 0.2, filtre: 2200 },
 };
 
 // Les gammes, en demi-tons depuis la tonique
@@ -244,8 +246,8 @@ const THEMES = {
   titre: {
     base: NOTE.E / 2, gamme: GAMMES.mineur, tempo: 150, temps: 3, phrase: 8,
     accords: [0, 0, 5, 5, 3, 3, 4, 4], octaveMelodie: 2,
-    instruments: { melodie: 'carillon', accompagnement: 'cordes', basse: 'basse' }, reverb: 0.55, lie: 1.3,
-    motif: { 0: [[0, 7, 1.3], [1, 9, 1.3], [2, 11, 1.3]], 1: [[0, 14, 2.4], [2, 11, 1.3]], 2: [[0, 12, 1.3], [1, 11, 1.3], [2, 9, 1.3]], 3: [[0, 10, 3.5]], 4: [[0, 7, 1.3], [1, 9, 1.3], [2, 11, 1.3]], 5: [[0, 13, 2.4], [2, 14, 1.3]], 6: [[0, 12, 1.8], [1.5, 11, 0.8], [2, 9, 1.3]], 7: [[0, 7, 4]] },
+    instruments: { melodie: 'carillon', accompagnement: 'cordes', basse: 'basse' }, reverb: 0.3, lie: 1.1,
+    motif: { 0: [[0, 7, 1.1], [1, 9, 1.1], [2, 11, 1.1]], 1: [[0, 14, 2.1], [2, 11, 1.1]], 2: [[0, 12, 1.1], [1, 11, 1.1], [2, 9, 1.1]], 3: [[0, 10, 3]], 4: [[0, 7, 1.1], [1, 9, 1.1], [2, 11, 1.1]], 5: [[0, 13, 2.1], [2, 14, 1.1]], 6: [[0, 12, 1.6], [1.5, 11, 0.6], [2, 9, 1.1]], 7: [[0, 7, 3]] },
     rythmes: [[1, 1, 1], [2, 1], [1, 2]], silence: 0,
     basse: (m, a) => [[0, a, 2.8]],
     accompagnement: (m) => [[0, 0, 3, 0.5], [0, 1, 3, 0.4], [0, 2, 3, 0.4]],
@@ -275,7 +277,7 @@ const THEMES = {
   comptoir2: {
     base: NOTE.D / 2, gamme: GAMMES.majeur, tempo: 104, temps: 3, phrase: 8,
     accords: [0, 0, 3, 3, 5, 5, 4, 4], octaveMelodie: 2,
-    instruments: { melodie: 'guitare', accompagnement: 'harpe', basse: 'basse' }, reverb: 0.2,
+    instruments: { melodie: 'harpe', accompagnement: 'guitare', basse: 'basse' }, reverb: 0.2,
     motif: { 0: [[0, 9, 1], [1, 11, 1], [2, 12, 1]], 1: [[0, 14, 2], [2, 12, 1]], 2: [[0, 11, 1], [1, 9, 1], [2, 7, 1]], 3: [[0, 9, 3]], 4: [[0, 9, 1], [1, 11, 1], [2, 14, 1]], 5: [[0, 16, 2], [2, 14, 1]], 6: [[0, 12, 1], [1, 11, 1], [2, 9, 1]], 7: [[0, 7, 3]] },
     rythmes: [[1, 1, 1], [2, 1]], silence: 0.2,
     basse: (m, a) => [[0, a, 2.8]],
@@ -340,11 +342,11 @@ const THEMES = {
   recitTriste: {
     base: NOTE.A / 2, gamme: GAMMES.mineur, tempo: 58, temps: 4, phrase: 8,
     accords: [0, 5, 3, 4, 0, 5, 6, 4], octaveMelodie: 2,
-    instruments: { melodie: 'piano', accompagnement: 'cordes', basse: 'basse' }, reverb: 0.3,
+    instruments: { melodie: 'piano', accompagnement: 'cordes', basse: 'basse' }, reverb: 0.3, forceBasse: 1.5,
     motif: { 0: [[0, 11, 2], [2, 10, 1], [3, 9, 1]], 1: [[0, 7, 3.5]], 2: [[0, 9, 2], [2, 10, 2]], 3: [[0, 11, 4]], 4: [[0, 12, 2], [2, 11, 1], [3, 9, 1]], 5: [[0, 8, 4]], 6: [[0, 9, 1], [1, 10, 1], [2, 11, 2]], 7: [[0, 7, 4]] },
     rythmes: [[2, 2], [4], [1, 3]], silence: 0.1, lie: 1.1,
-    basse: (m, a) => [[0, a, 3.8]],
-    accompagnement: (m) => [[0, 0, 3.9, 0.3], [0, 1, 3.9, 0.25], [0, 2, 3.9, 0.25]],
+    basse: (m, a) => [[0, a, 3.8], [2, a, 1.8]],
+    accompagnement: (m) => [[0, 0, 3.9, 0.45], [0, 1, 3.9, 0.3], [0, 2, 3.9, 0.3], [0, -3, 3.9, 0.35]],
   },
   recitPeur: {
     // Une tour hantée : clochettes lointaines sur une gamme étrange (demi-tons, triton), un

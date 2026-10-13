@@ -169,6 +169,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       const nx = (x + 0.5 - centre) / demi;
       return Math.abs(nx) <= 1 ? [nx * 0.6, 0.1, 0.8] : null;
     }, { decalage: -0.9, motif: (x) => (Math.floor(x / k) % 5 === 0 ? -0.5 : 0) });
+    // Le liséré d'or de la cape des elfes et des légendes
+    if (race === 'elfe' || tenue >= 4) for (let y = yT + 1 * k; y <= sol - 4 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'cape' && (t.mat(x - 1, y) !== 'cape' || t.mat(x + 1, y) !== 'cape' || y === sol - 4 * k)) t.poser(x, y, 'or', 3);
   };
   // La hotte d'osier du colporteur, derrière tout : plus large que lui, une couverture roulée dessus
   if (costume === 'colporteur' && !dos) {
@@ -183,9 +185,11 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const longs = ['long', 'queue', 'chignon'].includes(g.coiffure) || race === 'elfe' || race === 'magicienne';
   if (longs && !dos) {
     const bas = g.coiffure === 'chignon' ? cy + 4 * k : race === 'elfe' || race === 'magicienne' ? yT + 10 * k : yT + 4 * k;
-    t.forme('cheveux', (x, y) => { const cc = X(0, -P.rx * 0.4); return y >= cy - 4 * k && y <= bas && Math.abs(x + 0.5 - cc) < P.rx + 1.2 * k - Math.max(0, y - bas + 6 * k) * 0.5 ? [(x + 0.5 - cc) / (P.rx + 2 * k), 0, 0.8] : null; }, { decalage: -0.8, motif: MECHES });
+    const larg = P.rx + 1.2 * k - s * 2.5 * k;   // (de profil, la masse des cheveux tombe dans le dos, plus étroite)
+    t.forme('cheveux', (x, y) => { const cc = X(0, -P.rx * (0.4 + s * 0.25)); return y >= cy - 4 * k && y <= bas && Math.abs(x + 0.5 - cc) < larg - Math.max(0, y - bas + 6 * k) * 0.5 ? [(x + 0.5 - cc) / (P.rx + 2 * k), 0, 0.8] : null; }, { decalage: -0.8, motif: MECHES });
   }
-  if (!dos) { bras(loin, false); if (!longue) jambe(loin, false); } else { bras(pres, false); if (!longue) jambe(pres, false); }
+  const deFace = Math.abs(c) > 0.9;   // (de face, les deux côtés sont éclairés pareil)
+  if (!dos) { bras(loin, deFace); if (!longue) jambe(loin, deFace); } else { bras(pres, deFace); if (!longue) jambe(pres, deFace); }
 
   // --- 2. Le torse (un cylindre un peu aplati, les épaules rondes), la ceinture ---
   const torse = (x, y) => {
@@ -269,6 +273,17 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       if (tenue >= 1 && Math.floor(y / k) % 4 === 0) for (const d of [-1, 1]) { const x = Math.round(X(d * (4.5 * k + onde * 0.5), prof * 0.95)); if (t.mat(x, y) === 'habit' || t.mat(x, y) === 'argent') t.poser(x, y, 'or', 3); }
     }
     t.forme('or', (x, y) => (y >= yB - 2 * k && y <= yB - 1 && torse(x, y) ? [0, 0, 0.9] : null), { decalage: 0.1, ombre: false }); // une fine ceinture d'or
+    if (!dos) {
+      // Une vigne d'or qui monte au milieu de la tunique, avec ses feuilles ; une broche-feuille à
+      // pierre au col ; des galons d'or à l'ourlet et aux poignets
+      const vx = y => Math.round(X(Math.sin((y - yT) / (2.5 * k)) * 0.8 * k, prof));
+      for (let y = yT + 4 * k; y < yB - 3 * k; y++) { const x = vx(y); if (t.mat(x, y) && t.mat(x, y) !== 'peau') t.poser(x, y, 'or', 4); }
+      for (let y = yT + 5 * k; y < yB - 4 * k; y += 3 * k) for (const d of [-1, 1]) for (let j = 1; j <= 2 * k; j++) { const x = vx(y) + d * j, yy = y - Math.round(j * 0.6); if (t.mat(x, yy) && t.mat(x, yy) !== 'peau') t.poser(x, yy, 'or', j > k ? 3 : 5); }
+      t.forme('or', ellipsoide(X(0, prof), yT + 2.2 * k, 2.2 * k, 1.5 * k), { decalage: 0.4, ombre: false });
+      t.forme('iris', ellipsoide(X(0, prof), yT + 2.2 * k, 0.9 * k, 0.9 * k), { decalage: 0.6, ombre: false, bord: false });
+      const bas = yB + Math.round((sol - yB) * 0.55);
+      for (let y = bas - 1 * k; y <= bas; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'habit') t.poser(x, y, 'or', 3 + (y === bas ? 0 : 1));
+    }
   }
   if (aventurier && race === 'hobbit') {
     // Le hobbit : du lin et de la laine, un ourlet effiloché, des pièces cousues ; jamais de métal.
@@ -523,7 +538,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   } else if (race === 'magicienne') {
     // Le chapeau de mage : une grande calotte souple qui se plie et retombe, un large bord
     // ondulé, un ruban de cuir à boucle
-    const haut = cy - P.ry;
+    const haut = cy - P.ry + 2.5 * k;   // (le bord repose sur la tête, pas au-dessus)
     const sommet = [X(0, -2 * k) + 7 * k * (c > 0 ? 1 : 0.4) + s * 5 * k, 1 * k];
     t.forme('chapeau', (x, y) => {
       if (y < 0 || y > haut + 1 * k) return null;
