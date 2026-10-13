@@ -156,7 +156,7 @@ class BureauScene extends Phaser.Scene {
       fond.on('pointerover', () => fond.setFillStyle(0xd8c498, 1));
       fond.on('pointerout', () => fond.setFillStyle(0xffffff, 0));
       fond.on('pointerdown', () => this.afficherFiche(f));
-      c.add([fond, this.add.image(48, y + 14, 'perso_' + f.race).setOrigin(0.5, 1).setScale(1.8),
+      c.add([fond, imageCorps(this, 48, y + 14, f.race === 'faucheuse' ? 'faucheuse' : { nom: f.nom, race: f.race, niveau: (this.G.personnes[f.nom] || {}).niveau }, 1.8),
         this.add.text(66, y - 13, f.nom, style(13, couleurNom(this.G, f.nom), { fontStyle: 'bold' })),
         this.add.text(66, y + 3, f.ligne, style(10, '#5a3a20', { wordWrap: { width: 220 } }))]);
     });
@@ -182,7 +182,7 @@ class BureauScene extends Phaser.Scene {
     const c = this.ficheDroite = this.add.container(0, 0);
     this.pages.add(c);
     c.add(this.add.rectangle(423, 262, 258, 404, 0xead9b0));
-    c.add(this.add.image(335, 140, 'perso_' + f.race).setOrigin(0.5, 1).setScale(4));
+    c.add(imageCorps(this, 335, 140, f.race === 'faucheuse' ? 'faucheuse' : { nom: f.nom, race: f.race, niveau: (this.G.personnes[f.nom] || {}).niveau }, 4));
     c.add(this.add.text(370, 80, f.nom, style(15, couleurNom(G, f.nom), { fontStyle: 'bold', wordWrap: { width: 175 } })));
     c.add(this.add.text(370, 120, NOMS_RACES[f.race] || '', style(12, '#5a3a20', { fontStyle: 'italic' })));
 

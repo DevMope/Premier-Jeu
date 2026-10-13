@@ -35,7 +35,7 @@ class AtelierScene extends Phaser.Scene {
     Object.entries(EMPLOYES).forEach(([id, e], i) => {
       const x = 110 + i * 370;
       const embauche = G.employes.includes(id);
-      c.add(this.add.image(x + 10, 528, 'perso_' + e.race).setOrigin(0.5, 1).setScale(2));
+      c.add(imageCorps(this, x + 10, 528, e.race, 2));
       c.add(this.add.text(x + 28, 478, `${e.nom} · ${e.salaire} p./nuit`, style(13, '#f3d98a', { fontStyle: 'bold' })));
       c.add(this.add.text(x + 28, 496, e.description, style(11, '#c9b48a', { wordWrap: { width: 230 } })));
       const btn = this.add.rectangle(x + 310, 500, 100, 28, embauche ? 0x8a3a2a : 0x4f7a3a).setStrokeStyle(2, 0x2a1a10).setInteractive({ useHandCursor: true });

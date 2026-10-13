@@ -284,7 +284,7 @@ Chaque étape doit donner une version **jouable**.
 | 7c ✅ | Finitions du comptoir | Marchandises HD sur lit de toile, pièces d'or, boutons noyer et laiton, panneau de dialogue, registre en livre ouvert, tailles des peuples. |
 | 7d ✅ | L'intérieur du shop | Arrière-boutique, chambre, bureau du registre, écran du soir ; bougies, luminaires et lumière ; améliorations du shop (4 niveaux de luxe). |
 | 7e ✅ | L'extérieur | Paysages peints de toutes les contrées (ciel tramé, nuages, montagnes, arbres, chemin), façade à colombages et toit de chaume (enseigne qui se balance, fumée), étals à auvents et pavés du marché, Banque de pierre et d'or, carte illustrée à l'encre et à l'aquarelle. |
-| 7f | Silhouettes HD en pied | Personnages entiers en HD (file, départs, récits, marché), tenues selon le niveau du voyageur. |
+| 7f ✅ | Silhouettes HD en pied | Personnages entiers en HD partout (file, départs, récits, marché, carte, registre), couleurs propres à chaque voyageur, tenues selon le niveau (novice rapiécé → aguerri sacoche → vétéran épaulières de cuir → héros métal et cape → légende dorures), figurants costumés (garde, banquiers, colporteur, mentor, Grippesou). |
 | 7g | Cinématiques animées | Vrais déplacements : marche, gestes, objets qui bougent ; prologue, récits d'aventure, faillite, Faucheuse, départs, nuit. |
 | 8 | **Réputation et améliorations** | Clients plus exigeants, décoration, améliorations la nuit. |
 | 9 | **Le Bien et le Mal** | Races maléfiques, objets du bien / du mal, réputation par camp, dialogues qui changent. |

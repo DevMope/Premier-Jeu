@@ -226,7 +226,7 @@ class DodoScene extends Cinematique {
     else this.G.legendeClaire = true;
     await this.changerCote(cote);
     this.onomatopee(900, SOL_CHAMBRE - 160, sombre ? 'Tok... tok...' : 'Toc toc !', sombre ? '#ff6080' : '#fff4dc');
-    const m = this.add.image(1010, SOL_CHAMBRE, 'perso_colporteur').setOrigin(0.5, 1).setScale(6).setTint(sombre ? 0x3a1a24 : 0x7a7aa8).setDepth(3);
+    const m = imageCorps(this, 1010, SOL_CHAMBRE, 'colporteur', 6).setTint(sombre ? 0x3a1a24 : 0x7a7aa8).setDepth(3);
     await this.marcher(m, 905, 4);
     const c = this.add.container(0, 0).setDepth(9);
     c.add(this.add.rectangle(480, 210, 640, premiere ? 290 : 220, 0xead9b0).setStrokeStyle(4, 0x8a6a3a));

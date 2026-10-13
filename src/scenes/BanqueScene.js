@@ -19,7 +19,7 @@ class BanqueScene extends Phaser.Scene {
 
     // Les banquiers nains, perchés très haut
     this.banquiers = [[330, 238, 7], [480, 226, 8], [630, 238, 7]].map(([x, y, e], i) => {
-      const b = this.add.image(x, y, 'perso_nainBanquier').setOrigin(0.5, 1).setScale(e);
+      const b = imageCorps(this, x, y, 'nainBanquier', e);
       // Ils te toisent : petits mouvements de tête, l'un après l'autre
       this.tweens.add({ targets: b, angle: i === 1 ? 4 : -4, duration: 900 + i * 300, yoyo: true, repeat: -1, delay: i * 400, ease: 'Sine.easeInOut' });
       return b;

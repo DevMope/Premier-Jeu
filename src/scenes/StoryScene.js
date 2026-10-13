@@ -20,7 +20,8 @@ class StoryScene extends Cinematique {
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
     this.decor = this.add.container(0, 0);
 
-    this.perso = this.add.image(-60, 360, 'perso_' + v.race).setOrigin(0.5, 1).setScale(6);
+    this.perso = imageCorps(this, -60, 360, v, 6);
+    this.fCorps = echelleCorps(this.perso.texture.key);
 
     this.coeurs = [];
     // Ses cœurs, plus ceux gagnés grâce aux soins donnés en plus.
@@ -37,9 +38,9 @@ class StoryScene extends Cinematique {
 
   async marcherVers(x) {
     const duree = Math.max(300, Math.abs(x - this.perso.x) * 5);
-    this.tweens.add({ targets: this.perso, scaleY: 5.6, duration: 140, yoyo: true, repeat: Math.floor(duree / 280) });
+    this.tweens.add({ targets: this.perso, scaleY: 5.6 * this.fCorps, duration: 140, yoyo: true, repeat: Math.floor(duree / 280) });
     await this.animer({ targets: this.perso, x, duration: duree, ease: 'Linear' });
-    this.perso.setScale(6);
+    this.perso.setScale(6 * this.fCorps);
   }
 
   // --- Le récit ---
@@ -313,7 +314,7 @@ class StoryScene extends Cinematique {
       });
     } else if (type === 'bandits') {
       [0, 60].forEach(dx => this.decor.add(
-        this.add.image(x + dx, sol, 'perso_humain').setOrigin(0.5, 1).setScale(6).setFlipX(true).setTint(0x504048)));
+        imageCorps(this, x + dx, sol, 'humain', 6).setFlipX(true).setTint(0x504048)));
     } else if (type === 'gouffre') {
       g.fillStyle(0x111111).fillRect(x - 60, sol - 26, 140, 40);
       g.fillStyle(0x6b4423).fillRect(x - 64, sol - 34, 6, 10).fillRect(x + 80, sol - 34, 6, 10);
@@ -345,7 +346,7 @@ class StoryScene extends Cinematique {
       for (let i = 0; i < 18; i++) g.lineBetween(Phaser.Math.Between(0, 960), Phaser.Math.Between(60, 340), Phaser.Math.Between(0, 960), Phaser.Math.Between(60, 340));
     } else if (type === 'pillards') {
       [0, 60, 120].forEach(dx => this.decor.add(
-        this.add.image(x + dx, sol, 'perso_humain').setOrigin(0.5, 1).setScale(6).setFlipX(true).setTint(0x8a6a50)));
+        imageCorps(this, x + dx, sol, 'humain', 6).setFlipX(true).setTint(0x8a6a50)));
     } else if (type === 'froid') {
       g.fillStyle(0xffffff, 0.9);
       for (let i = 0; i < 40; i++) g.fillCircle(Phaser.Math.Between(0, 960), Phaser.Math.Between(40, 350), Phaser.Math.Between(1, 3));
@@ -354,10 +355,10 @@ class StoryScene extends Cinematique {
       g.fillStyle(0xd0d8e8);
       for (let i = 0; i < 6; i++) g.fillCircle(x + 20 + i * 30, sol - 20 - i * 18, 10);
     } else if (type === 'yeti') {
-      this.decor.add(this.add.image(x + 40, sol, 'perso_nain').setOrigin(0.5, 1).setScale(9).setFlipX(true).setTint(0xf0f4ff));
+      this.decor.add(imageCorps(this, x + 40, sol, 'nain', 9).setFlipX(true).setTint(0xf0f4ff));
     } else if (type === 'mortvivant') {
       [0, 70].forEach(dx => this.decor.add(
-        this.add.image(x + dx, sol, 'perso_humain').setOrigin(0.5, 1).setScale(6).setFlipX(true).setTint(0xb0c8a0)));
+        imageCorps(this, x + dx, sol, 'humain', 6).setFlipX(true).setTint(0xb0c8a0)));
     } else if (type === 'malediction') {
       for (let i = 0; i < 5; i++) {
         const rond = this.add.circle(this.perso.x, sol - 50, 20 + i * 18).setStrokeStyle(2, 0xa060e0, 0.8);

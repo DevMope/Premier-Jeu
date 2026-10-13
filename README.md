@@ -37,6 +37,7 @@ La partie se sauvegarde toute seule le soir et le matin au marché :
 | `src/decorHD.js` | Le décor HD : chêne, enduit, pierre, fer, ardoise, parchemin, plaques des boutons |
 | `src/interieurHD.js` | L'intérieur en HD : murs, plancher, meubles par niveau de luxe, luminaires, bougies et lumière, panneaux |
 | `src/exterieurHD.js` | L'extérieur en HD : paysages peints, façade, étals, pavés, Banque, carte |
+| `src/corpsHD.js` | Les personnages en pied en HD : peuples, tenues par niveau, figurants |
 | `src/objetsHD.js` | Les marchandises en HD (icônes 16 × 16), les pièces d'or, l'éclat et l'étiquette des casiers |
 | `src/scenes/FacadeScene.js` | Le matin : la façade du shop et son enseigne |
 | `src/scenes/ArriereScene.js` | L'arrière-boutique : stock, fortune, cadeaux, tiroir secret, chambre |

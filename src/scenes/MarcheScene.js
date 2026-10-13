@@ -128,7 +128,7 @@ class MarcheScene extends Phaser.Scene {
     // L'étal (poteaux et auvent), le marchand derrière, puis la table par-dessus lui
     const etal = etalHD(this, m.couleur);
     this.add.image(x, 244, etal).setOrigin(0.5, 1).setScale(2);
-    this.add.image(x, 205, 'perso_' + m.race).setOrigin(0.5, 1).setScale(5);
+    imageCorps(this, x, 205, { nom: m.nom, race: m.race, feminin: /Mère|Hilda|Rosalie/.test(m.nom), niveau: 'aguerri' }, 5);
     this.add.image(x, 244, etal).setOrigin(0.5, 1).setScale(2).setCrop(0, 56, 88, 26);
     Object.keys(this.G.etals[cle] || {}).slice(0, 4).forEach((id, i) => this.add.image(x - 54 + i * 36, 192, iconeObjet(this, id)).setOrigin(0.5, 1).setScale(2));
     this.add.text(x, 254, m.nom, style(13, couleurNom(this.G, m.nom, true), { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
@@ -141,7 +141,7 @@ class MarcheScene extends Phaser.Scene {
 
   creerLieu(x, texture, nom, action, { tint = 0xffffff, angle = 0, echelle = 5 }) {
     const avant = this.children.list.length;
-    const perso = this.add.image(x, 245, texture).setOrigin(0.5, 1).setScale(echelle).setTint(tint).setAngle(angle);
+    const perso = imageCorps(this, x, 245, texture.replace('perso_', ''), echelle).setTint(tint).setAngle(angle);
     this.add.text(x, 262, nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
     const zone = this.add.rectangle(x, 200, 110, 120, 0xffffff, 0).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', action);
@@ -330,7 +330,7 @@ class MarcheScene extends Phaser.Scene {
     const bulles = {};
     ENCHERISSEURS.forEach((e, i) => {
       const x = 120 + i * 200;
-      c.add(this.add.image(x, 440, 'perso_' + e.race).setOrigin(0.5, 1).setScale(3));
+      c.add(imageCorps(this, x, 440, { nom: e.nom, race: e.race, niveau: 'veteran' }, 3));
       c.add(this.add.text(x, 444, e.nom, style(11, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5, 0));
       bulles[e.nom] = this.add.text(x + 20, 385, '', style(14, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 6, y: 3 } })).setOrigin(0, 0.5);
       c.add(bulles[e.nom]);

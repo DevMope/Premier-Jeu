@@ -125,8 +125,9 @@ class CounterScene extends Phaser.Scene {
 
   // Un personnage qui attend dans la file, à la place `i`.
   spriteFile(entree, i) {
-    const sprite = this.add.image(FILE.x - i * FILE.ecart, FILE.y, this.texturePour(entree))
-      .setOrigin(0.5, 1).setScale(FILE.echelle).setTint(0xd8d0c0).setDepth(1);
+    const cle = this.texturePour(entree);
+    const sprite = this.add.image(FILE.x - i * FILE.ecart, FILE.y, cle)
+      .setOrigin(0.5, 1).setScale(FILE.echelle * echelleCorps(cle)).setTint(0xd8d0c0).setDepth(1);
     sprite.setMask(this.masqueFenetre);
     // Ils piétinent un peu en attendant.
     this.tweens.add({ targets: sprite, y: FILE.y - 3, duration: 500 + (i % 5) * 90, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -163,9 +164,9 @@ class CounterScene extends Phaser.Scene {
 
   texturePour(entree) {
     if (entree.type === 'faucheuse') return 'perso_faucheuse';
-    if (entree.type === 'famille') return 'perso_' + entree.visite.parent.race;
+    if (entree.type === 'famille') return corpsHD(this, entree.visite.parent);
     const v = entree.type === 'client' ? entree.voyageur : entree.parti.voyageur;
-    return 'perso_' + v.race;
+    return corpsHD(this, v);
   }
 
   majFileAttente() {
@@ -478,8 +479,9 @@ class CounterScene extends Phaser.Scene {
     const premier = this.fileSprites.shift();
     const departX = premier ? premier.x : FILE.x;
     this.buste = null;
-    this.perso.setTexture(this.texturePour(entree)).setFlipX(false).setAngle(0)
-      .setPosition(departX, FILE.y).setScale(FILE.echelle);
+    const cle = this.texturePour(entree);
+    this.perso.setTexture(cle).setFlipX(false).setAngle(0)
+      .setPosition(departX, FILE.y).setScale(FILE.echelle * echelleCorps(cle));
     if (premier) premier.destroy();
     // ... et les autres avancent d'une place.
     this.fileSprites.forEach((sprite, i) => {
@@ -497,11 +499,12 @@ class CounterScene extends Phaser.Scene {
       return;
     }
     // Les autres : leur silhouette s'avance vers la fenêtre... puis on le voit de près, en buste.
-    const marcheur = this.add.image(departX, FILE.y, this.texturePour(entree)).setOrigin(0.5, 1).setScale(FILE.echelle).setDepth(1.5);
+    const f = echelleCorps(this.texturePour(entree));
+    const marcheur = this.add.image(departX, FILE.y, this.texturePour(entree)).setOrigin(0.5, 1).setScale(FILE.echelle * f).setDepth(1.5);
     marcheur.setMask(this.masqueFenetre);
     this.tweens.add({ targets: marcheur, angle: { from: -4, to: 4 }, duration: 150, yoyo: true, repeat: 3 });
     this.tweens.add({
-      targets: marcheur, x: FENETRE.x + FENETRE.w / 2, y: SOL_COMPTOIR + 40, scale: 8, alpha: 0, duration: 1000, ease: 'Sine.easeIn',
+      targets: marcheur, x: FENETRE.x + FENETRE.w / 2, y: SOL_COMPTOIR + 40, scale: 8 * f, alpha: 0, duration: 1000, ease: 'Sine.easeIn',
       onComplete: () => marcheur.destroy(),
     });
     this.montrerBuste(this.personneDe(entree), this.expressionArrivee(entree));
@@ -1005,15 +1008,15 @@ class CounterScene extends Phaser.Scene {
       this.buste = null;
       if (this.paroles) { this.paroles.remove(); this.paroles = null; this.enTrainDeParler = false; }
       if (entree) this.perso.setTexture(this.texturePour(entree));
-      this.perso.setScale(9).setY(SOL_COMPTOIR).setFlipX(versDroite);
+      this.perso.setScale(9 * echelleCorps(this.perso.texture.key)).setY(SOL_COMPTOIR).setFlipX(versDroite);
     };
     if (!this.buste) this.perso.setFlipX(versDroite);
     const decalage = versDroite ? 22 : -22;
     const inclinaison = versDroite ? -22 : 22;
     // Le baluchon est porté à hauteur des mains, qui dépend de la taille de son peuple.
-    const race = entree ? this.texturePour(entree).replace('perso_', '') : '';
-    const mains = (MAINS_PEUPLES[race] || 7) * 9 - 1;
     const placer = () => {
+      const cle = this.perso.texture.key;
+      const mains = cle.startsWith('corps_') ? (MAINS_CORPS[cle] || 28) * this.perso.scaleY : 62;
       porte.setPosition(this.perso.x + decalage, this.perso.y - mains).setAngle(inclinaison + this.perso.angle);
     };
     if (porte) {

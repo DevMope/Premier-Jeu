@@ -74,7 +74,10 @@ class CarteScene extends Phaser.Scene {
     for (const [cle, z] of Object.entries(ZONES)) {
       const ouverte = zoneOuverte(G, cle);
       // Les contrées inconnues restent dans la brume du parchemin.
-      if (!ouverte) this.add.image(z.x, z.y, 'halo').setScale(1.45).setTint(0xe8d4a4).setAlpha(1);
+      if (!ouverte) {
+        this.add.image(z.x, z.y, 'halo').setScale(2.3, 1.9).setTint(0xe4d0a0).setAlpha(0.9);
+        this.add.ellipse(z.x, z.y, 130, 100, 0xe4d0a0, 0.8);
+      }
       const pastille = this.add.circle(z.x, z.y, 22, ouverte ? BIOMES[z.biome].loin : 0x8a8478).setStrokeStyle(3, 0x3b2410)
         .setInteractive({ useHandCursor: true });
       this.add.text(z.x, z.y, ouverte ? '★'.repeat(z.danger) : '?', style(ouverte ? 10 : 18, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);
@@ -103,7 +106,7 @@ class CarteScene extends Phaser.Scene {
         const x = z.x - (Math.min(liste.length, 6) - 1) * 18 + i * 36;
         const y = z.y - 26;
         if (r.choisi) this.reperes.add(this.add.circle(x, y - 12, 15, 0xffe066, 0.6));
-        this.reperes.add(this.add.image(x, y, 'perso_' + r.race).setOrigin(0.5, 1).setScale(1.6));
+        this.reperes.add(imageCorps(this, x, y, r.race, 1.6));
         // Les étiquettes alternent de hauteur pour ne pas se chevaucher.
         this.reperes.add(this.add.text(x, y - 26 - (i % 2) * 12, r.texte, style(9, r.couleur, { fontStyle: 'bold', backgroundColor: '#f3e6c8', padding: { x: 2, y: 0 } })).setOrigin(0.5, 1));
       });
@@ -132,7 +135,7 @@ class CarteScene extends Phaser.Scene {
         .setStrokeStyle(2, choisi ? 0xffe066 : zone ? 0x4f7a3a : 0x8a6a3a).setInteractive({ useHandCursor: true });
       fond.on('pointerdown', () => { this.selection = v; this.tout(); });
       this.cartes.add([fond,
-        this.add.image(x, 470, 'perso_' + v.race).setOrigin(0.5, 1).setScale(2.4),
+        imageCorps(this, x, 470, v, 2.4),
         this.add.text(x, 474, v.nom.split(' ')[0], style(12, couleurNom(this.G, v.nom, true), { fontStyle: 'bold' })).setOrigin(0.5, 0),
         this.add.text(x, 490, zone ? '→ ' + ZONES[zone].nom.replace(/^(Les |La |L')/, '') : NIVEAUX_AVENTURIER[v.niveau].nom,
           style(10, zone ? '#b8e0a0' : '#c9b48a', { align: 'center', wordWrap: { width: largeur - 12 } })).setOrigin(0.5, 0)]);

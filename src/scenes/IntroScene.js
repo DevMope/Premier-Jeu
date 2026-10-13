@@ -119,7 +119,7 @@ class IntroHistoireScene extends Cinematique {
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
 
     this.heros = this.add.image(220, 330, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(4));
-    this.mentor = this.add.image(-80, 345, 'perso_mentor').setOrigin(0.5, 0.5).setScale(6).setAngle(90);
+    this.mentor = this.add.image(-80, 345, corpsHD(this, 'mentor')).setOrigin(0.5, 0.5).setScale(6 * ECHELLE_CORPS).setAngle(90);
 
     this.creerBoiteTexte();
     this.boutonPasser(() => this.finir());
@@ -228,7 +228,7 @@ class IntroHistoireScene extends Cinematique {
     dessinerComte(g, 0, 0, 960, 370, 0.15);
     const facade = dessinerFacade(this, 480, 345);
     const heros = this.add.image(140, 345, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(5));
-    this.add.image(90, 345, 'perso_mentor').setOrigin(0.5, 1).setScale(6);
+    imageCorps(this, 90, 345, 'mentor', 6);
     this.creerBoiteTexte();
     this.boutonPasser(() => this.finir());
     this.ecrire(this.G ? this.G.nomShop : window.GAME.nomShop, 'Et c\'est ainsi que tout commença.');

@@ -18,7 +18,7 @@ class FacadeScene extends Cinematique {
     this.add.text(480, 34, `Jour ${G.jour} · ${G.nomShop}`, style(26, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 6 })).setOrigin(0.5);
     // Une petite foule attend déjà devant la fenêtre, s'il y a du monde aujourd'hui.
     const clients = G.file.filter(e => e.type === 'client').slice(0, 4);
-    clients.forEach((e, i) => this.add.image(330 - i * 34, 440, 'perso_' + e.voyageur.race).setOrigin(0.5, 1).setScale(3.2).setTint(0xe8e0d0));
+    clients.forEach((e, i) => imageCorps(this, 330 - i * 34, 440, e.voyageur, 3.2).setTint(0xe8e0d0));
     if (clients.length) {
       this.add.text(250, 300, `${G.file.length} visite${G.file.length > 1 ? 's' : ''} aujourd'hui`, style(13, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
     }

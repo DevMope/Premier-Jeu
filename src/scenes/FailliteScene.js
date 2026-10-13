@@ -12,7 +12,7 @@ class FailliteScene extends Cinematique {
 
     this.joueur = this.add.image(300, 350, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(6)).setDepth(3);
     this.piece = this.add.ellipse(322, 290, 12, 12, 0xe8c040).setStrokeStyle(2, 0x9a7a10).setDepth(4);
-    this.banquier = this.add.image(1040, 350, 'perso_banquier').setOrigin(0.5, 1).setScale(6).setDepth(3);
+    this.banquier = imageCorps(this, 1040, 350, 'banquier', 6).setDepth(3);
     this.gardes = [0, 1].map(i => this.creerGarde(1110 + i * 70));
 
     this.creerBoiteTexte();
@@ -26,7 +26,7 @@ class FailliteScene extends Cinematique {
     const lance = this.add.graphics();
     lance.fillStyle(0x6b4423).fillRect(26, -140, 4, 140);
     lance.fillStyle(0xc0c8d0).fillTriangle(22, -140, 28, -160, 34, -140);
-    c.add([lance, this.add.image(0, 0, 'perso_garde').setOrigin(0.5, 1).setScale(6)]);
+    c.add([lance, imageCorps(this, 0, 0, 'garde', 6)]);
     return c;
   }
 
