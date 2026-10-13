@@ -29,6 +29,7 @@ class ToileHD {
     this.k = new Array(l * h).fill(0);      // la teinte posée (0 sombre … 5 clair), pour les ombres portées
     this.rampes = { ...RAMPES };            // + les dégradés propres à ce personnage
     this.relief = false;                    // true : chaque forme projette une ombre sur ce qu'elle recouvre
+    this.cel = false;                       // true : trois tons francs (ombre, teinte, lumière) au lieu d'un dégradé
   }
   dans(x, y) { return x >= 0 && y >= 0 && x < this.l && y < this.h; }
   poser(x, y, mat, i) {
@@ -73,6 +74,7 @@ class ToileHD {
       let i = Math.floor(f);
       if (tramage && f - i > (BAYER[y % 4][x % 4] + 0.5) / 16) i++;
       else if (!tramage && f - i > 0.5) i++;
+      if (this.cel) i = f < 2.3 ? 1 : f < 3.7 ? 3 : 4;   // trois tons, limite nette
       if (bord) {
         if (!dans(x + 1, y) || !dans(x, y + 1)) i = Math.min(i, 1);
         else if (!dans(x - 1, y) || !dans(x, y - 1)) i = Math.max(Math.min(i, 3), i - 1);
