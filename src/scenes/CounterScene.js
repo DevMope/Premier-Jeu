@@ -690,6 +690,7 @@ class CounterScene extends Phaser.Scene {
   parler(duree) {
     if (!this.buste) return;
     if (this.paroles) this.paroles.remove();
+    Son.jouer('voix', { personne: this.buste.personne, duree: duree / 1000 });
     this.enTrainDeParler = true;
     let ouverte = false, temps = 0;
     const paroles = this.paroles = this.time.addEvent({ delay: 110, loop: true, callback: () => {

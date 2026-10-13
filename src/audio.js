@@ -510,13 +510,17 @@ const SONS = {
   // PLOUF : une chute dans l'eau, puis des bulles
   plouf(t, bus) { this.bruit(0.08, t, bus, 0.7, 400, 'lowpass'); this.bruit(0.4, t + 0.05, bus, 0.3, 1800); SONS.glou.call(this, t + 0.3, bus); },
   // OUSTE : un grognement de bête qui fuit
-  grogne(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(95, t); osc.frequency.linearRampToValueAtTime(70, t + 0.4); const f = this.ctx.createBiquadFilter(); f.frequency.value = 400; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.06); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.45); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.5); this.bruit(0.4, t, bus, 0.12, 300); },
+  grogne(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(70, t); osc.frequency.linearRampToValueAtTime(48, t + 0.4); const f = this.ctx.createBiquadFilter(); f.frequency.value = 300; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.06); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.45); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.5); this.bruit(0.4, t, bus, 0.12, 300); },
   // Le trèfle qui brille : un petit scintillement qui monte
   trefle(t, bus) { [0, 4, 7, 12, 16].forEach((d, i) => this.note('celesta', 1046.5 * Math.pow(2, d / 12), t + i * 0.06, 0.25, 0.5, bus)); },
   // Un cœur qui revient (les soins) : deux notes chaudes
   coeur(t, bus) { this.note('fluteDouce', 523.25, t, 0.25, 1, bus); this.note('fluteDouce', 783.99, t + 0.22, 0.5, 1, bus); },
 
   // --- Les bêtes ---
+  // Le sanglier : des grognements graves et courts, le groin dans la terre
+  sanglier(t, bus) { for (const [dt, d] of [[0, 0.16], [0.22, 0.12], [0.4, 0.26]]) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(62, t + dt); osc.frequency.linearRampToValueAtTime(44, t + dt + d); const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 260; f.Q.value = 2; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + dt); g.gain.exponentialRampToValueAtTime(0.5, t + dt + 0.03); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + d); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + d + 0.02); this.bruit(d, t + dt, bus, 0.18, 180, 'lowpass'); } },
+  // Le loup : un hurlement qui monte, se tient, puis retombe
+  loup(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(260, t); osc.frequency.exponentialRampToValueAtTime(520, t + 0.5); osc.frequency.setValueAtTime(520, t + 0.9); osc.frequency.exponentialRampToValueAtTime(330, t + 1.5); const f = this.ctx.createBiquadFilter(); f.frequency.value = 1100; f.Q.value = 1.5; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.3); g.gain.setValueAtTime(0.16, t + 0.9); g.gain.exponentialRampToValueAtTime(0.0005, t + 1.6); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 1.65); },
   // Brisquet le chien : deux aboiements
   chien(t, bus) { for (const dt of [0, 0.26]) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(240, t + dt); osc.frequency.exponentialRampToValueAtTime(150, t + dt + 0.1); const f = this.ctx.createBiquadFilter(); f.frequency.value = 900; f.Q.value = 2; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + dt); g.gain.exponentialRampToValueAtTime(0.3, t + dt + 0.02); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.13); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.15); this.bruit(0.05, t + dt, bus, 0.25, 700); } },
   // Le chat de la maison : un miaulement
@@ -549,8 +553,36 @@ const SONS = {
   sabots(t, bus) { for (let i = 0; i < 6; i++) { const dt = i * 0.17 + (i % 2) * 0.04; this.bruit(0.03, t + dt, bus, 0.45, 1600 + (i % 2) * 500); const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(260, t + dt); osc.frequency.exponentialRampToValueAtTime(120, t + dt + 0.05); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.14, t + dt); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.07); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.08); } },
 };
 
+// Les voix « 2 bits » : chaque peuple a son timbre et sa hauteur, chaque personnage sa petite
+// mélodie (tirée de son nom), et on baragouine le temps de la phrase (façon Animal Crossing)
+const VOIX = {
+  humain: { forme: 'triangle', base: 200, ecart: 60, note: 0.085 },
+  hobbit: { forme: 'triangle', base: 300, ecart: 70, note: 0.07 },
+  nain: { forme: 'square', base: 105, ecart: 30, note: 0.11 },
+  elfe: { forme: 'sine', base: 330, ecart: 90, note: 0.1 },
+  magicienne: { forme: 'sine', base: 280, ecart: 80, note: 0.09 },
+  gobelin: { forme: 'sawtooth', base: 380, ecart: 120, note: 0.06 },
+  faucheuse: { forme: 'sawtooth', base: 70, ecart: 15, note: 0.16 },
+};
+SONS.voix = function (t, bus, o) {
+  const p = o.personne || {};
+  const V = VOIX[o.race || p.race] || VOIX.humain;
+  const base = V.base * (p.feminin ? 1.35 : 1) * (o.hauteur || 1);
+  let graine = 0; for (const c of (p.nom || o.nom || 'x')) graine = (graine * 31 + c.charCodeAt(0)) & 0xffff;
+  const alea = () => { graine = (graine * 1103515245 + 12345) & 0x7fffffff; return graine / 0x7fffffff; };
+  const duree = Math.min(2.2, o.duree || 1);
+  const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = V.forme === 'sine' ? 3000 : 1600; f.connect(bus);
+  for (let tt = 0; tt < duree; tt += V.note * (1 + alea() * 0.6)) {
+    if (alea() < 0.18) continue;   // (une respiration)
+    const freq = base + (alea() - 0.5) * 2 * V.ecart;
+    const osc = this.ctx.createOscillator(); osc.type = V.forme; osc.frequency.setValueAtTime(freq, t + tt); osc.frequency.exponentialRampToValueAtTime(freq * (0.9 + alea() * 0.2), t + tt + V.note);
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + tt); g.gain.exponentialRampToValueAtTime(0.1 * (o.force || 1), t + tt + 0.01); g.gain.exponentialRampToValueAtTime(0.0005, t + tt + V.note);
+    osc.connect(g); g.connect(f); osc.start(t + tt); osc.stop(t + tt + V.note + 0.02);
+  }
+};
+
 // Les onomatopées du carnet de voyage : le son qui va avec chaque mot
-const SON_DES_MOTS = [['TCHAK', 'coup'], ['BLONG', 'bouclier'], ['FIOUU', 'siffle'], ['HOP', 'saut'], ['Miam', 'miam'], ['Glou', 'glou'], ['OUSTE', 'grogne'], ['AÏE', 'aie'], ['OUILLE', 'aie'], ['CRAC', 'aie'], ['Atchoum', 'aie'], ['PLOUF', 'plouf'], ['Frrrt', 'page'], ['Frotte', 'balai'], ['Pfff', 'balai'], ['Tchac', 'balai'], ['Hop', 'saut']];
+const SON_DES_MOTS = [['TCHAK', 'coup'], ['BLONG', 'bouclier'], ['FIOUU', 'siffle'], ['HOP', 'saut'], ['Miam', 'miam'], ['Glou', 'glou'], ['AÏE', 'aie'], ['OUILLE', 'aie'], ['CRAC', 'aie'], ['Atchoum', 'aie'], ['PLOUF', 'plouf'], ['Frrrt', 'page'], ['Frotte', 'balai'], ['Pfff', 'balai'], ['Tchac', 'balai'], ['Hop', 'saut']];
 function sonDuMot(mot) { const trouve = SON_DES_MOTS.find(([m]) => mot.startsWith(m)); return trouve ? trouve[1] : null; }
 
 // La création du personnage : le thème du titre, en plus doux (boîte à musique et harpe, sans

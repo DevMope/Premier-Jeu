@@ -56,14 +56,8 @@ class ArriereScene extends Phaser.Scene {
     bougie(this, 768, 290, { rayon: 70 });
     // Le tapis, et le chat
     this.add.image(430, SOL_ARRIERE + 64, tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(2.2);
+    // (le coussin attend un familier : le chat du shop viendra plus tard, quand on l'aura adopté)
     this.add.image(196, SOL_ARRIERE + 86, 'coussinHD').setOrigin(0.5, 1).setScale(2.4);
-    const chat = this.add.image(196, SOL_ARRIERE + 76, 'chatHD').setOrigin(0.5, 1).setScale(2.4).setInteractive({ useHandCursor: true });
-    this.time.addEvent({ delay: 1300, loop: true, callback: () => chat.setTexture(chat.texture.key === 'chatHD' ? 'chatHD_2' : 'chatHD') });
-    chat.on('pointerdown', () => {
-      Son.jouer('miaou');
-      this.message(Phaser.Utils.Array.GetRandom(['Ronron... Le chat de la maison dort comme un loir.', 'Le chat entrouvre un œil, puis se rendort.', 'Mrrrou ? Il s\'étire, et se roule à nouveau en boule.']));
-      this.tweens.add({ targets: chat, scaleX: 2.6, duration: 160, yoyo: true });
-    });
   }
 
   // Les étagères : chaque objet de ta réserve, en vrai. Plus il y en a, plus ça déborde.

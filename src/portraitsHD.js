@@ -263,7 +263,7 @@ const VISAGES = {
   humain: { cy: 43, rx: 15.5, ry: 18.5, menton: 0.1, yeux: 41, nez: [2.8, 3.8], bouche: 56, cou: 6, torse: 66, sourcil: 2 },
   hobbit: { cy: 46, rx: 16.5, ry: 17, menton: 0, joues: 0.1, yeux: 45, nez: [3.6, 3.2], bouche: 59, cou: 6, torse: 68, sourcil: 2 },
   nain: { cy: 43, rx: 17, ry: 19, menton: 0, yeux: 43, nez: [5, 4.6], bouche: 60, cou: 0, torse: 66, sourcil: 3 },
-  elfe: { cy: 42, rx: 14, ry: 19, menton: 0.22, yeux: 41, nez: [2.2, 3.8], bouche: 55, cou: 5, torse: 66, sourcil: 1 },
+  elfe: { cy: 42, rx: 14, ry: 19, menton: 0.22, yeux: 44, nez: [2.2, 3.8], bouche: 56, cou: 5, torse: 66, sourcil: 1, front: 3 },   // (front : la frange et le diadème restent haut, le front se voit)
   magicienne: { cy: 46, rx: 15, ry: 18, menton: 0.12, yeux: 45, nez: [2.6, 3.6], bouche: 59, cou: 5, torse: 68, sourcil: 1 },
 };
 
@@ -668,7 +668,7 @@ function cheveuxHD(t, g, v, cx) {
     return;
   }
   // Le dessus de la tête, avec une frange
-  const haut = v.cy - v.ry - 4, frange = v.yeux - 8;
+  const haut = v.cy - v.ry - 4, frange = v.yeux - 8 - (v.front || 0);
   t.forme('cheveux', (x, y) => {
     // Le volume des cheveux dépasse du crâne, avec un bord en mèches
     const gonfle = 3 + Math.sin(x * 1.3) * 0.8;
@@ -688,7 +688,7 @@ function cheveuxHD(t, g, v, cx) {
 function coiffeHD(t, g, v, cx) {
   if (g.race === 'elfe') {
     // Le diadème d'argent avec sa pierre
-    const y = v.yeux - 9;
+    const y = v.yeux - 9 - (v.front || 0);
     t.forme('metal', (x, yy) => (yy === y && Math.abs(x + 0.5 - cx) < v.rx - 0.5 ? [(x + 0.5 - cx) / v.rx, 0, 0.9] : null), { decalage: 0.6, bord: false });
     t.dessin(cx - 1, y - 1, ['.o.', 'oCo', '.o.'], { o: ['metal', 4], C: ['iris', 4] });
   } else if (g.race === 'magicienne') {

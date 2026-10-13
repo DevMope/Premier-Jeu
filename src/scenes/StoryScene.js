@@ -357,7 +357,7 @@ class StoryScene extends Cinematique {
     creerObjetsHD(this);
     const sol = 360;
     if (this.meteo) { this.meteo.remove(); this.meteo = null; }
-    this.menace = { sorte: 'ambiance', sprites: [] };
+    this.menace = { sorte: 'ambiance', sprites: [], type };
     const sombre = ['nuit', 'grotte', 'feufollet', 'esprits', 'malediction', 'mortvivant'].includes(type);
     if (this.parti.resultat.vivant) Son.ambiance(sombre ? 'recitPeur' : 'recitEtonne');
     this.voile.setFillStyle(type === 'tempete' ? 0x8a6a3a : 0x05051a, this.voile.fillAlpha);
@@ -629,6 +629,7 @@ class StoryScene extends Cinematique {
             this.tweens.add({ targets: b, y: b.y - 8, duration: 110, yoyo: true, repeat: 3 });
           } });
         }
+        Son.jouer({ sanglier: 'sanglier', loup: 'loup', araignee: 'siffle', esprits: 'froid', mortvivant: 'coup' }[this.menace.type] || 'grogne');
         this.onomatopee(betes[0].x, sol - 150, 'OUSTE !', '#b8f0a0');
         await this.attendre(500);
       } else {

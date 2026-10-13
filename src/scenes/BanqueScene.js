@@ -42,6 +42,7 @@ class BanqueScene extends Phaser.Scene {
 
   parler(texte) {
     this.texteNain.setText(`Thorgrim Coffrefort : « ${texte} »`);
+    Son.jouer('voix', { race: 'nain', nom: 'Thorgrim', duree: Math.min(1.6, 0.3 + texte.length * 0.018) });
   }
 
   accueil() {

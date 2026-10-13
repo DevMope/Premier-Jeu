@@ -1,13 +1,16 @@
 // Le soir, une promenade dans ton shop : la chambre, l'arrière-boutique, le comptoir, l'atelier,
-// puis dehors sous les étoiles. On clique au sol (ou ◀ ▶ au clavier) pour marcher, et sur les
-// choses pour les regarder de plus près. Tout est tel que tu l'as amélioré, à la lueur des bougies.
+// puis dehors sous les étoiles. Une pièce à la fois : on clique au sol (ou ◀ ▶ au clavier) pour
+// marcher, sur les choses pour les regarder de plus près, et sur une porte pour passer dans la
+// pièce voisine. Le comptoir ne se traverse pas : on s'y installe comme pour recevoir les clients,
+// et on regarde la rue par la fenêtre. Tout est tel que tu l'as amélioré, à la lueur des bougies.
 const PIECES_PROMENADE = [
   { nom: 'Ta chambre', x: 0 },
   { nom: "L'arrière-boutique", x: 960 },
-  { nom: 'Le comptoir', x: 1920 },
+  { nom: 'Le comptoir, la nuit', x: 1920, marche: false },
   { nom: "L'atelier", x: 2880 },
   { nom: 'Dehors, sous les étoiles', x: 3840 },
 ];
+const P_CHAMBRE = 0, P_ARRIERE = 1, P_COMPTOIR = 2, P_ATELIER = 3, P_DEHORS = 4;
 const LARGEUR_PROMENADE = 4800;
 const SOL_PROMENADE = 505;
 
@@ -41,24 +44,130 @@ class PromenadeScene extends Cinematique {
     }
 
     textureJoueur(this, G);
-    this.heros = this.add.image(2300, SOL_PROMENADE, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(5)).setDepth(8.5);
+    this.heros = this.add.image(960 + 480, SOL_PROMENADE, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(5)).setDepth(8.5);
     this.cible = null;
+    this.rue = [];   // (les animations de la rue, vues du comptoir)
 
     // L'interface, fixe à l'écran
     const fixe = o => o.setScrollFactor(0).setDepth(30);
     this.titre = fixe(this.add.text(480, 22, '', style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
-    fixe(this.add.text(480, 48, '◀ ▶ ou clique au sol pour te promener · clique sur les choses pour les regarder', style(12, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
+    this.conseil = fixe(this.add.text(480, 48, '', style(12, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
     this.bulle = fixe(this.add.text(480, 78, '', style(14, '#3b2410', { fontStyle: 'italic', backgroundColor: '#ead9b0', padding: { x: 10, y: 6 }, wordWrap: { width: 640 }, align: 'center' })).setOrigin(0.5, 0).setVisible(false));
     const b = creerBouton(this, 860, 505, 170, '↩ Retour', () => this.partir());
     fixe(b.fond); fixe(b.label);
-    for (const [sens, x, texte] of [[-1, 26, '◀'], [1, 934, '▶']]) {
-      const f = fixe(this.add.text(x, 290, texte, style(26, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5).setInteractive({ useHandCursor: true }));
-      f.on('pointerdown', () => this.allerVers(this.heros.x + sens * 700));
-    }
+
+    // Les portes : chaque pièce a la sienne, on clique dessus pour changer de pièce
+    this.portes();
 
     this.input.on('pointerdown', (pointeur, sous) => { if (!sous.length) this.allerVers(pointeur.worldX); });
     this.touches = this.input.keyboard ? this.input.keyboard.createCursorKeys() : null;
     this.pas = 0;
+    this.entrer(P_ARRIERE, 960 + 480, true);
+  }
+
+  // --- Les pièces et leurs portes ---
+
+  portes() {
+    // Une porte dessinée (ou une zone sur une porte qui existe déjà), avec son écriteau
+    const porte = (x, vers, ecriteau, { dessiner = true, large = 92, haut = 168, sol = SOL_PROMENADE } = {}) => {
+      if (dessiner) this.add.image(x, sol, 'porteHD').setOrigin(0.5, 1).setScale(2).setDepth(7.5);
+      this.add.text(x, sol - haut - 14, ecriteau, style(12, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(8.6);
+      const zone = this.add.rectangle(x, sol - haut / 2, large, haut, 0xffffff, 0).setDepth(8.6).setInteractive({ useHandCursor: true });
+      zone.on('pointerdown', async () => {
+        if (this.transition) return;
+        this.transition = true;
+        if (PIECES_PROMENADE[this.piece].marche !== false) { this.allerVers(x); await this.attendreArrivee(); }
+        Son.jouer('porte');
+        this.entrer(vers.piece, vers.x);
+        this.transition = false;
+      });
+    };
+    const o = PIECES_PROMENADE;
+    // La chambre : une porte vers l'arrière-boutique
+    porte(900, { piece: P_ARRIERE, x: o[P_ARRIERE].x + 840 }, "L'arrière-boutique", { sol: SOL_PROMENADE - 10 });
+    // L'arrière-boutique : la porte de la chambre (déjà dessinée), et le passage vers le comptoir
+    porte(o[P_ARRIERE].x + 900, { piece: P_CHAMBRE, x: 840 }, 'Ta chambre', { dessiner: false, sol: SOL_ARRIERE });
+    porte(o[P_ARRIERE].x + 22, { piece: P_COMPTOIR, x: 0 }, 'Le comptoir ◀', { sol: SOL_ARRIERE + 30 });   // (au bord, à moitié dans le mur : le passage vers l'avant)
+    // Le comptoir : on n'y marche pas ; comme dans la journée, on se retourne vers
+    // l'arrière-boutique ou l'atelier d'un bouton, et la fenêtre donne sur la rue
+    this.boutonsComptoir = [
+      creerBouton(this, 150, 505, 250, '↻ Arrière-boutique', () => { if (!this.transition) { Son.jouer('porte'); this.entrer(P_ARRIERE, o[P_ARRIERE].x + 120); } }),
+      creerBouton(this, 430, 505, 220, "🔨 L'atelier", () => { if (!this.transition) { Son.jouer('porte'); this.entrer(P_ATELIER, o[P_ATELIER].x + 120); } }),
+    ];
+    for (const b of this.boutonsComptoir) { b.fond.setScrollFactor(0).setDepth(30); b.label.setScrollFactor(0).setDepth(30); }
+    const { x, y, w, h } = FENETRE;
+    const fen = this.add.rectangle(o[P_COMPTOIR].x + x + w / 2, y + h / 2, w, h, 0xffffff, 0).setDepth(8.6).setInteractive({ useHandCursor: true });
+    fen.on('pointerdown', () => { if (this.transition) return; Son.jouer('glisse'); this.dire('Tu ouvres le store, et tu sors dans la rue...'); this.time.delayedCall(600, () => this.entrer(P_DEHORS, o[P_DEHORS].x + 560)); });
+    // L'atelier : la porte du comptoir
+    porte(o[P_ATELIER].x + 60, { piece: P_COMPTOIR, x: 0 }, 'Le comptoir', { sol: 360 + 150 });
+    // Dehors : la porte du shop ramène au comptoir
+    porte(this.porteShop.x, { piece: P_COMPTOIR, x: 0 }, 'Rentrer', { dessiner: false, sol: this.porteShop.y, haut: 120, large: 70 });
+  }
+
+  attendreArrivee() { return new Promise(r => { const v = () => { if (this.cible === null) r(); else this.time.delayedCall(60, v); }; v(); }); }
+
+  // Entrer dans une pièce : la caméra s'y pose, le héros arrive par la porte (sauf au comptoir,
+  // où l'on s'installe derrière le plateau pour regarder la rue).
+  entrer(index, xHeros, direct = false) {
+    const piece = PIECES_PROMENADE[index];
+    const cam = this.cameras.main;
+    const aller = () => {
+      this.piece = index;
+      this.cible = null;
+      cam.setScroll(piece.x, 0);
+      this.titre.setText(piece.nom);
+      this.conseil.setText(piece.marche === false ? "Regarde la rue par la fenêtre (clique dessus pour sortir) · les boutons pour te retourner" : '◀ ▶ ou clique au sol pour marcher · clique sur les choses pour les regarder · sur une porte pour changer de pièce');
+      this.heros.setVisible(piece.marche !== false);
+      for (const b of this.boutonsComptoir) { b.fond.setVisible(index === P_COMPTOIR); b.label.setVisible(index === P_COMPTOIR); }
+      if (piece.marche !== false) { this.heros.x = xHeros; this.heros.setFlipX(xHeros > piece.x + 480); }
+      this.arreterRue();
+      if (index === P_COMPTOIR) this.animerRue();
+    };
+    if (direct) return aller();
+    cam.fadeOut(220);
+    cam.once('camerafadeoutcomplete', () => { aller(); cam.fadeIn(260); });
+  }
+
+  // --- La rue, vue de la fenêtre du comptoir : étoiles filantes, un chat de gouttière, un
+  // passant à la lanterne, le hibou... ---
+  animerRue() {
+    const o = PIECES_PROMENADE[P_COMPTOIR].x, { x, y, w, h } = FENETRE;
+    const masque = this.add.graphics().fillStyle(0xffffff).fillRect(o + x, y, w, h).setVisible(false);
+    const geo = masque.createGeometryMask();
+    const dansLaFenetre = obj => { obj.setMask(geo); this.rue.push(obj); return obj; };
+    this.rue.push(masque);
+    const filante = () => {
+      const x0 = o + x + 40 + Math.random() * (w - 120), y0 = y + 15 + Math.random() * 50;
+      const e = dansLaFenetre(this.add.rectangle(x0, y0, 26, 2, 0xfff8d0, 0.9).setAngle(22).setDepth(7.3).setBlendMode(Phaser.BlendModes.ADD));
+      this.tweens.add({ targets: e, x: x0 + 90, y: y0 + 36, alpha: 0, scaleX: 0.3, duration: 650, ease: 'Quad.easeOut', onComplete: () => e.destroy() });
+    };
+    const chat = () => {
+      const sens = Math.random() < 0.5 ? 1 : -1;
+      const c = dansLaFenetre(this.add.image(o + x + (sens > 0 ? -30 : w + 30), y + h - 2, 'chatHD').setOrigin(0.5, 1).setScale(1.5).setTint(0x1a1424).setFlipX(sens < 0).setDepth(7.4));
+      let k = 0;
+      const pattes = this.time.addEvent({ delay: 260, loop: true, callback: () => { if (!c.active) { pattes.remove(); return; } c.setTexture(++k % 2 ? 'chatHD_2' : 'chatHD'); } });
+      this.tweens.add({ targets: c, x: o + x + (sens > 0 ? w + 30 : -30), duration: 5200, ease: 'Linear', onComplete: () => c.destroy() });
+      if (Math.random() < 0.5) this.time.delayedCall(1800, () => Son.jouer('miaou'));
+    };
+    const passant = () => {
+      const sens = Math.random() < 0.5 ? 1 : -1;
+      const p = dansLaFenetre(imageCorps(this, o + x + (sens > 0 ? -40 : w + 40), y + h - 4, 'garde', 2.2).setTint(0x3a3450).setFlipX(sens < 0).setDepth(7.4));
+      const lanterne = dansLaFenetre(this.add.image(p.x, p.y - 40, 'halo').setScale(1.3).setTint(0xffb050).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD).setDepth(7.5));
+      pasDeMarche(this, p, 7000, { poussiere: false });
+      this.tweens.add({ targets: p, x: o + x + (sens > 0 ? w + 40 : -40), duration: 7000, ease: 'Linear', onUpdate: () => lanterne.setPosition(p.x + sens * 12, p.y - 40), onComplete: () => { p.destroy(); lanterne.destroy(); } });
+    };
+    this.rue.push(
+      this.time.addEvent({ delay: 2500, loop: true, callback: () => { if (Math.random() < 0.45) filante(); } }),
+      this.time.addEvent({ delay: 9000, startAt: 5000, loop: true, callback: () => { if (Math.random() < 0.6) chat(); } }),
+      this.time.addEvent({ delay: 16000, startAt: 2000, loop: true, callback: () => { if (Math.random() < 0.5) passant(); } }),
+      this.time.addEvent({ delay: 7000, loop: true, callback: () => { if (Math.random() < 0.3) Son.jouer('hibou'); } }),
+    );
+    this.time.delayedCall(900, filante);
+  }
+
+  arreterRue() {
+    for (const r of this.rue) { if (r.remove) r.remove(); else if (r.destroy) r.destroy(); }
+    this.rue = [];
   }
 
   // --- Les pièces (chacune construite avec les mêmes dessins que dans le jeu) ---
@@ -161,6 +270,7 @@ class PromenadeScene extends Cinematique {
       this.tweens.add({ targets: e, alpha: 0.15, duration: 700 + Math.random() * 1200, yoyo: true, repeat: -1 });
     }
     const f = dessinerFacade(this, o + 520, 470, G.nomShop);
+    this.porteShop = { x: f.porteX, y: f.porteY };
     this.lumieres.push([f.porteX, 400, 2.4]);
     this.regarder(o + 360, 200, 330, 270, `${G.nomShop}, ton shop. ${['Une humble chaumière', 'Une jolie maison', 'Une belle maison', 'La plus belle maison du village'][niveauFacade(G)]}.`);
   }
@@ -178,7 +288,9 @@ class PromenadeScene extends Cinematique {
   }
 
   allerVers(x) {
-    this.cible = Phaser.Math.Clamp(x, 40, LARGEUR_PROMENADE - 40);
+    const piece = PIECES_PROMENADE[this.piece];
+    if (piece.marche === false) return;
+    this.cible = Phaser.Math.Clamp(x, piece.x + 40, piece.x + 920);
   }
 
   update(temps, delta) {
@@ -192,18 +304,15 @@ class PromenadeScene extends Cinematique {
       dx = Math.sign(reste) * Math.min(Math.abs(reste), 0.32 * delta);
       if (Math.abs(reste) < 1) this.cible = null;
     }
+    const piece = PIECES_PROMENADE[this.piece];
+    if (piece.marche === false) dx = 0;
     if (dx) {
-      this.heros.x = Phaser.Math.Clamp(this.heros.x + dx, 40, LARGEUR_PROMENADE - 40);
+      this.heros.x = Phaser.Math.Clamp(this.heros.x + dx, piece.x + 40, piece.x + 920);
       this.heros.setFlipX(dx < 0);
       this.pas += delta;
       if (!this.heros.marche) pasDeMarche(this, this.heros, 260);
       this.heros.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
     } else this.heros.y = SOL_PROMENADE;
-    // La caméra suit, sans dépasser les bouts du shop
-    const cam = this.cameras.main;
-    cam.setScroll(Phaser.Math.Clamp(cam.scrollX + (this.heros.x - 480 - cam.scrollX) * Math.min(1, delta / 120), 0, LARGEUR_PROMENADE - 960), 0);
-    const piece = [...PIECES_PROMENADE].reverse().find(p => this.heros.x >= p.x);
-    if (piece && this.titre.text !== piece.nom) this.titre.setText(piece.nom);
   }
 
   partir() {

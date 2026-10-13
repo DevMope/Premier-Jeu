@@ -61,6 +61,7 @@ class ExpressScene extends Phaser.Scene {
 
   parler(texte) {
     this.texteGobelin.setText('« ' + texte + ' »');
+    Son.jouer('voix', { race: this.vendeur === 'colporteur' ? 'humain' : 'gobelin', nom: this.vendeur === 'colporteur' ? 'Barnabé' : 'Grippesou', duree: Math.min(1.6, 0.3 + texte.length * 0.018) });
   }
 
   creerEtal() {

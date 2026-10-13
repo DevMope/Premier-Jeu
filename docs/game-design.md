@@ -389,7 +389,11 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 
 ### 11 Aider pendant l'aventure
 - Messages de détresse en mission ; le **grand aigle** (familier) apporte vite des objets ; les **mercenaires** récupèrent le butin perdu (nombre limité par jour, recrutés au bar).
-- Un système de familiers (aigle et autres), conditions d'obtention à inventer.
+- Un système de familiers (aigle et autres), conditions d'obtention à inventer. **Le chat du shop** en fait partie (décidé en v 0.50) : on ne l'a pas au début du jeu, on l'adopte plus tard (un chat de gouttière qui rôde devant la fenêtre du comptoir la nuit, qu'on apprivoise en le nourrissant ?) ; il dort alors sur le coussin de l'arrière-boutique.
+
+### Promenade du soir (à enrichir au fil des étapes)
+- Décidé en v 0.50 : une pièce à la fois, une porte par pièce pour passer dans la suivante ou sortir ; le comptoir ne se traverse pas, on s'y installe et on regarde la rue par la fenêtre (étoiles filantes, chat de gouttière, passant à la lanterne, hibou).
+- À ajouter plus tard : des choses à trouver (objets cachés, pièces, lettres glissées sous la porte), des animations cachées (souris sous l'étagère, la bougie qui s'éteint, un rêve à la fenêtre), des rencontres étonnantes la nuit (un voyageur attardé, Garrick qui passe, un fantôme, le colporteur qui campe devant le shop), et d'autres vues de la rue selon les saisons et le temps.
 
 ### 12 Le petit bar
 - Rumeurs, histoires, boissons, recrutement de mercenaires ; clients attablés (*Travellers Rest*, *Tavern Master*).
