@@ -853,3 +853,56 @@ function cadreLivreHD(scene) {
   t.texture(scene, 'cadreLivre');
   return 'cadreLivre';
 }
+
+// Le coffre au trésor du prologue (celui que Garrick rapporte) : bois sombre, couvercle bombé,
+// coins et bandes dorés, serrure ouvragée avec son trou de clé, rivets, poignées de fer, et des
+// pièces et des bijoux qui débordent du couvercle mal fermé.
+function coffreTresorHD(scene) {
+  if (scene.textures.exists('coffreTresorHD')) return 'coffreTresorHD';
+  const L = 44, H = 36;
+  const t = toileLuxe(L, H, 2);
+  t.rampes.laiton = [0x4a2c06, 0x7a520e, 0xb0821c, 0xdcae36, 0xf4d464, 0xfff6c4];
+  const x0 = 3, x1 = 40, yC = 15; // la ligne du couvercle
+  // Le trésor qui déborde, derrière le couvercle entrouvert
+  for (let k = 0; k < 14; k++) {
+    const px = 8 + k * 2.2, py = yC - 6 - Math.sin(k * 0.9) * 2;
+    t.forme('laiton', ellipsoide(px, py, 2.2, 1.3), { decalage: 0.4 });
+  }
+  t.forme('verreRouge', ellipsoide(14, yC - 8, 1.6, 1.6), { decalage: 0.6 });
+  t.forme('gemme', ellipsoide(28, yC - 9, 1.6, 1.6), { decalage: 0.6 });
+  traitHD(t, 'laiton', [[31, yC - 7], [35, yC - 12], [37, yC - 9]], 0.6, 0.6); // un collier qui pend
+  // Le couvercle bombé, en planches, entrouvert (un peu soulevé)
+  t.forme('chene', (x, y) => {
+    if (x < x0 || x > x1) return null;
+    const u = (x + 0.5 - (x0 + x1) / 2) / ((x1 - x0) / 2 + 1);
+    const haut = yC - 3 - Math.sqrt(Math.max(0, 1 - u * u)) * 9;
+    return y >= haut && y < yC - 2 ? [u * 0.4, -0.7, 0.7] : null;
+  }, { motif: (x, y) => (x % 7 === 0 ? -1 : 0) });
+  // Le corps en planches
+  for (let k = 0; k < 3; k++) planche(t, x0, yC + k * 7, x1 - x0 + 1, 7, 'chene', { graine: 990 + k, noeuds: 1 });
+  // Les ferrures dorées : bord du couvercle, bord du coffre, bandes, coins
+  for (let x = x0; x <= x1; x++) { t.poser(x, yC - 3, 'laiton', 4); t.poser(x, yC - 2, 'laiton', 2); t.poser(x, yC, 'laiton', 5); t.poser(x, yC + 1, 'laiton', 2); t.poser(x, H - 1, 'laiton', 1); }
+  for (const bx of [x0 + 6, x1 - 7]) {
+    for (let y = yC - 11; y < H; y++) {
+      if (y < yC - 3 && y < yC - 3 - Math.sqrt(Math.max(0, 1 - ((bx + 0.5 - (x0 + x1) / 2) / ((x1 - x0) / 2 + 1)) ** 2)) * 9) continue;
+      t.poser(bx, y, 'laiton', 4); t.poser(bx + 1, y, 'laiton', 2);
+    }
+    for (let y = yC + 3; y < H - 1; y += 4) { t.poser(bx, y, 'laiton', 5); t.poser(bx + 1, y + 1, 'laiton', 0); } // les rivets
+  }
+  for (const [cx0, cy0, sx, sy] of [[x0, yC, 1, 1], [x1, yC, -1, 1], [x0, H - 1, 1, -1], [x1, H - 1, -1, -1]]) {
+    for (let k = 0; k < 4; k++) for (let j = 0; j < 4 - k; j++) t.poser(cx0 + sx * j, cy0 + sy * k, 'laiton', k === 0 || j === 0 ? 5 : 3);
+  }
+  // La serrure ouvragée : une plaque en écu, un trou de clé, un moraillon
+  t.forme('laiton', (x, y) => {
+    const dx = x + 0.5 - 21.5, dy = y + 0.5 - (yC + 6);
+    return Math.abs(dx) < 5.5 - Math.max(0, dy) * 0.45 && dy > -5 && dy < 7 ? [dx / 6, dy / 8, 0.8] : null;
+  }, { decalage: 0.3 });
+  for (const [x, y] of [[21, yC + 4], [22, yC + 4], [21, yC + 5], [22, yC + 5], [21, yC + 6], [22, yC + 7], [21, yC + 7]]) t.poser(x, y, 'encre', 0);
+  for (const [x, y] of [[17, yC + 2], [26, yC + 2], [21, yC + 10]]) t.poser(x, y, 'laiton', 5);
+  traitHD(t, 'laiton', [[19, yC - 4], [19, yC + 1], [24, yC + 1], [24, yC - 4]], 0.6, 0.4); // le moraillon
+  // Les poignées de fer sur les côtés
+  for (const [x, s] of [[x0 - 1, -1], [x1 + 1, 1]]) traitHD(t, 'fer', [[x, yC + 5], [x + s * 2, yC + 7], [x, yC + 10]], 0.7, 0.2);
+  t.contour();
+  t.texture(scene, 'coffreTresorHD');
+  return 'coffreTresorHD';
+}

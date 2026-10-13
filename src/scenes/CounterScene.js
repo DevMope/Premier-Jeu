@@ -45,8 +45,77 @@ class CounterScene extends Phaser.Scene {
     this.events.on('resume', this.auRetourExpress, this);
 
     this.cameras.main.fadeIn(400);
-    this.voyageurSuivant();
+    this.creerStore();
+    if (this.G.comptoirOuvert !== this.G.jour) {
+      // Midi : on lève le store, le comptoir est officiellement ouvert.
+      this.G.comptoirOuvert = this.G.jour;
+      this.dire('Midi sonne au clocher. Tu lèves le store : le comptoir est ouvert !', '');
+      this.time.delayedCall(this.G.banniere !== this.G.jour ? 1700 : 500, () => this.leverStore(() => this.voyageurSuivant()));
+    } else {
+      this.store.setVisible(false);
+      this.voyageurSuivant();
+    }
     if (this.G.banniere !== this.G.jour) this.afficherBanniere();
+  }
+
+  // Le premier jour (tutoriel) : les deux premiers clients peuvent être servis entièrement ;
+  // pour le dernier, il manque quelque chose en réserve — l'occasion d'apprendre qu'on peut
+  // renvoyer un client qu'on ne peut pas bien équiper (contre un peu de réputation).
+  preparerTutoriel(v) {
+    const G = this.G;
+    if (G.jour !== 1 || !G.tuto || !v.queteId) return;
+    const commande = commandeDe(v);
+    const ids = Object.keys(commande);
+    if (!ids.length) return;
+    const dernier = G.file.filter(e => e.type === 'client').length === 0;
+    if (!dernier) {
+      for (const id of ids) G.stock[id] = Math.max(G.stock[id] || 0, commande[id]);
+    } else {
+      const manque = ids[0];
+      G.stock[manque] = Math.max(0, commande[manque] - 1);
+      for (const id of ids.slice(1)) G.stock[id] = Math.max(G.stock[id] || 0, commande[id]);
+      this.time.delayedCall(1200, () => conseilGarrick(this, 'refus'));
+    }
+    this.majStock();
+  }
+
+  // Le store de bois qui ferme la fenêtre du comptoir (et sa pancarte).
+  creerStore() {
+    const { x, y, w, h } = FENETRE;
+    if (!this.textures.exists('storeHD')) {
+      const t = toileDecor(w / 2, h / 2 + 6);
+      for (let yy = 0; yy < h / 2 + 6; yy += 6) {
+        planche(t, 0, yy, w / 2, 5, 'chene', { graine: 980 + yy, noeuds: 1 });
+        for (let xx = 0; xx < w / 2; xx++) { t.poser(xx, yy + 5, 'cheneSombre', 0); t.poser(xx, yy, 'chene', 4); }
+      }
+      for (let xx = 0; xx < w / 2; xx++) for (let k = 0; k < 4; k++) t.poser(xx, h / 2 + 2 + k, 'fer', 3 - (k === 3 ? 2 : 0)); // la barre du bas
+      for (const xx of [w / 4 - 8, w / 4 + 8]) for (let k = 0; k < 3; k++) t.poser(xx, h / 2 - 1 + k, 'laiton', 4);       // la poignée
+      t.texture(this, 'storeHD');
+    }
+    const panneau = this.add.image(0, 0, 'storeHD').setOrigin(0.5, 1).setScale(2);
+    const pancarte = this.add.text(0, -h / 2 - 6, 'FERMÉ', style(20, '#f3d98a', { fontStyle: 'bold', backgroundColor: '#5a1a12', padding: { x: 12, y: 4 }, brut: true })).setOrigin(0.5);
+    this.store = this.add.container(x + w / 2, y + h + 6, [panneau, pancarte]).setDepth(2.4);
+    this.store.setMask(this.masqueFenetre);
+    this.pancarte = pancarte;
+  }
+
+  leverStore(suite) {
+    const { y, h } = FENETRE;
+    this.store.setVisible(true).setY(y + h + 6);
+    this.pancarte.setText('OUVERT !').setBackgroundColor('#2a5a1a');
+    this.tweens.add({ targets: this.pancarte, scale: { from: 1.4, to: 1 }, duration: 250, ease: 'Back.easeOut' });
+    this.time.delayedCall(500, () => {
+      this.cameras.main.shake(120, 0.003);
+      this.tweens.add({ targets: this.store, y: y - 10, duration: 1300, ease: 'Quad.easeIn', onComplete: () => { this.store.setVisible(false); if (suite) suite(); } });
+      this.tweens.add({ targets: this.store, x: this.store.x + 2, duration: 60, yoyo: true, repeat: 10 });
+    });
+  }
+
+  baisserStore(suite) {
+    const { y, h } = FENETRE;
+    this.pancarte.setText('FERMÉ').setBackgroundColor('#5a1a12');
+    this.store.setVisible(true).setY(y - 10);
+    this.tweens.add({ targets: this.store, y: y + h + 6, duration: 900, ease: 'Bounce.easeOut', onComplete: () => this.time.delayedCall(500, suite) });
   }
 
   // « Jour 3 » en grand au réveil.
@@ -96,15 +165,13 @@ class CounterScene extends Phaser.Scene {
     const { x, y, w, h } = FENETRE;
     this.paysage = this.add.graphics();
     dessinerComte(this.paysage, x, y, w, h, 0);
-    // Le ciel suit la journée : l'aube à l'ouverture, qui laisse place au plein jour,
-    // puis la nuit quand le dernier client est parti.
+    // Le ciel suit la journée : on ouvre à midi, en plein jour ; la nuit tombe quand le
+    // dernier client est parti.
     const ciel = moment => {
       const cle = paysageHD(this, w, h, 'comte', moment);
       const tex = this.textures.get(cle).getSourceImage();
       return this.add.image(x, y, cle).setOrigin(0).setScale(w / tex.width, h / tex.height);
     };
-    this.cielAube = ciel('aube');
-    this.tweens.add({ targets: this.cielAube, alpha: 0, delay: 4000, duration: 20000 });
     this.cielNuit = ciel(0.85).setAlpha(0);
     this.voile = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0x0a0a30, 0);
 
@@ -592,6 +659,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'client') {
       conseilGarrick(this, 'comptoir');
       const v = this.voyageur = entree.voyageur;
+      this.preparerTutoriel(v);
       let bonjour = v.prevu ? "C'est moi qui t'ai écrit, tu te souviens ? " : '';
       if (entree.attentes) bonjour = "Me revoilà ! On reprend où on en était ? ";
       if (v.habitue) bonjour = 'Re-bonjour, c\'est encore moi ! ' + (this.aReparer(v).length ? 'Mon matériel a souffert la dernière fois... ' : '');
@@ -1192,10 +1260,8 @@ class CounterScene extends Phaser.Scene {
   finDeJournee() {
     this.majFileAttente();
     this.majCommande();
-    this.bouton('Fermer le comptoir', () => this.scene.start('Nuit'));
+    this.bouton('Fermer le comptoir', () => { this.bouton('...', null); this.baisserStore(() => this.scene.start('Nuit')); });
     this.dire('Le soleil se couche sur la Comté. Plus personne ne fait la queue.', 'Fin de la journée');
-    this.tweens.killTweensOf(this.cielAube);
-    this.tweens.add({ targets: this.cielAube, alpha: 0, duration: 800 });
     this.tweens.add({ targets: this.cielNuit, alpha: 1, duration: 3000 });
     this.tweens.add({ targets: this.voile, fillAlpha: 0.25, duration: 3000 });
   }

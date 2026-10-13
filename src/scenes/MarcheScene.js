@@ -13,11 +13,14 @@ class MarcheScene extends Phaser.Scene {
   create() {
     const G = this.G = window.GAME;
     G.banniere = G.jour;
+    // Les étals du jour (s'ils n'ont pas été garnis cette nuit, par exemple avec une vieille sauvegarde)
+    const vides = !G.etals || !Object.values(G.etals).some(e => Object.keys(e || {}).length);
+    if (vides || (G.etalsJour !== undefined && G.etalsJour !== G.jour)) { G.etals = etalsDuJour(G); G.etalsJour = G.jour; }
     this.cameras.main.fadeIn(500);
 
     // Le fond de la vue d'ensemble : le ciel, les collines, et la grand-place pavée
     const fondVue = this.add.graphics();
-    dessinerComte(fondVue, 0, 0, 960, VUE_MARCHE.y + 300 * VUE_MARCHE.echelle, 0.05);
+    dessinerComte(fondVue, 0, 0, 960, VUE_MARCHE.y + 300 * VUE_MARCHE.echelle, 'aube'); // le matin, au lever du soleil
     this.add.image(0, VUE_MARCHE.y + 182 * VUE_MARCHE.echelle, pavesHD(this, 960, 260)).setOrigin(0).setScale(2);
     creerLieuxMarcheHD(this);
     this.etiquettesRue = [];
@@ -26,7 +29,7 @@ class MarcheScene extends Phaser.Scene {
     this.monde = this.add.container(0, 0);
     const g = this.add.graphics();
     this.monde.add(g);
-    dessinerComte(g, 0, 0, LARGEUR_MARCHE, 300, 0.05);
+    dessinerComte(g, 0, 0, LARGEUR_MARCHE, 300, 'aube');
     this.paysageRue = g.paysage;
     this.paveRue = this.add.image(0, 250, pavesHD(this, LARGEUR_MARCHE, 50)).setOrigin(0).setScale(2);
     this.monde.add(this.paveRue);

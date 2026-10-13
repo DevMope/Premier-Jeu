@@ -31,11 +31,15 @@ const FIGURANTS = {
 // Les mains de chaque texture (en pixels HD depuis le sol), pour porter le baluchon.
 const MAINS_CORPS = {};
 
-function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0) {
+// `pose` : null (bras le long du corps) ou 'leves' (les deux bras levés au-dessus de la tête,
+// pour porter quelque chose, ou crier victoire).
+function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0, pose = null) {
   const race = PROPORTIONS[g.race] ? g.race : 'humain';
   const P = PROPORTIONS[race];
   const L = 44;
-  const chapeau = costume === 'banquier' ? 9 : (race === 'magicienne' || costume === 'colporteur') ? 9 : 0;
+  const coiffe = costume === 'banquier' ? 9 : (race === 'magicienne' || costume === 'colporteur') ? 9 : 0;
+  const leves = pose === 'leves';
+  const chapeau = coiffe + (leves ? 12 : 0);           // (de la place au-dessus de la tête pour les mains)
   const H = P.H + chapeau;
   const t = new ToileHD(L, H);
   const cx = L / 2;
@@ -95,7 +99,7 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0) {
   }
   // Les bras, puis les mains
   const mainY = yB - 1;
-  for (const sens of [-1, 1]) {
+  if (!leves) for (const sens of [-1, 1]) {
     const bx = cx + sens * (P.ep - 0.5);
     const mainY = yB - 1 + (pas ? (sens === pas ? -1 : 1) : 0);   // les bras se balancent
     t.forme(costume === 'garde' || (race === 'nain' && costume !== 'banquier') ? 'metal' : 'habit',
@@ -103,7 +107,7 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0) {
     if (tenue >= 2) t.forme('cuir', (x, y) => (y >= mainY - 6 && y <= mainY - 3 && Math.abs(x + 0.5 - bx - sens * (y - yT) * 0.06) < 2.9 ? [sens * 0.6, 0, 0.8] : null)); // les brassards
     t.forme('peau', ellipsoide(bx + sens * 0.8, mainY, 2.3, 2.2));
   }
-  MAINS_CORPS[race + (costume || '')] = H - mainY;
+  if (!leves) MAINS_CORPS[race + (costume || '')] = H - mainY;
 
   // Le torse (et la robe longue de la magicienne, le manteau de l'elfe)
   const bas = longue ? sol : manteau ? yB + Math.round((sol - yB) * 0.55) : yB + 2;
@@ -256,6 +260,18 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0) {
   }
   if (costume !== 'mendiant') yeux();
 
+  // Les bras levés : de l'épaule, le coude un peu écarté, les mains au-dessus de la tête
+  if (leves) {
+    const matBras = costume === 'garde' || (race === 'nain' && costume !== 'banquier') ? 'metal' : 'habit';
+    const hautTete = cy - P.ry;
+    for (const sens of [-1, 1]) {
+      const epaule = [cx + sens * (P.ep - 1), yT + 2], coude = [cx + sens * (P.ep + 2.5), yT - 5], main = [cx + sens * 6.5, hautTete - 7];
+      traitHD(t, matBras, [epaule, coude, main], 2.4, -0.2);
+      t.forme('peau', ellipsoide(main[0], main[1], 2.3, 2.2));
+    }
+    MAINS_CORPS[race + (costume || '') + '_leves'] = H - (hautTete - 7);
+  }
+
   t.contour();
   return t;
 }
@@ -268,7 +284,7 @@ function tenueDe(niveau) {
 
 // La clé de la texture en pied : un peuple (couleurs par défaut), un figurant, ou une personne
 // (avec ses couleurs à elle et la tenue de son niveau).
-function corpsHD(scene, quoi) {
+function corpsHD(scene, quoi, pose = null) {
   if (quoi === 'faucheuse') return 'perso_faucheuse';
   if (typeof quoi === 'string' && !FIGURANTS[quoi] && !PROPORTIONS[quoi]) return 'perso_' + quoi;   // (le joueur, etc.)
   let gene, tenue, costume = null, cle;
@@ -287,12 +303,13 @@ function corpsHD(scene, quoi) {
     tenue = tenueDe(quoi.niveau);
     cle = `corps_${quoi.race}_${quoi.nom}_${tenue}`;
   }
+  if (pose) cle += '_' + pose;
   if (!scene.textures.exists(cle)) {
-    dessinerCorpsHD(gene, tenue, costume).texture(scene, cle);
-    dessinerCorpsHD(gene, tenue, costume, -1).texture(scene, cle + '_pas1');
-    dessinerCorpsHD(gene, tenue, costume, 1).texture(scene, cle + '_pas2');
+    dessinerCorpsHD(gene, tenue, costume, 0, pose).texture(scene, cle);
+    dessinerCorpsHD(gene, tenue, costume, -1, pose).texture(scene, cle + '_pas1');
+    dessinerCorpsHD(gene, tenue, costume, 1, pose).texture(scene, cle + '_pas2');
   }
-  MAINS_CORPS[cle] = MAINS_CORPS[gene.race + (costume || '')];
+  MAINS_CORPS[cle] = MAINS_CORPS[gene.race + (costume || '') + (pose ? '_' + pose : '')];
   return cle;
 }
 
@@ -327,7 +344,7 @@ function echelleCorps(cle) {
 
 // Un personnage en pied, posé par les pieds : `quoi` = un peuple, un figurant ou une personne.
 // `echelle` est l'échelle d'avant (celle des personnages de 16 pixels).
-function imageCorps(scene, x, y, quoi, echelle) {
-  const cle = corpsHD(scene, quoi);
+function imageCorps(scene, x, y, quoi, echelle, pose = null) {
+  const cle = corpsHD(scene, quoi, pose);
   return scene.add.image(x, y, cle).setOrigin(0.5, 1).setScale(echelle * echelleCorps(cle));
 }

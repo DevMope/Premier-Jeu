@@ -46,10 +46,19 @@ class NightScene extends Phaser.Scene {
       [`L'atelier (${G.tresors.length})`, () => ouvrirPage('Atelier')],
       ...(this.matin
         ? [['Retour au marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
-        : [['Aller dormir', () => this.dormir()]]),
+        : [['🌙 Aller dormir', () => this.dormir()]]),
     ];
     const largeur = 920 / boutons.length;
-    boutons.forEach(([texte, action], i) => creerBouton(this, 20 + largeur * (i + 0.5), 505, largeur - 16, texte, action));
+    boutons.forEach(([texte, action], i) => {
+      const b = creerBouton(this, 20 + largeur * (i + 0.5), 505, largeur - 16, texte, action);
+      // Le soir, le bouton pour aller dormir (et passer au lendemain) se voit bien : il luit.
+      if (!this.matin && i === boutons.length - 1) {
+        b.label.setColor('#ffe9a0');
+        creerHalo(this);
+        const lueur = this.add.image(b.fond.x, b.fond.y, 'halo').setScale(2.2, 0.7).setTint(0xffd060).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({ targets: lueur, alpha: 0.1, duration: 900, yoyo: true, repeat: -1 });
+      }
+    });
     this.events.off('resume', this.tout, this);
     this.events.on('resume', this.tout, this);
     this.tout();

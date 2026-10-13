@@ -958,6 +958,7 @@ function nuit(G) {
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
   G.etals = etalsDuJour(G);
+  G.etalsJour = G.jour;
   G.jeux = { des: 0, bonneteau: 0 };
   avancerAtelier(G);
   avancerEvenements(G);

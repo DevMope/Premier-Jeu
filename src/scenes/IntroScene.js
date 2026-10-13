@@ -140,7 +140,7 @@ class IntroHistoireScene extends Cinematique {
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
 
     textureJoueur(this, G); // (crée les textures du joueur si besoin)
-    this.heros = this.add.image(220, 330, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(4));
+    this.heros = this.add.image(220, 330, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(6));
     this.mentor = this.add.image(-80, 345, corpsHD(this, 'mentor')).setOrigin(0.5, 0.5).setScale(6 * ECHELLE_CORPS).setAngle(90);
 
     this.creerBoiteTexte();
@@ -225,20 +225,26 @@ class IntroHistoireScene extends Cinematique {
     await this.animer({ targets: this.voile, fillAlpha: 0.7, duration: 500, yoyo: true, repeat: 2 });
     await this.attendreClic();
 
-    // Le retour, avec un coffre !
-    this.mentor.setPosition(1020, 330);
-    const coffre = this.add.image(1020, 220, coffreHD(this, 3)).setScale(2.6).setDepth(5);
+    // Le retour : Garrick porte un coffre au trésor à bout de bras, au-dessus de sa tête !
+    this.mentor.setTexture(corpsHD(this, 'mentor', 'leves')).setPosition(1020, 330);
+    const coffre = this.add.image(1020, 220, coffreTresorHD(this)).setOrigin(0.5, 1).setScale(2).setDepth(5);
+    const porter = () => coffre.setPosition(this.mentor.x, this.mentor.y - this.mentor.displayHeight + 8);
+    this.events.on('update', porter);
     // (quelques pièces s'en échappent en route)
     this.time.addEvent({ delay: 260, repeat: 8, callback: () => {
       if (!coffre.active) return;
-      const p = this.add.image(coffre.x + Phaser.Math.Between(-20, 20), coffre.y - 20, 'pieceFace').setScale(2).setDepth(6);
+      const p = this.add.image(coffre.x + Phaser.Math.Between(-20, 20), coffre.y - 40, 'pieceFace').setScale(2).setDepth(6);
       this.tweens.add({ targets: p, y: p.y - 40, x: p.x + Phaser.Math.Between(-30, 30), alpha: 0, angle: 180, duration: 700, onComplete: () => p.destroy() });
     } });
-    this.tweens.add({ targets: coffre, x: 520, duration: 2500 });
     this.ecrire('', "Et puis, un soir, quelqu'un siffla au bout du chemin...");
     await this.marcher(this.mentor, 520, 5);
+    // Il pose le coffre à tes pieds, dans un nuage d'étincelles
+    this.events.off('update', porter);
+    this.mentor.setTexture(corpsHD(this, 'mentor'));
+    await this.animer({ targets: coffre, x: 430, y: 334, duration: 450, ease: 'Bounce.easeOut' });
+    this.cameras.main.shake(150, 0.004);
     for (let i = 0; i < 10; i++) {
-      const etoile = this.add.star(Phaser.Math.Between(470, 570), Phaser.Math.Between(170, 230), 4, 3, 7, 0xffe066).setDepth(6);
+      const etoile = this.add.star(Phaser.Math.Between(380, 480), Phaser.Math.Between(250, 310), 4, 3, 7, 0xffe066).setDepth(6);
       this.tweens.add({ targets: etoile, alpha: 0, scale: 2, duration: 900, delay: i * 80, onComplete: () => etoile.destroy() });
     }
     this.ecrire('Garrick Cœur-de-Chêne', `« Tu croyais que je t'avais oublié${e} ? Voici ta part du trésor ! Alors, que veux-tu en faire ? »`);

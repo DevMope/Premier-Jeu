@@ -90,7 +90,7 @@ const DEDOMMAGEMENTS = {
 
 // Réputation perdue quand on refuse.
 const REFUS_LETTRE = 0.2;
-const REFUS_CLIENT = 1;
+const REFUS_CLIENT = 0.5;
 
 // Les prêts : les banquiers nains prêtent plus, et moins cher, quand ta réputation grandit.
 // La Main Noire (`mal`) ne prête qu'à ceux qui ont choisi le camp du mal (plus tard dans le jeu).

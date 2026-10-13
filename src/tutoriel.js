@@ -6,6 +6,7 @@ const CONSEILS = {
   comptoir: "Un client ! Sa commande est sur le parchemin, à droite. Clique sur tes marchandises, en bas, pour les glisser dans son baluchon. Plus il est bien équipé, plus il a de chances de revenir... et de te reverser sa part du butin.",
   colis: "Bien ! Quand le baluchon est prêt, clique sur « Remettre le colis ». Ton flair, sous la commande, t'indique ses chances de revenir vivant.",
   remis: "Le voilà parti ! Dans quelques jours, il reviendra te raconter son aventure (si tout va bien...). Occupe-toi du suivant : la file attend.",
+  refus: "Aïe : il te manque de quoi l'équiper entièrement. L'envoyer à moitié préparé, c'est risquer sa vie... Si tu juges que c'est trop dangereux, clique sur « Refuser ce client » : il repartira, et ta réputation baissera un peu. Mieux vaut un client déçu qu'un client mort !",
   arriere: "Ton arrière-boutique : ta réserve sur les étagères, ta fortune près du coffre, les cadeaux dans le panier. La porte, au fond, mène à ta chambre quand la journée est finie.",
   soir: "La journée est finie. Le soir, réponds aux lettres (des clients qui viendront plus tard), surveille ta réserve, et passe au bureau : c'est là qu'on améliore le shop. Puis va dormir !",
   bureau: "Le registre : toutes les fiches de tes clients. À droite, l'ardoise de tes comptes, et des tiroirs. Le premier, « Améliorer le shop », fait venir les ouvriers pendant la nuit.",

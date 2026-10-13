@@ -80,7 +80,7 @@ class RenovationScene extends Cinematique {
     const G = this.G = window.GAME;
     this.fini = false;
     this.cameras.main.fadeIn(600);
-    this.cameras.main.setBounds(0, 0, 3840, 540);
+    // (pas de setBounds : avec le zoom haute résolution, Phaser décalait toute la scène)
     creerInterieurHD(this);
     creerDecorComptoir(this);
     creerObjetsHD(this);
@@ -110,8 +110,12 @@ class RenovationScene extends Cinematique {
   endroit(lieu, nom, images, zone, { planches = false, toiles = 2, cache = [] } = {}) {
     const [zx, zy, zl, zh] = zone;
     const sales = images.map(img => {
+      // La version sale est posée juste au-dessus de l'objet propre (et pas plus haut : sinon le
+      // mur encore sale recouvrait les meubles déjà nettoyés, qui semblaient disparaître).
       const s = this.add.image(img.x, img.y, salir(this, img.texture.key)).setOrigin(img.originX, img.originY)
-        .setScale(img.scaleX, img.scaleY).setDepth(img.depth + 0.01).setFlipX(img.flipX);
+        .setScale(img.scaleX, img.scaleY).setDepth(img.depth).setFlipX(img.flipX);
+      if (img.parentContainer) img.parentContainer.addAt(s, img.parentContainer.getIndex(img) + 1);
+      else this.children.moveAbove(s, img);
       if (img.decoupe) s.setCrop(...img.decoupe);
       if (img.isTinted) s.setTint(img.tintTopLeft);
       return s;
