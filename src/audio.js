@@ -277,11 +277,11 @@ const THEMES = {
   comptoir2: {
     base: NOTE.D / 2, gamme: GAMMES.majeur, tempo: 104, temps: 3, phrase: 8,
     accords: [0, 0, 3, 3, 5, 5, 4, 4], octaveMelodie: 2,
-    instruments: { melodie: 'harpe', accompagnement: 'guitare', basse: 'basse' }, reverb: 0.2,
+    instruments: { melodie: 'harpe', accompagnement: 'orgue', basse: 'basse' }, reverb: 0.2,
     motif: { 0: [[0, 9, 1], [1, 11, 1], [2, 12, 1]], 1: [[0, 14, 2], [2, 12, 1]], 2: [[0, 11, 1], [1, 9, 1], [2, 7, 1]], 3: [[0, 9, 3]], 4: [[0, 9, 1], [1, 11, 1], [2, 14, 1]], 5: [[0, 16, 2], [2, 14, 1]], 6: [[0, 12, 1], [1, 11, 1], [2, 9, 1]], 7: [[0, 7, 3]] },
     rythmes: [[1, 1, 1], [2, 1]], silence: 0.2,
     basse: (m, a) => [[0, a, 2.8]],
-    accompagnement: (m) => [[0, 0, 1, 0.5], [1, 1, 1, 0.4], [2, 2, 1, 0.4], [1.5, 3, 0.5, 0.3], [2.5, 4, 0.5, 0.3]],
+    accompagnement: (m) => [[0, 0, 2.9, 0.35], [0, 1, 2.9, 0.28], [0, 2, 2.9, 0.28]],
   },
   // Le comptoir, troisième air : un barde qui gratte son luth au coin du feu, lent et chaud
   comptoir3: {
