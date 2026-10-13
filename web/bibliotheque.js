@@ -95,6 +95,7 @@ function categories(scene) {
 
   const ville = [
     ...nouvelles(scene, () => creerLieuxMarcheHD(scene)), ...nouvelles(scene, () => creerDecorPlaceHD(scene)),
+    ...nouvelles(scene, () => placeMarcheHD(scene)),
     ...nouvelles(scene, () => creerBanqueHD(scene)), ...nouvelles(scene, () => creerEauHD(scene)),
     ...Object.values(MARCHANDS).map(m => sur(() => etalHD(scene, m.couleur))).filter(Boolean),
   ].map(cle => ({ cle, nom: joli(cle) }));
