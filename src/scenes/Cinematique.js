@@ -2,7 +2,7 @@
 // une boîte de texte, « clique pour continuer », et des animations qu'on attend avec `await`.
 class Cinematique extends Phaser.Scene {
   creerBoiteTexte() {
-    this.add.rectangle(480, 455, 940, 150, 0x1e130a, 0.95).setStrokeStyle(2, 0xc9a227).setDepth(10);
+    this.add.image(480, 455, panneauHD(this, 940, 150, 'ardoise')).setScale(2).setDepth(10);
     this.entete = this.add.text(30, 392, '', style(16, '#f3d98a', { fontStyle: 'bold' })).setDepth(10);
     this.texte = this.add.text(30, 418, '', style(18, '#f3e6c8', { wordWrap: { width: 900 }, lineSpacing: 6 })).setDepth(10);
     this.indice = this.add.text(940, 518, '▶ clique pour continuer', style(13, '#c9b48a', { fontStyle: 'italic' }))
@@ -40,7 +40,10 @@ class Cinematique extends Phaser.Scene {
     const duree = Math.max(300, Math.abs(x - sprite.x) * vitesse);
     if (x !== sprite.x) sprite.setFlipX(x < sprite.x);
     const y = sprite.y;
-    this.tweens.add({ targets: sprite, y: y - 6, duration: 130, yoyo: true, repeat: Math.floor(duree / 260) });
+    // Les personnages HD marchent vraiment (jambes, bras, poussière) ; les autres sautillent.
+    const hd = this.textures.exists(sprite.texture.key.replace(/_pas[12]$/, '') + '_pas1');
+    if (hd) pasDeMarche(this, sprite, duree);
+    this.tweens.add({ targets: sprite, y: y - (hd ? 2 : 6), duration: hd ? 125 : 130, yoyo: true, repeat: Math.floor(duree / (hd ? 250 : 260)) });
     await this.animer({ targets: sprite, x, duration: duree, ease: 'Linear' });
     sprite.y = y;
   }

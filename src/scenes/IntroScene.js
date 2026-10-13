@@ -108,8 +108,9 @@ class IntroHistoireScene extends Cinematique {
     // La rivière, au pied des collines
     this.fond = this.add.graphics();
     dessinerComte(this.fond, 0, 0, 960, 370, 0);
-    this.riviere = this.add.graphics();
-    this.riviere.fillStyle(0x2f6a9a).fillRect(0, 330, 960, 50);
+    // L'eau qui coule (une texture peinte qui défile)
+    this.riviere = this.add.tileSprite(0, 330, 960, 50, riviereHD(this)).setOrigin(0).setTileScale(2);
+    this.tweens.add({ targets: this.riviere, tilePositionX: -240, duration: 4000, repeat: -1 });
     this.vagues = [];
     for (let i = 0; i < 14; i++) {
       const v = this.add.rectangle(i * 75, 340 + (i % 3) * 10, 22, 3, 0x8fd0f0);
@@ -118,6 +119,7 @@ class IntroHistoireScene extends Cinematique {
     }
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
 
+    textureJoueur(this, G); // (crée les textures du joueur si besoin)
     this.heros = this.add.image(220, 330, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(4));
     this.mentor = this.add.image(-80, 345, corpsHD(this, 'mentor')).setOrigin(0.5, 0.5).setScale(6 * ECHELLE_CORPS).setAngle(90);
 

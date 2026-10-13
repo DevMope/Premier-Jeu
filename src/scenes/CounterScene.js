@@ -486,7 +486,8 @@ class CounterScene extends Phaser.Scene {
     // ... et les autres avancent d'une place.
     this.fileSprites.forEach((sprite, i) => {
       sprite.setVisible(true);
-      this.tweens.add({ targets: sprite, x: FILE.x - i * FILE.ecart, duration: 900, delay: 300 + i * 150, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: sprite, x: FILE.x - i * FILE.ecart, duration: 900, delay: 300 + i * 150, ease: 'Sine.easeInOut',
+        onStart: () => pasDeMarche(this, sprite, 900) });
     });
 
     if (faucheuse) {
@@ -502,7 +503,8 @@ class CounterScene extends Phaser.Scene {
     const f = echelleCorps(this.texturePour(entree));
     const marcheur = this.add.image(departX, FILE.y, this.texturePour(entree)).setOrigin(0.5, 1).setScale(FILE.echelle * f).setDepth(1.5);
     marcheur.setMask(this.masqueFenetre);
-    this.tweens.add({ targets: marcheur, angle: { from: -4, to: 4 }, duration: 150, yoyo: true, repeat: 3 });
+    this.tweens.add({ targets: marcheur, angle: { from: -3, to: 3 }, duration: 150, yoyo: true, repeat: 3 });
+    pasDeMarche(this, marcheur, 1000);
     this.tweens.add({
       targets: marcheur, x: FENETRE.x + FENETRE.w / 2, y: SOL_COMPTOIR + 40, scale: 8 * f, alpha: 0, duration: 1000, ease: 'Sine.easeIn',
       onComplete: () => marcheur.destroy(),
@@ -888,9 +890,10 @@ class CounterScene extends Phaser.Scene {
 
   // Petit dandinement pendant la marche.
   marche(duree) {
-    this.perso.setAngle(-4);
+    pasDeMarche(this, this.perso, duree);
+    this.perso.setAngle(-2);
     this.tweens.add({
-      targets: this.perso, angle: 4, duration: 150, yoyo: true, repeat: Math.floor(duree / 300) - 1,
+      targets: this.perso, angle: 2, duration: 150, yoyo: true, repeat: Math.floor(duree / 300) - 1,
       onComplete: () => this.perso.setAngle(0),
     });
   }

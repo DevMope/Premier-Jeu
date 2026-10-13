@@ -17,6 +17,8 @@ class StoryScene extends Cinematique {
     this.fond = this.add.graphics();
     // Le paysage de la zone où il est parti.
     dessinerComte(this.fond, 0, 0, 960, 370, 0, v.zone ? ZONES[v.zone].biome : 'comte');
+    // Le paysage déborde un peu de l'écran : il glisse doucement quand le voyageur avance.
+    this.paysage = this.fond.paysage.setScale(this.fond.paysage.scaleX * 1.1, this.fond.paysage.scaleY * 1.1).setPosition(0, -18);
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
     this.decor = this.add.container(0, 0);
 
@@ -38,9 +40,12 @@ class StoryScene extends Cinematique {
 
   async marcherVers(x) {
     const duree = Math.max(300, Math.abs(x - this.perso.x) * 5);
-    this.tweens.add({ targets: this.perso, scaleY: 5.6 * this.fCorps, duration: 140, yoyo: true, repeat: Math.floor(duree / 280) });
+    pasDeMarche(this, this.perso, duree);
+    const y = this.perso.y;
+    this.tweens.add({ targets: this.perso, y: y - 2, duration: 125, yoyo: true, repeat: Math.floor(duree / 250) });
+    this.tweens.add({ targets: this.paysage, x: -Phaser.Math.Clamp(x, 0, 960) / 960 * 96, duration: duree, ease: 'Sine.easeInOut' });
     await this.animer({ targets: this.perso, x, duration: duree, ease: 'Linear' });
-    this.perso.setScale(6 * this.fCorps);
+    this.perso.setScale(6 * this.fCorps).setY(y);
   }
 
   // --- Le récit ---
@@ -98,6 +103,7 @@ class StoryScene extends Cinematique {
       }
       this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(epreuve[niveau], v)} »\n${suite}`);
       if (!reussie) await this.blesser(pvApres);
+      else await this.victoire(niveau === 'complet');
       await this.attendreClic();
     }
 
@@ -112,13 +118,34 @@ class StoryScene extends Cinematique {
   }
 
   async montrerObjet(id) {
-    const icone = this.add.image(this.perso.x, this.perso.y - 110, id).setScale(0).setDepth(5);
-    await this.animer({ targets: icone, scale: 5, y: icone.y - 30, duration: 350, ease: 'Back.easeOut' });
+    creerObjetsHD(this);
+    const cle = iconeObjet(this, id);
+    const icone = this.add.image(this.perso.x, this.perso.y - 110, cle).setScale(0).setDepth(5);
+    await this.animer({ targets: icone, scale: cle.startsWith('hd_') ? 3 : 5, y: icone.y - 30, duration: 350, ease: 'Back.easeOut' });
     this.tweens.add({ targets: icone, alpha: 0, y: icone.y - 30, duration: 900, delay: 500, onComplete: () => icone.destroy() });
+  }
+
+  // Une épreuve surmontée : un bond de joie (et quelques étincelles si c'était bien préparé).
+  async victoire(eclatante) {
+    const y = this.perso.y;
+    if (eclatante) {
+      creerObjetsHD(this);
+      for (let k = 0; k < 7; k++) {
+        const e = this.add.image(this.perso.x, y - 60, 'eclat').setScale(2).setDepth(6);
+        const a = (k / 7) * Math.PI * 2;
+        this.tweens.add({ targets: e, x: e.x + Math.cos(a) * 60, y: e.y + Math.sin(a) * 40, alpha: 0, angle: 90, duration: 600, onComplete: () => e.destroy() });
+      }
+    }
+    await this.animer({ targets: this.perso, y: y - 26, duration: 180, ease: 'Quad.easeOut', yoyo: true });
+    this.perso.setY(y);
   }
 
   async blesser(pvRestants) {
     this.cameras.main.shake(250, 0.01);
+    this.cameras.main.flash(180, 160, 20, 20);
+    // Il recule sous le choc
+    const x = this.perso.x;
+    this.tweens.add({ targets: this.perso, x: x - 14, duration: 90, yoyo: true, ease: 'Quad.easeOut' });
     this.perso.setTint(0xff4040);
     this.time.delayedCall(300, () => this.perso.clearTint());
     const coeur = this.coeurs[pvRestants];

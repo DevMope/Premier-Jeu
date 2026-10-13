@@ -528,7 +528,11 @@ function textureJoueur(scene, G) {
 
 // Crée (ou recrée) les trois textures du joueur, en HD : joueur_petit, joueur_adulte, joueur_ancien.
 function creerTexturesJoueur(scene, ap, feminin = false) {
-  for (const stade of ['petit', 'adulte', 'ancien']) dessinerJoueurHD(ap, stade, feminin).texture(scene, 'joueur_' + stade);
+  for (const stade of ['petit', 'adulte', 'ancien']) {
+    dessinerJoueurHD(ap, stade, feminin).texture(scene, 'joueur_' + stade);
+    dessinerJoueurHD(ap, stade, feminin, -1).texture(scene, 'joueur_' + stade + '_pas1');
+    dessinerJoueurHD(ap, stade, feminin, 1).texture(scene, 'joueur_' + stade + '_pas2');
+  }
 }
 
 // La caravane du vieux Grippesou.

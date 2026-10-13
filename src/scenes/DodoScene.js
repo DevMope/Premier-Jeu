@@ -143,7 +143,7 @@ class DodoScene extends Cinematique {
   // Le parchemin du bilan : ce que la journée a donné.
   afficherBilan(b) {
     const c = this.carteBilan = this.add.container(0, -400).setDepth(8);
-    c.add(this.add.rectangle(760, 210, 330, 290, 0xead9b0).setStrokeStyle(4, 0x8a6a3a));
+    c.add(this.add.image(760, 210, panneauHD(this, 330, 290)).setScale(2));
     c.add(this.add.text(760, 88, `Fin du jour ${b.jour}`, style(24, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     const lignes = [
       ['Clients servis', b.servis],
@@ -229,7 +229,7 @@ class DodoScene extends Cinematique {
     const m = imageCorps(this, 1010, SOL_CHAMBRE, 'colporteur', 6).setTint(sombre ? 0x3a1a24 : 0x7a7aa8).setDepth(3);
     await this.marcher(m, 905, 4);
     const c = this.add.container(0, 0).setDepth(9);
-    c.add(this.add.rectangle(480, 210, 640, premiere ? 290 : 220, 0xead9b0).setStrokeStyle(4, 0x8a6a3a));
+    c.add(this.add.image(480, 210, panneauHD(this, 640, premiere ? 290 : 220)).setScale(2));
     const haut = premiere ? 78 : 112;
     c.add(this.add.text(480, haut, sombre ? 'Un messager de la Main Noire' : 'Un messager de la Confrérie du Dernier Rempart',
       style(17, sombre ? '#7a1a2a' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));

@@ -30,7 +30,7 @@ function tramer(x, y, v, paliers) {
 
 // Les arbres, montagnes et autres détails de chaque contrée.
 const RELIEFS = {
-  comte: { arbres: 'ronds', porte: true, fleurs: 0xf0d060 },
+  comte: { arbres: 'ronds', fleurs: 0xf0d060 },
   foret: { arbres: 'sapins', densite: 2 },
   marais: { roseaux: true, brume: 0.35 },
   mines: { pics: 0.55, neige: false, rochers: true },
@@ -465,4 +465,25 @@ function creerCarteHD(scene) {
   for (let k = -6; k <= 6; k++) { encre(rx + k, ry + k * 0.8, 3); encre(rx + k, ry - k * 0.8, 3); }
   for (let a = 0; a < 6.28; a += 0.12) encre(rx + Math.cos(a) * 7, ry + Math.sin(a) * 6, 2);
   t.texture(scene, 'carteHD');
+}
+
+// --- L'eau ---
+
+// Une rivière qui se répète à l'horizontale (pour un tileSprite qu'on fait couler).
+function riviereHD(scene) {
+  if (scene.textures.exists('riviereHD')) return 'riviereHD';
+  const L = 120, H = 25;
+  const t = toileDecor(L, H);
+  t.rampes.eau = [0x0e2a44, 0x174066, 0x22588a, 0x2f72a8, 0x5a9ac8, 0xbfe4f4];
+  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+    // Un bruit qui boucle horizontalement (pour que les tuiles se raccordent)
+    const a = (x / L) * Math.PI * 2;
+    const n = fbm(Math.cos(a) * 3 + 10, Math.sin(a) * 3 + y * 0.35, 790);
+    let i = 3 - Math.floor(y / 9) + (n > 0.62 ? 1 : n < 0.38 ? -1 : 0);
+    if (n > 0.7 && (x + y) % 3 === 0) i = 5;           // les reflets
+    if (y < 2) i = y ? 4 : 5;                          // la berge éclairée
+    t.poser(x, y, 'eau', i);
+  }
+  t.texture(scene, 'riviereHD');
+  return 'riviereHD';
 }

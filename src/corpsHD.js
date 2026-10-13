@@ -30,7 +30,7 @@ const FIGURANTS = {
 // Les mains de chaque texture (en pixels HD depuis le sol), pour porter le baluchon.
 const MAINS_CORPS = {};
 
-function dessinerCorpsHD(g, tenue = 1, costume = null) {
+function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0) {
   const race = PROPORTIONS[g.race] ? g.race : 'humain';
   const P = PROPORTIONS[race];
   const L = 44;
@@ -74,7 +74,8 @@ function dessinerCorpsHD(g, tenue = 1, costume = null) {
   // Les jambes, les bottes (ou les pieds nus et poilus des hobbits)
   if (!longue) {
     for (const sens of [-1, 1]) {
-      const lx = cx + sens * (P.ep * 0.36);
+      const lx = cx + sens * (P.ep * 0.36) - (pas && sens === pas ? sens * 0.6 : 0);
+      const sol = H - 1 - (pas && sens === pas ? 2 : 0);   // la jambe qui avance se lève
       const pied = sol - 4;
       t.forme(race === 'hobbit' ? 'bas' : 'bas', (x, y) => (y >= yB - 2 && y <= pied && Math.abs(x + 0.5 - lx) < (race === 'nain' ? 3.2 : 2.7) ? [(x + 0.5 - lx) / 3, 0, 0.9] : null));
       if (race === 'hobbit') {
@@ -94,6 +95,7 @@ function dessinerCorpsHD(g, tenue = 1, costume = null) {
   const mainY = yB - 1;
   for (const sens of [-1, 1]) {
     const bx = cx + sens * (P.ep - 0.5);
+    const mainY = yB - 1 + (pas ? (sens === pas ? -1 : 1) : 0);   // les bras se balancent
     t.forme(costume === 'garde' || (race === 'nain' && costume !== 'banquier') ? 'metal' : 'habit',
       (x, y) => (y >= yT + 2 && y <= mainY - 2 && Math.abs(x + 0.5 - bx - sens * (y - yT) * 0.06) < 2.6 ? [sens * 0.6, 0, 0.8] : null), { decalage: -0.3 });
     if (tenue >= 2) t.forme('cuir', (x, y) => (y >= mainY - 6 && y <= mainY - 3 && Math.abs(x + 0.5 - bx - sens * (y - yT) * 0.06) < 2.9 ? [sens * 0.6, 0, 0.8] : null)); // les brassards
@@ -271,9 +273,37 @@ function corpsHD(scene, quoi) {
     tenue = tenueDe(quoi.niveau);
     cle = `corps_${quoi.race}_${quoi.nom}_${tenue}`;
   }
-  if (!scene.textures.exists(cle)) dessinerCorpsHD(gene, tenue, costume).texture(scene, cle);
+  if (!scene.textures.exists(cle)) {
+    dessinerCorpsHD(gene, tenue, costume).texture(scene, cle);
+    dessinerCorpsHD(gene, tenue, costume, -1).texture(scene, cle + '_pas1');
+    dessinerCorpsHD(gene, tenue, costume, 1).texture(scene, cle + '_pas2');
+  }
   MAINS_CORPS[cle] = MAINS_CORPS[gene.race + (costume || '')];
   return cle;
+}
+
+// Fait marcher un personnage pendant `duree` ms : ses jambes alternent, ses bras se balancent,
+// un peu de poussière se soulève à chaque pas. (Pour toute image qui a ses textures « _pas1/2 ».)
+function pasDeMarche(scene, sprite, duree, { poussiere = true } = {}) {
+  const base = sprite.texture.key.replace(/_pas[12]$/, '');
+  if (!scene.textures.exists(base + '_pas1')) return;
+  const images = [base, base + '_pas1', base, base + '_pas2'];
+  let k = 0;
+  if (sprite.marche) sprite.marche.remove();
+  creerHalo(scene);
+  sprite.marche = scene.time.addEvent({ delay: 125, loop: true, callback: () => {
+    if (!sprite.active) { sprite.marche.remove(); return; }
+    k = (k + 1) % 4;
+    sprite.setTexture(images[k]);
+    if (poussiere && k % 2 === 1 && sprite.visible && sprite.alpha > 0.5 && !sprite.mask && !sprite.parentContainer) {
+      const p = scene.add.image(sprite.x + (k === 1 ? -6 : 6), sprite.y - 2, 'halo').setScale(0.12).setTint(0xc8b090).setAlpha(0.45).setDepth(sprite.depth - 0.01);
+      scene.tweens.add({ targets: p, scale: 0.32, alpha: 0, y: p.y - 8, duration: 420, onComplete: () => p.destroy() });
+    }
+  } });
+  scene.time.delayedCall(duree, () => {
+    if (sprite.marche) { sprite.marche.remove(); sprite.marche = null; }
+    if (sprite.active) sprite.setTexture(base);
+  });
 }
 
 // L'échelle à appliquer à une texture de personnage (les anciennes gardent leur taille).

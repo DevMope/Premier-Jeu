@@ -570,7 +570,7 @@ const JOUEUR_H = 64;
 // La peau de la création, ramenée à la rampe réglée à la main la plus proche.
 const PEAU_DE_CREATION = [0, 1, 3, 4];
 
-function dessinerJoueurHD(ap, stade = 'petit', feminin = false) {
+function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0) {
   const t = new ToileHD(JOUEUR_L, JOUEUR_H);
   const cx = 18;
   const ancien = stade === 'ancien';
@@ -589,19 +589,21 @@ function dessinerJoueurHD(ap, stade = 'petit', feminin = false) {
   // Les jambes et les bottes
   for (const sens of [-1, 1]) {
     const lx = cx + sens * 3.2;
-    t.forme('bas', (x, y) => (y >= 43 && y <= 57 && Math.abs(x + 0.5 - lx) < 2.8 ? [(x + 0.5 - lx) / 3, 0, 0.9] : null));
+    const leve = pas && sens === pas ? 2 : 0;   // la jambe qui avance se lève
+    t.forme('bas', (x, y) => (y >= 43 && y <= 57 - leve && Math.abs(x + 0.5 - lx) < 2.8 ? [(x + 0.5 - lx) / 3, 0, 0.9] : null));
     t.forme('cuir', (x, y) => {
-      if (y < 55 || y > 62) return null;
+      if (y < 55 - leve || y > 62 - leve) return null;
       const avant = sens * (x + 0.5 - lx);
-      return (Math.abs(x + 0.5 - lx) < 3 || (y >= 60 && avant > 0 && avant < 5)) ? [(x + 0.5 - lx) / 4, (y - 58) / 4, 0.8] : null;
+      return (Math.abs(x + 0.5 - lx) < 3 || (y >= 60 - leve && avant > 0 && avant < 5)) ? [(x + 0.5 - lx) / 4, (y - 58 + leve) / 4, 0.8] : null;
     });
-    t.forme('cuir', (x, y) => (y === 55 && Math.abs(x + 0.5 - lx) < 3.2 ? [0, -0.6, 0.7] : null), { decalage: 0.6, bord: false }); // le revers
+    t.forme('cuir', (x, y) => (y === 55 - leve && Math.abs(x + 0.5 - lx) < 3.2 ? [0, -0.6, 0.7] : null), { decalage: 0.6, bord: false }); // le revers
   }
   // Les bras (manches), puis les mains
   for (const sens of [-1, 1]) {
     const bx = cx + sens * 8.5;
-    t.forme('habit', (x, y) => (y >= 23 && y <= 37 && Math.abs(x + 0.5 - bx - sens * (y - 23) * 0.06) < 2.6 ? [sens * 0.6, 0, 0.8] : null), { decalage: -0.3 });
-    t.forme('peau', ellipsoide(bx + sens * 0.8, 39, 2.3, 2.2));
+    const balance = pas ? (sens === pas ? -1 : 1) : 0;   // les bras se balancent
+    t.forme('habit', (x, y) => (y >= 23 && y <= 37 + balance && Math.abs(x + 0.5 - bx - sens * (y - 23) * 0.06) < 2.6 ? [sens * 0.6, 0, 0.8] : null), { decalage: -0.3 });
+    t.forme('peau', ellipsoide(bx + sens * 0.8, 39 + balance, 2.3, 2.2));
   }
   // Le torse : la tunique, arrondie aux épaules
   t.forme('habit', (x, y) => {

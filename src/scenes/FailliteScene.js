@@ -32,7 +32,8 @@ class FailliteScene extends Cinematique {
 
   // Les gardes marchent au pas, parfaitement synchronisés.
   async defiler(cibles, xs, duree) {
-    cibles.forEach(c => this.tweens.add({ targets: c, y: 344, duration: 150, yoyo: true, repeat: Math.floor(duree / 300) }));
+    cibles.forEach(c => this.tweens.add({ targets: c, y: 347, duration: 150, yoyo: true, repeat: Math.floor(duree / 300) }));
+    cibles.forEach(c => pasDeMarche(this, c.list ? c.list[1] : c, duree));
     await Promise.all(cibles.map((c, i) => this.animer({ targets: c, x: xs[i], duration: duree, ease: 'Linear' })));
     cibles.forEach(c => { c.y = 350; });
   }
