@@ -170,7 +170,11 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       return Math.abs(nx) <= 1 ? [nx * 0.6, 0.1, 0.8] : null;
     }, { decalage: -0.9, motif: (x) => (Math.floor(x / k) % 5 === 0 ? -0.5 : 0) });
     // Le liséré d'or de la cape des elfes et des légendes
-    if (race === 'elfe' || (tenue >= 4 && race !== 'hobbit')) for (let y = yT + 1 * k; y <= sol - 4 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'cape' && (t.mat(x - 1, y) !== 'cape' || t.mat(x + 1, y) !== 'cape' || y === sol - 4 * k)) t.poser(x, y, 'or', 3);
+    if (race === 'elfe' || (tenue >= 4 && race !== 'hobbit')) {
+      const bord = [];
+      for (let y = yT + 1 * k; y <= sol - 4 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'cape' && (t.mat(x - 1, y) !== 'cape' || t.mat(x + 1, y) !== 'cape' || y === sol - 4 * k)) bord.push([x, y]);
+      for (const [x, y] of bord) t.poser(x, y, 'or', 3);
+    }
   };
   // La hotte d'osier du colporteur, derrière tout : plus large que lui, une couverture roulée dessus
   if (costume === 'colporteur' && !dos) {
