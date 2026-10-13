@@ -34,10 +34,22 @@ function niveauEpreuve(epreuve, colis, voyageur) {
   const donne = colis[epreuve.besoin] || 0;
   if (donne >= epreuve.qte) return 'complet';
   if (donne > 0) return 'partiel';
-  const etat = etatObjet(voyageur, epreuve.besoin);
+  // Ce qu'il a déjà sur lui : un client exigeant ne compte que le matériel neuf
+  const etat = etatObjet(voyageur, epreuve.besoin) - (voyageur.exigeant ? 1 : 0);
   if (etat >= 2) return 'complet';
   if (etat === 1) return 'partiel';
   return 'rien';
+}
+
+// Les épreuves rares (amulette, antidote, cape, bouclier), piochées dans toutes les quêtes.
+let EPREUVES_RARES_CACHE = null;
+function epreuvesRares() {
+  if (!EPREUVES_RARES_CACHE) {
+    const vues = {};
+    for (const q of Object.values(QUETES)) for (const e of q.epreuves) if (OBJETS_EXIGES.includes(e.besoin) && !vues[e.type]) vues[e.type] = e;
+    EPREUVES_RARES_CACHE = Object.values(vues);
+  }
+  return EPREUVES_RARES_CACHE;
 }
 
 // La carte des contrées améliore chaque épreuve.
@@ -265,6 +277,18 @@ function appliquerQuete(G, v, queteId, { butin, duree } = {}) {
     const vivres = epreuves.find(e => e.besoin === 'ration');
     if (vivres) vivres.qte += enPlus;
     else epreuves.unshift({ ...ETAPE_VIVRES, qte: enPlus });
+  }
+  // Les clients exigeants des hauts paliers : une commande plus grosse, parfois un objet rare en
+  // plus, et du matériel neuf (voir niveauEpreuve). Les nobles le sont toujours.
+  const palier = palierClients(G).index;
+  if (v.prestige || (palier >= PALIER_EXIGEANT && Math.random() < (CHANCE_EXIGEANT[palier] ?? 0.9))) {
+    v.exigeant = true;
+    const e = auHasard(epreuves);
+    e.qte += 1;
+    if (Math.random() < 0.5) {
+      const rare = auHasard(epreuvesRares().filter(r => !epreuves.some(x => x.type === r.type)));
+      if (rare) epreuves.splice(hasard(0, epreuves.length), 0, { ...rare });
+    }
   }
   const niv = NIVEAUX_AVENTURIER[v.niveau];
   // Un habitué revenu blessé et jamais soigné repart avec moins de cœurs.

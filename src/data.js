@@ -418,6 +418,10 @@ const EXIGENCES = {
     texte: 'Pas la moindre {objet} en stock ? Et vous vous dites fournisseur ? Je vais voir ailleurs.' },
 };
 const OBJETS_EXIGES = ['amulette', 'antidote', 'cape', 'bouclier'];
+// Dès ce palier (« Comptoir réputé »), une part des clients devient exigeante : commandes plus
+// grosses, un objet rare en plus, et du matériel neuf (un objet usé compte moins).
+const PALIER_EXIGEANT = 3;
+const CHANCE_EXIGEANT = [0, 0, 0, 0.4, 0.6, 0.8, 0.9];
 // Une fois le colporteur débloqué, il passe au comptoir certains jours.
 const CHANCE_COLPORTEUR = 0.35;
 const COLPORTEUR = { nom: 'Barnabé le colporteur', multiplicateur: 1.25 };

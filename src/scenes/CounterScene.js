@@ -725,6 +725,8 @@ class CounterScene extends Phaser.Scene {
       if (entree.attentes) bonjour = "Me revoilà ! On reprend où on en était ? ";
       if (v.habitue) bonjour = 'Re-bonjour, c\'est encore moi ! ' + (this.aReparer(v).length ? 'Mon matériel a souffert la dernière fois... ' : '');
       if (v.exige && !entree.attentes) bonjour += "Et après ma dernière mission ratée, tu me dois bien un objet de plus que ma commande ! ";
+      // Un client exigeant prévient après son bonjour : grosse commande, et rien d'usé
+      const exigeant = v.exigeant && !entree.attentes && v.queteId ? " Et je suis exigeant : une grosse commande, et du matériel neuf, pas de vieilles cordes rafistolées." : '';
       if (!v.queteId) {
         // Il vient chercher l'aventure : c'est toi qui choisis où l'envoyer.
         this.dire(`${bonjour}${ENVIES[v.envie]} (${NIVEAUX_AVENTURIER[v.niveau].nom}${v.blessures ? `, encore blessé${v.feminin ? 'e' : ''}` : ''})`, this.nomAvecRelation(v.nom));
@@ -734,7 +736,7 @@ class CounterScene extends Phaser.Scene {
       }
       // Placé sur la carte ce matin : il connaît déjà sa destination.
       const planifie = entree.planifie && !entree.attentes ? `${ZONES[v.zone].nom} ? Va pour ça ! ` : '';
-      this.dire(entree.attentes ? bonjour : bonjour + planifie + accord(v.accueil, v), this.nomAvecRelation(v.nom));
+      this.dire(entree.attentes ? bonjour : bonjour + planifie + accord(v.accueil, v) + exigeant, this.nomAvecRelation(v.nom));
       this.servir();
     } else if (entree.type === 'retour') {
       const v = entree.parti.voyageur;
