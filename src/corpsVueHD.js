@@ -462,8 +462,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // La bouche : une forme par peuple. Large et à deux lèvres pour l'humain, petit sourire bien
     // marqué pour le hobbit, trait net et long pour l'elfe homme, discrète pour l'elfe femme,
     // bouche visible au creux de la barbe pour le nain
-    const bx = profil ? cx + (bordProfil(by) || P.rx) - 1.2 * k : X(0, P.rx * 0.85);
+    const bx = profil ? cx + (bordProfil(by) || P.rx) - 2.2 * k : X(0, P.rx * 0.85);
     const elfeF = race === 'elfe' && f;
+    // Sur les peaux sombres, les lèvres rouges tranchent trop : on les dessine dans les tons de la peau
+    const sombre = (g.peau ?? 1) >= 3 && !gobelin;
+    const matLevre = sombre ? 'peau' : 'levres';
+    const tonFente = sombre ? 0 : 1, tonBas = sombre ? 4 : (race === 'nain' ? 3 : 4), tonHaut = sombre ? 1 : 2;
     const largeur = profil ? 1.2 : race === 'hobbit' ? 2.1 : race === 'nain' ? 3 : race === 'elfe' ? (f ? 1.9 : 2.8) : race === 'magicienne' ? 2.3 : 2.8;
     const lb = Math.max(1, Math.round(largeur * k * (profil ? 1 : Math.abs(c))));
     const bouche = options.bouche ?? 0;   // 0 souriante, 1 neutre, 2 étonnée, 3 grognon
@@ -472,13 +476,13 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (bouche === 2) t.forme('bouche', ellipsoide(bx, by + 0.5 * k, 1.2 * k, 1.5 * k), { decalage: -0.5, ombre: false });
     else for (let i = -lb; i <= lb; i++) {
       const yy = by + Math.round((1 - (i * i) / (lb * lb)) * courbe * k);
-      for (let e = 0; e < epaisseur; e++) t.poser(Math.round(bx + i), yy + e, 'levres', 1);                     // la fente
-      if (!elfeF && !profil && Math.abs(i) < lb && (Math.abs(c) > 0.9 || i <= 0)) t.poser(Math.round(bx + i), yy + epaisseur, 'levres', race === 'nain' ? 3 : 4); // la lèvre du bas, en lumière
-      if (!elfeF && !profil && Math.abs(i) < lb - 1 && race !== 'nain') t.poser(Math.round(bx + i), yy - 1, 'levres', 2);   // la lèvre du haut
+      for (let e = 0; e < epaisseur; e++) t.poser(Math.round(bx + i), yy + e, matLevre, tonFente);               // la fente
+      if (!elfeF && !profil && Math.abs(i) < lb && (Math.abs(c) > 0.9 || i <= 0)) t.poser(Math.round(bx + i), yy + epaisseur, matLevre, tonBas); // la lèvre du bas, en lumière
+      if (!elfeF && !profil && Math.abs(i) < lb - 1 && race !== 'nain') t.poser(Math.round(bx + i), yy - 1, matLevre, tonHaut);   // la lèvre du haut
     }
     if (bouche === 0 && options.bouche !== undefined) for (let i = -Math.round(lb * 0.5); i <= Math.round(lb * 0.5); i++) t.poser(Math.round(bx + i), by + Math.round(0.8 * k) - 1, 'blanc', 4);
-    if (!elfeF && Math.abs(c) > 0.3) t.poser(Math.round(bx - lb - 1), by, 'levres', 1);
-    if (!elfeF && Math.abs(c) > 0.9) t.poser(Math.round(bx + lb + 1), by, 'levres', 1);
+    if (!elfeF && Math.abs(c) > 0.3) t.poser(Math.round(bx - lb - 1), by, matLevre, tonFente);
+    if (!elfeF && Math.abs(c) > 0.9) t.poser(Math.round(bx + lb + 1), by, matLevre, tonFente);
     // La barbe : sur la moitié avant du menton et des joues
     const barbe = race === 'nain' ? 'nain' : g.barbe;
     if (barbe === 'moustache') { for (let i = -lb - 1; i <= lb + 1; i++) for (let e = 0; e < k; e++) t.poser(Math.round(bx + i), by - 1.6 * k + e + (Math.abs(i) > lb - 1 ? 1 : 0), 'cheveux', 3); }
