@@ -25,7 +25,11 @@ const Son = {
       const p = JSON.parse(localStorage.getItem('passage_audio') || 'null');
       if (p) { this.volumes = { ...this.volumes, ...(p.volumes || {}) }; this.coupe = { ...this.coupe, ...(p.coupe || {}) }; }
     } catch (e) { /* (pas de réglages gardés) */ }
+    // Sur iPhone et iPad, le son du web est coupé par le bouton silencieux (ou le mode silence) :
+    // on se déclare comme un lecteur de musique, qui joue même en silencieux, comme un jeu.
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* (ancien Safari) */ }
     this.ctx = new AC();
+    this.debloquer();
     this.maitre = this.ctx.createGain(); this.maitre.gain.value = 0.9; this.maitre.connect(this.ctx.destination);
     // Une réverbération d'auberge : une réponse impulsionnelle de bruit qui s'éteint en 1,8 s
     const duree = 1.8, n = Math.floor(this.ctx.sampleRate * duree), imp = this.ctx.createBuffer(2, n, this.ctx.sampleRate);
@@ -39,7 +43,22 @@ const Son = {
     this.pret = true;
     if (this.themeVoulu) this.ambiance(this.themeVoulu);
   },
-  reprendre() { if (this.ctx && this.ctx.state === 'suspended' && !(window.OfflineAudioContext && this.ctx instanceof OfflineAudioContext)) this.ctx.resume(); },
+  // Safari ne laisse sortir le son qu'après une vraie action du joueur : on reprend le contexte et
+  // on joue un échantillon muet pendant ce geste, ce qui « déverrouille » la sortie audio.
+  // (Il peut aussi être « interrompu » : un appel, l'iPad mis en veille, l'app en arrière-plan.)
+  reprendre() {
+    if (!this.ctx || (window.OfflineAudioContext && this.ctx instanceof OfflineAudioContext)) return;
+    if (this.ctx.state !== 'running') { try { this.ctx.resume(); } catch (e) { /* (rien) */ } }
+    this.debloquer();
+  },
+  debloquer() {
+    if (this.debloque && this.ctx.state === 'running') return;
+    try {
+      const muet = this.ctx.createBuffer(1, 1, 22050), src = this.ctx.createBufferSource();
+      src.buffer = muet; src.connect(this.ctx.destination); src.start(0);
+      this.debloque = true;
+    } catch (e) { /* (rien) */ }
+  },
   appliquerVolumes() {
     if (!this.pret) return;
     this.busSons.gain.value = this.coupe.sons ? 0 : this.volumes.sons;

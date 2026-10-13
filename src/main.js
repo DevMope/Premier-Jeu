@@ -59,9 +59,11 @@ function lancerJeu() {
       if (s.scene.isActive()) Son.ambiance(theme);   // (l'écran titre est déjà ouvert)
     }
     const reveil = () => { Son.demarrer(); Son.reprendre(); };
-    window.jeu.canvas.addEventListener('pointerdown', reveil);
-    window.jeu.canvas.addEventListener('touchstart', reveil);
-    document.addEventListener('keydown', reveil);
+    // (Safari sur iPad n'accepte de lancer le son que sur la fin d'un toucher ou un clic, pas sur
+    // son début : on écoute tout, sur toute la page, et à chaque fois tant qu'il n'est pas lancé)
+    for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'click', 'keydown']) document.addEventListener(ev, reveil, true);
+    // Revenu sur le jeu après une mise en veille ou un autre onglet : le son repart au prochain geste
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) Son.reprendre(); });
   });
 }
 
