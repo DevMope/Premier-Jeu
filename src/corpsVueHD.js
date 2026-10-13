@@ -170,7 +170,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       return Math.abs(nx) <= 1 ? [nx * 0.6, 0.1, 0.8] : null;
     }, { decalage: -0.9, motif: (x) => (Math.floor(x / k) % 5 === 0 ? -0.5 : 0) });
     // Le liséré d'or de la cape des elfes et des légendes
-    if (race === 'elfe' || tenue >= 4) for (let y = yT + 1 * k; y <= sol - 4 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'cape' && (t.mat(x - 1, y) !== 'cape' || t.mat(x + 1, y) !== 'cape' || y === sol - 4 * k)) t.poser(x, y, 'or', 3);
+    if (race === 'elfe' || (tenue >= 4 && race !== 'hobbit')) for (let y = yT + 1 * k; y <= sol - 4 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'cape' && (t.mat(x - 1, y) !== 'cape' || t.mat(x + 1, y) !== 'cape' || y === sol - 4 * k)) t.poser(x, y, 'or', 3);
   };
   // La hotte d'osier du colporteur, derrière tout : plus large que lui, une couverture roulée dessus
   if (costume === 'colporteur' && !dos) {
@@ -277,8 +277,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       // Une vigne d'or qui monte au milieu de la tunique, avec ses feuilles ; une broche-feuille à
       // pierre au col ; des galons d'or à l'ourlet et aux poignets
       const vx = y => Math.round(X(Math.sin((y - yT) / (2.5 * k)) * 0.8 * k, prof));
-      for (let y = yT + 4 * k; y < yB - 3 * k; y++) { const x = vx(y); if (t.mat(x, y) && t.mat(x, y) !== 'peau') t.poser(x, y, 'or', 4); }
-      for (let y = yT + 5 * k; y < yB - 4 * k; y += 3 * k) for (const d of [-1, 1]) for (let j = 1; j <= 2 * k; j++) { const x = vx(y) + d * j, yy = y - Math.round(j * 0.6); if (t.mat(x, yy) && t.mat(x, yy) !== 'peau') t.poser(x, yy, 'or', j > k ? 3 : 5); }
+      for (let y = yT + 4 * k; y < yB - 3 * k; y++) for (let e = 0; e < k; e++) { const x = vx(y) + e; if (t.mat(x, y) && t.mat(x, y) !== 'peau') t.poser(x, y, 'or', e ? 3 : 5); }
+      for (let y = yT + 5 * k; y < yB - 4 * k; y += 3 * k) for (const d of [-1, 1]) for (let j = 1; j <= 2.5 * k; j++) for (let e = 0; e < k; e++) { const x = vx(y) + d * j + (d > 0 ? k - 1 : 0), yy = y - Math.round(j * 0.6) + e; if (t.mat(x, yy) && t.mat(x, yy) !== 'peau') t.poser(x, yy, 'or', j > k ? 3 : 5); }
       t.forme('or', ellipsoide(X(0, prof), yT + 2.2 * k, 2.2 * k, 1.5 * k), { decalage: 0.4, ombre: false });
       t.forme('iris', ellipsoide(X(0, prof), yT + 2.2 * k, 0.9 * k, 0.9 * k), { decalage: 0.6, ombre: false, bord: false });
       const bas = yB + Math.round((sol - yB) * 0.55);
