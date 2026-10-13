@@ -33,3 +33,11 @@ Le mendiant est assis contre un tonneau, son gros chien couché contre lui. Une 
 ## Musique et sons
 
 À faire entre l'étape 8 et l'étape 9 : musiques d'ambiance par moment et bruitages.
+
+## Refonte des personnages (à faire avant la musique, après la v 0.47)
+
+- Les personnages n'existent que de face : dessiner chaque peuple sous plusieurs angles (face, trois-quarts, profil, dos) pour qu'ils se retournent, marchent et bougent naturellement.
+- Distinguer le bras de l'avant-bras par les couleurs (biceps / avant-bras), pas seulement par le coude plié : plus de relief.
+- Casser un peu la règle du « tout plat » : un poil de 3D par les jeux de couleurs, façon *Terraria*.
+- Ensuite, refonte des habits : plus jolis, inspirés des films et jeux de référence (chapeau de la magicienne façon mage de *Terraria*, *Le Hobbit*, *The Witcher 3*, *Travellers Rest*, *Stardew Valley*).
+- L'étape 9 (Bien et Mal) inclut aussi le marché noir.
