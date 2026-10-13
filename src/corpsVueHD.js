@@ -428,9 +428,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     } else if (Math.abs(c) > 0.2) {
       // De face comme de trois-quarts : une ombre nette sur le côté du visage opposé à la lumière
       // (à droite), et sous le menton
-      const seuil = Math.abs(c) > 0.9 ? 0.62 : 0.35;
+      const seuil = Math.abs(c) > 0.9 ? 0.72 : 0.35;
       t.forme('peau', (x, y) => { const n = tete(x, y); if (!n || y < ey - 2 * k || y > cy + P.ry) return null; const fz = Math.abs(c) > 0.9 ? 1 - n[0] : n[0] * s + n[2] * c; return (Math.abs(c) > 0.9 ? n[0] > seuil : fz < seuil && n[0] < 0) ? n : null; }, { decalage: -0.8, bord: false, ombre: false });
-      t.forme('peau', (x, y) => { const n = tete(x, y); return n && n[1] > 0.72 && y > by + 1 * k ? n : null; }, { decalage: -0.8, bord: false, ombre: false });
+      t.forme('peau', (x, y) => { const n = tete(x, y); return n && n[1] > 0.84 && y > by + 2 * k ? n : null; }, { decalage: -0.8, bord: false, ombre: false });   // (juste le dessous du menton)
     }
     // Les joues pleines du hobbit : juste un peu de rose
     if (race === 'hobbit') for (const cote of (Math.abs(c) > 0.9 ? [-1, 1] : profil ? [1] : [pres])) t.forme('levres', ellipsoide(profil ? cx + P.rx * 0.45 : X(cote * P.rx * 0.5, P.rx * 0.62), joueY + 0.4 * k, 1.3 * k, 0.8 * k), { decalage: 1.2, bord: false, ombre: false });
