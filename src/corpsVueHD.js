@@ -369,8 +369,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       const ny = (y + 0.5 - cy) / P.ry;
       const nx0 = dx / (P.rx * 0.95);
       const d = nx0 * nx0 + ny * ny;
-      if (d <= 1) return [nx0 * 0.8, ny, Math.sqrt(1 - d) + 0.2];
-      if (bord !== null && dx >= 0 && dx < bord && Math.abs(ny) <= 1.05) return [0.9, ny * 0.3, 0.45];
+      if (d <= 1) return [nx0 * 0.6, ny * 0.3, Math.sqrt(1 - d) * 0.8 + 0.3];
+      if (bord !== null && dx >= 0 && dx < bord && Math.abs(ny) <= 1.05) return [0.5, ny * 0.2, 0.8];
       return null;
     }
     const ny = (y + 0.5 - cy) / P.ry;
@@ -382,13 +382,15 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       const larg = ny < 0.68 ? 0.95 : 0.95 - (ny - 0.68) / 0.32 * 0.5;
       const nx = (x + 0.5 - cx) / (P.rx * larg);
       if (Math.abs(nx) > 1) return null;
-      return [nx * 0.85, ny * 0.5, Math.sqrt(Math.max(0.1, 1 - nx * nx * 0.7))];
+      return [nx * 0.6, ny * 0.25, Math.sqrt(Math.max(0.1, 1 - nx * nx * 0.5)) * 0.8 + 0.3];
     }
     if (race === 'hobbit' && ny > -0.1 && ny < 0.75) w *= 1 + Math.sin((ny + 0.1) / 0.85 * Math.PI) * 0.08;
     const nx = (x + 0.5 - cx) / (P.rx * w);
     const d = nx * nx + ny * ny;
     if (d > 1) return null;
-    return [nx, ny, Math.sqrt(1 - d)];
+    // Un visage reste clair presque partout : la normale est aplatie, l'ombre franche vient des
+    // formes dessinées exprès (côté tourné, dessous du menton, nez)
+    return [nx * 0.6, ny * 0.3, Math.sqrt(1 - d) * 0.8 + 0.3];
   };
   const oreille = (cote) => {
     const u = cote * P.rx, z = -P.rx * 0.3;
