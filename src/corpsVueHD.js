@@ -236,6 +236,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     for (const cote of [-1, 1]) for (let y = yB - 3 * k; y <= yB + 1 * k; y++) for (let x = Math.round(X(cote * 5 * k, prof)) - 2 * k; x <= Math.round(X(cote * 5 * k, prof)) + 1 * k; x++) if (t.mat(x, y) === 'habit') t.poser(x, y, 'cuir', y < yB - 3 * k + k ? 4 : 2 + ((Math.floor(x / k) + Math.floor(y / k)) % 2));
   }
   // Le tablier de marchand du joueur : la bavette, la poche et son crayon, les bretelles, le cordon noué
+  let panTablier = null;   // (le bas du tablier, redessiné par-dessus la jambe proche)
   if (joueur && !dos) {
     const tab = (x, y) => { if (y < yT + 7 * k || y > yB + 6 * k) return null; const cxx = X(0, prof * 0.7); const demi = section((6.5 + (y - yT - 7 * k) / k * 0.12) * k, prof * 0.95) * 0.95; const nx = (x + 0.5 - cxx) / demi; return Math.abs(nx) > 1 || !torse(x, y) && y <= yB + 2 * k ? null : [nx * 0.7, 0, 0.9]; };
     t.forme('lin', tab, { decalage: -0.1, motif: (x, y) => (y === yT + 7 * k || y === yB + 5 * k ? -0.8 : 0) });
@@ -246,6 +247,20 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme('lin', (x, y) => (y >= yB - 2 * k && y <= yB - 1 && torse(x, y) ? [0, 0.2, 0.9] : null), { decalage: -0.6, ombre: false });
     const nx0 = Math.round(X(5 * k, prof * 0.9));
     for (const [i, j] of [[0, 0], [1, 0], [2, 1], [3, 1], [1, 2], [3, 2]]) for (let e = 0; e < k; e++) t.poser(nx0 + i * k + e, yB - 2 * k + j * k, 'lin', 2);
+    // Le pan du tablier retombe par-dessus les cuisses : on le redessine après la jambe proche,
+    // avec le tissu soulevé par la cuisse (plus clair) et un pli sombre le long de la jambe
+    panTablier = () => {
+      const bal = pas ? pas : 0;
+      const r = 2.9 * k * P.membre;
+      const cuisseX = y => { const v = Math.min(1, Math.max(0, (y - (yB - 1 * k)) / ((sol - yB) * 0.5))); return X(pres * ep * (0.42 + 0.03 * v), (bal * 2.2 + (bal > 0 ? 1 : 0)) * k * v); };
+      t.forme('lin', (x, y) => (y > yB - 1 && y <= yB + 6 * k ? tab(x, y) : null), { decalage: -0.1, motif: (x, y) => {
+        if (y === yB + 5 * k) return -0.8;                       // l'ourlet
+        const d = Math.abs(x + 0.5 - cuisseX(y));
+        if (d < r * 0.8) return 0.35;                              // le tissu tendu sur la cuisse
+        if (d < r * 0.8 + 0.7 * k) return -0.9;                    // le pli, de chaque côté
+        return 0;
+      } });
+    };
   }
   // L'écharpe de laine, la chaîne de montre, la bague
   if (porte('echarpe') && !dos) {
@@ -347,7 +362,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   }
 
   // --- 3. Devant : le bras et la jambe du côté proche ---
-  if (!dos) { if (!longue) jambe(pres, true); bras(pres, true); } else { if (!longue) jambe(loin, true); bras(loin, true); }
+  if (!dos) { if (!longue) jambe(pres, true); if (panTablier) panTablier(); bras(pres, true); } else { if (!longue) jambe(loin, true); bras(loin, true); }
 
   if (porte('bague') && !dos) { const hx = X(pres * (ep + 0.6 * k), 1 * k); t.poser(Math.round(hx), Math.round(yB + 2.5 * k), 'or', 5); t.poser(Math.round(hx) + 1, Math.round(yB + 2.5 * k), 'or', 3); }
   // --- 4. Le cou, la tête, le visage ---
