@@ -356,6 +356,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // Les joues pleines du hobbit : juste un peu de rose
     if (race === 'hobbit') for (const cote of (Math.abs(c) > 0.9 ? [-1, 1] : profil ? [1] : [pres])) t.forme('levres', ellipsoide(profil ? cx + P.rx * 0.45 : X(cote * P.rx * 0.5, P.rx * 0.62), joueY + 0.4 * k, 1.3 * k, 0.8 * k), { decalage: 1.2, bord: false, ombre: false });
     if (!carre) t.forme('peau', ellipsoide(X(0, P.rx * 0.7), cy + P.ry - 1.2 * k, 2.6 * k, 1.1 * k), { decalage: -0.5, bord: false, ombre: false });
+    else if (!profil) {
+      // La mâchoire carrée se lit par ses ombres : les angles de la mâchoire et le dessous du menton
+      t.forme('peau', (x, y) => { const n = tete(x, y); if (!n) return null; const ny = (y + 0.5 - cy) / P.ry; return ny > 0.62 && (Math.abs(n[0]) > 0.42 || ny > 0.86) ? n : null; }, { decalage: -0.8, bord: false, ombre: false });
+    }
     // Le nez : une vraie bosse, éclairée en haut à gauche, ombrée dessous et du côté éloigné
     const nz = X(0, P.rx * (s > 0.5 ? 1 : 0.8));
     if (profil) { /* (le nez fait partie du contour) */ } else {

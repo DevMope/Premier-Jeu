@@ -41,3 +41,11 @@ Le mendiant est assis contre un tonneau, son gros chien couché contre lui. Une 
 - Casser un peu la règle du « tout plat » : un poil de 3D par les jeux de couleurs, façon *Terraria*.
 - Ensuite, refonte des habits : plus jolis, inspirés des films et jeux de référence (chapeau de la magicienne façon mage de *Terraria*, *Le Hobbit*, *The Witcher 3*, *Travellers Rest*, *Stardew Valley*).
 - L'étape 9 (Bien et Mal) inclut aussi le marché noir.
+
+## Rangé dans le GDD (v 0.50)
+
+Toutes les idées de la conversation sont maintenant rangées par étape dans `docs/game-design.md`, section 10. Ce fichier garde les idées en vrac ; le GDD dit quand on les fait.
+
+- À trancher avec le joueur : le joint de la garde-robe ; le mot « Passage » du titre ; changer de camp en cours de partie ; conséquences du marché noir ; nature de la menace ; durée d'une partie.
+- Références ajoutées : Harry Potter et Tavern Master (musique), Cats & Chill (intérieurs), jeux Lego (humour).
+- Un paysage crépuscule pour le soir ; des événements nocturnes rares au shop.

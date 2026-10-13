@@ -236,6 +236,8 @@ Le joueur ne quitte jamais vraiment son shop, sauf pour ces marchés (écrans/me
 - Ton qui s'assombrit progressivement à mesure que la menace grandit, jusqu'à la délivrance finale.
 - 2D, pas de vraie 3D : mélange dessin / pixel art (*Papers, Please*, *Dealer's Life Legends*, *Dave the Diver*, *Terraria* pour les forêts et l'eau).
 - Références supplémentaires (ajoutées en v 0.47) : *Travellers Rest* (l'auberge cozy, les clients attablés, la vie du village) et *Stardew Valley* (les PNJ du village, les cadeaux et les relations, les saisons, les festivals, les petits secrets à débloquer). On s'en inspire à la fois pour les graphismes et pour les mécaniques à proposer.
+- Pour la musique et les sons : *Harry Potter* (boîte à musique, célesta, valses mystérieuses), *Tavern Master* (auberge chaleureuse), en plus des jeux et films ci-dessus. Pour les intérieurs : *Cats & Chill* (placement libre des meubles, ambiance cozy). Pour l'humour des cinématiques : les jeux *Lego*.
+- Depuis la v 0.48, les personnages sont des corps en volume à trois tons (ombre, teinte, lumière), contours épais, couleurs vives, deux fois plus fins : le reste du jeu (décors, objets, interface) doit suivre cette direction, avec plus de couleur.
 
 ## 8. Questions ouvertes
 - La grande menace : un dragon, ou autre chose ?
@@ -352,3 +354,63 @@ Garrick Cœur-de-Chêne, l'aventurier sauvé de la rivière au début, est en r�
 méchant du jeu : il contrôle toutes les forces du mal. S'il flottait dans le fleuve, c'est que
 des héros légendaires l'avaient pris en chasse. À distiller par petits indices au fil du jeu
 (sa générosité suspecte, ses absences, les rumeurs de la gazette...) avant la révélation.
+
+
+## 10. Balayage des idées (v 0.50) : tout ce qui reste, rangé par étape
+
+Relevé de toutes les idées exprimées au fil de la conversation et pas encore faites. Chaque entrée reprend une envie du joueur ; les étapes sont celles du plan ci-dessus.
+
+### 8¾ Refonte des personnages (en cours)
+- Refonte des **habits** dans le nouveau moteur : tenues par niveau, costumes des figurants, vêtements distincts par peuple (Hobbit, Witcher 3, Travellers Rest, Stardew) ; chapeau de mage façon *Terraria* pour la magicienne.
+- Valider les planches avec le joueur avant chaque publication (règle fixée en v 0.49) ; rendu trois tons validé comme base (« la meilleure palette jusqu'ici »).
+- **Plus de couleur dans tout le jeu** : décors, paysages, intérieurs, interface (seuls les personnages ont la palette vive pour l'instant), et la même finesse ×2 si c'est utile (décors, objets, bustes).
+- Vérifier les expressions sur les peaux sombres avec le rendu trois tons ; vérifier les tailles enfant / adulte / vieux dans le nouveau moteur.
+- Le peuple **panda** (le plus grand du bien) ; les tailles des peuples du mal seront données par le joueur.
+- Les paysages et intérieurs à repasser avec le même relief ; le joueur fournira des références d'intérieur (cheminée, toits).
+- Le « joint » de la garde-robe : à trancher avec le joueur (la pipe existe).
+- Un paysage **crépuscule** pour le soir (promenade, marché noir).
+- Mettre la bibliothèque des créations à jour avec le nouveau moteur.
+
+### 8½ Musique et sons (en cours)
+- Moteur Web Audio en place (11 thèmes, bruitages, réglages dans le menu). À faire : écouter les extraits avec le joueur, ajuster, et varier les thèmes (plus de motifs, une percussion de marché, un thème de fête).
+
+### 9 Le Bien et le Mal (+ marché noir)
+- Les six peuples du mal (gobelins, orcs, loups-garous, vampires, momies, trolls) comme clients : silhouettes, bustes, poses, tailles (données par le joueur), ils viennent au comptoir et vont dans les terres d'ombre.
+- Objets du bien / du mal au marché ; décors du shop « lumineux » ou « sombres » (brocante) ; les réussites comptées par camp.
+- Dialogues et visages fermés du camp qui ne t'aime pas ; meilleures affaires avec le camp qui t'apprécie.
+- Une vraie jauge du bien (ou confirmer que c'est la réputation) ; les effets du camp de la lumière (meilleurs taux à la banque, plus de réputation en terres de lumière) ; la Main Noire et la banque selon le camp.
+- Le moment où le camp se scelle (aujourd'hui la 9e pièce) à caler avec l'histoire ; peut-on changer de camp ?
+- Les goûts de chaque peuple à définir avec le joueur quand les races du mal arrivent.
+- Un lieu du bien ou du mal pour l'auberge influence la clientèle et la jauge (avec les zones conquises).
+
+### 10 Marché noir
+- Le soir, pas tous les jours : grimoires interdits, potions illégales, artefacts ; voyageurs nocturnes aux quêtes farfelues ; s'ils se font prendre, ça retombe sur le joueur (amende, garde, fermeture : à décider).
+- Quelques événements nocturnes rares au shop (visiteur de nuit, incident).
+
+### 11 Aider pendant l'aventure
+- Messages de détresse en mission ; le **grand aigle** (familier) apporte vite des objets ; les **mercenaires** récupèrent le butin perdu (nombre limité par jour, recrutés au bar).
+- Un système de familiers (aigle et autres), conditions d'obtention à inventer.
+
+### 12 Le petit bar
+- Rumeurs, histoires, boissons, recrutement de mercenaires ; clients attablés (*Travellers Rest*, *Tavern Master*).
+
+### 13 Histoire et zones conquises
+- **Déplacer l'auberge** dans une zone conquise : nouveau biome, décor, PNJ du village, financer le voyage et le nouveau shop ; combien de shops au total.
+- Le grand retournement (Garrick) : distiller des indices (gazette, absences, générosité suspecte) ; les retours de Garrick.
+- La menace qui grandit : gazette, dialogues, décor qui s'assombrit ; sa nature (dragon ?) à confirmer.
+- L'armure : la révélation (c'est le joueur et son groupe qui partent) et la sélection du groupe.
+- Le mendiant (rôle narratif) et son chien (cinématique secrète, aventure annexe hors carte).
+- Personnages récurrents : voisins, services contre récompense, gens qui veulent influencer en mal ; le petit village où retrouver les PNJ et leur offrir des cadeaux.
+- Le titre « Le Passage des Aventuriers » : le mot « Passage » à confirmer.
+
+### 14 Vie du personnage
+- Vieillissement visible (cheveux blancs, barbe, posture, taille) ; talents aux grands âges ; famille ou vagabond ; fiancé(e) puis marié(e) ; la santé avec l'âge (CHAMBRE.sante) ; durée d'une partie.
+
+### 15 Fins du jeu
+- La fin du bien (équiper le groupe) et la fin du mal (aider la menace).
+
+### Équilibrage (à tout moment)
+- Le ravitaillement et le cœur commandes / colis ; états (empoisonné) et demi-cœurs (pistes) ; les effets de la chambre ; les déblocages de chaque palier à valider avec le joueur ; la conquête des lieux n'a d'effet que quand l'auberge peut déménager.
+
+### Diffusion
+- `main` (Cloudflare) est en v 0.40 : demander au joueur avant de pousser les versions suivantes.
