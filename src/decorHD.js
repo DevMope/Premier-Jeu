@@ -154,17 +154,24 @@ function creerDecorComptoir(scene) {
     t.texture(scene, 'parcheminComptoir');
   }
 
-  // La planche de la bande de dialogue, cerclée de fer
+  // Le panneau des dialogues : un parchemin clair dans un cadre de noyer à coins de laiton,
+  // avec à gauche la place du nom (sur sa plaque) et un filet qui sépare la parole.
   {
-    const t = toileDecor(462, 36);
-    planche(t, 0, 0, 462, 18, 'cheneSombre', { graine: 41, noeuds: 3 });
-    planche(t, 0, 18, 462, 18, 'cheneSombre', { graine: 42, noeuds: 3 });
-    for (const x0 of [6, 446]) {
-      for (let y = 0; y < 36; y++) for (let x = x0; x < x0 + 10; x++) t.poser(x, y, 'fer', y === 0 || x === x0 ? 4 : 2 + Math.round(fbm(x * 0.5, y * 0.5, 43)));
-      for (const y of [5, 17, 29]) clou(t, x0 + 4, y);
+    const l = 462, h = 40;
+    const t = toileDecor(l, h);
+    for (let y = 4; y < h - 4; y++) for (let x = 4; x < l - 4; x++) {
+      const bord = Math.min(x - 4, y - 4, l - 5 - x, h - 5 - y);
+      let i = 4 + Math.round((fbm(x * 0.06, y * 0.12, 44) - 0.5) * 1.6);
+      if (bord < 2) i -= 1;                                  // les bords un peu roussis
+      if (x < 112) i -= 1;                                   // la colonne du nom, un ton plus sombre
+      if (hachage(x, y, 45) < 0.03) i -= 1;                  // les fibres
+      t.poser(x, y, 'parchemin', i);
     }
-    t.contour();
-    t.texture(scene, 'planchesDialogue');
+    // Le filet de séparation, avec son petit losange
+    for (let y = 7; y < h - 7; y++) { t.poser(112, y, 'laiton', 2); t.poser(113, y, 'laiton', 4); }
+    t.dessin(110, 18, ['..o..', '.oOo.', 'oOOOo', '.oOo.', '..o..'], { o: ['laiton', 2], O: ['laiton', 4] });
+    cadreNoyer(t, l, h, 'parchemin');
+    t.texture(scene, 'parcheminDialogue');
   }
 
   // Le cadre de la fenêtre : un ébrasement profond dans le mur épais, un cadre biseauté,
@@ -244,22 +251,85 @@ function creerDecorComptoir(scene) {
     t.texture(scene, 'murComptoir');
   }
 
-  // Le registre : un gros livre relié de cuir rouge, coins de laiton, tranche des pages
+  // Le registre : un gros livre de comptes ouvert, relié de cuir rouge, ses pages couvertes
+  // d'écritures, un signet qui dépasse et une plume posée dessus.
   {
-    const t = toileDecor(62, 14);
-    for (let y = 0; y < 14; y++) for (let x = 0; x < 62; x++) {
-      if (y >= 11 && x > 2 && x < 59) { t.poser(x, y, 'parchemin', y === 11 ? 5 : 4 - (x % 3 === 0 ? 1 : 0)); continue; } // la tranche
-      let i = 3 + Math.round((fbm(x * 0.2, y * 0.3, 101) - 0.5) * 1.5);
-      if (y === 0) i = 5; if (y === 10) i = 1; if (x === 5) i = 1; if (x === 6) i = 4; // le dos et le nerf
+    const L = 58, H = 24, dos = 29;
+    const t = toileDecor(L, H);
+    // La couverture de cuir, qui dépasse autour des pages
+    for (let y = 2; y < H; y++) for (let x = 0; x < L; x++) {
+      if ((x === 0 || x === L - 1) && (y === 2 || y === H - 1)) continue;
+      let i = 2 + Math.round((fbm(x * 0.3, y * 0.3, 101) - 0.5) * 1.4);
+      if (y === 2 || x === 0) i = 4;
+      if (y === H - 1 || x === L - 1) i = 1;
       t.poser(x, y, 'cuirRouge', i);
     }
-    for (const [x, y] of [[0, 0], [59, 0], [0, 8], [59, 8]]) t.dessin(x, y, ['ooo', 'oo.', 'o..'].map((l, k) => (y ? ['o..', 'oo.', 'ooo'][k] : l)).map(l => (x ? [...l].reverse().join('') : l)), { o: ['or', 4] });
+    // L'épaisseur des pages, puis les deux pages bombées
+    for (let x = 2; x < L - 2; x++) {
+      const u = x < dos ? (x - 2) / (dos - 2) : (L - 3 - x) / (L - 3 - dos);
+      const haut = Math.round((1 - Math.sin(Math.PI * Math.min(1, u * 1.1))) * 1.5);
+      for (let y = 19; y < 22; y++) t.poser(x, y, 'parchemin', y % 2 ? 2 : 3); // la tranche
+      for (let y = haut; y < 19; y++) {
+        const gouttiere = Math.abs(x + 0.5 - dos);
+        let i = 4 + Math.round((fbm(x * 0.2, y * 0.2, 102) - 0.5) * 1.2);
+        if (gouttiere < 3) i -= 3 - Math.floor(gouttiere);   // le creux de la reliure
+        if (y === haut) i = 5;
+        if (x < dos && x < 6 && y < 6) i += 1;               // la lumière, en haut à gauche
+        t.poser(x, y, 'parchemin', i);
+      }
+    }
+    // Les écritures, mot par mot (on laisse la place du titre sur la page de gauche)
+    for (let y = 8; y < 18; y += 3) for (const [x0, x1] of [[5, 25], [33, 53]]) {
+      let x = x0 + (hachage(y, x0, 103) < 0.3 ? 3 : 0);
+      while (x < x1) {
+        const mot = 2 + Math.floor(hachage(x, y, 104) * 5);
+        for (let k = 0; k < mot && x + k < x1; k++) t.poser(x + k, y, 'encre', hachage(x + k, y, 105) < 0.3 ? 3 : 4);
+        x += mot + 1;
+      }
+    }
+    for (let x = 6; x < 25; x++) t.poser(x, 6, 'cuirRouge', 3); // (le titre est écrit au-dessus, à l'encre) // le trait sous le titre
+    // Le signet rouge qui pend de la reliure
+    for (let y = 18; y < H; y++) { t.poser(dos + 1, y, 'cuirRouge', 4); t.poser(dos + 2, y, 'cuirRouge', 3); }
+    t.poser(dos + 1, H - 1, 'cuirRouge', 2);
+    // La plume, posée en travers de la page de droite
+    for (let k = 0; k <= 12; k++) {
+      const x = 40 + k * 1.2, y = 18 - k * 1.35;
+      t.poser(Math.round(x), Math.round(y), 'cire', 5);
+      if (k > 4) { t.poser(Math.round(x) - 1, Math.round(y), 'cire', 3); t.poser(Math.round(x) + 1, Math.round(y) + 1, 'cire', 2); }
+      if (k > 6 && k < 12) t.poser(Math.round(x) - 2, Math.round(y) + 1, 'cire', 2);
+    }
+    t.poser(40, 19, 'encre', 0); t.poser(39, 20, 'encre', 1);
     t.contour();
     t.texture(scene, 'registreComptoir');
   }
 
   // Les plaques de bois des boutons, aux bords biseautés et clouées
   // (créées à la demande, selon leur largeur : voir plaqueBouton)
+}
+
+// Un cadre de noyer biseauté (3 pixels), un filet de laiton, l'ombre du cadre sur le fond
+// (« fond » : la matière du panneau), et des coins de laiton rivetés.
+function cadreNoyer(t, l, h, fond = 'chene', enfonce = false) {
+  for (let y = 0; y < h; y++) for (let x = 0; x < l; x++) {
+    const d = Math.min(x, y, l - 1 - x, h - 1 - y);
+    const lumiere = (d === y || d === x) !== enfonce; // le haut et la gauche prennent la lumière
+    if (d === 0) t.poser(x, y, 'cheneSombre', 0);
+    else if (d <= 2) t.poser(x, y, 'cheneSombre', lumiere ? 6 - d : 1 + d);
+    else if (d === 3) t.poser(x, y, 'laiton', lumiere ? 2 : 4);
+    // L'ombre du cadre sur le panneau (plus profonde quand on appuie)
+    else if (d === 4 && (d === y || d === x)) t.poser(x, y, fond, enfonce ? 0 : 1);
+    else if (enfonce && d === 5 && d === y) t.poser(x, y, fond, 1);
+  }
+  const coins = [[0, 0, 1, 1], [l - 1, 0, -1, 1], [0, h - 1, 1, -1], [l - 1, h - 1, -1, -1]];
+  for (const [cx, cy, sx, sy] of coins) {
+    for (let j = 0; j < 6; j++) for (let k = 0; j + k < 6; k++) {
+      const bord = j + k === 5 || j === 0 || k === 0;
+      t.poser(cx + sx * k, cy + sy * j, 'laiton', bord ? (sy > 0 && j === 0 || sx > 0 && k === 0 ? 4 : 1) : 3);
+    }
+    t.poser(cx + sx * 2, cy + sy * 2, 'laiton', 5); // le rivet
+    t.poser(cx + sx * 3, cy + sy * 2, 'laiton', 1);
+    t.poser(cx + sx * 2, cy + sy * 3, 'laiton', 1);
+  }
 }
 
 // Une plaque de bois pour un bouton de la largeur donnée (à l'écran), et sa version éclairée
@@ -278,29 +348,7 @@ function plaqueBouton(scene, largeur) {
     }
     // Le panneau de chêne en creux, veiné
     planche(t, 4, 4, l - 8, h - 8, 'chene', { graine: l + 7, noeuds: 0 });
-    for (let y = 0; y < h; y++) for (let x = 0; x < l; x++) {
-      const d = Math.min(x, y, l - 1 - x, h - 1 - y);
-      const lumiere = (d === y || d === x) !== enfonce; // le haut et la gauche prennent la lumière
-      if (d === 0) t.poser(x, y, 'cheneSombre', 0);
-      // Le cadre de noyer, biseauté
-      else if (d <= 2) t.poser(x, y, 'cheneSombre', lumiere ? 6 - d : 1 + d);
-      // Un filet de laiton entre le cadre et le panneau
-      else if (d === 3) t.poser(x, y, 'laiton', lumiere ? 2 : 4);
-      // L'ombre du cadre sur le panneau (plus profonde quand on appuie)
-      else if (d === 4 && (d === y || d === x)) t.poser(x, y, 'chene', enfonce ? 0 : 1);
-      else if (enfonce && d === 5 && d === y) t.poser(x, y, 'chene', 1);
-    }
-    // Les coins de laiton, en équerre, rivetés
-    const coins = [[0, 0, 1, 1], [l - 1, 0, -1, 1], [0, h - 1, 1, -1], [l - 1, h - 1, -1, -1]];
-    for (const [cx, cy, sx, sy] of coins) {
-      for (let j = 0; j < 6; j++) for (let k = 0; j + k < 6; k++) {
-        const bord = j + k === 5 || j === 0 || k === 0;
-        t.poser(cx + sx * k, cy + sy * j, 'laiton', bord ? (sy > 0 && j === 0 || sx > 0 && k === 0 ? 4 : 1) : 3);
-      }
-      t.poser(cx + sx * 2, cy + sy * 2, 'laiton', 5); // le rivet
-      t.poser(cx + sx * 3, cy + sy * 2, 'laiton', 1);
-      t.poser(cx + sx * 2, cy + sy * 3, 'laiton', 1);
-    }
+    cadreNoyer(t, l, h, 'chene', enfonce);
     t.texture(scene, cle + etat);
   }
   return cle;

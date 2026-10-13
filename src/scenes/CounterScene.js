@@ -223,9 +223,13 @@ class CounterScene extends Phaser.Scene {
   }
 
   creerDialogue() {
-    this.fondDialogue = this.add.image(480, 296, 'planchesDialogue').setScale(2); // les planches cerclées de fer
-    this.nomParleur = this.add.text(32, 266, '', style(15, '#f3d98a', { fontStyle: 'bold' }));
-    this.texteDialogue = this.add.text(32, 286, '', style(15, '#f3e6c8', { wordWrap: { width: 900 } }));
+    // Le panneau des dialogues : à gauche le nom sur sa plaque (et la relation dessous),
+    // à droite la parole, à l'encre, centrée dans la hauteur.
+    this.fondDialogue = this.add.image(480, 298, 'parcheminDialogue').setScale(2);
+    this.plaqueNom = this.add.image(133, 288, plaqueBouton(this, 196)).setScale(2);
+    this.nomParleur = this.add.text(133, 288, '', style(15, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+    this.sousNom = this.add.text(133, 321, '', style(12, '#5a4028', { fontStyle: 'italic bold' })).setOrigin(0.5);
+    this.texteDialogue = this.add.text(256, 298, '', style(16, '#2a1a0c', { wordWrap: { width: 660 }, lineSpacing: 1 })).setOrigin(0, 0.5);
   }
 
   creerStock() {
@@ -233,10 +237,11 @@ class CounterScene extends Phaser.Scene {
     this.texteReserve = this.add.text(660, 357, '', style(12, '#f3d98a', { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 3 })).setOrigin(1, 0);
     this.creerEtagere();
     // Le registre posé sur le bureau : clic pour ouvrir le bureau (fiches, comptes, statistiques)
-    const registre = this.add.image(75, 364, 'registreComptoir').setScale(2).setInteractive({ useHandCursor: true });
-    this.add.text(78, 360, 'Le registre', style(13, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0808', strokeThickness: 3 })).setOrigin(0.5);
-    registre.on('pointerover', () => registre.setTint(0xffe0c0));
-    registre.on('pointerout', () => registre.clearTint());
+    // Un gros livre de comptes ouvert ; son titre est écrit à l'encre sur la page de gauche.
+    const registre = this.add.image(75, 368, 'registreComptoir').setScale(2).setInteractive({ useHandCursor: true });
+    const titre = this.add.text(47, 353, 'Registre', style(12, '#5e1a16', { fontStyle: 'italic bold' })).setOrigin(0.5);
+    registre.on('pointerover', () => { registre.setTint(0xfff0d8).setY(365); titre.setY(350); });
+    registre.on('pointerout', () => { registre.clearTint().setY(368); titre.setY(353); });
     registre.on('pointerdown', () => {
       this.scene.pause();
       this.scene.launch('Bureau', { retour: 'Comptoir', comptoir: this });
@@ -382,11 +387,13 @@ class CounterScene extends Phaser.Scene {
 
   // L'étagère des décorations offertes par tes amis. Clic : voir son effet.
   creerEtagere() {
+    // La petite étagère des souvenirs, sous le registre
     const g = this.add.graphics();
-    g.fillStyle(0x5a3a22).fillRect(12, 396, 126, 6);
-    g.fillStyle(0x3b2410).fillRect(18, 402, 6, 8).fillRect(126, 402, 6, 8);
+    g.fillStyle(0x8a5a2b).fillRect(12, 420, 126, 2);
+    g.fillStyle(0x5a3a22).fillRect(12, 422, 126, 4);
+    g.fillStyle(0x2a1a10).fillRect(12, 426, 126, 1).fillRect(18, 427, 5, 6).fillRect(127, 427, 5, 6);
     this.G.decorations.forEach((id, i) => {
-      const icone = this.add.image(32 + i * 30, 384, id).setScale(3).setInteractive({ useHandCursor: true });
+      const icone = this.add.image(24 + i * 25, 408, id === 'trefle' ? 'trefleChance' : id).setScale(3).setInteractive({ useHandCursor: true });
       icone.on('pointerdown', () => this.dire(DECORATIONS[id].effet, DECORATIONS[id].nom));
     });
   }
@@ -408,7 +415,7 @@ class CounterScene extends Phaser.Scene {
 
   // Des piles de pièces d'or qui grandissent avec l'argent, et quelques pièces éparpillées.
   dessinerPieces() {
-    const n = Phaser.Math.Clamp(Math.ceil(this.G.argent / 4), 0, 30);
+    const n = Phaser.Math.Clamp(Math.ceil(this.G.argent / 4), 0, 27);
     this.texteArgent.setText(this.G.argent + ' pièces');
     if (n === this.nbPieces) return;
     this.nbPieces = n;
@@ -605,7 +612,7 @@ class CounterScene extends Phaser.Scene {
 
   // Ce qui reste visible dans l'obscurité : la Faucheuse, ses paroles et tes réponses.
   elementsDansLOmbre() {
-    return [this.fondDialogue, this.nomParleur, this.texteDialogue, this.boutonAction.fond, this.boutonAction.label,
+    return [this.fondDialogue, this.plaqueNom, this.nomParleur, this.sousNom, this.texteDialogue, this.boutonAction.fond, this.boutonAction.label,
       this.boutonRefuser.fond, this.boutonRefuser.label];
   }
 
@@ -856,15 +863,6 @@ class CounterScene extends Phaser.Scene {
         changerRelation(G, p.nom, 5);
         fin(`${msg} Prends-en soin.`);
         this.creerEtagere();
-    // Le registre posé sur le bureau : clic pour ouvrir le bureau (fiches, comptes, statistiques)
-    const registre = this.add.image(75, 364, 'registreComptoir').setScale(2).setInteractive({ useHandCursor: true });
-    this.add.text(78, 360, 'Le registre', style(13, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0808', strokeThickness: 3 })).setOrigin(0.5);
-    registre.on('pointerover', () => registre.setTint(0xffe0c0));
-    registre.on('pointerout', () => registre.clearTint());
-    registre.on('pointerdown', () => {
-      this.scene.pause();
-      this.scene.launch('Bureau', { retour: 'Comptoir', comptoir: this });
-    });
       }], ['Le garder pour sa famille', () => {
         G.reputation += 0.5;
         changerRelation(G, p.nom, 3);
@@ -1096,8 +1094,18 @@ class CounterScene extends Phaser.Scene {
   // Par défaut, le client au comptoir quand c'est lui qui parle.
   dire(texte, nom = this.voyageur ? this.voyageur.nom : '', qui = null) {
     if (!qui && this.voyageur && nom && nom.startsWith(this.voyageur.nom)) qui = this.voyageur.nom;
-    this.nomParleur.setText(nom).setColor(qui ? couleurNom(this.G, qui, true) : '#f3d98a');
-    this.texteDialogue.setText(texte);
+    // « Pippa Boisclair — Inconnu » : le nom sur la plaque, la relation en dessous.
+    // (« Dagna, fille de Borin » : pareil, la suite passe sous la plaque.)
+    const coupure = nom.includes(' — ') ? ' — ' : ', ';
+    const [nomSeul, ...reste] = nom.split(coupure);
+    this.plaqueNom.setVisible(!!nomSeul);
+    this.nomParleur.setText(nomSeul).setColor(qui ? couleurNom(this.G, qui, true) : '#f3d98a').setFontSize(15);
+    for (let taille = 14; this.nomParleur.width > 176 && taille >= 10; taille--) this.nomParleur.setFontSize(taille);
+    this.sousNom.setText(reste.join(coupure)).setColor(qui ? couleurNom(this.G, qui) : '#5a4028').setFontSize(12);
+    for (let taille = 11; this.sousNom.width > 200 && taille >= 9; taille--) this.sousNom.setFontSize(taille);
+    // Le texte rapetisse un peu s'il est long, pour toujours tenir dans le parchemin.
+    this.texteDialogue.setText(texte).setFontSize(16);
+    for (let taille = 15; this.texteDialogue.height > 70 && taille >= 12; taille--) this.texteDialogue.setFontSize(taille);
     if (qui && this.buste && this.buste.personne.nom === qui) this.parler(Math.min(2400, 400 + texte.length * 22));
   }
 
