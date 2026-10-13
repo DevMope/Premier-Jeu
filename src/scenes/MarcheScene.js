@@ -37,6 +37,7 @@ class MarcheScene extends Phaser.Scene {
     this.paysageRue = g.paysage;
     this.paveRue = this.add.image(0, 250, pavesHD(this, LARGEUR_MARCHE, 50)).setOrigin(0).setScale(2);
     this.monde.add(this.paveRue);
+    this.time.delayedCall(600, () => Son.jouer('coq'));
     this.add.text(480, 22, `Le Marché des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setDepth(5);
 
     // Les étals, les enchères, les jeux et le mendiant
@@ -421,6 +422,7 @@ class MarcheScene extends Phaser.Scene {
   }
 
   message(texte, couleur = '#3b2410') {
+    if (couleur === '#a03030') Son.jouer('refus');
     if (this.texteMessage) this.texteMessage.destroy();
     this.texteMessage = this.add.text(480, 460, texte, style(13, couleur, { fontStyle: 'bold' })).setOrigin(0.5);
     this.contenu.add(this.texteMessage);
@@ -516,6 +518,7 @@ class MarcheScene extends Phaser.Scene {
       const b = this.bouton(c, x + 345, y, 100, libelle, () => {
         const r = acheterAuMarche(G, cle, id);
         if (r.erreur) return this.message(r.erreur, '#a03030');
+        Son.jouer('achat');
         this.ouvrirEtal(cle);
         if (this.commandesOuvertes) { this.panneauCommandes.destroy(); this.creerPanneauCommandes(); }
         this.message(r.message || `Acheté : ${nomObjet(id)}.`);
@@ -567,6 +570,7 @@ class MarcheScene extends Phaser.Scene {
     const lot = this.lot;
     this.lot = [];
     const r = vendreAuxEncheres(G, lot);
+    Son.jouer('maillet');
     const c = this.panneau('Les enchères', 'La vente commence !');
     c.add(this.add.text(30, 345, `Le lot : ${lot.map(t => t.nom).join(', ')} (estimé ~${r.estimation} p.)`, style(13, '#3b2410', { fontStyle: 'bold' })));
     // Les enchérisseurs, avec leur bulle
@@ -604,6 +608,7 @@ class MarcheScene extends Phaser.Scene {
     [1, 5, 10].forEach((n, i) => this.bouton(c, 120 + i * 150, 400, 130, `Donner ${n} pièce${n > 1 ? 's' : ''}`, () => {
       const merci = donnerAuMendiant(G, n);
       if (!merci) return this.message("Tu n'as pas assez d'argent.", '#a03030');
+      Son.jouer('pieces', { montant: n });
       this.ouvrirMendiant();
       this.message(merci);
     }));
@@ -613,6 +618,7 @@ class MarcheScene extends Phaser.Scene {
       if (nourri) return;
       const quoi = nourrirChien(G);
       if (!quoi) return this.message("Tu n'as pas de ration dans ta réserve.", '#a03030');
+      Son.jouer('chien');
       this.ouvrirMendiant();
       this.message(quoi);
     }, nourri ? 0x6a5a4a : 0x4f7a3a);
@@ -635,6 +641,7 @@ class MarcheScene extends Phaser.Scene {
       c.add(this.add.text(x + 280, y, `tu en as ${G.cadeaux[id] || 0}`, style(11, '#6b4a2a')).setOrigin(0, 0.5));
       this.bouton(c, x + 390, y, 70, 'Acheter', () => {
         const erreur = acheterCadeau(G, id);
+        if (!erreur) Son.jouer('achat');
         this.ouvrirBazar();
         this.message(erreur || `${cad.nom} : dans ton tiroir à cadeaux, au comptoir.`, erreur ? '#a03030' : '#2f6a2a');
       });
@@ -658,6 +665,7 @@ class MarcheScene extends Phaser.Scene {
       if (aDeco(G, id)) c.add(this.add.text(x + 390, y, 'Chez toi', style(12, '#2f6a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
       else this.bouton(c, x + 390, y, 70, 'Acheter', () => {
         const erreur = acheterDeco(G, id);
+        if (!erreur) Son.jouer('achat');
         this.ouvrirBrocante();
         this.message(erreur || `${d.nom} : accrochée dans ton arrière-boutique !`, erreur ? '#a03030' : '#2f6a2a');
       });
@@ -684,6 +692,7 @@ class MarcheScene extends Phaser.Scene {
       if (porte(G, id)) c.add(this.add.text(x + 340, y, 'Porté', style(12, '#2f6a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
       else this.bouton(c, x + 340, y, 70, 'Acheter', () => {
         const erreur = acheterTenue(G, id);
+        if (!erreur) Son.jouer('achat');
         this.ouvrirGardeRobe();
         this.message(erreur || `${d.nom} : tu le portes dès maintenant !`, erreur ? '#a03030' : '#2f6a2a');
       });

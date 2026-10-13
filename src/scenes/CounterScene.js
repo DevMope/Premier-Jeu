@@ -298,6 +298,7 @@ class CounterScene extends Phaser.Scene {
   lireLettre(i) {
     const a = this.G.annonces[i];
     if (!a) return;
+    Son.jouer('page');
     const v = a.voyageur;
     this.dire(`« Je passerai à ton comptoir le jour ${a.jour}. Je pars : ${v.quete.toLowerCase()}. ` +
       `Prépare-moi s'il te plaît : ${commandeEnTexte(v)}. » — ${v.nom}` +
@@ -612,6 +613,7 @@ class CounterScene extends Phaser.Scene {
       legende: `On m'avait parlé de toi, ${nomJoueur(G, 'petit')}. Un ${p.nom.toLowerCase()}, tenu par si jeune... J'ai voulu voir ça de mes yeux. Je ne suis pas déçue.`,
     }[p.visiteur];
     this.titreCommande.setFontSize(17).setText('⭐ Un visiteur notable');
+    Son.jouer('fanfare');
     this.dire(bonjour, qui);
     this.exprimer('content');
     this.bouton('« Merci ! »', () => {
@@ -700,6 +702,7 @@ class CounterScene extends Phaser.Scene {
   }
 
   arrivee(entree) {
+    Son.jouer('pas');
     if (entree.type === 'client') {
       conseilGarrick(this, 'comptoir');
       const v = this.voyageur = entree.voyageur;
@@ -888,7 +891,7 @@ class CounterScene extends Phaser.Scene {
         texte: `« Glisse-lui ceci dans son baluchon : ${PIEGES[mission.piege].nom.toLowerCase()}. Je te paierai ${mission.prime} pièces. »`,
         nom: 'La Faucheuse',
         choix: [['Accepter', () => {
-          accepterSabotage(G);
+          accepterSabotage(G); Son.jouer('tampon');
           return '« Je savais que je pouvais compter sur toi. »';
         }], ['Refuser', () => {
           refuserSabotage(G);
@@ -1131,7 +1134,8 @@ class CounterScene extends Phaser.Scene {
   // Réparer coûte des matériaux, et c'est le client qui paie la main-d'œuvre.
   reparer(id) {
     const erreur = reparerObjet(this.G, this.voyageur, id);
-    if (erreur) return this.dire(erreur, '');
+    if (erreur) { Son.jouer('refus'); return this.dire(erreur, ''); }
+    Son.jouer('marteau');
     this.dessinerPieces();
     this.dire(`Merci ! ${monNom(id, ITEMS[id].nom.toLowerCase())[0].toUpperCase() + monNom(id, ITEMS[id].nom.toLowerCase()).slice(1)} ${ITEMS[id].nom.toLowerCase()} ${genreDe(id).includes('p') ? 'sont' : 'est'} comme ${accordAdj(id, 'neuf', 'neuve', 'neufs', 'neuves')}. Voilà ${PRIX_REPARATION} pièces pour ta peine.`);
   }
@@ -1148,6 +1152,7 @@ class CounterScene extends Phaser.Scene {
     this.colis = {};
     this.pieges = {};
     const msg = refuserClient(this.G, v);
+    Son.jouer('refus');
     this.enService = false;
     this.majBoutonsService();
     this.bouton('...', null);
@@ -1319,6 +1324,7 @@ class CounterScene extends Phaser.Scene {
     const v = this.voyageur;
     const chance = chanceDeRetour(v, this.colis);
     const msg = partir(this.G, v, this.colis, this.pieges);
+    Son.jouer('caisse');
     this.enService = false;
     this.time.delayedCall(2500, () => conseilGarrick(this, 'remis'));
     this.majCommande(); // le colis est remis : on ne peut plus rien retirer

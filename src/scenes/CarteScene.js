@@ -266,6 +266,7 @@ class CarteScene extends Phaser.Scene {
     const v = this.selection;
     if (!v) return;
     envoyerDans(this.G, v, cle);
+    Son.jouer('plume');
     if (!this.planification) return this.fermer({ destination: cle });
     this.place[v.id] = cle;
     const entree = this.G.file.find(e => e.voyageur === v);

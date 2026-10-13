@@ -20,6 +20,7 @@ class ExpressScene extends Phaser.Scene {
     if (this.vendeur === 'colporteur') {
       // Barnabé et son âne attelé à la charrette, lui qui s'éponge le front
       this.add.image(236, 438, charretteColporteurHD(this)).setOrigin(0.5, 1).setScale(2.4);
+      Son.jouer('sabots');
       this.gobelin = imageCorps(this, 470, 435, 'colporteur', 8);
       this.tweens.add({ targets: this.gobelin, y: 431, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       this.add.text(30, 22, COLPORTEUR.nom, style(26, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }));
@@ -99,13 +100,15 @@ class ExpressScene extends Phaser.Scene {
     const commande = c.voyageur ? commandeDe(c.voyageur) : {};
     // Si le client en a besoin, ça va directement dans son colis ; sinon, dans ta réserve.
     const pourLeClient = !colporteur && commande[id] && (c.colis[id] || 0) < commande[id];
-    if (offre.qte <= 0) return this.parler(colporteur ? 'Plus un seul ! Tu as vidé ma hotte.' : 'Plus rien ! Tout vendu ! Reviens demain, avec plus de pièces.');
-    if (!peutPayer(G, offre.prix)) return this.parler(colporteur ? "Pas assez de pièces... Une autre fois, l'ami." : "Pas de pièces, pas de marchandise ! File, mendiant !");
-    if (!pourLeClient && stockTotal(G) >= G.capacite) return this.parler(colporteur ? "Ta réserve est pleine, je n'ai nulle part où poser ça !" : 'Ta réserve est pleine ! Grippesou ne vend pas de place, hé hé.');
+    const non = texte => { Son.jouer('refus'); return this.parler(texte); };
+    if (offre.qte <= 0) return non(colporteur ? 'Plus un seul ! Tu as vidé ma hotte.' : 'Plus rien ! Tout vendu ! Reviens demain, avec plus de pièces.');
+    if (!peutPayer(G, offre.prix)) return non(colporteur ? "Pas assez de pièces... Une autre fois, l'ami." : "Pas de pièces, pas de marchandise ! File, mendiant !");
+    if (!pourLeClient && stockTotal(G) >= G.capacite) return non(colporteur ? "Ta réserve est pleine, je n'ai nulle part où poser ça !" : 'Ta réserve est pleine ! Grippesou ne vend pas de place, hé hé.');
     payer(G, offre.prix, colporteur ? 'colporteur' : 'express');
     offre.qte--;
     if (pourLeClient) c.colis[id] = (c.colis[id] || 0) + 1;
     else G.stock[id]++;
+    Son.jouer('achat');
     this.achats.push(`${ITEMS[id].nom} (${pourLeClient ? 'dans le baluchon' : 'dans ta réserve'})`);
     this.parler(colporteur ? auHasard(['Bien choisi ! Ça te servira, crois-moi.', 'Et une chose de moins à porter. Merci !']) : auHasard(['Hé hé ! Merci pour les pièces...', 'Excellent choix. Excellent prix. Pour moi.', 'Vendu ! Grippesou est content.']));
     this.tweens.add({ targets: this.gobelin, y: 425, duration: 120, yoyo: true });
@@ -116,11 +119,12 @@ class ExpressScene extends Phaser.Scene {
   acheterMateriau(id) {
     const G = this.G;
     const offre = G.expressMateriaux[id];
-    if (offre.qte <= 0) return this.parler('Plus de ' + MATERIAUX[id].nom.toLowerCase() + ' ! Hé hé, il fallait se décider plus vite.');
-    if (!peutPayer(G, offre.prix)) return this.parler(`Du ${MATERIAUX[id].nom.toLowerCase()}, à ce prix-là, ça se mérite ! Reviens avec des pièces.`);
+    if (offre.qte <= 0) { Son.jouer('refus'); return this.parler('Plus de ' + MATERIAUX[id].nom.toLowerCase() + ' ! Hé hé, il fallait se décider plus vite.'); }
+    if (!peutPayer(G, offre.prix)) { Son.jouer('refus'); return this.parler(`Du ${MATERIAUX[id].nom.toLowerCase()}, à ce prix-là, ça se mérite ! Reviens avec des pièces.`); }
     payer(G, offre.prix, 'express');
     offre.qte--;
     G.materiaux[id] = (G.materiaux[id] || 0) + 1;
+    Son.jouer('achat');
     this.achats.push(`${MATERIAUX[id].nom} (avec tes matériaux)`);
     this.parler(auHasard(['Du ' + MATERIAUX[id].nom.toLowerCase() + ' de première qualité ! Enfin... de qualité.', 'Hé hé hé ! Tu ne trouveras pas moins cher. Ici.']));
     this.tweens.add({ targets: this.gobelin, y: 425, duration: 120, yoyo: true });

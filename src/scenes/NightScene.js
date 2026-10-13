@@ -217,8 +217,8 @@ class NightScene extends Phaser.Scene {
       if (a.acceptee) {
         c.add(this.add.text(x2 - 12, y, 'acceptée', style(11, '#2f6a2a', { fontStyle: 'italic' })).setOrigin(1, 0));
       } else {
-        c.add(this.petitBouton(x2 - 70, y + 8, 'Oui', 0x4f7a3a, () => { accepterLettre(G, a); this.tout(); }));
-        c.add(this.petitBouton(x2 - 30, y + 8, 'Non', 0x8a3a2a, () => { refuserLettre(G, a); this.tout(); }));
+        c.add(this.petitBouton(x2 - 70, y + 8, 'Oui', 0x4f7a3a, () => { accepterLettre(G, a); Son.jouer('plume'); this.tout(); }));
+        c.add(this.petitBouton(x2 - 30, y + 8, 'Non', 0x8a3a2a, () => { refuserLettre(G, a); Son.jouer('tampon'); this.tout(); }));
       }
     });
     const cachees = G.annonces.length - liste.length;

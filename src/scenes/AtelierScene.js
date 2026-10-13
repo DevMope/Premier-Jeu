@@ -101,7 +101,8 @@ class AtelierScene extends Phaser.Scene {
           this.texteInfo.setText(`${e.nom} est parti${e.race === 'nain' ? 'e' : ''}. Sa réparation en cours s'arrête.`);
         } else {
           const erreur = embaucher(G, id);
-          if (erreur) return this.texteInfo.setText(erreur);
+          if (erreur) { Son.jouer('refus'); return this.texteInfo.setText(erreur); }
+          Son.jouer('plume');
           this.texteInfo.setText(`${e.nom} rejoint ton atelier ! Salaire : ${e.salaire} pièces chaque nuit.`);
         }
         this.liste();
@@ -190,7 +191,8 @@ class AtelierScene extends Phaser.Scene {
         const erreur = reparerTresor(G, t, e);
         this.fenetre.destroy();
         this.fenetre = null;
-        if (erreur) return this.texteInfo.setText(erreur);
+        if (erreur) { Son.jouer('refus'); return this.texteInfo.setText(erreur); }
+        Son.jouer('marteau');
         this.texteInfo.setText(`${ouvrier === 'toi' ? 'Tu te mets' : nomOuvrier(ouvrier) + ' se met'} au travail : ${t.nom} → ${ETATS[e].nom} en ${jours} jour${jours > 1 ? 's' : ''}.`);
         this.liste();
       });

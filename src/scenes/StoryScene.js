@@ -139,6 +139,7 @@ class StoryScene extends Cinematique {
 
   // Le trèfle de la chance qui brille au-dessus de lui.
   async trefle() {
+    Son.jouer('trefle');
     const t = this.add.image(this.perso.x, this.perso.y - 120, 'hd_trefleChance').setScale(0).setDepth(5);
     await this.animer({ targets: t, scale: 3.5, angle: 360, duration: 500, ease: 'Back.easeOut' });
     this.tweens.add({ targets: t, alpha: 0, y: t.y - 40, duration: 900, delay: 400, onComplete: () => t.destroy() });
@@ -221,6 +222,7 @@ class StoryScene extends Cinematique {
         `+ ${gain} pièces${ajuste} · Relation : ${relation.nom}${message ? '\n' + message : ''}`);
     } else {
       this.perso.setTint(0x888888);
+      Son.jouer('glas');
       await this.animer({ targets: this.perso, angle: -90, alpha: 0.6, duration: 700, ease: 'Bounce.easeOut' });
       this.ecrire('Fin du carnet', r.valeureux
         ? `${v.nom} est mort${this.e} valeureusement au combat. On chantera son nom dans les tavernes.\nTon investissement est perdu.`
@@ -267,7 +269,8 @@ class StoryScene extends Cinematique {
       c.add(this.add.text(170, y + 17, `👃 ${e.verdict.texte}`, style(12, e.verdict.couleur, { fontStyle: 'bold' })));
       const b = creerBouton(this, 470, y, 140, '', () => {
         const erreur = acheterTrouvaille(G, t);
-        if (erreur) return info.setText(erreur);
+        if (erreur) { Son.jouer('refus'); return info.setText(erreur); }
+        Son.jouer('achat');
         info.setColor('#2f6a2a').setText(`${tr.nom} rejoint ton atelier. Répare-le pour en tirer plus aux enchères !`);
         maj();
       });
@@ -311,7 +314,8 @@ class StoryScene extends Cinematique {
     if (!blessuresDe(G, v.nom)) return;
     const bouton = creerBouton(this, 540, 345, 290, '', () => {
       const erreur = soigner(G, v.nom);
-      if (erreur) return this.ecrire('Soins', erreur);
+      if (erreur) { Son.jouer('refus'); return this.ecrire('Soins', erreur); }
+      Son.jouer('coeur');
       const coeur = this.coeurs.find(c => c.texture.key === 'hd_coeurVide');
       if (coeur) {
         coeur.setTexture('hd_coeur');

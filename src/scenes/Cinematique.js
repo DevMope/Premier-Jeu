@@ -71,6 +71,7 @@ class Cinematique extends Phaser.Scene {
 
   // Un mot qui surgit, façon bande dessinée (« PLOUF ! », « BAM ! »).
   onomatopee(x, y, mot, couleur = '#fff4dc') {
+    const son = sonDuMot(mot); if (son) Son.jouer(son);
     const t = this.add.text(x, y, mot, style(30, couleur, { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 6 }))
       .setOrigin(0.5).setScale(0).setDepth(9).setAngle(Phaser.Math.Between(-12, 12));
     this.tweens.add({ targets: t, scale: 1, duration: 200, ease: 'Back.easeOut' });

@@ -56,7 +56,7 @@ class BureauScene extends Phaser.Scene {
       const x = 30 + i * 88;
       const fond = this.add.image(x + 43, 38, 'ongletHD').setScale(2).setInteractive({ useHandCursor: true });
       const texte = this.add.text(x + 43, 38, nom, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
-      fond.on('pointerdown', () => { this.onglet = cle; this.pageListe = 0; this.afficherListe(); });
+      fond.on('pointerdown', () => { Son.jouer('page'); this.onglet = cle; this.pageListe = 0; this.afficherListe(); });
       return { cle, fond, texte };
     });
   }

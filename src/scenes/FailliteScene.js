@@ -55,6 +55,7 @@ class FailliteScene extends Cinematique {
 
     // Le parchemin des dettes, beaucoup trop long.
     this.ecrire(banquier, `« Par ordre de la Banque Centrale Goyenne, vos dettes s'élèvent à... »`);
+    Son.jouer('page');
     const parchemin = this.add.rectangle(440, 260, 34, 90, 0xead9b0).setStrokeStyle(2, 0x8a6a3a).setOrigin(0.5, 0).setDepth(5).setScale(1, 0.1);
     await this.animer({ targets: parchemin, scaleY: 1, duration: 700 });
     const rouleau = this.add.ellipse(440, 350, 34, 14, 0xead9b0).setStrokeStyle(2, 0x8a6a3a).setDepth(5);

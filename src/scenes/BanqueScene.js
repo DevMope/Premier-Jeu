@@ -91,6 +91,7 @@ class BanqueScene extends Phaser.Scene {
     emprunter(this.G, pret);
     this.creerPrets();
     if (pret.mal) {
+      Son.jouer('tampon'); Son.jouer('froid');
       // La Main Noire ne danse pas : les banquiers se figent, la lumière baisse.
       this.parler('... Nous n\'avons rien vu. La Main Noire sait où tu dors.');
       const ombre = this.add.rectangle(480, 270, 960, 540, 0x000000, 0).setDepth(50);
@@ -98,6 +99,7 @@ class BanqueScene extends Phaser.Scene {
       this.tweens.add({ targets: ombre, fillAlpha: 0.55, duration: 600, yoyo: true, hold: 900, onComplete: () => { ombre.destroy(); this.toiser(); } });
       return;
     }
+    Son.jouer('pieces', { montant: pret.somme });
     // Plus le prêt est gros, plus la fête des banquiers est longue et folle.
     const n = pret.somme >= 400 ? 3 : pret.somme >= 150 ? 2 : 1;
     this.parler(['Signé. Et n\'oublie pas : un nain n\'oublie jamais une dette.',
