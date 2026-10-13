@@ -221,7 +221,7 @@ const INSTRUMENTS = {
   choeur: { voix: [['sawtooth', 1, 0.2, -8], ['sawtooth', 1, 0.2, 8], ['sine', 1, 0.4], ['sine', 2, 0.1, 4]], attaque: 0.6, decroissance: 0.4, tenue: 0.9, relache: 0.9, volume: 0.1, filtre: 900, vibrato: 0.004 },
   flute: { voix: [['sine', 1, 0.7], ['triangle', 1, 0.25], ['sine', 2, 0.08]], attaque: 0.06, decroissance: 0.1, tenue: 0.8, relache: 0.15, volume: 0.22, vibrato: 0.006, bruit: { duree: 0.08, volume: 0.04, filtre: 3000 } },
   luth: { voix: [['triangle', 1, 0.8], ['sawtooth', 1, 0.15], ['sine', 2, 0.15]], attaque: 0.006, decroissance: 0.5, tenue: 0.12, relache: 0.45, volume: 0.22, filtre: 2600, glisse: 1.01 },
-  harpe: { voix: [['sine', 1, 0.8], ['triangle', 1, 0.25], ['sine', 3, 0.06]], attaque: 0.012, decroissance: 0.9, tenue: 0.1, relache: 0.6, volume: 0.2 },
+  harpe: { voix: [['sine', 1, 0.85], ['triangle', 1, 0.15], ['sine', 2, 0.04]], attaque: 0.012, decroissance: 1.0, tenue: 0.1, relache: 0.6, volume: 0.2, filtre: 2400 },
   celesta: { voix: [['sine', 1, 0.8], ['sine', 4, 0.12], ['sine', 2.4, 0.05]], attaque: 0.012, decroissance: 1.2, tenue: 0.05, relache: 0.6, volume: 0.22 },
   boiteAMusique: { voix: [['sine', 1, 0.7], ['sine', 3, 0.1], ['sine', 5.2, 0.03]], attaque: 0.01, decroissance: 0.8, tenue: 0.04, relache: 0.5, volume: 0.18 },
   cordes: { voix: [['sawtooth', 1, 0.3, -6], ['sawtooth', 1, 0.3, 6], ['sawtooth', 1.005, 0.2, 0]], attaque: 0.35, decroissance: 0.3, tenue: 0.85, relache: 0.5, volume: 0.1, filtre: 1500, vibrato: 0.003 },
@@ -276,8 +276,8 @@ const THEMES = {
   // Le comptoir, deuxième air : une valse légère de harpe et de célesta (l'auberge un après-midi calme)
   comptoir2: {
     base: NOTE.D / 2, gamme: GAMMES.majeur, tempo: 104, temps: 3, phrase: 8,
-    accords: [0, 0, 3, 3, 5, 5, 4, 4], octaveMelodie: 2,
-    instruments: { melodie: 'harpe', accompagnement: 'orgue', basse: 'basse' }, reverb: 0.2,
+    accords: [0, 0, 3, 3, 5, 5, 4, 4], octaveMelodie: 1,
+    instruments: { melodie: 'harpe', accompagnement: 'orgue', basse: 'basse' }, reverb: 0.25,
     motif: { 0: [[0, 9, 1], [1, 11, 1], [2, 12, 1]], 1: [[0, 14, 2], [2, 12, 1]], 2: [[0, 11, 1], [1, 9, 1], [2, 7, 1]], 3: [[0, 9, 3]], 4: [[0, 9, 1], [1, 11, 1], [2, 14, 1]], 5: [[0, 16, 2], [2, 14, 1]], 6: [[0, 12, 1], [1, 11, 1], [2, 9, 1]], 7: [[0, 7, 3]] },
     rythmes: [[1, 1, 1], [2, 1]], silence: 0.2,
     basse: (m, a) => [[0, a, 2.8]],

@@ -359,7 +359,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (u < 4.2 * k) return base - 0.6 * k;                                           // sous le nez
     if (u < by0 - ey0 + 1.6 * k) { const v = (y - by0 + 0.5 * k) / (2.1 * k); return base - 0.5 * k + (v > 0 && v < 1 ? Math.sin(v * Math.PI) * 0.7 * k : 0); } // les lèvres
     const bas = cy + P.ry;
-    if (y <= bas) { const v = (y - by0 - 1.6 * k) / Math.max(1, bas - by0 - 1.6 * k); return (base - 0.8 * k) * (1 - v * v * (race === 'elfe' && f ? 0.75 : carre ? 0.35 : 0.55)); } // le menton
+    if (y <= bas) { const v = (y - by0 - 1.6 * k) / Math.max(1, bas - by0 - 1.6 * k); return (base - 0.8 * k) * (1 - v * v * (race === 'elfe' && f ? 0.75 : f && race !== 'hobbit' ? 0.65 : carre ? 0.35 : 0.55)); } // le menton
     return null;
   };
   const tete = (x, y) => {
@@ -473,8 +473,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     else for (let i = -lb; i <= lb; i++) {
       const yy = by + Math.round((1 - (i * i) / (lb * lb)) * courbe * k);
       for (let e = 0; e < epaisseur; e++) t.poser(Math.round(bx + i), yy + e, 'levres', 1);                     // la fente
-      if (!elfeF && Math.abs(i) < lb) t.poser(Math.round(bx + i), yy + epaisseur, 'levres', race === 'nain' ? 3 : 4); // la lèvre du bas, en lumière
-      if (!elfeF && Math.abs(i) < lb - 1 && race !== 'nain') t.poser(Math.round(bx + i), yy - 1, 'levres', 2);   // la lèvre du haut
+      if (!elfeF && !profil && Math.abs(i) < lb && (Math.abs(c) > 0.9 || i <= 0)) t.poser(Math.round(bx + i), yy + epaisseur, 'levres', race === 'nain' ? 3 : 4); // la lèvre du bas, en lumière
+      if (!elfeF && !profil && Math.abs(i) < lb - 1 && race !== 'nain') t.poser(Math.round(bx + i), yy - 1, 'levres', 2);   // la lèvre du haut
     }
     if (bouche === 0 && options.bouche !== undefined) for (let i = -Math.round(lb * 0.5); i <= Math.round(lb * 0.5); i++) t.poser(Math.round(bx + i), by + Math.round(0.8 * k) - 1, 'blanc', 4);
     if (!elfeF && Math.abs(c) > 0.3) t.poser(Math.round(bx - lb - 1), by, 'levres', 1);
