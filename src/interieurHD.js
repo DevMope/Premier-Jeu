@@ -906,3 +906,68 @@ function coffreTresorHD(scene) {
   t.texture(scene, 'coffreTresorHD');
   return 'coffreTresorHD';
 }
+
+// --- La fenêtre de la chambre : la lune, le soleil, le cadre et les rideaux ---
+function creerFenetreHD(scene) {
+  if (scene.textures.exists('luneHD')) return;
+  // La pleine lune : mers sombres, cratères, et un léger dégradé vers le bord
+  {
+    const t = toileDecor(30, 30);
+    t.rampes.lune = [0x6a6a78, 0x9a98a4, 0xc8c4c0, 0xe4e0d4, 0xf6f2e4, 0xfffdf4];
+    t.forme('lune', ellipsoide(15, 15, 13.5, 13.5), {
+      decalage: 0.6,
+      motif: (x, y) => (fbm(x * 0.18, y * 0.18, 990) > 0.58 ? -1.1 : 0) + (hachage(x, y, 991) < 0.04 ? -0.6 : 0),
+    });
+    for (const [x, y, r] of [[10, 9, 2.4], [19, 18, 3], [8, 19, 1.8], [20, 8, 1.5], [14, 23, 1.4]]) {
+      t.forme('lune', (xx, yy) => { const d = Math.hypot(xx + 0.5 - x, yy + 0.5 - y); return d < r ? [(xx + 0.5 - x) / -r, (yy + 0.5 - y) / -r, 0.6] : null; }, { decalage: -0.2, bord: false });
+    }
+    t.texture(scene, 'luneHD');
+  }
+  // Le soleil : un disque doré, plus clair au centre, cerclé de rayons
+  {
+    const t = toileDecor(40, 40);
+    t.rampes.soleil = [0xd86a10, 0xf0901c, 0xf8b830, 0xffd858, 0xfff090, 0xfffce0];
+    for (let k = 0; k < 12; k++) {
+      const a = k / 12 * Math.PI * 2, long = k % 2 ? 17 : 19.5;
+      t.forme('soleil', (x, y) => {
+        const dx = x + 0.5 - 20, dy = y + 0.5 - 20, r = Math.hypot(dx, dy);
+        const ang = Math.atan2(dy, dx), da = Math.abs(((ang - a + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+        return r > 11 && r < long && da < 0.16 * (1 - (r - 11) / (long - 11)) + 0.03 ? [dx / r, dy / r, 0.5] : null;
+      }, { decalage: 0.5, bord: false });
+    }
+    t.forme('soleil', (x, y) => { const d = Math.hypot(x + 0.5 - 20, y + 0.5 - 20); return d < 11 ? [0, 0, 1 - d / 22] : null; }, { decalage: 0.8 });
+    t.texture(scene, 'soleilHD');
+  }
+  // Le cadre de la fenêtre : montants de chêne, croisillon, appui, et reflets sur les vitres
+  {
+    const L = 116, H = 92, b = 8, f = 3; // b : épaisseur du cadre, f : le croisillon
+    const t = toileDecor(L, H);
+    t.rampes.vitre = [0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff];
+    for (const [x, y, l, h] of [[0, 0, L, b], [0, H - b - 6, L, b], [0, 0, b, H - 6], [L - b, 0, b, H - 6], [L / 2 - f / 2, 0, f, H - 6], [0, (H - 6) / 2 - f / 2, L, f]]) {
+      planche(t, x, y, l, h, 'chene', { horizontale: l > h, graine: 900 + x + y, noeuds: 1 });
+    }
+    for (let x = 0; x < L; x++) { t.poser(x, 0, 'chene', 5); t.poser(x, b - 1, 'cheneSombre', 1); }
+    // L'appui de fenêtre, qui déborde
+    planche(t, 0, H - 7, L, 7, 'chene', { graine: 909, noeuds: 2 });
+    for (let x = 0; x < L; x++) { t.poser(x, H - 7, 'chene', 5); t.poser(x, H - 1, 'cheneSombre', 0); }
+    // Des reflets en diagonale sur chaque carreau (semi-transparents : dessinés à part)
+    t.contour();
+    t.texture(scene, 'cadreFenetreHD');
+  }
+  // Un rideau de lin, plissé, retenu par une embrasse
+  {
+    const L = 22, H = 96;
+    const t = toileDecor(L, H);
+    t.rampes.rideau = rampe(0x9a3a32);
+    t.forme('rideau', (x, y) => {
+      const serre = y > 50 && y < 60 ? 0.55 : y >= 60 ? 0.55 + (y - 60) / 36 * 0.45 : 1;
+      if (x > L * serre) return null;
+      const pli = Math.sin(x * 1.1) * 0.6;
+      return [pli, 0, 0.8];
+    }, { motif: (x, y) => ((x + 1) % 4 === 0 ? -0.8 : 0) });
+    for (let x = 0; x < L * 0.6; x++) for (let y = 53; y < 57; y++) t.poser(x, y, 'laiton', y === 53 ? 5 : 3);
+    for (let x = 0; x < L; x++) t.poser(x, 0, 'fer', 3);
+    t.contour();
+    t.texture(scene, 'rideauHD');
+  }
+}

@@ -364,6 +364,7 @@ const TEINTES_SOMBRES = { 0xc8ccd8: 0x3a3a48, 0x6a6a7a: 0x1e1e26, 0xe8c040: 0xa0
 
 function creerToutesLesTextures(scene) {
   creerBaluchons(scene);
+  creerObjetsHD(scene); // toutes les marchandises en HD, dès le départ
   // Les pièces de l'armure sombre : mêmes formes, autres couleurs.
   for (const p of ARMURE) {
     const ic = ICONES[p.id];

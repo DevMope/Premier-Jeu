@@ -212,7 +212,7 @@ class CarteScene extends Phaser.Scene {
       style(13, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 2 })));
     besoinsDeZone(cle).forEach((id, i) => {
       const enStock = G.stock[id] || 0;
-      this.bulle.add(this.add.image(gauche + 10 + i * 40, by + h / 2 - 20, id).setScale(2.2));
+      this.bulle.add(this.add.image(gauche + 10 + i * 40, by + h / 2 - 20, iconeObjet(this, id)).setScale(2));
       this.bulle.add(this.add.text(gauche + 22 + i * 40, by + h / 2 - 20, String(enStock), style(13, enStock ? '#b8e0a0' : '#f0a8a0', { fontStyle: 'bold' })).setOrigin(0, 0.5));
     });
     if (!v) return;

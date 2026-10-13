@@ -193,8 +193,8 @@ class IntroHistoireScene extends Cinematique {
     this.tweens.add({ targets: feu, scaleY: 1.04, duration: 120, yoyo: true, repeat: -1 });
     this.ecrire('Pendant des jours...', 'Tu as fait un feu, réparé ses armes, soigné ses blessures, et chassé pour le nourrir.');
     for (const id of ['epee', 'bandage', 'potion']) {
-      const icone = this.add.image(470, 260, id).setScale(0).setDepth(5);
-      await this.animer({ targets: icone, scale: 5, duration: 250, ease: 'Back.easeOut' });
+      const icone = this.add.image(470, 260, iconeObjet(this, id)).setScale(0).setDepth(5);
+      await this.animer({ targets: icone, scale: 3.5, duration: 250, ease: 'Back.easeOut' });
       await this.animer({ targets: icone, alpha: 0, y: 230, duration: 400 });
       icone.destroy();
     }

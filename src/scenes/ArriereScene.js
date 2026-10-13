@@ -134,7 +134,7 @@ class ArriereScene extends Phaser.Scene {
     const G = this.G;
     const x = 330, y = SOL_ARRIERE + 50;
     const n = Object.values(G.cadeaux || {}).reduce((a, b) => a + b, 0);
-    Object.keys(G.cadeaux || {}).filter(id => G.cadeaux[id] > 0).slice(0, 4).forEach((id, i) => this.add.image(x - 27 + i * 18, y - 40 - (i % 2) * 5, id).setScale(2.4));
+    Object.keys(G.cadeaux || {}).filter(id => G.cadeaux[id] > 0).slice(0, 4).forEach((id, i) => this.add.image(x - 27 + i * 18, y - 40 - (i % 2) * 5, iconeObjet(this, id)).setScale(2));
     this.add.image(x, y + 6, 'panierHD').setOrigin(0.5, 1).setScale(2);
     const zone = this.add.rectangle(x, y - 14, 100, 60, 0xffffff, 0).setInteractive({ useHandCursor: true });
     this.add.text(x, y + 22, n ? `🎁 Les cadeaux (${n})` : '🎁 Panier vide', style(12, '#f3e6c8', { fontStyle: 'bold', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5);
@@ -175,7 +175,7 @@ class ArriereScene extends Phaser.Scene {
     this.cameras.main.fadeOut(400);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.stop('Comptoir');
-      this.scene.start('Nuit');
+      this.scene.start('Nuit', { matin: false });
     });
   }
 

@@ -483,12 +483,16 @@ function nomObjet(id) {
 
 // Ce que vend chaque marchand ce matin. Les prix varient d'un étal à l'autre :
 // ça vaut le coup de comparer. Les amis d'un marchand ont droit à plus de quantité.
+// Une marchandise ne peut pas manquer deux jours de suite : ce qui était absent ou épuisé
+// hier chez un marchand revient forcément aujourd'hui.
 function etalsDuJour(G) {
   const etals = {};
+  const hier = G.etals || {};
   for (const [cle, m] of Object.entries(MARCHANDS)) {
     const amis = niveauRelation(G, m.nom).index >= 5 ? 2 : 0;
     const rares = m.objets.filter(id => !m.toujours.includes(id));
-    const presents = rares.filter(() => Math.random() < 0.6);
+    const manquaient = rares.filter(id => !hier[cle] || !hier[cle][id] || hier[cle][id].qte <= 0);
+    const presents = rares.filter(id => manquaient.includes(id) || Math.random() < 0.6);
     if (rares.length && !presents.length) presents.push(auHasard(rares));
     etals[cle] = {};
     for (const id of m.objets) {
@@ -496,7 +500,7 @@ function etalsDuJour(G) {
       if (!toujours && !presents.includes(id)) continue;
       etals[cle][id] = {
         prix: Math.max(1, Math.round(prixDeBase(id) * Phaser.Math.FloatBetween(0.8, 1.25))),
-        qte: (toujours ? hasard(4, 9) : hasard(1, 4)) + amis,
+        qte: (toujours ? hasard(4, 9) : hasard(1, 4)) + amis + (manquaient.includes(id) ? 1 : 0),
       };
     }
   }

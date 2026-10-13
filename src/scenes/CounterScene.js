@@ -393,7 +393,7 @@ class CounterScene extends Phaser.Scene {
       ligne.on('pointerover', () => ligne.setFillStyle(0x3a5a2a));
       ligne.on('pointerout', () => ligne.setFillStyle(0x2a3a1e));
       ligne.on('pointerdown', () => this.offrir(id));
-      c.add([ligne, this.add.image(316, y, id).setScale(2.5),
+      c.add([ligne, this.add.image(316, y, iconeObjet(this, id)).setScale(2),
         this.add.text(334, y, `${CADEAUX[id].nom} x ${this.G.cadeaux[id]}`, style(12, '#f3f0d0', { fontStyle: 'bold' })).setOrigin(0, 0.5)]);
     });
   }
@@ -1260,7 +1260,7 @@ class CounterScene extends Phaser.Scene {
   finDeJournee() {
     this.majFileAttente();
     this.majCommande();
-    this.bouton('Fermer le comptoir', () => { this.bouton('...', null); this.baisserStore(() => this.scene.start('Nuit')); });
+    this.bouton('Fermer le comptoir', () => { this.bouton('...', null); this.baisserStore(() => this.scene.start('Nuit', { matin: false })); });
     this.dire('Le soleil se couche sur la Comté. Plus personne ne fait la queue.', 'Fin de la journée');
     this.tweens.add({ targets: this.cielNuit, alpha: 1, duration: 3000 });
     this.tweens.add({ targets: this.voile, fillAlpha: 0.25, duration: 3000 });

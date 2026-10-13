@@ -22,27 +22,46 @@ class DodoScene extends Cinematique {
   // --- Le décor ---
 
   dessinerChambre() {
-    // Le ciel derrière la fenêtre : la nuit par-dessus le jour, qu'on effacera à l'aube.
+    // Le ciel derrière la fenêtre : un vrai paysage, de jour et de nuit (étoiles, collines dans
+    // l'ombre, pleine lune), qu'on fera passer de l'un à l'autre à l'aube.
     const fx = 640, fy = 60, fw = 200, fh = 150;
-    this.add.rectangle(fx + fw / 2, fy + fh / 2, fw, fh, 0x8ac8f0);
-    this.soleil = this.add.circle(fx + 140, fy + fh + 30, 22, 0xfff0a0);
+    creerFenetreHD(this);
+    const ciel = moment => {
+      const cle = paysageHD(this, fw, fh, 'comte', moment, { sansAstre: true });
+      const tex = this.textures.get(cle).getSourceImage();
+      return this.add.image(fx, fy, cle).setOrigin(0).setScale(fw / tex.width, fh / tex.height);
+    };
+    ciel(0);
+    this.soleil = this.add.image(fx + 140, fy + fh + 30, 'soleilHD').setScale(1.4);
+    this.tweens.add({ targets: this.soleil, angle: 360, duration: 30000, repeat: -1 });
     this.cielNuit = this.add.container(0, 0);
-    this.cielNuit.add(this.add.rectangle(fx + fw / 2, fy + fh / 2, fw, fh, 0x0e1430));
-    for (let i = 0; i < 14; i++) {
-      const etoile = this.add.rectangle(fx + 10 + Math.random() * (fw - 20), fy + 8 + Math.random() * (fh - 30), 2, 2, 0xf3f0d0);
-      this.tweens.add({ targets: etoile, alpha: 0.3, duration: 400 + Math.random() * 900, yoyo: true, repeat: -1 });
+    this.cielNuit.add(ciel(0.95));
+    for (let i = 0; i < 10; i++) {
+      const etoile = this.add.image(fx + 10 + Math.random() * (fw - 20), fy + 8 + Math.random() * (fh * 0.45), 'eclat').setScale(0.7);
+      this.tweens.add({ targets: etoile, alpha: 0.2, scale: 0.4, duration: 500 + Math.random() * 900, yoyo: true, repeat: -1 });
       this.cielNuit.add(etoile);
     }
-    this.lune = this.add.circle(fx + 50, fy + 45, 18, 0xf3ecc8);
-    this.cielNuit.add([this.lune, this.add.circle(fx + 58, fy + 40, 15, 0x0e1430)]);
-    // L'aube : une lueur orangée entre la nuit et le jour.
+    creerHalo(this);
+    const lueur = this.add.image(fx + 52, fy + 42, 'halo').setScale(0.9).setTint(0xc8d8ff).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD);
+    this.lune = this.add.image(fx + 52, fy + 42, 'luneHD').setScale(1.3);
+    this.cielNuit.add([lueur, this.lune]);
+    this.tweens.add({ targets: lueur, alpha: 0.3, duration: 1800, yoyo: true, repeat: -1 });
+    // L'aube : le paysage rose orangé du lever du soleil, entre la nuit et le jour.
     this.aube = this.add.rectangle(fx + fw / 2, fy + fh / 2, fw, fh, 0xf0a060, 0);
+    this.cielAube = ciel('aube').setAlpha(0);
 
     // Les murs à colombages, avec le trou de la fenêtre (le ciel est derrière), et le plancher.
     creerInterieurHD(this);
     this.add.image(0, 0, murInterieur(this, 'murChambre', { h: SOL_CHAMBRE / 2, poteaux: [96, 400], graine: 320,
       fenetre: { x: fx / 2, y: fy / 2, l: fw / 2, h: fh / 2 } })).setOrigin(0).setScale(2).setDepth(1).setTint(0x9a7c60);
     this.add.image(0, SOL_CHAMBRE, plancher(this, 'plancherChambre', { h: (540 - SOL_CHAMBRE) / 2, graine: 420 })).setOrigin(0).setScale(2).setDepth(1).setTint(0xc8a888);
+    // Le cadre de la fenêtre, ses reflets, et les rideaux de part et d'autre
+    this.add.image(fx - 16, fy - 16, 'cadreFenetreHD').setOrigin(0).setScale(2).setDepth(1.1).setDisplaySize(fw + 32, fh + 44);
+    const reflets = this.add.graphics().setDepth(1.05);
+    reflets.fillStyle(0xffffff, 0.08);
+    for (const [px, py] of [[fx, fy], [fx + fw / 2, fy], [fx, fy + fh / 2], [fx + fw / 2, fy + fh / 2]]) reflets.fillTriangle(px + 8, py + 6, px + 30, py + 6, px + 8, py + 34);
+    this.add.image(fx - 34, fy - 18, 'rideauHD').setOrigin(0, 0).setScale(2).setDepth(1.2);
+    this.add.image(fx + fw + 34, fy - 18, 'rideauHD').setOrigin(0, 0).setScale(-2, 2).setDepth(1.2);
     vignette(this, 0.85, 1.5);
     // Le clair de lune qui entre par la fenêtre
     this.clairDeLune = this.add.image(fx + fw / 2, fy + fh / 2 + 40, 'halo').setScale(3.4, 2.6).setTint(0x6a8ad8).setAlpha(0.18)
@@ -106,7 +125,7 @@ class DodoScene extends Cinematique {
     await this.attendre(800);
     this.tweens.add({ targets: this.cielNuit, alpha: 0, duration: 1800 });
     this.tweens.add({ targets: this.clairDeLune, alpha: 0, duration: 1800 });
-    this.tweens.add({ targets: this.aube, fillAlpha: 0.6, duration: 1000, yoyo: true, hold: 300 });
+    this.tweens.add({ targets: this.cielAube, alpha: 1, duration: 1000, yoyo: true, hold: 700 });
     this.tweens.add({ targets: this.soleil, y: this.soleil.y - 110, duration: 2200, ease: 'Sine.easeOut' });
     await this.animer({ targets: this.noir, fillAlpha: 0, duration: 2000 });
     if (this.zzz) this.zzz.remove();

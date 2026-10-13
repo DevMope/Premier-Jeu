@@ -34,6 +34,87 @@ function trait(t, mat, x0, y0, x1, y1, ep = 1, { decalage = 0, bord = true } = {
 }
 
 const DESSINS_OBJETS = {
+  // --- Les cadeaux du Bazar ---
+  // Un pot de miel en terre, couvercle de tissu noué, une coulure dorée
+  miel(t) {
+    t.rampes.terre = rampe(0xb06a3a); t.rampes.miel = rampe(0xe8a020);
+    t.forme('terre', (x, y) => (y >= 5 && y <= 15 && Math.abs(x + 0.5 - 8) < 5.5 - Math.abs(y - 10) * 0.12 ? [(x + 0.5 - 8) / 6, (y - 10) / 10, 0.85] : null));
+    t.forme('tissuRouge', (x, y) => (y >= 2 && y <= 5 && Math.abs(x + 0.5 - 8) < 6 - (y === 2 ? 2 : 0) ? [0, -0.6, 0.8] : null), { decalage: 0.2 });
+    t.poser(8, 1, 'chanvre', 4); t.poser(7, 1, 'chanvre', 3);
+    for (const [x, y] of [[4, 6], [4, 7], [4, 8], [5, 6]]) t.poser(x, y, 'miel', 5);
+    t.forme('parchemin', (x, y) => (y >= 9 && y <= 12 && x >= 5 && x <= 10 ? [0, 0, 1] : null), { decalage: 0.3 }); // l'étiquette
+    t.poser(7, 10, 'miel', 2); t.poser(8, 11, 'miel', 2);
+  },
+  // Une blague à tabac de cuir et une pipe de bois
+  tabac(t) {
+    t.forme('cuir', ellipsoide(6, 10, 5, 4.5));
+    t.forme('cuir', (x, y) => (y >= 4 && y <= 6 && Math.abs(x + 0.5 - 6) < 2 ? [0, -0.5, 0.8] : null), { decalage: 0.3 });
+    for (let x = 3; x <= 9; x++) t.poser(x, 7, 'chanvre', 3);
+    trait(t, 'chene', 9, 13, 15, 8, 0.6, { decalage: 0.3 });
+    t.forme('chene', ellipsoide(14, 7, 1.8, 2.4), { decalage: 0.2 });
+    t.poser(14, 5, 'encre', 0);
+  },
+  // Une broche d'or ciselée, sertie d'une pierre bleue
+  broche(t) {
+    t.rampes.saphir = rampe(0x2a5ac8);
+    t.forme('or', ellipsoide(8, 8, 6, 6));
+    for (let a = 0; a < 6.28; a += 0.5) t.poser(Math.round(8 + Math.cos(a) * 5), Math.round(8 + Math.sin(a) * 5), 'or', 5 - (Math.round(a * 2) % 2) * 3);
+    t.forme('saphir', ellipsoide(8, 8, 2.8, 2.8), { decalage: 0.4 });
+    t.poser(7, 7, 'verre', 5);
+  },
+  // Un vieux grimoire relié de cuir, fermoir doré, pages jaunies
+  livre(t) {
+    t.forme('parchemin', (x, y) => (x >= 3 && x <= 13 && y >= 4 && y <= 14 ? [0.4, 0, 0.8] : null), { decalage: -0.3 });
+    t.forme('tissuRouge', (x, y) => (x >= 2 && x <= 12 && y >= 3 && y <= 13 ? [(x - 7) / 12, (y - 8) / 12, 0.9] : null));
+    for (let y = 3; y <= 13; y++) t.poser(2, y, 'tissuRouge', 1);
+    for (let x = 4; x <= 10; x++) { t.poser(x, 5, 'or', 4); t.poser(x, 11, 'or', 3); }
+    t.forme('or', ellipsoide(7, 8, 1.6, 1.6), { decalage: 0.4 });
+    for (let y = 7; y <= 9; y++) t.poser(13, y, 'or', 4);
+  },
+  // Un fer à cheval porte-bonheur, et ses clous
+  ferACheval(t) {
+    t.forme('metal', (x, y) => {
+      const dx = x + 0.5 - 8, dy = y + 0.5 - 7, r = Math.hypot(dx, dy);
+      return r > 3 && r < 6.2 && (dy < 3 || Math.abs(dx) > 3) && y <= 14 ? [dx / 6, dy / 6, 0.7] : null;
+    });
+    for (const [x, y] of [[3, 6], [4, 3], [12, 6], [11, 3], [3, 10], [12, 10]]) t.poser(x, y, 'encre', 1);
+  },
+  // Une bouteille de vin rouge, bouchon de cire, étiquette
+  vin(t) {
+    t.rampes.bouteille = rampe(0x2a4a2a);
+    t.forme('bouteille', (x, y) => {
+      const l = y < 6 ? 1.6 : y < 8 ? 1.6 + (y - 6) * 1.2 : 4;
+      return y >= 2 && y <= 15 && Math.abs(x + 0.5 - 8) < l ? [(x + 0.5 - 8) / 4, 0, 0.85] : null;
+    });
+    for (let y = 1; y <= 3; y++) for (let x = 7; x <= 8; x++) t.poser(x, y, 'tissuRouge', 3);
+    t.forme('parchemin', (x, y) => (y >= 9 && y <= 12 && Math.abs(x + 0.5 - 8) < 3.3 ? [0, 0, 1] : null), { decalage: 0.2 });
+    t.poser(8, 10, 'tissuRouge', 2); t.poser(7, 11, 'tissuRouge', 2);
+    for (let y = 8; y <= 13; y++) t.poser(6, y, 'bouteille', 5);
+  },
+  // Un gâteau aux mûres, avec sa part de crème
+  gateau(t) {
+    t.rampes.mure = rampe(0x5a1a4a);
+    t.forme('pain', (x, y) => (y >= 8 && y <= 14 && x >= 2 && x <= 14 ? [(x - 8) / 12, (y - 11) / 10, 0.9] : null));
+    t.forme('lin', (x, y) => (y >= 6 && y <= 8 && x >= 2 && x <= 14 ? [0, -0.6, 0.8] : null), { decalage: 0.5 });
+    for (const x of [3, 6, 9, 12]) t.poser(x, 9, 'lin', 5);
+    for (const [x, y] of [[4, 5], [8, 4], [11, 5], [6, 5]]) t.forme('mure', ellipsoide(x, y, 1.4, 1.4), { decalage: 0.3 });
+    for (let x = 2; x <= 14; x++) t.poser(x, 11, 'mure', 2);
+  },
+  // --- Les matériaux de l'atelier ---
+  // Un lingot de fer
+  fer(t) {
+    t.forme('metal', (x, y) => (y >= 7 && y <= 13 && x >= 2 + (13 - y) * 0.3 && x <= 14 - (13 - y) * 0.3 ? [0, (y - 10) / 8, 0.9] : null), { decalage: -0.5 });
+    for (let x = 4; x <= 12; x++) t.poser(x, 7, 'metal', 5);
+    t.forme('metal', (x, y) => (y >= 4 && y <= 8 && x >= 4 + (8 - y) * 0.3 && x <= 12 - (8 - y) * 0.3 ? [0, -0.6, 0.8] : null), { decalage: -0.2 });
+  },
+  // Un rouleau de cuir, lié d'une ficelle
+  cuir(t) {
+    t.forme('cuir', (x, y) => (y >= 5 && y <= 12 && x >= 3 && x <= 13 ? [0, (y - 8.5) / 5, 0.8] : null));
+    t.forme('cuir', ellipsoide(13, 8.5, 2, 3.7), { decalage: 0.4 });
+    t.poser(13, 8, 'cuir', 1); t.poser(13, 9, 'cuir', 1);
+    for (let y = 5; y <= 12; y++) { t.poser(6, y, 'chanvre', 4); t.poser(10, y, 'chanvre', 4); }
+  },
+
   // Une miche de pain croûtée, et un morceau de fromage
   ration(t) {
     t.forme('fromage', (x, y) => (x >= 8 && x <= 15 && y <= 14 && y >= 14 - (x - 8) * 0.85 ? [0.3, -0.3, 0.8] : null));

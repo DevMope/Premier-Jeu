@@ -6,6 +6,9 @@ class NightScene extends Phaser.Scene {
 
   init(data) {
     this.matin = !!(data && data.matin);
+    // Phaser garde les données d'un démarrage à l'autre : sans ce ménage, le soir du jour 2
+    // (lancé sans données) se croyait encore « le matin » — plus de bouton pour aller dormir.
+    this.sys.settings.data = {};
   }
 
   create() {

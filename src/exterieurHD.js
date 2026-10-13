@@ -48,11 +48,12 @@ const RELIEFS = {
 
 // Peint un paysage à la taille demandée (à l'écran). Renvoie la clé de la texture.
 // `nuit` : de 0 (plein jour) à 1 (nuit noire), ou 'aube' pour le lever du soleil.
-function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0) {
+// `sansAstre` : sans soleil ni lune (quand on les dessine à part, plus détaillés).
+function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAstre = false } = {}) {
   const L = Math.round(largeur / 2), H = Math.round(hauteur / 2);
   const aube = nuit === 'aube';
   if (aube) nuit = 0;
-  const cle = `paysage_${biome}_${L}x${H}_${aube ? 'aube' : Math.round(nuit * 10)}`;
+  const cle = `paysage_${biome}_${L}x${H}_${aube ? 'aube' : Math.round(nuit * 10)}${sansAstre ? '_sans' : ''}`;
   if (scene.textures.exists(cle)) return cle;
   const b = BIOMES[biome] || BIOMES.comte, r = RELIEFS[biome] || {};
   const graine = biome.length * 31;
@@ -79,7 +80,7 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0) {
   // (à l'aube, un gros soleil rouge orangé qui se lève à l'est, juste au-dessus des collines)
   const sx = aube ? L * 0.22 : L * 0.78, sy = aube ? H * 0.5 : H * (0.2 + nuit * 0.3), sr = Math.max(6, H * (aube ? 0.08 : 0.06));
   const halo = aube ? 3.6 : 2.2, astre = aube ? 0xffc870 : nuit > 0.6 ? 0xf3ecc8 : soir(b.soleil);
-  for (let y = Math.floor(sy - sr * 4); y < sy + sr * 4; y++) for (let x = Math.floor(sx - sr * 4); x < sx + sr * 4; x++) {
+  if (!sansAstre) for (let y = Math.floor(sy - sr * 4); y < sy + sr * 4; y++) for (let x = Math.floor(sx - sr * 4); x < sx + sr * 4; x++) {
     const d = Math.hypot(x - sx, y - sy);
     if (d < sr) poser(x, y, astre);
     else if (d < sr * halo && tramer(x, y, 1 - (d - sr) / (sr * (halo - 1)), 3) > 0 && y >= 0 && y < H) px[y * L + x] = melangeCouleur(px[y * L + x], aube ? 0xffd890 : soir(b.soleil), 0.35);
@@ -740,6 +741,15 @@ function riviereHD(scene) {
 
 function creerLieuxMarcheHD(scene) {
   if (scene.textures.exists('estradeEncheres')) return;
+  // Une cagette de bois, pour présenter la marchandise sur les étals
+  {
+    const t = toileDecor(20, 9);
+    planche(t, 0, 0, 20, 4, 'chene', { graine: 960, noeuds: 1 });
+    planche(t, 0, 4, 20, 5, 'chene', { graine: 961, noeuds: 1 });
+    for (let x = 0; x < 20; x++) { t.poser(x, 0, 'chene', 5); t.poser(x, 4, 'cheneSombre', 1); }
+    for (const x of [0, 19]) for (let y = 0; y < 9; y++) t.poser(x, y, 'cheneSombre', 2);
+    t.contour(); t.texture(scene, 'cagetteHD');
+  }
   // L'estrade des enchères : plancher, jupe de velours rouge frangée d'or, marches, portique à bannière
   {
     // Le portique est haut : la bannière flotte au-dessus de la tête du commissaire

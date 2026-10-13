@@ -261,11 +261,25 @@ class MarcheScene extends Phaser.Scene {
     this.add.image(x, 244, etal).setOrigin(0.5, 1).setScale(2);
     imageCorps(this, x, 205, personne, 5);
     this.add.image(x, 244, etal).setOrigin(0.5, 1).setScale(2).setCrop(0, 56, 88, 26);
-    icones.forEach((id, i) => this.add.image(x - 54 + i * 36, 192, id).setOrigin(0.5, 1).setScale(2.4));
+    this.etalage(x, icones.map(id => [id, 2]));
     this.etiquettesRue.push(this.add.text(x, 254, nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5),
       this.add.text(x, 272, metier, style(11, '#fff4dc', { stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5));
     this.add.rectangle(x, 160, 170, 140, 0xffffff, 0).setInteractive({ useHandCursor: true }).on('pointerdown', action);
     this.grouper(avant, x);
+  }
+
+  // La marchandise posée sur la table : une cagette par article, avec quelques exemplaires
+  // empilés dedans (plus il y en a en stock, plus la pile est haute), un peu de travers.
+  etalage(x, articles) {
+    const liste = articles.filter(([, n]) => n > 0).slice(0, 4);
+    const pas = liste.length > 3 ? 34 : 42;
+    liste.forEach(([id, n], i) => {
+      const cx = x + (i - (liste.length - 1) / 2) * pas;
+      for (let k = 0; k < Math.min(3, Math.ceil(n / 2)); k++) {
+        this.add.image(cx - 6 + k * 6, 186 - (k % 2) * 4, iconeObjet(this, id)).setOrigin(0.5, 1).setScale(1.7).setAngle((k - 1) * 8);
+      }
+      this.add.image(cx, 194, 'cagetteHD').setOrigin(0.5, 1).setScale(1.6);
+    });
   }
 
   // Un étal : auvent rayé aux couleurs du marchand, comptoir, marchand derrière.
@@ -276,7 +290,7 @@ class MarcheScene extends Phaser.Scene {
     this.add.image(x, 244, etal).setOrigin(0.5, 1).setScale(2);
     imageCorps(this, x, 205, { nom: m.nom, race: m.race, feminin: /Mère|Hilda|Rosalie/.test(m.nom), niveau: 'aguerri' }, 5);
     this.add.image(x, 244, etal).setOrigin(0.5, 1).setScale(2).setCrop(0, 56, 88, 26);
-    Object.keys(this.G.etals[cle] || {}).slice(0, 4).forEach((id, i) => this.add.image(x - 54 + i * 36, 192, iconeObjet(this, id)).setOrigin(0.5, 1).setScale(2));
+    this.etalage(x, Object.entries(this.G.etals[cle] || {}).map(([id, o]) => [id, o.qte]));
     this.etiquettesRue.push(this.add.text(x, 254, m.nom, style(13, couleurNom(this.G, m.nom, true), { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5),
       this.add.text(x, 272, m.metier, style(11, '#fff4dc', { stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5));
     const zone = this.add.rectangle(x, 160, 170, 140, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -380,7 +394,7 @@ class MarcheScene extends Phaser.Scene {
     ids.forEach((id, i) => {
       const y = 104 + i * 22;
       const manque = toutes[id] - G.stock[id];
-      c.add(this.add.image(x0 + 10, y, id).setScale(2.5));
+      c.add(this.add.image(x0 + 10, y, iconeObjet(this, id)).setScale(2));
       c.add(this.add.text(x0 + 28, y, ITEMS[id].nom, style(13, '#3b2410')).setOrigin(0, 0.5));
       c.add(this.add.text(x0 + 175, y, String(aujourdhui[id] || 0), style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
       c.add(this.add.text(x0 + 228, y, String(toutes[id]), style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
@@ -406,7 +420,7 @@ class MarcheScene extends Phaser.Scene {
       const x = 40 + (i % 2) * 460;
       const y = 352 + Math.floor(i / 2) * 34;
       const o = offre[id];
-      c.add(this.add.image(x + 12, y, id).setScale(3));
+      c.add(this.add.image(x + 12, y, iconeObjet(this, id)).setScale(2.4));
       c.add(this.add.text(x + 34, y, nomObjet(id), style(14, '#3b2410')).setOrigin(0, 0.5));
       const enStock = id in MATERIAUX ? G.materiaux[id] : G.stock[id];
       c.add(this.add.text(x + 150, y, `tu as ${enStock}`, style(12, '#6b4a2a')).setOrigin(0, 0.5));
@@ -523,7 +537,7 @@ class MarcheScene extends Phaser.Scene {
     Object.entries(CADEAUX).forEach(([id, cad], i) => {
       const x = 40 + (i % 2) * 460;
       const y = 372 + Math.floor(i / 2) * 26;
-      c.add(this.add.image(x, y, id).setScale(2.4));
+      c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(2));
       c.add(this.add.text(x + 20, y, `${cad.nom} · ${cad.prix} p.`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
       c.add(this.add.text(x + 280, y, `tu en as ${G.cadeaux[id] || 0}`, style(11, '#6b4a2a')).setOrigin(0, 0.5));
       this.bouton(c, x + 390, y, 70, 'Acheter', () => {
