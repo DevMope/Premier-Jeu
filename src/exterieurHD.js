@@ -727,3 +727,85 @@ function riviereHD(scene) {
   t.texture(scene, 'riviereHD');
   return 'riviereHD';
 }
+
+// --- Les lieux du marché : l'estrade des enchères, la table des jeux, l'estrade du crieur ---
+
+function creerLieuxMarcheHD(scene) {
+  if (scene.textures.exists('estradeEncheres')) return;
+  // L'estrade des enchères : plancher, jupe de velours rouge frangée d'or, marches, portique à bannière
+  {
+    // Le portique est haut : la bannière flotte au-dessus de la tête du commissaire
+    const D = 26, t = toileDecor(70, 46 + D);
+    for (const x of [6, 60]) planche(t, x, 0, 4, 28 + D, 'cheneSombre', { horizontale: false, graine: 800 + x });
+    planche(t, 4, 0, 62, 3, 'cheneSombre', { graine: 802 });
+    for (let y = 3; y < 15; y++) for (let x = 12; x < 58; x++) {
+      if (y > 12 && Math.abs(((x - 12) % 9) - 4) > (15 - y) * 2) continue;
+      t.poser(x, y, 'cuirRouge', 3 + (x < 14 ? 1 : 0) - (x > 55 ? 1 : 0) + ((x - 12) % 9 === 0 ? -1 : 0));
+    }
+    for (let x = 12; x < 58; x++) t.poser(x, 3, 'laiton', 4);
+    planche(t, 4, 28 + D, 62, 4, 'chene', { graine: 803, noeuds: 2 });
+    for (let x = 4; x < 66; x++) t.poser(x, 28 + D, 'chene', 5);
+    for (let y = 32 + D; y < 44 + D; y++) for (let x = 6; x < 64; x++) t.poser(x, y, 'cuirRouge', 2 + ((x >> 2) % 2) - (y > 41 + D ? 1 : 0));
+    for (let x = 6; x < 64; x++) { t.poser(x, 32 + D, 'laiton', 4); if (x % 2 === 0) t.poser(x, 44 + D, 'laiton', 3); }
+    for (let k = 0; k < 3; k++) planche(t, 0, 34 + D + k * 4, 6 - k, 4, 'chene', { graine: 804 + k }); // les marches
+    t.contour();
+    t.texture(scene, 'estradeEncheres');
+  }
+  // Le pupitre du commissaire-priseur, et son marteau
+  {
+    const t = toileDecor(16, 20);
+    planche(t, 4, 6, 8, 14, 'chene', { horizontale: false, graine: 810 });
+    planche(t, 0, 2, 16, 4, 'chene', { graine: 811 });
+    for (let x = 0; x < 16; x++) t.poser(x, 2, 'chene', 5);
+    for (let x = 9; x < 14; x++) t.poser(x, 0, 'chene', 2);
+    t.poser(13, 0, 'chene', 4); t.poser(13, 1, 'chene', 3);
+    t.contour();
+    t.texture(scene, 'pupitreHD');
+  }
+  // La table des jeux : un tapis vert, trois gobelets (le bonneteau), deux dés, deux tabourets
+  {
+    const t = toileDecor(48, 26);
+    t.rampes.feutre = [0x0e2a18, 0x1a4428, 0x245a36, 0x2f7244, 0x48905a, 0x70b07a];
+    for (const x of [6, 42]) { t.forme('chene', ellipsoide(x, 19, 4.5, 1.8), { decalage: 0.4 }); planche(t, x - 1, 20, 3, 6, 'chene', { horizontale: false, graine: 812 + x }); }
+    planche(t, 22, 14, 4, 12, 'cheneSombre', { horizontale: false, graine: 814 });
+    t.forme('chene', ellipsoide(24, 13, 16, 4), { decalage: -0.2 });
+    t.forme('feutre', ellipsoide(24, 12, 14.5, 3.2), { bord: false });
+    for (const x of [16, 23, 30]) t.forme('cuir', (xx, y) => (y >= 5 && y <= 11 && Math.abs(xx + 0.5 - x) <= 1.6 + (y - 5) * 0.25 ? [(xx + 0.5 - x) / 3, 0, 0.9] : null));
+    for (const [x, y] of [[35, 11], [12, 12]]) { for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) t.poser(x + a, y + b - 2, 'lin', 5 - (a === 2 || b === 2 ? 1 : 0)); t.poser(x + 1, y - 1, 'encre', 0); }
+    t.contour();
+    t.texture(scene, 'tableJeux');
+  }
+  // L'auvent du coin des jeux : toile violette à franges, poteaux jusqu'au sol, une lanterne
+  {
+    const L = 96, H = 92, t = toileDecor(L, H);
+    t.rampes.auvent = rampe(0x5a3a8a);
+    for (const x of [3, L - 7]) planche(t, x, 12, 4, H - 12, 'chene', { horizontale: false, graine: 830 + x });
+    for (let y = 0; y < 20; y++) for (let x = 0; x < L; x++) {
+      const bande = Math.floor(x / 12) % 2;
+      if (y >= 16 && Math.abs((x % 12) - 6) > (20 - y) * 2) continue;
+      t.poser(x, y, bande ? 'laiton' : 'auvent', bande ? 2 + (y < 2 ? 1 : 0) : 3 + (y < 2 ? 1 : 0) - (y > 13 ? 1 : 0));
+    }
+    // La lanterne accrochée sous l'auvent
+    for (let y = 20; y < 25; y++) t.poser(16, y, 'fer', 1);
+    t.forme('laiton', ellipsoide(16, 28, 2.6, 3.4), { decalage: 0.6 });
+    t.contour();
+    t.texture(scene, 'auventJeux');
+  }
+  // L'estrade du crieur : marches, rambarde, et la cloche qu'il fait sonner
+  {
+    const t = toileDecor(52, 52);
+    planche(t, 6, 30, 44, 4, 'chene', { graine: 820, noeuds: 1 });
+    for (let x = 6; x < 50; x++) t.poser(x, 30, 'chene', 5);
+    planche(t, 8, 34, 40, 18, 'cheneSombre', { graine: 821, noeuds: 2 });
+    for (let k = 0; k < 3; k++) planche(t, k * 2, 38 + k * 4, 8 - k * 2, 4, 'chene', { graine: 822 + k });
+    for (const x of [8, 26, 46]) planche(t, x, 18, 3, 12, 'chene', { horizontale: false, graine: 825 + x });
+    planche(t, 8, 18, 41, 3, 'chene', { graine: 828 });
+    // Le poteau et la cloche
+    planche(t, 46, 0, 4, 30, 'cheneSombre', { horizontale: false, graine: 829 });
+    for (let x = 38; x < 50; x++) t.poser(x, 2, 'cheneSombre', 3);
+    t.forme('laiton', (x, y) => (y >= 4 && y <= 12 && Math.abs(x + 0.5 - 40) <= 1.5 + (y - 4) * 0.45 ? [(x + 0.5 - 40) / 5, (y - 8) / 8, 0.8] : null), { decalage: 0.3 });
+    t.poser(40, 13, 'fer', 2);
+    t.contour();
+    t.texture(scene, 'estradeCrieur');
+  }
+}
