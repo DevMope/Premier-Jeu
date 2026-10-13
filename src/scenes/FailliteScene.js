@@ -4,6 +4,7 @@ class FailliteScene extends Cinematique {
   constructor() { super('Faillite'); }
 
   create() {
+    this.fini = false; // (la scène peut être rejouée dans la même session)
     const G = this.G = window.GAME;
     this.cameras.main.fadeIn(600);
     const g = this.add.graphics();

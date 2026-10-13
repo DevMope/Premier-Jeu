@@ -9,6 +9,10 @@ class StoryScene extends Cinematique {
 
   create() {
     this.G = window.GAME;
+    // (la scène est réutilisée d'un récit à l'autre : on remet la vitesse normale)
+    this.rapide = false;
+    this.tweens.timeScale = 1;
+    this.time.timeScale = 1;
     this.parti = this.G.partis.find(p => p.voyageur.id === this.idParti);
     const v = this.parti.voyageur;
     this.e = v.feminin ? 'e' : '';
@@ -29,11 +33,19 @@ class StoryScene extends Cinematique {
     // Ses cœurs, plus ceux gagnés grâce aux soins donnés en plus.
     const pvDepart = (this.parti.resultat && this.parti.resultat.pvDepart) || v.pv;
     for (let i = 0; i < pvDepart; i++) {
-      this.coeurs.push(this.add.image(30 + i * 34, 30, 'hd_coeur').setScale(2));
+      this.coeurs.push(this.add.image(30 + i * 34, 46, 'hd_coeur').setScale(2));
     }
     this.titre = this.add.text(480, 26, '', style(20, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
 
     this.creerBoiteTexte();
+    // Passer : le récit défile en accéléré jusqu'à la fin (les choix de la fin restent à faire).
+    this.boutonPasser(() => {
+      if (this.rapide) return;
+      this.rapide = true;
+      this.tweens.timeScale = 6;
+      this.time.timeScale = 6;
+      this.events.emit('passer');
+    });
 
     this.raconter();
   }
@@ -178,6 +190,10 @@ class StoryScene extends Cinematique {
   }
 
   async conclure() {
+    // La fin du récit se lit à vitesse normale.
+    this.rapide = false;
+    this.tweens.timeScale = 1;
+    this.time.timeScale = 1;
     const v = this.parti.voyageur;
     const r = this.parti.resultat;
     if (this.meteo) { this.meteo.remove(); this.meteo = null; }

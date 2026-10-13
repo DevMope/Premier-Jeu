@@ -171,8 +171,10 @@ class ArriereScene extends Phaser.Scene {
 
   porte() {
     const c = this.comptoir;
-    if (c.voyageur || this.G.file.length) return this.message('Pas le temps de dormir : des clients attendent !');
+    // (quelqu'un au comptoir : un client, un retour de mission, une famille, un carnet, la Faucheuse...)
+    if (c.voyageur || c.entree || this.G.file.length) return this.message("Pas le temps de dormir : quelqu'un t'attend au comptoir !");
     // La journée est finie : on ferme le comptoir et on rentre se reposer.
+    if (enTransition(this)) return;
     this.cameras.main.fadeOut(400);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.stop('Comptoir');

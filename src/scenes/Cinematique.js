@@ -26,13 +26,14 @@ class Cinematique extends Phaser.Scene {
   }
 
   attendreClic() {
+    // En accéléré (« Passer »), on n'attend pas les clics : l'histoire défile toute seule.
+    if (this.rapide) return this.attendre(150);
     return new Promise(resoudre => {
       this.time.delayedCall(200, () => {
         this.indice.setVisible(true);
-        this.input.once('pointerdown', () => {
-          this.indice.setVisible(false);
-          resoudre();
-        });
+        const suite = () => { this.events.off('passer', suite); this.input.off('pointerdown', suite); this.indice.setVisible(false); resoudre(); };
+        this.input.once('pointerdown', suite);
+        this.events.once('passer', suite);
       });
     });
   }
@@ -70,6 +71,7 @@ class Cinematique extends Phaser.Scene {
   boutonPasser(action) {
     const t = this.add.text(940, 20, 'Passer ▶▶', style(15, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 4 } }))
       .setOrigin(1, 0).setDepth(20).setScrollFactor(0).setInteractive({ useHandCursor: true });
-    t.on('pointerdown', pointer => { pointer.event.stopPropagation(); action(); });
+    // (le 4e argument est l'événement de Phaser : l'arrêter évite que ce clic fasse aussi avancer l'histoire)
+    t.on('pointerdown', (pointer, x, y, evenement) => { evenement.stopPropagation(); action(); });
   }
 }

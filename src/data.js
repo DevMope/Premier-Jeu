@@ -102,7 +102,7 @@ const REFUS_CLIENT = 0.5;
 // La Main Noire (`mal`) ne prête qu'à ceux qui ont choisi le camp du mal (plus tard dans le jeu).
 const PRETS = [
   // Cinq prêts de la Banque Centrale Goyenne : il faut de plus en plus de réputation entre chacun.
-  { id: 'petit', preteur: 'Banque Centrale Goyenne', nom: 'Petit prêt', somme: 60, taux: 0.15, jours: 5, reputation: 0 },
+  { id: 'petit', preteur: 'Banque Centrale Goyenne', nom: 'Petit prêt', somme: 60, taux: 0.15, jours: 5, reputation: -Infinity }, // le prêt de secours : toujours possible
   { id: 'artisan', preteur: 'Banque Centrale Goyenne', nom: "Prêt d'artisan", somme: 120, taux: 0.12, jours: 6, reputation: 3 },
   { id: 'marchand', preteur: 'Banque Centrale Goyenne', nom: 'Prêt marchand', somme: 220, taux: 0.09, jours: 8, reputation: 7 },
   { id: 'grand', preteur: 'Banque Centrale Goyenne', nom: 'Grand prêt', somme: 400, taux: 0.06, jours: 10, reputation: 12 },
@@ -336,6 +336,21 @@ const NOMS = {
   nain: [['Brunhild Martelor', true], ['Borin Pied-de-Roc', false], ['Helga Forgeterre', true], ['Gromli Tranchepierre', false]],
   elfe: [['Faelor Ventlune', false], ['Sylwen Rosée', true], ['Aerin Haut-Chêne', false], ['Lindë Brisargent', true]],
   magicienne: [['Esmée Brume-Étoile', true], ['Ysolde Cendrecœur', true], ['Céleste Mille-Runes', true]],
+};
+
+// Quand les noms ci-dessus sont tous pris (beaucoup de clients, de longues missions), on en
+// compose d'autres : un prénom et un nom de famille du même peuple.
+const NOMS_COMPOSES = {
+  humain: { m: ['Bertrand', 'Guillaume', 'Thibaut', 'Renaud', 'Arnaud', 'Gauvain'], f: ['Isabeau', 'Margot', 'Clémence', 'Aude', 'Blanche', 'Ysabelle'],
+    familles: ['Desmarais', 'Hautval', 'Combebrune', 'Lorvent', 'Piquemont', 'Verrière'] },
+  hobbit: { m: ['Pim', 'Bartho', 'Odo', 'Fosco', 'Pépin'], f: ['Daisy', 'Primula', 'Myrtille', 'Pervenche', 'Capucine'],
+    familles: ['Sous-Colline', 'Boisfleuri', 'Pied-Léger', 'Tonnelier', 'Fougerac'] },
+  nain: { m: ['Balgor', 'Durmik', 'Korvin', 'Thrandur', 'Bofur'], f: ['Hilde', 'Dagny', 'Runa', 'Sigrun', 'Ingrid'],
+    familles: ["Marteau-d'Or", 'Barbe-Grise', 'Forge-Ardente', 'Pierre-Fendue', 'Poing-de-Fer'] },
+  elfe: { m: ['Caelith', 'Aranor', 'Thalion', 'Ilvar', 'Erendis'], f: ['Naëlle', 'Elwyn', 'Sariel', 'Lyra', 'Ithil'],
+    familles: ['Feuillargent', "Chant-d'Aube", 'Ventclair', 'Étoile-Pâle', 'Rive-Lune'] },
+  magicienne: { m: [], f: ['Morgane', 'Albane', 'Sélène', 'Ondine', 'Iris', 'Mélusine'],
+    familles: ["Brume-d'Opale", 'Cent-Sorts', 'Lune-Pâle', "Plume-d'Encre", 'Flamme-Bleue'] },
 };
 
 // La première journée est écrite à la main.
@@ -581,7 +596,7 @@ const DECORATIONS = {
   trophee: { nom: 'Trophée de loup', effet: 'Impressionne les passants : plus de clients chaque jour.' },
   lanterne: { nom: 'Lanterne enchantée', effet: 'Porte chance : +10 % sur les parts de butin.' },
   enclume: { nom: 'Enclume naine', effet: 'Réparations plus faciles : 1 matériau de moins.' },
-  trefle: { nom: 'Trèfle du mendiant', effet: 'Porte-bonheur : +1 à tes dés, et le bonneteau va moins vite.' },
+  trefle: { nom: 'Trèfle du mendiant', effet: 'Porte-bonheur : tu gagnes les égalités aux dés, et le bonneteau va moins vite.' },
 };
 
 // --- Ton personnage ---
@@ -636,8 +651,8 @@ const CATEGORIES = {
   arme: { nom: 'Arme', materiau: 'fer', duree: 3 },
   armure: { nom: 'Armure', materiau: 'fer', duree: 3 },
   // Les bijoux : un seul fil d'or suffit (quel que soit le stade visé), mais c'est un travail d'orfèvre, très long.
-  bijou: { nom: 'Bijou', materiau: 'filOr', unSeul: true, duree: 6 },
-  artefact: { nom: 'Artefact', materiau: null, duree: 5 },
+  bijou: { nom: 'Bijou', materiau: 'filOr', unSeul: true, duree: 5 },
+  artefact: { nom: 'Artefact', materiau: null, duree: 6 }, // sans matériau, mais le plus long à restaurer
   vetement: { nom: 'Vêtement', materiau: 'cuir', duree: 2 },
 };
 
@@ -655,7 +670,7 @@ const ETATS = [
 // Les employés qu'on peut embaucher pour réparer plusieurs objets à la fois.
 // `rapide` : ses réparations prennent un jour de moins. Le salaire est payé chaque nuit.
 const EMPLOYES = {
-  tobin: { nom: "Tobin l'apprenti", race: 'hobbit', salaire: 4, rapide: false, description: 'Jeune et appliqué, il apprend vite.' },
+  tobin: { nom: "Tobin l'apprenti", race: 'hobbit', salaire: 4, rapide: false, apprenti: 5, description: 'Il apprend vite : après 5 réparations, il travaille un jour plus vite.' },
   marta: { nom: 'Marta la Rétameuse', race: 'nain', salaire: 9, rapide: true, description: 'Une naine experte : ses réparations prennent un jour de moins.' },
   pip: { nom: 'Pip le Joaillier', race: 'hobbit', salaire: 7, rapide: ['bijou', 'artefact'], description: 'Doigts de fée : un jour de moins sur les bijoux et les artefacts.' },
   brann: { nom: 'Brann le Tanneur', race: 'humain', salaire: 6, rapide: ['vetement', 'armure'], description: 'Un jour de moins sur les vêtements et les armures.' },

@@ -57,8 +57,9 @@ class HudScene extends Phaser.Scene {
       if (r !== this.reputAffichee) {
         if (this.reputAffichee !== null) {
           const d = Math.round((r - this.reputAffichee) * 10) / 10;
-          const t = this.add.text(166, 30, `${d > 0 ? '+' : ''}${String(d).replace('.', ',')}`, style(15, d > 0 ? '#a8f088' : '#ff8070', { fontStyle: 'bold', stroke: '#1e130a', strokeThickness: 4, brut: true })).setOrigin(0.5).setDepth(101);
-          this.tweens.add({ targets: t, y: 46, alpha: 0, duration: 1600, delay: 300, onComplete: () => t.destroy() });
+          // (à droite de la plaque, pour ne rien cacher en dessous)
+          const t = this.add.text(226, 9, `${d > 0 ? '+' : ''}${String(d).replace('.', ',')}`, style(15, d > 0 ? '#a8f088' : '#ff8070', { fontStyle: 'bold', stroke: '#1e130a', strokeThickness: 4, brut: true })).setOrigin(0, 0.5).setDepth(101);
+          this.tweens.add({ targets: t, x: 250, alpha: 0, duration: 1600, delay: 300, onComplete: () => t.destroy() });
           this.tweens.add({ targets: this.texteReput, scale: 1.25, duration: 150, yoyo: true });
         }
         this.reputAffichee = r;
@@ -73,11 +74,15 @@ class HudScene extends Phaser.Scene {
 
   ouvrirMenu() {
     if (this.fenetre) return;
+    // Le jeu s'arrête derrière la question (timers, animations, clients).
+    const s = this.scenePrincipale();
+    this.scenePausee = s && s.scene.isActive() ? s : null;
+    if (this.scenePausee) this.scenePausee.scene.pause();
     const c = this.fenetre = this.add.container(0, 0).setDepth(110);
     c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.55).setInteractive());
     c.add(this.add.image(480, 260, panneauHD(this, 480, 200)).setScale(2));
     c.add(this.add.text(480, 196, "Retourner à l'écran titre ?", style(24, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    c.add(this.add.text(480, 244, 'Ta partie est sauvegardée. En pleine journée,\ntu la reprendras au soir de ce jour-là.', style(16, '#4a2e18', { align: 'center', lineSpacing: 4 })).setOrigin(0.5));
+    c.add(this.add.text(480, 244, 'Ta partie est sauvegardée. En pleine journée,\ntu la reprendras au matin de ce jour-là.', style(16, '#4a2e18', { align: 'center', lineSpacing: 4 })).setOrigin(0.5));
     const oui = creerBouton(this, 385, 312, 170, 'Écran titre', () => this.retourTitre());
     const non = creerBouton(this, 575, 312, 170, 'Continuer', () => this.fermerMenu());
     c.add([oui.fond, oui.label, non.fond, non.label]);
@@ -86,6 +91,8 @@ class HudScene extends Phaser.Scene {
   fermerMenu() {
     if (this.fenetre) this.fenetre.destroy();
     this.fenetre = null;
+    if (this.scenePausee && this.scenePausee.scene.isPaused()) this.scenePausee.scene.resume();
+    this.scenePausee = null;
   }
 
   retourTitre() {

@@ -98,8 +98,9 @@ const Sauvegarde = {
   // Recharge une partie sauvegardée. Les champs ajoutés au jeu depuis gardent leur valeur de départ.
   charger(p) {
     nouvellePartie();
+    const brut = JSON.parse(JSON.stringify(p.partie));
     const G = Object.assign(window.GAME, JSON.parse(JSON.stringify(p.partie)));
-    mettreAJourPartie(G);
+    mettreAJourPartie(G, brut);
     return ['Marche', 'Maison'].includes(G.lieu) ? G.lieu : 'Nuit';
   },
 
@@ -203,7 +204,9 @@ function afficherStatutSauvegarde(scene, x, y, origineX) {
 }
 
 // Une partie sauvegardée avant une mise à jour du jeu : on complète ce qui manque.
-function mettreAJourPartie(G) {
+// `brut` : la partie telle qu'elle était sauvegardée (avant d'être fondue dans une partie neuve,
+// qui a déjà tous les champs récents : c'est donc sur elle qu'on regarde ce qui manquait).
+function mettreAJourPartie(G, brut = G) {
   for (const id of Object.keys(ITEMS)) if (G.stock[id] === undefined) G.stock[id] = 0;
   G.zonesDecouvertes = G.zonesDecouvertes || [];
   G.employes = G.employes || [];
@@ -225,7 +228,7 @@ function mettreAJourPartie(G) {
   G.cadeaux = G.cadeaux || {};
   G.evenements = G.evenements || [];
   G.courrier = G.courrier || [];
-  if (!G.succes) {
+  if (!brut.succes) {
     // Les retours réussis d'avant la mise à jour, par nombre d'étoiles.
     G.succes = {};
     for (const h of G.historique) {
@@ -238,7 +241,7 @@ function mettreAJourPartie(G) {
   }
   G.expressMateriaux = G.expressMateriaux || {};
   G.pieges = G.pieges || {};
-  G.faucheuse = G.faucheuse || { faveur: 0, morts: G.historique.filter(h => h.issue !== 'vivant').length, visites: 0, cadeau: false, mission: null, sabotages: 0 };
+  if (!brut.faucheuse) G.faucheuse = { faveur: 0, morts: G.historique.filter(h => h.issue !== 'vivant').length, visites: 0, cadeau: false, mission: null, sabotages: 0 };
   for (const t of G.tresors) {
     if (t.reparation && !t.reparation.ouvrier) t.reparation.ouvrier = 'toi';
     if (t.reparation && !t.reparation.cible) t.reparation.cible = t.etat + 1;
@@ -251,7 +254,14 @@ function mettreAJourPartie(G) {
     if (v.queteId && !v.zone) v.zone = zoneDeQuete(v.queteId);
   }
   for (const h of G.habitues) if (!h.niveau) h.niveau = 'aguerri';
-  if (!G.zonesConnues) {
+  if (!brut.conquete) {
+    // La conquête des contrées, d'après les retours réussis déjà notés au registre.
+    G.conquete = {};
+    for (const h of G.historique) if (h.issue === 'vivant' && ZONES[h.zone]) G.conquete[h.zone] = (G.conquete[h.zone] || 0) + 1;
+  }
+  G.piecesAVenir = G.piecesAVenir || [];
+  G.zonesDecouvertes = [...new Set(G.zonesDecouvertes)];
+  if (!brut.zonesConnues) {
     // Les zones déjà ouvertes avant l'armure : leurs pièces sont déjà sur le mannequin.
     const auDepart = Object.keys(ZONES).filter(z => ZONES[z].danger <= 2 && !ZONES[z].reputation);
     G.zonesConnues = zonesOuvertes(G);

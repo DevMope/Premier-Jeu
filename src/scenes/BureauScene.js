@@ -327,8 +327,12 @@ class BureauScene extends Phaser.Scene {
       droite = ['Tes relations', ...NIVEAUX_RELATION.slice().reverse().map(n => `${n.nom} : ${parNiveau[n.nom] || 0}`)];
     }
     if (!gauche.length || gauche.length === 1) gauche.push('Rien pour l\'instant.');
-    c.add(this.add.text(42, 96, gauche.join('\n'), style(12, '#3b2410', { lineSpacing: 6, wordWrap: { width: 240 } })));
-    c.add(this.add.text(304, 96, droite.join('\n'), style(12, '#3b2410', { lineSpacing: 6, wordWrap: { width: 240 } })));
+    // (si la page déborde, on écrit plus serré)
+    for (const [x, lignes] of [[42, gauche], [304, droite]]) {
+      const t = this.add.text(x, 96, lignes.join('\n'), style(12, '#3b2410', { lineSpacing: 6, wordWrap: { width: 240 } }));
+      if (t.height > 370) t.setFontSize(11).setLineSpacing(2);
+      c.add(t);
+    }
   }
 
   // --- Les améliorations du shop ---

@@ -13,6 +13,10 @@ class MarcheScene extends Phaser.Scene {
   create() {
     const G = this.G = window.GAME;
     G.banniere = G.jour;
+    // (Phaser réutilise la scène d'un jour à l'autre : on repart de zéro)
+    this.groupes = [];
+    this.desEnCours = false;
+    this.etatBonneteau = 'attente';
     // Les étals du jour (s'ils n'ont pas été garnis cette nuit, par exemple avec une vieille sauvegarde)
     const vides = !G.etals || !Object.values(G.etals).some(e => Object.keys(e || {}).length);
     if (vides || (G.etalsJour !== undefined && G.etalsJour !== G.jour)) { G.etals = etalsDuJour(G); G.etalsJour = G.jour; }
@@ -353,6 +357,12 @@ class MarcheScene extends Phaser.Scene {
 
   // Vide le panneau du bas et le prépare pour un nouveau lieu.
   panneau(titre, sousTitre = '') {
+    // On quitte le bonneteau en pleine partie : Fil-de-Fer rend la mise (la partie n'a pas eu lieu).
+    if (this.etatBonneteau === 'melange' || this.etatBonneteau === 'choix') {
+      encaisser(this.G, this.mise, 'jeux');
+      this.G.jeux.bonneteau = Math.max(0, this.G.jeux.bonneteau - 1);
+    }
+    this.etatBonneteau = 'attente';
     if (this.contenu) this.contenu.destroy();
     this.tweens.killTweensOf(this.cibles || []);
     this.cibles = [];
@@ -740,12 +750,14 @@ class MarcheScene extends Phaser.Scene {
 
   // Repasser chez soi avant d'ouvrir : réserve, atelier, bureau, banque.
   rentrer() {
+    if (enTransition(this)) return;
     Sauvegarde.maintenant(this.G, 'Maison');
     this.cameras.main.fadeOut(300);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Nuit', { matin: true }));
   }
 
   ouvrir() {
+    if (this._transition && performance.now() - this._transition < 1500) return;
     // On sauvegarde avant que la file d'attente du jour se forme.
     Sauvegarde.maintenant(this.G, 'Marche');
     commencerJournee(this);

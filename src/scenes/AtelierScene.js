@@ -95,6 +95,7 @@ class AtelierScene extends Phaser.Scene {
       const btn = this.add.rectangle(x + 198, 476, 70, 20, embauche ? 0x8a3a2a : 0x4f7a3a).setStrokeStyle(2, 0x2a1a10).setInteractive({ useHandCursor: true });
       if (!libre) btn.setFillStyle(0x5a4a3a);
       btn.on('pointerdown', () => {
+        if (!clicUnique(this, 600)) return;
         if (embauche) {
           renvoyer(G, id);
           this.texteInfo.setText(`${e.nom} est parti${e.race === 'nain' ? 'e' : ''}. Sa réparation en cours s'arrête.`);
@@ -158,7 +159,7 @@ class AtelierScene extends Phaser.Scene {
     const G = this.G;
     if (this.fenetre) this.fenetre.destroy();
     const c = this.fenetre = this.add.container(0, 0).setDepth(30);
-    const ouvrier = ouvrierLibre(G);
+    const ouvrier = ouvrierLibre(G, t);
     const mat = CATEGORIES[t.categorie].materiau;
     const stades = [];
     for (let e = t.etat + 1; e < ETATS.length; e++) stades.push(e);

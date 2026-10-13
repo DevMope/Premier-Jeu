@@ -119,6 +119,7 @@ class IntroHistoireScene extends Cinematique {
   constructor() { super('IntroHistoire'); }
 
   create() {
+    this.fini = false; // (la scène peut être rejouée dans la même session)
     const G = window.GAME;
     this.f = G.joueur.feminin;
     creerInterieurHD(this);
@@ -264,6 +265,7 @@ class IntroHistoireScene extends Cinematique {
     const coffre = this.add.image(1020, 220, coffreTresorHD(this)).setOrigin(0.5, 1).setScale(2).setDepth(5);
     const porter = () => coffre.setPosition(this.mentor.x, this.mentor.y - this.mentor.displayHeight + 8);
     this.events.on('update', porter);
+    this.events.once('shutdown', () => this.events.off('update', porter)); // (si on passe la cinématique)
     // (quelques pièces s'en échappent en route)
     this.time.addEvent({ delay: 260, repeat: 8, callback: () => {
       if (!coffre.active) return;

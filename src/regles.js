@@ -176,7 +176,14 @@ function simulerAventure(voyageur, colis, pieges = null) {
     if (!reussie) {
       pv--;
       if (EPREUVES_COMBAT.includes(e.type) && Math.random() < CHANCE_SAIGNEMENT) {
-        if (bandages > 0) { bandages--; saignement = 'bande'; } else if (pv > 0) { pv--; saignement = 'perte'; }
+        if (bandages > 0) { bandages--; saignement = 'bande'; } else if (pv > 0) {
+          // Le saignement va l'achever : sa bonne étoile peut encore le faire rebrousser chemin.
+          if (pv === 1 && Math.random() < chanceRepli(voyageur)) {
+            etapes.push({ epreuve: e, niveau, reussie: false, pvApres: 1, repli: true });
+            return { etapes, pvDepart, vivant: true, echec: true, valeureux: false };
+          }
+          pv--; saignement = 'perte';
+        }
       }
     }
     etapes.push({ epreuve: e, niveau, reussie, sauvee, pvApres: pv, saignement });
@@ -340,12 +347,24 @@ function habitueAuHasard(G, pris) {
 // Un voyageur tiré au hasard, qui ne porte pas le nom d'un voyageur déjà en jeu.
 // `aussi` : des voyageurs créés à l'instant, pas encore rangés dans la partie.
 function voyageurAuHasard(G, aussi = []) {
-  const pris = [...nomsActifs(G), ...aussi.map(v => v.nom)];
+  // Les disparus ne reviennent pas (leur nom n'est jamais redonné à un nouveau venu).
+  const morts = Object.entries(G.personnes || {}).filter(([, p]) => p.mort).map(([n]) => n);
+  for (const h of G.historique || []) if (h.issue === 'valeureux' || h.issue === 'sans gloire') morts.push(h.nom);
+  const pris = [...nomsActifs(G), ...aussi.map(v => v.nom), ...morts];
   const habitue = habitueAuHasard(G, pris);
   if (habitue) return habitue;
   const libres = [];
   for (const [race, noms] of Object.entries(NOMS)) {
     for (const [nom, feminin] of noms) if (!pris.includes(nom)) libres.push({ race, nom, feminin });
+  }
+  // Plus assez de noms connus : on en compose de nouveaux (prénom + nom de famille du même peuple).
+  if (libres.length < 6) {
+    for (const [race, n] of Object.entries(NOMS_COMPOSES)) {
+      for (const [prenoms, feminin] of [[n.m, false], [n.f, true]]) for (const p of prenoms) for (const f of n.familles) {
+        const nom = `${p} ${f}`;
+        if (!pris.includes(nom)) libres.push({ race, nom, feminin });
+      }
+    }
   }
   // Une race au hasard d'abord, pour que les races avec beaucoup de noms ne dominent pas.
   const races = [...new Set(libres.map(l => l.race))];
@@ -580,10 +599,11 @@ function jouerAuxDes(G, mise) {
   const de = () => hasard(1, 6);
   const toi = [de(), de()];
   const lui = [de(), de()];
-  const bonus = aDecoration(G, 'trefle') ? 1 : 0;
-  const a = toi[0] + toi[1] + bonus;
+  // Le trèfle du mendiant fait pencher les égalités de ton côté (sans fausser tous les lancers).
+  const a = toi[0] + toi[1];
   const b = lui[0] + lui[1];
-  const resultat = a > b ? 'gagne' : a < b ? 'perdu' : 'egalite';
+  const bonus = a === b && aDecoration(G, 'trefle') ? 1 : 0;
+  const resultat = a + bonus > b ? 'gagne' : a < b ? 'perdu' : 'egalite';
   if (resultat === 'gagne') encaisser(G, mise, 'jeux');
   if (resultat === 'perdu') payer(G, mise, 'jeux');
   return { toi, lui, bonus, resultat };
@@ -724,9 +744,9 @@ function estimationFlair(G, t) {
   const ecart = vraie * 0.35 * (1 - flair) + 2;
   const min = Math.max(1, Math.round(centre - ecart)), max = Math.round(centre + ecart);
   const rapport = t.prix / centre;
-  const verdict = rapport < 0.45 ? { texte: 'Une affaire en or !', couleur: '#2f7a2a' }
-    : rapport < 0.7 ? { texte: 'Bon prix', couleur: '#2f6a2a' }
-    : rapport < 0.95 ? { texte: 'Prix correct, sans plus', couleur: '#8a6a10' }
+  const verdict = rapport < 0.35 ? { texte: 'Une affaire en or !', couleur: '#2f7a2a' }
+    : rapport < 0.5 ? { texte: 'Bon prix', couleur: '#2f6a2a' }
+    : rapport < 0.68 ? { texte: 'Prix correct, sans plus', couleur: '#8a6a10' }
     : { texte: 'Trop cher, à mon avis…', couleur: '#a03030' };
   return { min, max, verdict, flair };
 }
@@ -922,7 +942,10 @@ function nuitDuShop(G) {
   }
   G.travaux = [];
   const coffre = niveauAmelioration(G, 'coffre');
-  if (coffre && G.argent > 0) encaisser(G, Math.min(15 * coffre, Math.floor(G.argent * 0.01 * coffre)), 'interets');
+  // Les intérêts ne portent que sur ta vraie fortune : l'argent emprunté (encore dû) ne rapporte rien.
+  const dette = G.prets.reduce((s, p) => s + p.restant, 0);
+  const fortune = G.argent - dette;
+  if (coffre && fortune > 0) encaisser(G, Math.min(15 * coffre, Math.floor(fortune * 0.01 * coffre)), 'interets');
   G.experience += niveauAmelioration(G, 'chambre');
 }
 
@@ -996,7 +1019,12 @@ function palierClients(G) {
 function partCommandeRemplie(v, colis) {
   const commande = commandeDe(v);
   let voulu = 0, donne = 0;
-  for (const [id, n] of Object.entries(commande)) { voulu += n; donne += Math.min(n, (colis && colis[id]) || 0); }
+  for (const [id, n] of Object.entries(commande)) {
+    voulu += n;
+    // Un objet durable qu'il a déjà, en bon état, compte comme fourni.
+    const dejaLa = ITEMS[id] && ITEMS[id].durable && etatObjet(v, id) >= 2 ? n : 0;
+    donne += Math.min(n, ((colis && colis[id]) || 0) + dejaLa);
+  }
   return voulu ? donne / voulu : 1;
 }
 
@@ -1016,6 +1044,14 @@ function nuit(G) {
     return;
   }
   nuitDuShop(G);
+  // Une mission de sabotage manquée (cible servie sans le piège, refusée, ou jamais venue) :
+  // la Faucheuse reprend son objet piégé et sa faveur baisse, sans attendre le prochain mort.
+  const mission = G.faucheuse && G.faucheuse.mission;
+  if (mission && mission.etat !== 'proposee' && mission.etat !== 'posee' && mission.jour <= G.jour) {
+    G.faucheuse.faveur -= 1;
+    if (G.pieges[mission.piege] > 0) G.pieges[mission.piege]--;
+    G.faucheuse.mission = null;
+  }
   G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2);
   G.expressMateriaux = materiauxExpress();
   G.jour++;
@@ -1026,6 +1062,8 @@ function nuit(G) {
   G.jeux = { des: 0, bonneteau: 0 };
   avancerAtelier(G);
   avancerEvenements(G);
+  // Le sort de ceux qui rentrent aujourd'hui est tiré pendant la nuit (et donc sauvegardé).
+  for (const p of G.partis) if (!p.termine && p.retour === G.jour && !p.resultat) p.resultat = simulerAventure(p.voyageur, p.colis, p.pieges);
   recompenserZones(G);
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
@@ -1035,6 +1073,9 @@ function nuit(G) {
 
 // On ouvre le comptoir : la file d'attente du jour se forme.
 function ouvrirComptoir(G) {
+  // (une seule fois par jour : un double clic ne doit pas refaire la file)
+  if (G.fileDuJour === G.jour) return;
+  G.fileDuJour = G.jour;
   const { min, max } = prevision(G, G.jour);
   // Les clients du jour : ceux qui ont écrit, plus des imprévus.
   // Une lettre restée sans réponse le jour venu : l'aventurier est allé ailleurs, et il s'en souviendra.
@@ -1052,7 +1093,8 @@ function ouvrirComptoir(G) {
   const morts = [], retours = [];
   for (const p of G.partis) {
     if (p.termine || p.retour !== G.jour) continue;
-    p.resultat = simulerAventure(p.voyageur, p.colis, p.pieges);
+    // (le sort est tiré dès la nuit, et sauvegardé : recharger la partie ne le change pas)
+    if (!p.resultat) p.resultat = simulerAventure(p.voyageur, p.colis, p.pieges);
     if (p.resultat.vivant) retours.push({ type: 'retour', parti: p });
     else morts.push(p);
   }
@@ -1131,7 +1173,9 @@ function terminerAventure(G, parti) {
     parti.trouvailles = trouvailles(G, v);
     // Il a peut-être aperçu une zone plus dangereuse, encore inconnue.
     const d = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
-    const inconnues = Object.keys(ZONES).filter(z => !zoneOuverte(G, z) && ZONES[z].danger <= d + 1);
+    // (une zone déjà découverte, ou que la réputation suffit déjà à ouvrir, ne compte pas)
+    const inconnues = Object.keys(ZONES).filter(z => !zoneOuverte(G, z) && ZONES[z].danger <= d + 1
+      && !G.zonesDecouvertes.includes(z) && !conditionsZone(G, z).reputation);
     if (inconnues.length && Math.random() < CHANCE_DECOUVERTE) {
       const z = auHasard(inconnues);
       G.zonesDecouvertes.push(z);
@@ -1140,6 +1184,7 @@ function terminerAventure(G, parti) {
     }
   } else {
     if (!r.valeureux) G.reputation--;
+    connaitre(G, v).mort = true;
     G.journal.morts++;
     recolter(G, [parti]); // si la Faucheuse ne l'a pas déjà emporté
     // La famille attend un dédommagement : il est choisi à la fin du carnet.
@@ -1304,7 +1349,9 @@ function trouvailles(G, voyageur) {
   for (let i = 0; i < n; i++) {
     const tresor = creerTresor(G);
     // Le prix varie : parfois une affaire, parfois une arnaque. C'est le flair qui t'aide à trier.
-    liste.push({ tresor, prix: Math.max(3, Math.round(valeurTresor(tresor) * Phaser.Math.FloatBetween(0.45, 1.1) * ami)), vendu: false,
+    // Le prix suit ce que l'objet vaudra une fois restauré (c'est ce que le voyageur imagine) :
+    // tantôt une affaire, tantôt trop cher pour le travail qu'il demandera.
+    liste.push({ tresor, prix: Math.max(3, Math.round(valeurTresor(tresor, ETATS.length - 1) * Phaser.Math.FloatBetween(0.25, 0.85) * ami)), vendu: false,
       biais: Phaser.Math.FloatBetween(-1, 1) });
   }
   return liste;
@@ -1328,13 +1375,15 @@ function acheterTrouvaille(G, t) {
 // Les étapes suivantes vont deux fois plus vite : l'objet est déjà sur l'établi.
 function dureeEtape(G, t, etat, ouvrier, suite = false) {
   const r = ouvrier && EMPLOYES[ouvrier] && EMPLOYES[ouvrier].rapide;
-  const experte = r === true || (Array.isArray(r) && r.includes(t.categorie)) ? 1 : 0;
+  // (l'apprenti devient rapide après quelques réparations)
+  const forme = ouvrier && EMPLOYES[ouvrier] && EMPLOYES[ouvrier].apprenti && ((G.reparationsPar || {})[ouvrier] || 0) >= EMPLOYES[ouvrier].apprenti;
+  const experte = r === true || forme || (Array.isArray(r) && r.includes(t.categorie)) ? 1 : 0;
   const base = suite ? Math.ceil(CATEGORIES[t.categorie].duree / 2) : CATEGORIES[t.categorie].duree;
   return Math.max(1, base + ETATS[etat].reparation - niveauArtisanat(G) - experte);
 }
 
 // La durée pour amener l'objet jusqu'à l'état « cible » : la somme des étapes.
-function dureeReparation(G, t, ouvrier = ouvrierLibre(G), cible = t.etat + 1) {
+function dureeReparation(G, t, ouvrier = ouvrierLibre(G, t), cible = t.etat + 1) {
   let jours = 0;
   for (let e = t.etat; e < cible; e++) jours += dureeEtape(G, t, e, ouvrier, e > t.etat);
   return jours;
@@ -1355,10 +1404,13 @@ function ouvriers(G) {
   return ['toi', ...G.employes];
 }
 
-// Le premier ouvrier libre (les employés d'abord, pour que tu restes disponible), ou null.
-function ouvrierLibre(G) {
-  const occupes = enReparation(G).map(t => t.reparation.ouvrier);
-  return [...G.employes, 'toi'].find(o => !occupes.includes(o)) || null;
+// Le premier ouvrier libre, ou null : d'abord un employé spécialiste de l'objet (s'il y en a un),
+// puis les autres employés, et toi en dernier (pour que tu restes disponible).
+function ouvrierLibre(G, t = null) {
+  const occupes = enReparation(G).map(x => x.reparation.ouvrier);
+  const libres = [...G.employes, 'toi'].filter(o => !occupes.includes(o));
+  const expert = t && libres.find(o => EMPLOYES[o] && (EMPLOYES[o].rapide === true || (Array.isArray(EMPLOYES[o].rapide) && EMPLOYES[o].rapide.includes(t.categorie))));
+  return expert || libres[0] || null;
 }
 
 function nomOuvrier(o) {
@@ -1370,7 +1422,7 @@ function nomOuvrier(o) {
 function reparerTresor(G, t, cible = t.etat + 1) {
   if (t.etat >= ETATS.length - 1) return 'Il est déjà en parfait état.';
   cible = Math.min(ETATS.length - 1, Math.max(t.etat + 1, cible));
-  const ouvrier = ouvrierLibre(G);
+  const ouvrier = ouvrierLibre(G, t);
   if (!ouvrier) return "Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois.";
   const mat = CATEGORIES[t.categorie].materiau;
   const n = materiauxReparation(t, cible);
@@ -1396,7 +1448,12 @@ function embaucher(G, id) {
 // Renvoyer un employé : la réparation qu'il faisait s'arrête (l'objet reste dans son état).
 function renvoyer(G, id) {
   G.employes = G.employes.filter(e => e !== id);
-  for (const t of G.tresors) if (t.reparation && t.reparation.ouvrier === id) t.reparation = null;
+  // Sa réparation s'arrête ; les matériaux pas encore travaillés te sont rendus.
+  for (const t of G.tresors) if (t.reparation && t.reparation.ouvrier === id) {
+    const mat = CATEGORIES[t.categorie].materiau;
+    if (mat) G.materiaux[mat] = (G.materiaux[mat] || 0) + materiauxReparation(t, t.reparation.cible || t.etat + 1);
+    t.reparation = null;
+  }
 }
 
 function salaires(G) {
@@ -1410,6 +1467,12 @@ function avancerAtelier(G) {
     t.reparation.jours--;
     if (t.reparation.jours > 0) continue;
     const cible = t.reparation.cible || t.etat + 1;
+    G.reparationsPar = G.reparationsPar || {};
+    const o = t.reparation.ouvrier;
+    G.reparationsPar[o] = (G.reparationsPar[o] || 0) + 1;
+    if (EMPLOYES[o] && EMPLOYES[o].apprenti && G.reparationsPar[o] === EMPLOYES[o].apprenti) {
+      G.nouvellesAtelier.push(`${EMPLOYES[o].nom} a bien appris : ses réparations prennent maintenant un jour de moins !`);
+    }
     t.reparation = null;
     t.etat = cible;
     G.reparations++;
@@ -1497,6 +1560,8 @@ function recolter(G, partis) {
     if (p.recolte) continue;
     p.recolte = true;
     F.morts++;
+    connaitre(G, p.voyageur).mort = true;
+    G.habitues = G.habitues.filter(h => h.nom !== p.voyageur.nom);
     if (p.voulu) {
       const poids = MORTS_VOULUES[p.voulu].poids;
       G.mal += poids;

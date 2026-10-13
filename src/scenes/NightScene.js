@@ -71,6 +71,7 @@ class NightScene extends Phaser.Scene {
   }
 
   allerA(scene) {
+    if (enTransition(this)) return;
     Sauvegarde.maintenant(this.G, scene === 'Marche' ? 'Marche' : this.lieu);
     this.cameras.main.fadeOut(300);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(scene));
@@ -78,6 +79,7 @@ class NightScene extends Phaser.Scene {
 
   // Le matin : on sauvegarde, puis la file d'attente du jour se forme.
   ouvrirComptoir() {
+    if (this._transition && performance.now() - this._transition < 1500) return;
     Sauvegarde.maintenant(this.G, 'Maison');
     commencerJournee(this);
   }
@@ -85,6 +87,7 @@ class NightScene extends Phaser.Scene {
   // Dormir : la fin de la journée. Ton personnage va se coucher (une petite scène, avec le
   // bilan du jour), la nuit passe, et au matin, direction le Marché des Mastres.
   dormir() {
+    if (enTransition(this)) return;
     const G = this.G;
     const bilan = { jour: G.jour, servis: G.journal.servis, retours: G.journal.retours, morts: G.journal.morts,
       gain: G.argent - G.argentDebutJour, reputation: G.reputation };
@@ -136,9 +139,10 @@ class NightScene extends Phaser.Scene {
 
     const dettes = G.prets.map(p => `${p.nom} : reste ${p.restant} (−${p.parJour}/nuit)`);
     c.add(this.add.text(x1 + 18, 290, 'Prêts en cours', style(14, '#3b2410', { fontStyle: 'bold' })));
-    c.add(this.add.text(x1 + 18, 310, listeCourte(dettes, 2, 'Aucun'), style(12, '#5a3a20', { lineSpacing: 2 })));
+    const texteDettes = this.add.text(x1 + 18, 310, listeCourte(dettes, 2, 'Aucun'), style(12, '#5a3a20', { lineSpacing: 2 }));
+    c.add(texteDettes);
     if (G.argent < 0) {
-      c.add(this.add.text(x1 + 18, 330, `À découvert ! Faillite à ${SEUIL_FAILLITE} p.`, style(12, '#a03030', { fontStyle: 'bold' })));
+      c.add(this.add.text(x1 + 18, 312 + texteDettes.height, `À découvert ! Faillite à ${SEUIL_FAILLITE} p.`, style(12, '#a03030', { fontStyle: 'bold' })));
     }
 
     c.add(this.add.text(x1 + 18, 352, 'En mission', style(14, '#3b2410', { fontStyle: 'bold' })));
@@ -217,13 +221,14 @@ class NightScene extends Phaser.Scene {
         c.add(this.petitBouton(x2 - 30, y + 8, 'Non', 0x8a3a2a, () => { refuserLettre(G, a); this.tout(); }));
       }
     });
-    if (G.annonces.length > 4) c.add(this.add.text(x1 + 14, 326, `+ ${G.annonces.length - 4} autres`, style(11, '#6b4a2a')));
+    const cachees = G.annonces.length - liste.length;
+    if (cachees > 0) c.add(this.add.text(x2 - 12, 344, `+ ${cachees} autre${cachees > 1 ? 's' : ''} lettre${cachees > 1 ? 's' : ''}`, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(1, 0.5));
   }
 
   petitBouton(x, y, texte, couleur, action) {
     const btn = this.add.container(x, y);
     const fond = this.add.rectangle(0, 0, 36, 20, couleur).setStrokeStyle(1, 0x2a1a10).setInteractive({ useHandCursor: true });
-    fond.on('pointerdown', action);
+    fond.on('pointerdown', () => { if (clicUnique(this)) action(); });
     btn.add([fond, this.add.text(0, 0, texte, style(11, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
     return btn;
   }

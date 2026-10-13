@@ -25,6 +25,14 @@ class CounterScene extends Phaser.Scene {
     this.enService = false;
     this.colis = {};
     this.pieges = {};
+    // (Phaser réutilise la même scène d'un jour à l'autre : on repart de zéro)
+    this.enConfirmation = false;
+    this.action = this.actionB = null;
+    this.minuterieCligne = null;
+    this.paroles = null;
+    this.enTrainDeParler = false;
+    this.aura = this.flottement = this.carnetPose = null;
+    this.buste = null;
 
     this.dessinerPiece();
     this.creerFenetre();
@@ -935,7 +943,9 @@ class CounterScene extends Phaser.Scene {
         const v = creerVoyageur(G, { quete: d.queteId, nom: p.nom, race: p.race, feminin: p.feminin });
         v.accueil = `Merci. Je pars ${q.titre.toLowerCase()}, pour honorer ${proche}. Prépare-moi bien.`;
         G.relations[p.nom] = Math.floor(d.points / 2);
-        this.arrivee({ type: 'client', voyageur: v });
+        this.entree = { type: 'client', voyageur: v }; // désormais, c'est un client comme un autre
+        if (this.buste) this.buste.personne = v; // (c'est la même personne : son visage réagira au baluchon)
+        this.arrivee(this.entree);
       }], ['Pas aujourd\'hui', () => {
         G.habitues.push({ nom: p.nom, race: p.race, feminin: p.feminin, inventaire: {} });
         fin(`Je comprends. Je reviendrai, prêt${e}.`);
@@ -956,6 +966,7 @@ class CounterScene extends Phaser.Scene {
   }
 
   ouvrirRecit(parti) {
+    if (enTransition(this)) return;
     this.bouton('...', null);
     this.cameras.main.fadeOut(400);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Recit', { id: parti.voyageur.id }));

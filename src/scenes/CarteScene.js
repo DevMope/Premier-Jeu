@@ -280,6 +280,7 @@ class CarteScene extends Phaser.Scene {
 
   terminer() {
     if (!this.planification) return this.fermer({ annule: true });
+    if (enTransition(this)) return;
     this.cameras.main.fadeOut(400);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Comptoir'));
   }
@@ -295,6 +296,7 @@ class CarteScene extends Phaser.Scene {
 // D'abord la façade du shop (sauf si on vient de la voir), puis la carte ou le comptoir.
 function commencerJournee(scene, ouvrir = true, facade = true) {
   const G = window.GAME;
+  if (enTransition(scene)) return;
   if (ouvrir) ouvrirComptoir(G);
   const aPlacer = G.file.some(e => e.type === 'client' && !e.voyageur.queteId);
   const suite = aPlacer ? 'Carte' : 'Comptoir';

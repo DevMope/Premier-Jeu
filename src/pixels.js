@@ -428,6 +428,24 @@ function style(taille, couleur = '#f3e6c8', extra = {}) {
 }
 
 // Coupe un texte trop long (avec « … »).
+// Empêche un double clic de lancer deux fois la même transition (pendant le fondu au noir).
+// Renvoie true si une transition est déjà en cours sur cette scène.
+function enTransition(scene) {
+  const maintenant = performance.now();
+  if (scene._transition && maintenant - scene._transition < 1500) return true;
+  scene._transition = maintenant;
+  return false;
+}
+
+// Un bouton qui reconstruit sa liste en cliquant ne doit pas être déclenché deux fois d'un
+// double clic (le second clic tomberait sur la ligne suivante). Renvoie true si le clic compte.
+function clicUnique(scene, delai = 400) {
+  const maintenant = performance.now();
+  if (scene._dernierClic && maintenant - scene._dernierClic < delai) return false;
+  scene._dernierClic = maintenant;
+  return true;
+}
+
 function raccourcir(texte, max) {
   return texte.length > max ? texte.slice(0, max - 1).trimEnd() + '…' : texte;
 }
