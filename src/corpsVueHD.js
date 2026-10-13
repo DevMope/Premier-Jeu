@@ -357,8 +357,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (u < 0.5 * k) return base + 0.3 * k - (u + 2.5 * k) * 0.08;                    // l'arcade, le creux du nez
     if (u < 3.6 * k) { const v = (u - 0.5 * k) / (3.1 * k); return base + (race === 'hobbit' ? Math.sin(v * Math.PI) : race === 'elfe' ? v : Math.sin(v * Math.PI * 0.75)) * nezH; } // le nez
     const fin = f && race !== 'hobbit' ? 2.4 * k : 0;                                 // une mâchoire bien plus fine pour les femmes
-    if (u < 4.2 * k) return base - 0.6 * k - fin * 0.5;                               // sous le nez
+    if (u < 4.2 * k) return base - 0.6 * k - fin * 0.6;                               // sous le nez
     if (u < by0 - ey0 + 1.6 * k) { const v = (y - by0 + 0.5 * k) / (2.1 * k); return base - 0.5 * k - fin + (v > 0 && v < 1 ? Math.sin(v * Math.PI) * 0.6 * k : 0); } // les lèvres
+    if (f && race !== 'hobbit') return null;                                          // (pas de mâchoire sous les lèvres pour les femmes : le visage finit aux lèvres)
     const bas = cy + P.ry;
     if (y <= bas) { const v = (y - by0 - 1.6 * k) / Math.max(1, bas - by0 - 1.6 * k); return (base - 0.8 * k - fin) * (1 - v * v * (race === 'elfe' && f ? 0.85 : f && race !== 'hobbit' ? 0.85 : carre ? 0.35 : 0.55)); } // le menton
     return null;
@@ -368,7 +369,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       const dx = x + 0.5 - cx;
       const bord = bordProfil(y);
       const ny = (y + 0.5 - cy) / P.ry;
-      const rxP = P.rx * 0.95 * (f && race !== 'hobbit' && ny > 0.1 ? 1 - (ny - 0.1) * 0.32 : 1);   // (la mâchoire des femmes s'affine)
+      if (f && race !== 'hobbit' && y > by0 + 1.6 * k) return null;   // (le visage s'arrête juste sous les lèvres)
+      const rxP = P.rx * 0.95 * (f && race !== 'hobbit' && ny > 0.1 ? 1 - (ny - 0.1) * 0.45 : 1);   // (la mâchoire des femmes s'affine et recule)
       const nx0 = dx / rxP;
       const d = nx0 * nx0 + ny * ny;
       if (d <= 1) return [nx0 * 0.6, ny * 0.3, Math.sqrt(1 - d) * 0.8 + 0.3];
@@ -428,7 +430,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       const nb = bordProfil(ey + 3.6 * k) || P.rx;
       for (let i = 0; i < Math.round(nb - P.rx * 0.78); i++) t.poser(Math.round(cx + P.rx * 0.78 + i), Math.round(ey + 3.6 * k) + 1, 'peau', 2); // l'ombre sous le nez
       t.poser(Math.round(cx + P.rx * 0.9), Math.round(ey + 3.3 * k), 'peau', 1); t.poser(Math.round(cx + P.rx * 0.9) + 1, Math.round(ey + 3.3 * k), 'peau', 2); // la narine
-      t.forme('peau', ellipsoide(cx + P.rx * 0.6, cy + P.ry - 1.5 * k, 2 * k, 1 * k), { decalage: -0.5, bord: false, ombre: false });
+      if (!(f && race !== 'hobbit')) t.forme('peau', ellipsoide(cx + P.rx * 0.6, cy + P.ry - 1.5 * k, 2 * k, 1 * k), { decalage: -0.5, bord: false, ombre: false });   // (le menton : pas chez les femmes, dont le visage finit aux lèvres)
     } else if (Math.abs(c) > 0.2) {
       // De face comme de trois-quarts : une ombre nette sur le côté du visage opposé à la lumière
       // (à droite), et sous le menton
@@ -438,7 +440,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
     // Les joues pleines du hobbit : juste un peu de rose
     if (race === 'hobbit') for (const cote of (Math.abs(c) > 0.9 ? [-1, 1] : profil ? [1] : [pres])) t.forme('levres', ellipsoide(profil ? cx + P.rx * 0.45 : X(cote * P.rx * 0.5, P.rx * 0.62), joueY + 0.4 * k, 1.3 * k, 0.8 * k), { decalage: 1.2, bord: false, ombre: false });
-    if (!carre) t.forme('peau', ellipsoide(X(0, P.rx * 0.7), cy + P.ry - 1.2 * k, 2.6 * k, 1.1 * k), { decalage: -0.5, bord: false, ombre: false });
+    if (!carre && !(profil && f && race !== 'hobbit')) t.forme('peau', ellipsoide(X(0, P.rx * 0.7), cy + P.ry - 1.2 * k, 2.6 * k, 1.1 * k), { decalage: -0.5, bord: false, ombre: false });   // (le menton ; pas de profil chez les femmes)
     else if (!profil) {
       // La mâchoire carrée se lit par ses ombres : les angles de la mâchoire et le dessous du menton
       t.forme('peau', (x, y) => { const n = tete(x, y); if (!n) return null; const ny = (y + 0.5 - cy) / P.ry; return ny > 0.62 && (Math.abs(n[0]) > 0.42 || ny > 0.86) ? n : null; }, { decalage: -0.8, bord: false, ombre: false });
