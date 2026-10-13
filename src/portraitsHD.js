@@ -26,7 +26,9 @@ class ToileHD {
     this.l = l; this.h = h;
     this.c = new Array(l * h).fill(null);   // couleur
     this.m = new Array(l * h).fill(null);   // matière (pour les contours)
+    this.k = new Array(l * h).fill(0);      // la teinte posée (0 sombre … 5 clair), pour les ombres portées
     this.rampes = { ...RAMPES };            // + les dégradés propres à ce personnage
+    this.relief = false;                    // true : chaque forme projette une ombre sur ce qu'elle recouvre
   }
   dans(x, y) { return x >= 0 && y >= 0 && x < this.l && y < this.h; }
   poser(x, y, mat, i) {
@@ -34,12 +36,28 @@ class ToileHD {
     i = Math.max(0, Math.min(5, i));
     this.c[y * this.l + x] = this.rampes[mat][i];
     this.m[y * this.l + x] = mat;
+    this.k[y * this.l + x] = i;
+  }
+  teinte(x, y) { return this.dans(x, y) ? this.k[y * this.l + x] : 0; }
+
+  // L'ombre portée d'une forme : ce qui dépasse en dessous et à droite d'elle (la lumière vient
+  // d'en haut à gauche) s'assombrit d'un ton. C'est ce qui décolle une manche du torse, un menton
+  // du cou, une mèche du front.
+  ombrer(ens, pts, portee = 2) {
+    const faits = new Set();
+    for (const [x, y] of pts) for (let dy = 0; dy <= portee; dy++) for (let dx = 0; dx <= Math.min(1, portee - dy); dx++) {
+      if (!dx && !dy) continue;
+      const nx = x + dx, ny = y + dy, idx = ny * this.l + nx;
+      if (!this.dans(nx, ny) || ens.has(idx) || this.c[idx] === null || faits.has(idx)) continue;
+      faits.add(idx);
+      this.poser(nx, ny, this.m[idx], this.k[idx] - 1);
+    }
   }
   mat(x, y) { return this.dans(x, y) ? this.m[y * this.l + x] : null; }
 
   // Une forme (fonction dedans(x, y) → normale ou null) éclairée, avec son bord intérieur
   // plus sombre côté ombre et plus clair côté lumière.
-  forme(mat, dedans, { decalage = 0, tramage = false, bord = true, motif = null } = {}) {
+  forme(mat, dedans, { decalage = 0, tramage = false, bord = true, motif = null, ombre = null, portee = 2 } = {}) {
     const pts = [];
     for (let y = 0; y < this.h; y++) for (let x = 0; x < this.l; x++) {
       const n = dedans(x, y);
@@ -47,6 +65,7 @@ class ToileHD {
     }
     const ens = new Set(pts.map(([x, y]) => y * this.l + x));
     const dans = (x, y) => this.dans(x, y) && ens.has(y * this.l + x);
+    if (ombre ?? this.relief) this.ombrer(ens, pts, portee);
     for (const [x, y, n] of pts) {
       const lum = n[0] * LUMIERE[0] + n[1] * LUMIERE[1] + n[2] * LUMIERE[2];
       let f = 1.2 + (lum + 0.15) * 3.6 + decalage;
