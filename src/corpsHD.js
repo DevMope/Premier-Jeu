@@ -5,7 +5,7 @@
 // Les anciens personnages faisaient 16 pixels de haut pour un humain ; ceux-ci en font 64 :
 // on les affiche à l'échelle d'avant × ECHELLE_CORPS.
 
-const ECHELLE_CORPS = 0.25;
+const ECHELLE_CORPS = 0.25 / 2;   // (les corps en volume sont deux fois plus fins : voir corpsVueHD.js)
 
 // Taille (H), largeur d'épaules (ep), hauteur du torse, et tête de chaque peuple.
 const PROPORTIONS = {
@@ -311,7 +311,8 @@ function tenueDe(niveau) {
 
 // La clé de la texture en pied : un peuple (couleurs par défaut), un figurant, ou une personne
 // (avec ses couleurs à elle et la tenue de son niveau).
-function corpsHD(scene, quoi, pose = null) {
+// `vue` : 'troisQuarts' (par défaut, il regarde vers la droite), 'face', 'profil' ou 'dos'.
+function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   if (quoi === 'faucheuse') return 'perso_faucheuse';
   if (typeof quoi === 'string' && !FIGURANTS[quoi] && !PROPORTIONS[quoi]) return 'perso_' + quoi;   // (le joueur, etc.)
   let gene, tenue, costume = null, cle;
@@ -333,12 +334,14 @@ function corpsHD(scene, quoi, pose = null) {
     if (quoi.prestige) { costume = 'noble'; gene.habit = gene.habitNoble; gene.cape = 0x5a1a3a; cle += '_noble'; }
   }
   if (pose) cle += '_' + pose;
+  if (vue && vue !== 'troisQuarts') cle += '_' + vue;
   if (!scene.textures.exists(cle)) {
-    dessinerCorpsHD(gene, tenue, costume, 0, pose).texture(scene, cle);
-    dessinerCorpsHD(gene, tenue, costume, -1, pose).texture(scene, cle + '_pas1');
-    dessinerCorpsHD(gene, tenue, costume, 1, pose).texture(scene, cle + '_pas2');
+    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue);
+    toile.texture(scene, cle);
+    MAINS_CORPS[cle] = toile.mains;
+    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue).texture(scene, cle + '_pas1');
+    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue).texture(scene, cle + '_pas2');
   }
-  MAINS_CORPS[cle] = MAINS_CORPS[gene.race + (costume || '') + (pose ? '_' + pose : '')];
   return cle;
 }
 
