@@ -35,6 +35,7 @@ La partie se sauvegarde toute seule le soir et le matin au marché :
 | `src/scenes/DodoScene.js` | Aller dormir : la scène du lit et le bilan de la journée |
 | `src/portraitsHD.js` | Les portraits HD (bustes des voyageurs) et JeuneGoy en pied |
 | `src/decorHD.js` | Le décor HD : chêne, enduit, pierre, fer, ardoise, parchemin, plaques des boutons |
+| `src/objetsHD.js` | Les marchandises en HD (icônes 16 × 16), les pièces d'or, l'éclat et l'étiquette des casiers |
 | `src/scenes/FacadeScene.js` | Le matin : la façade du shop et son enseigne |
 | `src/scenes/ArriereScene.js` | L'arrière-boutique : stock, fortune, cadeaux, tiroir secret, chambre |
 | `src/scenes/NightScene.js` | Le soir : bilan, réserve, lettres, banque, prévision de demain |

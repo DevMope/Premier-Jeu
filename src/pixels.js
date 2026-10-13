@@ -377,19 +377,33 @@ function style(taille, couleur = '#f3e6c8', extra = {}) {
 
 // Bouton en bois cliquable. Renvoie un objet avec setActif(bool).
 function creerBouton(scene, x, y, largeur, texte, action) {
-  // Une plaque de bois clouée, plus claire au survol
+  // Un panneau de chêne dans un cadre de noyer à coins de laiton : plus clair au survol,
+  // il s'enfonce quand on appuie.
   const cle = plaqueBouton(scene, largeur);
   const fond = scene.add.image(x, y, cle).setScale(2).setInteractive({ useHandCursor: true });
-  const label = scene.add.text(x, y, texte, style(18, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);
-  let actif = true;
-  fond.on('pointerover', () => actif && fond.setTexture(cle + '_clair'));
-  fond.on('pointerout', () => fond.setTexture(cle));
-  fond.on('pointerdown', () => actif && action());
+  const label = scene.add.text(x, y, texte, style(18, '#fff0d0', { fontStyle: 'bold', stroke: '#24140a', strokeThickness: 4 })).setOrigin(0.5);
+  label.setShadow(0, 2, '#120a04', 0, true, true); // comme gravé dans le bois
+  let actif = true, survol = false;
+  const repos = () => {
+    if (!fond.active) return;
+    fond.setTexture(survol && actif ? cle + '_clair' : cle);
+    label.setY(y);
+  };
+  fond.on('pointerover', () => { survol = true; repos(); });
+  fond.on('pointerout', () => { survol = false; repos(); });
+  fond.on('pointerdown', () => {
+    if (!actif) return;
+    fond.setTexture(cle + '_enfonce');
+    label.setY(y + 2);
+    scene.time.delayedCall(110, repos);
+    action();
+  });
   return {
     fond, label,
     setActif(a) {
       actif = a;
-      fond.setTexture(cle).setTint(a ? 0xffffff : 0x8a8a8a);
+      repos();
+      fond.setTint(a ? 0xffffff : 0x8a8a8a);
       label.setAlpha(a ? 1 : 0.5);
     },
     setVisible(v) { fond.setVisible(v); label.setVisible(v); },

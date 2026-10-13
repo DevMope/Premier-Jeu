@@ -1,0 +1,209 @@
+// Les objets en HD : les marchandises (16 × 16 pixels peints, deux fois plus détaillées que
+// les anciennes icônes) et les pièces d'or du comptoir. Même style que les portraits :
+// dégradés de 6 teintes, lumière en haut à gauche, contour coloré.
+
+const RAMPES_OBJETS = {
+  pain: [0x3a1c0c, 0x6a3414, 0x9a5420, 0xc47a34, 0xe0a050, 0xf4cc84],
+  fromage: [0x5a4010, 0x8a6a18, 0xc09a28, 0xe0c048, 0xf0dc78, 0xfaf0b0],
+  verreRouge: [0x2a0610, 0x5a0e1e, 0x8e1a2c, 0xc42e3c, 0xe8605a, 0xffb0a0],
+  verreVert: [0x0a2414, 0x14402a, 0x226a40, 0x38985a, 0x64c47e, 0xb0f0c0],
+  verre: [0x3a4a5a, 0x6a7e90, 0x9ab0c0, 0xc4d4de, 0xe4eef4, 0xffffff],
+  flamme: [0x8a1a08, 0xc23a0c, 0xe8640e, 0xf8981a, 0xfcc840, 0xfff4b0],
+  gemme: [0x1a0a2a, 0x34145a, 0x5a2a8e, 0x8a4ac4, 0xb87ae8, 0xe8c8ff],
+  tissuRouge: [0x1c0c14, 0x441628, 0x6e2234, 0x982e3c, 0xbc4a4a, 0xda7260],
+  lin: [0x5a4a38, 0x8a7a60, 0xb0a084, 0xd0c4a6, 0xe8dec4, 0xfaf4e4],
+  chanvre: [0x3a2810, 0x5e4420, 0x8a6a34, 0xb08e4e, 0xd0b06c, 0xead09a],
+};
+
+function toileObjet(l = 16, h = 16) {
+  const t = new ToileHD(l, h);
+  Object.assign(t.rampes, RAMPES_DECOR, RAMPES_OBJETS);
+  return t;
+}
+
+// Un trait épais (pour les lames, les manches, les flèches), éclairé selon son côté.
+function trait(t, mat, x0, y0, x1, y1, ep = 1, { decalage = 0, bord = true } = {}) {
+  const dx = x1 - x0, dy = y1 - y0, long = Math.hypot(dx, dy) || 1;
+  t.forme(mat, (x, y) => {
+    const px = x + 0.5 - x0, py = y + 0.5 - y0;
+    const u = (px * dx + py * dy) / (long * long);
+    if (u < 0 || u > 1) return null;
+    const d = (px * dy - py * dx) / long; // distance signée au trait
+    return Math.abs(d) <= ep ? [-dy / long * (d / ep), dx / long * (d / ep) * 0.5, 0.8] : null;
+  }, { decalage, bord });
+}
+
+const DESSINS_OBJETS = {
+  // Une miche de pain croûtée, et un morceau de fromage
+  ration(t) {
+    t.forme('fromage', (x, y) => (x >= 8 && x <= 15 && y <= 14 && y >= 14 - (x - 8) * 0.85 ? [0.3, -0.3, 0.8] : null));
+    t.poser(13, 12, 'fromage', 1); t.poser(14, 10, 'fromage', 1); t.poser(15, 13, 'fromage', 2); // les trous
+    t.forme('pain', ellipsoide(7, 9, 6.5, 4.5));
+    for (const x of [4, 7, 10]) { t.poser(x, 7, 'pain', 1); t.poser(x + 1, 8, 'pain', 1); t.poser(x, 6, 'pain', 5); }
+  },
+  // Une gourde de cuir bouchée, avec sa lanière
+  gourde(t) {
+    trait(t, 'cuir', 7, 3, 2, 8, 0.5, { bord: false, decalage: -0.6 }); // la lanière
+    t.forme('cuir', ellipsoide(8, 10, 5.5, 5));
+    t.forme('cuir', (x, y) => (y >= 3 && y <= 5 && x >= 7 && x <= 9 ? [(x - 8) / 2, 0, 0.9] : null));
+    t.forme('chene', (x, y) => (y >= 1 && y <= 2 && x >= 7 && x <= 9 ? [(x - 8) / 2, -0.5, 0.8] : null), { decalage: 0.5 });
+    for (let x = 4; x <= 12; x++) t.poser(x, 10, 'cuir', 2); // la couture
+  },
+  // Une épée en diagonale : lame claire, garde dorée, poignée de cuir, pommeau
+  epee(t) {
+    trait(t, 'metal', 4, 12, 14, 2, 1.1, { decalage: 0.6 });
+    for (let k = 0; k < 8; k++) t.poser(6 + k, 10 - k, 'metal', 5); // le fil de la lame
+    trait(t, 'or', 2, 9, 7, 14, 0.8);
+    trait(t, 'cuir', 2, 14, 4, 12, 0.8);
+    t.forme('or', ellipsoide(1.5, 14.5, 1.3, 1.3));
+  },
+  // Trois flèches : empennage rouge et blanc, pointes de fer
+  fleches(t) {
+    for (const d of [-3, 0, 3]) {
+      trait(t, 'chene', 2 + d, 14, 12 + d, 3, 0.5, { bord: false, decalage: 0.5 });
+      t.forme('metal', (x, y) => (Math.abs(x + 0.5 - (12.5 + d)) + Math.abs(y + 0.5 - 2.5) < 1.8 ? [0.3, -0.4, 0.8] : null), { decalage: 0.5 });
+      t.poser(1 + d, 14, 'tissuRouge', 4); t.poser(2 + d, 15, 'tissuRouge', 3); t.poser(2 + d, 13, 'parchemin', 5);
+    }
+  },
+  // Une fiole ronde de potion rouge, avec son reflet et son bouchon
+  potion(t) {
+    t.forme('verreRouge', ellipsoide(8, 10, 5.5, 5.2));
+    t.forme('verre', (x, y) => (y >= 3 && y <= 5 && x >= 7 && x <= 9 ? [(x - 8) / 2, 0, 0.9] : null), { decalage: -0.5 });
+    t.forme('chene', (x, y) => (y >= 1 && y <= 2 && x >= 6 && x <= 10 ? [(x - 8) / 3, -0.5, 0.8] : null), { decalage: 0.4 });
+    t.poser(5, 8, 'verre', 5); t.poser(5, 9, 'verre', 5); t.poser(6, 7, 'verre', 5); // le reflet
+    for (let x = 4; x <= 12; x++) t.poser(x, 7, 'verreRouge', 5); // la surface du liquide
+  },
+  // Un rouleau de bandage, avec sa bande qui pend
+  bandage(t) {
+    // Le corps du rouleau, couché, puis sa face enroulée en spirale
+    t.forme('lin', (x, y) => (x >= 5 && x <= 13 && y >= 4 && y <= 11 ? [0, (y - 7.5) / 4.5, 0.85] : null), { motif: (x) => (x % 3 === 0 ? -0.35 : 0) });
+    t.forme('lin', ellipsoide(5, 7.5, 2.6, 4.2), { decalage: 0.3 });
+    for (const [x, y] of [[4, 6], [5, 6], [6, 7], [5, 9], [4, 8], [4, 7]]) t.poser(x, y, 'lin', 2);
+    t.poser(5, 7, 'lin', 1); t.poser(5, 8, 'lin', 1);
+    // La bande qui pend en ondulant
+    t.forme('lin', (x, y) => (y >= 11 && y <= 14 && x >= 9 + Math.sin(y) && x <= 13 + Math.sin(y) ? [0.2, 0.3, 0.9] : null), { decalage: -0.2 });
+    // La croix rouge
+    t.dessin(9, 6, ['.r.', 'rrr', '.r.'], { r: ['tissuRouge', 4] });
+  },
+  // Une torche : manche de bois, tissu enroulé, flamme vivante
+  torche(t) {
+    trait(t, 'chene', 6, 15, 9, 6, 0.9);
+    t.forme('lin', ellipsoide(9.5, 6, 2.6, 1.8), { decalage: -0.8 });
+    // Une flamme en goutte : pointue en haut, ronde en bas, le cœur presque blanc
+    const flamme = (k) => (x, y) => {
+      const v = (y + 0.5) / 6.5; // 0 en haut, 1 en bas
+      const w = 4.4 * k * Math.sqrt(Math.max(0, v)) * (1.15 - v * 0.45);
+      const nx = (x + 0.5 - 9.5 - (1 - v) * 0.8) / Math.max(0.5, w);
+      return y < 7 && Math.abs(nx) <= 1 ? [nx, -0.3, 0.9] : null;
+    };
+    t.forme('flamme', flamme(1), { decalage: -0.3, bord: false });
+    t.forme('flamme', flamme(0.55), { decalage: 1.2, bord: false });
+    t.poser(10, 0, 'flamme', 3); t.poser(8, 5, 'flamme', 5);
+  },
+  // Une corde lovée en spirale
+  corde(t) {
+    for (let a = 0; a < 6.28 * 2.2; a += 0.12) {
+      const r = 6.5 - a * 0.33;
+      const x = 8 + Math.cos(a) * r, y = 8 + Math.sin(a) * r * 0.8;
+      t.forme('chanvre', ellipsoide(x, y, 1.3, 1.3), { bord: false, decalage: Math.sin(a * 6) * 0.6 });
+    }
+  },
+  // Une fiole d'antidote, longue et verte, avec une étiquette en forme de feuille
+  antidote(t) {
+    t.forme('verreVert', (x, y) => (y >= 5 && y <= 14 && Math.abs(x + 0.5 - 8) < 3.2 ? [(x + 0.5 - 8) / 3.2, (y - 9) / 8, 0.8] : null));
+    t.forme('verre', (x, y) => (y >= 2 && y <= 4 && Math.abs(x + 0.5 - 8) < 1.6 ? [(x + 0.5 - 8) / 1.6, 0, 0.9] : null), { decalage: -0.5 });
+    t.forme('chene', (x, y) => (y >= 0 && y <= 1 && Math.abs(x + 0.5 - 8) < 2.2 ? [0, -0.5, 0.8] : null), { decalage: 0.4 });
+    t.dessin(6, 8, ['.pp.', 'pPPp', '.pp.'], { p: ['parchemin', 4], P: ['verreVert', 1] });
+    t.poser(6, 6, 'verre', 5); t.poser(6, 7, 'verre', 5);
+  },
+  // Une cape chaude pliée, avec son fermoir doré et sa fourrure
+  cape(t) {
+    // Elle s'évase vers le bas, avec de grands plis
+    t.forme('tissuRouge', (x, y) => {
+      const demi = 3.2 + (y - 4) * 0.45, dx = x + 0.5 - 8;
+      return y >= 4 && y <= 15 && Math.abs(dx) < demi ? [dx / (demi + 1), (y - 9) / 12, 0.8] : null;
+    }, { motif: (x, y) => (y > 6 && (x === 6 || x === 10) ? -0.9 : y > 8 && (x === 4 || x === 12) ? -0.6 : (x === 7 || x === 11) ? 0.3 : 0) });
+    for (let x = 2; x <= 13; x++) t.poser(x, 15, 'tissuRouge', 1); // l'ourlet
+    t.forme('lin', ellipsoide(8, 4.2, 5, 2.2), { decalage: 0.2, motif: (x, y) => ((x + y) % 2 ? 0.4 : -0.4) }); // le col de fourrure
+    t.forme('or', ellipsoide(8, 6, 1.4, 1.4), { decalage: 0.3 });
+  },
+  // Un bouclier rond : planches, cerclage de fer, ombon au centre
+  bouclier(t) {
+    t.forme('metal', ellipsoide(8, 8, 7.2, 7.2), { decalage: -0.4 });
+    t.forme('chene', ellipsoide(8, 8, 5.8, 5.8), { motif: (x) => (x % 4 === 0 ? -0.9 : 0) });
+    t.forme('metal', ellipsoide(8, 8, 2.2, 2.2), { decalage: 0.6 });
+    for (const [x, y] of [[8, 2], [2, 8], [14, 8], [8, 14]]) t.poser(x, y, 'or', 4);
+  },
+  // Une amulette : chaîne dorée et gemme violette
+  amulette(t) {
+    // La chaîne, en maillons alternés, qui monte du pendentif
+    let m = 0;
+    for (let a = Math.PI + 0.25; a < 2 * Math.PI - 0.2; a += 0.16) t.poser(Math.round(8 + Math.cos(a) * 5.5), Math.round(9 + Math.sin(a) * 7.5), 'or', m++ % 2 ? 4 : 1);
+    t.forme('or', ellipsoide(8, 11, 3.6, 3.8));
+    t.forme('gemme', ellipsoide(8, 11, 2.4, 2.6), { decalage: 0.4 });
+    t.poser(7, 10, 'gemme', 5);
+  },
+};
+
+// Crée les icônes HD des marchandises : « hd_ration », « hd_epee »...
+function creerObjetsHD(scene) {
+  for (const [id, dessin] of Object.entries(DESSINS_OBJETS)) {
+    if (scene.textures.exists('hd_' + id)) continue;
+    const t = toileObjet();
+    dessin(t);
+    t.contour();
+    t.texture(scene, 'hd_' + id);
+  }
+  creerPiecesHD(scene);
+}
+
+// L'icône d'un objet : la version HD si elle existe, sinon l'ancienne.
+function iconeObjet(scene, id) {
+  return scene.textures.exists('hd_' + id) ? 'hd_' + id : id;
+}
+
+// --- Les pièces d'or ---
+
+function creerPiecesHD(scene) {
+  if (scene.textures.exists('etiquette')) return;
+  // Une pièce vue de face : rebord en relief, champ creusé, couronne frappée, reflet
+  {
+    const t = toileObjet(12, 12);
+    t.forme('or', ellipsoide(6, 6, 5.6, 5.6));
+    t.forme('or', ellipsoide(6, 6, 4, 4), { decalage: -0.8, bord: false });
+    // La couronne, frappée en creux : ombre en haut à gauche, lumière en bas à droite
+    const couronne = ['o.o.o', 'ooooo', '.ooo.'];
+    couronne.forEach((l, j) => [...l].forEach((c, i) => {
+      if (c !== 'o') return;
+      t.poser(4 + i, 4 + j, 'or', 2);
+      if (!(couronne[j + 1] && couronne[j + 1][i] === 'o')) t.poser(4 + i, 5 + j, 'or', 5);
+    }));
+    t.poser(2, 3, 'or', 5); t.poser(3, 2, 'or', 5); t.poser(2, 4, 'or', 5);
+    t.contour();
+    t.texture(scene, 'pieceFace');
+  }
+  // Une pièce de profil (dans une pile) : tranche cannelée et dessus éclairé
+  {
+    const t = toileObjet(14, 6);
+    t.forme('or', ellipsoide(7, 2.6, 6.6, 2.4), { decalage: 0.3 });
+    for (let x = 1; x < 13; x++) for (const y of [3, 4]) t.poser(x, y, 'or', x % 2 ? 2 : 3); // les cannelures
+    t.poser(4, 1, 'or', 5); t.poser(5, 1, 'or', 5);
+    t.contour();
+    t.texture(scene, 'pieceTranche');
+  }
+  // Le petit éclat qui scintille
+  {
+    const t = toileObjet(7, 7);
+    t.dessin(0, 0, ['...o...', '...o...', '..oOo..', 'ooOOOoo', '..oOo..', '...o...', '...o...'], { o: ['or', 4], O: ['verre', 5] });
+    t.texture(scene, 'eclat');
+  }
+  // La petite étiquette de parchemin des casiers, avec son œillet
+  {
+    const t = toileObjet(16, 8);
+    t.forme('parchemin', (x, y) => (y >= 1 && y <= 6 && x >= 1 && x <= 14 && !(x === 1 && (y === 1 || y === 6)) ? [0, -0.2, 0.9] : null),
+      { motif: (x, y) => (hachage(x, y, 7) < 0.15 ? -0.6 : 0) });
+    t.poser(2, 3, 'chene', 0); t.poser(2, 4, 'chene', 1);
+    t.contour();
+    t.texture(scene, 'etiquette');
+  }
+}

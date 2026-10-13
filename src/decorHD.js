@@ -14,6 +14,8 @@ const RAMPES_DECOR = {
   cire: [0x8a6a40, 0xc8a870, 0xe4cc98, 0xf0dcae, 0xf8ecc8, 0xfff8e4],
   cuirRouge: [0x1e0808, 0x3e1010, 0x5e1a16, 0x7e2a20, 0x9e4030, 0xbe5c44],
   encre: [0x0a0c14, 0x141a2a, 0x1e2840, 0x2a3656, 0x3a4a70, 0x4a5e8a],
+  laiton: [0x2e1c06, 0x5a3c10, 0x8a6420, 0xb88e34, 0xdcb85a, 0xfbe8a0],
+  toile: [0x6a5a44, 0x9a8a6c, 0xbcae8e, 0xd6caa8, 0xe8dec0, 0xf6f0dc],
 };
 
 // --- Le bruit, pour les veines, les taches et l'usure ---
@@ -195,18 +197,6 @@ function creerDecorComptoir(scene) {
     // Les planches du bureau
     for (let k = 0; k < 4; k++) planche(t, 0, 9 + k * 23, 480, 23, 'chene', { graine: 62 + k, noeuds: 3 });
     for (let k = 0; k < 4; k++) for (let x = 6; x < 480; x += 118) { clou(t, x + k * 7, 13 + k * 23); clou(t, x + k * 7, 27 + k * 23); }
-    // Les casiers du stock, creusés dans le plateau
-    for (let i = 0; i < 12; i++) {
-      const x0 = 74 + (i % 5) * 54, y0 = 17 + Math.floor(i / 5) * 24;
-      for (let y = y0; y < y0 + 22; y++) for (let x = x0; x < x0 + 52; x++) {
-        const bordH = y === y0, bordG = x === x0, bordB = y === y0 + 21, bordD = x === x0 + 51;
-        const ombre = y < y0 + 3 || x < x0 + 2;
-        let ind = 2 + Math.round((fbm(x * 0.1, y * 0.4, 70 + i) - 0.5) * 1.5) - (ombre ? 1 : 0);
-        if (bordH || bordG) ind = 0;
-        if (bordB || bordD) ind = 4;
-        t.poser(x, y, 'chene', ind);
-      }
-    }
     // Rayures, tache d'encre, traces de chopes
     for (let k = 0; k < 14; k++) {
       const x = hachage(k, 1, 80) * 480, y = 10 + hachage(k, 2, 80) * 86, l = 4 + hachage(k, 3, 80) * 10;
@@ -215,6 +205,26 @@ function creerDecorComptoir(scene) {
     t.forme('encre', ellipsoide(30, 70, 4, 2.4), { decalage: -0.6 });
     t.poser(36, 71, 'encre', 2); t.poser(38, 72, 'encre', 2);
     for (const [x, y] of [[440, 30], [452, 64]]) for (let a = 0; a < 40; a++) t.poser(x + Math.cos(a / 40 * 6.28) * 6, y + Math.sin(a / 40 * 6.28) * 3, 'chene', 1);
+    // Les casiers du stock, creusés dans le plateau : un rebord de chêne biseauté et, au fond,
+    // un lit de toile claire où les marchandises ressortent bien.
+    for (let i = 0; i < 12; i++) {
+      const x0 = 74 + (i % 5) * 54, y0 = 17 + Math.floor(i / 5) * 24;
+      for (let y = y0; y < y0 + 22; y++) for (let x = x0; x < x0 + 52; x++) {
+        const dx = Math.min(x - x0, x0 + 51 - x), dy = Math.min(y - y0, y0 + 21 - y), d = Math.min(dx, dy);
+        if (d < 2) {
+          // Le rebord : sombre en haut et à gauche (dans l'ombre), éclairé en bas et à droite
+          const haut = (y - y0 < 2 && dy <= dx) || (x - x0 < 2 && dx <= dy);
+          t.poser(x, y, 'chene', haut ? d : 4 + (d === 0 ? 1 : 0));
+          continue;
+        }
+        // La toile : un tissage serré, plus sombre près du bord haut (l'ombre du rebord)
+        let ind = 4 + ((x + y) % 2 ? 0 : -1) + Math.round((fbm(x * 0.2, y * 0.2, 90 + i) - 0.5) * 1.2);
+        if (y - y0 < 4 || x - x0 < 3) ind -= 1;
+        if (y - y0 < 3) ind -= 1;
+        if (x % 7 === 0 && hachage(x, y, i) < 0.5) ind--; // les fils plus épais de la trame
+        t.poser(x, y, 'toile', ind);
+      }
+    }
     t.texture(scene, 'plateauComptoir');
   }
 
@@ -257,15 +267,41 @@ function creerDecorComptoir(scene) {
 function plaqueBouton(scene, largeur) {
   const cle = 'plaque_' + Math.round(largeur);
   if (scene.textures.exists(cle)) return cle;
-  const l = Math.max(10, Math.round(largeur / 2)), h = 20;
-  for (const clair of [false, true]) {
+  const l = Math.max(14, Math.round(largeur / 2)), h = 20;
+  // Trois états : au repos, au survol (plus clair, le laiton brille), enfoncé (biseaux inversés)
+  for (const etat of ['', '_clair', '_enfonce']) {
     const t = toileDecor(l, h);
-    if (clair) t.rampes.chene = RAMPES_DECOR.chene.map((c, i, r) => r[Math.min(5, i + 1)]);
-    planche(t, 0, 0, l, h, 'chene', { graine: l, noeuds: 1 });
-    for (let x = 0; x < l; x++) { t.poser(x, 0, 'chene', 5); t.poser(x, 1, 'chene', 4); t.poser(x, h - 1, 'chene', 0); t.poser(x, h - 2, 'chene', 1); }
-    for (let y = 0; y < h; y++) { t.poser(0, y, 'chene', 4); t.poser(l - 1, y, 'chene', 1); }
-    clou(t, 2, 9); clou(t, l - 4, 9);
-    t.texture(scene, clair ? cle + '_clair' : cle);
+    const clair = etat === '_clair', enfonce = etat === '_enfonce';
+    if (clair) {
+      t.rampes.chene = RAMPES_DECOR.chene.map((c, i, r) => r[Math.min(5, i + 1)]);
+      t.rampes.laiton = RAMPES_DECOR.laiton.map((c, i, r) => r[Math.min(5, i + 1)]);
+    }
+    // Le panneau de chêne en creux, veiné
+    planche(t, 4, 4, l - 8, h - 8, 'chene', { graine: l + 7, noeuds: 0 });
+    for (let y = 0; y < h; y++) for (let x = 0; x < l; x++) {
+      const d = Math.min(x, y, l - 1 - x, h - 1 - y);
+      const lumiere = (d === y || d === x) !== enfonce; // le haut et la gauche prennent la lumière
+      if (d === 0) t.poser(x, y, 'cheneSombre', 0);
+      // Le cadre de noyer, biseauté
+      else if (d <= 2) t.poser(x, y, 'cheneSombre', lumiere ? 6 - d : 1 + d);
+      // Un filet de laiton entre le cadre et le panneau
+      else if (d === 3) t.poser(x, y, 'laiton', lumiere ? 2 : 4);
+      // L'ombre du cadre sur le panneau (plus profonde quand on appuie)
+      else if (d === 4 && (d === y || d === x)) t.poser(x, y, 'chene', enfonce ? 0 : 1);
+      else if (enfonce && d === 5 && d === y) t.poser(x, y, 'chene', 1);
+    }
+    // Les coins de laiton, en équerre, rivetés
+    const coins = [[0, 0, 1, 1], [l - 1, 0, -1, 1], [0, h - 1, 1, -1], [l - 1, h - 1, -1, -1]];
+    for (const [cx, cy, sx, sy] of coins) {
+      for (let j = 0; j < 6; j++) for (let k = 0; j + k < 6; k++) {
+        const bord = j + k === 5 || j === 0 || k === 0;
+        t.poser(cx + sx * k, cy + sy * j, 'laiton', bord ? (sy > 0 && j === 0 || sx > 0 && k === 0 ? 4 : 1) : 3);
+      }
+      t.poser(cx + sx * 2, cy + sy * 2, 'laiton', 5); // le rivet
+      t.poser(cx + sx * 3, cy + sy * 2, 'laiton', 1);
+      t.poser(cx + sx * 2, cy + sy * 3, 'laiton', 1);
+    }
+    t.texture(scene, cle + etat);
   }
   return cle;
 }

@@ -83,6 +83,7 @@ class CounterScene extends Phaser.Scene {
   // Le mur (enduit à la chaux entre les colombages de chêne) et le plateau du comptoir.
   dessinerPiece() {
     creerDecorComptoir(this);
+    creerObjetsHD(this);
     this.add.image(0, 0, 'murComptoir').setOrigin(0).setScale(2);
     this.add.image(0, 340, 'plateauComptoir').setOrigin(0).setScale(2);
   }
@@ -244,30 +245,31 @@ class CounterScene extends Phaser.Scene {
     Object.keys(ITEMS).forEach((id, i) => {
       const x = 200 + (i % 5) * 108;
       const y = 397 + Math.floor(i / 5) * 48;
-      const fond = this.add.rectangle(x, y, 104, 44, 0xfff0c8, 0.001).setInteractive({ useHandCursor: true });
-      this.add.image(x - 36, y, id).setScale(3);
-      this.add.text(x - 18, y - 16, ITEMS[id].nom, style(11, '#f3e6c8', { wordWrap: { width: 70 }, stroke: '#1a100a', strokeThickness: 3 }));
-      const qte = this.add.text(x - 18, y + 4, '', style(13, '#f3d98a', { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 3 }));
-      fond.on('pointerover', () => fond.setFillStyle(0xfff0c8, 0.14));
-      fond.on('pointerout', () => fond.setFillStyle(0xfff0c8, 0.001));
+      const fond = this.add.rectangle(x, y, 100, 40, 0xfff6d8, 0.001).setInteractive({ useHandCursor: true });
+      // La marchandise posée sur la toile : jusqu'à trois exemplaires empilés selon le stock
+      const cle = iconeObjet(this, id);
+      const pile = [2, 1, 0].map(k => this.add.image(x - 28 - k * 3, y + 3 - k * 4, cle).setScale(2));
+      const icone = pile[2];
+      this.add.text(x - 8, y - 18, ITEMS[id].nom, style(10, '#3a2410', { fontStyle: 'bold', wordWrap: { width: 58 } }));
+      // La quantité, sur une petite étiquette de parchemin
+      this.add.image(x + 32, y + 12, 'etiquette').setScale(2);
+      const qte = this.add.text(x + 33, y + 12, '', style(12, '#3a2410', { fontStyle: 'bold' })).setOrigin(0.5);
+      fond.on('pointerover', () => { fond.setFillStyle(0xfff6d8, 0.22); icone.setScale(2.25); });
+      fond.on('pointerout', () => { fond.setFillStyle(0xfff6d8, 0.001); icone.setScale(2); });
       fond.on('pointerdown', () => this.donner(id));
-      this.cases[id] = { fond, qte };
+      this.cases[id] = { fond, qte, pile, icone };
     });
     this.creerBoutonRetourner();
   }
 
   // Se retourner : l'arrière-boutique (étagères, fortune, cadeaux, tiroir secret, chambre).
   creerBoutonRetourner() {
-    const cle = plaqueBouton(this, 212);
-    const fond = this.add.image(578, 493, cle).setScale(2).setInteractive({ useHandCursor: true });
-    this.add.text(578, 493, "↻ Se retourner : l'arrière-boutique", style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);
-    fond.on('pointerover', () => fond.setTexture(cle + '_clair'));
-    fond.on('pointerout', () => fond.setTexture(cle));
-    fond.on('pointerdown', () => {
+    const b = creerBouton(this, 578, 493, 212, "↻ Se retourner : l'arrière-boutique", () => {
       if (this.enConfirmation) return;
       this.scene.pause();
       this.scene.launch('Arriere', { comptoir: this });
     });
+    b.label.setFontSize(13);
   }
 
   // Les cadeaux achetés au Bazar de Rosalie : un par client et par jour, pour sa chance.
@@ -390,24 +392,43 @@ class CounterScene extends Phaser.Scene {
   }
 
   creerArgent() {
-    this.pieces = this.add.graphics();
-    this.texteArgent = this.add.text(70, 510, '', style(18, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.pieces = this.add.container(0, 0);
+    this.texteArgent = this.add.text(70, 512, '', style(18, '#f3d98a', { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 4 })).setOrigin(0.5);
+    this.nbPieces = -1;
     this.dessinerPieces();
+    // De temps en temps, une pièce scintille au sommet d'une pile.
+    this.time.addEvent({ delay: 1400, loop: true, callback: () => {
+      const sommets = this.pieces.list.filter(o => o.sommet);
+      if (!sommets.length || Math.random() < 0.35) return;
+      const p = Phaser.Utils.Array.GetRandom(sommets);
+      const eclat = this.add.image(p.x + Phaser.Math.Between(-8, 8), p.y - 3, 'eclat').setScale(0).setDepth(1);
+      this.tweens.add({ targets: eclat, scale: 2, angle: 45, duration: 260, yoyo: true, onComplete: () => eclat.destroy() });
+    } });
   }
 
-  // Une petite pile de pièces qui grandit avec l'argent.
+  // Des piles de pièces d'or qui grandissent avec l'argent, et quelques pièces éparpillées.
   dessinerPieces() {
-    const n = Phaser.Math.Clamp(Math.ceil(this.G.argent / 5), 0, 24);
-    this.pieces.clear();
-    for (let i = 0; i < n; i++) {
-      const colonne = i % 3;
-      const hauteur = Math.floor(i / 3);
-      const x = 40 + colonne * 30;
-      const y = 480 - hauteur * 7;
-      this.pieces.fillStyle(0x9a7a10, 1).fillEllipse(x, y + 2, 26, 10);
-      this.pieces.fillStyle(0xe8c040, 1).fillEllipse(x, y, 26, 10);
-    }
+    const n = Phaser.Math.Clamp(Math.ceil(this.G.argent / 4), 0, 30);
     this.texteArgent.setText(this.G.argent + ' pièces');
+    if (n === this.nbPieces) return;
+    this.nbPieces = n;
+    this.pieces.removeAll(true);
+    const piles = [[40, 488], [100, 488], [70, 478]]; // celle du fond est dessinée en premier
+    const ordre = [2, 0, 1];
+    const hauteurs = [0, 0, 0];
+    const empilees = Math.max(0, n - 3);
+    for (let i = 0; i < empilees; i++) hauteurs[[0, 1, 2][i % 3]]++;
+    for (const c of ordre) {
+      const [px, py] = piles[c];
+      for (let k = 0; k < hauteurs[c]; k++) {
+        const piece = this.add.image(px + ((k * 7) % 3) - 1, py - k * 6, 'pieceTranche').setScale(2);
+        piece.sommet = k === hauteurs[c] - 1;
+        this.pieces.add(piece);
+      }
+    }
+    // Les pièces éparpillées devant les piles
+    const eparses = [[18, 498], [122, 500], [100, 508]];
+    for (let k = 0; k < Math.min(3, n); k++) this.pieces.add(this.add.image(eparses[k][0], eparses[k][1], 'pieceFace').setScale(2));
   }
 
   // --- Déroulement ---
@@ -1013,8 +1034,8 @@ class CounterScene extends Phaser.Scene {
     boite.setMask(this.masqueFenetre);
     this.tweens.add({ targets: boite, scale: 5, duration: 250, ease: 'Back.easeOut' });
     objets.forEach((id, i) => this.time.delayedCall(300 + i * 170, () => {
-      const depart = this.cases[id].fond;
-      const icone = this.add.image(depart.x - 36, depart.y, id).setScale(3).setDepth(6);
+      const depart = this.cases[id].icone;
+      const icone = this.add.image(depart.x, depart.y, iconeObjet(this, id)).setScale(2).setDepth(6);
       this.tweens.add({
         targets: icone, x: bx, y: SOL_COMPTOIR - 30, scale: 2, duration: 450, ease: 'Quad.easeIn',
         onComplete: () => {
@@ -1133,7 +1154,8 @@ class CounterScene extends Phaser.Scene {
   majStock() {
     for (const [id, c] of Object.entries(this.cases)) {
       const n = this.G.stock[id];
-      c.qte.setText('x ' + n).setColor(n > 0 ? '#f3d98a' : '#a05040');
+      c.qte.setText('x' + n).setColor(n > 0 ? '#3a2410' : '#a03020');
+      c.pile.forEach((img, k) => img.setVisible(k === 2 || n > 2 - k).setAlpha(n > 0 ? 1 : 0.35));
     }
     this.majTiroirSecret();
     this.majTiroirCadeaux();
