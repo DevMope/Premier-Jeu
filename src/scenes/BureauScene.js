@@ -340,9 +340,9 @@ class BureauScene extends Phaser.Scene {
     c.add(this.add.text(161, 72, 'Améliorer le shop', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     c.add(this.add.text(161, 94, 'Commande le soir : les ouvriers\npassent pendant la nuit.', style(11, '#6b4a2a', { fontStyle: 'italic', align: 'center' })).setOrigin(0.5, 0));
     Object.entries(AMELIORATIONS).forEach(([cle, a], i) => {
-      const y = 152 + i * 58;
+      const y = 148 + i * 50;
       const n = niveauAmelioration(G, cle);
-      const fond = this.add.rectangle(161, y, 252, 52, cle === choisi ? 0xd8c498 : 0xffffff, cle === choisi ? 1 : 0).setInteractive({ useHandCursor: true });
+      const fond = this.add.rectangle(161, y, 252, 46, cle === choisi ? 0xd8c498 : 0xffffff, cle === choisi ? 1 : 0).setInteractive({ useHandCursor: true });
       fond.on('pointerdown', () => { const p = this.vider(); this.afficherAmeliorations(p, cle); });
       const etoiles = n ? '★'.repeat(n) : '—';
       const prevu = (G.travaux || []).includes(cle) ? ' · 🔨 cette nuit' : '';
@@ -389,6 +389,7 @@ class BureauScene extends Phaser.Scene {
       case 'comptoir': return { cle: plateauComptoir(this, n), echelle: 0.5 };
       case 'coffre': return { cle: coffreHD(this, n), echelle: 2.4 };
       case 'chambre': return { cle: litHD(this, n), echelle: n === 3 ? 0.55 : 1.2 };
+      case 'atelier': return { cle: iconeObjet(this, 'enclume'), echelle: 2.6 + n * 0.5 };
       default: return { cle: luminaireHD(this, n), echelle: n >= 2 ? 1.6 : 2.6 };
     }
   }

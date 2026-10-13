@@ -1126,3 +1126,71 @@ function creerComptoirCarteHD(scene) {
   t.contour();
   t.texture(scene, 'comptoirCarteHD');
 }
+
+// --- Le décor de la grand-place du marché ---
+
+// Une fontaine de pierre à deux vasques, des sacs de grain, une charrette à foin, des tonneaux.
+function creerDecorPlaceHD(scene) {
+  if (scene.textures.exists('fontaineHD')) return;
+  // La fontaine (60×44) : un bassin octogonal, une colonne, une vasque haute
+  {
+    const t = toileDecor(60, 44);
+    t.rampes.eauF = rampe(0x4aa8c8);
+    t.forme('pierre', (x, y) => (y >= 30 && y <= 41 && x >= 2 && x <= 57 ? [(x - 30) / 40, (y - 35) / 14, 0.85] : null), { motif: (x, y) => ((x + (y % 2) * 3) % 7 === 0 ? -0.8 : 0) });
+    t.forme('eauF', ellipsoide(30, 30, 26, 3.5), { decalage: 0.6 });
+    for (let x = 6; x < 54; x += 5) t.poser(x, 30, 'eauF', 5);
+    t.forme('pierre', (x, y) => (y >= 14 && y <= 30 && Math.abs(x + 0.5 - 30) <= 3 ? [(x - 30) / 4, 0, 0.9] : null));
+    t.forme('pierre', ellipsoide(30, 14, 12, 3.5, (x, y) => y >= 12), { decalage: 0.3 });
+    t.forme('eauF', ellipsoide(30, 12.5, 10, 2), { decalage: 0.8 });
+    t.forme('pierre', (x, y) => (y >= 4 && y <= 12 && Math.abs(x + 0.5 - 30) <= 1.5 ? [0.2, 0, 0.9] : null));
+    t.forme('pierre', ellipsoide(30, 4, 3, 2), { decalage: 0.5 });
+    t.contour(); t.texture(scene, 'fontaineHD');
+  }
+  // La charrette (64×38) : un plateau, deux grandes roues, des ridelles, chargée de foin et d'un tonneau
+  {
+    const t = toileDecor(64, 38);
+    t.rampes.foin = rampe(0xd8b048);
+    t.forme('foin', ellipsoide(30, 14, 22, 10, (x, y) => y <= 18), { motif: (x, y) => (hachage(x, y, 61) - 0.5) * 1.6 });
+    for (let k = 0; k < 18; k++) { const x = 10 + hachage(k, 1, 62) * 40, y = 6 + hachage(k, 2, 62) * 10; t.poser(Math.round(x), Math.round(y), 'foin', 5); t.poser(Math.round(x) + 1, Math.round(y) - 1, 'foin', 4); }
+    planche(t, 4, 18, 52, 5, 'chene', { graine: 63, noeuds: 1 });
+    for (const x of [6, 18, 30, 42, 54]) for (let y = 12; y < 18; y++) t.poser(x, y, 'cheneSombre', 3);
+    trait(t, 'chene', 56, 21, 63, 26, 1);
+    for (const cx of [16, 44]) {
+      for (let a = 0; a < 6.28; a += 0.05) { t.poser(Math.round(cx + Math.cos(a) * 9), Math.round(28 + Math.sin(a) * 9), 'cheneSombre', a > 3.14 ? 3 : 1); t.poser(Math.round(cx + Math.cos(a) * 8), Math.round(28 + Math.sin(a) * 8), 'chene', 2); }
+      for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; trait(t, 'chene', cx, 28, cx + Math.cos(a) * 8, 28 + Math.sin(a) * 8, 0.5); }
+      t.forme('fer', ellipsoide(cx, 28, 1.6, 1.6), { decalage: 0.5 });
+    }
+    t.contour(); t.texture(scene, 'charretteHD');
+  }
+  // Des sacs de grain (40×24) : trois sacs ventrus, noués, l'un ouvert sur le blé
+  {
+    const t = toileDecor(40, 24);
+    t.rampes.jute = rampe(0xc0a070); t.rampes.ble = rampe(0xe8c050);
+    for (const [cx, cy, rx, ry] of [[10, 15, 8, 8], [29, 15, 9, 8.5], [20, 11, 7, 7]]) {
+      t.forme('jute', ellipsoide(cx, cy, rx, ry, (x, y) => y <= 23), { motif: (x, y) => ((x + y) % 3 === 0 ? -0.4 : 0) });
+      t.poser(cx, Math.round(cy - ry), 'chanvre', 2); t.poser(cx - 1, Math.round(cy - ry) - 1, 'jute', 3); t.poser(cx + 1, Math.round(cy - ry) - 1, 'jute', 3);
+    }
+    t.forme('ble', ellipsoide(20, 5, 4, 1.6), { decalage: 0.6 });
+    t.contour(); t.texture(scene, 'sacsHD');
+  }
+  // Des tonneaux (34×22) : deux couchés, un debout
+  {
+    const t = toileDecor(34, 22);
+    for (const cx of [8, 24]) {
+      t.forme('chene', ellipsoide(cx, 15, 7.5, 6.5, (x, y) => true), { motif: (x, y) => (x % 3 === 0 ? -0.6 : 0) });
+      for (const dx of [-4, 4]) for (let y = 9; y <= 21; y++) t.poser(cx + dx, y, 'fer', 2);
+    }
+    t.forme('chene', (x, y) => (y >= 1 && y <= 12 && x >= 12 && x <= 21 ? [(x - 16.5) / 7, 0, 0.8] : null), { motif: (x, y) => (x % 3 === 0 ? -0.6 : 0) });
+    for (const y of [3, 10]) for (let x = 12; x <= 21; x++) t.poser(x, y, 'fer', 3);
+    t.contour(); t.texture(scene, 'tonneauxHD');
+  }
+  // Un pigeon (8×6)
+  {
+    const t = toileDecor(8, 6);
+    t.rampes.plume = rampe(0x8a8a98);
+    t.forme('plume', ellipsoide(4, 3.5, 3.5, 2.2));
+    t.forme('plume', ellipsoide(6.5, 2, 1.4, 1.4), { decalage: 0.4 });
+    t.poser(7, 2, 'flamme', 3); t.poser(3, 5, 'flamme', 2); t.poser(5, 5, 'flamme', 2);
+    t.contour(); t.texture(scene, 'pigeonHD');
+  }
+}

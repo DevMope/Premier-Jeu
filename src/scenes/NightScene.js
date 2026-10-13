@@ -47,6 +47,7 @@ class NightScene extends Phaser.Scene {
       ['Le bureau', () => ouvrirPage('Bureau', { retour: 'Nuit' })],
       ['La banque', () => this.ouvrirBanque()],
       [`L'atelier (${G.tresors.length})`, () => ouvrirPage('Atelier')],
+      ...(this.matin ? [] : [['🕯 Se promener', () => ouvrirPage('Promenade')]]),
       ...(this.matin
         ? [['Retour au marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
         : [['🌙 Aller dormir', () => this.dormir()]]),
@@ -230,10 +231,10 @@ class NightScene extends Phaser.Scene {
   // --- La prévision pour demain ---
 
   creerPrevision(x1, x2) {
-    this.add.rectangle((x1 + x2) / 2, 410, x2 - x1 - 40, 96, 0xc8b080, 0.55).setStrokeStyle(2, 0x8a6a3a);
+    this.add.rectangle((x1 + x2) / 2, 412, x2 - x1 - 40, 112, 0xc8b080, 0.55).setStrokeStyle(2, 0x8a6a3a);
     this.add.text(x1 + 22, 366, this.matin ? "Aujourd'hui" : 'Demain', style(15, '#3b2410', { fontStyle: 'bold' }));
     this.textePrevision = this.add.text(x1 + 22, 386, '', style(14, '#3b2410', { fontStyle: 'bold', wordWrap: { width: x2 - x1 - 44 } }));
-    this.texteFacteurs = this.add.text(x1 + 22, 424, '', style(11, '#5a3a20', { lineSpacing: 2 }));
+    this.texteFacteurs = this.add.text(x1 + 22, 416, '', style(11, '#5a3a20', { lineSpacing: 2 }));
   }
 
   majPrevision() {
@@ -247,6 +248,8 @@ class NightScene extends Phaser.Scene {
     const rumeur = this.G.rumeur && this.G.rumeur.jour === jour ? -RUMEUR_CLIENTS : 0;
     this.texteFacteurs.setText(`Réputation ${signe(a.reputation)} · Expérience ${signe(a.experience)}\nStock varié ${signe(a.variete)}` +
       (evenements ? ` · Événements ${evenements > 0 ? '+' : ''}${evenements}` : '') + (rumeur ? ` · Rumeur ${rumeur}` : ''));
+    const pal = p.palier;
+    this.texteFacteurs.setText(this.texteFacteurs.text + `\nPalier : ${pal.max} clients max` + (pal.suivant ? ` (→ ${pal.suivant.max} à ${pal.suivant.reputation} de réput.)` : ''));
   }
 
   // --- La banque : une page à part, le soir attend en pause ---

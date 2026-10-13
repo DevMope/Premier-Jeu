@@ -211,7 +211,7 @@ function mettreAJourPartie(G) {
   for (const id of Object.keys(MATERIAUX)) if (G.materiaux[id] === undefined) G.materiaux[id] = 0;
   G.mal = G.mal || 0;
   G.nomShop = G.nomShop || NOM_SHOP_DEFAUT;
-  G.ameliorations = { comptoir: 0, coffre: 0, chambre: 0, eclairage: 0, ...(G.ameliorations || {}) };
+  G.ameliorations = { comptoir: 0, coffre: 0, chambre: 0, eclairage: 0, atelier: 0, ...(G.ameliorations || {}) };
   G.travaux = G.travaux || [];
   G.tutoVu = G.tutoVu || {};
   G.travauxFinis = G.travauxFinis || [];

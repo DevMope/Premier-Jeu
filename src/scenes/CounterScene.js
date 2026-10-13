@@ -991,14 +991,16 @@ class CounterScene extends Phaser.Scene {
     if (enPlus && !confirme) return this.demanderSurplus(id);
     this.G.stock[id]--;
     this.colis[id] = (this.colis[id] || 0) + 1;
-    if (enPlus) this.dire(OBJETS_DE_SOIN.includes(id) ? "Un soin de plus ? Merci, ça me fera un cœur de réserve !" : "Un de plus ? Ça peut toujours servir, merci !");
+    if (enPlus) this.dire(id === 'potion' ? "Une potion de plus ? Merci, ça me fera un cœur de réserve !"
+      : id === 'bandage' ? "Un bandage de plus ? Si je saigne après un combat, ça m'évitera de perdre un cœur !" : "Un de plus ? Ça peut toujours servir, merci !");
     this.majStock();
     this.majCommande();
   }
 
   demanderSurplus(id) {
     const v = this.voyageur;
-    const effet = OBJETS_DE_SOIN.includes(id) ? 'des soins en plus lui donnent un cœur de réserve'
+    const effet = id === 'potion' ? 'une potion en plus = un cœur de réserve (un seul)'
+      : id === 'bandage' ? 'un bandage en plus arrête un saignement après un combat raté'
       : '+5 % sur l\'épreuve qui en a besoin';
     this.dire(`Tu veux vraiment donner 1 ${ITEMS[id].nom} EN PLUS de sa commande ? (${effet} · sac : ${totalSurplus(v, this.colis)} / ${tailleSac(v)} · ` +
       'le surplus n\'est pas payé)', 'Objet en plus');
@@ -1300,7 +1302,8 @@ class CounterScene extends Phaser.Scene {
     }
     this.sousTitre.setText(v ? (v.queteId ? `→ ${ZONES[v.zone].nom}` : "cherche l'aventure") : '');
     this.texteSac.setText(v ? (v.queteId ? `Sac : ${totalSurplus(v, this.colis)} / ${tailleSac(v)} en plus` +
-      (coeursEnPlus(v, this.colis) ? ` · +${coeursEnPlus(v, this.colis)} cœur${coeursEnPlus(v, this.colis) > 1 ? 's' : ''}` : '') + ' · ' : '') +
+      (coeursEnPlus(v, this.colis) ? ` · +${coeursEnPlus(v, this.colis)} cœur${coeursEnPlus(v, this.colis) > 1 ? 's' : ''}` : '') +
+      (bandagesEnPlus(v, this.colis) ? ` · 🩹${bandagesEnPlus(v, this.colis)}` : '') + ' · ' : '') +
       `🍀 ${trefleDe(this.G, v.nom)}/${TREFLE_MAX} · ${NIVEAUX_AVENTURIER[v.niveau].nom}` : '');
     this.lignesCommande.forEach((ligne, i) => {
       const id = ids[i];

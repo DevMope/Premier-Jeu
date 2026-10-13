@@ -134,6 +134,22 @@ class IntroHistoireScene extends Cinematique {
     textureJoueur(this, G); // (crée les textures du joueur si besoin)
     this.heros = this.add.image(220, 330, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(6));
     this.mentor = this.add.image(-80, 345, corpsHD(this, 'mentor')).setOrigin(0.5, 0.5).setScale(6 * ECHELLE_CORPS).setAngle(90);
+    // Le devant de la rivière, par-dessus l'aventurier : seuls sa tête et son torse dépassent de l'eau.
+    const ligneEau = 342;
+    this.eauDevant = this.add.tileSprite(0, ligneEau, 960, 390 - ligneEau, 'eauFondHD').setOrigin(0).setTileScale(2, 60 / 32).setAlpha(0.8);
+    this.eauDevant.tilePositionY = (ligneEau - 330) / (60 / 32);
+    this.tweens.add({ targets: this.eauDevant, tilePositionX: -480, duration: 16000, repeat: -1 });
+    const reflets = this.refletsDevant = this.add.tileSprite(0, ligneEau, 960, 390 - ligneEau, 'caustiquesHD').setOrigin(0).setTileScale(2, 60 / 32).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: reflets, tilePositionX: -480, duration: 9000, repeat: -1 });
+    // Des rides qui s'écartent autour de lui, et l'écume de son sillage
+    this.dansLEau = true;
+    this.time.addEvent({ delay: 420, loop: true, callback: () => {
+      if (!this.dansLEau || this.mentor.x < 0) return;
+      const ride = this.add.ellipse(this.mentor.x, ligneEau, 70, 8).setStrokeStyle(2, 0xe8fcff, 0.7).setDepth(0.5);
+      this.tweens.add({ targets: ride, scaleX: 2, scaleY: 1.8, alpha: 0, duration: 1300, onComplete: () => ride.destroy() });
+      const ecume = this.add.circle(this.mentor.x - 40 + Math.random() * 10, ligneEau - 1 + Math.random() * 3, 2 + Math.random() * 2, 0xffffff, 0.8).setDepth(0.5);
+      this.tweens.add({ targets: ecume, x: ecume.x - 60, alpha: 0, duration: 1200, onComplete: () => ecume.destroy() });
+    } });
 
     this.creerBoiteTexte();
     this.boutonPasser(() => this.finir());
@@ -150,7 +166,7 @@ class IntroHistoireScene extends Cinematique {
   // Changement de décor : de la forêt et sa rivière aux collines de la Comté et leur chemin.
   async versLaComte() {
     await this.animer({ targets: this.cameras.main, alpha: 0, duration: 600 });
-    this.riviere.setVisible(false);
+    this.riviere.setVisible(false); this.eauDevant.setVisible(false); this.refletsDevant.setVisible(false);
     const comte = this.add.graphics().setDepth(-1);
     dessinerComte(comte, 0, 0, 960, 370, 0, 'comte');
     comte.paysage.setDepth(-1);
@@ -168,7 +184,7 @@ class IntroHistoireScene extends Cinematique {
     await this.attendreClic();
 
     // L'aventurier arrive en flottant, comme un vieux tonneau.
-    this.tweens.add({ targets: this.mentor, y: 352, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: this.mentor, y: 349, angle: 86, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     this.ecrire('Un matin...', "La rivière charria quelque chose d'inhabituel : un aventurier à moitié noyé, qui flottait comme un vieux tonneau.");
     await this.animer({ targets: this.mentor, x: 520, duration: 2600, ease: 'Sine.easeOut' });
     await this.attendreClic();
@@ -183,7 +199,13 @@ class IntroHistoireScene extends Cinematique {
     this.cameras.main.shake(200, 0.008);
     await this.attendre(500);
     this.tweens.killTweensOf(this.mentor);
-    await this.animer({ targets: this.mentor, x: 470, y: 318, duration: 600, ease: 'Back.easeOut' });
+    this.dansLEau = false;
+    // Il sort de l'eau dans une gerbe d'éclaboussures
+    for (let k = 0; k < 18; k++) {
+      const g = this.add.circle(this.mentor.x + Phaser.Math.Between(-50, 50), 342, Phaser.Math.Between(2, 4), 0xd8f8ff, 0.9).setDepth(3);
+      this.tweens.add({ targets: g, y: 342 - Phaser.Math.Between(30, 80), x: g.x + Phaser.Math.Between(-30, 30), duration: 350, yoyo: true, ease: 'Quad.easeOut', onComplete: () => g.destroy() });
+    }
+    await this.animer({ targets: this.mentor, x: 470, y: 318, angle: 90, duration: 600, ease: 'Back.easeOut' });
     this.onomatopee(470, 270, 'SPLOTCH');
     await this.animer({ targets: this.heros, angle: 0, duration: 300 });
     this.ecrire('', "Tu l'as sorti de l'eau. Il pesait aussi lourd qu'un âne... et sentait à peu près pareil.");

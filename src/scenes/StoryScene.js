@@ -62,7 +62,7 @@ class StoryScene extends Cinematique {
     await this.attendreClic();
 
     for (let i = 0; i < r.etapes.length; i++) {
-      const { epreuve, niveau, reussie, pvApres, piege, pvAvant, sauvee, repli } = r.etapes[i];
+      const { epreuve, niveau, reussie, pvApres, piege, pvAvant, sauvee, repli, saignement } = r.etapes[i];
       const x = 140 + i * (680 / etapes);
 
       if (this.meteo) { this.meteo.remove(); this.meteo = null; }
@@ -105,8 +105,17 @@ class StoryScene extends Cinematique {
       }
       await this.issue(reussie);
       this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(epreuve[niveau], v)} »\n${suite}`);
-      if (!reussie) await this.blesser(pvApres);
+      if (!reussie) await this.blesser(saignement === 'perte' ? pvApres + 1 : pvApres);
       else await this.victoire(niveau === 'complet');
+      // Le saignement après un combat raté
+      if (saignement) {
+        await this.attendreClic();
+        await this.saigner(saignement === 'bande');
+        this.ecrire(`Épreuve ${i + 1} / ${etapes}`, saignement === 'bande'
+          ? "« La plaie saignait beaucoup... Heureusement, j'avais un bandage en plus : j'ai serré fort, et le sang s'est arrêté. »"
+          : "« La plaie saignait sans s'arrêter... Pas un seul bandage en plus dans mon sac. J'ai perdu des forces. »");
+        if (saignement === 'perte') await this.blesser(pvApres);
+      }
       await this.attendreClic();
     }
 
@@ -141,6 +150,16 @@ class StoryScene extends Cinematique {
     }
     await this.animer({ targets: this.perso, y: y - 26, duration: 180, ease: 'Quad.easeOut', yoyo: true });
     this.perso.setY(y);
+  }
+
+  // Des gouttes de sang qui tombent... et, s'il a un bandage en plus, le pansement.
+  async saigner(bande) {
+    for (let k = 0; k < 6; k++) {
+      const g = this.add.circle(this.perso.x + Phaser.Math.Between(-12, 12), this.perso.y - 70, 3, 0xb01818).setDepth(6);
+      this.tweens.add({ targets: g, y: this.perso.y - 4, alpha: 0.4, duration: 500, delay: k * 90, ease: 'Quad.easeIn', onComplete: () => g.destroy() });
+    }
+    await this.attendre(500);
+    if (bande) { await this.montrerObjet('bandage'); await this.utiliserObjet('bandage'); }
   }
 
   async blesser(pvRestants) {
@@ -221,7 +240,10 @@ class StoryScene extends Cinematique {
       c.add(this.add.image(60, y, iconeObjet(this, 'tr_' + tr.categorie)).setScale(2.4));
       c.add(this.add.text(90, y - 16, tr.nom, style(15, '#3b2410', { fontStyle: 'bold' })));
       c.add(...pastilleEtat(this, 90, y + 12, tr.etat, 11));
-      c.add(this.add.text(170, y + 4, `${CATEGORIES[tr.categorie].nom} · vaut ~${valeurTresor(tr)} p. en l'état`, style(12, '#5a3a20')));
+      // Ton flair estime la revente (une fois restauré) et juge le prix demandé.
+      const e = estimationFlair(G, t);
+      c.add(this.add.text(170, y + 2, `Flair ${Math.round(e.flair * 100)} % · revente ~${e.min}–${e.max} p. restauré`, style(11, '#5a3a20')));
+      c.add(this.add.text(170, y + 17, `👃 ${e.verdict.texte}`, style(12, e.verdict.couleur, { fontStyle: 'bold' })));
       const b = creerBouton(this, 470, y, 140, '', () => {
         const erreur = acheterTrouvaille(G, t);
         if (erreur) return info.setText(erreur);

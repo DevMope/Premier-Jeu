@@ -1,0 +1,108 @@
+<title>Bibliothèque du Passage</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+  /* Une seule ambiance, celle du jeu : le cabinet de bois sombre où l'on range les créations. */
+  /* Mise en page : bandeau, rangée d'onglets par catégorie, puis une grille de vitrines. */
+  :root {
+    --bois: #1a120a; --bois-clair: #2a1c10; --vitrine: #241810; --liseré: #c9a227;
+    --parchemin: #f3e6c8; --encre-pale: #c9b48a; --or: #f3d98a; --rouge: #c0623a;
+    --titre: "Alegreya", Georgia, serif; --texte: "Alegreya Sans", "Trebuchet MS", sans-serif;
+    color-scheme: dark;
+  }
+  body { background: var(--bois); color: var(--parchemin); font-family: var(--texte); font-size: 15px; }
+  .page { padding-block: 24px 48px; padding-inline: max(16px, 4vw); max-width: 1280px; margin: 0 auto; display: grid; gap: 20px; }
+  header { display: grid; gap: 6px; border-bottom: 1px solid color-mix(in srgb, var(--liseré) 40%, transparent); padding-bottom: 16px; }
+  h1 { font-family: var(--titre); font-weight: 800; font-size: clamp(28px, 4vw, 44px); color: var(--or); margin: 0; text-wrap: balance; letter-spacing: 0.01em; }
+  .sous { color: var(--encre-pale); margin: 0; max-width: 65ch; }
+  .compte { font-variant-numeric: tabular-nums; color: var(--or); font-weight: 700; }
+  .outils { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .onglets { display: flex; flex-wrap: wrap; gap: 8px; }
+  .onglet { font: 600 14px var(--texte); color: var(--parchemin); background: var(--bois-clair); border: 1px solid #4a3220; border-radius: 999px; padding: 6px 12px; cursor: pointer; display: inline-flex; gap: 6px; align-items: baseline; }
+  .onglet span { color: var(--encre-pale); font-weight: 500; font-variant-numeric: tabular-nums; font-size: 12px; }
+  .onglet[aria-pressed="true"] { background: var(--or); color: #2a1608; border-color: var(--or); }
+  .onglet[aria-pressed="true"] span { color: #5a3a10; }
+  .onglet:focus-visible, .carte:focus-visible, input:focus-visible, button:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
+  #recherche { flex: 1 1 220px; min-width: 0; font: 15px var(--texte); color: var(--parchemin); background: var(--vitrine); border: 1px solid #4a3220; border-radius: 6px; padding: 8px 12px; }
+  .section h2 { font-family: var(--titre); font-weight: 700; font-size: 22px; color: var(--or); margin: 8px 0 4px; }
+  .section p { color: var(--encre-pale); margin: 0 0 12px; max-width: 65ch; }
+  .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .grille.large { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .carte { background: var(--vitrine); border: 1px solid #3a2616; border-radius: 6px; padding: 10px; display: grid; grid-template-rows: 150px auto; gap: 8px; cursor: zoom-in; min-width: 0; text-align: left; color: inherit; font: inherit; }
+  .grille.large .carte { grid-template-rows: 190px auto; }
+  .carte:hover { border-color: var(--liseré); }
+  .socle { display: grid; place-items: center; overflow: hidden; border-radius: 4px;
+    background: repeating-conic-gradient(#2e2014 0% 25%, #261a10 0% 50%) 0 0 / 16px 16px; }
+  .socle img { image-rendering: pixelated; max-width: 100%; max-height: 100%; height: auto; object-fit: contain; }
+  .nom { font-weight: 700; font-size: 14px; line-height: 1.25; overflow-wrap: anywhere; }
+  .taille { font-size: 12px; color: var(--encre-pale); font-variant-numeric: tabular-nums; }
+  .vide { color: var(--encre-pale); font-style: italic; }
+  #chargement { font-family: var(--titre); font-size: 20px; color: var(--or); }
+  dialog { background: var(--vitrine); color: var(--parchemin); border: 1px solid var(--liseré); border-radius: 8px; padding: 16px; max-width: min(96vw, 1200px); }
+  dialog::backdrop { background: rgb(10 6 2 / 0.8); }
+  .loupe { display: grid; gap: 12px; }
+  .loupe .socle { max-width: 92vw; max-height: 72vh; overflow: auto; padding: 12px; }
+  .loupe .socle img { max-width: none; max-height: none; height: revert; }
+  .barre { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+  .barre .nom { font-size: 18px; font-family: var(--titre); }
+  .zoom { display: flex; gap: 6px; }
+  .zoom button, .fermer { font: 600 14px var(--texte); color: var(--parchemin); background: var(--bois-clair); border: 1px solid #4a3220; border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  .zoom button[aria-pressed="true"] { background: var(--or); color: #2a1608; }
+  #moteur { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+  @media (prefers-reduced-motion: no-preference) { .carte { transition: border-color 0.15s; } }
+</style>
+<div class="page">
+  <header>
+    <h1>Bibliothèque du Passage des Aventuriers</h1>
+    <p class="sous">Tout ce qu'on a dessiné pour le jeu, peint ici en direct par le moteur du jeu lui-même : <span class="compte" id="total">…</span> créations. Clique sur une vignette pour l'agrandir.</p>
+  </header>
+  <div class="outils">
+    <div class="onglets" id="onglets" role="toolbar" aria-label="Catégories"></div>
+    <input id="recherche" type="search" placeholder="Chercher (ex. : nain, coffre, potion, marais…)" aria-label="Chercher une création">
+  </div>
+  <div id="chargement">On peint les créations…</div>
+  <main id="contenu"></main>
+</div>
+<dialog id="loupe" aria-label="Création agrandie">
+  <div class="loupe">
+    <div class="barre"><span class="nom" id="loupe-nom"></span><span class="taille" id="loupe-taille"></span>
+      <div class="zoom" id="loupe-zoom"></div><button class="fermer" id="loupe-fermer">Fermer</button></div>
+    <div class="socle"><img id="loupe-img" alt=""></div>
+  </div>
+</dialog>
+<div id="moteur"></div>
+<script>const ZOOM_ECRAN = 1;</script>
+<script src="lib/phaser.min.js"></script>
+<script src="src/data.js"></script>
+<script src="src/regles.js"></script>
+<script src="src/pixels.js"></script>
+<script src="src/portraits.js"></script>
+<script src="src/portraitsHD.js"></script>
+<script src="src/decorHD.js"></script>
+<script src="src/objetsHD.js"></script>
+<script src="src/iconesHD.js"></script>
+<script src="src/interieurHD.js"></script>
+<script src="src/exterieurHD.js"></script>
+<script src="src/corpsHD.js"></script>
+<script src="src/recitHD.js"></script>
+<script src="src/tutoriel.js"></script>
+<script src="src/sauvegarde.js"></script>
+<script src="src/scenes/Cinematique.js"></script>
+<script src="src/scenes/TitleScene.js"></script>
+<script src="src/scenes/IntroScene.js"></script>
+<script src="src/scenes/CounterScene.js"></script>
+<script src="src/scenes/NightScene.js"></script>
+<script src="src/scenes/StoryScene.js"></script>
+<script src="src/scenes/FailliteScene.js"></script>
+<script src="src/scenes/ExpressScene.js"></script>
+<script src="src/scenes/BanqueScene.js"></script>
+<script src="src/scenes/MarcheScene.js"></script>
+<script src="src/scenes/AtelierScene.js"></script>
+<script src="src/scenes/BureauScene.js"></script>
+<script src="src/scenes/CarteScene.js"></script>
+<script src="src/scenes/DodoScene.js"></script>
+<script src="src/scenes/FacadeScene.js"></script>
+<script src="src/scenes/ArriereScene.js"></script>
+<script src="src/scenes/RenovationScene.js"></script>
+<script src="src/scenes/PromenadeScene.js"></script>
+<script src="src/scenes/HudScene.js"></script>
+<script src="bibliotheque.js"></script>

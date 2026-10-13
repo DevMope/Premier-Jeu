@@ -17,7 +17,27 @@ class HudScene extends Phaser.Scene {
     zone.on('pointerdown', () => this.ouvrirMenu());
     zone.on('pointerover', () => menu.setColor('#ffe066'));
     zone.on('pointerout', () => menu.setColor('#fff4dc'));
-    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, zone]).setDepth(100);
+    // La réputation, en direct : elle s'anime quand elle bouge.
+    plaque.fillStyle(0x1e130a, 0.92).fillRoundedRect(114, -8, 104, 26, 7);
+    plaque.lineStyle(2, 0xc9a227, 1).strokeRoundedRect(114, -8, 104, 26, 7);
+    this.texteReput = this.add.text(166, 9, '', style(14, '#f3d98a', { fontStyle: 'bold', brut: true })).setOrigin(0.5);
+    const zoneReput = this.add.rectangle(166, 9, 104, 20, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    zoneReput.on('pointerover', () => this.infoReput(true));
+    zoneReput.on('pointerout', () => this.infoReput(false));
+    zoneReput.on('pointerdown', () => this.infoReput(!this.bulleReput));
+    this.reputAffichee = null;
+    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, zone, this.texteReput, zoneReput]).setDepth(100);
+  }
+
+  // Le détail de la réputation : son palier (le plafond de clients) et le suivant.
+  infoReput(montrer) {
+    if (this.bulleReput) { this.bulleReput.destroy(); this.bulleReput = null; }
+    const G = window.GAME;
+    if (!montrer || !G) return;
+    const p = palierClients(G);
+    const texte = `Réputation : ${arrondi(G.reputation)}\n${p.nom} : jusqu'à ${p.max} clients de passage par jour` +
+      (p.suivant ? `\nProchain palier à ${p.suivant.reputation} : ${p.suivant.nom} (${p.suivant.max} clients)` : '\nPalier maximum atteint !');
+    this.bulleReput = this.add.text(116, 24, texte, style(12, '#fff4dc', { backgroundColor: '#1e130a', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
   }
 
   // La scène du jeu qu'on regarde (la plus haute, hors bandeau).
@@ -31,7 +51,20 @@ class HudScene extends Phaser.Scene {
     const s = this.scenePrincipale();
     const visible = !!(G && s && !SCENES_SANS_BANDEAU.includes(s.scene.key));
     this.bandeau.setVisible(visible && !this.fenetre);
-    if (visible) this.texteJour.setText(`Jour ${G.jour}`);
+    if (visible) {
+      this.texteJour.setText(`Jour ${G.jour}`);
+      const r = Math.round(G.reputation * 10) / 10;
+      if (r !== this.reputAffichee) {
+        if (this.reputAffichee !== null) {
+          const d = Math.round((r - this.reputAffichee) * 10) / 10;
+          const t = this.add.text(166, 30, `${d > 0 ? '+' : ''}${String(d).replace('.', ',')}`, style(15, d > 0 ? '#a8f088' : '#ff8070', { fontStyle: 'bold', stroke: '#1e130a', strokeThickness: 4, brut: true })).setOrigin(0.5).setDepth(101);
+          this.tweens.add({ targets: t, y: 46, alpha: 0, duration: 1600, delay: 300, onComplete: () => t.destroy() });
+          this.tweens.add({ targets: this.texteReput, scale: 1.25, duration: 150, yoyo: true });
+        }
+        this.reputAffichee = r;
+        this.texteReput.setText(`⭐ Réput. ${String(r).replace('.', ',')}`);
+      }
+    } else if (this.bulleReput) this.infoReput(false);
     else if (this.fenetre && !G) this.fermerMenu();
     // Toujours au-dessus des autres pages
     const liste = this.scene.manager.scenes;

@@ -227,6 +227,47 @@ class MarcheScene extends Phaser.Scene {
   creerVueEnsemble() {
     const { x: ox, y: oy, echelle } = VUE_MARCHE;
     const c = this.vue = this.add.container(0, 0).setDepth(5);
+    // La grand-place : une fontaine, des charrettes, des sacs de grain, des tonneaux, des pigeons,
+    // et une guirlande de fanions au-dessus des toits.
+    creerDecorPlaceHD(this);
+    const guirlande = this.add.graphics();
+    const couleurs = [0xc0302a, 0xe8c040, 0x2f6a9a, 0x4f8a3a, 0xf3e6c8];
+    guirlande.lineStyle(1, 0x3b2410, 0.8);
+    const fil = x => 136 + Math.sin((x - 40) / 880 * Math.PI) * 30;
+    guirlande.beginPath(); guirlande.moveTo(40, fil(40));
+    for (let x = 40; x <= 920; x += 10) guirlande.lineTo(x, fil(x));
+    guirlande.strokePath();
+    for (let x = 52, k = 0; x < 914; x += 22, k++) {
+      guirlande.fillStyle(couleurs[k % couleurs.length]).fillTriangle(x - 6, fil(x - 6), x + 6, fil(x + 6), x, fil(x) + 12);
+    }
+    c.add(guirlande);
+    const decor = [
+      ['charretteHD', 92, 448, 1.5, false], ['charretteHD', 872, 452, 1.5, true],
+      ['sacsHD', 262, 462, 1.4, false], ['tonneauxHD', 330, 466, 1.3, false],
+      ['sacsHD', 700, 466, 1.3, true], ['tonneauxHD', 628, 462, 1.4, true],
+    ];
+    for (const [cle, x, y, e, miroir] of decor) c.add(this.add.image(x, y, cle).setOrigin(0.5, 1).setScale(e).setFlipX(miroir));
+    c.add(this.add.image(480, 438, 'fontaineHD').setOrigin(0.5, 1).setScale(1.6));
+    // Le jet de la fontaine
+    this.time.addEvent({ delay: 90, loop: true, callback: () => {
+      if (!this.vue.visible) return;
+      const goutte = this.add.circle(480 + Phaser.Math.Between(-3, 3), 372, 1.6, 0xc8f0ff, 0.9);
+      c.add(goutte);
+      const cote = Phaser.Math.FloatBetween(-1, 1);
+      this.tweens.add({ targets: goutte, x: 480 + cote * 16, y: 390, duration: 380, ease: 'Quad.easeIn', onComplete: () => {
+        this.tweens.add({ targets: goutte, x: 480 + cote * 40, y: 414, alpha: 0.3, duration: 340, ease: 'Quad.easeIn', onComplete: () => goutte.destroy() });
+      } });
+    } });
+    // Des pigeons qui picorent, et s'envolent de temps en temps
+    for (let k = 0; k < 4; k++) {
+      const x0 = 400 + k * 46, y0 = 452 + (k % 2) * 8;
+      const pigeon = this.add.image(x0, y0, 'pigeonHD').setScale(1.8).setFlipX(k % 2 === 1);
+      c.add(pigeon);
+      this.tweens.add({ targets: pigeon, angle: 25, duration: 160, yoyo: true, repeat: -1, repeatDelay: 900 + k * 330 });
+      this.time.addEvent({ delay: 7000 + k * 2300, loop: true, callback: () => {
+        this.tweens.add({ targets: pigeon, x: x0 + Phaser.Math.Between(-80, 80), y: y0 - 70, duration: 700, yoyo: true, ease: 'Sine.easeOut' });
+      } });
+    }
     const noms = { mendiant: 'Le mendiant', bazar: 'Le Bazar de Rosalie', encheres: 'Les enchères', jeux: 'Le coin des jeux', crieur: 'Le crieur' };
     const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => this.ouvrirJeux(), crieur: () => this.ouvrirCrieur() };
     for (const [cle, [x, type]] of Object.entries(this.positions)) {
@@ -250,7 +291,7 @@ class MarcheScene extends Phaser.Scene {
       };
       marcher(120 + i * 230);
     }
-    const invite = this.add.text(480, 400, 'Clique sur un lieu pour t\'en approcher', style(17, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5);
+    const invite = this.add.text(480, 356, 'Clique sur un lieu pour t\'en approcher', style(17, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5);
     this.tweens.add({ targets: invite, alpha: 0.5, duration: 900, yoyo: true, repeat: -1 });
     c.add(invite);
   }

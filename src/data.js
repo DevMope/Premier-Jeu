@@ -18,8 +18,12 @@ const ITEMS = {
   amulette: { nom: 'Amulette', prix: 20 },
 };
 
-// Les objets qui soignent : en plus de la commande, chacun donne un cœur de plus pendant le voyage.
-const OBJETS_DE_SOIN = ['potion', 'bandage', 'antidote'];
+// Les soins qu'on peut donner en plus de la commande :
+// - une potion en plus = un cœur de réserve ;
+// - un bandage en plus = il arrête un saignement (sinon, le saignement coûte un cœur de plus).
+const OBJETS_DE_SOIN = ['potion', 'bandage'];
+// La chance qu'un combat raté fasse saigner l'aventurier.
+const CHANCE_SAIGNEMENT = 0.5;
 // Le sac de l'aventurier : combien d'objets en plus de sa commande il peut porter.
 const SAC = { hobbit: 2, magicienne: 2, humain: 3, elfe: 3, nain: 4 };
 // Un objet en plus pour une épreuve qui le demande : +5 % de chances de la réussir.
@@ -64,9 +68,11 @@ const AMELIORATIONS = {
     effet: "Mieux reposé, tu apprends plus vite : +1 d'expérience par nuit et par niveau (ton flair progresse)." },
   eclairage: { nom: "L'éclairage", niveaux: ['Bougies', 'Lanternes', 'Chandeliers', 'Lustre de cristal'], prix: [90, 250, 600],
     effet: 'Un shop bien éclairé attire le regard : +0,3 client par jour et par niveau.' },
+  atelier: { nom: "L'atelier", niveaux: ['Un établi', 'Deux établis', 'Trois établis'], prix: [220, 480],
+    effet: "Un établi de plus = une place de plus pour embaucher un employé (2, puis 3, puis 4)." },
 };
 // La réputation gagnée à chaque amélioration terminée.
-const REPUTATION_AMELIORATION = 0.2;
+const REPUTATION_AMELIORATION = 0.15;
 
 // Le marchand express passe au comptoir pendant la journée :
 // pratique pour sauver un voyage, mais bien plus cher que le fournisseur.
@@ -95,9 +101,12 @@ const REFUS_CLIENT = 0.5;
 // Les prêts : les banquiers nains prêtent plus, et moins cher, quand ta réputation grandit.
 // La Main Noire (`mal`) ne prête qu'à ceux qui ont choisi le camp du mal (plus tard dans le jeu).
 const PRETS = [
+  // Cinq prêts de la Banque Centrale Goyenne : il faut de plus en plus de réputation entre chacun.
   { id: 'petit', preteur: 'Banque Centrale Goyenne', nom: 'Petit prêt', somme: 60, taux: 0.15, jours: 5, reputation: 0 },
-  { id: 'marchand', preteur: 'Banque Centrale Goyenne', nom: 'Prêt marchand', somme: 150, taux: 0.10, jours: 7, reputation: 4 },
-  { id: 'grand', preteur: 'Banque Centrale Goyenne', nom: 'Grand prêt', somme: 400, taux: 0.06, jours: 10, reputation: 10 },
+  { id: 'artisan', preteur: 'Banque Centrale Goyenne', nom: "Prêt d'artisan", somme: 120, taux: 0.12, jours: 6, reputation: 3 },
+  { id: 'marchand', preteur: 'Banque Centrale Goyenne', nom: 'Prêt marchand', somme: 220, taux: 0.09, jours: 8, reputation: 7 },
+  { id: 'grand', preteur: 'Banque Centrale Goyenne', nom: 'Grand prêt', somme: 400, taux: 0.06, jours: 10, reputation: 12 },
+  { id: 'guilde', preteur: 'Banque Centrale Goyenne', nom: 'Prêt de la Guilde', somme: 750, taux: 0.04, jours: 14, reputation: 18 },
   { id: 'mafia', preteur: 'La Main Noire', nom: 'Prêt sans questions', somme: 120, taux: 0.45, jours: 4, reputation: -Infinity, mal: true },
 ];
 
@@ -338,8 +347,26 @@ const JOUR_1 = [
 ];
 // Les premiers jours, pas plus de clients que ça (sans compter les lettres) : on apprend.
 const CLIENTS_DEBUT = { jours: 3, max: 3 };
+// Chaque sorte d'objet en stock attire un peu de monde (0,15 avant : −35 %).
+const CLIENTS_PAR_OBJET = 0.1;
+// La réputation gagnée par une mission réussie (×1,5 dans les terres de lumière).
+const GAIN_REPUTATION_SUCCES = 0.6;
+// Les paliers de réputation : chacun relève le nombre maximum de clients de passage par jour
+// (sans compter ceux des lettres). Entre deux paliers, plus de réputation = toujours plus de clients,
+// mais jamais au-delà du plafond : de quoi garder le dispatch gérable et le temps de s'équiper.
+const PALIERS_CLIENTS = [
+  { reputation: -Infinity, max: 3, nom: 'Échoppe inconnue' },
+  { reputation: 2, max: 4, nom: 'Échoppe du coin' },
+  { reputation: 5, max: 5, nom: 'Comptoir apprécié' },
+  { reputation: 9, max: 6, nom: 'Comptoir réputé' },
+  { reputation: 14, max: 7, nom: 'Comptoir renommé' },
+  { reputation: 20, max: 8, nom: 'Comptoir célèbre' },
+  { reputation: 28, max: 10, nom: 'Comptoir légendaire' },
+];
 // Le premier jour où la Faucheuse peut venir annoncer les morts.
 const JOUR_FAUCHEUSE = 5;
+// Une contrée est « conquise » après ce nombre de missions réussies : son drapeau flotte sur ta carte.
+const CONQUETE_ZONE = 5;
 
 // --- Le dispatch : les zones où envoyer les aventuriers ---
 
@@ -630,7 +657,11 @@ const ETATS = [
 const EMPLOYES = {
   tobin: { nom: "Tobin l'apprenti", race: 'hobbit', salaire: 4, rapide: false, description: 'Jeune et appliqué, il apprend vite.' },
   marta: { nom: 'Marta la Rétameuse', race: 'nain', salaire: 9, rapide: true, description: 'Une naine experte : ses réparations prennent un jour de moins.' },
+  pip: { nom: 'Pip le Joaillier', race: 'hobbit', salaire: 7, rapide: ['bijou', 'artefact'], description: 'Doigts de fée : un jour de moins sur les bijoux et les artefacts.' },
+  brann: { nom: 'Brann le Tanneur', race: 'humain', salaire: 6, rapide: ['vetement', 'armure'], description: 'Un jour de moins sur les vêtements et les armures.' },
 };
+// Le nombre d'employés qu'on peut embaucher : 2, plus un par établi en plus (amélioration « atelier »).
+const EMPLOYES_DE_BASE = 2;
 
 // Les objets que les aventuriers peuvent rapporter (valeur en parfait état... presque).
 const TRESORS = [

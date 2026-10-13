@@ -58,19 +58,31 @@ function piegeFatal(voyageur, pieges) {
 // Probabilité exacte que l'aventurier revienne vivant :
 // il meurt s'il échoue autant d'épreuves qu'il a de points de vie.
 // Avec un objet piégé qui lui servira, il n'a aucune chance.
+// Un combat raté peut faire saigner : un cœur de plus perdu, sauf s'il lui reste un bandage en plus.
 function chanceDeRetour(voyageur, colis, pieges = null) {
   if (piegeFatal(voyageur, pieges)) return 0;
-  let proba = [1]; // proba[k] = probabilité d'avoir raté k épreuves
+  const pv = pvAuDepart(voyageur, colis);
+  // états : « cœurs perdus, bandages en plus restants » → probabilité
+  let etats = new Map([[`0,${bandagesEnPlus(voyageur, colis)}`, 1]]);
   for (const e of voyageur.epreuves) {
     const p = chanceEtape(e, colis, voyageur);
-    const suivante = new Array(proba.length + 1).fill(0);
-    proba.forEach((pk, k) => {
-      suivante[k] += pk * p;
-      suivante[k + 1] += pk * (1 - p);
-    });
-    proba = suivante;
+    const combat = EPREUVES_COMBAT.includes(e.type);
+    const suite = new Map();
+    const ajouter = (perdu, b, q) => { if (perdu < pv && q > 0) suite.set(`${perdu},${b}`, (suite.get(`${perdu},${b}`) || 0) + q); };
+    for (const [cle, pk] of etats) {
+      const [perdu, b] = cle.split(',').map(Number);
+      ajouter(perdu, b, pk * p);
+      const rate = pk * (1 - p);
+      if (!combat) { ajouter(perdu + 1, b, rate); continue; }
+      ajouter(perdu + 1, b, rate * (1 - CHANCE_SAIGNEMENT));
+      if (b > 0) ajouter(perdu + 1, b - 1, rate * CHANCE_SAIGNEMENT);
+      else ajouter(perdu + 2, b, rate * CHANCE_SAIGNEMENT);
+    }
+    etats = suite;
   }
-  return proba.slice(0, pvAuDepart(voyageur, colis)).reduce((a, b) => a + b, 0);
+  let total = 0;
+  for (const q of etats.values()) total += q;
+  return total;
 }
 
 // --- Le suréquipement ---
@@ -94,10 +106,14 @@ function tailleSac(voyageur) {
   return SAC[voyageur.race] ?? 3;
 }
 
-// Les soins en plus donnent un cœur de réserve pendant le voyage (un seul, quel que soit leur nombre).
+// Une potion en plus donne un cœur de réserve pendant le voyage (un seul, quel que soit leur nombre).
 function coeursEnPlus(voyageur, colis) {
-  const plus = surplus(voyageur, colis);
-  return Math.min(1, OBJETS_DE_SOIN.reduce((s, id) => s + (plus[id] || 0), 0));
+  return Math.min(1, surplus(voyageur, colis).potion || 0);
+}
+
+// Les bandages en plus de la commande : chacun arrête un saignement.
+function bandagesEnPlus(voyageur, colis) {
+  return surplus(voyageur, colis).bandage || 0;
 }
 
 function pvAuDepart(voyageur, colis) {
@@ -137,6 +153,7 @@ function chanceVivant(voyageur, colis, pieges = null) {
 function simulerAventure(voyageur, colis, pieges = null) {
   const pvDepart = pvAuDepart(voyageur, colis);
   let pv = pvDepart;
+  let bandages = bandagesEnPlus(voyageur, colis);
   const etapes = [];
   for (const e of voyageur.epreuves) {
     const niveau = niveauEpreuve(e, colis, voyageur);
@@ -154,8 +171,15 @@ function simulerAventure(voyageur, colis, pieges = null) {
       etapes.push({ epreuve: e, niveau, reussie: false, pvApres: 1, repli: true });
       return { etapes, pvDepart, vivant: true, echec: true, valeureux: false };
     }
-    if (!reussie) pv--;
-    etapes.push({ epreuve: e, niveau, reussie, sauvee, pvApres: pv });
+    // Un combat raté peut faire saigner : un bandage en plus arrête le sang, sinon un cœur de plus s'en va.
+    let saignement = null;
+    if (!reussie) {
+      pv--;
+      if (EPREUVES_COMBAT.includes(e.type) && Math.random() < CHANCE_SAIGNEMENT) {
+        if (bandages > 0) { bandages--; saignement = 'bande'; } else if (pv > 0) { pv--; saignement = 'perte'; }
+      }
+    }
+    etapes.push({ epreuve: e, niveau, reussie, sauvee, pvApres: pv, saignement });
     if (pv <= 0) break;
   }
   const derniere = etapes[etapes.length - 1];
@@ -376,7 +400,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     faucheuse: { faveur: 0, morts: 0, visites: 0, cadeau: false, mission: null, sabotages: 0 },
     experience: 0, // nombre de clients servis depuis le début
     capacite: RESERVE_DEPART,
-    ameliorations: { comptoir: 0, coffre: 0, chambre: 0, eclairage: 0 },
+    ameliorations: { comptoir: 0, coffre: 0, chambre: 0, eclairage: 0, atelier: 0 },
     travaux: [],
     travauxFinis: [],
     prets: [],     // { id, preteur, nom, restant, parJour }
@@ -691,6 +715,22 @@ function niveauFlair(G) {
   return Math.min(1, G.experience / 40);
 }
 
+// Ce que ton flair te dit d'une trouvaille : son prix de revente une fois restaurée, plus ou moins
+// précis selon ton expérience, et si le prix demandé est une bonne affaire.
+function estimationFlair(G, t) {
+  const flair = niveauFlair(G);
+  const vraie = valeurTresor(t.tresor, ETATS.length - 1);
+  const centre = vraie * (1 + (t.biais || 0) * 0.45 * (1 - flair));
+  const ecart = vraie * 0.35 * (1 - flair) + 2;
+  const min = Math.max(1, Math.round(centre - ecart)), max = Math.round(centre + ecart);
+  const rapport = t.prix / centre;
+  const verdict = rapport < 0.45 ? { texte: 'Une affaire en or !', couleur: '#2f7a2a' }
+    : rapport < 0.7 ? { texte: 'Bon prix', couleur: '#2f6a2a' }
+    : rapport < 0.95 ? { texte: 'Prix correct, sans plus', couleur: '#8a6a10' }
+    : { texte: 'Trop cher, à mon avis…', couleur: '#a03030' };
+  return { min, max, verdict, flair };
+}
+
 function chanceEstimee(G, voyageur, colis, pieges = null) {
   // Toi, tu sais ce que tu as glissé dans le colis.
   if (piegeFatal(voyageur, pieges)) return 0;
@@ -846,8 +886,8 @@ function niveauAmelioration(G, cle) {
 // Le prochain niveau d'un meuble : { niveau, nom, prix }, ou null s'il est au maximum.
 function ameliorationSuivante(G, cle) {
   const n = niveauAmelioration(G, cle);
-  if (n >= 3) return null;
   const a = AMELIORATIONS[cle];
+  if (n >= a.niveaux.length - 1) return null;
   const prix = cle === 'reserve' ? AGRANDISSEMENTS[n].prix : a.prix[n];
   return { niveau: n + 1, nom: a.niveaux[n + 1], prix };
 }
@@ -868,7 +908,7 @@ function commanderAmelioration(G, cle) {
 // Le niveau de la façade (0 : humble chaumière … 3 : belle maison à colombages), qui suit
 // l'ensemble des améliorations du shop.
 function niveauFacade(G) {
-  const total = Object.keys(AMELIORATIONS).reduce((somme, cle) => somme + niveauAmelioration(G, cle), 0);
+  const total = Object.keys(AMELIORATIONS).filter(c => c !== 'atelier').reduce((somme, cle) => somme + niveauAmelioration(G, cle), 0);
   return Math.min(3, Math.floor(total / 4));
 }
 
@@ -876,7 +916,7 @@ function niveauFacade(G) {
 function nuitDuShop(G) {
   G.travauxFinis = [];
   for (const cle of G.travaux || []) {
-    G.ameliorations[cle] = Math.min(3, (G.ameliorations[cle] || 0) + 1);
+    G.ameliorations[cle] = Math.min(AMELIORATIONS[cle].niveaux.length - 1, (G.ameliorations[cle] || 0) + 1);
     G.reputation += REPUTATION_AMELIORATION;
     G.travauxFinis.push(cle);
   }
@@ -920,10 +960,10 @@ function attrait(G) {
   return {
     reputation: G.reputation * 0.4,
     experience: Math.min(G.experience, 40) / 10,
-    variete: variete * 0.15,
+    variete: variete * CLIENTS_PAR_OBJET,
     decoration: aDecoration(G, 'trophee') ? 0.7 : 0,
     eclairage: niveauAmelioration(G, 'eclairage') * 0.3,
-    total: 1 + G.reputation * 0.4 + Math.min(G.experience, 40) / 10 + variete * 0.15 + (aDecoration(G, 'trophee') ? 0.7 : 0)
+    total: 1 + G.reputation * 0.4 + Math.min(G.experience, 40) / 10 + variete * CLIENTS_PAR_OBJET + (aDecoration(G, 'trophee') ? 0.7 : 0)
       + niveauAmelioration(G, 'eclairage') * 0.3,
   };
 }
@@ -939,7 +979,25 @@ function prevision(G, jour = G.jour + 1) {
   let min = Phaser.Math.Clamp(base + evenements + rumeur, 1, 7);
   let max = Math.max(min, min + 3 + Math.min(0, evenements + rumeur));
   if (jour <= CLIENTS_DEBUT.jours) { min = Math.min(min, CLIENTS_DEBUT.max); max = Math.min(max, CLIENTS_DEBUT.max); }
-  return { min, max, annonces };
+  // Le plafond du palier de réputation
+  const palier = palierClients(G);
+  min = Math.min(min, palier.max); max = Math.min(max, palier.max);
+  return { min, max, annonces, palier };
+}
+
+// Le palier de réputation atteint, et le suivant (ou null).
+function palierClients(G) {
+  let i = 0;
+  PALIERS_CLIENTS.forEach((p, k) => { if (G.reputation >= p.reputation) i = k; });
+  return { ...PALIERS_CLIENTS[i], index: i, suivant: PALIERS_CLIENTS[i + 1] || null };
+}
+
+// La part d'une commande par lettre vraiment remplie (de 0 à 1).
+function partCommandeRemplie(v, colis) {
+  const commande = commandeDe(v);
+  let voulu = 0, donne = 0;
+  for (const [id, n] of Object.entries(commande)) { voulu += n; donne += Math.min(n, (colis && colis[id]) || 0); }
+  return voulu ? donne / voulu : 1;
 }
 
 // On va dormir puis on ouvre le comptoir (utile pour les tests).
@@ -990,11 +1048,12 @@ function ouvrirComptoir(G) {
 
   // Les aventuriers dont la quête se termine aujourd'hui reviennent...
   // ... les autres, c'est la Faucheuse qui vient les annoncer, tout au bout de la file.
-  const morts = [];
+  // Ceux qui reviennent de mission passent en premier : tu touches leur part tout de suite.
+  const morts = [], retours = [];
   for (const p of G.partis) {
     if (p.termine || p.retour !== G.jour) continue;
     p.resultat = simulerAventure(p.voyageur, p.colis, p.pieges);
-    if (p.resultat.vivant) file.splice(hasard(0, file.length), 0, { type: 'retour', parti: p });
+    if (p.resultat.vivant) retours.push({ type: 'retour', parti: p });
     else morts.push(p);
   }
   // Les familles des disparus.
@@ -1012,7 +1071,7 @@ function ouvrirComptoir(G) {
   // le carnet du disparu.
   if (morts.length && G.jour >= JOUR_FAUCHEUSE) file.push({ type: 'faucheuse', partis: morts });
   else if (morts.length) file.push(...morts.map(parti => ({ type: 'carnet', parti })));
-  G.file = file;
+  G.file = [...retours, ...file];
 }
 
 // Ce que l'aventurier te reverse vraiment, selon votre relation et la lanterne.
@@ -1044,14 +1103,24 @@ function terminerAventure(G, parti) {
   } else if (r.vivant) {
     gain = partDuButin(G, v);
     encaisser(G, gain, 'butins');
-    G.reputation += camp ? EFFETS_CAMP[camp].reputation : 1;
+    // Une commande par lettre remplie à moitié ne rapporte que la moitié de la réputation.
+    const part = v.prevu ? partCommandeRemplie(v, parti.colis) : 1;
+    G.reputation += GAIN_REPUTATION_SUCCES * (camp ? EFFETS_CAMP[camp].reputation : 1) * part;
     if (camp) G.mal += EFFETS_CAMP[camp].mal;
     G.journal.retours++;
     // Un succès de plus : il progresse, et la carte aussi (déblocage des étoiles).
     const danger = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
     G.succes[danger] = (G.succes[danger] || 0) + 1;
+    // La conquête de la contrée avance
+    G.conquete = G.conquete || {};
+    if (ZONES[v.zone]) {
+      G.conquete[v.zone] = (G.conquete[v.zone] || 0) + 1;
+      if (G.conquete[v.zone] === CONQUETE_ZONE) parti.conquise = true;
+    }
     connaitre(G, v).succes = succesDe(G, v.nom) + 1;
     message = changerRelation(G, v.nom, POINTS_RELATION.retourVivant);
+    if (parti.conquise) message = (message ? message + ' ' : '') + `⚑ ${ZONES[v.zone].nom} : contrée conquise ! Son drapeau flotte sur ta carte.`;
+    if (part < 1) message = (message ? message + ' ' : '') + `Sa commande n'était remplie qu'à ${Math.round(part * 100)} % : ta réputation en profite moins.`;
     const derniere = r.etapes[r.etapes.length - 1];
     // Les cœurs perdus (au-delà des cœurs gagnés grâce aux soins en plus) restent des blessures.
     const blessures = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - derniere.pvApres));
@@ -1234,7 +1303,9 @@ function trouvailles(G, voyageur) {
   const liste = [];
   for (let i = 0; i < n; i++) {
     const tresor = creerTresor(G);
-    liste.push({ tresor, prix: Math.max(3, Math.round(valeurTresor(tresor) * Phaser.Math.FloatBetween(0.5, 0.8) * ami)), vendu: false });
+    // Le prix varie : parfois une affaire, parfois une arnaque. C'est le flair qui t'aide à trier.
+    liste.push({ tresor, prix: Math.max(3, Math.round(valeurTresor(tresor) * Phaser.Math.FloatBetween(0.45, 1.1) * ami)), vendu: false,
+      biais: Phaser.Math.FloatBetween(-1, 1) });
   }
   return liste;
 }
@@ -1256,7 +1327,8 @@ function acheterTrouvaille(G, t) {
 // demande plus de travail), moins ton artisanat... et un jour de moins avec une experte.
 // Les étapes suivantes vont deux fois plus vite : l'objet est déjà sur l'établi.
 function dureeEtape(G, t, etat, ouvrier, suite = false) {
-  const experte = ouvrier && EMPLOYES[ouvrier] && EMPLOYES[ouvrier].rapide ? 1 : 0;
+  const r = ouvrier && EMPLOYES[ouvrier] && EMPLOYES[ouvrier].rapide;
+  const experte = r === true || (Array.isArray(r) && r.includes(t.categorie)) ? 1 : 0;
   const base = suite ? Math.ceil(CATEGORIES[t.categorie].duree / 2) : CATEGORIES[t.categorie].duree;
   return Math.max(1, base + ETATS[etat].reparation - niveauArtisanat(G) - experte);
 }
@@ -1310,8 +1382,13 @@ function reparerTresor(G, t, cible = t.etat + 1) {
 
 // --- Les employés ---
 
+function placesEmployes(G) {
+  return EMPLOYES_DE_BASE + niveauAmelioration(G, 'atelier');
+}
+
 function embaucher(G, id) {
   if (G.employes.includes(id)) return 'Déjà embauché.';
+  if (G.employes.length >= placesEmployes(G)) return `Pas d'établi libre : améliore l'atelier (bureau → améliorations) pour embaucher plus.`;
   G.employes.push(id);
   return null;
 }
@@ -1646,10 +1723,16 @@ function avancerEvenements(G) {
 function recompenserZones(G) {
   G.nouvellesPieces = [];
   G.zonesConnues = G.zonesConnues || [];
+  G.piecesAVenir = G.piecesAVenir || [];
+  // Chaque zone qui s'ouvre promet une pièce... mais le messager n'en apporte qu'une par matin :
+  // les autres attendent leur tour, pour que chacune soit un vrai événement.
   for (const z of zonesOuvertes(G)) {
     if (G.zonesConnues.includes(z)) continue;
     G.zonesConnues.push(z);
-    if (G.armure.length >= ARMURE.length) continue;
+    if (G.armure.length + G.piecesAVenir.length < ARMURE.length) G.piecesAVenir.push(z);
+  }
+  if (G.piecesAVenir.length && G.armure.length < ARMURE.length) {
+    const z = G.piecesAVenir.shift();
     const piece = ARMURE[G.armure.length];
     G.armure.push(piece.id);
     G.nouvellesPieces.push({ piece: piece.id, zone: z, cote: coteArmure(G) });

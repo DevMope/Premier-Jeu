@@ -295,10 +295,46 @@ class DodoScene extends Cinematique {
     await this.attendreClicSansBoite();
     if (this.fini) return;
     c.destroy();
-    // La pièce rejoint le mannequin.
+    // Le grand moment : la pièce s'élève au milieu de la chambre, dans un faisceau de lumière.
+    creerHalo(this); creerObjetsHD(this);
+    const teinte = sombre ? 0xff3060 : 0xffe080;
+    const voile = this.add.rectangle(480, 270, 960, 540, sombre ? 0x14000a : 0x0a0614, 0).setDepth(7.5);
+    const halo = this.add.image(480, 220, 'halo').setScale(0).setTint(teinte).setBlendMode(Phaser.BlendModes.ADD).setDepth(7.6);
+    const rayons = this.add.graphics().setPosition(480, 220).setScale(0).setDepth(7.6).setBlendMode(Phaser.BlendModes.ADD);
+    for (let k = 0; k < 14; k++) {
+      const a = k / 14 * Math.PI * 2;
+      rayons.fillStyle(teinte, 0.22).fillTriangle(0, 0, Math.cos(a - 0.07) * 360, Math.sin(a - 0.07) * 360, Math.cos(a + 0.07) * 360, Math.sin(a + 0.07) * 360);
+    }
     const icone = this.add.image(905, SOL_CHAMBRE - 90, iconeObjet(this, sombre ? piece + '_sombre' : piece)).setScale(3).setDepth(8);
-    await this.animer({ targets: icone, x: 790, y: SOL_CHAMBRE - 100, scale: 3, duration: 600, ease: 'Sine.easeInOut' });
+    this.animer({ targets: voile, fillAlpha: 0.65, duration: 500 });
+    this.tweens.add({ targets: rayons, scale: 1, duration: 900, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: rayons, angle: 360, duration: 14000, repeat: -1 });
+    this.tweens.add({ targets: halo, scale: 4.5, duration: 900 });
+    await this.animer({ targets: icone, x: 480, y: 220, scale: 8, duration: 1100, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: icone, y: 210, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.cameras.main.flash(300, sombre ? 160 : 255, sombre ? 20 : 240, sombre ? 60 : 180);
+    for (let k = 0; k < 24; k++) {
+      const e = this.add.image(480, 220, 'eclat').setScale(2.5).setTint(teinte).setDepth(8.1);
+      const a = k / 24 * Math.PI * 2;
+      this.tweens.add({ targets: e, x: 480 + Math.cos(a) * 220, y: 220 + Math.sin(a) * 150, alpha: 0, angle: 180, duration: 1000, ease: 'Quad.easeOut', onComplete: () => e.destroy() });
+    }
+    const n = this.G.armure.indexOf(piece) + 1;
+    const titre = this.add.text(480, 360, `✦ ${p.nom} ✦`, style(28, sombre ? '#ff90a8' : '#ffe8a0', { fontStyle: 'bold', stroke: '#1a0a06', strokeThickness: 6 })).setOrigin(0.5).setDepth(8.2).setScale(0);
+    const sous = this.add.text(480, 398, `Pièce ${n} / ${ARMURE.length} de ${sombre ? "l'Armure de la Nuit Éternelle" : "l'Armure du Dernier Rempart"}` +
+      ((this.G.piecesAVenir || []).length ? `\nLe messager reviendra demain : encore ${this.G.piecesAVenir.length} pièce${this.G.piecesAVenir.length > 1 ? 's' : ''} promise${this.G.piecesAVenir.length > 1 ? 's' : ''}.` : ''),
+      style(15, '#fff4dc', { fontStyle: 'italic', align: 'center', stroke: '#1a0a06', strokeThickness: 4 })).setOrigin(0.5, 0).setDepth(8.2).setAlpha(0);
+    this.tweens.add({ targets: titre, scale: 1, duration: 500, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: sous, alpha: 1, duration: 500, delay: 300 });
+    await this.attendre(900);
+    await this.attendreClicSansBoite();
+    if (this.fini) return;
+    // La pièce rejoint le mannequin.
+    this.tweens.killTweensOf(icone);
+    this.tweens.add({ targets: [voile], fillAlpha: 0, duration: 500 });
+    this.tweens.add({ targets: [halo, rayons, titre, sous], alpha: 0, duration: 400, onComplete: () => { halo.destroy(); rayons.destroy(); titre.destroy(); sous.destroy(); } });
+    await this.animer({ targets: icone, x: 790, y: SOL_CHAMBRE - 100, scale: 3, duration: 700, ease: 'Sine.easeInOut' });
     icone.destroy();
+    voile.destroy();
     this.dessinerArmure(this.G.armure.slice(0, this.G.armure.indexOf(piece) + 1));
     if (sombre) this.cameras.main.flash(300, 120, 0, 30);
     else this.cameras.main.flash(250, 255, 230, 150);

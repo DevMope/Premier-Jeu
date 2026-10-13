@@ -56,24 +56,24 @@ class BanqueScene extends Phaser.Scene {
     if (this.panneau) this.panneau.destroy();
     const G = this.G;
     const c = this.panneau = this.add.container(0, 0);
-    c.add(this.add.image(470, 435, panneauHD(this, 660, 150)).setScale(2));
+    c.add(this.add.image(470, 442, panneauHD(this, 660, 160)).setScale(2));
     pretsProposes(G).forEach((p, i) => {
-      const y = 380 + i * 28;
+      const y = 378 + i * 21;
       const du = Math.round(p.somme * (1 + p.taux));
       c.add(this.add.text(165, y, `${p.nom} : reçois ${p.somme} p., rends ${du} p. en ${p.jours} nuits (${Math.round(p.taux * 100)} %)`,
-        style(13, '#3b2410')).setOrigin(0, 0.5));
+        style(12, refusPret(G, p) ? '#7a6a5a' : '#3b2410')).setOrigin(0, 0.5));
       const refus = refusPret(G, p);
       if (refus) {
         c.add(this.add.text(785, y, refus, style(12, '#8a3a1a', { fontStyle: 'italic' })).setOrigin(1, 0.5));
       } else {
         const btn = creerBouton(this, 735, y, 104, 'Emprunter', () => this.emprunter(p));
         btn.label.setFontSize(13);
-        btn.fond.setScale(2, 1.15);
+        btn.fond.setScale(2, 0.92);
         c.add([btn.fond, btn.label]);
       }
     });
     const dettes = G.prets.map(p => `${p.nom} : reste ${p.restant} (−${p.parJour}/nuit)`).join(' · ');
-    c.add(this.add.text(165, 492, dettes ? 'En cours : ' + dettes : 'Aucun prêt en cours.', style(12, '#5a3a20', { wordWrap: { width: 610 } })).setOrigin(0, 0.5));
+    c.add(this.add.text(165, 504, dettes ? 'En cours : ' + dettes : 'Aucun prêt en cours.', style(12, '#5a3a20', { wordWrap: { width: 610 } })).setOrigin(0, 0.5));
   }
 
   // Ils te toisent : petits mouvements de tête, l'un après l'autre.
