@@ -8,13 +8,16 @@
 const ECHELLE_CORPS = 0.25 / 2;   // (les corps en volume sont deux fois plus fins : voir corpsVueHD.js)
 
 // Taille (H), largeur d'épaules (ep), hauteur du torse, et tête de chaque peuple.
+// Chaque peuple a sa morphologie : le hobbit rond et joufflu, le nain trapu et large (tête
+// large, membres épais), l'elfe fin et élancé (tête étroite et longue, membres fins), l'humain
+// entre les deux. `membre` : l'épaisseur des bras et des jambes par rapport à l'humain.
 const PROPORTIONS = {
-  hobbit: { H: 52, ep: 8.5, torse: 15, rx: 8.8, ry: 9 },
-  nain: { H: 56, ep: 10.5, torse: 18, rx: 9, ry: 8.6 },
-  humain: { H: 64, ep: 9, torse: 22, rx: 8.4, ry: 9 },
-  elfe: { H: 68, ep: 8.4, torse: 23, rx: 8, ry: 9 },
-  magicienne: { H: 72, ep: 8.6, torse: 22, rx: 8.4, ry: 9 },
-  gobelin: { H: 50, ep: 8, torse: 14, rx: 8.6, ry: 8 },
+  hobbit: { H: 52, ep: 8.8, torse: 15, rx: 9, ry: 9, membre: 1.1 },
+  nain: { H: 56, ep: 12.2, torse: 18, rx: 10.2, ry: 8.2, membre: 1.35 },
+  humain: { H: 64, ep: 9, torse: 22, rx: 8.4, ry: 9, membre: 1 },
+  elfe: { H: 68, ep: 7.6, torse: 24, rx: 7.2, ry: 9.6, membre: 0.82 },
+  magicienne: { H: 72, ep: 8.2, torse: 22, rx: 8, ry: 9.2, membre: 0.9 },
+  gobelin: { H: 50, ep: 8, torse: 14, rx: 8.6, ry: 8, membre: 0.9 },
 };
 
 // Les figurants : un peuple, des couleurs fixes, un costume.

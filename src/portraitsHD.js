@@ -269,6 +269,14 @@ const VISAGES = {
 function tete(cx, v) {
   return (x, y) => {
     const ny = (y + 0.5 - v.cy) / v.ry;
+    if (v.carre) {
+      // Une mâchoire carrée : la tête garde sa largeur jusqu'en bas, et finit à plat
+      if (ny > 0.9) return null;
+      const rx = v.rx * (ny > 0.2 ? Math.max(0.86, 1 - 0.1 * (ny - 0.2)) : 1);
+      const nx = (x + 0.5 - cx) / rx;
+      const d = nx * nx + ny * ny;
+      return d > 1 ? null : [nx, ny, Math.sqrt(1 - d)];
+    }
     // Des joues pleines (la tête s'élargit un peu sous les yeux), puis le menton s'affine
     const joues = v.joues && ny > -0.1 && ny < 0.7 ? 1 + Math.sin((ny + 0.1) / 0.8 * Math.PI) * v.joues : 1;
     const rx = v.rx * joues * (ny > 0.35 ? 1 - (ny - 0.35) * v.menton * 1.6 : 1);
@@ -287,7 +295,7 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   const t = new ToileHD(HD_L, HD_H);
   const g = gene.colporteur ? { ...gene, habit: 0x6a5a40, cheveux: 0x4a3a2a, armure: false, barbe: 'courte', coiffure: 'court' } : gene;
   const cx = 40;
-  const v = VISAGES[g.race];
+  const v = g.race === 'elfe' && !g.feminin ? { ...VISAGES.elfe, menton: 0, carre: true } : VISAGES[g.race];
   // Un trois-quarts léger : le visage est tourné de quelques pixels vers la droite (l'oreille
   // gauche se dégage, la droite se cache derrière la joue), et chaque forme porte son ombre.
   const T = 3;
