@@ -36,17 +36,21 @@ class CarteScene extends Phaser.Scene {
   // --- Le décor ---
 
   dessinerParchemin() {
+    // Le parchemin posé sur le bureau
+    creerInterieurHD(this);
+    creerBureauHD(this);
+    creerCarteHD(this);
+    creerHalo(this);
+    this.add.image(0, 0, 'bureauBois').setOrigin(0).setScale(2).setTint(0xa08870);
+    vignette(this, 0.7, 0);
+    this.add.image(14, 50, 'carteHD').setOrigin(0).setScale(2);
     const g = this.add.graphics();
-    g.fillStyle(0x3b2410).fillRect(0, 0, 960, 540);
-    g.fillStyle(0xe8d4a4).fillRect(14, 50, 932, 368);
-    g.lineStyle(4, 0x8a6a3a).strokeRect(14, 50, 932, 368);
     // Les trois terres : la lumière à l'ouest, l'ombre à l'est, et le milieu.
-    g.fillStyle(0xfff0a0, 0.45).fillRect(16, 52, 250, 364);
-    g.fillStyle(0x2a1a3a, 0.22).fillRect(735, 52, 209, 364);
-    g.lineStyle(2, 0x8a6a3a, 0.4).lineBetween(266, 52, 266, 416).lineBetween(735, 52, 735, 416);
+    g.fillStyle(0xfff0a0, 0.2).fillRect(20, 56, 246, 356);
+    g.fillStyle(0x2a1a3a, 0.2).fillRect(735, 56, 205, 356);
+    g.lineStyle(2, 0x6a421e, 0.5).lineBetween(266, 58, 266, 410).lineBetween(735, 58, 735, 410);
     this.add.text(141, 400, '☀ Terres de lumière', style(12, '#8a6a10', { fontStyle: 'bold italic' })).setOrigin(0.5);
     this.add.text(840, 400, '☾ Terres d\'ombre', style(12, '#4a2a5a', { fontStyle: 'bold italic' })).setOrigin(0.5);
-    for (const z of Object.values(ZONES)) g.fillStyle(BIOMES[z.biome].pres, 0.35).fillCircle(z.x, z.y, 56);
     // Ton comptoir, et les chemins qui en partent
     const depart = { x: 405, y: 395 };
     g.lineStyle(2, 0x8a6a3a, 0.7);
@@ -69,6 +73,8 @@ class CarteScene extends Phaser.Scene {
     this.tweens.add({ targets: this.anneau, scale: 1.15, duration: 500, yoyo: true, repeat: -1 });
     for (const [cle, z] of Object.entries(ZONES)) {
       const ouverte = zoneOuverte(G, cle);
+      // Les contrées inconnues restent dans la brume du parchemin.
+      if (!ouverte) this.add.image(z.x, z.y, 'halo').setScale(1.45).setTint(0xe8d4a4).setAlpha(1);
       const pastille = this.add.circle(z.x, z.y, 22, ouverte ? BIOMES[z.biome].loin : 0x8a8478).setStrokeStyle(3, 0x3b2410)
         .setInteractive({ useHandCursor: true });
       this.add.text(z.x, z.y, ouverte ? '★'.repeat(z.danger) : '?', style(ouverte ? 10 : 18, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);

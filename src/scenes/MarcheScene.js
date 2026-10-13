@@ -18,9 +18,7 @@ class MarcheScene extends Phaser.Scene {
     const g = this.add.graphics();
     this.monde.add(g);
     dessinerComte(g, 0, 0, LARGEUR_MARCHE, 300, 0.05);
-    g.fillStyle(0xa89a80).fillRect(0, 250, LARGEUR_MARCHE, 50);
-    g.lineStyle(1, 0x8a7a60);
-    for (let x = 0; x < LARGEUR_MARCHE; x += 24) g.lineBetween(x, 250, x + 12, 300);
+    this.monde.add(this.add.image(0, 250, pavesHD(this, LARGEUR_MARCHE, 50)).setOrigin(0).setScale(2));
     this.add.text(480, 22, `Le Marché des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setDepth(5);
 
     // Les étals, les enchères, les jeux et le mendiant
@@ -36,9 +34,7 @@ class MarcheScene extends Phaser.Scene {
     estrade.fillStyle(0x6b4423).fillRect(1175, 225, 90, 22);
     estrade.fillStyle(0x7a1a1a).fillRect(1185, 120, 70, 14);
     // La petite échoppe à rayures vertes du Bazar de Rosalie
-    for (let i = 0; i < 5; i++) estrade.fillStyle(i % 2 ? 0xf3e6c8 : 0x4f8a3a).fillRect(970 + i * 24, 96, 24, 22);
-    estrade.fillStyle(0x6b4423).fillRect(972, 118, 6, 110).fillRect(1082, 118, 6, 110);
-    estrade.fillStyle(0x8a5a2b).fillRect(975, 205, 110, 26);
+    this.monde.add(this.add.image(1030, 244, etalHD(this, 0x4f8a3a)).setOrigin(0.5, 1).setScale(2));
     // L'estrade du crieur
     estrade.fillStyle(0x5a3a1a).fillRect(1560, 228, 70, 18);
     this.monde.add(estrade);
@@ -50,7 +46,7 @@ class MarcheScene extends Phaser.Scene {
     this.creerFlechesRue();
 
     // Le panneau du bas et la barre d'infos
-    this.add.rectangle(480, 388, 940, 168, 0xead9b0).setStrokeStyle(3, 0x8a6a3a);
+    this.add.image(480, 388, panneauHD(this, 940, 168)).setScale(2);
     this.add.rectangle(480, 510, 960, 60, 0x2a1a10);
     this.texteInfos = this.add.text(20, 498, '', style(13, '#f3e6c8', { lineSpacing: 4 }));
     creerBouton(this, 640, 510, 170, 'Rentrer chez toi', () => this.rentrer());
@@ -129,16 +125,12 @@ class MarcheScene extends Phaser.Scene {
   // Un étal : auvent rayé aux couleurs du marchand, comptoir, marchand derrière.
   creerEtal(cle, m, x) {
     const avant = this.children.list.length;
-    const g = this.add.graphics();
-    g.fillStyle(0x6b4423).fillRect(x - 82, 80, 8, 150).fillRect(x + 74, 80, 8, 150);
-    for (let i = 0; i < 7; i++) {
-      g.fillStyle(i % 2 ? 0xf3e6c8 : m.couleur).fillRect(x - 84 + i * 24, 66, 24, 30);
-    }
+    // L'étal (poteaux et auvent), le marchand derrière, puis la table par-dessus lui
+    const etal = etalHD(this, m.couleur);
+    this.add.image(x, 244, etal).setOrigin(0.5, 1).setScale(2);
     this.add.image(x, 205, 'perso_' + m.race).setOrigin(0.5, 1).setScale(5);
-    const comptoir = this.add.graphics();
-    comptoir.fillStyle(0x8a5a2b).fillRect(x - 80, 196, 160, 44);
-    comptoir.fillStyle(0x6b4423).fillRect(x - 80, 196, 160, 6);
-    Object.keys(this.G.etals[cle] || {}).slice(0, 4).forEach((id, i) => this.add.image(x - 54 + i * 36, 188, id).setScale(3));
+    this.add.image(x, 244, etal).setOrigin(0.5, 1).setScale(2).setCrop(0, 56, 88, 26);
+    Object.keys(this.G.etals[cle] || {}).slice(0, 4).forEach((id, i) => this.add.image(x - 54 + i * 36, 192, iconeObjet(this, id)).setOrigin(0.5, 1).setScale(2));
     this.add.text(x, 254, m.nom, style(13, couleurNom(this.G, m.nom, true), { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
     this.add.text(x, 272, m.metier, style(11, '#fff4dc', { stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);
     const zone = this.add.rectangle(x, 160, 170, 140, 0xffffff, 0).setInteractive({ useHandCursor: true });

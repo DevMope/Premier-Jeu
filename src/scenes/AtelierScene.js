@@ -57,7 +57,7 @@ class AtelierScene extends Phaser.Scene {
     const G = this.G;
     if (this.contenu) this.contenu.destroy();
     const c = this.contenu = this.add.container(0, 0);
-    c.add(this.add.rectangle(480, 255, 900, 330, 0xead9b0).setStrokeStyle(3, 0x8a6a3a));
+    c.add(this.add.image(480, 255, panneauHD(this, 900, 330)).setScale(2));
     c.add(this.add.text(50, 100, `Tes objets de valeur (${G.tresors.length} / ${PLACES_ATELIER}) · Fer ${G.materiaux.fer} · Cuir ${G.materiaux.cuir}`,
       style(14, '#3b2410', { fontStyle: 'bold' })));
     this.employes();
@@ -102,7 +102,7 @@ class AtelierScene extends Phaser.Scene {
     for (let e = t.etat + 1; e < ETATS.length; e++) stades.push(e);
     const h = 120 + stades.length * 44;
     c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.55).setInteractive());
-    c.add(this.add.rectangle(480, 270, 620, h, 0xead9b0).setStrokeStyle(4, 0x8a6a3a));
+    c.add(this.add.image(480, 270, panneauHD(this, 620, h)).setScale(2));
     const haut = 270 - h / 2;
     c.add(this.add.text(480, haut + 24, `Réparer : ${t.nom}`, style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     c.add(this.add.text(480, haut + 50, `${ouvrier === 'toi' ? "C'est toi qui t'y mets" : nomOuvrier(ouvrier) + " s'en charge"} · état actuel : ${ETATS[t.etat].nom} (~${valeurTresor(t)} p.)` +

@@ -179,7 +179,7 @@ class StoryScene extends Cinematique {
     if (!liste.length) return;
     const c = this.add.container(0, 0).setDepth(12);
     const h = 90 + liste.length * 54;
-    c.add(this.add.rectangle(290, 70 + h / 2, 540, h, 0xead9b0).setStrokeStyle(3, 0x8a6a3a));
+    c.add(this.add.image(290, 70 + h / 2, panneauHD(this, 540, h)).setScale(2));
     c.add(this.add.text(40, 84, "« J'ai aussi ramené ça de mon voyage. Ça t'intéresse ? »", style(14, '#3b2410', { fontStyle: 'bold' })));
     const info = this.add.text(40, 70 + h - 24, '', style(12, '#a03030', { fontStyle: 'bold', wordWrap: { width: 500 } }));
     c.add(info);

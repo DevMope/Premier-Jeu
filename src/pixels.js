@@ -458,91 +458,18 @@ const BIOMES = {
 
 // Un paysage (la Comté par défaut, ou un autre biome). `nuit` assombrit le tout (de 0 à 1).
 function dessinerComte(g, x, y, w, h, nuit = 0, biome = 'comte') {
-  const b = BIOMES[biome] || BIOMES.comte;
-  const melange = (jour, soir) => Phaser.Display.Color.Interpolate.ColorWithColor(
-    Phaser.Display.Color.ValueToColor(jour), Phaser.Display.Color.ValueToColor(soir), 100, nuit * 100);
-  const c = (jour, soir) => { const m = melange(jour, soir); return Phaser.Display.Color.GetColor(m.r, m.g, m.b); };
-
-  g.fillGradientStyle(c(b.ciel, 0x1a1840), c(b.ciel, 0x1a1840), c(b.horizon, 0x8a4a50), c(b.horizon, 0x8a4a50), 1);
-  g.fillRect(x, y, w, h);
-  // Soleil
-  g.fillStyle(c(b.soleil, 0xf07040), 1);
-  g.fillCircle(x + w * 0.78, y + h * (0.22 + nuit * 0.4), 18);
-  // Montagnes pointues au loin (mines, pics, antre)
-  if (b.pics) {
-    g.fillStyle(c(b.pics, 0x2a3a40), 1);
-    for (let i = 0; i < 5; i++) g.fillTriangle(x + w * (i * 0.22 - 0.05), y + h * 0.7, x + w * (i * 0.22 + 0.06), y + h * (0.25 + (i % 2) * 0.1), x + w * (i * 0.22 + 0.17), y + h * 0.7);
-  }
-  // Collines lointaines puis proches
-  g.fillStyle(c(b.loin, 0x2a3a40), 1);
-  g.fillEllipse(x + w * 0.2, y + h * 0.75, w * 0.8, h * 0.5);
-  g.fillEllipse(x + w * 0.85, y + h * 0.78, w * 0.7, h * 0.45);
-  // Colonnes brisées (ruines)
-  if (b.colonnes) {
-    g.fillStyle(c(b.colonnes, 0x2a2a40), 1);
-    [0.12, 0.3, 0.62, 0.9].forEach((cx, i) => g.fillRect(x + w * cx, y + h * (0.45 + (i % 2) * 0.1), 14, h * 0.3));
-  }
-  g.fillStyle(c(b.pres, 0x1f2e30), 1);
-  g.fillEllipse(x + w * 0.5, y + h * 0.95, w * 1.4, h * 0.5);
-  // Sapins (forêt)
-  if (b.arbres) {
-    g.fillStyle(c(b.arbres, 0x10201a), 1);
-    for (let i = 0; i < 9; i++) {
-      const ax = x + w * (0.04 + i * 0.115);
-      g.fillTriangle(ax - 18, y + h * 0.78, ax, y + h * (0.42 + (i % 3) * 0.06), ax + 18, y + h * 0.78);
-    }
-  }
-  // Roseaux (marais)
-  if (b.roseaux) {
-    g.fillStyle(c(b.roseaux, 0x1a2a1a), 1);
-    for (let i = 0; i < 24; i++) g.fillRect(x + w * (i / 24) + 6, y + h * 0.72 - (i % 3) * 8, 3, 30);
-  }
-  // Petite porte ronde de hobbit dans la colline
-  if (b.porte) {
-    g.fillStyle(c(0x3a6a2a, 0x18242a), 1);
-    g.fillCircle(x + w * 0.16, y + h * 0.8, 13);
-    g.fillStyle(c(0x2f6a9a, 0x1a2a40), 1);
-    g.fillCircle(x + w * 0.16, y + h * 0.8, 10);
-    g.fillStyle(c(0xe0c040, 0x806020), 1);
-    g.fillCircle(x + w * 0.16, y + h * 0.8, 2);
-  }
-  // Chemin
-  g.fillStyle(c(b.chemin, 0x4a3a30), 1);
-  g.fillRect(x, y + h - 26, w, 26);
-}
-
-// La façade du comptoir, vue de dehors : bois, toit de chaume, fenêtre-comptoir et enseigne.
-// `cx` = centre, `sol` = bas des murs. Renvoie la position de la porte.
-function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT) {
-  const g = scene.add.graphics();
-  const l = 320, h = 170;
-  const x = cx - l / 2, y = sol - h;
-  // Murs en planches
-  g.fillStyle(0x8a5a2b).fillRect(x, y, l, h);
-  g.lineStyle(2, 0x6b4423);
-  for (let px = x; px < x + l; px += 20) g.lineBetween(px, y, px, sol);
-  // Poutres
-  g.fillStyle(0x3b2410).fillRect(x, y, l, 10).fillRect(x, y, 10, h).fillRect(x + l - 10, y, 10, h);
-  // Toit de chaume
-  g.fillStyle(0xc9a046).fillTriangle(x - 30, y + 4, cx, y - 110, x + l + 30, y + 4);
-  g.lineStyle(2, 0xa07a2a);
-  for (let i = 1; i < 6; i++) g.lineBetween(x - 30 + i * 18, y + 4 - i * 2, cx, y - 110);
-  // Fenêtre-comptoir (le « drive »)
-  g.fillStyle(0x2a1a10).fillRect(x + 30, y + 40, 130, 80);
-  g.fillStyle(0xf0c060, 0.5).fillRect(x + 36, y + 46, 118, 68);
-  g.fillStyle(0x6b4423).fillRect(x + 22, y + 120, 146, 12);
-  // Porte ronde
-  g.fillStyle(0x3b2410).fillRoundedRect(x + 205, y + 60, 80, h - 60, { tl: 40, tr: 40, bl: 0, br: 0 });
-  g.fillStyle(0x2f6a9a).fillRoundedRect(x + 211, y + 66, 68, h - 66, { tl: 34, tr: 34, bl: 0, br: 0 });
-  g.fillStyle(0xe0c040).fillCircle(x + 245, y + 120, 4);
-  // Enseigne suspendue
-  g.fillStyle(0x3b2410).fillRect(x + 40, y - 6, 4, 22).fillRect(x + 150, y - 6, 4, 22);
-  g.fillStyle(0xead9b0).fillRect(x + 8, y + 14, 180, 26);
-  g.lineStyle(2, 0x6b4423).strokeRect(x + 8, y + 14, 180, 26);
-  // Le nom rétrécit pour tenir sur l'enseigne.
-  const enseigne = scene.add.text(x + 98, y + 27, nomShop, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
-  for (let taille = 13; enseigne.width > 170 && taille >= 8; taille--) enseigne.setFontSize(taille);
-  return { porteX: x + 245, porteY: sol, g };
+  // Le paysage est peint en HD (voir exterieurHD.js) et glissé juste sous `g`, qui reste
+  // disponible pour dessiner par-dessus.
+  const scene = g.scene;
+  const cle = paysageHD(scene, w, h, biome, nuit);
+  const tex = scene.textures.get(cle).getSourceImage();
+  const image = scene.add.image(x, y, cle).setOrigin(0).setScale(w / tex.width, h / tex.height).setDepth(g.depth);
+  if (g.parentContainer) g.parentContainer.addAt(image, g.parentContainer.getIndex(g));
+  else if (scene.children.moveBelow) scene.children.moveBelow(image, g);
+  else image.setDepth(g.depth - 0.001);
+  if (g.paysage) g.paysage.destroy();
+  g.paysage = image;
+  return image;
 }
 
 // --- Ton personnage, construit à partir de la création ---

@@ -52,7 +52,7 @@ class ExpressScene extends Phaser.Scene {
   creerEtal() {
     const G = this.G;
     const v = this.comptoir.voyageur;
-    this.add.rectangle(780, 250, 340, 380, 0xead9b0).setStrokeStyle(3, 0x8a6a3a);
+    this.add.image(780, 250, panneauHD(this, 340, 380)).setScale(2);
     this.add.text(780, 78, "L'étal de Grippesou", style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
     this.add.text(780, 100, `Pour ${v.nom}`, style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.lignes = [];
