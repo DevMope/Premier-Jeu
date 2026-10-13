@@ -42,7 +42,12 @@ function categories(scene) {
   for (const [nom, race, feminin] of gens) for (const ex of ['neutre', 'content', 'fache']) {
     portraits.push(sur(() => ({ cle: textureBusteHD(scene, { nom, race, feminin }, ex), nom: `${nom} · ${ex === 'fache' ? 'fâché' : ex}` })));
   }
-  ajouter('portraits', 'Portraits', 'Les bustes des voyageurs au comptoir, avec leurs expressions.', portraits);
+  portraits.push(sur(() => ({ cle: textureBusteHD(scene, { nom: COLPORTEUR.nom, race: 'humain', figurant: 'colporteur' }, 'content'), nom: 'Barnabé le colporteur' })));
+  // Toutes les poses (les bras et les mains), sur un même visage
+  for (const pose of ['croises', 'hanche', 'menton', 'salut', 'pouce', 'poing', 'tete', 'mains', 'coeur', 'ventre', 'baton']) {
+    portraits.push(sur(() => ({ cle: textureBusteHD(scene, { nom: 'Maud Rivecourt', race: 'humain', feminin: true }, 'neutre', { pose }), nom: `Pose · ${pose}` })));
+  }
+  ajouter('portraits', 'Portraits', 'Les bustes des voyageurs au comptoir, avec leurs expressions et leurs poses (chaque peuple a les siennes, selon son humeur).', portraits);
 
   // Les objets
   const objets = [];
@@ -96,10 +101,12 @@ function categories(scene) {
   const ville = [
     ...nouvelles(scene, () => creerLieuxMarcheHD(scene)), ...nouvelles(scene, () => creerDecorPlaceHD(scene)),
     ...nouvelles(scene, () => placeMarcheHD(scene)),
+    ...nouvelles(scene, () => { mendiantAssisHD(scene); charretteColporteurHD(scene); decorsEtalsHD(scene); }),
+    ...Object.values(MARCHANDS).map(m => sur(() => tapisEtalHD(scene, m.couleur))).filter(Boolean),
     ...nouvelles(scene, () => creerBanqueHD(scene)), ...nouvelles(scene, () => creerEauHD(scene)),
     ...Object.values(MARCHANDS).map(m => sur(() => etalHD(scene, m.couleur))).filter(Boolean),
   ].map(cle => ({ cle, nom: joli(cle) }));
-  ajouter('ville', 'Marché et village', "Les étals, les enchères, la fontaine, les charrettes, la banque des nains, et l'eau de la rivière.", ville);
+  ajouter('ville', 'Marché et village', "Les étals et leurs tapis, les décorations de chaque marchand, le mendiant et son chien, la charrette du colporteur, les enchères, la fontaine, la banque des nains, et l'eau de la rivière.", ville);
 
   const carte = [...nouvelles(scene, () => creerCarteHD(scene)), ...nouvelles(scene, () => creerComptoirCarteHD(scene))].map(cle => ({ cle, nom: joli(cle) }));
   creerVignettesZonesHD(scene);

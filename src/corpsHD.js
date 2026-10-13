@@ -63,6 +63,16 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0, pose = null) {
   const longue = race === 'magicienne';                // la robe descend jusqu'aux pieds
   const manteau = race === 'elfe' || costume === 'colporteur' || costume === 'mentor';
 
+  // La hotte d'osier du colporteur, derrière tout : plus large que lui, une couverture roulée dessus,
+  // une marmite qui pend sur le côté
+  if (costume === 'colporteur') {
+    t.rampes.osier = rampe(0xb08a48); t.rampes.laine = rampe(0x8a3030);
+    t.forme('osier', (x, y) => (y >= yT - 12 && y <= yB + 7 && Math.abs(x + 0.5 - cx) < P.ep + 7 - Math.max(0, yT - 8 - y) * 0.8 ? [(x + 0.5 - cx) / (P.ep + 7) * 0.8, 0, 0.7] : null),
+      { motif: (x, y) => ((x + y) % 3 === 0 ? -0.7 : (x - y) % 3 === 0 ? 0.5 : 0) });
+    t.forme('laine', ellipsoide(cx, yT - 13, P.ep + 5, 3), { motif: (x) => (x % 4 === 0 ? -0.6 : 0) });
+    t.forme('metal', ellipsoide(cx + P.ep + 8, yB - 2, 3, 2.6), { decalage: 0.2 });
+    t.poser(Math.round(cx + P.ep + 8), yB - 5, 'metal', 1); t.poser(Math.round(cx + P.ep + 8), yB - 6, 'metal', 2);
+  }
   // La cape, derrière (héros et légendes, le mentor, le colporteur)
   if (tenue >= 3 || costume === 'mentor' || costume === 'colporteur' || costume === 'mendiant' || costume === 'noble') {
     t.forme('cape', (x, y) => {
@@ -248,8 +258,14 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0, pose = null) {
     t.forme('chapeau', (x, y) => (y >= cy - 6 && y <= cy - 5 && Math.abs(x + 0.5 - cx) < 9.5 ? [0, -0.5, 0.8] : null));
     for (let x = cx - 5; x <= cx + 5; x++) t.poser(x, cy - 8, 'or', 3);
   } else if (costume === 'colporteur') {
+    // Le chapeau mou à large bord, sa plume ; le foulard rouge ; les poches rapiécées du manteau
     t.forme('chapeau', (x, y) => (y >= 2 && y <= cy - 5 && Math.abs(x + 0.5 - cx) < 6 - (cy - 5 - y) * 0.3 ? [(x + 0.5 - cx) / 7, -0.2, 0.8] : null));
     t.forme('chapeau', (x, y) => (y >= cy - 6 && y <= cy - 4 && Math.abs(x + 0.5 - cx) < 13 ? [0, (y - cy + 5) * 0.6, 0.8] : null));
+    for (let k = 0; k < 7; k++) { t.poser(cx + 4 + k, cy - 8 - Math.round(k * 0.6), 'plume', 4 + (k % 2)); t.poser(cx + 4 + k, cy - 7 - Math.round(k * 0.6), 'plume', 3); }
+    t.rampes.foulard = rampe(0xa83a30);
+    t.forme('foulard', (x, y) => (y >= yT && y <= yT + 3 && Math.abs(x + 0.5 - cx) < 5.5 - (y - yT) * 0.8 ? [(x + 0.5 - cx) / 5 * 0.5, 0.2, 0.9] : null));
+    for (let k = 0; k < 4; k++) t.poser(cx + 4 + (k > 1 ? 1 : 0), yT + k, 'foulard', 3 - (k % 2));
+    for (const s of [-1, 1]) for (let y = yB - 3; y <= yB + 1; y++) for (let x = Math.round(cx + s * 5) - 2; x <= Math.round(cx + s * 5) + 1; x++) if (t.mat(x, y) === 'habit') t.poser(x, y, 'cuir', y === yB - 3 ? 4 : 2 + ((x + y) % 2));
   } else if (costume === 'garde') {
     t.forme('metal', (x, y) => { const n = ellipsoide(cx, cy - 1, P.rx + 1, P.ry + 1)(x, y); return n && y <= cy - 2 ? n : null; }, { decalage: 0.2 });
     for (let y = cy - 2; y <= cy + 3; y++) t.poser(cx, y, 'metal', 4); // le nasal

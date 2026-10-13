@@ -213,6 +213,8 @@ function mettreAJourPartie(G, brut = G) {
   G.materiaux = G.materiaux || {};
   for (const id of Object.keys(MATERIAUX)) if (G.materiaux[id] === undefined) G.materiaux[id] = 0;
   G.mal = G.mal || 0;
+  G.chienNourri = G.chienNourri || 0;
+  G.chienJour = G.chienJour || 0;
   G.nomShop = G.nomShop || NOM_SHOP_DEFAUT;
   G.ameliorations = { comptoir: 0, coffre: 0, chambre: 0, eclairage: 0, atelier: 0, ...(G.ameliorations || {}) };
   G.travaux = G.travaux || [];

@@ -18,10 +18,9 @@ class ExpressScene extends Phaser.Scene {
     g.fillStyle(0xc9a46a).fillRect(0, 430, 960, 110);
 
     if (this.vendeur === 'colporteur') {
-      // Barnabé, sa hotte posée à côté de lui, qui s'éponge le front
-      creerInterieurHD(this);
-      this.add.image(300, 436, coffreTresorHD(this)).setOrigin(0.5, 1).setScale(3).setTint(0xa08a60);
-      this.gobelin = imageCorps(this, 440, 435, 'colporteur', 8);
+      // Barnabé et son âne attelé à la charrette, lui qui s'éponge le front
+      this.add.image(236, 438, charretteColporteurHD(this)).setOrigin(0.5, 1).setScale(2.4);
+      this.gobelin = imageCorps(this, 470, 435, 'colporteur', 8);
       this.tweens.add({ targets: this.gobelin, y: 431, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       this.add.text(30, 22, COLPORTEUR.nom, style(26, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }));
       this.add.text(30, 58, 'Colporteur · des choses rares, directement dans ta réserve · un peu plus cher qu\'au marché', style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 }));
@@ -45,7 +44,7 @@ class ExpressScene extends Phaser.Scene {
     this.texteGobelin = this.add.text(34, 460, '', style(15, '#f3e6c8', { wordWrap: { width: 510 }, lineSpacing: 4 }));
     this.parler(this.vendeur === 'colporteur' ? auHasard([
       'Regarde-moi ça ! Trouvé dans une foire à trois jours de marche. Tu ne verras pas ça tous les jours.',
-      'Ma hotte pèse une tonne... fais-moi plaisir, allège-la un peu !',
+      'Ma charrette déborde... fais-moi plaisir, allège-la un peu !',
       'Un peu plus cher qu\'au marché, c\'est vrai. Mais mes jambes, elles, ne sont pas gratuites.',
     ]) : auHasard([
       'Hé hé hé... Du bon matos, très rare, très cher. Pour toi, prix d\'ami... enfin, presque.',
@@ -68,7 +67,7 @@ class ExpressScene extends Phaser.Scene {
     const v = this.comptoir.voyageur;
     this.add.image(780, 250, panneauHD(this, 340, 380)).setScale(2);
     const colporteur = this.vendeur === 'colporteur';
-    this.add.text(780, 78, colporteur ? 'La hotte de Barnabé' : "L'étal de Grippesou", style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.add.text(780, 78, colporteur ? 'La charrette de Barnabé' : "L'étal de Grippesou", style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
     this.add.text(780, 100, colporteur ? 'Pour ta réserve' : `Pour ${v.nom}`, style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.lignes = [];
     // Ses objets, puis (certains jours) son fer et son cuir hors de prix.

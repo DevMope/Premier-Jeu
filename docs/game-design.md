@@ -150,6 +150,8 @@ Après la nuit, on se réveille au marché avant d'ouvrir le comptoir.
   - Chaque nouvelle zone débloquée apporte aussi **une nouvelle pièce d'armure** (déjà en place : une pièce par zone ouverte, une seule par matin).
   - La conquête d'une contrée ne donne donc **pas** de bonus de butin : sa vraie récompense, c'est de pouvoir s'y installer. Partie à peaufiner, elle prendra du temps.
 
+- **Le chien du mendiant (noté en v 0.47)** : le mendiant est assis contre un tonneau avec son gros chien. Une fois par jour on peut donner une ration au chien. À force de le nourrir, on débloque une **cinématique un peu secrète** qui emmène vers une **aventure annexe, déconnectée du monde** (à inventer : un lieu hors de la carte, une histoire à part). Le compteur `G.chienNourri` est déjà en place pour s'en servir plus tard.
+
 ### 2.9 Aider pendant l'aventure
 - **Le grand aigle** (familier à débloquer) : quand un aventurier en mission envoie un message de détresse, l'aigle peut lui apporter rapidement des objets.
 - **Les mercenaires** : on peut en envoyer un nombre limité de fois par jour pour récupérer le butin perdu par un aventurier mort.
@@ -232,7 +234,8 @@ Le joueur ne quitte jamais vraiment son shop, sauf pour ces marchés (écrans/me
 - Fantasy inspirée du *Hobbit*, du *Seigneur des Anneaux* et de *The Witcher 3*.
 - Début : mystique, joli, cozy.
 - Ton qui s'assombrit progressivement à mesure que la menace grandit, jusqu'à la délivrance finale.
-- 2D, pas de vraie 3D : mélange dessin / pixel art (*Papers, Please*, *Dealer's Life Legends*, *Dave the Diver*).
+- 2D, pas de vraie 3D : mélange dessin / pixel art (*Papers, Please*, *Dealer's Life Legends*, *Dave the Diver*, *Terraria* pour les forêts et l'eau).
+- Références supplémentaires (ajoutées en v 0.47) : *Travellers Rest* (l'auberge cozy, les clients attablés, la vie du village) et *Stardew Valley* (les PNJ du village, les cadeaux et les relations, les saisons, les festivals, les petits secrets à débloquer). On s'en inspire à la fois pour les graphismes et pour les mécaniques à proposer.
 
 ## 8. Questions ouvertes
 - La grande menace : un dragon, ou autre chose ?
@@ -290,7 +293,8 @@ Chaque étape doit donner une version **jouable**.
 | 7e ✅ | L'extérieur | Paysages peints de toutes les contrées (ciel tramé, nuages, montagnes, arbres, chemin), façade à colombages et toit de chaume (enseigne qui se balance, fumée), étals à auvents et pavés du marché, Banque de pierre et d'or, carte illustrée à l'encre et à l'aquarelle. |
 | 7f ✅ | Silhouettes HD en pied | Personnages entiers en HD partout (file, départs, récits, marché, carte, registre), couleurs propres à chaque voyageur, tenues selon le niveau (novice rapiécé → aguerri sacoche → vétéran épaulières de cuir → héros métal et cape → légende dorures), figurants costumés (garde, banquiers, colporteur, mentor, Grippesou). |
 | 7g ✅ | Cinématiques animées | Vrais pas de marche (jambes, bras, poussière) pour tous les personnages et JeuneGoy, partout (file, départs, récits, prologue, faillite, chambre, façade) ; paysage qui glisse pendant les récits ; bond de joie et étincelles quand une épreuve est surmontée, recul et éclair rouge quand on est blessé ; rivière peinte qui coule ; cadres des textes. |
-| 8 | **Réputation et améliorations** | Clients plus exigeants, décoration, améliorations la nuit. |
+| 8 ✅ | **Réputation et améliorations** | Chaque palier de réputation est un événement (gazette, visiteur notable, déblocage) ; clients prestigieux (nobles, collectionneurs) qui paient le double mais ont une exigence ; brocante de Firmin (décorations) et garde-robe de Marcelline (vêtements portés par le joueur) ; commandes plus exigeantes aux hauts paliers (objets rares, matériel neuf). |
+| 8½ | **Musique et sons** | À faire **avant** l'étape 9 : une musique d'ambiance par moment (marché, comptoir, nuit, cinématiques) et les bruitages (pièces, porte, clochette, pas, dés, plume…). |
 | 9 | **Le Bien et le Mal** | Races maléfiques, objets du bien / du mal, réputation par camp, dialogues qui changent. Comment augmenter le mal ou le bien de façon satisfaisante, logique et fluide. Idées validées pour cette étape : le camp de la lumière donne de meilleurs taux à la banque et plus de réputation dans les terres de lumière. |
 | 10 | **Marché noir** | Objets interdits, voyageurs nocturnes, conséquences. |
 | 11 | **Aider pendant l'aventure** | Messages de détresse, le grand aigle, les mercenaires. |

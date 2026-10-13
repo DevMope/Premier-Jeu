@@ -46,15 +46,22 @@ class MarcheScene extends Phaser.Scene {
       this.creerEtal(cle, m, 260 + i * 190);
     });
     this.creerSurbrillance();
-    this.creerLieu(70, 'perso_mendiant', 'Le mendiant', () => this.ouvrirMendiant(), { angle: -4, echelle: 4.5 });
+    // Le mendiant, assis contre son tonneau avec son gros chien
+    {
+      const avant = this.children.list.length;
+      this.add.image(84, 248, mendiantAssisHD(this)).setOrigin(0.5, 1).setScale(2);
+      this.etiquettesRue.push(this.add.text(84, 262, 'Le mendiant et son chien', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
+      this.add.rectangle(84, 200, 160, 120, 0xffffff, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirMendiant());
+      this.grouper(avant, 84);
+    }
     // Le Bazar de Rosalie : une échoppe à rayures vertes, Rosalie derrière sa table de cadeaux
     this.creerEchoppe(1030, 0x4f8a3a, { nom: 'Rosalie', race: 'hobbit', feminin: true, niveau: 'aguerri' },
-      Object.keys(CADEAUX).slice(0, 4), 'Le Bazar de Rosalie', 'Cadeaux', () => this.ouvrirBazar());
+      Object.keys(CADEAUX).slice(0, 4), 'Le Bazar de Rosalie', 'Cadeaux', () => this.ouvrirBazar(), 'rosalie');
     // La brocante de Firmin (décorations pour le shop) et la garde-robe de Marcelline (pour toi)
     this.creerEchoppe(1790, 0x8a5a2a, { nom: 'Firmin', race: 'humain', feminin: false, niveau: 'aguerri' },
-      ['tropheeCerf', 'horloge', 'globe', 'carillon'], 'La brocante de Firmin', 'Décorations', () => this.ouvrirBrocante());
+      ['tropheeCerf', 'horloge', 'globe', 'carillon'], 'La brocante de Firmin', 'Décorations', () => this.ouvrirBrocante(), 'firmin');
     this.creerEchoppe(1980, 0x7a3a6a, { nom: 'Marcelline', race: 'humain', feminin: true, niveau: 'aguerri' },
-      ['chapeau', 'monocle', 'montre', 'pipe'], 'La garde-robe de Marcelline', 'Vêtements et accessoires', () => this.ouvrirGardeRobe());
+      ['chapeau', 'monocle', 'montre', 'pipe'], 'La garde-robe de Marcelline', 'Vêtements et accessoires', () => this.ouvrirGardeRobe(), 'marcelline');
     // Les enchères : une estrade drapée de velours, un portique à bannière, le commissaire au pupitre
     {
       const avant = this.children.list.length;
@@ -307,12 +314,13 @@ class MarcheScene extends Phaser.Scene {
   }
 
   // Une échoppe (Bazar) : auvent, vendeur derrière, table par-dessus, objets dessus.
-  creerEchoppe(x, couleur, personne, icones, nom, metier, action) {
+  creerEchoppe(x, couleur, personne, icones, nom, metier, action, decor = null) {
     const avant = this.children.list.length;
     const etal = etalHD(this, couleur);
     this.add.image(x, 244, etal).setOrigin(0.5, 1).setScale(2);
     imageCorps(this, x, 205, personne, 5);
     this.add.image(x, 244, etal).setOrigin(0.5, 1).setScale(2).setCrop(0, 56, 88, 26);
+    this.decorerEtal(x, couleur, decor);
     this.etalage(x, icones.map(id => [id, 2]));
     this.etiquettesRue.push(this.add.text(x, 254, nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5),
       this.add.text(x, 272, metier, style(11, '#fff4dc', { stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5));
@@ -342,6 +350,7 @@ class MarcheScene extends Phaser.Scene {
     this.add.image(x, 244, etal).setOrigin(0.5, 1).setScale(2);
     imageCorps(this, x, 205, { nom: m.nom, race: m.race, feminin: /Mère|Hilda|Rosalie/.test(m.nom), niveau: 'aguerri' }, 5);
     this.add.image(x, 244, etal).setOrigin(0.5, 1).setScale(2).setCrop(0, 56, 88, 26);
+    this.decorerEtal(x, m.couleur, cle);
     this.etalage(x, Object.entries(this.G.etals[cle] || {}).map(([id, o]) => [id, o.qte]));
     this.etiquettesRue.push(this.add.text(x, 254, m.nom, style(13, couleurNom(this.G, m.nom, true), { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5),
       this.add.text(x, 272, m.metier, style(11, '#fff4dc', { stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5));
@@ -351,6 +360,21 @@ class MarcheScene extends Phaser.Scene {
     this.grouper(avant, x);
   }
 
+  // Devant l'étal : un tapis aux couleurs du marchand, et ce qui dit son métier
+  decorerEtal(x, couleur, qui) {
+    decorsEtalsHD(this); creerDecorPlaceHD(this);
+    this.add.image(x, 252, tapisEtalHD(this, couleur)).setOrigin(0.5, 1).setScale(2);
+    const decos = {
+      gedeon: [['sacsHD', -66, 252], ['panierPommesHD', 70, 252]],
+      forge: [['enclumeHD', 70, 252], ['tonneauxHD', -68, 252]],
+      apothicaire: [['chaudronHD', 70, 252], ['herbesHD', -40, 116, 0]],
+      tailleuse: [['mannequinHD', 72, 252], ['rouleauxHD', -68, 252]],
+      rosalie: [['paquetsHD', 70, 252]],
+      firmin: [['bricabracHD', -68, 252], ['cagetteHD', 70, 252]],
+      marcelline: [['porteChapeauxHD', 72, 252]],
+    }[qui] || [];
+    for (const [cle, dx, y, origineY = 1] of decos) this.add.image(x + dx, y, cle).setOrigin(0.5, origineY).setScale(2);
+  }
   creerLieu(x, texture, nom, action, { tint = 0xffffff, angle = 0, echelle = 5 }) {
     const avant = this.children.list.length;
     const perso = imageCorps(this, x, 245, texture.replace('perso_', ''), echelle).setTint(tint).setAngle(angle);
@@ -574,15 +598,25 @@ class MarcheScene extends Phaser.Scene {
   ouvrirMendiant() {
     const G = this.G;
     this.montrer('mendiant');
-    const c = this.panneau('Le mendiant', `Tu lui as déjà donné ${G.mendiant} pièce${G.mendiant > 1 ? 's' : ''}`);
-    c.add(this.add.text(30, 350, "Un vieil homme est assis contre la fontaine, une sébile ébréchée entre les mains.\nPersonne ne s'arrête jamais pour lui.",
+    const c = this.panneau('Le mendiant et son chien', `Tu lui as déjà donné ${G.mendiant} pièce${G.mendiant > 1 ? 's' : ''} · ${G.chienNourri || 0} ration${G.chienNourri > 1 ? 's' : ''} au chien`);
+    c.add(this.add.text(30, 340, "Un vieil homme est assis contre un tonneau, une sébile ébréchée entre les mains. Son gros chien,\nBrisquet, dort contre lui, et lève un œil sur toi. Personne ne s'arrête jamais pour eux.",
       style(14, '#3b2410', { lineSpacing: 4 })));
-    [1, 5, 10].forEach((n, i) => this.bouton(c, 120 + i * 150, 420, 130, `Donner ${n} pièce${n > 1 ? 's' : ''}`, () => {
+    [1, 5, 10].forEach((n, i) => this.bouton(c, 120 + i * 150, 400, 130, `Donner ${n} pièce${n > 1 ? 's' : ''}`, () => {
       const merci = donnerAuMendiant(G, n);
       if (!merci) return this.message("Tu n'as pas assez d'argent.", '#a03030');
       this.ouvrirMendiant();
       this.message(merci);
     }));
+    // Une ration par jour pour le chien (ça compte, pour plus tard...)
+    const nourri = G.chienJour === G.jour;
+    const b = this.bouton(c, 230, 436, 260, nourri ? 'Brisquet a eu sa ration aujourd\'hui' : `Donner une ration au chien (${G.stock.ration || 0} en réserve)`, () => {
+      if (nourri) return;
+      const quoi = nourrirChien(G);
+      if (!quoi) return this.message("Tu n'as pas de ration dans ta réserve.", '#a03030');
+      this.ouvrirMendiant();
+      this.message(quoi);
+    }, nourri ? 0x6a5a4a : 0x4f7a3a);
+    if (nourri) b.fond.disableInteractive();
   }
 
   // --- Le Bazar de Rosalie : les cadeaux ---

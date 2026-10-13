@@ -428,6 +428,8 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     etals: {},         // ce que vend chaque marchand ce matin : { marchand: { id: { prix, qte } } }
     jeux: { des: 0, bonneteau: 0 },
     mendiant: 0,       // total donné au mendiant
+    chienNourri: 0,    // rations données au chien du mendiant (une par jour) : une aventure annexe s'y cache
+    chienJour: 0,      // le jour de la dernière ration
     tresors: [],       // objets de valeur à l'atelier : { id, nom, categorie, valeurBase, etat, reparation }
     compta: {},        // jour → { r: recettes, d: dépenses, pret: prêts reçus } par poste
     comptaTotal: { r: {}, d: {}, pret: {} },
@@ -684,6 +686,19 @@ function donnerAuMendiant(G, montant) {
     '« Merci... Que les étoiles veillent sur toi. »',
     "« Une pièce pour un vieil homme... Je n'oublierai pas ton visage. »",
     "« Tu es bon. C'est rare, par ici. »",
+  ]);
+}
+
+// Donner une ration au chien du mendiant, une fois par jour. Renvoie ce qui se passe, ou null.
+function nourrirChien(G) {
+  if (G.chienJour === G.jour || !(G.stock.ration > 0)) return null;
+  G.stock.ration--;
+  G.chienNourri = (G.chienNourri || 0) + 1;
+  G.chienJour = G.jour;
+  return auHasard([
+    "Le chien engloutit la ration et pose sa grosse tête sur ton genou. « Il t'aime bien, lui. Il n'aime personne, d'habitude. »",
+    "Le chien remue la queue à s'en décrocher l'échine. « Doucement, Brisquet ! » Le mendiant sourit dans sa barbe.",
+    "Brisquet renifle la ration, te regarde longuement, puis la dévore. « Il se souviendra de toi. Il se souvient de tout. »",
   ]);
 }
 

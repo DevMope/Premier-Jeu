@@ -204,6 +204,8 @@ function geneHD(p) {
     taches: r() < 0.25,
     // Les nobles et les collectionneurs (clients prestigieux) : des étoffes riches, et un chapeau à plume
     noble: !!p.prestige,
+    colporteur: p.figurant === 'colporteur',
+    nom: p.nom,
     habitNoble: choix([0x6a1a3a, 0x1a2a6a, 0x3a1a5a, 0x7a4a10]),
   };
 }
@@ -262,9 +264,9 @@ const MECHES = (x, y) => { const m = (x * 3 + Math.round(Math.sin(y / 3.5) * 1.5
 
 // --- Le portrait complet ---
 
-function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = false } = {}) {
+function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = false, pose = null } = {}) {
   const t = new ToileHD(HD_L, HD_H);
-  const g = gene;
+  const g = gene.colporteur ? { ...gene, habit: 0x6a5a40, cheveux: 0x4a3a2a, armure: false, barbe: 'courte', coiffure: 'court' } : gene;
   const cx = 40;
   const v = VISAGES[g.race];
   t.rampes.peau = RAMPES_PEAU[g.peau];
@@ -337,13 +339,14 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
     // Le col de fourrure blanche, et le chapeau de velours à large bord orné d'une plume
     const haut = v.torse - 2;
     t.forme('fourrure', (x, y) => (y >= haut && y <= haut + 6 && Math.abs(x + 0.5 - cx) < 20 && Math.abs(x + 0.5 - cx) > v.cou - 1 ? [(x + 0.5 - cx) / 20, -0.3, 0.8] : null), { motif: (x, y) => ((x + y) % 2 ? 0.5 : -0.3) });
-    const sommet = v.cy - v.ry;
+    const sommet = Math.round(v.cy - v.ry);
     t.forme('velours', (x, y) => (y >= sommet - 14 && y <= sommet + 1 && Math.abs(x + 0.5 - cx) < v.rx - 2 - (sommet + 1 - y) * 0.25 ? [(x + 0.5 - cx) / v.rx, -0.3, 0.8] : null));
     t.forme('velours', (x, y) => (y >= sommet && y <= sommet + 3 && Math.abs(x + 0.5 - cx) < v.rx + 7 ? [0, (y - sommet - 1) * 0.5, 0.8] : null));
     // La plume : elle part de la broche, monte en arc et retombe derrière le chapeau
     for (let k = 0; k < 20; k++) { const px = cx + 3 + k, py = sommet - 1 - Math.round(Math.sin(k / 19 * Math.PI) * 9) - Math.floor(k / 5); t.poser(px, py, 'plume', 4 + (k % 2)); t.poser(px, py + 1, 'plume', 3); if (k % 3 === 1) t.poser(px, py - 1, 'plume', 5); }
     t.poser(cx + 4, sommet + 1, 'or', 5); t.poser(cx + 5, sommet + 1, 'or', 4); t.poser(cx + 4, sommet + 2, 'or', 3);
   }
+  if (g.colporteur) colporteurBuste(t, g, v, cx);
   // Les oreilles des elfes percent à travers les cheveux, et montent en pointe
   if (g.race === 'elfe') oreillesElfe(t, v, cx);
 
@@ -355,8 +358,107 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
     for (let e = 0; e < v.sourcil; e++) t.poser(x, y + e, 'cheveux', e === 0 ? 4 : e === v.sourcil - 1 ? 1 : 3);
   }
 
+  // 8. Les bras et les mains : la pose, selon l'humeur et le peuple
+  brasBuste(t, g, v, cx, pose || poseBuste(g, expression));
+
   t.contour();
   return t;
+}
+
+// --- Les poses des bustes ---
+// Chaque peuple a ses poses par humeur ; plusieurs sont communes. La pose d'une personne pour une
+// humeur donnée est toujours la même (tirée de son nom), et change avec son humeur.
+const POSES_BUSTE = {
+  humain: { neutre: ['croises', 'hanche', 'menton'], content: ['salut', 'pouce', 'coeur'], inquiet: ['tete', 'coeur', 'mains'], fache: ['croises', 'poing'] },
+  hobbit: { neutre: ['ventre', 'hanche', 'menton'], content: ['ventre', 'salut', 'pouce'], inquiet: ['coeur', 'tete'], fache: ['poing', 'croises'] },
+  nain: { neutre: ['croises', 'hanche'], content: ['pouce', 'croises', 'salut'], inquiet: ['tete', 'croises'], fache: ['poing', 'croises'] },
+  elfe: { neutre: ['menton', 'croises', 'hanche'], content: ['salut', 'coeur'], inquiet: ['coeur', 'mains'], fache: ['croises', 'hanche'] },
+  magicienne: { neutre: ['baton', 'menton'], content: ['baton', 'salut'], inquiet: ['coeur', 'baton'], fache: ['baton', 'poing'] },
+};
+function poseBuste(g, expression) {
+  const race = POSES_BUSTE[g.race] ? g.race : 'humain';
+  const liste = POSES_BUSTE[race][expression] || POSES_BUSTE[race].neutre;
+  const r = hasardDuNom((g.nom || '') + '|' + expression);
+  return liste[Math.floor(r() * liste.length)];
+}
+
+// Les bras partent des épaules (sous les épaulières), les manches sont de la matière du torse.
+function brasBuste(t, g, v, cx, pose) {
+  const largeur = { nain: 24, hobbit: 21, humain: 20, elfe: 18, magicienne: 19 }[g.race];
+  const manche = g.race === 'nain' ? 'metal' : g.race === 'hobbit' ? 'lin' : g.race === 'humain' && g.armure ? 'cuir' : 'habit';
+  const ep = g.race === 'nain' ? 5.2 : 4.4;
+  const sx = largeur + 2, sy = v.torse + 12;
+  const epaule = s => [cx + s * sx, sy];
+  const bras = (pts) => traitHD(t, manche, pts, ep, -0.2);
+  const main = (x, y, rx = 5.8, ry = 5) => t.forme('peau', ellipsoide(x, y, rx, ry), { decalage: 0.1 });
+  // Une main ouverte : la paume, quatre doigts séparés, le pouce sur le côté
+  const ouverte = (x, y, s = 1) => {
+    main(x, y, 6, 4.8);
+    for (const k of [-5, -1.7, 1.7, 5]) t.forme('peau', ellipsoide(x + k, y - 7, 1.8, 4.6), { decalage: 0.1 });
+    t.forme('peau', ellipsoide(x - s * 7.5, y - 1, 1.9, 3.4), { decalage: 0.1 });
+    for (const k of [-3.4, 0, 3.4]) for (let j = -10; j <= -4; j++) t.poser(Math.round(x + k), y + j, 'peau', 1);
+  };
+  // Un poing : les phalanges en relief, le pouce replié devant
+  const poing = (x, y) => {
+    main(x, y, 6.4, 5.4);
+    for (const k of [-4.2, -1.4, 1.4, 4.2]) { t.poser(Math.round(x + k), y - 4, 'peau', 5); t.poser(Math.round(x + k), y - 3, 'peau', 1); }
+    t.forme('peau', ellipsoide(x - 1, y + 2, 4, 1.8), { decalage: 0.3 });
+  };
+  if (pose === 'croises') {
+    // Les bras croisés : chaque avant-bras passe devant la poitrine, la main se glisse sous l'autre bras
+    for (const s of [-1, 1]) { bras([epaule(s), [cx + s * (sx + 5), sy + 15], [cx - s * 11, sy + 9]]); main(cx - s * 13, sy + 9, 4.2, 3.6); }
+  } else if (pose === 'hanche') {
+    // Le poing sur la hanche : le coude pointe sur le côté
+    bras([epaule(-1), [cx - sx - 13, sy + 15], [cx - sx - 6, sy + 30]]);
+  } else if (pose === 'menton') {
+    // La main au menton, pensif
+    bras([epaule(1), [cx + sx + 8, sy + 19], [cx + 9, v.bouche + 9]]); main(cx + 8, v.bouche + 9, 4.6, 3.6);
+  } else if (pose === 'salut') {
+    // La main levée, paume ouverte
+    bras([epaule(1), [cx + sx + 12, sy - 7], [cx + sx + 8, sy - 24]]); ouverte(cx + sx + 8, sy - 28);
+  } else if (pose === 'pouce') {
+    // Le pouce levé
+    bras([epaule(1), [cx + sx + 12, sy - 3], [cx + sx + 7, sy - 17]]); poing(cx + sx + 7, sy - 18);
+    t.forme('peau', ellipsoide(cx + sx + 3, sy - 27, 2.2, 5), { decalage: 0.2 });
+  } else if (pose === 'poing') {
+    // Le poing brandi
+    bras([epaule(1), [cx + sx + 12, sy + 2], [cx + sx + 4, sy - 9]]); poing(cx + sx + 4, sy - 10);
+  } else if (pose === 'tete') {
+    // La main qui se gratte la tempe, embarrassée
+    bras([epaule(1), [cx + sx + 15, sy - 6], [cx + v.rx + 6, v.yeux - 2]]); main(cx + v.rx + 4, v.yeux - 4, 4.4, 5);
+  } else if (pose === 'mains') {
+    // Les deux mains levées, surpris ou désolé
+    for (const s of [-1, 1]) { bras([epaule(s), [cx + s * (sx + 14), sy - 2], [cx + s * (v.rx + 10), v.yeux + 10]]); ouverte(cx + s * (v.rx + 10), v.yeux + 8, s); }
+  } else if (pose === 'coeur') {
+    // La main sur le cœur, sincère
+    bras([epaule(-1), [cx - sx - 9, sy + 17], [cx - 4, sy + 11]]); main(cx - 5, sy + 10, 5, 4);
+  } else if (pose === 'ventre') {
+    // Les mains jointes sur le ventre, satisfait
+    for (const s of [-1, 1]) { bras([epaule(s), [cx + s * (sx + 9), sy + 18], [cx + s * 6, sy + 21]]); main(cx + s * 6, sy + 20, 4.6, 3.6); }
+  } else if (pose === 'baton') {
+    // Le bâton de la magicienne, tenu droit, son orbe au sommet
+    t.rampes.chene = rampe(0x6b4423);
+    const bx = cx + sx + 7;
+    t.forme('chene', (x, y) => (y >= 12 && Math.abs(x + 0.5 - bx) < 2.2 ? [(x + 0.5 - bx) / 2.2, 0, 0.9] : null), { motif: (x, y) => (y % 9 === 0 ? -0.6 : 0) });
+    t.forme('or', ellipsoide(bx, 11, 4.2, 3), { decalage: 0.2 });
+    t.forme('iris', ellipsoide(bx, 8, 3.6, 3.6), { decalage: 0.8 });
+    t.poser(bx - 1, 6, 'oeil', 5);
+    bras([epaule(1), [cx + sx + 11, sy + 6], [bx, sy - 4]]); main(bx, sy - 5, 4.6, 4);
+  }
+}
+
+// Le colporteur en buste : son grand chapeau mou, son foulard rouge, les bretelles de sa hotte.
+function colporteurBuste(t, g, v, cx) {
+  t.rampes.feutre = rampe(0x5a4630); t.rampes.foulard = rampe(0xa83a30);
+  for (let y = v.torse - 1; y <= v.torse + 6; y++) for (let x = cx - 12 + (y - v.torse); x <= cx + 12 - (y - v.torse); x++) t.poser(x, y, 'foulard', 3 + ((x + y) % 3 === 0 ? 1 : 0) - (y > v.torse + 4 ? 1 : 0));
+  for (let k = 0; k < 9; k++) { t.poser(cx + 10 + Math.floor(k / 3), v.torse + 6 + k, 'foulard', 3 - (k % 3 === 2 ? 1 : 0)); t.poser(cx + 11 + Math.floor(k / 3), v.torse + 6 + k, 'foulard', 2); }
+  for (const s of [-1, 1]) for (let y = v.torse + 8; y < HD_H; y++) { const x = Math.round(cx + s * (15 + (y - v.torse - 8) * 0.12)); t.poser(x, y, 'cuir', y % 5 === 0 ? 1 : 3); t.poser(x + 1, y, 'cuir', 2); }
+  const sommet = Math.round(v.cy - v.ry);
+  t.forme('feutre', (x, y) => (y >= sommet - 11 && y <= sommet + 1 && Math.abs(x + 0.5 - cx + (sommet - y) * 0.2) < v.rx - 1 - (sommet + 1 - y) * 0.2 ? [(x + 0.5 - cx) / v.rx, -0.3, 0.8] : null), { motif: (x, y) => (y === sommet - 6 ? -0.9 : 0) });
+  t.forme('feutre', (x, y) => (y >= sommet - 1 && y <= sommet + 3 && Math.abs(x + 0.5 - cx) < v.rx + 9 - Math.abs(y - sommet - 1) ? [0, (y - sommet - 1) * 0.5, 0.8] : null));
+  // Une plume piquée dans le ruban, qui dépasse sur le côté
+  for (let k = 0; k < 11; k++) { const px = cx + 5 + k, py = sommet - 4 - Math.round(k * 0.7); t.poser(px, py, 'plume', 4 + (k % 2)); t.poser(px, py + 1, 'plume', 3); if (k % 3 === 0) t.poser(px, py - 1, 'plume', 5); }
+  for (let x = cx - v.rx + 1; x <= cx + 6; x++) t.poser(x, sommet - 3, 'cuir', 2);
 }
 
 // Un corps arrondi : la poitrine et deux épaules en volume (la normale vient du volume le plus en avant).
@@ -576,7 +678,7 @@ function coiffeHD(t, g, v, cx) {
 
 // La texture d'un portrait HD (créée à la demande, puis gardée).
 function textureBusteHD(scene, personne, expression = 'neutre', etat = {}) {
-  const cle = `busteHD_${personne.race}_${personne.nom}${personne.prestige ? "_noble" : ""}_${expression}${etat.cligne ? '_c' : ''}${etat.parle ? '_p' : ''}`;
+  const cle = `busteHD_${personne.race}_${personne.nom}${personne.prestige ? "_noble" : ""}${personne.figurant ? '_' + personne.figurant : ''}_${expression}${etat.pose ? '_' + etat.pose : ''}${etat.cligne ? '_c' : ''}${etat.parle ? '_p' : ''}`;
   if (!scene.textures.exists(cle)) dessinerBusteHD(geneHD(personne), expression, etat).texture(scene, cle);
   return cle;
 }
@@ -736,10 +838,16 @@ function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0, tenue =
     t.poser(cx - 9, by, 'lin', 5); t.poser(cx - 10, by - 2, 'lin', 4); t.poser(cx - 10, by - 4, 'lin', 5);
   }
   if (porte('chapeau')) {
+    // Un chapeau de cow-boy : calotte pincée, large bord relevé sur les côtés, et le bandana rouge
+    // à pois noué autour du cou
     const haut = tete.cy - tete.ry;
-    t.forme('feutre', (x, y) => (y >= Math.max(0, haut - 6) && y <= haut + 1 && Math.abs(x + 0.5 - cx) < 5.5 - Math.max(0, haut - 4 - y) * 0.4 ? [(x + 0.5 - cx) / 6, -0.2, 0.8] : null));
-    t.forme('feutre', (x, y) => (y >= haut + 1 && y <= haut + 2 && Math.abs(x + 0.5 - cx) < 10 ? [0, (y - haut - 1.5) * 0.8, 0.8] : null));
-    for (let x = cx - 5; x <= cx + 4; x++) t.poser(x, haut, 'ruban', 3);
+    t.forme('feutre', (x, y) => (y >= Math.max(0, haut - 7) && y <= haut + 1 && Math.abs(x + 0.5 - cx) < 6 - Math.max(0, haut - 5 - y) * 0.5 ? [(x + 0.5 - cx) / 6, -0.2, 0.8] : null),
+      { motif: (x, y) => (y < haut - 3 && Math.abs(x + 0.5 - cx) < 1.5 ? -0.9 : 0) });
+    t.forme('feutre', (x, y) => { const d = Math.abs(x + 0.5 - cx); const rel = d > 8 ? Math.round((d - 8) * 0.7) : 0; return y >= haut + 1 - rel && y <= haut + 2 - rel && d < 12 ? [0, (y - haut - 1.5) * 0.8, 0.8] : null; });
+    for (let x = cx - 5; x <= cx + 4; x++) t.poser(x, haut, 'cuir', 2);
+    t.forme('ruban', (x, y) => (y >= 21 && y <= 27 && Math.abs(x + 0.5 - cx) < 6.5 - (y - 21) * 0.9 ? [(x + 0.5 - cx) / 6 * 0.5, 0.2, 0.9] : null),
+      { motif: (x, y) => ((x * 3 + y * 5) % 7 === 0 ? 1.4 : 0) });
+    for (let k = 0; k < 4; k++) t.poser(cx + 5 + (k % 2), 20 + k, 'ruban', 2 + (k % 2)); // le nœud, sur le côté
   }
 
   t.contour();

@@ -16,3 +16,20 @@ Avec un personnage du sexe opposé, si le joueur le souhaite, la relation peut d
 - Condition : l'amitié « Frères de sang » doit être complétée au maximum.
 - En offrant des cadeaux, la relation passe ensuite au rang de **Fiancé(e)**, puis **Marié(e)**.
 - C'est toujours un choix du joueur, jamais automatique.
+
+## Le chien du mendiant (aventure annexe secrète)
+
+Le mendiant est assis contre un tonneau, son gros chien couché contre lui. Une fois par jour, on peut lui donner une ration (déjà en place : `G.chienNourri` compte les rations données).
+
+- À force de nourrir le chien, une cinématique un peu secrète se déclenche.
+- Elle emmène vers une aventure annexe, déconnectée du monde du jeu : un lieu hors de la carte, une histoire à part. À inventer.
+
+## Références à garder sous la main
+
+- *Travellers Rest* : l'auberge cozy, les clients attablés, la vie du village.
+- *Stardew Valley* : PNJ du village, cadeaux et relations, saisons et festivals, petits secrets à débloquer.
+- *Terraria* : forêts et eau des cinématiques.
+
+## Musique et sons
+
+À faire entre l'étape 8 et l'étape 9 : musiques d'ambiance par moment et bruitages.

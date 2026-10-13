@@ -606,7 +606,7 @@ class CounterScene extends Phaser.Scene {
     const bonjour = {
       bourgmestre: `Bonjour, ${nomJoueur(G, 'petit')} ! Tout le bourg parle de « ${G.nomShop} » : te voilà ${p.nom.toLowerCase()} ! Je tenais à te féliciter en personne.`,
       heraut: `Oyez ! La Confrérie du Dernier Rempart salue « ${G.nomShop} », désormais ${p.nom.toLowerCase()}. Ton nom est inscrit dans nos registres.`,
-      colporteur: `Alors c'est ici, le fameux comptoir ? On en parle sur tous les chemins ! Te voilà ${p.nom.toLowerCase()}, bravo. Je passerai te voir avec ma hotte.`,
+      colporteur: `Alors c'est ici, le fameux comptoir ? On en parle sur tous les chemins ! Te voilà ${p.nom.toLowerCase()}, bravo. Je passerai te voir avec ma charrette.`,
       legende: `On m'avait parlé de toi, ${nomJoueur(G, 'petit')}. Un ${p.nom.toLowerCase()}, tenu par si jeune... J'ai voulu voir ça de mes yeux. Je ne suis pas déçue.`,
     }[p.visiteur];
     this.titreCommande.setFontSize(17).setText('⭐ Un visiteur notable');
@@ -634,12 +634,12 @@ class CounterScene extends Phaser.Scene {
   personneDe(entree) {
     if (entree.type === 'client') return entree.voyageur;
     if (entree.type === 'famille') return entree.visite.parent;
-    if (entree.type === 'colporteur') return { nom: COLPORTEUR.nom, race: 'humain', feminin: false };
+    if (entree.type === 'colporteur') return { nom: COLPORTEUR.nom, race: 'humain', feminin: false, figurant: 'colporteur' };
     if (entree.type === 'notable') {
       // Le visiteur notable du palier : le bourgmestre, le héraut de la Confrérie, une légende...
       const v = PALIERS_CLIENTS[entree.palier].visiteur;
       if (v === 'legende') return { nom: "Isolde Lame-d'Aurore", race: 'elfe', feminin: true, niveau: 'legende' };
-      if (v === 'colporteur') return { nom: COLPORTEUR.nom, race: 'humain', feminin: false };
+      if (v === 'colporteur') return { nom: COLPORTEUR.nom, race: 'humain', feminin: false, figurant: 'colporteur' };
       return { nom: FIGURANTS[v].nom, race: 'humain', feminin: false, figurant: v }; // (un figurant : bourgmestre, héraut)
     }
     return entree.parti ? entree.parti.voyageur : null;

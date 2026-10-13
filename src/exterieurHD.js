@@ -1333,3 +1333,204 @@ function creerForetPremierPlanHD(scene) {
     t.texture(scene, 'bergeHD');
   }
 }
+
+// --- La charrette du colporteur : un âne attelé à une charrette à deux roues, chargée de tout ---
+function charretteColporteurHD(scene) {
+  if (scene.textures.exists('charretteColporteurHD')) return 'charretteColporteurHD';
+  const L = 124, H = 66, t = toileDecor(L, H);
+  t.rampes.ane = rampe(0x8a7a6a); t.rampes.crin = rampe(0x3a3028); t.rampes.bache = rampe(0x8a7a58); t.rampes.jute = rampe(0xc0a070);
+  const sol = H - 2;
+  // La charrette, derrière l'âne : les brancards, le plateau, les ridelles, la grande roue
+  trait(t, 'chene', 34, 40, 62, 42, 1.4);
+  for (const x of [58, 70, 82, 94, 106]) for (let y = 22; y < 40; y++) t.poser(x, y, 'cheneSombre', 3);
+  planche(t, 56, 22, 60, 3, 'chene', { graine: 901 });
+  planche(t, 56, 39, 62, 5, 'chene', { graine: 902, noeuds: 1 });
+  for (let x = 56; x < 118; x++) t.poser(x, 39, 'chene', 5);
+  // Le chargement : des sacs ventrus, un tonneau, une marmite de cuivre, le tout sous un coin de bâche
+  for (const [cx, cy, rx, ry] of [[66, 32, 7, 7], [80, 33, 8, 6.5]]) {
+    t.forme('jute', ellipsoide(cx, cy, rx, ry, (x, y) => y <= 39), { motif: (x, y) => ((x + y) % 3 === 0 ? -0.4 : 0) });
+    t.poser(cx, Math.round(cy - ry), 'chanvre', 2);
+  }
+  t.forme('chene', (x, y) => (y >= 12 && y <= 38 && x >= 94 && x <= 108 ? [(x - 101) / 9, 0, 0.8] : null), { motif: (x, y) => (x % 3 === 0 ? -0.6 : 0) });
+  for (const y of [15, 25, 35]) for (let x = 94; x <= 108; x++) t.poser(x, y, 'fer', 3);
+  t.forme('laiton', ellipsoide(88, 22, 5.5, 4.5), { decalage: 0.2 }); for (let x = 83; x <= 93; x++) t.poser(x, 18, 'laiton', 1);
+  t.forme('bache', (x, y) => (y >= 8 && y <= 24 && x >= 60 && x <= 80 && y >= 8 + Math.abs(x - 70) * 0.5 ? [(x - 70) / 12, -0.3, 0.8] : null), { motif: (x, y) => (y % 5 === 0 ? -0.5 : 0) });
+  // La lanterne au bout de sa perche
+  for (let y = 4; y < 22; y++) t.poser(112, y, 'cheneSombre', 3);
+  for (let y = 4; y < 8; y++) t.poser(113, y, 'fer', 2);
+  t.forme('laiton', ellipsoide(116, 11, 3, 4), { decalage: 0.6 }); t.poser(116, 11, 'flamme', 4); t.poser(116, 10, 'flamme', 5);
+  // La grande roue cerclée de fer
+  for (let a = 0; a < 6.3; a += 0.04) { t.poser(Math.round(86 + Math.cos(a) * 15), Math.round(49 + Math.sin(a) * 15), 'fer', a > 3.14 ? 3 : 1); t.poser(Math.round(86 + Math.cos(a) * 13.5), Math.round(49 + Math.sin(a) * 13.5), 'chene', 2); }
+  for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; trait(t, 'chene', 86, 49, 86 + Math.cos(a) * 13, 49 + Math.sin(a) * 13, 0.7); }
+  t.forme('fer', ellipsoide(86, 49, 2.4, 2.4), { decalage: 0.5 });
+  // L'âne : pattes, corps, queue, encolure, tête aux longues oreilles, crinière, harnais
+  for (const [x, dy] of [[14, 0], [20, 1], [32, 0], [38, 1]]) { t.forme('ane', (xx, y) => (y >= 44 && y <= sol - dy && Math.abs(xx + 0.5 - x) < 2.3 ? [(xx + 0.5 - x) / 2.3, 0, 0.9] : null)); t.poser(x - 1, sol - dy, 'crin', 1); t.poser(x, sol - dy, 'crin', 1); t.poser(x + 1, sol - dy, 'crin', 1); }
+  t.forme('ane', ellipsoide(26, 37, 17, 10), { motif: (x, y) => (hachage(x, y, 71) > 0.85 ? -0.4 : 0) });
+  trait(t, 'crin', 42, 32, 47, 46, 1.2); t.forme('crin', ellipsoide(47, 48, 2, 3));
+  t.forme('ane', (x, y) => { const u = (y - 18) / 14; const ax = 14 - u * 2; return y >= 16 && y <= 34 && Math.abs(x + 0.5 - ax) < 4.5 + u * 3 ? [(x + 0.5 - ax) / 6, 0, 0.85] : null; });
+  t.forme('ane', ellipsoide(7, 20, 7, 5), { decalage: 0.1 });
+  t.forme('ane', ellipsoide(3, 22, 3, 2.4), { decalage: -0.6 });
+  for (const [ex, ey, a] of [[9, 11, -0.3], [14, 12, 0.25]]) t.forme('ane', (x, y) => { const dx = x + 0.5 - ex - (y - ey) * a, dy = y + 0.5 - ey; return dx * dx / 2.6 + dy * dy / 22 <= 1 ? [dx / 1.6, dy / 4.7, 0.7] : null; }, { decalage: -0.2 });
+  for (let k = 0; k < 10; k++) t.poser(14 + Math.round(k * 0.3), 13 + k * 2, 'crin', 2 + (k % 2));
+  t.poser(5, 18, 'encre', 0); t.poser(6, 18, 'encre', 1); t.poser(1, 23, 'crin', 0);
+  trait(t, 'cuir', 4, 24, 12, 22, 0.6); trait(t, 'cuir', 12, 30, 40, 36, 0.8); trait(t, 'cuir', 24, 28, 28, 46, 0.7);
+  t.poser(26, 30, 'laiton', 5); t.poser(26, 31, 'laiton', 4);
+  t.contour();
+  t.texture(scene, 'charretteColporteurHD');
+  return 'charretteColporteurHD';
+}
+
+// --- Le mendiant, assis contre un tonneau, son gros chien couché contre lui ---
+function mendiantAssisHD(scene) {
+  if (scene.textures.exists('mendiantAssisHD')) return 'mendiantAssisHD';
+  const L = 78, H = 52, t = toileDecor(L, H);
+  t.rampes.peau = RAMPES_PEAU[2]; t.rampes.cape = rampe(0x4a4236); t.rampes.habit = rampe(0x6a6252); t.rampes.barbe = rampe(0x8a8a80); t.rampes.poil = rampe(0x6a4a2a);
+  const sol = H - 2;
+  // Le tonneau debout
+  t.forme('chene', (x, y) => (y >= 6 && y <= sol && x >= 52 && x <= 74 ? [(x - 63) / 13, 0, 0.8] : null), { motif: (x, y) => ((x - 52) % 4 === 0 ? -0.6 : 0) });
+  t.forme('chene', ellipsoide(63, 6, 11.5, 2.2), { decalage: 0.3 });
+  for (const y of [10, 28, 46]) for (let x = 52; x <= 74; x++) t.poser(x, y, 'fer', 3 - (x < 55 || x > 71 ? 1 : 0));
+  // Le chien : le corps couché, la tête relevée vers son maître, les oreilles tombantes, la queue
+  const poil = (x, y) => (hachage(x, y, 37) > 0.8 ? -0.5 : hachage(x, y, 38) > 0.85 ? 0.5 : 0);
+  t.forme('poil', ellipsoide(3, 42, 2.8, 2.2), { motif: poil });
+  t.forme('poil', ellipsoide(17, 43, 15.5, 7), { motif: poil });
+  for (const x of [8, 26]) t.forme('poil', ellipsoide(x, sol - 1, 4, 2), { decalage: -0.3 });
+  t.forme('poil', (x, y) => { const u = (y - 28) / 10; const nx = 26 + u * 2; return y >= 28 && y <= 40 && Math.abs(x + 0.5 - nx) < 5 + u * 2 ? [(x + 0.5 - nx) / 6, 0, 0.85] : null; }, { motif: poil });
+  t.forme('poil', ellipsoide(25, 28, 7.5, 6.5), { motif: poil });
+  t.forme('poil', ellipsoide(32, 30, 4, 2.6), { decalage: -0.4 });
+  for (const ex of [19, 30]) t.forme('poil', ellipsoide(ex, 29, 2.2, 4.5), { decalage: -0.7 });
+  t.poser(34, 29, 'encre', 0); t.poser(35, 29, 'encre', 0); t.poser(35, 30, 'encre', 1); t.poser(27, 26, 'encre', 0); t.poser(24, 26, 'encre', 0);
+  t.poser(31, 33, 'bouche', 3); t.poser(32, 33, 'bouche', 3); // la langue
+  // Le mendiant : les jambes tendues, les pieds nus, le torse affaissé contre le tonneau, la capuche
+  for (const [y0, dy] of [[36, 0], [39, 3]]) t.forme('habit', (x, y) => { const u = (x - 12) / 28; return x >= 12 && x <= 44 && y >= y0 + u * 3 - 2 && y <= y0 + u * 3 + 4 + dy ? [0, (y - y0 - u * 3 - 1) / 3, 0.85] : null; }, { motif: (x, y) => (hachage(x, y, 39) > 0.9 ? -0.8 : 0) });
+  for (const [fx, fy] of [[10, 39], [9, 44]]) t.forme('peau', ellipsoide(fx, fy, 4, 2.6), { decalage: -0.1 });
+  t.forme('cape', (x, y) => (y >= 16 && y <= 42 && Math.abs(x + 0.5 - 44 - (y - 16) * 0.1) < 7 + (y - 16) * 0.22 ? [(x + 0.5 - 44) / 10, 0, 0.8] : null), { motif: (x, y) => ((x * 3 + y) % 11 === 0 ? -0.6 : 0) });
+  trait(t, 'cape', 38, 24, 30, 34, 2.4, { decalage: -0.2 });
+  t.forme('peau', ellipsoide(28, 35, 2.8, 2.2));
+  t.forme('cape', ellipsoide(42, 12, 7.5, 7.5), { decalage: -0.3 });
+  t.forme('peau', ellipsoide(41, 14, 4.5, 4.2), { decalage: 0.2 });
+  t.forme('barbe', (x, y) => (y >= 15 && y <= 24 && Math.abs(x + 0.5 - 41) < 4.5 - Math.max(0, y - 19) * 0.6 ? [(x + 0.5 - 41) / 4, 0, 0.8] : null), { motif: (x, y) => (x % 2 === 0 ? -0.4 : 0.3) });
+  t.poser(39, 13, 'encre', 0); t.poser(43, 13, 'encre', 0);
+  // La sébile, avec une pièce au fond
+  t.forme('fer', ellipsoide(48, sol - 1, 4.5, 2), { decalage: -0.2 }); t.poser(48, sol - 2, 'laiton', 5);
+  t.contour();
+  t.texture(scene, 'mendiantAssisHD');
+  return 'mendiantAssisHD';
+}
+
+// --- Devant chaque étal : un tapis aux couleurs du marchand, et une petite décoration qui parle de lui ---
+function tapisEtalHD(scene, couleur) {
+  const cle = 'tapisEtalHD_' + couleur.toString(16);
+  if (scene.textures.exists(cle)) return cle;
+  const L = 100, H = 16, t = toileDecor(L, H);
+  t.rampes.auvent = rampe(couleur);
+  for (let y = 1; y < H - 1; y++) for (let x = 4; x < L - 4; x++) {
+    const bordure = y <= 2 || y >= H - 3 || x < 8 || x >= L - 8;
+    const losange = !bordure && ((x + y) % 8 === 0 || (x - y) % 8 === 0);
+    t.poser(x, y, bordure ? 'lin' : 'auvent', (bordure ? 3 : 3) + (losange ? 2 : 0) - (y === H - 2 ? 1 : 0) + ((x * 7 + y * 3) % 13 === 0 ? -1 : 0));
+  }
+  for (const x of [1, 3, L - 4, L - 2]) for (let y = 2; y < H - 2; y += 2) t.poser(x, y, 'lin', 2); // les franges
+  t.contour();
+  t.texture(scene, cle);
+  return cle;
+}
+
+function decorsEtalsHD(scene) {
+  if (scene.textures.exists('enclumeHD')) return;
+  const base = (l, h) => { const t = toileDecor(l, h); t.rampes.pomme = rampe(0xc83030); t.rampes.drap = rampe(0x2f5a8a); t.rampes.fourrure = rampe(0xe8e0d0); t.rampes.herbe = rampe(0x4a7a3a); t.rampes.lavande = rampe(0x7a5aa8); t.rampes.papier = rampe(0xd8c0a0); t.rampes.ruban = rampe(0xc04060); return t; };
+  // L'enclume sur sa souche, le marteau appuyé contre
+  {
+    const t = base(30, 26);
+    t.forme('chene', (x, y) => (y >= 15 && y <= 25 && x >= 7 && x <= 23 ? [(x - 15) / 9, 0, 0.8] : null), { motif: (x, y) => (x % 3 === 0 ? -0.5 : 0) });
+    t.forme('fer', (x, y) => (y >= 10 && y <= 15 && x >= 10 && x <= 20 ? [(x - 15) / 6, 0, 0.8] : null), { decalage: -0.2 });
+    t.forme('fer', (x, y) => (y >= 6 && y <= 10 && x >= 4 && x <= 27 && !(x < 8 && y > 6 + (x - 4) * 0.8) ? [(x - 15) / 12, -0.4, 0.8] : null));
+    for (let x = 8; x <= 27; x++) t.poser(x, 6, 'fer', 5);
+    trait(t, 'chene', 27, 24, 29, 8, 0.9); t.forme('fer', (x, y) => (y >= 2 && y <= 8 && x >= 25 && x <= 30 ? [(x - 27) / 3, 0, 0.8] : null), { decalage: 0.2 });
+    t.contour(); t.texture(scene, 'enclumeHD');
+  }
+  // Le chaudron de l'apothicaire, qui bouillonne vert
+  {
+    const t = base(28, 26);
+    t.forme('fer', ellipsoide(14, 15, 11, 9, (x, y) => y >= 7), { decalage: -0.3, motif: (x, y) => (hachage(x, y, 41) > 0.9 ? 0.5 : 0) });
+    for (let x = 3; x <= 25; x++) { t.poser(x, 7, 'fer', 4); t.poser(x, 8, 'fer', 2); }
+    for (const x of [6, 14, 22]) for (let y = 22; y <= 25; y++) t.poser(x, y, 'fer', 1);
+    t.forme('verreVert', ellipsoide(14, 7, 9, 2), { decalage: 0.5 });
+    for (const [x, y] of [[9, 4], [16, 3], [20, 5], [12, 1]]) t.forme('verreVert', ellipsoide(x, y, 1.6, 1.6), { decalage: 0.8 });
+    trait(t, 'chene', 20, 2, 24, 12, 0.8);
+    t.contour(); t.texture(scene, 'chaudronHD');
+  }
+  // Les bouquets d'herbes séchées pendus à une tringle
+  {
+    const t = base(40, 22);
+    for (let x = 0; x < 40; x++) t.poser(x, 0, 'cheneSombre', 3);
+    for (const [x, mat] of [[7, 'herbe'], [20, 'lavande'], [33, 'chanvre']]) {
+      t.poser(x, 1, 'chanvre', 2); t.poser(x, 2, 'chanvre', 2);
+      t.forme(mat, (xx, y) => (y >= 3 && y <= 19 && Math.abs(xx + 0.5 - x) < 1.5 + (y - 3) * 0.3 ? [(xx + 0.5 - x) / 6, 0, 0.8] : null), { motif: (xx, y) => ((xx * 5 + y * 3) % 7 === 0 ? -0.9 : (xx + y) % 5 === 0 ? 0.6 : 0) });
+      t.poser(x - 1, 4, 'lin', 4); t.poser(x, 4, 'lin', 4); t.poser(x + 1, 4, 'lin', 4);
+    }
+    t.contour(); t.texture(scene, 'herbesHD');
+  }
+  // Le mannequin de la tailleuse : un buste de toile sur son pied, une fourrure sur l'épaule, une cape bleue
+  {
+    const t = base(26, 40);
+    for (let y = 28; y < 40; y++) t.poser(13, y, 'cheneSombre', 3);
+    t.forme('chene', ellipsoide(13, 38, 7, 1.8), { decalage: 0.2 });
+    t.forme('toile', (x, y) => (y >= 6 && y <= 28 && Math.abs(x + 0.5 - 13) < 6 + Math.sin((y - 6) / 22 * Math.PI) * 2.5 ? [(x + 0.5 - 13) / 8, 0, 0.85] : null), { motif: (x, y) => (x === 13 ? -0.6 : 0) });
+    t.forme('drap', (x, y) => (y >= 8 && y <= 30 && x + 0.5 - 13 > 1 - (y - 8) * 0.1 && x <= 24 ? [(x - 18) / 7, 0, 0.8] : null), { motif: (x, y) => (x % 5 === 0 ? -0.5 : 0) });
+    t.forme('fourrure', (x, y) => (y >= 5 && y <= 16 && x >= 3 && x <= 14 && y <= 5 + (x - 3) * 0.3 + 8 ? [(x - 8) / 6, -0.3, 0.8] : null), { motif: (x, y) => ((x + y) % 2 ? 0.5 : -0.3) });
+    t.poser(13, 5, 'cheneSombre', 3); t.poser(13, 4, 'cheneSombre', 4);
+    t.contour(); t.texture(scene, 'mannequinHD');
+  }
+  // Les rouleaux d'étoffe appuyés les uns sur les autres
+  {
+    const t = base(30, 24);
+    for (const [x, mat, a] of [[7, 'drap', 0.15], [15, 'tissuRouge', 0], [23, 'verreVert', -0.15]]) {
+      t.forme(mat, (xx, y) => { const cx = x + (23 - y) * a; return y >= 2 && y <= 23 && Math.abs(xx + 0.5 - cx) < 3.8 ? [(xx + 0.5 - cx) / 3.8, 0, 0.85] : null; }, { motif: (xx, y) => (y % 6 === 0 ? -0.5 : 0) });
+      t.forme('chene', ellipsoide(x + 21 * a, 1.5, 3.2, 1.6), { decalage: 0.2 });
+    }
+    t.contour(); t.texture(scene, 'rouleauxHD');
+  }
+  // Le panier de pommes de l'épicier
+  {
+    const t = base(26, 20);
+    t.forme('chanvre', (x, y) => (y >= 8 && y <= 19 && Math.abs(x + 0.5 - 13) < 11 - (y - 8) * 0.35 ? [(x + 0.5 - 13) / 11, 0, 0.85] : null), { motif: (x, y) => ((x + y) % 3 === 0 ? -0.6 : (x - y) % 3 === 0 ? 0.4 : 0) });
+    for (const [x, y] of [[5, 7], [10, 5], [16, 5], [21, 7], [13, 8], [8, 9], [18, 9]]) { t.forme('pomme', ellipsoide(x, y, 2.8, 2.6), { decalage: 0.2 }); t.poser(x, y - 3, 'herbe', 2); }
+    for (let x = 3; x <= 23; x++) t.poser(x, 9, 'chanvre', 4);
+    for (let k = 0; k < 11; k++) t.poser(8 + k, 3 - Math.round(Math.sin(k / 10 * Math.PI) * 3), 'chanvre', 3);
+    t.contour(); t.texture(scene, 'panierPommesHD');
+  }
+  // La pile de paquets-cadeaux de Rosalie
+  {
+    const t = base(28, 26);
+    for (const [x, y, l, h, mat] of [[2, 14, 14, 11, 'tissuRouge'], [15, 16, 12, 9, 'drap'], [6, 4, 13, 10, 'verreVert']]) {
+      t.forme(mat, (xx, yy) => (xx >= x && xx < x + l && yy >= y && yy < y + h ? [(xx - x - l / 2) / l, -0.2, 0.85] : null));
+      for (let yy = y; yy < y + h; yy++) t.poser(Math.round(x + l / 2), yy, 'ruban', 4);
+      for (let xx = x; xx < x + l; xx++) t.poser(xx, Math.round(y + h / 2), 'ruban', 4);
+      t.poser(Math.round(x + l / 2) - 1, y - 1, 'ruban', 5); t.poser(Math.round(x + l / 2) + 1, y - 1, 'ruban', 5);
+    }
+    t.contour(); t.texture(scene, 'paquetsHD');
+  }
+  // La caisse de bric-à-brac de Firmin : un chandelier, un vase, un cadre
+  {
+    const t = base(30, 26);
+    planche(t, 2, 12, 26, 14, 'chene', { graine: 950, noeuds: 2 });
+    for (let x = 2; x < 28; x++) { t.poser(x, 12, 'chene', 5); t.poser(x, 19, 'cheneSombre', 1); }
+    for (let y = 2; y <= 12; y++) t.poser(8, y, 'laiton', 3); for (let x = 5; x <= 11; x++) t.poser(x, 11, 'laiton', 4); t.poser(8, 1, 'flamme', 4); t.poser(8, 0, 'flamme', 5);
+    t.forme('verreRouge', (x, y) => (y >= 3 && y <= 12 && Math.abs(x + 0.5 - 16) < 2 + Math.sin((y - 3) / 9 * Math.PI) * 2.5 ? [(x + 0.5 - 16) / 4, 0, 0.8] : null));
+    for (let y = 4; y <= 12; y++) for (let x = 20; x <= 27; x++) t.poser(x, y, (y === 4 || y === 12 || x === 20 || x === 27) ? 'laiton' : 'encre', (y === 4 || y === 12 || x === 20 || x === 27) ? 4 : 3);
+    t.contour(); t.texture(scene, 'bricabracHD');
+  }
+  // Le porte-chapeaux de Marcelline : un pied de bois, des patères, un chapeau et une écharpe pendus
+  {
+    const t = base(26, 44);
+    for (let y = 4; y < 42; y++) t.poser(12, y, 'cheneSombre', 3);
+    t.forme('chene', ellipsoide(12, 42, 8, 1.8), { decalage: 0.2 });
+    for (const [x0, x1, y] of [[12, 4, 10], [12, 21, 14], [12, 5, 22]]) trait(t, 'chene', x0, y, x1, y - 3, 0.8);
+    t.rampes.feutre = rampe(0x4a3a2a);
+    t.forme('feutre', (x, y) => (y >= 1 && y <= 6 && Math.abs(x + 0.5 - 6) < 4 ? [(x + 0.5 - 6) / 4, -0.2, 0.8] : null));
+    for (let x = 0; x <= 12; x++) t.poser(x, 7, 'feutre', 3);
+    t.forme('tissuRouge', (x, y) => (y >= 11 && y <= 34 && Math.abs(x + 0.5 - 21 - Math.sin(y / 5) * 1.2) < 1.8 ? [0.2, 0, 0.9] : null), { motif: (x, y) => (y % 3 === 0 ? 0.5 : 0) });
+    for (let k = 0; k < 4; k++) t.poser(19 + k, 35, 'tissuRouge', 2);
+    t.contour(); t.texture(scene, 'porteChapeauxHD');
+  }
+}
