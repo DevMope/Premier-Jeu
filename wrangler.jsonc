@@ -1,0 +1,7 @@
+// Mise en ligne sur Cloudflare (Workers, fichiers statiques) : le jeu est servi tel quel,
+// sans étape de construction. Le nom doit être celui du Worker créé sur Cloudflare.
+{
+  "name": "premier-jeu",
+  "compatibility_date": "2025-09-01",
+  "assets": { "directory": "." }
+}
