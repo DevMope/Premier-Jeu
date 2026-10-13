@@ -1,4 +1,4 @@
-# Le Comptoir des Aventuriers
+# Le Passage des Aventuriers
 
 Jeu de gestion narratif en pixel art : tu tiens un comptoir de ravitaillement pour aventuriers et tu investis dans leurs chances de revenir vivants.
 

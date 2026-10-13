@@ -186,6 +186,19 @@ const CORPS = [
   '.bbb..bbb.',
 ];
 
+// La taille des peuples, des plus petits aux plus grands : les hobbits (13 pixels), les nains
+// (14, un poil plus grands), les humains (16), les elfes (17), les magiciennes (18).
+// Les lignes sont celles de CORPS.
+const TAILLES_PEUPLES = {
+  hobbit: { retirer: [7, 10, 13] },
+  nain: { retirer: [10, 13] },
+  nainBanquier: { retirer: [10, 13] },
+  elfe: { doubler: [12] },
+  magicienne: { doubler: [8, 12] },
+};
+// La hauteur des mains au-dessus du sol, en pixels, pour chaque peuple (calculée plus bas).
+const MAINS_PEUPLES = {};
+
 const RACES = {
   // Hobbit : cheveux bouclés, pieds nus.
   hobbit: {
@@ -362,7 +375,17 @@ function creerToutesLesTextures(scene) {
     creerTexture(scene, cle, ic.px, ic.pal);
   }
   for (const [race, r] of Object.entries(RACES)) {
-    const lignes = CORPS.map((l, i) => r.lignes[i] || l);
+    const base = CORPS.map((l, i) => r.lignes[i] || l);
+    // Chaque peuple sa taille : on retire ou on double quelques lignes du corps.
+    const t = TAILLES_PEUPLES[race] || {};
+    const lignes = [];
+    base.forEach((l, i) => {
+      if ((t.retirer || []).includes(i)) return;
+      lignes.push(l);
+      if ((t.doubler || []).includes(i)) lignes.push(l);
+      if (i === 9) MAINS_PEUPLES[race] = lignes.length; // la ligne des mains (pour porter le baluchon)
+    });
+    MAINS_PEUPLES[race] = lignes.length - MAINS_PEUPLES[race] + 1;
     creerTexture(scene, 'perso_' + race, lignes, r.pal);
   }
 }

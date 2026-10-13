@@ -9,6 +9,10 @@ const SOL_COMPTOIR = FENETRE.y + FENETRE.h - 10;
 // les suivants s'alignent derrière lui, plus petits car plus loin.
 // Le client au comptoir, en buste, à la taille de la fenêtre.
 const BUSTE = { echelle: 2.3 };
+// Les petits peuples apparaissent plus bas dans la fenêtre ; les grands, un peu plus gros
+// (plus proches), dépassent davantage vers le haut.
+const TAILLE_BUSTE = { hobbit: { bas: 34 }, nain: { bas: 24 }, elfe: { echelle: 1.05 }, magicienne: { echelle: 1.09 } };
+const tailleBuste = personne => ({ bas: 0, echelle: 1, ...((personne && TAILLE_BUSTE[personne.race]) || {}) });
 const FILE = { x: FENETRE.x + 110, ecart: 55, y: SOL_COMPTOIR - 14, echelle: 5 };
 
 class CounterScene extends Phaser.Scene {
@@ -501,9 +505,10 @@ class CounterScene extends Phaser.Scene {
       onComplete: () => marcheur.destroy(),
     });
     this.montrerBuste(this.personneDe(entree), this.expressionArrivee(entree));
-    this.perso.setAlpha(0).setScale(BUSTE.echelle * 0.85);
+    const echelle = BUSTE.echelle * tailleBuste(this.personneDe(entree)).echelle;
+    this.perso.setAlpha(0).setScale(echelle * 0.85);
     this.tweens.add({
-      targets: this.perso, alpha: 1, scale: BUSTE.echelle, duration: 600, delay: 600, ease: 'Back.easeOut',
+      targets: this.perso, alpha: 1, scale: echelle, duration: 600, delay: 600, ease: 'Back.easeOut',
       onComplete: () => this.arrivee(entree),
     });
   }
@@ -529,7 +534,8 @@ class CounterScene extends Phaser.Scene {
   montrerBuste(personne, expression = 'neutre') {
     this.buste = { personne, expression };
     this.perso.setTexture(textureBusteHD(this, personne, expression)).setOrigin(0.5, 1).setFlipX(false).setAngle(0)
-      .setPosition(FENETRE.x + FENETRE.w / 2, FENETRE.y + FENETRE.h).setScale(BUSTE.echelle).setVisible(true);
+      .setPosition(FENETRE.x + FENETRE.w / 2, FENETRE.y + FENETRE.h + tailleBuste(personne).bas)
+      .setScale(BUSTE.echelle * tailleBuste(personne).echelle).setVisible(true);
     if (!this.minuterieCligne) {
       // Il cligne des yeux de temps en temps.
       this.minuterieCligne = this.time.addEvent({ delay: 2600, loop: true, callback: () => {
@@ -1004,8 +1010,11 @@ class CounterScene extends Phaser.Scene {
     if (!this.buste) this.perso.setFlipX(versDroite);
     const decalage = versDroite ? 22 : -22;
     const inclinaison = versDroite ? -22 : 22;
+    // Le baluchon est porté à hauteur des mains, qui dépend de la taille de son peuple.
+    const race = entree ? this.texturePour(entree).replace('perso_', '') : '';
+    const mains = (MAINS_PEUPLES[race] || 7) * 9 - 1;
     const placer = () => {
-      porte.setPosition(this.perso.x + decalage, this.perso.y - 62).setAngle(inclinaison + this.perso.angle);
+      porte.setPosition(this.perso.x + decalage, this.perso.y - mains).setAngle(inclinaison + this.perso.angle);
     };
     if (porte) {
       porte.setFlipX(!versDroite).setOrigin(versDroite ? 0.95 : 0.05, 0.95).setDepth(2.1);

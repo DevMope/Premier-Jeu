@@ -9,7 +9,7 @@ class TitleScene extends Phaser.Scene {
     dessinerComte(g, 0, 0, 960, 540, 0.35);
     this.add.rectangle(480, 200, 640, 180, 0x2a1a10, 0.75).setStrokeStyle(4, 0xc9a227);
 
-    this.add.text(480, 160, 'Le Comptoir des Aventuriers', style(40, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.add.text(480, 160, 'Le Passage des Aventuriers', style(40, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
     this.add.text(480, 212, 'Prépare leurs provisions. Parie sur leur retour.', style(20, '#f3e6c8', { fontStyle: 'italic' })).setOrigin(0.5);
     this.add.text(480, 255, 'Prototype — étape 3', style(16, '#c9b48a')).setOrigin(0.5);
 

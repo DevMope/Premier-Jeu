@@ -1,6 +1,7 @@
 # Document de conception (GDD) — Premier-Jeu
 
-> Titre provisoire. Ce document résume l'idée du jeu et sert de référence pendant le développement.
+> Titre : **Le Passage des Aventuriers** (le mot « Passage » reste à confirmer).
+> Ce document résume l'idée du jeu et sert de référence pendant le développement.
 > Il évoluera au fil des étapes.
 
 ## 1. Pitch
@@ -286,3 +287,11 @@ Chaque étape doit donner une version **jouable**.
 | 13 | **Histoire** | Prologue, personnages récurrents, mendiant, menace qui grandit. |
 | 14 | **Vie du personnage** | Vieillissement, famille ou vagabond. |
 | 15 | **Fins du jeu** | La fin du bien et la fin du mal. |
+
+## Tailles des peuples
+
+Des plus petits aux plus grands : hobbits et nains à peu près pareils (léger avantage aux nains),
+puis humains, elfes, magiciennes. Les pandas (à venir) seront les plus grands parmi les peuples du
+bien ; la liste des tailles des forces maléfiques sera donnée plus tard.
+Silhouettes : hobbit 13 px, nain 14, humain 16, elfe 17, magicienne 18. Au comptoir, le buste des
+petits peuples apparaît plus bas dans la fenêtre, celui des grands plus haut.
