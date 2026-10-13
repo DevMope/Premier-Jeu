@@ -339,82 +339,130 @@ function moulure(t, x0, y0, l, h, horizontale = true) {
 function etagereHD(scene, n) {
   const cle = 'etagereArriere_' + n;
   if (scene.textures.exists(cle)) return cle;
-  const L = 256, H = 182, rayons = [37, 90, 142];
+  const L = 256, H = 182, rayons = [37, 90, 142], P = 8; // P : la largeur des montants
   const t = toileLuxe(L, H, n);
-  for (let x = 6; x < L - 6; x += 14) planche(t, x, 6, Math.min(14, L - 6 - x), H - 6, 'cheneSombre', { horizontale: false, graine: 500 + x, noeuds: n ? 1 : 3 });
-  for (const r of rayons) for (let y = r + 5; y < r + 11; y++) for (let x = 6; x < L - 6; x++) {
-    if (hachage(x, y, 501) < 0.85 - (y - r - 5) * 0.12) t.poser(x, y, 'cheneSombre', 0);
+  // Le fond : des lames verticales, plus sombres dans l'ombre des rayons et de la corniche
+  for (let x = P; x < L - P; x += 16) planche(t, x, 10, Math.min(16, L - P - x), H - 20, 'cheneSombre', { horizontale: false, graine: 500 + x, noeuds: n ? 1 : 3 });
+  const ombre = (y0, h) => { for (let y = y0; y < y0 + h; y++) for (let x = P; x < L - P; x++) if (hachage(x, y, 501) < 0.9 - (y - y0) / h) t.poser(x, y, 'cheneSombre', 0); };
+  ombre(10, 7);
+  for (const r of rayons) ombre(r + 6, 8);
+  // Les montants : épais, chanfreinés, éclairés à gauche
+  for (const x0 of [0, L - P]) {
+    planche(t, x0, 4, P, H - 4, 'chene', { horizontale: false, graine: 503 + x0, noeuds: 2 });
+    for (let y = 4; y < H; y++) { t.poser(x0, y, 'chene', 4); t.poser(x0 + P - 1, y, 'chene', 1); t.poser(x0 + 1, y, 'chene', 3); }
   }
-  planche(t, 0, 0, L, 6, 'chene', { graine: 502, noeuds: 2 });
-  for (let x = 0; x < L; x++) t.poser(x, 6, 'cheneSombre', 0);
-  for (const x of [0, L - 6]) planche(t, x, 0, 6, H, 'chene', { horizontale: false, graine: 503 + x, noeuds: 2 });
+  // La corniche, avec son profil mouluré
+  planche(t, 0, 0, L, 10, 'chene', { graine: 502, noeuds: 2 });
+  for (let x = 0; x < L; x++) { t.poser(x, 0, 'chene', 5); t.poser(x, 1, 'chene', 4); t.poser(x, 7, 'chene', 4); t.poser(x, 8, 'chene', 2); t.poser(x, 9, 'cheneSombre', 0); }
+  // Le socle
+  planche(t, 0, H - 10, L, 10, 'chene', { graine: 506, noeuds: 2 });
+  for (let x = 0; x < L; x++) { t.poser(x, H - 10, 'chene', 5); t.poser(x, H - 1, 'cheneSombre', 0); }
+  if (n >= 1) for (let x = 12; x < L - 12; x += 30) for (let k = 0; k < 18; k++) t.poser(x + k, H - 6, 'chene', 1 + (k === 0 || k === 17 ? 2 : 0)); // panneaux du socle
+  // Les rayons : épais, chant éclairé, et des consoles en dessous
   for (const r of rayons) {
-    planche(t, 6, r, L - 12, 5, 'chene', { graine: 510 + r, noeuds: n ? 2 : 4 });
-    for (const cx of [7, L - 13]) for (let k = 0; k < 6; k++) for (let j = 0; j < 6 - k; j++) t.poser(cx + (cx < L / 2 ? j : 5 - j), r + 5 + k, 'chene', j === 0 ? 4 : 2);
-    if (n === 0) { clou(t, 2, r + 1); clou(t, L - 4, r + 1); clou(t, L / 2, r + 1); }
+    planche(t, P, r, L - 2 * P, 6, 'chene', { graine: 510 + r, noeuds: n ? 2 : 4 });
+    for (let x = P; x < L - P; x++) { t.poser(x, r, 'chene', 5); t.poser(x, r + 5, 'cheneSombre', 1); }
+    for (const cx of [P, L - P - 1, L / 2]) for (let k = 0; k < 7; k++) for (let j = 0; j < 7 - k; j++) {
+      const x = cx === L / 2 ? cx - 3 + j : cx < L / 2 ? cx + j : cx - j;
+      if (cx === L / 2 && j > 6 - k * 1.2) continue;
+      t.poser(x, r + 6 + k, 'chene', j === 0 ? 4 : 2);
+    }
+    if (n === 0) { clou(t, P + 2, r + 2); clou(t, L - P - 4, r + 2); clou(t, L / 2, r + 2); }
   }
   if (n === 0) {
-    // Du bois brut : des échardes et des planches mal ajustées
+    // Du bois brut : des échardes, une corde qui ligote les montants
     for (let k = 0; k < 40; k++) t.poser(Math.floor(hachage(k, 1, 505) * L), Math.floor(hachage(k, 2, 505) * H), 'chene', 0);
+    for (const x0 of [0, L - P]) for (const y0 of [30, 120]) for (let k = 0; k < 6; k++) for (let x = x0; x < x0 + P; x++) t.poser(x, y0 + k, 'chanvre', 2 + ((x + k) % 2) * 2);
+  }
+  if (n >= 1) {
+    // Des patères sur les montants, pour suspendre un sac ou une lanterne
+    for (const x0 of [2, L - 6]) for (const y of [60, 112]) { t.poser(x0 + 1, y, 'laiton', 4); t.poser(x0 + 2, y, 'laiton', 3); t.poser(x0 + 2, y + 1, 'laiton', 1); }
   }
   if (n >= 2) {
     // Des moulures sur les montants et une corniche à denticules
-    for (const x of [2, L - 4]) moulure(t, x, 8, 0, H - 10, false);
-    moulure(t, 0, 2, L, 0);
-    for (let x = 6; x < L - 6; x += 4) for (let y = 7; y < 9; y++) { t.poser(x, y, 'chene', 3); t.poser(x + 1, y, 'chene', 4); }
-    for (const r of rayons) for (let x = 6; x < L - 6; x++) t.poser(x, r + 4, 'laiton', n === 3 ? 4 : 3); // le bord des rayons
+    for (const x of [3, L - 5]) moulure(t, x, 12, 0, H - 24, false);
+    for (let x = 4; x < L - 4; x += 4) for (let y = 3; y < 6; y++) { t.poser(x, y, 'chene', 2); t.poser(x + 1, y, 'chene', 4); }
+    for (const r of rayons) for (let x = P; x < L - P; x++) t.poser(x, r + 1, 'laiton', n === 3 ? 4 : 3); // le bord des rayons
   }
   if (n === 3) {
     // Les dorures : filets d'or, rosaces sur les montants, coins dorés
-    for (let x = 0; x < L; x++) { t.poser(x, 0, 'laiton', 5); t.poser(x, 5, 'laiton', 3); }
-    for (const x of [0, L - 6]) for (const y of [20, 64, 116, 166]) t.dessin(x + 1, y, ['.o.', 'oOo', '.o.'], { o: ['laiton', 3], O: ['laiton', 5] });
-    for (const r of rayons) for (const cx of [7, L - 13]) for (let k = 0; k < 6; k++) t.poser(cx + (cx < L / 2 ? 0 : 5), r + 5 + k, 'laiton', 4);
+    for (let x = 0; x < L; x++) { t.poser(x, 0, 'laiton', 5); t.poser(x, 8, 'laiton', 3); t.poser(x, H - 10, 'laiton', 4); }
+    for (const x of [1, L - P + 1]) for (const y of [24, 64, 116, 160]) t.dessin(x + 1, y, ['.o.', 'oOo', '.o.'], { o: ['laiton', 3], O: ['laiton', 5] });
   }
   t.texture(scene, cle);
   return cle;
 }
 
-// Le coffre de la fortune.
+// Le coffre de la fortune : du vieux coffre de bois au coffre-fort doré.
+// Vu de trois quarts : le dessus (en perspective), la face avant, le flanc droit dans l'ombre.
 function coffreHD(scene, n) {
   const cle = 'coffreHD_' + n;
   if (scene.textures.exists(cle)) return cle;
-  const t = toileLuxe(36, 28, Math.min(n, 1));
-  const corps = n === 2 ? 'fer' : n === 3 ? 'laiton' : 'chene';
-  if (n === 3) t.rampes.laiton = [0x5a3a08, 0x8a6010, 0xc09020, 0xe8c040, 0xf8e070, 0xfffcd0];
-  // Le couvercle bombé, puis le corps
-  t.forme(corps, (x, y) => {
-    const dy = (y + 0.5 - 10) / 9;
-    return y < 10 && x >= 1 && x <= 34 && dy * dy + Math.pow((x + 0.5 - 18) / 30, 2) < 1 ? [0, dy, 0.8] : null;
-  });
-  if (corps === 'chene') { planche(t, 1, 10, 34, 8, 'chene', { graine: 520, noeuds: 1 }); planche(t, 1, 18, 34, 9, 'chene', { graine: 521, noeuds: 1 }); }
-  else t.forme(corps, (x, y) => (x >= 1 && x <= 34 && y >= 10 && y <= 26 ? [(x - 17.5) / 30, (y - 16) / 20, 0.85] : null));
-  if (n === 0) {
-    // Une simple caisse, tenue par une corde
-    for (let x = 1; x < 35; x++) t.poser(x, 10, 'chene', 1);
-    for (let y = 2; y < 27; y++) { t.poser(17, y, 'chanvre', 3 + (y % 2)); t.poser(18, y, 'chanvre', 2); }
-  } else if (n === 1) {
-    for (const x of [4, 30]) for (let y = 2; y < 27; y++) { t.poser(x, y, 'fer', 3); t.poser(x + 1, y, 'fer', 1); }
-    for (let x = 1; x < 35; x++) { t.poser(x, 10, 'fer', 4); t.poser(x, 11, 'fer', 2); t.poser(x, 26, 'fer', 1); }
-    for (const [x, y] of [[4, 14], [30, 14], [4, 22], [30, 22]]) t.poser(x, y, 'fer', 5);
-    t.forme('laiton', (x, y) => (x >= 15 && x <= 20 && y >= 9 && y <= 15 ? [(x - 17.5) / 4, (y - 12) / 5, 0.8] : null));
-    t.poser(17, 12, 'encre', 0); t.poser(17, 13, 'encre', 0); t.poser(18, 12, 'encre', 1);
-  } else if (n === 2) {
-    // Le coffre-fort des nains : rivets partout, une molette de laiton
-    for (let x = 1; x < 35; x++) { t.poser(x, 10, 'fer', 1); t.poser(x, 11, 'fer', 4); }
-    for (let x = 3; x < 34; x += 4) for (const y of [13, 25]) { t.poser(x, y, 'fer', 5); t.poser(x + 1, y + 1, 'fer', 1); }
-    for (let y = 13; y < 26; y += 4) for (const x of [3, 32]) { t.poser(x, y, 'fer', 5); t.poser(x + 1, y + 1, 'fer', 1); }
-    t.forme('laiton', ellipsoide(18, 18, 4.2, 4.2), { decalage: 0.3 });
-    t.forme('laiton', ellipsoide(18, 18, 2, 2), { decalage: -0.4 });
-    for (let a = 0; a < 6.28; a += 0.8) t.poser(Math.round(18 + Math.cos(a) * 3.3), Math.round(18 + Math.sin(a) * 3.3), 'laiton', 1);
+  const L = 44, H = 36;
+  const t = toileLuxe(L, H, Math.min(n, 1));
+  const coffreFort = n >= 2;
+  const matiere = n === 3 ? 'laiton' : coffreFort ? 'fer' : 'chene';
+  if (n === 2) t.rampes.fer = [0x14181e, 0x262c34, 0x3c444e, 0x58626e, 0x7a8692, 0xa8b4c0];
+  if (n === 3) t.rampes.laiton = [0x4a2c06, 0x7a520e, 0xb0821c, 0xdcae36, 0xf4d464, 0xfff6c4];
+  const avant = { x0: 2, x1: 35, y0: coffreFort ? 9 : 12, y1: H - 1 };    // la face avant
+  const flanc = 7;                                                         // la profondeur du flanc
+  // Le flanc droit, dans l'ombre
+  t.forme(matiere, (x, y) => (x > avant.x1 && x <= avant.x1 + flanc && y >= avant.y0 - (x - avant.x1) * 0.6 && y <= avant.y1 - (x - avant.x1) * 0.6 ? [1, 0, 0.3] : null), { decalage: -1.2 });
+  // Le dessus : bombé pour un coffre, plat et biseauté pour un coffre-fort
+  t.forme(matiere, (x, y) => {
+    if (x < avant.x0 || x > avant.x1 + flanc) return null;
+    const recul = Math.max(0, x - avant.x1) * 0.6;
+    if (coffreFort) return y >= avant.y0 - 5 - recul && y < avant.y0 - recul + (x > avant.x1 ? 0 : 0) && y < avant.y0 ? [0, -1, 0.6] : null;
+    const bombe = Math.sqrt(Math.max(0, 1 - ((x + 0.5 - (avant.x0 + avant.x1 + flanc) / 2) / ((avant.x1 + flanc - avant.x0) / 2 + 1)) ** 2)) * 9;
+    return y >= avant.y0 - bombe - recul && y < avant.y0 - recul + 1 && y < avant.y0 + 1 ? [0, -0.7, 0.7] : null;
+  }, { decalage: 0.4 });
+  // La face avant
+  if (matiere === 'chene') {
+    for (let k = 0; k < 3; k++) planche(t, avant.x0, avant.y0 + 1 + k * 8, avant.x1 - avant.x0 + 1, 8, 'chene', { graine: 520 + k + n * 7, noeuds: n ? 1 : 2 });
   } else {
-    // L'or gravé, serti de gemmes
-    for (let x = 1; x < 35; x++) { t.poser(x, 10, 'laiton', 1); t.poser(x, 11, 'laiton', 5); }
-    for (let x = 4; x < 33; x += 2) t.poser(x, 15 + ((x >> 1) % 2), 'laiton', 2); // la frise gravée
-    for (let x = 4; x < 33; x += 2) t.poser(x, 22 + ((x >> 1) % 2), 'laiton', 2);
-    t.forme('gemme', ellipsoide(18, 18.5, 2.6, 2.6), { decalage: 0.4 });
-    t.forme('verreRouge', ellipsoide(8, 18.5, 1.6, 1.6), { decalage: 0.4 });
-    t.forme('verreRouge', ellipsoide(28, 18.5, 1.6, 1.6), { decalage: 0.4 });
-    t.forme('verreVert', ellipsoide(18, 5, 1.6, 1.6), { decalage: 0.4 });
+    t.forme(matiere, (x, y) => (x >= avant.x0 && x <= avant.x1 && y >= avant.y0 && y <= avant.y1 ? [(x - 18) / 40, (y - 22) / 40, 0.9] : null));
+    // Le biseau du cadre de la porte blindée
+    for (let x = avant.x0 + 3; x <= avant.x1 - 3; x++) { t.poser(x, avant.y0 + 3, matiere, 1); t.poser(x, avant.y1 - 3, matiere, 5); }
+    for (let y = avant.y0 + 3; y <= avant.y1 - 3; y++) { t.poser(avant.x0 + 3, y, matiere, 1); t.poser(avant.x1 - 3, y, matiere, 5); }
+  }
+  const rivet = (x, y) => { t.poser(x, y, n === 3 ? 'laiton' : 'fer', 5); t.poser(x + 1, y + 1, n === 3 ? 'laiton' : 'fer', 0); };
+  if (n <= 1) {
+    // Les ferrures : coins, bandes verticales, et la ligne du couvercle
+    const ferrure = n === 0 ? 'fer' : 'fer';
+    for (let x = avant.x0; x <= avant.x1; x++) { t.poser(x, avant.y0, ferrure, n ? 4 : 2); t.poser(x, avant.y0 + 1, ferrure, 1); }
+    for (const bx of n ? [avant.x0 + 4, avant.x1 - 5] : [avant.x0 + 6, avant.x1 - 7]) for (let y = avant.y0 - 7; y <= avant.y1; y++) {
+      if (y < avant.y0 - 6 + Math.abs(bx - 18) * 0.05) continue;
+      t.poser(bx, y, ferrure, n ? 3 : 2); t.poser(bx + 1, y, ferrure, n ? 2 : 1);
+      if (n && (y - avant.y0) % 5 === 0) rivet(bx, y);
+    }
+    if (n) for (const [x, y] of [[avant.x0, avant.y1 - 3], [avant.x1 - 3, avant.y1 - 3], [avant.x0, avant.y0 + 2], [avant.x1 - 3, avant.y0 + 2]]) for (let k = 0; k < 3; k++) for (let j = 0; j < 3; j++) t.poser(x + k, y + j, 'fer', 3);
+    // La serrure : une plaque, un moraillon, un cadenas
+    t.forme(n ? 'laiton' : 'fer', (x, y) => (x >= 15 && x <= 21 && y >= avant.y0 - 1 && y <= avant.y0 + 7 ? [(x - 18) / 4, (y - avant.y0 - 3) / 6, 0.8] : null), { decalage: 0.2 });
+    t.poser(18, avant.y0 + 3, 'encre', 0); t.poser(18, avant.y0 + 4, 'encre', 0);
+    traitHD(t, 'fer', [[16.5, avant.y0 + 9], [16.5, avant.y0 + 7], [19.5, avant.y0 + 7], [19.5, avant.y0 + 9]], 0.7);
+    t.forme(n ? 'laiton' : 'fer', (x, y) => (x >= 15 && x <= 21 && y >= avant.y0 + 9 && y <= avant.y0 + 14 ? [(x - 18) / 4, 0.2, 0.8] : null), { decalage: 0.1 });
+    // Les poignées sur le flanc
+    traitHD(t, 'fer', [[avant.x1 + 2, avant.y0 + 6], [avant.x1 + 5, avant.y0 + 5], [avant.x1 + 5, avant.y0 + 10]], 0.7, -0.5);
+  } else {
+    // Le coffre-fort : rivets tout autour, une molette graduée et un volant pour ouvrir
+    for (let x = avant.x0 + 1; x <= avant.x1 - 1; x += 4) { rivet(x, avant.y0 + 1); rivet(x, avant.y1 - 1); }
+    for (let y = avant.y0 + 5; y <= avant.y1 - 4; y += 4) { rivet(avant.x0 + 1, y); rivet(avant.x1 - 1, y); }
+    const dore = n === 3 ? 'laiton' : 'laiton';
+    t.forme(dore, ellipsoide(14, 23, 5, 5), { decalage: 0.3 });
+    t.forme(n === 3 ? 'gemme' : 'fer', ellipsoide(14, 23, 2.4, 2.4), { decalage: -0.2 });
+    for (let a = 0; a < 6.28; a += 0.52) t.poser(Math.round(14 + Math.cos(a) * 4.2), Math.round(23 + Math.sin(a) * 4.2), dore, 1);
+    // Le volant à trois branches
+    for (const a of [0, 2.09, 4.19]) traitHD(t, dore, [[27, 23], [27 + Math.cos(a) * 4.5, 23 + Math.sin(a) * 4.5]], 0.7, 0.3);
+    t.forme(dore, ellipsoide(27, 23, 1.6, 1.6), { decalage: 0.5 });
+    for (const a of [0, 2.09, 4.19]) t.forme(dore, ellipsoide(27 + Math.cos(a) * 4.5, 23 + Math.sin(a) * 4.5, 1.2, 1.2), { decalage: 0.6 });
+    // Les gonds, à gauche
+    for (const y of [avant.y0 + 6, avant.y1 - 6]) for (let k = 0; k < 4; k++) t.poser(avant.x0 + 1, y + k, 'fer', k === 0 ? 5 : 2);
+    if (n === 3) {
+      // Le coffre-fort doré : une tête de lion au-dessus, des gemmes aux coins
+      for (const [x, y] of [[6, avant.y0 + 5], [31, avant.y0 + 5], [6, avant.y1 - 5], [31, avant.y1 - 5]]) t.forme('verreRouge', ellipsoide(x, y, 1.4, 1.4), { decalage: 0.5 });
+      t.forme('laiton', ellipsoide(20, avant.y0 + 6, 3, 3), { decalage: 0.5 });
+      for (const dx of [-1, 1]) t.poser(20 + dx, avant.y0 + 5, 'encre', 0);
+    }
   }
   t.contour();
   t.texture(scene, cle);
@@ -699,4 +747,109 @@ function creerBureauHD(scene) {
     t.contour();
     t.texture(scene, clair ? 'tiroirHD_clair' : 'tiroirHD');
   }
+}
+
+// --- Le coin douillet : un chat qui dort, des herbes qui sèchent, des livres, une plante ---
+function creerDouilletHD(scene) {
+  if (scene.textures.exists('chatHD')) return;
+  // Le chat roux roulé en boule, la queue autour du nez (deux images : il respire)
+  for (const [k, gonfle] of [[0, 0], [1, 0.6]]) {
+    const t = toileDecor(34, 20);
+    t.rampes.roux = rampe(0xd8843a);
+    t.rampes.blanc = [0x8a7a6a, 0xb0a090, 0xd0c4b4, 0xe8e0d4, 0xf6f0e8, 0xffffff];
+    t.forme('roux', ellipsoide(18, 12.5 - gonfle * 0.4, 13 + gonfle * 0.3, 7.2 + gonfle), { motif: (x, y) => ((x + Math.floor(y / 2)) % 5 === 0 ? -1 : 0) }); // le dos rayé
+    t.forme('roux', ellipsoide(8, 13, 6.4, 5.4), { decalage: 0.2 });                              // la tête, posée
+    for (const ox of [4, 9]) t.forme('roux', (x, y) => (y >= 6 && y <= 9 && Math.abs(x + 0.5 - ox) <= (y - 6) * 0.6 + 0.3 ? [0, -0.6, 0.8] : null), { decalage: 0.3 });
+    t.forme('blanc', ellipsoide(6, 16, 3.5, 2.2), { decalage: 0.2 });                              // le museau blanc
+    for (const x of [4, 9]) t.poser(x, 13, 'encre', 1);                                            // les yeux fermés
+    t.poser(10, 13, 'encre', 1); t.poser(5, 13, 'encre', 1);
+    t.poser(6, 15, 'verreRouge', 4);                                                                // le petit nez rose
+    traitHD(t, 'roux', [[30, 17], [24, 19.5], [12, 19.5], [6, 18.5]], 1.6, 0.2);                   // la queue autour
+    t.forme('blanc', ellipsoide(6, 18.5, 2, 1.3), { decalage: 0.4 });                              // le bout blanc
+    t.contour();
+    t.texture(scene, 'chatHD' + (k ? '_2' : ''));
+  }
+  // Le coussin du chat
+  {
+    const t = toileDecor(44, 12);
+    t.rampes.coussin = rampe(0x8a3a4a);
+    t.forme('coussin', ellipsoide(22, 6.5, 21, 5.5), { motif: (x, y) => ((x + y) % 6 === 0 ? -0.7 : 0) });
+    for (const x of [2, 41]) t.forme('laiton', ellipsoide(x, 6, 1.5, 1.5), { decalage: 0.4 });
+    t.contour(); t.texture(scene, 'coussinHD');
+  }
+  // Un bouquet d'herbes qui sèche, la tête en bas
+  {
+    const t = toileDecor(14, 30);
+    t.rampes.herbe = rampe(0x6a8a3a); t.rampes.lavande = rampe(0x8a6ab0);
+    traitHD(t, 'chanvre', [[7, 0], [7, 6]], 0.7);
+    for (let k = 0; k < 7; k++) traitHD(t, k % 3 === 0 ? 'lavande' : 'herbe', [[7, 6], [2 + k * 1.6, 26 + (k % 2) * 3]], 0.8, -0.1);
+    for (let y = 6; y < 9; y++) for (let x = 5; x < 10; x++) t.poser(x, y, 'chanvre', 3);
+    t.contour(); t.texture(scene, 'herbesHD');
+  }
+  // Une rangée de vieux livres
+  {
+    const t = toileDecor(30, 18);
+    const couleurs = [0x7a2a2a, 0x2a4a6a, 0x5a6a2a, 0x6a4a2a, 0x4a2a5a];
+    let x = 1;
+    couleurs.forEach((c, i) => {
+      const l = 4 + (i % 2), h = 13 + (i * 7) % 5, nom = 'livre' + i;
+      t.rampes[nom] = rampe(c);
+      const penche = i === 4 ? 1 : 0;
+      t.forme(nom, (xx, y) => (xx >= x + penche * (18 - y) / 6 && xx < x + l + penche * (18 - y) / 6 && y >= 18 - h && y < 18 ? [(xx - x - l / 2) / l, 0, 0.9] : null));
+      for (let xx = x; xx < x + l; xx++) { t.poser(xx, 18 - h + 3, 'laiton', 4); t.poser(xx, 16, 'laiton', 3); }
+      x += l + 1;
+    });
+    t.contour(); t.texture(scene, 'livresHD');
+  }
+  // Une plante en pot
+  {
+    const t = toileDecor(18, 22);
+    t.rampes.feuille = rampe(0x4a8a3a); t.rampes.pot = rampe(0xb0603a);
+    t.forme('pot', (x, y) => (y >= 13 && y <= 21 && Math.abs(x + 0.5 - 9) < 5 - (y - 13) * 0.2 ? [(x + 0.5 - 9) / 5, 0, 0.85] : null));
+    for (let x = 3; x < 15; x++) t.poser(x, 13, 'pot', 5);
+    for (const [a, l] of [[-2.2, 9], [-1.6, 11], [-1.0, 10], [-0.6, 8], [-2.6, 7]]) {
+      const fx = 9 + Math.cos(a) * l, fy = 13 + Math.sin(a) * l;
+      traitHD(t, 'feuille', [[9, 13], [fx, fy]], 0.6);
+      t.forme('feuille', ellipsoide(fx, fy, 2.2, 1.4), { decalage: 0.3 });
+    }
+    t.contour(); t.texture(scene, 'planteHD');
+  }
+}
+
+// Le cadre du livre d'images (visite du shop restauré) : un cuir brun repoussé, un filet d'or,
+// et de grandes fleurons dorés dans les coins. Le centre est vide (on voit la scène à travers).
+function cadreLivreHD(scene) {
+  if (scene.textures.exists('cadreLivre')) return 'cadreLivre';
+  const L = 480, H = 270, E = 13; // E : l'épaisseur du cuir
+  const t = toileDecor(L, H);
+  t.rampes.cuir = rampe(0x5a2e1a);
+  t.rampes.or = [0x3a2006, 0x6e440c, 0xa8761c, 0xd8aa30, 0xf2d060, 0xfff2b8];
+  t.forme('cuir', (x, y) => {
+    const d = Math.min(x, y, L - 1 - x, H - 1 - y);
+    if (d >= E) return null;
+    const u = (d - E / 2) / (E / 2);
+    return [x < E ? -u : x > L - 1 - E ? u : 0, y < E ? -u : y > H - 1 - E ? u : 0, 0.8];
+  }, { motif: (x, y) => (fbm(x * 0.2, y * 0.2, 970) > 0.6 ? -0.6 : 0) });
+  // Le filet d'or, et le liseré de parchemin de la page
+  for (let x = 4; x < L - 4; x++) for (const y of [4, H - 5]) t.poser(x, y, 'or', 4);
+  for (let y = 4; y < H - 4; y++) for (const x of [4, L - 5]) t.poser(x, y, 'or', 4);
+  for (let x = E; x < L - E; x++) for (const y of [E, E + 1, H - E - 1, H - E - 2]) t.poser(x, y, 'parchemin', y === E || y === H - E - 1 ? 5 : 3);
+  for (let y = E; y < H - E; y++) for (const x of [E, E + 1, L - E - 1, L - E - 2]) t.poser(x, y, 'parchemin', x === E || x === L - E - 1 ? 5 : 3);
+  // Les fleurons des coins : une rosace et deux volutes
+  for (const [cx, cy, sx, sy] of [[E + 2, E + 2, 1, 1], [L - E - 3, E + 2, -1, 1], [E + 2, H - E - 3, 1, -1], [L - E - 3, H - E - 3, -1, -1]]) {
+    t.forme('or', ellipsoide(cx, cy, 8, 8), { decalage: 0.3 });
+    t.forme('verreRouge', ellipsoide(cx, cy, 3, 3), { decalage: 0.5 });
+    for (const [dx, dy] of [[1, 0], [0, 1]]) for (let k = 0; k < 26; k++) {
+      const a = k / 26 * Math.PI * 1.6;
+      const r = 4 + k * 0.5;
+      const px = cx + sx * (dx * (10 + k * 1.1) + dy * Math.sin(a) * 4), py = cy + sy * (dy * (10 + k * 1.1) + dx * Math.sin(a) * 4);
+      t.poser(Math.round(px), Math.round(py), 'or', 4); t.poser(Math.round(px), Math.round(py) + 1, 'or', 1);
+      void r;
+    }
+  }
+  // Le milieu des côtés : un petit fermoir doré
+  for (const [cx, cy] of [[L / 2, 6], [L / 2, H - 7], [6, H / 2], [L - 7, H / 2]]) t.forme('or', ellipsoide(cx, cy, 5, 4), { decalage: 0.4 });
+  t.contour();
+  t.texture(scene, 'cadreLivre');
+  return 'cadreLivre';
 }

@@ -161,6 +161,15 @@ const RAMPES_PEAU = [
   [0x180a08, 0x2e1610, 0x4a2618, 0x643a24, 0x7e5034, 0x9a6a48],
 ];
 const BASES_PEAU = [0, 1, 2, 3, 4];
+
+// La couleur des lèvres selon la peau : sur une peau foncée, des lèvres sombres disparaissent
+// (et avec elles, l'expression du visage) ; on les éclaircit pour qu'elles ressortent.
+function levresPour(peau, feminin) {
+  if (peau >= 4) return rampe(feminin ? 0xffb0b8 : 0xf0a898);
+  if (peau >= 3) return rampe(feminin ? 0xf09aa4 : 0xd8907e);
+  if (peau >= 2) return rampe(feminin ? 0xd06a78 : 0xb05a4c);
+  return rampe(feminin ? 0xb84a5a : 0x8a3a34);
+}
 const PEUPLES_HD = {
   humain: { peaux: [0, 1, 2, 3, 4], cheveux: [0x4a3220, 0x7a4a26, 0xb5532a, 0xd8c070, 0x24222a, 0x8a8a90],
     habits: [0x8a3030, 0x34507a, 0x4a6a34, 0x6a4a2a, 0x6a2a50, 0x3a5a5a] },
@@ -255,7 +264,7 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   t.rampes.cape = rampe(g.cape);
   t.rampes.iris = rampe(g.yeux);
   t.rampes.lin = rampe(0xd8ccb0);
-  t.rampes.levres = g.feminin ? rampe(0xb84a5a) : rampe(0x8a3a34);
+  t.rampes.levres = levresPour(g.peau, g.feminin);
   t.rampes.barbe = t.rampes.cheveux;
 
   // 1. Les cheveux longs, derrière tout le reste
@@ -580,7 +589,7 @@ function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0) {
   t.rampes.bas = rampe(APPARENCE.bas[ap.bas][1]);
   t.rampes.iris = rampe(APPARENCE.yeux[ap.yeux][1]);
   t.rampes.lin = rampe(0xd8ccb0);
-  t.rampes.levres = feminin ? rampe(0xb84a5a) : rampe(0x8a3a34);
+  t.rampes.levres = levresPour(PEAU_DE_CREATION[ap.peau] ?? 1, feminin);
   const tete = { cy: 13, rx: 8.5, ry: 9 };
 
   // Les cheveux longs, derrière
@@ -687,6 +696,10 @@ function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0) {
 }
 
 // L'échelle d'affichage du joueur : ses anciens sprites faisaient 16 pixels de haut.
+// Le joueur a 15 ans au début : un peu plus petit que les adultes (qui sont les plus grands),
+// puis il grandit, et se tasse un peu avec l'âge.
+const TAILLE_SELON_AGE = { petit: 0.86, adulte: 1, ancien: 0.95 };
 function echelleJoueur(ancienneEchelle) {
-  return ancienneEchelle * 16 / JOUEUR_H * 1.05;
+  const stade = window.GAME && GAME.joueur ? stadeJoueur(GAME) : 'petit';
+  return ancienneEchelle * 16 / JOUEUR_H * (TAILLE_SELON_AGE[stade] || 1);
 }

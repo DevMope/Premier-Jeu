@@ -51,7 +51,7 @@ class DodoScene extends Cinematique {
     // Le lit, et la couverture en patchwork posée par-dessus le dormeur (elle ne se voit qu'une fois couché).
     const luxe = niveauAmelioration(this.G, 'chambre');
     this.lit = this.add.image(250, SOL_CHAMBRE, litHD(this, luxe)).setOrigin(0, 1).setScale(2).setDepth(2);
-    this.couverture = this.add.image(342, SOL_CHAMBRE - 100, couvertureHD(this, luxe)).setOrigin(0).setScale(2, 2.35).setDepth(4).setAlpha(0);
+    this.couverture = this.add.image(316, SOL_CHAMBRE - 100, couvertureHD(this, luxe)).setOrigin(0).setScale(2, 2.35).setDepth(4).setAlpha(0);
 
     // La table de chevet, la bougie et sa lumière.
     this.chevet = this.add.image(635, SOL_CHAMBRE, chevetHD(this, luxe)).setOrigin(0.5, 1).setScale(2).setDepth(2);
@@ -88,7 +88,7 @@ class DodoScene extends Cinematique {
     // ... et se glisse sous la couverture.
     this.joueur.setOrigin(0.5, 0.5);
     this.joueur.y -= this.joueur.displayHeight / 2;
-    await this.animer({ targets: this.joueur, x: 368, y: SOL_CHAMBRE - 70, angle: -90, duration: 500, ease: 'Sine.easeInOut' });
+    await this.animer({ targets: this.joueur, x: 330, y: SOL_CHAMBRE - 68, angle: -90, duration: 500, ease: 'Sine.easeInOut' });
     this.tweens.add({ targets: this.couverture, alpha: 1, duration: 300 });
     this.ronfler();
     if (this.fini) return;
@@ -125,7 +125,9 @@ class DodoScene extends Cinematique {
       await this.messager(n);
     }
     this.annoncerMatin();
-    await this.attendre(1600);
+    await this.attendre(800);
+    if (this.fini) return;
+    await this.attendreSuite('▶ Clique pour partir au marché');
     if (this.fini) return;
     await this.marcher(this.joueur, 1020, 3);
     this.partir('Marche');
@@ -166,14 +168,13 @@ class DodoScene extends Cinematique {
     let y = 284;
     if (dette) {
       // Le rappel de la dette : ce qui reste à rembourser, et ce que la banque prélève cette nuit
-      const retards = Math.max(0, ...G.prets.map(p => p.retards || 0));
       const fond = this.add.rectangle(760, y + 26, 296, 54, 0xa03030, 0.14).setStrokeStyle(2, 0xa03030, 0.6);
       c.add(fond);
       c.add(this.add.text(618, y + 4, `📜 Dette : ${dette} p.`, style(17, '#8a1a1a', { fontStyle: 'bold' })));
-      const manque = Math.max(0, echeance - Math.max(0, G.argent));
-      c.add(this.add.text(618, y + 28, manque
-        ? `Cette nuit : −${echeance} p. Il manque ${manque} p. ! (${retards + 1}/${RETARDS_FAILLITE})`
-        : `Cette nuit, la banque prélève −${echeance} p.`, style(14, '#8a1a1a', { fontStyle: manque ? 'bold' : 'normal' })));
+      const apres = G.argent - echeance;
+      c.add(this.add.text(618, y + 28, apres < 0
+        ? `Cette nuit : −${echeance} p. → ${apres} p. (faillite à ${SEUIL_FAILLITE})`
+        : `Cette nuit, la banque prélève −${echeance} p.`, style(14, '#8a1a1a', { fontStyle: apres < 0 ? 'bold' : 'normal' })));
       this.tweens.add({ targets: fond, alpha: 0.4, duration: 700, yoyo: true, repeat: -1 });
       y += 64;
     }

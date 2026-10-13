@@ -124,9 +124,8 @@ class NightScene extends Phaser.Scene {
     const dettes = G.prets.map(p => `${p.nom} : reste ${p.restant} (−${p.parJour}/nuit)`);
     c.add(this.add.text(x1 + 18, 290, 'Prêts en cours', style(14, '#3b2410', { fontStyle: 'bold' })));
     c.add(this.add.text(x1 + 18, 310, listeCourte(dettes, 2, 'Aucun'), style(12, '#5a3a20', { lineSpacing: 2 })));
-    const retards = Math.max(0, ...G.prets.map(p => p.retards || 0));
-    if (retards) {
-      c.add(this.add.text(x1 + 18, 330, `Impayé ${retards}/${RETARDS_FAILLITE} : faillite à ${RETARDS_FAILLITE} !`, style(12, '#a03030', { fontStyle: 'bold' })));
+    if (G.argent < 0) {
+      c.add(this.add.text(x1 + 18, 330, `À découvert ! Faillite à ${SEUIL_FAILLITE} p.`, style(12, '#a03030', { fontStyle: 'bold' })));
     }
 
     c.add(this.add.text(x1 + 18, 352, 'En mission', style(14, '#3b2410', { fontStyle: 'bold' })));

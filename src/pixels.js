@@ -407,7 +407,7 @@ function style(taille, couleur = '#f3e6c8', extra = {}) {
     const gras = /bold/.test(fontStyle);
     fontStyle = `${italique ? 'italic ' : ''}${gras ? 800 : 500}`;
   }
-  return { fontFamily: POLICE, fontSize: taille + 'px', color: couleur, resolution: 3, ...reste, fontStyle };
+  return { fontFamily: POLICE, fontSize: taille + 'px', color: couleur, resolution: typeof ZOOM_ECRAN === 'number' ? Math.max(2, ZOOM_ECRAN + 1) : 3, ...reste, fontStyle };
 }
 
 // Coupe un texte trop long (avec « … »).
@@ -474,6 +474,7 @@ const BIOMES = {
 };
 
 // Un paysage (la Comté par défaut, ou un autre biome). `nuit` assombrit le tout (de 0 à 1).
+// `nuit` : de 0 (jour) à 1 (nuit), ou 'aube'.
 function dessinerComte(g, x, y, w, h, nuit = 0, biome = 'comte') {
   // Le paysage est peint en HD (voir exterieurHD.js) et glissé juste sous `g`, qui reste
   // disponible pour dessiner par-dessus.

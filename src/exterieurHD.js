@@ -47,19 +47,25 @@ const RELIEFS = {
 };
 
 // Peint un paysage à la taille demandée (à l'écran). Renvoie la clé de la texture.
+// `nuit` : de 0 (plein jour) à 1 (nuit noire), ou 'aube' pour le lever du soleil.
 function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0) {
   const L = Math.round(largeur / 2), H = Math.round(hauteur / 2);
-  const cle = `paysage_${biome}_${L}x${H}_${Math.round(nuit * 10)}`;
+  const aube = nuit === 'aube';
+  if (aube) nuit = 0;
+  const cle = `paysage_${biome}_${L}x${H}_${aube ? 'aube' : Math.round(nuit * 10)}`;
   if (scene.textures.exists(cle)) return cle;
   const b = BIOMES[biome] || BIOMES.comte, r = RELIEFS[biome] || {};
   const graine = biome.length * 31;
-  const soir = c => melangeCouleur(c, melangeCouleur(teinte(c, 0.45), 0x1a1840, 0.5), nuit);
+  // À l'aube, tout prend une lumière rose orangée, rasante ; la nuit, tout bleuit et s'assombrit.
+  const soir = aube ? (c => melangeCouleur(c, melangeCouleur(teinte(c, 0.85), 0xff9a60, 0.55), 0.32))
+    : (c => melangeCouleur(c, melangeCouleur(teinte(c, 0.45), 0x1a1840, 0.5), nuit));
   const px = new Uint32Array(L * H);
   const poser = (x, y, c) => { if (x >= 0 && y >= 0 && x < L && y < H) px[y * L + Math.floor(x)] = c; };
 
   // Le ciel : un dégradé tramé du zénith à l'horizon, puis les nuages
-  const zenith = soir(teinte(b.ciel, 0.85)), horizon = soir(b.horizon);
-  const nuages = nuit > 0.6 ? 0x3a3a5a : soir(0xfff8f0);
+  const zenith = aube ? melangeCouleur(teinte(b.ciel, 0.7), 0x6a5aa0, 0.55) : soir(teinte(b.ciel, 0.85));
+  const horizon = aube ? 0xffb070 : soir(b.horizon);
+  const nuages = aube ? 0xf8b8a8 : nuit > 0.6 ? 0x3a3a5a : soir(0xfff8f0);
   for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
     const v = tramer(x, y, y / (H * 0.8), 7) / 6;
     let c = melangeCouleur(zenith, horizon, v);
@@ -70,11 +76,13 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0) {
   // Les étoiles, la nuit
   if (nuit > 0.5) for (let k = 0; k < L * H / 90; k++) poser(Math.floor(hachage(k, 1, graine) * L), Math.floor(hachage(k, 2, graine) * H * 0.5), 0xf3f0d0);
   // Le soleil (ou la lune), avec son halo
-  const sx = L * 0.78, sy = H * (0.2 + nuit * 0.3), sr = Math.max(6, H * 0.06);
-  for (let y = Math.floor(sy - sr * 3); y < sy + sr * 3; y++) for (let x = Math.floor(sx - sr * 3); x < sx + sr * 3; x++) {
+  // (à l'aube, un gros soleil rouge orangé qui se lève à l'est, juste au-dessus des collines)
+  const sx = aube ? L * 0.22 : L * 0.78, sy = aube ? H * 0.5 : H * (0.2 + nuit * 0.3), sr = Math.max(6, H * (aube ? 0.08 : 0.06));
+  const halo = aube ? 3.6 : 2.2, astre = aube ? 0xffc870 : nuit > 0.6 ? 0xf3ecc8 : soir(b.soleil);
+  for (let y = Math.floor(sy - sr * 4); y < sy + sr * 4; y++) for (let x = Math.floor(sx - sr * 4); x < sx + sr * 4; x++) {
     const d = Math.hypot(x - sx, y - sy);
-    if (d < sr) poser(x, y, nuit > 0.6 ? 0xf3ecc8 : soir(b.soleil));
-    else if (d < sr * 2.2 && tramer(x, y, 1 - (d - sr) / (sr * 1.2), 3) > 0 && y >= 0 && y < H) px[y * L + x] = melangeCouleur(px[y * L + x], soir(b.soleil), 0.35);
+    if (d < sr) poser(x, y, astre);
+    else if (d < sr * halo && tramer(x, y, 1 - (d - sr) / (sr * (halo - 1)), 3) > 0 && y >= 0 && y < H) px[y * L + x] = melangeCouleur(px[y * L + x], aube ? 0xffd890 : soir(b.soleil), 0.35);
   }
 
   // Une ligne de crête : y(x) = base + bruit

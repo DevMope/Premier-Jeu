@@ -35,6 +35,33 @@ class ArriereScene extends Phaser.Scene {
     vignette(this, 0.75, 0); // (sous les objets : seuls les murs et le sol s'assombrissent)
     // La lanterne qui pend de la poutre, et sa lumière chaude
     poserLuminaire(this, 640, 18, niveauAmelioration(this.G, 'eclairage'));
+    this.dessinerCoinDouillet();
+  }
+
+  // Le coin douillet : des herbes qui sèchent sous la poutre, une petite étagère murale avec
+  // des livres et une plante, un tapis, et le chat de la maison qui dort sur son coussin.
+  dessinerCoinDouillet() {
+    creerDouilletHD(this);
+    for (const [x, a] of [[566, -3], [596, 4], [800, -2]]) {
+      const h = this.add.image(x, 0, 'herbesHD').setOrigin(0.5, 0).setScale(2.4).setAngle(a);
+      this.tweens.add({ targets: h, angle: a + 2, duration: 2400 + x, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
+    // L'étagère murale
+    const g = this.add.graphics();
+    g.fillStyle(0x5a3a22).fillRect(590, 290, 200, 8).fillStyle(0x7a5232).fillRect(590, 290, 200, 3);
+    g.fillStyle(0x4a2e1a).fillTriangle(600, 298, 616, 298, 600, 314).fillTriangle(780, 298, 764, 298, 780, 314);
+    this.add.image(640, 291, 'livresHD').setOrigin(0.5, 1).setScale(2);
+    this.add.image(730, 291, 'planteHD').setOrigin(0.5, 1).setScale(2);
+    bougie(this, 768, 290, { rayon: 70 });
+    // Le tapis, et le chat
+    this.add.image(430, SOL_ARRIERE + 64, tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(2.2);
+    this.add.image(196, SOL_ARRIERE + 86, 'coussinHD').setOrigin(0.5, 1).setScale(2.4);
+    const chat = this.add.image(196, SOL_ARRIERE + 76, 'chatHD').setOrigin(0.5, 1).setScale(2.4).setInteractive({ useHandCursor: true });
+    this.time.addEvent({ delay: 1300, loop: true, callback: () => chat.setTexture(chat.texture.key === 'chatHD' ? 'chatHD_2' : 'chatHD') });
+    chat.on('pointerdown', () => {
+      this.message(Phaser.Utils.Array.GetRandom(['Ronron... Le chat de la maison dort comme un loir.', 'Le chat entrouvre un œil, puis se rendort.', 'Mrrrou ? Il s\'étire, et se roule à nouveau en boule.']));
+      this.tweens.add({ targets: chat, scaleX: 2.6, duration: 160, yoyo: true });
+    });
   }
 
   // Les étagères : chaque objet de ta réserve, en vrai. Plus il y en a, plus ça déborde.
@@ -70,7 +97,7 @@ class ArriereScene extends Phaser.Scene {
     }
     // Des piles de pièces, derrière et autour du coffre
     // (sur le couvercle du coffre d'abord, puis par terre autour)
-    const places = [[0, 372], [-32, 376], [32, 376], [-66, 456], [66, 458], [-40, 470], [44, 472], [-84, 474], [86, 476], [0, 482]];
+    const places = [[-6, 350], [-34, 362], [26, 360], [-66, 456], [66, 458], [-40, 470], [44, 472], [-84, 474], [86, 476], [0, 482]];
     const piles = Math.min(10, Math.ceil(argent / 15));
     const tas = [];
     for (let i = 0; i < piles; i++) {

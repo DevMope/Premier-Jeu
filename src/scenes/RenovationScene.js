@@ -91,8 +91,8 @@ class RenovationScene extends Cinematique {
     this.construireArriere();
     this.construireChambre();
     textureJoueur(this, G);
-    this.heros = this.add.image(LIEUX_RENOVATION.facade - 60, 470, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(5)).setDepth(6);
-    this.garrick = imageCorps(this, LIEUX_RENOVATION.facade - 120, 470, 'mentor', 5).setDepth(6);
+    this.heros = this.add.image(LIEUX_RENOVATION.facade - 60, 470, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(6)).setDepth(6);
+    this.garrick = imageCorps(this, LIEUX_RENOVATION.facade - 120, 470, 'mentor', 6).setDepth(6);
     this.creerBoiteTexte();
     this.consigne = this.add.text(480, 20, '', style(16, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5, align: 'center' }))
       .setOrigin(0.5, 0).setScrollFactor(0).setDepth(20);
@@ -299,10 +299,19 @@ class RenovationScene extends Cinematique {
     const sol = lieu === 'facade' ? 470 : lieu === 'chambre' ? SOL_CHAMBRE : lieu === 'arriere' ? 440 : 530;
     this.heros.setPosition(LIEUX_RENOVATION[lieu] + entree, sol).setFlipX(false);
     this.garrick.setPosition(LIEUX_RENOVATION[lieu] + entree - 60, sol).setFlipX(false);
+    this.aLEchelle(lieu);
     // Au comptoir, on est derrière le plateau : on ne voit pas les personnages
     this.heros.setVisible(lieu !== 'comptoir');
     this.garrick.setVisible(lieu !== 'comptoir');
     await this.animer({ targets: this.cameras.main, alpha: 1, duration: 350 });
+  }
+
+  // Les personnages à l'échelle des portes : dehors (porte de 112 px), un adulte en fait ~96 ;
+  // dedans, les portes font 168 px, un adulte en fait ~140.
+  aLEchelle(lieu) {
+    const e = lieu === 'facade' ? 6 : 8.6;
+    this.heros.setScale(echelleJoueur(e));
+    this.garrick.setScale(e * echelleCorps(this.garrick.texture.key));
   }
 
   // --- Le déroulé ---
@@ -354,37 +363,55 @@ class RenovationScene extends Cinematique {
       .setOrigin(0.5).setScrollFactor(0).setDepth(20).setAlpha(0);
     await this.animer({ targets: this.cameras.main, alpha: 1, duration: 600 });
     this.tweens.add({ targets: titre, alpha: 1, duration: 600, hold: 2200, yoyo: true });
-    // Comme si l'on tournait la tête : des bandes noires de cinéma, des poteaux au premier plan qui
-    // défilent plus vite que les pièces (la profondeur), un léger recul de la caméra à chaque passage,
-    // et une pause au milieu de chaque pièce.
-    const bandes = [0, 540].map(y => this.add.rectangle(480, y, 960, 70, 0x000000).setScrollFactor(0).setDepth(19));
-    this.tweens.add({ targets: bandes[0], y: 20, duration: 800 });
-    this.tweens.add({ targets: bandes[1], y: 520, duration: 800 });
-    const vignetteVisite = vignette(this, 0.55, 18).setScrollFactor(0);
-    const pf = 1.4;
-    for (const J of [960, 1920, 2880]) {
-      const x = 480 + (J - 480) * pf;
-      const poteau = this.add.image(x, 0, 'murComptoir').setOrigin(0.5, 0).setCrop(140, 0, 9, 170).setScale(5, 3.2).setScrollFactor(pf, 1).setDepth(17).setTint(0x3a2a1c);
-      poteau.setPosition(x - 140 * 5 - 22, 0);
-    }
-    for (const centre of [960, 1920, 2880]) {
-      // (le léger recul de caméra est remplacé par le défilé des poteaux au premier plan)
-      await this.animer({ targets: this.cameras.main, scrollX: centre, duration: 2600, ease: 'Sine.easeInOut' });
+    // Comme un livre d'images : un cadre de cuir aux coins dorés autour de l'écran, et chaque
+    // pièce restaurée est une page qu'on tourne.
+    const cadre = this.add.image(0, 0, cadreLivreHD(this)).setOrigin(0).setScale(2).setScrollFactor(0).setDepth(19).setAlpha(0);
+    const legende = this.add.text(480, 506, '', style(17, '#3b2410', { fontStyle: 'bold italic', backgroundColor: '#e8d8b0', padding: { x: 14, y: 4 } }))
+      .setOrigin(0.5).setScrollFactor(0).setDepth(20).setAlpha(0);
+    const numero = this.add.text(900, 506, '', style(13, '#f3d98a', { fontStyle: 'italic' })).setOrigin(0.5).setScrollFactor(0).setDepth(20).setAlpha(0);
+    this.tweens.add({ targets: [cadre, legende, numero], alpha: 1, duration: 800 });
+    const pages = [[0, 'Chapitre I · Ta chambre'], [960, "Chapitre II · L'arrière-boutique"], [1920, 'Chapitre III · Le comptoir'], [2880, 'Chapitre IV · La façade']];
+    for (let i = 0; i < pages.length; i++) {
+      const [x, nom] = pages[i];
+      if (i > 0) await this.tournerPage(() => this.cameras.main.setScroll(x, 0));
       if (this.fini) return;
-      await this.attendre(centre === 2880 ? 200 : 900);
+      legende.setText(nom);
+      numero.setText(`— ${i + 1} —`);
+      await this.attendre(i === pages.length - 1 ? 1200 : 2300);
+      if (this.fini) return;
     }
-    this.tweens.add({ targets: bandes[0], y: -40, duration: 600 });
-    this.tweens.add({ targets: bandes[1], y: 580, duration: 600 });
-    this.tweens.add({ targets: vignetteVisite, alpha: 0, duration: 600 });
+    this.tweens.add({ targets: [cadre, legende, numero], alpha: 0, duration: 600 });
     if (this.fini) return;
     // Devant la façade, tout le monde est fier
     this.heros.setPosition(2880 + 230, 470).setVisible(true).setFlipX(false);
     this.garrick.setPosition(2880 + 160, 470).setVisible(true).setFlipX(false);
+    this.aLEchelle('facade');
     this.onomatopee(2880 + 520, 160, 'TADAAA !', '#f3d98a');
-    this.boite.setVisible(true); this.entete.setVisible(true); this.texte.setVisible(true);
-    this.ecrire('Garrick Cœur-de-Chêne', `« Magnifique ! « ${G.nomShop} » est prêt à ouvrir. Demain, je reste avec toi pour ta première journée : je te montrerai tout. »`);
-    await this.attendreClic();
+    // (Garrick parle dans la bulle du haut : la boîte du bas cacherait les deux fiers rénovateurs)
+    this.bulle.setText(`Garrick Cœur-de-Chêne : « Magnifique ! « ${G.nomShop} » est prêt à ouvrir. Demain, je reste avec toi pour ta première journée : je te montrerai tout. »`).setVisible(true);
+    await this.attendreSuite('▶ Clique pour commencer');
     this.finir();
+  }
+
+  // Une page qui tourne : elle se soulève à droite, balaie l'écran vers la gauche (on change de
+  // pièce pendant qu'elle cache tout), puis retombe à gauche et dévoile la page suivante.
+  async tournerPage(changer) {
+    const page = this.add.rectangle(960, 270, 960, 540, 0xeadcb4).setOrigin(1, 0.5).setScale(0, 1).setScrollFactor(0).setDepth(18.5);
+    const pli = this.add.rectangle(960, 270, 22, 540, 0x8a6a3a, 0.5).setOrigin(0.5).setScrollFactor(0).setDepth(18.6);
+    const ombre = this.add.rectangle(960, 270, 40, 540, 0x000000, 0.25).setOrigin(0, 0.5).setScrollFactor(0).setDepth(18.4);
+    this.onomatopee(780, 140, 'Frrrt !', '#fff4dc');
+    await this.animer({ targets: page, scaleX: 1, duration: 520, ease: 'Sine.easeIn', onUpdate: () => {
+      const bord = 960 - page.scaleX * 960;
+      pli.setX(bord + 11); ombre.setX(bord - 40);
+    } });
+    changer();
+    page.setOrigin(0, 0.5).setX(0);
+    await this.animer({ targets: page, scaleX: 0, duration: 520, ease: 'Sine.easeOut', onUpdate: () => {
+      const bord = page.scaleX * 960;
+      pli.setX(bord - 11); ombre.setX(bord);
+      ombre.setAlpha(page.scaleX * 0.6);
+    } });
+    for (const o of [page, pli, ombre]) o.destroy();
   }
 
   finir() {

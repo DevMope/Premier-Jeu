@@ -47,7 +47,7 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0) {
   t.rampes.iris = rampe(g.yeux || 0x4a3a20);
   t.rampes.lin = rampe(0xd8ccb0);
   t.rampes.bas = rampe(race === 'elfe' ? 0x3a4a3a : race === 'hobbit' ? 0x8a6a40 : 0x5a4a3a);
-  t.rampes.levres = rampe(f ? 0xb84a5a : 0x8a3a34);
+  t.rampes.levres = costume === 'gobelin' ? rampe(f ? 0xb84a5a : 0x8a3a34) : levresPour(g.peau ?? 1, f);
   t.rampes.chapeau = rampe(costume === 'banquier' ? 0x1a1a22 : costume === 'colporteur' ? 0x5a4630 : g.habit);
   const cy = chapeau + 1 + P.ry;                       // le centre de la tête
   const yT = cy + P.ry - 1;                            // le haut du torse

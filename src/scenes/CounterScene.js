@@ -96,6 +96,16 @@ class CounterScene extends Phaser.Scene {
     const { x, y, w, h } = FENETRE;
     this.paysage = this.add.graphics();
     dessinerComte(this.paysage, x, y, w, h, 0);
+    // Le ciel suit la journée : l'aube à l'ouverture, qui laisse place au plein jour,
+    // puis la nuit quand le dernier client est parti.
+    const ciel = moment => {
+      const cle = paysageHD(this, w, h, 'comte', moment);
+      const tex = this.textures.get(cle).getSourceImage();
+      return this.add.image(x, y, cle).setOrigin(0).setScale(w / tex.width, h / tex.height);
+    };
+    this.cielAube = ciel('aube');
+    this.tweens.add({ targets: this.cielAube, alpha: 0, delay: 4000, duration: 20000 });
+    this.cielNuit = ciel(0.85).setAlpha(0);
     this.voile = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0x0a0a30, 0);
 
     // Tout ce qui est dans la fenêtre est découpé à sa taille.
@@ -1184,7 +1194,10 @@ class CounterScene extends Phaser.Scene {
     this.majCommande();
     this.bouton('Fermer le comptoir', () => this.scene.start('Nuit'));
     this.dire('Le soleil se couche sur la Comté. Plus personne ne fait la queue.', 'Fin de la journée');
-    this.tweens.add({ targets: this.voile, fillAlpha: 0.55, duration: 2000 });
+    this.tweens.killTweensOf(this.cielAube);
+    this.tweens.add({ targets: this.cielAube, alpha: 0, duration: 800 });
+    this.tweens.add({ targets: this.cielNuit, alpha: 1, duration: 3000 });
+    this.tweens.add({ targets: this.voile, fillAlpha: 0.25, duration: 3000 });
   }
 
   // --- Mise à jour de l'affichage ---

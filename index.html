@@ -2,16 +2,21 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Le Passage des Aventuriers</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&display=swap">
 <style>
     html, body { margin: 0; height: 100%; background: #1a120a; overflow: hidden; }
     #jeu { width: 100%; height: 100%; }
+    /* Sur un téléphone tenu en hauteur, le jeu serait minuscule : on demande de le tourner. */
+    #tourner { display: none; position: fixed; inset: 0; z-index: 10; background: #1a120a; color: #f3d98a;
+      font: 600 22px "Alegreya", Georgia, serif; text-align: center; align-items: center; justify-content: center; padding: 24px; }
+    @media (orientation: portrait) and (max-width: 700px) { #tourner { display: flex; } }
   </style>
 </head>
 <body>
   <div id="jeu"></div>
+<div id="tourner">↻ Tourne ton téléphone<br>pour jouer en paysage</div>
   <script src="lib/phaser.min.js"></script>
   <script src="src/data.js"></script>
   <script src="src/regles.js"></script>

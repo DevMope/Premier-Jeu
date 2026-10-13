@@ -244,18 +244,13 @@ class StoryScene extends Cinematique {
     const v = this.parti.voyageur;
     const montants = montantsDedommagement(v);
     this.texte.setText(this.texte.text + `\nTu dois verser un dédommagement à sa famille. Plus tu es généreux, plus ta réputation remonte... et plus un proche voudra reprendre le flambeau.`);
-    // On ne peut pas donner plus que ce qu'on a : si même le minimum est trop cher, on donne tout.
-    const bourse = Math.max(0, G.argent);
-    const pauvre = bourse < montants.minimum;
-    if (pauvre) this.texte.setText(this.texte.text + `\nTa bourse ne contient que ${bourse} pièce${bourse > 1 ? 's' : ''}...`);
-    const choix = pauvre ? [['minimum', { nom: 'Tout ce que tu as', reputation: 0 }]] : Object.entries(DEDOMMAGEMENTS);
-    const boutons = choix.map(([cle, d], i) => {
-      const libelle = pauvre ? `${d.nom} : ${bourse} p.` : `${d.nom} : ${montants[cle]} p.`;
-      const b = creerBouton(this, pauvre ? 480 : 200 + i * 280, 345, pauvre ? 300 : 250, libelle, () => {
+    const boutons = Object.entries(DEDOMMAGEMENTS).map(([cle, d], i) => {
+      const b = creerBouton(this, 200 + i * 280, 345, 250, `${d.nom} : ${montants[cle]} p.`, () => {
         const verse = dedommager(G, this.parti, cle);
         boutons.forEach(x => x.setVisible(false));
-        const rep = verse < montants[cle] ? ' La famille repart déçue. Réputation −0.5.' : d.reputation ? ` Réputation +${d.reputation}.` : '';
-        this.ecrire('Dédommagement', `Tu as versé ${verse} pièce${verse > 1 ? 's' : ''} à la famille de ${v.nom}.${rep}`);
+        const rep = d.reputation ? ` Réputation +${d.reputation}.` : '';
+        this.ecrire('Dédommagement', `Tu as versé ${verse} pièces à la famille de ${v.nom}.${rep}` +
+          (G.argent < 0 ? `\nTu es à découvert (${G.argent} pièces). Faillite à ${SEUIL_FAILLITE} !` : ''));
         const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => this.scene.start('Comptoir'));
         retour.fond.setDepth(11);
         retour.label.setDepth(11);
