@@ -95,9 +95,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   t.rampes.blanc = rampeVive(0xf4f0ea);
   t.rampes.pupille = [0x060608, 0x0c0c12, 0x14141c, 0x1c1c26, 0x2a2a36, 0x3a3a48];
 
-  const cy = coiffe + 1 + P.ry;            // le centre de la tête
-  const yT = cy + P.ry - 1;                // le haut du torse
-  const yB = yT + P.torse;                 // la taille
+  const cy = Math.round(coiffe + 1 + P.ry);   // le centre de la tête (entier : les détails se posent pixel par pixel)
+  const yT = Math.round(cy + P.ry - 1);       // le haut du torse
+  const yB = Math.round(yT + P.torse);        // la taille
   const sol = H - 1;
   const ep = P.ep;                         // la demi-largeur d'épaules
   const prof = ep * 0.55;                  // la demi-épaisseur du torse
