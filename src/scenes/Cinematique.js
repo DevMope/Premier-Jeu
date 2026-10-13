@@ -11,6 +11,16 @@ class Cinematique extends Phaser.Scene {
     this.tweens.add({ targets: this.indice, alpha: 0.4, duration: 600, yoyo: true, repeat: -1 });
   }
 
+  // La boîte de texte en haut de l'écran, quand c'est en bas que se passe ce qu'il faut voir
+  // (la découverte du shop, par exemple), ou de nouveau en bas.
+  boiteEnHaut(enHaut = true) {
+    const dy = enHaut ? -370 : 0;
+    this.boite.setY(455 + dy);
+    this.entete.setY(392 + dy);
+    this.texte.setY(418 + dy);
+    this.indice.setY(518 + dy);
+  }
+
   ecrire(entete, texte) {
     this.entete.setText(entete);
     this.texte.setText(texte);

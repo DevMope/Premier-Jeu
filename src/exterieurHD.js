@@ -1288,3 +1288,48 @@ function placeMarcheHD(scene) {
   t.texture(scene, 'placeMarcheHD');
   return 'placeMarcheHD';
 }
+
+// --- La forêt au premier plan (cinématique d'introduction) ---
+
+// De grands sapins sombres tout près de l'œil, et la voûte des branches en haut de l'écran :
+// façon Terraria, quelques silhouettes en couches suffisent à faire sentir la forêt.
+function creerForetPremierPlanHD(scene) {
+  if (scene.textures.exists('sapinPremierPlanHD')) return;
+  // Un sapin (56×190) : tronc épais, branches en étages qui retombent, un peu de mousse
+  {
+    const t = toileDecor(56, 190);
+    t.rampes.sombre = rampe(0x14301a); t.rampes.tronc = rampe(0x2a1a10); t.rampes.mousse = rampe(0x3a6a2a);
+    for (let y = 60; y < 190; y++) for (let x = 23; x < 33; x++) t.poser(x, y, 'tronc', x < 25 ? 3 : x > 30 ? 0 : 1 + (hachage(x, y, 91) > 0.7 ? 1 : 0));
+    for (let k = 0; k < 9; k++) {
+      const y0 = 18 + k * 17, demi = 8 + k * 2.6;
+      for (let y = 0; y < 22; y++) for (let x = 0; x < 56; x++) {
+        const dx = Math.abs(x + 0.5 - 28), l = demi * (y / 22) + 3 + (fbm(x * 0.3, (y0 + y) * 0.3, 92 + k) - 0.5) * 4;
+        if (dx < l && y0 + y < 190) t.poser(x, y0 + y, 'sombre', dx > l - 2 ? 1 : (y < 4 ? 3 : 2) - (hachage(x, y0 + y, 93) > 0.85 ? 1 : 0));
+      }
+    }
+    for (let k = 0; k < 14; k++) { const x = 23 + Math.floor(hachage(k, 1, 94) * 10), y = 120 + Math.floor(hachage(k, 2, 94) * 60); t.poser(x, y, 'mousse', 3); t.poser(x + 1, y, 'mousse', 2); }
+    t.contour(); t.texture(scene, 'sapinPremierPlanHD');
+  }
+  // La voûte (240×44, se répète) : des branches qui pendent, des trouées de ciel
+  {
+    const t = toileDecor(240, 44);
+    t.rampes.sombre = rampe(0x14301a);
+    for (let y = 0; y < 44; y++) for (let x = 0; x < 240; x++) {
+      const bas = 18 + Math.sin(x / 11) * 7 + Math.sin(x / 3.7) * 4 + (fbm(x * 0.08, y * 0.2, 95) - 0.5) * 10;
+      if (y < bas) t.poser(x, y, 'sombre', y > bas - 3 ? 1 : y < 6 ? 0 : 2 - (hachage(x, y, 96) > 0.9 ? 1 : 0));
+    }
+    for (let k = 0; k < 10; k++) { const x = Math.floor(hachage(k, 3, 97) * 240), h = 22 + Math.floor(hachage(k, 4, 97) * 16); for (let y = 10; y < h; y++) t.poser(x, y, 'sombre', 1); t.poser(x + 1, h - 3, 'sombre', 2); }
+    t.texture(scene, 'vouteForetHD');
+  }
+  // La berge (240×14, se répète) : de l'herbe, puis la terre et des galets qui descendent vers l'eau
+  {
+    const t = toileDecor(240, 14);
+    t.rampes.herbe = rampe(0x3f7a3a); t.rampes.terre = rampe(0x5a4230); t.rampes.galet = rampe(0x8a8a80);
+    for (let y = 0; y < 14; y++) for (let x = 0; x < 240; x++) {
+      if (y < 3 + (hachage(x, 0, 98) > 0.6 ? 1 : 0)) t.poser(x, y, 'herbe', y === 0 ? 4 : 3);
+      else t.poser(x, y, 'terre', y > 11 ? 1 : 2 + (fbm(x * 0.2, y * 0.3, 99) > 0.6 ? 1 : 0));
+    }
+    for (let k = 0; k < 26; k++) { const x = Math.floor(hachage(k, 5, 100) * 238), y = 6 + Math.floor(hachage(k, 6, 100) * 6); t.poser(x, y, 'galet', 3); t.poser(x + 1, y, 'galet', 2); }
+    t.texture(scene, 'bergeHD');
+  }
+}

@@ -331,6 +331,7 @@ class RenovationScene extends Cinematique {
     const garrick = 'Garrick Cœur-de-Chêne';
     // L'arrivée devant l'auberge abandonnée
     this.cameras.main.setScroll(LIEUX_RENOVATION.facade, 0);
+    this.boiteEnHaut(true); // (dehors, c'est le shop qu'on découvre : le texte ne doit pas le cacher)
     this.ecrire('', 'Garrick t\'emmena au bout du village, devant une vieille auberge abandonnée depuis des années...');
     await Promise.all([this.marcher(this.heros, LIEUX_RENOVATION.facade + 200, 4), this.marcher(this.garrick, LIEUX_RENOVATION.facade + 140, 4)]);
     if (this.fini) return;
@@ -342,19 +343,30 @@ class RenovationScene extends Cinematique {
     // La porte grince...
     this.onomatopee(this.porteFacade, 380, 'Griiiiinc...', '#c8c0b0');
     this.ecrire(garrick, '« Ha ! Déjà beaucoup mieux. Entrons... attention à la poussière. »');
-    await this.attendre(1300);
+    await this.attendreClic();
     if (this.fini) return;
+    this.boiteEnHaut(false);
     await this.allerA('comptoir');
     this.ecrire(garrick, '« Le comptoir ! C\'est ici que tu serviras les aventuriers, par cette fenêtre. Il y a du travail... »');
     await this.renover('comptoir');
+    if (this.fini) return;
+    // (après chaque pièce, Garrick prend le temps d'un mot : rien ne s'enchaîne tout seul)
+    this.ecrire(garrick, '« Voilà un comptoir qui a de l\'allure ! Les aventuriers vont se bousculer à cette fenêtre. Passons derrière. »');
+    await this.attendreClic();
     if (this.fini) return;
     await this.allerA('arriere', 860);
     this.ecrire(garrick, '« L\'arrière-boutique : tes étagères, ton coffre, et la porte de ta chambre. Une bonne araignée y a élu domicile... »');
     await this.renover('arriere');
     if (this.fini) return;
+    this.ecrire(garrick, '« Tes étagères brillent comme un sou neuf ! Et ce coffre... il attend tes premières pièces d\'or. Il ne reste que ta chambre. »');
+    await this.attendreClic();
+    if (this.fini) return;
     await this.allerA('chambre', 880);
     this.ecrire(garrick, '« Et ta chambre ! Un lit, une fenêtre sur les collines... Tu seras bien, ici. »');
     await this.renover('chambre');
+    if (this.fini) return;
+    this.ecrire(garrick, '« Tout est propre, du toit à la cave ! Viens, on fait le tour du propriétaire. »');
+    await this.attendreClic();
     if (this.fini) return;
     await this.visite();
   }

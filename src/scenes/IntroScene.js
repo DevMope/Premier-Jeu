@@ -129,11 +129,26 @@ class IntroHistoireScene extends Cinematique {
     // La forêt, et sa rivière turquoise où dansent les reflets du soleil
     this.fond = this.add.graphics();
     dessinerComte(this.fond, 0, 0, 960, 370, 0, 'foret');
-    this.riviere = poserRiviereHD(this, 330, 60);
+    this.riviere = poserRiviereHD(this, 332, 58);
+    // La forêt tout autour : la berge sous nos pieds, l'ombre des arbres, de grands sapins devant,
+    // la voûte des branches en haut, et quelques rais de soleil qui percent.
+    creerForetPremierPlanHD(this);
+    this.foret = this.add.container(0, 0);
+    // (la berge est derrière les personnages : on marche dessus, et l'aventurier flotte devant)
+    this.berge = this.add.tileSprite(0, 318, 960, 14, 'bergeHD').setOrigin(0).setTileScale(2).setDepth(-0.5);
+    this.foret.add(this.add.rectangle(480, 185, 960, 370, 0x06140a, 0.2));
+    for (let k = 0; k < 4; k++) {
+      const r = this.add.triangle(0, 0, 120 + k * 230, 0, 160 + k * 230, 0, 260 + k * 230, 330, 0xfff4c0, 0.07).setOrigin(0).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: r, alpha: 0.14, duration: 2200 + k * 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      this.foret.add(r);
+    }
+    this.foret.add(this.add.tileSprite(0, 0, 960, 88, 'vouteForetHD').setOrigin(0).setTileScale(2));
+    for (const [x, e] of [[-6, 2.2], [900, 2.4], [760, 1.7]]) this.foret.add(this.add.image(x, 372, 'sapinPremierPlanHD').setOrigin(0, 1).setScale(e));
+    this.foret.setDepth(2.5);
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
 
     textureJoueur(this, G); // (crée les textures du joueur si besoin)
-    this.heros = this.add.image(220, 330, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(6));
+    this.heros = this.add.image(220, 320, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(6));
     this.mentor = this.add.image(-80, 345, corpsHD(this, 'mentor')).setOrigin(0.5, 0.5).setScale(6 * ECHELLE_CORPS).setAngle(90);
     // Le devant de la rivière, par-dessus l'aventurier : seuls sa tête et son torse dépassent de l'eau.
     const ligneEau = 342;
@@ -167,7 +182,7 @@ class IntroHistoireScene extends Cinematique {
   // Changement de décor : de la forêt et sa rivière aux collines de la Comté et leur chemin.
   async versLaComte() {
     await this.animer({ targets: this.cameras.main, alpha: 0, duration: 600 });
-    this.riviere.setVisible(false); this.eauDevant.setVisible(false); this.refletsDevant.setVisible(false);
+    this.riviere.setVisible(false); this.eauDevant.setVisible(false); this.refletsDevant.setVisible(false); this.foret.setVisible(false); this.berge.setVisible(false);
     const comte = this.add.graphics().setDepth(-1);
     dessinerComte(comte, 0, 0, 960, 370, 0, 'comte');
     comte.paysage.setDepth(-1);
@@ -206,7 +221,7 @@ class IntroHistoireScene extends Cinematique {
       const g = this.add.circle(this.mentor.x + Phaser.Math.Between(-50, 50), 342, Phaser.Math.Between(2, 4), 0xd8f8ff, 0.9).setDepth(3);
       this.tweens.add({ targets: g, y: 342 - Phaser.Math.Between(30, 80), x: g.x + Phaser.Math.Between(-30, 30), duration: 350, yoyo: true, ease: 'Quad.easeOut', onComplete: () => g.destroy() });
     }
-    await this.animer({ targets: this.mentor, x: 470, y: 318, angle: 90, duration: 600, ease: 'Back.easeOut' });
+    await this.animer({ targets: this.mentor, x: 470, y: 308, angle: 90, duration: 600, ease: 'Back.easeOut' });
     this.onomatopee(470, 270, 'SPLOTCH');
     await this.animer({ targets: this.heros, angle: 0, duration: 300 });
     this.ecrire('', "Tu l'as sorti de l'eau. Il pesait aussi lourd qu'un âne... et sentait à peu près pareil.");
@@ -216,13 +231,13 @@ class IntroHistoireScene extends Cinematique {
     await this.animer({ targets: this.voile, fillAlpha: 0.6, duration: 1200 });
     creerRecitHD(this); creerInterieurHD(this); creerHalo(this);
     const feu = this.add.container(0, 0).setDepth(2);
-    feu.add(this.add.image(580, 330, 'feuCampHD').setOrigin(0.5, 1).setScale(2.5));
+    feu.add(this.add.image(580, 322, 'feuCampHD').setOrigin(0.5, 1).setScale(2.5));
     for (const [dx, e, delai] of [[-9, 4, 2], [9, 4, 1], [0, 6, 0]]) {
-      const f = this.add.sprite(580 + dx, 318, 'flammeBougie0').setOrigin(0.5, 1).setScale(e * 1.5, e).play('flammeBougie');
+      const f = this.add.sprite(580 + dx, 310, 'flammeBougie0').setOrigin(0.5, 1).setScale(e * 1.5, e).play('flammeBougie');
       f.anims.setProgress(delai / 3);
       feu.add(f);
     }
-    const lueurFeu = this.add.image(580, 300, 'halo').setScale(3).setTint(0xffa040).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD).setDepth(8);
+    const lueurFeu = this.add.image(580, 292, 'halo').setScale(3).setTint(0xffa040).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD).setDepth(8);
     feu.add(lueurFeu);
     this.tweens.add({ targets: lueurFeu, alpha: 0.3, scale: 2.7, duration: 300, yoyo: true, repeat: -1 });
     this.ecrire('Pendant des jours...', 'Tu as fait un feu, réparé ses armes, soigné ses blessures, et chassé pour le nourrir.');
@@ -248,7 +263,7 @@ class IntroHistoireScene extends Cinematique {
     // Le départ et la promesse.
     feu.destroy();
     await this.animer({ targets: this.voile, fillAlpha: 0, duration: 1000 });
-    this.mentor.setOrigin(0.5, 1).setAngle(0).setPosition(470, 330);
+    this.mentor.setOrigin(0.5, 1).setAngle(0).setPosition(470, 320);
     this.ecrire('Garrick Cœur-de-Chêne', `« Je te dois la vie, ${petit}. Si je survis à ma quête, je reviendrai te récompenser. Promis. »`);
     await this.attendreClic();
     await this.marcher(this.mentor, 1020, 4);
