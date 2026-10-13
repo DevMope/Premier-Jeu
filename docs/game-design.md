@@ -278,7 +278,14 @@ Chaque étape doit donner une version **jouable**.
 | 4+ ✅ | **Le dispatch** | Carte des 8 zones, clients qui cherchent l'aventure, niveaux, quêtes par zone, découvertes, nouveaux objets, suréquipement, paysages par zone ; colis dont la forme et la taille dépendent du contenu ; rue du marché qu'on parcourt avec des flèches. |
 | 5 ✅ | **Les deux vues du shop** | Se retourner : l'arrière-boutique (étagères du stock, coin de la fortune, panier des cadeaux, tiroir secret, porte de la chambre) ; le nom du shop choisi à la création (et au bureau) ; la façade avec son enseigne chaque matin ; l'armure sombre. |
 | 6 ✅ | **Sauvegarde** | Automatique le soir et le matin : navigateur, compte claude.ai (version en ligne), et code de sauvegarde à copier-coller. Bouton Continuer à l'écran titre. |
-| 7 | **Premiers graphismes pixel art** | Remplacer les formes par de vrais sprites et décors. |
+| 7 | **Graphismes pixel art HD** | Remplacer les formes par de vrais sprites et décors, en micro-étapes (ci-dessous). |
+| 7a ✅ | Portraits | Bustes HD de tous les peuples, expressions, clignements, paroles. |
+| 7b ✅ | Le comptoir | Mur, fenêtre, plateau, ardoise, parchemin ; JeuneGoy en HD. |
+| 7c ✅ | Finitions du comptoir | Marchandises HD sur lit de toile, pièces d'or, boutons noyer et laiton, panneau de dialogue, registre en livre ouvert, tailles des peuples. |
+| 7d | L'intérieur du shop | Arrière-boutique, chambre (Dodo), bureau du registre ; bougies et lumière. |
+| 7e | L'extérieur | Façade et enseigne, rue du Marché des Mastres, Banque, carte, paysages des zones. |
+| 7f | Silhouettes HD en pied | Personnages entiers en HD (file, départs, récits, marché), tenues selon le niveau du voyageur. |
+| 7g | Cinématiques animées | Vrais déplacements : marche, gestes, objets qui bougent ; prologue, récits d'aventure, faillite, Faucheuse, départs, nuit. |
 | 8 | **Réputation et améliorations** | Clients plus exigeants, décoration, améliorations la nuit. |
 | 9 | **Le Bien et le Mal** | Races maléfiques, objets du bien / du mal, réputation par camp, dialogues qui changent. |
 | 10 | **Marché noir** | Objets interdits, voyageurs nocturnes, conséquences. |
