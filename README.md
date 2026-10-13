@@ -33,6 +33,8 @@ La partie se sauvegarde toute seule le soir et le matin au marché :
 | `src/scenes/BureauScene.js` | Le bureau : registre des fiches, chiffre d'affaires, tiroirs de statistiques |
 | `src/scenes/CarteScene.js` | La carte du monde : placer les voyageurs du jour sur leurs destinations, vue d'ensemble des missions |
 | `src/scenes/DodoScene.js` | Aller dormir : la scène du lit et le bilan de la journée |
+| `src/portraitsHD.js` | Les portraits HD (bustes des voyageurs) et JeuneGoy en pied |
+| `src/decorHD.js` | Le décor HD : chêne, enduit, pierre, fer, ardoise, parchemin, plaques des boutons |
 | `src/scenes/FacadeScene.js` | Le matin : la façade du shop et son enseigne |
 | `src/scenes/ArriereScene.js` | L'arrière-boutique : stock, fortune, cadeaux, tiroir secret, chambre |
 | `src/scenes/NightScene.js` | Le soir : bilan, réserve, lettres, banque, prévision de demain |

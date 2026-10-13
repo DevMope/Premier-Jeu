@@ -539,8 +539,8 @@ const DECORATIONS = {
 
 // Les noms selon l'âge : petit (moins de 18 ans), adulte, ancien (60 ans et plus).
 const NOMS_JOUEUR = {
-  garcon: { petit: 'PetitGoy', adulte: 'HommeGoy', ancien: 'AncienGoy' },
-  fille: { petit: 'PetiteGoy', adulte: 'FemmeGoy', ancien: 'AncienneGoy' },
+  garcon: { petit: 'JeuneGoy', adulte: 'HommeGoy', ancien: 'AncienGoy' },
+  fille: { petit: 'JeuneGoy', adulte: 'FemmeGoy', ancien: 'AncienneGoy' },
 };
 const AGE_DEPART = 15;
 

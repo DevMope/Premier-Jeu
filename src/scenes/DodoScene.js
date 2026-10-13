@@ -14,7 +14,7 @@ class DodoScene extends Cinematique {
     const G = this.G = window.GAME;
     this.cameras.main.fadeIn(500);
     this.dessinerChambre();
-    this.joueur = this.add.image(1000, SOL_CHAMBRE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(6).setDepth(3);
+    this.joueur = this.add.image(1000, SOL_CHAMBRE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(6)).setDepth(3);
     this.boutonPasser(() => this.passer());
     this.derouler();
   }
@@ -97,7 +97,7 @@ class DodoScene extends Cinematique {
     const b = this.bilan;
     await this.marcher(this.joueur, 600, 4);
     this.onomatopee(600, SOL_CHAMBRE - 130, 'Aaaah...', '#f3d98a');
-    await this.animer({ targets: this.joueur, scaleY: 6.5, duration: 260, yoyo: true });
+    await this.animer({ targets: this.joueur, scaleY: echelleJoueur(6.5), duration: 260, yoyo: true });
     await this.attendre(300);
     // Il souffle la bougie...
     this.onomatopee(650, SOL_CHAMBRE - 140, 'Fffff !');

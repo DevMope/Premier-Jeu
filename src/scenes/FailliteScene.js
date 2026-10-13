@@ -10,7 +10,7 @@ class FailliteScene extends Cinematique {
     dessinerComte(g, 0, 0, 960, 370, 0.45);
     this.facade = dessinerFacade(this, 560, 350);
 
-    this.joueur = this.add.image(300, 350, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(6).setDepth(3);
+    this.joueur = this.add.image(300, 350, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(6)).setDepth(3);
     this.piece = this.add.ellipse(322, 290, 12, 12, 0xe8c040).setStrokeStyle(2, 0x9a7a10).setDepth(4);
     this.banquier = this.add.image(1040, 350, 'perso_banquier').setOrigin(0.5, 1).setScale(6).setDepth(3);
     this.gardes = [0, 1].map(i => this.creerGarde(1110 + i * 70));

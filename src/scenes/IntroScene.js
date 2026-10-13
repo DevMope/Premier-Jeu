@@ -12,7 +12,7 @@ class IntroScene extends Phaser.Scene {
 
     // L'aperçu : toi, au début de l'aventure
     this.add.rectangle(220, 250, 380, 330, 0x2a1a10).setStrokeStyle(3, 0xc9a227);
-    this.apercu = this.add.image(220, 350, 'perso_heros').setOrigin(0.5, 1).setScale(13);
+    this.apercu = this.add.image(220, 350, 'perso_heros').setOrigin(0.5, 1).setScale(echelleJoueur(13));
     this.nomApercu = this.add.text(220, 372, '', style(18, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
     this.add.text(220, 398, `${AGE_DEPART} ans · la barbe poussera à 18 ans`, style(12, '#c9b48a', { fontStyle: 'italic' })).setOrigin(0.5);
 
@@ -75,7 +75,7 @@ class IntroScene extends Phaser.Scene {
   }
 
   maj() {
-    creerTexturesJoueur(this, this.ap);
+    creerTexturesJoueur(this, this.ap, this.feminin);
     const genre = this.feminin ? 'fille' : 'garcon';
     this.apercu.setTexture('joueur_petit');
     this.nomApercu.setText(NOMS_JOUEUR[genre].petit);
@@ -118,7 +118,7 @@ class IntroHistoireScene extends Cinematique {
     }
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
 
-    this.heros = this.add.image(220, 330, 'joueur_petit').setOrigin(0.5, 1).setScale(4);
+    this.heros = this.add.image(220, 330, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(4));
     this.mentor = this.add.image(-80, 345, 'perso_mentor').setOrigin(0.5, 0.5).setScale(6).setAngle(90);
 
     this.creerBoiteTexte();
@@ -227,7 +227,7 @@ class IntroHistoireScene extends Cinematique {
     const g = this.add.graphics();
     dessinerComte(g, 0, 0, 960, 370, 0.15);
     const facade = dessinerFacade(this, 480, 345);
-    const heros = this.add.image(140, 345, 'joueur_petit').setOrigin(0.5, 1).setScale(5);
+    const heros = this.add.image(140, 345, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(5));
     this.add.image(90, 345, 'perso_mentor').setOrigin(0.5, 1).setScale(6);
     this.creerBoiteTexte();
     this.boutonPasser(() => this.finir());

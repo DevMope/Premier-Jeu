@@ -38,7 +38,7 @@ class BanqueScene extends Phaser.Scene {
     this.add.text(480, 245, 'BANQUE CENTRALE GOYENNE', style(18, '#e8c040', { fontStyle: 'bold' })).setOrigin(0.5);
 
     // Toi, tout petit, tout en bas
-    this.add.image(70, 535, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(5);
+    this.add.image(70, 535, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(5));
 
     // Ce que dit Thorgrim Coffrefort
     this.add.rectangle(480, 330, 760, 50, 0x1e130a, 0.92).setStrokeStyle(2, 0xc9a227);

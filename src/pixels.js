@@ -377,19 +377,19 @@ function style(taille, couleur = '#f3e6c8', extra = {}) {
 
 // Bouton en bois cliquable. Renvoie un objet avec setActif(bool).
 function creerBouton(scene, x, y, largeur, texte, action) {
-  const fond = scene.add.rectangle(x, y, largeur, 40, 0x8a5a2b)
-    .setStrokeStyle(3, 0x3b2410)
-    .setInteractive({ useHandCursor: true });
-  const label = scene.add.text(x, y, texte, style(18, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
+  // Une plaque de bois clouée, plus claire au survol
+  const cle = plaqueBouton(scene, largeur);
+  const fond = scene.add.image(x, y, cle).setScale(2).setInteractive({ useHandCursor: true });
+  const label = scene.add.text(x, y, texte, style(18, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);
   let actif = true;
-  fond.on('pointerover', () => actif && fond.setFillStyle(0xa8743c));
-  fond.on('pointerout', () => fond.setFillStyle(actif ? 0x8a5a2b : 0x5a4030));
+  fond.on('pointerover', () => actif && fond.setTexture(cle + '_clair'));
+  fond.on('pointerout', () => fond.setTexture(cle));
   fond.on('pointerdown', () => actif && action());
   return {
     fond, label,
     setActif(a) {
       actif = a;
-      fond.setFillStyle(a ? 0x8a5a2b : 0x5a4030);
+      fond.setTexture(cle).setTint(a ? 0xffffff : 0x8a8a8a);
       label.setAlpha(a ? 1 : 0.5);
     },
     setVisible(v) { fond.setVisible(v); label.setVisible(v); },
@@ -558,17 +558,13 @@ function paletteJoueur(ap, stade) {
 
 // La texture du joueur à son âge actuel (créée si besoin).
 function textureJoueur(scene, G) {
-  if (!scene.textures.exists('joueur_petit')) creerTexturesJoueur(scene, G.joueur.apparence);
+  if (!scene.textures.exists('joueur_petit')) creerTexturesJoueur(scene, G.joueur.apparence, G.joueur.feminin);
   return 'joueur_' + stadeJoueur(G);
 }
 
-// Crée (ou recrée) les trois textures du joueur : joueur_petit, joueur_adulte, joueur_ancien.
-function creerTexturesJoueur(scene, ap) {
-  for (const stade of ['petit', 'adulte', 'ancien']) {
-    const cle = 'joueur_' + stade;
-    if (scene.textures.exists(cle)) scene.textures.remove(cle);
-    creerTexture(scene, cle, lignesJoueur(ap, stade), paletteJoueur(ap, stade));
-  }
+// Crée (ou recrée) les trois textures du joueur, en HD : joueur_petit, joueur_adulte, joueur_ancien.
+function creerTexturesJoueur(scene, ap, feminin = false) {
+  for (const stade of ['petit', 'adulte', 'ancien']) dessinerJoueurHD(ap, stade, feminin).texture(scene, 'joueur_' + stade);
 }
 
 // La caravane du vieux Grippesou.

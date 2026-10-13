@@ -80,29 +80,11 @@ class CounterScene extends Phaser.Scene {
 
   // --- Décor ---
 
+  // Le mur (enduit à la chaux entre les colombages de chêne) et le plateau du comptoir.
   dessinerPiece() {
-    const g = this.add.graphics();
-    // Mur en planches
-    g.fillStyle(0x5a3a22, 1);
-    g.fillRect(0, 0, 960, 340);
-    g.lineStyle(2, 0x45291a, 1);
-    for (let y = 0; y < 340; y += 34) g.lineBetween(0, y, 960, y);
-    for (let y = 0; y < 340; y += 34) {
-      const decal = (y / 34) % 2 ? 0 : 60;
-      for (let x = decal; x < 960; x += 120) g.lineBetween(x, y, x, y + 34);
-    }
-    // Poutres
-    g.fillStyle(0x3b2410, 1);
-    g.fillRect(0, 0, 960, 12);
-    g.fillRect(280, 0, 14, 340);
-    g.fillRect(666, 0, 14, 340);
-    // Bureau
-    g.fillStyle(0x8a5a2b, 1);
-    g.fillRect(0, 340, 960, 200);
-    g.fillStyle(0x6b4423, 1);
-    g.fillRect(0, 340, 960, 14);
-    g.lineStyle(2, 0x7a4e24, 1);
-    for (let y = 380; y < 540; y += 40) g.lineBetween(0, y, 960, y);
+    creerDecorComptoir(this);
+    this.add.image(0, 0, 'murComptoir').setOrigin(0).setScale(2);
+    this.add.image(0, 340, 'plateauComptoir').setOrigin(0).setScale(2);
   }
 
   creerFenetre() {
@@ -122,12 +104,8 @@ class CounterScene extends Phaser.Scene {
     this.perso.setMask(masque);
     this.creerFileAttente();
 
-    // Cadre et rebord de la fenêtre
-    const cadre = this.add.graphics().setDepth(3);
-    cadre.lineStyle(10, 0x3b2410, 1);
-    cadre.strokeRect(x - 5, y - 5, w + 10, h + 10);
-    cadre.fillStyle(0x6b4423, 1);
-    cadre.fillRect(x - 14, y + h, w + 28, 14);
+    // L'ébrasement, le cadre de chêne et l'appui de pierre de la fenêtre
+    this.add.image(x - 16, y - 16, 'cadreFenetre').setOrigin(0).setScale(2).setDepth(3);
   }
 
   // Les voyageurs qui attendent leur tour, visibles par la fenêtre.
@@ -192,7 +170,7 @@ class CounterScene extends Phaser.Scene {
 
   // À gauche : qui est en mission, et les lettres reçues (cliquables).
   creerPanneauGauche() {
-    this.add.rectangle(145, 135, 250, 230, 0x2a1a10, 0.55).setStrokeStyle(2, 0x3b2410);
+    this.add.image(20, 20, 'ardoiseComptoir').setOrigin(0).setScale(2); // l'ardoise dans son cadre
     this.texteJour = this.add.text(30, 28, '', style(22, '#f3d98a', { fontStyle: 'bold' }));
     this.texteJoueur = this.add.text(262, 36, '', style(13, '#c9b48a', { fontStyle: 'italic' })).setOrigin(1, 0);
     this.add.text(30, 62, 'En mission', style(14, '#c9b48a', { fontStyle: 'bold' }));
@@ -219,7 +197,7 @@ class CounterScene extends Phaser.Scene {
 
   creerCommande() {
     // Parchemin de la commande
-    this.add.rectangle(815, 135, 260, 230, 0xead9b0).setStrokeStyle(3, 0x8a6a3a);
+    this.add.image(685, 20, 'parcheminComptoir').setOrigin(0).setScale(2); // le parchemin punaisé
     // Le nom du client sur une ligne (la police rétrécit si besoin), sa destination en dessous.
     this.titreCommande = this.add.text(700, 26, '', style(17, '#3b2410', { fontStyle: 'bold' }));
     this.sousTitre = this.add.text(700, 49, '', style(12, '#6b4a2a', { fontStyle: 'italic' }));
@@ -244,20 +222,20 @@ class CounterScene extends Phaser.Scene {
   }
 
   creerDialogue() {
-    this.fondDialogue = this.add.rectangle(480, 296, 920, 70, 0x1e130a, 0.85).setStrokeStyle(2, 0xc9a227);
+    this.fondDialogue = this.add.image(480, 296, 'planchesDialogue').setScale(2); // les planches cerclées de fer
     this.nomParleur = this.add.text(32, 266, '', style(15, '#f3d98a', { fontStyle: 'bold' }));
     this.texteDialogue = this.add.text(32, 286, '', style(15, '#f3e6c8', { wordWrap: { width: 900 } }));
   }
 
   creerStock() {
-    this.add.text(150, 360, 'Ton stock — clic : ajouter au colis', style(14, '#2a1a10', { fontStyle: 'italic' }));
-    this.texteReserve = this.add.text(660, 360, '', style(14, '#2a1a10', { fontStyle: 'bold' })).setOrigin(1, 0);
+    this.add.text(150, 357, 'Ton stock — clic : ajouter au colis', style(12, '#f3e6c8', { fontStyle: 'italic', stroke: '#1a100a', strokeThickness: 3 }));
+    this.texteReserve = this.add.text(660, 357, '', style(12, '#f3d98a', { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 3 })).setOrigin(1, 0);
     this.creerEtagere();
     // Le registre posé sur le bureau : clic pour ouvrir le bureau (fiches, comptes, statistiques)
-    const registre = this.add.rectangle(75, 362, 120, 24, 0x6b2a1a).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
-    this.add.text(75, 362, 'Le registre', style(13, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
-    registre.on('pointerover', () => registre.setFillStyle(0x8a3a2a));
-    registre.on('pointerout', () => registre.setFillStyle(0x6b2a1a));
+    const registre = this.add.image(75, 364, 'registreComptoir').setScale(2).setInteractive({ useHandCursor: true });
+    this.add.text(78, 360, 'Le registre', style(13, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0808', strokeThickness: 3 })).setOrigin(0.5);
+    registre.on('pointerover', () => registre.setTint(0xffe0c0));
+    registre.on('pointerout', () => registre.clearTint());
     registre.on('pointerdown', () => {
       this.scene.pause();
       this.scene.launch('Bureau', { retour: 'Comptoir', comptoir: this });
@@ -266,13 +244,12 @@ class CounterScene extends Phaser.Scene {
     Object.keys(ITEMS).forEach((id, i) => {
       const x = 200 + (i % 5) * 108;
       const y = 397 + Math.floor(i / 5) * 48;
-      const fond = this.add.rectangle(x, y, 104, 44, 0x6b4423).setStrokeStyle(2, 0x3b2410)
-        .setInteractive({ useHandCursor: true });
+      const fond = this.add.rectangle(x, y, 104, 44, 0xfff0c8, 0.001).setInteractive({ useHandCursor: true });
       this.add.image(x - 36, y, id).setScale(3);
-      this.add.text(x - 18, y - 16, ITEMS[id].nom, style(11, '#f3e6c8', { wordWrap: { width: 70 } }));
-      const qte = this.add.text(x - 18, y + 4, '', style(13, '#f3d98a', { fontStyle: 'bold' }));
-      fond.on('pointerover', () => fond.setFillStyle(0x7a5030));
-      fond.on('pointerout', () => fond.setFillStyle(0x6b4423));
+      this.add.text(x - 18, y - 16, ITEMS[id].nom, style(11, '#f3e6c8', { wordWrap: { width: 70 }, stroke: '#1a100a', strokeThickness: 3 }));
+      const qte = this.add.text(x - 18, y + 4, '', style(13, '#f3d98a', { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 3 }));
+      fond.on('pointerover', () => fond.setFillStyle(0xfff0c8, 0.14));
+      fond.on('pointerout', () => fond.setFillStyle(0xfff0c8, 0.001));
       fond.on('pointerdown', () => this.donner(id));
       this.cases[id] = { fond, qte };
     });
@@ -281,10 +258,11 @@ class CounterScene extends Phaser.Scene {
 
   // Se retourner : l'arrière-boutique (étagères, fortune, cadeaux, tiroir secret, chambre).
   creerBoutonRetourner() {
-    const fond = this.add.rectangle(578, 493, 212, 44, 0x3b2410).setStrokeStyle(2, 0xc9a227).setInteractive({ useHandCursor: true });
-    this.add.text(578, 493, "↻ Se retourner\nl'arrière-boutique", style(12, '#f3d98a', { fontStyle: 'bold', align: 'center' })).setOrigin(0.5);
-    fond.on('pointerover', () => fond.setFillStyle(0x5a3a1a));
-    fond.on('pointerout', () => fond.setFillStyle(0x3b2410));
+    const cle = plaqueBouton(this, 212);
+    const fond = this.add.image(578, 493, cle).setScale(2).setInteractive({ useHandCursor: true });
+    this.add.text(578, 493, "↻ Se retourner : l'arrière-boutique", style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5);
+    fond.on('pointerover', () => fond.setTexture(cle + '_clair'));
+    fond.on('pointerout', () => fond.setTexture(cle));
     fond.on('pointerdown', () => {
       if (this.enConfirmation) return;
       this.scene.pause();
@@ -858,10 +836,10 @@ class CounterScene extends Phaser.Scene {
         fin(`${msg} Prends-en soin.`);
         this.creerEtagere();
     // Le registre posé sur le bureau : clic pour ouvrir le bureau (fiches, comptes, statistiques)
-    const registre = this.add.rectangle(75, 362, 120, 24, 0x6b2a1a).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
-    this.add.text(75, 362, 'Le registre', style(13, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
-    registre.on('pointerover', () => registre.setFillStyle(0x8a3a2a));
-    registre.on('pointerout', () => registre.setFillStyle(0x6b2a1a));
+    const registre = this.add.image(75, 364, 'registreComptoir').setScale(2).setInteractive({ useHandCursor: true });
+    this.add.text(78, 360, 'Le registre', style(13, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0808', strokeThickness: 3 })).setOrigin(0.5);
+    registre.on('pointerover', () => registre.setTint(0xffe0c0));
+    registre.on('pointerout', () => registre.clearTint());
     registre.on('pointerdown', () => {
       this.scene.pause();
       this.scene.launch('Bureau', { retour: 'Comptoir', comptoir: this });
