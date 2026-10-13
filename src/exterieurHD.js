@@ -113,7 +113,17 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0) {
       const v = tramer(x, y, (y - h0) / (H * 0.25), 4) / 3;
       poser(x, y, soir(melangeCouleur(teinte(b.loin, 1.05 - v * 0.2), b.horizon, 0.25)));
     }
-    if (r.arbres && hachage(x, 7, graine) < 0.08 * (r.densite || 1)) arbre(x, h0 + 2, 0.6, teinte(b.arbres || b.loin, 0.75));
+    if (r.arbres && hachage(x, 7, graine) < 0.08 * (r.densite || 1)) arbre(x, h0 + 2, 0.55, melangeCouleur(teinte(b.arbres || b.loin, 0.8), b.horizon, 0.3));
+    if (r.fleurs && hachage(x, 8, graine) < 0.006) maison(x, h0 + 3);   // des fermes au loin
+  }
+  // Les collines du milieu, avec leurs bosquets
+  for (let x = 0; x < L; x++) {
+    const h0 = crete(x, 0.68, 0.2, 0.016, graine + 3);
+    for (let y = Math.floor(h0); y < H; y++) {
+      const v = tramer(x, y, (y - h0) / (H * 0.2), 4) / 3;
+      poser(x, y, soir(melangeCouleur(teinte(b.pres, 1.08 - v * 0.22), b.loin, 0.35)));
+    }
+    if (y0Herbe(x, h0) && r.arbres && hachage(x, 17, graine) < 0.05 * (r.densite || 1)) arbre(x, h0 + 2, 0.8, melangeCouleur(teinte(b.arbres || b.pres, 0.78), b.loin, 0.15));
   }
   // Les colonnes, les temples et les tours
   const fond = (x0, larg, haut, c) => { for (let y = Math.floor(haut); y < H * 0.78; y++) for (let x = x0; x < x0 + larg; x++) poser(x, y, soir(teinte(c, x < x0 + larg / 2 ? 1.05 : 0.8))); };
@@ -137,7 +147,9 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0) {
       if (r.fleurs && hachage(x, y, graine + 8) < 0.012) c = r.fleurs;
       poser(x, y, soir(c));
     }
-    if (r.arbres && hachage(x, 9, graine) < 0.03 * (r.densite || 1)) arbre(x, h0 + 3, 1, teinte(b.arbres || herbe, 0.7));
+    if (r.arbres && hachage(x, 9, graine) < 0.03 * (r.densite || 1)) arbre(x, h0 + 3, 1.15, teinte(b.arbres || herbe, 0.7));
+    if (!r.dunes && hachage(x, 19, graine) < 0.035) buisson(x, h0 + 4 + hachage(x, 20, graine) * 10, 2.5 + hachage(x, 21, graine) * 2.5, teinte(b.arbres || herbe, 0.82));
+    if (!r.dunes && hachage(x, 22, graine) < 0.25) touffe(x, Math.floor(h0 + 3 + hachage(x, 23, graine) * (H - h0 - 16)));
     if (r.arbresMorts && hachage(x, 11, graine) < 0.02) arbreMort(x, h0 + 2);
     if (r.roseaux && hachage(x, 12, graine) < 0.35) for (let y = 0; y < 5 + hachage(x, 13, graine) * 8; y++) poser(x, Math.floor(h0 + H * 0.06 - y), soir(teinte(b.roseaux || herbe, 0.8 + y * 0.03)));
     if (r.rochers && hachage(x, 14, graine) < 0.02) for (let k = 0; k < 5; k++) for (let j = 0; j < 4 - Math.abs(k - 2); j++) poser(x + k, Math.floor(h0 + 4 - j), soir(teinte(0x8a8070, j > 1 ? 1.1 : 0.85)));
@@ -165,19 +177,73 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0) {
     poser(x, y, soir(c));
   }
   for (let x = 0; x < L; x += 1) if (hachage(x, 1, graine + 23) < 0.12) { poser(x, chemin - 1, soir(teinte(herbe, 1.1))); poser(x, chemin - 2, soir(teinte(herbe, 1.2))); }
+  // Des cailloux sur le chemin
+  for (let k = 0; k < L / 14; k++) {
+    const x = Math.floor(hachage(k, 30, graine) * L), y = chemin + 3 + Math.floor(hachage(k, 31, graine) * 8);
+    poser(x, y, soir(teinte(0x9a9080, 1.2))); poser(x + 1, y, soir(teinte(0x9a9080, 1))); poser(x, y + 1, soir(teinte(0x9a9080, 0.75))); poser(x + 1, y + 1, soir(teinte(0x9a9080, 0.6)));
+  }
+  // Une barrière de bois le long du chemin (dans la Comté et les terres paisibles)
+  if (r.fleurs) for (let x = 2; x < L; x += 11) {
+    if (hachage(Math.floor(x / 44), 32, graine) < 0.45) continue;
+    for (let y = chemin - 9; y < chemin; y++) { poser(x, y, soir(teinte(0x7a5a30, 1.1))); poser(x + 1, y, soir(teinte(0x7a5a30, 0.75))); }
+    for (let k = 0; k < 11; k++) { poser(x + k, chemin - 7, soir(teinte(0x8a6a38, 1.05))); poser(x + k, chemin - 4, soir(teinte(0x8a6a38, 0.9))); }
+  }
 
-  // Les arbres (définis après pour rester lisibles : hissés en fonctions)
+  // Les arbres, les buissons, les touffes d'herbe et les fermes (fonctions hissées)
+  function y0Herbe() { return true; }
+  // Une boule de feuillage éclairée en haut à gauche, avec ses reflets et son ombre
+  function boule(cx, cy, rx, ry, couleur) {
+    for (let y = Math.floor(cy - ry); y <= cy + ry; y++) for (let x = Math.floor(cx - rx); x <= cx + rx; x++) {
+      const nx = (x + 0.5 - cx) / rx, ny = (y + 0.5 - cy) / ry;
+      const d = nx * nx + ny * ny + (hachage(x, y, graine + 40) - 0.5) * 0.25;
+      if (d > 1) continue;
+      const lum = 1 - (nx * 0.45 + ny * 0.6) * 0.45 - d * 0.12;
+      let f = lum > 1.12 ? 1.28 : lum > 0.98 ? 1.08 : lum > 0.84 ? 0.9 : 0.72;
+      if (hachage(x, y, graine + 41) < 0.08) f += 0.12;
+      poser(x, y, soir(teinte(couleur, f)));
+    }
+  }
   function arbre(x, sol, taille, couleur) {
     const forme = r.arbres;
-    const h = Math.round((forme === 'sapins' ? 16 : 11) * taille * (0.8 + hachage(x, 3, graine) * 0.5));
-    for (let y = 0; y < 3 * taille; y++) poser(x, Math.floor(sol - y), soir(0x4a3020));
-    for (let y = 0; y < h; y++) {
-      const w = forme === 'sapins' ? (y / h) * h * 0.35 : Math.sqrt(Math.max(0, 1 - Math.pow((y - h / 2) / (h / 2), 2))) * h * 0.45;
-      for (let k = -Math.ceil(w); k <= Math.ceil(w); k++) {
-        const lum = k < 0 ? 1.08 : 0.82;
-        poser(x + k, Math.floor(sol - 2 * taille - h + y), soir(teinte(couleur, lum - (hachage(x + k, y, graine) < 0.2 ? 0.1 : 0))));
+    const h = Math.round((forme === 'sapins' ? 18 : 12) * taille * (0.8 + hachage(x, 3, graine) * 0.5));
+    // Le tronc, éclairé à gauche
+    for (let y = 0; y < 4 * taille; y++) { poser(x, Math.floor(sol - y), soir(0x6a4a2a)); poser(x + 1, Math.floor(sol - y), soir(0x3a2414)); }
+    if (forme === 'sapins') {
+      for (let etage = 0; etage < 3; etage++) {
+        const hh = h * (0.5 - etage * 0.08), base = sol - 3 * taille - etage * h * 0.28;
+        for (let y = 0; y < hh; y++) {
+          const w = (y / hh) * hh * 0.55;
+          for (let k = -Math.ceil(w); k <= Math.ceil(w); k++) {
+            const bord = y > hh - 2;
+            const f = bord ? 0.65 : (k < 0 ? 1.06 : 0.8) + (hachage(x + k, y + etage * 9, graine) < 0.12 ? 0.15 : 0);
+            poser(x + k, Math.floor(base - hh + y), soir((r.neige && y < 2) ? 0xf0f4ff : teinte(couleur, f)));
+          }
+        }
       }
+      return;
     }
+    // Un feuillage rond, fait de plusieurs boules
+    const R = h * 0.42, cy = sol - 3 * taille - R;
+    boule(x - R * 0.45, cy + R * 0.25, R * 0.75, R * 0.65, couleur);
+    boule(x + R * 0.5, cy + R * 0.3, R * 0.7, R * 0.6, teinte(couleur, 0.92));
+    boule(x, cy - R * 0.2, R * 0.85, R * 0.75, couleur);
+  }
+  function buisson(x, sol, taille, couleur) {
+    boule(x - taille * 0.6, sol - taille * 0.6, taille, taille * 0.75, teinte(couleur, 0.95));
+    boule(x + taille * 0.5, sol - taille * 0.7, taille * 0.9, taille * 0.7, couleur);
+    if (r.fleurs && hachage(x, 50, graine) < 0.5) for (let k = 0; k < 3; k++) poser(Math.round(x - taille + hachage(x, 51 + k, graine) * taille * 2), Math.round(sol - taille * (0.4 + hachage(x, 54 + k, graine))), r.fleurs);
+  }
+  function touffe(x, y) {
+    const c = teinte(b.pres, 1.25), c2 = teinte(b.pres, 0.7);
+    poser(x, y, soir(c2)); poser(x - 1, y - 1, soir(c)); poser(x + 1, y - 1, soir(c)); poser(x, y - 2, soir(c));
+    if (r.fleurs && hachage(x, y, graine + 60) < 0.15) { poser(x, y - 3, r.fleurs); poser(x + 1, y - 3, teinte(r.fleurs, 1.2)); }
+  }
+  // Une petite ferme au loin : murs blancs, toit d'ardoises ou de tuiles
+  function maison(x, sol) {
+    const toit = hachage(x, 70, graine) < 0.5 ? 0x8a3a2a : 0x4a5466;
+    for (let y = 0; y < 4; y++) for (let k = 0; k < 7; k++) poser(x + k, Math.floor(sol - y), soir(melangeCouleur(k < 2 ? 0xf0e8d8 : 0xc8c0b0, b.horizon, 0.25)));
+    for (let y = 0; y < 4; y++) for (let k = -1 + y; k < 8 - y; k++) poser(x + k, Math.floor(sol - 4 - y), soir(melangeCouleur(toit, b.horizon, 0.25)));
+    poser(x + 3, Math.floor(sol - 1), soir(0x3a2a20));
   }
   function arbreMort(x, sol) {
     for (let y = 0; y < 16; y++) poser(x, Math.floor(sol - y), soir(0x2a2420));
@@ -205,62 +271,228 @@ const RAMPES_EXTERIEUR = {
   vitre: [0x5a3a10, 0x8a5a18, 0xc08a30, 0xf0c060, 0xf8dc90, 0xfff4d0],
 };
 
-function creerFacadeHD(scene) {
-  if (scene.textures.exists('facadeHD')) return;
-  const L = 196, H = 142;           // 392 × 284 à l'écran ; le sol est en bas
+// La géométrie de la façade (en pixels de la toile ; affichée en ×2, posée par le bas, centrée).
+const FACADE = {
+  L: 200, H: 176,
+  toit: [0, 0, 200, 58],          // x, y, l, h
+  etage: [12, 58, 176, 50],
+  rdc: [18, 108, 164, 68],
+  fenetre: [28, 120, 64, 38],     // la fenêtre-comptoir
+  porte: [124, 120, 34, 56],
+  cheminee: [150, 0, 14, 34],
+  enseigne: [8, 104],             // l'accroche du support
+};
+
+// Où est la cheminée selon le niveau de la façade (pour la fumée).
+function chemineeFacade(n) { return n >= 2 ? FACADE.cheminee : [150, 34, 12, 26]; }
+
+// La façade à son niveau `n` (0 : humble chaumière … 3 : belle maison à colombages).
+function creerFacadeHD(scene, n = 3) {
+  creerAccessoiresFacade(scene);
+  if (scene.textures.exists('facadeHD_' + n)) return;
+  const { L, H } = FACADE;
   const t = toileDecor(L, H);
   Object.assign(t.rampes, RAMPES_EXTERIEUR);
-  const mx = 18, my = 56, ml = 160, mh = 86;                     // les murs
-  // Le soubassement de pierre, puis l'enduit entre les colombages
-  enduit(t, mx, my, ml, mh, 700, false);
-  pierres(t, mx, H - 12, ml, 12, 701);
-  for (const x of [mx, mx + 52, mx + 100, mx + ml - 6]) planche(t, x, my, 6, mh - 12, 'cheneSombre', { horizontale: false, graine: 702 + x });
-  planche(t, mx, my, ml, 6, 'cheneSombre', { graine: 703 });
-  planche(t, mx, H - 18, ml, 6, 'cheneSombre', { graine: 704 });
-  for (let k = 0; k < 18; k++) { t.poser(mx + 58 + k * 2.2, my + 8 + k * 2, 'cheneSombre', 2); t.poser(mx + 59 + k * 2.2, my + 8 + k * 2, 'cheneSombre', 3); } // une écharpe
-  // Le toit de chaume, épais et arrondi au bord, avec sa cheminée
-  for (let y = 0; y < my + 6; y++) for (let x = 0; x < L; x++) {
-    const demi = (y + 4) * 1.55;
-    if (Math.abs(x + 0.5 - L / 2) > demi) continue;
-    const brin = (x * 3 + Math.floor(y * 0.6)) % 5;
-    let i = 3 + (brin === 0 ? -1 : brin === 3 ? 1 : 0) + Math.round((fbm(x * 0.1, y * 0.2, 705) - 0.5) * 1.5);
-    if (y > my - 2) i -= 2;                                       // l'ombre sous l'avancée
-    else if (y > my - 6) i -= 1;
-    if (Math.abs(x + 0.5 - L / 2) > demi - 2) i = Math.max(1, i - 1);
-    t.poser(x, y, 'chaume', i);
+  t.rampes.tuile = [0x3a140c, 0x5e2214, 0x86341e, 0xa8482a, 0xc8663e, 0xe08a5a];
+  t.rampes.brique = [0x3a1410, 0x5e2018, 0x823024, 0xa04030, 0xbc5844, 0xd8806a];
+  t.rampes.torchis = [0x4a3a24, 0x7a6440, 0xa08a5e, 0xbca878, 0xd0be90, 0xe2d4ac];
+
+  if (n === 0) {
+    // La chaumière : des murs de torchis fissurés, des poteaux de bois brut, des pierres qui percent
+    const [x0, y0, l, h] = FACADE.rdc;
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + l; x++) {
+      let i = 3 + Math.round((fbm(x * 0.08, y * 0.08, 690) - 0.5) * 1.6) + (y > y0 + h - 8 ? -1 : 0);
+      if (fbm(x * 0.05, y * 0.07, 691) > 0.72) i -= 1;
+      t.poser(x, y, 'torchis', i);
+    }
+    pierres(t, x0 + 100, y0 + 8, 16, 10, 692); pierres(t, x0 + 4, y0 + h - 16, 14, 8, 693);
+    for (let k = 0; k < 3; k++) { let x = x0 + 20 + k * 50, y = y0 + 4; for (let j = 0; j < 14; j++) { t.poser(Math.round(x), y, 'torchis', 0); x += hachage(k, j, 694) - 0.5; y++; } }
+    t.rampes.chene = BOIS_LUXE[0].bois;
+    for (const x of [x0, x0 + 58, x0 + 112, x0 + l - 5]) planche(t, x, y0, 5, h, 'chene', { horizontale: false, graine: 695 + x, noeuds: 2 });
+    planche(t, x0, y0, l, 5, 'chene', { graine: 696, noeuds: 3 });
+  } else {
+  // Le rez-de-chaussée : de gros moellons de pierre
+  {
+    const [x0, y0, l, h] = FACADE.rdc;
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + l; x++) {
+      const rangee = Math.floor((y - y0) / 7), dec = (rangee % 2) * 6;
+      const bx = (x - x0 + dec) % 12, by = (y - y0) % 7;
+      const joint = bx === 0 || by === 0;
+      let i = joint ? 1 : 3 + (by === 1 ? 1 : 0) - (bx === 11 || by === 6 ? 1 : 0) + Math.round((hachage(Math.floor((x + dec) / 12), rangee, 700) - 0.5) * 1.6);
+      if (x < x0 + 3) i += 1;
+      t.poser(x, y, 'pierre', i);
+    }
+    for (const x of [x0, x0 + l - 4]) for (let y = y0; y < y0 + h; y++) for (let k = 0; k < 4; k++) t.poser(x + k, y, 'pierre', (Math.floor((y - y0) / 7) % 2 ? 4 : 3) + (k === 0 ? 1 : 0)); // les chaînes d'angle
   }
-  pierres(t, 140, 0, 14, 22, 706);
-  for (let y = 0; y < 22; y++) { t.poser(140, y, 'pierre', 1); t.poser(153, y, 'pierre', 1); }
+  }
+  // L'étage, en saillie : enduit blanc, colombages sombres, croix de Saint-André
+  if (n >= 2) {
+    const [x0, y0, l, h] = FACADE.etage;
+    enduit(t, x0, y0, l, h, 701, false);
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + l; x++) t.poser(x, y, 'platre', 4 + (hachage(x, y, 702) < 0.05 ? -1 : 0));
+    const poteaux = [x0, x0 + 30, x0 + 58, x0 + 88, x0 + 118, x0 + 146, x0 + l - 5];
+    for (const x of poteaux) planche(t, x, y0, 5, h, 'cheneSombre', { horizontale: false, graine: 703 + x });
+    planche(t, x0, y0, l, 5, 'cheneSombre', { graine: 704 });
+    planche(t, x0 - 4, y0 + h - 6, l + 8, 6, 'cheneSombre', { graine: 705, noeuds: 3 }); // la sablière, qui déborde
+    for (let x = x0 - 4; x < x0 + l + 4; x++) t.poser(x, y0 + h, 'cheneSombre', 0);
+    // Des croix dans les panneaux sans fenêtre
+    const croix = (xa, xb) => { for (let k = 0; k <= 1; k += 0.02) for (const [ax, bx] of [[xa, xb], [xb, xa]]) { const x = Math.round(ax + (bx - ax) * k), y = Math.round(y0 + 5 + (h - 11) * k); t.poser(x, y, 'cheneSombre', 2); t.poser(x + 1, y, 'cheneSombre', 3); t.poser(x + 2, y, 'cheneSombre', 2); } };
+    if (n === 3) { croix(x0 + 5, x0 + 28); croix(x0 + 63, x0 + 86); croix(x0 + 123, x0 + 144); }
+    // Deux fenêtres à petits carreaux, éclairées, avec leurs volets
+    for (const fx0 of [x0 + 35, x0 + 93, x0 + 151]) {
+      const fy0 = y0 + 12, fl = 18, fh = 24;
+      for (let y = fy0; y < fy0 + fh; y++) for (let x = fx0; x < fx0 + fl; x++) {
+        const cadre = x === fx0 || x === fx0 + fl - 1 || y === fy0 || y === fy0 + fh - 1;
+        const plomb = (x - fx0) % 6 === 0 || (y - fy0) % 6 === 0;
+        t.poser(x, y, cadre ? 'chene' : plomb ? 'fer' : 'vitre', cadre ? 2 : plomb ? 2 : 3 + ((x + y) % 5 === 0 ? 1 : 0) + (y < fy0 + 6 ? 1 : 0));
+      }
+      for (let x = fx0 - 2; x < fx0 + fl + 2; x++) t.poser(x, fy0 + fh, 'chene', 4);
+      // Une jardinière de fleurs sous chaque fenêtre
+      if (n === 3) for (let x = fx0; x < fx0 + fl; x++) { t.poser(x, fy0 + fh + 1, 'chene', 1); if (hachage(x, 3, 706) < 0.6) t.poser(x, fy0 + fh, hachage(x, 4, 706) < 0.5 ? 'cuirRouge' : 'laiton', 5); }
+    }
+    // Les consoles de bois sous la saillie
+    for (const x of poteaux) for (let k = 0; k < 5; k++) for (let j = 0; j < 5 - k; j++) t.poser(x + 1 + j, y0 + h + 1 + k, 'cheneSombre', j === 0 ? 3 : 1);
+  }
+  // Le toit : chaume (0), ardoises (1), bardeaux de bois (2), tuiles et lucarne (3)
+  if (n < 3) {
+    const haut = n === 2 ? 10 : 46, bas = n === 2 ? FACADE.toit[3] : 112;
+    const g0 = n === 2 ? 46 : 58, d0 = L - g0;
+    const mat = n === 0 ? 'chaume' : n === 1 ? 'ardoiseToit' : 'bardeau';
+    t.rampes.ardoiseToit = [0x161820, 0x252a36, 0x363e4e, 0x4a5466, 0x626e82, 0x8a96aa];
+    t.rampes.bardeau = [0x2a1a0e, 0x4a3018, 0x6a4626, 0x8a6036, 0xa87a4a, 0xc49a68];
+    for (let y = haut - (n === 0 ? 4 : 0); y <= bas + (n === 0 ? 3 : 0); y++) {
+      const v = Math.max(0, (y - haut) / (bas - haut));
+      let xa = Math.round(g0 - v * (g0 - 2)), xb = Math.round(d0 + v * (L - 3 - d0));
+      if (n === 0) { const arrondi = Math.max(0, y - bas) * 2.5 + Math.max(0, haut - y) * 3; xa += arrondi; xb -= arrondi; } // le chaume, bombé
+      for (let x = xa; x <= xb; x++) {
+        let i;
+        if (n === 0) {
+          const brin = (x * 3 + Math.floor(y * 0.6)) % 5;
+          i = 3 + (brin === 0 ? -1 : brin === 3 ? 1 : 0) + Math.round((fbm(x * 0.1, y * 0.2, 697) - 0.5) * 1.5) + (hachage(x, y, 698) < 0.04 ? -2 : 0);
+          if (y > bas - 1) i -= 1;
+        } else {
+          const rangee = Math.floor((y - haut) / 4), decal = (rangee % 2) * 3, ligne = (y - haut) % 4;
+          i = 3 + Math.round((hachage(Math.floor((x + decal) / (n === 2 ? 4 : 6)), rangee, 699) - 0.5) * 1.6);
+          if (ligne === 3) i = 1; else if (ligne === 0) i += 1;
+          if ((x + decal) % (n === 2 ? 4 : 6) === 0) i -= 1;
+          if (y > bas - 2) i = 0;
+        }
+        if (x < xa + 3) i += 1;
+        if (x > xb - 3) i -= 1;
+        t.poser(x, y, mat, i);
+      }
+    }
+    if (n > 0) for (let x = g0 - 1; x <= d0 + 1; x++) for (let y = haut - 3; y < haut; y++) t.poser(x, y, mat, y === haut - 3 ? 5 : 2);
+  } else {
+    const [, , , hToit] = FACADE.toit;
+    const haut = 10, bas = hToit, g0 = 46, d0 = L - 46;
+    for (let y = haut; y <= bas; y++) {
+      const v = (y - haut) / (bas - haut);
+      const xa = Math.round(g0 - v * (g0 - 2)), xb = Math.round(d0 + v * (L - 3 - d0));
+      const rangee = Math.floor((y - haut) / 4), decal = (rangee % 2) * 3;
+      for (let x = xa; x <= xb; x++) {
+        const tuile = (x + decal) % 6, ligne = (y - haut) % 4;
+        let i = 3 + Math.round((hachage(Math.floor((x + decal) / 6), rangee, 707) - 0.5) * 1.4);
+        if (ligne === 3) i = 1;                                    // l'ombre sous chaque rang
+        else if (ligne === 0) i += 1;
+        if (tuile === 0) i -= 1;
+        if (tuile === 1 && ligne < 2) i += 1;                      // le galbe de la tuile
+        if (x < xa + 3) i += 1;
+        if (x > xb - 3) i -= 1;
+        if (y > bas - 2) i = 0;
+        t.poser(x, y, 'tuile', i);
+      }
+    }
+    for (let x = g0 - 1; x <= d0 + 1; x++) for (let y = haut - 3; y < haut; y++) t.poser(x, y, 'tuile', y === haut - 3 ? 5 : 2); // le faîtage
+    // La lucarne
+    const lx = 86, ly = 22, ll = 28, lh = 24;
+    for (let y = ly; y < ly + lh; y++) for (let x = lx; x < lx + ll; x++) t.poser(x, y, 'platre', 4);
+    for (let y = ly + 6; y < ly + lh - 3; y++) for (let x = lx + 8; x < lx + ll - 8; x++) t.poser(x, y, 'vitre', (x - lx) % 6 === 2 || (y - ly) % 6 === 0 ? 2 : 4);
+    for (let y = ly; y < ly + lh; y++) { t.poser(lx, y, 'cheneSombre', 3); t.poser(lx + 1, y, 'cheneSombre', 2); t.poser(lx + ll - 1, y, 'cheneSombre', 1); }
+    for (let k = 0; k < 18; k++) for (let j = -k; j <= k; j++) {
+      const x = lx + ll / 2 + j, y = ly - 15 + k;
+      t.poser(x, y, 'tuile', Math.abs(j) > k - 2 ? (j < 0 ? 4 : 1) : (k % 4 === 3 ? 1 : 3));
+    }
+  }
+  // La cheminée : de brique pour la belle maison, de pierre sinon
+  {
+    const [x0, y0, l, h] = chemineeFacade(n);
+    if (n === 3) for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + l; x++) {
+      const rangee = Math.floor(y / 3), joint = y % 3 === 0 || (x + (rangee % 2) * 3) % 6 === 0;
+      t.poser(x, y, 'brique', joint ? 1 : (x < x0 + 3 ? 4 : 3));
+    }
+    else pierres(t, x0, y0, l, h, 712);
+    for (let x = x0 - 2; x < x0 + l + 2; x++) { t.poser(x, y0, 'pierre', 5); t.poser(x, y0 + 1, 'pierre', 3); }
+  }
   // La fenêtre-comptoir : volets ouverts, vitre éclairée, appui de comptoir
-  const fx = mx + 10, fy = my + 16, fl = 64, fh = 40;
-  for (let y = fy; y < fy + fh; y++) for (let x = fx; x < fx + fl; x++) {
-    const cadre = x < fx + 3 || x >= fx + fl - 3 || y < fy + 3;
-    if (cadre) { t.poser(x, y, 'chene', x < fx + 3 || y < fy + 3 ? 4 : 2); continue; }
-    t.poser(x, y, 'vitre', 3 + Math.round((fbm(x * 0.1, y * 0.1, 707) - 0.5) * 2) + (y < fy + 10 ? 1 : 0));
+  {
+    const [fx, fy, fl, fh] = FACADE.fenetre;
+    if (n > 0) for (let y = fy - 4; y < fy + fh; y++) for (let x = fx - 4; x < fx + fl + 4; x++) {
+      if (y >= fy && x >= fx && x < fx + fl) continue;
+      const d = Math.min(x - fx + 4, fx + fl + 3 - x, y - fy + 4);
+      t.poser(x, y, 'pierre', d < 2 ? 5 : 4); // un encadrement de pierre de taille
+    }
+    for (let y = fy; y < fy + fh; y++) for (let x = fx; x < fx + fl; x++) {
+      const cadre = x < fx + 3 || x >= fx + fl - 3 || y < fy + 3;
+      if (cadre) { t.poser(x, y, 'chene', x < fx + 3 || y < fy + 3 ? 4 : 2); continue; }
+      t.poser(x, y, 'vitre', 3 + Math.round((fbm(x * 0.1, y * 0.1, 708) - 0.5) * 2) + (y < fy + 10 ? 1 : 0) - (n === 0 ? 1 : 0));
+    }
+    for (const [x0] of [[fx - 16], [fx + fl + 4]]) {
+      for (let x = x0; x < x0 + 12; x++) for (let y = fy - 2; y < fy + fh; y++) t.poser(x, y, n === 0 ? 'chene' : 'porteVerte', (x - x0) % 4 === 0 ? 1 : 3);
+      for (const y of [fy + 6, fy + fh - 8]) for (let x = x0 + 2; x < x0 + 10; x++) t.poser(x, y, 'fer', 3);
+    }
+    planche(t, fx - 6, fy + fh, fl + 12, 6, 'chene', { graine: 709, noeuds: 2 });
+    for (let x = fx - 6; x < fx + fl + 6; x++) t.poser(x, fy + fh + 6, 'cheneSombre', 0);
+    for (const x of [fx, fx + fl - 4]) for (let y = fy + fh + 6; y < fy + fh + 13; y++) for (let k = 0; k < 3; k++) t.poser(x + k + (y - fy - fh - 6) * 0.3 * (x === fx ? 1 : -1), y, 'chene', 2);
   }
-  for (const [x0, sens] of [[fx - 12, 1], [fx + fl, -1]]) {               // les volets
-    for (let x = x0; x < x0 + 12; x++) for (let y = fy - 2; y < fy + fh; y++) t.poser(x, y, 'porteVerte', (x - x0) % 4 === 0 ? 1 : 3 + (sens > 0 ? 0 : -1));
-    for (const y of [fy + 6, fy + fh - 8]) for (let x = x0 + 2; x < x0 + 10; x++) t.poser(x, y, 'fer', 3);
+  // La porte : de simples planches pour la chaumière, de chêne cintrée dans un arc de pierre ensuite
+  if (n === 0) {
+    const [px0, py0, pl, ph] = FACADE.porte;
+    for (let x = px0; x < px0 + pl; x += 6) planche(t, x, py0 + 6, Math.min(6, px0 + pl - x), ph - 6, 'chene', { horizontale: false, graine: 713 + x, noeuds: 1 });
+    for (const y of [py0 + 14, py0 + ph - 12]) for (let x = px0 + 1; x < px0 + pl - 1; x++) t.poser(x, y, 'chene', 1);
+    for (let y = py0 + 4; y < py0 + ph; y++) { t.poser(px0 - 1, y, 'chene', 4); t.poser(px0 + pl, y, 'chene', 1); }
+    for (let x = px0 - 2; x < px0 + pl + 2; x++) t.poser(x, py0 + 4, 'chene', 4);
+    t.poser(px0 + pl - 6, py0 + ph / 2, 'fer', 4);
+  } else {
+    const [px0, py0, pl, ph] = FACADE.porte;
+    const cx = px0 + pl / 2, r = pl / 2;
+    for (let y = py0 - 4; y < py0 + ph; y++) for (let x = px0 - 4; x < px0 + pl + 4; x++) {
+      const dy = Math.max(0, py0 + r - y);
+      const d = Math.hypot(x + 0.5 - cx, dy);
+      if (d > r + 4) continue;
+      if (d > r) { t.poser(x, y, 'pierre', 4 + (Math.floor(Math.atan2(dy, x - cx) * 4) % 2)); continue; }
+      t.poser(x, y, 'chene', 3 + (x < cx ? 0 : -1) + ((x - px0) % 6 === 0 ? -1 : 0) + (d > r - 1.5 ? -1 : 0));
+    }
+    for (const y of [py0 + 16, py0 + ph - 14]) for (let x = px0 + 2; x < px0 + pl - 2; x++) t.poser(x, y, 'fer', y % 2 ? 3 : 2);
+    t.forme('laiton', ellipsoide(px0 + pl - 8, py0 + ph / 2 + 4, 2.2, 2.2), { decalage: 0.4 });
   }
-  planche(t, fx - 6, fy + fh, fl + 12, 6, 'chene', { graine: 708, noeuds: 2 });     // l'appui-comptoir
-  for (let x = fx - 6; x < fx + fl + 6; x++) t.poser(x, fy + fh + 6, 'cheneSombre', 0);
-  for (const x of [fx, fx + fl - 4]) for (let y = fy + fh + 6; y < fy + fh + 14; y++) for (let k = 0; k < 3; k++) t.poser(x + k + (y - fy - fh - 6) * 0.3 * (x === fx ? 1 : -1), y, 'chene', 2);
-  // La porte ronde de hobbit, verte, avec son bouton de laiton
-  const px = mx + 126, py = H - 12, r = 19;
-  for (let y = py - r * 2 - 4; y < py; y++) for (let x = px - r - 3; x <= px + r + 3; x++) {
-    const d = Math.hypot(x + 0.5 - px, Math.max(0, py - r - (y + 0.5)));
-    if (d > r + 3) continue;
-    if (d > r) { t.poser(x, y, 'pierre', 2 + Math.round(fbm(x * 0.4, y * 0.4, 709) * 2)); continue; }
-    t.poser(x, y, 'porteVerte', 3 + (x < px ? 0 : -1) + ((x - px + 40) % 7 === 0 ? -1 : 0) + (d > r - 1.5 ? -1 : 0));
+  // Le support de fer de l'enseigne
+  {
+    const [ex, ey] = FACADE.enseigne;
+    for (let x = ex - 6; x < ex + 26; x++) t.poser(x, ey, 'fer', x % 3 ? 3 : 1);
+    for (let k = 0; k < 10; k++) t.poser(ex + 18 - k, ey + k, 'fer', 2);
   }
-  t.forme('laiton', ellipsoide(px, py - r + 2, 2.4, 2.4), { decalage: 0.4 });
-  // Le support de l'enseigne, à gauche
-  for (let x = 2; x < mx + 30; x++) t.poser(x, my + 2, 'fer', x % 3 ? 3 : 1);
-  for (let k = 0; k < 10; k++) t.poser(mx + 2 - k, my + 2 + k, 'fer', 2);
-  // Une jardinière de fleurs sous la fenêtre
-  for (let x = fx; x < fx + fl; x++) if (hachage(x, 1, 710) < 0.5) t.poser(x, fy + fh - 1, hachage(x, 2, 710) < 0.5 ? 'cuirRouge' : 'laiton', 5);
   t.contour();
-  t.texture(scene, 'facadeHD');
+  t.texture(scene, 'facadeHD_' + n);
+}
+
+// Les tonneaux et l'enseigne (communs à toutes les façades).
+function creerAccessoiresFacade(scene) {
+  if (scene.textures.exists('tonneauxHD')) return;
+  // Les tonneaux et la caisse, devant la maison
+  {
+    const b = toileDecor(36, 22);
+    for (const [cx, cy] of [[7, 13], [18, 13]]) {
+      b.forme('chene', (x, y) => { const nx = (x + 0.5 - cx) / 6.5; return Math.abs(nx) < 1 && y >= cy - 9 && y <= cy + 8 ? [nx, 0, Math.sqrt(1 - nx * nx * 0.8) - Math.abs(y - cy) * 0.02] : null; },
+        { motif: (x) => ((x - cx + 10) % 3 === 0 ? -0.5 : 0) });
+      for (const y of [cy - 6, cy + 5]) for (let x = cx - 6; x <= cx + 6; x++) b.poser(x, y, 'fer', 3);
+      b.forme('chene', ellipsoide(cx, cy - 9, 6, 1.6), { decalage: 0.5 });
+    }
+    planche(b, 25, 9, 11, 13, 'chene', { graine: 711, noeuds: 1 });
+    for (let x = 25; x < 36; x++) { b.poser(x, 9, 'chene', 5); b.poser(x, 15, 'chene', 1); }
+    b.contour();
+    b.texture(scene, 'tonneauxHD');
+  }
   // L'enseigne en bois suspendue
   for (let n = 0; n < 4; n++) {
     const e = toileLuxe(60, 18, n);
@@ -274,14 +506,16 @@ function creerFacadeHD(scene) {
 }
 
 // La façade du comptoir, vue de dehors. `cx` = centre, `sol` = bas des murs.
-// Renvoie la position de la porte (et l'image).
-function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT) {
-  creerFacadeHD(scene);
-  const image = scene.add.image(cx, sol + 2, 'facadeHD').setOrigin(0.5, 1).setScale(2);
-  const gauche = cx - 196;
+// Renvoie la porte, l'image, l'enseigne et les zones de la façade (à l'écran).
+function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3) {
+  creerFacadeHD(scene, n);
+  const image = scene.add.image(cx, sol + 2, 'facadeHD_' + n).setOrigin(0.5, 1).setScale(2);
+  const gauche = cx - FACADE.L, haut = sol + 2 - FACADE.H * 2;
+  const ecran = ([x, y, l, h]) => [gauche + x * 2, haut + y * 2, l * 2, h * 2];
+  const tonneaux = scene.add.image(gauche + FACADE.L * 2 - 26, sol + 4, 'tonneauxHD').setOrigin(0, 1).setScale(2);
   // L'enseigne pend à son support, et se balance un peu
   const luxe = window.GAME ? niveauAmelioration(window.GAME, 'comptoir') : 1;
-  const ex = gauche + 30, ey = sol - 284 + 112 + 16;
+  const ex = gauche + (FACADE.enseigne[0] + 6) * 2, ey = haut + FACADE.enseigne[1] * 2;
   const enseigne = scene.add.container(ex, ey);
   const planche = scene.add.image(0, 22, 'enseigneHD_' + luxe).setScale(2).setOrigin(0.5, 0);
   const chaines = scene.add.graphics();
@@ -293,12 +527,18 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   scene.tweens.add({ targets: enseigne, angle: { from: -2.5, to: 2.5 }, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   // Un filet de fumée qui monte de la cheminée
   creerHalo(scene);
+  const [chx, chy, chl] = ecran(chemineeFacade(n));
   scene.time.addEvent({ delay: 700, loop: true, callback: () => {
     if (!image.active) return;
-    const f = scene.add.image(gauche + 294, sol - 284 + 2, 'halo').setScale(0.15).setTint(0xd0d0d0).setAlpha(0.5);
+    const f = scene.add.image(chx + chl / 2, chy, 'halo').setScale(0.15).setTint(0xd0d0d0).setAlpha(0.5);
     scene.tweens.add({ targets: f, y: f.y - 70, x: f.x + 20, scale: 0.45, alpha: 0, duration: 2600, onComplete: () => f.destroy() });
   } });
-  return { porteX: gauche + 2 * 144, porteY: sol, image, enseigne };
+  const [px, , pl] = ecran(FACADE.porte);
+  return {
+    porteX: px + pl / 2, porteY: sol, image, enseigne, tonneaux,
+    zones: { toit: ecran(n >= 2 ? FACADE.toit : [0, 42, 200, 72]), etage: n >= 2 ? ecran(FACADE.etage) : null, fenetre: ecran(FACADE.fenetre), porte: ecran(FACADE.porte),
+      enseigne: [ex - 60, ey + 18, 120, 46] },
+  };
 }
 
 // --- Le Marché des Mastres ---

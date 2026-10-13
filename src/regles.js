@@ -855,6 +855,13 @@ function commanderAmelioration(G, cle) {
   return null;
 }
 
+// Le niveau de la façade (0 : humble chaumière … 3 : belle maison à colombages), qui suit
+// l'ensemble des améliorations du shop.
+function niveauFacade(G) {
+  const total = Object.keys(AMELIORATIONS).reduce((somme, cle) => somme + niveauAmelioration(G, cle), 0);
+  return Math.min(3, Math.floor(total / 4));
+}
+
 // La nuit : les ouvriers installent ce qui a été commandé, le coffre rapporte, on se repose.
 function nuitDuShop(G) {
   G.travauxFinis = [];

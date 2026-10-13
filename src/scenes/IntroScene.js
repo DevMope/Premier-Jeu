@@ -121,6 +121,7 @@ class IntroHistoireScene extends Cinematique {
   create() {
     const G = window.GAME;
     this.f = G.joueur.feminin;
+    creerInterieurHD(this);
     this.e = this.f ? 'e' : '';
     this.cameras.main.fadeIn(600);
 
@@ -226,7 +227,13 @@ class IntroHistoireScene extends Cinematique {
 
     // Le retour, avec un coffre !
     this.mentor.setPosition(1020, 330);
-    const coffre = this.add.image(1020, 220, 'coffre').setScale(6).setDepth(5);
+    const coffre = this.add.image(1020, 220, coffreHD(this, 3)).setScale(2.6).setDepth(5);
+    // (quelques pièces s'en échappent en route)
+    this.time.addEvent({ delay: 260, repeat: 8, callback: () => {
+      if (!coffre.active) return;
+      const p = this.add.image(coffre.x + Phaser.Math.Between(-20, 20), coffre.y - 20, 'pieceFace').setScale(2).setDepth(6);
+      this.tweens.add({ targets: p, y: p.y - 40, x: p.x + Phaser.Math.Between(-30, 30), alpha: 0, angle: 180, duration: 700, onComplete: () => p.destroy() });
+    } });
     this.tweens.add({ targets: coffre, x: 520, duration: 2500 });
     this.ecrire('', "Et puis, un soir, quelqu'un siffla au bout du chemin...");
     await this.marcher(this.mentor, 520, 5);

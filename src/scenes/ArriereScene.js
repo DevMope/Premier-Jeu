@@ -114,7 +114,7 @@ class ArriereScene extends Phaser.Scene {
     const x = 540, y = SOL_ARRIERE + 56;
     const n = Object.values(G.pieges || {}).reduce((a, b) => a + b, 0);
     this.add.image(x, y + 2, 'buffetHD').setOrigin(0.5, 1).setScale(2);
-    bougie(this, x - 26, y - 72, { rayon: 120 }); // une bougie posée sur le buffet
+    bougie(this, x - 26, y - 80, { rayon: 120 }); // une bougie posée sur le buffet
     if (n) {
       // Une lueur violette sous le tiroir du bas...
       const lueur = this.add.rectangle(x, y - 26, 80, 3, 0xc040ff, 0.8);

@@ -238,16 +238,20 @@ function creerInterieurHD(scene) {
 
   // Le vieux buffet : plateau qui déborde, deux tiroirs à poignées de laiton, petits pieds
   {
-    const t = toileDecor(52, 38);
-    planche(t, 0, 0, 52, 4, 'chene', { graine: 530, noeuds: 1 });
-    planche(t, 2, 4, 48, 30, 'cheneSombre', { graine: 531, noeuds: 2 });
-    for (const y0 of [7, 20]) {
+    const t = toileDecor(52, 42);
+    // (tout descend de 4 pixels : un fronton cintré coiffe le buffet)
+    t.forme('chene', (x, y) => { const dx = (x + 0.5 - 26) / 18; return y < 5 && dx * dx + Math.pow((y - 5) / 5, 2) < 1 ? [dx * 0.5, -0.6, 0.7] : null; });
+    planche(t, 0, 4, 52, 4, 'chene', { graine: 530, noeuds: 1 });
+    arrondirCoins(t, 0, 4, 52, 4, 2, { bas: false });
+    planche(t, 2, 8, 48, 30, 'cheneSombre', { graine: 531, noeuds: 2 });
+    arrondirCoins(t, 2, 8, 48, 30, 3, { haut: false });
+    for (const y0 of [11, 24]) {
       planche(t, 5, y0, 42, 11, 'chene', { graine: 532 + y0, noeuds: 1 });
       for (let x = 5; x < 47; x++) { t.poser(x, y0, 'chene', 5); t.poser(x, y0 + 10, 'chene', 1); }
       for (let y = y0; y < y0 + 11; y++) { t.poser(5, y, 'chene', 4); t.poser(46, y, 'chene', 1); }
       t.forme('laiton', ellipsoide(26, y0 + 5.5, 3, 1.4), { decalage: 0.3 });
     }
-    for (const x of [3, 46]) for (let y = 34; y < 38; y++) { t.poser(x, y, 'cheneSombre', 2); t.poser(x + 1, y, 'cheneSombre', 1); t.poser(x + 2, y, 'cheneSombre', 1); }
+    for (const x of [6, 46]) t.forme('cheneSombre', ellipsoide(x, 39.5, 2.6, 2.2), { decalage: 0.5 }); // des pieds en boule
     t.contour();
     t.texture(scene, 'buffetHD');
   }
@@ -313,6 +317,16 @@ function toileLuxe(l, h, n) {
   t.rampes.cheneSombre = BOIS_LUXE[n].sombre;
   if (n === 3) t.rampes.laiton = [0x5a3a08, 0x8a6010, 0xc09020, 0xe8c040, 0xf8e070, 0xfffcd0];
   return t;
+}
+
+// Arrondit les coins d'un rectangle de la toile (efface les pixels hors des quarts de cercle).
+function arrondirCoins(t, x0, y0, l, h, r, { haut = true, bas = true } = {}) {
+  for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + l; x++) {
+    const dx = x < x0 + r ? x0 + r - x - 0.5 : x >= x0 + l - r ? x - (x0 + l - r) + 0.5 : 0;
+    const dy = y < y0 + r ? y0 + r - y - 0.5 : y >= y0 + h - r ? y - (y0 + h - r) + 0.5 : 0;
+    if (!dx || !dy || (y < y0 + r && !haut) || (y >= y0 + h - r && !bas)) continue;
+    if (dx * dx + dy * dy > r * r) { t.c[y * t.l + x] = null; t.m[y * t.l + x] = null; }
+  }
 }
 
 // Des moulures : un creux sombre et un filet clair, le long d'une pièce de bois.
@@ -419,6 +433,7 @@ function litHD(scene, n) {
     planche(t, 6, b + 38, L - 12, 5, 'chene', { graine: 560, noeuds: 3 });
     t.forme('chanvre', (x, y) => (x >= 8 && x < L - 8 && y >= b + 28 && y <= b + 38 ? [0, (y - b - 31) / 9, 0.85] : null),
       { motif: (x, y) => (hachage(x, y, 561) < 0.3 ? 0.6 : hachage(x, y, 562) < 0.2 ? -0.6 : 0) });
+    arrondirCoins(t, 8, b + 28, L - 16, 11, 5); // une paillasse bien rebondie
     t.forme('toile', (x, y) => { const nx = (x + 0.5 - 24) / 12, ny = (y + 0.5 - b - 26) / 4.5; return nx * nx + ny * ny < 1 ? [nx * 0.7, ny, 0.7] : null; });
     t.contour();
     t.texture(scene, cle);
@@ -430,8 +445,14 @@ function litHD(scene, n) {
   planche(t, 9, b + 8, 6, 30, 'cheneSombre', { horizontale: false, graine: 561 });
   planche(t, L - 9, b + 22, 9, 40, 'chene', { horizontale: false, graine: 562, noeuds: 1 });
   if (n === 1) {
+    // Une tête de lit cintrée, un pied de lit arrondi
+    t.forme('chene', (x, y) => {
+      const dx = (x + 0.5 - 18) / 18, dy = (y + 0.5 - b - 14) / 10;
+      return x >= 0 && x < 36 && y >= b + 4 && y < b + 30 && (y >= b + 14 || dx * dx + dy * dy < 1) ? [0, -0.3, 0.85] : null;
+    });
+    moulure(t, 3, b + 26, 30, 0);
     t.forme('chene', ellipsoide(4.5, b + 3.5, 4, 3.5), { decalage: 0.3 });
-    t.forme('chene', ellipsoide(L - 4.5, b + 21, 4, 3.5), { decalage: 0.3 });
+    t.forme('chene', (x, y) => { const dx = (x + 0.5 - (L - 4.5)) / 4.5; return y >= b + 17 && y < b + 24 && Math.abs(dx) < 1 && y >= b + 17 + dx * dx * 3 ? [dx, -0.3, 0.8] : null; }, { decalage: 0.3 });
   } else {
     // Un panneau sculpté en arc derrière l'oreiller
     t.forme('chene', (x, y) => {
@@ -506,12 +527,22 @@ function chevetHD(scene, n) {
   const cle = 'chevetHD_' + n;
   if (scene.textures.exists(cle)) return cle;
   const t = toileLuxe(36, 32, n);
-  planche(t, 0, 0, 36, 4, 'chene', { graine: 580, noeuds: 1 });
-  planche(t, 3, 4, 30, 10, 'cheneSombre', { graine: 581 });
-  for (let x = 6; x < 30; x++) { t.poser(x, 5, 'chene', 4); t.poser(x, 12, 'chene', 1); }
-  if (n) t.forme('laiton', ellipsoide(18, 8.5, 2, 1.2));
-  for (const x of [4, 29]) planche(t, x, 14, 3, 18, 'chene', { horizontale: false, graine: 582 + x });
-  if (n >= 2) { moulure(t, 0, 1, 36, 0); for (let x = 3; x < 33; x++) t.poser(x, 14, 'laiton', n === 3 ? 4 : 2); }
+  // Les pieds tournés, un peu évasés, avec leurs renflements
+  for (const [x0, sens] of [[6, -1], [29, 1]]) for (let y = 13; y < 32; y++) {
+    const v = (y - 13) / 19, larg = 1.2 + Math.abs(Math.sin(v * Math.PI * 2.2)) * 1.1;
+    const cx = x0 + sens * v * 2;
+    for (let x = Math.floor(cx - larg); x <= cx + larg; x++) t.poser(x, y, 'chene', x < cx ? 4 : 2);
+  }
+  // Le caisson et son tiroir, aux coins arrondis
+  planche(t, 4, 4, 28, 11, 'cheneSombre', { graine: 581 });
+  arrondirCoins(t, 4, 4, 28, 11, 3, { haut: false });
+  for (let x = 8; x < 28; x++) { t.poser(x, 6, 'chene', 4); t.poser(x, 12, 'chene', 1); }
+  for (let y = 6; y < 13; y++) { t.poser(8, y, 'chene', 4); t.poser(27, y, 'chene', 1); }
+  t.forme(n ? 'laiton' : 'chene', ellipsoide(18, 9.5, 1.6, 1.4), { decalage: 0.4 });
+  // Le plateau, arrondi aux deux bouts
+  t.forme('chene', (x, y) => (y >= 0 && y <= 4 && Math.abs(x + 0.5 - 18) < 18 - Math.max(0, Math.abs(y - 2) - 1) * 1.5 ? [(x + 0.5 - 18) / 30, (y - 2) / 3, 0.85] : null),
+    { motif: (x, y) => (y === 0 ? 0.6 : 0) });
+  if (n >= 2) for (let x = 3; x < 33; x++) t.poser(x, 4, 'laiton', n === 3 ? 4 : 2);
   t.contour();
   t.texture(scene, cle);
   return cle;

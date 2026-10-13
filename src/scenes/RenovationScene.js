@@ -143,10 +143,13 @@ class RenovationScene extends Cinematique {
     dessinerComte(g, o, 0, 960, 470, 0.15);
     const sol = this.add.image(o, 470, pavesHD(this, 960, 70)).setOrigin(0).setScale(2);
     const f = dessinerFacade(this, o + 520, 470, this.G.nomShop);
-    this.endroit('facade', 'Le toit', [f.image], [o + 324, 186, 392, 120], { toiles: 3 });
-    this.endroit('facade', 'La fenêtre', [], [o + 380, 330, 128, 80], { planches: true, toiles: 1 });
-    this.endroit('facade', "L'enseigne", [], [o + 294, 326, 120, 50], { toiles: 0, cache: [f.enseigne] });
-    this.endroit('facade', 'La porte', [], [o + 572, 362, 80, 84], { planches: true, toiles: 1 });
+    const z = f.zones;
+    this.porteFacade = f.porteX;
+    this.endroit('facade', 'Le toit', [f.image], z.toit, { toiles: 3 });
+    if (z.etage) this.endroit('facade', "L'étage", [], z.etage, { toiles: 2 });
+    this.endroit('facade', 'La fenêtre', [], z.fenetre, { planches: true, toiles: 1 });
+    this.endroit('facade', "L'enseigne", [], z.enseigne, { toiles: 0, cache: [f.enseigne] });
+    this.endroit('facade', 'La porte', [f.tonneaux], z.porte, { planches: true, toiles: 1 });
     this.endroit('facade', 'Le chemin', [sol], [o, 470, 960, 70], { toiles: 0 });
   }
 
@@ -186,7 +189,7 @@ class RenovationScene extends Cinematique {
     this.endroit('arriere', 'Les murs et le plancher', [mur, sol], [o + 560, 230, 260, 200], { toiles: 3 });
     this.endroit('arriere', "L'étagère", [etagere], [o + 20, 76, 512, 364], { toiles: 3 });
     this.endroit('arriere', 'Le coffre', [coffre], [o + 636, 362, 108, 84], { toiles: 1 });
-    this.endroit('arriere', 'Le vieux buffet', [buffet], [o + 488, 422, 104, 76], { toiles: 1 });
+    this.endroit('arriere', 'Le vieux buffet', [buffet], [o + 488, 414, 104, 84], { toiles: 1 });
     this.endroit('arriere', 'La porte de la chambre', [porte], [o + 854, 272, 92, 168], { toiles: 1 });
     this.endroit('arriere', 'Le panier', [panier], [o + 282, 436, 96, 60], { toiles: 0 });
     this.endroit('arriere', 'La lumière', [lum.image], [o + 610, 100, 60, 80], { toiles: 0, cache: lum.halos });
@@ -234,6 +237,7 @@ class RenovationScene extends Cinematique {
     // ... et l'endroit retrouve sa beauté
     e.propre = true;
     e.cible.disableInteractive();
+    if (e.indice) { e.indice.destroy(); e.indice = null; }
     this.tweens.add({ targets: e.sales, alpha: 0, duration: 500 });
     e.ajouts.forEach((a, i) => this.tweens.add({ targets: a, y: a.y + 300, angle: a.angle + 40, alpha: 0, duration: 700, delay: i * 60, ease: 'Quad.easeIn' }));
     e.cache.forEach(c => this.tweens.add({ targets: c, alpha: c.texture && c.texture.key === 'halo' ? 0.5 : 1, duration: 500 }));
@@ -262,10 +266,19 @@ class RenovationScene extends Cinematique {
     boite.forEach(o => o.setVisible(false));
     this.bulle.setText(`${this.entete.text} : ${this.texte.text}`).setVisible(true);
     // Les endroits encore sales clignotent doucement, pour aider à les trouver
+    // Chaque endroit à nettoyer est entouré d'un cadre doré qui pulse, avec un petit balai
     for (const e of this.endroits[lieu]) {
       const [zx, zy, zl, zh] = e.zone;
-      e.indice = this.add.image(zx + zl / 2, zy + zh / 2, 'eclat').setScale(2).setAlpha(0).setDepth(5);
-      this.tweens.add({ targets: e.indice, alpha: 0.9, duration: 700, yoyo: true, repeat: -1, delay: Math.random() * 700, hold: 200 });
+      const c = this.add.container(0, 0).setDepth(5);
+      const cadre = this.add.graphics();
+      cadre.lineStyle(4, 0x1a0e06, 0.6).strokeRoundedRect(zx + 2, zy + 2, zl - 4, zh - 4, 8);
+      cadre.lineStyle(2, 0xffd860, 1).strokeRoundedRect(zx + 2, zy + 2, zl - 4, zh - 4, 8);
+      const balai = this.add.text(zx + zl / 2, zy + Math.min(zh / 2, 40), '🧹', style(26, '#ffffff')).setOrigin(0.5);
+      const nom = this.add.text(zx + zl / 2, zy + Math.min(zh / 2, 40) + 26, e.nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5);
+      c.add([cadre, balai, nom]);
+      this.tweens.add({ targets: cadre, alpha: 0.35, duration: 650, yoyo: true, repeat: -1 });
+      this.tweens.add({ targets: balai, angle: { from: -15, to: 15 }, y: balai.y - 4, duration: 420, yoyo: true, repeat: -1, delay: Math.random() * 400 });
+      e.indice = c;
     }
     return new Promise(resoudre => {
       this.finLieu = () => {
@@ -309,7 +322,7 @@ class RenovationScene extends Cinematique {
     await this.renover('facade');
     if (this.fini) return;
     // La porte grince...
-    this.onomatopee(LIEUX_RENOVATION.facade + 612, 380, 'Griiiiinc...', '#c8c0b0');
+    this.onomatopee(this.porteFacade, 380, 'Griiiiinc...', '#c8c0b0');
     this.ecrire(garrick, '« Ha ! Déjà beaucoup mieux. Entrons... attention à la poussière. »');
     await this.attendre(1300);
     if (this.fini) return;
@@ -341,7 +354,28 @@ class RenovationScene extends Cinematique {
       .setOrigin(0.5).setScrollFactor(0).setDepth(20).setAlpha(0);
     await this.animer({ targets: this.cameras.main, alpha: 1, duration: 600 });
     this.tweens.add({ targets: titre, alpha: 1, duration: 600, hold: 2200, yoyo: true });
-    await this.animer({ targets: this.cameras.main, scrollX: 2880, duration: 10000, ease: 'Sine.easeInOut' });
+    // Comme si l'on tournait la tête : des bandes noires de cinéma, des poteaux au premier plan qui
+    // défilent plus vite que les pièces (la profondeur), un léger recul de la caméra à chaque passage,
+    // et une pause au milieu de chaque pièce.
+    const bandes = [0, 540].map(y => this.add.rectangle(480, y, 960, 70, 0x000000).setScrollFactor(0).setDepth(19));
+    this.tweens.add({ targets: bandes[0], y: 20, duration: 800 });
+    this.tweens.add({ targets: bandes[1], y: 520, duration: 800 });
+    const vignetteVisite = vignette(this, 0.55, 18).setScrollFactor(0);
+    const pf = 1.4;
+    for (const J of [960, 1920, 2880]) {
+      const x = 480 + (J - 480) * pf;
+      const poteau = this.add.image(x, 0, 'murComptoir').setOrigin(0.5, 0).setCrop(140, 0, 9, 170).setScale(5, 3.2).setScrollFactor(pf, 1).setDepth(17).setTint(0x3a2a1c);
+      poteau.setPosition(x - 140 * 5 - 22, 0);
+    }
+    for (const centre of [960, 1920, 2880]) {
+      this.tweens.add({ targets: this.cameras.main, zoom: 0.93, duration: 1300, yoyo: true, ease: 'Sine.easeInOut' });
+      await this.animer({ targets: this.cameras.main, scrollX: centre, duration: 2600, ease: 'Sine.easeInOut' });
+      if (this.fini) return;
+      await this.attendre(centre === 2880 ? 200 : 900);
+    }
+    this.tweens.add({ targets: bandes[0], y: -40, duration: 600 });
+    this.tweens.add({ targets: bandes[1], y: 580, duration: 600 });
+    this.tweens.add({ targets: vignetteVisite, alpha: 0, duration: 600 });
     if (this.fini) return;
     // Devant la façade, tout le monde est fier
     this.heros.setPosition(2880 + 230, 470).setVisible(true).setFlipX(false);
