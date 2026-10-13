@@ -160,12 +160,17 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0) {
   if (race === 'hobbit') for (const sens of [-1, 1]) t.forme('peau', ellipsoide(cx + sens * 4.5, cy + 3.5, 2.6, 2), { decalage: 0.3, bord: false });
 
   // Le visage
-  const ey = cy + 1;
-  for (const sens of [-1, 1]) {
+  const ey = Math.round(cy + 1); // arrondi : les nains (tête de 8,6) n'avaient pas d'yeux du tout
+  // Les yeux (reposés à la fin, pour que ni casque, ni cheveux, ni barbe ne les cachent)
+  const yeux = () => { for (const sens of [-1, 1]) {
     const ox = sens < 0 ? cx - 5 : cx + 3;
     t.poser(ox, ey, 'oeil', 4); t.poser(ox + 1, ey, 'iris', 2);
     t.poser(ox, ey + 1, 'iris', 1); t.poser(ox + 1, ey + 1, 'iris', 1);
     t.poser(sens < 0 ? ox + 1 : ox, ey, 'oeil', 5);
+  } };
+  yeux();
+  for (const sens of [-1, 1]) {
+    const ox = sens < 0 ? cx - 5 : cx + 3;
     for (let k = -1; k <= 2; k++) t.poser(ox + k, ey - 2 + (costume === 'gobelin' ? (sens < 0 ? (k < 1 ? 1 : 0) : (k > 0 ? 1 : 0)) : 0), 'cheveux', 1);
     if (f) t.poser(sens < 0 ? ox - 1 : ox + 2, ey - 1, 'cheveux', 0);
   }
@@ -249,6 +254,7 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0) {
     t.forme('metal', (x, y) => { const n = ellipsoide(cx, cy - 2, P.rx + 0.8, P.ry)(x, y); return n && y <= cy - 4 ? n : null; }, { decalage: 0.2 });
     for (const sens of [-1, 1]) for (let k = 0; k < 4; k++) t.poser(Math.round(cx + sens * (P.rx + k)), Math.round(cy - 5 - k * 0.8), 'lin', 4 - (k > 2 ? 1 : 0));
   }
+  if (costume !== 'mendiant') yeux();
 
   t.contour();
   return t;

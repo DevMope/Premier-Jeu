@@ -25,7 +25,7 @@ class ExpressScene extends Phaser.Scene {
     }
     // Le gobelin, recroquevillé, qui se frotte les mains
     this.gobelin = imageCorps(this, 440, 435, 'gobelin', 8).setAngle(14);
-    this.tweens.add({ targets: this.gobelin, angle: 18, scaleY: 7.7, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: this.gobelin, angle: 18, scaleY: this.gobelin.scaleY * 0.96, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
     this.add.text(30, 22, MARCHAND_EXPRESS.nom, style(26, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }));
     this.add.text(30, 58, 'Marchand express · tout de suite, sur ton comptoir · bien plus cher', style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 }));

@@ -152,14 +152,14 @@ class BureauScene extends Phaser.Scene {
       c.add(this.add.text(161, 200, vide, style(13, '#6b4a2a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 230 } })).setOrigin(0.5));
     }
     fiches.slice(this.pageListe * FICHES_PAR_PAGE, (this.pageListe + 1) * FICHES_PAR_PAGE).forEach((f, i) => {
-      const y = 104 + i * 34;
+      const y = 104 + i * 36;
       const fond = this.add.rectangle(161, y, 252, 32, 0xffffff, 0).setInteractive({ useHandCursor: true });
       fond.on('pointerover', () => fond.setFillStyle(0xd8c498, 1));
       fond.on('pointerout', () => fond.setFillStyle(0xffffff, 0));
       fond.on('pointerdown', () => this.afficherFiche(f));
       c.add([fond, imageCorps(this, 48, y + 14, f.race === 'faucheuse' ? 'faucheuse' : { nom: f.nom, race: f.race, niveau: (this.G.personnes[f.nom] || {}).niveau }, 1.8),
         this.add.text(66, y - 13, f.nom, style(13, couleurNom(this.G, f.nom), { fontStyle: 'bold' })),
-        this.add.text(66, y + 3, f.ligne, style(10, '#5a3a20', { wordWrap: { width: 220 } }))]);
+        this.add.text(66, y + 3, raccourcir(f.ligne, 34), style(10, '#5a3a20'))]);
     });
     if (pages > 1) {
       const nav = (x, texte, sens) => {

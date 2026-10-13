@@ -22,12 +22,20 @@ class NightScene extends Phaser.Scene {
     vignette(this, 0.85, 0);
     poserLuminaire(this, 480, -40, niveauAmelioration(G, 'eclairage'), 0);
     this.add.text(480, 34, this.matin ? `Matin du jour ${G.jour} · chez toi` : `Soir du jour ${G.jour}`, style(30, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5);
+    // La dette, bien en vue en haut de l'écran
+    if (G.prets.length) {
+      const dette = G.prets.reduce((a, p) => a + p.restant, 0);
+      const echeance = G.prets.reduce((a, p) => a + Math.min(p.parJour, p.restant), 0);
+      const note = this.add.text(190, 40, `📜 Dette : ${dette} p. · −${echeance} cette nuit`, style(15, '#8a1a1a', {
+        fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 10, y: 5 } })).setOrigin(0.5).setAngle(-2).setDepth(5);
+      this.tweens.add({ targets: note, angle: 2, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
     this.texteArgent = this.add.text(940, 34, '', style(20, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(1, 0.5);
 
     this.parchemin(20, 300, this.matin ? "Aujourd'hui" : 'La journée');
     this.parchemin(320, 640, 'Ta réserve');
     this.parchemin(660, 940, 'Lettres reçues');
-    this.add.text(800, 108, 'Une lettre acceptée = un client EN PLUS, le jour dit', style(12, '#8a3a1a', { fontStyle: 'bold italic' })).setOrigin(0.5);
+    this.add.text(800, 108, '1 lettre acceptée = 1 client EN PLUS', style(12, '#8a3a1a', { fontStyle: 'bold italic' })).setOrigin(0.5);
     this.creerReserve(320, 640);
     this.creerPrevision(660, 940);
 
@@ -45,7 +53,7 @@ class NightScene extends Phaser.Scene {
     this.events.off('resume', this.tout, this);
     this.events.on('resume', this.tout, this);
     this.tout();
-    afficherStatutSauvegarde(this, 20, 22, 0);
+    afficherStatutSauvegarde(this, 940, 60, 1);
     if (!this.matin) this.time.delayedCall(600, () => conseilGarrick(this, 'soir'));
   }
 
@@ -114,15 +122,16 @@ class NightScene extends Phaser.Scene {
     c.add(this.add.text(x1 + 18, 112, lignes.join('\n'), style(14, '#3b2410', { lineSpacing: 5 })));
 
     const dettes = G.prets.map(p => `${p.nom} : reste ${p.restant} (−${p.parJour}/nuit)`);
-    c.add(this.add.text(x1 + 18, 262, 'Prêts en cours', style(14, '#3b2410', { fontStyle: 'bold' })));
-    c.add(this.add.text(x1 + 18, 282, listeCourte(dettes, 2, 'Aucun'), style(12, '#5a3a20', { lineSpacing: 2 })));
-    if (G.argent < 0) {
-      c.add(this.add.text(x1 + 18, 318, `À découvert ! Faillite à ${SEUIL_FAILLITE} pièces.`, style(12, '#a03030', { fontStyle: 'bold' })));
+    c.add(this.add.text(x1 + 18, 290, 'Prêts en cours', style(14, '#3b2410', { fontStyle: 'bold' })));
+    c.add(this.add.text(x1 + 18, 310, listeCourte(dettes, 2, 'Aucun'), style(12, '#5a3a20', { lineSpacing: 2 })));
+    const retards = Math.max(0, ...G.prets.map(p => p.retards || 0));
+    if (retards) {
+      c.add(this.add.text(x1 + 18, 330, `Impayé ${retards}/${RETARDS_FAILLITE} : faillite à ${RETARDS_FAILLITE} !`, style(12, '#a03030', { fontStyle: 'bold' })));
     }
 
-    c.add(this.add.text(x1 + 18, 340, 'En mission', style(14, '#3b2410', { fontStyle: 'bold' })));
+    c.add(this.add.text(x1 + 18, 352, 'En mission', style(14, '#3b2410', { fontStyle: 'bold' })));
     const missions = enMission(G).map(p => `${p.voyageur.nom} — jour ${p.retour}`);
-    c.add(this.add.text(x1 + 18, 360, listeCourte(missions, 5, 'Personne'), style(12, '#5a3a20', { lineSpacing: 2 })));
+    c.add(this.add.text(x1 + 18, 372, listeCourte(missions, 4, 'Personne'), style(12, '#5a3a20', { lineSpacing: 2 })));
   }
 
   // --- Ta réserve (on achète le matin, au Marché des Mastres) ---

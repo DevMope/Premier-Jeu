@@ -368,7 +368,7 @@ class RenovationScene extends Cinematique {
       poteau.setPosition(x - 140 * 5 - 22, 0);
     }
     for (const centre of [960, 1920, 2880]) {
-      this.tweens.add({ targets: this.cameras.main, zoom: 0.93, duration: 1300, yoyo: true, ease: 'Sine.easeInOut' });
+      // (le léger recul de caméra est remplacé par le défilé des poteaux au premier plan)
       await this.animer({ targets: this.cameras.main, scrollX: centre, duration: 2600, ease: 'Sine.easeInOut' });
       if (this.fini) return;
       await this.attendre(centre === 2880 ? 200 : 900);

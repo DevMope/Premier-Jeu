@@ -730,20 +730,27 @@ function montantsDedommagement(voyageur) {
   return m;
 }
 
-// Le dédommagement est obligatoire. Il peut faire passer à découvert (et jusqu'à la faillite).
+// Le dédommagement est obligatoire, mais on ne donne jamais plus que ce qu'on a : si la bourse
+// ne suffit pas, la famille repart avec tout ce qu'on a pu donner, et la réputation en souffre.
 // Selon sa générosité, la réputation remonte un peu, et un proche viendra peut-être reprendre la quête.
+// Renvoie la somme réellement versée.
 function dedommager(G, parti, niveau) {
-  if (parti.dedommage) return;
+  if (parti.dedommage) return 0;
   const v = parti.voyageur;
   const d = DEDOMMAGEMENTS[niveau];
   parti.dedommage = niveau;
-  payer(G, montantsDedommagement(v)[niveau], 'dedommagements');
-  G.reputation += d.reputation;
-  if (Math.random() < d.releve) return ajouterVisite(G, v, parti.resultat.valeureux, 'releve');
+  const prevu = montantsDedommagement(v)[niveau];
+  const verse = Math.min(prevu, Math.max(0, G.argent));
+  payer(G, verse, 'dedommagements');
+  G.reputation += verse < prevu ? -0.5 : d.reputation;
+  parti.verse = verse;
+  if (verse < prevu) return verse;
+  if (Math.random() < d.releve) { ajouterVisite(G, v, parti.resultat.valeureux, 'releve'); return verse; }
   const pts = G.relations[v.nom] || 0;
   if (Math.random() < (Math.abs(pts) >= 3 ? 0.6 : 0.3)) {
     ajouterVisite(G, v, parti.resultat.valeureux, intentionFamille(pts, parti.resultat.valeureux, niveau));
   }
+  return verse;
 }
 
 function ajouterVisite(G, voyageur, valeureux, intention) {
@@ -893,11 +900,19 @@ function emprunter(G, pret) {
 }
 
 // Chaque nuit, les échéances des prêts sont prélevées.
+// On paie ce qu'on peut, sans jamais passer à découvert. Ce qui manque reste dû, avec une
+// pénalité ; après RETARDS_FAILLITE échéances manquées d'affilée, c'est la faillite.
 function payerEcheances(G) {
   for (const p of G.prets) {
-    const montant = Math.min(p.parJour, p.restant);
+    const du = Math.min(p.parJour, p.restant);
+    const montant = Math.min(du, Math.max(0, G.argent));
     payer(G, montant, 'remboursements');
     p.restant -= montant;
+    const manque = du - montant;
+    if (manque > 0) {
+      p.retards = (p.retards || 0) + 1;
+      p.restant += Math.ceil(manque * PENALITE_RETARD);
+    } else p.retards = 0;
   }
   G.prets = G.prets.filter(p => p.restant > 0);
 }
@@ -940,8 +955,8 @@ function journeeSuivante(G) {
 function nuit(G) {
   payerEcheances(G);
   // Les employés sont payés chaque nuit.
-  for (const id of G.employes) payer(G, EMPLOYES[id].salaire, 'salaires');
-  if (G.argent <= SEUIL_FAILLITE) {
+  for (const id of G.employes) payer(G, Math.min(EMPLOYES[id].salaire, Math.max(0, G.argent)), 'salaires');
+  if (G.argent <= SEUIL_FAILLITE || G.prets.some(p => (p.retards || 0) >= RETARDS_FAILLITE)) {
     G.faillite = true;
     return;
   }

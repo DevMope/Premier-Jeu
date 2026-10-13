@@ -260,7 +260,8 @@ class CounterScene extends Phaser.Scene {
       const cle = iconeObjet(this, id);
       const pile = [2, 1, 0].map(k => this.add.image(x - 28 - k * 3, y + 3 - k * 4, cle).setScale(2));
       const icone = pile[2];
-      this.add.text(x - 8, y - 18, ITEMS[id].nom, style(10, '#3a2410', { fontStyle: 'bold', wordWrap: { width: 58 } }));
+      const nom = this.add.text(x - 8, y - 18, ITEMS[id].nom, style(10, '#3a2410', { fontStyle: 'bold' }));
+      for (let taille = 12; nom.width > 60 && taille >= 9; taille--) nom.setFontSize(taille); // les noms longs rapetissent un peu
       // La quantité, sur une petite étiquette de parchemin
       this.add.image(x + 32, y + 12, 'etiquette').setScale(2);
       const qte = this.add.text(x + 33, y + 12, '', style(12, '#3a2410', { fontStyle: 'bold' })).setOrigin(0.5);
@@ -568,11 +569,12 @@ class CounterScene extends Phaser.Scene {
     if (this.paroles) this.paroles.remove();
     this.enTrainDeParler = true;
     let ouverte = false, temps = 0;
-    this.paroles = this.time.addEvent({ delay: 110, loop: true, callback: () => {
+    const paroles = this.paroles = this.time.addEvent({ delay: 110, loop: true, callback: () => {
+      if (this.paroles !== paroles) { paroles.remove(); return; } // interrompu (il s'est retourné)
       temps += 110;
       ouverte = temps < duree && !ouverte;
       this.majVisage(ouverte);
-      if (temps >= duree) { this.paroles.remove(); this.paroles = null; this.enTrainDeParler = false; this.majVisage(); }
+      if (temps >= duree) { paroles.remove(); this.paroles = null; this.enTrainDeParler = false; this.majVisage(); }
     } });
   }
 

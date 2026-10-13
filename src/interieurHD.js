@@ -496,8 +496,19 @@ function couvertureHD(scene, n) {
   if (scene.textures.exists(cle)) return cle;
   const L = 120, H = 26;
   const t = toileLuxe(L, H, n);
+  // La couverture épouse le dormeur : bosses des épaules, des hanches et des pieds, coins
+  // arrondis, et le drap retourné près de l'oreiller.
+  const bosse = x => 5.5 * Math.exp(-(((x - 26) / 13) ** 2)) + 4 * Math.exp(-(((x - 68) / 16) ** 2)) + 3 * Math.exp(-(((x - 106) / 8) ** 2));
+  const haut = x => Math.round(9 - bosse(x));
   for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
-    const ombre = (y > H - 4 ? -1 : 0) + (y < 2 ? 1 : 0);
+    const yh = haut(x);
+    if (y < yh) continue;
+    const coin = Math.min(x, L - 1 - x);
+    if (coin < 3 && y > H - 4 + coin) continue;
+    if (x > L - 4 && y < yh + (L - x)) continue;
+    const pente = haut(x + 1) - haut(x - 1);
+    let ombre = (y > H - 4 ? -1 : 0) + (y <= yh + 1 ? 1 : 0) + (pente > 0 ? 1 : pente < 0 ? -1 : 0) + ((x + y * 3) % 23 === 0 ? -1 : 0);
+    if (x < 9) { t.poser(x, y, 'lin', 4 + (x === 8 ? -2 : 0) + (y <= yh + 1 ? 1 : 0)); continue; } // le drap retourné
     if (n === 0) {
       t.poser(x, y, 'chanvre', 3 + ombre + (y % 8 < 2 ? -1 : 0) + Math.round((fbm(x * 0.2, y * 0.2, 575) - 0.5)));
     } else if (n === 1) {

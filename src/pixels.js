@@ -395,8 +395,24 @@ function creerToutesLesTextures(scene) {
 // Alegreya (Google Fonts) : une police à l'ancienne mais très lisible ; Georgia si elle manque.
 const POLICE = '"Alegreya", Georgia, "Times New Roman", serif';
 
+// Le style des textes. Pour qu'on lise sans plisser les yeux, les petits textes sont
+// grossis, et la police est plus épaisse : medium (500) au lieu de normale, extra-gras (800)
+// au lieu de gras. Les boutons gardent leur style à eux (`brut`).
 function style(taille, couleur = '#f3e6c8', extra = {}) {
-  return { fontFamily: POLICE, fontSize: taille + 'px', color: couleur, resolution: 3, ...extra };
+  const { brut, ...reste } = extra;
+  let fontStyle = reste.fontStyle || '';
+  if (!brut) {
+    taille = taille <= 12 ? taille + 2 : taille <= 16 ? taille + 1 : taille;
+    const italique = /italic/.test(fontStyle);
+    const gras = /bold/.test(fontStyle);
+    fontStyle = `${italique ? 'italic ' : ''}${gras ? 800 : 500}`;
+  }
+  return { fontFamily: POLICE, fontSize: taille + 'px', color: couleur, resolution: 3, ...reste, fontStyle };
+}
+
+// Coupe un texte trop long (avec « … »).
+function raccourcir(texte, max) {
+  return texte.length > max ? texte.slice(0, max - 1).trimEnd() + '…' : texte;
 }
 
 // Bouton en bois cliquable. Renvoie un objet avec setActif(bool).
@@ -405,7 +421,7 @@ function creerBouton(scene, x, y, largeur, texte, action) {
   // il s'enfonce quand on appuie.
   const cle = plaqueBouton(scene, largeur);
   const fond = scene.add.image(x, y, cle).setScale(2).setInteractive({ useHandCursor: true });
-  const label = scene.add.text(x, y, texte, style(18, '#fff0d0', { fontStyle: 'bold', stroke: '#24140a', strokeThickness: 4 })).setOrigin(0.5);
+  const label = scene.add.text(x, y, texte, style(18, '#fff0d0', { fontStyle: 'bold', stroke: '#24140a', strokeThickness: 4, brut: true })).setOrigin(0.5);
   label.setShadow(0, 2, '#120a04', 0, true, true); // comme gravé dans le bois
   let actif = true, survol = false;
   const repos = () => {

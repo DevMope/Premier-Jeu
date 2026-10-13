@@ -18,7 +18,7 @@ class MarcheScene extends Phaser.Scene {
     // Le fond de la vue d'ensemble : le ciel, les collines, et la grand-place pavée
     const fondVue = this.add.graphics();
     dessinerComte(fondVue, 0, 0, 960, VUE_MARCHE.y + 300 * VUE_MARCHE.echelle, 0.05);
-    this.add.image(0, VUE_MARCHE.y + 250 * VUE_MARCHE.echelle, pavesHD(this, 960, 220)).setOrigin(0).setScale(2);
+    this.add.image(0, VUE_MARCHE.y + 182 * VUE_MARCHE.echelle, pavesHD(this, 960, 260)).setOrigin(0).setScale(2);
     creerLieuxMarcheHD(this);
     this.etiquettesRue = [];
 
@@ -28,7 +28,8 @@ class MarcheScene extends Phaser.Scene {
     this.monde.add(g);
     dessinerComte(g, 0, 0, LARGEUR_MARCHE, 300, 0.05);
     this.paysageRue = g.paysage;
-    this.monde.add(this.add.image(0, 250, pavesHD(this, LARGEUR_MARCHE, 50)).setOrigin(0).setScale(2));
+    this.paveRue = this.add.image(0, 250, pavesHD(this, LARGEUR_MARCHE, 50)).setOrigin(0).setScale(2);
+    this.monde.add(this.paveRue);
     this.add.text(480, 22, `Le Marché des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setDepth(5);
 
     // Les étals, les enchères, les jeux et le mendiant
@@ -52,7 +53,7 @@ class MarcheScene extends Phaser.Scene {
       for (const [i, id] of ['amulette', 'epee'].entries()) this.add.image(1184 + i * 70, 208, iconeObjet(this, id)).setOrigin(0.5, 1).setScale(1.6);
       this.etiquettesRue.push(this.add.text(1220, 262, 'Les enchères', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
       this.add.rectangle(1220, 200, 150, 110, 0xffffff, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirEncheres());
-      this.monde.add(this.children.list.slice(avant));
+      this.grouper(avant, 1220);
     }
     // Le coin des jeux : un auvent violet, Grippesou derrière sa table de dés et de gobelets
     {
@@ -63,7 +64,7 @@ class MarcheScene extends Phaser.Scene {
       this.add.image(1410, 250, 'tableJeux').setOrigin(0.5, 1).setScale(2);
       this.etiquettesRue.push(this.add.text(1410, 262, 'Le coin des jeux', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
       this.add.rectangle(1410, 200, 150, 110, 0xffffff, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirJeux());
-      this.monde.add(this.children.list.slice(avant));
+      this.grouper(avant, 1410);
     }
     // Le crieur, sur son estrade, à côté de sa cloche
     {
@@ -74,7 +75,7 @@ class MarcheScene extends Phaser.Scene {
       this.add.text(1604, 230, 'NOUVELLES\nDU JOUR', style(11, '#ffe9a0', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3, align: 'center', lineSpacing: -2 })).setOrigin(0.5);
       this.etiquettesRue.push(this.add.text(1600, 262, 'Le crieur', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
       this.add.rectangle(1600, 200, 110, 120, 0xffffff, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirCrieur());
-      this.monde.add(this.children.list.slice(avant));
+      this.grouper(avant, 1600);
       this.tweens.add({ targets: this.crieur, angle: { from: -3, to: 3 }, duration: 600, yoyo: true, repeat: -1 });
     }
 
@@ -102,7 +103,8 @@ class MarcheScene extends Phaser.Scene {
     // Le crieur annonce la première nouvelle du jour (clic : toutes les nouvelles).
     if (G.gazette && G.gazette.jour === G.jour && G.gazette.lignes.length) {
       // Une bulle qui sort de la bouche du crieur (dans la vue d'ensemble)
-      const cx = VUE_MARCHE.x + 1590 * VUE_MARCHE.echelle, cy = VUE_MARCHE.y + 150 * VUE_MARCHE.echelle;
+      const arc = this.arcVue(1600);
+      const cx = VUE_MARCHE.x + 1590 * VUE_MARCHE.echelle, cy = VUE_MARCHE.y + (250 + arc.dy - 100 * arc.echelle) * VUE_MARCHE.echelle;
       const texte = this.add.text(cx - 24, cy - 34, '📯 « Oyez, oyez ! ' + G.gazette.lignes[0] + ' »', style(13, '#3b2410', {
         fontStyle: 'italic', backgroundColor: '#f6ead0', padding: { x: 8, y: 6 }, wordWrap: { width: 300 } })).setOrigin(1, 1).setDepth(6);
       const queue = this.add.triangle(0, 0, 0, 0, 14, 0, 22, 30, 0xf6ead0).setOrigin(0).setPosition(cx - 38, cy - 35).setDepth(6);
@@ -153,6 +155,37 @@ class MarcheScene extends Phaser.Scene {
     this.monde.add(this.flecheLieu);
   }
 
+  // Tout ce qu'on vient de créer forme un lieu : un groupe posé au sol en (x, 250), qu'on peut
+  // avancer, reculer et agrandir pour la vue d'ensemble en demi-cercle.
+  grouper(avant, x) {
+    const objets = this.children.list.slice(avant);
+    const c = this.add.container(x, 250);
+    for (const o of objets) { o.x -= x; o.y -= 250; }
+    c.add(objets);
+    this.monde.add(c);
+    (this.groupes = this.groupes || []).push(c);
+  }
+
+  // Dans la vue d'ensemble, les lieux forment un demi-cercle autour de la grand-place :
+  // ceux du milieu sont au fond (plus haut, plus petits), ceux des bouts au premier plan.
+  arcVue(x) {
+    const u = (x - LARGEUR_MARCHE / 2) / (LARGEUR_MARCHE / 2);
+    return { dy: 125 * u * u - 62, echelle: 0.74 + 0.42 * u * u };
+  }
+
+  disposer(enArc, instantane) {
+    for (const c of this.groupes) {
+      const { dy, echelle } = enArc ? this.arcVue(c.x) : { dy: 0, echelle: 1 };
+      this.tweens.killTweensOf(c);
+      if (instantane) c.setY(250 + dy).setScale(echelle);
+      else this.tweens.add({ targets: c, y: 250 + dy, scale: echelle, duration: 550, ease: 'Sine.easeInOut' });
+    }
+    this.paveRue.setVisible(!enArc);
+    // Les plus proches passent devant
+    [...this.groupes].sort((a, b) => this.arcVue(a.x).dy - this.arcVue(b.x).dy).forEach(c => this.monde.bringToTop(c));
+    this.monde.bringToTop(this.flecheLieu);
+  }
+
   // On s'approche du lieu : la rue grandit et glisse jusqu'à lui, le panneau du bas s'ouvre.
   montrer(cle) {
     const [x, type] = this.positions[cle];
@@ -161,6 +194,7 @@ class MarcheScene extends Phaser.Scene {
     this.modeVue = false;
     this.tweens.killTweensOf(this.monde);
     this.tweens.add({ targets: this.monde, scale: 1, y: 0, x: Phaser.Math.Clamp(480 - x, 960 - LARGEUR_MARCHE, 0), duration: 550, ease: 'Sine.easeInOut' });
+    this.disposer(false, false);
     if (this.paysageRue) this.paysageRue.setVisible(true);
     this.etiquettesRue.forEach(t => t.setVisible(true));
     this.vue.setVisible(false);
@@ -175,6 +209,7 @@ class MarcheScene extends Phaser.Scene {
     this.tweens.killTweensOf(this.monde);
     if (instantane) this.monde.setPosition(x, y).setScale(echelle);
     else this.tweens.add({ targets: this.monde, x, y, scale: echelle, duration: 550, ease: 'Sine.easeInOut' });
+    this.disposer(true, instantane);
     if (this.paysageRue) this.paysageRue.setVisible(false);
     this.etiquettesRue.forEach(t => t.setVisible(false));
     this.flecheLieu.setVisible(false);
@@ -192,7 +227,7 @@ class MarcheScene extends Phaser.Scene {
     const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => this.ouvrirJeux(), crieur: () => this.ouvrirCrieur() };
     for (const [cle, [x, type]] of Object.entries(this.positions)) {
       const nom = type === 'etal' ? MARCHANDS[cle].nom : noms[cle];
-      const t = this.add.text(ox + x * echelle, oy + 300 * echelle + 10, nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 96 } }))
+      const t = this.add.text(ox + x * echelle, oy + (250 + this.arcVue(x).dy) * echelle + 6, nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 96 } }))
         .setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
       t.on('pointerdown', type === 'etal' ? () => this.ouvrirEtal(cle) : ouvrir[cle]);
       if (type === 'etal') c.add(this.add.text(t.x, t.y + t.height + 2, MARCHANDS[cle].metier, style(11, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5, 0));
@@ -227,7 +262,7 @@ class MarcheScene extends Phaser.Scene {
     this.etiquettesRue.push(this.add.text(x, 254, nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5),
       this.add.text(x, 272, metier, style(11, '#fff4dc', { stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5));
     this.add.rectangle(x, 160, 170, 140, 0xffffff, 0).setInteractive({ useHandCursor: true }).on('pointerdown', action);
-    this.monde.add(this.children.list.slice(avant));
+    this.grouper(avant, x);
   }
 
   // Un étal : auvent rayé aux couleurs du marchand, comptoir, marchand derrière.
@@ -244,7 +279,7 @@ class MarcheScene extends Phaser.Scene {
     const zone = this.add.rectangle(x, 160, 170, 140, 0xffffff, 0).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => this.ouvrirEtal(cle));
     // Tout ce qu'on vient de créer appartient à la rue (qui glisse).
-    this.monde.add(this.children.list.slice(avant));
+    this.grouper(avant, x);
   }
 
   creerLieu(x, texture, nom, action, { tint = 0xffffff, angle = 0, echelle = 5 }) {
@@ -253,7 +288,7 @@ class MarcheScene extends Phaser.Scene {
     this.etiquettesRue.push(this.add.text(x, 262, nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
     const zone = this.add.rectangle(x, 200, 110, 120, 0xffffff, 0).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', action);
-    this.monde.add(this.children.list.slice(avant));
+    this.grouper(avant, x);
     return perso;
   }
 

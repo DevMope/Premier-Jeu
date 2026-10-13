@@ -87,10 +87,16 @@ class ArriereScene extends Phaser.Scene {
       this.add.text(cx, SOL_ARRIERE - 120, 'Le coffre sonne creux...', style(12, '#3a2410', { fontStyle: 'italic bold' })).setOrigin(0.5);
     }
     // Les dettes, clouées au mur
+    // Les dettes, clouées au mur, bien en vue : une lueur rouge qui pulse derrière chaque affiche
     G.prets.slice(0, 3).forEach((p, i) => {
-      const x = cx - 80 + i * 80, y = 150, angle = i % 2 ? 4 : -5;
-      this.add.image(x, y, 'noteDette').setScale(2).setAngle(angle);
-      this.add.text(x - 6, y + 2, `Dette\n${p.restant} p.`, style(11, '#8a1a1a', { fontStyle: 'bold', align: 'center' })).setOrigin(0.5).setAngle(angle);
+      const n = Math.min(3, G.prets.length);
+      const x = cx + (i - (n - 1) / 2) * 120, y = 112, angle = i % 2 ? 4 : -5;
+      creerHalo(this);
+      const lueur = this.add.image(x, y, 'halo').setTint(0xff3020).setScale(1.3).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: lueur, alpha: 0.1, scale: 1.1, duration: 900, yoyo: true, repeat: -1 });
+      const note = this.add.image(x, y, 'noteDette').setScale(4).setAngle(angle);
+      this.tweens.add({ targets: note, angle: angle + (i % 2 ? -2 : 2), duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      this.add.text(x - 8, y - 2, `DETTE\n${p.restant} p.\n−${Math.min(p.parJour, p.restant)}/nuit`, style(13, '#8a1a1a', { fontStyle: 'bold', align: 'center', lineSpacing: -2 })).setOrigin(0.5).setAngle(angle);
     });
     this.add.image(cx, 212, plaqueBouton(this, 240)).setScale(2);
     this.add.text(cx, 212, `Ta fortune : ${G.argent} pièces`, style(15, G.argent >= 0 ? '#f3d98a' : '#f0a8a0', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);

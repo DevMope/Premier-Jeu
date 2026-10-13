@@ -39,8 +39,12 @@ const STOCK_DEPART = {
 // Assez pour tenir les premiers jours, le temps que les aventuriers reviennent.
 const ARGENT_DEPART = 80;
 
-// En dessous de cette somme, c'est la faillite.
+// En dessous de cette somme, c'est la faillite (filet de sécurité : rien ne fait plus passer à découvert).
 const SEUIL_FAILLITE = -100;
+// Échéances de prêt manquées d'affilée avant que la banque ne saisisse tout.
+const RETARDS_FAILLITE = 3;
+// Pénalité sur la part d'une échéance qu'on n'a pas pu payer.
+const PENALITE_RETARD = 0.1;
 
 // La réserve : nombre d'objets qu'on peut stocker, et ses agrandissements.
 const RESERVE_DEPART = 20;

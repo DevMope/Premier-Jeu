@@ -142,9 +142,13 @@ class DodoScene extends Cinematique {
 
   // Le parchemin du bilan : ce que la journée a donné.
   afficherBilan(b) {
-    const c = this.carteBilan = this.add.container(0, -400).setDepth(8);
-    c.add(this.add.image(760, 210, panneauHD(this, 330, 290)).setScale(2));
-    c.add(this.add.text(760, 88, `Fin du jour ${b.jour}`, style(24, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    const c = this.carteBilan = this.add.container(0, -440).setDepth(8);
+    const G = this.G;
+    const dette = G.prets.reduce((a, p) => a + p.restant, 0);
+    const echeance = G.prets.reduce((a, p) => a + Math.min(p.parJour, p.restant), 0);
+    const h = dette ? 360 : 300;
+    c.add(this.add.image(760, 50 + h / 2, panneauHD(this, 330, h)).setScale(2));
+    c.add(this.add.text(760, 86, `Fin du jour ${b.jour}`, style(26, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     const lignes = [
       ['Clients servis', b.servis],
       ['Revenus de mission', b.retours],
@@ -152,18 +156,34 @@ class DodoScene extends Cinematique {
       ['Réputation', arrondi(b.reputation)],
     ];
     lignes.forEach(([nom, valeur], i) => {
-      c.add(this.add.text(620, 124 + i * 28, nom, style(15, '#5a3a20')));
-      c.add(this.add.text(900, 124 + i * 28, String(valeur), style(15, '#3b2410', { fontStyle: 'bold' })).setOrigin(1, 0));
+      c.add(this.add.text(618, 116 + i * 28, nom, style(17, '#4a2e18')));
+      c.add(this.add.text(902, 116 + i * 28, String(valeur), style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(1, 0));
     });
     const signe = b.gain >= 0 ? '+' : '−';
-    c.add(this.add.rectangle(760, 250, 290, 2, 0x8a6a3a));
-    c.add(this.add.text(620, 262, 'Bénéfice du jour', style(16, '#3b2410', { fontStyle: 'bold' })));
-    c.add(this.add.text(900, 262, `${signe}${Math.abs(b.gain)} p.`, style(18, b.gain >= 0 ? '#2f7a2a' : '#a03030', { fontStyle: 'bold' })).setOrigin(1, 0));
+    c.add(this.add.rectangle(760, 238, 290, 2, 0x8a6a3a));
+    c.add(this.add.text(618, 248, 'Bénéfice du jour', style(18, '#3b2410', { fontStyle: 'bold' })));
+    c.add(this.add.text(902, 248, `${signe}${Math.abs(b.gain)} p.`, style(19, b.gain >= 0 ? '#2f7a2a' : '#a03030', { fontStyle: 'bold' })).setOrigin(1, 0));
+    let y = 284;
+    if (dette) {
+      // Le rappel de la dette : ce qui reste à rembourser, et ce que la banque prélève cette nuit
+      const retards = Math.max(0, ...G.prets.map(p => p.retards || 0));
+      const fond = this.add.rectangle(760, y + 26, 296, 54, 0xa03030, 0.14).setStrokeStyle(2, 0xa03030, 0.6);
+      c.add(fond);
+      c.add(this.add.text(618, y + 4, `📜 Dette : ${dette} p.`, style(17, '#8a1a1a', { fontStyle: 'bold' })));
+      const manque = Math.max(0, echeance - Math.max(0, G.argent));
+      c.add(this.add.text(618, y + 28, manque
+        ? `Cette nuit : −${echeance} p. Il manque ${manque} p. ! (${retards + 1}/${RETARDS_FAILLITE})`
+        : `Cette nuit, la banque prélève −${echeance} p.`, style(14, '#8a1a1a', { fontStyle: manque ? 'bold' : 'normal' })));
+      this.tweens.add({ targets: fond, alpha: 0.4, duration: 700, yoyo: true, repeat: -1 });
+      y += 64;
+    }
     const mot = b.gain > 0 && !b.morts ? 'Une bonne journée de travail !'
       : b.gain > 0 ? 'Une bonne journée... malgré les pertes.'
         : 'Une dure journée. Demain sera meilleur.';
-    c.add(this.add.text(760, 312, mot, style(14, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
-    c.add(this.add.text(760, 340, '▶ clique pour dormir', style(12, '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0.5));
+    c.add(this.add.text(760, y + 6, mot, style(16, '#5a3a20', { fontStyle: 'italic' })).setOrigin(0.5));
+    const clic = this.add.text(760, y + 34, '▶ Clique pour dormir', style(15, '#7a4a20', { fontStyle: 'bold italic' })).setOrigin(0.5);
+    c.add(clic);
+    this.tweens.add({ targets: clic, alpha: 0.45, duration: 700, yoyo: true, repeat: -1 });
     this.tweens.add({ targets: c, y: 0, duration: 600, ease: 'Back.easeOut' });
   }
 

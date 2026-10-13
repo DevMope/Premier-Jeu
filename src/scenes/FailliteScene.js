@@ -139,7 +139,7 @@ class FailliteScene extends Cinematique {
     this.add.rectangle(480, 270, 960, 540, 0x140c08, 0.92).setDepth(30);
     this.add.text(480, 150, 'Faillite', style(56, '#d8604a', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(31);
     this.add.text(480, 230,
-      `Au matin du jour ${G.jour + 1}, la banque a tout saisi.\nTes dettes ont atteint ${-SEUIL_FAILLITE} pièces.`,
+      `Au matin du jour ${G.jour + 1}, la banque a tout saisi.\n${RETARDS_FAILLITE} échéances de prêt impayées d'affilée : la Banque Centrale Goyenne n'oublie jamais.`,
       style(18, '#f3e6c8', { align: 'center', lineSpacing: 8 })).setOrigin(0.5).setDepth(31);
     this.add.text(480, 310,
       `${G.jour} jours tenus · ${G.experience} aventuriers servis · réputation ${arrondi(G.reputation)}`,
