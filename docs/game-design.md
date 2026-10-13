@@ -307,6 +307,13 @@ bien ; la liste des tailles des forces maléfiques sera donnée plus tard.
 Silhouettes : hobbit 13 px, nain 14, humain 16, elfe 17, magicienne 18. Au comptoir, le buste des
 petits peuples apparaît plus bas dans la fenêtre, celui des grands plus haut.
 
+## La chambre : ce qu'une bonne nuit apporte (décidé, construit)
+- **+1 d'expérience** par nuit et par niveau de lit (l'expérience compte jusqu'à 80 clients).
+- **Bien dormi** : 15 % par niveau de se réveiller en forme : un client de plus ce jour-là, ou 10 % de remise chez tous les marchands.
+- **Les rêves** (dès le lit sculpté, 25 % par niveau au-delà du premier) : un indice au réveil : le sort d'un aventurier qui rentre aujourd'hui, un événement à venir, ou la catégorie d'objets qui se vendra 15 % plus cher aux enchères.
+- **Se remettre d'un mauvais jour** : après un mort ou une faillite frôlée (à moins de 30 p. du seuil), +0,15 de réputation par niveau au réveil.
+- **La santé avec l'âge** (à construire avec le vieillissement, étape 14) : une bonne chambre ralentit la fatigue des vieux jours (constante `CHAMBRE.sante`, réservée).
+
 ## Améliorations du shop
 
 Commandées le soir au bureau (tiroir « Améliorer le shop »), installées pendant la nuit

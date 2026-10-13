@@ -121,8 +121,8 @@ class MarcheScene extends Phaser.Scene {
     }
 
     // Les nouvelles de l'atelier (une réparation terminée cette nuit)
-    if (G.nouvellesAtelier.length) {
-      const t = this.add.text(480, 52, G.nouvellesAtelier.join(' '), style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 3 } })).setOrigin(0.5).setDepth(5);
+    if (nouvellesDuMatin(G).length) {
+      const t = this.add.text(480, 52, nouvellesDuMatin(G).join('\n'), style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 3 }, align: 'center', wordWrap: { width: 640 } })).setOrigin(0.5).setDepth(5);
       this.tweens.add({ targets: t, alpha: 0, delay: 6000, duration: 800 });
     }
   }

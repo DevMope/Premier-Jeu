@@ -560,7 +560,8 @@ function etalsDuJour(G) {
 }
 
 function remiseMarchand(G, cle) {
-  return REMISES[niveauRelation(G, MARCHANDS[cle].nom).nom] || 0;
+  const forme = reveilDuJour(G).forme === 'remise' ? CHAMBRE.remise : 0;
+  return (REMISES[niveauRelation(G, MARCHANDS[cle].nom).nom] || 0) + forme;
 }
 
 function prixMarchand(G, cle, id) {
@@ -1018,8 +1019,10 @@ function prevision(G, jour = G.jour + 1) {
   // ... et les bonus (stock varié, trophée, éclairage) passent par-dessus, jusqu'à +2,
   // comme les événements et la rumeur (qui peuvent aussi en retirer).
   const bonus = Math.min(BONUS_CLIENTS_MAX, Math.floor(a.bonus)) + evenements + rumeur;
-  min = Math.max(1, min + bonus);
-  max = Math.max(min, max + bonus);
+  // Réveillé en forme ce matin : un client de plus
+  const forme = G.reveil && G.reveil.jour === jour && G.reveil.forme === 'client' ? 1 : 0;
+  min = Math.max(1, min + bonus + forme);
+  max = Math.max(min, max + bonus + forme);
   if (jour <= CLIENTS_DEBUT.jours) { min = Math.min(min, CLIENTS_DEBUT.max); max = Math.min(max, CLIENTS_DEBUT.max); }
   return { min, max, annonces, palier };
 }
@@ -1070,6 +1073,7 @@ function nuit(G) {
   }
   G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2);
   G.expressMateriaux = materiauxExpress();
+  const mauvaisJour = G.journal.morts > 0 || G.argent <= SEUIL_FAILLITE + 30;
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1080,11 +1084,52 @@ function nuit(G) {
   avancerEvenements(G);
   // Le sort de ceux qui rentrent aujourd'hui est tiré pendant la nuit (et donc sauvegardé).
   for (const p of G.partis) if (!p.termine && p.retour === G.jour && !p.resultat) p.resultat = simulerAventure(p.voyageur, p.colis, p.pieges);
+  reveilDuMatin(G, mauvaisJour);
   recompenserZones(G);
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
   for (const j of Object.keys(G.compta)) if (j < G.jour - JOURS_DE_COMPTES) delete G.compta[j];
+}
+
+// Le réveil : ce que la chambre t'apporte ce matin (voir CHAMBRE dans data.js).
+function reveilDuMatin(G, mauvaisJour) {
+  const n = niveauAmelioration(G, 'chambre');
+  const r = G.reveil = { jour: G.jour, forme: null, reve: null, encheres: null, reconfort: 0, lignes: [] };
+  if (!n) return;
+  // En forme : un client de plus, ou une remise au marché
+  if (Math.random() < CHAMBRE.forme * n) {
+    r.forme = Math.random() < 0.5 ? 'client' : 'remise';
+    r.lignes.push(r.forme === 'client' ? "Tu t'es réveillé en pleine forme : tu serviras un client de plus aujourd'hui !"
+      : `Tu t'es réveillé en pleine forme : les marchands te feront ${Math.round(CHAMBRE.remise * 100)} % de remise aujourd'hui !`);
+  }
+  // Un rêve qui révèle quelque chose
+  if (n >= 2 && Math.random() < CHAMBRE.reve * (n - 1)) {
+    const reves = [];
+    const rentre = G.partis.find(p => !p.termine && p.retour === G.jour && p.resultat);
+    if (rentre) reves.push(() => `Tu as rêvé de ${rentre.voyageur.nom}... ${rentre.resultat.vivant ? (rentre.resultat.echec ? 'Tu l\'as vu revenir les mains vides, mais vivant.' : 'Tu l\'as vu revenir, les bras chargés !') : 'Tu as vu la Faucheuse marcher à ses côtés...'}`);
+    const avenir = (G.evenements || []).find(e => e.debut > G.jour && EVENEMENTS[e.id]);
+    if (avenir) reves.push(() => `Un rêve étrange : « ${EVENEMENTS[avenir.id].nouvelle} » Ça arrivera dans ${avenir.debut - G.jour} jour${avenir.debut - G.jour > 1 ? 's' : ''}.`);
+    reves.push(() => { r.encheres = auHasard(Object.keys(CATEGORIES)); const pluriel = { arme: 'armes', armure: 'armures', bijou: 'bijoux', artefact: 'artefacts', vetement: 'vêtements' }[r.encheres]; return `Tu as rêvé d'enchérisseurs qui se disputaient... Les ${pluriel} se vendront cher aux enchères aujourd'hui !`; });
+    r.reve = auHasard(reves)();
+    r.lignes.push('💤 ' + r.reve);
+  }
+  // Après un mauvais jour, une bonne nuit console
+  if (mauvaisJour) {
+    r.reconfort = Math.round(CHAMBRE.reconfort * n * 100) / 100;
+    G.reputation += r.reconfort;
+    r.lignes.push(`Une bonne nuit de sommeil t'a aidé à encaisser la mauvaise journée d'hier : réputation +${String(r.reconfort).replace('.', ',')}.`);
+  }
+}
+
+// Le réveil de ce matin (vide si on n'en a pas eu).
+function reveilDuJour(G) {
+  return G.reveil && G.reveil.jour === G.jour ? G.reveil : { lignes: [] };
+}
+
+// Les nouvelles du matin : l'atelier, et ce que la nuit t'a apporté.
+function nouvellesDuMatin(G) {
+  return [...(G.nouvellesAtelier || []), ...reveilDuJour(G).lignes];
 }
 
 // On ouvre le comptoir : la file d'attente du jour se forme.
@@ -1507,7 +1552,7 @@ function vendreAuxEncheres(G, lot) {
   const parCategorie = {};
   lot.forEach(t => { parCategorie[t.categorie] = (parCategorie[t.categorie] || 0) + 1; });
   const acheteurs = ENCHERISSEURS.map(e => {
-    let max = lot.reduce((s, t) => s + valeurTresor(t) *
+    let max = lot.reduce((s, t) => s + valeurTresor(t) * (reveilDuJour(G).encheres === t.categorie ? CHAMBRE.encheres : 1) *
       (e.aime.includes(t.categorie) ? Phaser.Math.FloatBetween(1.05, 1.45) : Phaser.Math.FloatBetween(0.6, 1.0)), 0);
     if (Object.entries(parCategorie).some(([cat, n]) => n >= 2 && e.aime.includes(cat))) max *= 1.15;
     return { ...e, max: Math.round(max) };

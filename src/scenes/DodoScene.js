@@ -363,9 +363,9 @@ class DodoScene extends Cinematique {
     const t = this.add.text(480, 150, `Jour ${G.jour}`, style(56, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 8 }))
       .setOrigin(0.5).setDepth(9).setScale(0);
     this.tweens.add({ targets: t, scale: 1, duration: 400, ease: 'Back.easeOut' });
-    const nouvelles = (G.nouvellesAtelier || []).slice(0, 2);
+    const nouvelles = nouvellesDuMatin(G).slice(0, 3);
     this.add.text(480, 196, ['Direction le Marché des Mastres !', ...nouvelles].join('\n'),
-      style(15, '#fff4dc', { align: 'center', stroke: '#2a1a10', strokeThickness: 4, lineSpacing: 4 })).setOrigin(0.5, 0).setDepth(9);
+      style(15, '#fff4dc', { align: 'center', stroke: '#2a1a10', strokeThickness: 4, lineSpacing: 4, wordWrap: { width: 760 } })).setOrigin(0.5, 0).setDepth(9);
     G.banniere = G.jour; // le « Jour N » est déjà annoncé
   }
 

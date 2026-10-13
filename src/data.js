@@ -67,12 +67,19 @@ const AMELIORATIONS = {
   coffre: { nom: 'Le coffre de la fortune', niveaux: ['Coffre de bois', 'Coffre ferré', 'Coffre-fort de nain', "Coffre d'or gravé"], prix: [100, 280, 650],
     effet: 'Ta fortune rapporte des intérêts chaque nuit : 1 % par niveau (15 p. max par niveau).' },
   chambre: { nom: 'La chambre', niveaux: ['Paillasse', 'Lit de bois', 'Lit sculpté et édredon', 'Lit à baldaquin'], prix: [80, 220, 500],
-    effet: "Mieux reposé, tu apprends plus vite : +1 d'expérience par nuit et par niveau (ton flair progresse)." },
+    effet: "Mieux reposé : +1 d'expérience par nuit et par niveau ; des réveils en forme (un client ou une remise de plus) ; des rêves qui révèlent un indice ; et une nuit qui console après un mauvais jour." },
   eclairage: { nom: "L'éclairage", niveaux: ['Bougies', 'Lanternes', 'Chandeliers', 'Lustre de cristal'], prix: [90, 250, 600],
     effet: 'Un shop bien éclairé attire le regard : +0,3 client par jour et par niveau.' },
   atelier: { nom: "L'atelier", niveaux: ['Un établi', 'Deux établis', 'Trois établis'], prix: [220, 480],
     effet: "Un établi de plus : une place pour un employé de plus (2, puis 3, puis 4) et 2 places de plus pour les objets." },
 };
+// Ce qu'une bonne chambre apporte au réveil, par niveau de lit :
+// - `forme` : chance de se réveiller en forme (un client de plus, ou 10 % de remise au marché ce jour-là) ;
+// - `reve` : chance (dès le lit sculpté) de rêver d'un indice : le sort d'un aventurier qui rentre,
+//   un événement à venir, ou ce qui se vendra cher aux enchères ;
+// - `reconfort` : après un mauvais jour (un mort, ou la faillite frôlée), une part de réputation retrouvée ;
+// - `sante` : pour plus tard, quand on vieillira : une bonne chambre ralentit la fatigue des vieux jours.
+const CHAMBRE = { forme: 0.15, reve: 0.25, reconfort: 0.15, remise: 0.1, encheres: 1.15, sante: 0.25 };
 // La réputation gagnée à chaque amélioration terminée.
 const REPUTATION_AMELIORATION = 0.15;
 
