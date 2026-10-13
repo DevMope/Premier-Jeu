@@ -43,7 +43,7 @@ function fbm(x, y, graine = 0, octaves = 3) {
 // Une toile de décor : la toile HD des portraits, avec les dégradés du décor en plus.
 function toileDecor(l, h) {
   const t = new ToileHD(l, h);
-  Object.assign(t.rampes, RAMPES_DECOR);
+  Object.assign(t.rampes, RAMPES_DECOR, typeof RAMPES_OBJETS !== 'undefined' ? RAMPES_OBJETS : {});
   return t;
 }
 
@@ -82,10 +82,10 @@ function clou(t, x, y) {
 }
 
 // De l'enduit à la chaux : taches, salissures vers le bas, fissures.
-function enduit(t, x0, y0, l, h, graine = 3) {
+function enduit(t, x0, y0, l, h, graine = 3, taches = true) {
   for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + l; x++) {
     let i = 3 + Math.round((fbm(x * 0.05, y * 0.05, graine) - 0.5) * 1.3);
-    if (fbm(x * 0.015, y * 0.02, graine + 4) > 0.74) i--;  // de grandes taches d'humidité
+    if (taches && fbm(x * 0.015, y * 0.02, graine + 4) > 0.74) i--;  // de grandes taches d'humidité
     if (y > y0 + h - 14 && hachage(x, y, graine) < 0.25 + (y - (y0 + h - 14)) * 0.04) i--; // la crasse en bas
     t.poser(x, y, 'platre', i);
   }
@@ -194,46 +194,6 @@ function creerDecorComptoir(scene) {
     t.texture(scene, 'cadreFenetre');
   }
 
-  // Le plateau du comptoir : chêne épais, planches veinées, casiers du stock creusés dedans,
-  // têtes de clous, rayures, une tache d'encre, des traces de chopes.
-  {
-    const t = toileDecor(480, 100);
-    // La tranche avant du plateau (épaisse, usée, éclairée)
-    planche(t, 0, 0, 480, 8, 'chene', { graine: 61, noeuds: 4 });
-    for (let x = 0; x < 480; x++) { t.poser(x, 0, 'chene', 5); t.poser(x, 8, 'chene', 0); }
-    // Les planches du bureau
-    for (let k = 0; k < 4; k++) planche(t, 0, 9 + k * 23, 480, 23, 'chene', { graine: 62 + k, noeuds: 3 });
-    for (let k = 0; k < 4; k++) for (let x = 6; x < 480; x += 118) { clou(t, x + k * 7, 13 + k * 23); clou(t, x + k * 7, 27 + k * 23); }
-    // Rayures, tache d'encre, traces de chopes
-    for (let k = 0; k < 14; k++) {
-      const x = hachage(k, 1, 80) * 480, y = 10 + hachage(k, 2, 80) * 86, l = 4 + hachage(k, 3, 80) * 10;
-      for (let s = 0; s < l; s++) t.poser(x + s, y + s * 0.2, 'chene', 4);
-    }
-    t.forme('encre', ellipsoide(30, 70, 4, 2.4), { decalage: -0.6 });
-    t.poser(36, 71, 'encre', 2); t.poser(38, 72, 'encre', 2);
-    for (const [x, y] of [[440, 30], [452, 64]]) for (let a = 0; a < 40; a++) t.poser(x + Math.cos(a / 40 * 6.28) * 6, y + Math.sin(a / 40 * 6.28) * 3, 'chene', 1);
-    // Les casiers du stock, creusés dans le plateau : un rebord de chêne biseauté et, au fond,
-    // un lit de toile claire où les marchandises ressortent bien.
-    for (let i = 0; i < 12; i++) {
-      const x0 = 74 + (i % 5) * 54, y0 = 17 + Math.floor(i / 5) * 24;
-      for (let y = y0; y < y0 + 22; y++) for (let x = x0; x < x0 + 52; x++) {
-        const dx = Math.min(x - x0, x0 + 51 - x), dy = Math.min(y - y0, y0 + 21 - y), d = Math.min(dx, dy);
-        if (d < 2) {
-          // Le rebord : sombre en haut et à gauche (dans l'ombre), éclairé en bas et à droite
-          const haut = (y - y0 < 2 && dy <= dx) || (x - x0 < 2 && dx <= dy);
-          t.poser(x, y, 'chene', haut ? d : 4 + (d === 0 ? 1 : 0));
-          continue;
-        }
-        // La toile : un tissage serré, plus sombre près du bord haut (l'ombre du rebord)
-        let ind = 4 + ((x + y) % 2 ? 0 : -1) + Math.round((fbm(x * 0.2, y * 0.2, 90 + i) - 0.5) * 1.2);
-        if (y - y0 < 4 || x - x0 < 3) ind -= 1;
-        if (y - y0 < 3) ind -= 1;
-        if (x % 7 === 0 && hachage(x, y, i) < 0.5) ind--; // les fils plus épais de la trame
-        t.poser(x, y, 'toile', ind);
-      }
-    }
-    t.texture(scene, 'plateauComptoir');
-  }
 
   // Le mur : enduit à la chaux entre les colombages de chêne, pierres apparentes en bas
   {
@@ -305,6 +265,64 @@ function creerDecorComptoir(scene) {
 
   // Les plaques de bois des boutons, aux bords biseautés et clouées
   // (créées à la demande, selon leur largeur : voir plaqueBouton)
+}
+
+// Le plateau du comptoir, selon son niveau de luxe (voir AMELIORATIONS) : bois épais, planches
+// veinées, casiers du stock creusés dedans, têtes de clous, rayures, une tache d'encre, des
+// traces de chopes ; laiton puis dorures aux niveaux supérieurs.
+function plateauComptoir(scene, n = 1) {
+  const cle = 'plateauComptoir_' + n;
+  if (scene.textures.exists(cle)) return cle;
+  const t = toileLuxe(480, 100, n);
+  // La tranche avant du plateau (épaisse, usée, éclairée)
+  planche(t, 0, 0, 480, 8, 'chene', { graine: 61, noeuds: 4 });
+  for (let x = 0; x < 480; x++) { t.poser(x, 0, 'chene', 5); t.poser(x, 8, 'chene', 0); }
+  // Les planches du bureau
+  for (let k = 0; k < 4; k++) planche(t, 0, 9 + k * 23, 480, 23, 'chene', { graine: 62 + k, noeuds: 3 });
+  for (let k = 0; k < 4; k++) for (let x = 6; x < 480; x += 118) { clou(t, x + k * 7, 13 + k * 23); clou(t, x + k * 7, 27 + k * 23); }
+  // Rayures, tache d'encre, traces de chopes
+  for (let k = 0; k < 14; k++) {
+    const x = hachage(k, 1, 80) * 480, y = 10 + hachage(k, 2, 80) * 86, l = 4 + hachage(k, 3, 80) * 10;
+    for (let s = 0; s < l; s++) t.poser(x + s, y + s * 0.2, 'chene', 4);
+  }
+  t.forme('encre', ellipsoide(30, 70, 4, 2.4), { decalage: -0.6 });
+  t.poser(36, 71, 'encre', 2); t.poser(38, 72, 'encre', 2);
+  for (const [x, y] of [[440, 30], [452, 64]]) for (let a = 0; a < 40; a++) t.poser(x + Math.cos(a / 40 * 6.28) * 6, y + Math.sin(a / 40 * 6.28) * 3, 'chene', 1);
+  // Les casiers du stock, creusés dans le plateau : un rebord de chêne biseauté et, au fond,
+  // un lit de toile claire où les marchandises ressortent bien.
+  for (let i = 0; i < 12; i++) {
+    const x0 = 74 + (i % 5) * 54, y0 = 17 + Math.floor(i / 5) * 24;
+    for (let y = y0; y < y0 + 22; y++) for (let x = x0; x < x0 + 52; x++) {
+      const dx = Math.min(x - x0, x0 + 51 - x), dy = Math.min(y - y0, y0 + 21 - y), d = Math.min(dx, dy);
+      if (d < 2) {
+        // Le rebord : sombre en haut et à gauche (dans l'ombre), éclairé en bas et à droite
+        const haut = (y - y0 < 2 && dy <= dx) || (x - x0 < 2 && dx <= dy);
+        t.poser(x, y, 'chene', haut ? d : 4 + (d === 0 ? 1 : 0));
+        continue;
+      }
+      // La toile : un tissage serré, plus sombre près du bord haut (l'ombre du rebord)
+      let ind = 4 + ((x + y) % 2 ? 0 : -1) + Math.round((fbm(x * 0.2, y * 0.2, 90 + i) - 0.5) * 1.2);
+      if (y - y0 < 4 || x - x0 < 3) ind -= 1;
+      if (y - y0 < 3) ind -= 1;
+      if (x % 7 === 0 && hachage(x, y, i) < 0.5) ind--; // les fils plus épais de la trame
+      t.poser(x, y, 'toile', ind);
+    }
+  }
+  if (n >= 2) {
+  // Une bande de laiton le long de la tranche, et des coins de laiton aux casiers
+  for (let x = 0; x < 480; x++) { t.poser(x, 1, 'laiton', 5); t.poser(x, 2, 'laiton', 3); t.poser(x, 7, 'laiton', 2); }
+  for (let i = 0; i < 12; i++) {
+    const x0 = 74 + (i % 5) * 54, y0 = 17 + Math.floor(i / 5) * 24;
+    for (const [x, y] of [[x0, y0], [x0 + 51, y0], [x0, y0 + 21], [x0 + 51, y0 + 21]]) { t.poser(x, y, 'laiton', 4); t.poser(x + (x === x0 ? 1 : -1), y, 'laiton', 3); t.poser(x, y + (y === y0 ? 1 : -1), 'laiton', 3); }
+  }
+  }
+  if (n === 3) {
+  // Des filets d'or incrustés entre les planches, et une frise sur la tranche
+  for (let k = 1; k < 4; k++) for (let x = 0; x < 480; x++) t.poser(x, 9 + k * 23, 'laiton', 4);
+  for (let x = 2; x < 480; x += 6) { t.poser(x, 4, 'laiton', 4); t.poser(x + 1, 5, 'laiton', 3); t.poser(x + 2, 4, 'laiton', 4); }
+  }
+  t.texture(scene, cle);
+  return cle;
 }
 
 // Un cadre de noyer biseauté (3 pixels), un filet de laiton, l'ombre du cadre sur le fond

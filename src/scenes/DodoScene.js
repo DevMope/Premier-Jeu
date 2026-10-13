@@ -38,54 +38,34 @@ class DodoScene extends Cinematique {
     // L'aube : une lueur orangée entre la nuit et le jour.
     this.aube = this.add.rectangle(fx + fw / 2, fy + fh / 2, fw, fh, 0xf0a060, 0);
 
-    // Les murs en planches, avec un trou pour la fenêtre.
-    const g = this.add.graphics().setDepth(1);
-    g.fillStyle(0x4a2e18);
-    g.fillRect(0, 0, 960, fy).fillRect(0, fy + fh, 960, SOL_CHAMBRE - fy - fh).fillRect(0, fy, fx, fh).fillRect(fx + fw, fy, 960 - fx - fw, fh);
-    g.lineStyle(2, 0x3b2410);
-    for (let y = 30; y < SOL_CHAMBRE; y += 30) {
-      g.lineBetween(0, y, fx, y).lineBetween(fx + fw, y, 960, y);
-      if (y < fy || y > fy + fh) g.lineBetween(fx, y, fx + fw, y);
-    }
-    // Le cadre et la croisée de la fenêtre.
-    g.lineStyle(8, 0x6b4423).strokeRect(fx, fy, fw, fh);
-    g.lineStyle(5, 0x6b4423).lineBetween(fx + fw / 2, fy, fx + fw / 2, fy + fh).lineBetween(fx, fy + fh / 2, fx + fw, fy + fh / 2);
-    // Le plancher.
-    g.fillStyle(0x6b4423).fillRect(0, SOL_CHAMBRE, 960, 540 - SOL_CHAMBRE);
-    g.lineStyle(2, 0x4a2e18);
-    for (let x = 0; x < 960; x += 80) g.lineBetween(x, SOL_CHAMBRE, x, 540);
+    // Les murs à colombages, avec le trou de la fenêtre (le ciel est derrière), et le plancher.
+    creerInterieurHD(this);
+    this.add.image(0, 0, murInterieur(this, 'murChambre', { h: SOL_CHAMBRE / 2, poteaux: [96, 400], graine: 320,
+      fenetre: { x: fx / 2, y: fy / 2, l: fw / 2, h: fh / 2 } })).setOrigin(0).setScale(2).setDepth(1).setTint(0x9a7c60);
+    this.add.image(0, SOL_CHAMBRE, plancher(this, 'plancherChambre', { h: (540 - SOL_CHAMBRE) / 2, graine: 420 })).setOrigin(0).setScale(2).setDepth(1).setTint(0xc8a888);
+    vignette(this, 0.85, 1.5);
+    // Le clair de lune qui entre par la fenêtre
+    this.clairDeLune = this.add.image(fx + fw / 2, fy + fh / 2 + 40, 'halo').setScale(3.4, 2.6).setTint(0x6a8ad8).setAlpha(0.18)
+      .setBlendMode(Phaser.BlendModes.ADD).setDepth(1.6);
 
-    // Le lit : cadre, matelas, oreiller.
-    const lit = this.add.graphics().setDepth(2);
-    lit.fillStyle(0x5a3a1a).fillRect(250, SOL_CHAMBRE - 110, 18, 110).fillRect(560, SOL_CHAMBRE - 70, 16, 70);
-    lit.fillStyle(0x7a4a22).fillRect(250, SOL_CHAMBRE - 50, 326, 30);
-    lit.fillStyle(0xe8d8b0).fillRect(268, SOL_CHAMBRE - 72, 292, 24);
-    lit.fillStyle(0xf4f0e4).fillRect(274, SOL_CHAMBRE - 88, 70, 22);
-    // La couverture en patchwork, posée par-dessus le dormeur (elle ne se voit qu'une fois couché).
-    this.couverture = this.add.graphics().setDepth(4).setAlpha(0);
-    const couleurs = [0x8a3a2a, 0xc9a046, 0x4f7a3a, 0x3a5a8a];
-    for (let i = 0; i < 9; i++) {
-      for (let j = 0; j < 2; j++) this.couverture.fillStyle(couleurs[(i + j) % 4]).fillRect(330 + i * 26, SOL_CHAMBRE - 92 + j * 22, 26, 22);
-    }
-    this.couverture.lineStyle(2, 0x3b2410).strokeRect(330, SOL_CHAMBRE - 92, 234, 44);
+    // Le lit, et la couverture en patchwork posée par-dessus le dormeur (elle ne se voit qu'une fois couché).
+    const luxe = niveauAmelioration(this.G, 'chambre');
+    this.lit = this.add.image(250, SOL_CHAMBRE, litHD(this, luxe)).setOrigin(0, 1).setScale(2).setDepth(2);
+    this.couverture = this.add.image(330, SOL_CHAMBRE - 92, couvertureHD(this, luxe)).setOrigin(0).setScale(2).setDepth(4).setAlpha(0);
 
     // La table de chevet, la bougie et sa lumière.
-    lit.fillStyle(0x5a3a1a).fillRect(600, SOL_CHAMBRE - 60, 70, 10).fillRect(610, SOL_CHAMBRE - 50, 8, 50).fillRect(652, SOL_CHAMBRE - 50, 8, 50);
-    lit.fillStyle(0xf3ecc8).fillRect(628, SOL_CHAMBRE - 84, 12, 24);
-    this.flamme = this.add.ellipse(634, SOL_CHAMBRE - 92, 8, 14, 0xffc040).setDepth(2);
-    this.lumiere = this.add.container(634, SOL_CHAMBRE - 90).setDepth(5);
-    for (let k = 0; k < 10; k++) this.lumiere.add(this.add.circle(0, 0, 30 + k * 16, 0xffb040, 0.03).setBlendMode(Phaser.BlendModes.ADD));
-    this.tweens.add({ targets: [this.flamme, this.lumiere], scaleX: 0.85, duration: 180, yoyo: true, repeat: -1 });
+    this.chevet = this.add.image(635, SOL_CHAMBRE, chevetHD(this, luxe)).setOrigin(0.5, 1).setScale(2).setDepth(2);
+    const b = bougie(this, 628, SOL_CHAMBRE - 62, { rayon: 230, profondeur: 2 });
+    this.flamme = b.flamme;
+    this.lumiere = b.halo.setDepth(5);
 
-    // Un tapis, un coffre, et la vieille épée de Garrick accrochée au mur.
-    lit.fillStyle(0x8a3a2a).fillEllipse(440, SOL_CHAMBRE + 40, 300, 34);
-    lit.fillStyle(0xc9a046).fillEllipse(440, SOL_CHAMBRE + 40, 250, 22);
-    lit.fillStyle(0x8a3a2a).fillEllipse(440, SOL_CHAMBRE + 40, 200, 12);
-    this.add.image(120, SOL_CHAMBRE, 'coffre').setOrigin(0.5, 1).setScale(6).setDepth(2);
+    // Un tapis tressé, un coffre, et la vieille épée de Garrick accrochée au mur.
+    this.tapis = this.add.image(440, SOL_CHAMBRE + 42, tapisHD(this, luxe)).setScale(2).setDepth(1.4);
+    this.add.image(120, SOL_CHAMBRE + 4, coffreHD(this, niveauAmelioration(this.G, 'coffre'))).setOrigin(0.5, 1).setScale(3).setDepth(2);
     // Le mannequin de l'armure (du côté qu'elle avait hier soir), et le compte des pièces.
     this.coteAffiche = this.G.armureCoteVu || coteArmure(this.G);
     this.dessinerArmure(this.G.armure.filter(id => !(this.G.nouvellesPieces || []).some(n => n.piece === id)));
-    this.add.image(400, 150, 'epee').setScale(6).setAngle(45).setDepth(2);
+    this.add.image(400, 150, 'hd_epee').setScale(4).setAngle(45).setDepth(2);
 
     // L'obscurité de la chambre, qui tombe quand on souffle la bougie.
     this.noir = this.add.rectangle(480, 270, 960, 540, 0x05060f, 0).setDepth(6);
@@ -125,6 +105,7 @@ class DodoScene extends Cinematique {
     this.tweens.add({ targets: this.lune, y: this.lune.y - 60, alpha: 0, duration: 1600 });
     await this.attendre(800);
     this.tweens.add({ targets: this.cielNuit, alpha: 0, duration: 1800 });
+    this.tweens.add({ targets: this.clairDeLune, alpha: 0, duration: 1800 });
     this.tweens.add({ targets: this.aube, fillAlpha: 0.6, duration: 1000, yoyo: true, hold: 300 });
     this.tweens.add({ targets: this.soleil, y: this.soleil.y - 110, duration: 2200, ease: 'Sine.easeOut' });
     await this.animer({ targets: this.noir, fillAlpha: 0, duration: 2000 });
@@ -134,6 +115,7 @@ class DodoScene extends Cinematique {
     await this.animer({ targets: this.joueur, angle: 0, x: 600, y: SOL_CHAMBRE - this.joueur.displayHeight / 2, duration: 450, ease: 'Back.easeOut' });
     this.joueur.setOrigin(0.5, 1).setY(SOL_CHAMBRE);
     this.onomatopee(600, SOL_CHAMBRE - 140, 'Debout !', '#f3d98a');
+    await this.travauxDeLaNuit();
     // L'armure a pu changer de côté pendant la nuit.
     if (!(this.G.nouvellesPieces || []).length && this.G.armure.length) await this.changerCote(coteArmure(this.G));
     // Un messager (Confrérie ou Main Noire), avec une pièce de l'armure pour chaque zone ouverte.
@@ -190,6 +172,30 @@ class DodoScene extends Cinematique {
   }
 
   // La nuit : échéances, salaires, atelier, nouveau jour... (une seule fois).
+  // Les ouvriers sont passés pendant la nuit : la chambre change sous nos yeux, et on dit ce
+  // qui a été installé ailleurs.
+  async travauxDeLaNuit() {
+    const finis = this.G.travauxFinis || [];
+    if (!finis.length || this.fini) return;
+    await this.attendre(500);
+    if (finis.includes('chambre')) {
+      const n = niveauAmelioration(this.G, 'chambre');
+      for (const [image, cle] of [[this.lit, litHD(this, n)], [this.couverture, couvertureHD(this, n)], [this.chevet, chevetHD(this, n)], [this.tapis, tapisHD(this, n)]]) {
+        const poussiere = this.add.image(image.x + image.displayWidth / 2 * (image.originX === 0 ? 1 : 0), image.y - image.displayHeight / 2, 'halo')
+          .setTint(0xfff0c0).setScale(3).setAlpha(0).setDepth(7).setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({ targets: poussiere, alpha: 0.8, duration: 250, yoyo: true, onYoyo: () => image.setTexture(cle), onComplete: () => poussiere.destroy() });
+      }
+      await this.attendre(600);
+    }
+    const noms = finis.map(c => `${AMELIORATIONS[c].nom.toLowerCase()} (${AMELIORATIONS[c].niveaux[niveauAmelioration(this.G, c)]})`);
+    this.onomatopee(480, 110, 'Les ouvriers ont fini !', '#f3d98a');
+    const texte = this.add.text(480, 150, noms.join(' · '), style(16, '#fff4dc', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 700 } }))
+      .setOrigin(0.5).setDepth(8);
+    await this.attendre(2200);
+    this.tweens.add({ targets: texte, alpha: 0, duration: 400, onComplete: () => texte.destroy() });
+    this.G.travauxFinis = [];
+  }
+
   passerLaNuit() {
     if (this.nuitPassee) return;
     this.nuitPassee = true;

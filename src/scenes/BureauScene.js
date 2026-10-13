@@ -7,7 +7,7 @@ const ONGLETS = [
   ['revenus', 'Revenus'], ['disparus', 'Disparus'], ['repertoire', 'Répertoire'],
 ];
 const FICHES_PAR_PAGE = 10;
-const TIROIRS = [['competences', 'Tes compétences'], ['aventuriers', 'Les aventuriers'], ['commerce', 'Le commerce'], ['reputation', 'La réputation']];
+const TIROIRS = [['ameliorations', '🔨 Améliorer le shop'], ['competences', 'Tes compétences'], ['aventuriers', 'Les aventuriers'], ['commerce', 'Le commerce'], ['reputation', 'La réputation']];
 
 class BureauScene extends Phaser.Scene {
   constructor() { super('Bureau'); }
@@ -21,15 +21,13 @@ class BureauScene extends Phaser.Scene {
 
   create() {
     const G = this.G = window.GAME;
-    const g = this.add.graphics();
-    g.fillStyle(0x5a3a22).fillRect(0, 0, 960, 540);
-    g.lineStyle(2, 0x4a2e1a);
-    for (let y = 0; y < 540; y += 40) g.lineBetween(0, y, 960, y);
-
-    // Le livre ouvert
-    g.fillStyle(0x3b2410).fillRect(22, 52, 540, 422);
-    g.fillStyle(0xead9b0).fillRect(30, 58, 262, 410).fillRect(292, 58, 262, 410);
-    g.lineStyle(2, 0xb09a70).lineBetween(292, 60, 292, 466);
+    // Le dessus du bureau, et le registre ouvert dessus
+    creerInterieurHD(this);
+    creerBureauHD(this);
+    this.add.image(0, 0, 'bureauBois').setOrigin(0).setScale(2).setTint(0xc8a888);
+    vignette(this, 0.7, 0);
+    this.add.image(22, 52, 'livreRegistre').setOrigin(0).setScale(2);
+    bougie(this, 470, 528, { rayon: 130 });
 
     this.creerOnglets();
     this.creerArdoise();
@@ -37,7 +35,8 @@ class BureauScene extends Phaser.Scene {
     this.add.text(24, 500, `${dateEnTexte(G)} · semaine ${dateDuJour(G).semaine} · jour ${G.jour}`, style(14, '#f3e6c8', { fontStyle: 'italic' }));
     creerBouton(this, 850, 505, 180, 'Fermer', () => this.fermer());
     // Renommer le shop (l'enseigne de la façade)
-    const enseigne = this.add.text(600, 505, `✎ « ${G.nomShop} »`, style(13, '#f3d98a', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 5 } }))
+    this.add.image(640, 505, plaqueBouton(this, 250)).setScale(2);
+    const enseigne = this.add.text(640, 505, `✎ « ${G.nomShop} »`, style(13, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 }))
       .setOrigin(0.5).setInteractive({ useHandCursor: true });
     enseigne.on('pointerdown', () => demanderTexte('Le nom de ton shop', G.nomShop, NOM_SHOP_MAX, nom => {
       if (!nom) return;
@@ -54,17 +53,20 @@ class BureauScene extends Phaser.Scene {
   creerOnglets() {
     this.ongletsFonds = ONGLETS.map(([cle, nom], i) => {
       const x = 30 + i * 88;
-      const fond = this.add.rectangle(x + 43, 38, 86, 28, 0xc9a046).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
-      this.add.text(x + 43, 38, nom, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+      const fond = this.add.image(x + 43, 38, 'ongletHD').setScale(2).setInteractive({ useHandCursor: true });
+      const texte = this.add.text(x + 43, 38, nom, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
       fond.on('pointerdown', () => { this.onglet = cle; this.pageListe = 0; this.afficherListe(); });
-      return { cle, fond };
+      return { cle, fond, texte };
     });
   }
 
   vider() {
     if (this.pages) this.pages.destroy();
     this.pages = this.add.container(0, 0);
-    for (const o of this.ongletsFonds) o.fond.setFillStyle(o.cle === this.onglet ? 0xead9b0 : 0xa8843c);
+    for (const o of this.ongletsFonds) {
+      o.fond.setTexture(o.cle === this.onglet ? 'ongletHD_actif' : 'ongletHD').setY(o.cle === this.onglet ? 40 : 38);
+      o.texte.setColor(o.cle === this.onglet ? '#3b2410' : '#f3e6c8');
+    }
     return this.pages;
   }
 
@@ -228,9 +230,8 @@ class BureauScene extends Phaser.Scene {
 
   creerArdoise() {
     const G = this.G;
+    this.add.image(578, 18, panneauHD(this, 364, 262, 'ardoise')).setOrigin(0).setScale(2);
     const g = this.add.graphics();
-    g.fillStyle(0x6b4423).fillRect(578, 18, 364, 262);
-    g.fillStyle(0x2f3a32).fillRect(588, 28, 344, 242);
     const craie = (x, y, texte, taille = 13, couleur = '#e8ecdf', origine = 0) =>
       this.add.text(x, y, texte, style(taille, couleur, { fontFamily: '"Comic Sans MS", "Segoe Print", cursive' })).setOrigin(origine, 0.5);
     craie(760, 48, "Chiffre d'affaires", 18, '#f3f0d8', 0.5);
@@ -260,12 +261,11 @@ class BureauScene extends Phaser.Scene {
 
   creerTiroirs() {
     TIROIRS.forEach(([cle, nom], i) => {
-      const y = 308 + i * 44;
-      const t = this.add.rectangle(760, y, 360, 38, 0x8a5a2b).setStrokeStyle(3, 0x3b2410).setInteractive({ useHandCursor: true });
-      this.add.circle(900, y, 6, 0xe8c040).setStrokeStyle(2, 0x6b4423);
-      this.add.text(760, y, nom, style(14, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
-      t.on('pointerover', () => t.setFillStyle(0xa8743c));
-      t.on('pointerout', () => t.setFillStyle(0x8a5a2b));
+      const y = 304 + i * 38;
+      const t = this.add.image(760, y, 'tiroirHD').setScale(2).setInteractive({ useHandCursor: true });
+      this.add.text(745, y, nom, style(14, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+      t.on('pointerover', () => t.setTexture('tiroirHD_clair'));
+      t.on('pointerout', () => t.setTexture('tiroirHD'));
       t.on('pointerdown', () => this.ouvrirTiroir(cle, nom));
     });
   }
@@ -274,6 +274,7 @@ class BureauScene extends Phaser.Scene {
     const G = this.G;
     this.onglet = null;
     const c = this.vider();
+    if (cle === 'ameliorations') return this.afficherAmeliorations(c);
     c.add(this.add.text(161, 72, nom, style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     const top = (obj, n, format) => Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n).map(format);
     let gauche = [], droite = [];
@@ -326,6 +327,68 @@ class BureauScene extends Phaser.Scene {
     if (!gauche.length || gauche.length === 1) gauche.push('Rien pour l\'instant.');
     c.add(this.add.text(42, 96, gauche.join('\n'), style(12, '#3b2410', { lineSpacing: 6, wordWrap: { width: 240 } })));
     c.add(this.add.text(304, 96, droite.join('\n'), style(12, '#3b2410', { lineSpacing: 6, wordWrap: { width: 240 } })));
+  }
+
+  // --- Les améliorations du shop ---
+
+  // Page de gauche : les meubles et leur niveau ; page de droite : le meuble choisi, avant/après.
+  afficherAmeliorations(c, choisi = this.meubleChoisi || 'reserve') {
+    const G = this.G;
+    this.meubleChoisi = choisi;
+    c.add(this.add.text(161, 72, 'Améliorer le shop', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(161, 94, 'Commande le soir : les ouvriers\npassent pendant la nuit.', style(11, '#6b4a2a', { fontStyle: 'italic', align: 'center' })).setOrigin(0.5, 0));
+    Object.entries(AMELIORATIONS).forEach(([cle, a], i) => {
+      const y = 152 + i * 58;
+      const n = niveauAmelioration(G, cle);
+      const fond = this.add.rectangle(161, y, 252, 52, cle === choisi ? 0xd8c498 : 0xffffff, cle === choisi ? 1 : 0).setInteractive({ useHandCursor: true });
+      fond.on('pointerdown', () => { const p = this.vider(); this.afficherAmeliorations(p, cle); });
+      const etoiles = n ? '★'.repeat(n) : '—';
+      const prevu = (G.travaux || []).includes(cle) ? ' · 🔨 cette nuit' : '';
+      c.add([fond,
+        this.add.text(44, y - 18, a.nom, style(13, '#3b2410', { fontStyle: 'bold' })),
+        this.add.text(44, y, `${a.niveaux[n]}${prevu}`, style(11, '#5a3a20', { fontStyle: 'italic' })),
+        this.add.text(278, y - 16, etoiles, style(14, '#b8860b')).setOrigin(1, 0)]);
+    });
+    // La page de droite
+    const a = AMELIORATIONS[choisi];
+    const n = niveauAmelioration(G, choisi);
+    const suivant = ameliorationSuivante(G, choisi);
+    c.add(this.add.text(423, 72, a.nom, style(15, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(423, 92, a.effet, style(11, '#5a3a20', { align: 'center', wordWrap: { width: 236 } })).setOrigin(0.5, 0));
+    const apercu = (niveau, y) => {
+      const { cle, echelle } = this.apercuMeuble(choisi, niveau);
+      c.add(this.add.image(423, y, cle).setScale(echelle));
+      c.add(this.add.text(423, y + 46, `${niveau ? '★'.repeat(niveau) + '  ' : ''}${a.niveaux[niveau]}`, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    };
+    apercu(n, 196);
+    if (!suivant) {
+      c.add(this.add.text(423, 330, 'Le plus beau qui soit !', style(14, '#8a6a10', { fontStyle: 'bold italic' })).setOrigin(0.5));
+      return;
+    }
+    c.add(this.add.text(423, 262, '▼', style(16, '#8a6a4a')).setOrigin(0.5));
+    apercu(suivant.niveau, 318);
+    const prevu = (G.travaux || []).includes(choisi);
+    const b = creerBouton(this, 423, 428, 230, prevu ? 'Prévu cette nuit' : `Commander · ${suivant.prix} p.`, () => {
+      const erreur = commanderAmelioration(G, choisi);
+      const p = this.vider();
+      this.afficherAmeliorations(p, choisi);
+      if (erreur) p.add(this.add.text(423, 456, erreur, style(12, '#a03030', { fontStyle: 'bold' })).setOrigin(0.5));
+      else p.add(this.add.text(423, 456, choisi === 'reserve' ? 'Ta réserve est agrandie !' : 'Commandé ! Les ouvriers viendront cette nuit.', style(12, '#3a6a20', { fontStyle: 'bold' })).setOrigin(0.5));
+    });
+    b.label.setFontSize(15);
+    if (prevu || !peutPayer(G, suivant.prix)) b.setActif(false);
+    c.add([b.fond, b.label]);
+  }
+
+  // La texture d'un meuble à un niveau donné, et l'échelle pour l'aperçu (page de droite).
+  apercuMeuble(cle, n) {
+    switch (cle) {
+      case 'reserve': return { cle: etagereHD(this, n), echelle: 0.42 };
+      case 'comptoir': return { cle: plateauComptoir(this, n), echelle: 0.5 };
+      case 'coffre': return { cle: coffreHD(this, n), echelle: 2.4 };
+      case 'chambre': return { cle: litHD(this, n), echelle: n === 3 ? 0.55 : 1.2 };
+      default: return { cle: luminaireHD(this, n), echelle: n >= 2 ? 1.6 : 2.6 };
+    }
   }
 
   fermer() {

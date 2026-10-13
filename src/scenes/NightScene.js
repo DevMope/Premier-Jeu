@@ -15,8 +15,14 @@ class NightScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor(this.matin ? '#2a1e12' : '#1e140c');
     this.cameras.main.fadeIn(500);
-    this.add.text(480, 34, this.matin ? `Matin du jour ${G.jour} · chez toi` : `Soir du jour ${G.jour}`, style(30, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
-    this.texteArgent = this.add.text(940, 34, '', style(20, '#f3d98a', { fontStyle: 'bold' })).setOrigin(1, 0.5);
+    // Le décor : l'arrière-boutique, à la lueur du luminaire (plus sombre le soir)
+    creerInterieurHD(this);
+    this.add.image(0, 0, murInterieur(this, 'murArriere', { poteaux: [272, 412], graine: 310 })).setOrigin(0).setScale(2).setTint(this.matin ? 0xb8946c : 0x7a5c44);
+    this.add.image(0, 440, plancher(this, 'plancherArriere', { graine: 410 })).setOrigin(0).setScale(2).setTint(this.matin ? 0xc8a888 : 0x8a6c54);
+    vignette(this, 0.85, 0);
+    poserLuminaire(this, 480, -40, niveauAmelioration(G, 'eclairage'), 0);
+    this.add.text(480, 34, this.matin ? `Matin du jour ${G.jour} · chez toi` : `Soir du jour ${G.jour}`, style(30, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5);
+    this.texteArgent = this.add.text(940, 34, '', style(20, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(1, 0.5);
 
     this.parchemin(20, 300, this.matin ? "Aujourd'hui" : 'La journée');
     this.parchemin(320, 640, 'Ta réserve');
@@ -64,7 +70,7 @@ class NightScene extends Phaser.Scene {
   }
 
   parchemin(x1, x2, titre) {
-    this.add.rectangle((x1 + x2) / 2, 270, x2 - x1, 400, 0xead9b0).setStrokeStyle(3, 0x8a6a3a);
+    this.add.image((x1 + x2) / 2, 270, panneauHD(this, x2 - x1, 400)).setScale(2);
     this.add.text((x1 + x2) / 2, 90, titre, style(20, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
   }
 
@@ -125,14 +131,13 @@ class NightScene extends Phaser.Scene {
     Object.keys({ ...ITEMS, ...MATERIAUX }).forEach((id, i) => {
       const x = x1 + 24 + (i % 2) * 150;
       const y = 138 + Math.floor(i / 2) * 38;
-      this.add.image(x, y, id).setScale(3);
+      this.add.image(x, y, iconeObjet(this, id)).setScale(2);
       this.add.text(x + 20, y - 8, nomObjet(id), style(13, '#3b2410'));
       this.lignesStock[id] = this.add.text(x + 20, y + 8, '', style(13, '#3b2410', { fontStyle: 'bold' }));
     });
     this.texteReserve = this.add.text(x1 + 18, 410, '', style(13, '#3b2410', { fontStyle: 'bold' }));
-    const btn = this.add.rectangle((x1 + x2) / 2, 444, x2 - x1 - 36, 30, 0x6b4423).setStrokeStyle(2, 0x3b2410)
-      .setInteractive({ useHandCursor: true });
-    this.texteAgrandir = this.add.text((x1 + x2) / 2, 444, '', style(13, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
+    const btn = this.add.image((x1 + x2) / 2, 444, plaqueBouton(this, x2 - x1 - 36)).setScale(2).setInteractive({ useHandCursor: true });
+    this.texteAgrandir = this.add.text((x1 + x2) / 2, 444, '', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
     btn.on('pointerdown', () => {
       if (agrandirReserve(this.G)) return this.tout();
       if (agrandissementSuivant(this.G)) this.annoncer("Pas assez d'argent pour agrandir la réserve.");
@@ -203,7 +208,7 @@ class NightScene extends Phaser.Scene {
   // --- La prévision pour demain ---
 
   creerPrevision(x1, x2) {
-    this.add.rectangle((x1 + x2) / 2, 410, x2 - x1 - 24, 100, 0xd8c498).setStrokeStyle(2, 0x8a6a3a);
+    this.add.rectangle((x1 + x2) / 2, 410, x2 - x1 - 40, 96, 0xc8b080, 0.55).setStrokeStyle(2, 0x8a6a3a);
     this.add.text(x1 + 22, 366, this.matin ? "Aujourd'hui" : 'Demain', style(15, '#3b2410', { fontStyle: 'bold' }));
     this.textePrevision = this.add.text(x1 + 22, 386, '', style(14, '#3b2410', { fontStyle: 'bold', wordWrap: { width: x2 - x1 - 44 } }));
     this.texteFacteurs = this.add.text(x1 + 22, 424, '', style(11, '#5a3a20', { lineSpacing: 2 }));

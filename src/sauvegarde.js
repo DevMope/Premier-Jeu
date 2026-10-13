@@ -209,6 +209,9 @@ function mettreAJourPartie(G) {
   G.employes = G.employes || [];
   G.mal = G.mal || 0;
   G.nomShop = G.nomShop || NOM_SHOP_DEFAUT;
+  G.ameliorations = { comptoir: 0, coffre: 0, chambre: 0, eclairage: 0, ...(G.ameliorations || {}) };
+  G.travaux = G.travaux || [];
+  G.travauxFinis = G.travauxFinis || [];
   // Le forgeron s'appelle désormais Thorgal : on garde votre relation.
   for (const table of [G.relations, G.personnes]) {
     if (table && 'Brunehaut la Forgeronne' in table) {

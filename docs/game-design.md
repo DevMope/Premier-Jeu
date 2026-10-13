@@ -282,7 +282,7 @@ Chaque étape doit donner une version **jouable**.
 | 7a ✅ | Portraits | Bustes HD de tous les peuples, expressions, clignements, paroles. |
 | 7b ✅ | Le comptoir | Mur, fenêtre, plateau, ardoise, parchemin ; JeuneGoy en HD. |
 | 7c ✅ | Finitions du comptoir | Marchandises HD sur lit de toile, pièces d'or, boutons noyer et laiton, panneau de dialogue, registre en livre ouvert, tailles des peuples. |
-| 7d | L'intérieur du shop | Arrière-boutique, chambre (Dodo), bureau du registre ; bougies et lumière. |
+| 7d ✅ | L'intérieur du shop | Arrière-boutique, chambre, bureau du registre, écran du soir ; bougies, luminaires et lumière ; améliorations du shop (4 niveaux de luxe). |
 | 7e | L'extérieur | Façade et enseigne, rue du Marché des Mastres, Banque, carte, paysages des zones. |
 | 7f | Silhouettes HD en pied | Personnages entiers en HD (file, départs, récits, marché), tenues selon le niveau du voyageur. |
 | 7g | Cinématiques animées | Vrais déplacements : marche, gestes, objets qui bougent ; prologue, récits d'aventure, faillite, Faucheuse, départs, nuit. |
@@ -302,3 +302,19 @@ puis humains, elfes, magiciennes. Les pandas (à venir) seront les plus grands p
 bien ; la liste des tailles des forces maléfiques sera donnée plus tard.
 Silhouettes : hobbit 13 px, nain 14, humain 16, elfe 17, magicienne 18. Au comptoir, le buste des
 petits peuples apparaît plus bas dans la fenêtre, celui des grands plus haut.
+
+## Améliorations du shop
+
+Commandées le soir au bureau (tiroir « Améliorer le shop »), installées pendant la nuit
+(sauf l'étagère, qui suit les agrandissements de la réserve). Chaque niveau terminé donne
++0,2 de réputation. 4 niveaux de luxe : bois brut → chêne ciré → noyer et laiton → ébène et dorures.
+
+| Meuble | Niveaux | Prix | Bonus par niveau |
+|---|---|---|---|
+| Étagère de la réserve | Planches brutes, Chêne ciré, Noyer à moulures, Ébène et dorures | 60 / 140 / 260 | réserve 30 / 40 / 55 places |
+| Comptoir | Chêne brut, Chêne verni, Noyer et laiton, Ébène et dorures | 150 / 400 / 900 | +4 % de butin reversé |
+| Coffre de la fortune | Bois, Ferré, Coffre-fort de nain, Or gravé | 100 / 280 / 650 | intérêts 1 % par nuit (15 p. max) |
+| Chambre | Paillasse, Lit de bois, Lit sculpté et édredon, Lit à baldaquin | 80 / 220 / 500 | +1 expérience par nuit |
+| Éclairage | Bougies, Lanternes, Chandeliers, Lustre de cristal | 90 / 250 / 600 | +0,3 client par jour |
+
+Tout futur objet améliorable suivra le même modèle (table AMELIORATIONS dans data.js).

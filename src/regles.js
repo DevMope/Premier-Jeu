@@ -358,6 +358,9 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     faucheuse: { faveur: 0, morts: 0, visites: 0, cadeau: false, mission: null, sabotages: 0 },
     experience: 0, // nombre de clients servis depuis le début
     capacite: RESERVE_DEPART,
+    ameliorations: { comptoir: 0, coffre: 0, chambre: 0, eclairage: 0 },
+    travaux: [],
+    travauxFinis: [],
     prets: [],     // { id, preteur, nom, restant, parJour }
     habitues: [],  // aventuriers revenus : { nom, race, feminin, inventaire }
     offre: {},     // ce que vend le fournisseur ce soir : { id: { prix, qte } }
@@ -801,7 +804,52 @@ function agrandirReserve(G) {
   if (!a || !peutPayer(G, a.prix)) return false;
   payer(G, a.prix, 'reserve');
   G.capacite = a.capacite;
+  G.reputation += REPUTATION_AMELIORATION;
   return true;
+}
+
+// --- Les améliorations du shop ---
+
+// Le niveau de luxe d'un meuble (0 à 3). L'étagère suit les agrandissements de la réserve.
+function niveauAmelioration(G, cle) {
+  if (cle === 'reserve') return AGRANDISSEMENTS.filter(a => a.capacite <= G.capacite).length;
+  return (G.ameliorations && G.ameliorations[cle]) || 0;
+}
+
+// Le prochain niveau d'un meuble : { niveau, nom, prix }, ou null s'il est au maximum.
+function ameliorationSuivante(G, cle) {
+  const n = niveauAmelioration(G, cle);
+  if (n >= 3) return null;
+  const a = AMELIORATIONS[cle];
+  const prix = cle === 'reserve' ? AGRANDISSEMENTS[n].prix : a.prix[n];
+  return { niveau: n + 1, nom: a.niveaux[n + 1], prix };
+}
+
+// Commander une amélioration (les ouvriers passent la nuit). L'étagère s'agrandit tout de suite.
+// Renvoie un message d'erreur, ou null si c'est commandé.
+function commanderAmelioration(G, cle) {
+  const s = ameliorationSuivante(G, cle);
+  if (!s) return 'Déjà au plus haut niveau.';
+  if ((G.travaux || []).includes(cle)) return 'Les ouvriers viennent déjà cette nuit.';
+  if (!peutPayer(G, s.prix)) return "Pas assez d'argent.";
+  if (cle === 'reserve') { agrandirReserve(G); return null; }
+  payer(G, s.prix, 'ameliorations');
+  G.travaux = [...(G.travaux || []), cle];
+  return null;
+}
+
+// La nuit : les ouvriers installent ce qui a été commandé, le coffre rapporte, on se repose.
+function nuitDuShop(G) {
+  G.travauxFinis = [];
+  for (const cle of G.travaux || []) {
+    G.ameliorations[cle] = Math.min(3, (G.ameliorations[cle] || 0) + 1);
+    G.reputation += REPUTATION_AMELIORATION;
+    G.travauxFinis.push(cle);
+  }
+  G.travaux = [];
+  const coffre = niveauAmelioration(G, 'coffre');
+  if (coffre && G.argent > 0) encaisser(G, Math.min(15 * coffre, Math.floor(G.argent * 0.01 * coffre)), 'interets');
+  G.experience += niveauAmelioration(G, 'chambre');
 }
 
 // Peut-on contracter ce prêt ? Renvoie la raison sinon.
@@ -838,7 +886,9 @@ function attrait(G) {
     experience: Math.min(G.experience, 40) / 10,
     variete: variete * 0.15,
     decoration: aDecoration(G, 'trophee') ? 0.7 : 0,
-    total: 1 + G.reputation * 0.4 + Math.min(G.experience, 40) / 10 + variete * 0.15 + (aDecoration(G, 'trophee') ? 0.7 : 0),
+    eclairage: niveauAmelioration(G, 'eclairage') * 0.3,
+    total: 1 + G.reputation * 0.4 + Math.min(G.experience, 40) / 10 + variete * 0.15 + (aDecoration(G, 'trophee') ? 0.7 : 0)
+      + niveauAmelioration(G, 'eclairage') * 0.3,
   };
 }
 
@@ -868,6 +918,7 @@ function nuit(G) {
     G.faillite = true;
     return;
   }
+  nuitDuShop(G);
   G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2);
   G.expressMateriaux = materiauxExpress();
   G.jour++;
@@ -924,7 +975,8 @@ function ouvrirComptoir(G) {
 // Ce que l'aventurier te reverse vraiment, selon votre relation et la lanterne.
 function partDuButin(G, voyageur) {
   const lanterne = aDecoration(G, 'lanterne') ? 1.1 : 1;
-  return Math.round(voyageur.butin * niveauRelation(G, voyageur.nom).butin * lanterne);
+  const comptoir = 1 + 0.04 * niveauAmelioration(G, 'comptoir');
+  return Math.round(voyageur.butin * niveauRelation(G, voyageur.nom).butin * lanterne * comptoir);
 }
 
 // Appelé à la fin du récit : on encaisse le butin, la réputation et la relation évoluent.

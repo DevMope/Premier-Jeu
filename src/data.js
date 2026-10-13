@@ -50,6 +50,24 @@ const AGRANDISSEMENTS = [
   { capacite: 55, prix: 260 },
 ];
 
+// Les améliorations du shop : chaque meuble a 4 niveaux de luxe (0 à 3), commandés le soir au
+// bureau ; les ouvriers les installent pendant la nuit. Chacune donne un petit bonus, et un
+// shop plus beau gagne un peu de réputation. (La réserve suit ses agrandissements.)
+const AMELIORATIONS = {
+  reserve: { nom: "L'étagère de la réserve", niveaux: ['Planches brutes', 'Chêne ciré', 'Noyer à moulures', 'Ébène et dorures'],
+    effet: 'Plus de place dans ta réserve.' },
+  comptoir: { nom: 'Le comptoir', niveaux: ['Chêne brut', 'Chêne verni', 'Noyer et laiton', 'Ébène et dorures'], prix: [150, 400, 900],
+    effet: 'Un beau comptoir inspire confiance : les aventuriers te reversent +4 % de butin par niveau.' },
+  coffre: { nom: 'Le coffre de la fortune', niveaux: ['Coffre de bois', 'Coffre ferré', 'Coffre-fort de nain', "Coffre d'or gravé"], prix: [100, 280, 650],
+    effet: 'Ta fortune rapporte des intérêts chaque nuit : 1 % par niveau (15 p. max par niveau).' },
+  chambre: { nom: 'La chambre', niveaux: ['Paillasse', 'Lit de bois', 'Lit sculpté et édredon', 'Lit à baldaquin'], prix: [80, 220, 500],
+    effet: "Mieux reposé, tu apprends plus vite : +1 d'expérience par nuit et par niveau (ton flair progresse)." },
+  eclairage: { nom: "L'éclairage", niveaux: ['Bougies', 'Lanternes', 'Chandeliers', 'Lustre de cristal'], prix: [90, 250, 600],
+    effet: 'Un shop bien éclairé attire le regard : +0,3 client par jour et par niveau.' },
+};
+// La réputation gagnée à chaque amélioration terminée.
+const REPUTATION_AMELIORATION = 0.2;
+
 // Le marchand express passe au comptoir pendant la journée :
 // pratique pour sauver un voyage, mais bien plus cher que le fournisseur.
 // Un vieux gobelin avare, recroquevillé à côté de sa caravane.
@@ -560,6 +578,7 @@ const POSTES = {
   remboursements: 'Remboursements de prêts', dons: 'Dons au mendiant', prets: 'Prêts reçus', salaires: 'Salaires',
   sabotages: 'Primes de la Faucheuse',
   bazar: 'Cadeaux du Bazar',
+  ameliorations: 'Améliorations du shop', interets: 'Intérêts du coffre',
 };
 // On garde le détail des derniers jours (un peu plus d'une année).
 const JOURS_DE_COMPTES = 120;

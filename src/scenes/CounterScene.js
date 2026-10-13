@@ -89,7 +89,7 @@ class CounterScene extends Phaser.Scene {
     creerDecorComptoir(this);
     creerObjetsHD(this);
     this.add.image(0, 0, 'murComptoir').setOrigin(0).setScale(2);
-    this.add.image(0, 340, 'plateauComptoir').setOrigin(0).setScale(2);
+    this.add.image(0, 340, plateauComptoir(this, niveauAmelioration(this.G, 'comptoir'))).setOrigin(0).setScale(2);
   }
 
   creerFenetre() {
