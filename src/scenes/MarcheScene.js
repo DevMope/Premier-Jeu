@@ -682,7 +682,7 @@ class MarcheScene extends Phaser.Scene {
       style(12, '#6b4a2a', { fontStyle: 'italic' })));
     // Toi, dans ta tenue du moment
     textureJoueur(this, G);
-    c.add(this.add.image(900, 500, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7)));
+    c.add(this.add.image(900, 500, textureJoueur(this, G, 'troisQuarts')).setOrigin(0.5, 1).setScale(echelleJoueur(7)).setFlipX(true));   // (tourné vers la marchande)
     Object.entries(GARDE_ROBE).forEach(([id, d], i) => {
       const x = 40 + (i % 2) * 400;
       const y = 370 + Math.floor(i / 2) * 30;

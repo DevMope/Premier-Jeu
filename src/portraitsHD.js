@@ -249,12 +249,12 @@ const SOURCILS = {
   fache: [-2, -2, -1, -1, 0, 0, 1, 1, 2, 2, 3],
 };
 // d : lèvre, D : fond de la bouche, w : dents, r : langue, p : ombre sous le nez
-const LEGENDE_BOUCHE = { d: ['levres', 1], D: ['bouche', 0], w: ['bouche', 5], r: ['bouche', 3], p: ['peau', 2] };
+const LEGENDE_BOUCHE = { d: ['levres', 1], L: ['levres', 3], D: ['bouche', 0], w: ['bouche', 5], r: ['bouche', 3], p: ['peau', 2] };
 const BOUCHES = {
-  neutre: ['..........', '..pppppp..', '.dddddddd.', '..........'],
-  content: ['.d......d.', '..dwwwwd..', '...dddd...', '..........'],
-  inquiet: ['..........', '...dddd...', '..d....d..', '.d......d.'],
-  fache: ['..........', '...dddd...', '..dwwwwd..', '.d......d.'],
+  neutre: ['..........', '..pppppp..', '.dddddddd.', '..LLLLLL..'],
+  content: ['.d......d.', '..dwwwwd..', '...dddd...', '...LLLL...'],
+  inquiet: ['..........', '..dddddd..', '.dLLLLLLd.', 'd........d'],
+  fache: ['..........', '..dddddd..', '.ddwwwwdd.', 'd..LLLL..d'],
   parle: ['..dddddd..', '.dDDDDDDd.', '.dDrrrrDd.', '..dddddd..'],
 };
 
@@ -364,7 +364,9 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
     for (const x of [fx - 11, fx - 10, fx + 9, fx + 10]) t.poser(x, ey + 7, 'levres', 4);
   }
   if (g.taches) for (const [i, j] of [[-9, 6], [-7, 7], [7, 6], [9, 7], [-8, 8], [8, 8]]) t.poser(fx + i, ey + j, 'peau', 2);
-  t.dessin(fx - 5, v.bouche, BOUCHES[parle ? 'parle' : expression], LEGENDE_BOUCHE);
+  const bouche = BOUCHES[parle ? 'parle' : expression];
+  // (les elfes femmes gardent une bouche discrète : pas de lèvre du bas)
+  t.dessin(fx - 5, v.bouche, g.race === 'elfe' && g.feminin ? bouche.map(l => l.replace(/L/g, '.')) : bouche, LEGENDE_BOUCHE);
   t.relief = true;
 
   // 5. La barbe

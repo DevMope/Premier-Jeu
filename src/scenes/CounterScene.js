@@ -1432,7 +1432,9 @@ class CounterScene extends Phaser.Scene {
     // Son visage suit son colis : content s'il est bien équipé, inquiet s'il manque des choses.
     if (v && this.enService && v.queteId && this.buste && this.buste.personne === v) {
       const c = chanceDeRetour(v, this.colis);
-      this.exprimer(v.exige && !totalSurplus(v, this.colis) ? 'fache' : c >= 0.75 ? 'content' : c < 0.4 ? 'inquiet' : 'neutre');
+      const vide = !Object.values(this.colis).some(n => n > 0);
+      // (tant que le baluchon est vide, il garde l'humeur de son arrivée : rien ne s'est encore passé)
+      this.exprimer(vide ? this.expressionArrivee(this.entree) : v.exige && !totalSurplus(v, this.colis) ? 'fache' : c >= 0.75 ? 'content' : c < 0.4 ? 'inquiet' : 'neutre');
     }
     if (v && !v.queteId) {
       this.texteChance.setText('Choisis sa destination').setColor('#8a6a10');

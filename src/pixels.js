@@ -575,11 +575,20 @@ function paletteJoueur(ap, stade) {
 }
 
 // La texture du joueur à son âge actuel (créée si besoin).
-function textureJoueur(scene, G) {
+function textureJoueur(scene, G, vue = 'face') {
   // (on redessine le joueur quand sa tenue change : ce qu'il achète à la garde-robe, il le porte)
   const tenue = (G.tenue || []).join(',');
   if (!scene.textures.exists('joueur_petit') || scene.textures.get('joueur_petit').tenue !== tenue) creerTexturesJoueur(scene, G.joueur.apparence, G.joueur.feminin, G.tenue || []);
-  return 'joueur_' + stadeJoueur(G);
+  const stade = stadeJoueur(G);
+  if (vue === 'face') return 'joueur_' + stade;
+  // Sous un autre angle (de trois-quarts, il regarde vers la droite : à retourner pour regarder à gauche)
+  const cle = `joueur_${stade}_${vue}`;
+  if (!scene.textures.exists(cle) || scene.textures.get(cle).tenue !== tenue) {
+    if (scene.textures.exists(cle)) scene.textures.remove(cle);
+    dessinerJoueurHD(G.joueur.apparence, stade, G.joueur.feminin, 0, G.tenue || [], vue).texture(scene, cle);
+    scene.textures.get(cle).tenue = tenue;
+  }
+  return cle;
 }
 
 // Crée (ou recrée) les trois textures du joueur, en HD : joueur_petit, joueur_adulte, joueur_ancien.

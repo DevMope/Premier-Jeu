@@ -149,6 +149,9 @@ class IntroHistoireScene extends Cinematique {
 
     textureJoueur(this, G); // (crée les textures du joueur si besoin)
     this.heros = this.add.image(220, 320, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(6));
+    // Quand il ne marche pas, il regarde Garrick (de trois-quarts, vers la droite)
+    this.regarder = () => this.heros.setTexture(textureJoueur(this, G, 'troisQuarts')).setFlipX(false);
+    this.aller = async (x) => { this.heros.setTexture('joueur_petit'); await this.marcher(this.heros, x); this.regarder(); };
     this.mentor = this.add.image(-80, 345, corpsHD(this, 'mentor')).setOrigin(0.5, 0.5).setScale(6 * ECHELLE_CORPS).setAngle(90);
     // Le devant de la rivière, par-dessus l'aventurier : seuls sa tête et son torse dépassent de l'eau.
     const ligneEau = 342;
@@ -169,6 +172,43 @@ class IntroHistoireScene extends Cinematique {
 
     this.creerBoiteTexte();
     this.boutonPasser(() => this.finir());
+    this.regarder();
+    this.volerAvantDeRaconter();
+  }
+
+  // L'entrée : la caméra vole à travers les arbres de la forêt, de plus en plus vite, jusqu'à
+  // arriver sur notre personnage au bord de la rivière. Là, l'histoire commence.
+  async volerAvantDeRaconter() {
+    const cam = this.cameras.main;
+    const boite = [this.boite, this.entete, this.texte, this.indice];
+    boite.forEach(o => o.setVisible(false));
+    // On part de très près, au cœur du bois, et on recule jusqu'au plan de la rivière.
+    // (la caméra du jeu est déjà zoomée depuis le coin en haut à gauche : on multiplie, et on
+    // calcule nous-mêmes le défilement pour viser un point)
+    const z0 = cam.zoom, k = 2.6;
+    cam.setZoom(z0 * k).setScroll(430 - 480 / k, 200 - 270 / k);
+    const nuit = this.add.rectangle(480, 185, 960, 370, 0x03110a, 0.9).setDepth(29);
+    Son.jouer('vent', { duree: 5 });
+    // Les arbres qu'on frôle : chacun surgit du fond, grossit et file sur le côté
+    const vol = [];
+    const arbres = [[0.0, -1, 2.2], [0.5, 1, 2.6], [0.95, -1, 1.9], [1.35, 1, 2.4], [1.7, -1, 2.8], [2.0, 1, 2.0], [2.3, -1, 2.5], [2.6, 1, 2.3], [2.9, -1, 2.0], [3.2, 1, 2.4], [3.5, -1, 1.8]];
+    for (const [delai, cote, taille] of arbres) {
+      const a = this.add.image(430 + cote * 30, 230, 'sapinPremierPlanHD').setOrigin(0.5, 1).setScale(0.35).setDepth(30).setAlpha(0).setTint(0x0c2214);
+      vol.push(a);
+      this.time.delayedCall(delai * 1000, () => {
+        if (this.fini) return;
+        Son.jouer('vol', { force: 0.6 + taille * 0.2 });
+        this.tweens.add({ targets: a, alpha: 1, duration: 100 });
+        this.tweens.add({ targets: a, scale: taille * 3, x: 430 + cote * 700, y: 230 + 420, duration: 700, ease: 'Cubic.easeIn', onComplete: () => a.destroy() });
+      });
+    }
+    // La lumière revient à mesure qu'on sort du bois, et la caméra se pose sur la rivière
+    this.tweens.add({ targets: nuit, fillAlpha: 0, duration: 3200, delay: 1200 });
+    await this.animer({ targets: cam, zoom: z0, scrollX: 0, scrollY: 0, duration: 4400, ease: 'Sine.easeInOut' });
+    nuit.destroy(); vol.forEach(a => a.active && a.destroy());
+    cam.setZoom(z0).setScroll(0, 0);
+    if (this.fini) return;
+    boite.forEach(o => o.setVisible(true));
     this.raconter();
   }
 
@@ -206,7 +246,7 @@ class IntroHistoireScene extends Cinematique {
     await this.attendreClic();
 
     // Tu tires... et tu tombes sur les fesses.
-    await this.marcher(this.heros, 430);
+    await this.aller(430);
     this.ecrire('', 'Tu as tiré. Et tiré. Et tiré encore...');
     await this.animer({ targets: this.heros, x: 410, duration: 250, yoyo: true, repeat: 2 });
     this.onomatopee(400, 250, 'HNNNG !');
@@ -267,7 +307,7 @@ class IntroHistoireScene extends Cinematique {
     this.ecrire('Garrick Cœur-de-Chêne', `« Je te dois la vie, ${petit}. Si je survis à ma quête, je reviendrai te récompenser. Promis. »`);
     await this.attendreClic();
     await this.marcher(this.mentor, 1020, 4);
-    await this.marcher(this.heros, 300);
+    await this.aller(300);
 
     // Le temps passe... et on rentre dans la Comté, au bord du chemin, à guetter son retour.
     await this.versLaComte();

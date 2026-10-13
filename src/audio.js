@@ -523,6 +523,28 @@ const SONS = {
   miaou(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(620, t); osc.frequency.linearRampToValueAtTime(820, t + 0.15); osc.frequency.exponentialRampToValueAtTime(480, t + 0.5); const f = this.ctx.createBiquadFilter(); f.frequency.value = 1500; f.Q.value = 3; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.14, t + 0.08); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.55); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.6); },
   // Le coq du matin, au marché
   coq(t, bus) { const notes = [[520, 0.18], [680, 0.18], [860, 0.32], [640, 0.5]]; let dt = 0; for (const [f0, d] of notes) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(f0, t + dt); osc.frequency.linearRampToValueAtTime(f0 * 0.92, t + dt + d); const f = this.ctx.createBiquadFilter(); f.frequency.value = 1800; f.Q.value = 2.5; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + dt); g.gain.exponentialRampToValueAtTime(0.12, t + dt + 0.03); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + d); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + d + 0.02); dt += d; } },
+  // Le vol de la caméra à travers la forêt : un souffle qui passe tout près (un arbre qu'on frôle)
+  vol(t, bus, o) {
+    const ctx = this.ctx, duree = 0.45, n = Math.floor(ctx.sampleRate * duree), buf = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.4;
+    f.frequency.setValueAtTime(400, t); f.frequency.exponentialRampToValueAtTime(2600, t + 0.16); f.frequency.exponentialRampToValueAtTime(300, t + duree);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.45 * ((o && o.force) || 1), t + 0.14); g.gain.exponentialRampToValueAtTime(0.0005, t + duree);
+    src.connect(f); f.connect(g); g.connect(bus); src.start(t); src.stop(t + duree + 0.05);
+    // (quelques feuilles qui claquent au passage)
+    for (let i = 0; i < 3; i++) this.bruit(0.02, t + 0.1 + i * 0.05, bus, 0.2, 5000, 'highpass');
+  },
+  // Le vent du vol : un long souffle grave qui enfle puis s'apaise
+  vent(t, bus, o) {
+    const ctx = this.ctx, duree = (o && o.duree) || 4, n = Math.floor(ctx.sampleRate * duree), buf = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 0.8;
+    f.frequency.setValueAtTime(300, t); f.frequency.linearRampToValueAtTime(900, t + duree * 0.6); f.frequency.linearRampToValueAtTime(250, t + duree);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.22, t + duree * 0.5); g.gain.exponentialRampToValueAtTime(0.0005, t + duree);
+    src.connect(f); f.connect(g); g.connect(bus); src.start(t); src.stop(t + duree + 0.05);
+  },
   // L'âne de Barnabé, les sabots sur les pavés
   sabots(t, bus) { for (let i = 0; i < 6; i++) { const dt = i * 0.17 + (i % 2) * 0.04; this.bruit(0.03, t + dt, bus, 0.45, 1600 + (i % 2) * 500); const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(260, t + dt); osc.frequency.exponentialRampToValueAtTime(120, t + dt + 0.05); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.14, t + dt); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.07); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.08); } },
 };
@@ -531,8 +553,17 @@ const SONS = {
 const SON_DES_MOTS = [['TCHAK', 'coup'], ['BLONG', 'bouclier'], ['FIOUU', 'siffle'], ['HOP', 'saut'], ['Miam', 'miam'], ['Glou', 'glou'], ['OUSTE', 'grogne'], ['AÏE', 'aie'], ['OUILLE', 'aie'], ['CRAC', 'aie'], ['Atchoum', 'aie'], ['PLOUF', 'plouf'], ['Frrrt', 'page'], ['Frotte', 'balai'], ['Pfff', 'balai'], ['Tchac', 'balai'], ['Hop', 'saut']];
 function sonDuMot(mot) { const trouve = SON_DES_MOTS.find(([m]) => mot.startsWith(m)); return trouve ? trouve[1] : null; }
 
+// La création du personnage : le thème du titre, en plus doux (boîte à musique et harpe, sans
+// les cordes), pour rester dans la même ambiance avant que l'histoire commence
+THEMES.personnage = Object.assign({}, THEMES.titre, {
+  tempo: 118, reverb: 0.4, lie: 1.2,
+  instruments: { melodie: 'boiteAMusique', accompagnement: 'harpe', basse: 'basse' },
+  basse: (m, a) => [[0, a, 2.8, 0.6]],
+  accompagnement: (m) => [[0, 0, 1, 0.5], [1, 1, 1, 0.4], [2, 2, 1, 0.4]],
+});
+
 // Le thème de chaque scène du jeu
 const THEME_PAR_SCENE = {
-  Titre: 'titre', Intro: 'cinematique', IntroHistoire: 'cinematique', Comptoir: 'comptoir', Nuit: 'nuit', Dodo: 'nuit', Recit: 'recitEtonne', Faillite: 'faillite',
+  Titre: 'titre', Intro: 'personnage', IntroHistoire: 'cinematique', Comptoir: 'comptoir', Nuit: 'nuit', Dodo: 'nuit', Recit: 'recitEtonne', Faillite: 'faillite',
   Express: 'jeux', Banque: 'banque', Marche: 'marche', Atelier: 'comptoir', Bureau: 'comptoir', Carte: 'carte', Facade: 'marche', Arriere: 'comptoir', Renovation: 'cinematique', Promenade: 'nuit',
 };
