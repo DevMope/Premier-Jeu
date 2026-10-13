@@ -250,7 +250,8 @@ function envoyerDans(G, v, zone) {
 // Une zone découverte dans un récit n'a plus besoin de la réputation, mais toujours des retours.
 function conditionsZone(G, zone) {
   const z = ZONES[zone];
-  const reputation = G.reputation >= z.reputation || G.zonesDecouvertes.includes(zone);
+  // Les contrées de départ restent toujours ouvertes, même si la réputation tombe sous zéro
+  const reputation = z.reputation <= 0 || G.reputation >= z.reputation || G.zonesDecouvertes.includes(zone);
   const besoin = RETOURS_POUR_ETOILE[z.danger] || 0;
   const faits = (G.succes && G.succes[z.danger - 1]) || 0;
   return { reputation, besoin, faits, ouverte: reputation && faits >= besoin };

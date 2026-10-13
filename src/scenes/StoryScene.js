@@ -65,6 +65,7 @@ class StoryScene extends Cinematique {
       const { epreuve, niveau, reussie, pvApres, piege, pvAvant, sauvee, repli } = r.etapes[i];
       const x = 140 + i * (680 / etapes);
 
+      if (this.meteo) { this.meteo.remove(); this.meteo = null; }
       this.decor.removeAll(true);
       this.ecrire(`Épreuve ${i + 1} / ${etapes}`, '...');
       await this.marcherVers(x);
@@ -72,12 +73,13 @@ class StoryScene extends Cinematique {
       this.ecrire(`Épreuve ${i + 1} / ${etapes}`, accord(epreuve.intro, v));
       await this.attendreClic();
 
-      if (niveau !== 'rien') await this.montrerObjet(epreuve.besoin);
+      if (niveau !== 'rien') { await this.montrerObjet(epreuve.besoin); await this.utiliserObjet(epreuve.besoin); }
 
       // Un objet piégé : il lâche au pire moment, et c'est fini.
       if (piege) {
         this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(PIEGES[piege].mort, v)} »`);
         this.cameras.main.flash(400, 90, 0, 30);
+        await this.issue(false);
         for (let pv = (pvAvant || 1) - 1; pv >= 0; pv--) await this.blesser(pv);
         await this.attendreClic();
         continue;
@@ -101,6 +103,7 @@ class StoryScene extends Cinematique {
       } else {
         suite = (niveau === 'complet' ? "Mais la chance n'était pas de mon côté... " : '') + `J'ai été blessé${this.e} !`;
       }
+      await this.issue(reussie);
       this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(epreuve[niveau], v)} »\n${suite}`);
       if (!reussie) await this.blesser(pvApres);
       else await this.victoire(niveau === 'complet');
@@ -158,6 +161,7 @@ class StoryScene extends Cinematique {
   async conclure() {
     const v = this.parti.voyageur;
     const r = this.parti.resultat;
+    if (this.meteo) { this.meteo.remove(); this.meteo = null; }
     this.decor.removeAll(true);
 
     const { gain, message } = terminerAventure(this.G, this.parti);
@@ -303,107 +307,314 @@ class StoryScene extends Cinematique {
   }
 
   // Le décor de chaque épreuve, dessiné avec des formes simples.
-  planterDecor(type, x) {
-    const sol = 360;
-    this.voile.setFillStyle(0x05051a, this.voile.fillAlpha);
-    const g = this.add.graphics();
-    this.decor.add(g);
-    this.tweens.add({ targets: this.voile, fillAlpha: ['nuit', 'grotte', 'feufollet', 'esprits', 'malediction', 'mortvivant'].includes(type) ? 0.6 : 0, duration: 500 });
+  // --- Le décor de chaque épreuve : créatures et obstacles en HD, météo, lumière ---
 
-    if (type === 'route') {
-      g.fillStyle(0x6b4423).fillRect(x, sol - 90, 8, 90);
-      g.fillStyle(0x8a5a2b).fillRect(x - 30, sol - 90, 70, 20);
-      g.fillStyle(0x6b4423).fillTriangle(x + 40, sol - 90, x + 52, sol - 80, x + 40, sol - 70);
-    } else if (type === 'riviere') {
-      g.fillStyle(0x2f6a9a).fillRect(x - 70, sol - 26, 160, 36);
-      g.fillStyle(0x8fd0f0);
-      for (let i = 0; i < 6; i++) g.fillRect(x - 60 + i * 26, sol - 18 + (i % 2) * 8, 14, 3);
-      g.fillStyle(0x6b4423).fillRect(x - 74, sol - 40, 8, 30).fillRect(x + 86, sol - 40, 8, 30);
-    } else if (type === 'nuit') {
-      g.fillStyle(0xf0e8c0).fillCircle(820, 70, 26);
-      g.fillStyle(0xffd040);
-      [[x, 270], [x + 70, 300], [x + 140, 260]].forEach(([ex, ey]) => {
-        g.fillRect(ex, ey, 6, 4).fillRect(ex + 14, ey, 6, 4);
-      });
-      g.fillStyle(0xf08a24).fillTriangle(x - 70, sol, x - 50, sol - 30, x - 30, sol);
-    } else if (type === 'grotte') {
-      g.fillStyle(0x4a4a50).fillTriangle(x - 120, sol, x + 60, sol - 250, x + 260, sol);
-      g.fillStyle(0x111111).fillEllipse(x + 40, sol - 10, 110, 150);
-    } else if (type === 'araignee') {
-      g.lineStyle(2, 0xdddddd, 0.6);
-      for (let i = 0; i < 6; i++) g.lineBetween(x + 40, 60, x + 40 + Math.cos(i) * 120, 60 + Math.abs(Math.sin(i)) * 140);
-      this.decor.add(this.add.image(x + 40, sol - 40, 'araignee').setScale(8));
-    } else if (type === 'loup') {
-      this.decor.add(this.add.image(x + 30, sol, 'loup').setOrigin(0.5, 1).setScale(8).setFlipX(true));
-    } else if (type === 'morsure') {
-      g.fillStyle(0x60c040, 0.8);
-      for (let i = 0; i < 8; i++) g.fillCircle(this.perso.x + Phaser.Math.Between(-40, 40), sol - Phaser.Math.Between(20, 100), 5);
-    } else if (type === 'feufollet') {
-      [[x, 250], [x + 50, 210], [x + 100, 260], [x + 150, 230]].forEach(([fx, fy], i) => {
-        const lueur = this.add.circle(fx, fy, 10, 0x80ffd0, 0.8);
-        this.decor.add(lueur);
-        this.tweens.add({ targets: lueur, y: fy - 20, duration: 800 + i * 150, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-      });
-    } else if (type === 'bandits') {
-      [0, 60].forEach(dx => this.decor.add(
-        imageCorps(this, x + dx, sol, 'humain', 6).setFlipX(true).setTint(0x504048)));
-    } else if (type === 'gouffre') {
-      g.fillStyle(0x111111).fillRect(x - 60, sol - 26, 140, 40);
-      g.fillStyle(0x6b4423).fillRect(x - 64, sol - 34, 6, 10).fillRect(x + 80, sol - 34, 6, 10);
-    } else if (type === 'sanglier') {
-      this.decor.add(this.add.image(x + 30, sol, 'loup').setOrigin(0.5, 1).setScale(7).setFlipX(true).setTint(0x8a5a3a));
-    } else if (type === 'esprits') {
-      [[x, 230], [x + 60, 200], [x + 120, 240]].forEach(([fx, fy], i) => {
-        const esprit = this.add.ellipse(fx, fy, 26, 34, 0xf0f8ff, 0.6);
-        this.decor.add(esprit);
-        this.tweens.add({ targets: esprit, y: fy - 25, x: fx + 15, duration: 700 + i * 200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-      });
-    } else if (type === 'champignons') {
-      [[x, sol - 6], [x + 30, sol - 4], [x + 60, sol - 8]].forEach(([cx, cy]) => {
-        g.fillStyle(0xf0e8d0).fillRect(cx - 3, cy - 12, 6, 14);
-        g.fillStyle(0xc03030).fillEllipse(cx, cy - 14, 26, 14);
-        g.fillStyle(0xffffff).fillCircle(cx - 5, cy - 16, 2).fillCircle(cx + 5, cy - 14, 2);
-      });
-    } else if (type === 'sangsues') {
-      g.fillStyle(0x3a4a2a).fillRect(x - 70, sol - 20, 180, 30);
-      g.fillStyle(0x1a1a1a);
-      for (let i = 0; i < 6; i++) g.fillEllipse(x - 50 + i * 28, sol - 10 + (i % 2) * 6, 16, 6);
-    } else if (type === 'soif') {
-      g.fillStyle(0xfff4b0, 0.5).fillCircle(820, 70, 60);
-      g.fillStyle(0xa8c8e0, 0.6).fillEllipse(x + 80, sol - 20, 120, 16);
-    } else if (type === 'tempete') {
-      this.tweens.add({ targets: this.voile, fillAlpha: 0.35, duration: 500 });
-      this.voile.setFillStyle(0x8a6a3a);
-      g.lineStyle(2, 0xe8d0a0, 0.8);
-      for (let i = 0; i < 18; i++) g.lineBetween(Phaser.Math.Between(0, 960), Phaser.Math.Between(60, 340), Phaser.Math.Between(0, 960), Phaser.Math.Between(60, 340));
-    } else if (type === 'pillards') {
-      [0, 60, 120].forEach(dx => this.decor.add(
-        imageCorps(this, x + dx, sol, 'humain', 6).setFlipX(true).setTint(0x8a6a50)));
-    } else if (type === 'froid') {
-      g.fillStyle(0xffffff, 0.9);
-      for (let i = 0; i < 40; i++) g.fillCircle(Phaser.Math.Between(0, 960), Phaser.Math.Between(40, 350), Phaser.Math.Between(1, 3));
-    } else if (type === 'avalanche') {
-      g.fillStyle(0xf8fbff).fillTriangle(x - 40, sol, x + 200, sol, x + 200, sol - 180);
-      g.fillStyle(0xd0d8e8);
-      for (let i = 0; i < 6; i++) g.fillCircle(x + 20 + i * 30, sol - 20 - i * 18, 10);
-    } else if (type === 'yeti') {
-      this.decor.add(imageCorps(this, x + 40, sol, 'nain', 9).setFlipX(true).setTint(0xf0f4ff));
-    } else if (type === 'mortvivant') {
-      [0, 70].forEach(dx => this.decor.add(
-        imageCorps(this, x + dx, sol, 'humain', 6).setFlipX(true).setTint(0xb0c8a0)));
-    } else if (type === 'malediction') {
-      for (let i = 0; i < 5; i++) {
-        const rond = this.add.circle(this.perso.x, sol - 50, 20 + i * 18).setStrokeStyle(2, 0xa060e0, 0.8);
-        this.decor.add(rond);
-        this.tweens.add({ targets: rond, scale: 0.3, alpha: 0, duration: 1200, delay: i * 150, repeat: -1 });
+  planterDecor(type, x) {
+    creerRecitHD(this);
+    creerInterieurHD(this);
+    creerObjetsHD(this);
+    const sol = 360;
+    if (this.meteo) { this.meteo.remove(); this.meteo = null; }
+    this.menace = { sorte: 'ambiance', sprites: [] };
+    const sombre = ['nuit', 'grotte', 'feufollet', 'esprits', 'malediction', 'mortvivant'].includes(type);
+    this.voile.setFillStyle(type === 'tempete' ? 0x8a6a3a : 0x05051a, this.voile.fillAlpha);
+    this.tweens.add({ targets: this.voile, fillAlpha: sombre ? 0.55 : type === 'tempete' ? 0.3 : 0, duration: 600 });
+    const ajouter = o => { this.decor.add(o); return o; };
+    // Une créature qui arrive de la droite, en se dandinant, jusqu'à sa place
+    const bete = (cle, bx, echelle, { flottante = false, depuisHaut = false } = {}) => {
+      const b = ajouter(this.add.image(depuisHaut ? bx : 1040, depuisHaut ? -80 : sol, cle).setOrigin(0.5, 1).setScale(echelle).setDepth(2));
+      if (depuisHaut) {
+        const fil = ajouter(this.add.rectangle(bx, 0, 1, 10, 0xdddddd, 0.7).setOrigin(0.5, 0));
+        this.tweens.add({ targets: b, y: sol - 40, duration: 1200, ease: 'Bounce.easeOut', onUpdate: () => fil.setSize(1, Math.max(0, b.y - b.displayHeight * 0.6)) });
+      } else {
+        this.tweens.add({ targets: b, x: bx, duration: 1100, ease: 'Sine.easeOut' });
+        this.tweens.add({ targets: b, y: sol - (flottante ? 70 : 3), duration: flottante ? 900 : 140, yoyo: true, repeat: flottante ? -1 : 6, ease: 'Sine.easeInOut' });
       }
-    } else if (type === 'monstre') {
-      this.decor.add(this.add.image(x + 60, sol, 'loup').setOrigin(0.5, 1).setScale(16).setFlipX(true).setTint(0xc04030));
-      g.fillStyle(0xff9030, 0.7).fillTriangle(x - 40, sol - 70, x + 10, sol - 90, x + 10, sol - 50);
-    } else if (type === 'blessure') {
-      g.fillStyle(0xd8344a, 0.8).fillRect(this.perso.x - 8, sol - 70, 16, 4);
+      if (flottante) b.setAlpha(0.8).setBlendMode(Phaser.BlendModes.SCREEN);
+      b.base = { x: bx, y: depuisHaut ? sol - 40 : sol };
+      this.menace.sorte = 'bete';
+      this.menace.sprites.push(b);
+      return b;
+    };
+    const humain = (bx, teinte) => {
+      const h = ajouter(imageCorps(this, 1040, sol, { nom: 'Brigand ' + bx, race: 'humain', niveau: 'aguerri' }, 6).setFlipX(true).setTint(teinte).setDepth(2));
+      this.tweens.add({ targets: h, x: bx, duration: 1100, ease: 'Sine.easeOut' });
+      pasDeMarche(this, h, 1100);
+      h.base = { x: bx, y: sol };
+      this.menace.sorte = 'bete';
+      this.menace.sprites.push(h);
+    };
+    // Des particules qui tombent ou volent (neige, sable, lucioles)
+    const particules = (cle, teinte, { vx = 0, vy = 1, n = 2, echelle = 1.5, alpha = 0.8, add = false } = {}) => {
+      this.meteo = this.time.addEvent({ delay: 90, loop: true, callback: () => {
+        for (let k = 0; k < n; k++) {
+          const px = Phaser.Math.Between(-100, 1000), py = vy > 0 ? Phaser.Math.Between(-20, 40) : Phaser.Math.Between(60, 360);
+          const p = this.add.image(px, py, cle).setScale(echelle * (0.6 + Math.random() * 0.8)).setTint(teinte).setAlpha(alpha).setDepth(7);
+          if (add) p.setBlendMode(Phaser.BlendModes.ADD);
+          this.decor.add(p);
+          this.tweens.add({ targets: p, x: px + vx * 400, y: py + vy * 380, alpha: 0, duration: 2200 + Math.random() * 1200, onComplete: () => p.destroy() });
+        }
+      } });
+    };
+    creerHalo(this);
+
+    switch (type) {
+      case 'loup': bete('loupHD', x + 140, 3.2); break;
+      case 'sanglier': bete('sanglierHD', x + 140, 3.2); break;
+      case 'araignee': {
+        for (let i = 0; i < 6; i++) ajouter(this.add.rectangle(x + 150, 0, 1, 260, 0xe8e8e8, 0.35).setOrigin(0.5, 0).setAngle(-50 + i * 20));
+        bete('araigneeHD', x + 150, 3, { depuisHaut: true });
+        break;
+      }
+      case 'yeti': bete('yetiHD', x + 160, 3.4); particules('lueurHD', 0xffffff, { vx: -0.3, vy: 1, n: 3, echelle: 1.2 }); break;
+      case 'monstre': bete('trollHD', x + 170, 3.4); break;
+      case 'esprits': [0, 60, 120].forEach(dx => bete('espritHD', x + 110 + dx, 2.4, { flottante: true })); break;
+      case 'mortvivant': [0, 70].forEach(dx => bete('squeletteHD', x + 130 + dx, 2.8)); break;
+      case 'bandits': [0, 60].forEach(dx => humain(x + 120 + dx, 0x6a5a66)); break;
+      case 'pillards': [0, 60, 120].forEach(dx => humain(x + 110 + dx, 0x8a6a50)); break;
+      case 'feufollet':
+        for (let i = 0; i < 6; i++) {
+          const l = ajouter(this.add.image(x + 60 + i * 35, 220 + (i % 3) * 30, 'lueurHD').setScale(3).setBlendMode(Phaser.BlendModes.ADD));
+          const halo = ajouter(this.add.image(l.x, l.y, 'halo').setScale(0.6).setTint(0x60ffc0).setAlpha(0.4).setBlendMode(Phaser.BlendModes.ADD));
+          this.tweens.add({ targets: [l, halo], y: l.y - 30, x: l.x + Phaser.Math.Between(-30, 30), duration: 900 + i * 170, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        }
+        break;
+      case 'grotte': {
+        ajouter(this.add.image(x + 150, sol + 4, 'grotteHD').setOrigin(0.5, 1).setScale(2.4).setDepth(1));
+        break;
+      }
+      case 'gouffre': ajouter(this.add.image(x + 100, sol + 12, 'gouffreHD').setOrigin(0.5, 1).setScale(2.2).setDepth(1)); this.menace.sorte = 'gouffre'; this.menace.x = x + 100; break;
+      case 'riviere': {
+        const eau = ajouter(this.add.tileSprite(x + 110, sol - 2, 220, 50, riviereHD(this)).setOrigin(0.5, 0.5).setTileScale(2).setDepth(1));
+        this.tweens.add({ targets: eau, tilePositionX: -240, duration: 6000, repeat: -1 });
+        this.menace.sorte = 'gouffre'; this.menace.x = x + 110; this.menace.eau = true;
+        break;
+      }
+      case 'sangsues': {
+        ajouter(this.add.ellipse(x + 110, sol, 260, 34, 0x2a3a22, 0.9).setDepth(1));
+        for (let i = 0; i < 6; i++) {
+          const s = ajouter(this.add.ellipse(x + 20 + i * 36, sol - 4, 16, 6, 0x111111).setDepth(1.1));
+          this.tweens.add({ targets: s, scaleX: 0.6, duration: 400 + i * 70, yoyo: true, repeat: -1 });
+        }
+        break;
+      }
+      case 'champignons': ajouter(this.add.image(x + 90, sol + 2, 'champignonsHD').setOrigin(0.5, 1).setScale(3).setDepth(1)); particules('lueurHD', 0xd0ff60, { vx: 0.1, vy: -0.4, n: 1, echelle: 0.9, alpha: 0.6 }); break;
+      case 'avalanche':
+        for (let i = 0; i < 4; i++) {
+          const r = ajouter(this.add.image(1000 + i * 60, sol - 200 - i * 40, 'rocherHD').setOrigin(0.5, 1).setScale(2 + i * 0.4).setDepth(2));
+          this.tweens.add({ targets: r, x: x + 140 + i * 50, y: sol, angle: -540, duration: 1300 + i * 200, ease: 'Bounce.easeOut' });
+        }
+        particules('lueurHD', 0xffffff, { vx: -0.4, vy: 1, n: 3, echelle: 1.2 });
+        break;
+      case 'froid': particules('lueurHD', 0xffffff, { vx: -0.5, vy: 1, n: 4, echelle: 1.3 }); break;
+      case 'tempete': particules('lueurHD', 0xe8c890, { vx: -2.4, vy: 0.15, n: 6, echelle: 1, alpha: 0.7 }); break;
+      case 'soif': {
+        const soleil = ajouter(this.add.image(820, 70, 'halo').setScale(2.4).setTint(0xfff0a0).setAlpha(0.6).setBlendMode(Phaser.BlendModes.ADD));
+        this.tweens.add({ targets: soleil, scale: 2.8, duration: 900, yoyo: true, repeat: -1 });
+        particules('lueurHD', 0xfff0c0, { vx: 0, vy: -0.4, n: 1, echelle: 1.6, alpha: 0.25 });
+        break;
+      }
+      case 'nuit': {
+        ajouter(this.add.circle(820, 70, 24, 0xf3ecc8).setDepth(0.5));
+        const feu = ajouter(this.add.image(x - 40, sol + 2, 'feuCampHD').setOrigin(0.5, 1).setScale(2.5).setDepth(2));
+        const flamme = ajouter(this.add.sprite(feu.x, sol - 14, 'flammeBougie0').setOrigin(0.5, 1).setScale(5).setDepth(2.1).play('flammeBougie'));
+        const lueur = ajouter(this.add.image(feu.x, sol - 30, 'halo').setScale(3).setTint(0xffa040).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD).setDepth(8));
+        this.tweens.add({ targets: lueur, alpha: 0.3, scale: 2.7, duration: 300, yoyo: true, repeat: -1 });
+        // Des yeux jaunes qui brillent dans le noir...
+        for (const [ex, ey] of [[x + 150, 290], [x + 230, 300], [x + 300, 280]]) {
+          const yeux = ajouter(this.add.text(ex, ey, '• •', style(14, '#ffd040', { fontStyle: 'bold', brut: true })).setOrigin(0.5).setDepth(8).setAlpha(0));
+          this.tweens.add({ targets: yeux, alpha: 1, duration: 300, delay: Phaser.Math.Between(300, 1500), yoyo: true, hold: 1200, repeat: -1, repeatDelay: 800 });
+        }
+        particules('lueurHD', 0xffa040, { vx: 0.1, vy: -0.6, n: 1, echelle: 0.7, add: true });
+        void flamme;
+        break;
+      }
+      case 'malediction':
+        for (let i = 0; i < 5; i++) {
+          const rond = ajouter(this.add.circle(this.perso.x, sol - 60, 20 + i * 18).setStrokeStyle(3, 0xa060e0, 0.8).setDepth(6));
+          this.tweens.add({ targets: rond, scale: 0.3, alpha: 0, duration: 1200, delay: i * 150, repeat: -1 });
+        }
+        particules('lueurHD', 0xb070ff, { vx: 0, vy: -0.5, n: 2, echelle: 1, add: true });
+        break;
+      case 'morsure': {
+        const serpent = ajouter(this.add.text(this.perso.x + 40, sol - 6, '〰', style(30, '#4a8a2a', { fontStyle: 'bold', brut: true })).setOrigin(0.5, 1).setDepth(3));
+        this.tweens.add({ targets: serpent, x: serpent.x + 16, duration: 300, yoyo: true, repeat: -1 });
+        particules('lueurHD', 0x60c040, { vx: 0, vy: -0.4, n: 1, echelle: 1, alpha: 0.6 });
+        break;
+      }
+      case 'blessure':
+        ajouter(this.add.image(x + 80, sol + 4, 'rocherHD').setOrigin(0.5, 1).setScale(1.6).setDepth(1));
+        break;
+      default: { // la route : un panneau, des cailloux, des fleurs
+        const g = ajouter(this.add.graphics().setDepth(1));
+        g.fillStyle(0x6b4423).fillRect(x + 120, sol - 90, 8, 90);
+        g.fillStyle(0x8a5a2b).fillRect(x + 90, sol - 90, 70, 20);
+        g.fillStyle(0x6b4423).fillTriangle(x + 160, sol - 90, x + 172, sol - 80, x + 160, sol - 70);
+        ajouter(this.add.image(x + 60, sol + 2, 'rocherHD').setOrigin(0.5, 1).setScale(1).setDepth(1));
+      }
     }
-    this.decor.list.forEach(o => o.setAlpha(0));
-    this.tweens.add({ targets: this.decor.list, alpha: 1, duration: 400 });
+  }
+
+  // L'objet du colis entre en action, selon ce que c'est.
+  async utiliserObjet(id) {
+    const p = this.perso, sol = 360;
+    const cible = this.menace.sprites[0];
+    const cx = cible ? cible.x - 20 : p.x + 120, cy = sol - 70;
+    const icone = cle => this.add.image(p.x + 30, sol - 80, iconeObjet(this, cle)).setScale(3).setDepth(6);
+    const etincelles = (x, y, teinte, n = 10) => {
+      for (let k = 0; k < n; k++) {
+        const e = this.add.image(x, y, 'eclat').setScale(2).setTint(teinte).setDepth(7);
+        const a = Math.random() * Math.PI * 2;
+        this.tweens.add({ targets: e, x: x + Math.cos(a) * 70, y: y + Math.sin(a) * 50, alpha: 0, angle: 180, duration: 600, onComplete: () => e.destroy() });
+      }
+    };
+    switch (id) {
+      case 'epee': case 'bouclier': {
+        const o = icone(id);
+        await this.animer({ targets: p, x: p.x + 40, duration: 160, ease: 'Quad.easeOut' });
+        o.setPosition(p.x + 40, sol - 70);
+        if (id === 'epee') {
+          const arc = this.add.graphics().setDepth(7);
+          arc.lineStyle(6, 0xffffff, 0.9).beginPath().arc(p.x + 50, sol - 70, 60, -1.2, 0.9).strokePath();
+          this.tweens.add({ targets: arc, alpha: 0, duration: 300, onComplete: () => arc.destroy() });
+          this.tweens.add({ targets: o, angle: 200, duration: 220 });
+          this.onomatopee(cx, cy - 40, 'TCHAK !', '#fff4dc');
+        } else {
+          this.onomatopee(p.x + 60, cy - 50, 'BLONG !', '#d8e4f0');
+          this.tweens.add({ targets: o, scale: 4, duration: 120, yoyo: true });
+        }
+        this.cameras.main.shake(150, 0.006);
+        etincelles(cx, cy, 0xfff0a0);
+        await this.attendre(350);
+        this.tweens.add({ targets: o, alpha: 0, duration: 300, onComplete: () => o.destroy() });
+        await this.animer({ targets: p, x: p.x - 40, duration: 220 });
+        break;
+      }
+      case 'fleches': {
+        for (let k = 0; k < 3; k++) {
+          const f = this.add.image(p.x + 20, sol - 80, iconeObjet(this, 'fleches')).setScale(2.5).setAngle(45).setDepth(6);
+          this.tweens.add({ targets: f, x: cx, y: cy + Phaser.Math.Between(-20, 20), duration: 260, delay: k * 140, onComplete: () => { etincelles(f.x, f.y, 0xfff0a0, 4); f.destroy(); } });
+        }
+        this.onomatopee(p.x + 40, cy - 60, 'FIOUU !');
+        await this.attendre(700);
+        break;
+      }
+      case 'torche': {
+        const o = icone('torche').setPosition(p.x + 26, sol - 90);
+        const lumiere = this.add.image(p.x + 20, sol - 90, 'halo').setScale(0.5).setTint(0xffc060).setAlpha(0.7).setBlendMode(Phaser.BlendModes.ADD).setDepth(8);
+        this.decor.add([o, lumiere]);
+        this.tweens.add({ targets: lumiere, scale: 4.5, duration: 600, ease: 'Sine.easeOut' });
+        this.tweens.add({ targets: this.voile, fillAlpha: Math.min(this.voile.fillAlpha, 0.35), duration: 600 });
+        this.tweens.add({ targets: lumiere, alpha: 0.5, duration: 200, yoyo: true, repeat: -1, delay: 600 });
+        await this.attendre(700);
+        break;
+      }
+      case 'corde': {
+        const x2 = (this.menace.x || p.x + 100) + 120;
+        const corde = this.add.graphics().setDepth(5);
+        this.decor.add(corde);
+        let u = 0;
+        this.tweens.addCounter({ from: 0, to: 1, duration: 500, onUpdate: tw => {
+          u = tw.getValue();
+          corde.clear().lineStyle(3, 0xc8a060).beginPath().moveTo(p.x + 10, sol - 60);
+          for (let k = 1; k <= 10; k++) { const t = k / 10 * u; corde.lineTo(p.x + 10 + (x2 - p.x - 10) * t, sol - 60 + Math.sin(t * Math.PI) * 26); }
+          corde.strokePath();
+        } });
+        this.onomatopee(p.x + 60, cy - 60, 'HOP !');
+        await this.attendre(600);
+        break;
+      }
+      case 'potion': case 'antidote': case 'bandage': {
+        const o = icone(id).setPosition(p.x, sol - 130);
+        await this.animer({ targets: o, y: sol - 100, scale: 2, alpha: 0, duration: 500 });
+        o.destroy();
+        const teinte = id === 'antidote' ? 0x70ff90 : id === 'potion' ? 0xff7090 : 0xffffff;
+        for (let k = 0; k < 12; k++) {
+          const e = this.add.image(p.x + Phaser.Math.Between(-30, 30), sol - Phaser.Math.Between(10, 60), 'lueurHD').setScale(1.5).setTint(teinte).setBlendMode(Phaser.BlendModes.ADD).setDepth(7);
+          this.tweens.add({ targets: e, y: e.y - 80, alpha: 0, duration: 900, delay: k * 50, onComplete: () => e.destroy() });
+        }
+        this.perso.setTint(teinte); this.time.delayedCall(400, () => this.perso.clearTint());
+        await this.attendre(500);
+        break;
+      }
+      case 'ration': case 'gourde': {
+        const o = icone(id).setPosition(p.x + 10, sol - 110);
+        this.onomatopee(p.x, sol - 160, id === 'ration' ? 'Miam !' : 'Glou glou !', '#f3d98a');
+        await this.animer({ targets: o, scale: 1.5, alpha: 0, y: o.y + 10, duration: 600 });
+        o.destroy();
+        for (let k = 0; k < 8; k++) {
+          const m = this.add.rectangle(p.x + 10, sol - 100, 3, 3, id === 'ration' ? 0xc89a50 : 0x8ac8f0).setDepth(7);
+          this.tweens.add({ targets: m, x: m.x + Phaser.Math.Between(-30, 30), y: sol, alpha: 0, duration: 500, delay: k * 40, onComplete: () => m.destroy() });
+        }
+        await this.attendre(200);
+        break;
+      }
+      case 'cape': {
+        const o = icone('cape').setPosition(p.x, sol - 80).setScale(5).setAlpha(0);
+        await this.animer({ targets: o, alpha: 0.85, duration: 300 });
+        this.tweens.add({ targets: o, alpha: 0, delay: 600, duration: 400, onComplete: () => o.destroy() });
+        await this.attendre(500);
+        break;
+      }
+      case 'amulette': {
+        for (let i = 0; i < 4; i++) {
+          const r = this.add.circle(p.x, sol - 70, 20).setStrokeStyle(4, 0xc080ff, 0.9).setDepth(7);
+          this.tweens.add({ targets: r, scale: 8, alpha: 0, duration: 900, delay: i * 150, onComplete: () => r.destroy() });
+        }
+        this.cameras.main.flash(250, 160, 100, 220);
+        await this.attendre(700);
+        break;
+      }
+      default: await this.attendre(300);
+    }
+  }
+
+  // L'issue de l'épreuve, en image : la bête fuit, ou elle frappe ; l'obstacle est franchi, ou pas.
+  async issue(reussie) {
+    const p = this.perso, sol = 360;
+    const betes = this.menace.sprites;
+    if (this.menace.sorte === 'bete' && betes.length) {
+      if (reussie) {
+        // Touchées ! Elles reculent, se retournent, et détalent.
+        betes.forEach(b => b.setTint(0xffffff));
+        for (const b of betes) {
+          this.tweens.killTweensOf(b);
+          this.tweens.add({ targets: b, x: b.x + 30, duration: 120, yoyo: true, onComplete: () => {
+            b.setFlipX(!b.flipX);
+            this.tweens.add({ targets: b, x: 1100, duration: 700, ease: 'Quad.easeIn' });
+            this.tweens.add({ targets: b, y: b.y - 8, duration: 110, yoyo: true, repeat: 3 });
+          } });
+        }
+        this.onomatopee(betes[0].x, sol - 150, 'OUSTE !', '#b8f0a0');
+        await this.attendre(500);
+      } else {
+        // Elle bondit sur lui.
+        const b = betes[0];
+        this.tweens.killTweensOf(b);
+        await this.animer({ targets: b, x: p.x + 50, y: b.y - 30, duration: 220, ease: 'Quad.easeIn' });
+        this.onomatopee(p.x + 20, sol - 150, Phaser.Utils.Array.GetRandom(['AÏE !', 'OUILLE !', 'CRAC !']), '#ff8080');
+        this.tweens.add({ targets: b, x: b.base.x, y: b.base.y, duration: 400, ease: 'Quad.easeOut' });
+        this.tweens.add({ targets: p, angle: -14, duration: 100, yoyo: true });
+      }
+    } else if (this.menace.sorte === 'gouffre') {
+      const x0 = p.x, y0 = p.y, x1 = (this.menace.x || x0) + 130;
+      if (reussie) {
+        // Un grand saut par-dessus
+        this.tweens.add({ targets: this.paysage, x: this.paysage.x - 20, duration: 600 });
+        await Promise.all([
+          this.animer({ targets: p, x: x1, duration: 600, ease: 'Linear' }),
+          this.animer({ targets: p, y: y0 - 70, duration: 300, yoyo: true, ease: 'Quad.easeOut' }),
+        ]);
+        p.setY(y0);
+        this.onomatopee(x1, sol - 150, 'HOP !', '#b8f0a0');
+      } else {
+        await this.animer({ targets: p, x: x0 + 40, y: y0 + 12, angle: 20, duration: 300, ease: 'Quad.easeIn' });
+        this.onomatopee(p.x, sol - 140, this.menace.eau ? 'PLOUF !' : 'AÏE !', this.menace.eau ? '#a8d0ff' : '#ff8080');
+        await this.animer({ targets: p, x: x0, y: y0, angle: 0, duration: 400 });
+      }
+    } else if (!reussie) {
+      // Il trébuche, frissonne ou suffoque
+      await this.animer({ targets: p, angle: 12, duration: 140, yoyo: true, repeat: 1 });
+    }
   }
 }
