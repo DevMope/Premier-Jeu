@@ -33,6 +33,10 @@ class DodoScene extends Cinematique {
     };
     ciel(0);
     this.soleil = this.add.image(fx + 140, fy + fh + 30, 'soleilHD').setScale(1.4);
+    // Le soleil se lève DERRIÈRE les arbres : on le cache sous la ligne des collines
+    const horizon = this.make.graphics({ add: false });
+    horizon.fillStyle(0xffffff).fillRect(fx, fy, fw, fh * 0.6);
+    this.soleil.setMask(horizon.createGeometryMask());
     this.tweens.add({ targets: this.soleil, angle: 360, duration: 30000, repeat: -1 });
     this.cielNuit = this.add.container(0, 0);
     this.cielNuit.add(ciel(0.95));
@@ -273,7 +277,7 @@ class DodoScene extends Cinematique {
     const haut = premiere ? 78 : 112;
     c.add(this.add.text(480, haut, sombre ? 'Un messager de la Main Noire' : 'Un messager de la Confrérie du Dernier Rempart',
       style(17, sombre ? '#7a1a2a' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    c.add(this.add.image(220, haut + 70, sombre ? piece + '_sombre' : piece).setScale(8));
+    c.add(this.add.image(220, haut + 70, iconeObjet(this, sombre ? piece + '_sombre' : piece)).setScale(5));
     c.add(this.add.text(275, haut + 30, p.nom, style(17, '#7a5a10', { fontStyle: 'bold' })));
     c.add(this.add.text(275, haut + 56, p.texte, style(13, '#5a3a20', { fontStyle: 'italic', wordWrap: { width: 500 } })));
     const ouvre = `${ZONES[zone].nom} ${ZONES[zone].nom.startsWith('Les ') ? "s'ouvrent" : "s'ouvre"} à tes aventuriers.`;
@@ -292,7 +296,7 @@ class DodoScene extends Cinematique {
     if (this.fini) return;
     c.destroy();
     // La pièce rejoint le mannequin.
-    const icone = this.add.image(905, SOL_CHAMBRE - 90, sombre ? piece + '_sombre' : piece).setScale(5).setDepth(8);
+    const icone = this.add.image(905, SOL_CHAMBRE - 90, iconeObjet(this, sombre ? piece + '_sombre' : piece)).setScale(3).setDepth(8);
     await this.animer({ targets: icone, x: 790, y: SOL_CHAMBRE - 100, scale: 3, duration: 600, ease: 'Sine.easeInOut' });
     icone.destroy();
     this.dessinerArmure(this.G.armure.slice(0, this.G.armure.indexOf(piece) + 1));

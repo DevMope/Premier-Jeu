@@ -114,6 +114,14 @@ const DESSINS_OBJETS = {
     t.poser(13, 8, 'cuir', 1); t.poser(13, 9, 'cuir', 1);
     for (let y = 5; y <= 12; y++) { t.poser(6, y, 'chanvre', 4); t.poser(10, y, 'chanvre', 4); }
   },
+  // Une bobine de fil d'or sur son fuseau de bois, un bout de fil qui s'échappe
+  filOr(t) {
+    t.rampes.filOr = rampe(0xe0b030);
+    t.forme('chene', (x, y) => ((y === 3 || y === 13) && x >= 3 && x <= 12 ? [0, y === 3 ? -0.8 : 0.6, 0.6] : null));
+    t.forme('filOr', (x, y) => (y >= 4 && y <= 12 && x >= 4 && x <= 11 ? [(x - 7.5) / 5, 0, 0.85] : null), { motif: (x, y) => (y % 2 ? 0.5 : -0.3) });
+    for (let y = 4; y <= 12; y += 2) t.poser(5, y, 'filOr', 5);
+    for (const [x, y] of [[12, 8], [13, 9], [14, 11], [14, 12], [13, 14]]) t.poser(x, y, 'filOr', 4);
+  },
 
   // Une miche de pain croûtée, et un morceau de fromage
   ration(t) {

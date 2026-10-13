@@ -103,14 +103,14 @@ class BureauScene extends Phaser.Scene {
           const v = e.parti.voyageur;
           return { nom: v.nom, race: v.race,
             ligne: e.type === 'retour' ? 'Revient de mission !' : 'Son carnet est posé sur ton comptoir...',
-            detail: () => [`Parti le jour ${e.parti.depart} : ${v.quete}`] };
+            detail: () => [`Parti${v.feminin ? 'e' : ''} le jour ${e.parti.depart} : ${v.quete}`] };
         });
       }
       case 'mission':
         return enMission(G).map(p => ({
           nom: p.voyageur.nom, race: p.voyageur.race,
           ligne: `Retour jour ${p.retour} · préparé à ${pctAffiche(p.chance)}`,
-          detail: () => [`Quête : ${p.voyageur.quete}`, `Parti le jour ${p.depart}, retour prévu le jour ${p.retour}`,
+          detail: () => [`Quête : ${p.voyageur.quete}`, `Parti${p.voyageur.feminin ? 'e' : ''} le jour ${p.depart}, retour prévu le jour ${p.retour}`,
             `Préparé à ${pctAffiche(p.chance)} · butin espéré ~${p.voyageur.butin} p.`,
             `Colis : ${Object.entries(p.colis).filter(([, n]) => n).map(([id, n]) => `${n} ${ITEMS[id].nom}`).join(', ') || 'rien'}`],
         }));
@@ -118,9 +118,10 @@ class BureauScene extends Phaser.Scene {
       case 'disparus':
         return G.historique.filter(h => (this.onglet === 'revenus') === ['vivant', 'echec'].includes(h.issue)).map(h => ({
           nom: h.nom, race: h.race,
-          ligne: h.issue === 'echec' ? `Jour ${h.retour} · mission ratée · ${h.quete}` : h.issue === 'vivant' ? `Jour ${h.retour} · +${h.gain} p. · ${h.quete}` : `Jour ${h.retour} · mort ${h.issue === 'valeureux' ? 'au combat' : 'sans gloire'}${h.voulu ? ' · ☠ offert' : ''}`,
+          ligne: h.issue === 'echec' ? `Jour ${h.retour} · mission ratée · ${h.quete}` : h.issue === 'vivant' ? `Jour ${h.retour} · +${h.gain} p. · ${h.quete}` : `Jour ${h.retour} · mort${(G.personnes[h.nom] || {}).feminin ? 'e' : ''} ${h.issue === 'valeureux' ? 'au combat' : 'sans gloire'}${h.voulu ? ' · ☠ offert' : ''}`,
           detail: () => [`Quête : ${h.quete} (jours ${h.depart} à ${h.retour})`,
-            h.issue === 'echec' ? 'Revenu vivant, mais sans rien : mission ratée.' : h.issue === 'vivant' ? `Revenu vivant, a rapporté ${h.gain} pièces.` : `Mort ${h.issue === 'valeureux' ? 'valeureusement au combat' : 'sans gloire'}.`,
+            ...(() => { const f = (G.personnes[h.nom] || {}).feminin ? 'e' : '';
+              return [h.issue === 'echec' ? `Revenu${f} vivant${f}, mais sans rien : mission ratée.` : h.issue === 'vivant' ? `Revenu${f} vivant${f}, a rapporté ${h.gain} pièces.` : `Mort${f} ${h.issue === 'valeureux' ? 'valeureusement au combat' : 'sans gloire'}.`]; })(),
             ...(h.voulu ? [`☠ Offert à la Faucheuse : ${MORTS_VOULUES[h.voulu].texte}.`] : [])],
         }));
       default: {

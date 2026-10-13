@@ -89,7 +89,8 @@ class MarcheScene extends Phaser.Scene {
     this.retour.fond.setDepth(21); this.retour.label.setDepth(21);
     this.creerVueEnsemble();
     this.add.rectangle(480, 510, 960, 60, 0x2a1a10);
-    this.texteInfos = this.add.text(20, 498, '', style(13, '#f3e6c8', { lineSpacing: 4 }));
+    this.bourse = bourse(this, 34, 532, this.G.argent, { echelle: 1.4, taille: 14, aDroite: true });
+    this.texteInfos = this.add.text(112, 498, '', style(13, '#f3e6c8', { lineSpacing: 4 }));
     creerBouton(this, 640, 510, 170, 'Rentrer chez toi', () => this.rentrer());
     creerBouton(this, 840, 510, 210, 'Ouvrir le comptoir', () => this.ouvrir());
 
@@ -333,7 +334,8 @@ class MarcheScene extends Phaser.Scene {
     const G = this.G;
     Sauvegarde.planifier(G, 'Marche');
     const p = prevision(G, G.jour);
-    this.texteInfos.setText(`Bourse : ${G.argent} pièces · Réserve : ${stockTotal(G)}/${G.capacite} · Fer ${G.materiaux.fer} · Cuir ${G.materiaux.cuir}\n` +
+    this.bourse.maj(G.argent);
+    this.texteInfos.setText(`Réserve : ${stockTotal(G)}/${G.capacite} · Fer ${G.materiaux.fer} · Cuir ${G.materiaux.cuir} · Fil d'or ${G.materiaux.filOr || 0}\n` +
       `Aujourd'hui : entre ${p.min} et ${p.max} clients attendus${p.annonces ? `, + ${p.annonces} annoncé${p.annonces > 1 ? 's' : ''} par lettre` : ''} (un stock varié en attire plus)`);
   }
 
@@ -469,7 +471,7 @@ class MarcheScene extends Phaser.Scene {
         else if (this.lot.length < OBJETS_PAR_LOT) this.lot.push(t);
         this.ouvrirEncheres();
       });
-      c.add([fond, this.add.image(x + 12, y, 'tr_' + t.categorie).setScale(2),
+      c.add([fond, this.add.image(x + 12, y, iconeObjet(this, 'tr_' + t.categorie)).setScale(1.4),
         this.add.rectangle(x + 246, y, 8, 20, ETATS[t.etat].couleur),
         this.add.text(x + 26, y, `${t.nom} · ${estRestaure(t) ? 'Restauré ★' : ETATS[t.etat].nom} · ~${valeurTresor(t)} p.`, style(11, ETATS[t.etat].texte, { fontStyle: 'bold' })).setOrigin(0, 0.5)]);
     });

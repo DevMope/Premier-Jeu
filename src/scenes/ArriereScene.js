@@ -125,8 +125,9 @@ class ArriereScene extends Phaser.Scene {
       this.tweens.add({ targets: note, angle: angle + (i % 2 ? -2 : 2), duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       this.add.text(x - 8, y - 2, `DETTE\n${p.restant} p.\n−${Math.min(p.parJour, p.restant)}/nuit`, style(13, '#8a1a1a', { fontStyle: 'bold', align: 'center', lineSpacing: -2 })).setOrigin(0.5).setAngle(angle);
     });
-    this.add.image(cx, 212, plaqueBouton(this, 240)).setScale(2);
-    this.add.text(cx, 212, `Ta fortune : ${G.argent} pièces`, style(15, G.argent >= 0 ? '#f3d98a' : '#f0a8a0', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+    // Ta bourse, accrochée au mur : plus elle est ronde, plus tu es riche.
+    this.add.text(cx, 158, 'Ta fortune', style(13, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+    bourse(this, cx, 240, G.argent, { echelle: 2, taille: 15 });
   }
 
   // Le panier des cadeaux (du Bazar de Rosalie)

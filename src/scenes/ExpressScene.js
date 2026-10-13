@@ -72,7 +72,7 @@ class ExpressScene extends Phaser.Scene {
       btn.on('pointerdown', () => (l.materiau ? this.acheterMateriau(l.id) : this.acheter(l.id)));
       this.lignes.push({ offre: l.offre, reste });
     });
-    this.texteArgent = this.add.text(780, 454, '', style(14, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
+    this.bourse = bourse(this, 760, 470, this.G.argent, { echelle: 1.6, taille: 14, couleur: '#fff4dc', aDroite: true });
     this.maj();
   }
 
@@ -90,7 +90,7 @@ class ExpressScene extends Phaser.Scene {
     offre.qte--;
     if (pourLeClient) c.colis[id] = (c.colis[id] || 0) + 1;
     else G.stock[id]++;
-    this.achats.push(`${ITEMS[id].nom} (${pourLeClient ? 'dans le colis' : 'dans ta réserve'})`);
+    this.achats.push(`${ITEMS[id].nom} (${pourLeClient ? 'dans le baluchon' : 'dans ta réserve'})`);
     this.parler(auHasard(['Hé hé ! Merci pour les pièces...', 'Excellent choix. Excellent prix. Pour moi.', 'Vendu ! Grippesou est content.']));
     this.tweens.add({ targets: this.gobelin, y: 425, duration: 120, yoyo: true });
     this.maj();
@@ -101,10 +101,10 @@ class ExpressScene extends Phaser.Scene {
     const G = this.G;
     const offre = G.expressMateriaux[id];
     if (offre.qte <= 0) return this.parler('Plus de ' + MATERIAUX[id].nom.toLowerCase() + ' ! Hé hé, il fallait se décider plus vite.');
-    if (!peutPayer(G, offre.prix)) return this.parler("Du fer, à ce prix-là, ça se mérite ! Reviens avec des pièces.");
+    if (!peutPayer(G, offre.prix)) return this.parler(`Du ${MATERIAUX[id].nom.toLowerCase()}, à ce prix-là, ça se mérite ! Reviens avec des pièces.`);
     payer(G, offre.prix, 'express');
     offre.qte--;
-    G.materiaux[id]++;
+    G.materiaux[id] = (G.materiaux[id] || 0) + 1;
     this.achats.push(`${MATERIAUX[id].nom} (avec tes matériaux)`);
     this.parler(auHasard(['Du ' + MATERIAUX[id].nom.toLowerCase() + ' de première qualité ! Enfin... de qualité.', 'Hé hé hé ! Tu ne trouveras pas moins cher. Ici.']));
     this.tweens.add({ targets: this.gobelin, y: 425, duration: 120, yoyo: true });
@@ -113,7 +113,7 @@ class ExpressScene extends Phaser.Scene {
 
   maj() {
     for (const l of this.lignes) l.reste.setText(`Il en reste ${l.offre.qte}`);
-    this.texteArgent.setText(`Ta bourse : ${this.G.argent} pièces`);
+    this.bourse.maj(this.G.argent);
   }
 
   fermer() {

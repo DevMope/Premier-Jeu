@@ -49,8 +49,8 @@ class CounterScene extends Phaser.Scene {
     if (this.G.comptoirOuvert !== this.G.jour) {
       // Midi : on lève le store, le comptoir est officiellement ouvert.
       this.G.comptoirOuvert = this.G.jour;
-      this.dire('Midi sonne au clocher. Tu lèves le store : le comptoir est ouvert !', '');
-      this.time.delayedCall(this.G.banniere !== this.G.jour ? 1700 : 500, () => this.leverStore(() => this.voyageurSuivant()));
+      this.dire('Midi sonne au clocher. Clique sur le store pour l\'ouvrir et commencer la journée !', '');
+      this.attendreStore();
     } else {
       this.store.setVisible(false);
       this.voyageurSuivant();
@@ -97,6 +97,22 @@ class CounterScene extends Phaser.Scene {
     this.store = this.add.container(x + w / 2, y + h + 6, [panneau, pancarte]).setDepth(2.4);
     this.store.setMask(this.masqueFenetre);
     this.pancarte = pancarte;
+  }
+
+  // Le store attend qu'on clique dessus : il luit doucement, une main invite à tirer.
+  attendreStore() {
+    const { x, y, w, h } = FENETRE;
+    this.store.setVisible(true).setY(y + h + 6);
+    const zone = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0xffffff, 0).setDepth(2.6).setInteractive({ useHandCursor: true });
+    const invite = this.add.text(x + w / 2, y + h - 30, '▲ Ouvrir le store ▲', style(18, '#ffe9a0', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }))
+      .setOrigin(0.5).setDepth(2.7);
+    this.tweens.add({ targets: invite, y: invite.y - 8, alpha: 0.6, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.storeEnAttente = true;
+    zone.once('pointerdown', () => {
+      this.storeEnAttente = false;
+      zone.destroy(); invite.destroy();
+      this.leverStore(() => this.voyageurSuivant());
+    });
   }
 
   leverStore(suite) {
@@ -222,7 +238,7 @@ class CounterScene extends Phaser.Scene {
     entree.pieges = { ...this.pieges };
     entree.attentes = (entree.attentes || 0) + 1;
     let msg = null;
-    let phrase = "D'accord, je repasse tout à l'heure. Garde-moi mon colis !";
+    let phrase = "D'accord, je repasse tout à l'heure. Garde-moi mon baluchon !";
     if (entree.attentes > 1) {
       msg = changerRelation(this.G, v.nom, -1);
       phrase = "Encore attendre ?! Bon... mais je n'ai pas toute la journée.";
@@ -300,7 +316,7 @@ class CounterScene extends Phaser.Scene {
       this.lignesCommande.push({ icone, txt, zone, moins, moinsTexte, id: null });
     }
     this.texteSac = this.add.text(700, 184, '', style(11, '#5a3a20'));
-    this.add.text(700, 226, '− : retirer du colis · clic sur une ligne : réparer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
+    this.add.text(700, 226, '− : retirer du baluchon · clic sur une ligne : réparer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
     this.texteChance = this.add.text(815, 208, '', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
   }
 
@@ -315,7 +331,7 @@ class CounterScene extends Phaser.Scene {
   }
 
   creerStock() {
-    this.add.text(150, 357, 'Ton stock — clic : ajouter au colis', style(12, '#f3e6c8', { fontStyle: 'italic', stroke: '#1a100a', strokeThickness: 3 }));
+    this.add.text(150, 357, 'Ton stock — clic : ajouter au baluchon', style(12, '#f3e6c8', { fontStyle: 'italic', stroke: '#1a100a', strokeThickness: 3 }));
     this.texteReserve = this.add.text(660, 357, '', style(12, '#f3d98a', { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 3 })).setOrigin(1, 0);
     this.creerEtagere();
     // Le registre posé sur le bureau : clic pour ouvrir le bureau (fiches, comptes, statistiques)
@@ -458,12 +474,12 @@ class CounterScene extends Phaser.Scene {
     if (!this.enService || this.enConfirmation) return this.dire("Il n'y a personne à qui le glisser.", '');
     const v = this.voyageur;
     const commande = commandeDe(v);
-    if (!commande[id]) return this.dire(`${v.nom.split(' ')[0]} n'a pas commandé de ${ITEMS[id].nom.toLowerCase()} : ça éveillerait ses soupçons.`, '');
-    if ((this.colis[id] || 0) >= commande[id]) return this.dire(`Son baluchon a déjà son compte de ${ITEMS[id].nom.toLowerCase()}. Retires-en un d'abord.`, '');
+    if (!commande[id]) return this.dire(`${v.nom.split(' ')[0]} n'a pas commandé ${deNom(ITEMS[id].nom.toLowerCase())} : ça éveillerait ses soupçons.`, '');
+    if ((this.colis[id] || 0) >= commande[id]) return this.dire(`Son baluchon a déjà son compte ${deNom(ITEMS[id].nom.toLowerCase())}. Retires-en un d'abord.`, '');
     this.G.pieges[id]--;
     this.colis[id] = (this.colis[id] || 0) + 1;
     this.pieges[id] = (this.pieges[id] || 0) + 1;
-    this.dire(`Tu glisses discrètement la ${PIEGES[id].nom.toLowerCase()} dans son baluchon. ${v.feminin ? 'Elle' : 'Il'} ne remarque rien.`, '');
+    this.dire(`Tu glisses discrètement ${leNom(id, PIEGES[id].nom.toLowerCase())} dans son baluchon. ${v.feminin ? 'Elle' : 'Il'} ne remarque rien.`, '');
     this.majStock();
     this.majCommande();
   }
@@ -476,49 +492,24 @@ class CounterScene extends Phaser.Scene {
     g.fillStyle(0x5a3a22).fillRect(12, 422, 126, 4);
     g.fillStyle(0x2a1a10).fillRect(12, 426, 126, 1).fillRect(18, 427, 5, 6).fillRect(127, 427, 5, 6);
     this.G.decorations.forEach((id, i) => {
-      const icone = this.add.image(24 + i * 25, 408, id === 'trefle' ? 'trefleChance' : id).setScale(3).setInteractive({ useHandCursor: true });
+      const icone = this.add.image(24 + i * 25, 408, iconeObjet(this, id === 'trefle' ? 'trefleChance' : id)).setScale(1.6).setInteractive({ useHandCursor: true });
       icone.on('pointerdown', () => this.dire(DECORATIONS[id].effet, DECORATIONS[id].nom));
     });
   }
 
   creerArgent() {
-    this.pieces = this.add.container(0, 0);
-    this.texteArgent = this.add.text(70, 512, '', style(18, '#f3d98a', { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 4 })).setOrigin(0.5);
-    this.nbPieces = -1;
-    this.dessinerPieces();
-    // De temps en temps, une pièce scintille au sommet d'une pile.
+    // Ta bourse, posée sur le comptoir : elle gonfle avec tes pièces.
+    this.bourse = bourse(this, 66, 500, this.G.argent, { echelle: 2.2, taille: 17 });
+    // De temps en temps, une pièce scintille quand la bourse est bien pleine.
     this.time.addEvent({ delay: 1400, loop: true, callback: () => {
-      const sommets = this.pieces.list.filter(o => o.sommet);
-      if (!sommets.length || Math.random() < 0.35) return;
-      const p = Phaser.Utils.Array.GetRandom(sommets);
-      const eclat = this.add.image(p.x + Phaser.Math.Between(-8, 8), p.y - 3, 'eclat').setScale(0).setDepth(1);
+      if (this.bourse.niveau < 2 || Math.random() < 0.35) return;
+      const eclat = this.add.image(66 + Phaser.Math.Between(-14, 14), 500 - Phaser.Math.Between(20, 50), 'eclat').setScale(0).setDepth(1);
       this.tweens.add({ targets: eclat, scale: 2, angle: 45, duration: 260, yoyo: true, onComplete: () => eclat.destroy() });
     } });
   }
 
-  // Des piles de pièces d'or qui grandissent avec l'argent, et quelques pièces éparpillées.
   dessinerPieces() {
-    const n = Phaser.Math.Clamp(Math.ceil(this.G.argent / 4), 0, 27);
-    this.texteArgent.setText(this.G.argent + ' pièces');
-    if (n === this.nbPieces) return;
-    this.nbPieces = n;
-    this.pieces.removeAll(true);
-    const piles = [[40, 488], [100, 488], [70, 478]]; // celle du fond est dessinée en premier
-    const ordre = [2, 0, 1];
-    const hauteurs = [0, 0, 0];
-    const empilees = Math.max(0, n - 3);
-    for (let i = 0; i < empilees; i++) hauteurs[[0, 1, 2][i % 3]]++;
-    for (const c of ordre) {
-      const [px, py] = piles[c];
-      for (let k = 0; k < hauteurs[c]; k++) {
-        const piece = this.add.image(px + ((k * 7) % 3) - 1, py - k * 6, 'pieceTranche').setScale(2);
-        piece.sommet = k === hauteurs[c] - 1;
-        this.pieces.add(piece);
-      }
-    }
-    // Les pièces éparpillées devant les piles
-    const eparses = [[18, 498], [122, 500], [100, 508]];
-    for (let k = 0; k < Math.min(3, n); k++) this.pieces.add(this.add.image(eparses[k][0], eparses[k][1], 'pieceFace').setScale(2));
+    this.bourse.maj(this.G.argent);
   }
 
   // --- Déroulement ---
@@ -688,7 +679,7 @@ class CounterScene extends Phaser.Scene {
     } else {
       const v = entree.parti.voyageur;
       this.dire(this.G.faucheuse.visites ? `Le carnet de voyage de ${v.nom} est posé sur ton comptoir. Sa couverture est glacée.`
-        : `Un berger a rapporté un carnet trouvé sur la route : celui de ${v.nom}... Il n'est jamais revenu${v.feminin ? 'e' : ''}.`, '');
+        : `Un berger a rapporté un carnet trouvé sur la route : celui de ${v.nom}... ${v.feminin ? 'Elle' : 'Il'} n'est jamais revenu${v.feminin ? 'e' : ''}.`, '');
       // Le carnet, couvert de givre, sur le rebord de la fenêtre.
       const g = this.carnetPose = this.add.graphics().setDepth(3);
       const cx = FENETRE.x + FENETRE.w / 2, cy = SOL_COMPTOIR + 2;
@@ -786,7 +777,7 @@ class CounterScene extends Phaser.Scene {
     }
     for (const p of bilan.demasques) {
       const id = Object.keys(p.pieges).find(k => p.pieges[k] > 0);
-      elle(`« Mais on a retrouvé ${PIEGES[id] ? 'la ' + PIEGES[id].nom.toLowerCase() : 'ton piège'} de ${p.voyageur.nom.split(' ')[0]}... Le village murmure ton nom. »`);
+      elle(`« Mais on a retrouvé ${PIEGES[id] ? leNom(id, PIEGES[id].nom.toLowerCase()) : 'ton piège'} de ${p.voyageur.nom.split(' ')[0]}... Le village murmure ton nom. »`);
       recit(`Ton piège a été découvert. Réputation −${PERTE_DEMASQUE}.`);
     }
     if (bilan.sabotage) {
@@ -881,7 +872,7 @@ class CounterScene extends Phaser.Scene {
   servir() {
     this.enService = true;
     this.majBoutonsService();
-    this.bouton('Remettre le colis', () => this.remettreColis());
+    this.bouton('Remettre le baluchon', () => this.remettreColis());
     this.majCommande();
   }
 
@@ -918,7 +909,7 @@ class CounterScene extends Phaser.Scene {
         payer(G, 25, 'dedommagements');
         G.reputation += 0.5;
         fin("Hmph... Ça ne ramènera pas " + proche + ", mais c'est honnête de ta part.");
-      }], ['Le renvoyer', () => {
+      }], [p.feminin ? 'La renvoyer' : 'Le renvoyer', () => {
         G.reputation -= 1;
         const msg = changerRelation(G, p.nom, -9);
         fin(`Tu le regretteras, marchand !${msg ? ' ' + msg : ''}`);
@@ -932,7 +923,7 @@ class CounterScene extends Phaser.Scene {
         G.stock[id]--;
         G.reputation += 0.5;
         const msg = changerRelation(G, p.nom, 4);
-        fin(`Une ${ITEMS[id].nom.toLowerCase()}... ${prenom} en avait toujours une sur ${d.feminin ? 'elle' : 'lui'}. Merci, du fond du cœur.${msg ? ' ' + msg : ''}`);
+        fin(`${unNom(id)[0].toUpperCase() + unNom(id).slice(1)} ${ITEMS[id].nom.toLowerCase()}... ${prenom} en avait toujours ${genreDe(id).includes('p') ? 'sur' : unNom(id) + ' sur'} ${d.feminin ? 'elle' : 'lui'}. Merci, du fond du cœur.${msg ? ' ' + msg : ''}`);
       }], ["Je n'ai rien", () => {
         changerRelation(G, p.nom, -1);
         fin('Je vois... Au revoir.');
@@ -1058,7 +1049,7 @@ class CounterScene extends Phaser.Scene {
     const erreur = reparerObjet(this.G, this.voyageur, id);
     if (erreur) return this.dire(erreur, '');
     this.dessinerPieces();
-    this.dire(`Merci ! Ma ${ITEMS[id].nom.toLowerCase()} est comme neuve. Voilà ${PRIX_REPARATION} pièces pour ta peine.`);
+    this.dire(`Merci ! ${monNom(id, ITEMS[id].nom.toLowerCase())[0].toUpperCase() + monNom(id, ITEMS[id].nom.toLowerCase()).slice(1)} ${ITEMS[id].nom.toLowerCase()} ${genreDe(id).includes('p') ? 'sont' : 'est'} comme ${accordAdj(id, 'neuf', 'neuve', 'neufs', 'neuves')}. Voilà ${PRIX_REPARATION} pièces pour ta peine.`);
   }
 
   // Refuser un client : il repart, et la réputation en prend un coup.
@@ -1153,7 +1144,7 @@ class CounterScene extends Phaser.Scene {
     const famille = familleColis(objets);
     const boite = this.add.image(bx, SOL_COMPTOIR, 'tissu_' + famille).setOrigin(0.5, 1).setScale(0).setDepth(2.5);
     boite.setMask(this.masqueFenetre);
-    this.tweens.add({ targets: boite, scale: 5, duration: 250, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: boite, scale: 2.5, duration: 250, ease: 'Back.easeOut' });
     objets.forEach((id, i) => this.time.delayedCall(300 + i * 170, () => {
       const depart = this.cases[id].icone;
       const icone = this.add.image(depart.x, depart.y, iconeObjet(this, id)).setScale(2).setDepth(6);
@@ -1161,14 +1152,14 @@ class CounterScene extends Phaser.Scene {
         targets: icone, x: bx, y: SOL_COMPTOIR - 30, scale: 2, duration: 450, ease: 'Quad.easeIn',
         onComplete: () => {
           icone.destroy();
-          this.tweens.add({ targets: boite, scaleY: 4.5, duration: 70, yoyo: true });
+          this.tweens.add({ targets: boite, scaleY: 2.25, duration: 70, yoyo: true });
         },
       });
     }));
     // On noue le tissu au bout du bâton...
     this.time.delayedCall(300 + objets.length * 170 + 500, () => {
       // Le motif dépend de ce qu'il contient, la taille du nombre d'objets.
-      const taille = 3.4 + Math.min(objets.length, 10) * 0.2;
+      const taille = (3.4 + Math.min(objets.length, 10) * 0.2) / 2; // (le baluchon HD a deux fois plus de pixels)
       boite.setTexture('baluchon_' + famille).setScale(taille);
       this.tweens.add({ targets: boite, angle: { from: -8, to: 8 }, duration: 90, yoyo: true, repeat: 2, onComplete: () => boite.setAngle(0) });
       const ficelle = this.add.text(bx, SOL_COMPTOIR - 70, 'Noué !', style(16, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 }))
@@ -1253,7 +1244,7 @@ class CounterScene extends Phaser.Scene {
       this.partirPar(FENETRE.x + FENETRE.w + 60, colis);
     };
     if (!objets.length) return sEnAller(null);
-    this.dire('Tu prépares le colis...', '');
+    this.dire('Tu prépares le baluchon...', '');
     this.empaqueter(objets, sEnAller);
   }
 

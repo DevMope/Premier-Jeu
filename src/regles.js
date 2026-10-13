@@ -526,7 +526,7 @@ function acheterAuMarche(G, cle, id) {
   const materiau = id in MATERIAUX;
   if (!materiau && stockTotal(G) >= G.capacite) return { erreur: 'Ta réserve est pleine.' };
   offre.qte--;
-  if (materiau) G.materiaux[id]++;
+  if (materiau) G.materiaux[id] = (G.materiaux[id] || 0) + 1;
   else G.stock[id]++;
   return { message: depenserChez(G, cle, prix) };
 }
@@ -645,6 +645,7 @@ function changerRelation(G, nom, delta) {
   G.relations[nom] += delta;
   const apres = niveauRelation(G, nom);
   if (apres.index === avant) return null;
+  const feminin = !!(G.personnes && G.personnes[nom] && G.personnes[nom].feminin);
   const deja = G.paliers[nom] = G.paliers[nom] || [];
   if (deja.includes(apres.nom)) return null;
   deja.push(apres.nom);
@@ -654,7 +655,7 @@ function changerRelation(G, nom, delta) {
     G.materiaux.cuir += 2;
     return `${nom} te considère comme un ami ! En cadeau : 2 fer et 2 cuir.`;
   }
-  if (apres.nom === 'Frères de sang') return `${nom} et toi êtes maintenant frères de sang ! ` + offrirDecoration(G);
+  if (apres.nom === 'Frères de sang') return `${nom} et toi êtes maintenant ${feminin ? 'sœurs' : 'frères'} de sang ! ` + offrirDecoration(G, feminin);
   if (apres.nom === 'Pires ennemis') {
     const perdus = [];
     for (let i = 0; i < 3; i++) {
@@ -664,22 +665,23 @@ function changerRelation(G, nom, delta) {
       G.stock[id]--;
       perdus.push(ITEMS[id].nom);
     }
-    return `${nom} est devenu ton pire ennemi... Cette nuit, ta réserve a été saccagée` +
+    return `${nom} est devenu${feminin ? 'e ta pire ennemie' : ' ton pire ennemi'}... Cette nuit, ta réserve a été saccagée` +
       (perdus.length ? ` (${perdus.join(', ')} perdus).` : '.');
   }
   return null;
 }
 
-function offrirDecoration(G) {
+function offrirDecoration(G, feminin = false) {
+  const il = feminin ? 'Elle' : 'Il';
   // Le trèfle ne s'obtient que par le mendiant.
   const libres = Object.keys(DECORATIONS).filter(id => id !== 'trefle' && !G.decorations.includes(id));
   if (!libres.length) {
     encaisser(G, 50, 'cadeaux');
-    return 'Il t\'offre une bourse de 50 pièces.';
+    return `${il} t'offre une bourse de 50 pièces.`;
   }
   const id = auHasard(libres);
   G.decorations.push(id);
-  return `Il t'offre une décoration pour ton comptoir : ${DECORATIONS[id].nom}.`;
+  return `${il} t'offre une décoration pour ton comptoir : ${DECORATIONS[id].nom}.`;
 }
 
 // --- Compétences du joueur ---
@@ -1243,6 +1245,8 @@ function acheterTrouvaille(G, t) {
   if (!peutPayer(G, t.prix)) return "Pas assez d'argent.";
   payer(G, t.prix, 'trouvailles');
   t.vendu = true;
+  t.tresor.prixAchat = t.prix;   // pour savoir à tout moment combien il t'a coûté
+  t.tresor.jourAchat = G.jour;
   G.tresors.push(t.tresor);
   return null;
 }
@@ -1266,7 +1270,8 @@ function dureeReparation(G, t, ouvrier = ouvrierLibre(G), cible = t.etat + 1) {
 
 // Les matériaux pour aller jusqu'à « cible » : un par étape.
 function materiauxReparation(t, cible = t.etat + 1) {
-  return CATEGORIES[t.categorie].materiau ? cible - t.etat : 0;
+  const c = CATEGORIES[t.categorie];
+  return !c.materiau ? 0 : c.unSeul ? 1 : cible - t.etat;
 }
 
 function enReparation(G) {
@@ -1297,7 +1302,7 @@ function reparerTresor(G, t, cible = t.etat + 1) {
   if (!ouvrier) return "Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois.";
   const mat = CATEGORIES[t.categorie].materiau;
   const n = materiauxReparation(t, cible);
-  if (mat && G.materiaux[mat] < n) return `Il te faut ${n} ${MATERIAUX[mat].nom.toLowerCase()} (tu en as ${G.materiaux[mat]}).`;
+  if (mat && (G.materiaux[mat] || 0) < n) return `Il te faut ${n} ${MATERIAUX[mat].nom.toLowerCase()} (tu en as ${G.materiaux[mat] || 0}).`;
   if (mat) G.materiaux[mat] -= n;
   t.reparation = { jours: dureeReparation(G, t, ouvrier, cible), ouvrier, cible };
   return null;
@@ -1667,3 +1672,20 @@ function pieceArmure(id, cote) {
   const p = ARMURE.find(a => a.id === id);
   return cote === 'sombre' ? { id, ...ARMURE_SOMBRE[id] } : p;
 }
+
+// --- Les petits mots qui s'accordent avec une marchandise ---
+const voyelle = mot => /^[aeiouyéèêàâîôûh]/i.test(mot);
+function genreDe(id) { return GENRE_OBJETS[id] || 'f'; }
+// « la torche », « l'épée », « le bouclier », « les bandages »
+function leNom(id, nom) {
+  const g = genreDe(id);
+  return g.includes('p') ? 'les ' + nom : voyelle(nom) ? "l'" + nom : (g === 'm' ? 'le ' : 'la ') + nom;
+}
+// « de torche », « d'épée »
+function deNom(nom) { return (voyelle(nom) ? "d'" : 'de ') + nom; }
+// « une torche », « un bouclier », « des flèches »
+function unNom(id) { const g = genreDe(id); return g.includes('p') ? 'des' : g === 'm' ? 'un' : 'une'; }
+// « ma torche », « mon épée », « mon bouclier », « mes bandages »
+function monNom(id, nom) { const g = genreDe(id); return g.includes('p') ? 'mes' : g === 'm' || voyelle(nom) ? 'mon' : 'ma'; }
+// l'accord d'un adjectif : neuf / neuve / neufs / neuves
+function accordAdj(id, m, f, mp, fp) { const g = genreDe(id); return g === 'm' ? m : g === 'f' ? f : g === 'mp' ? mp : fp; }

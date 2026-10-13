@@ -115,7 +115,12 @@ class RenovationScene extends Cinematique {
       const s = this.add.image(img.x, img.y, salir(this, img.texture.key)).setOrigin(img.originX, img.originY)
         .setScale(img.scaleX, img.scaleY).setDepth(img.depth).setFlipX(img.flipX);
       if (img.parentContainer) img.parentContainer.addAt(s, img.parentContainer.getIndex(img) + 1);
-      else this.children.moveAbove(s, img);
+      else {
+        // (moveAbove de Phaser ne fait rien si l'objet est déjà plus haut : on le replace à la main)
+        const liste = this.children.list;
+        liste.splice(liste.indexOf(s), 1);
+        liste.splice(liste.indexOf(img) + 1, 0, s);
+      }
       if (img.decoupe) s.setCrop(...img.decoupe);
       if (img.isTinted) s.setTint(img.tintTopLeft);
       return s;
@@ -374,7 +379,7 @@ class RenovationScene extends Cinematique {
       .setOrigin(0.5).setScrollFactor(0).setDepth(20).setAlpha(0);
     const numero = this.add.text(900, 506, '', style(13, '#f3d98a', { fontStyle: 'italic' })).setOrigin(0.5).setScrollFactor(0).setDepth(20).setAlpha(0);
     this.tweens.add({ targets: [cadre, legende, numero], alpha: 1, duration: 800 });
-    const pages = [[0, 'Chapitre I · Ta chambre'], [960, "Chapitre II · L'arrière-boutique"], [1920, 'Chapitre III · Le comptoir'], [2880, 'Chapitre IV · La façade']];
+    const pages = [[0, 'Pièce 1 · Ta chambre'], [960, "Pièce 2 · L'arrière-boutique"], [1920, 'Pièce 3 · Le comptoir'], [2880, 'Pièce 4 · La façade']];
     for (let i = 0; i < pages.length; i++) {
       const [x, nom] = pages[i];
       if (i > 0) await this.tournerPage(() => this.cameras.main.setScroll(x, 0));

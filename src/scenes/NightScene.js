@@ -33,7 +33,7 @@ class NightScene extends Phaser.Scene {
         fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 10, y: 5 } })).setOrigin(0.5).setAngle(-2).setDepth(5);
       this.tweens.add({ targets: note, angle: 2, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
-    this.texteArgent = this.add.text(940, 34, '', style(20, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(1, 0.5);
+    this.bourse = bourse(this, 846, 50, this.G.argent, { echelle: 1.5, taille: 19, aDroite: true });
 
     this.parchemin(20, 300, this.matin ? "Aujourd'hui" : 'La journée');
     this.parchemin(320, 640, 'Ta réserve');
@@ -126,7 +126,7 @@ class NightScene extends Phaser.Scene {
       `Clients servis : ${j.servis}`,
       `Revenus : ${j.retours} · Ratées : ${j.echecs || 0} · Morts : ${j.morts}`,
       `Argent ce matin : ${G.argentDebutJour}`,
-      `Argent ce soir : ${G.argent}  (${gain >= 0 ? '+' : ''}${gain})`,
+      `Argent ce soir : ${G.argent} (${gain >= 0 ? '+' : ''}${gain})`,
       `Réputation : ${arrondi(G.reputation)}`,
       `Expérience : ${G.experience} clients`,
       `Flair : ${Math.round(niveauFlair(G) * 100)} % · Artisanat : niv. ${niveauArtisanat(G)}`,
@@ -152,7 +152,7 @@ class NightScene extends Phaser.Scene {
     this.lignesStock = {};
     Object.keys({ ...ITEMS, ...MATERIAUX }).forEach((id, i) => {
       const x = x1 + 24 + (i % 2) * 150;
-      const y = 138 + Math.floor(i / 2) * 38;
+      const y = 136 + Math.floor(i / 2) * 34;
       this.add.image(x, y, iconeObjet(this, id)).setScale(2);
       this.add.text(x + 20, y - 8, nomObjet(id), style(13, '#3b2410'));
       this.lignesStock[id] = this.add.text(x + 20, y + 8, '', style(13, '#3b2410', { fontStyle: 'bold' }));
@@ -176,7 +176,7 @@ class NightScene extends Phaser.Scene {
 
   majArgent() {
     const G = this.G;
-    this.texteArgent.setText(G.argent + ' pièces').setColor(G.argent < 0 ? '#ff8070' : '#f3d98a');
+    this.bourse.maj(G.argent);
     for (const [id, t] of Object.entries(this.lignesStock)) {
       const n = id in MATERIAUX ? G.materiaux[id] : G.stock[id];
       t.setText('x ' + n).setColor(n > 0 ? '#3b2410' : '#a05040');

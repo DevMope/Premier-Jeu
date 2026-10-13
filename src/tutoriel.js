@@ -3,8 +3,8 @@
 
 const CONSEILS = {
   carte: "Le matin, des aventuriers cherchent l'aventure sans savoir où aller. Clique sur un voyageur en bas, puis sur une contrée de la carte. Les étoiles disent le danger : n'envoie pas un novice dans une contrée à trois étoiles !",
-  comptoir: "Un client ! Sa commande est sur le parchemin, à droite. Clique sur tes marchandises, en bas, pour les glisser dans son baluchon. Plus il est bien équipé, plus il a de chances de revenir... et de te reverser sa part du butin.",
-  colis: "Bien ! Quand le baluchon est prêt, clique sur « Remettre le colis ». Ton flair, sous la commande, t'indique ses chances de revenir vivant.",
+  comptoir: "Un client ! Sa commande est sur le parchemin, à droite. Clique sur tes marchandises, en bas, pour les glisser dans son baluchon. Mieux il est équipé, plus il a de chances de revenir... et de te reverser sa part du butin.",
+  colis: "Bien ! Quand le baluchon est prêt, clique sur « Remettre le baluchon ». Ton flair, sous la commande, t'indique ses chances de revenir vivant.",
   remis: "Le voilà parti ! Dans quelques jours, il reviendra te raconter son aventure (si tout va bien...). Occupe-toi du suivant : la file attend.",
   refus: "Aïe : il te manque de quoi l'équiper entièrement. L'envoyer à moitié préparé, c'est risquer sa vie... Si tu juges que c'est trop dangereux, clique sur « Refuser ce client » : il repartira, et ta réputation baissera un peu. Mieux vaut un client déçu qu'un client mort !",
   arriere: "Ton arrière-boutique : ta réserve sur les étagères, ta fortune près du coffre, les cadeaux dans le panier. La porte, au fond, mène à ta chambre quand la journée est finie.",

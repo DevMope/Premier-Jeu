@@ -29,7 +29,7 @@ class StoryScene extends Cinematique {
     // Ses cœurs, plus ceux gagnés grâce aux soins donnés en plus.
     const pvDepart = (this.parti.resultat && this.parti.resultat.pvDepart) || v.pv;
     for (let i = 0; i < pvDepart; i++) {
-      this.coeurs.push(this.add.image(30 + i * 34, 30, 'coeur').setScale(4));
+      this.coeurs.push(this.add.image(30 + i * 34, 30, 'hd_coeur').setScale(2));
     }
     this.titre = this.add.text(480, 26, '', style(20, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
 
@@ -115,8 +115,8 @@ class StoryScene extends Cinematique {
 
   // Le trèfle de la chance qui brille au-dessus de lui.
   async trefle() {
-    const t = this.add.image(this.perso.x, this.perso.y - 120, 'trefleChance').setScale(0).setDepth(5);
-    await this.animer({ targets: t, scale: 6, angle: 360, duration: 500, ease: 'Back.easeOut' });
+    const t = this.add.image(this.perso.x, this.perso.y - 120, 'hd_trefleChance').setScale(0).setDepth(5);
+    await this.animer({ targets: t, scale: 3.5, angle: 360, duration: 500, ease: 'Back.easeOut' });
     this.tweens.add({ targets: t, alpha: 0, y: t.y - 40, duration: 900, delay: 400, onComplete: () => t.destroy() });
   }
 
@@ -153,8 +153,8 @@ class StoryScene extends Cinematique {
     this.time.delayedCall(300, () => this.perso.clearTint());
     const coeur = this.coeurs[pvRestants];
     if (coeur) {
-      coeur.setTexture('coeurVide');
-      await this.animer({ targets: coeur, scale: 6, duration: 150, yoyo: true });
+      coeur.setTexture('hd_coeurVide');
+      await this.animer({ targets: coeur, scale: 3, duration: 150, yoyo: true });
     }
   }
 
@@ -169,7 +169,7 @@ class StoryScene extends Cinematique {
     if (r.vivant && r.echec) {
       // Mission ratée : vivant, mais les mains vides.
       await this.marcherVers(880);
-      this.ecrire('Mission ratée', [`« Je suis désolé${this.e}... Je reviens les mains vides. »  Relation : ${relation.nom}`,
+      this.ecrire('Mission ratée', [`« Je suis désolé${this.e}... Je reviens les mains vides. » · Relation : ${relation.nom}`,
         ...(this.parti.malus || []).map(m => '• ' + m)].join('\n'));
       this.texte.setFontSize(13).setLineSpacing(1);
     } else if (r.vivant) {
@@ -177,7 +177,7 @@ class StoryScene extends Cinematique {
       this.pleuvoirPieces();
       const ajuste = gain !== v.butin ? ` (prévu : ${v.butin}, ajusté selon votre relation et tes décorations)` : '';
       this.ecrire('Retour au comptoir',
-        `« Merci pour ton aide. Sans ton colis, je ne serais pas là. Voici ta part du butin ! »\n` +
+        `« Merci pour ton aide. Sans ton baluchon, je ne serais pas là. Voici ta part du butin ! »\n` +
         `+ ${gain} pièces${ajuste} · Relation : ${relation.nom}${message ? '\n' + message : ''}`);
     } else {
       this.perso.setTint(0x888888);
@@ -187,7 +187,7 @@ class StoryScene extends Cinematique {
         : `${v.nom} est mort${this.e} loin de chez ${v.feminin ? 'elle' : 'lui'}, sans gloire. Il fallait sans doute mieux ${v.feminin ? 'la' : 'le'} préparer...\nTon investissement est perdu.`);
       if (this.parti.demasque) {
         const id = Object.keys(this.parti.pieges).find(k => this.parti.pieges[k] > 0);
-        this.texte.setText(this.texte.text + `\nOn a retrouvé ${PIEGES[id] ? 'la ' + PIEGES[id].nom.toLowerCase() : 'ton piège'} près du corps. Au village, on t'accuse.`);
+        this.texte.setText(this.texte.text + `\nOn a retrouvé ${PIEGES[id] ? leNom(id, PIEGES[id].nom.toLowerCase()) : 'ton piège'} près du corps. Au village, on t'accuse.`);
       }
       this.tweens.add({ targets: this.voile, fillAlpha: 0.5, duration: 1500 });
       this.indice.destroy();
@@ -218,7 +218,7 @@ class StoryScene extends Cinematique {
     liste.forEach((t, i) => {
       const y = 130 + i * 54;
       const tr = t.tresor;
-      c.add(this.add.image(60, y, 'tr_' + tr.categorie).setScale(4));
+      c.add(this.add.image(60, y, iconeObjet(this, 'tr_' + tr.categorie)).setScale(2.4));
       c.add(this.add.text(90, y - 16, tr.nom, style(15, '#3b2410', { fontStyle: 'bold' })));
       c.add(...pastilleEtat(this, 90, y + 12, tr.etat, 11));
       c.add(this.add.text(170, y + 4, `${CATEGORIES[tr.categorie].nom} · vaut ~${valeurTresor(tr)} p. en l'état`, style(12, '#5a3a20')));
@@ -269,10 +269,10 @@ class StoryScene extends Cinematique {
     const bouton = creerBouton(this, 540, 345, 290, '', () => {
       const erreur = soigner(G, v.nom);
       if (erreur) return this.ecrire('Soins', erreur);
-      const coeur = this.coeurs.find(c => c.texture.key === 'coeurVide');
+      const coeur = this.coeurs.find(c => c.texture.key === 'hd_coeurVide');
       if (coeur) {
-        coeur.setTexture('coeur');
-        this.tweens.add({ targets: coeur, scale: 6, duration: 150, yoyo: true });
+        coeur.setTexture('hd_coeur');
+        this.tweens.add({ targets: coeur, scale: 3, duration: 150, yoyo: true });
       }
       this.perso.setTint(0x80ff80);
       this.time.delayedCall(300, () => this.perso.clearTint());

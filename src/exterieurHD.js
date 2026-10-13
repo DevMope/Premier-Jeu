@@ -64,9 +64,9 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
   const poser = (x, y, c) => { if (x >= 0 && y >= 0 && x < L && y < H) px[y * L + Math.floor(x)] = c; };
 
   // Le ciel : un dégradé tramé du zénith à l'horizon, puis les nuages
-  const zenith = aube ? melangeCouleur(teinte(b.ciel, 0.7), 0x6a5aa0, 0.55) : soir(teinte(b.ciel, 0.85));
-  const horizon = aube ? 0xffb070 : soir(b.horizon);
-  const nuages = aube ? 0xf8b8a8 : nuit > 0.6 ? 0x3a3a5a : soir(0xfff8f0);
+  const zenith = aube ? melangeCouleur(teinte(b.ciel, 0.7), 0x8a5aa8, 0.6) : soir(teinte(b.ciel, 0.85));
+  const horizon = aube ? 0xffa0a8 : soir(b.horizon);
+  const nuages = aube ? 0xffb0c0 : nuit > 0.6 ? 0x3a3a5a : soir(0xfff8f0);
   for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
     const v = tramer(x, y, y / (H * 0.8), 7) / 6;
     let c = melangeCouleur(zenith, horizon, v);
@@ -504,9 +504,9 @@ function creerAccessoiresFacade(scene) {
   }
   // L'enseigne en bois suspendue
   for (let n = 0; n < 4; n++) {
-    const e = toileLuxe(60, 18, n);
-    for (let x = 0; x < 60; x++) for (let y = 0; y < 18; y++) {
-      const bord = Math.min(x, y, 59 - x, 17 - y);
+    const e = toileLuxe(80, 24, n);
+    for (let x = 0; x < 80; x++) for (let y = 0; y < 24; y++) {
+      const bord = Math.min(x, y, 79 - x, 23 - y);
       e.poser(x, y, bord < 2 ? (n >= 2 ? 'laiton' : 'chene') : 'parchemin', bord < 2 ? (bord ? 4 : 2) : 4 + Math.round((fbm(x * 0.2, y * 0.2, 711) - 0.5)));
     }
     e.contour();
@@ -528,10 +528,11 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   const enseigne = scene.add.container(ex, ey);
   const planche = scene.add.image(0, 22, 'enseigneHD_' + luxe).setScale(2).setOrigin(0.5, 0);
   const chaines = scene.add.graphics();
-  chaines.lineStyle(2, 0x2a2a30).lineBetween(-44, 0, -44, 23).lineBetween(44, 0, 44, 23);
-  const texte = scene.add.text(0, 40, nomShop, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
-  for (let taille = 12; texte.width > 108 && taille >= 7; taille--) texte.setFontSize(taille);
-  if (texte.width > 108) texte.setWordWrapWidth(108).setAlign('center');
+  chaines.lineStyle(2, 0x2a2a30).lineBetween(-62, 0, -62, 23).lineBetween(62, 0, 62, 23);
+  // Le nom du shop, en grand, peint en brun sombre et cerné de clair pour bien se lire de loin
+  const texte = scene.add.text(0, 46, nomShop, style(17, '#2a1608', { fontStyle: 'bold', stroke: '#fff4dc', strokeThickness: 3 })).setOrigin(0.5);
+  for (let taille = 17; texte.width > 148 && taille >= 10; taille--) texte.setFontSize(taille);
+  if (texte.width > 148) texte.setWordWrapWidth(148).setAlign('center');
   enseigne.add([chaines, planche, texte]);
   scene.tweens.add({ targets: enseigne, angle: { from: -2.5, to: 2.5 }, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   // Un filet de fumée qui monte de la cheminée
@@ -546,7 +547,7 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   return {
     porteX: px + pl / 2, porteY: sol, image, enseigne, tonneaux,
     zones: { toit: ecran(n >= 2 ? FACADE.toit : [0, 42, 200, 72]), etage: n >= 2 ? ecran(FACADE.etage) : null, fenetre: ecran(FACADE.fenetre), porte: ecran(FACADE.porte),
-      enseigne: [ex - 60, ey + 18, 120, 46] },
+      enseigne: [ex - 80, ey + 18, 160, 56] },
   };
 }
 
@@ -826,4 +827,302 @@ function creerLieuxMarcheHD(scene) {
     t.contour();
     t.texture(scene, 'estradeCrieur');
   }
+}
+
+// --- L'eau façon « Dave the Diver » : une rivière turquoise, lumineuse, vivante ---
+// Trois textures qui se superposent : le dégradé de profondeur, le réseau de caustiques
+// (la lumière qui danse sous la surface) et la crête d'écume de la surface.
+function creerEauHD(scene) {
+  if (scene.textures.exists('eauFondHD')) return;
+  const L = 240, H = 32;
+  // Le fond : du turquoise lumineux sous la surface au bleu profond, tramé
+  {
+    const t = toileDecor(L, H);
+    t.rampes.eau = [0x0a2a5a, 0x0f3d78, 0x16609a, 0x1f8ab8, 0x34b4d0, 0x62d8e0];
+    for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+      const v = 5 - (y / H) * 5.2 + (BAYER[y % 4][x % 4] / 16 - 0.5) * 0.9;
+      t.poser(x, y, 'eau', Math.max(0, Math.min(5, Math.round(v))));
+    }
+    t.texture(scene, 'eauFondHD');
+  }
+  // Les caustiques : un filet de lignes claires et ondulantes (le reste est transparent)
+  for (const [cle, graine] of [['caustiquesHD', 1301], ['caustiques2HD', 1302]]) {
+    const t = new ToileHD(L, H);
+    t.rampes.lumiere = [0x40c0e0, 0x60d0e8, 0x80e0f0, 0xa0f0f8, 0xd0fcff, 0xffffff];
+    for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+      const a = (x / L) * Math.PI * 2;
+      const n = fbm(Math.cos(a) * 4 + 7, Math.sin(a) * 4 + y * 0.28, graine);
+      const ligne = Math.abs(((n * 9) % 1) - 0.5);
+      if (ligne < 0.07 && y < H - 4) t.poser(x, y, 'lumiere', y < H * 0.4 ? 4 : 2);
+    }
+    t.texture(scene, cle);
+  }
+  // La surface : une crête d'écume ondulante, des reflets de ciel
+  {
+    const t = new ToileHD(L, 8);
+    t.rampes.ecume = [0x7ad8e8, 0x9ae4f0, 0xbaeef6, 0xd6f6fa, 0xeefcff, 0xffffff];
+    for (let x = 0; x < L; x++) {
+      const a = (x / L) * Math.PI * 2;
+      const crete = 2.5 + Math.sin(a * 6) * 1.2 + Math.sin(a * 13 + 1) * 0.6;
+      for (let y = 0; y < 8; y++) {
+        if (y < crete - 0.5) continue;
+        if (y < crete + 1) t.poser(x, y, 'ecume', 5);
+        else if (y < crete + 2.5 && hachage(x, y, 1303) < 0.5) t.poser(x, y, 'ecume', 3);
+      }
+    }
+    t.texture(scene, 'surfaceHD');
+  }
+}
+
+// Pose la rivière animée : renvoie un conteneur (pour pouvoir la faire disparaître d'un coup).
+function poserRiviereHD(scene, y, hauteur = 60) {
+  creerEauHD(scene);
+  creerHalo(scene);
+  const c = scene.add.container(0, 0);
+  const fond = scene.add.tileSprite(0, y, 960, hauteur, 'eauFondHD').setOrigin(0).setTileScale(2, hauteur / 32);
+  const caus1 = scene.add.tileSprite(0, y, 960, hauteur, 'caustiquesHD').setOrigin(0).setTileScale(2, hauteur / 32).setAlpha(0.55).setBlendMode(Phaser.BlendModes.ADD);
+  const caus2 = scene.add.tileSprite(0, y, 960, hauteur, 'caustiques2HD').setOrigin(0).setTileScale(2, hauteur / 32).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
+  const surface = scene.add.tileSprite(0, y - 6, 960, 16, 'surfaceHD').setOrigin(0).setTileScale(2);
+  c.add([fond, caus1, caus2, surface]);
+  // Des rayons de lumière qui plongent dans l'eau, en biais
+  for (let i = 0; i < 6; i++) {
+    const rx = 80 + i * 160 + Math.random() * 40;
+    const rayon = scene.add.triangle(0, 0, rx, y, rx + 34, y, rx + 70, y + hauteur, 0xc8f4ff, 0.12).setOrigin(0).setBlendMode(Phaser.BlendModes.ADD);
+    scene.tweens.add({ targets: rayon, alpha: 0.25, duration: 1800 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    c.add(rayon);
+  }
+  // Le courant : les couches glissent à des vitesses différentes, la lumière ondule
+  scene.tweens.add({ targets: fond, tilePositionX: -480, duration: 16000, repeat: -1 });
+  scene.tweens.add({ targets: caus1, tilePositionX: -480, duration: 9000, repeat: -1 });
+  scene.tweens.add({ targets: caus2, tilePositionX: 480, duration: 13000, repeat: -1 });
+  scene.tweens.add({ targets: surface, tilePositionX: -480, duration: 6000, repeat: -1 });
+  scene.tweens.add({ targets: [caus1, caus2], alpha: '-=0.2', duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  // Des scintillements à la surface, et quelques bulles qui remontent
+  scene.time.addEvent({ delay: 260, loop: true, callback: () => {
+    if (!c.active || !c.visible || c.alpha < 0.1) return;
+    const s = scene.add.image(Math.random() * 960, y - 2 + Math.random() * 6, 'halo').setScale(0.08).setTint(0xffffff).setBlendMode(Phaser.BlendModes.ADD);
+    c.add(s);
+    scene.tweens.add({ targets: s, scale: 0.18, alpha: 0, x: s.x - 30, duration: 700, onComplete: () => s.destroy() });
+    if (Math.random() < 0.4) {
+      const b = scene.add.circle(Math.random() * 960, y + hauteur - 4, 2, 0xd8f8ff, 0.7);
+      c.add(b);
+      scene.tweens.add({ targets: b, y: y + 4, x: b.x - 20, alpha: 0.2, duration: 1600, onComplete: () => b.destroy() });
+    }
+  } });
+  return c;
+}
+
+// --- Les vignettes des contrées sur la carte ---
+
+// Pour chaque contrée, un petit tableau peint dans un médaillon ovale à liseré d'or :
+// des collines et des pommiers pour la Comté, une pagode pour les pandas, une tour pour le nécromancien...
+const VIGNETTE_L = 52, VIGNETTE_H = 36;
+function creerVignettesZonesHD(scene) {
+  for (const [cle, z] of Object.entries(ZONES)) {
+    if (!scene.textures.exists('vignetteZone_' + cle)) peindreVignetteZone(scene, cle, z.biome);
+  }
+  // La version brumeuse des contrées inconnues : un médaillon de parchemin et un point d'interrogation.
+  if (!scene.textures.exists('vignetteZone_inconnue')) {
+    const t = toileDecor(VIGNETTE_L, VIGNETTE_H);
+    const cx = VIGNETTE_L / 2, cy = VIGNETTE_H / 2;
+    for (let y = 0; y < VIGNETTE_H; y++) for (let x = 0; x < VIGNETTE_L; x++) {
+      const d = Math.hypot((x + 0.5 - cx) / 24.5, (y + 0.5 - cy) / 16.5);
+      if (d < 1) t.poser(x, y, 'parchemin', 3 + Math.round(fbm(x * 0.15, y * 0.15, 77) * 2 - (d > 0.8 ? 1 : 0)));
+      else if (d < 1.13) t.poser(x, y, 'pierre', d < 1.06 ? 2 : 1);
+    }
+    t.contour();
+    t.texture(scene, 'vignetteZone_inconnue');
+  }
+}
+
+function peindreVignetteZone(scene, cle, biome) {
+  const L = VIGNETTE_L, H = VIGNETTE_H, cx = L / 2, cy = H / 2, RX = 24.5, RY = 16.5;
+  const b = BIOMES[biome] || BIOMES.comte;
+  const t = toileDecor(L, H);
+  const R = t.rampes;
+  R.vCiel = rampe(b.ciel); R.vHorizon = rampe(b.horizon); R.vLoin = rampe(b.loin); R.vPres = rampe(b.pres);
+  R.vChemin = rampe(b.chemin); R.vSoleil = rampe(b.soleil);
+  R.vFeuille = rampe(b.arbres || melangeCouleur(b.pres, 0x1a3a10, 0.35));
+  R.vTronc = rampe(0x6a4424); R.vPomme = rampe(0xd83a2a); R.vNeige = rampe(0xf4f8ff); R.vRoche = rampe(b.pics || 0x7a7880);
+  R.vEau = rampe(melangeCouleur(b.ciel, 0x2a6a8a, 0.4)); R.vToit = rampe(0xb83a2a); R.vMur = rampe(0xe8dcc0);
+  R.vSombre = rampe(b.colonnes || 0x4a4050); R.vFeu = rampe(0xff8a20); R.vOr = rampe(0xd8a838);
+  const dansMedaillon = (x, y) => Math.hypot((x + 0.5 - cx) / RX, (y + 0.5 - cy) / RY) < 1;
+  const P = (x, y, mat, i) => { x = Math.round(x); y = Math.round(y); if (dansMedaillon(x, y)) t.poser(x, y, mat, i); };
+  const forme = (mat, f, opts) => t.forme(mat, (x, y) => dansMedaillon(x, y) ? f(x, y) : null, opts);
+  const horizon = 20;
+
+  // Le ciel (dégradé tramé) et le sol
+  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+    if (!dansMedaillon(x, y)) continue;
+    if (y < horizon) {
+      const f = y / horizon * 3 + (BAYER[y % 4][x % 4] + 0.5) / 16 - 0.5;
+      if (f > 2.2) t.poser(x, y, 'vHorizon', 3); else t.poser(x, y, 'vCiel', 4 - Math.floor(f / 1.4));
+    } else t.poser(x, y, 'vPres', 3 - Math.floor((y - horizon) / 6) + (fbm(x * 0.3, y * 0.3, 5) > 0.6 ? 1 : 0));
+  }
+  // Collines (une ellipse éclairée), montagnes (un triangle éclairé, neige au sommet)
+  const colline = (x0, y0, rx, ry, mat = 'vLoin', dec = 0) => forme(mat, ellipsoide(x0, y0, rx, ry, (x, y) => y < y0 + 0.5), { decalage: dec, bord: false });
+  const montagne = (x0, base, w, h, mat = 'vRoche', neige = false) => {
+    for (let y = base - h; y <= base; y++) {
+      const demi = (y - (base - h)) / h * w;
+      for (let x = Math.ceil(x0 - demi); x <= x0 + demi; x++) {
+        const cote = x < x0 ? 4 : 2, haut = y < base - h * 0.62;
+        P(x, y, neige && haut ? 'vNeige' : mat, neige && haut ? cote + 1 : cote - (y > base - 3 ? 1 : 0));
+      }
+    }
+  };
+  const soleil = (x0, y0, r = 3) => forme('vSoleil', ellipsoide(x0, y0, r, r), { decalage: 1.5, bord: false });
+  const lune = (x0, y0, r, mat) => { forme(mat, ellipsoide(x0, y0, r, r), { decalage: 1, bord: false }); };
+  const pommier = (x0, y0, pommes = true) => {
+    for (let k = 0; k < 4; k++) P(x0, y0 - k, 'vTronc', k ? 2 : 1);
+    forme('vFeuille', ellipsoide(x0, y0 - 6, 4, 3.5), { decalage: 0.4, motif: (x, y) => (hachage(x, y, 9) - 0.5) * 1.2 });
+    if (pommes) for (const [dx, dy] of [[-2, -6], [2, -5], [0, -8], [3, -8]]) P(x0 + dx, y0 + dy, 'vPomme', 3);
+  };
+  const sapin = (x0, y0, h = 9, mat = 'vFeuille') => {
+    P(x0, y0, 'vTronc', 1); P(x0, y0 - 1, 'vTronc', 2);
+    for (let k = 0; k < h; k++) {
+      const demi = Math.floor(((k % 4) + 1 + (h - k) / 3) * 0.6);
+      for (let dx = -demi; dx <= demi; dx++) P(x0 + dx, y0 - h + k, mat, dx < 0 ? 3 : dx > 0 ? 1 : 2);
+    }
+  };
+  const roseau = (x0, y0, h = 5) => { for (let k = 0; k < h; k++) P(x0, y0 - k, 'vFeuille', 3); P(x0, y0 - h, 'vTronc', 3); P(x0, y0 - h - 1, 'vTronc', 2); };
+  const rect = (x0, y0, w, h, mat, i) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) P(x, y, mat, typeof i === 'function' ? i(x, y) : i); };
+  const colonne = (x0, y0, h, mat = 'vSombre', cassee = false) => {
+    rect(x0 - 1, y0 - h, 3, h, mat, (x) => x === x0 - 1 ? 4 : x === x0 ? 3 : 1);
+    if (!cassee) rect(x0 - 2, y0 - h - 1, 5, 1, mat, 4);
+    rect(x0 - 2, y0 - 1, 5, 1, mat, 2);
+  };
+  const eau = (y0, y1) => { for (let y = y0; y < y1; y++) for (let x = 0; x < L; x++) P(x, y, 'vEau', 2 + ((x + y * 3) % 7 === 0 ? 2 : (y - y0) % 2)); };
+
+  switch (biome) {
+    case 'comte': // des collines verdoyantes, des pommiers et un trou de hobbit
+      soleil(40, 7);
+      colline(14, horizon + 2, 18, 8); colline(40, horizon + 3, 16, 7, 'vLoin', -0.3);
+      colline(26, H, 30, 12, 'vPres', 0.3);
+      rect(23, 24, 5, 4, 'vChemin', 3); forme('vOr', ellipsoide(25.5, 26, 2, 2), { bord: true });
+      P(25, 26, 'vTronc', 1);
+      pommier(11, 27); pommier(39, 28); pommier(33, 22, true);
+      break;
+    case 'foret': // une forêt profonde de sapins, des rayons de soleil
+      for (let k = 0; k < 9; k++) sapin(3 + k * 6, horizon + 2 + (k % 2), 10 + (k % 3), 'vLoin');
+      for (let k = 0; k < 6; k++) sapin(5 + k * 9, H - 4 + (k % 2) * 2, 13 + (k % 2) * 3);
+      for (let k = 0; k < 14; k++) P(26 + k * 0.5, 4 + k, 'vSoleil', 4);
+      break;
+    case 'marais': // eaux stagnantes, roseaux, un arbre mort et des feux follets
+      colline(26, horizon + 1, 30, 4, 'vLoin', -0.5); eau(horizon + 1, H);
+      for (let k = 0; k < 10; k++) roseau(4 + k * 5 + (k % 3), H - 4 - (k % 2) * 3, 4 + (k % 3));
+      for (let k = 0; k < 8; k++) P(36 + (k > 4 ? k - 4 : 0), 21 - k, 'vTronc', 1);
+      P(35, 15, 'vTronc', 1); P(38, 16, 'vTronc', 1);
+      P(16, 14, 'vSoleil', 5); P(30, 11, 'vSoleil', 5); P(20, 17, 'vSoleil', 4);
+      break;
+    case 'mines': // la montagne, l'entrée étayée, des rails et un wagonnet
+      montagne(18, horizon + 4, 16, 16); montagne(38, horizon + 4, 14, 12);
+      rect(22, 17, 9, 9, 'vTronc', (x) => x === 22 || x === 30 ? 3 : 0); rect(22, 16, 9, 1, 'vTronc', 4);
+      for (let x = 14; x < 40; x++) { P(x, 30, 'vRoche', 4); if (x % 3 === 0) P(x, 31, 'vTronc', 2); }
+      rect(33, 26, 6, 4, 'fer', 3); P(34, 25, 'vOr', 5); P(36, 25, 'vOr', 4); P(37, 25, 'vOr', 5);
+      break;
+    case 'desert': // des dunes, un soleil écrasant, un crâne et un cactus
+      soleil(36, 7, 4);
+      for (let x = 0; x < L; x++) for (let y = 0; y < H; y++) {
+        const d1 = horizon + Math.sin(x / 7) * 2, d2 = 27 + Math.sin(x / 5 + 2) * 2;
+        if (y > d2) P(x, y, 'vPres', y < d2 + 1.5 ? 4 : 3); else if (y > d1) P(x, y, 'vLoin', y < d1 + 1.5 ? 4 : 2);
+      }
+      for (let k = 0; k < 7; k++) P(14, 29 - k, 'vFeuille', 3); P(13, 25, 'vFeuille', 3); P(12, 24, 'vFeuille', 3); P(15, 26, 'vFeuille', 3); P(16, 25, 'vFeuille', 3);
+      rect(32, 29, 3, 2, 'vMur', 5); P(32, 30, 'encre', 0); P(34, 30, 'encre', 0);
+      break;
+    case 'neige': // des pics gelés et des flocons
+      montagne(14, H - 2, 15, 24, 'vRoche', true); montagne(36, H - 2, 16, 28, 'vRoche', true);
+      for (let x = 0; x < L; x++) for (let y = 30; y < H; y++) P(x, y, 'vNeige', 4);
+      for (let k = 0; k < 12; k++) P(hachage(k, 1, 31) * L, hachage(k, 2, 31) * 22, 'vNeige', 5);
+      break;
+    case 'ruines': // colonnes brisées sous un ciel violet, une couronne oubliée
+      lune(40, 7, 3, 'vSoleil');
+      colonne(10, 30, 14); colonne(18, 29, 9, 'vSombre', true); colonne(34, 30, 16); colonne(42, 29, 7, 'vSombre', true);
+      rect(8, 14, 29, 2, 'vSombre', 4);
+      rect(24, 27, 5, 2, 'vOr', 4); P(24, 26, 'vOr', 5); P(26, 26, 'vOr', 5); P(28, 26, 'vOr', 5);
+      break;
+    case 'antre': // un volcan, une caverne et deux yeux qui brillent
+      montagne(26, H, 24, 30, 'vRoche');
+      for (let k = 0; k < 6; k++) P(26 + (k % 2), 6 + k, 'vFeu', 5 - (k >> 1));
+      forme('encre', ellipsoide(26, H - 1, 8, 9, (x, y) => y < H - 1), { bord: false });
+      P(23, 29, 'vFeu', 5); P(29, 29, 'vFeu', 5); P(24, 29, 'vFeu', 3); P(28, 29, 'vFeu', 3);
+      break;
+    case 'monastere': // une pagode aux toits rouges sur une colline, des bambous
+      soleil(10, 7);
+      colline(26, H, 30, 14, 'vLoin');
+      rect(22, 17, 9, 9, 'vMur', (x) => x === 22 ? 4 : x === 30 ? 2 : 3); rect(25, 21, 3, 5, 'vTronc', 1);
+      for (const [y0, w] of [[16, 8], [11, 6]]) for (let k = 0; k < 3; k++) rect(26 - w - k + 1, y0 - k, (w - k) * 2 + 2 * k - 1, 1, 'vToit', 4 - k);
+      rect(23, 12, 7, 2, 'vMur', 3); P(26, 7, 'vOr', 5);
+      for (const bx of [6, 9, 44, 47]) for (let k = 0; k < 14; k++) P(bx, 31 - k, 'vFeuille', k % 4 === 0 ? 1 : 4);
+      break;
+    case 'sanctuaire': // de grands arbres argentés, un temple blanc et des lucioles
+      for (const [x0, h] of [[8, 16], [44, 18]]) { for (let k = 0; k < h; k++) P(x0, H - 4 - k, 'vMur', 2); forme('vFeuille', ellipsoide(x0, H - 6 - h, 7, 6), { decalage: 0.8 }); }
+      colonne(20, 28, 11, 'vMur'); colonne(32, 28, 11, 'vMur');
+      for (let k = 0; k < 7; k++) rect(18 + k, 16 - (k < 4 ? k : 6 - k), 1, 1, 'vMur', 5); rect(18, 16, 17, 1, 'vMur', 4);
+      for (let k = 0; k < 9; k++) P(hachage(k, 3, 41) * L, 8 + hachage(k, 4, 41) * 18, 'vSoleil', 5);
+      break;
+    case 'citadelle': // une citadelle blanche à bannières d'or sur son rocher
+      soleil(42, 6);
+      montagne(26, H, 26, 10, 'vRoche');
+      rect(14, 14, 24, 13, 'vSombre', (x, y) => (y === 14 && x % 3 === 0) ? 5 : x < 18 ? 4 : 3);
+      rect(12, 9, 6, 18, 'vSombre', (x) => x === 12 ? 5 : 3); rect(34, 9, 6, 18, 'vSombre', (x) => x === 34 ? 5 : 2);
+      rect(23, 19, 6, 8, 'vTronc', 1);
+      for (const fx of [15, 37]) { for (let k = 0; k < 4; k++) P(fx, 8 - k, 'vTronc', 1); rect(fx + 1, 4, 3, 2, 'vOr', 4); }
+      break;
+    case 'bourbier': // une mare de boue, des huttes de gobelins, une fumée
+      eau(26, H); for (let y = 26; y < H; y++) for (let x = 0; x < L; x++) if (hachage(x, y, 3) > 0.7) P(x, y, 'vChemin', 2);
+      for (const hx of [14, 34]) {
+        for (let k = 0; k < 7; k++) rect(hx - k, 18 + k, k * 2 + 1, 1, 'vTronc', 2 + (k % 2));
+        rect(hx - 1, 23, 3, 2, 'encre', 0);
+      }
+      for (let k = 0; k < 6; k++) P(34 + Math.sin(k) * 1.5, 16 - k * 1.6, 'vRoche', 4);
+      for (let k = 0; k < 7; k++) roseau(3 + k * 7, 33 - (k % 2) * 2, 3);
+      break;
+    case 'repaire': // une lune rouge, des arbres noirs et des yeux dans la nuit
+      lune(26, 9, 5, 'vSoleil');
+      for (let k = 0; k < 7; k++) sapin(2 + k * 8, H - 2 - (k % 2) * 3, 14 + (k % 3) * 2, 'vFeuille');
+      for (const [ex, ey] of [[13, 26], [37, 24], [25, 29]]) { P(ex, ey, 'vFeu', 5); P(ex + 2, ey, 'vFeu', 5); }
+      break;
+    case 'tour': // une tour noire au sommet violet, des tombes et des éclairs
+      lune(9, 7, 3, 'vSoleil');
+      colline(26, H, 30, 8, 'vLoin');
+      rect(22, 7, 8, 24, 'vSombre', (x) => x === 22 ? 4 : x < 26 ? 3 : 1);
+      for (let k = 0; k < 4; k++) rect(21 + k, 6 - k, 10 - 2 * k, 1, 'vSombre', 3);
+      P(26, 2, 'vSoleil', 5); P(25, 12, 'vSoleil', 5); P(27, 18, 'vSoleil', 5);
+      for (const gx of [8, 14, 38, 44]) { rect(gx, 28, 3, 4, 'pierre', 3); P(gx + 1, 27, 'pierre', 4); }
+      for (let k = 0; k < 5; k++) P(40 + (k % 2), 4 + k * 2, 'vSoleil', 5);
+      break;
+  }
+
+  // Le cadre du médaillon : un liseré d'or et un fil d'encre
+  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+    const d = Math.hypot((x + 0.5 - cx) / RX, (y + 0.5 - cy) / RY);
+    if (d >= 1 && d < 1.1) t.poser(x, y, 'laiton', y < cy - 4 ? 4 : y > cy + 4 ? 1 : 3);
+    else if (d >= 0.96 && d < 1) t.poser(x, y, 'laiton', 0);
+  }
+  t.contour();
+  t.texture(scene, 'vignetteZone_' + cle);
+}
+
+// Le comptoir sur la carte : une petite échoppe à colombages, son toit de chaume et son enseigne.
+function creerComptoirCarteHD(scene) {
+  if (scene.textures.exists('comptoirCarteHD')) return;
+  const t = toileDecor(30, 28);
+  t.rampes.chaume = rampe(0xc89a48); t.rampes.mur = rampe(0xf0e2c0);
+  // Le mur crépi et ses colombages
+  for (let y = 12; y < 26; y++) for (let x = 4; x < 26; x++) t.poser(x, y, 'mur', x === 4 ? 4 : x > 23 ? 2 : 3);
+  for (let y = 12; y < 26; y++) { t.poser(4, y, 'chene', 2); t.poser(15, y, 'chene', 2); t.poser(25, y, 'chene', 1); }
+  for (let x = 4; x < 26; x++) { t.poser(x, 12, 'chene', 2); t.poser(x, 18, 'chene', 2); }
+  // La porte, la vitrine éclairée et sa marquise rayée
+  for (let y = 19; y < 26; y++) for (let x = 7; x < 12; x++) t.poser(x, y, 'cheneSombre', x === 7 ? 3 : 1);
+  t.poser(10, 22, 'laiton', 5);
+  for (let y = 20; y < 25; y++) for (let x = 17; x < 24; x++) t.poser(x, y, 'flamme', y === 20 ? 4 : 3);
+  for (let x = 16; x < 25; x++) t.poser(x, 19, x % 2 ? 'tissuRouge' : 'lin', 3);
+  // Le toit de chaume, une cheminée qui fume
+  for (let k = 0; k < 11; k++) for (let x = 2 + k; x < 28 - k; x++) t.poser(x, 11 - k, 'chaume', k === 0 ? 1 : (x + k) % 3 === 0 ? 2 : 4 - (x > 15 ? 1 : 0));
+  for (let y = 1; y < 6; y++) { t.poser(21, y, 'pierre', 3); t.poser(22, y, 'pierre', 2); }
+  // L'enseigne qui pend
+  for (let y = 13; y < 16; y++) for (let x = 16; x < 22; x++) t.poser(x, y, 'laiton', y === 13 ? 5 : 3);
+  for (let y = 26; y < 28; y++) for (let x = 1; x < 29; x++) t.poser(x, y, 'pierre', 2);
+  t.contour();
+  t.texture(scene, 'comptoirCarteHD');
 }

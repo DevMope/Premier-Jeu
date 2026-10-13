@@ -125,18 +125,10 @@ class IntroHistoireScene extends Cinematique {
     this.e = this.f ? 'e' : '';
     this.cameras.main.fadeIn(600);
 
-    // La rivière, au pied des collines
+    // La forêt, et sa rivière turquoise où dansent les reflets du soleil
     this.fond = this.add.graphics();
-    dessinerComte(this.fond, 0, 0, 960, 370, 0);
-    // L'eau qui coule (une texture peinte qui défile)
-    this.riviere = this.add.tileSprite(0, 330, 960, 50, riviereHD(this)).setOrigin(0).setTileScale(2);
-    this.tweens.add({ targets: this.riviere, tilePositionX: -240, duration: 4000, repeat: -1 });
-    this.vagues = [];
-    for (let i = 0; i < 14; i++) {
-      const v = this.add.rectangle(i * 75, 340 + (i % 3) * 10, 22, 3, 0x8fd0f0);
-      this.tweens.add({ targets: v, x: v.x + 75, duration: 1800, repeat: -1 });
-      this.vagues.push(v);
-    }
+    dessinerComte(this.fond, 0, 0, 960, 370, 0, 'foret');
+    this.riviere = poserRiviereHD(this, 330, 60);
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
 
     textureJoueur(this, G); // (crée les textures du joueur si besoin)
@@ -153,6 +145,19 @@ class IntroHistoireScene extends Cinematique {
     this.fini = true;
     this.cameras.main.fadeOut(500);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Renovation'));
+  }
+
+  // Changement de décor : de la forêt et sa rivière aux collines de la Comté et leur chemin.
+  async versLaComte() {
+    await this.animer({ targets: this.cameras.main, alpha: 0, duration: 600 });
+    this.riviere.setVisible(false);
+    const comte = this.add.graphics().setDepth(-1);
+    dessinerComte(comte, 0, 0, 960, 370, 0, 'comte');
+    comte.paysage.setDepth(-1);
+    this.fond.paysage.setVisible(false);
+    this.add.image(0, 330, pavesHD(this, 960, 60)).setOrigin(0).setScale(2).setDepth(-0.5).setTint(0xc8b090);
+    this.heros.setPosition(300, 330);
+    await this.animer({ targets: this.cameras.main, alpha: 1, duration: 700 });
   }
 
   async raconter() {
@@ -186,11 +191,17 @@ class IntroHistoireScene extends Cinematique {
 
     // La nuit, au coin du feu.
     await this.animer({ targets: this.voile, fillAlpha: 0.6, duration: 1200 });
-    const feu = this.add.graphics().setDepth(2);
-    feu.fillStyle(0x6b4423).fillRect(560, 322, 40, 8);
-    feu.fillStyle(0xf08a24).fillTriangle(562, 322, 580, 286, 598, 322);
-    feu.fillStyle(0xffe066).fillTriangle(570, 322, 580, 300, 590, 322);
-    this.tweens.add({ targets: feu, scaleY: 1.04, duration: 120, yoyo: true, repeat: -1 });
+    creerRecitHD(this); creerInterieurHD(this); creerHalo(this);
+    const feu = this.add.container(0, 0).setDepth(2);
+    feu.add(this.add.image(580, 330, 'feuCampHD').setOrigin(0.5, 1).setScale(2.5));
+    for (const [dx, e, delai] of [[-9, 4, 2], [9, 4, 1], [0, 6, 0]]) {
+      const f = this.add.sprite(580 + dx, 318, 'flammeBougie0').setOrigin(0.5, 1).setScale(e * 1.5, e).play('flammeBougie');
+      f.anims.setProgress(delai / 3);
+      feu.add(f);
+    }
+    const lueurFeu = this.add.image(580, 300, 'halo').setScale(3).setTint(0xffa040).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD).setDepth(8);
+    feu.add(lueurFeu);
+    this.tweens.add({ targets: lueurFeu, alpha: 0.3, scale: 2.7, duration: 300, yoyo: true, repeat: -1 });
     this.ecrire('Pendant des jours...', 'Tu as fait un feu, réparé ses armes, soigné ses blessures, et chassé pour le nourrir.');
     for (const id of ['epee', 'bandage', 'potion']) {
       const icone = this.add.image(470, 260, iconeObjet(this, id)).setScale(0).setDepth(5);
@@ -203,7 +214,7 @@ class IntroHistoireScene extends Cinematique {
     // Il mange comme quatre.
     this.ecrire('', 'Il mangeait comme quatre.');
     for (let i = 0; i < 6; i++) {
-      const r = this.add.image(380, 300, 'ration').setScale(4).setDepth(5);
+      const r = this.add.image(380, 300, iconeObjet(this, 'ration')).setScale(2.6).setDepth(5);
       this.animer({ targets: r, x: 470, y: 310, duration: 300 }).then(() => r.destroy());
       this.onomatopee(490 + (i % 2) * 30, 260 - i * 6, 'MIAM');
       await this.attendre(250);
@@ -220,8 +231,9 @@ class IntroHistoireScene extends Cinematique {
     await this.marcher(this.mentor, 1020, 4);
     await this.marcher(this.heros, 300);
 
-    // Le temps passe.
-    this.ecrire('', 'Les jours passèrent. Puis les semaines. Tu commençais à croire qu\'il ne reviendrait jamais...');
+    // Le temps passe... et on rentre dans la Comté, au bord du chemin, à guetter son retour.
+    await this.versLaComte();
+    this.ecrire('', 'Les jours passèrent. Puis les semaines. De retour dans la Comté, tu guettais le chemin... Tu commençais à croire qu\'il ne reviendrait jamais...');
     await this.animer({ targets: this.voile, fillAlpha: 0.7, duration: 500, yoyo: true, repeat: 2 });
     await this.attendreClic();
 

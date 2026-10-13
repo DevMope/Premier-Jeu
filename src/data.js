@@ -506,9 +506,10 @@ const LIENS = [
 const MATERIAUX = {
   fer: { nom: 'Fer', prix: 4 },
   cuir: { nom: 'Cuir', prix: 3 },
+  filOr: { nom: "Fil d'or", prix: 6 },   // pour les bijoux : on en use peu, mais le travail est long
 };
 const MATERIAU_DE = { epee: 'fer', corde: 'cuir', gourde: 'cuir', cape: 'cuir', bouclier: 'fer' };
-const MATERIAUX_DEPART = { fer: 2, cuir: 2 };
+const MATERIAUX_DEPART = { fer: 2, cuir: 2, filOr: 1 };
 // Au début il faut 3 matériaux par réparation ; l'artisanat en fait baisser le nombre.
 const MATERIAUX_PAR_REPARATION = 3;
 
@@ -526,7 +527,7 @@ const MARCHANDS = {
   },
   apothicaire: {
     nom: 'Mère Sauge', metier: 'Apothicaire', race: 'magicienne', couleur: 0x5a3a8a,
-    objets: ['potion', 'bandage', 'antidote', 'amulette'], toujours: ['bandage'],
+    objets: ['potion', 'bandage', 'antidote', 'amulette', 'filOr'], toujours: ['bandage', 'filOr'],
   },
   tailleuse: {
     nom: 'Hilda la Tailleuse', metier: 'Tissus et fourrures', race: 'humain', couleur: 0x2f5a8a,
@@ -607,7 +608,8 @@ const APPARENCE = {
 const CATEGORIES = {
   arme: { nom: 'Arme', materiau: 'fer', duree: 3 },
   armure: { nom: 'Armure', materiau: 'fer', duree: 3 },
-  bijou: { nom: 'Bijou', materiau: null, duree: 4 },
+  // Les bijoux : un seul fil d'or suffit (quel que soit le stade visé), mais c'est un travail d'orfèvre, très long.
+  bijou: { nom: 'Bijou', materiau: 'filOr', unSeul: true, duree: 6 },
   artefact: { nom: 'Artefact', materiau: null, duree: 5 },
   vetement: { nom: 'Vêtement', materiau: 'cuir', duree: 2 },
 };
@@ -699,7 +701,7 @@ Object.assign(QUETES, {
       },
       {
         type: 'sangsues', besoin: 'bandage', qte: 2,
-        intro: "En plongeant pour la cloche, des sangsues énormes se sont collées à mes jambes !",
+        intro: "Pendant que je plongeais pour la cloche, des sangsues énormes se sont collées à mes jambes !",
         complet: "J'ai pansé les morsures avec tes bandages, rien de grave.",
         partiel: "Pas assez de bandages... ça saignait encore le lendemain.",
         rien: "Les morsures se sont infectées.",
@@ -882,7 +884,7 @@ const PIEGES = {
 // et séduit la Faucheuse (on retient la raison la plus grave).
 const MORTS_VOULUES = {
   piege: { poids: 2, texte: 'un objet piégé' },
-  colisVide: { poids: 1, texte: 'un colis volontairement vide' },
+  colisVide: { poids: 1, texte: 'un baluchon volontairement vide' },
   sansChance: { poids: 0.5, texte: 'aucune chance de revenir' },
 };
 const SEUIL_SANS_CHANCE = 0.3;     // en dessous, tu l'envoies à la mort
@@ -1004,6 +1006,13 @@ const SAUVETAGE_PAR_TREFLE = 0.02;              // une épreuve ratée rattrapé
 const REPLI_PAR_TREFLE = 0.07;                  // la mort évitée : il rebrousse chemin
 
 // Les cadeaux, au Bazar de Rosalie. Chaque race a ses goûts.
+// Le genre et le nombre de chaque marchandise (pour bien accorder les phrases) :
+// f / m, et p au pluriel.
+const GENRE_OBJETS = {
+  ration: 'f', gourde: 'f', epee: 'f', fleches: 'fp', potion: 'f', bandage: 'mp', torche: 'f', corde: 'f',
+  antidote: 'm', cape: 'f', bouclier: 'm', amulette: 'f', fer: 'm', cuir: 'm', filOr: 'm',
+};
+
 const CADEAUX = {
   miel: { nom: 'Pot de miel', prix: 6 },
   tabac: { nom: 'Tabac à pipe', prix: 5 },
@@ -1030,7 +1039,7 @@ const PERTE_ECHEC = 0.5;
 const MALUS_ECHEC = {
   rumine: '{nom} rumine son échec : votre relation en prend un coup.',
   blesse: '{nom} est trop blessé{e} pour repartir avant plusieurs jours, sauf si tu {le} soignes.',
-  rumeur: 'La rumeur court que tes colis ne suffisent pas : moins de clients demain.',
+  rumeur: 'La rumeur court que tes baluchons ne suffisent pas : moins de clients demain.',
   comptes: '{nom} te demandera des comptes : la prochaine fois, {il} exigera un objet en plus.',
 };
 // Le nombre de malus selon la relation au départ (Pires ennemis → Frères de sang).

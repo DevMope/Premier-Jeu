@@ -71,7 +71,7 @@ class FailliteScene extends Cinematique {
       garde.setScale(1, 1);
       await this.defiler([garde], [porte], 500);
       await this.animer({ targets: garde, alpha: 0, duration: 200 });
-      const caisse = this.add.image(0, -110, 'caisse').setScale(5);
+      const caisse = this.add.image(0, -110, 'hd_caisse').setScale(3);
       garde.add(caisse);
       await this.attendre(300);
       await this.animer({ targets: garde, alpha: 1, duration: 200 });

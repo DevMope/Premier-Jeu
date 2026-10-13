@@ -326,35 +326,50 @@ function motifTissu(famille, x, y, cx, cy) {
   return x >= cx + 1 && x <= cx + 3 && y >= cy && y <= cy + 2; // une pièce rapiécée
 }
 
+// Les baluchons, en HD (deux fois plus de pixels qu'avant) : un tissu noué en boule, plein de
+// plis et ombré, attaché au bout d'un bâton ; et le même tissu étalé sur le comptoir.
+// Le motif du tissu dépend de ce qu'il contient (provisions, armes, soins, divers).
 function creerBaluchons(scene) {
-  for (const [famille, t] of Object.entries(TISSUS)) {
-    // Le baluchon noué : bundle en haut à gauche, bâton qui descend vers la main (en bas à droite).
-    const g = scene.make.graphics({ add: false });
-    const W = 20, H = 18, cx = 6, cy = 8, r = 5.6;
-    for (let i = 0; i <= 13; i++) {
-      g.fillStyle(0x5a3a1a).fillRect(7 + i, 4 + i, 1, 1);
-      g.fillStyle(0x8a5a2b).fillRect(7 + i, 5 + i, 1, 1);
+  for (const [famille, c] of Object.entries(TISSUS)) {
+    if (scene.textures.exists('baluchon_' + famille)) continue;
+    const motif = (x, y) => {
+      if (famille === 'provisions') return ((x >> 2) + (y >> 2)) % 2 === 0;           // vichy
+      if (famille === 'soins') return (Math.abs(x - 12) < 2 && Math.abs(y - 16) < 6) || (Math.abs(y - 16) < 2 && Math.abs(x - 12) < 6); // croix
+      if (famille === 'armes') return (x + y) % 7 === 0;                                 // grosse toile
+      return (x * 3 + y * 5) % 11 === 0;                                                 // petites fleurs
+    };
+    {
+      const t = new ToileHD(40, 36);
+      Object.assign(t.rampes, RAMPES_DECOR);
+      t.rampes.tissu = rampe(c.fond); t.rampes.motif = rampe(c.motif);
+      // Le bâton, en diagonale, qui passe derrière le nœud
+      for (let k = 0; k < 28; k++) for (const [dx, dy, i] of [[0, 0, 2], [0, 1, 4], [1, 0, 3]]) t.poser(13 + k + dx, 7 + k * 0.95 + dy | 0, 'chene', i);
+      // La boule de tissu, avec ses plis qui convergent vers le nœud
+      t.forme('tissu', (x, y) => {
+        const n = ellipsoide(12, 17, 11, 10.5)(x, y);
+        if (!n) return null;
+        return n;
+      }, { motif: (x, y) => (motif(x, y) ? 0 : 0) + (Math.sin(Math.atan2(y - 6, x - 12) * 7) > 0.75 ? -0.9 : 0) });
+      for (let y = 8; y < 28; y++) for (let x = 2; x < 23; x++) {
+        if (!ellipsoide(12, 17, 10, 9.5)(x, y) || !motif(x, y)) continue;
+        const n = ellipsoide(12, 17, 11, 10.5)(x, y);
+        const lum = n ? Math.round(2.5 - n[0] * 1.2 - n[1] * 1.4) : 2;
+        t.poser(x, y, 'motif', Math.max(1, Math.min(5, lum)));
+      }
+      // Le nœud et ses deux oreilles
+      t.forme('tissu', ellipsoide(12, 6.5, 3.4, 2.6), { decalage: 0.2 });
+      for (const s of [-1, 1]) t.forme('tissu', (x, y) => (y >= 0 && y <= 5 && Math.abs(x + 0.5 - (12 + s * 5)) < 2.2 - (5 - y) * 0.25 ? [s * 0.6, -0.5, 0.7] : null), { decalage: 0.3 });
+      t.contour();
+      t.texture(scene, 'baluchon_' + famille);
     }
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const d = Math.hypot(x + 0.5 - cx, (y + 0.5 - cy) * 1.1);
-      if (d > r) continue;
-      g.fillStyle(d > r - 1 ? t.bord : motifTissu(famille, x, y, cx - 0.5, cy - 0.5) ? t.motif : t.fond).fillRect(x, y, 1, 1);
+    {
+      const t = new ToileHD(32, 10);
+      t.rampes.tissu = rampe(c.fond); t.rampes.motif = rampe(c.motif);
+      t.forme('tissu', (x, y) => (y >= 1 && y <= 9 && x >= (y < 3 ? 3 - y : 0) && x <= (y < 3 ? 28 + y : 31) ? [0, (y - 5) / 8, 0.9] : null), { motif: (x, y) => (x % 8 === 0 ? -0.6 : 0) });
+      for (let y = 2; y < 9; y++) for (let x = 1; x < 31; x++) if (motif(x, y * 3)) t.poser(x, y, 'motif', 3);
+      t.contour();
+      t.texture(scene, 'tissu_' + famille);
     }
-    // Le nœud et ses deux oreilles, là où passe le bâton.
-    g.fillStyle(t.bord).fillRect(5, 2, 3, 2).fillRect(4, 1, 1, 1).fillRect(8, 1, 1, 1).fillRect(3, 0, 1, 1).fillRect(9, 0, 1, 1);
-    g.fillStyle(0x5a3a1a).fillRect(6, 3, 1, 1);
-    g.generateTexture('baluchon_' + famille, W, H);
-    g.destroy();
-
-    // Le tissu étalé à plat sur le comptoir.
-    const e = scene.make.graphics({ add: false });
-    for (let y = 0; y < 5; y++) for (let x = 0; x < 16; x++) {
-      if ((y === 0 || y === 4) && (x < 2 || x > 13)) continue;
-      const bord = y === 4 || x === 0 || x === 15 || ((y === 0) && (x === 2 || x === 13));
-      e.fillStyle(bord ? t.bord : motifTissu(famille, x, y * 2, 7.5, 4) ? t.motif : t.fond).fillRect(x, y, 1, 1);
-    }
-    e.generateTexture('tissu_' + famille, 16, 5);
-    e.destroy();
   }
 }
 
@@ -365,6 +380,7 @@ const TEINTES_SOMBRES = { 0xc8ccd8: 0x3a3a48, 0x6a6a7a: 0x1e1e26, 0xe8c040: 0xa0
 function creerToutesLesTextures(scene) {
   creerBaluchons(scene);
   creerObjetsHD(scene); // toutes les marchandises en HD, dès le départ
+  creerIconesHD(scene); // et les autres icônes (décorations, trésors, armure, cœurs...)
   // Les pièces de l'armure sombre : mêmes formes, autres couleurs.
   for (const p of ARMURE) {
     const ic = ICONES[p.id];
@@ -593,25 +609,24 @@ function pastilleEtat(scene, x, y, etat, taille = 12) {
 // (Armure du Dernier Rempart) ou 'sombre' (Armure de la Nuit Éternelle).
 function dessinerMannequin(scene, x, sol, possedees, u = 4, cote = 'clair') {
   const g = scene.add.graphics();
-  const teinte = c => (cote === 'sombre' ? TEINTES_SOMBRES[c] ?? c : c);
-  const r = (couleur, ux, uy, w, h, alpha = 1) => g.fillStyle(teinte(couleur), alpha).fillRect(x + ux * u, sol - (uy + h) * u, w * u, h * u);
-  const ombre = (couleur, ux, uy, w, h) => r(0xe8dcc0, ux, uy, w, h, 0.13);
-  // Le support en bois : socle, poteau, épaules, bras et tête.
-  r(0x4a2e14, -6, 0, 12, 2); r(0x6b4423, -1, 2, 2, 30); r(0x6b4423, -7, 25, 14, 1);
-  r(0x6b4423, -7, 18, 1, 7); r(0x6b4423, 6, 18, 1, 7); r(0x8a5a2b, -2, 31, 4, 5);
-  const argent = 0xc8ccd8, sombre = 0x6a6a7a, or = 0xe8c040;
-  // Chaque pièce se dessine avec `d` : en couleur, ou en ombre.
-  const pieces = {
-    solerets: d => { d(argent, -5, 2, 4, 2); d(argent, 1, 2, 4, 2); d(sombre, -5, 2, 4, 1); d(sombre, 1, 2, 4, 1); },
-    jambieres: d => { d(argent, -4, 4, 3, 9); d(argent, 1, 4, 3, 9); d(or, -4, 9, 3, 1); d(or, 1, 9, 3, 1); d(sombre, -4, 4, 1, 9); },
-    ceinturon: d => { d(0x6b4423, -5, 13, 10, 2); d(or, -1, 13, 2, 2); },
-    plastron: d => { d(argent, -5, 15, 10, 10); d(sombre, -5, 15, 1, 10); d(sombre, 4, 15, 1, 10); d(or, -1, 20, 2, 2); d(0x3a3a48, 1, 17, 1, 3); d(0x3a3a48, 2, 20, 1, 2); },
-    spalieres: d => { d(argent, -9, 23, 4, 3); d(argent, 5, 23, 4, 3); d(or, -9, 25, 4, 1); d(or, 5, 25, 4, 1); },
-    gantelets: d => { d(argent, -8, 14, 3, 4); d(argent, 5, 14, 3, 4); d(0xe07020, -7, 16, 1, 1); d(0xe07020, 6, 16, 1, 1); },
-    heaume: d => { d(argent, -3, 31, 6, 6); d(0x1a1a24, -2, 33, 4, 1); d(or, -1, 37, 2, 2); d(sombre, -3, 31, 1, 6); },
-    pavois: d => { d(or, -16, 0, 8, 13); d(0x3a5a9a, -15, 1, 6, 11); d(or, -13, 2, 2, 9); d(or, -15, 7, 6, 2); },
-    lame: d => { d(0x5a3a1a, 10, 1, 1, 3); d(or, 10, 0, 1, 1); d(or, 8, 4, 5, 1); d(0xe8f0ff, 10, 5, 1, 22); d(0x8ad0f0, 10, 25, 1, 2); },
+  const r = (couleur, ux, uy, w, h) => g.fillStyle(couleur).fillRect(x + ux * u, sol - (uy + h) * u, w * u, h * u);
+  // Le support en bois : socle, poteau, épaules, et une tête ronde.
+  r(0x3a2410, -6, 0, 12, 2); r(0x5a3a1c, -1, 2, 2, 30); r(0x5a3a1c, -7, 25, 14, 1);
+  r(0x5a3a1c, -7, 18, 1, 7); r(0x5a3a1c, 6, 18, 1, 7); r(0x7a5230, -2, 31, 4, 5);
+  r(0x8a6238, -6, 1.5, 12, 0.5);
+  // Les pièces, en HD : en couleur si on les a, sinon une ombre pâle à leur place.
+  creerIconesHD(scene);
+  const c = scene.add.container(0, 0, [g]);
+  const e = u / 4;
+  const places = {
+    solerets: [0, 3, 2.4, 0], jambieres: [0, 8.5, 2.6, 0], ceinturon: [0, 14, 2.4, 0], plastron: [0, 20, 2.8, 0],
+    gantelets: [0, 16, 3.2, 0], spalieres: [0, 25, 3.4, 0], heaume: [0, 33.5, 2.4, 0], pavois: [-12, 7, 3, 0], lame: [11, 14, 3, -45],
   };
-  for (const p of ARMURE) pieces[p.id](possedees.includes(p.id) ? r : ombre);
-  return g;
+  for (const p of ARMURE) {
+    const [ux, uy, echelle, angle] = places[p.id] || [0, 0, 2, 0];
+    const img = scene.add.image(x + ux * u, sol - uy * u, iconeObjet(scene, p.id + (cote === 'sombre' ? '_sombre' : ''))).setScale(echelle * e).setAngle(angle);
+    if (!possedees.includes(p.id)) img.setTintFill(0xe8dcc0).setAlpha(0.14);
+    c.add(img);
+  }
+  return c;
 }

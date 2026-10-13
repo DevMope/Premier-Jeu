@@ -8,21 +8,69 @@ class AtelierScene extends Phaser.Scene {
   create() {
     const G = this.G = window.GAME;
     this.cameras.main.setBackgroundColor('#2a1a10');
+    creerInterieurHD(this);
+    creerAtelierHD(this);
+    creerHalo(this);
+    if (typeof creerRecitHD === 'function') creerRecitHD(this);
 
-    // L'établi
-    const g = this.add.graphics();
-    g.fillStyle(0x3b2410).fillRect(0, 0, 960, 540);
-    g.lineStyle(2, 0x2a1a10);
-    for (let y = 0; y < 540; y += 36) g.lineBetween(0, y, 960, y);
-    this.add.image(60, 50, 'enclume').setOrigin(0.5, 1).setScale(5);
+    // La pièce de l'atelier, avec une lanterne qui réchauffe l'établi
+    this.add.image(0, 46, 'atelierHD').setOrigin(0).setScale(2);
+    this.add.image(500, 90, 'halo').setScale(4, 2.4).setTint(0xffc070).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
+    this.add.rectangle(480, 46, 960, 4, 0x1a0e06).setOrigin(0.5, 0);
+    this.add.rectangle(480, 226, 960, 4, 0x1a0e06).setOrigin(0.5, 0);
+    this.add.text(130, 22, "L'atelier", style(26, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+    this.add.text(250, 23, `Artisanat niv. ${niveauArtisanat(G)} · un objet cassé demande plus de travail · vends-les aux enchères du Marché`,
+      style(12, '#c9b48a', { fontStyle: 'italic' })).setOrigin(0, 0.5);
+    this.texteInfo = this.add.text(480, 438, '', style(13, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(5);
 
-    this.add.text(480, 30, "L'atelier", style(28, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
-    this.add.text(480, 62, `Artisanat niv. ${niveauArtisanat(G)} · un objet cassé demande plus de travail · vends tes objets aux enchères du Marché des Mastres`,
-      style(12, '#c9b48a', { fontStyle: 'italic' })).setOrigin(0.5);
-    this.texteInfo = this.add.text(480, 432, '', style(14, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
-
-    creerBouton(this, 870, 34, 140, 'Fermer', () => this.fermer());
+    creerBouton(this, 890, 22, 120, 'Fermer', () => this.fermer());
     this.liste();
+  }
+
+  // On voit les objets dans la pièce : les armes et armures au râtelier, les bijoux et
+  // le reste sur le velours de la table d'orfèvre, et ceux qu'on répare sur l'établi,
+  // avec l'ouvrier à côté et des étincelles. Plus l'objet est abîmé, plus il est terne.
+  piece() {
+    const G = this.G;
+    if (this.objetsPiece) this.objetsPiece.destroy();
+    if (this.etincelles) this.etincelles.forEach(e => e.remove());
+    this.etincelles = [];
+    const c = this.objetsPiece = this.add.container(0, 0);
+    const TEINTES = [0x7a5a4a, 0xa88a78, 0xd8ccbc, 0xffffff, 0xffffff];
+    const poser = (t, x, y, echelle, pendu = false) => {
+      const img = this.add.image(x, y, iconeObjet(this, 'tr_' + t.categorie)).setOrigin(0.5, pendu ? 0 : 1).setScale(echelle).setTint(TEINTES[t.etat]);
+      if (t.etat === 0) img.setAngle(pendu ? 12 : -14);
+      c.add(img);
+      c.add(this.add.circle(x, pendu ? y - 4 : y + 6, 4, ETATS[t.etat].couleur).setStrokeStyle(1, 0x2a1a10));
+      if (t.etat === ETATS.length - 1) {
+        const brille = this.add.text(x + 10, (pendu ? y + 4 : y - 26), '✦', style(14, '#fff4b0', { fontStyle: 'bold', brut: true })).setOrigin(0.5);
+        c.add(brille);
+        this.tweens.add({ targets: brille, alpha: 0.1, scale: 0.6, duration: 700, yoyo: true, repeat: -1, delay: Math.random() * 600 });
+      }
+      return img;
+    };
+    const auRatelier = G.tresors.filter(t => !t.reparation && ['arme', 'armure'].includes(t.categorie));
+    const surLaTable = G.tresors.filter(t => !t.reparation && !['arme', 'armure'].includes(t.categorie));
+    auRatelier.forEach((t, i) => poser(t, 52 + (i % 4) * 48, i < 4 ? 46 + 42 : 46 + 88, 2.4, true));
+    surLaTable.forEach((t, i) => poser(t, 738 + (i % 6) * 30, i < 6 ? 148 : 178, 1.5));
+    // L'établi : un objet par ouvrier, et l'ouvrier juste à côté
+    enReparation(G).slice(0, 3).forEach((t, i) => {
+      const x = 410 + i * 80;
+      const o = t.reparation.ouvrier;
+      const qui = o === 'toi' ? this.add.image(x - 30, 222, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(4))
+        : imageCorps(this, x - 30, 222, EMPLOYES[o].race, 4);
+      c.add(qui);
+      poser(t, x + 6, 150, 2);
+      const cible = ETATS[t.reparation.cible || t.etat + 1];
+      c.add(this.add.text(x + 6, 84, `→ ${cible.nom}\n${t.reparation.jours} j`, style(11, '#fff4dc', { fontStyle: 'bold', align: 'center', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5, 0));
+      this.tweens.add({ targets: qui, angle: { from: -2, to: 3 }, duration: 260, yoyo: true, repeat: -1, delay: i * 120 });
+      // Des étincelles qui jaillissent du travail
+      this.etincelles.push(this.time.addEvent({ delay: 420 + i * 90, loop: true, callback: () => {
+        const e = this.add.rectangle(x + 6, 132, 2, 2, Phaser.Utils.Array.GetRandom([0xffe066, 0xffa040, 0xfff4dc])).setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({ targets: e, x: x + 6 + Phaser.Math.Between(-22, 22), y: 132 - Phaser.Math.Between(6, 26), alpha: 0, duration: 420, onComplete: () => e.destroy() });
+      } }));
+    });
+    if (!G.tresors.length) c.add(this.add.text(480, 136, "L'atelier est vide…", style(15, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
   }
 
   // Les employés : chacun permet une réparation de plus en même temps, contre un salaire.
@@ -30,7 +78,7 @@ class AtelierScene extends Phaser.Scene {
     const G = this.G;
     if (this.zoneEmployes) this.zoneEmployes.destroy();
     const c = this.zoneEmployes = this.add.container(0, 0);
-    c.add(this.add.text(110, 452, `Main-d'œuvre : ${ouvriers(G).map(nomOuvrier).join(', ')} · ${ouvriers(G).length} réparation${ouvriers(G).length > 1 ? 's' : ''} en même temps` +
+    c.add(this.add.text(110, 457, `Main-d'œuvre : ${ouvriers(G).map(nomOuvrier).join(', ')} · ${ouvriers(G).length} réparation${ouvriers(G).length > 1 ? 's' : ''} en même temps` +
       (salaires(G) ? ` · salaires : ${salaires(G)} p. par nuit` : ''), style(13, '#f3e6c8', { fontStyle: 'bold' })));
     Object.entries(EMPLOYES).forEach(([id, e], i) => {
       const x = 110 + i * 370;
@@ -55,39 +103,45 @@ class AtelierScene extends Phaser.Scene {
 
   liste() {
     const G = this.G;
+    this.piece();
     if (this.contenu) this.contenu.destroy();
     const c = this.contenu = this.add.container(0, 0);
-    c.add(this.add.image(480, 255, panneauHD(this, 900, 330)).setScale(2));
-    c.add(this.add.text(50, 100, `Tes objets de valeur (${G.tresors.length} / ${PLACES_ATELIER}) · Fer ${G.materiaux.fer} · Cuir ${G.materiaux.cuir}`,
-      style(14, '#3b2410', { fontStyle: 'bold' })));
+    c.add(this.add.image(480, 331, panneauHD(this, 932, 196)).setScale(2));
+    c.add(this.add.text(36, 244, `Tes objets de valeur (${G.tresors.length} / ${PLACES_ATELIER}) · Fer ${G.materiaux.fer} · Cuir ${G.materiaux.cuir} · Fil d'or ${G.materiaux.filOr || 0}`,
+      style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
     this.employes();
     if (!G.tresors.length) {
-      c.add(this.add.text(480, 255, "L'atelier est vide.\nRachète des objets aux aventuriers à la fin de leur récit.",
+      c.add(this.add.text(480, 335, "Rachète des objets aux aventuriers à la fin de leur récit :\nils apparaîtront ici, et dans la pièce au-dessus.",
         style(15, '#6b4a2a', { align: 'center', lineSpacing: 6 })).setOrigin(0.5));
     }
     G.tresors.forEach((t, i) => {
-      const y = 140 + i * 36;
-      c.add(this.add.image(70, y, 'tr_' + t.categorie).setScale(3));
-      c.add(this.add.text(95, y, t.nom, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
-      c.add(this.add.text(300, y, CATEGORIES[t.categorie].nom, style(12, '#5a3a20')).setOrigin(0, 0.5));
-      c.add(...pastilleEtat(this, 380, y, t.etat));
-      c.add(this.add.text(470, y, `~${valeurTresor(t)} p.${estRestaure(t) ? ' ★' : ''}`, style(13, estRestaure(t) ? '#b8860b' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      const x0 = i < 4 ? 30 : 490, y = 280 + (i % 4) * 38;
+      c.add(this.add.image(x0 + 12, y, iconeObjet(this, 'tr_' + t.categorie)).setScale(1.5));
+      c.add(this.add.text(x0 + 30, y - 8, raccourcir(t.nom, 26), style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      // Ce qu'il t'a coûté, et ce qu'il vaut maintenant
+      const achat = t.prixAchat !== undefined ? `acheté ${t.prixAchat} p.` : CATEGORIES[t.categorie].nom;
+      c.add(this.add.text(x0 + 30, y + 9, `${achat} · vaut ~${valeurTresor(t)} p.${estRestaure(t) ? ' ★' : ''}`,
+        style(11, estRestaure(t) ? '#b8860b' : '#5a3a20', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      c.add(...pastilleEtat(this, x0 + 222, y, t.etat, 11));
+      const droite = x0 + 436;
       if (t.reparation) {
         const cible = ETATS[t.reparation.cible || t.etat + 1];
-        c.add(this.add.text(910, y, `${nomOuvrier(t.reparation.ouvrier) === 'toi' ? 'Tu répares' : nomOuvrier(t.reparation.ouvrier) + ' répare'} → ${cible.nom} : encore ${t.reparation.jours} j`,
-          style(12, '#2f6a2a', { fontStyle: 'bold' })).setOrigin(1, 0.5));
+        const qui = t.reparation.ouvrier === 'toi' ? 'Toi' : EMPLOYES[t.reparation.ouvrier].nom.split(' ')[0];
+        c.add(this.add.text(droite, y, `${qui} → ${cible.nom}\nencore ${t.reparation.jours} j`,
+          style(11, '#2f6a2a', { fontStyle: 'bold', align: 'right' })).setOrigin(1, 0.5));
       } else if (t.etat >= ETATS.length - 1) {
-        c.add(this.add.text(910, y, estRestaure(t) ? 'Restauré ★' : 'Parfait état', style(13, estRestaure(t) ? '#b8860b' : '#1f5aa0', { fontStyle: 'bold italic' })).setOrigin(1, 0.5));
+        c.add(this.add.text(droite, y, estRestaure(t) ? 'Restauré ★' : 'Parfait état', style(13, estRestaure(t) ? '#b8860b' : '#1f5aa0', { fontStyle: 'bold italic' })).setOrigin(1, 0.5));
       } else {
-        const btn = this.add.rectangle(790, y, 240, 28, 0x8a5a2b).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
+        const btn = this.add.rectangle(droite - 64, y, 128, 28, 0x8a5a2b).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
         btn.on('pointerdown', () => {
           if (!ouvrierLibre(G)) return this.texteInfo.setText("Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois.");
           this.choisirStade(t);
         });
         if (!ouvrierLibre(G)) btn.setAlpha(0.5);
-        c.add([btn, this.add.text(790, y, 'Réparer… (choisir le stade)', style(12, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
+        c.add([btn, this.add.text(droite - 64, y, 'Réparer…', style(13, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
       }
     });
+    c.add(this.add.rectangle(480, 330, 2, 150, 0x8a6a3a, 0.6));
   }
 
   // La fenêtre du choix : jusqu'à quel état réparer l'objet, avec les jours, les matériaux
@@ -106,12 +160,12 @@ class AtelierScene extends Phaser.Scene {
     const haut = 270 - h / 2;
     c.add(this.add.text(480, haut + 24, `Réparer : ${t.nom}`, style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     c.add(this.add.text(480, haut + 50, `${ouvrier === 'toi' ? "C'est toi qui t'y mets" : nomOuvrier(ouvrier) + " s'en charge"} · état actuel : ${ETATS[t.etat].nom} (~${valeurTresor(t)} p.)` +
-      (mat ? ` · ${MATERIAUX[mat].nom} : ${G.materiaux[mat]}` : ''), style(12, '#5a3a20')).setOrigin(0.5));
+      (mat ? ` · ${MATERIAUX[mat].nom} : ${G.materiaux[mat] || 0}` : '') + (t.prixAchat !== undefined ? ` · acheté ${t.prixAchat} p.` : ''), style(12, '#5a3a20')).setOrigin(0.5));
     stades.forEach((e, i) => {
       const y = haut + 88 + i * 44;
       const jours = dureeReparation(G, t, ouvrier, e);
       const n = materiauxReparation(t, e);
-      const possible = !mat || G.materiaux[mat] >= n;
+      const possible = !mat || (G.materiaux[mat] || 0) >= n;
       const restaure = e === ETATS.length - 1 && t.etatInitial in BONUS_RESTAURE;
       const fond = this.add.rectangle(480, y, 560, 36, possible ? 0xf6ead0 : 0xd8c8a8).setStrokeStyle(2, restaure ? 0xd4a020 : 0x8a6a3a);
       c.add(fond);

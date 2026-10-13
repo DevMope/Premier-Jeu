@@ -971,3 +971,122 @@ function creerFenetreHD(scene) {
     t.texture(scene, 'rideauHD');
   }
 }
+
+// --- L'atelier ---
+
+// La pièce de l'atelier, vue de face (480×90, affichée en ×2) : un mur crépi et son lambris,
+// le râtelier des armes et armures à gauche, l'établi et son panneau d'outils au milieu,
+// la table d'orfèvre (velours rouge, loupe sur pied) à droite.
+function creerAtelierHD(scene) {
+  if (scene.textures.exists('atelierHD')) return;
+  const L = 480, H = 90;
+  const t = toileDecor(L, H);
+  t.rampes.velours = rampe(0x8a1a2a);
+  // Le mur et le lambris, le plancher
+  for (let y = 0; y < 46; y++) for (let x = 0; x < L; x++) t.poser(x, y, 'platre', 3 + Math.round((fbm(x * 0.06, y * 0.08, 301) - 0.5) * 2) - (y < 3 ? 1 : 0));
+  for (let x = 0; x < L; x += 12) planche(t, x, 46, 12, 18, 'cheneSombre', { horizontale: false, graine: 310 + x, noeuds: 0 });
+  for (let x = 0; x < L; x++) { t.poser(x, 46, 'chene', 4); t.poser(x, 47, 'chene', 2); }
+  for (let y = 64; y < H; y += 6) planche(t, 0, y, L, 6, 'chene', { graine: 320 + y, noeuds: 2 });
+  // Le râtelier : deux barres sur deux montants, des chevilles
+  for (const x of [14, 134]) for (let y = 10; y < 76; y++) { t.poser(x, y, 'cheneSombre', 4); t.poser(x + 1, y, 'cheneSombre', 3); t.poser(x + 2, y, 'cheneSombre', 1); }
+  for (const y of [17, 40]) {
+    planche(t, 12, y, 126, 3, 'cheneSombre', { graine: 330 + y, noeuds: 0 });
+    for (let x = 26; x < 130; x += 24) { t.poser(x, y + 3, 'chene', 4); t.poser(x, y + 4, 'chene', 2); }
+  }
+  // Le panneau d'outils au-dessus de l'établi : une scie, un marteau, une pince, des limes
+  planche(t, 182, 8, 132, 28, 'chene', { graine: 340, noeuds: 1 });
+  for (const [x, y] of [[184, 10], [310, 10], [184, 32], [310, 32]]) clou(t, x, y);
+  trait(t, 'fer', 192, 14, 224, 22, 2.5); trait(t, 'cheneSombre', 222, 22, 230, 25, 2);           // la scie
+  for (let k = 0; k < 14; k++) t.poser(194 + k * 2, 17 + Math.round(k * 0.5) + 2, 'fer', 1);
+  trait(t, 'cheneSombre', 244, 12, 244, 32, 1.2); trait(t, 'fer', 239, 13, 249, 13, 2);         // le marteau
+  trait(t, 'fer', 262, 12, 268, 30, 1); trait(t, 'fer', 272, 12, 266, 30, 1);                   // la pince
+  for (const x of [284, 292, 300]) trait(t, 'fer', x, 12, x, 30, 0.8);                          // les limes
+  // L'établi : un épais plateau, des pieds, une étagère basse, un étau
+  planche(t, 170, 52, 160, 6, 'chene', { graine: 350, noeuds: 2 });
+  for (const x of [176, 320]) for (let y = 58; y < 86; y++) for (let k = 0; k < 5; k++) t.poser(x + k, y, 'cheneSombre', k === 0 ? 4 : k === 4 ? 1 : 2);
+  planche(t, 176, 74, 149, 3, 'cheneSombre', { graine: 351, noeuds: 0 });
+  for (let y = 44; y < 58; y++) for (let x = 172; x < 182; x++) t.poser(x, y, 'fer', y === 44 ? 4 : x === 172 ? 3 : 2);
+  trait(t, 'fer', 168, 47, 186, 47, 0.7);
+  // La table d'orfèvre, son plateau de velours, la loupe sur son pied
+  planche(t, 352, 56, 112, 4, 'cheneSombre', { graine: 360, noeuds: 0 });
+  for (const x of [356, 456]) for (let y = 60; y < 86; y++) for (let k = 0; k < 3; k++) t.poser(x + k, y, 'cheneSombre', k === 0 ? 3 : 1);
+  for (let y = 51; y < 56; y++) for (let x = 360; x < 448; x++) t.poser(x, y, 'velours', y === 51 ? 4 : 2 + ((x + y) % 5 === 0 ? 1 : 0));
+  for (let y = 66; y < 72; y++) for (let x = 362; x < 452; x++) t.poser(x, y, 'velours', y === 66 ? 3 : 1);
+  trait(t, 'laiton', 452, 54, 452, 26, 0.8); trait(t, 'laiton', 452, 26, 440, 20, 0.8);
+  t.forme('verre', ellipsoide(436, 20, 6, 6), { decalage: 1 });
+  for (let a = 0; a < 6.28; a += 0.1) t.poser(Math.round(436 + Math.cos(a) * 6.5), Math.round(20 + Math.sin(a) * 6.5), 'laiton', 4);
+  t.contour();
+  t.texture(scene, 'atelierHD');
+}
+
+// --- La bourse ---
+
+// Ta bourse de cuir, plus ou moins rebondie selon ce que tu possèdes : plate et rapiécée
+// quand tu es fauché, ventrue et débordante de pièces quand tu es riche.
+const PALIERS_BOURSE = [0, 1, 30, 100, 300];
+function niveauBourse(argent) {
+  let n = 0;
+  PALIERS_BOURSE.forEach((p, i) => { if (argent >= p) n = i; });
+  return argent <= 0 ? 0 : Math.max(1, n);
+}
+
+function creerBoursesHD(scene) {
+  if (scene.textures.exists('bourseHD4')) return;
+  const tailles = [[9, 3.5], [6, 6], [8, 7.5], [10, 9], [11.5, 10]];
+  tailles.forEach(([rx, ry], n) => {
+    const t = toileObjet(32, 32);
+    t.rampes.bourse = rampe(n === 0 ? 0x7a5a3a : 0x9a5a2a);
+    t.rampes.pieceOr = rampe(0xe8b830);
+    const cx = 16, bas = 30, cy = bas - ry;
+    const piece = (x, y, debout = false) => t.forme('pieceOr', ellipsoide(x, y, debout ? 1.6 : 2.6, debout ? 2.6 : 1.4), { decalage: 0.6 });
+    // Les pièces tombées au pied d'une bourse bien pleine
+    if (n >= 4) { piece(5, 29); piece(27, 29.5); piece(25, 27.5); }
+    // Le ventre de la bourse (un peu aplati en bas, comme posé)
+    t.forme('bourse', ellipsoide(cx, cy, rx, ry, (x, y) => y < bas), { motif: (x, y) => (hachage(x, y, 40 + n) - 0.5) * 0.6 });
+    if (n === 0) {
+      // Fauché : la bourse est vide, à plat, avec une pièce de tissu cousue
+      for (let x = 13; x <= 17; x++) for (let y = 25; y <= 27; y++) t.poser(x, y, 'lin', y === 25 ? 4 : 2);
+      for (const x of [13, 15, 17]) t.poser(x, 24, 'chanvre', 1);
+      t.forme('bourse', (x, y) => (y >= 21 && y <= 24 && x >= 20 && x <= 27 - (24 - y) ? [0.3, -0.5, 0.8] : null), { decalage: -0.3 });
+    } else {
+      // Le col froncé et son cordon de chanvre
+      const haut = cy - ry, col = Math.max(3, rx * 0.45);
+      t.forme('bourse', (x, y) => (y >= haut - 4 && y <= haut + 1 && Math.abs(x + 0.5 - cx) <= col - (haut + 1 - y) * 0.3 ? [(x + 0.5 - cx) / col * 0.6, -0.3, 0.8] : null), { decalage: 0.2 });
+      for (let x = Math.round(cx - col - 1); x <= cx + col; x++) t.poser(x, haut, 'chanvre', (x % 2) ? 4 : 2);
+      trait(t, 'chanvre', cx + col, haut, cx + col + 3, haut + 5, 0.6);
+      for (let k = -1; k <= 1; k++) t.poser(cx + k * 2, haut - 5, 'bourse', 4);   // les fronces
+      // Une couture en arc sur le ventre, et le reflet du cuir
+      for (let a = 0.5; a < 2.65; a += 0.22) t.poser(Math.round(cx + Math.cos(a) * rx * 0.7), Math.round(cy - 1 + Math.sin(a) * ry * 0.55), 'chanvre', 3);
+      t.poser(Math.round(cx - rx * 0.5), Math.round(cy - ry * 0.45), 'bourse', 5); t.poser(Math.round(cx - rx * 0.5) + 1, Math.round(cy - ry * 0.45), 'bourse', 5);
+      // Une pièce qui dépasse, puis un trop-plein de pièces
+      if (n >= 3) piece(cx + 1, haut - 5, true);
+      if (n >= 4) { piece(cx - 3, haut - 6); piece(cx + 4, haut - 7, true); }
+    }
+    t.contour();
+    t.texture(scene, 'bourseHD' + n);
+  });
+}
+
+// Un petit widget : la bourse et le compte en dessous. Renvoie le conteneur, avec `maj(argent)`.
+function bourse(scene, x, y, argent, { echelle = 2, taille = 14, couleur = '#f3d98a', aDroite = false } = {}) {
+  creerBoursesHD(scene);
+  const c = scene.add.container(x, y);
+  const img = scene.add.image(0, 0, 'bourseHD0').setOrigin(0.5, 1).setScale(echelle);
+  const texte = (aDroite ? scene.add.text(echelle * 13, -echelle * 9, '', style(taille, couleur, { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 4 })).setOrigin(0, 0.5)
+    : scene.add.text(0, 2, '', style(taille, couleur, { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 4 })).setOrigin(0.5, 0));
+  c.image = img; c.texte = texte;
+  c.add([img, texte]);
+  c.niveau = -1;
+  c.maj = (a) => {
+    const n = niveauBourse(a);
+    texte.setText(`${a} p.`).setColor(a < 0 ? '#f0a8a0' : couleur);
+    if (n !== c.niveau) {
+      // Un petit rebond quand la bourse change de taille
+      if (c.niveau >= 0) scene.tweens.add({ targets: img, scaleY: echelle * 1.15, scaleX: echelle * 0.92, duration: 120, yoyo: true });
+      img.setTexture('bourseHD' + n);
+      c.niveau = n;
+    }
+  };
+  c.maj(argent);
+  return c;
+}
