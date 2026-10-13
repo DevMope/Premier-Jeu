@@ -21,7 +21,7 @@ class MarcheScene extends Phaser.Scene {
     // Le fond de la vue d'ensemble : le ciel, les collines, et la grand-place pavée
     const fondVue = this.add.graphics();
     dessinerComte(fondVue, 0, 0, 960, VUE_MARCHE.y + 300 * VUE_MARCHE.echelle, 'aube'); // le matin, au lever du soleil
-    this.add.image(0, VUE_MARCHE.y + 182 * VUE_MARCHE.echelle, pavesHD(this, 960, 260)).setOrigin(0).setScale(2);
+    this.add.image(0, VUE_MARCHE.y + 182 * VUE_MARCHE.echelle, placeMarcheHD(this)).setOrigin(0).setScale(2);
     creerLieuxMarcheHD(this);
     this.etiquettesRue = [];
 

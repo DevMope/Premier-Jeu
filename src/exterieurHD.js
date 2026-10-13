@@ -1194,3 +1194,97 @@ function creerDecorPlaceHD(scene) {
     t.contour(); t.texture(scene, 'pigeonHD');
   }
 }
+
+// --- Le sol de la grand-place ---
+
+// La grand-place du marché (480×130, affichée en ×2) : des pavés de teintes variées, une rosace
+// de pierres claires autour de la fontaine, des chemins de terre battue (avec leurs ornières)
+// qui mènent aux étals et vers les rues, des touffes d'herbe entre les joints, des flaques,
+// de la paille tombée des charrettes.
+function placeMarcheHD(scene) {
+  if (scene.textures.exists('placeMarcheHD')) return 'placeMarcheHD';
+  const L = 480, H = 130;
+  const t = toileDecor(L, H);
+  const R = t.rampes;
+  R.pierreChaude = rampe(0xa89478); R.pierreFroide = rampe(0x8a8a8e); R.terre = rampe(0xae9064);
+  R.herbe = rampe(0x5f9a48); R.flaque = rampe(0x7ab0d0); R.paille = rampe(0xd8b048);
+  const cx = 240, cy = 86; // la fontaine
+  // Les chemins : des lignes brisées, du centre vers les étals et vers le bas de la place
+  const chemins = [
+    [[cx, cy], [170, 52], [80, 22], [30, 6]], [[cx, cy], [236, 30], [250, 0]],
+    [[cx, cy], [320, 50], [410, 18], [470, 6]], [[cx, cy], [150, 112], [90, 130]], [[cx, cy], [330, 112], [390, 130]],
+  ];
+  const distSegment = (x, y, [ax, ay], [bx, by]) => {
+    const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy;
+    const u = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l2));
+    const px = ax + u * dx - x, py = ay + u * dy - y;
+    return { d: Math.hypot(px, py), u, nx: -dy / Math.sqrt(l2), ny: dx / Math.sqrt(l2), ax, ay };
+  };
+  const surChemin = (x, y) => {
+    let meilleur = null;
+    for (const c of chemins) for (let k = 0; k < c.length - 1; k++) {
+      const r = distSegment(x, y, c[k], c[k + 1]);
+      if (!meilleur || r.d < meilleur.d) meilleur = { ...r, signe: (x - r.ax) * r.nx + (y - r.ay) * r.ny };
+    }
+    return meilleur;
+  };
+  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+    // La rosace (un ovale, à cause de la perspective)
+    const dr = Math.hypot(x + 0.5 - cx, (y + 0.5 - cy) * 1.7);
+    const bord = (fbm(x * 0.15, y * 0.15, 771) - 0.5) * 3;
+    const c = surChemin(x, y);
+    const largeur = 7 + (y / H) * 6 + bord * 1.4;
+    if (dr < 30) {
+      const anneau = Math.floor(dr / 4.5), a = Math.atan2((y + 0.5 - cy) * 1.7, x + 0.5 - cx);
+      const secteurs = 6 + anneau * 5, s = (a + Math.PI) / (2 * Math.PI) * secteurs;
+      const joint = dr % 4.5 < 0.9 || s % 1 < 0.12 * (anneau + 1) / 2;
+      const motif = anneau % 2 ? 'pierreChaude' : 'pierre';
+      t.poser(x, y, motif, joint ? 1 : 3 + (hachage(Math.floor(s), anneau, 772) > 0.6 ? 1 : 0) + (dr > 27 ? -1 : 0));
+      if (dr > 28.5) t.poser(x, y, 'pierreFroide', 1);
+      continue;
+    }
+    if (c.d < largeur) {
+      // La terre battue, deux ornières, des cailloux
+      let i = 3 + Math.round((fbm(x * 0.2, y * 0.2, 773) - 0.5) * 1.6);
+      if (Math.abs(Math.abs(c.signe) - largeur * 0.4) < 0.7) i = 2;
+      if (c.d > largeur - 1.2) { t.poser(x, y, hachage(x, y, 779) > 0.5 ? 'herbe' : 'terre', 2); continue; }
+      if (hachage(x, y, 774) > 0.97) { t.poser(x, y, 'pierre', 4); continue; }
+      t.poser(x, y, 'terre', i);
+      continue;
+    }
+    // Les pavés, de trois teintes, posés en rangées décalées
+    const rangee = Math.floor(y / 4), dec = (rangee % 2) * 3;
+    const bx = (x + dec) % 6, by = y % 4;
+    const joint = bx === 0 || by === 0;
+    const id = hachage(Math.floor((x + dec) / 6), rangee, 730);
+    const mat = id < 0.2 ? 'pierreChaude' : id > 0.85 ? 'pierreFroide' : 'pierre';
+    let i = joint ? 1 : 3 + (by === 1 ? 1 : 0) - (bx === 5 ? 1 : 0) + Math.round((id - 0.5) * 1.5);
+    if (fbm(x * 0.05, y * 0.08, 775) > 0.68 && !joint) i -= 1; // les zones usées, plus sombres
+    if (joint && hachage(x, y, 776) > 0.9) { t.poser(x, y, 'herbe', 2 + Math.round(hachage(y, x, 777) * 2)); continue; }
+    t.poser(x, y, mat, i);
+  }
+  // Des touffes d'herbe dans les coins et le long des bords
+  for (let k = 0; k < 60; k++) {
+    const x = Math.floor(hachage(k, 1, 778) * L), y = Math.floor(5 + hachage(k, 2, 778) * (H - 8));
+    if (Math.hypot(x - cx, (y - cy) * 1.7) < 34) continue;
+    const c = surChemin(x, y);
+    if (c.d < 9) continue;
+    for (const [dx, dy, i] of [[0, 0, 3], [-1, 0, 2], [1, -1, 4], [0, -1, 4], [-1, -1, 3], [2, 0, 2]]) t.poser(x + dx, y + dy, 'herbe', i);
+  }
+  // Deux flaques qui reflètent le ciel
+  for (const [fx, fy, rx, ry] of [[110, 75, 9, 2.6], [372, 98, 11, 3]]) {
+    for (let y = Math.floor(fy - ry); y <= fy + ry; y++) for (let x = Math.floor(fx - rx); x <= fx + rx; x++) {
+      const d = Math.hypot((x + 0.5 - fx) / rx, (y + 0.5 - fy) / ry);
+      if (d < 1) t.poser(x, y, 'flaque', d > 0.8 ? 2 : (x + y) % 5 === 0 ? 5 : 3);
+    }
+  }
+  // De la paille tombée près des charrettes
+  for (const [px, py] of [[46, 92], [436, 94]]) for (let k = 0; k < 26; k++) {
+    const x = Math.round(px + (hachage(k, 3, px) - 0.5) * 40), y = Math.round(py + (hachage(k, 4, px) - 0.5) * 14);
+    t.poser(x, y, 'paille', 3 + (k % 3)); t.poser(x + 1, y + (k % 2 ? 1 : -1), 'paille', 3);
+  }
+  // Le bord de la place, sous les étals : une bordure de pierres taillées
+  for (let x = 0; x < L; x++) { t.poser(x, 0, 'pierre', 0); t.poser(x, 1, 'pierre', x % 8 === 0 ? 1 : 4); t.poser(x, 2, 'pierre', 2); }
+  t.texture(scene, 'placeMarcheHD');
+  return 'placeMarcheHD';
+}
