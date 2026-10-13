@@ -65,7 +65,7 @@ class ToileHD {
     }
     const ens = new Set(pts.map(([x, y]) => y * this.l + x));
     const dans = (x, y) => this.dans(x, y) && ens.has(y * this.l + x);
-    if (ombre ?? this.relief) this.ombrer(ens, pts, portee);
+    if (ombre ?? (this.relief && bord)) this.ombrer(ens, pts, portee);   // (un simple reflet ne porte pas d'ombre)
     for (const [x, y, n] of pts) {
       const lum = n[0] * LUMIERE[0] + n[1] * LUMIERE[1] + n[2] * LUMIERE[2];
       let f = 1.2 + (lum + 0.15) * 3.6 + decalage;
@@ -288,11 +288,16 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   const g = gene.colporteur ? { ...gene, habit: 0x6a5a40, cheveux: 0x4a3a2a, armure: false, barbe: 'courte', coiffure: 'court' } : gene;
   const cx = 40;
   const v = VISAGES[g.race];
-  t.rampes.peau = RAMPES_PEAU[g.peau];
-  t.rampes.cheveux = rampe(g.cheveux);
-  t.rampes.habit = rampe(g.habit);
-  t.rampes.cape = rampe(g.cape);
-  t.rampes.iris = rampe(g.yeux);
+  // Un trois-quarts léger : le visage est tourné de quelques pixels vers la droite (l'oreille
+  // gauche se dégage, la droite se cache derrière la joue), et chaque forme porte son ombre.
+  const T = 3;
+  t.relief = true;
+  t.rampes.peau = PEAUX_VIVES[g.peau];
+  t.rampes.cheveux = rampeVive(g.cheveux);
+  t.rampes.habit = rampeVive(g.habit);
+  t.rampes.cape = rampeVive(g.cape);
+  t.rampes.iris = rampeVive(g.yeux);
+  t.rampes.cuir = rampeVive(0x6a3f22); t.rampes.metal = rampeVive(0x7a8498); t.rampes.lin = rampeVive(0xd8ccb0);
   t.rampes.velours = rampe(0x4a1a3a); t.rampes.plume = rampe(0xf0e8d0); t.rampes.fourrure = rampe(0xe8e0d0);
   t.rampes.lin = rampe(0xd8ccb0);
   t.rampes.levres = levresPour(g.peau, g.feminin);
@@ -318,41 +323,45 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   if (v.cou) t.forme('peau', (x, y) => (y >= v.cy + v.ry - 6 && y <= v.torse + 2 && Math.abs(x + 0.5 - cx) < v.cou ? [(x + 0.5 - cx) / v.cou * 0.8, 0.3, 0.6] : null), { decalage: -0.7 });
   if (g.race !== 'elfe') {
     const o = g.race === 'hobbit' ? [4, 5.6] : [3.2, 5.2];
-    for (const sens of [-1, 1]) t.forme('peau', ellipsoide(cx + sens * (v.rx + 0.5), v.yeux + 6, o[0], o[1]));
+    t.forme('peau', ellipsoide(cx - (v.rx + 0.5) - T * 0.7, v.yeux + 6, o[0], o[1]));          // l'oreille dégagée, derrière
+    t.forme('peau', ellipsoide(cx + (v.rx + 0.5) - T * 1.6, v.yeux + 6, o[0] * 0.8, o[1] * 0.9)); // l'autre, presque cachée par la joue
   }
   t.forme('peau', tete(cx, v));
 
   // 4. Le visage : sourcils, yeux, nez, joues, bouche
   const ey = v.yeux;
+  const fx = cx + T;   // le milieu du visage, tourné
+  t.relief = false;    // (les traits du visage sont des dessins à plat : pas d'ombre portée)
   const oeil = YEUX[cligne ? 'cligne' : expression];
-  t.dessin(cx - 14, ey - 3, oeil, LEGENDE_OEIL);
-  t.dessin(cx + 3, ey - 3, oeil, LEGENDE_OEIL, true);
+  t.dessin(fx - 14, ey - 3, oeil, LEGENDE_OEIL);
+  t.dessin(fx + 3, ey - 3, oeil, LEGENDE_OEIL, true);
   if (g.feminin && !cligne) {
     // Les cils, au coin extérieur
     const ligne = oeil.findIndex(l => l.includes('l'));
-    t.poser(cx - 14, ey - 3 + ligne, 'cheveux', 0); t.poser(cx - 15, ey - 4 + ligne, 'cheveux', 0);
-    t.poser(cx + 13, ey - 3 + ligne, 'cheveux', 0); t.poser(cx + 14, ey - 4 + ligne, 'cheveux', 0);
+    t.poser(fx - 14, ey - 3 + ligne, 'cheveux', 0); t.poser(fx - 15, ey - 4 + ligne, 'cheveux', 0);
+    t.poser(fx + 13, ey - 3 + ligne, 'cheveux', 0); t.poser(fx + 14, ey - 4 + ligne, 'cheveux', 0);
   }
-  if (g.race === 'nain') t.forme('peau', ellipsoide(cx - 0.5, ey + 6 + v.nez[1] * 0.6, v.nez[0], v.nez[1]), { decalage: 0.3 });
-  else if (g.race === 'hobbit') t.forme('peau', ellipsoide(cx - 0.5, ey + 7, 3.2, 2.8), { decalage: 0.1, bord: false });
+  if (g.race === 'nain') t.forme('peau', ellipsoide(fx - 0.5, ey + 6 + v.nez[1] * 0.6, v.nez[0], v.nez[1]), { decalage: 0.3 });
+  else if (g.race === 'hobbit') t.forme('peau', ellipsoide(fx - 0.5, ey + 7, 3.2, 2.8), { decalage: 0.1, bord: false });
   else {
     // L'arête du nez (ombre à droite), le bout éclairé, les narines
-    for (let k = 1; k <= 6; k++) t.poser(cx + 1, ey + k, 'peau', 2);
-    t.poser(cx, ey + 6, 'peau', 4); t.poser(cx - 1, ey + 6, 'peau', 5);
-    t.poser(cx - 2, ey + 8, 'peau', 1); t.poser(cx + 2, ey + 8, 'peau', 1);
-    t.poser(cx - 1, ey + 8, 'peau', 2); t.poser(cx, ey + 8, 'peau', 2); t.poser(cx + 1, ey + 8, 'peau', 2);
+    for (let k = 1; k <= 6; k++) t.poser(fx + 1, ey + k, 'peau', 2);
+    t.poser(fx, ey + 6, 'peau', 4); t.poser(fx - 1, ey + 6, 'peau', 5);
+    t.poser(fx - 2, ey + 8, 'peau', 1); t.poser(fx + 2, ey + 8, 'peau', 1);
+    t.poser(fx - 1, ey + 8, 'peau', 2); t.poser(fx, ey + 8, 'peau', 2); t.poser(fx + 1, ey + 8, 'peau', 2);
   }
   if (expression === 'content' || expression === 'fache') {
-    for (const x of [cx - 11, cx - 10, cx + 9, cx + 10]) t.poser(x, ey + 7, 'levres', 4);
+    for (const x of [fx - 11, fx - 10, fx + 9, fx + 10]) t.poser(x, ey + 7, 'levres', 4);
   }
-  if (g.taches) for (const [i, j] of [[-9, 6], [-7, 7], [7, 6], [9, 7], [-8, 8], [8, 8]]) t.poser(cx + i, ey + j, 'peau', 2);
-  t.dessin(cx - 5, v.bouche, BOUCHES[parle ? 'parle' : expression], LEGENDE_BOUCHE);
+  if (g.taches) for (const [i, j] of [[-9, 6], [-7, 7], [7, 6], [9, 7], [-8, 8], [8, 8]]) t.poser(fx + i, ey + j, 'peau', 2);
+  t.dessin(fx - 5, v.bouche, BOUCHES[parle ? 'parle' : expression], LEGENDE_BOUCHE);
+  t.relief = true;
 
   // 5. La barbe
-  if (g.barbe) barbeHD(t, g, v, cx);
+  if (g.barbe) barbeHD(t, g, v, fx);
 
-  // 6. Les cheveux du dessus et les coiffes
-  cheveuxHD(t, g, v, cx);
+  // 6. Les cheveux du dessus et les coiffes (la masse des cheveux reste un peu en arrière)
+  cheveuxHD(t, g, v, cx - 1);
   coiffeHD(t, g, v, cx);
   if (g.noble) {
     // Le col de fourrure blanche, et le chapeau de velours à large bord orné d'une plume
@@ -367,12 +376,12 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   }
   if (g.colporteur) colporteurBuste(t, g, v, cx);
   // Les oreilles des elfes percent à travers les cheveux, et montent en pointe
-  if (g.race === 'elfe') oreillesElfe(t, v, cx);
+  if (g.race === 'elfe') oreillesElfe(t, v, cx, T);
 
   // 7. Les sourcils, par-dessus tout (ils débordent du casque des nains)
   const sourcil = SOURCILS[expression];
   for (const sens of [-1, 1]) for (let k = 0; k < 11; k++) {
-    const x = sens < 0 ? cx - 14 + k : cx + 13 - k;
+    const x = sens < 0 ? fx - 14 + k : fx + 13 - k;
     const y = ey - 6 + sourcil[k];
     for (let e = 0; e < v.sourcil; e++) t.poser(x, y + e, 'cheveux', e === 0 ? 4 : e === v.sourcil - 1 ? 1 : 3);
   }
@@ -702,9 +711,9 @@ function textureBusteHD(scene, personne, expression = 'neutre', etat = {}) {
   return cle;
 }
 
-function oreillesElfe(t, v, cx) {
+function oreillesElfe(t, v, cx, T = 0) {
   for (const sens of [-1, 1]) t.forme('peau', (x, y) => {
-    const u = (x + 0.5 - cx) * sens - v.rx + 1.5; // vers l'extérieur
+    const u = (x + 0.5 - cx + sens * T * 0.8) * sens - v.rx + 1.5; // vers l'extérieur (l'oreille du côté tourné se cache un peu)
     const w = y + 0.5 - (v.yeux + 5);             // vers le bas
     // Collée à la tête au niveau des yeux, elle monte en pointe jusqu'au-dessus des sourcils
     return u > 0 && u < 7.5 && w > -2 - u * 1.7 && w < 4 - u * 1.9 ? [sens * 0.6, -0.45, 0.65] : null;
@@ -715,162 +724,29 @@ function oreillesElfe(t, v, cx) {
 // Un jeune marchand : tunique, tablier de commerçant avec sa poche, ceinture, bottes.
 // Il reprend les choix de la création (coiffure, couleurs, bouche, barbe à l'âge adulte).
 
-const JOUEUR_L = 36;
-const JOUEUR_H = 64;
+const JOUEUR_L = 52 * 2;
+const JOUEUR_H = 64 * 2;   // (le joueur est un corps en volume : voir corpsVueHD.js)
 
 // La peau de la création, ramenée à la rampe réglée à la main la plus proche.
 const PEAU_DE_CREATION = [0, 1, 3, 4];
 
-function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0, tenue = []) {
-  const t = new ToileHD(JOUEUR_L, JOUEUR_H);
-  const cx = 18;
-  const porte = id => tenue.includes(id);
-  t.rampes.feutre = rampe(0x4a3a2a); t.rampes.capeV = rampe(0x5a2a2a); t.rampes.laine = rampe(0xc04040); t.rampes.bruyere = rampe(0x6a3a22); t.rampes.ruban = rampe(0x9a2a3a);
+function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0, tenue = [], vue = 'troisQuarts') {
+  // Le joueur passe par le moteur des corps en volume, avec son costume de marchand et ses
+  // choix de création : coiffure, couleurs, bouche ; barbe à l'âge adulte, cheveux gris à l'ancien.
   const ancien = stade === 'ancien';
-  t.rampes.peau = RAMPES_PEAU[PEAU_DE_CREATION[ap.peau] ?? 1];
-  t.rampes.cheveux = rampe(ancien ? 0xb8b8c0 : APPARENCE.cheveux[ap.cheveux][1]);
-  t.rampes.habit = rampe(APPARENCE.haut[ap.haut][1]);
-  t.rampes.bas = rampe(APPARENCE.bas[ap.bas][1]);
-  t.rampes.iris = rampe(APPARENCE.yeux[ap.yeux][1]);
-  t.rampes.lin = rampe(0xd8ccb0);
-  t.rampes.levres = levresPour(PEAU_DE_CREATION[ap.peau] ?? 1, feminin);
-  const tete = { cy: 13, rx: 8.5, ry: 9 };
-
-  // Les cheveux longs, derrière
-  if (ap.coiffure === 1) t.forme('cheveux', (x, y) => (y >= 6 && y <= 28 && Math.abs(x + 0.5 - cx) < 10.5 - Math.max(0, y - 22) * 0.4 ? [(x + 0.5 - cx) / 10.5, 0, 0.8] : null), { decalage: -0.8, motif: MECHES });
-
-  // La cape de voyage, derrière tout le reste
-  if (porte('cape')) t.forme('capeV', (x, y) => (y >= 21 && y <= 52 && Math.abs(x + 0.5 - cx) < 8 + (y - 21) * 0.14 ? [(x + 0.5 - cx) / 11 * 0.6, 0.1, 0.8] : null), { decalage: -0.8, motif: (x) => (x % 5 === 0 ? -0.5 : 0) });
-
-  // Les jambes et les bottes
-  for (const sens of [-1, 1]) {
-    const lx = cx + sens * 3.2;
-    const leve = pas && sens === pas ? 2 : 0;   // la jambe qui avance se lève
-    t.forme('bas', (x, y) => (y >= 43 && y <= 57 - leve && Math.abs(x + 0.5 - lx) < 2.8 ? [(x + 0.5 - lx) / 3, 0, 0.9] : null));
-    t.forme('cuir', (x, y) => {
-      if (y < 55 - leve || y > 62 - leve) return null;
-      const avant = sens * (x + 0.5 - lx);
-      return (Math.abs(x + 0.5 - lx) < 3 || (y >= 60 - leve && avant > 0 && avant < 5)) ? [(x + 0.5 - lx) / 4, (y - 58 + leve) / 4, 0.8] : null;
-    });
-    t.forme('cuir', (x, y) => (y === 55 - leve && Math.abs(x + 0.5 - lx) < 3.2 ? [0, -0.6, 0.7] : null), { decalage: 0.6, bord: false }); // le revers
-  }
-  // Les bras (manches), puis les mains
-  for (const sens of [-1, 1]) {
-    const bx = cx + sens * 8.5;
-    const balance = pas ? (sens === pas ? -1 : 1) : 0;   // les bras se balancent
-    t.forme('habit', (x, y) => (y >= 23 && y <= 37 + balance && Math.abs(x + 0.5 - bx - sens * (y - 23) * 0.06) < 2.6 ? [sens * 0.6, 0, 0.8] : null), { decalage: -0.3 });
-    t.forme('peau', ellipsoide(bx + sens * 0.8, 39 + balance, 2.3, 2.2));
-  }
-  // Le torse : la tunique, arrondie aux épaules
-  t.forme('habit', (x, y) => {
-    if (y < 21 || y > 45) return null;
-    const demi = y < 25 ? 5 + (y - 21) * 1.1 : 9.2 - Math.max(0, y - 38) * 0.15;
-    const nx = (x + 0.5 - cx) / demi;
-    return Math.abs(nx) > 1 ? null : [nx * 0.85, -0.2, Math.sqrt(1 - nx * nx * 0.72)];
-  });
-  // Le tablier de marchand, avec sa poche et ses coutures
-  t.forme('lin', (x, y) => {
-    if (y < 28 || y > 47) return null;
-    const demi = 6.5 + (y - 28) * 0.12;
-    const nx = (x + 0.5 - cx) / demi;
-    return Math.abs(nx) > 1 ? null : [nx * 0.7, 0, 0.9];
-  }, { decalage: -0.2, motif: (x, y) => (y === 46 || y === 29 ? -0.8 : 0) });
-  t.forme('lin', (x, y) => (y >= 39 && y <= 43 && x >= cx - 4 && x <= cx + 1 ? [0, 0.3, 0.9] : null), { decalage: -0.9 });
-  t.poser(cx - 1, 39, 'or', 4); // un crayon dans la poche
-  t.poser(cx - 1, 38, 'or', 3);
-  // Les bretelles du tablier, et la ceinture
-  for (const sens of [-1, 1]) for (let y = 21; y < 29; y++) t.poser(cx + sens * (4 + (y - 21) * 0.3), y, 'lin', 3);
-  // Le cordon du tablier, noué à la taille
-  t.forme('lin', (x, y) => (y >= 35 && y <= 36 && Math.abs(x + 0.5 - cx) < 9.2 ? [0, (y - 35.5), 0.9] : null), { decalage: -0.6 });
-  t.dessin(cx + 5, 35, ['ll.', '.ll', 'l.l'], { l: ['lin', 2] });
-
-  // Le cou, les oreilles, la tête
-  t.forme('peau', (x, y) => (y >= 19 && y <= 22 && Math.abs(x + 0.5 - cx) < 2.5 ? [0, 0.2, 0.9] : null), { decalage: -0.7 });
-  for (const sens of [-1, 1]) t.forme('peau', ellipsoide(cx + sens * 8.5, 14.5, 1.8, 2.6));
-  t.forme('peau', ellipsoide(cx, tete.cy, tete.rx, tete.ry));
-
-  // Le visage : yeux, sourcils, nez, joues, bouche
-  const ey = 14;
-  for (const sens of [-1, 1]) {
-    const ox = sens < 0 ? cx - 5 : cx + 3;
-    t.poser(ox, ey, 'oeil', 4); t.poser(ox + 1, ey, 'iris', 2);
-    t.poser(ox, ey + 1, 'iris', 1); t.poser(ox + 1, ey + 1, 'iris', 1);
-    t.poser(sens < 0 ? ox + 1 : ox, ey, 'oeil', 5);
-    for (let k = -1; k <= 2; k++) t.poser(ox + k, ey - 2, 'cheveux', 2);
-    if (feminin) t.poser(sens < 0 ? ox - 1 : ox + 2, ey - 1, 'cheveux', 0);
-  }
-  t.poser(cx, ey + 2, 'peau', 2); t.poser(cx, ey + 3, 'peau', 2);
-  t.poser(cx - 6, ey + 3, 'levres', 4); t.poser(cx + 5, ey + 3, 'levres', 4);
-  const by = ey + 5;
-  const bouches = [
-    [[-2, 0], [-1, 1], [0, 1], [1, 1], [2, 0]],   // souriante
-    [[-1, 0], [0, 0], [1, 0]],                    // neutre
-    [[0, 0], [-1, 1], [1, 1], [0, 2]],            // étonnée
-    [[-2, 1], [-1, 0], [0, 0], [1, 0], [2, 1]],   // grognon
-  ];
-  for (const [i, j] of bouches[ap.bouche]) t.poser(cx + i, by + j, 'levres', 1);
-  if (ap.bouche === 0) { t.poser(cx - 1, by, 'bouche', 5); t.poser(cx, by, 'bouche', 5); t.poser(cx + 1, by, 'bouche', 5); }
-
-  // La barbe (à partir de 18 ans)
-  if (stade !== 'petit' && ap.barbe) {
-    if (ap.barbe >= 1) for (let k = -3; k <= 3; k++) if (k) t.poser(cx + k, by - 1, 'cheveux', 3);
-    if (ap.barbe >= 2) t.forme('cheveux', (x, y) => {
-      const n = ellipsoide(cx, tete.cy, tete.rx + 0.5, tete.ry + (ap.barbe === 3 ? 6 : 1.5))(x, y);
-      return n && y >= ey + 3 && !(y >= by - 1 && y <= by + 1 && Math.abs(x + 0.5 - cx) < 3) ? n : null;
-    }, { motif: MECHES });
-  }
-
-  // Les cheveux
-  const coupe = ap.coiffure;
-  if (coupe === 2) {
-    for (const [i, j] of [[-6, -5], [-2, -8], [3, -8], [7, -5], [-8, -1], [8, -1], [0, -6]]) t.forme('cheveux', ellipsoide(cx + i, tete.cy + j, 3, 3));
-  } else if (coupe !== 4) {
-    t.forme('cheveux', (x, y) => {
-      const nx = (x + 0.5 - cx) / (tete.rx + 1), ny = (y + 0.5 - tete.cy) / (tete.ry + 1.8);
-      if (nx * nx + ny * ny > 1) return null;
-      const frange = 9 + Math.abs(Math.sin((x - cx) * 1.1)) * 2;
-      const tempe = Math.abs(x + 0.5 - cx) > tete.rx - 2 && y < 15;
-      if (y > frange && !tempe) return null;
-      return [nx, ny, Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny))];
-    }, { motif: MECHES });
-    if (coupe === 3) for (let k = -6; k <= 6; k += 3) t.forme('cheveux', (x, y) => (y >= 0 && y < 4 && Math.abs(x + 0.5 - cx - k) < (y + 1) * 0.5 ? [0, -0.6, 0.7] : null));
-  } else {
-    t.poser(cx - 3, 6, 'peau', 5); t.poser(cx - 2, 6, 'peau', 5); // le reflet du crâne
-  }
-
-  // Ce que tu portes (acheté à la garde-robe de Marcelline)
-  if (porte('cape')) t.forme('or', ellipsoide(cx, 22, 1.4, 1.4), { decalage: 0.6 }); // la broche
-  if (porte('echarpe')) {
-    t.forme('laine', (x, y) => (y >= 19 && y <= 23 && Math.abs(x + 0.5 - cx) < 5 ? [(x + 0.5 - cx) / 5 * 0.5, 0, 0.9] : null), { motif: (x, y) => (y % 2 ? 0.5 : -0.2) });
-    t.forme('laine', (x, y) => (y >= 23 && y <= 31 && x >= cx + 2 && x <= cx + 4 ? [0.3, 0, 0.9] : null), { motif: (x, y) => (y % 3 === 0 ? 0.6 : 0) });
-  }
-  if (porte('montre')) { for (let k = 0; k < 7; k++) t.poser(cx - 4 + k, 36 + (k > 2 ? 1 : 0) + (k > 5 ? 1 : 0), 'or', k % 2 ? 4 : 3); t.forme('or', ellipsoide(cx + 4, 39, 1.6, 1.6), { decalage: 0.5 }); }
-  if (porte('bague')) { t.poser(cx + 9, 39, 'or', 5); t.poser(cx + 10, 39, 'or', 3); }
-  if (porte('monocle')) {
-    for (let a = 0; a < 6.28; a += 0.3) t.poser(Math.round(cx + 3.5 + Math.cos(a) * 2.4), Math.round(ey + 0.5 + Math.sin(a) * 2.4), 'or', a < 3 ? 4 : 2);
-    for (let k = 0; k < 5; k++) t.poser(cx + 6 + (k % 2 ? 1 : 0), ey + 3 + k, 'or', 3);
-  }
-  if (porte('pipe')) {
-    // (à gauche de la bouche, pour ne pas gêner le monocle)
-    for (let k = 0; k < 5; k++) t.poser(cx - 3 - k, by + Math.floor(k / 2), 'bruyere', 3);
-    t.poser(cx - 8, by + 2, 'bruyere', 2); t.poser(cx - 8, by + 3, 'bruyere', 1); t.poser(cx - 9, by + 3, 'bruyere', 2); t.poser(cx - 9, by + 2, 'bruyere', 3);
-    t.poser(cx - 9, by, 'lin', 5); t.poser(cx - 10, by - 2, 'lin', 4); t.poser(cx - 10, by - 4, 'lin', 5);
-  }
-  if (porte('chapeau')) {
-    // Un chapeau de cow-boy : calotte pincée, large bord relevé sur les côtés, et le bandana rouge
-    // à pois noué autour du cou
-    const haut = tete.cy - tete.ry;
-    t.forme('feutre', (x, y) => (y >= Math.max(0, haut - 7) && y <= haut + 1 && Math.abs(x + 0.5 - cx) < 6 - Math.max(0, haut - 5 - y) * 0.5 ? [(x + 0.5 - cx) / 6, -0.2, 0.8] : null),
-      { motif: (x, y) => (y < haut - 3 && Math.abs(x + 0.5 - cx) < 1.5 ? -0.9 : 0) });
-    t.forme('feutre', (x, y) => { const d = Math.abs(x + 0.5 - cx); const rel = d > 8 ? Math.round((d - 8) * 0.7) : 0; return y >= haut + 1 - rel && y <= haut + 2 - rel && d < 12 ? [0, (y - haut - 1.5) * 0.8, 0.8] : null; });
-    for (let x = cx - 5; x <= cx + 4; x++) t.poser(x, haut, 'cuir', 2);
-    t.forme('ruban', (x, y) => (y >= 21 && y <= 27 && Math.abs(x + 0.5 - cx) < 6.5 - (y - 21) * 0.9 ? [(x + 0.5 - cx) / 6 * 0.5, 0.2, 0.9] : null),
-      { motif: (x, y) => ((x * 3 + y * 5) % 7 === 0 ? 1.4 : 0) });
-    for (let k = 0; k < 4; k++) t.poser(cx + 5 + (k % 2), 20 + k, 'ruban', 2 + (k % 2)); // le nœud, sur le côté
-  }
-
-  t.contour();
-  return t;
+  const gene = {
+    race: 'humain', feminin,
+    peau: PEAU_DE_CREATION[ap.peau] ?? 1,
+    cheveux: ancien ? 0xb8b8c0 : APPARENCE.cheveux[ap.cheveux][1],
+    habit: APPARENCE.haut[ap.haut][1],
+    bas: APPARENCE.bas[ap.bas][1],
+    cape: 0x5a2a2a,
+    yeux: APPARENCE.yeux[ap.yeux][1],
+    coiffure: ['court', 'long', 'boucles', 'herisse', 'chauve'][ap.coiffure] || 'court',
+    barbe: stade !== 'petit' && ap.barbe ? ['moustache', 'moustache', 'courte', 'pleine'][ap.barbe] : null,
+    nom: 'JeuneGoy',
+  };
+  return dessinerCorpsVue(gene, 1, 'joueur', pas, null, vue, { tenue, bouche: ap.bouche ?? 0 });
 }
 
 // L'échelle d'affichage du joueur : ses anciens sprites faisaient 16 pixels de haut.
