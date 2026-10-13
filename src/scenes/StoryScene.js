@@ -68,6 +68,7 @@ class StoryScene extends Cinematique {
     const etapes = v.epreuves.length;
 
     this.titre.setText(r.vivant ? 'Le récit de ' + v.nom : 'Le carnet de ' + v.nom).setColor(couleurNom(this.G, v.nom, true));
+    Son.ambiance(r.vivant ? 'recitEtonne' : 'recitTriste');   // (la musique suit le récit : étonnement, peur, joie, tristesse)
     this.ecrire(v.quete, r.vivant
       ? `${v.nom} est revenu${this.e} au comptoir, couvert${this.e} de poussière. Assis${this.e} sur le rebord de la fenêtre, ${v.feminin ? 'elle' : 'il'} te raconte son aventure...`
       : `${v.nom} n'est jamais revenu${this.e}... La Faucheuse a laissé son carnet de voyage sur ton comptoir. Tu l'ouvres en tremblant.`);
@@ -195,6 +196,7 @@ class StoryScene extends Cinematique {
   async conclure() {
     // La fin du récit se lit à vitesse normale.
     this.rapide = false;
+    Son.ambiance(this.parti.resultat.vivant && !this.parti.resultat.echec ? 'recitHeureux' : 'recitTriste');
     this.tweens.timeScale = 1;
     this.time.timeScale = 1;
     const v = this.parti.voyageur;
@@ -353,6 +355,7 @@ class StoryScene extends Cinematique {
     if (this.meteo) { this.meteo.remove(); this.meteo = null; }
     this.menace = { sorte: 'ambiance', sprites: [] };
     const sombre = ['nuit', 'grotte', 'feufollet', 'esprits', 'malediction', 'mortvivant'].includes(type);
+    if (this.parti.resultat.vivant) Son.ambiance(sombre ? 'recitPeur' : 'recitEtonne');
     this.voile.setFillStyle(type === 'tempete' ? 0x8a6a3a : 0x05051a, this.voile.fillAlpha);
     this.tweens.add({ targets: this.voile, fillAlpha: sombre ? 0.55 : type === 'tempete' ? 0.3 : 0, duration: 600 });
     const ajouter = o => { this.decor.add(o); return o; };

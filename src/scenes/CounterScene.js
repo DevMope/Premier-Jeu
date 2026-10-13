@@ -550,6 +550,7 @@ class CounterScene extends Phaser.Scene {
     }
     const faucheuse = entree.type === 'faucheuse';
     Son.jouer(faucheuse ? 'froid' : 'clochette');
+    if (faucheuse) Son.ambiance('faucheuse');
     this.dire(faucheuse ? "Le froid tombe d'un coup. Les bougies vacillent..." : "Quelqu'un approche du comptoir...", '');
     this.majFileAttente();
     this.perso.setVisible(true).setAlpha(1);
@@ -1161,6 +1162,7 @@ class CounterScene extends Phaser.Scene {
   // noué dans son dos).
   partirPar(x, porte = null) {
     Son.jouer('porte');
+    if (Son.theme === 'faucheuse') Son.ambiance('comptoir');
     const versDroite = x > this.perso.x;
     const entree = this.entree;
     const corps = () => {

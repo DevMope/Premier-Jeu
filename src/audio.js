@@ -92,6 +92,8 @@ const Son = {
 
   // --- La musique : un thème par moment, en fondu enchaîné ---
   ambiance(theme) {
+    // Le comptoir a plusieurs musiques (c'est là qu'on passe le plus de temps) : une par jour, en alternance
+    if (theme === 'comptoir') { const v = ['comptoir', 'comptoir2', 'comptoir3']; theme = v[((window.GAME && GAME.jour) || 1) % v.length]; }
     this.themeVoulu = theme;
     if (!this.pret) return;
     if (theme === this.theme) return;
@@ -101,6 +103,7 @@ const Son = {
     const T = THEMES[theme];
     const bus = this.ctx.createGain(); bus.gain.setValueAtTime(0.0005, this.ctx.currentTime); bus.gain.exponentialRampToValueAtTime(1, this.ctx.currentTime + 1.5);
     bus.connect(this.busMusique);
+    if (T.reverb) { const r = this.ctx.createGain(); r.gain.value = T.reverb; bus.connect(r); r.connect(this.reverb); } // (plus de résonance pour ce thème)
     this.courant = bus;
     this.mesure = 0; this.graine = 7;
     this.horloge = this.ctx.currentTime + 0.1;
@@ -199,6 +202,10 @@ const Son = {
 
 // Les instruments : [forme d'onde, multiple de la fréquence, volume, désaccord en cents]
 const INSTRUMENTS = {
+  carillon: { voix: [['sine', 1, 0.7], ['sine', 2.76, 0.18], ['sine', 5.4, 0.07], ['sine', 0.5, 0.15]], attaque: 0.003, decroissance: 1.8, tenue: 0.06, relache: 1.2, volume: 0.2 },
+  glas: { voix: [['sine', 1, 0.7], ['sine', 2.4, 0.25], ['sine', 3.9, 0.1], ['triangle', 0.5, 0.2]], attaque: 0.005, decroissance: 2.6, tenue: 0.08, relache: 1.8, volume: 0.24 },
+  fluteDouce: { voix: [['sine', 1, 0.85], ['triangle', 1, 0.08], ['sine', 2, 0.03]], attaque: 0.09, decroissance: 0.15, tenue: 0.8, relache: 0.2, volume: 0.24, vibrato: 0.004, filtre: 1800 },
+  choeur: { voix: [['sawtooth', 1, 0.2, -8], ['sawtooth', 1, 0.2, 8], ['sine', 1, 0.4], ['sine', 2, 0.1, 4]], attaque: 0.6, decroissance: 0.4, tenue: 0.9, relache: 0.9, volume: 0.1, filtre: 900, vibrato: 0.004 },
   flute: { voix: [['sine', 1, 0.7], ['triangle', 1, 0.25], ['sine', 2, 0.08]], attaque: 0.06, decroissance: 0.1, tenue: 0.8, relache: 0.15, volume: 0.22, vibrato: 0.006, bruit: { duree: 0.08, volume: 0.04, filtre: 3000 } },
   luth: { voix: [['triangle', 1, 0.8], ['sawtooth', 1, 0.15], ['sine', 2, 0.15]], attaque: 0.005, decroissance: 0.5, tenue: 0.12, relache: 0.25, volume: 0.22, filtre: 2600, glisse: 1.01 },
   harpe: { voix: [['sine', 1, 0.8], ['triangle', 1, 0.25], ['sine', 3, 0.06]], attaque: 0.004, decroissance: 0.9, tenue: 0.1, relache: 0.4, volume: 0.2 },
@@ -226,7 +233,7 @@ const THEMES = {
   titre: {
     base: NOTE.E / 2, gamme: GAMMES.mineur, tempo: 150, temps: 3, phrase: 8,
     accords: [0, 0, 5, 5, 3, 3, 4, 4], octaveMelodie: 2,
-    instruments: { melodie: 'boiteAMusique', accompagnement: 'cordes', basse: 'basse' },
+    instruments: { melodie: 'carillon', accompagnement: 'cordes', basse: 'basse' }, reverb: 0.5,
     motif: { 0: [[0, 7, 1], [1, 9, 1], [2, 11, 1]], 1: [[0, 14, 2], [2, 11, 1]], 2: [[0, 12, 1], [1, 11, 1], [2, 9, 1]], 3: [[0, 10, 3]], 4: [[0, 7, 1], [1, 9, 1], [2, 11, 1]], 5: [[0, 13, 2], [2, 14, 1]], 6: [[0, 12, 1.5], [1.5, 11, 0.5], [2, 9, 1]], 7: [[0, 7, 3]] },
     rythmes: [[1, 1, 1], [2, 1], [1, 2]], silence: 0.1,
     basse: (m, a) => [[0, a, 2.8]],
@@ -235,8 +242,8 @@ const THEMES = {
   // Le marché : une gigue en 6/8, flûte et luth, tambourin (la Comté, Stardew)
   marche: {
     base: NOTE.G / 2, gamme: GAMMES.majeur, tempo: 170, temps: 6, phrase: 8,
-    accords: [0, 0, 3, 4, 0, 5, 3, 4], octaveMelodie: 2,
-    instruments: { melodie: 'flute', accompagnement: 'luth', basse: 'basse' },
+    accords: [0, 0, 3, 4, 0, 5, 3, 4], octaveMelodie: 1,
+    instruments: { melodie: 'fluteDouce', accompagnement: 'luth', basse: 'basse' },
     motif: { 0: [[0, 7, 1], [1, 9, 1], [2, 11, 1], [3, 14, 2], [5, 11, 1]], 1: [[0, 12, 1], [1, 11, 1], [2, 9, 1], [3, 7, 3]], 4: [[0, 11, 1], [1, 12, 1], [2, 14, 1], [3, 16, 2], [5, 14, 1]], 5: [[0, 13, 1], [1, 12, 1], [2, 11, 1], [3, 9, 3]] },
     rythmes: [[1, 1, 1, 1, 1, 1], [2, 1, 2, 1], [1, 1, 1, 3], [3, 1, 1, 1]], silence: 0.12,
     basse: (m, a) => [[0, a, 1.4], [3, a + 4, 1.4]],
@@ -252,6 +259,27 @@ const THEMES = {
     rythmes: [[2, 2], [1, 1, 2], [4], [1.5, 0.5, 2]], silence: 0.35,
     basse: (m, a) => [[0, a, 2], [2, a + 4, 2]],
     accompagnement: (m) => [[0, 0, 1, 0.5], [0.5, 1, 1, 0.35], [1, 2, 1, 0.4], [1.5, 3, 1, 0.35], [2, 2, 1, 0.4], [2.5, 1, 1, 0.35], [3, 0, 1, 0.4], [3.5, 1, 1, 0.3]],
+  },
+  // Le comptoir, deuxième air : une valse légère de harpe et de célesta (l'auberge un après-midi calme)
+  comptoir2: {
+    base: NOTE.D / 2, gamme: GAMMES.majeur, tempo: 104, temps: 3, phrase: 8,
+    accords: [0, 0, 3, 3, 5, 5, 4, 4], octaveMelodie: 2,
+    instruments: { melodie: 'celesta', accompagnement: 'harpe', basse: 'basse' }, reverb: 0.2,
+    motif: { 0: [[0, 9, 1], [1, 11, 1], [2, 12, 1]], 1: [[0, 14, 2], [2, 12, 1]], 2: [[0, 11, 1], [1, 9, 1], [2, 7, 1]], 3: [[0, 9, 3]], 4: [[0, 9, 1], [1, 11, 1], [2, 14, 1]], 5: [[0, 16, 2], [2, 14, 1]], 6: [[0, 12, 1], [1, 11, 1], [2, 9, 1]], 7: [[0, 7, 3]] },
+    rythmes: [[1, 1, 1], [2, 1]], silence: 0.2,
+    basse: (m, a) => [[0, a, 2.8]],
+    accompagnement: (m) => [[0, 0, 1, 0.5], [1, 1, 1, 0.4], [2, 2, 1, 0.4], [1.5, 3, 0.5, 0.3], [2.5, 4, 0.5, 0.3]],
+  },
+  // Le comptoir, troisième air : un barde qui gratte son luth au coin du feu, lent et chaud
+  comptoir3: {
+    base: NOTE.G / 2, gamme: GAMMES.mixolydien, tempo: 68, temps: 4, phrase: 8,
+    accords: [0, 6, 3, 0, 4, 6, 3, 4], octaveMelodie: 1,
+    instruments: { melodie: 'vielle', accompagnement: 'luth', basse: 'basse' },
+    motif: { 0: [[0, 11, 1.5], [1.5, 9, 0.5], [2, 7, 2]], 1: [[0, 9, 1], [1, 10, 1], [2, 11, 2]], 4: [[0, 14, 1.5], [1.5, 12, 0.5], [2, 11, 2]], 5: [[0, 9, 1], [1, 7, 1], [2, 6, 2]] },
+    rythmes: [[2, 2], [1, 1, 2], [1.5, 0.5, 2], [4]], silence: 0.35,
+    basse: (m, a) => [[0, a, 1.9], [2, a + 4, 1.9]],
+    accompagnement: (m) => [[0, 0, 0.8, 0.5], [0, 1, 0.8, 0.4], [0, 2, 0.8, 0.4], [1.5, 1, 0.5, 0.3], [2, 0, 0.8, 0.45], [2, 2, 0.8, 0.35], [3.5, 1, 0.5, 0.3]],
+    percussion: (m) => [[1, 'bois', 0.3], [3, 'bois', 0.3]],
   },
   // La nuit : boîte à musique très douce sur un orgue lointain, beaucoup de silence (les nuits de Stardew, la Comté endormie)
   nuit: {
@@ -284,6 +312,58 @@ const THEMES = {
     basse: (m, a) => [[0, a, 3.8]],
     accompagnement: (m) => (m % 2 === 0 ? [[0, 0, 7.8, 0.6], [0, 2, 7.8, 0.4]] : []),
     percussion: (m) => [[0, 'tambour', 0.9], [1.5, 'bois', 0.5], [2, 'tambour', 0.6], [3.5, 'bois', 0.4]],
+  },
+  // Les récits, selon ce qu'il s'y passe : la joie (flûte et luth, en marche), la tristesse (piano
+  // et cordes, lent), la peur (bourdon, chœur grave, cœur qui bat, dissonances), l'étonnement
+  // (célesta et harpe en lydien, comme une découverte)
+  recitHeureux: {
+    base: NOTE.G / 2, gamme: GAMMES.majeur, tempo: 108, temps: 4, phrase: 8,
+    accords: [0, 3, 4, 0, 5, 3, 4, 0], octaveMelodie: 1,
+    instruments: { melodie: 'fluteDouce', accompagnement: 'luth', basse: 'basse' },
+    motif: { 0: [[0, 7, 1], [1, 9, 1], [2, 11, 1], [3, 12, 1]], 1: [[0, 14, 2], [2, 12, 1], [3, 11, 1]], 4: [[0, 11, 1], [1, 12, 1], [2, 14, 1], [3, 16, 1]], 5: [[0, 14, 3], [3, 11, 1]] },
+    rythmes: [[1, 1, 2], [1, 1, 1, 1], [2, 1, 1]], silence: 0.15,
+    basse: (m, a) => [[0, a, 1.9], [2, a + 4, 1.9]],
+    accompagnement: (m) => [[0, 0, 0.9, 0.6], [1, 1, 0.9, 0.4], [2, 2, 0.9, 0.5], [3, 1, 0.9, 0.4]],
+    percussion: (m) => [[0, 'tambour', 0.7], [2, 'tambour', 0.5], [1, 'tambourin', 0.3], [3, 'tambourin', 0.3]],
+  },
+  recitTriste: {
+    base: NOTE.A / 2, gamme: GAMMES.mineur, tempo: 58, temps: 4, phrase: 8,
+    accords: [0, 5, 3, 4, 0, 5, 6, 4], octaveMelodie: 2,
+    instruments: { melodie: 'piano', accompagnement: 'cordes', basse: 'basse' }, reverb: 0.3,
+    motif: { 0: [[0, 11, 2], [2, 10, 1], [3, 9, 1]], 1: [[0, 7, 3]], 4: [[0, 12, 2], [2, 11, 1], [3, 9, 1]], 5: [[0, 8, 4]] },
+    rythmes: [[2, 2], [4], [1, 3]], silence: 0.4,
+    basse: (m, a) => [[0, a, 3.8]],
+    accompagnement: (m) => [[0, 0, 3.9, 0.3], [0, 1, 3.9, 0.25], [0, 2, 3.9, 0.25]],
+  },
+  recitPeur: {
+    base: NOTE.E / 4, gamme: GAMMES.mineur, tempo: 72, temps: 4, phrase: 4,
+    accords: [0, 0, 1, 0], octaveMelodie: 2,
+    instruments: { melodie: 'vielle', accompagnement: 'choeur', basse: 'bourdon' }, reverb: 0.4,
+    motif: { 0: [[0, 7, 2], [2, 8, 2]], 1: [[0, 7, 1], [1, 6, 1], [2, 8, 2]], 2: [[0, 13, 3], [3, 12, 1]], 3: [[0, 8, 4]] },
+    rythmes: [[4]], silence: 0,
+    basse: (m, a) => [[0, a, 3.9]],
+    accompagnement: (m) => [[0, 0, 3.9, 0.6], [0, 1, 3.9, 0.35]],
+    percussion: (m) => [[0, 'coeur', 1], [0.4, 'coeur', 0.6], [2, 'coeur', 1], [2.4, 'coeur', 0.6], [3.5, 'tambour', 0.5]],
+  },
+  recitEtonne: {
+    base: NOTE.C / 2, gamme: GAMMES.lydien, tempo: 84, temps: 4, phrase: 8,
+    accords: [0, 1, 0, 4, 0, 1, 3, 4], octaveMelodie: 2,
+    instruments: { melodie: 'celesta', accompagnement: 'harpe', basse: 'basse' }, reverb: 0.35,
+    motif: { 0: [[0, 7, 1], [1, 10, 1], [2, 14, 2]], 1: [[0, 13, 1], [1, 10, 1], [2, 11, 2]], 4: [[0, 7, 1], [1, 11, 1], [2, 14, 1], [3, 17, 1]], 5: [[0, 16, 2], [2, 14, 2]] },
+    rythmes: [[1, 1, 2], [2, 2], [0.5, 0.5, 1, 2]], silence: 0.3,
+    basse: (m, a) => [[0, a, 3.8]],
+    accompagnement: (m) => [[0, 0, 0.9, 0.4], [0.5, 1, 0.9, 0.3], [1, 2, 0.9, 0.3], [1.5, 3, 0.9, 0.3], [2, 4, 0.9, 0.3], [2.5, 3, 0.9, 0.25], [3, 2, 0.9, 0.3], [3.5, 1, 0.9, 0.25]],
+  },
+  // La Faucheuse : un glas, un chœur grave, le cœur qui bat (son thème sombre, le temps de sa visite)
+  faucheuse: {
+    base: NOTE.E / 4, gamme: GAMMES.mineur, tempo: 48, temps: 4, phrase: 4,
+    accords: [0, 0, 5, 0], octaveMelodie: 1,
+    instruments: { melodie: 'glas', accompagnement: 'choeur', basse: 'bourdon' }, reverb: 0.7,
+    motif: { 0: [[0, 7, 4]], 1: [[0, 6, 2], [2, 7, 2]], 2: [[0, 5, 4]], 3: [[0, 6, 2], [2, 4, 2]] },
+    rythmes: [[4]], silence: 0,
+    basse: (m, a) => [[0, a, 3.9]],
+    accompagnement: (m) => [[0, 0, 3.9, 0.5], [0, 1, 3.9, 0.3]],
+    percussion: (m) => [[0, 'coeur', 1], [0.45, 'coeur', 0.6], [2, 'coeur', 1], [2.45, 'coeur', 0.6]],
   },
   // Grippesou et les jeux : sautillant, un peu louche (luth et bois)
   jeux: {
@@ -382,6 +462,6 @@ const SONS = {
 
 // Le thème de chaque scène du jeu
 const THEME_PAR_SCENE = {
-  Titre: 'titre', Intro: 'cinematique', IntroHistoire: 'cinematique', Comptoir: 'comptoir', Nuit: 'nuit', Dodo: 'nuit', Recit: 'recit', Faillite: 'faillite',
+  Titre: 'titre', Intro: 'cinematique', IntroHistoire: 'cinematique', Comptoir: 'comptoir', Nuit: 'nuit', Dodo: 'nuit', Recit: 'recitEtonne', Faillite: 'faillite',
   Express: 'jeux', Banque: 'banque', Marche: 'marche', Atelier: 'comptoir', Bureau: 'comptoir', Carte: 'carte', Facade: 'marche', Arriere: 'comptoir', Renovation: 'cinematique', Promenade: 'nuit',
 };
