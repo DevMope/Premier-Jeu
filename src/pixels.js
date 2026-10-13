@@ -408,7 +408,7 @@ function style(taille, couleur = '#f3e6c8', extra = {}) {
     const gras = /bold/.test(fontStyle);
     fontStyle = `${italique ? 'italic ' : ''}${gras ? 800 : 500}`;
   }
-  return { fontFamily: POLICE, fontSize: taille + 'px', color: couleur, resolution: typeof ZOOM_ECRAN === 'number' ? ZOOM_ECRAN : 2, ...reste, fontStyle };
+  return { fontFamily: POLICE, fontSize: taille + 'px', color: couleur, resolution: typeof ZOOM_ECRAN === 'number' ? Math.max(2, ZOOM_ECRAN + 1) : 3, ...reste, fontStyle };
 }
 
 // Coupe un texte trop long (avec « … »).
