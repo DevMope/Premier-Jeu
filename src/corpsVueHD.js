@@ -140,21 +140,33 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const bal = pas ? (cote === pres ? pas : -pas) : 0;   // la jambe qui avance
     const hanche = [cote * ep * 0.42, 0, yB - 1 * k];
     const genou = [cote * ep * 0.45, (bal * 2.2 + (bal > 0 ? 1 : 0)) * k, yB + (sol - yB) * 0.5];
-    const pied = [cote * ep * 0.48, bal * 3.8 * k, sol - 3 * k - (bal > 0 ? 1.5 * k : 0)];
+    // Le pas : le pied avant reste posé au sol, c'est le talon arrière qui se décolle (à peine de
+    // face, où l'on ne voit pas le pied partir en arrière)
+    const leve = bal < 0 ? (Math.abs(s) < 0.3 ? 0.6 : 1.2) * k : 0;
+    const pied = [cote * ep * 0.48, bal * 3.8 * k, sol - 3 * k - leve];
     const Hh = [X(hanche[0], hanche[1]), hanche[2]], G = [X(genou[0], genou[1]), genou[2]], Pd = [X(pied[0], pied[1]), pied[2]];
     const dec = devant ? 0 : -0.5;
     const r = 2.9 * k * P.membre;
     cylindre(t, 'bas', Hh, G, r, { decalage: dec });
+    const solPied = sol - leve;
     if (race === 'hobbit' || costume === 'mendiant') {
       cylindre(t, 'bas', G, Pd, r - 0.4 * k, { decalage: dec + 0.2, motif: costume === 'mendiant' ? (x, y) => (hachage(Math.floor(x / k), Math.floor(y / k), 77) > 0.85 ? -1.2 : 0) : null });
       // Les grands pieds nus et poilus
-      t.forme('peau', ellipsoide(X(pied[0], pied[1] + 2 * k), sol - 1.5 * k, (3.6 + s * 1.2) * k, 2 * k), { decalage: dec });
-      if (race === 'hobbit') for (let j = 0; j < 4; j++) t.poser(Math.round(X(pied[0], pied[1] + (1 + j * 0.7) * k)), sol - 3 * k - (j % 2), 'cheveux', 2);
+      t.forme('peau', ellipsoide(X(pied[0], pied[1] + 2 * k), solPied - 1.5 * k, (3.6 + Math.abs(s) * 1.2) * k, 2 * k), { decalage: dec });
+      if (race === 'hobbit') for (let j = 0; j < 4; j++) t.poser(Math.round(X(pied[0], pied[1] + (1 + j * 0.7) * k)), Math.round(solPied - 3 * k - (j % 2)), 'cheveux', 2);
     } else {
-      // La botte : la tige jusqu'au genou, le revers, le pied qui pointe vers l'avant
+      // La botte : la tige jusqu'au genou, le revers, le pied qui pointe vers l'avant. De face, le
+      // bout de la botte vient vers nous : un peu plus large et plus clair (on le voit de dessus).
       cylindre(t, 'cuir', G, Pd, r - 0.2 * k, { decalage: dec + 0.1 });
       const bout = X(pied[0], pied[1] + 3.4 * k);
-      t.forme('cuir', (x, y) => (y >= sol - 3 * k && y <= sol && Math.abs(x + 0.5 - (Pd[0] + bout) / 2) < Math.abs(bout - Pd[0]) / 2 + r - 0.5 * k ? [(x + 0.5 - Pd[0]) / (4 * k), (y - sol + 1.5 * k) / (2 * k), 0.8] : null), { decalage: dec });
+      const face = Math.max(0, 1 - Math.abs(s) / 0.7);   // (1 de face, 0 dès le trois-quarts)
+      t.forme('cuir', (x, y) => {
+        if (y < solPied - 3 * k || y > solPied) return null;
+        const bas = (y - (solPied - 3 * k)) / (3 * k);   // 0 en haut du pied, 1 à la semelle
+        const elargi = face * bas * 0.9 * k;
+        if (Math.abs(x + 0.5 - (Pd[0] + bout) / 2) >= Math.abs(bout - Pd[0]) / 2 + r - 0.5 * k + elargi) return null;
+        return [(x + 0.5 - Pd[0]) / (4 * k), face ? -0.5 + bas * 0.9 : (y - solPied + 1.5 * k) / (2 * k), 0.8];
+      }, { decalage: dec + face * 0.3 });
       t.forme('cuir', (x, y) => (y >= G[1] + 1 && y <= G[1] + 1.5 * k && Math.abs(x + 0.5 - G[0]) < r + 0.3 * k ? [0, -0.6, 0.7] : null), { decalage: 0.6, bord: false, ombre: false });
     }
   };
