@@ -196,6 +196,9 @@ function geneHD(p) {
     yeux: choix([0x2a5a8a, 0x3a6a3a, 0x5a3a1a, 0x4a4a5a, 0x2a2a20]),
     armure: r() < 0.4,
     taches: r() < 0.25,
+    // Les nobles et les collectionneurs (clients prestigieux) : des étoffes riches, et un chapeau à plume
+    noble: !!p.prestige,
+    habitNoble: choix([0x6a1a3a, 0x1a2a6a, 0x3a1a5a, 0x7a4a10]),
   };
 }
 
@@ -263,6 +266,7 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   t.rampes.habit = rampe(g.habit);
   t.rampes.cape = rampe(g.cape);
   t.rampes.iris = rampe(g.yeux);
+  t.rampes.velours = rampe(0x4a1a3a); t.rampes.plume = rampe(0xf0e8d0); t.rampes.fourrure = rampe(0xe8e0d0);
   t.rampes.lin = rampe(0xd8ccb0);
   t.rampes.levres = levresPour(g.peau, g.feminin);
   t.rampes.barbe = t.rampes.cheveux;
@@ -323,6 +327,17 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   // 6. Les cheveux du dessus et les coiffes
   cheveuxHD(t, g, v, cx);
   coiffeHD(t, g, v, cx);
+  if (g.noble) {
+    // Le col de fourrure blanche, et le chapeau de velours à large bord orné d'une plume
+    const haut = v.torse - 2;
+    t.forme('fourrure', (x, y) => (y >= haut && y <= haut + 6 && Math.abs(x + 0.5 - cx) < 20 && Math.abs(x + 0.5 - cx) > v.cou - 1 ? [(x + 0.5 - cx) / 20, -0.3, 0.8] : null), { motif: (x, y) => ((x + y) % 2 ? 0.5 : -0.3) });
+    const sommet = v.cy - v.ry;
+    t.forme('velours', (x, y) => (y >= sommet - 14 && y <= sommet + 1 && Math.abs(x + 0.5 - cx) < v.rx - 2 - (sommet + 1 - y) * 0.25 ? [(x + 0.5 - cx) / v.rx, -0.3, 0.8] : null));
+    t.forme('velours', (x, y) => (y >= sommet && y <= sommet + 3 && Math.abs(x + 0.5 - cx) < v.rx + 7 ? [0, (y - sommet - 1) * 0.5, 0.8] : null));
+    // La plume : elle part de la broche, monte en arc et retombe derrière le chapeau
+    for (let k = 0; k < 20; k++) { const px = cx + 3 + k, py = sommet - 1 - Math.round(Math.sin(k / 19 * Math.PI) * 9) - Math.floor(k / 5); t.poser(px, py, 'plume', 4 + (k % 2)); t.poser(px, py + 1, 'plume', 3); if (k % 3 === 1) t.poser(px, py - 1, 'plume', 5); }
+    t.poser(cx + 4, sommet + 1, 'or', 5); t.poser(cx + 5, sommet + 1, 'or', 4); t.poser(cx + 4, sommet + 2, 'or', 3);
+  }
   // Les oreilles des elfes percent à travers les cheveux, et montent en pointe
   if (g.race === 'elfe') oreillesElfe(t, v, cx);
 
@@ -555,7 +570,7 @@ function coiffeHD(t, g, v, cx) {
 
 // La texture d'un portrait HD (créée à la demande, puis gardée).
 function textureBusteHD(scene, personne, expression = 'neutre', etat = {}) {
-  const cle = `busteHD_${personne.race}_${personne.nom}_${expression}${etat.cligne ? '_c' : ''}${etat.parle ? '_p' : ''}`;
+  const cle = `busteHD_${personne.race}_${personne.nom}${personne.prestige ? "_noble" : ""}_${expression}${etat.cligne ? '_c' : ''}${etat.parle ? '_p' : ''}`;
   if (!scene.textures.exists(cle)) dessinerBusteHD(geneHD(personne), expression, etat).texture(scene, cle);
   return cle;
 }

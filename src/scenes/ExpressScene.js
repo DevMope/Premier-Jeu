@@ -7,6 +7,7 @@ class ExpressScene extends Phaser.Scene {
 
   init(data) {
     this.comptoir = data.comptoir;
+    this.vendeur = data.vendeur || 'grippesou'; // ou 'colporteur' : Barnabé et sa hotte, un peu plus cher qu'au marché
     this.achats = [];
   }
 
@@ -16,24 +17,37 @@ class ExpressScene extends Phaser.Scene {
     dessinerComte(g, 0, 0, 960, 540, 0.4);
     g.fillStyle(0xc9a46a).fillRect(0, 430, 960, 110);
 
-    dessinerCaravane(this, 260, 435);
-    // Sa pile de pièces, qu'il couve du regard
-    const pile = this.add.graphics();
-    for (let i = 0; i < 9; i++) {
-      pile.fillStyle(0x9a7a10).fillEllipse(500 + (i % 3) * 16, 434 - Math.floor(i / 3) * 6, 20, 8);
-      pile.fillStyle(0xe8c040).fillEllipse(500 + (i % 3) * 16, 432 - Math.floor(i / 3) * 6, 20, 8);
+    if (this.vendeur === 'colporteur') {
+      // Barnabé, sa hotte posée à côté de lui, qui s'éponge le front
+      creerInterieurHD(this);
+      this.add.image(300, 436, coffreTresorHD(this)).setOrigin(0.5, 1).setScale(3).setTint(0xa08a60);
+      this.gobelin = imageCorps(this, 440, 435, 'colporteur', 8);
+      this.tweens.add({ targets: this.gobelin, y: 431, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      this.add.text(30, 22, COLPORTEUR.nom, style(26, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }));
+      this.add.text(30, 58, 'Colporteur · des choses rares, directement dans ta réserve · un peu plus cher qu\'au marché', style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 }));
+    } else {
+      dessinerCaravane(this, 260, 435);
+      // Sa pile de pièces, qu'il couve du regard
+      const pile = this.add.graphics();
+      for (let i = 0; i < 9; i++) {
+        pile.fillStyle(0x9a7a10).fillEllipse(500 + (i % 3) * 16, 434 - Math.floor(i / 3) * 6, 20, 8);
+        pile.fillStyle(0xe8c040).fillEllipse(500 + (i % 3) * 16, 432 - Math.floor(i / 3) * 6, 20, 8);
+      }
+      // Le gobelin, recroquevillé, qui se frotte les mains
+      this.gobelin = imageCorps(this, 440, 435, 'gobelin', 8).setAngle(14);
+      this.tweens.add({ targets: this.gobelin, angle: 18, scaleY: this.gobelin.scaleY * 0.96, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      this.add.text(30, 22, MARCHAND_EXPRESS.nom, style(26, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }));
+      this.add.text(30, 58, 'Marchand express · tout de suite, sur ton comptoir · bien plus cher', style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 }));
     }
-    // Le gobelin, recroquevillé, qui se frotte les mains
-    this.gobelin = imageCorps(this, 440, 435, 'gobelin', 8).setAngle(14);
-    this.tweens.add({ targets: this.gobelin, angle: 18, scaleY: this.gobelin.scaleY * 0.96, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-
-    this.add.text(30, 22, MARCHAND_EXPRESS.nom, style(26, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }));
-    this.add.text(30, 58, 'Marchand express · tout de suite, sur ton comptoir · bien plus cher', style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 }));
 
     // Ce qu'il dit
     this.add.rectangle(290, 488, 540, 76, 0x1e130a, 0.92).setStrokeStyle(2, 0xc9a227);
     this.texteGobelin = this.add.text(34, 460, '', style(15, '#f3e6c8', { wordWrap: { width: 510 }, lineSpacing: 4 }));
-    this.parler(auHasard([
+    this.parler(this.vendeur === 'colporteur' ? auHasard([
+      'Regarde-moi ça ! Trouvé dans une foire à trois jours de marche. Tu ne verras pas ça tous les jours.',
+      'Ma hotte pèse une tonne... fais-moi plaisir, allège-la un peu !',
+      'Un peu plus cher qu\'au marché, c\'est vrai. Mais mes jambes, elles, ne sont pas gratuites.',
+    ]) : auHasard([
       'Hé hé hé... Du bon matos, très rare, très cher. Pour toi, prix d\'ami... enfin, presque.',
       'Tu as des pièces ? Grippesou aime les pièces. Grippesou a ce qu\'il te faut.',
       'Pressé, hein ? Les gens pressés paient plus cher. C\'est la loi du marché, hé hé.',
@@ -53,19 +67,21 @@ class ExpressScene extends Phaser.Scene {
     const G = this.G;
     const v = this.comptoir.voyageur;
     this.add.image(780, 250, panneauHD(this, 340, 380)).setScale(2);
-    this.add.text(780, 78, "L'étal de Grippesou", style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
-    this.add.text(780, 100, `Pour ${v.nom}`, style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
+    const colporteur = this.vendeur === 'colporteur';
+    this.add.text(780, 78, colporteur ? 'La hotte de Barnabé' : "L'étal de Grippesou", style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.add.text(780, 100, colporteur ? 'Pour ta réserve' : `Pour ${v.nom}`, style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.lignes = [];
     // Ses objets, puis (certains jours) son fer et son cuir hors de prix.
-    const lignes = [...Object.keys(G.express).map(id => ({ id, offre: G.express[id], nom: ITEMS[id].nom, prix: ITEMS[id].prix })),
-      ...Object.keys(G.expressMateriaux || {}).map(id => ({ id, offre: G.expressMateriaux[id], nom: MATERIAUX[id].nom, prix: MATERIAUX[id].prix, materiau: true }))];
+    const stock = colporteur ? (G.colporteurOffre || {}) : G.express;
+    const lignes = [...Object.keys(stock).map(id => ({ id, offre: stock[id], nom: ITEMS[id].nom, prix: ITEMS[id].prix })),
+      ...(colporteur ? [] : Object.keys(G.expressMateriaux || {}).map(id => ({ id, offre: G.expressMateriaux[id], nom: MATERIAUX[id].nom, prix: MATERIAUX[id].prix, materiau: true })))];
     if (!lignes.length) this.add.text(780, 250, 'Plus rien à vendre aujourd\'hui.', style(14, '#3b2410')).setOrigin(0.5);
     const ecart = lignes.length > 1 ? Math.min(62, 250 / (lignes.length - 1)) : 62;
     lignes.forEach((l, i) => {
       const y = 140 + i * ecart;
-      this.add.image(632, y + 6, l.id).setScale(4);
+      this.add.image(632, y + 6, iconeObjet(this, l.id)).setScale(2.4);
       this.add.text(660, y - 10, l.nom, style(15, '#3b2410', { fontStyle: 'bold' }));
-      this.add.text(660, y + 10, `${l.offre.prix} p. (au marché : ~${l.prix} p.)`, style(12, '#a03030'));
+      this.add.text(660, y + 10, `${l.offre.prix} p. (au marché : ~${l.prix} p.)`, style(12, colporteur ? '#8a6a10' : '#a03030'));
       const reste = this.add.text(660, y + 24, '', style(11, '#6b4a2a'));
       const btn = this.add.rectangle(895, y + 6, 70, 30, 0x8a5a2b).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
       this.add.text(895, y + 6, 'Acheter', style(12, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
@@ -79,19 +95,20 @@ class ExpressScene extends Phaser.Scene {
   acheter(id) {
     const G = this.G;
     const c = this.comptoir;
-    const offre = G.express[id];
-    const commande = commandeDe(c.voyageur);
+    const colporteur = this.vendeur === 'colporteur';
+    const offre = colporteur ? G.colporteurOffre[id] : G.express[id];
+    const commande = c.voyageur ? commandeDe(c.voyageur) : {};
     // Si le client en a besoin, ça va directement dans son colis ; sinon, dans ta réserve.
-    const pourLeClient = commande[id] && (c.colis[id] || 0) < commande[id];
-    if (offre.qte <= 0) return this.parler('Plus rien ! Tout vendu ! Reviens demain, avec plus de pièces.');
-    if (!peutPayer(G, offre.prix)) return this.parler("Pas de pièces, pas de marchandise ! File, mendiant !");
-    if (!pourLeClient && stockTotal(G) >= G.capacite) return this.parler('Ta réserve est pleine ! Grippesou ne vend pas de place, hé hé.');
-    payer(G, offre.prix, 'express');
+    const pourLeClient = !colporteur && commande[id] && (c.colis[id] || 0) < commande[id];
+    if (offre.qte <= 0) return this.parler(colporteur ? 'Plus un seul ! Tu as vidé ma hotte.' : 'Plus rien ! Tout vendu ! Reviens demain, avec plus de pièces.');
+    if (!peutPayer(G, offre.prix)) return this.parler(colporteur ? "Pas assez de pièces... Une autre fois, l'ami." : "Pas de pièces, pas de marchandise ! File, mendiant !");
+    if (!pourLeClient && stockTotal(G) >= G.capacite) return this.parler(colporteur ? "Ta réserve est pleine, je n'ai nulle part où poser ça !" : 'Ta réserve est pleine ! Grippesou ne vend pas de place, hé hé.');
+    payer(G, offre.prix, colporteur ? 'colporteur' : 'express');
     offre.qte--;
     if (pourLeClient) c.colis[id] = (c.colis[id] || 0) + 1;
     else G.stock[id]++;
     this.achats.push(`${ITEMS[id].nom} (${pourLeClient ? 'dans le baluchon' : 'dans ta réserve'})`);
-    this.parler(auHasard(['Hé hé ! Merci pour les pièces...', 'Excellent choix. Excellent prix. Pour moi.', 'Vendu ! Grippesou est content.']));
+    this.parler(colporteur ? auHasard(['Bien choisi ! Ça te servira, crois-moi.', 'Et une chose de moins à porter. Merci !']) : auHasard(['Hé hé ! Merci pour les pièces...', 'Excellent choix. Excellent prix. Pour moi.', 'Vendu ! Grippesou est content.']));
     this.tweens.add({ targets: this.gobelin, y: 425, duration: 120, yoyo: true });
     this.maj();
   }
@@ -118,6 +135,6 @@ class ExpressScene extends Phaser.Scene {
 
   fermer() {
     this.scene.stop();
-    this.scene.resume('Comptoir', { achats: this.achats });
+    this.scene.resume('Comptoir', { achats: this.achats, vendeur: this.vendeur });
   }
 }

@@ -266,6 +266,8 @@ class CounterScene extends Phaser.Scene {
   texturePour(entree) {
     if (entree.type === 'faucheuse') return 'perso_faucheuse';
     if (entree.type === 'famille') return corpsHD(this, entree.visite.parent);
+    if (entree.type === 'notable') { const p = this.personneDe(entree); return corpsHD(this, p.figurant || p); }
+    if (entree.type === 'colporteur') return corpsHD(this, 'colporteur');
     const v = entree.type === 'client' ? entree.voyageur : entree.parti.voyageur;
     return corpsHD(this, v);
   }
@@ -595,17 +597,58 @@ class CounterScene extends Phaser.Scene {
     });
   }
 
+  // Un visiteur notable vient te féliciter d'avoir franchi un palier de réputation, et t'apporte
+  // la récompense : une promesse, une prime, une décoration, ou de nouvelles visites.
+  visiteNotable(entree) {
+    const G = this.G;
+    const p = PALIERS_CLIENTS[entree.palier];
+    const qui = { bourgmestre: 'Odilon Bonnefoi, bourgmestre', heraut: 'Le héraut de la Confrérie du Dernier Rempart', colporteur: COLPORTEUR.nom, legende: "Isolde Lame-d'Aurore, légende vivante" }[p.visiteur];
+    const bonjour = {
+      bourgmestre: `Bonjour, ${nomJoueur(G, 'petit')} ! Tout le bourg parle de « ${G.nomShop} » : te voilà ${p.nom.toLowerCase()} ! Je tenais à te féliciter en personne.`,
+      heraut: `Oyez ! La Confrérie du Dernier Rempart salue « ${G.nomShop} », désormais ${p.nom.toLowerCase()}. Ton nom est inscrit dans nos registres.`,
+      colporteur: `Alors c'est ici, le fameux comptoir ? On en parle sur tous les chemins ! Te voilà ${p.nom.toLowerCase()}, bravo. Je passerai te voir avec ma hotte.`,
+      legende: `On m'avait parlé de toi, ${nomJoueur(G, 'petit')}. Un ${p.nom.toLowerCase()}, tenu par si jeune... J'ai voulu voir ça de mes yeux. Je ne suis pas déçue.`,
+    }[p.visiteur];
+    this.titreCommande.setFontSize(17).setText('⭐ Un visiteur notable');
+    this.dire(bonjour, qui);
+    this.exprimer('content');
+    this.bouton('« Merci ! »', () => {
+      const apporte = recompensePalier(G, entree.palier);
+      this.dire(apporte ? `En l'honneur de ton nouveau palier, voici ${apporte}. Continue comme ça !` : 'Continue comme ça !', qui);
+      this.cameras.main.flash(250, 255, 240, 160);
+      this.majStock(); this.dessinerPieces();
+      this.bouton('Au revoir !', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+    });
+  }
+
+  // Le colporteur passe avec sa hotte : des choses rares, un peu plus cher qu'au marché.
+  visiteColporteur(entree) {
+    this.titreCommande.setFontSize(17).setText('Le colporteur');
+    this.dire("Salut, l'ami ! J'ai de belles choses dans ma hotte aujourd'hui. Un coup d'œil ? C'est un peu plus cher qu'au marché, mais c'est là, sous ton nez.", COLPORTEUR.nom);
+    this.choix(['Voir sa marchandise', () => { this.scene.pause(); this.scene.launch('Express', { comptoir: this, vendeur: 'colporteur' }); }],
+      ['Pas aujourd\'hui', () => { this.dire('Comme tu veux ! Je repasserai.', COLPORTEUR.nom); this.bouton('...', null); this.partirPar(FENETRE.x - 80); }]);
+  }
+
   // --- Le client en buste : expressions, clignements, paroles ---
 
   personneDe(entree) {
     if (entree.type === 'client') return entree.voyageur;
     if (entree.type === 'famille') return entree.visite.parent;
+    if (entree.type === 'colporteur') return { nom: COLPORTEUR.nom, race: 'humain', feminin: false };
+    if (entree.type === 'notable') {
+      // Le visiteur notable du palier : le bourgmestre, le héraut de la Confrérie, une légende...
+      const v = PALIERS_CLIENTS[entree.palier].visiteur;
+      if (v === 'legende') return { nom: "Isolde Lame-d'Aurore", race: 'elfe', feminin: true, niveau: 'legende' };
+      if (v === 'colporteur') return { nom: COLPORTEUR.nom, race: 'humain', feminin: false };
+      return { nom: FIGURANTS[v].nom, race: 'humain', feminin: false, figurant: v }; // (un figurant : bourgmestre, héraut)
+    }
     return entree.parti ? entree.parti.voyageur : null;
   }
 
   // Son humeur en arrivant au comptoir.
   expressionArrivee(entree) {
     if (entree.type === 'retour') return entree.parti.resultat.echec ? 'inquiet' : 'content';
+    if (entree.type === 'notable' || entree.type === 'colporteur') return 'content';
     if (entree.type === 'famille') return entree.visite.intention === 'colere' ? 'fache' : entree.visite.intention === 'releve' ? 'neutre' : 'inquiet';
     const v = entree.voyageur;
     if (v.exige) return 'fache';
@@ -659,6 +702,25 @@ class CounterScene extends Phaser.Scene {
       conseilGarrick(this, 'comptoir');
       const v = this.voyageur = entree.voyageur;
       this.preparerTutoriel(v);
+      // Un client prestigieux vérifie d'abord que tu es à la hauteur
+      if (v.prestige && !entree.attentes) {
+        const refus = refusPrestige(this.G, v);
+        this.titreCommande.setFontSize(17).setText('👑 Un client prestigieux');
+        if (refus) {
+          this.exprimer('fache');
+          this.dire(`${refus} (réputation −${String(PERTE_PRESTIGE).replace('.', ',')})`, this.nomAvecRelation(v.nom), v.nom);
+          vexerPrestige(this.G, v);
+          this.bouton('...', null);
+          this.majBoutonsService();
+          this.time.delayedCall(2200, () => this.partirPar(FENETRE.x - 80));
+          return;
+        }
+        const e = EXIGENCES[v.prestige.type];
+        this.dire(`Hmm. ${e.nom.charAt(0).toUpperCase() + e.nom.slice(1)}... convenable. Voyons si vous êtes à la hauteur de ma commande. Je paie le double, naturellement.`, this.nomAvecRelation(v.nom), v.nom);
+        this.choix(['Choisir sa destination', () => this.ouvrirCarte()], ['Refuser ce client', () => this.refuser()]);
+        this.majCommande();
+        return;
+      }
       let bonjour = v.prevu ? "C'est moi qui t'ai écrit, tu te souviens ? " : '';
       if (entree.attentes) bonjour = "Me revoilà ! On reprend où on en était ? ";
       if (v.habitue) bonjour = 'Re-bonjour, c\'est encore moi ! ' + (this.aReparer(v).length ? 'Mon matériel a souffert la dernière fois... ' : '');
@@ -682,6 +744,10 @@ class CounterScene extends Phaser.Scene {
       this.bouton('Écouter son récit', () => this.ouvrirRecit(entree.parti));
     } else if (entree.type === 'famille') {
       this.visiteFamille(entree.visite);
+    } else if (entree.type === 'notable') {
+      this.visiteNotable(entree);
+    } else if (entree.type === 'colporteur') {
+      this.visiteColporteur(entree);
     } else if (entree.type === 'faucheuse') {
       this.visiteFaucheuse(entree);
     } else {
@@ -1214,7 +1280,13 @@ class CounterScene extends Phaser.Scene {
       this.servir();
     }
     if (data && data.achats && data.achats.length) {
-      this.dire(`Grippesou t'a vendu : ${data.achats.join(', ')}. C'est déjà sur ton comptoir, prêt à servir !`, '');
+      this.dire(data.vendeur === 'colporteur' ? `Barnabé t'a vendu : ${data.achats.join(', ')}. « Merci, l'ami ! À la prochaine ! »`
+        : `Grippesou t'a vendu : ${data.achats.join(', ')}. C'est déjà sur ton comptoir, prêt à servir !`, '');
+    }
+    if (data && data.vendeur === 'colporteur') {
+      if (!data.achats || !data.achats.length) this.dire('« Une autre fois, alors ! Bonne journée. »', COLPORTEUR.nom);
+      this.bouton('...', null);
+      this.partirPar(FENETRE.x - 80);
     }
   }
 

@@ -378,15 +378,49 @@ const GAIN_REPUTATION_SUCCES = 0.6;
 // Les paliers de réputation : chacun relève le nombre maximum de clients de passage par jour
 // (sans compter ceux des lettres). Entre deux paliers, plus de réputation = toujours plus de clients,
 // mais jamais au-delà du plafond : de quoi garder le dispatch gérable et le temps de s'équiper.
+// Chaque palier franchi est un événement : la gazette en parle, un visiteur notable vient te
+// féliciter au comptoir, et quelque chose se débloque (`recompense`).
 const PALIERS_CLIENTS = [
   { reputation: -Infinity, max: 3, nom: 'Échoppe inconnue' },
-  { reputation: 2, max: 4, nom: 'Échoppe du coin' },
-  { reputation: 5, max: 5, nom: 'Comptoir apprécié' },
-  { reputation: 9, max: 6, nom: 'Comptoir réputé' },
-  { reputation: 14, max: 7, nom: 'Comptoir renommé' },
-  { reputation: 20, max: 8, nom: 'Comptoir célèbre' },
-  { reputation: 28, max: 10, nom: 'Comptoir légendaire' },
+  { reputation: 2, max: 4, nom: 'Échoppe du coin', visiteur: 'bourgmestre', recompense: { type: 'etals' },
+    gazette: "On commence à parler d'une petite échoppe pleine de promesses, au bout du village..." },
+  { reputation: 5, max: 5, nom: 'Comptoir apprécié', visiteur: 'colporteur', recompense: { type: 'colporteur' },
+    gazette: 'Les colporteurs des grands chemins ont ajouté un comptoir à leur tournée.' },
+  { reputation: 9, max: 6, nom: 'Comptoir réputé', visiteur: 'heraut', recompense: { type: 'prestige', prime: 60 },
+    gazette: 'La Confrérie du Dernier Rempart cite un comptoir en exemple. Les nobles dressent l\'oreille.' },
+  { reputation: 14, max: 7, nom: 'Comptoir renommé', visiteur: 'bourgmestre', recompense: { type: 'decoration', id: 'blason', prime: 100 },
+    gazette: 'Le bourg a décerné son blason à un marchand. Du jamais vu depuis trois générations !' },
+  { reputation: 20, max: 8, nom: 'Comptoir célèbre', visiteur: 'legende', recompense: { type: 'legendes', prime: 150 },
+    gazette: 'Une légende vivante aurait été vue devant un comptoir de la Comté. Les curieux affluent.' },
+  { reputation: 28, max: 10, nom: 'Comptoir légendaire', visiteur: 'heraut', recompense: { type: 'decoration', id: 'sceau', prime: 300 },
+    gazette: "La Confrérie a remis son sceau d'or. On viendra de loin pour ce comptoir-là." },
 ];
+// Les clients prestigieux (dès le palier « Comptoir réputé ») : des nobles et des collectionneurs
+// qui paient le double... mais qui ont une exigence. Si elle n'est pas remplie, ils repartent
+// vexés, et ta réputation en prend un coup.
+const PRESTIGIEUX = [
+  { nom: 'Dame Aliénor de Hautval', race: 'humain', feminin: true },
+  { nom: 'Sire Baudouin de Montclair', race: 'humain', feminin: false },
+  { nom: 'Lord Edgard Pommeroy', race: 'humain', feminin: false },
+  { nom: 'Dame Ysaline des Bois-Clairs', race: 'elfe', feminin: true },
+  { nom: 'Seigneur Thrain Fendroc', race: 'nain', feminin: false },
+  { nom: 'Comtesse Primula Sous-Colline', race: 'hobbit', feminin: true },
+];
+const CHANCE_PRESTIGE = 0.3;
+const PRESTIGE_BUTIN = 2;
+const PERTE_PRESTIGE = 0.5; // la réputation perdue quand un prestigieux repart vexé
+const EXIGENCES = {
+  comptoir: { nom: 'un beau comptoir', verifier: G => niveauAmelioration(G, 'comptoir') >= 1,
+    texte: 'Un comptoir en chêne brut ? Je ne traite pas dans une échoppe de village. Faites-le vernir, et nous reparlerons.' },
+  eclairage: { nom: 'un shop bien éclairé', verifier: G => niveauAmelioration(G, 'eclairage') >= 1,
+    texte: "On n'y voit rien, ici ! Des bougies, à notre époque... Revenez me voir quand vous aurez des lanternes." },
+  objet: { nom: 'un objet rare en stock', verifier: (G, id) => (G.stock[id] || 0) >= 1,
+    texte: 'Pas la moindre {objet} en stock ? Et vous vous dites fournisseur ? Je vais voir ailleurs.' },
+};
+const OBJETS_EXIGES = ['amulette', 'antidote', 'cape', 'bouclier'];
+// Une fois le colporteur débloqué, il passe au comptoir certains jours.
+const CHANCE_COLPORTEUR = 0.35;
+const COLPORTEUR = { nom: 'Barnabé le colporteur', multiplicateur: 1.25 };
 // Le premier jour où la Faucheuse peut venir annoncer les morts.
 const JOUR_FAUCHEUSE = 5;
 // Une contrée est « conquise » après ce nombre de missions réussies : son drapeau flotte sur ta carte.
@@ -606,6 +640,8 @@ const DECORATIONS = {
   lanterne: { nom: 'Lanterne enchantée', effet: 'Porte chance : +10 % sur les parts de butin.' },
   enclume: { nom: 'Enclume naine', effet: 'Réparations plus faciles : 1 matériau de moins.' },
   trefle: { nom: 'Trèfle du mendiant', effet: 'Porte-bonheur : tu gagnes les égalités aux dés, et le bonneteau va moins vite.' },
+  blason: { nom: 'Blason du bourg', effet: 'Les marchands du Mastre Marché te font 5 % de remise.' },
+  sceau: { nom: 'Sceau de la Confrérie', effet: 'Les aventuriers te font confiance : +1 de chance (trèfle) pour tous.' },
 };
 
 // --- Ton personnage ---

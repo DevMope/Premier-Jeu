@@ -260,6 +260,7 @@ function mettreAJourPartie(G, brut = G) {
     for (const h of G.historique) if (h.issue === 'vivant' && ZONES[h.zone]) G.conquete[h.zone] = (G.conquete[h.zone] || 0) + 1;
   }
   G.piecesAVenir = G.piecesAVenir || [];
+  if (G.palierVu === undefined) G.palierVu = 0;
   G.zonesDecouvertes = [...new Set(G.zonesDecouvertes)];
   if (!brut.zonesConnues) {
     // Les zones déjà ouvertes avant l'armure : leurs pièces sont déjà sur le mannequin.

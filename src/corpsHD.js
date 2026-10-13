@@ -25,6 +25,8 @@ const FIGURANTS = {
   colporteur: { race: 'humain', nom: 'Colporteur', costume: 'colporteur', habit: 0x6a5a40, cheveux: 0x4a3a2a, cape: 0x4a3a2a },
   mentor: { race: 'humain', nom: 'Garrick', costume: 'mentor', habit: 0x2f5a3a, cheveux: 0x9a9aa0, cape: 0x2f5a3a, barbe: 'pleine', niveau: 3 },
   gobelin: { race: 'gobelin', nom: 'Grippesou', costume: 'gobelin', habit: 0x6a5030, cheveux: 0x5a3a20 },
+  bourgmestre: { race: 'humain', nom: 'Odilon Bonnefoi', costume: 'banquier', habit: 0x4a2a5a, cheveux: 0xb0b0b8, barbe: 'moustache', niveau: 3 },
+  heraut: { race: 'humain', nom: 'Le héraut', costume: 'garde', habit: 0x2a4a8a, cheveux: 0x5a3a1a },
   mendiant: { race: 'humain', nom: 'Le mendiant', costume: 'mendiant', habit: 0x6a6252, cheveux: 0x8a8a80, cape: 0x4a4236, barbe: 'pleine', niveau: 0 },
 };
 
@@ -37,7 +39,7 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0, pose = null) {
   const race = PROPORTIONS[g.race] ? g.race : 'humain';
   const P = PROPORTIONS[race];
   const L = 44;
-  const coiffe = costume === 'banquier' ? 9 : (race === 'magicienne' || costume === 'colporteur') ? 9 : 0;
+  const coiffe = costume === 'banquier' ? 9 : (race === 'magicienne' || costume === 'colporteur' || costume === 'noble') ? 9 : 0;
   const leves = pose === 'leves';
   const chapeau = coiffe + (leves ? 12 : 0);           // (de la place au-dessus de la tête pour les mains)
   const H = P.H + chapeau;
@@ -52,7 +54,8 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0, pose = null) {
   t.rampes.lin = rampe(0xd8ccb0);
   t.rampes.bas = rampe(race === 'elfe' ? 0x3a4a3a : race === 'hobbit' ? 0x8a6a40 : 0x5a4a3a);
   t.rampes.levres = costume === 'gobelin' ? rampe(f ? 0xb84a5a : 0x8a3a34) : levresPour(g.peau ?? 1, f);
-  t.rampes.chapeau = rampe(costume === 'banquier' ? 0x1a1a22 : costume === 'colporteur' ? 0x5a4630 : g.habit);
+  t.rampes.chapeau = rampe(costume === 'banquier' ? 0x1a1a22 : costume === 'colporteur' ? 0x5a4630 : costume === 'noble' ? 0x4a1a3a : g.habit);
+  t.rampes.plume = rampe(0xf0e8d0); t.rampes.velours = rampe(0x6a1a3a); t.rampes.fourrure = rampe(0xe8e0d0);
   const cy = chapeau + 1 + P.ry;                       // le centre de la tête
   const yT = cy + P.ry - 1;                            // le haut du torse
   const yB = yT + P.torse;                             // la taille
@@ -61,7 +64,7 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0, pose = null) {
   const manteau = race === 'elfe' || costume === 'colporteur' || costume === 'mentor';
 
   // La cape, derrière (héros et légendes, le mentor, le colporteur)
-  if (tenue >= 3 || costume === 'mentor' || costume === 'colporteur' || costume === 'mendiant') {
+  if (tenue >= 3 || costume === 'mentor' || costume === 'colporteur' || costume === 'mendiant' || costume === 'noble') {
     t.forme('cape', (x, y) => {
       if (y < yT + 1 || y > sol - 3) return null;
       const demi = P.ep + 1.5 + (y - yT) * 0.12;
@@ -70,6 +73,8 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0, pose = null) {
       return Math.abs(nx) <= 1 ? [nx * 0.6, 0.1, 0.8] : null;
     }, { decalage: -0.9, motif: (x) => (x % 5 === 0 ? -0.5 : 0) });
     if (tenue >= 4) for (let y = yT + 2; y < sol - 3; y++) { t.poser(Math.round(cx - P.ep - 2 - (y - yT) * 0.12), y, 'or', 4); t.poser(Math.round(cx + P.ep + 2 + (y - yT) * 0.12), y, 'or', 3); }
+    // Le noble : un col de fourrure blanche sur sa cape de velours
+    if (costume === 'noble') for (let y = yT + 1; y < yT + 5; y++) for (let x = Math.round(cx - P.ep - 2); x <= cx + P.ep + 2; x++) t.poser(x, y, 'fourrure', 3 + ((x + y) % 2));
   }
   // Les cheveux longs, derrière
   if (['long', 'queue', 'chignon'].includes(g.coiffure) || race === 'elfe' || race === 'magicienne') {
@@ -232,6 +237,12 @@ function dessinerCorpsHD(g, tenue = 1, costume = null, pas = 0, pose = null) {
     t.forme('chapeau', (x, y) => (y >= 0 && y < cy - 4 && Math.abs(x + 0.5 - cx - (cy - 4 - y) * 0.15) < (y + 1) * 0.55 ? [(x + 0.5 - cx) / 8, -0.3, 0.8] : null));
     t.forme('chapeau', (x, y) => (y >= cy - 5 && y <= cy - 4 && Math.abs(x + 0.5 - cx) < P.rx + 5 ? [0, -0.6, 0.7] : null), { decalage: -0.3 });
     for (let x = cx - 5; x <= cx + 5; x++) t.poser(x, cy - 6, 'or', 4);
+  } else if (costume === 'noble') {
+    // Un chapeau de velours à large bord, orné d'une longue plume blanche et d'une broche d'or
+    t.forme('chapeau', (x, y) => (y >= 2 && y <= cy - 6 && Math.abs(x + 0.5 - cx) < 7 - (cy - 6 - y) * 0.15 ? [(x + 0.5 - cx) / 8, -0.3, 0.8] : null));
+    t.forme('chapeau', (x, y) => (y >= cy - 7 && y <= cy - 5 && Math.abs(x + 0.5 - cx) < 11 ? [0, (y - cy + 6) * 0.6, 0.8] : null));
+    for (let k = 0; k < 11; k++) { t.poser(cx + 4 + k, Math.max(0, cy - 9 - Math.round(Math.sin(k / 3) * 4) - Math.floor(k / 3)), 'plume', 4 + (k % 2)); t.poser(cx + 4 + k, Math.max(0, cy - 8 - Math.round(Math.sin(k / 3) * 4) - Math.floor(k / 3)), 'plume', 3); }
+    t.poser(cx + 3, cy - 7, 'or', 5); t.poser(cx + 4, cy - 7, 'or', 4);
   } else if (costume === 'banquier') {
     t.forme('chapeau', (x, y) => (y >= 0 && y <= cy - 5 && Math.abs(x + 0.5 - cx) < 6 ? [(x + 0.5 - cx) / 7, -0.2, 0.8] : null));
     t.forme('chapeau', (x, y) => (y >= cy - 6 && y <= cy - 5 && Math.abs(x + 0.5 - cx) < 9.5 ? [0, -0.5, 0.8] : null));
@@ -302,6 +313,8 @@ function corpsHD(scene, quoi, pose = null) {
     gene = geneHD(quoi);
     tenue = tenueDe(quoi.niveau);
     cle = `corps_${quoi.race}_${quoi.nom}_${tenue}`;
+    // Les nobles et les collectionneurs : velours, fourrure et chapeau à plume
+    if (quoi.prestige) { costume = 'noble'; gene.habit = gene.habitNoble; gene.cape = 0x5a1a3a; cle += '_noble'; }
   }
   if (pose) cle += '_' + pose;
   if (!scene.textures.exists(cle)) {

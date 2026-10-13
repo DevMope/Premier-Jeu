@@ -10,6 +10,18 @@ const DESSINS_ICONES = {
     for (const [x, y] of [[4, 6], [5, 7], [6, 7], [7, 8], [8, 9], [9, 9]]) t.poser(x, y, 'tissuRouge', 2);
     t.poser(10, 10, 'tissuRouge', 4); t.poser(11, 11, 'tissuRouge', 4); t.poser(11, 10, 'tissuRouge', 4); t.poser(10, 11, 'tissuRouge', 4);
   },
+  blason(t) { // un écu aux armes du bourg : deux champs, une tour d'or
+    t.forme('tissuRouge', (x, y) => (y >= 1 && y <= 14 && Math.abs(x + 0.5 - 8) < 6 - Math.max(0, y - 8) * 0.9 ? [(x + 0.5 - 8) / 7, (y - 7) / 10, 0.8] : null));
+    t.forme('encre', (x, y) => (y >= 1 && y <= 14 && x + 0.5 < 8 && Math.abs(x + 0.5 - 8) < 6 - Math.max(0, y - 8) * 0.9 ? [(x + 0.5 - 8) / 7, (y - 7) / 10, 0.8] : null));
+    for (let y = 4; y <= 10; y++) for (let x = 6; x <= 9; x++) t.poser(x, y, 'or', y === 4 && x % 2 ? 5 : 4);
+    for (let y = 1; y <= 14; y++) { const d = Math.round(6 - Math.max(0, y - 8) * 0.9); t.poser(8 - d, y, 'or', 3); t.poser(7 + d, y, 'or', 3); }
+    for (let x = 2; x <= 13; x++) t.poser(x, 1, 'or', 4);
+  },
+  sceau(t) { // un sceau de cire d'or sur un ruban bleu, frappé d'une étoile
+    for (let y = 8; y <= 15; y++) { t.poser(5 + (y > 11 ? y - 11 : 0), y, 'encre', 3); t.poser(6 + (y > 11 ? y - 11 : 0), y, 'encre', 4); t.poser(10 - (y > 11 ? y - 11 : 0), y, 'encre', 3); t.poser(9 - (y > 11 ? y - 11 : 0), y, 'encre', 4); }
+    t.forme('or', ellipsoide(8, 7, 5.5, 5.5), { decalage: 0.2, motif: (x, y) => (Math.hypot(x + 0.5 - 8, y + 0.5 - 7) > 4.6 ? -0.9 : 0) });
+    for (const [dx, dy] of [[0, -2], [-2, 1], [2, 1], [-1, 2], [1, 2], [0, 0], [0, -1], [-1, 0], [1, 0], [0, 1]]) t.poser(8 + dx, 7 + dy, 'or', 5);
+  },
   trophee(t) { // une coupe d'or sur son socle
     t.forme('or', (x, y) => (y >= 2 && y <= 8 && Math.abs(x + 0.5 - 8) < 5.5 - (y - 2) * 0.5 ? [(x + 0.5 - 8) / 6, 0, 0.8] : null));
     for (const s of [-1, 1]) trait(t, 'or', 8 + s * 5, 3, 8 + s * 7, 6, 0.6);

@@ -220,7 +220,7 @@ function niveauAuHasard(G) {
     novice: 6,
     aguerri: 0.5 + r * 0.6 + j * 0.12,
     veteran: Math.max(0, r - 3) * 0.45 + Math.max(0, j - 10) * 0.06,
-    heros: Math.max(0, r - 8) * 0.3,
+    heros: Math.max(0, r - 8) * 0.3 + (G.legendes ? 1.5 : 0),
   };
   const total = Object.values(poids).reduce((a, b) => a + b, 0);
   let x = Math.random() * total;
@@ -228,7 +228,7 @@ function niveauAuHasard(G) {
   return 'novice';
 }
 
-function creerVoyageur(G, { quete = null, nom, race, feminin, butin, duree, inventaire, blessures = 0, niveau, envie, exige = false }) {
+function creerVoyageur(G, { quete = null, nom, race, feminin, butin, duree, inventaire, blessures = 0, niveau, envie, exige = false, prestige = null }) {
   const v = {
     id: G.prochainId++,
     nom, race, feminin,
@@ -241,6 +241,7 @@ function creerVoyageur(G, { quete = null, nom, race, feminin, butin, duree, inve
     inventaire: { ...(inventaire || {}) },
     habitue: !!inventaire,
     exige, // après une mission ratée, il exige un objet en plus de sa commande
+    prestige, // un noble ou un collectionneur : paie le double, mais a une exigence
   };
   v.accueil = ENVIES[v.envie];
   if (quete) appliquerQuete(G, v, quete, { butin, duree });
@@ -270,7 +271,8 @@ function appliquerQuete(G, v, queteId, { butin, duree } = {}) {
   v.pv = Math.max(1, q.pv + niv.pv - v.blessures);
   const camp = ZONES[zone].camp ? EFFETS_CAMP[ZONES[zone].camp].butin : 1;
   const evenement = modifEvenement(G, 'butin', zone) || 1;
-  v.butin = butin ?? Math.round(hasard(...q.butin) * (1 + 0.3 * enPlus) * BUTIN_PAR_DANGER[ZONES[zone].danger] / BUTIN_PAR_DANGER[1] * niv.butin * camp * evenement);
+  const prestige = v.prestige ? PRESTIGE_BUTIN : 1; // les nobles paient le double
+  v.butin = butin ?? Math.round(hasard(...q.butin) * (1 + 0.3 * enPlus) * BUTIN_PAR_DANGER[ZONES[zone].danger] / BUTIN_PAR_DANGER[1] * niv.butin * camp * evenement * prestige);
   v.duree = d;
   v.queteId = queteId;
   v.zone = zone;
@@ -420,6 +422,8 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     evenements: [],    // { id, debut, fin }
     courrier: [],      // les lettres d'information (événements) : { jour, texte }
     gazette: null,     // les nouvelles du jour, criées au marché
+    palierVu: 0,       // le plus haut palier de réputation déjà fêté
+    palierNouveau: null, // un palier franchi cette nuit : le visiteur notable vient ce matin
     rumeur: null,      // { jour } : moins de clients ce jour-là
     armure: [],        // les pièces de l'Armure du Dernier Rempart déjà reçues
     nouvellesPieces: [], // celles que le messager apporte ce matin : { piece, zone }
@@ -544,7 +548,8 @@ function etalsDuJour(G) {
     const amis = niveauRelation(G, m.nom).index >= 5 ? 2 : 0;
     const rares = m.objets.filter(id => !m.toujours.includes(id));
     const manquaient = rares.filter(id => !hier[cle] || !hier[cle][id] || hier[cle][id].qte <= 0);
-    const presents = rares.filter(id => manquaient.includes(id) || Math.random() < 0.6);
+    // (avec la promesse des marchands, obtenue au premier palier, les raretés sont là chaque jour)
+    const presents = rares.filter(id => manquaient.includes(id) || G.bonusEtals || Math.random() < 0.6);
     if (rares.length && !presents.length) presents.push(auHasard(rares));
     etals[cle] = {};
     for (const id of m.objets) {
@@ -561,7 +566,8 @@ function etalsDuJour(G) {
 
 function remiseMarchand(G, cle) {
   const forme = reveilDuJour(G).forme === 'remise' ? CHAMBRE.remise : 0;
-  return (REMISES[niveauRelation(G, MARCHANDS[cle].nom).nom] || 0) + forme;
+  const blason = aDecoration(G, 'blason') ? 0.05 : 0;
+  return (REMISES[niveauRelation(G, MARCHANDS[cle].nom).nom] || 0) + forme + blason;
 }
 
 function prixMarchand(G, cle, id) {
@@ -1081,6 +1087,9 @@ function nuit(G) {
   G.etalsJour = G.jour;
   G.jeux = { des: 0, bonneteau: 0 };
   avancerAtelier(G);
+  // Un palier de réputation franchi : la gazette en parlera, et un visiteur notable viendra.
+  const palier = palierClients(G).index;
+  if (palier > (G.palierVu || 0)) { G.palierVu = palier; G.palierNouveau = palier; }
   avancerEvenements(G);
   // Le sort de ceux qui rentrent aujourd'hui est tiré pendant la nuit (et donc sauvegardé).
   for (const p of G.partis) if (!p.termine && p.retour === G.jour && !p.resultat) p.resultat = simulerAventure(p.voyageur, p.colis, p.pieges);
@@ -1174,7 +1183,26 @@ function ouvrirComptoir(G) {
   // le carnet du disparu.
   if (morts.length && G.jour >= JOUR_FAUCHEUSE) file.push({ type: 'faucheuse', partis: morts });
   else if (morts.length) file.push(...morts.map(parti => ({ type: 'carnet', parti })));
-  G.file = [...retours, ...file];
+  // Un client prestigieux, certains jours (dès que les nobles s'intéressent à toi).
+  if (G.prestige && Math.random() < CHANCE_PRESTIGE) {
+    const pris = [...nomsActifs(G), ...clients.map(v => v.nom)];
+    const libres = PRESTIGIEUX.filter(p => !pris.includes(p.nom) && !(G.personnes[p.nom] && G.personnes[p.nom].mort));
+    if (libres.length) {
+      const p = auHasard(libres);
+      const type = auHasard(Object.keys(EXIGENCES));
+      const v = creerVoyageur(G, { ...p, niveau: auHasard(['veteran', 'veteran', 'heros']), envie: auHasard(['gloire', 'or']) });
+      v.prestige = { type, objet: type === 'objet' ? auHasard(OBJETS_EXIGES) : null };
+      file.splice(hasard(0, file.length), 0, { type: 'client', voyageur: v });
+    }
+  }
+  // Un palier franchi cette nuit : le visiteur notable passe juste après les retours de mission.
+  const notables = G.palierNouveau ? [{ type: 'notable', palier: G.palierNouveau }] : [];
+  // Le colporteur, certains jours, se glisse dans la file avec sa hotte.
+  if (G.colporteur && Math.random() < CHANCE_COLPORTEUR) {
+    G.colporteurOffre = offreDuJour(COLPORTEUR.multiplicateur, 3, 1, 2);
+    file.splice(hasard(0, file.length), 0, { type: 'colporteur' });
+  }
+  G.file = [...retours, ...notables, ...file];
 }
 
 // Ce que l'aventurier te reverse vraiment, selon votre relation et la lanterne.
@@ -1230,7 +1258,7 @@ function terminerAventure(G, parti) {
     // Chaque succès le fait progresser : novice, aguerri, vétéran, héros, légende.
     const niveau = meilleurNiveau(v.niveau, succesDe(G, v.nom));
     if (niveau !== v.niveau) message = (message ? message + ' ' : '') + `${v.nom.split(' ')[0]} devient ${NIVEAUX_AVENTURIER[niveau].nom.toLowerCase()} !`;
-    G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau });
+    G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau, prestige: v.prestige || null });
     parti.trouvailles = trouvailles(G, v);
     // Il a peut-être aperçu une zone plus dangereuse, encore inconnue.
     const d = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
@@ -1734,7 +1762,8 @@ function trefleDe(G, nom) {
   if (!G) return TREFLE_BASE;
   const relation = TREFLE_RELATION[niveauRelation(G, nom).index] || 0;
   const cadeaux = (G.personnes[nom] && G.personnes[nom].trefle) || 0;
-  return Phaser.Math.Clamp(TREFLE_BASE + relation + cadeaux, 0, TREFLE_MAX);
+  const sceau = aDecoration(G, 'sceau') ? 1 : 0;
+  return Phaser.Math.Clamp(TREFLE_BASE + relation + cadeaux + sceau, 0, TREFLE_MAX);
 }
 
 // Offrir un cadeau : selon ses goûts, beaucoup de chance, un peu, ou rien (et il le prend mal).
@@ -1843,7 +1872,39 @@ function avancerEvenements(G) {
   const i = auHasard(restantes.length ? restantes : NOUVELLES.map((_, k) => k));
   G.nouvellesLues.push(i);
   lignes.push(NOUVELLES[i]);
+  if (G.palierNouveau && PALIERS_CLIENTS[G.palierNouveau].gazette) lignes.unshift('📢 ' + PALIERS_CLIENTS[G.palierNouveau].gazette);
   G.gazette = { jour: G.jour, lignes };
+}
+
+// L'exigence d'un client prestigieux est-elle remplie ? Renvoie null, ou ce qu'il dit en repartant.
+function refusPrestige(G, v) {
+  if (!v.prestige) return null;
+  const e = EXIGENCES[v.prestige.type];
+  if (e.verifier(G, v.prestige.objet)) return null;
+  return e.texte.replace('{objet}', v.prestige.objet ? ITEMS[v.prestige.objet].nom.toLowerCase() : '');
+}
+
+// Il repart vexé : ta réputation en souffre, et il s'en souviendra.
+function vexerPrestige(G, v) {
+  G.reputation -= PERTE_PRESTIGE;
+  connaitre(G, v);
+  return changerRelation(G, v.nom, -2);
+}
+
+// La récompense d'un palier, remis par le visiteur notable. Renvoie ce qu'il a apporté (texte).
+function recompensePalier(G, index) {
+  const p = PALIERS_CLIENTS[index];
+  const r = p && p.recompense;
+  if (G.palierNouveau === index) G.palierNouveau = null;
+  if (!r) return '';
+  const textes = [];
+  if (r.prime) { encaisser(G, r.prime, 'primes'); textes.push(`une prime de ${r.prime} pièces`); }
+  if (r.type === 'etals') { G.bonusEtals = true; textes.push('la promesse des marchands : leurs raretés seront sur leurs étals chaque jour'); }
+  if (r.type === 'colporteur') { G.colporteur = true; textes.push(`la visite de ${COLPORTEUR.nom}, certains jours, avec sa hotte pleine de choses rares`); }
+  if (r.type === 'prestige') { G.prestige = true; textes.push('la curiosité des nobles et des collectionneurs : ils viendront bientôt te voir'); }
+  if (r.type === 'legendes') { G.legendes = true; textes.push('la bienveillance des héros et des légendes : ils passeront plus souvent'); }
+  if (r.type === 'decoration' && !G.decorations.includes(r.id)) { G.decorations.push(r.id); textes.push(`${DECORATIONS[r.id].nom} (${DECORATIONS[r.id].effet.charAt(0).toLowerCase() + DECORATIONS[r.id].effet.slice(1)})`); }
+  return textes.join(', et ');
 }
 
 // --- L'Armure du Dernier Rempart ---
