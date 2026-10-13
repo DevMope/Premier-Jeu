@@ -211,6 +211,7 @@ function mettreAJourPartie(G) {
   G.nomShop = G.nomShop || NOM_SHOP_DEFAUT;
   G.ameliorations = { comptoir: 0, coffre: 0, chambre: 0, eclairage: 0, ...(G.ameliorations || {}) };
   G.travaux = G.travaux || [];
+  G.tutoVu = G.tutoVu || {};
   G.travauxFinis = G.travauxFinis || [];
   // Le forgeron s'appelle désormais Thorgal : on garde votre relation.
   for (const table of [G.relations, G.personnes]) {

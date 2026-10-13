@@ -23,6 +23,7 @@ class ArriereScene extends Phaser.Scene {
     this.dessinerBuffet();
     this.dessinerPorte();
     creerBouton(this, 840, 505, 220, '↻ Retour au comptoir', () => this.fermer());
+    this.time.delayedCall(400, () => conseilGarrick(this, 'arriere'));
   }
 
   // --- Le décor ---

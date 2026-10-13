@@ -31,6 +31,7 @@ class CarteScene extends Phaser.Scene {
     this.creerBande();
     this.tout();
     this.cameras.main.fadeIn(300);
+    if (!this.comptoir) this.time.delayedCall(500, () => conseilGarrick(this, 'carte'));
   }
 
   // --- Le décor ---

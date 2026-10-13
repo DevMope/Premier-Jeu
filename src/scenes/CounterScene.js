@@ -578,6 +578,7 @@ class CounterScene extends Phaser.Scene {
 
   arrivee(entree) {
     if (entree.type === 'client') {
+      conseilGarrick(this, 'comptoir');
       const v = this.voyageur = entree.voyageur;
       let bonjour = v.prevu ? "C'est moi qui t'ai écrit, tu te souviens ? " : '';
       if (entree.attentes) bonjour = "Me revoilà ! On reprend où on en était ? ";
@@ -901,6 +902,7 @@ class CounterScene extends Phaser.Scene {
   // `confirme` : le joueur a déjà confirmé que c'est bien un objet en plus de la commande.
   donner(id, confirme = false) {
     if (!this.enService || this.enConfirmation) return;
+    this.time.delayedCall(400, () => conseilGarrick(this, 'colis'));
     const v = this.voyageur;
     const commande = commandeDe(v);
     // Au-delà de la commande, c'est du suréquipement : seulement ce qui peut servir (soins,
@@ -1129,6 +1131,7 @@ class CounterScene extends Phaser.Scene {
     const chance = chanceDeRetour(v, this.colis);
     const msg = partir(this.G, v, this.colis, this.pieges);
     this.enService = false;
+    this.time.delayedCall(2500, () => conseilGarrick(this, 'remis'));
     this.majCommande(); // le colis est remis : on ne peut plus rien retirer
     this.majBoutonsService();
     this.bouton('...', null);

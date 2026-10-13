@@ -46,6 +46,7 @@ class BureauScene extends Phaser.Scene {
 
     if (!this.comptoir) this.onglet = 'mission';
     this.afficherListe();
+    this.time.delayedCall(300, () => conseilGarrick(this, 'bureau'));
   }
 
   // --- Les onglets du registre ---

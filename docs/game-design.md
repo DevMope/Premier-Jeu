@@ -318,3 +318,21 @@ Commandées le soir au bureau (tiroir « Améliorer le shop »), installées pen
 | Éclairage | Bougies, Lanternes, Chandeliers, Lustre de cristal | 90 / 250 / 600 | +0,3 client par jour |
 
 Tout futur objet améliorable suivra le même modèle (table AMELIORATIONS dans data.js).
+
+## Le vrai début : la rénovation et la première journée
+
+Après le prologue, Garrick emmène le héros devant son futur shop : une vieille auberge
+abandonnée, sous la poussière et les toiles d'araignée. Petit gameplay de clic : on remet à
+neuf chaque endroit délabré (façade, comptoir, arrière-boutique, chambre) ; à chaque clic,
+JeuneGoy va jusqu'à l'endroit, un nuage de poussière, et l'endroit devient sa version propre.
+Puis le shop restauré est filmé de gauche à droite (chambre → arrière-boutique → comptoir →
+façade) et la première journée commence. Garrick reste ce jour-là et explique chaque écran la
+première fois qu'on le découvre (carte, comptoir, colis, arrière-boutique, soir, bureau,
+marché), puis reprend la route.
+
+## ⚠ Le grand retournement (pour plus tard)
+
+Garrick Cœur-de-Chêne, l'aventurier sauvé de la rivière au début, est en réalité le grand
+méchant du jeu : il contrôle toutes les forces du mal. S'il flottait dans le fleuve, c'est que
+des héros légendaires l'avaient pris en chasse. À distiller par petits indices au fil du jeu
+(sa générosité suspecte, ses absences, les rumeurs de la gazette...) avant la révélation.

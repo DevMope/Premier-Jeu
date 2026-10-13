@@ -131,7 +131,8 @@ class IntroHistoireScene extends Cinematique {
   finir() {
     if (this.fini) return;
     this.fini = true;
-    commencerJournee(this, false, false); // la file du premier jour est déjà là, la façade aussi
+    this.cameras.main.fadeOut(500);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Renovation'));
   }
 
   async raconter() {
@@ -221,22 +222,7 @@ class IntroHistoireScene extends Cinematique {
     this.ecrire('Garrick Cœur-de-Chêne', '« Alors c\'est tout trouvé ! Tu vas ouvrir un comptoir pour les aventuriers comme moi. Je t\'offre ton premier shop, et un petit capital pour commencer. »');
     await this.attendreClic();
 
-    // Le comptoir.
-    await this.animer({ targets: this.cameras.main, alpha: 0, duration: 400 });
-    this.tweens.killAll();
-    this.children.removeAll(true);
-    this.cameras.main.setAlpha(1);
-    const g = this.add.graphics();
-    dessinerComte(g, 0, 0, 960, 370, 0.15);
-    const facade = dessinerFacade(this, 480, 345);
-    const heros = this.add.image(140, 345, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(5));
-    imageCorps(this, 90, 345, 'mentor', 6);
-    this.creerBoiteTexte();
-    this.boutonPasser(() => this.finir());
-    this.ecrire(this.G ? this.G.nomShop : window.GAME.nomShop, 'Et c\'est ainsi que tout commença.');
-    await this.marcher(heros, facade.porteX - 60);
-    this.onomatopee(facade.porteX - 60, 200, 'TADAAA !', '#f3d98a');
-    await this.attendreClic();
+    // Le shop : une vieille auberge à remettre en état (la scène de rénovation).
     this.finir();
   }
 }

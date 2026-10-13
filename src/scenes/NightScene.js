@@ -45,6 +45,7 @@ class NightScene extends Phaser.Scene {
     this.events.on('resume', this.tout, this);
     this.tout();
     afficherStatutSauvegarde(this, 20, 22, 0);
+    if (!this.matin) this.time.delayedCall(600, () => conseilGarrick(this, 'soir'));
   }
 
   allerA(scene) {

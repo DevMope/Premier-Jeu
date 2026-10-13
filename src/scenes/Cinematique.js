@@ -2,11 +2,12 @@
 // une boîte de texte, « clique pour continuer », et des animations qu'on attend avec `await`.
 class Cinematique extends Phaser.Scene {
   creerBoiteTexte() {
-    this.add.image(480, 455, panneauHD(this, 940, 150, 'ardoise')).setScale(2).setDepth(10);
+    this.boite = this.add.image(480, 455, panneauHD(this, 940, 150, 'ardoise')).setScale(2).setDepth(10).setScrollFactor(0);
     this.entete = this.add.text(30, 392, '', style(16, '#f3d98a', { fontStyle: 'bold' })).setDepth(10);
     this.texte = this.add.text(30, 418, '', style(18, '#f3e6c8', { wordWrap: { width: 900 }, lineSpacing: 6 })).setDepth(10);
     this.indice = this.add.text(940, 518, '▶ clique pour continuer', style(13, '#c9b48a', { fontStyle: 'italic' }))
       .setOrigin(1, 0.5).setVisible(false).setDepth(10);
+    for (const o of [this.entete, this.texte, this.indice]) o.setScrollFactor(0);
     this.tweens.add({ targets: this.indice, alpha: 0.4, duration: 600, yoyo: true, repeat: -1 });
   }
 
@@ -59,7 +60,7 @@ class Cinematique extends Phaser.Scene {
   // « Passer ▶▶ » en haut à droite.
   boutonPasser(action) {
     const t = this.add.text(940, 20, 'Passer ▶▶', style(15, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 4 } }))
-      .setOrigin(1, 0).setDepth(20).setInteractive({ useHandCursor: true });
+      .setOrigin(1, 0).setDepth(20).setScrollFactor(0).setInteractive({ useHandCursor: true });
     t.on('pointerdown', pointer => { pointer.event.stopPropagation(); action(); });
   }
 }

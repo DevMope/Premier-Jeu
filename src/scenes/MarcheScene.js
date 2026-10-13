@@ -53,6 +53,7 @@ class MarcheScene extends Phaser.Scene {
     creerBouton(this, 840, 510, 210, 'Ouvrir le comptoir', () => this.ouvrir());
 
     this.ouvrirEtal('gedeon');
+    this.time.delayedCall(700, () => conseilGarrick(this, 'marche'));
     afficherStatutSauvegarde(this, 940, 46, 1);
     // Les commandes prévues, qu'on déroule ou referme
     this.commandesOuvertes = false;

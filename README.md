@@ -38,6 +38,8 @@ La partie se sauvegarde toute seule le soir et le matin au marché :
 | `src/interieurHD.js` | L'intérieur en HD : murs, plancher, meubles par niveau de luxe, luminaires, bougies et lumière, panneaux |
 | `src/exterieurHD.js` | L'extérieur en HD : paysages peints, façade, étals, pavés, Banque, carte |
 | `src/corpsHD.js` | Les personnages en pied en HD : peuples, tenues par niveau, figurants |
+| `src/tutoriel.js` | Les conseils de Garrick pendant la première journée |
+| `src/scenes/RenovationScene.js` | Le vrai début : rénovation de l'auberge abandonnée, visite du shop restauré |
 | `src/objetsHD.js` | Les marchandises en HD (icônes 16 × 16), les pièces d'or, l'éclat et l'étiquette des casiers |
 | `src/scenes/FacadeScene.js` | Le matin : la façade du shop et son enseigne |
 | `src/scenes/ArriereScene.js` | L'arrière-boutique : stock, fortune, cadeaux, tiroir secret, chambre |
