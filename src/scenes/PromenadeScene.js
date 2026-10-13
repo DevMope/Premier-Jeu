@@ -101,6 +101,7 @@ class PromenadeScene extends Cinematique {
       ArriereScene.prototype.dessinerPanier.call(this);
       ArriereScene.prototype.dessinerBuffet.call(this);
       ArriereScene.prototype.dessinerPorte.call(this);
+      ArriereScene.prototype.dessinerDecos.call(this);
     });
     this.lumieres.push([960 + 640, 90, 3], [960 + 514, SOL_ARRIERE - 30, 1.6]);
     this.regarder(980, 76, 512, 364, `Ta réserve : ${stockTotal(G)} / ${G.capacite} objets, rangés sur ${AMELIORATIONS.reserve.niveaux[niveauAmelioration(G, 'reserve')].toLowerCase()}.`);

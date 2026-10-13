@@ -644,6 +644,33 @@ const DECORATIONS = {
   sceau: { nom: 'Sceau de la Confrérie', effet: 'Les aventuriers te font confiance : +1 de chance (trèfle) pour tous.' },
 };
 
+// --- La brocante de Firmin : des décorations pour ton shop ---
+// Chacune se voit dans l'arrière-boutique, et attire un peuple (ou un peu tout le monde).
+const DECOS = {
+  tropheeCerf: { nom: 'Trophée de cerf', prix: 45, attire: 'nain', effet: 'Les nains se sentent chez eux : plus de clients nains.' },
+  tapisserie: { nom: 'Tapisserie des Trois Terres', prix: 60, attire: 'elfe', effet: 'Les elfes admirent le tissage : plus de clients elfes.' },
+  carillon: { nom: 'Carillon de cuivre', prix: 30, attire: 'hobbit', effet: 'Son tintement plaît aux hobbits : plus de clients hobbits.' },
+  horloge: { nom: 'Horloge à coucou', prix: 55, attire: 'humain', effet: 'Les humains aiment la ponctualité : plus de clients humains.' },
+  globe: { nom: 'Globe de cristal', prix: 70, attire: 'magicienne', effet: 'Les magiciennes y lisent des présages : plus de clientes magiciennes.' },
+  fougere: { nom: 'Fougère rare', prix: 25, attire: null, attrait: 0.4, effet: 'Un shop accueillant : +0,4 client par jour.' },
+};
+const BROCANTEUR = { nom: 'Firmin le brocanteur' };
+// Plus de clients du peuple qu'une décoration attire : le poids de ce peuple est multiplié.
+const ATTIRANCE_DECO = 2.2;
+
+// --- La garde-robe de Marcelline : des vêtements et des accessoires pour toi ---
+// Tout ce que tu achètes, tu le portes : on le voit sur toi, partout.
+const GARDE_ROBE = {
+  chapeau: { nom: 'Chapeau de feutre', prix: 18, effet: 'Tu as de l\'allure : +0,2 client par jour.' },
+  cape: { nom: 'Cape de voyage', prix: 35, effet: 'Belle allure : +0,2 client par jour.' },
+  echarpe: { nom: 'Écharpe de laine', prix: 12, effet: 'Bien au chaud : tes nuits te consolent un peu plus (+0,1 de réputation après un mauvais jour).' },
+  monocle: { nom: 'Monocle', prix: 24, effet: 'Tu vois mieux : +10 % de flair.' },
+  pipe: { nom: 'Pipe en bruyère', prix: 10, effet: 'Calme et posé : les marchands te font 2 % de remise.' },
+  montre: { nom: 'Montre à gousset', prix: 40, effet: "Toujours à l'heure : +1 d'expérience chaque jour." },
+  bague: { nom: 'Bague de marchand', prix: 30, effet: 'On te fait confiance : +1 de relation avec chaque nouveau client.' },
+};
+const MARCELLINE = { nom: 'Marcelline la couturière' };
+
 // --- Ton personnage ---
 
 // Les noms selon l'âge : petit (moins de 18 ans), adulte, ancien (60 ans et plus).

@@ -261,6 +261,8 @@ function mettreAJourPartie(G, brut = G) {
   }
   G.piecesAVenir = G.piecesAVenir || [];
   if (G.palierVu === undefined) G.palierVu = 0;
+  G.decos = G.decos || [];
+  G.tenue = G.tenue || [];
   G.zonesDecouvertes = [...new Set(G.zonesDecouvertes)];
   if (!brut.zonesConnues) {
     // Les zones déjà ouvertes avant l'armure : leurs pièces sont déjà sur le mannequin.

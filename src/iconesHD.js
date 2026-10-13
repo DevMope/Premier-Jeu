@@ -22,6 +22,97 @@ const DESSINS_ICONES = {
     t.forme('or', ellipsoide(8, 7, 5.5, 5.5), { decalage: 0.2, motif: (x, y) => (Math.hypot(x + 0.5 - 8, y + 0.5 - 7) > 4.6 ? -0.9 : 0) });
     for (const [dx, dy] of [[0, -2], [-2, 1], [2, 1], [-1, 2], [1, 2], [0, 0], [0, -1], [-1, 0], [1, 0], [0, 1]]) t.poser(8 + dx, 7 + dy, 'or', 5);
   },
+  // --- La brocante de Firmin ---
+  tropheeCerf(t) { // une tête de cerf sur son écusson de bois
+    t.rampes.cerf = rampe(0x8a6a3a);
+    t.forme('chene', (x, y) => (y >= 2 && y <= 14 && Math.abs(x + 0.5 - 8) < 5.5 - Math.max(0, y - 10) * 0.8 ? [(x + 0.5 - 8) / 6, 0, 0.8] : null), { decalage: -0.4 });
+    t.forme('cerf', ellipsoide(8, 9, 2.6, 3.6));
+    t.forme('cerf', ellipsoide(8, 12.5, 1.8, 1.6), { decalage: 0.4 });
+    for (const s of [-1, 1]) { for (let k = 0; k < 5; k++) t.poser(8 + s * (2 + k), 6 - k, 'parchemin', 4); t.poser(8 + s * 4, 1, 'parchemin', 5); t.poser(8 + s * 6, 3, 'parchemin', 5); t.poser(8 + s * 3, 3, 'parchemin', 4); }
+    t.poser(7, 8, 'encre', 0); t.poser(9, 8, 'encre', 0); t.poser(8, 13, 'encre', 0);
+  },
+  tapisserie(t) { // une tenture aux trois terres : lumière, milieu, ombre, sur sa tringle
+    t.rampes.lumiere = rampe(0xe8d060); t.rampes.ombre = rampe(0x4a2a5a); t.rampes.vert = rampe(0x4f7a3a);
+    for (let x = 1; x <= 14; x++) t.poser(x, 1, 'chene', 3);
+    t.forme('lumiere', (x, y) => (y >= 2 && y <= 13 && x >= 2 && x <= 5 ? [0, 0, 1] : null), { bord: false });
+    t.forme('vert', (x, y) => (y >= 2 && y <= 13 && x >= 6 && x <= 9 ? [0, 0, 1] : null), { bord: false });
+    t.forme('ombre', (x, y) => (y >= 2 && y <= 13 && x >= 10 && x <= 13 ? [0, 0, 1] : null), { bord: false });
+    t.poser(3, 5, 'or', 5); t.poser(7, 8, 'vert', 1); t.poser(8, 7, 'vert', 1); t.poser(11, 5, 'lin', 5);
+    for (let x = 2; x <= 13; x += 2) t.poser(x, 14, 'or', 3);
+  },
+  carillon(t) { // des tubes de cuivre suspendus à un disque de bois
+    t.rampes.cuivre = rampe(0xc87a3a);
+    t.forme('chene', ellipsoide(8, 3, 5, 1.8), { decalage: 0.3 });
+    trait(t, 'chanvre', 8, 0, 8, 2, 0.5);
+    for (const [x, h] of [[4, 9], [6, 12], [8, 14], [10, 11], [12, 8]]) for (let y = 5; y <= h; y++) t.poser(x, y, 'cuivre', y === 5 ? 1 : x % 4 === 0 ? 4 : 3);
+  },
+  horloge(t) { // une horloge à coucou : toit pointu, cadran, balancier
+    t.rampes.cadran = rampe(0xf0e8d0);
+    t.forme('cheneSombre', (x, y) => (y >= 1 && y <= 5 && Math.abs(x + 0.5 - 8) < (y - 1) * 1.3 + 1 ? [0, -0.4, 0.8] : null));
+    t.forme('chene', (x, y) => (y >= 5 && y <= 12 && x >= 3 && x <= 12 ? [(x + 0.5 - 8) / 6, 0, 0.8] : null), { decalage: -0.3 });
+    t.forme('cadran', ellipsoide(8, 8.5, 3, 3), { decalage: 0.5 });
+    t.poser(8, 8, 'encre', 0); t.poser(8, 7, 'encre', 0); t.poser(9, 8, 'encre', 0);
+    for (let y = 12; y <= 15; y++) t.poser(8, y, 'or', 3); t.poser(7, 15, 'or', 4); t.poser(9, 15, 'or', 4);
+    t.poser(8, 2, 'cadran', 5); t.poser(8, 3, 'cadran', 4); // le coucou à sa lucarne
+  },
+  globe(t) { // un globe de cristal sur un pied de laiton, une lueur à l'intérieur
+    t.rampes.cristal = rampe(0x9ad0f0);
+    t.forme('cristal', ellipsoide(8, 7, 5.5, 5.5), { decalage: 0.2, motif: (x, y) => (Math.hypot(x + 0.5 - 6, y + 0.5 - 5) < 2 ? 1.5 : 0) });
+    t.poser(8, 8, 'cristal', 5); t.poser(9, 7, 'cristal', 5);
+    t.forme('laiton', (x, y) => (y >= 12 && y <= 15 && Math.abs(x + 0.5 - 8) < (y - 10) * 0.9 ? [0, -0.3, 0.8] : null));
+  },
+  fougere(t) { // une fougère touffue dans un pot de terre
+    t.rampes.feuille = rampe(0x4f8a3a); t.rampes.terre = rampe(0xb06a3a);
+    t.forme('terre', (x, y) => (y >= 11 && y <= 15 && Math.abs(x + 0.5 - 8) < 4.5 - (y - 11) * 0.3 ? [(x + 0.5 - 8) / 5, 0, 0.8] : null));
+    for (const [dx, dy, s] of [[0, 0, 0], [-1, 1, -1], [1, 1, 1], [-2, 3, -1], [2, 3, 1]]) {
+      for (let k = 0; k < 7 - Math.abs(dy); k++) { const x = 8 + dx + Math.round(s * k * 0.7), y = 10 - dy - k; t.poser(x, y, 'feuille', 3); t.poser(x + 1, y, 'feuille', k % 2 ? 4 : 2); t.poser(x - 1, y, 'feuille', k % 2 ? 2 : 4); }
+    }
+  },
+  // --- La garde-robe de Marcelline ---
+  chapeau(t) { // un chapeau de feutre à ruban
+    t.rampes.feutre = rampe(0x4a3a2a);
+    t.forme('feutre', (x, y) => (y >= 3 && y <= 9 && Math.abs(x + 0.5 - 8) < 4.5 ? [(x + 0.5 - 8) / 5, -0.2, 0.8] : null));
+    t.forme('feutre', (x, y) => (y >= 9 && y <= 11 && Math.abs(x + 0.5 - 8) < 7.5 ? [0, (y - 10) * 0.6, 0.8] : null));
+    for (let x = 4; x <= 11; x++) t.poser(x, 8, 'tissuRouge', 3);
+  },
+  cape(t) { // une cape de voyage pliée, avec sa broche
+    t.rampes.capeV = rampe(0x5a2a2a);
+    t.forme('capeV', (x, y) => (y >= 3 && y <= 14 && Math.abs(x + 0.5 - 8) < 3 + (y - 3) * 0.45 ? [(x + 0.5 - 8) / 8, 0, 0.8] : null), { motif: (x) => (x % 4 === 0 ? -0.5 : 0) });
+    t.forme('or', ellipsoide(8, 4, 1.6, 1.6), { decalage: 0.6 });
+  },
+  echarpe(t) { // une écharpe de laine rayée, enroulée
+    t.rampes.laine = rampe(0xc04040);
+    t.forme('laine', (x, y) => (y >= 2 && y <= 8 && x >= 2 && x <= 13 ? [0, (y - 5) / 4, 0.9] : null), { motif: (x, y) => (y % 3 === 0 ? 0.6 : 0) });
+    t.forme('laine', (x, y) => (y >= 8 && y <= 14 && x >= 9 && x <= 12 ? [(x - 10.5) / 2, 0, 0.9] : null), { motif: (x, y) => (y % 3 === 0 ? 0.6 : 0) });
+    for (const x of [9, 11]) t.poser(x, 15, 'laine', 2);
+  },
+  monocle(t) { // un monocle d'or à chaînette
+    for (let a = 0; a < 6.28; a += 0.18) t.poser(Math.round(7 + Math.cos(a) * 4.5), Math.round(6 + Math.sin(a) * 4.5), 'or', a < 3 ? 4 : 3);
+    t.forme('verre', ellipsoide(7, 6, 3.6, 3.6), { decalage: 0.8 });
+    t.poser(5, 4, 'verre', 5); t.poser(6, 4, 'verre', 5);
+    for (let k = 0; k < 6; k++) t.poser(11 + (k % 2), 10 + k, 'or', 4);
+  },
+  pipe(t) { // une pipe en bruyère, un filet de fumée
+    t.rampes.bruyere = rampe(0x6a3a22);
+    trait(t, 'bruyere', 3, 6, 11, 9, 1.1);
+    t.forme('bruyere', ellipsoide(12, 10, 2.6, 3), { decalage: -0.2 });
+    t.poser(12, 7, 'encre', 1); t.poser(11, 7, 'encre', 2);
+    for (const [x, y] of [[13, 5], [12, 3], [13, 1]]) { t.poser(x, y, 'lin', 5); t.poser(x + 1, y, 'lin', 4); }
+  },
+  montre(t) { // une montre à gousset ouverte, sa chaîne d'or
+    t.forme('or', ellipsoide(8, 9, 5, 5), { decalage: 0.1 });
+    t.forme('lin', ellipsoide(8, 9, 3.4, 3.4), { decalage: 0.9 });
+    t.poser(8, 9, 'encre', 0); t.poser(8, 8, 'encre', 0); t.poser(8, 7, 'encre', 1); t.poser(9, 9, 'encre', 0); t.poser(10, 9, 'encre', 1);
+    t.poser(8, 3, 'or', 5); t.poser(8, 2, 'or', 4);
+    for (let k = 0; k < 5; k++) t.poser(2 + k, 14 - (k % 2), 'or', 3);
+  },
+  bague(t) { // une bague d'or sertie d'un rubis
+    for (let a = 0; a < 6.28; a += 0.14) t.poser(Math.round(8 + Math.cos(a) * 4.5), Math.round(9 + Math.sin(a) * 4.5), 'or', a > 3.5 && a < 6 ? 4 : 2);
+    for (let a = 0; a < 6.28; a += 0.2) t.poser(Math.round(8 + Math.cos(a) * 3.5), Math.round(9 + Math.sin(a) * 3.5), 'or', 3);
+    t.rampes.rubis = rampe(0xd02030);
+    t.forme('rubis', ellipsoide(8, 4, 2.2, 2), { decalage: 0.4 });
+    t.poser(7, 3, 'rubis', 5);
+  },
   trophee(t) { // une coupe d'or sur son socle
     t.forme('or', (x, y) => (y >= 2 && y <= 8 && Math.abs(x + 0.5 - 8) < 5.5 - (y - 2) * 0.5 ? [(x + 0.5 - 8) / 6, 0, 0.8] : null));
     for (const s of [-1, 1]) trait(t, 'or', 8 + s * 5, 3, 8 + s * 7, 6, 0.6);

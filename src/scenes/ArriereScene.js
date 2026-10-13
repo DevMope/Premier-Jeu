@@ -22,6 +22,7 @@ class ArriereScene extends Phaser.Scene {
     this.dessinerPanier();
     this.dessinerBuffet();
     this.dessinerPorte();
+    this.dessinerDecos();
     creerBouton(this, 840, 505, 220, '↻ Retour au comptoir', () => this.fermer());
     this.time.delayedCall(400, () => conseilGarrick(this, 'arriere'));
   }
@@ -128,6 +129,19 @@ class ArriereScene extends Phaser.Scene {
     // Ta bourse, accrochée au mur : plus elle est ronde, plus tu es riche.
     this.add.text(cx, 158, 'Ta fortune', style(13, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
     bourse(this, cx, 240, G.argent, { echelle: 2, taille: 15 });
+  }
+
+  // Les décorations achetées à la brocante, accrochées aux murs. Clic : leur effet.
+  dessinerDecos() {
+    const G = this.G;
+    const places = [[640, 66], [692, 66], [744, 66], [556, 206], [826, 206], [556, 338]];
+    (G.decos || []).slice(0, places.length).forEach((id, i) => {
+      const [x, y] = places[i];
+      this.add.rectangle(x, y - 24, 3, 3, 0x2a1a10); // le clou
+      const img = this.add.image(x, y, iconeObjet(this, id)).setScale(3).setInteractive({ useHandCursor: true });
+      if (id === 'carillon') this.tweens.add({ targets: img, angle: { from: -3, to: 3 }, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      img.on('pointerdown', () => this.message(`${DECOS[id].nom} : ${DECOS[id].effet}`));
+    });
   }
 
   // Le panier des cadeaux (du Bazar de Rosalie)

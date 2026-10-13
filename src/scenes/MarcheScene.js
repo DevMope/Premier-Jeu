@@ -2,10 +2,10 @@
 // quatre étals (épicerie, forge, apothicaire, tailleuse), le Bazar de Rosalie (les cadeaux), les enchères,
 // le coin des jeux, le mendiant, et le crieur qui annonce les nouvelles du jour.
 // La rue est plus large que l'écran : on la parcourt avec les flèches ◀ ▶.
-const LARGEUR_MARCHE = 1700;
+const LARGEUR_MARCHE = 2080;
 const DEPLACEMENT_RUE = 360;
 // La vue d'ensemble : la rue entière, réduite, posée sur la grand-place.
-const VUE_MARCHE = { echelle: 0.53, x: 29, y: 170 };
+const VUE_MARCHE = { echelle: 0.45, x: 12, y: 170 };
 // On clique sur un lieu pour l'ouvrir dans le panneau du bas.
 class MarcheScene extends Phaser.Scene {
   constructor() { super('Marche'); }
@@ -40,7 +40,7 @@ class MarcheScene extends Phaser.Scene {
     this.add.text(480, 22, `Le Marché des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setDepth(5);
 
     // Les étals, les enchères, les jeux et le mendiant
-    this.positions = { mendiant: [70, 'lieu'], bazar: [1030, 'lieu'], encheres: [1220, 'lieu'], jeux: [1410, 'lieu'], crieur: [1595, 'lieu'] };
+    this.positions = { mendiant: [70, 'lieu'], bazar: [1030, 'lieu'], encheres: [1220, 'lieu'], jeux: [1410, 'lieu'], crieur: [1595, 'lieu'], brocante: [1790, 'lieu'], garderobe: [1980, 'lieu'] };
     Object.entries(MARCHANDS).forEach(([cle, m], i) => {
       this.positions[cle] = [260 + i * 190, 'etal'];
       this.creerEtal(cle, m, 260 + i * 190);
@@ -50,6 +50,11 @@ class MarcheScene extends Phaser.Scene {
     // Le Bazar de Rosalie : une échoppe à rayures vertes, Rosalie derrière sa table de cadeaux
     this.creerEchoppe(1030, 0x4f8a3a, { nom: 'Rosalie', race: 'hobbit', feminin: true, niveau: 'aguerri' },
       Object.keys(CADEAUX).slice(0, 4), 'Le Bazar de Rosalie', 'Cadeaux', () => this.ouvrirBazar());
+    // La brocante de Firmin (décorations pour le shop) et la garde-robe de Marcelline (pour toi)
+    this.creerEchoppe(1790, 0x8a5a2a, { nom: 'Firmin', race: 'humain', feminin: false, niveau: 'aguerri' },
+      ['tropheeCerf', 'horloge', 'globe', 'carillon'], 'La brocante de Firmin', 'Décorations', () => this.ouvrirBrocante());
+    this.creerEchoppe(1980, 0x7a3a6a, { nom: 'Marcelline', race: 'humain', feminin: true, niveau: 'aguerri' },
+      ['chapeau', 'monocle', 'montre', 'pipe'], 'La garde-robe de Marcelline', 'Vêtements et accessoires', () => this.ouvrirGardeRobe());
     // Les enchères : une estrade drapée de velours, un portique à bannière, le commissaire au pupitre
     {
       const avant = this.children.list.length;
@@ -272,8 +277,9 @@ class MarcheScene extends Phaser.Scene {
         this.tweens.add({ targets: pigeon, x: x0 + Phaser.Math.Between(-80, 80), y: y0 - 70, duration: 700, yoyo: true, ease: 'Sine.easeOut' });
       } });
     }
-    const noms = { mendiant: 'Le mendiant', bazar: 'Le Bazar de Rosalie', encheres: 'Les enchères', jeux: 'Le coin des jeux', crieur: 'Le crieur' };
-    const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => this.ouvrirJeux(), crieur: () => this.ouvrirCrieur() };
+    const noms = { mendiant: 'Le mendiant', bazar: 'Le Bazar de Rosalie', encheres: 'Les enchères', jeux: 'Le coin des jeux', crieur: 'Le crieur', brocante: 'La brocante', garderobe: 'La garde-robe' };
+    const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => this.ouvrirJeux(), crieur: () => this.ouvrirCrieur(),
+      brocante: () => this.ouvrirBrocante(), garderobe: () => this.ouvrirGardeRobe() };
     for (const [cle, [x, type]] of Object.entries(this.positions)) {
       const nom = type === 'etal' ? MARCHANDS[cle].nom : noms[cle];
       const t = this.add.text(ox + x * echelle, oy + (250 + this.arcVue(x).dy) * echelle + 6, nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 96 } }))
@@ -597,6 +603,55 @@ class MarcheScene extends Phaser.Scene {
         const erreur = acheterCadeau(G, id);
         this.ouvrirBazar();
         this.message(erreur || `${cad.nom} : dans ton tiroir à cadeaux, au comptoir.`, erreur ? '#a03030' : '#2f6a2a');
+      });
+    });
+  }
+
+  // --- La brocante : des décorations pour le shop ---
+
+  ouvrirBrocante() {
+    const G = this.G;
+    this.montrer('brocante');
+    const c = this.panneau(BROCANTEUR.nom, "Chaque décoration se voit dans ton arrière-boutique, et attire un peuple");
+    c.add(this.add.text(30, 340, "« Des merveilles dénichées aux quatre coins des Trois Terres. Ça fera un shop qu'on remarque ! »",
+      style(12, '#6b4a2a', { fontStyle: 'italic' })));
+    Object.entries(DECOS).forEach(([id, d], i) => {
+      const x = 40 + (i % 2) * 460;
+      const y = 370 + Math.floor(i / 2) * 30;
+      c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(2));
+      c.add(this.add.text(x + 20, y - 7, `${d.nom} · ${d.prix} p.`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      c.add(this.add.text(x + 20, y + 8, d.effet, style(10, '#6b4a2a')).setOrigin(0, 0.5));
+      if (aDeco(G, id)) c.add(this.add.text(x + 390, y, 'Chez toi', style(12, '#2f6a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
+      else this.bouton(c, x + 390, y, 70, 'Acheter', () => {
+        const erreur = acheterDeco(G, id);
+        this.ouvrirBrocante();
+        this.message(erreur || `${d.nom} : accrochée dans ton arrière-boutique !`, erreur ? '#a03030' : '#2f6a2a');
+      });
+    });
+  }
+
+  // --- La garde-robe : des vêtements et des accessoires pour toi ---
+
+  ouvrirGardeRobe() {
+    const G = this.G;
+    this.montrer('garderobe');
+    const c = this.panneau(MARCELLINE.nom, 'Tout ce que tu achètes, tu le portes : on te verra avec, partout');
+    c.add(this.add.text(30, 340, "« Un marchand bien mis inspire confiance. Laissez-moi vous arranger ça... »",
+      style(12, '#6b4a2a', { fontStyle: 'italic' })));
+    // Toi, dans ta tenue du moment
+    textureJoueur(this, G);
+    c.add(this.add.image(900, 500, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7)));
+    Object.entries(GARDE_ROBE).forEach(([id, d], i) => {
+      const x = 40 + (i % 2) * 400;
+      const y = 370 + Math.floor(i / 2) * 30;
+      c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(2));
+      c.add(this.add.text(x + 20, y - 7, `${d.nom} · ${d.prix} p.`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      c.add(this.add.text(x + 20, y + 8, d.effet, style(10, '#6b4a2a', { wordWrap: { width: 280 } })).setOrigin(0, 0.5));
+      if (porte(G, id)) c.add(this.add.text(x + 340, y, 'Porté', style(12, '#2f6a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
+      else this.bouton(c, x + 340, y, 70, 'Acheter', () => {
+        const erreur = acheterTenue(G, id);
+        this.ouvrirGardeRobe();
+        this.message(erreur || `${d.nom} : tu le portes dès maintenant !`, erreur ? '#a03030' : '#2f6a2a');
       });
     });
   }

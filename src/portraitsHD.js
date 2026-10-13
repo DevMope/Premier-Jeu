@@ -85,8 +85,14 @@ class ToileHD {
 
   // La texture : on écrit tous les pixels d'un coup dans un canvas (bien plus rapide).
   texture(scene, cle) {
-    if (scene.textures.exists(cle)) scene.textures.remove(cle);
-    const tex = scene.textures.createCanvas(cle, this.l, this.h);
+    // Une texture déjà affichée quelque part (le joueur qui change de tenue) : on la repeint sur
+    // place, sans la détruire sous les pieds des images qui s'en servent.
+    let tex = scene.textures.exists(cle) ? scene.textures.get(cle) : null;
+    if (tex && !(tex.getSourceImage && tex.getSourceImage().width === this.l && tex.getSourceImage().height === this.h && tex.getContext)) {
+      scene.textures.remove(cle);
+      tex = null;
+    }
+    if (!tex) tex = scene.textures.createCanvas(cle, this.l, this.h);
     const ctx = tex.getContext();
     const img = ctx.createImageData(this.l, this.h);
     for (let k = 0; k < this.c.length; k++) {
@@ -594,9 +600,11 @@ const JOUEUR_H = 64;
 // La peau de la création, ramenée à la rampe réglée à la main la plus proche.
 const PEAU_DE_CREATION = [0, 1, 3, 4];
 
-function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0) {
+function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0, tenue = []) {
   const t = new ToileHD(JOUEUR_L, JOUEUR_H);
   const cx = 18;
+  const porte = id => tenue.includes(id);
+  t.rampes.feutre = rampe(0x4a3a2a); t.rampes.capeV = rampe(0x5a2a2a); t.rampes.laine = rampe(0xc04040); t.rampes.bruyere = rampe(0x6a3a22); t.rampes.ruban = rampe(0x9a2a3a);
   const ancien = stade === 'ancien';
   t.rampes.peau = RAMPES_PEAU[PEAU_DE_CREATION[ap.peau] ?? 1];
   t.rampes.cheveux = rampe(ancien ? 0xb8b8c0 : APPARENCE.cheveux[ap.cheveux][1]);
@@ -609,6 +617,9 @@ function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0) {
 
   // Les cheveux longs, derrière
   if (ap.coiffure === 1) t.forme('cheveux', (x, y) => (y >= 6 && y <= 28 && Math.abs(x + 0.5 - cx) < 10.5 - Math.max(0, y - 22) * 0.4 ? [(x + 0.5 - cx) / 10.5, 0, 0.8] : null), { decalage: -0.8, motif: MECHES });
+
+  // La cape de voyage, derrière tout le reste
+  if (porte('cape')) t.forme('capeV', (x, y) => (y >= 21 && y <= 52 && Math.abs(x + 0.5 - cx) < 8 + (y - 21) * 0.14 ? [(x + 0.5 - cx) / 11 * 0.6, 0.1, 0.8] : null), { decalage: -0.8, motif: (x) => (x % 5 === 0 ? -0.5 : 0) });
 
   // Les jambes et les bottes
   for (const sens of [-1, 1]) {
@@ -704,6 +715,31 @@ function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0) {
     if (coupe === 3) for (let k = -6; k <= 6; k += 3) t.forme('cheveux', (x, y) => (y >= 0 && y < 4 && Math.abs(x + 0.5 - cx - k) < (y + 1) * 0.5 ? [0, -0.6, 0.7] : null));
   } else {
     t.poser(cx - 3, 6, 'peau', 5); t.poser(cx - 2, 6, 'peau', 5); // le reflet du crâne
+  }
+
+  // Ce que tu portes (acheté à la garde-robe de Marcelline)
+  if (porte('cape')) t.forme('or', ellipsoide(cx, 22, 1.4, 1.4), { decalage: 0.6 }); // la broche
+  if (porte('echarpe')) {
+    t.forme('laine', (x, y) => (y >= 19 && y <= 23 && Math.abs(x + 0.5 - cx) < 5 ? [(x + 0.5 - cx) / 5 * 0.5, 0, 0.9] : null), { motif: (x, y) => (y % 2 ? 0.5 : -0.2) });
+    t.forme('laine', (x, y) => (y >= 23 && y <= 31 && x >= cx + 2 && x <= cx + 4 ? [0.3, 0, 0.9] : null), { motif: (x, y) => (y % 3 === 0 ? 0.6 : 0) });
+  }
+  if (porte('montre')) { for (let k = 0; k < 7; k++) t.poser(cx - 4 + k, 36 + (k > 2 ? 1 : 0) + (k > 5 ? 1 : 0), 'or', k % 2 ? 4 : 3); t.forme('or', ellipsoide(cx + 4, 39, 1.6, 1.6), { decalage: 0.5 }); }
+  if (porte('bague')) { t.poser(cx + 9, 39, 'or', 5); t.poser(cx + 10, 39, 'or', 3); }
+  if (porte('monocle')) {
+    for (let a = 0; a < 6.28; a += 0.3) t.poser(Math.round(cx + 3.5 + Math.cos(a) * 2.4), Math.round(ey + 0.5 + Math.sin(a) * 2.4), 'or', a < 3 ? 4 : 2);
+    for (let k = 0; k < 5; k++) t.poser(cx + 6 + (k % 2 ? 1 : 0), ey + 3 + k, 'or', 3);
+  }
+  if (porte('pipe')) {
+    // (à gauche de la bouche, pour ne pas gêner le monocle)
+    for (let k = 0; k < 5; k++) t.poser(cx - 3 - k, by + Math.floor(k / 2), 'bruyere', 3);
+    t.poser(cx - 8, by + 2, 'bruyere', 2); t.poser(cx - 8, by + 3, 'bruyere', 1); t.poser(cx - 9, by + 3, 'bruyere', 2); t.poser(cx - 9, by + 2, 'bruyere', 3);
+    t.poser(cx - 9, by, 'lin', 5); t.poser(cx - 10, by - 2, 'lin', 4); t.poser(cx - 10, by - 4, 'lin', 5);
+  }
+  if (porte('chapeau')) {
+    const haut = tete.cy - tete.ry;
+    t.forme('feutre', (x, y) => (y >= Math.max(0, haut - 6) && y <= haut + 1 && Math.abs(x + 0.5 - cx) < 5.5 - Math.max(0, haut - 4 - y) * 0.4 ? [(x + 0.5 - cx) / 6, -0.2, 0.8] : null));
+    t.forme('feutre', (x, y) => (y >= haut + 1 && y <= haut + 2 && Math.abs(x + 0.5 - cx) < 10 ? [0, (y - haut - 1.5) * 0.8, 0.8] : null));
+    for (let x = cx - 5; x <= cx + 4; x++) t.poser(x, haut, 'ruban', 3);
   }
 
   t.contour();

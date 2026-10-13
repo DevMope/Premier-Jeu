@@ -377,9 +377,13 @@ function voyageurAuHasard(G, aussi = []) {
       }
     }
   }
-  // Une race au hasard d'abord, pour que les races avec beaucoup de noms ne dominent pas.
+  // Une race au hasard d'abord, pour que les races avec beaucoup de noms ne dominent pas...
+  // ... sauf que tes décorations attirent certains peuples plus que d'autres.
   const races = [...new Set(libres.map(l => l.race))];
-  const race = auHasard(races);
+  const poids = races.map(r => 1 + (G.decos || []).filter(d => DECOS[d].attire === r).length * (ATTIRANCE_DECO - 1));
+  let tirage = Math.random() * poids.reduce((a, b) => a + b, 0);
+  let race = races[0];
+  for (let k = 0; k < races.length; k++) { tirage -= poids[k]; if (tirage <= 0) { race = races[k]; break; } }
   const choix = races.length ? auHasard(libres.filter(l => l.race === race))
     : { race: 'humain', nom: auHasard(NOMS.humain)[0], feminin: false };
   return creerVoyageur(G, { ...choix });
@@ -422,6 +426,8 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     evenements: [],    // { id, debut, fin }
     courrier: [],      // les lettres d'information (événements) : { jour, texte }
     gazette: null,     // les nouvelles du jour, criées au marché
+    decos: [],         // les décorations achetées à la brocante (visibles dans l'arrière-boutique)
+    tenue: [],         // ce que tu portes (acheté à la garde-robe)
     palierVu: 0,       // le plus haut palier de réputation déjà fêté
     palierNouveau: null, // un palier franchi cette nuit : le visiteur notable vient ce matin
     rumeur: null,      // { jour } : moins de clients ce jour-là
@@ -567,7 +573,8 @@ function etalsDuJour(G) {
 function remiseMarchand(G, cle) {
   const forme = reveilDuJour(G).forme === 'remise' ? CHAMBRE.remise : 0;
   const blason = aDecoration(G, 'blason') ? 0.05 : 0;
-  return (REMISES[niveauRelation(G, MARCHANDS[cle].nom).nom] || 0) + forme + blason;
+  const pipe = porte(G, 'pipe') ? 0.02 : 0;
+  return (REMISES[niveauRelation(G, MARCHANDS[cle].nom).nom] || 0) + forme + blason + pipe;
 }
 
 function prixMarchand(G, cle, id) {
@@ -686,7 +693,43 @@ function couleurNom(G, nom, sombre = false) {
 }
 
 function rencontrer(G, nom) {
-  if (!(nom in G.relations)) G.relations[nom] = 0;
+  // Ta bague de marchand inspire confiance dès la première rencontre
+  if (!(nom in G.relations)) G.relations[nom] = porte(G, 'bague') ? 1 : 0;
+}
+
+// --- La brocante et la garde-robe ---
+
+function porte(G, id) {
+  return !!(G.tenue && G.tenue.includes(id));
+}
+
+function aDeco(G, id) {
+  return !!(G.decos && G.decos.includes(id));
+}
+
+function acheterDeco(G, id) {
+  if (aDeco(G, id)) return 'Tu l\'as déjà.';
+  if (!peutPayer(G, DECOS[id].prix)) return "Pas assez d'argent.";
+  payer(G, DECOS[id].prix, 'decoration');
+  G.decos = [...(G.decos || []), id];
+  return null;
+}
+
+function acheterTenue(G, id) {
+  if (porte(G, id)) return 'Tu le portes déjà.';
+  if (!peutPayer(G, GARDE_ROBE[id].prix)) return "Pas assez d'argent.";
+  payer(G, GARDE_ROBE[id].prix, 'garderobe');
+  G.tenue = [...(G.tenue || []), id];
+  return null;
+}
+
+// L'attrait de ce que tu portes et de tes décorations (en clients par jour).
+function attraitTenue(G) {
+  let a = 0;
+  for (const id of G.decos || []) a += DECOS[id].attrait || 0;
+  if (porte(G, 'chapeau')) a += 0.2;
+  if (porte(G, 'cape')) a += 0.2;
+  return a;
 }
 
 function niveauRelation(G, nom) {
@@ -748,7 +791,7 @@ function offrirDecoration(G, feminin = false) {
 
 // Le flair : au début, tes estimations sont faussées. Elles s'affinent avec l'expérience.
 function niveauFlair(G) {
-  return Math.min(1, G.experience / EXPERIENCE_MAX);
+  return Math.min(1, G.experience / EXPERIENCE_MAX + (porte(G, 'monocle') ? 0.1 : 0));
 }
 
 // Ce que ton flair te dit d'une trouvaille : son prix de revente une fois restaurée, plus ou moins
@@ -962,7 +1005,7 @@ function nuitDuShop(G) {
   const dette = G.prets.reduce((s, p) => s + p.restant, 0);
   const fortune = G.argent - dette;
   if (coffre && fortune > 0) encaisser(G, Math.min(15 * coffre, Math.floor(fortune * 0.01 * coffre)), 'interets');
-  G.experience += niveauAmelioration(G, 'chambre');
+  G.experience += niveauAmelioration(G, 'chambre') + (porte(G, 'montre') ? 1 : 0);
 }
 
 // Peut-on contracter ce prêt ? Renvoie la raison sinon.
@@ -1004,7 +1047,7 @@ function attrait(G) {
     eclairage: niveauAmelioration(G, 'eclairage') * 0.3,
     // la base (réputation, expérience) est plafonnée par le palier ; les bonus passent par-dessus
     base: 1 + G.reputation * 0.4 + Math.min(G.experience, EXPERIENCE_MAX) / 20,
-    bonus: variete * CLIENTS_PAR_OBJET + (aDecoration(G, 'trophee') ? 0.7 : 0) + niveauAmelioration(G, 'eclairage') * 0.3,
+    bonus: variete * CLIENTS_PAR_OBJET + (aDecoration(G, 'trophee') ? 0.7 : 0) + niveauAmelioration(G, 'eclairage') * 0.3 + attraitTenue(G),
     total: 1 + G.reputation * 0.4 + Math.min(G.experience, EXPERIENCE_MAX) / 20 + variete * CLIENTS_PAR_OBJET + (aDecoration(G, 'trophee') ? 0.7 : 0)
       + niveauAmelioration(G, 'eclairage') * 0.3,
   };
@@ -1105,9 +1148,8 @@ function nuit(G) {
 function reveilDuMatin(G, mauvaisJour) {
   const n = niveauAmelioration(G, 'chambre');
   const r = G.reveil = { jour: G.jour, forme: null, reve: null, encheres: null, reconfort: 0, lignes: [] };
-  if (!n) return;
   // En forme : un client de plus, ou une remise au marché
-  if (Math.random() < CHAMBRE.forme * n) {
+  if (n && Math.random() < CHAMBRE.forme * n) {
     r.forme = Math.random() < 0.5 ? 'client' : 'remise';
     r.lignes.push(r.forme === 'client' ? "Tu t'es réveillé en pleine forme : tu serviras un client de plus aujourd'hui !"
       : `Tu t'es réveillé en pleine forme : les marchands te feront ${Math.round(CHAMBRE.remise * 100)} % de remise aujourd'hui !`);
@@ -1124,8 +1166,8 @@ function reveilDuMatin(G, mauvaisJour) {
     r.lignes.push('💤 ' + r.reve);
   }
   // Après un mauvais jour, une bonne nuit console
-  if (mauvaisJour) {
-    r.reconfort = Math.round(CHAMBRE.reconfort * n * 100) / 100;
+  if (mauvaisJour && (n || porte(G, 'echarpe'))) {
+    r.reconfort = Math.round((CHAMBRE.reconfort * n + (porte(G, 'echarpe') ? 0.1 : 0)) * 100) / 100;
     G.reputation += r.reconfort;
     r.lignes.push(`Une bonne nuit de sommeil t'a aidé à encaisser la mauvaise journée d'hier : réputation +${String(r.reconfort).replace('.', ',')}.`);
   }

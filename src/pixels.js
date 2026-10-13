@@ -575,16 +575,19 @@ function paletteJoueur(ap, stade) {
 
 // La texture du joueur à son âge actuel (créée si besoin).
 function textureJoueur(scene, G) {
-  if (!scene.textures.exists('joueur_petit')) creerTexturesJoueur(scene, G.joueur.apparence, G.joueur.feminin);
+  // (on redessine le joueur quand sa tenue change : ce qu'il achète à la garde-robe, il le porte)
+  const tenue = (G.tenue || []).join(',');
+  if (!scene.textures.exists('joueur_petit') || scene.textures.get('joueur_petit').tenue !== tenue) creerTexturesJoueur(scene, G.joueur.apparence, G.joueur.feminin, G.tenue || []);
   return 'joueur_' + stadeJoueur(G);
 }
 
 // Crée (ou recrée) les trois textures du joueur, en HD : joueur_petit, joueur_adulte, joueur_ancien.
-function creerTexturesJoueur(scene, ap, feminin = false) {
+function creerTexturesJoueur(scene, ap, feminin = false, tenue = []) {
   for (const stade of ['petit', 'adulte', 'ancien']) {
-    dessinerJoueurHD(ap, stade, feminin).texture(scene, 'joueur_' + stade);
-    dessinerJoueurHD(ap, stade, feminin, -1).texture(scene, 'joueur_' + stade + '_pas1');
-    dessinerJoueurHD(ap, stade, feminin, 1).texture(scene, 'joueur_' + stade + '_pas2');
+    dessinerJoueurHD(ap, stade, feminin, 0, tenue).texture(scene, 'joueur_' + stade);
+    dessinerJoueurHD(ap, stade, feminin, -1, tenue).texture(scene, 'joueur_' + stade + '_pas1');
+    dessinerJoueurHD(ap, stade, feminin, 1, tenue).texture(scene, 'joueur_' + stade + '_pas2');
+    scene.textures.get('joueur_' + stade).tenue = tenue.join(',');
   }
 }
 
