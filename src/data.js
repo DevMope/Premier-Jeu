@@ -665,7 +665,8 @@ const ATTIRANCE_DECO = 2.2;
 // --- La garde-robe de Marcelline : des vêtements et des accessoires pour toi ---
 // Tout ce que tu achètes, tu le portes : on le voit sur toi, partout.
 const GARDE_ROBE = {
-  chapeau: { nom: 'Chapeau de feutre', prix: 18, effet: 'Tu as de l\'allure : +0,2 client par jour.' },
+  chapeau: { nom: 'Chapeau de cow-boy', prix: 18, effet: 'Tu as de l\'allure : +0,2 client par jour.' },
+  bandana: { nom: 'Bandana rouge', prix: 8, effet: 'Un air de baroudeur : les novices te font confiance (+0,1 client par jour).' },
   cape: { nom: 'Cape de voyage', prix: 35, effet: 'Belle allure : +0,2 client par jour.' },
   echarpe: { nom: 'Écharpe de laine', prix: 12, effet: 'Bien au chaud : tes nuits te consolent un peu plus (+0,1 de réputation après un mauvais jour).' },
   monocle: { nom: 'Monocle', prix: 24, effet: 'Tu vois mieux : +10 % de flair.' },

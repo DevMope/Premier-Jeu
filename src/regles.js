@@ -767,6 +767,7 @@ function attraitTenue(G) {
   let a = 0;
   for (const id of G.decos || []) a += DECOS[id].attrait || 0;
   if (porte(G, 'chapeau')) a += 0.2;
+  if (porte(G, 'bandana')) a += 0.1;
   if (porte(G, 'cape')) a += 0.2;
   return a;
 }

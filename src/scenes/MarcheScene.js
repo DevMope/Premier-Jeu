@@ -61,7 +61,7 @@ class MarcheScene extends Phaser.Scene {
     this.creerEchoppe(1790, 0x8a5a2a, { nom: 'Firmin', race: 'humain', feminin: false, niveau: 'aguerri' },
       ['tropheeCerf', 'horloge', 'globe', 'carillon'], 'La brocante de Firmin', 'Décorations', () => this.ouvrirBrocante(), 'firmin');
     this.creerEchoppe(1980, 0x7a3a6a, { nom: 'Marcelline', race: 'humain', feminin: true, niveau: 'aguerri' },
-      ['chapeau', 'monocle', 'montre', 'pipe'], 'La garde-robe de Marcelline', 'Vêtements et accessoires', () => this.ouvrirGardeRobe(), 'marcelline');
+      ['chapeau', 'bandana', 'montre', 'pipe'], 'La garde-robe de Marcelline', 'Vêtements et accessoires', () => this.ouvrirGardeRobe(), 'marcelline');
     // Les enchères : une estrade drapée de velours, un portique à bannière, le commissaire au pupitre
     {
       const avant = this.children.list.length;

@@ -69,11 +69,17 @@ const DESSINS_ICONES = {
     }
   },
   // --- La garde-robe de Marcelline ---
-  chapeau(t) { // un chapeau de feutre à ruban
+  chapeau(t) { // un chapeau de cow-boy : calotte pincée, bord relevé, ruban de cuir
     t.rampes.feutre = rampe(0x4a3a2a);
-    t.forme('feutre', (x, y) => (y >= 3 && y <= 9 && Math.abs(x + 0.5 - 8) < 4.5 ? [(x + 0.5 - 8) / 5, -0.2, 0.8] : null));
-    t.forme('feutre', (x, y) => (y >= 9 && y <= 11 && Math.abs(x + 0.5 - 8) < 7.5 ? [0, (y - 10) * 0.6, 0.8] : null));
-    for (let x = 4; x <= 11; x++) t.poser(x, 8, 'tissuRouge', 3);
+    t.forme('feutre', (x, y) => (y >= 2 && y <= 9 && Math.abs(x + 0.5 - 8) < 4.5 - Math.max(0, 4 - y) * 0.5 ? [(x + 0.5 - 8) / 5, -0.2, 0.8] : null), { motif: (x, y) => (y < 6 && Math.abs(x + 0.5 - 8) < 1 ? -0.9 : 0) });
+    t.forme('feutre', (x, y) => { const d = Math.abs(x + 0.5 - 8); const rel = d > 5 ? Math.round((d - 5) * 0.7) : 0; return y >= 9 - rel && y <= 11 - rel && d < 8 ? [0, (y - 10) * 0.6, 0.8] : null; });
+    for (let x = 4; x <= 11; x++) t.poser(x, 8, 'cuir', 2);
+  },
+  bandana(t) { // un bandana rouge à pois, noué
+    t.rampes.ruban = rampe(0x9a2a3a);
+    t.forme('ruban', (x, y) => (y >= 4 && y <= 13 && Math.abs(x + 0.5 - 8) < 6.5 - (y - 4) * 0.7 ? [(x + 0.5 - 8) / 6 * 0.5, 0.2, 0.9] : null), { motif: (x, y) => ((x * 3 + y * 5) % 7 === 0 ? 1.4 : 0) });
+    for (let k = 0; k < 4; k++) t.poser(12 + (k % 2), 2 + k, 'ruban', 2 + (k % 2));
+    t.poser(3, 3, 'ruban', 3); t.poser(4, 2, 'ruban', 2);
   },
   cape(t) { // une cape de voyage pliée, avec sa broche
     t.rampes.capeV = rampe(0x5a2a2a);
