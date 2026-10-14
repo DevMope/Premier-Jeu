@@ -339,26 +339,43 @@ function creerBaluchons(scene) {
       return (x * 3 + y * 5) % 11 === 0;                                                 // petites fleurs
     };
     {
-      const t = new ToileHD(40, 36);
+      // (v0.58) Le baluchon HD : une poche de tissu froncée, lourde en bas, avec des plis qui
+      // partent du nœud ; une cordelette serrée autour du col, deux oreilles de tissu ; le bâton
+      // passe dans le nœud, et on le tient par le bout (en bas à droite de l'image).
+      const t = new ToileHD(52, 48);
       Object.assign(t.rampes, RAMPES_DECOR);
-      t.rampes.tissu = rampe(c.fond); t.rampes.motif = rampe(c.motif);
-      // Le bâton, en diagonale, qui passe derrière le nœud
-      for (let k = 0; k < 28; k++) for (const [dx, dy, i] of [[0, 0, 2], [0, 1, 4], [1, 0, 3]]) t.poser(13 + k + dx, 7 + k * 0.95 + dy | 0, 'chene', i);
-      // La boule de tissu, avec ses plis qui convergent vers le nœud
-      t.forme('tissu', (x, y) => {
-        const n = ellipsoide(12, 17, 11, 10.5)(x, y);
-        if (!n) return null;
-        return n;
-      }, { motif: (x, y) => (motif(x, y) ? 0 : 0) + (Math.sin(Math.atan2(y - 6, x - 12) * 7) > 0.75 ? -0.9 : 0) });
-      for (let y = 8; y < 28; y++) for (let x = 2; x < 23; x++) {
-        if (!ellipsoide(12, 17, 10, 9.5)(x, y) || !motif(x, y)) continue;
-        const n = ellipsoide(12, 17, 11, 10.5)(x, y);
-        const lum = n ? Math.round(2.5 - n[0] * 1.2 - n[1] * 1.4) : 2;
+      t.rampes.tissu = rampe(c.fond); t.rampes.motif = rampe(c.motif); t.rampes.corde = rampe(0xb89a68);
+      t.relief = true;
+      // le bâton : du nœud (en haut à gauche) jusqu'à la main (en bas à droite)
+      traitHD(t, 'chene', [[13, 6], [50, 46]], 1.5);
+      // la poche : une poire, plus large en bas ; les plis rayonnent depuis le col
+      const poche = (x, y) => {
+        const cy = 29, haut = y < cy;
+        const rx = haut ? 13 - (cy - y) * 0.18 : 14.5, ry = haut ? 14 : 12.5;
+        const nx = (x + 0.5 - 15) / rx, ny = (y + 0.5 - cy) / ry;
+        const d = nx * nx + ny * ny;
+        return d > 1 ? null : [nx, ny, Math.sqrt(1 - d)];
+      };
+      const pli = (x, y) => { const a = Math.atan2(y - 14, x - 15); return Math.sin(a * 9 + (y - 14) * 0.08) > 0.72 && y > 17 ? -1 : 0; };
+      t.forme('tissu', poche, { motif: pli });
+      // le motif du tissu, ombré comme la poche
+      for (let y = 16; y < 42; y++) for (let x = 1; x < 30; x++) {
+        const n = poche(x, y);
+        if (!n || !motif(Math.round(x * 0.9), Math.round(y * 0.9)) || t.mat(x, y) !== 'tissu') continue;
+        const lum = Math.round(3 - n[0] * 1.4 - n[1] * 1.2 + pli(x, y));
         t.poser(x, y, 'motif', Math.max(1, Math.min(5, lum)));
       }
-      // Le nœud et ses deux oreilles
-      t.forme('tissu', ellipsoide(12, 6.5, 3.4, 2.6), { decalage: 0.2 });
-      for (const s of [-1, 1]) t.forme('tissu', (x, y) => (y >= 0 && y <= 5 && Math.abs(x + 0.5 - (12 + s * 5)) < 2.2 - (5 - y) * 0.25 ? [s * 0.6, -0.5, 0.7] : null), { decalage: 0.3 });
+      // le col froncé, et ses petits plis serrés
+      t.forme('tissu', ellipsoide(15.5, 14.5, 5, 3.4), { decalage: 0.2, motif: (x) => (x % 2 ? -0.6 : 0.3) });
+      // les deux oreilles de tissu qui dépassent du nœud
+      for (const [ox, sens] of [[10.5, -1], [19.5, 1]]) t.forme('tissu', (x, y) => {
+        const h = 12.5 - y; if (h < 0 || h > 8) return null;
+        const larg = 2.8 - h * 0.28, cx0 = ox + sens * h * 0.45;
+        return Math.abs(x + 0.5 - cx0) < larg ? [sens * 0.5, -0.6, 0.6] : null;
+      }, { decalage: 0.3 });
+      // la cordelette : deux tours autour du col, et une boucle autour du bâton
+      for (const yc of [16, 17.6]) traitHD(t, 'corde', [[10.5, yc], [20.5, yc + 0.4]], 0.75, 0.3);
+      traitHD(t, 'corde', [[18, 15], [20, 12], [17, 9.5]], 0.7, 0.4);
       t.contour();
       t.texture(scene, 'baluchon_' + famille);
     }

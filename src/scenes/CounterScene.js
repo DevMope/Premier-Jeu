@@ -1262,27 +1262,30 @@ class CounterScene extends Phaser.Scene {
       this.perso.setScale(9 * echelleCorps(this.perso.texture.key)).setY(SOL_COMPTOIR).setFlipX(!versDroite);   // (les corps regardent vers la droite : il fait face à sa route)
     };
     if (!this.buste) this.perso.setFlipX(!versDroite);
-    const decalage = versDroite ? 22 : -22;
-    const inclinaison = versDroite ? -22 : 22;
-    // Le baluchon est porté à hauteur des mains, qui dépend de la taille de son peuple.
-    // En marchant, le baluchon se balance au bout du bâton et rebondit à chaque pas.
-    let balance = false;
+    // (v0.58) Le bâton sur l'épaule : on tient le bout devant soi, à hauteur de poitrine, le
+    // bâton repose sur l'épaule et la poche pend dans le dos. (Le bâton du dessin monte à 47° ;
+    // on le couche un peu, vers 30°.)
+    const sens = versDroite ? 1 : -1;
+    const inclinaison = versDroite ? -17 : 17;
+    let balance = false, debutMarche = 0;
     const placer = () => {
-      const cle = this.perso.texture.key;
-      const mains = cle.startsWith('corps_') ? (MAINS_CORPS[cle] || 28) * this.perso.scaleY : 62;
-      const t = this.time.now;
-      const swing = balance ? Math.sin(t / 130) * 9 : 0;
-      const rebond = balance ? Math.abs(Math.sin(t / 125)) * 5 : 0;
-      porte.setPosition(this.perso.x + decalage * this.perso.scaleY / (9 * echelleCorps(cle)), this.perso.y - mains - rebond)
-        .setAngle(inclinaison + this.perso.angle + swing);
+      const h = this.perso.displayHeight, l = this.perso.displayWidth;
+      const t = balance ? this.time.now - debutMarche : 0;
+      // calé sur les pas (un pas toutes les 250 ms) : il rebondit à chaque pas, et balance comme
+      // un pendule, avec un temps de retard sur la marche
+      const phase = t / 500 * Math.PI * 2;
+      const swing = balance ? Math.sin(phase - 0.9) * 6 * Math.min(1, t / 300) : 0;
+      const rebond = balance ? Math.abs(Math.sin(phase)) * 3 : 0;
+      porte.setPosition(this.perso.x + sens * l * 0.2, this.perso.y - h * 0.6 - rebond)
+        .setAngle(inclinaison + this.perso.angle + sens * swing);
     };
     if (porte) {
-      porte.setFlipX(!versDroite).setOrigin(versDroite ? 0.95 : 0.05, 0.95).setDepth(2.1);
+      porte.setFlipX(!versDroite).setOrigin(versDroite ? 0.96 : 0.04, 0.96).setDepth(2.1);
       placer();
     }
     const partir = () => this.tweens.add({
       targets: this.perso, x, duration: porte ? 1900 : 1400, ease: 'Sine.easeIn',
-      onStart: () => { balance = true; this.marche(porte ? 1900 : 1400); },
+      onStart: () => { balance = true; debutMarche = this.time.now; this.marche(porte ? 1900 : 1400); },
       onUpdate: (tw) => {
         // Il s'éloigne sur la route : un peu plus petit, un peu plus haut, vers l'horizon.
         if (porte) {
@@ -1333,7 +1336,7 @@ class CounterScene extends Phaser.Scene {
     // On noue le tissu au bout du bâton...
     this.time.delayedCall(300 + objets.length * 170 + 500, () => {
       // Le motif dépend de ce qu'il contient, la taille du nombre d'objets.
-      const taille = (3.4 + Math.min(objets.length, 10) * 0.2) / 2; // (le baluchon HD a deux fois plus de pixels)
+      const taille = (3.4 + Math.min(objets.length, 10) * 0.2) / 2 * 0.8; // (le baluchon HD a deux fois plus de pixels, et il est plus grand en v0.58)
       boite.setTexture('baluchon_' + famille).setScale(taille);
       this.tweens.add({ targets: boite, angle: { from: -8, to: 8 }, duration: 90, yoyo: true, repeat: 2, onComplete: () => boite.setAngle(0) });
       const ficelle = this.add.text(bx, SOL_COMPTOIR - 70, 'Noué !', style(16, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 }))
