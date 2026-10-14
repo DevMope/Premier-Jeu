@@ -56,15 +56,19 @@ class MarcheScene extends Phaser.Scene {
       this.grouper(avant, 84);
     }
     // Le Bazar de Rosalie : une échoppe à rayures vertes, Rosalie derrière sa table de cadeaux
-    this.creerEchoppe(1030, 0x4f8a3a, { nom: 'Rosalie', race: 'hobbit', feminin: true, niveau: 'aguerri' },
+    if (lieuOuvert(G, 'bazar')) this.creerEchoppe(1030, 0x4f8a3a, { nom: 'Rosalie', race: 'hobbit', feminin: true, niveau: 'aguerri' },
       Object.keys(CADEAUX).slice(0, 4), 'Le Bazar de Rosalie', 'Cadeaux', () => this.ouvrirBazar(), 'rosalie');
+    else this.creerChantier(1030, 'bazar');
     // La brocante de Firmin (décorations pour le shop) et la garde-robe de Marcelline (pour toi)
-    this.creerEchoppe(1790, 0x8a5a2a, { nom: 'Firmin', race: 'humain', feminin: false, niveau: 'aguerri' },
+    if (lieuOuvert(G, 'brocante')) this.creerEchoppe(1790, 0x8a5a2a, { nom: 'Firmin', race: 'humain', feminin: false, niveau: 'aguerri' },
       ['tropheeCerf', 'horloge', 'globe', 'carillon'], 'La brocante de Firmin', 'Décorations', () => this.ouvrirBrocante(), 'firmin');
-    this.creerEchoppe(1980, 0x7a3a6a, { nom: 'Marcelline', race: 'humain', feminin: true, niveau: 'aguerri' },
+    else this.creerChantier(1790, 'brocante');
+    if (lieuOuvert(G, 'garderobe')) this.creerEchoppe(1980, 0x7a3a6a, { nom: 'Marcelline', race: 'humain', feminin: true, niveau: 'aguerri' },
       ['chapeau', 'bandana', 'montre', 'pipe'], 'La garde-robe de Marcelline', 'Vêtements et accessoires', () => this.ouvrirGardeRobe(), 'marcelline');
+    else this.creerChantier(1980, 'garderobe');
     // Les enchères : une estrade drapée de velours, un portique à bannière, le commissaire au pupitre
-    {
+    if (!lieuOuvert(G, 'encheres')) this.creerChantier(1220, 'encheres');
+    else {
       const avant = this.children.list.length;
       this.add.image(1220, 250, 'estradeEncheres').setOrigin(0.5, 1).setScale(2);
       this.add.text(1220, 126, 'ENCHÈRES', style(14, '#ffe9a0', { fontStyle: 'bold', stroke: '#3a0a0a', strokeThickness: 3 })).setOrigin(0.5);
@@ -76,7 +80,8 @@ class MarcheScene extends Phaser.Scene {
       this.grouper(avant, 1220);
     }
     // Le coin des jeux : un auvent violet, Grippesou derrière sa table de dés et de gobelets
-    {
+    if (!lieuOuvert(G, 'jeux')) this.creerChantier(1410, 'jeux');
+    else {
       const avant = this.children.list.length;
       this.add.image(1410, 252, 'auventJeux').setOrigin(0.5, 1).setScale(2);
       this.add.text(1410, 82, '🎲 JEUX 🎲', style(13, '#ffe9a0', { fontStyle: 'bold', stroke: '#2a1040', strokeThickness: 4 })).setOrigin(0.5);
@@ -142,12 +147,12 @@ class MarcheScene extends Phaser.Scene {
 
   // Les flèches ◀ ▶ pour se déplacer dans la rue du marché.
   creerFlechesRue() {
-    this.flechesRue = [[-1, 26, '◀'], [1, 934, '▶']].map(([sens, x, texte]) => {
-      const fond = this.add.circle(x, 165, 22, 0x3b2410, 0.85).setStrokeStyle(2, 0xc9a227).setDepth(6).setInteractive({ useHandCursor: true });
-      const t = this.add.text(x, 165, texte, style(20, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(6);
-      fond.on('pointerdown', () => this.deplacer(this.monde.x - sens * DEPLACEMENT_RUE));
-      this.tweens.add({ targets: [fond, t], x: x + sens * 4, duration: 500, yoyo: true, repeat: -1 });
-      return { sens, fond, t };
+    this.flechesRue = [[-1, 30], [1, 930]].map(([sens, x]) => {
+      const fond = this.add.image(x, 165, boutonFlecheHD(this)).setScale(2.2).setFlipX(sens < 0).setDepth(6).setInteractive({ useHandCursor: true });
+      fond.on('pointerdown', () => { Son.jouer('clic'); this.deplacer(this.monde.x - sens * DEPLACEMENT_RUE); });
+      fond.on('pointerover', () => fond.setScale(2.4)); fond.on('pointerout', () => fond.setScale(2.2));
+      this.tweens.add({ targets: fond, x: x + sens * 4, duration: 500, yoyo: true, repeat: -1 });
+      return { sens, fond, t: fond };
     });
     this.majFlechesRue();
   }
@@ -159,6 +164,7 @@ class MarcheScene extends Phaser.Scene {
   }
 
   majFlechesRue() {
+    if (!this.flechesRue) return;
     for (const f of this.flechesRue) {
       const visible = f.sens < 0 ? this.monde.x < 0 : this.monde.x > 960 - LARGEUR_MARCHE;
       f.fond.setVisible(visible);
@@ -209,6 +215,7 @@ class MarcheScene extends Phaser.Scene {
 
   // On s'approche du lieu : la rue grandit et glisse jusqu'à lui, le panneau du bas s'ouvre.
   montrer(cle) {
+    this.lieuMontre = cle;
     const [x, type] = this.positions[cle];
     const etal = type === 'etal';
     this.flecheLieu.setVisible(true).setPosition(x, etal ? 46 : 128);
@@ -227,6 +234,7 @@ class MarcheScene extends Phaser.Scene {
   vueEnsemble(instantane = false) {
     const { x, y, echelle } = VUE_MARCHE;
     this.modeVue = true;
+    this.lieuMontre = null;
     this.tweens.killTweensOf(this.monde);
     if (instantane) this.monde.setPosition(x, y).setScale(echelle);
     else this.tweens.add({ targets: this.monde, x, y, scale: echelle, duration: 550, ease: 'Sine.easeInOut' });
@@ -238,6 +246,26 @@ class MarcheScene extends Phaser.Scene {
     if (this.bulleCrieur) this.bulleCrieur.setVisible(true);
     if (this.contenu) this.contenu.setVisible(false);
     for (const o of [this.fondPanneau, this.retour.fond, this.retour.label]) o.setVisible(false);
+  }
+
+  // Une pièce dans la fontaine, une fois par jour : on fait un vœu (ça servira, plus tard...)
+  jeterPiece() {
+    const G = this.G;
+    const erreur = jeterPieceFontaine(G);
+    if (erreur) return this.message(erreur, '#a03030');
+    Son.jouer('piece');
+    const piece = this.add.image(560, 300, 'pieceFace').setScale(1.6).setDepth(6);
+    this.tweens.add({ targets: piece, x: 480, duration: 650, ease: 'Linear' });
+    this.tweens.add({ targets: piece, y: 240, duration: 320, ease: 'Quad.easeOut', yoyo: true, onComplete: () => {
+      this.tweens.add({ targets: piece, y: 392, angle: 540, scale: 0.6, duration: 330, ease: 'Quad.easeIn', onComplete: () => {
+        Son.jouer('glou');
+        for (let k = 0; k < 6; k++) { const r = this.add.ellipse(480, 392, 10, 4).setStrokeStyle(1, 0xe8fcff, 0.8).setDepth(6); this.tweens.add({ targets: r, scaleX: 3 + k, scaleY: 2 + k * 0.5, alpha: 0, duration: 700, delay: k * 70, onComplete: () => r.destroy() }); }
+        piece.destroy();
+      } });
+    } });
+    this.majInfos();
+    const n = G.fontainePieces;
+    this.message(`Plouf ! Tu fermes les yeux et tu fais un vœu... ${n === 1 ? 'Ta première pièce dort au fond de la fontaine.' : `${n} pièces dorment au fond de la fontaine.`}`);
   }
 
   // Les noms des lieux, lisibles dans la vue d'ensemble, et l'invitation à s'approcher.
@@ -264,7 +292,9 @@ class MarcheScene extends Phaser.Scene {
       ['sacsHD', 700, 466, 1.3, true], ['tonneauxHD', 628, 462, 1.4, true],
     ];
     for (const [cle, x, y, e, miroir] of decor) c.add(this.add.image(x, y, cle).setOrigin(0.5, 1).setScale(e).setFlipX(miroir));
-    c.add(this.add.image(480, 438, 'fontaineHD').setOrigin(0.5, 1).setScale(1.6));
+    const fontaine = this.add.image(480, 438, 'fontaineHD').setOrigin(0.5, 1).setScale(1.6).setInteractive({ useHandCursor: true });
+    fontaine.on('pointerdown', () => this.jeterPiece());
+    c.add(fontaine);
     // Le jet de la fontaine
     this.time.addEvent({ delay: 90, loop: true, callback: () => {
       if (!this.vue.visible) return;
@@ -289,10 +319,11 @@ class MarcheScene extends Phaser.Scene {
     const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => this.ouvrirJeux(), crieur: () => this.ouvrirCrieur(),
       brocante: () => this.ouvrirBrocante(), garderobe: () => this.ouvrirGardeRobe() };
     for (const [cle, [x, type]] of Object.entries(this.positions)) {
-      const nom = type === 'etal' ? MARCHANDS[cle].nom : noms[cle];
-      const t = this.add.text(ox + x * echelle, oy + (250 + this.arcVue(x).dy) * echelle + 6, nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 96 } }))
+      const ferme = type !== 'etal' && !lieuOuvert(this.G, cle);
+      const nom = type === 'etal' ? MARCHANDS[cle].nom : ferme ? `${noms[cle]}\n(en travaux)` : noms[cle];
+      const t = this.add.text(ox + x * echelle, oy + (250 + this.arcVue(x).dy) * echelle + 6, nom, style(13, ferme ? '#c9b48a' : '#fff4dc', { fontStyle: ferme ? 'italic' : 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 96 } }))
         .setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
-      t.on('pointerdown', type === 'etal' ? () => this.ouvrirEtal(cle) : ouvrir[cle]);
+      t.on('pointerdown', ferme ? () => this.message(`${noms[cle]} ouvre le jour ${OUVERTURE_LIEUX[cle]}.`) : type === 'etal' ? () => this.ouvrirEtal(cle) : ouvrir[cle]);
       if (type === 'etal') c.add(this.add.text(t.x, t.y + t.height + 2, MARCHANDS[cle].metier, style(11, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5, 0));
       c.add(t);
     }
@@ -356,8 +387,33 @@ class MarcheScene extends Phaser.Scene {
     this.etiquettesRue.push(this.add.text(x, 254, m.nom, style(13, couleurNom(this.G, m.nom, true), { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5),
       this.add.text(x, 272, m.metier, style(11, '#fff4dc', { stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5));
     const zone = this.add.rectangle(x, 160, 170, 140, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    zone.on('pointerdown', () => this.ouvrirEtal(cle));
+    // Un premier clic s'approche de l'étal ; un second, sur l'étal qu'on regarde déjà, le montre de tout près
+    zone.on('pointerdown', () => (!this.modeVue && this.lieuMontre === cle ? this.vitrine(cle) : this.ouvrirEtal(cle)));
     // Tout ce qu'on vient de créer appartient à la rue (qui glisse).
+    this.grouper(avant, x);
+  }
+
+  // Un lieu encore en travaux : des poteaux, des planches en croix, un écriteau qui annonce
+  // l'ouverture, quelques planches et un tonneau par terre. On ne peut qu'y lire l'écriteau.
+  creerChantier(x, cle) {
+    const avant = this.children.list.length;
+    const jour = OUVERTURE_LIEUX[cle], nom = NOMS_LIEUX_MARCHE[cle];
+    const g = this.add.graphics();
+    g.fillStyle(0x4a3018).fillRect(x - 74, 100, 8, 150).fillRect(x + 66, 100, 8, 150);
+    g.fillStyle(0x6a4a28).fillRect(x - 72, 100, 4, 150).fillRect(x + 68, 100, 4, 150);
+    g.lineStyle(7, 0x3a2410).lineBetween(x - 70, 110, x + 70, 240).lineBetween(x + 70, 110, x - 70, 240);
+    g.lineStyle(4, 0x8a6a3a).lineBetween(x - 70, 110, x + 70, 240).lineBetween(x + 70, 110, x - 70, 240);
+    g.fillStyle(0x5a3a1a).fillRect(x - 80, 96, 160, 8);
+    g.fillStyle(0x3a2410, 0.5).fillRect(x - 60, 246, 70, 6).fillRect(x - 20, 240, 80, 6);
+    g.fillStyle(0x7a5a32).fillRect(x - 58, 244, 70, 6).fillRect(x - 18, 238, 80, 6);
+    this.add.image(x + 62, 252, 'tonneauxHD').setOrigin(0.5, 1).setScale(1.1);
+    // L'écriteau cloué en travers
+    this.add.image(x, 176, panneauHD(this, 150, 54, 'ardoise')).setScale(1.2).setAngle(-4);
+    this.add.text(x, 166, 'EN TRAVAUX', style(13, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5).setAngle(-4);
+    this.add.text(x, 184, `${nom}\nouvre le jour ${jour}`, style(10, '#e8d4a8', { align: 'center' })).setOrigin(0.5).setAngle(-4);
+    this.etiquettesRue.push(this.add.text(x, 262, 'En travaux', style(13, '#c9b48a', { fontStyle: 'bold italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
+    const zone = this.add.rectangle(x, 170, 160, 160, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    zone.on('pointerdown', () => { Son.jouer('marteau'); this.message(`${nom} est en travaux : ouverture le jour ${jour}. ${jour - this.G.jour === 1 ? "C'est pour demain !" : `Encore ${jour - this.G.jour} jours de patience.`}`); });
     this.grouper(avant, x);
   }
 
@@ -424,8 +480,14 @@ class MarcheScene extends Phaser.Scene {
   message(texte, couleur = '#3b2410') {
     if (couleur === '#a03030') Son.jouer('refus');
     if (this.texteMessage) this.texteMessage.destroy();
-    this.texteMessage = this.add.text(480, 460, texte, style(13, couleur, { fontStyle: 'bold' })).setOrigin(0.5);
-    this.contenu.add(this.texteMessage);
+    if (this.contenu && !this.modeVue) {
+      this.texteMessage = this.add.text(480, 460, texte, style(13, couleur, { fontStyle: 'bold' })).setOrigin(0.5);
+      this.contenu.add(this.texteMessage);
+    } else {
+      // Dans la vue d'ensemble (ou de tout près) : une bulle sur la place, qui s'efface d'elle-même
+      this.texteMessage = this.add.text(480, 492, texte, style(14, couleur === '#a03030' ? '#ffb0a0' : '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 760 } })).setOrigin(0.5).setDepth(45);
+      this.tweens.add({ targets: this.texteMessage, alpha: 0, delay: 3500, duration: 500 });
+    }
   }
 
   // --- Les commandes prévues (lettres acceptées) ---
@@ -491,6 +553,59 @@ class MarcheScene extends Phaser.Scene {
 
   // --- Un étal ---
 
+  // L'étal de tout près : la marchandise du jour bien disposée sur la nappe, le marchand qui la
+  // vante, les prix sur des étiquettes. On clique sur un article pour l'acheter.
+  vitrine(cle) {
+    const G = this.G, m = MARCHANDS[cle];
+    if (this.vitrineOuverte) this.vitrineOuverte.destroy();
+    const c = this.vitrineOuverte = this.add.container(0, 0).setDepth(40);
+    const panneau = this.contenu;
+    if (panneau) panneau.setVisible(false);
+    const fermer = () => { Son.jouer('glisse'); c.destroy(); this.vitrineOuverte = null; if (panneau && panneau.active) panneau.setVisible(true); };
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x120a04, 0.86).setInteractive().on('pointerdown', fermer));
+    // L'auvent au-dessus, la grande table drapée aux couleurs du marchand, la planche du devant
+    const etal = etalHD(this, m.couleur);
+    c.add(this.add.image(560, 118, etal).setOrigin(0.5, 0).setScale(8.7, 7).setCrop(0, 0, 88, 22));
+    c.add(this.add.rectangle(560, 356, 760, 210, m.couleur).setStrokeStyle(3, 0x2a1a10));
+    for (let y = 262; y < 450; y += 24) c.add(this.add.rectangle(560, y, 760, 2, 0xffffff, 0.08));
+    c.add(this.add.image(560, 470, tapisEtalHD(this, m.couleur)).setOrigin(0.5, 1).setScale(7.6, 2.2));
+    c.add(this.add.rectangle(560, 452, 760, 14, 0x5a3a1a).setStrokeStyle(2, 0x2a1a10));
+    // Le marchand, en buste, sur le côté, qui te parle
+    const personne = { nom: m.nom, race: m.race, feminin: /Mère|Hilda|Rosalie/.test(m.nom) };
+    c.add(this.add.image(100, 470, textureBusteHD(this, personne, 'content')).setOrigin(0.5, 1).setScale(2.1));
+    const offre = G.etals[cle], ids = m.objets.filter(id => offre[id] && offre[id].qte > 0);
+    const phrases = ids.length ? [`Approche, approche ! Regarde-moi ${ids.length > 1 ? 'ces merveilles' : 'cette merveille'}...`, 'Tout est frais de ce matin. Tu ne trouveras pas mieux sur la place !', `Un œil de connaisseur, je vois. Fais ton choix !`] : ['Tout est parti ! Reviens demain, de bonne heure.'];
+    Son.jouer('voix', { personne, ton: 'bonjour' });
+    c.add(this.add.text(560, 88, `« ${Phaser.Utils.Array.GetRandom(phrases)} »`, style(15, '#fff4dc', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 700 } })).setOrigin(0.5, 0));
+    c.add(this.add.text(560, 50, `${m.nom} · ${m.metier}`, style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
+    // La marchandise, bien alignée sur la nappe : l'objet en grand, sa pile, son étiquette
+    const pas = Math.min(160, 700 / Math.max(1, ids.length));
+    ids.forEach((id, i) => {
+      const x = 560 + (i - (ids.length - 1) / 2) * pas, o = offre[id], prix = prixMarchand(G, cle, id);
+      const groupe = [];
+      for (let k = 0; k < Math.min(3, Math.ceil(o.qte / 2)); k++) groupe.push(this.add.image(x - 10 + k * 10, 420 - k * 6, iconeObjet(this, id)).setOrigin(0.5, 1).setScale(4.6).setAngle((k - 1) * 6));
+      const etiquette = this.add.image(x, 436, panneauHD(this, 64, 30)).setScale(1.7).setAngle(3);
+      const texte = this.add.text(x, 436, `${prix} p.`, style(15, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5).setAngle(3);
+      const nom = this.add.text(x, 318, `${nomObjet(id)}\n× ${o.qte}`, style(13, '#fff4dc', { align: 'center', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5, 1);
+      const zone = this.add.rectangle(x, 400, pas - 8, 130, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      zone.on('pointerover', () => groupe.forEach(g => g.setScale(5))); zone.on('pointerout', () => groupe.forEach(g => g.setScale(4.6)));
+      zone.on('pointerdown', () => {
+        const r = acheterAuMarche(G, cle, id);
+        if (r.erreur) return this.message(r.erreur, '#a03030');
+        Son.jouer('achat');
+        this.message(r.message || `Acheté : ${nomObjet(id)}.`);
+        this.majInfos();
+        if (this.commandesOuvertes) { this.panneauCommandes.destroy(); this.creerPanneauCommandes(); }
+        this.vitrine(cle);
+      });
+      c.add([...groupe, etiquette, texte, nom, zone]);
+    });
+    if (!ids.length) c.add(this.add.text(560, 390, 'Les cagettes sont vides...', style(16, '#c9b48a', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
+    const b = creerBouton(this, 840, 505, 200, '◀ Reculer', fermer);
+    c.add([b.fond, b.label]);
+    c.add(this.add.text(480, 505, 'Clique sur un article pour l\'acheter', style(12, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
+  }
+
   ouvrirEtal(cle) {
     const G = this.G;
     this.montrer(cle);
@@ -531,6 +646,7 @@ class MarcheScene extends Phaser.Scene {
 
   ouvrirEncheres() {
     const G = this.G;
+    if (!lieuOuvert(G, 'encheres')) return this.message(`${NOMS_LIEUX_MARCHE.encheres} ouvre le jour ${OUVERTURE_LIEUX.encheres}.`);
     this.montrer('encheres');
     const c = this.panneau('Les enchères', 'Lord Pommeroy, Dame Ysaline, Gros Bob et Thrain Fendroc se disputent tes objets');
     if (G.encheresJour === G.jour) {
@@ -629,6 +745,7 @@ class MarcheScene extends Phaser.Scene {
 
   ouvrirBazar() {
     const G = this.G;
+    if (!lieuOuvert(G, 'bazar')) return this.message(`${NOMS_LIEUX_MARCHE.bazar} ouvre le jour ${OUVERTURE_LIEUX.bazar}.`);
     this.montrer('bazar');
     const c = this.panneau('Le Bazar de Rosalie', 'Un cadeau par client et par jour · chacun ses goûts, à toi de les découvrir');
     c.add(this.add.text(30, 340, "« Un petit cadeau, et la chance leur sourit ! Mais attention : un nain n'aime pas ce qu'aime un elfe. »",
@@ -652,6 +769,7 @@ class MarcheScene extends Phaser.Scene {
 
   ouvrirBrocante() {
     const G = this.G;
+    if (!lieuOuvert(G, 'brocante')) return this.message(`${NOMS_LIEUX_MARCHE.brocante} ouvre le jour ${OUVERTURE_LIEUX.brocante}.`);
     this.montrer('brocante');
     const c = this.panneau(BROCANTEUR.nom, "Chaque décoration se voit dans ton arrière-boutique, et attire un peuple");
     c.add(this.add.text(30, 340, "« Des merveilles dénichées aux quatre coins des Trois Terres. Ça fera un shop qu'on remarque ! »",
@@ -676,6 +794,7 @@ class MarcheScene extends Phaser.Scene {
 
   ouvrirGardeRobe() {
     const G = this.G;
+    if (!lieuOuvert(G, 'garderobe')) return this.message(`${NOMS_LIEUX_MARCHE.garderobe} ouvre le jour ${OUVERTURE_LIEUX.garderobe}.`);
     this.montrer('garderobe');
     const c = this.panneau(MARCELLINE.nom, 'Tout ce que tu achètes, tu le portes : on te verra avec, partout');
     c.add(this.add.text(30, 340, "« Un marchand bien mis inspire confiance. Laissez-moi vous arranger ça... »",
@@ -717,6 +836,7 @@ class MarcheScene extends Phaser.Scene {
 
   ouvrirJeux() {
     const G = this.G;
+    if (!lieuOuvert(G, 'jeux')) return this.message(`${NOMS_LIEUX_MARCHE.jeux} ouvre le jour ${OUVERTURE_LIEUX.jeux}.`);
     this.montrer('jeux');
     const c = this.panneau('Le coin des jeux', 'Tenu par Fil-de-Fer, cousin du vieux Grippesou');
     c.add(this.add.rectangle(480, 395, 2, 120, 0x8a6a3a));

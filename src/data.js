@@ -605,6 +605,11 @@ const MATERIAUX_PAR_REPARATION = 3;
 // --- Le Marché des Mastres (le matin) ---
 
 // Les trois étals. `toujours` : objets disponibles tous les jours ; les autres apparaissent au hasard.
+// Les lieux du marché qui ouvrent un par un, les premiers jours (le jour d'ouverture). Les étals
+// de provisions, le crieur et le mendiant sont là dès le premier jour.
+const OUVERTURE_LIEUX = { jeux: 2, encheres: 3, brocante: 5, garderobe: 7, bazar: 9 };
+const NOMS_LIEUX_MARCHE = { jeux: 'Le coin des jeux', encheres: 'Les enchères', brocante: 'La brocante de Firmin', garderobe: 'La garde-robe de Marcelline', bazar: 'Le Bazar de Rosalie' };
+
 const MARCHANDS = {
   gedeon: {
     nom: 'Maître Gédéon', metier: 'Épicerie', race: 'hobbit', couleur: 0x4f7a3a,

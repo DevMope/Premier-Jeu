@@ -592,6 +592,8 @@ class CounterScene extends Phaser.Scene {
       onComplete: () => marcheur.destroy(),
     });
     this.montrerBuste(this.personneDe(entree), this.expressionArrivee(entree));
+    // Il dit bonjour (ou grogne, si c'est une famille en colère ou la Faucheuse)
+    this.time.delayedCall(260, () => { if (this.buste) Son.jouer('voix', { personne: this.buste.personne, ton: this.buste.expression === 'fache' ? 'grogne' : entree.type === 'faucheuse' ? 'grogne' : 'bonjour' }); });
     const echelle = BUSTE.echelle * tailleBuste(this.personneDe(entree)).echelle;
     this.perso.setAlpha(0).setScale(echelle * 0.85);
     this.tweens.add({
@@ -684,6 +686,9 @@ class CounterScene extends Phaser.Scene {
     if (!this.buste || this.buste.expression === expression) return;
     this.buste.expression = expression;
     this.majVisage();
+    // Son humeur s'entend : un petit mot fâché, déçu ou ravi
+    const ton = { fache: 'fache', inquiet: 'decu', content: 'content' }[expression];
+    if (ton && !this.enTrainDeParler) Son.jouer('voix', { personne: this.buste.personne, ton });
   }
 
   // La bouche bouge pendant qu'il parle.
@@ -1167,7 +1172,8 @@ class CounterScene extends Phaser.Scene {
   // `porte` : le baluchon que le client emporte, sur l'épaule (le bâton devant, le tissu
   // noué dans son dos).
   partirPar(x, porte = null) {
-    Son.jouer('porte');
+    if (this.buste) Son.jouer('voix', { personne: this.buste.personne, ton: this.buste.expression === 'fache' ? 'grogne' : 'auRevoir' });
+    this.time.delayedCall(350, () => Son.jouer('porte'));
     if (Son.theme === 'faucheuse') Son.ambiance('comptoir');
     const versDroite = x > this.perso.x;
     const entree = this.entree;

@@ -430,6 +430,8 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     mendiant: 0,       // total donné au mendiant
     chienNourri: 0,    // rations données au chien du mendiant (une par jour) : une aventure annexe s'y cache
     chienJour: 0,      // le jour de la dernière ration
+    fontaineJour: 0,   // le jour de la dernière pièce jetée dans la fontaine
+    fontainePieces: 0, // combien de pièces dorment au fond (ça servira, plus tard...)
     tresors: [],       // objets de valeur à l'atelier : { id, nom, categorie, valeurBase, etat, reparation }
     compta: {},        // jour → { r: recettes, d: dépenses, pret: prêts reçus } par poste
     comptaTotal: { r: {}, d: {}, pret: {} },
@@ -673,6 +675,23 @@ function gagnerAuBonneteau(G, mise) {
 // --- Le mendiant ---
 
 // Donner au mendiant. Renvoie un message de remerciement (un cadeau la première fois qu'on dépasse le seuil).
+// Une pièce dans la fontaine, une fois par jour : on fait un vœu. Renvoie un message d'erreur, ou null.
+function jeterPieceFontaine(G) {
+  if (G.fontaineJour === G.jour) return "Tu as déjà fait ton vœu aujourd'hui. La fontaine n'en exauce qu'un par jour.";
+  if (!peutPayer(G, 1)) return "Pas une seule pièce à jeter...";
+  payer(G, 1, 'fontaine');
+  G.fontaineJour = G.jour;
+  G.fontainePieces = (G.fontainePieces || 0) + 1;
+  return null;
+}
+
+// Les lieux du marché ouvrent un par un, les premiers jours : au début, seuls les étals de
+// provisions sont là, les autres sont en travaux.
+function lieuOuvert(G, cle) {
+  const jour = OUVERTURE_LIEUX[cle];
+  return !jour || G.jour >= jour;
+}
+
 function donnerAuMendiant(G, montant) {
   if (!peutPayer(G, montant)) return null;
   const avant = G.mendiant;
@@ -1955,6 +1974,11 @@ function avancerEvenements(G) {
   G.nouvellesLues.push(i);
   lignes.push(NOUVELLES[i]);
   if (G.palierNouveau && PALIERS_CLIENTS[G.palierNouveau].gazette) lignes.unshift('📢 ' + PALIERS_CLIENTS[G.palierNouveau].gazette);
+  // Un nouveau lieu ouvre sur le marché (annoncé la veille, puis le jour même)
+  for (const [cle, jour] of Object.entries(OUVERTURE_LIEUX)) {
+    if (jour === G.jour) lignes.unshift(`📢 ${NOMS_LIEUX_MARCHE[cle]} ouvre aujourd'hui sur le marché !`);
+    else if (jour === G.jour + 1) lignes.push(`🔨 Les travaux s'achèvent : ${NOMS_LIEUX_MARCHE[cle].toLowerCase()} ouvre demain.`);
+  }
   G.gazette = { jour: G.jour, lignes };
 }
 

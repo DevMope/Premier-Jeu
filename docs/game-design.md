@@ -400,7 +400,7 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 
 ### 13 Histoire et zones conquises
 - **Déplacer l'auberge** dans une zone conquise : nouveau biome, décor, PNJ du village, financer le voyage et le nouveau shop ; combien de shops au total.
-- Le grand retournement (Garrick) : distiller des indices (gazette, absences, générosité suspecte) ; les retours de Garrick.
+- **Le grand retournement (rappel, à ne pas oublier)** : Garrick Cœur-de-Chêne, l'aventurier sauvé de la rivière au début, est le grand méchant de la fin du jeu. Distiller des indices (gazette, absences, générosité suspecte) ; les retours de Garrick ; la révélation à l'étape 15.
 - La menace qui grandit : gazette, dialogues, décor qui s'assombrit ; sa nature (dragon ?) à confirmer.
 - L'armure : la révélation (c'est le joueur et son groupe qui partent) et la sélection du groupe.
 - Le mendiant (rôle narratif) et son chien (cinématique secrète, aventure annexe hors carte).
@@ -412,9 +412,15 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 
 ### 15 Fins du jeu
 - La fin du bien (équiper le groupe) et la fin du mal (aider la menace).
+- **La révélation : Garrick est le grand méchant.** Celui qu'on a sauvé au début contrôle les forces du mal ; la fin du bien l'affronte, la fin du mal le rejoint.
+
+### « On le fera plus tard » (dit par le joueur ; à caser dans les étapes au fur et à mesure)
+- **La fontaine du marché** (v 0.52) : on peut jeter une pièce par jour. Ce que ça débloque reste à définir : une rencontre un soir de promenade, un coup de pouce pendant un voyage, un vœu qui se réalise après N pièces… (candidat : étapes 11 ou 13).
+- **La vitrine des étals** (v 0.52) : le second zoom montre les marchandises de près ; à enrichir plus tard avec des objets rares du jour, des promotions, le marchand qui vante sa marchandise.
+- **Les étals qui ouvrent jour après jour** (v 0.52) : calendrier à ajuster avec les retours des joueurs.
 
 ### Équilibrage (à tout moment)
 - Le ravitaillement et le cœur commandes / colis ; états (empoisonné) et demi-cœurs (pistes) ; les effets de la chambre ; les déblocages de chaque palier à valider avec le joueur ; la conquête des lieux n'a d'effet que quand l'auberge peut déménager.
 
 ### Diffusion
-- `main` (Cloudflare) est en v 0.40 : demander au joueur avant de pousser les versions suivantes.
+- `main` (Cloudflare) est en v 0.51 (adresse goyland.workers.dev) : toujours demander au joueur avant de pousser les versions suivantes ; l'artefact claude.ai se publie sans demander, sauf quand il y a de nouveaux designs graphiques (le joueur veut voir les planches d'abord).

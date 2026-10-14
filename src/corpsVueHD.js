@@ -546,10 +546,14 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       if (d2 > 1) return null;
       const nz = Math.sqrt(1 - d2);
       const fz = nx * s + nz * c, fu = nx * c - nz * s;   // la normale dans le repère du personnage
-      const frange = ny < -0.42 + Math.abs(Math.sin((x - cx) / k * 1.1)) * 0.14;
+      // (les elfes ont le front dégagé : la frange s'arrête bien au-dessus des yeux, et une seule
+      // mèche fine retombe sur le coin d'un œil)
+      const elfe = race === 'elfe';
+      const frange = ny < (elfe ? -0.64 : -0.42) + Math.abs(Math.sin((x - cx) / k * 1.1)) * (elfe ? 0.07 : 0.14);
+      const meche = elfe && !dos && fz > 0.3 && ny > -0.7 && ny < -0.08 && Math.abs(x + 0.5 - X(-2.4 * k, P.rx * 0.9)) < 0.8 * k;
       const arriere = fz < -0.05;
-      const tempe = Math.abs(fu) > 0.9 && ny < 0.25 && fz < 0.5;
-      if (!frange && !arriere && !tempe) return null;
+      const tempe = Math.abs(fu) > (elfe ? 0.94 : 0.9) && ny < 0.25 && fz < 0.5;
+      if (!frange && !arriere && !tempe && !meche) return null;
       return [nx, ny, nz];
     }, { motif: MECHES });
     if (coupe === 'herisse') for (let j = -6; j <= 6; j += 3) t.forme('cheveux', (x, y) => (y >= cy - P.ry - 3 * k && y < cy - P.ry + 1 * k && Math.abs(x + 0.5 - cx - j * 0.9 * k) < (y - cy + P.ry + 4 * k) * 0.5 ? [0, -0.6, 0.7] : null), { ombre: false });

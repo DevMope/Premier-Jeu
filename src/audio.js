@@ -186,6 +186,7 @@ const Son = {
     if (quoi === 'tambour') { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12); g.gain.setValueAtTime(0.5 * force, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.25); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.3); }
     else if (quoi === 'tambourin') this.bruit(0.08, t, bus, 0.16 * force, 6000, 'highpass');
     else if (quoi === 'bois') this.bruit(0.03, t, bus, 0.25 * force, 2400);
+    else if (quoi === 'pieces') { const g = this.ctx.createGain(); g.gain.value = force; g.connect(bus); SONS.piece.call(this, t, g, {}); if (force > 0.45) SONS.piece.call(this, t + 0.06, g, {}); }
     else if (quoi === 'coeur') { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.frequency.value = 50; g.gain.setValueAtTime(0.6 * force, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.35); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.4); }
   },
 
@@ -233,6 +234,8 @@ const Son = {
 
 // Les instruments : [forme d'onde, multiple de la fréquence, volume, désaccord en cents]
 const INSTRUMENTS = {
+  clarinette: { voix: [['square', 1, 0.35], ['sine', 1, 0.5], ['sine', 3, 0.12], ['square', 2, 0.05]], attaque: 0.04, decroissance: 0.15, tenue: 0.85, relache: 0.18, volume: 0.17, vibrato: 0.007, filtre: 2600, glisse: 1.012 },
+  accordeon: { voix: [['sawtooth', 1, 0.25, -7], ['sawtooth', 1, 0.25, 7], ['square', 2, 0.08], ['sine', 1, 0.3]], attaque: 0.03, decroissance: 0.1, tenue: 0.8, relache: 0.12, volume: 0.1, filtre: 1500 },
   guitare: { voix: [['triangle', 1, 0.7], ['sine', 1, 0.3], ['sine', 2, 0.12], ['sawtooth', 1, 0.06]], attaque: 0.008, decroissance: 0.9, tenue: 0.1, relache: 0.35, volume: 0.22, filtre: 2200, glisse: 1.008 },
   clochette: { voix: [['sine', 1, 0.6], ['sine', 2.0, 0.2], ['sine', 3.01, 0.12], ['sine', 4.2, 0.05]], attaque: 0.004, decroissance: 2.2, tenue: 0.05, relache: 1.5, volume: 0.16 },
   carillon: { voix: [['sine', 1, 0.7], ['sine', 2.76, 0.18], ['sine', 5.4, 0.07], ['sine', 0.5, 0.15]], attaque: 0.012, decroissance: 1.3, tenue: 0.08, relache: 0.9, volume: 0.17 },
@@ -254,7 +257,7 @@ const INSTRUMENTS = {
 
 // Les gammes, en demi-tons depuis la tonique
 const GAMMES = {
-  hante: [0, 2, 3, 6, 7, 8, 11], majeur: [0, 2, 4, 5, 7, 9, 11], mineur: [0, 2, 3, 5, 7, 8, 10], dorien: [0, 2, 3, 5, 7, 9, 10], mixolydien: [0, 2, 4, 5, 7, 9, 10], lydien: [0, 2, 4, 6, 7, 9, 11],
+  hante: [0, 2, 3, 6, 7, 8, 11], freygish: [0, 1, 4, 5, 7, 8, 10], majeur: [0, 2, 4, 5, 7, 9, 11], mineur: [0, 2, 3, 5, 7, 8, 10], dorien: [0, 2, 3, 5, 7, 9, 10], mixolydien: [0, 2, 4, 5, 7, 9, 10], lydien: [0, 2, 4, 6, 7, 9, 11],
 };
 const NOTE = { C: 261.63, D: 293.66, E: 329.63, F: 349.23, G: 392.0, A: 440.0, B: 493.88 };
 
@@ -412,14 +415,18 @@ const THEMES = {
     percussion: (m) => [[0, 'bois', 0.8], [1, 'bois', 0.5], [2, 'bois', 0.8], [3, 'bois', 0.5]],
   },
   // La banque : un peu solennel, harpe et orgue
+  // La banque : une danse klezmer (gamme freygish), clarinette qui ornemente sur l'oum-pah de
+  // l'accordéon et de la basse, et des pièces qui tintent au fond (le coffre de Thorgrim)
   banque: {
-    base: NOTE.F / 2, gamme: GAMMES.majeur, tempo: 84, temps: 4, phrase: 8,
-    accords: [0, 3, 4, 0, 5, 3, 4, 0], octaveMelodie: 2,
-    instruments: { melodie: 'harpe', accompagnement: 'orgue', basse: 'basse' },
-    motif: { 0: [[0, 7, 1], [1, 11, 1], [2, 14, 2]], 1: [[0, 13, 1], [1, 11, 1], [2, 9, 2]] },
-    rythmes: [[1, 1, 2], [2, 2], [1, 1, 1, 1]], silence: 0.3,
-    basse: (m, a) => [[0, a, 3.8]],
-    accompagnement: (m) => [[0, 0, 3.9, 0.3], [0, 1, 3.9, 0.25], [0, 2, 3.9, 0.25]],
+    base: NOTE.D / 2, gamme: GAMMES.freygish, tempo: 132, temps: 2, phrase: 8,
+    accords: [0, 0, 3, 0, 5, 3, 4, 0], octaveMelodie: 2, lie: 1.05,
+    instruments: { melodie: 'clarinette', accompagnement: 'accordeon', basse: 'basse' },
+    motif: { 0: [[0, 7, 0.5], [0.5, 8, 0.5], [1, 11, 1]], 1: [[0, 12, 0.5], [0.5, 11, 0.5], [1, 8, 0.5], [1.5, 7, 0.5]], 2: [[0, 10, 0.5], [0.5, 8, 0.5], [1, 7, 1]], 3: [[0, 8, 0.75], [0.75, 7, 0.25], [1, 6, 1]], 7: [[0, 7, 2]] },
+    rythmes: [[0.5, 0.5, 1], [0.5, 0.5, 0.5, 0.5], [1, 0.5, 0.5], [0.25, 0.25, 0.5, 1]], silence: 0.1,
+    basse: (m, a) => [[0, a, 0.45], [1, a + 4, 0.45]],
+    accompagnement: (m) => [[0.5, 0, 0.35, 0.4], [0.5, 1, 0.35, 0.35], [1.5, 0, 0.35, 0.4], [1.5, 2, 0.35, 0.35]],
+    percussion: (m) => (m % 2 === 0 ? [[0, 'pieces', 0.5], [1.5, 'pieces', 0.35]] : [[1, 'pieces', 0.4]]),
+    reverb: 0.2,
   },
   // Les cinématiques : cordes et célesta, mystère et émerveillement (Harry Potter, le Hobbit)
   cinematique: {
@@ -493,6 +500,11 @@ const SONS = {
   froid(t, bus) { this.bruit(1.2, t, bus, 0.12, 250); const osc = this.ctx.createOscillator(); osc.frequency.value = 55; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.2, t + 0.4); g.gain.exponentialRampToValueAtTime(0.0005, t + 1.4); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 1.5); },
   // Le feu qui crépite (une bûche)
   feu(t, bus) { for (let i = 0; i < 6; i++) this.bruit(0.025, t + Math.random() * 0.5, bus, 0.3, 2500 + Math.random() * 2000); },
+
+  // --- Les passages d'un lieu à l'autre (façon Pokémon : deux notes vives, un petit souffle) ---
+  passage(t, bus) { for (const [dt, f] of [[0, 660], [0.07, 990]]) { const osc = this.ctx.createOscillator(); osc.type = 'square'; osc.frequency.value = f; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.09, t + dt); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.09); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.1); } this.bruit(0.12, t + 0.04, bus, 0.14, 2200); },
+  // Dehors : les deux notes descendent, et l'air du dehors (un souffle plus clair, un oiseau)
+  passageDehors(t, bus) { for (const [dt, f] of [[0, 990], [0.07, 740]]) { const osc = this.ctx.createOscillator(); osc.type = 'square'; osc.frequency.value = f; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.09, t + dt); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.09); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.1); } this.bruit(0.25, t + 0.04, bus, 0.1, 3500, 'highpass'); const o = this.ctx.createOscillator(); o.frequency.setValueAtTime(2400, t + 0.3); o.frequency.exponentialRampToValueAtTime(3200, t + 0.38); o.frequency.exponentialRampToValueAtTime(2600, t + 0.46); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + 0.3); g.gain.exponentialRampToValueAtTime(0.05, t + 0.33); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.48); o.connect(g); g.connect(bus); o.start(t + 0.3); o.stop(t + 0.5); },
 
   // --- Le commerce ---
   // Un achat : deux pièces sur le comptoir, puis un petit « ding » de satisfaction
@@ -583,20 +595,44 @@ const VOIX = {
   gobelin: { forme: 'sawtooth', base: 380, ecart: 120, note: 0.06 },
   faucheuse: { forme: 'sawtooth', base: 70, ecart: 15, note: 0.16 },
 };
+// Les intonations : la même voix, mais la phrase monte, descend, s'emballe ou traîne selon
+// l'humeur. `pente` : de combien la hauteur glisse sur la phrase (en proportion) ; `vitesse` :
+// le débit ; `duree` : la longueur de la phrase ; `forme` : un timbre forcé (le grognement)
+const TONS = {
+  neutre: { duree: 1, vitesse: 1, pente: 0, force: 1 },
+  bonjour: { duree: 0.55, vitesse: 1, pente: 0.35, force: 1.1, courbe: [0, 0.3, 1] },           // « Bonjour ! » : ça monte
+  auRevoir: { duree: 0.6, vitesse: 0.9, pente: -0.3, force: 1, courbe: [0.6, 1, 0.2] },         // « Au revoir… » : ça retombe
+  merci: { duree: 0.4, vitesse: 1.2, pente: 0.25, force: 1, courbe: [0.2, 1, 0.7] },
+  content: { duree: 0.7, vitesse: 1.3, pente: 0.2, force: 1.1, courbe: [0.2, 1, 0.5, 1] },       // guilleret, ça sautille
+  fache: { duree: 0.8, vitesse: 1.7, pente: -0.15, force: 1.5, hauteur: 0.8, forme: 'sawtooth', courbe: [1, 1, 0.9, 1] },   // vite, bas, râpeux
+  decu: { duree: 0.9, vitesse: 0.65, pente: -0.35, force: 0.8, courbe: [0.8, 0.5, 0] },         // lent, qui s'affaisse
+  triste: { duree: 1.1, vitesse: 0.55, pente: -0.25, force: 0.7, hauteur: 0.9, courbe: [0.5, 0.3, 0] },
+  etonne: { duree: 0.45, vitesse: 1.1, pente: 0.6, force: 1.2, courbe: [0, 0.2, 1] },           // un bond vers l'aigu
+  inquiet: { duree: 0.7, vitesse: 1.2, pente: 0.15, force: 0.9, courbe: [0.3, 0.6, 0.4, 0.8] },  // ça tremblote
+  peur: { duree: 0.5, vitesse: 1.6, pente: 0.5, force: 1.2, hauteur: 1.2, courbe: [0.2, 1, 1] },
+  rire: { duree: 0.8, vitesse: 1.6, pente: -0.1, force: 1.1, courbe: [1, 0.6, 1, 0.6, 1, 0.6] },
+  grogne: { duree: 0.6, vitesse: 0.8, pente: -0.2, force: 1.2, hauteur: 0.7, forme: 'sawtooth', courbe: [1, 0.8, 0.6] },
+};
 SONS.voix = function (t, bus, o) {
   const p = o.personne || {};
   const V = VOIX[o.race || p.race] || VOIX.humain;
-  const base = V.base * (p.feminin ? 1.35 : 1) * (o.hauteur || 1);
+  const T = TONS[o.ton] || TONS.neutre;
+  const base = V.base * (p.feminin ? 1.35 : 1) * (o.hauteur || 1) * (T.hauteur || 1);
   let graine = 0; for (const c of (p.nom || o.nom || 'x')) graine = (graine * 31 + c.charCodeAt(0)) & 0xffff;
   const alea = () => { graine = (graine * 1103515245 + 12345) & 0x7fffffff; return graine / 0x7fffffff; };
-  const duree = Math.min(2.2, o.duree || 1);
-  const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = V.forme === 'sine' ? 3000 : 1600; f.connect(bus);
-  for (let tt = 0; tt < duree; tt += V.note * (1 + alea() * 0.6)) {
-    if (alea() < 0.18) continue;   // (une respiration)
-    const freq = base + (alea() - 0.5) * 2 * V.ecart;
-    const osc = this.ctx.createOscillator(); osc.type = V.forme; osc.frequency.setValueAtTime(freq, t + tt); osc.frequency.exponentialRampToValueAtTime(freq * (0.9 + alea() * 0.2), t + tt + V.note);
-    const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + tt); g.gain.exponentialRampToValueAtTime(0.1 * (o.force || 1), t + tt + 0.01); g.gain.exponentialRampToValueAtTime(0.0005, t + tt + V.note);
-    osc.connect(g); g.connect(f); osc.start(t + tt); osc.stop(t + tt + V.note + 0.02);
+  const duree = Math.min(2.2, o.duree || T.duree);
+  const forme = T.forme || V.forme;
+  const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = forme === 'sine' ? 3000 : forme === 'sawtooth' ? 1200 : 1600; f.connect(bus);
+  const courbe = T.courbe || [0.5, 0.5];
+  const note = V.note / T.vitesse;
+  for (let tt = 0; tt < duree; tt += note * (1 + alea() * 0.6)) {
+    if (alea() < (o.ton && o.ton !== 'neutre' ? 0.08 : 0.18)) continue;   // (une respiration)
+    const u = tt / duree;                                                  // où l'on en est dans la phrase
+    const pos = u * (courbe.length - 1), i = Math.min(courbe.length - 2, Math.floor(pos)), c = courbe[i] + (courbe[i + 1] - courbe[i]) * (pos - i);
+    const freq = base * (1 + T.pente * u + (c - 0.5) * 0.3) + (alea() - 0.5) * 2 * V.ecart * 0.6;
+    const osc = this.ctx.createOscillator(); osc.type = forme; osc.frequency.setValueAtTime(freq, t + tt); osc.frequency.exponentialRampToValueAtTime(freq * (0.9 + alea() * 0.2), t + tt + note);
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + tt); g.gain.exponentialRampToValueAtTime(0.1 * (o.force || 1) * T.force, t + tt + 0.01); g.gain.exponentialRampToValueAtTime(0.0005, t + tt + note);
+    osc.connect(g); g.connect(f); osc.start(t + tt); osc.stop(t + tt + note + 0.02);
   }
 };
 

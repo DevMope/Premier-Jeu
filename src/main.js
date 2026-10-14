@@ -58,6 +58,14 @@ function lancerJeu() {
       s.events.on('create', () => Son.ambiance(theme));
       if (s.scene.isActive()) Son.ambiance(theme);   // (l'écran titre est déjà ouvert)
     }
+    // Un petit son de passage quand on change de lieu (façon Pokémon) : une porte qui s'ouvre
+    // à l'intérieur, l'air du dehors quand on sort
+    const DEHORS = new Set(['Marche', 'Facade', 'Carte']);
+    const SANS_PASSAGE = new Set(['Titre', 'Intro', 'IntroHistoire', 'Recit', 'Faillite', 'Renovation', 'Hud']);
+    for (const s of window.jeu.scene.scenes) {
+      if (SANS_PASSAGE.has(s.scene.key)) continue;
+      s.events.on('create', () => Son.jouer(DEHORS.has(s.scene.key) ? 'passageDehors' : 'passage'));
+    }
     const reveil = () => { Son.demarrer(); Son.reprendre(); };
     // (Safari sur iPad n'accepte de lancer le son que sur la fin d'un toucher ou un clic, pas sur
     // son début : on écoute tout, sur toute la page, et à chaque fois tant qu'il n'est pas lancé)

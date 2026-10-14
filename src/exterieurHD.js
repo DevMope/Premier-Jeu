@@ -1383,39 +1383,107 @@ function charretteColporteurHD(scene) {
 // --- Le mendiant, assis contre un tonneau, son gros chien couché contre lui ---
 function mendiantAssisHD(scene) {
   if (scene.textures.exists('mendiantAssisHD')) return 'mendiantAssisHD';
-  const L = 78, H = 52, t = toileDecor(L, H);
-  t.rampes.peau = RAMPES_PEAU[2]; t.rampes.cape = rampe(0x4a4236); t.rampes.habit = rampe(0x6a6252); t.rampes.barbe = rampe(0x8a8a80); t.rampes.poil = rampe(0x6a4a2a);
+  // 96 × 64 : le tonneau à droite, le vieil homme adossé, genoux relevés, la sébile devant lui ;
+  // le gros chien Brisquet couché à gauche, la tête relevée vers son maître.
+  const L = 96, H = 64, t = toileDecor(L, H);
+  t.rampes.peau = RAMPES_PEAU[2]; t.rampes.cape = rampe(0x5a4a3c); t.rampes.habit = rampe(0x7a6a52); t.rampes.rapiece = rampe(0x4a5a6a);
+  t.rampes.barbe = rampe(0xb0b0a8); t.rampes.poil = rampe(0x8a6a3e); t.rampes.poilClair = rampe(0xc8a878); t.rampes.collier = rampe(0xa83a2a);
   const sol = H - 2;
-  // Le tonneau debout
-  t.forme('chene', (x, y) => (y >= 6 && y <= sol && x >= 52 && x <= 74 ? [(x - 63) / 13, 0, 0.8] : null), { motif: (x, y) => ((x - 52) % 4 === 0 ? -0.6 : 0) });
-  t.forme('chene', ellipsoide(63, 6, 11.5, 2.2), { decalage: 0.3 });
-  for (const y of [10, 28, 46]) for (let x = 52; x <= 74; x++) t.poser(x, y, 'fer', 3 - (x < 55 || x > 71 ? 1 : 0));
-  // Le chien : le corps couché, la tête relevée vers son maître, les oreilles tombantes, la queue
-  const poil = (x, y) => (hachage(x, y, 37) > 0.8 ? -0.5 : hachage(x, y, 38) > 0.85 ? 0.5 : 0);
-  t.forme('poil', ellipsoide(3, 42, 2.8, 2.2), { motif: poil });
-  t.forme('poil', ellipsoide(17, 43, 15.5, 7), { motif: poil });
-  for (const x of [8, 26]) t.forme('poil', ellipsoide(x, sol - 1, 4, 2), { decalage: -0.3 });
-  t.forme('poil', (x, y) => { const u = (y - 28) / 10; const nx = 26 + u * 2; return y >= 28 && y <= 40 && Math.abs(x + 0.5 - nx) < 5 + u * 2 ? [(x + 0.5 - nx) / 6, 0, 0.85] : null; }, { motif: poil });
-  t.forme('poil', ellipsoide(25, 28, 7.5, 6.5), { motif: poil });
-  t.forme('poil', ellipsoide(32, 30, 4, 2.6), { decalage: -0.4 });
-  for (const ex of [19, 30]) t.forme('poil', ellipsoide(ex, 29, 2.2, 4.5), { decalage: -0.7 });
-  t.poser(34, 29, 'encre', 0); t.poser(35, 29, 'encre', 0); t.poser(35, 30, 'encre', 1); t.poser(27, 26, 'encre', 0); t.poser(24, 26, 'encre', 0);
-  t.poser(31, 33, 'bouche', 3); t.poser(32, 33, 'bouche', 3); // la langue
-  // Le mendiant : les jambes tendues, les pieds nus, le torse affaissé contre le tonneau, la capuche
-  for (const [y0, dy] of [[36, 0], [39, 3]]) t.forme('habit', (x, y) => { const u = (x - 12) / 28; return x >= 12 && x <= 44 && y >= y0 + u * 3 - 2 && y <= y0 + u * 3 + 4 + dy ? [0, (y - y0 - u * 3 - 1) / 3, 0.85] : null; }, { motif: (x, y) => (hachage(x, y, 39) > 0.9 ? -0.8 : 0) });
-  for (const [fx, fy] of [[10, 39], [9, 44]]) t.forme('peau', ellipsoide(fx, fy, 4, 2.6), { decalage: -0.1 });
-  t.forme('cape', (x, y) => (y >= 16 && y <= 42 && Math.abs(x + 0.5 - 44 - (y - 16) * 0.1) < 7 + (y - 16) * 0.22 ? [(x + 0.5 - 44) / 10, 0, 0.8] : null), { motif: (x, y) => ((x * 3 + y) % 11 === 0 ? -0.6 : 0) });
-  trait(t, 'cape', 38, 24, 30, 34, 2.4, { decalage: -0.2 });
-  t.forme('peau', ellipsoide(28, 35, 2.8, 2.2));
-  t.forme('cape', ellipsoide(42, 12, 7.5, 7.5), { decalage: -0.3 });
-  t.forme('peau', ellipsoide(41, 14, 4.5, 4.2), { decalage: 0.2 });
-  t.forme('barbe', (x, y) => (y >= 15 && y <= 24 && Math.abs(x + 0.5 - 41) < 4.5 - Math.max(0, y - 19) * 0.6 ? [(x + 0.5 - 41) / 4, 0, 0.8] : null), { motif: (x, y) => (x % 2 === 0 ? -0.4 : 0.3) });
-  t.poser(39, 13, 'encre', 0); t.poser(43, 13, 'encre', 0);
-  // La sébile, avec une pièce au fond
-  t.forme('fer', ellipsoide(48, sol - 1, 4.5, 2), { decalage: -0.2 }); t.poser(48, sol - 2, 'laiton', 5);
+  // Le tonneau debout, cerclé de fer
+  t.forme('chene', (x, y) => (y >= 8 && y <= sol && x >= 72 && x <= 94 ? [(x - 83) / 13, 0, 0.8] : null), { motif: (x, y) => ((x - 72) % 4 === 0 ? -0.6 : 0) });
+  t.forme('chene', ellipsoide(83, 8, 11.5, 2.4), { decalage: 0.3 });
+  for (const y of [12, 32, 54]) for (let x = 72; x <= 94; x++) t.poser(x, y, 'fer', 3 - (x < 75 || x > 91 ? 1 : 0));
+  // --- Le chien : couché sur le flanc, les pattes avant allongées, la tête levée ---
+  const poil = (x, y) => (hachage(x, y, 37) > 0.82 ? -0.5 : hachage(x, y, 38) > 0.86 ? 0.4 : 0);
+  // la queue, enroulée derrière lui
+  trait(t, 'poil', 6, 50, 2, 42, 2.6, { decalage: -0.2 }); trait(t, 'poil', 2, 42, 6, 38, 2.2, { decalage: -0.1 });
+  // le corps, bien rond (il mange trop peu, mais il a le poil épais)
+  t.forme('poil', ellipsoide(24, 50, 18, 9), { motif: poil });
+  t.forme('poilClair', ellipsoide(26, 55, 12, 4), { motif: poil, decalage: 0.2, bord: false });   // le ventre clair
+  // la patte arrière repliée, les deux pattes avant allongées devant
+  t.forme('poil', ellipsoide(14, 56, 6, 4.5), { decalage: -0.2, motif: poil });
+  for (const [px, d] of [[40, 0], [45, -0.3]]) { trait(t, 'poil', 34, 54, px + 6, sol - 2, 3.2, { decalage: d }); t.forme('poilClair', ellipsoide(px + 7, sol - 1.5, 3.2, 1.8), { decalage: d + 0.2 }); }
+  // le cou et la tête, tournée vers le maître (vers la droite), le museau, la truffe
+  trait(t, 'poil', 36, 46, 44, 34, 6, { motif: poil });
+  t.forme('poil', ellipsoide(46, 30, 7.5, 6.8), { motif: poil });
+  t.forme('poil', ellipsoide(53, 33, 5.5, 3.4), { decalage: -0.1 });
+  t.forme('poilClair', ellipsoide(53, 34.5, 4, 1.6), { decalage: 0.3, bord: false });
+  t.poser(57, 32, 'encre', 0); t.poser(58, 32, 'encre', 0); t.poser(58, 33, 'encre', 1); t.poser(57, 31, 'encre', 2);   // la truffe
+  t.poser(49, 29, 'encre', 0); t.poser(50, 29, 'encre', 0); t.poser(50, 28, 'parchemin', 5);                                // l'œil
+  t.poser(54, 36, 'cuirRouge', 4); t.poser(55, 36, 'cuirRouge', 4);                                                         // la langue
+  // l'oreille tombante, et le collier rouge
+  t.forme('poil', (x, y) => (y >= 24 && y <= 36 && Math.abs(x + 0.5 - 42 - (y - 24) * 0.15) < 2.6 - Math.max(0, y - 32) * 0.5 ? [(x + 0.5 - 42) / 3, 0, 0.8] : null), { decalage: -0.6 });
+  for (const [x, y] of [[40, 38], [41, 39], [42, 40], [43, 40], [44, 40], [45, 39]]) { t.poser(x, y, 'collier', 3); t.poser(x, y + 1, 'collier', 1); }
+  t.poser(43, 41, 'laiton', 5);   // la médaille
+  // --- Le mendiant : adossé au tonneau, genoux relevés, pieds nus, capuche baissée ---
+  const rapieces = (x, y) => (hachage(Math.floor(x / 3), Math.floor(y / 3), 41) > 0.86 ? -0.9 : 0);
+  // le tronc et la cape qui l'enveloppe, de l'épaule aux hanches
+  t.forme('cape', (x, y) => (y >= 18 && y <= 52 && Math.abs(x + 0.5 - 66 - (y - 18) * 0.05) < 7.5 + (y - 18) * 0.2 ? [(x + 0.5 - 66) / 11, 0, 0.8] : null), { motif: rapieces });
+  // les cuisses relevées (genoux en l'air), puis les tibias qui redescendent vers les pieds
+  for (const [dx, d] of [[0, -0.3], [3, 0]]) {
+    trait(t, 'habit', 62 + dx, 44, 50 + dx, 34, 5.5, { decalage: d, motif: rapieces });
+    trait(t, 'habit', 50 + dx, 34, 46 + dx, 56, 4.5, { decalage: d + 0.1, motif: rapieces });
+  }
+  // les pieds nus, les orteils vers le chien
+  for (const [fx, fy] of [[42, 59], [45, 61]]) { t.forme('peau', ellipsoide(fx, fy, 5, 2.4), { decalage: -0.1 }); for (let o = 0; o < 3; o++) t.poser(fx - 4 + o, fy - 1, 'peau', 1); }
+  // un morceau de pièce qui rapièce la cape, bleu délavé
+  t.forme('rapiece', (x, y) => (y >= 30 && y <= 37 && x >= 68 && x <= 75 ? [0, 0, 0.8] : null), { decalage: -0.2, bord: false, motif: (x, y) => ((x + y) % 2 ? -0.3 : 0) });
+  // le bras droit posé sur le genou, la main qui pend ; le bras gauche tendu vers la sébile
+  trait(t, 'cape', 66, 26, 56, 36, 3.6, { decalage: -0.2 }); t.forme('peau', ellipsoide(55, 38, 2.8, 2.4));
+  trait(t, 'cape', 70, 28, 62, 52, 3.4, { decalage: -0.4 }); t.forme('peau', ellipsoide(61, 54, 2.8, 2.2), { decalage: -0.1 });
+  // la tête penchée en avant sous la capuche, la barbe grise qui descend sur la poitrine
+  t.forme('cape', ellipsoide(66, 15, 8.5, 8), { decalage: -0.2 });
+  t.forme('peau', ellipsoide(63, 17, 5, 4.6), { decalage: 0.2 });
+  t.forme('barbe', (x, y) => (y >= 19 && y <= 31 && Math.abs(x + 0.5 - 62 + (y - 19) * 0.1) < 4.8 - Math.max(0, y - 23) * 0.5 ? [(x + 0.5 - 62) / 4.5, 0, 0.8] : null), { motif: (x, y) => (x % 2 === 0 ? -0.4 : 0.3) });
+  t.poser(60, 16, 'encre', 0); t.poser(64, 16, 'encre', 0);
+  t.forme('cape', (x, y) => (y >= 8 && y <= 14 && Math.abs(x + 0.5 - 66) < 8 - (14 - y) * 0.9 ? [(x + 0.5 - 66) / 8, -0.5, 0.7] : null), { decalage: -0.1 });   // le haut de la capuche
+  // La sébile en fer-blanc, posée devant lui, deux pièces au fond
+  t.forme('fer', ellipsoide(56, sol - 1, 5.5, 2.4), { decalage: -0.2 });
+  t.forme('fer', ellipsoide(56, sol - 3, 5, 1.2), { decalage: 0.4, bord: false });
+  t.poser(55, sol - 3, 'laiton', 5); t.poser(57, sol - 3, 'laiton', 4);
   t.contour();
   t.texture(scene, 'mendiantAssisHD');
   return 'mendiantAssisHD';
+}
+
+// Un bouton rond en bois cerclé de laiton, avec une flèche de laiton (vers la droite ; on le
+// retourne pour la gauche). Remplace les flèches en caractères du téléphone.
+function boutonFlecheHD(scene) {
+  if (scene.textures.exists('flecheHD')) return 'flecheHD';
+  const L = 26, H = 26, t = toileDecor(L, H);
+  t.forme('laiton', ellipsoide(13, 13, 12.5, 12.5), { decalage: 0.2 });
+  t.forme('chene', ellipsoide(13, 13, 10.5, 10.5), { decalage: -0.1, motif: (x, y) => (Math.floor(y / 3) % 2 ? -0.35 : 0.1) });
+  // la flèche : un fût et une pointe
+  t.forme('laiton', (x, y) => (y >= 11 && y <= 14 && x >= 6 && x <= 14 ? [0, (y - 12.5) / 2, 0.9] : null), { decalage: 0.5 });
+  t.forme('laiton', (x, y) => (x >= 12 && x <= 20 && Math.abs(y + 0.5 - 13) <= (20 - x) * 0.8 + 0.5 ? [(x - 16) / 4, (y - 13) / 5, 0.9] : null), { decalage: 0.5 });
+  t.contour();
+  t.texture(scene, 'flecheHD');
+  return 'flecheHD';
+}
+
+// Une eau de récit : les mêmes couches que la rivière de l'ouverture (fond turquoise, caustiques,
+// surface qui scintille), sur une bande de la largeur du gué ou de la rivière à traverser
+function eauRecitHD(scene, x, y, l, h) {
+  creerEauHD(scene); creerHalo(scene);
+  const c = scene.add.container(0, 0);
+  const fond = scene.add.tileSprite(x, y, l, h, 'eauFondHD').setOrigin(0.5, 1).setTileScale(2, h / 32);
+  const caus1 = scene.add.tileSprite(x, y, l, h, 'caustiquesHD').setOrigin(0.5, 1).setTileScale(2, h / 32).setAlpha(0.5).setBlendMode(Phaser.BlendModes.ADD);
+  const caus2 = scene.add.tileSprite(x, y, l, h, 'caustiques2HD').setOrigin(0.5, 1).setTileScale(2, h / 32).setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD);
+  const surface = scene.add.tileSprite(x, y - h + 4, l, 14, 'surfaceHD').setOrigin(0.5, 0.5).setTileScale(2);
+  c.add([fond, caus1, caus2, surface]);
+  scene.tweens.add({ targets: fond, tilePositionX: -240, duration: 9000, repeat: -1 });
+  scene.tweens.add({ targets: caus1, tilePositionX: -240, duration: 5000, repeat: -1 });
+  scene.tweens.add({ targets: caus2, tilePositionX: 240, duration: 7000, repeat: -1 });
+  scene.tweens.add({ targets: surface, tilePositionX: -240, duration: 3500, repeat: -1 });
+  scene.tweens.add({ targets: [caus1, caus2], alpha: '-=0.15', duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  const scintille = scene.time.addEvent({ delay: 220, loop: true, callback: () => {
+    if (!c.active) { scintille.remove(); return; }
+    if (!c.visible) return;
+    const e = scene.add.image(x - l / 2 + Math.random() * l, y - h + 2 + Math.random() * 6, 'halo').setScale(0.07).setTint(0xffffff).setBlendMode(Phaser.BlendModes.ADD);
+    c.add(e);
+    scene.tweens.add({ targets: e, scale: 0.16, alpha: 0, x: e.x - 20, duration: 600, onComplete: () => e.destroy() });
+  } });
+  return c;
 }
 
 // --- Devant chaque étal : un tapis aux couleurs du marchand, et une petite décoration qui parle de lui ---

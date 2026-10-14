@@ -25,6 +25,11 @@ class StoryScene extends Cinematique {
     this.paysage = this.fond.paysage.setScale(this.fond.paysage.scaleX * 1.1, this.fond.paysage.scaleY * 1.1).setPosition(0, -18);
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
     this.decor = this.add.container(0, 0);
+    // Un premier plan qui glisse plus vite que le paysage (profondeur), et un léger assombrissement
+    // des bords qui concentre le regard sur le voyageur
+    this.premierPlan = this.add.container(0, 0).setDepth(6.5);
+    this.planterPremierPlan(v.zone ? ZONES[v.zone].biome : 'comte');
+    vignette(this, 0.45, 7);
 
     this.perso = imageCorps(this, -60, 360, v, 6);
     this.fCorps = echelleCorps(this.perso.texture.key);
@@ -56,6 +61,7 @@ class StoryScene extends Cinematique {
     const y = this.perso.y;
     this.tweens.add({ targets: this.perso, y: y - 2, duration: 125, yoyo: true, repeat: Math.floor(duree / 250) });
     this.tweens.add({ targets: this.paysage, x: -Phaser.Math.Clamp(x, 0, 960) / 960 * 96, duration: duree, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: this.premierPlan, x: -Phaser.Math.Clamp(x, 0, 960) / 960 * 260, duration: duree, ease: 'Sine.easeInOut' });
     await this.animer({ targets: this.perso, x, duration: duree, ease: 'Linear' });
     this.perso.setScale(6 * this.fCorps).setY(y);
   }
@@ -351,7 +357,28 @@ class StoryScene extends Cinematique {
   // Le décor de chaque épreuve, dessiné avec des formes simples.
   // --- Le décor de chaque épreuve : créatures et obstacles en HD, météo, lumière ---
 
+  // Le premier plan : des touffes d'herbe, des buissons ou des sapins sombres selon la contrée,
+  // tout en bas de l'écran, qui défilent vite quand le voyageur avance
+  planterPremierPlan(biome) {
+    creerForetPremierPlanHD(this);
+    const sol = 370;
+    const sombre = ['foret', 'marais', 'repaire', 'tour', 'grotte'].includes(biome);
+    const neige = ['montagne', 'glace'].includes(biome);
+    const teinte = neige ? 0xdce8f0 : sombre ? 0x1a3020 : 0x2f5a2a;
+    const g = this.add.graphics();
+    // les touffes d'herbe (ou de neige), en silhouette
+    for (let x = -100; x < 1300; x += 26 + (x * 7) % 19) {
+      const h = 10 + (x * 13) % 16;
+      g.fillStyle(teinte, 0.95);
+      g.fillTriangle(x, sol + 2, x + 6, sol - h, x + 12, sol + 2);
+      g.fillTriangle(x + 8, sol + 2, x + 13, sol - h * 0.7, x + 18, sol + 2);
+    }
+    this.premierPlan.add(g);
+    if (sombre) for (const [x, e] of [[-40, 1.1], [1180, 1.3]]) this.premierPlan.add(this.add.image(x, sol + 30, 'sapinPremierPlanHD').setOrigin(0.5, 1).setScale(e).setTint(0x101c14).setAlpha(0.9));
+  }
+
   planterDecor(type, x) {
+    if (this.eauRecit) { this.eauRecit.destroy(); this.eauRecit = null; }
     creerRecitHD(this);
     creerInterieurHD(this);
     creerObjetsHD(this);
@@ -428,8 +455,12 @@ class StoryScene extends Cinematique {
       }
       case 'gouffre': ajouter(this.add.image(x + 100, sol + 12, 'gouffreHD').setOrigin(0.5, 1).setScale(2.2).setDepth(1)); this.menace.sorte = 'gouffre'; this.menace.x = x + 100; break;
       case 'riviere': {
-        const eau = ajouter(this.add.tileSprite(x + 110, sol - 2, 220, 50, riviereHD(this)).setOrigin(0.5, 0.5).setTileScale(2).setDepth(1));
-        this.tweens.add({ targets: eau, tilePositionX: -240, duration: 6000, repeat: -1 });
+        // Une vraie rivière : fond turquoise, caustiques, surface qui scintille, et la berge.
+        // (devant les herbes du premier plan : on la pose hors du décor, et on l'enlève avec lui)
+        if (this.eauRecit) this.eauRecit.destroy();
+        this.eauRecit = eauRecitHD(this, x + 110, sol + 24, 230, 56).setDepth(6.6);
+        const berge = ajouter(this.add.graphics().setDepth(1.5));
+        berge.fillStyle(0x6a5a3a).fillRect(x - 10, sol - 32, 10, 6).fillRect(x + 225, sol - 32, 10, 6);
         this.menace.sorte = 'gouffre'; this.menace.x = x + 110; this.menace.eau = true;
         break;
       }
