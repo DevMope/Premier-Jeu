@@ -11,7 +11,7 @@ class MarcheNoirScene extends Phaser.Scene {
     this.part = false;   // (audit v0.59 : sinon « Remonter » ne marchait plus à la 2e visite)
     this.cameras.main.fadeIn(600);
     this.soiree = soireeMarcheNoir(G);
-    this.mainNoireOuverte = G.mal >= SEUIL_MAIN_NOIRE || palierCamp(G) <= -2;
+    this.mainNoireOuverte = mainNoireOuverte(G);
     // (v0.57) La cave a trois coins côte à côte : les doyens, les voyageurs (l'arrivée), la Main Noire
     this.coin = 1;
     this.cameras.main.setScroll(960, 0);

@@ -475,6 +475,13 @@ function creerBouton(scene, x, y, largeur, texte, action) {
   const fond = scene.add.image(x, y, cle).setScale(2).setInteractive({ useHandCursor: true });
   const label = scene.add.text(x, y, texte, style(18, '#fff0d0', { fontStyle: 'bold', stroke: '#24140a', strokeThickness: 4, brut: true })).setOrigin(0.5);
   label.setShadow(0, 2, '#120a04', 0, true, true); // comme gravé dans le bois
+  // (v0.60) le texte tient toujours dans sa plaque : trop long, la police rapetisse
+  const tenir = () => {
+    let t = parseInt(label.style.fontSize, 10) || 18;
+    while (label.text && label.width > largeur - 16 && t > 10) { t--; Phaser.GameObjects.Text.prototype.setFontSize.call(label, t); }
+  };
+  label.setFontSize = function (t) { Phaser.GameObjects.Text.prototype.setFontSize.call(this, t); tenir(); return this; };
+  tenir();
   let actif = true, survol = false;
   const repos = () => {
     if (!fond.active) return;
@@ -501,7 +508,7 @@ function creerBouton(scene, x, y, largeur, texte, action) {
     },
     setVisible(v) { fond.setVisible(v); label.setVisible(v); },
     // (v0.57) un bouton sans texte ne montre pas sa plaque vide ; il revient quand on lui redonne un texte
-    setTexte(t) { label.setText(t); if (!t) { fond.setVisible(false); fond.vide = true; } else if (fond.vide) { fond.setVisible(true); fond.vide = false; } },
+    setTexte(t) { label.setText(t); tenir(); if (!t) { fond.setVisible(false); fond.vide = true; } else if (fond.vide) { fond.setVisible(true); fond.vide = false; } },
   };
 }
 

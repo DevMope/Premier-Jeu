@@ -1420,7 +1420,12 @@ class CounterScene extends Phaser.Scene {
     this.majPanneauGauche();
 
     const jours = v.duree > 1 ? `dans ${v.duree} jours` : 'demain';
-    const phrase = chance >= 0.75 ? `Parfait ! Je reviendrai ${jours} avec ta part du butin, promis !`
+    // (v0.60) la phrase dit si la commande est complète ; la chance, elle, dit si le voyage est risqué
+    // (une commande complète pour une contrée trop dangereuse n'est pas « pas tout ce que je voulais »)
+    const cmd = commandeDe(v);
+    const complete = Object.entries(cmd).every(([id, n]) => (this.colis[id] || 0) >= n || (ITEMS[id] && ITEMS[id].durable && etatObjet(v, id) > 0));
+    const phrase = complete ? (chance >= 0.6 ? `Parfait, tout y est ! Je reviendrai ${jours} avec ta part du butin, promis !`
+      : `Tout y est, merci. Mais ça va être rude, là-bas... Rendez-vous ${jours}, si tout va bien.`)
       : chance >= 0.4 ? `Ce n'est pas tout ce que je voulais... mais je ferai avec. Rendez-vous ${jours} !`
       : "C'est tout ? Bon... Souhaite-moi bonne chance.";
     const objets = Object.entries(this.colis).flatMap(([id, n]) => Array(n).fill(id));

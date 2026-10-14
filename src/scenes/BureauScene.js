@@ -293,7 +293,9 @@ class BureauScene extends Phaser.Scene {
       ];
       droite = [
         { titre: 'Marchandage', lignes: Object.entries(MARCHANDS).map(([m, d]) => `${d.nom} : ${niveauRelation(G, d.nom).nom}${remiseMarchand(G, m) ? ` (−${Math.round(remiseMarchand(G, m) * 100)} %)` : ''}`) },
-        { titre: "Main-d'œuvre", lignes: [`${ouvriers(G).map(nomOuvrier).join(', ')}`, `${ouvriers(G).length} réparation(s) à la fois`, salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : 'Aucun employé'] },
+        { titre: "Main-d'œuvre", lignes: [`${ouvriers(G).map(nomOuvrier).join(', ')}`, `${ouvriers(G).length} réparation(s) à la fois`, salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : 'Aucun employé',
+          // (v0.60) le bilan de chacun : ce qu'il coûte, ce qu'il a fait gagner en valeur à l'atelier
+          ...G.employes.map(id => { const b = bilanEmploye(G, id); return `${EMPLOYES[id].nom} : ${b.reparations} réparation${b.reparations > 1 ? 's' : ''}, +${b.valeur} p. de valeur pour ${b.cout} p. de salaire` + (b.cout >= 20 ? (b.solde >= 0 ? ' ✓' : ' (donne-lui du travail !)') : ''); })] },
       ];
     } else if (cle === 'aventuriers') {
       const h = G.historique;
@@ -393,7 +395,7 @@ class BureauScene extends Phaser.Scene {
       { titre: 'Les prêteurs', lignes: [
         p > 0 ? `Banque Centrale : −${p * REMISE_BANQUE_LUMIERE * 100} points sur les taux` : 'Banque Centrale : taux normaux (la lumière les fait baisser)',
         ...taux,
-        (G.mal >= SEUIL_MAIN_NOIRE || cote === 'mal') ? 'La Main Noire te prête sans questions.' : "La Main Noire ne te connaît pas encore."] },
+        mainNoireOuverte(G) ? 'La Main Noire te prête sans questions.' : "La Main Noire ne te connaît pas encore."] },
       { titre: 'Qui te réclame', lignes: [cote === 'mal' ? `${NOMS_CAMPS.mal.charAt(0).toUpperCase() + NOMS_CAMPS.mal.slice(1)} te font confiance : ils viendront bientôt au comptoir.` : cote === 'bien' ? `${NOMS_CAMPS.bien.charAt(0).toUpperCase() + NOMS_CAMPS.bien.slice(1)} te tient en estime.` : 'Aucun camp ne te réclame encore.'] },
     ];
     this.pageEnBlocs(c, 42, 214, gauche);

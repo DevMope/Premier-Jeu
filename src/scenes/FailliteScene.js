@@ -217,7 +217,7 @@ class FailliteScene extends Cinematique {
     await this.defiler(this.proches, [700, 770, 840], 2000);
     this.proches.forEach((pp, i) => this.torche(pp.x - 26, pp.y - 120 - (i % 2) * 6));
     await this.attendreClic();
-    this.ecrire(`La famille ${famille}`, `« ${c.nom || 'Il'} est mort à cause de toi. Ton argent ne nous le rendra pas. »`);
+    this.ecrire(`La famille ${famille}`, `« ${c.nom || (c.feminin ? 'Elle' : 'Il')} est mort${c.feminin ? 'e' : ''} à cause de toi. Ton argent ne nous ${c.feminin ? 'la' : 'le'} rendra pas. »`);
     if (this.proches) { this.proches.forEach(q => this.regarderVers(q, this.p)); this.emotion(this.proches[0], 'colere'); this.geste(this.proches[0], 'penche'); Son.jouer('voix', { personne: { nom: "Père", race: "humain" }, ton: 'fache' }); } this.regarderVers(this.p, this.proches ? this.proches[0] : { x: 9999 }); this.geste(this.p, 'recule'); this.emotion(this.p, '!');
     Son.jouer('voix', { race: c.race || 'humain', nom: famille, ton: 'fache' });
     await this.attendreClic();

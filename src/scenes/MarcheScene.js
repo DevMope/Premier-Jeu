@@ -1115,7 +1115,12 @@ class MarcheScene extends Phaser.Scene {
       c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(2));
       c.add(this.add.text(x + 20, y - 7, `${d.nom} · ${d.prix} p.`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
       c.add(this.add.text(x + 20, y + 8, d.effet, style(10, '#6b4a2a', { wordWrap: { width: 280 } })).setOrigin(0, 0.5));
-      if (porte(G, id)) c.add(this.add.text(x + 340, y, 'Porté', style(12, '#2f6a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
+      if (porte(G, id)) this.bouton(c, x + 340, y, 70, `Revendre`, () => {
+        const erreur = revendreTenue(G, id);
+        if (!erreur) Son.jouer('pieces');
+        this.ouvrirGardeRobe();
+        this.message(erreur || `${d.nom} revendu à Marcelline : +${Math.floor(d.prix / 2)} p.`, erreur ? '#a03030' : '#2f6a2a');
+      });
       else this.bouton(c, x + 340, y, 70, 'Acheter', () => {
         const erreur = acheterTenue(G, id);
         if (!erreur) Son.jouer('achat');
@@ -1253,13 +1258,17 @@ class MarcheScene extends Phaser.Scene {
   async choisirGobelet(g) {
     if (this.etatBonneteau !== 'choix') return;
     this.etatBonneteau = 'revelation';
+    // (v0.60) Fil-de-Fer est un vrai bonneteur : dès la 2e partie, il lui arrive d'escamoter la
+    // pièce au dernier moment (moins souvent avec le trèfle du mendiant). Suivre le gobelet ne suffit plus.
+    const triche = g === this.gagnant && (this.G.jeux.bonneteau || 0) >= 2 && Math.random() < (aDecoration(this.G, 'trefle') ? 0.15 : 0.35);
+    if (triche) this.gagnant = Phaser.Utils.Array.GetRandom(this.gobelets.filter(x => x !== g));
     this.piece.setPosition(this.gagnant.x, 428).setVisible(true);
     await Promise.all(this.gobelets.map(x => this.animer({ targets: x, y: 385, duration: 250 })));
     if (g === this.gagnant) {
       gagnerAuBonneteau(this.G, this.mise);
       this.message(`Trouvé ! Tu gagnes ${this.mise * 2} pièces.`, '#2f6a2a');
     } else {
-      this.message(`Raté ! « Hé hé, l'œil est plus lent que la main... »`, '#a03030');
+      this.message(triche ? `Raté ?! Tu l'avais pourtant bien suivie... « Hé hé, la main est plus rapide que l'œil ! »` : `Raté ! « Hé hé, l'œil est plus lent que la main... »`, '#a03030');
     }
     this.majInfos();
     await this.attendre(900);

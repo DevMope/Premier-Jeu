@@ -180,12 +180,13 @@ class AtelierScene extends Phaser.Scene {
       const y = haut + 88 + i * 44;
       const jours = dureeReparation(G, t, ouvrier, e);
       const n = materiauxReparation(t, e);
-      const possible = !mat || (G.materiaux[mat] || 0) >= n;
+      const prix = prixReparation(t, e);
+      const possible = (!mat || (G.materiaux[mat] || 0) >= n) && G.argent >= prix;
       const restaure = e === ETATS.length - 1 && t.etatInitial in BONUS_RESTAURE;
       const fond = this.add.rectangle(480, y, 560, 36, possible ? 0xf6ead0 : 0xd8c8a8).setStrokeStyle(2, restaure ? 0xd4a020 : 0x8a6a3a);
       c.add(fond);
       c.add(pastilleEtat(this, 230, y, e));
-      c.add(this.add.text(322, y, `${jours} jour${jours > 1 ? 's' : ''}${mat ? ` · ${n} ${MATERIAUX[mat].nom.toLowerCase()}` : ''}`, style(13, possible ? '#3b2410' : '#9a3020', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      c.add(this.add.text(322, y, `${jours} j${mat ? ` · ${n} ${MATERIAUX[mat].nom.toLowerCase()}` : ''} · ${prix} p.`, style(13, possible ? '#3b2410' : '#9a3020', { fontStyle: 'bold' })).setOrigin(0, 0.5));
       c.add(this.add.text(740, y, `→ ~${valeurTresor(t, e)} p.${restaure ? `  Restauré ★ (×${String(BONUS_RESTAURE[t.etatInitial]).replace('.', ',')})` : ''}`,
         style(13, restaure ? '#b8860b' : '#2f6a2a', { fontStyle: 'bold' })).setOrigin(1, 0.5));
       if (!possible) return;

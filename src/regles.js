@@ -437,6 +437,7 @@ function voyageurAuHasard(G, aussi = []) {
 function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_DEFAUT } = {}) {
   const G = {
     nomShop,
+    graine: Math.floor(Math.random() * 1e9),   // (v0.60) le hasard de la partie (voir avecGraine)
     joueur: { feminin, apparence: apparence || apparenceParDefaut(feminin) },
     relations: {},     // nom → points
     paliers: {},       // nom → niveaux déjà atteints (pour ne donner chaque cadeau qu'une fois)
@@ -816,9 +817,9 @@ function remarqueCamp(G, v) {
   const decos = (G.decos || []).filter(d => DECOS[d].camp);
   const clair = decos.filter(d => DECOS[d].camp === 'bien'), sombre = decos.filter(d => DECOS[d].camp === 'mal');
   const p = palierCamp(G);
-  if (banni && sombre.length && Math.random() < 0.7) { changerRelation(G, v.nom, 1); return `${auHasard(["Ah, ", "Tiens, ", ""])}${auHasard(sombre).startsWith('crane') ? "un crâne de troll au mur... Tu sais au moins à qui il appartenait ? Hm. Au moins, ici, on ne nous chasse pas" : "une lanterne-crâne... Enfin un comptoir où l'on respire"} !`; }
+  if (banni && sombre.length && Math.random() < 0.7) { changerRelation(G, v.nom, 1); return `${auHasard(["Ah, ", "Tiens, ", ""])}${auHasard(sombre).startsWith('crane') ? "un crâne de wyverne au mur... Voilà un comptoir qui n'a pas peur des ombres" : "une lanterne-crâne... Enfin un comptoir où l'on respire"} !`; }
   if (banni && clair.length && Math.random() < 0.7) { changerRelation(G, v.nom, -1); return `${auHasard(clair) === 'banniere' ? 'Une bannière de la Confrérie' : "Un chandelier d'argent, comme chez les Gardiens"} ? Ici ? Je surveille mes arrières.`; }
-  if (!banni && sombre.length && Math.random() < 0.6) { changerRelation(G, v.nom, -1); return `Brr... ${auHasard(sombre) === 'craneTroll' ? 'ce crâne de troll' : 'cette lanterne-crâne'} me donne froid dans le dos.`; }
+  if (!banni && sombre.length && Math.random() < 0.6) { changerRelation(G, v.nom, -1); return `Brr... ${auHasard(sombre) === 'craneTroll' ? 'ce crâne de wyverne' : 'cette lanterne-crâne'} me donne froid dans le dos.`; }
   if (!banni && clair.length && Math.random() < 0.4) { changerRelation(G, v.nom, 1); return auHasard(["La bannière de la Confrérie ! On est entre gens bien, ici.", "Quelle belle lumière dans ce comptoir."]).replace('La bannière de la Confrérie', clair.includes('banniere') ? 'La bannière de la Confrérie' : "Un chandelier d'argent"); }
   if (!banni && p <= -1 && Math.random() < 0.6) return auHasard(["On raconte des choses sur ton comptoir... J'espère que c'est faux.", "Des Bannis sortaient d'ici hier soir, paraît-il. Ça ne me regarde pas."]);
   if (!banni && p >= 2 && Math.random() < 0.4) return "Ton comptoir a bonne réputation chez la Confrérie !";
@@ -830,6 +831,15 @@ function acheterTenue(G, id) {
   if (!peutPayer(G, GARDE_ROBE[id].prix)) return "Pas assez d'argent.";
   payer(G, GARDE_ROBE[id].prix, 'garderobe');
   G.tenue = [...(G.tenue || []), id];
+  return null;
+}
+
+// (v0.60) Revendre un vêtement ou un accessoire à Marcelline : la moitié de son prix.
+function revendreTenue(G, id) {
+  if (!porte(G, id)) return "Tu ne l'as pas.";
+  const prix = Math.floor(GARDE_ROBE[id].prix / 2);
+  G.tenue = G.tenue.filter(x => x !== id);
+  encaisser(G, prix, 'revente');
   return null;
 }
 
@@ -984,7 +994,7 @@ function dedommager(G, parti, niveau) {
   parti.dedommage = niveau;
   const verse = montantsDedommagement(v)[niveau];
   payer(G, verse, 'dedommagements');
-  G.dernierDedommagement = { jour: G.jour, nom: v.nom, race: v.race, verse };   // (v0.57 : pour la fin « vengeance »)
+  G.dernierDedommagement = { jour: G.jour, nom: v.nom, race: v.race, feminin: !!v.feminin, verse };   // (v0.57 : pour la fin « vengeance »)
   G.reputation += d.reputation;
   if (Math.random() < d.releve) { ajouterVisite(G, v, parti.resultat.valeureux, 'releve'); return verse; }
   const pts = G.relations[v.nom] || 0;
@@ -1191,7 +1201,8 @@ function prevision(G, jour = G.jour + 1) {
   const forme = G.reveil && G.reveil.jour === jour && G.reveil.forme === 'client' ? 1 : 0;
   min = Math.max(1, min + bonus + forme);
   max = Math.max(min, max + bonus + forme);
-  if (jour <= CLIENTS_DEBUT.jours) { min = Math.min(min, CLIENTS_DEBUT.max); max = Math.min(max, CLIENTS_DEBUT.max); }
+  // (v0.60) les premiers jours : pas trop de monde, mais au moins deux clients (le rythme des débuts)
+  if (jour <= CLIENTS_DEBUT.jours) { min = Math.max(2, Math.min(min, CLIENTS_DEBUT.max)); max = Math.max(min, Math.min(max, CLIENTS_DEBUT.max)); }
   return { min, max, annonces, palier };
 }
 
@@ -1228,15 +1239,38 @@ function causeFaillite(G) {
   if ((G.prets || []).some(p => p.preteur === 'La Main Noire')) return { type: 'mainNoire' };
   if ((G.prets || []).length) return { type: 'banque' };
   const d = G.dernierDedommagement;
-  if (d && G.jour - d.jour <= 3) return { type: 'vengeance', nom: d.nom, race: d.race };
+  if (d && G.jour - d.jour <= 3) return { type: 'vengeance', nom: d.nom, race: d.race, feminin: !!d.feminin };
   return { type: 'gestion' };
 }
 
 // La nuit : échéances des prêts, puis le matin d'un nouveau jour (le marché).
+// (v0.60) Le loyer du comptoir : le bourgmestre loue les murs, et réévalue le bail à mesure que
+// le comptoir prospère (un palier de réputation de plus, et le loyer monte). Payé en fin de semaine.
+// (v0.60) Une seule règle pour la Main Noire : assez d'âmes offertes, la jauge bien à l'Ombre,
+// ou le camp scellé du côté de l'ombre
+function mainNoireOuverte(G) {
+  return G.camp === 'mal' || G.mal >= SEUIL_MAIN_NOIRE || palierCamp(G) <= -2;
+}
+const LOYER = { base: 20, parPalier: 15 };
+const CONVALESCENCE_PAR_COEUR = 2;   // (v0.60) jours de repos par cœur perdu, pour un blessé revenu de mission
+function loyerSemaine(G) {
+  return LOYER.base + LOYER.parPalier * palierClients(G).index;
+}
+function jourDeLoyer(G, jour = G.jour) { return jour % 7 === 0; }
+
+// Ce qui sera prélevé cette nuit (prêts, salaires, loyer), pour prévenir le joueur le soir.
+function depensesDeLaNuit(G) {
+  const prets = G.prets.reduce((s, p) => s + Math.min(p.parJour, p.restant), 0);
+  return prets + salaires(G) + (jourDeLoyer(G) ? loyerSemaine(G) : 0);
+}
+
 function nuit(G) {
   payerEcheances(G);
   // Les employés sont payés chaque nuit.
-  for (const id of G.employes) payer(G, EMPLOYES[id].salaire, 'salaires');
+  for (const id of G.employes) { payer(G, EMPLOYES[id].salaire, 'salaires'); G.salairesPar = G.salairesPar || {}; G.salairesPar[id] = (G.salairesPar[id] || 0) + EMPLOYES[id].salaire; }
+  // Le loyer, en fin de semaine
+  let loyer = 0;
+  if (jourDeLoyer(G)) { loyer = loyerSemaine(G); payer(G, loyer, 'loyer'); }
   if (G.argent <= SEUIL_FAILLITE) {
     G.faillite = true;
     G.causeFaillite = causeFaillite(G);
@@ -1276,6 +1310,8 @@ function nuit(G) {
   // Le sort de ceux qui rentrent aujourd'hui est tiré pendant la nuit (et donc sauvegardé).
   for (const p of G.partis) if (!p.termine && p.retour === G.jour && !p.resultat) p.resultat = simulerAventure(p.voyageur, p.colis, p.pieges);
   reveilDuMatin(G, mauvaisJour);
+  if (loyer > 0) G.reveil.lignes.push(`Le bourgmestre a encaissé le loyer de la semaine : ${loyer} pièces.` + (loyer > (G.dernierLoyer || loyer) ? ' Le bail a augmenté : ton comptoir a pris de la valeur.' : ''));
+  if (loyer > 0) G.dernierLoyer = loyer;
   if (taxe > 0) G.reveil.lignes.push(`Un percepteur de la Confrérie est passé : ${taxe} pièces de taxe « pour la défense contre le dragon ».`);
   // Plus d'argent ni de provisions : Garrick laisse de quoi repartir (pas trop souvent)
   const stock = Object.values(G.stock || {}).reduce((a, n) => a + n, 0);
@@ -1342,10 +1378,27 @@ function nouvellesDuMatin(G) {
   return [...(G.nouvellesAtelier || []), ...reveilDuJour(G).lignes];
 }
 
+// (v0.60) Le hasard d'une journée est fixé par une graine propre à la partie : recharger la
+// sauvegarde du matin redonne exactement les mêmes clients (on ne peut plus « retirer » sa journée).
+function aleaGraine(n) {
+  return () => { n = (n + 0x6D2B79F5) | 0; let t = Math.imul(n ^ (n >>> 15), 1 | n); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+function avecGraine(G, sel, fn) {
+  if (!G.graine) G.graine = Math.floor(Math.random() * 1e9);
+  let h = G.graine | 0;
+  for (const ch of String(sel)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  const avant = Math.random;
+  Math.random = aleaGraine(h);
+  try { return fn(); } finally { Math.random = avant; }
+}
+
 // On ouvre le comptoir : la file d'attente du jour se forme.
 function ouvrirComptoir(G) {
   // (une seule fois par jour : un double clic ne doit pas refaire la file)
   if (G.fileDuJour === G.jour) return;
+  return avecGraine(G, 'comptoir' + G.jour, () => formerFileDuJour(G));
+}
+function formerFileDuJour(G) {
   G.fileDuJour = G.jour;
   const { min, max } = prevision(G, G.jour);
   // Les clients du jour : ceux qui ont écrit, plus des imprévus.
@@ -1585,7 +1638,12 @@ function terminerAventure(G, parti) {
     gain = partDuButin(G, v);
     encaisser(G, gain, 'butins');
     // Une commande par lettre remplie à moitié ne rapporte que la moitié de la réputation.
-    const part = v.prevu ? partCommandeRemplie(v, parti.colis) : 1;
+    const part0 = v.prevu ? partCommandeRemplie(v, parti.colis) : 1;
+    // (v0.60) Revenu, mais blessé : la mission compte moins (un quart de réputation en moins par cœur
+    // perdu, jamais moins de la moitié), et il lui faudra du repos s'il n'est pas soigné.
+    const derniere0 = r.etapes[r.etapes.length - 1];
+    const blesse = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - derniere0.pvApres));
+    const part = part0 * Math.max(0.5, 1 - 0.25 * blesse);
     // (audit v0.54) Au-delà de 12, la réputation monte de moins en moins vite : elle garde un sens
     // en fin de partie (refus, échecs et pièges continuent de coûter quelque chose).
     G.reputation += GAIN_REPUTATION_SUCCES * multReputationCamp(G, camp) * part / (1 + Math.max(0, G.reputation - 12) / 20);
@@ -1608,14 +1666,15 @@ function terminerAventure(G, parti) {
     connaitre(G, v).succes = succesDe(G, v.nom) + 1;
     message = changerRelation(G, v.nom, POINTS_RELATION.retourVivant);
     if (parti.conquise) message = (message ? message + ' ' : '') + `⚑ ${ZONES[v.zone].nom} : contrée conquise ! Son drapeau flotte sur ta carte.`;
-    if (part < 1) message = (message ? message + ' ' : '') + `Sa commande n'était remplie qu'à ${Math.round(part * 100)} % : ta réputation en profite moins.`;
+    if (part0 < 1) message = (message ? message + ' ' : '') + `Sa commande n'était remplie qu'à ${Math.round(part0 * 100)} % : ta réputation en profite moins.`;
+    if (blesse) message = (message ? message + ' ' : '') + `Revenu${v.feminin ? 'e' : ''} blessé${v.feminin ? 'e' : ''} : la mission compte un peu moins pour ta réputation, et sans soins il lui faudra ${CONVALESCENCE_PAR_COEUR * blesse} jours de repos.`;
     const derniere = r.etapes[r.etapes.length - 1];
     // Les cœurs perdus (au-delà des cœurs gagnés grâce aux soins en plus) restent des blessures.
     const blessures = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - derniere.pvApres));
     // Chaque succès le fait progresser : novice, aguerri, vétéran, héros, légende.
     const niveau = meilleurNiveau(v.niveau, succesDe(G, v.nom));
     if (niveau !== v.niveau) message = (message ? message + ' ' : '') + `${v.nom.split(' ')[0]} devient ${NIVEAUX_AVENTURIER[niveau].nom.toLowerCase()} !`;
-    G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau, prestige: v.prestige || null });
+    G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau, prestige: v.prestige || null, convalescence: blessures ? G.jour + CONVALESCENCE_PAR_COEUR * blessures : 0 });
     parti.trouvailles = trouvailles(G, v);
     // Il a peut-être aperçu une zone plus dangereuse, encore inconnue.
     const d = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
@@ -1664,12 +1723,13 @@ function inventaireApres(parti) {
 // Renvoie un message d'erreur, ou null.
 function soigner(G, nom) {
   const h = G.habitues.find(x => x.nom === nom);
-  if (!h || !h.blessures) return "Il n'a plus de blessure à soigner.";
+  if (!h || !h.blessures) return `${nom} n'a plus de blessure à soigner.`;
   if (G.stock.potion <= 0) return "Tu n'as plus de potion.";
   G.stock.potion--;
   encaisser(G, PRIX_SOIN, 'soins');
   h.blessures--;
   if (!h.blessures) h.convalescence = 0;
+  else if (h.convalescence) h.convalescence -= CONVALESCENCE_PAR_COEUR;   // (v0.60) chaque cœur soigné raccourcit le repos
   changerRelation(G, nom, 1);
   return null;
 }
@@ -1681,7 +1741,7 @@ function blessuresDe(G, nom) {
 
 // Les prêts proposés : la Main Noire seulement pour le camp du mal.
 function pretsProposes(G) {
-  return PRETS.filter(p => !p.mal || G.camp === 'mal' || G.mal >= SEUIL_MAIN_NOIRE);
+  return PRETS.filter(p => !p.mal || mainNoireOuverte(G));
 }
 
 // --- La comptabilité ---
@@ -1846,6 +1906,14 @@ function materiauxReparation(t, cible = t.etat + 1) {
   return !c.materiau ? 0 : c.unSeul ? 1 : cible - t.etat;
 }
 
+// (v0.60) Les fournitures de l'atelier (colle, rivets, vernis, outils usés) : un cinquième de ce
+// que la réparation fait gagner en valeur. Restaurer un objet rare coûte donc bien plus cher.
+const PART_FOURNITURES = 0.2;
+function prixReparation(t, cible = t.etat + 1) {
+  const gain = Math.max(0, valeurTresor(t, cible) - valeurTresor(t, t.etat));
+  return Math.max(2, Math.round(gain * PART_FOURNITURES));
+}
+
 function enReparation(G) {
   return G.tresors.filter(t => t.reparation);
 }
@@ -1871,14 +1939,17 @@ function nomOuvrier(o) {
 // Lancer la réparation d'un objet jusqu'à l'état « cible » : un ouvrier libre, et un
 // matériau par étape. Renvoie une erreur, ou null.
 function reparerTresor(G, t, cible = t.etat + 1) {
-  if (t.etat >= ETATS.length - 1) return 'Il est déjà en parfait état.';
+  if (t.etat >= ETATS.length - 1) return `${t.nom} : déjà en parfait état.`;
   cible = Math.min(ETATS.length - 1, Math.max(t.etat + 1, cible));
   const ouvrier = ouvrierLibre(G, t);
   if (!ouvrier) return "Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois.";
   const mat = CATEGORIES[t.categorie].materiau;
   const n = materiauxReparation(t, cible);
   if (mat && (G.materiaux[mat] || 0) < n) return `Il te faut ${n} ${MATERIAUX[mat].nom.toLowerCase()} (tu en as ${G.materiaux[mat] || 0}).`;
+  const prix = prixReparation(t, cible);
+  if (G.argent < prix) return `Les fournitures coûtent ${prix} pièces : tu n'as pas assez.`;
   if (mat) G.materiaux[mat] -= n;
+  payer(G, prix, 'atelier');
   t.reparation = { jours: dureeReparation(G, t, ouvrier, cible), ouvrier, cible };
   return null;
 }
@@ -1911,6 +1982,12 @@ function renvoyer(G, id) {
   }
 }
 
+// (v0.60) Le bilan d'un employé : ce qu'il a coûté, ce qu'il a fait gagner en valeur à l'atelier.
+function bilanEmploye(G, id) {
+  const cout = (G.salairesPar || {})[id] || 0, valeur = (G.valeurPar || {})[id] || 0;
+  return { cout, valeur, reparations: (G.reparationsPar || {})[id] || 0, solde: valeur - cout };
+}
+
 function salaires(G) {
   return G.employes.reduce((s, id) => s + EMPLOYES[id].salaire, 0);
 }
@@ -1929,7 +2006,11 @@ function avancerAtelier(G) {
       G.nouvellesAtelier.push(`${EMPLOYES[o].nom} a bien appris : ses réparations prennent maintenant un jour de moins !`);
     }
     t.reparation = null;
+    // (v0.60) ce que chaque ouvrier a fait gagner en valeur (pour son bilan au bureau)
+    const avant = valeurTresor(t);
     t.etat = cible;
+    G.valeurPar = G.valeurPar || {};
+    G.valeurPar[o] = (G.valeurPar[o] || 0) + Math.max(0, valeurTresor(t) - avant);
     G.reparations++;
     G.nouvellesAtelier.push(`L'atelier a fini : ${t.nom} est maintenant « ${ETATS[t.etat].nom} »${estRestaure(t) ? ' — restauré ★' : ''} (~${valeurTresor(t)} p.).`);
   }

@@ -230,7 +230,8 @@ class StoryScene extends Cinematique {
       } else if (reussie) {
         suite = niveau === 'complet' ? 'Épreuve surmontée !' : `Je m'en suis sorti${this.e}... de justesse.`;
       } else {
-        suite = (niveau === 'complet' ? "Mais la chance n'était pas de mon côté... " : '') + `J'ai été blessé${this.e} !`;
+        // (v0.60) le texte « complet » raconte une victoire : la blessure arrive avant d'en finir
+      suite = niveau === 'complet' ? `Mais avant d'en finir, j'ai pris un mauvais coup : j'ai été blessé${this.e} !` : `J'ai été blessé${this.e} !`;
       }
       await this.issue(reussie);
       this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(epreuve[niveau], v)} »\n${suite}`);
@@ -440,7 +441,7 @@ class StoryScene extends Cinematique {
       this.perso.setTint(0x80ff80);
       this.time.delayedCall(300, () => this.perso.clearTint());
       this.ecrire('Soins', `« Ah, ça fait du bien ! Tiens, ${PRIX_SOIN} pièces pour la potion. »` +
-        (blessuresDe(G, v.nom) ? `\nEncore ${blessuresDe(G, v.nom)} cœur(s) à soigner.` : '\nComplètement remis sur pied !'));
+        (blessuresDe(G, v.nom) ? `\nEncore ${blessuresDe(G, v.nom)} cœur(s) à soigner.` : `\nComplètement remis${this.e} sur pied !`));
       maj();
     });
     this.dansUI(bouton);
@@ -453,7 +454,7 @@ class StoryScene extends Cinematique {
     maj();
     const n = blessuresDe(G, v.nom);
     this.texte.setText(this.texte.text + `\n${v.feminin ? 'Elle' : 'Il'} a perdu ${n} cœur${n > 1 ? 's' : ''}. ` +
-      (G.stock.potion > 0 ? `Une potion par cœur (il te reste ${G.stock.potion} potion${G.stock.potion > 1 ? 's' : ''}).` : "Tu n'as pas de potion pour le soigner."));
+      (G.stock.potion > 0 ? `Une potion par cœur (il te reste ${G.stock.potion} potion${G.stock.potion > 1 ? 's' : ''}).` : `Tu n'as pas de potion pour ${v.feminin ? 'la' : 'le'} soigner.`));
   }
 
   pleuvoirPieces() {

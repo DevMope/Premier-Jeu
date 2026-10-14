@@ -887,7 +887,7 @@ const DECOS = {
   // attirent leur camp, et les clients de l'autre camp ne les aiment pas.
   chandelier: { court: 'lumière · attire les pandas', nom: "Chandelier d'argent", prix: 50, camp: 'bien', attire: 'panda', effet: 'Lumière : les pandas du Monastère se sentent chez eux. Les Bannis grimacent.' },
   banniere: { court: 'lumière · attire les humains', nom: 'Bannière de la Confrérie', prix: 40, camp: 'bien', attire: 'humain', effet: 'Lumière : les humains te font confiance. Les Bannis se méfient.' },
-  craneTroll: { court: 'ombre · attire les Bannis', nom: 'Crâne de troll', prix: 45, camp: 'mal', attire: 'ombre', effet: "Ombre : les Bannis se sentent chez eux. Les gens de la lumière frissonnent." },
+  craneTroll: { court: 'ombre · attire les Bannis', nom: 'Crâne de wyverne', prix: 45, camp: 'mal', attire: 'ombre', effet: "Ombre : les Bannis se sentent chez eux. Les gens de la lumière frissonnent." },
   lanterneCrane: { court: 'ombre · attire les Bannis', nom: 'Lanterne-crâne', prix: 55, camp: 'mal', attire: 'ombre', effet: "Ombre : une lueur verte qui attire les Bannis. La Confrérie n'aime pas ça." },
 };
 const BROCANTEUR = { nom: 'Firmin le brocanteur' };
@@ -934,6 +934,7 @@ const POSTES = {
   sabotages: 'Primes de la Faucheuse', colporteur: 'Le colporteur',
   bazar: 'Cadeaux du Bazar',
   ameliorations: 'Améliorations du shop', interets: 'Intérêts du coffre',
+  atelier: "Fournitures de l'atelier", loyer: 'Loyer du comptoir', revente: 'Reventes',
   taxe: 'Taxe de la Confrérie', amende: 'Amendes de la garde', marcheNoir: 'Marché noir', decoration: 'Décorations', garderobe: 'Garde-robe', cadeau: 'Cadeaux reçus',
 };
 // On garde le détail des derniers jours (un peu plus d'une année).

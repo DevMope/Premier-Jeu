@@ -248,11 +248,20 @@ class NightScene extends Phaser.Scene {
   creerPrevision(x1, x2) {
     this.add.rectangle((x1 + x2) / 2, 412, x2 - x1 - 40, 112, 0xc8b080, 0.55).setStrokeStyle(2, 0x8a6a3a);
     this.add.text(x1 + 22, 366, this.matin ? "Aujourd'hui" : 'Demain', style(15, '#3b2410', { fontStyle: 'bold' }));
+    // (v0.60) l'alerte : ce que la nuit va prélever, et la faillite si on n'a pas de quoi payer
+    this.texteAlerte = this.add.text(x2 - 22, 366, '', style(12, '#a02010', { fontStyle: 'bold', align: 'right' })).setOrigin(1, 0);
     this.textePrevision = this.add.text(x1 + 22, 386, '', style(14, '#3b2410', { fontStyle: 'bold', wordWrap: { width: x2 - x1 - 44 } }));
     this.texteFacteurs = this.add.text(x1 + 22, 416, '', style(11, '#5a3a20', { lineSpacing: 2, wordWrap: { width: x2 - x1 - 44 } }));
   }
 
   majPrevision() {
+    if (this.texteAlerte) {
+      const du = this.matin ? 0 : depensesDeLaNuit(this.G);
+      const apres = this.G.argent - du;
+      this.texteAlerte.setColor(apres <= SEUIL_FAILLITE ? '#c01010' : apres < 0 ? '#a05010' : '#5a3a20');
+      this.texteAlerte.setText(!du ? '' : apres <= SEUIL_FAILLITE ? `⚠ Cette nuit : −${du} p. → FAILLITE !`
+        : `Cette nuit : −${du} p.${jourDeLoyer(this.G) ? ' (loyer)' : ''}${apres < 0 ? ' ⚠' : ''}`);
+    }
     const p = prevision(this.G, this.matin ? this.G.jour : this.G.jour + 1);
     const a = attrait(this.G);
     this.textePrevision.setText(`${p.min === p.max ? p.min : p.min + ' à ' + p.max} clients` +
