@@ -133,7 +133,7 @@ const AMELIORATIONS = {
   chambre: { nom: 'La chambre', niveaux: ['Paillasse', 'Lit de bois', 'Lit sculpté et édredon', 'Lit à baldaquin'], prix: [80, 220, 500],
     effet: "Mieux reposé : +1 d'expérience par nuit et par niveau ; des réveils en forme (un client ou une remise de plus) ; des rêves qui révèlent un indice ; et une nuit qui console après un mauvais jour." },
   eclairage: { nom: "L'éclairage", niveaux: ['Bougies', 'Lanternes', 'Chandeliers', 'Lustre de cristal'], prix: [90, 250, 600],
-    effet: 'Un shop bien éclairé attire le regard : +0,3 client par jour et par niveau.' },
+    effet: 'Un comptoir bien éclairé attire le regard : +0,3 client par jour et par niveau.' },
   atelier: { nom: "L'atelier", niveaux: ['Un établi', 'Deux établis', 'Trois établis'], prix: [220, 480],
     effet: "2 employés au départ, puis un de plus pour chaque établi ajouté (et 2 places de plus pour les objets)." },
 };
@@ -494,7 +494,7 @@ const PERTE_PRESTIGE = 0.5; // la réputation perdue quand un prestigieux repart
 const EXIGENCES = {
   comptoir: { nom: 'un beau comptoir', verifier: G => niveauAmelioration(G, 'comptoir') >= 1,
     texte: 'Un comptoir en chêne brut ? Je ne traite pas dans une échoppe de village. Faites-le vernir, et nous reparlerons.' },
-  eclairage: { nom: 'un shop bien éclairé', verifier: G => niveauAmelioration(G, 'eclairage') >= 1,
+  eclairage: { nom: 'un comptoir bien éclairé', verifier: G => niveauAmelioration(G, 'eclairage') >= 1,
     texte: "On n'y voit rien, ici ! Des bougies, à notre époque... Revenez me voir quand vous aurez des lanternes." },
   objet: { nom: 'un objet rare en stock', verifier: (G, id) => (G.stock[id] || 0) >= 1,
     texte: 'Pas {la moindre} {objet} en stock ? Et vous vous dites fournisseur ? Je vais voir ailleurs.' },
@@ -882,7 +882,7 @@ const DECOS = {
   carillon: { court: 'plus de hobbits', nom: 'Carillon de cuivre', prix: 30, attire: 'hobbit', effet: 'Son tintement plaît aux hobbits : plus de clients hobbits.' },
   horloge: { court: 'plus d\'humains', nom: 'Horloge à coucou', prix: 55, attire: 'humain', effet: 'Les humains aiment la ponctualité : plus de clients humains.' },
   globe: { court: 'plus de magiciennes', nom: 'Globe de cristal', prix: 70, attire: 'magicienne', effet: 'Les magiciennes y lisent des présages : plus de clientes magiciennes.' },
-  fougere: { court: '+0,4 client/jour', nom: 'Fougère rare', prix: 25, attire: null, attrait: 0.4, effet: 'Un shop accueillant : +0,4 client par jour.' },
+  fougere: { court: '+0,4 client/jour', nom: 'Fougère rare', prix: 25, attire: null, attrait: 0.4, effet: 'Un comptoir accueillant : +0,4 client par jour.' },
   // Étape 9c : les décorations des deux camps. Elles font pencher la jauge (lumière ou ombre),
   // attirent leur camp, et les clients de l'autre camp ne les aiment pas.
   chandelier: { court: 'lumière · attire les pandas', nom: "Chandelier d'argent", prix: 50, camp: 'bien', attire: 'panda', effet: 'Lumière : les pandas du Monastère se sentent chez eux. Les Bannis grimacent.' },
@@ -933,7 +933,7 @@ const POSTES = {
   remboursements: 'Remboursements de prêts', dons: 'Dons au mendiant', prets: 'Prêts reçus', salaires: 'Salaires',
   sabotages: 'Primes de la Faucheuse', colporteur: 'Le colporteur',
   bazar: 'Cadeaux du Bazar',
-  ameliorations: 'Améliorations du shop', interets: 'Intérêts du coffre',
+  ameliorations: 'Améliorations du comptoir', interets: 'Intérêts du coffre',
   atelier: "Fournitures de l'atelier", loyer: 'Loyer du comptoir', revente: 'Reventes',
   pizzo: 'La Main Noire', taxe: 'Taxe de la Confrérie', amende: 'Amendes de la garde', marcheNoir: 'Marché noir', decoration: 'Décorations', garderobe: 'Garde-robe', cadeau: 'Cadeaux reçus',
 };
@@ -1856,3 +1856,44 @@ const NOMS_ARMURE = { clair: 'Armure du Dernier Rempart', sombre: 'Armure de la 
 const LEGENDE_SOMBRE = "« La Main Noire te salue. Nous ne choisissons pas de camp : nous choisissons nos clients. Cette pièce appartient " +
   "à l'Armure de la Nuit Éternelle, et ton cœur penche vers l'ombre : celles que tu gardes déjà vont noircir. Rassemble-la. " +
   "Elle vaudra cher, le jour où quelqu'un saura la porter. »";
+
+// (v0.60) La fin de chaque quête réussie : ce qu'on n'avait jamais vu (la lettre remise, la cloche
+// qui sonne de nouveau...). Le récit se termine sur cette image.
+const FINS_QUETES = {
+  lettre: "Au village, la vieille Berthe a lu la lettre trois fois, puis elle a pleuré, et elle m'a donné une part de tarte.",
+  mine: "Les mineurs de Grisefer sont redescendus en chantant. Le premier coup de pioche a résonné jusqu'au fond de la montagne.",
+  fleur: "La fleur de lune s'est ouverte dans mes mains, toute pâle. Elle sentait la pluie et le miel.",
+  loup: "Le loup géant ne rôdera plus près des bergeries. Les bergers m'ont offert un fromage gros comme une roue.",
+  caravane: "La caravane est arrivée entière. Le marchand a compté ses ballots deux fois, et m'a payé sans rechigner.",
+  ruines: "Au fond des ruines, une salle intacte, couverte de fresques. Personne n'y était entré depuis cent ans.",
+  sanglier: "Le sanglier des Hauts-Bois a fini en rôti pour tout le hameau. On a dansé jusqu'au matin.",
+  champignons: "Le panier débordait de champignons de lune. Ils brillaient encore un peu dans le noir.",
+  sangsues: "J'ai remonté la cloche engloutie. Au premier coup, tous les oiseaux du marais se sont envolés.",
+  oasis: "J'ai dessiné la carte de l'oasis perdue. Les caravaniers ne mourront plus de soif sur cette route.",
+  yeti: "Le yéti a quitté le col. Les voyageurs peuvent de nouveau passer sans trembler.",
+  col: "De l'autre côté du col des Glaces, la vallée était verte. On aurait dit un autre monde.",
+  roiSorcier: "La couronne du Roi-Sorcier s'est brisée en mille éclats noirs. Le ciel au-dessus des ruines s'est éclairci.",
+  bete: "La Bête a reculé dans les profondeurs de son antre. Pour la première fois, elle a eu peur.",
+  pelerins: "Les pèlerins sont arrivés au Monastère au son des cloches. Les moines m'ont béni trois fois.",
+  graine: "La Graine d'argent a germé dès qu'elle a touché la terre du Sanctuaire. Les elfes ont chanté toute la nuit.",
+  siege: "Les assiégeants ont levé le camp à l'aube. Sur les remparts, on agitait des bannières.",
+  pillage: "Les chariots « de pèlerins » sont restés sur la route. Ce qu'il y avait dedans, mieux vaut ne pas en parler.",
+  pacte: "Le chef de la meute a lu le pacte, puis il a hurlé à la lune. Les autres ont répondu, tous ensemble.",
+  profanation: "Les reliques ont quitté le temple. Derrière moi, les cierges se sont éteints un à un.",
+  renards: "Plus un seul renard dans les vergers de Bourg-Joyeux. Les pommes rougissent en paix.",
+  contrebande: "Les contrebandiers de Port-Brisant ont filé à la rame. Leurs caisses, elles, sont restées sur le quai.",
+  convoi: "Le convoi de Khaz-Durim est arrivé. Les nains ont tapé sur leurs boucliers pour me saluer.",
+  lunes: "Au matin, le Lac des Lunes était calme et lisse comme un miroir. Les elfes ont repris leurs chants.",
+  cristal: "La Cité d'Opale a reçu son cristal. Il s'est mis à briller dès qu'il a passé les portes.",
+  grimoire: "Le grimoire de la Bibliothèque Interdite pèse lourd dans mon sac. Parfois, j'entends ses pages tourner toutes seules.",
+  peage: "Les trolls du pont ont goûté le sel, puis ils ont souri. Je n'avais jamais vu un troll sourire.",
+  forteresse: "Le Fort des Orcs a été ravitaillé. Ce soir-là, ils ont fait une fête... bruyante.",
+  tombeaux: "J'ai lu les noms à voix haute. Les momies se sont tues, une à une, apaisées.",
+  bal: "Le bal masqué s'est terminé sans un seul drame. Enfin, presque.",
+  simples: "Les guérisseuses du Vallon ont cueilli leurs simples. Elles m'ont appris le nom de chaque plante.",
+  cloche: "La cloche de l'Abbaye a retrouvé son clocher. Elle sonne de nouveau les heures.",
+  garnison: "Le Fort de Hautgarde a ses vivres pour l'hiver. Les soldats m'ont offert une chope.",
+  remedes: "Les chamans ont reçu les remèdes. Dans le village, on a recommencé à rire.",
+  filon: "Le filon des Mines Rouges a livré son minerai. Les orcs m'ont donné un éclat, en souvenir.",
+  meute: "Au sommet du col, la meute s'est écartée pour me laisser passer. Ils m'ont regardé partir sans un bruit.",
+};

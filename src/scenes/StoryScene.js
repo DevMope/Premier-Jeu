@@ -51,6 +51,7 @@ class StoryScene extends Cinematique {
 
     this.perso = imageCorps(this, -60, 360, v, 6);
     this.fCorps = echelleCorps(this.perso.texture.key);
+    this.creerCompagnons(v);
 
     this.coeurs = [];
     // Ses cœurs, plus ceux gagnés grâce aux soins donnés en plus.
@@ -172,7 +173,7 @@ class StoryScene extends Cinematique {
     this.titre.setText(r.vivant ? 'Le récit de ' + v.nom : 'Le carnet de ' + v.nom).setColor(couleurNom(this.G, v.nom, true));
     Son.ambiance(r.vivant ? 'recitEtonne' : 'recitTriste');   // (la musique suit le récit : étonnement, peur, joie, tristesse)
     this.ecrire(v.quete, r.vivant
-      ? `${v.nom} est revenu${this.e} au comptoir, couvert${this.e} de poussière. Assis${this.e} sur le rebord de la fenêtre, ${v.feminin ? 'elle' : 'il'} te raconte son aventure...`
+      ? `${v.nom} est revenu${this.e} au comptoir, ${this.etatAuRetour()}. Assis${this.e} sur le rebord de la fenêtre, ${v.feminin ? 'elle' : 'il'} te raconte son aventure...`
       : `${v.nom} n'est jamais revenu${this.e}... ${this.G.faucheuse && this.G.faucheuse.visites ? 'La Faucheuse a laissé son carnet de voyage sur ton comptoir' : 'Un berger a rapporté son carnet de voyage'}. Tu l'ouvres en tremblant.`);
     await this.attendreClic();
 
@@ -185,14 +186,15 @@ class StoryScene extends Cinematique {
       if (this.meteo) { this.meteo.remove(); this.meteo = null; }
       this.nettoyerScenario();
       this.decor.removeAll(true);
-      this.ecrire(`Épreuve ${i + 1} / ${etapes}`, '...');
+      this.titreEtape = r.vivant ? `Épreuve ${i + 1} / ${etapes}` : `Jour ${Math.min(v.duree || etapes, 1 + Math.floor(i * (v.duree || etapes) / etapes))}`;
+      this.ecrire(this.titreEtape, '...');
       await this.marcherVers(x);
       this.planterDecor(epreuve.type, x + 130, epreuve);
       const scene = this.menace.scenario;
       this.menace.niveau = niveau;
       this.menace.texteIssue = epreuve[niveau] || '';
       this.cadrer(x + 150, 240, scene ? 1.12 : 1.22, 900);   // (on s'approche de ce qui l'attend)
-      this.ecrire(`Épreuve ${i + 1} / ${etapes}`, accord(epreuve.intro, v));
+      this.ecrire(this.titreEtape, accord(epreuve.intro, v));
       // (v0.59) la scène se joue pendant qu'on lit : la bête arrive, la nuit tombe...
       if (scene && scene.avant) await scene.avant.call(this);
       await this.attendreClic();
@@ -205,7 +207,7 @@ class StoryScene extends Cinematique {
 
       // Un objet piégé : il lâche au pire moment, et c'est fini.
       if (piege) {
-        this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(PIEGES[piege].mort, v)} »`);
+        this.ecrire(this.titreEtape, `« ${accord(PIEGES[piege].mort, v)} »`);
         this.cameras.main.flash(400, 90, 0, 30);
         Son.jouer('froid');
         await this.issue(false);
@@ -217,7 +219,7 @@ class StoryScene extends Cinematique {
       // Sa bonne étoile : il rebrousse chemin au lieu de mourir.
       if (repli) {
         await this.trefle();
-        this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(epreuve[niveau], v)} »\n` +
+        this.ecrire(this.titreEtape, `« ${accord(epreuve[niveau], v)} »\n` +
           `J'ai senti que la prochaine fois serait la dernière. Ma bonne étoile m'a soufflé de rebrousser chemin... J'ai abandonné la mission.` + fanee);
         await this.attendreClic();
         break;
@@ -234,14 +236,20 @@ class StoryScene extends Cinematique {
       suite = niveau === 'complet' ? `Mais avant d'en finir, j'ai pris un mauvais coup : j'ai été blessé${this.e} !` : `J'ai été blessé${this.e} !`;
       }
       await this.issue(reussie);
-      this.ecrire(`Épreuve ${i + 1} / ${etapes}`, `« ${accord(epreuve[niveau], v)} »\n${suite}`);
+      this.ecrire(this.titreEtape, `« ${accord(epreuve[niveau], v)} »\n${suite}`);
+      // (v0.60) le conteur revit l'épreuve : il sourit, ou il grimace
+      if (this.conteur && r.vivant) this.conteur.setTexture(textureBusteHD(this, v, reussie ? 'content' : 'fache'));
+      // (v0.60) le carnet d'un disparu : l'écriture tremble de plus en plus
+      if (!r.vivant) this.trembler(pvDepartRecit(this.parti) - pvApres);
+      // (v0.60) les indices sur le Conseil : rangés dans le carnet des choses étranges
+      if (reussie && niveau === 'complet') noterEtrangete(this.G, epreuve.complet, v);
       if (!reussie) await this.blesser(saignement === 'perte' ? pvApres + 1 : pvApres);
       else await this.victoire(niveau === 'complet');
       // Le saignement après un combat raté
       if (saignement) {
         await this.attendreClic();
         await this.saigner(saignement === 'bande');
-        this.ecrire(`Épreuve ${i + 1} / ${etapes}`, saignement === 'bande'
+        this.ecrire(this.titreEtape, saignement === 'bande'
           ? "« La plaie saignait beaucoup... Heureusement, j'avais un bandage en plus : j'ai serré fort, et le sang s'est arrêté. »"
           : "« La plaie saignait sans s'arrêter... Pas un seul bandage en plus dans mon sac. J'ai perdu des forces. »");
         if (saignement === 'perte') await this.blesser(pvApres);
@@ -250,6 +258,14 @@ class StoryScene extends Cinematique {
     }
 
     await this.conclure();
+  }
+
+  // L'écriture du carnet qui tremble (plus le voyageur a perdu de cœurs, plus elle tremble)
+  trembler(perdus) {
+    this.tweens.killTweensOf(this.texte);
+    this.texte.setX(176).setAngle(0);
+    if (perdus <= 0) return;
+    this.tweens.add({ targets: this.texte, x: 176 + Math.min(3, perdus), angle: Math.min(1.2, perdus * 0.3), duration: Math.max(40, 140 - perdus * 25), yoyo: true, repeat: -1 });
   }
 
   // Le trèfle de la chance qui brille au-dessus de lui.
@@ -271,6 +287,9 @@ class StoryScene extends Cinematique {
   // Une épreuve surmontée : un bond de joie (et quelques étincelles si c'était bien préparé).
   async victoire(eclatante) {
     const y = this.perso.y;
+    // (v0.60) chaque peuple a son cri de victoire
+    const cris = { nain: 'Hrm !', elfe: '♪ La la...', hobbit: 'Youpi !', orc: 'GRAAH !', troll: 'HOUGA !', gobelin: 'Hé hé hé !', vampire: 'Ha ha ha...', momie: 'Mmmh !', loupgarou: 'AOUH !', panda: 'Ho ho !', magicienne: 'Et voilà !' };
+    if (eclatante && Math.random() < 0.6) this.onomatopee(this.perso.x, y - 170, cris[this.parti.voyageur.race] || 'Hop !', '#f3d98a');
     if (eclatante) {
       creerObjetsHD(this);
       for (let k = 0; k < 7; k++) {
@@ -333,6 +352,13 @@ class StoryScene extends Cinematique {
       this.texte.setFontSize(13).setLineSpacing(1);
     } else if (r.vivant) {
       await this.marcherVers(880);
+      // (v0.60) la fin de la quête, en une image : ce qu'on n'avait jamais vu
+      const finQuete = FINS_QUETES[v.queteId];
+      if (finQuete && !v.quetePerso) {
+        this.ecrire(v.quete, `« ${accord(finQuete, v)} »`);
+        if (this.conteur) this.conteur.setTexture(textureBusteHD(this, v, 'content'));
+        await this.attendreClic();
+      }
       this.pleuvoirPieces();
       const ajuste = gain !== v.butin ? ` (prévu : ${v.butin}, ajusté selon votre relation et tes décorations)` : '';
       this.ecrire('Retour au comptoir',
@@ -345,6 +371,10 @@ class StoryScene extends Cinematique {
       this.ecrire('Fin du carnet', r.valeureux
         ? `${v.nom} est mort${this.e} valeureusement au combat. On chantera son nom dans les tavernes.\nTon investissement est perdu.`
         : `${v.nom} est mort${this.e} loin de chez ${v.feminin ? 'elle' : 'lui'}, sans gloire. Il fallait sans doute mieux ${v.feminin ? 'la' : 'le'} préparer...\nTon investissement est perdu.`);
+      // (v0.60) la dernière ligne du carnet, interrompue
+      const proche = auHasard(['ma sœur', 'mon frère', 'ma mère', 'mon père', 'mes enfants', 'ma bien-aimée']);
+      this.texte.setText(this.texte.text + `\nLa dernière ligne du carnet, à peine lisible : « Dis à ${proche} que je... »`);
+      this.trembler(3);
       if (this.parti.demasque) {
         const id = Object.keys(this.parti.pieges).find(k => this.parti.pieges[k] > 0);
         this.texte.setText(this.texte.text + `\nOn a retrouvé ${PIEGES[id] ? leNom(id, PIEGES[id].nom.toLowerCase()) : 'ton piège'} près du corps. Au village, on t'accuse.`);
@@ -361,6 +391,56 @@ class StoryScene extends Cinematique {
       this.proposerSoins();
       this.proposerTrouvailles();
     }
+  }
+
+  // (v0.60) Les compagnons du texte (pèlerins, convoi nain, guérisseuses...) marchent derrière lui
+  creerCompagnons(v) {
+    this.compagnons = [];
+    if (!this.parti.resultat.vivant) return;
+    const C = {
+      pelerins: [{ nom: 'Frère Anselme', race: 'humain', costume: 'mendiant', niveau: 'novice' }, { nom: 'Sœur Brune', race: 'humain', feminin: true, costume: 'mendiant', niveau: 'novice' }],
+      convoi: [{ nom: 'Borin Pied-de-Roc', race: 'nain', niveau: 'aguerri' }, { nom: 'Dwalina Forge-Vive', race: 'nain', feminin: true, niveau: 'aguerri' }],
+      caravane: [{ nom: 'Maître Orfric', race: 'humain', costume: 'colporteur', niveau: 'novice' }],
+      simples: [{ nom: 'Elwen la Guérisseuse', race: 'elfe', feminin: true, niveau: 'novice' }, { nom: 'Lirael', race: 'elfe', feminin: true, niveau: 'novice' }],
+      remedes: [{ nom: 'Grak le Chaman', race: 'orc', niveau: 'veteran' }],
+      forteresse: [{ nom: 'Urzog', race: 'orc', niveau: 'aguerri' }],
+      garnison: [{ nom: 'Sergent Hobbe', race: 'humain', costume: 'garde', niveau: 'aguerri' }],
+      siege: [{ nom: 'Sergent Hobbe', race: 'humain', costume: 'garde', niveau: 'aguerri' }],
+      cloche: [{ nom: 'Frère Tobie', race: 'humain', costume: 'mendiant', niveau: 'novice' }],
+    }[v.queteId] || [];
+    C.forEach((q, i) => {
+      const c = imageCorps(this, -110 - i * 46, 360, q, 6).setDepth(2.95 - i * 0.01);
+      c.ecart = 52 + i * 44;
+      this.compagnons.push(c);
+    });
+    this.events.off('update', this.suivreCompagnons, this);
+    if (this.compagnons.length) this.events.on('update', this.suivreCompagnons, this);
+  }
+  suivreCompagnons() {
+    {
+      for (const c of this.compagnons) {
+        if (!c.active || !this.perso.active) continue;
+        const cible = this.perso.x - c.ecart, dx = cible - c.x;
+        const marche = Math.abs(dx) > 2;
+        if (marche) { c.x += Math.sign(dx) * Math.min(Math.abs(dx), 3.2); c.setFlipX(dx < 0); if (!c.marche) pasDeMarche(this, c, 300); }
+        else c.setFlipX(false);
+        c.setVisible(!(this.menace && (this.menace.ravin || this.menace.dedans)));
+      }
+    }
+  }
+
+  // (v0.60) L'allure au retour, selon la contrée traversée
+  etatAuRetour() {
+    const e = this.e, b = this.biome;
+    if (['marais', 'bourbier'].includes(b)) return `trempé${e} et sentant la vase`;
+    if (b === 'neige') return `de la neige plein ${this.parti.voyageur.race === 'nain' ? 'la barbe' : 'les cheveux'}`;
+    if (['desert', 'badlands'].includes(b)) return 'du sable plein les bottes';
+    if (b === 'antre') return `noirci${e} de suie`;
+    if (b === 'sanctuaire') return "une feuille d'argent prise dans les cheveux";
+    if (['foret', 'repaire'].includes(b)) return 'des aiguilles de pin dans le col';
+    if (['cote', 'port'].includes(b)) return 'les cheveux raides de sel';
+    if (['mines', 'opale'].includes(b)) return `couvert${e} de poussière de roche`;
+    return `couvert${e} de poussière`;
   }
 
   // (v0.60) Le merci du retour : selon la qualité du baluchon, son peuple, et sa quête personnelle

@@ -253,7 +253,7 @@ class IntroHistoireScene extends Cinematique {
 
     // L'aventurier arrive en flottant, comme un vieux tonneau.
     this.tweens.add({ targets: this.mentor, y: 349, angle: 86, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.ecrire('Un matin...', "La rivière charria quelque chose d'inhabituel : un aventurier à moitié noyé, qui flottait comme un vieux tonneau.");
+    this.ecrire('Un matin...', "La rivière a charrié quelque chose d'inhabituel : un aventurier à moitié noyé, qui flottait comme un vieux tonneau.");
     this.time.delayedCall(1300, () => { this.emotion(this.heros, '!'); Son.jouer('voix', { personne: this.voixHeros, ton: 'peur' }); this.geste(this.heros, 'recule'); });
     await this.animer({ targets: this.mentor, x: 520, duration: 2600, ease: 'Sine.easeOut' });
     await this.attendreClic();
@@ -346,7 +346,7 @@ class IntroHistoireScene extends Cinematique {
 
     // Le temps passe... et on rentre dans la Comté, au bord du chemin, à guetter son retour.
     await this.versLaComte();
-    this.ecrire('', 'Les jours passèrent. Puis les semaines. De retour dans la Comté, tu guettais le chemin... Tu commençais à croire qu\'il ne reviendrait jamais...');
+    this.ecrire('', 'Les jours ont passé. Puis les semaines. De retour dans la Comté, tu guettais le chemin... Tu commençais à croire qu\'il ne reviendrait jamais...');
     this.time.delayedCall(800, () => { this.emotion(this.heros, '…', 2000); Son.jouer('voix', { personne: this.voixHeros, ton: 'triste' }); });
     await this.animer({ targets: this.voile, fillAlpha: 0.7, duration: 500, yoyo: true, repeat: 2 });
     await this.attendreClic();
@@ -363,7 +363,7 @@ class IntroHistoireScene extends Cinematique {
       const p = this.add.image(coffre.x + Phaser.Math.Between(-20, 20), coffre.y - 40, 'pieceFace').setScale(2).setDepth(6);
       this.tweens.add({ targets: p, y: p.y - 40, x: p.x + Phaser.Math.Between(-30, 30), alpha: 0, angle: 180, duration: 700, onComplete: () => p.destroy() });
     } });
-    this.ecrire('', "Et puis, un soir, quelqu'un siffla au bout du chemin...");
+    this.ecrire('', "Et puis, un soir, quelqu'un a sifflé au bout du chemin...");
     Son.jouer('siffle');
     this.time.delayedCall(600, () => { this.regarderVers(this.heros, this.mentor); this.emotion(this.heros, '!'); this.geste(this.heros, 'saut'); Son.jouer('voix', { personne: this.voixHeros, ton: 'etonne' }); });
     await this.marcher(this.mentor, 520, 5);
@@ -385,7 +385,7 @@ class IntroHistoireScene extends Cinematique {
     this.fermerPensee(souvenir);
     creerComptoirCarteHD(this);
     const idee = this.pensee(this.mentor, 'comptoirCarteHD', { echelle: 1.4 });   // (il rêve déjà de ton shop)
-    await this.replique('Garrick Cœur-de-Chêne', '« Alors c\'est tout trouvé ! Tu vas ouvrir un comptoir pour les aventuriers comme moi. Je t\'offre ton premier shop, et un petit capital pour commencer. »',
+    await this.replique('Garrick Cœur-de-Chêne', '« Alors c\'est tout trouvé ! Tu vas ouvrir un comptoir pour les aventuriers comme moi. Je t\'offre ta première échoppe, et un petit capital pour commencer. »',
       { sprite: this.mentor, vers: this.heros, personne: this.voixGarrick, ton: 'content', emotion: 'idee', geste: 'hoche' });
     this.fermerPensee(idee);
     this.emotion(this.heros, '♥');

@@ -95,7 +95,7 @@ class PromenadeScene extends Cinematique {
       creerBouton(this, 150, 505, 250, '↻ Arrière-boutique', () => { if (!this.transition) { Son.jouer('porte'); this.entrer(P_ARRIERE, o[P_ARRIERE].x + 120); } }),
       creerBouton(this, 400, 505, 200, "🔨 L'atelier", () => { if (!this.transition) { Son.jouer('porte'); this.entrer(P_ATELIER, o[P_ATELIER].x + 120); } }),
       // (v0.58 : on sort par la porte d'entrée du shop, pas par la fenêtre)
-      creerBouton(this, 630, 505, 230, '🚪 Sortir dans la rue', () => { if (!this.transition) { Son.jouer('porte'); this.dire('Tu pousses la porte du shop ; la clochette tinte dans la nuit...'); this.time.delayedCall(500, () => this.entrer(P_DEHORS, this.porteShop.x + 60)); } }),
+      creerBouton(this, 630, 505, 230, '🚪 Sortir dans la rue', () => { if (!this.transition) { Son.jouer('porte'); this.dire('Tu pousses la porte du comptoir ; la clochette tinte dans la nuit...'); this.time.delayedCall(500, () => this.entrer(P_DEHORS, this.porteShop.x + 60)); } }),
     ];
     for (const b of this.boutonsComptoir) { b.fond.setScrollFactor(0).setDepth(30); b.label.setScrollFactor(0).setDepth(30); }
     const { x, y, w, h } = FENETRE;

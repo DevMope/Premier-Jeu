@@ -346,7 +346,7 @@ class RenovationScene extends Cinematique {
     this.ecrire('', 'Garrick t\'emmena au bout du village, devant une vieille auberge abandonnée depuis des années...');
     await Promise.all([this.marcher(this.heros, LIEUX_RENOVATION.facade + 200, 4), this.marcher(this.garrick, LIEUX_RENOVATION.facade + 140, 4)]);
     if (this.fini) return;
-    this.garrickDit(`« Et voilà ton shop, ${petit} ! Bon... il a un peu souffert. Mais avec de l'huile de coude, il sera magnifique. Au travail ! »`, { ton: 'content', emotion: 'joie', geste: 'bras' });
+    this.garrickDit(`« Et voilà ton comptoir, ${petit} ! Bon... il a un peu souffert. Mais avec de l'huile de coude, il sera magnifique. Au travail ! »`, { ton: 'content', emotion: 'joie', geste: 'bras' });
     await this.attendreClic();
     this.garrickDit('« Commence par la façade : décloue les planches, chasse les toiles d\'araignée, remets l\'enseigne. »', { ton: 'neutre', geste: 'hoche' });
     await this.renover('facade');

@@ -13,8 +13,8 @@ const CONSEILS = {
   remis: "Et un baluchon de parti ! Ton client reviendra te raconter son aventure, dès demain pour une course courte (si tout va bien...). Occupe-toi du suivant : la file attend.",
   refus: "Aïe : il te manque de quoi l'équiper entièrement. L'envoyer à moitié préparé, c'est risquer sa vie... Si tu juges que c'est trop dangereux, clique sur « Refuser ce client » : il repartira, et ta réputation baissera un peu. Mieux vaut un client déçu qu'un client mort !",
   arriere: "Ton arrière-boutique : ta réserve sur les étagères, ta fortune près du coffre, les cadeaux dans le panier. La porte, au fond, mène à ta chambre quand la journée est finie.",
-  soir: "La journée est finie. Le soir, réponds aux lettres (des clients qui viendront plus tard), surveille ta réserve, et passe au bureau : c'est là qu'on améliore le shop. Puis va dormir !",
-  bureau: "Le registre : toutes les fiches de tes clients. À droite, l'ardoise de tes comptes, et des tiroirs. Le premier, « Améliorer le shop », fait venir les ouvriers pendant la nuit.",
+  soir: "La journée est finie. Le soir, réponds aux lettres (des clients qui viendront plus tard), surveille ta réserve, et passe au bureau : c'est là qu'on améliore le comptoir. Puis va dormir !",
+  bureau: "Le registre : toutes les fiches de tes clients. À droite, l'ardoise de tes comptes, et des tiroirs. Le premier, « Améliorer le comptoir », fait venir les ouvriers pendant la nuit.",
   marche: "Le Marché des Mastres ! Chaque matin, rachète ici de quoi remplir ta réserve : chaque marchand a ses prix du jour. Clique sur un lieu pour t'en approcher. Il y a aussi le Bazar, les enchères, les jeux et le crieur... Moi, je reprends la route. Bonne chance !",
 };
 

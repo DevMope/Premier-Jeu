@@ -2609,3 +2609,16 @@ function ouvrePluriel(cle) { return /^Les /.test(NOMS_LIEUX_MARCHE[cle] || '') ?
 function eJ(G = window.GAME) { return G && G.joueur && G.joueur.feminin ? 'e' : ''; }
 function petitJ(G = window.GAME) { return G && G.joueur && G.joueur.feminin ? 'petite' : 'petit'; }
 function accordAdj(id, m, f, mp, fp) { const g = genreDe(id); return g === 'm' ? m : g === 'f' ? f : g === 'mp' ? mp : fp; }
+
+// (v0.60) Le nombre de cœurs au départ d'un récit
+function pvDepartRecit(parti) { return (parti.resultat && parti.resultat.pvDepart) || parti.voyageur.pv; }
+
+// (v0.60) Le carnet des choses étranges : les indices glissés dans les récits (le Conseil, les
+// galeries creusées par d'autres mains, le Sage qui ne vieillit pas...), rangés au bureau.
+const INDICES_ETRANGES = /d'autres mains|pour ne pas oublier|n'a pas changé d'un cheveu|effacées|dessins d'enfants|empêcher de revenir|à demi effacée|très vieux, qui chantaient|avec un portrait\. Son mari|outils de nains|Ça pleurait, dedans|personne d'autre ne se souvient, si loin|sceau du Conseil|n'attaquaient jamais, avant/;
+function noterEtrangete(G, texte, v) {
+  if (!texte || !INDICES_ETRANGES.test(texte)) return;
+  G.etrangetes = G.etrangetes || [];
+  if (G.etrangetes.some(e => e.texte === texte)) return;
+  G.etrangetes.push({ jour: G.jour, nom: v.nom, texte: accord(texte, v) });
+}

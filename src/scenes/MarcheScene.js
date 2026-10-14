@@ -1075,7 +1075,7 @@ class MarcheScene extends Phaser.Scene {
     if (!lieuOuvert(G, 'brocante')) return this.message(`${NOMS_LIEUX_MARCHE.brocante} ouvre le jour ${OUVERTURE_LIEUX.brocante}.`);
     this.montrer('brocante');
     const c = this.panneau(BROCANTEUR.nom, "Chaque décoration se voit dans ton arrière-boutique, et attire un peuple");
-    c.add(this.add.text(30, 340, "« Des merveilles dénichées aux quatre coins des Trois Terres. Ça fera un shop qu'on remarque ! »",
+    c.add(this.add.text(30, 340, "« Des merveilles dénichées aux quatre coins des Trois Terres. Ça fera un comptoir qu'on remarque ! »",
       style(12, '#6b4a2a', { fontStyle: 'italic' })));
     Object.entries(DECOS).forEach(([id, d], i) => {
       // Une ligne par décoration : l'icône, le nom et le prix, l'effet en bref (l'effet complet au survol)

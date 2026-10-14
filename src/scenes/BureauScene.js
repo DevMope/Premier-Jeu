@@ -7,7 +7,7 @@ const ONGLETS = [
   ['revenus', 'Revenus'], ['disparus', 'Disparus'], ['repertoire', 'Répertoire'],
 ];
 const FICHES_PAR_PAGE = 9;   // (v0.57 : un peu d'air entre les fiches)
-const TIROIRS = [['ameliorations', '🔨 Améliorer le shop'], ['competences', 'Tes compétences'], ['aventuriers', 'Chiffres des missions'], ['commerce', 'Le commerce'], ['reputation', 'Réputation et relations'], ['camps', 'Lumière et ombre']];
+const TIROIRS = [['ameliorations', '🔨 Améliorer le comptoir'], ['competences', 'Tes compétences'], ['aventuriers', 'Chiffres des missions'], ['commerce', 'Le commerce'], ['reputation', 'Réputation et relations'], ['camps', 'Lumière et ombre'], ['etrange', '🌸 Choses étranges']];
 
 class BureauScene extends Phaser.Scene {
   constructor() { super('Bureau'); }
@@ -297,6 +297,13 @@ class BureauScene extends Phaser.Scene {
           // (v0.60) le bilan de chacun : ce qu'il coûte, ce qu'il a fait gagner en valeur à l'atelier
           ...G.employes.map(id => { const b = bilanEmploye(G, id); return `${EMPLOYES[id].nom} : ${b.reparations} réparation${b.reparations > 1 ? 's' : ''}, +${b.valeur} p. de valeur pour ${b.cout} p. de salaire` + (b.cout >= 20 ? (b.solde >= 0 ? ' ✓' : ' (donne-lui du travail !)') : ''); })] },
       ];
+    } else if (cle === 'etrange') {
+      // (v0.60) le carnet des choses étranges : les indices glissés dans les récits
+      const notes = G.etrangetes || [];
+      const blocs = notes.length ? notes.map(n => ({ titre: `🌸 Jour ${n.jour} · ${n.nom}`, lignes: [`« ${n.texte} »`] }))
+        : [{ titre: 'Rien encore', lignes: ["Certains récits laissent des questions sans réponse. Quand un aventurier en rapportera une, tu la noteras ici."] }];
+      gauche = blocs.filter((_, i) => i % 2 === 0);
+      droite = blocs.filter((_, i) => i % 2 === 1);
     } else if (cle === 'aventuriers') {
       const h = G.historique;
       const vivants = h.filter(x => x.issue === 'vivant').length;
@@ -396,6 +403,7 @@ class BureauScene extends Phaser.Scene {
         p > 0 ? `Banque Centrale : −${p * REMISE_BANQUE_LUMIERE * 100} points sur les taux` : 'Banque Centrale : taux normaux (la lumière les fait baisser)',
         ...taux,
         mainNoireOuverte(G) ? 'La Main Noire te prête sans questions.' : "La Main Noire ne te connaît pas encore."] },
+      ...(mafia(G).engage ? [{ titre: NomBande(G), lignes: [mafia(G).sorti ? (mafia(G).sorti === 'denonce' ? 'Dénoncée à la Confrérie. Méfie-toi des ombres.' : 'Liberté rachetée. Tu ne leur dois plus rien.') : `Ton rang : ${NOMS_RANGS[rangMafia(G)]} · ${mafia(G).services} service${mafia(G).services > 1 ? 's' : ''} rendu${mafia(G).services > 1 ? 's' : ''}`, !mafia(G).sorti && rangMafia(G) < 2 ? `Le collecteur passe en milieu de semaine (≈ ${montantPizzo(G)} p.)` : ''] }] : []),
       { titre: 'Qui te réclame', lignes: [cote === 'mal' ? `${NOMS_CAMPS.mal.charAt(0).toUpperCase() + NOMS_CAMPS.mal.slice(1)} te font confiance : ils viendront bientôt au comptoir.` : cote === 'bien' ? `${NOMS_CAMPS.bien.charAt(0).toUpperCase() + NOMS_CAMPS.bien.slice(1)} te tient en estime.` : 'Aucun camp ne te réclame encore.'] },
     ];
     this.pageEnBlocs(c, 42, 214, gauche);
@@ -408,7 +416,7 @@ class BureauScene extends Phaser.Scene {
   afficherAmeliorations(c, choisi = this.meubleChoisi || 'reserve') {
     const G = this.G;
     this.meubleChoisi = choisi;
-    c.add(this.add.text(161, 72, 'Améliorer le shop', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(161, 72, 'Améliorer le comptoir', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     c.add(this.add.text(161, 94, 'Commande le soir : les ouvriers\npassent pendant la nuit.', style(11, '#6b4a2a', { fontStyle: 'italic', align: 'center' })).setOrigin(0.5, 0));
     Object.entries(AMELIORATIONS).forEach(([cle, a], i) => {
       const y = 148 + i * 50;

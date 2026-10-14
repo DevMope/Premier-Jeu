@@ -293,7 +293,16 @@ const SCENES_EPREUVES = {
         g.fillStyle(0x7a8a5a, 0.5).fillEllipse(fx - 10, SOL_RECIT, 30, 3);
         for (let r = 0; r < 4; r++) g.lineStyle(2, 0x5a7a3a).lineBetween(fx + 30 + r * 4, SOL_RECIT, fx + 28 + r * 5, SOL_RECIT - 18 - r * 3);
       }
-      this.garder(this.add.image(X + 40, SOL_RECIT + 4, 'panneauRouteHD').setOrigin(0.5, 1).setScale(2.4).setDepth(2));
+      // (v0.60) un détail de la contrée au bord du chemin : pommier, cairn, cactus, roseaux... ou le panneau
+      const b = this.biome;
+      if (['neige', 'mines', 'badlands'].includes(b)) {
+        for (let k = 0; k < 4; k++) this.garder(this.add.image(X + 40, SOL_RECIT + 4 - k * 14, 'rocherHD').setOrigin(0.5, 1).setScale(1.3 - k * 0.22).setDepth(2 + k * 0.01));   // un cairn
+      } else if (['desert', 'oasis'].includes(b)) this.garder(this.add.image(X + 40, SOL_RECIT + 4, 'cactusHD').setOrigin(0.5, 1).setScale(2.2).setDepth(2));
+      else if (['comte', 'vergers', 'vallon', 'monastere'].includes(b) && Math.random() < 0.5) {
+        this.garder(this.add.image(X + 40, SOL_RECIT + 4, 'arbreRecitHD').setOrigin(0.5, 1).setScale(1.8).setDepth(2));
+        const pommes = this.garder(this.add.graphics().setDepth(2.01));
+        for (let k = 0; k < 7; k++) pommes.fillStyle(0xc0301a).fillCircle(X + 40 - 50 + hachage(k, 3, 9) * 100, SOL_RECIT - 130 - hachage(k, 4, 9) * 60, 3.5);
+      } else this.garder(this.add.image(X + 40, SOL_RECIT + 4, 'panneauRouteHD').setOrigin(0.5, 1).setScale(2.4).setDepth(2));
       M.borne = this.garder(this.add.image(X + 190, SOL_RECIT + 3, 'borneHD').setOrigin(0.5, 1).setScale(2.4).setDepth(2));
       // le soleil, qui va traverser le ciel
       M.soleil = this.garder(this.add.image(M.soif ? 760 : 90, M.soif ? 80 : 250, 'halo').setScale(1.6).setTint(0xfff0a0).setAlpha(0.85).setBlendMode(Phaser.BlendModes.ADD).setDepth(-0.3));
