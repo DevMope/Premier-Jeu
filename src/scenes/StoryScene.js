@@ -603,17 +603,10 @@ class StoryScene extends Cinematique {
         ajouter(this.add.image(x + 150, sol + 4, 'grotteHD').setOrigin(0.5, 1).setScale(2.4).setDepth(1));
         break;
       }
-      case 'gouffre': ajouter(this.add.image(x + 100, sol + 12, 'gouffreHD').setOrigin(0.5, 1).setScale(2.2).setDepth(1)); this.menace.sorte = 'gouffre'; this.menace.x = x + 100; break;
-      case 'riviere': {
-        // Une vraie rivière : fond turquoise, caustiques, surface qui scintille, et la berge.
-        // (devant les herbes du premier plan : on la pose hors du décor, et on l'enlève avec lui)
-        if (this.eauRecit) this.eauRecit.destroy();
-        this.eauRecit = eauRecitHD(this, x + 110, sol + 24, 230, 56).setDepth(6.6);
-        const berge = ajouter(this.add.graphics().setDepth(1.5));
-        berge.fillStyle(0x6a5a3a).fillRect(x - 10, sol - 32, 10, 6).fillRect(x + 225, sol - 32, 10, 6);
-        this.menace.sorte = 'gouffre'; this.menace.x = x + 110; this.menace.eau = true;
-        break;
-      }
+      // (v0.58) Le ravin : deux falaises à gradins, la rivière qui gronde tout au fond (ou le
+      // gouffre et sa brume), et un vieil arbre penché au-dessus du vide, sur l'autre rive.
+      case 'gouffre': this.ravin(x, false); break;
+      case 'riviere': this.ravin(x, true); break;
       case 'sangsues': {
         ajouter(this.add.ellipse(x + 110, sol, 260, 34, 0x2a3a22, 0.9).setDepth(1));
         for (let i = 0; i < 6; i++) {
@@ -737,6 +730,7 @@ class StoryScene extends Cinematique {
         break;
       }
       case 'corde': {
+        if (this.menace.ravin) { await this.grimperFalaise(); await this.lancerGrappin(); break; }
         const x2 = (this.menace.x || p.x + 100) + 120;
         const corde = this.add.graphics().setDepth(5);
         this.decor.add(corde);
@@ -846,6 +840,8 @@ class StoryScene extends Cinematique {
         this.tweens.add({ targets: b, x: b.base.x, y: b.base.y, duration: 400, ease: 'Quad.easeOut' });
         this.tweens.add({ targets: p, angle: -14, duration: 100, yoyo: true });
       }
+    } else if (this.menace.ravin) {
+      await this.traverserRavin(reussie);
     } else if (this.menace.sorte === 'gouffre') {
       const x0 = p.x, y0 = p.y, x1 = (this.menace.x || x0) + 130;
       if (reussie) {
@@ -866,6 +862,220 @@ class StoryScene extends Cinematique {
       // Il trébuche, frissonne ou suffoque
       await this.animer({ targets: p, angle: 12, duration: 140, yoyo: true, repeat: 1 });
     }
+  }
+
+  // --- (v0.58) Le ravin et la corde ---
+
+  // Le décor : X = le bord du ravin. La falaise de gauche monte en deux gradins jusqu'au bord ;
+  // le vide ; la falaise de droite, l'arbre penché, puis on redescend en deux gradins.
+  ravin(X, eau) {
+    const sol = 360, haut = 270, bas = 380;
+    const R = this.menace;
+    Object.assign(R, { sorte: 'gouffre', ravin: { X, haut, eau, branche: { x: X + 110, y: haut - 112 } }, x: X + 110, eau });
+    const ajouter = o => { this.decor.add(o); return o; };
+    this.perso.setDepth(3);
+    // la paroi d'en face, au fond du canyon : de plus en plus sombre vers le bas, avec ses strates
+    const canyon = ajouter(this.add.graphics().setDepth(1.02));
+    for (let k = 0; k < 10; k++) canyon.fillStyle(Phaser.Display.Color.GetColor(92 - k * 6, 80 - k * 6, 66 - k * 5)).fillRect(X + 12, haut + k * 12, 196, 13);
+    for (let y = haut + 6; y < bas; y += 9) canyon.fillStyle(0x000000, 0.12).fillRect(X + 12, y, 196, 2);
+    for (let k = 0; k < 6; k++) canyon.fillStyle(0x3a5a2a, 0.6).fillEllipse(X + 30 + k * 32, haut + 6 + (k % 2) * 6, 18, 6);   // des touffes accrochées
+    // le fond du ravin : la rivière qui gronde, ou le noir du gouffre et sa brume
+    if (eau) {
+      if (this.eauRecit) this.eauRecit.destroy();
+      this.eauRecit = eauRecitHD(this, X + 110, bas, 210, 40).setDepth(1.05);
+      // les rapides : des traînées d'écume qui filent, des rochers qui fendent le courant
+      for (const [rx, ry] of [[X + 70, bas - 26], [X + 150, bas - 22]]) {
+        const roc = ajouter(this.add.ellipse(rx, ry, 26, 12, 0x3a3430).setDepth(1.08));
+        for (let k = 0; k < 3; k++) { const e = ajouter(this.add.ellipse(rx - 14, ry, 10, 4, 0xffffff, 0.8).setDepth(1.09)); this.tweens.add({ targets: e, x: rx - 40, alpha: 0, scaleX: 2, duration: 700, delay: k * 230, repeat: -1 }); }
+        void roc;
+      }
+      this.tweens.add({ targets: ajouter(this.add.rectangle(X + 110, bas - 36, 200, 10, 0xe8f8ff, 0.12).setDepth(1.1)), alpha: 0.25, duration: 900, yoyo: true, repeat: -1 });
+      this.time.addEvent({ delay: 140, repeat: 60, callback: () => {
+        if (!this.menace.ravin) return;
+        const g = ajouter(this.add.circle(X + 30 + Math.random() * 160, bas - 30, 1.5 + Math.random(), 0xe8f8ff, 0.8).setDepth(1.1));
+        this.tweens.add({ targets: g, y: g.y - 20 - Math.random() * 20, x: g.x + 10, alpha: 0, duration: 700, onComplete: () => g.destroy() });
+      } });
+    } else {
+      const fond = ajouter(this.add.graphics().setDepth(1.05));
+      for (let k = 0; k < 8; k++) fond.fillStyle(Phaser.Display.Color.GetColor(30 - k * 3, 26 - k * 3, 30 - k * 3)).fillRect(X + 10, haut + k * 14, 200, 15);
+      for (let k = 0; k < 4; k++) { const b = ajouter(this.add.image(X + 50 + k * 40, bas - 10, 'halo').setScale(1.4, 0.5).setTint(0xb0b0c0).setAlpha(0.25).setDepth(1.08)); this.tweens.add({ targets: b, x: b.x + 30, alpha: 0.1, duration: 2200 + k * 400, yoyo: true, repeat: -1 }); }
+    }
+    // les deux falaises, avec leurs strates, leurs fissures et l'herbe au bord
+    const falaise = (pts, graine) => {
+      const g = ajouter(this.add.graphics().setDepth(1.2));
+      const v = pts.map(([x, y]) => new Phaser.Math.Vector2(x, y));
+      g.fillStyle(0x7a6a56).fillPoints(v, true);
+      const xs = pts.map(p => p[0]), x0 = Math.min(...xs), x1 = Math.max(...xs);
+      // la lumière vient d'en haut à gauche : les dessus et les flancs gauches s'éclairent, le bas fonce
+      for (let y = haut; y < bas + 20; y += 6) g.fillStyle(0x000000, Math.min(0.45, (y - haut) / 260)).fillRect(x0, y, x1 - x0, 6);
+      for (let k = 0; k < pts.length - 1; k++) {
+        const [ax, ay] = pts[k], [bx, by] = pts[k + 1];
+        if (Math.abs(ay - by) < 2) g.lineStyle(4, 0xa8967a).lineBetween(ax, ay + 2, bx, by + 2);                // les dessus, clairs
+        else if (bx === ax || Math.abs(bx - ax) < 12) g.lineStyle(5, by < ay ? 0x9a886e : 0x3e342a).lineBetween(ax + (by < ay ? 3 : -3), ay, bx + (by < ay ? 3 : -3), by);
+      }
+      // des blocs et des éclats de roche
+      for (let k = 0; k < 9; k++) { const bx = x0 + 8 + hachage(k, graine, 61) * (x1 - x0 - 16), by = haut + 16 + hachage(graine, k, 62) * (bas - haut - 10); g.fillStyle(0x8a7a62, 0.9).fillRect(bx, by, 7 + (k % 3) * 3, 4); g.fillStyle(0x4a3e32).fillRect(bx, by + 4, 7 + (k % 3) * 3, 2); }
+      for (let y = haut + 8; y < bas; y += 11) g.fillStyle(0x4a4036, 0.6).fillRect(x0 + 4, y, x1 - x0 - 8, 2);           // les strates
+      for (let k = 0; k < 5; k++) { const fx = x0 + 10 + hachage(k, graine, 51) * (x1 - x0 - 20); g.lineStyle(2, 0x2e2822, 0.9).lineBetween(fx, haut + 20 + k * 9, fx + 6, haut + 40 + k * 9); }
+      g.lineStyle(3, 0x2a221c).strokePoints(pts.map(([x, y]) => new Phaser.Math.Vector2(x, y)), true);
+      return g;
+    };
+    falaise([[X - 96, bas + 20], [X - 96, 318], [X - 36, 318], [X - 36, haut], [X + 16, haut], [X + 26, 300], [X + 18, 330], [X + 30, bas + 20]], 1);
+    falaise([[X + 194, bas + 20], [X + 204, 320], [X + 196, 300], [X + 206, haut], [X + 292, haut], [X + 292, 318], [X + 346, 318], [X + 346, bas + 20]], 2);
+    // l'herbe au bord des gradins
+    const herbe = ajouter(this.add.graphics().setDepth(1.25));
+    for (const [a, b, y] of [[X - 96, X - 36, 318], [X - 36, X + 16, haut], [X + 206, X + 292, haut], [X + 292, X + 346, 318]]) {
+      herbe.fillStyle(0x5a8a3a).fillRect(a, y - 3, b - a, 5);
+      for (let k = a; k < b; k += 5) herbe.fillStyle(0x6aa040).fillTriangle(k, y - 2, k + 2, y - 8 - (k % 3) * 2, k + 4, y - 2);
+    }
+    for (const [a, b, y] of [[X - 36, X + 16, haut], [X + 206, X + 292, haut]]) for (let k = a + 3; k < b; k += 7) herbe.fillStyle(0x4a7a30, 0.9).fillRect(k, y + 2, 3, 4 + (k % 5) * 2);
+    // le vieil arbre penché sur l'autre rive, et sa grosse branche au-dessus du vide
+    const br = R.ravin.branche;
+    const arbre = ajouter(this.add.graphics().setDepth(1.3));
+    arbre.lineStyle(14, 0x4a3420).beginPath().moveTo(X + 262, haut).lineTo(X + 252, haut - 80).lineTo(X + 236, haut - 150).strokePath();
+    arbre.lineStyle(8, 0x5a4028).beginPath().moveTo(X + 246, haut - 104).lineTo(X + 180, haut - 112).lineTo(br.x, br.y).strokePath();
+    for (const [lx, ly, r] of [[X + 236, haut - 165, 34], [X + 266, haut - 150, 26], [X + 206, haut - 150, 24], [X + 150, haut - 126, 18], [X + 112, haut - 124, 14], [X + 250, haut - 190, 24]]) {
+      arbre.fillStyle(0x2f5a2a).fillCircle(lx, ly, r); arbre.fillStyle(0x3f7a34).fillCircle(lx - r * 0.25, ly - r * 0.25, r * 0.7);
+    }
+  }
+
+  // Il grimpe sur la falaise de gauche, de gradin en gradin, jusqu'au bord du vide.
+  async grimperFalaise() {
+    const R = this.menace.ravin, p = this.perso;
+    if (!R || R.grimpe) return;
+    R.grimpe = true;
+    this.cadrer(R.X + 110, 230, 1.15, 800);
+    for (const [x, y] of [[R.X - 66, 318], [R.X - 6, R.haut]]) {
+      p.setFlipX(false);
+      pasDeMarche(this, p, 380);
+      await Promise.all([this.animer({ targets: p, x, duration: 380, ease: 'Linear' }), this.animer({ targets: p, y: { from: p.y, to: y }, duration: 380, ease: 'Quad.easeOut' })]);
+      p.setY(y);
+    }
+    // il se penche au-dessus du vide... et regarde en bas
+    this.onomatopee(R.X + 60, R.haut - 80, R.eau ? 'Grrrrr...' : '...', '#c8e0ff');
+    await this.animer({ targets: p, angle: 8, duration: 220, yoyo: true, hold: 300 });
+  }
+
+  // Le grappin : il le fait tournoyer, le lance en cloche, il s'enroule autour de la branche.
+  async lancerGrappin() {
+    const R = this.menace.ravin, p = this.perso, br = R.branche;
+    const main = () => ({ x: p.x + 8, y: p.y - p.displayHeight * 0.72 });
+    const corde = this.add.graphics().setDepth(4); this.decor.add(corde);
+    const crochet = this.add.triangle(0, 0, 0, 6, 6, 0, 12, 6, 0x9aa0a8).setDepth(4.1); this.decor.add(crochet);
+    // il le fait tournoyer au-dessus de sa tête
+    const tour = { a: 0 };
+    Son.jouer('vol');
+    await this.animer({ targets: tour, a: Math.PI * 4, duration: 700, onUpdate: () => {
+      const m = main(), cx = m.x + Math.cos(tour.a) * 18, cy = m.y - 30 + Math.sin(tour.a) * 8;
+      crochet.setPosition(cx, cy); corde.clear().lineStyle(2, 0xc8a060).lineBetween(m.x, m.y, cx, cy);
+    } });
+    // le lancer, en cloche
+    const vol = { t: 0 }, m0 = main();
+    await this.animer({ targets: vol, t: 1, duration: 600, ease: 'Linear', onUpdate: () => {
+      const t = vol.t, x = m0.x + (br.x - m0.x) * t, y = m0.y + (br.y - m0.y) * t - Math.sin(t * Math.PI) * 50;
+      crochet.setPosition(x, y).setAngle(t * 720);
+      const m = main(); corde.clear().lineStyle(2, 0xc8a060).beginPath().moveTo(m.x, m.y);
+      for (let k = 1; k <= 8; k++) { const u = k / 8; corde.lineTo(m.x + (x - m.x) * u, m.y + (y - m.y) * u + Math.sin(u * Math.PI) * 14 * (1 - t)); }
+      corde.strokePath();
+    } });
+    // il s'enroule autour de la branche, et la corde se tend
+    this.onomatopee(br.x, br.y - 30, 'CLAC !', '#fff4dc');
+    Son.jouer('coup');
+    const enroule = this.add.graphics().setDepth(4.2); this.decor.add(enroule);
+    enroule.lineStyle(3, 0xc8a060).strokeEllipse(br.x, br.y, 12, 8);
+    crochet.setPosition(br.x + 4, br.y + 6).setAngle(180);
+    R.corde = corde;
+    R.tirer = () => { const m = main(); corde.clear().lineStyle(2.5, 0xc8a060).lineBetween(br.x, br.y, m.x, m.y); };
+    R.tirer();
+    await this.animer({ targets: p, x: p.x - 4, duration: 120, yoyo: true });   // il tire un coup sec pour vérifier
+  }
+
+  // La traversée : accroché à la corde, il se balance au-dessus de l'eau et atterrit en face ;
+  // ou la corde cède au milieu, et c'est le plongeon. Sans corde, il tente un grand saut.
+  async traverserRavin(reussie) {
+    const R = this.menace.ravin, p = this.perso, br = R.branche;
+    await this.grimperFalaise();
+    const pieds = () => ({ x: p.x, y: p.y });
+    const fin = { x: R.X + 238, y: R.haut };
+    if (R.corde) {
+      // le balancier : les mains décrivent un arc autour de la branche
+      const m0 = { x: p.x + 8, y: p.y - p.displayHeight * 0.72 };
+      const r = Math.hypot(m0.x - br.x, m0.y - br.y), a0 = Math.atan2(m0.y - br.y, m0.x - br.x);
+      const a1 = Math.PI - a0, ecart = p.displayHeight * 0.72;
+      const balance = { u: 0 };
+      this.lignesDeVitesse(p.x, p.y - 60, 1);
+      Son.jouer('vol', { force: 1.2 });
+      const casse = !reussie;
+      await this.animer({ targets: balance, u: casse ? 0.5 : 1, duration: casse ? 620 : 1150, ease: casse ? 'Sine.easeIn' : 'Sine.easeInOut', onUpdate: () => {
+        const a = a0 + (a1 - a0) * balance.u;
+        const mx = br.x + Math.cos(a) * r, my = br.y + Math.sin(a) * r;
+        p.setPosition(mx - 8, my + ecart).setAngle((a - Math.PI / 2) * -40 * 0.6);
+        R.corde.clear().lineStyle(2.5, 0xc8a060).lineBetween(br.x, br.y, mx, my);
+      } });
+      if (casse) {
+        // CRAC : la corde lâche, il tombe dans le vide
+        this.onomatopee(br.x, br.y - 20, 'CRAC !', '#ff8080');
+        this.cameras.main.shake(200, 0.01);
+        const bout = { x: p.x + 8, y: p.y - ecart };
+        R.corde.clear().lineStyle(2.5, 0xc8a060).lineBetween(br.x, br.y, br.x + 6, br.y + 30);
+        void bout;
+        await this.tomberDansLeRavin();
+        return;
+      }
+      p.setAngle(0);
+      // il lâche la corde au bon moment, et retombe sur ses pieds
+      this.tweens.addCounter({ from: 0, to: 1, duration: 1400, onUpdate: tw => { const u = tw.getValue(); const a = Math.PI / 2 + Math.sin(u * 12) * (1 - u) * 0.6; R.corde.clear().lineStyle(2.5, 0xc8a060).lineBetween(br.x, br.y, br.x + Math.cos(a) * 70, br.y + Math.sin(a) * 70); } });
+      await this.animer({ targets: p, x: fin.x, y: fin.y, duration: 260, ease: 'Quad.easeOut' });
+    } else if (reussie) {
+      // sans corde : un grand saut, de justesse
+      this.lignesDeVitesse(p.x, p.y - 60, 1);
+      const x0 = p.x, y0 = p.y;
+      await Promise.all([this.animer({ targets: p, x: fin.x, duration: 700, ease: 'Linear' }), this.animer({ targets: p, y: { from: y0, to: y0 - 80 }, duration: 350, yoyo: true, ease: 'Quad.easeOut' })]);
+      p.setY(fin.y);
+      void pieds;
+    } else {
+      this.lignesDeVitesse(p.x, p.y - 60, 1);
+      await Promise.all([this.animer({ targets: p, x: R.X + 110, duration: 500, ease: 'Linear' }), this.animer({ targets: p, y: { from: p.y, to: p.y - 50 }, duration: 250, yoyo: true, ease: 'Quad.easeOut' })]);
+      await this.tomberDansLeRavin();
+      return;
+    }
+    // la réception : un nuage de poussière, HOP, puis il redescend les gradins de l'autre côté
+    for (let k = 0; k < 8; k++) { const d = this.add.circle(p.x + (k - 4) * 6, p.y, 4, 0xc8b090, 0.7).setDepth(3.1); this.decor.add(d); this.tweens.add({ targets: d, y: d.y - 10, x: d.x + (k - 4) * 4, alpha: 0, scale: 2, duration: 500, onComplete: () => d.destroy() }); }
+    this.onomatopee(p.x, p.y - 140, 'HOP !', '#b8f0a0');
+    this.tweens.add({ targets: p, scaleY: p.scaleY * 0.9, duration: 90, yoyo: true });
+    await this.attendre(300);
+    for (const [x, y] of [[R.X + 318, 318], [R.X + 372, 360]]) {
+      pasDeMarche(this, p, 330);
+      await Promise.all([this.animer({ targets: p, x, duration: 330, ease: 'Linear' }), this.animer({ targets: p, y: { from: p.y - 16, to: y }, duration: 330, ease: 'Quad.easeIn' })]);
+    }
+    p.setY(360);
+    this.menace.ravin = null;
+  }
+
+  // La chute : il tombe en tournoyant, PLOUF dans la rivière (ou se rattrape à une racine dans
+  // le gouffre), puis on le retrouve, trempé et sonné, au pied de la falaise de départ.
+  async tomberDansLeRavin() {
+    const R = this.menace.ravin, p = this.perso;
+    const fond = R.eau ? 352 : 330;
+    await this.animer({ targets: p, y: fond, angle: 160, duration: 520, ease: 'Quad.easeIn' });
+    if (R.eau) {
+      Son.jouer('plouf');
+      this.onomatopee(p.x, fond - 120, 'PLOUF !', '#a8d0ff');
+      for (let k = 0; k < 16; k++) { const g = this.add.circle(p.x + (Math.random() - 0.5) * 20, fond - 10, 2 + Math.random() * 2, 0xe8fcff, 0.9).setDepth(4); this.decor.add(g); const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.8, v = 30 + Math.random() * 50; this.tweens.add({ targets: g, x: g.x + Math.cos(a) * v, y: g.y + Math.sin(a) * v, duration: 300, yoyo: true, ease: 'Quad.easeOut', onComplete: () => g.destroy() }); }
+      p.setAlpha(0.6);
+      await this.animer({ targets: p, x: p.x - 60, duration: 700, ease: 'Sine.easeInOut' });   // le courant l'emporte
+    } else {
+      this.onomatopee(p.x, fond - 120, 'AÏE !', '#ff8080');
+      this.cameras.main.shake(220, 0.012);
+    }
+    await this.animer({ targets: p, alpha: 0, duration: 300 });
+    // on le retrouve au pied de la falaise, trempé
+    p.setPosition(R.X - 130, 360).setAngle(0).setFlipX(false);
+    if (R.eau) p.setTint(0xa8c8ff);
+    await this.animer({ targets: p, alpha: 1, duration: 400 });
+    this.time.delayedCall(1200, () => p.active && p.clearTint());
+    await this.animer({ targets: p, angle: 10, duration: 120, yoyo: true, repeat: 2 });   // il s'ébroue
+    this.menace.ravin = null;
   }
 
   // Des lignes de vitesse, façon bande dessinée, derrière un bond ou un coup (sens : 1 vers la droite)
