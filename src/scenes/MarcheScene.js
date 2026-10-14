@@ -474,6 +474,8 @@ class MarcheScene extends Phaser.Scene {
       const p = imageCorps(this, 0, y, { nom: 'Passant ' + i, race: peuples[(this.G.jour + i) % peuples.length], feminin: i % 2 === 1, niveau: 'novice' }, 2.8).setFlipX(!versDroite);
       c.add(p);
       pasDeMarche(this, p, 0, { poussiere: false });
+      // (v0.58) on clique sur un passant : il s'arrête et lâche une petite phrase
+      p.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.passantParle(p, i));
       const marcher = (depart) => {
         p.x = depart;
         this.tweens.add({ targets: p, x: versDroite ? 1010 : -50, duration: Math.abs((versDroite ? 1010 : -50) - depart) * (26 + i * 5), onComplete: () => marcher(versDroite ? -50 : 1010) });
@@ -483,6 +485,44 @@ class MarcheScene extends Phaser.Scene {
     const invite = this.add.text(480, 356, 'Clique sur un lieu pour t\'en approcher', style(17, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5);
     this.tweens.add({ targets: invite, alpha: 0.5, duration: 900, yoyo: true, repeat: -1 });
     c.add(invite);
+  }
+
+  // (v0.58) Ce que disent les passants : leur journée, les nouvelles du crieur, les événements
+  // du moment, les gens du marché... avec un peu d'humour.
+  passantParle(p, i) {
+    const G = this.G;
+    if (p.bulle && p.bulle.active) return;
+    const gazette = G.gazette && G.gazette.jour === G.jour ? G.gazette.lignes : [];
+    const actifs = evenementsActifs(G).map(e => EVENEMENTS[e.id].nouvelle);
+    const phrases = [
+      "Trois heures que j'attends ma femme devant la tailleuse. Trois heures !",
+      "Thorgal a encore martelé toute la nuit. Mes poules ne pondent plus.",
+      "Mère Sauge m'a vendu une potion contre la toux. Maintenant je tousse en chantant.",
+      "Paraît que Maître Gédéon compte ses pommes deux fois. Et qu'il en trouve une de moins à chaque fois.",
+      "Le mendiant ? Brave homme. Son chien, par contre, m'a volé un saucisson. Le saucisson ne m'a jamais été rendu.",
+      "J'ai fait un vœu à la fontaine. J'attends toujours mon dragon apprivoisé.",
+      "Des aventuriers, partout, tout le temps. On ne peut plus traverser la place sans se prendre une épée dans l'œil.",
+      "Hier j'ai perdu aux dés. Aujourd'hui je reviens me refaire. Demain je reviendrai me refaire de m'être refait.",
+      `Ton comptoir ? « ${G.nomShop} » ? ... Ah oui ! Celui où il y a toujours la queue.`,
+      "Je cherche un cadeau pour ma belle-mère. Rosalie m'a conseillé un pot de miel. Ou un pot de cornichons, je n'ai pas bien entendu.",
+    ];
+    if (gazette.length) phrases.push(`Le crieur a dit : « ${gazette[0]} » Moi, je n'y crois qu'à moitié.`, 'Le crieur crie de plus en plus fort, tu trouves pas ? Bientôt, on l\'entendra depuis les Terres sauvages.');
+    for (const a of actifs) phrases.push(`Tu as entendu ? ${a} On ne parle que de ça !`);
+    if (G.argent > 400) phrases.push("On dit que tu roules sur l'or, toi. Tu ne voudrais pas m'acheter un âne ?");
+    if ((G.prets || []).length) phrases.push("Les banquiers nains t'ont dans le collimateur, à ce qu'on raconte. Fais attention à tes poches.");
+    const texte = Phaser.Utils.Array.GetRandom(phrases);
+    // il s'arrête, se tourne vers toi, parle, puis reprend sa route
+    const tw = this.tweens.getTweensOf(p); tw.forEach(t => t.pause());
+    if (p.marche) p.marche.paused = true;
+    Son.jouer('voix', { personne: { nom: 'Passant ' + i, race: 'humain', feminin: i % 2 === 1 }, ton: Phaser.Utils.Array.GetRandom(['content', 'rire', 'etonne', 'neutre']) });
+    const c = this.vue;
+    const bulle = p.bulle = this.add.text(Phaser.Math.Clamp(p.x, 130, 830), p.y - p.displayHeight - 10, texte, style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 240 }, align: 'center' })).setOrigin(0.5, 1).setDepth(8).setScale(0);
+    c.add(bulle);
+    this.tweens.add({ targets: bulle, scale: 1, duration: 180, ease: 'Back.easeOut' });
+    this.time.delayedCall(Math.max(2600, texte.length * 55), () => {
+      this.tweens.add({ targets: bulle, alpha: 0, duration: 300, onComplete: () => bulle.destroy() });
+      if (p.active) { tw.forEach(t => t.resume()); if (p.marche) p.marche.paused = false; }
+    });
   }
 
   // Une échoppe (Bazar) : auvent, vendeur derrière, table par-dessus, objets dessus.
