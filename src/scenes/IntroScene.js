@@ -148,11 +148,11 @@ class IntroHistoireScene extends Cinematique {
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
 
     textureJoueur(this, G); // (crée les textures du joueur si besoin)
-    this.heros = this.add.image(220, 320, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(6));
+    this.heros = this.add.image(220, 320, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(7.5));   // (v0.57 : plus grand)
     // Quand il ne marche pas, il regarde Garrick (de trois-quarts, vers la droite)
     this.regarder = () => this.heros.setTexture(textureJoueur(this, G, 'troisQuarts')).setFlipX(false);
     this.aller = async (x) => { this.heros.setTexture('joueur_petit'); await this.marcher(this.heros, x); this.regarder(); };
-    this.mentor = this.add.image(-80, 345, corpsHD(this, 'mentor')).setOrigin(0.5, 0.5).setScale(6 * ECHELLE_CORPS).setAngle(90);
+    this.mentor = this.add.image(-80, 345, corpsHD(this, 'mentor')).setOrigin(0.5, 0.5).setScale(7 * ECHELLE_CORPS).setAngle(90);   // (v0.57 : plus grand)
     // Le devant de la rivière, par-dessus l'aventurier : seuls sa tête et son torse dépassent de l'eau.
     const ligneEau = 342;
     this.eauDevant = this.add.tileSprite(0, ligneEau, 960, 390 - ligneEau, 'eauFondHD').setOrigin(0).setTileScale(2, 60 / 32).setAlpha(0.8);
@@ -221,7 +221,9 @@ class IntroHistoireScene extends Cinematique {
 
   // Changement de décor : de la forêt et sa rivière aux collines de la Comté et leur chemin.
   async versLaComte() {
-    await this.animer({ targets: this.cameras.main, alpha: 0, duration: 600 });
+    // (v0.57) un vrai fondu au noir, puis la Comté qui apparaît doucement
+    this.cameras.main.fadeOut(800, 0, 0, 0);
+    await this.attendre(850);
     this.riviere.setVisible(false); this.eauDevant.setVisible(false); this.refletsDevant.setVisible(false); this.foret.setVisible(false); this.berge.setVisible(false);
     const comte = this.add.graphics().setDepth(-1);
     dessinerComte(comte, 0, 0, 960, 370, 0, 'comte');
@@ -229,7 +231,8 @@ class IntroHistoireScene extends Cinematique {
     this.fond.paysage.setVisible(false);
     this.add.image(0, 330, pavesHD(this, 960, 60)).setOrigin(0).setScale(2).setDepth(-0.5).setTint(0xc8b090);
     this.heros.setPosition(300, 330);
-    await this.animer({ targets: this.cameras.main, alpha: 1, duration: 700 });
+    this.cameras.main.fadeIn(1200, 0, 0, 0);
+    await this.attendre(1000);
   }
 
   async raconter() {
@@ -291,11 +294,13 @@ class IntroHistoireScene extends Cinematique {
 
     // Il mange comme quatre.
     this.ecrire('', 'Il mangeait comme quatre.');
-    for (let i = 0; i < 6; i++) {
-      const r = this.add.image(380, 300, iconeObjet(this, 'ration')).setScale(2.6).setDepth(5);
+    // (v0.57 : des bruits variés, un à la fois, au lieu de « MIAM » empilés)
+    const bruits = ['Miam !', 'Crunch !', 'Glou !', 'Miam !'];
+    for (let i = 0; i < 4; i++) {
+      const r = this.add.image(380, 300, iconeObjet(this, i === 2 ? 'gourde' : 'ration')).setScale(2.6).setDepth(5);
       this.animer({ targets: r, x: 470, y: 310, duration: 300 }).then(() => r.destroy());
-      this.onomatopee(490 + (i % 2) * 30, 260 - i * 6, 'MIAM');
-      await this.attendre(250);
+      this.onomatopee(500 + (i % 2) * 50, 250 - (i % 2) * 20, bruits[i]);
+      await this.attendre(520);
     }
     this.ecrire('', 'Il mangeait comme quatre. Peut-être même comme cinq.');
     await this.attendreClic();

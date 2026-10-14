@@ -22,9 +22,10 @@ class FacadeScene extends Cinematique {
     if (clients.length) {
       this.add.text(250, 300, `${G.file.length} visite${G.file.length > 1 ? 's' : ''} aujourd'hui`, style(13, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
     }
-    this.joueur = this.add.image(-40, 440, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(6));
+    this.joueur = this.add.image(-40, 440, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7));
     this.indicePasser = this.add.text(940, 520, '▶ clique pour passer', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(1, 0.5);
     this.input.once('pointerdown', () => { if (this.indicePasser.visible) this.entrer(); });
+    this.facadeVue = facade;
     this.derouler(facade);
   }
 
@@ -42,7 +43,17 @@ class FacadeScene extends Cinematique {
   entrer() {
     if (this.fini) return;
     this.fini = true;
-    this.cameras.main.fadeOut(400);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(this.suite, {}));
+    // (v0.57) Un cercle qui se referme sur la porte, comme dans les vieux films, puis le comptoir
+    const cx = this.facadeVue ? this.facadeVue.porteX : 480, cy = 380;
+    // (un anneau noir très épais autour d'un cercle qui rétrécit)
+    const anneau = this.add.graphics().setDepth(50);
+    const cercle = { r: 760 };
+    const dessiner = () => { anneau.clear(); anneau.lineStyle(2000, 0x000000, 1).strokeCircle(cx, cy, Math.max(0, cercle.r) + 1000); };
+    dessiner();
+    Son.jouer('porte');
+    this.tweens.add({ targets: cercle, r: 0, duration: 800, ease: 'Sine.easeIn', onUpdate: dessiner, onComplete: () => {
+      this.add.rectangle(480, 270, 960, 540, 0x000000).setDepth(51);
+      this.time.delayedCall(150, () => this.scene.start(this.suite, {}));
+    } });
   }
 }

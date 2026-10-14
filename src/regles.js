@@ -981,6 +981,7 @@ function dedommager(G, parti, niveau) {
   parti.dedommage = niveau;
   const verse = montantsDedommagement(v)[niveau];
   payer(G, verse, 'dedommagements');
+  G.dernierDedommagement = { jour: G.jour, nom: v.nom, race: v.race, verse };   // (v0.57 : pour la fin « vengeance »)
   G.reputation += d.reputation;
   if (Math.random() < d.releve) { ajouterVisite(G, v, parti.resultat.valeureux, 'releve'); return verse; }
   const pts = G.relations[v.nom] || 0;
@@ -1217,6 +1218,17 @@ function journeeSuivante(G) {
   if (!G.faillite) ouvrirComptoir(G);
 }
 
+// (v0.57) Pourquoi la faillite ? La cause la plus grave du moment décide de la fin :
+// une dette à la Main Noire, sinon une dette à la banque, sinon un dédommagement trop lourd payé
+// ces trois derniers jours (la famille vient se venger), sinon la simple mauvaise gestion.
+function causeFaillite(G) {
+  if ((G.prets || []).some(p => p.preteur === 'La Main Noire')) return { type: 'mainNoire' };
+  if ((G.prets || []).length) return { type: 'banque' };
+  const d = G.dernierDedommagement;
+  if (d && G.jour - d.jour <= 3) return { type: 'vengeance', nom: d.nom, race: d.race };
+  return { type: 'gestion' };
+}
+
 // La nuit : échéances des prêts, puis le matin d'un nouveau jour (le marché).
 function nuit(G) {
   payerEcheances(G);
@@ -1224,6 +1236,7 @@ function nuit(G) {
   for (const id of G.employes) payer(G, EMPLOYES[id].salaire, 'salaires');
   if (G.argent <= SEUIL_FAILLITE) {
     G.faillite = true;
+    G.causeFaillite = causeFaillite(G);
     return;
   }
   nuitDuShop(G);
