@@ -1,5 +1,5 @@
 // La version du jeu (affichée sur l'écran titre) : on l'augmente à chaque mise à jour publiée.
-const VERSION_JEU = 'v 0.52';
+const VERSION_JEU = 'v 0.53';
 // Point d'entrée : configuration de Phaser et liste des scènes.
 
 // Le jeu est en pixel art (pixels nets), mais les textes doivent rester lisses et lisibles :

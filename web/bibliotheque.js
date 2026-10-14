@@ -24,7 +24,8 @@ function categories(scene) {
   const sur = f => { try { return f(); } catch (e) { console.warn(e); return null; } };
 
   // Les personnages en pied
-  const peuples = { humain: 'Humain', hobbit: 'Hobbit', nain: 'Nain', elfe: 'Elfe', magicienne: 'Magicienne' };
+  const peuples = { humain: 'Humain', hobbit: 'Hobbit', nain: 'Nain', elfe: 'Elfe', magicienne: 'Magicienne', panda: 'Panda',
+    gobelin: 'Gobelin (Banni)', orc: 'Orc (Banni)', loupgarou: 'Loup-garou (Banni)', vampire: 'Vampire (Banni)', momie: 'Momie (Bannie)', troll: 'Troll (Banni)' };
   const persos = [];
   for (const [r, nom] of Object.entries(peuples)) persos.push(sur(() => ({ cle: corpsHD(scene, r), nom })));
   for (const [k, f] of Object.entries(FIGURANTS)) persos.push(sur(() => ({ cle: corpsHD(scene, k), nom: f.nom })));
@@ -38,7 +39,9 @@ function categories(scene) {
   // Les portraits du comptoir
   const portraits = [];
   const gens = [['Pippa Boisclair', 'hobbit', true], ['Durgan Barbe-de-Fer', 'nain', false], ["Mirabelle Lune-d'Argent", 'magicienne', true],
-    ['Faelor Ventlune', 'elfe', false], ['Maud Rivecourt', 'humain', true], ['Aldric Montfort', 'humain', false], ['Helga Forgeterre', 'nain', true], ['Lindë Brisargent', 'elfe', true]];
+    ['Faelor Ventlune', 'elfe', false], ['Maud Rivecourt', 'humain', true], ['Aldric Montfort', 'humain', false], ['Helga Forgeterre', 'nain', true], ['Lindë Brisargent', 'elfe', true],
+    ['Bao Bambou-Doux', 'panda', false], ['Zizka Mordille', 'gobelin', true], ['Gorrak Brise-Crâne', 'orc', false], ['Fenrick Lunegrise', 'loupgarou', false],
+    ['Carmilla Nuit-Pâle', 'vampire', true], ['Nekhet Sable-Ancien', 'momie', false], ['Grumsh Mange-Pierre', 'troll', false]];
   for (const [nom, race, feminin] of gens) for (const ex of ['neutre', 'content', 'fache']) {
     portraits.push(sur(() => ({ cle: textureBusteHD(scene, { nom, race, feminin }, ex), nom: `${nom} · ${ex === 'fache' ? 'fâché' : ex}` })));
   }

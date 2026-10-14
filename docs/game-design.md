@@ -439,4 +439,4 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 - Le ravitaillement et le cœur commandes / colis ; états (empoisonné) et demi-cœurs (pistes) ; les effets de la chambre ; les déblocages de chaque palier à valider avec le joueur ; la conquête des lieux n'a d'effet que quand l'auberge peut déménager.
 
 ### Diffusion
-- L'artefact claude.ai est en v 0.52 (récits en bulle de rêve, bouvier bernois, vitrines, voix à intonations, étals progressifs). `main` (Cloudflare) est en v 0.51 (adresse goyland.workers.dev) : toujours demander au joueur avant de pousser les versions suivantes ; l'artefact claude.ai se publie sans demander, sauf quand il y a de nouveaux designs graphiques (le joueur veut voir les planches d'abord).
+- L'artefact claude.ai est en v 0.53 (jauge lumière ⟷ ombre, six peuples de l'ombre et pandas). `main` (Cloudflare) est en v 0.51 (adresse goyland.workers.dev) : toujours demander au joueur avant de pousser les versions suivantes ; l'artefact claude.ai se publie sans demander, sauf quand il y a de nouveaux designs graphiques (le joueur veut voir les planches d'abord).
