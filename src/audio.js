@@ -97,10 +97,10 @@ const Son = {
     g.gain.exponentialRampToValueAtTime(Math.max(0.0005, v * s * 0.35), fin + r * 0.5);
     g.gain.exponentialRampToValueAtTime(0.0005, fin + r);
     for (const [type, mult, vol, detune] of I.voix) {
-      const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq * mult; o.detune.value = detune || 0;
+      const o = ctx.createOscillator(); o.type = type; o.frequency.value = Math.min(18000, freq * mult); o.detune.value = detune || 0;
       const og = ctx.createGain(); og.gain.value = vol; o.connect(og); og.connect(g);
       if (I.vibrato) { const lfo = ctx.createOscillator(); lfo.frequency.value = 5.2; const lg = ctx.createGain(); lg.gain.value = freq * I.vibrato; lfo.connect(lg); lg.connect(o.frequency); lfo.start(t + a); lfo.stop(fin + r + 0.1); }
-      if (I.glisse) { o.frequency.setValueAtTime(freq * mult * I.glisse, t); o.frequency.exponentialRampToValueAtTime(freq * mult, t + a + 0.02); }
+      if (I.glisse) { o.frequency.setValueAtTime(Math.min(18000, freq * mult * I.glisse), t); o.frequency.exponentialRampToValueAtTime(Math.min(18000, freq * mult), t + a + 0.02); }
       o.start(t); o.stop(fin + r + 0.1);
     }
     if (I.bruit) {

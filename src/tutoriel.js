@@ -27,7 +27,8 @@ function conseilGarrick(scene, cle, toujours = false) {
   if (G.tutoVu[cle]) return;
   G.tutoVu[cle] = true;
   if (cle === 'marche') G.tuto = false; // le dernier conseil : Garrick s'en va
-  const c = scene.add.container(0, 0).setDepth(60);
+  // (v0.59) fixé à l'écran, même quand la caméra a défilé (le marché noir et ses trois coins)
+  const c = scene.add.container(0, 0).setDepth(60).setScrollFactor(0, 0, true);
   c.add(scene.add.rectangle(480, 270, 960, 540, 0x000000, 0.35).setInteractive());
   c.add(scene.add.image(560, 420, panneauHD(scene, 700, 170)).setScale(2));
   c.add(imageCorps(scene, 150, 520, 'mentor', 9));

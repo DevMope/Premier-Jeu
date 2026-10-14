@@ -1449,8 +1449,9 @@ class CounterScene extends Phaser.Scene {
     this.texteJoueur.setText(`${nomJoueur(this.G)}, ${ageJoueur(this.G)} ans`);
 
     // (v0.57) chaque ligne tient dans l'ardoise : un nom trop long est raccourci avec « … »
-    const LARGEUR_ARDOISE = 228;
-    const mesure = this.mesureArdoise = this.mesureArdoise || this.add.text(-999, -999, '', style(13, '#000')).setVisible(false);
+    // (v0.59) on mesure avec le texte de l'ardoise lui-même (même police, même taille)
+    const LARGEUR_ARDOISE = 218;
+    const mesure = this.texteMissions;
     const tenir = (debut, nom, fin) => {
       let n = nom;
       while (n.length > 3 && mesure.setText(debut + n + fin).width > LARGEUR_ARDOISE) n = n.slice(0, -1);

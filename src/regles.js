@@ -1731,11 +1731,15 @@ function dateDuJour(G, jour = G.jour) {
 
 // Le premier jour de la semaine, du mois et de l'année en cours.
 function debutsDePeriodes(G) {
-  const j = G.jour - 1 + (G.decalageJours || 0);
+  // (v0.59) le calcul se fait en jours de calendrier (avec les sauts de temps), mais on rend des
+  // numéros de jour du jeu (les clés de la comptabilité) : sans ça, dès le premier saut, la semaine
+  // et le mois commençaient après aujourd'hui et le bureau affichait 0
+  const d = G.decalageJours || 0, j = G.jour - 1 + d;
+  const enJeu = c => Math.max(1, Math.min(G.jour, c - d));
   return {
-    semaine: j - (j % JOURS_PAR_SEMAINE) + 1,
-    mois: j - (j % JOURS_PAR_MOIS) + 1,
-    an: j - (j % JOURS_PAR_AN) + 1,
+    semaine: enJeu(j - (j % JOURS_PAR_SEMAINE) + 1),
+    mois: enJeu(j - (j % JOURS_PAR_MOIS) + 1),
+    an: enJeu(j - (j % JOURS_PAR_AN) + 1),
   };
 }
 

@@ -255,8 +255,8 @@ class NightScene extends Phaser.Scene {
   majPrevision() {
     const p = prevision(this.G, this.matin ? this.G.jour : this.G.jour + 1);
     const a = attrait(this.G);
-    this.textePrevision.setText(`Environ ${p.min} à ${p.max} clients` +
-      (p.annonces ? `, + ${p.annonces} annoncé${p.annonces > 1 ? 's' : ''} par lettre` : ''));
+    this.textePrevision.setText(`${p.min === p.max ? p.min : p.min + ' à ' + p.max} clients` +
+      (p.annonces ? ` (+ ${p.annonces} par lettre)` : ''));
     const signe = n => (n >= 0 ? '+' : '') + n.toFixed(1);
     const jour = this.matin ? this.G.jour : this.G.jour + 1;
     const evenements = modifEvenement(this.G, 'clients', null, jour);

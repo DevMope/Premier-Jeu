@@ -656,7 +656,7 @@ class MarcheScene extends Phaser.Scene {
     const p = prevision(G, G.jour);
     this.bourse.maj(G.argent);
     this.texteInfos.setText(`Réserve : ${stockTotal(G)}/${G.capacite} · Fer ${G.materiaux.fer} · Cuir ${G.materiaux.cuir} · Fil d'or ${G.materiaux.filOr || 0}\n` +
-      `Aujourd'hui : entre ${p.min} et ${p.max} clients attendus${p.annonces ? `, + ${p.annonces} annoncé${p.annonces > 1 ? 's' : ''} par lettre` : ''} (un stock varié en attire plus)`);
+      `Aujourd'hui : ${p.min === p.max ? p.min : p.min + ' à ' + p.max} clients${p.annonces ? ` (+ ${p.annonces} par lettre)` : ''} · un stock varié en attire plus`);
   }
 
   message(texte, couleur = '#3b2410') {

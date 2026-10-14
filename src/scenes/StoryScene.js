@@ -391,7 +391,7 @@ class StoryScene extends Cinematique {
         const erreur = acheterTrouvaille(G, t);
         if (erreur) { Son.jouer('refus'); return info.setText(erreur); }
         Son.jouer('achat');
-        info.setColor('#2f6a2a').setText(`${tr.nom} rejoint ton atelier. Répare-le pour en tirer plus aux enchères !`);
+        info.setColor('#2f6a2a').setText(`${tr.nom} rejoint ton atelier : à réparer !`);
         maj();
       });
       c.add([b.fond, b.label]);
