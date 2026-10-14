@@ -272,6 +272,140 @@ class MarcheScene extends Phaser.Scene {
     this.message(`Plouf ! Tu fermes les yeux et tu fais un vœu... ${n === 1 ? 'Ta première pièce dort au fond de la fontaine.' : `${n} pièces dorment au fond de la fontaine.`}`);
   }
 
+  // (v0.58) La fontaine vue de près : le grand bassin, l'eau qui bouge, la vasque qui déborde, le
+  // jet du sommet, et les pièces des vœux d'avant qui dorment au fond. On y jette sa pièce : elle
+  // vole en tournant, touche l'eau (gerbe, ronds), puis coule doucement en se balançant.
+  vueFontaine() {
+    const G = this.G, F = FONTAINE_PROCHE, E = 2;
+    if (this.vitrineOuverte) this.vitrineOuverte.destroy();
+    const c = this.vitrineOuverte = this.add.container(0, 0).setDepth(40);
+    const panneau = this.contenu;
+    if (panneau) panneau.setVisible(false);
+    const fermer = () => { Son.jouer('glisse'); c.destroy(); this.vitrineOuverte = null; if (panneau && panneau.active) panneau.setVisible(true); };
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x0e1410, 0.9).setInteractive());
+    // la place autour : le ciel du matin, les façades au loin, les pavés
+    const fond = this.add.graphics(); dessinerComte(fond, 0, 0, 960, 300, 'aube'); c.add(fond); if (fond.paysage) c.add(fond.paysage);
+    c.add(this.add.image(0, 300, pavesHD(this, 960, 240)).setOrigin(0).setScale(2));
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.25));
+    const ox = 480 - F.L, oy = 500 - F.H * E;   // (le coin haut-gauche de la fontaine, à l'écran)
+    const X = x => ox + x * E, Y = y => oy + y * E;
+    c.add(this.add.ellipse(480, 500, F.L * 1.9, 46, 0x000000, 0.35));
+    c.add(this.add.image(480, 500, fontaineProcheHD(this)).setOrigin(0.5, 1).setScale(E));
+    for (const [x, flip] of [[175, false], [785, true]]) { c.add(this.add.ellipse(x, 506, 60, 12, 0x000000, 0.3)); c.add(this.add.image(x, 508, potFleursHD(this)).setOrigin(0.5, 1).setScale(2.6).setFlipX(flip)); }
+    const cx = X(F.cx), ey = Y(F.eauY), rx = F.eauRx * E, ry = F.eauRy * E;
+    // les pièces au fond (sous l'eau), à des places fixes pour chaque vœu
+    const fondPieces = this.add.container(0, 0);
+    const placer = k => { const a = hachage(k, 3, 911) * Math.PI * 2, r = Math.sqrt(hachage(k, 4, 912)) * 0.85; return [cx + Math.cos(a) * r * rx, ey + Math.sin(a) * r * ry * 0.9]; };
+    const piecesAuFond = Math.min(40, G.fontainePieces || 0);
+    // l'eau : une nappe translucide, une bande de lumière, et des reflets qui dansent
+    const eau = this.add.ellipse(cx, ey, rx * 2, ry * 2, 0x4aa0c8, 0.55); c.add(eau);
+    c.add(fondPieces);
+    const piece = (x, y) => { const o = this.add.ellipse(x, y, 10, 5, 0xf0d060, 0.85).setStrokeStyle(1, 0x9a7010, 0.9); fondPieces.add(o); if (Math.random() < 0.5) this.tweens.add({ targets: o, fillAlpha: 0.5, duration: 600 + Math.random() * 900, yoyo: true, repeat: -1 }); return o; };
+    for (let k = 0; k < piecesAuFond; k++) piece(...placer(k));
+    const lumiere = this.add.ellipse(cx - rx * 0.25, ey - ry * 0.35, rx * 1.1, ry * 0.5, 0xd8f4ff, 0.22).setBlendMode(Phaser.BlendModes.ADD); c.add(lumiere);
+    this.tweens.add({ targets: lumiere, x: cx + rx * 0.2, duration: 3200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    for (let k = 0; k < 7; k++) {
+      const r = this.add.ellipse(cx + (hachage(k, 1, 913) - 0.5) * rx * 1.4, ey + (hachage(k, 2, 914) - 0.5) * ry, 26, 3, 0xffffff, 0.5); c.add(r);
+      this.tweens.add({ targets: r, alpha: 0.05, scaleX: 1.6, duration: 900 + k * 170, yoyo: true, repeat: -1, delay: k * 140 });
+    }
+    // la vasque qui déborde en rideau de gouttes, et le jet du sommet
+    const tomber = (x, y0, y1, couleur = 0xc8f0ff) => {
+      const g = this.add.circle(x, y0, 1.8, couleur, 0.9); c.add(g);
+      this.tweens.add({ targets: g, y: y1, x: x + (x - cx) * 0.08, duration: Phaser.Math.Between(420, 560), ease: 'Quad.easeIn', onComplete: () => {
+        g.destroy();
+        if (Math.random() < 0.3) { const o = this.add.ellipse(x, y1, 8, 2).setStrokeStyle(1, 0xe8fcff, 0.7); c.add(o); this.tweens.add({ targets: o, scaleX: 3, scaleY: 2, alpha: 0, duration: 500, onComplete: () => o.destroy() }); }
+      } });
+    };
+    const pluie = this.time.addEvent({ delay: 45, loop: true, callback: () => {
+      if (!c.active) { pluie.remove(); return; }
+      const cote = Math.random() < 0.5 ? -1 : 1, x = cx + cote * (F.vasqueRx - 2 - Math.random() * 3) * E;
+      tomber(x, Y(F.vasqueY + 2), ey + (Math.random() - 0.3) * ry * 0.6);
+      for (const sens of [-1, 1]) {
+        const g = this.add.circle(X(F.cx + sens * 14), Y(94), 2, 0xd8f4ff, 0.95); c.add(g);
+        const portee = 70 + Math.random() * 14;
+        this.tweens.add({ targets: g, x: g.x + sens * portee, duration: 520, ease: 'Linear' });
+        this.tweens.add({ targets: g, y: { from: Y(94), to: ey - 4 }, duration: 520, ease: 'Quad.easeIn', onComplete: () => g.destroy() });
+      }
+      if (Math.random() < 0.6) {
+        const j = this.add.circle(cx, Y(F.sommetY - 6), 1.6, 0xe8fcff, 0.95); c.add(j);
+        const dx = (Math.random() - 0.5) * 60;
+        this.tweens.add({ targets: j, x: cx + dx, duration: 700, ease: 'Linear' });
+        this.tweens.add({ targets: j, y: Y(F.sommetY - 22), duration: 320, ease: 'Quad.easeOut', yoyo: true, onComplete: () => { j.destroy(); } });
+      }
+    } });
+    // les titres et les boutons
+    c.add(this.add.text(480, 32, 'La fontaine de la grand-place', style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
+    const n = G.fontainePieces || 0;
+    const sous = this.add.text(480, 60, n ? `${n} pièce${n > 1 ? 's' : ''} brille${n > 1 ? 'nt' : ''} au fond de l'eau.` : "Personne ne t'a encore vu y jeter une pièce.", style(14, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+    c.add(sous);
+    const deja = G.fontaineJour === G.jour;
+    const jeter = creerBouton(this, 480, 516, 260, deja ? 'Vœu fait pour aujourd\'hui' : 'Jeter une pièce (1 p.)', () => {
+      if (this.pieceEnVol) return;
+      const erreur = jeterPieceFontaine(G);
+      if (erreur) return this.message(erreur, '#a03030');
+      this.majInfos();
+      jeter.label.setText('Vœu fait pour aujourd\'hui'); jeter.fond.setAlpha(0.6);
+      this.pieceEnVol = true;
+      const [tx, ty] = placer(G.fontainePieces - 1);
+      this.lancerPieceFontaine(c, tx, ty, ey, () => {
+        this.pieceEnVol = false;
+        piece(tx, ty);
+        const k = G.fontainePieces;
+        sous.setText(`${k} pièce${k > 1 ? 's' : ''} brille${k > 1 ? 'nt' : ''} au fond de l'eau.`);
+        this.message(`Plouf ! Tu fermes les yeux et tu fais un vœu... ${k === 1 ? 'Ta première pièce dort au fond de la fontaine.' : `${k} pièces dorment au fond de la fontaine.`}`);
+      });
+    });
+    if (deja) jeter.fond.setAlpha(0.6);
+    const reculer = creerBouton(this, 836, 46, 200, '◀ Reculer', () => { if (!this.pieceEnVol) fermer(); });
+    c.add([jeter.fond, jeter.label, reculer.fond, reculer.label]);
+  }
+
+  // La pièce du vœu : elle part de ta main (en bas), tourne sur elle-même en volant, touche l'eau
+  // dans une gerbe de gouttes et des ronds, puis coule en se balançant jusqu'au fond.
+  lancerPieceFontaine(c, tx, ty, surface, fin) {
+    Son.jouer('piece');
+    const p = this.add.image(820, 560, 'pieceFace').setScale(2.4); c.add(p);
+    const surfaceY = surface + (ty - surface) * 0.15;
+    const vol = { t: 0 };
+    this.tweens.add({ targets: vol, t: 1, duration: 900, ease: 'Linear',
+      onUpdate: () => {
+        const u = vol.t;
+        p.x = 820 + (tx - 820) * u;
+        p.y = 560 + (surfaceY - 560) * u - Math.sin(u * Math.PI) * 240;
+        p.scaleX = 2.4 * Math.cos(u * Math.PI * 7);   // elle tourne sur elle-même
+        p.scaleY = 2.4 - u * 0.6;
+      },
+      onComplete: () => {
+        // le contact avec l'eau : une gerbe, des ronds, plouf
+        Son.jouer('plouf');
+        for (let k = 0; k < 12; k++) {
+          const g = this.add.circle(tx, surfaceY, Phaser.Math.Between(2, 3), 0xe8fcff, 0.95); c.add(g);
+          const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.6, v = 30 + Math.random() * 40;
+          this.tweens.add({ targets: g, x: tx + Math.cos(a) * v, duration: 600, ease: 'Linear' });
+          this.tweens.add({ targets: g, y: surfaceY + Math.sin(a) * v, duration: 300, ease: 'Quad.easeOut', yoyo: true, onComplete: () => g.destroy() });
+        }
+        for (let k = 0; k < 4; k++) {
+          const o = this.add.ellipse(tx, surfaceY, 14, 4).setStrokeStyle(2, 0xe8fcff, 0.8); c.add(o);
+          this.tweens.add({ targets: o, scaleX: 4 + k * 1.5, scaleY: 3 + k, alpha: 0, duration: 1100, delay: k * 160, onComplete: () => o.destroy() });
+        }
+        // elle coule, à plat, en se balançant, et l'eau la bleuit
+        p.setScale(1.5, 0.7).setTint(0xb8d8e8).setAlpha(0.9);
+        const coule = { t: 0 };
+        this.tweens.add({ targets: coule, t: 1, duration: 1600, ease: 'Sine.easeOut',
+          onUpdate: () => { p.y = surfaceY + (ty - surfaceY) * coule.t; p.x = tx + Math.sin(coule.t * Math.PI * 4) * 6 * (1 - coule.t); p.setAngle(Math.sin(coule.t * Math.PI * 4) * 25 * (1 - coule.t)); p.setAlpha(0.9 - coule.t * 0.25); },
+          onComplete: () => {
+            p.destroy();
+            // le vœu : quelques étincelles qui montent de l'eau
+            for (let k = 0; k < 8; k++) {
+              const e = this.add.image(tx + (Math.random() - 0.5) * 40, ty, 'eclat').setScale(1.4).setTint(0xffe080).setBlendMode(Phaser.BlendModes.ADD); c.add(e);
+              this.tweens.add({ targets: e, y: ty - 60 - Math.random() * 40, alpha: 0, duration: 1100, delay: k * 90, onComplete: () => e.destroy() });
+            }
+            Son.jouer('trefle');
+            fin();
+          } });
+      } });
+  }
+
   // Les noms des lieux, lisibles dans la vue d'ensemble, et l'invitation à s'approcher.
   creerVueEnsemble() {
     const { x: ox, y: oy, echelle } = VUE_MARCHE;
@@ -297,7 +431,7 @@ class MarcheScene extends Phaser.Scene {
     ];
     for (const [cle, x, y, e, miroir] of decor) c.add(this.add.image(x, y, cle).setOrigin(0.5, 1).setScale(e).setFlipX(miroir));
     const fontaine = this.add.image(480, 438, 'fontaineHD').setOrigin(0.5, 1).setScale(1.6).setInteractive({ useHandCursor: true });
-    fontaine.on('pointerdown', () => this.jeterPiece());
+    fontaine.on('pointerdown', () => this.vueFontaine());   // (v0.58 : on s'approche de la fontaine, comme d'un étal)
     c.add(fontaine);
     // Le jet de la fontaine
     this.time.addEvent({ delay: 90, loop: true, callback: () => {

@@ -2057,3 +2057,92 @@ function nappeVitrineHD(scene, couleur) {
   t.texture(scene, cle);
   return cle;
 }
+
+// (v0.58) La fontaine de la grand-place, vue de près (260×190, demi-résolution) : un grand bassin
+// rond de pierre taillée (le rebord clair, la paroi en blocs, de la mousse au pied), une colonne
+// cannelée qui sort de l'eau, une vasque haute et sa boule de pierre. L'eau du bassin est peinte
+// à part (elle bouge) : ici, seulement le fond, sombre. Renvoie aussi où sont l'eau et la vasque.
+const FONTAINE_PROCHE = { L: 260, H: 190, cx: 130, eauY: 128, eauRx: 100, eauRy: 16, vasqueY: 52, vasqueRx: 40, sommetY: 34 };
+function fontaineProcheHD(scene) {
+  if (scene.textures.exists('fontaineProcheHD')) return 'fontaineProcheHD';
+  const F = FONTAINE_PROCHE, t = toileDecor(F.L, F.H);
+  t.rampes.pierre = rampe(0xb8a07a);   // (un grès doré, chaud au soleil du matin)
+  t.rampes.mousse = rampe(0x5a7a3a);
+  t.rampes.bronze = rampe(0x4a8a78);   // (le bronze vert-de-gris des têtes de lion)
+  t.rampes.lierre = rampe(0x3a7a2a);
+  t.rampes.eauFond = [0x0a1a24, 0x10283a, 0x16364c, 0x1e4660, 0x285a78, 0x346e90];
+  const dans = (x, y, cx, cy, rx, ry) => ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1;
+  const ext = { rx: 112, ry: 22 };
+  // la colonne cannelée, de l'eau jusqu'à la vasque, et ses deux bagues
+  for (let y = F.vasqueY; y < F.eauY; y++) for (let x = F.cx - 8; x <= F.cx + 8; x++) {
+    const n = (x + 0.5 - F.cx) / 8.5;
+    t.poser(x, y, 'pierre', Math.round(3.4 - n * 1.6 - Math.abs(n) * 0.8 + ((x - F.cx + 8) % 4 === 0 ? -1 : 0)));
+  }
+  for (const yb of [70, 108]) t.forme('pierre', ellipsoide(F.cx, yb, 11, 3), { decalage: 0.6 });
+  // la vasque haute : le dessous en coupe, puis le rebord, puis son eau
+  t.forme('pierre', (x, y) => (y >= F.vasqueY && y <= F.vasqueY + 14 && Math.abs(x + 0.5 - F.cx) <= F.vasqueRx - (y - F.vasqueY) * 2.2 ? [(x + 0.5 - F.cx) / F.vasqueRx, 0.5, 0.7] : null), { decalage: -0.3 });
+  t.forme('pierre', ellipsoide(F.cx, F.vasqueY, F.vasqueRx, 9), { decalage: 0.9 });
+  t.forme('eauFond', ellipsoide(F.cx, F.vasqueY - 1, F.vasqueRx - 6, 6), { decalage: 1.6, bord: false });
+  // la boule au sommet, sur son petit pied
+  for (let y = F.sommetY + 4; y < F.vasqueY - 4; y++) for (let x = F.cx - 3; x <= F.cx + 3; x++) t.poser(x, y, 'pierre', x < F.cx ? 4 : 2);
+  t.forme('pierre', ellipsoide(F.cx, F.sommetY, 7, 7), { decalage: 0.5 });
+  // la paroi du bassin : entre le rebord et le sol, en blocs taillés
+  for (let y = F.eauY; y < F.H - 2; y++) for (let x = F.cx - ext.rx; x <= F.cx + ext.rx; x++) {
+    const nx = (x + 0.5 - F.cx) / ext.rx;
+    if (Math.abs(nx) > 1) continue;
+    const bas = F.eauY + 38 + Math.sqrt(1 - nx * nx) * ext.ry;
+    const haut = F.eauY + Math.sqrt(1 - nx * nx) * ext.ry;
+    if (y < haut || y > bas) continue;
+    const joint = Math.round(x - F.cx) % 26 === 0 || Math.abs(y - (haut + bas) / 2) < 0.6;
+    let ton = Math.round(3.2 - nx * 1.5 - Math.abs(nx) * 0.9) + (joint ? -2 : 0);
+    if (y > bas - 4 && hachage(x, y, 905) > 0.45) { t.poser(x, y, 'mousse', 2 + Math.round(hachage(x, 1, 906) * 2)); continue; }
+    t.poser(x, y, 'pierre', ton);
+  }
+  // le rebord : un anneau de pierre claire, épais, avec le fond d'eau sombre au milieu
+  for (let y = F.eauY - ext.ry - 2; y <= F.eauY + ext.ry + 2; y++) for (let x = F.cx - ext.rx - 2; x <= F.cx + ext.rx + 2; x++) {
+    if (!dans(x, y, F.cx, F.eauY, ext.rx, ext.ry)) continue;
+    if (dans(x, y, F.cx, F.eauY, F.eauRx, F.eauRy)) { if (y >= F.eauY - F.eauRy || t.mat(x, y) !== 'pierre') t.poser(x, y, 'eauFond', 1 + Math.round((y - F.eauY + F.eauRy) / (2 * F.eauRy) * 2)); continue; }
+    const devant = y > F.eauY;
+    t.poser(x, y, 'pierre', devant ? 4 : 5 - (hachage(x >> 2, y, 907) > 0.8 ? 1 : 0));
+  }
+  // la frise sculptée sous le rebord : un sillon, et des losanges en relief
+  for (let x = F.cx - ext.rx + 3; x <= F.cx + ext.rx - 3; x++) {
+    const nx = (x + 0.5 - F.cx) / ext.rx, haut = Math.round(F.eauY + Math.sqrt(Math.max(0, 1 - nx * nx)) * ext.ry) + 3;
+    const sh = Math.round(-nx * 1.5);
+    t.poser(x, haut, 'pierre', 1 + sh); t.poser(x, haut + 7, 'pierre', 1 + sh);
+    const m = ((x - F.cx) % 12 + 12) % 12, d = Math.abs(m - 6);
+    for (let j = 1; j < 7; j++) if (Math.abs(j - 3.5) + d * 0.6 < 3) t.poser(x, haut + j, 'pierre', 4 + sh);
+  }
+  // deux têtes de lion en bronze sur la colonne : l'eau sort de leur gueule
+  for (const sens of [-1, 1]) {
+    const lx = F.cx + sens * 10, ly = 92;
+    t.forme('bronze', ellipsoide(lx, ly, 4.5, 4.5), { decalage: 0.4 });
+    t.forme('bronze', ellipsoide(lx + sens * 3, ly + 1.5, 2.6, 2), { decalage: 0.7 });   // le museau
+    t.poser(Math.round(lx + sens * 4), ly + 2, 'eauFond', 0);                           // la gueule
+    t.poser(Math.round(lx + sens * 1), ly - 2, 'eauFond', 1);                           // l'œil
+  }
+  // du lierre qui grimpe sur la paroi, de chaque côté
+  for (const [x0, sens] of [[F.cx - ext.rx + 6, 1], [F.cx + ext.rx - 6, -1]]) {
+    for (let k = 0; k < 26; k++) {
+      const x = x0 + sens * Math.round(Math.sin(k * 0.7) * 4 + k * 0.5), y = F.H - 4 - k * 1.4;
+      t.forme('lierre', ellipsoide(x + (k % 2 ? 2 : -2), y, 2, 1.4), { decalage: 0.3 + (k % 3) * 0.2, bord: false });
+    }
+  }
+  t.contour();
+  t.texture(scene, 'fontaineProcheHD');
+  return 'fontaineProcheHD';
+}
+
+// (v0.58) Un pot de terre cuite fleuri (28×30), posé au pied de la fontaine
+function potFleursHD(scene) {
+  if (scene.textures.exists('potFleursHD')) return 'potFleursHD';
+  const t = toileDecor(28, 30);
+  t.rampes.terre = rampe(0xb8603a); t.rampes.feuille = rampe(0x4a8a3a); t.rampes.fleurR = rampe(0xd84050); t.rampes.fleurJ = rampe(0xf0c040);
+  t.forme('terre', (x, y) => (y >= 16 && y <= 29 && Math.abs(x + 0.5 - 14) <= 8 - (y - 16) * 0.25 ? [(x + 0.5 - 14) / 9, 0, 0.8] : null));
+  t.forme('terre', ellipsoide(14, 16, 9.5, 2.2), { decalage: 0.6 });
+  for (const [x, y] of [[8, 12], [12, 9], [17, 10], [20, 13], [14, 13], [10, 14], [18, 14]]) t.forme('feuille', ellipsoide(x, y, 2.6, 1.8), { decalage: 0.3 });
+  for (const [x, y, c] of [[9, 8, 'fleurR'], [14, 5, 'fleurJ'], [19, 7, 'fleurR'], [12, 11, 'fleurJ'], [17, 11, 'fleurR']]) { t.forme(c, ellipsoide(x, y, 2.2, 2), { decalage: 0.5 }); t.poser(x, y, 'fleurJ', 5); }
+  t.contour();
+  t.texture(scene, 'potFleursHD');
+  return 'potFleursHD';
+}
