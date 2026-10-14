@@ -236,4 +236,66 @@ function creerRecitEpreuvesHD(scene) {
     grad.addColorStop(0.75, 'rgba(255,255,255,0.45)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = grad; ctx.fillRect(0, 0, 128, 128); c.refresh();
   }
+  // (2e lot) La pierre tombale, moussue, un peu penchée
+  {
+    const t = toileDecor(22, 30);
+    t.rampes.tombe = rampe(0x8a8a90); t.rampes.mousseT = rampe(0x4a6a32);
+    t.forme('tombe', (x, y) => (y >= 8 && x >= 2 && x <= 19 ? [(x - 10.5) / 10, -0.2, 0.9] : ellipsoide(10.5, 9, 8.5, 7.5)(x, y)), { motif: (x, y) => (fbm(x * 0.4, y * 0.4, 990) > 0.64 ? -1 : 0) });
+    for (let y = 9; y < 20; y++) t.poser(10, y, 'encre', 2);
+    for (let x = 7; x < 14; x++) t.poser(x, 12, 'encre', 2);
+    for (let k = 0; k < 9; k++) { const x = 2 + Math.floor(hachage(k, 1, 991) * 17), y = 22 + Math.floor(hachage(k, 2, 991) * 7); t.poser(x, y, 'mousseT', 3); }
+    t.contour(); t.texture(scene, 'tombeHD');
+  }
+  // Le golem gardien : des blocs de pierre empilés, des runes qui luisent
+  {
+    const t = toileDecor(50, 70);
+    t.rampes.roc = rampe(0x8a8070); t.rampes.rune = [0x0a3a4a, 0x1a6a8a, 0x2aa0c0, 0x50d0f0, 0x90f0ff, 0xe0ffff];
+    const blocs = (x, y) => (fbm(x * 0.35, y * 0.35, 995) > 0.66 ? -1 : (x * 3 + y * 7) % 17 === 0 ? 0.8 : 0);
+    for (const x of [16, 33]) t.forme('roc', (xx, y) => (y >= 48 && y <= 69 && Math.abs(xx + 0.5 - x) < 6 ? [(xx + 0.5 - x) / 6, 0, 0.8] : null), { motif: blocs });
+    t.forme('roc', ellipsoide(25, 36, 18, 15), { motif: blocs });
+    for (const [x0, x1] of [[8, 2], [42, 48]]) t.forme('roc', (xx, y) => (y >= 24 && y <= 56 && Math.abs(xx + 0.5 - (x0 + (x1 - x0) * (y - 24) / 32)) < 5.5 ? [0, 0, 0.8] : null), { motif: blocs, decalage: 0.1 });
+    for (const x of [2, 48]) t.forme('roc', ellipsoide(x, 58, 6.5, 5.5), { motif: blocs, decalage: 0.2 });
+    t.forme('roc', ellipsoide(25, 14, 10, 9), { motif: blocs, decalage: 0.2 });
+    for (const x of [21, 28]) { t.poser(x, 13, 'rune', 5); t.poser(x + 1, 13, 'rune', 4); }
+    for (const [x, y] of [[20, 34], [22, 36], [24, 38], [26, 36], [28, 34], [24, 32], [25, 40]]) t.poser(x, y, 'rune', 4);
+    t.contour(); t.texture(scene, 'golemHD');
+  }
+  // La pierre levée (les ruines, les esprits)
+  {
+    const t = toileDecor(20, 50);
+    t.rampes.menhir = rampe(0x7a7a80);
+    t.forme('menhir', (x, y) => { const l = 7 - Math.abs(y - 26) * 0.08 + Math.sin(y * 0.4) * 0.6; return y >= 3 && Math.abs(x + 0.5 - 10) < l ? [(x + 0.5 - 10) / l, -0.2, 0.9] : null; }, { motif: (x, y) => (fbm(x * 0.4, y * 0.3, 996) > 0.62 ? -1 : 0) });
+    for (let y = 14; y < 40; y += 6) { t.poser(9, y, 'encre', 2); t.poser(10, y + 1, 'encre', 2); }
+    t.contour(); t.texture(scene, 'pierreLeveeHD');
+  }
+  // L'autel (où repose l'objet maudit)
+  {
+    const t = toileDecor(36, 30);
+    t.rampes.marbre = rampe(0xb8b0a0);
+    t.forme('marbre', polygoneHD([[2, 4], [34, 4], [34, 9], [2, 9]]), { decalage: 0.3 });
+    t.forme('marbre', polygoneHD([[8, 9], [28, 9], [26, 26], [10, 26]]), { motif: (x, y) => (x % 4 === 0 ? -0.8 : 0) });
+    t.forme('marbre', polygoneHD([[4, 26], [32, 26], [32, 30], [4, 30]]), { decalage: 0.1 });
+    t.contour(); t.texture(scene, 'autelHD');
+  }
+  // Le sarcophage dressé (les momies)
+  {
+    const t = toileDecor(24, 56);
+    t.rampes.or = rampe(0xc8a040); t.rampes.lapis = rampe(0x2a4a9a);
+    t.forme('or', ellipsoide(12, 28, 11, 27), { motif: (x, y) => (y % 6 === 0 ? -1 : 0) });
+    t.forme('lapis', (x, y) => (y >= 4 && y <= 18 && Math.abs(x + 0.5 - 12) < 9 && (x + y) % 3 !== 0 ? [0, 0, 1] : null));
+    t.forme('or', ellipsoide(12, 12, 5.5, 7), { decalage: 0.3 });
+    t.poser(10, 11, 'encre', 0); t.poser(14, 11, 'encre', 0);
+    for (let y = 24; y < 50; y += 4) for (let x = 6; x < 18; x += 3) t.poser(x, y, 'lapis', 3);
+    t.contour(); t.texture(scene, 'sarcophageHD');
+  }
+  // Le cactus (le désert)
+  {
+    const t = toileDecor(30, 46);
+    t.rampes.cactus = rampe(0x4a8a3a);
+    traitHD(t, 'cactus', [[15, 46], [15, 6]], 4.5, 0.1);
+    traitHD(t, 'cactus', [[11, 26], [5, 24], [5, 14]], 2.8, 0);
+    traitHD(t, 'cactus', [[19, 20], [25, 18], [25, 10]], 2.6, 0);
+    for (let y = 8; y < 44; y += 4) { t.poser(13, y, 'cactus', 1); t.poser(17, y + 2, 'cactus', 1); }
+    t.contour(); t.texture(scene, 'cactusHD');
+  }
 }

@@ -169,6 +169,8 @@ Object.assign(StoryScene.prototype, {
         rt.erase(gomme);
       }
     };
+    // une faible lueur autour du voyageur (qu'on le voie toujours un peu dans le noir)
+    ob.ajouter({ suivre: () => ({ x: this.perso.x, y: this.perso.y - this.perso.displayHeight * 0.5 }), r: 70 });
     maj(); this.chaqueImage(maj);
     this.ombreNuit = ob;
     return ob;
@@ -261,7 +263,7 @@ Object.assign(StoryScene.prototype, {
 });
 
 // L'issue dit-elle que la bête est tombée (et non qu'elle a fui) ?
-function abattu(scene) { return scene.menace.niveau === 'complet' && /tomb|effondr|abatt/.test(scene.menace.texteIssue || ''); }
+function abattu(scene) { return scene.menace.niveau === 'complet' && /tomb|effondr|abatt|tranch/.test(scene.menace.texteIssue || ''); }
 
 // Le texte de l'épreuve contient-il un de ces mots ?
 function texteDit(scene, re) { return re.test(scene.menace.texte || ''); }
