@@ -158,12 +158,13 @@ class NightScene extends Phaser.Scene {
     this.lignesStock = {};
     Object.keys({ ...ITEMS, ...MATERIAUX }).forEach((id, i) => {
       const x = x1 + 24 + (i % 2) * 150;
-      const y = 136 + Math.floor(i / 2) * 34;
+      const y = 140 + Math.floor(i / 2) * 32;
+      // (audit v0.54) le nom et la quantité sur une seule ligne : la liste se lit d'un coup d'œil
       this.add.image(x, y, iconeObjet(this, id)).setScale(2);
-      this.add.text(x + 20, y - 8, nomObjet(id), style(13, '#3b2410'));
-      this.lignesStock[id] = this.add.text(x + 20, y + 8, '', style(13, '#3b2410', { fontStyle: 'bold' }));
+      this.add.text(x + 20, y, nomObjet(id), style(13, '#3b2410')).setOrigin(0, 0.5);
+      this.lignesStock[id] = this.add.text(x + 124, y, '', style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(1, 0.5);
     });
-    this.texteReserve = this.add.text(x1 + 18, 410, '', style(13, '#3b2410', { fontStyle: 'bold' }));
+    this.texteReserve = this.add.text(x1 + 18, 398, '', style(13, '#3b2410', { fontStyle: 'bold' }));
     const btn = this.add.image((x1 + x2) / 2, 444, plaqueBouton(this, x2 - x1 - 36)).setScale(2).setInteractive({ useHandCursor: true });
     this.texteAgrandir = this.add.text((x1 + x2) / 2, 444, '', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
     btn.on('pointerdown', () => {
@@ -185,7 +186,7 @@ class NightScene extends Phaser.Scene {
     this.bourse.maj(G.argent);
     for (const [id, t] of Object.entries(this.lignesStock)) {
       const n = id in MATERIAUX ? G.materiaux[id] : G.stock[id];
-      t.setText('x ' + n).setColor(n > 0 ? '#3b2410' : '#a05040');
+      t.setText('×' + n).setColor(n > 0 ? '#3b2410' : '#a05040');
     }
     const plein = stockTotal(G) >= G.capacite;
     this.texteReserve.setText(`Réserve : ${stockTotal(G)} / ${G.capacite}${plein ? ' — pleine !' : ''}`);

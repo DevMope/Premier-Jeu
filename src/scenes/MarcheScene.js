@@ -324,7 +324,7 @@ class MarcheScene extends Phaser.Scene {
     for (const [cle, [x, type]] of Object.entries(this.positions)) {
       const ferme = type !== 'etal' && !lieuOuvert(this.G, cle);
       const nom = type === 'etal' ? MARCHANDS[cle].nom : ferme ? `${noms[cle]}\n(en travaux)` : noms[cle];
-      const t = this.add.text(ox + x * echelle, oy + (250 + this.arcVue(x).dy) * echelle + 6, nom, style(13, ferme ? '#c9b48a' : '#fff4dc', { fontStyle: ferme ? 'italic' : 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 96 } }))
+      const t = this.add.text(ox + x * echelle, oy + (250 + this.arcVue(x).dy) * echelle + 6, nom, style(12, ferme ? '#c9b48a' : '#fff4dc', { fontStyle: ferme ? 'italic' : 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 92 }, lineSpacing: -2 }))
         .setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
       t.on('pointerdown', ferme ? () => this.message(`${noms[cle]} ouvre le jour ${OUVERTURE_LIEUX[cle]}.`) : type === 'etal' ? () => this.ouvrirEtal(cle) : ouvrir[cle]);
       if (type === 'etal') c.add(this.add.text(t.x, t.y + t.height + 2, MARCHANDS[cle].metier, style(11, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5, 0));
@@ -489,7 +489,7 @@ class MarcheScene extends Phaser.Scene {
       this.contenu.add(this.texteMessage);
     } else {
       // Dans la vue d'ensemble (ou de tout près) : une bulle sur la place, qui s'efface d'elle-même
-      this.texteMessage = this.add.text(480, 492, texte, style(14, couleur === '#a03030' ? '#ffb0a0' : '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 760 } })).setOrigin(0.5).setDepth(45);
+      this.texteMessage = this.add.text(480, 452, texte, style(14, couleur === '#a03030' ? '#ffb0a0' : '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 760 } })).setOrigin(0.5).setDepth(45);
       this.tweens.add({ targets: this.texteMessage, alpha: 0, delay: 3500, duration: 500 });
     }
   }
