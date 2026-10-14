@@ -48,6 +48,37 @@ const GARDE = {
 // Ce que chaque peuple aime parmi les trésors (pour le soudoiement)
 const GOUTS_TRESORS = { humain: ['arme', 'vetement'], nain: ['arme', 'armure'], elfe: ['bijou', 'artefact'], hobbit: ['vetement', 'bijou'], magicienne: ['artefact', 'bijou'], panda: ['artefact', 'vetement'] };
 
+// --- Étape 9e : le marché noir ---
+// Certains soirs, un papier glissé sous la porte : la porte dérobée de l'arrière-boutique s'ouvre
+// sur une cave aux lanternes rouges. Le Passeur y vend des objets interdits, les Bannis y passent
+// commande, on y vend ses trouvailles sans questions. Chaque affaire augmente le risque qu'une
+// plainte fasse venir la garde le lendemain.
+const INTERDITS = {
+  poison: { nom: 'Fiole de poison', prix: 14, vente: [30, 44] },
+  grimoire: { nom: 'Grimoire interdit', prix: 24, vente: [48, 70] },
+  poudre: { nom: 'Poudre de lune noire', prix: 10, vente: [22, 32] },
+  passe: { nom: 'Passe-partout', prix: 16, vente: [34, 48] },
+};
+const MARCHE_NOIR = {
+  debut: 6,                     // le premier soir possible
+  chance: 0.33, chanceOmbre: 0.5, // un soir sur trois, un sur deux quand la jauge penche vers l'ombre
+  mots: ['Corbeau', 'Lanterne', 'Chardon', 'Minuit', 'Tonneau', 'Belette', 'Ronce', 'Brume'],
+  risqueAchat: 0.05, risqueCommande: 0.12, risqueVente: 0.08,   // le risque d'une plainte, par affaire
+  venteTresor: 1.15,           // une trouvaille se vend 15 % plus cher qu'à son prix (sans questions)
+  ombreAffaire: 0.5,           // chaque commande d'un Banni fait pencher la jauge (en « objets de l'ombre »)
+};
+// Ce qu'on murmure dans la cave (des indices sur le Conseil des Gardiens, à la légère)
+const MURMURES = [
+  "Il paraît que le Sage du Conseil a fait brûler les vieux registres de naissance. Pourquoi brûler des naissances ?",
+  "Mon grand-père était né dans la Vallée des Pommiers. On l'appelle le Bourbier, maintenant. Lui, il ne s'en souvenait pas.",
+  "Personne n'a vu le dragon. Mais tout le monde a vu les impôts pour le combattre.",
+  "Les gobelins chantent une berceuse dont plus personne ne connaît les paroles. Juste l'air.",
+  "Les gardes ne descendent jamais ici sans être payés pour ne pas voir.",
+  "Un homme à la cape verte passe parfois. Quand il parle, même les orcs se taisent.",
+  "Avant, il y avait des villages de loups-garous sur la colline. Avant quoi ? Va savoir.",
+  "On dit que les momies se souviennent de tout, parce qu'elles dormaient pendant le grand oubli.",
+];
+
 // --- Étape 9d : Garrick repasse prendre des nouvelles ---
 // Toujours bienveillant, il plaisante, et laisse tomber des choses à la légère. (Le joueur ne sait
 // pas encore que Garrick est le chef des Bannis, ni ce que le Conseil des Gardiens a fait.)

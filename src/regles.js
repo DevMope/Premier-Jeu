@@ -1351,6 +1351,62 @@ function ouvrirComptoir(G) {
   G.file = [...retours, ...notables, ...visites, ...file];
 }
 
+// --- Étape 9e : le marché noir ---
+
+function marcheNoirCeSoir(G) { return !!(G.marcheNoir && G.marcheNoir.jour === G.jour); }
+
+// Les affaires de la soirée : deux Bannis, chacun commande un objet interdit
+function soireeMarcheNoir(G) {
+  if (G.marcheNoir.soiree) return G.marcheNoir.soiree;
+  const races = Phaser.Utils.Array.Shuffle([...PEUPLES_OMBRE]).slice(0, 2);
+  const bannis = races.map(race => { const [nom, feminin] = auHasard(NOMS[race]); return { nom, race, feminin, niveau: 'aguerri' }; });
+  const commandes = bannis.map(b => { const id = auHasard(Object.keys(INTERDITS)); return { banni: b, objet: id, prix: hasard(...INTERDITS[id].vente), faite: false }; });
+  G.marcheNoir.soiree = { bannis, commandes, risque: 0, murmure: auHasard(MURMURES) };
+  for (const b of bannis) G.personnes = { ...(G.personnes || {}), [b.nom]: { race: b.race, feminin: b.feminin } };
+  return G.marcheNoir.soiree;
+}
+
+function acheterInterdit(G, id) {
+  const o = INTERDITS[id];
+  if (!peutPayer(G, o.prix)) return "Pas assez d'argent.";
+  payer(G, o.prix, 'marcheNoir');
+  G.interdits[id] = (G.interdits[id] || 0) + 1;
+  soireeMarcheNoir(G).risque += MARCHE_NOIR.risqueAchat;
+  return null;
+}
+
+function honorerCommande(G, c) {
+  if (c.faite) return 'Déjà fait.';
+  if (!(G.interdits[c.objet] > 0)) return `Il te faut : ${INTERDITS[c.objet].nom.toLowerCase()} (le Passeur en vend).`;
+  G.interdits[c.objet]--;
+  c.faite = true;
+  encaisser(G, c.prix, 'marcheNoir');
+  changerRelation(G, c.banni.nom, 2);
+  G.objetsCamp.mal = (G.objetsCamp.mal || 0) + MARCHE_NOIR.ombreAffaire;
+  soireeMarcheNoir(G).risque += MARCHE_NOIR.risqueCommande;
+  return null;
+}
+
+function prixTresorMarcheNoir(t) { return Math.round(valeurTresor(t) * MARCHE_NOIR.venteTresor); }
+
+function vendreTresorMarcheNoir(G, t) {
+  const prix = prixTresorMarcheNoir(t);
+  G.tresors = G.tresors.filter(x => x !== t);
+  encaisser(G, prix, 'marcheNoir');
+  soireeMarcheNoir(G).risque += MARCHE_NOIR.risqueVente;
+  return prix;
+}
+
+// En remontant : quelqu'un a-t-il vu la lanterne ? (la garde viendra demain)
+function quitterMarcheNoir(G) {
+  const s = soireeMarcheNoir(G);
+  G.marcheNoirVisites = (G.marcheNoirVisites || 0) + 1;
+  const plainte = Math.random() < s.risque;
+  if (plainte) G.gardeDemain = true;
+  s.risque = 0;
+  return plainte;
+}
+
 // --- Étape 9d : la garde ---
 
 // La garde vient-elle ce matin ? Après une plainte (le marché noir), ou par surprise quand ton
@@ -2085,6 +2141,11 @@ function avancerEvenements(G) {
   const i = auHasard(restantes.length ? restantes : NOUVELLES.map((_, k) => k));
   G.nouvellesLues.push(i);
   lignes.push(NOUVELLES[i]);
+  // Un soir de marché noir : un papier glissé sous la porte, avec le mot de passe
+  if (G.jour >= MARCHE_NOIR.debut && Math.random() < (palierCamp(G) <= -1 ? MARCHE_NOIR.chanceOmbre : MARCHE_NOIR.chance)) {
+    G.marcheNoir = { jour: G.jour, mot: auHasard(MARCHE_NOIR.mots) };
+    lignes.push(`📜 Un papier glissé sous ta porte : « Ce soir. Derrière le tonneau. Mot : ${G.marcheNoir.mot}. »`);
+  }
   if (G.palierNouveau && PALIERS_CLIENTS[G.palierNouveau].gazette) lignes.unshift('📢 ' + PALIERS_CLIENTS[G.palierNouveau].gazette);
   // La jauge lumière ⟷ ombre a franchi un palier
   const palier = nouvellePalierCamp(G);

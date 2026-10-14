@@ -92,6 +92,32 @@ const DESSINS_ICONES = {
     for (const ox of [6, 10]) { t.poser(ox, 8, 'lueur', 5); t.poser(ox - (ox < 8 ? 1 : 0), 9, 'lueur', 4); }
     t.poser(8, 11, 'lueur', 3); for (let x = 6; x <= 10; x += 2) t.poser(x, 13, 'encre', 1);
   },
+  poison(t) { // une fiole verte, un bouchon de cire, une tête de mort sur l'étiquette
+    t.rampes.verre = rampe(0x4ac040); t.rampes.cire = rampe(0x8a2a2a);
+    t.forme('verre', (x, y) => (y >= 5 && y <= 14 && Math.abs(x + 0.5 - 8) < (y < 8 ? 2 : 4.5) ? [(x + 0.5 - 8) / 5, 0, 0.8] : null), { motif: (x, y) => (x === 6 && y > 8 ? 1.2 : 0) });
+    for (let x = 6; x <= 10; x++) { t.poser(x, 3, 'cire', 3); t.poser(x, 4, 'cire', 2); }
+    t.forme('parchemin', (x, y) => (y >= 9 && y <= 12 && Math.abs(x + 0.5 - 8) < 2.6 ? [0, 0, 1] : null), { bord: false });
+    t.poser(7, 10, 'encre', 0); t.poser(9, 10, 'encre', 0); t.poser(8, 11, 'encre', 1);
+  },
+  grimoire(t) { // un livre noir à fermoir, un œil violet sur la couverture
+    t.rampes.cuirNoir = rampe(0x2a1a2a); t.rampes.oeilViolet = rampe(0xb050f0);
+    t.forme('cuirNoir', (x, y) => (x >= 3 && x <= 13 && y >= 2 && y <= 14 ? [(x + 0.5 - 8) / 7, 0, 0.8] : null), { motif: (x) => (x === 3 ? -0.8 : 0) });
+    for (let y = 3; y <= 13; y++) t.poser(13, y, 'parchemin', y % 2 ? 4 : 3);
+    t.forme('oeilViolet', ellipsoide(8.5, 7.5, 2.5, 1.5), { decalage: 0.4, bord: false }); t.poser(8, 7, 'encre', 0); t.poser(9, 7, 'encre', 0);
+    for (let y = 6; y <= 9; y++) t.poser(14, y, 'or', 4);
+  },
+  poudre(t) { // un sachet noué d'où s'échappe une poudre bleu nuit étoilée
+    t.rampes.sac = rampe(0x5a4a5a); t.rampes.nuitPoudre = rampe(0x3a3a8a);
+    t.forme('sac', (x, y) => (y >= 6 && y <= 14 && Math.abs(x + 0.5 - 8) < 4.5 - Math.max(0, 8 - y) ? [(x + 0.5 - 8) / 5, 0.2, 0.8] : null));
+    for (let x = 6; x <= 10; x++) t.poser(x, 6, 'chanvre', 3);
+    for (const [x, y] of [[11, 4], [12, 3], [13, 5], [10, 2], [12, 1]]) t.poser(x, y, 'nuitPoudre', 4);
+    t.poser(12, 2, 'or', 5); t.poser(10, 4, 'or', 5);
+  },
+  passe(t) { // une clé tordue à l'anneau de fer
+    t.forme('fer', (x, y) => (Math.abs(Math.hypot(x + 0.5 - 5, y + 0.5 - 5) - 2.6) < 1 ? [0, 0, 1] : null));
+    for (let k = 0; k < 8; k++) { t.poser(7 + k, 7 + k, 'fer', 4); t.poser(7 + k, 8 + k, 'fer', 2); }
+    t.poser(12, 14, 'fer', 3); t.poser(11, 14, 'fer', 3); t.poser(14, 11, 'fer', 3); t.poser(14, 12, 'fer', 3);
+  },
   fougere(t) { // une fougère touffue dans un pot de terre
     t.rampes.feuille = rampe(0x4f8a3a); t.rampes.terre = rampe(0xb06a3a);
     t.forme('terre', (x, y) => (y >= 11 && y <= 15 && Math.abs(x + 0.5 - 8) < 4.5 - (y - 11) * 0.3 ? [(x + 0.5 - 8) / 5, 0, 0.8] : null));

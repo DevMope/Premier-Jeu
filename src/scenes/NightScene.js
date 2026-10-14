@@ -48,6 +48,7 @@ class NightScene extends Phaser.Scene {
       ['La banque', () => this.ouvrirBanque()],
       [`L'atelier (${G.tresors.length})`, () => ouvrirPage('Atelier')],
       ...(this.matin ? [] : [['🕯 Se promener', () => ouvrirPage('Promenade')]]),
+      ...(!this.matin && marcheNoirCeSoir(G) ? [['🏮 La porte dérobée', () => ouvrirPage('MarcheNoir')]] : []),
       ...(this.matin
         ? [['Retour au marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
         : [['🌙 Aller dormir', () => this.dormir()]]),

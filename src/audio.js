@@ -403,6 +403,17 @@ const THEMES = {
     accompagnement: (m) => [[0, 0, 3.9, 0.5], [0, 1, 3.9, 0.3]],
     percussion: (m) => [[0, 'coeur', 1], [0.45, 'coeur', 0.6], [2, 'coeur', 1], [2.45, 'coeur', 0.6]],
   },
+  // Le marché noir : une cave, un luth qui traîne, un bourdon, des pièces qui tintent de loin
+  marcheNoir: {
+    base: NOTE.D / 2, gamme: GAMMES.mineur, tempo: 76, temps: 4, phrase: 4,
+    accords: [0, 5, 3, 4], octaveMelodie: 1,
+    instruments: { melodie: 'luth', accompagnement: 'choeur', basse: 'bourdon' }, reverb: 0.55,
+    motif: { 0: [[0, 7, 1.5], [1.5, 8, 0.5], [2, 7, 2]], 2: [[0, 5, 1], [1, 6, 1], [2, 4, 2]] },
+    rythmes: [[1, 1, 2], [1.5, 0.5, 2], [2, 2]], silence: 0.3,
+    basse: (m, a) => [[0, a, 3.9]],
+    accompagnement: (m) => [[0, 0, 3.9, 0.25]],
+    percussion: (m) => (m % 4 === 3 ? [[2.5, 'pieces', 0.25]] : []),
+  },
   // Grippesou et les jeux : sautillant, un peu louche (luth et bois)
   jeux: {
     base: NOTE.E / 2, gamme: GAMMES.mineur, tempo: 128, temps: 4, phrase: 4,
@@ -658,5 +669,5 @@ THEMES.personnage = Object.assign({}, THEMES.titre, {
 // Le thème de chaque scène du jeu
 const THEME_PAR_SCENE = {
   Titre: 'titre', Intro: 'personnage', IntroHistoire: 'cinematique', Comptoir: 'comptoir', Nuit: 'nuit', Dodo: 'nuit', Recit: 'recitEtonne', Faillite: 'faillite',
-  Express: 'jeux', Banque: 'banque', Marche: 'marche', Atelier: 'comptoir', Bureau: 'comptoir', Carte: 'carte', Facade: 'marche', Arriere: 'comptoir', Renovation: 'cinematique', Promenade: 'nuit',
+  MarcheNoir: 'marcheNoir', Express: 'jeux', Banque: 'banque', Marche: 'marche', Atelier: 'comptoir', Bureau: 'comptoir', Carte: 'carte', Facade: 'marche', Arriere: 'comptoir', Renovation: 'cinematique', Promenade: 'nuit',
 };
