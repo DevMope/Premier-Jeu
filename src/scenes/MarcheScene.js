@@ -47,10 +47,13 @@ class MarcheScene extends Phaser.Scene {
       this.creerEtal(cle, m, 260 + i * 190);
     });
     this.creerSurbrillance();
-    // Le mendiant, assis contre son tonneau avec son gros chien
+    // Le mendiant, debout contre son tonneau, appuyé sur son bâton, et Brisquet couché à ses pieds
     {
       const avant = this.children.list.length;
-      this.add.image(84, 248, mendiantAssisHD(this)).setOrigin(0.5, 1).setScale(2);
+      creerDecorPlaceHD(this);
+      this.add.image(118, 250, 'tonneauxHD').setOrigin(0.5, 1).setScale(1.5);
+      imageCorps(this, 96, 250, 'mendiant', 4.6);
+      this.add.image(42, 252, chienHD(this, 'profil', true)).setOrigin(0.5, 1).setScale(0.7);
       this.etiquettesRue.push(this.add.text(84, 262, 'Le mendiant et son chien', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
       this.add.rectangle(84, 200, 160, 120, 0xffffff, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirMendiant());
       this.grouper(avant, 84);
@@ -570,6 +573,18 @@ class MarcheScene extends Phaser.Scene {
     for (let y = 262; y < 450; y += 24) c.add(this.add.rectangle(560, y, 760, 2, 0xffffff, 0.08));
     c.add(this.add.image(560, 470, tapisEtalHD(this, m.couleur)).setOrigin(0.5, 1).setScale(7.6, 2.2));
     c.add(this.add.rectangle(560, 452, 760, 14, 0x5a3a1a).setStrokeStyle(2, 0x2a1a10));
+    // Le matériel du métier, autour de la table : les outils du forgeron, les bocaux et les
+    // champignons de l'apothicaire, les pains et le fromage de l'épicier, les fourrures de la tailleuse
+    propsVitrineHD(this); decorsEtalsHD(this); creerDecorPlaceHD(this);
+    // Quatre places : pendu sous l'auvent à gauche / à droite, posé par terre à gauche / à droite
+    const places = { penduG: [236, 128, 0.5, 0], penduD: [884, 128, 0.5, 0], solG: [206, 538, 0.5, 1], solD: [922, 538, 0.5, 1] };
+    const props = {
+      gedeon: { penduG: ['painsHD', 2.2], solG: ['sacsHD', 2.2], solD: ['panierPommesHD', 2.6] },
+      forge: { penduG: ['outilsForgeHD', 2.2], solG: ['tonneauxHD', 1.7], solD: ['enclumeHD', 2.4] },
+      apothicaire: { penduG: ['bocauxHD', 2.2], penduD: ['herbesHD', 2.4], solG: ['bocauxHD', 1.8], solD: ['chaudronHD', 2.4] },
+      tailleuse: { penduG: ['fourruresHD', 2.2], solG: ['rouleauxHD', 2.2], solD: ['mannequinHD', 2.4] },
+    }[cle] || {};
+    for (const [place, [tex, e]] of Object.entries(props)) { const [x, y, ox, oy] = places[place]; if (this.textures.exists(tex)) c.add(this.add.image(x, y, tex).setOrigin(ox, oy).setScale(e)); }
     // Le marchand, en buste, sur le côté, qui te parle
     const personne = { nom: m.nom, race: m.race, feminin: /Mère|Hilda|Rosalie/.test(m.nom) };
     c.add(this.add.image(100, 470, textureBusteHD(this, personne, 'content')).setOrigin(0.5, 1).setScale(2.1));
@@ -601,7 +616,7 @@ class MarcheScene extends Phaser.Scene {
       c.add([...groupe, etiquette, texte, nom, zone]);
     });
     if (!ids.length) c.add(this.add.text(560, 390, 'Les cagettes sont vides...', style(16, '#c9b48a', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
-    const b = creerBouton(this, 840, 505, 200, '◀ Reculer', fermer);
+    const b = creerBouton(this, 836, 46, 200, '◀ Reculer', fermer);
     c.add([b.fond, b.label]);
     c.add(this.add.text(480, 505, 'Clique sur un article pour l\'acheter', style(12, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
   }

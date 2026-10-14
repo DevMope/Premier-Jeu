@@ -1381,69 +1381,65 @@ function charretteColporteurHD(scene) {
 }
 
 // --- Le mendiant, assis contre un tonneau, son gros chien couché contre lui ---
-function mendiantAssisHD(scene) {
-  if (scene.textures.exists('mendiantAssisHD')) return 'mendiantAssisHD';
-  // 96 × 64 : le tonneau à droite, le vieil homme adossé, genoux relevés, la sébile devant lui ;
-  // le gros chien Brisquet couché à gauche, la tête relevée vers son maître.
-  const L = 96, H = 64, t = toileDecor(L, H);
-  t.rampes.peau = RAMPES_PEAU[2]; t.rampes.cape = rampe(0x5a4a3c); t.rampes.habit = rampe(0x7a6a52); t.rampes.rapiece = rampe(0x4a5a6a);
-  t.rampes.barbe = rampe(0xb0b0a8); t.rampes.poil = rampe(0x8a6a3e); t.rampes.poilClair = rampe(0xc8a878); t.rampes.collier = rampe(0xa83a2a);
-  const sol = H - 2;
-  // Le tonneau debout, cerclé de fer
-  t.forme('chene', (x, y) => (y >= 8 && y <= sol && x >= 72 && x <= 94 ? [(x - 83) / 13, 0, 0.8] : null), { motif: (x, y) => ((x - 72) % 4 === 0 ? -0.6 : 0) });
-  t.forme('chene', ellipsoide(83, 8, 11.5, 2.4), { decalage: 0.3 });
-  for (const y of [12, 32, 54]) for (let x = 72; x <= 94; x++) t.poser(x, y, 'fer', 3 - (x < 75 || x > 91 ? 1 : 0));
-  // --- Le chien : couché sur le flanc, les pattes avant allongées, la tête levée ---
-  const poil = (x, y) => (hachage(x, y, 37) > 0.82 ? -0.5 : hachage(x, y, 38) > 0.86 ? 0.4 : 0);
-  // la queue, enroulée derrière lui
-  trait(t, 'poil', 6, 50, 2, 42, 2.6, { decalage: -0.2 }); trait(t, 'poil', 2, 42, 6, 38, 2.2, { decalage: -0.1 });
-  // le corps, bien rond (il mange trop peu, mais il a le poil épais)
-  t.forme('poil', ellipsoide(24, 50, 18, 9), { motif: poil });
-  t.forme('poilClair', ellipsoide(26, 55, 12, 4), { motif: poil, decalage: 0.2, bord: false });   // le ventre clair
-  // la patte arrière repliée, les deux pattes avant allongées devant
-  t.forme('poil', ellipsoide(14, 56, 6, 4.5), { decalage: -0.2, motif: poil });
-  for (const [px, d] of [[40, 0], [45, -0.3]]) { trait(t, 'poil', 34, 54, px + 6, sol - 2, 3.2, { decalage: d }); t.forme('poilClair', ellipsoide(px + 7, sol - 1.5, 3.2, 1.8), { decalage: d + 0.2 }); }
-  // le cou et la tête, tournée vers le maître (vers la droite), le museau, la truffe
-  trait(t, 'poil', 36, 46, 44, 34, 6, { motif: poil });
-  t.forme('poil', ellipsoide(46, 30, 7.5, 6.8), { motif: poil });
-  t.forme('poil', ellipsoide(53, 33, 5.5, 3.4), { decalage: -0.1 });
-  t.forme('poilClair', ellipsoide(53, 34.5, 4, 1.6), { decalage: 0.3, bord: false });
-  t.poser(57, 32, 'encre', 0); t.poser(58, 32, 'encre', 0); t.poser(58, 33, 'encre', 1); t.poser(57, 31, 'encre', 2);   // la truffe
-  t.poser(49, 29, 'encre', 0); t.poser(50, 29, 'encre', 0); t.poser(50, 28, 'parchemin', 5);                                // l'œil
-  t.poser(54, 36, 'cuirRouge', 4); t.poser(55, 36, 'cuirRouge', 4);                                                         // la langue
-  // l'oreille tombante, et le collier rouge
-  t.forme('poil', (x, y) => (y >= 24 && y <= 36 && Math.abs(x + 0.5 - 42 - (y - 24) * 0.15) < 2.6 - Math.max(0, y - 32) * 0.5 ? [(x + 0.5 - 42) / 3, 0, 0.8] : null), { decalage: -0.6 });
-  for (const [x, y] of [[40, 38], [41, 39], [42, 40], [43, 40], [44, 40], [45, 39]]) { t.poser(x, y, 'collier', 3); t.poser(x, y + 1, 'collier', 1); }
-  t.poser(43, 41, 'laiton', 5);   // la médaille
-  // --- Le mendiant : adossé au tonneau, genoux relevés, pieds nus, capuche baissée ---
-  const rapieces = (x, y) => (hachage(Math.floor(x / 3), Math.floor(y / 3), 41) > 0.86 ? -0.9 : 0);
-  // le tronc et la cape qui l'enveloppe, de l'épaule aux hanches
-  t.forme('cape', (x, y) => (y >= 18 && y <= 52 && Math.abs(x + 0.5 - 66 - (y - 18) * 0.05) < 7.5 + (y - 18) * 0.2 ? [(x + 0.5 - 66) / 11, 0, 0.8] : null), { motif: rapieces });
-  // les cuisses relevées (genoux en l'air), puis les tibias qui redescendent vers les pieds
-  for (const [dx, d] of [[0, -0.3], [3, 0]]) {
-    trait(t, 'habit', 62 + dx, 44, 50 + dx, 34, 5.5, { decalage: d, motif: rapieces });
-    trait(t, 'habit', 50 + dx, 34, 46 + dx, 56, 4.5, { decalage: d + 0.1, motif: rapieces });
+// --- Les vitrines : le matériel de chaque métier, posé autour de la table ---
+function propsVitrineHD(scene) {
+  if (scene.textures.exists('outilsForgeHD')) return;
+  const base = (l, h) => { const t = toileDecor(l, h); t.rampes.verre = rampe(0xa8d8e0); t.rampes.baie = rampe(0xb03040); t.rampes.herbe = rampe(0x4a7a3a); t.rampes.miel = rampe(0xe0a030); t.rampes.croute = rampe(0xb87838); t.rampes.mie = rampe(0xf0d8a8); t.rampes.fromage = rampe(0xe8c860); t.rampes.saucisson = rampe(0x8a3a2a); t.rampes.fourrure = rampe(0xd8cfc0); t.rampes.fourrureSombre = rampe(0x6a4a30); t.rampes.chapeau = rampe(0xc8b090); return t; };
+  // Le panneau d'outils du forgeron : un marteau, des pinces, trois fers à cheval accrochés
+  {
+    const t = base(64, 44);
+    planche(t, 0, 0, 64, 44, 'cheneSombre', { graine: 501, noeuds: 2 });
+    for (const [x, y] of [[4, 4], [59, 4], [4, 39], [59, 39]]) t.poser(x, y, 'fer', 1);
+    // le marteau : manche en bois, tête de fer carrée
+    t.forme('chene', (x, y) => (x >= 11 && x <= 15 && y >= 10 && y <= 38 ? [(x - 13) / 2.5, 0, 0.85] : null), { decalage: 0.2 });
+    t.forme('fer', (x, y) => (x >= 6 && x <= 20 && y >= 5 && y <= 13 ? [(x - 13) / 8, (y - 9) / 4, 0.8] : null), { decalage: 0.3 });
+    // les pinces : deux branches qui se croisent, les mâchoires en haut
+    for (const d of [-1, 1]) { trait(t, 'fer', 30 + d * 2, 6, 30 + d * 6, 38, 2.2, { decalage: 0.1 }); t.forme('fer', ellipsoide(30 + d * 1.5, 7, 2.2, 3.5), { decalage: 0.2 }); }
+    t.poser(30, 22, 'laiton', 4);
+    // trois fers à cheval sur des clous
+    for (const [hx, hy] of [[48, 10], [55, 24], [46, 34]]) { t.poser(hx, hy - 6, 'fer', 1); t.forme('fer', (x, y) => { const d = Math.hypot(x + 0.5 - hx, y + 0.5 - hy); return d >= 3.6 && d <= 5.6 && y <= hy + 4.2 ? [(x - hx) / 5, (y - hy) / 5, 0.8] : null; }, { decalage: 0.2 }); }
+    t.contour(); t.texture(scene, 'outilsForgeHD');
   }
-  // les pieds nus, les orteils vers le chien
-  for (const [fx, fy] of [[42, 59], [45, 61]]) { t.forme('peau', ellipsoide(fx, fy, 5, 2.4), { decalage: -0.1 }); for (let o = 0; o < 3; o++) t.poser(fx - 4 + o, fy - 1, 'peau', 1); }
-  // un morceau de pièce qui rapièce la cape, bleu délavé
-  t.forme('rapiece', (x, y) => (y >= 30 && y <= 37 && x >= 68 && x <= 75 ? [0, 0, 0.8] : null), { decalage: -0.2, bord: false, motif: (x, y) => ((x + y) % 2 ? -0.3 : 0) });
-  // le bras droit posé sur le genou, la main qui pend ; le bras gauche tendu vers la sébile
-  trait(t, 'cape', 66, 26, 56, 36, 3.6, { decalage: -0.2 }); t.forme('peau', ellipsoide(55, 38, 2.8, 2.4));
-  trait(t, 'cape', 70, 28, 62, 52, 3.4, { decalage: -0.4 }); t.forme('peau', ellipsoide(61, 54, 2.8, 2.2), { decalage: -0.1 });
-  // la tête penchée en avant sous la capuche, la barbe grise qui descend sur la poitrine
-  t.forme('cape', ellipsoide(66, 15, 8.5, 8), { decalage: -0.2 });
-  t.forme('peau', ellipsoide(63, 17, 5, 4.6), { decalage: 0.2 });
-  t.forme('barbe', (x, y) => (y >= 19 && y <= 31 && Math.abs(x + 0.5 - 62 + (y - 19) * 0.1) < 4.8 - Math.max(0, y - 23) * 0.5 ? [(x + 0.5 - 62) / 4.5, 0, 0.8] : null), { motif: (x, y) => (x % 2 === 0 ? -0.4 : 0.3) });
-  t.poser(60, 16, 'encre', 0); t.poser(64, 16, 'encre', 0);
-  t.forme('cape', (x, y) => (y >= 8 && y <= 14 && Math.abs(x + 0.5 - 66) < 8 - (14 - y) * 0.9 ? [(x + 0.5 - 66) / 8, -0.5, 0.7] : null), { decalage: -0.1 });   // le haut de la capuche
-  // La sébile en fer-blanc, posée devant lui, deux pièces au fond
-  t.forme('fer', ellipsoide(56, sol - 1, 5.5, 2.4), { decalage: -0.2 });
-  t.forme('fer', ellipsoide(56, sol - 3, 5, 1.2), { decalage: 0.4, bord: false });
-  t.poser(55, sol - 3, 'laiton', 5); t.poser(57, sol - 3, 'laiton', 4);
-  t.contour();
-  t.texture(scene, 'mendiantAssisHD');
-  return 'mendiantAssisHD';
+  // Les bocaux de l'apothicaire : baies rouges, herbes, miel ; et un panier de champignons
+  {
+    const t = base(64, 36);
+    const bocal = (x, mat) => {
+      t.forme('verre', (x2, y) => (y >= 10 && y <= 33 && Math.abs(x2 + 0.5 - x) < 6 ? [(x2 + 0.5 - x) / 6, 0, 0.9] : null), { decalage: 0.3, motif: (x2, y) => (x2 === x - 4 ? 0.8 : 0) });
+      t.forme(mat, (x2, y) => (y >= 16 && y <= 32 && Math.abs(x2 + 0.5 - x) < 5 ? [(x2 + 0.5 - x) / 5, 0, 0.8] : null), { decalage: -0.1, bord: false, motif: (x2, y) => (hachage(x2, y, 61) > 0.8 ? -0.6 : hachage(x2, y, 62) > 0.85 ? 0.5 : 0) });
+      t.forme('chene', (x2, y) => (y >= 7 && y <= 10 && Math.abs(x2 + 0.5 - x) < 5.5 ? [0, -0.4, 0.8] : null), { decalage: 0.1 });   // le bouchon
+      for (let y = 7; y <= 10; y++) t.poser(x - 6, y, 'parchemin', 3);
+    };
+    bocal(8, 'baie'); bocal(22, 'herbe'); bocal(36, 'miel');
+    // le panier de champignons
+    t.forme('chene', (x, y) => (y >= 24 && y <= 34 && Math.abs(x + 0.5 - 53) < 9 - (y - 24) * 0.2 ? [(x + 0.5 - 53) / 9, 0, 0.8] : null), { motif: (x, y) => ((x + y) % 3 === 0 ? -0.6 : 0.2) });
+    for (const [mx, my, r, mat] of [[48, 22, 4, 'croute'], [55, 20, 4.5, 'baie'], [60, 23, 3, 'croute']]) { t.forme(mat, (x, y) => (y >= my - r && y <= my + 1 && Math.abs(x + 0.5 - mx) < r * (1 - Math.max(0, my - r - y) / r) ? [(x + 0.5 - mx) / r, -0.3, 0.8] : null), { decalage: 0.2 }); if (mat === 'baie') for (const [px, py] of [[mx - 2, my - 2], [mx + 1, my - 3], [mx + 2, my]]) t.poser(px, py, 'parchemin', 5); for (let y = my + 1; y <= my + 4; y++) t.poser(mx, y, 'mie', 3); }
+    t.contour(); t.texture(scene, 'bocauxHD');
+  }
+  // Les pains et le fromage de l'épicier, les saucissons pendus
+  {
+    const t = base(64, 40);
+    // deux miches, une entière, une entamée
+    t.forme('croute', ellipsoide(14, 31, 12, 7), { motif: (x, y) => ((x * 2 + y) % 9 === 0 ? -0.7 : 0) });
+    for (const [gx, gy] of [[8, 26], [14, 24], [20, 26]]) t.poser(gx, gy, 'mie', 4);
+    t.forme('croute', ellipsoide(38, 33, 10, 5), { motif: (x, y) => ((x + y * 2) % 7 === 0 ? -0.6 : 0) });
+    t.forme('mie', (x, y) => (x >= 46 && x <= 48 && y >= 29 && y <= 37 ? [0.8, 0, 0.6] : null), { bord: false });
+    // la meule de fromage, une part coupée
+    t.forme('fromage', (x, y) => { const d = Math.hypot(x + 0.5 - 54, y + 0.5 - 29); const a = Math.atan2(y + 0.5 - 29, x + 0.5 - 54); return d <= 8 && !(a > -2.3 && a < -1.2) ? [(x - 54) / 8, (y - 29) / 8, 0.8] : null; }, { motif: (x, y) => (hachage(x, y, 71) > 0.88 ? -0.5 : 0) });
+    // trois saucissons pendus à une ficelle
+    for (const [sx, h] of [[6, 18], [28, 20], [50, 16]]) { for (let y = 0; y < 5; y++) t.poser(sx, y, 'parchemin', 2); t.forme('saucisson', (x, y) => (y >= 5 && y <= h && Math.abs(x + 0.5 - sx - 0.5) < 2.6 ? [(x + 0.5 - sx - 0.5) / 2.6, 0, 0.85] : null), { motif: (x, y) => (y % 4 === 0 ? -0.5 : 0) }); }
+    t.contour(); t.texture(scene, 'painsHD');
+  }
+  // Les fourrures de la tailleuse, pendues à une tringle, et quelques bobines
+  {
+    const t = base(64, 44);
+    for (let x = 0; x < 64; x++) t.poser(x, 2, 'chene', 2 + (x % 7 === 0 ? 1 : 0));
+    for (const [fx, mat, l] of [[12, 'fourrure', 10], [34, 'fourrureSombre', 9]]) {
+      t.forme(mat, (x, y) => { const demi = l - Math.max(0, y - 28) * 0.6 + Math.sin(x * 1.7) * 0.6; return y >= 3 && y <= 40 && Math.abs(x + 0.5 - fx) < demi ? [(x + 0.5 - fx) / l, 0, 0.8] : null; }, { motif: (x, y) => (hachage(x, y, 81) > 0.8 ? -0.6 : hachage(x, y, 82) > 0.88 ? 0.5 : 0) });
+    }
+    // les bobines de fil, en bas à droite
+    for (const [bx, by, mat] of [[52, 30, 'cuirRouge'], [59, 32, 'laiton'], [55, 39, 'encre']]) { t.forme('chene', ellipsoide(bx, by, 2.2, 4.5), { decalage: 0.1 }); t.forme(mat, (x, y) => (Math.abs(y + 0.5 - by) < 3 && Math.abs(x + 0.5 - bx) < 3.2 ? [(x + 0.5 - bx) / 3.2, 0, 0.9] : null), { decalage: 0.2, motif: (x, y) => (y % 2 ? -0.3 : 0.2) }); }
+    t.contour(); t.texture(scene, 'fourruresHD');
+  }
 }
 
 // Un bouton rond en bois cerclé de laiton, avec une flèche de laiton (vers la droite ; on le

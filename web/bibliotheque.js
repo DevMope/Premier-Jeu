@@ -101,7 +101,7 @@ function categories(scene) {
   const ville = [
     ...nouvelles(scene, () => creerLieuxMarcheHD(scene)), ...nouvelles(scene, () => creerDecorPlaceHD(scene)),
     ...nouvelles(scene, () => placeMarcheHD(scene)),
-    ...nouvelles(scene, () => { mendiantAssisHD(scene); charretteColporteurHD(scene); decorsEtalsHD(scene); }),
+    ...nouvelles(scene, () => { charretteColporteurHD(scene); decorsEtalsHD(scene); propsVitrineHD(scene); chienHD(scene, 'profil', true); chienHD(scene, 'troisQuarts'); chienHD(scene, 'face'); }),
     ...Object.values(MARCHANDS).map(m => sur(() => tapisEtalHD(scene, m.couleur))).filter(Boolean),
     ...nouvelles(scene, () => creerBanqueHD(scene)), ...nouvelles(scene, () => creerEauHD(scene)),
     ...Object.values(MARCHANDS).map(m => sur(() => etalHD(scene, m.couleur))).filter(Boolean),
