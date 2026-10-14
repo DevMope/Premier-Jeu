@@ -78,3 +78,35 @@ Ordre proposé : 9a (petit, pose les bases) → 9b (le gros morceau visuel) → 
    joueur vers l'ombre (cadeaux, conseils) dès cette étape ?
 6. **Les tailles des six peuples du mal** (comme pour les peuples du bien) : à donner.
 7. **La durée** : la jauge doit-elle pouvoir se décider en 10 jours, 30 jours, plus ?
+
+## 4. Décisions du joueur (14/10, v 0.52)
+
+1. **Une seule jauge** lumière ⟷ ombre. On commence avec ça.
+2. **Le sceau reste** (9e pièce d'armure), avec plus tard une quête de rédemption / corruption très chère pour le renverser une seule fois.
+3. **Les clients du mal arrivent dès le premier palier d'ombre**, et c'est au **marché noir, le soir**, qu'on les rencontre d'abord : ça donne un sens au marché noir, et la Main Noire (la mafia qui prête au côté sombre) s'y installera plus tard. Voir § 5 pour la proposition détaillée.
+4. **Une garde récurrente** (un capitaine avec son visage), amende la première fois, fouille et saisie ensuite. Il faut **de nouveaux habits et armures de garde pour toutes les races du bien**. Le joueur peut **soudoyer** la garde avec des objets achetés aux voyageurs : plus de chances si l'objet plaît à la race du garde ; si ça rate, le garde repart *rarement* avec l'objet.
+5. **Garrick pousse vers l'ombre dès maintenant, mais très, très subtilement** : des choses dites à la légère, des blagues sur les forces du mal, jamais un conseil direct.
+6. Les peuples du mal choisis : gobelins, orcs, loups-garous, vampires, momies, trolls (tailles à donner). Et le peuple **panda** entre côté bien.
+7. **Durée** : une jauge qui peut basculer en 10 à 15 jours ; on ajustera.
+
+Et l'histoire derrière tout ça (dit par le joueur, à garder secret dans le jeu) : les **Gardiens de la paix** ont commis des horreurs, caché la vérité, et baptisé « forces du mal » ceux qui les gênaient. Celui qui choisit les Gardiens finit par servir des bourreaux maquillés en héros ; celui qui choisit les « forces du mal » se retrouve, à la fin, du côté des justes. Un complot à tisser avec le temps, par les récits et l'avancement (voir § 6, questions sur le récit).
+
+## 5. Proposition : le marché noir comme porte d'entrée du côté sombre
+
+- **Où** : une porte dérobée dans l'arrière-boutique (visible seulement le soir, à la promenade), qui mène à une cave ou une ruelle sous les lanternes rouges : un comptoir de fortune, trois ou quatre silhouettes dans l'ombre, un musicien de rue.
+- **Quand** : pas tous les soirs. Un **papier glissé sous la porte** le matin (« Ce soir, derrière le tonneau. ») ou une rumeur au marché annonce l'ouverture. Au début 1 soir sur 3, plus souvent quand la jauge penche vers l'ombre.
+- **Qui** : d'abord un **passeur** (un humain louche, le seul visage humain du lieu), puis au fil des soirs les **clients du mal** : un gobelin qui marchande, un orc qui cherche une bonne lame, un loup-garou qui veut voyager de nuit… Au premier palier d'ombre ils osent venir au comptoir en plein jour.
+- **Quoi** : acheter des objets interdits (poison, grimoire, crâne-lanterne) ; équiper des voyageurs nocturnes pour des quêtes farfelues et très payantes ; **vendre ses trouvailles** sans questions, à meilleur prix qu'aux enchères.
+- **Le risque** : à chaque soir de marché noir, un risque que la garde descende. Si le voyageur nocturne se fait prendre, la garde vient au shop le lendemain (amende, puis fouille). Le soudoiement joue ici.
+- **Plus tard** : la Main Noire ouvre sa table au fond de la cave (ses prêts « sans questions » y passent, plutôt qu'à la banque) ; des rumeurs sur les Gardiens s'y entendent avant partout ailleurs (c'est là que la vérité commence à filtrer : le marché noir n'est pas le mal, c'est la clandestinité des gens que les Gardiens ont mis au ban).
+- **Idées en plus** : un **mot de passe** qui change (donné par le papier), une **lanterne rouge** à accrocher à la façade pour signaler qu'on est preneur, un chat noir qui annonce la garde, un **registre secret** dans le bureau (le livre de comptes du marché noir, à cacher pendant une fouille).
+
+## 6. Questions sur le récit général (à poser au joueur avant 9d)
+
+1. Les **Gardiens de la paix** : qui sont-ils concrètement ? Un ordre (les Paladins de la Citadelle ?), un conseil de la Comté, une confrérie des aventuriers ? Un chef avec un visage ?
+2. **Quelles horreurs** ont-ils commises ? (un peuple chassé de ses terres, un village brûlé mis sur le dos des gobelins, un pacte avec le dragon…) Il en faut une concrète, que des indices puissent pointer.
+3. **Garrick** contrôle les forces du mal (grand retournement). Avec le complot, est-il **un Gardien** (le vrai méchant côté « gentils ») ou **le chef des bannis** (donc, au fond, du bon côté) ? Ça change tout ce qu'on lui fait dire.
+4. Le **dragon sous la montagne** : toujours la menace finale, ou un bouc émissaire inventé par les Gardiens ?
+5. À quel moment le joueur **apprend la vérité** : à mi-parcours (et il peut encore choisir), ou seulement à la fin (coup de théâtre) ?
+6. Les peuples du bien **savent-ils** ? (les Pandas du Monastère gardent-ils le secret ? un elfe dissident ?) Qui, parmi les clients récurrents, pourrait être le premier à laisser échapper un indice ?
+7. Les **deux fins** : garder « équiper les héros » / « aider la menace », ou les inverser une fois la vérité connue ?

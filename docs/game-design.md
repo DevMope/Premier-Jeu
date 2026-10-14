@@ -355,6 +355,14 @@ méchant du jeu : il contrôle toutes les forces du mal. S'il flottait dans le f
 des héros légendaires l'avaient pris en chasse. À distiller par petits indices au fil du jeu
 (sa générosité suspecte, ses absences, les rumeurs de la gazette...) avant la révélation.
 
+**Le complot des Gardiens de la paix** (dit par le joueur en v 0.52) : les Gardiens de la paix, le
+camp « gentil », ont commis des horreurs que tout le monde aurait pu pointer du doigt, et ont caché
+la vérité ; ils ont baptisé « forces du mal » ceux qui les gênaient. Celui qui choisit les Gardiens
+finit par servir des bourreaux maquillés en héros ; celui qui choisit les « forces du mal » se
+retrouve, à la fin, du côté des justes. À tisser avec le temps par les récits et l'avancement ;
+Garrick glisse des allusions très subtiles dès l'étape 9 (blagues, choses dites à la légère).
+Questions à trancher : docs/etape9-preparatifs.md § 6.
+
 
 ## 10. Balayage des idées (v 0.50) : tout ce qui reste, rangé par étape
 
@@ -375,7 +383,7 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 - Moteur Web Audio en place (11 thèmes, bruitages, réglages dans le menu). À faire : écouter les extraits avec le joueur, ajuster, et varier les thèmes (plus de motifs, une percussion de marché, un thème de fête).
 
 ### 9 Le Bien et le Mal (+ marché noir)
-- Les six peuples du mal (gobelins, orcs, loups-garous, vampires, momies, trolls) comme clients : silhouettes, bustes, poses, tailles (données par le joueur), ils viennent au comptoir et vont dans les terres d'ombre.
+- Les six peuples du mal (gobelins, orcs, loups-garous, vampires, momies, trolls) comme clients : silhouettes, bustes, poses, tailles (données par le joueur), ils viennent au comptoir et vont dans les terres d'ombre. Et le peuple panda côté bien. Décisions prises et proposition du marché noir : docs/etape9-preparatifs.md § 4-5 (une jauge, sceau gardé, clients du mal rencontrés d'abord au marché noir le soir, garde récurrente avec habits de garde pour chaque race du bien et soudoiement, Garrick très subtil).
 - Objets du bien / du mal au marché ; décors du shop « lumineux » ou « sombres » (brocante) ; les réussites comptées par camp.
 - Dialogues et visages fermés du camp qui ne t'aime pas ; meilleures affaires avec le camp qui t'apprécie.
 - Une vraie jauge du bien (ou confirmer que c'est la réputation) ; les effets du camp de la lumière (meilleurs taux à la banque, plus de réputation en terres de lumière) ; la Main Noire et la banque selon le camp.
