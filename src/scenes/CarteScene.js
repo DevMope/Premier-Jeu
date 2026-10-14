@@ -159,10 +159,21 @@ class CarteScene extends Phaser.Scene {
       }
     }
     // De gros nuages couvrent les contrées pas encore ouvertes : elles se dévoileront plus tard
+    // (ils ne débordent jamais sur une contrée déjà ouverte : son médaillon, son nom, son fanion)
+    const ouvertesVues = Object.entries(ZONES).filter(([c]) => zoneOuverte(G, c) && !this.nouvelles.includes(c));
+    const gene = (x, y, e) => ouvertesVues.some(([c, o]) => {
+      const demiNom = Math.min(95, o.nom.length * 4.2);
+      const zonesLibres = [[o.x - 62, o.y - 48, o.x + 92, o.y + 36], [o.x - demiNom, o.y + 36, o.x + demiNom, o.y + 60]];
+      return zonesLibres.some(([x0, y0, x1, y1]) => x + 30 * e > x0 && x - 30 * e < x1 && y + 14 * e > y0 && y - 16 * e < y1);
+    });
     for (const [cle, z] of Object.entries(ZONES)) {
       if (zoneOuverte(G, cle) && !this.nouvelles.includes(cle)) continue;
       const p = this.pieces[cle];
-      p.nuages = [[-38, -8, 0, 1.9], [30, -14, 1, 1.7], [0, 12, 2, 2.1], [-14, -24, 1, 1.3], [44, 10, 0, 1.5], [-46, 14, 2, 1.4], [16, -30, 2, 1.2]].map(([dx, dy, v, e], i) => {
+      p.nuages = [[-38, -8, 0, 1.9], [30, -14, 1, 1.7], [0, 12, 2, 2.1], [-14, -24, 1, 1.3], [44, 10, 0, 1.5], [-46, 14, 2, 1.4], [16, -30, 2, 1.2]].map(([dx, dy, v, e]) => {
+        // un nuage qui gênerait rapetisse, et disparaît s'il gêne encore
+        if (gene(z.x + dx, z.y + dy, e)) e *= 0.65;
+        return gene(z.x + dx, z.y + dy, e) ? null : [dx, dy, v, e];
+      }).filter(Boolean).map(([dx, dy, v, e], i) => {
         const n = this.add.image(z.x + dx, z.y + dy, 'nuageCarte_' + ((v + cle.length) % 3)).setScale(e).setAlpha(0.96).setFlipX((i + cle.length) % 2 === 0);
         this.monde.add(n);
         // ils dérivent doucement sur place

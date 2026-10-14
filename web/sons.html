@@ -1,0 +1,111 @@
+<title>Planche des sons du Passage</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+  /* Le cabinet de bois sombre du jeu : une rangée de « boîtes à musique » par thème, puis les voix par peuple. */
+  :root {
+    --bois: #1a120a; --bois-clair: #2a1c10; --vitrine: #241810; --lisere: #c9a227;
+    --parchemin: #f3e6c8; --encre-pale: #c9b48a; --or: #f3d98a; --braise: #c0623a;
+    --titre: "Alegreya", Georgia, serif; --texte: "Alegreya Sans", "Trebuchet MS", sans-serif;
+    color-scheme: dark;
+  }
+  body { background: var(--bois); color: var(--parchemin); font-family: var(--texte); font-size: 15px; }
+  .page { padding-block: 24px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1100px; margin: 0 auto; display: grid; gap: 28px; }
+  header { display: grid; gap: 6px; border-bottom: 1px solid color-mix(in srgb, var(--lisere) 40%, transparent); padding-bottom: 16px; }
+  h1 { font-family: var(--titre); font-weight: 800; font-size: clamp(28px, 4vw, 42px); color: var(--or); margin: 0; text-wrap: balance; }
+  h2 { font-family: var(--titre); font-weight: 700; font-size: 24px; color: var(--or); margin: 0; }
+  p { margin: 0; max-width: 65ch; color: var(--encre-pale); }
+  section { display: grid; gap: 12px; }
+  .barre { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .piste { background: var(--vitrine); border: 1px solid #3a2616; border-radius: 6px; padding: 10px 12px; display: grid; gap: 6px; min-width: 0; }
+  .piste.neuf { border-color: var(--lisere); }
+  .nom { font-weight: 700; font-size: 15px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .etiquette { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--bois); background: var(--or); border-radius: 3px; padding: 1px 6px; font-weight: 700; }
+  .detail { font-size: 13px; color: var(--encre-pale); }
+  .tons { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font: 600 14px var(--texte); color: var(--parchemin); background: var(--bois-clair); border: 1px solid #5a3a20; border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+  button:hover { border-color: var(--lisere); }
+  button[aria-pressed="true"] { background: var(--braise); border-color: var(--braise); color: #fff4e4; }
+  button:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
+  .arret { background: transparent; }
+  .peuple { display: grid; grid-template-columns: 9.5em 1fr; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #2e2014; }
+  .peuple .qui { font-weight: 700; }
+  .peuple .qui small { display: block; font-weight: 400; color: var(--encre-pale); font-size: 12px; }
+  @media (max-width: 520px) { .peuple { grid-template-columns: 1fr; gap: 4px; } }
+</style>
+<div class="page">
+  <header>
+    <h1>Planche des sons du Passage</h1>
+    <p>Les musiques et les voix du jeu, jouées en direct par son moteur sonore. Clique pour écouter ; un thème joue jusqu'à ce que tu l'arrêtes ou en lances un autre.</p>
+  </header>
+
+  <section aria-labelledby="t-musiques">
+    <div class="barre"><h2 id="t-musiques">Les musiques</h2><button class="arret" id="arreter" type="button">■ Arrêter la musique</button></div>
+    <div class="grille" id="musiques"></div>
+  </section>
+
+  <section aria-labelledby="t-aines">
+    <h2 id="t-aines">Les aînés des Bannis (voix fatiguée)</h2>
+    <p>Chaque aîné à côté d'un jeune de son peuple, pour comparer : plus grave, plus lente, étouffée, qui chevrote, avec des souffles.</p>
+    <div id="aines"></div>
+  </section>
+
+  <section aria-labelledby="t-voix">
+    <h2 id="t-voix">Les voix des peuples</h2>
+    <p>La même voix change d'intonation selon l'humeur.</p>
+    <div id="voix"></div>
+  </section>
+</div>
+<script src="src/data.js"></script>
+<script src="src/audio.js"></script>
+<script>
+  const NOMS_THEMES = {
+    titre: ["L'écran titre", 'Valse de boîte à musique'], personnage: ['La création du personnage', 'Boîte à musique et harpe'],
+    comptoir: ['Le comptoir (1)', 'Le thème du travail'], comptoir2: ['Le comptoir (2)', 'Un autre jour'], comptoir3: ['Le comptoir (3)', 'Encore un autre jour'],
+    marche: ['Le marché', 'Chaleureux, la place du matin'], nuit: ['La nuit', 'Boîte à musique et orgue lointain'], carte: ['La carte', 'Le voyage qui se prépare'],
+    recit: ['Récit', 'Le carnet de voyage'], recitHeureux: ['Récit heureux', ''], recitTriste: ['Récit triste', ''], recitPeur: ['Récit qui fait peur', ''], recitEtonne: ['Récit étonnant', ''],
+    faucheuse: ['La Faucheuse', 'Glas, chœur et battements de cœur'], marcheNoir: ['Le marché noir', 'Sombre et mystérieux : bourdon, harpe, célesta, gouttes dans la cave'],
+    jeux: ['Grippesou et les jeux', 'Sautillant, un peu louche'], banque: ['La Banque Centrale', ''], cinematique: ['Cinématique', ''], faillite: ['La faillite', ''], danger: ['Le danger', ''],
+  };
+  const NOUVEAU = new Set(['marcheNoir']);
+  const NOMS_PEUPLES = { humain: 'Humain', hobbit: 'Hobbit', nain: 'Nain', elfe: 'Elfe', magicienne: 'Magicienne', panda: 'Panda', gobelin: 'Gobelin', orc: 'Orc', loupgarou: 'Loup-garou', vampire: 'Vampire', momie: 'Momie', troll: 'Troll', faucheuse: 'La Faucheuse' };
+  const TONS_ECOUTE = [['neutre', 'Parle'], ['bonjour', 'Bonjour !'], ['content', 'Content'], ['triste', 'Triste'], ['fache', 'Fâché'], ['etonne', 'Étonné']];
+
+  const pret = () => { Son.demarrer(); Son.reprendre(); };
+  const el = (tag, props = {}, enfants = []) => { const e = Object.assign(document.createElement(tag), props); enfants.forEach(c => e.append(c)); return e; };
+
+  // Les musiques
+  const boutonsMusique = [];
+  const majBoutons = () => boutonsMusique.forEach(b => b.setAttribute('aria-pressed', String(Son.theme === b.dataset.theme)));
+  for (const cle of Object.keys(THEMES)) {
+    const [nom, detail] = NOMS_THEMES[cle] || [cle, ''];
+    const b = el('button', { type: 'button', textContent: '▶ Écouter' }); b.dataset.theme = cle; b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => { pret(); if (Son.theme === cle) Son.arreter(); else { Son.theme = null; Son.ambiance(cle); } setTimeout(majBoutons, 30); });
+    boutonsMusique.push(b);
+    const titre = el('div', { className: 'nom' }, [nom]);
+    if (NOUVEAU.has(cle)) titre.append(el('span', { className: 'etiquette', textContent: 'Nouveau' }));
+    document.getElementById('musiques').append(el('div', { className: 'piste' + (NOUVEAU.has(cle) ? ' neuf' : '') }, [titre, ...(detail ? [el('div', { className: 'detail', textContent: detail })] : []), el('div', {}, [b])]));
+  }
+  document.getElementById('arreter').addEventListener('click', () => { pret(); Son.arreter(); majBoutons(); });
+
+  // Les voix : un peuple par ligne, un bouton par intonation
+  const ligne = (qui, sousTitre, personne) => {
+    const tons = el('div', { className: 'tons' });
+    for (const [ton, label] of TONS_ECOUTE) {
+      const b = el('button', { type: 'button', textContent: label });
+      b.addEventListener('click', () => { pret(); Son.jouer('voix', { personne, ton, duree: ton === 'neutre' ? 1.8 : undefined }); });
+      tons.append(b);
+    }
+    return el('div', { className: 'peuple' }, [el('div', { className: 'qui' }, [qui, el('small', { textContent: sousTitre })]), tons]);
+  };
+  for (const [race, a] of Object.entries(AINES)) {
+    document.getElementById('aines').append(
+      ligne(a.nom, `aîné${a.feminin ? 'e' : ''} · ${NOMS_PEUPLES[race]}`, { nom: a.nom, race, feminin: a.feminin, vieux: true }),
+      ligne(NOMS_PEUPLES[race], 'jeune, pour comparer', { nom: a.nom, race, feminin: a.feminin }));
+  }
+  for (const race of Object.keys(VOIX)) {
+    document.getElementById('voix').append(ligne(NOMS_PEUPLES[race] || race, race === 'magicienne' ? 'voix de femme' : 'voix d\'homme', { nom: 'Voix ' + race, race, feminin: race === 'magicienne' }));
+    if (!['magicienne', 'faucheuse', 'troll'].includes(race)) document.getElementById('voix').append(ligne(NOMS_PEUPLES[race] + ' (femme)', 'voix de femme', { nom: 'Voix f ' + race, race, feminin: true }));
+  }
+</script>

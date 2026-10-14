@@ -307,7 +307,10 @@ Chaque étape doit donner une version **jouable**.
 | 9+++++ ✅ | **v 0.56** | **Garrick** redessiné en rôdeur (cheveux longs bruns, barbe nette, justaucorps sombre, long manteau olive, chemise bordeaux, baudrier, épée, pendentif fleur de pommier) avec sa **pipe** ; même teinte de peau en buste et en pied. **Nuages** gris et lourds sur les contrées pas encore ouvertes, qui s'écartent au dévoilement. Emblème des trolls sur fond brun. **Degrés de la Faucheuse** : le mal compte plus à mesure qu'on s'attache à elle ; à « Éprise », elle réclame un habitué ami (prime double, refus plus cher). **Les aînés des Bannis** (un par peuple : Grand-mère Ortie, Gromak le Vieux, Aïeule Lunegrise, Sévérin l'Ancien, Ankhar le Scribe, le Vieux Moussu) : très rares au comptoir à partir du jour 30, plus souvent au marché noir où l'on écoute leur **récit-cinématique** (buste, tableau du souvenir qui se colore, 5 pages) ; skins vieux (cheveux gris, rides, canne, fourrure blanchie, momie moisie avec sa toile d'araignée), **voix fatiguée** (lente, étouffée, chevrotante, avec des souffles). **Nouvelle musique du marché noir** : sombre et mystérieuse (bourdon, harpe, célesta, gouttes dans la cave). |
 | 9¾ | **Construire le récit tranché** | Voix de la Faucheuse et de Garrick, l'Antre ★6 cachée, le système de combat au tour par tour (plus tard), les deux fins (amère et cachée) ; (faits en v0.56 : skin de Garrick, degrés de la Faucheuse, aînés) (voir « Le grand retournement »). |
 | 9¾ bis | **Trancher le reste du récit** | Répondre aux questions de docs/audit-v054.md (Main Noire, Faucheuse, sort d'oubli, armure, Bête, fins, Sage, noms) ; séparer le camp et la cruauté. |
-| 10 | **Marché noir** | Objets interdits, voyageurs nocturnes, conséquences. |
+| 10 ✅ | **Marché noir** | Fait à l'étape 9e (objets interdits, voyageurs nocturnes, conséquences). |
+| 10a | **Les armes de chaque peuple** (proposé, à valider) | Chaque peuple a son arme préférée et la demande dans ses commandes ; Thorgal vend plus d'armes ; le **bois** devient un matériau du marché. Recettes et liste : voir « La forge » plus bas. |
+| 10b | **La forge chez soi** (proposé, à valider) | À ★3 (le saut d'un an), on peut construire une forge dans l'arrière-boutique et engager un premier forgeron ; un second à ★4. Chaque nuit, ils fabriquent des armes avec les matériaux en stock. |
+| 10c | **La rue et le familier** (proposé, à valider) | La rue du comptoir s'agrandit : on y marche avec son personnage jusqu'aux lieux du quartier (marché, banque, forge, fontaine, plus tard le petit bar), en plus des raccourcis depuis la maison. En s'y promenant le soir, on croise le chat de gouttière : on le nourrit quelques soirs de suite, et il nous adopte (premier familier). |
 | 11 | **Aider pendant l'aventure** | Messages de détresse, le grand aigle, les mercenaires. |
 | 12 | **Le petit bar** | Rumeurs, boissons, recrutement de mercenaires. |
 | 13 | **Histoire** | Prologue, personnages récurrents, mendiant, menace qui grandit. |
@@ -480,3 +483,40 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 
 ### Diffusion
 - L'artefact claude.ai est en v 0.55 (carte du grand monde, 30 contrées, emblèmes, retouches des peuples, sauts de temps). `main` (Cloudflare) est en v 0.51 (adresse goyland.workers.dev) : toujours demander au joueur avant de pousser les versions suivantes ; l'artefact claude.ai se publie sans demander, sauf quand il y a de nouveaux designs graphiques (le joueur veut voir les planches d'abord).
+
+
+## La forge (proposition du 16/10, à valider)
+
+**Idée du joueur :** chaque peuple a ses armes préférées ; plus d'armes chez le forgeron ; plus tard, deux forgerons engagés fabriquent les armes avec les matériaux du marché ; des recettes logiques (une lance, c'est surtout du bois ; une épée, surtout du fer).
+
+**Un nouveau matériau : le bois** (2 p. chez Thorgal, toujours en stock). Fer 4 p., cuir 3 p., fil d'or 6 p. ne changent pas.
+
+| Arme | Peuples qui la préfèrent | Recette | Prix au marché |
+|---|---|---|---|
+| Épée | humains | 3 fer + 1 cuir | 15 p. (déjà là) |
+| Hache de guerre | nains, orcs | 2 fer + 2 bois | 15 p. |
+| Marteau de guerre | nains (paladins) | 3 fer + 1 bois | 16 p. |
+| Arc long (+ flèches) | elfes | 3 bois + 1 cuir | 14 p. |
+| Lance | humains (gardes), pandas | 3 bois + 1 fer | 11 p. |
+| Bâton de mage | magiciennes | 3 bois + 1 fil d'or | 14 p. |
+| Bâton de bambou | pandas | 3 bois | 7 p. |
+| Fronde | hobbits | 2 cuir | 6 p. |
+| Dague | gobelins, hobbits | 1 fer + 1 cuir | 8 p. |
+| Rapière | vampires | 2 fer + 1 fil d'or | 17 p. |
+| Khopesh | momies | 2 fer + 1 bois | 12 p. |
+| Griffes de fer | loups-garous | 2 fer + 2 cuir | 14 p. |
+| Massue cloutée | trolls | 4 bois + 1 fer | 12 p. |
+| Bouclier | tous | 2 bois + 2 fer | 14 p. (déjà là) |
+
+**Comment ça s'enchaîne :**
+1. **10a (tout de suite après le lot visuel 9½)** : les commandes demandent l'arme du peuple du client (ou une arme au choix pour les autres) ; Thorgal vend ces armes, quelques-unes par jour ; donner l'arme préférée rapporte un peu plus de relation. Les armes sont durables et se réparent comme l'épée (au fer, ou au bois pour les armes en bois).
+2. **10b (à ★3, avec le saut d'un an)** : Garrick propose de transformer un coin de l'arrière-boutique en forge (achat comme un agrandissement). On engage un premier forgeron (un apprenti humain, lent) ; à ★4, un second (une maîtresse naine, rapide et soignée). Le soir, on choisit ce qu'ils fabriquent ; les armes sortent le matin. Fabriquer coûte environ 60 % du prix du marché, mais prend une nuit et occupe les matériaux.
+3. **Plus tard** : les forgerons ont un salaire par semaine ; une arme bien faite peut sortir en qualité « belle ouvrage » (vaut plus, s'use moins) ; côté ombre, la forge peut fabriquer des armes interdites pour le marché noir.
+
+À trancher par le joueur : la liste d'armes, les recettes, le moment (★3 / ★4) et le salaire des forgerons.
+
+## La rue et le familier (proposition du 16/10, à valider)
+
+- La rue devant le comptoir devient un vrai quartier qu'on parcourt avec son personnage (gauche-droite, comme la promenade du soir) : le marché, la banque, la forge de Thorgal, la fontaine, l'impasse du marché noir, plus tard le petit bar. Les raccourcis depuis la maison restent.
+- **Le chat de gouttière** (premier familier) : certains soirs, il rôde dans la rue. On peut le nourrir (une ration) ; au bout de trois soirs, il nous suit et dort sur le coussin de l'arrière-boutique. Ses effets : à définir (il chasse les souris de la réserve ? il prévient quand la garde approche ?).
+- Les autres familiers (le grand aigle, etc.) viendront par les quêtes et les relations, comme prévu.

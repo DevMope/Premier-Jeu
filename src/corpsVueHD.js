@@ -195,6 +195,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const long = T.brasLongs && !leves;
     const coude = leves ? [cote * (ep + 2.5 * k), 1 * k, yT - 5 * k] : [cote * (ep + (long ? 2.2 : 1.2) * k), (-0.8 + bal * 1.5) * k, long ? yT + P.torse * 0.68 : yT + P.torse * 0.5];
     const main = leves ? [cote * 6.5 * k, 2 * k, cy - P.ry - 7 * k] : [cote * (ep + (long ? 2.2 : 0.6) * k), (1 + bal * 3.5) * k, long ? yB + (sol - yB) * 0.48 : yB + (1.5 - Math.abs(bal) * 0.5) * k];
+    // Les aînés : le bras de la canne bien plié, le coude écarté en arrière, la main en avant qui
+    // appuie de tout son poids sur le pommeau
+    if (g.vieux && devant && !leves) {
+      coude.splice(0, 3, cote * (ep + 2.6 * k), -1.8 * k, yT + P.torse * (long ? 0.6 : 0.42));
+      main.splice(0, 3, cote * (ep + 1.4 * k), 4 * k, long ? yB + (sol - yB) * 0.28 : yB - 1.5 * k);
+    }
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
     const r = 2.6 * k * P.membre;
     const dec = devant ? 0 : -0.5;
