@@ -662,8 +662,11 @@ Object.assign(SCENES_EPREUVES, {
       } else if (M.trone) {
         g.fillStyle(0x2a1a2a).fillRect(-50, -50, 1060, 415);
         for (const cx of [X - 100, X + 340]) { g.fillStyle(0x4a3a4a).fillRect(cx, 40, 40, 330); g.fillStyle(0x5a4a5a).fillRect(cx, 40, 10, 330); }
-        g.fillStyle(0x6a1a2a).fillRect(X + 120, 120, 120, 245);
-        g.fillStyle(0xc8a040).fillRect(X + 150, 200, 60, 90).fillRect(X + 140, 280, 80, 20);   // le trône
+        // le grand tapis rouge, les bannières, et le trône sur son estrade
+        g.fillStyle(0x6a1a2a).fillRect(-50, SOL_RECIT - 4, 1060, 10);
+        for (const bx of [X - 40, X + 290]) { g.fillStyle(0x5a1a4a).fillRect(bx, 50, 50, 150); g.fillTriangle(bx, 200, bx + 50, 200, bx + 25, 225); g.fillStyle(0xc8a040).fillCircle(bx + 25, 110, 12); }
+        g.fillStyle(0x4a3a4a).fillRect(X + 210, SOL_RECIT - 30, 150, 30); g.fillStyle(0x5a4a5a).fillRect(X + 210, SOL_RECIT - 30, 150, 5);
+        this.garder(this.add.image(Math.min(X + 285, 900), SOL_RECIT - 28, 'troneHD').setOrigin(0.5, 1).setScale(2.6).setDepth(1.2));
       } else if (M.reliques || M.grimoire || M.cristal) {
         g.fillStyle(0x3a3040).fillRect(-50, -50, 1060, 415);
         for (let y = 30; y < 360; y += 22) for (let x = (y / 22) % 2 ? 0 : 26; x < 960; x += 52) g.fillStyle(0x4a4050).fillRect(x, y, 50, 20);
@@ -1121,10 +1124,10 @@ Object.assign(SCENES_EPREUVES, {
         this.premierPlan.setVisible(false); this.planMoyen.setVisible(false);
       } else {
         // la pente enneigée au-dessus, à droite
-        const g = this.garder(this.add.graphics().setDepth(1.05));
-        g.fillStyle(0xe8f0f8).fillTriangle(300, SOL_RECIT, 1000, SOL_RECIT, 1000, 20);
-        g.fillStyle(0xc8d8e8).fillTriangle(600, SOL_RECIT, 1000, SOL_RECIT, 1000, 160);
+        this.garder(this.add.image(1000, SOL_RECIT + 6, 'montagneHD').setOrigin(1, 1).setScale(2.6).setDepth(1.05));
+        const g = this.garder(this.add.graphics().setDepth(1.06));
         g.fillStyle(0xf0f6fa).fillRect(-50, SOL_RECIT - 4, 1060, 30);
+        for (let x = -40; x < 1000; x += 30) g.fillStyle(0xffffff).fillEllipse(x, SOL_RECIT - 4, 50, 10);
         this.ciel(0xa8c0e0, 0.2, 600);
       }
       // le rocher (pour s'encorder)

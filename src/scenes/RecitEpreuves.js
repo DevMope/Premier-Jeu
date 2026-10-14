@@ -922,8 +922,12 @@ const SCENES_EPREUVES = {
       const base = Math.min(X + 110, 960 - n * 62);
       if (M.quai) {
         const g = this.garder(this.add.graphics().setDepth(1.4));
-        g.fillStyle(0x2a4a6a).fillRect(-50, SOL_RECIT + 6, 1060, 40);
-        for (let x = -40; x < 1000; x += 36) { g.fillStyle(0x6a4a2a).fillRect(x, SOL_RECIT - 4, 34, 10); g.fillStyle(0x8a6a40).fillRect(x, SOL_RECIT - 4, 34, 2); }
+        // le fleuve, à gauche du quai (on y tombe), et le quai de planches
+        M.bordQuai = X - 175;
+        const eau = this.garder(this.add.graphics().setDepth(3.5));
+        eau.fillStyle(0x1a3a5a, 0.95).fillRect(-50, SOL_RECIT - 6, M.bordQuai + 50, 30);
+        for (let x = -40; x < M.bordQuai; x += 24) eau.fillStyle(0x6a9ac0, 0.7).fillRect(x, SOL_RECIT - 6, 12, 2);
+        for (let x = M.bordQuai; x < 1000; x += 36) { g.fillStyle(0x6a4a2a).fillRect(x, SOL_RECIT - 4, 34, 10); g.fillStyle(0x8a6a40).fillRect(x, SOL_RECIT - 4, 34, 2); }
         for (const cx of [base - 60, base + 150]) { g.fillStyle(0x7a5a34).fillRect(cx, SOL_RECIT - 36, 32, 32); g.lineStyle(2, 0x4a3420).strokeRect(cx, SOL_RECIT - 36, 32, 32).lineBetween(cx, SOL_RECIT - 36, cx + 32, SOL_RECIT - 4); }
         this.cielDeNuit(); this.ciel(0x05051a, 0.45, 600);
       } else if (M.oasis) {
@@ -1046,6 +1050,15 @@ const SCENES_EPREUVES = {
     },
     async issue(reussie) {
       const M = this.menace, p = this.perso;
+      const texte = M.texteIssue || '';
+      const jete = /à l'eau/.test(texte), vole = /pris|moitié|emporté/.test(texte);
+      if (reussie && vole) {
+        // repoussés... mais l'un d'eux file avec une partie du butin
+        const sac = this.garder(this.add.image(M.chef.x, SOL_RECIT - 40, iconeObjet(this, 'ration')).setScale(2.4).setDepth(3.2));
+        this.chaqueImage(() => { if (sac.active && M.chef.active) sac.setPosition(M.chef.x + 14, M.chef.y - M.chef.displayHeight * 0.5); });
+        this.onomatopee(M.chef.x, SOL_RECIT - 170, 'HA HA !', '#f0c0a0');
+        this.emotion(p, 'colere', 1000);
+      }
       if (reussie) {
         // ils prennent leurs jambes à leur cou
         await this.attendre(300);
@@ -1064,6 +1077,19 @@ const SCENES_EPREUVES = {
       await this.animer({ targets: chef, x: p.x + 60, duration: 300, ease: 'Quad.easeIn' });
       this.onomatopee(p.x, p.y - 170, 'BAM !', '#ff8080');
       this.cameras.main.shake(220, 0.012);
+      if (jete) {
+        // jeté{e} à l'eau, par-dessus le bord du quai
+        await this.sauter(p, p.x - 90, SOL_RECIT + 60, 80, 600, -200);
+        this.onomatopee(p.x, SOL_RECIT - 60, 'PLOUF !', '#a8d0ff');
+        for (let k = 0; k < 12; k++) { const g = this.garder(this.add.circle(p.x + (Math.random() - 0.5) * 30, SOL_RECIT + 6, 2 + Math.random() * 2, 0xe8fcff, 0.9).setDepth(4)); this.sauter(g, g.x + Phaser.Math.Between(-40, 40), SOL_RECIT + 10, 40 + Math.random() * 40, 500).then(() => g.destroy()); }
+        for (const [i, b] of M.brigands.entries()) { b.setFlipX(false); pasDeMarche(this, b, 1000); this.tweens.add({ targets: b, x: 1120 + i * 40, duration: 1000, delay: 300 + i * 100 }); }
+        await this.attendre(900);
+        p.setAngle(0).setTint(0xa8c8ff);
+        await this.sauter(p, p.x + 40, SOL_RECIT, 60, 500);
+        await this.animer({ targets: p, angle: 10, duration: 100, yoyo: true, repeat: 3 });   // il s'ébroue
+        p.clearTint();
+        return;
+      }
       await this.renverse(true);
       // les pièces s'envolent de la bourse
       creerPiecesHD(this);

@@ -298,4 +298,26 @@ function creerRecitEpreuvesHD(scene) {
     for (let y = 8; y < 44; y += 4) { t.poser(13, y, 'cactus', 1); t.poser(17, y + 2, 'cactus', 1); }
     t.contour(); t.texture(scene, 'cactusHD');
   }
+  // (v0.59) Le trône : haut dossier sculpté, velours pourpre, accoudoirs et pommeaux dorés
+  {
+    const t = toileDecor(44, 66);
+    t.rampes.or = rampe(0xc8a040); t.rampes.velours = rampe(0x7a1a3a);
+    t.forme('or', polygoneHD([[6, 64], [6, 14], [10, 6], [16, 8], [22, 1], [28, 8], [34, 6], [38, 14], [38, 64]]), { motif: (x, y) => ((x + y) % 7 === 0 ? 0.8 : y % 9 === 0 ? -0.8 : 0) });
+    t.forme('velours', polygoneHD([[11, 40], [11, 16], [16, 12], [22, 9], [28, 12], [33, 16], [33, 40]]), { motif: (x, y) => ((x * 3 + y * 5) % 11 === 0 ? -0.8 : 0) });
+    t.forme('velours', polygoneHD([[3, 44], [41, 44], [41, 50], [3, 50]]), { decalage: 0.3 });
+    for (const x of [2, 42]) { t.forme('or', polygoneHD([[x - 3, 36], [x + 3, 36], [x + 3, 64], [x - 3, 64]]), { decalage: 0.1 }); t.forme('or', ellipsoide(x, 34, 3.5, 3.5), { decalage: 0.4 }); }
+    t.forme('gemme', ellipsoide(22, 13, 2.5, 2.5), { decalage: 0.6 });
+    t.contour(); t.texture(scene, 'troneHD');
+  }
+  // La montagne enneigée (avalanche) : un grand versant aux arêtes rocheuses, des sapins blanchis
+  {
+    const L = 240, H = 150, t = toileDecor(L, H);
+    t.rampes.neigeM = rampe(0xe8f0f8); t.rampes.rocM = rampe(0x6a6a78); t.rampes.sapinM = rampe(0x2a4a3a);
+    t.forme('neigeM', (x, y) => { const crete = H - x * 0.6 - Math.sin(x * 0.07) * 8 - fbm(x * 0.05, 0, 330) * 14; return y >= crete ? [-0.4, -0.6, 0.7] : null; }, { motif: (x, y) => (fbm(x * 0.08, y * 0.12, 331) > 0.6 ? -1 : 0) });
+    for (const [x, h] of [[30, 26], [52, 22], [120, 18], [150, 24], [200, 20], [220, 16]]) {
+      const base = Math.min(H - 1, Math.round(H - x * 0.6 + 40 + (x % 3) * 6));
+      for (let j = 0; j < h; j++) { const l = Math.round((j / h) * h * 0.35); for (let i = -l; i <= l; i++) t.poser(x + i, base - h + j, j % 5 === 0 && Math.abs(i) < l ? 'neigeM' : 'sapinM', Math.abs(i) === l ? 1 : 3); }
+    }
+    t.contour(); t.texture(scene, 'montagneHD');
+  }
 }
