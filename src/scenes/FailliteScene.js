@@ -114,6 +114,22 @@ class FailliteScene extends Cinematique {
     }
     this.ecrire('La Main Noire', '« Encore une. Ta dette, elle, ne baisse jamais. »');
     await this.attendreClic();
+    // Ta nouvelle vie : des années plus tard, c'est toi qui gardes la table du fond
+    await this.nouveauPlan(() => {
+      this.nuit = false;
+      this.o(this.add.image(-1920, 0, 'caveFond').setOrigin(0).setScale(2));
+      this.o(this.add.rectangle(480, 270, 960, 540, 0x100608, 0.3).setDepth(2.5));
+      creerEmblemesHD(this);
+      this.o(this.add.image(520, 128, 'embleme_mainNoire').setScale(2.6));
+      this.o(lumiere(this, 430, 300, 120, 0xffc070, 0.5));
+      this.o(this.add.image(520, 350, corpsHD(this, 'passeur')).setOrigin(0.5, 1).setScale(6.6 * echelleCorps(corpsHD(this, 'passeur'))).setTint(0x3a2830));
+      this.o(this.add.image(520, 392, 'tableMainNoire').setOrigin(0.5, 1).setScale(2.2).setDepth(3));
+      this.p = this.joueur(250, 372, 7.5).setTint(0x8a7a90);
+      this.client = this.corps(780, 372, { nom: 'Petit marchand', race: 'hobbit', niveau: 'novice' }, 5.6).setFlipX(true);
+    });
+    this.ecrire('', 'Des années plus tard, c\'est toi qui gardes la table du fond. Ce soir, un petit marchand tremble devant toi... comme toi, autrefois.');
+    this.tweens.add({ targets: this.client, x: 790, duration: 120, yoyo: true, repeat: -1 });
+    await this.attendreClic();
     this.finir();
   }
 
@@ -162,6 +178,21 @@ class FailliteScene extends Cinematique {
     this.ecrire('', 'Depuis, tu cires les pièces de la Banque Centrale, au pied de leur grand bureau. Au-dessus de ta tête, les banquiers dansent.');
     this.onomatopee(520, 300, 'Frotte, frotte...');
     await this.attendreClic();
+    // Ta nouvelle vie : porter leurs registres à travers la Comté, sous les regards
+    await this.nouveauPlan(() => {
+      this.o(this.add.image(0, 0, paysageHD(this, 960, 380, 'comte', 0)).setOrigin(0).setScale(2));
+      this.o(this.add.image(0, 362, pavesHD(this, 960, 60)).setOrigin(0).setScale(2));
+      this.banquier = this.corps(-60, 362, 'banquier', 6);
+      this.p = this.joueur(-200, 362, 7);
+      this.pile = this.o(this.add.container(-200, 362 - 108).setDepth(3.5));
+      [0x6a2a1a, 0x2a3a6a, 0x5a4a20, 0x3a5a2a, 0x6a2a1a, 0x4a3a5a].forEach((c, i) => this.pile.add(this.add.rectangle(Phaser.Math.Between(-3, 3), -i * 13, 46, 12, c).setStrokeStyle(2, 0x1a0e06)));
+      this.badauds = [[700, 'humain'], [770, 'elfe'], [840, 'nain']].map(([x, race], i) => this.corps(x, 362, { nom: 'Badaud ' + i, race, feminin: i === 1, niveau: 'novice' }, 5.4).setFlipX(true));
+    });
+    this.ecrire('', 'Chaque matin, tu portes leurs registres à travers la Comté, derrière le banquier. Les gens chuchotent : « C\'est l\'ancien marchand du Comptoir. »');
+    this.tweens.add({ targets: this.pile, angle: { from: -5, to: 5 }, duration: 400, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: this.pile, x: 520, duration: 3600, ease: 'Linear' });
+    await this.defiler([this.banquier, this.p], [640, 520], 3600);
+    await this.attendreClic();
     this.finir();
   }
 
@@ -198,6 +229,25 @@ class FailliteScene extends Cinematique {
     this.ecrire('', 'Tu t\'es enfui par derrière, dans la nuit, sans te retourner. Derrière toi, le comptoir brûlait.');
     this.p.setFlipX(true);
     await this.defiler([this.p], [-80], 1600);
+    await this.attendreClic();
+    // Ta nouvelle vie : loin, sous un autre nom, dans un village de montagne
+    await this.nouveauPlan(() => {
+      this.nuit = false;
+      this.o(this.add.image(0, 0, paysageHD(this, 960, 380, 'neige', 0.2)).setOrigin(0).setScale(2));
+      this.o(this.add.image(0, 362, cheminTerreHD(this, 960, 120)).setOrigin(0).setScale(2).setTint(0xd8dce8));
+      creerAccessoiresFacade(this);
+      this.o(this.add.image(600, 366, 'tonneauxHD').setOrigin(0.5, 1).setScale(2.4).setDepth(3));
+      for (let i = 0; i < 6; i++) this.o(this.add.circle(570 + (i % 3) * 14, 300 - Math.floor(i / 3) * 10, 6, 0xc83a2a).setStrokeStyle(2, 0x5a1a10).setDepth(3.4));
+      this.p = this.joueur(500, 366, 7).setTint(0x9a8a9a);
+      this.passant = this.corps(1040, 366, { nom: 'Passant des cimes', race: 'nain', niveau: 'novice' }, 5.6).setFlipX(true);
+    });
+    this.ecrire('', 'Loin, très loin, sous un autre nom, tu vends des pommes dans un village où personne ne te connaît.');
+    await this.attendreClic();
+    this.ecrire('', 'Mais chaque fois qu\'un étranger s\'approche avec une torche, ton cœur s\'arrête.');
+    await this.defiler([this.passant], [760], 1600);
+    this.torche(734, 250);
+    this.tweens.add({ targets: this.p, y: 352, duration: 120, yoyo: true });
+    this.onomatopee(500, 230, '!', '#ffb060');
     await this.attendreClic();
     this.finir();
   }
@@ -236,7 +286,16 @@ class FailliteScene extends Cinematique {
       this.o(lumiere(this, 520, 330, 240, 0xff8a30, 0.45).setDepth(3.2));
       this.p = this.joueur(420, 380);
     });
-    this.ecrire('', 'Tu es retourné vivre dans la forêt, là où tout avait commencé. Le soir, près du feu, tu repenses au comptoir. Peut-être qu\'un jour...');
+    this.ecrire('', 'Tu es retourné vivre dans la forêt, là où tout avait commencé. Le soir, près du feu, tu repenses au comptoir.');
+    await this.attendreClic();
+    // Et l'histoire recommence peut-être : un voyageur blessé arrive jusqu'à ton feu
+    this.blesse = this.corps(1040, 380, { nom: 'Voyageur blessé', race: 'humain', niveau: 'aguerri' }, 6.2).setFlipX(true);
+    this.ecrire('', 'Un soir, un voyageur blessé est arrivé en titubant jusqu\'à ton feu...');
+    await this.defiler([this.blesse], [640], 2200);
+    await this.animer({ targets: this.blesse, angle: -80, y: 392, duration: 500, ease: 'Quad.easeIn' });
+    this.cameras.main.shake(150, 0.004);
+    await this.attendreClic();
+    this.ecrire('', 'Tu l\'as soigné, comme autrefois. Et s\'il revenait un jour, lui aussi, pour te remercier ?');
     await this.attendreClic();
     this.finir();
   }
@@ -259,11 +318,27 @@ class FailliteScene extends Cinematique {
     this.add.text(480, 170, titre, style(48, '#d8604a', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(31);
     this.add.text(480, 240, `${phrase}\nAu matin du jour ${G.jour + 1}, tes dettes avaient atteint ${-SEUIL_FAILLITE} pièces.`,
       style(18, '#f3e6c8', { align: 'center', lineSpacing: 8 })).setOrigin(0.5).setDepth(31);
-    this.add.text(480, 315,
+    this.add.text(480, 312,
       `${G.jour} jours tenus · ${G.experience} aventuriers servis · réputation ${arrondi(G.reputation)}`,
       style(15, '#c9b48a')).setOrigin(0.5).setDepth(31);
-    const b = creerBouton(this, 480, 420, 260, 'Recommencer', () => this.scene.start('Titre'));
-    b.fond.setDepth(31);
-    b.label.setDepth(31);
+    // (v0.57) Reprendre au dernier point de reprise, charger une de ses sauvegardes, ou recommencer
+    const boutons = [];
+    const ajouter = (y, texte, action) => { const b = creerBouton(this, 480, y, 380, texte, action); b.fond.setDepth(31); b.label.setDepth(31); boutons.push(b); return b; };
+    let reprendre = null;
+    const reprise = ajouter(370, 'Recherche du point de reprise...', () => reprendre && reprendre());
+    reprise.setActif(false);
+    ajouter(422, 'Mes sauvegardes', () => {
+      this.input.enabled = false;
+      ouvrirFenetreEmplacements({ peutSauver: false, surCharger: p => { this.input.enabled = true; lancerPartieChargee(this, p); }, surFermer: () => { this.input.enabled = true; } });
+    });
+    ajouter(474, 'Recommencer depuis le début', () => this.scene.start('Titre'));
+    Sauvegarde.lireEmplacement('reprise').then(p => {
+      if (!reprise.fond.active) return;
+      if (p && p.partie && !p.partie.faillite) {
+        reprise.setTexte(`Reprendre au jour ${p.jour} (point de reprise)`);
+        reprise.setActif(true);
+        reprendre = () => lancerPartieChargee(this, p);
+      } else reprise.setTexte('Pas encore de point de reprise');
+    });
   }
 }

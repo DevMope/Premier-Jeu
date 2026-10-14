@@ -106,9 +106,14 @@ class HudScene extends Phaser.Scene {
     c.add(this.add.image(480, 270, panneauHD(this, 480, 300)).setScale(2));
     c.add(this.add.text(480, 150, "Retourner à l'écran titre ?", style(24, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     c.add(this.add.text(480, 196, 'Ta partie est sauvegardée. En pleine journée,\ntu la reprendras au matin de ce jour-là.', style(16, '#4a2e18', { align: 'center', lineSpacing: 4 })).setOrigin(0.5));
-    const oui = creerBouton(this, 385, 258, 170, 'Écran titre', () => this.retourTitre());
-    const non = creerBouton(this, 575, 258, 170, 'Continuer', () => this.fermerMenu());
-    c.add([oui.fond, oui.label, non.fond, non.label]);
+    const oui = creerBouton(this, 318, 258, 150, 'Écran titre', () => this.retourTitre());
+    const non = creerBouton(this, 642, 258, 150, 'Continuer', () => this.fermerMenu());
+    // (v0.57) les trois emplacements de sauvegarde et le point de reprise
+    const sauv = creerBouton(this, 480, 258, 150, 'Sauvegardes', () => {
+      this.fenetre.setVisible(false);
+      ouvrirFenetreEmplacements({ peutSauver: !!window.GAME && !window.GAME.faillite, surCharger: p => { this.fermerMenu(); lancerPartieChargee(this, p); }, surFermer: () => { if (this.fenetre) this.fenetre.setVisible(true); } });
+    });
+    c.add([oui.fond, oui.label, non.fond, non.label, sauv.fond, sauv.label]);
     // Le son : musique et bruitages, chacun avec son volume et son interrupteur
     Son.demarrer();
     [['musique', 'Musique', 320], ['sons', 'Sons', 374]].forEach(([quoi, nom, y]) => {

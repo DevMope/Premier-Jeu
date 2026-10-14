@@ -166,8 +166,10 @@ class TitleScene extends Phaser.Scene {
 
   ouvrirSauvegardes() {
     this.input.enabled = false;
-    ouvrirFenetreSauvegardes(this.trouvees || { locale: Sauvegarde.lireLocale(), nuage: null, meilleure: Sauvegarde.lireLocale(), compte: false },
+    const codes = () => ouvrirFenetreSauvegardes(this.trouvees || { locale: Sauvegarde.lireLocale(), nuage: null, meilleure: Sauvegarde.lireLocale(), compte: false },
       p => { this.input.enabled = true; this.charger(p); },
       () => { this.input.enabled = true; this.chercher(); });
+    // (v0.57) d'abord les emplacements et le point de reprise ; les codes sont un cran plus loin
+    ouvrirFenetreEmplacements({ peutSauver: false, surCharger: p => { this.input.enabled = true; this.charger(p); }, surFermer: () => { this.input.enabled = true; }, surCodes: codes });
   }
 }

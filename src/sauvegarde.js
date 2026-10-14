@@ -25,7 +25,7 @@ const Sauvegarde = {
         const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
         if (!db || !user) return;
         const id = await user.id();
-        if (id) this.nuage = db.doc('data/users/' + id + '/sauvegarde');
+        if (id) { this.nuage = db.doc('data/users/' + id + '/sauvegarde'); this.docCompte = nom => db.doc('data/users/' + id + '/' + nom); }
       } catch (e) { this.nuage = null; }
     })();
     return this.nuagePret;
@@ -46,6 +46,8 @@ const Sauvegarde = {
   // Sauvegarde tout de suite.
   maintenant(G, lieu) {
     clearTimeout(this.minuterie);
+    // (v0.57) au matin, un point de reprise automatique : chaque semaine, et à chaque palier d'étoiles
+    if (lieu === 'Marche' && !G.faillite) this.pointDeRepriseSiBesoin(G);
     const p = this.paquet(G, lieu);
     let local = false;
     try {
@@ -64,6 +66,46 @@ const Sauvegarde = {
         : 'Sauvegarde impossible ici : pense au code de sauvegarde !');
     });
     return this.ecriture;
+  },
+
+  // --- (v0.57) Les points de reprise et les trois emplacements de sauvegarde ---
+  // Un emplacement : 'reprise' (automatique), ou 1, 2, 3 (à la main). Dans ce navigateur, et sur
+  // ton compte claude.ai quand il est disponible.
+  cle(nom) { return CLE_LOCALE + '/' + (nom === 'reprise' ? 'reprise' : 'emplacement' + nom); },
+  async ecrireEmplacement(nom, p) {
+    let ok = false;
+    try { localStorage.setItem(this.cle(nom), JSON.stringify(p)); ok = true; } catch (e) { /* stockage bloqué */ }
+    await this.connecterNuage();
+    if (this.docCompte) { try { await this.docCompte(nom === 'reprise' ? 'reprise' : 'emplacement' + nom).set(p); ok = true; } catch (e) { /* tant pis */ } }
+    return ok;
+  },
+  async lireEmplacement(nom) {
+    let locale = null, nuage = null;
+    try { locale = JSON.parse(localStorage.getItem(this.cle(nom))); } catch (e) { locale = null; }
+    await this.connecterNuage();
+    if (this.docCompte) { try { const d = await this.docCompte(nom === 'reprise' ? 'reprise' : 'emplacement' + nom).get(); nuage = d.exists ? JSON.parse(JSON.stringify(d.data())) : null; } catch (e) { nuage = null; } }
+    return [locale, nuage].filter(p => p && p.partie).sort((a, b) => b.date - a.date)[0] || null;
+  },
+  async emplacements() {
+    const [reprise, a, b, c] = await Promise.all(['reprise', 1, 2, 3].map(n => this.lireEmplacement(n)));
+    return { reprise, 1: a, 2: b, 3: c };
+  },
+  pointDeRepriseSiBesoin(G) {
+    const paliers = (G.paliersEtoiles || []).length;
+    const semaine = G.jour - (G.repriseJour || 0) >= 7;
+    const palier = paliers !== (G.reprisePaliers || 1);
+    if (!semaine && !palier && G.repriseJour) return;
+    G.repriseJour = G.jour;
+    G.reprisePaliers = paliers;
+    const p = this.paquet(G, 'Marche');
+    p.raison = palier ? 'Nouveau palier d\'étoiles' : 'Début de semaine';
+    this.ecrireEmplacement('reprise', p);
+  },
+  // Sauvegarder à la main dans un emplacement : on y copie la dernière sauvegarde « au calme »
+  // (le matin ou le soir), comme le dit le menu : en pleine journée, on reprend au matin.
+  async sauverEmplacement(G, n) {
+    const p = this.lireLocale() || this.paquet(G, 'Nuit');
+    return this.ecrireEmplacement(n, { ...p, date: Date.now() });
   },
 
   changerStatut(texte) {
@@ -199,6 +241,85 @@ function ouvrirFenetreSauvegardes(trouvees, surCharger, surFermer) {
   bouton('Fermer', fermer);
   boite.append(titre, infos, etiquette, zone, message, rangee);
   document.body.appendChild(fond);
+}
+
+// (v0.57) La fenêtre « Tes sauvegardes » : le point de reprise automatique, trois emplacements
+// (sauvegarder ici / charger), et l'accès aux codes de sauvegarde.
+async function ouvrirFenetreEmplacements({ peutSauver = false, surCharger, surFermer, surCodes = null }) {
+  const fond = document.createElement('div');
+  fond.style.cssText = 'position:fixed;inset:0;background:rgba(10,6,3,.75);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10;font-family:Georgia,serif';
+  const boite = document.createElement('div');
+  boite.style.cssText = 'background:#ead9b0;color:#3b2410;border:4px solid #8a6a3a;max-width:600px;width:100%;padding:20px;display:flex;flex-direction:column;gap:12px;max-height:100%;overflow:auto';
+  fond.appendChild(boite);
+  document.body.appendChild(fond);
+  const titre = document.createElement('h2');
+  titre.textContent = 'Tes sauvegardes';
+  titre.style.cssText = 'margin:0;font-size:22px';
+  const message = document.createElement('p');
+  message.style.cssText = 'margin:0;font-size:13px;font-weight:bold;min-height:1.2em';
+  const liste = document.createElement('div');
+  liste.style.cssText = 'display:flex;flex-direction:column;gap:8px';
+  const bouton = (parent, texte, action) => {
+    const b = document.createElement('button');
+    b.textContent = texte;
+    b.style.cssText = 'background:#8a5a2b;color:#fff4dc;border:2px solid #3b2410;padding:6px 10px;font:bold 13px Georgia,serif;cursor:pointer';
+    b.addEventListener('click', action);
+    parent.appendChild(b);
+    return b;
+  };
+  const fermer = () => { fond.remove(); if (surFermer) surFermer(); };
+  const decrire = p => p ? `${p.nom}, jour ${p.jour} — ${new Date(p.date).toLocaleString('fr-FR')}` : 'vide';
+  const dessiner = async () => {
+    liste.textContent = 'Recherche...';
+    const e = await Sauvegarde.emplacements();
+    liste.textContent = '';
+    for (const nom of ['reprise', 1, 2, 3]) {
+      const p = e[nom];
+      const ligne = document.createElement('div');
+      ligne.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border:2px solid #b8965e;padding:8px;background:#f2e4c0';
+      const texte = document.createElement('div');
+      texte.style.cssText = 'font-size:14px;line-height:1.4;min-width:0;flex:1 1 220px';
+      texte.innerHTML = '';
+      const b1 = document.createElement('strong'); b1.textContent = nom === 'reprise' ? 'Point de reprise (automatique)' : `Emplacement ${nom}`;
+      const b2 = document.createElement('div'); b2.textContent = decrire(p) + (nom === 'reprise' && p && p.raison ? ` · ${p.raison}` : '');
+      texte.append(b1, b2);
+      const actions = document.createElement('div');
+      actions.style.cssText = 'display:flex;gap:6px';
+      if (peutSauver && nom !== 'reprise') {
+        let confirmer = false;
+        const bs = bouton(actions, 'Sauvegarder ici', async () => {
+          if (p && !confirmer) { confirmer = true; bs.textContent = 'Écraser ? Clique encore'; return; }
+          const ok = await Sauvegarde.sauverEmplacement(window.GAME, nom);
+          message.textContent = ok ? `Partie sauvegardée dans l'emplacement ${nom}.` : 'Sauvegarde impossible ici : pense au code de sauvegarde.';
+          dessiner();
+        });
+      }
+      if (p) bouton(actions, 'Charger', () => { fond.remove(); surCharger(p); });
+      ligne.append(texte, actions);
+      liste.appendChild(ligne);
+    }
+  };
+  const bas = document.createElement('div');
+  bas.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px';
+  if (surCodes) bouton(bas, 'Codes de sauvegarde…', () => { fond.remove(); surCodes(); });
+  bouton(bas, 'Fermer', fermer);
+  const aide = document.createElement('p');
+  aide.style.cssText = 'margin:0;font-size:13px;line-height:1.5';
+  aide.textContent = 'Le point de reprise se fait tout seul, chaque semaine et à chaque nouveau palier d\'étoiles. Les trois emplacements sont à toi : sauvegarde où tu veux, quand tu veux (en pleine journée, tu reprendras au matin de ce jour-là).';
+  boite.append(titre, aide, liste, message, bas);
+  dessiner();
+}
+
+// Charge une partie depuis n'importe où (menu, faillite) : toutes les pages s'arrêtent, et l'on
+// repart au bon endroit de la journée.
+function lancerPartieChargee(sceneQuelconque, p) {
+  const lieu = Sauvegarde.charger(p);
+  const gestion = sceneQuelconque.scene.manager;
+  for (const s of gestion.getScenes(false)) {
+    if (s.scene.key !== 'Hud' && (s.scene.isActive() || s.scene.isPaused() || s.scene.isSleeping())) s.scene.stop();
+  }
+  if (lieu === 'Maison') gestion.start('Nuit', { matin: true });
+  else gestion.start(lieu, lieu === 'Nuit' ? { matin: false } : {});
 }
 
 // Le petit texte « Partie sauvegardée ✓ » d'une scène, mis à jour à chaque sauvegarde.
