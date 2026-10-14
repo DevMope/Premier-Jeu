@@ -90,7 +90,7 @@ class NightScene extends Phaser.Scene {
     if (enTransition(this)) return;
     const G = this.G;
     const bilan = { jour: G.jour, servis: G.journal.servis, retours: G.journal.retours, morts: G.journal.morts,
-      gain: G.argent - G.argentDebutJour, reputation: G.reputation };
+      gain: G.argent - G.argentDebutJour, reputation: G.reputation, jauge: jaugeCamp(G), palier: nomPalierCamp(G) };
     this.cameras.main.fadeOut(500);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Dodo', { bilan }));
   }

@@ -213,6 +213,9 @@ function mettreAJourPartie(G, brut = G) {
   G.materiaux = G.materiaux || {};
   for (const id of Object.keys(MATERIAUX)) if (G.materiaux[id] === undefined) G.materiaux[id] = 0;
   G.mal = G.mal || 0;
+  G.reussites = { bien: 0, mal: 0, ...(G.reussites || {}) };
+  G.objetsCamp = { bien: 0, mal: 0, ...(G.objetsCamp || {}) };
+  G.palierJaugeVu = G.palierJaugeVu || 0;
   G.chienNourri = G.chienNourri || 0;
   G.chienJour = G.chienJour || 0;
   G.fontaineJour = G.fontaineJour || 0;

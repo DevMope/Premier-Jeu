@@ -172,7 +172,7 @@ class DodoScene extends Cinematique {
     const G = this.G;
     const dette = G.prets.reduce((a, p) => a + p.restant, 0);
     const echeance = G.prets.reduce((a, p) => a + Math.min(p.parJour, p.restant), 0);
-    const h = dette ? 360 : 300;
+    const h = dette ? 408 : 348;
     c.add(this.add.image(760, 50 + h / 2, panneauHD(this, 330, h)).setScale(2));
     c.add(this.add.text(760, 86, `Fin du jour ${b.jour}`, style(26, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     const lignes = [
@@ -185,11 +185,18 @@ class DodoScene extends Cinematique {
       c.add(this.add.text(618, 116 + i * 28, nom, style(17, '#4a2e18')));
       c.add(this.add.text(902, 116 + i * 28, String(valeur), style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(1, 0));
     });
+    // La jauge lumière ⟷ ombre, en petit : une barre, et le palier en mot
+    if (b.jauge !== undefined) {
+      const yj = 116 + lignes.length * 28 + 4;
+      c.add(this.add.text(618, yj, 'Lumière / ombre', style(17, '#4a2e18')));
+      c.add(this.add.text(902, yj, b.palier, style(15, b.jauge > 0 ? '#9a7a10' : b.jauge < 0 ? '#5a3a8a' : '#5a3a20', { fontStyle: 'bold italic' })).setOrigin(1, 0));
+      c.add(barreJauge(this, 760, yj + 30, 284, b.jauge));
+    }
     const signe = b.gain >= 0 ? '+' : '−';
-    c.add(this.add.rectangle(760, 238, 290, 2, 0x8a6a3a));
-    c.add(this.add.text(618, 248, 'Bénéfice du jour', style(18, '#3b2410', { fontStyle: 'bold' })));
-    c.add(this.add.text(902, 248, `${signe}${Math.abs(b.gain)} p.`, style(19, b.gain >= 0 ? '#2f7a2a' : '#a03030', { fontStyle: 'bold' })).setOrigin(1, 0));
-    let y = 284;
+    c.add(this.add.rectangle(760, 286, 290, 2, 0x8a6a3a));
+    c.add(this.add.text(618, 296, 'Bénéfice du jour', style(18, '#3b2410', { fontStyle: 'bold' })));
+    c.add(this.add.text(902, 296, `${signe}${Math.abs(b.gain)} p.`, style(19, b.gain >= 0 ? '#2f7a2a' : '#a03030', { fontStyle: 'bold' })).setOrigin(1, 0));
+    let y = 332;
     if (dette) {
       // Le rappel de la dette : ce qui reste à rembourser, et ce que la banque prélève cette nuit
       const fond = this.add.rectangle(760, y + 26, 296, 54, 0xa03030, 0.14).setStrokeStyle(2, 0xa03030, 0.6);

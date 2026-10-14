@@ -60,8 +60,8 @@ class BanqueScene extends Phaser.Scene {
     c.add(this.add.image(470, 442, panneauHD(this, 660, 160)).setScale(2));
     pretsProposes(G).forEach((p, i) => {
       const y = 378 + i * 21;
-      const du = Math.round(p.somme * (1 + p.taux));
-      c.add(this.add.text(165, y, `${p.nom} : reçois ${p.somme} p., rends ${du} p. en ${p.jours} nuits (${Math.round(p.taux * 100)} %)`,
+      const taux = tauxPret(G, p), du = Math.round(p.somme * (1 + taux));
+      c.add(this.add.text(165, y, `${p.nom} : reçois ${p.somme} p., rends ${du} p. en ${p.jours} nuits (${Math.round(taux * 100)} %${taux < p.taux ? ', prix de la lumière' : ''})`,
         style(12, refusPret(G, p) ? '#7a6a5a' : '#3b2410')).setOrigin(0, 0.5));
       const refus = refusPret(G, p);
       if (refus) {

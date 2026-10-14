@@ -536,7 +536,28 @@ const ZONES = {
 // Pour ouvrir une zone à 3, 4 ou 5 étoiles : des retours réussis dans l'étoile d'avant.
 const RETOURS_POUR_ETOILE = { 3: 3, 4: 5, 5: 8 };
 // Les quêtes du bien : un peu plus de réputation. Celles du mal : plus d'or, et la jauge du mal.
-const EFFETS_CAMP = { bien: { reputation: 1.5, butin: 1, mal: 0 }, mal: { reputation: 0, butin: 1.35, mal: 0.5 } };
+// Étape 9a. Les terres de lumière rapportent plus de réputation (bien plus si tu es du côté de la
+// lumière), les terres d'ombre plus de butin (bien plus si tu es du côté de l'ombre).
+const EFFETS_CAMP = { bien: { reputation: 1.2, reputationAllie: 1.5, butin: 1, mal: 0 }, mal: { reputation: 0, butin: 1.15, butinAllie: 1.35, mal: 0.5 } };
+// La jauge lumière ⟷ ombre, de −100 (l'ombre) à +100 (la lumière) : ce que le monde pense de toi.
+// (Dans le monde, les deux camps s'appellent la Confrérie et les Bannis.)
+const NOMS_CAMPS = { bien: 'la Confrérie', mal: 'les Bannis' };
+const JAUGE_CAMP = { reussite: 8, mal: 5, objet: 3, max: 100 }; // points par mission réussie pour un camp, par point de la jauge du mal, par objet marqué acheté
+const PALIERS_JAUGE = [25, 60, 90];                              // les paliers, de chaque côté
+const NOMS_PALIERS_JAUGE = {
+  3: 'Lumière éclatante', 2: 'Lumière', 1: 'Lueur', 0: 'Entre les deux', '-1': 'Pénombre', '-2': 'Ombre', '-3': 'Ombre épaisse',
+};
+const REMISE_BANQUE_LUMIERE = 0.03;   // par palier de lumière, les taux de la Banque Centrale baissent d'autant
+const GAZETTE_PALIERS_JAUGE = {
+  1: "On dit que ton comptoir sert bien la Confrérie. Les gens te saluent dans la rue.",
+  2: "La Confrérie te cite en exemple : « un marchand qui sait de quel côté est la lumière ».",
+  3: "Le conseil des Gardiens lui-même aurait parlé de ton comptoir. On te regarde avec respect.",
+  '-1': "Des rumeurs courent : ton comptoir ferait affaire avec les Bannis. On te regarde de travers.",
+  '-2': "La garde surveille ta rue. On dit que les Bannis connaissent ton nom.",
+  '-3': "Plus personne ne doute : ton comptoir est celui des Bannis. La Confrérie ne te salue plus.",
+};
+// Tailles des peuples à venir (silhouettes, comme TAILLES_PEUPLES) : le panda côté lumière, les six peuples de l'ombre.
+const TAILLES_PEUPLES_A_VENIR = { panda: 21, gobelin: 11, momie: 15, vampire: 16, orc: 17, loupgarou: 20, troll: 24 };
 
 // Plus la zone est dangereuse, plus le butin est gros.
 const BUTIN_PAR_DANGER = [0, 1, 1.25, 1.6, 2.1, 3];

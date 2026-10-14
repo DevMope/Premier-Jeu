@@ -661,3 +661,27 @@ function dessinerMannequin(scene, x, sol, possedees, u = 4, cote = 'clair') {
   }
   return c;
 }
+
+
+// Étape 9a. La jauge lumière ⟷ ombre : une barre violette à gauche, dorée à droite, et un curseur.
+// `valeur` de −100 à +100. Renvoie un conteneur centré en (x, y), large de `l`.
+function barreJauge(scene, x, y, l, valeur, { h = 10 } = {}) {
+  const c = scene.add.container(x, y);
+  const g = scene.add.graphics();
+  const n = 24, pas = l / n;
+  for (let i = 0; i < n; i++) {
+    const u = i / (n - 1);   // 0 = ombre, 1 = lumière
+    const teinte = Phaser.Display.Color.Interpolate.ColorWithColor(new Phaser.Display.Color(0x4a, 0x2a, 0x7a), new Phaser.Display.Color(0xf0, 0xc8, 0x40), 100, Math.round(u * 100));
+    g.fillStyle(Phaser.Display.Color.GetColor(teinte.r, teinte.g, teinte.b), 1).fillRect(-l / 2 + i * pas, -h / 2, Math.ceil(pas), h);
+  }
+  g.lineStyle(2, 0x2a1a10, 1).strokeRect(-l / 2, -h / 2, l, h);
+  g.fillStyle(0x2a1a10, 1).fillRect(-1, -h / 2 - 2, 2, h + 4);   // le milieu
+  const cx = (Math.max(-100, Math.min(100, valeur)) / 100) * (l / 2 - 4);
+  g.fillStyle(0xfff4dc, 1).fillTriangle(cx - 6, -h / 2 - 7, cx + 6, -h / 2 - 7, cx, -h / 2 - 1);
+  g.lineStyle(1, 0x2a1a10, 1).strokeTriangle(cx - 6, -h / 2 - 7, cx + 6, -h / 2 - 7, cx, -h / 2 - 1);
+  g.fillStyle(0xfff4dc, 1).fillRect(cx - 1.5, -h / 2, 3, h);
+  c.add(g);
+  c.add(scene.add.text(-l / 2, h / 2 + 2, 'Ombre', style(10, '#5a3a8a', { fontStyle: 'bold' })));
+  c.add(scene.add.text(l / 2, h / 2 + 2, 'Lumière', style(10, '#9a7a10', { fontStyle: 'bold' })).setOrigin(1, 0));
+  return c;
+}

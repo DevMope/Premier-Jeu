@@ -293,7 +293,7 @@ function appliquerQuete(G, v, queteId, { butin, duree } = {}) {
   const niv = NIVEAUX_AVENTURIER[v.niveau];
   // Un habitué revenu blessé et jamais soigné repart avec moins de cœurs.
   v.pv = Math.max(1, q.pv + niv.pv - v.blessures);
-  const camp = ZONES[zone].camp ? EFFETS_CAMP[ZONES[zone].camp].butin : 1;
+  const camp = multButinCamp(G, ZONES[zone].camp);
   const evenement = modifEvenement(G, 'butin', zone) || 1;
   const prestige = v.prestige ? PRESTIGE_BUTIN : 1; // les nobles paient le double
   v.butin = butin ?? Math.round(hasard(...q.butin) * (1 + 0.3 * enPlus) * BUTIN_PAR_DANGER[ZONES[zone].danger] / BUTIN_PAR_DANGER[1] * niv.butin * camp * evenement * prestige);
@@ -462,6 +462,9 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     armure: [],        // les pièces de l'Armure du Dernier Rempart déjà reçues
     nouvellesPieces: [], // celles que le messager apporte ce matin : { piece, zone }
     mal: 0,            // la jauge du mal : les âmes que tu as offertes exprès
+    reussites: { bien: 0, mal: 0 }, // missions réussies pour chaque camp (la jauge lumière ⟷ ombre)
+    objetsCamp: { bien: 0, mal: 0 }, // objets marqués achetés au marché (étape 9c)
+    palierJaugeVu: 0,  // le dernier palier de la jauge annoncé par la gazette
     pieges: {},        // les objets piégés cachés sous le comptoir
     faucheuse: { faveur: 0, morts: 0, visites: 0, cadeau: false, mission: null, sabotages: 0 },
     experience: 0, // nombre de clients servis depuis le début
@@ -1076,7 +1079,7 @@ function refusPret(G, pret) {
 
 function emprunter(G, pret) {
   if (refusPret(G, pret)) return;
-  const du = Math.round(pret.somme * (1 + pret.taux));
+  const du = Math.round(pret.somme * (1 + tauxPret(G, pret)));
   // Un prêt n'est pas une recette : il est compté à part.
   G.argent += pret.somme;
   compter(G, 'pret', 'prets', pret.somme);
@@ -1337,8 +1340,8 @@ function terminerAventure(G, parti) {
     encaisser(G, gain, 'butins');
     // Une commande par lettre remplie à moitié ne rapporte que la moitié de la réputation.
     const part = v.prevu ? partCommandeRemplie(v, parti.colis) : 1;
-    G.reputation += GAIN_REPUTATION_SUCCES * (camp ? EFFETS_CAMP[camp].reputation : 1) * part;
-    if (camp) G.mal += EFFETS_CAMP[camp].mal;
+    G.reputation += GAIN_REPUTATION_SUCCES * multReputationCamp(G, camp) * part;
+    if (camp) { G.mal += EFFETS_CAMP[camp].mal; G.reussites[camp] = (G.reussites[camp] || 0) + 1; }
     G.journal.retours++;
     // Un succès de plus : il progresse, et la carte aussi (déblocage des étoiles).
     const danger = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
@@ -1974,6 +1977,9 @@ function avancerEvenements(G) {
   G.nouvellesLues.push(i);
   lignes.push(NOUVELLES[i]);
   if (G.palierNouveau && PALIERS_CLIENTS[G.palierNouveau].gazette) lignes.unshift('📢 ' + PALIERS_CLIENTS[G.palierNouveau].gazette);
+  // La jauge lumière ⟷ ombre a franchi un palier
+  const palier = nouvellePalierCamp(G);
+  if (palier) lignes.unshift('📢 ' + palier);
   // Un nouveau lieu ouvre sur le marché (annoncé la veille, puis le jour même)
   for (const [cle, jour] of Object.entries(OUVERTURE_LIEUX)) {
     if (jour === G.jour) lignes.unshift(`📢 ${NOMS_LIEUX_MARCHE[cle]} ouvre aujourd'hui sur le marché !`);
@@ -2044,7 +2050,59 @@ function recompenserZones(G) {
 // Le côté de l'armure : scellé avec le camp, sinon la jauge du mal contre la réputation.
 function coteArmure(G) {
   if (G.camp) return G.camp === 'mal' ? 'sombre' : 'clair';
-  return G.mal > G.reputation ? 'sombre' : 'clair';
+  return jaugeCamp(G) < 0 ? 'sombre' : 'clair';
+}
+
+// --- Étape 9a : la jauge lumière ⟷ ombre ---
+
+// De −100 (l'ombre) à +100 (la lumière) : les missions réussies pour chaque camp, les âmes offertes,
+// les objets marqués achetés.
+function jaugeCamp(G) {
+  const r = G.reussites || { bien: 0, mal: 0 }, o = G.objetsCamp || { bien: 0, mal: 0 };
+  const j = (r.bien - r.mal) * JAUGE_CAMP.reussite - (G.mal || 0) * JAUGE_CAMP.mal + (o.bien - o.mal) * JAUGE_CAMP.objet;
+  return Math.max(-JAUGE_CAMP.max, Math.min(JAUGE_CAMP.max, Math.round(j)));
+}
+
+// Le palier : de −3 (ombre épaisse) à +3 (lumière éclatante), 0 entre les deux.
+function palierCamp(G) {
+  const j = jaugeCamp(G);
+  return Math.sign(j) * PALIERS_JAUGE.filter(p => Math.abs(j) >= p).length;
+}
+
+// De quel côté es-tu ? 'bien', 'mal' ou null tant qu'aucun palier n'est franchi.
+function coteCamp(G) {
+  const p = palierCamp(G);
+  return p > 0 ? 'bien' : p < 0 ? 'mal' : null;
+}
+
+function nomPalierCamp(G) { return NOMS_PALIERS_JAUGE[palierCamp(G)]; }
+
+// La réputation gagnée en terres de lumière : plus si tu es de leur côté.
+function multReputationCamp(G, camp) {
+  if (!camp) return 1;
+  const e = EFFETS_CAMP[camp];
+  return camp === 'bien' && coteCamp(G) === 'bien' ? e.reputationAllie : e.reputation;
+}
+
+// Le butin des terres d'ombre : plus si tu es de leur côté.
+function multButinCamp(G, camp) {
+  if (!camp) return 1;
+  const e = EFFETS_CAMP[camp];
+  return camp === 'mal' && coteCamp(G) === 'mal' ? e.butinAllie : e.butin;
+}
+
+// Le taux d'un prêt : la Banque Centrale fait de meilleurs prix du côté de la lumière.
+function tauxPret(G, pret) {
+  if (pret.mal) return pret.taux;
+  return Math.max(0.02, pret.taux - Math.max(0, palierCamp(G)) * REMISE_BANQUE_LUMIERE);
+}
+
+// Un palier franchi (dans un sens ou dans l'autre) : une ligne pour la gazette du matin, une fois.
+function nouvellePalierCamp(G) {
+  const p = palierCamp(G);
+  if (p === (G.palierJaugeVu || 0)) return null;
+  G.palierJaugeVu = p;
+  return p ? GAZETTE_PALIERS_JAUGE[p] : null;
 }
 
 // Le nom et le texte d'une pièce, selon le côté.

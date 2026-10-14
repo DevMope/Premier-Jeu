@@ -7,7 +7,7 @@ const ONGLETS = [
   ['revenus', 'Revenus'], ['disparus', 'Disparus'], ['repertoire', 'Répertoire'],
 ];
 const FICHES_PAR_PAGE = 10;
-const TIROIRS = [['ameliorations', '🔨 Améliorer le shop'], ['competences', 'Tes compétences'], ['aventuriers', 'Les aventuriers'], ['commerce', 'Le commerce'], ['reputation', 'La réputation']];
+const TIROIRS = [['ameliorations', '🔨 Améliorer le shop'], ['competences', 'Tes compétences'], ['aventuriers', 'Les aventuriers'], ['commerce', 'Le commerce'], ['reputation', 'La réputation'], ['camps', 'Lumière et ombre']];
 
 class BureauScene extends Phaser.Scene {
   constructor() { super('Bureau'); }
@@ -263,7 +263,7 @@ class BureauScene extends Phaser.Scene {
 
   creerTiroirs() {
     TIROIRS.forEach(([cle, nom], i) => {
-      const y = 304 + i * 38;
+      const y = 300 + i * 34;
       const t = this.add.image(760, y, 'tiroirHD').setScale(2).setInteractive({ useHandCursor: true });
       this.add.text(745, y, nom, style(14, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
       t.on('pointerover', () => t.setTexture('tiroirHD_clair'));
@@ -277,6 +277,7 @@ class BureauScene extends Phaser.Scene {
     this.onglet = null;
     const c = this.vider();
     if (cle === 'ameliorations') return this.afficherAmeliorations(c);
+    if (cle === 'camps') return this.afficherCamps(c);
     c.add(this.add.text(161, 72, nom, style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     const top = (obj, n, format) => Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n).map(format);
     let gauche = [], droite = [];
@@ -331,6 +332,42 @@ class BureauScene extends Phaser.Scene {
     for (const [x, lignes] of [[42, gauche], [304, droite]]) {
       const t = this.add.text(x, 96, lignes.join('\n'), style(12, '#3b2410', { lineSpacing: 6, wordWrap: { width: 240 } }));
       if (t.height > 370) t.setFontSize(11).setLineSpacing(2);
+      c.add(t);
+    }
+  }
+
+  // --- La jauge lumière ⟷ ombre (étape 9a) ---
+
+  // Page de gauche : la jauge, le palier, ce qui l'a fait bouger. Page de droite : ce que ça change.
+  afficherCamps(c) {
+    const G = this.G, j = jaugeCamp(G), p = palierCamp(G), cote = coteCamp(G);
+    const r = G.reussites || { bien: 0, mal: 0 };
+    c.add(this.add.text(161, 72, 'Lumière et ombre', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(161, 94, `De quel côté le monde te voit`, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5, 0));
+    c.add(barreJauge(this, 161, 136, 230, j, { h: 14 }));
+    c.add(this.add.text(161, 166, nomPalierCamp(G), style(15, j > 0 ? '#9a7a10' : j < 0 ? '#5a3a8a' : '#5a3a20', { fontStyle: 'bold' })).setOrigin(0.5, 0));
+    const prochain = PALIERS_JAUGE.find(s => s > Math.abs(j));
+    const gauche = [
+      `Jauge : ${j > 0 ? '+' : ''}${j}` + (prochain ? ` · prochain palier à ${j >= 0 ? '+' : '−'}${prochain}` : ' · au bout de la jauge'), '',
+      'Ce qui la fait bouger',
+      `Réussites pour ${NOMS_CAMPS.bien} : ${r.bien} (+${JAUGE_CAMP.reussite} chacune)`,
+      `Réussites pour ${NOMS_CAMPS.mal} : ${r.mal} (−${JAUGE_CAMP.reussite} chacune)`,
+      `Âmes offertes, sabotages : ${arrondi(G.mal)} (−${JAUGE_CAMP.mal} par point)`,
+      `Objets marqués : bientôt au marché`, '',
+      G.camp ? `Camp scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}`
+        : `Le camp se scelle à la ${ARMURE.length}e pièce d'armure (${(G.armure || []).length} / ${ARMURE.length}).`,
+    ];
+    const taux = PRETS.filter(x => !x.mal).map(x => `${x.nom} : ${Math.round(tauxPret(G, x) * 100)} %`);
+    const droite = ['Ce que ça change', '',
+      `Réputation en terres de lumière : ×${multReputationCamp(G, 'bien')}` + (cote === 'bien' ? ' (ton camp)' : ` (×${EFFETS_CAMP.bien.reputationAllie} côté lumière)`),
+      `Butin des terres d'ombre : ×${multButinCamp(G, 'mal')}` + (cote === 'mal' ? ' (ton camp)' : ` (×${EFFETS_CAMP.mal.butinAllie} côté ombre)`), '',
+      p > 0 ? `Banque Centrale : −${p * REMISE_BANQUE_LUMIERE * 100} points sur les taux` : 'Banque Centrale : taux normaux (la lumière fait baisser les taux)',
+      ...taux, '',
+      (G.mal >= SEUIL_MAIN_NOIRE || cote === 'mal') ? 'La Main Noire te prête sans questions.' : "La Main Noire ne te connaît pas encore.",
+      cote === 'mal' ? `Les ${NOMS_CAMPS.mal} te font confiance : ils viendront bientôt au comptoir.` : cote === 'bien' ? `${NOMS_CAMPS.bien.charAt(0).toUpperCase() + NOMS_CAMPS.bien.slice(1)} te tient en estime.` : 'Aucun camp ne te réclame encore.'];
+    for (const [x, lignes] of [[42, gauche], [304, droite]]) {
+      const t = this.add.text(x, x === 42 ? 188 : 96, lignes.join('\n'), style(12, '#3b2410', { lineSpacing: 4, wordWrap: { width: 240 } }));
+      if (t.y + t.height > 460) t.setFontSize(11).setLineSpacing(2);
       c.add(t);
     }
   }
