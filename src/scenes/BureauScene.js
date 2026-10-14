@@ -342,6 +342,7 @@ class BureauScene extends Phaser.Scene {
   afficherCamps(c) {
     const G = this.G, j = jaugeCamp(G), p = palierCamp(G), cote = coteCamp(G);
     const r = G.reussites || { bien: 0, mal: 0 };
+    this.time.delayedCall(300, () => conseilGarrick(this, 'jauge', true));
     c.add(this.add.text(161, 72, 'Lumière et ombre', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     c.add(this.add.text(161, 94, `De quel côté le monde te voit`, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5, 0));
     c.add(barreJauge(this, 161, 136, 230, j, { h: 14 }));

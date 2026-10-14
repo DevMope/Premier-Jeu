@@ -6,6 +6,7 @@ class AtelierScene extends Phaser.Scene {
   constructor() { super('Atelier'); }
 
   create() {
+    this.time.delayedCall(500, () => conseilGarrick(this, 'atelier', true));
     const G = this.G = window.GAME;
     this.cameras.main.setBackgroundColor('#2a1a10');
     creerInterieurHD(this);

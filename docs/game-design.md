@@ -350,10 +350,14 @@ marché), puis reprend la route.
 
 ## ⚠ Le grand retournement (pour plus tard)
 
-Garrick Cœur-de-Chêne, l'aventurier sauvé de la rivière au début, est en réalité le grand
-méchant du jeu : il contrôle toutes les forces du mal. S'il flottait dans le fleuve, c'est que
-des héros légendaires l'avaient pris en chasse. À distiller par petits indices au fil du jeu
-(sa générosité suspecte, ses absences, les rumeurs de la gazette...) avant la révélation.
+**Version à jour (décidée par le joueur le 14/10, remplace l'ancienne idée du « grand méchant ») :**
+Garrick Cœur-de-Chêne, l'aventurier sauvé de la rivière au début, est en réalité **le chef des
+Bannis**, c'est-à-dire des vrais justes. Aux yeux du monde, il « contrôle les forces du mal ». S'il
+flottait dans le fleuve, c'est que des héros de la Confrérie l'avaient pris en chasse. Il ne recrute
+pas le joueur directement (trop tôt, trop dangereux pour lui) : il le surveille, l'aide en douce
+(coup de pouce, cadeaux), et plaisante à la légère sur ce que « tout le monde sait ». La grande
+vérité n'arrive qu'à la fin ; un joueur attentif peut sentir avant que quelque chose cloche dans le
+Conseil. (L'ancienne idée, Garrick « grand méchant que la fin du bien affronte », est abandonnée.)
 
 **Le complot des Gardiens de la paix** (dit par le joueur en v 0.52) : les Gardiens de la paix, le
 camp « gentil », ont commis des horreurs que tout le monde aurait pu pointer du doigt, et ont caché
@@ -413,7 +417,7 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 ### 13 Histoire et zones conquises
 - **Agrandir la carte** (dit le 14/10) : plus de destinations, et **dessiner les royaumes** sur la carte (Hobbits ★, Humains ★★, Nains ★★★, Elfes ★★★★, Mages ★★★★★, plus les terres des Bannis) pour que le joueur comprenne comment ils sont disposés.
 - **Déplacer l'auberge** dans une zone conquise : nouveau biome, décor, PNJ du village, financer le voyage et le nouveau shop ; combien de shops au total.
-- **Le grand retournement (rappel, à ne pas oublier)** : Garrick Cœur-de-Chêne, l'aventurier sauvé de la rivière au début, est le grand méchant de la fin du jeu. Distiller des indices (gazette, absences, générosité suspecte) ; les retours de Garrick ; la révélation à l'étape 15.
+- **Le grand retournement (rappel, à ne pas oublier)** : Garrick Cœur-de-Chêne est le chef des Bannis (les vrais justes), et le Conseil des Gardiens cache un massacre sous un sort d'oubli. Indices déjà en place (v 0.54) : visites de Garrick, murmures du marché noir, quêtes d'ombre réécrites, taxe « pour la défense contre le dragon », nouvelles de la gazette. La révélation à l'étape 15.
 - La menace qui grandit : gazette, dialogues, décor qui s'assombrit ; sa nature (dragon ?) à confirmer.
 - L'armure : la révélation (c'est le joueur et son groupe qui partent) et la sélection du groupe.
 - Le mendiant (rôle narratif) et son chien (cinématique secrète, aventure annexe hors carte).
@@ -425,7 +429,7 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 
 ### 15 Fins du jeu
 - La fin du bien (équiper le groupe) et la fin du mal (aider la menace).
-- **La révélation : Garrick est le grand méchant.** Celui qu'on a sauvé au début contrôle les forces du mal ; la fin du bien l'affronte, la fin du mal le rejoint.
+- **La révélation : le Conseil a menti.** Garrick, celui qu'on a sauvé au début, mène les Bannis ; les « forces du mal » sont les peuples que les Gardiens ont chassés de leurs terres, et le sort d'oubli peut être brisé. Les fins sont à reformuler avec le joueur (question ouverte : fin « Gardien » amère ou rachat possible, fin cachée).
 
 ### « On le fera plus tard » (dit par le joueur ; à caser dans les étapes au fur et à mesure)
 - **La fontaine du marché** (v 0.52) : on peut jeter une pièce par jour. Ce que ça débloque reste à définir : une rencontre un soir de promenade, un coup de pouce pendant un voyage, un vœu qui se réalise après N pièces… (candidat : étapes 11 ou 13).

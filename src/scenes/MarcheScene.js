@@ -447,8 +447,9 @@ class MarcheScene extends Phaser.Scene {
 
   // Vide le panneau du bas et le prépare pour un nouveau lieu.
   panneau(titre, sousTitre = '') {
-    // On quitte le bonneteau en pleine partie : Fil-de-Fer rend la mise (la partie n'a pas eu lieu).
-    if (this.etatBonneteau === 'melange' || this.etatBonneteau === 'choix') {
+    // On quitte le bonneteau pendant le mélange : Fil-de-Fer rend la mise (la partie n'a pas eu lieu).
+    // Une fois les gobelets posés, partir sans choisir, c'est perdre sa mise (audit v0.53).
+    if (this.etatBonneteau === 'melange') {
       encaisser(this.G, this.mise, 'jeux');
       this.G.jeux.bonneteau = Math.max(0, this.G.jeux.bonneteau - 1);
     }
@@ -948,8 +949,9 @@ class MarcheScene extends Phaser.Scene {
     await this.animer({ targets: this.gagnant, y: 385, duration: 250, yoyo: true, hold: 500 });
     this.piece.setVisible(false);
     // ... puis Fil-de-Fer mélange.
-    const vitesse = aDecoration(G, 'trefle') ? 380 : 260;
-    for (let i = 0; i < 7; i++) {
+    // (plus de passes et plus vite à mesure qu'on joue dans la journée : Fil-de-Fer s'échauffe)
+    const vitesse = (aDecoration(G, 'trefle') ? 340 : 230) - Math.min(60, (G.jeux.bonneteau || 0) * 15);
+    for (let i = 0; i < 8 + Math.min(4, G.jeux.bonneteau || 0); i++) {
       const [a, b] = Phaser.Utils.Array.Shuffle([...this.gobelets]).slice(0, 2);
       const xa = a.x, xb = b.x;
       await Promise.all([

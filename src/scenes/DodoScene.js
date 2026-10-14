@@ -269,7 +269,7 @@ class DodoScene extends Cinematique {
 
   // Toc toc : le messager encapuchonné apporte une pièce de l'armure. La première fois, il
   // raconte la légende du champion.
-  async messager({ piece, zone, cote = 'clair', scelle }) {
+  async messager({ piece, zone, cote = 'clair', scelle, avertit }) {
     const sombre = cote === 'sombre';
     const p = pieceArmure(piece, cote);
     // La légende, la première fois de chaque côté.
@@ -292,6 +292,7 @@ class DodoScene extends Cinematique {
     let message = premiere ? (sombre ? LEGENDE_SOMBRE : LEGENDE_ARMURE)
       : sombre ? `« ${ouvre} La Main Noire te laisse une pièce de plus pour son champion. Ne la perds pas. »`
         : `« ${ouvre} La Confrérie te confie une pièce de plus pour le champion. Garde-la bien. »`;
+    if (avertit && !scelle) message += `\nPlus qu'une pièce, et l'armure sera complète : ton camp sera scellé pour de bon. Aujourd'hui, ta jauge penche ${palierCamp(this.G) > 0 ? 'vers la lumière' : palierCamp(this.G) < 0 ? "vers l'ombre" : 'entre les deux (l\'armure restera claire)'}.`;
     if (scelle) {
       message += scelle === 'mal' ? "\nL'armure est complète. Ton camp est scellé : l'ombre. Il n'y aura plus de retour en arrière."
         : "\nL'armure est complète. Ton camp est scellé : la lumière. Il n'y aura plus de retour en arrière.";

@@ -2,7 +2,12 @@
 // la première fois que tu le découvres. Un conseil ne s'affiche qu'une fois (G.tutoVu).
 
 const CONSEILS = {
-  carte: "Le matin, des aventuriers cherchent l'aventure sans savoir où aller. Clique sur un voyageur en bas, puis sur une contrée de la carte. Les étoiles disent le danger : n'envoie pas un novice dans une contrée à trois étoiles !",
+  carte: "Le matin, des aventuriers cherchent l'aventure sans savoir où aller. Clique sur un voyageur en bas, puis sur une contrée de la carte. Les étoiles disent le danger : chaque étoile rend chaque épreuve plus dure, et un novice rentre souvent blessé d'une contrée à trois étoiles !",
+  // Les conseils d'après le premier jour : Garrick n'est plus là, mais ses mots restent (une fois chacun)
+  banque: "La Banque Centrale, chez les nains. Un prêt, ça dépanne, mais la banque prélève chaque nuit. Ne prends que ce que tu peux rendre, petit.",
+  atelier: "L'atelier : les trouvailles que les aventuriers te laissent. Répare-les, et revends-les plus cher aux enchères. Un objet cassé ne vaut presque rien.",
+  jauge: "La lumière et l'ombre : ce que le monde pense de toi. Les gens aiment les cases bien rangées, hein ? Ha ! Regarde surtout ce que ça change pour ton comptoir.",
+  marcheNoir: "Tiens, tiens... Je ne t'ai jamais dit de descendre ici, hein ? Ha ha ! Sois prudent. Chaque affaire fait du bruit, et la garde a de bonnes oreilles.",
   comptoir: "Un client ! Sa commande est sur le parchemin, à droite. Clique sur tes marchandises, en bas, pour les glisser dans son baluchon. Mieux il est équipé, plus il a de chances de revenir... et de te reverser sa part du butin.",
   colis: "Bien ! Quand le baluchon est prêt, clique sur « Remettre le baluchon ». Ton flair, sous la commande, t'indique ses chances de revenir vivant.",
   remis: "Le voilà parti ! Dans quelques jours, il reviendra te raconter son aventure (si tout va bien...). Occupe-toi du suivant : la file attend.",
@@ -14,9 +19,10 @@ const CONSEILS = {
 };
 
 // Affiche le conseil `cle` de Garrick, si c'est la première fois (et si le tutoriel est actif).
-function conseilGarrick(scene, cle) {
+// `toujours` : un conseil des mécaniques d'après le premier jour (il s'affiche même après le tutoriel)
+function conseilGarrick(scene, cle, toujours = false) {
   const G = window.GAME;
-  if (!G || !G.tuto || !CONSEILS[cle]) return;
+  if (!G || (!G.tuto && !toujours) || !CONSEILS[cle]) return;
   G.tutoVu = G.tutoVu || {};
   if (G.tutoVu[cle]) return;
   G.tutoVu[cle] = true;

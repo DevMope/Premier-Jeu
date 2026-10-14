@@ -31,3 +31,22 @@ montants sont des ordres de grandeur). Le suivi de chaque constat (corrigé, rep
 
 ## Suivi
 (mis à jour au fil des corrections)
+- **Corrigés en v 0.54** :
+  - 1 : malus de 0,08 par étoile au-delà de la première sur chaque épreuve (compensé par le bonus de niveau). Simulation : novice en mine ★3, 69 % de retour (contre ~95 %) ; l'IA « toujours la zone la plus haute » fait faillite une fois sur quatre.
+  - 2 (en partie) : taxe hebdomadaire de la Confrérie « pour la défense contre le dragon » (12 / 16 / 22 % au-dessus de 200 p., selon le côté de la jauge). Simulation : ~15 000 p. au jour 30 au lieu de ~40 000. Reste à faire : réputation qui monte trop vite (44 au jour 30).
+  - 3 : l'armure ne devient sombre qu'à partir du palier −1.
+  - 4 : `coteCamp` respecte le camp scellé ; la 9e pièce n'arrive pas avant le jour 24 ; avertissement à la 8e pièce.
+  - 5 : l'écart des réussites compte au plus pour 14 missions (la jauge peut toujours revenir) ; plus de double compte.
+  - 6 : les missions en terres d'ombre ne touchent plus `G.mal` (migration : on retire 0,5 par mission d'ombre réussie des anciennes parties).
+  - 7 : quêtes d'ombre réécrites (titres « officiels » du Conseil, récits qui disent autre chose : enfants gobelins enchaînés dans la caravane, reliques qui « étaient à son peuple, avant »).
+  - 8 : visites de Garrick (étape 9d).
+  - 9 : bonneteau : partir sans choisir fait perdre la mise ; plus de passes, plus vite à chaque partie du jour.
+  - 11 : migration : objets imbriqués complétés avec les valeurs de départ ; réussites par camp reconstruites depuis l'historique.
+  - 12 (en partie) : conseils de Garrick à la première visite de la banque, de l'atelier, de la page « Lumière et ombre », du marché noir.
+  - 13 (en partie) : cinq nouvelles de la gazette sur le Conseil (Terres d'avant, taxe du dragon, âge du Sage, moine panda, fondations dans le Bourbier) ; murmures du marché noir.
+  - 14 : coup de pouce de Garrick (provisions sur le pas de la porte) quand il ne reste ni argent ni stock, au plus tous les 15 jours.
+  - 16 : GDD mis à jour (Garrick chef des Bannis).
+  - 17 : avertissement à la 8e pièce d'armure.
+  - 21 : textes corrigés (« Des jours de marche », « Marché des Mastres ») ; refus des terres d'ombre au nom du Conseil.
+  - 22 : on peut feuilleter toutes les lettres le soir (le nombre sans réponse s'affiche en rouge).
+- **Reportés** : 2 (réputation trop rapide), 10 (voie de la lumière peu rentable), 15 (flair), 18 (page Lumière et ombre trop chargée : à refaire avec le registre), 19 (Main Noire, réparations au début, mendiant/fontaine/chien), 20 (le mendiant et le sort d'oubli : à décider avec le joueur).

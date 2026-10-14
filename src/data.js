@@ -194,6 +194,9 @@ const ETAPE_VIVRES = {
 
 // Chance de réussir une épreuve selon ce que l'aventurier a reçu.
 const CHANCE_EPREUVE = { complet: 0.9, partiel: 0.55, rien: 0.2 };
+// (audit v0.53, constat 1) Chaque étoile au-delà de la première rend chaque épreuve plus dure ;
+// l'expérience de l'aventurier (son bonus de niveau) compense en partie.
+const MALUS_DANGER = 0.08;
 
 // Épreuves de combat : y mourir, c'est mourir valeureusement.
 const EPREUVES_COMBAT = ['araignee', 'loup', 'bandits', 'sanglier', 'pillards', 'yeti', 'mortvivant', 'monstre'];
@@ -211,7 +214,7 @@ const QUETES = {
     epreuves: [
       {
         type: 'route', besoin: 'ration', qte: 2,
-        intro: 'Quatre jours de marche à travers les collines...',
+        intro: 'Des jours de marche à travers les collines...',
         complet: "Tes rations m'ont tenu le ventre plein tout du long !",
         partiel: "J'ai dû me rationner... J'avais l'estomac dans les talons.",
         rien: "Je n'avais rien à manger. J'ai fini par goûter des baies douteuses...",
@@ -621,7 +624,15 @@ const EFFETS_CAMP = { bien: { reputation: 1.2, reputationAllie: 1.5, butin: 1, m
 // La jauge lumière ⟷ ombre, de −100 (l'ombre) à +100 (la lumière) : ce que le monde pense de toi.
 // (Dans le monde, les deux camps s'appellent la Confrérie et les Bannis.)
 const NOMS_CAMPS = { bien: 'la Confrérie', mal: 'les Bannis' };
-const JAUGE_CAMP = { reussite: 8, mal: 5, objet: 6, max: 100 }; // points par mission réussie pour un camp, par point de la jauge du mal, par objet marqué acheté
+const JAUGE_CAMP = { reussite: 8, mal: 5, objet: 6, max: 100, ecartMax: 14 };   // (ecartMax : l'écart des réussites compte au plus pour 14 missions : la jauge peut toujours revenir)
+// Le dernier jour avant lequel la 9e pièce d'armure (le sceau du camp) ne peut pas arriver
+const JOUR_SCEAU = 24;
+// (audit v0.53, constat 2) La taxe de la Confrérie, chaque fin de semaine (tous les 7 jours) : une
+// part de ce que tu as au-dessus de la franchise. « Pour la défense contre le dragon. » La
+// Confrérie taxe moins ceux qui penchent vers la lumière, et plus ceux qui penchent vers l'ombre.
+const TAXE_CONFRERIE = { franchise: 200, taux: { lumiere: 0.12, neutre: 0.16, ombre: 0.22 } };
+// (constat 14) Le coup de pouce de Garrick quand tu n'as plus rien : des provisions sur le pas de la porte
+const COUP_DE_POUCE = { argent: 12, stock: 2, delai: 15, cadeau: { ration: 2, gourde: 1, torche: 1 } };
 const PALIERS_JAUGE = [25, 60, 90];                              // les paliers, de chaque côté
 const NOMS_PALIERS_JAUGE = {
   3: 'Lumière éclatante', 2: 'Lumière', 1: 'Lueur', 0: 'Entre les deux', '-1': 'Pénombre', '-2': 'Ombre', '-3': 'Ombre épaisse',
@@ -756,7 +767,7 @@ const DECORATIONS = {
   lanterne: { nom: 'Lanterne enchantée', effet: 'Porte chance : +10 % sur les parts de butin.' },
   enclume: { nom: 'Enclume naine', effet: 'Réparations plus faciles : 1 matériau de moins.' },
   trefle: { nom: 'Trèfle du mendiant', effet: 'Porte-bonheur : tu gagnes les égalités aux dés, et le bonneteau va moins vite.' },
-  blason: { nom: 'Blason du bourg', effet: 'Les marchands du Mastre Marché te font 5 % de remise.' },
+  blason: { nom: 'Blason du bourg', effet: 'Les marchands du Marché des Mastres te font 5 % de remise.' },
   sceau: { nom: 'Sceau de la Confrérie', effet: 'Les aventuriers te font confiance : +1 de chance (trèfle) pour tous.' },
 };
 
@@ -820,6 +831,7 @@ const POSTES = {
   sabotages: 'Primes de la Faucheuse',
   bazar: 'Cadeaux du Bazar',
   ameliorations: 'Améliorations du shop', interets: 'Intérêts du coffre',
+  taxe: 'Taxe de la Confrérie', amende: 'Amendes de la garde', marcheNoir: 'Marché noir', decoration: 'Décorations', garderobe: 'Garde-robe', cadeau: 'Cadeaux reçus',
 };
 // On garde le détail des derniers jours (un peu plus d'une année).
 const JOURS_DE_COMPTES = 120;
@@ -1201,16 +1213,16 @@ Object.assign(QUETES, {
     ],
   },
   pillage: {
-    titre: 'Piller une caravane de pèlerins',
-    accueil: "Le Bourbier ? Les gobelins paient en or pour chaque caravane pillée. De l'or, c'est de l'or. Ne me regarde pas comme ça.",
+    titre: 'Arrêter une caravane « de pèlerins »',
+    accueil: "Le Bourbier ? Les gobelins paient en or pour qu'on arrête une caravane de « pèlerins ». C'est ce que dit l'avis du Conseil, en tout cas. De l'or, c'est de l'or.",
     pv: 2, duree: [2, 3], butin: [40, 60],
     epreuves: [
       { type: 'route', besoin: 'ration', qte: 1, intro: "J'ai attendu la caravane deux jours, caché{e} dans la boue.",
         complet: 'Tes rations m\'ont tenu{e}.', partiel: "J'avais faim...", rien: "J'ai mangé un crapaud. Cru." },
-      { type: 'bandits', besoin: 'epee', qte: 1, intro: 'La caravane avait des gardes !',
-        complet: "Ton épée a fait le travail. Je n'en suis pas fier{e}.", partiel: 'Un garde m\'a blessé{e} avant de fuir.', rien: 'Sans arme, les gardes m\'ont roué{e} de coups.' },
+      { type: 'bandits', besoin: 'epee', qte: 1, intro: 'Des pèlerins ? Ils portaient le tabard bleu de la Confrérie, et des chariots fermés à clé.',
+        complet: "Ton épée a fait le travail. Dans les chariots... des gobelins enchaînés. Des enfants, surtout.", partiel: 'Un garde m\'a blessé{e} avant de fuir.', rien: 'Sans arme, les gardes m\'ont roué{e} de coups.' },
       { type: 'riviere', besoin: 'corde', qte: 1, intro: 'Pour rapporter le butin aux gobelins, il fallait traverser le bourbier.',
-        complet: 'Avec ta corde, tout le butin est passé.', partiel: "J'ai perdu une partie du butin dans la boue.", rien: "Le bourbier a failli m'avaler." },
+        complet: 'Avec ta corde, tout le monde est passé. Les gobelins pleuraient en revoyant leurs petits.', partiel: "J'ai perdu une partie du butin dans la boue.", rien: "Le bourbier a failli m'avaler." },
     ],
   },
   pacte: {
@@ -1227,15 +1239,15 @@ Object.assign(QUETES, {
     ],
   },
   profanation: {
-    titre: 'Voler les reliques d\'un temple',
-    accueil: "La Tour du Nécromancien... Il veut les reliques du temple de la Lumière. Volées. C'est mal, je sais. Mais l'or n'a pas d'odeur.",
+    titre: 'Reprendre les reliques d\'un temple',
+    accueil: "La Tour du Nécromancien... Il veut les reliques du temple de la Lumière. Il dit qu'elles étaient à son peuple, avant. Avant quoi ? L'or n'a pas d'odeur.",
     pv: 3, duree: [3, 5], butin: [95, 135],
     epreuves: [
       { type: 'malediction', besoin: 'amulette', qte: 1, intro: 'Les reliques étaient protégées par une bénédiction... qui brûle les voleurs.',
         complet: 'Ton amulette m\'a protégé{e} de la lumière sacrée.', partiel: 'La lumière m\'a brûlé{e}...', rien: "J'en porte encore les marques." },
       { type: 'gouffre', besoin: 'corde', qte: 1, intro: 'Pour fuir, il fallait descendre la falaise derrière le temple.',
         complet: 'Ta corde a tenu jusqu\'en bas.', partiel: 'Les derniers mètres, je les ai faits en tombant.', rien: 'Je suis tombé{e}.' },
-      { type: 'mortvivant', besoin: 'epee', qte: 1, intro: 'À la Tour, les gardes morts du Nécromancien ne voulaient pas me laisser repartir.',
+      { type: 'mortvivant', besoin: 'epee', qte: 1, intro: "À la Tour, le Nécromancien a pleuré sur les reliques. Ses gardes morts ne savaient pas que j'étais avec lui.",
         complet: 'Ton épée m\'a ouvert le chemin.', partiel: "Je m'en suis tiré{e} de justesse.", rien: 'Ils voulaient me garder comme serviteur...' },
     ],
   },
@@ -1348,6 +1360,12 @@ const EVENEMENTS = {
 
 // Le crieur du marché : une nouvelle par jour, souvent absurde.
 const NOUVELLES = [
+  // (des indices sur le Conseil des Gardiens, glissés parmi les nouvelles absurdes)
+  "Le Conseil des Gardiens rappelle qu'il est interdit de parler des « Terres d'avant ». Personne ne sait ce que c'est, mais c'est interdit.",
+  "Une nouvelle taxe pour la défense contre le dragon de la montagne. Le dragon n'a pas été aperçu cette année. La taxe, si.",
+  "Le grand Sage du Conseil fête son anniversaire. Son âge reste un secret d'État. Les bougies, elles, ont été commandées par charrettes.",
+  "Un vieux moine panda affirme se souvenir d'une chanson « d'avant ». Le Conseil l'a invité à venir la chanter. On ne l'a pas revu.",
+  "Des fermiers ont trouvé des fondations de maisons dans le Bourbier. Le Conseil assure qu'il s'agit de très grands terriers de gobelins.",
   "Un gobelin a été enseveli sous une bouse de Groliphant, ces éléphants de dix mètres au garrot. On n'a retrouvé que son chapeau. Il était content du chapeau.",
   'Le concours de lancer de nain de Brêche-Haute est annulé : le nain a gagné.',
   "Un troll a tenté de payer le péage du pont avec un caillou. Le péagiste, lui aussi troll, a rendu la monnaie en cailloux.",

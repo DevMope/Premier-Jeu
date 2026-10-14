@@ -98,8 +98,14 @@ const Sauvegarde = {
   // Recharge une partie sauvegardée. Les champs ajoutés au jeu depuis gardent leur valeur de départ.
   charger(p) {
     nouvellePartie();
+    const defauts = JSON.parse(JSON.stringify(window.GAME));
     const brut = JSON.parse(JSON.stringify(p.partie));
     const G = Object.assign(window.GAME, JSON.parse(JSON.stringify(p.partie)));
+    // (audit v0.53) Les objets imbriqués (faucheuse, stats, journal...) gardent les sous-champs
+    // ajoutés depuis : on complète avec les valeurs de départ au lieu de les écraser.
+    for (const [k, d] of Object.entries(defauts)) {
+      if (d && typeof d === 'object' && !Array.isArray(d) && brut[k] && typeof brut[k] === 'object' && !Array.isArray(brut[k])) G[k] = { ...d, ...brut[k] };
+    }
     mettreAJourPartie(G, brut);
     return ['Marche', 'Maison'].includes(G.lieu) ? G.lieu : 'Nuit';
   },
@@ -213,7 +219,19 @@ function mettreAJourPartie(G, brut = G) {
   G.materiaux = G.materiaux || {};
   for (const id of Object.keys(MATERIAUX)) if (G.materiaux[id] === undefined) G.materiaux[id] = 0;
   G.mal = G.mal || 0;
+  if (!brut.reussites) {
+    // (audit v0.53) Les réussites par camp d'avant la jauge : on les retrouve dans l'historique
+    G.reussites = { bien: 0, mal: 0 };
+    for (const h of G.historique || []) { const z = ZONES[h.zone]; if (h.issue === 'vivant' && z && z.camp) G.reussites[z.camp]++; }
+  }
   G.reussites = { bien: 0, mal: 0, ...(G.reussites || {}) };
+  if (!G.malCorrige) {
+    // (audit v0.53) Les missions en terres d'ombre ne comptent plus dans les « âmes offertes »
+    G.malCorrige = true;
+    let ombre = 0;
+    for (const h of G.historique || []) { const z = ZONES[h.zone]; if (h.issue === 'vivant' && z && z.camp === 'mal') ombre++; }
+    G.mal = Math.max(0, (G.mal || 0) - 0.5 * ombre);
+  }
   G.objetsCamp = { bien: 0, mal: 0, ...(G.objetsCamp || {}) };
   G.palierJaugeVu = G.palierJaugeVu || 0;
   G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 };

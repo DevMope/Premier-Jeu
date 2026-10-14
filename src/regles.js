@@ -139,7 +139,9 @@ function chanceEtapeBase(e, colis, voyageur) {
   const enPlus = surplus(voyageur, colis)[e.besoin] || 0;
   const niv = NIVEAUX_AVENTURIER[voyageur.niveau] || NIVEAUX_AVENTURIER.novice;
   const evenement = modifEvenement(window.GAME, 'danger', voyageur.zone);
-  return Phaser.Math.Clamp(chanceEpreuve(niveauEpreuve(e, colis, voyageur)) + enPlus * BONUS_SURPLUS + niv.bonus + evenement, 0.05, 0.97);
+  const etoiles = ZONES[voyageur.zone] ? ZONES[voyageur.zone].danger : 1;
+  const danger = Math.max(0, MALUS_DANGER * (etoiles - 1) - niv.bonus);
+  return Phaser.Math.Clamp(chanceEpreuve(niveauEpreuve(e, colis, voyageur)) + enPlus * BONUS_SURPLUS + niv.bonus + evenement - danger, 0.05, 0.97);
 }
 
 // Avec la chance : une épreuve ratée peut être rattrapée de justesse par son trèfle.
@@ -340,7 +342,7 @@ function refusZone(G, v, zone) {
   const z = ZONES[zone];
   const banni = PEUPLES_OMBRE.includes(v.race);
   if (z.camp === 'bien' && banni) return "« Les terres de la Confrérie ? Ils me pendraient à l'entrée. Trouve-moi autre chose. »";
-  if (z.camp === 'mal' && v.envie !== 'or' && !banni) return '« Servir le mal ? Jamais ! Trouve-moi une quête honnête. »';
+  if (z.camp === 'mal' && v.envie !== 'or' && !banni) return "« Les terres d'ombre ? Jamais ! Le Conseil des Gardiens dit que c'est le repaire du mal. Trouve-moi une quête honnête. »";
   if (z.danger >= 5 && ORDRE_NIVEAUX.indexOf(v.niveau) < ORDRE_NIVEAUX.indexOf('heros')) return "« Là-bas ? Il faut être un héros pour s'y risquer. Pas moi, pas encore. »";
   return null;
 }
@@ -480,6 +482,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     garde: { visites: 0, dernier: 0, saisies: 0 },   // les visites de la garde de la Confrérie
     interdits: {},     // les objets interdits achetés au marché noir (étape 9e)
     garrickVu: [],     // les visites de Garrick déjà faites
+    malCorrige: true,  // (migration de l'audit v0.53 déjà faite)
     pieges: {},        // les objets piégés cachés sous le comptoir
     faucheuse: { faveur: 0, morts: 0, visites: 0, cadeau: false, mission: null, sabotages: 0 },
     experience: 0, // nombre de clients servis depuis le début
@@ -1222,6 +1225,13 @@ function nuit(G) {
   G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2);
   G.expressMateriaux = materiauxExpress();
   const mauvaisJour = G.journal.morts > 0 || G.argent <= SEUIL_FAILLITE + 30;
+  // La taxe de la Confrérie, en fin de semaine
+  let taxe = 0;
+  if (G.jour % 7 === 0) {
+    const p = palierCamp(G);
+    taxe = Math.round(Math.max(0, G.argent - TAXE_CONFRERIE.franchise) * TAXE_CONFRERIE.taux[p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre']);
+    if (taxe > 0) payer(G, taxe, 'taxe');
+  }
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1236,6 +1246,14 @@ function nuit(G) {
   // Le sort de ceux qui rentrent aujourd'hui est tiré pendant la nuit (et donc sauvegardé).
   for (const p of G.partis) if (!p.termine && p.retour === G.jour && !p.resultat) p.resultat = simulerAventure(p.voyageur, p.colis, p.pieges);
   reveilDuMatin(G, mauvaisJour);
+  if (taxe > 0) G.reveil.lignes.push(`Un percepteur de la Confrérie est passé : ${taxe} pièces de taxe « pour la défense contre le dragon ».`);
+  // Plus d'argent ni de provisions : Garrick laisse de quoi repartir (pas trop souvent)
+  const stock = Object.values(G.stock || {}).reduce((a, n) => a + n, 0);
+  if (G.argent < COUP_DE_POUCE.argent && stock < COUP_DE_POUCE.stock && G.jour - (G.coupDePouce || -99) >= COUP_DE_POUCE.delai) {
+    G.coupDePouce = G.jour;
+    for (const [id, n] of Object.entries(COUP_DE_POUCE.cadeau)) G.stock[id] = (G.stock[id] || 0) + n;
+    G.reveil.lignes.push("Au réveil, des provisions sur le pas de la porte : deux rations, une gourde, une torche. Un mot : « Tiens bon, petit. — G. »");
+  }
   recompenserZones(G);
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
@@ -1506,7 +1524,7 @@ function terminerAventure(G, parti) {
     // Une commande par lettre remplie à moitié ne rapporte que la moitié de la réputation.
     const part = v.prevu ? partCommandeRemplie(v, parti.colis) : 1;
     G.reputation += GAIN_REPUTATION_SUCCES * multReputationCamp(G, camp) * part;
-    if (camp) { G.mal += EFFETS_CAMP[camp].mal; G.reussites[camp] = (G.reussites[camp] || 0) + 1; }
+    if (camp) G.reussites[camp] = (G.reussites[camp] || 0) + 1;   // (audit v0.53 : plus de G.mal ici, il ne compte que les âmes offertes)
     G.journal.retours++;
     // Un succès de plus : il progresse, et la carte aussi (déblocage des étoiles).
     const danger = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
@@ -2204,11 +2222,13 @@ function recompenserZones(G) {
     G.zonesConnues.push(z);
     if (G.armure.length + G.piecesAVenir.length < ARMURE.length) G.piecesAVenir.push(z);
   }
-  if (G.piecesAVenir.length && G.armure.length < ARMURE.length) {
+  // (le sceau est un moment de l'histoire : la dernière pièce n'arrive pas avant le jour JOUR_SCEAU)
+  const derniereRetenue = G.armure.length === ARMURE.length - 1 && G.jour < JOUR_SCEAU;
+  if (G.piecesAVenir.length && G.armure.length < ARMURE.length && !derniereRetenue) {
     const z = G.piecesAVenir.shift();
     const piece = ARMURE[G.armure.length];
     G.armure.push(piece.id);
-    G.nouvellesPieces.push({ piece: piece.id, zone: z, cote: coteArmure(G) });
+    G.nouvellesPieces.push({ piece: piece.id, zone: z, cote: coteArmure(G), avertit: G.armure.length === ARMURE.length - 1 });
     // L'armure est complète : ton camp est scellé pour de bon.
     if (G.armure.length === ARMURE.length && !G.camp) {
       G.camp = coteArmure(G) === 'sombre' ? 'mal' : 'bien';
@@ -2220,7 +2240,7 @@ function recompenserZones(G) {
 // Le côté de l'armure : scellé avec le camp, sinon la jauge du mal contre la réputation.
 function coteArmure(G) {
   if (G.camp) return G.camp === 'mal' ? 'sombre' : 'clair';
-  return jaugeCamp(G) < 0 ? 'sombre' : 'clair';
+  return palierCamp(G) <= -1 ? 'sombre' : 'clair';   // (audit v0.53 : une seule mort ne suffit plus à basculer)
 }
 
 // --- Étape 9a : la jauge lumière ⟷ ombre ---
@@ -2229,7 +2249,8 @@ function coteArmure(G) {
 // les objets marqués achetés.
 function jaugeCamp(G) {
   const r = G.reussites || { bien: 0, mal: 0 }, o = G.objetsCamp || { bien: 0, mal: 0 };
-  const j = (r.bien - r.mal) * JAUGE_CAMP.reussite - (G.mal || 0) * JAUGE_CAMP.mal + (o.bien - o.mal) * JAUGE_CAMP.objet;
+  const ecart = Math.max(-JAUGE_CAMP.ecartMax, Math.min(JAUGE_CAMP.ecartMax, r.bien - r.mal));
+  const j = ecart * JAUGE_CAMP.reussite - (G.mal || 0) * JAUGE_CAMP.mal + (o.bien - o.mal) * JAUGE_CAMP.objet;
   return Math.max(-JAUGE_CAMP.max, Math.min(JAUGE_CAMP.max, Math.round(j)));
 }
 
@@ -2241,6 +2262,7 @@ function palierCamp(G) {
 
 // De quel côté es-tu ? 'bien', 'mal' ou null tant qu'aucun palier n'est franchi.
 function coteCamp(G) {
+  if (G.camp) return G.camp;   // (audit v0.53 : une fois scellé, le camp ne bouge plus)
   const p = palierCamp(G);
   return p > 0 ? 'bien' : p < 0 ? 'mal' : null;
 }

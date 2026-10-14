@@ -18,6 +18,7 @@ class MarcheNoirScene extends Phaser.Scene {
     this.elements = [];
     this.majBourse();
     if (G.marcheNoir.entre) this.accueil(); else this.porte();
+    this.time.delayedCall(900, () => conseilGarrick(this, 'marcheNoir', true));
   }
 
   majBourse() { this.texteBourse.setText(`${this.G.argent} p.`); }

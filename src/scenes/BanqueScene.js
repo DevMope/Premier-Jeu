@@ -5,6 +5,7 @@ class BanqueScene extends Phaser.Scene {
   constructor() { super('Banque'); }
 
   create() {
+    this.time.delayedCall(500, () => conseilGarrick(this, 'banque', true));
     const G = this.G = window.GAME;
     this.cameras.main.setBackgroundColor('#2a2a30');
 

@@ -207,7 +207,10 @@ class NightScene extends Phaser.Scene {
       c.add(this.add.text(x1 + 14, y, '📜 ' + l.texte, style(11, '#3b2410', { fontStyle: 'italic', wordWrap: { width: x2 - x1 - 24 }, lineSpacing: 1 })));
     });
     // ... puis les commandes (à accepter ou refuser), les nouvelles d'abord.
-    const liste = [...G.annonces].sort((a, b) => a.acceptee - b.acceptee).slice(0, 4 - infos.length);
+    // (audit v0.53 : on peut feuilleter toutes les lettres, aucune n'est refusée sans avoir été vue)
+    const max = 4 - infos.length, toutes = [...G.annonces].sort((a, b) => a.acceptee - b.acceptee);
+    if ((this.pageLettres || 0) * max >= toutes.length) this.pageLettres = 0;
+    const liste = toutes.slice((this.pageLettres || 0) * max, (this.pageLettres || 0) * max + max);
     if (!liste.length && !infos.length) c.add(this.add.text(x1 + 16, 127, 'Aucune lettre pour le moment.\nLes lettres sont rares.', style(13, '#3b2410')));
     liste.forEach((a, i) => {
       const y = 124 + (i + infos.length) * 52;
@@ -223,7 +226,12 @@ class NightScene extends Phaser.Scene {
       }
     });
     const cachees = G.annonces.length - liste.length;
-    if (cachees > 0) c.add(this.add.text(x2 - 12, 344, `+ ${cachees} autre${cachees > 1 ? 's' : ''} lettre${cachees > 1 ? 's' : ''}`, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(1, 0.5));
+    if (cachees > 0) {
+      const nonLues = toutes.filter((x, i) => !x.acceptee && !liste.includes(x)).length;
+      const suite = this.add.text(x2 - 12, 344, `▸ ${cachees} autre${cachees > 1 ? 's' : ''} lettre${cachees > 1 ? 's' : ''}${nonLues ? ` (${nonLues} sans réponse)` : ''}`, style(12, nonLues ? '#a03a1a' : '#6b4a2a', { fontStyle: 'bold italic' })).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+      suite.on('pointerdown', () => { this.pageLettres = (this.pageLettres || 0) + 1; Son.jouer('page'); this.tout(); });
+      c.add(suite);
+    }
   }
 
   petitBouton(x, y, texte, couleur, action) {
