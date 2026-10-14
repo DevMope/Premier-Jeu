@@ -27,7 +27,10 @@ const CHANCE_SAIGNEMENT = 0.35;
 // Pas plus de 2 bandages en plus de la commande : le reste ne lui servirait à rien.
 const BANDAGES_EN_PLUS_MAX = 2;
 // Le sac de l'aventurier : combien d'objets en plus de sa commande il peut porter.
-const SAC = { hobbit: 2, magicienne: 2, humain: 3, elfe: 3, nain: 4 };
+const SAC = { hobbit: 2, magicienne: 2, humain: 3, elfe: 3, nain: 4, gobelin: 2, momie: 2, vampire: 3, loupgarou: 3, orc: 4, panda: 4, troll: 5 };
+// Les peuples de l'ombre (les Bannis) et ceux qui n'arrivent que plus tard côté lumière
+const PEUPLES_OMBRE = ['gobelin', 'orc', 'loupgarou', 'vampire', 'momie', 'troll'];
+const PEUPLES_LUMIERE_TARD = ['panda'];
 // Un objet en plus pour une épreuve qui le demande : +5 % de chances de la réussir.
 const BONUS_SURPLUS = 0.05;
 
@@ -345,6 +348,14 @@ const NOMS = {
   nain: [['Brunhild Martelor', true], ['Borin Pied-de-Roc', false], ['Helga Forgeterre', true], ['Gromli Tranchepierre', false]],
   elfe: [['Faelor Ventlune', false], ['Sylwen Rosée', true], ['Aerin Haut-Chêne', false], ['Lindë Brisargent', true]],
   magicienne: [['Esmée Brume-Étoile', true], ['Ysolde Cendrecœur', true], ['Céleste Mille-Runes', true]],
+  // Les Bannis (ils ne viennent qu'une fois la jauge passée côté ombre) et les pandas (côté lumière)
+  gobelin: [['Grinx Pincefer', false], ['Zizka Mordille', true], ['Ratchou Ventrecreux', false], ['Nibble Griffecourte', true]],
+  orc: [['Gorrak Brise-Crâne', false], ['Urza Dent-de-Fer', true], ['Mogdar Poing-Noir', false], ['Sharga Hurlevent', true]],
+  loupgarou: [['Fenrick Lunegrise', false], ["Ysra Croc-d'Argent", true], ['Varguel Pleine-Lune', false], ['Nocta Pelage-Noir', true]],
+  vampire: [['Vladek Sangfroid', false], ['Carmilla Nuit-Pâle', true], ['Ambrose Veine-Noire', false], ['Lisbeth Crépuscule', true]],
+  momie: [['Nekhet Sable-Ancien', false], ['Amunet Bandelette', true], ['Khafra Poussière', false], ['Tiyé Sept-Sceaux', true]],
+  troll: [['Grumsh Mange-Pierre', false], ['Bolga Roc-Fendu', true], ['Ugrok Pont-Vieux', false], ['Thrunda Mousse-Grise', true]],
+  panda: [['Bao Bambou-Doux', false], ['Mei Lune-Calme', true], ['Tenzin Pas-Lourd', false], ['Lin Feuille-Verte', true]],
 };
 
 // Quand les noms ci-dessus sont tous pris (beaucoup de clients, de longues missions), on en
@@ -360,6 +371,13 @@ const NOMS_COMPOSES = {
     familles: ['Feuillargent', "Chant-d'Aube", 'Ventclair', 'Étoile-Pâle', 'Rive-Lune'] },
   magicienne: { m: [], f: ['Morgane', 'Albane', 'Sélène', 'Ondine', 'Iris', 'Mélusine'],
     familles: ["Brume-d'Opale", 'Cent-Sorts', 'Lune-Pâle', "Plume-d'Encre", 'Flamme-Bleue'] },
+  gobelin: { m: ['Snik', 'Grob', 'Pikel', 'Mozz'], f: ['Tizzi', 'Nakka', 'Rizla', 'Gobbie'], familles: ['Pincefer', 'Mordille', 'Ventrecreux', 'Trousse-Bourse'] },
+  orc: { m: ['Thrak', 'Mogrul', 'Durbag', 'Karg'], f: ['Urza', 'Gruna', 'Sharga', 'Morka'], familles: ['Brise-Crâne', 'Dent-de-Fer', 'Poing-Noir', 'Hurlevent'] },
+  loupgarou: { m: ['Fenrick', 'Varguel', 'Lupan', 'Garrou'], f: ['Ysra', 'Nocta', 'Louve', 'Selva'], familles: ['Lunegrise', "Croc-d'Argent", 'Pleine-Lune', 'Pelage-Noir'] },
+  vampire: { m: ['Vladek', 'Ambrose', 'Lucan', 'Sévrin'], f: ['Carmilla', 'Lisbeth', 'Morwenna', 'Ilse'], familles: ['Sangfroid', 'Nuit-Pâle', 'Veine-Noire', 'Crépuscule'] },
+  momie: { m: ['Nekhet', 'Khafra', 'Sethos', 'Imhot'], f: ['Amunet', 'Tiyé', 'Nefret', 'Isha'], familles: ['Sable-Ancien', 'Bandelette', 'Poussière', 'Sept-Sceaux'] },
+  troll: { m: ['Grumsh', 'Ugrok', 'Borrog', 'Tuk'], f: ['Bolga', 'Thrunda', 'Mogra', 'Hulda'], familles: ['Mange-Pierre', 'Roc-Fendu', 'Pont-Vieux', 'Mousse-Grise'] },
+  panda: { m: ['Bao', 'Tenzin', 'Jian', 'Norbu'], f: ['Mei', 'Lin', 'Yuki', 'Pema'], familles: ['Bambou-Doux', 'Lune-Calme', 'Pas-Lourd', 'Feuille-Verte'] },
 };
 
 // La première journée est écrite à la main.
@@ -603,6 +621,13 @@ const PRENOMS = {
   nain: { m: ['Gimrod', 'Balmor', 'Hrolf', 'Thurgan'], f: ['Dagna', 'Hilde', 'Brynja', 'Sigrun'] },
   elfe: { m: ['Elrion', 'Faenor', 'Ithil', 'Caladir'], f: ['Nimrielle', 'Galwen', 'Ilyra', 'Aelith'] },
   magicienne: { m: [], f: ['Morgane', 'Viviane', 'Isaure', 'Ondine'] },
+  gobelin: { m: ['Snik', 'Grob', 'Pikel'], f: ['Tizzi', 'Nakka', 'Rizla'] },
+  orc: { m: ['Thrak', 'Mogrul', 'Karg'], f: ['Gruna', 'Morka', 'Urza'] },
+  loupgarou: { m: ['Lupan', 'Garrou', 'Fenrick'], f: ['Louve', 'Selva', 'Nocta'] },
+  vampire: { m: ['Lucan', 'Sévrin', 'Ambrose'], f: ['Morwenna', 'Ilse', 'Lisbeth'] },
+  momie: { m: ['Sethos', 'Imhot', 'Khafra'], f: ['Nefret', 'Isha', 'Tiyé'] },
+  troll: { m: ['Borrog', 'Tuk', 'Ugrok'], f: ['Mogra', 'Hulda', 'Bolga'] },
+  panda: { m: ['Jian', 'Norbu', 'Bao'], f: ['Yuki', 'Pema', 'Mei'] },
 };
 const LIENS = [
   { nom: 'fils', feminin: false }, { nom: 'fille', feminin: true },
@@ -1185,6 +1210,13 @@ const GOUTS = {
   elfe: { aime: ['livre', 'broche'], deteste: ['tabac'] },
   humain: { aime: ['vin', 'ferACheval'], deteste: [] },
   magicienne: { aime: ['livre', 'ferACheval'], deteste: ['vin'] },
+  gobelin: { aime: ['broche', 'ferACheval'], deteste: ['gateau'] },
+  orc: { aime: ['vin', 'ferACheval'], deteste: ['livre'] },
+  loupgarou: { aime: ['gateau', 'miel'], deteste: ['broche'] },
+  vampire: { aime: ['vin', 'livre'], deteste: ['miel'] },
+  momie: { aime: ['livre', 'broche'], deteste: ['vin'] },
+  troll: { aime: ['gateau', 'miel'], deteste: ['livre'] },
+  panda: { aime: ['miel', 'gateau', 'livre'], deteste: ['tabac'] },
 };
 const EFFET_CADEAU = { aime: { trefle: 3, relation: 1 }, neutre: { trefle: 1, relation: 0 }, deteste: { trefle: 0, relation: -1 } };
 

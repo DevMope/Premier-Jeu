@@ -1,7 +1,7 @@
 // Le bureau : le registre des fiches (à gauche), l'ardoise du chiffre d'affaires
 // et les tiroirs à statistiques (à droite). La page s'ouvre par-dessus le comptoir
 // ou le soir, qui restent en pause.
-const NOMS_RACES = { humain: 'Humain', hobbit: 'Hobbit', nain: 'Nain', elfe: 'Elfe', magicienne: 'Magicienne' };
+const NOMS_RACES = { humain: 'Humain', hobbit: 'Hobbit', nain: 'Nain', elfe: 'Elfe', magicienne: 'Magicienne', gobelin: 'Gobelin', orc: 'Orc', loupgarou: 'Loup-garou', vampire: 'Vampire', momie: 'Momie', troll: 'Troll', panda: 'Panda' };
 const ONGLETS = [
   ['avenir', 'À venir'], ['aujourdhui', "Aujourd'hui"], ['mission', 'En mission'],
   ['revenus', 'Revenus'], ['disparus', 'Disparus'], ['repertoire', 'Répertoire'],

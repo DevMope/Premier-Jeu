@@ -593,6 +593,12 @@ const VOIX = {
   elfe: { forme: 'sine', base: 330, ecart: 90, note: 0.1 },
   magicienne: { forme: 'sine', base: 280, ecart: 80, note: 0.09 },
   gobelin: { forme: 'sawtooth', base: 380, ecart: 120, note: 0.06 },
+  orc: { forme: 'square', base: 95, ecart: 30, note: 0.12 },
+  loupgarou: { forme: 'sawtooth', base: 130, ecart: 45, note: 0.1 },
+  vampire: { forme: 'sine', base: 170, ecart: 40, note: 0.13 },
+  momie: { forme: 'triangle', base: 125, ecart: 25, note: 0.16 },
+  troll: { forme: 'square', base: 70, ecart: 20, note: 0.17 },
+  panda: { forme: 'triangle', base: 150, ecart: 40, note: 0.11 },
   faucheuse: { forme: 'sawtooth', base: 70, ecart: 15, note: 0.16 },
 };
 // Les intonations : la même voix, mais la phrase monte, descend, s'emballe ou traîne selon

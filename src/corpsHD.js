@@ -18,6 +18,14 @@ const PROPORTIONS = {
   elfe: { H: 68, ep: 7.6, torse: 24, rx: 7.2, ry: 9.6, membre: 0.82 },
   magicienne: { H: 72, ep: 8.2, torse: 22, rx: 8, ry: 9.2, membre: 0.9 },
   gobelin: { H: 50, ep: 8, torse: 14, rx: 8.6, ry: 8, membre: 0.9 },
+  // Les peuples de l'ombre (tailles données par le joueur : gobelin 11, momie 15, vampire 16,
+  // orc 17, loup-garou 20, troll 24) et le panda (21), à 4 pixels HD par unité.
+  momie: { H: 60, ep: 8.6, torse: 21, rx: 8.2, ry: 9, membre: 1 },
+  vampire: { H: 64, ep: 8.2, torse: 23, rx: 7.6, ry: 9.6, membre: 0.9 },
+  orc: { H: 68, ep: 12.5, torse: 24, rx: 9.4, ry: 9.2, membre: 1.35 },
+  loupgarou: { H: 80, ep: 11.5, torse: 28, rx: 9.4, ry: 9, membre: 1.25 },
+  panda: { H: 84, ep: 13.5, torse: 30, rx: 11, ry: 10, membre: 1.35 },
+  troll: { H: 96, ep: 15.5, torse: 34, rx: 11.5, ry: 10.5, membre: 1.6 },
 };
 
 // Les figurants : un peuple, des couleurs fixes, un costume.

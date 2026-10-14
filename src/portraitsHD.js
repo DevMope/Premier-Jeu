@@ -204,6 +204,14 @@ const PEUPLES_HD = {
   nain: { peaux: [1, 2, 3], cheveux: [0xba5826, 0x7a3a1a, 0x3a2a1a, 0x9a9aa0, 0xd8a040], habits: [0x8a2a34, 0x34465a, 0x5a3a24] },
   elfe: { peaux: [0, 1], cheveux: [0xe8dca8, 0xd4d4e0, 0x2a2a34, 0xc8944a], habits: [0x2f6a4a, 0x4a7a6a, 0x6a7a8a, 0x3a5a3a] },
   magicienne: { peaux: [0, 1, 2, 3], cheveux: [0xb0602a, 0x2a1a30, 0xd8c070, 0xa0a0b0, 0x8a2a5a], habits: [0x5a3a8a, 0x2a4a8a, 0x6a2a5a, 0x3a3a6a] },
+  // Les peuples de l'ombre et le panda (la peau est fixée par TRAITS_PEUPLES, dans corpsVueHD)
+  gobelin: { peaux: [1], cheveux: [0x3a2a1a, 0x5a3a20], habits: [0x6a5030, 0x4a3a5a, 0x5a4a2a] },
+  orc: { peaux: [1], cheveux: [0x1a1a1a, 0x3a2a1a, 0x6a1a1a], habits: [0x4a3a2a, 0x3a3a3a, 0x5a2a2a] },
+  loupgarou: { peaux: [1], cheveux: [0x4a3a28], habits: [0x3a3030, 0x4a3a2a, 0x2a2a3a] },
+  vampire: { peaux: [1], cheveux: [0x101014, 0x1a1a22], habits: [0x1a1a22, 0x2a1020, 0x101828] },
+  momie: { peaux: [1], cheveux: [0x3a3a3a], habits: [0x6a5a40, 0x5a4a3a] },
+  troll: { peaux: [1], cheveux: [0x3a3a3a], habits: [0x4a4a3a, 0x5a4a30] },
+  panda: { peaux: [1], cheveux: [0x201c1c], habits: [0x8a3a20, 0xa85a20, 0x6a3a2a, 0x3a4a6a] },
 };
 
 function geneHD(p) {
@@ -265,6 +273,14 @@ const VISAGES = {
   nain: { cy: 43, rx: 17, ry: 19, menton: 0, yeux: 43, nez: [5, 4.6], bouche: 60, cou: 0, torse: 66, sourcil: 3 },
   elfe: { cy: 42, rx: 14, ry: 19, menton: 0.22, yeux: 44, nez: [2.2, 3.8], bouche: 56, cou: 5, torse: 66, sourcil: 1, front: 3 },   // (front : la frange et le diadème restent haut, le front se voit)
   magicienne: { cy: 46, rx: 15, ry: 18, menton: 0.12, yeux: 45, nez: [2.6, 3.6], bouche: 59, cou: 5, torse: 68, sourcil: 1 },
+  // (les peuples de l'ombre et le panda : en attendant leurs bustes propres)
+  gobelin: { cy: 45, rx: 15, ry: 17, menton: 0.2, yeux: 44, nez: [2.6, 4], bouche: 58, cou: 5, torse: 67, sourcil: 2 },
+  orc: { cy: 43, rx: 17, ry: 19, menton: 0, carre: true, yeux: 42, nez: [3.2, 3.8], bouche: 58, cou: 7, torse: 66, sourcil: 3 },
+  loupgarou: { cy: 43, rx: 16, ry: 18.5, menton: 0.05, yeux: 41, nez: [2.8, 3.8], bouche: 57, cou: 6, torse: 66, sourcil: 2 },
+  vampire: { cy: 43, rx: 14.5, ry: 19, menton: 0.18, yeux: 42, nez: [2.4, 3.8], bouche: 56, cou: 5, torse: 66, sourcil: 1 },
+  momie: { cy: 44, rx: 15, ry: 18.5, menton: 0.1, yeux: 42, nez: [2.4, 3.4], bouche: 57, cou: 5, torse: 66, sourcil: 1 },
+  troll: { cy: 42, rx: 18, ry: 19.5, menton: 0, carre: true, yeux: 41, nez: [5.5, 5], bouche: 60, cou: 8, torse: 66, sourcil: 3 },
+  panda: { cy: 44, rx: 18, ry: 18, menton: 0, yeux: 43, nez: [3, 3], bouche: 59, cou: 7, torse: 67, sourcil: 2 },
 };
 
 // La tête (ellipse dont le menton peut s'affiner).
@@ -295,23 +311,30 @@ const MECHES = (x, y) => { const m = (x * 3 + Math.round(Math.sin(y / 3.5) * 1.5
 
 function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = false, pose = null } = {}) {
   const t = new ToileHD(HD_L, HD_H);
-  const g = gene.colporteur ? { ...gene, habit: 0x6a5a40, cheveux: 0x4a3a2a, armure: false, barbe: 'courte', coiffure: 'court' } : gene;
+  let g = gene.colporteur ? { ...gene, habit: 0x6a5a40, cheveux: 0x4a3a2a, armure: false, barbe: 'courte', coiffure: 'court' } : gene;
+  // Les peuples de l'ombre et le panda : leurs traits (peau, oreilles, museau, crocs...) sont dans
+  // TRAITS_PEUPLES (corpsVueHD.js), les mêmes que pour les corps en pied
+  const TR = (typeof TRAITS_PEUPLES !== 'undefined' && TRAITS_PEUPLES[g.race]) || {};
+  if (TR.cheveux !== undefined) g = { ...g, coiffure: TR.cheveux === 'plaque' ? 'court' : 'chauve', armure: false, barbe: null };
   const cx = 40;
   const v = g.race === 'elfe' && !g.feminin ? { ...VISAGES.elfe, menton: 0, carre: true } : VISAGES[g.race];
   // Un trois-quarts léger : le visage est tourné de quelques pixels vers la droite (l'oreille
   // gauche se dégage, la droite se cache derrière la joue), et chaque forme porte son ombre.
   const T = 3;
   t.relief = true;
-  t.rampes.peau = PEAUX_VIVES[g.peau];
+  t.rampes.peau = TR.peau ? rampeVive(TR.peau) : PEAUX_VIVES[g.peau];
   t.rampes.cheveux = rampeVive(g.cheveux);
   t.rampes.habit = rampeVive(g.habit);
-  t.rampes.cape = rampeVive(g.cape);
-  t.rampes.iris = rampeVive(g.yeux);
+  t.rampes.cape = rampeVive(TR.cape || g.cape);
+  t.rampes.iris = rampeVive(TR.yeux || g.yeux);
+  t.rampes.museau = rampeVive(TR.museau || 0x5a4030); t.rampes.noir = rampeVive(TR.taches || 0x201c1c); t.rampes.bande = rampeVive(TR.bandelettes || 0xd8cfae); t.rampes.truffe = rampe(0x1a1410);
+  if (!t.rampes.blanc) t.rampes.blanc = rampeVive(0xf4f0ea);
   t.rampes.cuir = rampeVive(0x6a3f22); t.rampes.metal = rampeVive(0x7a8498); t.rampes.lin = rampeVive(0xd8ccb0);
   t.rampes.velours = rampe(0x4a1a3a); t.rampes.plume = rampe(0xf0e8d0); t.rampes.fourrure = rampe(0xe8e0d0);
   t.rampes.lin = rampe(0xd8ccb0);
-  t.rampes.levres = levresPour(g.peau, g.feminin);
+  t.rampes.levres = TR.levres ? rampeVive(TR.levres) : levresPour(g.peau, g.feminin);
   t.rampes.barbe = t.rampes.cheveux;
+  const oreilles = TR.oreilles !== undefined ? TR.oreilles : g.race === 'elfe' ? 'elfe' : 'rondes-humaines';
 
   // 1. Les cheveux longs, derrière tout le reste
   if (['long', 'queue', 'chignon'].includes(g.coiffure) || g.race === 'elfe' || g.race === 'magicienne') {
@@ -331,7 +354,10 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
 
   // 3. Le cou, les oreilles, la tête
   if (v.cou) t.forme('peau', (x, y) => (y >= v.cy + v.ry - 6 && y <= v.torse + 2 && Math.abs(x + 0.5 - cx) < v.cou ? [(x + 0.5 - cx) / v.cou * 0.8, 0.3, 0.6] : null), { decalage: -0.7 });
-  if (g.race !== 'elfe') {
+  if (oreilles === 'grandes') {
+    // Les grandes oreilles des gobelins : longues, pointues, à l'horizontale
+    for (const sens of [-1, 1]) t.forme('peau', (x, y) => { const u = (x + 0.5 - cx + sens * T * 0.8) * sens - v.rx + 2, w = y + 0.5 - (v.yeux + 4); return u > 0 && u < 14 && Math.abs(w + u * 0.15) < 4.2 - u * 0.28 ? [sens * 0.7, -0.3, 0.6] : null; });
+  } else if (oreilles === 'rondes-humaines') {
     const o = g.race === 'hobbit' ? [4, 5.6] : [3.2, 5.2];
     t.forme('peau', ellipsoide(cx - (v.rx + 0.5) - T * 0.7, v.yeux + 6, o[0], o[1]));          // l'oreille dégagée, derrière
     t.forme('peau', ellipsoide(cx + (v.rx + 0.5) - T * 1.6, v.yeux + 6, o[0] * 0.8, o[1] * 0.9)); // l'autre, presque cachée par la joue
@@ -342,6 +368,8 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   const ey = v.yeux;
   const fx = cx + T;   // le milieu du visage, tourné
   t.relief = false;    // (les traits du visage sont des dessins à plat : pas d'ombre portée)
+  if (TR.taches) { t.relief = true; t.forme('noir', ellipsoide(fx - 9, ey + 1, 8.5, 6.5), { decalage: 0.1, bord: false }); t.forme('noir', ellipsoide(fx + 8, ey + 1, 7.5, 6.5), { decalage: 0.1, bord: false }); t.relief = false; }
+  if (TR.verrues) { t.relief = true; for (const [i, j] of [[-11, 9], [10, -2], [6, 12], [-6, -8]]) t.forme('peau', ellipsoide(fx + i, ey + j, 1.6, 1.4), { decalage: -0.6, bord: false }); t.relief = false; }
   const oeil = YEUX[cligne ? 'cligne' : expression];
   t.dessin(fx - 14, ey - 3, oeil, LEGENDE_OEIL);
   t.dessin(fx + 3, ey - 3, oeil, LEGENDE_OEIL, true);
@@ -351,7 +379,15 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
     t.poser(fx - 14, ey - 3 + ligne, 'cheveux', 0); t.poser(fx - 15, ey - 4 + ligne, 'cheveux', 0);
     t.poser(fx + 13, ey - 3 + ligne, 'cheveux', 0); t.poser(fx + 14, ey - 4 + ligne, 'cheveux', 0);
   }
-  if (g.race === 'nain') t.forme('peau', ellipsoide(fx - 0.5, ey + 6 + v.nez[1] * 0.6, v.nez[0], v.nez[1]), { decalage: 0.3 });
+  if (TR.museau) {
+    // Le museau : une bosse large qui avance sous les yeux, la truffe sombre au bout
+    t.relief = true;
+    const my = ey + (g.race === 'panda' ? 9 : 10), mr = g.race === 'panda' ? [9, 6] : [8.5, 6.5];
+    t.forme('museau', ellipsoide(fx, my, mr[0], mr[1]), { decalage: 0.15 });
+    t.forme('truffe', ellipsoide(fx + 0.5, my - 2.5, 3.2, 2.2), { ombre: false, bord: false }); t.poser(fx - 1, my - 4, 'blanc', 3);
+    t.relief = false;
+  } else if (TR.nez === 0) { /* (pas de nez) */ }
+  else if (g.race === 'nain' || TR.nez >= 2) t.forme('peau', ellipsoide(fx - 0.5, ey + 6 + v.nez[1] * 0.6, v.nez[0], v.nez[1]), { decalage: 0.3 });
   else if (g.race === 'hobbit') t.forme('peau', ellipsoide(fx - 0.5, ey + 7, 3.2, 2.8), { decalage: 0.1, bord: false });
   else {
     // L'arête du nez (ombre à droite), le bout éclairé, les narines
@@ -367,6 +403,11 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   const bouche = BOUCHES[parle ? 'parle' : expression];
   // (les elfes femmes gardent une bouche discrète : pas de lèvre du bas)
   t.dessin(fx - 5, v.bouche, g.race === 'elfe' && g.feminin ? bouche.map(l => l.replace(/L/g, '.')) : bouche, LEGENDE_BOUCHE);
+  // Les défenses (orcs, trolls), les canines (vampires), les crocs (loups-garous), les dents (gobelins)
+  if (TR.dents === 'defenses') for (const sx of [fx - 7, fx + 6]) for (let j = 0; j < 6; j++) { t.poser(sx, v.bouche + 2 - j, 'blanc', j > 3 ? 5 : 3); t.poser(sx + 1, v.bouche + 2 - j, 'blanc', j > 3 ? 4 : 2); }
+  else if (TR.dents === 'canines') for (const sx of [fx - 4, fx + 3]) for (let j = 0; j < 4; j++) t.poser(sx, v.bouche + 1 + j, 'blanc', j > 1 ? 5 : 3);
+  else if (TR.dents === 'crocs') for (const sx of [fx - 6, fx + 5]) for (let j = 0; j < 5; j++) t.poser(sx, ey + 13 + j, 'blanc', j > 2 ? 5 : 3);
+  else if (TR.dents === 'gobelin') for (let j = -3; j <= 3; j++) { t.poser(fx + j * 2, v.bouche + 3, 'blanc', j % 2 ? 4 : 2); t.poser(fx + j * 2, v.bouche + 4, 'blanc', j % 2 ? 3 : 1); }
   t.relief = true;
 
   // 5. La barbe
@@ -387,8 +428,12 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
     t.poser(cx + 4, sommet + 1, 'or', 5); t.poser(cx + 5, sommet + 1, 'or', 4); t.poser(cx + 4, sommet + 2, 'or', 3);
   }
   if (g.colporteur) colporteurBuste(t, g, v, cx);
+  if (TR.cheveux === 'crete') t.forme('cheveux', (x, y) => { const h = v.cy - v.ry + 2 - y; return h >= -2 && h < 12 && Math.abs(x + 0.5 - cx - 1) < 4 - h * 0.15 ? [(x + 0.5 - cx) / 4, -0.5, 0.7] : null; }, { motif: (x, y) => (x % 2 ? 0.5 : -0.6) });
   // Les oreilles des elfes percent à travers les cheveux, et montent en pointe
-  if (g.race === 'elfe') oreillesElfe(t, v, cx, T);
+  if (oreilles === 'elfe') oreillesElfe(t, v, cx, T);
+  else if (oreilles === 'pointues') oreillesElfe(t, { ...v, yeux: v.yeux + 1 }, cx, T, 0.75);
+  else if (oreilles === 'loup') for (const sens of [-1, 1]) { const ox = cx + sens * (v.rx - 4) - T * 0.5, oy = v.cy - v.ry + 3; t.forme('peau', (x, y) => { const h = (oy - y); return h >= -4 && h < 13 && Math.abs(x + 0.5 - ox - sens * h * 0.25) < 6 - h * 0.42 ? [sens * 0.5, -0.4, 0.7] : null; }, { decalage: 0.1, motif: MECHES }); t.forme('museau', (x, y) => { const h = (oy - y); return h >= -1 && h < 7 && Math.abs(x + 0.5 - ox - sens * h * 0.25) < 2.6 - h * 0.3 ? [0, 0, 1] : null; }, { bord: false, ombre: false, decalage: -0.3 }); }
+  else if (oreilles === 'rondes') for (const sens of [-1, 1]) t.forme('noir', ellipsoide(cx + sens * (v.rx - 2) - T * 0.5, v.cy - v.ry + 2, 6.5, 6), { decalage: 0.1 });
 
   // 7. Les sourcils, par-dessus tout (ils débordent du casque des nains)
   const sourcil = SOURCILS[expression];
@@ -400,6 +445,17 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
 
   // 8. Les bras et les mains : la pose, selon l'humeur et le peuple
   brasBuste(t, g, v, cx, pose || poseBuste(g, expression));
+
+  // 9. Les peaux particulières : la fourrure (poils en hachures), les bandelettes de la momie
+  if (TR.fourrure) for (let y = 0; y < HD_H; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'peau' || t.mat(x, y) === 'noir') {
+    const h = hachage(x, y, TR.fourrure);
+    if (h > 0.8) t.poser(x, y, t.mat(x, y), Math.max(0, t.k[y * t.l + x] - 1)); else if (h < 0.08) t.poser(x, y, t.mat(x, y), Math.min(5, t.k[y * t.l + x] + 1));
+  }
+  if (TR.bandelettes) for (let y = 0; y < HD_H; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'peau') {
+    if (y >= ey - 5 && y <= v.bouche + 5 && Math.abs(x + 0.5 - fx) < v.rx * 0.72) continue;   // (le visage reste à l'air)
+    const b = ((y + Math.floor(x * 0.3)) / 2) % 4.5;
+    if (b < 3) t.poser(x, y, 'bande', b < 0.6 ? 1 : b > 2.4 ? 2 : (t.k[y * t.l + x] >= 3 ? 4 : 3));
+  }
 
   t.contour();
   return t;
@@ -424,9 +480,9 @@ function poseBuste(g, expression) {
 
 // Les bras partent des épaules (sous les épaulières), les manches sont de la matière du torse.
 function brasBuste(t, g, v, cx, pose) {
-  const largeur = { nain: 24, hobbit: 21, humain: 20, elfe: 18, magicienne: 19 }[g.race];
+  const largeur = LARGEURS_BUSTE[g.race] || 20;
   const manche = g.race === 'nain' ? 'metal' : g.race === 'hobbit' ? 'lin' : g.race === 'humain' && g.armure ? 'cuir' : 'habit';
-  const ep = g.race === 'nain' ? 5.2 : 4.4;
+  const ep = g.race === 'nain' || g.race === 'troll' || g.race === 'orc' ? 5.2 : 4.4;
   const sx = largeur + 2, sy = v.torse + 12;
   const epaule = s => [cx + s * sx, sy];
   const bras = (pts) => traitHD(t, manche, pts, ep, -0.2);
@@ -512,8 +568,9 @@ function corpsRond(cx, haut, largeur) {
   return (x, y) => volumes[0](x, y) || volumes[1](x, y) || volumes[2](x, y);
 }
 
+const LARGEURS_BUSTE = { nain: 24, hobbit: 21, humain: 20, elfe: 18, magicienne: 19, gobelin: 18, orc: 25, loupgarou: 23, vampire: 19, momie: 20, troll: 27, panda: 26 };
 function torseHD(t, g, v, cx) {
-  const largeur = { nain: 24, hobbit: 21, humain: 20, elfe: 18, magicienne: 19 }[g.race];
+  const largeur = LARGEURS_BUSTE[g.race] || 20;
   const corps = corpsRond(cx, v.torse, largeur);
   if (g.race === 'nain') {
     t.forme('habit', corps, { decalage: -0.7 });
@@ -723,10 +780,10 @@ function textureBusteHD(scene, personne, expression = 'neutre', etat = {}) {
   return cle;
 }
 
-function oreillesElfe(t, v, cx, T = 0) {
+function oreillesElfe(t, v, cx, T = 0, taille = 1) {
   for (const sens of [-1, 1]) t.forme('peau', (x, y) => {
-    const u = (x + 0.5 - cx + sens * T * 0.8) * sens - v.rx + 1.5; // vers l'extérieur (l'oreille du côté tourné se cache un peu)
-    const w = y + 0.5 - (v.yeux + 5);             // vers le bas
+    const u = ((x + 0.5 - cx + sens * T * 0.8) * sens - v.rx + 1.5) / taille; // vers l'extérieur (l'oreille du côté tourné se cache un peu)
+    const w = (y + 0.5 - (v.yeux + 5)) / taille;             // vers le bas
     // Collée à la tête au niveau des yeux, elle monte en pointe jusqu'au-dessus des sourcils
     return u > 0 && u < 7.5 && w > -2 - u * 1.7 && w < 4 - u * 1.9 ? [sens * 0.6, -0.45, 0.65] : null;
   });

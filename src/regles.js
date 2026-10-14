@@ -327,10 +327,20 @@ function zoneOuverte(G, zone) {
   return conditionsZone(G, zone).ouverte;
 }
 
+// Ce peuple vient-il à ton comptoir ? Les Bannis n'osent qu'une fois la jauge passée côté ombre,
+// les pandas du Monastère ne descendent que vers un comptoir qui penche côté lumière.
+function peupleAccueilli(G, race) {
+  if (PEUPLES_OMBRE.includes(race)) return coteCamp(G) === 'mal';
+  if (PEUPLES_LUMIERE_TARD.includes(race)) return coteCamp(G) === 'bien';
+  return true;
+}
+
 // Ce voyageur accepte-t-il d'aller là ? Renvoie la raison de son refus, ou null.
 function refusZone(G, v, zone) {
   const z = ZONES[zone];
-  if (z.camp === 'mal' && v.envie !== 'or') return '« Servir le mal ? Jamais ! Trouve-moi une quête honnête. »';
+  const banni = PEUPLES_OMBRE.includes(v.race);
+  if (z.camp === 'bien' && banni) return "« Les terres de la Confrérie ? Ils me pendraient à l'entrée. Trouve-moi autre chose. »";
+  if (z.camp === 'mal' && v.envie !== 'or' && !banni) return '« Servir le mal ? Jamais ! Trouve-moi une quête honnête. »';
   if (z.danger >= 5 && ORDRE_NIVEAUX.indexOf(v.niveau) < ORDRE_NIVEAUX.indexOf('heros')) return "« Là-bas ? Il faut être un héros pour s'y risquer. Pas moi, pas encore. »";
   return null;
 }
@@ -390,11 +400,13 @@ function voyageurAuHasard(G, aussi = []) {
   if (habitue) return habitue;
   const libres = [];
   for (const [race, noms] of Object.entries(NOMS)) {
+    if (!peupleAccueilli(G, race)) continue;
     for (const [nom, feminin] of noms) if (!pris.includes(nom)) libres.push({ race, nom, feminin });
   }
   // Plus assez de noms connus : on en compose de nouveaux (prénom + nom de famille du même peuple).
   if (libres.length < 6) {
     for (const [race, n] of Object.entries(NOMS_COMPOSES)) {
+      if (!peupleAccueilli(G, race)) continue;
       for (const [prenoms, feminin] of [[n.m, false], [n.f, true]]) for (const p of prenoms) for (const f of n.familles) {
         const nom = `${p} ${f}`;
         if (!pris.includes(nom)) libres.push({ race, nom, feminin });

@@ -11,7 +11,8 @@ const SOL_COMPTOIR = FENETRE.y + FENETRE.h - 10;
 const BUSTE = { echelle: 2.3 };
 // Les petits peuples apparaissent plus bas dans la fenêtre ; les grands, un peu plus gros
 // (plus proches), dépassent davantage vers le haut.
-const TAILLE_BUSTE = { hobbit: { bas: 34 }, nain: { bas: 24 }, elfe: { echelle: 1.05 }, magicienne: { echelle: 1.09 } };
+const TAILLE_BUSTE = { hobbit: { bas: 34 }, nain: { bas: 24 }, elfe: { echelle: 1.05 }, magicienne: { echelle: 1.09 },
+  gobelin: { bas: 44 }, momie: { bas: 10 }, vampire: {}, orc: { echelle: 1.04 }, loupgarou: { echelle: 1.08 }, panda: { echelle: 1.1 }, troll: { echelle: 1.12 } };
 const tailleBuste = personne => ({ bas: 0, echelle: 1, ...((personne && TAILLE_BUSTE[personne.race]) || {}) });
 const FILE = { x: FENETRE.x + 110, ecart: 55, y: SOL_COMPTOIR - 14, echelle: 5 };
 
