@@ -11,8 +11,9 @@
 
 const Son = {
   ctx: null, pret: false,
-  volumes: { musique: 0.55, sons: 0.8 },
-  coupe: { musique: false, sons: false },
+  // (v0.57) cinq volumes : le général, puis la musique, les bruitages, les voix et l'interface (clics, pages)
+  volumes: { general: 0.9, musique: 0.55, sons: 0.8, voix: 0.8, interface: 0.7 },
+  coupe: { general: false, musique: false, sons: false, voix: false, interface: false },
   theme: null, boucle: null, horloge: 0, mesure: 0, graine: 1,
   courant: null,   // le bus de la musique en cours (pour le fondu)
 
@@ -39,6 +40,8 @@ const Son = {
     this.reverb.connect(this.reverbGain); this.reverbGain.connect(this.maitre);
     this.busSons = this.ctx.createGain(); this.busSons.connect(this.maitre); this.busSons.connect(this.reverb);
     this.busMusique = this.ctx.createGain(); this.busMusique.connect(this.maitre); this.busMusique.connect(this.reverb);
+    this.busVoix = this.ctx.createGain(); this.busVoix.connect(this.maitre); this.busVoix.connect(this.reverb);
+    this.busInterface = this.ctx.createGain(); this.busInterface.connect(this.maitre);
     this.appliquerVolumes();
     this.pret = true;
     if (this.themeVoulu) this.ambiance(this.themeVoulu);
@@ -61,8 +64,12 @@ const Son = {
   },
   appliquerVolumes() {
     if (!this.pret) return;
-    this.busSons.gain.value = this.coupe.sons ? 0 : this.volumes.sons;
-    this.busMusique.gain.value = this.coupe.musique ? 0 : this.volumes.musique;
+    const v = quoi => (this.coupe[quoi] ? 0 : this.volumes[quoi]);
+    this.maitre.gain.value = v('general');
+    this.busSons.gain.value = v('sons');
+    this.busMusique.gain.value = v('musique');
+    this.busVoix.gain.value = v('voix');
+    this.busInterface.gain.value = v('interface');
   },
   regler(quoi, valeur) {
     this.volumes[quoi] = Math.max(0, Math.min(1, valeur));
@@ -231,7 +238,9 @@ const Son = {
     if (!this.pret) return;
     this.reprendre();
     const S = SONS[nom]; if (!S) return;
-    S.call(this, this.ctx.currentTime + 0.01, this.busSons, options);
+    // (chaque famille de sons passe par son propre volume)
+    const bus = nom === 'voix' ? this.busVoix : SONS_INTERFACE.has(nom) ? this.busInterface : this.busSons;
+    S.call(this, this.ctx.currentTime + 0.01, bus, options);
   },
 };
 
@@ -490,6 +499,9 @@ const THEMES = {
 };
 
 // Les sons. Chaque fonction reçoit le moment, le bus et les options.
+// Les sons de l'interface (réglés à part des bruitages du monde)
+const SONS_INTERFACE = new Set(['clic', 'page', 'plume', 'passage', 'passageDehors', 'refus']);
+
 const SONS = {
   // Une pièce qui tinte : deux partiels aigus, très courts
   piece(t, bus, o) { const f = 2200 + Math.random() * 600; for (const [mult, v] of [[1, 0.25], [1.5, 0.12], [2.7, 0.06]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = f * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.18); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.2); } this.bruit(0.02, t, bus, 0.15, 5000, 'highpass'); },

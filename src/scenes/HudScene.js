@@ -104,29 +104,78 @@ class HudScene extends Phaser.Scene {
     const c = this.fenetre = this.add.container(0, 0).setDepth(110);
     c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.55).setInteractive());
     c.add(this.add.image(480, 270, panneauHD(this, 480, 300)).setScale(2));
-    c.add(this.add.text(480, 150, "Retourner à l'écran titre ?", style(24, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    c.add(this.add.text(480, 196, 'Ta partie est sauvegardée. En pleine journée,\ntu la reprendras au matin de ce jour-là.', style(16, '#4a2e18', { align: 'center', lineSpacing: 4 })).setOrigin(0.5));
-    const oui = creerBouton(this, 318, 258, 150, 'Écran titre', () => this.retourTitre());
-    const non = creerBouton(this, 642, 258, 150, 'Continuer', () => this.fermerMenu());
-    // (v0.57) les trois emplacements de sauvegarde et le point de reprise
-    const sauv = creerBouton(this, 480, 258, 150, 'Sauvegardes', () => {
-      this.fenetre.setVisible(false);
-      ouvrirFenetreEmplacements({ peutSauver: !!window.GAME && !window.GAME.faillite, surCharger: p => { this.fermerMenu(); lancerPartieChargee(this, p); }, surFermer: () => { if (this.fenetre) this.fenetre.setVisible(true); } });
-    });
-    c.add([oui.fond, oui.label, non.fond, non.label, sauv.fond, sauv.label]);
-    // Le son : musique et bruitages, chacun avec son volume et son interrupteur
+    c.add(this.add.text(480, 150, 'Pause', style(26, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(480, 186, 'Ta partie est sauvegardée. En pleine journée,\ntu la reprendras au matin de ce jour-là.', style(14, '#4a2e18', { align: 'center', lineSpacing: 3 })).setOrigin(0.5));
+    // (v0.57) un bouton par chose à faire, les uns sous les autres
+    const boutons = [
+      ['Continuer', () => this.fermerMenu()],
+      ['Réglages du son', () => this.ouvrirReglages()],
+      ['Sauvegardes', () => {
+        this.fenetre.setVisible(false);
+        ouvrirFenetreEmplacements({ peutSauver: !!window.GAME && !window.GAME.faillite, surCharger: p => { this.fermerMenu(); lancerPartieChargee(this, p); }, surFermer: () => { if (this.fenetre) this.fenetre.setVisible(true); } });
+      }],
+      ['Écran titre', () => this.retourTitre()],
+    ];
+    boutons.forEach(([texte, action], k) => { const b = creerBouton(this, 480, 236 + k * 46, 240, texte, action); c.add([b.fond, b.label]); });
+  }
+
+  // (v0.57) Les réglages du son : cinq volumes, chacun avec sa glissière et son interrupteur.
+  // On y arrive depuis le menu ☰ ou depuis l'écran titre.
+  ouvrirReglages() {
     Son.demarrer();
-    [['musique', 'Musique', 320], ['sons', 'Sons', 374]].forEach(([quoi, nom, y]) => {
-      const etiquette = this.add.text(300, y, nom, style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
-      const valeur = this.add.text(560, y, '', style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
-      const maj = () => valeur.setText(Son.coupe[quoi] ? 'coupé' : `${Math.round(Son.volumes[quoi] * 100)} %`);
+    const depuisMenu = !!this.fenetre;
+    if (depuisMenu) this.fenetre.setVisible(false);
+    else {
+      const s = this.scenePrincipale();
+      this.scenePausee = s && s.scene.isActive() ? s : null;
+      if (this.scenePausee) this.scenePausee.scene.pause();
+    }
+    const c = this.reglages = this.add.container(0, 0).setDepth(115);
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.55).setInteractive());
+    c.add(this.add.image(480, 270, panneauHD(this, 560, 380)).setScale(2));
+    c.add(this.add.text(480, 112, 'Réglages du son', style(26, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    const lignes = [
+      ['general', 'Volume général', null],
+      ['musique', 'Musique', null],
+      ['sons', 'Bruitages', 'pieces'],
+      ['voix', 'Voix', 'voix'],
+      ['interface', 'Interface (clics, pages)', 'clic'],
+    ];
+    const X0 = 452, L = 170;
+    lignes.forEach(([quoi, nom, essai], k) => {
+      const y = 162 + k * 50;
+      c.add(this.add.text(232, y, nom, style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      const piste = this.add.rectangle(X0, y, L, 10, 0x6b4a2a).setOrigin(0, 0.5).setStrokeStyle(2, 0x3b2410);
+      const rempli = this.add.rectangle(X0, y, 0, 10, 0xc9a227).setOrigin(0, 0.5);
+      const curseur = this.add.circle(X0, y, 9, 0xf3d98a).setStrokeStyle(2, 0x3b2410);
+      const valeur = this.add.text(X0 + L + 22, y, '', style(15, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+      const inter = this.add.text(X0 + L + 92, y, '', style(20, '#3b2410', { brut: true })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      const maj = () => {
+        const v = Son.volumes[quoi], coupe = Son.coupe[quoi];
+        rempli.width = L * v; curseur.x = X0 + L * v;
+        rempli.setFillStyle(coupe ? 0x8a7a6a : 0xc9a227);
+        valeur.setText(coupe ? 'coupé' : `${Math.round(v * 100)} %`);
+        inter.setText(coupe ? '🔇' : '🔊');
+      };
+      const essayer = () => { if (essai === 'voix') Son.jouer('voix', { race: 'humain', nom: 'Essai', ton: 'bonjour' }); else if (essai) Son.jouer(essai, { montant: 3 }); };
+      // un clic ou un glissé sur la piste règle le volume
+      const zone = this.add.rectangle(X0 - 10, y, L + 20, 30, 0xffffff, 0).setOrigin(0, 0.5).setInteractive({ useHandCursor: true, draggable: false });
+      let tire = false;
+      const regler = pointeur => { const x = this.cameras.main.getWorldPoint(pointeur.x, pointeur.y).x; Son.regler(quoi, Math.round(Phaser.Math.Clamp((x - X0) / L, 0, 1) * 20) / 20); maj(); };
+      zone.on('pointerdown', p => { tire = true; regler(p); });
+      zone.on('pointermove', p => { if (tire && p.isDown) regler(p); });
+      zone.on('pointerup', () => { if (tire) essayer(); tire = false; });
+      zone.on('pointerout', () => { tire = false; });
+      inter.on('pointerdown', () => { Son.basculer(quoi); maj(); if (!Son.coupe[quoi]) essayer(); });
       maj();
-      const moins = this.add.text(500, y, '◀', style(20, '#7a4a20', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => { Son.regler(quoi, Son.volumes[quoi] - 0.1); maj(); if (quoi === 'sons') Son.jouer('clic'); });
-      const plus = this.add.text(620, y, '▶', style(20, '#7a4a20', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => { Son.regler(quoi, Son.volumes[quoi] + 0.1); maj(); if (quoi === 'sons') Son.jouer('clic'); });
-      const inter = this.add.text(690, y, Son.coupe[quoi] ? '🔇' : '🔊', style(20, '#3b2410', { brut: true })).setOrigin(0.5).setInteractive({ useHandCursor: true });
-      inter.on('pointerdown', () => { Son.basculer(quoi); inter.setText(Son.coupe[quoi] ? '🔇' : '🔊'); maj(); });
-      c.add([etiquette, valeur, moins, plus, inter]);
+      c.add([piste, rempli, curseur, valeur, inter, zone]);
     });
+    const fermer = creerBouton(this, 480, 432, 200, 'Fermer', () => {
+      this.reglages.destroy(); this.reglages = null;
+      if (depuisMenu && this.fenetre) this.fenetre.setVisible(true);
+      else if (!depuisMenu) { if (this.scenePausee && this.scenePausee.scene.isPaused()) this.scenePausee.scene.resume(); this.scenePausee = null; }
+    });
+    c.add([fermer.fond, fermer.label]);
   }
 
   fermerMenu() {
