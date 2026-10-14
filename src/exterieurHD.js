@@ -1998,3 +1998,62 @@ function cheminTerreHD(scene, largeur = 960, hauteur = 110) {
   t.texture(scene, cle);
   return cle;
 }
+
+// (v0.58) Le fond de l'étal vu de près (480×270, peint en demi-résolution) : le mur de pierre de
+// la maison derrière, deux poteaux, le mur de planches du fond avec deux étagères à consoles,
+// une tringle de fer sous l'auvent, le plateau du comptoir, et les pavés de la place.
+function fondVitrineHD(scene) {
+  if (scene.textures.exists('fondVitrineHD')) return 'fondVitrineHD';
+  const L = 480, H = 270, t = toileDecor(L, H);
+  // la maison derrière : de grosses pierres, dans l'ombre de l'auvent
+  for (let y = 0; y < 236; y++) for (let x = 0; x < L; x++) {
+    const rang = Math.floor(y / 14), dx = (rang % 2) * 11, bx = Math.floor((x + dx) / 22);
+    const joint = y % 14 === 0 || (x + dx) % 22 === 0;
+    t.poser(x, y, 'pierre', joint ? 0 : (hachage(bx, rang, 801) > 0.7 ? 1 : 0) + (fbm(x * 0.15, y * 0.15, 802) > 0.62 ? 1 : 0));
+  }
+  // le mur de planches du fond, entre les poteaux
+  for (let k = 0; k * 20 < 360; k++) planche(t, 60 + k * 20, 40, 20, 128, 'cheneSombre', { horizontale: false, graine: 810 + k, noeuds: 1 });
+  // deux étagères, sur des consoles
+  for (const y of [107, 145]) {
+    planche(t, 66, y, 348, 5, 'chene', { graine: 830 + y, noeuds: 2 });
+    for (const x of [80, 400]) for (let j = 0; j < 8; j++) for (let e = 0; e <= 8 - j; e++) t.poser(x + (x < 200 ? e : -e), y + 5 + j, 'chene', 1);
+  }
+  // la tringle de fer sous l'auvent, et ses deux crochets
+  for (let x = 70; x < 410; x++) { t.poser(x, 62, 'fer', 4); t.poser(x, 63, 'fer', 2); }
+  for (const x of [72, 407]) for (let y = 56; y < 64; y++) t.poser(x, y, 'fer', 3);
+  // les deux poteaux
+  for (const x0 of [54, 414]) planche(t, x0, 30, 12, 206, 'chene', { horizontale: false, graine: 850 + x0, noeuds: 2 });
+  // le plateau du comptoir, épais, et l'ombre dessous
+  planche(t, 44, 167, 392, 9, 'chene', { graine: 870, noeuds: 3 });
+  for (let x = 44; x < 436; x++) t.poser(x, 176, 'cheneSombre', 0);
+  // les pavés de la place
+  for (let y = 236; y < H; y++) for (let x = 0; x < L; x++) {
+    const rang = Math.floor((y - 236) / 9), dx = (rang % 2) * 7, bx = Math.floor((x + dx) / 14);
+    const bord = (y - 236) % 9 === 0 || (x + dx) % 14 === 0;
+    t.poser(x, y, 'pierre', bord ? 1 : 2 + Math.round(hachage(bx, rang, 880) * 2));
+  }
+  t.texture(scene, 'fondVitrineHD');
+  return 'fondVitrineHD';
+}
+
+// (v0.58) Le drapé du comptoir vu de près (380×62) : de grands plis verticaux, une bande de
+// bordure en haut, et une frange festonnée en bas, aux couleurs du marchand.
+function nappeVitrineHD(scene, couleur) {
+  const cle = 'nappeVitrineHD_' + couleur.toString(16);
+  if (scene.textures.exists(cle)) return cle;
+  const L = 380, H = 62, t = toileDecor(L, H);
+  t.rampes.nappe = rampe(couleur);
+  t.rampes.galon = rampe(0xe8c860);
+  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+    const feston = 54 + Math.round(Math.abs(Math.sin(x / 9.5 * Math.PI)) * 5);
+    if (y > feston) continue;
+    if (y < 5) { t.poser(x, y, 'galon', y === 0 ? 1 : y === 4 ? 2 : (x % 6 < 3 ? 4 : 3)); continue; }
+    const pli = Math.sin(x / 19 * Math.PI * 2);
+    let ton = 3 + Math.round(pli * 1.3 - (y > feston - 3 ? 1 : 0));
+    t.poser(x, y, 'nappe', ton);
+  }
+  // la frange : de petits fils au bas de chaque feston
+  for (let x = 2; x < L; x += 3) { const f = 54 + Math.round(Math.abs(Math.sin(x / 9.5 * Math.PI)) * 5); for (let j = 1; j <= 3; j++) t.poser(x, f + j, 'galon', 2); }
+  t.texture(scene, cle);
+  return cle;
+}

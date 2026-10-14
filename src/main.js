@@ -6,6 +6,8 @@ const VERSION_JEU = 'v 0.58';
 // leurs textures sont lissées, même agrandies sur un grand écran.
 const majTexteOrigine = Phaser.GameObjects.Text.prototype.updateText;
 Phaser.GameObjects.Text.prototype.updateText = function () {
+  // (v0.58) un texte déjà détruit (son écran fermé entre-temps) : on ne fait rien, au lieu de planter
+  if (!this.frame || !this.scene) return this;
   const r = majTexteOrigine.apply(this, arguments);
   if (this.texture && this.texture.setFilter) this.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
   return r;
@@ -33,6 +35,12 @@ Phaser.Cameras.Scene2D.CameraManager.prototype.add = function () {
   if (this.cameras.length === 1) camera.setOrigin(0, 0).setZoom(ZOOM_ECRAN);
   return camera;
 };
+
+// (v0.58) De même pour une image ou un sprite déjà détruits dont on change la texture
+for (const Classe of [Phaser.GameObjects.Image, Phaser.GameObjects.Sprite]) {
+  const changerOrigine = Classe.prototype.setTexture;
+  Classe.prototype.setTexture = function () { return this.scene ? changerOrigine.apply(this, arguments) : this; };
+}
 
 // (v0.58) Le grand gel : dans Phaser, si une erreur survient pendant une image (une animation,
 // un minuteur, un clic...), la boucle du jeu ne demande plus l'image suivante et tout se fige

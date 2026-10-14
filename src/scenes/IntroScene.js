@@ -56,6 +56,7 @@ class IntroScene extends Phaser.Scene {
     this.curseur = this.add.rectangle(0, 470, 2, 22, 0x3b2410);
     this.tweens.add({ targets: this.curseur, alpha: 0, duration: 500, yoyo: true, repeat: -1 });
     const ecrire = () => demanderTexte('Le nom de ton auberge', this.nomShop, NOM_SHOP_MAX, nom => {
+      if (!this.sys.isActive()) return;   // (v0.58 : on a quitté l'écran pendant que la fenêtre était ouverte)
       if (nom) this.nomShop = nom;
       this.maj();
     });

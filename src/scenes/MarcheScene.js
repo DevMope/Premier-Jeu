@@ -570,44 +570,62 @@ class MarcheScene extends Phaser.Scene {
     if (panneau) panneau.setVisible(false);
     const fermer = () => { Son.jouer('glisse'); c.destroy(); this.vitrineOuverte = null; if (panneau && panneau.active) panneau.setVisible(true); };
     c.add(this.add.rectangle(480, 270, 960, 540, 0x120a04, 0.86).setInteractive().on('pointerdown', fermer));
-    // L'auvent au-dessus, la grande table drapée aux couleurs du marchand, la planche du devant
-    const etal = etalHD(this, m.couleur);
-    c.add(this.add.image(560, 118, etal).setOrigin(0.5, 0).setScale(8.7, 7).setCrop(0, 0, 88, 22));
-    c.add(this.add.rectangle(560, 356, 760, 210, m.couleur).setStrokeStyle(3, 0x2a1a10));
-    for (let y = 262; y < 450; y += 24) c.add(this.add.rectangle(560, y, 760, 2, 0xffffff, 0.08));
-    c.add(this.add.image(560, 470, tapisEtalHD(this, m.couleur)).setOrigin(0.5, 1).setScale(7.6, 2.2));
-    c.add(this.add.rectangle(560, 452, 760, 14, 0x5a3a1a).setStrokeStyle(2, 0x2a1a10));
-    // Le matériel du métier, autour de la table : les outils du forgeron, les bocaux et les
-    // champignons de l'apothicaire, les pains et le fromage de l'épicier, les fourrures de la tailleuse
+    // (v0.58) Un vrai étal, rangé : deux poteaux, l'auvent rayé, le mur de planches du fond avec
+    // ses deux étagères, une tringle où pend la marchandise, le marchand debout derrière son
+    // comptoir, le comptoir drapé à ses couleurs, et ce qu'on garde au sol de chaque côté.
     propsVitrineHD(this); decorsEtalsHD(this); creerDecorPlaceHD(this);
-    // Quatre places : pendu sous l'auvent à gauche / à droite, posé par terre à gauche / à droite
-    const places = { penduG: [236, 128, 0.5, 0], penduD: [884, 128, 0.5, 0], solG: [206, 538, 0.5, 1], solD: [922, 538, 0.5, 1] };
-    const props = {
-      gedeon: { penduG: ['painsHD', 2.2], solG: ['sacsHD', 2.2], solD: ['panierPommesHD', 2.6] },
-      forge: { penduG: ['outilsForgeHD', 2.2], solG: ['tonneauxHD', 1.7], solD: ['enclumeHD', 2.4] },
-      apothicaire: { penduG: ['bocauxHD', 2.2], penduD: ['herbesHD', 2.4], solG: ['bocauxHD', 1.8], solD: ['chaudronHD', 2.4] },
-      tailleuse: { penduG: ['fourruresHD', 2.2], solG: ['rouleauxHD', 2.2], solD: ['mannequinHD', 2.4] },
-    }[cle] || {};
-    for (const [place, [tex, e]] of Object.entries(props)) { const [x, y, ox, oy] = places[place]; if (this.textures.exists(tex)) c.add(this.add.image(x, y, tex).setOrigin(ox, oy).setScale(e)); }
-    // Le marchand, en buste, sur le côté, qui te parle
+    c.add(this.add.image(480, 270, fondVitrineHD(this)).setScale(2));
+    for (const [x, l] of [[50, 100], [910, 100]]) c.add(this.add.rectangle(x, 230, l, 470, 0x0a0604, 0.45));
+    const etal = etalHD(this, m.couleur);
+    c.add(this.add.image(480, 66, etal).setOrigin(0.5, 0).setScale(8.4, 3.2).setCrop(0, 0, 88, 22));
+    // ce qu'on met en avant, selon le métier : [suspendu à la tringle, étagère du haut, étagère du bas, au sol à gauche, au sol à droite]
+    const deco = {
+      gedeon: { pendu: 'painsHD', haut: ['panierPommesHD', 'sacsHD'], bas: ['cagetteHD', 'panierPommesHD'], solG: 'sacsHD', solD: 'panierPommesHD' },
+      forge: { pendu: 'outilsForgeHD', haut: ['outilsForgeHD'], bas: ['tonneauxHD', 'cagetteHD'], solG: 'tonneauxHD', solD: 'enclumeHD' },
+      apothicaire: { pendu: 'herbesHD', haut: ['bocauxHD'], bas: ['bocauxHD', 'cagetteHD'], solG: 'bocauxHD', solD: 'chaudronHD' },
+      tailleuse: { pendu: 'fourruresHD', haut: ['rouleauxHD'], bas: ['rouleauxHD', 'cagetteHD'], solG: 'rouleauxHD', solD: 'mannequinHD' },
+    }[cle] || { pendu: null, haut: ['cagetteHD'], bas: ['cagetteHD'], solG: 'tonneauxHD', solD: 'sacsHD' };
+    // une image posée par le bas, à la hauteur voulue (proportions gardées)
+    const poser = (tex, x, yBas, h, flip = false) => {
+      if (!tex || !this.textures.exists(tex)) return null;
+      const src = this.textures.get(tex).getSourceImage();
+      const img = this.add.image(x, yBas, tex).setOrigin(0.5, 1).setScale(h / src.height).setFlipX(flip);
+      c.add(img); return img;
+    };
+    // la tringle et ce qui y pend, régulièrement espacé, en laissant le milieu au marchand
+    for (const x of [205, 300, 660, 755]) poser(deco.pendu, x, 168, 46);
+    // les deux étagères (le marchand cache le milieu) : même rangement à gauche et à droite
+    [[deco.haut, 214, 40], [deco.bas, 290, 44]].forEach(([liste, y, h]) => {
+      [190, 270, 350, 610, 690, 770].forEach((x, i) => poser(liste[i % liste.length], x, y, h, x > 480));
+    });
+    // le marchand, debout derrière son comptoir
     const personne = { nom: m.nom, race: m.race, feminin: /Mère|Hilda|Rosalie/.test(m.nom) };
-    c.add(this.add.image(100, 470, textureBusteHD(this, personne, 'content')).setOrigin(0.5, 1).setScale(2.1));
+    c.add(this.add.image(480, 334, textureBusteHD(this, personne, 'content')).setOrigin(0.5, 1).setScale(1.9));
+    // le comptoir : le plateau, puis le drapé à ses couleurs, avec sa frange
+    c.add(this.add.image(480, 352, nappeVitrineHD(this, m.couleur)).setOrigin(0.5, 0).setScale(2));
+    // au sol, de chaque côté
+    poser(deco.solG, 56, 530, 66); poser(deco.solD, 904, 530, 74, true);
     const offre = G.etals[cle], ids = m.objets.filter(id => offre[id] && offre[id].qte > 0);
     const phrases = ids.length ? [`Approche, approche ! Regarde-moi ${ids.length > 1 ? 'ces merveilles' : 'cette merveille'}...`, 'Tout est frais de ce matin. Tu ne trouveras pas mieux sur la place !', `Un œil de connaisseur, je vois. Fais ton choix !`] : ['Tout est parti ! Reviens demain, de bonne heure.'];
     Son.jouer('voix', { personne, ton: 'bonjour' });
-    c.add(this.add.text(560, 88, `« ${Phaser.Utils.Array.GetRandom(phrases)} »`, style(15, '#fff4dc', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 700 } })).setOrigin(0.5, 0));
-    c.add(this.add.text(560, 50, `${m.nom} · ${m.metier}`, style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
+    const dit = this.add.text(600, 196, `« ${Phaser.Utils.Array.GetRandom(phrases)} »`, style(14, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 10, y: 6 }, wordWrap: { width: 250 } })).setOrigin(0, 1);
+    c.add(this.add.triangle(0, 0, 600, 190, 618, 190, 572, 214, 0xf3e6c8).setOrigin(0));
+    c.add(dit);
+    c.add(this.add.text(480, 32, `${m.nom} · ${m.metier}`, style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
     // La marchandise, bien alignée sur la nappe : l'objet en grand, sa pile, son étiquette
-    const pas = Math.min(160, 700 / Math.max(1, ids.length));
+    const pas = Math.min(130, 700 / Math.max(1, ids.length));
     ids.forEach((id, i) => {
-      const x = 560 + (i - (ids.length - 1) / 2) * pas, o = offre[id], prix = prixMarchand(G, cle, id);
+      const x = 480 + (i - (ids.length - 1) / 2) * pas, o = offre[id], prix = prixMarchand(G, cle, id);
       const groupe = [];
-      for (let k = 0; k < Math.min(3, Math.ceil(o.qte / 2)); k++) groupe.push(this.add.image(x - 10 + k * 10, 420 - k * 6, iconeObjet(this, id)).setOrigin(0.5, 1).setScale(4.6).setAngle((k - 1) * 6));
-      const etiquette = this.add.image(x, 436, panneauHD(this, 64, 30)).setScale(1.7).setAngle(3);
-      const texte = this.add.text(x, 436, `${prix} p.`, style(15, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5).setAngle(3);
-      const nom = this.add.text(x, 318, `${nomObjet(id)}\n× ${o.qte}`, style(13, '#fff4dc', { align: 'center', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5, 1);
-      const zone = this.add.rectangle(x, 400, pas - 8, 130, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      zone.on('pointerover', () => groupe.forEach(g => g.setScale(5))); zone.on('pointerout', () => groupe.forEach(g => g.setScale(4.6)));
+      c.add(this.add.image(x, 346, 'cagetteHD').setOrigin(0.5, 1).setScale(2.6));
+      for (let k = 0; k < Math.min(3, Math.ceil(o.qte / 2)); k++) groupe.push(this.add.image(x - 10 + k * 10, 334 - k * 5, iconeObjet(this, id)).setOrigin(0.5, 1).setScale(3.6).setAngle((k - 1) * 6));
+      // l'étiquette pend du plateau, au bout d'une ficelle
+      c.add(this.add.rectangle(x, 360, 2, 22, 0x3b2410));
+      const etiquette = this.add.image(x, 384, panneauHD(this, 64, 30)).setScale(1.5).setAngle(3);
+      const texte = this.add.text(x, 384, `${prix} p.`, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5).setAngle(3);
+      const nom = this.add.text(x, 424, `${nomObjet(id)} × ${o.qte}`, style(12, '#fff4dc', { align: 'center', stroke: '#1a0e06', strokeThickness: 3, wordWrap: { width: pas - 6 } })).setOrigin(0.5, 0);
+      const zone = this.add.rectangle(x, 360, pas - 8, 170, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      zone.on('pointerover', () => groupe.forEach(g => g.setScale(4))); zone.on('pointerout', () => groupe.forEach(g => g.setScale(3.6)));
       zone.on('pointerdown', () => {
         const r = acheterAuMarche(G, cle, id);
         if (r.erreur) return this.message(r.erreur, '#a03030');
@@ -619,7 +637,7 @@ class MarcheScene extends Phaser.Scene {
       });
       c.add([...groupe, etiquette, texte, nom, zone]);
     });
-    if (!ids.length) c.add(this.add.text(560, 390, 'Les cagettes sont vides...', style(16, '#c9b48a', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
+    if (!ids.length) c.add(this.add.text(480, 390, 'Les cagettes sont vides...', style(16, '#c9b48a', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
     const b = creerBouton(this, 836, 46, 200, '◀ Reculer', fermer);
     c.add([b.fond, b.label]);
     c.add(this.add.text(480, 505, 'Clique sur un article pour l\'acheter', style(12, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
