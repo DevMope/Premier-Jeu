@@ -491,9 +491,11 @@ function creerFacadeHD(scene, n = 3) {
 
 // Les tonneaux et l'enseigne (communs à toutes les façades).
 function creerAccessoiresFacade(scene) {
-  if (scene.textures.exists('tonneauxHD')) return;
+  // (v0.58 : le marché dessine aussi des « tonneauxHD » ; on vérifie chaque dessin à part, sinon
+  // après un passage au marché, l'enseigne de la façade manquait)
+  if (scene.textures.exists('tonneauxHD') && scene.textures.exists('enseigneHD_3')) return;
   // Les tonneaux et la caisse, devant la maison
-  {
+  if (!scene.textures.exists('tonneauxHD')) {
     const b = toileDecor(36, 22);
     for (const [cx, cy] of [[7, 13], [18, 13]]) {
       b.forme('chene', (x, y) => { const nx = (x + 0.5 - cx) / 6.5; return Math.abs(nx) < 1 && y >= cy - 9 && y <= cy + 8 ? [nx, 0, Math.sqrt(1 - nx * nx * 0.8) - Math.abs(y - cy) * 0.02] : null; },

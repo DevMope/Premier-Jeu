@@ -99,6 +99,7 @@ class MarcheScene extends Phaser.Scene {
       const avant = this.children.list.length;
       this.add.image(1600, 252, 'estradeCrieur').setOrigin(0.5, 1).setScale(2);
       this.crieur = imageCorps(this, 1590, 210, 'garde', 4.5);
+      creerDecorComptoir(this);   // (v0.58 : le parchemin manquait si on arrivait au marché avant le comptoir)
       this.add.image(1572, 170, 'parcheminComptoir').setDisplaySize(16, 22);
       this.add.text(1604, 230, 'NOUVELLES\nDU JOUR', style(11, '#ffe9a0', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3, align: 'center', lineSpacing: -2 })).setOrigin(0.5);
       this.etiquettesRue.push(this.add.text(1600, 262, 'Le crieur', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));

@@ -69,9 +69,9 @@ class PromenadeScene extends Cinematique {
 
   portes() {
     // Une porte dessinée (ou une zone sur une porte qui existe déjà), avec son écriteau
-    const porte = (x, vers, ecriteau, { dessiner = true, large = 92, haut = 168, sol = SOL_PROMENADE, ecriteauX = 0 } = {}) => {
+    const porte = (x, vers, ecriteau, { dessiner = true, large = 92, haut = 168, sol = SOL_PROMENADE, ecriteauX = 0, ecriteauY = null } = {}) => {
       if (dessiner) this.add.image(x, sol, 'porteHD').setOrigin(0.5, 1).setScale(2).setDepth(7.5);
-      this.add.text(x + ecriteauX, sol - haut - 14, ecriteau, style(12, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(8.6);
+      this.add.text(x + ecriteauX, ecriteauY ?? sol - haut - 14, ecriteau, style(12, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(8.6);
       const zone = this.add.rectangle(x, sol - haut / 2, large, haut, 0xffffff, 0).setDepth(8.6).setInteractive({ useHandCursor: true });
       zone.on('pointerdown', async () => {
         if (this.transition) return;
@@ -87,7 +87,7 @@ class PromenadeScene extends Cinematique {
     porte(900, { piece: P_ARRIERE, x: o[P_ARRIERE].x + 840 }, "L'arrière-boutique", { sol: SOL_PROMENADE - 10 });
     // L'arrière-boutique : la porte de la chambre (déjà dessinée), et le passage vers le comptoir
     porte(o[P_ARRIERE].x + 900, { piece: P_CHAMBRE, x: 840 }, 'Ta chambre', { dessiner: false, sol: SOL_ARRIERE });
-    porte(o[P_ARRIERE].x + 22, { piece: P_COMPTOIR, x: 0 }, '◀ Le comptoir', { dessiner: false, sol: SOL_ARRIERE + 30, ecriteauX: 58 });   // (v0.57 : un simple passage au bord, sans porte devant l'étagère)
+    porte(o[P_ARRIERE].x + 22, { piece: P_COMPTOIR, x: 0 }, '◀ Le comptoir', { dessiner: false, sol: SOL_ARRIERE + 30, ecriteauX: 58, ecriteauY: SOL_ARRIERE + 18 });   // (v0.57 : un simple passage au bord, sans porte devant l'étagère)
     // Le comptoir : on n'y marche pas ; comme dans la journée, on se retourne vers
     // l'arrière-boutique ou l'atelier d'un bouton, et la fenêtre donne sur la rue
     this.boutonsComptoir = [
