@@ -321,13 +321,15 @@ class MarcheScene extends Phaser.Scene {
     const noms = { mendiant: 'Le mendiant', bazar: 'Le Bazar de Rosalie', encheres: 'Les enchères', jeux: 'Le coin des jeux', crieur: 'Le crieur', brocante: 'La brocante', garderobe: 'La garde-robe' };
     const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => this.ouvrirJeux(), crieur: () => this.ouvrirCrieur(),
       brocante: () => this.ouvrirBrocante(), garderobe: () => this.ouvrirGardeRobe() };
-    for (const [cle, [x, type]] of Object.entries(this.positions)) {
+    // (v0.57) les étiquettes voisines se décalent une sur deux en hauteur : elles ne se chevauchent plus
+    const ordre = Object.entries(this.positions).sort((a, b) => a[1][0] - b[1][0]);
+    for (const [rang, [cle, [x, type]]] of ordre.entries()) {
       const ferme = type !== 'etal' && !lieuOuvert(this.G, cle);
       const nom = type === 'etal' ? MARCHANDS[cle].nom : ferme ? `${noms[cle]}\n(en travaux)` : noms[cle];
-      const t = this.add.text(ox + x * echelle, oy + (250 + this.arcVue(x).dy) * echelle + 6, nom, style(12, ferme ? '#c9b48a' : '#fff4dc', { fontStyle: ferme ? 'italic' : 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 92 }, lineSpacing: -2 }))
+      const t = this.add.text(ox + x * echelle, oy + (250 + this.arcVue(x).dy) * echelle + 6 + (rang % 2) * 34, nom, style(12, ferme ? '#c9b48a' : '#fff4dc', { fontStyle: ferme ? 'italic' : 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 92 }, lineSpacing: -2 }))
         .setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
       t.on('pointerdown', ferme ? () => this.message(`${noms[cle]} ouvre le jour ${OUVERTURE_LIEUX[cle]}.`) : type === 'etal' ? () => this.ouvrirEtal(cle) : ouvrir[cle]);
-      if (type === 'etal') c.add(this.add.text(t.x, t.y + t.height + 2, MARCHANDS[cle].metier, style(11, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5, 0));
+      // (le métier du marchand se lit en s'approchant de son étal : ici, il chevauchait les voisins)
       c.add(t);
     }
     // Quelques passants flânent sur la grand-place

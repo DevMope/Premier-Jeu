@@ -141,9 +141,16 @@ class MarcheNoirScene extends Phaser.Scene {
   vider() { for (const e of this.elements) e.destroy(); this.elements = []; }
   texte(x, y, t, taille = 15, couleur = '#f3e6c8', extra = {}) { const o = this.add.text(x, y, t, style(taille, couleur, extra)).setDepth(6).setScrollFactor(0); this.elements.push(o); return o; }
   bouton(x, y, l, t, action, actif = true) {
-    const fond = this.add.rectangle(x, y, l, 28, actif ? 0x7a2a1a : 0x3a2a26).setStrokeStyle(2, 0x1a0806).setDepth(6).setScrollFactor(0);
-    const label = this.add.text(x, y, t, style(13, actif ? '#fff0dc' : '#8a7a70', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(6).setScrollFactor(0);
-    if (actif) { fond.setInteractive({ useHandCursor: true }); fond.on('pointerdown', () => { Son.jouer('clic'); action(); }); fond.on('pointerover', () => fond.setFillStyle(0x9a3a24)); fond.on('pointerout', () => fond.setFillStyle(0x7a2a1a)); }
+    // (v0.57) les mêmes plaques de bois doré que partout ailleurs dans le jeu
+    const cle = plaqueBouton(this, l);
+    const fond = this.add.image(x, y, cle).setScale(2, 1.6).setDepth(6).setScrollFactor(0).setAlpha(actif ? 1 : 0.55);
+    const label = this.add.text(x, y, t, style(13, actif ? '#fff0d0' : '#c8b8a0', { fontStyle: 'bold', stroke: '#24140a', strokeThickness: 3 })).setOrigin(0.5).setDepth(6).setScrollFactor(0);
+    if (actif) {
+      fond.setInteractive({ useHandCursor: true });
+      fond.on('pointerdown', () => { Son.jouer('clic'); fond.setTexture(cle + '_enfonce'); this.time.delayedCall(110, () => fond.active && fond.setTexture(cle)); action(); });
+      fond.on('pointerover', () => fond.setTexture(cle + '_clair'));
+      fond.on('pointerout', () => fond.setTexture(cle));
+    }
     this.elements.push(fond, label);
     return fond;
   }

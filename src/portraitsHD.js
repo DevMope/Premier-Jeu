@@ -278,9 +278,9 @@ const VISAGES = {
   magicienne: { cy: 46, rx: 15, ry: 18, menton: 0.12, yeux: 45, nez: [2.6, 3.6], bouche: 59, cou: 5, torse: 68, sourcil: 1 },
   // (les peuples de l'ombre et le panda : en attendant leurs bustes propres)
   gobelin: { cy: 45, rx: 15, ry: 17, menton: 0.2, yeux: 44, nez: [2.6, 4], bouche: 58, cou: 5, torse: 67, sourcil: 2 },
-  orc: { cy: 43, rx: 17, ry: 19, menton: 0, carre: true, yeux: 42, nez: [3.2, 3.8], bouche: 58, cou: 7, torse: 66, sourcil: 3 },
+  orc: { cy: 43, rx: 17, ry: 19, menton: 0, carre: true, yeux: 42, nez: [3.2, 3.8], bouche: 58, cou: 10, torse: 66, sourcil: 3 },
   loupgarou: { cy: 43, rx: 16.5, ry: 18.5, menton: 0.15, yeux: 40, nez: [2.8, 3.8], bouche: 58, cou: 6, torse: 66, sourcil: 2 },
-  vampire: { cy: 43, rx: 14.5, ry: 19, menton: 0.18, yeux: 42, nez: [2.4, 3.8], bouche: 56, cou: 5, torse: 66, sourcil: 1 },
+  vampire: { cy: 43, rx: 14.5, ry: 19, menton: 0.18, yeux: 42, nez: [2.4, 3.8], bouche: 56, cou: 7, torse: 66, sourcil: 1 },
   momie: { cy: 44, rx: 15, ry: 18.5, menton: 0.1, yeux: 42, nez: [2.4, 3.4], bouche: 57, cou: 5, torse: 66, sourcil: 1 },
   troll: { cy: 40, rx: 21, ry: 22, menton: 0.05, yeux: 36, nez: [7, 7.5], bouche: 58, cou: 8, torse: 66, sourcil: 3 },
   panda: { cy: 44, rx: 20.5, ry: 18.5, menton: -0.05, yeux: 43, nez: [3, 3], bouche: 59, cou: 7, torse: 67, sourcil: 2 },
@@ -515,10 +515,14 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
 
   // 7. Les sourcils, par-dessus tout (ils débordent du casque des nains)
   const sourcil = SOURCILS[expression];
+  // (v0.57) des cheveux très clairs (blancs, blonds platine) donnent des sourcils presque invisibles,
+  // qui ressemblaient à des mèches en travers du visage : on les fonce de deux tons
+  const lum = c => ((c >> 16 & 255) * 0.3 + (c >> 8 & 255) * 0.59 + (c & 255) * 0.11) / 255;
+  const sourcilClair = lum(g.cheveux) > 0.68 && !g.vieux ? 2 : 0;
   for (const sens of [-1, 1]) for (let k = 0; k < 11; k++) {
     const x = sens < 0 ? fx - 14 + k : fx + 13 - k;
     const y = ey - 6 + sourcil[k];
-    for (let e = 0; e < v.sourcil; e++) t.poser(x, y + e, 'cheveux', e === 0 ? 4 : e === v.sourcil - 1 ? 1 : 3);
+    for (let e = 0; e < v.sourcil; e++) t.poser(x, y + e, 'cheveux', Math.max(0, (e === 0 ? 4 : e === v.sourcil - 1 ? 1 : 3) - sourcilClair));
   }
 
   // 8. Les bras et les mains : la pose, selon l'humeur et le peuple
@@ -778,6 +782,22 @@ function torseHD(t, g, v, cx) {
     t.forme('habit', corps, { decalage: -0.3, motif: (x, y) => ((x - cx + 40) % 5 === 0 && y > v.torse + 10 ? -0.9 : 0) });
     t.forme('cape', ellipsoide(cx, v.torse + 3, 17, 7.5), { decalage: -0.3 });
     t.forme('cape', ellipsoide(cx, v.torse + 1, 10, 4), { decalage: -1.4, bord: false });
+    // (v0.57) Les orcs et les trolls : un épais col de fourrure autour du cou (plus de col lacé, qui
+    // leur faisait un cou trop fin) ; les vampires : un haut col dressé et un jabot de dentelle
+    if (g.race === 'orc' || g.race === 'troll') {
+      t.rampes.colFourrure = rampe(g.race === 'troll' ? 0x5a5248 : 0x5a4636);
+      t.forme('colFourrure', ellipsoide(cx, v.torse, g.race === 'troll' ? 21 : 18, 9), { decalage: -0.2, motif: (x, y) => ((x * 3 + y * 5) % 7 === 0 ? -0.9 : (x + y) % 5 === 0 ? 0.6 : 0) });
+      for (let x = Math.round(cx - 19); x <= cx + 19; x += 2) if (hachage(x, 1, 77) > 0.4 && t.mat(x, v.torse - 2) === 'colFourrure') t.poser(x, v.torse - 6 + Math.round(hachage(x, 2, 78) * 2), 'colFourrure', 3);
+    } else if (g.race === 'vampire') {
+      for (const sens of [-1, 1]) t.forme('cape', (x, y) => {
+        const u = (x + 0.5 - cx) * sens;
+        if (y < v.torse - 14 || y > v.torse + 6) return null;
+        const interieur = 5 + (v.torse + 6 - y) * 0.15, exterieur = 13 + (v.torse + 6 - y) * 0.45;
+        return u >= interieur && u <= exterieur ? [sens * 0.7, -0.3, 0.6] : null;
+      }, { decalage: -0.2 });
+      for (const sens of [-1, 1]) for (let y = v.torse - 12; y < v.torse + 5; y++) t.poser(Math.round(cx + sens * (5.5 + (v.torse + 6 - y) * 0.15)), y, 'levres', 1);   // la doublure rouge sang
+      t.forme('lin', (x, y) => (y >= v.torse - 1 && y <= v.torse + 12 && Math.abs(x + 0.5 - cx) < 4.5 - (y - v.torse) * 0.25 ? [0, 0.1, 0.9] : null), { decalage: 0.3, motif: (x, y) => (y % 3 === 0 ? -0.8 : 0) });
+    } else
     // Le col lacé : la peau dans l'ouverture, et les lacets en croix
     for (let y = v.torse + 3; y < v.torse + 13; y++) {
       const o = Math.max(0, 3 - (y - v.torse - 3) * 0.3);

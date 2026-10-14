@@ -6,7 +6,7 @@ const ONGLETS = [
   ['avenir', 'À venir'], ['aujourdhui', "Aujourd'hui"], ['mission', 'En mission'],
   ['revenus', 'Revenus'], ['disparus', 'Disparus'], ['repertoire', 'Répertoire'],
 ];
-const FICHES_PAR_PAGE = 10;
+const FICHES_PAR_PAGE = 9;   // (v0.57 : un peu d'air entre les fiches)
 const TIROIRS = [['ameliorations', '🔨 Améliorer le shop'], ['competences', 'Tes compétences'], ['aventuriers', 'Chiffres des missions'], ['commerce', 'Le commerce'], ['reputation', 'Réputation et relations'], ['camps', 'Lumière et ombre']];
 
 class BureauScene extends Phaser.Scene {
@@ -153,7 +153,7 @@ class BureauScene extends Phaser.Scene {
       c.add(this.add.text(161, 200, vide, style(13, '#6b4a2a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 230 } })).setOrigin(0.5));
     }
     fiches.slice(this.pageListe * FICHES_PAR_PAGE, (this.pageListe + 1) * FICHES_PAR_PAGE).forEach((f, i) => {
-      const y = 104 + i * 36;
+      const y = 106 + i * 38;
       const fond = this.add.rectangle(161, y, 252, 32, 0xffffff, 0).setInteractive({ useHandCursor: true });
       fond.on('pointerover', () => fond.setFillStyle(0xd8c498, 1));
       fond.on('pointerout', () => fond.setFillStyle(0xffffff, 0));
@@ -235,7 +235,7 @@ class BureauScene extends Phaser.Scene {
     this.add.image(578, 18, panneauHD(this, 364, 262, 'ardoise')).setOrigin(0).setScale(2);
     const g = this.add.graphics();
     const craie = (x, y, texte, taille = 13, couleur = '#e8ecdf', origine = 0) =>
-      this.add.text(x, y, texte, style(taille, couleur, { fontFamily: '"Comic Sans MS", "Segoe Print", cursive' })).setOrigin(origine, 0.5);
+      this.add.text(x, y, texte, style(taille, couleur, { fontStyle: 'italic' })).setOrigin(origine, 0.5);
     craie(760, 48, "Chiffre d'affaires", 18, '#f3f0d8', 0.5);
     const d = debutsDePeriodes(G);
     const periodes = [

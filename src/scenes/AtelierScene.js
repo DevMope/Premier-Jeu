@@ -87,7 +87,7 @@ class AtelierScene extends Phaser.Scene {
     if (this.zoneEmployes) this.zoneEmployes.destroy();
     const c = this.zoneEmployes = this.add.container(0, 0);
     const places = placesEmployes(G);
-    c.add(this.add.text(24, 456, `Main-d'œuvre : ${ouvriers(G).length} réparation${ouvriers(G).length > 1 ? 's' : ''} en même temps · employés ${G.employes.length} / ${places}` +
+    c.add(this.add.text(24, 450, `Main-d'œuvre : ${ouvriers(G).length} réparation${ouvriers(G).length > 1 ? 's' : ''} en même temps · employés ${G.employes.length} / ${places}` +
       (salaires(G) ? ` · salaires : ${salaires(G)} p. par nuit` : '') + (places < EMPLOYES_DE_BASE + 2 ? ' · un établi de plus (améliorations) = une place de plus' : ''),
       style(12, '#f3e6c8', { fontStyle: 'bold' })).setOrigin(0, 0.5));
     Object.entries(EMPLOYES).forEach(([id, e], i) => {
@@ -95,9 +95,9 @@ class AtelierScene extends Phaser.Scene {
       const embauche = G.employes.includes(id);
       const libre = embauche || G.employes.length < places;
       c.add(imageCorps(this, x + 12, 534, e.race, 2));
-      c.add(this.add.text(x + 28, 474, e.nom, style(12, '#f3d98a', { fontStyle: 'bold' })));
-      c.add(this.add.text(x + 28, 490, `${e.salaire} p./nuit · ${e.description}`, style(10, '#c9b48a', { wordWrap: { width: 192 } })));
-      const btn = this.add.rectangle(x + 188, 476, 70, 20, embauche ? 0x8a3a2a : 0x4f7a3a).setStrokeStyle(2, 0x2a1a10).setInteractive({ useHandCursor: true });
+      c.add(this.add.text(x + 28, 468, e.nom, style(12, '#f3d98a', { fontStyle: 'bold' })));
+      c.add(this.add.text(x + 28, 484, `${e.salaire} p./nuit · ${e.description}`, style(10, '#c9b48a', { wordWrap: { width: 192 } })));
+      const btn = this.add.rectangle(x + 188, 470, 70, 20, embauche ? 0x8a3a2a : 0x4f7a3a).setStrokeStyle(2, 0x2a1a10).setInteractive({ useHandCursor: true });
       if (!libre) btn.setFillStyle(0x5a4a3a);
       btn.on('pointerdown', () => {
         if (!clicUnique(this, 600)) return;
@@ -112,7 +112,7 @@ class AtelierScene extends Phaser.Scene {
         }
         this.liste();
       });
-      c.add([btn, this.add.text(x + 188, 476, embauche ? 'Renvoyer' : libre ? 'Embaucher' : '🔒 Établi', style(10, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
+      c.add([btn, this.add.text(x + 188, 470, embauche ? 'Renvoyer' : libre ? 'Embaucher' : '🔒 Établi', style(10, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
     });
   }
 

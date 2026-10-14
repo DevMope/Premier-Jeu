@@ -47,6 +47,7 @@ class CounterScene extends Phaser.Scene {
     this.boutonAttente = creerBouton(this, 840, 404, 210, 'Mettre en attente', () => this.mettreEnAttente());
     this.boutonRefuser = creerBouton(this, 840, 448, 210, 'Refuser ce client', () => (this.actionB ? this.actionB() : this.refuser()));
     this.boutonAction = creerBouton(this, 840, 496, 210, '', () => this.action && this.action());
+    this.boutonAction.setTexte('');   // (pas de plaque vide tant qu'il n'y a rien à faire)
     this.majBoutonsService();
 
     // Au retour de chez Grippesou, on remet l'affichage à jour.
@@ -219,8 +220,8 @@ class CounterScene extends Phaser.Scene {
   creerFileAttente() {
     this.fileSprites = this.G.file.map((entree, i) => this.spriteFile(entree, i));
 
-    const fond = this.add.rectangle(FENETRE.x + 8, FENETRE.y + 8, 132, 28, 0x2a1a10, 0.8)
-      .setOrigin(0, 0).setStrokeStyle(2, 0xc9a227).setDepth(4);
+    const fond = this.fondAttente = this.add.rectangle(FENETRE.x + 8, FENETRE.y + 8, 132, 28, 0x2a1a10, 0.8)
+      .setOrigin(0, 0).setStrokeStyle(2, 0xc9a227).setDepth(4).setVisible(false);   // (montré quand la file a un compte)
     this.texteAttente = this.add.text(fond.x + 66, fond.y + 14, '', style(14, '#f3d98a', { fontStyle: 'bold' }))
       .setOrigin(0.5).setDepth(4);
   }
@@ -279,6 +280,7 @@ class CounterScene extends Phaser.Scene {
   majFileAttente() {
     const n = this.G.file.length;
     this.texteAttente.setText(n === 0 ? 'Plus personne' : `En attente : ${n}`);
+    this.fondAttente.setVisible(true);
   }
 
   // À gauche : qui est en mission, et les lettres reçues (cliquables).
@@ -1441,15 +1443,19 @@ class CounterScene extends Phaser.Scene {
     this.texteJour.setText('Jour ' + this.G.jour);
     this.texteJoueur.setText(`${nomJoueur(this.G)}, ${ageJoueur(this.G)} ans`);
 
-    const missions = enMission(this.G).map(p => {
-      const quand = p.retour <= this.G.jour ? "aujourd'hui" : 'jour ' + p.retour;
-      return `${p.voyageur.nom} — retour ${quand}`;
-    });
-    this.texteMissions.setText(listeCourte(missions, 4, 'Personne pour l\'instant'));
+    // (v0.57) chaque ligne tient dans l'ardoise : un nom trop long est raccourci avec « … »
+    const LARGEUR_ARDOISE = 228;
+    const mesure = this.mesureArdoise = this.mesureArdoise || this.add.text(-999, -999, '', style(13, '#000')).setVisible(false);
+    const tenir = (debut, nom, fin) => {
+      let n = nom;
+      while (n.length > 3 && mesure.setText(debut + n + fin).width > LARGEUR_ARDOISE) n = n.slice(0, -1);
+      return debut + (n === nom ? n : n.trimEnd() + '…') + fin;
+    };
+    this.texteMissions.setText(listeCourte(enMission(this.G).map(p => tenir('', p.voyageur.nom, ` — retour ${p.retour <= this.G.jour ? "aujourd'hui" : 'jour ' + p.retour}`)), 4, 'Personne pour l\'instant'));
 
     this.lignesLettres.forEach((t, i) => {
       const a = this.G.annonces[i];
-      t.setText(a ? `✉ Jour ${a.jour} · ${a.voyageur.nom}${a.acceptee ? '' : ' (à répondre)'}` : (i === 0 ? 'Aucune lettre' : ''));
+      t.setText(a ? tenir(`✉ Jour ${a.jour} · `, a.voyageur.nom, a.acceptee ? '' : ' (à répondre)') : (i === 0 ? 'Aucune lettre' : ''));
     });
   }
 

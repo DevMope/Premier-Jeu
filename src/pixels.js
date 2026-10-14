@@ -483,7 +483,8 @@ function creerBouton(scene, x, y, largeur, texte, action) {
       label.setAlpha(a ? 1 : 0.5);
     },
     setVisible(v) { fond.setVisible(v); label.setVisible(v); },
-    setTexte(t) { label.setText(t); },
+    // (v0.57) un bouton sans texte ne montre pas sa plaque vide ; il revient quand on lui redonne un texte
+    setTexte(t) { label.setText(t); if (!t) { fond.setVisible(false); fond.vide = true; } else if (fond.vide) { fond.setVisible(true); fond.vide = false; } },
   };
 }
 

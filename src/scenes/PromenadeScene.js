@@ -87,7 +87,7 @@ class PromenadeScene extends Cinematique {
     porte(900, { piece: P_ARRIERE, x: o[P_ARRIERE].x + 840 }, "L'arrière-boutique", { sol: SOL_PROMENADE - 10 });
     // L'arrière-boutique : la porte de la chambre (déjà dessinée), et le passage vers le comptoir
     porte(o[P_ARRIERE].x + 900, { piece: P_CHAMBRE, x: 840 }, 'Ta chambre', { dessiner: false, sol: SOL_ARRIERE });
-    porte(o[P_ARRIERE].x + 22, { piece: P_COMPTOIR, x: 0 }, '◀ Le comptoir', { sol: SOL_ARRIERE + 30, ecriteauX: 58 });   // (au bord, à moitié dans le mur : le passage vers l'avant)
+    porte(o[P_ARRIERE].x + 22, { piece: P_COMPTOIR, x: 0 }, '◀ Le comptoir', { dessiner: false, sol: SOL_ARRIERE + 30, ecriteauX: 58 });   // (v0.57 : un simple passage au bord, sans porte devant l'étagère)
     // Le comptoir : on n'y marche pas ; comme dans la journée, on se retourne vers
     // l'arrière-boutique ou l'atelier d'un bouton, et la fenêtre donne sur la rue
     this.boutonsComptoir = [

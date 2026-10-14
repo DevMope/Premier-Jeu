@@ -99,3 +99,10 @@ Tous les défauts de la liste ci-dessus, et les boutons en bois doré partout.
 - **Portraits de l'audit** (cou fin de l'orc, du vampire et du troll ; mèches de l'elfe) : des
   propositions en planche, et retour aux anciens modèles si ça ne va pas.
 - **Grippesou** : son chariot se garera dans la rue certains jours quand elle arrivera (10c).
+
+## 5. Retours sur les planches 9½a (17/10)
+
+- Décors validés comme base. **La Bête de l'antre et le troll des récits** sont à refaire plus
+  proprement : le modèle du joueur est `docs/references/dragon-reference.webp` (un dragon vert,
+  ventre blanc crème en écailles, grandes ailes à membrane orangée, cornes rouges en bois de cerf,
+  crête rouge, port altier). À reprendre avec l'Antre ★6 (étape 9¾).

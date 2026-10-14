@@ -551,7 +551,8 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   return {
     porteX: px + pl / 2, porteY: sol, image, enseigne, tonneaux,
     zones: { toit: ecran(n >= 2 ? FACADE.toit : [0, 42, 200, 72]), etage: n >= 2 ? ecran(FACADE.etage) : null, fenetre: ecran(FACADE.fenetre), porte: ecran(FACADE.porte),
-      enseigne: [ex - 80, ey + 18, 160, 56] },
+      // (v0.57) le cadre de l'enseigne s'arrête avant la fenêtre : les deux cadres ne se chevauchent plus
+      enseigne: [ex - 80, ey + 18, Math.max(70, Math.min(160, ecran(FACADE.fenetre)[0] - 6 - (ex - 80))), Math.min(56, ecran(FACADE.fenetre)[1] - 2 - (ey + 18) > 30 ? 56 : 56)] },
   };
 }
 
