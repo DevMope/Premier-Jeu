@@ -302,7 +302,7 @@ class DodoScene extends Cinematique {
     c.add(this.add.image(220, haut + 70, iconeObjet(this, sombre ? piece + '_sombre' : piece)).setScale(5));
     c.add(this.add.text(275, haut + 30, p.nom, style(17, '#7a5a10', { fontStyle: 'bold' })));
     c.add(this.add.text(275, haut + 56, p.texte, style(13, '#5a3a20', { fontStyle: 'italic', wordWrap: { width: 500 } })));
-    const ouvre = `${ZONES[zone].nom} ${ZONES[zone].nom.startsWith('Les ') ? "s'ouvrent" : "s'ouvre"} à tes aventuriers.`;
+    const ouvre = `${ZONES[zone].nom} ${ZONES[zone].nom.startsWith('Les ') ? 'ont été conquises' : 'a été conquise'} par tes aventuriers.`;
     let message = premiere ? (sombre ? LEGENDE_SOMBRE : LEGENDE_ARMURE)
       : sombre ? `« ${ouvre} La Main Noire te laisse une pièce de plus pour son champion. Ne la perds pas. »`
         : `« ${ouvre} La Confrérie te confie une pièce de plus pour le champion. Garde-la bien. »`;
@@ -400,7 +400,7 @@ class DodoScene extends Cinematique {
     };
     await parler("Bien dormi ? Je passais par la Comté... et je t'ai apporté un vieil ami : le mannequin de mon ancien capitaine.", 'content', 'joie');
     if (this.fini) return;
-    await parler(`L'armure du champion a été dispersée en ${ARMURE.length} pièces, aux quatre coins du monde. Chaque fois que tes aventuriers ouvriront une nouvelle contrée, on t'en rapportera une.`, 'neutre', null, iconeObjet(this, ARMURE[0].id));
+    await parler(`L'armure du champion a été dispersée en ${ARMURE.length} pièces, aux quatre coins du monde. Chaque fois que tes aventuriers conquerront une contrée (cinq missions réussies là-bas, et son drapeau flottera sur ta carte), on t'en rapportera une.`, 'neutre', null, iconeObjet(this, ARMURE[0].id));
     if (this.fini) return;
     await parler("Trouve-les toutes, et habille ce mannequin, pièce après pièce. Le jour où l'armure sera complète, ton camp sera choisi pour de bon. Lumière ou ombre... à toi de voir.", 'inquiet', '!');
     if (this.fini) return;

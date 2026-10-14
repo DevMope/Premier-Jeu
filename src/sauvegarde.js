@@ -423,6 +423,8 @@ function mettreAJourPartie(G, brut = G) {
   G.decos = G.decos || [];
   G.tenue = G.tenue || [];
   G.zonesDecouvertes = [...new Set(G.zonesDecouvertes)];
+  // (v0.58) Une partie d'avant, qui voyait déjà les contrées des Bannis, les garde
+  if (G.visiteMarcheNoir === undefined && (brut.zonesConnues || []).some(z => ZONES[z] && ZONES[z].camp === 'mal')) G.visiteMarcheNoir = 0;
   if (!brut.zonesConnues) {
     // Les zones déjà ouvertes avant l'armure : leurs pièces sont déjà sur le mannequin.
     const auDepart = Object.keys(ZONES).filter(z => ZONES[z].danger <= 2 && !ZONES[z].reputation);

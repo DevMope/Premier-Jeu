@@ -34,6 +34,28 @@ Phaser.Cameras.Scene2D.CameraManager.prototype.add = function () {
   return camera;
 };
 
+// (v0.58) Le grand gel : dans Phaser, si une erreur survient pendant une image (une animation,
+// un minuteur, un clic...), la boucle du jeu ne demande plus l'image suivante et tout se fige
+// jusqu'au rafraîchissement de la page. On protège chaque image : l'erreur est notée (console et
+// carnet de bord), et le jeu continue à l'image suivante.
+const etapeJeuOrigine = Phaser.Game.prototype.step;
+let erreursJeu = 0, derniereErreurJeu = '';
+Phaser.Game.prototype.step = function (temps, delta) {
+  try {
+    etapeJeuOrigine.call(this, temps, delta);
+  } catch (e) {
+    erreursJeu++;
+    const msg = (e && e.message) || String(e);
+    if (msg !== derniereErreurJeu || erreursJeu % 300 === 1) {
+      console.error('[jeu] erreur rattrapée :', e);
+      if (window.diag) diag('erreur rattrapée : ' + msg);
+    }
+    derniereErreurJeu = msg;
+    // (le rendu de cette image a pu être interrompu au milieu : on le termine proprement)
+    try { if (this.renderer && this.renderer.postRender) this.renderer.postRender(); } catch (e2) { /* rien */ }
+  }
+};
+
 let jeuLance = false;
 function lancerJeu() {
   if (jeuLance) return;

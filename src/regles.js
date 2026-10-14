@@ -324,7 +324,10 @@ function conditionsZone(G, zone) {
   const faits = (G.succes && G.succes[z.danger - 1]) || 0;
   // (v0.55) les contrées à 2 étoiles attendent le deuxième jour : le premier déblocage se voit
   const jourOk = z.danger < 2 || G.jour >= JOUR_DEUX_ETOILES || (G.jour === undefined);
-  return { reputation, besoin, faits, ouverte: reputation && faits >= besoin && jourOk };
+  // (v0.58) Les contrées des Bannis restent cachées tant qu'on n'est jamais descendu au marché
+  // noir : on les découvre le lendemain de la première visite (on y a entendu parler d'elles).
+  const bannisOk = z.camp !== 'mal' || (G.visiteMarcheNoir !== undefined && G.jour > G.visiteMarcheNoir) || G.zonesDecouvertes.includes(zone);
+  return { reputation, besoin, faits, bannis: bannisOk, ouverte: reputation && faits >= besoin && jourOk && bannisOk };
 }
 
 function zoneOuverte(G, zone) {
@@ -2281,17 +2284,19 @@ function recompensePalier(G, index) {
 
 // --- L'Armure du Dernier Rempart ---
 
-// Chaque zone qui s'ouvre (réputation, missions réussies, découverte) vaut une pièce de
-// l'armure, apportée par un messager au réveil.
+// (v0.58) Chaque contrée CONQUISE (CONQUETE_ZONE missions réussies, son drapeau flotte sur la
+// carte) vaut une pièce de l'armure, apportée par un messager au réveil. (Avant, une contrée qui
+// s'ouvrait toute seule suffisait : une pièce arrivait dès le jour 2, sans raison.)
 function recompenserZones(G) {
   G.nouvellesPieces = [];
-  G.zonesConnues = G.zonesConnues || [];
+  // (une partie d'avant la v0.58 : les pièces promises pour des contrées seulement ouvertes sont oubliées)
+  if (!G.zonesRecompensees) { G.zonesRecompensees = []; G.piecesAVenir = []; }
   G.piecesAVenir = G.piecesAVenir || [];
-  // Chaque zone qui s'ouvre promet une pièce... mais le messager n'en apporte qu'une par matin :
+  // Chaque conquête promet une pièce... mais le messager n'en apporte qu'une par matin :
   // les autres attendent leur tour, pour que chacune soit un vrai événement.
-  for (const z of zonesOuvertes(G)) {
-    if (G.zonesConnues.includes(z)) continue;
-    G.zonesConnues.push(z);
+  for (const [z, n] of Object.entries(G.conquete || {})) {
+    if (n < CONQUETE_ZONE || G.zonesRecompensees.includes(z) || !ZONES[z]) continue;
+    G.zonesRecompensees.push(z);
     if (G.armure.length + G.piecesAVenir.length < ARMURE.length) G.piecesAVenir.push(z);
   }
   // (le sceau est un moment de l'histoire : la dernière pièce n'arrive pas avant le jour JOUR_SCEAU)

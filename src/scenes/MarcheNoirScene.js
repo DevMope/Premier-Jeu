@@ -173,6 +173,12 @@ class MarcheNoirScene extends Phaser.Scene {
   accueil(message = null) {
     const G = this.G, s = this.soiree;
     this.vider();
+    // (v0.58) La première fois qu'on descend : on entend parler des contrées des Bannis, qui
+    // apparaîtront sur la carte dès demain
+    if (G.visiteMarcheNoir === undefined) {
+      G.visiteMarcheNoir = G.jour;
+      if (!message) message = "Le Passeur : « Bienvenue en bas. Ici, on parle de contrées que ta carte ne montre pas... Le Bourbier, le Pont des Trolls, la Clairière des Chamans. Demain, tu sauras où elles sont. »";
+    }
     const b = s.bannis[0];
     this.texte(40, 374, message || `Le Passeur : « Bienvenue en bas. Ici, personne ne pose de questions. »`, 15, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
     this.texte(40, 400, `${b.nom} murmure : « ${s.murmure} »`, 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } });
