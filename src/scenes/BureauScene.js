@@ -7,7 +7,7 @@ const ONGLETS = [
   ['revenus', 'Revenus'], ['disparus', 'Disparus'], ['repertoire', 'Répertoire'],
 ];
 const FICHES_PAR_PAGE = 10;
-const TIROIRS = [['ameliorations', '🔨 Améliorer le shop'], ['competences', 'Tes compétences'], ['aventuriers', 'Les aventuriers'], ['commerce', 'Le commerce'], ['reputation', 'La réputation'], ['camps', 'Lumière et ombre']];
+const TIROIRS = [['ameliorations', '🔨 Améliorer le shop'], ['competences', 'Tes compétences'], ['aventuriers', 'Chiffres des missions'], ['commerce', 'Le commerce'], ['reputation', 'Réputation et relations'], ['camps', 'Lumière et ombre']];
 
 class BureauScene extends Phaser.Scene {
   constructor() { super('Bureau'); }
@@ -272,7 +272,7 @@ class BureauScene extends Phaser.Scene {
     });
   }
 
-  ouvrirTiroir(cle, nom) {
+  ouvrirTiroir(cle, nom = (TIROIRS.find(t => t[0] === cle) || [])[1]) {
     const G = this.G;
     this.onglet = null;
     const c = this.vider();
@@ -280,59 +280,81 @@ class BureauScene extends Phaser.Scene {
     if (cle === 'camps') return this.afficherCamps(c);
     c.add(this.add.text(161, 72, nom, style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     const top = (obj, n, format) => Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n).map(format);
+    // Chaque page est faite de blocs encadrés, un sujet par bloc (audit / demande du joueur : « des
+    // catégories bien encadrées, qu'on distingue ce qui va avec quoi »)
     let gauche = [], droite = [];
     if (cle === 'competences') {
       const flair = niveauFlair(G);
       const prochainArtisanat = (niveauArtisanat(G) + 1) * 4;
-      gauche = [`${nomJoueur(G)}, ${ageJoueur(G)} ans`, '',
-        `Flair : ${Math.round(flair * 100)} %`,
-        flair < 1 ? `Tes estimations peuvent se tromper de ±${Math.round(35 * (1 - flair))} %.` : 'Tes estimations sont exactes.',
-        flair < 1 ? `Progresse en servant des clients (${G.experience} / ${EXPERIENCE_MAX}).` : '', '',
-        `Artisanat : niveau ${niveauArtisanat(G)}`,
-        `Réparations faites : ${G.reparations} (prochain niveau à ${prochainArtisanat})`,
-        `Matériaux par réparation : ${materiauxRequis(G)}`,
-        `Réparations à l'atelier : ${niveauArtisanat(G)} jour(s) de moins`];
-      droite = ['Marchandage', ...Object.entries(MARCHANDS).map(([m, d]) =>
-        `${d.nom} : ${niveauRelation(G, d.nom).nom}${remiseMarchand(G, m) ? ` (−${Math.round(remiseMarchand(G, m) * 100)} %)` : ''}`), '',
-        "Main-d'œuvre", `${ouvriers(G).map(nomOuvrier).join(', ')}`,
-        `${ouvriers(G).length} réparation(s) à la fois`, salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : 'Aucun employé'];
+      gauche = [
+        { titre: 'Toi', lignes: [`${nomJoueur(G)}, ${ageJoueur(G)} ans`] },
+        { titre: `Flair : ${Math.round(flair * 100)} %`, lignes: [flair < 1 ? `Tes estimations peuvent se tromper de ±${Math.round(35 * (1 - flair))} %.` : 'Tes estimations sont exactes.', flair < 1 ? `Il monte en servant des clients (${G.experience} / ${EXPERIENCE_MAX}).` : ''] },
+        { titre: `Artisanat : niveau ${niveauArtisanat(G)}`, lignes: [`Réparations faites : ${G.reparations} (niveau suivant à ${prochainArtisanat})`, `Matériaux par réparation : ${materiauxRequis(G)}`, `${niveauArtisanat(G)} jour(s) de moins à l'atelier`] },
+      ];
+      droite = [
+        { titre: 'Marchandage', lignes: Object.entries(MARCHANDS).map(([m, d]) => `${d.nom} : ${niveauRelation(G, d.nom).nom}${remiseMarchand(G, m) ? ` (−${Math.round(remiseMarchand(G, m) * 100)} %)` : ''}`) },
+        { titre: "Main-d'œuvre", lignes: [`${ouvriers(G).map(nomOuvrier).join(', ')}`, `${ouvriers(G).length} réparation(s) à la fois`, salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : 'Aucun employé'] },
+      ];
     } else if (cle === 'aventuriers') {
       const h = G.historique;
       const vivants = h.filter(x => x.issue === 'vivant').length;
-      gauche = [`Clients servis : ${G.experience}`, `Missions réussies : ${vivants}`, `Missions ratées : ${h.filter(x => x.issue === 'echec').length}`,
-        `Morts au combat : ${h.filter(x => x.issue === 'valeureux').length}`, `Morts sans gloire : ${h.filter(x => x.issue === 'sans gloire').length}`,
-        `Taux de retour : ${h.length ? Math.round(vivants / h.length * 100) : 0} %`, '',
-        `Clients refusés : ${G.stats.refus}`, `Lettres acceptées : ${G.stats.lettresAcceptees}`, `Lettres refusées : ${G.stats.lettresRefusees}`];
+      gauche = [
+        { titre: 'Les missions', lignes: [`Réussies : ${vivants}`, `Ratées : ${h.filter(x => x.issue === 'echec').length}`, `Morts au combat : ${h.filter(x => x.issue === 'valeureux').length}`, `Morts sans gloire : ${h.filter(x => x.issue === 'sans gloire').length}`, `Taux de retour : ${h.length ? Math.round(vivants / h.length * 100) : 0} %`] },
+        { titre: 'Les clients', lignes: [`Servis : ${G.experience}`, `Refusés : ${G.stats.refus}`, `Lettres acceptées : ${G.stats.lettresAcceptees} · refusées : ${G.stats.lettresRefusees}`] },
+      ];
       const gains = {};
       h.forEach(x => { if (x.issue === 'vivant') gains[x.nom] = (gains[x.nom] || 0) + x.gain; });
-      droite = ['Meilleurs clients', ...top(gains, 5, ([n, v]) => `${n} : ${v} p.`), '', 'Objets les plus donnés',
-        ...top(G.stats.objets, 5, ([id, v]) => `${ITEMS[id].nom} : ${v}`)];
+      droite = [
+        { titre: 'Meilleurs clients', lignes: top(gains, 5, ([n, v]) => `${n} : ${v} p.`) },
+        { titre: 'Objets les plus donnés', lignes: top(G.stats.objets, 5, ([id, v]) => `${ITEMS[id].nom} : ${v}`) },
+      ];
     } else if (cle === 'commerce') {
-      gauche = ['Recettes depuis le début', ...top(G.comptaTotal.r, 10, ([p, v]) => `${POSTES[p] || p} : ${v} p.`)];
-      droite = ['Dépenses depuis le début', ...top(G.comptaTotal.d, 10, ([p, v]) => `${POSTES[p] || p} : ${v} p.`), '',
-        `Objets vendus aux enchères : ${G.stats.ventes}`, `Objets à l'atelier : ${G.tresors.length}`];
+      gauche = [{ titre: 'Recettes (depuis le début)', lignes: top(G.comptaTotal.r, 10, ([p, v]) => `${POSTES[p] || p} : ${v} p.`) }];
+      droite = [
+        { titre: 'Dépenses (depuis le début)', lignes: top(G.comptaTotal.d, 10, ([p, v]) => `${POSTES[p] || p} : ${v} p.`) },
+        { titre: 'Trouvailles', lignes: [`Vendues aux enchères : ${G.stats.ventes}`, `À l'atelier : ${G.tresors.length}`] },
+      ];
     } else {
       const parNiveau = {};
       Object.keys(G.relations).forEach(n => { const k = niveauRelation(G, n).nom; parNiveau[k] = (parNiveau[k] || 0) + 1; });
       const F = G.faucheuse;
       const m = F.mission;
-      gauche = [`Réputation (bien) : ${arrondi(G.reputation)}`, `Jauge du mal : ${arrondi(G.mal)}` +
-        (G.mal >= SEUIL_SABOTAGE ? ' · sabotages' : '') + (G.mal >= SEUIL_MAIN_NOIRE ? ' · Main Noire' : ''),
-        `Retours réussis : ${[1, 2, 3, 4, 5].map(d => `${d}★ ${(G.succes || {})[d] || 0}`).join(' · ')}`,
-        `${NOMS_ARMURE[coteArmure(G)]} : ${(G.armure || []).length} / ${ARMURE.length} pièces` + (G.camp ? ` · camp scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}` : ''),
-        `La Faucheuse : ${seductionFaucheuse(G).nom} · ${F.morts} âme${F.morts > 1 ? 's' : ''}` + (F.sabotages ? ` · ${F.sabotages} sabotage${F.sabotages > 1 ? 's' : ''}` : ''),
-        ...(m && m.etat !== 'proposee' ? [`☠ Mission : ${m.cible.nom} (${PIEGES[m.piege].nom.toLowerCase()}, ${m.prime} p.)`] : []),
-        `Flair : ${Math.round(niveauFlair(G) * 100)} %`, `Artisanat : niveau ${niveauArtisanat(G)}`,
-        `Donné au mendiant : ${G.mendiant} p.`, '', 'Décorations',
-        ...(G.decorations.length ? G.decorations.map(id => `• ${DECORATIONS[id].nom}`) : ['aucune pour l\'instant'])];
-      droite = ['Tes relations', ...NIVEAUX_RELATION.slice().reverse().map(n => `${n.nom} : ${parNiveau[n.nom] || 0}`)];
+      gauche = [
+        { titre: `Réputation : ${arrondi(G.reputation)}`, lignes: [`Retours réussis : ${[1, 2, 3, 4, 5].map(d => `${d}★ ${(G.succes || {})[d] || 0}`).join(' · ')}`] },
+        { titre: NOMS_ARMURE[coteArmure(G)], lignes: [`${(G.armure || []).length} / ${ARMURE.length} pièces` + (G.camp ? ` · camp scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}` : '')] },
+        { titre: `La Faucheuse : ${seductionFaucheuse(G).nom}`, lignes: [`Âmes offertes : ${arrondi(G.mal)}` + (G.mal >= SEUIL_SABOTAGE ? ' · sabotages possibles' : '') + (G.mal >= SEUIL_MAIN_NOIRE ? ' · la Main Noire te connaît' : ''), `${F.morts} âme${F.morts > 1 ? 's' : ''} emportée${F.morts > 1 ? 's' : ''}` + (F.sabotages ? ` · ${F.sabotages} sabotage${F.sabotages > 1 ? 's' : ''}` : ''), ...(m && m.etat !== 'proposee' ? [`☠ Mission : ${m.cible.nom} (${PIEGES[m.piege].nom.toLowerCase()}, ${m.prime} p.)`] : [])] },
+        { titre: 'Le mendiant', lignes: [`Donné : ${G.mendiant} p.`] },
+      ];
+      droite = [
+        { titre: 'Tes relations', lignes: NIVEAUX_RELATION.slice().reverse().map(n => `${n.nom} : ${parNiveau[n.nom] || 0}`) },
+        { titre: 'Décorations du comptoir', lignes: G.decorations.length ? G.decorations.map(id => `• ${DECORATIONS[id].nom}`) : ["aucune pour l'instant"] },
+      ];
     }
-    if (!gauche.length || gauche.length === 1) gauche.push('Rien pour l\'instant.');
-    // (si la page déborde, on écrit plus serré)
-    for (const [x, lignes] of [[42, gauche], [304, droite]]) {
-      const t = this.add.text(x, 96, lignes.join('\n'), style(12, '#3b2410', { lineSpacing: 6, wordWrap: { width: 240 } }));
-      if (t.height > 370) t.setFontSize(11).setLineSpacing(2);
-      c.add(t);
+    this.pageEnBlocs(c, 42, 96, gauche);
+    this.pageEnBlocs(c, 304, 96, droite);
+  }
+
+  // Une colonne de blocs encadrés : un titre sur un bandeau, puis ses lignes. Si la colonne
+  // déborde de la page, on recommence plus serré.
+  pageEnBlocs(c, x, y0, blocs, largeur = 244, bas = 470) {
+    for (const taille of [12, 11, 10]) {
+      const objets = [];
+      let y = y0;
+      for (const b of blocs) {
+        let lignes = (b.lignes || []).filter(l => l !== '');
+        if (!lignes.length) lignes = ["rien pour l'instant"];
+        const titre = this.add.text(x + 8, y + 4, b.titre, style(taille + 1, '#6a1a10', { fontStyle: 'bold', wordWrap: { width: largeur - 16 } }));
+        const corps = this.add.text(x + 8, y + titre.height + 9, lignes.join('\n'), style(taille, '#3b2410', { lineSpacing: taille > 11 ? 3 : 1, wordWrap: { width: largeur - 16 } }));
+        const h = titre.height + 9 + (lignes.length ? corps.height + 6 : 0);
+        const cadre = this.add.graphics();
+        cadre.fillStyle(0xf4e8c8, 0.55).fillRect(x, y, largeur, h);
+        cadre.fillStyle(0xd8b888, 0.7).fillRect(x, y, largeur, titre.height + 7);
+        cadre.lineStyle(1.5, 0x8a5a2a, 0.9).strokeRect(x, y, largeur, h);
+        objets.push(cadre, titre, corps);
+        y += h + 8;
+      }
+      if (y <= bas || taille === 10) { c.add(objets); return y; }
+      for (const o of objets) o.destroy();
     }
   }
 
@@ -348,29 +370,30 @@ class BureauScene extends Phaser.Scene {
     c.add(barreJauge(this, 161, 136, 230, j, { h: 14 }));
     c.add(this.add.text(161, 166, nomPalierCamp(G), style(15, j > 0 ? '#9a7a10' : j < 0 ? '#5a3a8a' : '#5a3a20', { fontStyle: 'bold' })).setOrigin(0.5, 0));
     const prochain = PALIERS_JAUGE.find(s => s > Math.abs(j));
+    c.add(this.add.text(161, 190, `Jauge : ${j > 0 ? '+' : ''}${j}` + (prochain ? ` · prochain palier à ${j >= 0 ? '+' : '−'}${prochain}` : ' · au bout de la jauge'), style(11, '#3b2410')).setOrigin(0.5, 0));
+    const oc = G.objetsCamp || {};
     const gauche = [
-      `Jauge : ${j > 0 ? '+' : ''}${j}` + (prochain ? ` · prochain palier à ${j >= 0 ? '+' : '−'}${prochain}` : ' · au bout de la jauge'), '',
-      'Ce qui la fait bouger',
-      `Réussites pour ${NOMS_CAMPS.bien} : ${r.bien} (+${JAUGE_CAMP.reussite} chacune)`,
-      `Réussites pour ${NOMS_CAMPS.mal} : ${r.mal} (−${JAUGE_CAMP.reussite} chacune)`,
-      `Âmes offertes, sabotages : ${arrondi(G.mal)} (−${JAUGE_CAMP.mal} par point)`,
-      `Décorations de camp : ${(G.objetsCamp || {}).bien || 0} lumière, ${(G.objetsCamp || {}).mal || 0} ombre (±${JAUGE_CAMP.objet} chacune)`, '',
-      G.camp ? `Camp scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}`
-        : `Le camp se scelle à la ${ARMURE.length}e pièce d'armure (${(G.armure || []).length} / ${ARMURE.length}).`,
+      { titre: 'Ce qui la fait bouger', lignes: [
+        `Réussites pour ${NOMS_CAMPS.bien} : ${r.bien} (+${JAUGE_CAMP.reussite} chacune)`,
+        `Réussites pour ${NOMS_CAMPS.mal} : ${r.mal} (−${JAUGE_CAMP.reussite} chacune)`,
+        `Âmes offertes, sabotages : ${arrondi(G.mal)} (−${JAUGE_CAMP.mal} par point)`,
+        `Décorations : ${oc.bien || 0} lumière, ${oc.mal || 0} ombre (±${JAUGE_CAMP.objet} chacune)`] },
+      { titre: 'Le sceau', lignes: [G.camp ? `Camp scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}`
+        : `Le camp se scelle à la ${ARMURE.length}e pièce d'armure (${(G.armure || []).length} / ${ARMURE.length}).`] },
     ];
     const taux = PRETS.filter(x => !x.mal).map(x => `${x.nom} : ${Math.round(tauxPret(G, x) * 100)} %`);
-    const droite = ['Ce que ça change', '',
-      `Réputation en terres de lumière : ×${multReputationCamp(G, 'bien')}` + (cote === 'bien' ? ' (ton camp)' : ` (×${EFFETS_CAMP.bien.reputationAllie} côté lumière)`),
-      `Butin des terres d'ombre : ×${multButinCamp(G, 'mal')}` + (cote === 'mal' ? ' (ton camp)' : ` (×${EFFETS_CAMP.mal.butinAllie} côté ombre)`), '',
-      p > 0 ? `Banque Centrale : −${p * REMISE_BANQUE_LUMIERE * 100} points sur les taux` : 'Banque Centrale : taux normaux (la lumière fait baisser les taux)',
-      ...taux, '',
-      (G.mal >= SEUIL_MAIN_NOIRE || cote === 'mal') ? 'La Main Noire te prête sans questions.' : "La Main Noire ne te connaît pas encore.",
-      cote === 'mal' ? `Les ${NOMS_CAMPS.mal} te font confiance : ils viendront bientôt au comptoir.` : cote === 'bien' ? `${NOMS_CAMPS.bien.charAt(0).toUpperCase() + NOMS_CAMPS.bien.slice(1)} te tient en estime.` : 'Aucun camp ne te réclame encore.'];
-    for (const [x, lignes] of [[42, gauche], [304, droite]]) {
-      const t = this.add.text(x, x === 42 ? 188 : 96, lignes.join('\n'), style(12, '#3b2410', { lineSpacing: 4, wordWrap: { width: 240 } }));
-      if (t.y + t.height > 460) t.setFontSize(11).setLineSpacing(2);
-      c.add(t);
-    }
+    const droite = [
+      { titre: 'Ce que ça change', lignes: [
+        `Réputation en terres de lumière : ×${multReputationCamp(G, 'bien')}` + (cote === 'bien' ? ' (ton camp)' : ` (×${EFFETS_CAMP.bien.reputationAllie} côté lumière)`),
+        `Butin des terres d'ombre : ×${multButinCamp(G, 'mal')}` + (cote === 'mal' ? ' (ton camp)' : ` (×${EFFETS_CAMP.mal.butinAllie} côté ombre)`)] },
+      { titre: 'Les prêteurs', lignes: [
+        p > 0 ? `Banque Centrale : −${p * REMISE_BANQUE_LUMIERE * 100} points sur les taux` : 'Banque Centrale : taux normaux (la lumière les fait baisser)',
+        ...taux,
+        (G.mal >= SEUIL_MAIN_NOIRE || cote === 'mal') ? 'La Main Noire te prête sans questions.' : "La Main Noire ne te connaît pas encore."] },
+      { titre: 'Qui te réclame', lignes: [cote === 'mal' ? `Les ${NOMS_CAMPS.mal} te font confiance : ils viendront bientôt au comptoir.` : cote === 'bien' ? `${NOMS_CAMPS.bien.charAt(0).toUpperCase() + NOMS_CAMPS.bien.slice(1)} te tient en estime.` : 'Aucun camp ne te réclame encore.'] },
+    ];
+    this.pageEnBlocs(c, 42, 214, gauche);
+    this.pageEnBlocs(c, 304, 96, droite);
   }
 
   // --- Les améliorations du shop ---
