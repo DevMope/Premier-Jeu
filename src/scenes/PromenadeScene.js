@@ -92,12 +92,14 @@ class PromenadeScene extends Cinematique {
     // l'arrière-boutique ou l'atelier d'un bouton, et la fenêtre donne sur la rue
     this.boutonsComptoir = [
       creerBouton(this, 150, 505, 250, '↻ Arrière-boutique', () => { if (!this.transition) { Son.jouer('porte'); this.entrer(P_ARRIERE, o[P_ARRIERE].x + 120); } }),
-      creerBouton(this, 430, 505, 220, "🔨 L'atelier", () => { if (!this.transition) { Son.jouer('porte'); this.entrer(P_ATELIER, o[P_ATELIER].x + 120); } }),
+      creerBouton(this, 400, 505, 200, "🔨 L'atelier", () => { if (!this.transition) { Son.jouer('porte'); this.entrer(P_ATELIER, o[P_ATELIER].x + 120); } }),
+      // (v0.58 : on sort par la porte d'entrée du shop, pas par la fenêtre)
+      creerBouton(this, 630, 505, 230, '🚪 Sortir dans la rue', () => { if (!this.transition) { Son.jouer('porte'); this.dire('Tu pousses la porte du shop ; la clochette tinte dans la nuit...'); this.time.delayedCall(500, () => this.entrer(P_DEHORS, this.porteShop.x + 60)); } }),
     ];
     for (const b of this.boutonsComptoir) { b.fond.setScrollFactor(0).setDepth(30); b.label.setScrollFactor(0).setDepth(30); }
     const { x, y, w, h } = FENETRE;
     const fen = this.add.rectangle(o[P_COMPTOIR].x + x + w / 2, y + h / 2, w, h, 0xffffff, 0).setDepth(8.6).setInteractive({ useHandCursor: true });
-    fen.on('pointerdown', () => { if (this.transition) return; Son.jouer('glisse'); this.dire('Tu ouvres le store, et tu sors dans la rue...'); this.time.delayedCall(600, () => this.entrer(P_DEHORS, o[P_DEHORS].x + 560)); });
+    fen.on('pointerdown', () => { if (this.transition) return; Son.jouer('glisse'); this.dire(Phaser.Utils.Array.GetRandom(['La rue dort. Pour sortir, mieux vaut passer par la porte d\'entrée.', 'Tu colles le front à la vitre : les pavés luisent sous la lune.', 'Une lanterne passe au loin... La porte d\'entrée t\'attend si tu veux sortir.'])); });
     // L'atelier : la porte du comptoir
     porte(o[P_ATELIER].x + 60, { piece: P_COMPTOIR, x: 0 }, 'Le comptoir', { sol: 360 + 150 });
     // Dehors : la porte du shop ramène au comptoir
@@ -116,7 +118,7 @@ class PromenadeScene extends Cinematique {
       this.cible = null;
       cam.setScroll(piece.x, 0);
       this.titre.setText(piece.nom);
-      this.conseil.setText(piece.marche === false ? "Regarde la rue par la fenêtre (clique dessus pour sortir) · les boutons pour te retourner" : '◀ ▶ ou clique au sol pour marcher · clique sur les choses pour les regarder · sur une porte pour changer de pièce');
+      this.conseil.setText(piece.marche === false ? "Regarde la rue par la fenêtre · la porte d'entrée pour sortir · les boutons pour te retourner" : '◀ ▶ ou clique au sol pour marcher · clique sur les choses pour les regarder · sur une porte pour changer de pièce');
       this.heros.setVisible(piece.marche !== false);
       for (const b of this.boutonsComptoir) { b.fond.setVisible(index === P_COMPTOIR); b.label.setVisible(index === P_COMPTOIR); }
       if (piece.marche !== false) { this.heros.x = xHeros; this.heros.setFlipX(xHeros > piece.x + 480); }
@@ -141,14 +143,83 @@ class PromenadeScene extends Cinematique {
       const e = dansLaFenetre(this.add.rectangle(x0, y0, 26, 2, 0xfff8d0, 0.9).setAngle(22).setDepth(7.3).setBlendMode(Phaser.BlendModes.ADD));
       this.tweens.add({ targets: e, x: x0 + 90, y: y0 + 36, alpha: 0, scaleX: 0.3, duration: 650, ease: 'Quad.easeOut', onComplete: () => e.destroy() });
     };
+    // Le chat de gouttière : il passe rarement, et pas toujours de la même façon. Parfois il
+    // traverse ; parfois il saute sur le banc, s'y assoit un moment en battant de la queue ;
+    // parfois une souris file devant lui, il se tapit... et bondit.
+    const sol = y + h - 3, banc = this.bancRue;
     const chat = () => {
-      const sens = Math.random() < 0.5 ? 1 : -1;
-      const c = dansLaFenetre(this.add.image(o + x + (sens > 0 ? -30 : w + 30), y + h - 2, 'chatHD').setOrigin(0.5, 1).setScale(1.5).setTint(0x1a1424).setFlipX(sens < 0).setDepth(7.4));
-      let k = 0;
-      const pattes = this.time.addEvent({ delay: 260, loop: true, callback: () => { if (!c.active) { pattes.remove(); return; } c.setTexture(++k % 2 ? 'chatHD_2' : 'chatHD'); } });
-      this.tweens.add({ targets: c, x: o + x + (sens > 0 ? w + 30 : -30), duration: 5200, ease: 'Linear', onComplete: () => c.destroy() });
-      if (Math.random() < 0.5) this.time.delayedCall(1800, () => Son.jouer('miaou'));
+      if (this.chatDehors) return;
+      this.chatDehors = true;
+      const sens = Math.random() < 0.5 ? 1 : -1, bord = v => o + x + (v > 0 ? w + 34 : -34);
+      const c = dansLaFenetre(this.add.image(bord(-sens), sol, 'chatRue_m0').setOrigin(0.5, 1).setScale(1.5).setTint(0x9a94b8).setFlipX(sens < 0).setDepth(7.4));
+      let pattes = null;
+      const marche = (on) => {
+        if (pattes) { pattes.remove(); pattes = null; }
+        if (!on) return;
+        let k = 0;
+        pattes = this.time.addEvent({ delay: 110, loop: true, callback: () => { if (!c.active) { pattes.remove(); return; } c.setTexture('chatRue_m' + (++k % 4)); } });
+        this.rue.push(pattes);
+      };
+      const aller = (versX, vitesse = 9) => new Promise(r => { marche(true); c.setFlipX(versX < c.x); this.tweens.add({ targets: c, x: versX, duration: Math.abs(versX - c.x) * vitesse, ease: 'Linear', onComplete: () => { marche(false); r(); } }); });
+      const sauter = (versX, versY, image = 'chatRue_bond') => new Promise(r => {
+        c.setTexture(image).setFlipX(versX < c.x);
+        const y0 = c.y;
+        this.tweens.add({ targets: c, x: versX, duration: 420, ease: 'Linear' });
+        this.tweens.addCounter({ from: 0, to: 1, duration: 420, onUpdate: tw => { const u = tw.getValue(); if (c.active) c.y = y0 + (versY - y0) * u - Math.sin(u * Math.PI) * 26; }, onComplete: r });
+      });
+      const pause = ms => new Promise(r => this.time.delayedCall(ms, r));
+      const fin = () => { this.chatDehors = false; if (c.active) c.destroy(); };
+      const scenario = Math.random();
+      (async () => {
+        if (scenario < 0.4 && banc) {
+          // Une pause sur le banc
+          await aller(banc.x - sens * 34);
+          if (!c.active) return fin();
+          await sauter(banc.x, banc.siege, 'chatRue_tapi');
+          c.setTexture('chatRue_assis0').setFlipX(Math.random() < 0.5);
+          let q = 0;
+          const queue = this.time.addEvent({ delay: 380, loop: true, callback: () => { if (c.active) c.setTexture('chatRue_assis' + (++q % 2)); } });
+          this.rue.push(queue);
+          if (Math.random() < 0.6) this.time.delayedCall(1500, () => { if (c.active) Son.jouer('miaou'); });
+          await pause(5000 + Math.random() * 4000);
+          queue.remove();
+          if (!c.active) return fin();
+          await sauter(banc.x + sens * 40, sol, 'chatRue_tapi');
+          await aller(bord(sens));
+        } else if (scenario < 0.7) {
+          // La chasse à la souris
+          const s = dansLaFenetre(this.add.image(bord(-sens), sol, 'souris_0').setOrigin(0.5, 1).setScale(1.5).setTint(0x9a94b8).setFlipX(sens < 0).setDepth(7.4));
+          let ks = 0;
+          const trot = this.time.addEvent({ delay: 70, loop: true, callback: () => { if (s.active) s.setTexture('souris_' + (++ks % 2)); } });
+          this.rue.push(trot);
+          const milieu = o + x + w / 2 + sens * 40;
+          this.tweens.add({ targets: s, x: milieu, duration: 1300, ease: 'Linear' });
+          await pause(900);
+          await aller(milieu - sens * 110, 7);
+          if (!c.active) return fin();
+          c.setTexture('chatRue_tapi');                           // il se tapit, l'arrière-train qui frétille
+          this.tweens.add({ targets: c, angle: sens * 3, duration: 90, yoyo: true, repeat: 5 });
+          this.tweens.add({ targets: s, x: milieu + sens * 14, duration: 900, ease: 'Sine.easeInOut' });
+          await pause(1300);
+          if (!c.active) return fin();
+          const attrape = Math.random() < 0.4;
+          if (!attrape) this.tweens.add({ targets: s, x: bord(sens), duration: 900, ease: 'Quad.easeIn', delay: 120 });
+          await sauter(milieu + sens * 14, sol);
+          if (attrape && s.active) { s.destroy(); Son.jouer('miaou'); }
+          trot.remove();
+          c.setTexture('chatRue_assis0');
+          await pause(attrape ? 1600 : 900);
+          if (!c.active) return fin();
+          await aller(bord(sens), attrape ? 10 : 6);
+          if (s.active) s.destroy();
+        } else {
+          // Il traverse, simplement, sans se presser
+          await aller(bord(sens), 11);
+        }
+        fin();
+      })();
     };
+    this.lancerChat = chat;   // (pour les essais)
     const passant = () => {
       const sens = Math.random() < 0.5 ? 1 : -1;
       const p = dansLaFenetre(imageCorps(this, o + x + (sens > 0 ? -40 : w + 40), y + h - 4, 'garde', 2.2).setTint(0x3a3450).setFlipX(sens < 0).setDepth(7.4));
@@ -158,7 +229,7 @@ class PromenadeScene extends Cinematique {
     };
     this.rue.push(
       this.time.addEvent({ delay: 2500, loop: true, callback: () => { if (Math.random() < 0.45) filante(); } }),
-      this.time.addEvent({ delay: 9000, startAt: 5000, loop: true, callback: () => { if (Math.random() < 0.6) chat(); } }),
+      this.time.addEvent({ delay: 20000, startAt: 8000, loop: true, callback: () => { if (Math.random() < 0.35) chat(); } }),   // (le chat est rare)
       this.time.addEvent({ delay: 16000, startAt: 2000, loop: true, callback: () => { if (Math.random() < 0.5) passant(); } }),
       this.time.addEvent({ delay: 7000, loop: true, callback: () => { if (Math.random() < 0.3) Son.jouer('hibou'); } }),
     );
@@ -166,6 +237,7 @@ class PromenadeScene extends Cinematique {
   }
 
   arreterRue() {
+    this.chatDehors = false;
     for (const r of this.rue) { if (r.remove) r.remove(); else if (r.destroy) r.destroy(); }
     this.rue = [];
   }
@@ -222,6 +294,9 @@ class PromenadeScene extends Cinematique {
     const cle = paysageHD(this, w, h, 'comte', 0.9);
     const tex = this.textures.get(cle).getSourceImage();
     this.add.image(o + x, y, cle).setOrigin(0).setScale(w / tex.width, h / tex.height);
+    creerChatRueHD(this);
+    const banc = this.add.image(o + x + 250, y + h - 3, 'bancRue').setOrigin(0.5, 1).setScale(1.5).setTint(0x9a94b8);
+    this.bancRue = { x: banc.x, siege: y + h - 3 - 12 * 1.5 };
     for (let i = 0; i < 8; i++) {
       const e = this.add.image(o + x + 10 + Math.random() * (w - 20), y + 10 + Math.random() * h * 0.4, 'eclat').setScale(0.7);
       this.tweens.add({ targets: e, alpha: 0.2, duration: 600 + Math.random() * 900, yoyo: true, repeat: -1 });
@@ -233,9 +308,12 @@ class PromenadeScene extends Cinematique {
     this.add.image(o, 340, plateauComptoir(this, niveauAmelioration(G, 'comptoir'))).setOrigin(0).setScale(2);
     this.add.image(o + 75, 368, 'registreComptoir').setScale(2);
     bourse(this, o + 66, 500, G.argent, { echelle: 2.2, taille: 15 });
-    const lum = poserLuminaire(this, o + 480, 4, niveauAmelioration(G, 'eclairage'));
-    void lum;
-    this.lumieres.push([o + 480, 120, 3.4]);
+    // L'éclairage : sans amélioration, une simple bougie posée sur le plateau du comptoir
+    // (l'applique murale n'a pas de mur où s'accrocher au milieu de la fenêtre) ; ensuite, la
+    // lanterne ou le lustre pendent du plafond.
+    const eclairage = niveauAmelioration(G, 'eclairage');
+    if (eclairage === 0) { bougie(this, o + 880, 352, { rayon: 140, profondeur: 7.6 }); this.lumieres.push([o + 880, 316, 2.4]); }
+    else { poserLuminaire(this, o + 480, 4, eclairage); this.lumieres.push([o + 480, 120, 3.4]); }
     this.regarder(o + 140, 340, 560, 120, `Ton comptoir : ${AMELIORATIONS.comptoir.niveaux[niveauAmelioration(G, 'comptoir')]}. Demain, la file d'attente recommencera ici.`);
     this.regarder(o + 17, 340, 120, 60, `Le registre : ${G.experience} clients servis depuis le début.`);
   }

@@ -39,5 +39,8 @@ function conseilGarrick(scene, cle, toujours = false) {
   b.label.setFontSize(15);
   c.add([b.fond, b.label]);
   c.setAlpha(0);
+  // (sur la carte, le monde est filmé par sa propre caméra, par-dessus la caméra principale :
+  // le conseil va dans le calque de l'interface, filmé en dernier, pour rester au-dessus)
+  if (scene.dessus && scene.camDessus) scene.dessus.add(c);
   scene.tweens.add({ targets: c, alpha: 1, duration: 250 });
 }

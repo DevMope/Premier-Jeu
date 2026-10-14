@@ -749,6 +749,94 @@ function creerBureauHD(scene) {
   }
 }
 
+// --- Le chat de gouttière (vu de profil, tourné vers la droite) : quatre images de marche, assis
+// (deux images : la queue qui bat), le bond du chasseur ; et la souris qu'il guette, et le banc
+// de la rue où il aime s'asseoir. (Il deviendra peut-être ton familier, un jour...)
+function creerChatRueHD(scene) {
+  if (scene.textures.exists('chatRue_m0')) return;
+  const pelage = t => {
+    t.rampes.poil = rampe(0x8a8478); t.rampes.ventre = rampe(0xc8c0b0);
+    t.rampes.oeil = [0x3a4a10, 0x5a7010, 0x8aa020, 0xb8d040, 0xd8ec70, 0xf4ffb0];
+  };
+  const rayures = (x, y) => ((x + Math.floor(y * 0.6)) % 4 === 0 ? -1 : 0);
+  // La tête (de profil) : le crâne, le museau, deux oreilles pointues, l'œil
+  const tete = (t, cx, cy) => {
+    for (const ox of [-2.2, 1.4]) t.forme('poil', (x, y) => (y >= cy - 7 && y <= cy - 2 && Math.abs(x + 0.5 - (cx + ox)) <= (y - (cy - 7)) * 0.42 + 0.2 ? [0, -0.6, 0.8] : null), { decalage: 0.2 });
+    t.forme('poil', ellipsoide(cx, cy, 4.4, 3.8), { motif: rayures });
+    t.forme('ventre', ellipsoide(cx + 3, cy + 1.4, 2.2, 1.6), { decalage: 0.2 });
+    t.poser(Math.round(cx + 1.6), Math.round(cy - 0.8), 'oeil', 4);
+    t.poser(Math.round(cx + 2.6), Math.round(cy - 0.8), 'oeil', 2);
+    t.poser(Math.round(cx + 5), Math.round(cy + 0.6), 'verreRouge', 3);
+  };
+  const patte = (t, pts) => traitHD(t, 'poil', pts, 1.25, -0.2);
+  // Marche : les pattes diagonales avancent ensemble (avant gauche et arrière droite...)
+  for (let k = 0; k < 4; k++) {
+    const t = toileDecor(40, 26); pelage(t);
+    const a = Math.sin(k * Math.PI / 2) * 3, leve = v => (v > 0.5 ? 1.5 : 0);
+    const dos = k % 2 ? 0.5 : 0;
+    // les pattes du fond, plus sombres
+    patte(t, [[12, 16], [12 - a, 21], [11 - a, 24.5 - leve(-a)]]);
+    patte(t, [[25, 16], [25 + a, 21], [26 + a, 24.5 - leve(a)]]);
+    t.forme('poil', ellipsoide(18, 14 + dos, 10.5, 5.2), { motif: rayures });     // le corps
+    t.forme('ventre', ellipsoide(19, 17.4 + dos, 7, 1.6), { decalage: 0.3 });
+    patte(t, [[14, 17], [14 + a, 21], [13 + a, 24.5 - leve(a)]]);
+    patte(t, [[27, 17], [27 - a, 21], [28 - a, 24.5 - leve(-a)]]);
+    traitHD(t, 'poil', [[8, 12 + dos], [4, 9], [3, 4 + (k % 2)], [5, 1.5]], 1.3);   // la queue dressée
+    tete(t, 31, 9 + dos);
+    t.contour(); t.texture(scene, 'chatRue_m' + k);
+  }
+  // Assis, la queue enroulée au sol (deux images : le bout de la queue bat)
+  for (let k = 0; k < 2; k++) {
+    const t = toileDecor(40, 26); pelage(t);
+    traitHD(t, 'poil', k ? [[13, 23.5], [6, 23.5], [3, 21], [2, 17]] : [[13, 23.5], [6, 23.5], [2.5, 22.5], [1, 20.5]], 1.3);
+    t.forme('poil', ellipsoide(17, 18.5, 7.5, 6), { motif: rayures });            // l'arrière-train
+    t.forme('poil', ellipsoide(22, 13, 4.6, 7));                                  // le poitrail
+    t.forme('ventre', ellipsoide(24, 14, 2.4, 5), { decalage: 0.3 });
+    patte(t, [[22, 17], [22, 24.5]]); patte(t, [[25, 17], [25.5, 24.5]]);
+    tete(t, 24, 6.5);
+    t.contour(); t.texture(scene, 'chatRue_assis' + k);
+  }
+  // Tapi (prêt à bondir), puis le bond, tout en longueur
+  {
+    const t = toileDecor(40, 26); pelage(t);
+    traitHD(t, 'poil', [[8, 18], [3, 20], [1, 22]], 1.3);
+    patte(t, [[12, 20], [10, 24.5]]); patte(t, [[25, 20], [28, 24.5]]);
+    t.forme('poil', ellipsoide(18, 19.5, 11, 4.2), { motif: rayures });
+    tete(t, 31, 17);
+    t.contour(); t.texture(scene, 'chatRue_tapi');
+  }
+  {
+    const t = toileDecor(44, 26); pelage(t);
+    patte(t, [[12, 15], [5, 19], [1, 21]]); patte(t, [[30, 13], [37, 15], [41, 16]]);
+    t.forme('poil', ellipsoide(21, 13, 13, 4.4), { motif: rayures });
+    traitHD(t, 'poil', [[8, 12], [3, 10], [0.5, 11]], 1.3);
+    tete(t, 35, 10);
+    t.contour(); t.texture(scene, 'chatRue_bond');
+  }
+  // La souris (deux images : les pattes qui trottinent)
+  for (let k = 0; k < 2; k++) {
+    const t = toileDecor(16, 8);
+    t.rampes.souris = rampe(0x8a7a6a);
+    traitHD(t, 'souris', [[5, 5.5], [2, 5], [0.5, 3.5]], 0.6);
+    t.forme('souris', ellipsoide(8, 4.6, 4, 2.6));
+    t.forme('souris', ellipsoide(12, 4.6, 2.2, 1.8));
+    t.forme('souris', ellipsoide(11, 2.2, 1.2, 1.2), { decalage: 0.3 });
+    t.poser(13, 4, 'encre', 0); t.poser(14, 5, 'verreRouge', 3);
+    for (const x of (k ? [6, 10] : [7, 11])) t.poser(x, 7, 'souris', 1);
+    t.contour(); t.texture(scene, 'souris_' + k);
+  }
+  // Le banc de la rue : une planche épaisse sur deux pieds, un dossier de deux lattes
+  {
+    const t = toileDecor(48, 22);
+    for (const x of [5, 39]) planche(t, x, 11, 4, 11, 'cheneSombre', { horizontale: false, graine: 70 + x });
+    for (const x of [6, 40]) planche(t, x, 0, 3, 11, 'cheneSombre', { horizontale: false, graine: 80 + x });
+    planche(t, 2, 1, 44, 3, 'chene', { graine: 91 });
+    planche(t, 2, 5, 44, 3, 'chene', { graine: 92 });
+    planche(t, 0, 10, 48, 4, 'chene', { graine: 93, noeuds: 2 });
+    t.contour(); t.texture(scene, 'bancRue');
+  }
+}
+
 // --- Le coin douillet : un chat qui dort, des herbes qui sèchent, des livres, une plante ---
 function creerDouilletHD(scene) {
   if (scene.textures.exists('chatHD')) return;

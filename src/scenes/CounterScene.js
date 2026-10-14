@@ -1258,9 +1258,9 @@ class CounterScene extends Phaser.Scene {
       this.buste = null;
       if (this.paroles) { this.paroles.remove(); this.paroles = null; this.enTrainDeParler = false; }
       if (entree) this.perso.setTexture(this.texturePour(entree));
-      this.perso.setScale(9 * echelleCorps(this.perso.texture.key)).setY(SOL_COMPTOIR).setFlipX(versDroite);
+      this.perso.setScale(9 * echelleCorps(this.perso.texture.key)).setY(SOL_COMPTOIR).setFlipX(!versDroite);   // (les corps regardent vers la droite : il fait face à sa route)
     };
-    if (!this.buste) this.perso.setFlipX(versDroite);
+    if (!this.buste) this.perso.setFlipX(!versDroite);
     const decalage = versDroite ? 22 : -22;
     const inclinaison = versDroite ? -22 : 22;
     // Le baluchon est porté à hauteur des mains, qui dépend de la taille de son peuple.
