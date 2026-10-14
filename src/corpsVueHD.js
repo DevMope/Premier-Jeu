@@ -107,7 +107,7 @@ function cylindre(t, mat, a, b, rayon, { decalage = 0, ombre = null, motif = nul
 // Un contour plus épais : un deuxième anneau sombre autour du premier.
 // (v0.58) Le réglage du contour des personnages : nombre de tours de noir autour de la silhouette,
 // et nettoyage des pixels isolés qui dépassent (avant de cerner).
-const CONTOUR_CORPS = { tours: 1, nettoyer: false };
+const CONTOUR_CORPS = { tours: 2, nettoyer: false };   // (v0.58 : le joueur a choisi B, un contour plus épais)
 function nettoyerSilhouette(t) {
   for (let passe = 0; passe < 2; passe++) {
     const vides = [];
@@ -143,7 +143,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const c = Math.cos(th), s = Math.sin(th);
   const dos = vue === 'dos';
   const L = 52 * k;
-  const coiffe = (race === 'magicienne' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' ? 8 : costume === 'garde' ? 2 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : 0) * k + (pose === 'leves' ? 12 * k : 0);
+  // (v0.58) + une marge en haut : sans elle, le sommet du crâne (cheveux, contour) touchait le bord
+  // de l'image et paraissait coupé à plat
+  const coiffe = (race === 'magicienne' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' ? 8 : costume === 'garde' ? 2 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : 0) * k + (pose === 'leves' ? 12 * k : 0) + 3 * k;
   const H = P.H + coiffe;
   const t = new ToileHD(L, H);
   t.relief = true;

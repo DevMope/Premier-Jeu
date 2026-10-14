@@ -840,17 +840,10 @@ class MarcheScene extends Phaser.Scene {
         return;
       }
       c.add(this.add.text(x + 230, y, `${prixMarchand(G, cle, id)} p.`, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
-      const libelle = o.qte > 0 ? `Acheter (${o.qte})` : 'Épuisé';
-      const b = this.bouton(c, x + 345, y, 100, libelle, () => {
-        const r = acheterAuMarche(G, cle, id);
-        if (r.erreur) return this.message(r.erreur, '#a03030');
-        Son.jouer('achat');
-        this.ouvrirEtal(cle);
-        if (this.commandesOuvertes) { this.panneauCommandes.destroy(); this.creerPanneauCommandes(); }
-        this.message(r.message || `Acheté : ${nomObjet(id)}.`);
-      });
-      if (o.qte <= 0 || !peutPayer(G, prixMarchand(G, cle, id))) { b.fond.setAlpha(0.5); b.label.setAlpha(0.5); }
+      c.add(this.add.text(x + 300, y, o.qte > 0 ? `${o.qte} en vente` : 'Épuisé', style(12, o.qte > 0 ? '#4a6a2a' : '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
     });
+    // (v0.58) on n'achète plus d'ici : on s'approche de l'étal pour choisir sur la marchandise
+    this.bouton(c, 800, 446, 220, '🔍 Voir l\'étal de près', () => this.vitrine(cle), 0x4f7a3a);
   }
 
   // --- Les enchères : on choisit jusqu'à 3 objets, qui forment un lot ---
