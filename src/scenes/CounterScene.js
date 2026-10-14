@@ -271,6 +271,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'colporteur') return corpsHD(this, 'colporteur');
     if (entree.type === 'garde') return corpsHD(this, GARDE.capitaine);
     if (entree.type === 'garrick') return corpsHD(this, 'mentor');
+    if (entree.type === 'aine') return corpsHD(this, personneAine(entree.race));
     const v = entree.type === 'client' ? entree.voyageur : entree.parti.voyageur;
     return corpsHD(this, v);
   }
@@ -643,6 +644,18 @@ class CounterScene extends Phaser.Scene {
     });
   }
 
+  // --- (v0.56) Un aîné des Bannis : une phrase, et il repart (on le prend pour un vieux radoteur) ---
+  visiteAine(entree) {
+    const a = AINES[entree.race];
+    this.titreCommande.setFontSize(17).setText('Un vieux voyageur');
+    this.dire(a.phrase, a.nom);
+    this.bouton('« ... »', () => {
+      this.dire(`${a.nom} repart à petits pas, appuyé${a.feminin ? 'e' : ''} sur sa canne. Dans la rue, quelqu'un rit : « Encore un vieux qui radote. »`);
+      this.bouton('...', null);
+      this.time.delayedCall(2200, () => this.partirPar(FENETRE.x - 80));
+    });
+  }
+
   // --- Étape 9d : la garde de la Confrérie ---
   // Le capitaine (et un garde d'un peuple de la lumière, dans la file) : une amende la première
   // fois, une fouille ensuite. On peut payer, ou tenter de soudoyer le garde avec un trésor.
@@ -687,6 +700,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'colporteur') return { nom: COLPORTEUR.nom, race: 'humain', feminin: false, figurant: 'colporteur' };
     if (entree.type === 'garde') return GARDE.capitaine;
     if (entree.type === 'garrick') return { nom: 'Garrick Cœur-de-Chêne', race: 'humain', feminin: false, figurant: 'mentor' };
+    if (entree.type === 'aine') return personneAine(entree.race);
     if (entree.type === 'notable') {
       // Le visiteur notable du palier : le bourgmestre, le héraut de la Confrérie, une légende...
       const v = PALIERS_CLIENTS[entree.palier].visiteur;
@@ -701,6 +715,7 @@ class CounterScene extends Phaser.Scene {
   expressionArrivee(entree) {
     if (entree.type === 'retour') return entree.parti.resultat.echec ? 'inquiet' : 'content';
     if (entree.type === 'notable' || entree.type === 'colporteur' || entree.type === 'garrick') return 'content';
+    if (entree.type === 'aine') return 'neutre';
     if (entree.type === 'garde') return (this.G.garde && this.G.garde.visites) ? 'fache' : 'neutre';
     if (entree.type === 'famille') return entree.visite.intention === 'colere' ? 'fache' : entree.visite.intention === 'releve' ? 'neutre' : 'inquiet';
     const v = entree.voyageur;
@@ -815,6 +830,8 @@ class CounterScene extends Phaser.Scene {
       this.visiteGarde(entree);
     } else if (entree.type === 'garrick') {
       this.visiteGarrick(entree);
+    } else if (entree.type === 'aine') {
+      this.visiteAine(entree);
     } else if (entree.type === 'faucheuse') {
       this.visiteFaucheuse(entree);
     } else {
@@ -946,7 +963,8 @@ class CounterScene extends Phaser.Scene {
     const mission = proposerSabotage(G);
     if (mission) {
       const c = mission.cible;
-      elle(`« J'ai un travail pour toi. Demain, ${c.nom} viendra à ton comptoir. ${NOMS_RACES[c.race] || ''}, un cœur pur... les gentils l'adorent. »`);
+      if (mission.proche) elle(`« Tu m'aimes, n'est-ce pas ? Alors prouve-le. Demain, ${c.nom} viendra à ton comptoir. Ton ami${c.feminin ? 'e' : ''}... Je veux celle-là. Rien que pour moi. »`);
+      else elle(`« J'ai un travail pour toi. Demain, ${c.nom} viendra à ton comptoir. ${NOMS_RACES[c.race] || ''}, un cœur pur... les gentils l'adorent. »`);
       etapes.push({
         texte: `« Glisse-lui ceci dans son baluchon : ${PIEGES[mission.piege].nom.toLowerCase()}. Je te paierai ${mission.prime} pièces. »`,
         nom: 'La Faucheuse',
@@ -954,8 +972,9 @@ class CounterScene extends Phaser.Scene {
           accepterSabotage(G); Son.jouer('tampon');
           return '« Je savais que je pouvais compter sur toi. »';
         }], ['Refuser', () => {
+          const prix = mission.proche;
           refuserSabotage(G);
-          return '« Comme tu voudras... Pour l\'instant. »';
+          return prix ? '« Tu me refuses ? À moi ? ... Je m\'en souviendrai, marchand. Longtemps. »' : '« Comme tu voudras... Pour l\'instant. »';
         }]],
       });
     }

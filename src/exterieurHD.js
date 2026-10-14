@@ -805,6 +805,25 @@ function creerCarteHD(scene) {
   t.texture(scene, 'carteHD');
 }
 
+// Les gros nuages qui couvrent les contrées pas encore ouvertes : des cumulus pixelisés, blancs
+// dessus, gris-bleu dessous, avec un liseré sombre. Trois formes, pour varier les amas.
+function creerNuagesCarteHD(scene) {
+  if (scene.textures.exists('nuageCarte_0')) return;
+  for (let v = 0; v < 3; v++) {
+    const L = 64, H = 36, t = toileDecor(L, H);
+    t.rampes.nuage = [0x3e434e, 0x5c626e, 0x7a808c, 0x989ea8, 0xb4b8c0, 0xcdd0d6];   // (des nuages gris et lourds)
+    const boules = [[18, 22, 12], [32, 16, 14], [46, 22, 11], [26, 26, 10], [40, 27, 10], [10, 27, 7], [54, 28, 7]]
+      .map(([x, y, r], i) => [x + (hachage(i, v, 31) - 0.5) * 6, y + (hachage(i, v, 37) - 0.5) * 4, r * (0.85 + hachage(i, v, 41) * 0.3)]);
+    t.forme('nuage', (x, y) => {
+      if (y > 31) return null;   // (le dessous est plat)
+      for (const [bx, by, r] of boules) { const dx = (x + 0.5 - bx) / r, dy = (y + 0.5 - by) / r; if (dx * dx + dy * dy <= 1) return [dx * 0.5, dy * 0.9 - 0.3, Math.sqrt(Math.max(0.1, 1 - dx * dx - dy * dy))]; }
+      return null;
+    }, { decalage: 0.6, tramage: true });
+    t.contour();
+    t.texture(scene, 'nuageCarte_' + v);
+  }
+}
+
 // --- L'eau ---
 
 // Une rivière qui se répète à l'horizontale (pour un tileSprite qu'on fait couler).

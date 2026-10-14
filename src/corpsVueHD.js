@@ -54,9 +54,40 @@ const TRAITS_PEUPLES = {
 function banniFache(personne) {
   if (!personne || typeof PEUPLES_OMBRE === 'undefined' || !PEUPLES_OMBRE.includes(personne.race)) return false;
   const G = typeof window !== 'undefined' && window.GAME;
+  if (personne.vieux) return false;   // (les aînés ont le regard calme de ceux qui ont tout vu)
   if (!G || !personne.nom) return true;
   const ami = ((G.relations || {})[personne.nom] || 0) >= 8;
   return !(ami || (typeof palierCamp === 'function' && palierCamp(G) <= -2));
+}
+
+// Une couleur qui grisonne (les aînés) : on la mêle à un gris clair.
+function grisonner(c, f = 0.7) {
+  const m = (a, b) => Math.round(a + (b - a) * f);
+  return (m(c >> 16 & 255, 0xd2) << 16) | (m(c >> 8 & 255, 0xd2) << 8) | m(c & 255, 0xd6);
+}
+
+// La momie très vieille : des taches de moisissure sur ses bandelettes (k : la taille d'un pixel).
+function moisirBandelettes(t, k = 1) {
+  t.rampes.moisi = rampe(0x6a6a34);
+  for (let y = 0; y < t.h; y++) for (let x = 0; x < t.l; x++) {
+    if (t.mat(x, y) !== 'bande') continue;
+    const n = fbm(x * 0.16 / k, y * 0.16 / k, 91);
+    if (n > 0.66 && hachage(x, y, 3) > 0.25) t.poser(x, y, 'moisi', n > 0.74 ? 2 : n > 0.7 ? 3 : 4);
+    else if (n > 0.62 && hachage(x, y, 5) > 0.55) t.poser(x, y, 'moisi', 4);   // (le bord de la tache, piqueté)   // (le bord de la tache, qui jaunit)
+  }
+}
+// ... et une toile d'araignée : des fils en éventail depuis un coin (angles en degrés, à l'écran),
+// reliés par des fils qui pendent un peu. Dessinée par-dessus le contour, fine comme un vrai fil.
+function toileAraignee(t, ax, ay, r, de, a, k = 1) {
+  t.rampes.toile = rampe(0xd8d8e2);
+  const fils = 4, rad = d => d * Math.PI / 180;
+  const pt = (i, u) => { const ang = rad(de + (a - de) * i / (fils - 1)); return [ax + Math.cos(ang) * r * u, ay + Math.sin(ang) * r * u]; };
+  const trait = ([x0, y0], [x1, y1], creux = 0) => {
+    const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 1.5);
+    for (let j = 0; j <= n; j++) { const u = j / n, x = Math.round(x0 + (x1 - x0) * u), y = Math.round(y0 + (y1 - y0) * u + Math.sin(u * Math.PI) * creux); if (t.dans(x, y)) t.poser(x, y, 'toile', t.mat(x, y) ? 5 : 3); }
+  };
+  for (let i = 0; i < fils; i++) trait([ax, ay], pt(i, 1));
+  for (const u of [0.45, 0.9]) for (let i = 0; i < fils - 1; i++) trait(pt(i, u), pt(i + 1, u), 0.12 * r * u);
 }
 
 // Un cylindre entre deux points de l'écran (un membre), avec sa normale ronde.
@@ -116,12 +147,14 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const fache = !!options.fache;
   t.rampes.museau = rampeVive(T.museau || 0x5a4030); t.rampes.noir = rampeVive(T.taches || 0x201c1c); t.rampes.bande = rampe(T.bandelettes || 0xd8cfae); t.rampes.truffe = rampe(0x1a1410);
   t.rampes.cheveux = rampeVive(g.cheveux);
+  // Les aînés : cheveux et poils gris, et la fourrure des bêtes qui blanchit un peu
+  if (g.vieux) { t.rampes.cheveux = rampeVive(grisonner(T.poils || g.cheveux)); if (T.fourrure) t.rampes.peau = rampeVive(grisonner(T.peau, 0.35)); if (T.bandelettes) t.rampes.bande = rampe(0xb0a070); }
   t.rampes.habit = rampeVive(g.habit);
   t.rampes.cape = rampeVive(T.cape || (race === 'elfe' ? 0x8aa0b8 : g.cape || 0x4a3a2a));
   t.rampes.iris = rampeVive(T.yeux || g.yeux || 0x4a3a20);
   t.rampes.lin = rampeVive(0xd8ccb0);
   t.rampes.bas = rampeVive(T.bas || g.bas || (race === 'elfe' ? 0x3a4a3a : race === 'hobbit' ? 0x8a6a40 : 0x5a4a3a));
-  t.rampes.cuir = rampeVive(0x6a3f22);
+  t.rampes.cuir = costume === 'mentor' ? rampe(0x4a3426) : rampeVive(0x6a3f22);   // (le cuir usé et sombre du rôdeur)
   t.rampes.metal = rampeVive(0x7a8498);
   t.rampes.levres = levresPour(g.peau ?? 1, f);
   t.rampes.chapeau = rampeVive(race === 'magicienne' ? 0x3a2a8a : costume === 'banquier' ? 0x1a1a22 : costume === 'colporteur' ? 0x5a4630 : costume === 'noble' ? 0x4a1a3a : g.habit);
@@ -175,7 +208,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme(matMain, ellipsoide(M[0], M[1] + 1 * k * gm, 2.2 * k * gm, 2.3 * k * gm), { decalage: dec + 0.1 });
     t.forme(matMain, ellipsoide(M[0] + cote * c * 1.6 * k * gm + s * 1.2 * k, M[1] + 0.6 * k, 0.9 * k * gm, 1.2 * k * gm), { decalage: dec + 0.3, ombre: false });
     if (T.griffes) for (const d of [-1, 0, 1]) for (let j = 0; j < Math.round(0.9 * k * gm); j++) t.poser(Math.round(M[0] + d * 1.1 * k * gm), Math.round(M[1] + 3.2 * k * gm) + j, 'griffe', j ? 2 : 4);
+    if (devant) mainDevant = { M, matMain, gm, cote };
   };
+  let mainDevant = null;
   // Où passe la cuisse proche à l'écran, à une hauteur donnée (pour dessiner le pli du tissu dessus)
   const rCuisse = 2.9 * k * P.membre;
   const cuisseX = (y) => { const bal = pas ? pas : 0; const v = Math.min(1, Math.max(0, (y - (yB - 1 * k)) / ((sol - yB) * 0.5))); return X(pres * ep * (0.42 + 0.03 * v), (bal * 2.2 + (bal > 0 ? 1 : 0)) * k * v); };
@@ -221,6 +256,20 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
   };
 
+  // Les pans du long manteau ouvert de Garrick, entre deux hauteurs (le haut avec le torse, le bas
+  // par-dessus les jambes : il tombe jusqu'aux mollets)
+  const pansManteau = (yMin, yMax) => {
+    for (const cote of [-1, 1]) {
+      if (Z(cote * ep, prof * 0.3) < -1 * k) continue;
+      t.forme('cape', (x, y) => {
+        if (y < yMin || y > yMax) return null;
+        const u = cote * ep * (0.62 + Math.min(1, (y - yT) / (yB - yT)) * 0.2), bord = X(u, prof * 0.9);
+        const ext = X(cote * (ep + 1 * k + Math.max(0, y - yB) * 0.15), prof * 0.2);
+        const a = Math.min(bord, ext), b = Math.max(bord, ext);
+        return x + 0.5 >= a && x + 0.5 <= b ? [cote * 0.5, 0, 0.85] : null;
+      }, { decalage: -0.3, motif: (x, y) => (hachage(Math.floor(x / k), Math.floor(y / k), 53) > 0.88 ? -0.8 : 0) });
+    }
+  };
   // --- 1. Derrière : la cape (sauf de dos), les cheveux longs, le bras et la jambe du côté éloigné ---
   const dessinerCape = (devant) => {
     t.forme(porte('cape') ? 'capeV' : 'cape', (x, y) => {
@@ -416,10 +465,31 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (tenue >= 4) for (let j = -2 * k; j <= 2 * k; j++) t.poser(Math.round(ex + j), yT + 4 * k, 'or', 4);
   }
 
+  // Garrick, le rôdeur : les pans du long manteau olive ouvert sur le devant (jusqu'aux mollets), la
+  // chemise bordeaux au col, le baudrier en travers, le ceinturon et le pommeau de l'épée à la hanche
+  if (costume === 'mentor' && !dos) {
+    t.rampes.chemise = rampeVive(0x5a1a20);
+    t.forme('chemise', (x, y) => (y >= yT && y <= yT + 5 * k && Math.abs(x + 0.5 - X(0, prof)) < (3.2 * k - (y - yT) * 0.5) * Math.max(0.4, Math.abs(c)) ? [0, -0.2, 0.9] : null), { decalage: 0.1 });
+    pansManteau(yT, yB + 2 * k);
+    // les revers du col, relevés
+    for (const cote of [-1, 1]) t.forme('cape', (x, y) => { const bx = X(cote * 2.5 * k, prof); return y >= yT - 2 * k && y <= yT + 4 * k && Math.abs(x + 0.5 - bx - cote * (y - yT + 2 * k) * 0.35) < 1.3 * k && Z(cote * 2.5 * k, prof) > 0 ? [cote * 0.6, -0.4, 0.7] : null; }, { decalage: 0.4 });
+    // le baudrier et le ceinturon
+    for (let j = 0; j <= (yB - yT) * 1.2; j++) { const u = j / ((yB - yT) * 1.2); const x = Math.round(X((0.7 - u * 1.4) * ep * 0.6, prof)), y = Math.round(yT + 2 * k + u * (yB - yT - 4 * k)); for (let e = 0; e < Math.max(1, Math.round(1.2 * k)); e++) if (t.mat(x + e, y)) t.poser(x + e, y, 'cuir', e ? 1 : 2); }
+    t.forme('cuir', (x, y) => { const n = torse(x, y); return n && y >= yB - 2.5 * k && y <= yB - 0.5 * k ? n : null; }, { decalage: -0.6, ombre: false });
+    t.forme('metal', ellipsoide(X(0, prof), yB - 1.5 * k, 1.2 * k * Math.max(0.5, Math.abs(c)), 1 * k), { decalage: 0.4, ombre: false });
+    // l'épée : la garde et le pommeau qui dépassent à la hanche, le fourreau qui descend en biais
+    const hx = X(loin * ep * 0.9, prof * 0.4), hy = yB - 1 * k;
+    for (let j = 0; j < 14 * k; j++) { const x = Math.round(hx - loin * j * 0.18), y = hy + j; for (let e = 0; e < Math.max(1, Math.round(0.9 * k)); e++) if (!t.mat(x + e, y) || t.mat(x + e, y) === 'cape' || t.mat(x + e, y) === 'bas') t.poser(x + e, y, 'cuir', 1); }
+    for (let j = -2 * k; j <= 2 * k; j++) t.poser(Math.round(hx + j), hy - 1, 'metal', 4);
+    for (let j = 0; j < 3 * k; j++) t.poser(Math.round(hx + loin * j * 0.18), hy - 2 - j, 'cuir', 2);
+    t.forme('metal', ellipsoide(hx + loin * 0.7 * k, hy - 3.5 * k, 0.9 * k, 0.9 * k), { decalage: 0.5, ombre: false });
+  }
   // --- 3. Devant : le bras et la jambe du côté proche ---
   if (!dos) bras(pres, true); else bras(loin, true);
 
   if (porte('bague') && !dos) { const hx = X(pres * (ep + 0.6 * k), 1 * k); t.poser(Math.round(hx), Math.round(yB + 2.5 * k), 'or', 5); t.poser(Math.round(hx) + 1, Math.round(yB + 2.5 * k), 'or', 3); }
+  if (costume === 'mentor' && !dos) pansManteau(yB + 2 * k, sol - 6 * k);
+  // La pipe de Garrick, au coin de la bouche (voir après le visage)
   // --- 4. Le cou, la tête, le visage ---
   t.forme('peau', (x, y) => (y >= yT - 3 * k && y <= yT + 1 * k && Math.abs(x + 0.5 - X(0, 0.5 * k)) < 2.4 * k ? [(x + 0.5 - X(0, 0.5 * k)) / (2.4 * k), 0.2, 0.9] : null), { decalage: -0.6 });
   // La forme de la tête : ronde (hobbit), large et basse avec une mâchoire lourde (nain),
@@ -604,12 +674,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const elfeF = race === 'elfe' && f;
     // Sur les peaux sombres, les lèvres rouges tranchent trop : on les dessine dans les tons de la peau
     const sombre = (g.peau ?? 1) >= 3 && !gobelin;
-    const matLevre = sombre ? 'peau' : 'levres';
+    const matLevre = sombre || (g.vieux && race === 'troll') ? 'peau' : 'levres';
     const tonFente = sombre ? 0 : 1, tonBas = sombre ? 4 : (race === 'nain' ? 3 : 4), tonHaut = sombre ? 1 : 2;
     const largeur = profil ? 1.2 : race === 'troll' ? 4.6 : race === 'hobbit' ? 2.1 : race === 'nain' ? 3 : race === 'elfe' ? (f ? 1.9 : 2.8) : race === 'magicienne' ? 2.3 : 2.8;
     const lb = Math.max(1, Math.round(largeur * k * (profil ? 1 : Math.abs(c))));
     const bouche = options.bouche ?? 0;   // 0 souriante, 1 neutre, 2 étonnée, 3 grognon
-    const courbe = (T.sourire ? 1.4 : bouche === 1 ? 0 : bouche === 3 ? -0.8 : race === 'hobbit' ? 1.2 : race === 'elfe' ? 0.3 : 0.8) * (profil ? 0.5 : 1);
+    const courbe = (g.vieux && race === 'troll' ? -0.4 : T.sourire ? 1.4 : bouche === 1 ? 0 : bouche === 3 ? -0.8 : race === 'hobbit' ? 1.2 : race === 'elfe' ? 0.3 : 0.8) * (profil ? 0.5 : 1);
     const epaisseur = elfeF ? 1 : Math.max(1, Math.round((profil ? 0.9 : 0.65) * k));
     if (museauLoup) { /* (la gueule est dessinée avec le museau) */ }
     else if (bouche === 2) t.forme('bouche', ellipsoide(bx, by + 0.5 * k, 1.2 * k, 1.5 * k), { decalage: -0.5, ombre: false });
@@ -624,7 +694,19 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (!elfeF && Math.abs(c) > 0.9) t.poser(Math.round(bx + lb + 1), by, matLevre, tonFente);
     // La barbe : sur la moitié avant du menton et des joues
     const barbe = race === 'nain' ? 'nain' : g.barbe;
-    if (barbe === 'moustache') { for (let i = -lb - 1; i <= lb + 1; i++) for (let e = 0; e < k; e++) t.poser(Math.round(bx + i), by - 1.6 * k + e + (Math.abs(i) > lb - 1 ? 1 : 0), 'cheveux', 3); }
+    if (barbe === 'rase') {
+      // Une barbe courte et nette : un aplat sombre qui suit la mâchoire et le menton, une
+      // moustache fine au-dessus de la bouche (lisible même de loin)
+      t.forme('cheveux', (x, y) => {
+        if (y < by - 1.6 * k || y > cy + P.ry + 0.6 * k) return null;
+        if (y >= by - 0.4 * k && y <= by + 0.9 * k && Math.abs(x + 0.5 - bx) < lb + 0.6 * k) return null;   // (la bouche)
+        const n = tete(x, y); if (!n) return null;
+        const fz = n[0] * s + n[2] * c;
+        if (fz < 0.2) return null;
+        const joue = y < by - 0.4 * k && Math.abs(x + 0.5 - bx) > lb + 1.2 * k;   // (pas de barbe sur les joues, au-dessus de la bouche)
+        return joue ? null : n;
+      }, { decalage: -0.9, bord: false, ombre: false });
+    } else if (barbe === 'moustache') { for (let i = -lb - 1; i <= lb + 1; i++) for (let e = 0; e < k; e++) t.poser(Math.round(bx + i), by - 1.6 * k + e + (Math.abs(i) > lb - 1 ? 1 : 0), 'cheveux', 3); }
     else if (barbe) {
       const long = barbe === 'nain' ? yB - 2 * k : barbe === 'pleine' ? cy + P.ry + 4 * k : cy + P.ry + 1.5 * k;
       t.forme('cheveux', (x, y) => {
@@ -678,6 +760,17 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
   }
 
+  if (costume === 'mentor' && !dos) {
+    // La pipe de Garrick : le tuyau au coin de la bouche, le fourneau qui remonte, la braise et la fumée
+    t.rampes.pipe = rampe(0x8a5a32); t.rampes.fumee = rampe(0xc8c8cc);   // (bois clair : elle se détache de la barbe)
+    const d = profil ? 1 : (Math.sign(s) || 1);
+    const mx = (profil ? cx + P.rx * 0.8 : X(0, P.rx * 0.85)) + d * 1.2 * k, my = by + 0.5 * k;
+    for (let j = 0; j <= 4 * k; j++) for (let e = 0; e < Math.max(1, Math.round(0.7 * k)); e++) t.poser(Math.round(mx + d * j), Math.round(my + j * 0.3) + e, 'pipe', e ? 1 : 3);
+    const fx2 = mx + d * 4.5 * k, fy2 = my + 1.2 * k;
+    t.forme('pipe', (x, y) => (Math.abs(x + 0.5 - fx2) < 1.3 * k && y >= fy2 - 2.6 * k && y <= fy2 + 0.4 * k ? [(x + 0.5 - fx2) / (1.3 * k), -0.2, 0.8] : null), { decalage: 0.2, ombre: false });
+    t.poser(Math.round(fx2), Math.round(fy2 - 2.6 * k), 'levres', 5);
+    for (let j = 0; j < 3; j++) t.poser(Math.round(fx2 + Math.sin(j * 1.4) * k), Math.round(fy2 - 3.5 * k - j * 1.6 * k), 'fumee', 5 - j);
+  }
   // --- 5. Les cheveux : une calotte sur la sphère, qui couvre le haut, l'arrière et les tempes ---
   const coupe = T.cheveux === false ? 'chauve' : T.cheveux === 'crete' ? 'crete' : T.cheveux === 'plaque' ? 'court' : T.cheveux === 'rare' ? 'chauve' : race === 'hobbit' ? 'boucles' : g.coiffure;
   if (T.cheveux === 'hirsute') {
@@ -806,7 +899,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // Une capuche râpée, qui encadre le visage
     t.forme('cape', (x, y) => { const n = ellipsoide(X(0, -0.5 * k), cy - 1 * k, P.rx + 1.5 * k, P.ry + 1.8 * k)(x, y); if (!n) return null; const fz = n[0] * s + n[2] * c; return (y < cy - 3 * k || fz < (gobelin ? 0.25 : 0.4)) && y < yT + 3 * k ? n : null; }, { decalage: -0.3, motif: costume === 'mendiant' ? (x, y) => (hachage(Math.floor(x / k), Math.floor(y / k), 31) > 0.9 ? -1 : 0) : null });
   } else if (costume === 'mentor') {
-    // Rien sur la tête : Garrick a sa tignasse grise
+    // Rien sur la tête : Garrick a ses cheveux bruns, longs et ondulés
   }
   // L'écuelle tendue du mendiant
   if (costume === 'mendiant' && !dos) { const mx = X(pres * (ep + 0.6 * k), 2.5 * k); t.forme('metal', ellipsoide(mx, yB + 0.5 * k, 3.2 * k, 1.6 * k), { decalage: -0.2 }); t.poser(Math.round(mx), Math.round(yB - 0.5 * k), 'or', 4); t.poser(Math.round(mx) + 1, Math.round(yB - 0.5 * k), 'or', 5); }
@@ -853,6 +946,17 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
     for (const [x, y, m, ton] of ajouts) if (t.dans(x, y) && !t.mat(x, y)) t.poser(x, y, m, ton);
   }
+  // Les aînés s'appuient sur une canne noueuse, tenue dans la main de devant
+  if (g.vieux && !leves && mainDevant) {
+    const { M, matMain, gm } = mainDevant;
+    t.rampes.canne = rampe(0xa0703c);
+    const dehors = M[0] < cx ? -1 : 1;   // (la canne s'écarte de la jambe, vers l'extérieur)
+    const bas = [M[0] + dehors * 2.5 * k, sol], haut = [M[0], M[1] - 1.5 * k];
+    cylindre(t, 'canne', haut, bas, 1.5 * k, { decalage: 0.5 });
+    t.forme('canne', ellipsoide(haut[0] - dehors * 0.8 * k, haut[1] - 0.4 * k, 2.2 * k, 1.6 * k), { decalage: 0.5 });   // le pommeau
+    t.forme(matMain, ellipsoide(M[0], M[1] + 1 * k * gm, 2.2 * k * gm, 2.3 * k * gm), { decalage: 0.4 });   // la main serrée dessus
+  }
+  if (g.vieux && T.bandelettes) moisirBandelettes(t, k);
   contourEpais(t, k - 1);
   // Où sont les mains (depuis le sol), pour y accrocher le baluchon
   t.mains = H - (leves ? cy - P.ry - 7 * k : T.brasLongs ? yB + (sol - yB) * 0.48 + 2 * k : yB + 2.5 * k);

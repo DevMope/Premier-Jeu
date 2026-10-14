@@ -187,6 +187,8 @@ const Son = {
     else if (quoi === 'tambourin') this.bruit(0.08, t, bus, 0.16 * force, 6000, 'highpass');
     else if (quoi === 'bois') this.bruit(0.03, t, bus, 0.25 * force, 2400);
     else if (quoi === 'pieces') { const g = this.ctx.createGain(); g.gain.value = force; g.connect(bus); SONS.piece.call(this, t, g, {}); if (force > 0.45) SONS.piece.call(this, t + 0.06, g, {}); }
+    else if (quoi === 'goutte') { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(700, t + 0.08); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.09 * force, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.18); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.2); }
+    else if (quoi === 'souffle') this.bruit(0.16, t, bus, 0.05 * force, 900);
     else if (quoi === 'coeur') { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.frequency.value = 50; g.gain.setValueAtTime(0.6 * force, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.35); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.4); }
   },
 
@@ -403,16 +405,18 @@ const THEMES = {
     accompagnement: (m) => [[0, 0, 3.9, 0.5], [0, 1, 3.9, 0.3]],
     percussion: (m) => [[0, 'coeur', 1], [0.45, 'coeur', 0.6], [2, 'coeur', 1], [2.45, 'coeur', 0.6]],
   },
-  // Le marché noir : une cave, un luth qui traîne, un bourdon, des pièces qui tintent de loin
+  // Le marché noir (v0.56) : sombre et mystérieux. Un bourdon grave, une harpe qui égrène des
+  // arpèges lents dans une gamme « hantée », un célesta lointain qui pose ses questions, de longs
+  // silences, des gouttes qui tombent dans la cave, et de temps en temps des pièces qui tintent
   marcheNoir: {
-    base: NOTE.D / 2, gamme: GAMMES.mineur, tempo: 76, temps: 4, phrase: 4,
-    accords: [0, 5, 3, 4], octaveMelodie: 1,
-    instruments: { melodie: 'luth', accompagnement: 'choeur', basse: 'bourdon' }, reverb: 0.55,
-    motif: { 0: [[0, 7, 1.5], [1.5, 8, 0.5], [2, 7, 2]], 2: [[0, 5, 1], [1, 6, 1], [2, 4, 2]] },
-    rythmes: [[1, 1, 2], [1.5, 0.5, 2], [2, 2]], silence: 0.3,
-    basse: (m, a) => [[0, a, 3.9]],
-    accompagnement: (m) => [[0, 0, 3.9, 0.25]],
-    percussion: (m) => (m % 4 === 3 ? [[2.5, 'pieces', 0.25]] : []),
+    base: NOTE.D / 2, gamme: GAMMES.hante, tempo: 58, temps: 4, phrase: 8,
+    accords: [0, 0, 5, 4, 0, 3, 1, 4], octaveMelodie: 1, lie: 1.3,
+    instruments: { melodie: 'celesta', accompagnement: 'harpe', basse: 'bourdon' }, reverb: 0.75,
+    motif: { 0: [[0, 7, 1], [1, 9, 1], [2, 10, 2]], 3: [[0, 11, 1.5], [1.5, 10, 0.5], [2, 7, 2]], 4: [[1, 7, 1], [2, 6, 2]], 7: [[0, 4, 1], [1, 6, 1], [2, 7, 2]] },
+    rythmes: [[2, 2], [1, 1, 2], [3, 1], [4]], silence: 0.45,
+    basse: (m, a) => [[0, a, 3.95]],
+    accompagnement: (m) => (m % 2 ? [[0, 0, 1.4, 0.35], [1, 1, 1.4, 0.3], [2, 2, 1.4, 0.3], [3, 3, 1.2, 0.25]] : [[0, 0, 3, 0.3], [2, 2, 2, 0.22]]),
+    percussion: (m) => [[1.5 + (m % 3) * 0.7, 'goutte', 0.6], ...(m % 8 === 6 ? [[3, 'pieces', 0.2]] : []), ...(m % 4 === 0 ? [[0, 'coeur', 0.45]] : [])],
   },
   // Grippesou et les jeux : sautillant, un peu louche (luth et bois)
   jeux: {
@@ -637,19 +641,31 @@ SONS.voix = function (t, bus, o) {
   const base = V.base * (p.feminin ? 1.35 : 1) * (o.hauteur || 1) * (T.hauteur || 1);
   let graine = 0; for (const c of (p.nom || o.nom || 'x')) graine = (graine * 31 + c.charCodeAt(0)) & 0xffff;
   const alea = () => { graine = (graine * 1103515245 + 12345) & 0x7fffffff; return graine / 0x7fffffff; };
-  const duree = Math.min(2.2, o.duree || T.duree);
+  // Les aînés : une voix fatiguée, plus basse, lente, étouffée, qui chevrote, avec des souffles
+  const vieux = !!(p.vieux || o.vieux);
+  const duree = Math.min(vieux ? 2.6 : 2.2, o.duree || T.duree);
   const forme = T.forme || V.forme;
-  const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = forme === 'sine' ? 3000 : forme === 'sawtooth' ? 1200 : 1600; f.connect(bus);
+  const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = (forme === 'sine' ? 3000 : forme === 'sawtooth' ? 1200 : 1600) * (vieux ? 0.4 : 1); f.connect(bus);
   const courbe = T.courbe || [0.5, 0.5];
-  const note = V.note / T.vitesse;
+  const note = V.note / T.vitesse * (vieux ? 1.45 : 1);
+  const souffle = vieux ? 0.3 : 0;
   for (let tt = 0; tt < duree; tt += note * (1 + alea() * 0.6)) {
-    if (alea() < (o.ton && o.ton !== 'neutre' ? 0.08 : 0.18)) continue;   // (une respiration)
+    if (alea() < (o.ton && o.ton !== 'neutre' ? 0.08 : 0.18) + souffle) {   // (une respiration ; chez les aînés, un souffle qu'on entend)
+      if (vieux) this.percu('souffle', t + tt, 0.5, f);
+      continue;
+    }
     const u = tt / duree;                                                  // où l'on en est dans la phrase
     const pos = u * (courbe.length - 1), i = Math.min(courbe.length - 2, Math.floor(pos)), c = courbe[i] + (courbe[i + 1] - courbe[i]) * (pos - i);
     const freq = base * (1 + T.pente * u + (c - 0.5) * 0.3) + (alea() - 0.5) * 2 * V.ecart * 0.6;
-    const osc = this.ctx.createOscillator(); osc.type = forme; osc.frequency.setValueAtTime(freq, t + tt); osc.frequency.exponentialRampToValueAtTime(freq * (0.9 + alea() * 0.2), t + tt + note);
-    const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + tt); g.gain.exponentialRampToValueAtTime(0.1 * (o.force || 1) * T.force, t + tt + 0.01); g.gain.exponentialRampToValueAtTime(0.0005, t + tt + note);
+    const fr = vieux ? freq * 0.85 : freq;
+    const osc = this.ctx.createOscillator(); osc.type = forme; osc.frequency.setValueAtTime(fr, t + tt); osc.frequency.exponentialRampToValueAtTime(fr * (vieux ? 0.88 : 0.9 + alea() * 0.2), t + tt + note);
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + tt); g.gain.exponentialRampToValueAtTime(0.1 * (o.force || 1) * T.force * (vieux ? 0.8 : 1), t + tt + (vieux ? 0.04 : 0.01)); g.gain.exponentialRampToValueAtTime(0.0005, t + tt + note);
     osc.connect(g); g.connect(f); osc.start(t + tt); osc.stop(t + tt + note + 0.02);
+    if (vieux) {   // le chevrotement : la hauteur tremble vite
+      const lfo = this.ctx.createOscillator(), amp = this.ctx.createGain();
+      lfo.frequency.value = 6.5 + alea() * 2; amp.gain.value = 45; lfo.connect(amp); amp.connect(osc.detune);
+      lfo.start(t + tt); lfo.stop(t + tt + note + 0.02);
+    }
   }
 };
 

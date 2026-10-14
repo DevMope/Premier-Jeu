@@ -68,6 +68,10 @@ class MarcheNoirScene extends Phaser.Scene {
       const img = imageCorps(this, 640 + i * 130, 368, b, 4.6).setFlipX(true).setTint(0xd8b0a8);
       this.tweens.add({ targets: img, y: 366, duration: 1400 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     });
+    // Certains soirs, un aîné des Bannis est assis près des tonneaux, appuyé sur sa canne
+    if (this.soiree.aine && !(this.G.ainesRecits || []).includes(this.soiree.aine)) {
+      this.aine = imageCorps(this, 112, 372, personneAine(this.soiree.aine), 4).setTint(0xd8b8b0);
+    }
   }
 
   // --- Le panneau du bas : une page à la fois ---
@@ -105,6 +109,11 @@ class MarcheNoirScene extends Phaser.Scene {
     const mainNoire = G.mal >= SEUIL_MAIN_NOIRE || palierCamp(G) <= -2;
     const choix = [['Le Passeur (objets interdits)', () => this.pagePasseur()], ['Les commandes des Bannis', () => this.pageCommandes()], ['Vendre une trouvaille', () => this.pageTrouvailles()]];
     if (mainNoire) choix.push(['La table du fond', () => this.pageMainNoire()]);
+    const aine = s.aine && !(G.ainesRecits || []).includes(s.aine) ? AINES[s.aine] : null;
+    if (aine) {
+      this.texte(40, 424, `Près des tonneaux, ${aine.nom} tapote sa canne : « Tu as un peu de temps pour une vieille histoire ? »`, 12, '#e8c890', { fontStyle: 'italic', wordWrap: { width: 880 } });
+      choix.push([aine.feminin ? "Écouter l'aïeule" : "Écouter l'aïeul", () => this.pageAine()]);
+    }
     const l = 900 / choix.length;
     choix.forEach(([t, a], i) => this.bouton(30 + l * (i + 0.5), 460, l - 14, t, a));
     this.bouton(860, 503, 140, 'Remonter', () => this.partir(true));
@@ -188,6 +197,45 @@ class MarcheNoirScene extends Phaser.Scene {
       this.bouton(700, 440, 200, refus || 'Emprunter', () => { emprunter(G, pret); Son.jouer('pieces'); this.majBourse(); this.pageMainNoire('La main gantée pousse une bourse vers toi. « À bientôt. »'); }, !refus);
     }
     this.bouton(860, 503, 140, '◂ Retour', () => this.accueil());
+  }
+
+  // Le récit d'un aîné : la cave s'efface, le souvenir apparaît (un tableau qui se colore peu à
+  // peu), et l'aîné raconte, page après page. Personne d'autre ne l'écoute, sauf Garrick, d'habitude.
+  pageAine() {
+    const G = this.G, race = this.soiree.aine, a = AINES[race];
+    const scene = [];
+    const voile = this.add.rectangle(480, 270, 960, 540, 0x08050a).setAlpha(0).setDepth(3);
+    creerVignettesZonesHD(this);
+    const souvenir = this.add.image(600, 196, 'vignetteZone_' + a.vignette).setScale(6.4).setDepth(3.2).setAlpha(0).setTint(0xc8a878);
+    const conteur = this.add.image(190, 82, textureBusteHD(this, personneAine(race), 'neutre')).setOrigin(0.5, 0).setScale(2.6).setDepth(3.3).setAlpha(0);
+    const nom = this.add.text(190, 64, a.nom, style(18, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0806', strokeThickness: 4 })).setOrigin(0.5).setDepth(3.4).setAlpha(0);
+    scene.push(voile, souvenir, conteur, nom);
+    this.tweens.add({ targets: voile, alpha: 0.88, duration: 900 });
+    this.tweens.add({ targets: [conteur, nom], alpha: 1, duration: 900, delay: 300 });
+    this.tweens.add({ targets: souvenir, alpha: 0.95, duration: 1600, delay: 700 });
+    this.tweens.add({ targets: souvenir, scale: 6.9, x: 590, duration: 26000, ease: 'Sine.easeInOut' });
+    Son.jouer('page');
+    let page = 0;
+    const montrer = () => {
+      this.vider();
+      // (le souvenir reprend ses couleurs au fil du récit, puis se ternit à la dernière page)
+      const fin = page === a.recit.length - 1;
+      const teinte = fin ? 0x9a8a80 : [0xc8a878, 0xe0c8a0, 0xf4e8d4, 0xffffff][Math.min(3, page)];
+      souvenir.setTint(teinte);
+      const txt = this.texte(40, 380, a.recit[page], 15, '#f3e6c8', { fontStyle: 'italic', wordWrap: { width: 880 }, lineSpacing: 4 }).setAlpha(0);
+      this.tweens.add({ targets: txt, alpha: 1, duration: 500 });
+      Son.jouer('voix', { personne: personneAine(race), duree: Math.min(2.6, 0.5 + a.recit[page].length * 0.01) });
+      this.texte(40, 503, `${page + 1} / ${a.recit.length}`, 12, '#a89080').setOrigin(0, 0.5);
+      this.bouton(840, 503, 180, fin ? (a.feminin ? 'La remercier' : 'Le remercier') : 'Suite ▸', () => {
+        if (!fin) { page++; Son.jouer('page'); montrer(); return; }
+        G.ainesRecits = [...new Set([...(G.ainesRecits || []), race])];
+        this.tweens.add({ targets: scene, alpha: 0, duration: 900, onComplete: () => scene.forEach(o => o.destroy()) });
+        if (this.aine) { this.tweens.add({ targets: this.aine, alpha: 0, duration: 1200 }); }
+        this.accueil(`${a.nom} se tait. Le Passeur hausse les épaules : « Les vieux racontent n'importe quoi. » Mais toi, tu te souviendras.`);
+      });
+    };
+    this.time.delayedCall(700, montrer);
+    this.vider();
   }
 
   // Remonter : quelqu'un a-t-il vu la lanterne ?

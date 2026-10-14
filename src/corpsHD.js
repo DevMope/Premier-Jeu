@@ -34,7 +34,7 @@ const FIGURANTS = {
   banquier: { race: 'humain', nom: 'Banquier', costume: 'banquier', habit: 0x26262e, cheveux: 0x1a1a20 },
   nainBanquier: { race: 'nain', nom: 'Thorgrim', costume: 'banquier', habit: 0x26262e, cheveux: 0xe0e0e0 },
   colporteur: { race: 'humain', nom: 'Colporteur', costume: 'colporteur', habit: 0x6a5a40, cheveux: 0x4a3a2a, cape: 0x4a3a2a },
-  mentor: { race: 'humain', nom: 'Garrick', costume: 'mentor', habit: 0x2f5a3a, cheveux: 0x9a9aa0, cape: 0x2f5a3a, barbe: 'pleine', niveau: 3 },
+  mentor: { race: 'humain', nom: 'Garrick', costume: 'mentor', habit: 0x2e2420, cheveux: 0x3a281a, cape: 0x3e4a2a, barbe: 'rase', coiffure: 'long', peau: 1, niveau: 2 },   // (peau : la même teinte que son buste)
   gobelin: { race: 'gobelin', nom: 'Grippesou', costume: 'gobelin', habit: 0x6a5030, cheveux: 0x5a3a20 },
   bourgmestre: { race: 'humain', nom: 'Odilon Bonnefoi', costume: 'banquier', habit: 0x4a2a5a, cheveux: 0xb0b0b8, barbe: 'moustache', niveau: 3 },
   heraut: { race: 'humain', nom: 'Le héraut', costume: 'garde', habit: 0x2a4a8a, cheveux: 0x5a3a1a },
@@ -330,7 +330,7 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   let gene, tenue, costume = null, cle;
   if (typeof quoi === 'string' && FIGURANTS[quoi]) {
     const fig = FIGURANTS[quoi];
-    gene = { ...geneHD({ nom: fig.nom, race: fig.race === 'gobelin' ? 'humain' : fig.race }), race: fig.race, habit: fig.habit, cheveux: fig.cheveux, cape: fig.cape, barbe: fig.barbe ?? null, coiffure: 'court' };
+    gene = { ...geneHD({ nom: fig.nom, race: fig.race === 'gobelin' ? 'humain' : fig.race }), race: fig.race, habit: fig.habit, cheveux: fig.cheveux, cape: fig.cape, barbe: fig.barbe ?? null, coiffure: fig.coiffure || 'court', ...(fig.peau !== undefined ? { peau: fig.peau } : {}) };
     tenue = fig.niveau ?? 1;
     costume = fig.costume;
     cle = 'corps_' + quoi;
@@ -345,7 +345,8 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
     // Les nobles et les collectionneurs : velours, fourrure et chapeau à plume
     if (quoi.prestige) { costume = 'noble'; gene.habit = gene.habitNoble; gene.cape = 0x5a1a3a; cle += '_noble'; }
     if (quoi.costume) { costume = quoi.costume; cle += '_' + quoi.costume; }
-    if (quoi.figurant === 'mentor') { gene = { ...gene, habit: 0x2f5a3a, cheveux: 0x9a9aa0, cape: 0x2f5a3a, barbe: 'pleine', coiffure: 'court' }; costume = 'mentor'; }
+    if (quoi.vieux) cle += '_vieux';
+    if (quoi.figurant === 'mentor') { gene = { ...gene, habit: 0x2e2420, cheveux: 0x3a281a, cape: 0x3e4a2a, barbe: 'rase', coiffure: 'long', peau: 1 }; costume = 'mentor'; tenue = 2; }
   }
   if (pose) cle += '_' + pose;
   if (vue && vue !== 'troisQuarts') cle += '_' + vue;

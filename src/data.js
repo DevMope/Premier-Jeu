@@ -1262,12 +1262,17 @@ const TERREUR_FAUCHEUSE = [
   { morts: 15, ombre: 0.95, echelle: 10.2, secousse: 0.009, aura: 0.7 },
 ];
 // ... et de plus en plus séduite par toi si tu lui offres des âmes exprès.
+// (v0.56, décidé par le joueur) Elle n'est d'aucun camp : elle aime la mort. Plus tu t'en approches,
+// plus chaque âme offerte pèse lourd dans la jauge du mal (`mal`), et au dernier degré elle a un
+// prix : ses missions désignent tes proches (`proches`), et refuser lui coûte plus cher.
 const SEDUCTION_FAUCHEUSE = [
-  { faveur: -Infinity, nom: 'Indifférente', couleur: '#ff3a2a' },
-  { faveur: 2, nom: 'Intriguée', couleur: '#ff5a6a' },
-  { faveur: 5, nom: 'Séduite', couleur: '#e04aa0' },
-  { faveur: 10, nom: 'Éprise', couleur: '#c03ae0' },
+  { faveur: -Infinity, nom: 'Indifférente', couleur: '#ff3a2a', mal: 1 },
+  { faveur: 2, nom: 'Intriguée', couleur: '#ff5a6a', mal: 1.2 },
+  { faveur: 5, nom: 'Séduite', couleur: '#e04aa0', mal: 1.45 },
+  { faveur: 10, nom: 'Éprise', couleur: '#c03ae0', mal: 1.8, proches: true },
 ];
+// Au dernier degré : la relation minimale de la cible (un ami), la prime doublée, et le prix d'un refus
+const PRIX_FAUCHEUSE = { relation: 4, prime: 2, refus: 3 };
 // Les missions de sabotage : une fois assez noir, elle te désigne une âme pure à piéger.
 const SEUIL_SABOTAGE = 3;          // jauge du mal
 const PRIME_SABOTAGE = [30, 60];   // pièces froides, selon le danger de la zone
@@ -1573,6 +1578,83 @@ Object.assign(QUETES, {
     ],
   },
 });
+
+// --- Les aînés des Bannis (v0.56) ---
+// Les doyens de chaque peuple banni se souviennent des anciens récits (le sort d'oubli les a moins
+// pris), mais tout le monde les prend pour de vieux radoteurs. Seul Garrick les écoute. Au comptoir,
+// très rarement et seulement à partir du milieu du jeu, l'un d'eux passe et laisse une phrase.
+// Au marché noir, de temps en temps, l'un d'eux raconte : un récit en plusieurs pages, jamais tout
+// à fait clair. Au joueur de recoller les morceaux.
+const AINES_JOUR = 30;             // pas avant le milieu du jeu
+const AINES_CHANCE = { comptoir: 0.04, marcheNoir: 0.35 };
+const AINES = {
+  gobelin: {
+    nom: 'Grand-mère Ortie', feminin: true, vignette: 'vergers',
+    phrase: "« Tes pommes, petit... Elles viennent d'où ? Hm. Nous aussi, on avait des pommiers. Des milliers. Personne ne me croit. Garrick, lui, il me croit. »",
+    recit: [
+      "« Approche, approche. Mes yeux sont vieux, mais ma tête, elle, se souvient. »",
+      "« Avant, nous vivions dans une vallée pleine de pommiers. Les fleurs, au printemps, on aurait dit de la neige rose. On chantait en cueillant. Les enfants dormaient sous les arbres. »",
+      "« Un printemps, des hommes en bleu sont venus. Un soleil d'or sur la poitrine. Ils disaient qu'un dragon allait venir, qu'il fallait partir pour notre bien. Personne n'avait jamais vu de dragon. »",
+      "« Après... je ne sais plus. Il y a un trou, là, dans ma mémoire. Comme une page arrachée. Je me suis réveillée dans la boue, avec les autres. La vallée s'appelait le Bourbier. On ne savait plus pourquoi on pleurait. »",
+      "« Il reste la berceuse. L'air, seulement. Les paroles sont tombées dans le trou, avec le reste. Si un jour quelqu'un les retrouve... dis-le-moi, petit. Avant que je parte. »",
+    ],
+  },
+  orc: {
+    nom: 'Gromak le Vieux', feminin: false, vignette: 'forge',
+    phrase: "« Les Nains et nous, on a creusé les mêmes galeries, autrefois. Côte à côte. Tu ne me crois pas ? Personne ne me croit. »",
+    recit: [
+      "« Assieds-toi. Je parle lentement, maintenant. Les mots pèsent lourd, à mon âge. »",
+      "« Les grandes galeries de la montagne, celles que les Nains appellent les leurs... nous les avons creusées ensemble. Orcs et Nains. Leur forge, notre feu. On partageait le pain et le minerai. »",
+      "« Il y avait un pacte. Gravé dans la pierre, à l'entrée. Les Nains le chantaient, et nous aussi, chacun dans sa langue. Un héros l'avait scellé. Un humain, je crois. Grand. Une armure qui brillait. »",
+      "« Un jour, la pierre du pacte a été martelée. Effacée. Les Nains ne se souvenaient plus de nous. Ils nous regardaient comme des bêtes. Moi, je me souvenais. Je ne sais pas pourquoi moi. »",
+      "« Le héros ? Disparu. Les Nains disent qu'il n'a jamais existé. Mais ses armes, elles, existent. J'en ai vu une pièce, un jour, sur un étal. Elle m'a reconnu. Je te jure qu'elle m'a reconnu. »",
+    ],
+  },
+  loupgarou: {
+    nom: 'Aïeule Lunegrise', feminin: true, vignette: 'col',
+    phrase: "« Je chante des noms, chaque nuit. Des centaines. Si je m'arrête, ils disparaissent pour de bon. Tu veux en entendre un ? »",
+    recit: [
+      "« Viens près du feu, petit d'homme. Les loups n'ont pas froid, mais les vieux, si. »",
+      "« Les elfes chantent au Lac des Lunes pour ne pas oublier. Ils ne savent plus quoi. Moi, je sais : c'est notre chant. Nous gardions leurs forêts, autrefois, et ils nous l'avaient appris en remerciement. »",
+      "« Puis vint la nuit sans lune. Le grand Sage parla, et le monde s'endormit. Au réveil, les elfes nous chassaient de leurs forêts à coups de flèches d'argent. Ils pleuraient en tirant, sans savoir pourquoi. »",
+      "« La meute s'est réfugiée au Col. Les plus vieux d'entre nous se souviennent un peu. Alors nous chantons les noms des nôtres tombés cette nuit-là. Tant qu'on les chante, ils ne sont pas tout à fait partis. »",
+      "« Un homme vient parfois, la nuit. Une pipe, un manteau vert. Il écoute les noms jusqu'au bout. Il en connaît certains. ... Non, je ne te dirai pas son nom. Tu le connais déjà, je crois. »",
+    ],
+  },
+  vampire: {
+    nom: "Sévérin l'Ancien", feminin: false, vignette: 'chateau',
+    phrase: "« J'ai vu le grand Sage, jeune homme. Il y a fort longtemps. Il avait déjà ce visage-là. Exactement celui-là. Curieux, n'est-ce pas ? »",
+    recit: [
+      "« Un verre ? ... Non, ce n'est pas ce que tu crois. Du vin. Je suis vieux, pas grossier. »",
+      "« À Nuit-Pourpre, nous tenions les registres. Les naissances, les mariages, les morts, de tous les peuples. Nous vivons longtemps : on nous confiait la mémoire. C'était un honneur. »",
+      "« Le Sage est venu nous les demander. Pour les mettre à l'abri, disait-il. Mon père a refusé. On l'a pendu sur le pont-levis, au petit matin, et les registres ont brûlé dans la cour. Ça sentait le parchemin pendant des jours. »",
+      "« Le Sage avait le même visage que celui qu'on voit aujourd'hui sur les pièces d'or. Le même, exactement. Mon grand-père le connaissait déjà. Les mages vieillissent, d'habitude. Pas lui. »",
+      "« Il reste une page. Une seule. Je l'ai cachée. Elle parle d'un héros et d'une armure. Je ne la montrerai qu'à celui qui portera cette armure. ... Ne fais pas cette tête. Je radote, voilà tout. »",
+    ],
+  },
+  momie: {
+    nom: 'Ankhar le Scribe', feminin: false, vignette: 'tombeaux',
+    phrase: "« Les vivants oublient. Les morts, eux, se souviennent : le sort ne touche pas ceux qui dorment sous le sable. Nous dormions. Nous avons tout vu. »",
+    recit: [
+      "« Lis-moi les noms, scribe vivant. Mes yeux sont de poussière. ... Ah, c'est toi qui écoutes ? Bien. Alors écoute. »",
+      "« Le sort qu'ils appellent l'oubli n'efface rien. Il recouvre. Comme le sable recouvre une ville. Dessous, tout est encore là. Les maisons. Les noms. Les crimes. »",
+      "« Nous, les momies, dormions déjà quand il fut lancé. Le sommeil protège du sommeil, vois-tu. Alors nous nous souvenons de la grande marche des peuples chassés vers l'est, et des colonnes de soldats au soleil d'or derrière eux. »",
+      "« Un sort qui recouvre peut se lever. Il faut une clé. Une parole, un objet, un lieu... Les tablettes le disaient. Elles ont été volées. Pour un temple de la Lumière, m'a-t-on dit. »",
+      "« Le Nécromancien les cherche. Il croit qu'elles parlent de lui. Elles parlent de nous tous. ... Le sable va tomber, maintenant. Reviens une autre nuit, et lis-moi encore des noms. »",
+    ],
+  },
+  troll: {
+    nom: 'Le Vieux Moussu', feminin: false, vignette: 'pont',
+    phrase: "« Je garde un pont. Quelqu'un m'a demandé d'attendre. Il y a très longtemps. J'attends toujours. Tu ne l'aurais pas vu passer ? »",
+    recit: [
+      "« Hrrm. Assieds-toi sur ma mousse. Elle est douce. Elle a mon âge. »",
+      "« Le pont, je l'ai bâti avec mes frères. Pierre sur pierre. Pour que les marchands de la Comté viennent jusqu'à nous, et nous jusqu'à eux. On échangeait du sel contre des pommes. C'était bien. »",
+      "« Un jour, un homme est passé. Grand. Une armure qui brillait comme le soleil. Il m'a dit : garde le pont, mon ami, je reviens. Il riait. Il avait une fleur de pommier sur l'épaule. »",
+      "« Il n'est jamais revenu. Après, plus personne n'est venu de la Comté. Seulement des soldats, qui disaient que nous mangions les voyageurs. Nous ne mangeons que de la mousse. Et de la soupe, le dimanche. »",
+      "« Alors j'attends. Il a dit qu'il reviendrait. Un héros, ça tient parole. ... Ou alors quelqu'un portera son armure à sa place, un jour. Ça compterait, hein ? Ça compterait quand même. »",
+    ],
+  },
+};
 
 // --- La chance (le trèfle) ---
 

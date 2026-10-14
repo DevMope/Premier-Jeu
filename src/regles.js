@@ -486,6 +486,8 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     garde: { visites: 0, dernier: 0, saisies: 0 },   // les visites de la garde de la Confrérie
     interdits: {},     // les objets interdits achetés au marché noir (étape 9e)
     garrickVu: [],     // les visites de Garrick déjà faites
+    ainesVus: [],      // (v0.56) les aînés des Bannis passés au comptoir
+    ainesRecits: [],   // et ceux dont on a écouté le récit au marché noir
     malCorrige: true,  // (migration de l'audit v0.53 déjà faite)
     pieges: {},        // les objets piégés cachés sous le comptoir
     faucheuse: { faveur: 0, morts: 0, visites: 0, cadeau: false, mission: null, sabotages: 0 },
@@ -1382,10 +1384,28 @@ function ouvrirComptoir(G) {
   const g = GARRICK_VISITES.findIndex(x => x.jour === G.jour);
   if (g >= 0 && !(G.garrickVu || []).includes(g)) visites.push({ type: 'garrick', i: g });
   if (doitVenirGarde(G)) visites.push({ type: 'garde', garde: gardeDuJour(G) });
+  // (v0.56) Très rarement, à partir du milieu du jeu, un aîné des Bannis passe et laisse une phrase
+  const aine = aineDuJour(G, 'comptoir');
+  if (aine) { G.ainesVus = [...(G.ainesVus || []), aine]; file.splice(hasard(0, file.length), 0, { type: 'aine', race: aine }); }
   G.file = [...retours, ...notables, ...visites, ...file];
 }
 
 // --- Étape 9e : le marché noir ---
+
+// Un aîné des Bannis aujourd'hui ? `ou` : 'comptoir' (une phrase, chacun une seule fois) ou
+// 'marcheNoir' (son récit, chacun une seule fois). Rien avant le milieu du jeu.
+function aineDuJour(G, ou) {
+  if (G.jour < AINES_JOUR || Math.random() >= AINES_CHANCE[ou]) return null;
+  const deja = ou === 'comptoir' ? (G.ainesVus || []) : (G.ainesRecits || []);
+  const restants = Object.keys(AINES).filter(r => !deja.includes(r));
+  return restants.length ? auHasard(restants) : null;
+}
+
+// La personne d'un aîné (pour son corps et son buste de vieillard)
+function personneAine(race) {
+  const a = AINES[race];
+  return { nom: a.nom, race, feminin: a.feminin, vieux: true, niveau: 'aguerri' };
+}
 
 function marcheNoirCeSoir(G) { return !!(G.marcheNoir && G.marcheNoir.jour === G.jour); }
 
@@ -1395,7 +1415,9 @@ function soireeMarcheNoir(G) {
   const races = Phaser.Utils.Array.Shuffle([...PEUPLES_OMBRE]).slice(0, 2);
   const bannis = races.map(race => { const [nom, feminin] = auHasard(NOMS[race]); return { nom, race, feminin, niveau: 'aguerri' }; });
   const commandes = bannis.map(b => { const id = auHasard(Object.keys(INTERDITS)); return { banni: b, objet: id, prix: hasard(...INTERDITS[id].vente), faite: false }; });
-  G.marcheNoir.soiree = { bannis, commandes, risque: 0, murmure: auHasard(MURMURES) };
+  // (v0.56) parfois, un aîné est là ce soir, et raconte
+  const aine = aineDuJour(G, 'marcheNoir');
+  G.marcheNoir.soiree = { bannis, commandes, risque: 0, murmure: auHasard(MURMURES), aine };
   for (const b of bannis) G.personnes = { ...(G.personnes || {}), [b.nom]: { race: b.race, feminin: b.feminin } };
   return G.marcheNoir.soiree;
 }
@@ -1968,7 +1990,7 @@ function recolter(G, partis) {
     G.habitues = G.habitues.filter(h => h.nom !== p.voyageur.nom);
     if (p.voulu) {
       const poids = MORTS_VOULUES[p.voulu].poids;
-      G.mal += poids;
+      G.mal += poids * (seductionFaucheuse(G).mal || 1);   // (plus elle t'aime, plus chaque âme pèse)
       F.faveur += poids;
       bilan.voulues.push(p);
       if (p.voulu === 'piege' && Math.random() < CHANCE_DEMASQUE) {
@@ -2013,9 +2035,12 @@ function cadeauFaucheuse(G) {
 function proposerSabotage(G) {
   const F = G.faucheuse;
   if (F.mission || G.mal < SEUIL_SABOTAGE) return null;
+  // Éprise, elle a un prix : une âme qui t'est chère (un habitué, ton ami)
+  const proches = seductionFaucheuse(G).proches ? G.habitues.filter(h => (G.relations[h.nom] || 0) >= PRIX_FAUCHEUSE.relation && !nomsActifs(G).includes(h.nom)) : [];
   for (let essai = 0; essai < 20; essai++) {
-    const cible = voyageurAuHasard(G);
-    if (cible.habitue) continue;
+    const proche = proches.length ? auHasard(proches) : null;
+    const cible = proche ? creerVoyageur(G, { ...proche }) : voyageurAuHasard(G);
+    if (cible.habitue && !proche) continue;
     const zones = zonesPour(G, cible).filter(z => ZONES[z].camp !== 'mal');
     if (!zones.length) continue;
     const zone = auHasard(zones);
@@ -2023,8 +2048,8 @@ function proposerSabotage(G) {
     const possibles = Object.keys(commandeDe(cible)).filter(id => id in PIEGES);
     if (!possibles.length) continue;
     const danger = ZONES[zone].danger;
-    const prime = Math.round(PRIME_SABOTAGE[0] + (PRIME_SABOTAGE[1] - PRIME_SABOTAGE[0]) * (danger - 1) / 4);
-    F.mission = { cible, piege: auHasard(possibles), jour: G.jour + 1, prime, etat: 'proposee' };
+    const prime = Math.round((PRIME_SABOTAGE[0] + (PRIME_SABOTAGE[1] - PRIME_SABOTAGE[0]) * (danger - 1) / 4) * (proche ? PRIX_FAUCHEUSE.prime : 1));
+    F.mission = { cible, piege: auHasard(possibles), jour: G.jour + 1, prime, etat: 'proposee', proche: !!proche };
     return F.mission;
   }
   return null;
@@ -2037,8 +2062,9 @@ function accepterSabotage(G) {
 }
 
 function refuserSabotage(G) {
+  const prix = G.faucheuse.mission && G.faucheuse.mission.proche;
   G.faucheuse.mission = null;
-  G.faucheuse.faveur -= 1;
+  G.faucheuse.faveur -= prix ? PRIX_FAUCHEUSE.refus : 1;   // (on ne refuse pas impunément son prix)
 }
 
 // Est-ce la cible d'une mission en cours ?

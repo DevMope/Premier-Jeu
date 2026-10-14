@@ -59,6 +59,7 @@ class CarteScene extends Phaser.Scene {
     this.limiter(Object.keys(ZONES).filter(c => zoneOuverte(this.G, c) && (!this.nouvelles.includes(c) || c === cle || !liste.includes(c))));
     this.vue(Math.max(this.k, 0.95), z.x, z.y, () => {
       if (p.point) p.point.destroy();
+      (p.nuages || []).forEach((n, i) => { this.tweens.killTweensOf(n); this.tweens.add({ targets: n, x: n.x + (n.x < z.x ? -90 : 90), y: n.y - 20 + i * 8, alpha: 0, duration: 900, ease: 'Sine.easeIn', onComplete: () => n.destroy() }); });
       this.tweens.add({ targets: p.brume, alpha: 0, scaleX: 3.2, scaleY: 2.6, duration: 700, ease: 'Sine.easeOut', onComplete: () => p.brume.destroy() });
       p.pastille.setTexture('vignetteZone_' + cle).setScale(0);
       p.ombre.setTexture('vignetteZone_' + cle).setScale(0);
@@ -93,6 +94,7 @@ class CarteScene extends Phaser.Scene {
     creerVignettesZonesHD(this);
     creerComptoirCarteHD(this);
     creerEmblemesHD(this);
+    creerNuagesCarteHD(this);
     this.add.image(0, 0, 'bureauBois').setOrigin(0).setScale(2).setTint(0xa08870);
     vignette(this, 0.7, 0);
     // Le cadre de la carte (le monde s'affiche dedans, par sa caméra)
@@ -155,6 +157,18 @@ class CarteScene extends Phaser.Scene {
           style(11, conquise ? '#7a4a00' : '#3b2410', { fontStyle: 'bold', backgroundColor: conquise ? '#f0c840' : '#e8d8b0', padding: { x: 3, y: 1 } })).setOrigin(0.5), { etiquette: true, detail: true });
         if (conquise) this.tweens.add({ targets: fanion, angle: { from: -4, to: 4 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
+    }
+    // De gros nuages couvrent les contrées pas encore ouvertes : elles se dévoileront plus tard
+    for (const [cle, z] of Object.entries(ZONES)) {
+      if (zoneOuverte(G, cle) && !this.nouvelles.includes(cle)) continue;
+      const p = this.pieces[cle];
+      p.nuages = [[-38, -8, 0, 1.9], [30, -14, 1, 1.7], [0, 12, 2, 2.1], [-14, -24, 1, 1.3], [44, 10, 0, 1.5], [-46, 14, 2, 1.4], [16, -30, 2, 1.2]].map(([dx, dy, v, e], i) => {
+        const n = this.add.image(z.x + dx, z.y + dy, 'nuageCarte_' + ((v + cle.length) % 3)).setScale(e).setAlpha(0.96).setFlipX((i + cle.length) % 2 === 0);
+        this.monde.add(n);
+        // ils dérivent doucement sur place
+        this.tweens.add({ targets: n, x: n.x + (i % 2 ? 7 : -7), duration: 2600 + i * 500 + cle.length * 90, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        return n;
+      });
     }
     const conquises = Object.keys(ZONES).filter(c => ((G.conquete || {})[c] || 0) >= CONQUETE_ZONE).length;
     this.dessus.add(this.add.text(938, 402, `⚑ Contrées conquises : ${conquises} / ${Object.keys(ZONES).length}`, style(12, '#f3e6c8', { fontStyle: 'bold', backgroundColor: '#2a1a10cc', padding: { x: 5, y: 2 } })).setOrigin(1, 0.5));

@@ -18,7 +18,7 @@ const EMBLEMES = {
   loups: { nom: 'Les Loups-garous', champ: 0x161c34, metal: 'argentTerni' },
   vampires: { nom: 'Les Vampires', champ: 0x4a1030, metal: 'or' },
   momies: { nom: 'Les Momies', champ: 0xd0b070, metal: 'or' },
-  trolls: { nom: 'Les Trolls', champ: 0x3a4a3a, metal: 'fer' },
+  trolls: { nom: 'Les Trolls', champ: 0x5a4430, metal: 'fer' },
   mainNoire: { nom: 'La Main Noire', champ: 0x8a1a1a, metal: 'fer' },
 };
 // L'emblème de chaque royaume de la carte
