@@ -110,3 +110,14 @@ Et l'histoire derrière tout ça (dit par le joueur, à garder secret dans le je
 5. À quel moment le joueur **apprend la vérité** : à mi-parcours (et il peut encore choisir), ou seulement à la fin (coup de théâtre) ?
 6. Les peuples du bien **savent-ils** ? (les Pandas du Monastère gardent-ils le secret ? un elfe dissident ?) Qui, parmi les clients récurrents, pourrait être le premier à laisser échapper un indice ?
 7. Les **deux fins** : garder « équiper les héros » / « aider la menace », ou les inverser une fois la vérité connue ?
+
+## 7. Réponses du joueur sur le récit (14/10) — à garder secret dans le jeu
+
+- **Tailles des peuples du mal** (pour tester) : gobelins 11, momies 15 (un peu courbées), vampires 16, orcs 17, loups-garous 20, trolls 24. (Rappel du bien : hobbit 13, nain 14, humain 16, elfe 17, magicienne 18 ; panda à fixer, le plus grand du bien.)
+- **Le marché noir** : oui à tout (§ 5), on retravaillera par-dessus.
+- **Les Gardiens de la paix** : un **conseil** qui réunit les chefs des royaumes, présidé par un **grand chef « sage »**, fourbe en secret, si vieux qu'on ne sait plus son âge. Les royaumes : Hobbits ★, Humains ★★, Nains ★★★, Elfes ★★★★, Mages ★★★★★ (par exemple).
+- **L'horreur cachée** : les Gardiens ont **rasé les trois quarts des populations** dites maléfiques pour installer les peuples gentils sur leurs terres (leurs anciennes terres mouraient). Un **puissant sort d'oubli** a effacé la mémoire de tous. Le sort **pourra être brisé**.
+- **Garrick** est au fond **le chef des vrais gentils** (les bannis). Il ne recrute pas le joueur directement : trop tôt, trop dangereux pour lui.
+- **Le dragon sous la montagne** : un **bouc émissaire** inventé par les Gardiens.
+- **La grande vérité à la fin** seulement ; mais un joueur attentif doit pouvoir sentir que quelque chose cloche dans ce conseil.
+- **Le premier indice** : Garrick, quand il repasse voir le joueur quelques jours après le début, pour prendre des nouvelles.
