@@ -385,7 +385,10 @@ class StoryScene extends Cinematique {
       loupgarou: "Même les nuits de pleine lune, ton baluchon a tenu le coup.",
       panda: "Il ne manquait que le bambou. Pour le reste : parfait.",
     };
-    return perso + (parPeuple[v.race] || "Sans ton baluchon, je ne serais pas là.");
+    // (v0.60) la fin selon le camp de la contrée
+    const camp = ZONES[v.zone] && ZONES[v.zone].camp;
+    const fin = camp === 'bien' ? ' Au village, on a sonné les cloches pour moi.' : camp === 'mal' ? " Personne ne m'a vu revenir. C'est mieux ainsi." : '';
+    return perso + (parPeuple[v.race] || "Sans ton baluchon, je ne serais pas là.") + fin;
   }
 
   // Un bouton posé dans l'interface (hors de la caméra du monde, qui zoome et se déplace)

@@ -1323,7 +1323,9 @@ function mainNoireOuverte(G) {
   return G.camp === 'mal' || G.mal >= SEUIL_MAIN_NOIRE || palierCamp(G) <= -2;
 }
 const LOYER = { base: 20, parPalier: 15 };
-const CONVALESCENCE_PAR_COEUR = 2;   // (v0.60) jours de repos par cœur perdu, pour un blessé revenu de mission
+const CONVALESCENCE_PAR_COEUR = 2;
+const CHANCE_GRATITUDE = 0.4, CHANCE_INTERDIT_OMBRE = 0.35, CHANCE_GARDE_OMBRE = 0.25;
+const CADEAUX_VILLAGES = [['ration', 2], ['potion', 1], ['bandage', 2], ['gourde', 1], ['torche', 2], ['antidote', 1]];   // (v0.60) jours de repos par cœur perdu, pour un blessé revenu de mission
 function loyerSemaine(G) {
   return LOYER.base + LOYER.parPalier * palierClients(G).index;
 }
@@ -1381,6 +1383,13 @@ function nuit(G) {
   // Le sort de ceux qui rentrent aujourd'hui est tiré pendant la nuit (et donc sauvegardé).
   for (const p of G.partis) if (!p.termine && p.retour === G.jour && !p.resultat) p.resultat = simulerAventure(p.voyageur, p.colis, p.pieges);
   reveilDuMatin(G, mauvaisJour);
+  // (v0.60) la gratitude des villages de lumière : un panier devant la porte
+  for (const c of G.cadeauxVillages || []) {
+    const [id, n] = auHasard(CADEAUX_VILLAGES);
+    G.stock[id] = (G.stock[id] || 0) + n;
+    G.reveil.lignes.push(`Un panier devant la porte, de la part ${ZONES[c.zone] ? 'des gens ' + (ZONES[c.zone].nom.startsWith('Le ') ? 'du ' + ZONES[c.zone].nom.slice(3) : ZONES[c.zone].nom.startsWith('La ') ? 'de la ' + ZONES[c.zone].nom.slice(3) : ZONES[c.zone].nom.startsWith('Les ') ? 'des ' + ZONES[c.zone].nom.slice(4) : 'de ' + ZONES[c.zone].nom) : 'd\'un village'} : ${n} ${ITEMS[id].nom.toLowerCase()}${n > 1 ? 's' : ''}, pour te remercier d'avoir aidé ${c.nom.split(' ')[0]}.`);
+  }
+  G.cadeauxVillages = [];
   if (loyer > 0) G.reveil.lignes.push(`Le bourgmestre a encaissé le loyer de la semaine : ${loyer} pièces.` + (loyer > (G.dernierLoyer || loyer) ? ' Le bail a augmenté : ton comptoir a pris de la valeur.' : ''));
   if (loyer > 0) G.dernierLoyer = loyer;
   if (taxe > 0) G.reveil.lignes.push(`Un percepteur de la Confrérie est passé : ${taxe} pièces de taxe « pour la défense contre le dragon ».`);
@@ -1737,6 +1746,17 @@ function terminerAventure(G, parti) {
     connaitre(G, v).succes = succesDe(G, v.nom) + 1;
     message = changerRelation(G, v.nom, POINTS_RELATION.retourVivant);
     if (parti.conquise) message = (message ? message + ' ' : '') + `⚑ ${ZONES[v.zone].nom} : contrée conquise ! Son drapeau flotte sur ta carte.`;
+    // (v0.60) Lumière : les villages remercient (un cadeau en nature demain matin).
+    // Ombre : plus d'or, un objet interdit glissé sous le manteau... et la garde qui rôde.
+    if (camp === 'bien' && Math.random() < CHANCE_GRATITUDE) G.cadeauxVillages = [...(G.cadeauxVillages || []), { zone: v.zone, nom: v.nom }];
+    if (camp === 'mal') {
+      if (Math.random() < CHANCE_INTERDIT_OMBRE) {
+        const id = auHasard(Object.keys(INTERDITS));
+        G.interdits[id] = (G.interdits[id] || 0) + 1;
+        message = (message ? message + ' ' : '') + `${v.nom.split(' ')[0]} te glisse ${INTERDITS[id].nom.toLowerCase()} : « Un souvenir. Cache-le bien. »`;
+      }
+      if (Math.random() < CHANCE_GARDE_OMBRE) { G.gardeDemain = true; message = (message ? message + ' ' : '') + 'Des silhouettes en tabard bleu l\'ont suivi jusqu\'à ta porte...'; }
+    }
     if (part0 < 1) message = (message ? message + ' ' : '') + `Sa commande n'était remplie qu'à ${Math.round(part0 * 100)} % : ta réputation en profite moins.`;
     if (blesse) message = (message ? message + ' ' : '') + `Revenu${v.feminin ? 'e' : ''} blessé${v.feminin ? 'e' : ''} : la mission compte un peu moins pour ta réputation, et sans soins il lui faudra ${CONVALESCENCE_PAR_COEUR * blesse} jours de repos.`;
     const derniere = r.etapes[r.etapes.length - 1];
