@@ -84,5 +84,6 @@ class Cinematique extends Phaser.Scene {
       .setOrigin(1, 0).setDepth(20).setScrollFactor(0).setInteractive({ useHandCursor: true });
     // (le 4e argument est l'événement de Phaser : l'arrêter évite que ce clic fasse aussi avancer l'histoire)
     t.on('pointerdown', (pointer, x, y, evenement) => { evenement.stopPropagation(); action(); });
+    return t;
   }
 }

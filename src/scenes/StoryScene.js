@@ -18,6 +18,14 @@ class StoryScene extends Cinematique {
     this.e = v.feminin ? 'e' : '';
 
     this.cameras.main.fadeIn(500);
+    // Deux caméras : la principale filme le monde (elle zoome, se déplace, tremble), une seconde,
+    // fixe, dessine l'interface (la boîte de texte, les cœurs, le conteur). Tout ce qui n'est pas
+    // dans `this.ui` est caché à la caméra de l'interface (voir `filtrerCameras`).
+    this.zoomBase = this.cameras.main.zoom;
+    this.ui = this.add.container(0, 0).setDepth(20);
+    this.camUI = this.cameras.add(0, 0, this.cameras.main.width, this.cameras.main.height).setOrigin(0, 0).setZoom(this.zoomBase);
+    this.cameras.main.ignore(this.ui);
+    this.events.on('postupdate', this.filtrerCameras, this);
     this.fond = this.add.graphics();
     // Le paysage de la zone où il est parti.
     dessinerComte(this.fond, 0, 0, 960, 370, 0, v.zone ? ZONES[v.zone].biome : 'comte');
@@ -27,9 +35,12 @@ class StoryScene extends Cinematique {
     this.decor = this.add.container(0, 0);
     // Un premier plan qui glisse plus vite que le paysage (profondeur), et un léger assombrissement
     // des bords qui concentre le regard sur le voyageur
+    this.planMoyen = this.add.container(0, 0).setDepth(0.4);
     this.premierPlan = this.add.container(0, 0).setDepth(6.5);
-    this.planterPremierPlan(v.zone ? ZONES[v.zone].biome : 'comte');
-    vignette(this, 0.45, 7);
+    this.biome = v.zone ? ZONES[v.zone].biome : 'comte';
+    this.planterPlanMoyen(this.biome);
+    this.planterPremierPlan(this.biome);
+    this.meteoBiome(this.biome);
 
     this.perso = imageCorps(this, -60, 360, v, 6);
     this.fCorps = echelleCorps(this.perso.texture.key);
@@ -43,16 +54,92 @@ class StoryScene extends Cinematique {
     this.titre = this.add.text(480, 26, '', style(20, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
 
     this.creerBoiteTexte();
+    // La bulle de rêve : le récit est un souvenir que le voyageur nous raconte. Le monde est vu
+    // à travers une bulle aux bords de nuage, qui part de sa tête, en bas à gauche.
+    this.ui.add([this.boite, this.entete, this.texte, this.indice]);
+    this.texte.setX(176).setWordWrapWidth(760);
+    this.entete.setX(176);
+    this.creerBulleDeReve();
+    this.ui.add([...this.coeurs, this.titre]);
     // Passer : le récit défile en accéléré jusqu'à la fin (les choix de la fin restent à faire).
-    this.boutonPasser(() => {
+    const passer = this.boutonPasser(() => {
       if (this.rapide) return;
       this.rapide = true;
       this.tweens.timeScale = 6;
       this.time.timeScale = 6;
       this.events.emit('passer');
     });
+    if (passer) this.ui.add(passer);
 
     this.raconter();
+  }
+
+  // Tout ce qui n'est pas dans `this.ui` est caché à la caméra de l'interface, et seule la caméra
+  // de l'interface voit `this.ui`. (À chaque tour, pour attraper ce qui vient d'être créé.)
+  filtrerCameras() {
+    if (!this.camUI || !this.camUI.id) return;
+    const bit = this.camUI.id;
+    for (const o of this.children.list) if (o !== this.ui && !(o.cameraFilter & bit)) o.cameraFilter |= bit;
+  }
+
+  // La caméra du monde cadre un point (x, y) avec un grossissement k (1 = tout l'écran)
+  cadrer(x, y, k = 1, duree = 600, ease = 'Sine.easeInOut') {
+    const cam = this.cameras.main;
+    const zoom = this.zoomBase * k;
+    const sx = Phaser.Math.Clamp(x - 480 / k, 0, Math.max(0, 960 - 960 / k));
+    // (le sol, à y = 360, reste à la même hauteur à l'écran : on ne cadre qu'en largeur, et `y`
+    // ne fait que pencher un peu le regard vers le haut quand il est petit)
+    const sy = Phaser.Math.Clamp(360 - 360 / k - Math.max(0, 200 - y) * 0.1, 0, 360 - 360 / k);
+    this.tweens.killTweensOf(cam);
+    if (duree <= 0) { cam.setZoom(zoom).setScroll(sx, sy); return Promise.resolve(); }
+    return this.animer({ targets: cam, zoom, scrollX: sx, scrollY: sy, duration: duree, ease });
+  }
+
+  // Un coup de zoom sur un impact, puis retour
+  async coupDeZoom(x, y, k = 1.35) {
+    await this.cadrer(x, y, k, 160, 'Quad.easeOut');
+    await this.attendre(220);
+    await this.cadrer(x, y, 1, 420, 'Sine.easeInOut');
+  }
+
+  // La bulle de rêve : un cadre aux bords de nuage autour du monde, trois petites bulles vers
+  // le conteur, et le conteur lui-même (son buste) qui raconte depuis le coin de la boîte
+  creerBulleDeReve() {
+    const v = this.parti.voyageur, vivant = this.parti.resultat.vivant;
+    const g = this.add.graphics();
+    const teinte = vivant ? 0xf3e6c8 : 0x8a7aa8;
+    g.fillStyle(0x1a120a, 1);
+    // le cadre : l'extérieur de la bulle, plein, puis des bosses de nuage le long du bord
+    g.fillRect(0, 0, 960, 10).fillRect(0, 372, 960, 12).fillRect(0, 0, 10, 384).fillRect(950, 0, 10, 384);
+    g.fillStyle(teinte, 0.9);
+    for (let x = 0; x <= 960; x += 44) { g.fillCircle(x, 2, 22 + (x % 88 ? 0 : 6)); g.fillCircle(x + 22, 379, 13 + (x % 88 ? 3 : 0)); }
+    for (let y = 0; y <= 370; y += 40) { g.fillCircle(2, y, 20 + (y % 80 ? 0 : 5)); g.fillCircle(958, y + 20, 18 + (y % 80 ? 5 : 0)); }
+    g.fillStyle(teinte, 0.75);
+    for (let x = 22; x <= 960; x += 44) { g.fillCircle(x, 8, 16); g.fillCircle(x - 12, 376, 9); }
+    // les petites bulles qui mènent au conteur
+    for (const [bx, by, r] of [[112, 392, 9], [96, 412, 6], [86, 428, 4]]) { g.fillStyle(teinte, 0.9); g.fillCircle(bx, by, r); }
+    this.ui.add(g);
+    // le conteur : son buste, dans le coin de la boîte de texte (ou son carnet, s'il n'est plus là)
+    if (vivant) {
+      this.conteur = this.add.image(92, 538, textureBusteHD(this, v, 'content')).setOrigin(0.5, 1).setScale(1.45);
+      this.ui.add(this.conteur);
+      this.tweens.add({ targets: this.conteur, y: 541, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    } else {
+      creerObjetsHD(this);
+      const carnet = this.add.image(92, 470, 'registreComptoir').setScale(2.2).setAngle(-6);
+      this.ui.add(carnet);
+    }
+  }
+
+  // Le conteur parle (sa voix) à chaque nouveau texte
+  ecrire(entete, texte) {
+    super.ecrire(entete, texte);
+    if (this.conteur && this.parti && this.parti.resultat.vivant && !this.rapide) Son.jouer('voix', { personne: this.parti.voyageur, duree: Math.min(1.8, 0.3 + (texte || '').length * 0.012), force: 0.7 });
+  }
+
+  // Les mots qui surgissent se dessinent dans le monde (devant tout)
+  onomatopee(x, y, mot, couleur) {
+    super.onomatopee(x, y, mot, couleur);
   }
 
   async marcherVers(x) {
@@ -62,6 +149,8 @@ class StoryScene extends Cinematique {
     this.tweens.add({ targets: this.perso, y: y - 2, duration: 125, yoyo: true, repeat: Math.floor(duree / 250) });
     this.tweens.add({ targets: this.paysage, x: -Phaser.Math.Clamp(x, 0, 960) / 960 * 96, duration: duree, ease: 'Sine.easeInOut' });
     this.tweens.add({ targets: this.premierPlan, x: -Phaser.Math.Clamp(x, 0, 960) / 960 * 260, duration: duree, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: this.planMoyen, x: -Phaser.Math.Clamp(x, 0, 960) / 960 * 40, duration: duree, ease: 'Sine.easeInOut' });
+    this.cadrer(x + 120, 250, 1.12, duree, 'Sine.easeInOut');
     await this.animer({ targets: this.perso, x, duration: duree, ease: 'Linear' });
     this.perso.setScale(6 * this.fCorps).setY(y);
   }
@@ -90,6 +179,7 @@ class StoryScene extends Cinematique {
       this.ecrire(`Épreuve ${i + 1} / ${etapes}`, '...');
       await this.marcherVers(x);
       this.planterDecor(epreuve.type, x + 130);
+      this.cadrer(x + 150, 240, 1.22, 900);   // (on s'approche de ce qui l'attend)
       this.ecrire(`Épreuve ${i + 1} / ${etapes}`, accord(epreuve.intro, v));
       await this.attendreClic();
 
@@ -154,7 +244,7 @@ class StoryScene extends Cinematique {
   async montrerObjet(id) {
     creerObjetsHD(this);
     const cle = iconeObjet(this, id);
-    const icone = this.add.image(this.perso.x, this.perso.y - 110, cle).setScale(0).setDepth(5);
+    const icone = this.add.image(this.perso.x, this.perso.y - 88, cle).setScale(0).setDepth(5);
     await this.animer({ targets: icone, scale: cle.startsWith('hd_') ? 3 : 5, y: icone.y - 30, duration: 350, ease: 'Back.easeOut' });
     this.tweens.add({ targets: icone, alpha: 0, y: icone.y - 30, duration: 900, delay: 500, onComplete: () => icone.destroy() });
   }
@@ -203,6 +293,7 @@ class StoryScene extends Cinematique {
   async conclure() {
     // La fin du récit se lit à vitesse normale.
     this.rapide = false;
+    this.cadrer(480, 185, 1, 800);
     Son.ambiance(this.parti.resultat.vivant && !this.parti.resultat.echec ? 'recitHeureux' : 'recitTriste');
     this.tweens.timeScale = 1;
     this.time.timeScale = 1;
@@ -377,6 +468,52 @@ class StoryScene extends Cinematique {
     if (sombre) for (const [x, e] of [[-40, 1.1], [1180, 1.3]]) this.premierPlan.add(this.add.image(x, sol + 30, 'sapinPremierPlanHD').setOrigin(0.5, 1).setScale(e).setTint(0x101c14).setAlpha(0.9));
   }
 
+  // Le plan moyen : des arbres ou des rochers en silhouette, entre le paysage et le voyageur, qui
+  // glissent un peu moins vite que lui (profondeur)
+  planterPlanMoyen(biome) {
+    const sombre = ['foret', 'marais', 'repaire', 'tour', 'grotte'].includes(biome);
+    const neige = ['montagne', 'glace'].includes(biome);
+    const g = this.add.graphics();
+    const teinte = neige ? 0xc8d4e0 : sombre ? 0x24402a : 0x3f6a34;
+    for (let x = -60; x < 1100; x += 70 + (x * 3) % 50) {
+      const h = 60 + (x * 7) % 70, r = 22 + (x * 5) % 18;
+      g.fillStyle(teinte, 0.85);
+      if (neige) g.fillTriangle(x - r * 1.4, 332, x, 332 - h, x + r * 1.4, 332);
+      else { g.fillRect(x - 3, 332 - h * 0.5, 6, h * 0.5); g.fillCircle(x, 332 - h * 0.5 - r * 0.6, r); g.fillCircle(x - r * 0.7, 332 - h * 0.5 - r * 0.2, r * 0.8); g.fillCircle(x + r * 0.7, 332 - h * 0.5 - r * 0.2, r * 0.8); }
+    }
+    this.planMoyen.add(g);
+  }
+
+  // La météo de la contrée, en continu : pluie des marais, neige des montagnes, feuilles de la
+  // forêt, brume... (en plus des effets propres à chaque épreuve)
+  meteoBiome(biome) {
+    if (this.ambiance) this.ambiance.remove();
+    const marais = biome === 'marais', neige = ['montagne', 'glace'].includes(biome), foret = ['foret', 'sanctuaire'].includes(biome), ombre = ['repaire', 'tour', 'bourbier'].includes(biome);
+    if (!marais && !neige && !foret && !ombre) return;
+    this.ambiance = this.time.addEvent({ delay: marais ? 40 : 160, loop: true, callback: () => {
+      if (marais) {
+        // des gouttes de pluie en biais
+        const x = Phaser.Math.Between(-60, 1000);
+        const r = this.add.rectangle(x, -10, 1.5, 16, 0xcfe4f0, 0.5).setAngle(-12).setDepth(6.8);
+        this.tweens.add({ targets: r, y: 380, x: x - 80, duration: 650 + Math.random() * 200, ease: 'Linear', onComplete: () => r.destroy() });
+        if (Math.random() < 0.08) { const b = this.add.ellipse(Phaser.Math.Between(0, 960), Phaser.Math.Between(200, 330), 180, 40, 0xb8c8c0, 0.08).setDepth(6.7); this.tweens.add({ targets: b, x: b.x + 120, alpha: 0, duration: 4000, onComplete: () => b.destroy() }); }
+      } else if (neige) {
+        const x = Phaser.Math.Between(-40, 1000);
+        const f = this.add.circle(x, -8, 1.5 + Math.random() * 2, 0xffffff, 0.85).setDepth(6.8);
+        this.tweens.add({ targets: f, y: 380, x: x + Phaser.Math.Between(-60, 20), duration: 3500 + Math.random() * 2500, ease: 'Linear', onComplete: () => f.destroy() });
+      } else if (foret) {
+        if (Math.random() < 0.5) return;
+        const x = Phaser.Math.Between(0, 1000);
+        const f = this.add.ellipse(x, -6, 6, 3, Phaser.Utils.Array.GetRandom([0xc8a040, 0xa86a28, 0x7a9a30]), 0.9).setDepth(6.8);
+        this.tweens.add({ targets: f, y: 375, x: x - 120, angle: 720, duration: 5000 + Math.random() * 2000, ease: 'Sine.easeIn', onComplete: () => f.destroy() });
+      } else if (ombre) {
+        if (Math.random() < 0.6) return;
+        const b = this.add.ellipse(Phaser.Math.Between(-100, 1000), Phaser.Math.Between(240, 340), 220, 50, 0x3a2a48, 0.12).setDepth(6.7);
+        this.tweens.add({ targets: b, x: b.x + 160, alpha: 0, duration: 5000, onComplete: () => b.destroy() });
+      }
+    } });
+  }
+
   planterDecor(type, x) {
     if (this.eauRecit) { this.eauRecit.destroy(); this.eauRecit = null; }
     creerRecitHD(this);
@@ -401,6 +538,7 @@ class StoryScene extends Cinematique {
         this.tweens.add({ targets: b, y: sol - (flottante ? 70 : 3), duration: flottante ? 900 : 140, yoyo: true, repeat: flottante ? -1 : 6, ease: 'Sine.easeInOut' });
       }
       if (flottante) b.setAlpha(0.8).setBlendMode(Phaser.BlendModes.SCREEN);
+      else this.time.delayedCall(1200, () => { if (b.active) this.tweens.add({ targets: b, scaleY: echelle * 1.05, scaleX: echelle * 0.97, duration: 520, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); });   // (elle respire)
       b.base = { x: bx, y: depuisHaut ? sol - 40 : sol };
       this.menace.sorte = 'bete';
       this.menace.sprites.push(b);
@@ -429,17 +567,17 @@ class StoryScene extends Cinematique {
     creerHalo(this);
 
     switch (type) {
-      case 'loup': bete('loupHD', x + 140, 3.2); break;
-      case 'sanglier': bete('sanglierHD', x + 140, 3.2); break;
+      case 'loup': bete('loupHD', x + 140, 2.3); break;
+      case 'sanglier': bete('sanglierHD', x + 140, 2.3); break;
       case 'araignee': {
         for (let i = 0; i < 6; i++) ajouter(this.add.rectangle(x + 150, 0, 1, 260, 0xe8e8e8, 0.35).setOrigin(0.5, 0).setAngle(-50 + i * 20));
         bete('araigneeHD', x + 150, 3, { depuisHaut: true });
         break;
       }
-      case 'yeti': bete('yetiHD', x + 160, 3.4); particules('lueurHD', 0xffffff, { vx: -0.3, vy: 1, n: 3, echelle: 1.2 }); break;
-      case 'monstre': bete('trollHD', x + 170, 3.4); break;
-      case 'esprits': [0, 60, 120].forEach(dx => bete('espritHD', x + 110 + dx, 2.4, { flottante: true })); break;
-      case 'mortvivant': [0, 70].forEach(dx => bete('squeletteHD', x + 130 + dx, 2.8)); break;
+      case 'yeti': bete('yetiHD', x + 160, 3); particules('lueurHD', 0xffffff, { vx: -0.3, vy: 1, n: 3, echelle: 1.2 }); break;
+      case 'monstre': bete('trollHD', x + 170, 3.1); break;
+      case 'esprits': [0, 60, 120].forEach(dx => bete('espritHD', x + 110 + dx, 2, { flottante: true })); break;
+      case 'mortvivant': [0, 70].forEach(dx => bete('squeletteHD', x + 130 + dx, 2.4)); break;
       case 'bandits': [0, 60].forEach(dx => humain(x + 120 + dx, 0x6a5a66)); break;
       case 'pillards': [0, 60, 120].forEach(dx => humain(x + 110 + dx, 0x8a6a50)); break;
       case 'feufollet':
@@ -559,6 +697,8 @@ class StoryScene extends Cinematique {
         }
         this.cameras.main.shake(150, 0.006);
         etincelles(cx, cy, 0xfff0a0);
+        this.lignesDeVitesse(cx, cy, 1);
+        this.coupDeZoom(cx, cy, 1.4);
         Son.jouer('succes');
         await this.attendre(350);
         this.tweens.add({ targets: o, alpha: 0, duration: 300, onComplete: () => o.destroy() });
@@ -613,6 +753,22 @@ class StoryScene extends Cinematique {
         break;
       }
       case 'ration': case 'gourde': {
+        // Une pause au coin du feu : le feu s'allume à côté de lui, la lumière baisse, il mange
+        if (id === 'ration') {
+          const feu = this.add.image(p.x - 70, sol + 2, 'feuCampHD').setOrigin(0.5, 1).setScale(0).setDepth(2);
+          const flamme = this.add.sprite(feu.x, sol - 14, 'flammeBougie0').setOrigin(0.5, 1).setScale(0).setDepth(2.1).play('flammeBougie');
+          const lueur = this.add.image(feu.x, sol - 30, 'halo').setScale(0).setTint(0xffa040).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD).setDepth(8);
+          this.decor.add([feu, flamme, lueur]);
+          Son.jouer('feu');
+          this.tweens.add({ targets: feu, scale: 2.5, duration: 300, ease: 'Back.easeOut' });
+          this.tweens.add({ targets: flamme, scale: 5, duration: 400, delay: 200, ease: 'Back.easeOut' });
+          this.tweens.add({ targets: lueur, scale: 3, duration: 500, delay: 200 });
+          this.tweens.add({ targets: lueur, alpha: 0.3, scale: 2.7, duration: 300, yoyo: true, repeat: -1, delay: 700 });
+          this.tweens.add({ targets: this.voile, fillAlpha: Math.min(0.6, this.voile.fillAlpha + 0.3), duration: 600 });
+          this.cadrer(p.x - 20, 280, 1.3, 700);
+          for (let k = 0; k < 10; k++) { const e = this.add.image(feu.x + Phaser.Math.Between(-8, 8), sol - 30, 'lueurHD').setScale(0.7).setTint(0xffa040).setBlendMode(Phaser.BlendModes.ADD).setDepth(7); this.decor.add(e); this.tweens.add({ targets: e, y: sol - 110 - Math.random() * 40, x: e.x + Phaser.Math.Between(-20, 20), alpha: 0, duration: 1200, delay: 300 + k * 120, onComplete: () => e.destroy() }); }
+          await this.attendre(700);
+        }
         const o = icone(id).setPosition(p.x + 10, sol - 110);
         this.onomatopee(p.x, sol - 160, id === 'ration' ? 'Miam !' : 'Glou glou !', '#f3d98a');
         await this.animer({ targets: o, scale: 1.5, alpha: 0, y: o.y + 10, duration: 600 });
@@ -621,7 +777,8 @@ class StoryScene extends Cinematique {
           const m = this.add.rectangle(p.x + 10, sol - 100, 3, 3, id === 'ration' ? 0xc89a50 : 0x8ac8f0).setDepth(7);
           this.tweens.add({ targets: m, x: m.x + Phaser.Math.Between(-30, 30), y: sol, alpha: 0, duration: 500, delay: k * 40, onComplete: () => m.destroy() });
         }
-        await this.attendre(200);
+        await this.attendre(id === 'ration' ? 900 : 200);
+        if (id === 'ration') this.cadrer(p.x + 120, 250, 1.12, 700);
         break;
       }
       case 'cape': {
@@ -651,7 +808,8 @@ class StoryScene extends Cinematique {
     if (this.menace.sorte === 'bete' && betes.length) {
       if (reussie) {
         // Touchées ! Elles reculent, se retournent, et détalent.
-        betes.forEach(b => b.setTint(0xffffff));
+        betes.forEach(b => b.setTint(0xff6060));
+        this.time.delayedCall(180, () => betes.forEach(b => b.active && b.clearTint()));
         for (const b of betes) {
           this.tweens.killTweensOf(b);
           this.tweens.add({ targets: b, x: b.x + 30, duration: 120, yoyo: true, onComplete: () => {
@@ -667,7 +825,11 @@ class StoryScene extends Cinematique {
         // Elle bondit sur lui.
         const b = betes[0];
         this.tweens.killTweensOf(b);
+        this.lignesDeVitesse(b.x - 40, b.y - 60, -1);
         await this.animer({ targets: b, x: p.x + 50, y: b.y - 30, duration: 220, ease: 'Quad.easeIn' });
+        this.coupDeZoom(p.x + 30, sol - 70, 1.45);
+        const impact = this.add.image(p.x + 30, sol - 80, 'eclat').setScale(5).setTint(0xffffff).setDepth(8);
+        this.tweens.add({ targets: impact, scale: 1, alpha: 0, angle: 45, duration: 260, onComplete: () => impact.destroy() });
         this.onomatopee(p.x + 20, sol - 150, Phaser.Utils.Array.GetRandom(['AÏE !', 'OUILLE !', 'CRAC !']), '#ff8080');
         this.tweens.add({ targets: b, x: b.base.x, y: b.base.y, duration: 400, ease: 'Quad.easeOut' });
         this.tweens.add({ targets: p, angle: -14, duration: 100, yoyo: true });
@@ -691,6 +853,14 @@ class StoryScene extends Cinematique {
     } else if (!reussie) {
       // Il trébuche, frissonne ou suffoque
       await this.animer({ targets: p, angle: 12, duration: 140, yoyo: true, repeat: 1 });
+    }
+  }
+
+  // Des lignes de vitesse, façon bande dessinée, derrière un bond ou un coup (sens : 1 vers la droite)
+  lignesDeVitesse(x, y, sens = 1) {
+    for (let k = 0; k < 5; k++) {
+      const l = this.add.rectangle(x - sens * (20 + k * 12), y - 30 + k * 15, 40 + (k % 2) * 30, 2, 0xffffff, 0.8).setOrigin(sens > 0 ? 1 : 0, 0.5).setDepth(8);
+      this.tweens.add({ targets: l, scaleX: 0, alpha: 0, x: l.x - sens * 40, duration: 260, delay: k * 20, onComplete: () => l.destroy() });
     }
   }
 }

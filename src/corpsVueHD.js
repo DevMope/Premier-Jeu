@@ -670,9 +670,11 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
 // Le chien a ses propres axes : L le long du corps (vers la tête), W de côté. Pour une vue, on
 // projette comme pour les personnages (face = la tête vers nous, profil = le corps en long).
 function dessinerChienVue(vue = 'profil', couche = false) {
-  const k = FINESSE, L = 72 * k, H = 36 * k;
+  const k = FINESSE, L = 72 * k, H = 40 * k;
   const t = new ToileHD(L, H);
-  t.rampes.poil = rampeVive(0x8a6a3e); t.rampes.poilClair = rampeVive(0xc8a878); t.rampes.collier = rampeVive(0xa83a2a);
+  // Un bouvier bernois : robe noire, poitrail, liste, museau et bout des pattes blancs, taches feu
+  // (sourcils, joues, bas des pattes). Une grosse tête large, des oreilles tombantes.
+  t.rampes.poil = rampeVive(0x2a2420); t.rampes.poilClair = rampeVive(0xece6da); t.rampes.feu = rampeVive(0xb06a30); t.rampes.collier = rampeVive(0xa83a2a);
   t.rampes.truffe = rampe(0x1a1410); t.rampes.langue = rampe(0xc85a50); t.rampes.or = rampeVive(0xe8c040);
   if (!t.rampes.blanc) t.rampes.blanc = rampe(0xf0ece0);
   if (!t.rampes.pupille) t.rampes.pupille = rampe(0x2a1e14);
@@ -683,51 +685,67 @@ function dessinerChienVue(vue = 'profil', couche = false) {
   const X = (l, w) => cx + w * c + l * s;              // l le long du corps, w de côté
   const prof = (l, w) => l * c - w * s;                 // vers le spectateur (plus grand = devant)
   const largeur = (rl, rw) => Math.sqrt((rl * s) ** 2 + (rw * c) ** 2);
-  const haut = couche ? 7 * k : 13 * k;                 // la hauteur du dos
+  const haut = couche ? 7.5 * k : 15 * k;               // la hauteur du dos (un grand chien)
   const parts = [];
   const part = (l, w, dessin) => parts.push([prof(l, w), dessin]);
-  // la queue, relevée en panache
-  part(-18 * k, 0, () => { t.forme('poil', (x, y) => { const qx = X(-16 * k, 0), qy = sol - haut - 2 * k; const u = (y - qy) / (6 * k); return y >= qy - 1 * k && y <= qy + 6 * k && Math.abs(x + 0.5 - qx - u * 3 * k * s) < 1.4 * k + (1 - u) * 0.8 * k ? [0.2, 0, 0.8] : null; }, { motif: MECHES }); });
-  // les pattes arrière (debout) ou repliées (couché)
-  for (const w of [-4 * k, 4 * k]) part(-9 * k, w, () => {
-    const px = X(-9 * k, w);
-    if (couche) t.forme('poil', ellipsoide(px + s * 3 * k, sol - 2 * k, 4 * k * Math.max(0.5, Math.abs(s)) + 1.5 * k, 2.2 * k), { decalage: prof(-9 * k, w) < 0 ? -0.4 : 0 });
-    else { cylindre(t, 'poil', [px, sol - haut + 2 * k], [px, sol - 1 * k], 1.9 * k, { decalage: prof(-9 * k, w) < 0 ? -0.5 : 0 }); t.forme('poilClair', ellipsoide(px + s * 1 * k, sol - 1 * k, 2.4 * k, 1.3 * k), { decalage: 0.1 }); }
+  // une patte : noire en haut, feu au-dessus du pied, pied blanc
+  const patte = (px, y0, y1, devant) => {
+    const dec = devant ? 0 : -0.5;
+    cylindre(t, 'poil', [px, y0], [px, y1 - 3.5 * k], 2.4 * k, { decalage: dec });
+    cylindre(t, 'feu', [px, y1 - 3.5 * k], [px, y1 - 1 * k], 2.1 * k, { decalage: dec });
+    t.forme('poilClair', ellipsoide(px + s * 1 * k, y1 - 1 * k, 2.8 * k, 1.4 * k), { decalage: 0.1 });
+  };
+  // la queue, en panache, le bout blanc
+  part(-18 * k, 0, () => {
+    const qx = X(-15 * k, 0), qy = sol - haut - 1 * k;
+    t.forme('poil', (x, y) => { const u = (y - qy) / (8 * k); return y >= qy - 1 * k && y <= qy + 8 * k && Math.abs(x + 0.5 - qx - u * 4 * k * s) < 1.8 * k - u * 0.6 * k ? [0.2, 0, 0.8] : null; }, { motif: MECHES });
+    t.forme('poilClair', ellipsoide(qx + 4 * k * s, qy + 8 * k, 1.4 * k, 1.2 * k), { decalage: 0.1, bord: false });
   });
-  // le corps (un ellipsoïde allongé), le poitrail, le ventre clair
+  // les pattes arrière (debout) ou repliées (couché)
+  for (const w of [-4 * k, 4 * k]) part(-8 * k, w, () => {
+    const px = X(-8 * k, w), devant = prof(-8 * k, w) >= 0;
+    if (couche) t.forme('poil', ellipsoide(px + s * 3 * k, sol - 2 * k, 4 * k * Math.max(0.5, Math.abs(s)) + 1.5 * k, 2.2 * k), { decalage: devant ? 0 : -0.4 });
+    else patte(px, sol - haut + 3 * k, sol, devant);
+  });
+  // le corps (un ellipsoïde allongé, le dos un peu plus haut aux épaules), le poitrail blanc
   part(0, 0, () => {
-    t.forme('poil', ellipsoide(X(0, 0), sol - haut + 1 * k, largeur(17 * k, 7 * k), (couche ? 6 : 7) * k), { motif: MECHES });
-    t.forme('poilClair', ellipsoide(X(1 * k, 0), sol - haut + 4 * k, largeur(11 * k, 5 * k), 2.6 * k), { decalage: 0.2, bord: false, ombre: false });
+    t.forme('poil', ellipsoide(X(0, 0), sol - haut + 1.5 * k, largeur(16 * k, 8 * k), (couche ? 6.5 : 7.5) * k), { motif: MECHES });
+    t.forme('poilClair', ellipsoide(X(9 * k, 0), sol - haut + 4.5 * k, largeur(4.5 * k, 5 * k), 3.4 * k), { decalage: 0.2, bord: false, ombre: false });
   });
   // les pattes avant : tendues devant (couché) ou droites (debout)
   for (const w of [-4 * k, 4 * k]) part(9 * k, w, () => {
-    const px = X(9 * k, w);
-    if (couche) { cylindre(t, 'poil', [px, sol - 5 * k], [X(17 * k, w), sol - 2 * k], 1.8 * k, { decalage: prof(9 * k, w) < 0 ? -0.4 : 0 }); t.forme('poilClair', ellipsoide(X(18 * k, w), sol - 1.5 * k, 2.4 * k, 1.3 * k), { decalage: 0.1 }); }
-    else { cylindre(t, 'poil', [px, sol - haut + 2 * k], [px, sol - 1 * k], 1.9 * k, { decalage: prof(9 * k, w) < 0 ? -0.5 : 0 }); t.forme('poilClair', ellipsoide(px + s * 1 * k, sol - 1 * k, 2.4 * k, 1.3 * k), { decalage: 0.1 }); }
+    const px = X(9 * k, w), devant = prof(9 * k, w) >= 0;
+    if (couche) { cylindre(t, 'poil', [px, sol - 5 * k], [X(14 * k, w), sol - 3 * k], 2.2 * k, { decalage: devant ? 0 : -0.4 }); cylindre(t, 'feu', [X(14 * k, w), sol - 3 * k], [X(17 * k, w), sol - 2 * k], 2 * k, { decalage: devant ? 0 : -0.4 }); t.forme('poilClair', ellipsoide(X(18 * k, w), sol - 1.5 * k, 2.8 * k, 1.4 * k), { decalage: 0.1 }); }
+    else patte(px, sol - haut + 3 * k, sol, devant);
   });
-  // le cou, puis la tête levée, le museau, la truffe, les oreilles tombantes, le collier
-  const ty = couche ? sol - 15 * k : sol - haut - 4 * k;
+  // le cou, épais, puis la tête : large, les oreilles tombantes, le museau blanc, les joues feu
+  const ty = couche ? sol - 16 * k : sol - haut - 5 * k;
   part(14 * k, 0, () => {
-    cylindre(t, 'poil', [X(10 * k, 0), sol - haut + 1 * k], [X(15 * k, 0), ty + 3 * k], 3.2 * k);
-    // le collier rouge et sa médaille
-    t.forme('collier', (x, y) => { const n = ellipsoide(X(12 * k, 0), sol - haut + 0.5 * k + (couche ? -3 * k : 0), largeur(3 * k, 3.6 * k), 3.4 * k)(x, y); return n && Math.abs(y + 0.5 - (sol - haut + 0.5 * k + (couche ? -3 * k : 0))) < 0.9 * k ? n : null; }, { decalage: 0.2, ombre: false });
-    t.poser(Math.round(X(12 * k, 0) + s * 2 * k), Math.round(sol - haut + 1.8 * k + (couche ? -3 * k : 0)), 'or', 5);
+    cylindre(t, 'poil', [X(9 * k, 0), sol - haut + 1 * k], [X(15 * k, 0), ty + 3 * k], 4 * k);
+    const cy = sol - haut + 0.5 * k + (couche ? -3 * k : 0);
+    t.forme('collier', (x, y) => { const n = ellipsoide(X(12 * k, 0), cy, largeur(3 * k, 4.2 * k), 4 * k)(x, y); return n && Math.abs(y + 0.5 - cy) < 0.9 * k ? n : null; }, { decalage: 0.2, ombre: false });
+    t.poser(Math.round(X(12 * k, 0) + s * 2 * k), Math.round(cy + 1.4 * k), 'or', 5);
   });
   part(18 * k, 0, () => {
     const hx = X(17 * k, 0);
-    t.forme('poil', ellipsoide(hx, ty, largeur(5.5 * k, 5 * k) + 0.5 * k, 5 * k), { motif: MECHES });
-    // le museau, qui avance vers la tête du chien (+L), et la truffe au bout
-    const mx = X(22 * k, 0);
-    t.forme('poil', ellipsoide(mx, ty + 1.5 * k, largeur(4 * k, 3 * k) + 0.4 * k, 2.6 * k), { decalage: 0.1 });
-    t.forme('poilClair', ellipsoide(mx, ty + 2.6 * k, largeur(3 * k, 2.4 * k), 1.2 * k), { decalage: 0.3, bord: false, ombre: false });
-    const nx = X(25 * k, 0);
-    t.forme('truffe', ellipsoide(nx, ty + 0.6 * k, 1.3 * k, 1.1 * k), { ombre: false }); t.poser(Math.round(nx - 0.5 * k), Math.round(ty), 'truffe', 5);
+    // les oreilles, derrière la tête, qui tombent de chaque côté (larges et arrondies)
+    for (const w of [-5 * k, 5 * k]) { const ox = X(16 * k, w), devant = prof(16 * k, w) > 0; t.forme('poil', (x, y) => (y >= ty - 3 * k && y <= ty + 5 * k && Math.abs(x + 0.5 - ox) < 2.2 * k - Math.max(0, y - ty - 2 * k) * 0.35 - Math.max(0, ty - 2 * k - y) * 0.6 ? [Math.sign(w) * c * 0.6, 0, 0.7] : null), { decalage: devant ? -0.3 : -0.7, motif: MECHES }); }
+    // la tête, large et ronde
+    t.forme('poil', ellipsoide(hx, ty, largeur(6.5 * k, 6.5 * k) + 0.5 * k, 6 * k), { motif: MECHES });
+    // les joues feu, de chaque côté du museau
+    for (const w of [-3.6 * k, 3.6 * k]) { if (prof(19 * k, w) < -2.5 * k) continue; t.forme('feu', ellipsoide(X(20 * k, w), ty + 1.8 * k, 1.6 * k, 1.5 * k), { bord: false, ombre: false, decalage: 0.1 }); }
+    // la liste blanche qui descend du front au museau (visible de face et de biais)
+    if (c > 0.3) t.forme('poilClair', (x, y) => (y >= ty - 5 * k && y <= ty + 2 * k && Math.abs(x + 0.5 - X(21 * k, 0)) < 1.1 * k + Math.max(0, y - ty) * 0.35 ? [0, 0, 0.9] : null), { bord: false, ombre: false, decalage: 0.2 });
+    // le museau, qui avance vers la tête du chien (+L), blanc dessous, et la truffe au bout
+    const mx = X(22.5 * k, 0);
+    t.forme('poil', ellipsoide(mx, ty + 2 * k, largeur(4 * k, 3.2 * k) + 0.4 * k, 2.6 * k), { decalage: 0.1 });
+    t.forme('poilClair', ellipsoide(mx + s * 0.5 * k, ty + 3 * k, largeur(3.5 * k, 2.6 * k), 1.4 * k), { decalage: 0.3, bord: false, ombre: false });
+    const nx = X(26 * k, 0);
+    t.forme('truffe', ellipsoide(nx, ty + 0.8 * k, 1.5 * k, 1.2 * k), { ombre: false }); t.poser(Math.round(nx - 0.5 * k), Math.round(ty + 0.2 * k), 'truffe', 5);
     // la langue qui pend un peu
-    for (let j = 0; j < 2 * k; j++) t.poser(Math.round(X(23 * k, 0.5 * k)), Math.round(ty + 3.4 * k) + j, 'langue', 3);
-    // les yeux : de chaque côté de la tête, visibles selon l'angle
-    for (const w of [-3.2 * k, 3.2 * k]) { if (prof(17 * k, w) < -2 * k) continue; const ex = X(19 * k, w); t.forme('blanc', ellipsoide(ex, ty - 0.8 * k, 0.9 * k, 1 * k), { ombre: false, bord: false }); t.forme('pupille', ellipsoide(ex + s * 0.2 * k, ty - 0.7 * k, 0.55 * k, 0.75 * k), { ombre: false, bord: false }); t.poser(Math.round(ex - 0.3 * k), Math.round(ty - 1.2 * k), 'blanc', 5); }
-    // les oreilles, qui tombent de chaque côté
-    for (const w of [-4.5 * k, 4.5 * k]) { const ox = X(16 * k, w), devant = prof(16 * k, w) > 0; t.forme('poil', (x, y) => (y >= ty - 4 * k && y <= ty + 4 * k && Math.abs(x + 0.5 - ox - (y - ty) * 0.08 * Math.sign(w) * c) < 1.6 * k - Math.max(0, y - ty - 2 * k) * 0.3 ? [Math.sign(w) * c * 0.6, 0, 0.7] : null), { decalage: devant ? -0.35 : -0.7, motif: MECHES }); }
+    for (let j = 0; j < 2 * k; j++) t.poser(Math.round(X(24 * k, 0.5 * k)), Math.round(ty + 3.8 * k) + j, 'langue', 3);
+    // les yeux (sourcils feu au-dessus) : de chaque côté de la tête, visibles selon l'angle
+    for (const w of [-3.4 * k, 3.4 * k]) { if (prof(17 * k, w) < -2 * k) continue; const ex = X(19 * k, w); t.forme('feu', ellipsoide(ex, ty - 3.2 * k, 1.3 * k, 0.8 * k), { bord: false, ombre: false }); t.forme('blanc', ellipsoide(ex, ty - 1.5 * k, 1 * k, 1.1 * k), { ombre: false, bord: false }); t.forme('pupille', ellipsoide(ex + s * 0.2 * k, ty - 1.4 * k, 0.6 * k, 0.85 * k), { ombre: false, bord: false }); t.poser(Math.round(ex - 0.3 * k), Math.round(ty - 1.9 * k), 'blanc', 5); }
   });
   parts.sort((a, b) => a[0] - b[0]);
   for (const [, dessin] of parts) dessin();
