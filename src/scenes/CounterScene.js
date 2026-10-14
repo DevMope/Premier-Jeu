@@ -1157,6 +1157,7 @@ class CounterScene extends Phaser.Scene {
     if (enPlus && !confirme) return this.demanderSurplus(id);
     this.G.stock[id]--;
     this.colis[id] = (this.colis[id] || 0) + 1;
+    Son.jouer('poser');
     if (enPlus) this.dire(id === 'potion' ? "Une potion de plus ? Merci, ça me fera un cœur de réserve !"
       : id === 'bandage' ? "Un bandage de plus ? Si je saigne après un combat, ça m'évitera de perdre un cœur !" : "Un de plus ? Ça peut toujours servir, merci !");
     this.majStock();

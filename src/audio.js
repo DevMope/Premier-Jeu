@@ -215,8 +215,8 @@ const Son = {
     this.busSons = this.ctx.createGain(); this.busSons.connect(this.maitre); this.busSons.connect(this.reverb);
     this.busMusique = this.ctx.createGain(); this.busMusique.gain.value = 0.7; this.busMusique.connect(this.maitre); this.busMusique.connect(this.reverb);
     this.pret = true; this.boucle = null; this.courant = null; this.theme = null;
-    if (Array.isArray(son)) for (const [nom, t] of son) SONS[nom].call(this, t, this.busSons, {});
-    else if (son) SONS[son].call(this, 0.2, this.busSons, {});
+    if (Array.isArray(son)) for (const [nom, t] of son) SONS[nom].call(this, t, this.busCorrige(nom, this.busSons), {});
+    else if (son) SONS[son].call(this, 0.2, this.busCorrige(son, this.busSons), {});
     else {
       const T = THEMES[theme]; this.mesure = 0; this.graine = 7; this.derniereNote = null;
       for (let t = 0.1; t < secondes; t += T.temps * 60 / T.tempo) { this.jouerMesure(T, t, this.busMusique); this.mesure++; }
@@ -242,8 +242,17 @@ const Son = {
     this.reprendre();
     const S = SONS[nom]; if (!S) return;
     // (chaque famille de sons passe par son propre volume)
-    const bus = nom === 'voix' ? this.busVoix : SONS_INTERFACE.has(nom) ? this.busInterface : this.busSons;
+    let bus = nom === 'voix' ? this.busVoix : SONS_INTERFACE.has(nom) ? this.busInterface : this.busSons;
+    bus = this.busCorrige(nom, bus);
     S.call(this, this.ctx.currentTime + 0.01, bus, options);
+  },
+  // Un petit gain propre au son, le temps qu'il se joue (voir VOLUME_SONS)
+  busCorrige(nom, bus) {
+    const k = VOLUME_SONS[nom];
+    if (!k) return bus;
+    const g = this.ctx.createGain(); g.gain.value = k; g.connect(bus);
+    setTimeout(() => g.disconnect(), 6000);
+    return g;
   },
 };
 
@@ -505,6 +514,10 @@ const THEMES = {
 
 // Les sons. Chaque fonction reçoit le moment, le bus et les options.
 // Les sons de l'interface (réglés à part des bruitages du monde)
+// (v0.58) Le volume de chaque bruitage, mesuré puis corrigé : chacun est ramené au niveau de sa
+// famille — l'interface discrète (-30 dB), l'ambiance et les bêtes (-27 dB), les gestes du jeu
+// (-23 dB), les grands moments (-20 dB). Sans ça, une plume était 28 dB plus faible qu'un succès.
+const VOLUME_SONS = { poser: 0.6, plume: 3.05, clic: 2.57, feu: 3.02, balai: 2.88, glisse: 4, des: 3.47, page: 1.24, sabots: 1.7, vent: 1.57, porte: 2.37, glou: 1.48, plouf: 1.48, aie: 1.29, coq: 1.23, passageDehors: 0.84, saut: 1.16, refus: 0.65, maillet: 1.4, pas: 1.36, fanfare: 1.7, siffle: 1.16, hibou: 0.67, echec: 1.46, grogne: 0.59, loup: 0.56, pieces: 0.73, achat: 0.73, sanglier: 0.46, caisse: 0.65, marteau: 0.65, bouclier: 0.56, clochette: 0.65, coeur: 0.64, cloche: 0.6, trefle: 0.55, succes: 0.38 };
 const SONS_INTERFACE = new Set(['clic', 'page', 'plume', 'passage', 'passageDehors', 'refus']);
 
 const SONS = {
@@ -528,6 +541,15 @@ const SONS = {
   // Un marteau sur l'enclume (l'atelier)
   marteau(t, bus) { for (const [mult, v] of [[1, 0.25], [2.3, 0.1], [3.7, 0.05]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 820 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.5); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.6); } this.bruit(0.02, t, bus, 0.3, 3000); },
   // Un petit arpège de réussite
+  // (v0.58) Un objet posé dans le baluchon : un petit choc mat sur le tissu, et le froissement
+  poser(t, bus) {
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(75, t + 0.1);
+    g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.16);
+    o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.2);
+    this.bruit(0.09, t, bus, 0.16, 1400, 'lowpass');
+    this.bruit(0.12, t + 0.05, bus, 0.06, 3200);
+  },
   succes(t, bus) { [0, 4, 7, 12].forEach((d, i) => this.note('ocarina', 523.25 * Math.pow(2, d / 12), t + i * 0.09, 0.3, 0.8, bus)); },
   // Un accord qui tombe (échec)
   echec(t, bus) { [7, 3, 0].forEach((d, i) => this.note('piano', 261.63 * Math.pow(2, d / 12), t + i * 0.16, 0.6, 0.7, bus)); },
@@ -554,7 +576,7 @@ const SONS = {
   // --- Le commerce ---
   // Un achat : deux pièces sur le comptoir, puis un petit « ding » de satisfaction
   achat(t, bus, o) { SONS.piece.call(this, t, bus, o); SONS.piece.call(this, t + 0.07, bus, o); SONS.ting.call(this, t + 0.16, bus, 1.3); },
-  ting(t, bus, hauteur = 1) { for (const [mult, v, d] of [[1, 0.18, 0.5], [2.5, 0.05, 0.3]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 2093 * hauteur * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.05); } },
+  ting(t, bus, o = {}) { const hauteur = typeof o === 'number' ? o : (o.hauteur || 1); for (const [mult, v, d] of [[1, 0.18, 0.5], [2.5, 0.05, 0.3]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 2093 * hauteur * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.05); } },
   // La caisse : une vente conclue au comptoir (clochette claire et poignée de pièces)
   caisse(t, bus, o) { SONS.ting.call(this, t, bus, 1); SONS.ting.call(this, t + 0.09, bus, 1.5); SONS.pieces.call(this, t + 0.12, bus, { montant: 30 }); },
   // Un refus, une erreur : un petit « bonk » sourd qui descend
