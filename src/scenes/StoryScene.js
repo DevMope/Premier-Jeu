@@ -336,7 +336,7 @@ class StoryScene extends Cinematique {
       this.pleuvoirPieces();
       const ajuste = gain !== v.butin ? ` (prévu : ${v.butin}, ajusté selon votre relation et tes décorations)` : '';
       this.ecrire('Retour au comptoir',
-        `« Merci pour ton aide. Sans ton baluchon, je ne serais pas là. Voici ta part du butin ! »\n` +
+        `« ${this.remerciement()} Voici ta part du butin ! »\n` +
         `+ ${gain} pièces${ajuste} · Relation : ${relation.nom}${message ? '\n' + message : ''}`);
     } else {
       this.perso.setTint(0x888888);
@@ -361,6 +361,31 @@ class StoryScene extends Cinematique {
       this.proposerSoins();
       this.proposerTrouvailles();
     }
+  }
+
+  // (v0.60) Le merci du retour : selon la qualité du baluchon, son peuple, et sa quête personnelle
+  remerciement() {
+    const v = this.parti.voyageur, r = this.parti.resultat;
+    const etapes = r.etapes || [];
+    const complets = etapes.filter(e => e.niveau === 'complet').length;
+    const qualite = etapes.length ? complets / etapes.length : 1;
+    const perso = v.quetePerso ? v.quetePerso.fin + ' ' : '';
+    if (qualite < 0.5) return perso + auHasard(["On fera mieux la prochaine fois, hein ? Il manquait des choses dans ce baluchon.", "J'ai dû me débrouiller avec ce que j'avais... mais je suis là."]);
+    const parPeuple = {
+      nain: "Hrm. Ton matériel a tenu. Le mien, moins.",
+      hobbit: "J'ai tout mangé, même la ficelle du baluchon !",
+      elfe: "Ton baluchon était aussi bien rangé qu'un jardin elfique. Merci.",
+      magicienne: "Tes provisions valaient bien un sortilège. Merci !",
+      humain: "Sans ton baluchon, je ne serais pas là.",
+      gobelin: "Bon matos. Pas volé. Enfin, pas par moi.",
+      orc: "Ton baluchon, solide. Comme toi. Grrr... merci.",
+      troll: "Marchand donne bonnes choses. Troll content.",
+      vampire: "Tes provisions m'ont été... utiles. Je n'ai mordu personne. Presque.",
+      momie: "Mes bandelettes et moi te remercions. Surtout les bandelettes.",
+      loupgarou: "Même les nuits de pleine lune, ton baluchon a tenu le coup.",
+      panda: "Il ne manquait que le bambou. Pour le reste : parfait.",
+    };
+    return perso + (parPeuple[v.race] || "Sans ton baluchon, je ne serais pas là.");
   }
 
   // Un bouton posé dans l'interface (hors de la caméra du monde, qui zoome et se déplace)

@@ -450,10 +450,10 @@ class CarteScene extends Phaser.Scene {
       const dureeMax = Math.max(...quetes.map(q => q.duree[1]));
       let ligne = `${dureeMin} à ${dureeMax} jours`;
       if (v) {
-        const mult = BUTIN_PAR_DANGER[z.danger] / BUTIN_PAR_DANGER[1] * NIVEAUX_AVENTURIER[v.niveau].butin;
+        const mult = BUTIN_PAR_DANGER[z.danger] / BUTIN_PAR_DANGER[1] * NIVEAUX_AVENTURIER[v.niveau].butin * (aSaMesure(v, cle) ? BONUS_A_SA_MESURE : 1);
         const butinMin = Math.round(Math.min(...quetes.map(q => q.butin[0])) * mult);
         const butinMax = Math.round(Math.max(...quetes.map(q => q.butin[1])) * mult);
-        ligne = `Butin espéré pour ${v.nom.split(' ')[0]} : ${butinMin} à ${butinMax} p. · ${ligne}`;
+        ligne = `Butin espéré pour ${v.nom.split(' ')[0]} : ${butinMin} à ${butinMax} p. · ${ligne}` + (aSaMesure(v, cle) ? `\n★ À sa mesure : ${v.feminin ? 'elle' : 'il'} y va avec plaisir (+15 % de butin)` : '');
       }
       const texte = this.add.text(0, 22, `${z.description}\n${ligne}`, style(13, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 2 }));
       contenu.add(texte);

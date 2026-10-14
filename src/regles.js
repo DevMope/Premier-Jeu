@@ -310,7 +310,53 @@ function appliquerQuete(G, v, queteId, { butin, duree } = {}) {
 
 // Envoyer un aventurier dans une zone : une des quêtes de la zone, au hasard.
 function envoyerDans(G, v, zone) {
-  return appliquerQuete(G, v, auHasard(ZONES[zone].quetes));
+  appliquerQuete(G, v, auHasard(ZONES[zone].quetes));
+  if (aSaMesure(v, zone)) { v.butin = Math.round(v.butin * BONUS_A_SA_MESURE); v.aSaMesure = true; }
+  return v;
+}
+
+// (v0.60) La quête personnelle d'un grand aventurier : venger un compagnon, reprendre une relique,
+// tenir un serment. Une contrée à sa mesure, une épreuve de plus (un combat), un butin bien plus gros.
+const QUETES_PERSONNELLES = [
+  { id: 'vengeance', titre: n => `Venger ${n}`, accueil: (n, z) => `Je ne viens pas pour une mission ordinaire. ${n} est tombé{e2} ${z}. J'y retourne, et je ne reviendrai pas sans l'avoir vengé{e2}.`, fin: n => `Je l'ai fait. ${n} peut reposer en paix.` },
+  { id: 'relique', titre: () => 'Reprendre la relique', accueil: (n, z) => `On a volé l'épée de mon maître. Elle est quelque part ${z}. Je la veux de retour, quoi qu'il en coûte.`, fin: () => "L'épée de mon maître est de nouveau entre mes mains." },
+  { id: 'serment', titre: () => 'Tenir un serment', accueil: (n, z) => `J'ai juré de ramener la bannière de ma compagnie, perdue ${z}. Un serment, ça se tient.`, fin: () => 'La bannière flotte de nouveau. Mon serment est tenu.' },
+];
+const CHANCE_QUETE_PERSONNELLE = 0.3;
+// « à la Forêt », « au Lac des Lunes », « aux Pics », « à l'Antre »
+function aLieu(nom) {
+  if (/^Le /.test(nom)) return 'au ' + nom.slice(3);
+  if (/^Les /.test(nom)) return 'aux ' + nom.slice(4);
+  if (/^La /.test(nom)) return 'à la ' + nom.slice(3);
+  if (/^L'/.test(nom)) return "à l'" + nom.slice(2);
+  return 'à ' + nom;
+}
+const BONUS_QUETE_PERSONNELLE = 1.6;
+function donnerQuetePersonnelle(G, v) {
+  const min = dangerMinimum(v);
+  const zones = zonesPour(G, v);
+  if (!zones.length) return false;
+  const top = Math.max(...zones.map(z => ZONES[z].danger));
+  const choix = zones.filter(z => ZONES[z].danger >= Math.min(min, top));
+  const zone = auHasard(choix);
+  const p = auHasard(QUETES_PERSONNELLES);
+  // le compagnon tombé : un disparu de ton registre, sinon un nom de son peuple
+  const disparus = (G.historique || []).filter(h => (h.issue === 'valeureux' || h.issue === 'sans gloire') && h.nom !== v.nom);
+  let compagnon = disparus.length ? auHasard(disparus) : null;
+  if (!compagnon) { const [nom, f] = auHasard(NOMS[v.race] || NOMS.humain); compagnon = { nom, feminin: f }; }
+  else compagnon = { nom: compagnon.nom, feminin: !!(G.personnes && G.personnes[compagnon.nom] && G.personnes[compagnon.nom].feminin) };
+  appliquerQuete(G, v, auHasard(ZONES[zone].quetes));
+  // une épreuve de plus : un combat de la contrée (ou des brigands)
+  const combats = ZONES[zone].quetes.flatMap(q => QUETES[q].epreuves).filter(e => EPREUVES_COMBAT.includes(e.type));
+  // (une contrée sans combat : on prend un combat d'ailleurs, le face-à-face final)
+  const tous = combats.length ? combats : Object.values(QUETES).flatMap(q => q.epreuves).filter(e => EPREUVES_COMBAT.includes(e.type) && e.besoin === 'epee');
+  if (tous.length) { const combat = { ...auHasard(tous) }; combat.qte = (combat.qte || 1) + 1; v.epreuves.push(combat); }
+  v.butin = Math.round(v.butin * BONUS_QUETE_PERSONNELLE);
+  const e2 = compagnon.feminin ? 'e' : '';
+  v.quetePerso = { id: p.id, compagnon: compagnon.nom, fin: p.fin(compagnon.nom) };
+  v.quete = p.titre(compagnon.nom);
+  v.accueil = p.accueil(compagnon.nom, aLieu(ZONES[zone].nom)).replace(/\{e2\}/g, e2);
+  return true;
 }
 
 // Les zones où l'on peut envoyer quelqu'un : ouvertes par la réputation, ou découvertes.
@@ -343,7 +389,29 @@ function peupleAccueilli(G, race) {
 }
 
 // Ce voyageur accepte-t-il d'aller là ? Renvoie la raison de son refus, ou null.
+// (v0.60) Les grands aventuriers ont leur fierté : à partir de vétéran, une contrée trop facile
+// les vexe (sauf, de temps en temps, un jour de bonne humeur), et une contrée à leur mesure paie mieux.
+const DANGER_MINIMUM = { veteran: 2, heros: 3, legende: 4 };
+const BONUS_A_SA_MESURE = 1.15;
+function dangerMinimum(v) { return DANGER_MINIMUM[v.niveau] || 1; }
+function bonneHumeur(G, v) {
+  let h = 7;
+  for (const c of v.nom + ':' + G.jour) h = (h * 31 + c.charCodeAt(0)) % 1000;
+  return h < 120;   // (environ un jour sur huit, il accepte quand même)
+}
+function aSaMesure(v, zone) { return dangerMinimum(v) > 1 && ZONES[zone].danger >= dangerMinimum(v); }
+
 function refusZone(G, v, zone) {
+  const r = refusDeBase(G, v, zone);
+  if (r) return r;
+  const z = ZONES[zone], min = dangerMinimum(v);
+  if (z.danger < min && !bonneHumeur(G, v) && zonesOuvertes(G).some(c => ZONES[c].danger >= min && !refusDeBase(G, v, c))) {
+    return `« ${z.nom} ? Pour quelqu'un de mon rang ? Trouve-moi une contrée à ma mesure : ${'★'.repeat(min)} au moins. »`;
+  }
+  return null;
+}
+
+function refusDeBase(G, v, zone) {
   const z = ZONES[zone];
   const banni = PEUPLES_OMBRE.includes(v.race);
   if (z.camp === 'bien' && banni) return "« Les terres de la Confrérie ? Ils me pendraient à l'entrée. Trouve-moi autre chose. »";
@@ -393,7 +461,10 @@ function habitueAuHasard(G, pris) {
   const libres = G.habitues.filter(h => !pris.includes(h.nom) && !(h.convalescence > G.jour && h.blessures > 0));
   if (!libres.length || Math.random() > 0.35) return null;
   const h = auHasard(libres);
-  return creerVoyageur(G, { ...h });
+  const v = creerVoyageur(G, { ...h });
+  // (v0.60) un grand aventurier revient parfois avec une quête bien à lui
+  if (dangerMinimum(v) > 1 && Math.random() < CHANCE_QUETE_PERSONNELLE) donnerQuetePersonnelle(G, v);
+  return v;
 }
 
 // Un voyageur tiré au hasard, qui ne porte pas le nom d'un voyageur déjà en jeu.
