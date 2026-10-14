@@ -1621,7 +1621,8 @@ function terminerAventure(G, parti) {
     const d = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
     // (une zone déjà découverte, ou que la réputation suffit déjà à ouvrir, ne compte pas)
     const inconnues = Object.keys(ZONES).filter(z => !zoneOuverte(G, z) && ZONES[z].danger <= d + 1
-      && !G.zonesDecouvertes.includes(z) && !conditionsZone(G, z).reputation);
+      && !G.zonesDecouvertes.includes(z) && !conditionsZone(G, z).reputation
+      && (ZONES[z].camp !== 'mal' || G.visiteMarcheNoir !== undefined));   // (v0.58 : les terres des Bannis, seulement après le marché noir)
     if (inconnues.length && Math.random() < CHANCE_DECOUVERTE) {
       const z = auHasard(inconnues);
       G.zonesDecouvertes.push(z);
@@ -2291,7 +2292,8 @@ function recompensePalier(G, index) {
 function recompenserZones(G) {
   G.nouvellesPieces = [];
   // (une partie d'avant la v0.58 : les pièces promises pour des contrées seulement ouvertes sont oubliées)
-  if (!G.zonesRecompensees) { G.zonesRecompensees = []; G.piecesAVenir = []; }
+  // (les contrées déjà conquises comptent comme déjà récompensées : pas de pièce en double)
+  if (!G.zonesRecompensees) { G.zonesRecompensees = Object.keys(G.conquete || {}).filter(z => G.conquete[z] >= CONQUETE_ZONE); G.piecesAVenir = []; }
   G.piecesAVenir = G.piecesAVenir || [];
   // Chaque conquête promet une pièce... mais le messager n'en apporte qu'une par matin :
   // les autres attendent leur tour, pour que chacune soit un vrai événement.
