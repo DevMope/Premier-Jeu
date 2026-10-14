@@ -209,7 +209,7 @@ const EPREUVES_COMBAT = ['araignee', 'loup', 'bandits', 'sanglier', 'pillards', 
 const QUETES = {
   lettre: {
     titre: 'Porter une lettre à Brêche-Haute',
-    accueil: "Bonjour ! Je dois porter une lettre au village de Brêche-Haute, de l'autre côté de la rivière. Vous pourriez me préparer de quoi faire le voyage ?",
+    accueil: "Bonjour ! Je dois porter une lettre au village de Brêche-Haute, de l'autre côté de la rivière. Tu pourrais me préparer de quoi faire le voyage ?",
     pv: 2, duree: [1, 2], butin: [25, 35],
     epreuves: [
       {
