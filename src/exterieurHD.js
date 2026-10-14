@@ -44,6 +44,10 @@ const RELIEFS = {
   bourbier: { roseaux: true, brume: 0.5, arbresMorts: true },
   repaire: { arbres: 'sapins', densite: 2, arbresMorts: true },
   tour: { tourNoire: true, pics: 0.35, brume: 0.2 },
+  cote: { arbres: 'ronds', fleurs: 0xf8f0d0 },
+  opale: { colonnes: true, tours: true, brume: 0.15 },
+  badlands: { pics: 0.45, rochers: true },
+  nuitPourpre: { tourNoire: true, arbresMorts: true, brume: 0.25 },
 };
 
 // Peint un paysage à la taille demandée (à l'écran). Renvoie la clé de la texture.
@@ -661,35 +665,115 @@ function creerBanqueHD(scene) {
 
 // --- La carte des contrées ---
 
-// Le parchemin de la carte, avec les contrées dessinées à l'encre et lavées d'aquarelle.
+// Le parchemin du monde, avec les royaumes lavés d'aquarelle, leurs frontières à l'encre, la mer
+// à l'ouest, la Grande Muraille à l'est, les fleuves, les routes et les reliefs de chaque contrée.
+// Peint à demi-taille du monde (MONDE_CARTE) : on l'affiche en ×2.
+// Les limites du monde, en pixels du parchemin : la côte à l'ouest, la Grande Muraille à l'est.
+function coteCarte(y) { return 46 + (fbm(0.5, y * 0.03, 771) - 0.5) * 34 + Math.sin(y / 40) * 6; }
+function murailleCarte(y) { return 712 + (fbm(y * 0.02, 0.5, 772) - 0.5) * 30 + Math.sin(y / 55) * 8; }
+// Le royaume d'un point du parchemin (null : la mer)
+function royaumeCarte(x, y) {
+  if (x < coteCarte(y)) {
+    // quelques îles au large des Mages
+    for (const [ix, iy, r] of [[22, 96, 9], [16, 236, 7], [28, 300, 6]]) if (Math.hypot(x - ix, (y - iy) * 1.2) < r + fbm(x * 0.2, y * 0.2, 773) * 4) return 'mages';
+    return null;
+  }
+  if (x > murailleCarte(y)) return 'bannis';
+  let meilleur = null, dmin = Infinity;
+  for (const [cle, z] of Object.entries(ZONES)) {
+    if (!z.royaume || z.royaume === 'bannis') continue;
+    const d = Math.hypot(x - z.x / 2, (y - z.y / 2) * 1.15);
+    if (d < dmin) { dmin = d; meilleur = z.royaume; }
+  }
+  for (const [cle, r] of Object.entries(ROYAUMES)) {
+    if (cle === 'bannis') continue;
+    const d = Math.hypot(x - r.x / 2, (y - r.y / 2) * 1.15) + 20;
+    if (d < dmin) { dmin = d; meilleur = cle; }
+  }
+  return meilleur;
+}
 function creerCarteHD(scene) {
   if (scene.textures.exists('carteHD')) return;
-  const L = 466, H = 184, ox = 14, oy = 50;            // affichée en (14, 50), en ×2
+  const L = MONDE_CARTE.L / 2, H = MONDE_CARTE.H / 2;
   const t = toileDecor(L, H);
   t.rampes.sepia = [0x2a1808, 0x4a2c12, 0x6a421e, 0x8a5a2c, 0xa8764a, 0xc8a070];
-  // Le parchemin vieilli, les bords roussis, l'ombre (est) et la lumière (ouest)
+  t.rampes.mer = rampe(melangeCouleur(0x4a88b8, 0xe8d4a4, 0.5));
+  t.rampes.fleuve = rampe(melangeCouleur(0x3a78b0, 0xe8d4a4, 0.3));
+  for (const [cle, r] of Object.entries(ROYAUMES)) t.rampes['roy_' + cle] = rampe(melangeCouleur(r.couleur, 0xe8d4a4, cle === 'bannis' ? 0.4 : 0.55));
+  // Le royaume de chaque point, un peu bruité pour que les frontières serpentent
+  const carte = [];
+  for (let y = 0; y < H; y++) {
+    carte.push([]);
+    for (let x = 0; x < L; x++) {
+      const bx = x + (fbm(x * 0.05, y * 0.05, 774) - 0.5) * 22, by = y + (fbm(x * 0.05, y * 0.05, 775) - 0.5) * 22;
+      carte[y].push(royaumeCarte(bx, by));
+    }
+  }
+  // Le parchemin vieilli, les bords roussis, la mer, et le lavis de chaque royaume
   for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
     const bord = Math.min(x, y, L - 1 - x, H - 1 - y);
     const dechire = fbm(x * 0.2, y * 0.2, 760) * 3;
     let i = 4 + Math.round((fbm(x * 0.03, y * 0.05, 761) - 0.5) * 1.6);
+    if (fbm(x * 0.02, y * 0.03, 762) > 0.7) i -= 1;      // des taches
+    const r = carte[y][x];
+    let mat = 'parchemin';
+    if (r === null) { mat = 'mer'; i = 3 + ((x * 7 + y * 3) % 23 === 0 ? 1 : 0) + (fbm(x * 0.08, y * 0.08, 776) > 0.6 ? 1 : 0); }
+    else if (fbm(x * 0.04, y * 0.04, 777) < 0.82) { mat = 'roy_' + r; i = 4 + (fbm(x * 0.09, y * 0.09, 778) > 0.62 ? -1 : 0); }
     if (bord < dechire + 2) i -= 2;
     else if (bord < dechire + 5) i -= 1;
-    if (fbm(x * 0.02, y * 0.03, 762) > 0.7) i -= 1;      // des taches
-    t.poser(x, y, 'parchemin', i);
+    t.poser(x, y, mat, Math.max(0, Math.min(5, i)));
   }
-  // Les lavis d'aquarelle sous chaque contrée, dans la couleur de son paysage
-  const lavis = [];
-  for (const [cle, z] of Object.entries(ZONES)) {
-    const zx = (z.x - ox) / 2, zy = (z.y - oy) / 2, couleur = BIOMES[z.biome].pres;
-    t.rampes['lavis_' + cle] = rampe(melangeCouleur(couleur, 0xe8d4a4, 0.45));
-    lavis.push([cle, zx, zy]);
-    for (let y = Math.floor(zy - 30); y < zy + 30; y++) for (let x = Math.floor(zx - 34); x < zx + 34; x++) {
-      const d = Math.hypot((x - zx) / 32, (y - zy) / 27) + (fbm(x * 0.1, y * 0.1, 763) - 0.5) * 0.5;
-      if (d < 1 && t.dans(x, y)) t.poser(x, y, 'lavis_' + cle, d > 0.85 ? 3 : 4);
+  const encre = (x, y, i = 1) => { x = Math.round(x); y = Math.round(y); if (t.dans(x, y)) t.poser(x, y, 'sepia', i); };
+  // La côte à l'encre, avec des vaguelettes au large
+  for (let y = 0; y < H; y++) for (let x = 1; x < L; x++) if ((carte[y][x] === null) !== (carte[y][x - 1] === null)) { encre(x, y, 1); encre(x - 1, y, 3); }
+  for (let k = 0; k < 40; k++) {
+    const vx = 6 + hachage(k, 1, 779) * 40, vy = 6 + hachage(k, 2, 779) * (H - 12);
+    if (carte[Math.round(vy)] && carte[Math.round(vy)][Math.round(vx)] === null) for (let j = -2; j <= 2; j++) encre(vx + j, vy - (Math.abs(j) === 1 ? 1 : 0), 3);
+  }
+  // Les frontières des royaumes, en pointillé
+  for (let y = 1; y < H; y++) for (let x = 1; x < L; x++) {
+    const r = carte[y][x];
+    if (r === null || (x + y) % 3 === 0) continue;
+    if ((carte[y][x - 1] !== r && carte[y][x - 1] !== null) || (carte[y - 1][x] !== r && carte[y - 1][x] !== null)) encre(x, y, 2);
+  }
+  // (un tracé très ancien, presque effacé, qui passe bien plus à l'ouest que la Muraille... Personne ne sait ce qu'il borde.)
+  for (let y = 4; y < H - 4; y += 5) encre(452 + (fbm(y * 0.03, 2.5, 780) - 0.5) * 60, y, 5);
+  // Les fleuves : le Grand Fleuve descend des montagnes des Nains jusqu'à la mer, près de Port-Brisant ;
+  // un ruisseau traverse la Comté.
+  const fleuve = (points, larg) => {
+    for (let k = 0; k < points.length - 1; k++) {
+      const [x0, y0] = points[k], [x1, y1] = points[k + 1], n = Math.ceil(Math.hypot(x1 - x0, y1 - y0));
+      for (let j = 0; j <= n; j++) {
+        const x = x0 + (x1 - x0) * j / n + Math.sin((k * 40 + j) / 6) * 1.5, y = y0 + (y1 - y0) * j / n;
+        for (let dx = 0; dx < larg; dx++) if (t.dans(Math.round(x + dx), Math.round(y))) t.poser(Math.round(x + dx), Math.round(y), 'fleuve', dx === 0 ? 2 : 4);
+        encre(x - 1, y, 3); encre(x + larg, y, 3);
+      }
     }
+  };
+  fleuve([[440, 58], [400, 110], [350, 160], [300, 215], [250, 270], [215, 300], [175, 320], [120, 330], [70, 336], [40, 338]], 3);
+  fleuve([[520, 225], [490, 260], [470, 300], [455, 340], [445, 368]], 2);
+  // Les routes : depuis ton comptoir, chaque contrée se relie à la plus proche déjà reliée (en pointillé)
+  const noeuds = [[MONDE_CARTE.comptoir.x / 2, MONDE_CARTE.comptoir.y / 2]];
+  const reste = Object.values(ZONES).filter(z => z.camp !== 'mal').map(z => [z.x / 2, z.y / 2]);
+  while (reste.length) {
+    let best = null;
+    for (let a = 0; a < reste.length; a++) for (const n of noeuds) {
+      const d = Math.hypot(reste[a][0] - n[0], reste[a][1] - n[1]);
+      if (!best || d < best.d) best = { d, a, n };
+    }
+    const [x1, y1] = reste.splice(best.a, 1)[0], [x0, y0] = best.n;
+    noeuds.push([x1, y1]);
+    const n = Math.ceil(best.d);
+    for (let j = 0; j < n; j++) if (j % 4 < 2) encre(x0 + (x1 - x0) * j / n + Math.sin(j / 9) * 2, y0 + (y1 - y0) * j / n, 2);
   }
-  // Les reliefs à l'encre : collines, arbres, montagnes, roseaux, colonnes, dunes
-  const encre = (x, y, i = 1) => { if (t.dans(Math.round(x), Math.round(y))) t.poser(Math.round(x), Math.round(y), 'sepia', i); };
+  // La Grande Muraille : un rempart crénelé du nord au sud, entre les terres sauvages et celles des Bannis
+  for (let y = 0; y < H; y++) {
+    const x = murailleCarte(y);
+    for (let dx = -1; dx <= 1; dx++) encre(x + dx, y, dx === 1 ? 2 : 0);
+    if (y % 6 < 3) { encre(x - 2, y, 1); encre(x - 3, y, 1); }
+    if (y % 30 === 15) for (let dy = -3; dy <= 3; dy++) for (let dx = -4; dx <= 3; dx++) if (Math.abs(dy) === 3 || Math.abs(dx) >= 3) encre(x + dx, y + dy, 1);
+  }
+  // Les reliefs à l'encre autour de chaque contrée : collines, arbres, montagnes, roseaux, colonnes, dunes
   const glyphes = {
     colline: (x, y) => { for (let k = -4; k <= 4; k++) encre(x + k, y - Math.round(Math.sqrt(16 - k * k) * 0.7)); },
     arbre: (x, y) => { for (let k = -2; k <= 2; k++) encre(x + k, y - 3 - Math.round(Math.sqrt(4 - k * k))); encre(x - 2, y - 3); encre(x + 2, y - 3); encre(x, y - 1); encre(x, y); },
@@ -701,19 +785,23 @@ function creerCarteHD(scene) {
   };
   const parBiome = { comte: ['colline', 'arbre'], foret: ['sapin', 'sapin', 'arbre'], marais: ['roseau'], mines: ['montagne'], desert: ['dune'], neige: ['montagne'],
     ruines: ['colonne', 'colline'], antre: ['montagne'], monastere: ['colline', 'arbre'], sanctuaire: ['colonne', 'arbre'], citadelle: ['montagne', 'colonne'],
-    bourbier: ['roseau'], repaire: ['sapin'], tour: ['colonne', 'montagne'] };
-  for (const [cle, zx, zy] of lavis) {
-    const z = ZONES[cle], formes = parBiome[z.biome] || ['colline'];
-    for (let k = 0; k < 7; k++) {
-      const a = hachage(k, 1, cle.length * 7) * Math.PI * 2, rr = 14 + hachage(k, 2, cle.length * 7) * 14;
-      glyphes[formes[k % formes.length]](zx + Math.cos(a) * rr * 1.2, zy + Math.sin(a) * rr * 0.8);
+    bourbier: ['roseau'], repaire: ['sapin'], tour: ['colonne', 'montagne'], cote: ['colline'], opale: ['colonne', 'colline'], badlands: ['montagne', 'dune'], nuitPourpre: ['sapin', 'colonne'] };
+  for (const [cle, z] of Object.entries(ZONES)) {
+    const zx = z.x / 2, zy = z.y / 2, formes = parBiome[z.biome] || ['colline'];
+    for (let k = 0; k < 8; k++) {
+      const a = hachage(k, 1, cle.length * 7 + cle.charCodeAt(0)) * Math.PI * 2, rr = 34 + hachage(k, 2, cle.length * 7) * 16;
+      glyphes[formes[k % formes.length]](zx + Math.cos(a) * rr * 1.3, zy + Math.sin(a) * rr * 0.8);
     }
   }
-  // Une rose des vents dans le coin
-  const rx = 30, ry = H - 30;
+  // La chaîne de montagnes des Nains, au nord
+  for (let k = 0; k < 18; k++) glyphes.montagne(390 + k * 9 + hachage(k, 3, 781) * 4, 22 + hachage(k, 4, 781) * 14 + (k % 2) * 6);
+  // Une rose des vents dans la mer, et un serpent de mer
+  const rx = 26, ry = H - 34;
   for (let k = -12; k <= 12; k++) { encre(rx + k, ry, Math.abs(k) < 3 ? 0 : 2); encre(rx, ry + k * 0.8, Math.abs(k) < 3 ? 0 : 2); }
   for (let k = -6; k <= 6; k++) { encre(rx + k, ry + k * 0.8, 3); encre(rx + k, ry - k * 0.8, 3); }
   for (let a = 0; a < 6.28; a += 0.12) encre(rx + Math.cos(a) * 7, ry + Math.sin(a) * 6, 2);
+  for (let k = 0; k < 18; k++) encre(14 + k, 170 + Math.sin(k / 2.2) * 3, k < 3 ? 0 : 1);
+  encre(13, 169, 0); encre(12, 170, 0);
   t.texture(scene, 'carteHD');
 }
 
@@ -919,7 +1007,7 @@ function poserRiviereHD(scene, y, hauteur = 60) {
 const VIGNETTE_L = 52, VIGNETTE_H = 36;
 function creerVignettesZonesHD(scene) {
   for (const [cle, z] of Object.entries(ZONES)) {
-    if (!scene.textures.exists('vignetteZone_' + cle)) peindreVignetteZone(scene, cle, z.biome);
+    if (!scene.textures.exists('vignetteZone_' + cle)) peindreVignetteZone(scene, cle, z.biome, z.vignette);
   }
   // La version brumeuse des contrées inconnues : un médaillon de parchemin et un point d'interrogation.
   if (!scene.textures.exists('vignetteZone_inconnue')) {
@@ -935,7 +1023,7 @@ function creerVignettesZonesHD(scene) {
   }
 }
 
-function peindreVignetteZone(scene, cle, biome) {
+function peindreVignetteZone(scene, cle, biome, motif = biome) {
   const L = VIGNETTE_L, H = VIGNETTE_H, cx = L / 2, cy = H / 2, RX = 24.5, RY = 16.5;
   const b = BIOMES[biome] || BIOMES.comte;
   const t = toileDecor(L, H);
@@ -993,7 +1081,7 @@ function peindreVignetteZone(scene, cle, biome) {
   };
   const eau = (y0, y1) => { for (let y = y0; y < y1; y++) for (let x = 0; x < L; x++) P(x, y, 'vEau', 2 + ((x + y * 3) % 7 === 0 ? 2 : (y - y0) % 2)); };
 
-  switch (biome) {
+  switch (motif) {
     case 'comte': // des collines verdoyantes, des pommiers et un trou de hobbit
       soleil(40, 7);
       colline(14, horizon + 2, 18, 8); colline(40, horizon + 3, 16, 7, 'vLoin', -0.3);
@@ -1090,6 +1178,102 @@ function peindreVignetteZone(scene, cle, biome) {
       P(26, 2, 'vSoleil', 5); P(25, 12, 'vSoleil', 5); P(27, 18, 'vSoleil', 5);
       for (const gx of [8, 14, 38, 44]) { rect(gx, 28, 3, 4, 'pierre', 3); P(gx + 1, 27, 'pierre', 4); }
       for (let k = 0; k < 5; k++) P(40 + (k % 2), 4 + k * 2, 'vSoleil', 5);
+      break    // --- Le grand monde (v0.54) ---
+    case 'vergers': // des rangées de pommiers chargés, un moulin et une charrette de pommes
+      soleil(9, 6);
+      colline(30, horizon + 3, 26, 7);
+      rect(38, 9, 5, 9, 'vMur', (x) => x === 38 ? 4 : 2); for (let k = 0; k < 3; k++) rect(38 - k + 1, 8 - k, 5 + 2 * k - 2, 1, 'vToit', 3);
+      for (let k = 0; k < 5; k++) { P(40 - k, 11 - k, 'vTronc', 2); P(40 + k, 11 - k, 'vTronc', 2); P(40 - k, 11 + k, 'vTronc', 2); P(40 + k, 11 + k, 'vTronc', 2); }
+      for (const [x0, y0] of [[8, 24], [17, 25], [26, 24], [12, 31], [22, 32], [32, 31]]) pommier(x0, y0);
+      rect(37, 27, 7, 3, 'vTronc', 3); P(38, 30, 'encre', 0); P(42, 30, 'encre', 0);
+      for (let x = 38; x < 43; x++) P(x, 26, 'vPomme', 3 + (x % 2));
+      break;
+    case 'cote': // la mer, un phare, un quai et un navire aux voiles blanches
+      soleil(10, 6);
+      eau(18, H);
+      rect(34, 6, 4, 13, 'vMur', (x) => x === 34 ? 4 : 2);
+      for (let y = 6; y < 19; y++) if (y % 4 >= 2) for (let x = 34; x < 38; x++) P(x, y, 'vToit', x === 34 ? 4 : 2);
+      rect(33, 4, 6, 2, 'vSombre', 3); P(35, 3, 'vSoleil', 5); P(36, 3, 'vSoleil', 5);
+      colline(40, 22, 12, 4, 'vPres');
+      rect(4, 22, 20, 2, 'vTronc', (x) => x % 4 === 0 ? 1 : 3);
+      rect(12, 26, 14, 3, 'vTronc', (x) => x === 12 ? 4 : 2); for (let k = 0; k < 3; k++) rect(11 - k + 1, 26 + k, 1, 1, 'vTronc', 2);
+      for (let k = 0; k < 11; k++) P(19, 25 - k, 'vTronc', 1);
+      for (let k = 0; k < 7; k++) rect(13 + Math.floor(k / 2), 15 + k, 6 - Math.floor(k / 2), 1, 'vMur', 5 - (k % 2));
+      for (let k = 0; k < 7; k++) rect(20, 16 + k, 3 + Math.floor(k / 2), 1, 'vMur', 4);
+      rect(20, 13, 3, 1, 'vToit', 4);
+      break;
+    case 'forge': // une porte colossale taillée dans la montagne, deux statues, une forge rougeoyante
+      montagne(26, H, 28, 30, 'vRoche'); montagne(8, H, 10, 14, 'vRoche'); montagne(46, H, 10, 15, 'vRoche');
+      rect(19, 14, 14, 18, 'vSombre', (x) => x === 19 ? 4 : x > 30 ? 1 : 2);
+      for (let k = 0; k < 4; k++) rect(19 + k, 14 - k, 14 - 2 * k, 1, 'vSombre', 3);
+      rect(23, 20, 6, 12, 'encre', 0);
+      for (let y = 22; y < 32; y++) for (let x = 24; x < 28; x++) if (hachage(x, y, 61) > 0.55) P(x, y, 'vFeu', 3 + (y > 28 ? 1 : 0));
+      for (const sx of [15, 37]) { rect(sx, 20, 3, 12, 'vRoche', 4); rect(sx - 1, 18, 5, 2, 'vRoche', 5); P(sx + 1, 17, 'vOr', 4); }
+      for (let k = 0; k < 4; k++) P(26 + Math.sin(k) * 2, 8 - k * 1.5, 'vRoche', 4);
+      break;
+    case 'lac': // un lac d'argent sous deux lunes, des arbres d'argent et des lucioles
+      lune(16, 6, 3, 'vSoleil'); lune(36, 8, 2, 'vSoleil');
+      for (let y = 21; y < H; y++) for (let x = 0; x < L; x++) P(x, y, 'vEau', 3 + (((x * 3 + y * 7) % 11) === 0 ? 2 : 0));
+      for (let k = -2; k <= 2; k++) { P(16 + k, 25, 'vSoleil', 4); P(36 + k * 0.6, 27, 'vSoleil', 4); }
+      for (const [x0, h] of [[6, 13], [46, 15]]) { for (let k = 0; k < h; k++) P(x0, 22 - k, 'vMur', 3); forme('vFeuille', ellipsoide(x0, 22 - h, 6, 5), { decalage: 0.8 }); }
+      colline(26, 21, 16, 4, 'vLoin');
+      for (let k = 0; k < 8; k++) P(hachage(k, 5, 43) * L, 10 + hachage(k, 6, 43) * 20, 'vSoleil', 5);
+      break;
+    case 'opale': // une cité de tours de cristal sur une falaise, au bord de la mer
+      soleil(41, 6, 2);
+      eau(26, H);
+      montagne(22, 27, 20, 7, 'vLoin');
+      for (const [tx, h, w] of [[12, 15, 3], [18, 20, 4], [25, 24, 4], [32, 18, 3], [37, 13, 3]]) {
+        rect(tx, 26 - h, w, h, 'vSombre', (x) => x === tx ? 5 : x === tx + w - 1 ? 2 : 4);
+        for (let k = 0; k < 4; k++) rect(tx + Math.floor(k / 2), 26 - h - k - 1, Math.max(1, w - k), 1, 'vSombre', 5);
+        P(tx + 1, 26 - h + 3, 'vSoleil', 5);
+      }
+      for (let k = 0; k < 6; k++) P(hachage(k, 7, 47) * L, 4 + hachage(k, 8, 47) * 12, 'vSoleil', 5);
+      break;
+    case 'bibliotheque': // un dôme fermé de lourdes chaînes, des livres qui volent autour
+      soleil(42, 6, 2);
+      colline(26, H, 30, 9, 'vLoin');
+      rect(14, 15, 24, 13, 'vMur', (x) => x < 18 ? 4 : x > 34 ? 2 : 3);
+      forme('vSombre', ellipsoide(26, 15, 10, 7, (x, y) => y < 15), { decalage: 0.6, bord: false });
+      for (const cx2 of [17, 22, 30, 35]) colonne(cx2, 28, 12, 'vMur');
+      rect(23, 21, 6, 7, 'vTronc', 1);
+      for (let k = 0; k < 7; k++) { P(22 + k, 23 + (k % 2), 'fer', 4); }
+      for (const [bx, by] of [[8, 9], [44, 12], [10, 20]]) { rect(bx, by, 3, 2, 'vToit', 3); P(bx - 1, by - 1, 'vMur', 5); P(bx + 3, by - 1, 'vMur', 5); }
+      break;
+    case 'pont': // un vieux pont de pierre moussu sur un torrent, un troll assis dessous
+      for (let k = 0; k < 8; k++) sapin(2 + k * 7, horizon + 1 + (k % 2), 9 + (k % 3), 'vLoin');
+      eau(26, H);
+      for (let x = 6; x < 46; x++) { const y0 = 17 + Math.round(Math.pow((x - 26) / 20, 2) * 4); for (let y = y0; y < y0 + 3; y++) P(x, y, 'vRoche', y === y0 ? 4 : 2); if (hachage(x, 1, 71) > 0.6) P(x, y0 - 1, 'vFeuille', 4); }
+      for (const px of [10, 42]) rect(px, 20, 4, 8, 'vRoche', (x) => x === px ? 4 : 2);
+      forme('encre', ellipsoide(26, 27, 7, 6, (x, y) => y < 27), { bord: false });
+      forme('vLoin', ellipsoide(26, 25, 3, 3), { decalage: 0.5 }); P(25, 24, 'vFeu', 5); P(27, 24, 'vFeu', 5);
+      break;
+    case 'badlands': // une forteresse de pierre rouge, des pics et des bannières en lambeaux
+      soleil(40, 6, 3);
+      montagne(10, horizon + 6, 12, 14, 'vRoche'); montagne(44, horizon + 6, 10, 12, 'vRoche');
+      rect(13, 14, 26, 14, 'vRoche', (x, y) => (y === 14 && x % 3 === 0) ? 5 : x < 17 ? 4 : 2);
+      rect(11, 9, 6, 19, 'vRoche', (x) => x === 11 ? 5 : 3); rect(35, 9, 6, 19, 'vRoche', (x) => x === 35 ? 5 : 2);
+      for (let k = 0; k < 4; k++) rect(22 + k, 20 - k, 8 - 2 * k, 1, 'encre', 0); rect(22, 20, 8, 8, 'encre', 0);
+      for (const fx of [14, 38]) { for (let k = 0; k < 5; k++) P(fx, 8 - k, 'vTronc', 1); rect(fx + 1, 4, 3, 3, 'vToit', 2); P(fx + 3, 6, 'vToit', 1); }
+      break;
+    case 'tombeaux': // des pyramides à demi enfouies sous la lune, des obélisques
+      lune(40, 7, 4, 'vMur');
+      for (let x = 0; x < L; x++) for (let y = 0; y < H; y++) { const d = 26 + Math.sin(x / 6) * 2; if (y > d) P(x, y, 'vPres', y < d + 1.5 ? 4 : 2); }
+      for (const [px, base, h] of [[16, 27, 13], [33, 28, 9]]) for (let k = 0; k < h; k++) rect(px - k, base - h + k, 2 * k + 1, 1, 'vLoin', (x) => x < px ? 4 : 2);
+      rect(15, 23, 3, 4, 'encre', 0);
+      for (const ox of [6, 44]) { rect(ox, 16, 2, 11, 'vLoin', (x) => x === ox ? 4 : 2); P(ox, 15, 'vOr', 5); }
+      break;
+    case 'nuitPourpre': // un château gothique aux fenêtres rouges sous une lune pâle, des chauves-souris
+      lune(12, 8, 4, 'vSoleil');
+      colline(26, H, 30, 10, 'vLoin');
+      rect(18, 12, 16, 17, 'vSombre', (x) => x === 18 ? 4 : x > 31 ? 1 : 2);
+      for (const [tx, h] of [[15, 22], [33, 24], [24, 26]]) {
+        rect(tx, 29 - h, 4, h, 'vSombre', (x) => x === tx ? 4 : 2);
+        for (let k = 0; k < 5; k++) rect(tx + Math.floor(k / 2.5), 29 - h - k - 1, Math.max(1, 4 - Math.floor(k * 0.8)), 1, 'vSombre', 3);
+      }
+      for (const [wx, wy] of [[16, 12], [26, 9], [34, 11], [21, 18], [29, 18]]) { P(wx, wy, 'vFeu', 4); P(wx, wy + 1, 'vFeu', 3); }
+      for (const [cx2, cy2] of [[38, 6], [43, 9], [8, 16]]) { P(cx2, cy2, 'encre', 0); P(cx2 - 1, cy2 - 1, 'encre', 0); P(cx2 + 1, cy2 - 1, 'encre', 0); }
+      for (let k = 0; k < 6; k++) { P(4 + k * 1.5, 30 - k * 2, 'vSombre', 2); P(48 - k * 1.5, 30 - k * 2, 'vSombre', 2); }
       break;
   }
 

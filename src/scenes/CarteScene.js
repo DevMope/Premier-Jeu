@@ -23,14 +23,23 @@ class CarteScene extends Phaser.Scene {
     for (const e of G.file) if (e.planifie) this.place[e.voyageur.id] = e.voyageur.zone;
     this.selection = this.voyageurs.find(v => !this.place[v.id]) || this.voyageurs[0];
 
+    // Le monde (le parchemin, les contrées, les repères) vit dans `this.monde`, filmé par sa propre
+    // caméra qu'on fait glisser et zoomer ; tout le reste (bureau, bande, bulle) est l'interface.
+    this.monde = this.add.container(0, 0);
+    this.dessus = this.add.container(0, 0).setDepth(10);   // l'interface posée sur la carte (sa propre caméra, au-dessus)
+    this.bulle = this.add.container(0, 0);
+    this.dessus.add(this.bulle);
+    this.etiquettes = [];        // les textes du monde qui gardent la même taille à l'écran
     this.dessinerParchemin();
     this.titre = this.add.text(480, 24, '', style(19, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
     this.dessinerZones();
     this.reperes = this.add.container(0, 0).setDepth(5);
-    this.bulle = this.add.container(0, 0).setDepth(10);
+    this.monde.add(this.reperes);
     this.creerBande();
+    this.creerCamera();
     this.tout();
     this.cameras.main.fadeIn(300);
+    this.camCarte.fadeIn(300);
     if (!this.comptoir) this.time.delayedCall(500, () => conseilGarrick(this, 'carte'));
   }
 
@@ -46,62 +55,191 @@ class CarteScene extends Phaser.Scene {
     creerComptoirCarteHD(this);
     this.add.image(0, 0, 'bureauBois').setOrigin(0).setScale(2).setTint(0xa08870);
     vignette(this, 0.7, 0);
-    this.add.image(14, 50, 'carteHD').setOrigin(0).setScale(2);
-    const g = this.add.graphics();
-    // Les trois terres : la lumière à l'ouest, l'ombre à l'est, et le milieu.
-    g.fillStyle(0xfff0a0, 0.2).fillRect(20, 56, 246, 356);
-    g.fillStyle(0x2a1a3a, 0.2).fillRect(735, 56, 205, 356);
-    g.lineStyle(2, 0x6a421e, 0.5).lineBetween(266, 58, 266, 410).lineBetween(735, 58, 735, 410);
-    this.add.text(141, 400, '☀ Terres de lumière', style(14, '#8a6a10', { fontStyle: 'bold italic' })).setOrigin(0.5);
-    this.add.text(840, 400, '☾ Terres d\'ombre', style(14, '#4a2a5a', { fontStyle: 'bold italic' })).setOrigin(0.5);
-    // Ton comptoir, et les chemins qui en partent
-    const depart = { x: 420, y: 386 };
-    g.lineStyle(2, 0x8a6a3a, 0.7);
-    for (const z of Object.values(ZONES)) {
-      const n = 14;
-      for (let i = 0; i < n; i += 2) {
-        g.lineBetween(depart.x + (z.x - depart.x) * i / n, depart.y + (z.y - depart.y) * i / n,
-          depart.x + (z.x - depart.x) * (i + 1) / n, depart.y + (z.y - depart.y) * (i + 1) / n);
-      }
+    // Le cadre de la carte (le monde s'affiche dedans, par sa caméra)
+    this.add.rectangle(480, 234, 938, 374, 0x000000, 0).setStrokeStyle(4, 0x3b2410);
+    this.add.rectangle(480, 234, 944, 380, 0x000000, 0).setStrokeStyle(2, 0xc9a227, 0.8);
+    this.monde.add(this.add.image(0, 0, 'carteHD').setOrigin(0).setScale(2));
+    // Le nom des royaumes, à la plume, avec leurs étoiles
+    for (const [cle, r] of Object.entries(ROYAUMES)) {
+      const t = this.add.text(r.x, r.y, r.nom + (r.etoiles ? ' ' + '★'.repeat(r.etoiles) : ''), style(13, cle === 'bannis' ? '#3a1a4a' : '#4a2a0a',
+        { fontStyle: 'bold italic', stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5).setAlpha(0.92)
+        .setInteractive({ useHandCursor: true });
+      t.on('pointerup', () => { if (!this.aGlisse()) this.vue(1, r.x, r.y + 120); });
+      this.monde.add(t);
+      this.etiquettes.push({ o: t, royaume: true });
     }
-    this.add.image(depart.x, depart.y + 14, 'halo').setScale(0.9, 0.5).setTint(0xffe8a0).setAlpha(0.7);
-    this.add.image(depart.x, depart.y + 14, 'comptoirCarteHD').setOrigin(0.5, 1).setScale(2);
-    this.add.text(depart.x, depart.y + 14, 'Ton comptoir', style(12, '#3b2410', { fontStyle: 'bold', stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0);
+    for (const [x, y, nom, angle] of [[60, 520, "Mer d'Opale", -80], [1440, 600, 'La Grande Muraille', 88], [330, 470, 'Le Grand Fleuve', -38]]) {
+      const t = this.add.text(x, y, nom, style(12, '#3b2a4a', { fontStyle: 'italic', stroke: '#f0e2bc', strokeThickness: 3 })).setOrigin(0.5).setAngle(angle).setAlpha(0.8);
+      this.monde.add(t);
+      this.etiquettes.push({ o: t, detail: true });
+    }
+    // Ton comptoir
+    const depart = MONDE_CARTE.comptoir;
+    this.monde.add(this.add.image(depart.x, depart.y + 14, 'halo').setScale(0.9, 0.5).setTint(0xffe8a0).setAlpha(0.7));
+    this.monde.add(this.add.image(depart.x, depart.y + 14, 'comptoirCarteHD').setOrigin(0.5, 1).setScale(2));
+    const ici = this.add.text(depart.x, depart.y + 16, 'Ton comptoir', style(12, '#3b2410', { fontStyle: 'bold', stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0);
+    this.monde.add(ici);
+    this.etiquettes.push({ o: ici });
   }
 
   dessinerZones() {
     const G = this.G;
-    this.anneau = this.add.ellipse(0, 0, 116, 82).setStrokeStyle(4, 0xffe066).setVisible(false).setDepth(2);
+    this.anneau = this.add.ellipse(0, 0, 116, 82).setStrokeStyle(4, 0xffe066).setVisible(false);
+    this.monde.add(this.anneau);
     this.tweens.add({ targets: this.anneau, scale: 1.15, duration: 500, yoyo: true, repeat: -1 });
+    const ajouter = (o, opts = {}) => { this.monde.add(o); if (opts.etiquette) this.etiquettes.push({ o, ...opts }); return o; };
     for (const [cle, z] of Object.entries(ZONES)) {
       const ouverte = zoneOuverte(G, cle);
       // Les contrées inconnues restent dans la brume du parchemin.
-      if (!ouverte) this.add.image(z.x, z.y, 'halo').setScale(2.3, 1.9).setTint(0xe4d0a0).setAlpha(0.9);
+      if (!ouverte) ajouter(this.add.image(z.x, z.y, 'halo').setScale(2.3, 1.9).setTint(0xe4d0a0).setAlpha(0.9));
       // Le médaillon peint de la contrée (ou sa brume), et ses étoiles de danger en bas.
-      this.add.image(z.x + 3, z.y + 4, ouverte ? 'vignetteZone_' + cle : 'vignetteZone_inconnue').setScale(2).setTint(0x000000).setAlpha(0.25);
-      const pastille = this.add.image(z.x, z.y, ouverte ? 'vignetteZone_' + cle : 'vignetteZone_inconnue').setScale(2)
-        .setInteractive({ useHandCursor: true });
-      if (ouverte) this.add.text(z.x, z.y + 30, '★'.repeat(z.danger), style(13, '#ffd860', { fontStyle: 'bold', stroke: '#3b2410', strokeThickness: 4 })).setOrigin(0.5);
-      else this.add.text(z.x, z.y, '?', style(26, '#8a7450', { fontStyle: 'bold' })).setOrigin(0.5);
-      this.add.text(z.x, z.y + 38, ouverte ? z.nom : '🔒 ???', style(13, ouverte ? '#2a1808' : '#6a6458', { fontStyle: 'bold', align: 'center', wordWrap: { width: 190 }, stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0);
+      ajouter(this.add.image(z.x + 3, z.y + 4, ouverte ? 'vignetteZone_' + cle : 'vignetteZone_inconnue').setScale(2).setTint(0x000000).setAlpha(0.25));
+      const pastille = ajouter(this.add.image(z.x, z.y, ouverte ? 'vignetteZone_' + cle : 'vignetteZone_inconnue').setScale(2)
+        .setInteractive({ useHandCursor: true }));
+      if (ouverte) ajouter(this.add.text(z.x, z.y + 30, '★'.repeat(z.danger), style(13, '#ffd860', { fontStyle: 'bold', stroke: '#3b2410', strokeThickness: 4 })).setOrigin(0.5), { etiquette: true });
+      else ajouter(this.add.text(z.x, z.y, '?', style(26, '#8a7450', { fontStyle: 'bold' })).setOrigin(0.5));
+      ajouter(this.add.text(z.x, z.y + 40, ouverte ? z.nom : '🔒 ???', style(13, ouverte ? '#2a1808' : '#6a6458', { fontStyle: 'bold', align: 'center', wordWrap: { width: 190 }, stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0), { etiquette: true, detail: true });
       // Une contrée qui vient de s'ouvrir depuis la dernière fois : on la signale.
       if (ouverte && G.zonesVuesCarte && !G.zonesVuesCarte.includes(cle)) {
-        const n = this.add.text(z.x, z.y - 44, '✦ Nouveau ! ✦', style(14, '#a0300a', { fontStyle: 'bold', stroke: '#fff4dc', strokeThickness: 4 })).setOrigin(0.5).setDepth(3);
-        this.tweens.add({ targets: n, scale: 1.15, duration: 500, yoyo: true, repeat: -1 });
+        const n = ajouter(this.add.text(z.x, z.y - 44, '✦ Nouveau ! ✦', style(14, '#a0300a', { fontStyle: 'bold', stroke: '#fff4dc', strokeThickness: 4 })).setOrigin(0.5), { etiquette: true });
+        this.tweens.add({ targets: n, alpha: 0.6, duration: 500, yoyo: true, repeat: -1 });
       }
-      pastille.on('pointerdown', () => this.choisirZone(cle));
+      pastille.on('pointerup', () => { if (!this.aGlisse()) this.choisirZone(cle); });
       // La conquête : un fanion avec le compte des missions réussies, doré une fois conquise
       if (ouverte) {
         const n = (G.conquete || {})[cle] || 0;
         const conquise = n >= CONQUETE_ZONE;
-        const fanion = this.add.text(z.x + 50, z.y - 22, conquise ? '⚑ Conquise' : `⚑ ${n}/${CONQUETE_ZONE}`,
-          style(11, conquise ? '#7a4a00' : '#3b2410', { fontStyle: 'bold', backgroundColor: conquise ? '#f0c840' : '#e8d8b0', padding: { x: 3, y: 1 } })).setOrigin(0.5).setDepth(4);
+        const fanion = ajouter(this.add.text(z.x + 50, z.y - 22, conquise ? '⚑ Conquise' : `⚑ ${n}/${CONQUETE_ZONE}`,
+          style(11, conquise ? '#7a4a00' : '#3b2410', { fontStyle: 'bold', backgroundColor: conquise ? '#f0c840' : '#e8d8b0', padding: { x: 3, y: 1 } })).setOrigin(0.5), { etiquette: true, detail: true });
         if (conquise) this.tweens.add({ targets: fanion, angle: { from: -4, to: 4 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
     }
     const conquises = Object.keys(ZONES).filter(c => ((G.conquete || {})[c] || 0) >= CONQUETE_ZONE).length;
-    this.add.text(620, 404, `⚑ Contrées conquises : ${conquises} / ${Object.keys(ZONES).length}`, style(13, '#3b2410', { fontStyle: 'bold', stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5);
+    this.dessus.add(this.add.text(938, 402, `⚑ Contrées conquises : ${conquises} / ${Object.keys(ZONES).length}`, style(12, '#f3e6c8', { fontStyle: 'bold', backgroundColor: '#2a1a10cc', padding: { x: 5, y: 2 } })).setOrigin(1, 0.5));
     G.zonesVuesCarte = zonesOuvertes(G);
+  }
+
+  // --- La caméra du monde : on la fait glisser (glisser-déposer) et zoomer (molette, boutons) ---
+
+  creerCamera() {
+    const Z = this.Z = this.cameras.main.zoom;
+    this.cadre = { x: 14, y: 50, l: 932, h: 368 };
+    this.kMin = Math.max(this.cadre.l / MONDE_CARTE.L, this.cadre.h / MONDE_CARTE.H);
+    this.kMax = 1.3;
+    this.camCarte = this.cameras.add(this.cadre.x * Z, this.cadre.y * Z, this.cadre.l * Z, this.cadre.h * Z)
+      .setBounds(0, 0, MONDE_CARTE.L, MONDE_CARTE.H).setBackgroundColor('#2a1a10');
+    this.camDessus = this.cameras.add(0, 0, 960 * Z, 540 * Z).setOrigin(0, 0).setZoom(Z);
+    this.cameras.main.ignore([this.monde, this.dessus]);
+    this.events.on('postupdate', this.filtrerCameras, this);
+    this.filtrerCameras();
+    // La vue de la dernière fois, sinon le monde entier
+    const v = this.G.vueCarte || { k: this.kMin, x: MONDE_CARTE.L / 2, y: MONDE_CARTE.H / 2 };
+    this.k = v.k;
+    this.appliquerVue(v.k, v.x, v.y);
+    // Glisser pour se déplacer
+    this.input.on('pointerdown', p => {
+      if (!this.dansCadre(p)) { this.glisse = null; return; }
+      this.glisse = { x: p.x, y: p.y, sx: this.centre.x, sy: this.centre.y, bouge: false };
+    });
+    this.input.on('pointermove', p => {
+      const g = this.glisse;
+      if (!g || !p.isDown) return;
+      if (!g.bouge && Math.hypot(p.x - g.x, p.y - g.y) < 8 * Z) return;
+      if (!g.bouge) { g.bouge = true; this.fermerBulle(); }
+      this.appliquerVue(this.k, g.sx - (p.x - g.x) / (Z * this.k), g.sy - (p.y - g.y) / (Z * this.k));
+    });
+    this.input.on('pointerup', () => this.time.delayedCall(0, () => { this.glisse = null; }));
+    this.input.on('wheel', (p, objets, dx, dy) => {
+      if (!this.dansCadre(p)) return;
+      const k = Phaser.Math.Clamp(this.k * (dy > 0 ? 0.85 : 1.18), this.kMin, this.kMax);
+      // on zoome vers le point visé
+      const c = this.centre, Z = this.Z;
+      const m = { x: c.x + (p.x / Z - this.cadre.x - this.cadre.l / 2) / this.k, y: c.y + (p.y / Z - this.cadre.y - this.cadre.h / 2) / this.k };
+      const f = this.k / k;
+      this.fermerBulle();
+      this.appliquerVue(k, m.x + (c.x - m.x) * f, m.y + (c.y - m.y) * f);
+    });
+    // Les boutons : zoomer, dézoomer, voir tout le monde
+    let xb = 24;
+    const bouton = (texte, action) => {
+      const b = this.add.text(xb, 68, texte, style(15, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410cc', padding: { x: 7, y: 2 } }))
+        .setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
+      b.on('pointerdown', () => { Son.jouer('clic'); action(); });
+      this.dessus.add(b);
+      xb += b.width + 6;
+      return b;
+    };
+    const c = () => this.centre;
+    bouton('＋', () => { this.fermerBulle(); this.vue(Math.min(this.kMax, this.k * 1.4), c().x, c().y); });
+    bouton('－', () => { this.fermerBulle(); this.vue(Math.max(this.kMin, this.k / 1.4), c().x, c().y); });
+    bouton('🗺 Tout', () => { this.fermerBulle(); this.vue(this.kMin, MONDE_CARTE.L / 2, MONDE_CARTE.H / 2); });
+  }
+
+  // Ce que la caméra du monde ne filme pas : tout sauf le monde (et inversement pour l'interface).
+  filtrerCameras() {
+    if (!this.camCarte || !this.camCarte.id) return;
+    const bit = this.camCarte.id, dessus = this.camDessus.id;
+    for (const o of this.children.list) {
+      if (o !== this.monde && !(o.cameraFilter & bit)) o.cameraFilter |= bit;
+      if (o !== this.dessus && !(o.cameraFilter & dessus)) o.cameraFilter |= dessus;
+    }
+    // (et la caméra de l'interface ne doit pas tester les clics sur le monde, à de fausses positions)
+    const principal = this.cameras.main.id | dessus;
+    const marquer = liste => { for (const o of liste) { o.cameraFilter |= principal; if (o.list) marquer(o.list); } };
+    marquer(this.monde.list);
+  }
+
+  dansCadre(p) {
+    const Z = this.Z, c = this.cadre;
+    return p.x >= c.x * Z && p.x <= (c.x + c.l) * Z && p.y >= c.y * Z && p.y <= (c.y + c.h) * Z;
+  }
+
+  // Vrai si le geste en cours est un glissement (on ne choisit pas une contrée en glissant la carte)
+  aGlisse() { return !!(this.glisse && this.glisse.bouge); }
+
+  appliquerVue(k, x, y) {
+    this.k = k;
+    // (on borne nous-mêmes le centre : la caméra ne recalcule sa vue qu'à l'image suivante)
+    const dx = this.cadre.l / 2 / k, dy = this.cadre.h / 2 / k;
+    x = Phaser.Math.Clamp(x, dx, Math.max(dx, MONDE_CARTE.L - dx));
+    y = Phaser.Math.Clamp(y, dy, Math.max(dy, MONDE_CARTE.H - dy));
+    this.centre = { x, y };
+    this.camCarte.setZoom(this.Z * k);
+    this.camCarte.centerOn(x, y);
+    // Les textes gardent la même taille à l'écran ; les détails (noms des contrées, fanions)
+    // n'apparaissent qu'en s'approchant.
+    const proche = k >= 0.75;
+    for (const e of this.etiquettes) {
+      e.o.setScale(Math.max(1, 1 / k) * (e.royaume ? (proche ? 0.85 : 1) : 1));
+      if (e.detail) e.o.setVisible(proche);
+    }
+    if (this.reperes) this.reperes.setVisible(true);
+  }
+
+  // Une vue animée vers (x, y) au zoom k
+  vue(k, x, y, fin) {
+    const c = this.centre;
+    const etat = { k: this.k, x: c.x, y: c.y };
+    this.tweens.add({ targets: etat, k, x, y, duration: 450, ease: 'Sine.easeInOut',
+      onUpdate: () => this.appliquerVue(etat.k, etat.x, etat.y), onComplete: () => fin && fin() });
+  }
+
+  // Où se trouve un point du monde, à l'écran (en coordonnées de l'interface)
+  versEcran(x, y) {
+    const c = this.centre;
+    return { x: this.cadre.x + this.cadre.l / 2 + (x - c.x) * this.k, y: this.cadre.y + this.cadre.h / 2 + (y - c.y) * this.k };
+  }
+
+  fermerBulle() {
+    if (!this.bulle) return;
+    this.bulle.removeAll(true);
+    this.anneau.setVisible(false);
+    this.zoneChoisie = null;
+  }
+
+  memoriserVue() {
+    const c = this.centre;
+    this.G.vueCarte = { k: this.k, x: Math.round(c.x), y: Math.round(c.y) };
   }
 
   // Les petits personnages posés sur la carte : missions en cours, lettres, voyageurs placés.
@@ -190,6 +328,12 @@ class CarteScene extends Phaser.Scene {
     const G = this.G;
     const v = this.selection;
     const z = ZONES[cle];
+    // De loin, on s'approche d'abord de la contrée, puis la bulle s'ouvre.
+    const ecran = this.versEcran(z.x, z.y);
+    if (this.k < 0.75 || ecran.x < 40 || ecran.x > 920 || ecran.y < 70 || ecran.y > 400) {
+      this.fermerBulle();
+      return this.vue(Math.max(this.k, 0.9), z.x, z.y, () => this.choisirZone(cle));
+    }
     this.zoneChoisie = cle;
     this.anneau.setVisible(true).setPosition(z.x, z.y);
     this.bulle.removeAll(true);
@@ -198,7 +342,7 @@ class CarteScene extends Phaser.Scene {
     // On écrit d'abord le contenu (en haut à gauche), puis on mesure et on place la bulle.
     const contenu = this.add.container(0, 0);
     const fermer = this.add.text(w - 22, 0, '✕', style(14, '#c9b48a', { fontStyle: 'bold' })).setOrigin(1, 0).setInteractive({ useHandCursor: true });
-    fermer.on('pointerdown', () => { this.bulle.removeAll(true); this.anneau.setVisible(false); this.zoneChoisie = null; });
+    fermer.on('pointerdown', () => this.fermerBulle());
     let bas;
     if (!ouverte) {
       contenu.add(this.add.text(0, 0, 'Une contrée inconnue', style(15, '#f3d98a', { fontStyle: 'bold' })));
@@ -255,8 +399,9 @@ class CarteScene extends Phaser.Scene {
     }
     contenu.add(fermer);
     const h = bas + 20;
-    const bx = Phaser.Math.Clamp(z.x + (z.x > 560 ? -w / 2 - 62 : w / 2 + 62), w / 2 + 18, 942 - w / 2);
-    const by = Phaser.Math.Clamp(z.y, 54 + h / 2, 420 - h / 2);
+    const e = this.versEcran(z.x, z.y), ecart = 62 * this.k;
+    const bx = Phaser.Math.Clamp(e.x + (e.x > 480 ? -w / 2 - ecart : w / 2 + ecart), w / 2 + 18, 942 - w / 2);
+    const by = Phaser.Math.Clamp(e.y, 54 + h / 2, 420 - h / 2);
     contenu.setPosition(bx - w / 2 + 12, by - h / 2 + 10);
     this.bulle.add(this.add.rectangle(bx, by, w, h, 0x2a1a10, 0.96).setStrokeStyle(2, 0xc9a227));
     this.bulle.add(contenu);
@@ -273,20 +418,21 @@ class CarteScene extends Phaser.Scene {
     if (entree) entree.planifie = true;
     // On passe au suivant qui n'a pas encore de destination.
     this.selection = this.voyageurs.find(x => !this.place[x.id]) || null;
-    this.bulle.removeAll(true);
-    this.anneau.setVisible(false);
-    this.zoneChoisie = null;
+    this.fermerBulle();
     this.tout();
   }
 
   terminer() {
     if (!this.planification) return this.fermer({ annule: true });
     if (enTransition(this)) return;
+    this.memoriserVue();
+    this.camCarte.fadeOut(400);
     this.cameras.main.fadeOut(400);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Comptoir'));
   }
 
   fermer(donnees) {
+    this.memoriserVue();
     this.scene.stop();
     this.scene.resume('Comptoir', donnees);
   }

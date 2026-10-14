@@ -507,6 +507,11 @@ const BIOMES = {
   bourbier: { ciel: 0x6a6a4a, horizon: 0x9a9a60, loin: 0x4a4a28, pres: 0x3a3a1e, chemin: 0x5a4a2a, soleil: 0xc8c870, roseaux: 0x5a5a2a },
   repaire: { ciel: 0x2a1a2a, horizon: 0x7a2a2a, loin: 0x2a2a2a, pres: 0x1a1a18, chemin: 0x3a2a20, soleil: 0xd03020, arbres: 0x101810 },
   tour: { ciel: 0x2a1a3a, horizon: 0x6a3a7a, loin: 0x3a2a4a, pres: 0x2a1a30, chemin: 0x4a3a50, soleil: 0xb080e0, colonnes: 0x4a3a5a },
+  // Le grand monde (v0.54)
+  cote: { ciel: 0x8ac8e8, horizon: 0xe8f0e0, loin: 0x5a90b0, pres: 0x8aa868, chemin: 0xd0c090, soleil: 0xfff2b0 },
+  opale: { ciel: 0xc8c0f0, horizon: 0xf8e8ff, loin: 0xa098d0, pres: 0x7a88b0, chemin: 0xd8d0f0, soleil: 0xffffff, colonnes: 0xe8e0ff },
+  badlands: { ciel: 0xd0a080, horizon: 0xf0c890, loin: 0x9a5a3a, pres: 0x7a4a2a, chemin: 0xa07050, soleil: 0xfff0c0, pics: 0x8a4a30 },
+  nuitPourpre: { ciel: 0x3a1a3a, horizon: 0x8a3a5a, loin: 0x3a2038, pres: 0x281828, chemin: 0x4a3048, soleil: 0xf0e0f0, colonnes: 0x5a3a5a, arbres: 0x1a1020 },
 };
 
 // Un paysage (la Comté par défaut, ou un autre biome). `nuit` assombrit le tout (de 0 à 1).

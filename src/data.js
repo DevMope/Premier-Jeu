@@ -541,79 +541,146 @@ const ENVIES = {
 // 'mal' (terres d'ombre, à l'est), ou rien (les terres du milieu).
 const ZONES = {
   collines: {
-    nom: 'Les Collines de la Comté', danger: 1, reputation: 0, x: 300, y: 345, biome: 'comte',
+    nom: 'Les Collines de la Comté', danger: 1, reputation: 0, x: 820, y: 560, royaume: 'comte', biome: 'comte',
     description: 'Des routes tranquilles, des rivières et quelques loups. Parfait pour les débutants.',
     quetes: ['lettre', 'sanglier'],
   },
   foret: {
-    nom: 'La Forêt des Murmures', danger: 2, reputation: 0, x: 420, y: 250, biome: 'foret',
+    nom: 'La Forêt des Murmures', danger: 2, reputation: 0, x: 640, y: 450, royaume: 'humains', biome: 'foret',
     description: 'Des arbres immenses, des bêtes sauvages et des ruines oubliées sous la mousse.',
     quetes: ['loup', 'ruines', 'champignons'],
   },
   marais: {
-    nom: 'Les Marécages de Brume-Noire', danger: 2, reputation: 0, x: 330, y: 150, biome: 'marais',
+    nom: 'Les Marécages de Brume-Noire', danger: 2, reputation: 0, x: 430, y: 350, royaume: 'humains', biome: 'marais',
     description: 'Une eau croupie, des sangsues et des feux follets qui égarent les voyageurs.',
     quetes: ['fleur', 'sangsues'],
   },
   mines: {
-    nom: 'Les Mines abandonnées', danger: 3, reputation: 3, x: 530, y: 335, biome: 'mines',
+    nom: 'Les Mines abandonnées', danger: 3, reputation: 3, x: 900, y: 330, royaume: 'nains', biome: 'mines',
     description: 'Des galeries noires, des éboulements, et des araignées géantes. Mais quel minerai !',
     quetes: ['mine'],
   },
   desert: {
-    nom: 'Les Terres Désolées', danger: 3, reputation: 4, x: 650, y: 300, biome: 'desert',
+    nom: 'Les Terres Désolées', danger: 3, reputation: 4, x: 1230, y: 560, royaume: 'sauvages', biome: 'desert',
     description: 'Le soleil, la soif, les tempêtes de sable et les pillards. Les caravanes paient bien.',
     quetes: ['caravane', 'oasis'],
   },
   pics: {
-    nom: 'Les Pics Gelés', danger: 4, reputation: 8, x: 510, y: 110, biome: 'neige',
+    nom: 'Les Pics Gelés', danger: 4, reputation: 8, x: 840, y: 105, royaume: 'nains', biome: 'neige',
     description: 'Le froid qui mord, les avalanches et les yétis. Il faut une cape chaude.',
     quetes: ['yeti', 'col'],
   },
   ruinesRoi: {
-    nom: 'Les Ruines du Roi-Sorcier', danger: 4, reputation: 10, x: 630, y: 190, biome: 'ruines',
+    nom: 'Les Ruines du Roi-Sorcier', danger: 4, reputation: 10, x: 1230, y: 330, royaume: 'sauvages', biome: 'ruines',
     description: "Des morts qui marchent et des malédictions anciennes. Une amulette n'est pas de trop.",
     quetes: ['roiSorcier'],
   },
   antre: {
-    nom: "L'Antre de la Bête", danger: 5, reputation: 15, x: 690, y: 90, biome: 'antre',
+    nom: "L'Antre de la Bête", danger: 5, reputation: 15, x: 1250, y: 110, royaume: 'sauvages', biome: 'antre',
     description: "Personne n'en est revenu depuis des années. Mais le trésor qu'on y raconte...",
     quetes: ['bete'],
   },
   // Les terres de lumière : les quêtes du bien font monter ta réputation.
   monastere: {
-    nom: 'Le Monastère des Pandas', danger: 2, reputation: 0, x: 140, y: 320, biome: 'monastere', camp: 'bien',
+    nom: 'Le Monastère des Pandas', danger: 2, reputation: 0, x: 230, y: 625, royaume: 'bambous', biome: 'monastere', camp: 'bien',
     description: 'Des moines pandas, des jardins de bambous et des pèlerins à protéger sur la route.',
     quetes: ['pelerins'],
   },
   sanctuaire: {
-    nom: 'Le Sanctuaire des Elfes', danger: 3, reputation: 4, x: 95, y: 195, biome: 'sanctuaire', camp: 'bien',
+    nom: 'Le Sanctuaire des Elfes', danger: 4, reputation: 8, x: 450, y: 135, royaume: 'elfes', biome: 'sanctuaire', camp: 'bien',
     description: "Une forêt d'argent où les elfes veillent sur l'Arbre-Mère. Il faut le défendre.",
     quetes: ['graine'],
   },
   citadelle: {
-    nom: 'La Citadelle des Paladins', danger: 4, reputation: 9, x: 200, y: 95, biome: 'citadelle', camp: 'bien',
-    description: 'Le dernier rempart contre les ténèbres, assiégé nuit et jour par les morts.',
+    nom: 'La Citadelle des Paladins', danger: 4, reputation: 9, x: 1385, y: 425, biome: 'citadelle', camp: 'bien',
+    description: 'Le siège de la Confrérie du Dernier Rempart, face aux terres des Bannis. Assiégée nuit et jour.',
     quetes: ['siege'],
   },
   // Les terres d'ombre : plus d'or, mais tu nourris le mal. Seuls les aventuriers vénaux
   // (ceux qui ne cherchent que l'or) acceptent d'y aller.
   bourbier: {
-    nom: 'Le Bourbier des Gobelins', danger: 2, reputation: 0, x: 830, y: 340, biome: 'bourbier', camp: 'mal',
-    description: 'Les gobelins y paient en or volé ceux qui pillent pour eux les caravanes de pèlerins.',
+    nom: 'Le Bourbier des Gobelins', danger: 2, reputation: 0, x: 1580, y: 565, royaume: 'bannis', biome: 'bourbier', camp: 'mal',
+    description: "Selon l'avis du Conseil, les gobelins y paient en or volé ceux qui attaquent les caravanes.",
     quetes: ['pillage'],
   },
   repaire: {
-    nom: 'Le Repaire des Loups-garous', danger: 3, reputation: 4, x: 790, y: 220, biome: 'repaire', camp: 'mal',
-    description: 'Sous la lune rouge, la meute achète des pactes et des secrets. Elle paie bien. Très bien.',
+    nom: 'Le Repaire des Loups-garous', danger: 3, reputation: 4, x: 1735, y: 265, royaume: 'bannis', biome: 'repaire', camp: 'mal',
+    description: 'Sous la lune rouge, la meute paie pour qu\'on lui porte des pactes. Le Conseil dit que ce sont des sortilèges.',
     quetes: ['pacte'],
   },
   tour: {
-    nom: 'La Tour du Nécromancien', danger: 4, reputation: 9, x: 875, y: 105, biome: 'tour', camp: 'mal',
-    description: 'Le Nécromancien collectionne les reliques des temples. Volées, de préférence.',
+    nom: 'La Tour du Nécromancien', danger: 4, reputation: 9, x: 1760, y: 110, royaume: 'bannis', biome: 'tour', camp: 'mal',
+    description: 'Le Nécromancien réclame les reliques des temples de la Lumière. « Volées », dit le Conseil.',
     quetes: ['profanation'],
   },
+  // --- Le grand monde (v0.54) : dix contrées de plus, rangées par royaume ---
+  vergers: {
+    nom: 'Les Vergers de Bourg-Joyeux', danger: 1, reputation: 1, x: 1080, y: 575, royaume: 'comte', biome: 'comte', vignette: 'vergers',
+    description: 'Des pommiers à perte de vue, des fermiers généreux... et des renards bien trop gros.',
+    quetes: ['renards'],
+  },
+  port: {
+    nom: 'Port-Brisant', danger: 2, reputation: 2, x: 420, y: 590, royaume: 'humains', biome: 'cote',
+    description: 'Le grand port des Hommes, sur le Fleuve. Des marins, des marchands, des contrebandiers.',
+    quetes: ['contrebande'],
+  },
+  forge: {
+    nom: 'Les Portes de Khaz-Durim', danger: 3, reputation: 5, x: 1020, y: 175, royaume: 'nains', biome: 'mines', vignette: 'forge',
+    description: 'La cité des Nains, taillée dans la montagne. Ses convois de minerai attirent les pillards.',
+    quetes: ['convoi'],
+  },
+  lac: {
+    nom: 'Le Lac des Lunes', danger: 4, reputation: 8, x: 645, y: 235, royaume: 'elfes', biome: 'sanctuaire', vignette: 'lac', camp: 'bien',
+    description: "Un lac d'argent où les elfes chantent chaque nuit. Des esprits froids rôdent sur ses rives.",
+    quetes: ['lunes'],
+  },
+  opale: {
+    nom: "La Cité d'Opale", danger: 5, reputation: 15, x: 205, y: 150, royaume: 'mages', biome: 'opale', camp: 'bien',
+    description: 'La capitale des Mages, où siège le Sage du Conseil. On dit que ses tours chantent.',
+    quetes: ['cristal'],
+  },
+  bibliotheque: {
+    nom: 'La Bibliothèque Interdite', danger: 5, reputation: 18, x: 175, y: 410, royaume: 'mages', biome: 'opale', vignette: 'bibliotheque',
+    description: "Tous les savoirs du monde, sous clé. Les Mages n'aiment pas qu'on y fouille.",
+    quetes: ['grimoire'],
+  },
+  pont: {
+    nom: 'Le Pont des Trolls', danger: 2, reputation: 1, x: 1760, y: 470, royaume: 'bannis', biome: 'foret', vignette: 'pont', camp: 'mal',
+    description: "Un vieux pont moussu, gardé par des trolls. Le Conseil dit qu'ils mangent les voyageurs.",
+    quetes: ['peage'],
+  },
+  fort: {
+    nom: 'Le Fort des Orcs', danger: 3, reputation: 5, x: 1545, y: 365, royaume: 'bannis', biome: 'badlands', camp: 'mal',
+    description: 'Une forteresse de pierre rouge dans les terres brûlées. Les orcs y paient en or.',
+    quetes: ['forteresse'],
+  },
+  tombeaux: {
+    nom: 'Les Tombeaux des Sables', danger: 3, reputation: 6, x: 1745, y: 620, royaume: 'bannis', biome: 'desert', vignette: 'tombeaux', camp: 'mal',
+    description: 'Des tombeaux à demi enfouis, où les momies veillent sur leurs morts.',
+    quetes: ['tombeaux'],
+  },
+  chateau: {
+    nom: 'Le Château de Nuit-Pourpre', danger: 4, reputation: 10, x: 1560, y: 135, royaume: 'bannis', biome: 'nuitPourpre', camp: 'mal',
+    description: 'Le château des vampires. On y donne des bals où il vaut mieux ne pas être le dessert.',
+    quetes: ['bal'],
+  },
 };
+
+// Les royaumes de la carte. Les cinq royaumes du Conseil (de 1 à 5 étoiles), les terres sauvages,
+// les Monts de Bambou des pandas et les terres des Bannis, derrière la Grande Muraille.
+// `x`, `y` : où l'on écrit son nom sur la carte. `couleur` : le lavis du royaume.
+const ROYAUMES = {
+  comte: { nom: 'La Comté des Hobbits', etoiles: 1, x: 950, y: 470, couleur: 0x8ac060 },
+  humains: { nom: 'Le Royaume des Hommes', etoiles: 2, x: 540, y: 690, couleur: 0xd8b860 },
+  nains: { nom: 'Le Royaume des Nains', etoiles: 3, x: 1065, y: 262, couleur: 0xb08868 },
+  elfes: { nom: 'Le Royaume des Elfes', etoiles: 4, x: 520, y: 40, couleur: 0x7ac0a0 },
+  mages: { nom: 'Le Royaume des Mages', etoiles: 5, x: 200, y: 285, couleur: 0x9a88e0 },
+  bambous: { nom: 'Les Monts de Bambou', etoiles: 0, x: 245, y: 540, couleur: 0x9ad070 },
+  sauvages: { nom: 'Les Terres sauvages', etoiles: 0, x: 1185, y: 452, couleur: 0xc8a070 },
+  bannis: { nom: 'Les Terres des Bannis', etoiles: 0, x: 1650, y: 40, couleur: 0x6a4a7a },
+};
+// La taille du monde sur la carte (on le voit en entier en dézoomant de moitié)
+const MONDE_CARTE = { L: 1864, H: 736, comptoir: { x: 945, y: 660 } };
 
 // Pour ouvrir une zone à 3, 4 ou 5 étoiles : des retours réussis dans l'étoile d'avant.
 const RETOURS_POUR_ETOILE = { 3: 3, 4: 5, 5: 8 };
@@ -1249,6 +1316,142 @@ Object.assign(QUETES, {
         complet: 'Ta corde a tenu jusqu\'en bas.', partiel: 'Les derniers mètres, je les ai faits en tombant.', rien: 'Je suis tombé{e}.' },
       { type: 'mortvivant', besoin: 'epee', qte: 1, intro: "À la Tour, le Nécromancien a pleuré sur les reliques. Ses gardes morts ne savaient pas que j'étais avec lui.",
         complet: 'Ton épée m\'a ouvert le chemin.', partiel: "Je m'en suis tiré{e} de justesse.", rien: 'Ils voulaient me garder comme serviteur...' },
+    ],
+  },
+});
+
+// --- Les quêtes du grand monde (v0.54) ---
+// Chaque royaume a son petit secret : un détail qui cloche, glissé dans un récit, que seul un
+// joueur attentif remarquera (rien n'y est dit franchement : la vérité est pour la fin).
+Object.assign(QUETES, {
+  renards: {
+    titre: 'Garder les vergers de Bourg-Joyeux',
+    accueil: "Les vergers de Bourg-Joyeux ? Des renards gros comme des veaux dévorent les pommes, la nuit. Les fermiers paient en pièces... et en tartes !",
+    pv: 2, duree: [1, 2], butin: [20, 32],
+    epreuves: [
+      { type: 'route', besoin: 'ration', qte: 1, intro: "Une journée de marche entre les haies et les ruisseaux.",
+        complet: 'Ta ration, sous un pommier, au soleil... la belle vie.', partiel: "J'ai grignoté des pommes vertes. Mauvaise idée.", rien: "J'avais si faim que j'ai volé une tarte. Le fermier n'a pas ri." },
+      { type: 'nuit', besoin: 'torche', qte: 1, intro: 'La nuit, des yeux brillaient entre les pommiers...',
+        complet: 'Ta torche les a tous fait détaler.', partiel: 'Ma torche crachotait, ils revenaient sans cesse.', rien: "Dans le noir, je n'ai rien vu venir." },
+      { type: 'loup', besoin: 'fleches', qte: 1, intro: 'Le chef de la bande, un renard énorme, m\'a fait face.',
+        complet: 'Une flèche bien placée, et il a filé sans demander son reste.', partiel: "Je l'ai effleuré. Il m'a mordu{e} au mollet.", rien: "Il m'a pris mon sac. Et mon chapeau." },
+    ],
+  },
+  contrebande: {
+    titre: 'Démasquer les contrebandiers de Port-Brisant',
+    accueil: "Port-Brisant ? Le capitaine du port cherche quelqu'un pour surveiller les quais la nuit. Des caisses disparaissent. Ça paie bien et ça sent le poisson.",
+    pv: 2, duree: [2, 3], butin: [35, 50],
+    epreuves: [
+      { type: 'route', besoin: 'gourde', qte: 1, intro: 'La route du Fleuve longe des marais salés.',
+        complet: 'Ta gourde était la bienvenue sous ce soleil.', partiel: "J'ai bu l'eau du Fleuve. Elle avait un goût de vase.", rien: "J'avais la langue comme du cuir en arrivant." },
+      { type: 'bandits', besoin: 'epee', qte: 1, intro: 'Sur le quai, à minuit, des hommes chargeaient des caisses dans une barque.',
+        complet: "Ton épée les a convaincus de tout laisser. Les caisses portaient le sceau du Conseil. Le capitaine m'a dit d'oublier ce que j'avais vu. J'ai dit oui.", partiel: "Ils ont fui avec la moitié des caisses.", rien: "Ils m'ont jeté{e} à l'eau avec les poissons." },
+      { type: 'riviere', besoin: 'corde', qte: 1, intro: 'Le dernier a sauté dans une barque. Il fallait le rattraper.',
+        complet: 'Ta corde, lancée comme un grappin, et hop ! Je l\'ai ramené par le col.', partiel: "J'ai raté mon lancer. Deux fois.", rien: 'Il a disparu dans la brume du Fleuve.' },
+    ],
+  },
+  convoi: {
+    titre: 'Escorter un convoi de Khaz-Durim',
+    accueil: "Les Nains de Khaz-Durim cherchent des escortes pour leurs convois de minerai. Les galeries sont longues, et pas toujours vides.",
+    pv: 2, duree: [2, 3], butin: [50, 70],
+    epreuves: [
+      { type: 'grotte', besoin: 'torche', qte: 1, intro: 'Les galeries de la vieille route sont noires comme un four.',
+        complet: "Ta torche éclairait des gravures très anciennes. Les Nains disent que ces galeries ont été creusées par d'autres mains, plus petites. Ils n'aiment pas qu'on en parle.", partiel: 'Ma torche a faibli à mi-chemin.', rien: 'On avançait à tâtons, en se tenant par la barbe.' },
+      { type: 'gouffre', besoin: 'corde', qte: 1, intro: 'Un pont de pierre s\'était effondré au-dessus du gouffre.',
+        complet: 'Avec ta corde, on a fait passer les wagonnets un par un.', partiel: 'On a perdu un wagonnet dans le vide.', rien: "Il a fallu faire un détour d'une journée." },
+      { type: 'pillards', besoin: 'bouclier', qte: 1, intro: 'Des pillards attendaient le convoi à la sortie.',
+        complet: 'Ton bouclier a encaissé leurs flèches. Les Nains ont applaudi.', partiel: "J'ai pris une flèche dans l'épaule.", rien: 'Ils ont emporté une partie du minerai.' },
+    ],
+  },
+  lunes: {
+    titre: 'Veiller sur le Lac des Lunes',
+    accueil: "Le Lac des Lunes ? Les elfes cherchent quelqu'un pour veiller sur leurs chanteurs, la nuit. Des esprits froids sortent de l'eau. C'est beau et ça fait peur.",
+    pv: 2, duree: [3, 4], butin: [65, 90],
+    epreuves: [
+      { type: 'froid', besoin: 'cape', qte: 1, intro: 'Les nuits au bord du lac sont glaciales.',
+        complet: 'Ta cape m\'a gardé{e} au chaud toute la nuit.', partiel: 'Je claquais des dents.', rien: "J'ai attrapé un rhume d'elfe. C'est pire qu'un rhume normal." },
+      { type: 'esprits', besoin: 'torche', qte: 1, intro: "À minuit, des formes pâles sont sorties de l'eau.",
+        complet: "Ta torche les a tenues loin des chanteurs. Les elfes chantent « pour ne pas oublier », disent-ils. Quand je leur ai demandé quoi, ils ne savaient plus.", partiel: 'Un esprit a touché un chanteur. Il ne parle plus.', rien: 'Les esprits ont éteint toutes les lanternes.' },
+      { type: 'feufollet', besoin: 'potion', qte: 1, intro: 'Un feu follet m\'a attiré{e} vers le fond du lac.',
+        complet: "Ta potion m'a rendu les idées claires juste à temps.", partiel: "J'ai bu la tasse. Une grande tasse.", rien: 'Les elfes ont dû me repêcher.' },
+    ],
+  },
+  cristal: {
+    titre: "Livrer un cristal à la Cité d'Opale",
+    accueil: "La Cité d'Opale ? Les Mages ont commandé un cristal de chant. Il faut le porter jusqu'au palais du Sage. Personne n'en revient tout à fait pareil.",
+    pv: 3, duree: [4, 5], butin: [140, 200],
+    epreuves: [
+      { type: 'malediction', besoin: 'amulette', qte: 1, intro: 'Le cristal murmurait des choses. Il ne voulait pas qu\'on le transporte.',
+        complet: 'Ton amulette l\'a fait taire.', partiel: 'Je l\'entendais encore la nuit...', rien: "Il m'a fait oublier mon propre nom pendant un jour." },
+      { type: 'gouffre', besoin: 'corde', qte: 1, intro: 'Les ponts de lumière de la Cité s\'éteignent quand on ne s\'y attend pas.',
+        complet: "Ta corde m'a rattrapé{e} au-dessus du vide.", partiel: 'Je me suis rattrapé{e} de justesse.', rien: 'Je suis tombé{e} dans les jardins. De haut.' },
+      { type: 'monstre', besoin: 'bouclier', qte: 1, intro: 'Un golem gardien ne voulait pas me laisser entrer au palais.',
+        complet: "Ton bouclier a tenu. Au palais, j'ai vu le Sage, de loin. Mon grand-père l'avait vu au même âge. Il n'a pas changé d'un cheveu.", partiel: 'Le golem m\'a cabossé{e}.', rien: "Le golem m'a raccompagné{e} dehors. Par la fenêtre." },
+    ],
+  },
+  grimoire: {
+    titre: 'Retrouver un grimoire à la Bibliothèque Interdite',
+    accueil: "La Bibliothèque Interdite ? Un mage a perdu un grimoire là-dedans, et il paie une fortune pour qu'on le lui rapporte sans le lire.",
+    pv: 3, duree: [4, 5], butin: [150, 210],
+    epreuves: [
+      { type: 'esprits', besoin: 'torche', qte: 1, intro: 'Entre les rayons, des lecteurs fantômes chuchotaient.',
+        complet: "Ta torche les a fait reculer. Des rayons entiers de livres aux pages blanches. Pas abîmées : effacées. Le bibliothécaire a dit que c'était normal.", partiel: 'Ma torche a fait fuir les uns, pas les autres.', rien: "Ils m'ont suivi{e} pendant des heures." },
+      { type: 'malediction', besoin: 'amulette', qte: 1, intro: 'Le grimoire était protégé par un sort.',
+        complet: 'Ton amulette a absorbé le sort.', partiel: "J'ai les doigts qui picotent depuis.", rien: 'Le sort m\'a brûlé{e} les mains.' },
+      { type: 'blessure', besoin: 'potion', qte: 1, intro: 'Les gardiens de pierre se sont réveillés à ma sortie.',
+        complet: 'Ta potion m\'a remis{e} sur pied après leurs coups.', partiel: 'Je boite encore.', rien: "Je suis sorti{e} en rampant." },
+    ],
+  },
+  peage: {
+    titre: 'Porter du sel au Pont des Trolls',
+    accueil: "Le Pont des Trolls ? Ils ne mangent personne, enfin je crois. Ils paient bien pour du sel et des remèdes. Le Conseil interdit d'y aller. Raison de plus pour que ça paie.",
+    pv: 2, duree: [2, 3], butin: [40, 58],
+    epreuves: [
+      { type: 'route', besoin: 'ration', qte: 1, intro: 'La forêt moussue est longue à traverser.',
+        complet: 'Tes rations m\'ont tenu{e} jusqu\'au pont.', partiel: "J'ai mangé de la mousse. Les trolls font pareil, paraît-il.", rien: 'Je suis arrivé{e} affamé{e}.' },
+      { type: 'riviere', besoin: 'corde', qte: 1, intro: 'Le torrent sous le pont avait emporté une arche.',
+        complet: "Ta corde m'a fait passer, sac et sel compris. Le vieux troll garde ce pont depuis toujours, dit-il. Il ne se souvient plus pourquoi. Il m'a offert de la soupe de mousse.", partiel: "Une partie du sel a fondu dans l'eau.", rien: 'Le torrent a failli m\'emporter.' },
+      { type: 'froid', besoin: 'cape', qte: 1, intro: 'Au retour, la brume glacée des collines.',
+        complet: 'Ta cape m\'a protégé{e} du froid.', partiel: "J'avais froid jusqu'aux os.", rien: 'Je suis rentré{e} en grelottant.' },
+    ],
+  },
+  forteresse: {
+    titre: 'Ravitailler le Fort des Orcs',
+    accueil: "Le Fort des Orcs ? Ils ont besoin de vivres et de pansements. Ils paient en or, et ils ne posent pas de questions. Moi non plus.",
+    pv: 2, duree: [2, 4], butin: [60, 85],
+    epreuves: [
+      { type: 'route', besoin: 'gourde', qte: 1, intro: 'Les terres brûlées : pas une goutte d\'eau sur des lieues.',
+        complet: 'Ta gourde m\'a sauvé{e}.', partiel: "J'ai léché la rosée sur les cailloux.", rien: "J'ai cru mourir de soif." },
+      { type: 'bandits', besoin: 'epee', qte: 1, intro: 'Des chasseurs de primes guettaient la route du Fort.',
+        complet: "Ton épée les a fait fuir. Au Fort, les orcs n'attaquaient personne. Ils réparaient un mur. Sur les pierres, il y avait des dessins d'enfants, très vieux.", partiel: 'Ils m\'ont blessé{e} avant de fuir.', rien: 'Ils ont pris la moitié des vivres.' },
+      { type: 'blessure', besoin: 'bandage', qte: 2, intro: 'Au Fort, beaucoup de blessés attendaient.',
+        complet: 'Tes bandages ont soigné tout le monde. Un vieil orc a pleuré.', partiel: "Il n'y en avait pas assez pour tous.", rien: "Je n'avais rien pour les soigner." },
+    ],
+  },
+  tombeaux: {
+    titre: 'Rendre leurs noms aux Tombeaux des Sables',
+    accueil: "Les Tombeaux des Sables ? Les momies cherchent quelqu'un qui sache lire. Si si. Elles paient en or ancien.",
+    pv: 2, duree: [3, 4], butin: [60, 85],
+    epreuves: [
+      { type: 'soif', besoin: 'gourde', qte: 1, intro: 'Le désert des Tombeaux est sans pitié.',
+        complet: 'Ta gourde m\'a gardé{e} en vie.', partiel: "J'ai économisé chaque goutte.", rien: "J'ai vu des oasis qui n'existaient pas." },
+      { type: 'gouffre', besoin: 'corde', qte: 1, intro: 'Les tombeaux s\'ouvrent par le haut, au fond d\'un puits de sable.',
+        complet: 'Ta corde m\'a descendu{e} en douceur.', partiel: 'La corde était courte, j\'ai sauté le reste.', rien: 'Je suis tombé{e} dans le sable mou.' },
+      { type: 'malediction', besoin: 'amulette', qte: 1, intro: 'Les momies m\'ont demandé de lire les noms gravés sur les murs, à voix haute.',
+        complet: "Ton amulette m'a protégé{e} de la poussière maudite. Les momies pleuraient du sable. Elles disaient que personne d'autre ne se souvient de ces noms.", partiel: 'La poussière m\'a fait tousser des jours.', rien: 'La poussière m\'a rendu{e} malade.' },
+    ],
+  },
+  bal: {
+    titre: 'Le bal masqué de Nuit-Pourpre',
+    accueil: "Nuit-Pourpre ? La comtesse cherche quelqu'un pour garder son bal masqué. Il paraît qu'on y mange très bien. Il paraît.",
+    pv: 3, duree: [3, 5], butin: [95, 130],
+    epreuves: [
+      { type: 'nuit', besoin: 'torche', qte: 1, intro: 'Le château ne se trouve que la nuit, au bout d\'une forêt morte.',
+        complet: 'Ta torche m\'a guidé{e} jusqu\'aux grilles.', partiel: "Ma torche s'est éteinte devant la porte.", rien: "J'ai tourné en rond jusqu'à l'aube." },
+      { type: 'bandits', besoin: 'epee', qte: 1, intro: 'Un chasseur de vampires de la Confrérie s\'est glissé parmi les invités.',
+        complet: "Ton épée l'a désarmé. La comtesse a dansé toute la nuit avec un portrait. Son mari, dit-elle. Pendu, au temps d'avant.", partiel: "Il s'est enfui par une fenêtre.", rien: 'Il a semé la panique dans la salle.' },
+      { type: 'morsure', besoin: 'antidote', qte: 1, intro: 'Un jeune vampire a un peu trop bu. De moi.',
+        complet: 'Ton antidote m\'a évité de finir avec des crocs.', partiel: "J'ai envie de viande crue depuis.", rien: "Le soleil me pique les yeux, maintenant." },
     ],
   },
 });
