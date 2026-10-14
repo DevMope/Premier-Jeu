@@ -330,7 +330,7 @@ class CounterScene extends Phaser.Scene {
       this.lignesCommande.push({ icone, txt, zone, moins, moinsTexte, id: null });
     }
     this.texteSac = this.add.text(700, 184, '', style(11, '#5a3a20'));
-    this.add.text(700, 226, '− : retirer du baluchon · clic sur une ligne : réparer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
+    this.add.text(700, 226, '− : retirer · clic sur une ligne : réparer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
     this.texteChance = this.add.text(815, 208, '', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
   }
 

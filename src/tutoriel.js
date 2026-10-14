@@ -7,7 +7,7 @@ const CONSEILS = {
   banque: "La Banque Centrale, chez les nains. Un prêt, ça dépanne, mais la banque prélève chaque nuit. Ne prends que ce que tu peux rendre, petit.",
   atelier: "L'atelier : les trouvailles que les aventuriers te laissent. Répare-les, et revends-les plus cher aux enchères. Un objet cassé ne vaut presque rien.",
   jauge: "La lumière et l'ombre : ce que le monde pense de toi. Les gens aiment les cases bien rangées, hein ? Ha ! Regarde surtout ce que ça change pour ton comptoir.",
-  marcheNoir: "Tiens, tiens... Je ne t'ai jamais dit de descendre ici, hein ? Ha ha ! Sois prudent. Chaque affaire fait du bruit, et la garde a de bonnes oreilles.",
+  marcheNoir: "(Garrick t'avait dit un jour :) « La nuit, les honnêtes gens ont aussi leurs marchés. Sois prudent : chaque affaire fait du bruit, et la garde a de bonnes oreilles. »",
   comptoir: "Un client ! Sa commande est sur le parchemin, à droite. Clique sur tes marchandises, en bas, pour les glisser dans son baluchon. Mieux il est équipé, plus il a de chances de revenir... et de te reverser sa part du butin.",
   colis: "Bien ! Quand le baluchon est prêt, clique sur « Remettre le baluchon ». Ton flair, sous la commande, t'indique ses chances de revenir vivant.",
   remis: "Le voilà parti ! Dans quelques jours, il reviendra te raconter son aventure (si tout va bien...). Occupe-toi du suivant : la file attend.",

@@ -83,7 +83,7 @@ class ExpressScene extends Phaser.Scene {
       this.add.image(632, y + 6, iconeObjet(this, l.id)).setScale(2.4);
       this.add.text(660, y - 10, l.nom, style(15, '#3b2410', { fontStyle: 'bold' }));
       this.add.text(660, y + 10, `${l.offre.prix} p. (au marché : ~${l.prix} p.)`, style(12, colporteur ? '#8a6a10' : '#a03030'));
-      const reste = this.add.text(660, y + 24, '', style(11, '#6b4a2a'));
+      const reste = this.add.text(856, y - 8, '', style(11, '#6b4a2a')).setOrigin(1, 0);   // (sur la ligne du nom : la liste ne se chevauche plus)
       const btn = this.add.rectangle(895, y + 6, 70, 30, 0x8a5a2b).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
       this.add.text(895, y + 6, 'Acheter', style(12, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
       btn.on('pointerdown', () => (l.materiau ? this.acheterMateriau(l.id) : this.acheter(l.id)));
@@ -133,7 +133,7 @@ class ExpressScene extends Phaser.Scene {
   }
 
   maj() {
-    for (const l of this.lignes) l.reste.setText(`Il en reste ${l.offre.qte}`);
+    for (const l of this.lignes) l.reste.setText(`reste ${l.offre.qte}`);
     this.bourse.maj(this.G.argent);
   }
 

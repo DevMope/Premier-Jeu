@@ -42,7 +42,7 @@ const GARDE = {
   noms: { humain: ['Sergent Basile Courtepaille', 'Garde Odette Vifargent'], nain: ['Garde Brokk Ferpoing', 'Garde Hilde Rocdur'], elfe: ['Garde Aelar Feuillevent', 'Garde Ilwen Clairebrise'],
     hobbit: ['Garde Pippin Rondelet', 'Garde Marguerite Fourneau'], panda: ['Garde Wen Bambou-Sage', 'Garde Lan Pas-Tranquille'] },
   amendeMin: 15, amendePart: 0.12,     // l'amende : 12 % de ta bourse, au moins 15 pièces
-  soudoiement: 0.35, bonusGout: 0.4, bonusValeur: 0.25, gardeObjet: 0.15,   // les chances, et le risque qu'il garde l'objet sans rien faire
+  soudoiement: 0.1, bonusGout: 0.3, bonusValeur: 0.45, gardeObjet: 0.15,   // les chances, et le risque qu'il garde l'objet sans rien faire
   chance: 0.16, parPalier: 0.1, parDeco: 0.06, delai: 5,                    // une visite surprise quand le comptoir penche vers l'ombre
 };
 // Ce que chaque peuple aime parmi les trésors (pour le soudoiement)
@@ -63,7 +63,7 @@ const MARCHE_NOIR = {
   debut: 6,                     // le premier soir possible
   chance: 0.33, chanceOmbre: 0.5, // un soir sur trois, un sur deux quand la jauge penche vers l'ombre
   mots: ['Corbeau', 'Lanterne', 'Chardon', 'Minuit', 'Tonneau', 'Belette', 'Ronce', 'Brume'],
-  risqueAchat: 0.05, risqueCommande: 0.12, risqueVente: 0.08,   // le risque d'une plainte, par affaire
+  risqueAchat: 0.05, risqueCommande: 0.2, risqueVente: 0.08,   // le risque d'une plainte, par affaire
   venteTresor: 1.15,           // une trouvaille se vend 15 % plus cher qu'à son prix (sans questions)
   ombreAffaire: 0.5,           // chaque commande d'un Banni fait pencher la jauge (en « objets de l'ombre »)
 };
@@ -74,9 +74,9 @@ const MURMURES = [
   "Personne n'a vu le dragon. Mais tout le monde a vu les impôts pour le combattre.",
   "Les gobelins chantent une berceuse dont plus personne ne connaît les paroles. Juste l'air.",
   "Les gardes ne descendent jamais ici sans être payés pour ne pas voir.",
-  "Un homme à la cape verte passe parfois. Quand il parle, même les orcs se taisent.",
+  "Un vieux voyageur passe parfois, très tard. Quand il parle, même les orcs se taisent.",
   "Avant, il y avait des villages de loups-garous sur la colline. Avant quoi ? Va savoir.",
-  "On dit que les momies se souviennent de tout, parce qu'elles dormaient pendant le grand oubli.",
+  "On dit que les momies se souviennent de tout, parce qu'elles dormaient pendant le long sommeil.",
 ];
 
 // --- Étape 9d : Garrick repasse prendre des nouvelles ---
@@ -180,7 +180,7 @@ const PRETS = [
   { id: 'marchand', preteur: 'Banque Centrale Goyenne', nom: 'Prêt marchand', somme: 220, taux: 0.09, jours: 8, reputation: 7 },
   { id: 'grand', preteur: 'Banque Centrale Goyenne', nom: 'Grand prêt', somme: 400, taux: 0.06, jours: 10, reputation: 12 },
   { id: 'guilde', preteur: 'Banque Centrale Goyenne', nom: 'Prêt de la Guilde', somme: 750, taux: 0.04, jours: 14, reputation: 18 },
-  { id: 'mafia', preteur: 'La Main Noire', nom: 'Prêt sans questions', somme: 120, taux: 0.45, jours: 4, reputation: -Infinity, mal: true },
+  { id: 'mafia', preteur: 'La Main Noire', nom: 'Prêt sans questions', somme: 200, taux: 0.25, jours: 6, reputation: -Infinity, mal: true },
 ];
 
 // Une étape ajoutée aux longues quêtes qui n'ont pas déjà de rations.
@@ -196,7 +196,7 @@ const ETAPE_VIVRES = {
 const CHANCE_EPREUVE = { complet: 0.9, partiel: 0.55, rien: 0.2 };
 // (audit v0.53, constat 1) Chaque étoile au-delà de la première rend chaque épreuve plus dure ;
 // l'expérience de l'aventurier (son bonus de niveau) compense en partie.
-const MALUS_DANGER = 0.08;
+const MALUS_DANGER = 0.12;
 
 // Épreuves de combat : y mourir, c'est mourir valeureusement.
 const EPREUVES_COMBAT = ['araignee', 'loup', 'bandits', 'sanglier', 'pillards', 'yeti', 'mortvivant', 'monstre'];
@@ -237,7 +237,7 @@ const QUETES = {
   },
   mine: {
     titre: 'Nettoyer la mine de Grisefer',
-    accueil: "Hrm. Des araignées géantes ont envahi la vieille mine de Grisefer. Le conseil paie bien pour s'en débarrasser. Il me faut du matériel solide, petit.",
+    accueil: "Hrm. Des araignées géantes ont envahi la vieille mine de Grisefer. Le conseil des Nains paie bien pour s'en débarrasser. Il me faut du matériel solide, petit.",
     pv: 2, duree: [2, 3], butin: [50, 70],
     epreuves: [
       {
@@ -687,7 +687,7 @@ const RETOURS_POUR_ETOILE = { 3: 3, 4: 5, 5: 8 };
 // Les quêtes du bien : un peu plus de réputation. Celles du mal : plus d'or, et la jauge du mal.
 // Étape 9a. Les terres de lumière rapportent plus de réputation (bien plus si tu es du côté de la
 // lumière), les terres d'ombre plus de butin (bien plus si tu es du côté de l'ombre).
-const EFFETS_CAMP = { bien: { reputation: 1.2, reputationAllie: 1.5, butin: 1, mal: 0 }, mal: { reputation: 0, butin: 1.15, butinAllie: 1.35, mal: 0.5 } };
+const EFFETS_CAMP = { bien: { reputation: 1.2, reputationAllie: 1.5, butin: 1, mal: 0 }, mal: { reputation: 0.5, butin: 1.15, butinAllie: 1.25, mal: 0.5 } };
 // La jauge lumière ⟷ ombre, de −100 (l'ombre) à +100 (la lumière) : ce que le monde pense de toi.
 // (Dans le monde, les deux camps s'appellent la Confrérie et les Bannis.)
 const NOMS_CAMPS = { bien: 'la Confrérie', mal: 'les Bannis' };
@@ -708,7 +708,7 @@ const REMISE_BANQUE_LUMIERE = 0.03;   // par palier de lumière, les taux de la 
 const GAZETTE_PALIERS_JAUGE = {
   1: "On dit que ton comptoir sert bien la Confrérie. Les gens te saluent dans la rue.",
   2: "La Confrérie te cite en exemple : « un marchand qui sait de quel côté est la lumière ».",
-  3: "Le conseil des Gardiens lui-même aurait parlé de ton comptoir. On te regarde avec respect.",
+  3: "Le Conseil des Gardiens lui-même aurait parlé de ton comptoir. On te regarde avec respect.",
   '-1': "Des rumeurs courent : ton comptoir ferait affaire avec les Bannis. On te regarde de travers.",
   '-2': "La garde surveille ta rue. On dit que les Bannis connaissent ton nom.",
   '-3': "Plus personne ne doute : ton comptoir est celui des Bannis. La Confrérie ne te salue plus.",
@@ -717,7 +717,7 @@ const GAZETTE_PALIERS_JAUGE = {
 const TAILLES_PEUPLES_A_VENIR = { panda: 21, gobelin: 11, momie: 15, vampire: 16, orc: 17, loupgarou: 20, troll: 24 };
 
 // Plus la zone est dangereuse, plus le butin est gros.
-const BUTIN_PAR_DANGER = [0, 1, 1.25, 1.6, 2.1, 3];
+const BUTIN_PAR_DANGER = [0, 1, 1.2, 1.4, 1.7, 2.2];   // (audit v0.54 : les étoiles ne sont plus toujours le meilleur choix)
 // La chance qu'un aventurier revenu d'une zone parle d'une zone encore inconnue, plus dangereuse.
 const CHANCE_DECOUVERTE = 0.35;
 
@@ -895,7 +895,7 @@ const POSTES = {
   jeux: 'Jeux', cadeaux: 'Cadeaux', marche: 'Achats au marché', express: 'Marchand express',
   trouvailles: 'Trouvailles', reserve: 'Agrandissements', dedommagements: 'Dédommagements',
   remboursements: 'Remboursements de prêts', dons: 'Dons au mendiant', prets: 'Prêts reçus', salaires: 'Salaires',
-  sabotages: 'Primes de la Faucheuse',
+  sabotages: 'Primes de la Faucheuse', colporteur: 'Le colporteur',
   bazar: 'Cadeaux du Bazar',
   ameliorations: 'Améliorations du shop', interets: 'Intérêts du coffre',
   taxe: 'Taxe de la Confrérie', amende: 'Amendes de la garde', marcheNoir: 'Marché noir', decoration: 'Décorations', garderobe: 'Garde-robe', cadeau: 'Cadeaux reçus',
@@ -1243,7 +1243,7 @@ Object.assign(QUETES, {
   pelerins: {
     titre: 'Escorter les pèlerins au Monastère',
     accueil: "Le Monastère des Pandas ? Les pèlerins ont besoin d'une escorte, les routes ne sont plus sûres. C'est une bonne cause.",
-    pv: 2, duree: [2, 3], butin: [25, 40],
+    pv: 2, duree: [2, 3], butin: [35, 50],
     epreuves: [
       { type: 'route', besoin: 'gourde', qte: 1, intro: 'La route du Monastère grimpe sous un soleil de plomb. Les pèlerins avaient soif.',
         complet: 'Ta gourde a désaltéré tout le monde. Un vieux moine panda m\'a béni{e}.', partiel: "On a partagé le peu d'eau qu'on avait...", rien: 'Les plus vieux pèlerins se sont évanouis en chemin.' },
@@ -1287,9 +1287,9 @@ Object.assign(QUETES, {
       { type: 'route', besoin: 'ration', qte: 1, intro: "J'ai attendu la caravane deux jours, caché{e} dans la boue.",
         complet: 'Tes rations m\'ont tenu{e}.', partiel: "J'avais faim...", rien: "J'ai mangé un crapaud. Cru." },
       { type: 'bandits', besoin: 'epee', qte: 1, intro: 'Des pèlerins ? Ils portaient le tabard bleu de la Confrérie, et des chariots fermés à clé.',
-        complet: "Ton épée a fait le travail. Dans les chariots... des gobelins enchaînés. Des enfants, surtout.", partiel: 'Un garde m\'a blessé{e} avant de fuir.', rien: 'Sans arme, les gardes m\'ont roué{e} de coups.' },
+        complet: "Ton épée a fait le travail. Les chariots étaient fermés à clé. Ça pleurait, dedans. On m'a payé pour ne pas ouvrir.", partiel: 'Un garde m\'a blessé{e} avant de fuir.', rien: 'Sans arme, les gardes m\'ont roué{e} de coups.' },
       { type: 'riviere', besoin: 'corde', qte: 1, intro: 'Pour rapporter le butin aux gobelins, il fallait traverser le bourbier.',
-        complet: 'Avec ta corde, tout le monde est passé. Les gobelins pleuraient en revoyant leurs petits.', partiel: "J'ai perdu une partie du butin dans la boue.", rien: "Le bourbier a failli m'avaler." },
+        complet: 'Avec ta corde, les chariots sont passés. Les gobelins les ont ouverts en pleurant. Je ne suis pas resté{e} pour voir.', partiel: "J'ai perdu une partie du butin dans la boue.", rien: "Le bourbier a failli m'avaler." },
     ],
   },
   pacte: {
@@ -1562,6 +1562,8 @@ const EVENEMENTS = {
 };
 
 // Le crieur du marché : une nouvelle par jour, souvent absurde.
+// Les nouvelles qui en disent un peu trop n'arrivent qu'après un certain jour (audit récit v0.54)
+const NOUVELLES_JOUR = { "Terres d'avant": 8, 'son anniversaire': 12, 'fondations de maisons': 18, 'moine panda affirme': 25 };
 const NOUVELLES = [
   // (des indices sur le Conseil des Gardiens, glissés parmi les nouvelles absurdes)
   "Le Conseil des Gardiens rappelle qu'il est interdit de parler des « Terres d'avant ». Personne ne sait ce que c'est, mais c'est interdit.",

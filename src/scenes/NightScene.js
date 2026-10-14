@@ -248,7 +248,7 @@ class NightScene extends Phaser.Scene {
     this.add.rectangle((x1 + x2) / 2, 412, x2 - x1 - 40, 112, 0xc8b080, 0.55).setStrokeStyle(2, 0x8a6a3a);
     this.add.text(x1 + 22, 366, this.matin ? "Aujourd'hui" : 'Demain', style(15, '#3b2410', { fontStyle: 'bold' }));
     this.textePrevision = this.add.text(x1 + 22, 386, '', style(14, '#3b2410', { fontStyle: 'bold', wordWrap: { width: x2 - x1 - 44 } }));
-    this.texteFacteurs = this.add.text(x1 + 22, 416, '', style(11, '#5a3a20', { lineSpacing: 2 }));
+    this.texteFacteurs = this.add.text(x1 + 22, 416, '', style(11, '#5a3a20', { lineSpacing: 2, wordWrap: { width: x2 - x1 - 44 } }));
   }
 
   majPrevision() {
@@ -263,7 +263,7 @@ class NightScene extends Phaser.Scene {
     this.texteFacteurs.setText(`Réputation ${signe(a.reputation)} · Expérience ${signe(a.experience)}\nStock varié ${signe(a.variete)}` +
       (evenements ? ` · Événements ${evenements > 0 ? '+' : ''}${evenements}` : '') + (rumeur ? ` · Rumeur ${rumeur}` : ''));
     const pal = p.palier;
-    this.texteFacteurs.setText(this.texteFacteurs.text + `\nPalier : ${pal.max} clients (+${BONUS_CLIENTS_MAX} en bonus)` + (pal.suivant ? ` · ${pal.suivant.max} à ${pal.suivant.reputation} de réput.` : ''));
+    this.texteFacteurs.setText(this.texteFacteurs.text + `\nPalier : ${pal.max} clients (+${BONUS_CLIENTS_MAX})` + (pal.suivant ? ` · ${pal.suivant.max} dès ${pal.suivant.reputation} de réput.` : ''));
   }
 
   // --- La banque : une page à part, le soir attend en pause ---

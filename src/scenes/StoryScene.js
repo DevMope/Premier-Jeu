@@ -30,12 +30,14 @@ class StoryScene extends Cinematique {
     // Le paysage de la zone où il est parti.
     dessinerComte(this.fond, 0, 0, 960, 370, 0, v.zone ? ZONES[v.zone].biome : 'comte');
     // Le paysage déborde un peu de l'écran : il glisse doucement quand le voyageur avance.
-    this.paysage = this.fond.paysage.setScale(this.fond.paysage.scaleX * 1.1, this.fond.paysage.scaleY * 1.1).setPosition(0, -18);
-    this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
+    this.paysage = this.fond.paysage.setScale(this.fond.paysage.scaleX * 1.1, this.fond.paysage.scaleY * 1.1).setPosition(0, -18).setDepth(-2);
+    this.fond.setDepth(-2);
+    // (audit v0.54) le voile de la nuit couvre aussi le plan moyen, et le plan moyen reste derrière le voyageur
+    this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0).setDepth(-0.4);
     this.decor = this.add.container(0, 0);
     // Un premier plan qui glisse plus vite que le paysage (profondeur), et un léger assombrissement
     // des bords qui concentre le regard sur le voyageur
-    this.planMoyen = this.add.container(0, 0).setDepth(0.4);
+    this.planMoyen = this.add.container(0, 0).setDepth(-0.5);
     this.premierPlan = this.add.container(0, 0).setDepth(6.5);
     this.biome = v.zone ? ZONES[v.zone].biome : 'comte';
     this.planterPlanMoyen(this.biome);
@@ -335,20 +337,23 @@ class StoryScene extends Cinematique {
 
     this.indice.destroy();
     const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => this.scene.start('Comptoir'));
-    retour.fond.setDepth(11);
-    retour.label.setDepth(11);
+    this.dansUI(retour);
     if (r.vivant) {
       this.proposerSoins();
       this.proposerTrouvailles();
     }
   }
 
+  // Un bouton posé dans l'interface (hors de la caméra du monde, qui zoome et se déplace)
+  dansUI(b) { this.ui.add([b.fond, b.label]); return b; }
+
   // L'aventurier te montre ce qu'il a rapporté : à toi de repérer la bonne affaire.
   proposerTrouvailles() {
     const G = this.G;
     const liste = this.parti.trouvailles || [];
     if (!liste.length) return;
-    const c = this.add.container(0, 0).setDepth(12);
+    const c = this.add.container(0, 0);
+    this.ui.add(c);
     const h = 90 + liste.length * 54;
     c.add(this.add.image(290, 70 + h / 2, panneauHD(this, 540, h)).setScale(2));
     c.add(this.add.text(40, 84, "« J'ai aussi ramené ça de mon voyage. Ça t'intéresse ? »", style(14, '#3b2410', { fontStyle: 'bold' })));
@@ -371,8 +376,7 @@ class StoryScene extends Cinematique {
         info.setColor('#2f6a2a').setText(`${tr.nom} rejoint ton atelier. Répare-le pour en tirer plus aux enchères !`);
         maj();
       });
-      b.fond.setDepth(13);
-      b.label.setDepth(13);
+      c.add([b.fond, b.label]);
       const maj = () => {
         b.setTexte(t.vendu ? 'Acheté' : `Acheter ${t.prix} p.`);
         b.setActif(!t.vendu);
@@ -395,12 +399,9 @@ class StoryScene extends Cinematique {
         this.ecrire('Dédommagement', `Tu as versé ${verse} pièces à la famille de ${v.nom}.${rep}` +
           (G.argent < 0 ? `\nTu es à découvert (${G.argent} pièces). Faillite à ${SEUIL_FAILLITE} !` : ''));
         const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => this.scene.start('Comptoir'));
-        retour.fond.setDepth(11);
-        retour.label.setDepth(11);
+        this.dansUI(retour);
       });
-      b.fond.setDepth(11);
-      b.label.setDepth(11);
-      return b;
+      return this.dansUI(b);
     });
   }
 
@@ -424,8 +425,7 @@ class StoryScene extends Cinematique {
         (blessuresDe(G, v.nom) ? `\nEncore ${blessuresDe(G, v.nom)} cœur(s) à soigner.` : '\nComplètement remis sur pied !'));
       maj();
     });
-    bouton.fond.setDepth(11);
-    bouton.label.setDepth(11);
+    this.dansUI(bouton);
     const maj = () => {
       const reste = blessuresDe(G, v.nom);
       bouton.setVisible(reste > 0);
@@ -474,11 +474,15 @@ class StoryScene extends Cinematique {
     const sombre = ['foret', 'marais', 'repaire', 'tour', 'grotte'].includes(biome);
     const neige = ['montagne', 'glace'].includes(biome);
     const g = this.add.graphics();
-    const teinte = neige ? 0xc8d4e0 : sombre ? 0x24402a : 0x3f6a34;
+    // (audit v0.54) la couleur suit le paysage (plus de bosquets verts dans les terres brûlées), et
+    // les déserts, terres brûlées et montagnes ont des rochers plutôt que des arbres
+    const b = BIOMES[biome] || BIOMES.comte;
+    const rocheux = neige || ['desert', 'badlands', 'mines', 'antre', 'opale'].includes(biome);
+    const teinte = neige ? 0xc8d4e0 : melangeCouleur(b.arbres || b.loin, 0x0a0a10, sombre ? 0.45 : 0.3);
     for (let x = -60; x < 1100; x += 70 + (x * 3) % 50) {
       const h = 60 + (x * 7) % 70, r = 22 + (x * 5) % 18;
-      g.fillStyle(teinte, 0.85);
-      if (neige) g.fillTriangle(x - r * 1.4, 332, x, 332 - h, x + r * 1.4, 332);
+      g.fillStyle(teinte, 0.8);
+      if (rocheux) { g.fillTriangle(x - r * 1.4, 332, x, 332 - h * (neige ? 1 : 0.6), x + r * 1.4, 332); g.fillStyle(melangeCouleur(teinte, 0xffffff, 0.15), 0.8).fillTriangle(x - r * 0.5, 332, x, 332 - h * (neige ? 1 : 0.6), x + r * 0.2, 332); }
       else { g.fillRect(x - 3, 332 - h * 0.5, 6, h * 0.5); g.fillCircle(x, 332 - h * 0.5 - r * 0.6, r); g.fillCircle(x - r * 0.7, 332 - h * 0.5 - r * 0.2, r * 0.8); g.fillCircle(x + r * 0.7, 332 - h * 0.5 - r * 0.2, r * 0.8); }
     }
     this.planMoyen.add(g);

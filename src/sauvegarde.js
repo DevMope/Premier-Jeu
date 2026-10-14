@@ -225,13 +225,19 @@ function mettreAJourPartie(G, brut = G) {
     for (const h of G.historique || []) { const z = ZONES[h.zone]; if (h.issue === 'vivant' && z && z.camp) G.reussites[z.camp]++; }
   }
   G.reussites = { bien: 0, mal: 0, ...(G.reussites || {}) };
-  if (!G.malCorrige) {
+  if (!brut.malCorrige) {
     // (audit v0.53) Les missions en terres d'ombre ne comptent plus dans les « âmes offertes »
+    // (audit v0.54 : on regarde la sauvegarde brute, la partie neuve a déjà malCorrige)
     G.malCorrige = true;
     let ombre = 0;
     for (const h of G.historique || []) { const z = ZONES[h.zone]; if (h.issue === 'vivant' && z && z.camp === 'mal') ombre++; }
     G.mal = Math.max(0, (G.mal || 0) - 0.5 * ombre);
+    // Un camp scellé par l'ancienne règle (une seule mort suffisait) est recalculé
+    if (G.camp) G.camp = palierCamp(Object.assign({}, G, { camp: null })) <= -1 ? 'mal' : 'bien';
   }
+  // (audit v0.54) L'écart des réussites est borné pour que la jauge puisse toujours revenir
+  if (G.reussites.bien - G.reussites.mal > JAUGE_CAMP.ecartMax) G.reussites.bien = G.reussites.mal + JAUGE_CAMP.ecartMax;
+  if (G.reussites.mal - G.reussites.bien > JAUGE_CAMP.ecartMax) G.reussites.mal = G.reussites.bien + JAUGE_CAMP.ecartMax;
   G.objetsCamp = { bien: 0, mal: 0, ...(G.objetsCamp || {}) };
   G.palierJaugeVu = G.palierJaugeVu || 0;
   G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 };
@@ -269,7 +275,7 @@ function mettreAJourPartie(G, brut = G) {
   }
   G.expressMateriaux = G.expressMateriaux || {};
   G.pieges = G.pieges || {};
-  if (!brut.faucheuse) G.faucheuse = { faveur: 0, morts: G.historique.filter(h => h.issue !== 'vivant').length, visites: 0, cadeau: false, mission: null, sabotages: 0 };
+  if (!brut.faucheuse) G.faucheuse = { faveur: 0, morts: G.historique.filter(h => !['vivant', 'echec'].includes(h.issue)).length, visites: 0, cadeau: false, mission: null, sabotages: 0 };
   for (const t of G.tresors) {
     if (t.reparation && !t.reparation.ouvrier) t.reparation.ouvrier = 'toi';
     if (t.reparation && !t.reparation.cible) t.reparation.cible = t.etat + 1;

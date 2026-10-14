@@ -806,11 +806,10 @@ function remarqueCamp(G, v) {
   const decos = (G.decos || []).filter(d => DECOS[d].camp);
   const clair = decos.filter(d => DECOS[d].camp === 'bien'), sombre = decos.filter(d => DECOS[d].camp === 'mal');
   const p = palierCamp(G);
-  if (banni && sombre.length && Math.random() < 0.7) { changerRelation(G, v.nom, 1); return `${auHasard(["Ah, ", "Tiens, ", ""])}${auHasard(sombre).startsWith('crane') ? 'un crâne de troll au mur' : 'une lanterne-crâne'}... Enfin un comptoir où l'on respire !`; }
+  if (banni && sombre.length && Math.random() < 0.7) { changerRelation(G, v.nom, 1); return `${auHasard(["Ah, ", "Tiens, ", ""])}${auHasard(sombre).startsWith('crane') ? "un crâne de troll au mur... Tu sais au moins à qui il appartenait ? Hm. Au moins, ici, on ne nous chasse pas" : "une lanterne-crâne... Enfin un comptoir où l'on respire"} !`; }
   if (banni && clair.length && Math.random() < 0.7) { changerRelation(G, v.nom, -1); return `${auHasard(clair) === 'banniere' ? 'Une bannière de la Confrérie' : "Un chandelier d'argent, comme chez les Gardiens"} ? Ici ? Je surveille mes arrières.`; }
   if (!banni && sombre.length && Math.random() < 0.6) { changerRelation(G, v.nom, -1); return `Brr... ${auHasard(sombre) === 'craneTroll' ? 'ce crâne de troll' : 'cette lanterne-crâne'} me donne froid dans le dos.`; }
   if (!banni && clair.length && Math.random() < 0.4) { changerRelation(G, v.nom, 1); return auHasard(["La bannière de la Confrérie ! On est entre gens bien, ici.", "Quelle belle lumière dans ce comptoir."]).replace('La bannière de la Confrérie', clair.includes('banniere') ? 'La bannière de la Confrérie' : "Un chandelier d'argent"); }
-  if (banni && p >= 1) return auHasard(["Un comptoir de la Confrérie... Je paie, je prends, je pars.", "Pas de sermon, marchand. Juste du matériel."]);
   if (!banni && p <= -1 && Math.random() < 0.6) return auHasard(["On raconte des choses sur ton comptoir... J'espère que c'est faux.", "Des Bannis sortaient d'ici hier soir, paraît-il. Ça ne me regarde pas."]);
   if (!banni && p >= 2 && Math.random() < 0.4) return "Ton comptoir a bonne réputation chez la Confrérie !";
   return null;
@@ -1229,7 +1228,8 @@ function nuit(G) {
   let taxe = 0;
   if (G.jour % 7 === 0) {
     const p = palierCamp(G);
-    taxe = Math.round(Math.max(0, G.argent - TAXE_CONFRERIE.franchise) * TAXE_CONFRERIE.taux[p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre']);
+    const dette = G.prets.reduce((s, x) => s + x.restant, 0);   // (audit v0.54 : l'argent emprunté n'est pas taxé)
+    taxe = Math.round(Math.max(0, G.argent - dette - TAXE_CONFRERIE.franchise) * TAXE_CONFRERIE.taux[p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre']);
     if (taxe > 0) payer(G, taxe, 'taxe');
   }
   G.jour++;
@@ -1471,7 +1471,8 @@ function payerAmende(G, montant) {
 // Les chances de soudoyer un garde avec ce trésor (selon ses goûts et la valeur de l'objet)
 function chanceSoudoiement(G, garde, t) {
   const aime = (GOUTS_TRESORS[garde.race] || []).includes(t.categorie);
-  return Math.min(0.92, GARDE.soudoiement + (aime ? GARDE.bonusGout : 0) + Math.min(GARDE.bonusValeur, valeurTresor(t) / 300));
+  // (audit v0.54) la valeur compte par rapport à l'amende : un rebut à 5 p. n'achète plus un garde
+  return Math.min(0.92, GARDE.soudoiement + (aime ? GARDE.bonusGout : 0) + Math.min(GARDE.bonusValeur, valeurTresor(t) / Math.max(1, amendeGarde(G))));
 }
 
 // Tenter de soudoyer : réussi, le trésor change de main et la garde s'en va. Raté : rarement, le
@@ -1523,8 +1524,15 @@ function terminerAventure(G, parti) {
     encaisser(G, gain, 'butins');
     // Une commande par lettre remplie à moitié ne rapporte que la moitié de la réputation.
     const part = v.prevu ? partCommandeRemplie(v, parti.colis) : 1;
-    G.reputation += GAIN_REPUTATION_SUCCES * multReputationCamp(G, camp) * part;
-    if (camp) G.reussites[camp] = (G.reussites[camp] || 0) + 1;   // (audit v0.53 : plus de G.mal ici, il ne compte que les âmes offertes)
+    // (audit v0.54) Au-delà de 12, la réputation monte de moins en moins vite : elle garde un sens
+    // en fin de partie (refus, échecs et pièges continuent de coûter quelque chose).
+    G.reputation += GAIN_REPUTATION_SUCCES * multReputationCamp(G, camp) * part / (1 + Math.max(0, G.reputation - 12) / 20);
+    if (camp) {
+      G.reussites[camp] = (G.reussites[camp] || 0) + 1;   // (audit v0.53 : plus de G.mal ici, il ne compte que les âmes offertes)
+      // (audit v0.54) l'écart est borné ici, pas seulement dans le calcul : la jauge peut toujours revenir
+      const autre = camp === 'bien' ? 'mal' : 'bien';
+      if (G.reussites[camp] - (G.reussites[autre] || 0) > JAUGE_CAMP.ecartMax) G.reussites[camp] = (G.reussites[autre] || 0) + JAUGE_CAMP.ecartMax;
+    }
     G.journal.retours++;
     // Un succès de plus : il progresse, et la carte aussi (déblocage des étoiles).
     const danger = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
@@ -1727,7 +1735,7 @@ function trouvailles(G, voyageur) {
     // Le prix varie : parfois une affaire, parfois une arnaque. C'est le flair qui t'aide à trier.
     // Le prix suit ce que l'objet vaudra une fois restauré (c'est ce que le voyageur imagine) :
     // tantôt une affaire, tantôt trop cher pour le travail qu'il demandera.
-    liste.push({ tresor, prix: Math.max(3, Math.round(valeurTresor(tresor, ETATS.length - 1) * Phaser.Math.FloatBetween(0.25, 0.85) * ami)), vendu: false,
+    liste.push({ tresor, prix: Math.max(3, Math.round(valeurTresor(tresor, ETATS.length - 1) * Phaser.Math.FloatBetween(0.35, 1.2) * ami)), vendu: false,
       biais: Phaser.Math.FloatBetween(-1, 1) });
   }
   return liste;
@@ -2155,8 +2163,9 @@ function avancerEvenements(G) {
   }
   // Une nouvelle absurde, sans répéter les dernières.
   G.nouvellesLues = (G.nouvellesLues || []).slice(-15);
-  const restantes = NOUVELLES.map((_, i) => i).filter(i => !G.nouvellesLues.includes(i));
-  const i = auHasard(restantes.length ? restantes : NOUVELLES.map((_, k) => k));
+  const permise = i => Object.entries(NOUVELLES_JOUR).every(([mot, jour]) => !NOUVELLES[i].includes(mot) || G.jour >= jour);
+  const restantes = NOUVELLES.map((_, i) => i).filter(i => !G.nouvellesLues.includes(i) && permise(i));
+  const i = auHasard(restantes.length ? restantes : NOUVELLES.map((_, k) => k).filter(permise));
   G.nouvellesLues.push(i);
   lignes.push(NOUVELLES[i]);
   // Un soir de marché noir : un papier glissé sous la porte, avec le mot de passe
@@ -2223,7 +2232,8 @@ function recompenserZones(G) {
     if (G.armure.length + G.piecesAVenir.length < ARMURE.length) G.piecesAVenir.push(z);
   }
   // (le sceau est un moment de l'histoire : la dernière pièce n'arrive pas avant le jour JOUR_SCEAU)
-  const derniereRetenue = G.armure.length === ARMURE.length - 1 && G.jour < JOUR_SCEAU;
+  // (audit v0.54) ... ni tant que tu n'as penché d'aucun côté : on ne te scelle pas sans que tu aies choisi
+  const derniereRetenue = G.armure.length === ARMURE.length - 1 && (G.jour < JOUR_SCEAU || palierCamp(G) === 0);
   if (G.piecesAVenir.length && G.armure.length < ARMURE.length && !derniereRetenue) {
     const z = G.piecesAVenir.shift();
     const piece = ARMURE[G.armure.length];
@@ -2257,7 +2267,11 @@ function jaugeCamp(G) {
 // Le palier : de −3 (ombre épaisse) à +3 (lumière éclatante), 0 entre les deux.
 function palierCamp(G) {
   const j = jaugeCamp(G);
-  return Math.sign(j) * PALIERS_JAUGE.filter(p => Math.abs(j) >= p).length;
+  const p = Math.sign(j) * PALIERS_JAUGE.filter(p => Math.abs(j) >= p).length;
+  // (audit v0.54) une fois le camp scellé, on ne repasse plus de l'autre côté
+  if (G.camp === 'bien') return Math.max(1, p);
+  if (G.camp === 'mal') return Math.min(-1, p);
+  return p;
 }
 
 // De quel côté es-tu ? 'bien', 'mal' ou null tant qu'aucun palier n'est franchi.
