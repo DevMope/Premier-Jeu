@@ -23,7 +23,9 @@ const ZOOM_ECRAN = (() => {
   const l = Math.max(window.innerWidth, (window.screen && window.screen.width) || 0);
   const h = Math.max(window.innerHeight, (window.screen && window.screen.height) || 0);
   const ideal = dpr * Math.min(Math.max(l, h) / 960, Math.min(l, h) / 540);
-  return Math.min(4, Math.max(1, Math.ceil(ideal - 0.15)));
+  // (sur un téléphone, au plus 2 : l'écran est petit, et sa mémoire aussi)
+  const telephone = Math.min((window.screen && window.screen.width) || 9999, (window.screen && window.screen.height) || 9999) < 500;
+  return Math.min(telephone ? 2 : 4, Math.max(1, Math.ceil(ideal - 0.15)));
 })();
 const ajouterCameraOrigine = Phaser.Cameras.Scene2D.CameraManager.prototype.add;
 Phaser.Cameras.Scene2D.CameraManager.prototype.add = function () {
@@ -36,6 +38,7 @@ let jeuLance = false;
 function lancerJeu() {
   if (jeuLance) return;
   jeuLance = true;
+  if (window.diag) diag('phaser (zoom ' + ZOOM_ECRAN + ')');
   window.jeu = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'jeu',
@@ -52,6 +55,12 @@ function lancerJeu() {
   // La musique et les sons : le son démarre au premier clic (les navigateurs l'exigent), et
   // chaque scène qui s'ouvre lance son ambiance.
   window.jeu.events.once('ready', () => {
+    if (window.diag) {
+      diag('prêt');
+      // chaque écran ouvert est noté ; après 20 secondes sans plantage, le lancement est réussi
+      for (const s of window.jeu.scene.scenes) s.events.on('create', () => diag('écran ' + s.scene.key));
+      setTimeout(() => { window.jeu.diagStable = true; if (window.diagFini) diagFini(); }, 20000);
+    }
     for (const s of window.jeu.scene.scenes) {
       const theme = THEME_PAR_SCENE[s.scene.key];
       if (!theme) continue;

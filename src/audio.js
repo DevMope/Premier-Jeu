@@ -137,6 +137,9 @@ const Son = {
     this.horloge = this.ctx.currentTime + 0.1;
     const avance = () => {
       if (this.courant !== bus) return;
+      // (après une mise en veille, l'horloge du son a filé sans nous : on ne rattrape pas les
+      // mesures manquées, sinon des milliers de notes partiraient d'un coup)
+      if (this.horloge < this.ctx.currentTime) this.horloge = this.ctx.currentTime + 0.05;
       while (this.horloge < this.ctx.currentTime + 0.6) { this.jouerMesure(T, this.horloge, bus); this.horloge += T.temps * 60 / T.tempo; this.mesure++; }
     };
     avance();

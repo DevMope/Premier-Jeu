@@ -19,6 +19,28 @@
 <body>
   <div id="jeu"></div>
 <div id="tourner"><span>↻ Tourne ton téléphone<br>pour jouer en paysage</span><button id="tourner-quand-meme" type="button">Jouer quand même</button></div>
+<div id="diag" style="display:none;position:fixed;left:8px;right:8px;bottom:8px;z-index:20;background:#3b2410;color:#f3d98a;font:14px Georgia,serif;padding:8px 10px;border-radius:6px"></div>
+<script>
+  // Le carnet de bord du lancement : chaque étape est notée (dans le navigateur). Si le jeu
+  // plante (un téléphone à court de mémoire, par exemple), on sait au lancement suivant jusqu'où
+  // il était allé, et on l'affiche en bas de l'écran.
+  (function () {
+    var cle = 'passage_diag', precedent = null, etapes = [];
+    try { precedent = JSON.parse(localStorage.getItem(cle) || 'null'); } catch (e) {}
+    function noter() { try { localStorage.setItem(cle, JSON.stringify({ etapes: etapes.slice(-8), fini: false, ecran: screen.width + 'x' + screen.height + '@' + (window.devicePixelRatio || 1) })); } catch (e) {} }
+    window.diag = function (etape) { etapes.push(etape); if (etapes.length > 16) etapes = etapes.slice(-8); noter(); };
+    window.diagFini = function () { try { localStorage.setItem(cle, JSON.stringify({ etapes: etapes.slice(-8), fini: true })); } catch (e) {} };
+    window.addEventListener('error', function (e) { window.diag('erreur : ' + (e.message || e) + ' (' + (e.filename || '').split('/').pop() + ':' + (e.lineno || 0) + ')'); });
+    window.addEventListener('unhandledrejection', function (e) { window.diag('erreur : ' + ((e.reason && e.reason.message) || e.reason)); });
+    window.diag('page');
+    if (precedent && !precedent.fini && precedent.etapes && precedent.etapes.length > 1) {
+      var d = document.getElementById('diag');
+      d.textContent = '⚠ Le lancement précédent s\'est arrêté après : ' + precedent.etapes.slice(-3).join(' → ') + ' [' + (precedent.ecran || '') + ']  (touche pour fermer)';
+      d.style.display = 'block';
+      d.addEventListener('click', function () { d.style.display = 'none'; });
+    }
+  })();
+</script>
 <script>
   // Sur un vrai téléphone tenu en hauteur, le jeu serait minuscule : on demande de le tourner.
   // (Jamais sur une tablette ni dans un panneau étroit sur un grand écran : on se fie à la taille

@@ -109,6 +109,7 @@ class ToileHD {
     // Une texture déjà affichée quelque part (le joueur qui change de tenue) : on la repeint sur
     // place, sans la détruire sous les pieds des images qui s'en servent.
     let tex = scene.textures.exists(cle) ? scene.textures.get(cle) : null;
+    if (!tex && window.diag && !(window.jeu && window.jeu.diagStable)) diag('texture ' + cle);
     if (tex && !(tex.getSourceImage && tex.getSourceImage().width === this.l && tex.getSourceImage().height === this.h && tex.getContext)) {
       scene.textures.remove(cle);
       tex = null;
