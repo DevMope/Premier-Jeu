@@ -93,6 +93,7 @@ class RenovationScene extends Cinematique {
     textureJoueur(this, G);
     this.heros = this.add.image(LIEUX_RENOVATION.facade - 60, 470, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(6)).setDepth(6);
     this.garrick = imageCorps(this, LIEUX_RENOVATION.facade - 120, 470, 'mentor', 6).setDepth(6);
+    this.ombreSol(this.heros); this.ombreSol(this.garrick);
     this.creerBoiteTexte();
     this.consigne = this.add.text(480, 20, '', style(16, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5, align: 'center' }))
       .setOrigin(0.5, 0).setScrollFactor(0).setDepth(20);
@@ -325,6 +326,15 @@ class RenovationScene extends Cinematique {
 
   // --- Le déroulé ---
 
+  // (v0.58) Garrick parle : il se tourne vers toi, avec sa voix, son humeur et un geste ; tu le
+  // regardes ; s'il imagine quelque chose, une bulle de pensée s'ouvre au-dessus de lui.
+  garrickDit(texte, o = {}) {
+    const visible = this.garrick.visible;
+    if (this.pense) { this.fermerPensee(this.pense); this.pense = null; }
+    this.replique('Garrick Cœur-de-Chêne', texte, { ...o, sprite: visible ? this.garrick : null, vers: visible ? this.heros : null, personne: { nom: 'Garrick', race: 'humain' }, quoi: 'mentor', attendre: false });
+    if (visible && o.pensee) this.pense = this.pensee(this.garrick, o.pensee, { echelle: 2.4 });
+  }
+
   async derouler() {
     const G = this.G;
     const petit = nomJoueur(G, 'petit');
@@ -335,37 +345,37 @@ class RenovationScene extends Cinematique {
     this.ecrire('', 'Garrick t\'emmena au bout du village, devant une vieille auberge abandonnée depuis des années...');
     await Promise.all([this.marcher(this.heros, LIEUX_RENOVATION.facade + 200, 4), this.marcher(this.garrick, LIEUX_RENOVATION.facade + 140, 4)]);
     if (this.fini) return;
-    this.ecrire(garrick, `« Et voilà ton shop, ${petit} ! Bon... il a un peu souffert. Mais avec de l'huile de coude, il sera magnifique. Au travail ! »`);
+    this.garrickDit(`« Et voilà ton shop, ${petit} ! Bon... il a un peu souffert. Mais avec de l'huile de coude, il sera magnifique. Au travail ! »`, { ton: 'content', emotion: 'joie', geste: 'bras' });
     await this.attendreClic();
-    this.ecrire(garrick, '« Commence par la façade : décloue les planches, chasse les toiles d\'araignée, remets l\'enseigne. »');
+    this.garrickDit('« Commence par la façade : décloue les planches, chasse les toiles d\'araignée, remets l\'enseigne. »', { ton: 'neutre', geste: 'hoche' });
     await this.renover('facade');
     if (this.fini) return;
     // La porte grince...
     this.onomatopee(this.porteFacade, 380, 'Griiiiinc...', '#c8c0b0');
-    this.ecrire(garrick, '« Ha ! Déjà beaucoup mieux. Entrons... attention à la poussière. »');
+    this.garrickDit('« Ha ! Déjà beaucoup mieux. Entrons... attention à la poussière. »', { ton: 'rire', emotion: 'joie' });
     await this.attendreClic();
     if (this.fini) return;
     this.boiteEnHaut(false);
     await this.allerA('comptoir');
-    this.ecrire(garrick, '« Le comptoir ! C\'est ici que tu serviras les aventuriers, par cette fenêtre. Il y a du travail... »');
+    this.garrickDit('« Le comptoir ! C\'est ici que tu serviras les aventuriers, par cette fenêtre. Il y a du travail... »', { ton: 'etonne', emotion: '!' });
     await this.renover('comptoir');
     if (this.fini) return;
     // (après chaque pièce, Garrick prend le temps d'un mot : rien ne s'enchaîne tout seul)
-    this.ecrire(garrick, '« Voilà un comptoir qui a de l\'allure ! Les aventuriers vont se bousculer à cette fenêtre. Passons derrière. »');
+    this.garrickDit('« Voilà un comptoir qui a de l\'allure ! Les aventuriers vont se bousculer à cette fenêtre. Passons derrière. »', { ton: 'content', emotion: 'merci', geste: 'hoche' });
     await this.attendreClic();
     if (this.fini) return;
     await this.allerA('arriere', 860);
-    this.ecrire(garrick, '« L\'arrière-boutique : tes étagères, ton coffre, et la porte de ta chambre. Une bonne araignée y a élu domicile... »');
+    this.garrickDit('« L\'arrière-boutique : tes étagères, ton coffre, et la porte de ta chambre. Une bonne araignée y a élu domicile... »', { ton: 'inquiet', emotion: '…' });
     await this.renover('arriere');
     if (this.fini) return;
-    this.ecrire(garrick, '« Tes étagères brillent comme un sou neuf ! Et ce coffre... il attend tes premières pièces d\'or. Il ne reste que ta chambre. »');
+    this.garrickDit('« Tes étagères brillent comme un sou neuf ! Et ce coffre... il attend tes premières pièces d\'or. Il ne reste que ta chambre. »', { ton: 'content', emotion: 'idee', pensee: 'pieceFace' });
     await this.attendreClic();
     if (this.fini) return;
     await this.allerA('chambre', 880);
-    this.ecrire(garrick, '« Et ta chambre ! Un lit, une fenêtre sur les collines... Tu seras bien, ici. »');
+    this.garrickDit('« Et ta chambre ! Un lit, une fenêtre sur les collines... Tu seras bien, ici. »', { ton: 'content', emotion: '♥' });
     await this.renover('chambre');
     if (this.fini) return;
-    this.ecrire(garrick, '« Tout est propre, du toit à la cave ! Viens, on fait le tour du propriétaire. »');
+    this.garrickDit('« Tout est propre, du toit à la cave ! Viens, on fait le tour du propriétaire. »', { ton: 'rire', emotion: 'joie', geste: 'saut' });
     await this.attendreClic();
     if (this.fini) return;
     await this.visite();
@@ -408,6 +418,8 @@ class RenovationScene extends Cinematique {
     this.garrick.setPosition(2880 + 160, 470).setVisible(true).setFlipX(false);
     this.aLEchelle('facade');
     this.onomatopee(2880 + 520, 160, 'TADAAA !', '#f3d98a');
+    this.geste(this.heros, 'saut'); this.emotion(this.heros, '♥');
+    this.time.delayedCall(900, () => { this.regarderVers(this.garrick, this.heros); this.regarderVers(this.heros, this.garrick); Son.jouer('voix', { personne: { nom: 'Garrick', race: 'humain' }, ton: 'content', duree: 1.6 }); this.emotion(this.garrick, 'joie'); });
     // (Garrick parle dans la bulle du haut : la boîte du bas cacherait les deux fiers rénovateurs)
     this.bulle.setText(`Garrick Cœur-de-Chêne : « Magnifique ! « ${G.nomShop} » est prêt à ouvrir. Demain, je reste avec toi pour ta première journée : je te montrerai tout. »`).setVisible(true);
     await this.attendreSuite('▶ Clique pour commencer');

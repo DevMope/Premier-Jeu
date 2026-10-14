@@ -84,9 +84,11 @@ class FailliteScene extends Cinematique {
     await this.defiler([this.ombre, ...this.orcs], [560, 650, 730], 2200);
     await this.attendreClic();
     this.ecrire('La Main Noire', '« Tu nous dois. Tu ne peux pas payer. Alors tu travailleras. La Main Noire n\'oublie jamais. »');
+    if (this.orcs) { this.regarderVers(this.orcs[0], this.p); this.emotion(this.orcs[0], 'colere'); Son.jouer('voix', { personne: { nom: "Mog", race: "orc" }, ton: 'grogne' }); } this.emotion(this.p, '!'); this.geste(this.p, 'tremble');
     Son.jouer('voix', { race: 'humain', nom: 'La Main Noire', ton: 'grogne' });
     await this.attendreClic();
     this.ecrire('', 'Les deux orcs te prirent chacun par un bras.');
+    Son.jouer('voix', { personne: { nom: 'toi', race: 'humain', feminin: this.G.joueur.feminin }, ton: 'peur' }); this.emotion(this.p, 'larme');
     await this.defiler(this.orcs, [450, 360], 700);
     this.p.setFlipX(false);
     await this.defiler([this.p, ...this.orcs, this.ombre], [1100, 1060, 1150, 1200], 2400);
@@ -128,6 +130,7 @@ class FailliteScene extends Cinematique {
       this.client = this.corps(780, 372, { nom: 'Petit marchand', race: 'hobbit', niveau: 'novice' }, 5.6).setFlipX(true);
     });
     this.ecrire('', 'Des années plus tard, c\'est toi qui gardes la table du fond. Ce soir, un petit marchand tremble devant toi... comme toi, autrefois.');
+    this.regarderVers(this.p, this.client); this.regarderVers(this.client, this.p); this.geste(this.client, 'tremble'); this.emotion(this.client, '!'); Son.jouer('voix', { personne: { nom: "Petit marchand", race: "hobbit" }, ton: 'peur' });
     this.tweens.add({ targets: this.client, x: 790, duration: 120, yoyo: true, repeat: -1 });
     await this.attendreClic();
     this.finir();
@@ -144,6 +147,7 @@ class FailliteScene extends Cinematique {
       this.gardes.forEach(c => c.setScale(-1, 1));
     });
     this.ecrire('', 'Au matin, on frappa à la porte. Très fort.');
+    this.emotion(this.p, '!');
     this.onomatopee(this.facade.porteX, 220, 'TOC TOC TOC !');
     this.cameras.main.shake(300, 0.006);
     await this.attendreClic();
@@ -151,6 +155,7 @@ class FailliteScene extends Cinematique {
     await this.defiler([this.banquier, ...this.gardes], [470, 560, 630], 2200);
     await this.attendreClic();
     this.ecrire('Le banquier', '« Par ordre de la Banque Centrale Goyenne, vos dettes s\'élèvent à... beaucoup. Tout est saisi. Et vous aussi. »');
+    if (this.banquier) { this.regarderVers(this.banquier, this.p); this.regarderVers(this.p, this.banquier); this.geste(this.banquier, 'hoche'); Son.jouer('voix', { personne: { nom: "Grippesou", race: "nain" }, ton: 'neutre' }); } this.time.delayedCall(900, () => this.emotion(this.p, 'larme'));
     Son.jouer('page');
     const porte = this.facade.porteX;
     for (let i = 0; i < 2; i++) {
@@ -189,6 +194,7 @@ class FailliteScene extends Cinematique {
       this.badauds = [[700, 'humain'], [770, 'elfe'], [840, 'nain']].map(([x, race], i) => this.corps(x, 362, { nom: 'Badaud ' + i, race, feminin: i === 1, niveau: 'novice' }, 5.4).setFlipX(true));
     });
     this.ecrire('', 'Chaque matin, tu portes leurs registres à travers la Comté, derrière le banquier. Les gens chuchotent : « C\'est l\'ancien marchand du Comptoir. »');
+    if (this.badauds) this.badauds.forEach((b, i) => this.time.delayedCall(400 + i * 300, () => this.emotion(b, i === 1 ? '…' : '?')));
     this.tweens.add({ targets: this.pile, angle: { from: -5, to: 5 }, duration: 400, yoyo: true, repeat: -1 });
     this.tweens.add({ targets: this.pile, x: 520, duration: 3600, ease: 'Linear' });
     await this.defiler([this.banquier, this.p], [640, 520], 3600);
@@ -212,6 +218,7 @@ class FailliteScene extends Cinematique {
     this.proches.forEach((pp, i) => this.torche(pp.x - 26, pp.y - 120 - (i % 2) * 6));
     await this.attendreClic();
     this.ecrire(`La famille ${famille}`, `« ${c.nom || 'Il'} est mort à cause de toi. Ton argent ne nous le rendra pas. »`);
+    if (this.proches) { this.proches.forEach(q => this.regarderVers(q, this.p)); this.emotion(this.proches[0], 'colere'); this.geste(this.proches[0], 'penche'); Son.jouer('voix', { personne: { nom: "Père", race: "humain" }, ton: 'fache' }); } this.regarderVers(this.p, this.proches ? this.proches[0] : { x: 9999 }); this.geste(this.p, 'recule'); this.emotion(this.p, '!');
     Son.jouer('voix', { race: c.race || 'humain', nom: famille, ton: 'fache' });
     await this.attendreClic();
     this.ecrire('', 'Une torche vola. La vitre éclata.');
@@ -244,6 +251,7 @@ class FailliteScene extends Cinematique {
     this.ecrire('', 'Loin, très loin, sous un autre nom, tu vends des pommes dans un village où personne ne te connaît.');
     await this.attendreClic();
     this.ecrire('', 'Mais chaque fois qu\'un étranger s\'approche avec une torche, ton cœur s\'arrête.');
+    this.emotion(this.p, '!'); this.geste(this.p, 'tremble');
     await this.defiler([this.passant], [760], 1600);
     this.torche(734, 250);
     this.tweens.add({ targets: this.p, y: 352, duration: 120, yoyo: true });
@@ -261,6 +269,7 @@ class FailliteScene extends Cinematique {
       this.affiche = this.o(this.add.text(this.facade.porteX, 290, 'À VENDRE', style(18, '#a02020', { fontStyle: 'bold', backgroundColor: '#ead9b0', padding: { x: 6, y: 2 } })).setOrigin(0.5).setAngle(-6).setDepth(4).setAlpha(0));
     });
     this.ecrire('', 'Plus de pièces, plus de marchandises, plus de clients. Un matin, tu as fermé la porte pour la dernière fois.');
+    this.emotion(this.p, 'larme', 2200); Son.jouer('voix', { personne: { nom: 'toi', race: 'humain', feminin: this.G.joueur.feminin }, ton: 'triste' });
     await this.animer({ targets: this.affiche, alpha: 1, scale: { from: 1.8, to: 1 }, duration: 300 });
     this.onomatopee(this.facade.porteX + 30, 250, 'Clac.');
     await this.attendreClic();
@@ -291,11 +300,13 @@ class FailliteScene extends Cinematique {
     // Et l'histoire recommence peut-être : un voyageur blessé arrive jusqu'à ton feu
     this.blesse = this.corps(1040, 380, { nom: 'Voyageur blessé', race: 'humain', niveau: 'aguerri' }, 6.2).setFlipX(true);
     this.ecrire('', 'Un soir, un voyageur blessé est arrivé en titubant jusqu\'à ton feu...');
+    this.regarderVers(this.p, this.blesse); this.emotion(this.blesse, '…'); this.geste(this.blesse, 'tremble'); Son.jouer('voix', { personne: { nom: "Voyageur blessé", race: "humain" }, ton: 'triste' }); this.time.delayedCall(800, () => this.emotion(this.p, '!'));
     await this.defiler([this.blesse], [640], 2200);
     await this.animer({ targets: this.blesse, angle: -80, y: 392, duration: 500, ease: 'Quad.easeIn' });
     this.cameras.main.shake(150, 0.004);
     await this.attendreClic();
     this.ecrire('', 'Tu l\'as soigné, comme autrefois. Et s\'il revenait un jour, lui aussi, pour te remercier ?');
+    this.regarderVers(this.blesse, this.p); this.emotion(this.blesse, 'merci'); Son.jouer('voix', { personne: { nom: "Voyageur blessé", race: "humain" }, ton: 'merci' }); this.time.delayedCall(700, () => this.emotion(this.p, '♥'));
     await this.attendreClic();
     this.finir();
   }
