@@ -790,13 +790,17 @@ class MarcheScene extends Phaser.Scene {
     c.add(this.add.text(30, 340, "« Des merveilles dénichées aux quatre coins des Trois Terres. Ça fera un shop qu'on remarque ! »",
       style(12, '#6b4a2a', { fontStyle: 'italic' })));
     Object.entries(DECOS).forEach(([id, d], i) => {
+      // Une ligne par décoration : l'icône, le nom et le prix, l'effet en bref (l'effet complet au survol)
       const x = 40 + (i % 2) * 460;
-      const y = 370 + Math.floor(i / 2) * 30;
-      c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(2));
-      c.add(this.add.text(x + 20, y - 7, `${d.nom} · ${d.prix} p.`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
-      c.add(this.add.text(x + 20, y + 8, d.effet, style(10, '#6b4a2a')).setOrigin(0, 0.5));
-      if (aDeco(G, id)) c.add(this.add.text(x + 390, y, 'Chez toi', style(12, '#2f6a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
-      else this.bouton(c, x + 390, y, 70, 'Acheter', () => {
+      const y = 364 + Math.floor(i / 2) * 22;
+      c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(1.5));
+      const nom = this.add.text(x + 16, y, `${d.nom} · ${d.prix} p.`, style(12, d.camp === 'bien' ? '#8a6a00' : d.camp === 'mal' ? '#5a2a7a' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+      c.add(nom);
+      const effet = this.add.text(x + 22 + nom.width, y + 1, d.court || '', style(10, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5).setInteractive();
+      effet.on('pointerover', () => this.message(d.effet));
+      c.add(effet);
+      if (aDeco(G, id)) c.add(this.add.text(x + 405, y, 'Chez toi', style(11, '#2f6a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
+      else this.bouton(c, x + 405, y, 62, 'Acheter', () => {
         const erreur = acheterDeco(G, id);
         if (!erreur) Son.jouer('achat');
         this.ouvrirBrocante();

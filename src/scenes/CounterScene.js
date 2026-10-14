@@ -737,6 +737,9 @@ class CounterScene extends Phaser.Scene {
       if (entree.attentes) bonjour = "Me revoilà ! On reprend où on en était ? ";
       if (v.habitue) bonjour = 'Re-bonjour, c\'est encore moi ! ' + (this.aReparer(v).length ? 'Mon matériel a souffert la dernière fois... ' : '');
       if (v.exige && !entree.attentes) bonjour += "Et après ma dernière mission ratée, tu me dois bien un objet de plus que ma commande ! ";
+      // Ce qu'il pense de ton comptoir (ses décorations, ton côté de la jauge)
+      const remarque = !entree.attentes && !v.habitue ? remarqueCamp(this.G, v) : null;
+      if (remarque) bonjour = remarque + ' ' + bonjour;
       // Un client exigeant prévient après son bonjour : grosse commande, et rien d'usé
       const exigeant = v.exigeant && !entree.attentes && v.queteId ? " Et je suis exigeant : une grosse commande, et du matériel neuf, pas de vieilles cordes rafistolées." : '';
       if (!v.queteId) {

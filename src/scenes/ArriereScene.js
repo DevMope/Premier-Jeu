@@ -129,12 +129,14 @@ class ArriereScene extends Phaser.Scene {
   // Les décorations achetées à la brocante, accrochées aux murs. Clic : leur effet.
   dessinerDecos() {
     const G = this.G;
-    const places = [[640, 66], [692, 66], [744, 66], [556, 206], [826, 206], [556, 338]];
+    const places = [[640, 66], [692, 66], [744, 66], [556, 206], [826, 206], [556, 338], [826, 338], [588, 66], [796, 66], [826, 272]];
     (G.decos || []).slice(0, places.length).forEach((id, i) => {
       const [x, y] = places[i];
       this.add.rectangle(x, y - 24, 3, 3, 0x2a1a10); // le clou
       const img = this.add.image(x, y, iconeObjet(this, id)).setScale(3).setInteractive({ useHandCursor: true });
       if (id === 'carillon') this.tweens.add({ targets: img, angle: { from: -3, to: 3 }, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      // La lanterne-crâne luit en vert, le chandelier d'argent en doré
+      if (id === 'lanterneCrane' || id === 'chandelier') { const halo = this.add.circle(x, y, 26, id === 'chandelier' ? 0xffd870 : 0x80ff60, 0.16).setBlendMode(Phaser.BlendModes.ADD); this.tweens.add({ targets: halo, alpha: 0.32, scale: 1.15, duration: 900 + Math.random() * 500, yoyo: true, repeat: -1 }); }
       img.on('pointerdown', () => this.message(`${DECOS[id].nom} : ${DECOS[id].effet}`));
     });
   }

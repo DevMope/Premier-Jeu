@@ -353,7 +353,7 @@ class BureauScene extends Phaser.Scene {
       `Réussites pour ${NOMS_CAMPS.bien} : ${r.bien} (+${JAUGE_CAMP.reussite} chacune)`,
       `Réussites pour ${NOMS_CAMPS.mal} : ${r.mal} (−${JAUGE_CAMP.reussite} chacune)`,
       `Âmes offertes, sabotages : ${arrondi(G.mal)} (−${JAUGE_CAMP.mal} par point)`,
-      `Objets marqués : bientôt au marché`, '',
+      `Décorations de camp : ${(G.objetsCamp || {}).bien || 0} lumière, ${(G.objetsCamp || {}).mal || 0} ombre (±${JAUGE_CAMP.objet} chacune)`, '',
       G.camp ? `Camp scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}`
         : `Le camp se scelle à la ${ARMURE.length}e pièce d'armure (${(G.armure || []).length} / ${ARMURE.length}).`,
     ];

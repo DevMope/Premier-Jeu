@@ -416,7 +416,7 @@ function voyageurAuHasard(G, aussi = []) {
   // Une race au hasard d'abord, pour que les races avec beaucoup de noms ne dominent pas...
   // ... sauf que tes décorations attirent certains peuples plus que d'autres.
   const races = [...new Set(libres.map(l => l.race))];
-  const poids = races.map(r => 1 + (G.decos || []).filter(d => DECOS[d].attire === r).length * (ATTIRANCE_DECO - 1));
+  const poids = races.map(r => 1 + (G.decos || []).filter(d => DECOS[d].attire === r || (DECOS[d].attire === 'ombre' && PEUPLES_OMBRE.includes(r))).length * (ATTIRANCE_DECO - 1));
   let tirage = Math.random() * poids.reduce((a, b) => a + b, 0);
   let race = races[0];
   for (let k = 0; k < races.length; k++) { tirage -= poids[k]; if (tirage <= 0) { race = races[k]; break; } }
@@ -785,6 +785,28 @@ function acheterDeco(G, id) {
   if (!peutPayer(G, DECOS[id].prix)) return "Pas assez d'argent.";
   payer(G, DECOS[id].prix, 'decoration');
   G.decos = [...(G.decos || []), id];
+  // (une décoration de camp fait pencher la jauge)
+  if (DECOS[id].camp) { G.objetsCamp = G.objetsCamp || { bien: 0, mal: 0 }; G.objetsCamp[DECOS[id].camp]++; }
+  return null;
+}
+
+// --- Étape 9c/9d : ce que les clients disent de ton comptoir, selon leur camp et le tien ---
+// Renvoie une phrase (dite avant le bonjour) ou null ; peut changer un peu la relation. Une fois
+// par jour et par client.
+function remarqueCamp(G, v) {
+  if (!v || v.remarqueJour === G.jour) return null;
+  v.remarqueJour = G.jour;
+  const banni = PEUPLES_OMBRE.includes(v.race);
+  const decos = (G.decos || []).filter(d => DECOS[d].camp);
+  const clair = decos.filter(d => DECOS[d].camp === 'bien'), sombre = decos.filter(d => DECOS[d].camp === 'mal');
+  const p = palierCamp(G);
+  if (banni && sombre.length && Math.random() < 0.7) { changerRelation(G, v.nom, 1); return `${auHasard(["Ah, ", "Tiens, ", ""])}${auHasard(sombre).startsWith('crane') ? 'un crâne de troll au mur' : 'une lanterne-crâne'}... Enfin un comptoir où l'on respire !`; }
+  if (banni && clair.length && Math.random() < 0.7) { changerRelation(G, v.nom, -1); return `${auHasard(clair) === 'banniere' ? 'Une bannière de la Confrérie' : "Un chandelier d'argent, comme chez les Gardiens"} ? Ici ? Je surveille mes arrières.`; }
+  if (!banni && sombre.length && Math.random() < 0.6) { changerRelation(G, v.nom, -1); return `Brr... ${auHasard(sombre) === 'craneTroll' ? 'ce crâne de troll' : 'cette lanterne-crâne'} me donne froid dans le dos.`; }
+  if (!banni && clair.length && Math.random() < 0.4) { changerRelation(G, v.nom, 1); return auHasard(["La bannière de la Confrérie ! On est entre gens bien, ici.", "Quelle belle lumière dans ce comptoir."]).replace('La bannière de la Confrérie', clair.includes('banniere') ? 'La bannière de la Confrérie' : "Un chandelier d'argent"); }
+  if (banni && p >= 1) return auHasard(["Un comptoir de la Confrérie... Je paie, je prends, je pars.", "Pas de sermon, marchand. Juste du matériel."]);
+  if (!banni && p <= -1 && Math.random() < 0.6) return auHasard(["On raconte des choses sur ton comptoir... J'espère que c'est faux.", "Des Bannis sortaient d'ici hier soir, paraît-il. Ça ne me regarde pas."]);
+  if (!banni && p >= 2 && Math.random() < 0.4) return "Ton comptoir a bonne réputation chez la Confrérie !";
   return null;
 }
 

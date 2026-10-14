@@ -61,6 +61,37 @@ const DESSINS_ICONES = {
     t.poser(8, 8, 'cristal', 5); t.poser(9, 7, 'cristal', 5);
     t.forme('laiton', (x, y) => (y >= 12 && y <= 15 && Math.abs(x + 0.5 - 8) < (y - 10) * 0.9 ? [0, -0.3, 0.8] : null));
   },
+  chandelier(t) { // un chandelier d'argent à trois branches, trois flammes
+    t.rampes.argent = rampe(0xc8ccd8); t.rampes.cire = rampe(0xf0e8d0); t.rampes.flamme = rampe(0xffc040);
+    t.forme('argent', (x, y) => (y >= 13 && y <= 15 && Math.abs(x + 0.5 - 8) < 4 - (15 - y) ? [(x + 0.5 - 8) / 4, -0.3, 0.8] : null));
+    for (let y = 7; y <= 13; y++) t.poser(8, y, 'argent', 4);
+    for (const s of [-1, 1]) { for (let k = 0; k <= 4; k++) t.poser(8 + s * k, 9 - Math.round(k * k * 0.15), 'argent', 3); t.poser(8 + s * 4, 7, 'argent', 4); }
+    for (const x of [4, 8, 12]) { t.poser(x, 5, 'cire', 4); t.poser(x, 6, 'cire', 3); t.poser(x, 3, 'flamme', 5); t.poser(x, 4, 'flamme', 3); }
+  },
+  banniere(t) { // la bannière bleue de la Confrérie, un soleil d'or
+    t.rampes.bleu = rampe(0x2a4a8a);
+    for (let x = 1; x <= 14; x++) t.poser(x, 1, 'chene', 3);
+    t.forme('bleu', (x, y) => (y >= 2 && y <= 14 && x >= 3 && x <= 12 && (y < 12 || Math.abs(x + 0.5 - 8) > (y - 12) * 2) ? [(x + 0.5 - 8) / 6, 0, 0.8] : null), { motif: (x) => (x % 3 === 0 ? -0.4 : 0) });
+    t.forme('or', ellipsoide(8, 7, 2.2, 2.2), { decalage: 0.3 });
+    for (const [dx, dy] of [[0, -4], [0, 4], [-4, 0], [4, 0], [-3, -3], [3, -3], [-3, 3], [3, 3]]) t.poser(8 + dx, 7 + dy, 'or', 4);
+  },
+  craneTroll(t) { // un énorme crâne de troll, un grand trou pour le nez, sur une planche
+    t.rampes.os = rampe(0xd8ceb0);
+    for (let x = 1; x <= 14; x++) { t.poser(x, 14, 'cheneSombre', 3); t.poser(x, 15, 'cheneSombre', 2); }
+    t.forme('os', ellipsoide(8, 6.5, 6.5, 5.5), { decalage: 0.1 });
+    t.forme('os', (x, y) => (y >= 9 && y <= 13 && Math.abs(x + 0.5 - 8) < 4.5 - (y - 9) * 0.3 ? [(x + 0.5 - 8) / 5, 0.3, 0.8] : null));
+    for (const ox of [5, 10]) { t.poser(ox, 6, 'encre', 0); t.poser(ox + 1, 6, 'encre', 0); t.poser(ox, 7, 'encre', 0); t.poser(ox + 1, 7, 'encre', 1); }
+    t.poser(7, 9, 'encre', 0); t.poser(8, 9, 'encre', 0); t.poser(7, 10, 'encre', 1); t.poser(8, 10, 'encre', 0);
+    for (let x = 5; x <= 11; x += 2) t.poser(x, 12, 'encre', 1);
+  },
+  lanterneCrane(t) { // un petit crâne évidé, une lueur verte dedans, pendu à une chaîne
+    t.rampes.os = rampe(0xd8ceb0); t.rampes.lueur = rampe(0x70ff50);
+    for (let y = 0; y <= 3; y++) t.poser(8, y, 'fer', y % 2 ? 2 : 4);
+    t.forme('os', ellipsoide(8, 8, 5, 4.5), { decalage: 0.1 });
+    t.forme('os', (x, y) => (y >= 11 && y <= 14 && Math.abs(x + 0.5 - 8) < 3.2 ? [0, 0.3, 0.8] : null));
+    for (const ox of [6, 10]) { t.poser(ox, 8, 'lueur', 5); t.poser(ox - (ox < 8 ? 1 : 0), 9, 'lueur', 4); }
+    t.poser(8, 11, 'lueur', 3); for (let x = 6; x <= 10; x += 2) t.poser(x, 13, 'encre', 1);
+  },
   fougere(t) { // une fougère touffue dans un pot de terre
     t.rampes.feuille = rampe(0x4f8a3a); t.rampes.terre = rampe(0xb06a3a);
     t.forme('terre', (x, y) => (y >= 11 && y <= 15 && Math.abs(x + 0.5 - 8) < 4.5 - (y - 11) * 0.3 ? [(x + 0.5 - 8) / 5, 0, 0.8] : null));

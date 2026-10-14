@@ -560,7 +560,7 @@ const EFFETS_CAMP = { bien: { reputation: 1.2, reputationAllie: 1.5, butin: 1, m
 // La jauge lumière ⟷ ombre, de −100 (l'ombre) à +100 (la lumière) : ce que le monde pense de toi.
 // (Dans le monde, les deux camps s'appellent la Confrérie et les Bannis.)
 const NOMS_CAMPS = { bien: 'la Confrérie', mal: 'les Bannis' };
-const JAUGE_CAMP = { reussite: 8, mal: 5, objet: 3, max: 100 }; // points par mission réussie pour un camp, par point de la jauge du mal, par objet marqué acheté
+const JAUGE_CAMP = { reussite: 8, mal: 5, objet: 6, max: 100 }; // points par mission réussie pour un camp, par point de la jauge du mal, par objet marqué acheté
 const PALIERS_JAUGE = [25, 60, 90];                              // les paliers, de chaque côté
 const NOMS_PALIERS_JAUGE = {
   3: 'Lumière éclatante', 2: 'Lumière', 1: 'Lueur', 0: 'Entre les deux', '-1': 'Pénombre', '-2': 'Ombre', '-3': 'Ombre épaisse',
@@ -702,12 +702,18 @@ const DECORATIONS = {
 // --- La brocante de Firmin : des décorations pour ton shop ---
 // Chacune se voit dans l'arrière-boutique, et attire un peuple (ou un peu tout le monde).
 const DECOS = {
-  tropheeCerf: { nom: 'Trophée de cerf', prix: 45, attire: 'nain', effet: 'Les nains se sentent chez eux : plus de clients nains.' },
-  tapisserie: { nom: 'Tapisserie des Trois Terres', prix: 60, attire: 'elfe', effet: 'Les elfes admirent le tissage : plus de clients elfes.' },
-  carillon: { nom: 'Carillon de cuivre', prix: 30, attire: 'hobbit', effet: 'Son tintement plaît aux hobbits : plus de clients hobbits.' },
-  horloge: { nom: 'Horloge à coucou', prix: 55, attire: 'humain', effet: 'Les humains aiment la ponctualité : plus de clients humains.' },
-  globe: { nom: 'Globe de cristal', prix: 70, attire: 'magicienne', effet: 'Les magiciennes y lisent des présages : plus de clientes magiciennes.' },
-  fougere: { nom: 'Fougère rare', prix: 25, attire: null, attrait: 0.4, effet: 'Un shop accueillant : +0,4 client par jour.' },
+  tropheeCerf: { court: 'plus de nains', nom: 'Trophée de cerf', prix: 45, attire: 'nain', effet: 'Les nains se sentent chez eux : plus de clients nains.' },
+  tapisserie: { court: 'plus d\'elfes', nom: 'Tapisserie des Trois Terres', prix: 60, attire: 'elfe', effet: 'Les elfes admirent le tissage : plus de clients elfes.' },
+  carillon: { court: 'plus de hobbits', nom: 'Carillon de cuivre', prix: 30, attire: 'hobbit', effet: 'Son tintement plaît aux hobbits : plus de clients hobbits.' },
+  horloge: { court: 'plus d\'humains', nom: 'Horloge à coucou', prix: 55, attire: 'humain', effet: 'Les humains aiment la ponctualité : plus de clients humains.' },
+  globe: { court: 'plus de magiciennes', nom: 'Globe de cristal', prix: 70, attire: 'magicienne', effet: 'Les magiciennes y lisent des présages : plus de clientes magiciennes.' },
+  fougere: { court: '+0,4 client/jour', nom: 'Fougère rare', prix: 25, attire: null, attrait: 0.4, effet: 'Un shop accueillant : +0,4 client par jour.' },
+  // Étape 9c : les décorations des deux camps. Elles font pencher la jauge (lumière ou ombre),
+  // attirent leur camp, et les clients de l'autre camp ne les aiment pas.
+  chandelier: { court: 'lumière · attire les pandas', nom: "Chandelier d'argent", prix: 50, camp: 'bien', attire: 'panda', effet: 'Lumière : les pandas du Monastère se sentent chez eux. Les Bannis grimacent.' },
+  banniere: { court: 'lumière · attire les humains', nom: 'Bannière de la Confrérie', prix: 40, camp: 'bien', attire: 'humain', effet: 'Lumière : les humains te font confiance. Les Bannis se méfient.' },
+  craneTroll: { court: 'ombre · attire les Bannis', nom: 'Crâne de troll', prix: 45, camp: 'mal', attire: 'ombre', effet: "Ombre : les Bannis se sentent chez eux. Les gens de la lumière frissonnent." },
+  lanterneCrane: { court: 'ombre · attire les Bannis', nom: 'Lanterne-crâne', prix: 55, camp: 'mal', attire: 'ombre', effet: "Ombre : une lueur verte qui attire les Bannis. La Confrérie n'aime pas ça." },
 };
 const BROCANTEUR = { nom: 'Firmin le brocanteur' };
 // Plus de clients du peuple qu'une décoration attire : le poids de ce peuple est multiplié.
