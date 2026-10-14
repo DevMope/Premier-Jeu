@@ -17,6 +17,10 @@ class AtelierScene extends Phaser.Scene {
     // La pièce de l'atelier, avec une lanterne qui réchauffe l'établi
     this.add.image(0, 46, 'atelierHD').setOrigin(0).setScale(2);
     this.add.image(500, 90, 'halo').setScale(4, 2.4).setTint(0xffc070).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
+    // (v0.57) Le coin de la forge, encore bâché, et une étagère de pots au-dessus de la table du bijoutier
+    creerCoinForgeHD(this);
+    this.add.image(318, 222, 'forgeBachee').setOrigin(0.5, 1).setScale(2);
+    this.add.image(740, 112, 'etagerePots').setOrigin(0.5, 1).setScale(2);
     this.add.rectangle(480, 46, 960, 4, 0x1a0e06).setOrigin(0.5, 0);
     this.add.rectangle(480, 226, 960, 4, 0x1a0e06).setOrigin(0.5, 0);
     this.add.text(236, 22, "L'atelier", style(26, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0, 0.5);

@@ -1090,3 +1090,106 @@ function bourse(scene, x, y, argent, { echelle = 2, taille = 14, couleur = '#f3d
   c.maj(argent);
   return c;
 }
+
+// --- (v0.57) Les souvenirs de la chambre : l'étagère des trophées, le tableau des lettres, le portrait ---
+function creerSouvenirsChambreHD(scene) {
+  if (scene.textures.exists('etagereTrophees')) return;
+  {
+    // Une étagère murale sur deux consoles sculptées
+    const t = toileDecor(104, 14);
+    planche(t, 0, 0, 104, 5, 'chene', { graine: 971 });
+    for (let x = 0; x < 104; x++) { t.poser(x, 0, 'chene', 5); t.poser(x, 4, 'chene', 1); }
+    for (const x0 of [10, 88]) for (let y = 5; y < 14; y++) for (let x = x0; x < x0 + 6 - Math.floor((y - 5) * 0.5); x++) t.poser(x, y, 'chene', x === x0 ? 4 : 2);
+    t.contour();
+    t.texture(scene, 'etagereTrophees');
+  }
+  {
+    // Le tableau de liège où l'on épingle les lettres reçues
+    const t = toileDecor(52, 40);
+    t.rampes.liege = rampe(0xa8784a);
+    for (let y = 0; y < 40; y++) for (let x = 0; x < 52; x++) {
+      const bord = Math.min(x, y, 51 - x, 39 - y);
+      if (bord < 3) t.poser(x, y, 'chene', bord === 0 ? 1 : bord === 1 ? 4 : 3);
+      else t.poser(x, y, 'liege', 3 + (hachage(x, y, 972) > 0.7 ? 1 : hachage(x, y, 973) > 0.8 ? -1 : 0));
+    }
+    t.contour();
+    t.texture(scene, 'tableauLettres');
+    // une lettre épinglée (trois variantes de papier)
+    ['parchemin', 'cire', 'toile'].forEach((mat, v) => {
+      const l = toileDecor(12, 14);
+      for (let y = 0; y < 14; y++) for (let x = 0; x < 12; x++) l.poser(x, y, mat, (x === 11 || y === 13) ? 2 : 4 - (y > 2 && y < 12 && y % 2 === 0 && x > 1 && x < 10 ? 2 : 0));
+      l.poser(5, 1, v === 1 ? 'cuirRouge' : 'fer', 4); l.poser(6, 1, v === 1 ? 'cuirRouge' : 'fer', 2);
+      l.contour();
+      l.texture(scene, 'lettreEpinglee' + v);
+    });
+  }
+  {
+    // Le portrait de famille : un médaillon ovale, deux silhouettes (tes parents ?) devant un ciel
+    const t = toileDecor(36, 44);
+    t.rampes.ciel = rampe(0x8aa0b8); t.rampes.ombre = rampe(0x3a2e2a);
+    for (let y = 0; y < 44; y++) for (let x = 0; x < 36; x++) {
+      const d = Math.hypot((x + 0.5 - 18) / 17.5, (y + 0.5 - 22) / 21.5);
+      if (d > 1) continue;
+      if (d > 0.84) { t.poser(x, y, 'laiton', d > 0.95 ? 1 : (x + y) % 4 === 0 ? 5 : 3); continue; }
+      t.poser(x, y, 'ciel', 4 - Math.floor(y / 14));
+    }
+    t.forme('ombre', ellipsoide(13, 16, 4, 4.5)); t.forme('ombre', ellipsoide(13, 31, 6.5, 9, (x, y) => y > 22));
+    t.forme('ombre', ellipsoide(23, 18, 3.6, 4.2)); t.forme('ombre', ellipsoide(23, 32, 6, 9, (x, y) => y > 24));
+    t.contour();
+    t.texture(scene, 'portraitFamille');
+  }
+  // Les trophées
+  const dessins = {
+    croc: d => d.forme('ivoire', (x, y) => { const u = (y - 2) / 12; return u >= 0 && u <= 1 && Math.abs(x + 0.5 - 8 - u * u * 3) < 3.2 * (1 - u) + 0.4 ? [0, -0.5, 0.8] : null; }),
+    plume: d => { for (let y = 1; y < 15; y++) { const w = Math.sin((y / 15) * Math.PI) * 3.5; for (let x = Math.round(8 - w); x <= 8 + w; x++) d.poser(x + Math.round((15 - y) * 0.2), y, x === 8 ? 'ivoire' : 'plumeT', x < 8 ? 2 : 4); } },
+    ecaille: d => d.forme('ecailleT', (x, y) => { const nx = (x + 0.5 - 8) / 6, ny = (y + 0.5 - 7) / 7; return nx * nx + ny * ny <= 1 && y > 2 - Math.abs(nx) * 3 ? [nx, ny, 0.7] : null; }),
+    corne: d => { for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 1.3, r = 6 - i * 0.18; d.forme('ivoire', ellipsoide(8 + Math.cos(a) * r, 9 - Math.sin(a) * r, 2.6 - i * 0.1, 2.6 - i * 0.1), { decalage: -0.1 * (i % 2) }); } },
+    crane: d => { d.forme('ivoire', ellipsoide(8, 7, 5.5, 5)); d.forme('ivoire', ellipsoide(8, 12, 3.5, 2.5)); for (const x of [6, 10]) { d.poser(x, 7, 'fer', 0); d.poser(x, 8, 'fer', 0); } },
+    masque: d => { d.forme('chene', ellipsoide(8, 8, 5.5, 7)); for (const x of [5, 11]) d.poser(x, 6, 'fer', 0); for (let x = 6; x < 11; x++) d.poser(x, 11, 'cuirRouge', 3); d.poser(8, 1, 'plumeT', 4); d.poser(8, 0, 'plumeT', 3); },
+  };
+  for (const [id, f] of Object.entries(dessins)) {
+    const d = toileObjet(16, 16);
+    d.rampes.ivoire = rampe(0xe8dcb4); d.rampes.plumeT = rampe(0x6a5a9a); d.rampes.ecailleT = rampe(0x3a8a6a);
+    f(d);
+    d.contour();
+    d.texture(scene, 'trophee_' + id);
+  }
+}
+
+// --- (v0.57) Le coin de la forge, encore bâché (il ouvrira à l'étape 10b), et une étagère de pots ---
+function creerCoinForgeHD(scene) {
+  if (scene.textures.exists('forgeBachee')) return;
+  {
+    const t = toileDecor(44, 50);
+    // le tuyau de la cheminée, qui monte le long du mur
+    for (let y = 0; y < 22; y++) for (let x = 18; x < 25; x++) t.poser(x, y, 'fer', x === 18 ? 4 : x === 24 ? 1 : 3 - (y % 8 === 0 ? 1 : 0));
+    // la bâche, posée sur la forge et l'enclume : une bosse avec de grands plis, ficelée
+    t.rampes.bacheF = rampe(0x7a6c52);
+    t.forme('bacheF', (x, y) => {
+      const nx = (x + 0.5 - 22) / 21, ny = (y + 0.5 - 50) / 30;
+      return y >= 20 && nx * nx + ny * ny <= 1 && y < 49 ? [nx * 0.8, -0.5, Math.sqrt(Math.max(0.1, 1 - nx * nx))] : null;
+    }, { decalage: 0.2 });
+    // les grands plis qui tombent du sommet
+    for (const [x0, pente] of [[14, -0.35], [22, 0], [30, 0.35]]) for (let y = 24; y < 49; y++) {
+      const x = Math.round(x0 + (y - 24) * pente);
+      if (t.mat(x, y) === 'bacheF') { t.poser(x, y, 'bacheF', 1); if (t.mat(x + 1, y) === 'bacheF') t.poser(x + 1, y, 'bacheF', 4); }
+    }
+    for (let x = 4; x < 41; x++) { const y = 36 + Math.round(Math.sin(x * 0.3)); if (t.mat(x, y) === 'bacheF') t.poser(x, y, 'chene', 2); }   // la ficelle
+    // la corne de l'enclume qui dépasse sous la bâche
+    t.forme('fer', (x, y) => (y >= 40 && y <= 44 && x >= 36 && x <= 43 - (y - 40) * 0.6 ? [0.3, -0.7, 0.6] : null), { decalage: 0.3 });
+    t.contour();
+    t.texture(scene, 'forgeBachee');
+  }
+  {
+    const t = toileDecor(72, 26);
+    planche(t, 0, 20, 72, 4, 'chene', { graine: 981 });
+    for (let x = 0; x < 72; x++) t.poser(x, 20, 'chene', 5);
+    t.rampes.potA = rampe(0x6a8aa0); t.rampes.potB = rampe(0x9a5a3a); t.rampes.potC = rampe(0x5a7a4a);
+    [[8, 'potA', 7, 13], [22, 'potB', 6, 16], [36, 'potC', 5, 11], [50, 'potB', 7, 12], [63, 'potA', 4, 9]].forEach(([cx, mat, r, h]) => {
+      t.forme(mat, (x, y) => { const nx = (x + 0.5 - cx) / r; return y < 20 && y >= 20 - h && Math.abs(nx) <= 1 - (y < 20 - h + 3 ? 0.35 : 0) ? [nx, -0.2, Math.sqrt(1 - nx * nx * 0.9)] : null; }, { decalage: 0.3 });
+      for (let x = cx - r + 2; x <= cx + r - 2; x++) t.poser(x, 20 - h, 'chene', 3);   // le bouchon de liège
+    });
+    t.contour();
+    t.texture(scene, 'etagerePots');
+  }
+}

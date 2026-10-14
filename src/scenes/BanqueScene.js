@@ -12,7 +12,7 @@ class BanqueScene extends Phaser.Scene {
     // Murs de pierre
     creerInterieurHD(this);
     creerBanqueHD(this);
-    this.add.image(0, 0, 'murBanque').setOrigin(0).setScale(2).setTint(0xb8b0c0);
+    this.add.image(0, 0, 'murBanque').setOrigin(0).setScale(2);
     vignette(this, 0.8, 0);
     // Bannières de velours, et deux chandeliers dorés
     for (const x of [90, 870]) this.add.image(x, 20, 'banniereHD').setOrigin(0.5, 0).setScale(2);
@@ -27,7 +27,9 @@ class BanqueScene extends Phaser.Scene {
     this.toiser();
     // L'immense bureau, devant eux : on ne voit que leurs têtes qui dépassent
     this.bureau = this.add.image(480, 180, 'bureauBanque').setOrigin(0.5, 0).setScale(2);
-    this.add.text(480, 242, 'BANQUE CENTRALE GOYENNE', style(17, '#3a2408', { fontStyle: 'bold' })).setOrigin(0.5);
+    // (le nom gravé dans la plaque : un trait clair dessous, un creux sombre dessus)
+    this.add.text(481, 243, 'BANQUE CENTRALE GOYENNE', style(17, '#fff2b0', { fontStyle: 'bold' })).setOrigin(0.5).setAlpha(0.7);
+    this.add.text(480, 242, 'BANQUE CENTRALE GOYENNE', style(17, '#4a2c06', { fontStyle: 'bold' })).setOrigin(0.5);
 
     // Toi, tout petit, tout en bas
     this.add.image(70, 535, textureJoueur(this, G, 'troisQuarts')).setOrigin(0.5, 1).setScale(echelleJoueur(7));   // (tourné vers les banquiers)

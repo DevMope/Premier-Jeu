@@ -190,3 +190,48 @@ function creerRecitHD(scene) {
     t.texture(scene, 'lueurHD');
   }
 }
+
+// --- (v0.57) La Bête de l'antre : un grand wyrm aux écailles sombres, ailes repliées, cornes,
+// la gueule ouverte où rougeoie le feu (un leurre ? on ne le saura qu'à l'Antre...) ---
+function creerBeteAntreHD(scene) {
+  if (scene.textures.exists('beteAntreHD')) return;
+  const t = toileDecor(100, 66);
+  t.rampes.ecailleB = rampe(0x4a2420); t.rampes.ventreB = rampe(0xa8784a); t.rampes.aile = rampe(0x3a1418);
+  t.rampes.corneB = rampe(0xd8ccb0); t.rampes.feu = [0x7a1a08, 0xb83a10, 0xe86a18, 0xf8a030, 0xffd060, 0xfff4c0];
+  t.rampes.oeilB = [0x5a3a00, 0x9a6a00, 0xd8a010, 0xf8d030, 0xfff070, 0xffffd0];
+  const ecailles = (x, y) => (((x * 5 + y * 3) % 6 === 0) ? -0.7 : ((x + y * 2) % 7 === 0 ? 0.4 : 0));
+  // l'aile repliée, derrière le corps : une membrane tendue sur trois baleines
+  t.forme('aile', (x, y) => {
+    if (y < 4 || y > 36 || x < 44 || x > 94) return null;
+    const haut = 4 + Math.abs(x - 74) * 0.5, bas = 36 - Math.max(0, x - 82) * 1.2;
+    return y >= haut + Math.sin(x * 0.4) * 1.5 && y <= bas ? [0.2, -0.6, 0.7] : null;
+  }, { decalage: -0.2 });
+  for (const [x1, y1] of [[52, 30], [66, 16], [86, 26]]) traitHD(t, 'corneB', [[74, 6], [x1, y1]], 0.9, 0.2);
+  // la queue, qui remonte en fouet vers la droite
+  traitHD(t, 'ecailleB', [[78, 48], [90, 50], [96, 40], [98, 30]], 4.5, -0.1);
+  // les pattes de derrière et de devant, avec leurs griffes
+  for (const [x0, ep] of [[72, 5.5], [64, 5], [38, 5], [30, 4.5]]) traitHD(t, 'ecailleB', [[x0, 44], [x0 - 2, 56], [x0 - 4, 62]], ep, x0 % 2 ? -0.3 : 0.1);
+  for (const x0 of [68, 60, 34, 26]) for (const d of [-3, 0, 3]) { t.poser(x0 + d - 1, 64, 'corneB', 4); t.poser(x0 + d - 2, 65, 'corneB', 2); }
+  // le grand corps, et son ventre clair
+  t.forme('ecailleB', ellipsoide(56, 40, 26, 15), { motif: ecailles, decalage: 0.3 });
+  t.forme('ventreB', (x, y) => { const nx = (x + 0.5 - 54) / 22, ny = (y + 0.5 - 46) / 8; return nx * nx + ny * ny <= 1 && y > 42 ? [nx * 0.5, 0.6, 0.6] : null; }, { motif: (x, y) => (y % 3 === 0 ? -0.6 : 0) });
+  // le cou qui se dresse vers la gauche, puis la tête
+  traitHD(t, 'ecailleB', [[42, 34], [32, 24], [24, 20]], 7, 0.2);
+  t.forme('ecailleB', ellipsoide(17, 20, 11, 8), { motif: ecailles, decalage: 0.35 });
+  t.forme('ecailleB', ellipsoide(6, 22, 7, 4.5), { decalage: 0.25 });                               // le museau
+  // la gueule ouverte : la mâchoire du bas, les crocs, le feu au fond
+  t.forme('ecailleB', (x, y) => (x >= 0 && x <= 18 && y >= 27 && y <= 31 - (18 - x) * 0.12 ? [0, 0.5, 0.7] : null), { decalage: 0.1 });
+  for (let x = 2; x < 16; x++) for (let y = 25; y < 28; y++) t.poser(x, y, 'feu', 5 - Math.floor((16 - x) / 4) - (y === 27 ? 1 : 0));
+  for (const x of [3, 7, 11]) { t.poser(x, 25, 'corneB', 5); t.poser(x, 26, 'corneB', 3); t.poser(x + 1, 27, 'corneB', 4); }
+  // les cornes, l'œil qui luit, la naseau qui fume
+  traitHD(t, 'corneB', [[20, 14], [28, 6], [34, 4]], 1.6, 0.3);
+  traitHD(t, 'corneB', [[15, 13], [20, 5], [24, 1]], 1.3, 0.3);
+  t.poser(13, 18, 'oeilB', 5); t.poser(14, 18, 'oeilB', 4); t.poser(13, 19, 'oeilB', 3); t.poser(14, 19, 'feu', 0);
+  t.poser(2, 20, 'feu', 0); t.poser(3, 20, 'feu', 1);
+  // les piques le long du dos
+  for (const [x, y] of [[30, 17], [36, 22], [44, 26], [52, 25], [60, 25], [68, 27], [76, 31], [84, 40], [92, 40]]) {
+    for (let j = 0; j < 4; j++) for (let i = -2 + Math.ceil(j / 2); i <= 2 - Math.ceil(j / 2); i++) if (!t.mat(x + i, y - j) || t.mat(x + i, y - j) === 'aile') t.poser(x + i, y - j, 'corneB', j < 2 ? 3 : 4);
+  }
+  t.contour();
+  t.texture(scene, 'beteAntreHD');
+}

@@ -486,6 +486,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     garde: { visites: 0, dernier: 0, saisies: 0 },   // les visites de la garde de la Confrérie
     interdits: {},     // les objets interdits achetés au marché noir (étape 9e)
     garrickVu: [],     // les visites de Garrick déjà faites
+    trophees: [],      // (v0.57) les trophées offerts par les habitués devenus frères de sang
     ainesVus: [],      // (v0.56) les aînés des Bannis passés au comptoir
     ainesRecits: [],   // et ceux dont on a écouté le récit au marché noir
     malCorrige: true,  // (migration de l'audit v0.53 déjà faite)
@@ -865,7 +866,14 @@ function changerRelation(G, nom, delta) {
     G.materiaux.cuir += 2;
     return `${nom} te considère comme un ami ! En cadeau : 2 fer et 2 cuir.`;
   }
-  if (apres.nom === 'Frères de sang') return `${nom} et toi êtes maintenant ${feminin ? 'sœurs' : 'frères'} de sang ! ` + offrirDecoration(G, feminin);
+  if (apres.nom === 'Frères de sang') {
+    // (v0.57) et un trophée de ses aventures, pour l'étagère de la chambre
+    const libres = Object.keys(TROPHEES).filter(id => !(G.trophees || []).some(t => t.id === id));
+    const trophee = libres.length ? auHasard(libres) : null;
+    if (trophee) G.trophees = [...(G.trophees || []), { id: trophee, de: nom, jour: G.jour }];
+    return `${nom} et toi êtes maintenant ${feminin ? 'sœurs' : 'frères'} de sang ! ` + offrirDecoration(G, feminin) +
+      (trophee ? ` Et pour ta chambre, un trophée de ses aventures : ${TROPHEES[trophee].nom.toLowerCase()}.` : '');
+  }
   if (apres.nom === 'Pires ennemis') {
     const perdus = [];
     for (let i = 0; i < 3; i++) {

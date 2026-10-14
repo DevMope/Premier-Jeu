@@ -638,15 +638,31 @@ function creerBanqueHD(scene) {
   {
     const L = 480, H = 270;
     const t = toileDecor(L, H);
+    // (v0.57) En haut, de grandes plaques de marbre veiné ; en bas, un lambris de bois sombre
+    t.rampes.marbre = [0x3a3640, 0x5a5660, 0x7a7680, 0x9894a0, 0xb4b0b8, 0xccc8cc];
+    const lambris = 176;
     for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
-      const rangee = Math.floor(y / 12), dec = (rangee % 2) * 14;
-      const bx = (x + dec) % 28, by = y % 12;
-      const joint = bx === 0 || by === 0;
-      let i = joint ? 1 : 3 + (by === 1 ? 1 : 0) - (bx === 27 || by === 11 ? 1 : 0) + Math.round((fbm(x * 0.08, y * 0.08, 740) - 0.5) * 1.2);
-      t.poser(x, y, 'pierre', i);
+      if (y >= lambris) continue;
+      const rangee = Math.floor(y / 34), dec = (rangee % 2) * 24;
+      const bx = (x + dec) % 48, by = y % 34;
+      if (bx === 0 || by === 0) { t.poser(x, y, 'marbre', 1); continue; }
+      const veine = Math.abs(Math.sin(x * 0.045 + y * 0.02 + fbm(x * 0.03, y * 0.03, 741) * 9));
+      let i = 3 + (by === 1 || bx === 1 ? 1 : 0) - (bx === 47 || by === 33 ? 1 : 0) + Math.round((fbm(x * 0.05, y * 0.05, 740) - 0.5) * 1.4);
+      if (veine < 0.035) i -= 1;
+      t.poser(x, y, 'marbre', i);
     }
-    for (const x0 of [12, 90, 380, 458]) for (let y = 0; y < H; y++) for (let x = x0; x < x0 + 10; x++) {
-      t.poser(x, y, 'pierre', x === x0 ? 5 : x === x0 + 9 ? 1 : x === x0 + 4 ? 2 : 4);
+    for (let x = 0; x < L; x++) { t.poser(x, lambris, 'laiton', 4); t.poser(x, lambris + 1, 'laiton', 2); t.poser(x, lambris + 2, 'cheneSombre', 0); }
+    planche(t, 0, lambris + 3, L, H - lambris - 3, 'cheneSombre', { graine: 742, noeuds: 3 });
+    for (let k = 0; k < 8; k++) {
+      const x0 = 8 + k * 60;
+      for (let y = lambris + 12; y < H - 8; y++) for (let x = x0; x < x0 + 46; x++) {
+        const bord = Math.min(x - x0, y - lambris - 12, x0 + 45 - x, H - 9 - y);
+        if (bord === 0) t.poser(x, y, 'cheneSombre', (x === x0 || y === lambris + 12) ? 0 : 4);
+        else if (bord === 1) t.poser(x, y, 'cheneSombre', (x === x0 + 1 || y === lambris + 13) ? 4 : 1);
+      }
+    }
+    for (const x0 of [12, 90, 380, 458]) for (let y = 0; y < lambris; y++) for (let x = x0; x < x0 + 10; x++) {
+      t.poser(x, y, 'marbre', x === x0 ? 5 : x === x0 + 9 ? 1 : x === x0 + 4 ? 2 : 4);
     }
     for (let x = 0; x < L; x++) { t.poser(x, 6, 'laiton', 4); t.poser(x, 7, 'laiton', 2); if (x % 6 < 3) t.poser(x, 9, 'laiton', 3); }
     t.texture(scene, 'murBanque');
@@ -680,11 +696,21 @@ function creerBanqueHD(scene) {
         const bord = Math.min(x - x0, y - 16, x0 + 31 - x, 49 - y);
         if (bord === 0) t.poser(x, y, 'laiton', (x === x0 || y === 16) ? 4 : 2);
         else if (bord === 1) t.poser(x, y, 'chene', (x === x0 + 1 || y === 17) ? 1 : 4);
-        else t.poser(x, y, 'chene', 3 + Math.round((fbm(x * 0.1, y * 0.1, 752 + k) - 0.5)));
+        else {
+          const d = Math.abs(x + 0.5 - (x0 + 16)) / 12 + Math.abs(y + 0.5 - 33) / 13;
+          t.poser(x, y, 'chene', (d > 0.93 && d < 1.05 ? (y < 33 ? 1 : 5) : d < 0.93 ? 4 : 3) + Math.round((fbm(x * 0.1, y * 0.1, 752 + k) - 0.5)));
+        }
       }
     }
     // La plaque de laiton au centre, pour le nom de la banque
-    for (let y = 22; y < 40; y++) for (let x = 70; x < 220; x++) t.poser(x, y, 'laiton', (y === 22 || x === 70) ? 5 : (y === 39 || x === 219) ? 1 : 3);
+    // (v0.57) une plaque biseautée, un filet gravé, quatre rivets
+    for (let y = 20; y < 42; y++) for (let x = 66; x < 224; x++) {
+      const bord = Math.min(x - 66, y - 20, 223 - x, 41 - y);
+      let ton = bord === 0 ? 1 : bord === 1 ? ((x === 67 || y === 21) ? 5 : 2) : bord === 2 ? ((x === 68 || y === 22) ? 4 : 2) : 3 + Math.round((fbm(x * 0.08, y * 0.3, 753) - 0.5) * 1.2);
+      if (bord === 4) ton = 2;
+      t.poser(x, y, 'laiton', ton);
+    }
+    for (const [rx, ry] of [[70, 24], [219, 24], [70, 37], [219, 37]]) { t.poser(rx, ry, 'laiton', 5); t.poser(rx + 1, ry + 1, 'laiton', 1); }
     t.contour();
     t.texture(scene, 'bureauBanque');
   }
@@ -1881,4 +1907,91 @@ function decorsEtalsHD(scene) {
     for (let k = 0; k < 4; k++) t.poser(19 + k, 35, 'tissuRouge', 2);
     t.contour(); t.texture(scene, 'porteChapeauxHD');
   }
+}
+
+// --- (v0.57) La roulotte de Grippesou ---
+// Une roulotte de bric et de broc : caisse de planches peinte de travers, toit bombé couvert d'une
+// bâche rapiécée, grosses roues cerclées de fer, lanterne, fenêtre à rideau, marchepied, et tout un
+// fatras sur le toit (sacs, une cage, une épée qui dépasse, une casserole qui pend).
+function roulotteGrippesouHD(scene) {
+  if (scene.textures.exists('roulotteGrippesouHD')) return 'roulotteGrippesouHD';
+  const L = 150, H = 104, t = toileDecor(L, H);
+  t.rampes.bache = rampe(0xb8a27a); t.rampes.rapiece = rampe(0x7a5a8a); t.rampes.rapiece2 = rampe(0x5a7a5a);
+  t.rampes.peint = rampe(0x8a3a2a); t.rampes.jute = rampe(0xb08a58); t.rampes.lueur = [0x5a3010, 0x8a5018, 0xb87820, 0xe0a030, 0xf4c860, 0xfff0b0];
+  const sol = H - 2;
+  // la caisse de planches, peinte en rouge passé
+  planche(t, 22, 46, 104, 36, 'chene', { graine: 951, noeuds: 2 });
+  for (let y = 46; y < 82; y++) for (let x = 22; x < 126; x++) {
+    if ((x - 22) % 9 === 0) t.poser(x, y, 'chene', 0);
+    else if (fbm(x * 0.04, y * 0.07, 953) > 0.4) t.poser(x, y, 'peint', 3 + ((x - 22) % 9 === 1 ? 1 : (x - 22) % 9 === 8 ? -1 : 0) + Math.round((fbm(x * 0.15, y * 0.15, 954) - 0.5) * 1.2));
+  }
+  for (let x = 20; x < 128; x++) { t.poser(x, 46, 'chene', 5); t.poser(x, 47, 'chene', 4); t.poser(x, 81, 'cheneSombre', 1); t.poser(x, 82, 'cheneSombre', 0); }
+  // le toit bombé et sa bâche rapiécée
+  t.forme('bache', (x, y) => { const nx = (x + 0.5 - 74) / 60, ny = (y + 0.5 - 50) / 34; return y <= 48 && nx * nx + ny * ny <= 1 ? [nx * 0.7, -0.6, Math.sqrt(Math.max(0.05, 1 - nx * nx))] : null; }, { decalage: 0.3, motif: (x) => ((x - 14) % 12 === 0 ? -0.6 : 0) });
+  for (const [x0, y0, l, h, mat] of [[40, 24, 14, 10, 'rapiece'], [92, 30, 12, 9, 'rapiece2'], [66, 18, 10, 7, 'jute']]) {
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + l; x++) if (t.mat(x, y) === 'bache') t.poser(x, y, mat, (x === x0 || y === y0) ? 4 : 3);
+    for (let x = x0; x < x0 + l; x += 2) { t.poser(x, y0 - 1, 'cheneSombre', 2); t.poser(x, y0 + h, 'cheneSombre', 2); }   // les points de couture
+  }
+  // le fatras sur le toit : deux sacs, une cage, une épée qui dépasse
+  t.forme('jute', ellipsoide(36, 16, 9, 7), { decalage: 0.2 });
+  t.forme('jute', ellipsoide(52, 12, 7, 6), { decalage: 0.2 });
+  for (let y = 4; y < 18; y++) for (let x = 100; x < 114; x++) if ((x - 100) % 3 === 0 || y === 4 || y === 17) t.poser(x, y, 'laiton', y === 4 ? 5 : 3);
+  trait(t, 'fer', 80, 2, 86, 18, 1);
+  for (let x = 77; x < 89; x++) t.poser(x, 6, 'laiton', 4);
+  // la fenêtre à rideau, éclairée, et l'enseigne peinte de travers
+  for (let y = 54; y < 68; y++) for (let x = 90; x < 112; x++) {
+    const bord = x === 90 || x === 111 || y === 54 || y === 67;
+    t.poser(x, y, bord ? 'cheneSombre' : (x < 96 || x > 105) ? 'rapiece' : 'lueur', bord ? 1 : (x < 96 || x > 105) ? 3 : 4 + (x === 100 ? -1 : 0));
+  }
+  for (let i = 0; i < 46; i++) for (let j = 0; j < 11; j++) {
+    const x = 32 + i, y = 56 + j + Math.round(i * 0.12);
+    t.poser(x, y, 'parchemin', j === 0 || j === 10 || i === 0 || i === 45 ? 1 : 4);
+  }
+  // les lettres : des traits sombres qui imitent « GRIPPESOU »
+  for (let i = 0; i < 9; i++) for (let j = 0; j < 5; j++) if (hachage(i, j, 955) > 0.35) t.poser(36 + i * 4 + (j % 2), 59 + j + Math.round((36 + i * 4) * 0.12 - 32 * 0.12), 'cuirRouge', 1);
+  // la porte à l'arrière, et son marchepied
+  for (let y = 50; y < 81; y++) for (let x = 126; x < 140; x++) t.poser(x, y, 'chene', x === 126 || x === 139 ? 1 : 3 - ((x - 126) % 5 === 0 ? 1 : 0));
+  t.poser(136, 66, 'laiton', 5);
+  for (const [y0, x0] of [[84, 128], [90, 132]]) for (let x = x0; x < x0 + 12; x++) { t.poser(x, y0, 'chene', 4); t.poser(x, y0 + 1, 'chene', 2); }
+  // la lanterne qui pend à l'avant, la casserole accrochée
+  for (let y = 40; y < 50; y++) t.poser(16, y, 'fer', 2);
+  for (let y = 50; y < 60; y++) for (let x = 12; x < 21; x++) t.poser(x, y, (x === 12 || x === 20 || y === 50 || y === 59) ? 'fer' : 'lueur', (x === 12 || x === 20 || y === 50 || y === 59) ? 2 : 5 - Math.abs(x - 16) * 0.5);
+  // (la casserole de cuivre, pendue au crochet sous l'avant-toit)
+  for (let y = 46; y < 50; y++) t.poser(26, y, 'fer', 2);
+  t.forme('laiton', (x, y) => (y >= 50 && y <= 56 && Math.abs(x + 0.5 - 27) < 5 - (y > 54 ? 1 : 0) ? [(x + 0.5 - 27) / 5, 0, 0.8] : null), { decalage: 0.2 });
+  for (let x = 32; x < 36; x++) t.poser(x, 51, 'fer', 2);
+  // le dessous et les grosses roues cerclées de fer
+  for (let x = 26; x < 122; x++) for (let y = 83; y < 86; y++) t.poser(x, y, 'cheneSombre', 1);
+  for (const cx of [44, 104]) {
+    const cy = sol - 16, r = 16;
+    for (let y = cy - r - 1; y <= cy + r + 1; y++) for (let x = cx - r - 1; x <= cx + r + 1; x++) {
+      const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy), a = Math.atan2(y + 0.5 - cy, x + 0.5 - cx);
+      if (d > r + 0.5) continue;
+      if (d > r - 2) t.poser(x, y, 'fer', d > r - 1 ? 2 : 4 - (y > cy ? 1 : 0));
+      else if (d > r - 4.5) t.poser(x, y, 'chene', 3 - (y > cy ? 1 : 0));
+      else if (d < 3.5) t.poser(x, y, 'chene', d < 1.5 ? 1 : 4);
+      else if (Math.abs(((a / (Math.PI / 5)) % 1 + 1) % 1 - 0.5) > 0.38) t.poser(x, y, 'chene', 3);
+    }
+  }
+  t.contour();
+  t.texture(scene, 'roulotteGrippesouHD');
+  return 'roulotteGrippesouHD';
+}
+
+// Un chemin de terre battue : ornières, cailloux, touffes d'herbe au bord (en haut).
+function cheminTerreHD(scene, largeur = 960, hauteur = 110) {
+  const cle = `cheminTerre_${largeur}x${hauteur}`;
+  if (scene.textures.exists(cle)) return cle;
+  const L = Math.round(largeur / 2), H = Math.round(hauteur / 2), t = toileDecor(L, H);
+  t.rampes.terreC = rampe(0x9a7a50); t.rampes.herbeC = rampe(0x5a8a3a);
+  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+    const p = y / H;
+    let ton = 3 + Math.round((fbm(x * 0.05, y * 0.25, 961) - 0.5) * 2.2) - (p < 0.08 ? 1 : 0);
+    if (Math.abs(y - H * 0.45 - Math.sin(x * 0.01) * 2) < 1.6 || Math.abs(y - H * 0.75 - Math.sin(x * 0.012 + 1) * 2) < 1.8) ton -= 1;   // les ornières
+    if (hachage(x, y, 962) > 0.975) ton += 2;
+    t.poser(x, y, 'terreC', ton);
+    if (y < 6 && fbm(x * 0.2, 0, 963) > 0.45 && y < 6 - fbm(x * 0.5, 1, 964) * 6) t.poser(x, y, 'herbeC', 2 + (y % 2));
+  }
+  t.texture(scene, cle);
+  return cle;
 }

@@ -1656,6 +1656,18 @@ const AINES = {
   },
 };
 
+// --- (v0.57) Les trophées d'aventuriers ---
+// Rares : un habitué n'en offre qu'en devenant ton frère (ou ta sœur) de sang. Ils trônent sur
+// l'étagère de ta chambre.
+const TROPHEES = {
+  croc: { nom: 'Un croc de loup géant' },
+  plume: { nom: "Une plume d'aigle des cimes" },
+  ecaille: { nom: 'Une écaille de wyverne' },
+  corne: { nom: 'Une corne de bélier noir' },
+  crane: { nom: 'Un petit crâne de gobelin des marais' },
+  masque: { nom: 'Un masque de chaman' },
+};
+
 // --- La chance (le trèfle) ---
 
 // Chaque voyageur a sa chance, de 0 à 10 : un peu au départ, plus avec une bonne relation, et

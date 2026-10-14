@@ -579,7 +579,15 @@ class StoryScene extends Cinematique {
         break;
       }
       case 'yeti': bete('yetiHD', x + 160, 3); particules('lueurHD', 0xffffff, { vx: -0.3, vy: 1, n: 3, echelle: 1.2 }); break;
-      case 'monstre': bete('trollHD', x + 170, 3.1); break;
+      case 'monstre':
+        // (v0.57) l'Antre a sa propre Bête : un grand wyrm qui crache le feu
+        if (this.parti.voyageur.quete === 'bete') {
+          creerBeteAntreHD(this);
+          const b = bete('beteAntreHD', x + 200, 3.4);
+          particules('lueurHD', 0xff7a20, { vx: -0.6, vy: -0.4, n: 2, echelle: 1.4, add: true });
+          this.time.delayedCall(1300, () => { if (b.active) { const f = ajouter(this.add.image(b.x - 150, sol - 140, 'halo').setScale(2.6, 1.4).setTint(0xff6a10).setAlpha(0.55).setBlendMode(Phaser.BlendModes.ADD).setDepth(3)); this.tweens.add({ targets: f, alpha: 0.2, scaleX: 3.2, duration: 400, yoyo: true, repeat: -1 }); } });
+        } else bete('trollHD', x + 170, 3.1);
+        break;
       case 'esprits': [0, 60, 120].forEach(dx => bete('espritHD', x + 110 + dx, 2, { flottante: true })); break;
       case 'mortvivant': [0, 70].forEach(dx => bete('squeletteHD', x + 130 + dx, 2.4)); break;
       case 'bandits': [0, 60].forEach(dx => humain(x + 120 + dx, 0x6a5a66)); break;

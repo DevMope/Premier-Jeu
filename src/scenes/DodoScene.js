@@ -14,7 +14,7 @@ class DodoScene extends Cinematique {
     const G = this.G = window.GAME;
     this.cameras.main.fadeIn(500);
     this.dessinerChambre();
-    this.joueur = this.add.image(1000, SOL_CHAMBRE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(6)).setDepth(3);
+    this.joueur = this.add.image(1000, SOL_CHAMBRE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(3);
     this.boutonPasser(() => this.passer());
     this.derouler();
   }
@@ -89,6 +89,15 @@ class DodoScene extends Cinematique {
     this.coteAffiche = this.G.armureCoteVu || coteArmure(this.G);
     this.dessinerArmure(this.G.armure.filter(id => !(this.G.nouvellesPieces || []).some(n => n.piece === id)));
     this.add.image(400, 150, 'hd_epee').setScale(4).setAngle(45).setDepth(2);
+    // (v0.57) Les souvenirs au mur : le portrait de famille, l'étagère des trophées (rares), les lettres
+    creerSouvenirsChambreHD(this);
+    this.add.image(64, 96, 'portraitFamille').setScale(2).setDepth(1.3);
+    this.add.image(140, 210, 'etagereTrophees').setOrigin(0, 0).setScale(2).setDepth(1.3);
+    (this.G.trophees || []).slice(0, 6).forEach((t, i) => this.add.image(160 + i * 32, 212, 'trophee_' + t.id).setOrigin(0.5, 1).setScale(2).setDepth(1.35));
+    if (!(this.G.trophees || []).length) this.add.text(244, 196, 'Trophées des aventuriers', style(10, '#c8a878', { fontStyle: 'italic' })).setOrigin(0.5).setAlpha(0.55).setDepth(1.35);
+    this.add.image(480, 60, 'tableauLettres').setOrigin(0, 0).setScale(2).setDepth(1.3);
+    const nLettres = Math.min(6, (this.G.courrier || []).length + Math.floor(((this.G.stats || {}).lettresAcceptees || 0) / 3));
+    for (let i = 0; i < nLettres; i++) this.add.image(496 + (i % 3) * 26 + (i % 2) * 3, 70 + Math.floor(i / 3) * 34 + (i % 3) * 2, 'lettreEpinglee' + (i % 3)).setOrigin(0, 0).setScale(2).setAngle((i % 2 ? 4 : -5)).setDepth(1.32);
 
     // L'obscurité de la chambre, qui tombe quand on souffle la bougie.
     this.noir = this.add.rectangle(480, 270, 960, 540, 0x05060f, 0).setDepth(6);
@@ -100,7 +109,7 @@ class DodoScene extends Cinematique {
     const b = this.bilan;
     await this.marcher(this.joueur, 600, 4);
     this.onomatopee(600, SOL_CHAMBRE - 130, 'Aaaah...', '#f3d98a');
-    await this.animer({ targets: this.joueur, scaleY: echelleJoueur(6.5), duration: 260, yoyo: true });
+    await this.animer({ targets: this.joueur, scaleY: echelleJoueur(8), duration: 260, yoyo: true });
     await this.attendre(300);
     // Il souffle la bougie...
     this.onomatopee(650, SOL_CHAMBRE - 140, 'Fffff !');

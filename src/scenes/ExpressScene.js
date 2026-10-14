@@ -13,9 +13,9 @@ class ExpressScene extends Phaser.Scene {
 
   create() {
     const G = this.G = window.GAME;
-    const g = this.add.graphics();
-    dessinerComte(g, 0, 0, 960, 540, 0.4);
-    g.fillStyle(0xc9a46a).fillRect(0, 430, 960, 110);
+    // (v0.57) Le paysage du Comté en HD, et un chemin de terre battue
+    this.add.image(0, 0, paysageHD(this, 960, 440, 'comte', 0)).setOrigin(0).setScale(2);
+    this.add.image(0, 425, cheminTerreHD(this, 960, 120)).setOrigin(0).setScale(2);
 
     if (this.vendeur === 'colporteur') {
       // Barnabé et son âne attelé à la charrette, lui qui s'éponge le front
@@ -26,15 +26,14 @@ class ExpressScene extends Phaser.Scene {
       this.add.text(30, 22, COLPORTEUR.nom, style(26, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }));
       this.add.text(30, 58, 'Colporteur · des choses rares, directement dans ta réserve · un peu plus cher qu\'au marché', style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 }));
     } else {
-      dessinerCaravane(this, 260, 435);
-      // Sa pile de pièces, qu'il couve du regard
-      const pile = this.add.graphics();
-      for (let i = 0; i < 9; i++) {
-        pile.fillStyle(0x9a7a10).fillEllipse(500 + (i % 3) * 16, 434 - Math.floor(i / 3) * 6, 20, 8);
-        pile.fillStyle(0xe8c040).fillEllipse(500 + (i % 3) * 16, 432 - Math.floor(i / 3) * 6, 20, 8);
-      }
+      this.add.image(250, 440, roulotteGrippesouHD(this)).setOrigin(0.5, 1).setScale(2.5);
+      creerHalo(this);
+      lumiere(this, 92, 302, 70, 0xffc060, 0.45);
+      // Sa bourse débordante, qu'il couve du regard
+      creerBoursesHD(this);
+      this.add.image(565, 440, 'bourseHD4').setOrigin(0.5, 1).setScale(2.6);
       // Le gobelin, recroquevillé, qui se frotte les mains
-      this.gobelin = imageCorps(this, 440, 435, 'gobelin', 8).setAngle(14);
+      this.gobelin = imageCorps(this, 490, 438, 'gobelin', 10).setAngle(12);
       this.tweens.add({ targets: this.gobelin, angle: 18, scaleY: this.gobelin.scaleY * 0.96, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       this.add.text(30, 22, MARCHAND_EXPRESS.nom, style(26, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }));
       this.add.text(30, 58, 'Marchand express · tout de suite, sur ton comptoir · bien plus cher', style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 }));
