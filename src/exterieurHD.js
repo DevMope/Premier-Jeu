@@ -587,18 +587,45 @@ function etalHD(scene, couleur) {
 
 // Les pavés de la rue, sur toute la largeur.
 function pavesHD(scene, largeur, hauteur = 50) {
-  const cle = `paves_${largeur}x${hauteur}`;
+  // (v0.57) Des pavés de ville : des rangées qui grandissent vers le bas (la perspective), des pierres
+  // de largeurs et de teintes variées, bombées (le haut éclairé, le bas dans l'ombre), coins écornés,
+  // joints sombres où poussent un peu de mousse et de terre, quelques pierres fendues.
+  const cle = `paves2_${largeur}x${hauteur}`;
   if (scene.textures.exists(cle)) return cle;
   const L = Math.round(largeur / 2), H = Math.round(hauteur / 2);
   const t = toileDecor(L, H);
-  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
-    const rangee = Math.floor(y / 4), dec = (rangee % 2) * 3;
-    const bx = (x + dec) % 6, by = y % 4;
-    const joint = bx === 0 || by === 0;
-    let i = joint ? 1 : 3 + (by === 1 ? 1 : 0) - (bx === 5 ? 1 : 0) + Math.round((hachage(Math.floor((x + dec) / 6), rangee, 730) - 0.5) * 1.5);
-    if (y === 0) i = 0;
-    t.poser(x, y, 'pierre', i);
+  t.rampes.paveA = rampe(0x8a8478); t.rampes.paveB = rampe(0x7c7a76); t.rampes.paveC = rampe(0x948a7a);
+  t.rampes.joint = rampe(0x4a3e34); t.rampes.mousseJ = rampe(0x5a6a34); t.rampes.terreJ = rampe(0x6a5640);
+  // Les rangées : de 3 pixels au loin à 6 au premier plan
+  const rangees = []; let y0 = 0, r = 0;
+  while (y0 < H) { const h = Math.round(5 + 5 * Math.min(1, y0 / Math.max(8, H - 4))); rangees.push([y0, h, r++]); y0 += h; }
+  for (const [ry, rh, ri] of rangees) {
+    let x = -Math.floor(hachage(ri, 3, 811) * 6);
+    let k = 0;
+    while (x < L) {
+      const w = Math.round(rh * (0.95 + hachage(ri, k, 812) * 0.9));
+      const mat = ['paveA', 'paveB', 'paveC'][Math.floor(hachage(ri, k, 813) * 3)];
+      const fendu = hachage(ri, k, 814) > 0.93;
+      for (let yy = ry; yy < ry + rh && yy < H; yy++) for (let xx = x; xx < x + w && xx < L; xx++) {
+        if (xx < 0) continue;
+        // chaque pavé est une pierre arrondie (un « coussin ») posée dans la terre des joints
+        const nx = (xx + 0.5 - x - w / 2) / (w / 2 - 0.4), ny = (yy + 0.5 - ry - rh / 2) / (rh / 2 - 0.3);
+        const forme = Math.pow(Math.abs(nx), 2.6) + Math.pow(Math.abs(ny), 2.6) + (hachage(xx, yy, 815) - 0.5) * 0.25;
+        if (forme > 1) {
+          const n = hachage(xx, yy, 816);
+          t.poser(xx, yy, n > 0.88 ? 'mousseJ' : n > 0.55 ? 'terreJ' : 'joint', n > 0.88 ? 2 : 2 + (n > 0.7 ? 1 : 0));
+          continue;
+        }
+        const nz = Math.sqrt(Math.max(0, 1 - Math.min(1, forme)));
+        let ton = Math.round(2.6 + (-ny * 0.9 - nx * 0.4) * (1 - nz) * 2 + nz * 0.8);
+        ton += Math.round((fbm(xx * 0.4, yy * 0.4, 817 + k) - 0.5) * 1.4);
+        if (fendu && Math.abs(nx - ny * 0.7) < 0.12) ton = 1;
+        t.poser(xx, yy, mat, Math.max(0, Math.min(5, ton)));
+      }
+      x += w; k++;
+    }
   }
+  for (let x = 0; x < L; x++) t.poser(x, 0, 'joint', 0);
   t.texture(scene, cle);
   return cle;
 }

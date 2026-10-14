@@ -10,11 +10,17 @@ class MarcheNoirScene extends Phaser.Scene {
     const G = this.G = window.GAME;
     this.cameras.main.fadeIn(600);
     this.soiree = soireeMarcheNoir(G);
+    this.mainNoireOuverte = G.mal >= SEUIL_MAIN_NOIRE || palierCamp(G) <= -2;
+    // (v0.57) La cave a trois coins côte à côte : les doyens, les voyageurs (l'arrivée), la Main Noire
+    this.coin = 1;
+    this.cameras.main.setScroll(960, 0);
     this.dessinerCave();
     this.dessinerGens();
-    this.add.text(480, 26, 'Le marché noir', style(26, '#ff9a70', { fontStyle: 'bold', stroke: '#1a0806', strokeThickness: 5 })).setOrigin(0.5).setDepth(5);
-    this.texteBourse = this.add.text(940, 26, '', style(16, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0806', strokeThickness: 4 })).setOrigin(1, 0.5).setDepth(5);
-    this.add.image(480, 452, panneauHD(this, 940, 170, 'ardoise')).setScale(2).setDepth(4);
+    const fixe = o => o.setScrollFactor(0);
+    this.titreCoin = fixe(this.add.text(480, 26, 'Le marché noir', style(26, '#ff9a70', { fontStyle: 'bold', stroke: '#1a0806', strokeThickness: 5 })).setOrigin(0.5).setDepth(5));
+    this.texteBourse = fixe(this.add.text(940, 26, '', style(16, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0806', strokeThickness: 4 })).setOrigin(1, 0.5).setDepth(5));
+    fixe(this.add.image(480, 452, panneauHD(this, 940, 170, 'ardoise')).setScale(2).setDepth(4));
+    this.fleches();
     this.elements = [];
     this.majBourse();
     if (G.marcheNoir.entre) this.accueil(); else this.porte();
@@ -23,34 +29,27 @@ class MarcheNoirScene extends Phaser.Scene {
 
   majBourse() { this.texteBourse.setText(`${this.G.argent} p.`); }
 
-  // --- Le décor : des murs de pierre, des lanternes rouges, des tonneaux, un chat noir ---
+  // --- Le décor : les trois coins de la cave (voir caveHD.js) ---
   dessinerCave() {
-    const g = this.add.graphics();
-    g.fillStyle(0x140e12).fillRect(0, 0, 960, 540);
-    for (let y = 0; y < 370; y += 22) for (let x = -((y / 22) % 2) * 26; x < 960; x += 52) {
-      const t = hachage(Math.floor(x / 52), Math.floor(y / 22), 41);
-      g.fillStyle(t > 0.6 ? 0x2c2226 : t > 0.3 ? 0x261d21 : 0x211a1d).fillRect(x + 1, y + 1, 50, 20);
-    }
-    g.fillStyle(0x1e1513).fillRect(0, 360, 960, 180);
-    for (let x = 0; x < 960; x += 64) g.fillStyle(0x281c18).fillRect(x, 360, 62, 180);
-    // Une voûte au fond, et l'escalier par lequel on est descendu
-    g.fillStyle(0x0a0608).fillEllipse(480, 140, 300, 220).fillRect(330, 140, 300, 220);
-    for (let i = 0; i < 6; i++) g.fillStyle(0x2a201e - i * 0x020202).fillRect(400 + i * 8, 250 + i * 18, 160 - i * 16, 18);
+    creerCaveHD(this);
     creerAccessoiresFacade(this);
-    this.add.image(880, 372, 'tonneauxHD').setOrigin(0.5, 1).setScale(2.2).setTint(0x9a7a7a);
-    this.add.image(60, 372, 'tonneauxHD').setOrigin(0.5, 1).setScale(1.8).setTint(0x8a6a6a).setFlipX(true);
-    // Les lanternes rouges, qui vacillent
+    creerInterieurHD(this);
     creerHalo(this);
-    for (const [x, y] of [[170, 70], [480, 52], [790, 70]]) {
+    this.add.image(0, 0, 'caveFond').setOrigin(0).setScale(2);
+    // Chez les voyageurs : les lanternes rouges qui vacillent, les tonneaux, les caisses de contrebande
+    const g = this.add.graphics();
+    for (const [x, y] of [[1130, 70], [1440, 40], [1750, 70]]) {
       g.lineStyle(2, 0x3a2a20).lineBetween(x, 0, x, y - 14);
       g.fillStyle(0x3a1a10).fillRect(x - 9, y - 14, 18, 4).fillRect(x - 9, y + 12, 18, 4);
       g.fillStyle(0xc0321e).fillRect(x - 7, y - 10, 14, 22);
       g.fillStyle(0xff8040).fillRect(x - 2, y - 4, 4, 9);
-      const halo = this.add.image(x, y, 'halo').setScale(3.2).setTint(0xff4a20).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
-      this.tweens.add({ targets: halo, alpha: 0.2, scale: 2.9, duration: 500 + Math.random() * 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      const halo = this.add.image(x, y, 'halo').setScale(3.4).setTint(0xff4a20).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: halo, alpha: 0.2, scale: 3.1, duration: 500 + Math.random() * 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
+    this.add.image(1850, 370, 'tonneauxHD').setOrigin(0.5, 1).setScale(2.4).setTint(0x9a7a7a);
+    this.add.image(1050, 370, 'caissesContrebande').setOrigin(0.5, 1).setScale(2.4).setTint(0xb09090);
     // Le chat noir, sur un tonneau : deux yeux jaunes qui clignent, une queue qui balance
-    const chat = this.add.container(860, 300);
+    const chat = this.add.container(1830, 296);
     const c = this.add.graphics();
     c.fillStyle(0x0a080a).fillEllipse(0, 0, 26, 18).fillCircle(-11, -10, 8).fillTriangle(-17, -16, -14, -24, -11, -16).fillTriangle(-9, -16, -6, -24, -4, -15);
     const yeux = this.add.graphics(); yeux.fillStyle(0xf0d040).fillRect(-15, -12, 3, 2).fillRect(-9, -12, 3, 2);
@@ -58,28 +57,92 @@ class MarcheNoirScene extends Phaser.Scene {
     chat.add([queue, c, yeux]);
     this.tweens.add({ targets: queue, angle: 14, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     this.time.addEvent({ delay: 3200, loop: true, callback: () => { yeux.setVisible(false); this.time.delayedCall(140, () => yeux.setVisible(true)); } });
-    vignette(this, 0.9, 3);
+    // Chez les doyens : le feu de camp, et la lueur des petites fenêtres
+    this.add.image(400, 374, 'feuCamp').setOrigin(0.5, 1).setScale(2.4);
+    for (const [dx, e] of [[-10, 3.4], [6, 4], [16, 3]]) {
+      const f = this.add.sprite(400 + dx, 358, 'flammeBougie0').setOrigin(0.5, 1).setScale(e).setTint(0xffb060);
+      f.play({ key: 'flammeBougie', startFrame: Math.floor(Math.random() * 3) });
+    }
+    lumiere(this, 400, 330, 260, 0xff8a30, 0.5);
+    for (const [x, y] of [[260, 244], [708, 238], [490, 102]]) lumiere(this, x, y, 50, 0xffb050, 0.45);
+    // Chez la Main Noire : deux chandelles sur la table, l'emblème sur la tenture
+    creerEmblemesHD(this);
+    this.add.image(2440, 128, 'embleme_mainNoire').setScale(2.6);
+    for (const x of [2350, 2530]) lumiere(this, x, 300, 120, 0xffc070, 0.5);
+    vignette(this, 0.85, 3).setScrollFactor(0);
   }
 
-  // Le Passeur à gauche, les deux Bannis à droite
+  // Les gens : le Passeur et deux Bannis chez les voyageurs ; les familles bannies chez les
+  // doyens (et l'aîné du soir, près du feu) ; les gardes orcs et la silhouette de la Main Noire
   dessinerGens() {
-    this.passeur = imageCorps(this, 210, 368, 'passeur', 5.2).setTint(0xd8b8b0);
+    const G = this.G;
+    this.passeur = imageCorps(this, 1170, 370, 'passeur', 6.4).setTint(0xd8b8b0);
     this.soiree.bannis.forEach((b, i) => {
-      const img = imageCorps(this, 640 + i * 130, 368, b, 4.6).setFlipX(true).setTint(0xd8b0a8);
-      this.tweens.add({ targets: img, y: 366, duration: 1400 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      const img = imageCorps(this, 1600 + i * 150, 370, b, 5.8).setFlipX(true).setTint(0xd8b0a8);
+      this.tweens.add({ targets: img, y: 368, duration: 1400 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     });
-    // Certains soirs, un aîné des Bannis est assis près des tonneaux, appuyé sur sa canne
-    if (this.soiree.aine && !(this.G.ainesRecits || []).includes(this.soiree.aine)) {
-      this.aine = imageCorps(this, 112, 372, personneAine(this.soiree.aine), 4).setTint(0xd8b8b0);
+    // Les familles des doyens : un enfant gobelin, une mère orc qui étend le linge, un vieux troll qui somnole
+    const habitants = [
+      [{ nom: 'Pipou', race: 'gobelin', niveau: 'novice' }, 150, 4.2, 0xc8b0a0],
+      [{ nom: 'Grenouille', race: 'gobelin', feminin: true, niveau: 'novice' }, 560, 3.9, 0xc8b0a0],
+      [{ nom: 'Ourga Lavandière', race: 'orc', feminin: true, niveau: 'novice' }, 800, 5.6, 0xb8a098],
+    ];
+    habitants.forEach(([p, x, e, tint], i) => {
+      const img = imageCorps(this, x, 370, p, e).setTint(tint).setFlipX(i === 2);
+      this.tweens.add({ targets: img, y: 367, duration: 1600 + i * 400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    });
+    // Certains soirs, un aîné des Bannis est assis près du feu, appuyé sur sa canne
+    if (this.soiree.aine && !(G.ainesRecits || []).includes(this.soiree.aine)) {
+      this.aine = imageCorps(this, 470, 370, personneAine(this.soiree.aine), 5.2).setTint(0xe8c8b0).setFlipX(true);
     }
+    // La Main Noire : une silhouette encapuchonnée derrière sa table, deux gardes orcs
+    this.add.image(2440, 350, corpsHD(this, 'passeur')).setOrigin(0.5, 1).setScale(6.6 * echelleCorps(corpsHD(this, 'passeur'))).setTint(0x3a2830);
+    this.add.image(2440, 392, 'tableMainNoire').setOrigin(0.5, 1).setScale(2.2);
+    [[2150, false], [2730, true]].forEach(([x, flip], i) => imageCorps(this, x, 370, { nom: i ? 'Krug Briseur' : 'Mog Poing-de-Fer', race: 'orc', niveau: 'veteran' }, 6.2).setFlipX(flip).setTint(0xc8a8a0));
+    // Tant que la Main Noire ne s'intéresse pas à toi, le rideau est gardé
+    if (!this.mainNoireOuverte) this.garde = imageCorps(this, 2000, 370, { nom: 'Mog Poing-de-Fer', race: 'orc', niveau: 'veteran' }, 6.4).setFlipX(true).setTint(0xc8a8a0);
+  }
+
+  // --- Les flèches pour aller d'un coin à l'autre ---
+  fleches() {
+    const noms = ['Le coin des doyens', 'Les voyageurs', 'La table du fond'];
+    const fleche = (sens) => {
+      const x = sens < 0 ? 26 : 934;
+      const fond = this.add.circle(x, 200, 20, 0x2a1810, 0.85).setStrokeStyle(2, 0xc9a227).setScrollFactor(0).setDepth(5).setInteractive({ useHandCursor: true });
+      const signe = this.add.text(x, 200, sens < 0 ? '◀' : '▶', style(18, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5).setScrollFactor(0).setDepth(5);
+      const nom = this.add.text(x + (sens < 0 ? 26 : -26), 200, '', style(13, '#f3d98a', { fontStyle: 'italic bold', stroke: '#1a0806', strokeThickness: 4 })).setOrigin(sens < 0 ? 0 : 1, 0.5).setScrollFactor(0).setDepth(5);
+      fond.on('pointerdown', () => { Son.jouer('clic'); this.allerCoin(this.coin + sens); });
+      return { fond, signe, nom };
+    };
+    this.flecheG = fleche(-1); this.flecheD = fleche(1);
+    this.majFleches = () => {
+      for (const [f, sens] of [[this.flecheG, -1], [this.flecheD, 1]]) {
+        const cible = this.coin + sens, ok = cible >= 0 && cible <= 2;
+        f.fond.setVisible(ok); f.signe.setVisible(ok); f.nom.setVisible(ok).setText(ok ? noms[cible] : '');
+      }
+      this.titreCoin.setText(['Le coin des doyens', 'Le marché noir', 'La table de la Main Noire'][this.coin]);
+    };
+    this.majFleches();
+  }
+
+  allerCoin(coin, apres = null) {
+    coin = Phaser.Math.Clamp(coin, 0, 2);
+    if (coin === this.coin) { if (apres) apres(); return; }
+    this.coin = coin;
+    Son.jouer('pas');
+    this.tweens.add({ targets: this.cameras.main, scrollX: coin * 960, duration: 900, ease: 'Sine.easeInOut', onComplete: () => { if (apres) apres(); } });
+    this.majFleches();
+    // le garde orc arrête ceux que la Main Noire n'a pas invités
+    if (coin === 2 && !this.mainNoireOuverte) this.time.delayedCall(900, () => { if (this.coin === 2) this.accueil("Un orc énorme te barre le passage : « La table du fond, c'est sur invitation. Reviens quand on parlera de toi, marchand. »"); });
+    if (coin === 0 && !this.aine) this.time.delayedCall(900, () => { if (this.coin === 0) this.accueil('Le feu crépite. Une vieille gobeline te sourit sans un mot : ce soir, aucun aîné ne raconte.'); });
   }
 
   // --- Le panneau du bas : une page à la fois ---
   vider() { for (const e of this.elements) e.destroy(); this.elements = []; }
-  texte(x, y, t, taille = 15, couleur = '#f3e6c8', extra = {}) { const o = this.add.text(x, y, t, style(taille, couleur, extra)).setDepth(6); this.elements.push(o); return o; }
+  texte(x, y, t, taille = 15, couleur = '#f3e6c8', extra = {}) { const o = this.add.text(x, y, t, style(taille, couleur, extra)).setDepth(6).setScrollFactor(0); this.elements.push(o); return o; }
   bouton(x, y, l, t, action, actif = true) {
-    const fond = this.add.rectangle(x, y, l, 28, actif ? 0x7a2a1a : 0x3a2a26).setStrokeStyle(2, 0x1a0806).setDepth(6);
-    const label = this.add.text(x, y, t, style(13, actif ? '#fff0dc' : '#8a7a70', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(6);
+    const fond = this.add.rectangle(x, y, l, 28, actif ? 0x7a2a1a : 0x3a2a26).setStrokeStyle(2, 0x1a0806).setDepth(6).setScrollFactor(0);
+    const label = this.add.text(x, y, t, style(13, actif ? '#fff0dc' : '#8a7a70', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(6).setScrollFactor(0);
     if (actif) { fond.setInteractive({ useHandCursor: true }); fond.on('pointerdown', () => { Son.jouer('clic'); action(); }); fond.on('pointerover', () => fond.setFillStyle(0x9a3a24)); fond.on('pointerout', () => fond.setFillStyle(0x7a2a1a)); }
     this.elements.push(fond, label);
     return fond;
@@ -106,13 +169,14 @@ class MarcheNoirScene extends Phaser.Scene {
     const b = s.bannis[0];
     this.texte(40, 374, message || `Le Passeur : « Bienvenue en bas. Ici, personne ne pose de questions. »`, 15, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
     this.texte(40, 400, `${b.nom} murmure : « ${s.murmure} »`, 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } });
-    const mainNoire = G.mal >= SEUIL_MAIN_NOIRE || palierCamp(G) <= -2;
-    const choix = [['Le Passeur (objets interdits)', () => this.pagePasseur()], ['Les commandes des Bannis', () => this.pageCommandes()], ['Vendre une trouvaille', () => this.pageTrouvailles()]];
-    if (mainNoire) choix.push(['La table du fond', () => this.pageMainNoire()]);
+    const mainNoire = this.mainNoireOuverte;
+    const ici = page => () => this.allerCoin(1, page);
+    const choix = [['Le Passeur (objets interdits)', ici(() => this.pagePasseur())], ['Les commandes des Bannis', ici(() => this.pageCommandes())], ['Vendre une trouvaille', ici(() => this.pageTrouvailles())]];
+    if (mainNoire) choix.push(['La table du fond', () => this.allerCoin(2, () => this.pageMainNoire())]);
     const aine = s.aine && !(G.ainesRecits || []).includes(s.aine) ? AINES[s.aine] : null;
     if (aine) {
-      this.texte(40, 424, `Près des tonneaux, ${aine.nom} tapote sa canne : « Tu as un peu de temps pour une vieille histoire ? »`, 12, '#e8c890', { fontStyle: 'italic', wordWrap: { width: 880 } });
-      choix.push([aine.feminin ? "Écouter l'aïeule" : "Écouter l'aïeul", () => this.pageAine()]);
+      this.texte(40, 424, `Près du feu des doyens, ${aine.nom} tapote sa canne : « Tu as un peu de temps pour une vieille histoire ? »`, 12, '#e8c890', { fontStyle: 'italic', wordWrap: { width: 880 } });
+      choix.push([aine.feminin ? "Écouter l'aïeule" : "Écouter l'aïeul", () => this.allerCoin(0, () => this.pageAine())]);
     }
     const l = 900 / choix.length;
     choix.forEach(([t, a], i) => this.bouton(30 + l * (i + 0.5), 460, l - 14, t, a));
@@ -204,11 +268,11 @@ class MarcheNoirScene extends Phaser.Scene {
   pageAine() {
     const G = this.G, race = this.soiree.aine, a = AINES[race];
     const scene = [];
-    const voile = this.add.rectangle(480, 270, 960, 540, 0x08050a).setAlpha(0).setDepth(3);
+    const voile = this.add.rectangle(480, 270, 960, 540, 0x08050a).setAlpha(0).setDepth(3.6).setScrollFactor(0);
     creerVignettesZonesHD(this);
-    const souvenir = this.add.image(600, 196, 'vignetteZone_' + a.vignette).setScale(6.4).setDepth(3.2).setAlpha(0).setTint(0xc8a878);
-    const conteur = this.add.image(190, 82, textureBusteHD(this, personneAine(race), 'neutre')).setOrigin(0.5, 0).setScale(2.6).setDepth(3.3).setAlpha(0);
-    const nom = this.add.text(190, 64, a.nom, style(18, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0806', strokeThickness: 4 })).setOrigin(0.5).setDepth(3.4).setAlpha(0);
+    const souvenir = this.add.image(600, 196, 'vignetteZone_' + a.vignette).setScale(6.4).setDepth(3.7).setAlpha(0).setTint(0xc8a878).setScrollFactor(0);
+    const conteur = this.add.image(190, 82, textureBusteHD(this, personneAine(race), 'neutre')).setOrigin(0.5, 0).setScale(2.6).setDepth(3.8).setAlpha(0).setScrollFactor(0);
+    const nom = this.add.text(190, 64, a.nom, style(18, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0806', strokeThickness: 4 })).setOrigin(0.5).setDepth(3.9).setAlpha(0).setScrollFactor(0);
     scene.push(voile, souvenir, conteur, nom);
     this.tweens.add({ targets: voile, alpha: 0.88, duration: 900 });
     this.tweens.add({ targets: [conteur, nom], alpha: 1, duration: 900, delay: 300 });

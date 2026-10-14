@@ -69,3 +69,33 @@ Tous les défauts de la liste ci-dessus, et les boutons en bois doré partout.
    planche pendant 9½, ou tu préfères ne pas y toucher ?
 6. **Grippesou** : quand la rue arrivera (10c), son chariot pourrait se garer dans la rue certains
    jours au lieu d'être un écran à part. On le prévoit déjà ?
+
+## 4. Réponses du joueur (16/10) et décisions
+
+- **Tout le plan 9½ est validé**, dans l'ordre décors → interface → cinématiques.
+- **Le joueur est trop petit** dans les pièces (arrière-boutique surtout), même enfant : on le
+  grandit dans la promenade, la banque et partout où il paraît minuscule à côté des portes et meubles.
+- **La faillite, quatre fins selon la cause** (sans Garrick) :
+  1. *Prêt de la Main Noire impayé* → on devient l'esclave de la Main Noire (on porte ses caisses dans
+     la cave, une main gantée sur l'épaule).
+  2. *Prêt de la Banque Centrale impayé* → on devient le larbin des banquiers (on cire leurs pièces,
+     on porte leurs registres pendant qu'ils dansent).
+  3. *Stocks et argent mal gérés* → on retourne vivre dans la forêt de l'intro, le baluchon sur
+     l'épaule.
+  4. *Un dédommagement qu'on ne pouvait pas payer* → la famille de l'aventurier mort vient se venger :
+     on fuit dans la nuit, la boutique saccagée.
+  La cause retenue est la plus grave du moment : dette de la Main Noire en retard, sinon dette de la
+  banque en retard, sinon un dédommagement payé dans les 3 derniers jours, sinon la mauvaise gestion.
+  Chaque fin : 3 à 4 plans, la musique dramatique, une dernière phrase.
+- **La cave du marché noir devient trois coins** qu'on parcourt en glissant à gauche et à droite :
+  1. *Le coin des voyageurs* (au centre, l'arrivée) : le Passeur, les Bannis de passage avec leurs
+     commandes, les lanternes, les caisses de contrebande.
+  2. *Le coin des doyens* : de petites habitations creusées dans la roche, du linge qui sèche, un feu
+     de camp, des enfants bannis ; l'aîné du soir s'assoit au feu pour raconter.
+  3. *La table de la Main Noire* : derrière un rideau, tapis, cartes, coffre, deux gardes orcs ; ce
+     coin n'ouvre que lorsque la Main Noire s'intéresse à toi.
+- **Chambre** : les trophées des aventuriers (rares, offerts par les meilleurs habitués), les
+  lettres reçues, un portrait de famille (prévu pour l'étape 14).
+- **Portraits de l'audit** (cou fin de l'orc, du vampire et du troll ; mèches de l'elfe) : des
+  propositions en planche, et retour aux anciens modèles si ça ne va pas.
+- **Grippesou** : son chariot se garera dans la rue certains jours quand elle arrivera (10c).

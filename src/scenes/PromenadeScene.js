@@ -44,7 +44,7 @@ class PromenadeScene extends Cinematique {
     }
 
     textureJoueur(this, G);
-    this.heros = this.add.image(960 + 480, SOL_PROMENADE, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(5)).setDepth(8.5);
+    this.heros = this.add.image(960 + 480, SOL_PROMENADE, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(8.5);
     this.cible = null;
     this.rue = [];   // (les animations de la rue, vues du comptoir)
 
