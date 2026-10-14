@@ -232,6 +232,7 @@ class IntroHistoireScene extends Cinematique {
     // (v0.57) un vrai fondu au noir, puis la Comté qui apparaît doucement
     this.cameras.main.fadeOut(800, 0, 0, 0);
     await this.attendre(850);
+    if (this.fini) return;   // (audit v0.59 : « Passer » pendant le fondu)
     this.riviere.setVisible(false); this.eauDevant.setVisible(false); this.refletsDevant.setVisible(false); this.foret.setVisible(false); this.berge.setVisible(false);
     const comte = this.add.graphics().setDepth(-1);
     dessinerComte(comte, 0, 0, 960, 370, 0, 'comte');

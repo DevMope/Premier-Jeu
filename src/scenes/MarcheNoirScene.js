@@ -8,6 +8,7 @@ class MarcheNoirScene extends Phaser.Scene {
 
   create() {
     const G = this.G = window.GAME;
+    this.part = false;   // (audit v0.59 : sinon « Remonter » ne marchait plus à la 2e visite)
     this.cameras.main.fadeIn(600);
     this.soiree = soireeMarcheNoir(G);
     this.mainNoireOuverte = G.mal >= SEUIL_MAIN_NOIRE || palierCamp(G) <= -2;

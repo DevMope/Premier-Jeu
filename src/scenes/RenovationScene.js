@@ -77,6 +77,7 @@ class RenovationScene extends Cinematique {
   constructor() { super('Renovation'); }
 
   create() {
+    this.occupe = false;
     const G = this.G = window.GAME;
     this.fini = false;
     this.cameras.main.fadeIn(600);

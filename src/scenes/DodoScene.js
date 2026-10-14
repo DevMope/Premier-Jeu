@@ -375,8 +375,9 @@ class DodoScene extends Cinematique {
     const g = imageCorps(this, 1020, SOL_CHAMBRE, 'mentor', 6).setDepth(3);
     this.ombreSol(g);
     const porte = dessinerMannequin(this, 0, 0, [], 4).setDepth(3.1).setAngle(-12);
-    const suivre = () => porte.setPosition(g.x + (g.flipX ? 10 : -10), g.y - g.displayHeight * 0.35);
+    const suivre = () => porte.active && porte.setPosition(g.x + (g.flipX ? 10 : -10), g.y - g.displayHeight * 0.35);
     this.events.on('update', suivre);
+    this.events.once('shutdown', () => this.events.off('update', suivre));   // (audit v0.59 : si on passe pendant qu'il marche)
     Son.jouer('voix', { personne: voix, ton: 'bonjour' });
     await this.marcher(g, 880, 4);
     this.events.off('update', suivre);

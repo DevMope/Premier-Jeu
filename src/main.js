@@ -61,6 +61,18 @@ Phaser.Game.prototype.step = function (temps, delta) {
     derniereErreurJeu = msg;
     // (le rendu de cette image a pu être interrompu au milieu : on le termine proprement)
     try { if (this.renderer && this.renderer.postRender) this.renderer.postRender(); } catch (e2) { /* rien */ }
+    // (audit v0.59) une scène qui a planté dans son create() reste « en création » et Phaser
+    // refuse ensuite de la relancer : on l'arrête, et l'on retombe sur l'écran titre
+    try {
+      const S = Phaser.Scenes;
+      for (const sc of this.scene.scenes) {
+        if (sc.sys.settings.status === S.CREATING) {
+          this.scene.stop(sc.sys.settings.key);
+          if (window.diag) diag('scène arrêtée après une erreur : ' + sc.sys.settings.key);
+          if (sc.sys.settings.key !== 'Titre') this.scene.start('Titre');
+        }
+      }
+    } catch (e3) { /* rien */ }
   }
 };
 

@@ -64,7 +64,7 @@ const Sauvegarde = {
       this.changerStatut(local || nuage
         ? `Partie sauvegardée ✓ (${[local && 'ce navigateur', nuage && 'ton compte'].filter(Boolean).join(' + ')})`
         : 'Sauvegarde impossible ici : pense au code de sauvegarde !');
-    });
+    }).catch(() => {});   // (audit v0.59 : un échec ne doit pas bloquer les sauvegardes suivantes)
     return this.ecriture;
   },
 
@@ -316,7 +316,8 @@ function lancerPartieChargee(sceneQuelconque, p) {
   const lieu = Sauvegarde.charger(p);
   const gestion = sceneQuelconque.scene.manager;
   for (const s of gestion.getScenes(false)) {
-    if (s.scene.key !== 'Hud' && (s.scene.isActive() || s.scene.isPaused() || s.scene.isSleeping())) s.scene.stop();
+    // (audit v0.59) un arrêt immédiat : mis en file, il arrêtait la scène qu'on venait de relancer
+    if (s.scene.key !== 'Hud' && (s.scene.isActive() || s.scene.isPaused() || s.scene.isSleeping())) gestion.stop(s.scene.key);
   }
   if (lieu === 'Maison') gestion.start('Nuit', { matin: true });
   else gestion.start(lieu, lieu === 'Nuit' ? { matin: false } : {});

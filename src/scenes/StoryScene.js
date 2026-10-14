@@ -16,6 +16,7 @@ class StoryScene extends Cinematique {
     this.tweens.timeScale = 1;
     this.time.timeScale = 1;
     this.parti = this.G.partis.find(p => p.voyageur.id === this.idParti);
+    if (!this.parti) { this.time.delayedCall(0, () => this.scene.start('Comptoir')); return; }
     const v = this.parti.voyageur;
     this.e = v.feminin ? 'e' : '';
 
@@ -27,6 +28,8 @@ class StoryScene extends Cinematique {
     this.ui = this.add.container(0, 0).setDepth(20);
     this.camUI = this.cameras.add(0, 0, this.cameras.main.width, this.cameras.main.height).setOrigin(0, 0).setZoom(this.zoomBase);
     this.cameras.main.ignore(this.ui);
+    this.events.off('postupdate', this.filtrerCameras, this);
+    this.events.off('passer');   // (audit v0.59 : un « Passer » d'un récit interrompu ne doit pas relancer l'ancien)
     this.events.on('postupdate', this.filtrerCameras, this);
     this.fond = this.add.graphics();
     // Le paysage de la zone où il est parti.

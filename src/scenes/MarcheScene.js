@@ -12,6 +12,7 @@ class MarcheScene extends Phaser.Scene {
 
   create() {
     const G = this.G = window.GAME;
+    this.pieceEnVol = false; this.chienMange = false;   // (audit v0.59 : sinon la fontaine et Brisquet restaient bloqués)
     G.banniere = G.jour;
     // (Phaser réutilise la scène d'un jour à l'autre : on repart de zéro)
     this.groupes = [];

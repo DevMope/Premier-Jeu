@@ -20,6 +20,7 @@ class PromenadeScene extends Cinematique {
   create() {
     const G = this.G = window.GAME;
     this.fini = false;
+    this.transition = false;   // (audit v0.59)
     this.cameras.main.fadeIn(500);
     creerInterieurHD(this); creerDecorComptoir(this); creerObjetsHD(this); creerHalo(this);
     creerAtelierHD(this); creerFenetreHD(this); creerDouilletHD(this);

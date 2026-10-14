@@ -12,6 +12,7 @@ class CarteScene extends Phaser.Scene {
     this.comptoir = data.comptoir || null;
     this.planification = !this.comptoir;
     this.zoneChoisie = null;
+    this.devoilement = false;   // (audit v0.59) la scène est réutilisée : sans ça, une carte quittée pendant le dévoilement restait inerte
   }
 
   create() {
@@ -199,6 +200,7 @@ class CarteScene extends Phaser.Scene {
       .setBounds(0, 0, MONDE_CARTE.L, MONDE_CARTE.H).setBackgroundColor('#2a1a10');
     this.camDessus = this.cameras.add(0, 0, 960 * Z, 540 * Z).setOrigin(0, 0).setZoom(Z);
     this.cameras.main.ignore([this.monde, this.dessus]);
+    this.events.off('postupdate', this.filtrerCameras, this);   // (audit v0.59 : un seul écouteur, pas un de plus à chaque ouverture)
     this.events.on('postupdate', this.filtrerCameras, this);
     this.filtrerCameras();
     // La vue de la dernière fois, sinon le monde entier

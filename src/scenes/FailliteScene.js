@@ -315,6 +315,7 @@ class FailliteScene extends Cinematique {
     if (this.fini) return;
     this.fini = true;
     const G = this.G;
+    this.cameras.main.resetFX();   // (audit v0.59 : « Passer » pendant un fondu laissait l'écran noir)
     this.tweens.killAll();
     this.time.removeAllEvents();
     const fins = {

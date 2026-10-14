@@ -20,6 +20,7 @@ class CounterScene extends Phaser.Scene {
   constructor() { super('Comptoir'); }
 
   create() {
+    this.mesureArdoise = null;   // (audit v0.59 : le texte de mesure de la veille est détruit)
     this.G = window.GAME;
     this.entree = null;   // ce qui est au comptoir : client, retour ou carnet
     this.voyageur = null; // le client à servir, s'il y en a un
