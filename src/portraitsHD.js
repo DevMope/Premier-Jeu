@@ -373,7 +373,14 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   torseHD(t, g, v, cx);
 
   // 3. Le cou, les oreilles, la tête
-  if (v.cou) t.forme('peau', (x, y) => (y >= v.cy + v.ry - 6 && y <= v.torse + 2 && Math.abs(x + 0.5 - cx) < v.cou ? [(x + 0.5 - cx) / v.cou * 0.8, 0.3, 0.6] : null), { decalage: -0.7 });
+  // (v0.57) le cou s'évase vers le bas pour entrer dans le col (trapèze des muscles), plus sombre
+  // sous le menton et au ras du vêtement
+  if (v.cou) t.forme('peau', (x, y) => {
+    if (y < v.cy + v.ry - 6 || y > v.torse + 2) return null;
+    const evase = Math.max(0, y - (v.torse - 7)) * 0.7, demi = v.cou + evase;
+    const nx = (x + 0.5 - cx) / demi;
+    return Math.abs(nx) < 1 ? [nx * 0.8, 0.3 + (y > v.torse - 4 ? 0.3 : 0), 0.6] : null;
+  }, { decalage: -0.7 });
   if (oreilles === 'grandes') {
     // Les grandes oreilles des gobelins : longues, pointues, à l'horizontale
     for (const sens of [-1, 1]) t.forme('peau', (x, y) => { const u = (x + 0.5 - cx + sens * T * 0.8) * sens - v.rx + 2, w = y + 0.5 - (v.yeux + 4); return u > 0 && u < 14 && Math.abs(w + u * 0.15) < 4.2 - u * 0.28 ? [sens * 0.7, -0.3, 0.6] : null; });
