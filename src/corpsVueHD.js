@@ -105,7 +105,22 @@ function cylindre(t, mat, a, b, rayon, { decalage = 0, ombre = null, motif = nul
 }
 
 // Un contour plus épais : un deuxième anneau sombre autour du premier.
+// (v0.58) Le réglage du contour des personnages : nombre de tours de noir autour de la silhouette,
+// et nettoyage des pixels isolés qui dépassent (avant de cerner).
+const CONTOUR_CORPS = { tours: 1, nettoyer: false };
+function nettoyerSilhouette(t) {
+  for (let passe = 0; passe < 2; passe++) {
+    const vides = [];
+    for (let y = 0; y < t.h; y++) for (let x = 0; x < t.l; x++) {
+      if (t.c[y * t.l + x] === null) continue;
+      const voisins = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => t.dans(x + dx, y + dy) && t.c[(y + dy) * t.l + x + dx] !== null).length;
+      if (voisins <= 1) vides.push(y * t.l + x);
+    }
+    for (const i of vides) { t.c[i] = null; t.m[i] = null; }
+  }
+}
 function contourEpais(t, tours = 1) {
+  if (CONTOUR_CORPS.nettoyer) nettoyerSilhouette(t);
   t.contour();
   for (let n = 0; n < tours; n++) {
     const ajouts = [];
@@ -985,7 +1000,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
     if (mainDevant) { const { M } = mainDevant; for (let y = Math.round(M[1] - 6 * k); y <= Math.round(M[1] - 3.5 * k); y++) for (let x = Math.round(M[0] - 3 * k); x <= Math.round(M[0] + 3 * k); x++) { const m = t.mat(x, y); if (m && m !== 'lin' && m !== 'sang') t.poser(x, y, 'lin', y % 2 ? 3 : 4); } }
   }
-  contourEpais(t, k - 1);
+  contourEpais(t, CONTOUR_CORPS.tours);
   // Où sont les mains (depuis le sol), pour y accrocher le baluchon
   t.mains = H - (leves ? cy - P.ry - 7 * k : T.brasLongs ? yB + (sol - yB) * 0.48 + 2 * k : yB + 2.5 * k);
   return t;
