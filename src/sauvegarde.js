@@ -243,6 +243,9 @@ function mettreAJourPartie(G, brut = G) {
   G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 };
   G.interdits = G.interdits || {};
   G.garrickVu = G.garrickVu || [];
+  G.decalageJours = G.decalageJours || 0;
+  // (v0.55) une partie ancienne a déjà ouvert des paliers : on ne lui fait pas sauter de temps après coup
+  if (!brut.paliersEtoiles) G.paliersEtoiles = [1, ...new Set(zonesOuvertes(G).map(z => ZONES[z].danger))];
   G.chienNourri = G.chienNourri || 0;
   G.chienJour = G.chienJour || 0;
   G.fontaineJour = G.fontaineJour || 0;

@@ -40,7 +40,46 @@ class CarteScene extends Phaser.Scene {
     this.tout();
     this.cameras.main.fadeIn(300);
     this.camCarte.fadeIn(300);
-    if (!this.comptoir) this.time.delayedCall(500, () => conseilGarrick(this, 'carte'));
+    if (this.nouvelles.length) this.time.delayedCall(400, () => this.devoiler(this.nouvelles.slice()));
+    else if (!this.comptoir) this.time.delayedCall(500, () => conseilGarrick(this, 'carte'));
+  }
+
+  // Le dévoilement d'une contrée qui vient de s'ouvrir : la caméra y glisse, la brume se dissipe,
+  // le médaillon se déplie avec une fanfare, puis son nom et ses étoiles s'écrivent.
+  devoiler(liste) {
+    const cle = liste.shift();
+    if (!cle) {
+      // Le monde connu s'est agrandi : on dézoome pour le voir en entier
+      this.vue(this.kMin, this.limites.cx, this.limites.cy, () => { this.devoilement = false; if (!this.comptoir) conseilGarrick(this, 'carte'); });
+      return;
+    }
+    this.devoilement = true;
+    const z = ZONES[cle], p = this.pieces[cle];
+    this.fermerBulle();
+    this.limiter(Object.keys(ZONES).filter(c => zoneOuverte(this.G, c) && (!this.nouvelles.includes(c) || c === cle || !liste.includes(c))));
+    this.vue(Math.max(this.k, 0.95), z.x, z.y, () => {
+      if (p.point) p.point.destroy();
+      this.tweens.add({ targets: p.brume, alpha: 0, scaleX: 3.2, scaleY: 2.6, duration: 700, ease: 'Sine.easeOut', onComplete: () => p.brume.destroy() });
+      p.pastille.setTexture('vignetteZone_' + cle).setScale(0);
+      p.ombre.setTexture('vignetteZone_' + cle).setScale(0);
+      Son.jouer('fanfare');
+      this.tweens.add({ targets: [p.pastille, p.ombre], scale: 2, duration: 550, ease: 'Back.easeOut', delay: 250 });
+      // un éclat de lumière derrière le médaillon
+      const eclat = this.add.image(z.x, z.y, 'halo').setScale(0.5).setTint(0xfff0a0).setAlpha(0.9).setBlendMode(Phaser.BlendModes.ADD);
+      this.monde.add(eclat);
+      this.tweens.add({ targets: eclat, scale: 4, alpha: 0, duration: 900, delay: 200, onComplete: () => eclat.destroy() });
+      this.time.delayedCall(850, () => {
+        p.nom.setText(z.nom).setColor('#2a1808').setAlpha(0);
+        const etoiles = this.add.text(z.x, z.y + 30, '★'.repeat(z.danger), style(13, '#ffd860', { fontStyle: 'bold', stroke: '#3b2410', strokeThickness: 4 })).setOrigin(0.5).setAlpha(0);
+        this.monde.add(etoiles); this.etiquettes.push({ o: etoiles, etiquette: true });
+        const neuf = this.add.text(z.x, z.y - 44, '✦ Nouvelle contrée ! ✦', style(14, '#a0300a', { fontStyle: 'bold', stroke: '#fff4dc', strokeThickness: 4 })).setOrigin(0.5).setAlpha(0);
+        this.monde.add(neuf); this.etiquettes.push({ o: neuf, etiquette: true });
+        this.appliquerVue(this.k, this.centre.x, this.centre.y);
+        this.tweens.add({ targets: [p.nom, etoiles, neuf], alpha: 1, duration: 400 });
+        this.tweens.add({ targets: neuf, alpha: 0.6, duration: 500, yoyo: true, repeat: -1, delay: 400 });
+        this.time.delayedCall(1100, () => this.devoiler(liste));
+      });
+    });
   }
 
   // --- Le décor ---
@@ -71,7 +110,7 @@ class CarteScene extends Phaser.Scene {
       this.monde.add(groupe);
       this.etiquettes.push({ o: groupe, royaume: true });
     }
-    for (const [x, y, nom, angle] of [[60, 520, "Mer d'Opale", -80], [1440, 600, 'La Grande Muraille', 88], [330, 470, 'Le Grand Fleuve', -38]]) {
+    for (const [x, y, nom, angle] of [[60, 520, "Mer d'Opale", -80], [1440, 600, 'La Grande Muraille', 88], [300, 540, 'Le Grand Fleuve', -42]]) {
       const t = this.add.text(x, y, nom, style(12, '#3b2a4a', { fontStyle: 'italic', stroke: '#f0e2bc', strokeThickness: 3 })).setOrigin(0.5).setAngle(angle).setAlpha(0.8);
       this.monde.add(t);
       this.etiquettes.push({ o: t, detail: true });
@@ -91,23 +130,23 @@ class CarteScene extends Phaser.Scene {
     this.monde.add(this.anneau);
     this.tweens.add({ targets: this.anneau, scale: 1.15, duration: 500, yoyo: true, repeat: -1 });
     const ajouter = (o, opts = {}) => { this.monde.add(o); if (opts.etiquette) this.etiquettes.push({ o, ...opts }); return o; };
+    // Les contrées qui viennent de s'ouvrir depuis la dernière visite : elles sortent de la brume
+    // sous tes yeux (voir `devoiler`), dans l'ordre des étoiles.
+    this.nouvelles = G.zonesVuesCarte ? Object.keys(ZONES).filter(c => zoneOuverte(G, c) && !G.zonesVuesCarte.includes(c)).sort((a, b) => ZONES[a].danger - ZONES[b].danger) : [];
+    this.pieces = {};
     for (const [cle, z] of Object.entries(ZONES)) {
-      const ouverte = zoneOuverte(G, cle);
+      const ouverte = zoneOuverte(G, cle) && !this.nouvelles.includes(cle);   // (une nouvelle reste brumeuse jusqu'à son dévoilement)
+      const p = this.pieces[cle] = {};
       // Les contrées inconnues restent dans la brume du parchemin.
-      if (!ouverte) ajouter(this.add.image(z.x, z.y, 'halo').setScale(2.3, 1.9).setTint(0xe4d0a0).setAlpha(0.9));
+      if (!ouverte) p.brume = ajouter(this.add.image(z.x, z.y, 'halo').setScale(2.3, 1.9).setTint(0xe4d0a0).setAlpha(0.9));
       // Le médaillon peint de la contrée (ou sa brume), et ses étoiles de danger en bas.
-      ajouter(this.add.image(z.x + 3, z.y + 4, ouverte ? 'vignetteZone_' + cle : 'vignetteZone_inconnue').setScale(2).setTint(0x000000).setAlpha(0.25));
-      const pastille = ajouter(this.add.image(z.x, z.y, ouverte ? 'vignetteZone_' + cle : 'vignetteZone_inconnue').setScale(2)
+      p.ombre = ajouter(this.add.image(z.x + 3, z.y + 4, ouverte ? 'vignetteZone_' + cle : 'vignetteZone_inconnue').setScale(2).setTint(0x000000).setAlpha(0.25));
+      const pastille = p.pastille = ajouter(this.add.image(z.x, z.y, ouverte ? 'vignetteZone_' + cle : 'vignetteZone_inconnue').setScale(2)
         .setInteractive({ useHandCursor: true }));
       if (ouverte) ajouter(this.add.text(z.x, z.y + 30, '★'.repeat(z.danger), style(13, '#ffd860', { fontStyle: 'bold', stroke: '#3b2410', strokeThickness: 4 })).setOrigin(0.5), { etiquette: true });
-      else ajouter(this.add.text(z.x, z.y, '?', style(26, '#8a7450', { fontStyle: 'bold' })).setOrigin(0.5));
-      ajouter(this.add.text(z.x, z.y + 40, ouverte ? z.nom : '🔒 ???', style(13, ouverte ? '#2a1808' : '#6a6458', { fontStyle: 'bold', align: 'center', wordWrap: { width: 190 }, stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0), { etiquette: true, detail: true });
-      // Une contrée qui vient de s'ouvrir depuis la dernière fois : on la signale.
-      if (ouverte && G.zonesVuesCarte && !G.zonesVuesCarte.includes(cle)) {
-        const n = ajouter(this.add.text(z.x, z.y - 44, '✦ Nouveau ! ✦', style(14, '#a0300a', { fontStyle: 'bold', stroke: '#fff4dc', strokeThickness: 4 })).setOrigin(0.5), { etiquette: true });
-        this.tweens.add({ targets: n, alpha: 0.6, duration: 500, yoyo: true, repeat: -1 });
-      }
-      pastille.on('pointerup', () => { if (!this.aGlisse()) this.choisirZone(cle); });
+      else p.point = ajouter(this.add.text(z.x, z.y, '?', style(26, '#8a7450', { fontStyle: 'bold' })).setOrigin(0.5));
+      p.nom = ajouter(this.add.text(z.x, z.y + 40, ouverte ? z.nom : '🔒 ???', style(13, ouverte ? '#2a1808' : '#6a6458', { fontStyle: 'bold', align: 'center', wordWrap: { width: 190 }, stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0), { etiquette: true, detail: true });
+      pastille.on('pointerup', () => { if (!this.aGlisse() && !this.devoilement) this.choisirZone(cle); });
       // La conquête : un fanion avec le compte des missions réussies, doré une fois conquise
       if (ouverte) {
         const n = (G.conquete || {})[cle] || 0;
@@ -127,8 +166,10 @@ class CarteScene extends Phaser.Scene {
   creerCamera() {
     const Z = this.Z = this.cameras.main.zoom;
     this.cadre = { x: 14, y: 50, l: 932, h: 368 };
-    this.kMin = Math.max(this.cadre.l / MONDE_CARTE.L, this.cadre.h / MONDE_CARTE.H);
     this.kMax = 1.3;
+    // Le monde connu : la carte ne montre que les contrées ouvertes (et un peu autour), zoomée
+    // dessus ; elle se dézoome à mesure que de nouvelles contrées s'ouvrent.
+    this.limiter(Object.keys(ZONES).filter(c => zoneOuverte(this.G, c) && !this.nouvelles.includes(c)));
     this.camCarte = this.cameras.add(this.cadre.x * Z, this.cadre.y * Z, this.cadre.l * Z, this.cadre.h * Z)
       .setBounds(0, 0, MONDE_CARTE.L, MONDE_CARTE.H).setBackgroundColor('#2a1a10');
     this.camDessus = this.cameras.add(0, 0, 960 * Z, 540 * Z).setOrigin(0, 0).setZoom(Z);
@@ -136,7 +177,7 @@ class CarteScene extends Phaser.Scene {
     this.events.on('postupdate', this.filtrerCameras, this);
     this.filtrerCameras();
     // La vue de la dernière fois, sinon le monde entier
-    const v = this.G.vueCarte || { k: this.kMin, x: MONDE_CARTE.L / 2, y: MONDE_CARTE.H / 2 };
+    const v = this.G.vueCarte && this.G.vueCarte.k >= this.kMin ? this.G.vueCarte : { k: this.kMin, x: this.limites.cx, y: this.limites.cy };
     this.k = v.k;
     this.appliquerVue(v.k, v.x, v.y);
     // Glisser pour se déplacer
@@ -175,7 +216,22 @@ class CarteScene extends Phaser.Scene {
     const c = () => this.centre;
     bouton('＋', () => { this.fermerBulle(); this.vue(Math.min(this.kMax, this.k * 1.4), c().x, c().y); });
     bouton('－', () => { this.fermerBulle(); this.vue(Math.max(this.kMin, this.k / 1.4), c().x, c().y); });
-    bouton('🗺 Tout', () => { this.fermerBulle(); this.vue(this.kMin, MONDE_CARTE.L / 2, MONDE_CARTE.H / 2); });
+    bouton('🗺 Tout', () => { this.fermerBulle(); this.vue(this.kMin, this.limites.cx, this.limites.cy); });
+  }
+
+  // Les limites du monde connu : un rectangle autour des contrées ouvertes et du comptoir, avec
+  // de la marge, jamais plus grand que le monde ; le zoom minimal est celui qui le montre en entier.
+  limiter(ouvertes) {
+    const pts = [[MONDE_CARTE.comptoir.x, MONDE_CARTE.comptoir.y], ...ouvertes.map(c => [ZONES[c].x, ZONES[c].y])];
+    const marge = 150;
+    const x0 = Math.max(0, Math.min(...pts.map(p => p[0])) - marge), x1 = Math.min(MONDE_CARTE.L, Math.max(...pts.map(p => p[0])) + marge);
+    const y0 = Math.max(0, Math.min(...pts.map(p => p[1])) - marge), y1 = Math.min(MONDE_CARTE.H, Math.max(...pts.map(p => p[1])) + marge + 30);
+    // (au moins un cadre entier, pour qu'on puisse toujours glisser un peu)
+    const l = Math.max(x1 - x0, this.cadre.l), h = Math.max(y1 - y0, this.cadre.h);
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    this.limites = { x0: Math.max(0, cx - l / 2), x1: Math.min(MONDE_CARTE.L, cx + l / 2), y0: Math.max(0, cy - h / 2), y1: Math.min(MONDE_CARTE.H, cy + h / 2), cx, cy };
+    this.kMin = Math.max(this.cadre.l / (this.limites.x1 - this.limites.x0), this.cadre.h / (this.limites.y1 - this.limites.y0), this.cadre.l / MONDE_CARTE.L);
+    this.kMin = Math.min(this.kMin, 1.1);
   }
 
   // Ce que la caméra du monde ne filme pas : tout sauf le monde (et inversement pour l'interface).
@@ -203,9 +259,9 @@ class CarteScene extends Phaser.Scene {
   appliquerVue(k, x, y) {
     this.k = k;
     // (on borne nous-mêmes le centre : la caméra ne recalcule sa vue qu'à l'image suivante)
-    const dx = this.cadre.l / 2 / k, dy = this.cadre.h / 2 / k;
-    x = Phaser.Math.Clamp(x, dx, Math.max(dx, MONDE_CARTE.L - dx));
-    y = Phaser.Math.Clamp(y, dy, Math.max(dy, MONDE_CARTE.H - dy));
+    const dx = this.cadre.l / 2 / k, dy = this.cadre.h / 2 / k, L = this.limites;
+    x = Phaser.Math.Clamp(x, L.x0 + dx, Math.max(L.x0 + dx, L.x1 - dx));
+    y = Phaser.Math.Clamp(y, L.y0 + dy, Math.max(L.y0 + dy, L.y1 - dy));
     this.centre = { x, y };
     this.camCarte.setZoom(this.Z * k);
     this.camCarte.centerOn(x, y);

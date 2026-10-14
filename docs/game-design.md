@@ -301,9 +301,11 @@ Chaque étape doit donner une version **jouable**.
 | 9 ✅ | **Le Bien et le Mal** (v 0.53–0.54) | Races maléfiques, objets du bien / du mal, réputation par camp, dialogues qui changent. **Le marché noir en fait partie** (objets interdits, voyageurs nocturnes, conséquences). Comment augmenter le mal ou le bien de façon satisfaisante, logique et fluide. Idées validées pour cette étape : le camp de la lumière donne de meilleurs taux à la banque et plus de réputation dans les terres de lumière. |
 | 9+ ✅ | **Registre et grand point final** (v 0.54) | Registre du bureau en blocs encadrés ; trois audits (récit, gameplay, visuel) et leurs correctifs : voir docs/audit-v054.md. |
 | 9++ ⏳ | **Le grand monde** (construit, à valider) | Carte qu'on fait glisser et zoomer, royaumes du Conseil dessinés (Comté ★ … Mages ★★★★★), Monts de Bambou, Terres sauvages, Terres des Bannis derrière la Grande Muraille, dix contrées de plus (24 en tout) avec leurs quêtes et leurs indices. Planches : docs/planches-v054/. |
-| 9+++ ⏳ | **Retouches et emblèmes** (construit, à valider) | Loup-garou de biais et de profil avec un vrai long museau ; vampire plus pâle, longues canines bordées, goutte de sang chez certains ; momie aux orbites noires et pupilles jaunes ; seize emblèmes (Conseil au soleil à l'œil fermé, Confrérie du Dernier Rempart, cinq royaumes, Monts de Bambou, Bannis à la lune qui berce une fleur de pommier, six peuples bannis, Main Noire), sur la carte et au bout de la jauge. Planches : docs/planches-v055/. |
+| 9++++ ✅ | **v 0.55** | Œil de l'elfe dégagé (la tempe du côté tourné recule) ; emblèmes des orcs (vert sombre), des gobelins (dague) et des nains (marteau de paladin) ; le Monastère des Pandas à 4 étoiles ; six contrées de plus (Vallon des Guérisseuses ★2, Abbaye de Clairval ★3, Fort de Hautgarde ★3 côté lumière ; Clairière des Chamans ★2, Mines Rouges ★3, Col des Hurlements ★4 côté ombre), 30 en tout ; les ★2 s'ouvrent au jour 2 avec le **dévoilement** (la caméra glisse, la brume se dissipe, le médaillon se déplie, fanfare) ; la carte ne montre que le **monde connu**, zoomée dessus, et se dézoome à chaque contrée gagnée ; **sauts de temps** par palier d'étoiles (★2 : 1 mois, ★3 : 1 an, ★4 : 2 ans, ★5 : 3 ans) : le calendrier avance et le joueur grandit. |
+| 9+++ ✅ | **Retouches et emblèmes** (validé le 15/10) | Loup-garou de biais et de profil avec un vrai long museau ; vampire plus pâle, longues canines bordées, goutte de sang chez certains ; momie aux orbites noires et pupilles jaunes ; seize emblèmes (Conseil au soleil à l'œil fermé, Confrérie du Dernier Rempart, cinq royaumes, Monts de Bambou, Bannis à la lune qui berce une fleur de pommier, six peuples bannis, Main Noire), sur la carte et au bout de la jauge. Planches : docs/planches-v055/. |
 | 9½ | **Lot visuel** | Remettre au niveau les décors restés anciens (Express, Banque, Atelier, cave du marché noir, chambre, pavés), retravailler les cinématiques d'intro et de faillite, les petits débordements d'interface (liste dans docs/audit-v054.md). |
-| 9¾ | **Trancher le récit** | Répondre aux questions de docs/audit-v054.md (Main Noire, Faucheuse, sort d'oubli, armure, Bête, fins, Sage, noms) ; séparer le camp et la cruauté. |
+| 9¾ | **Construire le récit tranché** | Voix de la Faucheuse et de Garrick, skin marquant de Garrick, degrés de la relation avec la mort, aînés des Bannis au comptoir et au marché noir, l'Antre ★6 cachée, le système de combat (voir « Le grand retournement »). |
+| 9¾ bis | **Trancher le reste du récit** | Répondre aux questions de docs/audit-v054.md (Main Noire, Faucheuse, sort d'oubli, armure, Bête, fins, Sage, noms) ; séparer le camp et la cruauté. |
 | 10 | **Marché noir** | Objets interdits, voyageurs nocturnes, conséquences. |
 | 11 | **Aider pendant l'aventure** | Messages de détresse, le grand aigle, les mercenaires. |
 | 12 | **Le petit bar** | Rumeurs, boissons, recrutement de mercenaires. |
@@ -370,6 +372,31 @@ la vérité ; ils ont baptisé « forces du mal » ceux qui les gênaient. Celui
 finit par servir des bourreaux maquillés en héros ; celui qui choisit les « forces du mal » se
 retrouve, à la fin, du côté des justes. À tisser avec le temps par les récits et l'avancement ;
 Garrick glisse des allusions très subtiles dès l'étape 9 (blagues, choses dites à la légère).
+
+**Les réponses du joueur du 15/10 (tranchées, à construire aux étapes 9¾ et 13–15) :**
+- **La Main Noire** est neutre : elle profite de la situation des Bannis, mais elle est aussi la seule
+  à pouvoir vraiment les financer. Ni amie, ni ennemie : un rouage.
+- **La Faucheuse** est du côté de la mort, et de rien d'autre. Elle aime la mort et veut pousser le
+  joueur à tuer : la jauge du mal (les âmes offertes) monte d'autant plus vite que le joueur se
+  plaît à la mort. Il faut définir les degrés de cette relation (jusqu'où on peut être proche de la
+  mort), et lui donner **une voix à part entière** (audio.js).
+- **Les aînés et doyens des Bannis** se souviennent des anciens récits (le sort d'oubli les a moins
+  pris), mais ils passent pour des vieux séniles. Seul **Garrick** les prend au sérieux et veut
+  démêler le vrai du faux. Vu l'importance qu'il prend : **un skin plus marquant et une voix à lui.**
+- **L'armure du Dernier Rempart** appartenait à un héros des temps anciens, qui avait accueilli les
+  peuples (aujourd'hui) bannis à bras ouverts, avant de subir le complot du grand Sage. (La
+  Confrérie la distribue comme si elle était à elle.)
+- **La Bête de l'antre et le dragon** : une **destination cachée, hors de tout royaume, à 6 étoiles**,
+  la dernière, avec le « dragon sous la montagne » en leurre. C'est là que le joueur prend part au
+  dernier combat avec sa nouvelle armure et sa nouvelle arme : le dernier combat officiel... et
+  l'avant-dernier en vérité, car le vrai combat se joue contre le vrai Sage. Un petit **système de
+  combat** à construire (étape à venir).
+- **Les fins** : une fin **amère** (le Gardien qui a servi les bourreaux) et une fin **cachée**, à
+  détailler une fois la majeure partie de l'histoire en place.
+- **Les noms** : le Conseil des Gardiens gouverne ; la Confrérie du Dernier Rempart est son bras armé
+  et siège à la Citadelle.
+- **Le temps qui passe** : à chaque nouveau palier d'étoiles, quelques mois ou quelques années
+  s'écoulent (construit en v 0.55 : `SAUTS_TEMPS`), et le joueur grandit avec la carte.
 Questions à trancher : docs/etape9-preparatifs.md § 6.
 
 
@@ -433,7 +460,7 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 - Vieillissement visible (cheveux blancs, barbe, posture, taille) ; talents aux grands âges ; famille ou vagabond ; fiancé(e) puis marié(e) ; la santé avec l'âge (CHAMBRE.sante) ; durée d'une partie.
 
 ### 15 Fins du jeu
-- La fin du bien (équiper le groupe) et la fin du mal (aider la menace).
+- Décidé le 15/10 : une fin amère (Gardien) et une fin cachée ; l'Antre à 6 étoiles, hors royaume, comme dernière destination (leurre du dragon), puis le vrai combat contre le Sage ; un petit système de combat à construire avant.
 - **La révélation : le Conseil a menti.** Garrick, celui qu'on a sauvé au début, mène les Bannis ; les « forces du mal » sont les peuples que les Gardiens ont chassés de leurs terres, et le sort d'oubli peut être brisé. Les fins sont à reformuler avec le joueur (question ouverte : fin « Gardien » amère ou rachat possible, fin cachée).
 
 ### « On le fera plus tard » (dit par le joueur ; à caser dans les étapes au fur et à mesure)

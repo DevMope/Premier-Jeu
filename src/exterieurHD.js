@@ -1263,6 +1263,60 @@ function peindreVignetteZone(scene, cle, biome, motif = biome) {
       rect(15, 23, 3, 4, 'encre', 0);
       for (const ox of [6, 44]) { rect(ox, 16, 2, 11, 'vLoin', (x) => x === ox ? 4 : 2); P(ox, 15, 'vOr', 5); }
       break;
+    case 'vallon': // un vallon fleuri, une cabane de guérisseuse, des herbes qui sèchent et une marmite
+      soleil(40, 7);
+      colline(12, horizon + 3, 16, 7); colline(40, horizon + 2, 18, 8, 'vLoin', -0.3);
+      colline(26, H, 30, 12, 'vPres', 0.3);
+      rect(9, 20, 11, 9, 'vMur', (x) => x === 9 ? 4 : 2); for (let k = 0; k < 4; k++) rect(8 + k, 19 - k, 13 - 2 * k, 1, 'vToit', 3 - (k % 2));
+      rect(13, 24, 3, 5, 'vTronc', 1);
+      for (let k = 0; k < 5; k++) { P(24 + k * 2, 22, 'vFeuille', 4); P(24 + k * 2, 23, 'vFeuille', 3); P(24 + k * 2, 21, 'vTronc', 2); }
+      for (let x = 23; x < 34; x++) P(x, 20, 'vTronc', 2);
+      forme('vSombre', ellipsoide(40, 29, 3.5, 2.5), { decalage: -0.2 }); P(39, 26, 'vFeu', 5); P(41, 25, 'vFeu', 4); P(40, 24, 'vSoleil', 4);
+      for (const [px, py, m] of [[6, 31, 'vPomme'], [18, 33, 'vSoleil'], [30, 32, 'vPomme'], [46, 30, 'vSoleil'], [12, 34, 'vSoleil']]) P(px, py, m, 5);
+      break;
+    case 'abbaye': // une abbaye de pierre claire, son clocher et sa grande cloche
+      soleil(8, 7);
+      colline(26, H, 30, 10, 'vLoin');
+      rect(14, 18, 24, 12, 'vMur', (x) => x < 18 ? 4 : x > 33 ? 2 : 3);
+      for (let k = 0; k < 4; k++) rect(14 - k + 1, 18 - k, 24 + 2 * k - 2, 1, 'vToit', 3);
+      rect(30, 6, 7, 24, 'vMur', (x) => x === 30 ? 4 : x > 34 ? 2 : 3); for (let k = 0; k < 4; k++) rect(29 + k, 6 - k, 9 - 2 * k, 1, 'vToit', 3);
+      rect(32, 9, 3, 5, 'encre', 0); P(33, 10, 'vOr', 4); P(33, 11, 'vOr', 5); P(33, 12, 'vOr', 3);
+      for (const wx of [17, 22, 27]) { rect(wx, 21, 2, 4, 'vSoleil', 4); P(wx, 20, 'vSoleil', 5); P(wx + 1, 20, 'vSoleil', 5); }
+      rect(21, 25, 4, 5, 'vTronc', 1);
+      P(33, 2, 'vOr', 5); P(33, 3, 'vOr', 4); P(32, 3, 'vOr', 4); P(34, 3, 'vOr', 4);
+      break;
+    case 'hautgarde': // un fort de pierre grise sur la passe, une bannière bleue, la Muraille au loin
+      montagne(10, horizon + 6, 13, 16); montagne(42, horizon + 6, 12, 14);
+      for (let x = 0; x < L; x++) if (x % 5 < 3) P(x, 9, 'vRoche', 2);   // (la Muraille, au loin)
+      rect(15, 16, 22, 13, 'vRoche', (x, y) => (y === 16 && x % 3 === 0) ? 5 : x < 19 ? 4 : 2);
+      rect(13, 11, 6, 18, 'vRoche', (x) => x === 13 ? 5 : 3); rect(33, 11, 6, 18, 'vRoche', (x) => x === 33 ? 5 : 2);
+      rect(23, 22, 6, 7, 'encre', 0); for (let k = 0; k < 3; k++) rect(23 + k, 22 - k, 6 - 2 * k, 1, 'encre', 0);
+      for (let k = 0; k < 5; k++) P(16, 10 - k, 'vTronc', 1); rect(17, 6, 4, 3, 'vEau', 3); P(18, 7, 'vOr', 5);
+      break;
+    case 'chamans': // une clairière dans la forêt, un totem, un feu et de la fumée verte
+      for (let k = 0; k < 9; k++) sapin(3 + k * 6, horizon + 2 + (k % 2), 10 + (k % 3), 'vLoin');
+      for (let k = 0; k < 3; k++) sapin(4 + k * 5, H - 4 + (k % 2) * 2, 13); for (let k = 0; k < 3; k++) sapin(39 + k * 5, H - 4 + (k % 2) * 2, 13);
+      forme('vSombre', ellipsoide(26, 30, 10, 3), { decalage: -0.3, bord: false });
+      rect(32, 14, 4, 15, 'vTronc', (x) => x === 32 ? 3 : 1); P(33, 16, 'vOr', 4); P(34, 16, 'vOr', 4); P(33, 20, 'vFeu', 4); P(34, 20, 'vFeu', 4); rect(31, 13, 6, 1, 'vTronc', 3);
+      for (let k = 0; k < 4; k++) P(20 + (k % 2), 28 - k, 'vFeu', 5 - (k >> 1)); P(19, 29, 'vTronc', 2); P(22, 29, 'vTronc', 2);
+      for (let k = 0; k < 6; k++) P(20 + Math.sin(k) * 1.5, 23 - k * 1.8, 'vFeuille', 4);
+      break;
+    case 'minesRouges': // des falaises de terre rouge, l'entrée d'une mine, un wagonnet et des pépites
+      soleil(40, 6, 3);
+      montagne(14, horizon + 5, 15, 15, 'vRoche'); montagne(38, horizon + 5, 14, 13, 'vRoche');
+      rect(21, 18, 10, 11, 'vTronc', (x) => x === 21 || x === 30 ? 3 : 0); rect(21, 17, 10, 1, 'vTronc', 4);
+      for (let x = 10; x < 44; x++) { P(x, 30, 'vRoche', 4); if (x % 3 === 0) P(x, 31, 'vTronc', 2); }
+      rect(34, 26, 6, 4, 'fer', 3); P(35, 25, 'vOr', 5); P(37, 25, 'vOr', 4); P(38, 25, 'vOr', 5);
+      for (let y = 20; y < 28; y++) for (let x = 23; x < 29; x++) if (hachage(x, y, 63) > 0.6) P(x, y, 'vFeu', 3);
+      break;
+    case 'col': // un col gelé entre deux pics, une grotte, et des yeux dans la nuit
+      lune(26, 7, 4, 'vSoleil');
+      montagne(10, H - 2, 15, 26, 'vRoche', true); montagne(42, H - 2, 15, 26, 'vRoche', true);
+      for (let x = 0; x < L; x++) for (let y = 29; y < H; y++) P(x, y, 'vNeige', 4);
+      forme('encre', ellipsoide(26, 30, 6, 6, (x, y) => y < 30), { bord: false });
+      for (const [ex, ey] of [[23, 27], [28, 26], [8, 24], [44, 25]]) { P(ex, ey, 'vSoleil', 5); P(ex + 2, ey, 'vSoleil', 5); }
+      for (let k = 0; k < 10; k++) P(hachage(k, 1, 37) * L, hachage(k, 2, 37) * 22, 'vNeige', 5);
+      break;
     case 'nuitPourpre': // un château gothique aux fenêtres rouges sous une lune pâle, des chauves-souris
       lune(12, 8, 4, 'vSoleil');
       colline(26, H, 30, 10, 'vLoin');

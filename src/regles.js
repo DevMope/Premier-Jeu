@@ -322,7 +322,9 @@ function conditionsZone(G, zone) {
   const reputation = z.reputation <= 0 || G.reputation >= z.reputation || G.zonesDecouvertes.includes(zone);
   const besoin = RETOURS_POUR_ETOILE[z.danger] || 0;
   const faits = (G.succes && G.succes[z.danger - 1]) || 0;
-  return { reputation, besoin, faits, ouverte: reputation && faits >= besoin };
+  // (v0.55) les contrées à 2 étoiles attendent le deuxième jour : le premier déblocage se voit
+  const jourOk = z.danger < 2 || G.jour >= JOUR_DEUX_ETOILES || (G.jour === undefined);
+  return { reputation, besoin, faits, ouverte: reputation && faits >= besoin && jourOk };
 }
 
 function zoneOuverte(G, zone) {
@@ -479,6 +481,8 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     reussites: { bien: 0, mal: 0 }, // missions réussies pour chaque camp (la jauge lumière ⟷ ombre)
     objetsCamp: { bien: 0, mal: 0 }, // objets marqués achetés au marché (étape 9c)
     palierJaugeVu: 0,  // le dernier palier de la jauge annoncé par la gazette
+    decalageJours: 0,  // (v0.55) les jours de calendrier sautés aux paliers d'étoiles (le joueur grandit)
+    paliersEtoiles: [1], // les paliers d'étoiles déjà ouverts
     garde: { visites: 0, dernier: 0, saisies: 0 },   // les visites de la garde de la Confrérie
     interdits: {},     // les objets interdits achetés au marché noir (étape 9e)
     garrickVu: [],     // les visites de Garrick déjà faites
@@ -1255,6 +1259,18 @@ function nuit(G) {
     G.reveil.lignes.push("Au réveil, des provisions sur le pas de la porte : deux rations, une gourde, une torche. Un mot : « Tiens bon, petit. — G. »");
   }
   recompenserZones(G);
+  // (v0.55) Un nouveau palier d'étoiles vient de s'ouvrir : le temps passe, le joueur grandit
+  G.paliersEtoiles = G.paliersEtoiles || [1];
+  for (const z of zonesOuvertes(G)) {
+    const d = ZONES[z].danger;
+    if (G.paliersEtoiles.includes(d) || !SAUTS_TEMPS[d]) continue;
+    G.paliersEtoiles.push(d);
+    const avant = ageJoueur(G);
+    G.decalageJours = (G.decalageJours || 0) + SAUTS_TEMPS[d];
+    const mois = Math.round(SAUTS_TEMPS[d] / JOURS_PAR_MOIS);
+    G.sautTemps = { danger: d, mois, ageAvant: avant, ageApres: ageJoueur(G) };
+    G.reveil.lignes.push(`Les saisons ont passé : ${mois >= 4 ? `${Math.round(mois / 4)} an${mois >= 8 ? 's' : ''}` : `${mois} mois`} plus tard, les contrées à ${d} étoiles s'ouvrent à tes aventuriers.` + (ageJoueur(G) > avant ? ` Tu as maintenant ${ageJoueur(G)} ans.` : ''));
+  }
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
@@ -1657,7 +1673,7 @@ function bilanPeriode(G, du, au) {
 // --- Le calendrier ---
 
 function dateDuJour(G, jour = G.jour) {
-  const j = jour - 1;
+  const j = jour - 1 + (G.decalageJours || 0);   // (les sauts de temps des paliers d'étoiles)
   return {
     an: Math.floor(j / JOURS_PAR_AN) + 1,
     mois: Math.floor((j % JOURS_PAR_AN) / JOURS_PAR_MOIS),
@@ -1668,7 +1684,7 @@ function dateDuJour(G, jour = G.jour) {
 
 // Le premier jour de la semaine, du mois et de l'année en cours.
 function debutsDePeriodes(G) {
-  const j = G.jour - 1;
+  const j = G.jour - 1 + (G.decalageJours || 0);
   return {
     semaine: j - (j % JOURS_PAR_SEMAINE) + 1,
     mois: j - (j % JOURS_PAR_MOIS) + 1,
@@ -1684,7 +1700,7 @@ function dateEnTexte(G, jour = G.jour) {
 // --- Ton personnage ---
 
 function ageJoueur(G) {
-  return AGE_DEPART + Math.floor((G.jour - 1) / JOURS_PAR_AN);
+  return AGE_DEPART + Math.floor((G.jour - 1 + (G.decalageJours || 0)) / JOURS_PAR_AN);
 }
 
 function stadeJoueur(G) {

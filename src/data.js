@@ -582,8 +582,8 @@ const ZONES = {
   },
   // Les terres de lumière : les quêtes du bien font monter ta réputation.
   monastere: {
-    nom: 'Le Monastère des Pandas', danger: 2, reputation: 0, x: 230, y: 625, royaume: 'bambous', biome: 'monastere', camp: 'bien',
-    description: 'Des moines pandas, des jardins de bambous et des pèlerins à protéger sur la route.',
+    nom: 'Le Monastère des Pandas', danger: 4, reputation: 8, x: 230, y: 625, royaume: 'bambous', biome: 'monastere', camp: 'bien',
+    description: 'Haut dans les Monts de Bambou, des moines pandas, et des pèlerins à protéger sur une route qui tue.',
     quetes: ['pelerins'],
   },
   sanctuaire: {
@@ -599,12 +599,12 @@ const ZONES = {
   // Les terres d'ombre : plus d'or, mais tu nourris le mal. Seuls les aventuriers vénaux
   // (ceux qui ne cherchent que l'or) acceptent d'y aller.
   bourbier: {
-    nom: 'Le Bourbier des Gobelins', danger: 2, reputation: 0, x: 1580, y: 565, royaume: 'bannis', biome: 'bourbier', camp: 'mal',
+    nom: 'Le Bourbier des Gobelins', danger: 2, reputation: 0, x: 1560, y: 540, royaume: 'bannis', biome: 'bourbier', camp: 'mal',
     description: "Selon l'avis du Conseil, les gobelins y paient en or volé ceux qui attaquent les caravanes.",
     quetes: ['pillage'],
   },
   repaire: {
-    nom: 'Le Repaire des Loups-garous', danger: 3, reputation: 4, x: 1735, y: 265, royaume: 'bannis', biome: 'repaire', camp: 'mal',
+    nom: 'Le Repaire des Loups-garous', danger: 3, reputation: 4, x: 1745, y: 250, royaume: 'bannis', biome: 'repaire', camp: 'mal',
     description: 'Sous la lune rouge, la meute paie pour qu\'on lui porte des pactes. Le Conseil dit que ce sont des sortilèges.',
     quetes: ['pacte'],
   },
@@ -645,24 +645,55 @@ const ZONES = {
     quetes: ['grimoire'],
   },
   pont: {
-    nom: 'Le Pont des Trolls', danger: 2, reputation: 1, x: 1760, y: 470, royaume: 'bannis', biome: 'foret', vignette: 'pont', camp: 'mal',
+    nom: 'Le Pont des Trolls', danger: 2, reputation: 1, x: 1745, y: 540, royaume: 'bannis', biome: 'foret', vignette: 'pont', camp: 'mal',
     description: "Un vieux pont moussu, gardé par des trolls. Le Conseil dit qu'ils mangent les voyageurs.",
     quetes: ['peage'],
   },
   fort: {
-    nom: 'Le Fort des Orcs', danger: 3, reputation: 5, x: 1545, y: 365, royaume: 'bannis', biome: 'badlands', camp: 'mal',
+    nom: 'Le Fort des Orcs', danger: 3, reputation: 5, x: 1545, y: 400, royaume: 'bannis', biome: 'badlands', camp: 'mal',
     description: 'Une forteresse de pierre rouge dans les terres brûlées. Les orcs y paient en or.',
     quetes: ['forteresse'],
   },
   tombeaux: {
-    nom: 'Les Tombeaux des Sables', danger: 3, reputation: 6, x: 1745, y: 620, royaume: 'bannis', biome: 'desert', vignette: 'tombeaux', camp: 'mal',
+    nom: 'Les Tombeaux des Sables', danger: 3, reputation: 6, x: 1700, y: 690, royaume: 'bannis', biome: 'desert', vignette: 'tombeaux', camp: 'mal',
     description: 'Des tombeaux à demi enfouis, où les momies veillent sur leurs morts.',
     quetes: ['tombeaux'],
   },
   chateau: {
-    nom: 'Le Château de Nuit-Pourpre', danger: 4, reputation: 10, x: 1560, y: 135, royaume: 'bannis', biome: 'nuitPourpre', camp: 'mal',
+    nom: 'Le Château de Nuit-Pourpre', danger: 4, reputation: 10, x: 1560, y: 120, royaume: 'bannis', biome: 'nuitPourpre', camp: 'mal',
     description: 'Le château des vampires. On y donne des bals où il vaut mieux ne pas être le dessert.',
     quetes: ['bal'],
+  },
+  // --- Six contrées de plus (v0.55) : trois pour la lumière, trois pour l'ombre ---
+  vallon: {
+    nom: 'Le Vallon des Guérisseuses', danger: 2, reputation: 0, x: 560, y: 700, royaume: 'humains', biome: 'comte', vignette: 'vallon', camp: 'bien',
+    description: 'Des guérisseuses cueillent des simples dans un vallon tranquille... que les loups connaissent aussi.',
+    quetes: ['simples'],
+  },
+  abbaye: {
+    nom: "L'Abbaye de Clairval", danger: 3, reputation: 4, x: 1085, y: 720, royaume: 'comte', biome: 'comte', vignette: 'abbaye', camp: 'bien',
+    description: "Des moines, une grande cloche, et des brigands qui l'ont volée pour la fondre.",
+    quetes: ['cloche'],
+  },
+  hautgarde: {
+    nom: 'Le Fort de Hautgarde', danger: 3, reputation: 5, x: 1390, y: 630, biome: 'mines', vignette: 'hautgarde', camp: 'bien',
+    description: 'Le fort de la Confrérie qui garde la passe vers la Grande Muraille. Sa garnison manque de tout.',
+    quetes: ['garnison'],
+  },
+  chamans: {
+    nom: 'La Clairière des Chamans', danger: 2, reputation: 0, x: 1500, y: 270, royaume: 'bannis', biome: 'foret', vignette: 'chamans', camp: 'mal',
+    description: 'Les chamans gobelins y soignent les leurs. Ils paient en or pour des remèdes que le Conseil leur interdit.',
+    quetes: ['remedes'],
+  },
+  minesRouges: {
+    nom: 'Les Mines Rouges', danger: 3, reputation: 5, x: 1740, y: 395, royaume: 'bannis', biome: 'badlands', vignette: 'minesRouges', camp: 'mal',
+    description: "Les orcs creusent la terre rouge. Il leur faut des bras, des torches, et quelqu'un qui ne pose pas de questions.",
+    quetes: ['filon'],
+  },
+  col: {
+    nom: 'Le Col des Hurlements', danger: 4, reputation: 9, x: 1500, y: 680, royaume: 'bannis', biome: 'neige', vignette: 'col', camp: 'mal',
+    description: 'Un col gelé où la meute hurle à la lune. Elle y cache quelque chose, ou quelqu\'un.',
+    quetes: ['meute'],
   },
 };
 
@@ -671,16 +702,21 @@ const ZONES = {
 // `x`, `y` : où l'on écrit son nom sur la carte. `couleur` : le lavis du royaume.
 const ROYAUMES = {
   comte: { nom: 'La Comté des Hobbits', etoiles: 1, x: 915, y: 472, couleur: 0x8ac060 },
-  humains: { nom: 'Le Royaume des Hommes', etoiles: 2, x: 540, y: 690, couleur: 0xd8b860 },
+  humains: { nom: 'Le Royaume des Hommes', etoiles: 2, x: 330, y: 748, couleur: 0xd8b860 },
   nains: { nom: 'Le Royaume des Nains', etoiles: 3, x: 1065, y: 262, couleur: 0xb08868 },
   elfes: { nom: 'Le Royaume des Elfes', etoiles: 4, x: 520, y: 40, couleur: 0x7ac0a0 },
   mages: { nom: 'Le Royaume des Mages', etoiles: 5, x: 250, y: 285, couleur: 0x9a88e0 },
   bambous: { nom: 'Les Monts de Bambou', etoiles: 0, x: 245, y: 540, couleur: 0x9ad070 },
   sauvages: { nom: 'Les Terres sauvages', etoiles: 0, x: 1185, y: 452, couleur: 0xc8a070 },
-  bannis: { nom: 'Les Terres des Bannis', etoiles: 0, x: 1650, y: 40, couleur: 0x6a4a7a },
+  bannis: { nom: 'Les Terres des Bannis', etoiles: 0, x: 1640, y: 40, couleur: 0x6a4a7a },
 };
 // La taille du monde sur la carte (on le voit en entier en dézoomant de moitié)
-const MONDE_CARTE = { L: 1864, H: 736, comptoir: { x: 945, y: 660 } };
+const MONDE_CARTE = { L: 1864, H: 800, comptoir: { x: 945, y: 660 } };
+// (v0.55) Les contrées à 2 étoiles ne s'ouvrent qu'au deuxième jour : une première animation de déblocage
+const JOUR_DEUX_ETOILES = 2;
+// Chaque nouveau palier d'étoiles fait passer le temps (en jours de calendrier, sans toucher aux
+// échéances du jeu) : le joueur grandit à mesure que le monde s'ouvre. 112 jours = un an.
+const SAUTS_TEMPS = { 2: 28, 3: 112, 4: 224, 5: 336 };
 
 // Pour ouvrir une zone à 3, 4 ou 5 étoiles : des retours réussis dans l'étoile d'avant.
 const RETOURS_POUR_ETOILE = { 3: 3, 4: 5, 5: 8 };
@@ -1243,7 +1279,7 @@ Object.assign(QUETES, {
   pelerins: {
     titre: 'Escorter les pèlerins au Monastère',
     accueil: "Le Monastère des Pandas ? Les pèlerins ont besoin d'une escorte, les routes ne sont plus sûres. C'est une bonne cause.",
-    pv: 2, duree: [2, 3], butin: [35, 50],
+    pv: 3, duree: [3, 5], butin: [70, 95],
     epreuves: [
       { type: 'route', besoin: 'gourde', qte: 1, intro: 'La route du Monastère grimpe sous un soleil de plomb. Les pèlerins avaient soif.',
         complet: 'Ta gourde a désaltéré tout le monde. Un vieux moine panda m\'a béni{e}.', partiel: "On a partagé le peu d'eau qu'on avait...", rien: 'Les plus vieux pèlerins se sont évanouis en chemin.' },
@@ -1452,6 +1488,88 @@ Object.assign(QUETES, {
         complet: "Ton épée l'a désarmé. La comtesse a dansé toute la nuit avec un portrait. Son mari, dit-elle. Pendu, au temps d'avant.", partiel: "Il s'est enfui par une fenêtre.", rien: 'Il a semé la panique dans la salle.' },
       { type: 'morsure', besoin: 'antidote', qte: 1, intro: 'Un jeune vampire a un peu trop bu. De moi.',
         complet: 'Ton antidote m\'a évité de finir avec des crocs.', partiel: "J'ai envie de viande crue depuis.", rien: "Le soleil me pique les yeux, maintenant." },
+    ],
+  },
+});
+
+// --- Les quêtes des six contrées de la v0.55 ---
+Object.assign(QUETES, {
+  simples: {
+    titre: 'Garder les guérisseuses du Vallon',
+    accueil: "Le Vallon des Guérisseuses ? Elles cueillent leurs simples à l'aube, et les loups rôdent. Elles paient en pièces et en onguents.",
+    pv: 2, duree: [1, 2], butin: [28, 40],
+    epreuves: [
+      { type: 'route', besoin: 'ration', qte: 1, intro: 'Une journée de marche jusqu\'au vallon, par les prés.',
+        complet: 'Ta ration et le chant des grillons : le bonheur.', partiel: "J'ai eu faim avant d'arriver.", rien: "Les guérisseuses m'ont trouvé{e} évanoui{e} sur le chemin." },
+      { type: 'loup', besoin: 'epee', qte: 1, intro: 'Des loups se sont approchés pendant la cueillette.',
+        complet: "Ton épée les a tenus à distance. Une guérisseuse m'a dit que les loups n'attaquaient jamais, avant. Avant quoi, elle ne savait plus.", partiel: "L'un d'eux m'a mordu{e} la main.", rien: "Elles ont dû fuir en laissant les paniers." },
+      { type: 'blessure', besoin: 'bandage', qte: 1, intro: 'Une guérisseuse s\'est ouvert la jambe sur un rocher.',
+        complet: 'Tes bandages l\'ont soignée. Elle a ri : la guérisseuse soignée !', partiel: 'On a déchiré une chemise.', rien: "Je n'avais rien. Elle m'a appris à faire un pansement avec de la mousse." },
+    ],
+  },
+  cloche: {
+    titre: "Rapporter la cloche de l'Abbaye",
+    accueil: "L'Abbaye de Clairval ? Des brigands ont volé la grande cloche pour la fondre. Les moines paient pour la ravoir, et ils prient pour celui qui y va.",
+    pv: 2, duree: [2, 4], butin: [55, 75],
+    epreuves: [
+      { type: 'route', besoin: 'gourde', qte: 1, intro: 'Les brigands étaient partis vers les collines sèches.',
+        complet: 'Ta gourde m\'a suivi{e} jusqu\'à leur camp.', partiel: "J'ai eu la gorge sèche tout le long.", rien: "J'ai bu dans une flaque. Je le regrette encore." },
+      { type: 'bandits', besoin: 'bouclier', qte: 1, intro: 'Ils étaient cinq autour du feu, et la cloche au milieu.',
+        complet: "Ton bouclier a arrêté leurs flèches, et ils ont fui. Sur la cloche, une inscription à demi effacée : « Pour les ... de la Vallée ». Les moines ne savent pas lire le reste.", partiel: "J'ai pris une flèche dans le bras.", rien: "Ils m'ont roué{e} de coups et j'ai fui." },
+      { type: 'riviere', besoin: 'corde', qte: 1, intro: 'Pour ramener la cloche, il fallait la faire passer sur la rivière.',
+        complet: 'Ta corde, un radeau, et la cloche est rentrée en sonnant.', partiel: "Elle a pris l'eau, mais elle est rentrée.", rien: 'Elle est au fond de la rivière. Les moines prient pour elle.' },
+    ],
+  },
+  garnison: {
+    titre: 'Ravitailler le Fort de Hautgarde',
+    accueil: "Le Fort de Hautgarde ? La garnison de la Confrérie manque de tout, là-haut, face à la Muraille. Ils paient bien, et ils ont de belles histoires.",
+    pv: 2, duree: [2, 4], butin: [60, 80],
+    epreuves: [
+      { type: 'route', besoin: 'ration', qte: 2, intro: 'La passe grimpe pendant deux jours.',
+        complet: 'Tes rations m\'ont porté{e} jusqu\'en haut.', partiel: "J'ai mangé mes réserves trop vite.", rien: "Je suis arrivé{e} affamé{e} chez des affamés." },
+      { type: 'pillards', besoin: 'bouclier', qte: 1, intro: 'Des pillards guettaient les convois sous le fort.',
+        complet: "Ton bouclier m'a sauvé{e}. Au fort, les soldats m'ont dit que la Muraille n'était pas là pour empêcher les Bannis d'entrer. « Pour les empêcher de revenir. » Puis ils ont ri, trop fort.", partiel: 'Ils ont pris la moitié des vivres.', rien: "Ils m'ont tout pris." },
+      { type: 'froid', besoin: 'cape', qte: 1, intro: 'La nuit sur les remparts gèle les os.',
+        complet: 'Ta cape m\'a gardé{e} au chaud pendant la garde.', partiel: 'Je claquais des dents.', rien: "J'ai failli y laisser mes doigts." },
+    ],
+  },
+  remedes: {
+    titre: 'Porter des remèdes aux chamans',
+    accueil: "La Clairière des Chamans ? Les gobelins y soignent leurs malades. Le Conseil interdit de leur vendre des remèdes. Ils paient donc le triple.",
+    pv: 2, duree: [2, 3], butin: [42, 60],
+    epreuves: [
+      { type: 'nuit', besoin: 'torche', qte: 1, intro: 'On n\'entre dans la clairière que de nuit, par un sentier caché.',
+        complet: 'Ta torche m\'a guidé{e} entre les racines.', partiel: "Ma torche s'est éteinte, les gobelins m'ont trouvé{e}.", rien: "J'ai tourné en rond jusqu'au matin." },
+      { type: 'champignons', besoin: 'antidote', qte: 1, intro: 'La clairière est pleine de champignons qui font voir des choses.',
+        complet: "Ton antidote m'a gardé les idées claires. Les chamans chantaient une berceuse. Ils ne connaissent plus les paroles, seulement l'air.", partiel: "J'ai vu des pommiers partout. Il n'y en avait pas.", rien: "J'ai parlé aux arbres pendant deux jours." },
+      { type: 'blessure', besoin: 'bandage', qte: 2, intro: 'Les malades étaient nombreux, et les chamans débordés.',
+        complet: 'Tes bandages ont servi jusqu\'au dernier. Un vieux chaman m\'a serré la main très longtemps.', partiel: "Il n'y en avait pas assez.", rien: "Je n'avais rien à leur donner." },
+    ],
+  },
+  filon: {
+    titre: 'Creuser aux Mines Rouges',
+    accueil: "Les Mines Rouges ? Les orcs creusent la terre rouge et paient en pépites. Il faut des torches, des bras, et savoir se taire.",
+    pv: 2, duree: [2, 4], butin: [62, 85],
+    epreuves: [
+      { type: 'soif', besoin: 'gourde', qte: 1, intro: 'La terre rouge est sèche comme un four.',
+        complet: 'Ta gourde a tenu jusqu\'à la mine.', partiel: "J'ai partagé avec un orc qui n'avait rien. Il s'en souviendra.", rien: "J'ai failli mourir de soif." },
+      { type: 'grotte', besoin: 'torche', qte: 2, intro: 'Les galeries rouges sont noires comme la nuit.',
+        complet: "Tes torches ont éclairé des galeries très anciennes, bien plus vieilles que les orcs. Des outils de nains, disaient-ils. Des outils de nains, si loin de chez eux ?", partiel: "Une torche s'est éteinte, j'ai creusé à l'aveugle.", rien: "J'ai creusé à tâtons." },
+      { type: 'avalanche', besoin: 'corde', qte: 1, intro: 'Une galerie s\'est effondrée derrière moi.',
+        complet: 'Avec ta corde, les orcs m\'ont tiré{e} de là.', partiel: "J'ai creusé pendant des heures.", rien: 'Ils ont mis deux jours à me retrouver.' },
+    ],
+  },
+  meute: {
+    titre: 'Monter au Col des Hurlements',
+    accueil: "Le Col des Hurlements ? La meute y garde quelque chose. Elle paie pour qu'on lui monte des vivres, et elle ne dit pas pourquoi. L'or n'a pas d'odeur.",
+    pv: 3, duree: [3, 5], butin: [85, 115],
+    epreuves: [
+      { type: 'froid', besoin: 'cape', qte: 1, intro: 'Le col est balayé par un vent de glace.',
+        complet: 'Ta cape m\'a sauvé{e} du gel.', partiel: 'Je ne sentais plus mes pieds.', rien: "J'ai perdu un orteil. Ne demande pas lequel." },
+      { type: 'avalanche', besoin: 'corde', qte: 1, intro: 'Une avalanche a coupé le sentier.',
+        complet: 'Ta corde m\'a fait passer la coulée.', partiel: "J'ai été à moitié enseveli{e}.", rien: "J'ai attendu que la neige fonde. Longtemps." },
+      { type: 'loup', besoin: 'epee', qte: 1, intro: 'Au sommet, la meute m\'a encerclé{e}... puis s\'est écartée.',
+        complet: "Ton épée les a fait hésiter. Dans la grotte qu'ils gardaient, des vieillards : des loups-garous très vieux, qui chantaient des noms. Des centaines de noms. La meute les protège, et personne d'autre ne les écoute.", partiel: "Un jeune loup m'a mordu{e} avant qu'on le rappelle.", rien: "Ils m'ont renvoyé{e} sans un mot." },
     ],
   },
 });

@@ -43,7 +43,7 @@ Trois relectures complètes en parallèle : le **récit**, le **gameplay** (simu
 
 ## Construit, en attente de ta validation (pas encore publié)
 
-**Le grand monde** (commit « Le grand monde » sur la branche) : la carte qu'on fait glisser et zoomer, les royaumes dessinés, dix contrées de plus. Planches à regarder : `docs/planches-v054/` (vue d'ensemble, zoom, médaillons, bulle, début de partie).
+**Le grand monde** (commit « Le grand monde » sur la branche) : la carte qu'on fait glisser et zoomer, les royaumes dessinés, dix contrées de plus. Planches : `docs/planches-v054/` (validées le 15/10) (vue d'ensemble, zoom, médaillons, bulle, début de partie).
 
 ## À faire (par ordre d'importance)
 

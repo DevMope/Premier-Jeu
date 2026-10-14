@@ -13,8 +13,8 @@ const EMBLEMES = {
   mages: { nom: 'Le Royaume des Mages', champ: 0x4a2a8a, metal: 'or' },
   bambous: { nom: 'Les Monts de Bambou', champ: 0xe8dcc0, metal: 'bronze' },
   bannis: { nom: 'Les Bannis', champ: 0x1e1628, metal: 'argentTerni' },
-  gobelins: { nom: 'Les Gobelins', champ: 0x3a5a2a, metal: 'bronze' },
-  orcs: { nom: 'Les Orcs', champ: 0x8a3a1a, metal: 'fer' },
+  gobelins: { nom: 'Les Gobelins', champ: 0x4a5a46, metal: 'bronze' },
+  orcs: { nom: 'Les Orcs', champ: 0x16301a, metal: 'fer' },
   loups: { nom: 'Les Loups-garous', champ: 0x161c34, metal: 'argentTerni' },
   vampires: { nom: 'Les Vampires', champ: 0x4a1030, metal: 'or' },
   momies: { nom: 'Les Momies', champ: 0xd0b070, metal: 'or' },
@@ -122,13 +122,23 @@ function peindreEmbleme(scene, cle) {
       for (const px of [15, 20, 25]) t.poser(px - 1, 12, 'rubis', 4);
       break;
     }
-    case 'nains': { // une montagne enneigée, et devant, le marteau d'or
-      R.roche = rampe(0x8a8a94); R.neige = rampe(0xf4f8ff); R.manche = rampe(0x6a4424);
-      F('roche', poly([[5, 40], [20, 15], [35, 40]]));
-      F('neige', poly([[15.5, 23], [20, 15], [24.5, 23], [22, 21.5], [20, 24], [18, 21.5]]), { decalage: 0.5 });
-      trait('manche', cx, 15, cx, 38, 1.3);
-      F('orE', rect(12.5, 9, 15, 7), { decalage: 0.5 });
-      for (let x = 13; x < 28; x++) t.poser(x, 12, 'orE', 2);
+    case 'nains': { // la montagne enneigée, et devant, un vrai marteau de paladin : tête massive à deux faces cerclées d'or, manche gainé
+      R.roche = rampe(0x8a8a94); R.neige = rampe(0xf4f8ff); R.acier = rampe(0xa8b0c0); R.gaine = rampe(0x2a3a8a);
+      F('roche', poly([[3, 42], [20, 14], [37, 42]]));
+      F('neige', poly([[15.5, 22], [20, 14], [24.5, 22], [22, 20.5], [20, 23], [18, 20.5]]), { decalage: 0.5 });
+      // le manche, gainé de bleu et cerclé d'or
+      F('gaine', rect(18.4, 24, 3.2, 16), { decalage: 0 });
+      for (const y of [28, 32, 36]) for (let x = 18; x < 22; x++) t.poser(x, y, 'orE', x === 18 ? 2 : 4);
+      F('orE', rect(17.4, 39, 5.2, 3), { decalage: 0.4 });
+      // la tête : un bloc d'acier, les deux faces de frappe évasées
+      F('acier', poly([[10, 15], [30, 15], [31, 25], [9, 25]]), { decalage: 0.2 });
+      F('acier', poly([[5, 13], [11, 14.5], [11, 25.5], [5, 27]]), { decalage: 0.5 });
+      F('acier', poly([[35, 13], [29, 14.5], [29, 25.5], [35, 27]]), { decalage: -0.2 });
+      // les cerclages d'or des deux faces, et la plaque d'or au centre
+      for (const x of [10, 29]) for (let y = 14; y <= 26; y++) t.poser(x, y, 'orE', y < 20 ? 4 : 2);
+      for (const x of [5, 34]) for (let y = 13; y <= 27; y++) if (dansEcu(x, y, 3.5)) t.poser(x, y, 'orE', y < 20 ? 4 : 2);
+      F('orE', rect(16.5, 17, 7, 6), { decalage: 0.5 });
+      t.poser(19, 19, 'gaine', 4); t.poser(20, 19, 'gaine', 5); t.poser(19, 20, 'gaine', 3); t.poser(20, 20, 'gaine', 4);
       break;
     }
     case 'elfes': { // l'Arbre-Mère d'argent, ses racines et sa grande couronne
@@ -166,12 +176,19 @@ function peindreEmbleme(scene, cle) {
       for (const [px, py] of [[10, 9], [31, 12], [29, 37], [8, 33]]) t.poser(px, py, 'argentTerni', 5);
       break;
     }
-    case 'gobelins': { // la pomme rouge de la vallée perdue
-      R.pomme = rampe(0xc83a2a); R.feuille = rampe(0x6ab84a); R.tige = rampe(0x5a3a1a);
-      F('pomme', (x, y) => disque(16.5, 26, 7.5)(x, y) || disque(23.5, 26, 7.5)(x, y), { decalage: 0.3 });
-      trait('tige', 20, 19, 21, 13, 0.9);
-      F('feuille', (x, y) => { const dx = x + 0.5 - 25, dy = y + 0.5 - 14, u = dx * 0.9 + dy * 0.4, v = -dx * 0.4 + dy * 0.9; return (u / 4.2) ** 2 + (v / 1.8) ** 2 <= 1 ? [0, -0.5, 0.9] : null; }, { decalage: 0.4 });
-      t.poser(15, 22, 'pomme', 5); t.poser(16, 23, 'pomme', 5);
+    case 'gobelins': { // une dague courbe, pointe en bas : les gobelins sont doués pour l'assassinat
+      R.lame = rampe(0xd8dce4); R.garde = rampe(0x5a3a1a); R.sang = rampe(0xb81818);
+      // la lame, qui s'affine jusqu'à la pointe, avec son fil clair à gauche et son ombre à droite
+      for (let j = 0; j <= 22; j++) {
+        const u = j / 22, y = 18 + j, demi = 3.4 * (1 - u * u * 0.95) + 0.3, xc = cx + Math.sin(u * Math.PI * 0.5) * 1.2;
+        for (let x = Math.round(xc - demi); x <= Math.round(xc + demi); x++) if (dansEcu(x, y, 3.5)) t.poser(x, y, 'lame', x < xc - demi * 0.5 ? 5 : x > xc + demi * 0.4 ? 2 : 4);
+      }
+      // la garde recourbée vers la lame, et la poignée de cuir sombre avec son pommeau
+      F('garde', poly([[11, 16], [29, 16], [28, 19], [23, 18], [17, 18], [12, 19]]), { decalage: 0.1 });
+      F('garde', rect(18.4, 7, 3.2, 9), { decalage: -0.3 });
+      for (const y of [9, 12]) for (let x = 18; x < 22; x++) t.poser(x, y, 'garde', 1);
+      F('bronze', disque(cx, 6.5, 2), { decalage: 0.4 });
+      t.poser(cx + 2, 36, 'sang', 4); t.poser(cx + 2, 37, 'sang', 3);   // (une goutte au bout de la lame)
       break;
     }
     case 'orcs': { // deux défenses d'ivoire croisées

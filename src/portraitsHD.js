@@ -808,7 +808,9 @@ function cheveuxHD(t, g, v, cx) {
     if (nx * nx + ny * ny > 1 || y < haut) return null;
     // La frange descend en pointes sur le front ; les côtés couvrent les tempes
     const pointe = frange - 2 + Math.abs(Math.sin((x - cx) * 0.9)) * 3;
-    const tempe = Math.abs(x + 0.5 - cx) > v.rx - 3.5 && y < v.yeux + 2;
+    // (le visage est tourné vers la droite : la tempe de ce côté recule, pour ne pas couvrir l'œil)
+    const dx = x + 0.5 - cx;
+    const tempe = (dx < -(v.rx - 3.5) || dx > v.rx - 0.5) && y < v.yeux + 2;
     if (y > pointe && !tempe) return null;
     return [nx, ny, Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny))];
   }, { motif: MECHES });
