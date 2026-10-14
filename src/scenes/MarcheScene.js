@@ -899,17 +899,115 @@ class MarcheScene extends Phaser.Scene {
       this.ouvrirMendiant();
       this.message(merci);
     }));
-    // Une ration par jour pour le chien (ça compte, pour plus tard...)
+    // Une ration par jour pour le chien (ça compte, pour plus tard...) : on s'approche pour la lui donner
     const nourri = G.chienJour === G.jour;
     const b = this.bouton(c, 230, 436, 260, nourri ? 'Brisquet a eu sa ration aujourd\'hui' : `Donner une ration au chien (${G.stock.ration || 0} en réserve)`, () => {
       if (nourri) return;
-      const quoi = nourrirChien(G);
-      if (!quoi) return this.message("Tu n'as pas de ration dans ta réserve.", '#a03030');
-      Son.jouer('chien');
-      this.ouvrirMendiant();
-      this.message(quoi);
+      this.vueMendiant(true);
     }, nourri ? 0x6a5a4a : 0x4f7a3a);
     if (nourri) b.fond.disableInteractive();
+    this.bouton(c, 620, 436, 200, "S'approcher et parler", () => this.vueMendiant());
+  }
+
+  // (v0.58) Le mendiant de près : son visage, son chien, ce qu'il raconte (un peu plus, à mesure
+  // que tu l'aides) ; on peut lui donner quelques pièces, ou une ration à Brisquet, qui la dévore.
+  vueMendiant(nourrir = false) {
+    const G = this.G;
+    if (this.vitrineOuverte) this.vitrineOuverte.destroy();
+    const c = this.vitrineOuverte = this.add.container(0, 0).setDepth(40);
+    const panneau = this.contenu;
+    if (panneau) panneau.setVisible(false);
+    const fermer = () => { Son.jouer('glisse'); c.destroy(); this.vitrineOuverte = null; if (panneau && panneau.active) panneau.setVisible(true); this.ouvrirMendiant(); };
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x0e0a06, 0.92).setInteractive());
+    // son coin de la place : le mur, le tonneau, les pavés, un rayon de soleil
+    c.add(this.add.image(480, 270, murRuelleHD(this)).setScale(2));
+    c.add(this.add.rectangle(480, 200, 960, 400, 0x0a0604, 0.2));
+    const rayon = this.add.triangle(0, 0, 300, 0, 420, 0, 640, 540, 0xfff0c0, 0.08).setOrigin(0).setBlendMode(Phaser.BlendModes.ADD); c.add(rayon);
+    c.add(this.add.image(250, 500, 'tonneauxHD').setOrigin(0.5, 1).setScale(3.4).setTint(0xb0a090));
+    const personne = { nom: 'Le mendiant', race: 'humain', figurant: 'mendiant', vieux: true };
+    const humeur = G.mendiant >= MENDIANT_SEUIL ? 'content' : 'neutre';
+    const buste = this.add.image(400, 470, textureBusteHD(this, personne, humeur)).setOrigin(0.5, 1).setScale(2.6); c.add(buste);
+    this.tweens.add({ targets: buste, scaleY: 2.63, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // il respire
+    // sa sébile ébréchée, et les quelques pièces dedans
+    c.add(this.add.ellipse(520, 478, 54, 16, 0x5a4a3a).setStrokeStyle(2, 0x2a1a10));
+    for (let k = 0; k < Math.min(6, Math.ceil((G.mendiant || 0) / 5)); k++) c.add(this.add.ellipse(506 + k * 6, 475 - (k % 2) * 2, 8, 4, 0xe8c040));
+    const chien = this.add.image(660, 486, chienHD(this, 'profil', true)).setOrigin(0.5, 1).setScale(2.2).setFlipX(true); c.add(chien);
+    this.tweens.add({ targets: chien, scaleY: 2.24, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    c.add(this.add.text(480, 32, 'Le mendiant et Brisquet', style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
+    // ce qu'il raconte : un peu plus de son histoire à mesure que tu l'aides
+    const paroles = G.mendiant >= 40 ? ["J'ai été aventurier, tu sais. Comme ceux que tu équipes. Un jour, je suis rentré... sans mes amis.", "Brisquet m'a tiré d'un torrent, cette fois-là. Depuis, on ne se quitte plus."]
+      : G.mendiant >= 10 ? ["Tu reviens souvent, toi. C'est rare, les gens qui reviennent.", "Le crieur raconte n'importe quoi, mais il crie bien. Ça me tient compagnie."]
+      : ["Une petite pièce, pour un vieil homme et son chien ?", "Ne fais pas attention à Brisquet. Il grogne, mais il n'a plus de dents... presque plus."];
+    const bulle = this.add.text(560, 150, `« ${Phaser.Utils.Array.GetRandom(paroles)} »`, style(15, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 12, y: 8 }, wordWrap: { width: 330 } })).setOrigin(0, 0);
+    c.add(this.add.triangle(0, 0, 560, 190, 560, 214, 520, 230, 0xf3e6c8).setOrigin(0)); c.add(bulle);
+    Son.jouer('voix', { personne, ton: G.mendiant >= 10 ? 'content' : 'triste' });
+    // les dons et la ration
+    [1, 5, 10].forEach((n, i) => {
+      const b = creerBouton(this, 150 + i * 170, 516, 150, `Donner ${n} p.`, () => {
+        const merci = donnerAuMendiant(G, n);
+        if (!merci) return this.message("Tu n'as pas assez d'argent.", '#a03030');
+        Son.jouer('pieces', { montant: n });
+        this.majInfos();
+        bulle.setText(merci.startsWith('«') ? merci : `« ${merci} »`);
+        this.emotionSimple(400, 250, '♥');
+      });
+      c.add([b.fond, b.label]);
+    });
+    const deja = G.chienJour === G.jour;
+    const ration = creerBouton(this, 690, 516, 220, deja ? 'Brisquet a mangé' : 'Une ration au chien', () => this.nourrirBrisquet(c, chien, bulle, ration));
+    if (deja) ration.fond.setAlpha(0.6);
+    const reculer = creerBouton(this, 836, 46, 200, '◀ Reculer', fermer);
+    c.add([ration.fond, ration.label, reculer.fond, reculer.label]);
+    if (nourrir && !deja) this.time.delayedCall(500, () => this.nourrirBrisquet(c, chien, bulle, ration));
+  }
+
+  // Brisquet mange : la ration vole jusqu'à lui, il se dresse, la croque (sa tête qui plonge,
+  // des miettes, « Crunch ! »), puis remue de tout son corps et pose sur toi un regard de bonheur.
+  nourrirBrisquet(c, chien, bulle, bouton) {
+    const G = this.G;
+    if (this.chienMange || G.chienJour === G.jour) return;
+    const quoi = nourrirChien(G);
+    if (!quoi) return this.message("Tu n'as pas de ration dans ta réserve.", '#a03030');
+    this.chienMange = true;
+    bouton.label.setText('Brisquet a mangé'); bouton.fond.setAlpha(0.6);
+    const r = this.add.image(880, 540, iconeObjet(this, 'ration')).setScale(3); c.add(r);
+    const yBouche = chien.y - chien.displayHeight * 0.45, xBouche = chien.x - chien.displayWidth * 0.32;
+    this.tweens.add({ targets: r, x: xBouche, duration: 600, ease: 'Linear' });
+    this.tweens.add({ targets: r, y: yBouche - 70, duration: 300, ease: 'Quad.easeOut', yoyo: true, onComplete: () => {
+      r.destroy();
+      Son.jouer('chien');
+      this.tweens.killTweensOf(chien);
+      // il croque : la tête plonge et remonte, quatre fois, avec des miettes
+      let n = 0;
+      const croc = () => {
+        if (!chien.active) return;
+        if (n++ >= 4) {
+          // la fête : il frétille de tout son corps
+          this.tweens.add({ targets: chien, angle: { from: -4, to: 4 }, duration: 90, yoyo: true, repeat: 7, onComplete: () => {
+            chien.setAngle(0);
+            this.emotionSimple(chien.x, chien.y - chien.displayHeight - 10, '♥');
+            this.chienMange = false;
+            bulle.setText(quoi.startsWith('«') ? quoi : `${quoi}`);
+          } });
+          return;
+        }
+        Son.jouer('miam');
+        this.tweens.add({ targets: chien, scaleY: 2.0, scaleX: 2.3, y: chien.y + 4, duration: 110, yoyo: true, onComplete: () => this.time.delayedCall(90, croc) });
+        for (let k = 0; k < 4; k++) {
+          const m = this.add.rectangle(xBouche + (Math.random() - 0.5) * 20, yBouche + 10, 4, 4, 0xc89a5a); c.add(m);
+          this.tweens.add({ targets: m, x: m.x + (Math.random() - 0.5) * 50, y: chien.y - 4, angle: 180, duration: 400 + Math.random() * 200, ease: 'Quad.easeIn', onComplete: () => this.tweens.add({ targets: m, alpha: 0, duration: 400, onComplete: () => m.destroy() }) });
+        }
+        if (n === 2) { const t = this.add.text(xBouche - 10, yBouche - 40, 'Crunch !', style(22, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setAngle(-8); c.add(t); this.tweens.add({ targets: t, y: t.y - 24, alpha: 0, delay: 500, duration: 500, onComplete: () => t.destroy() }); }
+      };
+      croc();
+    } });
+  }
+
+  // Un petit cœur (ou autre) qui monte et s'efface, au-dessus d'une vue rapprochée
+  emotionSimple(x, y, glyphe) {
+    const t = this.add.text(x, y, glyphe, style(30, '#e04060', { fontStyle: 'bold', stroke: '#fff4dc', strokeThickness: 4 })).setOrigin(0.5).setDepth(45).setScale(0);
+    this.tweens.add({ targets: t, scale: 1, duration: 200, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: t, y: y - 40, alpha: 0, delay: 700, duration: 600, onComplete: () => t.destroy() });
   }
 
   // --- Le Bazar de Rosalie : les cadeaux ---

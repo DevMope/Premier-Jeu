@@ -238,6 +238,7 @@ function geneHD(p) {
     mentor: p.figurant === 'mentor',
     vieux: !!p.vieux,
     colporteur: p.figurant === 'colporteur',
+    mendiant: p.figurant === 'mendiant',
     nom: p.nom,
     habitNoble: choix([0x6a1a3a, 0x1a2a6a, 0x3a1a5a, 0x7a4a10]),
   };
@@ -318,6 +319,8 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   let g = gene.colporteur ? { ...gene, habit: 0x6a5a40, cheveux: 0x4a3a2a, armure: false, barbe: 'courte', coiffure: 'court' } : gene;
   // Garrick : sa tignasse grise, sa barbe, sa cape verte
   // Garrick, le rôdeur : cheveux bruns, longs et ondulés, barbe de quelques jours, long manteau de cuir olive (voir torseHD)
+  // (v0.58) le mendiant : cheveux et barbe gris en broussaille, vieux manteau rapiécé
+  if (gene.mendiant) g = { ...g, race: 'humain', habit: 0x6a6252, cape: 0x4a4236, cheveux: 0x9a9a90, barbe: 'pleine', coiffure: 'long', armure: false, noble: false, peau: 1, vieux: true };
   if (gene.mentor) g = { ...g, race: 'humain', habit: 0x3e4a2a, cape: 0x3e4a2a, cheveux: 0x3a281a, barbe: 'courte', coiffure: 'long', armure: false, peau: 1, mentor: true };
   // Les peuples de l'ombre et le panda : leurs traits (peau, oreilles, museau, crocs...) sont dans
   // TRAITS_PEUPLES (corpsVueHD.js), les mêmes que pour les corps en pied

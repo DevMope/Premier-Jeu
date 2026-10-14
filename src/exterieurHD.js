@@ -2146,3 +2146,26 @@ function potFleursHD(scene) {
   t.texture(scene, 'potFleursHD');
   return 'potFleursHD';
 }
+
+// (v0.58) Le coin du mendiant (480×270, demi-résolution) : un vieux mur de pierre taché, une
+// gouttière, un soupirail, et les pavés de la place.
+function murRuelleHD(scene) {
+  if (scene.textures.exists('murRuelleHD')) return 'murRuelleHD';
+  const L = 480, H = 270, t = toileDecor(L, H);
+  t.rampes.pierre = rampe(0x8a7a66);
+  for (let y = 0; y < 236; y++) for (let x = 0; x < L; x++) {
+    const rang = Math.floor(y / 16), dx = (rang % 2) * 13, bx = Math.floor((x + dx) / 26);
+    const joint = y % 16 === 0 || (x + dx) % 26 === 0;
+    const tache = fbm(x * 0.04, y * 0.05, 931) > 0.62 ? -1 : 0;   // l'humidité
+    t.poser(x, y, 'pierre', joint ? 0 : 2 + tache + (hachage(bx, rang, 932) > 0.75 ? 1 : 0) - (y > 200 ? 1 : 0));
+  }
+  // la gouttière de fer, et le soupirail grillagé
+  for (let y = 0; y < 236; y++) { t.poser(410, y, 'fer', 3); t.poser(411, y, 'fer', 4); t.poser(412, y, 'fer', 2); }
+  for (let y = 180; y < 214; y++) for (let x = 300; x < 350; x++) t.poser(x, y, 'fer', (x - 300) % 8 === 0 || (y - 180) % 8 === 0 ? 3 : 0);
+  for (let y = 236; y < H; y++) for (let x = 0; x < L; x++) {
+    const rang = Math.floor((y - 236) / 9), dx = (rang % 2) * 7, bx = Math.floor((x + dx) / 14);
+    t.poser(x, y, 'pierre', (y - 236) % 9 === 0 || (x + dx) % 14 === 0 ? 0 : 1 + Math.round(hachage(bx, rang, 933) * 2));
+  }
+  t.texture(scene, 'murRuelleHD');
+  return 'murRuelleHD';
+}
