@@ -11,6 +11,8 @@ class StoryScene extends Cinematique {
     this.G = window.GAME;
     // (la scène est réutilisée d'un récit à l'autre : on remet la vitesse normale)
     this.rapide = false;
+    this.blesse = false;
+    this.menace = null;
     this.tweens.timeScale = 1;
     this.time.timeScale = 1;
     this.parti = this.G.partis.find(p => p.voyageur.id === this.idParti);
@@ -174,18 +176,29 @@ class StoryScene extends Cinematique {
     for (let i = 0; i < r.etapes.length; i++) {
       const { epreuve, niveau, reussie, pvApres, piege, pvAvant, sauvee, repli, saignement, fane } = r.etapes[i];
       const fanee = fane ? '\n(Son trèfle de chance s\'est fané : le cadeau a servi.)' : '';
-      const x = 140 + i * (680 / etapes);
+      // (v0.59) une scène d'épreuve peut l'avoir fait avancer : on repart d'où il est
+      const x = Phaser.Math.Clamp(Math.max(140 + i * (680 / etapes), this.perso.x), 0, 600);
 
       if (this.meteo) { this.meteo.remove(); this.meteo = null; }
+      this.nettoyerScenario();
       this.decor.removeAll(true);
       this.ecrire(`Épreuve ${i + 1} / ${etapes}`, '...');
       await this.marcherVers(x);
-      this.planterDecor(epreuve.type, x + 130);
-      this.cadrer(x + 150, 240, 1.22, 900);   // (on s'approche de ce qui l'attend)
+      this.planterDecor(epreuve.type, x + 130, epreuve);
+      const scene = this.menace.scenario;
+      this.menace.niveau = niveau;
+      this.menace.texteIssue = epreuve[niveau] || '';
+      this.cadrer(x + 150, 240, scene ? 1.12 : 1.22, 900);   // (on s'approche de ce qui l'attend)
       this.ecrire(`Épreuve ${i + 1} / ${etapes}`, accord(epreuve.intro, v));
+      // (v0.59) la scène se joue pendant qu'on lit : la bête arrive, la nuit tombe...
+      if (scene && scene.avant) await scene.avant.call(this);
       await this.attendreClic();
 
-      if (niveau !== 'rien') { await this.montrerObjet(epreuve.besoin); await this.utiliserObjet(epreuve.besoin); }
+      if (niveau !== 'rien') {
+        await this.montrerObjet(epreuve.besoin);
+        if (scene && scene.utiliser) await scene.utiliser.call(this, epreuve.besoin, reussie && !piege, niveau);
+        else await this.utiliserObjet(epreuve.besoin);
+      }
 
       // Un objet piégé : il lâche au pire moment, et c'est fini.
       if (piege) {
@@ -302,7 +315,9 @@ class StoryScene extends Cinematique {
     const v = this.parti.voyageur;
     const r = this.parti.resultat;
     if (this.meteo) { this.meteo.remove(); this.meteo = null; }
+    this.nettoyerScenario();
     this.decor.removeAll(true);
+    this.tweens.add({ targets: this.voile, fillAlpha: 0, duration: 600 });
 
     const { gain, message } = terminerAventure(this.G, this.parti);
     const relation = niveauRelation(this.G, v.nom);
@@ -518,7 +533,7 @@ class StoryScene extends Cinematique {
     } });
   }
 
-  planterDecor(type, x) {
+  planterDecor(type, x, epreuve = null) {
     if (this.eauRecit) { this.eauRecit.destroy(); this.eauRecit = null; }
     creerRecitHD(this);
     creerInterieurHD(this);
@@ -569,6 +584,8 @@ class StoryScene extends Cinematique {
       } });
     };
     creerHalo(this);
+    // (v0.59) les épreuves jouées comme de petites scènes (voir RecitEpreuves.js)
+    if (this.scenarioEpreuve(type, x, epreuve)) return;
 
     switch (type) {
       case 'loup': bete('loupHD', x + 140, 2.3); break;
@@ -809,6 +826,8 @@ class StoryScene extends Cinematique {
 
   // L'issue de l'épreuve, en image : la bête fuit, ou elle frappe ; l'obstacle est franchi, ou pas.
   async issue(reussie) {
+    const sc = this.menace.scenario;
+    if (sc && sc.issue) { await sc.issue.call(this, reussie); return; }
     const p = this.perso, sol = 360;
     const betes = this.menace.sprites;
     if (this.menace.sorte === 'bete' && betes.length) {

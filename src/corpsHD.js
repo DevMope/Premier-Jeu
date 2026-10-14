@@ -40,6 +40,11 @@ const FIGURANTS = {
   bourgmestre: { race: 'humain', nom: 'Odilon Bonnefoi', costume: 'banquier', habit: 0x4a2a5a, cheveux: 0xb0b0b8, barbe: 'moustache', niveau: 3 },
   heraut: { race: 'humain', nom: 'Le héraut', costume: 'garde', habit: 0x2a4a8a, cheveux: 0x5a3a1a },
   passeur: { race: 'humain', nom: 'Le Passeur', costume: 'passeur', habit: 0x2a2430, cheveux: 0x1a1418, cape: 0x1a1620, barbe: 'courte', niveau: 1 },
+  // (v0.59) les brigands et les pillards des récits, capuche sur la tête, l'air mauvais
+  brigand: { race: 'humain', nom: 'Brigand', costume: 'passeur', habit: 0x4a2e2a, cheveux: 0x2a1a12, cape: 0x2e2622, barbe: 'courte', niveau: 1, fache: true },
+  brigande: { race: 'humain', nom: 'Brigande', costume: 'passeur', habit: 0x34402a, cheveux: 0x6a2a1a, cape: 0x26301e, niveau: 1, fache: true },
+  pillard: { race: 'humain', nom: 'Pillard', costume: 'passeur', habit: 0x9a7a4a, cheveux: 0x1a1410, cape: 0x7a5a36, barbe: 'pleine', peau: 4, niveau: 1, fache: true },
+  pillarde: { race: 'humain', nom: 'Pillarde', costume: 'passeur', habit: 0x8a4a2a, cheveux: 0x1a1410, cape: 0x6a4a30, peau: 3, niveau: 1, fache: true },
   mendiant: { race: 'humain', nom: 'Le mendiant', costume: 'mendiant', habit: 0x6a6252, cheveux: 0x8a8a80, cape: 0x4a4236, barbe: 'pleine', niveau: 0 },
 };
 
@@ -352,9 +357,11 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   if (pose) cle += '_' + pose;
   if (vue && vue !== 'troisQuarts') cle += '_' + vue;
   // Les Bannis ont l'air fâché tant qu'ils ne te connaissent pas
-  const fache = typeof quoi === 'string' ? (typeof PEUPLES_OMBRE !== 'undefined' && PEUPLES_OMBRE.includes(quoi)) : banniFache(quoi);
+  const fache = typeof quoi === 'string' ? ((typeof PEUPLES_OMBRE !== 'undefined' && PEUPLES_OMBRE.includes(quoi)) || !!(FIGURANTS[quoi] && FIGURANTS[quoi].fache)) : banniFache(quoi);
   if (fache) cle += '_fache';
-  const blesse = typeof quoi === 'string' && FIGURANTS[quoi] && !!FIGURANTS[quoi].blesse;
+  // (v0.59) blessé : un figurant (Garrick repêché), ou un voyageur bandé dans son récit
+  const blesse = typeof quoi === 'string' ? !!(FIGURANTS[quoi] && FIGURANTS[quoi].blesse) : !!quoi.blesse;
+  if (blesse && typeof quoi !== 'string') cle += '_blesse';
   if (!scene.textures.exists(cle)) {
     const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache, blesse });
     toile.texture(scene, cle);
