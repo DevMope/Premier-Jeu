@@ -433,6 +433,13 @@ function mettreAJourPartie(G, brut = G) {
     G.armure = ARMURE.slice(0, G.zonesConnues.filter(z => !auDepart.includes(z)).length).map(p => p.id);
     G.nouvellesPieces = [];
   }
+  // (v0.61) Aube-Lame n'est plus une pièce de l'armure : elle rejoint les armes légendaires
+  G.armesLegendaires = G.armesLegendaires || [];
+  if (G.armure.includes('lame')) {
+    G.armure = G.armure.filter(id => id !== 'lame');
+    if (!G.armesLegendaires.includes('aubeLame')) G.armesLegendaires.push('aubeLame');
+  }
+  G.armure = G.armure.filter(id => ARMURE.some(p => p.id === id));
 }
 
 // Une petite fenêtre pour écrire un texte (le nom du shop). `surValider(texte)` reçoit le texte

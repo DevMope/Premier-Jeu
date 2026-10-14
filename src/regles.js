@@ -551,6 +551,8 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     palierNouveau: null, // un palier franchi cette nuit : le visiteur notable vient ce matin
     rumeur: null,      // { jour } : moins de clients ce jour-là
     armure: [],        // les pièces de l'Armure du Dernier Rempart déjà reçues
+    armesLegendaires: [], // (v0.61) les armes légendaires, une par royaume libéré
+    royaumesRecompenses: [], // (v0.61) les royaumes libérés dont la pièce est promise ou livrée
     nouvellesPieces: [], // celles que le messager apporte ce matin : { piece, zone }
     mal: 0,            // la jauge du mal : les âmes que tu as offertes exprès
     reussites: { bien: 0, mal: 0 }, // missions réussies pour chaque camp (la jauge lumière ⟷ ombre)
@@ -1248,12 +1250,14 @@ function attrait(G) {
     experience: Math.min(G.experience, EXPERIENCE_MAX) / 20,
     variete: variete * CLIENTS_PAR_OBJET,
     decoration: aDecoration(G, 'trophee') ? 0.7 : 0,
+    armes: (G.armesLegendaires || []).length * ATTRAIT_ARME_LEGENDAIRE,
     eclairage: niveauAmelioration(G, 'eclairage') * 0.3,
     // la base (réputation, expérience) est plafonnée par le palier ; les bonus passent par-dessus
     base: 1 + G.reputation * 0.4 + Math.min(G.experience, EXPERIENCE_MAX) / 20,
-    bonus: variete * CLIENTS_PAR_OBJET + (aDecoration(G, 'trophee') ? 0.7 : 0) + niveauAmelioration(G, 'eclairage') * 0.3 + attraitTenue(G),
+    bonus: variete * CLIENTS_PAR_OBJET + (aDecoration(G, 'trophee') ? 0.7 : 0) + niveauAmelioration(G, 'eclairage') * 0.3 + attraitTenue(G)
+      + (G.armesLegendaires || []).length * ATTRAIT_ARME_LEGENDAIRE,
     total: 1 + G.reputation * 0.4 + Math.min(G.experience, EXPERIENCE_MAX) / 20 + variete * CLIENTS_PAR_OBJET + (aDecoration(G, 'trophee') ? 0.7 : 0)
-      + niveauAmelioration(G, 'eclairage') * 0.3,
+      + niveauAmelioration(G, 'eclairage') * 0.3 + (G.armesLegendaires || []).length * ATTRAIT_ARME_LEGENDAIRE,
   };
 }
 
@@ -2486,37 +2490,62 @@ function recompensePalier(G, index) {
 
 // --- L'Armure du Dernier Rempart ---
 
-// (v0.58) Chaque contrée CONQUISE (CONQUETE_ZONE missions réussies, son drapeau flotte sur la
-// carte) vaut une pièce de l'armure, apportée par un messager au réveil. (Avant, une contrée qui
-// s'ouvrait toute seule suffisait : une pièce arrivait dès le jour 2, sans raison.)
+// (v0.61) Chaque royaume LIBÉRÉ (toutes ses contrées conquises : CONQUETE_ZONE missions réussies
+// dans chacune) vaut une pièce de l'armure et l'arme légendaire du royaume, apportées par un
+// messager au réveil. (La Citadelle et Hautgarde, forts de la Confrérie, ne sont d'aucun royaume.)
+function contreesDuRoyaume(r) { return Object.keys(ZONES).filter(z => ZONES[z].royaume === r); }
+function royaumeLibere(G, r) {
+  const zs = contreesDuRoyaume(r);
+  return zs.length > 0 && zs.every(z => ((G.conquete || {})[z] || 0) >= CONQUETE_ZONE);
+}
+// Pour la carte : où en est la libération d'un royaume (contrées conquises / contrées)
+function avanceeRoyaume(G, r) {
+  const zs = contreesDuRoyaume(r);
+  return { faites: zs.filter(z => ((G.conquete || {})[z] || 0) >= CONQUETE_ZONE).length, total: zs.length };
+}
 function recompenserZones(G) {
   G.nouvellesPieces = [];
-  // (une partie d'avant la v0.58 : les pièces promises pour des contrées seulement ouvertes sont oubliées)
-  // (les contrées déjà conquises comptent comme déjà récompensées : pas de pièce en double)
-  if (!G.zonesRecompensees) { G.zonesRecompensees = Object.keys(G.conquete || {}).filter(z => G.conquete[z] >= CONQUETE_ZONE); G.piecesAVenir = []; }
-  G.piecesAVenir = G.piecesAVenir || [];
-  // Chaque conquête promet une pièce... mais le messager n'en apporte qu'une par matin :
-  // les autres attendent leur tour, pour que chacune soit un vrai événement.
-  for (const [z, n] of Object.entries(G.conquete || {})) {
-    if (n < CONQUETE_ZONE || G.zonesRecompensees.includes(z) || !ZONES[z]) continue;
-    G.zonesRecompensees.push(z);
-    if (G.armure.length + G.piecesAVenir.length < ARMURE.length) G.piecesAVenir.push(z);
+  G.armesLegendaires = G.armesLegendaires || [];
+  // (une partie d'avant la v0.61 : ses pièces restent, mais les promesses par contrée sont oubliées,
+  // et les royaumes déjà libérés donnent leur arme sans cérémonie)
+  if (!G.royaumesRecompenses) {
+    G.royaumesRecompenses = Object.keys(ROYAUMES).filter(r => royaumeLibere(G, r));
+    G.piecesAVenir = [];
+    for (const r of G.royaumesRecompenses) if (!G.armesLegendaires.includes(ARMES_LEGENDAIRES[r].id)) G.armesLegendaires.push(ARMES_LEGENDAIRES[r].id);
   }
+  G.piecesAVenir = (G.piecesAVenir || []).filter(r => ROYAUMES[r]);
+  // Chaque royaume libéré promet sa pièce... mais le messager ne passe qu'une fois par matin :
+  // les autres attendent leur tour, pour que chacune soit un vrai événement.
+  for (const r of Object.keys(ROYAUMES)) {
+    if (G.royaumesRecompenses.includes(r) || !royaumeLibere(G, r)) continue;
+    G.royaumesRecompenses.push(r);
+    G.piecesAVenir.push(r);
+  }
+  if (!G.piecesAVenir.length) return;
+  const resteArmure = G.armure.length < ARMURE.length;
   // (le sceau est un moment de l'histoire : la dernière pièce n'arrive pas avant le jour JOUR_SCEAU)
   // (audit v0.54) ... ni tant que tu n'as penché d'aucun côté : on ne te scelle pas sans que tu aies choisi
-  const derniereRetenue = G.armure.length === ARMURE.length - 1 && (G.jour < JOUR_SCEAU || palierCamp(G) === 0);
-  if (G.piecesAVenir.length && G.armure.length < ARMURE.length && !derniereRetenue) {
-    const z = G.piecesAVenir.shift();
+  const derniereRetenue = resteArmure && G.armure.length === ARMURE.length - 1 && (G.jour < JOUR_SCEAU || palierCamp(G) === 0);
+  if (derniereRetenue) return;
+  const r = G.piecesAVenir.shift();
+  const arme = ARMES_LEGENDAIRES[r];
+  if (!G.armesLegendaires.includes(arme.id)) G.armesLegendaires.push(arme.id);
+  const n = { piece: null, arme: arme.id, royaume: r, cote: coteArmure(G) };
+  if (resteArmure) {
     const piece = ARMURE[G.armure.length];
     G.armure.push(piece.id);
-    G.nouvellesPieces.push({ piece: piece.id, zone: z, cote: coteArmure(G), avertit: G.armure.length === ARMURE.length - 1 });
+    n.piece = piece.id;
+    n.avertit = G.armure.length === ARMURE.length - 1;
     // L'armure est complète : ton camp est scellé pour de bon.
     if (G.armure.length === ARMURE.length && !G.camp) {
       G.camp = coteArmure(G) === 'sombre' ? 'mal' : 'bien';
-      G.nouvellesPieces[G.nouvellesPieces.length - 1].scelle = G.camp;
+      n.scelle = G.camp;
     }
   }
+  G.nouvellesPieces.push(n);
 }
+
+function armeLegendaire(id) { return Object.values(ARMES_LEGENDAIRES).find(a => a.id === id); }
 
 // Le côté de l'armure : scellé avec le camp, sinon la jauge du mal contre la réputation.
 function coteArmure(G) {

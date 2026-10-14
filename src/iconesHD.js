@@ -297,10 +297,83 @@ const DESSINS_ARMURE = {
     t.forme('acier', (x, y) => (y >= 1 && y <= 15 && Math.abs(x + 0.5 - 8) < 6.5 - Math.max(0, y - 9) * 0.8 ? [(x + 0.5 - 8) / 8, (y - 8) / 14, 0.8] : null));
     t.forme('liseré', (x, y) => (Math.abs(x + 0.5 - 8) < 1 && y >= 3 && y <= 13) || (Math.abs(y + 0.5 - 7) < 1 && x >= 3 && x <= 12) ? [0, 0, 1] : null, { decalage: 0.3 });
   },
-  lame(t) {
-    trait(t, 'acier', 4, 12, 15, 1, 1.2, { decalage: 0.6 });
-    trait(t, 'liseré', 2, 9, 7, 14, 0.8);
-    trait(t, 'cuir', 1, 15, 4, 12, 0.8);
+};
+
+// (v0.61) Les armes légendaires, une par royaume libéré (en 24 × 24 : plus de détail qu'une marchandise).
+const DESSINS_ARMES = {
+  // Pique-Bourdon : une dague de hobbit, garde en feuille, pommeau de laiton
+  piqueBourdon(t) {
+    t.rampes.lame = rampe(0xdce6f0); t.rampes.laiton = rampe(0xd8a838); t.rampes.bois = rampe(0x7a4a24);
+    trait(t, 'lame', 8, 16, 19, 5, 1.6, { decalage: 0.5 });
+    trait(t, 'lame', 9, 15, 18, 6, 0.5, { decalage: 0.9, bord: false });
+    t.forme('laiton', ellipsoide(7.5, 16.5, 3.2, 1.6), { decalage: 0.2 });
+    trait(t, 'bois', 3, 21, 7, 17, 1.2);
+    t.forme('laiton', ellipsoide(3, 21, 1.6, 1.6), { decalage: 0.4 });
+  },
+  // Aube-Lame : l'épée du champion, longue, lame claire et garde dorée, une gemme d'aube
+  aubeLame(t) {
+    t.rampes.lame = rampe(0xe8f0ff); t.rampes.or = rampe(0xe8c040); t.rampes.cuirR = rampe(0x6a2a1a); t.rampes.gemme = rampe(0xff9a5a);
+    trait(t, 'lame', 7, 17, 21, 3, 1.7, { decalage: 0.5 });
+    trait(t, 'lame', 8, 16, 20, 4, 0.5, { decalage: 0.95, bord: false });
+    trait(t, 'or', 3, 13, 11, 21, 1.1, { decalage: 0.3 });
+    trait(t, 'cuirR', 3, 21, 7, 17, 1.2);
+    t.forme('or', ellipsoide(2.5, 21.5, 1.7, 1.7), { decalage: 0.4 });
+    t.forme('gemme', ellipsoide(7, 17, 1.2, 1.2), { decalage: 0.6 });
+  },
+  // Brise-Montagne : le marteau du premier roi nain, tête d'acier gravée de runes
+  briseMontagne(t) {
+    t.rampes.bois = rampe(0x8a5a2a); t.rampes.fer = rampe(0x8a94a4); t.rampes.rune = rampe(0x58c8ff); t.rampes.or = rampe(0xd8a838);
+    trait(t, 'bois', 4, 21, 15, 9, 1.3);
+    t.forme('fer', (x, y) => { const u = (x + 0.5 - 16) * 0.707 + (y + 0.5 - 8) * 0.707, v = -(x + 0.5 - 16) * 0.707 + (y + 0.5 - 8) * 0.707;
+      return Math.abs(u) < 4 && Math.abs(v) < 7 ? [u / 5, v / 8, 0.85] : null; });
+    t.poser(15, 6, 'rune', 5); t.poser(17, 9, 'rune', 5); t.poser(13, 9, 'rune', 4); t.poser(18, 6, 'rune', 4);
+    trait(t, 'or', 11, 12, 13, 14, 1, { decalage: 0.3 });
+    t.forme('or', ellipsoide(4, 21, 1.5, 1.5), { decalage: 0.3 });
+  },
+  // Chant-de-Lune : un arc d'argent pâle, une lune à la poignée
+  chantDeLune(t) {
+    t.rampes.argent = rampe(0xc8d8e8); t.rampes.corde = rampe(0xf0f4ff); t.rampes.lune = rampe(0xfff4c0); t.rampes.feuille = rampe(0x6ac08a);
+    t.forme('argent', (x, y) => { const d = Math.hypot(x + 0.5 - 3, y + 0.5 - 12); return d > 8.6 && d < 10.6 && x >= 3 ? [(x - 8) / 10, (y - 12) / 10, 0.8] : null; });
+    trait(t, 'corde', 4, 2, 4, 22, 0.35, { bord: false });
+    t.forme('lune', (x, y) => (Math.hypot(x + 0.5 - 13, y + 0.5 - 12) < 2.2 && Math.hypot(x + 0.5 - 14, y + 0.5 - 11.5) > 1.6 ? [0, 0, 1] : null), { decalage: 0.5 });
+    t.forme('feuille', ellipsoide(9, 4, 1.6, 0.9), { decalage: 0.2 }); t.forme('feuille', ellipsoide(9, 20, 1.6, 0.9), { decalage: 0.2 });
+  },
+  // Le Bâton des Sept Étoiles : un bâton noueux, sept pierres (la dernière éteinte)
+  septEtoiles(t) {
+    t.rampes.bois = rampe(0x5a3a6a); t.rampes.pierre = rampe(0xb8a8ff); t.rampes.eteinte = rampe(0x4a4458); t.rampes.or = rampe(0xe8c040);
+    trait(t, 'bois', 6, 22, 15, 6, 1.3);
+    t.forme('or', (x, y) => { const d = Math.hypot(x + 0.5 - 16, y + 0.5 - 5); return d > 3 && d < 4.4 ? [0, 0, 0.8] : null; }, { decalage: 0.2 });
+    t.forme('pierre', ellipsoide(16, 5, 2, 2), { decalage: 0.6 });
+    [[10.5, 15], [9.3, 17], [8.2, 19]].forEach(([x, y]) => t.poser(Math.round(x), y, 'pierre', 5));
+    [[19, 2], [20, 6]].forEach(([x, y]) => t.poser(x, y, 'pierre', 5));
+    t.poser(12, 2, 'eteinte', 3);
+  },
+  // Souffle-de-Bambou : une lance à lame courbe, hampe de bambou à nœuds, un ruban rouge
+  souffleBambou(t) {
+    t.rampes.bambou = rampe(0x9ad070); t.rampes.lame = rampe(0xdce6f0); t.rampes.ruban = rampe(0xd83a2a);
+    trait(t, 'bambou', 3, 22, 16, 9, 1);
+    for (const k of [0.3, 0.55, 0.8]) t.poser(Math.round(3 + 13 * k), Math.round(22 - 13 * k), 'bambou', 1);
+    t.forme('lame', (x, y) => { const d = Math.hypot(x + 0.5 - 14, y + 0.5 - 11); return d > 7 && d < 10 && x >= 16 && y <= 9 && y >= 1 ? [(x - 18) / 6, (y - 5) / 8, 0.85] : null; }, { decalage: 0.4 });
+    t.forme('ruban', ellipsoide(14, 13, 1.4, 2.2), { decalage: 0.2 });
+    trait(t, 'ruban', 13, 14, 11, 18, 0.6);
+  },
+  // Croc-de-Wyverne : une hache dont la lame est une dent d'os ivoire
+  crocWyverne(t) {
+    t.rampes.bois = rampe(0x6a4020); t.rampes.os = rampe(0xece0c0); t.rampes.cuir = rampe(0x8a5a30);
+    trait(t, 'bois', 5, 22, 15, 4, 1.2);
+    t.forme('os', (x, y) => { const px = x + 0.5, py = y + 0.5;
+      const u = (py - 6) / 9; if (u < 0 || u > 1) return null; const larg = 6 * Math.sin(u * Math.PI) ** 0.7;
+      return px > 14 && px < 14 + larg + 1 ? [(px - 17) / 5, (py - 10) / 9, 0.85] : null; });
+    trait(t, 'cuir', 12, 8, 15, 11, 1, { decalage: 0.3 }); trait(t, 'cuir', 12, 11, 14, 13, 0.8, { decalage: 0.3 });
+  },
+  // La Lame sans Nom : un sabre noir courbe, fil rouge sombre
+  lameSansNom(t) {
+    t.rampes.noir = rampe(0x3a3448); t.rampes.fil = rampe(0xc83a5a); t.rampes.cuir = rampe(0x2a1a14); t.rampes.argent = rampe(0x9aa0b0);
+    t.forme('noir', (x, y) => { const d = Math.hypot(x + 0.5 - 4, y + 0.5 + 4); return d > 17 && d < 19.6 && x >= 6 && y <= 18 ? [(x - 12) / 12, (y - 8) / 12, 0.85] : null; }, { decalage: 0.3 });
+    t.forme('fil', (x, y) => { const d = Math.hypot(x + 0.5 - 4, y + 0.5 + 4); return d > 19 && d < 19.8 && x >= 8 && y <= 16 ? [0, 0, 1] : null; }, { decalage: 0.6, bord: false });
+    trait(t, 'argent', 7, 13, 11, 17, 1, { decalage: 0.3 });
+    trait(t, 'cuir', 4, 20, 9, 15, 1.1);
+    t.forme('argent', ellipsoide(3.5, 20.5, 1.4, 1.4), { decalage: 0.3 });
   },
 };
 
@@ -321,5 +394,11 @@ function creerIconesHD(scene) {
       t.contour();
       t.texture(scene, 'hd_' + id + (sombre ? '_sombre' : ''));
     }
+  }
+  for (const [id, dessin] of Object.entries(DESSINS_ARMES)) {
+    const t = toileObjet(24, 24);
+    dessin(t);
+    t.contour();
+    t.texture(scene, 'arme_' + id);
   }
 }

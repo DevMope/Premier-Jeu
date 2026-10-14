@@ -1815,8 +1815,9 @@ const NOUVELLES = [
 
 // --- L'Armure du Dernier Rempart ---
 
-// Chaque nouvelle zone débloquée, un messager de la Confrérie du Dernier Rempart t'apporte une
-// pièce de l'armure légendaire, « pour le champion qui la portera lors de la dernière bataille ».
+// (v0.61) Chaque royaume libéré (toutes ses contrées conquises), un messager de la Confrérie du
+// Dernier Rempart t'apporte une pièce de l'armure légendaire, « pour le champion qui la portera lors
+// de la dernière bataille ». Huit royaumes, huit pièces.
 // (Le joueur croit la rassembler pour un aventurier... le scénario en décidera autrement.)
 const ARMURE = [
   { id: 'heaume', nom: 'Le Heaume du Veilleur', texte: "Un casque d'argent terni, une crête en forme d'aile. Il voit plus loin que les yeux." },
@@ -1827,8 +1828,20 @@ const ARMURE = [
   { id: 'solerets', nom: 'Les Solerets du Long Chemin', texte: 'Usés par mille routes, et pourtant solides comme au premier jour.' },
   { id: 'plastron', nom: 'Le Plastron du Dernier Rempart', texte: 'Le cœur de l\'armure. Une fissure en travers, jamais réparée.' },
   { id: 'pavois', nom: 'Le Pavois des Mille Flèches', texte: 'Un grand bouclier criblé de pointes de flèches. Aucune ne l\'a traversé.' },
-  { id: 'lame', nom: 'Aube-Lame', texte: "L'épée du champion. Sa lame s'éclaire quand les ténèbres approchent." },
 ];
+// (v0.61) ... et avec elle, l'arme légendaire du royaume. Accrochées au mur de la chambre, elles
+// font jaser la ville : chacune attire un peu plus de curieux au comptoir.
+const ARMES_LEGENDAIRES = {
+  comte: { id: 'piqueBourdon', nom: 'Pique-Bourdon', texte: "Une dague de hobbit, pas plus longue qu'un avant-bras. Elle bourdonne quand un voleur approche." },
+  humains: { id: 'aubeLame', nom: 'Aube-Lame', texte: "L'épée du champion. Sa lame s'éclaire quand les ténèbres approchent." },
+  nains: { id: 'briseMontagne', nom: 'Brise-Montagne', texte: "Le marteau du premier roi nain. Il a ouvert Khaz-Durim d'un seul coup, dit-on." },
+  elfes: { id: 'chantDeLune', nom: 'Chant-de-Lune', texte: "Un arc d'argent pâle. La flèche part d'elle-même quand on retient son souffle." },
+  mages: { id: 'septEtoiles', nom: 'Le Bâton des Sept Étoiles', texte: 'Sept pierres serties, une par archimage. Six brillent encore.' },
+  bambous: { id: 'souffleBambou', nom: 'Souffle-de-Bambou', texte: 'Une lance à lame courbe, légère comme une tige. Les moines la manient en dansant.' },
+  sauvages: { id: 'crocWyverne', nom: 'Croc-de-Wyverne', texte: "Une hache taillée dans une dent de wyverne. Elle ne s'émousse jamais." },
+  bannis: { id: 'lameSansNom', nom: 'La Lame sans Nom', texte: "Un sabre noir rendu par les Bannis. Nul ne sait qui l'a forgé, ni qui il a tué." },
+};
+const ATTRAIT_ARME_LEGENDAIRE = 0.1;
 // La première fois, le messager raconte la légende.
 const LEGENDE_ARMURE = "« Il y a bien longtemps, un champion a porté cette armure contre les ténèbres. Ses pièces ont été dispersées " +
   "aux quatre coins du monde. On dit qu'un jour, quelqu'un la portera de nouveau, pour la dernière bataille. La Confrérie du " +
@@ -1850,7 +1863,6 @@ const ARMURE_SOMBRE = {
   solerets: { nom: 'Les Solerets du Sentier Noir', texte: 'Ils laissent des traces de suie sur le plancher.' },
   plastron: { nom: 'La Cuirasse de la Nuit Éternelle', texte: 'Le cœur de l\'armure. La fissure saigne encore.' },
   pavois: { nom: 'Le Pavois des Lamentations', texte: 'On y entend des pleurs, quand on colle l\'oreille.' },
-  lame: { nom: 'Crépuscule', texte: "L'épée du champion noir. Sa lame s'assombrit quand la lumière approche." },
 };
 const NOMS_ARMURE = { clair: 'Armure du Dernier Rempart', sombre: 'Armure de la Nuit Éternelle' };
 const LEGENDE_SOMBRE = "« La Main Noire te salue. Nous ne choisissons pas de camp : nous choisissons nos clients. Cette pièce appartient " +

@@ -183,7 +183,7 @@ class CarteScene extends Phaser.Scene {
       });
     }
     const conquises = Object.keys(ZONES).filter(c => ((G.conquete || {})[c] || 0) >= CONQUETE_ZONE).length;
-    this.dessus.add(this.add.text(938, 402, `⚑ Contrées conquises : ${conquises} / ${Object.keys(ZONES).length}`, style(12, '#f3e6c8', { fontStyle: 'bold', backgroundColor: '#2a1a10cc', padding: { x: 5, y: 2 } })).setOrigin(1, 0.5));
+    this.dessus.add(this.add.text(938, 402, `⚑ Contrées conquises : ${conquises} / ${Object.keys(ZONES).length} · royaumes libérés : ${Object.keys(ROYAUMES).filter(r => royaumeLibere(G, r)).length} / ${Object.keys(ROYAUMES).length}`, style(12, '#f3e6c8', { fontStyle: 'bold', backgroundColor: '#2a1a10cc', padding: { x: 5, y: 2 } })).setOrigin(1, 0.5));
     G.zonesVuesCarte = zonesOuvertes(G);
   }
 
@@ -436,7 +436,7 @@ class CarteScene extends Phaser.Scene {
       const c = conditionsZone(G, cle);
       const lignes = [`Personne ne sait vraiment ce qu'il y a là-bas${z.camp === 'mal' ? ", dans les terres d'ombre" : z.camp === 'bien' ? ', dans les terres de lumière' : ''}. Pour l'ouvrir :`,
         `${c.reputation ? '✓' : '✗'} une réputation de ${z.reputation} (toi : ${arrondi(G.reputation)}), ou qu'un aventurier la découvre`];
-      if ((G.armure || []).length < ARMURE.length) lignes.push("🛡 Une fois conquise (5 missions réussies), elle te vaudra une pièce de l'armure.");
+      if (z.royaume) { const a = avanceeRoyaume(G, z.royaume); lignes.push(`🛡 ${ROYAUMES[z.royaume].nom} : ${a.faites} / ${a.total} contrée${a.total > 1 ? 's' : ''} conquise${a.total > 1 ? 's' : ''}. Toutes conquises : une pièce de l'armure et une arme légendaire.`); }
       if (c.besoin) lignes.push(`${c.faits >= c.besoin ? '✓' : '✗'} ${c.besoin} missions réussies dans des zones à ${z.danger - 1} étoile${z.danger > 2 ? 's' : ''} (${Math.min(c.faits, c.besoin)} / ${c.besoin})`);
       const texte = this.add.text(0, 24, lignes.join('\n'), style(14, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 3 }));
       contenu.add(texte);

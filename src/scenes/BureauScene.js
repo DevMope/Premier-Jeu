@@ -330,7 +330,7 @@ class BureauScene extends Phaser.Scene {
       const m = F.mission;
       gauche = [
         { titre: `Réputation : ${arrondi(G.reputation)}`, lignes: [`Retours réussis : ${[1, 2, 3, 4, 5].map(d => `${d}★ ${(G.succes || {})[d] || 0}`).join(' · ')}`] },
-        { titre: NOMS_ARMURE[coteArmure(G)], lignes: [`${(G.armure || []).length} / ${ARMURE.length} pièces` + (G.camp ? ` · camp scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}` : '')] },
+        { titre: NOMS_ARMURE[coteArmure(G)], lignes: [`${(G.armure || []).length} / ${ARMURE.length} pièces` + (G.camp ? ` · camp scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}` : ''), `Armes légendaires : ${(G.armesLegendaires || []).length} / ${Object.keys(ARMES_LEGENDAIRES).length}`] },
         { titre: `La Faucheuse : ${seductionFaucheuse(G).nom}`, lignes: [`Âmes offertes : ${arrondi(G.mal)}` + (G.mal >= SEUIL_SABOTAGE ? ' · sabotages possibles' : '') + (G.mal >= SEUIL_MAIN_NOIRE ? ' · la Main Noire te connaît' : ''), `${F.morts} âme${F.morts > 1 ? 's' : ''} emportée${F.morts > 1 ? 's' : ''}` + (F.sabotages ? ` · ${F.sabotages} sabotage${F.sabotages > 1 ? 's' : ''}` : ''), ...(m && m.etat !== 'proposee' ? [`☠ Mission : ${m.cible.nom} (${PIEGES[m.piege].nom.toLowerCase()}, ${m.prime} p.)`] : [])] },
         { titre: 'Le mendiant', lignes: [`Donné : ${G.mendiant} p.`] },
       ];

@@ -259,6 +259,7 @@ class PromenadeScene extends Cinematique {
   pieceChambre() {
     const G = this.G;
     this.dessinerArmure = DodoScene.prototype.dessinerArmure;
+    this.dessinerArmes = DodoScene.prototype.dessinerArmes;
     DodoScene.prototype.dessinerChambre.call(this);
     // La nuit, à la fenêtre ; le soleil reste couché
     this.soleil.setVisible(false);
@@ -268,6 +269,8 @@ class PromenadeScene extends Cinematique {
     if (G.mannequin || G.armure.length) this.regarder(740, SOL_CHAMBRE - 200, 110, 200, G.armure.length ? `${NOMS_ARMURE[coteArmure(G)]} : ${G.armure.length} / ${ARMURE.length} pièces.` : "Le mannequin de Garrick attend sa première pièce d'armure.");
     this.regarder(66, SOL_CHAMBRE - 80, 110, 84, `Ton coffre (${AMELIORATIONS.coffre.niveaux[niveauAmelioration(G, 'coffre')]}).`);
     this.regarder(360, 110, 80, 80, "La vieille épée de Garrick. Il t'a dit qu'elle portait chance.");
+    const armes = G.armesLegendaires || [];
+    if (armes.length) this.regarder(228, 130, 200, 90, `Tes armes légendaires (${armes.length} / ${Object.keys(ARMES_LEGENDAIRES).length}) : ${armes.map(id => armeLegendaire(id).nom).join(', ')}. La ville en parle : un peu plus de curieux au comptoir.`);
   }
 
   pieceArriere() {

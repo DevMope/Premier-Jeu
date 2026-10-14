@@ -681,7 +681,7 @@ function dessinerMannequin(scene, x, sol, possedees, u = 4, cote = 'clair') {
   const e = u / 4;
   const places = {
     solerets: [0, 3, 2.4, 0], jambieres: [0, 8.5, 2.6, 0], ceinturon: [0, 14, 2.4, 0], plastron: [0, 20, 2.8, 0],
-    gantelets: [0, 16, 3.2, 0], spalieres: [0, 25, 3.4, 0], heaume: [0, 33.5, 2.4, 0], pavois: [-12, 7, 3, 0], lame: [11, 14, 3, -45],
+    gantelets: [0, 16, 3.2, 0], spalieres: [0, 25, 3.4, 0], heaume: [0, 33.5, 2.4, 0], pavois: [-12, 7, 3, 0],
   };
   for (const p of ARMURE) {
     const [ux, uy, echelle, angle] = places[p.id] || [0, 0, 2, 0];

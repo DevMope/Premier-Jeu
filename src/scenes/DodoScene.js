@@ -1,3 +1,6 @@
+// (v0.61) Où s'accrochent les armes légendaires : la panoplie du mur (réglée sur la planche)
+function placeArmeAuMur(i) { return [160 + (i % 4) * 46, 110 + Math.floor(i / 4) * 42]; }
+
 // Aller dormir : la fin de la journée. Ton personnage rentre dans sa chambre, souffle la
 // bougie et se glisse dans son lit, pendant que le bilan de la journée s'affiche (façon
 // Dave the Diver). La nuit passe à la fenêtre, puis l'aube : il se lève, direction le marché.
@@ -88,6 +91,7 @@ class DodoScene extends Cinematique {
     // Le mannequin de l'armure (du côté qu'elle avait hier soir), et le compte des pièces.
     this.coteAffiche = this.G.armureCoteVu || coteArmure(this.G);
     this.dessinerArmure(this.G.armure.filter(id => !(this.G.nouvellesPieces || []).some(n => n.piece === id)));
+    this.dessinerArmes((this.G.armesLegendaires || []).filter(id => !(this.G.nouvellesPieces || []).some(n => n.arme === id)));
     this.add.image(400, 150, 'hd_epee').setScale(4).setAngle(45).setDepth(2);
     // (v0.57) Les souvenirs au mur : le portrait de famille, l'étagère des trophées (rares), les lettres
     creerSouvenirsChambreHD(this);
@@ -151,7 +155,7 @@ class DodoScene extends Cinematique {
     await this.travauxDeLaNuit();
     // L'armure a pu changer de côté pendant la nuit.
     if (!(this.G.nouvellesPieces || []).length && this.G.armure.length) await this.changerCote(coteArmure(this.G));
-    // Un messager (Confrérie ou Main Noire), avec une pièce de l'armure pour chaque zone ouverte.
+    // Un messager (Confrérie ou Main Noire), avec une pièce de l'armure et l'arme d'un royaume libéré.
     for (const n of this.G.nouvellesPieces || []) {
       await this.attendre(500);
       if (this.fini) return;
@@ -282,7 +286,9 @@ class DodoScene extends Cinematique {
 
   // Toc toc : le messager encapuchonné apporte une pièce de l'armure. La première fois, il
   // raconte la légende du champion.
-  async messager({ piece, zone, cote = 'clair', scelle, avertit }) {
+  async messager({ piece, arme, royaume, cote = 'clair', scelle, avertit }) {
+    // (v0.61) une partie d'avant, à l'armure déjà complète : l'arme du royaume arrive seule
+    if (!piece) return this.livrerArme(arme, royaume, cote === 'sombre');
     if (!this.G.mannequin) { await this.offrirMannequin(); if (this.fini) return; }
     const sombre = cote === 'sombre';
     const p = pieceArmure(piece, cote);
@@ -302,10 +308,12 @@ class DodoScene extends Cinematique {
     c.add(this.add.image(220, haut + 70, iconeObjet(this, sombre ? piece + '_sombre' : piece)).setScale(5));
     c.add(this.add.text(275, haut + 30, p.nom, style(17, '#7a5a10', { fontStyle: 'bold' })));
     c.add(this.add.text(275, haut + 56, p.texte, style(13, '#5a3a20', { fontStyle: 'italic', wordWrap: { width: 500 } })));
-    const ouvre = `Tes aventuriers ont conquis ${ZONES[zone].nom.replace(/^(Le|La|Les) /, m => m.toLowerCase())}.`;
+    const ouvre = `Tes aventuriers ont libéré ${ROYAUMES[royaume].nom.replace(/^(Le|La|Les) /, m => m.toLowerCase())}.`;
     let message = premiere ? (sombre ? LEGENDE_SOMBRE : LEGENDE_ARMURE)
       : sombre ? `« ${ouvre} La Main Noire te cède une pièce de plus. Elle a un prix, comme tout : ne la perds pas. »`
         : `« ${ouvre} La Confrérie te confie une pièce de plus pour le champion. Garde-la bien. »`;
+    if (arme) message += premiere ? `\nEt avec elle, une arme légendaire : ${armeLegendaire(arme).nom}. ${ouvre}`
+      : `\nEt avec elle, l'arme légendaire du royaume : ${armeLegendaire(arme).nom}.`;
     if (avertit && !scelle) message += `\nPlus qu'une pièce, et l'armure sera complète : ton camp sera scellé pour de bon. Aujourd'hui, ta jauge penche ${palierCamp(this.G) > 0 ? 'vers la lumière' : palierCamp(this.G) < 0 ? "vers l'ombre" : 'entre les deux (l\'armure restera claire)'}.`;
     if (scelle) {
       message += scelle === 'mal' ? "\nL'armure est complète. Ton camp est scellé : l'ombre. Il n'y aura plus de retour en arrière."
@@ -361,13 +369,63 @@ class DodoScene extends Cinematique {
     this.dessinerArmure(this.G.armure.slice(0, this.G.armure.indexOf(piece) + 1));
     if (sombre) this.cameras.main.flash(300, 120, 0, 30);
     else this.cameras.main.flash(250, 255, 230, 150);
+    if (arme && !this.fini) await this.livrerArme(arme, royaume, sombre, m);
+    if (this.fini) return;
     await this.marcher(m, 1020, 3);
     m.destroy();
   }
 
+  // (v0.61) L'arme légendaire du royaume libéré : elle s'élève, puis rejoint la panoplie au mur.
+  async livrerArme(id, royaume, sombre, messager = null) {
+    const a = armeLegendaire(id);
+    if (!a) return;
+    let m = messager;
+    if (!m) {
+      this.onomatopee(900, SOL_CHAMBRE - 160, 'Toc toc !', '#fff4dc');
+      m = imageCorps(this, 1010, SOL_CHAMBRE, 'colporteur', 6).setTint(sombre ? 0x3a1a24 : 0x7a7aa8).setDepth(3);
+      await this.marcher(m, 905, 4);
+    }
+    creerHalo(this);
+    const voile = this.add.rectangle(480, 270, 960, 540, 0x0a0614, 0).setDepth(7.5);
+    const halo = this.add.image(480, 220, 'halo').setScale(0).setTint(0xfff0c0).setBlendMode(Phaser.BlendModes.ADD).setDepth(7.6);
+    const icone = this.add.image(905, SOL_CHAMBRE - 110, 'arme_' + id).setScale(2).setDepth(8);
+    this.animer({ targets: voile, fillAlpha: 0.6, duration: 400 });
+    this.tweens.add({ targets: halo, scale: 3.5, duration: 700 });
+    Son.jouer('tresor');
+    await this.animer({ targets: icone, x: 480, y: 200, scale: 6, duration: 900, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: icone, y: 190, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    const titre = this.add.text(480, 316, `⚔ ${a.nom} ⚔`, style(26, '#ffe8a0', { fontStyle: 'bold', stroke: '#1a0a06', strokeThickness: 6 })).setOrigin(0.5).setDepth(8.2).setScale(0);
+    const sous = this.add.text(480, 350, `Arme légendaire : ${ROYAUMES[royaume].nom}\n${a.texte}\nAccrochée au mur, elle fera parler d'elle : un peu plus de curieux au comptoir.`,
+      style(14, '#fff4dc', { fontStyle: 'italic', align: 'center', stroke: '#1a0a06', strokeThickness: 4, wordWrap: { width: 640 } })).setOrigin(0.5, 0).setDepth(8.2).setAlpha(0);
+    this.tweens.add({ targets: titre, scale: 1, duration: 450, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: sous, alpha: 1, duration: 500, delay: 250 });
+    await this.attendre(800);
+    await this.attendreClicSansBoite();
+    if (this.fini) return;
+    this.tweens.killTweensOf(icone);
+    this.tweens.add({ targets: voile, fillAlpha: 0, duration: 400 });
+    this.tweens.add({ targets: [halo, titre, sous], alpha: 0, duration: 350, onComplete: () => { halo.destroy(); titre.destroy(); sous.destroy(); } });
+    const n = this.G.armesLegendaires.indexOf(id);
+    const [x, y] = placeArmeAuMur(n);
+    await this.animer({ targets: icone, x, y, scale: 1.6, duration: 650, ease: 'Sine.easeInOut' });
+    icone.destroy(); voile.destroy();
+    this.dessinerArmes(this.G.armesLegendaires.slice(0, n + 1));
+    this.cameras.main.flash(200, 255, 230, 150);
+    if (!messager) { await this.marcher(m, 1020, 3); m.destroy(); }
+  }
+
+  // La panoplie : les armes légendaires accrochées au mur, au-dessus du coffre et du tapis
+  dessinerArmes(ids) {
+    (this.armesAuMur || []).forEach(o => o.destroy());
+    this.armesAuMur = ids.map((id, i) => {
+      const [x, y] = placeArmeAuMur(i);
+      return this.add.image(x, y, 'arme_' + id).setScale(1.6).setDepth(1.36);
+    });
+  }
+
   // (v0.58) Le matin de la première pièce d'armure, Garrick repasse, un vieux mannequin de bois
   // sur l'épaule : il l'installe dans ta chambre et t'explique qu'il faudra retrouver toutes les
-  // pièces de l'armure du champion, une par contrée ouverte.
+  // pièces de l'armure du champion, une par royaume libéré.
   async offrirMannequin() {
     this.G.mannequin = true;
     const voix = { nom: 'Garrick', race: 'humain' };
@@ -401,7 +459,7 @@ class DodoScene extends Cinematique {
     };
     await parler("Bien dormi ? Je passais par la Comté... et je t'ai apporté un vieil ami : le mannequin de mon ancien capitaine.", 'content', 'joie');
     if (this.fini) return;
-    await parler(`L'armure du champion a été dispersée en ${ARMURE.length} pièces, aux quatre coins du monde. Chaque fois que tes aventuriers conquerront une contrée (cinq missions réussies là-bas, et son drapeau flottera sur ta carte), on t'en rapportera une.`, 'neutre', null, iconeObjet(this, ARMURE[0].id));
+    await parler(`L'armure du champion a été dispersée en ${ARMURE.length} pièces, aux quatre coins du monde. Chaque fois que tes aventuriers libéreront un royaume (cinq missions réussies dans chacune de ses contrées, et son drapeau flottera sur ta carte), on t'en rapportera une, avec l'arme légendaire de ce royaume.`, 'neutre', null, iconeObjet(this, ARMURE[0].id));
     if (this.fini) return;
     await parler("Trouve-les toutes, et habille ce mannequin, pièce après pièce. Le jour où l'armure sera complète, ton camp sera choisi pour de bon. Lumière ou ombre... à toi de voir.", 'inquiet', '!');
     if (this.fini) return;
