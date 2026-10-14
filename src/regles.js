@@ -477,6 +477,9 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     reussites: { bien: 0, mal: 0 }, // missions réussies pour chaque camp (la jauge lumière ⟷ ombre)
     objetsCamp: { bien: 0, mal: 0 }, // objets marqués achetés au marché (étape 9c)
     palierJaugeVu: 0,  // le dernier palier de la jauge annoncé par la gazette
+    garde: { visites: 0, dernier: 0, saisies: 0 },   // les visites de la garde de la Confrérie
+    interdits: {},     // les objets interdits achetés au marché noir (étape 9e)
+    garrickVu: [],     // les visites de Garrick déjà faites
     pieges: {},        // les objets piégés cachés sous le comptoir
     faucheuse: { faveur: 0, morts: 0, visites: 0, cadeau: false, mission: null, sabotages: 0 },
     experience: 0, // nombre de clients servis depuis le début
@@ -1340,14 +1343,86 @@ function ouvrirComptoir(G) {
     G.colporteurOffre = offreDuJour(COLPORTEUR.multiplicateur, 3, 1, 2);
     file.splice(hasard(0, file.length), 0, { type: 'colporteur' });
   }
-  G.file = [...retours, ...notables, ...file];
+  // Garrick repasse certains jours prendre des nouvelles ; la garde vient quand le comptoir a mauvaise réputation
+  const visites = [];
+  const g = GARRICK_VISITES.findIndex(x => x.jour === G.jour);
+  if (g >= 0 && !(G.garrickVu || []).includes(g)) visites.push({ type: 'garrick', i: g });
+  if (doitVenirGarde(G)) visites.push({ type: 'garde', garde: gardeDuJour(G) });
+  G.file = [...retours, ...notables, ...visites, ...file];
+}
+
+// --- Étape 9d : la garde ---
+
+// La garde vient-elle ce matin ? Après une plainte (le marché noir), ou par surprise quand ton
+// comptoir penche vers l'ombre (et plus souvent avec des décorations sombres au mur).
+function doitVenirGarde(G) {
+  G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 };
+  if (G.gardeDemain) { G.gardeDemain = false; return true; }
+  if (G.jour < 8 || G.jour - (G.garde.dernier || 0) < GARDE.delai) return false;
+  const p = palierCamp(G);
+  if (p >= 0) return false;
+  const sombres = (G.decos || []).filter(d => DECOS[d].camp === 'mal').length;
+  return Math.random() < GARDE.chance + GARDE.parPalier * (-p - 1) + GARDE.parDeco * sombres;
+}
+
+// Le garde qui accompagne le capitaine aujourd'hui (un peuple de la lumière)
+function gardeDuJour(G) {
+  const race = auHasard(GARDE.peuples);
+  const nom = auHasard(GARDE.noms[race]);
+  return { nom, race, feminin: /Odette|Hilde|Ilwen|Marguerite|Lan /.test(nom), garde: true, costume: 'garde', niveau: 'aguerri' };
+}
+
+// L'amende : un pourcentage de la bourse, au moins le minimum
+function amendeGarde(G) {
+  return Math.max(GARDE.amendeMin, Math.round(Math.max(0, G.argent) * GARDE.amendePart));
+}
+
+// La visite : le capitaine annonce une amende (la première fois) ou une fouille (les suivantes).
+// Renvoie { fouille, amende, saisis } ; la fouille saisit les objets interdits.
+function visiteGarde(G) {
+  G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 };
+  const fouille = G.garde.visites > 0;
+  G.garde.visites++;
+  G.garde.dernier = G.jour;
+  const saisis = [];
+  if (fouille) for (const [id, n] of Object.entries(G.interdits || {})) if (n > 0) { saisis.push(`${n} × ${INTERDITS[id].nom.toLowerCase()}`); G.garde.saisies += n; G.interdits[id] = 0; }
+  return { fouille, amende: amendeGarde(G), saisis };
+}
+
+function payerAmende(G, montant) {
+  payer(G, Math.min(montant, Math.max(0, G.argent)), 'amende');
+  G.reputation -= 0.3;
+}
+
+// Les chances de soudoyer un garde avec ce trésor (selon ses goûts et la valeur de l'objet)
+function chanceSoudoiement(G, garde, t) {
+  const aime = (GOUTS_TRESORS[garde.race] || []).includes(t.categorie);
+  return Math.min(0.92, GARDE.soudoiement + (aime ? GARDE.bonusGout : 0) + Math.min(GARDE.bonusValeur, valeurTresor(t) / 300));
+}
+
+// Tenter de soudoyer : réussi, le trésor change de main et la garde s'en va. Raté : rarement, le
+// garde garde quand même l'objet. Renvoie { reussi, perdu }.
+function soudoyer(G, garde, t) {
+  const reussi = Math.random() < chanceSoudoiement(G, garde, t);
+  const perdu = reussi || Math.random() < GARDE.gardeObjet;
+  if (perdu) G.tresors = G.tresors.filter(x => x !== t);
+  if (reussi) changerRelation(G, garde.nom, 2);
+  return { reussi, perdu };
+}
+
+// Le meilleur trésor à offrir à ce garde, puis les suivants (pour choisir)
+function tresorsPourSoudoyer(G, garde) {
+  return (G.tresors || []).filter(t => !t.reparation).sort((a, b) => chanceSoudoiement(G, garde, b) - chanceSoudoiement(G, garde, a));
 }
 
 // Ce que l'aventurier te reverse vraiment, selon votre relation et la lanterne.
 function partDuButin(G, voyageur) {
   const lanterne = aDecoration(G, 'lanterne') ? 1.1 : 1;
   const comptoir = 1 + 0.04 * niveauAmelioration(G, 'comptoir');
-  return Math.round(voyageur.butin * niveauRelation(G, voyageur.nom).butin * lanterne * comptoir);
+  // (le camp qui ne t'aime pas paie moins : un Banni chez un comptoir de la lumière, et l'inverse)
+  const cote = coteCamp(G), banni = PEUPLES_OMBRE.includes(voyageur.race);
+  const froid = banni && cote === 'bien' ? 0.85 : 1;
+  return Math.round(voyageur.butin * niveauRelation(G, voyageur.nom).butin * lanterne * comptoir * froid);
 }
 
 // Appelé à la fin du récit : on encaisse le butin, la réputation et la relation évoluent.

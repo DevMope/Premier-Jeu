@@ -233,6 +233,8 @@ function geneHD(p) {
     taches: r() < 0.25,
     // Les nobles et les collectionneurs (clients prestigieux) : des étoffes riches, et un chapeau à plume
     noble: !!p.prestige,
+    garde: !!p.garde,
+    mentor: p.figurant === 'mentor',
     colporteur: p.figurant === 'colporteur',
     nom: p.nom,
     habitNoble: choix([0x6a1a3a, 0x1a2a6a, 0x3a1a5a, 0x7a4a10]),
@@ -312,6 +314,8 @@ const MECHES = (x, y) => { const m = (x * 3 + Math.round(Math.sin(y / 3.5) * 1.5
 function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = false, pose = null } = {}) {
   const t = new ToileHD(HD_L, HD_H);
   let g = gene.colporteur ? { ...gene, habit: 0x6a5a40, cheveux: 0x4a3a2a, armure: false, barbe: 'courte', coiffure: 'court' } : gene;
+  // Garrick : sa tignasse grise, sa barbe, sa cape verte
+  if (gene.mentor) g = { ...g, race: 'humain', habit: 0x2f5a3a, cape: 0x2f5a3a, cheveux: 0x9a9aa0, barbe: 'pleine', coiffure: 'court', armure: false, peau: 1 };
   // Les peuples de l'ombre et le panda : leurs traits (peau, oreilles, museau, crocs...) sont dans
   // TRAITS_PEUPLES (corpsVueHD.js), les mêmes que pour les corps en pied
   const TR = (typeof TRAITS_PEUPLES !== 'undefined' && TRAITS_PEUPLES[g.race]) || {};
@@ -613,6 +617,17 @@ const LARGEURS_BUSTE = { nain: 24, hobbit: 21, humain: 20, elfe: 18, magicienne:
 function torseHD(t, g, v, cx) {
   const largeur = LARGEURS_BUSTE[g.race] || 20;
   const corps = corpsRond(cx, v.torse, largeur);
+  if (g.garde) {
+    // Le garde de la Confrérie : la cotte de mailles, le tabard bleu, le soleil d'or
+    t.rampes.tabard = rampeVive(0x2a4a8a);
+    t.forme('metal', corps, { decalage: -0.6, motif: (x, y) => ((x + y) % 2 ? 0.4 : -0.4) });
+    t.forme('tabard', (x, y) => (corps(x, y) && y >= v.torse + 4 && Math.abs(x + 0.5 - cx) < 13 ? corps(x, y) : null), { decalage: 0.1 });
+    t.forme('or', ellipsoide(cx, v.torse + 18, 4, 4), { decalage: 0.3 });
+    for (const [dx, dy] of [[0, -7], [0, 7], [-7, 0], [7, 0], [-5, -5], [5, -5], [-5, 5], [5, 5]]) { t.poser(cx + dx, v.torse + 18 + dy, 'or', 4); t.poser(cx + Math.round(dx * 0.8), v.torse + 18 + Math.round(dy * 0.8), 'or', 3); }
+    for (let x = cx - 12; x <= cx + 12; x++) t.poser(x, v.torse + 4, 'or', 3);
+    epaulieres(t, cx, largeur - 6, v.torse + 8);
+    return;
+  }
   if (g.race === 'nain') {
     t.forme('habit', corps, { decalage: -0.7 });
     t.forme('metal', ellipsoide(cx, 92, 22, 26, (x, y) => y >= 66), {
@@ -784,6 +799,15 @@ function cheveuxHD(t, g, v, cx) {
 }
 
 function coiffeHD(t, g, v, cx) {
+  if (g.garde && g.race !== 'magicienne' && g.race !== 'nain') {
+    // Le casque de la garde : une calotte de fer, un nasal (sauf le panda), un cimier bleu pour l'elfe
+    const haut = v.cy - v.ry - 2, bas = v.yeux - 7;
+    t.forme('metal', (x, y) => (y >= haut && y <= bas && ((x + 0.5 - cx) / (v.rx + 2)) ** 2 + ((y + 0.5 - bas) / (bas - haut + 1)) ** 2 <= 1 ? [(x + 0.5 - cx) / (v.rx + 2), -0.5, 0.8] : null), { decalage: 0.3 });
+    for (let x = Math.round(cx - v.rx - 2); x <= cx + v.rx + 2; x++) { t.poser(x, bas, 'metal', 1); t.poser(x, bas - 1, 'metal', 4); }
+    if (g.race !== 'panda') for (let y = bas; y <= v.yeux + 5; y++) { t.poser(cx + 3, y, 'metal', 4); t.poser(cx + 4, y, 'metal', 2); }
+    if (g.race === 'elfe') { t.rampes.cimier = rampeVive(0x3a6ad8); for (let k = 0; k < 16; k++) { t.poser(cx - 6 + k, haut - 2 - Math.round(Math.sin(k / 15 * Math.PI) * 6), 'cimier', 4); t.poser(cx - 6 + k, haut - 1 - Math.round(Math.sin(k / 15 * Math.PI) * 6), 'cimier', 2); } }
+    return;
+  }
   if (g.race === 'elfe') {
     // Le diadème d'argent avec sa pierre
     const y = v.yeux - 9 - (v.front || 0);

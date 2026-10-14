@@ -278,6 +278,15 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   t.forme(race === 'hobbit' ? 'lin' : 'habit', torse, { decalage: -0.1, motif: (x, y) => (!dos && Math.abs(x + 0.5 - X(0, prof)) < 0.6 * k && y > yT + 3 * k ? -0.6 : longue && (Math.floor(x / k) * 7 + Math.floor(y / k) * 3) % 23 === 0 ? 0.9 : 0) });
   if (race === 'hobbit') t.forme('habit', (x, y) => { const n = torse(x, y); return n && y >= yT + 2 * k && Math.abs(x + 0.5 - X(0, prof * 0.9)) > 2 * k + Math.max(0, 6 * k - (y - yT)) * 0.5 ? n : null; }, { decalage: -0.2 });
   if ((race === 'nain' && costume !== 'banquier') || costume === 'garde') t.forme('metal', (x, y) => { const n = torse(x, y); return n && y >= yT + 1 * k && y <= yB - 2 * k ? n : null; }, { motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.3 : -0.3) });
+  if (costume === 'garde' && !dos) {
+    // Le tabard bleu de la Confrérie, son soleil d'or, et le pan qui tombe devant les cuisses
+    const larg = ep * 0.62 * Math.max(0.55, Math.abs(c));
+    t.forme('habit', (x, y) => { const n = torse(x, y); return (n || (y > yB - 2 * k && y < yB + 6 * k)) && y >= yT + 2 * k && Math.abs(x + 0.5 - X(0, prof)) < larg ? (n || [0, 0.2, 0.9]) : null; }, { decalage: 0.05 });
+    const sx = X(0, prof), sy = yT + P.torse * 0.42;
+    t.forme('or', ellipsoide(sx, sy, 1.6 * k * Math.max(0.6, Math.abs(c)), 1.6 * k), { decalage: 0.3, ombre: false });
+    for (const [dx, dy] of [[0, -2.8], [0, 2.8], [-2.6, 0], [2.6, 0], [-2, -2], [2, -2], [-2, 2], [2, 2]]) t.poser(Math.round(sx + dx * k * Math.max(0.6, Math.abs(c))), Math.round(sy + dy * k), 'or', 4);
+    for (let x = Math.round(X(0, prof) - larg); x <= X(0, prof) + larg; x++) t.poser(x, Math.round(yB + 6 * k) - 1, 'or', 3);
+  }
   // Le tabard du garde, le plastron blanc et la chaîne d'or du banquier
   if (costume === 'garde') t.forme('habit', (x, y) => (y >= yT + 3 * k && y <= yB + 4 * k && Math.abs(x + 0.5 - X(0, prof)) < 4 * k * Math.max(0.3, Math.abs(c)) && Z(0, prof) > 0 ? [0, 0, 1] : null), { decalage: 0.1 });
   if (costume === 'banquier' && !dos) {
@@ -734,11 +743,14 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme('ruban', (x, y) => (y >= yT - 2 * k && y <= yT + 4 * k && Math.abs(x + 0.5 - X(0, prof * 0.7)) < (6.5 * k - (y - yT + 2 * k) * 0.9) * Math.max(0.4, Math.abs(c)) ? [(x + 0.5 - cx) / (6 * k) * 0.5, 0.2, 0.9] : null), { motif: (x, y) => ((Math.floor(x / k) * 3 + Math.floor(y / k) * 5) % 7 === 0 ? 1.4 : 0) });
     for (let j = 0; j < 4 * k; j++) t.poser(Math.round(X(5 * k, prof * 0.5)) + (Math.floor(j / k) % 2), yT - 3 * k + j, 'ruban', 2 + (Math.floor(j / k) % 2));
   }
-  if (costume === 'garde') {
-    // Le casque conique à nasal
+  if (costume === 'garde' && race !== 'magicienne' && race !== 'nain') {
+    // Le casque à nasal (le panda n'a pas de nasal : son museau ; le hobbit a un casque rond à bord ;
+    // l'elfe un cimier bleu)
     t.forme('metal', (x, y) => { const n = ellipsoide(cx, cy - 1 * k, P.rx + 1 * k, P.ry + 1 * k)(x, y); return n && y <= cy - 2 * k ? n : null; }, { decalage: 0.2 });
-    t.forme('metal', ellipsoide(cx, cy - P.ry - 1 * k, 1.5 * k, 2.5 * k), { decalage: 0.1 });
-    if (!dos) for (let y = cy - 2 * k; y <= cy + 3 * k; y++) for (let e = 0; e < k; e++) t.poser(Math.round(X(0, P.rx)) - (k - 1) + e - Math.round(s * k), y, 'metal', 4);
+    if (race === 'hobbit') t.forme('metal', (x, y) => (Math.abs(y + 0.5 - (cy - 2 * k)) < 0.8 * k && Math.abs(x + 0.5 - cx) < P.rx + 3 * k ? [0, -0.5, 0.8] : null), { decalage: 0.1 });
+    else t.forme('metal', ellipsoide(cx, cy - P.ry - 1 * k, 1.5 * k, 2.5 * k), { decalage: 0.1 });
+    if (race === 'elfe') { t.rampes.cimier = rampeVive(0x3a6ad8); for (let j = 0; j < 7 * k; j++) for (let e = 0; e < k; e++) t.poser(Math.round(X(-j * 0.35, -j * 0.6)) + e, Math.round(cy - P.ry - 2 * k - Math.sin(j / (7 * k) * Math.PI) * 2 * k), 'cimier', 3 + (j % 2)); }
+    if (!dos && race !== 'panda' && race !== 'hobbit') for (let y = cy - 2 * k; y <= cy + 3 * k; y++) for (let e = 0; e < k; e++) t.poser(Math.round(X(0, P.rx)) - (k - 1) + e - Math.round(s * k), y, 'metal', 4);
   } else if (costume === 'banquier') {
     // Le haut-de-forme, et son ruban d'or
     const haut = cy - P.ry;

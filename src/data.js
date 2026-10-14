@@ -31,6 +31,36 @@ const SAC = { hobbit: 2, magicienne: 2, humain: 3, elfe: 3, nain: 4, gobelin: 2,
 // Les peuples de l'ombre (les Bannis) et ceux qui n'arrivent que plus tard côté lumière
 const PEUPLES_OMBRE = ['gobelin', 'orc', 'loupgarou', 'vampire', 'momie', 'troll'];
 const PEUPLES_LUMIERE_TARD = ['panda'];
+
+// --- Étape 9d : la garde de la Confrérie ---
+// Un capitaine humain, et un garde d'un des peuples de la lumière à ses côtés (tabard bleu au
+// soleil d'or). La première visite : une amende. Les suivantes : une fouille (les objets interdits
+// sont saisis). On peut tenter de soudoyer le garde avec un trésor de l'atelier.
+const GARDE = {
+  capitaine: { nom: 'Capitaine Edmond Brisefer', race: 'humain', feminin: false, garde: true, costume: 'garde', niveau: 'veteran' },
+  peuples: ['humain', 'nain', 'elfe', 'hobbit', 'panda'],
+  noms: { humain: ['Sergent Basile Courtepaille', 'Garde Odette Vifargent'], nain: ['Garde Brokk Ferpoing', 'Garde Hilde Rocdur'], elfe: ['Garde Aelar Feuillevent', 'Garde Ilwen Clairebrise'],
+    hobbit: ['Garde Pippin Rondelet', 'Garde Marguerite Fourneau'], panda: ['Garde Wen Bambou-Sage', 'Garde Lan Pas-Tranquille'] },
+  amendeMin: 15, amendePart: 0.12,     // l'amende : 12 % de ta bourse, au moins 15 pièces
+  soudoiement: 0.35, bonusGout: 0.4, bonusValeur: 0.25, gardeObjet: 0.15,   // les chances, et le risque qu'il garde l'objet sans rien faire
+  chance: 0.16, parPalier: 0.1, parDeco: 0.06, delai: 5,                    // une visite surprise quand le comptoir penche vers l'ombre
+};
+// Ce que chaque peuple aime parmi les trésors (pour le soudoiement)
+const GOUTS_TRESORS = { humain: ['arme', 'vetement'], nain: ['arme', 'armure'], elfe: ['bijou', 'artefact'], hobbit: ['vetement', 'bijou'], magicienne: ['artefact', 'bijou'], panda: ['artefact', 'vetement'] };
+
+// --- Étape 9d : Garrick repasse prendre des nouvelles ---
+// Toujours bienveillant, il plaisante, et laisse tomber des choses à la légère. (Le joueur ne sait
+// pas encore que Garrick est le chef des Bannis, ni ce que le Conseil des Gardiens a fait.)
+const GARRICK_VISITES = [
+  { jour: 4, texte: "Alors, petit, ce comptoir ? Tu as l'air de t'en sortir ! Tiens, pour les débuts difficiles. ... Et ne crois pas tout ce qu'on raconte au marché. Les gens répètent ce qu'on leur a appris à répéter, ha ha !", cadeau: 20 },
+  { jour: 10, texte: "Un dragon sous la montagne, hein ? Ça fait cent ans que j'entends ça. Personne ne l'a jamais vu, mais tout le monde le craint. Drôle de bête, tu ne trouves pas ?" },
+  { jour: 17, texte: "On dit beaucoup de mal des gobelins. Moi j'en ai connu un qui rendait la monnaie juste ! Rare, hein ? Ha ha ! ... Si un jour un Banni frappe à ta porte, sers-le comme un autre. Une pièce, c'est une pièce." },
+  { jour: 25, texte: "Le Conseil des Gardiens a encore voté une taxe. Ils ont l'air si sages, dans leurs grandes robes blanches... Bah. Ne m'écoute pas, je radote." },
+  { jour: 34, texte: "Ma grand-mère disait qu'il poussait des pommiers, dans les terres d'ombre. Avant. Avant quoi ? Elle ne savait plus. Personne ne sait plus, d'ailleurs. C'est curieux, la mémoire.", cadeau: 30 },
+  { jour: 44, texte: "Le grand Sage du Conseil... Tu savais que personne ne connaît son âge ? Mon père le voyait déjà vieux. Et son père avant lui. Ha ! Il doit avoir un bon apothicaire." },
+  { jour: 56, texte: "Tu as bien grandi, petit. Un jour, je te raconterai d'où je viens vraiment. Pas aujourd'hui. Aujourd'hui, je t'achète une ration et je repars, ha ha !" },
+];
+
 // Un objet en plus pour une épreuve qui le demande : +5 % de chances de la réussir.
 const BONUS_SURPLUS = 0.05;
 

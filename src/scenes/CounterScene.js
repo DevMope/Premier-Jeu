@@ -269,6 +269,8 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'famille') return corpsHD(this, entree.visite.parent);
     if (entree.type === 'notable') { const p = this.personneDe(entree); return corpsHD(this, p.figurant || p); }
     if (entree.type === 'colporteur') return corpsHD(this, 'colporteur');
+    if (entree.type === 'garde') return corpsHD(this, GARDE.capitaine);
+    if (entree.type === 'garrick') return corpsHD(this, 'mentor');
     const v = entree.type === 'client' ? entree.voyageur : entree.parti.voyageur;
     return corpsHD(this, v);
   }
@@ -628,6 +630,47 @@ class CounterScene extends Phaser.Scene {
     });
   }
 
+  // --- Étape 9d : Garrick repasse prendre des nouvelles ---
+  visiteGarrick(entree) {
+    const G = this.G, visite = GARRICK_VISITES[entree.i];
+    G.garrickVu = [...(G.garrickVu || []), entree.i];
+    this.titreCommande.setFontSize(17).setText('Une visite');
+    this.dire(visite.texte, 'Garrick Cœur-de-Chêne');
+    this.bouton('« Merci, Garrick ! »', () => {
+      if (visite.cadeau) { encaisser(G, visite.cadeau, 'cadeau'); this.dessinerPieces(); Son.jouer('pieces'); }
+      this.dire(visite.cadeau ? `Garrick glisse ${visite.cadeau} pièces sur le comptoir. « Ne dis rien, ha ha ! Allez, au travail, petit. »` : "« Allez, au travail, petit. Je repasserai ! »", 'Garrick Cœur-de-Chêne');
+      this.bouton('Au revoir !', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+    });
+  }
+
+  // --- Étape 9d : la garde de la Confrérie ---
+  // Le capitaine (et un garde d'un peuple de la lumière, dans la file) : une amende la première
+  // fois, une fouille ensuite. On peut payer, ou tenter de soudoyer le garde avec un trésor.
+  visiteGarde(entree) {
+    const G = this.G, garde = entree.garde || gardeDuJour(G), cap = GARDE.capitaine.nom;
+    const v = visiteGarde(G);
+    this.titreCommande.setFontSize(17).setText('La garde de la Confrérie');
+    const motif = palierCamp(G) <= -1 ? "On dit que ton comptoir fait affaire avec les Bannis." : "On a reçu une plainte contre ton comptoir.";
+    const saisie = v.saisis.length ? ` Nous saisissons : ${v.saisis.join(', ')}.` : v.fouille ? ' Mes hommes ont fouillé ta réserve : rien d\'interdit... pour cette fois.' : '';
+    this.dire(`${motif} ${v.fouille ? 'Fouille !' : 'Premier avertissement.'}${saisie} L'amende : ${v.amende} pièces. ${garde.nom} est avec moi.`, cap);
+    const finir = (texte) => { this.actionB = null; this.majBoutonsService(); this.dire(texte, cap); this.majStock(); this.dessinerPieces(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
+    const payerEtPartir = () => { payerAmende(G, v.amende); Son.jouer('pieces'); finir(`Bien. Que je ne t'y reprenne pas. La Confrérie a l'œil sur toi.`); };
+    const tresors = tresorsPourSoudoyer(G, garde);
+    if (!tresors.length) { this.bouton(`Payer l'amende (${v.amende} p.)`, payerEtPartir); return; }
+    const proposer = (i) => {
+      const t = tresors[i];
+      const chance = chanceSoudoiement(G, garde, t);
+      const mot = chance >= 0.75 ? 'très bonnes' : chance >= 0.55 ? 'bonnes' : 'moyennes';
+      this.dire(`(Tu peux glisser un trésor de ton atelier à ${garde.nom}, discrètement. ${t.nom} : chances ${mot}.)`, '');
+      this.choix([`Glisser : ${t.nom}`, () => {
+        const r = soudoyer(G, garde, t);
+        if (r.reussi) { Son.jouer('trefle'); this.exprimer('neutre'); finir(`${garde.nom} se penche à l'oreille du capitaine... « Bon. Une erreur, sans doute. On s'en va. » (Pas d'amende.)`); }
+        else { payerAmende(G, v.amende); this.exprimer('fache'); finir(`« Tu crois qu'on s'achète ? » L'amende est payée${r.perdu ? `, et ${garde.nom} garde ${t.nom} « comme preuve »` : ''}.`); }
+      }], [i + 1 < tresors.length && i < 2 ? 'Un autre trésor ▸' : 'Finalement, payer', () => (i + 1 < tresors.length && i < 2 ? proposer(i + 1) : payerEtPartir())]);
+    };
+    this.choix([`Payer l'amende (${v.amende} p.)`, payerEtPartir], ['Soudoyer le garde…', () => proposer(0)]);
+  }
+
   // Le colporteur passe avec sa hotte : des choses rares, un peu plus cher qu'au marché.
   visiteColporteur(entree) {
     this.titreCommande.setFontSize(17).setText('Le colporteur');
@@ -642,6 +685,8 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'client') return entree.voyageur;
     if (entree.type === 'famille') return entree.visite.parent;
     if (entree.type === 'colporteur') return { nom: COLPORTEUR.nom, race: 'humain', feminin: false, figurant: 'colporteur' };
+    if (entree.type === 'garde') return GARDE.capitaine;
+    if (entree.type === 'garrick') return { nom: 'Garrick Cœur-de-Chêne', race: 'humain', feminin: false, figurant: 'mentor' };
     if (entree.type === 'notable') {
       // Le visiteur notable du palier : le bourgmestre, le héraut de la Confrérie, une légende...
       const v = PALIERS_CLIENTS[entree.palier].visiteur;
@@ -655,7 +700,8 @@ class CounterScene extends Phaser.Scene {
   // Son humeur en arrivant au comptoir.
   expressionArrivee(entree) {
     if (entree.type === 'retour') return entree.parti.resultat.echec ? 'inquiet' : 'content';
-    if (entree.type === 'notable' || entree.type === 'colporteur') return 'content';
+    if (entree.type === 'notable' || entree.type === 'colporteur' || entree.type === 'garrick') return 'content';
+    if (entree.type === 'garde') return (this.G.garde && this.G.garde.visites) ? 'fache' : 'neutre';
     if (entree.type === 'famille') return entree.visite.intention === 'colere' ? 'fache' : entree.visite.intention === 'releve' ? 'neutre' : 'inquiet';
     const v = entree.voyageur;
     if (v.exige) return 'fache';
@@ -765,6 +811,10 @@ class CounterScene extends Phaser.Scene {
       this.visiteNotable(entree);
     } else if (entree.type === 'colporteur') {
       this.visiteColporteur(entree);
+    } else if (entree.type === 'garde') {
+      this.visiteGarde(entree);
+    } else if (entree.type === 'garrick') {
+      this.visiteGarrick(entree);
     } else if (entree.type === 'faucheuse') {
       this.visiteFaucheuse(entree);
     } else {

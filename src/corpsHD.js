@@ -343,6 +343,8 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
     cle = `corps_${quoi.race}_${quoi.nom}_${tenue}`;
     // Les nobles et les collectionneurs : velours, fourrure et chapeau à plume
     if (quoi.prestige) { costume = 'noble'; gene.habit = gene.habitNoble; gene.cape = 0x5a1a3a; cle += '_noble'; }
+    if (quoi.costume) { costume = quoi.costume; cle += '_' + quoi.costume; }
+    if (quoi.figurant === 'mentor') { gene = { ...gene, habit: 0x2f5a3a, cheveux: 0x9a9aa0, cape: 0x2f5a3a, barbe: 'pleine', coiffure: 'court' }; costume = 'mentor'; }
   }
   if (pose) cle += '_' + pose;
   if (vue && vue !== 'troisQuarts') cle += '_' + vue;
