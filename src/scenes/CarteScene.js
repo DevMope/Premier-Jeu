@@ -53,20 +53,23 @@ class CarteScene extends Phaser.Scene {
     creerHalo(this);
     creerVignettesZonesHD(this);
     creerComptoirCarteHD(this);
+    creerEmblemesHD(this);
     this.add.image(0, 0, 'bureauBois').setOrigin(0).setScale(2).setTint(0xa08870);
     vignette(this, 0.7, 0);
     // Le cadre de la carte (le monde s'affiche dedans, par sa caméra)
     this.add.rectangle(480, 234, 938, 374, 0x000000, 0).setStrokeStyle(4, 0x3b2410);
     this.add.rectangle(480, 234, 944, 380, 0x000000, 0).setStrokeStyle(2, 0xc9a227, 0.8);
     this.monde.add(this.add.image(0, 0, 'carteHD').setOrigin(0).setScale(2));
-    // Le nom des royaumes, à la plume, avec leurs étoiles
+    // Le nom des royaumes, à la plume, avec leurs étoiles, et leur écu devant
     for (const [cle, r] of Object.entries(ROYAUMES)) {
-      const t = this.add.text(r.x, r.y, r.nom + (r.etoiles ? ' ' + '★'.repeat(r.etoiles) : ''), style(13, cle === 'bannis' ? '#3a1a4a' : '#4a2a0a',
+      const t = this.add.text(0, 0, r.nom + (r.etoiles ? ' ' + '★'.repeat(r.etoiles) : ''), style(13, cle === 'bannis' ? '#3a1a4a' : '#4a2a0a',
         { fontStyle: 'bold italic', stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5).setAlpha(0.92)
         .setInteractive({ useHandCursor: true });
       t.on('pointerup', () => { if (!this.aGlisse()) this.vue(1, r.x, r.y + 120); });
-      this.monde.add(t);
-      this.etiquettes.push({ o: t, royaume: true });
+      const groupe = this.add.container(r.x, r.y, [t]);
+      if (EMBLEME_ROYAUME[cle]) groupe.add(this.add.image(-t.width / 2 - 10, 0, 'embleme_' + EMBLEME_ROYAUME[cle]).setScale(0.5));
+      this.monde.add(groupe);
+      this.etiquettes.push({ o: groupe, royaume: true });
     }
     for (const [x, y, nom, angle] of [[60, 520, "Mer d'Opale", -80], [1440, 600, 'La Grande Muraille', 88], [330, 470, 'Le Grand Fleuve', -38]]) {
       const t = this.add.text(x, y, nom, style(12, '#3b2a4a', { fontStyle: 'italic', stroke: '#f0e2bc', strokeThickness: 3 })).setOrigin(0.5).setAngle(angle).setAlpha(0.8);

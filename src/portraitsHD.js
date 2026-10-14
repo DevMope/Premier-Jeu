@@ -428,7 +428,25 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   if (g.race === 'troll') for (let i = -10; i <= 10; i++) { const y = v.bouche + 1 + Math.round((1 - (i * i) / 100) * (expression === 'fache' ? -2 : 3)); t.poser(fx + i, y, 'levres', 0); if (Math.abs(i) < 9 && expression !== 'fache') t.poser(fx + i, y - 1, 'blanc', Math.abs(i) % 3 ? 4 : 2); }
   // Les défenses (orcs, trolls), les canines (vampires), les crocs (loups-garous), les dents (gobelins)
   if (TR.dents === 'defenses') for (const sens of [-1, 1]) { const x0 = fx + sens * 7 - (sens > 0 ? 0 : 1), y0 = v.bouche + 5; for (let j = 0; j < 6; j++) { const dx = Math.round(sens * j * j / 14); t.poser(x0 + dx, y0 - j, 'ivoire', j > 3 ? 5 : 3); if (j < 4) t.poser(x0 + dx + sens, y0 - j, 'ivoire', 2); } }
-  else if (TR.dents === 'canines') for (const sx of [fx - 4, fx + 3]) for (let j = 0; j < 4; j++) t.poser(sx, v.bouche + 1 + j, 'blanc', j > 1 ? 5 : 3);
+  else if (TR.dents === 'canines') {
+    // De longues canines qui dépassent de la lèvre, larges à la racine, pointues au bout ; chez
+    // certains vampires (toujours les mêmes), une goutte de sang perle au bout d'une canine
+    let h = 0;
+    for (const ch of g.nom || '') h = (h * 31 + ch.charCodeAt(0)) % 9973;
+    const sang = h % 5 < 2, laquelle = h % 2;
+    t.rampes.sang = rampeVive(0xb81818);
+    [fx - 4, fx + 3].forEach((sx, i) => {
+      const large = j => j < 3;
+      // (un liseré sombre autour : sinon le blanc se perd sur la peau pâle)
+      for (let j = 0; j < 8; j++) for (const dx of [-2, -1, 1, 2]) {
+        const x = sx + dx, dedans = dx === 0 || (large(j) && dx === (i ? 1 : -1));
+        const bord = j === 7 ? Math.abs(dx) <= 1 && !(large(j) && dx === (i ? 1 : -1)) : (large(j) ? dx === (i ? 2 : -2) || dx === (i ? -1 : 1) : Math.abs(dx) === 1);
+        if (!dedans && bord && t.mat(x, v.bouche + 1 + j) === 'peau') t.poser(x, v.bouche + 1 + j, 'levres', 0);
+      }
+      for (let j = 0; j < 7; j++) { t.poser(sx, v.bouche + 1 + j, 'blanc', j > 4 ? 5 : j > 1 ? 4 : 3); if (large(j)) t.poser(sx + (i ? 1 : -1), v.bouche + 1 + j, 'blanc', 2); }
+      if (sang && i === laquelle) { t.poser(sx, v.bouche + 6, 'sang', 3); t.poser(sx, v.bouche + 7, 'sang', 4); t.poser(sx, v.bouche + 9, 'sang', 3); t.poser(sx, v.bouche + 10, 'sang', 2); }
+    });
+  }
   else if (TR.dents === 'crocs') for (const sx of [fx - 6, fx + 5]) for (let j = 0; j < 5; j++) t.poser(sx, ey + 13 + j, 'blanc', j > 2 ? 5 : 3);
   else if (TR.dents === 'gobelin') for (let j = -3; j <= 3; j++) { t.poser(fx + j * 2, v.bouche + 3, 'blanc', j % 2 ? 4 : 2); t.poser(fx + j * 2, v.bouche + 4, 'blanc', j % 2 ? 3 : 1); }
   t.relief = true;
@@ -484,13 +502,14 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
     for (let y = 0; y < HD_H; y++) for (let x = 0; x < HD_L; x++) {
       const m = t.mat(x, y);
       if (!enveloppe.includes(m)) continue;
-      if ([fx - 8.5, fx + 8.5].some(ox => ((x + 0.5 - ox) / 4.5) ** 2 + ((y + 0.5 - ey) / 2.6) ** 2 <= 1)) { t.poser(x, y, 'noir', 1); continue; }
+      if ([fx - 8.5, fx + 8.5].some(ox => ((x + 0.5 - ox) / 4.5) ** 2 + ((y + 0.5 - ey) / 2.8) ** 2 <= 1)) { t.poser(x, y, 'noir', 0); continue; }   // (des orbites noires et profondes)
       const pente = y < v.torse ? -0.3 : 0.42;
       const b = ((y + x * pente) % 4 + 4) % 4;
       const ton = t.k[y * t.l + x];
       t.poser(x, y, 'bande', b < 0.7 ? 0 : b > 3.3 ? Math.max(1, ton - 1) : Math.min(5, Math.max(2, ton)));
     }
-    for (const ox of [fx - 9, fx + 8]) { t.poser(ox, ey, 'iris', 5); t.poser(ox + 1, ey, 'iris', 4); t.poser(ox, ey - 1, 'iris', 3); t.poser(ox + 1, ey + 1, 'iris', 2); }
+    // les pupilles jaunâtres, qui luisent au fond des orbites
+    for (const ox of [fx - 9, fx + 8]) { t.poser(ox, ey, 'iris', 5); t.poser(ox + 1, ey, 'iris', 4); t.poser(ox, ey - 1, 'iris', 4); t.poser(ox + 1, ey - 1, 'iris', 3); t.poser(ox, ey + 1, 'iris', 2); t.poser(ox + 1, ey + 1, 'iris', 1); }
   }
   if (TR.touffu) {
     const ajouts = [];

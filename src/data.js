@@ -670,11 +670,11 @@ const ZONES = {
 // les Monts de Bambou des pandas et les terres des Bannis, derrière la Grande Muraille.
 // `x`, `y` : où l'on écrit son nom sur la carte. `couleur` : le lavis du royaume.
 const ROYAUMES = {
-  comte: { nom: 'La Comté des Hobbits', etoiles: 1, x: 950, y: 470, couleur: 0x8ac060 },
+  comte: { nom: 'La Comté des Hobbits', etoiles: 1, x: 915, y: 472, couleur: 0x8ac060 },
   humains: { nom: 'Le Royaume des Hommes', etoiles: 2, x: 540, y: 690, couleur: 0xd8b860 },
   nains: { nom: 'Le Royaume des Nains', etoiles: 3, x: 1065, y: 262, couleur: 0xb08868 },
   elfes: { nom: 'Le Royaume des Elfes', etoiles: 4, x: 520, y: 40, couleur: 0x7ac0a0 },
-  mages: { nom: 'Le Royaume des Mages', etoiles: 5, x: 200, y: 285, couleur: 0x9a88e0 },
+  mages: { nom: 'Le Royaume des Mages', etoiles: 5, x: 250, y: 285, couleur: 0x9a88e0 },
   bambous: { nom: 'Les Monts de Bambou', etoiles: 0, x: 245, y: 540, couleur: 0x9ad070 },
   sauvages: { nom: 'Les Terres sauvages', etoiles: 0, x: 1185, y: 452, couleur: 0xc8a070 },
   bannis: { nom: 'Les Terres des Bannis', etoiles: 0, x: 1650, y: 40, couleur: 0x6a4a7a },

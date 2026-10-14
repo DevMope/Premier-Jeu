@@ -117,6 +117,10 @@ function categories(scene) {
   carte.push({ cle: 'vignetteZone_inconnue', nom: 'Contrée inconnue' });
   ajouter('carte', 'Carte du monde', 'Le parchemin, ton comptoir, et le médaillon peint de chaque contrée.', carte);
 
+  creerEmblemesHD(scene);
+  const emblemes = Object.entries(EMBLEMES).map(([k, e]) => ({ cle: 'embleme_' + k, nom: e.nom }));
+  ajouter('emblemes', 'Emblèmes', 'Les écus des royaumes du Conseil, du Conseil et de sa Confrérie, des Bannis et de chacun de leurs peuples, et de la Main Noire.', emblemes);
+
   const recits = nouvelles(scene, () => creerRecitHD(scene)).map(cle => ({ cle, nom: joli(cle) }));
   ajouter('recits', 'Récits de voyage', 'Les créatures, les décors et les effets des histoires que racontent les aventuriers.', recits);
 

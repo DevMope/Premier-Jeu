@@ -368,6 +368,10 @@ class BureauScene extends Phaser.Scene {
     c.add(this.add.text(161, 72, 'Lumière et ombre', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     c.add(this.add.text(161, 94, `De quel côté le monde te voit`, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5, 0));
     c.add(barreJauge(this, 161, 136, 230, j, { h: 14 }));
+    // les écus des deux camps, au bout de la jauge (les Bannis côté ombre, la Confrérie côté lumière)
+    creerEmblemesHD(this);
+    c.add(this.add.image(58, 116, 'embleme_bannis').setScale(0.55));
+    c.add(this.add.image(264, 116, 'embleme_confrerie').setScale(0.55));
     c.add(this.add.text(161, 166, nomPalierCamp(G), style(15, j > 0 ? '#9a7a10' : j < 0 ? '#5a3a8a' : '#5a3a20', { fontStyle: 'bold' })).setOrigin(0.5, 0));
     const prochain = PALIERS_JAUGE.find(s => s > Math.abs(j));
     c.add(this.add.text(161, 190, `Jauge : ${j > 0 ? '+' : ''}${j}` + (prochain ? ` · prochain palier à ${j >= 0 ? '+' : '−'}${prochain}` : ' · au bout de la jauge'), style(11, '#3b2410')).setOrigin(0.5, 0));
