@@ -2169,7 +2169,12 @@ function recolter(G, partis) {
     F.morts++;
     connaitre(G, p.voyageur).mort = true;
     G.habitues = G.habitues.filter(h => h.nom !== p.voyageur.nom);
+    // (v0.60) la gazette de demain en parlera
+    G.decesAnnonces = [...(G.decesAnnonces || []), { nom: p.voyageur.nom, feminin: !!p.voyageur.feminin, zone: p.voyageur.zone, voulu: !!p.voulu }];
     if (p.voulu) {
+      // (v0.60) et la Faucheuse laisse un souvenir sur le comptoir, un par âme offerte
+      F.reliques = F.reliques || [];
+      if (F.reliques.length < RELIQUES_FAUCHEUSE.length) F.reliques.push(RELIQUES_FAUCHEUSE[F.reliques.length].id);
       const poids = MORTS_VOULUES[p.voulu].poids;
       G.mal += poids * (seductionFaucheuse(G).mal || 1);   // (plus elle t'aime, plus chaque âme pèse)
       F.faveur += poids;
@@ -2405,6 +2410,12 @@ function avancerEvenements(G) {
     if (jour === G.jour) lignes.unshift(`📢 ${NOMS_LIEUX_MARCHE[cle]} ${ouvrePluriel(cle)} aujourd'hui sur le marché !`);
     else if (jour === G.jour + 1) lignes.push(`🔨 Les travaux s'achèvent : ${NOMS_LIEUX_MARCHE[cle].toLowerCase()} ${ouvrePluriel(cle)} demain.`);
   }
+  // (v0.60) les disparus d'hier : un drame sur la route (et des murmures, si la mort n'était pas un hasard)
+  for (const d of (G.decesAnnonces || []).slice(0, 3)) {
+    const z = ZONES[d.zone] ? ZONES[d.zone].nom : 'la route';
+    lignes.unshift(`🕯 Drame ${aLieu(z).replace(/^à /, 'à ')} : ${d.nom} n'est jamais revenu${d.feminin ? 'e' : ''}.` + (d.voulu ? ' On murmure que son baluchon était bien léger...' : ' Que la terre lui soit légère.'));
+  }
+  G.decesAnnonces = [];
   G.gazette = { jour: G.jour, lignes };
 }
 

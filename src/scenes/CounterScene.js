@@ -183,9 +183,24 @@ class CounterScene extends Phaser.Scene {
   // Le mur (enduit à la chaux entre les colombages de chêne) et le plateau du comptoir.
   dessinerPiece() {
     creerDecorComptoir(this);
+    this.dessinerReliques();
     creerObjetsHD(this);
     this.add.image(0, 0, 'murComptoir').setOrigin(0).setScale(2);
     this.add.image(0, 340, plateauComptoir(this, niveauAmelioration(this.G, 'comptoir'))).setOrigin(0).setScale(2);
+  }
+
+  // (v0.60) Les souvenirs de la Faucheuse, alignés sur le comptoir : un par âme offerte
+  dessinerReliques() {
+    const F = this.G.faucheuse;
+    if (!F || !F.reliques || !F.reliques.length) return;
+    creerReliquesFaucheuseHD(this);
+    F.reliques.forEach((id, i) => {
+      const r = RELIQUES_FAUCHEUSE.find(x => x.id === id);
+      const o = this.add.image(26 + i * 21, 424, 'relique_' + id).setOrigin(0.5, 1).setScale(1.6).setDepth(4).setInteractive({ useHandCursor: true });
+      o.on('pointerover', () => { this.infoRelique = this.add.text(Math.max(130, o.x), 395, `${r.nom}\n${r.texte}`, style(12, '#e8dcff', { fontStyle: 'italic', align: 'center', backgroundColor: '#1a1020e0', padding: { x: 8, y: 5 }, wordWrap: { width: 230 } })).setOrigin(0.5, 1).setDepth(30); });
+      o.on('pointerout', () => { if (this.infoRelique) { this.infoRelique.destroy(); this.infoRelique = null; } });
+      if (id === 'bougieNoire') { creerHalo(this); const h = this.add.image(o.x, o.y - 29, 'halo').setScale(0.28).setTint(0x60ff90).setAlpha(0.5).setBlendMode(Phaser.BlendModes.ADD).setDepth(4.1); this.tweens.add({ targets: h, alpha: 0.2, duration: 700, yoyo: true, repeat: -1 }); }
+    });
   }
 
   creerFenetre() {
@@ -211,6 +226,16 @@ class CounterScene extends Phaser.Scene {
     this.masqueFenetre = masque;
     this.perso = this.add.image(-100, SOL_COMPTOIR, 'perso_hobbit').setOrigin(0.5, 1).setScale(9).setDepth(2);
     this.perso.setMask(masque);
+    // (v0.60) Ton reflet dans la vitre : à peine visible... et de plus en plus sombre à chaque âme offerte
+    const ames = this.G.mal || 0;
+    if (ames > 0) {
+      const C = Phaser.Display.Color;
+      const c = C.Interpolate.ColorWithColor(C.ValueToColor(0xd8d8e8), C.ValueToColor(0x2a0a3a), 10, Math.min(10, Math.round(ames * 1.2)));
+      const reflet = this.add.image(x + w - 48, y + h + 26, textureJoueur(this, this.G, 'face')).setOrigin(0.5, 1).setScale(echelleJoueur(8))
+        .setAlpha(Math.min(0.32, 0.08 + ames * 0.035)).setTint(C.GetColor(c.r, c.g, c.b)).setDepth(2.35);
+      reflet.setMask(masque);
+      this.reflet = reflet;
+    }
     this.creerFileAttente();
 
     // L'ébrasement, le cadre de chêne et l'appui de pierre de la fenêtre

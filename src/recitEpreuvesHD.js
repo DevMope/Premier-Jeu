@@ -321,3 +321,52 @@ function creerRecitEpreuvesHD(scene) {
     t.contour(); t.texture(scene, 'montagneHD');
   }
 }
+
+// (v0.60) Les souvenirs que la Faucheuse laisse sur le comptoir, un par âme offerte
+const RELIQUES_FAUCHEUSE = [
+  { id: 'petaleNoir', nom: 'Un pétale noir', texte: "Un pétale de rose, noir comme l'encre. Il ne fane pas." },
+  { id: 'plumeCorbeau', nom: 'Une plume de corbeau', texte: 'Une longue plume noire, encore tiède.' },
+  { id: 'sablier', nom: 'Un sablier', texte: "Un petit sablier dont le sable ne tombe que lorsqu'on ne le regarde pas." },
+  { id: 'bougieNoire', nom: 'Une bougie noire', texte: "Une bougie noire à la flamme verte. Elle ne fond jamais." },
+  { id: 'craneOiseau', nom: "Un crâne d'oiseau", texte: "Un minuscule crâne d'oiseau, poli comme un galet." },
+  { id: 'fauxMiniature', nom: 'Une faux miniature', texte: 'Une faux grande comme un doigt. La lame est vraie.' },
+];
+function creerReliquesFaucheuseHD(scene) {
+  if (scene.textures.exists('relique_petaleNoir')) return;
+  const nouvelle = (id, l, h, dessin) => { const t = toileDecor(l, h); dessin(t); t.contour(); t.texture(scene, 'relique_' + id); };
+  nouvelle('petaleNoir', 14, 12, t => {
+    t.rampes.noirRose = rampe(0x3a1428);
+    t.forme('noirRose', ellipsoide(7, 6, 6, 4.5), { motif: (x, y) => (x === 7 ? -0.8 : 0) });
+    t.poser(3, 4, 'noirRose', 5); t.poser(4, 3, 'noirRose', 5);
+  });
+  nouvelle('plumeCorbeau', 20, 10, t => {
+    t.rampes.corbeau = rampe(0x1e1e2a);
+    t.forme('corbeau', polygoneHD([[1, 8], [8, 3], [19, 1], [12, 6], [3, 9]]), { motif: (x, y) => ((x + y) % 3 === 0 ? -0.8 : 0) });
+    traitHD(t, 'cire', [[1, 8], [16, 2]], 0.5, 0.4);
+  });
+  nouvelle('sablier', 12, 18, t => {
+    t.rampes.or = rampe(0xc8a040); t.rampes.verreS = rampe(0xa8c8d8); t.rampes.sable = rampe(0xd8b070);
+    for (const y of [1, 15]) t.forme('or', polygoneHD([[1, y], [11, y], [11, y + 2], [1, y + 2]]), { decalage: 0.2 });
+    t.forme('verreS', polygoneHD([[2, 3], [10, 3], [6, 9], [10, 15], [2, 15], [6, 9]]), { decalage: 0.4 });
+    t.forme('sable', polygoneHD([[3, 15], [9, 15], [6, 11]]), { decalage: 0.1 });
+    for (let y = 9; y < 12; y++) t.poser(6, y, 'sable', 4);
+  });
+  nouvelle('bougieNoire', 10, 20, t => {
+    t.rampes.cireNoire = rampe(0x24202a); t.rampes.flammeV = [0x1a5a2a, 0x2a8a3a, 0x4ab85a, 0x7ae08a, 0xb0ffb8, 0xe8ffe8];
+    t.forme('cireNoire', polygoneHD([[2, 8], [8, 8], [8, 19], [2, 19]]), { decalage: 0.1 });
+    t.forme('flammeV', ellipsoide(5, 4, 2.2, 3.6), { decalage: 0.8 });
+    t.poser(3, 9, 'cireNoire', 5); t.poser(3, 10, 'cireNoire', 4);
+  });
+  nouvelle('craneOiseau', 16, 10, t => {
+    t.rampes.os = [0x3a3428, 0x6a6250, 0x9a927a, 0xc8c0a6, 0xe6dfc8, 0xfffaea];
+    t.forme('os', ellipsoide(10, 5, 5, 4), { decalage: 0.3 });
+    t.forme('os', polygoneHD([[6, 4], [0, 6], [6, 7]]), { decalage: 0.1 });
+    t.poser(10, 4, 'encre', 0); t.poser(11, 4, 'encre', 0);
+  });
+  nouvelle('fauxMiniature', 14, 20, t => {
+    t.rampes.manche = rampe(0x4a3420);
+    traitHD(t, 'manche', [[9, 19], [8, 3]], 0.8);
+    t.forme('fer', polygoneHD([[8, 2], [1, 3], [0, 6], [3, 4], [8, 4]]), { decalage: 0.5 });
+  });
+}
+
