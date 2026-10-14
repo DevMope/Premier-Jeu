@@ -33,14 +33,31 @@ const PEAUX_VIVES = RAMPES_PEAU.map(r => r.map((c, i) => { const [h, s, l] = ver
 // Les traits des peuples de l'ombre et du panda : une peau fixe, des oreilles, un museau, des
 // crocs, des bandelettes, de la fourrure... (tout ce qui change par rapport aux cinq peuples)
 const TRAITS_PEUPLES = {
-  gobelin: { peau: 0x6a9a3a, yeux: 0xe0c030, oreilles: 'grandes', dents: 'gobelin', nez: 1.6, cheveux: 'rare' },
-  orc: { peau: 0x5a7a3a, yeux: 0xd8a030, oreilles: 'pointues', dents: 'defenses', nez: 1.4, carre: true, sourcil: 1.4, cheveux: 'crete' },
-  loupgarou: { peau: 0x6a5038, yeux: 0xf0c020, oreilles: 'loup', museau: 0x5a4030, truffe: true, dents: 'crocs', fourrure: 31, queue: true, cheveux: false, griffes: true },
-  vampire: { peau: 0xe0d8e8, yeux: 0xc02020, oreilles: 'pointues', dents: 'canines', nez: 0.9, cape: 0x3a0a14, cheveux: 'plaque', levres: 0x6a2030 },
-  momie: { peau: 0x5a4a3a, yeux: 0xe8e0c0, oreilles: null, bandelettes: 0xd8cfae, cheveux: false, nez: 0.8 },
-  troll: { peau: 0x7a8a7a, yeux: 0xe8d090, oreilles: 'pointues', nez: 2.3, carre: true, sourcil: 1.6, cheveux: false, verrues: true, dents: 'defenses' },
-  panda: { peau: 0xf0ece4, yeux: 0x2a1a10, oreilles: 'rondes', museau: 0xf0ece4, truffe: true, taches: 0x201c1c, fourrure: 53, cheveux: false, nez: 0, bas: 0x24201e },
+  // Le gobelin : petit, vicieux, des yeux jaunes fendus, un nez crochu, un sourire plein de dents pointues
+  gobelin: { peau: 0x6a9a3a, yeux: 0xe8c020, fente: true, oreilles: 'grandes', dents: 'gobelin', nez: 1.7, cheveux: false, sourire: true },
+  // L'orc : mâchoire carrée, de petites défenses d'ivoire qui sortent du fond des mâchoires, une crête
+  orc: { peau: 0x5a7a3a, yeux: 0xd84020, oreilles: 'pointues', dents: 'defenses', nez: 1.4, carre: true, sourcil: 1.4, cheveux: 'crete' },
+  // Le loup-garou : gris, un long museau clair, des oreilles de loup, des touffes aux joues, une collerette de poils
+  loupgarou: { peau: 0x7c7c84, yeux: 0xf0c020, fente: true, oreilles: 'loup', museau: 0xb4b4b8, truffe: true, dents: 'crocs', fourrure: 31, queue: true, cheveux: false, griffes: true, jambes: 'peau', pattes: 'peau', touffes: true, collerette: true, touffu: 1 },
+  // Le vampire : pâle, yeux rouges, canines, cape sombre, cheveux plaqués
+  vampire: { peau: 0xe0d8e8, yeux: 0xc02020, fente: true, oreilles: 'pointues', dents: 'canines', nez: 0.9, cape: 0x3a0a14, cheveux: 'plaque', levres: 0x6a2030 },
+  // La momie : enroulée de bandelettes de la tête aux pieds, deux lueurs dans la fente des yeux
+  momie: { peau: 0x5a4a3a, yeux: 0xd8f070, oreilles: null, bandelettes: 0xcfc6a6, cheveux: false, nez: 0.8 },
+  // Le troll des montagnes : une énorme tête, un nez immense qui pend, des cheveux hirsutes et de la
+  // mousse, de longs bras d'orang-outan, de grands pieds nus griffus (pas de défenses)
+  troll: { peau: 0x8a8274, yeux: 0x6a4a20, oreilles: 'pointues', nez: 3.2, nezBas: true, sourcil: 1.8, cheveux: 'hirsute', poils: 0x5a5248, mousse: 0x5a6a2a, fourrure: 47, brasLongs: true, grandesMains: true, griffes: true, jambes: 'peau', pattes: 'peau', touffu: 1, sourire: true },
+  // Le panda : gros et touffu, des pattes noires, les taches autour des yeux
+  panda: { peau: 0xf0ece4, yeux: 0x2a1a10, oreilles: 'rondes', museau: 0xf0ece4, truffe: true, taches: 0x201c1c, fourrure: 53, cheveux: false, nez: 0, bas: 0x24201e, jambes: 'noir', pattes: 'noir', mains: 'noir', touffu: 2 },
 };
+// Les Bannis ont l'air fâché tant qu'ils ne te connaissent pas (le joueur est du côté de la lumière
+// au départ) ; une fois amis, ou quand ton comptoir penche franchement vers l'ombre, leur visage s'adoucit.
+function banniFache(personne) {
+  if (!personne || typeof PEUPLES_OMBRE === 'undefined' || !PEUPLES_OMBRE.includes(personne.race)) return false;
+  const G = typeof window !== 'undefined' && window.GAME;
+  if (!G || !personne.nom) return true;
+  const ami = ((G.relations || {})[personne.nom] || 0) >= 8;
+  return !(ami || (typeof palierCamp === 'function' && palierCamp(G) <= -2));
+}
 
 // Un cylindre entre deux points de l'écran (un membre), avec sa normale ronde.
 function cylindre(t, mat, a, b, rayon, { decalage = 0, ombre = null, motif = null } = {}) {
@@ -88,13 +105,16 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const cx = L / 2;
   const f = g.feminin;
   const T = TRAITS_PEUPLES[race] || {};
-  if (T.cheveux !== undefined) g = { ...g, coiffure: T.cheveux === 'plaque' ? 'court' : 'chauve' };   // (pas de cheveux longs derrière)
+  if (T.cheveux !== undefined) g = { ...g, coiffure: T.cheveux === 'plaque' ? 'court' : 'chauve', barbe: T.barbe || null };   // (pas de cheveux longs derrière)
   const gobelin = costume === 'gobelin' || race === 'gobelin';
   const leves = pose === 'leves';
   const joueur = costume === 'joueur';
   const porte = id => joueur && (options.tenue || []).includes(id);
   t.rampes.peau = T.peau ? rampeVive(T.peau) : gobelin ? rampeVive(0x6a9a3a) : PEAUX_VIVES[g.peau ?? 1] || PEAUX_VIVES[1];
-  t.rampes.museau = rampeVive(T.museau || 0x5a4030); t.rampes.noir = rampeVive(T.taches || 0x201c1c); t.rampes.bande = rampeVive(T.bandelettes || 0xd8cfae); t.rampes.truffe = rampe(0x1a1410);
+  t.rampes.ivoire = rampe(0xe8dcb4); t.rampes.mousse = rampeVive(T.mousse || 0x5a6a2a); t.rampes.griffe = rampe(0x2a2420);
+  if (T.poils) t.rampes.cheveux = rampeVive(T.poils);
+  const fache = !!options.fache;
+  t.rampes.museau = rampeVive(T.museau || 0x5a4030); t.rampes.noir = rampeVive(T.taches || 0x201c1c); t.rampes.bande = rampe(T.bandelettes || 0xd8cfae); t.rampes.truffe = rampe(0x1a1410);
   t.rampes.cheveux = rampeVive(g.cheveux);
   t.rampes.habit = rampeVive(g.habit);
   t.rampes.cape = rampeVive(T.cape || (race === 'elfe' ? 0x8aa0b8 : g.cape || 0x4a3a2a));
@@ -138,8 +158,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const bal = pas ? (cote === pres ? pas : -pas) : 0;   // les bras se balancent avec la marche
     const epaule = [cote * (ep - 0.8 * k), 0.3 * k, yT + 2 * k];
     // Les bras levés : du coude écarté, les mains montent au-dessus de la tête (pour porter quelque chose)
-    const coude = leves ? [cote * (ep + 2.5 * k), 1 * k, yT - 5 * k] : [cote * (ep + 1.2 * k), (-0.8 + bal * 1.5) * k, yT + P.torse * 0.5];
-    const main = leves ? [cote * 6.5 * k, 2 * k, cy - P.ry - 7 * k] : [cote * (ep + 0.6 * k), (1 + bal * 3.5) * k, yB + (1.5 - Math.abs(bal) * 0.5) * k];
+    // (les longs bras du troll, comme un orang-outan : les mains pendent presque aux genoux)
+    const long = T.brasLongs && !leves;
+    const coude = leves ? [cote * (ep + 2.5 * k), 1 * k, yT - 5 * k] : [cote * (ep + (long ? 2.2 : 1.2) * k), (-0.8 + bal * 1.5) * k, long ? yT + P.torse * 0.68 : yT + P.torse * 0.5];
+    const main = leves ? [cote * 6.5 * k, 2 * k, cy - P.ry - 7 * k] : [cote * (ep + (long ? 2.2 : 0.6) * k), (1 + bal * 3.5) * k, long ? yB + (sol - yB) * 0.48 : yB + (1.5 - Math.abs(bal) * 0.5) * k];
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
     const r = 2.6 * k * P.membre;
     const dec = devant ? 0 : -0.5;
@@ -149,8 +171,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     cylindre(t, matAvant, C, M, r - 0.3 * k, { decalage: dec + (matAvant === matBras ? 0.4 : 0.15) });
     if (tenue >= 2 && aventurier && race !== 'hobbit' && race !== 'elfe') for (let j = 0; j < 2; j++) t.forme('cuir', (x, y) => (Math.abs(y - (C[1] + (M[1] - C[1]) * (0.35 + j * 0.3))) < 0.6 * k && Math.abs(x + 0.5 - (C[0] + (M[0] - C[0]) * (0.35 + j * 0.3))) < r ? [0, 0, 1] : null), { decalage: -0.9, bord: false, ombre: false }); // les lanières
     // La main : la paume et un pouce
-    t.forme('peau', ellipsoide(M[0], M[1] + 1 * k, 2.2 * k, 2.3 * k), { decalage: dec + 0.1 });
-    t.forme('peau', ellipsoide(M[0] + cote * c * 1.6 * k + s * 1.2 * k, M[1] + 0.6 * k, 0.9 * k, 1.2 * k), { decalage: dec + 0.3, ombre: false });
+    const matMain = T.mains || 'peau', gm = T.grandesMains ? 1.55 : 1;
+    t.forme(matMain, ellipsoide(M[0], M[1] + 1 * k * gm, 2.2 * k * gm, 2.3 * k * gm), { decalage: dec + 0.1 });
+    t.forme(matMain, ellipsoide(M[0] + cote * c * 1.6 * k * gm + s * 1.2 * k, M[1] + 0.6 * k, 0.9 * k * gm, 1.2 * k * gm), { decalage: dec + 0.3, ombre: false });
+    if (T.griffes) for (const d of [-1, 0, 1]) for (let j = 0; j < Math.round(0.9 * k * gm); j++) t.poser(Math.round(M[0] + d * 1.1 * k * gm), Math.round(M[1] + 3.2 * k * gm) + j, 'griffe', j ? 2 : 4);
   };
   // Où passe la cuisse proche à l'écran, à une hauteur donnée (pour dessiner le pli du tissu dessus)
   const rCuisse = 2.9 * k * P.membre;
@@ -167,9 +191,15 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const Hh = [X(hanche[0], hanche[1]), hanche[2]], G = [X(genou[0], genou[1]), genou[2]], Pd = [X(pied[0], pied[1]), pied[2]];
     const dec = devant ? 0 : -0.5;
     const r = 2.9 * k * P.membre;
-    cylindre(t, 'bas', Hh, G, r, { decalage: dec });
+    const matJambe = T.jambes || 'bas';
+    cylindre(t, matJambe, Hh, G, r, { decalage: dec });
     const solPied = sol - leve;
-    if (race === 'hobbit' || costume === 'mendiant') {
+    if (T.pattes) {
+      // Des pattes : la jambe velue jusqu'au sol, un large pied nu (griffu chez le troll et le loup-garou)
+      cylindre(t, matJambe, G, Pd, r - 0.2 * k, { decalage: dec + 0.2 });
+      t.forme(T.pattes, ellipsoide(X(pied[0], pied[1] + 2 * k), solPied - 1.6 * k, (3.8 + Math.abs(s) * 1.6) * k * (T.grandesMains ? 1.2 : 1), 2.1 * k), { decalage: dec });
+      if (T.griffes) for (const d of (Math.abs(s) > 0.5 ? [0, 1, 2] : [-1, 0, 1])) for (let e = 0; e < Math.max(1, Math.round(0.6 * k)); e++) t.poser(Math.round(X(pied[0] + (Math.abs(s) > 0.5 ? 0 : d * 1.3 * k), pied[1] + (Math.abs(s) > 0.5 ? (3.5 + d * 0.8) * k : 4 * k))) + e, Math.round(solPied - 1), 'griffe', 3);
+    } else if (race === 'hobbit' || costume === 'mendiant') {
       cylindre(t, 'bas', G, Pd, r - 0.4 * k, { decalage: dec + 0.2, motif: costume === 'mendiant' ? (x, y) => (hachage(Math.floor(x / k), Math.floor(y / k), 77) > 0.85 ? -1.2 : 0) : null });
       // Les grands pieds nus et poilus
       t.forme('peau', ellipsoide(X(pied[0], pied[1] + 2 * k), solPied - 1.5 * k, (3.6 + Math.abs(s) * 1.2) * k, 2 * k), { decalage: dec });
@@ -457,26 +487,37 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   oreille(pres);
   if (race === 'hobbit' && !dos) for (const cote of [-1, 1]) if (Z(cote * 4.5 * k, P.rx * 0.7) > 0) t.forme('peau', ellipsoide(X(cote * 4.5 * k, P.rx * 0.7), cy + 3.5 * k, 2.6 * k, 2 * k), { decalage: 0.35, bord: false, ombre: false });
   const ey = Math.round(cy + 1 * k);
-  const by = ey + 5 * k;
+  const by = ey + (T.nezBas ? 7.5 : 5) * k;
   // Le museau du loup-garou et du panda : une bosse qui avance sous les yeux, la truffe au bout
   if (T.museau && !dos) {
-    const avance = race === 'panda' ? 1.5 : 3;
+    const avance = race === 'panda' ? 1.5 : 4.2;
     const mx = profil ? cx + P.rx * 0.9 + avance * k : X(0, P.rx * 0.85) + s * avance * k;
-    const rx = (race === 'panda' ? 3.6 : 3.8) * k * (profil ? 1.1 : Math.max(0.55, Math.abs(c) + 0.25)), ry = (race === 'panda' ? 2.6 : 2.8) * k;
-    t.forme('museau', ellipsoide(mx, ey + 3.2 * k, rx, ry), { decalage: 0.15 });
+    const rx = (race === 'panda' ? 3.6 : 3.4) * k * (profil ? 1.4 : Math.max(0.55, Math.abs(c) + 0.25)), ry = (race === 'panda' ? 2.6 : 3.4) * k;
+    if (T.touffes) for (const cote of [-1, 1]) if (Z(cote * P.rx, P.rx * 0.2) > -1 * k) { const tx = X(cote * P.rx * 0.95, P.rx * 0.2); t.forme('peau', (x, y) => { const d = cote * (x + 0.5 - tx) / k, h = (y + 0.5 - cy - 2.5 * k) / k; return d > -2 && d < 4 && Math.abs(h - d * 0.25) < 2.6 - d * 0.55 ? [cote, 0.2, 0.6] : null; }, { motif: MECHES }); }
+    t.forme('museau', ellipsoide(mx, ey + (race === 'panda' ? 3.2 : 3.6) * k, rx, ry), { decalage: 0.15 });
     const nx = profil ? mx + rx - 0.8 * k : mx + s * (rx - 0.8 * k);
-    t.forme('truffe', ellipsoide(nx, ey + 2.2 * k, 1.1 * k, 0.9 * k), { ombre: false, bord: false }); t.poser(Math.round(nx - 0.4 * k), Math.round(ey + 1.8 * k), 'blanc', 3);
+    t.forme('truffe', ellipsoide(nx, ey + (race === 'panda' ? 2.2 : 1.6) * k, (race === 'panda' ? 1.1 : 1.5) * k, (race === 'panda' ? 0.9 : 1.1) * k), { ombre: false, bord: false }); t.poser(Math.round(nx - 0.4 * k), Math.round(ey + 1.8 * k), 'blanc', 3);
   }
   if (T.verrues && !dos) for (const [u, z, dy] of [[-3.5, 0.8, 2.5], [4, 0.75, -1], [2, 0.6, 6], [-5, 0.5, -3]]) if (Z(u * k, P.rx * z) > 0) t.forme('peau', ellipsoide(X(u * k, P.rx * z), cy + dy * k, 0.9 * k, 0.8 * k), { decalage: -0.6, bord: false });
   let yeux = [];
   const poserYeux = () => { for (const [ox, large, cote] of yeux) {
     // Un œil simple et posé : un petit blanc, la pupille sombre, un reflet d'un pixel, la paupière
     const w = large ? 1.3 * k : 0.8 * k, h = 1.4 * k;
-    t.forme('blanc', ellipsoide(ox, ey, w, h), { decalage: 0.2, ombre: false, bord: false });
+    // (les yeux de bête : tout l'œil de la couleur de l'iris, une pupille en fente)
+    t.forme(T.fente ? 'iris' : 'blanc', ellipsoide(ox, ey, w, h), { decalage: T.fente ? 0.4 : 0.2, ombre: false, bord: false });
     const ix = ox + (large ? 0 : cote * 0.15 * k);
-    t.forme('pupille', ellipsoide(ix, ey + 0.15 * k, large ? 0.75 * k : 0.5 * k, 1.05 * k), { ombre: false, bord: false });
+    t.forme('pupille', ellipsoide(ix, ey + 0.15 * k, T.fente ? 0.3 * k : large ? 0.75 * k : 0.5 * k, 1.05 * k), { ombre: false, bord: false });
     t.poser(Math.round(ix - 0.4 * k), Math.round(ey - 0.4 * k), 'blanc', 5);
     for (let i = -Math.round(w); i <= Math.round(w); i++) t.poser(Math.round(ox + i), Math.round(ey - h), 'pupille', 2);
+    if (fache) {
+      // Fâché : la paupière du haut descend en biais, plus bas du côté du nez
+      const versNez = Math.sign(X(0, P.rx) - ox) || 1;
+      for (let i = -Math.round(w); i <= Math.round(w); i++) {
+        const cache = Math.max(0, Math.round((0.35 + 0.45 * (i * versNez) / Math.max(1, w)) * h * 1.1));
+        for (let y = Math.round(ey - h); y < Math.round(ey - h) + cache; y++) t.poser(Math.round(ox + i), y, 'peau', 2);
+        t.poser(Math.round(ox + i), Math.round(ey - h) + cache, 'pupille', 1);
+      }
+    }
     if (costume === 'mendiant') {
       // Des yeux fatigués mais doux : la paupière retombe sur le haut de l'œil, un cerne dessous,
       // et le sourcil s'incline vers l'extérieur (la vie n'a pas été facile, mais il sourit)
@@ -516,8 +557,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const nz = X(0, P.rx * (s > 0.5 ? 1 : 0.8));
     if (profil || T.nez === 0) { /* (le nez fait partie du contour, ou c'est un museau) */ } else {
     const nr = (race === 'nain' ? 1.7 : race === 'hobbit' ? 1.4 : 1.1) * (T.nez || 1) * k;
-    t.forme('peau', ellipsoide(nz + s * 0.5 * k, ey + 2.9 * k, nr * (s > 0.5 ? 1.1 : 0.85), nr * 1.15), { decalage: 0.15, ombre: false });
-    for (let i = -Math.round(nr * 0.6); i <= Math.round(nr * 0.6); i++) t.poser(Math.round(nz + s * 0.5 * k + i), Math.round(ey + 2.9 * k + nr * 1.15), 'peau', 1); // l'ombre dessous
+    const ny0 = ey + (T.nezBas ? 4 : 2.9) * k;
+    if (T.nezBas) t.forme('peau', ellipsoide(nz + s * 1.8 * k + 0.4 * k, ny0 + 0.8 * k, nr * (s > 0.5 ? 1.2 : 0.95), nr * 1.45), { decalage: -0.9, ombre: false, bord: false });
+    t.forme('peau', ellipsoide(nz + s * (T.nezBas ? 1.5 : 0.5) * k, ny0, nr * (s > 0.5 ? 1.1 : 0.85), nr * (T.nezBas ? 1.35 : 1.15)), { decalage: T.nezBas ? 0.45 : 0.15, ombre: false });
+    for (let i = -Math.round(nr * 0.6); i <= Math.round(nr * 0.6); i++) t.poser(Math.round(nz + s * 0.5 * k + i), Math.round(ny0 + nr * (T.nezBas ? 1.35 : 1.15)), 'peau', 1); // l'ombre dessous
     for (let j = 0; j < Math.round(nr * 1.5); j++) t.poser(Math.round(nz + s * 0.5 * k - nr * (s > 0.5 ? 1 : 0.85)), Math.round(ey + 1.8 * k + j), 'peau', 2); // l'arête
     if (Math.abs(c) > 0.9) for (let j = 0; j < Math.round(nr * 1.6); j++) for (let e = 0; e < Math.max(1, Math.round(0.6 * k)); e++) t.poser(Math.round(nz + nr * 0.85) + e, Math.round(ey + 1.6 * k + j), 'peau', 1); // l'ombre à droite du nez
     }
@@ -532,7 +575,15 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     poserYeux();
     // Les sourcils : un arc au-dessus de chaque œil
     const epSourcil = T.sourcil ? Math.round(T.sourcil * 0.9 * k) : race === 'nain' ? Math.round(1.2 * k) : race === 'elfe' ? Math.max(1, Math.round(0.45 * k)) : Math.round(0.7 * k);
-    for (const [ox, large] of yeux) { const w = large ? 2 * k : 1.1 * k; for (let i = -Math.round(w); i <= Math.round(w); i++) for (let e = 0; e < epSourcil; e++) t.poser(Math.round(ox + i), Math.round(ey - 3.2 * k + (i * i) / (w * w) * (race === 'elfe' ? 1.6 : 1) * k) + e, 'cheveux', e ? 2 : 1); }
+    for (const [ox, large] of yeux) {
+      const w = large ? 2 * k : 1.1 * k, versNez = Math.sign(X(0, P.rx) - ox) || 1;
+      for (let i = -Math.round(w); i <= Math.round(w); i++) for (let e = 0; e < epSourcil + (fache ? 1 : 0); e++) {
+        // (fâché : le sourcil plonge vers le nez)
+        const dy = fache ? -2.6 * k + (i * versNez) / w * 1.3 * k : -3.2 * k + (i * i) / (w * w) * (race === 'elfe' ? 1.6 : 1) * k;
+        t.poser(Math.round(ox + i), Math.round(ey + dy) + e, 'cheveux', e ? 2 : 1);
+      }
+    }
+    if (fache && !profil && Math.abs(c) > 0.3) for (let j = 0; j < 1.4 * k; j++) t.poser(Math.round(X(0, P.rx)), Math.round(ey - 2.8 * k) + j, 'peau', 1);   // (le pli du front)
     // La bouche : une forme par peuple. Large et à deux lèvres pour l'humain, petit sourire bien
     // marqué pour le hobbit, trait net et long pour l'elfe homme, discrète pour l'elfe femme,
     // bouche visible au creux de la barbe pour le nain
@@ -542,10 +593,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const sombre = (g.peau ?? 1) >= 3 && !gobelin;
     const matLevre = sombre ? 'peau' : 'levres';
     const tonFente = sombre ? 0 : 1, tonBas = sombre ? 4 : (race === 'nain' ? 3 : 4), tonHaut = sombre ? 1 : 2;
-    const largeur = profil ? 1.2 : race === 'hobbit' ? 2.1 : race === 'nain' ? 3 : race === 'elfe' ? (f ? 1.9 : 2.8) : race === 'magicienne' ? 2.3 : 2.8;
+    const largeur = profil ? 1.2 : race === 'troll' ? 4.6 : race === 'hobbit' ? 2.1 : race === 'nain' ? 3 : race === 'elfe' ? (f ? 1.9 : 2.8) : race === 'magicienne' ? 2.3 : 2.8;
     const lb = Math.max(1, Math.round(largeur * k * (profil ? 1 : Math.abs(c))));
     const bouche = options.bouche ?? 0;   // 0 souriante, 1 neutre, 2 étonnée, 3 grognon
-    const courbe = (bouche === 1 ? 0 : bouche === 3 ? -0.8 : race === 'hobbit' ? 1.2 : race === 'elfe' ? 0.3 : 0.8) * (profil ? 0.5 : 1);
+    const courbe = (T.sourire ? 1.4 : bouche === 1 ? 0 : bouche === 3 ? -0.8 : race === 'hobbit' ? 1.2 : race === 'elfe' ? 0.3 : 0.8) * (profil ? 0.5 : 1);
     const epaisseur = elfeF ? 1 : Math.max(1, Math.round((profil ? 0.9 : 0.65) * k));
     if (bouche === 2) t.forme('bouche', ellipsoide(bx, by + 0.5 * k, 1.2 * k, 1.5 * k), { decalage: -0.5, ombre: false });
     else for (let i = -lb; i <= lb; i++) {
@@ -577,15 +628,30 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // Les grandes dents de Grippesou (et des gobelins), les défenses des orcs et des trolls, les
     // canines des vampires, les crocs du loup-garou
     const dents = T.dents || (gobelin ? 'gobelin' : null);
-    if (dents === 'gobelin') for (let j = -2; j <= 2; j++) { const x = Math.round(bx + j * 1.2 * k); for (let e = 0; e < k; e++) t.poser(x, by + 1 * k + e, 'blanc', j % 2 ? 4 : 2); }
-    else if (dents === 'defenses') for (const cote of (profil ? [1] : [-1, 1])) { const x = Math.round(bx + cote * (lb - 0.4 * k)); for (let j = 0; j < 2.4 * k; j++) for (let e = 0; e < Math.max(1, Math.round(0.8 * k)); e++) t.poser(x + e - (j > 1.2 * k ? cote : 0), Math.round(by + 0.8 * k) - j, 'blanc', j > 1.5 * k ? 5 : 3); }
+    if (dents === 'gobelin') for (let j = -2; j <= 2; j++) { const x = Math.round(bx + j * 1.1 * k); for (let e = 0; e < Math.round(1.2 * k) - (j % 2 ? 1 : 0); e++) t.poser(x, by + 1 + e, 'blanc', e ? 3 : 5); }   // (des dents pointues, une sur deux plus courte)
+    else if (dents === 'defenses') for (const cote of (profil ? [1] : [-1, 1])) {
+      // Deux petites défenses d'ivoire qui sortent du fond de la mâchoire et se recourbent vers le haut
+      const x0 = bx + cote * (lb + 0.6 * k), y0 = by + 1.4 * k;
+      for (let j = 0; j < 3 * k; j++) { const u = j / (3 * k), epd = Math.max(1, Math.round((1.3 - u * 0.9) * k)); for (let e = 0; e < epd; e++) t.poser(Math.round(x0 + cote * u * u * 1.4 * k) + e * cote - (epd > 1 ? cote : 0), Math.round(y0 - j), 'ivoire', u > 0.7 ? 5 : e ? 2 : 4); }
+    }
     else if (dents === 'canines') for (const cote of (profil ? [1] : [-1, 1])) { const x = Math.round(bx + cote * 1.3 * k); for (let j = 0; j < 1.8 * k; j++) t.poser(x, by + epaisseur + j, 'blanc', 4); }
-    else if (dents === 'crocs') for (const cote of (profil ? [1] : [-1, 1])) { const x = Math.round((profil ? cx + P.rx * 0.9 + 2.5 * k : X(0, P.rx * 0.85) + s * 1.5 * k) + cote * 1.6 * k); for (let j = 0; j < 2 * k; j++) t.poser(x, Math.round(ey + 4.6 * k) + j, 'blanc', j > k ? 5 : 3); }
+    else if (dents === 'crocs') for (const cote of (profil ? [1] : [-1, 1])) { const x = Math.round((profil ? cx + P.rx * 0.9 + 3 * k : X(0, P.rx * 0.85) + s * 3 * k) + cote * 1.8 * k); for (let j = 0; j < 2.2 * k; j++) t.poser(x, Math.round(ey + 5 * k) + j, 'blanc', j > k ? 5 : 3); }
   }
 
   // --- 5. Les cheveux : une calotte sur la sphère, qui couvre le haut, l'arrière et les tempes ---
   const coupe = T.cheveux === false ? 'chauve' : T.cheveux === 'crete' ? 'crete' : T.cheveux === 'plaque' ? 'court' : T.cheveux === 'rare' ? 'chauve' : race === 'hobbit' ? 'boucles' : g.coiffure;
-  if (coupe === 'crete') {
+  if (T.cheveux === 'hirsute') {
+    // Une tignasse grise et hirsute qui encadre l'énorme visage et retombe en mèches sur les épaules
+    t.forme('cheveux', (x, y) => {
+      const nx = (x + 0.5 - X(0, -P.rx * 0.3)) / (P.rx + 3 * k), ny = (y + 0.5 - cy + 1 * k) / (P.ry + 2.5 * k);
+      if (nx * nx + ny * ny > 1 && !(Math.abs(nx) < 1.05 && y > cy && y < yT + 10 * k - hachage(Math.floor(x / k), 0, 61) * 5 * k)) return null;
+      // (le visage reste libre : sur la tête, seulement une frange en haut, et les côtés vers l'arrière)
+      if (tete(x, y) && !dos && (y + 0.5 - cy) / P.ry > -0.6 && Math.abs(x + 0.5 - X(0, P.rx * 0.6)) < P.rx * 0.95) return null;
+      if (!dos && t.mat(x, y) && t.mat(x, y) !== 'cheveux' && (y + 0.5 - cy) / P.ry > -0.6) return null;   // (ni le nez, ni les yeux, ni la bouche)
+      return [nx, ny * 0.5, 0.7];
+    }, { decalage: -0.2, motif: MECHES });
+    for (const [u, z, dy, r] of [[-7, -4, -11, 2], [9, -7, 4, 1.8], [-11, -6, 7, 2]]) if (Z(u * k, z * k) > -4 * k || dos) t.forme('mousse', ellipsoide(X(u * k, z * k), cy + dy * k, r * k, r * 0.7 * k), { motif: (x, y) => (hachage(x, y, 5) > 0.6 ? 0.6 : 0) });
+  } else if (coupe === 'crete') {
     // La crête des orcs : une bande de cheveux hérissés au sommet du crâne, d'avant en arrière
     t.forme('cheveux', (x, y) => { const h = (cy - P.ry + 1 * k - y) / k; const demi = (1.6 * Math.max(0.3, Math.abs(c)) + 2.5 * Math.abs(s)) * k; return h >= -1.5 && h < 4.5 && Math.abs(x + 0.5 - X(0, -1.5 * k)) < demi + Math.abs(s) * 2 * k ? [(x + 0.5 - cx) / (3 * k), -0.5, 0.7] : null; }, { motif: (x, y) => (Math.floor(x / k) % 2 ? 0.5 : -0.6) });
   } else if (coupe === 'boucles') {
@@ -704,20 +770,49 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   // --- 6. De dos : la cape par-dessus tout ---
   if (capee && dos) dessinerCape(true);
 
+  // La collerette de poils du loup-garou, sur les épaules ; la mousse sur les épaules du troll
+  if (T.collerette) t.forme('peau', (x, y) => { const nx = (x + 0.5 - cx) / (ep + 2 * k), ny = (y + 0.5 - yT - 2 * k) / (4 * k); return nx * nx + ny * ny <= 1 && y > cy + P.ry * 0.6 - hachage(Math.floor(x / k), 3, 11) * 2 * k ? [nx * 0.6, ny * 0.4, 0.8] : null; }, { decalage: -0.1, motif: MECHES });
+  if (T.mousse) for (const cote of [-1, 1]) t.forme('mousse', ellipsoide(X(cote * (ep - 1 * k), 0), yT + 1.5 * k, 3.2 * k, 2 * k), { decalage: -0.2, motif: (x, y) => (hachage(x, y, 9) > 0.55 ? 0.7 : 0) });
   // --- 7. Les peaux particulières : la fourrure (poils en hachures), les bandelettes de la momie ---
   if (T.fourrure) for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'peau' || t.mat(x, y) === 'noir') {
+    if (race === 'troll' && y < yT && !dos) continue;
     const h = hachage(Math.floor(x / k), Math.floor(y / k), T.fourrure);
     if (h > 0.8) t.poser(x, y, t.mat(x, y), Math.max(0, t.k[y * t.l + x] - 1)); else if (h < 0.08) t.poser(x, y, t.mat(x, y), Math.min(5, t.k[y * t.l + x] + 1));
   }
-  if (T.bandelettes) for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'peau') {
-    if (!dos && y >= ey - 2.5 * k && y <= by + 1.5 * k && Math.abs(x + 0.5 - X(0, P.rx * 0.5)) < P.rx * 0.7) continue;   // (le visage reste à l'air)
-    const b = ((y + Math.floor(x * 0.3)) / k) % 4.5;
-    if (b < 3) t.poser(x, y, 'bande', b < 0.6 ? 1 : b > 2.4 ? 2 : (t.k[y * t.l + x] >= 3 ? 4 : 3));
+  if (T.bandelettes) {
+    // La momie : bandée de la tête aux pieds (vêtements compris), une fente sombre sur les yeux
+    const enveloppe = ['peau', 'habit', 'bas', 'cuir', 'lin', 'metal', 'levres', 'cape', 'cheveux'];
+    for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+      const m = t.mat(x, y);
+      if (!enveloppe.includes(m)) continue;
+      const fente = !dos && yeux.some(([ox, large]) => ((x + 0.5 - ox) / ((large ? 1.8 : 1.2) * k)) ** 2 + ((y + 0.5 - ey) / (1.2 * k)) ** 2 <= 1);
+      if (fente) { t.poser(x, y, 'noir', 1); continue; }
+      // Des bandes de 3 pixels HD, en biais (dans un sens sur la tête et les jambes, dans l'autre sur le torse)
+      const pente = y < yT ? -0.3 : y > yB ? 0.22 : 0.42;
+      const b = (((y + x * pente) / k) % 3 + 3) % 3;
+      const ton = t.k[y * t.l + x];
+      t.poser(x, y, 'bande', b < 0.45 ? 0 : b > 2.5 ? Math.max(1, ton - 1) : Math.min(5, Math.max(2, ton)));
+    }
+    // Les yeux : deux lueurs dans la fente
+    if (!dos) for (const [ox] of yeux) { t.poser(Math.round(ox), Math.round(ey), 'iris', 5); t.poser(Math.round(ox) + 1, Math.round(ey), 'iris', 4); t.poser(Math.round(ox), Math.round(ey) - 1, 'iris', 3); }
+    // Un bout de bandelette qui pend du poignet
+    const bx0 = X(pres * (ep + 1 * k), 1 * k);
+    for (let j = 0; j < 7 * k; j++) for (let e = 0; e < k; e++) t.poser(Math.round(bx0 + Math.sin(j / (2 * k)) * 0.8 * k) + e, Math.round(yB + 3 * k + j), 'bande', j % (3 * k) === 0 ? 1 : 3);
   }
 
+  if (T.touffu) {
+    // Une silhouette touffue : des mèches de poils qui dépassent du contour
+    const ajouts = [];
+    for (let y = 1; y < H - 3; y++) for (let x = 1; x < L - 1; x++) {
+      const m = t.mat(x, y);
+      if (m !== 'peau' && m !== 'noir' && m !== 'cheveux') continue;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1]]) if (!t.mat(x + dx, y + dy) && hachage(x, y, 71) > 0.55) for (let j = 1; j <= Math.round(T.touffu * k * hachage(y, x, 13)); j++) ajouts.push([x + dx * j, y + dy * j, m, t.k[y * t.l + x]]);
+    }
+    for (const [x, y, m, ton] of ajouts) if (t.dans(x, y) && !t.mat(x, y)) t.poser(x, y, m, ton);
+  }
   contourEpais(t, k - 1);
   // Où sont les mains (depuis le sol), pour y accrocher le baluchon
-  t.mains = H - (leves ? cy - P.ry - 7 * k : yB + 2.5 * k);
+  t.mains = H - (leves ? cy - P.ry - 7 * k : T.brasLongs ? yB + (sol - yB) * 0.48 + 2 * k : yB + 2.5 * k);
   return t;
 }
 

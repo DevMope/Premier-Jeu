@@ -276,11 +276,11 @@ const VISAGES = {
   // (les peuples de l'ombre et le panda : en attendant leurs bustes propres)
   gobelin: { cy: 45, rx: 15, ry: 17, menton: 0.2, yeux: 44, nez: [2.6, 4], bouche: 58, cou: 5, torse: 67, sourcil: 2 },
   orc: { cy: 43, rx: 17, ry: 19, menton: 0, carre: true, yeux: 42, nez: [3.2, 3.8], bouche: 58, cou: 7, torse: 66, sourcil: 3 },
-  loupgarou: { cy: 43, rx: 16, ry: 18.5, menton: 0.05, yeux: 41, nez: [2.8, 3.8], bouche: 57, cou: 6, torse: 66, sourcil: 2 },
+  loupgarou: { cy: 43, rx: 16.5, ry: 18.5, menton: 0.15, yeux: 40, nez: [2.8, 3.8], bouche: 58, cou: 6, torse: 66, sourcil: 2 },
   vampire: { cy: 43, rx: 14.5, ry: 19, menton: 0.18, yeux: 42, nez: [2.4, 3.8], bouche: 56, cou: 5, torse: 66, sourcil: 1 },
   momie: { cy: 44, rx: 15, ry: 18.5, menton: 0.1, yeux: 42, nez: [2.4, 3.4], bouche: 57, cou: 5, torse: 66, sourcil: 1 },
-  troll: { cy: 42, rx: 18, ry: 19.5, menton: 0, carre: true, yeux: 41, nez: [5.5, 5], bouche: 60, cou: 8, torse: 66, sourcil: 3 },
-  panda: { cy: 44, rx: 18, ry: 18, menton: 0, yeux: 43, nez: [3, 3], bouche: 59, cou: 7, torse: 67, sourcil: 2 },
+  troll: { cy: 40, rx: 21, ry: 22, menton: 0.05, yeux: 36, nez: [7, 7.5], bouche: 58, cou: 8, torse: 66, sourcil: 3 },
+  panda: { cy: 44, rx: 20.5, ry: 18.5, menton: -0.05, yeux: 43, nez: [3, 3], bouche: 59, cou: 7, torse: 67, sourcil: 2 },
 };
 
 // La tête (ellipse dont le menton peut s'affiner).
@@ -316,6 +316,7 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   // TRAITS_PEUPLES (corpsVueHD.js), les mêmes que pour les corps en pied
   const TR = (typeof TRAITS_PEUPLES !== 'undefined' && TRAITS_PEUPLES[g.race]) || {};
   if (TR.cheveux !== undefined) g = { ...g, coiffure: TR.cheveux === 'plaque' ? 'court' : 'chauve', armure: false, barbe: null };
+  if (TR.poils) g = { ...g, cheveux: TR.poils };
   const cx = 40;
   const v = g.race === 'elfe' && !g.feminin ? { ...VISAGES.elfe, menton: 0, carre: true } : VISAGES[g.race];
   // Un trois-quarts léger : le visage est tourné de quelques pixels vers la droite (l'oreille
@@ -327,7 +328,10 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   t.rampes.habit = rampeVive(g.habit);
   t.rampes.cape = rampeVive(TR.cape || g.cape);
   t.rampes.iris = rampeVive(TR.yeux || g.yeux);
-  t.rampes.museau = rampeVive(TR.museau || 0x5a4030); t.rampes.noir = rampeVive(TR.taches || 0x201c1c); t.rampes.bande = rampeVive(TR.bandelettes || 0xd8cfae); t.rampes.truffe = rampe(0x1a1410);
+  // (les yeux de bête : le blanc prend la couleur de l'œil, l'iris devient une fente sombre)
+  if (TR.fente) { t.rampes.oeil = rampeVive(TR.yeux); t.rampes.iris = rampe(0x140c08); }
+  t.rampes.ivoire = rampe(0xe8dcb4); t.rampes.mousse = rampeVive(TR.mousse || 0x5a6a2a); t.rampes.griffe = rampe(0x2a2420);
+  t.rampes.museau = rampeVive(TR.museau || 0x5a4030); t.rampes.noir = rampeVive(TR.taches || 0x201c1c); t.rampes.bande = rampe(TR.bandelettes || 0xd8cfae); t.rampes.truffe = rampe(0x1a1410);
   if (!t.rampes.blanc) t.rampes.blanc = rampeVive(0xf4f0ea);
   t.rampes.cuir = rampeVive(0x6a3f22); t.rampes.metal = rampeVive(0x7a8498); t.rampes.lin = rampeVive(0xd8ccb0);
   t.rampes.velours = rampe(0x4a1a3a); t.rampes.plume = rampe(0xf0e8d0); t.rampes.fourrure = rampe(0xe8e0d0);
@@ -336,7 +340,13 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   t.rampes.barbe = t.rampes.cheveux;
   const oreilles = TR.oreilles !== undefined ? TR.oreilles : g.race === 'elfe' ? 'elfe' : 'rondes-humaines';
 
-  // 1. Les cheveux longs, derrière tout le reste
+  // 1. Les cheveux longs, derrière tout le reste (la tignasse hirsute du troll aussi)
+  if (TR.cheveux === 'hirsute') t.forme('cheveux', (x, y) => {
+    const nx = (x + 0.5 - cx) / (v.rx + 7), ny = (y + 0.5 - v.cy) / (v.ry + 5);
+    if (Math.abs(nx) > 1 || y < v.cy - v.ry - 5) return null;
+    if (y < v.cy && nx * nx + ny * ny > 1) return null;
+    return y < v.torse + 12 - hachage(x, 0, 61) * 9 ? [nx, Math.min(0.9, ny), Math.sqrt(Math.max(0.05, 1 - nx * nx))] : null;
+  }, { decalage: -0.6, motif: MECHES });
   if (['long', 'queue', 'chignon'].includes(g.coiffure) || g.race === 'elfe' || g.race === 'magicienne') {
     const long = g.coiffure === 'long' || g.race === 'elfe' || g.race === 'magicienne';
     t.forme('cheveux', (x, y) => {
@@ -382,11 +392,19 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   if (TR.museau) {
     // Le museau : une bosse large qui avance sous les yeux, la truffe sombre au bout
     t.relief = true;
-    const my = ey + (g.race === 'panda' ? 9 : 10), mr = g.race === 'panda' ? [9, 6] : [8.5, 6.5];
+    const my = ey + (g.race === 'panda' ? 9 : 11), mr = g.race === 'panda' ? [9, 6] : [9, 8];
     t.forme('museau', ellipsoide(fx, my, mr[0], mr[1]), { decalage: 0.15 });
     t.forme('truffe', ellipsoide(fx + 0.5, my - 2.5, 3.2, 2.2), { ombre: false, bord: false }); t.poser(fx - 1, my - 4, 'blanc', 3);
     t.relief = false;
   } else if (TR.nez === 0) { /* (pas de nez) */ }
+  else if (TR.nezBas) {
+    // Le nez du troll : immense, qui pend jusqu'au-dessus de la bouche, avec ses narines
+    t.relief = true;
+    t.forme('peau', (x, y) => { const u = (y + 0.5 - ey - 1.5) / 18; if (u < 0 || u > 1) return null; const demi = 4 + u * u * 6; const nx = (x + 0.5 - fx - u * 2.5) / demi; return Math.abs(nx) <= 1 ? [0, 0, 1] : null; }, { decalage: -1, bord: false, ombre: false });   // (l'ombre du nez)
+    t.forme('peau', (x, y) => { const u = (y + 0.5 - ey) / 18; if (u < 0 || u > 1) return null; const demi = 3 + u * u * 5.5; const nx = (x + 0.5 - fx - u * 1.5) / demi; return Math.abs(nx) <= 1 ? [nx * 0.8, u - 0.3, Math.sqrt(1 - nx * nx)] : null; }, { decalage: 0.55 });
+    t.relief = false;
+    for (const sx of [fx - 4, fx + 5]) { t.poser(sx, ey + 17, 'peau', 0); t.poser(sx + 1, ey + 17, 'peau', 1); }
+  }
   else if (g.race === 'nain' || TR.nez >= 2) t.forme('peau', ellipsoide(fx - 0.5, ey + 6 + v.nez[1] * 0.6, v.nez[0], v.nez[1]), { decalage: 0.3 });
   else if (g.race === 'hobbit') t.forme('peau', ellipsoide(fx - 0.5, ey + 7, 3.2, 2.8), { decalage: 0.1, bord: false });
   else {
@@ -403,8 +421,9 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   const bouche = BOUCHES[parle ? 'parle' : expression];
   // (les elfes femmes gardent une bouche discrète : pas de lèvre du bas)
   t.dessin(fx - 5, v.bouche, g.race === 'elfe' && g.feminin ? bouche.map(l => l.replace(/L/g, '.')) : bouche, LEGENDE_BOUCHE);
+  if (g.race === 'troll') for (let i = -10; i <= 10; i++) { const y = v.bouche + 1 + Math.round((1 - (i * i) / 100) * (expression === 'fache' ? -2 : 3)); t.poser(fx + i, y, 'levres', 0); if (Math.abs(i) < 9 && expression !== 'fache') t.poser(fx + i, y - 1, 'blanc', Math.abs(i) % 3 ? 4 : 2); }
   // Les défenses (orcs, trolls), les canines (vampires), les crocs (loups-garous), les dents (gobelins)
-  if (TR.dents === 'defenses') for (const sx of [fx - 7, fx + 6]) for (let j = 0; j < 6; j++) { t.poser(sx, v.bouche + 2 - j, 'blanc', j > 3 ? 5 : 3); t.poser(sx + 1, v.bouche + 2 - j, 'blanc', j > 3 ? 4 : 2); }
+  if (TR.dents === 'defenses') for (const sens of [-1, 1]) { const x0 = fx + sens * 7 - (sens > 0 ? 0 : 1), y0 = v.bouche + 5; for (let j = 0; j < 6; j++) { const dx = Math.round(sens * j * j / 14); t.poser(x0 + dx, y0 - j, 'ivoire', j > 3 ? 5 : 3); if (j < 4) t.poser(x0 + dx + sens, y0 - j, 'ivoire', 2); } }
   else if (TR.dents === 'canines') for (const sx of [fx - 4, fx + 3]) for (let j = 0; j < 4; j++) t.poser(sx, v.bouche + 1 + j, 'blanc', j > 1 ? 5 : 3);
   else if (TR.dents === 'crocs') for (const sx of [fx - 6, fx + 5]) for (let j = 0; j < 5; j++) t.poser(sx, ey + 13 + j, 'blanc', j > 2 ? 5 : 3);
   else if (TR.dents === 'gobelin') for (let j = -3; j <= 3; j++) { t.poser(fx + j * 2, v.bouche + 3, 'blanc', j % 2 ? 4 : 2); t.poser(fx + j * 2, v.bouche + 4, 'blanc', j % 2 ? 3 : 1); }
@@ -434,6 +453,9 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   else if (oreilles === 'pointues') oreillesElfe(t, { ...v, yeux: v.yeux + 1 }, cx, T, 0.75);
   else if (oreilles === 'loup') for (const sens of [-1, 1]) { const ox = cx + sens * (v.rx - 4) - T * 0.5, oy = v.cy - v.ry + 3; t.forme('peau', (x, y) => { const h = (oy - y); return h >= -4 && h < 13 && Math.abs(x + 0.5 - ox - sens * h * 0.25) < 6 - h * 0.42 ? [sens * 0.5, -0.4, 0.7] : null; }, { decalage: 0.1, motif: MECHES }); t.forme('museau', (x, y) => { const h = (oy - y); return h >= -1 && h < 7 && Math.abs(x + 0.5 - ox - sens * h * 0.25) < 2.6 - h * 0.3 ? [0, 0, 1] : null; }, { bord: false, ombre: false, decalage: -0.3 }); }
   else if (oreilles === 'rondes') for (const sens of [-1, 1]) t.forme('noir', ellipsoide(cx + sens * (v.rx - 2) - T * 0.5, v.cy - v.ry + 2, 6.5, 6), { decalage: 0.1 });
+  if (TR.touffes) for (const sens of [-1, 1]) t.forme('peau', (x, y) => { const d = sens * (x + 0.5 - cx + T * 0.5) - v.rx + 3, h = y + 0.5 - (ey + 9); return d > -3 && d < 8 && Math.abs(h - d * 0.35) < 5 - d * 0.6 ? [sens, 0.2, 0.6] : null; }, { motif: MECHES });
+  if (TR.collerette) t.forme('peau', (x, y) => { const nx = (x + 0.5 - cx) / 26, ny = (y + 0.5 - v.torse - 3) / 8; return nx * nx + ny * ny <= 1 && y > v.bouche + 4 - hachage(x, 3, 11) * 3 ? [nx * 0.6, ny * 0.4, 0.8] : null; }, { decalage: -0.1, motif: MECHES });
+  if (TR.mousse) { t.relief = true; for (const [i, j, r] of [[-14, -16, 3.5], [11, -18, 3], [-22, 8, 3], [20, 26, 4], [-18, 30, 3.5]]) t.forme('mousse', ellipsoide(cx + i, v.cy + j, r, r * 0.7), { motif: (x, y) => (hachage(x, y, 5) > 0.6 ? 0.6 : 0) }); }
 
   // 7. Les sourcils, par-dessus tout (ils débordent du casque des nains)
   const sourcil = SOURCILS[expression];
@@ -448,13 +470,32 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
 
   // 9. Les peaux particulières : la fourrure (poils en hachures), les bandelettes de la momie
   if (TR.fourrure) for (let y = 0; y < HD_H; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'peau' || t.mat(x, y) === 'noir') {
+    if (g.race === 'troll' && y < v.bouche + 6 && Math.abs(x + 0.5 - fx) < v.rx * 0.85) continue;   // (le visage du troll reste lisible)
     const h = hachage(x, y, TR.fourrure);
     if (h > 0.8) t.poser(x, y, t.mat(x, y), Math.max(0, t.k[y * t.l + x] - 1)); else if (h < 0.08) t.poser(x, y, t.mat(x, y), Math.min(5, t.k[y * t.l + x] + 1));
   }
-  if (TR.bandelettes) for (let y = 0; y < HD_H; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'peau') {
-    if (y >= ey - 5 && y <= v.bouche + 5 && Math.abs(x + 0.5 - fx) < v.rx * 0.72) continue;   // (le visage reste à l'air)
-    const b = ((y + Math.floor(x * 0.3)) / 2) % 4.5;
-    if (b < 3) t.poser(x, y, 'bande', b < 0.6 ? 1 : b > 2.4 ? 2 : (t.k[y * t.l + x] >= 3 ? 4 : 3));
+  if (TR.bandelettes) {
+    // La momie : tout est enroulé de bandelettes (vêtements compris), sauf une fente sombre sur les yeux
+    const enveloppe = ['peau', 'habit', 'cuir', 'lin', 'metal', 'levres', 'cape', 'cheveux', 'bouche', 'oeil', 'iris'];
+    for (let y = 0; y < HD_H; y++) for (let x = 0; x < HD_L; x++) {
+      const m = t.mat(x, y);
+      if (!enveloppe.includes(m)) continue;
+      if ([fx - 8.5, fx + 8.5].some(ox => ((x + 0.5 - ox) / 4.5) ** 2 + ((y + 0.5 - ey) / 2.6) ** 2 <= 1)) { t.poser(x, y, 'noir', 1); continue; }
+      const pente = y < v.torse ? -0.3 : 0.42;
+      const b = ((y + x * pente) % 4 + 4) % 4;
+      const ton = t.k[y * t.l + x];
+      t.poser(x, y, 'bande', b < 0.7 ? 0 : b > 3.3 ? Math.max(1, ton - 1) : Math.min(5, Math.max(2, ton)));
+    }
+    for (const ox of [fx - 9, fx + 8]) { t.poser(ox, ey, 'iris', 5); t.poser(ox + 1, ey, 'iris', 4); t.poser(ox, ey - 1, 'iris', 3); t.poser(ox + 1, ey + 1, 'iris', 2); }
+  }
+  if (TR.touffu) {
+    const ajouts = [];
+    for (let y = 1; y < HD_H - 1; y++) for (let x = 1; x < HD_L - 1; x++) {
+      const m = t.mat(x, y);
+      if (m !== 'peau' && m !== 'noir' && m !== 'cheveux') continue;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1]]) if (!t.mat(x + dx, y + dy) && hachage(x, y, 71) > 0.5) for (let j = 1; j <= Math.round(TR.touffu * 1.5 * hachage(y, x, 13)); j++) ajouts.push([x + dx * j, y + dy * j, m, t.k[y * t.l + x]]);
+    }
+    for (const [x, y, m, ton] of ajouts) if (t.dans(x, y) && !t.mat(x, y)) t.poser(x, y, m, ton);
   }
 
   t.contour();
@@ -568,7 +609,7 @@ function corpsRond(cx, haut, largeur) {
   return (x, y) => volumes[0](x, y) || volumes[1](x, y) || volumes[2](x, y);
 }
 
-const LARGEURS_BUSTE = { nain: 24, hobbit: 21, humain: 20, elfe: 18, magicienne: 19, gobelin: 18, orc: 25, loupgarou: 23, vampire: 19, momie: 20, troll: 27, panda: 26 };
+const LARGEURS_BUSTE = { nain: 24, hobbit: 21, humain: 20, elfe: 18, magicienne: 19, gobelin: 18, orc: 25, loupgarou: 23, vampire: 19, momie: 20, troll: 28, panda: 30 };
 function torseHD(t, g, v, cx) {
   const largeur = LARGEURS_BUSTE[g.race] || 20;
   const corps = corpsRond(cx, v.torse, largeur);
@@ -775,6 +816,8 @@ function coiffeHD(t, g, v, cx) {
 
 // La texture d'un portrait HD (créée à la demande, puis gardée).
 function textureBusteHD(scene, personne, expression = 'neutre', etat = {}) {
+  // (les Bannis ont l'air fâché tant qu'ils ne te connaissent pas : leur humeur « neutre » est fâchée)
+  if (expression === 'neutre' && typeof banniFache === 'function' && banniFache(personne)) expression = 'fache';
   const cle = `busteHD_${personne.race}_${personne.nom}${personne.prestige ? "_noble" : ""}${personne.figurant ? '_' + personne.figurant : ''}_${expression}${etat.pose ? '_' + etat.pose : ''}${etat.cligne ? '_c' : ''}${etat.parle ? '_p' : ''}`;
   if (!scene.textures.exists(cle)) dessinerBusteHD(geneHD(personne), expression, etat).texture(scene, cle);
   return cle;

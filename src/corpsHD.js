@@ -23,9 +23,9 @@ const PROPORTIONS = {
   momie: { H: 60, ep: 8.6, torse: 21, rx: 8.2, ry: 9, membre: 1 },
   vampire: { H: 64, ep: 8.2, torse: 23, rx: 7.6, ry: 9.6, membre: 0.9 },
   orc: { H: 68, ep: 12.5, torse: 24, rx: 9.4, ry: 9.2, membre: 1.35 },
-  loupgarou: { H: 80, ep: 11.5, torse: 28, rx: 9.4, ry: 9, membre: 1.25 },
-  panda: { H: 84, ep: 13.5, torse: 30, rx: 11, ry: 10, membre: 1.35 },
-  troll: { H: 96, ep: 15.5, torse: 34, rx: 11.5, ry: 10.5, membre: 1.6 },
+  loupgarou: { H: 80, ep: 12, torse: 28, rx: 9.8, ry: 9.4, membre: 1.3 },
+  panda: { H: 84, ep: 16.5, torse: 30, rx: 12.5, ry: 11, membre: 1.7 },
+  troll: { H: 96, ep: 15, torse: 30, rx: 14.5, ry: 13.5, membre: 1.5 },
 };
 
 // Les figurants : un peuple, des couleurs fixes, un costume.
@@ -346,12 +346,15 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   }
   if (pose) cle += '_' + pose;
   if (vue && vue !== 'troisQuarts') cle += '_' + vue;
+  // Les Bannis ont l'air fâché tant qu'ils ne te connaissent pas
+  const fache = typeof quoi === 'string' ? (typeof PEUPLES_OMBRE !== 'undefined' && PEUPLES_OMBRE.includes(quoi)) : banniFache(quoi);
+  if (fache) cle += '_fache';
   if (!scene.textures.exists(cle)) {
-    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue);
+    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache });
     toile.texture(scene, cle);
     MAINS_CORPS[cle] = toile.mains;
-    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue).texture(scene, cle + '_pas1');
-    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue).texture(scene, cle + '_pas2');
+    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache }).texture(scene, cle + '_pas1');
+    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache }).texture(scene, cle + '_pas2');
   }
   return cle;
 }
