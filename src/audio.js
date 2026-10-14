@@ -187,6 +187,7 @@ const Son = {
     else if (quoi === 'tambourin') this.bruit(0.08, t, bus, 0.16 * force, 6000, 'highpass');
     else if (quoi === 'bois') this.bruit(0.03, t, bus, 0.25 * force, 2400);
     else if (quoi === 'pieces') { const g = this.ctx.createGain(); g.gain.value = force; g.connect(bus); SONS.piece.call(this, t, g, {}); if (force > 0.45) SONS.piece.call(this, t + 0.06, g, {}); }
+    else if (quoi === 'timbale') { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(95, t); o.frequency.exponentialRampToValueAtTime(58, t + 0.25); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.55 * force, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.9); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 1); this.bruit(0.05, t, bus, 0.12 * force, 300); }
     else if (quoi === 'goutte') { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(700, t + 0.08); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.09 * force, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.18); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.2); }
     else if (quoi === 'souffle') this.bruit(0.16, t, bus, 0.05 * force, 900);
     else if (quoi === 'coeur') { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.frequency.value = 50; g.gain.setValueAtTime(0.6 * force, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.35); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.4); }
@@ -254,11 +255,20 @@ const INSTRUMENTS = {
   basse: { voix: [['triangle', 1, 0.8], ['sine', 1, 0.5], ['sawtooth', 1, 0.08]], attaque: 0.01, decroissance: 0.4, tenue: 0.3, relache: 0.2, volume: 0.28, filtre: 500 },
   orgue: { voix: [['sine', 1, 0.6], ['sine', 2, 0.35], ['sine', 3, 0.12], ['sine', 0.5, 0.25]], attaque: 0.25, decroissance: 0.2, tenue: 0.9, relache: 0.6, volume: 0.1 },
   bourdon: { voix: [['sawtooth', 1, 0.3], ['sawtooth', 1, 0.3, 9], ['sine', 0.5, 0.5]], attaque: 1.2, decroissance: 0.5, tenue: 0.9, relache: 1.5, volume: 0.1, filtre: 600 },
+  // (v0.57) L'ocarina, façon Zelda : rond, doux, un souffle au début ; il remplace le célesta, trop strident dans l'aigu
+  ocarina: { voix: [['sine', 1, 0.9], ['triangle', 1, 0.12], ['sine', 2, 0.04]], attaque: 0.05, decroissance: 0.12, tenue: 0.85, relache: 0.25, volume: 0.22, vibrato: 0.005, filtre: 1600, bruit: { duree: 0.06, volume: 0.025, filtre: 1800 } },
+  // Les graves du marché noir : un violoncelle qui chante bas, une contrebasse pincée
+  violoncelle: { voix: [['sawtooth', 1, 0.45], ['sawtooth', 1, 0.25, 7], ['sine', 0.5, 0.25]], attaque: 0.18, decroissance: 0.3, tenue: 0.85, relache: 0.5, volume: 0.15, filtre: 900, vibrato: 0.005 },
+  pizzicato: { voix: [['triangle', 1, 0.8], ['sine', 1, 0.4], ['sine', 2, 0.08]], attaque: 0.005, decroissance: 0.5, tenue: 0.05, relache: 0.3, volume: 0.28, filtre: 700 },
+  // Le drame (la faillite) : des cuivres sombres, des cordes en trémolo
+  cuivres: { voix: [['sawtooth', 1, 0.4], ['sawtooth', 1, 0.3, -5], ['square', 0.5, 0.1]], attaque: 0.12, decroissance: 0.3, tenue: 0.8, relache: 0.45, volume: 0.14, filtre: 1100, vibrato: 0.003 },
+  cordesTremolo: { voix: [['sawtooth', 1, 0.3, -6], ['sawtooth', 1, 0.3, 6]], attaque: 0.02, decroissance: 0.05, tenue: 0.8, relache: 0.08, volume: 0.07, filtre: 1600 },
   piano: { voix: [['triangle', 1, 0.7], ['sine', 2, 0.2], ['sawtooth', 1, 0.08]], attaque: 0.01, decroissance: 1.4, tenue: 0.08, relache: 0.8, volume: 0.2, filtre: 2200 },
 };
 
 // Les gammes, en demi-tons depuis la tonique
 const GAMMES = {
+  harmonique: [0, 2, 3, 5, 7, 8, 11],
   hante: [0, 2, 3, 6, 7, 8, 11], freygish: [0, 1, 4, 5, 7, 8, 10], majeur: [0, 2, 4, 5, 7, 9, 11], mineur: [0, 2, 3, 5, 7, 8, 10], dorien: [0, 2, 3, 5, 7, 9, 10], mixolydien: [0, 2, 4, 5, 7, 9, 10], lydien: [0, 2, 4, 6, 7, 9, 11],
 };
 const NOTE = { C: 261.63, D: 293.66, E: 329.63, F: 349.23, G: 392.0, A: 440.0, B: 493.88 };
@@ -388,7 +398,7 @@ const THEMES = {
   recitEtonne: {
     base: NOTE.C / 2, gamme: GAMMES.lydien, tempo: 84, temps: 4, phrase: 8,
     accords: [0, 1, 0, 4, 0, 1, 3, 4], octaveMelodie: 2,
-    instruments: { melodie: 'celesta', accompagnement: 'harpe', basse: 'basse' }, reverb: 0.35,
+    instruments: { melodie: 'ocarina', accompagnement: 'harpe', basse: 'basse' }, reverb: 0.35,
     motif: { 0: [[0, 7, 1], [1, 10, 1], [2, 14, 2]], 1: [[0, 13, 1], [1, 10, 1], [2, 11, 2]], 4: [[0, 7, 1], [1, 11, 1], [2, 14, 1], [3, 17, 1]], 5: [[0, 16, 2], [2, 14, 2]] },
     rythmes: [[1, 1, 2], [2, 2], [0.5, 0.5, 1, 2]], silence: 0.15, lie: 1.15,
     basse: (m, a) => [[0, a, 3.8]],
@@ -405,17 +415,17 @@ const THEMES = {
     accompagnement: (m) => [[0, 0, 3.9, 0.5], [0, 1, 3.9, 0.3]],
     percussion: (m) => [[0, 'coeur', 1], [0.45, 'coeur', 0.6], [2, 'coeur', 1], [2.45, 'coeur', 0.6]],
   },
-  // Le marché noir (v0.56) : sombre et mystérieux. Un bourdon grave, une harpe qui égrène des
-  // arpèges lents dans une gamme « hantée », un célesta lointain qui pose ses questions, de longs
-  // silences, des gouttes qui tombent dans la cave, et de temps en temps des pièces qui tintent
+  // Le marché noir (v0.57) : sombre et mystérieux, rien que des graves. Un bourdon, une contrebasse
+  // pincée, un violoncelle qui chante bas, de longs silences, des gouttes qui tombent dans la cave,
+  // un cœur sourd et de temps en temps des pièces qui tintent
   marcheNoir: {
     base: NOTE.D / 2, gamme: GAMMES.hante, tempo: 58, temps: 4, phrase: 8,
-    accords: [0, 0, 5, 4, 0, 3, 1, 4], octaveMelodie: 1, lie: 1.3,
-    instruments: { melodie: 'celesta', accompagnement: 'harpe', basse: 'bourdon' }, reverb: 0.75,
+    accords: [0, 0, 5, 4, 0, 3, 1, 4], octaveMelodie: -1, lie: 1.3,
+    instruments: { melodie: 'violoncelle', accompagnement: 'pizzicato', basse: 'bourdon' }, reverb: 0.7,
     motif: { 0: [[0, 7, 1], [1, 9, 1], [2, 10, 2]], 3: [[0, 11, 1.5], [1.5, 10, 0.5], [2, 7, 2]], 4: [[1, 7, 1], [2, 6, 2]], 7: [[0, 4, 1], [1, 6, 1], [2, 7, 2]] },
     rythmes: [[2, 2], [1, 1, 2], [3, 1], [4]], silence: 0.45,
     basse: (m, a) => [[0, a, 3.95]],
-    accompagnement: (m) => (m % 2 ? [[0, 0, 1.4, 0.35], [1, 1, 1.4, 0.3], [2, 2, 1.4, 0.3], [3, 3, 1.2, 0.25]] : [[0, 0, 3, 0.3], [2, 2, 2, 0.22]]),
+    accompagnement: (m) => (m % 2 ? [[0, 0, 0.9, 0.5], [1, 1, 0.9, 0.4], [2, 2, 0.9, 0.4], [3, 1, 0.9, 0.35]] : [[0, 0, 1.5, 0.5], [2, 2, 1.5, 0.4]]),
     percussion: (m) => [[1.5 + (m % 3) * 0.7, 'goutte', 0.6], ...(m % 8 === 6 ? [[3, 'pieces', 0.2]] : []), ...(m % 4 === 0 ? [[0, 'coeur', 0.45]] : [])],
   },
   // Grippesou et les jeux : sautillant, un peu louche (luth et bois)
@@ -447,21 +457,24 @@ const THEMES = {
   cinematique: {
     base: NOTE.D / 2, gamme: GAMMES.lydien, tempo: 72, temps: 4, phrase: 8,
     accords: [0, 0, 1, 1, 4, 4, 3, 3], octaveMelodie: 2,
-    instruments: { melodie: 'celesta', accompagnement: 'cordes', basse: 'basse' },
+    instruments: { melodie: 'ocarina', accompagnement: 'cordes', basse: 'basse' },
     motif: { 0: [[0, 7, 1], [1, 11, 1], [2, 14, 1], [3, 13, 1]], 1: [[0, 11, 2], [2, 9, 2]], 4: [[0, 7, 1], [1, 11, 1], [2, 14, 1], [3, 17, 1]], 5: [[0, 16, 2], [2, 14, 2]] },
     rythmes: [[2, 2], [1, 1, 2], [4]], silence: 0.3,
     basse: (m, a) => [[0, a, 3.8]],
     accompagnement: (m) => [[0, 0, 3.9, 0.35], [0, 1, 3.9, 0.3], [0, 2, 3.9, 0.3]],
   },
   // La faillite : lent, piano et cordes, en mineur
+  // La faillite (v0.57) : le drame. Cuivres sombres en mineur harmonique, cordes en trémolo,
+  // un orgue grave, des timbales qui roulent et frappent à chaque fin de phrase
   faillite: {
-    base: NOTE.D / 2, gamme: GAMMES.mineur, tempo: 60, temps: 4, phrase: 4,
-    accords: [0, 5, 3, 4], octaveMelodie: 2,
-    instruments: { melodie: 'piano', accompagnement: 'cordes', basse: 'basse' },
-    motif: { 0: [[0, 11, 2], [2, 10, 1], [3, 9, 1]], 1: [[0, 7, 4]] },
-    rythmes: [[2, 2], [4]], silence: 0.4,
-    basse: (m, a) => [[0, a, 3.8]],
-    accompagnement: (m) => [[0, 0, 3.9, 0.3], [0, 1, 3.9, 0.25], [0, 2, 3.9, 0.25]],
+    base: NOTE.D / 2, gamme: GAMMES.harmonique, tempo: 54, temps: 4, phrase: 4,
+    accords: [0, 5, 3, 4], octaveMelodie: 1, lie: 1.1,
+    instruments: { melodie: 'cuivres', accompagnement: 'cordesTremolo', basse: 'orgue' }, reverb: 0.6,
+    motif: { 0: [[0, 7, 1.5], [1.5, 8, 0.5], [2, 7, 2]], 1: [[0, 12, 2], [2, 11, 1], [3, 10, 1]], 2: [[0, 10, 3], [3, 9, 1]], 3: [[0, 8, 2], [2, 6, 2]] },
+    rythmes: [[2, 2], [4]], silence: 0.1,
+    basse: (m, a) => [[0, a, 3.9]],
+    accompagnement: (m) => Array.from({ length: 16 }, (_, i) => [i * 0.25, i % 2 ? 1 : 0, 0.22, 0.3 + (i / 16) * 0.2]),
+    percussion: (m) => [[0, 'timbale', m % 4 === 0 ? 1 : 0.6], ...(m % 4 === 3 ? Array.from({ length: 16 }, (_, j) => [2 + j * 0.125, 'timbale', 0.15 + j * 0.04]) : [])],
   },
   // La Faucheuse : un bourdon grave et un cœur qui bat
   danger: {
@@ -498,7 +511,7 @@ const SONS = {
   // Un marteau sur l'enclume (l'atelier)
   marteau(t, bus) { for (const [mult, v] of [[1, 0.25], [2.3, 0.1], [3.7, 0.05]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 820 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.5); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.6); } this.bruit(0.02, t, bus, 0.3, 3000); },
   // Un petit arpège de réussite
-  succes(t, bus) { [0, 4, 7, 12].forEach((d, i) => this.note('celesta', 523.25 * Math.pow(2, d / 12), t + i * 0.09, 0.3, 0.8, bus)); },
+  succes(t, bus) { [0, 4, 7, 12].forEach((d, i) => this.note('ocarina', 523.25 * Math.pow(2, d / 12), t + i * 0.09, 0.3, 0.8, bus)); },
   // Un accord qui tombe (échec)
   echec(t, bus) { [7, 3, 0].forEach((d, i) => this.note('piano', 261.63 * Math.pow(2, d / 12), t + i * 0.16, 0.6, 0.7, bus)); },
   // Des pas sur le plancher
@@ -558,7 +571,7 @@ const SONS = {
   // OUSTE : un grognement de bête qui fuit
   grogne(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(70, t); osc.frequency.linearRampToValueAtTime(48, t + 0.4); const f = this.ctx.createBiquadFilter(); f.frequency.value = 300; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.06); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.45); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.5); this.bruit(0.4, t, bus, 0.12, 300); },
   // Le trèfle qui brille : un petit scintillement qui monte
-  trefle(t, bus) { [0, 4, 7, 12, 16].forEach((d, i) => this.note('celesta', 1046.5 * Math.pow(2, d / 12), t + i * 0.06, 0.25, 0.5, bus)); },
+  trefle(t, bus) { [0, 4, 7, 12, 16].forEach((d, i) => this.note('ocarina', 523.25 * Math.pow(2, d / 12), t + i * 0.06, 0.25, 0.5, bus)); },
   // Un cœur qui revient (les soins) : deux notes chaudes
   coeur(t, bus) { this.note('fluteDouce', 523.25, t, 0.25, 1, bus); this.note('fluteDouce', 783.99, t + 0.22, 0.5, 1, bus); },
 
