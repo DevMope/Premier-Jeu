@@ -42,9 +42,9 @@ const FIGURANTS = {
   passeur: { race: 'humain', nom: 'Le Passeur', costume: 'passeur', habit: 0x2a2430, cheveux: 0x1a1418, cape: 0x1a1620, barbe: 'courte', niveau: 1 },
   // (v0.59) les brigands et les pillards des récits, capuche sur la tête, l'air mauvais
   brigand: { race: 'humain', nom: 'Brigand', costume: 'passeur', habit: 0x4a2e2a, cheveux: 0x2a1a12, cape: 0x2e2622, barbe: 'courte', niveau: 1, fache: true },
-  brigande: { race: 'humain', nom: 'Brigande', costume: 'passeur', habit: 0x34402a, cheveux: 0x6a2a1a, cape: 0x26301e, niveau: 1, fache: true },
+  brigande: { race: 'humain', nom: 'Brigande', feminin: true, costume: 'passeur', habit: 0x34402a, cheveux: 0x6a2a1a, cape: 0x26301e, niveau: 1, fache: true },
   pillard: { race: 'humain', nom: 'Pillard', costume: 'passeur', habit: 0x9a7a4a, cheveux: 0x1a1410, cape: 0x7a5a36, barbe: 'pleine', peau: 4, niveau: 1, fache: true },
-  pillarde: { race: 'humain', nom: 'Pillarde', costume: 'passeur', habit: 0x8a4a2a, cheveux: 0x1a1410, cape: 0x6a4a30, peau: 3, niveau: 1, fache: true },
+  pillarde: { race: 'humain', nom: 'Pillarde', feminin: true, costume: 'passeur', habit: 0x8a4a2a, cheveux: 0x1a1410, cape: 0x6a4a30, peau: 3, niveau: 1, fache: true },
   mendiant: { race: 'humain', nom: 'Le mendiant', costume: 'mendiant', habit: 0x6a6252, cheveux: 0x8a8a80, cape: 0x4a4236, barbe: 'pleine', niveau: 0 },
 };
 
@@ -336,7 +336,7 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   let gene, tenue, costume = null, cle;
   if (typeof quoi === 'string' && FIGURANTS[quoi]) {
     const fig = FIGURANTS[quoi];
-    gene = { ...geneHD({ nom: fig.nom, race: fig.race === 'gobelin' ? 'humain' : fig.race }), race: fig.race, habit: fig.habit, cheveux: fig.cheveux, cape: fig.cape, barbe: fig.barbe ?? null, coiffure: fig.coiffure || 'court', ...(fig.peau !== undefined ? { peau: fig.peau } : {}) };
+    gene = { ...geneHD({ nom: fig.nom, race: fig.race === 'gobelin' ? 'humain' : fig.race, feminin: !!fig.feminin }), race: fig.race, habit: fig.habit, cheveux: fig.cheveux, cape: fig.cape, barbe: fig.barbe ?? null, coiffure: fig.coiffure || 'court', ...(fig.peau !== undefined ? { peau: fig.peau } : {}) };
     tenue = fig.niveau ?? 1;
     costume = fig.costume;
     cle = 'corps_' + quoi;

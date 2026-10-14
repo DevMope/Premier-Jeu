@@ -935,7 +935,7 @@ const POSTES = {
   bazar: 'Cadeaux du Bazar',
   ameliorations: 'Améliorations du shop', interets: 'Intérêts du coffre',
   atelier: "Fournitures de l'atelier", loyer: 'Loyer du comptoir', revente: 'Reventes',
-  taxe: 'Taxe de la Confrérie', amende: 'Amendes de la garde', marcheNoir: 'Marché noir', decoration: 'Décorations', garderobe: 'Garde-robe', cadeau: 'Cadeaux reçus',
+  pizzo: 'La Main Noire', taxe: 'Taxe de la Confrérie', amende: 'Amendes de la garde', marcheNoir: 'Marché noir', decoration: 'Décorations', garderobe: 'Garde-robe', cadeau: 'Cadeaux reçus',
 };
 // On garde le détail des derniers jours (un peu plus d'une année).
 const JOURS_DE_COMPTES = 120;

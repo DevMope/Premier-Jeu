@@ -298,6 +298,8 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'colporteur') return corpsHD(this, 'colporteur');
     if (entree.type === 'garde') return corpsHD(this, GARDE.capitaine);
     if (entree.type === 'garrick') return corpsHD(this, 'mentor');
+    if (entree.type === 'collecteur') return corpsHD(this, COLLECTEUR);
+    if (entree.type === 'serpent') return corpsHD(this, CHEFS_SERPENT[0]);
     if (entree.type === 'aine') return corpsHD(this, personneAine(entree.race));
     const v = entree.type === 'client' ? entree.voyageur : entree.parti.voyageur;
     return corpsHD(this, v);
@@ -694,7 +696,21 @@ class CounterScene extends Phaser.Scene {
     const motif = palierCamp(G) <= -1 ? "On dit que ton comptoir fait affaire avec les Bannis." : "On a reçu une plainte contre ton comptoir.";
     const saisie = v.saisis.length ? ` Nous saisissons : ${v.saisis.join(', ')}.` : v.fouille ? ' Mes hommes ont fouillé ta réserve : rien d\'interdit... pour cette fois.' : '';
     this.dire(`${motif} ${v.fouille ? 'Fouille !' : 'Premier avertissement.'}${saisie} L'amende : ${v.amende} pièces. ${garde.nom} est avec moi.`, cap);
-    const finir = (texte) => { this.actionB = null; this.majBoutonsService(); this.dire(texte, cap); this.majStock(); this.dessinerPieces(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
+    const partir = () => { this.actionB = null; this.majBoutonsService(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
+    const finir = (texte) => {
+      this.actionB = null; this.majBoutonsService(); this.dire(texte, cap); this.majStock(); this.dessinerPieces();
+      // (v0.60) si tu es tenu par la Main Noire : le capitaine tend la perche
+      if (!enMafia(G)) return partir();
+      this.bouton('...', null);
+      this.time.delayedCall(1600, () => {
+        this.dire(`Le capitaine baisse la voix : « On sait que ${nomBande(G)} te tient. Si tu parles, la Confrérie efface ta dette envers eux... et te protège. Enfin, on essaiera. »`, cap);
+        this.choix([`Dénoncer ${nomBande(G)}`, () => {
+          denoncerMafia(G); Son.jouer('cloche'); this.dessinerPieces();
+          this.dire(`Tu racontes tout. Le capitaine prend des notes, longtemps. « Demain, on frappe. Garde la tête basse quelque temps. » (Dette effacée, +2 de réputation. Mais la bande n'oublie pas...)`, cap);
+          partir();
+        }], ['Je n\'ai rien à dire', () => { this.dire('« Comme tu voudras. La porte de la Confrérie reste ouverte. »', cap); partir(); }]);
+      });
+    };
     const payerEtPartir = () => { payerAmende(G, v.amende); Son.jouer('pieces'); finir(`Bien. Que je ne t'y reprenne pas. La Confrérie a l'œil sur toi.`); };
     const tresors = tresorsPourSoudoyer(G, garde);
     if (!tresors.length) { this.bouton(`Payer l'amende (${v.amende} p.)`, payerEtPartir); return; }
@@ -712,6 +728,65 @@ class CounterScene extends Phaser.Scene {
     this.choix([`Payer l'amende (${v.amende} p.)`, payerEtPartir], ['Soudoyer le garde…', () => proposer(0)]);
   }
 
+  // --- (v0.60) La Main Noire : le collecteur, ses services, la sortie ---
+  visiteCollecteur(entree) {
+    const G = this.G, qui = COLLECTEUR.nom, bande = NomBande(G);
+    const rang = rangMafia(G);
+    const partir = () => { this.actionB = null; this.majBoutonsService(); this.dessinerPieces(); this.majStock(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
+    this.titreCommande.setFontSize(17).setText(`${bande} · ${NOMS_RANGS[rang]}`);
+    const sortie = () => {
+      const prix = prixRachat(G);
+      this.dire(`Silas rit sans joie. « Sortir ? Ça se paie. ${prix} pièces, et on oublie ton nom. »`, qui);
+      this.choix([`Racheter ta liberté (${prix} p.)`, () => {
+        const err = racheterLiberte(G);
+        if (err) { Son.jouer('refus'); this.dire(`« ${err} Reviens quand tu les auras. »`, qui); return partir(); }
+        Son.jouer('pieces'); this.dire(`Silas compte les pièces, une à une. « Te voilà libre. On ne se connaît pas. » Il crache par terre, et s'en va.`, qui); partir();
+      }], ['Non, oublie', () => { this.dire('« Sage décision. »', qui); partir(); }]);
+    };
+    if (rang >= 2) {
+      const part = partLieutenant(G);
+      encaisser(G, part, 'pizzo');
+      Son.jouer('pieces');
+      this.dire(`« Lieutenant. » Silas pose une bourse sur le comptoir : ${part} pièces. « Ta part de la semaine. Les affaires marchent. »`, qui);
+      this.choix(['Merci, Silas', partir], ['Je veux en sortir…', sortie]);
+      return;
+    }
+    const pizzo = montantPizzo(G);
+    if (entree.service) {
+      const s = SERVICES_MAFIA[entree.service];
+      this.dire(`« ${bande} a besoin d'un petit service. » ${s.demande} « Fais-le, et on oublie ta part de la semaine. »`, qui);
+      this.choix([`Rendre le service (${s.nom.toLowerCase()})`, () => {
+        const msg = rendreService(G, entree.service);
+        Son.jouer('glisse');
+        this.dire(`Silas hoche la tête. « Bien. »${msg ? ' ' + msg : ''} (La jauge penche vers l'ombre, et la garde pourrait s'y intéresser.)`, qui);
+        partir();
+      }], [`Payer plutôt (${pizzo} p.)`, () => { payerPizzo(G); Son.jouer('pieces'); this.dire('« Comme tu veux. L\'argent, c\'est bien aussi. »', qui); partir(); }]);
+      return;
+    }
+    this.dire(`« ${bande} protège ton comptoir. La protection, ça se paie : ${pizzo} pièces cette semaine. » Silas regarde ta vitrine. « Ce serait dommage qu'elle se brise. »`, qui);
+    this.choix([`Payer (${pizzo} p.)`, () => { payerPizzo(G); Son.jouer('pieces'); this.dire('« À la semaine prochaine. »', qui); partir(); }],
+      [rang >= 1 ? 'Je veux en sortir…' : 'Refuser de payer', () => {
+        if (rang >= 1) return sortie();
+        refuserPizzo(G); this.exprimer('fache');
+        this.dire(`Silas sourit lentement. « Comme tu voudras. » Cette nuit, garde un œil sur ta vitrine...`, qui); partir();
+      }]);
+  }
+
+  // Le Serpent à deux têtes : ses deux chefs veulent te débaucher
+  visiteSerpent() {
+    const G = this.G, [vesna, corvin] = CHEFS_SERPENT;
+    this.titreCommande.setFontSize(17).setText('Le Serpent à deux têtes');
+    this.dire(`« On t'a vu travailler pour la Main Noire. » ${vesna.nom} sourit ; derrière elle, ${corvin.nom} fait craquer ses doigts. « Le Serpent paie mieux, et prend moins. Viens avec nous. La Main Noire n'en saura rien... au début. »`, vesna.nom);
+    const partir = () => { this.actionB = null; this.majBoutonsService(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
+    this.choix(['Rester fidèle à la Main Noire', () => {
+      choisirBande(G, 'main');
+      this.dire(`« Dommage. » ${corvin.nom} grogne. « Le Serpent a deux têtes... et deux fois plus de rancune. » (Ils se vengeront cette nuit.)`, corvin.nom); partir();
+    }], ['Rejoindre le Serpent', () => {
+      choisirBande(G, 'serpent');
+      this.dire(`${vesna.nom} te tend la main ; ${corvin.nom} pose la sienne par-dessus. « Bienvenue. Ta part sera plus légère. Mais la Main Noire va l'apprendre... » (Elle se vengera cette nuit.)`, vesna.nom); partir();
+    }]);
+  }
+
   // Le colporteur passe avec sa hotte : des choses rares, un peu plus cher qu'au marché.
   visiteColporteur(entree) {
     this.titreCommande.setFontSize(17).setText('Le colporteur');
@@ -727,6 +802,8 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'famille') return entree.visite.parent;
     if (entree.type === 'colporteur') return { nom: COLPORTEUR.nom, race: 'humain', feminin: false, figurant: 'colporteur' };
     if (entree.type === 'garde') return GARDE.capitaine;
+    if (entree.type === 'collecteur') return COLLECTEUR;
+    if (entree.type === 'serpent') return CHEFS_SERPENT[0];
     if (entree.type === 'garrick') return { nom: 'Garrick Cœur-de-Chêne', race: 'humain', feminin: false, figurant: 'mentor' };
     if (entree.type === 'aine') return personneAine(entree.race);
     if (entree.type === 'notable') {
@@ -744,6 +821,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'retour') return entree.parti.resultat.echec ? 'inquiet' : 'content';
     if (entree.type === 'notable' || entree.type === 'colporteur' || entree.type === 'garrick') return 'content';
     if (entree.type === 'aine') return 'neutre';
+    if (entree.type === 'collecteur' || entree.type === 'serpent') return 'neutre';
     if (entree.type === 'garde') return (this.G.garde && this.G.garde.visites) ? 'fache' : 'neutre';
     if (entree.type === 'famille') return entree.visite.intention === 'colere' ? 'fache' : entree.visite.intention === 'releve' ? 'neutre' : 'inquiet';
     const v = entree.voyageur;
@@ -858,6 +936,10 @@ class CounterScene extends Phaser.Scene {
       this.visiteGarde(entree);
     } else if (entree.type === 'garrick') {
       this.visiteGarrick(entree);
+    } else if (entree.type === 'collecteur') {
+      this.visiteCollecteur(entree);
+    } else if (entree.type === 'serpent') {
+      this.visiteSerpent(entree);
     } else if (entree.type === 'aine') {
       this.visiteAine(entree);
     } else if (entree.type === 'faucheuse') {

@@ -603,6 +603,9 @@ function partir(G, voyageur, colis, pieges = {}) {
   if (chance >= 0.75) message = changerRelation(G, voyageur.nom, POINTS_RELATION.colisComplet);
   else if (chance < 0.4) message = changerRelation(G, voyageur.nom, POINTS_RELATION.colisPauvre);
   else rencontrer(G, voyageur.nom);
+  // (v0.60) le détour pour la Main Noire (un service rendu)
+  const detour = detourMafia(G, voyageur);
+  if (detour) message = (message ? message + ' ' : '') + detour;
   const mission = G.faucheuse.mission;
   if (mission && mission.cible.id === voyageur.id) mission.etat = pieges[mission.piege] > 0 ? 'posee' : 'ratee';
   // Il demandait des comptes : sans objet en plus, il le prend très mal.
@@ -1222,6 +1225,7 @@ function emprunter(G, pret) {
   G.argent += pret.somme;
   compter(G, 'pret', 'prets', pret.somme);
   G.prets.push({ id: pret.id, preteur: pret.preteur, nom: pret.nom, restant: du, parJour: Math.ceil(du / pret.jours) });
+  if (pret.preteur === 'La Main Noire') engagerMafia(G);   // (v0.60) on lui appartient un peu, désormais
 }
 
 // Chaque nuit, les échéances des prêts sont prélevées.
@@ -1390,6 +1394,7 @@ function nuit(G) {
     G.reveil.lignes.push(`Un panier devant la porte, de la part ${ZONES[c.zone] ? 'des gens ' + (ZONES[c.zone].nom.startsWith('Le ') ? 'du ' + ZONES[c.zone].nom.slice(3) : ZONES[c.zone].nom.startsWith('La ') ? 'de la ' + ZONES[c.zone].nom.slice(3) : ZONES[c.zone].nom.startsWith('Les ') ? 'des ' + ZONES[c.zone].nom.slice(4) : 'de ' + ZONES[c.zone].nom) : 'd\'un village'} : ${n} ${ITEMS[id].nom.toLowerCase()}${n > 1 ? 's' : ''}, pour te remercier d'avoir aidé ${c.nom.split(' ')[0]}.`);
   }
   G.cadeauxVillages = [];
+  for (const l of nuitMafia(G)) G.reveil.lignes.push(l);
   if (loyer > 0) G.reveil.lignes.push(`Le bourgmestre a encaissé le loyer de la semaine : ${loyer} pièces.` + (loyer > (G.dernierLoyer || loyer) ? ' Le bail a augmenté : ton comptoir a pris de la valeur.' : ''));
   if (loyer > 0) G.dernierLoyer = loyer;
   if (taxe > 0) G.reveil.lignes.push(`Un percepteur de la Confrérie est passé : ${taxe} pièces de taxe « pour la défense contre le dragon ».`);
@@ -1541,6 +1546,7 @@ function formerFileDuJour(G) {
   const g = GARRICK_VISITES.findIndex(x => x.jour === G.jour);
   if (g >= 0 && !(G.garrickVu || []).includes(g)) visites.push({ type: 'garrick', i: g });
   if (doitVenirGarde(G)) visites.push({ type: 'garde', garde: gardeDuJour(G) });
+  visites.push(...visitesMafia(G));   // (v0.60) le collecteur de la Main Noire, le Serpent à deux têtes
   // (v0.56) Très rarement, à partir du milieu du jeu, un aîné des Bannis passe et laisse une phrase
   const aine = aineDuJour(G, 'comptoir');
   if (aine) { G.ainesVus = [...(G.ainesVus || []), aine]; file.splice(hasard(0, file.length), 0, { type: 'aine', race: aine }); }
@@ -1655,7 +1661,13 @@ function visiteGarde(G) {
   G.garde.dernier = G.jour;
   const saisis = [];
   if (fouille) for (const [id, n] of Object.entries(G.interdits || {})) if (n > 0) { saisis.push(`${n} × ${INTERDITS[id].nom.toLowerCase()}`); G.garde.saisies += n; G.interdits[id] = 0; }
-  return { fouille, amende: amendeGarde(G), saisis };
+  // (v0.60) ce que cache la Main Noire chez toi : le colis, les bijoux volés (l'amende double)
+  let double = false;
+  const m = mafia(G);
+  if (fouille && m.colis) { saisis.push('un colis scellé de cire noire'); m.colis = false; m.represailles = m.bande; double = true; }
+  const voles = G.tresors.filter(t => t.vole && !t.reparation);
+  if (fouille && voles.length) { saisis.push(`${voles.length} lot${voles.length > 1 ? 's' : ''} de bijoux volés`); G.tresors = G.tresors.filter(t => !voles.includes(t)); double = true; }
+  return { fouille, amende: amendeGarde(G) * (double ? 2 : 1), saisis };
 }
 
 function payerAmende(G, montant) {
@@ -2436,6 +2448,7 @@ function avancerEvenements(G) {
     lignes.unshift(`🕯 Drame ${aLieu(z).replace(/^à /, 'à ')} : ${d.nom} n'est jamais revenu${d.feminin ? 'e' : ''}.` + (d.voulu ? ' On murmure que son baluchon était bien léger...' : ' Que la terre lui soit légère.'));
   }
   G.decesAnnonces = [];
+  if (G.annonceMafia) { lignes.unshift(G.annonceMafia); G.annonceMafia = null; }
   G.gazette = { jour: G.jour, lignes };
 }
 
