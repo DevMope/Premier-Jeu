@@ -463,7 +463,7 @@ class MarcheScene extends Phaser.Scene {
       const nom = type === 'etal' ? MARCHANDS[cle].nom : ferme ? `${noms[cle]}\n(en travaux)` : noms[cle];
       const t = this.add.text(ox + x * echelle, oy + (250 + this.arcVue(x).dy) * echelle + 6 + (rang % 2) * 34, nom, style(12, ferme ? '#c9b48a' : '#fff4dc', { fontStyle: ferme ? 'italic' : 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 92 }, lineSpacing: -2 }))
         .setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
-      t.on('pointerdown', ferme ? () => this.message(`${noms[cle]} ouvre le jour ${OUVERTURE_LIEUX[cle]}.`) : type === 'etal' ? () => this.ouvrirEtal(cle) : ouvrir[cle]);
+      t.on('pointerdown', ferme ? () => this.message(`${noms[cle]} ${ouvrePluriel(cle)} le jour ${OUVERTURE_LIEUX[cle]}.`) : type === 'etal' ? () => this.ouvrirEtal(cle) : ouvrir[cle]);
       // (le métier du marchand se lit en s'approchant de son étal : ici, il chevauchait les voisins)
       c.add(t);
     }
@@ -590,10 +590,10 @@ class MarcheScene extends Phaser.Scene {
     // L'écriteau cloué en travers
     this.add.image(x, 176, panneauHD(this, 150, 54, 'ardoise')).setScale(1.2).setAngle(-4);
     this.add.text(x, 166, 'EN TRAVAUX', style(13, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5).setAngle(-4);
-    this.add.text(x, 184, `${nom}\nouvre le jour ${jour}`, style(10, '#e8d4a8', { align: 'center' })).setOrigin(0.5).setAngle(-4);
+    this.add.text(x, 184, `${nom}\n${ouvrePluriel(cle)} le jour ${jour}`, style(10, '#e8d4a8', { align: 'center' })).setOrigin(0.5).setAngle(-4);
     this.etiquettesRue.push(this.add.text(x, 262, 'En travaux', style(13, '#c9b48a', { fontStyle: 'bold italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
     const zone = this.add.rectangle(x, 170, 160, 160, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    zone.on('pointerdown', () => { Son.jouer('marteau'); this.message(`${nom} est en travaux : ouverture le jour ${jour}. ${jour - this.G.jour === 1 ? "C'est pour demain !" : `Encore ${jour - this.G.jour} jours de patience.`}`); });
+    zone.on('pointerdown', () => { Son.jouer('marteau'); this.message(`${nom} ${/^Les /.test(nom) ? 'sont' : 'est'} en travaux : ouverture le jour ${jour}. ${jour - this.G.jour === 1 ? "C'est pour demain !" : `Encore ${jour - this.G.jour} jours de patience.`}`); });
     this.grouper(avant, x);
   }
 
@@ -857,7 +857,7 @@ class MarcheScene extends Phaser.Scene {
 
   ouvrirEncheres() {
     const G = this.G;
-    if (!lieuOuvert(G, 'encheres')) return this.message(`${NOMS_LIEUX_MARCHE.encheres} ouvre le jour ${OUVERTURE_LIEUX.encheres}.`);
+    if (!lieuOuvert(G, 'encheres')) return this.message(`${NOMS_LIEUX_MARCHE.encheres} ${ouvrePluriel('encheres')} le jour ${OUVERTURE_LIEUX.encheres}.`);
     this.montrer('encheres');
     const c = this.panneau('Les enchères', 'Lord Pommeroy, Dame Ysaline, Gros Bob et Thrain Fendroc se disputent tes objets');
     if (G.encheresJour === G.jour) {
@@ -1110,7 +1110,7 @@ class MarcheScene extends Phaser.Scene {
     if (!lieuOuvert(G, 'garderobe')) return this.message(`${NOMS_LIEUX_MARCHE.garderobe} ouvre le jour ${OUVERTURE_LIEUX.garderobe}.`);
     this.montrer('garderobe');
     const c = this.panneau(MARCELLINE.nom, 'Tout ce que tu achètes, tu le portes : on te verra avec, partout');
-    c.add(this.add.text(30, 340, "« Un marchand bien mis inspire confiance. Laissez-moi vous arranger ça... »",
+    c.add(this.add.text(30, 340, "« Un commerce bien tenu commence par une tenue soignée. Laisse-moi t'arranger ça... »",
       style(12, '#6b4a2a', { fontStyle: 'italic' })));
     // Toi, dans ta tenue du moment
     textureJoueur(this, G);

@@ -306,7 +306,7 @@ class CounterScene extends Phaser.Scene {
     if (!a) return;
     Son.jouer('page');
     const v = a.voyageur;
-    this.dire(`« Je passerai à ton comptoir le jour ${a.jour}. Je pars : ${v.quete.toLowerCase()}. ` +
+    this.dire(`« Je passerai à ton comptoir le jour ${a.jour}. Je pars : ${(t => t.charAt(0).toLowerCase() + t.slice(1))(v.quete)}. ` +
       `Prépare-moi s'il te plaît : ${commandeEnTexte(v)}. » — ${v.nom}` +
       (a.acceptee ? ' (Tu as accepté.)' : ' (Pas encore répondu : accepte ou refuse ce soir.)'), '✉ Lettre de ' + v.nom);
   }
@@ -615,10 +615,10 @@ class CounterScene extends Phaser.Scene {
     const p = PALIERS_CLIENTS[entree.palier];
     const qui = { bourgmestre: 'Odilon Bonnefoi, bourgmestre', heraut: 'Le héraut de la Confrérie du Dernier Rempart', colporteur: COLPORTEUR.nom, legende: "Isolde Lame-d'Aurore, légende vivante" }[p.visiteur];
     const bonjour = {
-      bourgmestre: `Bonjour, ${nomJoueur(G, 'petit')} ! Tout le bourg parle de « ${G.nomShop} » : te voilà ${p.nom.toLowerCase()} ! Je tenais à te féliciter en personne.`,
-      heraut: `Oyez ! La Confrérie du Dernier Rempart salue « ${G.nomShop} », désormais ${p.nom.toLowerCase()}. Ton nom est inscrit dans nos registres.`,
-      colporteur: `Alors c'est ici, le fameux comptoir ? On en parle sur tous les chemins ! Te voilà ${p.nom.toLowerCase()}, bravo. Je passerai te voir avec ma charrette.`,
-      legende: `On m'avait parlé de toi, ${nomJoueur(G, 'petit')}. Un ${p.nom.toLowerCase()}, tenu par si jeune... J'ai voulu voir ça de mes yeux. Je ne suis pas déçue.`,
+      bourgmestre: `Bonjour, ${nomJoueur(G, 'petit')} ! Tout le bourg parle de « ${G.nomShop} » : on dit maintenant « ${p.nom} » ! Je tenais à te féliciter en personne.`,
+      heraut: `Oyez ! La Confrérie du Dernier Rempart salue « ${G.nomShop} », désormais « ${p.nom} ». Ton nom est inscrit dans nos registres.`,
+      colporteur: `Alors c'est ici, le fameux comptoir ? On en parle sur tous les chemins ! « ${p.nom} », rien que ça ! Bravo. Je passerai te voir avec ma charrette.`,
+      legende: `On m'avait parlé de toi, ${nomJoueur(G, 'petit')}. « ${p.nom} », tenu par quelqu'un de si jeune... J'ai voulu voir ça de mes yeux. Je ne suis pas déçue.`,
     }[p.visiteur];
     this.titreCommande.setFontSize(17).setText('⭐ Un visiteur notable');
     Son.jouer('fanfare');
@@ -652,7 +652,7 @@ class CounterScene extends Phaser.Scene {
     this.titreCommande.setFontSize(17).setText('Un vieux voyageur');
     this.dire(a.phrase, a.nom);
     this.bouton('« ... »', () => {
-      this.dire(`${a.nom} repart à petits pas, appuyé${a.feminin ? 'e' : ''} sur sa canne. Dans la rue, quelqu'un rit : « Encore un vieux qui radote. »`);
+      this.dire(`${a.nom} repart à petits pas, appuyé${a.feminin ? 'e' : ''} sur sa canne. Dans la rue, quelqu'un rit : « Encore ${a.feminin ? 'une vieille' : 'un vieux'} qui radote. »`);
       this.bouton('...', null);
       this.time.delayedCall(2200, () => this.partirPar(FENETRE.x - 80));
     });
@@ -804,7 +804,7 @@ class CounterScene extends Phaser.Scene {
       const remarque = !entree.attentes && !v.habitue ? remarqueCamp(this.G, v) : null;
       if (remarque) bonjour = remarque + ' ' + bonjour;
       // Un client exigeant prévient après son bonjour : grosse commande, et rien d'usé
-      const exigeant = v.exigeant && !entree.attentes && v.queteId ? " Et je suis exigeant : une grosse commande, et du matériel neuf, pas de vieilles cordes rafistolées." : '';
+      const exigeant = v.exigeant && !entree.attentes && v.queteId ? ` Et je suis exigeant${v.feminin ? 'e' : ''} : une grosse commande, et du matériel neuf, pas de vieilles cordes rafistolées.` : '';
       if (!v.queteId) {
         // Il vient chercher l'aventure : c'est toi qui choisis où l'envoyer.
         this.dire(`${bonjour}${ENVIES[v.envie]} (${NIVEAUX_AVENTURIER[v.niveau].nom}${v.blessures ? `, encore blessé${v.feminin ? 'e' : ''}` : ''})`, this.nomAvecRelation(v.nom));
@@ -813,7 +813,7 @@ class CounterScene extends Phaser.Scene {
         return;
       }
       // Placé sur la carte ce matin : il connaît déjà sa destination.
-      const planifie = entree.planifie && !entree.attentes ? `${ZONES[v.zone].nom} ? Va pour ça ! ` : '';
+      const planifie = entree.planifie && !entree.attentes && !(v.accueil || '').includes(ZONES[v.zone].nom) ? `${ZONES[v.zone].nom} ? Va pour ça ! ` : '';
       this.dire(entree.attentes ? bonjour : bonjour + planifie + accord(v.accueil, v) + exigeant, this.nomAvecRelation(v.nom));
       this.servir();
     } else if (entree.type === 'retour') {
@@ -920,8 +920,8 @@ class CounterScene extends Phaser.Scene {
       `« ${G.faucheuse.morts} âmes. ${G.faucheuse.morts} âmes sont passées par tes mains avant les miennes. Ton comptoir est devenu ma porte. »`,
     ];
     const charmes = [null,
-      '« Tiens, tiens... Toi. Tu commences à me plaire, petit marchand. »',
-      "« Mon marchand préféré... Tu m'as manqué. Regarde tout ce que tu m'as apporté. »",
+      `« Tiens, tiens... Toi. Tu commences à me plaire, ${eJ() ? 'petite marchande' : 'petit marchand'}. »`,
+      `« ${eJ() ? 'Ma marchande préférée' : 'Mon marchand préféré'}... Tu m'as manqué. Regarde tout ce que tu m'as apporté. »`,
       "« Mon âme sœur... si j'en avais une. Personne ne me nourrit aussi bien que toi. »"];
     elle(sed.index ? charmes[sed.index] : saluts[t.index]);
     elle(`« ${enListe(noms)} ne reviendr${plusieurs ? 'ont' : 'a'} jamais de voyage. ${plusieurs ? 'Leurs' : 'Son'} nom${plusieurs ? 's sont' : ' est'} à moi, désormais. »`);
@@ -965,7 +965,7 @@ class CounterScene extends Phaser.Scene {
     const mission = proposerSabotage(G);
     if (mission) {
       const c = mission.cible;
-      if (mission.proche) elle(`« Tu m'aimes, n'est-ce pas ? Alors prouve-le. Demain, ${c.nom} viendra à ton comptoir. Ton ami${c.feminin ? 'e' : ''}... Je veux celle-là. Rien que pour moi. »`);
+      if (mission.proche) elle(`« Tu m'aimes, n'est-ce pas ? Alors prouve-le. Demain, ${c.nom} viendra à ton comptoir. Ton ami${c.feminin ? 'e' : ''}... Je veux ${c.feminin ? 'celle-là' : 'celui-là'}. Rien que pour moi. »`);
       else elle(`« J'ai un travail pour toi. Demain, ${c.nom} viendra à ton comptoir. ${NOMS_RACES[c.race] || ''}, un cœur pur... les gentils l'adorent. »`);
       etapes.push({
         texte: `« Glisse-lui ceci dans son baluchon : ${PIEGES[mission.piege].nom.toLowerCase()}. Je te paierai ${mission.prime} pièces. »`,
@@ -1092,10 +1092,10 @@ class CounterScene extends Phaser.Scene {
       }]);
     } else if (visite.intention === 'releve') {
       const q = QUETES[d.queteId];
-      parler(`Je veux finir ce que ${proche} a commencé : ${q.titre.toLowerCase()}. Aide-moi à me préparer, comme tu l'as fait pour ${d.feminin ? 'elle' : 'lui'} !`);
+      parler(`Je veux finir ce que ${proche} a commencé : ${(t => t.charAt(0).toLowerCase() + t.slice(1))(q.titre)}. Aide-moi à me préparer, comme tu l'as fait pour ${d.feminin ? 'elle' : 'lui'} !`);
       this.choix([`L'équiper`, () => {
         const v = creerVoyageur(G, { quete: d.queteId, nom: p.nom, race: p.race, feminin: p.feminin });
-        v.accueil = `Merci. Je pars ${q.titre.toLowerCase()}, pour honorer ${proche}. Prépare-moi bien.`;
+        v.accueil = `Merci. Je pars ${(t => t.charAt(0).toLowerCase() + t.slice(1))(q.titre)}, pour honorer ${proche}. Prépare-moi bien.`;
         G.relations[p.nom] = Math.floor(d.points / 2);
         this.entree = { type: 'client', voyageur: v }; // désormais, c'est un client comme un autre
         if (this.buste) this.buste.personne = v; // (c'est la même personne : son visage réagira au baluchon)
@@ -1373,7 +1373,7 @@ class CounterScene extends Phaser.Scene {
     }
     if (data && data.destination) {
       const v = this.voyageur;
-      this.dire(`${ZONES[data.destination].nom} ? Va pour ça ! ` + accord(v.accueil, v), this.nomAvecRelation(v.nom));
+      this.dire(((v.accueil || '').includes(ZONES[data.destination].nom) ? '' : `${ZONES[data.destination].nom} ? Va pour ça ! `) + accord(v.accueil, v), this.nomAvecRelation(v.nom));
       this.servir();
     }
     if (data && data.achats && data.achats.length) {

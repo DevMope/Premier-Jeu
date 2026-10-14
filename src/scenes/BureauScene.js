@@ -394,7 +394,7 @@ class BureauScene extends Phaser.Scene {
         p > 0 ? `Banque Centrale : −${p * REMISE_BANQUE_LUMIERE * 100} points sur les taux` : 'Banque Centrale : taux normaux (la lumière les fait baisser)',
         ...taux,
         (G.mal >= SEUIL_MAIN_NOIRE || cote === 'mal') ? 'La Main Noire te prête sans questions.' : "La Main Noire ne te connaît pas encore."] },
-      { titre: 'Qui te réclame', lignes: [cote === 'mal' ? `Les ${NOMS_CAMPS.mal} te font confiance : ils viendront bientôt au comptoir.` : cote === 'bien' ? `${NOMS_CAMPS.bien.charAt(0).toUpperCase() + NOMS_CAMPS.bien.slice(1)} te tient en estime.` : 'Aucun camp ne te réclame encore.'] },
+      { titre: 'Qui te réclame', lignes: [cote === 'mal' ? `${NOMS_CAMPS.mal.charAt(0).toUpperCase() + NOMS_CAMPS.mal.slice(1)} te font confiance : ils viendront bientôt au comptoir.` : cote === 'bien' ? `${NOMS_CAMPS.bien.charAt(0).toUpperCase() + NOMS_CAMPS.bien.slice(1)} te tient en estime.` : 'Aucun camp ne te réclame encore.'] },
     ];
     this.pageEnBlocs(c, 42, 214, gauche);
     this.pageEnBlocs(c, 304, 96, droite);

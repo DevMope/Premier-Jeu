@@ -168,7 +168,7 @@ class StoryScene extends Cinematique {
     Son.ambiance(r.vivant ? 'recitEtonne' : 'recitTriste');   // (la musique suit le récit : étonnement, peur, joie, tristesse)
     this.ecrire(v.quete, r.vivant
       ? `${v.nom} est revenu${this.e} au comptoir, couvert${this.e} de poussière. Assis${this.e} sur le rebord de la fenêtre, ${v.feminin ? 'elle' : 'il'} te raconte son aventure...`
-      : `${v.nom} n'est jamais revenu${this.e}... La Faucheuse a laissé son carnet de voyage sur ton comptoir. Tu l'ouvres en tremblant.`);
+      : `${v.nom} n'est jamais revenu${this.e}... ${this.G.faucheuse && this.G.faucheuse.visites ? 'La Faucheuse a laissé son carnet de voyage sur ton comptoir' : 'Un berger a rapporté son carnet de voyage'}. Tu l'ouvres en tremblant.`);
     await this.attendreClic();
 
     for (let i = 0; i < r.etapes.length; i++) {
@@ -390,7 +390,7 @@ class StoryScene extends Cinematique {
     const G = this.G;
     const v = this.parti.voyageur;
     const montants = montantsDedommagement(v);
-    this.texte.setText(this.texte.text + `\nTu dois verser un dédommagement à sa famille. Plus tu es généreux, plus ta réputation remonte... et plus un proche voudra reprendre le flambeau.`);
+    this.texte.setText(this.texte.text + `\nTu dois verser un dédommagement à sa famille. Plus tu es ${eJ(this.G) ? 'généreuse' : 'généreux'}, plus ta réputation remonte... et plus un proche voudra reprendre le flambeau.`);
     const boutons = Object.entries(DEDOMMAGEMENTS).map(([cle, d], i) => {
       const b = creerBouton(this, 200 + i * 280, 345, 250, `${d.nom} : ${montants[cle]} p.`, () => {
         const verse = dedommager(G, this.parti, cle);
@@ -454,7 +454,7 @@ class StoryScene extends Cinematique {
     creerForetPremierPlanHD(this);
     const sol = 370;
     const sombre = ['foret', 'marais', 'repaire', 'tour', 'grotte'].includes(biome);
-    const neige = ['montagne', 'glace'].includes(biome);
+    const neige = ['montagne', 'glace', 'neige'].includes(biome);
     const teinte = neige ? 0xdce8f0 : sombre ? 0x1a3020 : 0x2f5a2a;
     const g = this.add.graphics();
     // les touffes d'herbe (ou de neige), en silhouette
@@ -472,7 +472,7 @@ class StoryScene extends Cinematique {
   // glissent un peu moins vite que lui (profondeur)
   planterPlanMoyen(biome) {
     const sombre = ['foret', 'marais', 'repaire', 'tour', 'grotte'].includes(biome);
-    const neige = ['montagne', 'glace'].includes(biome);
+    const neige = ['montagne', 'glace', 'neige'].includes(biome);
     const g = this.add.graphics();
     // (audit v0.54) la couleur suit le paysage (plus de bosquets verts dans les terres brûlées), et
     // les déserts, terres brûlées et montagnes ont des rochers plutôt que des arbres
@@ -492,7 +492,7 @@ class StoryScene extends Cinematique {
   // forêt, brume... (en plus des effets propres à chaque épreuve)
   meteoBiome(biome) {
     if (this.ambiance) this.ambiance.remove();
-    const marais = biome === 'marais', neige = ['montagne', 'glace'].includes(biome), foret = ['foret', 'sanctuaire'].includes(biome), ombre = ['repaire', 'tour', 'bourbier'].includes(biome);
+    const marais = biome === 'marais', neige = ['montagne', 'glace', 'neige'].includes(biome), foret = ['foret', 'sanctuaire'].includes(biome), ombre = ['repaire', 'tour', 'bourbier'].includes(biome);
     if (!marais && !neige && !foret && !ombre) return;
     this.ambiance = this.time.addEvent({ delay: marais ? 40 : 160, loop: true, callback: () => {
       if (marais) {

@@ -50,10 +50,10 @@ class BanqueScene extends Phaser.Scene {
 
   accueil() {
     const r = this.G.reputation;
-    if (r < 0) return 'Hmpf. Ta réputation sent le moisi. Estime-toi heureux qu\'on te reçoive.';
+    if (r < 0) return 'Hmpf. Ta réputation sent le moisi. Estime-toi heureu' + (eJ() ? 'se' : 'x') + ' qu\'on te reçoive.';
     if (r < 4) return 'Un petit marchand de rien du tout... On peut te prêter un peu. Un tout petit peu.';
     if (r < 10) return 'Ta réputation grandit, marchand. La Banque Centrale Goyenne... t\'écoute. Pour l\'instant.';
-    return 'Ah, un client respectable ! Asseyez-vous. Ah non, nous n\'avons pas de chaises à votre taille.';
+    return 'Ah, ' + (eJ() ? 'une cliente respectable' : 'un client respectable') + ' ! Assieds-toi. Ah non, nous n\'avons pas de chaises à ta taille.';
   }
 
   creerPrets() {
@@ -107,8 +107,8 @@ class BanqueScene extends Phaser.Scene {
     // Plus le prêt est gros, plus la fête des banquiers est longue et folle.
     const n = pret.somme >= 400 ? 3 : pret.somme >= 150 ? 2 : 1;
     this.parler(['Signé. Et n\'oublie pas : un nain n\'oublie jamais une dette.',
-      'Cent cinquante pièces ! Les intérêts... ah, les intérêts ! Messieurs, LA DANSE !',
-      'QUATRE CENTS PIÈCES ! Sortez les tambours, la Banque Centrale Goyenne est en FÊTE !'][n - 1]);
+      `${pret.somme} pièces ! Les intérêts... ah, les intérêts ! Messieurs, LA DANSE !`,
+      `${pret.somme} PIÈCES ! Sortez les tambours, la Banque Centrale Goyenne est en FÊTE !`][n - 1]);
     this.danse(n);
   }
 

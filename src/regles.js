@@ -18,9 +18,9 @@ function commandeDe(voyageur) {
   return commande;
 }
 
-// « 2 Rations, 1 Corde »
+// « Ration ×2, Corde ×1 » (v0.58 : plus de « 2 Ration » sans pluriel)
 function commandeEnTexte(voyageur) {
-  return Object.entries(commandeDe(voyageur)).map(([id, n]) => `${n} ${ITEMS[id].nom}`).join(', ');
+  return Object.entries(commandeDe(voyageur)).map(([id, n]) => `${ITEMS[id].nom} ×${n}`).join(', ');
 }
 
 // État d'un objet durable que l'aventurier possède déjà (0 = cassé ou absent).
@@ -730,7 +730,7 @@ function donnerAuMendiant(G, montant) {
   G.mendiant += montant;
   if (avant < MENDIANT_SEUIL && G.mendiant >= MENDIANT_SEUIL && !G.decorations.includes('trefle')) {
     G.decorations.push('trefle');
-    return "« Tu as un grand cœur, petit marchand. Prends ce trèfle, il m'a porté chance autrefois... » Tu reçois le Trèfle du mendiant !";
+    return `« Tu as un grand cœur, ${eJ(G) ? 'petite marchande' : 'petit marchand'}. Prends ce trèfle, il m'a porté chance autrefois... » Tu reçois le Trèfle du mendiant !`;
   }
   return auHasard([
     '« Merci... Que les étoiles veillent sur toi. »',
@@ -867,14 +867,14 @@ function changerRelation(G, nom, delta) {
   if (apres.nom === 'Amis') {
     G.materiaux.fer += 2;
     G.materiaux.cuir += 2;
-    return `${nom} te considère comme un ami ! En cadeau : 2 fer et 2 cuir.`;
+    return `${nom} te considère comme ${feminin ? 'une amie' : 'un ami'} ! En cadeau : 2 fer et 2 cuir.`;
   }
   if (apres.nom === 'Frères de sang') {
     // (v0.57) et un trophée de ses aventures, pour l'étagère de la chambre
     const libres = Object.keys(TROPHEES).filter(id => !(G.trophees || []).some(t => t.id === id));
     const trophee = libres.length ? auHasard(libres) : null;
     if (trophee) G.trophees = [...(G.trophees || []), { id: trophee, de: nom, jour: G.jour }];
-    return `${nom} et toi êtes maintenant ${feminin ? 'sœurs' : 'frères'} de sang ! ` + offrirDecoration(G, feminin) +
+    return `${nom} et toi êtes maintenant ${feminin && G.joueur.feminin ? 'sœurs' : feminin || G.joueur.feminin ? 'frère et sœur' : 'frères'} de sang ! ` + offrirDecoration(G, feminin) +
       (trophee ? ` Et pour ta chambre, un trophée de ses aventures : ${TROPHEES[trophee].nom.toLowerCase()}.` : '');
   }
   if (apres.nom === 'Pires ennemis') {
@@ -1317,7 +1317,7 @@ function reveilDuMatin(G, mauvaisJour) {
   if (n >= 2 && Math.random() < CHAMBRE.reve * (n - 1)) {
     const reves = [];
     const rentre = G.partis.find(p => !p.termine && p.retour === G.jour && p.resultat);
-    if (rentre) reves.push(() => `Tu as rêvé de ${rentre.voyageur.nom}... ${rentre.resultat.vivant ? (rentre.resultat.echec ? 'Tu l\'as vu revenir les mains vides, mais vivant.' : 'Tu l\'as vu revenir, les bras chargés !') : 'Tu as vu la Faucheuse marcher à ses côtés...'}`);
+    if (rentre) reves.push(() => `Tu as rêvé de ${rentre.voyageur.nom}... ${rentre.resultat.vivant ? (rentre.resultat.echec ? `Tu l'as vu${rentre.voyageur.feminin ? 'e' : ''} revenir les mains vides, mais vivant${rentre.voyageur.feminin ? 'e' : ''}.` : `Tu l'as vu${rentre.voyageur.feminin ? 'e' : ''} revenir, les bras chargés !`) : 'Tu as vu la Faucheuse marcher à ses côtés...'}`);
     const avenir = (G.evenements || []).find(e => e.debut > G.jour && EVENEMENTS[e.id]);
     if (avenir) reves.push(() => `Un rêve étrange : « ${EVENEMENTS[avenir.id].nouvelle} » Ça arrivera dans ${avenir.debut - G.jour} jour${avenir.debut - G.jour > 1 ? 's' : ''}.`);
     reves.push(() => { r.encheres = auHasard(Object.keys(CATEGORIES)); const pluriel = { arme: 'armes', armure: 'armures', bijou: 'bijoux', artefact: 'artefacts', vetement: 'vêtements' }[r.encheres]; return `Tu as rêvé d'enchérisseurs qui se disputaient... Les ${pluriel} se vendront cher aux enchères aujourd'hui !`; });
@@ -1626,7 +1626,7 @@ function terminerAventure(G, parti) {
       const z = auHasard(inconnues);
       G.zonesDecouvertes.push(z);
       parti.decouverte = z;
-      message = (message ? message + ' ' : '') + `« Au fait... J'ai aperçu au loin ${ZONES[z].nom.charAt(0).toLowerCase() + ZONES[z].nom.slice(1)}. » Nouvelle zone sur ta carte !`;
+      message = (message ? message + ' ' : '') + `« Au fait... J'ai aperçu au loin ${ZONES[z].nom.replace(/^(Le|La|Les|L') /, m => m.toLowerCase()).replace(/^L'/, "l'")}. » Nouvelle zone sur ta carte !`;
     }
   } else {
     if (!r.valeureux) G.reputation--;
@@ -2245,8 +2245,8 @@ function avancerEvenements(G) {
   if (palier) lignes.unshift('📢 ' + palier);
   // Un nouveau lieu ouvre sur le marché (annoncé la veille, puis le jour même)
   for (const [cle, jour] of Object.entries(OUVERTURE_LIEUX)) {
-    if (jour === G.jour) lignes.unshift(`📢 ${NOMS_LIEUX_MARCHE[cle]} ouvre aujourd'hui sur le marché !`);
-    else if (jour === G.jour + 1) lignes.push(`🔨 Les travaux s'achèvent : ${NOMS_LIEUX_MARCHE[cle].toLowerCase()} ouvre demain.`);
+    if (jour === G.jour) lignes.unshift(`📢 ${NOMS_LIEUX_MARCHE[cle]} ${ouvrePluriel(cle)} aujourd'hui sur le marché !`);
+    else if (jour === G.jour + 1) lignes.push(`🔨 Les travaux s'achèvent : ${NOMS_LIEUX_MARCHE[cle].toLowerCase()} ${ouvrePluriel(cle)} demain.`);
   }
   G.gazette = { jour: G.jour, lignes };
 }
@@ -2256,7 +2256,8 @@ function refusPrestige(G, v) {
   if (!v.prestige) return null;
   const e = EXIGENCES[v.prestige.type];
   if (e.verifier(G, v.prestige.objet)) return null;
-  return e.texte.replace('{objet}', v.prestige.objet ? ITEMS[v.prestige.objet].nom.toLowerCase() : '');
+  const o = v.prestige.objet;
+  return e.texte.replace('{la moindre}', o ? accordAdj(o, 'le moindre', 'la moindre', 'les moindres', 'les moindres') : 'la moindre').replace('{objet}', o ? ITEMS[o].nom.toLowerCase() : '');
 }
 
 // Il repart vexé : ta réputation en souffre, et il s'en souviendra.
@@ -2400,4 +2401,9 @@ function unNom(id) { const g = genreDe(id); return g.includes('p') ? 'des' : g =
 // « ma torche », « mon épée », « mon bouclier », « mes bandages »
 function monNom(id, nom) { const g = genreDe(id); return g.includes('p') ? 'mes' : g === 'm' || voyelle(nom) ? 'mon' : 'ma'; }
 // l'accord d'un adjectif : neuf / neuve / neufs / neuves
+// (v0.58) « ouvre » ou « ouvrent » selon le nom du lieu (Les enchères ouvrent...)
+function ouvrePluriel(cle) { return /^Les /.test(NOMS_LIEUX_MARCHE[cle] || '') ? 'ouvrent' : 'ouvre'; }
+// Le genre du joueur : « réveillé(e) », « petit(e) »...
+function eJ(G = window.GAME) { return G && G.joueur && G.joueur.feminin ? 'e' : ''; }
+function petitJ(G = window.GAME) { return G && G.joueur && G.joueur.feminin ? 'petite' : 'petit'; }
 function accordAdj(id, m, f, mp, fp) { const g = genreDe(id); return g === 'm' ? m : g === 'f' ? f : g === 'mp' ? mp : fp; }

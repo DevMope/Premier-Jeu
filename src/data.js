@@ -83,13 +83,13 @@ const MURMURES = [
 // Toujours bienveillant, il plaisante, et laisse tomber des choses à la légère. (Le joueur ne sait
 // pas encore que Garrick est le chef des Bannis, ni ce que le Conseil des Gardiens a fait.)
 const GARRICK_VISITES = [
-  { jour: 4, texte: "Alors, petit, ce comptoir ? Tu as l'air de t'en sortir ! Tiens, pour les débuts difficiles. ... Et ne crois pas tout ce qu'on raconte au marché. Les gens répètent ce qu'on leur a appris à répéter, ha ha !", cadeau: 20 },
+  { jour: 4, texte: "Alors, ce comptoir ? Tu as l'air de t'en sortir ! Tiens, pour les débuts difficiles. ... Et ne crois pas tout ce qu'on raconte au marché. Les gens répètent ce qu'on leur a appris à répéter, ha ha !", cadeau: 20 },
   { jour: 10, texte: "Un dragon sous la montagne, hein ? Ça fait cent ans que j'entends ça. Personne ne l'a jamais vu, mais tout le monde le craint. Drôle de bête, tu ne trouves pas ?" },
   { jour: 17, texte: "On dit beaucoup de mal des gobelins. Moi j'en ai connu un qui rendait la monnaie juste ! Rare, hein ? Ha ha ! ... Si un jour un Banni frappe à ta porte, sers-le comme un autre. Une pièce, c'est une pièce." },
   { jour: 25, texte: "Le Conseil des Gardiens a encore voté une taxe. Ils ont l'air si sages, dans leurs grandes robes blanches... Bah. Ne m'écoute pas, je radote." },
   { jour: 34, texte: "Ma grand-mère disait qu'il poussait des pommiers, dans les terres d'ombre. Avant. Avant quoi ? Elle ne savait plus. Personne ne sait plus, d'ailleurs. C'est curieux, la mémoire.", cadeau: 30 },
   { jour: 44, texte: "Le grand Sage du Conseil... Tu savais que personne ne connaît son âge ? Mon père le voyait déjà vieux. Et son père avant lui. Ha ! Il doit avoir un bon apothicaire." },
-  { jour: 56, texte: "Tu as bien grandi, petit. Un jour, je te raconterai d'où je viens vraiment. Pas aujourd'hui. Aujourd'hui, je t'achète une ration et je repars, ha ha !" },
+  { jour: 56, texte: "Tu as bien grandi, toi. Un jour, je te raconterai d'où je viens vraiment. Pas aujourd'hui. Aujourd'hui, je t'achète une ration et je repars, ha ha !" },
 ];
 
 // Un objet en plus pour une épreuve qui le demande : +5 % de chances de la réussir.
@@ -135,7 +135,7 @@ const AMELIORATIONS = {
   eclairage: { nom: "L'éclairage", niveaux: ['Bougies', 'Lanternes', 'Chandeliers', 'Lustre de cristal'], prix: [90, 250, 600],
     effet: 'Un shop bien éclairé attire le regard : +0,3 client par jour et par niveau.' },
   atelier: { nom: "L'atelier", niveaux: ['Un établi', 'Deux établis', 'Trois établis'], prix: [220, 480],
-    effet: "Un établi de plus : une place pour un employé de plus (2, puis 3, puis 4) et 2 places de plus pour les objets." },
+    effet: "2 employés au départ, puis un de plus pour chaque établi ajouté (et 2 places de plus pour les objets)." },
 };
 // Ce qu'une bonne chambre apporte au réveil, par niveau de lit :
 // - `forme` : chance de se réveiller en forme (un client de plus, ou 10 % de remise au marché ce jour-là) ;
@@ -237,7 +237,7 @@ const QUETES = {
   },
   mine: {
     titre: 'Nettoyer la mine de Grisefer',
-    accueil: "Hrm. Des araignées géantes ont envahi la vieille mine de Grisefer. Le conseil des Nains paie bien pour s'en débarrasser. Il me faut du matériel solide, petit.",
+    accueil: "Hrm. Des araignées géantes ont envahi la vieille mine de Grisefer. Les anciens de Khaz-Durim paient bien pour s'en débarrasser. Il me faut du matériel solide.",
     pv: 2, duree: [2, 3], butin: [50, 70],
     epreuves: [
       {
@@ -272,7 +272,7 @@ const QUETES = {
   },
   fleur: {
     titre: 'Cueillir la fleur de lune',
-    accueil: 'Bonsoir, enfin, bonjour ! Je pars cueillir la fleur de lune au cœur du marais des Brumes. Il paraît que les feux follets y égarent les voyageurs...',
+    accueil: 'Bonsoir, enfin, bonjour ! Je pars cueillir la fleur de lune au cœur des Marécages de Brume-Noire. Il paraît que les feux follets y égarent les voyageurs...',
     pv: 2, duree: [1, 2], butin: [35, 45],
     epreuves: [
       {
@@ -300,12 +300,12 @@ const QUETES = {
   },
   loup: {
     titre: 'Traquer le loup géant',
-    accueil: "Salutations. Un loup géant décime les troupeaux des fermes de l'est. Je vais le traquer. Il me faut de quoi chasser... et de quoi panser mes plaies.",
+    accueil: "Salutations. Un loup géant décime les troupeaux des fermes de l'ouest. Je vais le traquer. Il me faut de quoi chasser... et de quoi panser mes plaies.",
     pv: 2, duree: [2, 3], butin: [40, 55],
     epreuves: [
       {
         type: 'route', besoin: 'gourde', qte: 1,
-        intro: 'La traque a duré trois jours sous un soleil de plomb.',
+        intro: 'La traque a duré des jours, sous un soleil de plomb.',
         complet: "Ta gourde m'a gardé{e} hydraté{e} et l'esprit clair.",
         partiel: "Je manquais d'eau...",
         rien: "La soif me faisait tourner la tête. J'ai perdu sa trace un moment.",
@@ -333,7 +333,7 @@ const QUETES = {
     epreuves: [
       {
         type: 'route', besoin: 'ration', qte: 2,
-        intro: 'Une semaine de route poussiéreuse derrière les chariots.',
+        intro: 'Des jours de route poussiéreuse derrière les chariots.',
         complet: 'Tes rations ont fait des envieux chez les marchands !',
         partiel: 'Les marchands ont partagé un peu de leur pain. Pas beaucoup.',
         rien: "Je mendiais des restes aux cuisiniers de la caravane...",
@@ -497,7 +497,7 @@ const EXIGENCES = {
   eclairage: { nom: 'un shop bien éclairé', verifier: G => niveauAmelioration(G, 'eclairage') >= 1,
     texte: "On n'y voit rien, ici ! Des bougies, à notre époque... Revenez me voir quand vous aurez des lanternes." },
   objet: { nom: 'un objet rare en stock', verifier: (G, id) => (G.stock[id] || 0) >= 1,
-    texte: 'Pas la moindre {objet} en stock ? Et vous vous dites fournisseur ? Je vais voir ailleurs.' },
+    texte: 'Pas {la moindre} {objet} en stock ? Et vous vous dites fournisseur ? Je vais voir ailleurs.' },
 };
 const OBJETS_EXIGES = ['amulette', 'antidote', 'cape', 'bouclier'];
 // Dès ce palier (« Comptoir réputé »), une part des clients devient exigeante : commandes plus
@@ -897,7 +897,7 @@ const ATTIRANCE_DECO = 2.2;
 // --- La garde-robe de Marcelline : des vêtements et des accessoires pour toi ---
 // Tout ce que tu achètes, tu le portes : on le voit sur toi, partout.
 const GARDE_ROBE = {
-  chapeau: { nom: 'Chapeau de cow-boy', prix: 18, effet: 'Tu as de l\'allure : +0,2 client par jour.' },
+  chapeau: { nom: 'Chapeau de vagabond', prix: 18, effet: 'Tu as de l\'allure : +0,2 client par jour.' },
   bandana: { nom: 'Bandana rouge', prix: 8, effet: 'Un air de baroudeur : les novices te font confiance (+0,1 client par jour).' },
   cape: { nom: 'Cape de voyage', prix: 35, effet: 'Belle allure : +0,2 client par jour.' },
   echarpe: { nom: 'Écharpe de laine', prix: 12, effet: 'Bien au chaud : tes nuits te consolent un peu plus (+0,1 de réputation après un mauvais jour).' },
@@ -1328,7 +1328,7 @@ Object.assign(QUETES, {
       { type: 'route', besoin: 'ration', qte: 1, intro: "J'ai attendu la caravane deux jours, caché{e} dans la boue.",
         complet: 'Tes rations m\'ont tenu{e}.', partiel: "J'avais faim...", rien: "J'ai mangé un crapaud. Cru." },
       { type: 'bandits', besoin: 'epee', qte: 1, intro: 'Des pèlerins ? Ils portaient le tabard bleu de la Confrérie, et des chariots fermés à clé.',
-        complet: "Ton épée a fait le travail. Les chariots étaient fermés à clé. Ça pleurait, dedans. On m'a payé pour ne pas ouvrir.", partiel: 'Un garde m\'a blessé{e} avant de fuir.', rien: 'Sans arme, les gardes m\'ont roué{e} de coups.' },
+        complet: "Ton épée a fait le travail. Les chariots étaient fermés à clé. Ça pleurait, dedans. On m'a payé{e} pour ne pas ouvrir.", partiel: 'Un garde m\'a blessé{e} avant de fuir.', rien: 'Sans arme, les gardes m\'ont roué{e} de coups.' },
       { type: 'riviere', besoin: 'corde', qte: 1, intro: 'Pour rapporter le butin aux gobelins, il fallait traverser le bourbier.',
         complet: 'Avec ta corde, les chariots sont passés. Les gobelins les ont ouverts en pleurant. Je ne suis pas resté{e} pour voir.', partiel: "J'ai perdu une partie du butin dans la boue.", rien: "Le bourbier a failli m'avaler." },
     ],
@@ -1438,7 +1438,7 @@ Object.assign(QUETES, {
       { type: 'esprits', besoin: 'torche', qte: 1, intro: 'Entre les rayons, des lecteurs fantômes chuchotaient.',
         complet: "Ta torche les a fait reculer. Des rayons entiers de livres aux pages blanches. Pas abîmées : effacées. Le bibliothécaire a dit que c'était normal.", partiel: 'Ma torche a fait fuir les uns, pas les autres.', rien: "Ils m'ont suivi{e} pendant des heures." },
       { type: 'malediction', besoin: 'amulette', qte: 1, intro: 'Le grimoire était protégé par un sort.',
-        complet: 'Ton amulette a absorbé le sort.', partiel: "J'ai les doigts qui picotent depuis.", rien: 'Le sort m\'a brûlé{e} les mains.' },
+        complet: 'Ton amulette a absorbé le sort.', partiel: "J'ai les doigts qui picotent depuis.", rien: 'Le sort m\'a brûlé les mains.' },
       { type: 'blessure', besoin: 'potion', qte: 1, intro: 'Les gardiens de pierre se sont réveillés à ma sortie.',
         complet: 'Ta potion m\'a remis{e} sur pied après leurs coups.', partiel: 'Je boite encore.', rien: "Je suis sorti{e} en rampant." },
     ],
@@ -1483,7 +1483,7 @@ Object.assign(QUETES, {
     ],
   },
   bal: {
-    titre: 'Le bal masqué de Nuit-Pourpre',
+    titre: 'Garder le bal masqué de Nuit-Pourpre',
     accueil: "Nuit-Pourpre ? La comtesse cherche quelqu'un pour garder son bal masqué. Il paraît qu'on y mange très bien. Il paraît.",
     pv: 3, duree: [3, 5], butin: [95, 130],
     epreuves: [
@@ -1507,7 +1507,7 @@ Object.assign(QUETES, {
       { type: 'route', besoin: 'ration', qte: 1, intro: 'Une journée de marche jusqu\'au vallon, par les prés.',
         complet: 'Ta ration et le chant des grillons : le bonheur.', partiel: "J'ai eu faim avant d'arriver.", rien: "Les guérisseuses m'ont trouvé{e} évanoui{e} sur le chemin." },
       { type: 'loup', besoin: 'epee', qte: 1, intro: 'Des loups se sont approchés pendant la cueillette.',
-        complet: "Ton épée les a tenus à distance. Une guérisseuse m'a dit que les loups n'attaquaient jamais, avant. Avant quoi, elle ne savait plus.", partiel: "L'un d'eux m'a mordu{e} la main.", rien: "Elles ont dû fuir en laissant les paniers." },
+        complet: "Ton épée les a tenus à distance. Une guérisseuse m'a dit que les loups n'attaquaient jamais, avant. Avant quoi, elle ne savait plus.", partiel: "L'un d'eux m'a mordu la main.", rien: "Elles ont dû fuir en laissant les paniers." },
       { type: 'blessure', besoin: 'bandage', qte: 1, intro: 'Une guérisseuse s\'est ouvert la jambe sur un rocher.',
         complet: 'Tes bandages l\'ont soignée. Elle a ri : la guérisseuse soignée !', partiel: 'On a déchiré une chemise.', rien: "Je n'avais rien. Elle m'a appris à faire un pansement avec de la mousse." },
     ],
@@ -1590,13 +1590,13 @@ const AINES_CHANCE = { comptoir: 0.04, marcheNoir: 0.35 };
 const AINES = {
   gobelin: {
     nom: 'Grand-mère Ortie', feminin: true, vignette: 'vergers',
-    phrase: "« Tes pommes, petit... Elles viennent d'où ? Hm. Nous aussi, on avait des pommiers. Des milliers. Personne ne me croit. Garrick, lui, il me croit. »",
+    phrase: "« Tes pommes... Elles viennent d'où ? Hm. Nous aussi, on avait des pommiers. Des milliers. Personne ne me croit. Garrick, lui, il me croit. »",
     recit: [
       "« Approche, approche. Mes yeux sont vieux, mais ma tête, elle, se souvient. »",
       "« Avant, nous vivions dans une vallée pleine de pommiers. Les fleurs, au printemps, on aurait dit de la neige rose. On chantait en cueillant. Les enfants dormaient sous les arbres. »",
       "« Un printemps, des hommes en bleu sont venus. Un soleil d'or sur la poitrine. Ils disaient qu'un dragon allait venir, qu'il fallait partir pour notre bien. Personne n'avait jamais vu de dragon. »",
       "« Après... je ne sais plus. Il y a un trou, là, dans ma mémoire. Comme une page arrachée. Je me suis réveillée dans la boue, avec les autres. La vallée s'appelait le Bourbier. On ne savait plus pourquoi on pleurait. »",
-      "« Il reste la berceuse. L'air, seulement. Les paroles sont tombées dans le trou, avec le reste. Si un jour quelqu'un les retrouve... dis-le-moi, petit. Avant que je parte. »",
+      "« Il reste la berceuse. L'air, seulement. Les paroles sont tombées dans le trou, avec le reste. Si un jour quelqu'un les retrouve... dis-le-moi. Avant que je parte. »",
     ],
   },
   orc: {
@@ -1623,7 +1623,7 @@ const AINES = {
   },
   vampire: {
     nom: "Sévérin l'Ancien", feminin: false, vignette: 'chateau',
-    phrase: "« J'ai vu le grand Sage, jeune homme. Il y a fort longtemps. Il avait déjà ce visage-là. Exactement celui-là. Curieux, n'est-ce pas ? »",
+    phrase: "« J'ai vu le grand Sage, mon enfant. Il y a fort longtemps. Il avait déjà ce visage-là. Exactement celui-là. Curieux, n'est-ce pas ? »",
     recit: [
       "« Un verre ? ... Non, ce n'est pas ce que tu crois. Du vin. Je suis vieux, pas grossier. »",
       "« À Nuit-Pourpre, nous tenions les registres. Les naissances, les mariages, les morts, de tous les peuples. Nous vivons longtemps : on nous confiait la mémoire. C'était un honneur. »",
@@ -1739,7 +1739,7 @@ const CHANCE_LETTRE = 0.3;
 const CHANCE_EVENEMENT = 0.18;
 const EVENEMENTS = {
   penurieFer: { type: 'prix', objets: ['epee', 'bouclier'], mult: 1.6,
-    annonce: 'La mine de fer de Grisefer a été inondée. Les forgerons préviennent : les épées et les boucliers vont manquer.',
+    annonce: 'La mine de fer de Khaz-Durim a été inondée. Les forgerons préviennent : les épées et les boucliers vont manquer.',
     nouvelle: 'Pénurie de fer : épées et boucliers hors de prix au marché !' },
   recolte: { type: 'prix', objets: ['ration', 'gourde'], mult: 0.6,
     annonce: 'Une récolte exceptionnelle dans la Comté ! Les rations ne vont rien coûter.',
@@ -1748,7 +1748,7 @@ const EVENEMENTS = {
     annonce: 'La fièvre des marais gagne les villages. Les apothicaires sont dévalisés.',
     nouvelle: 'Fièvre des marais : potions, antidotes et bandages hors de prix !' },
   cordes: { type: 'prix', objets: ['corde', 'torche'], mult: 0.6,
-    annonce: 'Les nains de Grisefer bradent leurs cordes et leurs torches avant de partir en pèlerinage.',
+    annonce: 'Les nains de Khaz-Durim bradent leurs cordes et leurs torches avant de partir en pèlerinage.',
     nouvelle: 'Grande braderie naine : cordes et torches à prix cassés.' },
   hiver: { type: 'prix', objets: ['cape', 'torche'], mult: 1.5,
     annonce: 'Les anciens le sentent dans leurs os : un hiver précoce arrive.',
@@ -1852,6 +1852,6 @@ const ARMURE_SOMBRE = {
   lame: { nom: 'Crépuscule', texte: "L'épée du champion noir. Sa lame s'assombrit quand la lumière approche." },
 };
 const NOMS_ARMURE = { clair: 'Armure du Dernier Rempart', sombre: 'Armure de la Nuit Éternelle' };
-const LEGENDE_SOMBRE = "« La Main Noire te salue. Ton cœur a choisi l'ombre, et l'ombre te le rend. Cette pièce appartient " +
-  "à l'Armure de la Nuit Éternelle : celui qui la portera mènera la dernière bataille... de notre côté. Celles que tu gardes " +
-  "déjà vont noircir. Rassemble-la. Pour le champion qui viendra. »";
+const LEGENDE_SOMBRE = "« La Main Noire te salue. Nous ne choisissons pas de camp : nous choisissons nos clients. Cette pièce appartient " +
+  "à l'Armure de la Nuit Éternelle, et ton cœur penche vers l'ombre : celles que tu gardes déjà vont noircir. Rassemble-la. " +
+  "Elle vaudra cher, le jour où quelqu'un saura la porter. »";

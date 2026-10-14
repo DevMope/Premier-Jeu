@@ -164,7 +164,7 @@ class MarcheNoirScene extends Phaser.Scene {
     const mots = Phaser.Utils.Array.Shuffle([G.marcheNoir.mot, ...Phaser.Utils.Array.Shuffle(MARCHE_NOIR.mots.filter(m => m !== G.marcheNoir.mot)).slice(0, 2)]);
     mots.forEach((m, i) => this.bouton(170 + i * 230, 460, 200, `« ${m} »`, () => {
       if (m === G.marcheNoir.mot) { G.marcheNoir.entre = true; Son.jouer('porte'); this.accueil(); }
-      else { this.vider(); this.texte(40, 392, "« Pas ce soir, inconnu. » La trappe se referme.", 16, '#f3d9b0', { fontStyle: 'italic' }); this.bouton(480, 470, 220, 'Remonter', () => this.partir(false)); }
+      else { this.vider(); this.texte(40, 392, `« Pas ce soir, inconnu${eJ(G)}. » La trappe se referme.`, 16, '#f3d9b0', { fontStyle: 'italic' }); this.bouton(480, 470, 220, 'Remonter', () => this.partir(false)); }
     }));
     this.bouton(860, 500, 140, 'Remonter', () => this.partir(false));
   }

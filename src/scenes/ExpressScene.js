@@ -47,7 +47,7 @@ class ExpressScene extends Phaser.Scene {
       'Ma charrette déborde... fais-moi plaisir, allège-la un peu !',
       'Un peu plus cher qu\'au marché, c\'est vrai. Mais mes jambes, elles, ne sont pas gratuites.',
     ]) : auHasard([
-      'Hé hé hé... Du bon matos, très rare, très cher. Pour toi, prix d\'ami... enfin, presque.',
+      'Hé hé hé... De la bonne camelote, très rare, très cher. Pour toi, prix d\'ami... enfin, presque.',
       'Tu as des pièces ? Grippesou aime les pièces. Grippesou a ce qu\'il te faut.',
       'Pressé, hein ? Les gens pressés paient plus cher. C\'est la loi du marché, hé hé.',
     ]));

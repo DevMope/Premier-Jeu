@@ -421,7 +421,7 @@ class RenovationScene extends Cinematique {
     this.geste(this.heros, 'saut'); this.emotion(this.heros, '♥');
     this.time.delayedCall(900, () => { this.regarderVers(this.garrick, this.heros); this.regarderVers(this.heros, this.garrick); Son.jouer('voix', { personne: { nom: 'Garrick', race: 'humain' }, ton: 'content', duree: 1.6 }); this.emotion(this.garrick, 'joie'); });
     // (Garrick parle dans la bulle du haut : la boîte du bas cacherait les deux fiers rénovateurs)
-    this.bulle.setText(`Garrick Cœur-de-Chêne : « Magnifique ! « ${G.nomShop} » est prêt à ouvrir. Demain, je reste avec toi pour ta première journée : je te montrerai tout. »`).setVisible(true);
+    this.bulle.setText(`Garrick Cœur-de-Chêne : « Magnifique ! “${G.nomShop}” est prêt à ouvrir. Demain, je reste avec toi pour ta première journée : je te montrerai tout. »`).setVisible(true);
     await this.attendreSuite('▶ Clique pour commencer');
     this.finir();
   }

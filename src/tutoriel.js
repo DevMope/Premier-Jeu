@@ -7,15 +7,15 @@ const CONSEILS = {
   banque: "La Banque Centrale, chez les nains. Un prêt, ça dépanne, mais la banque prélève chaque nuit. Ne prends que ce que tu peux rendre, petit.",
   atelier: "L'atelier : les trouvailles que les aventuriers te laissent. Répare-les, et revends-les plus cher aux enchères. Un objet cassé ne vaut presque rien.",
   jauge: "La lumière et l'ombre : ce que le monde pense de toi. Les gens aiment les cases bien rangées, hein ? Ha ! Regarde surtout ce que ça change pour ton comptoir.",
-  marcheNoir: "(Garrick t'avait dit un jour :) « La nuit, les honnêtes gens ont aussi leurs marchés. Sois prudent : chaque affaire fait du bruit, et la garde a de bonnes oreilles. »",
-  comptoir: "Un client ! Sa commande est sur le parchemin, à droite. Clique sur tes marchandises, en bas, pour les glisser dans son baluchon. Mieux il est équipé, plus il a de chances de revenir... et de te reverser sa part du butin.",
+  marcheNoir: "Tu te souviens de ce que je t'avais dit ? La nuit, les honnêtes gens ont aussi leurs marchés. Sois prudent : chaque affaire fait du bruit, et la garde a de bonnes oreilles.",
+  comptoir: "Un client ! Sa commande est sur le parchemin, à droite. Clique sur tes marchandises, en bas, pour les glisser dans son baluchon. Mieux ton client est équipé, plus il a de chances de revenir... et de te reverser sa part du butin.",
   colis: "Bien ! Quand le baluchon est prêt, clique sur « Remettre le baluchon ». Ton flair, sous la commande, t'indique ses chances de revenir vivant.",
-  remis: "Le voilà parti ! Dans quelques jours, il reviendra te raconter son aventure (si tout va bien...). Occupe-toi du suivant : la file attend.",
+  remis: "Et un baluchon de parti ! Ton client reviendra te raconter son aventure, dès demain pour une course courte (si tout va bien...). Occupe-toi du suivant : la file attend.",
   refus: "Aïe : il te manque de quoi l'équiper entièrement. L'envoyer à moitié préparé, c'est risquer sa vie... Si tu juges que c'est trop dangereux, clique sur « Refuser ce client » : il repartira, et ta réputation baissera un peu. Mieux vaut un client déçu qu'un client mort !",
   arriere: "Ton arrière-boutique : ta réserve sur les étagères, ta fortune près du coffre, les cadeaux dans le panier. La porte, au fond, mène à ta chambre quand la journée est finie.",
   soir: "La journée est finie. Le soir, réponds aux lettres (des clients qui viendront plus tard), surveille ta réserve, et passe au bureau : c'est là qu'on améliore le shop. Puis va dormir !",
   bureau: "Le registre : toutes les fiches de tes clients. À droite, l'ardoise de tes comptes, et des tiroirs. Le premier, « Améliorer le shop », fait venir les ouvriers pendant la nuit.",
-  marche: "Le Marché des Mastres ! Chaque matin, viens y racheter de quoi remplir ta réserve. Chaque marchand a ses prix du jour. Clique sur un lieu pour t'en approcher, puis « ◀ Le marché » pour reculer. Il y a aussi le Bazar (des cadeaux), les enchères, les jeux, et le crieur qui annonce les nouvelles du jour... Moi, je reprends la route. Bonne chance, l'ami !",
+  marche: "Le Marché des Mastres ! Chaque matin, rachète ici de quoi remplir ta réserve : chaque marchand a ses prix du jour. Clique sur un lieu pour t'en approcher. Il y a aussi le Bazar, les enchères, les jeux et le crieur... Moi, je reprends la route. Bonne chance !",
 };
 
 // Affiche le conseil `cle` de Garrick, si c'est la première fois (et si le tutoriel est actif).

@@ -186,7 +186,7 @@ class DodoScene extends Cinematique {
     c.add(this.add.text(760, 86, `Fin du jour ${b.jour}`, style(26, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     const lignes = [
       ['Clients servis', b.servis],
-      ['Revenus de mission', b.retours],
+      ['Retours de mission', b.retours],
       ['Disparus', b.morts],
       ['Réputation', arrondi(b.reputation)],
     ];
@@ -302,9 +302,9 @@ class DodoScene extends Cinematique {
     c.add(this.add.image(220, haut + 70, iconeObjet(this, sombre ? piece + '_sombre' : piece)).setScale(5));
     c.add(this.add.text(275, haut + 30, p.nom, style(17, '#7a5a10', { fontStyle: 'bold' })));
     c.add(this.add.text(275, haut + 56, p.texte, style(13, '#5a3a20', { fontStyle: 'italic', wordWrap: { width: 500 } })));
-    const ouvre = `${ZONES[zone].nom} ${ZONES[zone].nom.startsWith('Les ') ? 'ont été conquises' : 'a été conquise'} par tes aventuriers.`;
+    const ouvre = `Tes aventuriers ont conquis ${ZONES[zone].nom.replace(/^(Le|La|Les) /, m => m.toLowerCase())}.`;
     let message = premiere ? (sombre ? LEGENDE_SOMBRE : LEGENDE_ARMURE)
-      : sombre ? `« ${ouvre} La Main Noire te laisse une pièce de plus pour son champion. Ne la perds pas. »`
+      : sombre ? `« ${ouvre} La Main Noire te cède une pièce de plus. Elle a un prix, comme tout : ne la perds pas. »`
         : `« ${ouvre} La Confrérie te confie une pièce de plus pour le champion. Garde-la bien. »`;
     if (avertit && !scelle) message += `\nPlus qu'une pièce, et l'armure sera complète : ton camp sera scellé pour de bon. Aujourd'hui, ta jauge penche ${palierCamp(this.G) > 0 ? 'vers la lumière' : palierCamp(this.G) < 0 ? "vers l'ombre" : 'entre les deux (l\'armure restera claire)'}.`;
     if (scelle) {

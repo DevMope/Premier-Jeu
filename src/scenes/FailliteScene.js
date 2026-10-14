@@ -151,7 +151,7 @@ class FailliteScene extends Cinematique {
     this.onomatopee(this.facade.porteX, 220, 'TOC TOC TOC !');
     this.cameras.main.shake(300, 0.006);
     await this.attendreClic();
-    this.ecrire('', 'Le banquier de la Comté était venu en personne. Avec des amis.');
+    this.ecrire('', 'Thorgrim Coffrefort, de la Banque Centrale, était venu en personne. Avec des amis.');
     await this.defiler([this.banquier, ...this.gardes], [470, 560, 630], 2200);
     await this.attendreClic();
     this.ecrire('Le banquier', '« Par ordre de la Banque Centrale Goyenne, vos dettes s\'élèvent à... beaucoup. Tout est saisi. Et vous aussi. »');
@@ -193,7 +193,7 @@ class FailliteScene extends Cinematique {
       [0x6a2a1a, 0x2a3a6a, 0x5a4a20, 0x3a5a2a, 0x6a2a1a, 0x4a3a5a].forEach((c, i) => this.pile.add(this.add.rectangle(Phaser.Math.Between(-3, 3), -i * 13, 46, 12, c).setStrokeStyle(2, 0x1a0e06)));
       this.badauds = [[700, 'humain'], [770, 'elfe'], [840, 'nain']].map(([x, race], i) => this.corps(x, 362, { nom: 'Badaud ' + i, race, feminin: i === 1, niveau: 'novice' }, 5.4).setFlipX(true));
     });
-    this.ecrire('', 'Chaque matin, tu portes leurs registres à travers la Comté, derrière le banquier. Les gens chuchotent : « C\'est l\'ancien marchand du Comptoir. »');
+    this.ecrire('', `Chaque matin, tu portes leurs registres à travers la Comté, derrière le banquier. Les gens chuchotent : « C'est ${eJ(this.G) ? "l'ancienne marchande" : "l'ancien marchand"} de “${this.G.nomShop}”. »`);
     if (this.badauds) this.badauds.forEach((b, i) => this.time.delayedCall(400 + i * 300, () => this.emotion(b, i === 1 ? '…' : '?')));
     this.tweens.add({ targets: this.pile, angle: { from: -5, to: 5 }, duration: 400, yoyo: true, repeat: -1 });
     this.tweens.add({ targets: this.pile, x: 520, duration: 3600, ease: 'Linear' });
@@ -233,7 +233,7 @@ class FailliteScene extends Cinematique {
       this.tweens.add({ targets: f, scale: e, duration: 600, ease: 'Back.easeOut' });
     }));
     await this.attendreClic();
-    this.ecrire('', 'Tu t\'es enfui par derrière, dans la nuit, sans te retourner. Derrière toi, le comptoir brûlait.');
+    this.ecrire('', `Tu t'es enfui${eJ(this.G)} par derrière, dans la nuit, sans te retourner. Derrière toi, le comptoir brûlait.`);
     this.p.setFlipX(true);
     await this.defiler([this.p], [-80], 1600);
     await this.attendreClic();
@@ -295,7 +295,7 @@ class FailliteScene extends Cinematique {
       this.o(lumiere(this, 520, 330, 240, 0xff8a30, 0.45).setDepth(3.2));
       this.p = this.joueur(420, 380);
     });
-    this.ecrire('', 'Tu es retourné vivre dans la forêt, là où tout avait commencé. Le soir, près du feu, tu repenses au comptoir.');
+    this.ecrire('', `Tu es retourné${eJ(this.G)} vivre dans la forêt, là où tout avait commencé. Le soir, près du feu, tu repenses au comptoir.`);
     await this.attendreClic();
     // Et l'histoire recommence peut-être : un voyageur blessé arrive jusqu'à ton feu
     this.blesse = this.corps(1040, 380, { nom: 'Voyageur blessé', race: 'humain', niveau: 'aguerri' }, 6.2).setFlipX(true);
