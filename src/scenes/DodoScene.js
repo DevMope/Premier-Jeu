@@ -268,6 +268,10 @@ class DodoScene extends Cinematique {
   dessinerArmure(possedees) {
     if (this.mannequin) this.mannequin.destroy();
     if (this.texteArmure) this.texteArmure.destroy();
+    this.mannequin = null; this.texteArmure = null;
+    // (v0.58) Pas de mannequin tant que Garrick ne l'a pas apporté (à la première pièce d'armure ;
+    // les anciennes parties qui ont déjà des pièces l'ont, bien sûr)
+    if (!this.G.mannequin && !possedees.length) return;
     const cote = this.coteAffiche || coteArmure(this.G);
     this.mannequin = dessinerMannequin(this, 790, SOL_CHAMBRE, possedees, 4, cote).setDepth(2);
     if (possedees.length) {
@@ -279,6 +283,7 @@ class DodoScene extends Cinematique {
   // Toc toc : le messager encapuchonné apporte une pièce de l'armure. La première fois, il
   // raconte la légende du champion.
   async messager({ piece, zone, cote = 'clair', scelle, avertit }) {
+    if (!this.G.mannequin) { await this.offrirMannequin(); if (this.fini) return; }
     const sombre = cote === 'sombre';
     const p = pieceArmure(piece, cote);
     // La légende, la première fois de chaque côté.
@@ -358,6 +363,55 @@ class DodoScene extends Cinematique {
     else this.cameras.main.flash(250, 255, 230, 150);
     await this.marcher(m, 1020, 3);
     m.destroy();
+  }
+
+  // (v0.58) Le matin de la première pièce d'armure, Garrick repasse, un vieux mannequin de bois
+  // sur l'épaule : il l'installe dans ta chambre et t'explique qu'il faudra retrouver toutes les
+  // pièces de l'armure du champion, une par contrée ouverte.
+  async offrirMannequin() {
+    this.G.mannequin = true;
+    const voix = { nom: 'Garrick', race: 'humain' };
+    this.onomatopee(900, SOL_CHAMBRE - 160, 'Toc toc !', '#fff4dc');
+    const g = imageCorps(this, 1020, SOL_CHAMBRE, 'mentor', 6).setDepth(3);
+    this.ombreSol(g);
+    const porte = dessinerMannequin(this, 0, 0, [], 4).setDepth(3.1).setAngle(-12);
+    const suivre = () => porte.setPosition(g.x + (g.flipX ? 10 : -10), g.y - g.displayHeight * 0.35);
+    this.events.on('update', suivre);
+    Son.jouer('voix', { personne: voix, ton: 'bonjour' });
+    await this.marcher(g, 880, 4);
+    this.events.off('update', suivre);
+    // il pose le mannequin à sa place, près de la fenêtre
+    Son.jouer('poser');
+    await this.animer({ targets: porte, x: 790, y: SOL_CHAMBRE, angle: 0, duration: 500, ease: 'Quad.easeOut' });
+    this.cameras.main.shake(120, 0.003);
+    this.regarderVers(g, this.joueur); this.regarderVers(this.joueur, g);
+    const parler = async (texte, ton, emotion, image = null) => {
+      const c = this.add.container(0, 0).setDepth(9);
+      c.add(this.add.image(480, 92, panneauHD(this, 700, 150)).setScale(2));
+      c.add(this.add.text(160, 44, 'Garrick Cœur-de-Chêne', style(16, '#7a5a10', { fontStyle: 'bold' })));
+      c.add(this.add.text(160, 68, `« ${texte} »`, style(14, '#3b2410', { wordWrap: { width: 640 }, lineSpacing: 3 })));
+      c.add(this.add.text(800, 150, '▶ clique', style(12, '#8a6a4a', { fontStyle: 'italic' })).setOrigin(1, 0.5));
+      Son.jouer('voix', { personne: voix, ton, duree: Math.min(2, 0.4 + texte.length * 0.012) });
+      if (emotion) this.emotion(g, emotion);
+      const bulle = image ? this.pensee(g, image, { echelle: 2.6 }) : null;
+      await this.attendreClicSansBoite();
+      if (bulle) this.fermerPensee(bulle);
+      c.destroy();
+    };
+    await parler("Bien dormi ? Je passais par la Comté... et je t'ai apporté un vieil ami : le mannequin de mon ancien capitaine.", 'content', 'joie');
+    if (this.fini) return;
+    await parler(`L'armure du champion a été dispersée en ${ARMURE.length} pièces, aux quatre coins du monde. Chaque fois que tes aventuriers ouvriront une nouvelle contrée, on t'en rapportera une.`, 'neutre', null, iconeObjet(this, ARMURE[0].id));
+    if (this.fini) return;
+    await parler("Trouve-les toutes, et habille ce mannequin, pièce après pièce. Le jour où l'armure sera complète, ton camp sera choisi pour de bon. Lumière ou ombre... à toi de voir.", 'inquiet', '!');
+    if (this.fini) return;
+    this.emotion(this.joueur, '♥');
+    Son.jouer('voix', { personne: { nom: this.G.joueur.nom || 'toi', race: 'humain', feminin: this.G.joueur.feminin }, ton: 'merci' });
+    porte.destroy();
+    this.dessinerArmure([]);
+    await parler("Tiens, justement : on frappe. Ce doit être la première pièce ! Je file, prends-en soin.", 'rire', 'joie');
+    this.geste(this.joueur, 'salut');
+    await this.marcher(g, 1040, 3);
+    g.destroy();
   }
 
   // L'armure change de côté : elle se corrompt (vers l'ombre) ou se purifie (vers la lumière).
