@@ -408,6 +408,7 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 - Rumeurs, histoires, boissons, recrutement de mercenaires ; clients attablés (*Travellers Rest*, *Tavern Master*).
 
 ### 13 Histoire et zones conquises
+- **Agrandir la carte** (dit le 14/10) : plus de destinations, et **dessiner les royaumes** sur la carte (Hobbits ★, Humains ★★, Nains ★★★, Elfes ★★★★, Mages ★★★★★, plus les terres des Bannis) pour que le joueur comprenne comment ils sont disposés.
 - **Déplacer l'auberge** dans une zone conquise : nouveau biome, décor, PNJ du village, financer le voyage et le nouveau shop ; combien de shops au total.
 - **Le grand retournement (rappel, à ne pas oublier)** : Garrick Cœur-de-Chêne, l'aventurier sauvé de la rivière au début, est le grand méchant de la fin du jeu. Distiller des indices (gazette, absences, générosité suspecte) ; les retours de Garrick ; la révélation à l'étape 15.
 - La menace qui grandit : gazette, dialogues, décor qui s'assombrit ; sa nature (dragon ?) à confirmer.
@@ -427,6 +428,12 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 - **La fontaine du marché** (v 0.52) : on peut jeter une pièce par jour. Ce que ça débloque reste à définir : une rencontre un soir de promenade, un coup de pouce pendant un voyage, un vœu qui se réalise après N pièces… (candidat : étapes 11 ou 13).
 - **La vitrine des étals** (v 0.52) : le second zoom montre les marchandises de près ; à enrichir plus tard avec des objets rares du jour, des promotions, le marchand qui vante sa marchandise.
 - **Les étals qui ouvrent jour après jour** (v 0.52) : calendrier à ajuster avec les retours des joueurs.
+
+### Registre du bureau à clarifier (dit le 14/10)
+- Le registre fait brouillon : des catégories plus faciles, bien encadrées, pour qu'on distingue ce qui va avec quoi (onglets, tiroirs, pages). À faire après l'étape 9.
+
+### Le grand point final (dit le 14/10)
+- Une fois tout fini : vérifier que tous les décors sont au niveau, que toutes les cinématiques sont de la plus haute qualité possible, chasser les bugs et les failles de la mécanique, lister ce qui reste à améliorer, et faire un gros point résumé.
 
 ### Équilibrage (à tout moment)
 - Le ravitaillement et le cœur commandes / colis ; états (empoisonné) et demi-cœurs (pistes) ; les effets de la chambre ; les déblocages de chaque palier à valider avec le joueur ; la conquête des lieux n'a d'effet que quand l'auberge peut déménager.
