@@ -963,6 +963,28 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme(matMain, ellipsoide(M[0], M[1] + 1 * k * gm, 2.2 * k * gm, 2.3 * k * gm), { decalage: 0.4 });   // la main serrée dessus
   }
   if (g.vieux && T.bandelettes) moisirBandelettes(t, k);
+  // (v0.58) Blessé : un bandage autour du front, un autre au poignet, des accrocs dans le manteau
+  // et des taches de sang (Garrick, quand on le repêche dans la rivière)
+  if (options.blesse && !dos) {
+    t.rampes.sang = rampe(0x9a1c1c);
+    const y0 = Math.round(cy - P.ry * 0.6), y1 = Math.round(cy - P.ry * 0.28);
+    for (let y = y0; y <= y1; y++) for (let x = Math.round(cx - P.rx - k); x <= cx + P.rx + k; x++) { const m = t.mat(x, y); if (m === 'peau' || m === 'cheveux') t.poser(x, y, 'lin', y === y0 ? 4 : y === y1 ? 1 : 3); }
+    for (let x = Math.round(cx - P.rx * 0.9); x < cx + P.rx; x += 3 * k) for (let e = 0; e < k; e++) if (t.mat(x + e, y0 + k) === 'lin') t.poser(x + e, y0 + k, 'lin', 2);   // (les tours de bande)
+    t.forme('sang', ellipsoide(cx + P.rx * 0.3 * (c >= 0 ? 1 : -1), (y0 + y1) / 2, 1.4 * k, 1.1 * k), { bord: false, decalage: 0.2 });
+    // les accrocs : une déchirure en zigzag, sombre, avec un bord effiloché plus clair au-dessus
+    for (const [dx, dy, lg] of [[-0.6, 1.5, 5], [0.45, 0.35, 4], [0.2, 1.9, 4], [-0.15, 0.9, 3]]) {
+      const x0 = Math.round(cx + dx * ep), y0d = Math.round(yT + dy * (yB - yT));
+      for (let j = 0; j < lg * k; j++) {
+        const x = x0 + j - Math.round(lg * k / 2), y = y0d + ((j >> 1) % 2 ? 1 : 0) * k;
+        for (let e = 0; e < k; e++) { const m = t.mat(x, y + e); if (m === 'cape' || m === 'habit' || m === 'bas') { t.poser(x, y + e, m, 0); if (t.mat(x, y - 1) === m) t.poser(x, y - 1, m, 4); } }
+      }
+    }
+    for (const [dx, dy, r] of [[-0.35, 0.45, 2.6], [0.3, 0.8, 2], [0.1, 1.3, 1.6]]) {
+      const px = cx + dx * ep, py = yT + dy * (yB - yT);
+      t.forme('sang', (x, y) => { const m = t.mat(x, y); return (m === 'habit' || m === 'cape' || m === 'bas') && Math.hypot(x + 0.5 - px, y + 0.5 - py) < r * k * (0.75 + 0.5 * hachage(x, y, 5)) ? [0, 0, 1] : null; }, { bord: false });
+    }
+    if (mainDevant) { const { M } = mainDevant; for (let y = Math.round(M[1] - 6 * k); y <= Math.round(M[1] - 3.5 * k); y++) for (let x = Math.round(M[0] - 3 * k); x <= Math.round(M[0] + 3 * k); x++) { const m = t.mat(x, y); if (m && m !== 'lin' && m !== 'sang') t.poser(x, y, 'lin', y % 2 ? 3 : 4); } }
+  }
   contourEpais(t, k - 1);
   // Où sont les mains (depuis le sol), pour y accrocher le baluchon
   t.mains = H - (leves ? cy - P.ry - 7 * k : T.brasLongs ? yB + (sol - yB) * 0.48 + 2 * k : yB + 2.5 * k);

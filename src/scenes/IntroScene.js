@@ -115,6 +115,8 @@ class IntroScene extends Phaser.Scene {
   }
 }
 
+const SOL_FORET = 337, SOL_COMTE = 352;   // (v0.58 : les pieds posés sur la berge, puis sur le chemin)
+
 class IntroHistoireScene extends Cinematique {
   constructor() { super('IntroHistoire'); }
 
@@ -148,11 +150,12 @@ class IntroHistoireScene extends Cinematique {
     this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0);
 
     textureJoueur(this, G); // (crée les textures du joueur si besoin)
-    this.heros = this.add.image(220, 320, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(7.5));   // (v0.57 : plus grand)
+    this.heros = this.add.image(220, SOL_FORET, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(7.5));   // (v0.57 : plus grand)
     // Quand il ne marche pas, il regarde Garrick (de trois-quarts, vers la droite)
     this.regarder = () => this.heros.setTexture(textureJoueur(this, G, 'troisQuarts')).setFlipX(false);
     this.aller = async (x) => { this.heros.setTexture('joueur_petit'); await this.marcher(this.heros, x); this.regarder(); };
-    this.mentor = this.add.image(-80, 345, corpsHD(this, 'mentor')).setOrigin(0.5, 0.5).setScale(7 * ECHELLE_CORPS).setAngle(90);   // (v0.57 : plus grand)
+    // (v0.58) Garrick arrive blessé : bandage, sang, manteau déchiré ; on le revoit guéri au retour
+    this.mentor = this.add.image(-80, 345, corpsHD(this, 'mentorBlesse')).setOrigin(0.5, 0.5).setScale(7 * ECHELLE_CORPS).setAngle(90);   // (v0.57 : plus grand)
     // Le devant de la rivière, par-dessus l'aventurier : seuls sa tête et son torse dépassent de l'eau.
     const ligneEau = 342;
     this.eauDevant = this.add.tileSprite(0, ligneEau, 960, 390 - ligneEau, 'eauFondHD').setOrigin(0).setTileScale(2, 60 / 32).setAlpha(0.8);
@@ -170,6 +173,10 @@ class IntroHistoireScene extends Cinematique {
       this.tweens.add({ targets: ecume, x: ecume.x - 60, alpha: 0, duration: 1200, onComplete: () => ecume.destroy() });
     } });
 
+    this.ombreSol(this.heros);
+    // les voix : la tienne, et celle de Garrick (un peu plus grave)
+    this.voixHeros = { nom: G.joueur.nom || 'JeuneGoy', race: 'humain', feminin: this.f };
+    this.voixGarrick = { nom: 'Garrick', race: 'humain' };
     this.creerBoiteTexte();
     this.boutonPasser(() => this.finir());
     this.regarder();
@@ -230,7 +237,7 @@ class IntroHistoireScene extends Cinematique {
     comte.paysage.setDepth(-1);
     this.fond.paysage.setVisible(false);
     this.add.image(0, 330, pavesHD(this, 960, 60)).setOrigin(0).setScale(2).setDepth(-0.5).setTint(0xc8b090);
-    this.heros.setPosition(300, 330);
+    this.heros.setPosition(300, SOL_COMTE); this.heros.sol = SOL_COMTE;
     this.cameras.main.fadeIn(1200, 0, 0, 0);
     await this.attendre(1000);
   }
@@ -245,12 +252,15 @@ class IntroHistoireScene extends Cinematique {
     // L'aventurier arrive en flottant, comme un vieux tonneau.
     this.tweens.add({ targets: this.mentor, y: 349, angle: 86, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     this.ecrire('Un matin...', "La rivière charria quelque chose d'inhabituel : un aventurier à moitié noyé, qui flottait comme un vieux tonneau.");
+    this.time.delayedCall(1300, () => { this.emotion(this.heros, '!'); Son.jouer('voix', { personne: this.voixHeros, ton: 'peur' }); this.geste(this.heros, 'recule'); });
     await this.animer({ targets: this.mentor, x: 520, duration: 2600, ease: 'Sine.easeOut' });
     await this.attendreClic();
 
     // Tu tires... et tu tombes sur les fesses.
     await this.aller(430);
+    this.regarderVers(this.heros, this.mentor);
     this.ecrire('', 'Tu as tiré. Et tiré. Et tiré encore...');
+    Son.jouer('voix', { personne: this.voixHeros, ton: 'fache', duree: 0.6 });
     await this.animer({ targets: this.heros, x: 410, duration: 250, yoyo: true, repeat: 2 });
     this.onomatopee(400, 250, 'HNNNG !');
     await this.animer({ targets: this.heros, x: 360, angle: -80, duration: 300, ease: 'Quad.easeOut' });
@@ -267,7 +277,11 @@ class IntroHistoireScene extends Cinematique {
     await this.animer({ targets: this.mentor, x: 470, y: 308, angle: 90, duration: 600, ease: 'Back.easeOut' });
     this.onomatopee(470, 270, 'SPLOTCH');
     await this.animer({ targets: this.heros, angle: 0, duration: 300 });
+    // Il gémit, à peine conscient
+    this.emotion(this.mentor, '…', 1800);
+    Son.jouer('voix', { personne: this.voixGarrick, ton: 'triste', duree: 0.9 });
     this.ecrire('', "Tu l'as sorti de l'eau. Il pesait aussi lourd qu'un âne... et sentait à peu près pareil.");
+    this.time.delayedCall(700, () => this.emotion(this.heros, 'larme', 1200));
     await this.attendreClic();
 
     // La nuit, au coin du feu.
@@ -284,6 +298,7 @@ class IntroHistoireScene extends Cinematique {
     feu.add(lueurFeu);
     this.tweens.add({ targets: lueurFeu, alpha: 0.3, scale: 2.7, duration: 300, yoyo: true, repeat: -1 });
     this.ecrire('Pendant des jours...', 'Tu as fait un feu, réparé ses armes, soigné ses blessures, et chassé pour le nourrir.');
+    this.regarderVers(this.heros, this.mentor);
     for (const id of ['epee', 'bandage', 'potion']) {
       const icone = this.add.image(470, 260, iconeObjet(this, id)).setScale(0).setDepth(5);
       await this.animer({ targets: icone, scale: 3.5, duration: 250, ease: 'Back.easeOut' });
@@ -303,25 +318,39 @@ class IntroHistoireScene extends Cinematique {
       await this.attendre(520);
     }
     this.ecrire('', 'Il mangeait comme quatre. Peut-être même comme cinq.');
+    this.emotion(this.heros, '?');
+    Son.jouer('voix', { personne: this.voixHeros, ton: 'etonne', duree: 0.5 });
     await this.attendreClic();
 
     // Le départ et la promesse.
     feu.destroy();
     await this.animer({ targets: this.voile, fillAlpha: 0, duration: 1000 });
-    this.mentor.setOrigin(0.5, 1).setAngle(0).setPosition(470, 320);
-    this.ecrire('Garrick Cœur-de-Chêne', `« Je te dois la vie, ${petit}. Si je survis à ma quête, je reviendrai te récompenser. Promis. »`);
-    await this.attendreClic();
-    await this.marcher(this.mentor, 1020, 4);
+    // Guéri : debout, le manteau recousu, plus de bandage ; il se tourne vers toi
+    this.mentor.setTexture(corpsHD(this, 'mentor')).setOrigin(0.5, 1).setAngle(0).setPosition(500, SOL_FORET);
+    this.ombreSol(this.mentor);
+    this.regarderVers(this.heros, this.mentor);
+    await this.replique('Garrick Cœur-de-Chêne', `« Je te dois la vie, ${petit}. Sans toi, la rivière m'emportait jusqu'à la mer. »`,
+      { sprite: this.mentor, vers: this.heros, personne: this.voixGarrick, ton: 'merci', emotion: 'merci', geste: 'hoche' });
+    const reve = this.pensee(this.mentor, coffreTresorHD(this), { echelle: 1.3 });
+    await this.replique('Garrick Cœur-de-Chêne', '« Si je survis à ma quête, je reviendrai te récompenser. Avec un trésor, foi de Cœur-de-Chêne ! Promis. »',
+      { sprite: this.mentor, vers: this.heros, personne: this.voixGarrick, ton: 'content' });
+    this.fermerPensee(reve);
+    await this.replique(nomJoueur(window.GAME, 'petit'), '« Revenez vivant, surtout ! »', { sprite: this.heros, vers: this.mentor, personne: this.voixHeros, ton: 'inquiet', emotion: '♥' });
+    // Il s'en va de l'autre côté du chemin ; tu le salues jusqu'à ce qu'il disparaisse
+    const depart = this.marcher(this.mentor, 1020, 4);
+    this.time.delayedCall(500, () => { this.geste(this.heros, 'salut'); this.emotion(this.mentor, 'joie', 900); });
+    await depart;
     await this.aller(300);
 
     // Le temps passe... et on rentre dans la Comté, au bord du chemin, à guetter son retour.
     await this.versLaComte();
     this.ecrire('', 'Les jours passèrent. Puis les semaines. De retour dans la Comté, tu guettais le chemin... Tu commençais à croire qu\'il ne reviendrait jamais...');
+    this.time.delayedCall(800, () => { this.emotion(this.heros, '…', 2000); Son.jouer('voix', { personne: this.voixHeros, ton: 'triste' }); });
     await this.animer({ targets: this.voile, fillAlpha: 0.7, duration: 500, yoyo: true, repeat: 2 });
     await this.attendreClic();
 
     // Le retour : Garrick porte un coffre au trésor à bout de bras, au-dessus de sa tête !
-    this.mentor.setTexture(corpsHD(this, 'mentor', 'leves')).setPosition(1020, 330);
+    this.mentor.setTexture(corpsHD(this, 'mentor', 'leves')).setPosition(1020, SOL_COMTE); this.mentor.sol = SOL_COMTE;
     const coffre = this.add.image(1020, 220, coffreTresorHD(this)).setOrigin(0.5, 1).setScale(2).setDepth(5);
     const porter = () => coffre.setPosition(this.mentor.x, this.mentor.y - this.mentor.displayHeight + 8);
     this.events.on('update', porter);
@@ -333,7 +362,10 @@ class IntroHistoireScene extends Cinematique {
       this.tweens.add({ targets: p, y: p.y - 40, x: p.x + Phaser.Math.Between(-30, 30), alpha: 0, angle: 180, duration: 700, onComplete: () => p.destroy() });
     } });
     this.ecrire('', "Et puis, un soir, quelqu'un siffla au bout du chemin...");
+    Son.jouer('siffle');
+    this.time.delayedCall(600, () => { this.regarderVers(this.heros, this.mentor); this.emotion(this.heros, '!'); this.geste(this.heros, 'saut'); Son.jouer('voix', { personne: this.voixHeros, ton: 'etonne' }); });
     await this.marcher(this.mentor, 520, 5);
+    this.regarderVers(this.mentor, this.heros);
     // Il pose le coffre à tes pieds, dans un nuage d'étincelles
     this.events.off('update', porter);
     this.mentor.setTexture(corpsHD(this, 'mentor'));
@@ -343,12 +375,20 @@ class IntroHistoireScene extends Cinematique {
       const etoile = this.add.star(Phaser.Math.Between(380, 480), Phaser.Math.Between(250, 310), 4, 3, 7, 0xffe066).setDepth(6);
       this.tweens.add({ targets: etoile, alpha: 0, scale: 2, duration: 900, delay: i * 80, onComplete: () => etoile.destroy() });
     }
-    this.ecrire('Garrick Cœur-de-Chêne', `« Tu croyais que je t'avais oublié${e} ? Voici ta part du trésor ! Alors, que veux-tu en faire ? »`);
-    await this.attendreClic();
-    this.ecrire(nomJoueur(window.GAME, 'petit'), "« Je ne sais pas... J'ai bien aimé m'occuper de vous. Vous soigner, vous nourrir, vous préparer pour la route. »");
-    await this.attendreClic();
-    this.ecrire('Garrick Cœur-de-Chêne', '« Alors c\'est tout trouvé ! Tu vas ouvrir un comptoir pour les aventuriers comme moi. Je t\'offre ton premier shop, et un petit capital pour commencer. »');
-    await this.attendreClic();
+    await this.replique('Garrick Cœur-de-Chêne', `« Tu croyais que je t'avais oublié${e} ? Voici ta part du trésor ! Alors, que veux-tu en faire ? »`,
+      { sprite: this.mentor, vers: this.heros, personne: this.voixGarrick, ton: 'rire', emotion: 'joie', geste: 'bras', quoi: 'mentor' });
+    const souvenir = this.pensee(this.heros, iconeObjet(this, 'bandage'), { echelle: 2.6 });
+    await this.replique(nomJoueur(window.GAME, 'petit'), "« Je ne sais pas... J'ai bien aimé m'occuper de vous. Vous soigner, vous nourrir, vous préparer pour la route. »",
+      { sprite: this.heros, vers: this.mentor, personne: this.voixHeros, ton: 'inquiet' });
+    this.fermerPensee(souvenir);
+    creerComptoirCarteHD(this);
+    const idee = this.pensee(this.mentor, 'comptoirCarteHD', { echelle: 1.4 });   // (il rêve déjà de ton shop)
+    await this.replique('Garrick Cœur-de-Chêne', '« Alors c\'est tout trouvé ! Tu vas ouvrir un comptoir pour les aventuriers comme moi. Je t\'offre ton premier shop, et un petit capital pour commencer. »',
+      { sprite: this.mentor, vers: this.heros, personne: this.voixGarrick, ton: 'content', emotion: 'idee', geste: 'hoche' });
+    this.fermerPensee(idee);
+    this.emotion(this.heros, '♥');
+    Son.jouer('voix', { personne: this.voixHeros, ton: 'content' });
+    await this.geste(this.heros, 'saut');
 
     // Le shop : une vieille auberge à remettre en état (la scène de rénovation).
     this.finir();

@@ -69,6 +69,118 @@ class Cinematique extends Phaser.Scene {
     sprite.y = y;
   }
 
+  // --- (v0.58) Des personnages vivants : ils se regardent, parlent avec leur voix, montrent ce
+  // qu'ils ressentent, font des gestes, et rêvent tout haut dans des bulles de pensée. ---
+
+  // `a` se tourne vers `b` (les corps regardent vers la droite ; un point {x} suffit aussi).
+  regarderVers(a, b) {
+    if (a && b && Math.abs(b.x - a.x) > 2) a.setFlipX(b.x < a.x);
+    return a;
+  }
+
+  // Une ombre douce au sol, sous les pieds : elle reste au sol quand le personnage saute, et
+  // rapetisse avec la hauteur. `sprite.sol` : la hauteur du sol (sa position au départ).
+  ombreSol(sprite, largeur = 0.62) {
+    if (sprite.ombre) return sprite.ombre;
+    sprite.sol = sprite.y;
+    const o = this.add.ellipse(sprite.x, sprite.y, 40, 9, 0x000000, 0.3).setDepth(sprite.depth - 0.01);
+    const maj = () => {
+      if (!sprite.active || !o.active) { this.events.off('update', maj); if (o.active) o.destroy(); return; }
+      const debout = Math.abs(sprite.angle) < 25 && sprite.originY > 0.9;
+      const haut = Math.max(0, sprite.sol - sprite.y);
+      o.setVisible(sprite.visible && debout && sprite.alpha > 0.3).setPosition(sprite.x, sprite.sol - 1).setDepth(sprite.depth - 0.01);
+      o.setScale(sprite.displayWidth * largeur / 40 * Math.max(0.5, 1 - haut / 120));
+    };
+    this.events.on('update', maj);
+    sprite.ombre = o;
+    return o;
+  }
+
+  // Une émotion au-dessus de la tête : '!', '?', '♥', 'colere', 'larme', 'joie', '…', 'idee'
+  emotion(sprite, quoi, duree = 1500) {
+    const glyphes = { '!': ['!', '#c0301a'], '?': ['?', '#2a4a8a'], '♥': ['♥', '#d03050'], colere: ['💢', '#c0301a'], larme: ['💧', '#3a7ac0'], joie: ['♪', '#2a8a3a'], '…': ['…', '#3b2410'], idee: ['💡', '#c09020'], merci: ['✨', '#c09020'] };
+    const [g, couleur] = glyphes[quoi] || [quoi, '#3b2410'];
+    const x = sprite.x + (sprite.flipX ? -1 : 1) * sprite.displayWidth * 0.22, y = sprite.y - sprite.displayHeight - 8;
+    const c = this.add.container(x, y).setDepth(9).setScale(0);
+    c.add(this.add.circle(0, 0, 15, 0xfff8e8).setStrokeStyle(2.5, 0x3b2410));
+    c.add(this.add.triangle(0, 0, -5, 12, 5, 12, 0, 20, 0xfff8e8).setOrigin(0));
+    c.add(this.add.text(0, 0, g, style(19, couleur, { fontStyle: 'bold' })).setOrigin(0.5));
+    this.tweens.add({ targets: c, scale: 1, duration: 220, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: c, y: y - 5, duration: 400, yoyo: true, repeat: 1, ease: 'Sine.easeInOut', delay: 220 });
+    this.tweens.add({ targets: c, alpha: 0, delay: duree, duration: 300, onComplete: () => c.destroy() });
+    return c;
+  }
+
+  // Un geste : 'hoche' (oui de la tête), 'saut' (de joie), 'penche' (vers l'autre), 'tremble',
+  // 'recule', 'bras' (les bras levés : il faut `quoi`, ce que corpsHD sait dessiner), 'salut'.
+  async geste(sprite, quel, quoi = null) {
+    const y = sprite.sol ?? sprite.y, x = sprite.x;
+    if (quel === 'hoche') return this.animer({ targets: sprite, y: y + 3, duration: 120, yoyo: true, repeat: 1 });
+    if (quel === 'saut') return this.animer({ targets: sprite, y: y - 26, duration: 180, yoyo: true, repeat: 1, ease: 'Quad.easeOut' });
+    if (quel === 'penche') { await this.animer({ targets: sprite, angle: sprite.flipX ? -6 : 6, duration: 200 }); await this.attendre(300); return this.animer({ targets: sprite, angle: 0, duration: 250 }); }
+    if (quel === 'tremble') return this.animer({ targets: sprite, x: x + 3, duration: 50, yoyo: true, repeat: 5 });
+    if (quel === 'recule') { await this.animer({ targets: sprite, x: x + (sprite.flipX ? 16 : -16), duration: 160, ease: 'Quad.easeOut' }); return; }
+    if (quel === 'bras' && quoi) {
+      const avant = sprite.texture.key;
+      sprite.setTexture(corpsHD(this, quoi, 'leves'));
+      await this.animer({ targets: sprite, y: y - 8, duration: 160, yoyo: true, ease: 'Quad.easeOut' });
+      await this.attendre(500);
+      sprite.setTexture(avant);
+      return;
+    }
+    if (quel === 'salut') {
+      const main = this.add.text(sprite.x + (sprite.flipX ? -1 : 1) * sprite.displayWidth * 0.35, sprite.y - sprite.displayHeight * 0.75, '👋', style(24, '#ffffff')).setOrigin(0.5).setDepth(9);
+      await this.animer({ targets: main, angle: { from: -25, to: 25 }, duration: 140, yoyo: true, repeat: 2 });
+      main.destroy();
+    }
+  }
+
+  // Une réplique : le texte, la voix du personnage (avec son intonation), son émotion et son
+  // geste, et il se tourne vers celui à qui il parle. Puis on attend le clic.
+  // o : { sprite, vers, personne, ton, emotion, geste, quoi, entete }
+  async replique(entete, texte, o = {}) {
+    this.ecrire(entete, texte);
+    if (o.sprite && o.vers) this.regarderVers(o.sprite, o.vers);
+    if (o.vers && o.sprite && o.vers.setFlipX && o.ecoute !== false) this.regarderVers(o.vers, o.sprite);
+    if (!this.rapide && o.personne) Son.jouer('voix', { personne: o.personne, ton: o.ton || 'neutre', duree: Math.min(2, 0.4 + texte.length * 0.012) });
+    if (o.sprite && o.emotion) this.emotion(o.sprite, o.emotion);
+    if (o.sprite && o.geste) this.geste(o.sprite, o.geste, o.quoi);
+    if (o.attendre !== false) await this.attendreClic();
+  }
+
+  // Une bulle de pensée au-dessus d'un personnage : trois petites bulles qui montent, puis un
+  // nuage avec une image dedans (le trésor promis, le shop rêvé...). Renvoie la bulle (on la
+  // ferme avec fermerPensee).
+  pensee(sprite, image, { echelle = 2, teinte = null } = {}) {
+    const cote = sprite.flipX ? -1 : 1;
+    const x0 = sprite.x + cote * sprite.displayWidth * 0.25, y0 = sprite.y - sprite.displayHeight - 6;
+    const bx = x0 + cote * 70, by = y0 - 80;
+    const c = this.add.container(0, 0).setDepth(9);
+    [[x0 + cote * 6, y0 - 4, 4], [x0 + cote * 20, y0 - 18, 6], [x0 + cote * 38, y0 - 36, 8]].forEach(([x, y, r], i) => {
+      const b = this.add.circle(x, y, r, 0xfff8e8).setStrokeStyle(2, 0x3b2410).setScale(0);
+      c.add(b);
+      this.tweens.add({ targets: b, scale: 1, duration: 180, delay: i * 140, ease: 'Back.easeOut' });
+    });
+    const nuage = this.add.container(bx, by).setScale(0);
+    const g = this.add.graphics();
+    g.fillStyle(0x3b2410);
+    for (const [dx, dy, r] of [[-38, 4, 26], [0, -10, 32], [38, 2, 26], [-16, 18, 24], [18, 18, 24]]) g.fillCircle(dx, dy, r + 2.5);
+    g.fillStyle(0xfff8e8);
+    for (const [dx, dy, r] of [[-38, 4, 26], [0, -10, 32], [38, 2, 26], [-16, 18, 24], [18, 18, 24]]) g.fillCircle(dx, dy, r);
+    nuage.add(g);
+    const img = this.add.image(0, 4, image).setScale(echelle);
+    if (teinte) img.setTint(teinte);
+    nuage.add(img);
+    c.add(nuage);
+    this.tweens.add({ targets: nuage, scale: 1, duration: 300, delay: 420, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: img, y: 0, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 720 });
+    return c;
+  }
+  fermerPensee(c) {
+    if (!c || !c.active) return;
+    this.tweens.add({ targets: c, alpha: 0, duration: 300, onComplete: () => c.destroy() });
+  }
+
   // Un mot qui surgit, façon bande dessinée (« PLOUF ! », « BAM ! »).
   onomatopee(x, y, mot, couleur = '#fff4dc') {
     const son = sonDuMot(mot); if (son) Son.jouer(son);
