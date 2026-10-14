@@ -118,7 +118,7 @@ class PromenadeScene extends Cinematique {
       this.cible = null;
       cam.setScroll(piece.x, 0);
       this.titre.setText(piece.nom);
-      this.conseil.setText(piece.marche === false ? "Regarde la rue par la fenêtre · la porte d'entrée pour sortir · les boutons pour te retourner" : '◀ ▶ ou clique au sol pour marcher · clique sur les choses pour les regarder · sur une porte pour changer de pièce');
+      this.conseil.setText(piece.marche === false ? "La rue, par la fenêtre · « Sortir dans la rue » par la porte · les boutons pour te retourner" : '◀ ▶ ou clique au sol pour marcher · clique sur les choses pour les regarder · sur une porte pour changer de pièce');
       this.heros.setVisible(piece.marche !== false);
       for (const b of this.boutonsComptoir) { b.fond.setVisible(index === P_COMPTOIR); b.label.setVisible(index === P_COMPTOIR); }
       if (piece.marche !== false) { this.heros.x = xHeros; this.heros.setFlipX(xHeros > piece.x + 480); }
@@ -188,7 +188,7 @@ class PromenadeScene extends Cinematique {
           await aller(bord(sens));
         } else if (scenario < 0.7) {
           // La chasse à la souris
-          const s = dansLaFenetre(this.add.image(bord(-sens), sol, 'souris_0').setOrigin(0.5, 1).setScale(1.5).setTint(0x9a94b8).setFlipX(sens < 0).setDepth(7.4));
+          const s = dansLaFenetre(this.add.image(bord(-sens), sol, 'souris_0').setOrigin(0.5, 1).setScale(2).setTint(0xc8c0dc).setFlipX(sens < 0).setDepth(7.4));
           let ks = 0;
           const trot = this.time.addEvent({ delay: 70, loop: true, callback: () => { if (s.active) s.setTexture('souris_' + (++ks % 2)); } });
           this.rue.push(trot);

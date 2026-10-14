@@ -268,7 +268,9 @@ const INSTRUMENTS = {
   orgue: { voix: [['sine', 1, 0.6], ['sine', 2, 0.35], ['sine', 3, 0.12], ['sine', 0.5, 0.25]], attaque: 0.25, decroissance: 0.2, tenue: 0.9, relache: 0.6, volume: 0.1 },
   bourdon: { voix: [['sawtooth', 1, 0.3], ['sawtooth', 1, 0.3, 9], ['sine', 0.5, 0.5]], attaque: 1.2, decroissance: 0.5, tenue: 0.9, relache: 1.5, volume: 0.1, filtre: 600 },
   // (v0.57) L'ocarina, façon Zelda : rond, doux, un souffle au début ; il remplace le célesta, trop strident dans l'aigu
-  ocarina: { voix: [['sine', 1, 0.9], ['triangle', 1, 0.12], ['sine', 2, 0.04]], attaque: 0.05, decroissance: 0.12, tenue: 0.85, relache: 0.25, volume: 0.22, vibrato: 0.005, filtre: 1600, bruit: { duree: 0.06, volume: 0.025, filtre: 1800 } },
+  // (v0.58 : plus rond encore — presque une sinusoïde pure, l'attaque plus douce, filtré plus bas,
+  // un léger souffle grave ; un peu plus fort, car le grave paraît moins fort à l'oreille)
+  ocarina: { voix: [['sine', 1, 0.95], ['sine', 2, 0.05], ['triangle', 0.5, 0.04]], attaque: 0.08, decroissance: 0.15, tenue: 0.88, relache: 0.32, volume: 0.28, vibrato: 0.004, filtre: 1100, bruit: { duree: 0.08, volume: 0.02, filtre: 900 } },
   // Les graves du marché noir : un violoncelle qui chante bas, une contrebasse pincée
   violoncelle: { voix: [['sawtooth', 1, 0.45], ['sawtooth', 1, 0.25, 7], ['sine', 0.5, 0.25]], attaque: 0.18, decroissance: 0.3, tenue: 0.85, relache: 0.5, volume: 0.15, filtre: 900, vibrato: 0.005 },
   pizzicato: { voix: [['triangle', 1, 0.8], ['sine', 1, 0.4], ['sine', 2, 0.08]], attaque: 0.005, decroissance: 0.5, tenue: 0.05, relache: 0.3, volume: 0.28, filtre: 700 },
@@ -409,7 +411,7 @@ const THEMES = {
   },
   recitEtonne: {
     base: NOTE.C / 2, gamme: GAMMES.lydien, tempo: 84, temps: 4, phrase: 8,
-    accords: [0, 1, 0, 4, 0, 1, 3, 4], octaveMelodie: 2,
+    accords: [0, 1, 0, 4, 0, 1, 3, 4], octaveMelodie: 1,
     instruments: { melodie: 'ocarina', accompagnement: 'harpe', basse: 'basse' }, reverb: 0.35,
     motif: { 0: [[0, 7, 1], [1, 10, 1], [2, 14, 2]], 1: [[0, 13, 1], [1, 10, 1], [2, 11, 2]], 4: [[0, 7, 1], [1, 11, 1], [2, 14, 1], [3, 17, 1]], 5: [[0, 16, 2], [2, 14, 2]] },
     rythmes: [[1, 1, 2], [2, 2], [0.5, 0.5, 1, 2]], silence: 0.15, lie: 1.15,
@@ -468,7 +470,7 @@ const THEMES = {
   // Les cinématiques : cordes et célesta, mystère et émerveillement (Harry Potter, le Hobbit)
   cinematique: {
     base: NOTE.D / 2, gamme: GAMMES.lydien, tempo: 72, temps: 4, phrase: 8,
-    accords: [0, 0, 1, 1, 4, 4, 3, 3], octaveMelodie: 2,
+    accords: [0, 0, 1, 1, 4, 4, 3, 3], octaveMelodie: 0,   // (v0.58 : deux octaves plus bas, l'ocarina dans son registre chaud)
     instruments: { melodie: 'ocarina', accompagnement: 'cordes', basse: 'basse' },
     motif: { 0: [[0, 7, 1], [1, 11, 1], [2, 14, 1], [3, 13, 1]], 1: [[0, 11, 2], [2, 9, 2]], 4: [[0, 7, 1], [1, 11, 1], [2, 14, 1], [3, 17, 1]], 5: [[0, 16, 2], [2, 14, 2]] },
     rythmes: [[2, 2], [1, 1, 2], [4]], silence: 0.3,
