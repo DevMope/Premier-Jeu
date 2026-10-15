@@ -973,7 +973,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       if (n) { const fz = n[0] * s + n[2] * c; if (!(y < ey - 1.5 * k || fz < 0.5)) return null; return n; }
       return pointe || epaules; }, { decalage: -0.4, motif: (x, y) => (hachage(Math.floor(x / k), Math.floor(y / k), 37) > 0.9 ? -0.8 : 0) });
     // tout le visage dans l'ombre de la capuche : seuls les yeux luisent
-    for (let y = 0; y < yT; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'peau' || t.mat(x, y) === 'cheveux' || t.mat(x, y) === 'levres') t.poser(x, y, t.mat(x, y), y < ey + 2 * k ? 0 : Math.min(t.teinte(x, y), 1));
+    for (let y = 0; y < yT; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'peau' || t.mat(x, y) === 'cheveux' || t.mat(x, y) === 'levres') { if (y < ey + 1.5 * k) t.poser(x, y, t.mat(x, y), 0); else if (y < ey + 3 * k) t.poser(x, y, t.mat(x, y), Math.max(0, t.teinte(x, y) - 1)); }
     for (let y = yT + 6 * k - 2 * k; y <= yT + 6 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'cape' && hachage(Math.floor(x / k), 0, 43) > 0.5) { t.c[y * L + x] = null; t.m[y * L + x] = null; }
   } else if (costume === 'serpent') {
     // La capuche verte des archers, à longue pointe qui retombe dans le dos, et le camail à dents
@@ -985,7 +985,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const bordC = []; for (let y = 0; y < yT; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'cape' && ['peau', 'cheveux', 'blanc', 'pupille', 'iris'].some(m => t.mat(x - 1, y) === m || t.mat(x + 1, y) === m || t.mat(x, y + 1) === m)) bordC.push([x, y]);
     for (const [x, y] of bordC) for (let e = 0; e < k; e++) if (t.mat(x - (s > 0 ? e : -e), y) === 'cape') t.poser(x - (s > 0 ? e : -e), y, 'cape', 5);
     // la longue pointe de la capuche, qui retombe dans le dos jusqu'aux omoplates
-    if (!dos) for (let j = 0; j < 16 * k; j++) { const u = j / (16 * k); const px = X(0, -P.rx * (0.9 + u * 0.6)) - Math.sin(u * 2.2) * 2 * k * (s > 0 ? 1 : -1), py = cy - P.ry * 0.7 + j * 0.95; t.forme('cape', ellipsoide(px, py, Math.max(0.6 * k, 2.4 * k * (1 - u * 0.8)), 1.1 * k), { decalage: -0.5 }); }
+    if (!dos && Math.abs(s) > 0.3) for (let j = 0; j < 16 * k; j++) { const u = j / (16 * k); const px = X(0, -P.rx * (0.9 + u * 0.6)) - Math.sin(u * 2.2) * 2 * k * (s > 0 ? 1 : -1), py = cy - P.ry * 0.7 + j * 0.95; t.forme('cape', ellipsoide(px, py, Math.max(0.6 * k, 2.4 * k * (1 - u * 0.8)), 1.1 * k), { decalage: -0.5 }); }
     t.forme('cape', (x, y) => (y >= yT - 1 * k && y <= yT + 6 * k && Math.abs(x + 0.5 - cx) < ep + 2 * k - Math.max(0, yT + 1 * k - y) * 0.8 && !(y > yT + 4 * k && Math.floor(x / k) % 3 === 1) ? [(x + 0.5 - cx) / (ep + 3 * k), 0, 0.8] : null), { decalage: -0.2 });
     if (!dos) t.forme('emeraude', ellipsoide(X(0, prof * 1.05), yT + 1 * k, 1.1 * k, 1.1 * k), { decalage: 0.5, ombre: false });
   } else if (costume === 'mentor') {

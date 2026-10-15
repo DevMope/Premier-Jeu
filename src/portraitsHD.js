@@ -544,6 +544,7 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
 
   // 8. Les bras et les mains : la pose, selon l'humeur et le peuple
   brasBuste(t, g, v, cx, pose || poseBuste(g, expression));
+  if (g.bande) plisBuste(t, g, v, cx);
 
   // 9. Les peaux particulières : la fourrure (poils en hachures), les bandelettes de la momie
   if (TR.fourrure) for (let y = 0; y < HD_H; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'peau' || t.mat(x, y) === 'noir') {
@@ -974,31 +975,77 @@ function coiffeHD(t, g, v, cx) {
 function capucheBuste(t, g, v, cx, ey) {
   const main = g.bande === 'main';
   // (des teintes sourdes : pas de vert pomme ni de violet, des étoffes sérieuses)
-  if (main) { t.rampes.cape = rampe(0x2a2830); t.rampes.habit = rampe(0x26242c); } else { t.rampes.cape = rampe(0x3a5620); t.rampes.habit = rampe(0x4a6428); }
-  const ouverture = (x, y) => ((x + 0.5 - cx - 1) / (v.rx - 1.5)) ** 2 + ((y + 0.5 - v.cy - 3) / (v.ry + 1)) ** 2 <= 1 && y > ey - (main ? 4 : 7);
-  const sommet = v.cy - v.ry - (main ? 13 : 4);
-  t.forme('cape', (x, y) => {
-    if (y > v.torse + 10 || y < sommet) return null;
-    if (ouverture(x, y)) return null;
+  if (main) { t.rampes.cape = rampe(0x2c2b30); t.rampes.habit = rampe(0x262629); } else { t.rampes.cape = rampe(0x3a5620); t.rampes.habit = rampe(0x4a6428); }
+  // L'ouverture : un ovale un peu plus petit que le visage (le bord de la capuche le recouvre), qui
+  // s'arrête au front (au ras des sourcils pour la Main Noire) et sous le menton
+  const ox = cx + 1, oy = v.cy + 4, orx = v.rx - 2.5, ory = v.ry - 0.5;
+  const haut = ey - (main ? 5 : 8), bas = v.bouche + 7;
+  const arche = x => haut + ((x + 0.5 - ox) / orx) ** 2 * 5;   // (le bord du front s'arrondit vers les tempes)
+  const dans = (x, y) => y > arche(x) && y < bas && ((x + 0.5 - ox) / orx) ** 2 + ((y + 0.5 - oy) / ory) ** 2 <= 1;
+  const anneau = (x, y) => (Math.sqrt(((x + 0.5 - ox) / orx) ** 2 + ((y + 0.5 - oy) / ory) ** 2) - 1) * orx;   // (la distance au bord, en pixels)
+  const hc = v.cy - 3, hrx = v.rx + 6.5, hry = v.ry + 5.5;
+  const largeurCamail = y => hrx - 1 + Math.max(0, y - v.cy) * 0.42;
+  const finCamail = x => v.torse + 8 + (main ? Math.round(hachage(x, 0, 43) * 4) : (Math.floor(x / 3) % 2 ? 3 : 0));
+  const forme = (x, y) => {
+    if (dans(x, y)) return null;
     const dx = x + 0.5 - cx;
-    // la tête de la capuche, un peu plus large que le crâne
-    const tete = (dx / (v.rx + 5)) ** 2 + ((y + 0.5 - v.cy + 1) / (v.ry + 5)) ** 2 <= 1;
-    // la pointe (Main Noire : haute, qui part en arrière ; Serpent : un petit bec)
-    const h = v.cy - v.ry - y, pointe = h > 0 && Math.abs(dx + h * (main ? 0.45 : 0.3)) < (main ? 12 - h * 0.85 : 9 - h * 2);
-    // le camail qui tombe sur les épaules
-    const camail = y >= v.cy && y <= v.torse + 7 && Math.abs(dx) < v.rx + 4 + (y - v.cy) * 0.3;
+    const tete = (dx / hrx) ** 2 + ((y + 0.5 - hc) / hry) ** 2 <= 1;
+    const h = hc - hry + 3 - y;   // (au-dessus du sommet de la tête)
+    const pointe = h > 0 && (main ? h < 16 && Math.abs(dx + 2 + h * 0.55) < 11 - h * 0.7 : h < 4 && Math.abs(dx + 3 + h * 0.8) < 7 - h * 1.6);
+    const camail = y >= v.cy && y <= finCamail(x) && Math.abs(dx) < largeurCamail(y);
     if (!(tete || pointe || camail)) return null;
-    return [dx / (v.rx + 8), (y - v.cy) / 40, 0.8];
-  }, { decalage: main ? -0.6 : -0.3, motif: (x, y) => (hachage(x, y, main ? 37 : 19) > 0.9 ? -0.8 : 0) });
-  // le bord replié autour du visage
-  for (let y = 0; y < HD_H; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'cape' && [[1, 0], [-1, 0], [0, 1]].some(([a, b]) => t.mat(x + a, y + b) && t.mat(x + a, y + b) !== 'cape' && ouverture(x + a, y + b))) t.poser(x, y, 'cape', main ? 3 : 5);
-  if (main) {
-    // le bas du camail en lambeaux, et le visage dans l'ombre
-    for (let y = v.torse + 4; y <= v.torse + 10; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'cape' && hachage(x, 0, 43) * 6 < y - v.torse - 4) t.poser(x, y, 'habit', 1);
-    for (let y = 0; y < v.torse; y++) for (let x = 0; x < HD_L; x++) { const m = t.mat(x, y); if (['peau', 'cheveux', 'levres', 'bouche'].includes(m)) t.poser(x, y, m, y < ey - 3 ? 0 : y < ey + 4 ? Math.min(t.k[y * t.l + x], 1) : Math.max(0, Math.min(t.k[y * t.l + x], 3) - 1)); }
-  } else {
-    t.rampes.emeraude = rampeVive(0x2ec860);
-    t.forme('emeraude', ellipsoide(cx, v.torse + 1, 2.2, 2.2), { decalage: 0.5 });
+    // un volume : la tête ronde, le camail qui s'évase sur les épaules
+    const nx = dx / (y > v.cy ? largeurCamail(y) : hrx);
+    return [nx * 0.9, y < v.cy ? (y - hc) / hry * 0.8 : 0.25, Math.sqrt(Math.max(0.1, 1 - nx * nx * 0.8))];
+  };
+  // Les plis : autour du visage, le bord replié (clair), l'ombre derrière lui, puis des plis en
+  // anneaux sur le crâne ; sur le camail, des plis qui tombent vers les épaules
+  const plis = (x, y) => {
+    const r = anneau(x, y);
+    if (y < v.cy + 10 && r < 2.2) return 0.9;
+    if (y < v.cy + 10 && r < 3.4) return -1;
+    if (y < v.cy + 4) return r % 6 < 1 ? -0.6 : r % 6 < 2 ? 0.35 : 0;
+    const u = (x + 0.5 - cx) / largeurCamail(y);
+    const f = Math.sin(u * 8.5 + (y - v.cy) * 0.06 + Math.sin(y * 0.3) * 0.3);
+    return f > 0.82 ? 0.55 : f < -0.86 ? -0.9 : hachage(x, y, main ? 37 : 19) > 0.93 ? -0.5 : 0;
+  };
+  t.forme('cape', forme, { decalage: main ? -0.5 : -0.25, motif: plis });
+  // L'ombre que la capuche jette sur le visage : le haut du visage s'assombrit sous le bord
+  for (let y = 0; y < v.torse; y++) for (let x = 0; x < HD_L; x++) {
+    const m = t.mat(x, y);
+    if (!['peau', 'cheveux', 'levres', 'bouche', 'iris'].includes(m) || !dans(x, y)) continue;
+    const sous = y - arche(x), k = t.k[y * t.l + x];
+    if (main) { if (sous < 9 && m !== 'iris') t.poser(x, y, m, sous < 6 ? 0 : Math.min(k, 1)); else if (sous < 13) t.poser(x, y, m, Math.max(0, k - 1)); }
+    else if (sous < 3 || -anneau(x, y) < 1.5) t.poser(x, y, m, Math.max(0, k - 2));
+  }
+  // (rien ne dépasse : une oreille ou une mèche hors de l'ouverture passe sous l'étoffe)
+  for (let y = 0; y < v.torse; y++) for (let x = 0; x < HD_L; x++) if (['peau', 'cheveux'].includes(t.mat(x, y)) && !dans(x, y)) t.poser(x, y, 'cape', 2);
+  if (!main) {
+    t.rampes.emeraude = rampeVive(0x2ec860); t.rampes.argent = rampeVive(0xc8ccd4);
+    t.forme('argent', ellipsoide(cx, v.torse + 1, 3, 3), { decalage: 0.3 });
+    t.forme('emeraude', ellipsoide(cx, v.torse + 1, 2, 2), { decalage: 0.6 });
+  }
+}
+
+// (v0.61) Les plis des étoffes des deux bandes : la robe, les manches, la tunique et le gilet
+// prennent des faux plis, des coutures et de l'usure (sinon, de grands aplats sans vie)
+function plisBuste(t, g, v, cx) {
+  const main = g.bande === 'main';
+  for (let y = v.torse - 2; y < HD_H; y++) for (let x = 0; x < HD_L; x++) {
+    const m = t.mat(x, y), k = t.k[y * t.l + x];
+    if (m === 'habit') {
+      const f = Math.sin((x - cx) * 0.55 + y * 0.18 + Math.sin(y * 0.21 + x * 0.1) * 1.4);
+      if (f > 0.86) t.poser(x, y, m, Math.min(5, k + 1)); else if (f < -0.9) t.poser(x, y, m, Math.max(0, k - 1));
+      if (main && hachage(x, y, 71) > 0.95) t.poser(x, y, m, Math.max(0, k - 1));
+    } else if (m === 'peau' && main) {
+      // les gantelets de fer sombre de la Main Noire, avec leurs articulations
+      t.rampes.gantelet = rampe(0x5c606c);
+      t.poser(x, y, 'gantelet', (x + y) % 3 === 0 ? Math.max(0, k - 2) : k);
+    } else if (m === 'gilet') {
+      if (hachage(x, y, 83) > 0.9) t.poser(x, y, m, Math.max(0, k - 1));
+      // une couture claire le long de l'ouverture du gilet
+      if (t.mat(x - 1, y) === 'habit' || t.mat(x + 1, y) === 'habit') { if (y % 2) t.poser(x, y, m, Math.min(5, k + 2)); }
+    }
   }
 }
 
