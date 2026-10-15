@@ -46,8 +46,11 @@ class StoryScene extends Cinematique {
     this.planMoyen = this.add.container(0, 0).setDepth(-0.5);
     this.premierPlan = this.add.container(0, 0).setDepth(6.5);
     this.biome = v.zone ? ZONES[v.zone].biome : 'comte';
+    // (v0.78) chaque destination a sa variante du décor de son royaume : arbres, repère, sol, faune
+    this.variante = varianteRecit(v.zone);
     this.planterPlanMoyen(this.biome);
     this.planterPremierPlan(this.biome);
+    planterVarianteRecit(this, v.zone, this.biome);
     this.meteoBiome(this.biome);
 
     this.perso = imageCorps(this, -60, 360, v, 6);
@@ -610,7 +613,10 @@ class StoryScene extends Cinematique {
     const b = BIOMES[biome] || BIOMES.comte;
     const rocheux = neige || ['desert', 'badlands', 'mines', 'antre', 'opale'].includes(biome);
     const teinte = neige ? 0xc8d4e0 : melangeCouleur(b.arbres || b.loin, 0x0a0a10, sombre ? 0.45 : 0.3);
+    const va = this.variante;
+    if (va && va.arbres) return;   // (ses arbres à elle sont plantés par planterVarianteRecit)
     for (let x = -60; x < 1100; x += 70 + (x * 3) % 50) {
+      if (va && va.repere && x > 480 && x < 880) continue;   // (on laisse voir le repère au loin)
       const h = 60 + (x * 7) % 70, r = 22 + (x * 5) % 18;
       g.fillStyle(teinte, 0.8);
       if (rocheux) { g.fillTriangle(x - r * 1.4, 332, x, 332 - h * (neige ? 1 : 0.6), x + r * 1.4, 332); g.fillStyle(melangeCouleur(teinte, 0xffffff, 0.15), 0.8).fillTriangle(x - r * 0.5, 332, x, 332 - h * (neige ? 1 : 0.6), x + r * 0.2, 332); }
