@@ -16,6 +16,7 @@ class BanqueScene extends Phaser.Scene {
     vignette(this, 0.8, 0);
     // Bannières de velours, et deux chandeliers dorés
     for (const x of [90, 870]) this.add.image(x, 20, 'banniereHD').setOrigin(0.5, 0).setScale(2);
+    for (const x of [90, 870]) this.add.image(x, 96, creerLogoBanque(this)).setScale(1.5);   // (v0.66 : le logo de la banque, brodé sur les bannières)
     for (const x of [230, 730]) poserLuminaire(this, x, -30, 3, 0);
 
     // Les banquiers nains, perchés très haut

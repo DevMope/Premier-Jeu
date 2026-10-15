@@ -88,7 +88,23 @@ class DodoScene extends Cinematique {
 
     // Un tapis tressé, un coffre, et la vieille épée de Garrick accrochée au mur.
     this.tapis = this.add.image(440, SOL_CHAMBRE + 42, tapisHD(this, luxe)).setScale(2).setDepth(1.4);
-    this.add.image(120, SOL_CHAMBRE + 4, coffreHD(this, niveauAmelioration(this.G, 'coffre'))).setOrigin(0.5, 1).setScale(3).setDepth(2);
+    // (v0.66) le coffre, au pied du lit ; à sa place, contre le mur de gauche, la cheminée
+    this.add.image(548, SOL_CHAMBRE + 44, coffreHD(this, niveauAmelioration(this.G, 'coffre'))).setOrigin(0.5, 1).setScale(2.4).setDepth(4.5);
+    creerChemineeHD(this);
+    this.add.image(112, SOL_CHAMBRE + 6, 'chemineeHD').setOrigin(0.5, 1).setScale(2).setDepth(1.6);
+    this.add.image(112, SOL_CHAMBRE - 2, 'buchesHD').setOrigin(0.5, 1).setScale(2).setDepth(1.65);
+    this.feuCheminee = null;
+    this.allumerCheminee = () => {
+      if (this.feuCheminee) return;
+      // les flammes et leur lueur restent visibles quand la bougie est soufflée (au-dessus du noir)
+      const f = this.add.image(112, SOL_CHAMBRE - 6, 'flammeHD_0').setOrigin(0.5, 1).setScale(2.2).setDepth(6.5);
+      const l = this.add.image(112, SOL_CHAMBRE - 40, 'halo').setScale(2.6).setTint(0xff8a30).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD).setDepth(6.6);
+      let k = 0;
+      this.time.addEvent({ delay: 120, loop: true, callback: () => { if (f.active) f.setTexture('flammeHD_' + (++k % 3)); } });
+      this.tweens.add({ targets: l, alpha: 0.22, scale: 2.4, duration: 260, yoyo: true, repeat: -1 });
+      this.feuCheminee = f;
+    };
+    if (feuAllume(this.G)) this.allumerCheminee();
     // Le mannequin de l'armure (du côté qu'elle avait hier soir), et le compte des pièces.
     this.coteAffiche = this.G.armureCoteVu || coteArmure(this.G);
     // (audit v0.61) le soir, tout ce qui a été reçu est en place (les livraisons de ce matin

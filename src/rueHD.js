@@ -70,6 +70,53 @@ function porteRue(t, x0, y0, l, h, { arc = false, mat = 'cheneSombre', graine = 
   t.poser(x0 + l - 6, y0 + Math.round(h * 0.5), 'laiton', 5); t.poser(x0 + l - 5, y0 + Math.round(h * 0.5), 'laiton', 3);   // la poignée
 }
 
+// (v0.66) La place du marché vue à travers l'arche : au fond les maisons de la place et des
+// guirlandes de fanions ; au milieu les étals rayés (bâchés la nuit) ; devant, la foule (le jour),
+// des caisses, un tonneau ; la nuit, une seule lanterne veille.
+function peindrePlaceMarche(t, dedans, x0, x1, y0, H, jour) {
+  const P = (x, y, m, k) => { if (dedans(x, y)) t.poser(x, y, m, Math.max(0, Math.min(5, k))); };
+  Object.assign(t.rampes, { fanionR: rampe(0xc83a2a), fanionB: rampe(0x2a5ab8), fanionJ: rampe(0xe0b030), fanionV: rampe(0x3a8a3a),
+    foule1: rampe(0x8a3a3a), foule2: rampe(0x3a5a8a), foule3: rampe(0x5a7a3a), foule4: rampe(0x7a5a8a), peauF: rampe(0xd8a070), bache: rampe(0x5a4a3a) });
+  const n = jour ? 0 : -2;   // la nuit, tout est plus sombre
+  // les maisons du fond de la place : pignons, fenêtres
+  for (const [hx, hl, hh, mat] of [[x0 - 2, 22, 40, 'platre'], [x0 + 18, 26, 50, 'pierre'], [x0 + 42, 20, 36, 'platre'], [x0 + 60, 28, 46, 'pierre']]) {
+    const sol = H - 38;
+    for (let y = sol - hh; y < sol; y++) for (let x = hx; x < hx + hl; x++) {
+      const pignon = y < sol - hh + 10 && Math.abs(x + 0.5 - (hx + hl / 2)) > (y - (sol - hh)) * hl / 20;
+      if (pignon) continue;
+      const toit = y < sol - hh + 12;
+      const fen = !toit && (x - hx) % 8 > 3 && (x - hx) % 8 < 7 && (y - sol + hh - 14) % 12 < 5 && y < sol - 6;
+      P(x, y, toit ? 'tuile' : fen ? (jour ? 'ciel' : 'vitre') : mat, (toit ? 2 : fen ? (jour ? 1 : 4) : 2) + n + (x === hx ? 1 : 0));
+    }
+  }
+  // les guirlandes de fanions, tendues d'un côté à l'autre
+  if (jour) for (const [ya, creux] of [[y0 + 30, 8], [y0 + 46, 6]]) for (let x = x0; x < x1; x++) {
+    const u = (x - x0) / (x1 - x0), y = Math.round(ya + Math.sin(u * Math.PI) * creux);
+    P(x, y, 'chene', 1);
+    if ((x - x0) % 6 < 4) { const m = ['fanionR', 'fanionB', 'fanionJ', 'fanionV'][Math.floor((x - x0) / 6) % 4]; for (let k = 1; k <= 4 - Math.abs(((x - x0) % 6) - 1.5) * 1.2; k++) P(x, y + k, m, 3); }
+  }
+  // le sol de la place
+  for (let y = H - 38; y < H; y++) for (let x = x0; x < x1; x++) P(x, y, 'pierre', 2 + (jour ? 1 : -1) + ((x + y * 3) % 9 === 0 ? -1 : 0));
+  // les étals : un auvent rayé (bâché la nuit), une table garnie
+  for (const [ex, el, c1] of [[x0 + 2, 26, 'fanionR'], [x0 + 32, 24, 'fanionB'], [x0 + 60, 28, 'fanionV']]) {
+    const ya = H - 58;
+    for (let y = ya; y < ya + 8; y++) for (let x = ex - (y - ya) / 2; x < ex + el + (y - ya) / 2; x++) P(Math.round(x), y, jour ? (Math.floor((x - ex) / 4) % 2 ? c1 : 'parchemin') : 'bache', (jour ? 3 : 2) + (y === ya ? 1 : 0) - (y === ya + 7 ? 1 : 0));
+    for (const px of [ex, ex + el - 2]) for (let y = ya + 8; y < H - 16; y++) { P(px, y, 'chene', 2); P(px + 1, y, 'chene', 1); }
+    for (let y = H - 26; y < H - 16; y++) for (let x = ex - 2; x < ex + el + 2; x++) P(x, y, jour ? 'chene' : 'bache', y === H - 26 ? 4 : 2);
+    if (jour) for (let x = ex; x < ex + el; x += 3) P(x, H - 27, ['fanionJ', 'fanionR', 'peauF', 'fanionV'][(x * 7) % 4], 4);   // la marchandise
+  }
+  // la foule, le jour : des silhouettes qui flânent entre les étals
+  if (jour) for (const [fx, fm, grand] of [[x0 + 14, 'foule1', 0], [x0 + 27, 'foule2', 2], [x0 + 46, 'foule3', 1], [x0 + 57, 'foule4', 0], [x0 + 74, 'foule1', 2], [x0 + 85, 'foule2', 1]]) {
+    const pied = H - 4, tete = pied - 20 - grand * 2;
+    for (let y = tete + 4; y < pied; y++) for (let x = fx - 3; x <= fx + 3; x++) if (Math.abs(x - fx) < (y < tete + 12 ? 3 : 2.5)) P(x, y, fm, 2 + (x < fx ? 1 : 0));
+    for (let y = tete; y < tete + 4; y++) for (let x = fx - 2; x <= fx + 1; x++) P(x, y, 'peauF', 3);
+  }
+  // des caisses et un tonneau, devant
+  for (const [cx2, cl, ch] of [[x0 + 4, 8, 7], [x1 - 14, 9, 8], [x1 - 10, 6, 5]]) for (let y = H - ch; y < H; y++) for (let x = cx2; x < cx2 + cl; x++) P(x, y, 'chene', (x === cx2 || y === H - ch ? 4 : 2) + n / 2 + ((x + y) % 4 === 0 ? -1 : 0));
+  // la nuit : une lanterne qui veille sur la place endormie
+  if (!jour) { for (let y = H - 50; y < H - 16; y++) P(x0 + 50, y, 'fer', 2); for (let y = H - 56; y < H - 50; y++) for (let x = x0 + 48; x < x0 + 53; x++) P(x, y, 'vitre', 5); }
+}
+
 function creerRueHD(scene) {
   if (scene.textures.exists('rueForgeHD')) return;
   const toile = (l, h) => { const t = toileDecor(l, h); Object.assign(t.rampes, RAMPES_RUE); return t; };
@@ -118,8 +165,16 @@ function creerRueHD(scene) {
     // la porte basse au fond, son judas grillé
     porteRue(t, 41, fy1 - 22, 13, 22, { arc: true, graine: 831 });
     for (let x = 45; x < 51; x += 2) for (let y = fy1 - 18; y < fy1 - 14; y++) t.poser(x, y, 'fer', 2);
-    // l'écriteau de l'impasse, cloué de travers sur le mur de gauche
-    planche(t, 6, 30, 22, 8, 'chene', { graine: 834 });
+    // (v0.66) deux piliers de pierre ferment l'entrée de l'impasse contre les maisons voisines, et une
+    // poutre les relie en haut : l'écriteau y pend
+    for (const [px0, px1] of [[0, 9], [L - 9, L]]) for (let y = 6; y < H; y++) for (let x = px0; x < px1; x++) {
+      const rang = Math.floor(y / 7), joint = y % 7 === 0 || (x - px0 + (rang % 2) * 4) % 9 === 0;
+      t.poser(x, y, 'pierre', joint ? 1 : (x === px0 ? 5 : x === px1 - 1 ? 2 : 4) - (y > H - 6 ? 1 : 0));
+    }
+    for (const px0 of [0, L - 9]) for (let x = px0 - 1; x < px0 + 10; x++) for (let y = 3; y < 7; y++) t.poser(x, y, 'pierre', y === 3 ? 5 : 3);   // les chapeaux des piliers
+    planche(t, 4, 10, L - 8, 5, 'cheneSombre', { graine: 835, noeuds: 2 });   // la poutre
+    for (const x of [30, 52]) for (let y = 15; y < 19; y++) t.poser(x, y, 'fer', 2);   // les chaînes de l'écriteau
+    planche(t, 26, 19, 30, 8, 'chene', { graine: 834 });
     t.contour(); t.texture(scene, 'rueImpasseHD');
   }
 
@@ -172,9 +227,7 @@ function creerRueHD(scene) {
     moellons(t, 10, 50, L - 20, H - 50, 850, 'taille', 16);
     // le fronton triangulaire et son médaillon d'or
     for (let y = 18; y < 50; y++) { const v = (y - 18) / 32, xa = Math.round(100 - v * 96), xb = Math.round(100 + v * 96); for (let x = xa; x <= xb; x++) t.poser(x, y, 'taille', x < xa + 2 ? 5 : y > 46 ? 1 : 3); }
-    t.forme('or', ellipsoide(100, 36, 8, 8), { decalage: 0.3 });
-    for (let x = 97; x <= 103; x++) t.poser(x, 36, 'or', 1);
-    for (let y = 33; y <= 39; y++) t.poser(100, y, 'or', 1);
+    // (le médaillon du fronton : le logo de la banque, posé par-dessus — voir construireRue)
     for (let x = 2; x < L - 2; x++) { t.poser(x, 50, 'taille', 5); t.poser(x, 51, 'taille', 2); t.poser(x, 52, 'taille', 1); }   // la corniche
     // deux colonnes cannelées, leurs chapiteaux
     for (const cx of [52, 148]) {
@@ -207,13 +260,7 @@ function creerRueHD(scene) {
       }
       if (!pilier && y < haut(x)) continue;
       const vide = !pilier && ((y >= cy && Math.abs(x + 0.5 - cx) < r) || Math.hypot(x + 0.5 - cx, y + 0.5 - cy) < r);
-      if (vide) {
-        // derrière l'arche : la place du marché, ses étals rayés
-        const etal = y > H - 44 && y < H - 22 && Math.floor((x - 30) / 22) % 2 === 0 && y > H - 44 + Math.abs(((x - 30) % 22) - 11) * 0.45;
-        const rayure = Math.floor((x - 30) / 4) % 2;
-        t.poser(x, y, etal ? (rayure ? 'toileVive' : 'toileVive2') : y > H - 22 ? 'pierre' : 'ciel', etal ? 3 : y > H - 22 ? (jour ? 3 : 1) : jour ? 3 + (y < 60 ? 1 : 0) : 1);
-        continue;
-      }
+      if (vide) { t.poser(x, y, 'ciel', jour ? 3 + (y < 60 ? 1 : 0) : 1); continue; }   // (la place, peinte par-dessus plus bas)
       const ang = Math.atan2(y + 0.5 - cy, x + 0.5 - cx), d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
       const claveau = !pilier && y < cy + 2 && d < r + 12 ? (ang + Math.PI) * 6 : -1;
       const joint = claveau >= 0 ? (claveau % 1) < 0.12 || Math.abs(d - r - 12) < 0.8 : (y % 8 === 0 || (x + Math.floor(y / 8) * 7) % 14 === 0);
@@ -224,6 +271,7 @@ function creerRueHD(scene) {
       if (y > H - 8 && pilier) i = (y === H - 8 ? 5 : 2);                            // le socle
       t.poser(x, y, 'pierre', Math.max(0, Math.min(5, i)));
     }
+    peindrePlaceMarche(t, (x, y) => (x >= 22 && x < L - 22) && ((y >= cy && Math.abs(x + 0.5 - cx) < r) || Math.hypot(x + 0.5 - cx, y + 0.5 - cy) < r), cx - r, cx + r, cy - r, H, jour);
     for (let y = cy - r - 12; y < cy - r + 2; y++) for (let x = cx - 6; x <= cx + 6; x++) t.poser(x, y, 'pierre', x < cx - 3 ? 5 : 3);   // la clé de voûte
     // la bannière frangée d'or (le nom du marché s'y écrit par-dessus)
     for (let y = cy - r + 4; y < cy - r + 26; y++) for (let x = cx - 30; x <= cx + 30; x++) {
@@ -274,7 +322,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   poser('rueImpasseHD', P.impasse);
   poser(jour ? 'rueForgeHD_jour' : 'rueForgeHD', P.forge);
   scene.add.image(o + 990, sol + 30, 'bancRue').setOrigin(0.5, 1).setScale(2.6);
-  const f = dessinerFacade(scene, o + P.shop, sol, G.nomShop);
+  const f = dessinerFacade(scene, o + P.shop, sol, G.nomShop, undefined, { fumee: feuAllume(G, jour) });   // (v0.66 : la fumée, seulement si le feu brûle)
   poser('rueMaisonHD_1', P.maison1);
   scene.add.image(o + P.fontaine, sol + 30, 'fontaineHD').setOrigin(0.5, 1).setScale(2.4);
   poser('rueBanqueHD', P.banque);
@@ -283,10 +331,11 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   lumieres.push([f.porteX, 400, 2.4], [o + P.forge, sol - 10, 1.8], [o + P.banque, sol - 150, 1.4]);
   // les noms : écriteaux peints, lettres gravées, bannière
   ecriteauRue(scene, o + P.maison0 + 4, sol - 112, 'Les Pommeroy', { taille: 10 });
-  ecriteauRue(scene, o + P.impasse - 46, sol - 150, 'Impasse du Corbeau', { taille: 9, angle: -6, fond: '#a88a5a' });
+  ecriteauRue(scene, o + P.impasse - 13, sol - 176, 'Impasse du Corbeau', { taille: 9, fond: '#a88a5a' });
   ecriteauRue(scene, o + P.forge - 128, sol - 186, 'Forge de Thorgal', { taille: 10 });
   ecriteauRue(scene, o + P.maison1 + 26, sol - 112, 'Les Brindeloup', { taille: 10 });
   ecriteauRue(scene, o + P.banque, sol - 254, 'BANQUE CENTRALE GOYENNE', { taille: 12, grave: true });
+  scene.add.image(o + P.banque, sol - 263, creerLogoBanque(scene)).setOrigin(0.5, 1).setScale(1.5).setDepth(8.3);
   ecriteauRue(scene, o + P.arche, sol - 250, 'Marché des Mastres', { taille: 13, grave: true });
   // les flammes de la forge, le jour : des étincelles qui jaillissent
   if (jour) scene.time.addEvent({ delay: 260, loop: true, callback: () => {
@@ -312,4 +361,54 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   ici.regarder(o + P.arche - 150, 120, 300, 350, jour ? "L'arche du Marché des Mastres. On entend déjà les marchands crier leurs prix." : "L'arche du Marché des Mastres. La place dort ; les étals rouvriront à l'aube.");
   if (jour) ici.porte(o + P.arche, sol, 'Le marché ▶', 'Marche');
   return { porteShop: { x: f.porteX, y: f.porteY }, lumieres };
+}
+
+// (v0.66) Le logo de la Banque Centrale Goyenne, dessiné par le joueur : l'inquisiteur barbu à
+// capuche et monocle d'or, sur son tas de pièces (40 × 32, pixel par pixel ; '.' = transparent)
+const LOGO_BANQUE = [
+  '...................bb...................',
+  '........................................',
+  '...................nn...................',
+  '............bb....nlhn....bb............',
+  '.................nhlhhn.................',
+  '................nhhlhhhn................',
+  '...............nhhhhhhhhn...............',
+  '..............nhhhhhhhhhhn..............',
+  '.........bb..nlhhhHHHHhhhHn..bb.........',
+  '.............nlhhHnnnnHhhHn.............',
+  '.............nlhHnnnnpoHhHn.............',
+  '.............nlHnnnnonnoHHn.............',
+  '.............nlHnOpnopOoHHn.............',
+  '........bb...nlHnnnnonnoHHn...bb........',
+  '.............nlHnnnnnoonHHn.............',
+  '............nlhnwwwwwwggohhn............',
+  '...........nlhhnwwwwwwggnbhhn...........',
+  '..........nlhhhnwwGwwwggnohhhn..........',
+  '.........nlhhhhnwwGwGwggnbhhhhn.........',
+  '........nlhhhhhnwwGwGwggnohhhHHn........',
+  '........nlhhhhohnwGwGggnhbhhhHHn........',
+  '........nlhhhhhhnwwwwggnhohhhHHn........',
+  '........nlhhhhohnwwwwgnnnnnhhHHn........',
+  '........nlhhhhhhhnwwggnobonhhHHn........',
+  '........nlhhhhohhnwwggnbbbnhhHHn........',
+  '........nlhhhhhhhhnwgnnobonhhHHn........',
+  '........nlhhhhhhhhnwgnnnnnnhhHHn........',
+  '........nlhnnnnnnnnnnnnnnnnnnHHn........',
+  '........nnnoOOooooooooOOooooonnn........',
+  '......nnooooobbroOOoooooobbOOooonn......',
+  '.....noOObbooooooobbbooouoooobbOOon.....',
+  '.....nooooooooobboooOOobbooooooooon.....',
+];
+const PALETTE_LOGO_BANQUE = { n: 0x1b1020, h: 0x34345a, H: 0x24223a, l: 0x494a78, o: 0xd8a21b, O: 0xf5d34b, p: 0xfef4af, b: 0x8a5914, w: 0xefeef4, g: 0xc4c2d0, G: 0x8f8ea0, r: 0xc13a3a, u: 0x2f4a9b };
+function creerLogoBanque(scene) {
+  if (scene.textures.exists('logoBanque')) return 'logoBanque';
+  const L = LOGO_BANQUE[0].length, H = LOGO_BANQUE.length;
+  const tex = scene.textures.createCanvas('logoBanque', L, H), ctx = tex.getContext();
+  LOGO_BANQUE.forEach((ligne, y) => [...ligne].forEach((c, x) => {
+    const coul = PALETTE_LOGO_BANQUE[c];
+    if (coul === undefined) return;
+    ctx.fillStyle = '#' + coul.toString(16).padStart(6, '0'); ctx.fillRect(x, y, 1, 1);
+  }));
+  tex.refresh();
+  return 'logoBanque';
 }

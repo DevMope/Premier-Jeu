@@ -171,6 +171,9 @@ const AMELIORATIONS = {
 // - `reconfort` : après un mauvais jour (un mort, ou la faillite frôlée), une part de réputation retrouvée ;
 // - `sante` : pour plus tard, quand on vieillira : une bonne chambre ralentit la fatigue des vieux jours.
 const CHAMBRE = { forme: 0.15, reve: 0.25, reconfort: 0.15, remise: 0.1, encheres: 1.15, sante: 0.25 };
+// (v0.66) La cheminée de la chambre : une planche de bois le soir, et la nuit passe au chaud
+// (plus de chances de se réveiller en forme, la fumée monte du toit, le chat dort devant les braises).
+const CHEMINEE = { bois: 1, forme: 0.15 };
 // La réputation gagnée à chaque amélioration terminée.
 const REPUTATION_AMELIORATION = 0.15;
 

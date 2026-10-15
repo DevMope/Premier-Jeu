@@ -434,7 +434,21 @@ function creerFacadeHD(scene, n = 3) {
       const rangee = Math.floor(y / 3), joint = y % 3 === 0 || (x + (rangee % 2) * 3) % 6 === 0;
       t.poser(x, y, 'brique', joint ? 1 : (x < x0 + 3 ? 4 : 3));
     }
-    else pierres(t, x0, y0, l, h, 712);
+    else if (n >= 2) pierres(t, x0, y0, l, h, 712);
+    else {
+      // (v0.66) sur la chaumière et l'ardoise, la souche descend jusqu'au pan du toit (elle ne flotte
+      // plus à droite) : chaque colonne s'arrête là où le toit la reçoit, avec un bourrelet de toit
+      const mat = n === 0 ? 'chaume' : 'ardoiseToit', g0 = 58, d0 = FACADE.L - g0;
+      const surface = x => 46 + Math.max(0, (x - d0) / (FACADE.L - 3 - d0)) * (112 - 46);
+      for (let x = x0; x < x0 + l; x++) {
+        const bas = Math.round(surface(x)) + 2;
+        for (let y = y0; y < bas; y++) {
+          const rangee = Math.floor((y - y0) / 6), dec = rangee % 2 ? 5 : 0, bx = (x - x0 + dec) % 10, by = (y - y0) % 6;
+          t.poser(x, y, 'pierre', bx === 0 || by === 0 ? 1 : 2 + Math.round(fbm(x * 0.2, y * 0.2, 712 + rangee) * 2) + (by === 1 ? 1 : 0) - (bx === 9 || by === 5 ? 1 : 0) - (x === x0 + l - 1 ? 1 : 0));
+        }
+        for (let k = 0; k < 3; k++) t.poser(x, bas + k, mat, k === 0 ? 4 : 2);
+      }
+    }
     for (let x = x0 - 2; x < x0 + l + 2; x++) { t.poser(x, y0, 'pierre', 5); t.poser(x, y0 + 1, 'pierre', 3); }
   }
   // La fenêtre-comptoir : volets ouverts, vitre éclairée, appui de comptoir
@@ -522,7 +536,7 @@ function creerAccessoiresFacade(scene) {
 
 // La façade du comptoir, vue de dehors. `cx` = centre, `sol` = bas des murs.
 // Renvoie la porte, l'image, l'enseigne et les zones de la façade (à l'écran).
-function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3) {
+function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3, { fumee = true } = {}) {
   creerFacadeHD(scene, n);
   const image = scene.add.image(cx, sol + 2, 'facadeHD_' + n).setOrigin(0.5, 1).setScale(2);
   const gauche = cx - FACADE.L, haut = sol + 2 - FACADE.H * 2;
@@ -544,7 +558,7 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   // Un filet de fumée qui monte de la cheminée
   creerHalo(scene);
   const [chx, chy, chl] = ecran(chemineeFacade(n));
-  scene.time.addEvent({ delay: 700, loop: true, callback: () => {
+  if (fumee) scene.time.addEvent({ delay: 700, loop: true, callback: () => {
     if (!image.active) return;
     const f = scene.add.image(chx + chl / 2, chy, 'halo').setScale(0.15).setTint(0xd0d0d0).setAlpha(0.5);
     scene.tweens.add({ targets: f, y: f.y - 70, x: f.x + 20, scale: 0.45, alpha: 0, duration: 2600, onComplete: () => f.destroy() });

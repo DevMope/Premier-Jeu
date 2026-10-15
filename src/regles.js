@@ -1439,6 +1439,7 @@ function nuit(G) {
     taxe = Math.round(Math.max(0, G.argent - dette - TAXE_CONFRERIE.franchise) * TAXE_CONFRERIE.taux[p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre']);
     if (taxe > 0) payer(G, taxe, 'taxe');
   }
+  if (G.feu === G.jour) G.nuitAuChaud = G.jour + 1;   // (v0.66 : la nuit au chaud, pour le réveil)
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1497,7 +1498,10 @@ function reveilDuMatin(G, mauvaisJour) {
   const n = niveauAmelioration(G, 'chambre');
   const r = G.reveil = { jour: G.jour, forme: null, reve: null, encheres: null, reconfort: 0, lignes: [] };
   // En forme : un client de plus, ou une remise au marché
-  if (n && Math.random() < CHAMBRE.forme * n) {
+  const auChaud = G.nuitAuChaud === G.jour;   // (v0.66 : le feu de cheminée a brûlé cette nuit)
+  if (auChaud) r.lignes.push(chatAdopte(G) ? `Le feu a crépité toute la nuit ; ${nomChat(G)} a dormi devant les braises. Tu te réveilles bien reposé${eJ(G)}.` : `Le feu a crépité toute la nuit : tu te réveilles bien reposé${eJ(G)}.`);
+  const chanceForme = CHAMBRE.forme * n + (auChaud ? CHEMINEE.forme : 0);
+  if (chanceForme && Math.random() < chanceForme) {
     r.forme = Math.random() < 0.5 ? 'client' : 'remise';
     r.lignes.push(r.forme === 'client' ? "Tu t'es réveillé en pleine forme : tu serviras un client de plus aujourd'hui !"
       : `Tu t'es réveillé en pleine forme : les marchands te feront ${Math.round(CHAMBRE.remise * 100)} % de remise aujourd'hui !`);
@@ -1785,6 +1789,16 @@ function aCacher(G) {
   return Object.values(G.interdits || {}).some(n => n > 0) || !!m.colis || G.tresors.some(t => t.vole && !t.reparation);
 }
 function cacherMarchandise(G) { G.cachette = G.jour + 1; }
+
+// --- (v0.66) La cheminée : une planche de bois, et le feu brûle toute la nuit ---
+function feuAllume(G, aussiHier = false) { return G.feu === G.jour || (aussiHier && G.feu === G.jour - 1); }
+function allumerFeu(G) {
+  if (G.feu === G.jour) return 'Le feu brûle déjà.';
+  if ((G.materiaux.bois || 0) < CHEMINEE.bois) return "Plus une planche de bois : Thorgal en vend à la forge.";
+  G.materiaux.bois -= CHEMINEE.bois;
+  G.feu = G.jour;
+  return null;
+}
 
 // La visite : le capitaine annonce une amende (la première fois) ou une fouille (les suivantes).
 // Renvoie { fouille, amende, saisis } ; la fouille saisit les objets interdits.

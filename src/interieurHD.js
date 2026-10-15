@@ -1326,3 +1326,60 @@ function creerCoinForgeHD(scene) {
     t.texture(scene, 'etagerePots');
   }
 }
+
+// --- (v0.66) La cheminée de la chambre : jambages de pierre, manteau de chêne, hotte, âtre noirci ---
+// (+ deux bûches, et trois images de flammes pour quand on l'allume)
+function creerChemineeHD(scene) {
+  if (scene.textures.exists('chemineeHD')) return;
+  {
+    const L = 84, H = 96, t = toileDecor(L, H);
+    t.rampes.suie = [0x06050a, 0x0e0b10, 0x1a1418, 0x261e20, 0x3a2e2a, 0x4a3a32];
+    // la hotte, qui monte en se resserrant jusqu'au plafond
+    for (let y = 0; y < 34; y++) for (let x = 16 + Math.round((34 - y) * 0.18); x < L - 16 - Math.round((34 - y) * 0.18); x++) {
+      const rang = Math.floor(y / 6), joint = y % 6 === 0 || (x + (rang % 2) * 5) % 10 === 0;
+      t.poser(x, y, 'pierre', joint ? 1 : 3 + (hachage(Math.floor(x / 10), rang, 901) > 0.7 ? 1 : 0) - (x > L / 2 + 14 ? 1 : 0));
+    }
+    // le manteau de chêne, qui déborde
+    planche(t, 4, 34, L - 8, 7, 'chene', { graine: 902, noeuds: 2 });
+    for (let x = 4; x < L - 4; x++) { t.poser(x, 34, 'chene', 5); t.poser(x, 41, 'chene', 0); }
+    // les jambages et le linteau de pierre
+    for (let y = 42; y < H; y++) for (let x = 8; x < L - 8; x++) {
+      const dansAtre = x >= 20 && x < L - 20 && y >= 52;
+      if (dansAtre) continue;
+      const rang = Math.floor((y - 42) / 7), joint = (y - 42) % 7 === 0 || (x + (rang % 2) * 6) % 12 === 0;
+      t.poser(x, y, 'pierre', joint ? 1 : (x < 12 ? 5 : x > L - 12 ? 2 : 4) - (y > H - 4 ? 1 : 0));
+    }
+    // l'âtre : le fond noirci de suie, plus clair au milieu (les pierres chauffées)
+    for (let y = 52; y < H - 4; y++) for (let x = 20; x < L - 20; x++) {
+      const d = Math.hypot((x - L / 2) / 22, (y - (H - 6)) / 40);
+      t.poser(x, y, 'suie', Math.max(0, Math.min(5, Math.round(3 - d * 3 + ((x + y) % 7 === 0 ? -1 : 0)))));
+    }
+    // la pierre de l'âtre, devant
+    for (let y = H - 4; y < H; y++) for (let x = 2; x < L - 2; x++) t.poser(x, y, 'pierre', y === H - 4 ? 5 : 2);
+    t.contour(); t.texture(scene, 'chemineeHD');
+  }
+  {
+    const t = toileDecor(40, 12);
+    t.rampes.buche = rampe(0x6a4426); t.rampes.coeurBois = rampe(0xc8965a);
+    for (const [y0, x0, x1] of [[4, 2, 36], [7, 5, 38]]) {
+      for (let x = x0; x < x1; x++) for (let y = y0 - 2; y <= y0 + 2; y++) t.poser(x, y, 'buche', 3 + (y === y0 - 2 ? 1 : y === y0 + 2 ? -2 : 0) + ((x * 3 + y) % 7 === 0 ? -1 : 0));
+      for (let y = y0 - 2; y <= y0 + 2; y++) for (let x = x1 - 2; x < x1; x++) t.poser(x, y, 'coeurBois', 3);
+    }
+    t.contour(); t.texture(scene, 'buchesHD');
+  }
+  for (let k = 0; k < 3; k++) {
+    const t = toileDecor(30, 30);
+    t.rampes.flamme = [0x7a1800, 0xc03a08, 0xf06a10, 0xffa830, 0xffe090, 0xfffff0];
+    for (const [cx, h, lx] of [[9, 18 + k * 2, 5], [15, 26 - k * 3, 7], [21, 16 + ((k + 1) % 3) * 3, 5]]) {
+      for (let y = 29 - h; y < 30; y++) {
+        const v = (y - (29 - h)) / h, w = lx * Math.sin(Math.min(1, v * 1.3) * Math.PI * 0.5) * (1 - Math.max(0, v - 0.85) * 3);
+        const ox = Math.sin(v * 5 + k * 2) * 1.2 * (1 - v);
+        for (let x = Math.round(cx + ox - w); x <= Math.round(cx + ox + w); x++) {
+          const bord = Math.abs(x - cx - ox) / Math.max(1, w);
+          t.poser(x, y, 'flamme', Math.max(0, Math.min(5, Math.round(5 - bord * 3 - (1 - v) * 1.5))));
+        }
+      }
+    }
+    t.texture(scene, 'flammeHD_' + k);
+  }
+}

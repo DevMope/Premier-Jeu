@@ -179,6 +179,9 @@ class NightScene extends Phaser.Scene {
       this.lignesStock[id] = this.add.text(x + 124, y, '', style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(1, 0.5);
     });
     this.texteReserve = this.add.text(x1 + 18, 398, '', style(13, '#3b2410', { fontStyle: 'bold' }));
+    // (v0.66) la cheminée de la chambre : une planche de bois, et la nuit passe au chaud
+    this.texteFeu = this.matin ? null : this.add.text(x2 - 18, 398, '', style(13, '#8a3a10', { fontStyle: 'bold' })).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+    if (this.texteFeu) this.texteFeu.on('pointerdown', () => { const err = allumerFeu(this.G); if (err) return this.annoncer(err); Son.jouer('glisse'); this.tout(); });
     const btn = this.add.image((x1 + x2) / 2, 444, plaqueBouton(this, x2 - x1 - 36)).setScale(2).setInteractive({ useHandCursor: true });
     this.texteAgrandir = this.add.text((x1 + x2) / 2, 444, '', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
     btn.on('pointerdown', () => {
@@ -204,6 +207,7 @@ class NightScene extends Phaser.Scene {
     }
     const plein = stockTotal(G) >= G.capacite;
     this.texteReserve.setText(`Réserve : ${stockTotal(G)} / ${G.capacite}${plein ? ' — pleine !' : ''}`);
+    if (this.texteFeu) this.texteFeu.setText(feuAllume(G) ? '🔥 Le feu brûle' : '🔥 Allumer le feu (1 bois)').setColor(feuAllume(G) ? '#a05010' : (G.materiaux.bois || 0) > 0 ? '#8a3a10' : '#a08070');
     const a = agrandissementSuivant(G);
     this.texteAgrandir.setText(a ? `Agrandir à ${a.capacite} places — ${a.prix} p.` : 'Réserve au maximum');
     this.boutonAgrandir.setAlpha(a && peutPayer(G, a.prix) ? 1 : 0.5);

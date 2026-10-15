@@ -272,7 +272,16 @@ class PromenadeScene extends Cinematique {
     const luxe = niveauAmelioration(G, 'chambre');
     this.regarder(250, SOL_CHAMBRE - 130, 340, 130, `Ton lit : ${AMELIORATIONS.chambre.niveaux[luxe]}. Il t'attend...`);
     if (G.mannequin || G.armure.length) this.regarder(740, SOL_CHAMBRE - 200, 110, 200, G.armure.length ? `${NOMS_ARMURE[coteArmure(G)]} : ${G.armure.length} / ${ARMURE.length} pièces.` : "Le mannequin de Garrick attend sa première pièce d'armure.");
-    this.regarder(66, SOL_CHAMBRE - 80, 110, 84, `Ton coffre (${AMELIORATIONS.coffre.niveaux[niveauAmelioration(G, 'coffre')]}).`);
+    this.regarder(500, SOL_CHAMBRE - 30, 100, 70, `Ton coffre, au pied du lit (${AMELIORATIONS.coffre.niveaux[niveauAmelioration(G, 'coffre')]}).`);
+    // (v0.66) la cheminée : une planche de bois, et le feu brûle toute la nuit
+    const zf = this.add.rectangle(112, SOL_CHAMBRE - 90, 160, 180, 0xffffff, 0).setDepth(8.6).setInteractive({ useHandCursor: true });
+    zf.on('pointerdown', () => {
+      if (this.transition) return;
+      this.allerVers(220);
+      if (feuAllume(G)) return this.dire('Le feu crépite doucement. La nuit sera chaude.');
+      this.dire(`La cheminée est froide. ${G.materiaux.bois || 0} planche${(G.materiaux.bois || 0) > 1 ? 's' : ''} de bois en réserve.`);
+      this.choixChat([`🔥 Allumer un feu (1 bois)`, () => { const err = allumerFeu(G); if (err) { Son.jouer('refus'); return this.dire(err); } Son.jouer('glisse'); this.allumerCheminee(); this.dire('Les flammes prennent. La fumée monte par la cheminée : la nuit sera douce' + (chatAdopte(G) ? `, et ${nomChat(G)} s'installe déjà devant l'âtre.` : '.')); }], ['Pas ce soir', () => this.dire('Tu laisses la cheminée froide. Le bois attendra.')]);
+    });
     this.regarder(360, 110, 80, 80, "La vieille épée de Garrick. Il t'a dit qu'elle portait chance.");
     const armes = G.armesLegendaires || [];
     if (armes.length) this.regarder(140, 88, 180, 88, `Tes armes légendaires (${armes.length} / ${Object.keys(ARMES_LEGENDAIRES).length}) : ${armes.map(id => armeLegendaire(id).nom).join(', ')}. La ville en parle : un peu plus de curieux au comptoir.`);
