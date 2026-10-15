@@ -8,10 +8,10 @@ const PIECES_PROMENADE = [
   { nom: "L'arrière-boutique", x: 960 },
   { nom: 'Le comptoir, la nuit', x: 1920, marche: false },
   { nom: "L'atelier", x: 2880 },
-  { nom: 'Dehors, sous les étoiles', x: 3840 },
+  { nom: 'Dehors, sous les étoiles', x: 3840, largeur: 2900 },   // (v0.65 : toute la rue, la caméra suit)
 ];
 const P_CHAMBRE = 0, P_ARRIERE = 1, P_COMPTOIR = 2, P_ATELIER = 3, P_DEHORS = 4;
-const LARGEUR_PROMENADE = 4800;
+const LARGEUR_PROMENADE = 3840 + 2900;
 const SOL_PROMENADE = 505;
 
 class PromenadeScene extends Cinematique {
@@ -121,13 +121,13 @@ class PromenadeScene extends Cinematique {
     const aller = () => {
       this.piece = index;
       this.cible = null;
-      cam.setScroll(piece.x, 0);
+      cam.setScroll(piece.largeur ? Phaser.Math.Clamp(xHeros - 480, piece.x, piece.x + piece.largeur - 960) : piece.x, 0);
       this.titre.setText(piece.nom);
       this.conseil.setText(piece.marche === false ? "La rue, par la fenêtre · « Sortir dans la rue » par la porte · les boutons pour te retourner" : '◀ ▶ ou clique au sol pour marcher · clique sur les choses pour les regarder · sur une porte pour changer de pièce');
       this.heros.setVisible(piece.marche !== false);
       for (const b of this.boutonsComptoir) { b.fond.setVisible(index === P_COMPTOIR); b.label.setVisible(index === P_COMPTOIR); }
-      if (piece.marche !== false) { this.heros.x = xHeros; this.heros.setFlipX(xHeros > piece.x + 480); }
-      if (this.compagnon) { this.compagnon.setVisible(piece.marche !== false); this.compagnon.x = Phaser.Math.Clamp(xHeros + (xHeros > piece.x + 480 ? 70 : -70), piece.x + 30, piece.x + 930); }
+      if (piece.marche !== false) { this.heros.x = xHeros; this.heros.setFlipX(xHeros > piece.x + (piece.largeur || 960) / 2); }
+      if (this.compagnon) { this.compagnon.setVisible(piece.marche !== false); this.compagnon.x = Phaser.Math.Clamp(xHeros + (xHeros > piece.x + 480 ? 70 : -70), piece.x + 30, piece.x + (piece.largeur || 960) - 30); }
       this.arreterRue();
       if (index === P_COMPTOIR) this.animerRue();
     };
@@ -347,19 +347,70 @@ class PromenadeScene extends Cinematique {
     this.regarder(o + 700, 380, 240, 120, `${G.tresors.length} / ${placesAtelier(G)} objets de valeur dans l'atelier.`);
   }
 
+  // (v0.65, étape 10c) Toute la rue, de l'impasse du marché noir jusqu'à l'arche du marché.
   pieceDehors() {
-    const G = this.G, o = 3840;
-    const g = this.add.graphics();
-    dessinerComte(g, o, 0, 960, 470, 1);
-    this.add.image(o, 470, pavesHD(this, 960, 70)).setOrigin(0).setScale(2);
-    for (let i = 0; i < 24; i++) {
-      const e = this.add.image(o + Math.random() * 960, 10 + Math.random() * 160, 'eclat').setScale(0.6 + Math.random() * 0.5);
+    const G = this.G, o = 3840, W = PIECES_PROMENADE[P_DEHORS].largeur, sol = 470;
+    creerRueHD(this);
+    creerDecorPlaceHD(this);   // (avant la façade : il redessine aussi les tonneaux, qu'elle utilise)
+    for (let k = 0; k < Math.ceil(W / 960); k++) dessinerComte(this.add.graphics(), o + k * 960, 0, 960, 470, 1);
+    for (let k = 0; k < Math.ceil(W / 960); k++) this.add.image(o + k * 960, 470, pavesHD(this, 960, 70)).setOrigin(0).setScale(2);
+    for (let i = 0; i < 70; i++) {
+      const e = this.add.image(o + Math.random() * W, 10 + Math.random() * 150, 'eclat').setScale(0.6 + Math.random() * 0.5);
       this.tweens.add({ targets: e, alpha: 0.15, duration: 700 + Math.random() * 1200, yoyo: true, repeat: -1 });
     }
-    const f = dessinerFacade(this, o + 520, 470, G.nomShop);
+    const poser = (cle, cx) => this.add.image(o + cx, sol + 2, cle).setOrigin(0.5, 1).setScale(2);
+    const ouvert = marcheNoirCeSoir(G);
+    // de gauche à droite
+    poser('rueMaisonHD_0', 160);
+    const impasse = poser('rueImpasseHD', 420);
+    poser('rueForgeHD', 680);
+    const f = dessinerFacade(this, o + 1320, sol, G.nomShop);
     this.porteShop = { x: f.porteX, y: f.porteY };
-    this.lumieres.push([f.porteX, 400, 2.4]);
-    this.regarder(o + 360, 200, 330, 270, `${G.nomShop}, ton shop. ${['Une humble chaumière', 'Une jolie maison', 'Une belle maison', 'La plus belle maison du village'][niveauFacade(G)]}.`);
+    poser('rueMaisonHD_1', 1820);
+    creerChatRueHD(this);   // (le banc de la rue est dessiné avec le chat de gouttière)
+    this.add.image(o + 990, sol + 30, 'bancRue').setOrigin(0.5, 1).setScale(2.6);
+    this.add.image(o + 2090, sol + 30, 'fontaineHD').setOrigin(0.5, 1).setScale(2.4);
+    poser('rueBanqueHD', 2400);
+    poser('rueArcheHD', 2740);
+    // les réverbères, et la lueur des fenêtres et des braises
+    for (const x of [560, 1060, 1640, 2240, 2600]) { this.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); this.lumieres.push([o + x, sol - 166, 1.6]); }
+    this.lumieres.push([f.porteX, 400, 2.4], [o + 680, sol - 10, 1.8], [o + 2400, sol - 150, 1.4]);
+    // la lanterne rouge de l'impasse, seulement les soirs où la porte dérobée s'ouvre
+    if (ouvert) {
+      const l = this.add.image(o + 420, sol - 120, 'halo').setScale(1.2).setTint(0xff3020).setAlpha(0.6).setBlendMode(Phaser.BlendModes.ADD).setDepth(9.5);
+      this.tweens.add({ targets: l, alpha: 0.35, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      this.add.rectangle(o + 420, sol - 120, 8, 12, 0xff4a2a).setDepth(9.6);
+    }
+    // ce qu'on regarde
+    this.regarder(o + 60, 160, 200, 310, Phaser.Utils.Array.GetRandom(['La maison des Pommeroy. Leur chien ronfle derrière la porte.', 'Une bougie veille chez la vieille Berthe. Elle tricote, comme chaque soir.']));
+    this.regarder(o + 370, 180, 100, 290, ouvert ? "Une lanterne rouge brûle au fond de l'impasse. La porte dérobée est ouverte ce soir..." : G.visiteMarcheNoir !== undefined ? "L'impasse est noire. La lanterne rouge est éteinte ce soir." : "Une impasse si sombre qu'on n'en voit pas le fond. On dit qu'une porte basse s'y ouvre, certains soirs.");
+    if (ouvert) {
+      const z = this.add.rectangle(o + 420, sol - 50, 60, 100, 0xffffff, 0).setDepth(8.6).setInteractive({ useHandCursor: true });
+      this.add.text(o + 420, sol - 160, '🏮 La porte dérobée', style(12, '#ffb0a0', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(8.6);
+      z.on('pointerdown', () => this.sortirVers('MarcheNoir', o + 420));
+    }
+    this.regarder(o + 520, 160, 320, 310, "La forge de Thorgal. Les braises rougeoient encore derrière les vantaux ; on l'entend ronfler à l'étage.");
+    this.regarder(o + 1100, 200, 440, 270, `${G.nomShop}, ton shop. ${['Une humble chaumière', 'Une jolie maison', 'Une belle maison', 'La plus belle maison du village'][niveauFacade(G)]}.`);
+    this.regarder(o + 1690, 160, 260, 310, Phaser.Utils.Array.GetRandom(["Chez les Brindeloup. On s'y dispute à voix basse : l'aîné veut partir à l'aventure.", "Les volets sont clos. Le cordonnier dort sur ses formes."]));
+    this.regarder(o + 2010, 360, 160, 110, 'La fontaine murmure dans la nuit. Au fond du bassin, des pièces luisent sous la lune.');
+    this.regarder(o + 2200, 120, 400, 350, 'La Banque Centrale Goyenne. Une lumière brûle encore : les nains comptent, même la nuit.');
+    const zb = this.add.rectangle(o + 2400, sol - 60, 90, 110, 0xffffff, 0).setDepth(8.65).setInteractive({ useHandCursor: true });
+    this.add.text(o + 2400, sol - 140, 'Entrer', style(12, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(8.6);
+    zb.on('pointerdown', () => this.sortirVers('Banque', o + 2400));
+    this.regarder(o + 2600, 120, 290, 350, "L'arche du Marché des Mastres. La place dort ; les étals rouvriront à l'aube.");
+  }
+
+  // (v0.65) Entrer dans la banque ou par la porte dérobée : la promenade s'arrête là, le soir attend.
+  async sortirVers(page, x) {
+    if (this.transition || this.fini) return;
+    this.transition = true;
+    this.allerVers(x); await this.attendreArrivee();
+    Son.jouer('porte');
+    this.fini = true;
+    const nuit = this.scene.get('Nuit');
+    if (nuit && nuit.lieu) Sauvegarde.planifier(this.G, nuit.lieu);
+    this.cameras.main.fadeOut(300);
+    this.cameras.main.once('camerafadeoutcomplete', () => { this.scene.stop(); this.scene.launch(page); });
   }
 
   // Une chose à regarder : on y va, et une petite phrase s'affiche.
@@ -377,7 +428,7 @@ class PromenadeScene extends Cinematique {
   allerVers(x) {
     const piece = PIECES_PROMENADE[this.piece];
     if (piece.marche === false) return;
-    this.cible = Phaser.Math.Clamp(x, piece.x + 40, piece.x + 920);
+    this.cible = Phaser.Math.Clamp(x, piece.x + 40, piece.x + (piece.largeur || 960) - 40);
   }
 
   update(temps, delta) {
@@ -394,12 +445,14 @@ class PromenadeScene extends Cinematique {
     const piece = PIECES_PROMENADE[this.piece];
     if (piece.marche === false) dx = 0;
     if (dx) {
-      this.heros.x = Phaser.Math.Clamp(this.heros.x + dx, piece.x + 40, piece.x + 920);
+      this.heros.x = Phaser.Math.Clamp(this.heros.x + dx, piece.x + 40, piece.x + (piece.largeur || 960) - 40);
       this.heros.setFlipX(dx < 0);
       this.pas += delta;
       if (!this.heros.marche) pasDeMarche(this, this.heros, 260);
       this.heros.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
     } else this.heros.y = SOL_PROMENADE;
+    // (v0.65) dans la rue, la caméra suit tes pas
+    if (piece.largeur) this.cameras.main.scrollX = Phaser.Math.Clamp(this.heros.x - 480, piece.x, piece.x + piece.largeur - 960);
     this.suivre(delta);
   }
 
@@ -423,7 +476,7 @@ class PromenadeScene extends Cinematique {
     const c = this.compagnon;
     if (!c || !c.visible) return;
     const piece = PIECES_PROMENADE[this.piece];
-    const cible = Phaser.Math.Clamp(this.heros.x + (this.heros.flipX ? 64 : -64), piece.x + 30, piece.x + 930);
+    const cible = Phaser.Math.Clamp(this.heros.x + (this.heros.flipX ? 64 : -64), piece.x + 30, piece.x + (piece.largeur || 960) - 30);
     const reste = cible - c.x;
     c.temps += delta;
     if (Math.abs(reste) > 6) {
