@@ -12,7 +12,7 @@ const VARIANTES_RECIT = {
   vallon: { arbres: 'saules', repere: 'chaumiere', sol: { fleurs: [0xb070e0, 0xe84a5a, 0xf8e060, 0x80c0f8], dense: true }, faune: ['papillons'] },
   abbaye: { arbres: 'cypres', repere: 'clocher', sol: { fleurs: [0x9a70d8, 0xb090e8], dense: true }, faune: ['colombes'] },
   // --- La forêt des hommes et celle des Bannis ---
-  foret: { arbres: 'chenes', repere: null, sol: { champignons: true, fougeres: true }, faune: ['cerf', 'oiseaux'] },
+  foret: { arbres: 'chenes', repere: 'vieuxChene', sol: { champignons: true, fougeres: true }, faune: ['cerf', 'oiseaux'] },
   pont: { arbres: 'sapins', repere: 'pont', sol: { pierres: true, fougeres: true }, faune: ['corbeaux'] },
   chamans: { arbres: 'sapins', repere: 'totems', sol: { cranes: true, plumes: true }, faune: ['lucioles'] },
   // --- Les nains ---
@@ -31,7 +31,7 @@ const VARIANTES_RECIT = {
   fort: { arbres: 'pieux', repere: 'palissade', sol: { pierres: true, cranes: true }, faune: ['corbeaux'] },
   minesRouges: { arbres: null, repere: 'echafaudage', sol: { pierres: true, rouge: true }, faune: ['braises'] },
   // --- La neige ---
-  pics: { arbres: 'sapins', repere: null, sol: { pierres: true }, faune: ['aigle'] },
+  pics: { arbres: 'sapins', repere: 'tourNaine', sol: { pierres: true }, faune: ['aigle'] },
   col: { arbres: null, repere: 'cairn', sol: { pierres: true }, faune: ['corbeaux'], vent: true },
 };
 
@@ -270,14 +270,21 @@ function planterVarianteRecit(scene, zone, biome) {
   const b = BIOMES[biome] || BIOMES.comte;
   const sol = 332;
   const loin = melangeCouleur(melangeCouleur(b.loin, b.ciel, 0.25), 0x1a1420, 0.25);
-  if (v.repere) { const g = scene.add.graphics(); dessinerRepere(g, v.repere, loin, sol); scene.planMoyen.addAt(g, 0); }
+  if (v.repere) {
+    // (v0.80) le repère peint en pixel art, s'il existe ; sinon l'ancienne silhouette
+    const cle = typeof textureRepere === 'function' ? textureRepere(scene, v.repere) : null;
+    if (cle) {
+      const lac = v.repere === 'lac';
+      scene.planMoyen.addAt(scene.add.image(lac ? 640 : 690, sol + (lac ? 8 : 3), cle).setOrigin(0.5, 1).setTint(0xf0eeea), 0);
+    } else { const g = scene.add.graphics(); dessinerRepere(g, v.repere, loin, sol); scene.planMoyen.addAt(g, 0); }
+  }
   if (v.arbres) {
     const neige = ['montagne', 'glace', 'neige'].includes(biome);
     const sombre = ['foret', 'marais', 'repaire', 'tour', 'grotte'].includes(biome);
     const teinte = neige ? 0x6a7a74 : melangeCouleur(b.arbres || b.loin, 0x0a0a10, sombre ? 0.45 : 0.3);
     const g = scene.add.graphics();
     for (let x = -60; x < 1100; x += 80 + (x * 3) % 50) {
-      if (v.repere && x > 480 && x < 880 && (x * 7) % 3) continue;   // (on laisse voir le repère)
+      if (v.repere && x > 500 && x < 880) continue;   // (on laisse voir le repère)
       dessinerArbreVariante(g, v.arbres, x, sol, 60 + (x * 7) % 70, 22 + (x * 5) % 18, teinte);
     }
     scene.planMoyen.add(g);
