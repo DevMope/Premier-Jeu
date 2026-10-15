@@ -984,8 +984,12 @@ function capucheBuste(t, g, v, cx, ey) {
   const dans = (x, y) => y > arche(x) && y < bas && ((x + 0.5 - ox) / orx) ** 2 + ((y + 0.5 - oy) / ory) ** 2 <= 1;
   const anneau = (x, y) => (Math.sqrt(((x + 0.5 - ox) / orx) ** 2 + ((y + 0.5 - oy) / ory) ** 2) - 1) * orx;   // (la distance au bord, en pixels)
   const hc = v.cy - 3, hrx = v.rx + 6.5, hry = v.ry + 5.5;
-  const largeurCamail = y => hrx - 1 + Math.max(0, y - v.cy) * 0.42;
-  const finCamail = x => v.torse + 8 + (main ? Math.round(hachage(x, 0, 43) * 4) : (Math.floor(x / 3) % 2 ? 3 : 0));
+  // Le camail épouse les épaules : il part du cou, s'élargit en arrondi jusqu'au bord des épaules
+  // (sans déborder dans le vide), et son ourlet descend en arc, plus bas au milieu de la poitrine
+  // qu'au-dessus des bras
+  const epaule = (LARGEURS_BUSTE[g.race] || 20) + 2.5;
+  const largeurCamail = y => { const u = Math.min(1, Math.max(0, (y - v.cy) / (v.torse + 8 - v.cy))); const lisse = u * u * (3 - 2 * u); return hrx - 1 + (epaule - hrx + 1) * lisse; };
+  const finCamail = x => { const d = Math.min(1, Math.abs(x + 0.5 - cx) / epaule); return v.torse + 13 - d * d * 9 + (main ? Math.round(hachage(x, 0, 43) * 3) : (Math.floor(x / 3) % 2 ? 2 : 0)); };
   const forme = (x, y) => {
     if (dans(x, y)) return null;
     const dx = x + 0.5 - cx;
@@ -996,7 +1000,9 @@ function capucheBuste(t, g, v, cx, ey) {
     if (!(tete || pointe || camail)) return null;
     // un volume : la tête ronde, le camail qui s'évase sur les épaules
     const nx = dx / (y > v.cy ? largeurCamail(y) : hrx);
-    return [nx * 0.9, y < v.cy ? (y - hc) / hry * 0.8 : 0.25, Math.sqrt(Math.max(0.1, 1 - nx * nx * 0.8))];
+    // sur les épaules, l'étoffe s'arrondit et tourne vers le bas : plus sombre vers l'ourlet et les côtés
+    const ny = y < v.cy ? (y - hc) / hry * 0.8 : 0.15 + Math.max(0, y - v.torse) / 14 * 0.6 + Math.abs(nx) * 0.2;
+    return [nx * 0.95, ny, Math.sqrt(Math.max(0.1, 1 - nx * nx * 0.85 - ny * ny * 0.3))];
   };
   // Les plis : autour du visage, le bord replié (clair), l'ombre derrière lui, puis des plis en
   // anneaux sur le crâne ; sur le camail, des plis qui tombent vers les épaules
@@ -1005,9 +1011,11 @@ function capucheBuste(t, g, v, cx, ey) {
     if (y < v.cy + 10 && r < 2.2) return 0.9;
     if (y < v.cy + 10 && r < 3.4) return -1;
     if (y < v.cy + 4) return r % 6 < 1 ? -0.6 : r % 6 < 2 ? 0.35 : 0;
-    const u = (x + 0.5 - cx) / largeurCamail(y);
-    const f = Math.sin(u * 8.5 + (y - v.cy) * 0.06 + Math.sin(y * 0.3) * 0.3);
-    return f > 0.82 ? 0.55 : f < -0.86 ? -0.9 : hachage(x, y, main ? 37 : 19) > 0.93 ? -0.5 : 0;
+    // les plis partent du cou et s'ouvrent en éventail vers l'ourlet, en suivant la pente des épaules
+    const a = Math.atan2(x + 0.5 - cx, y + 0.5 - (v.cy + 2));
+    const f = Math.sin(a * 11 + Math.sin(y * 0.25) * 0.4);
+    const pres = finCamail(x) - y;   // (l'ourlet se retourne un peu : un liseré clair, puis l'ombre dessous)
+    return pres < 1 ? -0.8 : pres < 2 ? 0.6 : f > 0.8 ? 0.55 : f < -0.85 ? -0.9 : hachage(x, y, main ? 37 : 19) > 0.93 ? -0.5 : 0;
   };
   t.forme('cape', forme, { decalage: main ? -0.5 : -0.25, motif: plis });
   // L'ombre que la capuche jette sur le visage : le haut du visage s'assombrit sous le bord
@@ -1031,6 +1039,8 @@ function capucheBuste(t, g, v, cx, ey) {
 // prennent des faux plis, des coutures et de l'usure (sinon, de grands aplats sans vie)
 function plisBuste(t, g, v, cx) {
   const main = g.bande === 'main';
+  // (une main portée au menton est gantée elle aussi)
+  if (main) for (let y = Math.round(v.cy + v.ry - 1); y < v.torse - 2; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'peau') { t.rampes.gantelet = rampe(0x5c606c); t.poser(x, y, 'gantelet', t.k[y * t.l + x]); }
   for (let y = v.torse - 2; y < HD_H; y++) for (let x = 0; x < HD_L; x++) {
     const m = t.mat(x, y), k = t.k[y * t.l + x];
     if (m === 'habit') {
