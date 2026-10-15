@@ -225,6 +225,6 @@ class BanqueScene extends Phaser.Scene {
 
   fermer() {
     this.scene.stop();
-    this.scene.resume('Nuit');
+    this.scene.resume((this.sys.settings.data && this.sys.settings.data.retour) || 'Nuit');   // (v0.65 : ou la rue)
   }
 }

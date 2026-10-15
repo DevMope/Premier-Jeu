@@ -1299,7 +1299,7 @@ class MarcheScene extends Phaser.Scene {
     if (enTransition(this)) return;
     Sauvegarde.maintenant(this.G, 'Maison');
     this.cameras.main.fadeOut(300);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Nuit', { matin: true }));
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Rue', { depuis: 'marche' }));   // (v0.65 : on rentre à pied, par la rue)
   }
 
   ouvrir() {

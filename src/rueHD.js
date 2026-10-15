@@ -89,27 +89,37 @@ function creerRueHD(scene) {
     t.contour(); t.texture(scene, 'rueMaisonHD_' + k);
   }
 
-  // --- L'impasse : deux murs qui se resserrent, l'ombre, une porte basse tout au fond ---
+  // --- L'impasse : une ruelle étroite entre la maison et la forge, vue en perspective. Pas de toit à
+  // elle : ce sont les murs des deux voisins qui s'enfoncent dans l'ombre jusqu'à une porte basse.
   {
-    const L = 120, H = 176, t = toile(L, H);
-    for (let y = 30; y < H; y++) for (let x = 0; x < L; x++) {
-      const fond = x > 30 && x < 90;
-      if (fond) {
-        // le fond de l'impasse : des pierres noyées dans l'ombre, plus sombres vers le haut
-        const i = (y % 7 === 0 || (x + Math.floor(y / 7) * 5) % 11 === 0) ? 0 : 1 + (y > H - 60 ? 1 : 0);
-        t.poser(x, y, 'pierre', i);
-      } else {
-        const rangee = Math.floor(y / 8), bx = (x + (rangee % 2) * 6) % 13;
-        t.poser(x, y, 'pierre', bx === 0 || y % 8 === 0 ? 0 : 2 + (hachage(Math.floor(x / 13), rangee, 830) > 0.7 ? 1 : 0) - (x > 24 && x < 96 ? 1 : 0));
+    const L = 95, H = 112, t = toile(L, H);
+    const fx0 = 34, fx1 = 61, fy0 = 46, fy1 = H - 26;   // le mur du fond, tout petit, au bout
+    for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+      const u = y < fy1 ? 0 : (y - fy1) / (H - 1 - fy1);            // 0 au fond … 1 devant (le sol)
+      const gauche = fx0 * (y >= fy1 ? 1 - u : 1), droite = fx1 + (L - 1 - fx1) * (y >= fy1 ? u : 0);
+      if (y >= fy1 && x >= gauche && x <= droite) {
+        // le sol : des pavés qui rapetissent vers le fond, de plus en plus sombres
+        const rang = Math.floor(Math.pow(u, 0.6) * 8), bx = Math.floor((x - L / 2) / (3 + u * 9) + rang * 0.5);
+        t.poser(x, y, 'pierre', ((x - L / 2) / (3 + u * 9) + rang * 0.5) % 1 < 0.12 ? 0 : 1 + (u > 0.6 ? 1 : 0) + (hachage(bx, rang, 829) > 0.7 ? 1 : 0));
+        continue;
       }
+      if (x >= fx0 && x <= fx1 && y >= fy0 && y < fy1) { t.poser(x, y, 'pierre', (y - fy0) % 5 === 0 || (x + Math.floor((y - fy0) / 5) * 3) % 7 === 0 ? 0 : 1); continue; }
+      // les deux murs latéraux, en fuite vers le fond (les rangs de pierre convergent)
+      const cote = x < fx0 ? -1 : x > fx1 ? 1 : 0;
+      if (!cote) continue;
+      const d = cote < 0 ? (fx0 - x) / fx0 : (x - fx1) / (L - 1 - fx1);   // 0 au fond … 1 au bord
+      const haut = fy0 - d * fy0, bas = fy1 + d * (H - 1 - fy1);
+      if (y < haut || y > bas) continue;
+      const v = (y - haut) / Math.max(1, bas - haut);
+      const rangs = Math.floor(v * 9), joint = Math.abs(v * 9 - Math.round(v * 9)) < 0.08 + d * 0.02;
+      const i = joint ? 0 : (cote < 0 ? 2 : 1) + (d > 0.7 ? 1 : 0) + (hachage(Math.floor(d * 6), rangs, 830 + cote) > 0.7 ? 1 : 0) - (d < 0.25 ? 1 : 0);
+      t.poser(x, y, 'pierre', Math.max(0, i));
     }
-    // les arêtes des deux murs qui reçoivent un peu de lune
-    for (let y = 30; y < H; y++) { t.poser(30, y, 'pierre', 4); t.poser(31, y, 'pierre', 3); t.poser(89, y, 'pierre', 1); }
-    // la porte basse au fond, et sa grille
-    porteRue(t, 48, H - 44, 24, 44, { arc: true, graine: 831 });
-    for (let x = 54; x < 66; x += 3) for (let y = H - 36; y < H - 28; y++) t.poser(x, y, 'fer', 2);
-    // un bout de toit de chaque côté, en haut
-    toitRue(t, -40, 40, 8, 34, 'tuile', 832); toitRue(t, 80, 160, 12, 34, 'ardoiseToit', 833);
+    // la porte basse au fond, son judas grillé
+    porteRue(t, 41, fy1 - 22, 13, 22, { arc: true, graine: 831 });
+    for (let x = 45; x < 51; x += 2) for (let y = fy1 - 18; y < fy1 - 14; y++) t.poser(x, y, 'fer', 2);
+    // l'écriteau de l'impasse, cloué de travers sur le mur de gauche
+    planche(t, 6, 30, 22, 8, 'chene', { graine: 834 });
     t.contour(); t.texture(scene, 'rueImpasseHD');
   }
 
@@ -142,6 +152,18 @@ function creerRueHD(scene) {
     planche(t, 16, 52, 22, 14, 'chene', { graine: 848 });
     for (const [x, y, l] of [[20, 55, 14], [24, 57, 6], [23, 59, 8], [21, 61, 12]]) for (let k = 0; k < l; k++) t.poser(x + k, y, 'fer', 1);
     t.contour(); t.texture(scene, 'rueForgeHD');
+    // Le jour, les vantaux sont ouverts : on voit le foyer, l'enclume et la lueur du feu
+    const j = toile(L, H);
+    for (let i = 0; i < t.c.length; i++) { j.c[i] = t.c[i]; j.m[i] = t.m[i]; j.k[i] = t.k[i]; }
+    for (let y = ay; y < H; y++) for (let x = ax; x < ax + al; x++) {
+      if (y < ay + r && Math.hypot(x + 0.5 - (ax + r), y + 0.5 - (ay + r)) > r) continue;
+      const feu = Math.hypot(x + 0.5 - (ax + 22), (y + 0.5 - (H - 16)) * 1.4);
+      j.poser(x, y, feu < 10 ? 'braise' : 'pierre', feu < 10 ? 5 - Math.floor(feu / 2.5) : y > H - 6 ? 1 : feu < 22 ? 1 : 0);
+    }
+    for (let x = ax + 44; x < ax + 64; x++) { j.poser(x, H - 18, 'fer', 4); j.poser(x, H - 17, 'fer', 2); }   // l'enclume
+    for (let y = H - 16; y < H - 4; y++) for (let x = ax + 51; x < ax + 57; x++) j.poser(x, y, 'fer', 1);
+    for (const vx of [ax - 14, ax + al + 2]) planche(j, vx, ay + 6, 12, 64, 'cheneSombre', { horizontale: false, graine: vx });   // les vantaux rabattus
+    j.contour(); j.texture(scene, 'rueForgeHD_jour');
   }
 
   // --- La Banque Centrale Goyenne : pierre de taille, deux colonnes, fronton à la pièce d'or ---
@@ -168,33 +190,48 @@ function creerRueHD(scene) {
     t.contour(); t.texture(scene, 'rueBanqueHD');
   }
 
-  // --- L'arche du Marché des Mastres : la place dort derrière, une bannière pend sous la clé ---
-  {
-    const L = 160, H = 176, t = toile(L, H);
-    const r = 46, cx = 80, cy = 72;
-    for (let y = 10; y < H; y++) for (let x = 0; x < L; x++) {
-      const vide = (y >= cy && Math.abs(x + 0.5 - cx) < r) || Math.hypot(x + 0.5 - cx, y + 0.5 - cy) < r;
+  // --- L'arche du Marché des Mastres : deux piliers coiffés de pierre, un arc au faîte arrondi, une
+  // bannière sous la clé ; la place se devine derrière (endormie la nuit, colorée le jour)
+  for (const jour of [false, true]) {
+    const L = 150, H = 176, t = toile(L, H);
+    const r = 44, cx = 75, cy = 76, haut = y => 22 + Math.pow((y - cx) / 75, 2) * 14;   // le dessus, en douce courbe
+    t.rampes.toileVive = rampe(jour ? 0xc84a3a : 0x6a2a24); t.rampes.toileVive2 = rampe(jour ? 0x3a6ac0 : 0x24305a); t.rampes.ciel = rampe(jour ? 0x9ac4e8 : 0x141a2a);
+    for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+      const pilier = x < 22 || x >= L - 22;
+      // les chapeaux des piliers : une petite pyramide de pierre et sa boule
+      if (pilier && y < 30) {
+        const px = x < 22 ? 11 : L - 12, dy = 30 - y;
+        if (Math.abs(x + 0.5 - px) <= 12 - dy * 0.55 && y >= 12) t.poser(x, y, 'pierre', x + 0.5 < px ? 4 : 2);
+        else if (Math.hypot(x + 0.5 - px, y + 0.5 - 9) < 3.6) t.poser(x, y, 'pierre', x + 0.5 < px ? 5 : 3);
+        continue;
+      }
+      if (!pilier && y < haut(x)) continue;
+      const vide = !pilier && ((y >= cy && Math.abs(x + 0.5 - cx) < r) || Math.hypot(x + 0.5 - cx, y + 0.5 - cy) < r);
       if (vide) {
-        // derrière l'arche : la place endormie, la silhouette des étals sous la lune
-        const etal = y > H - 40 && y < H - 22 && Math.floor((x - 40) / 26) % 2 === 0 && y > H - 40 + Math.abs(((x - 40) % 26) - 13) * 0.4;
-        t.poser(x, y, etal ? 'toileRouge' : 'vitreNoire', etal ? 1 : y > H - 22 ? 2 : 1);
+        // derrière l'arche : la place du marché, ses étals rayés
+        const etal = y > H - 44 && y < H - 22 && Math.floor((x - 30) / 22) % 2 === 0 && y > H - 44 + Math.abs(((x - 30) % 22) - 11) * 0.45;
+        const rayure = Math.floor((x - 30) / 4) % 2;
+        t.poser(x, y, etal ? (rayure ? 'toileVive' : 'toileVive2') : y > H - 22 ? 'pierre' : 'ciel', etal ? 3 : y > H - 22 ? (jour ? 3 : 1) : jour ? 3 + (y < 60 ? 1 : 0) : 1);
         continue;
       }
       const ang = Math.atan2(y + 0.5 - cy, x + 0.5 - cx), d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
-      const claveau = y < cy + 2 && d < r + 14 ? Math.floor((ang + Math.PI) * 5) : -1;
-      const joint = claveau >= 0 ? Math.abs(((ang + Math.PI) * 5) % 1) < 0.1 : (y % 8 === 0 || (x + Math.floor(y / 8) * 7) % 14 === 0);
-      t.poser(x, y, 'pierre', joint ? 1 : (claveau >= 0 ? 4 : 3) + Math.round((hachage(Math.floor(x / 7), Math.floor(y / 8), 860) - 0.5) * 1.2));
+      const claveau = !pilier && y < cy + 2 && d < r + 12 ? (ang + Math.PI) * 6 : -1;
+      const joint = claveau >= 0 ? (claveau % 1) < 0.12 || Math.abs(d - r - 12) < 0.8 : (y % 8 === 0 || (x + Math.floor(y / 8) * 7) % 14 === 0);
+      let i = joint ? 1 : (claveau >= 0 ? 4 : 3) + Math.round((hachage(Math.floor(x / 7), Math.floor(y / 8), 860) - 0.5) * 1.2);
+      if (pilier && (x === 0 || x === L - 22)) i = 5;                              // l'arête éclairée des piliers
+      if (pilier && (x === 21 || x === L - 1)) i = 1;
+      if (!pilier && y < haut(x) + 2) i = 5;                                         // le bord du faîte arrondi
+      if (y > H - 8 && pilier) i = (y === H - 8 ? 5 : 2);                            // le socle
+      t.poser(x, y, 'pierre', Math.max(0, Math.min(5, i)));
     }
-    // la clé de voûte, et la corniche en haut
-    for (let y = cy - r - 14; y < cy - r + 2; y++) for (let x = cx - 6; x <= cx + 6; x++) t.poser(x, y, 'pierre', x < cx - 3 ? 5 : 3);
-    for (let x = 0; x < L; x++) { t.poser(x, 10, 'pierre', 5); t.poser(x, 11, 'pierre', 2); }
-    // la bannière rouge frangée d'or
-    for (let y = cy - r + 4; y < cy - r + 26; y++) for (let x = cx - 26; x <= cx + 26; x++) {
-      const pointe = y > cy - r + 20 && Math.abs((x - cx) % 13) > 6 - (y - (cy - r + 20));
-      if (!pointe) t.poser(x, y, 'toileRouge', 3 + (y === cy - r + 4 ? 1 : 0) - (x === cx - 26 || x === cx + 26 ? 1 : 0));
+    for (let y = cy - r - 12; y < cy - r + 2; y++) for (let x = cx - 6; x <= cx + 6; x++) t.poser(x, y, 'pierre', x < cx - 3 ? 5 : 3);   // la clé de voûte
+    // la bannière frangée d'or (le nom du marché s'y écrit par-dessus)
+    for (let y = cy - r + 4; y < cy - r + 26; y++) for (let x = cx - 30; x <= cx + 30; x++) {
+      const pointe = y > cy - r + 20 && Math.abs((x - cx + 60) % 15 - 7) > 7 - (y - (cy - r + 20));
+      if (!pointe) t.poser(x, y, 'toileRouge', 3 + (y === cy - r + 4 ? 1 : 0) - (x === cx - 30 || x === cx + 30 ? 1 : 0));
     }
-    for (let x = cx - 26; x <= cx + 26; x += 2) t.poser(x, cy - r + 25, 'or', 4);
-    t.contour(); t.texture(scene, 'rueArcheHD');
+    for (let x = cx - 30; x <= cx + 30; x += 2) t.poser(x, cy - r + 25, 'or', 4);
+    t.contour(); t.texture(scene, 'rueArcheHD' + (jour ? '_jour' : ''));
   }
 
   // --- Le réverbère : un poteau de fer, une lanterne à quatre vitres ---
@@ -206,4 +243,73 @@ function creerRueHD(scene) {
     for (let x = 7; x < 17; x++) t.poser(x, 1, 'fer', 3);
     t.contour(); t.texture(scene, 'reverbereHD');
   }
+}
+
+// Un petit écriteau de bois peint (ou des lettres gravées), pour qu'on reconnaisse chaque bâtiment
+function ecriteauRue(scene, x, y, texte, { taille = 12, couleur = '#2a1608', fond = '#d8bc84', grave = false, angle = 0, profondeur = 8.3 } = {}) {
+  const t = scene.add.text(x, y, texte, style(taille, grave ? '#f0cf5a' : couleur, grave ? { fontStyle: 'bold', stroke: '#2a1a08', strokeThickness: 3 } : { fontStyle: 'bold', backgroundColor: fond, padding: { x: 5, y: 2 } })).setOrigin(0.5).setAngle(angle).setDepth(profondeur);
+  if (!grave) t.setShadow(1, 1, '#1a0e06', 0, false, true);
+  return t;
+}
+
+// (v0.65, étape 10c) Toute la rue, posée à partir de x = o, le soir ou le jour. `ici` reçoit les
+// choses à regarder et les portes : { regarder(x, y, l, h, texte), porte(x, sol, etiquette, action) }.
+// Renvoie la porte du shop et les lumières (fenêtres, réverbères, braises) pour la nuit.
+const LARGEUR_RUE = 2960;
+const PLACES_RUE = { maison0: 160, impasse: 405, forge: 680, shop: 1320, maison1: 1820, fontaine: 2090, banque: 2360, arche: 2780 };
+function construireRue(scene, o, { jour = false, sol = 470, ici }) {
+  const G = window.GAME, P = PLACES_RUE, lumieres = [];
+  creerRueHD(scene);
+  creerDecorPlaceHD(scene);   // (avant la façade : il redessine aussi les tonneaux, qu'elle utilise)
+  creerChatRueHD(scene);      // (le banc de la rue)
+  for (let k = 0; k < Math.ceil(LARGEUR_RUE / 960); k++) dessinerComte(scene.add.graphics(), o + k * 960, 0, 960, sol, jour ? 0 : 1);
+  for (let k = 0; k < Math.ceil(LARGEUR_RUE / 960); k++) scene.add.image(o + k * 960, sol, pavesHD(scene, 960, 70)).setOrigin(0).setScale(2);
+  if (!jour) for (let i = 0; i < 70; i++) {
+    const e = scene.add.image(o + Math.random() * LARGEUR_RUE, 10 + Math.random() * 150, 'eclat').setScale(0.6 + Math.random() * 0.5);
+    scene.tweens.add({ targets: e, alpha: 0.15, duration: 700 + Math.random() * 1200, yoyo: true, repeat: -1 });
+  }
+  const poser = (cle, cx) => scene.add.image(o + cx, sol + 2, cle).setOrigin(0.5, 1).setScale(2);
+  const ouvert = !jour && marcheNoirCeSoir(G);
+  poser('rueMaisonHD_0', P.maison0);
+  poser('rueImpasseHD', P.impasse);
+  poser(jour ? 'rueForgeHD_jour' : 'rueForgeHD', P.forge);
+  scene.add.image(o + 990, sol + 30, 'bancRue').setOrigin(0.5, 1).setScale(2.6);
+  const f = dessinerFacade(scene, o + P.shop, sol, G.nomShop);
+  poser('rueMaisonHD_1', P.maison1);
+  scene.add.image(o + P.fontaine, sol + 30, 'fontaineHD').setOrigin(0.5, 1).setScale(2.4);
+  poser('rueBanqueHD', P.banque);
+  poser(jour ? 'rueArcheHD_jour' : 'rueArcheHD', P.arche);
+  for (const x of [560, 1060, 1640, 2200, 2585]) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
+  lumieres.push([f.porteX, 400, 2.4], [o + P.forge, sol - 10, 1.8], [o + P.banque, sol - 150, 1.4]);
+  // les noms : écriteaux peints, lettres gravées, bannière
+  ecriteauRue(scene, o + P.maison0 + 4, sol - 112, 'Les Pommeroy', { taille: 10 });
+  ecriteauRue(scene, o + P.impasse - 46, sol - 150, 'Impasse du Corbeau', { taille: 9, angle: -6, fond: '#a88a5a' });
+  ecriteauRue(scene, o + P.forge - 128, sol - 186, 'Forge de Thorgal', { taille: 10 });
+  ecriteauRue(scene, o + P.maison1 + 26, sol - 112, 'Les Brindeloup', { taille: 10 });
+  ecriteauRue(scene, o + P.banque, sol - 254, 'BANQUE CENTRALE GOYENNE', { taille: 12, grave: true });
+  ecriteauRue(scene, o + P.arche, sol - 250, 'Marché des Mastres', { taille: 13, grave: true });
+  // les flammes de la forge, le jour : des étincelles qui jaillissent
+  if (jour) scene.time.addEvent({ delay: 260, loop: true, callback: () => {
+    const e = scene.add.rectangle(o + P.forge - 40 + Math.random() * 30, sol - 30, 2, 2, Math.random() < 0.5 ? 0xffd060 : 0xff8020).setDepth(8.2);
+    scene.tweens.add({ targets: e, y: e.y - 20 - Math.random() * 30, x: e.x + (Math.random() - 0.5) * 30, alpha: 0, duration: 500 + Math.random() * 400, onComplete: () => e.destroy() });
+  } });
+  // la lanterne rouge de l'impasse, seulement les soirs où la porte dérobée s'ouvre
+  if (ouvert) {
+    const l = scene.add.image(o + P.impasse, sol - 66, 'halo').setScale(1).setTint(0xff3020).setAlpha(0.6).setBlendMode(Phaser.BlendModes.ADD).setDepth(9.5);
+    scene.tweens.add({ targets: l, alpha: 0.35, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    scene.add.rectangle(o + P.impasse, sol - 66, 6, 9, 0xff4a2a).setDepth(9.6);
+    ici.porte(o + P.impasse, sol, '🏮 La porte dérobée', 'MarcheNoir');
+  }
+  // ce qu'on regarde
+  ici.regarder(o + 10, 160, 300, 310, jour ? 'Madame Pommeroy bat ses tapis à la fenêtre. Elle te salue d\'un hochement de tête.' : Phaser.Utils.Array.GetRandom(['La maison des Pommeroy. Leur chien ronfle derrière la porte.', 'Une bougie veille chez la vieille Berthe Pommeroy. Elle tricote, comme chaque soir.']));
+  ici.regarder(o + P.impasse - 90, 240, 180, 230, ouvert ? "Une lanterne rouge brûle au fond de l'impasse du Corbeau. La porte dérobée est ouverte ce soir..." : jour ? "L'impasse du Corbeau. Même en plein jour, le fond reste dans l'ombre." : G.visiteMarcheNoir !== undefined ? "L'impasse est noire. La lanterne rouge est éteinte ce soir." : "Une impasse si sombre qu'on n'en voit pas le fond. On dit qu'une porte basse s'y ouvre, certains soirs.");
+  ici.regarder(o + P.forge - 180, 160, 360, 310, jour ? 'Le marteau de Thorgal sonne sur l\'enclume. Pour lui acheter quelque chose, c\'est à son étal, au marché.' : "La forge de Thorgal. Les braises rougeoient encore derrière les vantaux ; on l'entend ronfler à l'étage.");
+  ici.regarder(o + P.shop - 220, 200, 440, 270, `${G.nomShop}, ton shop. ${['Une humble chaumière', 'Une jolie maison', 'Une belle maison', 'La plus belle maison du village'][niveauFacade(G)]}.`);
+  ici.regarder(o + P.maison1 - 130, 160, 260, 310, jour ? 'Le petit Brindeloup te regarde passer : il rêve de partir à l\'aventure.' : Phaser.Utils.Array.GetRandom(["Chez les Brindeloup. On s'y dispute à voix basse : l'aîné veut partir à l'aventure.", 'Les volets sont clos chez les Brindeloup. Tout le monde dort.']));
+  ici.regarder(o + P.fontaine - 80, 360, 160, 110, jour ? 'La fontaine chante. Pour y jeter une pièce, c\'est celle de la place du marché.' : 'La fontaine murmure dans la nuit. Au fond du bassin, des pièces luisent sous la lune.');
+  ici.regarder(o + P.banque - 200, 120, 400, 350, jour ? 'La Banque Centrale Goyenne. Des nains en redingote montent les marches, un registre sous le bras.' : 'La Banque Centrale Goyenne. Une lumière brûle encore : les nains comptent, même la nuit.');
+  ici.porte(o + P.banque, sol, 'Entrer', 'Banque');
+  ici.regarder(o + P.arche - 150, 120, 300, 350, jour ? "L'arche du Marché des Mastres. On entend déjà les marchands crier leurs prix." : "L'arche du Marché des Mastres. La place dort ; les étals rouvriront à l'aube.");
+  if (jour) ici.porte(o + P.arche, sol, 'Le marché ▶', 'Marche');
+  return { porteShop: { x: f.porteX, y: f.porteY }, lumieres };
 }

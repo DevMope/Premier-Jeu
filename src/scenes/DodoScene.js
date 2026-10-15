@@ -167,10 +167,10 @@ class DodoScene extends Cinematique {
     this.annoncerMatin();
     await this.attendre(800);
     if (this.fini) return;
-    await this.attendreSuite('▶ Clique pour partir au marché');
+    await this.attendreSuite('▶ Clique pour sortir dans la rue');
     if (this.fini) return;
     await this.marcher(this.joueur, 1020, 3);
-    this.partir('Marche');
+    this.partir('Rue');   // (v0.65 : on sort dans la rue, l'arche mène au marché)
   }
 
   ronfler() {
@@ -524,7 +524,7 @@ class DodoScene extends Cinematique {
   passer() {
     if (this.fini) return;
     this.passerLaNuit();
-    this.partir(this.G.faillite ? 'Faillite' : 'Marche');
+    this.partir(this.G.faillite ? 'Faillite' : 'Rue');
   }
 
   partir(scene) {
