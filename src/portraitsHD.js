@@ -1042,7 +1042,7 @@ function capucheBuste(t, g, v, cx, ey) {
 // (v0.61) La cape de la Main Noire : elle tombe des épaules derrière le dos, s'évase un peu, et on
 // n'en voit que les bords de chaque côté du corps (plus sombre que la robe, avec ses grands plis)
 function capeDosBuste(t, g, v, cx) {
-  t.rampes.capeDos = rampe(0x34323a);
+  t.rampes.capeDos = rampe(0x1c1b21);
   const epaule = (LARGEURS_BUSTE[g.race] || 20) + 2.5;
   const haut = v.torse + 2;
   t.forme('capeDos', (x, y) => {
@@ -1056,6 +1056,16 @@ function capeDosBuste(t, g, v, cx) {
 // Les épaulettes de la Main Noire : deux petites plaques de fer sombre posées sur le camail, au bord
 // des épaules, et l'agrafe d'où part la cape (un anneau et un bout de chaîne)
 function epaulettesBuste(t, g, v, cx) {
+  // (les bras se détachent de la cape : elle prend l'ombre du bras le long de la manche, et son
+  // bord extérieur accroche un peu la lumière pour qu'on la devine quand même)
+  const ombres = [], bords = [];
+  for (let y = v.torse; y < HD_H; y++) for (let x = 0; x < HD_L; x++) {
+    if (t.mat(x, y) !== 'capeDos') continue;
+    if ([[1, 0], [-1, 0], [0, -1], [2, 0], [-2, 0]].some(([a, b]) => ['habit', 'gantelet', 'peau'].includes(t.mat(x + a, y + b)))) ombres.push([x, y]);
+    else if (!t.mat(x - 1, y) || !t.mat(x + 1, y)) bords.push([x, y]);
+  }
+  for (const [x, y] of ombres) t.poser(x, y, 'capeDos', 0);
+  for (const [x, y] of bords) t.poser(x, y, 'capeDos', 4);
   t.rampes.gantelet = t.rampes.gantelet || rampe(0x5c606c);
   const epaule = (LARGEURS_BUSTE[g.race] || 20) + 2.5;
   for (const sens of [-1, 1]) {
