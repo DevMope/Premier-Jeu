@@ -27,40 +27,44 @@ function conseilGarrick(scene, cle, toujours = false) {
   if (G.tutoVu[cle]) return;
   G.tutoVu[cle] = true;
   if (cle === 'marche') G.tuto = false; // le dernier conseil : Garrick s'en va
-  // (v0.59) fixé à l'écran, même quand la caméra a défilé (le marché noir et ses trois coins)
-  const c = scene.add.container(0, 0).setDepth(60).setScrollFactor(0, 0, true);
-  const voile = scene.add.rectangle(480, 270, 960, 540, 0x000000, 0.35).setInteractive();
+  // (v0.85) le conseil s'affiche dans le calque du bandeau (la page « Hud », toujours au-dessus, et
+  // dont la caméra ne bouge jamais) : dans le marché noir, la caméra de la page a défilé et Phaser
+  // testait les clics au mauvais endroit (impossible de fermer le conseil). S'il n'y a pas de bandeau,
+  // on retombe sur la page elle-même.
+  const hud = scene.scene.get('Hud');
+  const h = hud && hud.sys.isActive() ? hud : scene;
+  const c = h.add.container(0, 0).setDepth(h === hud ? 130 : 60).setScrollFactor(0, 0, true);
+  const voile = h.add.rectangle(480, 270, 960, 540, 0x000000, 0.35).setInteractive();
   c.add(voile);
-  c.add(scene.add.image(560, 420, panneauHD(scene, 700, 170)).setScale(2));
-  c.add(imageCorps(scene, 150, 520, 'mentor', 9));
-  c.add(scene.add.text(240, 348, 'Garrick Cœur-de-Chêne', style(16, '#7a5a10', { fontStyle: 'bold' })));
+  c.add(h.add.image(560, 420, panneauHD(h, 700, 170)).setScale(2));
+  c.add(imageCorps(h, 150, 520, 'mentor', 9));
+  c.add(h.add.text(240, 348, 'Garrick Cœur-de-Chêne', style(16, '#7a5a10', { fontStyle: 'bold' })));
   // (v0.68) une écriture plus lisible (plus grande, plus foncée, droite) qui s'écrit lettre après
-  // lettre ; un premier clic sur « Compris ! » affiche tout, le second ferme
-  const texte = scene.add.text(240, 372, '', style(16, '#24140a', { wordWrap: { width: 610 }, lineSpacing: 4 }));
+  // lettre ; un premier clic affiche tout, le second ferme
+  const texte = h.add.text(240, 372, '', style(16, '#24140a', { wordWrap: { width: 610 }, lineSpacing: 4 }));
   c.add(texte);
   let defile = null;
-  scene.time.delayedCall(260, () => { if (texte.active) defile = texteQuiDefile(scene, texte, `« ${CONSEILS[cle]} »`, { vitesse: 18 }); });
-  // (v0.84) des joueurs n'arrivaient pas à cliquer « Compris ! » : un clic n'importe où sur le
-  // conseil, ou Entrée / Espace / Échap, fait la même chose (finir le texte, puis fermer)
-  const ouvert = scene.time.now;
+  h.time.delayedCall(260, () => { if (texte.active) defile = texteQuiDefile(h, texte, `« ${CONSEILS[cle]} »`, { vitesse: 18 }); });
+  // (v0.84) un clic n'importe où sur le conseil, ou Entrée / Espace / Échap : finir le texte, puis fermer
+  const ouvert = h.time.now;
   let ferme = false;
   const compris = () => {
-    if (ferme || scene.time.now - ouvert < 350) return;
+    if (ferme || h.time.now - ouvert < 350) return;
     if (defile && defile.enCours()) return defile.finir();
     ferme = true;
-    if (scene.input.keyboard) scene.input.keyboard.off('keydown', touche);
-    scene.tweens.add({ targets: c, alpha: 0, duration: 200, onComplete: () => c.destroy() });
+    h.tweens.add({ targets: c, alpha: 0, duration: 200, onComplete: () => c.destroy() });
   };
   const touche = (e) => { if (['Enter', 'Space', ' ', 'Escape'].includes(e.key) || e.code === 'Space') compris(); };
-  if (scene.input.keyboard) scene.input.keyboard.on('keydown', touche);
-  c.once('destroy', () => { if (scene.input && scene.input.keyboard) scene.input.keyboard.off('keydown', touche); });
+  if (h.input.keyboard) h.input.keyboard.on('keydown', touche);
+  c.once('destroy', () => { if (h.input && h.input.keyboard) h.input.keyboard.off('keydown', touche); });
+  // la page se ferme (on change de lieu) : le conseil part avec elle
+  const partir = () => { if (c.active) c.destroy(); };
+  if (h !== scene) { scene.events.once('shutdown', partir); scene.events.once('sleep', partir); }
   voile.on('pointerdown', compris);
-  const b = creerBouton(scene, 820, 482, 150, 'Compris !', compris);
+  const b = creerBouton(h, 820, 482, 150, 'Compris !', compris);
   b.label.setFontSize(15);
   c.add([b.fond, b.label]);
   c.setAlpha(0);
-  // (sur la carte, le monde est filmé par sa propre caméra, par-dessus la caméra principale :
-  // le conseil va dans le calque de l'interface, filmé en dernier, pour rester au-dessus)
-  if (scene.dessus && scene.camDessus) scene.dessus.add(c);
-  scene.tweens.add({ targets: c, alpha: 1, duration: 250 });
+  if (h === scene && scene.dessus && scene.camDessus) scene.dessus.add(c);
+  h.tweens.add({ targets: c, alpha: 1, duration: 250 });
 }
