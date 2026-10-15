@@ -545,6 +545,68 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 - **Bruitages** (demande du joueur) : enrichir la banque de sons dans la D.A. actuelle, comme pour un film : pas (sur bois, pavés, herbe, neige, eau), portes, tissus, coffres, armes qui s'entrechoquent, foule, vent, oiseaux, feu, etc., en particulier dans les cinématiques.
 - **Création du personnage** (demande du joueur) : plus de coupes de cheveux, de bouches, etc.
 
+## Étape 10b « La forge chez soi » — préparatifs (18/10)
+
+### État des lieux
+- **Déjà là** : les 13 armes des peuples et le bouclier (10a), le bois chez Thorgal, le fer, le cuir et
+  le fil d'or ; les armes sont durables et se réparent à l'atelier ; Thorgal ne sort que 3 armes par
+  matin (on garde ce tirage, décidé le 18/10) ; le saut d'un an à ★3 ; les améliorations
+  commandées le soir au bureau et posées la nuit ; les employés de l'atelier (salaire chaque nuit,
+  Tobin qui progresse).
+- **Pas encore là** : les recettes dans le code, la forge, les deux forgerons, la qualité « bel
+  ouvrage », les armes interdites forgées.
+- **Ce que la forge apporte au joueur** : n'importe quelle arme, n'importe quel jour (fini l'arc long
+  introuvable), des armes « bel ouvrage » qu'on ne trouve pas au marché, et côté ombre des armes
+  interdites pour le marché noir.
+
+### Le découpage proposé
+1. **10b-1 Les règles** : les recettes (tableau de la forge ci-dessus) ; chaque soir on met des armes
+   en commande, les matériaux sont pris dans le stock tout de suite, les armes sortent le matin ;
+   salaire chaque nuit ; la qualité « bel ouvrage ».
+2. **10b-2 La construction** : au lendemain du saut d'un an (★3), Garrick propose la forge ; on
+   l'achète au bureau (300 p.), les ouvriers la montent la nuit dans l'arrière-boutique.
+3. **10b-3 Les forgerons** : l'apprenti humain dès ★3 (6 p./nuit), la maîtresse naine à ★4
+   (12 p./nuit) ; leurs bustes et leurs corps ; l'apprenti qui progresse.
+4. **10b-4 Le décor et l'interface** : la forge dans l'arrière-boutique (foyer, soufflet, enclume,
+   bac de trempe, râtelier), qu'on voit en promenade, le feu qui rougeoie la nuit ; le panneau
+   « Ce soir à la forge » (les armes, leur recette, ce qu'on a en stock, ce que ça coûte) ; le
+   matin, les armes posées sur le râtelier, avec les « bel ouvrage » qui brillent.
+5. **10b-5 L'ombre** : les armes interdites que la forge fabrique pour le marché noir.
+6. **Planches à valider** avant de brancher : la forge (décor), les deux forgerons, le panneau.
+
+### Les chiffres proposés (à valider)
+- **Vitesse** : l'apprenti fait 1 arme toutes les 2 nuits au début ; la maîtresse 2 armes par nuit.
+- **L'apprenti qui progresse** : apprenti → compagnon (après 8 armes : 1 arme par nuit) → ouvrier
+  confirmé (après 20 armes : 1 arme par nuit, et plus de « bel ouvrage ») ; il plafonne à 80 % de
+  la maîtresse.
+- **Bel ouvrage** : 30 % de chances pour la maîtresse, de 8 % à 24 % pour l'apprenti. Une arme
+  « bel ouvrage » se vend 40 % plus cher, s'use deux fois moins vite, et donne +1 relation de plus
+  à un client de son peuple.
+- **Le coût** : avec les recettes validées et les prix actuels des matériaux, forger revient en
+  moyenne à **85 % du prix du marché** (de 64 % pour l'arc long à 100 % pour la fronde), salaire en
+  plus, et pas aux 60 % prévus. Trois façons de corriger (question 1).
+- **Côté ombre** (proposition) : la **lame empoisonnée** (une dague + une fiole de poison), la
+  **lame de lune noire** (2 fer + de la poudre de lune noire : elle ne brille pas la nuit), et les
+  **griffes de l'ombre** (des griffes de fer + un passe-partout fondu : elles ouvrent les serrures).
+  Elles se vendent au marché noir, risquées comme les autres affaires interdites.
+
+### Questions au joueur (10b)
+1. **Le coût de la forge** : (A) Thorgal vend les matériaux en gros à qui a une forge (par lots de
+   5, à −30 %) ; (B) des recettes plus légères à la forge (un matériau de moins par arme) ; (C) on
+   garde tout tel quel : la forge sert à avoir l'arme qu'on veut quand on veut et du « bel
+   ouvrage », pas à économiser.
+2. **Les noms** des deux forgerons (proposition : **Aldo**, l'apprenti humain, grand, maladroit et
+   plein de bonne volonté ; **Brunhilde Marteau-d'Or**, la maîtresse naine, tresses rousses,
+   bras couverts de brûlures, peu bavarde).
+3. **Les armes interdites** : les trois proposées ci-dessus, ou d'autres idées ?
+4. **Où choisir les armes du soir** : dans l'arrière-boutique en promenade (on va voir les
+   forgerons), au bureau avec le reste, ou les deux ?
+
+### Ensuite : le lot A « Le comptoir sous pression »
+Dans l'ordre : 1 la journée (10 heures, le temps de chaque action), 2 les avis de recherche
+dans la file (le tableau d'affichage et les visages sont faits), 6 les imposteurs et le flair,
+4 le marchandage.
+
 ## La rue et le familier (validé par le joueur le 16/10)
 
 - La rue devant le comptoir devient un vrai quartier qu'on parcourt avec son personnage (gauche-droite, comme la promenade du soir) : le marché, la banque, la forge de Thorgal, la fontaine, l'impasse du marché noir, plus tard le petit bar. Les raccourcis depuis la maison restent.
