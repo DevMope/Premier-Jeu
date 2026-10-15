@@ -14,7 +14,7 @@ class NightScene extends Phaser.Scene {
   create() {
     exclureScenes(this, 'Carte', 'Comptoir', 'Dodo');   // (v0.62)
     const G = this.G = window.GAME;
-    if (!this.matin) preparerSoir(G);
+    if (!this.matin) { preparerSoir(G); tirerGardeDuLendemain(G); }   // (v0.65 : la garde de demain se tire dès ce soir, le chat la sent parfois)
     this.lieu = this.matin ? 'Maison' : 'Nuit';
 
     this.cameras.main.setBackgroundColor(this.matin ? '#2a1e12' : '#1e140c');
@@ -150,6 +150,17 @@ class NightScene extends Phaser.Scene {
     c.add(this.add.text(x1 + 18, 352, 'En mission', style(14, '#3b2410', { fontStyle: 'bold' })));
     const missions = enMission(G).map(p => `${p.voyageur.nom} — jour ${p.retour}`);
     c.add(this.add.text(x1 + 18, 372, listeCourte(missions, 4, 'Personne'), style(12, '#5a3a20', { lineSpacing: 2 })));
+    // (v0.65, étape 10c) le chat : celui de gouttière qui rôde, ou le tien qui sent venir la garde
+    if (!this.matin) {
+      let ligne = null, action = null;
+      if (alerteChat(G)) {
+        const cache = G.cachette === G.jour + 1;
+        ligne = `🐈 ${nomChat(G)[0].toUpperCase() + nomChat(G).slice(1)} crache vers la porte. La garde, demain ?` + (cache ? ' Tout est caché.' : aCacher(G) ? '' : ' (Rien à cacher.)');
+        if (!cache && aCacher(G)) action = ['▸ Tout cacher sous le plancher', () => { cacherMarchandise(G); Son.jouer('glisse'); this.tout(); }];
+      } else if (chatCeSoir(G)) ligne = '🐈 Un chat de gouttière rôde devant ta porte ce soir.';
+      if (ligne) c.add(this.add.text(x1 + 18, 424, ligne, style(12, '#5a2a4a', { fontStyle: 'bold italic', wordWrap: { width: x2 - x1 - 36 } })));
+      if (action) c.add(this.add.text(x1 + 18, 455, action[0], style(12, '#8a1a1a', { fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 4, y: 2 } })).setInteractive({ useHandCursor: true }).on('pointerdown', action[1]));
+    }
   }
 
   // --- Ta réserve (on achète le matin, au Marché des Mastres) ---

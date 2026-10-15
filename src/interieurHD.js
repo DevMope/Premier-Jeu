@@ -752,13 +752,35 @@ function creerBureauHD(scene) {
 // --- Le chat de gouttière (vu de profil, tourné vers la droite) : quatre images de marche, assis
 // (deux images : la queue qui bat), le bond du chasseur ; et la souris qu'il guette, et le banc
 // de la rue où il aime s'asseoir. (Il deviendra peut-être ton familier, un jour...)
-function creerChatRueHD(scene) {
-  if (scene.textures.exists('chatRue_m0')) return;
+// (v0.65) Un chat, sous toutes ses poses, avec son pelage, ses yeux et son collier :
+// le chat de gouttière (gris tigré, sans collier) et, une fois adopté, le tien.
+// Poses : marche (_m0.._m3), assis (_assis0/1, la queue bat), tapi, bond, endormi en boule (_dort0/1).
+function cleChat(look) { return `chat_${look.pelage}_${look.yeux}_${look.collier}`; }
+function creerChatHD(scene, look = { pelage: 'gris', yeux: 'vert', collier: 'aucun' }, pref = cleChat(look)) {
+  if (scene.textures.exists(pref + '_m0')) return pref;
+  const P = PELAGES_CHAT[look.pelage] || PELAGES_CHAT.gris, Y = YEUX_CHAT[look.yeux] || YEUX_CHAT.vert, C = COLLIERS_CHAT[look.collier] || COLLIERS_CHAT.aucun;
   const pelage = t => {
-    t.rampes.poil = rampe(0x8a8478); t.rampes.ventre = rampe(0xc8c0b0);
-    t.rampes.oeil = [0x3a4a10, 0x5a7010, 0x8aa020, 0xb8d040, 0xd8ec70, 0xf4ffb0];
+    t.rampes.poil = rampe(P.poil); t.rampes.ventre = rampe(P.ventre);
+    if (P.taches) t.rampes.tache = rampe(P.taches);
+    if (P.masque) t.rampes.masque = rampe(P.masque);
+    t.rampes.oeil = rampe(Y.couleur);
+    if (C.couleur) t.rampes.collier = rampe(C.couleur);
   };
-  const rayures = (x, y) => ((x + Math.floor(y * 0.6)) % 4 === 0 ? -1 : 0);
+  const rayures = P.rayures ? (x, y) => ((x + Math.floor(y * 0.6)) % 4 === 0 ? -1 : 0) : (x, y) => (hachage(x, y, 17) > 0.9 ? -0.4 : 0);
+  // les taches de l'écaille de tortue : de grandes plaques rousses sur le poil sombre
+  const finir = (t, tete) => {
+    if (P.taches) for (let y = 0; y < t.h; y++) for (let x = 0; x < t.l; x++) if (t.mat(x, y) === 'poil' && fbm(x * 0.22, y * 0.22, 433) > 0.56) t.poser(x, y, 'tache', t.k[y * t.l + x]);
+    // le masque brun du chat crème : la tête, les oreilles, le bout de la queue et des pattes
+    if (P.masque) for (let y = t.h - 4; y < t.h; y++) for (let x = 0; x < t.l; x++) if (t.mat(x, y) === 'poil') t.poser(x, y, 'masque', t.k[y * t.l + x]);   // (les chaussettes brunes)
+    if (P.masque && tete) for (let y = 0; y < t.h; y++) for (let x = 0; x < t.l; x++) if (t.mat(x, y) === 'poil' && Math.hypot(x + 0.5 - tete[0], y + 0.5 - tete[1]) < 5.2) t.poser(x, y, 'masque', Math.max(0, t.k[y * t.l + x] - (Math.hypot(x + 0.5 - tete[0] - 3, y + 0.5 - tete[1] - 1) < 2.5 ? 0 : 1)));
+  };
+  // le collier, au cou (sous la tête, côté nuque), et son grelot ou son foulard
+  const collier = (t, cx, cy) => {
+    if (!C.couleur) return;
+    for (let y = Math.round(cy + 2); y <= Math.round(cy + 3); y++) for (let x = Math.round(cx - 4); x <= Math.round(cx); x++) if (['poil', 'ventre', 'tache', 'masque'].includes(t.mat(x, y))) t.poser(x, y, 'collier', y === Math.round(cy + 2) ? 4 : 2);
+    if (C.grelot) { t.poser(Math.round(cx - 1), Math.round(cy + 4), 'or', 5); t.poser(Math.round(cx), Math.round(cy + 4), 'or', 3); t.poser(Math.round(cx - 1), Math.round(cy + 5), 'or', 2); }
+    if (C.foulard) for (const [dx, dy, k] of [[-2, 4, 4], [-1, 4, 3], [-1, 5, 3], [0, 4, 2], [-1, 6, 2]]) t.poser(Math.round(cx + dx), Math.round(cy + dy), 'collier', k);
+  };
   // La tête (de profil) : le crâne, le museau, deux oreilles pointues, l'œil
   const tete = (t, cx, cy) => {
     for (const ox of [-2.2, 1.4]) t.forme('poil', (x, y) => (y >= cy - 7 && y <= cy - 2 && Math.abs(x + 0.5 - (cx + ox)) <= (y - (cy - 7)) * 0.42 + 0.2 ? [0, -0.6, 0.8] : null), { decalage: 0.2 });
@@ -766,15 +788,16 @@ function creerChatRueHD(scene) {
     t.forme('ventre', ellipsoide(cx + 3, cy + 1.4, 2.2, 1.6), { decalage: 0.2 });
     t.poser(Math.round(cx + 1.6), Math.round(cy - 0.8), 'oeil', 4);
     t.poser(Math.round(cx + 2.6), Math.round(cy - 0.8), 'oeil', 2);
+    t.poser(Math.round(cx + 2.1), Math.round(cy - 0.8), 'encre', 0);
     t.poser(Math.round(cx + 5), Math.round(cy + 0.6), 'verreRouge', 3);
   };
   const patte = (t, pts) => traitHD(t, 'poil', pts, 1.25, -0.2);
+  const fin = (t, cle, tx, ty) => { collier(t, tx, ty); finir(t, [tx, ty]); t.contour(); t.texture(scene, pref + cle); };
   // Marche : les pattes diagonales avancent ensemble (avant gauche et arrière droite...)
   for (let k = 0; k < 4; k++) {
     const t = toileDecor(40, 26); pelage(t);
     const a = Math.sin(k * Math.PI / 2) * 3, leve = v => (v > 0.5 ? 1.5 : 0);
     const dos = k % 2 ? 0.5 : 0;
-    // les pattes du fond, plus sombres
     patte(t, [[12, 16], [12 - a, 21], [11 - a, 24.5 - leve(-a)]]);
     patte(t, [[25, 16], [25 + a, 21], [26 + a, 24.5 - leve(a)]]);
     t.forme('poil', ellipsoide(18, 14 + dos, 10.5, 5.2), { motif: rayures });     // le corps
@@ -783,7 +806,7 @@ function creerChatRueHD(scene) {
     patte(t, [[27, 17], [27 - a, 21], [28 - a, 24.5 - leve(-a)]]);
     traitHD(t, 'poil', [[8, 12 + dos], [4, 9], [3, 4 + (k % 2)], [5, 1.5]], 1.3);   // la queue dressée
     tete(t, 31, 9 + dos);
-    t.contour(); t.texture(scene, 'chatRue_m' + k);
+    fin(t, '_m' + k, 31, 9 + dos);
   }
   // Assis, la queue enroulée au sol (deux images : le bout de la queue bat)
   for (let k = 0; k < 2; k++) {
@@ -794,7 +817,7 @@ function creerChatRueHD(scene) {
     t.forme('ventre', ellipsoide(24, 14, 2.4, 5), { decalage: 0.3 });
     patte(t, [[22, 17], [22, 24.5]]); patte(t, [[25, 17], [25.5, 24.5]]);
     tete(t, 24, 6.5);
-    t.contour(); t.texture(scene, 'chatRue_assis' + k);
+    fin(t, '_assis' + k, 24, 6.5);
   }
   // Tapi (prêt à bondir), puis le bond, tout en longueur
   {
@@ -803,7 +826,7 @@ function creerChatRueHD(scene) {
     patte(t, [[12, 20], [10, 24.5]]); patte(t, [[25, 20], [28, 24.5]]);
     t.forme('poil', ellipsoide(18, 19.5, 11, 4.2), { motif: rayures });
     tete(t, 31, 17);
-    t.contour(); t.texture(scene, 'chatRue_tapi');
+    fin(t, '_tapi', 31, 17);
   }
   {
     const t = toileDecor(44, 26); pelage(t);
@@ -811,8 +834,30 @@ function creerChatRueHD(scene) {
     t.forme('poil', ellipsoide(21, 13, 13, 4.4), { motif: rayures });
     traitHD(t, 'poil', [[8, 12], [3, 10], [0.5, 11]], 1.3);
     tete(t, 35, 10);
-    t.contour(); t.texture(scene, 'chatRue_bond');
+    fin(t, '_bond', 35, 10);
   }
+  // Endormi en boule, la queue autour du nez (deux images : il respire)
+  for (const [k, gonfle] of [[0, 0], [1, 0.6]]) {
+    const t = toileDecor(34, 20); pelage(t);
+    t.forme('poil', ellipsoide(18, 12.5 - gonfle * 0.4, 13 + gonfle * 0.3, 7.2 + gonfle), { motif: P.rayures ? (x, y) => ((x + Math.floor(y / 2)) % 5 === 0 ? -1 : 0) : rayures });
+    t.forme('poil', ellipsoide(8, 13, 6.4, 5.4), { decalage: 0.2 });
+    for (const ox of [4, 9]) t.forme('poil', (x, y) => (y >= 6 && y <= 9 && Math.abs(x + 0.5 - ox) <= (y - 6) * 0.6 + 0.3 ? [0, -0.6, 0.8] : null), { decalage: 0.3 });
+    t.forme('ventre', ellipsoide(6, 16, 3.5, 2.2), { decalage: 0.2 });
+    for (const x of [4, 5, 9, 10]) t.poser(x, 13, 'encre', 1);   // les yeux fermés
+    t.poser(6, 15, 'verreRouge', 4);
+    traitHD(t, 'poil', [[30, 17], [24, 19.5], [12, 19.5], [6, 18.5]], 1.6, 0.2);
+    t.forme('ventre', ellipsoide(6, 18.5, 2, 1.3), { decalage: 0.4 });
+    // (le collier, sous la joue)
+    if (C.couleur) { for (const [x, y] of [[11, 16], [12, 16], [12, 15], [13, 15], [11, 17]]) if (t.mat(x, y)) t.poser(x, y, 'collier', 3); if (C.grelot) { t.poser(11, 18, 'or', 5); t.poser(12, 18, 'or', 3); } }
+    finir(t, [8, 13]);
+    t.contour(); t.texture(scene, pref + '_dort' + k);
+  }
+  return pref;
+}
+
+function creerChatRueHD(scene) {
+  if (scene.textures.exists('chatRue_m0')) return;
+  creerChatHD(scene, { pelage: 'gris', yeux: 'vert', collier: 'aucun' }, 'chatRue');
   // La souris (deux images : les pattes qui trottinent)
   for (let k = 0; k < 2; k++) {
     const t = toileDecor(16, 8);

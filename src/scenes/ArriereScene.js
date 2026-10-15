@@ -56,8 +56,16 @@ class ArriereScene extends Phaser.Scene {
     bougie(this, 768, 290, { rayon: 70 });
     // Le tapis, et le chat
     this.add.image(430, SOL_ARRIERE + 64, tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(2.2);
-    // (le coussin attend un familier : le chat du shop viendra plus tard, quand on l'aura adopté)
+    // (le coussin attend un familier : le chat de gouttière, une fois adopté, y dort en boule)
     this.add.image(196, SOL_ARRIERE + 86, 'coussinHD').setOrigin(0.5, 1).setScale(2.4);
+    if (chatAdopte(this.G) && this.scene.key !== 'Promenade') {   // (en promenade, il te suit)
+      const k = creerChatHD(this, lookChat(this.G));
+      const chat = this.add.image(200, SOL_ARRIERE + 76, k + '_dort0').setOrigin(0.5, 1).setScale(2.4).setInteractive({ useHandCursor: true });
+      let souffle = 0;
+      this.time.addEvent({ delay: 1100, loop: true, callback: () => { if (chat.active) chat.setTexture(creerChatHD(this, lookChat(this.G)) + '_dort' + (++souffle % 2)); } });
+      chat.on('pointerdown', () => { Son.jouer('miaou'); ouvrirPanneauChat(this); });
+      this.add.text(200, SOL_ARRIERE + 30, nomChat(this.G), style(11, '#f3e6c8', { fontStyle: 'bold italic', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5, 0);
+    }
   }
 
   // Les étagères : chaque objet de ta réserve, en vrai. Plus il y en a, plus ça déborde.

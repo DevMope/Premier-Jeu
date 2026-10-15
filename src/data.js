@@ -847,6 +847,43 @@ const MATERIAUX = {
 const MATERIAU_DE = { epee: 'fer', corde: 'cuir', gourde: 'cuir', cape: 'cuir', bouclier: 'fer',
   hache: 'fer', marteau: 'fer', arc: 'bois', lance: 'bois', baton: 'bois', bambou: 'bois', fronde: 'cuir', dague: 'fer',
   rapiere: 'fer', khopesh: 'fer', griffes: 'fer', massue: 'bois' };
+// (v0.65, étape 10c) Le chat de gouttière, premier familier. Certains soirs il rôde devant le shop ;
+// on le nourrit d'une ration ; au bout de trois soirs, il te suit et dort sur le coussin de
+// l'arrière-boutique. Sans lui, des rats grignotent parfois les provisions ; avec lui, plus de rats,
+// et il sent parfois venir la garde (il crache vers la porte la veille d'une fouille).
+const CHAT = {
+  jourMin: 3,            // il ne rôde pas avant le 3e soir
+  chanceSoir: 0.4,       // un soir sur deux à peu près, au début
+  chanceRevient: 0.75,   // une fois nourri, il revient plus souvent
+  soirsPourAdopter: 3,
+  rats: { jourMin: 5, chance: 0.07, max: 2, objets: ['ration', 'gourde'] },
+  alerte: 0.75,          // il ne sent pas toujours venir la garde
+  cadeau: 0.05,          // une souris sur l'oreiller, de temps en temps
+};
+// Une fois lavé, son vrai pelage apparaît : c'est toi qui choisis (et ses yeux, et son collier).
+const PELAGES_CHAT = {
+  gris: { nom: 'Gris tigré', poil: 0x8a8478, ventre: 0xc8c0b0, rayures: true },
+  roux: { nom: 'Roux tigré', poil: 0xd8843a, ventre: 0xf2dcb4, rayures: true },
+  noir: { nom: 'Noir de jais', poil: 0x34303a, ventre: 0x48444e },
+  blanc: { nom: 'Blanc de neige', poil: 0xe6e0d6, ventre: 0xfaf6f0 },
+  ecaille: { nom: 'Écaille de tortue', poil: 0x3e322c, ventre: 0xd89048, taches: 0xc8742e },
+  creme: { nom: 'Crème au masque brun', poil: 0xe4cfa4, ventre: 0xf4e8d0, masque: 0x5a4030 },
+};
+const YEUX_CHAT = {
+  vert: { nom: 'Vert', couleur: 0x8aa020 },
+  or: { nom: "D'or", couleur: 0xe0a020 },
+  bleu: { nom: 'Bleu', couleur: 0x4a8ad8 },
+  cuivre: { nom: 'Cuivre', couleur: 0xc8642a },
+};
+const COLLIERS_CHAT = {
+  aucun: { nom: 'Sans collier' },
+  rouge: { nom: 'Collier rouge', couleur: 0xb02a2a },
+  bleu: { nom: 'Collier bleu', couleur: 0x2a4a9a },
+  grelot: { nom: 'Collier à grelot', couleur: 0x2a6a3a, grelot: true },
+  foulard: { nom: 'Petit foulard', couleur: 0xd8b040, foulard: true },
+};
+const NOM_CHAT_MAX = 16;
+
 const MATERIAUX_DEPART = { fer: 2, cuir: 2, bois: 2, filOr: 1 };
 // Au début il faut 3 matériaux par réparation ; l'artisanat en fait baisser le nombre.
 const MATERIAUX_PAR_REPARATION = 3;

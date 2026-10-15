@@ -1462,6 +1462,7 @@ function nuit(G) {
   }
   G.cadeauxVillages = [];
   for (const l of nuitMafia(G)) G.reveil.lignes.push(l);
+  for (const l of nuitDuChat(G)) G.reveil.lignes.push(l);   // (v0.65) les rats, ou le cadeau du chat
   if (loyer > 0) G.reveil.lignes.push(`Le bourgmestre a encaissé le loyer de la semaine : ${loyer} pièces.` + (loyer > (G.dernierLoyer || loyer) ? ' Le bail a augmenté : ton comptoir a pris de la valeur.' : ''));
   if (loyer > 0) G.dernierLoyer = loyer;
   if (taxe > 0) G.reveil.lignes.push(`Un percepteur de la Confrérie est passé : ${taxe} pièces de taxe « pour la défense contre le dragon ».`);
@@ -1700,6 +1701,10 @@ function quitterMarcheNoir(G) {
 function doitVenirGarde(G) {
   G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 };
   if (G.gardeDemain) { G.gardeDemain = false; return true; }
+  if (G.gardeTiree === G.jour) return false;   // (v0.65 : déjà tirée la veille au soir, pour le chat)
+  return gardeAuHasard(G);
+}
+function gardeAuHasard(G) {
   if (G.jour < 8 || G.jour - (G.garde.dernier || 0) < GARDE.delai) return false;
   const p = palierCamp(G);
   if (p >= 0) return false;
@@ -1719,6 +1724,68 @@ function amendeGarde(G) {
   return Math.max(GARDE.amendeMin, Math.round(Math.max(0, G.argent) * GARDE.amendePart));
 }
 
+// --- (v0.65, étape 10c) Le chat de gouttière ---
+function chatDe(G) { return (G.chat = G.chat || { soirs: [], adopte: false, nom: '', look: null, vu: 0, present: false }); }
+function chatAdopte(G) { return !!(G.chat && G.chat.adopte); }
+// Rôde-t-il devant le shop ce soir ? (tiré une fois par soir : recharger ne change rien)
+function chatCeSoir(G) {
+  const c = chatDe(G);
+  if (c.adopte) return false;
+  if (c.vu !== G.jour) { c.vu = G.jour; c.present = G.jour >= CHAT.jourMin && Math.random() < (c.soirs.length ? CHAT.chanceRevient : CHAT.chanceSoir); }
+  return c.present;
+}
+// Lui donner une ration. Renvoie { erreur } ou { soirs, adopte }.
+function nourrirChat(G) {
+  const c = chatDe(G);
+  if (!chatCeSoir(G)) return { erreur: "Il n'y a pas de chat ce soir." };
+  if (c.soirs.includes(G.jour)) return { erreur: 'Il a déjà eu sa ration ce soir. Il te regarde, repu.' };
+  if ((G.stock.ration || 0) <= 0) return { erreur: "Tu n'as plus une seule ration à lui donner." };
+  G.stock.ration--;
+  c.soirs.push(G.jour);
+  if (c.soirs.length >= CHAT.soirsPourAdopter) {
+    c.adopte = true; c.present = false; c.adopteJour = G.jour;
+    c.look = c.look || { pelage: 'gris', yeux: 'vert', collier: 'aucun' };
+  }
+  return { soirs: c.soirs.length, adopte: c.adopte };
+}
+function lookChat(G) { const c = chatDe(G); return c.look || { pelage: 'gris', yeux: 'vert', collier: 'aucun' }; }
+function nomChat(G) { return (G.chat && G.chat.nom) || 'ton chat'; }
+// La nuit : sans chat, des rats grignotent parfois les provisions ; avec lui, plus de rats (et parfois un cadeau)
+function nuitDuChat(G) {
+  const c = chatDe(G), lignes = [];
+  if (c.adopte) {
+    if (Math.random() < CHAT.cadeau) lignes.push(`Une souris morte sur ton oreiller : un cadeau de ${nomChat(G)}, qui ronronne, très fier.`);
+    return lignes;
+  }
+  const r = CHAT.rats;
+  if (G.jour < r.jourMin || Math.random() >= r.chance) return lignes;
+  const manges = {};
+  for (let i = 0; i < hasard(1, r.max); i++) {
+    const id = auHasard(r.objets.filter(o => (G.stock[o] || 0) > 0));
+    if (!id) break;
+    G.stock[id]--; manges[id] = (manges[id] || 0) + 1;
+  }
+  const liste = Object.entries(manges).map(([id, n]) => `${n === 1 ? (genreDe(id).startsWith('f') ? 'une' : 'un') : n} ${ITEMS[id].nom.toLowerCase()}${n > 1 ? 's' : ''}`);
+  if (liste.length) lignes.push(`Cette nuit, des rats ont grignoté ta réserve : ${liste.join(' et ')}.${c.soirs.length ? '' : ' Un chat, peut-être, les tiendrait à distance...'}`);
+  return lignes;
+}
+// (appelé le soir) la garde viendra-t-elle demain ? On le tire dès ce soir : ton chat le sent parfois.
+function tirerGardeDuLendemain(G) {
+  if (G.gardeTiree === G.jour + 1) return !!G.gardeDemain;
+  G.gardeTiree = G.jour + 1;
+  if (!G.gardeDemain) { G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 }; G.jour++; const vient = gardeAuHasard(G); G.jour--; if (vient) G.gardeDemain = true; }
+  const c = chatDe(G);
+  if (c.adopte && G.gardeDemain && G.garde && G.garde.visites > 0 && Math.random() < CHAT.alerte) c.alerte = G.jour + 1;
+  return !!G.gardeDemain;
+}
+function alerteChat(G) { return !!(G.chat && G.chat.alerte === G.jour + 1); }
+// Ce que la garde pourrait saisir chez toi (pour savoir s'il y a quelque chose à cacher)
+function aCacher(G) {
+  const m = mafia(G);
+  return Object.values(G.interdits || {}).some(n => n > 0) || !!m.colis || G.tresors.some(t => t.vole && !t.reparation);
+}
+function cacherMarchandise(G) { G.cachette = G.jour + 1; }
+
 // La visite : le capitaine annonce une amende (la première fois) ou une fouille (les suivantes).
 // Renvoie { fouille, amende, saisis } ; la fouille saisit les objets interdits.
 function visiteGarde(G) {
@@ -1727,6 +1794,8 @@ function visiteGarde(G) {
   G.garde.visites++;
   G.garde.dernier = G.jour;
   const saisis = [];
+  // (v0.65) prévenu par le chat, tu as tout caché sous le plancher : la fouille ne trouve rien
+  if (fouille && G.cachette === G.jour) return { fouille, amende: amendeGarde(G), saisis, cache: true };
   if (fouille) for (const [id, n] of Object.entries(G.interdits || {})) if (n > 0) { saisis.push(`${n} × ${INTERDITS[id].nom.toLowerCase()}`); G.garde.saisies += n; G.interdits[id] = 0; }
   // (v0.60) ce que cache la Main Noire chez toi : le colis, les bijoux volés (l'amende double)
   let double = false;

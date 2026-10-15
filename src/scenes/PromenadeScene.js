@@ -48,6 +48,10 @@ class PromenadeScene extends Cinematique {
     this.heros = this.add.image(960 + 480, SOL_PROMENADE, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(8.5);
     this.cible = null;
     this.rue = [];   // (les animations de la rue, vues du comptoir)
+    // (v0.65) ton chat te suit de pièce en pièce ; le chat de gouttière, lui, attend dehors
+    this.compagnon = null;
+    if (chatAdopte(G)) this.creerCompagnon();
+    if (chatCeSoir(G)) this.chatDeGouttiere();
 
     // L'interface, fixe à l'écran
     const fixe = o => o.setScrollFactor(0).setDepth(30);
@@ -123,6 +127,7 @@ class PromenadeScene extends Cinematique {
       this.heros.setVisible(piece.marche !== false);
       for (const b of this.boutonsComptoir) { b.fond.setVisible(index === P_COMPTOIR); b.label.setVisible(index === P_COMPTOIR); }
       if (piece.marche !== false) { this.heros.x = xHeros; this.heros.setFlipX(xHeros > piece.x + 480); }
+      if (this.compagnon) { this.compagnon.setVisible(piece.marche !== false); this.compagnon.x = Phaser.Math.Clamp(xHeros + (xHeros > piece.x + 480 ? 70 : -70), piece.x + 30, piece.x + 930); }
       this.arreterRue();
       if (index === P_COMPTOIR) this.animerRue();
     };
@@ -395,12 +400,154 @@ class PromenadeScene extends Cinematique {
       if (!this.heros.marche) pasDeMarche(this, this.heros, 260);
       this.heros.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
     } else this.heros.y = SOL_PROMENADE;
+    this.suivre(delta);
+  }
+
+  // --- (v0.65, étape 10c) Le chat ---
+
+  creerCompagnon() {
+    const k = creerChatHD(this, lookChat(this.G));
+    this.cleChat = k;
+    const c = this.compagnon = this.add.image(this.heros.x - 70, SOL_PROMENADE, k + '_assis0').setOrigin(0.5, 1).setScale(2.4).setDepth(8.45).setInteractive({ useHandCursor: true });
+    c.etape = 0; c.temps = 0;
+    c.on('pointerdown', () => {
+      if (this.transition) return;
+      Son.jouer('miaou');
+      this.dire(`${nomChat(this.G)} ronronne et se frotte contre ta jambe.`);
+      ouvrirPanneauChat(this, { quandFini: () => { this.cleChat = creerChatHD(this, lookChat(this.G)); c.setTexture(this.cleChat + '_assis0'); } });
+    });
+  }
+
+  // Il te suit à quelques pas ; quand tu t'arrêtes, il s'assoit et sa queue bat.
+  suivre(delta) {
+    const c = this.compagnon;
+    if (!c || !c.visible) return;
+    const piece = PIECES_PROMENADE[this.piece];
+    const cible = Phaser.Math.Clamp(this.heros.x + (this.heros.flipX ? 64 : -64), piece.x + 30, piece.x + 930);
+    const reste = cible - c.x;
+    c.temps += delta;
+    if (Math.abs(reste) > 6) {
+      c.x += Math.sign(reste) * Math.min(Math.abs(reste), 0.36 * delta);
+      c.setFlipX(reste < 0);
+      if (c.temps > 110) { c.temps = 0; c.etape = (c.etape + 1) % 4; c.setTexture(this.cleChat + '_m' + c.etape); }
+    } else if (c.temps > 420) { c.temps = 0; c.etape = (c.etape + 1) % 2; c.setTexture(this.cleChat + '_assis' + c.etape); }
+  }
+
+  // Le chat de gouttière, certains soirs, assis sur les pavés devant ta porte.
+  chatDeGouttiere() {
+    const G = this.G, x = this.porteShop.x - 130;
+    creerChatRueHD(this);
+    const c = this.gouttiere = this.add.image(x, SOL_PROMENADE, 'chatRue_assis0').setOrigin(0.5, 1).setScale(2.4).setDepth(8.45).setFlipX(true).setInteractive({ useHandCursor: true });
+    let q = 0;
+    const queue = this.time.addEvent({ delay: 420, loop: true, callback: () => { if (c.active && !c.occupe) c.setTexture('chatRue_assis' + (++q % 2)); } });
+    const coeurs = () => '♥'.repeat(chatDe(G).soirs.length) + '♡'.repeat(CHAT.soirsPourAdopter - chatDe(G).soirs.length);
+    c.on('pointerdown', () => {
+      if (this.transition || c.occupe) return;
+      this.allerVers(x + 90);
+      if (chatDe(G).soirs.includes(G.jour)) return this.dire(`Il a eu sa ration ce soir. Il fait sa toilette sans te quitter des yeux. ${coeurs()}`);
+      Son.jouer('miaou');
+      this.dire(`Un chat de gouttière, maigre et sale. Il te fixe de ses yeux verts... ${coeurs()}`);
+      this.choixChat([`Lui donner une ration (${G.stock.ration || 0})`, () => this.nourrir(c, queue)], ['Le laisser', () => this.dire('Il te suit du regard pendant que tu t\'éloignes.')]);
+    });
+  }
+
+  choixChat(...options) {
+    if (this.boutonsChat) for (const b of this.boutonsChat) { b.fond.destroy(); b.label.destroy(); }
+    this.boutonsChat = options.map(([texte, action], i) => {
+      const b = creerBouton(this, 480 + (i - (options.length - 1) / 2) * 280, 440, 260, texte, () => { for (const o of this.boutonsChat) { o.fond.destroy(); o.label.destroy(); } this.boutonsChat = null; action(); });
+      b.fond.setScrollFactor(0).setDepth(31); b.label.setScrollFactor(0).setDepth(31);
+      return b;
+    });
+  }
+
+  async nourrir(c, queue) {
+    const G = this.G;
+    const r = nourrirChat(G);
+    if (r.erreur) { Son.jouer('refus'); return this.dire(r.erreur); }
+    c.occupe = true;
+    Son.jouer('glisse');
+    const ration = this.add.image(c.x - 34, SOL_PROMENADE - 4, iconeObjet(this, 'ration')).setOrigin(0.5, 1).setScale(2).setDepth(8.44);
+    const pause = ms => new Promise(f => this.time.delayedCall(ms, f));
+    c.setTexture('chatRue_tapi');
+    this.tweens.add({ targets: c, y: SOL_PROMENADE + 2, duration: 160, yoyo: true, repeat: 6 });
+    this.tweens.add({ targets: ration, alpha: 0, scale: 1, duration: 1800 });
+    await pause(1900);
+    ration.destroy();
+    const aller = (versX, vitesse = 5) => new Promise(f => {
+      let k = 0; c.setFlipX(versX < c.x);
+      const pas = this.time.addEvent({ delay: 110, loop: true, callback: () => { if (c.active) c.setTexture('chatRue_m' + (++k % 4)); } });
+      this.tweens.add({ targets: c, x: versX, duration: Math.abs(versX - c.x) * vitesse, onComplete: () => { pas.remove(); f(); } });
+    });
+    if (!r.adopte) {
+      if (r.soirs >= 2) { await aller(this.heros.x - 40); Son.jouer('miaou'); await pause(700); }
+      this.dire(r.soirs >= 2 ? 'Il mange, puis se frotte contre ta jambe avant de filer dans la nuit. ♥♥♡' : 'Il dévore la ration... et file dans la nuit sans un regard. ♥♡♡');
+      await aller(PIECES_PROMENADE[P_DEHORS].x - 60, 4);
+      queue.remove(); c.destroy();
+      return;
+    }
+    // Le troisième soir : il te suit jusqu'à la porte... et entre.
+    await aller(this.heros.x - 40);
+    Son.jouer('miaou');
+    this.dire('Il mange, se frotte contre tes jambes... et te suit jusqu\'à la porte ! ♥♥♥');
+    await pause(1600);
+    queue.remove(); c.destroy();
+    ouvrirPanneauChat(this, { adoption: true, quandFini: () => {
+      this.creerCompagnon();
+      this.compagnon.x = this.heros.x - 64;
+      this.dire(`${nomChat(G)} est chez lui. Il a déjà choisi le coussin de l'arrière-boutique... et plus un rat n'osera entrer.`);
+    } });
   }
 
   partir() {
     if (this.fini) return;
     this.fini = true;
     this.cameras.main.fadeOut(400);
-    this.cameras.main.once('camerafadeoutcomplete', () => { this.scene.stop(); this.scene.resume('Nuit'); });
+    const nuit = this.scene.get('Nuit');
+    if (nuit && nuit.lieu) Sauvegarde.planifier(this.G, nuit.lieu);   // (v0.65 : le chat adopté, nourri...)
+    this.cameras.main.once('camerafadeoutcomplete', () => { this.scene.stop(); this.scene.resume('Nuit'); if (nuit && nuit.tout) nuit.tout(); });
   }
+}
+
+// --- (v0.65, étape 10c) Le panneau du chat : son pelage et ses yeux (une seule fois, au premier
+// bain : son vrai pelage apparaît), son collier et son nom (à changer quand on veut). ---
+function ouvrirPanneauChat(scene, { adoption = false, quandFini = null } = {}) {
+  const G = window.GAME, c = chatDe(G);
+  c.look = c.look || { pelage: 'gris', yeux: 'vert', collier: 'aucun' };
+  const look = { ...c.look };
+  const fixe = o => { o.setScrollFactor(0).setDepth(60); boite.add(o); return o; };
+  const boite = scene.add.container(0, 0).setDepth(60);
+  boite.add(scene.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.6).setScrollFactor(0).setInteractive());
+  fixe(scene.add.image(480, 270, panneauHD(scene, 620, 420)).setScale(2));
+  fixe(scene.add.text(480, 86, adoption ? 'Un nouveau compagnon !' : nomChat(G).replace(/^ton chat$/, 'Ton chat'), style(22, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+  fixe(scene.add.text(480, 114, adoption ? "Un bon bain plus tard, son vrai pelage apparaît. Comment est-il ?" : 'Un nouveau collier ? Un autre nom ?', style(13, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+  // l'aperçu : assis, la queue qui bat
+  const apercu = fixe(scene.add.image(300, 300, 'chatRue_assis0').setScale(6).setOrigin(0.5, 1));
+  let q = 0;
+  const queue = scene.time.addEvent({ delay: 400, loop: true, callback: () => { if (apercu.active) apercu.setTexture(cleChat(look) + '_assis' + (++q % 2)); } });
+  const maj = () => { creerChatHD(scene, look); apercu.setTexture(cleChat(look) + '_assis0'); for (const l of lignes) l.maj(); };
+  const lignes = [];
+  const choix = (y, titre, liste, cle) => {
+    const ids = Object.keys(liste);
+    fixe(scene.add.text(560, y - 18, titre, style(12, '#6b4a2a', { fontStyle: 'bold' })).setOrigin(0.5));
+    const t = fixe(scene.add.text(560, y, '', style(15, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    const tourner = d => { look[cle] = ids[(ids.indexOf(look[cle]) + d + ids.length) % ids.length]; Son.jouer('glisse'); maj(); };
+    for (const [x, d, s] of [[440, -1, '◀'], [680, 1, '▶']]) fixe(scene.add.text(x, y, s, style(20, '#7a4a1a', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => tourner(d)));
+    lignes.push({ maj: () => t.setText(liste[look[cle]].nom) });
+  };
+  if (adoption) { choix(170, 'Son pelage', PELAGES_CHAT, 'pelage'); choix(222, 'Ses yeux', YEUX_CHAT, 'yeux'); }
+  choix(adoption ? 274 : 200, 'Son collier', COLLIERS_CHAT, 'collier');
+  let nom = c.nom || '';
+  const texteNom = fixe(scene.add.text(560, adoption ? 330 : 270, '', style(16, '#3b2410', { fontStyle: 'bold italic' })).setOrigin(0.5).setInteractive({ useHandCursor: true }));
+  const majNom = () => texteNom.setText(`✎ ${nom ? '« ' + nom + ' »' : 'Lui donner un nom'}`);
+  texteNom.on('pointerdown', () => demanderTexte('Le nom de ton chat', nom, NOM_CHAT_MAX, n => { nom = n.trim() || nom; majNom(); }));
+  majNom(); maj();
+  const fin = creerBouton(scene, 480, 430, 220, adoption ? 'Bienvenue à la maison !' : 'Valider', () => {
+    if (!nom) { Son.jouer('refus'); return demanderTexte('Le nom de ton chat', '', NOM_CHAT_MAX, n => { nom = n.trim(); majNom(); }); }
+    c.look = { ...look }; c.nom = nom;
+    Son.jouer('miaou');
+    queue.remove(); boite.destroy();
+    if (quandFini) quandFini();
+  });
+  fixe(fin.fond); fixe(fin.label);
+  return boite;
 }
