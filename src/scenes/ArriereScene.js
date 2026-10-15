@@ -94,7 +94,7 @@ class ArriereScene extends Phaser.Scene {
   // des lingots quand on l'est vraiment. Et des reconnaissances de dettes quand ça va mal.
   dessinerFortune() {
     const G = this.G;
-    const cx = 690;
+    const cx = 760;   // (v0.66 : le coffre-fort contre le mur, entre le buffet et la porte de la chambre)
     const argent = Math.max(0, G.argent);
     // Des lingots, au-delà de 500 pièces
     const lingots = Math.min(6, Math.floor(argent / 500));
@@ -115,7 +115,7 @@ class ArriereScene extends Phaser.Scene {
     this.add.image(cx, SOL_ARRIERE + 6, coffreHD(this, niveauAmelioration(G, 'coffre'))).setOrigin(0.5, 1).setScale(3);
     // Des sacs de pièces, au-delà de 150
     const sacs = Math.min(4, Math.floor(argent / 150));
-    for (let i = 0; i < sacs; i++) this.add.image(cx + 122 + (i % 2) * 26, SOL_ARRIERE + 8 + Math.floor(i / 2) * 22, 'sacHD').setOrigin(0.5, 1).setScale(2.5);
+    for (let i = 0; i < sacs; i++) this.add.image(cx - 92 + i * 20, SOL_ARRIERE + 26 + (i % 2) * 4, 'sacHD').setOrigin(0.5, 1).setScale(2.5).setDepth(2);
     if (G.argent <= 0) {
       this.add.text(cx, SOL_ARRIERE - 120, 'Le coffre sonne creux...', style(12, '#3a2410', { fontStyle: 'italic bold' })).setOrigin(0.5);
     }
@@ -131,9 +131,10 @@ class ArriereScene extends Phaser.Scene {
       this.tweens.add({ targets: note, angle: angle + (i % 2 ? -2 : 2), duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       this.add.text(x - 8, y - 2, `DETTE\n${p.restant} p.\n−${Math.min(p.parJour, p.restant)}/nuit`, style(13, '#8a1a1a', { fontStyle: 'bold', align: 'center', lineSpacing: -2 })).setOrigin(0.5).setAngle(angle);
     });
-    // Ta bourse, accrochée au mur : plus elle est ronde, plus tu es riche.
-    this.add.text(cx, 158, 'Ta fortune', style(13, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
-    bourse(this, cx, 240, G.argent, { echelle: 2, taille: 15 });
+    // (v0.66) Ta fortune, peinte sur une plaque de laiton vissée au coffre (plus de bourse au mur)
+    const plaque = this.add.text(cx, SOL_ARRIERE - 26, `${G.argent} p.`, style(14, '#fff2b0', { fontStyle: 'bold', stroke: '#3a2408', strokeThickness: 4, backgroundColor: '#8a6420', padding: { x: 6, y: 1 } })).setOrigin(0.5).setDepth(1.5);
+    this.add.text(cx, SOL_ARRIERE - 48, 'Ta fortune', style(11, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5).setDepth(1.5);
+    this.plaqueFortune = plaque;
   }
 
   // Les décorations achetées à la brocante, accrochées aux murs. Clic : leur effet.
@@ -154,22 +155,24 @@ class ArriereScene extends Phaser.Scene {
   // Le panier des cadeaux (du Bazar de Rosalie)
   dessinerPanier() {
     const G = this.G;
-    const x = 330, y = SOL_ARRIERE + 50;
+    // (v0.66) posé sur le vieux buffet, contre le mur
+    const x = 580, y = SOL_ARRIERE - 62;
     const n = Object.values(G.cadeaux || {}).reduce((a, b) => a + b, 0);
-    Object.keys(G.cadeaux || {}).filter(id => G.cadeaux[id] > 0).slice(0, 4).forEach((id, i) => this.add.image(x - 27 + i * 18, y - 40 - (i % 2) * 5, iconeObjet(this, id)).setScale(2));
-    this.add.image(x, y + 6, 'panierHD').setOrigin(0.5, 1).setScale(2);
-    const zone = this.add.rectangle(x, y - 14, 100, 60, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    this.add.text(x, y + 22, n ? `🎁 Les cadeaux (${n})` : '🎁 Panier vide', style(12, '#f3e6c8', { fontStyle: 'bold', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5);
+    Object.keys(G.cadeaux || {}).filter(id => G.cadeaux[id] > 0).slice(0, 4).forEach((id, i) => this.add.image(x - 20 + i * 13, y - 28 - (i % 2) * 4, iconeObjet(this, id)).setScale(1.5).setDepth(1.2));
+    this.add.image(x, y + 4, 'panierHD').setOrigin(0.5, 1).setScale(1.4).setDepth(1.3);
+    const zone = this.add.rectangle(x, y - 12, 70, 44, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    this.add.text(x, y - 56, n ? `🎁 Les cadeaux (${n})` : '🎁 Panier vide', style(11, '#f3e6c8', { fontStyle: 'bold', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5).setDepth(1.4);
     zone.on('pointerdown', () => this.ouvrirListe('cadeaux'));
   }
 
   // Le vieux buffet. Son tiroir du bas ne s'ouvre que si la Faucheuse y a laissé quelque chose.
   dessinerBuffet() {
     const G = this.G;
-    const x = 540, y = SOL_ARRIERE + 56;
+    // (v0.66) contre le mur, à droite des étagères (et plus au milieu de la pièce)
+    const x = 600, y = SOL_ARRIERE + 20;
     const n = Object.values(G.pieges || {}).reduce((a, b) => a + b, 0);
     this.add.image(x, y + 2, 'buffetHD').setOrigin(0.5, 1).setScale(2);
-    bougie(this, x - 26, y - 80, { rayon: 120 }); // une bougie posée sur le buffet
+    bougie(this, x + 40, y - 80, { rayon: 120 }); // une bougie posée sur le buffet, à côté du panier
     if (n) {
       // Une lueur violette sous le tiroir du bas...
       const lueur = this.add.rectangle(x, y - 26, 80, 3, 0xc040ff, 0.8);
