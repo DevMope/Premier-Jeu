@@ -19,20 +19,20 @@ const VARIANTES_RECIT = {
   mines: { arbres: null, repere: 'chevalement', sol: { pierres: true }, faune: ['chauvesSouris'] },
   forge: { arbres: null, repere: 'porteNaine', sol: { pierres: true }, faune: ['braises'] },
   // --- Les elfes ---
-  sanctuaire: { arbres: 'bouleaux', repere: 'arches', sol: { fleurs: [0xffffff, 0xd8f0ff], luisantes: true }, faune: ['lucioles'] },
-  lac: { arbres: 'saules', repere: 'lac', sol: { roseaux: true, fleurs: [0xffffff] }, faune: ['lucioles', 'poissons'] },
+  sanctuaire: { arbres: 'mallorns', repere: 'lothlorien', sol: { fleurs: [0xffffff, 0xd8f0ff], luisantes: true }, faune: ['lucioles'] },
+  lac: { arbres: 'automne', repere: 'fondcombe', sol: { roseaux: true, fleurs: [0xffffff] }, faune: ['lucioles', 'poissons'] },
   // --- Les mages ---
-  opale: { arbres: null, repere: 'flèches', sol: { cristaux: true }, faune: ['etincelles'] },
-  bibliotheque: { arbres: null, repere: 'tourLivres', sol: { pages: true }, faune: ['livres'] },
+  opale: { arbres: null, repere: 'opaleCite', sol: { cristaux: true }, faune: ['etincelles'] },
+  bibliotheque: { arbres: null, repere: 'bibliothequeHD', sol: { pages: true }, faune: ['livres'] },
   // --- Les sables ---
-  desert: { arbres: 'cactus', repere: 'cotes', sol: { os: true }, faune: ['vautours'] },
+  desert: { arbres: 'cactus', repere: 'cotesHD', sol: { os: true }, faune: ['vautours'] },
   tombeaux: { arbres: 'colonnes', repere: 'pyramide', sol: { poteries: true }, faune: ['vautours'] },
   // --- Les terres brûlées des orcs ---
   fort: { arbres: 'pieux', repere: 'palissade', sol: { pierres: true, cranes: true }, faune: ['corbeaux'] },
   minesRouges: { arbres: null, repere: 'echafaudage', sol: { pierres: true, rouge: true }, faune: ['braises'] },
   // --- La neige ---
-  pics: { arbres: 'sapins', repere: 'tourNaine', sol: { pierres: true }, faune: ['aigle'] },
-  col: { arbres: null, repere: 'cairn', sol: { pierres: true }, faune: ['corbeaux'], vent: true },
+  pics: { arbres: 'sapinsNeige', repere: 'sommet', sol: { pierres: true }, faune: ['aigle', 'blizzard'] },
+  col: { arbres: null, repere: 'colHurlements', sol: { pierres: true, cranes: true }, faune: ['corbeaux', 'vent'], sombre: 0x1a1030 },
 };
 
 function varianteRecit(zone) { return zone ? VARIANTES_RECIT[zone] || null : null; }
@@ -206,13 +206,22 @@ function lancerFaune(scene, quoi, plan) {
     case 'corbeaux': return scene.time.addEvent({ delay: 5200, loop: true, startAt: 3500, callback: () => vol('bat', 0x101014, ciel(60, 160), 7000, 1.1, -1) });
     case 'colombes': return scene.time.addEvent({ delay: 4800, loop: true, startAt: 3000, callback: () => { const y = ciel(60, 150); for (let k = 0; k < 2; k++) scene.time.delayedCall(k * 300, () => vol('bat', 0xf8f8f0, y + k * 12, 8000, 0.9)); } });
     case 'vautours': case 'aigle': {
-      const g = scene.add.graphics(); plan.add(g);
-      g.lineStyle(3, quoi === 'aigle' ? 0x3a2a1a : 0x1a1410, 0.9); g.lineBetween(-12, -3, 0, 0); g.lineBetween(0, 0, 12, -3);
-      const cx = quoi === 'aigle' ? 300 : 620, cy = 80;
-      const t = { a: 0 };
-      scene.tweens.add({ targets: t, a: Math.PI * 2, duration: 9000, repeat: -1, onUpdate: () => g.setPosition(cx + Math.cos(t.a) * 90, cy + Math.sin(t.a) * 26) });
+      // (v0.81) trois vautours qui tournent en rond au-dessus des carcasses (un seul aigle)
+      for (let k = 0; k < (quoi === 'aigle' ? 1 : 3); k++) {
+        const g = scene.add.graphics(); plan.add(g);
+        g.lineStyle(3, quoi === 'aigle' ? 0x3a2a1a : 0x1a1410, 0.9); g.lineBetween(-12, -3, 0, 0); g.lineBetween(0, 0, 12, -3); g.fillStyle(0x1a1410, 0.9).fillCircle(0, 0, 2.5);
+        const cx = quoi === 'aigle' ? 300 : 560 + k * 90, cy = 70 + k * 22, r = 70 + k * 25;
+        const t = { a: k * 2 };
+        scene.tweens.add({ targets: t, a: k * 2 + Math.PI * 2, duration: 8000 + k * 1700, repeat: -1, onUpdate: () => g.setPosition(cx + Math.cos(t.a) * r, cy + Math.sin(t.a) * 22).setScale(Math.cos(t.a) > 0 ? 1 : -1, 1) });
+      }
       return null;
     }
+    case 'vent': case 'blizzard': return scene.time.addEvent({ delay: quoi === 'blizzard' ? 30 : 90, loop: true, callback: () => {
+      // des traînées de neige et de vent, à l'horizontale, qui hurlent à travers le paysage
+      const y = Phaser.Math.Between(10, 350), l = Phaser.Math.Between(20, 70);
+      const r = scene.add.rectangle(1000, y, l, quoi === 'blizzard' ? 2 : 1.5, 0xffffff, quoi === 'blizzard' ? 0.75 : 0.45).setDepth(Math.random() < 0.5 ? -0.45 : 6.8);
+      scene.tweens.add({ targets: r, x: -80, y: y + Phaser.Math.Between(10, 50), duration: Phaser.Math.Between(500, 900), ease: 'Linear', onComplete: () => r.destroy() });
+    } });
     case 'papillons': case 'abeilles': {
       const couleurs = quoi === 'abeilles' ? [0xf0c020] : [0xf8a0c8, 0xf8e060, 0x80c8f8, 0xffffff];
       for (let k = 0; k < (quoi === 'abeilles' ? 6 : 5); k++) {
@@ -233,7 +242,9 @@ function lancerFaune(scene, quoi, plan) {
     }
     case 'chauvesSouris': return scene.time.addEvent({ delay: 2600, loop: true, startAt: 1500, callback: () => vol('bat', 0x1a1018, ciel(60, 200), 4200, 0.9, Math.random() < 0.5 ? 1 : -1) });
     case 'livres': return scene.time.addEvent({ delay: 3400, loop: true, startAt: 1500, callback: () => {
-      const l = scene.add.rectangle(-30, ciel(70, 200), 16, 12, 0x8a2a3a).setStrokeStyle(2, 0xf0e8d0); plan.add(l);
+      const l = scene.add.container(-30, ciel(70, 200)); plan.add(l);
+      const g = scene.add.graphics(); l.add(g);   // (v0.81) un vrai petit livre : la couverture, les pages blanches au milieu
+      g.fillStyle(Phaser.Utils.Array.GetRandom([0x8a2a3a, 0x2a4a8a, 0x2a6a3a]), 1).fillRect(-11, -7, 22, 14); g.fillStyle(0xf4ecd4, 1).fillRect(-9, -6, 8, 11).fillRect(1, -6, 8, 11); g.lineStyle(1, 0x5a4a3a, 0.8).lineBetween(-7, -3, -3, -3).lineBetween(3, -3, 7, -3).lineBetween(-7, 0, -3, 0).lineBetween(3, 0, 7, 0);
       scene.tweens.add({ targets: l, x: 1000, duration: 9000, ease: 'Linear', onComplete: () => l.destroy() });
       scene.tweens.add({ targets: l, scaleY: 0.3, y: l.y - 16, duration: 300, yoyo: true, repeat: -1 });
     } });
@@ -275,20 +286,34 @@ function planterVarianteRecit(scene, zone, biome) {
     const cle = typeof textureRepere === 'function' ? textureRepere(scene, v.repere) : null;
     if (cle) {
       const lac = v.repere === 'lac';
-      scene.planMoyen.addAt(scene.add.image(lac ? 640 : 690, sol + (lac ? 8 : 3), cle).setOrigin(0.5, 1).setTint(0xf0eeea), 0);
+      const img = scene.add.image(lac ? 640 : 690, sol + (lac ? 8 : 3), cle).setOrigin(0.5, 1).setTint(0xf0eeea);
+      scene.planMoyen.addAt(img, 0);
+      // (v0.81) au Col des Hurlements, deux loups noirs hurlent à la lune sur l'éperon
+      if (v.repere === 'colHurlements' && typeof creerRecitEpreuvesHD === 'function') {
+        creerRecitEpreuvesHD(scene);
+        [[662, false], [718, true]].forEach(([x, flip], i) => {
+          const l = scene.add.image(x, img.y - 138, 'loupHD_hurle').setOrigin(0.5, 1).setScale(1.05).setFlipX(flip).setTint(0x2a2430);
+          scene.planMoyen.addAt(l, 1);
+          scene.tweens.add({ targets: l, scaleY: 1.09, duration: 900 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        });
+      }
     } else { const g = scene.add.graphics(); dessinerRepere(g, v.repere, loin, sol); scene.planMoyen.addAt(g, 0); }
   }
   if (v.arbres) {
     const neige = ['montagne', 'glace', 'neige'].includes(biome);
     const sombre = ['foret', 'marais', 'repaire', 'tour', 'grotte'].includes(biome);
     const teinte = neige ? 0x6a7a74 : melangeCouleur(b.arbres || b.loin, 0x0a0a10, sombre ? 0.45 : 0.3);
+    const cleArbre = typeof textureArbre === 'function' ? textureArbre(scene, v.arbres) : null;
     const g = scene.add.graphics();
     for (let x = -60; x < 1100; x += 80 + (x * 3) % 50) {
       if (v.repere && x > 500 && x < 880) continue;   // (on laisse voir le repère)
-      dessinerArbreVariante(g, v.arbres, x, sol, 60 + (x * 7) % 70, 22 + (x * 5) % 18, teinte);
+      // (v0.81) des arbres peints, un peu voilés par la distance ; sinon l'ancienne silhouette
+      if (cleArbre) scene.planMoyen.add(scene.add.image(x, sol + 2, cleArbre).setOrigin(0.5, 1).setScale(0.75 + ((x * 7) % 40) / 100).setFlipX((x * 3) % 2 === 0).setTint(sombre ? 0x9a9aa0 : 0xd8d8d0));
+      else dessinerArbreVariante(g, v.arbres, x, sol, 60 + (x * 7) % 70, 22 + (x * 5) % 18, teinte);
     }
     scene.planMoyen.add(g);
   }
+  if (v.sombre) scene.add.rectangle(480, 185, 960, 370, v.sombre, 0.45).setDepth(-1.5);   // (un ciel lourd, menaçant)
   if (v.sol) { const g = scene.add.graphics(); dessinerSolVariante(g, 370, v.sol); scene.premierPlan.add(g); }
   scene.fauneRecit = (v.faune || []).map(f => lancerFaune(scene, f, scene.planMoyen)).filter(Boolean);
   return !!v.arbres;

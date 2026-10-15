@@ -379,3 +379,266 @@ function textureRepere(scene, quoi) {
   t.texture(scene, cle);
   return cle;
 }
+
+// --- (v0.81) Les repères refaits à la demande du joueur ---
+Object.assign(RAMPES_REPERES, {
+  feuilleOr: [0x5a3a06, 0x8a5c0a, 0xc08a14, 0xe0b028, 0xf4d04a, 0xfff090],
+  argent: [0x5a6070, 0x8890a0, 0xb0b8c4, 0xd0d6de, 0xe8ecf0, 0xffffff],
+  lueurBleue: [0x1a3a6a, 0x2a5aa0, 0x4a84d0, 0x78b0f0, 0xb0d8ff, 0xf0faff],
+  automne: [0x4a1a06, 0x7a2e0a, 0xb04a12, 0xd86a20, 0xf0943a, 0xffc070],
+  nuit: [0x0a0812, 0x14101e, 0x201a2e, 0x2e2640, 0x3e3456, 0x544a70],
+  loup: [0x0c0c10, 0x18181e, 0x26262e, 0x363640, 0x4a4a56, 0x62626e],
+  mousse: [0x0e2414, 0x1a3a1e, 0x26502a, 0x346a36, 0x468844, 0x60a858],
+});
+for (const [k, v] of Object.entries(RAMPES_REPERES)) if (!REPERES_HD.__rampes) REPERES_HD.__rampes = true;
+
+// Un halo de lumière autour d'un point (des pixels clairs de plus en plus rares)
+function halo(t, mat, cx, cy, r) {
+  for (let y = Math.floor(cy - r); y <= cy + r; y++) for (let x = Math.floor(cx - r); x <= cx + r; x++) {
+    const d = Math.hypot(x - cx, y - cy);
+    if (d <= r && hachage(x, y, 5) > d / r) t.poser(x, y, mat, d < r * 0.35 ? 5 : 4);
+  }
+}
+// Une couronne de feuillage : un ellipsoïde dont le bord est découpé en touffes, et des reflets
+function feuillage(t, mat, cx, cy, rx, ry, graine = 1) {
+  t.forme(mat, (x, y) => {
+    const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry, d = dx * dx + dy * dy;
+    const bord = 1 - 0.14 * hachage(Math.floor(x / 4), Math.floor(y / 4), graine);
+    return d <= bord ? [dx, dy, Math.sqrt(Math.max(0, 1 - d))] : null;
+  }, { motif: (x, y) => (hachage(x, y, graine + 3) > 0.86 ? 0.8 : hachage(x, y, graine + 7) > 0.88 ? -0.7 : 0) });
+}
+
+// Un étage de feuillage fait de nombreuses touffes (plus vivant qu'un seul disque) : le dessous dans l'ombre
+function etageFeuilles(t, mat, cx, cy, rx, ry, graine, n = 26) {
+  for (let k = 0; k < n; k++) {
+    const a = hachage(k, 1, graine) * Math.PI * 2, r = Math.sqrt(hachage(k, 2, graine));
+    const x = cx + Math.cos(a) * rx * r * 0.85, y = cy + Math.sin(a) * ry * r * 0.7 - ry * 0.15;
+    const tr = 7 + hachage(k, 3, graine) * (rx / 6);
+    feuillage(t, mat, x, y, tr, tr * 0.7, graine + k);
+  }
+  for (let x = Math.round(cx - rx); x <= cx + rx; x++) for (let y = Math.round(cy); y <= cy + ry; y++) if (t.mat(x, y) === mat && t.mat(x, y + 1) !== mat) { t.poser(x, y, mat, 1); t.poser(x, y - 1, mat, 2); }   // le dessous, dans l'ombre
+}
+
+Object.assign(REPERES_HD, {
+  // Lothlórien : un mallorn géant au tronc d'argent, ses étages de feuilles d'or, un talan (plateforme)
+  // et sa maison elfique aux fenêtres de lumière, l'escalier qui tourne autour du tronc et ses
+  // lanternes, d'autres mallorns, et des lueurs bleues qui flottent
+  lothlorien: { l: 400, h: 300, dessin(t) {
+    // les mallorns du fond, de chaque côté
+    for (const [cx, h, r] of [[40, 210, 44], [360, 230, 48], [100, 170, 32]]) {
+      remplir(t, 'argent', (x, y) => y >= 300 - h && Math.abs(x + 0.5 - cx) < 5 + Math.max(0, y - 280) * 0.5, (x) => (x < cx ? 4 : 2));
+      etageFeuilles(t, 'feuilleOr', cx, 300 - h, r, r * 0.6, cx, 12);
+    }
+    // le grand tronc d'argent, épais, cannelé, ses racines qui s'étalent
+    remplir(t, 'argent', (x, y) => { const w = 20 + Math.max(0, y - 240) ** 1.4 * 0.16; return y >= 60 && Math.abs(x + 0.5 - 200) < w; },
+      (x, y) => (x < 190 ? 5 : x > 210 ? 2 : 3) + ((x - 200) % 7 === 0 ? -1 : 0) + ((y * 3 + x) % 23 === 0 ? -1 : 0));
+    for (const [x1, y1] of [[100, 186], [300, 186], [120, 100], [280, 100], [170, 46], [230, 46]]) ligne(t, 'argent', 4, 200, y1 + 26, x1, y1, 4);   // les grandes branches qui montent
+    // les étages de feuilles d'or, en touffes
+    etageFeuilles(t, 'feuilleOr', 200, 196, 120, 30, 21, 30);
+    etageFeuilles(t, 'feuilleOr', 200, 100, 140, 46, 22, 40);
+    etageFeuilles(t, 'feuilleOr', 200, 44, 86, 30, 23, 22);
+    // le talan : une plateforme blanche, la maison elfique, ses fenêtres en arc et son toit doré
+    remplir(t, 'marbre', (x, y) => y >= 140 && y < 146 && Math.abs(x + 0.5 - 200) < 74, (x, y) => (y === 140 ? 5 : 3));
+    remplir(t, 'marbre', (x, y) => y >= 114 && y < 140 && Math.abs(x + 0.5 - 200) < 42, (x) => (x < 190 ? 4 : 3));
+    remplir(t, 'feuilleOr', (x, y) => y >= 98 && y < 116 && Math.abs(x + 0.5 - 200) < (y - 94) * 2.6, (x) => (x < 200 ? 5 : 3));
+    for (const x of [172, 188, 212, 228]) t.forme('lumiere', (px, py) => { const dx = px + 0.5 - x, dy = py + 0.5 - 126; return Math.abs(dx) < 4 && dy < 12 && (dy > 0 || dx * dx + dy * dy < 16) ? [0, 0, 1] : null; }, { decalage: 1 });
+    for (let x = 128; x <= 272; x += 7) ligne(t, 'marbre', 4, x, 140, x, 134, 1);
+    // l'escalier blanc qui tourne autour du tronc, et ses lanternes
+    for (let k = 0; k < 9; k++) { const y = 288 - k * 16, x = 200 + (k % 2 ? 30 : -30); ligne(t, 'marbre', 5, 200, y + 8, x, y, 2); if (k % 2 === 0) halo(t, 'lumiere', x, y - 4, 4.5); }
+    // les lueurs bleues qui flottent
+    for (let k = 0; k < 18; k++) halo(t, 'lueurBleue', 20 + hachage(k, 1, 9) * 360, 30 + hachage(k, 2, 9) * 250, 2.5 + hachage(k, 3, 9) * 2.5);
+  } },
+  // Fondcombe : la vallée cachée, les falaises et leurs cascades, la maison d'Elrond en pierre
+  // claire, ses tours fines, ses arches et ses fenêtres dorées, le pont sur les chutes, les arbres d'automne
+  fondcombe: { l: 420, h: 290, dessin(t) {
+    // les falaises et la mousse
+    // (des falaises aux bords déchiquetés, des strates claires et des ombres)
+    const bordG = y => 70 + Math.sin(y * 0.05) * 18 + Math.sin(y * 0.19) * 7 - Math.max(0, 60 - y) * 0.9, bordD = y => 340 - Math.sin(y * 0.045) * 16 - Math.sin(y * 0.23) * 6 + Math.max(0, 40 - y) * 1.2;
+    remplir(t, 'roche', (x, y) => x < bordG(y) || x > bordD(y), (x, y) => { const strate = Math.floor((y + Math.sin(x * 0.1) * 4) / 9) % 3; return 2 + strate + (Math.abs(x - bordG(y)) < 4 || Math.abs(x - bordD(y)) < 4 ? 1 : 0) - (hachage(x >> 2, y >> 2, 2) > 0.8 ? 1 : 0); });
+    for (let k = 0; k < 10; k++) { const g = k < 5, x = g ? 10 + k * 12 : 350 + (k - 5) * 14, y = 40 + ((k * 53) % 220); remplir(t, 'sapin', (px, py) => py >= y && py < y + 22 && Math.abs(px + 0.5 - x) < (py - y) * 0.4, (px) => (px < x ? 4 : 2)); }   // des sapins accrochés aux parois
+    for (let k = 0; k < 40; k++) { const x = hachage(k, 1, 4) < 0.5 ? hachage(k, 2, 4) * 90 : 330 + hachage(k, 2, 4) * 90, y = 30 + hachage(k, 3, 4) * 250; t.forme('mousse', ellipsoide(x, y, 5, 3), { decalage: 0.2, bord: false }); }
+    // les cascades
+    for (const [x0, l] of [[70, 8], [300, 10], [348, 6]]) remplir(t, 'lueurBleue', (x, y) => x >= x0 && x < x0 + l && y > 40, (x, y) => ((y + x * 3) % 7 < 3 ? 5 : 4));
+    // la maison principale : des terrasses de pierre claire
+    for (const [x0, x1, y0, h] of [[110, 230, 150, 70], [200, 320, 180, 60], [130, 200, 110, 50]]) {
+      remplir(t, 'marbre', (x, y) => x >= x0 && x < x1 && y >= y0 && y < y0 + h, (x, y) => tonBlocs(x, y, 14, 9, 3, (x) => (x < x0 + 10 ? 1 : 0)));
+      remplir(t, 'rondin', (x, y) => y >= y0 - 22 && y < y0 && Math.abs(x + 0.5 - (x0 + x1) / 2) < (x1 - x0) / 2 + 6 - (y0 - y) * ((x1 - x0) / 2 + 6) / 24, (x) => (x < (x0 + x1) / 2 ? 4 : 2));
+      for (let x = x0 + 8; x < x1 - 8; x += 14) { t.forme('lumiere', (px, py) => { const dx = px + 0.5 - x, dy = py + 0.5 - (y0 + 14); return Math.abs(dx) < 4 && dy < 14 && (dy > 0 || dx * dx + dy * dy < 16) ? [0, 0, 1] : null; }, { decalage: 0.8 }); }
+    }
+    // deux tours fines au toit pointu
+    for (const [cx, haut] of [[150, 40], [290, 70]]) { remplir(t, 'marbre', (x, y) => y >= haut && y < 200 && Math.abs(x + 0.5 - cx) < 9, (x) => (x < cx ? 5 : 3)); remplir(t, 'rondin', (x, y) => y >= haut - 34 && y < haut && Math.abs(x + 0.5 - cx) < (y - haut + 34) * 0.32, (x) => (x < cx ? 4 : 2)); t.forme('lumiere', boite(cx - 3, haut + 10, cx + 3, haut + 22, 3), { decalage: 1 }); }
+    // le pont en arches sur les chutes
+    remplir(t, 'marbre', (x, y) => { if (y < 236 || y >= 250 || x < 220 || x >= 340) return false; return true; }, (x, y) => (y === 236 ? 5 : 3));
+    for (const cx of [250, 290, 330]) remplir(t, 'marbre', (x, y) => y >= 250 && y < 290 && Math.abs(x + 0.5 - cx) < 20 && !((x + 0.5 - cx) ** 2 + (y - 290) ** 2 < 300), (x) => (x < cx ? 4 : 2));
+    // les arbres d'automne, et des lanternes
+    for (const [cx, cy, r] of [[112, 248, 24], [172, 262, 20], [372, 236, 22]]) { remplir(t, 'rondin', (x, y) => y >= cy && y < 290 && Math.abs(x + 0.5 - cx) < 3, (x) => (x < cx ? 4 : 2)); etageFeuilles(t, 'automne', cx, cy - 4, r, r * 0.75, cx, 9); }
+    for (let k = 0; k < 10; k++) halo(t, 'lumiere', 110 + hachage(k, 1, 6) * 220, 120 + hachage(k, 2, 6) * 150, 2.5);
+  } },
+  // La Cité d'Opale : un rempart de cristal et sa porte, une forêt de flèches et de coupoles, la
+  // grande tour et son anneau qui flotte, des éclats de cristal en suspension, des ponts de lumière
+  opaleCite: { l: 400, h: 300, dessin(t) {
+    // les flèches, de la plus lointaine à la plus proche
+    for (const [cx, h, w, dome] of [[40, 170, 12, 0], [80, 220, 14, 1], [130, 190, 16, 0], [270, 200, 16, 1], [320, 230, 14, 0], [360, 160, 12, 1]]) {
+      remplir(t, 'opale', (x, y) => y >= 300 - h && Math.abs(x + 0.5 - cx) < w * Math.min(1, (y - (300 - h)) / 26 + 0.12), (x, y) => (x < cx - w / 3 ? 5 : x > cx + w / 3 ? 2 : 3) + ((y * 2 + x) % 19 === 0 ? 1 : 0));
+      if (dome) t.forme('opale', ellipsoide(cx, 300 - h + 40, w + 6, w), { decalage: 0.4 });
+      for (let y = 300 - h + 50; y < 260; y += 18) t.forme('lumiere', boite(cx - 2, y, cx + 2, y + 7, 2), { decalage: 1 });
+      halo(t, 'lumiere', cx, 300 - h - 4, 4);
+    }
+    // la grande tour au centre et son anneau flottant
+    remplir(t, 'opale', (x, y) => y >= 30 && Math.abs(x + 0.5 - 200) < 24 * Math.min(1, (y - 30) / 40 + 0.15), (x, y) => (x < 192 ? 5 : x > 210 ? 2 : 3) + (y % 24 === 0 ? -1 : 0));
+    t.forme('opale', ellipsoide(200, 110, 34, 20), { decalage: 0.5 });
+    for (let a = 0; a < 6.28; a += 0.02) { const x = Math.round(200 + Math.cos(a) * 54), y = Math.round(70 + Math.sin(a) * 12); if (!(Math.sin(a) < 0 && Math.abs(x - 200) < 22)) t.poser(x, y, 'or', Math.sin(a) > 0 ? 4 : 2); }
+    for (let y = 130; y < 270; y += 20) t.forme('lumiere', boite(196, y, 204, y + 10, 3), { decalage: 1 });
+    // des éclats de cristal qui flottent
+    for (let k = 0; k < 9; k++) { const x = 30 + hachage(k, 1, 3) * 340, y = 10 + hachage(k, 2, 3) * 70; remplir(t, 'opale', (px, py) => Math.abs(px - x) / 3 + Math.abs(py - y) / 7 <= 1, (px) => (px < x ? 5 : 3)); }
+    // les ponts de lumière entre les tours
+    for (const [x0, x1, y] of [[80, 130, 150], [130, 176, 130], [224, 270, 140], [270, 320, 120]]) for (let x = x0; x <= x1; x++) t.poser(x, Math.round(y + Math.sin((x - x0) / (x1 - x0) * Math.PI) * 6), 'lumiere', 4);
+    // le rempart de cristal et sa porte
+    remplir(t, 'opale', (x, y) => y >= 254 && y < 300, (x, y) => tonBlocs(x, y, 16, 9, 2));
+    for (let x = 0; x < 400; x += 14) t.forme('opale', boite(x, 246, x + 8, 254, 1), { decalage: 0.3 });
+    t.forme('or', (x, y) => { const dx = x + 0.5 - 200, dy = y + 0.5 - 280; return y < 300 && Math.abs(dx) < 16 && (dy >= 0 || dx * dx + dy * dy < 256) ? [dx / 18, 0, 0.8] : null; }, { decalage: 0.2 });
+  } },
+  // La Bibliothèque Interdite : la grande tour et ses contreforts, deux tourelles, l'escalier qui
+  // s'enroule dehors, un livre géant ouvert qui flotte au sommet, des rochers suspendus par des
+  // chaînes, des piles de livres au pied
+  bibliothequeHD: { l: 340, h: 300, dessin(t) {
+    // les rochers flottants enchaînés
+    for (const [cx, cy] of [[40, 60], [300, 90]]) { t.forme('roche', ellipsoide(cx, cy, 22, 10), { decalage: 0.1 }); remplir(t, 'roche', (x, y) => y > cy && y < cy + 18 && Math.abs(x + 0.5 - cx) < 18 - (y - cy), () => 2); ligne(t, 'fer', 2, cx + (cx < 170 ? 14 : -14), cy + 4, 170 + (cx < 170 ? -40 : 40), 150, 1); t.forme('pierreBleue', boite(cx - 8, cy - 22, cx + 8, cy - 8, 2), { decalage: 0.2 }); t.forme('lumiere', boite(cx - 2, cy - 18, cx + 2, cy - 12, 1), { decalage: 1 }); }
+    // les tourelles
+    for (const [cx, haut] of [[100, 120], [240, 140]]) { remplir(t, 'pierreBleue', (x, y) => y >= haut && Math.abs(x + 0.5 - cx) < 16, (x, y) => tonBlocs(x, y, 8, 6, 2, (x) => (x < cx - 6 ? 1 : 0))); remplir(t, 'ardoise', (x, y) => y >= haut - 40 && y < haut && Math.abs(x + 0.5 - cx) < (y - haut + 40) * 0.45, (x) => (x < cx ? 4 : 2)); t.forme('lumiere', boite(cx - 3, haut + 20, cx + 3, haut + 34, 3), { decalage: 1 }); }
+    // la grande tour et ses contreforts
+    remplir(t, 'pierreBleue', (x, y) => y >= 90 && Math.abs(x + 0.5 - 170) < 46 + Math.max(0, y - 270) * 0.6, (x, y) => tonBlocs(x, y, 10, 7, 3, (x) => (x < 150 ? 1 : x > 195 ? -1 : 0)));
+    for (const s of [-1, 1]) remplir(t, 'pierreBleue', (x, y) => { const d = (x + 0.5 - 170) * s - 46; return d >= 0 && d < (y - 170) * 0.35 && y < 300; }, () => 2);
+    remplir(t, 'ardoise', (x, y) => y >= 40 && y < 92 && Math.abs(x + 0.5 - 170) < (y - 36) * 0.9, (x, y) => (x < 170 ? 4 : 2) + (y % 6 === 0 ? -1 : 0));
+    for (let k = 0; k < 4; k++) for (const x of [150, 190]) { const y = 112 + k * 40; t.forme('rochesombre', boite(x - 7, y, x + 7, y + 22, 7), { decalage: 0 }); t.forme('lumiere', boite(x - 5, y + 2, x + 5, y + 22, 5), { decalage: 0.9 }); }
+    t.forme('rondin', boite(156, 262, 184, 300, 14), { decalage: -0.1 });
+    // l'escalier qui s'enroule
+    for (let k = 0; k < 12; k++) { const y = 290 - k * 17, x = k % 2 ? 222 : 118; ligne(t, 'pierre', 4, x, y, k % 2 ? 118 : 222, y - 17, 2); }
+    // le livre géant ouvert qui flotte au sommet, ses pages lumineuses
+    remplir(t, 'parchemin', (x, y) => y >= 6 && y < 30 && Math.abs(x + 0.5 - 170) < 44 && y > 6 + Math.abs(x + 0.5 - 170) * 0.12, (x, y) => (x === 170 ? 1 : (y % 4 === 0 && Math.abs(x - 170) > 6 && Math.abs(x - 170) < 38) ? 2 : 5));
+    remplir(t, 'tuile', (x, y) => y >= 28 && y < 33 && Math.abs(x + 0.5 - 170) < 46, () => 2);
+    for (let k = 0; k < 8; k++) halo(t, 'lumiere', 130 + k * 11, 4 - (k % 3) * 2, 2.5);
+    // des piles de livres au pied
+    for (const [x, n] of [[40, 5], [70, 3], [270, 4], [300, 6]]) for (let k = 0; k < n; k++) t.forme(['tuile', 'eau', 'vert', 'or', 'automne'][(k + x) % 5], boite(x - 12 + (k % 2) * 3, 296 - k * 5, x + 12 + (k % 2) * 3, 300 - k * 5, 1), { decalage: 0.2 });
+  } },
+  // Les Terres Désolées : le squelette géant, une seconde carcasse plus petite, un crâne cornu planté
+  // sur une pique, des os partout, et des vautours perchés
+  cotesHD: { l: 420, h: 130, dessin(t) {
+    REPERES_HD.cotes.dessin({ ...t, poser: (x, y, m, k) => t.poser(x + 60, y + 20, m, k), forme: (m, f, o) => t.forme(m, (x, y) => f(x - 60, y - 20), o), mat: (x, y) => t.mat(x + 60, y + 20), l: t.l, h: t.h });
+    // la petite carcasse (une cage thoracique et un crâne cornu)
+    for (let k = 0; k < 5; k++) for (let j = 0; j < 22; j++) t.forme('os', ellipsoide(16 + k * 9 + Math.sin(j / 22 * 2.6) * 6, 100 + j * 0.7 - Math.sin(j / 22 * Math.PI) * 6, 1.6, 1.6), { bord: false });
+    for (let x = 12; x < 60; x++) t.forme('os', ellipsoide(x, 98, 1.8, 1.8), { bord: false });
+    t.forme('os', ellipsoide(64, 104, 8, 6)); t.poser(62, 103, 'rochesombre', 0);
+    // le crâne cornu sur une pique
+    ligne(t, 'rondin', 3, 384, 70, 384, 130, 2);
+    t.forme('os', ellipsoide(384, 66, 9, 8)); t.poser(381, 65, 'rochesombre', 0); t.poser(387, 65, 'rochesombre', 0);
+    for (const s of [-1, 1]) for (let j = 0; j < 16; j++) t.forme('os', ellipsoide(384 + s * (8 + j * 0.9), 62 - j * 0.9 + j * j * 0.03, 2 - j * 0.08, 2 - j * 0.08), { bord: false });
+    // des os éparpillés
+    for (let k = 0; k < 10; k++) { const x = 20 + hachage(k, 1, 8) * 380, y = 118 + hachage(k, 2, 8) * 10; t.forme('os', boite(x - 5, y - 1, x + 5, y + 1, 1), { decalage: 0.3 }); }
+    // deux vautours perchés, voûtés, le cou pelé
+    for (const [x, y] of [[176, 46], [300, 62]]) {
+      t.forme('loup', ellipsoide(x, y, 7, 9), { decalage: 0.1 });
+      t.forme('peau', ellipsoide(x + 6, y - 9, 3, 3), { decalage: 0.3 }); t.poser(x + 9, y - 9, 'or', 4);
+      for (let k = 0; k < 4; k++) t.poser(x + 7 + k, y - 6 + k, 'os', 4);   // la collerette
+    }
+  } },
+  // Le Col des Hurlements : un col de roches noires en dents de scie, une lune pâle, deux loups qui
+  // hurlent sur un éperon, des arbres morts tordus, des crânes sur des pieux, une bannière déchirée
+  colHurlements: { l: 420, h: 290, dessin(t) {
+    t.forme('argent', ellipsoide(300, 70, 46, 46), { decalage: 0.6, bord: false });   // la lune
+    for (const [x, y, r] of [[286, 60, 6], [312, 84, 4], [318, 58, 3]]) t.forme('argent', ellipsoide(x, y, r, r), { decalage: -0.8, bord: false });
+    // les roches noires en dents de scie, de chaque côté
+    const crete = x => { // la ligne des crêtes : deux grands crocs de roche, le col entre eux
+      const dent = Math.abs(((x * 0.09) % 2) - 1) * 26;
+      if (x < 160) return 40 + Math.abs(x - 70) * 1.3 + dent;
+      if (x > 290) return 30 + Math.abs(x - 370) * 1.2 + dent;
+      return 200 + dent * 0.5;
+    };
+    remplir(t, 'loup', (x, y) => y > crete(x), (x, y) => (y - crete(x) < 3 ? 4 : 2) + ((x + Math.floor(y / 6)) % 9 === 0 ? 1 : 0) - (hachage(x >> 3, y >> 3, 3) > 0.75 ? 1 : 0));
+    // l'éperon et les deux loups qui hurlent
+    remplir(t, 'nuit', (x, y) => y >= 150 && y < 290 && Math.abs(x + 0.5 - 220) < 22 + (y - 150) * 0.55, (x, y) => (x < 214 ? 4 : 2) + ((x + y) % 11 === 0 ? -1 : 0));
+    // (les loups qui hurlent sont posés par-dessus : les vrais loups des récits, en silhouette)
+    // des arbres morts tordus
+    for (const [x0, h] of [[60, 120], [370, 100]]) { let x = x0, y = 290; for (let k = 0; k < h; k++) { x += Math.sin(k * 0.12) * 0.6; t.poser(Math.round(x), y - k, 'nuit', 1); t.poser(Math.round(x) + 1, y - k, 'nuit', 1); if (k > h * 0.4 && k % 18 === 0) ligne(t, 'nuit', 1, x, y - k, x + (k % 36 ? 22 : -22), y - k - 16, 1); } }
+    // des crânes sur des pieux, une bannière déchirée
+    for (const x of [130, 160, 290, 320]) { ligne(t, 'rondin', 1, x, 240, x, 290, 2); t.forme('os', ellipsoide(x, 236, 5, 5), { decalage: 0.2 }); t.poser(x - 2, 236, 'rochesombre', 0); t.poser(x + 2, 236, 'rochesombre', 0); }
+    ligne(t, 'rondin', 2, 100, 170, 100, 290, 2);
+    remplir(t, 'cuirRouge', (x, y) => x >= 102 && x < 136 && y >= 172 && y < 200 - ((x * 7) % 11), (x) => (x < 112 ? 3 : 2));
+  } },
+  // Les Pics Gelés : une aiguille de roche qui monte très haut, la tour de guet naine perchée tout en
+  // haut, un pont de corde vers un autre pic, la mer de nuages en bas, des stalactites de glace,
+  // une bannière gelée tendue par le vent
+  sommet: { l: 400, h: 300, dessin(t) {
+    // les deux pics
+    for (const [cx, w, haut] of [[150, 70, 60], [320, 50, 120]]) {
+      remplir(t, 'roche', (x, y) => y >= haut && Math.abs(x + 0.5 - cx) < 10 + (y - haut) * w / 240 + Math.sin(y * 0.15) * 3, (x, y) => (x < cx ? 4 : 2) + ((x * 5 + y * 3) % 11 === 0 ? -1 : 0));
+      for (let y = haut; y < 300; y += 3) { const w2 = 10 + (y - haut) * w / 240; for (let x = Math.round(cx - w2); x < cx - w2 + 4 + ((y * 7) % 5); x++) t.poser(x, y, 'neige', 5); }   // la neige collée au flanc
+    }
+    // la tour naine tout en haut du grand pic
+    remplir(t, 'pierreBleue', (x, y) => y >= 10 && y < 64 && Math.abs(x + 0.5 - 150) < 14, (x, y) => tonBlocs(x, y, 7, 5, 3, (x) => (x < 144 ? 1 : 0)));
+    for (let x = 136; x <= 164; x += 6) t.forme('pierreBleue', boite(x, 4, x + 3, 10, 1), { decalage: 0.3 });
+    remplir(t, 'neige', (x, y) => y >= 2 && y < 6 && Math.abs(x + 0.5 - 150) < 16, () => 5);
+    t.forme('lumiere', boite(147, 26, 153, 38, 3), { decalage: 1 });
+    // la bannière gelée, tendue à l'horizontale par le vent
+    ligne(t, 'rondin', 2, 164, 0, 164, 20, 2); remplir(t, 'eau', (x, y) => x >= 166 && x < 196 && y >= 2 && y < 12 - (x - 166) * 0.1 + Math.sin(x * 0.5), (x) => (x < 176 ? 4 : 3));
+    // le pont de corde entre les deux pics
+    for (let x = 166; x <= 304; x++) { const y = Math.round(80 + Math.sin((x - 166) / 138 * Math.PI) * 18 + (x - 166) * 0.3); t.poser(x, y, 'rondin', x % 4 === 0 ? 1 : 3); if (x % 6 === 0) ligne(t, 'chanvre', 3, x, y, x, y - 8, 1); t.poser(x, y - 8 - Math.round(Math.sin((x - 166) / 138 * Math.PI) * -2), 'chanvre', 3); }
+    // des stalactites de glace sous le pont et la tour
+    for (let k = 0; k < 14; k++) { const x = 140 + k * 13, y = k < 2 ? 64 : Math.round(82 + Math.sin((x - 166) / 138 * Math.PI) * 18 + (x - 166) * 0.3); for (let j = 0; j < 4 + (k % 3) * 2; j++) t.poser(x, y + 1 + j, 'lueurBleue', 5 - (j > 3 ? 1 : 0)); }
+    // la mer de nuages en bas : on est au-dessus de tout
+    for (let k = 0; k < 16; k++) feuillage(t, 'neige', 10 + k * 26, 288 - (k % 3) * 6, 22 + (k % 4) * 4, 12, k);
+  } },
+});
+
+// --- (v0.81) Les arbres du plan moyen, peints eux aussi (au lieu des silhouettes) ---
+const ARBRES_HD = {
+  ronds(t) { tronc(t, 40, 120, 70, 4); feuillage(t, 'vert', 40, 52, 28, 24, 1); feuillage(t, 'vert', 22, 66, 16, 14, 2); feuillage(t, 'vert', 58, 66, 16, 14, 3); },
+  pommiers(t) {
+    tronc(t, 40, 120, 74, 4); ligne(t, 'rondin', 3, 40, 80, 26, 64, 2); ligne(t, 'rondin', 3, 40, 80, 56, 62, 2);
+    feuillage(t, 'vert', 40, 56, 32, 24, 4);
+    for (let k = 0; k < 11; k++) { const x = 16 + hachage(k, 1, 4) * 48, y = 40 + hachage(k, 2, 4) * 34; if (t.mat(Math.round(x), Math.round(y)) === 'vert') { t.forme('pomme', ellipsoide(x, y, 2.4, 2.4), { decalage: 0.5 }); t.poser(Math.round(x) - 1, Math.round(y) - 1, 'pomme', 5); } }
+  },
+  saules(t) {
+    tronc(t, 40, 120, 60, 5);
+    feuillage(t, 'vert', 40, 54, 34, 18, 5);
+    for (let k = -8; k <= 8; k++) { const x = 40 + k * 4, l = 40 - Math.abs(k) * 2.5; for (let j = 0; j < l; j++) t.poser(Math.round(x + Math.sin(j * 0.15) * 1.5), 58 + j, 'vert', (j + k) % 4 === 0 ? 4 : 2 + (k < 0 ? 1 : 0)); }
+  },
+  cypres(t) { tronc(t, 40, 120, 106, 2); feuillage(t, 'vert', 40, 62, 10, 52, 6); },
+  chenes(t) {
+    tronc(t, 40, 120, 72, 7); ligne(t, 'rondin', 4, 40, 76, 18, 58, 3); ligne(t, 'rondin', 4, 40, 76, 62, 56, 3);
+    for (const [x, y, r] of [[40, 42, 22], [18, 56, 16], [62, 56, 16], [28, 30, 14], [52, 30, 14]]) feuillage(t, 'vert', x, y, r, r * 0.8, x + y);
+  },
+  sapins(t) {
+    tronc(t, 40, 120, 104, 3);
+    for (let k = 0; k < 5; k++) remplir(t, 'sapin', (x, y) => { const y0 = 14 + k * 18, h = 30; return y >= y0 && y < y0 + h && Math.abs(x + 0.5 - 40) < (y - y0) * (0.55 + k * 0.08); }, (x, y) => (x < 40 ? 4 : 2) + ((x + y) % 5 === 0 ? -1 : 0));
+  },
+  sapinsNeige(t) { ARBRES_HD.sapins(t); for (let y = 0; y < t.h; y++) for (let x = 0; x < 40; x++) if (t.mat(x, y) === 'sapin' && t.mat(x, y - 1) !== 'sapin') { t.poser(x, y, 'neige', 5); t.poser(x, y + 1, 'neige', 4); } },
+  mallorns(t) { remplir(t, 'argent', (x, y) => y >= 30 && Math.abs(x + 0.5 - 40) < 4 + Math.max(0, y - 108) * 0.6, (x) => (x < 40 ? 5 : 3)); ligne(t, 'argent', 4, 40, 70, 20, 58, 2); ligne(t, 'argent', 4, 40, 70, 60, 58, 2); etageFeuilles(t, 'feuilleOr', 40, 66, 30, 12, 7, 9); etageFeuilles(t, 'feuilleOr', 40, 32, 32, 18, 8, 12); },
+  automne(t) { tronc(t, 40, 120, 70, 4); feuillage(t, 'automne', 40, 50, 28, 26, 9); feuillage(t, 'feuilleOr', 52, 40, 12, 10, 10); },
+  cactus(t) {
+    const bras = (x0, y0, x1, y1, w) => remplir(t, 'cactus', (x, y) => x >= Math.min(x0, x1) - w && x <= Math.max(x0, x1) + w && y >= Math.min(y0, y1) && y <= Math.max(y0, y1), (x) => (x % 3 === 0 ? 2 : 3) + (x < 40 ? 1 : 0));
+    bras(40, 30, 40, 120, 6); bras(20, 56, 20, 80, 4); bras(20, 78, 34, 84, 0); bras(60, 46, 60, 74, 4); bras(46, 72, 60, 76, 0);
+    for (const [x, y] of [[40, 30], [20, 56], [60, 46]]) t.forme('cactus', ellipsoide(x, y, 6, 4), { decalage: 0.3 });
+    t.forme('plume', ellipsoide(40, 27, 3, 2), { decalage: 0.5 });   // une fleur au sommet
+  },
+  colonnes(t) { remplir(t, 'gres', (x, y) => y >= 40 && y < 120 && Math.abs(x + 0.5 - 40) < 9, (x, y) => (x < 36 ? 4 : x > 44 ? 2 : 3) - (y % 12 === 0 ? 1 : 0)); remplir(t, 'gres', (x, y) => y >= 34 + (x % 7) && y < 42 && Math.abs(x + 0.5 - 40) < 12, () => 4); remplir(t, 'gres', (x, y) => y >= 112 && Math.abs(x + 0.5 - 40) < 13, () => 3); },
+  pieux(t) { for (const dx of [-14, 0, 14]) { remplir(t, 'rondin', (x, y) => y >= 60 + Math.abs(dx) && Math.abs(x + 0.5 - 40 - dx) < 4 && (y >= 70 + Math.abs(dx) || Math.abs(x + 0.5 - 40 - dx) < (y - 60 - Math.abs(dx)) * 0.4), (x) => (x < 40 + dx ? 4 : 2)); } ligne(t, 'fer', 2, 22, 96, 58, 96, 2); t.forme('os', ellipsoide(40, 56, 5, 5), { decalage: 0.3 }); t.poser(38, 56, 'rochesombre', 0); t.poser(42, 56, 'rochesombre', 0); },
+};
+function tronc(t, cx, bas, haut, w) {
+  remplir(t, 'rondin', (x, y) => y >= bas - haut && y < bas && Math.abs(x + 0.5 - cx) < w + Math.max(0, y - bas + 8) * 0.6, (x, y) => (x < cx - 1 ? 4 : 2) + ((y * 3) % 11 === 0 ? -1 : 0));
+}
+Object.assign(RAMPES_REPERES, {
+  pomme: [0x3a0808, 0x6a1010, 0x9a1c18, 0xc83226, 0xe85a40, 0xffa080],
+  sapin: [0x08180e, 0x102818, 0x1a3c22, 0x26522e, 0x386c3c, 0x52884e],
+  cactus: [0x0e2a14, 0x1a4420, 0x2a602e, 0x3e7c3c, 0x58984e, 0x80b46a],
+});
+function textureArbre(scene, forme) {
+  const cle = 'arbreHD_' + forme;
+  if (scene.textures.exists(cle)) return cle;
+  if (!ARBRES_HD[forme]) return null;
+  const t = toileRepere(80, 120);
+  ARBRES_HD[forme](t);
+  t.contour();
+  t.texture(scene, cle);
+  return cle;
+}
