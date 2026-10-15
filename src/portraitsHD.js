@@ -1238,7 +1238,6 @@ function oreillesElfe(t, v, cx, T = 0, taille = 1) {
 // Un jeune marchand : tunique, tablier de commerçant avec sa poche, ceinture, bottes.
 // Il reprend les choix de la création (coiffure, couleurs, bouche, barbe à l'âge adulte).
 
-const JOUEUR_L = 52 * 2;
 const JOUEUR_H = 64 * 2;   // (le joueur est un corps en volume : voir corpsVueHD.js)
 
 // La peau de la création, ramenée à la rampe réglée à la main la plus proche.

@@ -319,13 +319,6 @@ const TISSUS = {
   divers: { fond: 0xa87a44, motif: 0x6a8a3a, bord: 0x4a2e14 },
 };
 
-function motifTissu(famille, x, y, cx, cy) {
-  if (famille === 'provisions') return ((x >> 1) + (y >> 1)) % 2 === 0;
-  if (famille === 'armes') return (x + y) % 4 === 0;
-  if (famille === 'soins') return (Math.abs(x - cx) <= 0.6 && Math.abs(y - cy) <= 2.6) || (Math.abs(y - cy) <= 0.6 && Math.abs(x - cx) <= 2.6);
-  return x >= cx + 1 && x <= cx + 3 && y >= cy && y <= cy + 2; // une pièce rapiécée
-}
-
 // Les baluchons, en HD (deux fois plus de pixels qu'avant) : un tissu noué en boule, plein de
 // plis et ombré, attaché au bout d'un bâton ; et le même tissu étalé sur le comptoir.
 // Le motif du tissu dépend de ce qu'il contient (provisions, armes, soins, divers).
@@ -565,47 +558,6 @@ function dessinerComte(g, x, y, w, h, nuit = 0, biome = 'comte') {
 // L'apparence par défaut, selon que tu joues un garçon ou une fille.
 function apparenceParDefaut(feminin) {
   return { coiffure: feminin ? 1 : 0, cheveux: 0, peau: 0, yeux: 0, bouche: 0, barbe: 0, haut: feminin ? 1 : 0, bas: 0 };
-}
-
-// Les lignes du dessin selon les choix et l'âge (la barbe ne pousse qu'à l'âge adulte).
-function lignesJoueur(ap, stade) {
-  const l = [...CORPS];
-  const coiffures = [
-    {},
-    { 6: '.hcccccch.', 7: '.hcccccch.' },
-    { 0: '..hhhhhh..', 1: '.hhhhhhhh.', 2: '.hhsssshh.' },
-    { 0: '..h.hh.h..', 1: '..hhhhhh..' },
-    { 0: '..........', 1: '...ssss...', 2: '..ssssss..' },
-  ];
-  const bouches = [
-    { 4: '..ssssss..', 5: '...mmmm...' },
-    { 4: '..ssssss..', 5: '...smms...' },
-    { 4: '..ssmmss..', 5: '...smms...' },
-    { 4: '..ssmmss..', 5: '...mssm...' },
-  ];
-  const barbes = [
-    {},
-    { 4: '..sxxxxs..' },
-    { 5: '..xxmmxx..', 6: '..cxxxxc..' },
-    { 4: '..sxmmxs..', 5: '..xxxxxx..', 6: '..cxxxxc..', 7: '.cccxxccc.', 8: 'scccxxcccs' },
-  ];
-  const morceaux = [coiffures[ap.coiffure], bouches[ap.bouche], stade === 'petit' ? {} : barbes[ap.barbe]];
-  for (const m of morceaux) for (const [i, ligne] of Object.entries(m)) l[i] = ligne;
-  return l;
-}
-
-function paletteJoueur(ap, stade) {
-  const cheveux = stade === 'ancien' ? 0xc0c0c0 : APPARENCE.cheveux[ap.cheveux][1];
-  return {
-    h: cheveux, x: cheveux,
-    s: APPARENCE.peau[ap.peau][1],
-    e: APPARENCE.yeux[ap.yeux][1],
-    m: 0x6a2020,
-    c: APPARENCE.haut[ap.haut][1],
-    d: 0x7a4a1e,
-    p: APPARENCE.bas[ap.bas][1],
-    b: 0x4a3020,
-  };
 }
 
 // La texture du joueur à son âge actuel (créée si besoin).

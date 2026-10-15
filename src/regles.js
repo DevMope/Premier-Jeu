@@ -1369,12 +1369,6 @@ function partCommandeRemplie(v, colis) {
   return voulu ? donne / voulu : 1;
 }
 
-// On va dormir puis on ouvre le comptoir (utile pour les tests).
-function journeeSuivante(G) {
-  nuit(G);
-  if (!G.faillite) ouvrirComptoir(G);
-}
-
 // (v0.57) Pourquoi la faillite ? La cause la plus grave du moment décide de la fin :
 // une dette à la Main Noire, sinon une dette à la banque, sinon un dédommagement trop lourd payé
 // ces trois derniers jours (la famille vient se venger), sinon la simple mauvaise gestion.
@@ -2704,7 +2698,6 @@ function monNom(id, nom) { const g = genreDe(id); return g.includes('p') ? 'mes'
 function ouvrePluriel(cle) { return /^Les /.test(NOMS_LIEUX_MARCHE[cle] || '') ? 'ouvrent' : 'ouvre'; }
 // Le genre du joueur : « réveillé(e) », « petit(e) »...
 function eJ(G = window.GAME) { return G && G.joueur && G.joueur.feminin ? 'e' : ''; }
-function petitJ(G = window.GAME) { return G && G.joueur && G.joueur.feminin ? 'petite' : 'petit'; }
 function accordAdj(id, m, f, mp, fp) { const g = genreDe(id); return g === 'm' ? m : g === 'f' ? f : g === 'mp' ? mp : fp; }
 
 // (v0.60) Le nombre de cœurs au départ d'un récit

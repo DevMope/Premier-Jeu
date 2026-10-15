@@ -776,8 +776,6 @@ const GAZETTE_PALIERS_JAUGE = {
   '-2': "La garde surveille ta rue. On dit que les Bannis connaissent ton nom.",
   '-3': "Plus personne ne doute : ton comptoir est celui des Bannis. La Confrérie ne te salue plus.",
 };
-// Tailles des peuples à venir (silhouettes, comme TAILLES_PEUPLES) : le panda côté lumière, les six peuples de l'ombre.
-const TAILLES_PEUPLES_A_VENIR = { panda: 21, gobelin: 11, momie: 15, vampire: 16, orc: 17, loupgarou: 20, troll: 24 };
 
 // Plus la zone est dangereuse, plus le butin est gros.
 const BUTIN_PAR_DANGER = [0, 1, 1.2, 1.4, 1.7, 2.2];   // (audit v0.54 : les étoiles ne sont plus toujours le meilleur choix)

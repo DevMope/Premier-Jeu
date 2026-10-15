@@ -13,7 +13,6 @@
 
 const FINESSE = 2;
 const ANGLES_VUE = { face: 0, troisQuarts: Math.PI / 4, profil: Math.PI / 2, dos: Math.PI };
-const VUES_CORPS = ['troisQuarts', 'face', 'profil', 'dos'];
 
 // Des dégradés plus vifs que `rampe` : plus saturés, des ombres plus profondes, des lumières
 // plus franches (les ombres tirent vers le violet, les lumières vers le jaune, comme avant).
@@ -1055,7 +1054,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   // ceinture ; plus bas (tuniques, robes, capes), il retombe en plis droits qui ondulent.
   if (costume !== 'mainNoire' && costume !== 'serpent' && !T.bandelettes) {
     const h = hachage((g.nom || '').length, 7, 97) * 6;
-    const etoffes = ['habit', 'cape', 'lin', 'bas', 'gilet'];
+    const etoffes = joueur ? ['habit', 'cape', 'bas', 'gilet'] : ['habit', 'cape', 'lin', 'bas', 'gilet'];   // (le tablier du marchand est une toile raide)
     const proche = (x, y, A, B) => { const dx = B[0] - A[0], dy = B[1] - A[1], l2 = dx * dx + dy * dy || 1, u = Math.max(0, Math.min(1, ((x - A[0]) * dx + (y - A[1]) * dy) / l2)); return [Math.hypot(x - A[0] - u * dx, y - A[1] - u * dy), u * Math.sqrt(l2)]; };
     const fronces = (x, y, segs) => {
       for (const [A, B, , r] of segs) {
