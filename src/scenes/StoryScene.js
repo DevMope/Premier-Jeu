@@ -772,7 +772,7 @@ class StoryScene extends Cinematique {
         this.tweens.add({ targets: lueur, alpha: 0.3, scale: 2.7, duration: 300, yoyo: true, repeat: -1 });
         // Des yeux jaunes qui brillent dans le noir...
         for (const [ex, ey] of [[x + 150, 290], [x + 230, 300], [x + 300, 280]]) {
-          const yeux = ajouter(this.add.text(ex, ey, '• •', style(14, '#ffd040', { fontStyle: 'bold', brut: true })).setOrigin(0.5).setDepth(8).setAlpha(0));
+          const yeux = ajouter(yeuxDansLeNoir(this, ex, ey, 0xffd040, { taille: 2, profondeur: 8 }).setAlpha(0));
           this.tweens.add({ targets: yeux, alpha: 1, duration: 300, delay: Phaser.Math.Between(300, 1500), yoyo: true, hold: 1200, repeat: -1, repeatDelay: 800 });
         }
         particules('lueurHD', 0xffa040, { vx: 0.1, vy: -0.6, n: 1, echelle: 0.7, add: true });
@@ -1022,11 +1022,17 @@ class StoryScene extends Cinematique {
     for (let k = 0; k < 6; k++) canyon.fillStyle(0x3a5a2a, 0.6).fillEllipse(X + 30 + k * 32, haut + 6 + (k % 2) * 6, 18, 6);   // des touffes accrochées
     // le fond du ravin : la rivière qui gronde, ou le noir du gouffre et sa brume
     if (eau) {
-      if (this.eauRecit) this.eauRecit.destroy();
-      this.eauRecit = eauRecitHD(this, X + 110, bas, 210, 40).setDepth(1.05);
+      // (v0.68) l'eau fait partie du décor : dessinée derrière les falaises (elle passait par-dessus)
+      // et effacée avec lui au changement de plan (elle traînait encore à l'écran)
+      if (this.eauRecit) { this.eauRecit.destroy(); this.eauRecit = null; }
+      ajouter(eauRecitHD(this, X + 110, bas + 20, 214, 60));
       // les rapides : des traînées d'écume qui filent, des rochers qui fendent le courant
+      // (v0.68) l'eau s'enfonce dans l'ombre des falaises, et une ligne d'humidité marque la paroi
+      ajouter(this.add.rectangle(X + 110, bas - 41, 200, 4, 0x1a1410, 0.35));
+      for (const [ox, sens] of [[X + 30, 1], [X + 192, -1]]) for (let k = 0; k < 4; k++) ajouter(this.add.rectangle(ox + sens * k * 6, bas - 10, 6, 62, 0x0a1a24, 0.32 - k * 0.07).setOrigin(0.5, 1));
       for (const [rx, ry] of [[X + 70, bas - 26], [X + 150, bas - 22]]) {
         const roc = ajouter(this.add.ellipse(rx, ry, 26, 12, 0x3a3430).setDepth(1.08));
+        ajouter(this.add.ellipse(rx - 3, ry - 3, 16, 5, 0x6a5e52));   // le dessus mouillé du rocher, qui accroche la lumière
         for (let k = 0; k < 3; k++) { const e = ajouter(this.add.ellipse(rx - 14, ry, 10, 4, 0xffffff, 0.8).setDepth(1.09)); this.tweens.add({ targets: e, x: rx - 40, alpha: 0, scaleX: 2, duration: 700, delay: k * 230, repeat: -1 }); }
         void roc;
       }

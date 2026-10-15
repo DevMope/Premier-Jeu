@@ -373,7 +373,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
     ici.porte(o + P.arche, sol, 'La lueur de la fontaine', 'Nymphe', arche);
   }
   if (jour) ici.porte(o + P.arche, sol, 'Le marché ▶', 'Marche', arche);
-  return { porteShop: { x: f.porteX, y: f.porteY }, lumieres };
+  return { porteShop: { x: f.porteX, y: f.porteY }, lumieres, banc: { x: o + 990, sol: sol + 30 } };   // (v0.68 : le banc, où l'on peut s'asseoir)
 }
 
 // (v0.66) Le logo de la Banque Centrale Goyenne, dessiné par le joueur : l'inquisiteur barbu à

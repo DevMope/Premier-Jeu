@@ -397,13 +397,58 @@ class CounterScene extends Phaser.Scene {
       this.scene.pause();
       this.scene.launch('Bureau', { retour: 'Comptoir', comptoir: this });
     });
-    this.cases = {};
+    this.cases = {}; this.casesArmes = {};
     // (v0.63) toutes les armes partagent une case : le râtelier, qui s'ouvre sur celles du stock
     const cases = Object.keys(ITEMS).filter(id => !estArme(id) || id === 'epee').map(id => (id === 'epee' ? 'armes' : id));
+    const avant = this.children.list.length;
     cases.forEach((id, i) => {
       if (id === 'armes') return this.creerCaseArmes(200 + (i % 5) * 108, 397 + Math.floor(i / 5) * 48);
-      const x = 200 + (i % 5) * 108;
-      const y = 397 + Math.floor(i / 5) * 48;
+      this.creerCase(id, 200 + (i % 5) * 108, 397 + Math.floor(i / 5) * 48, this.cases);
+    });
+    this.pagesStock = [this.children.list.slice(avant)];
+    // (v0.68) la page 2 : les autres armes, chacune dans sa case (l'épée reste en page 1, dans le râtelier)
+    const avant2 = this.children.list.length;
+    IDS_ARMES.filter(id => id !== 'epee').slice(0, 12).forEach((id, i) => this.creerCase(id, 200 + (i % 5) * 108, 397 + Math.floor(i / 5) * 48, this.casesArmes));
+    this.pagesStock.push(this.children.list.slice(avant2));
+    this.creerOngletPages();
+    this.montrerPageStock(0);
+    this.creerBoutonRetourner();
+  }
+
+  // (v0.68) L'onglet qui tourne les pages de la marchandise (▶ 1/2), comme un intercalaire
+  creerOngletPages() {
+    const x = 712, y = 421;
+    const fond = this.add.image(x, y, panneauHD(this, 18, 46, 'ardoise')).setScale(2).setInteractive({ useHandCursor: true });
+    const fleche = this.add.text(x, y - 10, '▶', style(16, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+    const num = this.add.text(x, y + 16, '', style(11, '#f3e6c8', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+    fond.on('pointerdown', () => { Son.jouer('page'); this.montrerPageStock((this.pageStock + 1) % this.pagesStock.length); });
+    fond.on('pointerover', () => fond.setTint(0xfff0c8)); fond.on('pointerout', () => fond.clearTint());
+    this.ongletPages = { fond, fleche, num };
+  }
+
+  montrerPageStock(n) {
+    this.pageStock = n;
+    this.pagesStock.forEach((objets, k) => objets.forEach(o => { o.setVisible(k === n); if (o.input) o.input.enabled = k === n; }));
+    const o = this.ongletPages;
+    if (o) { o.num.setText(`${n + 1}/${this.pagesStock.length}`); o.fleche.setText(n === this.pagesStock.length - 1 ? '◀' : '▶'); }
+    if (this.ratelier && n !== 0) { this.ratelier.destroy(); this.ratelier = null; }
+    this.majOngletPages();
+  }
+
+  // L'onglet s'anime quand l'arme que veut le client est rangée sur l'autre page
+  majOngletPages() {
+    const o = this.ongletPages;
+    if (!o) return;
+    const pref = this.voyageur ? armePour(this.voyageur) : null;
+    const ailleurs = pref && this.casesArmes[pref] && this.pageStock === 0;
+    this.tweens.killTweensOf(o.fleche);
+    o.fleche.setScale(1);
+    if (ailleurs) this.tweens.add({ targets: o.fleche, scale: 1.35, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+
+  // Une case de marchandise posée sur la toile (page 1 : les objets ; page 2 : les armes)
+  creerCase(id, x, y, ou) {
+    {
       const fond = this.add.rectangle(x, y, 100, 40, 0xfff6d8, 0.001).setInteractive({ useHandCursor: true });
       // La marchandise posée sur la toile : jusqu'à trois exemplaires empilés selon le stock
       const cle = iconeObjet(this, id);
@@ -417,9 +462,8 @@ class CounterScene extends Phaser.Scene {
       fond.on('pointerover', () => { fond.setFillStyle(0xfff6d8, 0.22); icone.setScale(2.25); });
       fond.on('pointerout', () => { fond.setFillStyle(0xfff6d8, 0.001); icone.setScale(2); });
       fond.on('pointerdown', () => this.donner(id));
-      this.cases[id] = { fond, qte, pile, icone };
-    });
-    this.creerBoutonRetourner();
+      ou[id] = { fond, qte, pile, icone };
+    }
   }
 
   // (v0.63) La case du râtelier : l'arme la plus utile en ce moment (celle du client si on l'a),
@@ -1666,7 +1710,7 @@ class CounterScene extends Phaser.Scene {
   }
 
   majStock() {
-    for (const [id, c] of Object.entries(this.cases)) {
+    for (const [id, c] of [...Object.entries(this.cases), ...Object.entries(this.casesArmes || {})]) {
       if (c.armes) {
         // le râtelier : l'arme du client si on l'a, sinon la plus nombreuse
         const total = IDS_ARMES.reduce((s, w) => s + (this.G.stock[w] || 0), 0);
@@ -1683,6 +1727,7 @@ class CounterScene extends Phaser.Scene {
     }
     this.majTiroirSecret();
     this.majTiroirCadeaux();
+    this.majOngletPages();
     const m = this.G.materiaux;
     this.texteReserve.setText(`Réserve ${stockTotal(this.G)}/${this.G.capacite} · Fer ${m.fer} · Cuir ${m.cuir} · Bois ${m.bois || 0}`);
   }

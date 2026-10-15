@@ -1243,7 +1243,7 @@ const JOUEUR_H = 64 * 2;   // (le joueur est un corps en volume : voir corpsVueH
 // La peau de la création, ramenée à la rampe réglée à la main la plus proche.
 const PEAU_DE_CREATION = [0, 1, 3, 4];
 
-function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0, tenue = [], vue = 'troisQuarts') {
+function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0, tenue = [], vue = 'troisQuarts', pose = null) {
   // Le joueur passe par le moteur des corps en volume, avec son costume de marchand et ses
   // choix de création : coiffure, couleurs, bouche ; barbe à l'âge adulte, cheveux gris à l'ancien.
   const ancien = stade === 'ancien';
@@ -1260,7 +1260,7 @@ function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0, tenue =
     barbe: stade !== 'petit' && ap.barbe ? ['moustache', 'moustache', 'courte', 'pleine'][ap.barbe] : null,
     nom: 'JeuneGoy',
   };
-  return dessinerCorpsVue(gene, 1, 'joueur', pas, null, vue, { tenue, bouche: ap.bouche ?? 0 });
+  return dessinerCorpsVue(gene, 1, 'joueur', pas, pose, vue, { tenue, bouche: ap.bouche ?? 0 });
 }
 
 // L'échelle d'affichage du joueur : ses anciens sprites faisaient 16 pixels de haut.

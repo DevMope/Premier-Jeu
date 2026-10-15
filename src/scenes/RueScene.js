@@ -48,6 +48,23 @@ class RueScene extends Phaser.Scene {
     // des passants qui vont et viennent
     this.time.addEvent({ delay: 4500, startAt: 3500, loop: true, callback: () => this.passant() });
     this.passant();
+    // (v0.68) quelqu'un se repose sur le banc, de temps en temps
+    this.banc = r.banc; this.surLeBanc = null;
+    this.time.addEvent({ delay: 9000, startAt: 8000, loop: true, callback: () => this.reposBanc() });
+    if (Math.random() < 0.6) this.reposBanc();
+  }
+
+  reposBanc() {
+    if (this.surLeBanc && this.surLeBanc.active) {
+      if (Math.random() < 0.4) { const p = this.surLeBanc; this.surLeBanc = null; this.tweens.add({ targets: p, alpha: 0, duration: 500, onComplete: () => p.destroy() }); }
+      return;
+    }
+    if (Math.random() < 0.5) return;
+    const race = auHasard(['humain', 'humain', 'hobbit', 'nain', 'elfe', 'magicienne']);
+    const quoi = { nom: auHasard(NOMS_PASSANTS_RUE) + ' ' + Math.floor(Math.random() * 99), race, niveau: auHasard(['novice', 'aguerri']), feminin: Math.random() < 0.5 };
+    const p = this.surLeBanc = imageCorps(this, this.banc.x + (Math.random() < 0.5 ? -22 : 22), this.banc.sol - 6, quoi, 7.2, 'assis').setDepth(8.44).setFlipX(Math.random() < 0.5).setAlpha(0).setInteractive({ useHandCursor: true });
+    this.tweens.add({ targets: p, alpha: 1, duration: 500 });
+    p.on('pointerdown', () => { this.allerVers(p.x + 70); this.dire(`« ${auHasard(['Belle journée, hein ? Je me pose deux minutes, mes pieds n\'en peuvent plus.', 'Je regarde passer les aventuriers. Il en part tous les jours, de chez toi !', 'Chut... j\'écoute les potins du marché.', 'Ce banc est le meilleur du village. Ne le dis à personne.'])} »`); });
   }
 
   passant() {

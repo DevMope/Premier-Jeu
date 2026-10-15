@@ -580,6 +580,20 @@ function textureJoueur(scene, G, vue = 'face') {
 }
 
 // Crée (ou recrée) les trois textures du joueur, en HD : joueur_petit, joueur_adulte, joueur_ancien.
+// (v0.68) Le joueur assis (sur un banc) : renvoie la clé de la texture ; ses pieds sont à PIEDS_ASSIS[clé]
+function textureJoueurAssis(scene, G) {
+  const stade = stadeJoueur(G), tenue = (G.tenue || []).join(',');
+  const cle = `joueur_${stade}_assis`;
+  if (!scene.textures.exists(cle) || scene.textures.get(cle).tenue !== tenue) {
+    if (scene.textures.exists(cle)) scene.textures.remove(cle);
+    const t = dessinerJoueurHD(G.joueur.apparence, stade, G.joueur.feminin, 0, G.tenue || [], 'troisQuarts', 'assis');
+    t.texture(scene, cle);
+    scene.textures.get(cle).tenue = tenue;
+    PIEDS_ASSIS[cle] = t.piedsAssis;
+  }
+  return cle;
+}
+
 function creerTexturesJoueur(scene, ap, feminin = false, tenue = []) {
   for (const stade of ['petit', 'adulte', 'ancien']) {
     dessinerJoueurHD(ap, stade, feminin, 0, tenue).texture(scene, 'joueur_' + stade);
@@ -751,5 +765,30 @@ function bullePensee(scene, x, y, image, { conteneur = null, echelle = 2, duree 
   scene.tweens.add({ targets: nuage, scale: 1, duration: 300, delay: 400, ease: 'Back.easeOut' });
   scene.tweens.add({ targets: img, y: 0, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 700 });
   scene.tweens.add({ targets: c, alpha: 0, delay: duree, duration: 400, onComplete: () => c.destroy() });
+  return c;
+}
+
+// (v0.68) Des yeux qui guettent dans le noir : deux yeux en amande qui luisent (pas de simples
+// points qu'on prendrait pour des baies), une pupille fendue, un halo de lumière autour, et ils
+// clignent de temps en temps. Renvoie un conteneur (on joue sur son alpha pour les faire apparaître).
+function yeuxDansLeNoir(scene, x, y, couleur = 0xffd040, { ecart = 13, taille = 1, profondeur = 6.9 } = {}) {
+  creerHalo(scene);
+  const c = scene.add.container(x, y).setDepth(profondeur).setScale(taille);
+  c.add(scene.add.image(0, 0, 'halo').setScale(0.55, 0.32).setTint(couleur).setAlpha(0.5).setBlendMode(Phaser.BlendModes.ADD));
+  const yeux = [];
+  for (const sens of [-1, 1]) {
+    const o = scene.add.container(sens * ecart / 2, 0);
+    // l'amande : penchée vers le nez (un regard mauvais), avec un liseré plus sombre
+    o.add(scene.add.ellipse(0, 0, 11, 6, 0x3a2400).setAngle(sens * 14));
+    o.add(scene.add.ellipse(0, 0, 9, 4.5, couleur).setAngle(sens * 14));
+    o.add(scene.add.ellipse(0, -0.6, 5, 1.6, 0xfff8c0, 0.9).setAngle(sens * 14));   // le reflet
+    o.add(scene.add.rectangle(0, 0, 1.6, 4.4, 0x140800));                            // la pupille fendue
+    c.add(o); yeux.push(o);
+  }
+  // un clignement, de temps en temps (les deux yeux ensemble)
+  scene.time.addEvent({ delay: 1800 + Math.random() * 1400, loop: true, callback: () => {
+    if (!c.active) return;
+    scene.tweens.add({ targets: yeux, scaleY: 0.1, duration: 70, yoyo: true });
+  } });
   return c;
 }

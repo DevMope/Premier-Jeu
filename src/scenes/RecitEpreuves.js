@@ -224,7 +224,8 @@ Object.assign(StoryScene.prototype, {
   },
   // Des yeux qui brillent dans le noir
   yeux(x, y, teinte = '#ffd040') {
-    const o = this.garder(this.add.text(x, y, '• •', style(15, teinte, { fontStyle: 'bold', brut: true })).setOrigin(0.5).setDepth(6.9).setAlpha(0));
+    // (v0.68) de vrais yeux qui luisent et clignent (des points, on les prenait pour des baies)
+    const o = this.garder(yeuxDansLeNoir(this, x, y, Phaser.Display.Color.HexStringToColor(teinte).color, { taille: 2.2 }).setAlpha(0));
     return o;
   },
   // Une flèche tirée de (x0, y0) vers (x1, y1), en cloche ; elle se plante (ou disparaît)

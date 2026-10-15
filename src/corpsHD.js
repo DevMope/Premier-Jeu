@@ -50,7 +50,8 @@ const FIGURANTS = {
 
 // Les mains de chaque texture (en pixels HD depuis le sol), pour porter le baluchon.
 const MAINS_CORPS = {};
-const BOUTS_CORPS = {};   // (v0.68) le bout du bâton du baluchon, en pixels de la texture
+const BOUTS_CORPS = {};
+const PIEDS_ASSIS = {};   // (v0.68) la hauteur des pieds d'un personnage assis, en pixels de la texture   // (v0.68) le bout du bâton du baluchon, en pixels de la texture
 
 // L'ordre des tenues : novice 0 … légende 4.
 function tenueDe(niveau) {
@@ -99,6 +100,7 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
     toile.texture(scene, cle);
     MAINS_CORPS[cle] = toile.mains;
     if (toile.bout) BOUTS_CORPS[cle] = toile.bout;
+    if (toile.piedsAssis) PIEDS_ASSIS[cle] = toile.piedsAssis;
     dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache, blesse }).texture(scene, cle + '_pas1');
     dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache, blesse }).texture(scene, cle + '_pas2');
   }
@@ -138,5 +140,7 @@ function echelleCorps(cle) {
 // `echelle` est l'échelle d'avant (celle des personnages de 16 pixels).
 function imageCorps(scene, x, y, quoi, echelle, pose = null) {
   const cle = corpsHD(scene, quoi, pose);
-  return scene.add.image(x, y, cle).setOrigin(0.5, 1).setScale(echelle * echelleCorps(cle));
+  const img = scene.add.image(x, y, cle).setOrigin(0.5, 1).setScale(echelle * echelleCorps(cle));
+  if (PIEDS_ASSIS[cle]) img.setOrigin(0.5, (PIEDS_ASSIS[cle] + 1) / img.height);   // (assis : posé par les pieds, devant le banc)
+  return img;
 }

@@ -194,6 +194,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const yT = Math.round(cy + P.ry - 1);       // le haut du torse
   const yB = Math.round(yT + P.torse);        // la taille
   const sol = H - 1;
+  const solDebout = sol, solAssis = Math.round(yB + (sol - yB) * 0.52);   // (v0.68 : la hauteur du banc, pour la pose assise)
   const ep = P.ep;                         // la demi-largeur d'épaules
   const prof = ep * 0.55;                  // la demi-épaisseur du torse
   const longue = race === 'magicienne' || costume === 'mainNoire';    // la robe descend jusqu'aux pieds
@@ -229,6 +230,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
     // (v0.68) Le baluchon sur l'épaule : le bras proche se plie, la main tient le bâton devant la
     // poitrine (elle ne se balance plus avec la marche) ; l'autre bras, lui, continue de balancer
+    if (pose === 'assis') {   // (v0.68) assis : les mains posées sur les cuisses
+      coude.splice(0, 3, cote * (ep + 0.8 * k), 1 * k, yT + P.torse * 0.62);
+      main.splice(0, 3, cote * ep * 0.55, (solAssis - yB) * 0.55, yB);
+    }
     if (pose === 'baluchon' && devant) {
       coude.splice(0, 3, cote * (ep + 0.8 * k), 1.2 * k, yT + P.torse * 0.62);
       main.splice(0, 3, cote * ep * 0.55, 5.2 * k, yT + 4 * k);
@@ -258,11 +263,14 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const jambe = (cote, devant) => {
     const bal = pas ? (cote === pres ? pas : -pas) : 0;   // la jambe qui avance
     const hanche = [cote * ep * 0.42, 0, yB - 1 * k];
-    const genou = [cote * ep * 0.45, (bal * 2.2 + (bal > 0 ? 1 : 0)) * k, yB + (sol - yB) * 0.5];
+    // (v0.68) assis : la cuisse à l'horizontale vers l'avant, le mollet qui descend jusqu'au sol (le
+    // sol est alors à mi-hauteur de la jambe debout : c'est la hauteur du banc)
+    const assis = pose === 'assis', sol = assis ? solAssis : solDebout;
+    const genou = assis ? [cote * ep * 0.45, (sol - yB) * 0.95, yB + 1 * k] : [cote * ep * 0.45, (bal * 2.2 + (bal > 0 ? 1 : 0)) * k, yB + (sol - yB) * 0.5];
     // Le pas : le pied avant reste posé au sol, c'est le talon arrière qui se décolle (à peine de
     // face, où l'on ne voit pas le pied partir en arrière)
     const leve = bal < 0 ? (Math.abs(s) < 0.3 ? 0.6 : 1.2) * k : 0;
-    const pied = [cote * ep * 0.48, bal * 3.8 * k, sol - 3 * k - leve];
+    const pied = assis ? [cote * ep * 0.48, (sol - yB) * 1.05, sol - 3 * k] : [cote * ep * 0.48, bal * 3.8 * k, sol - 3 * k - leve];
     const Hh = [X(hanche[0], hanche[1]), hanche[2]], G = [X(genou[0], genou[1]), genou[2]], Pd = [X(pied[0], pied[1]), pied[2]];
     const dec = devant ? 0 : -0.5;
     const r = 2.9 * k * P.membre;
@@ -1131,6 +1139,11 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     traitHD(t, 'baton', [debut, bout], 0.75 * k, 0.2);
     t.forme(matMain, ellipsoide(M[0], M[1] + 0.3 * k, 1.9 * k * gm, 1.6 * k * gm), { decalage: 0.3 });   // les doigts autour du bâton
     t.bout = [Math.round(bout[0]), Math.round(bout[1])];
+  }
+  if (pose === 'assis') {
+    // sous les pieds, plus rien : la cape et la robe se posent sur le banc au lieu de descendre au sol
+    for (let y = solAssis + 1; y < t.h; y++) for (let x = 0; x < t.l; x++) { const i = y * t.l + x; t.c[i] = null; t.m[i] = null; t.k[i] = 0; }
+    t.piedsAssis = solAssis;
   }
   contourEpais(t, CONTOUR_CORPS.tours);
   // Où sont les mains (depuis le sol), pour y accrocher le baluchon

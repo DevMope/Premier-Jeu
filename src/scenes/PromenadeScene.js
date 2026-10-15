@@ -413,6 +413,9 @@ class PromenadeScene extends Cinematique {
     };
     const r = construireRue(this, o, { ici });
     this.porteShop = r.porteShop;
+    // (v0.68) le banc de la rue : on peut s'y asseoir un moment, regarder les étoiles
+    const zb = this.add.rectangle(r.banc.x, r.banc.sol - 30, 130, 60, 0xffffff, 0).setDepth(8.42).setInteractive({ useHandCursor: true });
+    zb.on('pointerdown', () => this.asseoir(r.banc));
     this.lumieres.push(...r.lumieres);
   }
 
@@ -449,8 +452,32 @@ class PromenadeScene extends Cinematique {
     this.cible = Phaser.Math.Clamp(x, piece.x + 40, piece.x + (piece.largeur || 960) - 40);
   }
 
+  // (v0.68) S'asseoir sur le banc : il y va, s'assoit (les jambes pliées, les mains sur les cuisses) ;
+  // un clic ailleurs ou une flèche, et il se relève
+  async asseoir(banc) {
+    if (this.transition || this.assis) return;
+    this.allerVers(banc.x); await this.attendreArrivee();
+    if (this.cible !== null) return;
+    await this.attendre(300);   // (le dernier pas se termine)
+    if (this.cible !== null) return;
+    const cle = textureJoueurAssis(this, this.G);
+    this.assis = { avant: this.heros.texture.key.replace(/_pas[12]$/, '') };
+    this.heros.setTexture(cle).setOrigin(0.5, (PIEDS_ASSIS[cle] + 1) / this.heros.height).setY(banc.sol - 6).setFlipX(false);
+    this.dire(Phaser.Utils.Array.GetRandom(['Tu t\'assois un moment sur le banc. Le ciel est plein d\'étoiles.', 'Un banc, la nuit, et le silence du village. Tu respires.', 'Tu t\'assois. Au loin, un hibou. La journée a été longue.']));
+  }
+  seLever() {
+    if (!this.assis) return;
+    const avant = this.assis.avant;
+    this.assis = null;
+    this.heros.setTexture(avant).setOrigin(0.5, 1).setY(SOL_PROMENADE);
+  }
+
   update(temps, delta) {
     if (!this.heros) return;
+    if (this.assis) {
+      if ((this.touches && (this.touches.left.isDown || this.touches.right.isDown)) || this.cible !== null) this.seLever();
+      else { this.suivre(delta); return; }
+    }
     let dx = 0;
     if (this.touches && (this.touches.left.isDown || this.touches.right.isDown)) {
       this.cible = null;
