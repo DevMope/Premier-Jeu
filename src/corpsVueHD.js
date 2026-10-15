@@ -770,7 +770,26 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const bouche = options.bouche ?? 0;   // 0 souriante, 1 neutre, 2 étonnée, 3 grognon
     const courbe = (g.vieux && race === 'troll' ? -0.4 : T.sourire ? 1.4 : bouche === 1 ? 0 : bouche === 3 ? -0.8 : race === 'hobbit' ? 1.2 : race === 'elfe' ? 0.3 : 0.8) * (profil ? 0.5 : 1);
     const epaisseur = elfeF ? 1 : Math.max(1, Math.round((profil ? 0.9 : 0.65) * k));
-    if (museauLoup) { /* (la gueule est dessinée avec le museau) */ }
+    // (v0.73) Grippesou qui t'accueille : le sourire du Grinch, un croissant immense qui remonte
+    // jusqu'aux joues, rempli de dents serrées
+    const grinch = pose === 'accueil' && gobelin && !profil, by0 = by;
+    if (grinch) {
+      const lg = Math.round(Math.min(5.4 * k, P.rx * 0.9) * Math.abs(c)), by = by0 - Math.round(1.4 * k);   // (plus haut : il mange les joues)
+      for (let i = -lg; i <= lg; i++) {
+        const u = i / lg, coin = Math.round(u * u * u * u * 1.8 * k);
+        const haut = by + Math.round((1 - u * u) * 0.6 * k) - coin, bas = by + Math.round((1 - u * u) * 2.8 * k) - coin;
+        const x = Math.round(bx + i);
+        t.poser(x, haut, matLevre, tonFente);
+        for (let y = haut + 1; y < bas; y++) t.poser(x, y, 'blanc', (Math.abs(i) % 3 === 1) ? 2 : y === haut + 1 || y === bas - 1 ? 3 : 5);   // (des dents serrées, l'ombre entre elles)
+        t.poser(x, bas, matLevre, tonFente);
+        if (Math.abs(u) < 0.85) t.poser(x, bas + 1, matLevre, tonBas);   // (la lèvre du bas, en lumière)
+      }
+      for (const cote of [-1, 1]) {   // les fossettes : les joues remontées par le sourire
+        t.poser(Math.round(bx + cote * (lg + 1)), by - Math.round(1.6 * k), 'peau', 1);
+        t.poser(Math.round(bx + cote * (lg + 1)), by - Math.round(1.6 * k) - 1, 'peau', 1);
+      }
+    }
+    else if (museauLoup) { /* (la gueule est dessinée avec le museau) */ }
     else if (bouche === 2) t.forme('bouche', ellipsoide(bx, by + 0.5 * k, 1.2 * k, 1.5 * k), { decalage: -0.5, ombre: false });
     else for (let i = -lb; i <= lb; i++) {
       const yy = by + Math.round((1 - (i * i) / (lb * lb)) * courbe * k);
@@ -779,8 +798,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       if (!elfeF && !profil && Math.abs(i) < lb - 1 && race !== 'nain') t.poser(Math.round(bx + i), yy - 1, matLevre, tonHaut);   // la lèvre du haut
     }
     if (bouche === 0 && options.bouche !== undefined) for (let i = -Math.round(lb * 0.5); i <= Math.round(lb * 0.5); i++) t.poser(Math.round(bx + i), by + Math.round(0.8 * k) - 1, 'blanc', 4);
-    if (!elfeF && !museauLoup && Math.abs(c) > 0.3) t.poser(Math.round(bx - lb - 1), by, matLevre, tonFente);
-    if (!elfeF && Math.abs(c) > 0.9) t.poser(Math.round(bx + lb + 1), by, matLevre, tonFente);
+    if (!grinch && !elfeF && !museauLoup && Math.abs(c) > 0.3) t.poser(Math.round(bx - lb - 1), by, matLevre, tonFente);
+    if (!grinch && !elfeF && Math.abs(c) > 0.9) t.poser(Math.round(bx + lb + 1), by, matLevre, tonFente);
     // La barbe : sur la moitié avant du menton et des joues
     const barbe = race === 'nain' ? 'nain' : g.barbe;
     if (barbe === 'rase') {
@@ -813,7 +832,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // Les grandes dents de Grippesou (et des gobelins), les défenses des orcs et des trolls, les
     // canines des vampires, les crocs du loup-garou
     const dents = T.dents || (gobelin ? 'gobelin' : null);
-    if (dents === 'gobelin') for (let j = -2; j <= 2; j++) { const x = Math.round(bx + j * 1.1 * k); for (let e = 0; e < Math.round(1.2 * k) - (j % 2 ? 1 : 0); e++) t.poser(x, by + 1 + e, 'blanc', e ? 3 : 5); }   // (des dents pointues, une sur deux plus courte)
+    if (grinch) { /* (ses dents sont déjà dans le sourire) */ }
+    else if (dents === 'gobelin') for (let j = -2; j <= 2; j++) { const x = Math.round(bx + j * 1.1 * k); for (let e = 0; e < Math.round(1.2 * k) - (j % 2 ? 1 : 0); e++) t.poser(x, by + 1 + e, 'blanc', e ? 3 : 5); }   // (des dents pointues, une sur deux plus courte)
     else if (dents === 'defenses') for (const cote of (profil ? [1] : [-1, 1])) {
       // Deux petites défenses d'ivoire qui sortent du fond de la mâchoire et se recourbent vers le haut
       const x0 = bx + cote * (lb + 0.6 * k), y0 = by + 1.4 * k;

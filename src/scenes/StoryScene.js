@@ -966,7 +966,7 @@ class StoryScene extends Cinematique {
           } });
         }
         Son.jouer({ sanglier: 'sanglier', loup: 'loup', araignee: 'siffle', esprits: 'froid', mortvivant: 'coup' }[this.menace.type] || 'grogne');
-        this.onomatopee(betes[0].x, sol - 150, 'OUSTE !', '#b8f0a0');
+        this.onomatopee(betes[0].x, sol - 150, 'OUSTE !', '#ffe9a8');
         await this.attendre(500);
       } else {
         // Elle bondit sur lui.
@@ -993,7 +993,7 @@ class StoryScene extends Cinematique {
           this.animer({ targets: p, y: y0 - 70, duration: 300, yoyo: true, ease: 'Quad.easeOut' }),
         ]);
         p.setY(y0);
-        this.onomatopee(x1, sol - 150, 'HOP !', '#b8f0a0');
+        this.onomatopee(x1, sol - 150, 'HOP !', '#ffe9a8');
       } else {
         await this.animer({ targets: p, x: x0 + 40, y: y0 + 12, angle: 20, duration: 300, ease: 'Quad.easeIn' });
         this.onomatopee(p.x, sol - 140, this.menace.eau ? 'PLOUF !' : 'AÏE !', this.menace.eau ? '#a8d0ff' : '#ff8080');
@@ -1188,7 +1188,7 @@ class StoryScene extends Cinematique {
     }
     // la réception : un nuage de poussière, HOP, puis il redescend les gradins de l'autre côté
     for (let k = 0; k < 8; k++) { const d = this.add.circle(p.x + (k - 4) * 6, p.y, 4, 0xc8b090, 0.7).setDepth(3.1); this.decor.add(d); this.tweens.add({ targets: d, y: d.y - 10, x: d.x + (k - 4) * 4, alpha: 0, scale: 2, duration: 500, onComplete: () => d.destroy() }); }
-    this.onomatopee(p.x, p.y - 140, 'HOP !', '#b8f0a0');
+    this.onomatopee(p.x, p.y - 140, 'HOP !', '#ffe9a8');
     this.tweens.add({ targets: p, scaleY: p.scaleY * 0.9, duration: 90, yoyo: true });
     await this.attendre(300);
     for (const [x, y] of [[R.X + 318, 318], [R.X + 372, 360]]) {

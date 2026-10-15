@@ -498,7 +498,7 @@ const SCENES_EPREUVES = {
         if (M.loups) {
           // aveuglés, ils glapissent et filent dans le noir
           Son.jouer('loup');
-          this.onomatopee(M.loups[0].x, SOL_RECIT - 130, 'Kaï ! Kaï !', '#b8f0a0');
+          this.onomatopee(M.loups[0].x, SOL_RECIT - 130, 'Kaï ! Kaï !', '#ffe9a8');
           for (const l of M.loups) { l.setFlipX(true); this.animerBete(l, ['loupHD_pas', 'loupHD'], 90); this.tweens.add({ targets: l, x: 1100, duration: 900, ease: 'Quad.easeIn' }); }
           await this.attendre(800);
         }
@@ -800,8 +800,8 @@ const SCENES_EPREUVES = {
       if (reussie && abattu(this)) { await this.assommer(l, 'loupHD'); return; }
       if (reussie) {
         // ils détalent en couinant
-        if (!M.meute) this.onomatopee(l.x, l.y - 110, 'Kaï ! Kaï !', '#b8f0a0');
-        else this.onomatopee(l.x, l.y - 110, 'OUSTE !', '#b8f0a0');
+        if (!M.meute) this.onomatopee(l.x, l.y - 110, 'Kaï ! Kaï !', '#ffe9a8');
+        else this.onomatopee(l.x, l.y - 110, 'OUSTE !', '#ffe9a8');
         for (const b of loups) {
           b.setFlipX(true).setAngle(0);
           this.animerBete(b, ['loupHD_pas', 'loupHD_bond'], 90);
@@ -1081,7 +1081,7 @@ const SCENES_EPREUVES = {
           pasDeMarche(this, b, 900);
           this.tweens.add({ targets: b, x: 1120 + i * 40, y: SOL_RECIT, duration: 900, delay: i * 120, ease: 'Quad.easeIn' });
         }
-        this.onomatopee(M.chef.x, SOL_RECIT - 170, 'OUSTE !', '#b8f0a0');
+        this.onomatopee(M.chef.x, SOL_RECIT - 170, 'OUSTE !', '#ffe9a8');
         await this.attendre(900);
         return;
       }
@@ -1185,18 +1185,18 @@ const SCENES_EPREUVES = {
         await this.animer({ targets: a, y: cible, duration: 1300, ease: 'Sine.easeOut', onUpdate: () => fil.setSize(1, Math.max(1, a.y - 6)) });
         this.emotion(p, '!', 700);
         await this.attendre(300);
-        this.onomatopee(a.x + 20, a.y - 40, 'CHTAK !', '#c0ff80');
+        this.onomatopee(a.x + 20, a.y - 40, 'CHTAK !', '#ffd080');
         await this.attendre(300);
         this.tweens.add({ targets: a, y: 0, duration: 900, ease: 'Sine.easeIn', onUpdate: () => fil.setSize(1, Math.max(1, a.y - 6)) });
       } else if (M.sorte === 'serpent') {
         const s = M.serpent;
         this.animerBete(s, ['serpentHD0', 'serpentHD1'], 220);
         this.tweens.add({ targets: s, alpha: 1, duration: 300 });
-        this.onomatopee(s.x, s.y - 60, 'Ksss...', '#c0ff80');
+        this.onomatopee(s.x, s.y - 60, 'Ksss...', '#ffd080');
         await this.animer({ targets: s, x: p.x + 60, duration: 1200, ease: 'Sine.easeInOut' });
         this.emotion(p, '!', 700);
         await this.animer({ targets: s, x: p.x + 30, duration: 90, yoyo: true });
-        this.onomatopee(p.x + 20, p.y - 100, 'CHTAK !', '#c0ff80');
+        this.onomatopee(p.x + 20, p.y - 100, 'CHTAK !', '#ffd080');
         this.tweens.add({ targets: s, x: 1080, alpha: 0, duration: 1400, delay: 400 });
       } else {
         // la créature de la nuit sort du buisson

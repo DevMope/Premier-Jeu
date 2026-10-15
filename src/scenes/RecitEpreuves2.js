@@ -900,7 +900,7 @@ Object.assign(SCENES_EPREUVES, {
       M.eau = await this.entrerDansLEau(M.ex + 40, 0.42, 0x3a5a40);
       // il plonge (BLOUP), cherche à tâtons, remonte avec...
       await this.animer({ targets: p, y: SOL_RECIT + 60, duration: 400, ease: 'Quad.easeIn' });
-      this.onomatopee(p.x, SOL_RECIT - 60, 'BLOUP !', '#a8d0a0');
+      this.onomatopee(p.x, SOL_RECIT - 60, 'BLOUP !', '#c8e8ff');
       for (let k = 0; k < 6; k++) { const b = this.garder(this.add.circle(p.x + Phaser.Math.Between(-15, 15), SOL_RECIT, 3, 0xd0f0d0, 0.8).setDepth(3.5)); this.tweens.add({ targets: b, y: b.y - 20, alpha: 0, duration: 500, delay: k * 150 }); }
       await this.attendre(900);
       await this.animer({ targets: p, y: SOL_RECIT, duration: 400, ease: 'Quad.easeOut' });
@@ -920,14 +920,14 @@ Object.assign(SCENES_EPREUVES, {
         M.sangsues.push(s);
       }
       this.emotion(p, '!', 900);
-      this.onomatopee(p.x, p.y - 170, 'BEURK !', '#a0c080');
+      this.onomatopee(p.x, p.y - 170, 'BEURK !', '#e0f070');
     },
     async utiliser(id, reussie) {
       const M = this.menace, p = this.perso;
       // il les arrache une par une (PLOP), puis bande les morsures
       await this.aGenoux();
       for (const s of M.sangsues) {
-        this.onomatopee(s.x + 20, s.y - 40, 'PLOP !', '#a0c080');
+        this.onomatopee(s.x + 20, s.y - 40, 'PLOP !', '#e0f070');
         this.sauter(s, s.x + Phaser.Math.Between(40, 100), SOL_RECIT, 40, 400);
         await this.attendre(180);
       }

@@ -874,13 +874,18 @@ function donnerAuMendiant(G, montant) {
   G.mendiant += montant;
   if (avant < MENDIANT_SEUIL && G.mendiant >= MENDIANT_SEUIL && !G.decorations.includes('trefle')) {
     G.decorations.push('trefle');
-    return `« Tu as un grand cœur, ${eJ(G) ? 'petite marchande' : 'petit marchand'}. Prends ce trèfle, il m'a porté chance autrefois... » Tu reçois le Trèfle du mendiant !`;
+    return { recit: 'Il fouille dans sa besace et te tend un trèfle séché. Tu reçois le Trèfle du mendiant !', parole: `Tu as un grand cœur, ${eJ(G) ? 'petite marchande' : 'petit marchand'}. Prends ce trèfle, il m'a porté chance autrefois...` };
   }
-  return auHasard([
-    '« Merci... Que les étoiles veillent sur toi. »',
-    "« Une pièce pour un vieil homme... Je n'oublierai pas ton visage. »",
-    "« Tu es bon. C'est rare, par ici. »",
-  ]);
+  return { parole: auHasard([
+    'Merci... Que les étoiles veillent sur toi.',
+    "Une pièce pour un vieil homme... Je n'oublierai pas ton visage.",
+    "Tu es bon. C'est rare, par ici.",
+  ]) };
+}
+
+// (v0.73) Ce que dit le mendiant et ce qui se passe, séparés : { recit, parole } -> une seule ligne
+function texteMendiant(r) {
+  return [r.recit, r.parole && `« ${r.parole} »`].filter(Boolean).join(' ');
 }
 
 // Donner une ration au chien du mendiant, une fois par jour. Renvoie ce qui se passe, ou null.
@@ -890,9 +895,9 @@ function nourrirChien(G) {
   G.chienNourri = (G.chienNourri || 0) + 1;
   G.chienJour = G.jour;
   return auHasard([
-    "Le chien engloutit la ration et pose sa grosse tête sur ton genou. « Il t'aime bien, lui. Il n'aime personne, d'habitude. »",
-    "Le chien remue la queue à s'en décrocher l'échine. « Doucement, Brisquet ! » Le mendiant sourit dans sa barbe.",
-    "Brisquet renifle la ration, te regarde longuement, puis la dévore. « Il se souviendra de toi. Il se souvient de tout. »",
+    { recit: 'Le chien engloutit la ration et pose sa grosse tête sur ton genou.', parole: "Il t'aime bien, lui. Il n'aime personne, d'habitude." },
+    { recit: "Le chien remue la queue à s'en décrocher l'échine. Le mendiant sourit dans sa barbe.", parole: 'Doucement, Brisquet !' },
+    { recit: 'Brisquet renifle la ration, te regarde longuement, puis la dévore.', parole: 'Il se souviendra de toi. Il se souvient de tout.' },
   ]);
 }
 

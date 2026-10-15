@@ -801,7 +801,11 @@ class MarcheScene extends Phaser.Scene {
       const nom = this.add.text(x, 418, serre ? nomObjet(id) : `${nomObjet(id)} × ${o.qte}`, style(serre ? 11 : 12, '#fff4dc', { align: 'center', stroke: '#1a0e06', strokeThickness: 3, wordWrap: { width: pas - 4 } })).setOrigin(0.5, 0);
       // (v0.68) ce que tu en as déjà, juste dessous
       const aDeja = id in MATERIAUX ? G.materiaux[id] || 0 : G.stock[id] || 0;
-      c.add(this.add.text(x, 419 + nom.height, serre ? `× ${o.qte}\nà toi : ${aDeja}` : `tu en as ${aDeja}`, style(11, aDeja ? '#b8e090' : '#c9b48a', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3, align: 'center' })).setOrigin(0.5, 0));
+      // (v0.73) sur une plaque sombre : lisible quelle que soit la toile de l'étal (verte, rouge...)
+      const aToi = this.add.text(x, 421 + nom.height, serre ? `× ${o.qte}\nà toi : ${aDeja}` : `tu en as ${aDeja}`, style(11, aDeja ? '#f3d98a' : '#d8c8a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3, align: 'center' })).setOrigin(0.5, 0);
+      const larg = Math.min(pas - 4, Math.max(nom.width, aToi.width) + 14);
+      c.add(this.add.rectangle(x, 414, larg, nom.height + aToi.height + 12, 0x1a0e06, 0.72).setOrigin(0.5, 0).setStrokeStyle(1, 0x8a6a3a, 0.8));
+      c.add(nom); c.add(aToi);
       const zone = this.add.rectangle(x, 360, pas - 8, 170, 0xffffff, 0).setInteractive({ useHandCursor: true });
       zone.on('pointerover', () => groupe.forEach(g => g.setScale(4))); zone.on('pointerout', () => groupe.forEach(g => g.setScale(3.6)));
       zone.on('pointerdown', () => {
@@ -813,7 +817,7 @@ class MarcheScene extends Phaser.Scene {
         if (this.commandesOuvertes) { this.panneauCommandes.destroy(); this.creerPanneauCommandes(); }
         this.vitrine(cle);
       });
-      c.add([...groupe, etiquette, texte, nom, zone]);
+      c.add([...groupe, etiquette, texte, zone]);
     });
     if (!ids.length) c.add(this.add.text(480, 390, 'Les cagettes sont vides...', style(16, '#c9b48a', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
     const b = creerBouton(this, 836, 46, 200, '◀ Reculer', fermer);
@@ -959,7 +963,7 @@ class MarcheScene extends Phaser.Scene {
       if (!merci) return this.message("Tu n'as pas assez d'argent.", '#a03030');
       Son.jouer('pieces', { montant: n });
       this.ouvrirMendiant();
-      this.message(merci);
+      this.message(texteMendiant(merci));
     }));
     // Une ration par jour pour le chien (ça compte, pour plus tard...) : on s'approche pour la lui donner
     const nourri = G.chienJour === G.jour;
@@ -1009,6 +1013,14 @@ class MarcheScene extends Phaser.Scene {
       : ["Une petite pièce, pour un vieil homme et son chien ?", "Ne fais pas attention à Brisquet. Il grogne, mais il n'a plus de dents... presque plus."];
     const bulle = this.add.text(560, 150, `« ${Phaser.Utils.Array.GetRandom(paroles)} »`, style(15, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 12, y: 8 }, wordWrap: { width: 330 } })).setOrigin(0, 0);
     c.add(this.add.triangle(0, 0, 560, 190, 560, 214, 520, 230, 0xf3e6c8).setOrigin(0)); c.add(bulle);
+    // (v0.73) ce qui se passe est raconté à part, dans un bandeau sombre façon narrateur :
+    // la bulle ne garde que ce que dit le mendiant
+    const recit = this.add.text(480, 66, '', style(15, '#f3e6c8', { fontStyle: 'italic', align: 'center', backgroundColor: '#1a0e06cc', padding: { x: 14, y: 7 }, wordWrap: { width: 720 } })).setOrigin(0.5, 0).setVisible(false);
+    c.add(recit);
+    const raconter = (r) => {
+      bulle.setText(`« ${r.parole} »`);
+      recit.setText(r.recit || '').setVisible(!!r.recit);
+    };
     Son.jouer('voix', { personne, ton: G.mendiant >= 10 ? 'content' : 'triste' });
     // les dons et la ration
     [1, 5, 10].forEach((n, i) => {
@@ -1019,7 +1031,7 @@ class MarcheScene extends Phaser.Scene {
         // (v0.68) les pièces volent jusqu'à sa sébile, puis il pense à ce qu'il va en faire
         voleePieces(this, 150 + i * 170, 500, 520, 474, n, { conteneur: c, fin: () => {
           if (!c.active) return;
-          bulle.setText(merci.startsWith('«') ? merci : `« ${merci} »`);
+          raconter(merci);
           const image = n >= 10 ? chienHD(this, 'profil', true) : n >= 5 ? 'hd_coeur' : iconeObjet(this, 'ration');
           bullePensee(this, 430, buste.y - buste.displayHeight + 10, image, { conteneur: c, echelle: n >= 10 ? 0.9 : 2.6 });
         } });
@@ -1027,16 +1039,16 @@ class MarcheScene extends Phaser.Scene {
       c.add([b.fond, b.label]);
     });
     const deja = G.chienJour === G.jour;
-    const ration = creerBouton(this, 690, 516, 220, deja ? 'Brisquet a mangé' : 'Une ration au chien', () => this.nourrirBrisquet(c, chien, bulle, ration));
+    const ration = creerBouton(this, 690, 516, 220, deja ? 'Brisquet a mangé' : 'Une ration au chien', () => this.nourrirBrisquet(c, chien, raconter, ration));
     if (deja) ration.fond.setAlpha(0.6);
     const reculer = creerBouton(this, 836, 46, 200, '◀ Reculer', fermer);
     c.add([ration.fond, ration.label, reculer.fond, reculer.label]);
-    if (nourrir && !deja) this.time.delayedCall(500, () => this.nourrirBrisquet(c, chien, bulle, ration));
+    if (nourrir && !deja) this.time.delayedCall(500, () => this.nourrirBrisquet(c, chien, raconter, ration));
   }
 
   // Brisquet mange : la ration vole jusqu'à lui, il se dresse, la croque (sa tête qui plonge,
   // des miettes, « Crunch ! »), puis remue de tout son corps et pose sur toi un regard de bonheur.
-  nourrirBrisquet(c, chien, bulle, bouton) {
+  nourrirBrisquet(c, chien, raconter, bouton) {
     const G = this.G;
     if (this.chienMange || G.chienJour === G.jour) return;
     const quoi = nourrirChien(G);
@@ -1061,7 +1073,7 @@ class MarcheScene extends Phaser.Scene {
             creerIconesHD(this);
             bullePensee(this, chien.x - 20, chien.y - chien.displayHeight - 4, iconeObjet(this, 'ration'), { conteneur: c, echelle: 2.6, cote: -1 });   // (v0.68) il rêve déjà de la prochaine
             this.chienMange = false;
-            bulle.setText(quoi.startsWith('«') ? quoi : `${quoi}`);
+            raconter(quoi);
           } });
           return;
         }
