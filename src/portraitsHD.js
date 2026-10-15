@@ -239,6 +239,7 @@ function geneHD(p) {
     vieux: !!p.vieux,
     colporteur: p.figurant === 'colporteur',
     mendiant: p.figurant === 'mendiant',
+    bande: p.costume === 'mainNoire' ? 'main' : p.costume === 'serpent' ? 'serpent' : null,   // (v0.61) les deux bandes, encapuchonnées
     nom: p.nom,
     habitNoble: choix([0x6a1a3a, 0x1a2a6a, 0x3a1a5a, 0x7a4a10]),
   };
@@ -321,6 +322,8 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   // Garrick, le rôdeur : cheveux bruns, longs et ondulés, barbe de quelques jours, long manteau de cuir olive (voir torseHD)
   // (v0.58) le mendiant : cheveux et barbe gris en broussaille, vieux manteau rapiécé
   if (gene.mendiant) g = { ...g, race: 'humain', habit: 0x6a6252, cape: 0x4a4236, cheveux: 0x9a9a90, barbe: 'pleine', coiffure: 'long', armure: false, noble: false, peau: 1, vieux: true };
+  if (gene.bande === 'main') g = { ...g, habit: 0x24222a, cape: 0x1a181e, coiffure: 'court', armure: false, noble: false };
+  if (gene.bande === 'serpent') g = { ...g, habit: 0x4a6428, cape: 0x34501e, coiffure: 'court', armure: false, noble: false };
   if (gene.mentor) g = { ...g, race: 'humain', habit: 0x3e4a2a, cape: 0x3e4a2a, cheveux: 0x3a281a, barbe: 'courte', coiffure: 'long', armure: false, peau: 1, mentor: true };
   // Les peuples de l'ombre et le panda : leurs traits (peau, oreilles, museau, crocs...) sont dans
   // TRAITS_PEUPLES (corpsVueHD.js), les mêmes que pour les corps en pied
@@ -536,6 +539,9 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
     for (let e = 0; e < v.sourcil; e++) t.poser(x, y + e, 'cheveux', Math.max(0, (e === 0 ? 4 : e === v.sourcil - 1 ? 1 : 3) - sourcilClair));
   }
 
+  // (v0.61) La capuche des deux bandes, par-dessus les cheveux et les sourcils
+  if (g.bande) capucheBuste(t, g, v, fx, ey);
+
   // 8. Les bras et les mains : la pose, selon l'humeur et le peuple
   brasBuste(t, g, v, cx, pose || poseBuste(g, expression));
 
@@ -697,6 +703,23 @@ function torseHD(t, g, v, cx) {
     for (const [dx, dy] of [[0, -7], [0, 7], [-7, 0], [7, 0], [-5, -5], [5, -5], [-5, 5], [5, 5]]) { t.poser(cx + dx, v.torse + 18 + dy, 'or', 4); t.poser(cx + Math.round(dx * 0.8), v.torse + 18 + Math.round(dy * 0.8), 'or', 3); }
     for (let x = cx - 12; x <= cx + 12; x++) t.poser(x, v.torse + 4, 'or', 3);
     epaulieres(t, cx, largeur - 6, v.torse + 8);
+    return;
+  }
+  if (g.bande === 'main') {
+    // La Main Noire : la robe noire, ses plis, une chaîne de fer en travers
+    t.forme('habit', corps, { decalage: -0.6, motif: (x, y) => ((x * 5 + Math.floor(y / 3)) % 9 === 0 ? -0.8 : hachage(x, y, 37) > 0.92 ? -0.5 : 0) });
+    for (let k = 0; k < 40; k++) { const x = cx - 20 + k, y = v.torse + 26 - Math.round(k * 0.35); if (corps(x, y)) { t.poser(x, y, 'metal', k % 2 ? 4 : 2); t.poser(x, y + 1, 'metal', 1); } }
+    return;
+  }
+  if (g.bande === 'serpent') {
+    // Le Serpent : la tunique verte, le gilet de cuir brun ouvert, les sangles bouclées d'argent, le baudrier
+    t.rampes.gilet = rampeVive(0x6a4426); t.rampes.argent = rampeVive(0xc8ccd4); t.rampes.noirCuir = rampe(0x26222a);
+    t.forme('habit', corps, { decalage: -0.3 });
+    const ouvert = y => Math.max(3, 9 - (y - v.torse) * 0.25);
+    t.forme('gilet', (x, y) => { const n = corps(x, y); return n && y >= v.torse + 3 && Math.abs(x + 0.5 - cx) >= ouvert(y) ? n : null; }, { decalage: -0.2, motif: (x, y) => (hachage(x, y, 61) > 0.85 ? -0.6 : 0) });
+    for (const dy of [12, 19, 26]) { const y = v.torse + dy, o = ouvert(y) + 2; for (let x = Math.round(cx - o); x <= cx + o; x++) { t.poser(x, y, 'noirCuir', 2); t.poser(x, y + 1, 'noirCuir', 1); } t.dessin(cx + 1, y - 1, ['oo', 'oo'], { o: ['argent', 4] }); }
+    t.forme('noirCuir', (x, y) => (y >= v.torse + 2 && Math.abs((x + 0.5 - cx - 14) + (y - v.torse - 2) * 0.95) < 2.2 && corps(x, y) ? [0.2, 0.1, 0.95] : null), { decalage: -0.2 });
+    t.dessin(cx - 8, v.torse + 23, ['ooo', 'o.o', 'ooo'], { o: ['argent', 4] });
     return;
   }
   if (g.mentor) {
@@ -945,11 +968,45 @@ function coiffeHD(t, g, v, cx) {
   }
 }
 
+// (v0.61) La capuche des deux bandes. La Main Noire : profonde et pointue, le visage dans l'ombre
+// (seuls les yeux luisent). Le Serpent : la capuche verte des archers, au bord replié, fermée par
+// une émeraude.
+function capucheBuste(t, g, v, cx, ey) {
+  const main = g.bande === 'main';
+  // (des teintes sourdes : pas de vert pomme ni de violet, des étoffes sérieuses)
+  if (main) { t.rampes.cape = rampe(0x2a2830); t.rampes.habit = rampe(0x26242c); } else { t.rampes.cape = rampe(0x3a5620); t.rampes.habit = rampe(0x4a6428); }
+  const ouverture = (x, y) => ((x + 0.5 - cx - 1) / (v.rx - 1.5)) ** 2 + ((y + 0.5 - v.cy - 3) / (v.ry + 1)) ** 2 <= 1 && y > ey - (main ? 4 : 7);
+  const sommet = v.cy - v.ry - (main ? 13 : 4);
+  t.forme('cape', (x, y) => {
+    if (y > v.torse + 10 || y < sommet) return null;
+    if (ouverture(x, y)) return null;
+    const dx = x + 0.5 - cx;
+    // la tête de la capuche, un peu plus large que le crâne
+    const tete = (dx / (v.rx + 5)) ** 2 + ((y + 0.5 - v.cy + 1) / (v.ry + 5)) ** 2 <= 1;
+    // la pointe (Main Noire : haute, qui part en arrière ; Serpent : un petit bec)
+    const h = v.cy - v.ry - y, pointe = h > 0 && Math.abs(dx + h * (main ? 0.45 : 0.3)) < (main ? 12 - h * 0.85 : 9 - h * 2);
+    // le camail qui tombe sur les épaules
+    const camail = y >= v.cy && y <= v.torse + 7 && Math.abs(dx) < v.rx + 4 + (y - v.cy) * 0.3;
+    if (!(tete || pointe || camail)) return null;
+    return [dx / (v.rx + 8), (y - v.cy) / 40, 0.8];
+  }, { decalage: main ? -0.6 : -0.3, motif: (x, y) => (hachage(x, y, main ? 37 : 19) > 0.9 ? -0.8 : 0) });
+  // le bord replié autour du visage
+  for (let y = 0; y < HD_H; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'cape' && [[1, 0], [-1, 0], [0, 1]].some(([a, b]) => t.mat(x + a, y + b) && t.mat(x + a, y + b) !== 'cape' && ouverture(x + a, y + b))) t.poser(x, y, 'cape', main ? 3 : 5);
+  if (main) {
+    // le bas du camail en lambeaux, et le visage dans l'ombre
+    for (let y = v.torse + 4; y <= v.torse + 10; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'cape' && hachage(x, 0, 43) * 6 < y - v.torse - 4) t.poser(x, y, 'habit', 1);
+    for (let y = 0; y < v.torse; y++) for (let x = 0; x < HD_L; x++) { const m = t.mat(x, y); if (['peau', 'cheveux', 'levres', 'bouche'].includes(m)) t.poser(x, y, m, y < ey - 3 ? 0 : y < ey + 4 ? Math.min(t.k[y * t.l + x], 1) : Math.max(0, Math.min(t.k[y * t.l + x], 3) - 1)); }
+  } else {
+    t.rampes.emeraude = rampeVive(0x2ec860);
+    t.forme('emeraude', ellipsoide(cx, v.torse + 1, 2.2, 2.2), { decalage: 0.5 });
+  }
+}
+
 // La texture d'un portrait HD (créée à la demande, puis gardée).
 function textureBusteHD(scene, personne, expression = 'neutre', etat = {}) {
   // (les Bannis ont l'air fâché tant qu'ils ne te connaissent pas : leur humeur « neutre » est fâchée)
   if (expression === 'neutre' && typeof banniFache === 'function' && banniFache(personne)) expression = 'fache';
-  const cle = `busteHD_${personne.race}_${personne.nom}${personne.prestige ? "_noble" : ""}${personne.figurant ? '_' + personne.figurant : ''}${personne.vieux ? '_vieux' : ''}_${expression}${etat.pose ? '_' + etat.pose : ''}${etat.cligne ? '_c' : ''}${etat.parle ? '_p' : ''}`;
+  const cle = `busteHD_${personne.race}_${personne.nom}${personne.prestige ? "_noble" : ""}${personne.figurant ? '_' + personne.figurant : ''}${personne.vieux ? '_vieux' : ''}${personne.costume ? '_' + personne.costume : ''}_${expression}${etat.pose ? '_' + etat.pose : ''}${etat.cligne ? '_c' : ''}${etat.parle ? '_p' : ''}`;
   if (!scene.textures.exists(cle)) dessinerBusteHD(geneHD(personne), expression, etat).texture(scene, cle);
   return cle;
 }

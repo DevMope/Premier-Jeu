@@ -299,7 +299,11 @@ const DESSINS_ARMURE = {
   },
 };
 
-// (v0.61) Les armes légendaires, une par royaume libéré (en 24 × 24 : plus de détail qu'une marchandise).
+// (v0.61) Les armes légendaires, une par royaume libéré (en 24 × 24 : plus de détail qu'une marchandise ;
+// la massue des nains, plus imposante, en 32 × 32).
+const TAILLE_ARMES = { briseMontagne: 32 };
+// L'échelle d'affichage d'une arme : les plus grandes toiles restent un peu plus grandes à l'écran
+function echelleArme(id, echelle) { const n = TAILLE_ARMES[id] || 24; return echelle * 24 / n * (n > 24 ? 1.2 : 1); }
 const DESSINS_ARMES = {
   // Pique-Bourdon : une dague de hobbit, garde en feuille, pommeau de laiton
   piqueBourdon(t) {
@@ -320,15 +324,30 @@ const DESSINS_ARMES = {
     t.forme('or', ellipsoide(2.5, 21.5, 1.7, 1.7), { decalage: 0.4 });
     t.forme('gemme', ellipsoide(7, 17, 1.2, 1.2), { decalage: 0.6 });
   },
-  // Brise-Montagne : le marteau du premier roi nain, tête d'acier gravée de runes
+  // Brise-Montagne : la massue du premier roi nain, longue hampe de fer et tête à ailettes
+  // tranchantes qui jaillissent comme des éclats de roche, une rune bleue au cœur
   briseMontagne(t) {
-    t.rampes.bois = rampe(0x8a5a2a); t.rampes.fer = rampe(0x8a94a4); t.rampes.rune = rampe(0x58c8ff); t.rampes.or = rampe(0xd8a838);
-    trait(t, 'bois', 4, 21, 15, 9, 1.3);
-    t.forme('fer', (x, y) => { const u = (x + 0.5 - 16) * 0.707 + (y + 0.5 - 8) * 0.707, v = -(x + 0.5 - 16) * 0.707 + (y + 0.5 - 8) * 0.707;
-      return Math.abs(u) < 4 && Math.abs(v) < 7 ? [u / 5, v / 8, 0.85] : null; });
-    t.poser(15, 6, 'rune', 5); t.poser(17, 9, 'rune', 5); t.poser(13, 9, 'rune', 4); t.poser(18, 6, 'rune', 4);
-    trait(t, 'or', 11, 12, 13, 14, 1, { decalage: 0.3 });
-    t.forme('or', ellipsoide(4, 21, 1.5, 1.5), { decalage: 0.3 });
+    t.rampes.fer = rampe(0x6a6e78); t.rampes.ferS = rampe(0x34363e); t.rampes.lame = rampe(0xc8ccd4); t.rampes.rune = rampe(0x58c8ff); t.rampes.cuir = rampe(0x4a3424);
+    const O = [13, 19], ax = [0.707, -0.707], no = [0.707, 0.707];   // le haut de la hampe, l'axe de l'arme et sa normale
+    const pt = (u, v) => [O[0] + ax[0] * u + no[0] * v, O[1] + ax[1] * u + no[1] * v];
+    // la hampe et sa poignée gainée, le pommeau
+    trait(t, 'ferS', 2.5, 29.5, O[0], O[1], 1.2);
+    for (const u of [0.12, 0.24, 0.36, 0.48]) t.forme('cuir', ellipsoide(2.5 + 10.5 * u, 29.5 - 10.5 * u, 1.6, 1.6), { decalage: 0.1 });
+    t.forme('fer', ellipsoide(2.2, 29.8, 1.7, 1.7), { decalage: 0.3 });
+    // une ailette : une lame en pointe qui part du cœur vers l'extérieur et vers le haut
+    const lame = (u0, cote, long, larg) => {
+      const [bx, by] = pt(u0, 0), [tx, ty] = pt(u0 + long * 0.6, cote * long);
+      t.forme('lame', (x, y) => { const px = x + 0.5, py = y + 0.5, dx = tx - bx, dy = ty - by, L2 = dx * dx + dy * dy;
+        const v = ((px - bx) * dx + (py - by) * dy) / L2; if (v < 0 || v > 1) return null;
+        const d = Math.abs((px - bx) * dy - (py - by) * dx) / Math.sqrt(L2); return d <= larg * (1 - v) + 0.2 ? [cote * 0.7, -0.4, 0.8] : null; }, { decalage: 0.3 });
+    };
+    for (const [u0, long] of [[2, 5], [6.2, 6.5], [10.4, 5.5]]) { lame(u0, -1, long, 1.25); lame(u0, 1, long, 1.25); }
+    // le cœur sombre de la tête, gravé, la pointe au sommet, les runes
+    t.forme('ferS', (x, y) => { const px = x + 0.5 - O[0], py = y + 0.5 - O[1]; const u = px * ax[0] + py * ax[1], v = px * no[0] + py * no[1];
+      return u > -0.5 && u < 14 && Math.abs(v) < 2 - Math.max(0, u - 12) * 0.7 ? [v / 2.5, -0.2, 0.85] : null; }, { decalage: 0.1 });
+    const [sx, sy] = pt(13, 0), [px2, py2] = pt(18, 0);
+    trait(t, 'lame', sx, sy, px2, py2, 1.1, { decalage: 0.4 });
+    for (const u of [2, 6.2, 10.4]) { const [rx, ry] = pt(u, 0); t.poser(Math.round(rx), Math.round(ry), 'rune', 5); }
   },
   // Chant-de-Lune : un arc d'argent pâle, une lune à la poignée
   chantDeLune(t) {
@@ -396,7 +415,8 @@ function creerIconesHD(scene) {
     }
   }
   for (const [id, dessin] of Object.entries(DESSINS_ARMES)) {
-    const t = toileObjet(24, 24);
+    const n = TAILLE_ARMES[id] || 24;
+    const t = toileObjet(n, n);
     dessin(t);
     t.contour();
     t.texture(scene, 'arme_' + id);

@@ -736,39 +736,39 @@ class CounterScene extends Phaser.Scene {
     this.titreCommande.setFontSize(17).setText(`${bande} · ${NOMS_RANGS[rang]}`);
     const sortie = () => {
       const prix = prixRachat(G);
-      this.dire(`Silas rit sans joie. « Sortir ? Ça se paie. ${prix} pièces, et on oublie ton nom. »`, qui);
+      this.dire(`Silas ne cille pas. « Sortir ? Ça se paie. ${prix} pièces. Et ton nom disparaît de nos registres. »`, qui);
       this.choix([`Racheter ta liberté (${prix} p.)`, () => {
         const err = racheterLiberte(G);
         if (err) { Son.jouer('refus'); this.dire(`« ${err} Reviens quand tu les auras. »`, qui); return partir(); }
-        Son.jouer('pieces'); this.dire(`Silas compte les pièces, une à une. « Te voilà libre. On ne se connaît pas. » Il crache par terre, et s'en va.`, qui); partir();
-      }], ['Non, oublie', () => { this.dire('« Sage décision. »', qui); partir(); }]);
+        Son.jouer('pieces'); this.dire(`Silas compte les pièces, une à une, en silence. « Te voilà libre. Nous ne nous sommes jamais vus. » La porte se referme sans un bruit.`, qui); partir();
+      }], ['Non, oublie', () => { this.dire('« Alors rien ne change. »', qui); partir(); }]);
     };
     if (rang >= 2) {
       const part = partLieutenant(G);
       encaisser(G, part, 'pizzo');
       Son.jouer('pieces');
-      this.dire(`« Lieutenant. » Silas pose une bourse sur le comptoir : ${part} pièces. « Ta part de la semaine. Les affaires marchent. »`, qui);
-      this.choix(['Merci, Silas', partir], ['Je veux en sortir…', sortie]);
+      this.dire(`« Lieutenant. » Silas pose une bourse sur le comptoir : ${part} pièces. « Ta part de la semaine. Pas un mot. »`, qui);
+      this.choix(['Prendre la bourse', partir], ['Je veux en sortir…', sortie]);
       return;
     }
     const pizzo = montantPizzo(G);
     if (entree.service) {
       const s = SERVICES_MAFIA[entree.service];
-      this.dire(`« ${bande} a besoin d'un petit service. » ${s.demande} « Fais-le, et on oublie ta part de la semaine. »`, qui);
+      this.dire(`« ${bande} a besoin de toi. » ${s.demande} « Fais-le, et ta part de la semaine est réglée. »`, qui);
       this.choix([`Rendre le service (${s.nom.toLowerCase()})`, () => {
         const msg = rendreService(G, entree.service);
         Son.jouer('glisse');
-        this.dire(`Silas hoche la tête. « Bien. »${msg ? ' ' + msg : ''} (La jauge penche vers l'ombre, et la garde pourrait s'y intéresser.)`, qui);
+        this.dire(`Silas hoche à peine la tête. « Bien. »${msg ? ' ' + msg : ''} (La jauge penche vers l'ombre, et la garde pourrait s'y intéresser.)`, qui);
         partir();
-      }], [`Payer plutôt (${pizzo} p.)`, () => { payerPizzo(G); Son.jouer('pieces'); this.dire('« Comme tu veux. L\'argent, c\'est bien aussi. »', qui); partir(); }]);
+      }], [`Payer plutôt (${pizzo} p.)`, () => { payerPizzo(G); Son.jouer('pieces'); this.dire('« L\'argent fera l\'affaire. Cette fois. »', qui); partir(); }]);
       return;
     }
-    this.dire(`« ${bande} protège ton comptoir. La protection, ça se paie : ${pizzo} pièces cette semaine. » Silas regarde ta vitrine. « Ce serait dommage qu'elle se brise. »`, qui);
-    this.choix([`Payer (${pizzo} p.)`, () => { payerPizzo(G); Son.jouer('pieces'); this.dire('« À la semaine prochaine. »', qui); partir(); }],
+    this.dire(`« ${bande} protège ton comptoir. La protection a un prix : ${pizzo} pièces cette semaine. » Silas pose un long regard sur ta vitrine. « Les vitres sont fragiles, par ici. »`, qui);
+    this.choix([`Payer (${pizzo} p.)`, () => { payerPizzo(G); Son.jouer('pieces'); this.dire('« Sept jours. »', qui); partir(); }],
       [rang >= 1 ? 'Je veux en sortir…' : 'Refuser de payer', () => {
         if (rang >= 1) return sortie();
         refuserPizzo(G); this.exprimer('fache');
-        this.dire(`Silas sourit lentement. « Comme tu voudras. » Cette nuit, garde un œil sur ta vitrine...`, qui); partir();
+        this.dire(`Silas ne dit rien. Il remet sa capuche, et sort. Cette nuit, garde un œil sur ta vitrine...`, qui); partir();
       }]);
   }
 
@@ -776,14 +776,14 @@ class CounterScene extends Phaser.Scene {
   visiteSerpent() {
     const G = this.G, [vesna, corvin] = CHEFS_SERPENT;
     this.titreCommande.setFontSize(17).setText('Le Serpent à deux têtes');
-    this.dire(`« On t'a vu travailler pour la Main Noire. » ${vesna.nom} sourit ; derrière elle, ${corvin.nom} fait craquer ses doigts. « Le Serpent paie mieux, et prend moins. Viens avec nous. La Main Noire n'en saura rien... au début. »`, vesna.nom);
+    this.dire(`« On t'a vu travailler pour la Main Noire. » ${vesna.nom} parle bas, sans un sourire ; derrière elle, ${corvin.nom} garde la main sur son arc. « Le Serpent prend moins, et paie mieux. Choisis. On ne posera pas la question deux fois. »`, vesna.nom);
     const partir = () => { this.actionB = null; this.majBoutonsService(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
     this.choix(['Rester fidèle à la Main Noire', () => {
       choisirBande(G, 'main');
-      this.dire(`« Dommage. » ${corvin.nom} grogne. « Le Serpent a deux têtes... et deux fois plus de rancune. » (Ils se vengeront cette nuit.)`, corvin.nom); partir();
+      this.dire(`${corvin.nom} se lève. « Le Serpent a deux têtes. Et il n'oublie rien. » (Ils se vengeront cette nuit.)`, corvin.nom); partir();
     }], ['Rejoindre le Serpent', () => {
       choisirBande(G, 'serpent');
-      this.dire(`${vesna.nom} te tend la main ; ${corvin.nom} pose la sienne par-dessus. « Bienvenue. Ta part sera plus légère. Mais la Main Noire va l'apprendre... » (Elle se vengera cette nuit.)`, vesna.nom); partir();
+      this.dire(`${vesna.nom} te serre la main, longuement ; ${corvin.nom} pose la sienne par-dessus. « Tu es des nôtres. La Main Noire l'apprendra vite. Tiens-toi prêt. » (Elle se vengera cette nuit.)`, vesna.nom); partir();
     }]);
   }
 

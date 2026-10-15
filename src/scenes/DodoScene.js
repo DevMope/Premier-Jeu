@@ -388,11 +388,11 @@ class DodoScene extends Cinematique {
     creerHalo(this);
     const voile = this.add.rectangle(480, 270, 960, 540, 0x0a0614, 0).setDepth(7.5);
     const halo = this.add.image(480, 220, 'halo').setScale(0).setTint(0xfff0c0).setBlendMode(Phaser.BlendModes.ADD).setDepth(7.6);
-    const icone = this.add.image(905, SOL_CHAMBRE - 110, 'arme_' + id).setScale(2).setDepth(8);
+    const icone = this.add.image(905, SOL_CHAMBRE - 110, 'arme_' + id).setScale(echelleArme(id, 2)).setDepth(8);
     this.animer({ targets: voile, fillAlpha: 0.6, duration: 400 });
     this.tweens.add({ targets: halo, scale: 3.5, duration: 700 });
     Son.jouer('tresor');
-    await this.animer({ targets: icone, x: 480, y: 200, scale: 6, duration: 900, ease: 'Sine.easeInOut' });
+    await this.animer({ targets: icone, x: 480, y: 200, scale: echelleArme(id, 6), duration: 900, ease: 'Sine.easeInOut' });
     this.tweens.add({ targets: icone, y: 190, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     const titre = this.add.text(480, 316, `⚔ ${a.nom} ⚔`, style(26, '#ffe8a0', { fontStyle: 'bold', stroke: '#1a0a06', strokeThickness: 6 })).setOrigin(0.5).setDepth(8.2).setScale(0);
     const sous = this.add.text(480, 350, `Arme légendaire : ${ROYAUMES[royaume].nom}\n${a.texte}\nAccrochée au mur, elle fera parler d'elle : un peu plus de curieux au comptoir.`,
@@ -407,7 +407,7 @@ class DodoScene extends Cinematique {
     this.tweens.add({ targets: [halo, titre, sous], alpha: 0, duration: 350, onComplete: () => { halo.destroy(); titre.destroy(); sous.destroy(); } });
     const n = this.G.armesLegendaires.indexOf(id);
     const [x, y] = placeArmeAuMur(n);
-    await this.animer({ targets: icone, x, y, scale: 1.6, duration: 650, ease: 'Sine.easeInOut' });
+    await this.animer({ targets: icone, x, y, scale: echelleArme(id, 1.6), duration: 650, ease: 'Sine.easeInOut' });
     icone.destroy(); voile.destroy();
     this.dessinerArmes(this.G.armesLegendaires.slice(0, n + 1));
     this.cameras.main.flash(200, 255, 230, 150);
@@ -419,7 +419,7 @@ class DodoScene extends Cinematique {
     (this.armesAuMur || []).forEach(o => o.destroy());
     this.armesAuMur = ids.map((id, i) => {
       const [x, y] = placeArmeAuMur(i);
-      return this.add.image(x, y, 'arme_' + id).setScale(1.6).setDepth(1.36);
+      return this.add.image(x, y, 'arme_' + id).setScale(echelleArme(id, 1.6)).setDepth(1.36);
     });
   }
 

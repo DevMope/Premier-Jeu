@@ -14,10 +14,10 @@ const MAFIA = {
   vengeance: 0.35,                 // après une dénonciation : les restes de la bande se vengent parfois
 };
 const NOMS_RANGS = ['Débiteur', 'Associé', 'Lieutenant'];
-const COLLECTEUR = { nom: 'Silas Doigts-Noirs', race: 'humain', feminin: false, costume: 'passeur', niveau: 'aguerri' };
+const COLLECTEUR = { nom: 'Silas Doigts-Noirs', race: 'humain', feminin: false, costume: 'mainNoire', niveau: 'aguerri', serieux: true };
 const CHEFS_SERPENT = [
-  { nom: 'Vesna la Vipère', race: 'humain', feminin: true, costume: 'noble', niveau: 'veteran' },
-  { nom: 'Corvin le Crotale', race: 'orc', feminin: false, costume: 'passeur', niveau: 'veteran' },
+  { nom: 'Vesna la Vipère', race: 'humain', feminin: true, costume: 'serpent', niveau: 'veteran', serieux: true },
+  { nom: 'Corvin le Crotale', race: 'orc', feminin: false, costume: 'serpent', niveau: 'veteran', serieux: true },
 ];
 const SERVICES_MAFIA = {
   colis: { nom: 'Cacher un colis', demande: "Un colis à garder dans ta réserve jusqu'à demain soir. Tu ne l'ouvres pas. Tu ne poses pas de questions.", efface: 40, risque: 0.3 },

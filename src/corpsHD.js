@@ -357,7 +357,8 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   if (pose) cle += '_' + pose;
   if (vue && vue !== 'troisQuarts') cle += '_' + vue;
   // Les Bannis ont l'air fâché tant qu'ils ne te connaissent pas
-  const fache = typeof quoi === 'string' ? ((typeof PEUPLES_OMBRE !== 'undefined' && PEUPLES_OMBRE.includes(quoi)) || !!(FIGURANTS[quoi] && FIGURANTS[quoi].fache)) : banniFache(quoi);
+  // (v0.61) ... et les gens des deux bandes ont toujours la mine grave
+  const fache = typeof quoi === 'string' ? ((typeof PEUPLES_OMBRE !== 'undefined' && PEUPLES_OMBRE.includes(quoi)) || !!(FIGURANTS[quoi] && FIGURANTS[quoi].fache)) : (!!quoi.serieux || banniFache(quoi));
   if (fache) cle += '_fache';
   // (v0.59) blessé : un figurant (Garrick repêché), ou un voyageur bandé dans son récit
   const blesse = typeof quoi === 'string' ? !!(FIGURANTS[quoi] && FIGURANTS[quoi].blesse) : !!quoi.blesse;
