@@ -865,16 +865,18 @@ class MarcheScene extends Phaser.Scene {
       c.add(this.add.image(x + 12, y, iconeObjet(this, id)).setScale(2.4));
       const k3 = cols === 3;
       const nomT = this.add.text(x + 34, y, nomObjet(id), style(k3 ? 12 : 14, '#3b2410')).setOrigin(0, 0.5);
-      for (let t = k3 ? 12 : 14; nomT.width > (k3 ? 92 : 112) && t >= 9; t--) nomT.setFontSize(t);
+      for (let t = k3 ? 12 : 14; nomT.width > (k3 ? 86 : 112) && t >= 9; t--) nomT.setFontSize(t);
       c.add(nomT);
       const enStock = id in MATERIAUX ? G.materiaux[id] : G.stock[id];
-      c.add(this.add.text(x + (k3 ? 130 : 150), y, k3 ? `(${enStock})` : `tu as ${enStock}`, style(k3 ? 11 : 12, '#6b4a2a')).setOrigin(0, 0.5));
+      // (v0.69) sur trois colonnes aussi, les mêmes mots que chez les autres : « tu as N », « N en vente »
+      const ajuster = (t, max) => { for (let f = parseInt(t.style.fontSize, 10); t.width > max && f >= 8; f--) t.setFontSize(f); return t; };
+      c.add(ajuster(this.add.text(x + (k3 ? 124 : 150), y, `tu as ${enStock}`, style(k3 ? 11 : 12, '#6b4a2a')).setOrigin(0, 0.5), k3 ? 46 : 70));
       if (!o) {
-        c.add(this.add.text(x + (k3 ? 165 : 260), y, "Pas aujourd'hui", style(k3 ? 11 : 12, '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
+        c.add(this.add.text(x + (k3 ? 174 : 260), y, "Pas aujourd'hui", style(k3 ? 11 : 12, '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
         return;
       }
-      c.add(this.add.text(x + (k3 ? 165 : 230), y, `${prixMarchand(G, cle, id)} p.`, style(k3 ? 12 : 14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
-      c.add(this.add.text(x + (k3 ? 210 : 300), y, o.qte > 0 ? (k3 ? `×${o.qte}` : `${o.qte} en vente`) : 'Épuisé', style(k3 ? 11 : 12, o.qte > 0 ? '#4a6a2a' : '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
+      c.add(this.add.text(x + (k3 ? 174 : 230), y, `${prixMarchand(G, cle, id)} p.`, style(k3 ? 12 : 14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      c.add(ajuster(this.add.text(x + (k3 ? 210 : 300), y, o.qte > 0 ? `${o.qte} en vente` : 'Épuisé', style(k3 ? 11 : 12, o.qte > 0 ? '#4a6a2a' : '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5), k3 ? 82 : 120));
     });
     // (v0.58) on n'achète plus d'ici : on s'approche de l'étal pour choisir sur la marchandise
     // (v0.68) une vraie plaque de bois, comme les autres boutons du jeu
@@ -1150,7 +1152,7 @@ class MarcheScene extends Phaser.Scene {
     const G = this.G;
     if (!lieuOuvert(G, 'garderobe')) return this.message(`${NOMS_LIEUX_MARCHE.garderobe} ouvre le jour ${OUVERTURE_LIEUX.garderobe}.`);
     this.montrer('garderobe');
-    const c = this.panneau(MARCELLINE.nom, 'Tout ce que tu achètes, tu le portes : on te verra avec, partout');
+    const c = this.panneau(MARCELLINE.nom, 'Ce que tu achètes, tu le portes ; ta malle, au pied du lit, garde le reste');
     c.add(this.add.text(30, 340, "« Un commerce bien tenu commence par une tenue soignée. Laisse-moi t'arranger ça... »",
       style(12, '#6b4a2a', { fontStyle: 'italic' })));
     // Toi, dans ta tenue du moment
@@ -1164,7 +1166,7 @@ class MarcheScene extends Phaser.Scene {
       c.add(this.add.text(x + 20, y + 8, d.effet, style(10, '#6b4a2a', { wordWrap: { width: 280 } })).setOrigin(0, 0.5));
       // (audit v0.61) un double clic retombait sur le bouton reconstruit : acheter puis revendre aussitôt
       const verrou = () => { if (this.verrouGR > this.time.now) return true; this.verrouGR = this.time.now + 400; return false; };
-      if (porte(G, id)) this.bouton(c, x + 340, y, 70, `Revendre`, () => {
+      if (possede(G, id)) this.bouton(c, x + 340, y, 70, `Revendre`, () => {
         if (verrou()) return;
         const erreur = revendreTenue(G, id);
         if (!erreur) Son.jouer('pieces');

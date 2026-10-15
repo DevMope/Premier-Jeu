@@ -599,6 +599,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     gazette: null,     // les nouvelles du jour, criées au marché
     decos: [],         // les décorations achetées à la brocante (visibles dans l'arrière-boutique)
     tenue: [],         // ce que tu portes (acheté à la garde-robe)
+    garderobe: [],     // (v0.69) tout ce que tu possèdes : ce que tu ne portes pas dort dans la malle, au pied du lit
     palierVu: 0,       // le plus haut palier de réputation déjà fêté
     palierNouveau: null, // un palier franchi cette nuit : le visiteur notable vient ce matin
     rumeur: null,      // { jour } : moins de clients ce jour-là
@@ -968,19 +969,33 @@ function remarqueCamp(G, v) {
   return null;
 }
 
+// (v0.69) Ce que tu possèdes (porté ou rangé dans la malle)
+function possede(G, id) {
+  return (G.garderobe || G.tenue || []).includes(id) || porte(G, id);
+}
+
 function acheterTenue(G, id) {
-  if (porte(G, id)) return 'Tu le portes déjà.';
+  if (possede(G, id)) return 'Tu l\'as déjà.';
   if (!peutPayer(G, GARDE_ROBE[id].prix)) return "Pas assez d'argent.";
   payer(G, GARDE_ROBE[id].prix, 'garderobe');
+  G.garderobe = [...(G.garderobe || G.tenue || []), id];
   G.tenue = [...(G.tenue || []), id];
+  return null;
+}
+
+// (v0.69) La malle au pied du lit : mettre un vêtement, ou le ranger
+function basculerTenue(G, id) {
+  if (!possede(G, id)) return "Tu ne l'as pas.";
+  G.tenue = porte(G, id) ? G.tenue.filter(x => x !== id) : [...(G.tenue || []), id];
   return null;
 }
 
 // (v0.60) Revendre un vêtement ou un accessoire à Marcelline : la moitié de son prix.
 function revendreTenue(G, id) {
-  if (!porte(G, id)) return "Tu ne l'as pas.";
+  if (!possede(G, id)) return "Tu ne l'as pas.";
   const prix = Math.floor(GARDE_ROBE[id].prix / 2);
-  G.tenue = G.tenue.filter(x => x !== id);
+  G.tenue = (G.tenue || []).filter(x => x !== id);
+  G.garderobe = (G.garderobe || []).filter(x => x !== id);
   encaisser(G, prix, 'revente');
   return null;
 }

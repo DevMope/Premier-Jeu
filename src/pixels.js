@@ -792,3 +792,13 @@ function yeuxDansLeNoir(scene, x, y, couleur = 0xffd040, { ecart = 13, taille = 
   } });
   return c;
 }
+
+// (v0.69) Le joueur change de tenue : on redessine ses textures, puis on rebranche toutes les images
+// de la scène qui les montraient (sinon elles pointent vers une texture détruite et le rendu casse).
+function rafraichirJoueur(scene, G) {
+  creerTexturesJoueur(scene, G.joueur.apparence, G.joueur.feminin, G.tenue || []);
+  const tous = l => l.flatMap(o => (o.list ? [o, ...tous(o.list)] : [o]));
+  for (const o of tous(scene.children.list)) {
+    if (o.texture && /^joueur_(petit|adulte|ancien)(_pas[12])?$/.test(o.texture.key)) o.setTexture(o.texture.key);
+  }
+}

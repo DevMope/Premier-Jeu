@@ -422,6 +422,7 @@ function mettreAJourPartie(G, brut = G) {
   G.piecesAVenir = G.piecesAVenir || [];
   if (G.palierVu === undefined) G.palierVu = 0;
   G.decos = G.decos || [];
+  G.garderobe = G.garderobe || [...(G.tenue || [])];   // (v0.69 : ce qu'on possède ; G.tenue = ce qu'on porte)
   G.tenue = G.tenue || [];
   G.zonesDecouvertes = [...new Set(G.zonesDecouvertes)];
   // (v0.58) Une partie d'avant, qui voyait déjà les contrées des Bannis, les garde

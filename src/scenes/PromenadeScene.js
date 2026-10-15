@@ -45,7 +45,7 @@ class PromenadeScene extends Cinematique {
     }
 
     textureJoueur(this, G);
-    this.heros = this.add.image(960 + 480, SOL_PROMENADE, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(8.5);
+    this.heros = this.add.image(960 + 480, SOL_PROMENADE, 'joueur_' + stadeJoueur(G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(8.5);
     this.cible = null;
     this.rue = [];   // (les animations de la rue, vues du comptoir)
     // (v0.65) ton chat te suit de pièce en pièce ; le chat de gouttière, lui, attend dehors
@@ -272,7 +272,9 @@ class PromenadeScene extends Cinematique {
     const luxe = niveauAmelioration(G, 'chambre');
     this.regarder(250, SOL_CHAMBRE - 130, 340, 130, `Ton lit : ${AMELIORATIONS.chambre.niveaux[luxe]}. Il t'attend...`);
     if (G.mannequin || G.armure.length) this.regarder(740, SOL_CHAMBRE - 200, 110, 200, G.armure.length ? `${NOMS_ARMURE[coteArmure(G)]} : ${G.armure.length} / ${ARMURE.length} pièces.` : "Le mannequin de Garrick attend sa première pièce d'armure.");
-    this.regarder(500, SOL_CHAMBRE - 30, 100, 70, `Ton coffre, au pied du lit (${AMELIORATIONS.coffre.niveaux[niveauAmelioration(G, 'coffre')]}).`);
+    // (v0.69) la malle au pied du lit : tes vêtements ; un clic pour choisir ce que tu portes
+    const malle = this.add.rectangle(550, SOL_CHAMBRE + 5, 100, 70, 0xffffff, 0).setDepth(8.4).setInteractive({ useHandCursor: true });
+    malle.on('pointerdown', () => { if (this.transition) return; this.allerVers(550); ouvrirMalle(this); });
     // (v0.66) la cheminée : une planche de bois, et le feu brûle toute la nuit
     const zf = this.add.rectangle(112, SOL_CHAMBRE - 90, 160, 180, 0xffffff, 0).setDepth(8.6).setInteractive({ useHandCursor: true });
     zf.on('pointerdown', () => {
@@ -650,5 +652,48 @@ function ouvrirPanneauChat(scene, { adoption = false, quandFini = null } = {}) {
     if (quandFini) quandFini();
   });
   fixe(fin.fond); fixe(fin.label);
+  return boite;
+}
+
+// --- (v0.69) La malle à vêtements, au pied du lit : ce que tu as acheté chez Marcelline. On choisit
+// ce qu'on porte (on te voit avec, partout) ; le reste dort, plié, dans la malle. ---
+function ouvrirMalle(scene, quandFini = null) {
+  const G = window.GAME;
+  const boite = scene.add.container(0, 0).setDepth(60);
+  const fixe = o => { o.setScrollFactor(0); boite.add(o); return o; };
+  fixe(scene.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.6).setInteractive());
+  fixe(scene.add.image(480, 270, panneauHD(scene, 700, 430)).setScale(2));
+  fixe(scene.add.text(480, 80, 'Ta malle à vêtements', style(22, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+  fixe(scene.add.text(480, 106, 'Ce que tu portes, on le voit sur toi, partout ; le reste reste plié ici.', style(13, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+  creerIconesHD(scene);
+  const apercu = fixe(scene.add.image(250, 430, 'joueur_' + stadeJoueur(G)).setOrigin(0.5, 1).setScale(echelleJoueur(9)));
+  const lignes = scene.add.container(0, 0); boite.add(lignes);
+  const dessiner = () => {
+    lignes.removeAll(true);
+    const ids = Object.keys(GARDE_ROBE).filter(id => possede(G, id));
+    if (!ids.length) lignes.add(fixe(scene.add.text(600, 250, "La malle est vide... Marcelline, au marché, a de quoi la remplir.", style(14, '#6b4a2a', { fontStyle: 'italic', wordWrap: { width: 380 }, align: 'center' })).setOrigin(0.5)));
+    ids.forEach((id, i) => {
+      const y = 142 + i * 41, d = GARDE_ROBE[id], porté = porte(G, id);
+      lignes.add(fixe(scene.add.image(420, y, iconeObjet(scene, id)).setScale(2).setAlpha(porté ? 1 : 0.55)));
+      lignes.add(fixe(scene.add.text(442, y - 7, d.nom, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5)));
+      lignes.add(fixe(scene.add.text(442, y + 9, d.effet, style(10, '#6b4a2a', { wordWrap: { width: 250 } })).setOrigin(0, 0.5)));
+      const b = creerBouton(scene, 760, y, 120, porté ? 'Ranger' : 'Porter', () => {
+        basculerTenue(G, id); Son.jouer('glisse');
+        rafraichirJoueur(scene, G);
+        dessiner();
+      });
+      b.label.setFontSize(14);
+      lignes.add(fixe(b.fond)); lignes.add(fixe(b.label));
+    });
+  };
+  dessiner();
+  const fin = creerBouton(scene, 480, 470, 200, 'Refermer la malle', () => {
+    Son.jouer('porte');
+    const nuit = scene.scene.get('Nuit');
+    if (nuit && nuit.lieu) Sauvegarde.planifier(G, nuit.lieu);
+    boite.destroy(); if (quandFini) quandFini();
+  });
+  fixe(fin.fond); fixe(fin.label);
+  Son.jouer('porte');
   return boite;
 }
