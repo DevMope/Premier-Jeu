@@ -769,7 +769,7 @@ class MarcheScene extends Phaser.Scene {
     // une image posée par le bas, à la hauteur voulue (proportions gardées)
     const poser = (tex, x, yBas, h, flip = false) => {
       if (!tex || !this.textures.exists(tex)) return null;
-      const src = this.textures.get(tex).getSourceImage();
+      const src = this.textures.get(tex).get();   // (la découpe, pas la source : les icônes 32 px s'affichent en 16)
       const img = this.add.image(x, yBas, tex).setOrigin(0.5, 1).setScale(h / src.height).setFlipX(flip);
       c.add(img); return img;
     };

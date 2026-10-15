@@ -344,12 +344,33 @@ const DESSINS_OBJETS = {
 function creerObjetsHD(scene) {
   for (const [id, dessin] of Object.entries(DESSINS_OBJETS)) {
     if (scene.textures.exists('hd_' + id)) continue;
+    // (v0.79) les provisions redessinées en 32 × 32 (planche 10, validée le 18/10)
+    if (typeof DESSINS_OBJETS_32 !== 'undefined' && DESSINS_OBJETS_32[id]) {
+      const t = toileObjet32();
+      DESSINS_OBJETS_32[id](t);
+      t.contour();
+      t.texture(scene, 'hd_' + id);
+      afficherEnDemiTaille(scene, 'hd_' + id);
+      continue;
+    }
     const t = toileObjet();
     dessin(t);
     t.contour();
     t.texture(scene, 'hd_' + id);
   }
   creerPiecesHD(scene);
+}
+
+// (v0.79) Une texture de 32 × 32 qui s'affiche à la taille d'une icône de 16 × 16 : partout où le
+// jeu pose une icône (à l'échelle 2, 3, 3.6...), elle garde sa taille, mais avec deux fois plus de
+// détails. Phaser dessine une image à la taille de sa découpe (16 × 16) en y étirant les
+// coordonnées de texture (ici, toute l'image 32 × 32).
+function afficherEnDemiTaille(scene, cle) {
+  const f = scene.textures.get(cle).get();
+  const L = f.source.width, H = f.source.height;
+  f.setSize(L / 2, H / 2, 0, 0);
+  f.u0 = 0; f.v0 = 0; f.u1 = 1; f.v1 = 1;
+  f.canvasData.width = L; f.canvasData.height = H;   // (le rendu en canvas lit la source entière)
 }
 
 // L'icône d'un objet : la version HD si elle existe, sinon l'ancienne.
