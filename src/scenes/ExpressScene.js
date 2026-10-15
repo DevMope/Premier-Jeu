@@ -92,9 +92,11 @@ class ExpressScene extends Phaser.Scene {
       btn.on('pointerover', () => btn.setTexture(cle + '_clair')); btn.on('pointerout', () => btn.setTexture(cle));
       this.add.text(895, y + 6, 'Acheter', style(12, '#fff0d0', { fontStyle: 'bold', stroke: '#24140a', strokeThickness: 3 })).setOrigin(0.5);
       btn.on('pointerdown', () => (l.materiau ? this.acheterMateriau(l.id) : this.acheter(l.id)));
-      this.lignes.push({ offre: l.offre, reste });
+      this.lignes.push({ offre: l.offre, reste, id: l.id, materiau: l.materiau });
     });
     this.bourse = bourse(this, 760, 470, this.G.argent, { echelle: 1.6, taille: 14, couleur: '#fff4dc', aDroite: true });
+    // (v0.84) ta réserve, pour savoir ce qui te manque avant d'acheter
+    this.texteReserve = this.add.text(780, 412, '', style(12, '#3b2410', { fontStyle: 'bold italic' })).setOrigin(0.5);
     this.maj();
   }
 
@@ -108,7 +110,7 @@ class ExpressScene extends Phaser.Scene {
     const pourLeClient = !colporteur && commande[id] && fourni(c.voyageur, c.colis, id) < commande[id];   // (une autre arme déjà donnée compte)
     const non = texte => { Son.jouer('refus'); return this.parler(texte); };
     if (offre.qte <= 0) return non(colporteur ? 'Plus un seul ! Tu as vidé ma hotte.' : 'Plus rien ! Tout vendu ! Reviens demain, avec plus de pièces.');
-    if (!peutPayer(G, offre.prix)) return non(colporteur ? "Pas assez de pièces... Une autre fois, l'ami." : "Pas de pièces, pas de marchandise ! File, mendiant !");
+    if (!peutPayer(G, offre.prix)) return non(manqueArgent(G, offre.prix, '') + (colporteur ? "Pas assez de pièces... Une autre fois, l'ami." : "Pas de pièces, pas de marchandise ! File, mendiant !"));
     if (!pourLeClient && stockTotal(G) >= G.capacite) return non(colporteur ? "Ta réserve est pleine, je n'ai nulle part où poser ça !" : 'Ta réserve est pleine ! Grippesou ne vend pas de place, hé hé.');
     payer(G, offre.prix, colporteur ? 'colporteur' : 'express');
     offre.qte--;
@@ -126,7 +128,7 @@ class ExpressScene extends Phaser.Scene {
     const G = this.G;
     const offre = G.expressMateriaux[id];
     if (offre.qte <= 0) { Son.jouer('refus'); return this.parler('Plus de ' + MATERIAUX[id].nom.toLowerCase() + ' ! Hé hé, il fallait se décider plus vite.'); }
-    if (!peutPayer(G, offre.prix)) { Son.jouer('refus'); return this.parler(`Du ${MATERIAUX[id].nom.toLowerCase()}, à ce prix-là, ça se mérite ! Reviens avec des pièces.`); }
+    if (!peutPayer(G, offre.prix)) { Son.jouer('refus'); manqueArgent(G, offre.prix, ''); return this.parler(`Du ${MATERIAUX[id].nom.toLowerCase()}, à ce prix-là, ça se mérite ! Reviens avec des pièces.`); }
     payer(G, offre.prix, 'express');
     offre.qte--;
     G.materiaux[id] = (G.materiaux[id] || 0) + 1;
@@ -138,7 +140,9 @@ class ExpressScene extends Phaser.Scene {
   }
 
   maj() {
-    for (const l of this.lignes) l.reste.setText(`reste ${l.offre.qte}`);
+    const G = this.G;
+    for (const l of this.lignes) l.reste.setText(`reste ${l.offre.qte} · chez toi ${l.materiau ? (G.materiaux[l.id] || 0) : (G.stock[l.id] || 0)}`);
+    if (this.texteReserve) this.texteReserve.setText(`Ta réserve : ${stockTotal(G)} / ${G.capacite} objets`);
     this.bourse.maj(this.G.argent);
   }
 

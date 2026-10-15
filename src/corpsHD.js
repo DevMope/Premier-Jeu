@@ -37,7 +37,7 @@ const FIGURANTS = {
   mentor: { race: 'humain', nom: 'Garrick', costume: 'mentor', habit: 0x2e2420, cheveux: 0x3a281a, cape: 0x3e4a2a, barbe: 'rase', coiffure: 'long', peau: 1, niveau: 2 },   // (peau : la même teinte que son buste)
   mentorBlesse: { race: 'humain', nom: 'Garrick', costume: 'mentor', habit: 0x2e2420, cheveux: 0x3a281a, cape: 0x3e4a2a, barbe: 'rase', coiffure: 'long', peau: 1, niveau: 2, blesse: true },   // (v0.58 : repêché dans la rivière)
   gobelin: { race: 'gobelin', nom: 'Grippesou', costume: 'gobelin', habit: 0x6a5030, cheveux: 0x5a3a20 },
-  bourgmestre: { race: 'humain', nom: 'Odilon Bonnefoi', costume: 'banquier', habit: 0x4a2a5a, cheveux: 0xb0b0b8, barbe: 'moustache', niveau: 3 },
+  bourgmastre: { race: 'humain', nom: 'Odilon Bonnefoi', costume: 'banquier', habit: 0x4a2a5a, cheveux: 0xb0b0b8, barbe: 'moustache', niveau: 3 },
   heraut: { race: 'humain', nom: 'Le héraut', costume: 'garde', habit: 0x2a4a8a, cheveux: 0x5a3a1a },
   passeur: { race: 'humain', nom: 'Le Passeur', costume: 'passeur', habit: 0x2a2430, cheveux: 0x1a1418, cape: 0x1a1620, barbe: 'courte', niveau: 1 },
   // (v0.59) les brigands et les pillards des récits, capuche sur la tête, l'air mauvais

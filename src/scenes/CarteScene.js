@@ -398,7 +398,7 @@ class CarteScene extends Phaser.Scene {
       this.cartes.add([fond,
         imageCorps(this, x, 470, v, 2.4),
         this.add.text(x, 474, v.nom.split(' ')[0], style(14, couleurNom(this.G, v.nom, true), { fontStyle: 'bold' })).setOrigin(0.5, 0),
-        this.add.text(x, 490, zone ? '→ ' + ZONES[zone].nom.replace(/^(Les |La |L')/, '') : NIVEAUX_AVENTURIER[v.niveau].nom,
+        this.add.text(x, 490, zone ? '→ ' + ZONES[zone].nom.replace(/^(Les |La |L')/, '') : nomRang(v.niveau, true),
           style(12, zone ? '#b8e0a0' : '#c9b48a', { align: 'center', wordWrap: { width: largeur - 12 } })).setOrigin(0.5, 0)]);
     });
     if (!this.voyageurs.length) {
@@ -412,10 +412,10 @@ class CarteScene extends Phaser.Scene {
     const restants = this.voyageurs.filter(x => !this.place[x.id]).length;
     if (!v) this.titre.setText('La carte de tes alentours');
     else if (this.planification) {
-      this.titre.setText(restants ? `Où envoyer ${v.nom} ? (${NIVEAUX_AVENTURIER[v.niveau].nom}, ${NOMS_RACES[v.race] || v.race}) · encore ${restants} à placer`
+      this.titre.setText(restants ? `Où envoyer ${v.nom} ? (${nomRang(v.niveau)}, ${NOMS_RACES[v.race] || v.race}) · encore ${restants} à placer`
         : 'Tout le monde a sa destination : à toi de préparer les sacs !');
     } else {
-      this.titre.setText(`Où envoyer ${v.nom} ? (${NIVEAUX_AVENTURIER[v.niveau].nom}, ${NOMS_RACES[v.race] || v.race})`);
+      this.titre.setText(`Où envoyer ${v.nom} ? (${nomRang(v.niveau)}, ${NOMS_RACES[v.race] || v.race})`);
     }
     if (this.titre.width > 930) this.titre.setFontSize(15);
     this.dessinerBande();

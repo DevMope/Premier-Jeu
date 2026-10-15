@@ -29,7 +29,8 @@ function conseilGarrick(scene, cle, toujours = false) {
   if (cle === 'marche') G.tuto = false; // le dernier conseil : Garrick s'en va
   // (v0.59) fixé à l'écran, même quand la caméra a défilé (le marché noir et ses trois coins)
   const c = scene.add.container(0, 0).setDepth(60).setScrollFactor(0, 0, true);
-  c.add(scene.add.rectangle(480, 270, 960, 540, 0x000000, 0.35).setInteractive());
+  const voile = scene.add.rectangle(480, 270, 960, 540, 0x000000, 0.35).setInteractive();
+  c.add(voile);
   c.add(scene.add.image(560, 420, panneauHD(scene, 700, 170)).setScale(2));
   c.add(imageCorps(scene, 150, 520, 'mentor', 9));
   c.add(scene.add.text(240, 348, 'Garrick Cœur-de-Chêne', style(16, '#7a5a10', { fontStyle: 'bold' })));
@@ -39,10 +40,22 @@ function conseilGarrick(scene, cle, toujours = false) {
   c.add(texte);
   let defile = null;
   scene.time.delayedCall(260, () => { if (texte.active) defile = texteQuiDefile(scene, texte, `« ${CONSEILS[cle]} »`, { vitesse: 18 }); });
-  const b = creerBouton(scene, 820, 482, 150, 'Compris !', () => {
+  // (v0.84) des joueurs n'arrivaient pas à cliquer « Compris ! » : un clic n'importe où sur le
+  // conseil, ou Entrée / Espace / Échap, fait la même chose (finir le texte, puis fermer)
+  const ouvert = scene.time.now;
+  let ferme = false;
+  const compris = () => {
+    if (ferme || scene.time.now - ouvert < 350) return;
     if (defile && defile.enCours()) return defile.finir();
+    ferme = true;
+    if (scene.input.keyboard) scene.input.keyboard.off('keydown', touche);
     scene.tweens.add({ targets: c, alpha: 0, duration: 200, onComplete: () => c.destroy() });
-  });
+  };
+  const touche = (e) => { if (['Enter', 'Space', ' ', 'Escape'].includes(e.key) || e.code === 'Space') compris(); };
+  if (scene.input.keyboard) scene.input.keyboard.on('keydown', touche);
+  c.once('destroy', () => { if (scene.input && scene.input.keyboard) scene.input.keyboard.off('keydown', touche); });
+  voile.on('pointerdown', compris);
+  const b = creerBouton(scene, 820, 482, 150, 'Compris !', compris);
   b.label.setFontSize(15);
   c.add([b.fond, b.label]);
   c.setAlpha(0);

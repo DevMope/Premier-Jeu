@@ -14,14 +14,15 @@ class ArriereScene extends Phaser.Scene {
     const G = this.G = window.GAME;
     this.cameras.main.fadeIn(250);
     this.dessinerPiece();
-    this.add.text(276, 26, "L'arrière-boutique", style(24, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5);
-    this.texteInfo = this.add.text(276, 50, this.comptoir.voyageur ? `${this.comptoir.voyageur.nom} attend au comptoir...` : '',
+    this.add.text(340, 30, "L'arrière-boutique", style(24, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5);
+    this.texteInfo = this.add.text(340, 54, this.comptoir.voyageur ? `${this.comptoir.voyageur.nom} attend au comptoir...` : '',
       style(13, '#e8d4a8', { fontStyle: 'italic bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
     this.dessinerEtageres();
     this.dessinerFortune();
     this.dessinerPanier();
     this.dessinerBuffet();
     this.dessinerPorte();
+    this.dessinerPorteRue();
     this.dessinerDecos();
     creerBouton(this, 840, 505, 220, '↻ Retour au comptoir', () => this.fermer());
     // (v0.82, étape 10b) le coin de la forge, à partir du saut d'un an
@@ -51,11 +52,13 @@ class ArriereScene extends Phaser.Scene {
     }
     // L'étagère murale
     const g = this.add.graphics();
-    g.fillStyle(0x5a3a22).fillRect(590, 290, 200, 8).fillStyle(0x7a5232).fillRect(590, 290, 200, 3);
-    g.fillStyle(0x4a2e1a).fillTriangle(600, 298, 616, 298, 600, 314).fillTriangle(780, 298, 764, 298, 780, 314);
-    this.add.image(640, 291, 'livresHD').setOrigin(0.5, 1).setScale(2);
-    this.add.image(730, 291, 'planteHD').setOrigin(0.5, 1).setScale(2);
-    bougie(this, 768, 290, { rayon: 70 });
+    // (v0.84) un peu plus haut : la porte de la rue passe dessous
+    const ye = 236;
+    g.fillStyle(0x5a3a22).fillRect(590, ye, 200, 8).fillStyle(0x7a5232).fillRect(590, ye, 200, 3);
+    g.fillStyle(0x4a2e1a).fillTriangle(600, ye + 8, 616, ye + 8, 600, ye + 24).fillTriangle(780, ye + 8, 764, ye + 8, 780, ye + 24);
+    this.add.image(640, ye + 1, 'livresHD').setOrigin(0.5, 1).setScale(2);
+    this.add.image(730, ye + 1, 'planteHD').setOrigin(0.5, 1).setScale(2);
+    bougie(this, 768, ye, { rayon: 70 });
     // Le tapis, et le chat
     this.add.image(430, SOL_ARRIERE + 64, tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(2.2);
     // (le coussin attend un familier : le chat de gouttière, une fois adopté, y dort en boule)
@@ -96,7 +99,7 @@ class ArriereScene extends Phaser.Scene {
   // des lingots quand on l'est vraiment. Et des reconnaissances de dettes quand ça va mal.
   dessinerFortune() {
     const G = this.G;
-    const cx = 760;   // (v0.66 : le coffre-fort contre le mur, entre le buffet et la porte de la chambre)
+    const cx = 792;   // (v0.66 : le coffre-fort contre le mur, entre le buffet et la porte de la chambre ; v0.84 : un peu à droite, pour la porte de la rue)
     const argent = Math.max(0, G.argent);
     // Des lingots, au-delà de 500 pièces
     const lingots = Math.min(6, Math.floor(argent / 500));
@@ -114,7 +117,7 @@ class ArriereScene extends Phaser.Scene {
       for (let k = 0; k < hauteur; k++) tas.push(this.add.image(cx + dx, base - k * 6, 'pieceTranche').setScale(2).setDepth(1));
     }
     // Le coffre
-    this.add.image(cx, SOL_ARRIERE + 6, coffreHD(this, niveauAmelioration(G, 'coffre'))).setOrigin(0.5, 1).setScale(3);
+    this.add.image(cx, SOL_ARRIERE + 6, coffreHD(this, niveauAmelioration(G, 'coffre'))).setOrigin(0.5, 1).setScale(2.6);
     // Des sacs de pièces, au-delà de 150
     const sacs = Math.min(4, Math.floor(argent / 150));
     for (let i = 0; i < sacs; i++) this.add.image(cx - 92 + i * 20, SOL_ARRIERE + 26 + (i % 2) * 4, 'sacHD').setOrigin(0.5, 1).setScale(2.5).setDepth(2);
@@ -158,7 +161,7 @@ class ArriereScene extends Phaser.Scene {
   dessinerPanier() {
     const G = this.G;
     // (v0.66) posé sur le vieux buffet, contre le mur
-    const x = 580, y = SOL_ARRIERE - 62;
+    const x = 562, y = SOL_ARRIERE - 62;
     const n = Object.values(G.cadeaux || {}).reduce((a, b) => a + b, 0);
     Object.keys(G.cadeaux || {}).filter(id => G.cadeaux[id] > 0).slice(0, 4).forEach((id, i) => this.add.image(x - 20 + i * 13, y - 28 - (i % 2) * 4, iconeObjet(this, id)).setScale(1.5).setDepth(1.2));
     this.add.image(x, y + 4, 'panierHD').setOrigin(0.5, 1).setScale(1.4).setDepth(1.3);
@@ -171,7 +174,7 @@ class ArriereScene extends Phaser.Scene {
   dessinerBuffet() {
     const G = this.G;
     // (v0.66) contre le mur, à droite des étagères (et plus au milieu de la pièce)
-    const x = 600, y = SOL_ARRIERE + 20;
+    const x = 584, y = SOL_ARRIERE + 20;
     const n = Object.values(G.pieges || {}).reduce((a, b) => a + b, 0);
     this.add.image(x, y + 2, 'buffetHD').setOrigin(0.5, 1).setScale(2);
     bougie(this, x + 40, y - 80, { rayon: 120 }); // une bougie posée sur le buffet, à côté du panier
@@ -193,6 +196,20 @@ class ArriereScene extends Phaser.Scene {
     this.add.text(x, SOL_ARRIERE - 182, 'La chambre', style(12, '#3a2410', { fontStyle: 'bold italic' })).setOrigin(0.5);
     const zone = this.add.rectangle(x, SOL_ARRIERE - 84, 92, 168, 0xffffff, 0).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => this.porte());
+  }
+
+  // (v0.84) la porte de derrière, qui donne sur la ruelle et la rue (demandée par les testeurs)
+  dessinerPorteRue() {
+    const x = 688;
+    this.add.image(x, SOL_ARRIERE, 'porteHD').setOrigin(0.5, 1).setScale(1.7, 1.75).setTint(0xd8c0a0);
+    this.add.text(x, SOL_ARRIERE - 162, 'La rue', style(12, '#3a2410', { fontStyle: 'bold italic' })).setOrigin(0.5);
+    const zone = this.add.rectangle(x, SOL_ARRIERE - 74, 80, 148, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    zone.on('pointerdown', () => { if (this.porteRue) this.porteRue(); });
+  }
+
+  porteRue() {
+    if (this.comptoir && (this.comptoir.voyageur || this.comptoir.entree || this.G.file.length)) return this.message("Pas maintenant : quelqu'un t'attend au comptoir !");
+    this.message('La porte de derrière donne sur la ruelle. Le soir, en te promenant, tu pourras sortir par là.');
   }
 
   porte() {

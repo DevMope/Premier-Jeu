@@ -740,9 +740,9 @@ class CounterScene extends Phaser.Scene {
   visiteNotable(entree) {
     const G = this.G;
     const p = PALIERS_CLIENTS[entree.palier];
-    const qui = { bourgmestre: 'Odilon Bonnefoi, bourgmestre', heraut: 'Le héraut de la Confrérie du Dernier Rempart', colporteur: COLPORTEUR.nom, legende: "Isolde Lame-d'Aurore, légende vivante" }[p.visiteur];
+    const qui = { bourgmastre: 'Odilon Bonnefoi, bourgmastre', heraut: 'Le héraut de la Confrérie du Dernier Rempart', colporteur: COLPORTEUR.nom, legende: "Isolde Lame-d'Aurore, légende vivante" }[p.visiteur];
     const bonjour = {
-      bourgmestre: `Bonjour, ${nomJoueur(G, 'petit')} ! Tout le bourg parle de « ${G.nomShop} » : on dit maintenant « ${p.nom} » ! Je tenais à te féliciter en personne.`,
+      bourgmastre: `Bonjour, ${nomJoueur(G, 'petit')} ! Tout le bourg parle de « ${G.nomShop} » : on dit maintenant « ${p.nom} » ! Je tenais à te féliciter en personne.`,
       heraut: `Oyez ! La Confrérie du Dernier Rempart salue « ${G.nomShop} », désormais « ${p.nom} ». Ton nom est inscrit dans nos registres.`,
       colporteur: `Alors c'est ici, le fameux comptoir ? On en parle sur tous les chemins ! « ${p.nom} », rien que ça ! Bravo. Je passerai te voir avec ma charrette.`,
       legende: `On m'avait parlé de toi, ${nomJoueur(G, 'petit')}. « ${p.nom} », tenu par quelqu'un de si jeune... J'ai voulu voir ça de mes yeux. Je ne suis pas déçue.`,
@@ -912,11 +912,11 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'garrick') return { nom: 'Garrick Cœur-de-Chêne', race: 'humain', feminin: false, figurant: 'mentor' };
     if (entree.type === 'aine') return personneAine(entree.race);
     if (entree.type === 'notable') {
-      // Le visiteur notable du palier : le bourgmestre, le héraut de la Confrérie, une légende...
+      // Le visiteur notable du palier : le bourgmastre, le héraut de la Confrérie, une légende...
       const v = PALIERS_CLIENTS[entree.palier].visiteur;
       if (v === 'legende') return { nom: "Isolde Lame-d'Aurore", race: 'elfe', feminin: true, niveau: 'legende' };
       if (v === 'colporteur') return { nom: COLPORTEUR.nom, race: 'humain', feminin: false, figurant: 'colporteur' };
-      return { nom: FIGURANTS[v].nom, race: 'humain', feminin: false, figurant: v }; // (un figurant : bourgmestre, héraut)
+      return { nom: FIGURANTS[v].nom, race: 'humain', feminin: false, figurant: v }; // (un figurant : bourgmastre, héraut)
     }
     return entree.parti ? entree.parti.voyageur : null;
   }
@@ -1016,7 +1016,7 @@ class CounterScene extends Phaser.Scene {
       const exigeant = v.exigeant && !entree.attentes && v.queteId ? ` Et je suis exigeant${v.feminin ? 'e' : ''} : une grosse commande, et du matériel neuf, pas de vieilles cordes rafistolées.` : '';
       if (!v.queteId) {
         // Il vient chercher l'aventure : c'est toi qui choisis où l'envoyer.
-        this.dire(`${bonjour}${ENVIES[v.envie]} (${NIVEAUX_AVENTURIER[v.niveau].nom}${v.blessures ? `, encore blessé${v.feminin ? 'e' : ''}` : ''})`, this.nomAvecRelation(v.nom));
+        this.dire(`${bonjour}${ENVIES[v.envie]} (${nomRang(v.niveau)} : ${EXPLICATION_RANGS[v.niveau]}${v.blessures ? `, encore blessé${v.feminin ? 'e' : ''}` : ''})`, this.nomAvecRelation(v.nom));
         this.choix(['Choisir sa destination', () => this.ouvrirCarte()], ['Refuser ce client', () => this.refuser()]);
         this.majCommande();
         return;
@@ -1028,7 +1028,7 @@ class CounterScene extends Phaser.Scene {
     } else if (entree.type === 'retour') {
       const v = entree.parti.voyageur;
       this.dire(entree.parti.resultat.echec ? "Me revoilà... Vivant, au moins. Mais ça ne s'est pas passé comme prévu."
-        : `Me revoilà, sain${v.feminin ? 'e' : ''} et sauf${v.feminin ? 've' : ''} ! Tu ne devineras jamais ce qui m'est arrivé...`, v.nom);
+        : `Me revoilà, sain${v.feminin ? 'e' : ''} et ${v.feminin ? 'sauve' : 'sauf'} ! Tu ne devineras jamais ce qui m'est arrivé...`, v.nom);
       this.titreCommande.setFontSize(17).setText('Retour de mission');
       this.bouton('Écouter son récit', () => this.ouvrirRecit(entree.parti));
     } else if (entree.type === 'famille') {
@@ -1349,8 +1349,7 @@ class CounterScene extends Phaser.Scene {
     });
   }
 
-  // `confirme` : le joueur a déjà confirmé que c'est bien un objet en plus de la commande.
-  donner(id, confirme = false) {
+  donner(id) {
     if (!this.enService || this.enConfirmation) return;
     this.time.delayedCall(400, () => conseilGarrick(this, 'colis'));
     const v = this.voyageur;
@@ -1368,13 +1367,14 @@ class CounterScene extends Phaser.Scene {
     if (this.G.stock[id] <= 0) {
       return this.dire("Tu n'en as plus en stock...", '');
     }
-    // Un objet en plus de la commande : on demande confirmation, pour éviter les erreurs.
-    if (enPlus && !confirme) return this.demanderSurplus(id);
+    // (v0.84) un objet en plus de la commande se donne directement (plus de confirmation, demandé par
+    // les testeurs) : le client le dit, et le sac affiche « (en plus) » ; on peut le reprendre d'un clic
     this.G.stock[id]--;
     this.colis[id] = (this.colis[id] || 0) + 1;
     Son.jouer('poser');
-    if (enPlus) this.dire(id === 'potion' ? "Une potion de plus ? Merci, ça me fera un cœur de réserve !"
-      : id === 'bandage' ? "Un bandage de plus ? Si je saigne après un combat, ça m'évitera de perdre un cœur !" : "Un de plus ? Ça peut toujours servir, merci !");
+    if (enPlus) this.dire((id === 'potion' ? "Une potion de plus ? Merci, ça me fera un cœur de réserve !"
+      : id === 'bandage' ? "Un bandage de plus ? Si je saigne après un combat, ça m'évitera de perdre un cœur !" : "Un de plus ? Ça peut toujours servir, merci !") +
+      ` (offert, en plus de la commande · sac ${totalSurplus(v, this.colis)} / ${tailleSac(v)})`);
     // (v0.63) une autre arme que celle de son peuple : il fait avec, sans enthousiasme
     else if (estArme(id) && id !== armePour(v)) this.dire(`${(unNom(id) + ' ' + ITEMS[id].nom.toLowerCase()).replace(/^./, c => c.toUpperCase())} ? Je préfère ${unNom(armePour(v))} ${ITEMS[armePour(v)].nom.toLowerCase()}... mais je ferai avec.`, v.nom);
     else if (estArme(id)) this.dire(`${(unNom(id) + ' ' + ITEMS[id].nom.toLowerCase()).replace(/^./, c => c.toUpperCase())} ! Exactement ce qu'il me fallait.`, v.nom);
@@ -1382,17 +1382,13 @@ class CounterScene extends Phaser.Scene {
     this.majCommande();
   }
 
-  demanderSurplus(id) {
-    const v = this.voyageur;
-    const effet = id === 'potion' ? 'une potion en plus = un cœur de réserve (un seul)'
-      : id === 'bandage' ? 'un bandage en plus arrête un saignement après un combat raté'
-      : '+5 % sur l\'épreuve qui en a besoin';
-    this.dire(`Tu veux vraiment donner 1 ${ITEMS[id].nom} EN PLUS de sa commande ? (${effet} · sac : ${totalSurplus(v, this.colis)} / ${tailleSac(v)} · ` +
-      'le surplus n\'est pas payé)', 'Objet en plus');
-    this.enConfirmation = true;
-    const fin = () => { this.enConfirmation = false; this.servir(); };
-    this.choix([`Oui, en plus`, () => { fin(); this.donner(id, true); }],
-      ['Non', () => { fin(); this.dire("D'accord, je garde juste ma commande.", v.nom); }]);
+  // (v0.84) un objet du client à réparer : un marteau qui bat à côté de la ligne, pour ne pas le rater
+  marquerReparation(ligne, oui) {
+    if (!ligne.marteau) {
+      ligne.marteau = this.add.text(922, ligne.icone.y, '⚒', style(16, '#ff8a20', { fontStyle: 'bold', stroke: '#2a1206', strokeThickness: 4, brut: true })).setOrigin(0.5).setDepth(ligne.txt.depth + 1);
+      this.tweens.add({ targets: ligne.marteau, angle: { from: -25, to: 15 }, scale: { from: 1, to: 1.25 }, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
+    ligne.marteau.setVisible(!!oui);
   }
 
   // Clic sur une ligne de la commande : reprendre un objet, ou réparer celui du client.
@@ -1443,9 +1439,18 @@ class CounterScene extends Phaser.Scene {
   }
 
   // Refuser un client : il repart, et la réputation en prend un coup.
-  refuser() {
+  refuser(confirme = false) {
     if (!this.voyageur) return;
     const v = this.voyageur;
+    // (v0.84) des objets sont déjà dans son baluchon : on le rappelle avant de le renvoyer
+    const dedans = Object.entries(this.colis).filter(([, n]) => n > 0);
+    if (!confirme && dedans.length && this.enService && !this.enConfirmation) {
+      const liste = dedans.map(([id, n]) => `${n} ${ITEMS[id] ? ITEMS[id].nom.toLowerCase() : id}`).join(', ');
+      this.dire(`Tu as déjà mis dans son baluchon : ${liste}. Si tu le refuses maintenant, il repart fâché (−${REFUS_CLIENT} de réputation) ; ces objets reviennent dans ta réserve. Le refuser quand même ?`, 'Refuser ce client ?');
+      this.enConfirmation = true;
+      const fin = () => { this.enConfirmation = false; };
+      return this.choix(['Non, je le sers', () => { fin(); this.servir(); }], ['Oui, le refuser', () => { fin(); this.refuser(true); }]);
+    }
     for (const [id, n] of Object.entries(this.colis)) {
       const pieges = this.pieges[id] || 0;
       this.G.stock[id] += n - pieges;
@@ -1646,8 +1651,17 @@ class CounterScene extends Phaser.Scene {
     if (qui && this.buste && this.buste.personne.nom === qui) this.parler(Math.min(2400, 400 + texte.length * 22));
   }
 
-  remettreColis() {
+  remettreColis(confirme = false) {
     const v = this.voyageur;
+    if (this.enConfirmation) return;
+    // (v0.84) un baluchon vide : on demande avant de l'envoyer les mains vides
+    const cmd0 = commandeDe(v);
+    if (!confirme && Object.keys(cmd0).length && !Object.values(this.colis).some(n => n > 0)) {
+      this.dire(`Son baluchon est vide ! ${v.nom} partira sans aucune provision : ses chances de revenir vivant sont bien minces. L'envoyer quand même ?`, 'Partir sans rien ?');
+      this.enConfirmation = true;
+      const fin = () => { this.enConfirmation = false; };
+      return this.choix(['Oui, il part comme ça', () => { fin(); this.remettreColis(true); }], ['Non, je le prépare', () => { fin(); this.servir(); }]);
+    }
     const chance = chanceDeRetour(v, this.colis);
     const msg = partir(this.G, v, this.colis, this.pieges);
     Son.jouer('caisse');
@@ -1747,7 +1761,7 @@ class CounterScene extends Phaser.Scene {
     this.texteSac.setText(v ? (v.queteId ? `Sac : ${totalSurplus(v, this.colis)} / ${tailleSac(v)} en plus` +
       (coeursEnPlus(v, this.colis) ? ` · +${coeursEnPlus(v, this.colis)} cœur${coeursEnPlus(v, this.colis) > 1 ? 's' : ''}` : '') +
       (bandagesEnPlus(v, this.colis) ? ` · +${bandagesEnPlus(v, this.colis)} bandage${bandagesEnPlus(v, this.colis) > 1 ? 's' : ''}` : '') + ' · ' : '') +
-      `trèfle ${trefleDe(this.G, v.nom)}/${TREFLE_MAX} · ${NIVEAUX_AVENTURIER[v.niveau].nom}` : '');
+      `trèfle ${trefleDe(this.G, v.nom)}/${TREFLE_MAX} · ${nomRang(v.niveau, true)}` : '');
     this.lignesCommande.forEach((ligne, i) => {
       let id = ids[i];
       // (v0.63) la ligne de l'arme : n'importe quelle arme la remplit ; on montre celle qu'il emporte
@@ -1762,16 +1776,19 @@ class CounterScene extends Phaser.Scene {
           if (!donne) {
             const etat = etatObjet(v, donnee);
             const cout = `${materiauxRequis(this.G)} ${MATERIAUX[MATERIAU_DE[donnee]].nom.toLowerCase()}`;
-            ligne.txt.setText(etat > 0 ? `${ITEMS[donnee].nom} · sienne ${etat}/${USURE_MAX}${etat < USURE_MAX ? ` (réparer : ${cout})` : ' ✓'}` : `${ITEMS[donnee].nom} · cassée`).setFontSize(12).setColor(etat >= 2 ? '#2f6a2a' : '#8a5a10');
+            ligne.txt.setText(etat > 0 ? `${ITEMS[donnee].nom} ${etat}/${USURE_MAX}${etat < USURE_MAX ? ` · réparer : ${cout}` : ' ✓'}` : `${ITEMS[donnee].nom} · cassée`).setFontSize(12).setColor(etat >= USURE_MAX ? '#2f6a2a' : etat > 0 ? '#b04a00' : '#8a5a10');
+            this.marquerReparation(ligne, etat > 0 && etat < USURE_MAX && this.enService);
           } else {
+            this.marquerReparation(ligne, false);
             ligne.txt.setText(`${ITEMS[donnee].nom} (préfère ${ITEMS[id].nom.toLowerCase()}) ${Math.min(donne, n)}/${n} ${donne >= n ? '✓' : ''}`).setFontSize(12).setColor(donne >= n ? '#2f6a2a' : '#3b2410');
           }
-          for (let t = 12; ligne.txt.width > 205 && t >= 9; t--) ligne.txt.setFontSize(t);
+          for (let t = 12; ligne.txt.width > (ligne.marteau && ligne.marteau.visible ? 182 : 205) && t >= 9; t--) ligne.txt.setFontSize(t);
           return;
         }
       }
       ligne.id = id || null;
       ligne.icone.setVisible(!!id);
+      this.marquerReparation(ligne, false);
       const retirable = !!id && !!this.colis[id] && this.enService;
       ligne.moins.setVisible(retirable);
       ligne.moinsTexte.setVisible(retirable);
@@ -1782,9 +1799,11 @@ class CounterScene extends Phaser.Scene {
       if (!donne && id in v.inventaire) {
         // Le client a déjà le sien : on peut le réparer au lieu d'en donner un neuf.
         const cout = `${materiauxRequis(this.G)} ${MATERIAUX[MATERIAU_DE[id]].nom.toLowerCase()}`;
-        const texte = etat > 0 ? `${ITEMS[id].nom} · sienne ${etat}/${USURE_MAX}${etat < USURE_MAX ? ` (réparer : ${cout})` : ' ✓'}`
+        const texte = etat > 0 ? `${ITEMS[id].nom} ${etat}/${USURE_MAX}${etat < USURE_MAX ? ` · réparer : ${cout}` : ' ✓'}`
           : `${ITEMS[id].nom} · la sienne est cassée`;
-        ligne.txt.setText(texte).setFontSize(12).setColor(etat >= 2 ? '#2f6a2a' : '#8a5a10');
+        ligne.txt.setText(texte).setFontSize(12).setColor(etat >= USURE_MAX ? '#2f6a2a' : etat > 0 ? '#b04a00' : '#8a5a10');
+        for (let t = 12; ligne.txt.width > 182 && t >= 9; t--) ligne.txt.setFontSize(t);
+        this.marquerReparation(ligne, etat > 0 && etat < USURE_MAX && this.enService);
         return;
       }
       if (!commande[id]) {

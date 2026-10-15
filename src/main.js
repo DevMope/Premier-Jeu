@@ -1,5 +1,5 @@
 // La version du jeu (affichée sur l'écran titre) : on l'augmente à chaque mise à jour publiée.
-const VERSION_JEU = 'v 0.83';
+const VERSION_JEU = 'v 0.84';
 // Point d'entrée : configuration de Phaser et liste des scènes.
 
 // Le jeu est en pixel art (pixels nets), mais les textes doivent rester lisses et lisibles :
@@ -41,6 +41,15 @@ for (const Classe of [Phaser.GameObjects.Image, Phaser.GameObjects.Sprite]) {
   const changerOrigine = Classe.prototype.setTexture;
   Classe.prototype.setTexture = function () { return this.scene ? changerOrigine.apply(this, arguments) : this; };
 }
+
+// (v0.84) Dans Phaser, une page relancée SANS données garde celles de son lancement précédent :
+// la banque ouverte le soir croyait encore venir de la rue (« Quitter » rouvrait la rue et le soir
+// restait en pause : le jeu semblait figé). Chaque lancement repart de ses propres données.
+const demarrerSysteme = Phaser.Scenes.Systems.prototype.start;
+Phaser.Scenes.Systems.prototype.start = function (data) {
+  if (data === undefined || data === null) this.settings.data = {};
+  return demarrerSysteme.call(this, data);
+};
 
 // (v0.58) Le grand gel : dans Phaser, si une erreur survient pendant une image (une animation,
 // un minuteur, un clic...), la boucle du jeu ne demande plus l'image suivante et tout se fige
@@ -106,7 +115,13 @@ function lancerJeu() {
     for (const s of window.jeu.scene.scenes) {
       const theme = THEME_PAR_SCENE[s.scene.key];
       if (!theme) continue;
-      s.events.on('create', () => Son.ambiance(theme));
+      // (v0.84) une page peut choisir sa musique elle-même (le récit d'un héros mort : la musique
+      // triste) : `s.musiqueVoulue` passe avant celle de la page
+      s.events.on('create', () => Son.ambiance(s.musiqueVoulue || theme));
+      // (v0.84) une page qui s'ouvre par-dessus (banque, Express, forge...) change la musique : en la
+      // refermant, la page d'en dessous reprend la sienne
+      s.events.on('resume', () => Son.ambiance(s.musiqueVoulue || theme));
+      s.events.on('wake', () => Son.ambiance(s.musiqueVoulue || theme));
       if (s.scene.isActive()) Son.ambiance(theme);   // (l'écran titre est déjà ouvert)
     }
     // Un petit son de passage quand on change de lieu (façon Pokémon) : une porte qui s'ouvre

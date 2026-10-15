@@ -31,7 +31,36 @@ class HudScene extends Phaser.Scene {
     zoneReput.on('pointerout', () => this.infoReput(false));
     zoneReput.on('pointerdown', () => this.infoReput(!this.bulleReput));
     this.reputAffichee = null;
-    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput]).setDepth(100);
+    // (v0.84) la lumière et l'ombre, en direct elles aussi : une fine bande sous les deux plaques, l'or
+    // de la lumière à gauche, le violet de l'ombre à droite, et le curseur entre les deux
+    plaque.fillStyle(0x1e130a, 0.92).fillRect(-8, 17, 226, 8);
+    plaque.lineStyle(2, 0xc9a227, 1).strokeRect(-8, 17, 226, 8);
+    this.jaugeCampG = this.add.graphics();
+    const zoneCamp = this.add.rectangle(105, 21, 226, 10, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp]).setDepth(100);
+    // (v0.84) pas assez d'argent : une grande alerte en haut de l'écran, par-dessus toutes les pages
+    const surManque = m => this.alerteArgent(m);
+    this.game.events.on('manqueArgent', surManque);
+    this.events.once('shutdown', () => this.game.events.off('manqueArgent', surManque));
+  }
+
+  alerteArgent(manque) {
+    if (this.alerte) { this.tweens.killTweensOf(this.alerte); this.alerte.destroy(); }
+    const c = this.alerte = this.add.container(480, 74).setDepth(120);
+    const texte = this.add.text(18, 0, `Pas assez d'argent : il te manque ${manque} pièce${manque > 1 ? 's' : ''} !`,
+      style(17, '#fff4dc', { fontStyle: 'bold', stroke: '#3a0a06', strokeThickness: 4, brut: true })).setOrigin(0.5);
+    const l = texte.width + 74;
+    const fond = this.add.graphics();
+    fond.fillStyle(0x7a1a10, 0.95).fillRoundedRect(-l / 2, -21, l, 42, 9);
+    fond.lineStyle(3, 0xe8b040, 1).strokeRoundedRect(-l / 2, -21, l, 42, 9);
+    creerPiecesHD(this);
+    const piece = this.add.image(-l / 2 + 26, 0, 'pieceFace').setScale(2.2);
+    const barre = this.add.text(-l / 2 + 26, 0, '✕', style(20, '#ff5040', { fontStyle: 'bold', stroke: '#1a0604', strokeThickness: 4, brut: true })).setOrigin(0.5);
+    c.add([fond, piece, barre, texte]);
+    c.setScale(0.4).setAlpha(0);
+    this.tweens.add({ targets: c, scale: 1, alpha: 1, duration: 220, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: c, x: { from: 472, to: 488 }, duration: 60, yoyo: true, repeat: 3, delay: 220, onComplete: () => c.setX(480) });
+    this.tweens.add({ targets: c, alpha: 0, y: 60, delay: 2400, duration: 400, onComplete: () => { c.destroy(); if (this.alerte === c) this.alerte = null; } });
   }
 
   dessinerJauge() {
@@ -53,7 +82,47 @@ class HudScene extends Phaser.Scene {
     const p = palierClients(G);
     const texte = `Réputation : ${arrondi(G.reputation)}\n${p.nom} : jusqu'à ${p.max} clients de passage par jour\n(+${BONUS_CLIENTS_MAX} au plus grâce au stock varié, à l'éclairage, au trophée)` +
       (p.suivant ? `\nProchain palier à ${p.suivant.reputation} : ${p.suivant.nom} (${p.suivant.max} clients)` : '\nPalier maximum atteint !');
-    this.bulleReput = this.add.text(116, 24, texte, style(12, '#fff4dc', { backgroundColor: '#1e130a', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
+    this.bulleReput = this.add.text(116, 30, texte, style(12, '#fff4dc', { backgroundColor: '#1e130a', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
+  }
+
+  // (v0.84) la petite jauge du bandeau : la lumière à gauche (or), l'ombre à droite (violet)
+  dessinerCamp(j) {
+    const g = this.jaugeCampG, x0 = -6, l = 222, y0 = 19, h = 4;
+    g.clear();
+    g.fillStyle(0x0a0604, 1).fillRect(x0, y0, l, h);
+    const milieu = x0 + l / 2, pos = milieu - (j / JAUGE_CAMP.max) * (l / 2);
+    if (j > 0) g.fillStyle(0xf0c040, 1).fillRect(pos, y0, milieu - pos, h);
+    if (j < 0) g.fillStyle(0x9a6ad8, 1).fillRect(milieu, y0, pos - milieu, h);
+    g.fillStyle(0x8a7a5a, 1).fillRect(milieu, y0 - 1, 1, h + 2);
+    g.fillStyle(0xfff4dc, 1).fillRect(Math.round(pos) - 1, y0 - 2, 3, h + 4);
+  }
+
+  infoCamp(montrer) {
+    if (this.bulleCamp) { this.bulleCamp.destroy(); this.bulleCamp = null; }
+    const G = window.GAME;
+    if (!montrer || !G) return;
+    const j = jaugeCamp(G), p = palierCamp(G);
+    const texte = `Lumière ⟷ Ombre : ${NOMS_PALIERS_JAUGE[p]} (${j > 0 ? '+' : ''}${j})\n` +
+      'Plus de lumière : missions réussies en terres de lumière, objets du bien.\nPlus d\'ombre : missions pour les Bannis, âmes offertes, objets de l\'ombre.' +
+      (G.camp ? `\nTon camp est scellé : ${G.camp === 'bien' ? 'la lumière' : 'l\'ombre'}.` : '');
+    this.bulleCamp = this.add.text(4, 30, texte, style(12, '#fff4dc', { backgroundColor: '#1e130a', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
+  }
+
+  // Un gain de lumière ou d'ombre : un « +3 lumière » qui monte, et une annonce quand un palier change
+  gainCamp(d, palier, ancienPalier) {
+    const lum = d > 0;
+    const t = this.add.text(226, 21, `${lum ? '+' + d + ' ☀ lumière' : '+' + (-d) + ' ☾ ombre'}`, style(14, lum ? '#ffe070' : '#d0b0ff', { fontStyle: 'bold', stroke: '#1e130a', strokeThickness: 4, brut: true })).setOrigin(0, 0.5).setDepth(101);
+    this.tweens.add({ targets: t, x: 246, alpha: 0, duration: 1800, delay: 700, onComplete: () => t.destroy() });
+    this.tweens.add({ targets: this.jaugeCampG, alpha: { from: 0.4, to: 1 }, duration: 160, yoyo: true, repeat: 2 });
+    Son.jouer(lum ? 'clochette' : 'froid');
+    if (palier !== ancienPalier && ancienPalier !== null) {
+      const c = this.add.container(480, 120).setDepth(118);
+      const mot = this.add.text(0, 0, `${palier > ancienPalier ? '☀' : '☾'}  ${NOMS_PALIERS_JAUGE[palier]}  ${palier > ancienPalier ? '☀' : '☾'}`, style(26, palier > 0 ? '#ffe070' : palier < 0 ? '#d8b8ff' : '#fff4dc', { fontStyle: 'bold', stroke: '#1e130a', strokeThickness: 6, brut: true })).setOrigin(0.5);
+      const sous = this.add.text(0, 30, palier > ancienPalier ? 'Le monde te voit un peu plus du côté de la lumière' : 'Le monde te voit un peu plus du côté de l\'ombre', style(13, '#fff4dc', { fontStyle: 'italic', stroke: '#1e130a', strokeThickness: 4, brut: true })).setOrigin(0.5);
+      c.add([mot, sous]); c.setScale(0.5).setAlpha(0);
+      this.tweens.add({ targets: c, scale: 1, alpha: 1, duration: 400, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: c, alpha: 0, delay: 2800, duration: 600, onComplete: () => c.destroy() });
+    }
   }
 
   // La scène du jeu qu'on regarde (la plus haute, hors bandeau).
@@ -89,8 +158,18 @@ class HudScene extends Phaser.Scene {
         this.tweens.add({ targets: this, remplissage: cible, duration: 600, ease: 'Sine.easeOut', onUpdate: () => this.dessinerJauge() });
         this.dessinerJauge();
       }
-    } else if (this.bulleReput) this.infoReput(false);
-    else if (this.fenetre && !G) this.fermerMenu();
+      // (v0.84) la lumière et l'ombre
+      const j = jaugeCamp(G), pal = palierCamp(G);
+      if (j !== this.campAffiche) {
+        if (this.campAffiche !== null && this.joueurCamp === G) this.gainCamp(j - this.campAffiche, pal, this.palierAffiche);
+        this.campAffiche = j; this.palierAffiche = pal; this.joueurCamp = G;
+        this.dessinerCamp(j);
+      }
+    } else {
+      if (this.bulleReput) this.infoReput(false);
+      if (this.bulleCamp) this.infoCamp(false);
+      if (this.fenetre && !G) this.fermerMenu();
+    }
     // Toujours au-dessus des autres pages
     const liste = this.scene.manager.scenes;
     if (liste[liste.length - 1] !== this) this.scene.bringToTop();

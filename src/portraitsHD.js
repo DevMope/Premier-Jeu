@@ -920,7 +920,25 @@ function barbeHD(t, g, v, cx) {
 
 function cheveuxHD(t, g, v, cx) {
   if (g.race === 'nain' && g.armure) return; // le casque
-  if (g.race === 'magicienne') return;       // le chapeau
+  if (g.race === 'magicienne') {
+    // (v0.84) sous le chapeau : une frange sous le bord, et deux longues mèches qui encadrent le
+    // visage jusqu'aux épaules (on ne voyait presque plus ses cheveux, juste un trait sur le côté)
+    const bord = v.cy - v.ry + 9;
+    t.forme('cheveux', (x, y) => {
+      const dx = x + 0.5 - cx;
+      if (Math.abs(dx) > v.rx - 1 || y < bord) return null;
+      const bas = bord + 3 + (hachage(x, 3, 17) > 0.5 ? 1 : 0) - Math.abs(dx) * 0.06;
+      return y < bas ? [dx / v.rx, -0.4, 0.8] : null;
+    }, { decalage: 0.2, motif: MECHES });
+    for (const sens of [-1, 1]) t.forme('cheveux', (x, y) => {
+      if (y < bord || y > v.torse + 8) return null;
+      const u = (x + 0.5 - cx) * sens;                    // vers l'extérieur
+      const dedans = v.rx - 3 - Math.max(0, (y - v.yeux) * 0.12), dehors = v.rx + 3 + Math.min(4, Math.max(0, y - v.cy) * 0.25);
+      const pointe = y > v.torse + 2 - hachage(x, 1, 29) * 5;
+      return u > dedans && u < dehors && !pointe ? [sens * 0.8, (y - v.cy) / (v.ry * 2), 0.6] : null;
+    }, { decalage: 0.1, motif: MECHES });
+    return;
+  }
   if (g.coiffure === 'chauve') {
     t.poser(cx - 6, v.cy - v.ry + 4, 'peau', 5); t.poser(cx - 5, v.cy - v.ry + 4, 'peau', 5); // le reflet sur le crâne
     return;

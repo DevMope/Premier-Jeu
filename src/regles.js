@@ -797,7 +797,7 @@ function acheterAuMarche(G, cle, id) {
   const offre = G.etals[cle][id];
   if (!offre || offre.qte <= 0) return { erreur: 'Plus en stock.' };
   const prix = prixMarchand(G, cle, id);
-  if (!peutPayer(G, prix)) return { erreur: "Pas assez d'argent ! Passe à la banque pour un prêt." };
+  if (!peutPayer(G, prix)) return { erreur: manqueArgent(G, prix, "Pas assez d'argent ! Passe à la banque pour un prêt.") };
   const materiau = id in MATERIAUX;
   if (!materiau && stockTotal(G) >= G.capacite) return { erreur: 'Ta réserve est pleine.' };
   offre.qte--;
@@ -953,7 +953,7 @@ function aDeco(G, id) {
 
 function acheterDeco(G, id) {
   if (aDeco(G, id)) return 'Tu l\'as déjà.';
-  if (!peutPayer(G, DECOS[id].prix)) return "Pas assez d'argent.";
+  if (!peutPayer(G, DECOS[id].prix)) return manqueArgent(G, DECOS[id].prix, "Pas assez d'argent.");
   payer(G, DECOS[id].prix, 'decoration');
   G.decos = [...(G.decos || []), id];
   // (une décoration de camp fait pencher la jauge)
@@ -987,7 +987,7 @@ function possede(G, id) {
 
 function acheterTenue(G, id) {
   if (possede(G, id)) return 'Tu l\'as déjà.';
-  if (!peutPayer(G, GARDE_ROBE[id].prix)) return "Pas assez d'argent.";
+  if (!peutPayer(G, GARDE_ROBE[id].prix)) return manqueArgent(G, GARDE_ROBE[id].prix, "Pas assez d'argent.");
   payer(G, GARDE_ROBE[id].prix, 'garderobe');
   G.garderobe = [...(G.garderobe || G.tenue || []), id];
   G.tenue = [...(G.tenue || []), id];
@@ -1240,6 +1240,14 @@ function peutPayer(G, montant) {
   return G.argent >= montant;
 }
 
+// (v0.84) Pas assez d'argent : en plus du message de la page, une grande alerte bien visible dans
+// le bandeau (combien il manque), pour ne plus passer à côté
+function manqueArgent(G, prix, texte) {
+  const manque = Math.max(1, Math.ceil(prix - G.argent));
+  if (typeof window !== 'undefined' && window.jeu && window.jeu.events) window.jeu.events.emit('manqueArgent', manque);
+  return texte;
+}
+
 function agrandissementSuivant(G) {
   return AGRANDISSEMENTS.find(a => a.capacite > G.capacite) || null;
 }
@@ -1276,7 +1284,7 @@ function commanderAmelioration(G, cle) {
   const s = ameliorationSuivante(G, cle);
   if (!s) return 'Déjà au plus haut niveau.';
   if ((G.travaux || []).includes(cle)) return 'Les ouvriers viennent déjà cette nuit.';
-  if (!peutPayer(G, s.prix)) return "Pas assez d'argent.";
+  if (!peutPayer(G, s.prix)) return manqueArgent(G, s.prix, "Pas assez d'argent.");
   if (cle === 'reserve') { agrandirReserve(G); return null; }
   payer(G, s.prix, 'ameliorations');
   G.travaux = [...(G.travaux || []), cle];
@@ -1412,7 +1420,7 @@ function causeFaillite(G) {
 }
 
 // La nuit : échéances des prêts, puis le matin d'un nouveau jour (le marché).
-// (v0.60) Le loyer du comptoir : le bourgmestre loue les murs, et réévalue le bail à mesure que
+// (v0.60) Le loyer du comptoir : le bourgmastre loue les murs, et réévalue le bail à mesure que
 // le comptoir prospère (un palier de réputation de plus, et le loyer monte). Payé en fin de semaine.
 // (v0.60) Une seule règle pour la Main Noire : assez d'âmes offertes, la jauge bien à l'Ombre,
 // ou le camp scellé du côté de l'ombre
@@ -1495,7 +1503,7 @@ function nuit(G) {
   for (const l of nuitDuChat(G)) G.reveil.lignes.push(l);   // (v0.65) les rats, ou le cadeau du chat
   if (G.forge && G.forge.construite && G.forge.nouvelle) { G.reveil.lignes.push("Les ouvriers ont monté ta forge dans l'arrière-boutique : le foyer, le soufflet, l'enclume. Il ne manque plus qu'un forgeron !"); G.forge.nouvelle = false; }
   if (nouvellesDeLaForge(G)) G.reveil.lignes.push(nouvellesDeLaForge(G));   // (v0.82) les armes sorties de la forge
-  if (loyer > 0) G.reveil.lignes.push(`Le bourgmestre a encaissé le loyer de la semaine : ${loyer} pièces.` + (loyer > (G.dernierLoyer || loyer) ? ' Le bail a augmenté : ton comptoir a pris de la valeur.' : ''));
+  if (loyer > 0) G.reveil.lignes.push(`Le bourgmastre a encaissé le loyer de la semaine : ${loyer} pièces.` + (loyer > (G.dernierLoyer || loyer) ? ' Le bail a augmenté : ton comptoir a pris de la valeur.' : ''));
   if (loyer > 0) G.dernierLoyer = loyer;
   if (taxe > 0) G.reveil.lignes.push(`Un percepteur de la Confrérie est passé : ${taxe} pièces de taxe « pour la défense contre le dragon ».`);
   // Plus d'argent ni de provisions : Garrick laisse de quoi repartir (pas trop souvent)
@@ -1692,7 +1700,7 @@ function soireeMarcheNoir(G) {
 
 function acheterInterdit(G, id) {
   const o = INTERDITS[id];
-  if (!peutPayer(G, o.prix)) return "Pas assez d'argent.";
+  if (!peutPayer(G, o.prix)) return manqueArgent(G, o.prix, "Pas assez d'argent.");
   payer(G, o.prix, 'marcheNoir');
   G.interdits[id] = (G.interdits[id] || 0) + 1;
   soireeMarcheNoir(G).risque += MARCHE_NOIR.risqueAchat;
@@ -1916,6 +1924,8 @@ function terminerAventure(G, parti) {
   parti.termine = true;
   const r = parti.resultat;
   const v = parti.voyageur;
+  // (v0.84) ce qu'il était avant de revenir : pour la carte de progression façon RPG
+  const avant = { niveau: v.niveau, succes: succesDe(G, v.nom), relation: niveauRelation(G, v.nom).nom, reputation: G.reputation };
   let gain = 0;
   let message = null;
   G.habitues = G.habitues.filter(h => h.nom !== v.nom);
@@ -2001,6 +2011,8 @@ function terminerAventure(G, parti) {
     // La famille attend un dédommagement : il est choisi à la fin du carnet.
   }
   parti.bilan = { gain, message };
+  const h = G.habitues.find(x => x.nom === v.nom);
+  parti.progression = { avant, apres: { niveau: (h && h.niveau) || v.niveau, succes: succesDe(G, v.nom), relation: niveauRelation(G, v.nom).nom, reputation: G.reputation }, gain };
   connaitre(G, v);
   G.historique.unshift({
     nom: v.nom, race: v.race, quete: v.quete, zone: v.zone, depart: parti.depart, retour: parti.retour,
@@ -2179,7 +2191,7 @@ function trouvailles(G, voyageur) {
 function acheterTrouvaille(G, t) {
   if (t.vendu) return 'Déjà acheté.';
   if (G.tresors.length >= placesAtelier(G)) return `Ton atelier est plein (${placesAtelier(G)} objets). Un établi de plus (améliorations) donne plus de place.`;
-  if (!peutPayer(G, t.prix)) return "Pas assez d'argent.";
+  if (!peutPayer(G, t.prix)) return manqueArgent(G, t.prix, "Pas assez d'argent.");
   payer(G, t.prix, 'trouvailles');
   t.vendu = true;
   t.tresor.prixAchat = t.prix;   // pour savoir à tout moment combien il t'a coûté
@@ -2554,7 +2566,7 @@ function offrirCadeau(G, v, id) {
 
 function acheterCadeau(G, id) {
   const prix = CADEAUX[id].prix;
-  if (!peutPayer(G, prix)) return "Pas assez d'argent !";
+  if (!peutPayer(G, prix)) return manqueArgent(G, prix, "Pas assez d'argent !");
   payer(G, prix, 'bazar');
   G.cadeaux[id] = (G.cadeaux[id] || 0) + 1;
   return null;
@@ -2898,7 +2910,7 @@ function acheterForge(G) {
   const f = etatForge(G);
   if (f.construite || f.achat) return 'La forge est déjà commandée.';
   if (!forgeProposee(G)) return `La forge s'ouvre avec les contrées à ${FORGE.etoiles} étoiles.`;
-  if (!peutPayer(G, FORGE.prix)) return `Il te faut ${FORGE.prix} pièces.`;
+  if (!peutPayer(G, FORGE.prix)) return manqueArgent(G, FORGE.prix, `Il te faut ${FORGE.prix} pièces.`);
   payer(G, FORGE.prix, 'ameliorations');
   f.achat = G.jour;
   return null;
@@ -3015,7 +3027,7 @@ function prixLotGros(G, mat) {
 function acheterLotGros(G, mat) {
   if (!forgeConstruite(G)) return 'Thorgal ne vend en gros qu\'aux forgerons.';
   const prix = prixLotGros(G, mat);
-  if (!peutPayer(G, prix)) return "Pas assez d'argent ! Passe à la banque pour un prêt.";
+  if (!peutPayer(G, prix)) return manqueArgent(G, prix, "Pas assez d'argent ! Passe à la banque pour un prêt.");
   G.materiaux[mat] = (G.materiaux[mat] || 0) + FORGE.lot;
   return { message: depenserChez(G, 'forge', prix) };
 }

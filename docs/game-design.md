@@ -335,6 +335,7 @@ Chaque étape doit donner une version **jouable**.
 | v 0.81 | **Elfes majestueux, mages plus riches, lieux qui font peur** (planche 11 v3 validée le 18/10, sauf deux retouches faites en v0.82) | Demandes du 18/10. **Sanctuaire des Elfes façon Lothlórien** : un mallorn géant au tronc d'argent, trois étages de feuilles d'or en touffes, un talan blanc et sa maison aux fenêtres de lumière, l'escalier qui tourne autour du tronc et ses lanternes, des lueurs bleues qui flottent, d'autres mallorns autour. **Lac des Lunes façon Fondcombe** : la vallée entre des falaises à strates et leurs sapins, trois cascades, la maison en terrasses de pierre claire aux fenêtres en arc dorées, deux tours fines, un pont en arches, des arbres d'automne. **Cité d'Opale** : un rempart de cristal et sa porte d'or, une forêt de flèches et de coupoles, la grande tour et son anneau d'or qui flotte, des éclats de cristal suspendus, des ponts de lumière. **Bibliothèque** : la grande tour et ses contreforts, deux tourelles, l'escalier qui s'enroule, un livre géant ouvert qui flotte au sommet, des rochers enchaînés, des piles de livres ; les livres qui volent ont maintenant une couverture et des pages. **Terres Désolées** : trois carcasses (le grand squelette, une petite cage thoracique, un crâne cornu sur une pique), des os partout, deux vautours perchés et trois qui tournent dans le ciel. **Col des Hurlements** : un ciel lourd, des crocs de roche noire, une lune pâle, deux loups noirs qui hurlent sur l'éperon, des arbres morts tordus, des crânes sur des pieux, une bannière déchirée, le vent qui siffle. **Pics Gelés** : une aiguille de roche immense, la tour naine perchée tout en haut, un pont de corde vers un autre pic, une mer de nuages en dessous, des stalactites de glace, une bannière gelée tendue par le vent, le blizzard. **Les arbres du plan moyen sont peints** eux aussi (pommiers, saules, cyprès, chênes, sapins enneigés, mallorns, arbres d'automne, cactus, colonnes, pieux). |
 | v 0.82 | **La forge chez soi (10b, planche 12 validée le 18/10 ; Baba aux cheveux courts)** | Au lendemain du saut d'un an (★3), Garrick propose la forge ; on la construit (300 p.) depuis l'arrière-boutique ou le bureau (nouveau tiroir « La forge »), les ouvriers la montent la nuit. **Aldo** (apprenti humain, 6 p./nuit, une arme toutes les deux nuits, puis compagnon après 8 armes et ouvrier confirmé après 20) et **Baba Marteau-d'Or** (maîtresse naine du sud, khôl et anneau d'or au nez, 12 p./nuit, 2 armes par nuit, dès ★4) en tablier de cuir. Le soir, on clique sur les armes à forger (recettes validées ; les matériaux sont pris tout de suite, on peut vider la commande) ; elles sortent la nuit et arrivent sur le râtelier, avec parfois du **bel ouvrage** (30 % pour Baba, 8 → 24 % pour Aldo) : il brille sur le râtelier, s'use deux fois moins vite et donne +1 relation. **Thorgal vend en gros** à qui a une forge (lots de 5 fer, cuir ou bois à −30 %). **Côté ombre**, la forge fabrique la lame empoisonnée (dague + poison), la lame de lune noire (2 fer + poudre de lune noire) et les griffes de l'ombre (griffes + passe-partout), que les Bannis commandent au marché noir (le Passeur n'en vend pas). Retouches de la planche 11 : les falaises de Fondcombe ont un bord extérieur naturel ; le pont des Pics Gelés arrive sur un ponton calé au sommet du pic de droite. |
 | v 0.83 | **Contrôle complet (pendant le trajet du joueur)** | Correctif urgent : en v0.82, le tablier de cuir du forgeron faisait planter le dessin du joueur (promenade, intro, comptoir…) ; réparé. Le tiroir « La forge » du bureau était caché derrière « Fermer » : les 8 tiroirs sont resserrés. La phrase du chantier de la forge a un bandeau sombre (elle passait sur la hotte). La carte du matin, une fois fermée, gardait un écouteur de caméras qui pouvait planter et figer le jeu : il est retiré à la fermeture. Vérifié : audit des cas difficiles (marché noir, passer, dévoilement, fontaine, chien, promenade, intro, faillite, chargement), parcours de la forge (arrière-boutique, bureau, promenade, lots de Thorgal), nuits de forge (Aldo, Baba, bel ouvrage, armes de l'ombre), 17 écrans, 10 décors de récit, simulations longues et joueurs au hasard : aucune erreur. |
+| v 0.84 | **Le lot bêta (retours des amis testeurs, 19/10)** | **Bugs** : la banque figeait le jeu (ouverte le soir après une visite de jour, « Quitter » rouvrait la rue et laissait le soir en pause : chaque page relancée repart maintenant de ses propres données) ; un prêt pouvait se prendre tout seul en entrant (la banque n'écoute qu'après un court instant, et un prêt se signe sur une fiche « Signer / Non merci ») ; le conseil de Garrick se ferme d'un clic n'importe où (ou Entrée, Espace, Échap) ; les musiques de la banque, de l'Express et de la forge s'arrêtent quand on les quitte (la page d'en dessous reprend la sienne) ; les étals de Firmin et Marcelline ne se chevauchent plus ; Ysolde et les magiciennes ont une frange et deux longues mèches sous le chapeau ; « saine et sauve ». **Confort** : ta dette en gros à la banque ; plus de confirmation pour les objets en plus (« offert » est dit) ; refuser un client qui a déjà des objets, ou l'envoyer sans rien, demande confirmation ; une grande alerte « il te manque N pièces » ; l'étagère dit « 20 → 30 places (+10) » ; les rangs s'écrivent « Aguerri · rang 2/5 » avec ce qu'ils changent ; au marché, on rachète en cliquant sur une ligne (vue mi-zoomée) et de tout près on voit les commandes prévues (« prévu : 2 » sous chaque article, et le panneau des lettres) ; ta réserve chez le colporteur ; potions revendues après un récit à ×1,1 ; « bourgmastre » ; une musique triste pour le récit d'un héros mort ; un marteau ⚒ qui bat sur la ligne d'un objet à réparer ; une fine bande lumière ⟷ ombre sous le bandeau, avec « +N lumière / ombre » et une annonce quand un palier change. **Planches à valider** (non publiées) : le curseur (épée, plume ou flèche, et la main gantée), la carte de progression façon RPG au retour, la fiche de mission (au choix avec la cinématique, après un premier récit), la porte de derrière de l'arrière-boutique vers la rue. |
 | 10b | **La forge chez soi** (validé) | À ★3 (le saut d'un an), on peut construire une forge dans l'arrière-boutique et engager un premier forgeron ; un second à ★4. Chaque nuit, ils fabriquent des armes avec les matériaux en stock. |
 | 10c | **La rue et le familier** (validé : le chat chasse les rats de la réserve et prévient parfois de la garde) | La rue du comptoir s'agrandit : on y marche avec son personnage jusqu'aux lieux du quartier (marché, banque, forge, fontaine, plus tard le petit bar), en plus des raccourcis depuis la maison. En s'y promenant le soir, on croise le chat de gouttière : on le nourrit quelques soirs de suite, et il nous adopte (premier familier). |
 | 11 | **Aider pendant l'aventure** | Messages de détresse, le grand aigle, les mercenaires. |
@@ -672,6 +673,63 @@ dans la file (le tableau d'affichage et les visages sont faits), 6 les imposteur
    environ un client sur douze, un peu plus quand ta réputation grandit) ?
 4. **Le marchandage** porte bien sur **la part du butin** que le client te reversera au retour ?
 5. **L'ordre** : A-1, A-2, A-3, A-4, ou une autre préférence ?
+
+### Réponses du joueur (lot A, 19/10)
+1. **À 18 h** : (C) ceux qui avaient écrit reviennent le lendemain, les imprévus repartent.
+2. **Les recherchés** : environ un par semaine, mais jamais le même jour de la semaine.
+3. **Les imposteurs** : oui aux propositions (dès le jour 5, environ un client sur douze, un peu
+   plus quand la réputation grandit).
+4. **Le marchandage** : sur la part du butin, **et aussi** sur les trouvailles que le voyageur
+   propose de te vendre après son récit.
+5. **L'ordre** : laissé à Claude (A-1, A-2, A-3, A-4).
+
+## Bêta-test avec des amis (19/10)
+
+### À corriger ou améliorer (lot bêta, v0.84)
+- Bugs : la banque peut figer le jeu ; en entrant dans la banque, un prêt peut se prendre tout seul ;
+  au premier dialogue avec Garrick on ne peut pas cliquer « Compris » (il faut changer de pièce) ;
+  la musique de la banque et celle de l'Express restent quand on change de pièce (vérifier toutes
+  les musiques) ; les étals de Marceline la couturière et de Firmin le brocanteur ont leurs
+  provisions et leurs textes qui se chevauchent ; Ysolde la magicienne n'a presque pas de cheveux
+  sous le chapeau ; faute d'orthographe sur « saine et sauve » au comptoir.
+- Confort : en très gros zoom au marché, voir aussi les commandes prévues par lettre ; rendre les
+  rangs (novice, aguerri...) plus clairs pour qui ne les connaît pas ; une musique triste pour le
+  récit d'un héros mort ; plus de confirmation pour les objets en plus dans les provisions ; un
+  message bien visible quand on n'a pas assez d'argent ; l'amélioration de l'étagère dit combien
+  de places on gagne ; « bourgmestre » devient « bourgmastre » ; voir sa dette à la banque ;
+  potions revendues après un récit à ×1,1 au lieu de ×1,5 ; un objet à réparer bien visible ;
+  refuser un client à qui on a déjà donné des objets demande confirmation (en rappelant que ces
+  objets sont perdus) ; racheter partout au marché en vue mi-zoomée (et toujours de près sur
+  l'étal) ; confirmer avant d'envoyer un voyageur sans provisions ; voir sa réserve chez le
+  colporteur ; toujours mieux faire sentir le gain de lumière et d'ombre.
+- Planches à valider : un curseur de souris dans le thème du jeu ; la progression des héros au
+  retour façon RPG (comme Dispatch : l'expérience d'avant, ce qu'elle gagne, le rang qui monte) ;
+  après le premier visionnage d'un récit, le choix entre la cinématique et une fiche résumé de
+  l'aventure ; une porte dans l'arrière-boutique pour sortir dans la rue.
+
+### On le fera plus tard
+- **Plus de musiques** pour en enchaîner plusieurs et ne jamais lasser le joueur avec une seule.
+- **Le jeu du forgeron** : quand la forge est achetée, le joueur peut forger lui-même, avec tout
+  un mécanisme façon Kingdom Come: Deliverance 2 (chauffer au soufflet, sortir le métal à la
+  bonne couleur, frapper en rythme sur l'enclume, tremper, aiguiser), en pixel art. À préparer :
+  ce qu'il faut ajouter ou changer dans le jeu (voir la réponse de Claude du 19/10).
+  **Ce qu'il faudra ajouter ou changer (analyse du 19/10)** :
+  1. *Une scène de mini-jeu* « À l'enclume », lancée depuis la forge : chauffer au soufflet (la couleur
+     du métal passe du rouge sombre au jaune ; trop blanc, il brûle), sortir la pièce au bon moment,
+     frapper en rythme (une barre qui va et vient, des coups au bon endroit), étirer et plier, tremper
+     au bon instant, aiguiser à la meule, monter la poignée.
+  2. *Une qualité pour chaque arme* (0 à 100) : aujourd'hui une arme a seulement son usure et le
+     « bel ouvrage ». La qualité du mini-jeu donnerait : 80 et plus = bel ouvrage ; moins de 40 = arme
+     fragile (elle s'use plus vite). Les commandes exigeantes pourraient demander une qualité.
+  3. *Du temps* : forger soi-même prend un moment (le soir, ou une ou deux heures de la journée avec
+     l'horloge du lot A). C'est un choix : forger, ou servir au comptoir.
+  4. *Une progression de forgeron pour le joueur* (apprenti → compagnon → maître) : chaque arme
+     réussie fait progresser, et ouvre des recettes (les armes de peuple, puis les légendaires).
+  5. *Peut-être une matière en plus* : le charbon (acheté chez Thorgal), pour que chauffer coûte un peu.
+  6. *Aldo et Baba* : Aldo apprend plus vite quand tu forges avec lui ; Baba peut te donner des
+     conseils (une « leçon » qui facilite une étape).
+  7. *Des sons* (soufflet, braises, coups de marteau, trempe qui siffle) et une petite musique de forge.
+  Questions à trancher plus tard : forger seulement le soir ? en plus d'Aldo et Baba ou à leur place ?
 
 ## La rue et le familier (validé par le joueur le 16/10)
 

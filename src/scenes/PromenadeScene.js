@@ -92,6 +92,8 @@ class PromenadeScene extends Cinematique {
     porte(900, { piece: P_ARRIERE, x: o[P_ARRIERE].x + 840 }, "L'arrière-boutique", { sol: SOL_PROMENADE - 10 });
     // L'arrière-boutique : la porte de la chambre (déjà dessinée), et le passage vers le comptoir
     porte(o[P_ARRIERE].x + 900, { piece: P_CHAMBRE, x: 840 }, 'Ta chambre', { dessiner: false, sol: SOL_ARRIERE });
+    // (v0.84) la porte de derrière : on sort dans la rue sans repasser par le comptoir
+    porte(o[P_ARRIERE].x + 688, { piece: P_DEHORS, x: this.porteShop.x + 60 }, 'La rue', { dessiner: false, sol: SOL_ARRIERE, large: 80, haut: 148, ecriteauY: SOL_ARRIERE - 162 });
     porte(o[P_ARRIERE].x + 22, { piece: P_COMPTOIR, x: 0 }, '◀ Le comptoir', { dessiner: false, sol: SOL_ARRIERE + 30, ecriteauX: 58, ecriteauY: SOL_ARRIERE + 18 });   // (v0.57 : un simple passage au bord, sans porte devant l'étagère)
     // Le comptoir : on n'y marche pas ; comme dans la journée, on se retourne vers
     // l'arrière-boutique ou l'atelier d'un bouton, et la fenêtre donne sur la rue
@@ -305,6 +307,7 @@ class PromenadeScene extends Cinematique {
       ArriereScene.prototype.dessinerPanier.call(this);
       ArriereScene.prototype.dessinerBuffet.call(this);
       ArriereScene.prototype.dessinerPorte.call(this);
+      ArriereScene.prototype.dessinerPorteRue.call(this);
       ArriereScene.prototype.dessinerDecos.call(this);
     });
     this.lumieres.push([960 + 640, 90, 3], [960 + 514, SOL_ARRIERE - 30, 1.6]);

@@ -1,6 +1,9 @@
 // La petite cinématique : on voit l'aventure d'un voyageur, épreuve par épreuve,
 // et comment chaque objet du colis l'a aidé (ou lui a manqué).
 class StoryScene extends Cinematique {
+  // (v0.84) la musique du récit, retenue : elle reste la même quand on revient du menu pause
+  musique(theme) { this.musiqueVoulue = theme; Son.ambiance(theme); }
+
   constructor() { super('Recit'); }
 
   init(data) {
@@ -8,6 +11,8 @@ class StoryScene extends Cinematique {
   }
 
   create() {
+    this.musiqueVoulue = null;
+    this.modeFiche = false;
     this.G = window.GAME;
     // (la scène est réutilisée d'un récit à l'autre : on remet la vitesse normale)
     this.rapide = false;
@@ -138,6 +143,7 @@ class StoryScene extends Cinematique {
       this.tweens.add({ targets: this.conteur, y: 541, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     } else {
       creerObjetsHD(this);
+      if (!this.textures.exists('registreComptoir')) creerDecorComptoir(this);   // (v0.84 : sinon, un carré vide)
       const carnet = this.add.image(92, 470, 'registreComptoir').setScale(2.2).setAngle(-6);
       this.ui.add(carnet);
     }
@@ -175,11 +181,15 @@ class StoryScene extends Cinematique {
     const etapes = v.epreuves.length;
 
     this.titre.setText(r.vivant ? 'Le récit de ' + v.nom : 'Le carnet de ' + v.nom).setColor(couleurNom(this.G, v.nom, true));
-    Son.ambiance(r.vivant ? 'recitEtonne' : 'recitTriste');   // (la musique suit le récit : étonnement, peur, joie, tristesse)
+    this.musique(r.vivant ? 'recitEtonne' : 'recitTriste');   // (la musique suit le récit : étonnement, peur, joie, tristesse)
     this.ecrire(v.quete, r.vivant
       ? `${v.nom} est revenu${this.e} au comptoir, ${this.etatAuRetour()}. Assis${this.e} sur le rebord de la fenêtre, ${v.feminin ? 'elle' : 'il'} te raconte son aventure...`
       : `${v.nom} n'est jamais revenu${this.e}... ${this.G.faucheuse && this.G.faucheuse.visites ? 'La Faucheuse a laissé son carnet de voyage sur ton comptoir' : 'Un berger a rapporté son carnet de voyage'}. Tu l'ouvres en tremblant.`);
-    await this.attendreClic();
+    // (v0.84) après un premier récit vu en entier : le choix entre la cinématique et la fiche résumée
+    if ((this.G.recitsVus || 0) > 0 && !this.rapide) {
+      this.modeFiche = await this.choisirRecitOuFiche();
+      if (this.modeFiche) return this.conclure();
+    } else await this.attendreClic();
 
     for (let i = 0; i < r.etapes.length; i++) {
       const { epreuve, niveau, reussie, pvApres, piege, pvAvant, sauvee, repli, saignement, fane } = r.etapes[i];
@@ -338,7 +348,7 @@ class StoryScene extends Cinematique {
     // La fin du récit se lit à vitesse normale.
     this.rapide = false;
     this.cadrer(480, 185, 1, 800);
-    Son.ambiance(this.parti.resultat.vivant && !this.parti.resultat.echec ? 'recitHeureux' : 'recitTriste');
+    this.musique(this.parti.resultat.vivant && !this.parti.resultat.echec ? 'recitHeureux' : 'recitTriste');
     this.tweens.timeScale = 1;
     this.time.timeScale = 1;
     const v = this.parti.voyageur;
@@ -351,12 +361,18 @@ class StoryScene extends Cinematique {
 
     const { gain, message } = terminerAventure(this.G, this.parti);
     const relation = niveauRelation(this.G, v.nom);
+    this.G.recitsVus = (this.G.recitsVus || 0) + 1;
+    // (v0.84) la fiche de mission (si on l'a choisie) et la carte de progression façon RPG
+    this.carte = this.fiche = null;
+    if (this.modeFiche) this.ficheMission(20, 52);
+
     if (r.vivant && r.echec) {
       // Mission ratée : vivant, mais les mains vides.
       await this.marcherVers(880);
       this.ecrire('Mission ratée', [`« Je suis désolé${this.e}... Je reviens les mains vides. » · Relation : ${relation.nom}`,
         ...(this.parti.malus || []).map(m => '• ' + m)].join('\n'));
       this.texte.setFontSize(13).setLineSpacing(1);
+      this.carteProgression(this.modeFiche ? 494 : 257, 52);
     } else if (r.vivant) {
       await this.marcherVers(880);
       // (v0.60) la fin de la quête, en une image : ce qu'on n'avait jamais vu
@@ -371,6 +387,7 @@ class StoryScene extends Cinematique {
       this.ecrire('Retour au comptoir',
         `« ${this.remerciement()} Voici ta part du butin ! »\n` +
         `+ ${gain} pièces${ajuste} · Relation : ${relation.nom}${message ? '\n' + message : ''}`);
+      this.carteProgression(this.modeFiche ? 494 : 257, 52);
     } else {
       this.perso.setTint(0x888888);
       Son.jouer('glas');
@@ -391,6 +408,13 @@ class StoryScene extends Cinematique {
       return this.proposerDedommagement();
     }
 
+    // (v0.84) la carte de progression est un moment à part : on la lit, un clic, puis viennent les soins
+    // et les trouvailles (qui prennent sa place)
+    if (this.carte || this.fiche) {
+      await this.attendreClic();
+      for (const c of [this.carte, this.fiche]) if (c) this.tweens.add({ targets: c, alpha: 0, duration: 250, onComplete: () => c.destroy() });
+      this.carte = this.fiche = null;
+    }
     this.indice.destroy();
     const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => allerA(this, 'Comptoir'));
     this.dansUI(retour);
@@ -398,6 +422,94 @@ class StoryScene extends Cinematique {
       this.proposerSoins();
       this.proposerTrouvailles();
     }
+  }
+
+  // --- (v0.84) Le choix du récit, la fiche de mission, la carte de progression ---
+
+  choisirRecitOuFiche() {
+    return new Promise(fini => {
+      const a = creerBouton(this, 600, 345, 230, '▶ Voir le récit', () => choisir(false));
+      const b = creerBouton(this, 840, 345, 230, '📜 Lire la fiche', () => choisir(true));
+      this.dansUI(a); this.dansUI(b);
+      const choisir = fiche => { for (const x of [a, b]) { x.fond.destroy(); x.label.destroy(); } fini(fiche); };
+    });
+  }
+
+  // La fiche de mission : chaque épreuve en une ligne, ce qui a servi, ce qui a coûté
+  ficheMission(x0, y0) {
+    const v = this.parti.voyageur, r = this.parti.resultat, z = ZONES[v.zone];
+    const c = this.fiche = this.add.container(0, 0);
+    this.ui.add(c);
+    const h = 70 + r.etapes.length * 34 + 30;
+    c.add(this.add.image(x0 + 225, y0 + h / 2, panneauHD(this, 450, h)).setScale(2));
+    c.add(this.add.text(x0 + 24, y0 + 18, 'Fiche de mission', style(18, '#3b2410', { fontStyle: 'bold' })));
+    c.add(this.add.text(x0 + 24, y0 + 42, `${z ? z.nom + ' ' + '★'.repeat(z.danger) : ''} · ${v.quete || ''}`, style(12, '#6b4a2a', { fontStyle: 'italic', wordWrap: { width: 400 } })));
+    const NOMS = { riviere: 'La rivière', nuit: 'La nuit', soif: 'La soif', faim: 'La faim', froid: 'Le froid', loup: 'Le loup', bandits: 'Les bandits', araignee: "L'araignée", sanglier: 'Le sanglier', pillards: 'Les pillards', yeti: 'Le yéti', mortvivant: 'Le mort-vivant', monstre: 'Le monstre', marais: 'Le marais', poison: 'Le poison', falaise: 'La falaise', tempete: 'La tempête', piege: 'Le piège', perdu: 'Perdu' };
+    r.etapes.forEach((e, i) => {
+      const y = y0 + 80 + i * 34, ep = e.epreuve;
+      if (ep.besoin && ITEMS[ep.besoin]) c.add(this.add.image(x0 + 38, y, iconeObjet(this, ep.besoin)).setScale(1.6));
+      c.add(this.add.text(x0 + 60, y - 8, `${i + 1}. ${NOMS[ep.type] || (ep.type || '').replace(/^./, m => m.toUpperCase())}`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      const prepa = e.niveau === 'complet' ? 'bien équipé' : e.niveau === 'partiel' ? 'à moitié équipé' : `sans ${ITEMS[ep.besoin] ? ITEMS[ep.besoin].nom.toLowerCase() : 'rien'}`;
+      c.add(this.add.text(x0 + 60, y + 8, prepa + (e.piege ? ' · objet piégé !' : ''), style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
+      const perdu = Math.max(0, (e.pvAvant ?? e.pvApres) - e.pvApres);
+      c.add(this.add.text(x0 + 426, y, e.reussie ? '✓ réussie' : `✗ ratée${perdu ? ` · −${perdu} ♥` : ''}`, style(13, e.reussie ? '#2f6a2a' : '#a03030', { fontStyle: 'bold' })).setOrigin(1, 0.5));
+    });
+    const fin = r.vivant ? (r.echec ? `Revenu${this.e} vivant${this.e}, mais la mission a échoué.` : `Revenu${this.e} au comptoir : mission accomplie !`) : `N'est jamais revenu${this.e}...`;
+    c.add(this.add.text(x0 + 24, y0 + h - 26, fin, style(13, r.vivant && !r.echec ? '#2f6a2a' : '#a03030', { fontStyle: 'bold italic' })));
+    c.setAlpha(0); this.tweens.add({ targets: c, alpha: 1, duration: 300 });
+  }
+
+  // La carte de progression, façon RPG : les missions réussies qui remplissent la barre de son rang,
+  // le rang qui monte, la relation, ce qu'il te reverse
+  carteProgression(x0, y0) {
+    const v = this.parti.voyageur, pr = this.parti.progression, r = this.parti.resultat;
+    if (!pr) return;
+    const c = this.carte = this.add.container(0, 0);
+    this.ui.add(c);
+    const L = 446, H = 236;
+    c.add(this.add.image(x0 + L / 2, y0 + H / 2, panneauHD(this, L, H)).setScale(2));
+    const monte = pr.apres.niveau !== pr.avant.niveau;
+    c.add(this.add.image(x0 + 70, y0 + H - 10, textureBusteHD(this, v, monte || !r.echec ? 'content' : 'inquiet')).setOrigin(0.5, 1).setScale(1.2));
+    c.add(this.add.text(x0 + 140, y0 + 18, v.nom, style(17, '#3b2410', { fontStyle: 'bold' })));
+    const rang = this.add.text(x0 + 140, y0 + 42, nomRang(pr.avant.niveau), style(13, '#8a6a10', { fontStyle: 'bold' }));
+    c.add(rang);
+    // la barre : du seuil de son rang au seuil du suivant
+    const i0 = ORDRE_NIVEAUX.indexOf(pr.avant.niveau);
+    const seuil = k => NIVEAUX_AVENTURIER[ORDRE_NIVEAUX[k]].succes;
+    const bas = seuil(i0), haut = i0 + 1 < ORDRE_NIVEAUX.length ? seuil(i0 + 1) : bas + 1;
+    const part = n => Phaser.Math.Clamp((n - bas) / Math.max(1, haut - bas), 0, 1);
+    const bx = x0 + 140, by = y0 + 92, bl = 280, bh = 14;
+    c.add(this.add.text(bx, by - 14, r.echec ? 'Missions réussies : pas de progrès cette fois' : `Missions réussies : ${pr.avant.succes} → ${pr.apres.succes}`, style(12, '#3b2410')).setOrigin(0, 0.5));
+    const fond = this.add.rectangle(bx, by, bl, bh, 0x2a1a10).setOrigin(0, 0.5).setStrokeStyle(2, 0x6b4a2a);
+    const deja = this.add.rectangle(bx + 2, by, (bl - 4) * part(pr.avant.succes), bh - 4, 0xc9a227).setOrigin(0, 0.5);
+    const largeur = (bl - 4) * (part(Math.min(pr.apres.succes, haut)) - part(pr.avant.succes));
+    const gagne = this.add.rectangle(bx + 2 + (bl - 4) * part(pr.avant.succes), by, Math.max(1, largeur), bh - 4, 0xffe070).setOrigin(0, 0.5).setScale(0, 1);
+    c.add([fond, deja, gagne]);
+    for (let k = 1; k < haut - bas; k++) c.add(this.add.rectangle(bx + (bl * k) / (haut - bas), by, 2, bh, 0x2a1a10));
+    // (le prochain rang à viser : celui d'après le nouveau rang, s'il vient de monter)
+    const i1 = ORDRE_NIVEAUX.indexOf(pr.apres.niveau);
+    const suivant = i1 + 1 < ORDRE_NIVEAUX.length ? ORDRE_NIVEAUX[i1 + 1] : null;
+    c.add(this.add.text(bx + bl, by + 16, suivant ? `prochain rang : ${NIVEAUX_AVENTURIER[suivant].nom} (${NIVEAUX_AVENTURIER[suivant].succes} missions réussies)` : 'rang maximum', style(10, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(1, 0.5));
+    // relation, pièces, réputation
+    const lignes = [];
+    if (pr.apres.relation !== pr.avant.relation) lignes.push([`Relation : ${pr.avant.relation} → ${pr.apres.relation}`, '#1f5aa0']);
+    else lignes.push([`Relation : ${pr.apres.relation}`, '#3b2410']);
+    if (pr.gain) lignes.push([`+ ${pr.gain} pièces (sa part du butin)`, '#8a6a10']);
+    const dr = Math.round((pr.apres.reputation - pr.avant.reputation) * 10) / 10;
+    if (dr) lignes.push([`Réputation ${dr > 0 ? '+' : ''}${String(dr).replace('.', ',')}`, dr > 0 ? '#2f6a2a' : '#a03030']);
+    lignes.forEach(([t, col], k) => c.add(this.add.text(bx, by + 34 + k * 20, t, style(13, col, { fontStyle: 'bold' }))));
+    c.setAlpha(0);
+    this.tweens.add({ targets: c, alpha: 1, duration: 300 });
+    // l'animation : la barre se remplit, puis le rang monte
+    if (largeur > 0) this.tweens.add({ targets: gagne, scaleX: 1, duration: 900, delay: 500, ease: 'Sine.easeOut', onComplete: () => {
+      if (!monte) return;
+      Son.jouer('fanfare');
+      rang.setText(`${NIVEAUX_AVENTURIER[pr.avant.niveau].nom} → ${nomRang(pr.apres.niveau)}`).setColor('#b02a10');
+      const bravo = this.add.text(x0 + 70, y0 + 34, 'RANG\nSUPÉRIEUR !', style(16, '#fff4dc', { fontStyle: 'bold', stroke: '#8a2a10', strokeThickness: 5, align: 'center' })).setOrigin(0.5).setScale(0.3).setAngle(-8);
+      c.add(bravo);
+      this.tweens.add({ targets: bravo, scale: 1, duration: 400, ease: 'Back.easeOut' });
+      c.add(this.add.text(bx, y0 + H - 22, EXPLICATION_RANGS[pr.apres.niveau].replace(/^./, m => m.toUpperCase()), style(11, '#6b4a2a', { fontStyle: 'italic', wordWrap: { width: 290 } })));
+    } });
   }
 
   // (v0.60) Les compagnons du texte (pèlerins, convoi nain, guérisseuses...) marchent derrière lui
@@ -664,7 +776,7 @@ class StoryScene extends Cinematique {
     if (this.meteo) { this.meteo.remove(); this.meteo = null; }
     this.menace = { sorte: 'ambiance', sprites: [], type };
     const sombre = ['nuit', 'grotte', 'feufollet', 'esprits', 'malediction', 'mortvivant'].includes(type);
-    if (this.parti.resultat.vivant) Son.ambiance(sombre ? 'recitPeur' : 'recitEtonne');
+    if (this.parti.resultat.vivant) this.musique(sombre ? 'recitPeur' : 'recitEtonne');
     this.voile.setFillStyle(type === 'tempete' ? 0x8a6a3a : 0x05051a, this.voile.fillAlpha);
     this.tweens.add({ targets: this.voile, fillAlpha: sombre ? 0.55 : type === 'tempete' ? 0.3 : 0, duration: 600 });
     const ajouter = o => { this.decor.add(o); return o; };

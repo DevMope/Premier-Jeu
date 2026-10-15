@@ -45,6 +45,10 @@ class BanqueScene extends Phaser.Scene {
 
     this.creerPrets();
     creerBouton(this, 875, 505, 150, 'Quitter', () => this.fermer());
+    // (v0.84) le clic qui ouvre la banque (ou un second clic impatient sur la porte) ne doit rien
+    // signer : la banque n'écoute qu'au bout d'un court instant
+    this.input.enabled = false;
+    this.time.delayedCall(700, () => { this.input.enabled = true; });
   }
 
   parler(texte) {
@@ -66,7 +70,7 @@ class BanqueScene extends Phaser.Scene {
     const c = this.panneau = this.add.container(0, 0);
     c.add(this.add.image(470, 442, panneauHD(this, 660, 160)).setScale(2));
     pretsProposes(G).forEach((p, i) => {
-      const y = 393 + i * 20;
+      const y = 386 + i * 19;
       const taux = tauxPret(G, p), du = Math.round(p.somme * (1 + taux));
       c.add(this.add.text(165, y, `${p.nom} : reçois ${p.somme} p., rends ${du} p. en ${p.jours} nuits (${Math.round(taux * 100)} %${taux < p.taux ? ', prix de la lumière' : ''})`,
         style(12, refusPret(G, p) ? '#7a6a5a' : '#3b2410')).setOrigin(0, 0.5));
@@ -74,14 +78,18 @@ class BanqueScene extends Phaser.Scene {
       if (refus) {
         c.add(this.add.text(785, y, refus, style(12, '#8a3a1a', { fontStyle: 'italic' })).setOrigin(1, 0.5));
       } else {
-        const btn = creerBouton(this, 735, y, 104, 'Emprunter', () => this.emprunter(p));
+        const btn = creerBouton(this, 735, y, 104, 'Emprunter', () => this.confirmer(p));
         btn.label.setFontSize(13);
         btn.fond.setScale(2, 0.92);
         c.add([btn.fond, btn.label]);
       }
     });
-    const dettes = G.prets.map(p => `${p.nom} : reste ${p.restant} (−${p.parJour}/nuit)`).join(' · ');
-    c.add(this.add.text(165, 504, dettes ? 'En cours : ' + dettes : 'Aucun prêt en cours.', style(12, '#5a3a20', { wordWrap: { width: 610 } })).setOrigin(0, 0.5));
+    // (v0.84) ta dette, en gros : le total qui reste à rendre et ce que la banque prélève chaque nuit
+    const reste = G.prets.reduce((t, p) => t + p.restant, 0), parNuit = G.prets.reduce((t, p) => t + p.parJour, 0);
+    c.add(this.add.text(165, 485, reste ? `Ta dette : ${reste} p. à rendre (−${parNuit} p. chaque nuit)` : 'Ta dette : aucune. La banque ne te doit rien, et toi non plus.',
+      style(15, reste ? '#8a2a10' : '#2a5a20', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+    const dettes = G.prets.map(p => `${p.nom} : reste ${p.restant} p. (−${p.parJour}/nuit)`).join(' · ');
+    if (dettes) c.add(this.add.text(165, 502, dettes, style(10, '#5a3a20', { wordWrap: { width: 610 } })).setOrigin(0, 0.5));
   }
 
   // Ils te toisent : petits mouvements de tête, l'un après l'autre.
@@ -93,6 +101,22 @@ class BanqueScene extends Phaser.Scene {
       if (b.marche) { b.marche.remove(); b.marche = null; }
       this.tweens.add({ targets: b, angle: i === 1 ? 4 : -4, duration: 900 + i * 300, yoyo: true, repeat: -1, delay: i * 400, ease: 'Sine.easeInOut' });
     });
+  }
+
+  // (v0.84) un prêt se signe : on relit d'abord ce qu'on reçoit et ce qu'on rendra
+  confirmer(pret) {
+    if (this.fenetre) return;
+    const G = this.G, taux = tauxPret(G, pret), du = Math.round(pret.somme * (1 + taux));
+    const c = this.fenetre = this.add.container(0, 0).setDepth(70);
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.5).setInteractive());
+    c.add(this.add.image(480, 260, panneauHD(this, 420, 190)).setScale(2));
+    c.add(this.add.text(480, 196, `Signer : ${pret.nom}`, style(20, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(480, 248, `Tu reçois ${pret.somme} pièces maintenant.\nTu rendras ${du} pièces en ${pret.jours} nuits (−${Math.ceil(du / pret.jours)} p. chaque nuit).`,
+      style(15, '#3b2410', { align: 'center', lineSpacing: 4 })).setOrigin(0.5));
+    const fermer = () => { c.destroy(); this.fenetre = null; };
+    const oui = creerBouton(this, 395, 318, 150, 'Signer', () => { fermer(); this.emprunter(pret); });
+    const non = creerBouton(this, 565, 318, 150, 'Non merci', fermer);
+    c.add([oui.fond, oui.label, non.fond, non.label]);
   }
 
   emprunter(pret) {

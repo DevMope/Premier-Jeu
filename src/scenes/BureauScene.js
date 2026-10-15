@@ -210,7 +210,7 @@ class BureauScene extends Phaser.Scene {
     if (fiche || f.nom in G.relations) {
       const succes = succesDe(G, f.nom);
       const habitueNiv = (G.habitues.find(h => h.nom === f.nom) || {}).niveau;
-      if (habitueNiv) lignes.push(`Niveau : ${NIVEAUX_AVENTURIER[habitueNiv].nom} · ${succes} mission${succes > 1 ? 's' : ''} réussie${succes > 1 ? 's' : ''}`);
+      if (habitueNiv) lignes.push(`Rang : ${nomRang(habitueNiv)} (${EXPLICATION_RANGS[habitueNiv]}) · ${succes} mission${succes > 1 ? 's' : ''} réussie${succes > 1 ? 's' : ''}`);
       lignes.push(`Chance (trèfle) : ${trefleDe(G, f.nom)} / ${TREFLE_MAX}`);
       const gouts = fiche && fiche.gouts ? Object.entries(fiche.gouts) : [];
       const aime = gouts.filter(([, g]) => g === 'aime').map(([id]) => CADEAUX[id].nom.toLowerCase());
@@ -460,6 +460,9 @@ class BureauScene extends Phaser.Scene {
     }
     c.add(this.add.text(423, 262, '▼', style(16, '#8a6a4a')).setOrigin(0.5));
     apercu(suivant.niveau, 318);
+    // (v0.84) l'étagère : combien de places on gagne, par rapport à aujourd'hui
+    const agr = choisi === 'reserve' ? agrandissementSuivant(G) : null;
+    if (agr) c.add(this.add.text(423, 394, `${G.capacite} places → ${agr.capacite} places (+${agr.capacite - G.capacite})`, style(13, '#2a5a20', { fontStyle: 'bold' })).setOrigin(0.5));
     const prevu = (G.travaux || []).includes(choisi);
     const b = creerBouton(this, 423, 428, 230, prevu ? 'Prévu cette nuit' : `Commander · ${suivant.prix} p.`, () => {
       const erreur = commanderAmelioration(G, choisi);
@@ -469,7 +472,9 @@ class BureauScene extends Phaser.Scene {
       else p.add(this.add.text(423, 456, choisi === 'reserve' ? 'Ta réserve est agrandie !' : 'Commandé ! Les ouvriers viendront cette nuit.', style(12, '#3a6a20', { fontStyle: 'bold' })).setOrigin(0.5));
     });
     b.label.setFontSize(15);
-    if (prevu || !peutPayer(G, suivant.prix)) b.setActif(false);
+    if (prevu) b.setActif(false);
+    // (v0.84) trop cher : le bouton reste cliquable (grisé), pour dire clairement combien il manque
+    else if (!peutPayer(G, suivant.prix)) { b.fond.setTint(0x9a9a9a); b.label.setAlpha(0.6); }
     c.add([b.fond, b.label]);
   }
 

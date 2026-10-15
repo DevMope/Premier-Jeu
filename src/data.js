@@ -190,8 +190,8 @@ const MARCHAND_EXPRESS = { nom: 'Vieux Grippesou', multiplicateur: 2.5 };
 const EXPRESS_MATERIAUX = { chance: 0.4, multiplicateur: 4.5 };
 
 // Soigner un aventurier revenu blessé : une potion par cœur perdu,
-// et il te paie 1,5 fois le prix d'une potion.
-const PRIX_SOIN = Math.round(ITEMS.potion.prix * 1.5);
+// et il te paie 1,1 fois le prix d'une potion.
+const PRIX_SOIN = Math.round(ITEMS.potion.prix * 1.1);
 
 // Le dédommagement obligatoire versé à la famille d'un aventurier mort :
 // une part du butin qu'il espérait. Plus tu donnes, plus ta réputation remonte,
@@ -499,13 +499,13 @@ const GAIN_REPUTATION_SUCCES = 0.6;
 // féliciter au comptoir, et quelque chose se débloque (`recompense`).
 const PALIERS_CLIENTS = [
   { reputation: -Infinity, max: 3, nom: 'Échoppe inconnue' },
-  { reputation: 2, max: 4, nom: 'Échoppe du coin', visiteur: 'bourgmestre', recompense: { type: 'etals' },
+  { reputation: 2, max: 4, nom: 'Échoppe du coin', visiteur: 'bourgmastre', recompense: { type: 'etals' },
     gazette: "On commence à parler d'une petite échoppe pleine de promesses, au bout du village..." },
   { reputation: 5, max: 5, nom: 'Comptoir apprécié', visiteur: 'colporteur', recompense: { type: 'colporteur' },
     gazette: 'Les colporteurs des grands chemins ont ajouté un comptoir à leur tournée.' },
   { reputation: 9, max: 6, nom: 'Comptoir réputé', visiteur: 'heraut', recompense: { type: 'prestige', prime: 60 },
     gazette: 'La Confrérie du Dernier Rempart cite un comptoir en exemple. Les nobles dressent l\'oreille.' },
-  { reputation: 14, max: 7, nom: 'Comptoir renommé', visiteur: 'bourgmestre', recompense: { type: 'decoration', id: 'blason', prime: 100 },
+  { reputation: 14, max: 7, nom: 'Comptoir renommé', visiteur: 'bourgmastre', recompense: { type: 'decoration', id: 'blason', prime: 100 },
     gazette: 'Le bourg a décerné son blason à un marchand. Du jamais vu depuis trois générations !' },
   { reputation: 20, max: 8, nom: 'Comptoir célèbre', visiteur: 'legende', recompense: { type: 'legendes', prime: 150 },
     gazette: 'Une légende vivante aurait été vue devant un comptoir de la Comté. Les curieux affluent.' },
@@ -560,6 +560,19 @@ const NIVEAUX_AVENTURIER = {
   legende: { nom: 'Légende', pv: 2, butin: 1.5, bonus: 0.08, succes: 10 },
 };
 const ORDRE_NIVEAUX = Object.keys(NIVEAUX_AVENTURIER);
+// (v0.84) les rangs, lisibles pour qui ne les connaît pas : leur numéro sur cinq, et ce qu'ils changent
+const EXPLICATION_RANGS = {
+  novice: 'débutant : fragile, rapporte un peu moins',
+  aguerri: 'a fait ses preuves (1 mission réussie)',
+  veteran: 'solide : un cœur de plus, meilleur butin (3 missions)',
+  heros: 'redoutable : butin ×1,3 (6 missions), exigeant sur les contrées',
+  legende: 'le sommet : deux cœurs de plus, butin ×1,5 (10 missions)',
+};
+function nomRang(niveau, court = false) {
+  const n = NIVEAUX_AVENTURIER[niveau];
+  if (!n) return niveau;
+  return court ? `${n.nom} ${ORDRE_NIVEAUX.indexOf(niveau) + 1}/5` : `${n.nom} · rang ${ORDRE_NIVEAUX.indexOf(niveau) + 1}/5`;
+}
 
 // Ce qu'ils viennent chercher.
 const ENVIES = {
@@ -1889,7 +1902,7 @@ const NOUVELLES = [
   'Un barde a chanté si faux à la taverne que le fantôme du grenier a demandé à être exorcisé.',
   "Les gobelins du Bourbier organisent leur premier concours de poésie. Le jury a été mangé.",
   "Un hobbit a mangé sept repas hier. Ses médecins s'inquiètent : d'habitude, c'est neuf.",
-  'Une vache a été élue bourgmestre de Ravin-Moussu. Les habitants parlent du meilleur mandat depuis dix ans.',
+  'Une vache a été élue bourgmastre de Ravin-Moussu. Les habitants parlent du meilleur mandat depuis dix ans.',
   'Un nécromancien a relevé une armée de squelettes, qui s\'est aussitôt mise en grève pour réclamer de la peau.',
   'Les araignées des Mines abandonnées tissent désormais des pulls. Personne n\'ose en commander.',
   'Un elfe a souri en public. Les témoins sont encore sous le choc.',

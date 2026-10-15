@@ -187,7 +187,7 @@ class NightScene extends Phaser.Scene {
     this.texteAgrandir = this.add.text((x1 + x2) / 2, 444, '', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
     btn.on('pointerdown', () => {
       if (agrandirReserve(this.G)) return this.tout();
-      if (agrandissementSuivant(this.G)) this.annoncer("Pas assez d'argent pour agrandir la réserve.");
+      if (agrandissementSuivant(this.G)) this.annoncer(manqueArgent(this.G, agrandissementSuivant(this.G).prix, "Pas assez d'argent pour agrandir la réserve."));
     });
     this.boutonAgrandir = btn;
   }
@@ -210,7 +210,7 @@ class NightScene extends Phaser.Scene {
     this.texteReserve.setText(`Réserve : ${stockTotal(G)} / ${G.capacite}${plein ? ' — pleine !' : ''}`);
     if (this.texteFeu) this.texteFeu.setText(feuAllume(G) ? 'Le feu brûle' : 'Allumer le feu (1 bois)').setColor(feuAllume(G) ? '#a05010' : (G.materiaux.bois || 0) > 0 ? '#8a3a10' : '#a08070');
     const a = agrandissementSuivant(G);
-    this.texteAgrandir.setText(a ? `Agrandir à ${a.capacite} places — ${a.prix} p.` : 'Réserve au maximum');
+    this.texteAgrandir.setText(a ? `Agrandir : ${G.capacite} → ${a.capacite} places (+${a.capacite - G.capacite}) — ${a.prix} p.` : 'Réserve au maximum');
     this.boutonAgrandir.setAlpha(a && peutPayer(G, a.prix) ? 1 : 0.5);
   }
 
@@ -299,7 +299,7 @@ class NightScene extends Phaser.Scene {
 
   ouvrirBanque() {
     this.scene.pause();
-    this.scene.launch('Banque');
+    this.scene.launch('Banque', { retour: 'Nuit' });
   }
 }
 

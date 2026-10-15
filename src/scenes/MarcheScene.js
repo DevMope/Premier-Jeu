@@ -648,8 +648,8 @@ class MarcheScene extends Phaser.Scene {
     return c;
   }
 
-  bouton(c, x, y, l, texte, action, couleur = 0x8a5a2b) {
-    const fond = this.add.rectangle(x, y, l, 26, couleur).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
+  bouton(c, x, y, l, texte, action, couleur = 0x8a5a2b, haut = 26) {
+    const fond = this.add.rectangle(x, y, l, haut, couleur).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
     const label = this.add.text(x, y, texte, style(12, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5);
     fond.on('pointerdown', () => { Son.jouer('clic'); action(); });
     c.add([fond, label]);
@@ -797,6 +797,7 @@ class MarcheScene extends Phaser.Scene {
     c.add(this.add.text(480, 32, `${m.nom} · ${m.metier}`, style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
     // La marchandise, bien alignée sur la nappe : l'objet en grand, sa pile, son étiquette
     const pas = Math.min(130, 700 / Math.max(1, ids.length));
+    const prevus = totalCommandes(G);
     ids.forEach((id, i) => {
       const x = 480 + (i - (ids.length - 1) / 2) * pas, o = offre[id], prix = prixMarchand(G, cle, id);
       const groupe = [];
@@ -813,8 +814,10 @@ class MarcheScene extends Phaser.Scene {
       const nom = this.add.text(x, 418, serre ? nomObjet(id) : `${nomObjet(id)} × ${o.qte}`, style(serre ? 11 : 12, '#fff4dc', { align: 'center', stroke: '#1a0e06', strokeThickness: 3, wordWrap: { width: pas - 4 } })).setOrigin(0.5, 0);
       // (v0.68) ce que tu en as déjà, juste dessous
       const aDeja = id in MATERIAUX ? G.materiaux[id] || 0 : G.stock[id] || 0;
+      // (v0.84) ce que les lettres acceptées demandent (de tout près aussi), rouge s'il en manque
+      const prevu = id in MATERIAUX ? 0 : (prevus[id] || 0);
       // (v0.73) sur une plaque sombre : lisible quelle que soit la toile de l'étal (verte, rouge...)
-      const aToi = this.add.text(x, 421 + nom.height, serre ? `× ${o.qte}\nà toi : ${aDeja}` : `tu en as ${aDeja}`, style(11, aDeja ? '#f3d98a' : '#d8c8a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3, align: 'center' })).setOrigin(0.5, 0);
+      const aToi = this.add.text(x, 421 + nom.height, (serre ? `× ${o.qte}\nà toi : ${aDeja}` : `tu en as ${aDeja}`) + (prevu ? `\nprévu : ${prevu}` : ''), style(11, prevu > aDeja ? '#ff9a80' : aDeja ? '#f3d98a' : '#d8c8a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3, align: 'center' })).setOrigin(0.5, 0);
       const larg = Math.min(pas - 4, Math.max(nom.width, aToi.width) + 14);
       c.add(this.add.rectangle(x, 414, larg, nom.height + aToi.height + 12, 0x1a0e06, 0.72).setOrigin(0.5, 0).setStrokeStyle(1, 0x8a6a3a, 0.8));
       c.add(nom); c.add(aToi);
@@ -828,6 +831,7 @@ class MarcheScene extends Phaser.Scene {
         this.majInfos();
         if (this.commandesOuvertes) { this.panneauCommandes.destroy(); this.creerPanneauCommandes(); }
         this.vitrine(cle);
+        if (this.panneauCommandes) this.panneauCommandes.setDepth(45);
       });
       c.add([...groupe, etiquette, texte, zone]);
     });
@@ -835,7 +839,18 @@ class MarcheScene extends Phaser.Scene {
     const b = creerBouton(this, 836, 46, 200, '◀ Reculer', fermer);
     c.add([b.fond, b.label]);
     // (v0.68) ta bourse, en haut à gauche
-    c.add(bourse(this, 44, 70, G.argent, { echelle: 1.6, taille: 16, aDroite: true }));
+    c.add(bourse(this, 44, 82, G.argent, { echelle: 1.6, taille: 16, aDroite: true }));
+    // (v0.84) les commandes prévues par lettre, consultables de tout près aussi
+    const nLettres = G.annonces.filter(a => a.acceptee && a.jour >= G.jour).length;
+    const bc = creerBouton(this, 124, 42, 220, `Commandes prévues (${nLettres}) ${this.commandesOuvertes ? '▲' : '▼'}`, () => {
+      this.basculerCommandes();
+      if (this.panneauCommandes) this.panneauCommandes.setDepth(45);
+      bc.setTexte(`Commandes prévues (${nLettres}) ${this.commandesOuvertes ? '▲' : '▼'}`);
+    });
+    bc.label.setFontSize(13);
+    c.add([bc.fond, bc.label]);
+    if (this.panneauCommandes) this.panneauCommandes.setDepth(45);
+    c.once('destroy', () => { if (this.panneauCommandes) this.panneauCommandes.setDepth(20); });
     // (v0.68) des flèches pour passer d'un étal à l'autre sans reculer (et ◀ ▶ au clavier)
     const cles = Object.keys(MARCHANDS), i0 = cles.indexOf(cle);
     const aller = sens => { const suivant = cles[(i0 + sens + cles.length) % cles.length]; Son.jouer('glisse'); this.ouvrirEtal(suivant); this.vitrine(suivant); };
@@ -872,7 +887,7 @@ class MarcheScene extends Phaser.Scene {
     const m = MARCHANDS[cle];
     const rel = niveauRelation(G, m.nom);
     const remise = remiseMarchand(G, cle);
-    const c = this.panneau(`${m.nom} · ${m.metier}`, `Relation : ${rel.nom}${remise ? ` · remise ${Math.round(remise * 100)} %` : ''} · les prix changent chaque jour`);
+    const c = this.panneau(`${m.nom} · ${m.metier}`, `Relation : ${rel.nom}${remise ? ` · remise ${Math.round(remise * 100)} %` : ''} · clique sur une ligne pour acheter`);
     const offre = G.etals[cle];
     const ids = m.objets.filter(id => offre[id]);
     // (v0.63) les armes absentes ne prennent pas de ligne : il y en a trop
@@ -897,8 +912,27 @@ class MarcheScene extends Phaser.Scene {
       }
       c.add(this.add.text(x + (k3 ? 174 : 230), y, `${prixMarchand(G, cle, id)} p.`, style(k3 ? 12 : 14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
       c.add(ajuster(this.add.text(x + (k3 ? 210 : 300), y, o.qte > 0 ? `${o.qte} en vente` : 'Épuisé', style(k3 ? 11 : 12, o.qte > 0 ? '#4a6a2a' : '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5), k3 ? 82 : 120));
+      // (v0.84) on achète de nouveau d'ici : un clic sur la ligne en achète un (de près, ça marche aussi)
+      if (o.qte > 0) {
+        const surbrillance = this.add.rectangle(x - 4, y, lx - 12, 26, 0xfff2c0, 0).setOrigin(0, 0.5);
+        const zone = this.add.rectangle(x - 4, y, lx - 12, 26, 0xffffff, 0).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
+        zone.on('pointerover', () => surbrillance.setFillStyle(0xfff2c0, 0.55));
+        zone.on('pointerout', () => surbrillance.setFillStyle(0xfff2c0, 0));
+        zone.on('pointerdown', () => {
+          if (this.verrouAchat > this.time.now) return;
+          this.verrouAchat = this.time.now + 250;
+          const r = acheterAuMarche(G, cle, id);
+          if (r.erreur) return this.message(r.erreur, '#a03030');
+          Son.jouer('achat');
+          this.majInfos();
+          if (this.commandesOuvertes) { this.panneauCommandes.destroy(); this.creerPanneauCommandes(); }
+          this.ouvrirEtal(cle);
+          this.message(r.message || `Acheté : ${nomObjet(id)}.`);
+        });
+        c.addAt(surbrillance, 0);
+        c.add(zone);
+      }
     });
-    // (v0.58) on n'achète plus d'ici : on s'approche de l'étal pour choisir sur la marchandise
     // (v0.68) une vraie plaque de bois, comme les autres boutons du jeu
     const pres = creerBouton(this, 800, 446, 240, "Voir l'étal de près ▸", () => this.vitrine(cle));
     c.add([pres.fond, pres.label]);
@@ -985,7 +1019,7 @@ class MarcheScene extends Phaser.Scene {
       style(14, '#3b2410', { lineSpacing: 4 })));
     [1, 5, 10].forEach((n, i) => this.bouton(c, 120 + i * 150, 400, 130, `Donner ${n} pièce${n > 1 ? 's' : ''}`, () => {
       const merci = donnerAuMendiant(G, n);
-      if (!merci) return this.message("Tu n'as pas assez d'argent.", '#a03030');
+      if (!merci) return this.message(manqueArgent(G, n, "Tu n'as pas assez d'argent."), '#a03030');
       Son.jouer('pieces', { montant: n });
       this.ouvrirMendiant();
       this.message(texteMendiant(merci));
@@ -1051,7 +1085,7 @@ class MarcheScene extends Phaser.Scene {
     [1, 5, 10].forEach((n, i) => {
       const b = creerBouton(this, 150 + i * 170, 516, 150, `Donner ${n} p.`, () => {
         const merci = donnerAuMendiant(G, n);
-        if (!merci) return this.message("Tu n'as pas assez d'argent.", '#a03030');
+        if (!merci) return this.message(manqueArgent(G, n, "Tu n'as pas assez d'argent."), '#a03030');
         this.majInfos();
         // (v0.68) les pièces volent jusqu'à sa sébile, puis il pense à ce qu'il va en faire
         voleePieces(this, 150 + i * 170, 500, 520, 474, n, { conteneur: c, fin: () => {
@@ -1152,12 +1186,13 @@ class MarcheScene extends Phaser.Scene {
     if (!lieuOuvert(G, 'brocante')) return this.message(`${NOMS_LIEUX_MARCHE.brocante} ouvre le jour ${OUVERTURE_LIEUX.brocante}.`);
     this.montrer('brocante');
     const c = this.panneau(BROCANTEUR.nom, "Chaque décoration se voit dans ton arrière-boutique, et attire un peuple");
-    c.add(this.add.text(30, 340, "« Des merveilles dénichées aux quatre coins des Trois Terres. Ça fera un comptoir qu'on remarque ! »",
-      style(12, '#6b4a2a', { fontStyle: 'italic' })));
+    c.add(this.add.text(30, 334, "« Des merveilles dénichées aux quatre coins des Trois Terres. Ça fera un comptoir qu'on remarque ! »",
+      style(11, '#6b4a2a', { fontStyle: 'italic' })));
     Object.entries(DECOS).filter(([, d]) => !d.cadeau).forEach(([id, d], i) => {   // (les souvenirs ne se vendent pas)
       // Une ligne par décoration : l'icône, le nom et le prix, l'effet en bref (l'effet complet au survol)
+      // (v0.84) des lignes qui ne se chevauchent plus : sous la phrase de Firmin, et des boutons plus fins
       const x = 40 + (i % 2) * 460;
-      const y = 364 + Math.floor(i / 2) * 22;
+      const y = 361 + Math.floor(i / 2) * 21;
       c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(1.5));
       const nom = this.add.text(x + 16, y, `${d.nom} · ${d.prix} p.`, style(12, d.camp === 'bien' ? '#8a6a00' : d.camp === 'mal' ? '#5a2a7a' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
       c.add(nom);
@@ -1166,11 +1201,13 @@ class MarcheScene extends Phaser.Scene {
       c.add(effet);
       if (aDeco(G, id)) c.add(this.add.text(x + 405, y, 'Chez toi', style(11, '#2f6a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
       else this.bouton(c, x + 405, y, 62, 'Acheter', () => {
+        if (this.verrouBrocante > this.time.now) return;
+        this.verrouBrocante = this.time.now + 400;
         const erreur = acheterDeco(G, id);
         if (!erreur) Son.jouer('achat');
         this.ouvrirBrocante();
         this.message(erreur || `${d.nom} : accrochée dans ton arrière-boutique !`, erreur ? '#a03030' : '#2f6a2a');
-      });
+      }, undefined, 19);
     });
   }
 
@@ -1181,17 +1218,24 @@ class MarcheScene extends Phaser.Scene {
     if (!lieuOuvert(G, 'garderobe')) return this.message(`${NOMS_LIEUX_MARCHE.garderobe} ouvre le jour ${OUVERTURE_LIEUX.garderobe}.`);
     this.montrer('garderobe');
     const c = this.panneau(MARCELLINE.nom, 'Ce que tu achètes, tu le portes ; ta malle, au pied du lit, garde le reste');
-    c.add(this.add.text(30, 340, "« Un commerce bien tenu commence par une tenue soignée. Laisse-moi t'arranger ça... »",
-      style(12, '#6b4a2a', { fontStyle: 'italic' })));
+    c.add(this.add.text(30, 334, "« Un commerce bien tenu commence par une tenue soignée. Laisse-moi t'arranger ça... »",
+      style(11, '#6b4a2a', { fontStyle: 'italic' })));
     // Toi, dans ta tenue du moment
     textureJoueur(this, G);
     c.add(this.add.image(900, 500, textureJoueur(this, G, 'troisQuarts')).setOrigin(0.5, 1).setScale(echelleJoueur(7)).setFlipX(true));   // (tourné vers la marchande)
     Object.entries(GARDE_ROBE).forEach(([id, d], i) => {
       const x = 40 + (i % 2) * 400;
-      const y = 362 + Math.floor(i / 2) * 26;   // (audit v0.61 : la dernière rangée passait sous le message)
-      c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(2));
-      c.add(this.add.text(x + 20, y - 7, `${d.nom} · ${d.prix} p.`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
-      c.add(this.add.text(x + 20, y + 8, d.effet, style(10, '#6b4a2a', { wordWrap: { width: 280 } })).setOrigin(0, 0.5));
+      const y = 364 + Math.floor(i / 2) * 25;   // (audit v0.61 : la dernière rangée passait sous le message)
+      c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(1.6));
+      c.add(this.add.text(x + 18, y - 6, `${d.nom} · ${d.prix} p.`, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      // (v0.84) l'effet tient sur une ligne (il débordait sur la rangée suivante) ; en entier au survol
+      const effet = this.add.text(x + 18, y + 7, d.effet, style(10, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5);
+      if (effet.width > 290) {
+        let t = d.effet;
+        while (t.length > 4 && effet.setText(t + '…').width > 290) t = t.slice(0, -1);
+        effet.setInteractive().on('pointerover', () => this.message(d.effet));
+      }
+      c.add(effet);
       // (audit v0.61) un double clic retombait sur le bouton reconstruit : acheter puis revendre aussitôt
       const verrou = () => { if (this.verrouGR > this.time.now) return true; this.verrouGR = this.time.now + 400; return false; };
       if (possede(G, id)) this.bouton(c, x + 340, y, 70, `Revendre`, () => {
@@ -1200,14 +1244,14 @@ class MarcheScene extends Phaser.Scene {
         if (!erreur) Son.jouer('pieces');
         this.ouvrirGardeRobe();
         this.message(erreur || `${d.nom} revendu à Marcelline : +${Math.floor(d.prix / 2)} p.`, erreur ? '#a03030' : '#2f6a2a');
-      });
+      }, undefined, 21);
       else this.bouton(c, x + 340, y, 70, 'Acheter', () => {
         if (verrou()) return;
         const erreur = acheterTenue(G, id);
         if (!erreur) Son.jouer('achat');
         this.ouvrirGardeRobe();
         this.message(erreur || `${d.nom} : tu le portes dès maintenant !`, erreur ? '#a03030' : '#2f6a2a');
-      });
+      }, undefined, 21);
     });
   }
 
@@ -1462,7 +1506,7 @@ class MarcheScene extends Phaser.Scene {
     const G = this.G;
     if (this.desEnCours) return;
     const r = jouerAuxDes(G, mise);
-    if (!r) return this.message(partiesRestantes(G, 'des') <= 0 ? "Plus de parties aujourd'hui. Reviens demain !" : "Pas assez d'argent pour cette mise.", '#a03030');
+    if (!r) return this.message(partiesRestantes(G, 'des') <= 0 ? "Plus de parties aujourd'hui. Reviens demain !" : manqueArgent(G, mise, "Pas assez d'argent pour cette mise."), '#a03030');
     this.desEnCours = true;
     const tous = [...this.desToi, ...this.desLui];
     let n = 0;
@@ -1502,7 +1546,7 @@ class MarcheScene extends Phaser.Scene {
     const G = this.G;
     if (this.etatBonneteau !== 'attente') return;
     if (!miserAuBonneteau(G, mise)) {
-      return this.message(partiesRestantes(G, 'bonneteau') <= 0 ? "Plus de parties aujourd'hui. Reviens demain !" : "Pas assez d'argent pour cette mise.", '#a03030');
+      return this.message(partiesRestantes(G, 'bonneteau') <= 0 ? "Plus de parties aujourd'hui. Reviens demain !" : manqueArgent(G, mise, "Pas assez d'argent pour cette mise."), '#a03030');
     }
     this.majInfos();
     this.mise = mise;
