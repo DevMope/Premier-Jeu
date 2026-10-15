@@ -157,7 +157,8 @@ class NightScene extends Phaser.Scene {
         const cache = G.cachette === G.jour + 1;
         ligne = `🐈 ${nomChat(G)[0].toUpperCase() + nomChat(G).slice(1)} crache vers la porte. La garde, demain ?` + (cache ? ' Tout est caché.' : aCacher(G) ? '' : ' (Rien à cacher.)');
         if (!cache && aCacher(G)) action = ['▸ Tout cacher sous le plancher', () => { cacherMarchandise(G); Son.jouer('glisse'); this.tout(); }];
-      } else if (chatCeSoir(G)) ligne = '🐈 Un chat de gouttière rôde devant ta porte ce soir.';
+      } else if (nympheAttend(G)) ligne = '✨ Une lueur bleue monte de la place du marché... Sors voir, par la rue !';
+      else if (chatCeSoir(G)) ligne = '🐈 Un chat de gouttière rôde devant ta porte ce soir.';
       if (ligne) c.add(this.add.text(x1 + 18, 424, ligne, style(12, '#5a2a4a', { fontStyle: 'bold italic', wordWrap: { width: x2 - x1 - 36 } })));
       if (action) c.add(this.add.text(x1 + 18, 455, action[0], style(12, '#8a1a1a', { fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 4, y: 2 } })).setInteractive({ useHandCursor: true }).on('pointerdown', action[1]));
     }

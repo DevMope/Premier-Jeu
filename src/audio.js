@@ -517,7 +517,7 @@ const THEMES = {
 // (v0.58) Le volume de chaque bruitage, mesuré puis corrigé : chacun est ramené au niveau de sa
 // famille — l'interface discrète (-30 dB), l'ambiance et les bêtes (-27 dB), les gestes du jeu
 // (-23 dB), les grands moments (-20 dB). Sans ça, une plume était 28 dB plus faible qu'un succès.
-const VOLUME_SONS = { poser: 0.6, plume: 3.05, clic: 2.57, feu: 3.02, balai: 2.88, glisse: 4, des: 3.47, page: 1.24, sabots: 1.7, vent: 1.57, porte: 2.37, glou: 1.48, plouf: 1.48, aie: 1.29, coq: 1.23, passageDehors: 0.84, saut: 1.16, refus: 0.65, maillet: 1.4, pas: 1.36, fanfare: 1.7, siffle: 1.16, hibou: 0.67, echec: 1.46, grogne: 0.59, loup: 0.56, pieces: 0.73, achat: 0.73, sanglier: 0.46, caisse: 0.65, marteau: 0.65, bouclier: 0.56, clochette: 0.65, coeur: 0.64, cloche: 0.6, trefle: 0.55, succes: 0.38 };
+const VOLUME_SONS = { poser: 0.6, plume: 3.05, clic: 2.57, feu: 3.02, balai: 2.88, glisse: 4, des: 3.47, page: 1.24, sabots: 1.7, vent: 1.57, porte: 2.37, glou: 1.48, plouf: 1.48, aie: 1.29, coq: 1.23, passageDehors: 0.84, saut: 1.16, refus: 0.65, maillet: 1.4, pas: 1.36, fanfare: 1.7, siffle: 1.16, hibou: 0.67, echec: 1.46, grogne: 0.59, loup: 0.56, pieces: 0.73, achat: 0.73, sanglier: 0.46, caisse: 0.65, marteau: 0.65, bouclier: 0.56, clochette: 0.65, coeur: 0.64, cloche: 0.6, trefle: 0.55, succes: 0.38, nymphe: 0.7 };
 const SONS_INTERFACE = new Set(['clic', 'page', 'plume', 'passage', 'passageDehors', 'refus']);
 
 const SONS = {
@@ -549,6 +549,11 @@ const SONS = {
     o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.2);
     this.bruit(0.09, t, bus, 0.16, 1400, 'lowpass');
     this.bruit(0.12, t + 0.05, bus, 0.06, 3200);
+  },
+  // (v0.67) L'éveil de la nymphe : une harpe qui monte, et des clochettes d'eau par-dessus
+  nymphe(t, bus) {
+    [0, 4, 7, 11, 14, 18, 21, 26].forEach((d, i) => this.note('harpe', 293.66 * Math.pow(2, d / 12), t + i * 0.13, 1.4, 0.7, bus));
+    [31, 28, 33].forEach((d, i) => this.note('celesta', 293.66 * Math.pow(2, d / 12), t + 1.1 + i * 0.22, 1.2, 0.5, bus));
   },
   succes(t, bus) { [0, 4, 7, 12].forEach((d, i) => this.note('ocarina', 523.25 * Math.pow(2, d / 12), t + i * 0.09, 0.3, 0.8, bus)); },
   // Un accord qui tombe (échec)
@@ -737,5 +742,5 @@ THEMES.personnage = Object.assign({}, THEMES.titre, {
 // Le thème de chaque scène du jeu
 const THEME_PAR_SCENE = {
   Titre: 'titre', Intro: 'personnage', IntroHistoire: 'cinematique', Comptoir: 'comptoir', Nuit: 'nuit', Dodo: 'nuit', Recit: 'recitEtonne', Faillite: 'faillite',
-  MarcheNoir: 'marcheNoir', Express: 'jeux', Banque: 'banque', Marche: 'marche', Atelier: 'comptoir', Bureau: 'comptoir', Carte: 'carte', Facade: 'marche', Arriere: 'comptoir', Renovation: 'cinematique', Promenade: 'nuit', Rue: 'marche',
+  MarcheNoir: 'marcheNoir', Express: 'jeux', Banque: 'banque', Marche: 'marche', Atelier: 'comptoir', Bureau: 'comptoir', Carte: 'carte', Facade: 'marche', Arriere: 'comptoir', Renovation: 'cinematique', Promenade: 'nuit', Rue: 'marche', Nymphe: 'cinematique',
 };

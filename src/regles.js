@@ -183,7 +183,9 @@ function chanceEtapeBase(e, colis, voyageur) {
   const evenement = modifEvenement(window.GAME, 'danger', voyageur.zone);
   const etoiles = ZONES[voyageur.zone] ? ZONES[voyageur.zone].danger : 1;
   const danger = Math.max(0, MALUS_DANGER * (etoiles - 1) - niv.bonus);
-  return Phaser.Math.Clamp(chanceEpreuve(niveauEpreuve(e, colis, voyageur)) + enPlus * BONUS_SURPLUS + bonusArme + niv.bonus + evenement - danger, 0.05, 0.97);
+  // (v0.67) la bénédiction de la nymphe : les épreuves d'eau réussissent mieux pendant quelques jours
+  const B = NYMPHE.benediction, beni = window.GAME && window.GAME.nymphe && window.GAME.nymphe.benie >= window.GAME.jour && (B.types.includes(e.type) || B.besoins.includes(e.besoin)) ? B.bonus : 0;
+  return Phaser.Math.Clamp(chanceEpreuve(niveauEpreuve(e, colis, voyageur)) + enPlus * BONUS_SURPLUS + bonusArme + niv.bonus + evenement - danger + beni, 0.05, 0.97);
 }
 
 // Avec la chance : une épreuve ratée peut être rattrapée de justesse par son trèfle.
@@ -1789,6 +1791,22 @@ function aCacher(G) {
   return Object.values(G.interdits || {}).some(n => n > 0) || !!m.colis || G.tresors.some(t => t.vole && !t.reparation);
 }
 function cacherMarchandise(G) { G.cachette = G.jour + 1; }
+
+// --- (v0.67) La nymphe des fontaines ---
+// Ce soir, la place du marché l'attend-elle ? (5 vœux, puis tous les 10 de plus)
+function nympheAttend(G) {
+  const n = G.nymphe || { visites: 0 };
+  return (G.fontainePieces || 0) >= NYMPHE.voeux + n.visites * NYMPHE.ensuite;
+}
+// La rencontre : la bénédiction (et le souvenir, la première fois). Renvoie ce qu'elle laisse.
+function rencontrerNymphe(G) {
+  const n = G.nymphe = G.nymphe || { visites: 0 };
+  n.visites++;
+  n.benie = G.jour + NYMPHE.benediction.jours;
+  const souvenir = n.visites === 1 && !(G.decos || []).includes(NYMPHE.souvenir);
+  if (souvenir) G.decos = [...(G.decos || []), NYMPHE.souvenir];
+  return { visite: n.visites, souvenir, jusqua: n.benie };
+}
 
 // --- (v0.66) La cheminée : une planche de bois, et le feu brûle toute la nuit ---
 function feuAllume(G, aussiHier = false) { return G.feu === G.jour || (aussiHier && G.feu === G.jour - 1); }

@@ -887,6 +887,16 @@ const COLLIERS_CHAT = {
 };
 const NOM_CHAT_MAX = 16;
 
+// (v0.67) La nymphe des fontaines : cinq vœux jetés dans la fontaine du marché (cinq jours différents),
+// et un soir l'arche s'ouvre sur la place endormie ; l'eau de la fontaine se lève et prend forme.
+// Elle bénit tes aventuriers (les épreuves d'eau, pendant quelques jours) et laisse un souvenir.
+// Elle revient tous les dix vœux de plus.
+const NYMPHE = {
+  voeux: 5, ensuite: 10,
+  benediction: { jours: 7, bonus: 0.15, types: ['riviere', 'sangsues'], besoins: ['gourde'] },
+  souvenir: 'coquillageNymphe',
+};
+
 const MATERIAUX_DEPART = { fer: 2, cuir: 2, bois: 2, filOr: 1 };
 // Au début il faut 3 matériaux par réparation ; l'artisanat en fait baisser le nombre.
 const MATERIAUX_PAR_REPARATION = 3;
@@ -957,6 +967,7 @@ const DECOS = {
   chandelier: { court: 'lumière · attire les pandas', nom: "Chandelier d'argent", prix: 50, camp: 'bien', attire: 'panda', effet: 'Lumière : les pandas du Monastère se sentent chez eux. Les Bannis grimacent.' },
   banniere: { court: 'lumière · attire les humains', nom: 'Bannière de la Confrérie', prix: 40, camp: 'bien', attire: 'humain', effet: 'Lumière : les humains te font confiance. Les Bannis se méfient.' },
   craneTroll: { court: 'ombre · attire les Bannis', nom: 'Crâne de wyverne', prix: 45, camp: 'mal', attire: 'ombre', effet: "Ombre : les Bannis se sentent chez eux. Les gens de la lumière frissonnent." },
+  coquillageNymphe: { court: 'souvenir de la nymphe · +0,3 client/jour', nom: 'Coquillage de la nymphe', prix: 0, cadeau: true, attire: null, attrait: 0.3, effet: "Le souvenir de la nymphe des fontaines : on y entend la rivière chanter. Les passants s'arrêtent pour l'écouter (+0,3 client par jour)." },
   lanterneCrane: { court: 'ombre · attire les Bannis', nom: 'Lanterne-crâne', prix: 55, camp: 'mal', attire: 'ombre', effet: "Ombre : une lueur verte qui attire les Bannis. La Confrérie n'aime pas ça." },
 };
 const BROCANTEUR = { nom: 'Firmin le brocanteur' };

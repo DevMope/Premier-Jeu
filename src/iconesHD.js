@@ -125,6 +125,18 @@ const DESSINS_ICONES = {
       for (let k = 0; k < 7 - Math.abs(dy); k++) { const x = 8 + dx + Math.round(s * k * 0.7), y = 10 - dy - k; t.poser(x, y, 'feuille', 3); t.poser(x + 1, y, 'feuille', k % 2 ? 4 : 2); t.poser(x - 1, y, 'feuille', k % 2 ? 2 : 4); }
     }
   },
+  coquillageNymphe(t) { // (v0.67) le souvenir de la nymphe : un coquillage nacré en éventail, côtelé, où luit une goutte
+    t.rampes.nacre = rampe(0xe8d4dc); t.rampes.goutte = rampe(0x4ab8d0);
+    t.forme('nacre', (x, y) => {
+      const dx = x + 0.5 - 8, dy = y + 0.5 - 13, r = Math.hypot(dx, dy), a = Math.atan2(-dy, dx);
+      const bord = 7.4 + Math.cos(a * 14) * 0.5;   // le bord festonné
+      return a > 0.25 && a < Math.PI - 0.25 && r < bord ? [dx / 9, dy / 9, 0.75] : null;
+    }, { motif: (x, y) => (Math.round(Math.atan2(13 - y - 0.5, x + 0.5 - 8) * 14 / Math.PI) % 2 ? -0.7 : 0.4) });
+    // la charnière et ses deux oreillettes
+    t.forme('nacre', (x, y) => (y >= 12 && y <= 13 && Math.abs(x + 0.5 - 8) < (y === 12 ? 3.6 : 2.6) ? [0, 0.4, 0.8] : null), { decalage: -0.3 });
+    t.forme('goutte', ellipsoide(8, 8.5, 1.4, 1.7), { decalage: 0.7, bord: false });
+    t.poser(8, 7, 'goutte', 5);
+  },
   // --- La garde-robe de Marcelline ---
   chapeau(t) { // un chapeau de cow-boy : calotte pincée, bord relevé, ruban de cuir
     t.rampes.feutre = rampe(0x4a3a2a);

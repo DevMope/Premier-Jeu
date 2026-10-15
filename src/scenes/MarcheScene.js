@@ -1082,7 +1082,7 @@ class MarcheScene extends Phaser.Scene {
     const c = this.panneau(BROCANTEUR.nom, "Chaque décoration se voit dans ton arrière-boutique, et attire un peuple");
     c.add(this.add.text(30, 340, "« Des merveilles dénichées aux quatre coins des Trois Terres. Ça fera un comptoir qu'on remarque ! »",
       style(12, '#6b4a2a', { fontStyle: 'italic' })));
-    Object.entries(DECOS).forEach(([id, d], i) => {
+    Object.entries(DECOS).filter(([, d]) => !d.cadeau).forEach(([id, d], i) => {   // (les souvenirs ne se vendent pas)
       // Une ligne par décoration : l'icône, le nom et le prix, l'effet en bref (l'effet complet au survol)
       const x = 40 + (i % 2) * 460;
       const y = 364 + Math.floor(i / 2) * 22;
