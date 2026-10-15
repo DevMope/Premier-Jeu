@@ -604,6 +604,22 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 4. **Où choisir les armes du soir** : dans l'arrière-boutique en promenade (on va voir les
    forgerons), au bureau avec le reste, ou les deux ?
 
+### Réponses du joueur (18/10)
+- **Les 5 morceaux** : validés.
+- **Le coût** : choix laissé à Claude → **A, les matériaux en gros** : une fois la forge construite,
+  Thorgal vend au forgeron du comptoir des lots de 5 (fer, cuir, bois) à −30 %. Les recettes du
+  tableau ne changent pas ; forger revient alors à environ 60 % du prix du marché, comme prévu.
+  (Choisi parce que ça garde les recettes validées, fait vivre la relation avec Thorgal, et pousse
+  à prévoir ses achats plutôt qu'à acheter au jour le jour.)
+- **Les forgerons** : **Aldo**, l'apprenti humain ; **Baba Marteau-d'Or**, la maîtresse naine, au
+  visage du sud et de l'orient (peau brune, cheveux noirs tressés, yeux soulignés de khôl,
+  anneau d'or au nez).
+- **Les armes interdites** : les trois proposées (lame empoisonnée, lame de lune noire, griffes de
+  l'ombre), pour l'instant.
+- **Les armes interdites seulement avec la forge** : oui ; elles ne se fabriquent qu'une fois la
+  forge achetée (et la jauge côté ombre). On choisit les armes du soir **à la forge, dans
+  l'arrière-boutique** (on va voir les forgerons), avec un raccourci depuis le bureau.
+
 ### Ensuite : le lot A « Le comptoir sous pression »
 Dans l'ordre : 1 la journée (10 heures, le temps de chaque action), 2 les avis de recherche
 dans la file (le tableau d'affichage et les visages sont faits), 6 les imposteurs et le flair,
