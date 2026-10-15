@@ -230,6 +230,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
     // (v0.68) Le baluchon sur l'épaule : le bras proche se plie, la main tient le bâton devant la
     // poitrine (elle ne se balance plus avec la marche) ; l'autre bras, lui, continue de balancer
+    if (pose === 'accueil') {   // (v0.71) les bras grands ouverts, paumes vers le ciel : « Bienvenue, l'ami ! »
+      coude.splice(0, 3, cote * (ep + 7.5 * k), 0.8 * k, yT + 0.5 * k);   // (v0.72) levés en V, comme on salue
+      main.splice(0, 3, cote * Math.min(ep + 16 * k, L / 2 - 2.5 * k), 1.6 * k, yT - 7 * k);   // un vieil ami
+    }
     if (pose === 'assis') {   // (v0.68) assis : les mains posées sur les cuisses
       coude.splice(0, 3, cote * (ep + 0.8 * k), 1 * k, yT + P.torse * 0.62);
       main.splice(0, 3, cote * ep * 0.55, (solAssis - yB) * 0.55, yB);
@@ -270,7 +274,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // Le pas : le pied avant reste posé au sol, c'est le talon arrière qui se décolle (à peine de
     // face, où l'on ne voit pas le pied partir en arrière)
     const leve = bal < 0 ? (Math.abs(s) < 0.3 ? 0.6 : 1.2) * k : 0;
-    const pied = assis ? [cote * ep * 0.48, (sol - yB) * 1.05, sol - 3 * k] : [cote * ep * 0.48, bal * 3.8 * k, sol - 3 * k - leve];
+    const pied = assis ? [cote * ep * 0.48, (sol - yB) * 1.05, sol - 3 * k] : pose === 'accueil' ? [cote * ep * 0.85, 0.5 * k, sol - 3 * k] : [cote * ep * 0.48, bal * 3.8 * k, sol - 3 * k - leve];   // (accueil : les jambes un peu écartées, bien campé)
     const Hh = [X(hanche[0], hanche[1]), hanche[2]], G = [X(genou[0], genou[1]), genou[2]], Pd = [X(pied[0], pied[1]), pied[2]];
     const dec = devant ? 0 : -0.5;
     const r = 2.9 * k * P.membre;

@@ -32,9 +32,12 @@ class ExpressScene extends Phaser.Scene {
       // Sa bourse débordante, qu'il couve du regard
       creerBoursesHD(this);
       this.add.image(565, 440, 'bourseHD4').setOrigin(0.5, 1).setScale(2.6);
-      // Le gobelin, recroquevillé, qui se frotte les mains
-      this.gobelin = imageCorps(this, 490, 438, 'gobelin', 10).setAngle(12);
-      this.tweens.add({ targets: this.gobelin, angle: 18, scaleY: this.gobelin.scaleY * 0.96, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      // (v0.71) Le gobelin t'accueille les bras grands ouverts, de face, un grand sourire plein de
+      // dents : il sait qu'il va faire affaire. Il sautille d'impatience sur place.
+      const cle = corpsHD(this, 'gobelin', 'accueil', 'face');
+      this.gobelin = this.add.image(470, 440, cle).setOrigin(0.5, 1).setScale(10 * echelleCorps(cle));
+      const e = this.gobelin.scaleY;
+      this.tweens.add({ targets: this.gobelin, y: 432, scaleY: e * 1.02, duration: 260, yoyo: true, repeat: -1, repeatDelay: 900, ease: 'Quad.easeOut' });
       this.add.text(30, 22, MARCHAND_EXPRESS.nom, style(26, '#f3d98a', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }));
       this.add.text(30, 58, 'Marchand express · tout de suite, sur ton comptoir · bien plus cher', style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 }));
     }
