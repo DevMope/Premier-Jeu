@@ -645,7 +645,7 @@ const ZONES = {
   },
   // --- Le grand monde (v0.54) : dix contrées de plus, rangées par royaume ---
   vergers: {
-    nom: 'Les Vergers de Bourg-Joyeux', danger: 1, reputation: 1, x: 1080, y: 575, royaume: 'comte', biome: 'comte', vignette: 'vergers',
+    nom: 'Les Vergers de Bourg-Joyeux', danger: 1, reputation: 0, x: 1080, y: 575, royaume: 'comte', biome: 'comte', vignette: 'vergers',
     description: 'Des pommiers à perte de vue, des fermiers généreux... et des renards bien trop gros.',
     quetes: ['renards'],
   },
