@@ -376,6 +376,9 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
     }, { decalage: -0.8, motif: MECHES });
   }
 
+  // (v0.61) La cape de la Main Noire, derrière le dos : on la devine de chaque côté du corps
+  if (g.bande === 'main') capeDosBuste(t, g, v, cx);
+
   // 2. Le torse, selon le peuple
   torseHD(t, g, v, cx);
 
@@ -545,6 +548,7 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   // 8. Les bras et les mains : la pose, selon l'humeur et le peuple
   brasBuste(t, g, v, cx, pose || poseBuste(g, expression));
   if (g.bande) plisBuste(t, g, v, cx);
+  if (g.bande === 'main') epaulettesBuste(t, g, v, cx);
 
   // 9. Les peaux particulières : la fourrure (poils en hachures), les bandelettes de la momie
   if (TR.fourrure) for (let y = 0; y < HD_H; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'peau' || t.mat(x, y) === 'noir') {
@@ -1032,6 +1036,37 @@ function capucheBuste(t, g, v, cx, ey) {
     t.rampes.emeraude = rampeVive(0x2ec860); t.rampes.argent = rampeVive(0xc8ccd4);
     t.forme('argent', ellipsoide(cx, v.torse + 1, 3, 3), { decalage: 0.3 });
     t.forme('emeraude', ellipsoide(cx, v.torse + 1, 2, 2), { decalage: 0.6 });
+  }
+}
+
+// (v0.61) La cape de la Main Noire : elle tombe des épaules derrière le dos, s'évase un peu, et on
+// n'en voit que les bords de chaque côté du corps (plus sombre que la robe, avec ses grands plis)
+function capeDosBuste(t, g, v, cx) {
+  t.rampes.capeDos = rampe(0x34323a);
+  const epaule = (LARGEURS_BUSTE[g.race] || 20) + 2.5;
+  const haut = v.torse + 2;
+  t.forme('capeDos', (x, y) => {
+    if (y < haut) return null;
+    const demi = epaule + 2.5 + (y - haut) * 0.5;
+    const nx = (x + 0.5 - cx) / demi;
+    return Math.abs(nx) <= 1 ? [nx * 0.7, 0.2, 0.7] : null;
+  }, { decalage: -1, motif: (x, y) => { const f = Math.sin((x - cx) * 0.7 + Math.sin(y * 0.2) * 0.8); return f > 0.85 ? 0.6 : f < -0.85 ? -0.8 : 0; } });
+}
+
+// Les épaulettes de la Main Noire : deux petites plaques de fer sombre posées sur le camail, au bord
+// des épaules, et l'agrafe d'où part la cape (un anneau et un bout de chaîne)
+function epaulettesBuste(t, g, v, cx) {
+  t.rampes.gantelet = t.rampes.gantelet || rampe(0x5c606c);
+  const epaule = (LARGEURS_BUSTE[g.race] || 20) + 2.5;
+  for (const sens of [-1, 1]) {
+    const ex = cx + sens * (epaule - 5.5), ey = v.torse + 3;
+    // la plaque : un arc bombé, et une seconde lame en dessous, plus étroite
+    t.forme('gantelet', (x, y) => { const nx = (x + 0.5 - ex) / 5.2, ny = (y + 0.5 - ey) / 2.6; return nx * nx + ny * ny <= 1 && y <= ey + 1 ? [nx * 0.8, -0.5, 0.7] : null; }, { decalage: -0.2 });
+    t.forme('gantelet', (x, y) => { const nx = (x + 0.5 - ex - sens * 0.8) / 4.2, ny = (y + 0.5 - ey - 2.6) / 1.6; return nx * nx + ny * ny <= 1 && y > ey + 1 ? [nx * 0.8, 0.2, 0.8] : null; }, { decalage: -0.4 });
+    // l'agrafe de la cape, côté cou : un anneau de fer, et deux maillons qui filent vers le dos
+    const ax = Math.round(ex - sens * 4), ay = ey - 1;
+    t.dessin(ax - 1, ay - 1, ['.o.', 'o.o', '.o.'], { o: ['gantelet', 5] });
+    t.poser(ax - sens * 2, ay + 1, 'gantelet', 3); t.poser(ax - sens * 3, ay + 2, 'gantelet', 2);
   }
 }
 
