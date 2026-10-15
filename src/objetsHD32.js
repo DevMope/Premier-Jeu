@@ -68,14 +68,20 @@ const DESSINS_OBJETS_32 = {
   },
   // Les flèches : une botte de trois flèches liée d'une ficelle, empennes rouges et blanches, pointes de fer
   fleches(t) {
-    for (const d of [-4, 0, 4]) {
-      trait(t, 'chene', 5 + d, 28, 25 + d, 6, 0.7, { decalage: 0.4 });
-      // la pointe de fer, en losange
-      t.forme('metal', (x, y) => { const u = (x + 0.5 - (26 + d)) * 0.74 - (y + 0.5 - 5) * -0.67, v = (x + 0.5 - (26 + d)) * 0.67 + (y + 0.5 - 5) * -0.74; return Math.abs(u) / 3.4 + Math.abs(v) / 1.8 <= 1 ? [u / 4, v / 2, 0.8] : null; }, { decalage: 0.5 });
-      // l'empenne : deux plumes
-      for (let k = 0; k < 5; k++) { t.poser(4 + d + k, 26 - k, 'tissuRouge', 4 - (k % 2)); t.poser(6 + d + k, 28 - k, 'parchemin', 5 - (k % 2)); t.poser(5 + d + k, 29 - k, 'tissuRouge', 3); }
+    // trois flèches en éventail : la hampe de bois, la pointe de fer, l'empenne de plumes rouges et blanches
+    for (const [x0, y0, x1, y1] of [[4, 27, 23, 4], [8, 29, 28, 9], [3, 22, 18, 3]]) {
+      const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+      trait(t, 'chene', x0 + ux * 3, y0 + uy * 3, x1 - ux * 3, y1 - uy * 3, 0.7, { decalage: 0.4 });
+      // la pointe, un losange de fer
+      t.forme('metal', (x, y) => { const px = x + 0.5 - (x1 - ux * 1.5), py = y + 0.5 - (y1 - uy * 1.5); const u = px * ux + py * uy, v = -px * uy + py * ux; return Math.abs(u) / 3.4 + Math.abs(v) / 1.9 <= 1 ? [u / 4, v / 2, 0.8] : null; }, { decalage: 0.5 });
+      // l'empenne : deux plumes de chaque côté de la hampe
+      for (let k = 0; k < 6; k++) {
+        const bx = x0 + ux * (1 + k), by = y0 + uy * (1 + k);
+        t.poser(Math.round(bx - uy * 1.6), Math.round(by + ux * 1.6), 'tissuRouge', 4 - (k % 2));
+        t.poser(Math.round(bx + uy * 1.6), Math.round(by - ux * 1.6), 'parchemin', 5 - (k % 2));
+        if (k < 4) { t.poser(Math.round(bx - uy * 2.6), Math.round(by + ux * 2.6), 'tissuRouge', 3); t.poser(Math.round(bx + uy * 2.6), Math.round(by - ux * 2.6), 'parchemin', 4); }
+      }
     }
-    for (let k = -6; k <= 6; k++) t.poser(15 + k, 18 + Math.round(k * 0.95) - 1, 'chanvre', 4 - (Math.abs(k) % 2));   // la ficelle
   },
   // La potion : une fiole ronde au liquide rouge, un cœur sur l'étiquette (elle rend un cœur),
   // le bouchon scellé de cire
@@ -101,20 +107,21 @@ const DESSINS_OBJETS_32 = {
   },
   // La torche : un manche de bois, le tissu imbibé de poix enroulé et ficelé, une belle flamme
   torche(t) {
-    trait(t, 'chene', 11, 31, 18, 14, 1.6);
-    t.forme('lin', (x, y) => { const u = (x + 0.5 - 18.5), v = (y + 0.5 - 14); return Math.abs(u) < 4.6 && Math.abs(v) < 3.6 ? [u / 5, v / 4, 0.8] : null; }, { decalage: -0.9, motif: (x, y) => ((x + y) % 3 === 0 ? -0.6 : 0) });
-    for (let x = 14; x <= 23; x++) t.poser(x, 15, 'chanvre', 3);
+    trait(t, 'chene', 12, 31, 18, 18, 1.6);
+    t.forme('lin', (x, y) => { const u = (x + 0.5 - 18.5), v = (y + 0.5 - 18); return Math.abs(u) < 4.6 && Math.abs(v) < 3.6 ? [u / 5, v / 4, 0.8] : null; }, { decalage: -0.9, motif: (x, y) => ((x + y) % 3 === 0 ? -0.6 : 0) });
+    for (let x = 14; x <= 23; x++) t.poser(x, 19, 'chanvre', 3);
     t.rampes.flamme2 = RAMPES_OBJETS.flamme;
     const flamme = (k, dx = 0) => (x, y) => {
-      const v = (y + 0.5) / 12.5;
-      const w = 7.5 * k * Math.sqrt(Math.max(0, v)) * (1.15 - v * 0.45);
-      const nx = (x + 0.5 - 18.5 - dx - (1 - v) * 2 * Math.sin(v * 6)) / Math.max(0.5, w);
-      return y < 12 && Math.abs(nx) <= 1 ? [nx, -0.3, 0.9] : null;
+      const v = (y + 0.5 - 2) / 14;   // (la pointe à 2 pixels du bord : elle n'est plus coupée)
+      if (v < 0) return null;
+      const w = 7 * k * Math.sqrt(v) * (1.15 - v * 0.45);
+      const nx = (x + 0.5 - 18.5 - dx - (1 - v) * 1.5 * Math.sin(v * 6)) / Math.max(0.5, w);
+      return y < 16 && Math.abs(nx) <= 1 ? [nx, -0.3, 0.9] : null;
     };
     t.forme('braise', flamme(1), { decalage: -0.3, bord: false });
     t.forme('flamme', flamme(0.72), { decalage: 0.3, bord: false });
     t.forme('flamme', flamme(0.38), { decalage: 1.4, bord: false });
-    for (const [x, y] of [[13, 3], [24, 2], [22, 6]]) t.poser(x, y, 'flamme', 4);   // des étincelles
+    for (const [x, y] of [[12, 6], [25, 4], [24, 9]]) t.poser(x, y, 'flamme', 4);   // des étincelles
   },
   // La corde : une corde de chanvre lovée, ses torons torsadés bien visibles, un bout qui dépasse
   corde(t) {
@@ -188,12 +195,34 @@ const DESSINS_OBJETS_32 = {
   },
   // Le bois : trois belles planches empilées, le fil du bois, les nœuds et les cernes au bout
   bois(t) {
-    t.rampes.planche = rampe(0xc89058);
-    for (const [y, dx] of [[24, 0], [17, 2], [10, -2]]) {
-      t.forme('planche', (x, py) => (py >= y - 2 && py <= y + 3 && x >= 2 + dx && x <= 27 + dx ? [0, (py - y) / 5 - 0.2, 0.85] : null), { motif: (x, py) => (py === y && x % 7 !== 0 ? -0.5 : (py === y + 2 && x % 5 === 2) ? -0.4 : 0) });
-      for (let k = 0; k < 6; k++) t.poser(27 + dx, y - 2 + k, 'chene', k === 0 || k === 5 ? 2 : 4 - (k % 2));
-      t.poser(9 + dx, y + 1, 'chene', 1); t.poser(10 + dx, y + 1, 'chene', 2); t.poser(20 + dx, y, 'chene', 1);
+    // une pile de longues planches de pin, vue de trois quarts comme au dépôt du scieur : le dessus
+    // de la planche du haut, veiné et noueux ; en dessous, les chants des planches empilées ; à
+    // droite, les bouts sciés avec leurs cernes
+    t.rampes.pin = [0x5a3416, 0x8a5428, 0xb8783c, 0xd49a58, 0xe8b878, 0xf6d8a8];
+    const pente = 0.32;   // (les planches fuient un peu vers le fond, à gauche)
+    // le dessus : deux larges planches côte à côte, le fil du bois qui ondule autour des nœuds
+    const noeuds = [[9, 8.5], [19, 6], [24, 10.5]];
+    for (let y = 3; y <= 13; y++) for (let x = Math.round(1 + (13 - y) * pente * 3); x <= 26; x++) {
+      let f = Math.sin(y * 1.9 + Math.sin(x * 0.22) * 2.2);
+      for (const [nx, ny] of noeuds) { const d = Math.hypot(x - nx, (y - ny) * 2); if (d < 4) f = Math.sin(d * 2.2); }
+      t.poser(x, y, 'pin', y === 3 ? 5 : y === 8 ? 2 : f > 0.75 ? 5 : f < -0.6 ? 3 : 4);
     }
+    for (const [nx, ny] of noeuds) { t.poser(nx, Math.round(ny), 'pin', 0); t.poser(nx + 1, Math.round(ny), 'pin', 1); }
+    // les chants : quatre planches empilées, chacune avec sa lumière en haut et son ombre en bas
+    for (let r = 0; r < 4; r++) {
+      const y0 = 14 + r * 4;
+      for (let x = 1; x <= 26; x++) for (let k = 0; k < 4; k++) t.poser(x, y0 + k, 'pin', k === 0 ? 4 : k === 3 ? 1 : ((x * 3 + r * 5) % 11 === 0 ? 2 : 3));
+    }
+    // les bouts sciés, à droite : un peu plus sombres, avec les arcs des cernes
+    for (let r = 0; r < 5; r++) {
+      const y0 = r === 0 ? 3 : 10 + r * 4, h = r === 0 ? 11 : 4;
+      for (let y = y0; y < y0 + h; y++) for (let x = 27; x <= 30; x++) {
+        const cerne = Math.hypot(x - 33, (y - (y0 + h + 2)) * 1.3);
+        t.poser(x, y, 'pin', y === y0 + h - 1 ? 0 : Math.floor(cerne) % 2 ? 3 : 2);
+      }
+    }
+    // le feuillard qui tient la pile, et sa boucle
+    for (let y = 3; y <= 29; y++) t.poser(y <= 13 ? 15 - Math.round((13 - y) * pente * 3) + 3 : 18, y, 'metal', y <= 13 ? 5 : 3);
   },
   // Le fil d'or : une bobine de fil d'or sur son fuseau de bois tourné, un bout qui s'échappe
   filOr(t) {
