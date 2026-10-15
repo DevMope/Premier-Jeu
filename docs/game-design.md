@@ -538,3 +538,41 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
   - **Les rats** : sans chat, certains jours (rarement), des rats grignotent un peu de la réserve, seulement les choses comestibles (rations, gourdes, provisions). Jamais beaucoup : la perte doit rester légère, elle sert surtout à donner envie d'apprivoiser le chat. Une fois adopté, plus de rats.
   - **La garde** : le chat sent parfois venir la garde et prévient (il crache vers la porte la veille d'une fouille), ce qui laisse le temps de cacher les objets interdits. Pas à tous les coups.
 - Les autres familiers (le grand aigle, etc.) viendront par les quêtes et les relations, comme prévu.
+
+## Rendre le jeu plus palpitant (idées tirées des jeux de référence, décidées le 17/10)
+
+Constat des simulations (v0.64) : le danger se concentre sur les jours 5 à 12 ; après le jour 20
+l'argent s'envole (≈ 2 000 p. au jour 20, 7 500 au jour 30, 30 000 à 50 000 au jour 120) et plus
+rien ne fait peur. Il faut des enjeux qui grandissent avec le joueur et des choix où l'on ne peut
+pas tout avoir.
+
+Réponses du joueur, idée par idée :
+1. **La journée a une durée** — oui, mais on doit pouvoir servir bien plus de clients au jour 120
+   qu'au jour 1 (paliers de réputation, rapidité, améliorations du comptoir).
+2. **Le tableau d'affichage du marché** (« medieval notice board »), à côté du crieur (qui reste
+   pour l'humour) : nouvelles du jour et tout ce qui touche le joueur ; une notification au-dessus
+   du panneau quand il y a un changement important. Références : avis de recherche façon *One Piece*
+   (« WANTED / Mort ou vif », portrait, prime) et petit panneau couvert de bois avec ses affiches.
+3. **Le foyer à nourrir** (chat, apprenti, famille, bois de chauffage l'hiver) — oui pour tout.
+4. **Marchander au comptoir** (jauge de patience, tics de bluff, style par peuple) — oui.
+5. **Miser sur un aventurier** (avance contre une plus grosse part) — oui.
+6. **Les imposteurs**, combinés au **flair** : un flair aiguisé les repère de loin, mais même au
+   maximum on n'est jamais sûr à 100 %.
+7. **La menace qui grandit** (attaque hebdomadaire, escouade à équiper, contrée perdue) — oui.
+8. **Les commandes royales** (délai, très grosse prime) — oui.
+9. **Agir pendant le récit** — le joueur est mitigé : réflexion à pousser (voir la proposition
+   suivante), en gardant en tête le combat au tour par tour de la fin du jeu.
+10. **Les saisons** — oui ; trouver un système qui fasse avancer le temps de façon satisfaisante
+    malgré les sauts de temps par palier d'étoiles.
+11. **Les fêtes du village** — oui.
+12. **Les collections du Conseil** — oui, contenu à définir.
+13. **Le présage du jour** (une diseuse, un personnage unique de plus) — oui.
+14. **Le comptoir rival** — oui : un personnage très énervant (physique, dialogues, comportement).
+    Le battre = pouvoir **le racheter** : offrir le shop à des orphelins, ou en faire un bâtiment de
+    plus pour le joueur (à définir).
+15. **Des prix qui suivent la renommée** — oui, à tester.
+- Question du joueur : tout inclure, est-ce trop ? Des mécaniques se contrent-elles ? (à trancher)
+
+### « On le fera plus tard »
+- **La banque de noms** (vers la fin des étapes) : le joueur fournira prénoms, noms, noms de villes
+  et expressions à insérer dans le jeu.
