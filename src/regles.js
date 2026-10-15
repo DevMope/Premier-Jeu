@@ -135,7 +135,9 @@ function surplus(voyageur, colis) {
   // (v0.63) les armes se partagent la commande d'arme : la sienne d'abord, puis les autres
   const pref = armePour(voyageur);
   let resteArme = commande[pref] || 0;
-  const ordre = Object.keys(colis).sort((a, b) => (b === pref) - (a === pref));
+  // (dans le même ordre que armeEmportee : la sienne, puis l'ordre des armes)
+  const rang = id => (id === pref ? -1 : estArme(id) ? IDS_ARMES.indexOf(id) : 99);
+  const ordre = Object.keys(colis).sort((a, b) => rang(a) - rang(b));
   for (const id of ordre) {
     const n = colis[id];
     let utilise;
@@ -743,7 +745,7 @@ function etalsDuJour(G) {
     const amis = niveauRelation(G, m.nom).index >= 5 ? 2 : 0;
     // (v0.63) chez Thorgal : quelques armes chaque matin seulement, et celles des peuples de l'ombre
     // une fois les Bannis venus au comptoir
-    const ombreOuverte = G.visiteMarcheNoir !== undefined || (G.zonesConnues || []).some(z => ZONES[z] && ZONES[z].camp === 'mal');
+    const ombreOuverte = G.visiteMarcheNoir !== undefined || (G.zonesConnues || []).some(z => ZONES[z] && ZONES[z].camp === 'mal') || PEUPLES_OMBRE.some(r => peupleAccueilli(G, r));
     const armesDispo = m.objets.filter(id => estArme(id) && (!ITEMS[id].ombre || ombreOuverte));
     const armesDuJour = Phaser.Utils.Array.Shuffle(armesDispo.slice()).slice(0, ARMES_PAR_ETAL);
     // (celle qu'un client attendu commande est souvent là)
@@ -1308,7 +1310,8 @@ function payerEcheances(G) {
 
 // Ce qui attire les clients : réputation, expérience, variété du stock.
 function attrait(G) {
-  const variete = Object.values(G.stock).filter(n => n > 0).length;
+  // (v0.64) les armes, rangées ensemble au râtelier, ne comptent que pour une sorte
+  const variete = Object.entries(G.stock).filter(([id, n]) => n > 0 && !estArme(id)).length + (IDS_ARMES.some(id => G.stock[id] > 0) ? 1 : 0);
   return {
     reputation: G.reputation * 0.4,
     experience: Math.min(G.experience, EXPERIENCE_MAX) / 20,
@@ -1880,8 +1883,11 @@ function inventaireApres(parti) {
   for (const [id, n] of Object.entries(parti.colis)) {
     if (ITEMS[id].durable && n > 0) inv[id] = USURE_MAX;
   }
+  // (v0.64) au combat, c'est l'arme qu'il a vraiment emportée qui s'use (pas toujours l'épée)
+  const arme = armeEmportee(parti.voyageur, parti.colis);
   for (const { epreuve } of parti.resultat.etapes) {
-    if (inv[epreuve.besoin] > 0) inv[epreuve.besoin]--;
+    const id = estArme(epreuve.besoin) ? arme : epreuve.besoin;
+    if (inv[id] > 0) inv[id]--;
   }
   return inv;
 }
@@ -2328,7 +2334,7 @@ function proposerSabotage(G) {
     if (!zones.length) continue;
     const zone = auHasard(zones);
     envoyerDans(G, cible, zone);
-    const possibles = Object.keys(commandeDe(cible)).filter(id => id in PIEGES);
+    const possibles = Object.keys(commandeDe(cible)).map(id => (estArme(id) ? 'epee' : id)).filter(id => id in PIEGES);   // (l'épée fêlée remplace n'importe quelle arme)
     if (!possibles.length) continue;
     const danger = ZONES[zone].danger;
     const prime = Math.round((PRIME_SABOTAGE[0] + (PRIME_SABOTAGE[1] - PRIME_SABOTAGE[0]) * (danger - 1) / 4) * (proche ? PRIX_FAUCHEUSE.prime : 1));

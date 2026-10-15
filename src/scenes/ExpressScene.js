@@ -102,7 +102,7 @@ class ExpressScene extends Phaser.Scene {
     const offre = colporteur ? G.colporteurOffre[id] : G.express[id];
     const commande = c.voyageur ? commandeDe(c.voyageur) : {};
     // Si le client en a besoin, ça va directement dans son colis ; sinon, dans ta réserve.
-    const pourLeClient = !colporteur && commande[id] && (c.colis[id] || 0) < commande[id];
+    const pourLeClient = !colporteur && commande[id] && fourni(c.voyageur, c.colis, id) < commande[id];   // (une autre arme déjà donnée compte)
     const non = texte => { Son.jouer('refus'); return this.parler(texte); };
     if (offre.qte <= 0) return non(colporteur ? 'Plus un seul ! Tu as vidé ma hotte.' : 'Plus rien ! Tout vendu ! Reviens demain, avec plus de pièces.');
     if (!peutPayer(G, offre.prix)) return non(colporteur ? "Pas assez de pièces... Une autre fois, l'ami." : "Pas de pièces, pas de marchandise ! File, mendiant !");

@@ -655,7 +655,7 @@ class MarcheScene extends Phaser.Scene {
     Sauvegarde.planifier(G, 'Marche');
     const p = prevision(G, G.jour);
     this.bourse.maj(G.argent);
-    this.texteInfos.setText(`Réserve : ${stockTotal(G)}/${G.capacite} · Fer ${G.materiaux.fer} · Cuir ${G.materiaux.cuir} · Fil d'or ${G.materiaux.filOr || 0}\n` +
+    this.texteInfos.setText(`Réserve : ${stockTotal(G)}/${G.capacite} · Fer ${G.materiaux.fer} · Cuir ${G.materiaux.cuir} · Bois ${G.materiaux.bois || 0} · Fil d'or ${G.materiaux.filOr || 0}\n` +
       `Aujourd'hui : ${p.min === p.max ? p.min : p.min + ' à ' + p.max} clients${p.annonces ? ` (+ ${p.annonces} par lettre)` : ''} · un stock varié en attire plus`);
   }
 

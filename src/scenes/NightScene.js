@@ -157,12 +157,14 @@ class NightScene extends Phaser.Scene {
   creerReserve(x1, x2) {
     this.add.text((x1 + x2) / 2, 110, this.matin ? 'Tu peux encore retourner au marché' : 'Demain matin : le Marché des Mastres', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.lignesStock = {};
-    Object.keys({ ...ITEMS, ...MATERIAUX }).forEach((id, i) => {
+    // (v0.64) toutes les armes sur une seule ligne, comme au râtelier (sinon la liste sortait de l'écran)
+    const ids = [...Object.keys(ITEMS).filter(id => !estArme(id)), 'armes', ...Object.keys(MATERIAUX)];
+    ids.forEach((id, i) => {
       const x = x1 + 24 + (i % 2) * 150;
       const y = 140 + Math.floor(i / 2) * 32;
       // (audit v0.54) le nom et la quantité sur une seule ligne : la liste se lit d'un coup d'œil
-      this.add.image(x, y, iconeObjet(this, id)).setScale(2);
-      this.add.text(x + 20, y, nomObjet(id), style(13, '#3b2410')).setOrigin(0, 0.5);
+      this.add.image(x, y, iconeObjet(this, id === 'armes' ? 'epee' : id)).setScale(2);
+      this.add.text(x + 20, y, id === 'armes' ? 'Armes' : nomObjet(id), style(13, '#3b2410')).setOrigin(0, 0.5);
       this.lignesStock[id] = this.add.text(x + 124, y, '', style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(1, 0.5);
     });
     this.texteReserve = this.add.text(x1 + 18, 398, '', style(13, '#3b2410', { fontStyle: 'bold' }));
@@ -186,7 +188,7 @@ class NightScene extends Phaser.Scene {
     const G = this.G;
     this.bourse.maj(G.argent);
     for (const [id, t] of Object.entries(this.lignesStock)) {
-      const n = id in MATERIAUX ? G.materiaux[id] : G.stock[id];
+      const n = id === 'armes' ? IDS_ARMES.reduce((s, w) => s + (G.stock[w] || 0), 0) : id in MATERIAUX ? G.materiaux[id] : G.stock[id];
       t.setText('×' + n).setColor(n > 0 ? '#3b2410' : '#a05040');
     }
     const plein = stockTotal(G) >= G.capacite;

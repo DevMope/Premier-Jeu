@@ -443,11 +443,11 @@ class CounterScene extends Phaser.Scene {
     const ids = IDS_ARMES.filter(id => (G.stock[id] || 0) > 0 || id === pref);
     const c = this.ratelier = this.add.container(0, 0).setDepth(25);
     const n = Math.max(1, ids.length), cols = Math.min(4, n), lignes = Math.ceil(n / cols);
-    const l = cols * 132 + 20, h = lignes * 40 + 46, x0 = 420 - l / 2, y0 = 352 - h;
+    const l = (ids.length ? cols * 132 : 300) + 20, h = lignes * 40 + 46, x0 = 420 - l / 2, y0 = 352 - h;
     c.add(this.add.rectangle(x0 + l / 2, y0 + h / 2, l, h, 0x2a1a10, 0.94).setStrokeStyle(2, 0xc9a046).setInteractive());
     c.add(this.add.text(x0 + 12, y0 + 8, 'Le râtelier' + (pref ? ` · ${v.nom.split(' ')[0]} préfère : ${ITEMS[pref].nom.toLowerCase()}` : ''), style(12, '#f3d98a', { fontStyle: 'bold' })));
     c.add(this.add.text(x0 + l - 10, y0 + 6, '✕', style(14, '#c9b48a', { fontStyle: 'bold' })).setOrigin(1, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirRatelier()));
-    if (!ids.length) c.add(this.add.text(x0 + 12, y0 + 32, "Aucune arme en réserve. Thorgal en vend quelques-unes chaque matin.", style(11, '#e8dcc0', { fontStyle: 'italic' })));
+    if (!ids.length) c.add(this.add.text(x0 + 12, y0 + 32, "Aucune arme en réserve. Thorgal en vend quelques-unes chaque matin.", style(11, '#e8dcc0', { fontStyle: 'italic', wordWrap: { width: l - 24 } })));
     ids.forEach((id, i) => {
       const x = x0 + 14 + (i % cols) * 132, y = y0 + 48 + Math.floor(i / cols) * 40;
       const nb = G.stock[id] || 0;
@@ -570,8 +570,10 @@ class CounterScene extends Phaser.Scene {
     if (!this.enService || this.enConfirmation) return this.dire("Il n'y a personne à qui le glisser.", '');
     const v = this.voyageur;
     const commande = commandeDe(v);
-    if (!commande[id]) return this.dire(`${v.nom.split(' ')[0]} n'a pas commandé ${deNom(ITEMS[id].nom.toLowerCase())} : ça éveillerait ses soupçons.`, '');
-    if ((this.colis[id] || 0) >= commande[id]) return this.dire(`Son baluchon a déjà son compte ${deNom(ITEMS[id].nom.toLowerCase())}. Retires-en un d'abord.`, '');
+    // (v0.64) l'épée fêlée passe pour l'arme qu'il a commandée, quelle qu'elle soit
+    const besoin = estArme(id) ? Object.keys(commande).find(estArme) : id;
+    if (!besoin || !commande[besoin]) return this.dire(`${v.nom.split(' ')[0]} n'a pas commandé ${estArme(id) ? "d'arme" : deNom(ITEMS[id].nom.toLowerCase())} : ça éveillerait ses soupçons.`, '');
+    if (fourni(v, this.colis, besoin) >= commande[besoin]) return this.dire(estArme(id) ? "Son baluchon a déjà son arme. Retires-en une d'abord." : `Son baluchon a déjà son compte ${deNom(ITEMS[id].nom.toLowerCase())}. Retires-en un d'abord.`, '');
     this.G.pieges[id]--;
     this.colis[id] = (this.colis[id] || 0) + 1;
     this.pieges[id] = (this.pieges[id] || 0) + 1;
@@ -1684,7 +1686,7 @@ class CounterScene extends Phaser.Scene {
       // (v0.63) la ligne de l'arme : n'importe quelle arme la remplit ; on montre celle qu'il emporte
       const prefere = id && estArme(id) && commande[id] ? id : null;
       if (prefere) {
-        const donnee = armesDonnees(this.colis) > 0 ? armeEmportee(v, this.colis) : !IDS_ARMES.some(w => w in v.inventaire) ? id : (IDS_ARMES.find(w => w === id && w in v.inventaire) || IDS_ARMES.find(w => w in v.inventaire));
+        const donnee = armeEmportee(v, this.colis);   // (rien de donné : la meilleure qu'il a sur lui)
         if (donnee !== id) {
           const n = commande[id], donne = armesDonnees(this.colis);
           ligne.id = donnee; ligne.icone.setVisible(true); iconeLigne(this, ligne.icone, donnee);
@@ -1719,7 +1721,7 @@ class CounterScene extends Phaser.Scene {
         return;
       }
       if (!commande[id]) {
-        ligne.txt.setText(`${ITEMS[id].nom}  +${donne} (en plus)`).setFontSize(13).setColor('#1f5aa0');
+        ligne.txt.setText(`${ITEMS[id].nom}  +${plus[id] || donne} (en plus)`).setFontSize(13).setColor('#1f5aa0');
         return;
       }
       const ok = donne >= commande[id];

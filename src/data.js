@@ -1770,9 +1770,9 @@ const CHANCE_LETTRE = 0.3;
 // ou le nombre de clients pendant quelques jours. Annoncé par une lettre ou par le crieur.
 const CHANCE_EVENEMENT = 0.18;
 const EVENEMENTS = {
-  penurieFer: { type: 'prix', objets: ['epee', 'bouclier'], mult: 1.6,
-    annonce: 'La mine de fer de Khaz-Durim a été inondée. Les forgerons préviennent : les épées et les boucliers vont manquer.',
-    nouvelle: 'Pénurie de fer : épées et boucliers hors de prix au marché !' },
+  penurieFer: { type: 'prix', objets: ['epee', 'bouclier', 'hache', 'marteau', 'dague', 'rapiere', 'khopesh', 'griffes'], mult: 1.6,
+    annonce: 'La mine de fer de Khaz-Durim a été inondée. Les forgerons préviennent : les lames, les haches et les boucliers vont manquer.',
+    nouvelle: 'Pénurie de fer : les armes de fer et les boucliers sont hors de prix au marché !' },
   recolte: { type: 'prix', objets: ['ration', 'gourde'], mult: 0.6,
     annonce: 'Une récolte exceptionnelle dans la Comté ! Les rations ne vont rien coûter.',
     nouvelle: 'Récolte record : les rations et les gourdes sont bradées au marché.' },
