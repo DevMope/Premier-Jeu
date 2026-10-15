@@ -802,3 +802,45 @@ function rafraichirJoueur(scene, G) {
     if (o.texture && /^joueur_(petit|adulte|ancien)(_pas[12])?$/.test(o.texture.key)) o.setTexture(o.texture.key);
   }
 }
+
+// --- (v0.70) Les effets de fumée et d'eau : des particules CC0 de Kenney (www.kenney.nl),
+// ramenées à notre grille de pixels et à notre palette (voir docs/essais-assets), animées ici. ---
+const FX_IMAGES = ['fumee0', 'fumee1', 'fumee2', 'fumee3', 'fumee4', 'fumee5', 'fumee6', 'fumee7', 'jet1', 'jet2', 'jet3', 'jet4', 'goutte', 'rond'];
+function chargerFx(scene) {
+  for (const f of FX_IMAGES) if (!scene.textures.exists('fx_' + f)) scene.load.image('fx_' + f, 'assets/fx/' + f + '.png');
+}
+
+// Une bouffée de fumée qui monte, s'élargit, dérive avec le vent et s'efface
+function bouffeeFumee(scene, x, y, { echelle = 2, monte = 120, vent = 50, duree = 3400, alpha = 0.85, profondeur = null, conteneur = null, teinte = null } = {}) {
+  let s;
+  if (scene.textures.exists('fx_fumee0')) s = scene.add.image(x, y, 'fx_fumee' + Math.floor(Math.random() * 8)).setScale(echelle * 0.5).setAlpha(alpha).setAngle(Math.random() * 360);
+  else { creerHalo(scene); s = scene.add.image(x, y, 'halo').setScale(0.15).setTint(0xd0d0d0).setAlpha(0.5); }
+  if (teinte) s.setTint(teinte);
+  if (profondeur !== null) s.setDepth(profondeur);
+  if (conteneur) conteneur.add(s);
+  const fin = scene.textures.exists('fx_fumee0') ? echelle * (1.4 + Math.random() * 0.5) : 0.45;
+  scene.tweens.add({ targets: s, y: y - monte * (0.8 + Math.random() * 0.4), x: x + vent * (0.7 + Math.random() * 0.6), scale: fin, alpha: 0, angle: s.angle + 50, duration: duree * (0.9 + Math.random() * 0.25), ease: 'Sine.easeOut', onComplete: () => s.destroy() });
+  return s;
+}
+
+// Une éclaboussure à la surface de l'eau : une couronne de jets, des gouttes qui retombent en
+// cloche, et des ronds qui s'élargissent. `taille` 1 = une pierre ; 2 = quelqu'un qui tombe.
+function eclaboussure(scene, x, y, { taille = 1, profondeur = null, conteneur = null, ronds = true } = {}) {
+  const E = 2 * taille, ok = scene.textures.exists('fx_jet1');
+  const ajout = o => { if (profondeur !== null) o.setDepth(profondeur); if (conteneur) conteneur.add(o); return o; };
+  if (ok) for (let k = 0; k < 9; k++) {
+    const a = (k - 4) * 0.22;
+    const j = ajout(scene.add.image(x + (k - 4) * 2 * taille, y, 'fx_jet' + (1 + (k % 4))).setOrigin(0.5, 1).setScale(E * 1.1, E * (1.2 + Math.random() * 0.9)).setRotation(a));
+    scene.tweens.add({ targets: j, scaleY: 0.2, alpha: 0, duration: 420 + Math.random() * 140, ease: 'Quad.easeOut', onComplete: () => j.destroy() });
+  }
+  for (let k = 0; k < 10 + 4 * taille; k++) {
+    const d = ajout(ok ? scene.add.image(x, y - 4, 'fx_goutte').setScale(E * (0.5 + Math.random() * 0.5)) : scene.add.circle(x, y - 4, 2 + Math.random() * 2, 0xe8fcff, 0.9));
+    const vx = (Math.random() - 0.5) * 120 * taille, h = (34 + Math.random() * 50) * taille, t = 560 + Math.random() * 280;
+    scene.tweens.add({ targets: d, x: x + vx, duration: t });
+    scene.tweens.add({ targets: d, y: y - 4 - h, duration: t / 2, ease: 'Quad.easeOut', yoyo: true, onComplete: () => d.destroy() });
+  }
+  if (ronds) for (let k = 0; k < 3; k++) {
+    const r = ajout(ok ? scene.add.image(x, y + 2, 'fx_rond').setScale(E * 0.4, E * 0.3).setAlpha(0.9) : scene.add.ellipse(x, y + 2, 14, 4).setStrokeStyle(2, 0xe8fcff, 0.8));
+    scene.tweens.add({ targets: r, scaleX: ok ? E * 2 : 5, scaleY: ok ? E * 1 : 3, alpha: 0, delay: k * 240, duration: 1200, onComplete: () => r.destroy() });
+  }
+}

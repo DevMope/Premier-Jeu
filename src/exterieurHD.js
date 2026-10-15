@@ -558,10 +558,9 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   // Un filet de fumée qui monte de la cheminée
   creerHalo(scene);
   const [chx, chy, chl] = ecran(chemineeFacade(n));
-  if (fumee) scene.time.addEvent({ delay: 700, loop: true, callback: () => {
+  if (fumee) scene.time.addEvent({ delay: 420, loop: true, callback: () => {
     if (!image.active) return;
-    const f = scene.add.image(chx + chl / 2, chy, 'halo').setScale(0.15).setTint(0xd0d0d0).setAlpha(0.5);
-    scene.tweens.add({ targets: f, y: f.y - 70, x: f.x + 20, scale: 0.45, alpha: 0, duration: 2600, onComplete: () => f.destroy() });
+    bouffeeFumee(scene, chx + chl / 2, chy, { echelle: 2.2, monte: 110, vent: 40, duree: 3200, alpha: 0.95, profondeur: image.depth + 0.01 });   // (v0.70 : la vraie fumée)
   } });
   const [px, , pl] = ecran(FACADE.porte);
   return {

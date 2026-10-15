@@ -1094,7 +1094,7 @@ const SCENES_EPREUVES = {
         // jeté{e} à l'eau, par-dessus le bord du quai
         await this.sauter(p, p.x - 90, SOL_RECIT + 60, 80, 600, -200);
         this.onomatopee(p.x, SOL_RECIT - 60, 'PLOUF !', '#a8d0ff');
-        for (let k = 0; k < 12; k++) { const g = this.garder(this.add.circle(p.x + (Math.random() - 0.5) * 30, SOL_RECIT + 6, 2 + Math.random() * 2, 0xe8fcff, 0.9).setDepth(4)); this.sauter(g, g.x + Phaser.Math.Between(-40, 40), SOL_RECIT + 10, 40 + Math.random() * 40, 500).then(() => g.destroy()); }
+        eclaboussure(this, p.x, SOL_RECIT + 8, { taille: 2, profondeur: 4 });   // (v0.70)
         for (const [i, b] of M.brigands.entries()) { b.setFlipX(false); pasDeMarche(this, b, 1000); this.tweens.add({ targets: b, x: 1120 + i * 40, duration: 1000, delay: 300 + i * 100 }); }
         await this.attendre(900);
         p.setAngle(0).setTint(0xa8c8ff);

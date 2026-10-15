@@ -120,6 +120,8 @@ function cadreDragonHD(scene) {
 class TitleScene extends Phaser.Scene {
   constructor() { super('Titre'); }
 
+  preload() { chargerFx(this); }   // (v0.70 : les effets de fumée et d'eau)
+
   create() {
     creerToutesLesTextures(this);
 

@@ -379,16 +379,7 @@ class MarcheScene extends Phaser.Scene {
       onComplete: () => {
         // le contact avec l'eau : une gerbe, des ronds, plouf
         Son.jouer('plouf');
-        for (let k = 0; k < 12; k++) {
-          const g = this.add.circle(tx, surfaceY, Phaser.Math.Between(2, 3), 0xe8fcff, 0.95); c.add(g);
-          const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.6, v = 30 + Math.random() * 40;
-          this.tweens.add({ targets: g, x: tx + Math.cos(a) * v, duration: 600, ease: 'Linear' });
-          this.tweens.add({ targets: g, y: surfaceY + Math.sin(a) * v, duration: 300, ease: 'Quad.easeOut', yoyo: true, onComplete: () => g.destroy() });
-        }
-        for (let k = 0; k < 4; k++) {
-          const o = this.add.ellipse(tx, surfaceY, 14, 4).setStrokeStyle(2, 0xe8fcff, 0.8); c.add(o);
-          this.tweens.add({ targets: o, scaleX: 4 + k * 1.5, scaleY: 3 + k, alpha: 0, duration: 1100, delay: k * 160, onComplete: () => o.destroy() });
-        }
+        eclaboussure(this, tx, surfaceY, { taille: 1.3, conteneur: c });   // (v0.70)
         // elle coule, à plat, en se balançant, et l'eau la bleuit
         p.setScale(1.5, 0.7).setTint(0xb8d8e8).setAlpha(0.9);
         const coule = { t: 0 };

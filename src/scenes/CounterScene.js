@@ -1793,8 +1793,11 @@ class CounterScene extends Phaser.Scene {
       }
       const ok = donne >= commande[id];
       const piege = this.pieges && this.pieges[id] ? `  (piégé${this.pieges[id] > 1 ? ' ×' + this.pieges[id] : ''})` : '';
-      ligne.txt.setText(`${ITEMS[id].nom}  ${Math.min(donne, commande[id])} / ${commande[id]}  ${ok ? '✓' : ''}${plus[id] ? ` +${plus[id]}` : ''}${piege}`)
+      // (v0.70) l'arme préférée, pas encore donnée : n'importe quelle arme remplit la ligne (la sienne donne un petit bonus)
+      const ouAutre = estArme(id) && !ok && !armesDonnees(this.colis) ? ' (ou une autre arme)' : '';
+      ligne.txt.setText(`${ITEMS[id].nom}  ${Math.min(donne, commande[id])} / ${commande[id]}  ${ok ? '✓' : ''}${plus[id] ? ` +${plus[id]}` : ''}${piege}${ouAutre}`)
         .setFontSize(14).setColor(piege ? '#7a1a4a' : ok ? '#2f6a2a' : '#3b2410');
+      for (let t = 14; ligne.txt.width > 205 && t >= 10; t--) ligne.txt.setFontSize(t);
     });
     // Son visage suit son colis : content s'il est bien équipé, inquiet s'il manque des choses.
     if (v && this.enService && v.queteId && this.buste && this.buste.personne === v) {

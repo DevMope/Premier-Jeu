@@ -800,7 +800,7 @@ Object.assign(SCENES_EPREUVES, {
         // il s'enfonce... PLOUF ; on le repêche, trempé
         await this.animer({ targets: p, y: SOL_RECIT + 40, duration: 700, ease: 'Sine.easeIn' });
         this.onomatopee(p.x, SOL_RECIT - 80, 'PLOUF !', '#a8d0ff');
-        for (let k = 0; k < 12; k++) { const g = this.garder(this.add.circle(p.x + (Math.random() - 0.5) * 30, SOL_RECIT - 4, 2 + Math.random() * 2, 0xe8fcff, 0.9).setDepth(4)); this.sauter(g, g.x + Phaser.Math.Between(-40, 40), SOL_RECIT, 40 + Math.random() * 40, 500).then(() => g.destroy()); }
+        eclaboussure(this, p.x, SOL_RECIT - 2, { taille: 2, profondeur: 4 });   // (v0.70)
         await this.attendre(600);
         p.setY(SOL_RECIT).setTint(0xa8c8ff);
       }

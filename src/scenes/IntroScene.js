@@ -272,10 +272,7 @@ class IntroHistoireScene extends Cinematique {
     this.tweens.killTweensOf(this.mentor);
     this.dansLEau = false;
     // Il sort de l'eau dans une gerbe d'éclaboussures
-    for (let k = 0; k < 18; k++) {
-      const g = this.add.circle(this.mentor.x + Phaser.Math.Between(-50, 50), 342, Phaser.Math.Between(2, 4), 0xd8f8ff, 0.9).setDepth(3);
-      this.tweens.add({ targets: g, y: 342 - Phaser.Math.Between(30, 80), x: g.x + Phaser.Math.Between(-30, 30), duration: 350, yoyo: true, ease: 'Quad.easeOut', onComplete: () => g.destroy() });
-    }
+    for (const dx of [-30, 20]) eclaboussure(this, this.mentor.x + dx, 342, { taille: 1.6, profondeur: 3, ronds: dx < 0 });   // (v0.70)
     await this.animer({ targets: this.mentor, x: 470, y: 308, angle: 90, duration: 600, ease: 'Back.easeOut' });
     this.onomatopee(470, 270, 'SPLOTCH');
     await this.animer({ targets: this.heros, angle: 0, duration: 300 });

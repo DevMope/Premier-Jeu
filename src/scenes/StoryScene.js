@@ -1208,7 +1208,7 @@ class StoryScene extends Cinematique {
     if (R.eau) {
       Son.jouer('plouf');
       this.onomatopee(p.x, fond - 120, 'PLOUF !', '#a8d0ff');
-      for (let k = 0; k < 16; k++) { const g = this.add.circle(p.x + (Math.random() - 0.5) * 20, fond - 10, 2 + Math.random() * 2, 0xe8fcff, 0.9).setDepth(4); this.decor.add(g); const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.8, v = 30 + Math.random() * 50; this.tweens.add({ targets: g, x: g.x + Math.cos(a) * v, y: g.y + Math.sin(a) * v, duration: 300, yoyo: true, ease: 'Quad.easeOut', onComplete: () => g.destroy() }); }
+      eclaboussure(this, p.x, fond - 8, { taille: 2, conteneur: this.decor });   // (v0.70)
       p.setAlpha(0.6);
       await this.animer({ targets: p, x: p.x - 60, duration: 700, ease: 'Sine.easeInOut' });   // le courant l'emporte
     } else {
