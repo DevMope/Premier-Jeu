@@ -627,6 +627,51 @@ Dans l'ordre : 1 la journée (10 heures, le temps de chaque action), 2 les avis 
 dans la file (le tableau d'affichage et les visages sont faits), 6 les imposteurs et le flair,
 4 le marchandage.
 
+## Lot A « Le comptoir sous pression » — préparatifs (18/10)
+
+### État des lieux
+- **Déjà là** : le nombre de clients par jour suit les paliers de réputation (3 → 10) ; l'éclairage
+  donne +0,3 client par jour et par niveau ; le flair (il grandit avec l'expérience, le monocle
+  l'aide) estime les trouvailles ; ce qu'un client te reverse, c'est une part de son butin
+  (multipliée par la relation, le comptoir, la lanterne...) ; le tableau d'affichage et les huit
+  bandits aux signes distinctifs (v0.74–0.75) ; Grippesou et son express.
+- **Pas encore là** : le temps qui passe au comptoir, les recherchés qui viennent dans la file,
+  les imposteurs, le marchandage.
+
+### Le découpage proposé
+1. **A-1 La journée** : une horloge au comptoir, de 8 h à 18 h (un soleil qui traverse la
+   fenêtre, et le ciel qui rougit vers le soir). Chaque action prend du temps : servir 1 h (½ h
+   avec l'expérience), un retour de mission ¼ h, marchander +½ h, inspecter +¼ h, l'Express
+   de Grippesou +½ h. À 18 h, le comptoir ferme. La lanterne (éclairage) ajoute une heure le soir.
+   Plus tard : l'apprenti au guichet, qui sert seul les commandes simples.
+2. **A-2 Les recherchés dans la file** : de temps en temps, une tête mise à prix entre au
+   comptoir, avec ses signes distinctifs (cache-œil, cicatrice...). À toi de la reconnaître :
+   côté lumière, tu peux appeler la garde (la prime de l'affiche, de la réputation) ; côté ombre,
+   tu peux le cacher dans l'arrière-boutique (il te le rendra : un objet interdit, un service) ;
+   ou le servir comme si de rien n'était. Dénoncer un innocent coûte cher (réputation, relation).
+3. **A-3 Les imposteurs et le flair** : certains clients mentent (un faux héros, une fausse
+   quête) ; servis, ils disparaissent avec le baluchon et ne reviennent jamais. Des indices les
+   trahissent (un équipement trop neuf, une arme qui ne va pas avec leur peuple, une histoire qui
+   se contredit) ; « Inspecter » (+¼ h) en révèle plus selon ton flair, mais jamais à 100 %.
+4. **A-4 Le marchandage** : le client annonce la part de son butin qu'il te reversera ; tu peux
+   demander plus. Une jauge de patience descend à chaque demande ; ses tics trahissent s'il
+   bluffe (il transpire, détourne le regard, tapote le comptoir) ; chaque peuple a son style (le
+   nain est dur mais respecte qui tient bon, le hobbit pleurniche, l'elfe a peu de patience, l'orc
+   menace, le gobelin bluffe tout le temps). Trop insister : il part fâché.
+5. **Planches à valider** avant de brancher : l'horloge au comptoir, la scène du recherché
+   (garde ou cachette), la fiche d'inspection, la jauge de marchandage et les tics.
+
+### Questions au joueur (lot A)
+1. **À 18 h, les clients qui attendent encore** : (A) ils repartent (un peu de réputation en
+   moins) ; (B) ils reviennent le lendemain matin, en tête de file ; (C) ceux qui avaient écrit
+   reviennent, les imprévus repartent.
+2. **Les recherchés** : à quelle fréquence (proposition : un par semaine environ, à partir de la
+   semaine 2) ?
+3. **Les imposteurs** : à partir de quand et à quelle fréquence (proposition : dès le jour 5,
+   environ un client sur douze, un peu plus quand ta réputation grandit) ?
+4. **Le marchandage** porte bien sur **la part du butin** que le client te reversera au retour ?
+5. **L'ordre** : A-1, A-2, A-3, A-4, ou une autre préférence ?
+
 ## La rue et le familier (validé par le joueur le 16/10)
 
 - La rue devant le comptoir devient un vrai quartier qu'on parcourt avec son personnage (gauche-droite, comme la promenade du soir) : le marché, la banque, la forge de Thorgal, la fontaine, l'impasse du marché noir, plus tard le petit bar. Les raccourcis depuis la maison restent.
