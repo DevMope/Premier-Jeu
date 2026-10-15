@@ -86,8 +86,10 @@ class ForgeScene extends Phaser.Scene {
       this.forgerons();
     } else {
       // le chantier : des planches, un plan roulé, et Garrick qui a laissé un mot
-      this.add.text(300, 300, forgeProposee(G) ? `Garrick l'a dit : il y a la place ici pour une forge.\nLe foyer et la hotte sont déjà là ; il manque l'enclume, le soufflet... et un forgeron.` : `Ce coin de l'arrière-boutique attendra les contrées à ${FORGE.etoiles} étoiles.`,
-        style(14, '#f3e6c8', { fontStyle: 'italic', align: 'center', stroke: '#1a0e06', strokeThickness: 4, wordWrap: { width: 520 } })).setOrigin(0.5);
+      const mot = this.add.text(300, 300, forgeProposee(G) ? `Garrick l'a dit : il y a la place ici pour une forge.\nLe foyer et la hotte sont déjà là ; il manque l'enclume, le soufflet... et un forgeron.` : `Ce coin de l'arrière-boutique attendra les contrées à ${FORGE.etoiles} étoiles.`,
+        style(14, '#f3e6c8', { fontStyle: 'italic', align: 'center', stroke: '#1a0e06', strokeThickness: 4, wordWrap: { width: 520 } })).setOrigin(0.5).setDepth(2);
+      // (un bandeau sombre dessous : la phrase passe sur la hotte et les briques)
+      this.add.rectangle(300, 300, mot.width + 28, mot.height + 14, 0x1a0e06, 0.72).setStrokeStyle(2, 0x6b4a2a).setDepth(1.9);
     }
     // le panneau de droite
     this.panneauForge = this.add.container(0, 0);
