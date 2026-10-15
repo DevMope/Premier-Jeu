@@ -1030,6 +1030,7 @@ function capucheBuste(t, g, v, cx, ey) {
     if (main) { if (sous < 9 && m !== 'iris') t.poser(x, y, m, sous < 6 ? 0 : Math.min(k, 1)); else if (sous < 13) t.poser(x, y, m, Math.max(0, k - 1)); }
     else if (sous < 3 || -anneau(x, y) < 1.5) t.poser(x, y, m, Math.max(0, k - 2));
   }
+  t.ouvertureCapuche = dans;   // (pour ganter ensuite les mains levées près du visage)
   // (rien ne dépasse : une oreille ou une mèche hors de l'ouverture passe sous l'étoffe)
   for (let y = 0; y < v.torse; y++) for (let x = 0; x < HD_L; x++) if (['peau', 'cheveux'].includes(t.mat(x, y)) && !dans(x, y)) t.poser(x, y, 'cape', 2);
   if (!main) {
@@ -1066,7 +1067,7 @@ function epaulettesBuste(t, g, v, cx) {
   }
   for (const [x, y] of ombres) t.poser(x, y, 'capeDos', 0);
   for (const [x, y] of bords) t.poser(x, y, 'capeDos', 4);
-  t.rampes.gantelet = t.rampes.gantelet || rampe(0x5c606c);
+  gantelets(t);
   const epaule = (LARGEURS_BUSTE[g.race] || 20) + 2.5;
   for (const sens of [-1, 1]) {
     const ex = cx + sens * (epaule - 5.5), ey = v.torse + 3;
@@ -1080,12 +1081,57 @@ function epaulettesBuste(t, g, v, cx) {
   }
 }
 
+// Les gantelets de la Main Noire, lisibles : un acier plus clair que la robe, la manchette au
+// poignet (un rebord sombre contre la manche, puis une plaque brillante), une rangée de jointures
+// qui accroche la lumière, et des doigts séparés par de fines rainures, dans le sens de la main
+function gantelets(t) {
+  t.rampes.gantelet = rampe(0x7e8696);
+  const L = t.l, H = t.h || HD_H, vu = new Set();
+  const cle = (x, y) => y * L + x;
+  for (let y0 = 0; y0 < H; y0++) for (let x0 = 0; x0 < L; x0++) {
+    if (t.mat(x0, y0) !== 'gantelet' || vu.has(cle(x0, y0))) continue;
+    // une main : tous les pixels de gantelet qui se touchent
+    const main = [], pile = [[x0, y0]]; vu.add(cle(x0, y0));
+    while (pile.length) { const [x, y] = pile.pop(); main.push([x, y]); for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + a, ny = y + b; if (t.mat(nx, ny) === 'gantelet' && !vu.has(cle(nx, ny))) { vu.add(cle(nx, ny)); pile.push([nx, ny]); } } }
+    if (main.length < 6) continue;   // (l'anneau de l'agrafe, les maillons : pas des mains)
+    // le poignet : là où la main touche la manche ; la distance au poignet, pas à pas
+    const dist = new Map(), file = [];
+    const touche = ([x, y]) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => t.mat(x + a, y + b) === 'habit');
+    const bord = main.filter(([x, y]) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => t.mat(x + a, y + b) !== 'gantelet'));
+    let poignet = main.filter(touche);
+    // (bras croisés : la main posée sur l'autre manche est entourée d'étoffe ; le poignet est alors
+    // du côté du corps, et les doigts partent vers l'extérieur)
+    if (poignet.length > bord.length * 0.5) {
+      const bx = main.reduce((m, [x]) => m + x, 0) / main.length, sens = bx < t.l / 2 ? -1 : 1;
+      const ext = Math.max(...main.map(([x]) => -sens * x));
+      poignet = main.filter(([x]) => -sens * x >= ext - 0.5);
+    }
+    for (const [x, y] of poignet) { dist.set(cle(x, y), 0); file.push([x, y]); }
+    if (!file.length) { const [x, y] = main[0]; dist.set(cle(x, y), 0); file.push([x, y]); }
+    for (let i = 0; i < file.length; i++) { const [x, y] = file[i], d = dist.get(cle(x, y)); for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + a, ny = y + b; if (t.mat(nx, ny) === 'gantelet' && !dist.has(cle(nx, ny))) { dist.set(cle(nx, ny), d + 1); file.push([nx, ny]); } } }
+    // le sens de la main : du poignet vers le bout des doigts
+    const moy = pts => pts.reduce((m, [x, y]) => [m[0] + x / pts.length, m[1] + y / pts.length], [0, 0]);
+    const P = moy(file.filter(([x, y]) => dist.get(cle(x, y)) === 0)), B = moy(main);
+    let dx = B[0] - P[0], dy = B[1] - P[1]; const n = Math.hypot(dx, dy) || 1; dx /= n; dy /= n;
+    for (const [x, y] of main) {
+      const d = dist.get(cle(x, y)) ?? 9, k = t.k[cle(x, y)];
+      if (d === 0) t.poser(x, y, 'gantelet', 1);                      // le rebord de la manchette
+      else if (d <= 2) t.poser(x, y, 'gantelet', Math.min(5, k + 1));   // la plaque du poignet
+      else if (d === 3) t.poser(x, y, 'gantelet', 1);                 // la jointure de la manchette
+      else if (d === 4 && main.length < 70) t.poser(x, y, 'gantelet', 5);   // les jointures du poing, qui brillent
+      else if (d >= 5 && main.length < 70 && ((Math.floor((x + 0.5) * -dy + (y + 0.5) * dx + 100) % 3) + 3) % 3 === 0) t.poser(x, y, 'gantelet', 1);   // les doigts repliés, séparés
+      else t.poser(x, y, 'gantelet', k <= 2 ? Math.max(0, k - 1) : Math.min(5, k + 1));   // (une main ouverte garde son dessin, plus contrasté)
+    }
+  }
+}
+
 // (v0.61) Les plis des étoffes des deux bandes : la robe, les manches, la tunique et le gilet
 // prennent des faux plis, des coutures et de l'usure (sinon, de grands aplats sans vie)
 function plisBuste(t, g, v, cx) {
   const main = g.bande === 'main';
   // (une main portée au menton est gantée elle aussi)
-  if (main) for (let y = Math.round(v.cy + v.ry - 1); y < v.torse - 2; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'peau') { t.rampes.gantelet = rampe(0x5c606c); t.poser(x, y, 'gantelet', t.k[y * t.l + x]); }
+  if (main) t.rampes.gantelet = rampe(0x7e8696);
+  if (main) for (let y = 0; y < v.torse - 2; y++) for (let x = 0; x < HD_L; x++) if (t.mat(x, y) === 'peau' && (y >= v.cy + v.ry - 1 || !(t.ouvertureCapuche && t.ouvertureCapuche(x, y)))) { t.poser(x, y, 'gantelet', t.k[y * t.l + x]); }
   for (let y = v.torse - 2; y < HD_H; y++) for (let x = 0; x < HD_L; x++) {
     const m = t.mat(x, y), k = t.k[y * t.l + x];
     if (m === 'habit') {
@@ -1093,9 +1139,7 @@ function plisBuste(t, g, v, cx) {
       if (f > 0.86) t.poser(x, y, m, Math.min(5, k + 1)); else if (f < -0.9) t.poser(x, y, m, Math.max(0, k - 1));
       if (main && hachage(x, y, 71) > 0.95) t.poser(x, y, m, Math.max(0, k - 1));
     } else if (m === 'peau' && main) {
-      // les gantelets de fer sombre de la Main Noire, avec leurs articulations
-      t.rampes.gantelet = rampe(0x5c606c);
-      t.poser(x, y, 'gantelet', (x + y) % 3 === 0 ? Math.max(0, k - 2) : k);
+      t.poser(x, y, 'gantelet', k);   // (les gantelets : voir gantelets() plus bas)
     } else if (m === 'gilet') {
       if (hachage(x, y, 83) > 0.9) t.poser(x, y, m, Math.max(0, k - 1));
       // une couture claire le long de l'ouverture du gilet
