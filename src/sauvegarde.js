@@ -364,6 +364,7 @@ function mettreAJourPartie(G, brut = G) {
   G.palierJaugeVu = G.palierJaugeVu || 0;
   G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 };
   G.interdits = G.interdits || {};
+  G.belOuvrage = G.belOuvrage || {};   // (v0.82)
   G.garrickVu = G.garrickVu || [];
   G.decalageJours = G.decalageJours || 0;
   G.ainesVus = G.ainesVus || []; G.ainesRecits = G.ainesRecits || []; G.trophees = G.trophees || [];

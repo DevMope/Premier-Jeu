@@ -113,6 +113,28 @@ const DESSINS_ICONES = {
     for (const [x, y] of [[11, 4], [12, 3], [13, 5], [10, 2], [12, 1]]) t.poser(x, y, 'nuitPoudre', 4);
     t.poser(12, 2, 'or', 5); t.poser(10, 4, 'or', 5);
   },
+  // (v0.82, étape 10b) les armes interdites de ta forge
+  lameEmpoisonnee(t) { // une dague dont la lame suinte un poison vert
+    t.rampes.venin = rampe(0x58d040);
+    for (let k = 0; k < 9; k++) { t.poser(5 + k, 10 - k, 'metal', 4); t.poser(6 + k, 10 - k, 'metal', 2); }
+    for (const [x, y] of [[8, 8], [10, 6], [12, 4], [9, 9], [13, 3]]) t.poser(x, y, 'venin', 4);
+    t.poser(9, 10, 'venin', 3); t.poser(9, 11, 'venin', 5); t.poser(12, 6, 'venin', 3); t.poser(12, 7, 'venin', 5);
+    for (let k = 0; k < 4; k++) { t.poser(2 + k, 9 + k, 'or', 3); t.poser(3 + k, 8 + k, 'or', 4); }
+    for (let k = 0; k < 3; k++) t.poser(2 + k, 13 - k + 1, 'cuir', 3);
+  },
+  lameLune(t) { // une lame courbe noir-bleu, mate, avec un croissant de lune gravé
+    t.rampes.lameNoire = rampe(0x2a2a4a);
+    t.forme('lameNoire', (x, y) => { const d = Math.hypot(x + 0.5 - 2, y + 0.5 - 16); return d > 9 && d < 13 && x > 2 && y < 12 ? [0, 0, 1] : null; });
+    t.poser(8, 6, 'or', 4); t.poser(9, 7, 'or', 3); t.poser(8, 8, 'or', 4);   // le croissant
+    for (let k = 0; k < 4; k++) t.poser(1 + k, 12 + Math.min(k, 3), 'cuir', 3);
+    t.poser(3, 11, 'metal', 4); t.poser(4, 12, 'metal', 4);
+  },
+  griffesOmbre(t) { // trois griffes de fer noirci sur un gantelet, une serrure fondue dessus
+    t.rampes.ferNoir = rampe(0x3a3440);
+    t.forme('cuir', (x, y) => (y >= 9 && y <= 14 && x >= 3 && x <= 12 ? [0, 0.2, 0.9] : null));
+    for (const x0 of [4, 7, 10]) for (let k = 0; k < 7; k++) t.poser(x0 + Math.round(k * 0.3), 8 - k, 'ferNoir', k < 2 ? 2 : 4);
+    t.forme('or', ellipsoide(8, 12, 1.6, 1.6), { decalage: 0.3 }); t.poser(8, 12, 'encre', 0);
+  },
   passe(t) { // une clé tordue à l'anneau de fer
     t.forme('fer', (x, y) => (Math.abs(Math.hypot(x + 0.5 - 5, y + 0.5 - 5) - 2.6) < 1 ? [0, 0, 1] : null));
     for (let k = 0; k < 8; k++) { t.poser(7 + k, 7 + k, 'fer', 4); t.poser(7 + k, 8 + k, 'fer', 2); }

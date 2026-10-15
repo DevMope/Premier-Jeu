@@ -85,6 +85,11 @@ const INTERDITS = {
   grimoire: { nom: 'Grimoire interdit', article: 'un grimoire interdit', prix: 24, vente: [48, 70] },
   poudre: { nom: 'Poudre de lune noire', article: 'un sachet de poudre de lune noire', prix: 10, vente: [22, 32] },
   passe: { nom: 'Passe-partout', article: 'un passe-partout', prix: 16, vente: [34, 48] },
+  // (v0.82, étape 10b) les armes interdites, qu'on ne trouve pas chez le Passeur : elles sortent
+  // de ta forge (`forge: true`), côté ombre, et les Bannis les paient cher
+  lameEmpoisonnee: { nom: 'Lame empoisonnée', article: 'une lame empoisonnée', prix: 30, vente: [62, 84], forge: true },
+  lameLune: { nom: 'Lame de lune noire', article: 'une lame de lune noire', prix: 28, vente: [58, 78], forge: true },
+  griffesOmbre: { nom: "Griffes de l'ombre", article: "des griffes de l'ombre", prix: 34, vente: [70, 92], forge: true },
 };
 const MARCHE_NOIR = {
   debut: 6,                     // le premier soir possible
@@ -2023,3 +2028,36 @@ const AVIS_RECHERCHE = [
   { nom: 'Vorag le Comte Pâle', personne: { nom: 'Vorag', race: 'vampire', niveau: 'veteran', marques: ['monocle'] }, crime: 'Rôde la nuit autour des bergeries. On a retrouvé les moutons... pâles.', prime: 1500 },
   { nom: 'Brumos sous-le-Pont', personne: { nom: 'Brumos', race: 'troll', niveau: 'aguerri', marques: ['bandeau', 'balafre'] }, crime: 'Exige un péage de trois chèvres sur le pont de la Rivière.', prime: 900 },
 ];
+
+// --- (v0.82, étape 10b) La forge chez soi ---
+// Les recettes (validées le 16/10) : ce que coûte une arme en matériaux.
+const RECETTES = {
+  epee: { fer: 3, cuir: 1 }, hache: { fer: 2, bois: 2 }, marteau: { fer: 3, bois: 1 }, arc: { bois: 3, cuir: 1 },
+  lance: { bois: 3, fer: 1 }, baton: { bois: 3, filOr: 1 }, bambou: { bois: 3 }, fronde: { cuir: 2 },
+  dague: { fer: 1, cuir: 1 }, rapiere: { fer: 2, filOr: 1 }, khopesh: { fer: 2, bois: 1 }, griffes: { fer: 2, cuir: 2 },
+  massue: { bois: 4, fer: 1 }, bouclier: { bois: 2, fer: 2 },
+};
+// Les armes interdites (côté ombre) : une arme ou du fer, et un objet du marché noir
+const RECETTES_OMBRE = {
+  lameEmpoisonnee: { dague: 1, poison: 1 },
+  lameLune: { fer: 2, poudre: 1 },
+  griffesOmbre: { griffes: 1, passe: 1 },
+};
+const FORGE = {
+  prix: 300, etoiles: 3,           // construite au lendemain du saut d'un an (★3)
+  lot: 5, remiseGros: 0.3,         // Thorgal vend au forgeron du comptoir des lots de 5, à −30 %
+  forgerons: {
+    aldo: { nom: "Aldo l'apprenti", race: 'humain', salaire: 6, etoiles: 3,
+      description: "Grand, maladroit, plein de bonne volonté. Il apprend à chaque arme forgée." },
+    baba: { nom: "Baba Marteau-d'Or", race: 'nain', feminin: true, salaire: 12, etoiles: 4, vitesse: 2, belOuvrage: 0.3,
+      description: "Maîtresse forgeronne venue du sud. Peu de mots, des mains sûres : deux armes par nuit, et souvent du bel ouvrage." },
+  },
+  // Aldo progresse avec les armes forgées (il plafonne à 80 % de Baba)
+  rangsAldo: [
+    { nom: 'apprenti', armes: 0, vitesse: 0.5, belOuvrage: 0.08 },
+    { nom: 'compagnon', armes: 8, vitesse: 1, belOuvrage: 0.15 },
+    { nom: 'ouvrier confirmé', armes: 20, vitesse: 1, belOuvrage: 0.24 },
+  ],
+  // Une arme « bel ouvrage » : elle s'use deux fois moins vite et le client l'apprécie (+1 relation)
+  belOuvrage: { usure: 2, relation: 1 },
+};

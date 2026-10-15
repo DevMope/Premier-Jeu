@@ -24,6 +24,8 @@ class ArriereScene extends Phaser.Scene {
     this.dessinerPorte();
     this.dessinerDecos();
     creerBouton(this, 840, 505, 220, '↻ Retour au comptoir', () => this.fermer());
+    // (v0.82, étape 10b) le coin de la forge, à partir du saut d'un an
+    if (forgeProposee(G)) creerBouton(this, 600, 505, 220, forgeConstruite(G) ? '⚒ La forge' : '⚒ Le coin de la forge', () => { this.scene.pause(); this.scene.launch('Forge', { appelant: 'Arriere' }); });
     this.time.delayedCall(400, () => conseilGarrick(this, 'arriere'));
   }
 

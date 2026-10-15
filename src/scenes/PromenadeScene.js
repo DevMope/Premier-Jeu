@@ -310,6 +310,11 @@ class PromenadeScene extends Cinematique {
     this.lumieres.push([960 + 640, 90, 3], [960 + 514, SOL_ARRIERE - 30, 1.6]);
     this.armoire(etagere);
     this.regarder(960 + 680, 300, 160, 140, `Ta fortune : ${G.argent} pièces.` + (G.prets.length ? ` Et ${G.prets.reduce((a, p) => a + p.restant, 0)} p. de dette...` : ''));
+    // (v0.82, étape 10b) le passage vers la forge, au fond de l'arrière-boutique
+    if (forgeProposee(G)) {
+      const t = this.add.text(960 + 300, 150, forgeConstruite(G) ? '⚒ La forge ▸' : '⚒ Le coin de la forge ▸', style(14, '#f3d98a', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 10, y: 5 } })).setOrigin(0.5).setDepth(8.6).setInteractive({ useHandCursor: true });
+      t.on('pointerdown', () => { if (this.transition) return; Son.jouer('porte'); this.scene.pause(); this.scene.launch('Forge', { appelant: 'Promenade' }); });
+    }
   }
 
   // (v0.68) L'étagère de la réserve devient une armoire : fermée, on ne voit que ses portes (moins de

@@ -215,7 +215,14 @@ const PEUPLES_HD = {
   panda: { peaux: [1], cheveux: [0x201c1c], habits: [0x8a3a20, 0xa85a20, 0x6a3a2a, 0x3a4a6a] },
 };
 
+// (v0.82) Un figurant qui impose son allure à son buste (couleurs, coiffure) : Aldo, Baba...
+function FIGURANTS_BUSTE(p) { const f = p && p.figurant && typeof FIGURANTS !== 'undefined' && FIGURANTS[p.figurant]; return f && f.buste ? f : null; }
 function geneHD(p) {
+  const fig = FIGURANTS_BUSTE(p);
+  if (fig) return { ...geneHDBase({ ...p, race: fig.race, feminin: fig.feminin }), peau: BASES_PEAU[fig.peau] ?? BASES_PEAU[1], cheveux: fig.cheveux, habit: fig.habit, coiffure: fig.coiffure || 'court', barbe: fig.barbe || (fig.race === 'nain' && !fig.feminin ? 'nain' : null), armure: false, forgeron: fig.costume === 'forgeron' };
+  return geneHDBase(p);
+}
+function geneHDBase(p) {
   const r = hasardDuNom(p.nom || 'Inconnu');
   const choix = liste => liste[Math.floor(r() * liste.length)];
   const race = PEUPLES_HD[p.race] ? p.race : 'humain';
@@ -240,7 +247,7 @@ function geneHD(p) {
     colporteur: p.figurant === 'colporteur',
     mendiant: p.figurant === 'mendiant',
     bande: p.costume === 'mainNoire' ? 'main' : p.costume === 'serpent' ? 'serpent' : null,   // (v0.61) les deux bandes, encapuchonnées
-    marques: p.marques || null,   // (v0.75) les signes distinctifs des bandits recherchés
+    marques: p.marques || (FIGURANTS_BUSTE(p) || {}).marques || null,   // (v0.75) les signes distinctifs des bandits recherchés
     nom: p.nom,
     habitNoble: choix([0x6a1a3a, 0x1a2a6a, 0x3a1a5a, 0x7a4a10]),
   };
@@ -614,7 +621,7 @@ function poseBuste(g, expression) {
 // Les bras partent des épaules (sous les épaulières), les manches sont de la matière du torse.
 function brasBuste(t, g, v, cx, pose) {
   const largeur = LARGEURS_BUSTE[g.race] || 20;
-  const manche = g.race === 'nain' ? 'metal' : g.race === 'hobbit' ? 'lin' : g.race === 'humain' && g.armure ? 'cuir' : 'habit';
+  const manche = g.forgeron ? 'peau' : g.race === 'nain' ? 'metal' : g.race === 'hobbit' ? 'lin' : g.race === 'humain' && g.armure ? 'cuir' : 'habit';
   const ep = g.race === 'nain' || g.race === 'troll' || g.race === 'orc' ? 5.2 : 4.4;
   const sx = largeur + 2, sy = v.torse + 12;
   const epaule = s => [cx + s * sx, sy];
@@ -751,6 +758,12 @@ function torseHD(t, g, v, cx) {
     // le pendentif en fleur de pommier, sur un cordon de cuir
     for (let k = -3; k <= 3; k++) t.poser(cx + k, v.torse + 1 + Math.round(k * k * 0.25), 'cuir', 1);
     t.dessin(cx - 1, v.torse + 4, ['.o.', 'oCo', '.o.'], { o: ['metal', 5], C: ['levres', 4] });
+  } else if (g.forgeron) {
+    // (v0.82) les forgerons : la chemise, et par-dessus un épais tablier de cuir, ses bretelles et sa poche
+    t.forme('habit', corps, { decalage: -0.7 });
+    t.forme('cuir', (x, y) => (y >= v.torse + 8 && Math.abs(x + 0.5 - cx) < 13 + (y - v.torse) * 0.12 && corps(x, y) ? [(x + 0.5 - cx) / 16, 0.1, 0.9] : null), { decalage: -0.3, motif: (x, y) => ((x * 3 + y * 7) % 13 === 0 ? -0.5 : 0) });
+    for (const cote of [-1, 1]) t.forme('cuir', (x, y) => (y >= v.torse - 2 && y < v.torse + 10 && Math.abs((x + 0.5 - cx) - cote * (9 + (y - v.torse) * 0.3)) < 2 && corps(x, y) ? [cote * 0.3, 0, 0.9] : null), { decalage: 0.1 });
+    t.forme('cuir', (x, y) => (y >= v.torse + 18 && y < v.torse + 24 && Math.abs(x + 0.5 - cx - 4) < 5 ? [0, 0.3, 0.9] : null), { decalage: -0.8 });
   } else if (g.race === 'nain') {
     t.forme('habit', corps, { decalage: -0.7 });
     t.forme('metal', ellipsoide(cx, 92, 22, 26, (x, y) => y >= 66), {
@@ -1323,6 +1336,18 @@ function marqueVisage(t, marque, { fx, ey, cx, v, T }) {
     for (let y = ey - 13; y <= ey - 8; y++) for (let x = 0; x < t.l; x++) if (surTete(x, y)) t.poser(x, y, 'bandana', y === ey - 13 ? 4 : y === ey - 8 ? 1 : ((x + y) % 5 === 0 ? 4 : 3));
     const bx = Math.round(cx - v.rx - 2);
     for (let j = 0; j < 9; j++) { t.poser(bx - 1 - (j >> 2), ey - 8 + j, 'bandana', 2); t.poser(bx - 3 - (j >> 2), ey - 7 + j, 'bandana', 3); }
+  } else if (marque === 'khol') {
+    // (v0.82) les yeux soulignés de khôl, étirés vers les tempes
+    t.rampes.khol = rampe(0x140c10);
+    for (const [x0, x1, coin] of [[fx - 14, fx - 4, -1], [fx + 3, fx + 13, 1]]) {
+      for (let x = x0; x <= x1; x++) t.poser(x, ey + 3, 'khol', 1);
+      const xc = coin < 0 ? x0 - 1 : x1 + 1;
+      t.poser(xc, ey + 2, 'khol', 1); t.poser(xc + coin, ey + 1, 'khol', 1);
+    }
+  } else if (marque === 'anneauNez') {
+    // (v0.82) un fin anneau d'or à la narine
+    t.rampes.or = rampe(0xe8b830);
+    for (const [dx, dy, k] of [[0, 0, 4], [1, 1, 3], [1, 2, 2], [0, 3, 2], [-1, 2, 3]]) t.poser(fx + 3 + dx, ey + 8 + dy, 'or', k);
   } else if (marque === 'monocle') {
     // un monocle cerclé d'or sur l'œil droit, et sa chaînette
     t.rampes.or = rampe(0xe8b830);

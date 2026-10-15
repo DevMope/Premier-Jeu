@@ -454,8 +454,9 @@ Object.assign(REPERES_HD, {
     // les falaises et la mousse
     // (des falaises aux bords déchiquetés, des strates claires et des ombres)
     const bordG = y => 70 + Math.sin(y * 0.05) * 18 + Math.sin(y * 0.19) * 7 - Math.max(0, 60 - y) * 0.9, bordD = y => 340 - Math.sin(y * 0.045) * 16 - Math.sin(y * 0.23) * 6 + Math.max(0, 40 - y) * 1.2;
-    remplir(t, 'roche', (x, y) => x < bordG(y) || x > bordD(y), (x, y) => { const strate = Math.floor((y + Math.sin(x * 0.1) * 4) / 9) % 3; return 2 + strate + (Math.abs(x - bordG(y)) < 4 || Math.abs(x - bordD(y)) < 4 ? 1 : 0) - (hachage(x >> 2, y >> 2, 2) > 0.8 ? 1 : 0); });
-    for (let k = 0; k < 10; k++) { const g = k < 5, x = g ? 10 + k * 12 : 350 + (k - 5) * 14, y = 40 + ((k * 53) % 220); remplir(t, 'sapin', (px, py) => py >= y && py < y + 22 && Math.abs(px + 0.5 - x) < (py - y) * 0.4, (px) => (px < x ? 4 : 2)); }   // des sapins accrochés aux parois
+    const extG = y => Math.max(0, 46 - y * 0.16 + Math.sin(y * 0.11) * 8 + Math.sin(y * 0.31) * 4), extD = y => Math.min(419, 374 + y * 0.16 - Math.sin(y * 0.1) * 8 - Math.sin(y * 0.27) * 4);
+    remplir(t, 'roche', (x, y) => (x < bordG(y) && x > extG(y)) || (x > bordD(y) && x < extD(y)), (x, y) => { const strate = Math.floor((y + Math.sin(x * 0.1) * 4) / 9) % 3; return 2 + strate + (Math.abs(x - bordG(y)) < 4 || Math.abs(x - bordD(y)) < 4 || Math.abs(x - extG(y)) < 3 || Math.abs(x - extD(y)) < 3 ? 1 : 0) - (hachage(x >> 2, y >> 2, 2) > 0.8 ? 1 : 0); });
+    for (let k = 0; k < 10; k++) { const g = k < 5, y = 60 + ((k * 53) % 200), x = g ? extG(y) + 8 + (k * 7) % 20 : extD(y) - 8 - (k * 7) % 20; remplir(t, 'sapin', (px, py) => py >= y && py < y + 22 && Math.abs(px + 0.5 - x) < (py - y) * 0.4, (px) => (px < x ? 4 : 2)); }   // des sapins accrochés aux parois
     for (let k = 0; k < 40; k++) { const x = hachage(k, 1, 4) < 0.5 ? hachage(k, 2, 4) * 90 : 330 + hachage(k, 2, 4) * 90, y = 30 + hachage(k, 3, 4) * 250; t.forme('mousse', ellipsoide(x, y, 5, 3), { decalage: 0.2, bord: false }); }
     // les cascades
     for (const [x0, l] of [[70, 8], [300, 10], [348, 6]]) remplir(t, 'lueurBleue', (x, y) => x >= x0 && x < x0 + l && y > 40, (x, y) => ((y + x * 3) % 7 < 3 ? 5 : 4));
@@ -570,7 +571,7 @@ Object.assign(REPERES_HD, {
   // une bannière gelée tendue par le vent
   sommet: { l: 400, h: 300, dessin(t) {
     // les deux pics
-    for (const [cx, w, haut] of [[150, 70, 60], [320, 50, 120]]) {
+    for (const [cx, w, haut] of [[150, 70, 60], [322, 50, 104]]) {
       remplir(t, 'roche', (x, y) => y >= haut && Math.abs(x + 0.5 - cx) < 10 + (y - haut) * w / 240 + Math.sin(y * 0.15) * 3, (x, y) => (x < cx ? 4 : 2) + ((x * 5 + y * 3) % 11 === 0 ? -1 : 0));
       for (let y = haut; y < 300; y += 3) { const w2 = 10 + (y - haut) * w / 240; for (let x = Math.round(cx - w2); x < cx - w2 + 4 + ((y * 7) % 5); x++) t.poser(x, y, 'neige', 5); }   // la neige collée au flanc
     }
@@ -581,10 +582,15 @@ Object.assign(REPERES_HD, {
     t.forme('lumiere', boite(147, 26, 153, 38, 3), { decalage: 1 });
     // la bannière gelée, tendue à l'horizontale par le vent
     ligne(t, 'rondin', 2, 164, 0, 164, 20, 2); remplir(t, 'eau', (x, y) => x >= 166 && x < 196 && y >= 2 && y < 12 - (x - 166) * 0.1 + Math.sin(x * 0.5), (x) => (x < 176 ? 4 : 3));
-    // le pont de corde entre les deux pics
-    for (let x = 166; x <= 304; x++) { const y = Math.round(80 + Math.sin((x - 166) / 138 * Math.PI) * 18 + (x - 166) * 0.3); t.poser(x, y, 'rondin', x % 4 === 0 ? 1 : 3); if (x % 6 === 0) ligne(t, 'chanvre', 3, x, y, x, y - 8, 1); t.poser(x, y - 8 - Math.round(Math.sin((x - 166) / 138 * Math.PI) * -2), 'chanvre', 3); }
+    // le pont de corde entre les deux pics : il part du pied de la tour et arrive sur un petit
+    // ponton de bois posé au sommet du pic de droite
+    const pontY = x => { const u = (x - 166) / (312 - 166); return 68 + (102 - 68) * u + Math.sin(u * Math.PI) * 16; };
+    for (let x = 166; x <= 312; x++) { const y = Math.round(pontY(x)); t.poser(x, y, 'rondin', x % 4 === 0 ? 1 : 3); if (x % 6 === 0) ligne(t, 'chanvre', 3, x, y, x, y - 8, 1); t.poser(x, y - 8 - Math.round(Math.sin((x - 166) / 146 * Math.PI) * -2), 'chanvre', 3); }
+    remplir(t, 'chene', (x, y) => x >= 308 && x < 336 && y >= 100 && y < 105, (x, y) => (y === 100 ? 5 : 2));   // le ponton
+    ligne(t, 'rondin', 2, 309, 105, 316, 116, 2); ligne(t, 'rondin', 2, 335, 105, 328, 116, 2);   // ses jambes de force, calées dans la roche
+    for (const x of [166, 312]) ligne(t, 'rondin', 2, x, pontY(x) - 12, x, pontY(x) + 3, 2);   // les poteaux d'amarrage
     // des stalactites de glace sous le pont et la tour
-    for (let k = 0; k < 14; k++) { const x = 140 + k * 13, y = k < 2 ? 64 : Math.round(82 + Math.sin((x - 166) / 138 * Math.PI) * 18 + (x - 166) * 0.3); for (let j = 0; j < 4 + (k % 3) * 2; j++) t.poser(x, y + 1 + j, 'lueurBleue', 5 - (j > 3 ? 1 : 0)); }
+    for (let k = 0; k < 12; k++) { const x = 140 + k * 13, y = k < 2 ? 64 : Math.round(pontY(Math.min(312, x))); for (let j = 0; j < 4 + (k % 3) * 2; j++) t.poser(x, y + 1 + j, 'lueurBleue', 5 - (j > 3 ? 1 : 0)); }
     // la mer de nuages en bas : on est au-dessus de tout
     for (let k = 0; k < 16; k++) feuillage(t, 'neige', 10 + k * 26, 288 - (k % 3) * 6, 22 + (k % 4) * 4, 12, k);
   } },

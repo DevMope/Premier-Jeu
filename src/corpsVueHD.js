@@ -213,7 +213,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const section = (ru, rz) => Math.sqrt((ru * c) ** 2 + (rz * s) ** 2);
 
   // --- Les membres ---
-  const matBras = (race === 'nain' && costume !== 'banquier') || costume === 'garde' ? 'metal' : 'habit';
+  const forgeron = costume === 'forgeron';   // (v0.82) Aldo et Baba : tablier de cuir, manches retroussées
+  const matBras = (race === 'nain' && costume !== 'banquier' && !forgeron) || costume === 'garde' ? 'metal' : 'habit';
   const bras = (cote, devant) => {
     const bal = pas ? (cote === pres ? pas : -pas) : 0;   // les bras se balancent avec la marche
     const epaule = [cote * (ep - 0.8 * k), 0.3 * k, yT + 2 * k];
@@ -248,7 +249,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     segBras.push([E, C, M, r]);
     cylindre(t, matBras, E, C, r, { decalage: dec });
     // L'avant-bras : manche retroussée (novice), manche plus claire (aguerri), brassard de cuir (vétéran et plus)
-    const matAvant = costume === 'serpent' ? 'gilet' : matBras === 'metal' ? 'metal' : tenue >= 2 && aventurier && race !== 'hobbit' && race !== 'elfe' ? 'cuir' : (tenue === 0 || race === 'hobbit') && aventurier ? 'peau' : matBras;
+    const matAvant = forgeron ? 'peau' : costume === 'serpent' ? 'gilet' : matBras === 'metal' ? 'metal' : tenue >= 2 && aventurier && race !== 'hobbit' && race !== 'elfe' ? 'cuir' : (tenue === 0 || race === 'hobbit') && aventurier ? 'peau' : matBras;
     cylindre(t, matAvant, C, M, r - 0.3 * k, { decalage: dec + (matAvant === matBras ? 0.4 : 0.15) });
     if (tenue >= 2 && aventurier && race !== 'hobbit' && race !== 'elfe') for (let j = 0; j < 2; j++) t.forme('cuir', (x, y) => (Math.abs(y - (C[1] + (M[1] - C[1]) * (0.35 + j * 0.3))) < 0.6 * k && Math.abs(x + 0.5 - (C[0] + (M[0] - C[0]) * (0.35 + j * 0.3))) < r ? [0, 0, 1] : null), { decalage: -0.9, bord: false, ombre: false }); // les lanières
     // La main : la paume et un pouce
@@ -391,7 +392,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   };
   t.forme(race === 'hobbit' ? 'lin' : 'habit', torse, { decalage: -0.1, motif: (x, y) => (!dos && Math.abs(x + 0.5 - X(0, prof)) < 0.6 * k && y > yT + 3 * k ? -0.6 : race === 'magicienne' && (Math.floor(x / k) * 7 + Math.floor(y / k) * 3) % 23 === 0 ? 0.9 : 0) });
   if (race === 'hobbit') t.forme('habit', (x, y) => { const n = torse(x, y); return n && y >= yT + 2 * k && Math.abs(x + 0.5 - X(0, prof * 0.9)) > 2 * k + Math.max(0, 6 * k - (y - yT)) * 0.5 ? n : null; }, { decalage: -0.2 });
-  if ((race === 'nain' && costume !== 'banquier') || costume === 'garde') t.forme('metal', (x, y) => { const n = torse(x, y); return n && y >= yT + 1 * k && y <= yB - 2 * k ? n : null; }, { motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.3 : -0.3) });
+  if ((race === 'nain' && costume !== 'banquier' && !forgeron) || costume === 'garde') t.forme('metal', (x, y) => { const n = torse(x, y); return n && y >= yT + 1 * k && y <= yB - 2 * k ? n : null; }, { motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.3 : -0.3) });
   if (costume === 'garde' && !dos) {
     // Le tabard bleu de la Confrérie, son soleil d'or, et le pan qui tombe devant les cuisses
     const larg = ep * 0.62 * Math.max(0.55, Math.abs(c));
@@ -435,23 +436,24 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     for (const cote of [-1, 1]) for (let y = yB - 3 * k; y <= yB + 1 * k; y++) for (let x = Math.round(X(cote * 5 * k, prof)) - 2 * k; x <= Math.round(X(cote * 5 * k, prof)) + 1 * k; x++) if (t.mat(x, y) === 'habit') t.poser(x, y, 'cuir', y < yB - 3 * k + k ? 4 : 2 + ((Math.floor(x / k) + Math.floor(y / k)) % 2));
   }
   // Le tablier de marchand du joueur : la bavette, la poche et son crayon, les bretelles, le cordon noué
-  if (joueur && !dos) {
+  if ((joueur || forgeron) && !dos) {
+    const matTab = forgeron ? 'cuir' : matTab;   // (le tablier de cuir épais du forgeron)
     const tab = (x, y) => { if (y < yT + 7 * k || y > yB + 6 * k) return null; const cxx = X(0, prof * 0.7); const demi = section((6.5 + (y - yT - 7 * k) / k * 0.12) * k, prof * 0.95) * 0.95; const nx = (x + 0.5 - cxx) / demi; return Math.abs(nx) > 1 || !torse(x, y) && y <= yB + 2 * k ? null : [nx * 0.7, 0, 0.9]; };
-    t.forme('lin', tab, { decalage: -0.1, motif: (x, y) => (y === yT + 7 * k || y === yB + 5 * k ? -0.8 : 0) });
+    t.forme(matTab, tab, { decalage: -0.1, motif: (x, y) => (y === yT + 7 * k || y === yB + 5 * k ? -0.8 : 0) });
     const px = X(-2 * k, prof);
-    t.forme('lin', (x, y) => (y >= yB - 4 * k && y <= yB && Math.abs(x + 0.5 - px) < 2.5 * k * Math.max(0.4, Math.abs(c)) ? [0, 0.3, 0.9] : null), { decalage: -0.9 });
+    t.forme(matTab, (x, y) => (y >= yB - 4 * k && y <= yB && Math.abs(x + 0.5 - px) < 2.5 * k * Math.max(0.4, Math.abs(c)) ? [0, 0.3, 0.9] : null), { decalage: -0.9 });
     for (let e = 0; e < k; e++) { t.poser(Math.round(px) + e, yB - 4 * k - 1, 'or', 4); t.poser(Math.round(px) + e, yB - 4 * k - 2, 'or', 3); }
-    for (const cote of [-1, 1]) for (let y = yT; y < yT + 8 * k; y++) for (let e = 0; e < k; e++) { const x = Math.round(X(cote * (4 * k + (y - yT) * 0.3), prof * 0.9)) + e; if (t.mat(x, y)) t.poser(x, y, 'lin', 3); }
-    t.forme('lin', (x, y) => (y >= yB - 2 * k && y <= yB - 1 && torse(x, y) ? [0, 0.2, 0.9] : null), { decalage: -0.6, ombre: false });
+    for (const cote of [-1, 1]) for (let y = yT; y < yT + 8 * k; y++) for (let e = 0; e < k; e++) { const x = Math.round(X(cote * (4 * k + (y - yT) * 0.3), prof * 0.9)) + e; if (t.mat(x, y)) t.poser(x, y, matTab, 3); }
+    t.forme(matTab, (x, y) => (y >= yB - 2 * k && y <= yB - 1 && torse(x, y) ? [0, 0.2, 0.9] : null), { decalage: -0.6, ombre: false });
     const nx0 = Math.round(X(5 * k, prof * 0.9));
-    for (const [i, j] of [[0, 0], [1, 0], [2, 1], [3, 1], [1, 2], [3, 2]]) for (let e = 0; e < k; e++) t.poser(nx0 + i * k + e, yB - 2 * k + j * k, 'lin', 2);
+    for (const [i, j] of [[0, 0], [1, 0], [2, 1], [3, 1], [1, 2], [3, 2]]) for (let e = 0; e < k; e++) t.poser(nx0 + i * k + e, yB - 2 * k + j * k, matTab, 2);
     // Le pan du tablier retombe par-dessus les cuisses : on le redessine après la jambe proche,
     // avec le tissu soulevé par la cuisse (plus clair) et un pli sombre le long de la jambe
-    t.forme('lin', (x, y) => (y > yB + 1 * k && y <= yB + 6 * k ? tab(x, y) : null), { decalage: -0.1, motif: (x, y) => (y === yB + 5 * k ? -0.8 : motifCuisse(x, y)) });
+    t.forme(matTab, (x, y) => (y > yB + 1 * k && y <= yB + 6 * k ? tab(x, y) : null), { decalage: -0.1, motif: (x, y) => (y === yB + 5 * k ? -0.8 : motifCuisse(x, y)) });
   }
   // L'ourlet de la tunique retombe sur les cuisses : le tissu est tendu sur la cuisse proche (plus
   // clair), et fait un pli de chaque côté
-  if (!dos && !longue && !joueur) t.forme('habit', (x, y) => (y > yB && t.mat(x, y) === 'habit' ? torse(x, y) : null), { bord: false, ombre: false, motif: motifCuisse });
+  if (!dos && !longue && !joueur && !forgeron) t.forme('habit', (x, y) => (y > yB && t.mat(x, y) === 'habit' ? torse(x, y) : null), { bord: false, ombre: false, motif: motifCuisse });
   // L'écharpe de laine, la chaîne de montre, la bague
   if (porte('echarpe') && !dos) {
     t.forme('echarpe', (x, y) => (y >= yT - 2 * k && y <= yT + 2 * k && Math.abs(x + 0.5 - X(0, prof * 0.6)) < 5 * k * Math.max(0.4, Math.abs(c)) ? [(x + 0.5 - cx) / (5 * k) * 0.5, 0, 0.9] : null), { motif: (x, y) => (Math.floor(y / k) % 2 ? 0.5 : -0.2) });
@@ -801,7 +803,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (!grinch && !elfeF && !museauLoup && Math.abs(c) > 0.3) t.poser(Math.round(bx - lb - 1), by, matLevre, tonFente);
     if (!grinch && !elfeF && Math.abs(c) > 0.9) t.poser(Math.round(bx + lb + 1), by, matLevre, tonFente);
     // La barbe : sur la moitié avant du menton et des joues
-    const barbe = race === 'nain' ? 'nain' : g.barbe;
+    const barbe = race === 'nain' && !(forgeron && f) ? 'nain' : g.barbe;   // (v0.82 : Baba n'a pas de barbe)
     if (barbe === 'rase') {
       // Une barbe courte et nette : un aplat sombre qui suit la mâchoire et le menton, une
       // moustache fine au-dessus de la bouche (lisible même de loin)
@@ -929,7 +931,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   if (tenue >= 4 && race !== 'nain' && race !== 'magicienne') for (let j = -5; j <= 5; j++) { const x = Math.round(X(j * k, Math.sqrt(Math.max(0, P.rx * P.rx - (j * k) ** 2)) * 0.9)); for (let e = 0; e < k; e++) t.poser(x + e, cy - P.ry + 1 * k + (j % 3 === 0 ? -1 * k : 0), 'or', j % 3 === 0 ? 5 : 4); } // le diadème
 
   // --- Les couvre-chefs des peuples ---
-  if (race === 'nain' && costume !== 'banquier') {
+  if (race === 'nain' && costume !== 'banquier' && !forgeron) {
     // Le casque à cornes : une calotte de métal, un nasal, deux cornes d'ivoire qui s'écartent
     t.forme('metal', (x, y) => { const n = ellipsoide(cx, cy - 2 * k, P.rx + 0.8 * k, P.ry)(x, y); return n && y <= cy - 4 * k ? n : null; }, { decalage: 0.2, motif: (x, y) => (y === Math.round(cy - 4 * k) ? -0.9 : 0) });
     if (!dos) for (let y = cy - 2 * k; y <= cy + 3 * k; y++) for (let e = 0; e < k; e++) t.poser(Math.round(X(0, P.rx)) - (k - 1) + e - Math.round(s * k), y, 'metal', 4);

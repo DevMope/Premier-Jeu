@@ -615,6 +615,8 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     paliersEtoiles: [1], // les paliers d'étoiles déjà ouverts
     garde: { visites: 0, dernier: 0, saisies: 0 },   // les visites de la garde de la Confrérie
     interdits: {},     // les objets interdits achetés au marché noir (étape 9e)
+    forge: null,       // (v0.82, étape 10b) la forge chez soi : voir etatForge
+    belOuvrage: {},    // les armes « bel ouvrage » de la réserve (une partie de G.stock)
     garrickVu: [],     // les visites de Garrick déjà faites
     trophees: [],      // (v0.57) les trophées offerts par les habitués devenus frères de sang
     ainesVus: [],      // (v0.56) les aînés des Bannis passés au comptoir
@@ -660,6 +662,9 @@ function partir(G, voyageur, colis, pieges = {}) {
   else rencontrer(G, voyageur.nom);
   // (v0.63) son arme à lui : un peu plus d'amitié
   if ((colis[armePour(voyageur)] || 0) > 0 && commandeDe(voyageur)[armePour(voyageur)]) { const m = changerRelation(G, voyageur.nom, RELATION_ARME_PREFEREE); if (m && !message) message = m; }
+  // (v0.82) une arme « bel ouvrage » : il l'apprécie, et elle s'usera moins vite
+  const belOuvrage = belOuvrageAuDepart(G, voyageur, colis);
+  if (belOuvrage.length) { const m = changerRelation(G, voyageur.nom, FORGE.belOuvrage.relation); if (m && !message) message = m; }
   // (la mort voulue se juge sur ce que tu savais : avant le détour imposé par la bande)
   const voulu = mortVoulue(G, voyageur, colis, pieges, chanceVivant(voyageur, colis, pieges));
   // (v0.60) le détour pour la Main Noire (un service rendu)
@@ -680,6 +685,7 @@ function partir(G, voyageur, colis, pieges = {}) {
     voyageur,
     colis: { ...colis },
     pieges: { ...pieges },
+    belOuvrage,
     voulu,
     chance: reelle,
     relationDepart,
@@ -1442,6 +1448,7 @@ function nuit(G) {
     return;
   }
   nuitDuShop(G);
+  nuitDeLaForge(G);
   // Une mission de sabotage manquée (cible servie sans le piège, refusée, ou jamais venue) :
   // la Faucheuse reprend son objet piégé et sa faveur baisse, sans attendre le prochain mort.
   const mission = G.faucheuse && G.faucheuse.mission;
@@ -1486,6 +1493,8 @@ function nuit(G) {
   G.cadeauxVillages = [];
   for (const l of nuitMafia(G)) G.reveil.lignes.push(l);
   for (const l of nuitDuChat(G)) G.reveil.lignes.push(l);   // (v0.65) les rats, ou le cadeau du chat
+  if (G.forge && G.forge.construite && G.forge.nouvelle) { G.reveil.lignes.push("Les ouvriers ont monté ta forge dans l'arrière-boutique : le foyer, le soufflet, l'enclume. Il ne manque plus qu'un forgeron !"); G.forge.nouvelle = false; }
+  if (nouvellesDeLaForge(G)) G.reveil.lignes.push(nouvellesDeLaForge(G));   // (v0.82) les armes sorties de la forge
   if (loyer > 0) G.reveil.lignes.push(`Le bourgmestre a encaissé le loyer de la semaine : ${loyer} pièces.` + (loyer > (G.dernierLoyer || loyer) ? ' Le bail a augmenté : ton comptoir a pris de la valeur.' : ''));
   if (loyer > 0) G.dernierLoyer = loyer;
   if (taxe > 0) G.reveil.lignes.push(`Un percepteur de la Confrérie est passé : ${taxe} pièces de taxe « pour la défense contre le dragon ».`);
@@ -1507,6 +1516,8 @@ function nuit(G) {
     G.decalageJours = (G.decalageJours || 0) + SAUTS_TEMPS[d];
     const mois = Math.round(SAUTS_TEMPS[d] / JOURS_PAR_MOIS);
     G.sautTemps = { danger: d, mois, ageAvant: avant, ageApres: ageJoueur(G) };
+    if (d === FORGE.etoiles && !(G.forge && G.forge.construite)) G.reveil.lignes.push("Garrick passe en coup de vent : « Tu as grandi, et ton comptoir aussi. Il y a de la place dans l'arrière-boutique pour une forge : avec un forgeron, tu aurais toutes les armes que tu veux, quand tu veux. Penses-y ! »");
+    if (d === FORGE.forgerons.baba.etoiles && G.forge && G.forge.construite && !G.forge.baba) G.reveil.lignes.push("Une naine aux tresses noires frappe à la porte de ta forge : Baba Marteau-d'Or cherche du travail. Elle t'attend dans l'arrière-boutique.");
     G.reveil.lignes.push(`Les saisons ont passé : ${mois >= 4 ? `${Math.round(mois / 4)} an${mois >= 8 ? 's' : ''}` : `${mois} mois`} plus tard, les contrées à ${d} étoiles s'ouvrent à tes aventuriers.` + (ageJoueur(G) > avant ? ` Tu as maintenant ${ageJoueur(G)} ans.` : ''));
   }
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
@@ -1671,7 +1682,7 @@ function soireeMarcheNoir(G) {
   if (G.marcheNoir.soiree) return G.marcheNoir.soiree;
   const races = Phaser.Utils.Array.Shuffle([...PEUPLES_OMBRE]).slice(0, 2);
   const bannis = races.map(race => { const [nom, feminin] = auHasard(NOMS[race]); return { nom, race, feminin, niveau: 'aguerri' }; });
-  const commandes = bannis.map(b => { const id = auHasard(Object.keys(INTERDITS)); return { banni: b, objet: id, prix: hasard(...INTERDITS[id].vente), faite: false }; });
+  const commandes = bannis.map(b => { const id = auHasard(interditsCommandables(G)); return { banni: b, objet: id, prix: hasard(...INTERDITS[id].vente), faite: false }; });
   // (v0.56) parfois, un aîné est là ce soir, et raconte
   const aine = aineDuJour(G, 'marcheNoir');
   G.marcheNoir.soiree = { bannis, commandes, risque: 0, murmure: auHasard(MURMURES), aine };
@@ -1954,7 +1965,7 @@ function terminerAventure(G, parti) {
     if (camp === 'bien' && Math.random() < CHANCE_GRATITUDE) G.cadeauxVillages = [...(G.cadeauxVillages || []), { zone: v.zone, nom: v.nom }];
     if (camp === 'mal') {
       if (Math.random() < CHANCE_INTERDIT_OMBRE) {
-        const id = auHasard(Object.keys(INTERDITS));
+        const id = auHasard(interditsDuPasseur());
         G.interdits[id] = (G.interdits[id] || 0) + 1;
         message = (message ? message + ' ' : '') + `${v.nom.split(' ')[0]} te glisse ${INTERDITS[id].article} : « Un souvenir. Cache-le bien. »`;
       }
@@ -2005,7 +2016,7 @@ function terminerAventure(G, parti) {
 function inventaireApres(parti) {
   const inv = { ...parti.voyageur.inventaire };
   for (const [id, n] of Object.entries(parti.colis)) {
-    if (ITEMS[id].durable && n > 0) inv[id] = USURE_MAX;
+    if (ITEMS[id].durable && n > 0) inv[id] = USURE_MAX + ((parti.belOuvrage || []).includes(id) ? FORGE.belOuvrage.usure : 0);
   }
   // (v0.64) au combat, c'est l'arme qu'il a vraiment emportée qui s'use (pas toujours l'épée)
   const arme = armeEmportee(parti.voyageur, parti.colis);
@@ -2865,4 +2876,156 @@ function tableauANouveau(G) {
   if (G.tableauLu === G.jour) return false;
   const evts = (G.evenements || []).some(e => e.debut === G.jour || e.fin === G.jour);
   return evts || (G.jour - 1) % 7 === 0;
+}
+
+// --- (v0.82, étape 10b) La forge chez soi ---
+
+function interditsDuPasseur() { return Object.keys(INTERDITS).filter(id => !INTERDITS[id].forge); }
+// Ce que les Bannis peuvent commander : les armes forgées aussi, une fois ta forge construite
+function interditsCommandables(G) { return Object.keys(INTERDITS).filter(id => !INTERDITS[id].forge || forgeConstruite(G)); }
+
+function etatForge(G) {
+  if (!G.forge) G.forge = { construite: false, achat: null, aldo: false, baba: false, file: [], progresAldo: 0, armesAldo: 0, nuit: [] };
+  return G.forge;
+}
+function forgeConstruite(G) { return !!(G.forge && G.forge.construite); }
+// La forge peut être proposée à partir du saut d'un an (★3)
+function forgeProposee(G) { return (G.paliersEtoiles || []).includes(FORGE.etoiles); }
+function babaDisponible(G) { return (G.paliersEtoiles || []).includes(FORGE.forgerons.baba.etoiles); }
+
+// Construire la forge : payée tout de suite, montée la nuit par les ouvriers
+function acheterForge(G) {
+  const f = etatForge(G);
+  if (f.construite || f.achat) return 'La forge est déjà commandée.';
+  if (!forgeProposee(G)) return `La forge s'ouvre avec les contrées à ${FORGE.etoiles} étoiles.`;
+  if (!peutPayer(G, FORGE.prix)) return `Il te faut ${FORGE.prix} pièces.`;
+  payer(G, FORGE.prix, 'ameliorations');
+  f.achat = G.jour;
+  return null;
+}
+
+function engagerForgeron(G, id) {
+  const f = etatForge(G), d = FORGE.forgerons[id];
+  if (!f.construite) return "Il faut d'abord une forge.";
+  if (f[id]) return `${d.nom} travaille déjà pour toi.`;
+  if (id === 'baba' && !babaDisponible(G)) return `${d.nom} n'arrivera qu'avec les contrées à ${d.etoiles} étoiles.`;
+  f[id] = true;
+  return null;
+}
+
+function rangAldo(G) {
+  const n = etatForge(G).armesAldo;
+  return [...FORGE.rangsAldo].reverse().find(r => n >= r.armes);
+}
+
+// Ce qu'il faut pour forger une arme (armes interdites comprises), et peut-on le faire ?
+function recetteDe(id) { return RECETTES[id] || RECETTES_OMBRE[id] || null; }
+function enStockPourForge(G, mat) {
+  if (MATERIAUX[mat]) return G.materiaux[mat] || 0;
+  if (INTERDITS[mat]) return G.interdits[mat] || 0;
+  return G.stock[mat] || 0;
+}
+function peutForger(G, id) {
+  const f = etatForge(G);
+  if (!f.construite) return "Il faut d'abord une forge.";
+  if (!f.aldo && !f.baba) return "Personne ne travaille à la forge : engage un forgeron.";
+  if (RECETTES_OMBRE[id] && coteCamp(G) !== 'mal') return 'Les armes interdites ne se forgent que du côté de l\'ombre.';
+  const r = recetteDe(id);
+  if (!r) return 'Pas de recette.';
+  for (const [mat, n] of Object.entries(r)) if (enStockPourForge(G, mat) < n) return `Il manque : ${nomForge(mat).toLowerCase()} (${n} pour la recette).`;
+  return null;
+}
+function nomForge(id) { return INTERDITS[id] ? INTERDITS[id].nom : nomObjet(id); }
+
+// Mettre une arme en commande pour cette nuit : les matériaux sont pris tout de suite
+function commanderArme(G, id) {
+  const e = peutForger(G, id);
+  if (e) return e;
+  for (const [mat, n] of Object.entries(recetteDe(id))) {
+    if (MATERIAUX[mat]) G.materiaux[mat] -= n;
+    else if (INTERDITS[mat]) G.interdits[mat] -= n;
+    else { G.stock[mat] -= n; if (G.belOuvrage[mat] > G.stock[mat]) G.belOuvrage[mat] = G.stock[mat]; }
+  }
+  etatForge(G).file.push(id);
+  return null;
+}
+// Annuler une commande : les matériaux reviennent
+function annulerArme(G, index) {
+  const f = etatForge(G), id = f.file[index];
+  if (!id) return;
+  f.file.splice(index, 1);
+  for (const [mat, n] of Object.entries(recetteDe(id))) {
+    if (MATERIAUX[mat]) G.materiaux[mat] += n;
+    else if (INTERDITS[mat]) G.interdits[mat] = (G.interdits[mat] || 0) + n;
+    else G.stock[mat] = (G.stock[mat] || 0) + n;
+  }
+}
+
+// Combien d'armes sortiront cette nuit (pour l'affichage)
+function capaciteForge(G) {
+  const f = etatForge(G);
+  return (f.baba ? FORGE.forgerons.baba.vitesse : 0) + (f.aldo ? rangAldo(G).vitesse : 0);
+}
+
+// La nuit à la forge : les salaires, puis les armes qui sortent (Baba d'abord, puis Aldo)
+function nuitDeLaForge(G) {
+  const f = G.forge;
+  if (!f) return;
+  f.nuit = [];
+  if (f.achat && !f.construite) { f.construite = true; f.achat = null; f.nouvelle = true; }
+  if (!f.construite) return;
+  if (f.aldo) payer(G, FORGE.forgerons.aldo.salaire, 'salaires');
+  if (f.baba) payer(G, FORGE.forgerons.baba.salaire, 'salaires');
+  const sortir = (id, qui, bel) => {
+    if (INTERDITS[id]) G.interdits[id] = (G.interdits[id] || 0) + 1;
+    else { G.stock[id] = (G.stock[id] || 0) + 1; if (bel) G.belOuvrage[id] = (G.belOuvrage[id] || 0) + 1; }
+    f.nuit.push({ id, qui, bel: !!bel && !INTERDITS[id] });
+  };
+  if (f.baba) for (let k = 0; k < FORGE.forgerons.baba.vitesse && f.file.length; k++) sortir(f.file.shift(), 'baba', Math.random() < FORGE.forgerons.baba.belOuvrage);
+  if (f.aldo && f.file.length) {
+    const r = rangAldo(G);
+    f.progresAldo += r.vitesse;
+    while (f.progresAldo >= 1 && f.file.length) {
+      f.progresAldo -= 1;
+      f.armesAldo++;
+      sortir(f.file.shift(), 'aldo', Math.random() < r.belOuvrage);
+      const nouveau = rangAldo(G);
+      if (nouveau !== r) f.nuit.push({ rang: nouveau.nom });
+    }
+  } else if (!f.file.length) f.progresAldo = 0;
+  // (le bel ouvrage ne dépasse jamais ce qu'il reste en réserve)
+  for (const id of Object.keys(G.belOuvrage)) if (G.belOuvrage[id] > (G.stock[id] || 0)) G.belOuvrage[id] = G.stock[id] || 0;
+}
+
+// Ce que la forge a sorti cette nuit, en une phrase (pour le réveil et la forge)
+function nouvellesDeLaForge(G) {
+  const f = G.forge;
+  if (!f || !f.nuit || !f.nuit.length) return null;
+  const armes = f.nuit.filter(e => e.id).map(e => nomForge(e.id).toLowerCase() + (e.bel ? ' (bel ouvrage !)' : ''));
+  const rang = f.nuit.find(e => e.rang);
+  return (armes.length ? `La forge a tourné toute la nuit : ${armes.join(', ')}.` : '') + (rang ? ` Aldo est passé ${rang.rang} !` : '');
+}
+
+// (option A, validée le 18/10) Les lots en gros chez Thorgal, pour qui a une forge
+function prixLotGros(G, mat) {
+  const offre = G.etals && G.etals.forge && G.etals.forge[mat];
+  const unite = offre ? prixMarchand(G, 'forge', mat) : prixDeBase(mat);
+  return Math.round(unite * FORGE.lot * (1 - FORGE.remiseGros));
+}
+function acheterLotGros(G, mat) {
+  if (!forgeConstruite(G)) return 'Thorgal ne vend en gros qu\'aux forgerons.';
+  const prix = prixLotGros(G, mat);
+  if (!peutPayer(G, prix)) return "Pas assez d'argent ! Passe à la banque pour un prêt.";
+  G.materiaux[mat] = (G.materiaux[mat] || 0) + FORGE.lot;
+  return { message: depenserChez(G, 'forge', prix) };
+}
+
+// Au départ d'un aventurier : les armes « bel ouvrage » de son baluchon (prises en premier)
+function belOuvrageAuDepart(G, voyageur, colis) {
+  const bel = [];
+  for (const [id, n] of Object.entries(colis)) {
+    const k = Math.min(n, (G.belOuvrage && G.belOuvrage[id]) || 0);
+    if (k > 0) { G.belOuvrage[id] -= k; bel.push(id); }
+  }
+  return bel;
 }

@@ -851,6 +851,18 @@ class MarcheScene extends Phaser.Scene {
       c.once('destroy', () => this.input.keyboard && this.input.keyboard.off('keydown', touche));
     }
     // (v0.76) on rappelle que les étals tournent : ce qui manque aujourd'hui reviendra peut-être demain
+    // (v0.82, étape 10b) pour qui a une forge : les lots en gros de Thorgal (5 d'un coup, −30 %)
+    if (cle === 'forge' && forgeConstruite(G)) {
+      c.add(this.add.text(82, 96, 'En gros pour\nta forge', style(12, '#f3d98a', { fontStyle: 'bold', align: 'center', stroke: '#1a0e06', strokeThickness: 3, lineSpacing: -2 })).setOrigin(0.5));
+      ['fer', 'cuir', 'bois'].forEach((m, i) => {
+        const b = creerBouton(this, 82, 130 + i * 34, 140, `${FORGE.lot} ${MATERIAUX[m].nom.toLowerCase()} · ${prixLotGros(G, m)} p.`, () => {
+          const r = acheterLotGros(G, m);
+          if (typeof r === 'string') return this.message(r, '#a03030');
+          Son.jouer('achat'); this.message(r.message || `${FORGE.lot} ${MATERIAUX[m].nom.toLowerCase()} pour ta forge.`); this.majInfos(); this.vitrine(cle);
+        });
+        b.label.setFontSize(11); c.add([b.fond, b.label]);
+      });
+    }
     c.add(this.add.text(480, 505, cle === 'forge' ? 'Clique sur un article pour l\'acheter · Thorgal ne sort que quelques armes chaque matin : elles changent d\'un jour à l\'autre' : 'Clique sur un article pour l\'acheter · Les étals changent chaque matin', style(12, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
   }
 

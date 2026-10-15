@@ -269,8 +269,11 @@ class BureauScene extends Phaser.Scene {
   // --- Les tiroirs ---
 
   creerTiroirs() {
-    TIROIRS.forEach(([cle, nom], i) => {
-      const y = 300 + i * 34;
+    // (v0.82) un tiroir de plus, vers la forge, une fois qu'elle est proposée
+    const tiroirs = forgeProposee(this.G) ? [...TIROIRS, ['forge', '⚒ La forge']] : TIROIRS;
+    const pas = tiroirs.length > 6 ? 29 : 34, y0 = tiroirs.length > 6 ? 292 : 300;
+    tiroirs.forEach(([cle, nom], i) => {
+      const y = y0 + i * pas;
       const t = this.add.image(760, y, 'tiroirHD').setScale(2).setInteractive({ useHandCursor: true });
       this.add.text(745, y, nom, style(14, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
       t.on('pointerover', () => t.setTexture('tiroirHD_clair'));
@@ -281,6 +284,7 @@ class BureauScene extends Phaser.Scene {
 
   ouvrirTiroir(cle, nom = (TIROIRS.find(t => t[0] === cle) || [])[1]) {
     const G = this.G;
+    if (cle === 'forge') { this.scene.pause(); this.scene.launch('Forge', { appelant: 'Bureau' }); return; }
     this.onglet = null;
     const c = this.vider();
     if (cle === 'ameliorations') return this.afficherAmeliorations(c);

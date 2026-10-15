@@ -221,7 +221,7 @@ class MarcheNoirScene extends Phaser.Scene {
     const G = this.G;
     this.vider();
     this.texte(40, 374, message || 'Le Passeur ouvre sa cape : des fioles, des livres, des choses sans nom.', 14, '#f3d9b0', { fontStyle: 'italic' });
-    Object.entries(INTERDITS).forEach(([id, o], i) => {
+    interditsDuPasseur().map(id => [id, INTERDITS[id]]).forEach(([id, o], i) => {
       const x = 40 + (i % 2) * 450, y = 414 + Math.floor(i / 2) * 36;
       this.elements.push(this.add.image(x + 10, y, iconeObjet(this, id)).setScale(2).setDepth(6));
       this.texte(x + 32, y, `${o.nom} · ${o.prix} p. (tu en as ${G.interdits[id] || 0})`, 13, '#f3e6c8', { fontStyle: 'bold' }).setOrigin(0, 0.5);
