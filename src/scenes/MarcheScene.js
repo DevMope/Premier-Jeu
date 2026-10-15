@@ -789,7 +789,7 @@ class MarcheScene extends Phaser.Scene {
     // au sol, de chaque côté
     poser(deco.solG, 56, 530, 66); poser(deco.solD, 904, 530, 74, true);
     const offre = G.etals[cle], ids = m.objets.filter(id => offre[id] && offre[id].qte > 0);
-    const phrases = ids.length ? [`Approche, approche ! Regarde-moi ${ids.length > 1 ? 'ces merveilles' : 'cette merveille'}...`, 'Tout est frais de ce matin. Tu ne trouveras pas mieux sur la place !', `Un œil de connaisseur, je vois. Fais ton choix !`] : ['Tout est parti ! Reviens demain, de bonne heure.'];
+    const phrases = ids.length ? [`Approche, approche ! Regarde-moi ${ids.length > 1 ? 'ces merveilles' : 'cette merveille'}...`, 'Tout est frais de ce matin. Tu ne trouveras pas mieux sur la place !', `Un œil de connaisseur, je vois. Fais ton choix !`, ...(cle === 'forge' ? ["Mes armes changent chaque matin, l'ami. Ce qui n'est pas là aujourd'hui sortira peut-être de la forge demain !"] : ["Reviens demain : mon étal ne sera pas le même !"])] : ['Tout est parti ! Reviens demain, de bonne heure.'];
     Son.jouer('voix', { personne, ton: 'bonjour' });
     const dit = this.add.text(600, 196, `« ${Phaser.Utils.Array.GetRandom(phrases)} »`, style(14, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 10, y: 6 }, wordWrap: { width: 250 } })).setOrigin(0, 1);
     c.add(this.add.triangle(0, 0, 600, 190, 618, 190, 572, 214, 0xf3e6c8).setOrigin(0));
@@ -850,7 +850,8 @@ class MarcheScene extends Phaser.Scene {
       this.input.keyboard.on('keydown', touche);
       c.once('destroy', () => this.input.keyboard && this.input.keyboard.off('keydown', touche));
     }
-    c.add(this.add.text(480, 505, 'Clique sur un article pour l\'acheter', style(12, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
+    // (v0.76) on rappelle que les étals tournent : ce qui manque aujourd'hui reviendra peut-être demain
+    c.add(this.add.text(480, 505, cle === 'forge' ? 'Clique sur un article pour l\'acheter · Thorgal ne sort que quelques armes chaque matin : elles changent d\'un jour à l\'autre' : 'Clique sur un article pour l\'acheter · Les étals changent chaque matin', style(12, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
   }
 
   ouvrirEtal(cle) {

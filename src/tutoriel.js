@@ -15,7 +15,7 @@ const CONSEILS = {
   arriere: "Ton arrière-boutique : ta réserve sur les étagères, ta fortune près du coffre, les cadeaux dans le panier. La porte, au fond, mène à ta chambre quand la journée est finie.",
   soir: "La journée est finie. Le soir, réponds aux lettres (des clients qui viendront plus tard), surveille ta réserve, et passe au bureau : c'est là qu'on améliore le comptoir. Puis va dormir !",
   bureau: "Le registre : toutes les fiches de tes clients. À droite, l'ardoise de tes comptes, et des tiroirs. Le premier, « Améliorer le comptoir », fait venir les ouvriers pendant la nuit.",
-  marche: "Le Marché des Mastres ! Chaque matin, rachète ici de quoi remplir ta réserve : chaque marchand a ses prix du jour. Clique sur un lieu pour t'en approcher. Il y a aussi le Bazar, les enchères, les jeux et le crieur... Moi, je reprends la route. Bonne chance !",
+  marche: "Le Marché des Mastres ! Chaque matin, rachète ici de quoi remplir ta réserve : chaque marchand a ses prix du jour, et ses étals changent d'un matin à l'autre : ce qui manque aujourd'hui sera peut-être là demain. Clique sur un lieu pour t'en approcher. Il y a aussi le Bazar, les enchères, les jeux et le crieur... Moi, je reprends la route. Bonne chance !",
 };
 
 // Affiche le conseil `cle` de Garrick, si c'est la première fois (et si le tutoriel est actif).
