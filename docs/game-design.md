@@ -571,7 +571,38 @@ Réponses du joueur, idée par idée :
     Le battre = pouvoir **le racheter** : offrir le shop à des orphelins, ou en faire un bâtiment de
     plus pour le joueur (à définir).
 15. **Des prix qui suivent la renommée** — oui, à tester.
-- Question du joueur : tout inclure, est-ce trop ? Des mécaniques se contrent-elles ? (à trancher)
+- Question du joueur : tout inclure, est-ce trop ? Des mécaniques se contrent-elles ? → **tranché** :
+  tout garder, avec trois garde-fous validés : (a) chaque action au comptoir reste courte (le temps
+  est le prix du choix, pas une corvée) ; (b) **un seul grand rendez-vous par semaine** (menace,
+  commande royale, fête ou collection, tour à tour selon le calendrier) ; (c) foyer, mises, prix et
+  rival réglés ensemble par la simulation.
+
+### Décisions validées (17/10)
+- **1 La journée** : 10 heures ; servir 1 h (½ h avec l'expérience), marchander +½ h, inspecter +¼ h,
+  Grippesou +½ h. Plus de clients avec la réputation (paliers 3 → 10), plus vite avec l'expérience,
+  plus de temps avec les améliorations (lanterne pour fermer à la nuit, apprenti au guichet pour
+  les colis simples). Jour 1 : 3-4 clients tranquilles ; jour 120 : 10-12 en choisissant.
+- **2 Le tableau** : le crieur lit le gros titre ; le panneau a toujours la même structure
+  (nouvelles, règles du jour, prix qui bougent) ; avis de recherche « Mort ou vif » avec portrait
+  et prime : un visage recherché peut venir dans la file (lumière : le dénoncer pour la prime ;
+  ombre : le cacher, il te le rend) ; un « ! » au-dessus quand un changement important arrive.
+- **9 → les messages de détresse** (avec l'étape 11 « aider pendant l'aventure ») : un pigeon
+  arrive au comptoir pendant une mission (« Borin est coincé, il lui faut 2 torches ») ; on aide
+  (aigle, mercenaire : argent et temps de journée) ou non ; le récit montre la conséquence. Pas de
+  contrôle direct dans les récits : le combat au tour par tour reste pour la fin du jeu.
+- **10 Les saisons** : les 4 mois de 28 jours sont les 4 saisons (Semailles, Moissons, Brumes,
+  Givre) ; les sauts de temps (28 j, puis 1, 2, 3 ans) tombent juste. Calendrier visible (date,
+  saison, prochaine fête), matin de changement de saison mis en scène (première neige, bourgeons),
+  et pendant les sauts de temps un défilé des saisons sur la façade pendant que le joueur grandit.
+- **14 Le rival** : le racheter ; son shop devient **le petit bar** (étape 12) ; ou l'offrir aux
+  orphelins (réputation, peut-être des petits coursiers : à voir).
+
+### L'ordre (laissé à Claude) : après 10c puis 10b
+- **Lot A « Le comptoir sous pression »** : 1 la journée, 2 le tableau et les avis de recherche,
+  6 imposteurs et flair, 4 le marchandage.
+- **Lot B « L'année qui passe »** : 10 les saisons, 11 les fêtes, 13 la diseuse, 3 le foyer.
+- **Lot C « Les grands enjeux »** : 7 la menace, 8 les commandes royales, 5 les mises, 15 les prix,
+  14 le rival (et le bar), 12 les collections, 9 les messages de détresse.
 
 ### « On le fera plus tard »
 - **La banque de noms** (vers la fin des étapes) : le joueur fournira prénoms, noms, noms de villes
