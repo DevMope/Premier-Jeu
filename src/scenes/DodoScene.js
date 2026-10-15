@@ -14,6 +14,7 @@ class DodoScene extends Cinematique {
   }
 
   create() {
+    exclureScenes(this, 'Nuit', 'Carte', 'Comptoir');   // (v0.62)
     const G = this.G = window.GAME;
     this.cameras.main.fadeIn(500);
     this.dessinerChambre();

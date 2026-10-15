@@ -12,6 +12,7 @@ class NightScene extends Phaser.Scene {
   }
 
   create() {
+    exclureScenes(this, 'Carte', 'Comptoir', 'Dodo');   // (v0.62)
     const G = this.G = window.GAME;
     if (!this.matin) preparerSoir(G);
     this.lieu = this.matin ? 'Maison' : 'Nuit';

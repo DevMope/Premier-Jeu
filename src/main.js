@@ -131,3 +131,16 @@ const policePrete = document.fonts && document.fonts.load
   ? Promise.all(['500 16px', '800 16px', 'italic 500 16px', 'italic 800 16px', 'bold 16px'].map(f => document.fonts.load(f + ' "Alegreya"')))
   : Promise.resolve();
 Promise.race([policePrete, new Promise(r => setTimeout(r, 2500))]).catch(() => {}).then(lancerJeu);
+
+// (v0.62) Garde-fou : certaines scènes ne vivent jamais ensemble (la nuit d'un côté ; la carte et le
+// comptoir de l'autre ; le dodo seul). Si l'une démarre alors qu'une autre est restée coincée
+// derrière (active ou en pause), on arrête la coincée tout de suite : sinon, deux journées se
+// mélangent et le jeu peut se figer.
+function exclureScenes(scene, ...cles) {
+  const gestion = scene.scene.manager;
+  for (const cle of cles) {
+    if (cle === scene.scene.key) continue;
+    const s = gestion.getScene(cle);
+    if (s && (s.scene.isActive() || s.scene.isPaused())) gestion.stop(cle);
+  }
+}

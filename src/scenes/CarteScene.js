@@ -16,6 +16,7 @@ class CarteScene extends Phaser.Scene {
   }
 
   create() {
+    exclureScenes(this, 'Nuit', 'Dodo');   // (v0.62)
     const G = this.G = window.GAME;
     // Les voyageurs à placer : tout ceux du jour sans destination, ou celui du comptoir.
     this.voyageurs = this.comptoir ? [this.comptoir.voyageur]
