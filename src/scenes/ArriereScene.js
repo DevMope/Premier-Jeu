@@ -64,16 +64,18 @@ class ArriereScene extends Phaser.Scene {
   dessinerEtageres() {
     const G = this.G;
     this.add.image(20, 76, etagereHD(this, niveauAmelioration(G, 'reserve'))).setOrigin(0).setScale(2);
-    const ids = Object.keys(ITEMS);
+    // (v0.63) toutes les armes rangées ensemble, sur la même planche
+    const ids = Object.keys(ITEMS).filter(id => !estArme(id) || id === 'epee').map(id => (id === 'epee' ? 'armes' : id));
     const rangees = [150, 256, 360];
     ids.forEach((id, i) => {
       const x = 44 + (i % 4) * 120;
       const y = rangees[Math.floor(i / 4)];
-      const n = G.stock[id] || 0;
+      const armes = id === 'armes' ? IDS_ARMES.flatMap(w => Array(G.stock[w] || 0).fill(w)) : null;
+      const n = armes ? armes.length : G.stock[id] || 0;
       for (let k = 0; k < Math.min(n, 8); k++) {
-        this.add.image(x + 18 + (k % 4) * 24, y - Math.floor(k / 4) * 26, iconeObjet(this, id)).setOrigin(0.5, 1).setScale(2);
+        this.add.image(x + 18 + (k % 4) * 24, y - Math.floor(k / 4) * 26, iconeObjet(this, armes ? armes[k] : id)).setOrigin(0.5, 1).setScale(2);
       }
-      this.add.text(x + 4, y + 13, `${ITEMS[id].nom} ${n ? '× ' + n : '— vide'}`,
+      this.add.text(x + 4, y + 13, `${armes ? 'Armes' : ITEMS[id].nom} ${n ? '× ' + n : '— vide'}`,
         style(11, n ? '#f3e6c8' : '#d0a890', { fontStyle: n ? 'bold' : 'bold italic', stroke: '#140c06', strokeThickness: 3 }));
     });
     this.add.image(276, 78, plaqueBouton(this, 200)).setScale(2);
@@ -217,7 +219,7 @@ class ArriereScene extends Phaser.Scene {
       ligne.on('pointerout', () => ligne.setFillStyle(sombre ? 0x2a1424 : 0xf6ead0));
       ligne.on('pointerdown', () => this.utiliser(type, id));
       const nom = sombre ? PIEGES[id].nom : CADEAUX[id].nom;
-      c.add([ligne, this.add.image(310, y, id).setScale(2.5).setTint(sombre ? 0x9a8aa0 : 0xffffff),
+      c.add([ligne, this.add.image(310, y, iconeObjet(this, id)).setScale(2).setTint(sombre ? 0x9a8aa0 : 0xffffff),
         this.add.text(330, y, `${nom} × ${stock[id]}`, style(13, sombre ? '#f0c0d8' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5)]);
     });
     const fermer = this.add.text(480, haut + h - 14, 'Fermer', style(12, sombre ? '#d08aa8' : '#8a3a2a', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true });

@@ -14,9 +14,36 @@ function commandeDe(voyageur) {
   const commande = {};
   for (const e of voyageur.epreuves) {
     if (e.detour) continue;   // (le détour imposé par la Main Noire n'était pas dans sa commande)
-    commande[e.besoin] = (commande[e.besoin] || 0) + e.qte;
+    // (v0.63) un combat demande « une arme » : il commande celle de son peuple
+    const id = estArme(e.besoin) ? armePour(voyageur) : e.besoin;
+    commande[id] = (commande[id] || 0) + e.qte;
   }
   return commande;
+}
+
+// --- (v0.63, étape 10a) Les armes ---
+function estArme(id) { return !!(ITEMS[id] && ITEMS[id].arme); }
+const IDS_ARMES = Object.keys(ITEMS).filter(estArme);
+// L'arme de son peuple (les nains vétérans et plus préfèrent le marteau)
+function armePour(v) {
+  if (v.race === 'nain' && ['veteran', 'heros', 'legende'].includes(v.niveau)) return 'marteau';
+  return ARME_PREFEREE[v.race] || 'epee';
+}
+// Toutes les armes du colis, quelles qu'elles soient
+function armesDonnees(colis) { return IDS_ARMES.reduce((s, id) => s + (colis[id] || 0), 0); }
+// Ce que le colis fournit pour un objet de la commande : pour l'arme, n'importe laquelle compte
+function fourni(v, colis, id) { return estArme(id) ? armesDonnees(colis) : (colis[id] || 0); }
+// Le meilleur état parmi les armes qu'il a déjà sur lui
+function etatArme(v) { return Math.max(0, ...IDS_ARMES.map(id => etatObjet(v, id))); }
+// L'arme qu'il emportera vraiment au combat : la sienne si on la lui donne, sinon une autre du colis,
+// sinon celle qu'il a sur lui (ou la sienne, à défaut)
+function armeEmportee(v, colis) {
+  const pref = armePour(v);
+  if ((colis[pref] || 0) > 0) return pref;
+  const autre = IDS_ARMES.find(id => (colis[id] || 0) > 0);
+  if (autre) return autre;
+  const surLui = IDS_ARMES.filter(id => etatObjet(v, id) > 0).sort((a, b) => etatObjet(v, b) - etatObjet(v, a))[0];
+  return surLui || pref;
 }
 
 // « Ration ×2, Corde ×1 » (v0.58 : plus de « 2 Ration » sans pluriel)
@@ -32,11 +59,12 @@ function etatObjet(voyageur, id) {
 // Niveau de préparation d'une épreuve selon le colis...
 // ... et les objets que l'aventurier a déjà sur lui.
 function niveauEpreuve(epreuve, colis, voyageur) {
-  const donne = colis[epreuve.besoin] || 0;
+  const arme = estArme(epreuve.besoin);
+  const donne = arme ? armesDonnees(colis) : (colis[epreuve.besoin] || 0);
   if (donne >= epreuve.qte) return 'complet';
   if (donne > 0) return 'partiel';
   // Ce qu'il a déjà sur lui : un client exigeant ne compte que le matériel neuf
-  const etat = etatObjet(voyageur, epreuve.besoin) - (voyageur.exigeant ? 1 : 0);
+  const etat = (arme ? etatArme(voyageur) : etatObjet(voyageur, epreuve.besoin)) - (voyageur.exigeant ? 1 : 0);
   if (etat >= 2) return 'complet';
   if (etat === 1) return 'partiel';
   return 'rien';
@@ -104,8 +132,16 @@ function chanceDeRetour(voyageur, colis, pieges = null) {
 function surplus(voyageur, colis) {
   const commande = commandeDe(voyageur);
   const plus = {};
-  for (const [id, n] of Object.entries(colis)) {
-    const enPlus = n - (commande[id] || 0);
+  // (v0.63) les armes se partagent la commande d'arme : la sienne d'abord, puis les autres
+  const pref = armePour(voyageur);
+  let resteArme = commande[pref] || 0;
+  const ordre = Object.keys(colis).sort((a, b) => (b === pref) - (a === pref));
+  for (const id of ordre) {
+    const n = colis[id];
+    let utilise;
+    if (estArme(id)) { utilise = Math.min(n, resteArme); resteArme -= utilise; }
+    else utilise = Math.min(n, commande[id] || 0);
+    const enPlus = n - utilise;
     if (enPlus > 0) plus[id] = enPlus;
   }
   return plus;
@@ -137,12 +173,15 @@ function pvAuDepart(voyageur, colis) {
 // Sans la chance : l'objet donné, les objets en plus, le niveau de l'aventurier, et parfois un
 // événement dans sa zone (tempête, brume...).
 function chanceEtapeBase(e, colis, voyageur) {
-  const enPlus = surplus(voyageur, colis)[e.besoin] || 0;
+  const sp = surplus(voyageur, colis);
+  const enPlus = estArme(e.besoin) ? IDS_ARMES.reduce((s, id) => s + (sp[id] || 0), 0) : (sp[e.besoin] || 0);
+  // (v0.63) son arme à lui : un vrai bonus ; une autre : un tout petit
+  const bonusArme = !estArme(e.besoin) ? 0 : (colis[armePour(voyageur)] || 0) > 0 ? BONUS_ARME_PREFEREE : armesDonnees(colis) > 0 ? BONUS_AUTRE_ARME : 0;
   const niv = NIVEAUX_AVENTURIER[voyageur.niveau] || NIVEAUX_AVENTURIER.novice;
   const evenement = modifEvenement(window.GAME, 'danger', voyageur.zone);
   const etoiles = ZONES[voyageur.zone] ? ZONES[voyageur.zone].danger : 1;
   const danger = Math.max(0, MALUS_DANGER * (etoiles - 1) - niv.bonus);
-  return Phaser.Math.Clamp(chanceEpreuve(niveauEpreuve(e, colis, voyageur)) + enPlus * BONUS_SURPLUS + niv.bonus + evenement - danger, 0.05, 0.97);
+  return Phaser.Math.Clamp(chanceEpreuve(niveauEpreuve(e, colis, voyageur)) + enPlus * BONUS_SURPLUS + bonusArme + niv.bonus + evenement - danger, 0.05, 0.97);
 }
 
 // Avec la chance : une épreuve ratée peut être rattrapée de justesse par son trèfle.
@@ -614,6 +653,8 @@ function partir(G, voyageur, colis, pieges = {}) {
   if (chance >= 0.75) message = changerRelation(G, voyageur.nom, POINTS_RELATION.colisComplet);
   else if (chance < 0.4) message = changerRelation(G, voyageur.nom, POINTS_RELATION.colisPauvre);
   else rencontrer(G, voyageur.nom);
+  // (v0.63) son arme à lui : un peu plus d'amitié
+  if ((colis[armePour(voyageur)] || 0) > 0 && commandeDe(voyageur)[armePour(voyageur)]) { const m = changerRelation(G, voyageur.nom, RELATION_ARME_PREFEREE); if (m && !message) message = m; }
   // (la mort voulue se juge sur ce que tu savais : avant le détour imposé par la bande)
   const voulu = mortVoulue(G, voyageur, colis, pieges, chanceVivant(voyageur, colis, pieges));
   // (v0.60) le détour pour la Main Noire (un service rendu)
@@ -700,11 +741,20 @@ function etalsDuJour(G) {
   const hier = G.etals || {};
   for (const [cle, m] of Object.entries(MARCHANDS)) {
     const amis = niveauRelation(G, m.nom).index >= 5 ? 2 : 0;
-    const rares = m.objets.filter(id => !m.toujours.includes(id));
+    // (v0.63) chez Thorgal : quelques armes chaque matin seulement, et celles des peuples de l'ombre
+    // une fois les Bannis venus au comptoir
+    const ombreOuverte = G.visiteMarcheNoir !== undefined || (G.zonesConnues || []).some(z => ZONES[z] && ZONES[z].camp === 'mal');
+    const armesDispo = m.objets.filter(id => estArme(id) && (!ITEMS[id].ombre || ombreOuverte));
+    const armesDuJour = Phaser.Utils.Array.Shuffle(armesDispo.slice()).slice(0, ARMES_PAR_ETAL);
+    // (celle qu'un client attendu commande est souvent là)
+    const attendue = Object.keys(totalCommandes(G)).find(id => estArme(id) && armesDispo.includes(id) && !armesDuJour.includes(id));
+    if (attendue && Math.random() < 0.7) armesDuJour[armesDuJour.length - 1] = attendue;
+    const rares = m.objets.filter(id => !m.toujours.includes(id) && !estArme(id));
     const manquaient = rares.filter(id => !hier[cle] || !hier[cle][id] || hier[cle][id].qte <= 0);
     // (avec la promesse des marchands, obtenue au premier palier, les raretés sont là chaque jour)
     const presents = rares.filter(id => manquaient.includes(id) || G.bonusEtals || Math.random() < 0.6);
     if (rares.length && !presents.length) presents.push(auHasard(rares));
+    presents.push(...armesDuJour);
     etals[cle] = {};
     for (const id of m.objets) {
       const toujours = m.toujours.includes(id);
@@ -1121,10 +1171,12 @@ function intentionFamille(pts, valeureux, niveau) {
 // Un assortiment : les objets de base toujours là, plus quelques autres au hasard.
 // Les prix bougent un peu d'un jour à l'autre.
 function offreDuJour(multiplicateur, nbAutres, qteMin, qteMax) {
-  const autres = Phaser.Utils.Array.Shuffle(Object.keys(ITEMS).filter(id => !ITEMS[id].base));
+  // (v0.63) des armes, seulement l'épée : les autres, c'est chez Thorgal
+  const courants = Object.keys(ITEMS).filter(id => !estArme(id) || id === 'epee');
+  const autres = Phaser.Utils.Array.Shuffle(courants.filter(id => !ITEMS[id].base));
   const ids = multiplicateur > 1
-    ? Phaser.Utils.Array.Shuffle(Object.keys(ITEMS)).slice(0, hasard(3, 4))
-    : [...Object.keys(ITEMS).filter(id => ITEMS[id].base), ...autres.slice(0, hasard(1, nbAutres))];
+    ? Phaser.Utils.Array.Shuffle(courants.slice()).slice(0, hasard(3, 4))
+    : [...courants.filter(id => ITEMS[id].base), ...autres.slice(0, hasard(1, nbAutres))];
   const offre = {};
   for (const id of Object.keys(ITEMS)) {
     if (!ids.includes(id)) continue;
@@ -1311,8 +1363,8 @@ function partCommandeRemplie(v, colis) {
   for (const [id, n] of Object.entries(commande)) {
     voulu += n;
     // Un objet durable qu'il a déjà, en bon état, compte comme fourni.
-    const dejaLa = ITEMS[id] && ITEMS[id].durable && etatObjet(v, id) >= 2 ? n : 0;
-    donne += Math.min(n, ((colis && colis[id]) || 0) + dejaLa);
+    const dejaLa = ITEMS[id] && ITEMS[id].durable && (estArme(id) ? etatArme(v) : etatObjet(v, id)) >= 2 ? n : 0;
+    donne += Math.min(n, (colis ? fourni(v, colis, id) : 0) + dejaLa);
   }
   return voulu ? donne / voulu : 1;
 }
@@ -2186,8 +2238,9 @@ function mortVoulue(G, voyageur, colis, pieges, chance) {
   if (Object.values(pieges || {}).some(n => n > 0)) return 'piege';
   let manquants = 0;
   for (const [id, n] of Object.entries(commandeDe(voyageur))) {
-    if (ITEMS[id].durable && etatObjet(voyageur, id) >= 2) continue; // il a déjà le sien
-    manquants += Math.min(Math.max(0, n - (colis[id] || 0)), G.stock[id] || 0);
+    if (ITEMS[id].durable && (estArme(id) ? etatArme(voyageur) : etatObjet(voyageur, id)) >= 2) continue; // il a déjà le sien
+    const enStock = estArme(id) ? IDS_ARMES.reduce((s, w) => s + (G.stock[w] || 0), 0) : (G.stock[id] || 0);
+    manquants += Math.min(Math.max(0, n - fourni(voyageur, colis, id)), enStock);
   }
   if (manquants >= MANQUANTS_VOLONTAIRES) return 'colisVide';
   if (chance < SEUIL_SANS_CHANCE) return 'sansChance';
@@ -2632,7 +2685,8 @@ function pieceArmure(id, cote) {
 }
 
 // --- Les petits mots qui s'accordent avec une marchandise ---
-const voyelle = mot => /^[aeiouyéèêàâîôûh]/i.test(mot);
+// (« la hache » : le h est aspiré ; « l'herbe », « l'huile » : il est muet)
+const voyelle = mot => /^[aeiouyéèêàâîôû]/i.test(mot) || (/^h/i.test(mot) && !/^(hache|haut|hibou|héros|hall|hamac|hotte|houx|hutte)/i.test(mot));
 function genreDe(id) { return GENRE_OBJETS[id] || 'f'; }
 // « la torche », « l'épée », « le bouclier », « les bandages »
 function leNom(id, nom) {

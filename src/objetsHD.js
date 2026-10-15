@@ -100,6 +100,97 @@ const DESSINS_OBJETS = {
     for (const [x, y] of [[4, 5], [8, 4], [11, 5], [6, 5]]) t.forme('mure', ellipsoide(x, y, 1.4, 1.4), { decalage: 0.3 });
     for (let x = 2; x <= 14; x++) t.poser(x, 11, 'mure', 2);
   },
+  // --- (v0.63) Les armes de chaque peuple, et le bois ---
+  // Trois bûches de bois empilées, leurs cernes au bout
+  bois(t) {
+    for (const [x, y] of [[5, 11], [11, 11], [8, 6]]) {
+      t.forme('chene', (px, py) => (Math.abs(py + 0.5 - y) < 2.4 && px >= x - 4 && px <= x + 3 ? [0, (py + 0.5 - y) / 3, 0.85] : null));
+      t.forme('chanvre', ellipsoide(x + 3, y, 1.6, 2.3), { decalage: 0.4 });
+      t.poser(x + 3, y, 'chene', 2);
+    }
+  },
+  // La hache de guerre : manche de bois, large fer en croissant
+  hache(t) {
+    trait(t, 'chene', 3, 14, 11, 4, 0.8);
+    t.forme('metal', (x, y) => { const d = Math.hypot(x + 0.5 - 8, y + 0.5 - 8); return d > 4 && d < 8 && x >= 9 && y <= 8 && y >= 1 ? [(x - 11) / 4, (y - 4) / 5, 0.85] : null; }, { decalage: 0.3 });
+    for (let k = 0; k < 6; k++) t.poser(13 + Math.round(Math.sin(k / 5 * Math.PI) * 1), 2 + k, 'metal', 5);
+    t.forme('cuir', ellipsoide(4.5, 12.5, 1.3, 1.3));
+  },
+  // Le marteau de guerre des nains : tête carrée, manche gainé
+  marteau(t) {
+    trait(t, 'chene', 3, 14, 10, 6, 0.8);
+    t.forme('metal', (x, y) => { const u = (x + 0.5 - 11) * 0.707 + (y + 0.5 - 5) * 0.707, v = -(x + 0.5 - 11) * 0.707 + (y + 0.5 - 5) * 0.707; return Math.abs(u) < 2.4 && Math.abs(v) < 4.2 ? [u / 3, v / 5, 0.85] : null; }, { decalage: 0.2 });
+    t.poser(10, 3, 'metal', 5); t.poser(12, 6, 'metal', 5);
+    for (const k of [0, 1]) t.poser(4 + k, 13 - k, 'cuir', 3);
+  },
+  // L'arc long des elfes, sa corde tendue
+  arc(t) {
+    t.forme('chene', (x, y) => { const d = Math.hypot(x + 0.5 - 0.5, y + 0.5 - 8); return d > 8.8 && d < 10.4 && x >= 4 ? [(x - 7) / 9, (y - 8) / 9, 0.8] : null; });
+    for (let y = 1; y <= 15; y++) t.poser(5, y, 'lin', 5);
+    t.forme('cuir', ellipsoide(10, 8, 1, 1.7));
+    t.forme('or', ellipsoide(6, 1.5, 0.9, 0.9)); t.forme('or', ellipsoide(6, 14.5, 0.9, 0.9));
+  },
+  // La lance : longue hampe, pointe de fer en feuille
+  lance(t) {
+    trait(t, 'chene', 1, 15, 11, 5, 0.6);
+    t.forme('metal', (x, y) => { const u = (x + 0.5 - 13) * 0.707 - (y + 0.5 - 3) * 0.707, v = (x + 0.5 - 13) * 0.707 + (y + 0.5 - 3) * 0.707; return Math.abs(u) < 3.2 && Math.abs(v) < 1.6 - Math.abs(u) * 0.35 ? [v / 2, -0.3, 0.85] : null; }, { decalage: 0.4 });
+    t.forme('tissuRouge', ellipsoide(10, 7, 1, 1));
+  },
+  // Le bâton de mage : bois noueux, une pierre bleue au sommet dans une griffe d'or
+  baton(t) {
+    t.rampes.pierre = rampe(0x4a8ae0);
+    trait(t, 'chene', 3, 15, 11, 5, 0.7);
+    t.forme('or', ellipsoide(12, 4, 2.6, 2.6), { decalage: -0.2 });
+    t.forme('pierre', ellipsoide(12, 4, 1.6, 1.6), { decalage: 0.5 });
+    t.poser(11, 3, 'pierre', 5);
+  },
+  // Le bâton de bambou des pandas, ses nœuds
+  bambou(t) {
+    t.rampes.bambouV = rampe(0x8ac860); t.rampes.feuille = rampe(0x4a9a3a);
+    trait(t, 'bambouV', 2, 14, 14, 2, 0.9);
+    for (const k of [0.22, 0.48, 0.74]) { const x = 2 + 12 * k, y = 14 - 12 * k; t.forme('bambouV', (px, py) => (Math.abs((px + 0.5 - x) + (py + 0.5 - y)) < 0.9 && Math.hypot(px + 0.5 - x, py + 0.5 - y) < 1.8 ? [0, 0, 1] : null), { decalage: -0.6, bord: false }); }
+    t.forme('feuille', ellipsoide(11, 8, 2.2, 0.9), { decalage: 0.2 });
+    t.forme('feuille', ellipsoide(9, 9.5, 0.9, 2), { decalage: 0.1 });
+  },
+  // La fronde des hobbits : une lanière de cuir, un caillou dans la poche
+  fronde(t) {
+    trait(t, 'cuir', 3, 3, 7, 11, 0.5);
+    trait(t, 'cuir', 13, 3, 9, 11, 0.5);
+    t.forme('cuir', ellipsoide(8, 11.5, 2.4, 1.6), { decalage: -0.2 });
+    t.forme('metal', ellipsoide(8, 10.5, 1.2, 1.1), { decalage: -0.4 });
+    t.forme('chene', ellipsoide(3, 3, 1, 1)); t.forme('chene', ellipsoide(13, 3, 1, 1));
+  },
+  // La dague : courte lame, garde simple
+  dague(t) {
+    trait(t, 'metal', 5, 11, 12, 4, 1, { decalage: 0.6 });
+    for (let k = 0; k < 5; k++) t.poser(7 + k, 9 - k, 'metal', 5);
+    trait(t, 'metal', 3, 9, 7, 13, 0.6, { decalage: -0.2 });
+    trait(t, 'cuir', 3, 13, 5, 11, 0.7);
+  },
+  // La rapière des vampires : lame fine et longue, coquille d'argent, rubis
+  rapiere(t) {
+    trait(t, 'metal', 4, 12, 15, 1, 0.5, { decalage: 0.7 });
+    t.forme('metal', ellipsoide(4.5, 11.5, 2.2, 2.2), { decalage: 0.2 });
+    t.forme('tissuRouge', ellipsoide(4.5, 11.5, 0.9, 0.9), { decalage: 0.6 });
+    trait(t, 'cuir', 1, 15, 3, 13, 0.6);
+  },
+  // Le khopesh des momies : la lame en faucille, le manche doré
+  khopesh(t) {
+    t.forme('metal', (x, y) => { const d = Math.hypot(x + 0.5 - 13, y + 0.5 - 9); return d > 3.2 && d < 5.4 && (y < 9 || x < 13) && x >= 8 ? [(x - 12) / 5, (y - 6) / 5, 0.85] : null; }, { decalage: 0.3 });
+    trait(t, 'metal', 5, 10, 9, 7, 0.8, { decalage: 0.2 });
+    trait(t, 'or', 2, 14, 5, 10, 0.8);
+  },
+  // Les griffes de fer des loups-garous : trois lames courbes sur un gantelet
+  griffes(t) {
+    t.forme('cuir', ellipsoide(5, 11, 3.6, 3), { decalage: -0.2 });
+    for (const d of [-2.5, 0, 2.5]) trait(t, 'metal', 6 + d * 0.5, 9 + d, 13, 3 + d * 1.4, 0.55, { decalage: 0.5 });
+  },
+  // La massue cloutée des trolls : un gros bois noueux hérissé de clous
+  massue(t) {
+    trait(t, 'chene', 3, 14, 7, 9, 0.8);
+    t.forme('chene', (x, y) => { const u = (x + 0.5 - 10.5) * 0.707 - (y + 0.5 - 5.5) * 0.707, v = (x + 0.5 - 10.5) * 0.707 + (y + 0.5 - 5.5) * 0.707; return Math.abs(u) < 3.6 && Math.abs(v) < 5 - Math.max(0, -v) * 0.3 ? [u / 4, v / 6, 0.85] : null; }, { decalage: 0.1 });
+    for (const [x, y] of [[9, 2], [13, 4], [12, 8], [8, 6], [10, 5]]) t.poser(x, y, 'metal', 5);
+  },
   // --- Les matériaux de l'atelier ---
   // Un lingot de fer
   fer(t) {

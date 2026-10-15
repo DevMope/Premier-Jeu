@@ -46,6 +46,8 @@ Object.assign(StoryScene.prototype, {
   tete(p = this.perso) { return { x: p.x + (p.flipX ? -1 : 1) * p.displayWidth * 0.05, y: p.y - p.displayHeight * 0.86 }; },
   // Il tient un objet : l'image suit sa main
   tenir(cle, { echelle = 2.6, angle = 0, dx = 0, dy = 0, qui = this.perso, devant = true } = {}) {
+    // (v0.63) le voyageur se bat avec l'arme qu'il a vraiment emportée (sa hache, son arc...)
+    if (qui === this.perso && cle === iconeObjet(this, 'epee') && this.armeTenue && this.armeTenue !== 'epee') cle = iconeObjet(this, this.armeTenue);
     const o = this.garder(this.add.image(0, 0, cle).setScale(echelle).setAngle(angle).setDepth(qui.depth + (devant ? 0.05 : -0.05)));
     o.dx = dx; o.dy = dy;
     if (qui === this.perso) (this.menace.tenus = this.menace.tenus || []).push(o);

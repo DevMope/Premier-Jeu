@@ -16,6 +16,7 @@ class StoryScene extends Cinematique {
     this.tweens.timeScale = 1;
     this.time.timeScale = 1;
     this.parti = this.G.partis.find(p => p.voyageur.id === this.idParti);
+    this.armeTenue = this.parti ? armeEmportee(this.parti.voyageur, this.parti.colis || {}) : 'epee';   // (v0.63)
     if (!this.parti) { this.time.delayedCall(0, () => this.scene.start('Comptoir')); return; }
     const v = this.parti.voyageur;
     this.e = v.feminin ? 'e' : '';
@@ -279,6 +280,7 @@ class StoryScene extends Cinematique {
 
   async montrerObjet(id) {
     creerObjetsHD(this);
+    if (id === 'epee' && this.armeTenue) id = this.armeTenue;   // (v0.63 : son arme à lui)
     const cle = iconeObjet(this, id);
     const icone = this.add.image(this.perso.x, this.perso.y - 88, cle).setScale(0).setDepth(5);
     await this.animer({ targets: icone, scale: cle.startsWith('hd_') ? 3 : 5, y: icone.y - 30, duration: 350, ease: 'Back.easeOut' });

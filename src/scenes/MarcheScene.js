@@ -827,21 +827,26 @@ class MarcheScene extends Phaser.Scene {
     const c = this.panneau(`${m.nom} · ${m.metier}`, `Relation : ${rel.nom}${remise ? ` · remise ${Math.round(remise * 100)} %` : ''} · les prix changent chaque jour`);
     const offre = G.etals[cle];
     const ids = m.objets.filter(id => offre[id]);
-    m.objets.filter(id => !offre[id]).forEach(id => ids.push(id));
+    // (v0.63) les armes absentes ne prennent pas de ligne : il y en a trop
+    m.objets.filter(id => !offre[id] && !estArme(id)).forEach(id => ids.push(id));
+    const cols = ids.length > 6 ? 3 : 2, lx = cols === 3 ? 300 : 460;
     ids.forEach((id, i) => {
-      const x = 40 + (i % 2) * 460;
-      const y = 352 + Math.floor(i / 2) * 34;
+      const x = 30 + (i % cols) * lx;
+      const y = 352 + Math.floor(i / cols) * 30;
       const o = offre[id];
       c.add(this.add.image(x + 12, y, iconeObjet(this, id)).setScale(2.4));
-      c.add(this.add.text(x + 34, y, nomObjet(id), style(14, '#3b2410')).setOrigin(0, 0.5));
+      const k3 = cols === 3;
+      const nomT = this.add.text(x + 34, y, nomObjet(id), style(k3 ? 12 : 14, '#3b2410')).setOrigin(0, 0.5);
+      for (let t = k3 ? 12 : 14; nomT.width > (k3 ? 92 : 112) && t >= 9; t--) nomT.setFontSize(t);
+      c.add(nomT);
       const enStock = id in MATERIAUX ? G.materiaux[id] : G.stock[id];
-      c.add(this.add.text(x + 150, y, `tu as ${enStock}`, style(12, '#6b4a2a')).setOrigin(0, 0.5));
+      c.add(this.add.text(x + (k3 ? 130 : 150), y, k3 ? `(${enStock})` : `tu as ${enStock}`, style(k3 ? 11 : 12, '#6b4a2a')).setOrigin(0, 0.5));
       if (!o) {
-        c.add(this.add.text(x + 260, y, "Pas aujourd'hui", style(12, '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
+        c.add(this.add.text(x + (k3 ? 165 : 260), y, "Pas aujourd'hui", style(k3 ? 11 : 12, '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
         return;
       }
-      c.add(this.add.text(x + 230, y, `${prixMarchand(G, cle, id)} p.`, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
-      c.add(this.add.text(x + 300, y, o.qte > 0 ? `${o.qte} en vente` : 'Épuisé', style(12, o.qte > 0 ? '#4a6a2a' : '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
+      c.add(this.add.text(x + (k3 ? 165 : 230), y, `${prixMarchand(G, cle, id)} p.`, style(k3 ? 12 : 14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      c.add(this.add.text(x + (k3 ? 210 : 300), y, o.qte > 0 ? (k3 ? `×${o.qte}` : `${o.qte} en vente`) : 'Épuisé', style(k3 ? 11 : 12, o.qte > 0 ? '#4a6a2a' : '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
     });
     // (v0.58) on n'achète plus d'ici : on s'approche de l'étal pour choisir sur la marchandise
     this.bouton(c, 800, 446, 220, '🔍 Voir l\'étal de près', () => this.vitrine(cle), 0x4f7a3a);

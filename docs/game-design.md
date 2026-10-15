@@ -314,7 +314,7 @@ Chaque étape doit donner une version **jouable**.
 | 9¾ | **Construire le récit tranché** | Voix de la Faucheuse et de Garrick, l'Antre ★6 cachée, le système de combat au tour par tour (plus tard), les deux fins (amère et cachée) ; (faits en v0.56 : skin de Garrick, degrés de la Faucheuse, aînés) (voir « Le grand retournement »). |
 | 9¾ bis | **Trancher le reste du récit** | Répondre aux questions de docs/audit-v054.md (Main Noire, Faucheuse, sort d'oubli, armure, Bête, fins, Sage, noms) ; séparer le camp et la cruauté. |
 | 10 ✅ | **Marché noir** | Fait à l'étape 9e (objets interdits, voyageurs nocturnes, conséquences). |
-| 10a | **Les armes de chaque peuple** (validé) | Chaque peuple a son arme préférée et la demande dans ses commandes ; Thorgal vend plus d'armes ; le **bois** devient un matériau du marché. Recettes et liste : voir « La forge » plus bas. |
+| 10a ✅ (v 0.63) | **Les armes de chaque peuple** (validé) | Chaque peuple a son arme préférée et la demande dans ses commandes ; Thorgal vend plus d'armes ; le **bois** devient un matériau du marché. Recettes et liste : voir « La forge » plus bas. |
 | 10b | **La forge chez soi** (validé) | À ★3 (le saut d'un an), on peut construire une forge dans l'arrière-boutique et engager un premier forgeron ; un second à ★4. Chaque nuit, ils fabriquent des armes avec les matériaux en stock. |
 | 10c | **La rue et le familier** (validé : le chat chasse les rats de la réserve et prévient parfois de la garde) | La rue du comptoir s'agrandit : on y marche avec son personnage jusqu'aux lieux du quartier (marché, banque, forge, fontaine, plus tard le petit bar), en plus des raccourcis depuis la maison. En s'y promenant le soir, on croise le chat de gouttière : on le nourrit quelques soirs de suite, et il nous adopte (premier familier). |
 | 11 | **Aider pendant l'aventure** | Messages de détresse, le grand aigle, les mercenaires. |
@@ -520,6 +520,15 @@ Relevé de toutes les idées exprimées au fil de la conversation et pas encore 
 3. **Plus tard** : les forgerons ont un salaire par semaine ; une arme bien faite peut sortir en qualité « belle ouvrage » (vaut plus, s'use moins) ; côté ombre, la forge peut fabriquer des armes interdites pour le marché noir.
 
 À trancher par le joueur : la liste d'armes, les recettes, le moment (★3 / ★4) et le salaire des forgerons.
+
+### Décisions du joueur (étape 10a/10b/10c, après la v0.62)
+
+- **10a (fait en v0.63)** : la liste et les recettes restent ; les matériaux plus chers (acier, mithril, cuir de wyverne) viendront **plus tard**, pour garder la découverte. Son arme à lui : +5 % sur le combat et +1 relation ; **une autre arme fait l'affaire avec un tout petit avantage** (+1,5 %). Un nain vétéran et plus préfère le marteau. Au comptoir, la case « Armes » ouvre le râtelier (★ = l'arme de son peuple). Thorgal vend trois armes par matin (celle qu'un client attendu commande est souvent là) ; celles des peuples de l'ombre une fois les Bannis venus au comptoir. Planche : `docs/planches-v059/4-armes.jpg`.
+- **10b** : forge 300 p. ; apprenti humain (6 p./nuit) dès ★3, maîtresse naine (12 p./nuit) à ★4 ; la qualité « bel ouvrage » dès la 10b ; **l'apprenti progresse** sans jamais égaler la maîtresse (proposition : apprenti → compagnon → ouvrier confirmé, au fil des armes forgées ; il plafonne à environ 80 % de sa vitesse et de ses chances de « bel ouvrage ») ; **côté ombre, la forge fabrique aussi des armes interdites** pour le marché noir.
+- **10c** : ordre laissé à Claude (10a, puis 10c, puis 10b) ; le chat, une fois apprivoisé, **se personnalise** (petit panel : pelage, yeux, collier) et le joueur lui **donne un nom**.
+- **Armure** : on garde « toutes les contrées d'un royaume » ; à combiner avec d'autres idées (proposition : à mi-chemin d'un royaume, un messager apporte un écusson et un mot d'encouragement ; une fois 7 royaumes libérés, la dernière pièce vient d'elle-même au bout d'une semaine, apportée par ton camp).
+- **Bruitages** (demande du joueur) : enrichir la banque de sons dans la D.A. actuelle, comme pour un film : pas (sur bois, pavés, herbe, neige, eau), portes, tissus, coffres, armes qui s'entrechoquent, foule, vent, oiseaux, feu, etc., en particulier dans les cinématiques.
+- **Création du personnage** (demande du joueur) : plus de coupes de cheveux, de bouches, etc.
 
 ## La rue et le familier (validé par le joueur le 16/10)
 

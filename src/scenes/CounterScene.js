@@ -397,7 +397,10 @@ class CounterScene extends Phaser.Scene {
       this.scene.launch('Bureau', { retour: 'Comptoir', comptoir: this });
     });
     this.cases = {};
-    Object.keys(ITEMS).forEach((id, i) => {
+    // (v0.63) toutes les armes partagent une case : le râtelier, qui s'ouvre sur celles du stock
+    const cases = Object.keys(ITEMS).filter(id => !estArme(id) || id === 'epee').map(id => (id === 'epee' ? 'armes' : id));
+    cases.forEach((id, i) => {
+      if (id === 'armes') return this.creerCaseArmes(200 + (i % 5) * 108, 397 + Math.floor(i / 5) * 48);
       const x = 200 + (i % 5) * 108;
       const y = 397 + Math.floor(i / 5) * 48;
       const fond = this.add.rectangle(x, y, 100, 40, 0xfff6d8, 0.001).setInteractive({ useHandCursor: true });
@@ -416,6 +419,48 @@ class CounterScene extends Phaser.Scene {
       this.cases[id] = { fond, qte, pile, icone };
     });
     this.creerBoutonRetourner();
+  }
+
+  // (v0.63) La case du râtelier : l'arme la plus utile en ce moment (celle du client si on l'a),
+  // le total des armes ; un clic ouvre le râtelier pour choisir laquelle donner
+  creerCaseArmes(x, y) {
+    const fond = this.add.rectangle(x, y, 100, 40, 0xfff6d8, 0.001).setInteractive({ useHandCursor: true });
+    const pile = [2, 1, 0].map(k => this.add.image(x - 28 - k * 3, y + 3 - k * 4, iconeObjet(this, 'epee')).setScale(2));
+    const icone = pile[2];
+    this.add.text(x - 8, y - 18, 'Armes', style(12, '#3a2410', { fontStyle: 'bold' }));
+    this.add.text(x - 8, y - 4, '▾ choisir', style(9, '#6b4a2a', { fontStyle: 'italic' }));
+    this.add.image(x + 32, y + 12, 'etiquette').setScale(2);
+    const qte = this.add.text(x + 33, y + 12, '', style(12, '#3a2410', { fontStyle: 'bold' })).setOrigin(0.5);
+    fond.on('pointerover', () => { fond.setFillStyle(0xfff6d8, 0.22); icone.setScale(2.25); });
+    fond.on('pointerout', () => { fond.setFillStyle(0xfff6d8, 0.001); icone.setScale(2); });
+    fond.on('pointerdown', () => this.ouvrirRatelier());
+    this.cases.armes = { fond, qte, pile, icone, armes: true };
+  }
+
+  ouvrirRatelier() {
+    if (this.ratelier) { this.ratelier.destroy(); this.ratelier = null; return; }
+    const G = this.G, v = this.voyageur;
+    const pref = v ? armePour(v) : null;
+    const ids = IDS_ARMES.filter(id => (G.stock[id] || 0) > 0 || id === pref);
+    const c = this.ratelier = this.add.container(0, 0).setDepth(25);
+    const n = Math.max(1, ids.length), cols = Math.min(4, n), lignes = Math.ceil(n / cols);
+    const l = cols * 132 + 20, h = lignes * 40 + 46, x0 = 420 - l / 2, y0 = 352 - h;
+    c.add(this.add.rectangle(x0 + l / 2, y0 + h / 2, l, h, 0x2a1a10, 0.94).setStrokeStyle(2, 0xc9a046).setInteractive());
+    c.add(this.add.text(x0 + 12, y0 + 8, 'Le râtelier' + (pref ? ` · ${v.nom.split(' ')[0]} préfère : ${ITEMS[pref].nom.toLowerCase()}` : ''), style(12, '#f3d98a', { fontStyle: 'bold' })));
+    c.add(this.add.text(x0 + l - 10, y0 + 6, '✕', style(14, '#c9b48a', { fontStyle: 'bold' })).setOrigin(1, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirRatelier()));
+    if (!ids.length) c.add(this.add.text(x0 + 12, y0 + 32, "Aucune arme en réserve. Thorgal en vend quelques-unes chaque matin.", style(11, '#e8dcc0', { fontStyle: 'italic' })));
+    ids.forEach((id, i) => {
+      const x = x0 + 14 + (i % cols) * 132, y = y0 + 48 + Math.floor(i / cols) * 40;
+      const nb = G.stock[id] || 0;
+      const z = this.add.rectangle(x + 60, y, 126, 34, id === pref ? 0x5a4a14 : 0x3a2a1a, 1).setStrokeStyle(1, id === pref ? 0xf0c840 : 0x6a4a2a).setInteractive({ useHandCursor: nb > 0 });
+      c.add(z);
+      c.add(this.add.image(x + 14, y, iconeObjet(this, id)).setScale(2).setAlpha(nb > 0 ? 1 : 0.4));
+      const t = this.add.text(x + 32, y - 8, (id === pref ? '★ ' : '') + ITEMS[id].nom, style(11, nb > 0 ? '#fff0d0' : '#9a8a70', { fontStyle: 'bold' }));
+      for (let s = 11; t.width > 90 && s >= 8; s--) t.setFontSize(s);
+      c.add(t);
+      c.add(this.add.text(x + 32, y + 6, `x${nb}`, style(10, nb > 0 ? '#c9e0a0' : '#c08070')));
+      z.on('pointerdown', () => { if (nb <= 0) return this.dire("Tu n'en as plus en stock...", ''); this.ouvrirRatelier(); this.donner(id); });
+    });
   }
 
   // Se retourner : l'arrière-boutique (étagères, fortune, cadeaux, tiroir secret, chambre).
@@ -514,7 +559,7 @@ class CounterScene extends Phaser.Scene {
       ligne.on('pointerover', () => ligne.setFillStyle(0x4a1a34));
       ligne.on('pointerout', () => ligne.setFillStyle(0x2a1424));
       ligne.on('pointerdown', () => this.glisserPiege(id));
-      c.add([ligne, this.add.image(482, y, id).setScale(2.5).setTint(0x9a8aa0),
+      c.add([ligne, this.add.image(482, y, iconeObjet(this, id)).setScale(2).setTint(0x9a8aa0),
         this.add.text(500, y, `${PIEGES[id].nom} x ${this.G.pieges[id]}`, style(12, '#f0c0d8', { fontStyle: 'bold' })).setOrigin(0, 0.5)]);
     });
   }
@@ -1265,9 +1310,11 @@ class CounterScene extends Phaser.Scene {
     const commande = commandeDe(v);
     // Au-delà de la commande, c'est du suréquipement : seulement ce qui peut servir (soins,
     // ou un objet qu'une épreuve demande), et pas plus que ce que son sac peut porter.
-    const enPlus = (this.colis[id] || 0) >= (commande[id] || 0);
+    // (v0.63) les armes se partagent la commande d'arme : une autre que la sienne fait l'affaire
+    const besoinArme = estArme(id) ? (commande[armePour(v)] || 0) : 0;
+    const enPlus = estArme(id) ? armesDonnees(this.colis) >= besoinArme : (this.colis[id] || 0) >= (commande[id] || 0);
     if (enPlus) {
-      if (!commande[id] && !OBJETS_DE_SOIN.includes(id)) return this.dire("Hum, ça ne me servira à rien là où je vais.");
+      if (!commande[id] && !besoinArme && !OBJETS_DE_SOIN.includes(id)) return this.dire("Hum, ça ne me servira à rien là où je vais.");
       if (totalSurplus(v, this.colis) >= tailleSac(v)) return this.dire(`Mon sac est plein ! Je ne peux porter que ${tailleSac(v)} objets en plus de ma commande.`);
       if (id === 'bandage' && (this.colis.bandage || 0) - (commande.bandage || 0) >= BANDAGES_EN_PLUS_MAX) return this.dire(`${BANDAGES_EN_PLUS_MAX} bandages en plus, ça suffit largement ! Garde les autres pour quelqu'un d'autre.`);
     }
@@ -1281,6 +1328,9 @@ class CounterScene extends Phaser.Scene {
     Son.jouer('poser');
     if (enPlus) this.dire(id === 'potion' ? "Une potion de plus ? Merci, ça me fera un cœur de réserve !"
       : id === 'bandage' ? "Un bandage de plus ? Si je saigne après un combat, ça m'évitera de perdre un cœur !" : "Un de plus ? Ça peut toujours servir, merci !");
+    // (v0.63) une autre arme que celle de son peuple : il fait avec, sans enthousiasme
+    else if (estArme(id) && id !== armePour(v)) this.dire(`${(unNom(id) + ' ' + ITEMS[id].nom.toLowerCase()).replace(/^./, c => c.toUpperCase())} ? Je préfère ${unNom(armePour(v))} ${ITEMS[armePour(v)].nom.toLowerCase()}... mais je ferai avec.`, v.nom);
+    else if (estArme(id)) this.dire(`${(unNom(id) + ' ' + ITEMS[id].nom.toLowerCase()).replace(/^./, c => c.toUpperCase())} ! Exactement ce qu'il me fallait.`, v.nom);
     this.majStock();
     this.majCommande();
   }
@@ -1328,7 +1378,9 @@ class CounterScene extends Phaser.Scene {
 
   // Les objets durables du client qui ont besoin d'une réparation (et qu'il peut encore utiliser).
   aReparer(v) {
-    return Object.keys(commandeDe(v)).filter(id => {
+    // (v0.63) pour l'arme : celle qu'il a sur lui, quelle qu'elle soit
+    const ids = Object.keys(commandeDe(v)).flatMap(id => estArme(id) ? IDS_ARMES.filter(w => w in (v.inventaire || {})) : [id]);
+    return ids.filter(id => {
       const etat = etatObjet(v, id);
       return ITEMS[id].durable && etat > 0 && etat < USURE_MAX;
     });
@@ -1444,7 +1496,7 @@ class CounterScene extends Phaser.Scene {
     boite.setMask(this.masqueFenetre);
     this.tweens.add({ targets: boite, scale: 2.5, duration: 250, ease: 'Back.easeOut' });
     objets.forEach((id, i) => this.time.delayedCall(300 + i * 170, () => {
-      const depart = this.cases[id].icone;
+      const depart = (this.cases[id] || this.cases.armes).icone;   // (v0.63 : les armes partent du râtelier)
       const icone = this.add.image(depart.x, depart.y, iconeObjet(this, id)).setScale(2).setDepth(6);
       this.tweens.add({
         targets: icone, x: bx, y: SOL_COMPTOIR - 30, scale: 2, duration: 450, ease: 'Quad.easeIn',
@@ -1543,7 +1595,7 @@ class CounterScene extends Phaser.Scene {
     // (v0.60) la phrase dit si la commande est complète ; la chance, elle, dit si le voyage est risqué
     // (une commande complète pour une contrée trop dangereuse n'est pas « pas tout ce que je voulais »)
     const cmd = commandeDe(v);
-    const complete = Object.entries(cmd).every(([id, n]) => (this.colis[id] || 0) >= n || (ITEMS[id] && ITEMS[id].durable && etatObjet(v, id) > 0));
+    const complete = Object.entries(cmd).every(([id, n]) => fourni(v, this.colis, id) >= n || (ITEMS[id] && ITEMS[id].durable && (estArme(id) ? etatArme(v) : etatObjet(v, id)) > 0));
     const phrase = complete ? (chance >= 0.6 ? `Parfait, tout y est ! Je reviendrai ${jours} avec ta part du butin, promis !`
       : `Tout y est, merci. Mais ça va être rude, là-bas... Rendez-vous ${jours}, si tout va bien.`)
       : chance >= 0.4 ? `Ce n'est pas tout ce que je voulais... mais je ferai avec. Rendez-vous ${jours} !`
@@ -1592,6 +1644,16 @@ class CounterScene extends Phaser.Scene {
 
   majStock() {
     for (const [id, c] of Object.entries(this.cases)) {
+      if (c.armes) {
+        // le râtelier : l'arme du client si on l'a, sinon la plus nombreuse
+        const total = IDS_ARMES.reduce((s, w) => s + (this.G.stock[w] || 0), 0);
+        const pref = this.voyageur ? armePour(this.voyageur) : null;
+        const montre = pref && this.G.stock[pref] > 0 ? pref : IDS_ARMES.slice().sort((a, b) => (this.G.stock[b] || 0) - (this.G.stock[a] || 0))[0];
+        c.pile.forEach(img => img.setTexture(iconeObjet(this, montre)));
+        c.qte.setText('x' + total).setColor(total > 0 ? '#3a2410' : '#a03020');
+        c.pile.forEach((img, k) => img.setVisible(k === 2 || total > 2 - k).setAlpha(total > 0 ? 1 : 0.35));
+        continue;
+      }
       const n = this.G.stock[id];
       c.qte.setText('x' + n).setColor(n > 0 ? '#3a2410' : '#a03020');
       c.pile.forEach((img, k) => img.setVisible(k === 2 || n > 2 - k).setAlpha(n > 0 ? 1 : 0.35));
@@ -1599,7 +1661,7 @@ class CounterScene extends Phaser.Scene {
     this.majTiroirSecret();
     this.majTiroirCadeaux();
     const m = this.G.materiaux;
-    this.texteReserve.setText(`Réserve ${stockTotal(this.G)}/${this.G.capacite} · Fer ${m.fer} · Cuir ${m.cuir}`);
+    this.texteReserve.setText(`Réserve ${stockTotal(this.G)}/${this.G.capacite} · Fer ${m.fer} · Cuir ${m.cuir} · Bois ${m.bois || 0}`);
   }
 
   majCommande() {
@@ -1619,14 +1681,34 @@ class CounterScene extends Phaser.Scene {
       (bandagesEnPlus(v, this.colis) ? ` · 🩹${bandagesEnPlus(v, this.colis)}` : '') + ' · ' : '') +
       `🍀 ${trefleDe(this.G, v.nom)}/${TREFLE_MAX} · ${NIVEAUX_AVENTURIER[v.niveau].nom}` : '');
     this.lignesCommande.forEach((ligne, i) => {
-      const id = ids[i];
+      let id = ids[i];
+      // (v0.63) la ligne de l'arme : n'importe quelle arme la remplit ; on montre celle qu'il emporte
+      const prefere = id && estArme(id) && commande[id] ? id : null;
+      if (prefere) {
+        const donnee = armesDonnees(this.colis) > 0 ? armeEmportee(v, this.colis) : !IDS_ARMES.some(w => w in v.inventaire) ? id : (IDS_ARMES.find(w => w === id && w in v.inventaire) || IDS_ARMES.find(w => w in v.inventaire));
+        if (donnee !== id) {
+          const n = commande[id], donne = armesDonnees(this.colis);
+          ligne.id = donnee; ligne.icone.setVisible(true); iconeLigne(this, ligne.icone, donnee);
+          const retirable = !!this.colis[donnee] && this.enService;
+          ligne.moins.setVisible(retirable); ligne.moinsTexte.setVisible(retirable);
+          if (!donne) {
+            const etat = etatObjet(v, donnee);
+            const cout = `${materiauxRequis(this.G)} ${MATERIAUX[MATERIAU_DE[donnee]].nom.toLowerCase()}`;
+            ligne.txt.setText(etat > 0 ? `${ITEMS[donnee].nom} · sienne ${etat}/${USURE_MAX}${etat < USURE_MAX ? ` (réparer : ${cout})` : ' ✓'}` : `${ITEMS[donnee].nom} · cassée`).setFontSize(12).setColor(etat >= 2 ? '#2f6a2a' : '#8a5a10');
+          } else {
+            ligne.txt.setText(`${ITEMS[donnee].nom} (préfère ${ITEMS[id].nom.toLowerCase()}) ${Math.min(donne, n)}/${n} ${donne >= n ? '✓' : ''}`).setFontSize(12).setColor(donne >= n ? '#2f6a2a' : '#3b2410');
+          }
+          for (let t = 12; ligne.txt.width > 205 && t >= 9; t--) ligne.txt.setFontSize(t);
+          return;
+        }
+      }
       ligne.id = id || null;
       ligne.icone.setVisible(!!id);
       const retirable = !!id && !!this.colis[id] && this.enService;
       ligne.moins.setVisible(retirable);
       ligne.moinsTexte.setVisible(retirable);
       if (!id) return ligne.txt.setText('');
-      ligne.icone.setTexture(id);
+      iconeLigne(this, ligne.icone, id);
       const donne = this.colis[id] || 0;
       const etat = ITEMS[id].durable ? etatObjet(v, id) : 0;
       if (!donne && id in v.inventaire) {
@@ -1675,10 +1757,17 @@ function listeCourte(lignes, max, siVide) {
   return lignes.slice(0, max - 1).join('\n') + `\n+ ${lignes.length - max + 1} autres`;
 }
 
+// (v0.63) L'icône d'une ligne de l'ardoise : la petite icône d'origine, ou la HD à demi-taille
+// pour les objets qui n'en ont pas (les nouvelles armes)
+function iconeLigne(scene, img, id) {
+  if (scene.textures.exists(id)) img.setTexture(id).setScale(2.5);
+  else img.setTexture(iconeObjet(scene, id)).setScale(1.25);
+}
+
 // Le tissu du baluchon selon ce qu'il contient le plus : provisions, armes, soins...
 // ou « divers » quand c'est un peu de tout.
 function familleColis(objets) {
-  const familles = { provisions: ['ration', 'gourde'], armes: ['epee', 'fleches', 'bouclier'], soins: ['potion', 'bandage', 'antidote'] };
+  const familles = { provisions: ['ration', 'gourde'], armes: [...IDS_ARMES, 'fleches', 'bouclier'], soins: ['potion', 'bandage', 'antidote'] };
   for (const [famille, ids] of Object.entries(familles)) {
     if (objets.filter(id => ids.includes(id)).length > objets.length / 2) return famille;
   }

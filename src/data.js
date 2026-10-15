@@ -6,7 +6,7 @@
 const ITEMS = {
   ration:  { nom: 'Ration',   prix: 3,  base: true },
   gourde:  { nom: 'Gourde',   prix: 4,  base: true, durable: true },
-  epee:    { nom: 'Épée',     prix: 15, durable: true },
+  epee:    { nom: 'Épée',     prix: 15, durable: true, arme: true },
   fleches: { nom: 'Flèches',  prix: 6 },
   potion:  { nom: 'Potion',   prix: 10 },
   bandage: { nom: 'Bandages', prix: 4,  base: true },
@@ -16,7 +16,34 @@ const ITEMS = {
   cape:    { nom: 'Cape chaude', prix: 9, durable: true },
   bouclier: { nom: 'Bouclier', prix: 14, durable: true },
   amulette: { nom: 'Amulette', prix: 20 },
+  // (v0.63, étape 10a) Les armes de chaque peuple. Une épreuve de combat demande « une arme » :
+  // le client commande celle de son peuple (voir ARME_PREFEREE), mais n'importe quelle arme fait
+  // l'affaire ; la sienne donne un vrai bonus, une autre un tout petit. `ombre` : celles des
+  // peuples de l'ombre, que Thorgal ne vend qu'une fois les Bannis venus au comptoir.
+  hache:   { nom: 'Hache de guerre', prix: 15, durable: true, arme: true },
+  marteau: { nom: 'Marteau de guerre', prix: 16, durable: true, arme: true },
+  arc:     { nom: 'Arc long', prix: 14, durable: true, arme: true },
+  lance:   { nom: 'Lance', prix: 11, durable: true, arme: true },
+  baton:   { nom: 'Bâton de mage', prix: 14, durable: true, arme: true },
+  bambou:  { nom: 'Bâton de bambou', prix: 7, durable: true, arme: true },
+  fronde:  { nom: 'Fronde', prix: 6, durable: true, arme: true },
+  dague:   { nom: 'Dague', prix: 8, durable: true, arme: true },
+  rapiere: { nom: 'Rapière', prix: 17, durable: true, arme: true, ombre: true },
+  khopesh: { nom: 'Khopesh', prix: 12, durable: true, arme: true, ombre: true },
+  griffes: { nom: 'Griffes de fer', prix: 14, durable: true, arme: true, ombre: true },
+  massue:  { nom: 'Massue cloutée', prix: 12, durable: true, arme: true, ombre: true },
 };
+// L'arme que chaque peuple préfère (et commande). Les nains vétérans et plus, paladins dans
+// l'âme, passent au marteau.
+const ARME_PREFEREE = {
+  humain: 'epee', nain: 'hache', elfe: 'arc', magicienne: 'baton', hobbit: 'fronde', panda: 'bambou',
+  gobelin: 'dague', orc: 'hache', vampire: 'rapiere', momie: 'khopesh', loupgarou: 'griffes', troll: 'massue',
+};
+// Son arme à lui : un vrai bonus dans les combats et un peu plus d'amitié ; une autre arme : un
+// tout petit bonus quand même (il se débrouille avec).
+const BONUS_ARME_PREFEREE = 0.05, BONUS_AUTRE_ARME = 0.015, RELATION_ARME_PREFEREE = 1;
+// Combien d'armes Thorgal a sur son étal chaque matin (en plus du reste)
+const ARMES_PAR_ETAL = 3;
 
 // Les soins qu'on peut donner en plus de la commande :
 // - une potion en plus = un cœur de réserve ;
@@ -814,12 +841,15 @@ const LIENS = [
 
 // Ce qu'il faut pour réparer chaque objet durable.
 const MATERIAUX = {
+  bois: { nom: 'Bois', prix: 2 },   // (v0.63) pour les arcs, les lances, les bâtons, les manches
   fer: { nom: 'Fer', prix: 4 },
   cuir: { nom: 'Cuir', prix: 3 },
   filOr: { nom: "Fil d'or", prix: 6 },   // pour les bijoux : on en use peu, mais le travail est long
 };
-const MATERIAU_DE = { epee: 'fer', corde: 'cuir', gourde: 'cuir', cape: 'cuir', bouclier: 'fer' };
-const MATERIAUX_DEPART = { fer: 2, cuir: 2, filOr: 1 };
+const MATERIAU_DE = { epee: 'fer', corde: 'cuir', gourde: 'cuir', cape: 'cuir', bouclier: 'fer',
+  hache: 'fer', marteau: 'fer', arc: 'bois', lance: 'bois', baton: 'bois', bambou: 'bois', fronde: 'cuir', dague: 'fer',
+  rapiere: 'fer', khopesh: 'fer', griffes: 'fer', massue: 'bois' };
+const MATERIAUX_DEPART = { fer: 2, cuir: 2, bois: 2, filOr: 1 };
 // Au début il faut 3 matériaux par réparation ; l'artisanat en fait baisser le nombre.
 const MATERIAUX_PAR_REPARATION = 3;
 
@@ -838,7 +868,8 @@ const MARCHANDS = {
   },
   forge: {
     nom: 'Thorgal le Forgeron', metier: 'Forge', race: 'nain', couleur: 0x8a3a2a,
-    objets: ['epee', 'fleches', 'corde', 'bouclier', 'fer', 'cuir'], toujours: ['fer', 'cuir'],
+    objets: ['fleches', 'corde', 'bouclier', 'fer', 'cuir', 'bois', 'epee', 'hache', 'marteau', 'arc', 'lance', 'baton', 'bambou', 'fronde', 'dague', 'rapiere', 'khopesh', 'griffes', 'massue'],
+    toujours: ['fer', 'cuir', 'bois'],
   },
   apothicaire: {
     nom: 'Mère Sauge', metier: 'Apothicaire', race: 'magicienne', couleur: 0x5a3a8a,
@@ -1687,7 +1718,9 @@ const TREFLE_CONSOMME = 3;
 // f / m, et p au pluriel.
 const GENRE_OBJETS = {
   ration: 'f', gourde: 'f', epee: 'f', fleches: 'fp', potion: 'f', bandage: 'mp', torche: 'f', corde: 'f',
-  antidote: 'm', cape: 'f', bouclier: 'm', amulette: 'f', fer: 'm', cuir: 'm', filOr: 'm',
+  antidote: 'm', cape: 'f', bouclier: 'm', amulette: 'f', fer: 'm', cuir: 'm', filOr: 'm', bois: 'm',
+  hache: 'f', marteau: 'm', arc: 'm', lance: 'f', baton: 'm', bambou: 'm', fronde: 'f', dague: 'f',
+  rapiere: 'f', khopesh: 'm', griffes: 'fp', massue: 'f',
 };
 
 const CADEAUX = {
