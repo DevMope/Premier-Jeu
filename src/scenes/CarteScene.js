@@ -203,6 +203,7 @@ class CarteScene extends Phaser.Scene {
     this.cameras.main.ignore([this.monde, this.dessus]);
     this.events.off('postupdate', this.filtrerCameras, this);   // (audit v0.59 : un seul écouteur, pas un de plus à chaque ouverture)
     this.events.on('postupdate', this.filtrerCameras, this);
+    this.events.once('shutdown', () => this.events.off('postupdate', this.filtrerCameras, this));
     this.filtrerCameras();
     // La vue de la dernière fois, sinon le monde entier
     const v = this.G.vueCarte && this.G.vueCarte.k >= this.kMin ? this.G.vueCarte : { k: this.kMin, x: this.limites.cx, y: this.limites.cy };
@@ -264,7 +265,7 @@ class CarteScene extends Phaser.Scene {
 
   // Ce que la caméra du monde ne filme pas : tout sauf le monde (et inversement pour l'interface).
   filtrerCameras() {
-    if (!this.camCarte || !this.camCarte.id) return;
+    if (!this.camCarte || !this.camCarte.id || !this.camDessus || !this.cameras.main || !this.monde || !this.monde.list) return;   // (la carte fermée : ses caméras n'existent plus)
     const bit = this.camCarte.id, dessus = this.camDessus.id;
     for (const o of this.children.list) {
       if (o !== this.monde && !(o.cameraFilter & bit)) o.cameraFilter |= bit;
