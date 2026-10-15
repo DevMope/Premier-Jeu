@@ -381,6 +381,7 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
 
   // 2. Le torse, selon le peuple
   torseHD(t, g, v, cx);
+  if (!g.bande && !TR.bandelettes) plisTorse(t, g, v, cx);
 
   // 3. Le cou, les oreilles, la tête
   // (v0.57) le cou s'évase vers le bas pour entrer dans le col (trapèze des muscles), plus sombre
@@ -546,8 +547,10 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   if (g.bande) capucheBuste(t, g, v, fx, ey);
 
   // 8. Les bras et les mains : la pose, selon l'humeur et le peuple
+  const avantBras = g.bande || TR.bandelettes ? null : t.m.slice();
   brasBuste(t, g, v, cx, pose || poseBuste(g, expression));
   if (g.bande) plisBuste(t, g, v, cx);
+  else if (avantBras) plisManches(t, g, v, cx, avantBras);
   if (g.bande === 'main') epaulettesBuste(t, g, v, cx);
 
   // 9. Les peaux particulières : la fourrure (poils en hachures), les bandelettes de la momie
@@ -1145,6 +1148,71 @@ function plisBuste(t, g, v, cx) {
       // une couture claire le long de l'ouverture du gilet
       if (t.mat(x - 1, y) === 'habit' || t.mat(x + 1, y) === 'habit') { if (y % 2) t.poser(x, y, m, Math.min(5, k + 2)); }
     }
+  }
+}
+
+// (v0.64) Les plis de tous les vêtements, comme ceux des deux bandes : sous les aisselles, le tissu
+// se tend en plis obliques vers le milieu du ventre ; plus bas, il retombe en plis droits ; les
+// coutures d'épaules sont piquées ; la trame s'use un peu. Un pli = un trait d'ombre, éclairé
+// d'un fil de lumière au-dessus (ou à gauche, quand il descend).
+const ETOFFES_BUSTE = ['habit', 'cape', 'lin', 'chemise', 'justau', 'tabard', 'gilet', 'cuir'];
+function pliEtoffe(t, pts, etoffe, fort = 2) {
+  const vus = new Set(pts.map(([x, y]) => y * t.l + x));
+  const changer = (x, y, d) => { if (etoffe(x, y)) t.poser(x, y, t.mat(x, y), Math.max(0, Math.min(5, t.k[y * t.l + x] + d))); };
+  const lum = [], omb = [];
+  pts.forEach(([x, y, f], i) => {
+    const [px, py] = pts[Math.max(0, i - 1)], [nx, ny] = pts[Math.min(pts.length - 1, i + 1)];
+    const raide = Math.abs(ny - py) > Math.abs(nx - px);
+    // le creux du pli, son flanc à l'ombre (en bas ou à droite) et son arête éclairée (en haut ou à gauche)
+    if ((f ?? 1) > 0.25) { omb.push([raide ? x + 1 : x, raide ? y : y + 1]); lum.push([raide ? x - 1 : x, raide ? y : y - 1, f]); }
+  });
+  pts.forEach(([x, y, f]) => changer(x, y, -Math.max(1, Math.round((f ?? 1) * fort))));
+  omb.forEach(([x, y]) => { if (!vus.has(y * t.l + x)) changer(x, y, -1); });
+  lum.forEach(([x, y, f]) => { if (!vus.has(y * t.l + x)) changer(x, y, f > 0.6 ? 2 : 1); });
+}
+// Les points (arrondis, sans doublon) d'une courbe de Bézier de a à b par c ; f : la force du pli
+// le long de la courbe (il s'efface aux deux bouts)
+function courbePli(a, c, b, f = u => Math.sin(Math.min(1, u * 1.3) * Math.PI)) {
+  const pts = [], vus = new Set(), n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) * 1.6) + 1;
+  for (let j = 0; j <= n; j++) {
+    const u = j / n, x = Math.round((1 - u) ** 2 * a[0] + 2 * u * (1 - u) * c[0] + u * u * b[0]), y = Math.round((1 - u) ** 2 * a[1] + 2 * u * (1 - u) * c[1] + u * u * b[1]);
+    if (!vus.has(x + ',' + y)) { vus.add(x + ',' + y); pts.push([x, y, f(u)]); }
+  }
+  return pts;
+}
+function plisTorse(t, g, v, cx) {
+  const L = LARGEURS_BUSTE[g.race] || 20, h = hachage((g.nom || '').length, 3, 97);
+  const etoffe = (x, y) => y >= v.torse - 1 && ETOFFES_BUSTE.includes(t.mat(x, y));
+  for (const sens of [-1, 1]) {
+    // les plis de tension, de l'aisselle vers le milieu du ventre
+    for (let j = 0; j < 3; j++) {
+      const a = [cx + sens * (L - 1 - j), v.torse + 11 + j * 5 + h * 2], b = [cx + sens * (5 + j * 3), v.torse + 22 + j * 6];
+      pliEtoffe(t, courbePli(a, [(a[0] + b[0]) / 2, Math.max(a[1], b[1]) + 2], b, u => (1 - u) * 1.2), etoffe, j ? 1 : 2);
+    }
+    // la couture de l'épaule, piquée
+    for (let j = 0; j <= 12; j++) { const x = Math.round(cx + sens * (9 + j * (L - 7) / 12)), y = Math.round(v.torse + 1 + j * 0.45); if (etoffe(x, y)) t.poser(x, y, t.mat(x, y), Math.max(0, t.k[y * t.l + x] - 1)); if (j % 2 && etoffe(x, y + 1)) t.poser(x, y + 1, t.mat(x, y + 1), Math.min(5, t.k[(y + 1) * t.l + x] + 1)); }
+    // l'emmanchure : le tissu froncé là où la manche rejoint le corps
+    for (let y = v.torse + 6; y < v.torse + 20; y++) { const x = Math.round(cx + sens * (L - 6 - (y - v.torse - 6) * 0.15)); if (etoffe(x, y) && y % 3) t.poser(x, y, t.mat(x, y), Math.max(0, t.k[y * t.l + x] - 1)); }
+  }
+  // les plis qui retombent, en bas
+  for (const d of [-14, -6, 3, 11]) {
+    const x0 = cx + d + Math.round(h * 3);
+    pliEtoffe(t, courbePli([x0, v.torse + 30], [x0 + 2, v.torse + 38], [x0 - 1, HD_H + 2], u => Math.min(1, u * 3)), etoffe, 1);
+  }
+  // le tissu qui ondule (comme la robe de la Main Noire), et la trame qui s'use un peu
+  for (let y = v.torse + 2; y < HD_H; y++) for (let x = 0; x < HD_L; x++) if (etoffe(x, y) && t.mat(x, y) !== 'cuir') {
+    const i = y * t.l + x, f = Math.sin((x - cx) * 0.5 + y * 0.1 + h * 6 + Math.sin(y * 0.15 + x * 0.07) * 1.1);
+    if (f > 0.9) t.poser(x, y, t.m[i], Math.min(5, t.k[i] + 1)); else if (f < -0.88) t.poser(x, y, t.m[i], Math.max(0, t.k[i] - 1));
+    else if (hachage(x, y, 131) > 0.985) t.poser(x, y, t.m[i], Math.max(0, t.k[i] - 1));
+  }
+}
+// Les manches : des faux plis en travers (comme les bandes), seulement sur ce que les bras ont posé
+function plisManches(t, g, v, cx, avant) {
+  for (let y = v.torse - 6; y < HD_H; y++) for (let x = 0; x < HD_L; x++) {
+    const i = y * t.l + x, m = t.m[i];
+    if (!ETOFFES_BUSTE.includes(m) || avant[i] === m) continue;
+    const f = Math.sin((x - cx) * 0.55 + y * 0.45 + Math.sin(y * 0.21 + x * 0.17) * 1.6);
+    if (f > 0.9) t.poser(x, y, m, Math.min(5, t.k[i] + 1)); else if (f < -0.86) t.poser(x, y, m, Math.max(0, t.k[i] - 1));
   }
 }
 

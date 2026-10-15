@@ -231,6 +231,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
     const r = 2.6 * k * P.membre;
     const dec = devant ? 0 : -0.5;
+    segBras.push([E, C, M, r]);
     cylindre(t, matBras, E, C, r, { decalage: dec });
     // L'avant-bras : manche retroussée (novice), manche plus claire (aguerri), brassard de cuir (vétéran et plus)
     const matAvant = costume === 'serpent' ? 'gilet' : matBras === 'metal' ? 'metal' : tenue >= 2 && aventurier && race !== 'hobbit' && race !== 'elfe' ? 'cuir' : (tenue === 0 || race === 'hobbit') && aventurier ? 'peau' : matBras;
@@ -244,6 +245,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (devant) mainDevant = { M, matMain, gm, cote };
   };
   let mainDevant = null;
+  const segBras = [], segJambes = [];   // (v0.64) pour les plis des manches et des jambes
   // Où passe la cuisse proche à l'écran, à une hauteur donnée (pour dessiner le pli du tissu dessus)
   const rCuisse = 2.9 * k * P.membre;
   const cuisseX = (y) => { const bal = pas ? pas : 0; const v = Math.min(1, Math.max(0, (y - (yB - 1 * k)) / ((sol - yB) * 0.5))); return X(pres * ep * (0.42 + 0.03 * v), (bal * 2.2 + (bal > 0 ? 1 : 0)) * k * v); };
@@ -260,6 +262,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const dec = devant ? 0 : -0.5;
     const r = 2.9 * k * P.membre;
     const matJambe = T.jambes || 'bas';
+    segJambes.push([Hh, G, Pd, r]);
     cylindre(t, matJambe, Hh, G, r, { decalage: dec });
     const solPied = sol - leve;
     if (T.pattes) {
@@ -1047,6 +1050,44 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme(matMain, ellipsoide(M[0], M[1] + 1 * k * gm, 2.2 * k * gm, 2.3 * k * gm), { decalage: 0.4 });   // la main serrée dessus
   }
   if (g.vieux && T.bandelettes) moisirBandelettes(t, k);
+  // (v0.64) Les plis de tous les vêtements (les deux bandes ont déjà les leurs) : au coude et au genou,
+  // le tissu se fronce en anneaux ; sur la poitrine, il se tend en plis qui convergent vers la
+  // ceinture ; plus bas (tuniques, robes, capes), il retombe en plis droits qui ondulent.
+  if (costume !== 'mainNoire' && costume !== 'serpent' && !T.bandelettes) {
+    const h = hachage((g.nom || '').length, 7, 97) * 6;
+    const etoffes = ['habit', 'cape', 'lin', 'bas', 'gilet'];
+    const proche = (x, y, A, B) => { const dx = B[0] - A[0], dy = B[1] - A[1], l2 = dx * dx + dy * dy || 1, u = Math.max(0, Math.min(1, ((x - A[0]) * dx + (y - A[1]) * dy) / l2)); return [Math.hypot(x - A[0] - u * dx, y - A[1] - u * dy), u * Math.sqrt(l2)]; };
+    const fronces = (x, y, segs) => {
+      for (const [A, B, , r] of segs) {
+        const [d1, l1] = proche(x, y, A, B);
+        if (d1 > r + 0.5) continue;
+        const reste = Math.hypot(B[0] - A[0], B[1] - A[1]) - l1;   // (la distance au coude ou au genou)
+        if (reste > 4 * k) return 0;
+        return Math.sin(reste / (0.8 * k) + h) * (1 - reste / (5 * k));
+      }
+      for (const [, B, C, r] of segs) { const [d2, l2] = proche(x, y, B, C); if (d2 <= r + 0.5) return l2 < 3 * k ? Math.sin(l2 / (0.8 * k) + h + 1) * (1 - l2 / (4 * k)) : 0; }
+      return null;
+    };
+    const ox = X(0, prof);
+    for (let y = yT; y <= sol; y++) for (let x = 0; x < L; x++) {
+      const i = y * L + x, m = t.m[i];
+      if (!etoffes.includes(m)) continue;
+      let f = (m === 'bas' ? fronces(x, y, segJambes) : null) ?? fronces(x, y, segBras);
+      if (f !== null && f !== undefined) { if (f > 0.55) t.poser(x, y, m, Math.min(5, t.k[i] + 1)); else if (f < -0.5) t.poser(x, y, m, Math.max(0, t.k[i] - 1)); continue; }
+      if (m === 'bas') continue;
+      if (y < yB - 1 * k && m !== 'cape') {
+        const y0 = yT + Math.max(3 * k, P.torse * 0.3);
+        if (y < y0) continue;
+        // (des plis espacés selon la carrure : pas de soleil de rayons sur les grands torses)
+        const a = Math.atan2(x + 0.5 - ox, yB + 5 * k - y) * ep / (5 * k);
+        f = Math.sin(a * 2.6 + Math.sin(y / (2.5 * k) + x / (4 * k)) * 0.7 + h) * Math.min(1, (y - y0) / (3 * k)) * (Math.abs(x + 0.5 - ox) < 1.5 * k ? 0.5 : 1);
+        if (f > 0.93) t.poser(x, y, m, Math.min(5, t.k[i] + 1)); else if (f < -0.9) t.poser(x, y, m, Math.max(0, t.k[i] - 1));
+        continue;
+      }
+      f = Math.sin((x - cx) / (1.4 * k) + Math.sin(y / (5 * k) + h) * 0.9 + h);
+      if (f > 0.88) t.poser(x, y, m, Math.min(5, t.k[i] + 1)); else if (f < -0.84) t.poser(x, y, m, Math.max(0, t.k[i] - 1));
+    }
+  }
   // (v0.58) Blessé : un bandage autour du front, un autre au poignet, des accrocs dans le manteau
   // et des taches de sang (Garrick, quand on le repêche dans la rivière)
   if (options.blesse && !dos) {
