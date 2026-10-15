@@ -240,6 +240,7 @@ function geneHD(p) {
     colporteur: p.figurant === 'colporteur',
     mendiant: p.figurant === 'mendiant',
     bande: p.costume === 'mainNoire' ? 'main' : p.costume === 'serpent' ? 'serpent' : null,   // (v0.61) les deux bandes, encapuchonnées
+    marques: p.marques || null,   // (v0.75) les signes distinctifs des bandits recherchés
     nom: p.nom,
     habitNoble: choix([0x6a1a3a, 0x1a2a6a, 0x3a1a5a, 0x7a4a10]),
   };
@@ -584,6 +585,8 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
     for (const [x, y, m, ton] of ajouts) if (t.dans(x, y) && !t.mat(x, y)) t.poser(x, y, m, ton);
   }
   if (g.vieux && TR.bandelettes) moisirBandelettes(t);
+  // (v0.75) Les signes distinctifs des bandits recherchés : on les reconnaît au premier coup d'œil
+  for (const m of g.marques || []) marqueVisage(t, m, { fx, ey, cx, v, T });
 
   t.contour();
   // (la vieille momie : une toile d'araignée tendue entre la tête et l'épaule)
@@ -1220,7 +1223,7 @@ function plisManches(t, g, v, cx, avant) {
 function textureBusteHD(scene, personne, expression = 'neutre', etat = {}) {
   // (les Bannis ont l'air fâché tant qu'ils ne te connaissent pas : leur humeur « neutre » est fâchée)
   if (expression === 'neutre' && typeof banniFache === 'function' && banniFache(personne)) expression = 'fache';
-  const cle = `busteHD_${personne.race}_${personne.nom}${personne.prestige ? "_noble" : ""}${personne.figurant ? '_' + personne.figurant : ''}${personne.vieux ? '_vieux' : ''}${personne.costume ? '_' + personne.costume : ''}_${expression}${etat.pose ? '_' + etat.pose : ''}${etat.cligne ? '_c' : ''}${etat.parle ? '_p' : ''}`;
+  const cle = `busteHD_${personne.race}_${personne.nom}${personne.marques ? '_' + personne.marques.join('-') : ''}${personne.prestige ? "_noble" : ""}${personne.figurant ? '_' + personne.figurant : ''}${personne.vieux ? '_vieux' : ''}${personne.costume ? '_' + personne.costume : ''}_${expression}${etat.pose ? '_' + etat.pose : ''}${etat.cligne ? '_c' : ''}${etat.parle ? '_p' : ''}`;
   if (!scene.textures.exists(cle)) dessinerBusteHD(geneHD(personne), expression, etat).texture(scene, cle);
   return cle;
 }
@@ -1270,4 +1273,60 @@ const TAILLE_SELON_AGE = { petit: 0.86, adulte: 1, ancien: 0.95 };
 function echelleJoueur(ancienneEchelle) {
   const stade = window.GAME && GAME.joueur ? stadeJoueur(GAME) : 'petit';
   return ancienneEchelle * 16 / JOUEUR_H * (TAILLE_SELON_AGE[stade] || 1);
+}
+
+// (v0.75) Un signe distinctif sur le visage d'un buste : cache-œil, cicatrice sur l'œil, balafre
+// sur la joue, dent en or, boucle d'oreille, tatouage, bandana de pirate, monocle.
+function marqueVisage(t, marque, { fx, ey, cx, v, T }) {
+  const surTete = (x, y) => ['peau', 'cheveux', 'museau', 'noir', 'oeil', 'blanc', 'iris', 'levres', 'barbe', 'bande', 'mousse'].includes(t.mat(x, y));
+  const trait = (x0, y0, x1, y1, mat, ton, tous = false) => {
+    const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+    for (let i = 0; i <= n; i++) { const x = Math.round(x0 + (x1 - x0) * i / n), y = Math.round(y0 + (y1 - y0) * i / n); if (tous || surTete(x, y)) t.poser(x, y, mat, ton); }
+  };
+  if (marque === 'cacheOeil') {
+    t.rampes.cuirNoir = rampe(0x2a2018);
+    // la lanière, en biais sur le front, et de l'autre côté vers l'oreille
+    trait(fx - 5, ey - 3, fx + 13, ey - 14, 'cuirNoir', 1); trait(fx - 5, ey - 2, fx + 13, ey - 13, 'cuirNoir', 0);
+    trait(fx - 14, ey - 1, cx - v.rx - 2, ey + 1, 'cuirNoir', 1);
+    for (let y = ey - 4; y <= ey + 4; y++) for (let x = fx - 15; x <= fx - 3; x++) {
+      const u = (x + 0.5 - (fx - 9)) / 6.2, w = (y + 0.5 - ey) / 4.6;
+      if (u * u + w * w <= 1) t.poser(x, y, 'cuirNoir', u * u + w * w > 0.7 ? 0 : (u < -0.2 && w < 0 ? 3 : 2));
+    }
+  } else if (marque === 'cicatrice') {
+    // une longue cicatrice qui barre l'œil droit, avec ses points de couture
+    t.rampes.balafre = rampe(0xb86a5a);
+    trait(fx + 5, ey - 9, fx + 13, ey + 8, 'balafre', 1);
+    trait(fx + 6, ey - 9, fx + 14, ey + 8, 'balafre', 3);
+    for (const k of [0.2, 0.45, 0.7, 0.9]) { const x = Math.round(fx + 5 + 8 * k), y = Math.round(ey - 9 + 17 * k); t.poser(x - 1, y, 'balafre', 0); t.poser(x + 2, y, 'balafre', 0); }
+  } else if (marque === 'balafre') {
+    // une balafre en travers de la joue gauche
+    t.rampes.balafre = rampe(0xb06050);
+    trait(fx - 16, ey + 6, fx - 6, ey + 12, 'balafre', 1);
+    trait(fx - 16, ey + 7, fx - 6, ey + 13, 'balafre', 3);
+  } else if (marque === 'dentOr') {
+    t.rampes.or = rampe(0xe8b830);
+    t.poser(fx + 1, v.bouche + 1, 'or', 4); t.poser(fx + 2, v.bouche + 1, 'or', 3); t.poser(fx + 1, v.bouche + 2, 'or', 2); t.poser(fx + 2, v.bouche + 2, 'or', 1);
+  } else if (marque === 'boucle') {
+    // un gros anneau d'or qui pend à l'oreille dégagée
+    t.rampes.or = rampe(0xe8b830);
+    const ox = Math.round(cx - (v.rx + 0.5) - T * 0.7), oy = v.yeux + 12;
+    for (let a = 0; a < 16; a++) { const x = Math.round(ox + Math.cos(a / 16 * Math.PI * 2) * 2.6), y = Math.round(oy + Math.sin(a / 16 * Math.PI * 2) * 2.6); t.poser(x, y, 'or', a < 8 ? 2 : 4); }
+  } else if (marque === 'tatouage') {
+    // une larme tatouée sous l'œil gauche, et trois points en arc sur la pommette, à l'encre bleue
+    t.rampes.encreBleue = rampe(0x2a4a8a);
+    const lx = fx - 10, ly = ey + 6;
+    t.poser(lx, ly, 'encreBleue', 2); t.poser(lx, ly + 1, 'encreBleue', 2); t.poser(lx - 1, ly + 2, 'encreBleue', 1); t.poser(lx + 1, ly + 2, 'encreBleue', 2); t.poser(lx, ly + 2, 'encreBleue', 3); t.poser(lx, ly + 3, 'encreBleue', 1);
+    for (const [dx, dy] of [[-6, 3], [-4, 5], [-1, 6]]) t.poser(fx - 6 + dx, ey + 4 + dy, 'encreBleue', 2);
+  } else if (marque === 'bandeau') {
+    // un bandana rouge de pirate noué sur le front, les pans qui pendent sur le côté
+    t.rampes.bandana = rampe(0xa82a24);
+    for (let y = ey - 13; y <= ey - 8; y++) for (let x = 0; x < t.l; x++) if (surTete(x, y)) t.poser(x, y, 'bandana', y === ey - 13 ? 4 : y === ey - 8 ? 1 : ((x + y) % 5 === 0 ? 4 : 3));
+    const bx = Math.round(cx - v.rx - 2);
+    for (let j = 0; j < 9; j++) { t.poser(bx - 1 - (j >> 2), ey - 8 + j, 'bandana', 2); t.poser(bx - 3 - (j >> 2), ey - 7 + j, 'bandana', 3); }
+  } else if (marque === 'monocle') {
+    // un monocle cerclé d'or sur l'œil droit, et sa chaînette
+    t.rampes.or = rampe(0xe8b830);
+    for (let a = 0; a < 28; a++) { const x = Math.round(fx + 8 + Math.cos(a / 28 * Math.PI * 2) * 5.5), y = Math.round(ey + 0.5 + Math.sin(a / 28 * Math.PI * 2) * 5); t.poser(x, y, 'or', a < 14 ? 2 : 4); }
+    trait(fx + 13, ey + 3, fx + 17, ey + 20, 'or', 3, true);
+  }
 }
