@@ -47,7 +47,7 @@ const FIGURANTS = {
   pillarde: { race: 'humain', nom: 'Pillarde', feminin: true, costume: 'passeur', habit: 0x8a4a2a, cheveux: 0x1a1410, cape: 0x6a4a30, peau: 3, niveau: 1, fache: true },
   // (v0.82, étape 10b) les forgerons du comptoir
   aldo: { race: 'humain', nom: "Aldo l'apprenti", costume: 'forgeron', habit: 0x8a6a4a, cheveux: 0xa86a2a, coiffure: 'court', peau: 1, niveau: 0, buste: true },
-  baba: { race: 'nain', nom: "Baba Marteau-d'Or", feminin: true, costume: 'forgeron', habit: 0x8a2a2a, cheveux: 0x141010, coiffure: 'long', peau: 3, niveau: 1, buste: true, marques: ['khol', 'anneauNez'] },
+  baba: { race: 'nain', nom: "Baba Marteau-d'Or", feminin: true, costume: 'forgeron', habit: 0x8a2a2a, cheveux: 0x141010, coiffure: 'court', peau: 3, niveau: 1, buste: true, marques: ['khol', 'anneauNez'] },
   mendiant: { race: 'humain', nom: 'Le mendiant', costume: 'mendiant', habit: 0x6a6252, cheveux: 0x8a8a80, cape: 0x4a4236, barbe: 'pleine', niveau: 0 },
 };
 
