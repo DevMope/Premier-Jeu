@@ -100,6 +100,13 @@ class BureauScene extends Phaser.Scene {
             return { nom: '???', race: 'faucheuse', ligne: 'Une silhouette noire, tout au bout de la file...',
               detail: () => ['Elle ne dit rien. Elle attend son tour.'] };
           }
+          // (audit v0.61) les visites sans voyageur (garde, Garrick, collecteur, Serpent, colporteur,
+          // notable, aîné...) faisaient planter le registre
+          if (!e.parti) {
+            const p = CounterScene.prototype.personneDe.call({ G }, e) || {};
+            const LIGNES = { garde: 'La garde de la Confrérie', garrick: 'Garrick passe te voir', collecteur: `Le collecteur de ${nomBande(G)}`, serpent: 'Le Serpent à deux têtes', colporteur: 'Le colporteur et sa hotte', notable: 'Un visiteur de marque', aine: 'Un aîné vient te parler' };
+            return { nom: p.nom || 'Un visiteur', race: p.race || 'humain', ligne: LIGNES[e.type] || 'Une visite', detail: () => [] };
+          }
           const v = e.parti.voyageur;
           return { nom: v.nom, race: v.race,
             ligne: e.type === 'retour' ? 'Revient de mission !' : 'Son carnet est posé sur ton comptoir...',
@@ -299,7 +306,8 @@ class BureauScene extends Phaser.Scene {
       ];
     } else if (cle === 'etrange') {
       // (v0.60) le carnet des choses étranges : les indices glissés dans les récits
-      const notes = G.etrangetes || [];
+      // (les huit dernières : la page n'en tient pas plus)
+      const notes = (G.etrangetes || []).slice(-8);
       const blocs = notes.length ? notes.map(n => ({ titre: `🌸 Jour ${n.jour} · ${n.nom}`, lignes: [`« ${n.texte} »`] }))
         : [{ titre: 'Rien encore', lignes: ["Certains récits laissent des questions sans réponse. Quand un aventurier en rapportera une, tu la noteras ici."] }];
       gauche = blocs.filter((_, i) => i % 2 === 0);
@@ -403,7 +411,7 @@ class BureauScene extends Phaser.Scene {
         p > 0 ? `Banque Centrale : −${p * REMISE_BANQUE_LUMIERE * 100} points sur les taux` : 'Banque Centrale : taux normaux (la lumière les fait baisser)',
         ...taux,
         mainNoireOuverte(G) ? 'La Main Noire te prête sans questions.' : "La Main Noire ne te connaît pas encore."] },
-      ...(mafia(G).engage ? [{ titre: NomBande(G), lignes: [mafia(G).sorti ? (mafia(G).sorti === 'denonce' ? 'Dénoncée à la Confrérie. Méfie-toi des ombres.' : 'Liberté rachetée. Tu ne leur dois plus rien.') : `Ton rang : ${NOMS_RANGS[rangMafia(G)]} · ${mafia(G).services} service${mafia(G).services > 1 ? 's' : ''} rendu${mafia(G).services > 1 ? 's' : ''}`, !mafia(G).sorti && rangMafia(G) < 2 ? `Le collecteur passe en milieu de semaine (≈ ${montantPizzo(G)} p.)` : ''] }] : []),
+      ...(mafia(G).engage ? [{ titre: NomBande(G), lignes: [mafia(G).sorti ? (mafia(G).sorti === 'denonce' ? `Dénoncé${mafia(G).bande === 'serpent' ? '' : 'e'} à la Confrérie. Méfie-toi des ombres.` : 'Liberté rachetée. Tu ne leur dois plus rien.') : `Ton rang : ${NOMS_RANGS[rangMafia(G)]} · ${mafia(G).services} service${mafia(G).services > 1 ? 's' : ''} rendu${mafia(G).services > 1 ? 's' : ''}`, !mafia(G).sorti && rangMafia(G) < 2 ? `Le collecteur passe en milieu de semaine (≈ ${montantPizzo(G)} p.)` : ''] }] : []),
       { titre: 'Qui te réclame', lignes: [cote === 'mal' ? `${NOMS_CAMPS.mal.charAt(0).toUpperCase() + NOMS_CAMPS.mal.slice(1)} te font confiance : ils viendront bientôt au comptoir.` : cote === 'bien' ? `${NOMS_CAMPS.bien.charAt(0).toUpperCase() + NOMS_CAMPS.bien.slice(1)} te tient en estime.` : 'Aucun camp ne te réclame encore.'] },
     ];
     this.pageEnBlocs(c, 42, 214, gauche);

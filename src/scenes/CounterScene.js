@@ -194,12 +194,18 @@ class CounterScene extends Phaser.Scene {
     const F = this.G.faucheuse;
     if (!F || !F.reliques || !F.reliques.length) return;
     creerReliquesFaucheuseHD(this);
+    // (audit v0.61) leur propre plateau de velours noir, à côté de la bourse : sur l'étagère, ils
+    // cachaient les décorations et prenaient leurs clics
+    const g = this.add.graphics().setDepth(3.9);
+    g.fillStyle(0x0c0810, 0.55).fillRoundedRect(97, 447, 50, 46, 4);
+    g.fillStyle(0x24141e).fillRoundedRect(95, 444, 50, 46, 4);
+    g.lineStyle(1, 0x4a2a3a).strokeRoundedRect(95, 444, 50, 46, 4);
     F.reliques.forEach((id, i) => {
       const r = RELIQUES_FAUCHEUSE.find(x => x.id === id);
-      const o = this.add.image(26 + i * 21, 424, 'relique_' + id).setOrigin(0.5, 1).setScale(1.6).setDepth(4).setInteractive({ useHandCursor: true });
-      o.on('pointerover', () => { this.infoRelique = this.add.text(Math.max(130, o.x), 395, `${r.nom}\n${r.texte}`, style(12, '#e8dcff', { fontStyle: 'italic', align: 'center', backgroundColor: '#1a1020e0', padding: { x: 8, y: 5 }, wordWrap: { width: 230 } })).setOrigin(0.5, 1).setDepth(30); });
+      const o = this.add.image(105 + (i % 3) * 15, 466 + Math.floor(i / 3) * 21, 'relique_' + id).setOrigin(0.5, 1).setScale(1.25).setDepth(4).setInteractive({ useHandCursor: true });
+      o.on('pointerover', () => { this.infoRelique = this.add.text(Math.max(130, o.x), o.y - 24, `${r.nom}\n${r.texte}`, style(12, '#e8dcff', { fontStyle: 'italic', align: 'center', backgroundColor: '#1a1020e0', padding: { x: 8, y: 5 }, wordWrap: { width: 230 } })).setOrigin(0.5, 1).setDepth(30); });
       o.on('pointerout', () => { if (this.infoRelique) { this.infoRelique.destroy(); this.infoRelique = null; } });
-      if (id === 'bougieNoire') { creerHalo(this); const h = this.add.image(o.x, o.y - 29, 'halo').setScale(0.28).setTint(0x60ff90).setAlpha(0.5).setBlendMode(Phaser.BlendModes.ADD).setDepth(4.1); this.tweens.add({ targets: h, alpha: 0.2, duration: 700, yoyo: true, repeat: -1 }); }
+      if (id === 'bougieNoire') { creerHalo(this); const h = this.add.image(o.x, o.y - 23, 'halo').setScale(0.22).setTint(0x60ff90).setAlpha(0.5).setBlendMode(Phaser.BlendModes.ADD).setDepth(4.1); this.tweens.add({ targets: h, alpha: 0.2, duration: 700, yoyo: true, repeat: -1 }); }
     });
   }
 
@@ -298,7 +304,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'colporteur') return corpsHD(this, 'colporteur');
     if (entree.type === 'garde') return corpsHD(this, GARDE.capitaine);
     if (entree.type === 'garrick') return corpsHD(this, 'mentor');
-    if (entree.type === 'collecteur') return corpsHD(this, COLLECTEUR);
+    if (entree.type === 'collecteur') return corpsHD(this, collecteurDe(this.G));
     if (entree.type === 'serpent') return corpsHD(this, CHEFS_SERPENT[0]);
     if (entree.type === 'aine') return corpsHD(this, personneAine(entree.race));
     const v = entree.type === 'client' ? entree.voyageur : entree.parti.voyageur;
@@ -730,24 +736,29 @@ class CounterScene extends Phaser.Scene {
 
   // --- (v0.60) La Main Noire : le collecteur, ses services, la sortie ---
   visiteCollecteur(entree) {
-    const G = this.G, qui = COLLECTEUR.nom, bande = NomBande(G);
+    const G = this.G, bande = NomBande(G);
+    // (audit v0.61) dénoncée plus tôt dans la journée : personne ne vient
+    if (!enMafia(G)) { this.bouton('...', null); return this.partirPar(FENETRE.x - 80); }
+    // (audit v0.61) chez le Serpent, c'est Corvin le Crotale qui passe prendre la part
+    const col = collecteurDe(G), qui = col.nom, pre = col.nom.split(' ')[0];
     const rang = rangMafia(G);
     const partir = () => { this.actionB = null; this.majBoutonsService(); this.dessinerPieces(); this.majStock(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
     this.titreCommande.setFontSize(17).setText(`${bande} · ${NOMS_RANGS[rang]}`);
+    for (let t = 16; this.titreCommande.width > 235 && t >= 11; t--) this.titreCommande.setFontSize(t);
     const sortie = () => {
       const prix = prixRachat(G);
-      this.dire(`Silas ne cille pas. « Sortir ? Ça se paie. ${prix} pièces. Et ton nom disparaît de nos registres. »`, qui);
+      this.dire(`${pre} ne cille pas. « Sortir ? Ça se paie. ${prix} pièces. Et ton nom disparaît de nos registres. »`, qui);
       this.choix([`Racheter ta liberté (${prix} p.)`, () => {
         const err = racheterLiberte(G);
         if (err) { Son.jouer('refus'); this.dire(`« ${err} Reviens quand tu les auras. »`, qui); return partir(); }
-        Son.jouer('pieces'); this.dire(`Silas compte les pièces, une à une, en silence. « Te voilà libre. Nous ne nous sommes jamais vus. » La porte se referme sans un bruit.`, qui); partir();
+        Son.jouer('pieces'); this.dire(`${pre} compte les pièces, une à une, en silence. « Te voilà libre. Nous ne nous sommes jamais vus. » La porte se referme sans un bruit.`, qui); partir();
       }], ['Non, oublie', () => { this.dire('« Alors rien ne change. »', qui); partir(); }]);
     };
     if (rang >= 2) {
       const part = partLieutenant(G);
       encaisser(G, part, 'pizzo');
       Son.jouer('pieces');
-      this.dire(`« Lieutenant. » Silas pose une bourse sur le comptoir : ${part} pièces. « Ta part de la semaine. Pas un mot. »`, qui);
+      this.dire(`« Lieutenant. » ${pre} pose une bourse sur le comptoir : ${part} pièces. « Ta part de la semaine. Pas un mot. »`, qui);
       this.choix(['Prendre la bourse', partir], ['Je veux en sortir…', sortie]);
       return;
     }
@@ -758,23 +769,24 @@ class CounterScene extends Phaser.Scene {
       this.choix([`Rendre le service (${s.nom.toLowerCase()})`, () => {
         const msg = rendreService(G, entree.service);
         Son.jouer('glisse');
-        this.dire(`Silas hoche à peine la tête. « Bien. »${msg ? ' ' + msg : ''} (La jauge penche vers l'ombre, et la garde pourrait s'y intéresser.)`, qui);
+        this.dire(`${pre} hoche à peine la tête. « Bien. »${msg ? ' ' + msg : ''} (La jauge penche vers l'ombre, et la garde pourrait s'y intéresser.)`, qui);
         partir();
       }], [`Payer plutôt (${pizzo} p.)`, () => { payerPizzo(G); Son.jouer('pieces'); this.dire('« L\'argent fera l\'affaire. Cette fois. »', qui); partir(); }]);
       return;
     }
-    this.dire(`« ${bande} protège ton comptoir. La protection a un prix : ${pizzo} pièces cette semaine. » Silas pose un long regard sur ta vitrine. « Les vitres sont fragiles, par ici. »`, qui);
+    this.dire(`« ${bande} protège ton comptoir. La protection a un prix : ${pizzo} pièces cette semaine. » ${pre} pose un long regard sur ta vitrine. « Les vitres sont fragiles, par ici. »`, qui);
     this.choix([`Payer (${pizzo} p.)`, () => { payerPizzo(G); Son.jouer('pieces'); this.dire('« Sept jours. »', qui); partir(); }],
       [rang >= 1 ? 'Je veux en sortir…' : 'Refuser de payer', () => {
         if (rang >= 1) return sortie();
         refuserPizzo(G); this.exprimer('fache');
-        this.dire(`Silas ne dit rien. Il remet sa capuche, et sort. Cette nuit, garde un œil sur ta vitrine...`, qui); partir();
+        this.dire(`${pre} ne dit rien. Il remet sa capuche, et sort. Cette nuit, garde un œil sur ta vitrine...`, qui); partir();
       }]);
   }
 
   // Le Serpent à deux têtes : ses deux chefs veulent te débaucher
   visiteSerpent() {
     const G = this.G, [vesna, corvin] = CHEFS_SERPENT;
+    if (!enMafia(G)) { this.bouton('...', null); return this.partirPar(FENETRE.x - 80); }   // (audit v0.61)
     this.titreCommande.setFontSize(17).setText('Le Serpent à deux têtes');
     this.dire(`« On t'a vu travailler pour la Main Noire. » ${vesna.nom} parle bas, sans un sourire ; derrière elle, ${corvin.nom} garde la main sur son arc. « Le Serpent prend moins, et paie mieux. Choisis. On ne posera pas la question deux fois. »`, vesna.nom);
     const partir = () => { this.actionB = null; this.majBoutonsService(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
@@ -802,7 +814,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'famille') return entree.visite.parent;
     if (entree.type === 'colporteur') return { nom: COLPORTEUR.nom, race: 'humain', feminin: false, figurant: 'colporteur' };
     if (entree.type === 'garde') return GARDE.capitaine;
-    if (entree.type === 'collecteur') return COLLECTEUR;
+    if (entree.type === 'collecteur') return collecteurDe(this.G);
     if (entree.type === 'serpent') return CHEFS_SERPENT[0];
     if (entree.type === 'garrick') return { nom: 'Garrick Cœur-de-Chêne', race: 'humain', feminin: false, figurant: 'mentor' };
     if (entree.type === 'aine') return personneAine(entree.race);

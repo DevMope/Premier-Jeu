@@ -19,7 +19,8 @@ Object.assign(StoryScene.prototype, {
   // On efface tout ce que la scène précédente a créé, et le voyageur redevient lui-même.
   nettoyerScenario() {
     const m = this.menace;
-    if (m && m.objets) for (const o of m.objets.splice(0)) if (o && o.destroy) o.destroy();
+    // (audit v0.61) leurs tweens en boucle meurent avec eux (Phaser 3.80 ne les tue pas tout seul)
+    if (m && m.objets) for (const o of m.objets.splice(0)) { if (o && o.scene) this.tweens.killTweensOf(o); if (o && o.destroy) o.destroy(); }
     this.ombreNuit = null;
     this.premierPlan.setVisible(true); this.planMoyen.setVisible(true);
     if (this.cameras.main.rotation) this.cameras.main.setRotation(0);

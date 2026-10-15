@@ -35,6 +35,8 @@ function rangMafia(G) {
 }
 function nomBande(G) { return mafia(G).bande === 'serpent' ? 'le Serpent à deux têtes' : 'la Main Noire'; }
 function NomBande(G) { const n = nomBande(G); return n.charAt(0).toUpperCase() + n.slice(1); }
+// Qui passe prendre la part : Silas pour la Main Noire, Corvin le Crotale pour le Serpent
+function collecteurDe(G) { return mafia(G).bande === 'serpent' ? CHEFS_SERPENT[1] : COLLECTEUR; }
 function enMafia(G) { const m = mafia(G); return m.engage && !m.sorti; }
 
 // Le pizzo de la semaine : un dixième de la bourse (un peu moins chez le Serpent), moitié prix pour un associé
@@ -73,7 +75,7 @@ function rendreService(G, id) {
   for (const p of G.prets.filter(x => x.preteur === 'La Main Noire')) { const k = Math.min(reste, p.restant); p.restant -= k; reste -= k; }
   G.prets = G.prets.filter(p => p.restant > 0);
   if (reste > 0) encaisser(G, Math.round(reste / 2), 'pizzo');
-  if (id === 'colis') m.colis = G.jour;
+  if (id === 'colis') m.colis = G.jour + 1;   // (il repart la nuit d'après : la garde peut le trouver demain)
   if (id === 'vole') G.tresors.push({ nom: 'Bijoux volés', categorie: 'bijou', valeurBase: 55, etat: 2, etatInitial: 2, reparation: null, vole: true });
   if (id === 'aventurier') m.detour = true;
   if (Math.random() < s.risque * (m.bande === 'serpent' ? 1.5 : 1)) G.gardeDemain = true;
@@ -112,7 +114,7 @@ function represaillesDeLaNuit(G) {
   const t = auHasard(G.tresors);
   t.etat = Math.max(0, t.etat - 1);
   if (t.reparation) t.reparation = null;
-  return `Un incendie, cette nuit, à l'atelier ! ${t.nom} est abîmé. Sur la porte, une marque : ${qui === 'serpent' ? 'deux têtes de serpent' : 'une main noire'}.`;
+  return `Un incendie, cette nuit, à l'atelier ! Les flammes ont léché ${t.nom.charAt(0).toLowerCase() + t.nom.slice(1)}. Sur la porte, une marque : ${qui === 'serpent' ? 'deux têtes de serpent' : 'une main noire'}.`;
 }
 
 // Sortir de la mafia : racheter sa liberté...
@@ -121,6 +123,7 @@ function racheterLiberte(G) {
   if (G.argent < prix) return `Ta liberté coûte ${prix} pièces. Tu ne les as pas.`;
   payer(G, prix, 'pizzo');
   mafia(G).sorti = 'rachat';
+  G.prets = G.prets.filter(p => p.preteur !== 'La Main Noire');   // (le rachat efface aussi la dette)
   return null;
 }
 // ... ou tout dénoncer à la Confrérie : la dette est effacée, la lumière t'en sait gré, mais les
@@ -162,6 +165,7 @@ function detourMafia(G, v) {
   if (!m.detour || !v.queteId) return null;
   m.detour = false;
   const bandits = Object.values(QUETES).flatMap(q => q.epreuves).find(e => e.type === 'bandits');
-  if (bandits) v.epreuves.push({ ...bandits, intro: "Le détour pour le paquet m'a mené dans un coin mal famé..." });
+  // (une épreuve en plus, que le voyageur n'avait pas demandée : elle ne compte pas dans sa commande)
+  if (bandits) v.epreuves.push({ ...bandits, detour: true, intro: "Le détour pour le paquet m'a mené dans un coin mal famé..." });
   return `${v.nom.split(' ')[0]} emporte, sans le savoir, un paquet pour ${nomBande(G)}.`;
 }

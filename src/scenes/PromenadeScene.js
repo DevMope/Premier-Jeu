@@ -270,7 +270,7 @@ class PromenadeScene extends Cinematique {
     this.regarder(66, SOL_CHAMBRE - 80, 110, 84, `Ton coffre (${AMELIORATIONS.coffre.niveaux[niveauAmelioration(G, 'coffre')]}).`);
     this.regarder(360, 110, 80, 80, "La vieille épée de Garrick. Il t'a dit qu'elle portait chance.");
     const armes = G.armesLegendaires || [];
-    if (armes.length) this.regarder(228, 130, 200, 90, `Tes armes légendaires (${armes.length} / ${Object.keys(ARMES_LEGENDAIRES).length}) : ${armes.map(id => armeLegendaire(id).nom).join(', ')}. La ville en parle : un peu plus de curieux au comptoir.`);
+    if (armes.length) this.regarder(140, 88, 180, 88, `Tes armes légendaires (${armes.length} / ${Object.keys(ARMES_LEGENDAIRES).length}) : ${armes.map(id => armeLegendaire(id).nom).join(', ')}. La ville en parle : un peu plus de curieux au comptoir.`);
   }
 
   pieceArriere() {

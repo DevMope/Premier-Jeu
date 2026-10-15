@@ -13,6 +13,7 @@ function accord(texte, voyageur) {
 function commandeDe(voyageur) {
   const commande = {};
   for (const e of voyageur.epreuves) {
+    if (e.detour) continue;   // (le détour imposé par la Main Noire n'était pas dans sa commande)
     commande[e.besoin] = (commande[e.besoin] || 0) + e.qte;
   }
   return commande;
@@ -324,6 +325,14 @@ const QUETES_PERSONNELLES = [
 ];
 const CHANCE_QUETE_PERSONNELLE = 0.3;
 // « à la Forêt », « au Lac des Lunes », « aux Pics », « à l'Antre »
+// « du Lac des Lunes », « de la Cité d'Opale », « des Vergers », « de l'Abbaye de Clairval »
+function deLieu(nom) {
+  if (/^Le /.test(nom)) return 'du ' + nom.slice(3);
+  if (/^Les /.test(nom)) return 'des ' + nom.slice(4);
+  if (/^La /.test(nom)) return 'de la ' + nom.slice(3);
+  if (/^L'/.test(nom)) return "de l'" + nom.slice(2);
+  return (/^[AEIOUYÉÈH]/i.test(nom) ? "d'" : 'de ') + nom;
+}
 function aLieu(nom) {
   if (/^Le /.test(nom)) return 'au ' + nom.slice(3);
   if (/^Les /.test(nom)) return 'aux ' + nom.slice(4);
@@ -605,6 +614,8 @@ function partir(G, voyageur, colis, pieges = {}) {
   if (chance >= 0.75) message = changerRelation(G, voyageur.nom, POINTS_RELATION.colisComplet);
   else if (chance < 0.4) message = changerRelation(G, voyageur.nom, POINTS_RELATION.colisPauvre);
   else rencontrer(G, voyageur.nom);
+  // (la mort voulue se juge sur ce que tu savais : avant le détour imposé par la bande)
+  const voulu = mortVoulue(G, voyageur, colis, pieges, chanceVivant(voyageur, colis, pieges));
   // (v0.60) le détour pour la Main Noire (un service rendu)
   const detour = detourMafia(G, voyageur);
   if (detour) message = (message ? message + ' ' : '') + detour;
@@ -623,7 +634,7 @@ function partir(G, voyageur, colis, pieges = {}) {
     voyageur,
     colis: { ...colis },
     pieges: { ...pieges },
-    voulu: mortVoulue(G, voyageur, colis, pieges, chanceVivant(voyageur, colis, pieges)),
+    voulu,
     chance: reelle,
     relationDepart,
     depart: G.jour,
@@ -643,6 +654,7 @@ function recevoirLettres(G, nombre) {
   for (let i = 0; i < nombre; i++) {
     // Celui qui écrit sait déjà où il veut aller (une zone ouverte).
     const voyageur = voyageurAuHasard(G);
+    delete voyageur.quetePerso;   // (sa lettre annonce une autre quête : l'ancienne quête personnelle tombe)
     envoyerDans(G, voyageur, auHasard(zonesPour(G, voyageur).filter(z => ZONES[z].camp !== 'mal')));
     rendreExigeant(voyageur);
     G.annonces.push({ voyageur, jour: G.jour + hasard(2, 3), acceptee: false });
@@ -1328,6 +1340,7 @@ function causeFaillite(G) {
 // (v0.60) Une seule règle pour la Main Noire : assez d'âmes offertes, la jauge bien à l'Ombre,
 // ou le camp scellé du côté de l'ombre
 function mainNoireOuverte(G) {
+  if (typeof mafia === 'function' && mafia(G).sorti) return false;   // (dénoncée ou quittée : elle ne te prête plus)
   return G.camp === 'mal' || G.mal >= SEUIL_MAIN_NOIRE || palierCamp(G) <= -2;
 }
 const LOYER = { base: 20, parPalier: 15 };
@@ -1395,7 +1408,8 @@ function nuit(G) {
   for (const c of G.cadeauxVillages || []) {
     const [id, n] = auHasard(CADEAUX_VILLAGES);
     G.stock[id] = (G.stock[id] || 0) + n;
-    G.reveil.lignes.push(`Un panier devant la porte, de la part ${ZONES[c.zone] ? 'des gens ' + (ZONES[c.zone].nom.startsWith('Le ') ? 'du ' + ZONES[c.zone].nom.slice(3) : ZONES[c.zone].nom.startsWith('La ') ? 'de la ' + ZONES[c.zone].nom.slice(3) : ZONES[c.zone].nom.startsWith('Les ') ? 'des ' + ZONES[c.zone].nom.slice(4) : 'de ' + ZONES[c.zone].nom) : 'd\'un village'} : ${n} ${ITEMS[id].nom.toLowerCase()}${n > 1 ? 's' : ''}, pour te remercier d'avoir aidé ${c.nom.split(' ')[0]}.`);
+    const nom = ITEMS[id].nom.toLowerCase();
+    G.reveil.lignes.push(`Un panier devant la porte, de la part ${ZONES[c.zone] ? 'des gens ' + deLieu(ZONES[c.zone].nom) : 'd\'un village'} : ${n} ${nom}${n > 1 && !/[sx]$/.test(nom) ? 's' : ''}, pour te remercier d'avoir aidé ${c.nom.split(' ')[0]}.`);
   }
   G.cadeauxVillages = [];
   for (const l of nuitMafia(G)) G.reveil.lignes.push(l);
@@ -1769,7 +1783,7 @@ function terminerAventure(G, parti) {
       if (Math.random() < CHANCE_INTERDIT_OMBRE) {
         const id = auHasard(Object.keys(INTERDITS));
         G.interdits[id] = (G.interdits[id] || 0) + 1;
-        message = (message ? message + ' ' : '') + `${v.nom.split(' ')[0]} te glisse ${INTERDITS[id].nom.toLowerCase()} : « Un souvenir. Cache-le bien. »`;
+        message = (message ? message + ' ' : '') + `${v.nom.split(' ')[0]} te glisse ${INTERDITS[id].article} : « Un souvenir. Cache-le bien. »`;
       }
       if (Math.random() < CHANCE_GARDE_OMBRE) { G.gardeDemain = true; message = (message ? message + ' ' : '') + 'Des silhouettes en tabard bleu l\'ont suivi jusqu\'à ta porte...'; }
     }
@@ -2648,6 +2662,7 @@ const INDICES_ETRANGES = /d'autres mains|pour ne pas oublier|n'a pas changé d'u
 function noterEtrangete(G, texte, v) {
   if (!texte || !INDICES_ETRANGES.test(texte)) return;
   G.etrangetes = G.etrangetes || [];
-  if (G.etrangetes.some(e => e.texte === texte)) return;
-  G.etrangetes.push({ jour: G.jour, nom: v.nom, texte: accord(texte, v) });
+  const t = accord(texte, v);   // (on compare le texte accordé : sinon « payé{e} » ≠ « payée » et l'indice revient sans fin)
+  if (G.etrangetes.some(e => e.texte === t || e.texte === texte)) return;
+  G.etrangetes.push({ jour: G.jour, nom: v.nom, texte: t });
 }

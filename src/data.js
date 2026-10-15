@@ -54,10 +54,10 @@ const GOUTS_TRESORS = { humain: ['arme', 'vetement'], nain: ['arme', 'armure'], 
 // commande, on y vend ses trouvailles sans questions. Chaque affaire augmente le risque qu'une
 // plainte fasse venir la garde le lendemain.
 const INTERDITS = {
-  poison: { nom: 'Fiole de poison', prix: 14, vente: [30, 44] },
-  grimoire: { nom: 'Grimoire interdit', prix: 24, vente: [48, 70] },
-  poudre: { nom: 'Poudre de lune noire', prix: 10, vente: [22, 32] },
-  passe: { nom: 'Passe-partout', prix: 16, vente: [34, 48] },
+  poison: { nom: 'Fiole de poison', article: 'une fiole de poison', prix: 14, vente: [30, 44] },
+  grimoire: { nom: 'Grimoire interdit', article: 'un grimoire interdit', prix: 24, vente: [48, 70] },
+  poudre: { nom: 'Poudre de lune noire', article: 'un sachet de poudre de lune noire', prix: 10, vente: [22, 32] },
+  passe: { nom: 'Passe-partout', article: 'un passe-partout', prix: 16, vente: [34, 48] },
 };
 const MARCHE_NOIR = {
   debut: 6,                     // le premier soir possible
@@ -935,7 +935,7 @@ const POSTES = {
   bazar: 'Cadeaux du Bazar',
   ameliorations: 'Améliorations du comptoir', interets: 'Intérêts du coffre',
   atelier: "Fournitures de l'atelier", loyer: 'Loyer du comptoir', revente: 'Reventes',
-  pizzo: 'La Main Noire', taxe: 'Taxe de la Confrérie', amende: 'Amendes de la garde', marcheNoir: 'Marché noir', decoration: 'Décorations', garderobe: 'Garde-robe', cadeau: 'Cadeaux reçus',
+  pizzo: 'La Main Noire', taxe: 'Taxe de la Confrérie', amende: 'Amendes de la garde', marcheNoir: 'Marché noir', primes: 'Primes des paliers', fontaine: 'Pièces à la fontaine', decoration: 'Décorations', garderobe: 'Garde-robe', cadeau: 'Cadeaux reçus',
 };
 // On garde le détail des derniers jours (un peu plus d'une année).
 const JOURS_DE_COMPTES = 120;
@@ -1909,3 +1909,13 @@ const FINS_QUETES = {
   filon: "Le filon des Mines Rouges a livré son minerai. Les orcs m'ont donné un éclat, en souvenir.",
   meute: "Au sommet du col, la meute s'est écartée pour me laisser passer. Ils m'ont regardé partir sans un bruit.",
 };
+
+// (v0.60) Les souvenirs que la Faucheuse laisse sur l'étagère du comptoir, un par âme offerte
+const RELIQUES_FAUCHEUSE = [
+  { id: 'petaleNoir', nom: 'Un pétale noir', texte: "Un pétale de rose, noir comme l'encre. Il ne fane pas." },
+  { id: 'plumeCorbeau', nom: 'Une plume de corbeau', texte: 'Une longue plume noire, encore tiède.' },
+  { id: 'sablier', nom: 'Un sablier', texte: "Un petit sablier dont le sable ne tombe que lorsqu'on ne le regarde pas." },
+  { id: 'bougieNoire', nom: 'Une bougie noire', texte: "Une bougie noire à la flamme verte. Elle ne fond jamais." },
+  { id: 'craneOiseau', nom: "Un crâne d'oiseau", texte: "Un minuscule crâne d'oiseau, poli comme un galet." },
+  { id: 'fauxMiniature', nom: 'Une faux miniature', texte: 'Une faux grande comme un doigt. La lame est vraie.' },
+];

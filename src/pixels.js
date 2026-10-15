@@ -476,11 +476,15 @@ function creerBouton(scene, x, y, largeur, texte, action) {
   const label = scene.add.text(x, y, texte, style(18, '#fff0d0', { fontStyle: 'bold', stroke: '#24140a', strokeThickness: 4, brut: true })).setOrigin(0.5);
   label.setShadow(0, 2, '#120a04', 0, true, true); // comme gravé dans le bois
   // (v0.60) le texte tient toujours dans sa plaque : trop long, la police rapetisse
+  // (audit v0.61) on repart toujours de la taille voulue : sinon, après un long libellé, le bouton
+  // gardait sa petite police pour tous les textes suivants
+  let base = 18;
   const tenir = () => {
-    let t = parseInt(label.style.fontSize, 10) || 18;
+    let t = base;
+    Phaser.GameObjects.Text.prototype.setFontSize.call(label, t);
     while (label.text && label.width > largeur - 16 && t > 10) { t--; Phaser.GameObjects.Text.prototype.setFontSize.call(label, t); }
   };
-  label.setFontSize = function (t) { Phaser.GameObjects.Text.prototype.setFontSize.call(this, t); tenir(); return this; };
+  label.setFontSize = function (t) { base = parseInt(t, 10) || base; tenir(); return this; };
   tenir();
   let actif = true, survol = false;
   const repos = () => {

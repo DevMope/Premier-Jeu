@@ -323,14 +323,7 @@ function creerRecitEpreuvesHD(scene) {
 }
 
 // (v0.60) Les souvenirs que la Faucheuse laisse sur le comptoir, un par âme offerte
-const RELIQUES_FAUCHEUSE = [
-  { id: 'petaleNoir', nom: 'Un pétale noir', texte: "Un pétale de rose, noir comme l'encre. Il ne fane pas." },
-  { id: 'plumeCorbeau', nom: 'Une plume de corbeau', texte: 'Une longue plume noire, encore tiède.' },
-  { id: 'sablier', nom: 'Un sablier', texte: "Un petit sablier dont le sable ne tombe que lorsqu'on ne le regarde pas." },
-  { id: 'bougieNoire', nom: 'Une bougie noire', texte: "Une bougie noire à la flamme verte. Elle ne fond jamais." },
-  { id: 'craneOiseau', nom: "Un crâne d'oiseau", texte: "Un minuscule crâne d'oiseau, poli comme un galet." },
-  { id: 'fauxMiniature', nom: 'Une faux miniature', texte: 'Une faux grande comme un doigt. La lame est vraie.' },
-];
+// (les souvenirs eux-mêmes, RELIQUES_FAUCHEUSE, sont dans data.js : les règles en ont besoin)
 function creerReliquesFaucheuseHD(scene) {
   if (scene.textures.exists('relique_petaleNoir')) return;
   const nouvelle = (id, l, h, dessin) => { const t = toileDecor(l, h); dessin(t); t.contour(); t.texture(scene, 'relique_' + id); };

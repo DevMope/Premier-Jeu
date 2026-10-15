@@ -433,6 +433,12 @@ function mettreAJourPartie(G, brut = G) {
     G.armure = ARMURE.slice(0, G.zonesConnues.filter(z => !auDepart.includes(z)).length).map(p => p.id);
     G.nouvellesPieces = [];
   }
+  // (v0.61) Une partie d'avant : nouvellePartie() a posé royaumesRecompenses = [], ce qui ferait livrer
+  // de nouveau chaque royaume déjà libéré. On l'efface : recompenserZones() fera la migration (les
+  // royaumes déjà libérés donnent leur arme sans cérémonie, et aucune pièce d'armure en plus).
+  if (!brut.royaumesRecompenses) delete G.royaumesRecompenses;
+  // (v0.61) un prêt de la Main Noire contracté avant la v0.60 : on lui appartient déjà un peu
+  if ((G.prets || []).some(p => p.preteur === 'La Main Noire')) engagerMafia(G);
   // (v0.61) Aube-Lame n'est plus une pièce de l'armure : elle rejoint les armes légendaires
   G.armesLegendaires = G.armesLegendaires || [];
   if (G.armure.includes('lame')) {

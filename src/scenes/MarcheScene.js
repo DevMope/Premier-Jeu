@@ -1111,17 +1111,21 @@ class MarcheScene extends Phaser.Scene {
     c.add(this.add.image(900, 500, textureJoueur(this, G, 'troisQuarts')).setOrigin(0.5, 1).setScale(echelleJoueur(7)).setFlipX(true));   // (tourné vers la marchande)
     Object.entries(GARDE_ROBE).forEach(([id, d], i) => {
       const x = 40 + (i % 2) * 400;
-      const y = 370 + Math.floor(i / 2) * 30;
+      const y = 362 + Math.floor(i / 2) * 26;   // (audit v0.61 : la dernière rangée passait sous le message)
       c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(2));
       c.add(this.add.text(x + 20, y - 7, `${d.nom} · ${d.prix} p.`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
       c.add(this.add.text(x + 20, y + 8, d.effet, style(10, '#6b4a2a', { wordWrap: { width: 280 } })).setOrigin(0, 0.5));
+      // (audit v0.61) un double clic retombait sur le bouton reconstruit : acheter puis revendre aussitôt
+      const verrou = () => { if (this.verrouGR > this.time.now) return true; this.verrouGR = this.time.now + 400; return false; };
       if (porte(G, id)) this.bouton(c, x + 340, y, 70, `Revendre`, () => {
+        if (verrou()) return;
         const erreur = revendreTenue(G, id);
         if (!erreur) Son.jouer('pieces');
         this.ouvrirGardeRobe();
         this.message(erreur || `${d.nom} revendu à Marcelline : +${Math.floor(d.prix / 2)} p.`, erreur ? '#a03030' : '#2f6a2a');
       });
       else this.bouton(c, x + 340, y, 70, 'Acheter', () => {
+        if (verrou()) return;
         const erreur = acheterTenue(G, id);
         if (!erreur) Son.jouer('achat');
         this.ouvrirGardeRobe();

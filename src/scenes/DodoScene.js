@@ -90,8 +90,10 @@ class DodoScene extends Cinematique {
     this.add.image(120, SOL_CHAMBRE + 4, coffreHD(this, niveauAmelioration(this.G, 'coffre'))).setOrigin(0.5, 1).setScale(3).setDepth(2);
     // Le mannequin de l'armure (du côté qu'elle avait hier soir), et le compte des pièces.
     this.coteAffiche = this.G.armureCoteVu || coteArmure(this.G);
-    this.dessinerArmure(this.G.armure.filter(id => !(this.G.nouvellesPieces || []).some(n => n.piece === id)));
-    this.dessinerArmes((this.G.armesLegendaires || []).filter(id => !(this.G.nouvellesPieces || []).some(n => n.arme === id)));
+    // (audit v0.61) le soir, tout ce qui a été reçu est en place (les livraisons de ce matin
+    // comprises) ; ce que la nuit apporte sera retiré dans passerLaNuit(), pour le messager
+    this.dessinerArmure(this.G.armure.slice());
+    this.dessinerArmes((this.G.armesLegendaires || []).slice());
     this.add.image(400, 150, 'hd_epee').setScale(4).setAngle(45).setDepth(2);
     // (v0.57) Les souvenirs au mur : le portrait de famille, l'étagère des trophées (rares), les lettres
     creerSouvenirsChambreHD(this);
@@ -265,6 +267,12 @@ class DodoScene extends Cinematique {
     if (this.nuitPassee) return;
     this.nuitPassee = true;
     nuit(this.G);
+    // ce que le messager apportera ce matin n'est pas encore sur le mannequin ni au mur
+    const nouv = this.G.nouvellesPieces || [];
+    if (nouv.length) {
+      this.dessinerArmure(this.G.armure.filter(id => !nouv.some(n => n.piece === id)));
+      this.dessinerArmes((this.G.armesLegendaires || []).filter(id => !nouv.some(n => n.arme === id)));
+    }
     if (this.G.faillite) Sauvegarde.supprimer();
     else Sauvegarde.maintenant(this.G, 'Marche');
   }
@@ -301,7 +309,9 @@ class DodoScene extends Cinematique {
     const m = imageCorps(this, 1010, SOL_CHAMBRE, 'colporteur', 6).setTint(sombre ? 0x3a1a24 : 0x7a7aa8).setDepth(3);
     await this.marcher(m, 905, 4);
     const c = this.add.container(0, 0).setDepth(9);
-    c.add(this.add.image(480, 210, panneauHD(this, 640, premiere ? 290 : 220)).setScale(2));
+    const hPanneau = premiere ? 290 : 220;
+    const panneau = this.add.image(480, 210, panneauHD(this, 640, hPanneau)).setScale(2);
+    c.add(panneau);
     const haut = premiere ? 78 : 112;
     c.add(this.add.text(480, haut, sombre ? 'Un messager de la Main Noire' : 'Un messager de la Confrérie du Dernier Rempart',
       style(17, sombre ? '#7a1a2a' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
@@ -319,8 +329,17 @@ class DodoScene extends Cinematique {
       message += scelle === 'mal' ? "\nL'armure est complète. Ton camp est scellé : l'ombre. Il n'y aura plus de retour en arrière."
         : "\nL'armure est complète. Ton camp est scellé : la lumière. Il n'y aura plus de retour en arrière.";
     }
-    c.add(this.add.text(185, haut + 110, message, style(13, '#3b2410', { wordWrap: { width: 590 }, lineSpacing: 3 })));
-    c.add(this.add.text(780, (premiere ? 345 : 312), '▶ clique', style(12, '#8a6a4a', { fontStyle: 'italic' })).setOrigin(1, 0.5));
+    const texteMsg = this.add.text(185, haut + 110, message, style(13, '#3b2410', { wordWrap: { width: 590 }, lineSpacing: 3 }));
+    c.add(texteMsg);
+    // (audit v0.61) un long message (avant-dernière pièce + arme) agrandit le parchemin vers le bas
+    let basClique = premiere ? 345 : 312;
+    const bas = texteMsg.y + texteMsg.height + 22, basPanneau = 210 + hPanneau / 2;   // (la texture fait la moitié, affichée ×2)
+    if (bas > basPanneau - 6) {
+      const h = hPanneau + Math.ceil(bas - basPanneau + 10);
+      panneau.setTexture(panneauHD(this, 640, h)).setY(210 - hPanneau / 2 + h / 2);
+      basClique = bas;
+    }
+    c.add(this.add.text(780, basClique, '▶ clique', style(12, '#8a6a4a', { fontStyle: 'italic' })).setOrigin(1, 0.5));
     c.setAlpha(0);
     await this.animer({ targets: c, alpha: 1, duration: 300 });
     await this.attendreClicSansBoite();

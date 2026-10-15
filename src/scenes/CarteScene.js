@@ -436,7 +436,7 @@ class CarteScene extends Phaser.Scene {
       const c = conditionsZone(G, cle);
       const lignes = [`Personne ne sait vraiment ce qu'il y a là-bas${z.camp === 'mal' ? ", dans les terres d'ombre" : z.camp === 'bien' ? ', dans les terres de lumière' : ''}. Pour l'ouvrir :`,
         `${c.reputation ? '✓' : '✗'} une réputation de ${z.reputation} (toi : ${arrondi(G.reputation)}), ou qu'un aventurier la découvre`];
-      if (z.royaume) { const a = avanceeRoyaume(G, z.royaume); lignes.push(`🛡 ${ROYAUMES[z.royaume].nom} : ${a.faites} / ${a.total} contrée${a.total > 1 ? 's' : ''} conquise${a.total > 1 ? 's' : ''}. Toutes conquises : une pièce de l'armure et une arme légendaire.`); }
+      if (z.royaume) { const a = avanceeRoyaume(G, z.royaume); lignes.push(`🛡 ${ROYAUMES[z.royaume].nom} : ${a.faites} / ${a.total} contrée${a.total > 1 ? 's' : ''} conquise${a.total > 1 ? 's' : ''}. Toutes conquises : ${(G.armure || []).length < ARMURE.length ? "une pièce de l'armure et une arme légendaire" : 'son arme légendaire'}.`); }
       if (c.besoin) lignes.push(`${c.faits >= c.besoin ? '✓' : '✗'} ${c.besoin} missions réussies dans des zones à ${z.danger - 1} étoile${z.danger > 2 ? 's' : ''} (${Math.min(c.faits, c.besoin)} / ${c.besoin})`);
       const texte = this.add.text(0, 24, lignes.join('\n'), style(14, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 3 }));
       contenu.add(texte);

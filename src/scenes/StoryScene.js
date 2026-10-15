@@ -185,6 +185,7 @@ class StoryScene extends Cinematique {
 
       if (this.meteo) { this.meteo.remove(); this.meteo = null; }
       this.nettoyerScenario();
+      this.tweens.killTweensOf(this.decor.list);   // (audit v0.61 : les tweens en boucle des décors)
       this.decor.removeAll(true);
       this.titreEtape = r.vivant ? `Épreuve ${i + 1} / ${etapes}` : `Jour ${Math.min(v.duree || etapes, 1 + Math.floor(i * (v.duree || etapes) / etapes))}`;
       this.ecrire(this.titreEtape, '...');
@@ -339,6 +340,7 @@ class StoryScene extends Cinematique {
     const r = this.parti.resultat;
     if (this.meteo) { this.meteo.remove(); this.meteo = null; }
     this.nettoyerScenario();
+    this.tweens.killTweensOf(this.decor.list);   // (audit v0.61 : les tweens en boucle des décors)
     this.decor.removeAll(true);
     this.tweens.add({ targets: this.voile, fillAlpha: 0, duration: 600 });
 
