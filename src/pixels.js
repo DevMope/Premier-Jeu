@@ -324,14 +324,16 @@ const TISSUS = {
 // Le motif du tissu dépend de ce qu'il contient (provisions, armes, soins, divers).
 function creerBaluchons(scene) {
   for (const [famille, c] of Object.entries(TISSUS)) {
-    if (scene.textures.exists('baluchon_' + famille)) continue;
+    if (scene.textures.exists('poche_' + famille)) continue;
     const motif = (x, y) => {
       if (famille === 'provisions') return ((x >> 2) + (y >> 2)) % 2 === 0;           // vichy
       if (famille === 'soins') return (Math.abs(x - 12) < 2 && Math.abs(y - 16) < 6) || (Math.abs(y - 16) < 2 && Math.abs(x - 12) < 6); // croix
       if (famille === 'armes') return (x + y) % 7 === 0;                                 // grosse toile
       return (x * 3 + y * 5) % 11 === 0;                                                 // petites fleurs
     };
-    {
+    // (v0.68) deux versions : avec son bâton (sur le comptoir), et la poche seule (qui pend au bout du
+    // bâton que le client tient sur l'épaule : le bâton fait alors partie de son corps)
+    for (const avecBaton of [true, false]) {
       // (v0.58) Le baluchon HD : une poche de tissu froncée, lourde en bas, avec des plis qui
       // partent du nœud ; une cordelette serrée autour du col, deux oreilles de tissu ; le bâton
       // passe dans le nœud, et on le tient par le bout (en bas à droite de l'image).
@@ -340,7 +342,7 @@ function creerBaluchons(scene) {
       t.rampes.tissu = rampe(c.fond); t.rampes.motif = rampe(c.motif); t.rampes.corde = rampe(0xb89a68);
       t.relief = true;
       // le bâton : du nœud (en haut à gauche) jusqu'à la main (en bas à droite)
-      traitHD(t, 'chene', [[13, 6], [50, 46]], 1.5);
+      if (avecBaton) traitHD(t, 'chene', [[13, 6], [50, 46]], 1.5);
       // la poche : une poire, plus large en bas ; les plis rayonnent depuis le col
       const poche = (x, y) => {
         const cy = 29, haut = y < cy;
@@ -370,7 +372,7 @@ function creerBaluchons(scene) {
       for (const yc of [16, 17.6]) traitHD(t, 'corde', [[10.5, yc], [20.5, yc + 0.4]], 0.75, 0.3);
       traitHD(t, 'corde', [[18, 15], [20, 12], [17, 9.5]], 0.7, 0.4);
       t.contour();
-      t.texture(scene, 'baluchon_' + famille);
+      t.texture(scene, (avecBaton ? 'baluchon_' : 'poche_') + famille);
     }
     {
       const t = new ToileHD(32, 10);
@@ -557,7 +559,7 @@ function dessinerComte(g, x, y, w, h, nuit = 0, biome = 'comte') {
 
 // L'apparence par défaut, selon que tu joues un garçon ou une fille.
 function apparenceParDefaut(feminin) {
-  return { coiffure: feminin ? 1 : 0, cheveux: 0, peau: 0, yeux: 0, bouche: 0, barbe: 0, haut: feminin ? 1 : 0, bas: 0 };
+  return { coiffure: feminin ? 1 : 0, cheveux: 0, peau: 0, yeux: 0, bouche: 0, barbe: 0, haut: feminin ? 1 : 0, bas: 0, bottes: 0 };
 }
 
 // La texture du joueur à son âge actuel (créée si besoin).
@@ -669,5 +671,85 @@ function barreJauge(scene, x, y, l, valeur, { h = 10 } = {}) {
   c.add(g);
   c.add(scene.add.text(-l / 2, h / 2 + 2, 'Ombre', style(10, '#5a3a8a', { fontStyle: 'bold' })));
   c.add(scene.add.text(l / 2, h / 2 + 2, 'Lumière', style(10, '#9a7a10', { fontStyle: 'bold' })).setOrigin(1, 0));
+  return c;
+}
+
+// (v0.68) Changer de scène proprement : toutes les caméras (interface comprise) passent au noir,
+// puis la scène suivante démarre. Sinon, pendant qu'elle se prépare (les textures se dessinent),
+// l'écran figé gardait la case de dialogue de la scène d'avant pendant une demi-seconde.
+function allerA(scene, cle, donnees = {}, duree = 220) {
+  if (scene.enPartance) return;
+  scene.enPartance = true;
+  scene.events.once('shutdown', () => { scene.enPartance = false; });
+  for (const cam of scene.cameras.cameras) cam.fadeOut(duree, 0, 0, 0);
+  scene.cameras.main.once('camerafadeoutcomplete', () => scene.scene.start(cle, donnees));
+}
+
+// (v0.68) Le texte qui s'écrit lettre après lettre, avec un petit bruit, comme dans Pokémon. On
+// coupe d'abord le texte complet en lignes (pour qu'un mot ne saute pas à la ligne en cours
+// d'écriture), puis on le dévoile. Renvoie { enCours(), finir() } : un clic pendant l'écriture
+// affiche tout d'un coup.
+function texteQuiDefile(scene, objet, texte, { depuis = 0, vitesse = 24, son = true } = {}) {
+  if (objet.defile) objet.defile.remove();
+  objet.defile = null;
+  objet.setText(texte);
+  const lignes = objet.getWrappedText ? objet.getWrappedText(texte).join('\n') : texte;
+  const ctl = { enCours: () => !!objet.defile, finir: () => { if (objet.defile) { objet.defile.remove(); objet.defile = null; } if (objet.active) objet.setText(lignes); } };
+  if (!texte || depuis >= lignes.length) { objet.setText(lignes); return ctl; }
+  let n = depuis;
+  objet.setText(lignes.slice(0, n));
+  objet.defile = scene.time.addEvent({ delay: vitesse, loop: true, callback: () => {
+    if (!objet.active) { ctl.finir(); return; }
+    n++;
+    while (n < lignes.length && lignes[n - 1] === ' ') n++;
+    objet.setText(lignes.slice(0, n));
+    if (son && n % 3 === 0 && /\S/.test(lignes[n - 1])) Son.jouer('lettre');
+    if (n >= lignes.length) ctl.finir();
+  } });
+  return ctl;
+}
+
+// (v0.68) Des pièces qui volent de ta main jusqu'à quelqu'un (la sébile du mendiant, une main
+// tendue...) : chacune décrit un arc en tournant, et tinte en arrivant. `fin` quand la dernière est là.
+function voleePieces(scene, x0, y0, x1, y1, n, { conteneur = null, profondeur = 50, fin = null } = {}) {
+  creerPiecesHD(scene);
+  const total = Math.max(1, Math.min(6, n));
+  for (let k = 0; k < total; k++) {
+    const p = scene.add.image(x0 + (Math.random() - 0.5) * 20, y0, 'pieceFace').setScale(2.4).setDepth(profondeur);
+    if (conteneur) conteneur.add(p);
+    const dx = x1 + (Math.random() - 0.5) * 16, duree = 520 + Math.random() * 120, retard = k * 110;
+    scene.tweens.add({ targets: p, x: dx, duration: duree, delay: retard, ease: 'Linear' });
+    scene.tweens.add({ targets: p, scaleX: { from: 2.4, to: 0.4 }, duration: 120, yoyo: true, repeat: Math.round(duree / 240), delay: retard });   // elle tourne sur elle-même
+    scene.tweens.add({ targets: p, y: Math.min(y0, y1) - 70, duration: duree * 0.45, delay: retard, ease: 'Quad.easeOut', onComplete: () => {
+      scene.tweens.add({ targets: p, y: y1, duration: duree * 0.55, ease: 'Quad.easeIn', onComplete: () => {
+        Son.jouer('piece');
+        scene.tweens.add({ targets: p, alpha: 0, duration: 250, delay: 150, onComplete: () => p.destroy() });
+        if (k === total - 1 && fin) fin();
+      } });
+    } });
+  }
+}
+
+// (v0.68) Une bulle de pensée au-dessus de quelqu'un : trois petites bulles qui montent, puis un
+// nuage avec une image dedans (ce qui le rend heureux). Elle s'efface toute seule.
+function bullePensee(scene, x, y, image, { conteneur = null, echelle = 2, duree = 2600, cote = 1, profondeur = 60 } = {}) {
+  const c = scene.add.container(0, 0).setDepth(profondeur);
+  if (conteneur) conteneur.add(c);
+  const bx = x + cote * 64, by = y - 76;
+  [[x + cote * 6, y - 4, 4], [x + cote * 20, y - 18, 6], [x + cote * 36, y - 34, 8]].forEach(([px, py, r], i) => {
+    const b = scene.add.circle(px, py, r, 0xfff8e8).setStrokeStyle(2, 0x3b2410).setScale(0);
+    c.add(b);
+    scene.tweens.add({ targets: b, scale: 1, duration: 180, delay: i * 130, ease: 'Back.easeOut' });
+  });
+  const nuage = scene.add.container(bx, by).setScale(0);
+  const g = scene.add.graphics();
+  const ronds = [[-38, 4, 26], [0, -10, 32], [38, 2, 26], [-16, 18, 24], [18, 18, 24]];
+  g.fillStyle(0x3b2410); for (const [dx, dy, r] of ronds) g.fillCircle(dx, dy, r + 2.5);
+  g.fillStyle(0xfff8e8); for (const [dx, dy, r] of ronds) g.fillCircle(dx, dy, r);
+  const img = scene.add.image(0, 4, image).setScale(echelle);
+  nuage.add([g, img]); c.add(nuage);
+  scene.tweens.add({ targets: nuage, scale: 1, duration: 300, delay: 400, ease: 'Back.easeOut' });
+  scene.tweens.add({ targets: img, y: 0, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 700 });
+  scene.tweens.add({ targets: c, alpha: 0, delay: duree, duration: 400, onComplete: () => c.destroy() });
   return c;
 }

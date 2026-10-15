@@ -518,7 +518,7 @@ const THEMES = {
 // famille — l'interface discrète (-30 dB), l'ambiance et les bêtes (-27 dB), les gestes du jeu
 // (-23 dB), les grands moments (-20 dB). Sans ça, une plume était 28 dB plus faible qu'un succès.
 const VOLUME_SONS = { poser: 0.6, plume: 3.05, clic: 2.57, feu: 3.02, balai: 2.88, glisse: 4, des: 3.47, page: 1.24, sabots: 1.7, vent: 1.57, porte: 2.37, glou: 1.48, plouf: 1.48, aie: 1.29, coq: 1.23, passageDehors: 0.84, saut: 1.16, refus: 0.65, maillet: 1.4, pas: 1.36, fanfare: 1.7, siffle: 1.16, hibou: 0.67, echec: 1.46, grogne: 0.59, loup: 0.56, pieces: 0.73, achat: 0.73, sanglier: 0.46, caisse: 0.65, marteau: 0.65, bouclier: 0.56, clochette: 0.65, coeur: 0.64, cloche: 0.6, trefle: 0.55, succes: 0.38, nymphe: 0.7 };
-const SONS_INTERFACE = new Set(['clic', 'page', 'plume', 'passage', 'passageDehors', 'refus']);
+const SONS_INTERFACE = new Set(['lettre', 'clic', 'page', 'plume', 'passage', 'passageDehors', 'refus']);
 
 const SONS = {
   // Une pièce qui tinte : deux partiels aigus, très courts
@@ -530,6 +530,9 @@ const SONS = {
   clochette2(t, bus) { for (const [mult, v, d] of [[1.19, 0.22, 0.8], [2.6, 0.08, 0.5]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 1760 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.1); } },
   // La porte qui s'ouvre puis se referme (un grincement, puis un claquement de bois)
   porte(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, t); osc.frequency.linearRampToValueAtTime(260, t + 0.3); const f = this.ctx.createBiquadFilter(); f.frequency.value = 900; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.08); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.35); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.4); this.bruit(0.06, t + 0.42, bus, 0.8, 500); this.bruit(0.03, t + 0.46, bus, 0.4, 1200); },
+  // (v0.68) Le texte qui défile, façon Pokémon : un petit « bip » doux, à peine audible, un peu
+  // différent à chaque lettre
+  lettre(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'square'; osc.frequency.value = 880 + Math.random() * 120; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.025, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.035); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.04); },
   // Un clic de bouton : un petit « toc » de bois
   clic(t, bus) { this.bruit(0.025, t, bus, 0.22, 1800); const osc = this.ctx.createOscillator(); osc.frequency.value = 700; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.05); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.06); },
   // Une page qu'on tourne, un parchemin

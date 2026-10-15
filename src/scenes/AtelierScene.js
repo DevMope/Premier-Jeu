@@ -112,7 +112,7 @@ class AtelierScene extends Phaser.Scene {
         }
         this.liste();
       });
-      c.add([btn, this.add.text(x + 188, 470, embauche ? 'Renvoyer' : libre ? 'Embaucher' : '🔒 Établi', style(10, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
+      c.add([btn, this.add.text(x + 188, 470, embauche ? 'Renvoyer' : libre ? 'Embaucher' : 'Fermé', style(10, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
     });
   }
 

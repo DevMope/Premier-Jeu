@@ -149,7 +149,7 @@ class CarteScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true }));
       if (ouverte) ajouter(this.add.text(z.x, z.y + 30, '★'.repeat(z.danger), style(13, '#ffd860', { fontStyle: 'bold', stroke: '#3b2410', strokeThickness: 4 })).setOrigin(0.5), { etiquette: true });
       else p.point = ajouter(this.add.text(z.x, z.y, '?', style(26, '#8a7450', { fontStyle: 'bold' })).setOrigin(0.5));
-      p.nom = ajouter(this.add.text(z.x, z.y + 40, ouverte ? z.nom : '🔒 ???', style(13, ouverte ? '#2a1808' : '#6a6458', { fontStyle: 'bold', align: 'center', wordWrap: { width: 190 }, stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0), { etiquette: true, detail: true });
+      p.nom = ajouter(this.add.text(z.x, z.y + 40, ouverte ? z.nom : '???', style(13, ouverte ? '#2a1808' : '#6a6458', { fontStyle: 'bold', align: 'center', wordWrap: { width: 190 }, stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0), { etiquette: true, detail: true });
       pastille.on('pointerup', () => { if (!this.aGlisse() && !this.devoilement) this.choisirZone(cle); });
       // La conquête : un fanion avec le compte des missions réussies, doré une fois conquise
       if (ouverte) {
@@ -244,7 +244,7 @@ class CarteScene extends Phaser.Scene {
     const c = () => this.centre;
     bouton('＋', () => { this.fermerBulle(); this.vue(Math.min(this.kMax, this.k * 1.4), c().x, c().y); });
     bouton('－', () => { this.fermerBulle(); this.vue(Math.max(this.kMin, this.k / 1.4), c().x, c().y); });
-    bouton('🗺 Tout', () => { this.fermerBulle(); this.vue(this.kMin, this.limites.cx, this.limites.cy); });
+    bouton('Tout voir', () => { this.fermerBulle(); this.vue(this.kMin, this.limites.cx, this.limites.cy); });
   }
 
   // Les limites du monde connu : un rectangle autour des contrées ouvertes et du comptoir, avec
@@ -334,11 +334,12 @@ class CarteScene extends Phaser.Scene {
     const G = this.G;
     this.reperes.removeAll(true);
     const parZone = {};
-    const ajouter = (zone, race, texte, couleur, choisi) => (parZone[zone] = parZone[zone] || []).push({ race, texte, couleur, choisi });
-    for (const p of enMission(G)) ajouter(p.voyageur.zone, p.voyageur.race, `⚔${p.retour}`, '#3b2410');
+    const ajouter = (zone, race, texte, couleur, choisi, glyphe = null) => (parZone[zone] = parZone[zone] || []).push({ race, texte, couleur, choisi, glyphe });
+    creerGlyphesHD(this);
+    for (const p of enMission(G)) ajouter(p.voyageur.zone, p.voyageur.race, `${p.retour}`, '#3b2410', false, 'epees');
     for (const e of G.file) {
       if (e.type !== 'client' || !e.voyageur.queteId || this.voyageurs.includes(e.voyageur)) continue;
-      ajouter(e.voyageur.zone, e.voyageur.race, estCible(G, e.voyageur) ? '☠' : '✉', estCible(G, e.voyageur) ? '#7a1a4a' : '#1f5aa0');
+      ajouter(e.voyageur.zone, e.voyageur.race, '', '#1f5aa0', false, estCible(G, e.voyageur) ? 'crane' : 'lettre');
     }
     for (const v of this.voyageurs) {
       if (this.place[v.id]) ajouter(this.place[v.id], v.race, v.nom.split(' ')[0].slice(0, 6), '#2f6a2a', v === this.selection);
@@ -351,7 +352,15 @@ class CarteScene extends Phaser.Scene {
         if (r.choisi) this.reperes.add(this.add.circle(x, y - 12, 15, 0xffe066, 0.6));
         this.reperes.add(imageCorps(this, x, y, r.race, 1.6));
         // Les étiquettes alternent de hauteur pour ne pas se chevaucher.
-        this.reperes.add(this.add.text(x, y - 26 - (i % 2) * 12, r.texte, style(11, r.couleur, { fontStyle: 'bold', backgroundColor: '#f3e6c8', padding: { x: 2, y: 0 } })).setOrigin(0.5, 1));
+        const yt = y - 26 - (i % 2) * 12;
+        // (v0.68) un petit pictogramme en pixel art (épées, lettre, crâne) plutôt qu'un émoji
+        if (r.glyphe) {
+          const t = r.texte ? this.add.text(0, 0, r.texte, style(11, r.couleur, { fontStyle: 'bold' })).setOrigin(0, 1) : null;
+          const lg = 14 + (t ? t.width + 2 : 0);
+          this.reperes.add(this.add.rectangle(x, yt - 8, lg + 4, 18, 0xf3e6c8).setStrokeStyle(1, 0x8a6a3a));
+          this.reperes.add(this.add.image(x - lg / 2 + 7, yt - 8, 'glyphe_' + r.glyphe).setScale(1.2));
+          if (t) { t.setPosition(x - lg / 2 + 15, yt); this.reperes.add(t); }
+        } else this.reperes.add(this.add.text(x, yt, r.texte, style(11, r.couleur, { fontStyle: 'bold', backgroundColor: '#f3e6c8', padding: { x: 2, y: 0 } })).setOrigin(0.5, 1));
       });
       if (liste.length > 6) this.reperes.add(this.add.text(z.x + 82, z.y - 36, `+${liste.length - 6}`, style(12, '#3b2410', { fontStyle: 'bold' })));
     }
@@ -363,7 +372,11 @@ class CarteScene extends Phaser.Scene {
     this.add.rectangle(480, 476, 932, 100, 0x2a1a10).setStrokeStyle(2, 0xc9a227);
     // La légende des repères, à part dans la bande : rien ne peut la cacher.
     this.add.text(24, 438, 'Sur la carte :', style(12, '#c9b48a', { fontStyle: 'bold italic' }));
-    this.add.text(24, 456, '⚔3  en mission\n      (jour du retour)\n✉  t\'a écrit\n☠  ta cible', style(12, '#f3e6c8', { lineSpacing: 1 }));
+    creerGlyphesHD(this);
+    [['epees', 'en mission (jour\ndu retour)', 466], ['lettre', "t'a écrit", 492], ['crane', 'ta cible', 510]].forEach(([g, t, y]) => {
+      this.add.image(32, y, 'glyphe_' + g).setScale(1.7);
+      this.add.text(44, y, t, style(11, '#f3e6c8', { lineSpacing: -2 })).setOrigin(0, 0.5);
+    });
     this.add.rectangle(138, 476, 2, 84, 0x8a6a3a);
     this.cartes = this.add.container(0, 0);
     const libelle = this.planification ? 'Préparer les sacs ▶' : 'Retour au comptoir';
@@ -437,7 +450,7 @@ class CarteScene extends Phaser.Scene {
       const c = conditionsZone(G, cle);
       const lignes = [`Personne ne sait vraiment ce qu'il y a là-bas${z.camp === 'mal' ? ", dans les terres d'ombre" : z.camp === 'bien' ? ', dans les terres de lumière' : ''}. Pour l'ouvrir :`,
         `${c.reputation ? '✓' : '✗'} une réputation de ${z.reputation} (toi : ${arrondi(G.reputation)}), ou qu'un aventurier la découvre`];
-      if (z.royaume) { const a = avanceeRoyaume(G, z.royaume); lignes.push(`🛡 ${ROYAUMES[z.royaume].nom} : ${a.faites} / ${a.total} contrée${a.total > 1 ? 's' : ''} conquise${a.total > 1 ? 's' : ''}. Toutes conquises : ${(G.armure || []).length < ARMURE.length ? "une pièce de l'armure et une arme légendaire" : 'son arme légendaire'}.`); }
+      if (z.royaume) { const a = avanceeRoyaume(G, z.royaume); lignes.push(`${ROYAUMES[z.royaume].nom} : ${a.faites} / ${a.total} contrée${a.total > 1 ? 's' : ''} conquise${a.total > 1 ? 's' : ''}. Toutes conquises : ${(G.armure || []).length < ARMURE.length ? "une pièce de l'armure et une arme légendaire" : 'son arme légendaire'}.`); }
       if (c.besoin) lignes.push(`${c.faits >= c.besoin ? '✓' : '✗'} ${c.besoin} missions réussies dans des zones à ${z.danger - 1} étoile${z.danger > 2 ? 's' : ''} (${Math.min(c.faits, c.besoin)} / ${c.besoin})`);
       const texte = this.add.text(0, 24, lignes.join('\n'), style(14, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 3 }));
       contenu.add(texte);
@@ -513,8 +526,9 @@ class CarteScene extends Phaser.Scene {
     if (!this.planification) return this.fermer({ annule: true });
     if (enTransition(this)) return;
     this.memoriserVue();
-    this.camCarte.fadeOut(400);
-    this.cameras.main.fadeOut(400);
+    // (v0.68) toutes les caméras s'éteignent ensemble : celle de l'interface aussi, sinon la case de
+    // dialogue de Garrick restait visible pendant le fondu, par-dessus le noir
+    for (const cam of this.cameras.cameras) cam.fadeOut(400);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Comptoir'));
   }
 
@@ -534,6 +548,6 @@ function commencerJournee(scene, ouvrir = true, facade = true) {
   if (ouvrir) ouvrirComptoir(G);
   const aPlacer = G.file.some(e => e.type === 'client' && !e.voyageur.queteId);
   const suite = aPlacer ? 'Carte' : 'Comptoir';
-  scene.cameras.main.fadeOut(400);
+  for (const cam of scene.cameras.cameras) cam.fadeOut(400);   // (v0.68 : toutes les caméras, interface comprise)
   scene.cameras.main.once('camerafadeoutcomplete', () => scene.scene.start(facade ? 'Facade' : suite, facade ? { suite } : {}));
 }

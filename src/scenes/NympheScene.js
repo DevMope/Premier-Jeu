@@ -122,7 +122,7 @@ class NympheScene extends Cinematique {
     }
     await parle("Pour sept jours, l'eau sera l'amie de tes aventuriers : les rivières les porteront, les marais les épargneront, et leurs gourdes ne les trahiront pas.");
     Son.jouer('succes');
-    await this.replique('✨ La bénédiction de la nymphe', `Jusqu'au jour ${r.jusqua}, +${Math.round(NYMPHE.benediction.bonus * 100)} % aux épreuves de rivière et de marais, et à celles où il faut une gourde.`);
+    await this.replique('La bénédiction de la nymphe', `Jusqu'au jour ${r.jusqua}, +${Math.round(NYMPHE.benediction.bonus * 100)} % aux épreuves de rivière et de marais, et à celles où il faut une gourde.`);
     if (r.souvenir) {
       // le coquillage flotte vers toi dans une bulle de lumière
       const lueur = this.add.image(this.cx - 90, this.ey - 120, 'halo').setScale(0).setTint(0x8ae0ff).setBlendMode(Phaser.BlendModes.ADD).setDepth(6.9);
@@ -134,7 +134,7 @@ class NympheScene extends Cinematique {
       Son.jouer('trefle');
       this.tweens.killTweensOf([coq, lueur]);
       this.tweens.add({ targets: [coq, lueur], x: this.heros.x, y: this.heros.y - 120, scale: 1.2, alpha: 0, duration: 900, ease: 'Quad.easeIn', onComplete: () => { coq.destroy(); lueur.destroy(); } });
-      await this.replique('🐚 Un souvenir', `Tu reçois le ${DECOS[NYMPHE.souvenir].nom}. Il t'attend dans l'arrière-boutique, avec tes décorations.`);
+      await this.replique('Un souvenir', `Tu reçois le ${DECOS[NYMPHE.souvenir].nom}. Il t'attend dans l'arrière-boutique, avec tes décorations.`);
     }
     await parle(r.visite === 1 ? "Reviens quand tu auras encore fait dix vœux. J'aurai peut-être d'autres choses à te dire." : "Dix vœux de plus, et nous reparlerons.");
     this.montrerBoite(false);

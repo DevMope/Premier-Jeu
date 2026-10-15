@@ -50,6 +50,7 @@ const FIGURANTS = {
 
 // Les mains de chaque texture (en pixels HD depuis le sol), pour porter le baluchon.
 const MAINS_CORPS = {};
+const BOUTS_CORPS = {};   // (v0.68) le bout du bâton du baluchon, en pixels de la texture
 
 // L'ordre des tenues : novice 0 … légende 4.
 function tenueDe(niveau) {
@@ -97,6 +98,7 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
     const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache, blesse });
     toile.texture(scene, cle);
     MAINS_CORPS[cle] = toile.mains;
+    if (toile.bout) BOUTS_CORPS[cle] = toile.bout;
     dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache, blesse }).texture(scene, cle + '_pas1');
     dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache, blesse }).texture(scene, cle + '_pas2');
   }

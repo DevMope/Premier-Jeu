@@ -96,6 +96,18 @@ class MarcheNoirScene extends Phaser.Scene {
     if (this.soiree.aine && !(G.ainesRecits || []).includes(this.soiree.aine)) {
       this.aine = imageCorps(this, 470, 370, personneAine(this.soiree.aine), 5.2).setTint(0xe8c8b0).setFlipX(true);
     }
+    // (v0.68) Certains soirs, le mendiant du marché est là aussi, avec Brisquet : ici, on l'écoute
+    if (mendiantAuMarcheNoir(G)) {
+      const m = imageCorps(this, 1390, 370, 'mendiant', 5.6).setTint(0xd8c0b0).setFlipX(true).setInteractive({ useHandCursor: true });
+      this.add.image(1440, 372, chienHD(this, 'profil', true)).setOrigin(0.5, 1).setScale(0.85).setTint(0xc0a898);
+      const paroles = ["Chut... Ici, personne ne me fait l'aumône. Ici, on m'écoute.", "Le Passeur me garde une écuelle de soupe. On se connaît depuis... avant.", "Brisquet sent les gardes à trois rues. Bien pratique, par ici.", "Là-haut, je suis le vieux fou du marché. En bas, je suis celui qui se souvient."];
+      m.on('pointerdown', () => {
+        if (this.bulleMendiant && this.bulleMendiant.active) this.bulleMendiant.destroy();
+        const t = this.bulleMendiant = this.add.text(1390, 370 - m.displayHeight - 12, `« ${Phaser.Utils.Array.GetRandom(paroles)} »`, style(13, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 230 }, align: 'center' })).setOrigin(0.5, 1).setDepth(6);
+        Son.jouer('voix', { personne: { nom: 'Le mendiant', race: 'humain', vieux: true }, ton: 'neutre' });
+        this.tweens.add({ targets: t, alpha: 0, delay: 4200, duration: 400, onComplete: () => t.destroy() });
+      });
+    }
     // La Main Noire : une silhouette encapuchonnée derrière sa table, deux gardes orcs
     this.add.image(2440, 350, corpsHD(this, 'passeur')).setOrigin(0.5, 1).setScale(6.6 * echelleCorps(corpsHD(this, 'passeur'))).setTint(0x3a2830);
     this.add.image(2440, 392, 'tableMainNoire').setOrigin(0.5, 1).setScale(2.2);

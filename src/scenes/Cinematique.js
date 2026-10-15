@@ -21,10 +21,22 @@ class Cinematique extends Phaser.Scene {
     this.indice.setY(518 + dy);
   }
 
-  ecrire(entete, texte) {
+  // (v0.68) le texte s'écrit lettre après lettre (un clic l'affiche d'un coup) ; en accéléré, tout de suite
+  ecrire(entete, texte, depuis = 0) {
     this.entete.setText(entete);
-    this.texte.setText(texte);
+    this.texteComplet = texte;
+    this.defile = texteQuiDefile(this, this.texte, texte, { depuis, son: !this.rapide });
+    if (this.rapide) this.defile.finir();
   }
+  // Ajouter une phrase à la suite de ce qui est déjà écrit (elle s'écrit à son tour)
+  ajouterTexte(suite) {
+    if (this.defile) this.defile.finir();
+    const avant = this.texte.text;
+    this.texteComplet = (this.texteComplet || '') + suite;
+    this.defile = texteQuiDefile(this, this.texte, this.texteComplet, { depuis: avant.length });
+    if (this.rapide) this.defile.finir();
+  }
+  enEcriture() { return !!(this.defile && this.defile.enCours()); }
 
   // À la fin d'une cinématique : on attend que le joueur clique pour passer à la suite
   // (rien ne s'enchaîne tout seul).
@@ -32,7 +44,10 @@ class Cinematique extends Phaser.Scene {
     const t = this.add.text(940, 520, texte, style(15, '#fff4dc', { fontStyle: 'bold italic', stroke: '#2a1a10', strokeThickness: 4 }))
       .setOrigin(1, 0.5).setDepth(30).setScrollFactor(0);
     this.tweens.add({ targets: t, alpha: 0.4, duration: 700, yoyo: true, repeat: -1 });
-    return new Promise(resoudre => this.time.delayedCall(300, () => this.input.once('pointerdown', () => { t.destroy(); resoudre(); })));
+    return new Promise(resoudre => this.time.delayedCall(300, () => {
+      const suite = () => { if (this.enEcriture()) { this.defile.finir(); this.input.once('pointerdown', suite); return; } t.destroy(); resoudre(); };
+      this.input.once('pointerdown', suite);
+    }));
   }
 
   attendreClic() {
@@ -41,7 +56,11 @@ class Cinematique extends Phaser.Scene {
     return new Promise(resoudre => {
       this.time.delayedCall(200, () => {
         this.indice.setVisible(true);
-        const suite = () => { this.events.off('passer', suite); this.input.off('pointerdown', suite); this.indice.setVisible(false); resoudre(); };
+        const suite = (pointeur) => {
+          // (v0.68) un clic pendant que le texte s'écrit l'affiche en entier ; le suivant fait avancer
+          if (pointeur && this.enEcriture()) { this.defile.finir(); this.input.once('pointerdown', suite); return; }
+          this.events.off('passer', suite); this.input.off('pointerdown', suite); this.indice.setVisible(false); if (this.defile) this.defile.finir(); resoudre();
+        };
         this.input.once('pointerdown', suite);
         this.events.once('passer', suite);
       });
@@ -98,13 +117,16 @@ class Cinematique extends Phaser.Scene {
 
   // Une émotion au-dessus de la tête : '!', '?', '♥', 'colere', 'larme', 'joie', '…', 'idee'
   emotion(sprite, quoi, duree = 1500) {
-    const glyphes = { '!': ['!', '#c0301a'], '?': ['?', '#2a4a8a'], '♥': ['♥', '#d03050'], colere: ['💢', '#c0301a'], larme: ['💧', '#3a7ac0'], joie: ['♪', '#2a8a3a'], '…': ['…', '#3b2410'], idee: ['💡', '#c09020'], merci: ['✨', '#c09020'] };
+    const glyphes = { '!': ['!', '#c0301a'], '?': ['?', '#2a4a8a'], '♥': ['♥', '#d03050'], joie: ['♪', '#2a8a3a'], '…': ['…', '#3b2410'] };
+    // (v0.68) la colère, la larme, l'idée, l'étincelle : de petits dessins en pixel art (plus d'émojis)
+    const dessin = { colere: 'colere', larme: 'larme', idee: 'idee', merci: 'merci' }[quoi];
     const [g, couleur] = glyphes[quoi] || [quoi, '#3b2410'];
     const x = sprite.x + (sprite.flipX ? -1 : 1) * sprite.displayWidth * 0.22, y = sprite.y - sprite.displayHeight - 8;
     const c = this.add.container(x, y).setDepth(9).setScale(0);
     c.add(this.add.circle(0, 0, 15, 0xfff8e8).setStrokeStyle(2.5, 0x3b2410));
     c.add(this.add.triangle(0, 0, -5, 12, 5, 12, 0, 20, 0xfff8e8).setOrigin(0));
-    c.add(this.add.text(0, 0, g, style(19, couleur, { fontStyle: 'bold' })).setOrigin(0.5));
+    if (dessin) { creerGlyphesHD(this); c.add(this.add.image(0, 0, 'glyphe_' + dessin).setScale(2)); }
+    else c.add(this.add.text(0, 0, g, style(19, couleur, { fontStyle: 'bold' })).setOrigin(0.5));
     this.tweens.add({ targets: c, scale: 1, duration: 220, ease: 'Back.easeOut' });
     this.tweens.add({ targets: c, y: y - 5, duration: 400, yoyo: true, repeat: 1, ease: 'Sine.easeInOut', delay: 220 });
     this.tweens.add({ targets: c, alpha: 0, delay: duree, duration: 300, onComplete: () => c.destroy() });
@@ -129,7 +151,8 @@ class Cinematique extends Phaser.Scene {
       return;
     }
     if (quel === 'salut') {
-      const main = this.add.text(sprite.x + (sprite.flipX ? -1 : 1) * sprite.displayWidth * 0.35, sprite.y - sprite.displayHeight * 0.75, '👋', style(24, '#ffffff')).setOrigin(0.5).setDepth(9);
+      creerGlyphesHD(this);
+      const main = this.add.image(sprite.x + (sprite.flipX ? -1 : 1) * sprite.displayWidth * 0.35, sprite.y - sprite.displayHeight * 0.75, 'glyphe_main').setScale(2.4).setOrigin(0.5, 1).setDepth(9);
       await this.animer({ targets: main, angle: { from: -25, to: 25 }, duration: 140, yoyo: true, repeat: 2 });
       main.destroy();
     }

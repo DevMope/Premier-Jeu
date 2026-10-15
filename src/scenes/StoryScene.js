@@ -17,7 +17,7 @@ class StoryScene extends Cinematique {
     this.time.timeScale = 1;
     this.parti = this.G.partis.find(p => p.voyageur.id === this.idParti);
     this.armeTenue = this.parti ? armeEmportee(this.parti.voyageur, this.parti.colis || {}) : 'epee';   // (v0.63)
-    if (!this.parti) { this.time.delayedCall(0, () => this.scene.start('Comptoir')); return; }
+    if (!this.parti) { this.time.delayedCall(0, () => allerA(this, 'Comptoir')); return; }
     const v = this.parti.voyageur;
     this.e = v.feminin ? 'e' : '';
 
@@ -377,11 +377,11 @@ class StoryScene extends Cinematique {
         : `${v.nom} est mort${this.e} loin de chez ${v.feminin ? 'elle' : 'lui'}, sans gloire. Il fallait sans doute mieux ${v.feminin ? 'la' : 'le'} préparer...\nTon investissement est perdu.`);
       // (v0.60) la dernière ligne du carnet, interrompue
       const proche = auHasard(['ma sœur', 'mon frère', 'ma mère', 'mon père', 'mes enfants', 'ma bien-aimée']);
-      this.texte.setText(this.texte.text + `\nLa dernière ligne du carnet, à peine lisible : « Dis à ${proche} que je... »`);
+      this.ajouterTexte(`\nLa dernière ligne du carnet, à peine lisible : « Dis à ${proche} que je... »`);
       this.trembler(3);
       if (this.parti.demasque) {
         const id = Object.keys(this.parti.pieges).find(k => this.parti.pieges[k] > 0);
-        this.texte.setText(this.texte.text + `\nOn a retrouvé ${PIEGES[id] ? leNom(id, PIEGES[id].nom.toLowerCase()) : 'ton piège'} près du corps. Au village, on t'accuse.`);
+        this.ajouterTexte(`\nOn a retrouvé ${PIEGES[id] ? leNom(id, PIEGES[id].nom.toLowerCase()) : 'ton piège'} près du corps. Au village, on t'accuse.`);
       }
       this.tweens.add({ targets: this.voile, fillAlpha: 0.5, duration: 1500 });
       this.indice.destroy();
@@ -389,7 +389,7 @@ class StoryScene extends Cinematique {
     }
 
     this.indice.destroy();
-    const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => this.scene.start('Comptoir'));
+    const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => allerA(this, 'Comptoir'));
     this.dansUI(retour);
     if (r.vivant) {
       this.proposerSoins();
@@ -499,7 +499,7 @@ class StoryScene extends Cinematique {
       // Ton flair estime la revente (une fois restauré) et juge le prix demandé.
       const e = estimationFlair(G, t);
       c.add(this.add.text(170, y + 2, `Flair ${Math.round(e.flair * 100)} % · revente ~${e.min}–${e.max} p. restauré`, style(11, '#5a3a20')));
-      c.add(this.add.text(170, y + 17, `👃 ${e.verdict.texte}`, style(12, e.verdict.couleur, { fontStyle: 'bold' })));
+      c.add(this.add.text(170, y + 17, `Ton flair : ${e.verdict.texte}`, style(12, e.verdict.couleur, { fontStyle: 'bold' })));
       const b = creerBouton(this, 470, y, 140, '', () => {
         const erreur = acheterTrouvaille(G, t);
         if (erreur) { Son.jouer('refus'); return info.setText(erreur); }
@@ -521,7 +521,7 @@ class StoryScene extends Cinematique {
     const G = this.G;
     const v = this.parti.voyageur;
     const montants = montantsDedommagement(v);
-    this.texte.setText(this.texte.text + `\nTu dois verser un dédommagement à sa famille. Plus tu es ${eJ(this.G) ? 'généreuse' : 'généreux'}, plus ta réputation remonte... et plus un proche voudra reprendre le flambeau.`);
+    this.ajouterTexte(`\nTu dois verser un dédommagement à sa famille. Plus tu es ${eJ(this.G) ? 'généreuse' : 'généreux'}, plus ta réputation remonte... et plus un proche voudra reprendre le flambeau.`);
     const boutons = Object.entries(DEDOMMAGEMENTS).map(([cle, d], i) => {
       const b = creerBouton(this, 200 + i * 280, 345, 250, `${d.nom} : ${montants[cle]} p.`, () => {
         const verse = dedommager(G, this.parti, cle);
@@ -529,7 +529,7 @@ class StoryScene extends Cinematique {
         const rep = d.reputation ? ` Réputation +${d.reputation}.` : '';
         this.ecrire('Dédommagement', `Tu as versé ${verse} pièces à la famille de ${v.nom}.${rep}` +
           (G.argent < 0 ? `\nTu es à découvert (${G.argent} pièces). Faillite à ${SEUIL_FAILLITE} !` : ''));
-        const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => this.scene.start('Comptoir'));
+        const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => allerA(this, 'Comptoir'));
         this.dansUI(retour);
       });
       return this.dansUI(b);
@@ -565,7 +565,7 @@ class StoryScene extends Cinematique {
     };
     maj();
     const n = blessuresDe(G, v.nom);
-    this.texte.setText(this.texte.text + `\n${v.feminin ? 'Elle' : 'Il'} a perdu ${n} cœur${n > 1 ? 's' : ''}. ` +
+    this.ajouterTexte(`\n${v.feminin ? 'Elle' : 'Il'} a perdu ${n} cœur${n > 1 ? 's' : ''}. ` +
       (G.stock.potion > 0 ? `Une potion par cœur (il te reste ${G.stock.potion} potion${G.stock.potion > 1 ? 's' : ''}).` : `Tu n'as pas de potion pour ${v.feminin ? 'la' : 'le'} soigner.`));
   }
 
@@ -787,7 +787,13 @@ class StoryScene extends Cinematique {
         particules('lueurHD', 0xb070ff, { vx: 0, vy: -0.5, n: 2, echelle: 1, add: true });
         break;
       case 'morsure': {
-        const serpent = ajouter(this.add.text(this.perso.x + 40, sol - 6, '〰', style(30, '#4a8a2a', { fontStyle: 'bold', brut: true })).setOrigin(0.5, 1).setDepth(3));
+        // (v0.68) un petit serpent dessiné (une ondulation verte, la tête, la langue), plus de symbole
+        const g = this.add.graphics();
+        g.lineStyle(7, 0x1a2a10, 1); g.beginPath(); for (let i = 0; i <= 16; i++) { const px = -22 + i * 2.6, py = -6 + Math.sin(i * 0.8) * 5; if (i) g.lineTo(px, py); else g.moveTo(px, py); } g.strokePath();
+        g.lineStyle(4, 0x5a9a2a, 1); g.beginPath(); for (let i = 0; i <= 16; i++) { const px = -22 + i * 2.6, py = -6 + Math.sin(i * 0.8) * 5; if (i) g.lineTo(px, py); else g.moveTo(px, py); } g.strokePath();
+        g.fillStyle(0x1a2a10).fillEllipse(22, -8, 12, 9); g.fillStyle(0x6aaa32).fillEllipse(22, -8, 9, 6);
+        g.fillStyle(0xc02020).fillRect(27, -8, 6, 1);
+        const serpent = ajouter(g.setPosition(this.perso.x + 40, sol - 2).setDepth(3));
         this.tweens.add({ targets: serpent, x: serpent.x + 16, duration: 300, yoyo: true, repeat: -1 });
         particules('lueurHD', 0x60c040, { vx: 0, vy: -0.4, n: 1, echelle: 1, alpha: 0.6 });
         break;

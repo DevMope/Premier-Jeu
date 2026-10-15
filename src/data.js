@@ -907,6 +907,14 @@ const MATERIAUX_PAR_REPARATION = 3;
 // Les lieux du marché qui ouvrent un par un, les premiers jours (le jour d'ouverture). Les étals
 // de provisions, le crieur et le mendiant sont là dès le premier jour.
 const OUVERTURE_LIEUX = { jeux: 2, encheres: 3, brocante: 5, garderobe: 7, bazar: 9 };
+// (v0.68) Ce que murmurent de rares passants sur les chantiers de la place : des indices, jamais le nom
+const RUMEURS_CHANTIER = {
+  jeux: ["Un drôle de type aux doigts agiles traîne derrière les planches. Il fait rouler des dés dans sa main sans jamais les regarder...", "On a vu livrer des gobelets et un tapis vert. Moi, je dis qu'on va encore y laisser des plumes."],
+  encheres: ["Un homme en habit noir est arrivé de la capitale avec un petit marteau d'ivoire. Il frappe sur tout ce qu'il voit en criant « Adjugé ! »", "Il paraît que les trésors des aventuriers vont bientôt changer de mains au plus offrant..."],
+  brocante: ["Un vieux bonhomme a déchargé trois charrettes de bric-à-brac derrière les planches. Des vieilleries ou des trésors ? Allez savoir.", "J'ai vu passer un fauteuil à pattes de lion, une horloge sans aiguilles et un hibou empaillé. Qui achète ça ?"],
+  garderobe: ["Des rouleaux de soie, des chapeaux à plumes... Quelqu'un va faire de nous des gens chics, je vous le dis.", "Une dame avec des épingles plein la bouche mesure tous ceux qui passent devant le chantier. Elle m'a pris le tour de taille sans demander !"],
+  bazar: ["Une dame qui sent la cannelle et le miel compte ouvrir quelque chose ici. Des petits cadeaux, à ce qu'on dit...", "On a livré des caisses pleines de rubans et de pots de confiture. Ça sent déjà bon derrière les planches."],
+};
 const NOMS_LIEUX_MARCHE = { jeux: 'Le coin des jeux', encheres: 'Les enchères', brocante: 'La brocante de Firmin', garderobe: 'La garde-robe de Marcelline', bazar: 'Le Bazar de Rosalie' };
 
 const MARCHANDS = {
@@ -917,7 +925,7 @@ const MARCHANDS = {
   forge: {
     nom: 'Thorgal le Forgeron', metier: 'Forge', race: 'nain', couleur: 0x8a3a2a,
     objets: ['fleches', 'corde', 'bouclier', 'fer', 'cuir', 'bois', 'epee', 'hache', 'marteau', 'arc', 'lance', 'baton', 'bambou', 'fronde', 'dague', 'rapiere', 'khopesh', 'griffes', 'massue'],
-    toujours: ['fer', 'cuir', 'bois'],
+    toujours: ['fer', 'cuir', 'bois', 'epee'],   // (v0.68 : l'épée, la plus demandée, ne manque jamais chez Thorgal)
   },
   apothicaire: {
     nom: 'Mère Sauge', metier: 'Apothicaire', race: 'magicienne', couleur: 0x5a3a8a,
@@ -1032,6 +1040,7 @@ const APPARENCE = {
   barbe: ['Aucune', 'Moustache', 'Courte', 'Longue'],
   haut: [['Bleu', 0x3a5a8a], ['Rouge', 0x9a3a2a], ['Vert', 0x4f7a3a], ['Violet', 0x6a4aa0], ['Moutarde', 0xc9a227], ['Gris', 0x6a6f78]],
   bas: [['Brun', 0x6a5a40], ['Noir', 0x2a2a30], ['Vert', 0x3a4a3a], ['Bleu', 0x3a4a6a], ['Beige', 0xb09a70]],
+  bottes: [['Cuir', 0x6a3f22], ['Noires', 0x2a2228], ['Fauves', 0xa0703a], ['Rouges', 0x7a2a22], ['Vertes', 0x3a4a2a]],   // (v0.68)
 };
 
 // --- Achat-revente : trouvailles, atelier, enchères ---

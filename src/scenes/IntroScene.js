@@ -13,7 +13,7 @@ class IntroScene extends Phaser.Scene {
     this.add.image(0, 0, 'bureauBois').setOrigin(0).setScale(2).setTint(0xa08870);
     vignette(this, 0.6, 0);
     this.add.text(480, 30, 'Qui es-tu ?', style(32, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 6 })).setOrigin(0.5);
-    const retour = creerBouton(this, 80, 30, 130, '◀ Menu', () => this.scene.start('Titre'));
+    const retour = creerBouton(this, 80, 30, 130, '◀ Menu', () => allerA(this, 'Titre'));
     retour.label.setFontSize(15);
 
     // L'aperçu : toi, au début de l'aventure
@@ -36,10 +36,10 @@ class IntroScene extends Phaser.Scene {
     this.add.image(705, 262, panneauHD(this, 470, 380)).setScale(2);
     const options = [
       ['coiffure', 'Coiffure'], ['cheveux', 'Cheveux'], ['peau', 'Peau'], ['yeux', 'Yeux'],
-      ['bouche', 'Bouche'], ['barbe', 'Barbe'], ['haut', 'Habit du haut'], ['bas', 'Habit du bas'],
+      ['bouche', 'Bouche'], ['barbe', 'Barbe'], ['haut', 'Habit du haut'], ['bas', 'Habit du bas'], ['bottes', 'Bottes'],
     ];
     this.lignes = options.map(([cle, libelle], i) => {
-      const y = 108 + i * 41;
+      const y = 100 + i * 38;
       this.add.text(496, y, libelle, style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
       this.fleche(660, y, '◀', () => this.changer(cle, -1));
       this.fleche(890, y, '▶', () => this.changer(cle, 1));
@@ -112,7 +112,7 @@ class IntroScene extends Phaser.Scene {
 
   commencer() {
     nouvellePartie({ feminin: this.feminin, apparence: { ...this.ap }, nomShop: this.nomShop });
-    this.scene.start('IntroHistoire');
+    allerA(this, 'IntroHistoire');
   }
 }
 

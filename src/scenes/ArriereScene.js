@@ -161,7 +161,7 @@ class ArriereScene extends Phaser.Scene {
     Object.keys(G.cadeaux || {}).filter(id => G.cadeaux[id] > 0).slice(0, 4).forEach((id, i) => this.add.image(x - 20 + i * 13, y - 28 - (i % 2) * 4, iconeObjet(this, id)).setScale(1.5).setDepth(1.2));
     this.add.image(x, y + 4, 'panierHD').setOrigin(0.5, 1).setScale(1.4).setDepth(1.3);
     const zone = this.add.rectangle(x, y - 12, 70, 44, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    this.add.text(x, y - 56, n ? `🎁 Les cadeaux (${n})` : '🎁 Panier vide', style(11, '#f3e6c8', { fontStyle: 'bold', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5).setDepth(1.4);
+    this.add.text(x, y - 56, n ? `Les cadeaux (${n})` : 'Panier vide', style(11, '#f3e6c8', { fontStyle: 'bold', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5).setDepth(1.4);
     zone.on('pointerdown', () => this.ouvrirListe('cadeaux'));
   }
 
@@ -179,7 +179,7 @@ class ArriereScene extends Phaser.Scene {
       this.tweens.add({ targets: lueur, alpha: 0.2, duration: 700, yoyo: true, repeat: -1 });
     }
     const zone = this.add.rectangle(x, y - 30, 100, 64, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    this.add.text(x, y + 14, n ? `☠ Le tiroir secret (${n})` : 'Le vieux buffet', style(12, n ? '#d08aa8' : '#f3e6c8', { fontStyle: 'bold', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5);
+    this.add.text(x, y + 14, n ? `Le tiroir secret (${n})` : 'Le vieux buffet', style(12, n ? '#d08aa8' : '#f3e6c8', { fontStyle: 'bold', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5);
     zone.on('pointerdown', () => n ? this.ouvrirListe('pieges') : this.message("Des torchons, de la ficelle, un vieux bouton. Rien d'intéressant."));
   }
 

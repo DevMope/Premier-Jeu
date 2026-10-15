@@ -137,7 +137,7 @@ class TitleScene extends Phaser.Scene {
     this.texteSauvegarde = this.add.text(480, 318, 'Recherche de ta sauvegarde...', style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
     this.boutonContinuer = creerBouton(this, 480, 360, 300, 'Continuer', () => this.continuer());
     this.boutonContinuer.setVisible(false);
-    creerBouton(this, 480, 410, 300, 'Nouvelle partie', () => this.scene.start('Intro'));
+    creerBouton(this, 480, 410, 300, 'Nouvelle partie', () => allerA(this, 'Intro'));
     creerBouton(this, 400, 460, 150, 'Sauvegardes', () => this.ouvrirSauvegardes());
     creerBouton(this, 560, 460, 150, 'Réglages', () => { const h = this.scene.get('Hud'); if (h && h.ouvrirReglages) h.ouvrirReglages(); });
     this.chercher();

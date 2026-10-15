@@ -233,7 +233,7 @@ class DodoScene extends Cinematique {
       // Le rappel de la dette : ce qui reste à rembourser, et ce que la banque prélève cette nuit
       const fond = this.add.rectangle(760, y + 26, 296, 54, 0xa03030, 0.14).setStrokeStyle(2, 0xa03030, 0.6);
       c.add(fond);
-      c.add(this.add.text(618, y + 4, `📜 Dette : ${dette} p.`, style(17, '#8a1a1a', { fontStyle: 'bold' })));
+      c.add(this.add.text(618, y + 4, `Dette : ${dette} p.`, style(17, '#8a1a1a', { fontStyle: 'bold' })));
       const apres = G.argent - echeance;
       c.add(this.add.text(618, y + 28, apres < 0
         ? `Cette nuit : −${echeance} p. → ${apres} p. (faillite à ${SEUIL_FAILLITE})`
@@ -430,7 +430,7 @@ class DodoScene extends Cinematique {
     Son.jouer('tresor');
     await this.animer({ targets: icone, x: 480, y: 200, scale: echelleArme(id, 6), duration: 900, ease: 'Sine.easeInOut' });
     this.tweens.add({ targets: icone, y: 190, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    const titre = this.add.text(480, 316, `⚔ ${a.nom} ⚔`, style(26, '#ffe8a0', { fontStyle: 'bold', stroke: '#1a0a06', strokeThickness: 6 })).setOrigin(0.5).setDepth(8.2).setScale(0);
+    const titre = this.add.text(480, 316, `— ${a.nom} —`, style(26, '#ffe8a0', { fontStyle: 'bold', stroke: '#1a0a06', strokeThickness: 6 })).setOrigin(0.5).setDepth(8.2).setScale(0);
     const sous = this.add.text(480, 350, `Arme légendaire : ${ROYAUMES[royaume].nom}\n${a.texte}\nAccrochée au mur, elle fera parler d'elle : un peu plus de curieux au comptoir.`,
       style(14, '#fff4dc', { fontStyle: 'italic', align: 'center', stroke: '#1a0a06', strokeThickness: 4, wordWrap: { width: 640 } })).setOrigin(0.5, 0).setDepth(8.2).setAlpha(0);
     this.tweens.add({ targets: titre, scale: 1, duration: 450, ease: 'Back.easeOut' });

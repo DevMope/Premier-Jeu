@@ -33,8 +33,14 @@ function conseilGarrick(scene, cle, toujours = false) {
   c.add(scene.add.image(560, 420, panneauHD(scene, 700, 170)).setScale(2));
   c.add(imageCorps(scene, 150, 520, 'mentor', 9));
   c.add(scene.add.text(240, 348, 'Garrick Cœur-de-Chêne', style(16, '#7a5a10', { fontStyle: 'bold' })));
-  c.add(scene.add.text(240, 372, `« ${CONSEILS[cle]} »`, style(14, '#3b2410', { wordWrap: { width: 610 }, lineSpacing: 3 })));
+  // (v0.68) une écriture plus lisible (plus grande, plus foncée, droite) qui s'écrit lettre après
+  // lettre ; un premier clic sur « Compris ! » affiche tout, le second ferme
+  const texte = scene.add.text(240, 372, '', style(16, '#24140a', { wordWrap: { width: 610 }, lineSpacing: 4 }));
+  c.add(texte);
+  let defile = null;
+  scene.time.delayedCall(260, () => { if (texte.active) defile = texteQuiDefile(scene, texte, `« ${CONSEILS[cle]} »`, { vitesse: 18 }); });
   const b = creerBouton(scene, 820, 482, 150, 'Compris !', () => {
+    if (defile && defile.enCours()) return defile.finir();
     scene.tweens.add({ targets: c, alpha: 0, duration: 200, onComplete: () => c.destroy() });
   });
   b.label.setFontSize(15);

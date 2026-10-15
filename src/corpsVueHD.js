@@ -223,9 +223,15 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const main = leves ? [cote * 6.5 * k, 2 * k, cy - P.ry - 7 * k] : [cote * (ep + (long ? 2.2 : 0.6) * k), (1 + bal * 3.5) * k, long ? yB + (sol - yB) * 0.48 : yB + (1.5 - Math.abs(bal) * 0.5) * k];
     // Les aînés : le bras de la canne bien plié, le coude écarté en arrière, la main en avant qui
     // appuie de tout son poids sur le pommeau
-    if (g.vieux && devant && !leves) {
+    if (g.vieux && devant && !leves && pose !== 'baluchon') {
       coude.splice(0, 3, cote * (ep + 2.6 * k), -1.8 * k, yT + P.torse * (long ? 0.6 : 0.42));
       main.splice(0, 3, cote * (ep + 1.4 * k), 4 * k, long ? yB + (sol - yB) * 0.28 : yB - 1.5 * k);
+    }
+    // (v0.68) Le baluchon sur l'épaule : le bras proche se plie, la main tient le bâton devant la
+    // poitrine (elle ne se balance plus avec la marche) ; l'autre bras, lui, continue de balancer
+    if (pose === 'baluchon' && devant) {
+      coude.splice(0, 3, cote * (ep + 0.8 * k), 1.2 * k, yT + P.torse * 0.62);
+      main.splice(0, 3, cote * ep * 0.55, 5.2 * k, yT + 4 * k);
     }
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
     const r = 2.6 * k * P.membre;
@@ -277,17 +283,19 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     } else {
       // La botte : la tige jusqu'au genou, le revers, le pied qui pointe vers l'avant. De face, le
       // bout de la botte vient vers nous : un peu plus large et plus clair (on le voit de dessus).
-      cylindre(t, 'cuir', G, Pd, r - 0.2 * k, { decalage: dec + 0.1 });
+      const botte = g.bottes ? 'bottes' : 'cuir';   // (v0.68 : le joueur choisit la couleur de ses bottes)
+      if (g.bottes) t.rampes.bottes = rampeVive(g.bottes);
+      cylindre(t, botte, G, Pd, r - 0.2 * k, { decalage: dec + 0.1 });
       const bout = X(pied[0], pied[1] + 3.4 * k);
       const face = Math.max(0, 1 - Math.abs(s) / 0.7);   // (1 de face, 0 dès le trois-quarts)
-      t.forme('cuir', (x, y) => {
+      t.forme(botte, (x, y) => {
         if (y < solPied - 3 * k || y > solPied) return null;
         const bas = (y - (solPied - 3 * k)) / (3 * k);   // 0 en haut du pied, 1 à la semelle
         const elargi = face * bas * 0.9 * k;
         if (Math.abs(x + 0.5 - (Pd[0] + bout) / 2) >= Math.abs(bout - Pd[0]) / 2 + r - 0.5 * k + elargi) return null;
         return [(x + 0.5 - Pd[0]) / (4 * k), face ? -0.5 + bas * 0.9 : (y - solPied + 1.5 * k) / (2 * k), 0.8];
       }, { decalage: dec + face * 0.3 });
-      t.forme('cuir', (x, y) => (y >= G[1] + 1 && y <= G[1] + 1.5 * k && Math.abs(x + 0.5 - G[0]) < r + 0.3 * k ? [0, -0.6, 0.7] : null), { decalage: 0.6, bord: false, ombre: false });
+      t.forme(botte, (x, y) => (y >= G[1] + 1 && y <= G[1] + 1.5 * k && Math.abs(x + 0.5 - G[0]) < r + 0.3 * k ? [0, -0.6, 0.7] : null), { decalage: 0.6, bord: false, ombre: false });
     }
   };
 
@@ -655,7 +663,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // (les yeux de bête : tout l'œil de la couleur de l'iris, une pupille en fente)
     t.forme(T.fente ? 'iris' : 'blanc', ellipsoide(ox, ey, w, h), { decalage: T.fente ? 0.4 : 0.2, ombre: false, bord: false });
     const ix = ox + (large ? 0 : cote * 0.15 * k);
-    t.forme('pupille', ellipsoide(ix, ey + 0.15 * k, T.fente ? 0.3 * k : large ? 0.75 * k : 0.5 * k, 1.05 * k), { ombre: false, bord: false });
+    // (v0.68) le joueur : l'iris prend la couleur choisie à la création, la pupille au milieu
+    const irisJoueur = costume === 'joueur' && !T.fente;
+    t.forme(irisJoueur ? 'iris' : 'pupille', ellipsoide(ix, ey + 0.15 * k, T.fente ? 0.3 * k : large ? 0.75 * k : 0.5 * k, 1.05 * k), { ombre: false, bord: false });
+    if (irisJoueur) t.poser(Math.round(ix), Math.round(ey + 0.3 * k), 'pupille', 1);
     t.poser(Math.round(ix - 0.4 * k), Math.round(ey - 0.4 * k), 'blanc', 5);
     for (let i = -Math.round(w); i <= Math.round(w); i++) t.poser(Math.round(ox + i), Math.round(ey - h), 'pupille', 2);
     if (fache) {
@@ -1039,7 +1050,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     for (const [x, y, m, ton] of ajouts) if (t.dans(x, y) && !t.mat(x, y)) t.poser(x, y, m, ton);
   }
   // Les aînés s'appuient sur une canne noueuse, tenue dans la main de devant
-  if (g.vieux && !leves && mainDevant) {
+  if (g.vieux && !leves && mainDevant && pose !== 'baluchon') {
     const { M, matMain, gm } = mainDevant;
     t.rampes.canne = rampe(0xa0703c);
     const dehors = M[0] < cx ? -1 : 1;   // (la canne s'écarte de la jambe, vers l'extérieur)
@@ -1108,6 +1119,18 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       t.forme('sang', (x, y) => { const m = t.mat(x, y); return (m === 'habit' || m === 'cape' || m === 'bas') && Math.hypot(x + 0.5 - px, y + 0.5 - py) < r * k * (0.75 + 0.5 * hachage(x, y, 5)) ? [0, 0, 1] : null; }, { bord: false });
     }
     if (mainDevant) { const { M } = mainDevant; for (let y = Math.round(M[1] - 6 * k); y <= Math.round(M[1] - 3.5 * k); y++) for (let x = Math.round(M[0] - 3 * k); x <= Math.round(M[0] + 3 * k); x++) { const m = t.mat(x, y); if (m && m !== 'lin' && m !== 'sang') t.poser(x, y, 'lin', y % 2 ? 3 : 4); } }
+  }
+  // (v0.68) Le bâton du baluchon : de la main, il passe sur l'épaule proche et part en arrière ; la
+  // poche (une image à part) pend à son bout, dans le dos. Les doigts se referment par-dessus.
+  if (pose === 'baluchon' && mainDevant && !dos) {
+    const { M, matMain, gm, cote } = mainDevant;
+    const E2 = [X(cote * (ep - 1.2 * k), -0.8 * k), yT - 1.6 * k];
+    const d = [E2[0] - M[0], E2[1] - M[1]];
+    const debut = [M[0] - d[0] * 0.18, M[1] - d[1] * 0.18], bout = [M[0] + d[0] * 1.95, M[1] + d[1] * 1.95];
+    t.rampes.baton = rampe(0x7a5228);
+    traitHD(t, 'baton', [debut, bout], 0.75 * k, 0.2);
+    t.forme(matMain, ellipsoide(M[0], M[1] + 0.3 * k, 1.9 * k * gm, 1.6 * k * gm), { decalage: 0.3 });   // les doigts autour du bâton
+    t.bout = [Math.round(bout[0]), Math.round(bout[1])];
   }
   contourEpais(t, CONTOUR_CORPS.tours);
   // Où sont les mains (depuis le sol), pour y accrocher le baluchon

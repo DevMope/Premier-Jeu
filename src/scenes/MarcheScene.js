@@ -88,7 +88,7 @@ class MarcheScene extends Phaser.Scene {
     else {
       const avant = this.children.list.length;
       this.add.image(1410, 252, 'auventJeux').setOrigin(0.5, 1).setScale(2);
-      this.add.text(1410, 82, '🎲 JEUX 🎲', style(13, '#ffe9a0', { fontStyle: 'bold', stroke: '#2a1040', strokeThickness: 4 })).setOrigin(0.5);
+      this.add.text(1410, 82, 'JEUX', style(13, '#ffe9a0', { fontStyle: 'bold', stroke: '#2a1040', strokeThickness: 4 })).setOrigin(0.5);
       imageCorps(this, 1410, 230, 'gobelin', 4.5);
       this.add.image(1410, 250, 'tableJeux').setOrigin(0.5, 1).setScale(2);
       this.etiquettesRue.push(this.add.text(1410, 262, 'Le coin des jeux', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
@@ -136,7 +136,7 @@ class MarcheScene extends Phaser.Scene {
       // Une bulle qui sort de la bouche du crieur (dans la vue d'ensemble)
       const arc = this.arcVue(1600);
       const cx = VUE_MARCHE.x + 1590 * VUE_MARCHE.echelle, cy = VUE_MARCHE.y + (250 + arc.dy - 100 * arc.echelle) * VUE_MARCHE.echelle;
-      const texte = this.add.text(cx - 24, cy - 34, '📯 « Oyez, oyez ! ' + G.gazette.lignes[0] + ' »', style(13, '#3b2410', {
+      const texte = this.add.text(cx - 24, cy - 34, '« Oyez, oyez ! ' + G.gazette.lignes[0] + ' »', style(13, '#3b2410', {
         fontStyle: 'italic', backgroundColor: '#f6ead0', padding: { x: 8, y: 6 }, wordWrap: { width: 300 } })).setOrigin(1, 1).setDepth(6);
       const queue = this.add.triangle(0, 0, 0, 0, 14, 0, 22, 30, 0xf6ead0).setOrigin(0).setPosition(cx - 38, cy - 35).setDepth(6);
       this.bulleCrieur = this.add.container(0, 0, [texte, queue]).setDepth(6);
@@ -461,7 +461,7 @@ class MarcheScene extends Phaser.Scene {
     const ordre = Object.entries(this.positions).sort((a, b) => a[1][0] - b[1][0]);
     for (const [rang, [cle, [x, type]]] of ordre.entries()) {
       const ferme = type !== 'etal' && !lieuOuvert(this.G, cle);
-      const nom = type === 'etal' ? MARCHANDS[cle].nom : ferme ? `${noms[cle]}\n(en travaux)` : noms[cle];
+      const nom = type === 'etal' ? MARCHANDS[cle].nom : ferme ? 'En travaux' : noms[cle];   // (v0.68 : pas de nom avant l'ouverture)
       const t = this.add.text(ox + x * echelle, oy + (250 + this.arcVue(x).dy) * echelle + 6 + (rang % 2) * 34, nom, style(12, ferme ? '#c9b48a' : '#fff4dc', { fontStyle: ferme ? 'italic' : 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 92 }, lineSpacing: -2 }))
         .setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
       t.on('pointerdown', ferme ? () => this.message(`${noms[cle]} ${ouvrePluriel(cle)} le jour ${OUVERTURE_LIEUX[cle]}.`) : type === 'etal' ? () => this.ouvrirEtal(cle) : ouvrir[cle]);
@@ -511,7 +511,9 @@ class MarcheScene extends Phaser.Scene {
     for (const a of actifs) phrases.push(`Tu as entendu ? ${a} On ne parle que de ça !`);
     if (G.argent > 400) phrases.push("On dit que tu roules sur l'or, toi. Tu ne voudrais pas m'acheter un âne ?");
     if ((G.prets || []).length) phrases.push("Les banquiers nains t'ont dans le collimateur, à ce qu'on raconte. Fais attention à tes poches.");
-    const texte = Phaser.Utils.Array.GetRandom(phrases);
+    // (v0.68) de temps en temps, une rumeur sur un chantier de la place (un indice, jamais le nom)
+    const chantiers = Object.keys(RUMEURS_CHANTIER).filter(k => !lieuOuvert(G, k));
+    const texte = chantiers.length && Math.random() < 0.25 ? Phaser.Utils.Array.GetRandom(RUMEURS_CHANTIER[Phaser.Utils.Array.GetRandom(chantiers)]) : Phaser.Utils.Array.GetRandom(phrases);
     // il s'arrête, se tourne vers toi, parle, puis reprend sa route
     const tw = this.tweens.getTweensOf(p); tw.forEach(t => t.pause());
     if (p.marche) p.marche.paused = true;
@@ -578,7 +580,7 @@ class MarcheScene extends Phaser.Scene {
   // l'ouverture, quelques planches et un tonneau par terre. On ne peut qu'y lire l'écriteau.
   creerChantier(x, cle) {
     const avant = this.children.list.length;
-    const jour = OUVERTURE_LIEUX[cle], nom = NOMS_LIEUX_MARCHE[cle];
+    const jour = OUVERTURE_LIEUX[cle];
     const g = this.add.graphics();
     g.fillStyle(0x4a3018).fillRect(x - 74, 100, 8, 150).fillRect(x + 66, 100, 8, 150);
     g.fillStyle(0x6a4a28).fillRect(x - 72, 100, 4, 150).fillRect(x + 68, 100, 4, 150);
@@ -591,10 +593,11 @@ class MarcheScene extends Phaser.Scene {
     // L'écriteau cloué en travers
     this.add.image(x, 176, panneauHD(this, 150, 54, 'ardoise')).setScale(1.2).setAngle(-4);
     this.add.text(x, 166, 'EN TRAVAUX', style(13, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5).setAngle(-4);
-    this.add.text(x, 184, `${nom}\n${ouvrePluriel(cle)} le jour ${jour}`, style(10, '#e8d4a8', { align: 'center' })).setOrigin(0.5).setAngle(-4);
+    // (v0.68) pas de nom avant l'ouverture : la surprise reste entière
+    this.add.text(x, 184, `Ouverture le jour ${jour}`, style(10, '#e8d4a8', { align: 'center' })).setOrigin(0.5).setAngle(-4);
     this.etiquettesRue.push(this.add.text(x, 262, 'En travaux', style(13, '#c9b48a', { fontStyle: 'bold italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
     const zone = this.add.rectangle(x, 170, 160, 160, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    zone.on('pointerdown', () => { Son.jouer('marteau'); this.message(`${nom} ${/^Les /.test(nom) ? 'sont' : 'est'} en travaux : ouverture le jour ${jour}. ${jour - this.G.jour === 1 ? "C'est pour demain !" : `Encore ${jour - this.G.jour} jours de patience.`}`); });
+    zone.on('pointerdown', () => { Son.jouer('marteau'); this.message(`Des ouvriers s'activent derrière les planches. Qu'est-ce qui ouvrira ici ? Personne ne le sait vraiment... Ouverture le jour ${jour}. ${jour - this.G.jour === 1 ? "C'est pour demain !" : `Encore ${jour - this.G.jour} jours de patience.`}`); });
     this.grouper(avant, x);
   }
 
@@ -748,7 +751,7 @@ class MarcheScene extends Phaser.Scene {
     // (v0.58) Un vrai étal, rangé : deux poteaux, l'auvent rayé, le mur de planches du fond avec
     // ses deux étagères, une tringle où pend la marchandise, le marchand debout derrière son
     // comptoir, le comptoir drapé à ses couleurs, et ce qu'on garde au sol de chaque côté.
-    propsVitrineHD(this); decorsEtalsHD(this); creerDecorPlaceHD(this);
+    propsVitrineHD(this); decorsEtalsHD(this); creerDecorPlaceHD(this); creerHalo(this);
     c.add(this.add.image(480, 270, fondVitrineHD(this)).setScale(2));
     for (const [x, l] of [[50, 100], [910, 100]]) c.add(this.add.rectangle(x, 230, l, 470, 0x0a0604, 0.45));
     const etal = etalHD(this, m.couleur);
@@ -773,6 +776,8 @@ class MarcheScene extends Phaser.Scene {
     [[deco.haut, 214, 40], [deco.bas, 290, 44]].forEach(([liste, y, h]) => {
       [190, 270, 350, 610, 690, 770].forEach((x, i) => poser(liste[i % liste.length], x, y, h, x > 480));
     });
+    // (v0.68) le fond s'assombrit un peu : la marchandise ressort mieux
+    c.add(this.add.rectangle(480, 190, 960, 300, 0x120a04, 0.28));
     // le marchand, debout derrière son comptoir
     const personne = { nom: m.nom, race: m.race, feminin: /Mère|Hilda|Rosalie/.test(m.nom) };
     c.add(this.add.image(480, 334, textureBusteHD(this, personne, 'content')).setOrigin(0.5, 1).setScale(1.9));
@@ -792,13 +797,20 @@ class MarcheScene extends Phaser.Scene {
     ids.forEach((id, i) => {
       const x = 480 + (i - (ids.length - 1) / 2) * pas, o = offre[id], prix = prixMarchand(G, cle, id);
       const groupe = [];
+      // (v0.68) une lueur chaude derrière chaque article, et son ombre sous la cagette : il se détache du décor
+      c.add(this.add.ellipse(x, 348, pas * 0.7, 12, 0x000000, 0.35));
+      c.add(this.add.image(x, 312, 'halo').setScale(1.15).setTint(0xfff0c0).setAlpha(0.5).setBlendMode(Phaser.BlendModes.ADD));
       c.add(this.add.image(x, 346, 'cagetteHD').setOrigin(0.5, 1).setScale(2.6));
       for (let k = 0; k < Math.min(3, Math.ceil(o.qte / 2)); k++) groupe.push(this.add.image(x - 10 + k * 10, 334 - k * 5, iconeObjet(this, id)).setOrigin(0.5, 1).setScale(3.6).setAngle((k - 1) * 6));
       // l'étiquette pend du plateau, au bout d'une ficelle
       c.add(this.add.rectangle(x, 360, 2, 22, 0x3b2410));
       const etiquette = this.add.image(x, 384, panneauHD(this, 64, 30)).setScale(1.5).setAngle(3);
       const texte = this.add.text(x, 384, `${prix} p.`, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5).setAngle(3);
-      const nom = this.add.text(x, 424, `${nomObjet(id)} × ${o.qte}`, style(12, '#fff4dc', { align: 'center', stroke: '#1a0e06', strokeThickness: 3, wordWrap: { width: pas - 6 } })).setOrigin(0.5, 0);
+      const serre = pas < 95;
+      const nom = this.add.text(x, 418, serre ? nomObjet(id) : `${nomObjet(id)} × ${o.qte}`, style(serre ? 11 : 12, '#fff4dc', { align: 'center', stroke: '#1a0e06', strokeThickness: 3, wordWrap: { width: pas - 4 } })).setOrigin(0.5, 0);
+      // (v0.68) ce que tu en as déjà, juste dessous
+      const aDeja = id in MATERIAUX ? G.materiaux[id] || 0 : G.stock[id] || 0;
+      c.add(this.add.text(x, 419 + nom.height, serre ? `× ${o.qte}\nà toi : ${aDeja}` : `tu en as ${aDeja}`, style(11, aDeja ? '#b8e090' : '#c9b48a', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3, align: 'center' })).setOrigin(0.5, 0));
       const zone = this.add.rectangle(x, 360, pas - 8, 170, 0xffffff, 0).setInteractive({ useHandCursor: true });
       zone.on('pointerover', () => groupe.forEach(g => g.setScale(4))); zone.on('pointerout', () => groupe.forEach(g => g.setScale(3.6)));
       zone.on('pointerdown', () => {
@@ -815,6 +827,22 @@ class MarcheScene extends Phaser.Scene {
     if (!ids.length) c.add(this.add.text(480, 390, 'Les cagettes sont vides...', style(16, '#c9b48a', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
     const b = creerBouton(this, 836, 46, 200, '◀ Reculer', fermer);
     c.add([b.fond, b.label]);
+    // (v0.68) ta bourse, en haut à gauche
+    c.add(bourse(this, 44, 70, G.argent, { echelle: 1.6, taille: 16, aDroite: true }));
+    // (v0.68) des flèches pour passer d'un étal à l'autre sans reculer (et ◀ ▶ au clavier)
+    const cles = Object.keys(MARCHANDS), i0 = cles.indexOf(cle);
+    const aller = sens => { const suivant = cles[(i0 + sens + cles.length) % cles.length]; Son.jouer('glisse'); this.ouvrirEtal(suivant); this.vitrine(suivant); };
+    for (const sens of [-1, 1]) {
+      const voisin = MARCHANDS[cles[(i0 + sens + cles.length) % cles.length]];
+      const f = creerBouton(this, sens < 0 ? 44 : 916, 250, 64, sens < 0 ? '◀' : '▶', () => aller(sens));
+      const nomVoisin = this.add.text(sens < 0 ? 44 : 916, 284, voisin.metier, style(11, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3, align: 'center', wordWrap: { width: 90 } })).setOrigin(0.5, 0);
+      c.add([f.fond, f.label, nomVoisin]);
+    }
+    if (this.input.keyboard) {
+      const touche = e => { if (!c.active) return; if (e.key === 'ArrowLeft') aller(-1); else if (e.key === 'ArrowRight') aller(1); };
+      this.input.keyboard.on('keydown', touche);
+      c.once('destroy', () => this.input.keyboard && this.input.keyboard.off('keydown', touche));
+    }
     c.add(this.add.text(480, 505, 'Clique sur un article pour l\'acheter', style(12, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
   }
 
@@ -849,7 +877,9 @@ class MarcheScene extends Phaser.Scene {
       c.add(this.add.text(x + (k3 ? 210 : 300), y, o.qte > 0 ? (k3 ? `×${o.qte}` : `${o.qte} en vente`) : 'Épuisé', style(k3 ? 11 : 12, o.qte > 0 ? '#4a6a2a' : '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
     });
     // (v0.58) on n'achète plus d'ici : on s'approche de l'étal pour choisir sur la marchandise
-    this.bouton(c, 800, 446, 220, '🔍 Voir l\'étal de près', () => this.vitrine(cle), 0x4f7a3a);
+    // (v0.68) une vraie plaque de bois, comme les autres boutons du jeu
+    const pres = creerBouton(this, 800, 446, 240, "Voir l'étal de près ▸", () => this.vitrine(cle));
+    c.add([pres.fond, pres.label]);
   }
 
   // --- Les enchères : on choisit jusqu'à 3 objets, qui forment un lot ---
@@ -963,10 +993,17 @@ class MarcheScene extends Phaser.Scene {
     c.add(this.add.rectangle(480, 200, 960, 400, 0x0a0604, 0.2));
     const rayon = this.add.triangle(0, 0, 300, 0, 420, 0, 640, 540, 0xfff0c0, 0.08).setOrigin(0).setBlendMode(Phaser.BlendModes.ADD); c.add(rayon);
     c.add(this.add.image(250, 500, 'tonneauxHD').setOrigin(0.5, 1).setScale(3.4).setTint(0xb0a090));
+    creerIconesHD(this);
     const personne = { nom: 'Le mendiant', race: 'humain', figurant: 'mendiant', vieux: true };
-    const humeur = G.mendiant >= MENDIANT_SEUIL ? 'content' : 'neutre';
-    const buste = this.add.image(400, 470, textureBusteHD(this, personne, humeur)).setOrigin(0.5, 1).setScale(2.6); c.add(buste);
-    this.tweens.add({ targets: buste, scaleY: 2.63, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // il respire
+    // (v0.68) de près, on le voit en entier, debout contre son tonneau et appuyé sur son bâton
+    // (son buste seul avait l'air de flotter)
+    const corps = imageCorps(this, 400, 506, 'mendiant', 1);
+    const echelle = 360 / corps.height;
+    corps.setScale(echelle); c.add(corps);
+    c.add(this.add.ellipse(400, 506, corps.displayWidth * 0.8, 14, 0x000000, 0.35));
+    c.bringToTop(corps);
+    this.tweens.add({ targets: corps, scaleY: echelle * 1.01, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // il respire
+    const buste = corps;
     // sa sébile ébréchée, et les quelques pièces dedans
     c.add(this.add.ellipse(520, 478, 54, 16, 0x5a4a3a).setStrokeStyle(2, 0x2a1a10));
     for (let k = 0; k < Math.min(6, Math.ceil((G.mendiant || 0) / 5)); k++) c.add(this.add.ellipse(506 + k * 6, 475 - (k % 2) * 2, 8, 4, 0xe8c040));
@@ -985,10 +1022,14 @@ class MarcheScene extends Phaser.Scene {
       const b = creerBouton(this, 150 + i * 170, 516, 150, `Donner ${n} p.`, () => {
         const merci = donnerAuMendiant(G, n);
         if (!merci) return this.message("Tu n'as pas assez d'argent.", '#a03030');
-        Son.jouer('pieces', { montant: n });
         this.majInfos();
-        bulle.setText(merci.startsWith('«') ? merci : `« ${merci} »`);
-        this.emotionSimple(400, 250, '♥');
+        // (v0.68) les pièces volent jusqu'à sa sébile, puis il pense à ce qu'il va en faire
+        voleePieces(this, 150 + i * 170, 500, 520, 474, n, { conteneur: c, fin: () => {
+          if (!c.active) return;
+          bulle.setText(merci.startsWith('«') ? merci : `« ${merci} »`);
+          const image = n >= 10 ? chienHD(this, 'profil', true) : n >= 5 ? 'hd_coeur' : iconeObjet(this, 'ration');
+          bullePensee(this, 430, buste.y - buste.displayHeight + 10, image, { conteneur: c, echelle: n >= 10 ? 0.9 : 2.6 });
+        } });
       });
       c.add([b.fond, b.label]);
     });
@@ -1024,7 +1065,8 @@ class MarcheScene extends Phaser.Scene {
           // la fête : il frétille de tout son corps
           this.tweens.add({ targets: chien, angle: { from: -4, to: 4 }, duration: 90, yoyo: true, repeat: 7, onComplete: () => {
             chien.setAngle(0);
-            this.emotionSimple(chien.x, chien.y - chien.displayHeight - 10, '♥');
+            creerIconesHD(this);
+            bullePensee(this, chien.x - 20, chien.y - chien.displayHeight - 4, iconeObjet(this, 'ration'), { conteneur: c, echelle: 2.6, cote: -1 });   // (v0.68) il rêve déjà de la prochaine
             this.chienMange = false;
             bulle.setText(quoi.startsWith('«') ? quoi : `${quoi}`);
           } });
@@ -1148,7 +1190,7 @@ class MarcheScene extends Phaser.Scene {
     const c = this.panneau('Le crieur', 'Les nouvelles du jour, vraies ou presque');
     const lignes = G.gazette && G.gazette.jour === G.jour ? G.gazette.lignes : ['Rien de neuf aujourd\'hui. Le crieur s\'ennuie.'];
     const actifs = evenementsActifs(G).map(e => EVENEMENTS[e.id].nouvelle);
-    c.add(this.add.text(30, 344, ['📯 Oyez, oyez !', ...lignes.map(l => '• ' + l),
+    c.add(this.add.text(30, 344, ['Oyez, oyez !', ...lignes.map(l => '• ' + l),
       ...(actifs.length ? ['', 'En ce moment : ' + actifs.join(' · ')] : [])].join('\n'),
       style(13, '#3b2410', { wordWrap: { width: 890 }, lineSpacing: 4 })));
   }

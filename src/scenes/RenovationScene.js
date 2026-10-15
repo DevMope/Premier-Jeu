@@ -275,7 +275,8 @@ class RenovationScene extends Cinematique {
     this.majConsigne();
     const boite = [this.boite, this.entete, this.texte, this.indice];
     boite.forEach(o => o.setVisible(false));
-    this.bulle.setText(`${this.entete.text} : ${this.texte.text}`).setVisible(true);
+    if (this.defile) this.defile.finir();
+    this.bulle.setText(`${this.entete.text} : ${this.texteComplet ?? this.texte.text}`).setVisible(true);
     // Les endroits encore sales clignotent doucement, pour aider à les trouver
     // Chaque endroit à nettoyer est entouré d'un cadre doré qui pulse, avec un petit balai
     for (const e of this.endroits[lieu]) {
@@ -284,7 +285,8 @@ class RenovationScene extends Cinematique {
       const cadre = this.add.graphics();
       cadre.lineStyle(4, 0x1a0e06, 0.6).strokeRoundedRect(zx + 2, zy + 2, zl - 4, zh - 4, 8);
       cadre.lineStyle(2, 0xffd860, 1).strokeRoundedRect(zx + 2, zy + 2, zl - 4, zh - 4, 8);
-      const balai = this.add.text(zx + zl / 2, zy + Math.min(zh / 2, 40), '🧹', style(26, '#ffffff')).setOrigin(0.5);
+      creerGlyphesHD(this);
+      const balai = this.add.image(zx + zl / 2, zy + Math.min(zh / 2, 40), 'glyphe_balai').setScale(2.6);
       const nom = this.add.text(zx + zl / 2, zy + Math.min(zh / 2, 40) + 26, e.nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5);
       c.add([cadre, balai, nom]);
       this.tweens.add({ targets: cadre, alpha: 0.35, duration: 650, yoyo: true, repeat: -1 });
@@ -421,8 +423,11 @@ class RenovationScene extends Cinematique {
     this.onomatopee(2880 + 520, 160, 'TADAAA !', '#f3d98a');
     this.geste(this.heros, 'saut'); this.emotion(this.heros, '♥');
     this.time.delayedCall(900, () => { this.regarderVers(this.garrick, this.heros); this.regarderVers(this.heros, this.garrick); Son.jouer('voix', { personne: { nom: 'Garrick', race: 'humain' }, ton: 'content', duree: 1.6 }); this.emotion(this.garrick, 'joie'); });
-    // (Garrick parle dans la bulle du haut : la boîte du bas cacherait les deux fiers rénovateurs)
-    this.bulle.setText(`Garrick Cœur-de-Chêne : « Magnifique ! “${G.nomShop}” est prêt à ouvrir. Demain, je reste avec toi pour ta première journée : je te montrerai tout. »`).setVisible(true);
+    // (Garrick parle dans la boîte de dialogue habituelle, en haut : en bas, elle cacherait les deux
+    // fiers rénovateurs ; v0.68 : plus de bulle d'un autre style)
+    this.boiteEnHaut(true);
+    [this.boite, this.entete, this.texte].forEach(o => o.setVisible(true));
+    this.ecrire('Garrick Cœur-de-Chêne', `« Magnifique ! “${G.nomShop}” est prêt à ouvrir. Demain, je reste avec toi pour ta première journée : je te montrerai tout. »`);
     await this.attendreSuite('▶ Clique pour commencer');
     this.finir();
   }

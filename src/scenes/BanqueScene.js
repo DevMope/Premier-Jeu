@@ -7,6 +7,9 @@ class BanqueScene extends Phaser.Scene {
   create() {
     this.time.delayedCall(500, () => conseilGarrick(this, 'banque', true));
     const G = this.G = window.GAME;
+    // (v0.68) ouverte depuis la rue (de jour ou le soir) : elle passe devant, sinon la rue la cacherait
+    const retour = this.sys.settings.data && this.sys.settings.data.retour;
+    if (retour) this.scene.moveAbove(retour);
     this.cameras.main.setBackgroundColor('#2a2a30');
 
     // Murs de pierre

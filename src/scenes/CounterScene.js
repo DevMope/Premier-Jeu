@@ -297,18 +297,18 @@ class CounterScene extends Phaser.Scene {
     this.partirPar(FENETRE.x - 80);
   }
 
-  texturePour(entree) {
+  texturePour(entree, pose = null) {
     if (entree.type === 'faucheuse') return 'perso_faucheuse';
-    if (entree.type === 'famille') return corpsHD(this, entree.visite.parent);
-    if (entree.type === 'notable') { const p = this.personneDe(entree); return corpsHD(this, p.figurant || p); }
-    if (entree.type === 'colporteur') return corpsHD(this, 'colporteur');
-    if (entree.type === 'garde') return corpsHD(this, GARDE.capitaine);
-    if (entree.type === 'garrick') return corpsHD(this, 'mentor');
-    if (entree.type === 'collecteur') return corpsHD(this, collecteurDe(this.G));
-    if (entree.type === 'serpent') return corpsHD(this, CHEFS_SERPENT[0]);
-    if (entree.type === 'aine') return corpsHD(this, personneAine(entree.race));
+    if (entree.type === 'famille') return corpsHD(this, entree.visite.parent, pose);
+    if (entree.type === 'notable') { const p = this.personneDe(entree); return corpsHD(this, p.figurant || p, pose); }
+    if (entree.type === 'colporteur') return corpsHD(this, 'colporteur', pose);
+    if (entree.type === 'garde') return corpsHD(this, GARDE.capitaine, pose);
+    if (entree.type === 'garrick') return corpsHD(this, 'mentor', pose);
+    if (entree.type === 'collecteur') return corpsHD(this, collecteurDe(this.G), pose);
+    if (entree.type === 'serpent') return corpsHD(this, CHEFS_SERPENT[0], pose);
+    if (entree.type === 'aine') return corpsHD(this, personneAine(entree.race), pose);
     const v = entree.type === 'client' ? entree.voyageur : entree.parti.voyageur;
-    return corpsHD(this, v);
+    return corpsHD(this, v, pose);
   }
 
   majFileAttente() {
@@ -342,7 +342,7 @@ class CounterScene extends Phaser.Scene {
     const v = a.voyageur;
     this.dire(`« Je passerai à ton comptoir le jour ${a.jour}. Je pars : ${(t => t.charAt(0).toLowerCase() + t.slice(1))(v.quete)}. ` +
       `Prépare-moi s'il te plaît : ${commandeEnTexte(v)}. » — ${v.nom}` +
-      (a.acceptee ? ' (Tu as accepté.)' : ' (Pas encore répondu : accepte ou refuse ce soir.)'), '✉ Lettre de ' + v.nom);
+      (a.acceptee ? ' (Tu as accepté.)' : ' (Pas encore répondu : accepte ou refuse ce soir.)'), 'Lettre de ' + v.nom);
   }
 
   creerCommande() {
@@ -375,6 +375,8 @@ class CounterScene extends Phaser.Scene {
     // Le panneau des dialogues : à gauche le nom sur sa plaque (et la relation dessous),
     // à droite la parole, à l'encre, centrée dans la hauteur.
     this.fondDialogue = this.add.image(480, 298, 'parcheminDialogue').setScale(2);
+    // (v0.68) un clic n'importe où affiche d'un coup la phrase en train de s'écrire
+    this.input.on('pointerdown', () => { if (this.defileDialogue) this.defileDialogue.finir(); });
     this.plaqueNom = this.add.image(133, 288, plaqueBouton(this, 196)).setScale(2);
     this.nomParleur = this.add.text(133, 288, '', style(15, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
     this.sousNom = this.add.text(133, 321, '', style(12, '#5a4028', { fontStyle: 'italic bold' })).setOrigin(0.5);
@@ -487,7 +489,7 @@ class CounterScene extends Phaser.Scene {
     if (!this.tiroirCadeaux) return;
     const n = Object.values(this.G.cadeaux || {}).reduce((a, b) => a + b, 0);
     this.tiroirCadeaux.fond.setVisible(n > 0);
-    this.tiroirCadeaux.texte.setVisible(n > 0).setText(`🎁 Cadeaux\n(${n})`);
+    this.tiroirCadeaux.texte.setVisible(n > 0).setText(`Cadeaux\n(${n})`);
     if (!n && this.panneauCadeaux) { this.panneauCadeaux.destroy(); this.panneauCadeaux = null; }
   }
 
@@ -539,7 +541,7 @@ class CounterScene extends Phaser.Scene {
     const n = Object.values(this.G.pieges).reduce((a, b) => a + b, 0);
     const visible = n > 0 || Object.values(this.pieges || {}).some(k => k > 0);
     this.tiroirSecret.fond.setVisible(visible);
-    this.tiroirSecret.texte.setVisible(visible).setText(`☠ Tiroir secret (${n})`);
+    this.tiroirSecret.texte.setVisible(visible).setText(`Tiroir secret (${n})`);
     if (!visible && this.panneauSecret) { this.panneauSecret.destroy(); this.panneauSecret = null; }
   }
 
@@ -701,7 +703,7 @@ class CounterScene extends Phaser.Scene {
       colporteur: `Alors c'est ici, le fameux comptoir ? On en parle sur tous les chemins ! « ${p.nom} », rien que ça ! Bravo. Je passerai te voir avec ma charrette.`,
       legende: `On m'avait parlé de toi, ${nomJoueur(G, 'petit')}. « ${p.nom} », tenu par quelqu'un de si jeune... J'ai voulu voir ça de mes yeux. Je ne suis pas déçue.`,
     }[p.visiteur];
-    this.titreCommande.setFontSize(17).setText('⭐ Un visiteur notable');
+    this.titreCommande.setFontSize(17).setText('Un visiteur notable');
     Son.jouer('fanfare');
     this.dire(bonjour, qui);
     this.exprimer('content');
@@ -943,7 +945,7 @@ class CounterScene extends Phaser.Scene {
       // Un client prestigieux vérifie d'abord que tu es à la hauteur
       if (v.prestige && !entree.attentes) {
         const refus = refusPrestige(this.G, v);
-        this.titreCommande.setFontSize(17).setText('👑 Un client prestigieux');
+        this.titreCommande.setFontSize(17).setText('Un client prestigieux');
         if (refus) {
           this.exprimer('fache');
           this.dire(`${refus} (réputation −${String(PERTE_PRESTIGE).replace('.', ',')})`, this.nomAvecRelation(v.nom), v.nom);
@@ -1432,31 +1434,42 @@ class CounterScene extends Phaser.Scene {
       if (!this.buste) return;
       this.buste = null;
       if (this.paroles) { this.paroles.remove(); this.paroles = null; this.enTrainDeParler = false; }
-      if (entree) this.perso.setTexture(this.texturePour(entree));
-      this.perso.setScale(9 * echelleCorps(this.perso.texture.key)).setY(SOL_COMPTOIR).setFlipX(!versDroite);   // (les corps regardent vers la droite : il fait face à sa route)
+      // (v0.68) avec un baluchon, il le tient par le bâton, sur l'épaule (une pose à part)
+      if (entree) this.perso.setTexture(this.texturePour(entree, porte && entree.type !== 'faucheuse' ? 'baluchon' : null));
+      const echelle = 9 * echelleCorps(this.perso.texture.key);
+      this.perso.setScale(echelle).setY(SOL_COMPTOIR).setFlipX(!versDroite);   // (les corps regardent vers la droite : il fait face à sa route)
+      // il se retourne : un demi-tour rapide (l'image s'amincit puis revient)
+      this.perso.scaleX = echelle * 0.1;
+      this.tweens.add({ targets: this.perso, scaleX: echelle, duration: 140, ease: 'Quad.easeOut' });
+      if (porte) {
+        // la poche seule pend au bout du bâton, dans son dos (le bâton est dans sa main)
+        porte.setTexture(porte.texture.key.replace('baluchon_', 'poche_')).setOrigin(17.5 / 52, 9 / 48).setAngle(0).setFlipX(!versDroite).setDepth(this.perso.depth - 0.05);
+        porte.echelleDepart *= 0.82; porte.setScale(porte.echelleDepart);   // (sans le bâton, la poche paraît plus grosse : on la ramène à sa taille)
+        if (!versDroite) porte.setOrigin(1 - 17.5 / 52, 9 / 48);
+      }
     };
     if (!this.buste) this.perso.setFlipX(!versDroite);
-    // (v0.58) Le bâton sur l'épaule : on tient le bout devant soi, à hauteur de poitrine, le
-    // bâton repose sur l'épaule et la poche pend dans le dos. (Le bâton du dessin monte à 47° ;
-    // on le couche un peu, vers 30°.)
+    // (v0.68) La poche pend au bout du bâton que le client tient sur l'épaule : elle suit sa marche
+    // (elle rebondit à chaque pas) et se balance comme un pendule, avec un temps de retard.
     const sens = versDroite ? 1 : -1;
-    const inclinaison = versDroite ? -17 : 17;
     let balance = false, debutMarche = 0;
     const placer = () => {
-      const h = this.perso.displayHeight, l = this.perso.displayWidth;
+      if (!porte || !porte.active) return;
+      const cle = this.perso.texture.key.replace(/_pas[12]$/, ''), b = BOUTS_CORPS[cle];
       const t = balance ? this.time.now - debutMarche : 0;
-      // calé sur les pas (un pas toutes les 250 ms) : il rebondit à chaque pas, et balance comme
-      // un pendule, avec un temps de retard sur la marche
       const phase = t / 500 * Math.PI * 2;
-      const swing = balance ? Math.sin(phase - 0.9) * 6 * Math.min(1, t / 300) : 0;
-      const rebond = balance ? Math.abs(Math.sin(phase)) * 3 : 0;
-      porte.setPosition(this.perso.x + sens * l * 0.2, this.perso.y - h * 0.6 - rebond)
-        .setAngle(inclinaison + this.perso.angle + sens * swing);
+      const swing = balance ? Math.sin(phase - 0.9) * 9 * Math.min(1, t / 300) : 0;
+      if (!b) {   // (sans bâton dessiné : comme avant, posé sur l'épaule)
+        porte.setPosition(this.perso.x - sens * this.perso.displayWidth * 0.15, this.perso.y - this.perso.displayHeight * 0.62).setAngle(swing);
+        return;
+      }
+      const src = this.textures.get(cle).getSourceImage();
+      const ax = (b[0] - src.width / 2) * Math.abs(this.perso.scaleX) * sens, ay = (b[1] - src.height) * this.perso.scaleY;
+      const a = Phaser.Math.DegToRad(this.perso.angle);
+      porte.setPosition(this.perso.x + ax * Math.cos(a) - ay * Math.sin(a), this.perso.y + ax * Math.sin(a) + ay * Math.cos(a)).setAngle(swing * sens);
     };
-    if (porte) {
-      porte.setFlipX(!versDroite).setOrigin(versDroite ? 0.96 : 0.04, 0.96).setDepth(2.1);
-      placer();
-    }
+    // (tant qu'il est en buste, il garde le baluchon dans sa main : on ne le déplace qu'une fois retourné)
+    if (porte) porte.setDepth(2.1);
     const partir = () => this.tweens.add({
       targets: this.perso, x, duration: porte ? 1900 : 1400, ease: 'Sine.easeIn',
       onStart: () => { balance = true; debutMarche = this.time.now; this.marche(porte ? 1900 : 1400); },
@@ -1480,7 +1493,11 @@ class CounterScene extends Phaser.Scene {
     this.time.delayedCall(500, () => {
       corps();
       placer();
-      const salut = this.add.text(this.perso.x + (versDroite ? -30 : 30), this.perso.y - this.perso.displayHeight - 6, '👋', style(26, '#ffffff')).setOrigin(0.5).setDepth(6);
+      this.events.on('update', placer);
+      this.events.once('shutdown', () => this.events.off('update', placer));
+      porte.once('destroy', () => this.events.off('update', placer));
+      creerGlyphesHD(this);
+      const salut = this.add.image(this.perso.x + (versDroite ? -30 : 30), this.perso.y - this.perso.displayHeight - 6, 'glyphe_main').setScale(2.6).setOrigin(0.5, 1).setDepth(6);
       this.tweens.add({ targets: salut, angle: { from: -25, to: 25 }, duration: 140, yoyo: true, repeat: 3 });
       this.tweens.add({ targets: salut, alpha: 0, y: salut.y - 16, delay: 800, duration: 300, onComplete: () => salut.destroy() });
       this.tweens.add({ targets: this.perso, y: SOL_COMPTOIR - 16, duration: 150, yoyo: true, ease: 'Quad.easeOut', onUpdate: placer, onComplete: () => this.time.delayedCall(450, partir) });
@@ -1519,10 +1536,11 @@ class CounterScene extends Phaser.Scene {
       // ... et le client le prend.
       this.time.delayedCall(700, () => {
         // ... et le client le hisse sur son épaule.
-        boite.setOrigin(0.95, 0.95).setPosition(boite.x + boite.displayWidth * 0.45, boite.y);
+        // (v0.68) il le saisit par le bâton et le lève à côté de lui, la poche du côté libre
+        boite.setFlipX(true).setOrigin(0.05, 0.95).setPosition(boite.x - boite.displayWidth * 0.45, boite.y);
         this.tweens.add({
-          // Sur l'épaule (en buste, l'épaule est plus bas et plus à droite)
-          targets: boite, x: this.perso.x + (this.buste ? 78 : 22), y: this.perso.y - (this.buste ? 34 : 62), angle: -22, duration: 400, ease: 'Back.easeOut',
+          // (v0.68) dans sa main : le bout du bâton vient se loger dans la main du buste, devant lui
+          targets: boite, x: this.perso.x + (this.buste ? this.perso.displayWidth * 0.3 : 22), y: this.perso.y - (this.buste ? this.perso.displayHeight * 0.22 : 62), angle: 6, duration: 450, ease: 'Sine.easeInOut',
           onComplete: () => suite(boite),
         });
       });
@@ -1577,6 +1595,10 @@ class CounterScene extends Phaser.Scene {
     // Le texte rapetisse un peu s'il est long, pour toujours tenir dans le parchemin.
     this.texteDialogue.setText(texte).setFontSize(16);
     for (let taille = 15; this.texteDialogue.height > 70 && taille >= 12; taille--) this.texteDialogue.setFontSize(taille);
+    // (v0.68) puis il s'écrit lettre après lettre (un clic sur le parchemin l'affiche d'un coup) ; on
+    // le place d'après sa hauteur finale, pour qu'il ne remonte pas à chaque nouvelle ligne
+    this.texteDialogue.setOrigin(0, 0).setY(Math.round(298 - this.texteDialogue.height / 2));
+    this.defileDialogue = texteQuiDefile(this, this.texteDialogue, texte, { vitesse: 16 });
     if (qui && this.buste && this.buste.personne.nom === qui) this.parler(Math.min(2400, 400 + texte.length * 22));
   }
 
@@ -1639,7 +1661,7 @@ class CounterScene extends Phaser.Scene {
 
     this.lignesLettres.forEach((t, i) => {
       const a = this.G.annonces[i];
-      t.setText(a ? tenir(`✉ Jour ${a.jour} · `, a.voyageur.nom, a.acceptee ? '' : ' (à répondre)') : (i === 0 ? 'Aucune lettre' : ''));
+      t.setText(a ? tenir(`Jour ${a.jour} · `, a.voyageur.nom, a.acceptee ? '' : ' (à répondre)') : (i === 0 ? 'Aucune lettre' : ''));
     });
   }
 
@@ -1671,7 +1693,7 @@ class CounterScene extends Phaser.Scene {
     const plus = v ? surplus(v, this.colis) : {};
     // La commande, puis les soins donnés en plus.
     const ids = [...Object.keys(commande), ...Object.keys(plus).filter(id => !commande[id])];
-    const cible = v && estCible(this.G, v) ? '☠ ' : '';
+    const cible = v && estCible(this.G, v) ? '(ta cible) ' : '';
     if (v) {
       this.titreCommande.setText(cible + v.nom).setFontSize(17);
       for (let taille = 16; this.titreCommande.width > 235 && taille >= 12; taille--) this.titreCommande.setFontSize(taille);
@@ -1679,8 +1701,8 @@ class CounterScene extends Phaser.Scene {
     this.sousTitre.setText(v ? (v.queteId ? `→ ${ZONES[v.zone].nom}` : "cherche l'aventure") : '');
     this.texteSac.setText(v ? (v.queteId ? `Sac : ${totalSurplus(v, this.colis)} / ${tailleSac(v)} en plus` +
       (coeursEnPlus(v, this.colis) ? ` · +${coeursEnPlus(v, this.colis)} cœur${coeursEnPlus(v, this.colis) > 1 ? 's' : ''}` : '') +
-      (bandagesEnPlus(v, this.colis) ? ` · 🩹${bandagesEnPlus(v, this.colis)}` : '') + ' · ' : '') +
-      `🍀 ${trefleDe(this.G, v.nom)}/${TREFLE_MAX} · ${NIVEAUX_AVENTURIER[v.niveau].nom}` : '');
+      (bandagesEnPlus(v, this.colis) ? ` · +${bandagesEnPlus(v, this.colis)} bandage${bandagesEnPlus(v, this.colis) > 1 ? 's' : ''}` : '') + ' · ' : '') +
+      `trèfle ${trefleDe(this.G, v.nom)}/${TREFLE_MAX} · ${NIVEAUX_AVENTURIER[v.niveau].nom}` : '');
     this.lignesCommande.forEach((ligne, i) => {
       let id = ids[i];
       // (v0.63) la ligne de l'arme : n'importe quelle arme la remplit ; on montre celle qu'il emporte
@@ -1725,7 +1747,7 @@ class CounterScene extends Phaser.Scene {
         return;
       }
       const ok = donne >= commande[id];
-      const piege = this.pieges && this.pieges[id] ? `  ☠${this.pieges[id] > 1 ? this.pieges[id] : ''}` : '';
+      const piege = this.pieges && this.pieges[id] ? `  (piégé${this.pieges[id] > 1 ? ' ×' + this.pieges[id] : ''})` : '';
       ligne.txt.setText(`${ITEMS[id].nom}  ${Math.min(donne, commande[id])} / ${commande[id]}  ${ok ? '✓' : ''}${plus[id] ? ` +${plus[id]}` : ''}${piege}`)
         .setFontSize(14).setColor(piege ? '#7a1a4a' : ok ? '#2f6a2a' : '#3b2410');
     });
@@ -1743,7 +1765,7 @@ class CounterScene extends Phaser.Scene {
       const c = chanceEstimee(this.G, v, this.colis, this.pieges);
       const couleur = c >= 0.75 ? '#2f6a2a' : c >= 0.4 ? '#8a6a10' : '#a03030';
       const exact = niveauFlair(this.G) >= 1;
-      if (piegeFatal(v, this.pieges)) this.texteChance.setText('Chances de retour : aucune ☠').setColor('#7a1a4a');
+      if (piegeFatal(v, this.pieges)) this.texteChance.setText('Chances de retour : aucune').setColor('#7a1a4a');
       else this.texteChance.setText(`${exact ? 'Chances de retour' : 'Ton flair dit'} : ${exact ? '' : '~'}${Math.round(c * 100)} %`).setColor(couleur);
     } else {
       this.texteChance.setText('');

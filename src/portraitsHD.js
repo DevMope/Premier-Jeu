@@ -1253,6 +1253,7 @@ function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0, tenue =
     cheveux: ancien ? 0xb8b8c0 : APPARENCE.cheveux[ap.cheveux][1],
     habit: APPARENCE.haut[ap.haut][1],
     bas: APPARENCE.bas[ap.bas][1],
+    bottes: APPARENCE.bottes[ap.bottes ?? 0][1],
     cape: 0x5a2a2a,
     yeux: APPARENCE.yeux[ap.yeux][1],
     coiffure: ['court', 'long', 'boucles', 'herisse', 'chauve'][ap.coiffure] || 'court',

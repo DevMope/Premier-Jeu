@@ -7,7 +7,7 @@ const ONGLETS = [
   ['revenus', 'Revenus'], ['disparus', 'Disparus'], ['repertoire', 'Répertoire'],
 ];
 const FICHES_PAR_PAGE = 9;   // (v0.57 : un peu d'air entre les fiches)
-const TIROIRS = [['ameliorations', '🔨 Améliorer le comptoir'], ['competences', 'Tes compétences'], ['aventuriers', 'Chiffres des missions'], ['commerce', 'Le commerce'], ['reputation', 'Réputation et relations'], ['camps', 'Lumière et ombre'], ['etrange', '🌸 Choses étranges']];
+const TIROIRS = [['ameliorations', 'Améliorer le comptoir'], ['competences', 'Tes compétences'], ['aventuriers', 'Chiffres des missions'], ['commerce', 'Le commerce'], ['reputation', 'Réputation et relations'], ['camps', 'Lumière et ombre'], ['etrange', 'Choses étranges']];
 
 class BureauScene extends Phaser.Scene {
   constructor() { super('Bureau'); }
@@ -125,11 +125,11 @@ class BureauScene extends Phaser.Scene {
       case 'disparus':
         return G.historique.filter(h => (this.onglet === 'revenus') === ['vivant', 'echec'].includes(h.issue)).map(h => ({
           nom: h.nom, race: h.race,
-          ligne: h.issue === 'echec' ? `Jour ${h.retour} · mission ratée · ${h.quete}` : h.issue === 'vivant' ? `Jour ${h.retour} · +${h.gain} p. · ${h.quete}` : `Jour ${h.retour} · mort${(G.personnes[h.nom] || {}).feminin ? 'e' : ''} ${h.issue === 'valeureux' ? 'au combat' : 'sans gloire'}${h.voulu ? ' · ☠ offert' : ''}`,
+          ligne: h.issue === 'echec' ? `Jour ${h.retour} · mission ratée · ${h.quete}` : h.issue === 'vivant' ? `Jour ${h.retour} · +${h.gain} p. · ${h.quete}` : `Jour ${h.retour} · mort${(G.personnes[h.nom] || {}).feminin ? 'e' : ''} ${h.issue === 'valeureux' ? 'au combat' : 'sans gloire'}${h.voulu ? ' · offert à la Faucheuse' : ''}`,
           detail: () => [`Quête : ${h.quete} (jours ${h.depart} à ${h.retour})`,
             ...(() => { const f = (G.personnes[h.nom] || {}).feminin ? 'e' : '';
               return [h.issue === 'echec' ? `Revenu${f} vivant${f}, mais sans rien : mission ratée.` : h.issue === 'vivant' ? `Revenu${f} vivant${f}, a rapporté ${h.gain} pièces.` : `Mort${f} ${h.issue === 'valeureux' ? 'valeureusement au combat' : 'sans gloire'}.`]; })(),
-            ...(h.voulu ? [`☠ Offert à la Faucheuse : ${MORTS_VOULUES[h.voulu].texte}.`] : [])],
+            ...(h.voulu ? [`Offert à la Faucheuse : ${MORTS_VOULUES[h.voulu].texte}.`] : [])],
         }));
       default: {
         const marchands = Object.entries(MARCHANDS).map(([cle, m]) => [m.nom, { race: m.race, marchand: cle }]);
@@ -308,7 +308,7 @@ class BureauScene extends Phaser.Scene {
       // (v0.60) le carnet des choses étranges : les indices glissés dans les récits
       // (les huit dernières : la page n'en tient pas plus)
       const notes = (G.etrangetes || []).slice(-8);
-      const blocs = notes.length ? notes.map(n => ({ titre: `🌸 Jour ${n.jour} · ${n.nom}`, lignes: [`« ${n.texte} »`] }))
+      const blocs = notes.length ? notes.map(n => ({ titre: `Jour ${n.jour} · ${n.nom}`, lignes: [`« ${n.texte} »`] }))
         : [{ titre: 'Rien encore', lignes: ["Certains récits laissent des questions sans réponse. Quand un aventurier en rapportera une, tu la noteras ici."] }];
       gauche = blocs.filter((_, i) => i % 2 === 0);
       droite = blocs.filter((_, i) => i % 2 === 1);
@@ -339,7 +339,7 @@ class BureauScene extends Phaser.Scene {
       gauche = [
         { titre: `Réputation : ${arrondi(G.reputation)}`, lignes: [`Retours réussis : ${[1, 2, 3, 4, 5].map(d => `${d}★ ${(G.succes || {})[d] || 0}`).join(' · ')}`] },
         { titre: NOMS_ARMURE[coteArmure(G)], lignes: [`${(G.armure || []).length} / ${ARMURE.length} pièces` + (G.camp ? ` · camp scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}` : ''), `Armes légendaires : ${(G.armesLegendaires || []).length} / ${Object.keys(ARMES_LEGENDAIRES).length}`] },
-        { titre: `La Faucheuse : ${seductionFaucheuse(G).nom}`, lignes: [`Âmes offertes : ${arrondi(G.mal)}` + (G.mal >= SEUIL_SABOTAGE ? ' · sabotages possibles' : '') + (G.mal >= SEUIL_MAIN_NOIRE ? ' · la Main Noire te connaît' : ''), `${F.morts} âme${F.morts > 1 ? 's' : ''} emportée${F.morts > 1 ? 's' : ''}` + (F.sabotages ? ` · ${F.sabotages} sabotage${F.sabotages > 1 ? 's' : ''}` : ''), ...(m && m.etat !== 'proposee' ? [`☠ Mission : ${m.cible.nom} (${PIEGES[m.piege].nom.toLowerCase()}, ${m.prime} p.)`] : [])] },
+        { titre: `La Faucheuse : ${seductionFaucheuse(G).nom}`, lignes: [`Âmes offertes : ${arrondi(G.mal)}` + (G.mal >= SEUIL_SABOTAGE ? ' · sabotages possibles' : '') + (G.mal >= SEUIL_MAIN_NOIRE ? ' · la Main Noire te connaît' : ''), `${F.morts} âme${F.morts > 1 ? 's' : ''} emportée${F.morts > 1 ? 's' : ''}` + (F.sabotages ? ` · ${F.sabotages} sabotage${F.sabotages > 1 ? 's' : ''}` : ''), ...(m && m.etat !== 'proposee' ? [`Mission de mort : ${m.cible.nom} (${PIEGES[m.piege].nom.toLowerCase()}, ${m.prime} p.)`] : [])] },
         { titre: 'Le mendiant', lignes: [`Donné : ${G.mendiant} p.`] },
       ];
       droite = [
@@ -432,7 +432,7 @@ class BureauScene extends Phaser.Scene {
       const fond = this.add.rectangle(161, y, 252, 46, cle === choisi ? 0xd8c498 : 0xffffff, cle === choisi ? 1 : 0).setInteractive({ useHandCursor: true });
       fond.on('pointerdown', () => { const p = this.vider(); this.afficherAmeliorations(p, cle); });
       const etoiles = n ? '★'.repeat(n) : '—';
-      const prevu = (G.travaux || []).includes(cle) ? ' · 🔨 cette nuit' : '';
+      const prevu = (G.travaux || []).includes(cle) ? ' · travaux cette nuit' : '';
       c.add([fond,
         this.add.text(44, y - 18, a.nom, style(13, '#3b2410', { fontStyle: 'bold' })),
         this.add.text(44, y, `${a.niveaux[n]}${prevu}`, style(11, '#5a3a20', { fontStyle: 'italic' })),

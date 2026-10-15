@@ -343,7 +343,7 @@ class FailliteScene extends Cinematique {
       this.input.enabled = false;
       ouvrirFenetreEmplacements({ peutSauver: false, surCharger: p => { this.input.enabled = true; lancerPartieChargee(this, p); }, surFermer: () => { this.input.enabled = true; } });
     });
-    ajouter(474, 'Recommencer depuis le début', () => this.scene.start('Titre'));
+    ajouter(474, 'Recommencer depuis le début', () => allerA(this, 'Titre'));
     Sauvegarde.lireEmplacement('reprise').then(p => {
       if (!reprise.fond.active) return;
       if (p && p.partie && !p.partie.faillite) {

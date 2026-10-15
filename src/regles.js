@@ -748,7 +748,7 @@ function etalsDuJour(G) {
     // (v0.63) chez Thorgal : quelques armes chaque matin seulement, et celles des peuples de l'ombre
     // une fois les Bannis venus au comptoir
     const ombreOuverte = G.visiteMarcheNoir !== undefined || (G.zonesConnues || []).some(z => ZONES[z] && ZONES[z].camp === 'mal') || PEUPLES_OMBRE.some(r => peupleAccueilli(G, r));
-    const armesDispo = m.objets.filter(id => estArme(id) && (!ITEMS[id].ombre || ombreOuverte));
+    const armesDispo = m.objets.filter(id => estArme(id) && !m.toujours.includes(id) && (!ITEMS[id].ombre || ombreOuverte));
     const armesDuJour = Phaser.Utils.Array.Shuffle(armesDispo.slice()).slice(0, ARMES_PAR_ETAL);
     // (celle qu'un client attendu commande est souvent là)
     const attendue = Object.keys(totalCommandes(G)).find(id => estArme(id) && armesDispo.includes(id) && !armesDuJour.includes(id));
@@ -1517,7 +1517,7 @@ function reveilDuMatin(G, mauvaisJour) {
     if (avenir) reves.push(() => `Un rêve étrange : « ${EVENEMENTS[avenir.id].nouvelle} » Ça arrivera dans ${avenir.debut - G.jour} jour${avenir.debut - G.jour > 1 ? 's' : ''}.`);
     reves.push(() => { r.encheres = auHasard(Object.keys(CATEGORIES)); const pluriel = { arme: 'armes', armure: 'armures', bijou: 'bijoux', artefact: 'artefacts', vetement: 'vêtements' }[r.encheres]; return `Tu as rêvé d'enchérisseurs qui se disputaient... Les ${pluriel} se vendront cher aux enchères aujourd'hui !`; });
     r.reve = auHasard(reves)();
-    r.lignes.push('💤 ' + r.reve);
+    r.lignes.push(r.reve);
   }
   // Après un mauvais jour, une bonne nuit console
   if (mauvaisJour && (n || porte(G, 'echarpe'))) {
@@ -1794,6 +1794,9 @@ function cacherMarchandise(G) { G.cachette = G.jour + 1; }
 
 // --- (v0.67) La nymphe des fontaines ---
 // Ce soir, la place du marché l'attend-elle ? (5 vœux, puis tous les 10 de plus)
+// (v0.68) Un soir sur quatre environ, le mendiant descend au marché noir (toujours les mêmes soirs)
+function mendiantAuMarcheNoir(G) { return hachage(G.jour, 5, 707) < 0.25; }
+
 function nympheAttend(G) {
   const n = G.nymphe || { visites: 0 };
   return (G.fontainePieces || 0) >= NYMPHE.voeux + n.visites * NYMPHE.ensuite;
@@ -2590,8 +2593,8 @@ function avancerEvenements(G) {
   }
   for (const e of G.evenements) {
     const d = EVENEMENTS[e.id];
-    if (e.debut === G.jour) lignes.push('📢 ' + d.nouvelle);
-    else if (e.fin === G.jour) lignes.push(`📢 Dernier jour : ${d.nouvelle.charAt(0).toLowerCase() + d.nouvelle.slice(1)}`);
+    if (e.debut === G.jour) lignes.push(d.nouvelle);
+    else if (e.fin === G.jour) lignes.push(`Dernier jour : ${d.nouvelle.charAt(0).toLowerCase() + d.nouvelle.slice(1)}`);
   }
   // Une nouvelle absurde, sans répéter les dernières.
   G.nouvellesLues = (G.nouvellesLues || []).slice(-15);
@@ -2603,21 +2606,22 @@ function avancerEvenements(G) {
   // Un soir de marché noir : un papier glissé sous la porte, avec le mot de passe
   if (G.jour >= MARCHE_NOIR.debut && Math.random() < (palierCamp(G) <= -1 ? MARCHE_NOIR.chanceOmbre : MARCHE_NOIR.chance)) {
     G.marcheNoir = { jour: G.jour, mot: auHasard(MARCHE_NOIR.mots) };
-    lignes.push(`📜 Un papier glissé sous ta porte : « Ce soir. Derrière le tonneau. Mot : ${G.marcheNoir.mot}. »`);
+    lignes.push(`Un papier glissé sous ta porte : « Ce soir. Derrière le tonneau. Mot : ${G.marcheNoir.mot}. »`);
   }
-  if (G.palierNouveau && PALIERS_CLIENTS[G.palierNouveau].gazette) lignes.unshift('📢 ' + PALIERS_CLIENTS[G.palierNouveau].gazette);
+  if (G.palierNouveau && PALIERS_CLIENTS[G.palierNouveau].gazette) lignes.unshift(PALIERS_CLIENTS[G.palierNouveau].gazette);
   // La jauge lumière ⟷ ombre a franchi un palier
   const palier = nouvellePalierCamp(G);
-  if (palier) lignes.unshift('📢 ' + palier);
+  if (palier) lignes.unshift(palier);
   // Un nouveau lieu ouvre sur le marché (annoncé la veille, puis le jour même)
   for (const [cle, jour] of Object.entries(OUVERTURE_LIEUX)) {
-    if (jour === G.jour) lignes.unshift(`📢 ${NOMS_LIEUX_MARCHE[cle]} ${ouvrePluriel(cle)} aujourd'hui sur le marché !`);
-    else if (jour === G.jour + 1) lignes.push(`🔨 Les travaux s'achèvent : ${NOMS_LIEUX_MARCHE[cle].toLowerCase()} ${ouvrePluriel(cle)} demain.`);
+    if (jour === G.jour) lignes.unshift(`${NOMS_LIEUX_MARCHE[cle]} ${ouvrePluriel(cle)} aujourd'hui sur le marché !`);
+    // (v0.68) la veille, on ne dit pas encore quoi : la surprise reste entière jusqu'à l'ouverture
+    else if (jour === G.jour + 1) lignes.push("Les travaux s'achèvent sur la place du marché : on ne sait toujours pas ce qui ouvre demain...");
   }
   // (v0.60) les disparus d'hier : un drame sur la route (et des murmures, si la mort n'était pas un hasard)
   for (const d of (G.decesAnnonces || []).slice(0, 3)) {
     const z = ZONES[d.zone] ? ZONES[d.zone].nom : 'la route';
-    lignes.unshift(`🕯 Drame ${aLieu(z).replace(/^à /, 'à ')} : ${d.nom} n'est jamais revenu${d.feminin ? 'e' : ''}.` + (d.voulu ? ' On murmure que son baluchon était bien léger...' : ' Que la terre lui soit légère.'));
+    lignes.unshift(`Drame ${aLieu(z).replace(/^à /, 'à ')} : ${d.nom} n'est jamais revenu${d.feminin ? 'e' : ''}.` + (d.voulu ? ' On murmure que son baluchon était bien léger...' : ' Que la terre lui soit légère.'));
   }
   G.decesAnnonces = [];
   if (G.annonceMafia) { lignes.unshift(G.annonceMafia); G.annonceMafia = null; }

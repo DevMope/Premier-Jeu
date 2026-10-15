@@ -347,7 +347,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
     const l = scene.add.image(o + P.impasse, sol - 66, 'halo').setScale(1).setTint(0xff3020).setAlpha(0.6).setBlendMode(Phaser.BlendModes.ADD).setDepth(9.5);
     scene.tweens.add({ targets: l, alpha: 0.35, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     scene.add.rectangle(o + P.impasse, sol - 66, 6, 9, 0xff4a2a).setDepth(9.6);
-    ici.porte(o + P.impasse, sol, '🏮 La porte dérobée', 'MarcheNoir');
+    ici.porte(o + P.impasse, sol, 'La porte dérobée', 'MarcheNoir');
   }
   // ce qu'on regarde
   ici.regarder(o + 10, 160, 300, 310, jour ? 'Madame Pommeroy bat ses tapis à la fenêtre. Elle te salue d\'un hochement de tête.' : Phaser.Utils.Array.GetRandom(['La maison des Pommeroy. Leur chien ronfle derrière la porte.', 'Une bougie veille chez la vieille Berthe Pommeroy. Elle tricote, comme chaque soir.']));
@@ -358,9 +358,10 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   ici.regarder(o + P.fontaine - 80, 360, 160, 110, jour ? 'La fontaine chante. Pour y jeter une pièce, c\'est celle de la place du marché.' : 'La fontaine murmure dans la nuit. Au fond du bassin, des pièces luisent sous la lune.');
   ici.regarder(o + P.banque - 200, 120, 400, 350, jour ? 'La Banque Centrale Goyenne. Des nains en redingote montent les marches, un registre sous le bras.' : 'La Banque Centrale Goyenne. Une lumière brûle encore : les nains comptent, même la nuit.');
   ici.porte(o + P.banque, sol, 'Entrer', 'Banque');
-  // (v0.67) après assez de vœux, une lueur bleue monte de la place : la nymphe attend
+  // (v0.67, v0.68) après assez de vœux, la nymphe attend ; quand l'arche mène quelque part, toute l'ouverture se clique
   const nymphe = !jour && nympheAttend(G);
-  ici.regarder(o + P.arche - 150, 120, 300, 350, jour ? "L'arche du Marché des Mastres. On entend déjà les marchands crier leurs prix." : nymphe ? "Une lueur bleue monte de la place du marché, comme si la fontaine s'était allumée..." : "L'arche du Marché des Mastres. La place dort ; les étals rouvriront à l'aube.");
+  const arche = { large: 200, haut: 300 };
+  if (!jour && !nymphe) ici.regarder(o + P.arche - 150, 120, 300, 350, "L'arche du Marché des Mastres. La place dort ; les étals rouvriront à l'aube.");
   if (nymphe) {
     // la place, au fond, baignée de bleu ; des gouttes de lumière montent par-dessus les toits
     const l = scene.add.rectangle(o + P.arche, sol - 130, 180, 250, 0x3a9ad8, 0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(9.5);
@@ -369,9 +370,9 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
       const g = scene.add.circle(o + P.arche + (Math.random() - 0.5) * 150, sol - 60 - Math.random() * 60, 1.5 + Math.random() * 1.5, Math.random() < 0.5 ? 0xd8fcff : 0x8ae0e8, 0.9).setBlendMode(Phaser.BlendModes.ADD).setDepth(9.6);
       scene.tweens.add({ targets: g, y: g.y - 120 - Math.random() * 80, alpha: 0, duration: 1600 + Math.random() * 800, onComplete: () => g.destroy() });
     } });
-    ici.porte(o + P.arche, sol, '✨ La lueur de la fontaine', 'Nymphe');
+    ici.porte(o + P.arche, sol, 'La lueur de la fontaine', 'Nymphe', arche);
   }
-  if (jour) ici.porte(o + P.arche, sol, 'Le marché ▶', 'Marche');
+  if (jour) ici.porte(o + P.arche, sol, 'Le marché ▶', 'Marche', arche);
   return { porteShop: { x: f.porteX, y: f.porteY }, lumieres };
 }
 

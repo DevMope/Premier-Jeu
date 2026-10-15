@@ -17,8 +17,8 @@ class RueScene extends Phaser.Scene {
         const z = this.add.rectangle(x + l / 2, y + h / 2, l, h, 0xffffff, 0).setDepth(8.4).setInteractive({ useHandCursor: true });
         z.on('pointerdown', () => { this.allerVers(x + l / 2); this.dire(texte); });
       },
-      porte: (x, s, etiquette, page) => {
-        const z = this.add.rectangle(x, s - 60, 80, 110, 0xffffff, 0).setDepth(8.65).setInteractive({ useHandCursor: true });
+      porte: (x, s, etiquette, page, { large = 80, haut = 110 } = {}) => {
+        const z = this.add.rectangle(x, s - haut / 2 - 5, large, haut, 0xffffff, 0).setDepth(8.65).setInteractive({ useHandCursor: true });
         this.add.text(x, s - 140, etiquette, style(12, '#fff4dc', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(8.6);
         z.on('pointerdown', () => this.passerPar(page, x));
       },
@@ -41,7 +41,7 @@ class RueScene extends Phaser.Scene {
     fixe(this.add.text(480, 22, `La rue du marché · jour ${G.jour}`, style(22, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
     fixe(this.add.text(480, 48, '◀ ▶ ou clique au sol pour marcher · clique sur les maisons pour les regarder · l\'arche mène au marché', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
     this.bulle = fixe(this.add.text(480, 78, '', style(14, '#3b2410', { fontStyle: 'italic', backgroundColor: '#ead9b0', padding: { x: 10, y: 6 }, wordWrap: { width: 640 }, align: 'center' })).setOrigin(0.5, 0).setVisible(false));
-    for (const [x, l, texte, page] of [[110, 190, '🏠 Chez toi', 'Maison'], [850, 200, 'Au marché ▶▶', 'Marche']]) { const b = creerBouton(this, x, 505, l, texte, () => this.passerPar(page)); fixe(b.fond); fixe(b.label); }
+    for (const [x, l, texte, page] of [[110, 190, '◀ Chez toi', 'Maison'], [850, 200, 'Au marché ▶▶', 'Marche']]) { const b = creerBouton(this, x, 505, l, texte, () => this.passerPar(page)); fixe(b.fond); fixe(b.label); }
 
     this.input.on('pointerdown', (pointeur, sous) => { if (!sous.length) this.allerVers(pointeur.worldX); });
     this.touches = this.input.keyboard ? this.input.keyboard.createCursorKeys() : null;

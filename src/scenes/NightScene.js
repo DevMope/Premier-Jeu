@@ -30,7 +30,7 @@ class NightScene extends Phaser.Scene {
     if (G.prets.length) {
       const dette = G.prets.reduce((a, p) => a + p.restant, 0);
       const echeance = G.prets.reduce((a, p) => a + Math.min(p.parJour, p.restant), 0);
-      const note = this.add.text(190, 40, `📜 Dette : ${dette} p. · −${echeance} cette nuit`, style(15, '#8a1a1a', {
+      const note = this.add.text(190, 40, `Dette : ${dette} p. · −${echeance} cette nuit`, style(15, '#8a1a1a', {
         fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 10, y: 5 } })).setOrigin(0.5).setAngle(-2).setDepth(5);
       this.tweens.add({ targets: note, angle: 2, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
@@ -48,11 +48,11 @@ class NightScene extends Phaser.Scene {
       ['Le bureau', () => ouvrirPage('Bureau', { retour: 'Nuit' })],
       ['La banque', () => this.ouvrirBanque()],
       [`L'atelier (${G.tresors.length})`, () => ouvrirPage('Atelier')],
-      ...(this.matin ? [] : [['🕯 Se promener', () => ouvrirPage('Promenade')]]),
-      ...(!this.matin && marcheNoirCeSoir(G) ? [['🏮 La porte dérobée', () => ouvrirPage('MarcheNoir')]] : []),
+      ...(this.matin ? [] : [['Se promener', () => ouvrirPage('Promenade')]]),
+      ...(!this.matin && marcheNoirCeSoir(G) ? [['La porte dérobée', () => ouvrirPage('MarcheNoir')]] : []),
       ...(this.matin
         ? [['Retour au marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
-        : [['🌙 Aller dormir', () => this.dormir()]]),
+        : [['Aller dormir', () => this.dormir()]]),
     ];
     const largeur = 920 / boutons.length;
     boutons.forEach(([texte, action], i) => {
@@ -155,10 +155,10 @@ class NightScene extends Phaser.Scene {
       let ligne = null, action = null;
       if (alerteChat(G)) {
         const cache = G.cachette === G.jour + 1;
-        ligne = `🐈 ${nomChat(G)[0].toUpperCase() + nomChat(G).slice(1)} crache vers la porte. La garde, demain ?` + (cache ? ' Tout est caché.' : aCacher(G) ? '' : ' (Rien à cacher.)');
+        ligne = `${nomChat(G)[0].toUpperCase() + nomChat(G).slice(1)} crache vers la porte. La garde, demain ?` + (cache ? ' Tout est caché.' : aCacher(G) ? '' : ' (Rien à cacher.)');
         if (!cache && aCacher(G)) action = ['▸ Tout cacher sous le plancher', () => { cacherMarchandise(G); Son.jouer('glisse'); this.tout(); }];
-      } else if (nympheAttend(G)) ligne = '✨ Une lueur bleue monte de la place du marché... Sors voir, par la rue !';
-      else if (chatCeSoir(G)) ligne = '🐈 Un chat de gouttière rôde devant ta porte ce soir.';
+      } else if (nympheAttend(G)) ligne = 'Une lueur bleue monte de la place du marché... Sors voir, par la rue !';
+      else if (chatCeSoir(G)) ligne = 'Un chat de gouttière rôde devant ta porte ce soir.';
       if (ligne) c.add(this.add.text(x1 + 18, 424, ligne, style(12, '#5a2a4a', { fontStyle: 'bold italic', wordWrap: { width: x2 - x1 - 36 } })));
       if (action) c.add(this.add.text(x1 + 18, 455, action[0], style(12, '#8a1a1a', { fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 4, y: 2 } })).setInteractive({ useHandCursor: true }).on('pointerdown', action[1]));
     }
@@ -208,7 +208,7 @@ class NightScene extends Phaser.Scene {
     }
     const plein = stockTotal(G) >= G.capacite;
     this.texteReserve.setText(`Réserve : ${stockTotal(G)} / ${G.capacite}${plein ? ' — pleine !' : ''}`);
-    if (this.texteFeu) this.texteFeu.setText(feuAllume(G) ? '🔥 Le feu brûle' : '🔥 Allumer le feu (1 bois)').setColor(feuAllume(G) ? '#a05010' : (G.materiaux.bois || 0) > 0 ? '#8a3a10' : '#a08070');
+    if (this.texteFeu) this.texteFeu.setText(feuAllume(G) ? 'Le feu brûle' : 'Allumer le feu (1 bois)').setColor(feuAllume(G) ? '#a05010' : (G.materiaux.bois || 0) > 0 ? '#8a3a10' : '#a08070');
     const a = agrandissementSuivant(G);
     this.texteAgrandir.setText(a ? `Agrandir à ${a.capacite} places — ${a.prix} p.` : 'Réserve au maximum');
     this.boutonAgrandir.setAlpha(a && peutPayer(G, a.prix) ? 1 : 0.5);
@@ -224,7 +224,7 @@ class NightScene extends Phaser.Scene {
     const infos = (G.courrier || []).filter(l => l.jour === G.jour).slice(0, 2);
     infos.forEach((l, i) => {
       const y = 124 + i * 54;
-      c.add(this.add.text(x1 + 14, y, '📜 ' + l.texte, style(11, '#3b2410', { fontStyle: 'italic', wordWrap: { width: x2 - x1 - 24 }, lineSpacing: 1 })));
+      c.add(this.add.text(x1 + 14, y, l.texte, style(11, '#3b2410', { fontStyle: 'italic', wordWrap: { width: x2 - x1 - 24 }, lineSpacing: 1 })));
     });
     // ... puis les commandes (à accepter ou refuser), les nouvelles d'abord.
     // (audit v0.53 : on peut feuilleter toutes les lettres, aucune n'est refusée sans avoir été vue)
@@ -235,7 +235,7 @@ class NightScene extends Phaser.Scene {
     liste.forEach((a, i) => {
       const y = 124 + (i + infos.length) * 52;
       const v = a.voyageur;
-      c.add(this.add.text(x1 + 14, y, `✉ ${v.nom}`, style(13, couleurNom(G, v.nom), { fontStyle: 'bold' })));
+      c.add(this.add.text(x1 + 14, y, `Lettre de ${v.nom}`, style(13, couleurNom(G, v.nom), { fontStyle: 'bold' })));
       c.add(this.add.text(x1 + 14, y + 17, `+1 client le jour ${a.jour} · butin ~${v.butin} p. · ${v.duree} j`, style(11, '#6b4a2a')));
       c.add(this.add.text(x1 + 14, y + 31, commandeEnTexte(v), style(11, '#3b2410', { wordWrap: { width: x2 - x1 - 24 } })));
       if (a.acceptee) {
@@ -278,8 +278,8 @@ class NightScene extends Phaser.Scene {
       const du = this.matin ? 0 : depensesDeLaNuit(this.G);
       const apres = this.G.argent - du;
       this.texteAlerte.setColor(apres <= SEUIL_FAILLITE ? '#c01010' : apres < 0 ? '#a05010' : '#5a3a20');
-      this.texteAlerte.setText(!du ? '' : apres <= SEUIL_FAILLITE ? `⚠ Cette nuit : −${du} p. → FAILLITE !`
-        : `Cette nuit : −${du} p.${jourDeLoyer(this.G) ? ' (loyer)' : ''}${apres < 0 ? ' ⚠' : ''}`);
+      this.texteAlerte.setText(!du ? '' : apres <= SEUIL_FAILLITE ? `Attention, cette nuit : −${du} p. → FAILLITE !`
+        : `Cette nuit : −${du} p.${jourDeLoyer(this.G) ? ' (loyer)' : ''}${apres < 0 ? ' (à découvert !)' : ''}`);
     }
     const p = prevision(this.G, this.matin ? this.G.jour : this.G.jour + 1);
     const a = attrait(this.G);

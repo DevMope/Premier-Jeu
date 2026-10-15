@@ -58,7 +58,7 @@ class PromenadeScene extends Cinematique {
     this.titre = fixe(this.add.text(480, 22, '', style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
     this.conseil = fixe(this.add.text(480, 48, '', style(12, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
     this.bulle = fixe(this.add.text(480, 78, '', style(14, '#3b2410', { fontStyle: 'italic', backgroundColor: '#ead9b0', padding: { x: 10, y: 6 }, wordWrap: { width: 640 }, align: 'center' })).setOrigin(0.5, 0).setVisible(false));
-    const b = creerBouton(this, 860, 505, 170, '↩ Retour', () => this.partir());
+    const b = creerBouton(this, 860, 505, 170, '◀ Retour', () => this.partir());
     fixe(b.fond); fixe(b.label);
 
     // Les portes : chaque pièce a la sienne, on clique dessus pour changer de pièce
@@ -97,9 +97,9 @@ class PromenadeScene extends Cinematique {
     // l'arrière-boutique ou l'atelier d'un bouton, et la fenêtre donne sur la rue
     this.boutonsComptoir = [
       creerBouton(this, 150, 505, 250, '↻ Arrière-boutique', () => { if (!this.transition) { Son.jouer('porte'); this.entrer(P_ARRIERE, o[P_ARRIERE].x + 120); } }),
-      creerBouton(this, 400, 505, 200, "🔨 L'atelier", () => { if (!this.transition) { Son.jouer('porte'); this.entrer(P_ATELIER, o[P_ATELIER].x + 120); } }),
+      creerBouton(this, 400, 505, 200, "L'atelier", () => { if (!this.transition) { Son.jouer('porte'); this.entrer(P_ATELIER, o[P_ATELIER].x + 120); } }),
       // (v0.58 : on sort par la porte d'entrée du shop, pas par la fenêtre)
-      creerBouton(this, 630, 505, 230, '🚪 Sortir dans la rue', () => { if (!this.transition) { Son.jouer('porte'); this.dire('Tu pousses la porte du comptoir ; la clochette tinte dans la nuit...'); this.time.delayedCall(500, () => this.entrer(P_DEHORS, this.porteShop.x + 60)); } }),
+      creerBouton(this, 630, 505, 230, 'Sortir dans la rue', () => { if (!this.transition) { Son.jouer('porte'); this.dire('Tu pousses la porte du comptoir ; la clochette tinte dans la nuit...'); this.time.delayedCall(500, () => this.entrer(P_DEHORS, this.porteShop.x + 60)); } }),
     ];
     for (const b of this.boutonsComptoir) { b.fond.setScrollFactor(0).setDepth(30); b.label.setScrollFactor(0).setDepth(30); }
     const { x, y, w, h } = FENETRE;
@@ -157,7 +157,7 @@ class PromenadeScene extends Cinematique {
       if (this.chatDehors) return;
       this.chatDehors = true;
       const sens = Math.random() < 0.5 ? 1 : -1, bord = v => o + x + (v > 0 ? w + 34 : -34);
-      const c = dansLaFenetre(this.add.image(bord(-sens), sol, 'chatRue_m0').setOrigin(0.5, 1).setScale(1.5).setTint(0x9a94b8).setFlipX(sens < 0).setDepth(7.4));
+      const c = dansLaFenetre(this.add.image(bord(-sens), sol, 'chatRue_m0').setOrigin(0.5, 1).setScale(0.75).setTint(0x9a94b8).setFlipX(sens < 0).setDepth(7.4));
       let pattes = null;
       const marche = (on) => {
         if (pattes) { pattes.remove(); pattes = null; }
@@ -194,7 +194,7 @@ class PromenadeScene extends Cinematique {
           await aller(bord(sens));
         } else if (scenario < 0.7) {
           // La chasse à la souris
-          const s = dansLaFenetre(this.add.image(bord(-sens), sol, 'souris_0').setOrigin(0.5, 1).setScale(2).setTint(0xc8c0dc).setFlipX(sens < 0).setDepth(7.4));
+          const s = dansLaFenetre(this.add.image(bord(-sens), sol, 'souris_0').setOrigin(0.5, 1).setScale(1).setTint(0xc8c0dc).setFlipX(sens < 0).setDepth(7.4));
           let ks = 0;
           const trot = this.time.addEvent({ delay: 70, loop: true, callback: () => { if (s.active) s.setTexture('souris_' + (++ks % 2)); } });
           this.rue.push(trot);
@@ -280,7 +280,7 @@ class PromenadeScene extends Cinematique {
       this.allerVers(220);
       if (feuAllume(G)) return this.dire('Le feu crépite doucement. La nuit sera chaude.');
       this.dire(`La cheminée est froide. ${G.materiaux.bois || 0} planche${(G.materiaux.bois || 0) > 1 ? 's' : ''} de bois en réserve.`);
-      this.choixChat([`🔥 Allumer un feu (1 bois)`, () => { const err = allumerFeu(G); if (err) { Son.jouer('refus'); return this.dire(err); } Son.jouer('glisse'); this.allumerCheminee(); this.dire('Les flammes prennent. La fumée monte par la cheminée : la nuit sera douce' + (chatAdopte(G) ? `, et ${nomChat(G)} s'installe déjà devant l'âtre.` : '.')); }], ['Pas ce soir', () => this.dire('Tu laisses la cheminée froide. Le bois attendra.')]);
+      this.choixChat([`Allumer un feu (1 bois)`, () => { const err = allumerFeu(G); if (err) { Son.jouer('refus'); return this.dire(err); } Son.jouer('glisse'); this.allumerCheminee(); this.dire('Les flammes prennent. La fumée monte par la cheminée : la nuit sera douce' + (chatAdopte(G) ? `, et ${nomChat(G)} s'installe déjà devant l'âtre.` : '.')); }], ['Pas ce soir', () => this.dire('Tu laisses la cheminée froide. Le bois attendra.')]);
     });
     this.regarder(360, 110, 80, 80, "La vieille épée de Garrick. Il t'a dit qu'elle portait chance.");
     const armes = G.armesLegendaires || [];
@@ -293,9 +293,12 @@ class PromenadeScene extends Cinematique {
     for (const nom of Object.getOwnPropertyNames(ArriereScene.prototype)) {
       if (nom.startsWith('dessiner') && !this[nom]) this[nom] = ArriereScene.prototype[nom];
     }
+    let etagere = [];
     this.decaler(960, () => {
       ArriereScene.prototype.dessinerPiece.call(this);
+      const avant = this.children.list.length;
       ArriereScene.prototype.dessinerEtageres.call(this);
+      etagere = this.children.list.slice(avant);
       ArriereScene.prototype.dessinerFortune.call(this);
       ArriereScene.prototype.dessinerPanier.call(this);
       ArriereScene.prototype.dessinerBuffet.call(this);
@@ -303,8 +306,49 @@ class PromenadeScene extends Cinematique {
       ArriereScene.prototype.dessinerDecos.call(this);
     });
     this.lumieres.push([960 + 640, 90, 3], [960 + 514, SOL_ARRIERE - 30, 1.6]);
-    this.regarder(980, 76, 512, 364, `Ta réserve : ${stockTotal(G)} / ${G.capacite} objets, rangés sur ${AMELIORATIONS.reserve.niveaux[niveauAmelioration(G, 'reserve')].toLowerCase()}.`);
+    this.armoire(etagere);
     this.regarder(960 + 680, 300, 160, 140, `Ta fortune : ${G.argent} pièces.` + (G.prets.length ? ` Et ${G.prets.reduce((a, p) => a + p.restant, 0)} p. de dette...` : ''));
+  }
+
+  // (v0.68) L'étagère de la réserve devient une armoire : fermée, on ne voit que ses portes (moins de
+  // texte à l'écran) ; un clic l'ouvre (les deux battants pivotent) et montre le stock, un autre la referme.
+  armoire(objets) {
+    const G = this.G;
+    const fond = objets[0], plaque = objets.slice(-2);
+    const contenu = objets.slice(1, -2);
+    const x0 = fond.x, y0 = fond.y + 22, l = fond.displayWidth, h = fond.displayHeight - 30, demi = l / 2;
+    const porte = (cote) => {
+      const g = this.add.graphics();
+      const w = demi - 2;
+      g.fillStyle(0x3a2412).fillRect(0, 0, w, h);
+      g.fillStyle(0x6a4424).fillRect(3, 3, w - 6, h - 6);
+      for (let x = 3; x < w - 6; x += 22) { g.fillStyle(0x7a5030).fillRect(x, 3, 12, h - 6); g.fillStyle(0x4a2e16).fillRect(x + 20, 3, 2, h - 6); }   // les planches
+      g.lineStyle(4, 0x3a2412).strokeRect(14, 18, w - 28, h * 0.4); g.strokeRect(14, h * 0.52, w - 28, h * 0.4);   // les panneaux moulurés
+      g.lineStyle(2, 0x9a6a3a).strokeRect(16, 20, w - 32, h * 0.4 - 4); g.strokeRect(16, h * 0.52 + 2, w - 32, h * 0.4 - 4);
+      const charn = cote < 0 ? 0 : w - 10;   // les charnières de fer, côté mur
+      for (const y of [24, h - 40]) { g.fillStyle(0x24201c).fillRect(charn, y, 10, 16); g.fillStyle(0x6a6460).fillRect(charn + 2, y + 2, 6, 3); }
+      const bouton = cote < 0 ? w - 14 : 6;   // le bouton de laiton, au milieu
+      g.fillStyle(0x3a2412).fillCircle(bouton + 4, h / 2, 6); g.fillStyle(0xc9a227).fillCircle(bouton + 4, h / 2, 4); g.fillStyle(0xfff0a0).fillRect(bouton + 2, h / 2 - 2, 2, 2);
+      const c = this.add.container(cote < 0 ? x0 : x0 + l, y0, [g]).setDepth(fond.depth + 0.5);
+      g.setPosition(cote < 0 ? 0 : -w, 0);
+      return c;
+    };
+    const portes = [porte(-1), porte(1)];
+    for (const p of plaque) p.setDepth(fond.depth + 0.6);   // la plaque « Ta réserve » reste lisible, sur les portes
+    let ouverte = false;
+    const montrer = (o) => { for (const c of contenu) c.setVisible(o); };
+    montrer(false);
+    const zone = this.add.rectangle(x0 + l / 2, y0 + h / 2, l, h, 0xffffff, 0).setDepth(8.4).setInteractive({ useHandCursor: true });
+    zone.on('pointerdown', () => {
+      if (this.transition) return;
+      this.allerVers(x0 + l / 2);
+      ouverte = !ouverte;
+      Son.jouer('porte');
+      if (ouverte) montrer(true);
+      this.tweens.killTweensOf(portes);
+      this.tweens.add({ targets: portes, scaleX: ouverte ? 0.12 : 1, duration: 380, ease: ouverte ? 'Quad.easeOut' : 'Quad.easeIn', onComplete: () => { if (!ouverte) montrer(false); } });
+      this.dire(ouverte ? `Ta réserve : ${stockTotal(G)} / ${G.capacite} objets, rangés sur ${AMELIORATIONS.reserve.niveaux[niveauAmelioration(G, 'reserve')].toLowerCase()}.` : 'Tu refermes les portes de la réserve.');
+    });
   }
 
   pieceComptoir() {
@@ -361,8 +405,8 @@ class PromenadeScene extends Cinematique {
     const o = 3840;
     const ici = {
       regarder: (x, y, l, h, texte) => this.regarder(x, y, l, h, texte),
-      porte: (x, sol, etiquette, page) => {
-        const z = this.add.rectangle(x, sol - 60, 80, 110, 0xffffff, 0).setDepth(8.65).setInteractive({ useHandCursor: true });
+      porte: (x, sol, etiquette, page, { large = 80, haut = 110 } = {}) => {
+        const z = this.add.rectangle(x, sol - haut / 2 - 5, large, haut, 0xffffff, 0).setDepth(8.65).setInteractive({ useHandCursor: true });
         this.add.text(x, sol - 140, etiquette, style(12, page === 'MarcheNoir' ? '#ffb0a0' : '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(8.6);
         z.on('pointerdown', () => this.sortirVers(page, x));
       },
@@ -378,6 +422,8 @@ class PromenadeScene extends Cinematique {
     this.transition = true;
     this.allerVers(x); await this.attendreArrivee();
     Son.jouer('porte');
+    // (v0.68) la banque s'ouvre par-dessus la rue : en sortant, on se retrouve devant sa porte
+    if (page === 'Banque') { this.transition = false; this.cible = null; this.scene.pause(); this.scene.launch('Banque', { retour: 'Promenade' }); return; }
     this.fini = true;
     const nuit = this.scene.get('Nuit');
     if (nuit && nuit.lieu) Sauvegarde.planifier(this.G, nuit.lieu);
@@ -498,6 +544,9 @@ class PromenadeScene extends Cinematique {
     this.tweens.add({ targets: ration, alpha: 0, scale: 1, duration: 1800 });
     await pause(1900);
     ration.destroy();
+    // (v0.68) repu, il pense à toi : une petite bulle de pensée heureuse
+    creerIconesHD(this);
+    bullePensee(this, c.x, c.y - c.displayHeight - 6, 'hd_coeur', { echelle: 2.4, profondeur: 9, cote: c.flipX ? -1 : 1, duree: 2000 });
     const aller = (versX, vitesse = 5) => new Promise(f => {
       let k = 0; c.setFlipX(versX < c.x);
       const pas = this.time.addEvent({ delay: 110, loop: true, callback: () => { if (c.active) c.setTexture('chatRue_m' + (++k % 4)); } });

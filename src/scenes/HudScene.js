@@ -21,7 +21,8 @@ class HudScene extends Phaser.Scene {
     plaque.fillStyle(0x1e130a, 0.92).fillRoundedRect(114, -8, 104, 26, 7);
     plaque.lineStyle(2, 0xc9a227, 1).strokeRoundedRect(114, -8, 104, 26, 7);
     // Une étoile et une jauge dorée qui se remplit vers le prochain palier, le chiffre par-dessus.
-    this.etoileReput = this.add.text(126, 9, '⭐', style(13, '#f3d98a', { brut: true })).setOrigin(0, 0.5);
+    creerGlyphesHD(this);
+    this.etoileReput = this.add.image(126, 9, 'glyphe_etoile').setScale(1.4).setOrigin(0, 0.5);
     this.jaugeReput = this.add.graphics();
     this.remplissage = 0;
     this.texteReput = this.add.text(178, 9, '', style(11, '#fff4dc', { fontStyle: 'bold', stroke: '#1e130a', strokeThickness: 4, brut: true })).setOrigin(0.5);
@@ -149,13 +150,13 @@ class HudScene extends Phaser.Scene {
       const rempli = this.add.rectangle(X0, y, 0, 10, 0xc9a227).setOrigin(0, 0.5);
       const curseur = this.add.circle(X0, y, 9, 0xf3d98a).setStrokeStyle(2, 0x3b2410);
       const valeur = this.add.text(X0 + L + 22, y, '', style(15, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
-      const inter = this.add.text(X0 + L + 92, y, '', style(20, '#3b2410', { brut: true })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      const inter = this.add.image(X0 + L + 92, y, 'glyphe_son').setScale(2.2).setInteractive({ useHandCursor: true });
       const maj = () => {
         const v = Son.volumes[quoi], coupe = Son.coupe[quoi];
         rempli.width = L * v; curseur.x = X0 + L * v;
         rempli.setFillStyle(coupe ? 0x8a7a6a : 0xc9a227);
         valeur.setText(coupe ? 'coupé' : `${Math.round(v * 100)} %`);
-        inter.setText(coupe ? '🔇' : '🔊');
+        inter.setTexture(coupe ? 'glyphe_muet' : 'glyphe_son');
       };
       const essayer = () => { if (essai === 'voix') Son.jouer('voix', { race: 'humain', nom: 'Essai', ton: 'bonjour' }); else if (essai) Son.jouer(essai, { montant: 3 }); };
       // un clic ou un glissé sur la piste règle le volume

@@ -136,7 +136,7 @@ function denoncerMafia(G) {
   G.reputation += 2;
   G.reussites.bien = (G.reussites.bien || 0) + 3;
   G.decesAnnonces = G.decesAnnonces || [];
-  G.annonceMafia = `⚖ Coup de filet de la Confrérie : ${nomBande(G)} démantelé${m.bande === 'serpent' ? '' : 'e'} ! Un commerçant courageux aurait parlé.`;
+  G.annonceMafia = `Coup de filet de la Confrérie : ${nomBande(G)} démantelé${m.bande === 'serpent' ? '' : 'e'} ! Un commerçant courageux aurait parlé.`;
 }
 
 // Chaque nuit : la vengeance des restes de la bande, une fois, au hasard
