@@ -2182,3 +2182,35 @@ function murRuelleHD(scene) {
   t.texture(scene, 'murRuelleHD');
   return 'murRuelleHD';
 }
+
+// (v0.74) Le tableau d'affichage du marché, vu de la rue : deux poteaux, un panneau de planches
+// sous un petit toit de bardeaux, et ses affiches punaisées (un avis de recherche, la gazette...).
+function texturePanneauAffichage(scene) {
+  if (scene.textures.exists('panneauAffichageHD')) return 'panneauAffichageHD';
+  const L = 42, H = 58, t = toileDecor(L, H);
+  t.rampes.papier = rampe(0xe8d6a4); t.rampes.punaise = rampe(0xa02a20); t.rampes.toit = rampe(0x5a3020); t.rampes.encre = rampe(0x3a2210);
+  for (const x of [5, 33]) planche(t, x, 10, 4, H - 10, 'cheneSombre', { horizontale: false, graine: 970 + x });
+  for (let k = 0; k < 4; k++) planche(t, 1, 13 + k * 7, L - 2, 7, 'chene', { graine: 980 + k, noeuds: 1 });
+  for (let y = 13; y < 41; y++) { t.poser(1, y, 'cheneSombre', 1); t.poser(L - 2, y, 'cheneSombre', 1); }
+  for (let x = 1; x < L - 1; x++) { t.poser(x, 13, 'cheneSombre', 2); t.poser(x, 40, 'cheneSombre', 1); }
+  // le toit de bardeaux
+  for (let y = 3; y < 13; y++) for (let x = 0; x < L; x++) {
+    const demi = (y - 3) * 2.2 + 2;
+    if (Math.abs(x + 0.5 - L / 2) > demi) continue;
+    t.poser(x, y, 'toit', 2 + ((x + (y >> 1)) % 4 === 0 ? -1 : 0) + (y % 3 === 0 ? 1 : 0));
+  }
+  // les affiches : la gazette (des lignes), deux avis de recherche (un portrait, la prime)
+  const feuille = (x0, y0, l, h) => {
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + l; x++) t.poser(x, y, 'papier', (x === x0 + l - 1 || y === y0 + h - 1) ? 1 : 3);
+    t.poser(x0 + (l >> 1), y0, 'punaise', 3);
+  };
+  feuille(4, 16, 11, 14); for (let k = 0; k < 5; k++) for (let x = 6; x < 13 - (k % 2) * 2; x++) t.poser(x, 19 + k * 2, 'encre', 2);
+  for (const x0 of [17, 28]) {
+    feuille(x0, 15, 9, 13);
+    for (let y = 18; y < 23; y++) for (let x = x0 + 2; x < x0 + 7; x++) t.poser(x, y, 'encre', y === 18 || x === x0 + 2 ? 1 : 3);   // le portrait
+    for (let x = x0 + 2; x < x0 + 7; x++) t.poser(x, 25, 'encre', 1);   // la prime
+  }
+  feuille(14, 31, 12, 7); for (let x = 16; x < 24; x++) t.poser(x, 34, 'encre', 2);
+  t.contour(); t.texture(scene, 'panneauAffichageHD');
+  return 'panneauAffichageHD';
+}

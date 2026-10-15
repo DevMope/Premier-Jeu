@@ -2010,3 +2010,16 @@ const RELIQUES_FAUCHEUSE = [
   { id: 'craneOiseau', nom: "Un crâne d'oiseau", texte: "Un minuscule crâne d'oiseau, poli comme un galet." },
   { id: 'fauxMiniature', nom: 'Une faux miniature', texte: 'Une faux grande comme un doigt. La lame est vraie.' },
 ];
+
+// (v0.74) Le tableau d'affichage du marché : les avis de recherche, façon primes de pirates.
+// Trois têtes affichées chaque semaine ; plus un bandit court, plus sa prime grimpe.
+const AVIS_RECHERCHE = [
+  { nom: 'Rufus la Belette', personne: { nom: 'Rufus', race: 'humain', figurant: 'brigand' }, crime: 'Détrousse les voyageurs sur la route des Collines.', prime: 320 },
+  { nom: 'Mélisande Mains-Vives', personne: { nom: 'Mélisande', race: 'humain', figurant: 'brigande', feminin: true }, crime: 'A vidé les coffres de trois auberges en une seule nuit.', prime: 450 },
+  { nom: 'Bartok le Pilleur', personne: { nom: 'Bartok', race: 'humain', figurant: 'pillard' }, crime: 'Incendie les fermes isolées et vole le bétail.', prime: 600 },
+  { nom: 'Yara Sang-Froid', personne: { nom: 'Yara', race: 'humain', figurant: 'pillarde', feminin: true }, crime: 'Cheffe d\'une bande de pillards des Terres sauvages.', prime: 780 },
+  { nom: 'Snik le Furtif', personne: { nom: 'Snik', race: 'gobelin', niveau: 'aguerri' }, crime: 'Vole tout ce qui brille, même les dents en or.', prime: 280 },
+  { nom: 'Grok Fend-Crâne', personne: { nom: 'Grok', race: 'orc', niveau: 'veteran' }, crime: 'A défoncé les portes de la garnison du Gué à mains nues.', prime: 1200 },
+  { nom: 'Vorag le Comte Pâle', personne: { nom: 'Vorag', race: 'vampire', niveau: 'veteran' }, crime: 'Rôde la nuit autour des bergeries. On a retrouvé les moutons... pâles.', prime: 1500 },
+  { nom: 'Brumos sous-le-Pont', personne: { nom: 'Brumos', race: 'troll', niveau: 'aguerri' }, crime: 'Exige un péage de trois chèvres sur le pont de la Rivière.', prime: 900 },
+];

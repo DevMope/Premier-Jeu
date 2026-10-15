@@ -2844,3 +2844,25 @@ function noterEtrangete(G, texte, v) {
   if (G.etrangetes.some(e => e.texte === t || e.texte === texte)) return;
   G.etrangetes.push({ jour: G.jour, nom: v.nom, texte: t });
 }
+
+// (v0.74) Les avis de recherche de la semaine : trois têtes, et des primes qui grimpent tant
+// que les bandits courent (chaque semaine où l'un reste affiché, sa prime prend 20 %).
+function avisDeRecherche(G) {
+  const semaine = Math.floor((G.jour - 1) / 7), n = AVIS_RECHERCHE.length;
+  return [0, 1, 2].map(k => {
+    const i = (semaine * 2 + k * 3) % n;
+    // depuis combien de semaines est-il affiché ?
+    let anciennete = 0;
+    for (let s = semaine - 1; s >= 0 && [0, 1, 2].some(j => (s * 2 + j * 3) % n === i); s--) anciennete++;
+    const a = AVIS_RECHERCHE[i];
+    return { ...a, prime: Math.round(a.prime * (1 + 0.2 * anciennete) / 10) * 10, nouveau: anciennete === 0 };
+  });
+}
+
+// Y a-t-il du neuf sur le tableau (un « ! » au-dessus) : un événement qui commence ou finit
+// aujourd'hui, ou de nouvelles têtes mises à prix ; jusqu'à ce que tu viennes lire.
+function tableauANouveau(G) {
+  if (G.tableauLu === G.jour) return false;
+  const evts = (G.evenements || []).some(e => e.debut === G.jour || e.fin === G.jour);
+  return evts || (G.jour - 1) % 7 === 0;
+}

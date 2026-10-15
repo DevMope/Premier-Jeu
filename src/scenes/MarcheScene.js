@@ -2,10 +2,10 @@
 // quatre étals (épicerie, forge, apothicaire, tailleuse), le Bazar de Rosalie (les cadeaux), les enchères,
 // le coin des jeux, le mendiant, et le crieur qui annonce les nouvelles du jour.
 // La rue est plus large que l'écran : on la parcourt avec les flèches ◀ ▶.
-const LARGEUR_MARCHE = 2080;
+const LARGEUR_MARCHE = 2150;
 const DEPLACEMENT_RUE = 360;
 // La vue d'ensemble : la rue entière, réduite, posée sur la grand-place.
-const VUE_MARCHE = { echelle: 0.45, x: 12, y: 170 };
+const VUE_MARCHE = { echelle: 0.44, x: 12, y: 170 };
 // On clique sur un lieu pour l'ouvrir dans le panneau du bas.
 class MarcheScene extends Phaser.Scene {
   constructor() { super('Marche'); }
@@ -42,7 +42,7 @@ class MarcheScene extends Phaser.Scene {
     this.add.text(480, 22, `Le Marché des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setDepth(5);
 
     // Les étals, les enchères, les jeux et le mendiant
-    this.positions = { mendiant: [70, 'lieu'], bazar: [1030, 'lieu'], encheres: [1220, 'lieu'], jeux: [1410, 'lieu'], crieur: [1595, 'lieu'], brocante: [1790, 'lieu'], garderobe: [1980, 'lieu'] };
+    this.positions = { mendiant: [70, 'lieu'], bazar: [1030, 'lieu'], encheres: [1220, 'lieu'], jeux: [1410, 'lieu'], crieur: [1595, 'lieu'], tableau: [1705, 'lieu'], brocante: [1850, 'lieu'], garderobe: [2045, 'lieu'] };
     Object.entries(MARCHANDS).forEach(([cle, m], i) => {
       this.positions[cle] = [260 + i * 190, 'etal'];
       this.creerEtal(cle, m, 260 + i * 190);
@@ -64,12 +64,12 @@ class MarcheScene extends Phaser.Scene {
       Object.keys(CADEAUX).slice(0, 4), 'Le Bazar de Rosalie', 'Cadeaux', () => this.ouvrirBazar(), 'rosalie');
     else this.creerChantier(1030, 'bazar');
     // La brocante de Firmin (décorations pour le shop) et la garde-robe de Marcelline (pour toi)
-    if (lieuOuvert(G, 'brocante')) this.creerEchoppe(1790, 0x8a5a2a, { nom: 'Firmin', race: 'humain', feminin: false, niveau: 'aguerri' },
+    if (lieuOuvert(G, 'brocante')) this.creerEchoppe(1850, 0x8a5a2a, { nom: 'Firmin', race: 'humain', feminin: false, niveau: 'aguerri' },
       ['tropheeCerf', 'horloge', 'globe', 'carillon'], 'La brocante de Firmin', 'Décorations', () => this.ouvrirBrocante(), 'firmin');
-    else this.creerChantier(1790, 'brocante');
-    if (lieuOuvert(G, 'garderobe')) this.creerEchoppe(1980, 0x7a3a6a, { nom: 'Marcelline', race: 'humain', feminin: true, niveau: 'aguerri' },
+    else this.creerChantier(1850, 'brocante');
+    if (lieuOuvert(G, 'garderobe')) this.creerEchoppe(2045, 0x7a3a6a, { nom: 'Marcelline', race: 'humain', feminin: true, niveau: 'aguerri' },
       ['chapeau', 'bandana', 'montre', 'pipe'], 'La garde-robe de Marcelline', 'Vêtements et accessoires', () => this.ouvrirGardeRobe(), 'marcelline');
-    else this.creerChantier(1980, 'garderobe');
+    else this.creerChantier(2045, 'garderobe');
     // Les enchères : une estrade drapée de velours, un portique à bannière, le commissaire au pupitre
     if (!lieuOuvert(G, 'encheres')) this.creerChantier(1220, 'encheres');
     else {
@@ -107,6 +107,18 @@ class MarcheScene extends Phaser.Scene {
       this.add.rectangle(1600, 200, 110, 120, 0xffffff, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirCrieur());
       this.grouper(avant, 1600);
       this.tweens.add({ targets: this.crieur, angle: { from: -3, to: 3 }, duration: 600, yoyo: true, repeat: -1 });
+    }
+
+    // (v0.74) Le tableau d'affichage, à côté du crieur : nouvelles, avis de recherche, événements
+    {
+      const avant = this.children.list.length;
+      this.add.image(1705, 252, texturePanneauAffichage(this)).setOrigin(0.5, 1).setScale(2);
+      this.etiquettesRue.push(this.add.text(1705, 262, 'Le tableau', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
+      this.add.rectangle(1705, 200, 84, 110, 0xffffff, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirTableau());
+      // un « ! » quand il y a du neuf
+      this.exclamTableau = this.add.text(1705, 120, '!', style(44, '#ffe066', { fontStyle: 'bold', stroke: '#3b2410', strokeThickness: 8 })).setOrigin(0.5).setVisible(tableauANouveau(G));
+      this.grouper(avant, 1705);
+      this.tweens.add({ targets: this.exclamTableau, y: '-=10', duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // (après le regroupement : ses coordonnées ont changé)
     }
 
     // Le panneau du bas et la barre d'infos
@@ -445,8 +457,8 @@ class MarcheScene extends Phaser.Scene {
         this.tweens.add({ targets: pigeon, x: x0 + Phaser.Math.Between(-80, 80), y: y0 - 70, duration: 700, yoyo: true, ease: 'Sine.easeOut' });
       } });
     }
-    const noms = { mendiant: 'Le mendiant', bazar: 'Le Bazar de Rosalie', encheres: 'Les enchères', jeux: 'Le coin des jeux', crieur: 'Le crieur', brocante: 'La brocante', garderobe: 'La garde-robe' };
-    const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => this.ouvrirJeux(), crieur: () => this.ouvrirCrieur(),
+    const noms = { mendiant: 'Le mendiant', bazar: 'Le Bazar de Rosalie', encheres: 'Les enchères', jeux: 'Le coin des jeux', crieur: 'Le crieur', tableau: "Le tableau d'affichage", brocante: 'La brocante', garderobe: 'La garde-robe' };
+    const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => this.ouvrirJeux(), crieur: () => this.ouvrirCrieur(), tableau: () => this.ouvrirTableau(),
       brocante: () => this.ouvrirBrocante(), garderobe: () => this.ouvrirGardeRobe() };
     // (v0.57) les étiquettes voisines se décalent une sur deux en hauteur : elles ne se chevauchent plus
     const ordre = Object.entries(this.positions).sort((a, b) => a[1][0] - b[1][0]);
@@ -1198,6 +1210,197 @@ class MarcheScene extends Phaser.Scene {
     c.add(this.add.text(30, 344, ['Oyez, oyez !', ...lignes.map(l => '• ' + l),
       ...(actifs.length ? ['', 'En ce moment : ' + actifs.join(' · ')] : [])].join('\n'),
       style(13, '#3b2410', { wordWrap: { width: 890 }, lineSpacing: 4 })));
+  }
+
+  // --- (v0.74) Le tableau d'affichage ---
+
+  ouvrirTableau() {
+    const G = this.G;
+    this.montrer('tableau');
+    const c = this.panneau("Le tableau d'affichage", 'Nouvelles, avis de recherche et annonces du Conseil');
+    const avis = avisDeRecherche(G);
+    c.add(this.add.text(30, 344, `Trois têtes mises à prix cette semaine : ${avis.map(a => a.nom).join(', ')}.\nLes nouvelles du jour et les annonces du Conseil sont punaisées à côté.`, style(14, '#3b2410', { lineSpacing: 4, wordWrap: { width: 890 } })));
+    this.bouton(c, 480, 430, 300, 'Lire les affiches de près', () => this.vueTableau());
+    this.vueTableau();
+  }
+
+  // Le tableau de près : un grand panneau de bois sous un petit toit, les affiches punaisées.
+  // Un clic sur une affiche la décroche pour la lire en grand ; un autre clic la remet en place.
+  vueTableau() {
+    const G = this.G;
+    G.tableauLu = G.jour;
+    if (this.exclamTableau) this.exclamTableau.setVisible(false);
+    if (this.vitrineOuverte) this.vitrineOuverte.destroy();
+    const c = this.vitrineOuverte = this.add.container(0, 0).setDepth(40);
+    const panneau = this.contenu;
+    if (panneau) panneau.setVisible(false);
+    const fermer = () => { Son.jouer('glisse'); c.destroy(); this.vitrineOuverte = null; if (panneau && panneau.active) panneau.setVisible(true); };
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x0e0a06, 0.92).setInteractive());
+    c.add(this.add.image(480, 270, murRuelleHD(this)).setScale(2));
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.3));
+    // le panneau : deux poteaux, un cadre, des planches, un petit toit de bardeaux
+    const g = this.add.graphics(); c.add(g);
+    const x0 = 70, y0 = 78, L = 820, H = 418;
+    g.fillStyle(0x3b2410).fillRect(x0 + 30, y0, 26, H + 60).fillRect(x0 + L - 56, y0, 26, H + 60);
+    g.fillStyle(0x2a1608).fillRect(x0 - 8, y0 - 8, L + 16, H + 16);
+    for (let k = 0; k < 7; k++) {
+      const y = y0 + k * (H / 7);
+      g.fillStyle(k % 2 ? 0x7a5432 : 0x6e4a2a).fillRect(x0, y, L, H / 7 - 2);
+      g.fillStyle(0x8a6440, 0.5).fillRect(x0, y, L, 3);
+      for (let n = 0; n < 6; n++) g.fillStyle(0x4a2e18, 0.5).fillRect(x0 + 40 + ((n * 137 + k * 61) % (L - 80)), y + 8 + (n % 3) * 10, 18, 2);   // (le grain du bois)
+    }
+    g.lineStyle(6, 0x4a2e18).strokeRect(x0 - 3, y0 - 3, L + 6, H + 6);
+    // le toit
+    g.fillStyle(0x4a2a1a).fillTriangle(x0 - 40, y0 - 4, x0 + L + 40, y0 - 4, 480, y0 - 58);
+    for (let k = 0; k < 4; k++) { g.lineStyle(2, 0x2a160c, 0.8); const yy = y0 - 4 - k * 13; const dx = (L / 2 + 40) * (1 - k * 13 / 54); g.lineBetween(480 - dx, yy, 480 + dx, yy); }
+    g.lineStyle(3, 0x1a0e06).strokeTriangle(x0 - 40, y0 - 4, x0 + L + 40, y0 - 4, 480, y0 - 58);
+    c.add(this.add.text(480, y0 - 24, "TABLEAU D'AFFICHAGE", style(15, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5));
+    // de vieux bouts d'affiches arrachées, pour faire vrai
+    [[x0 + 18, y0 + 300, 0xd8c8a0], [x0 + L - 80, y0 + 20, 0xcab890], [x0 + 410, y0 + 370, 0xd0c098]].forEach(([x, y, col]) => {
+      const lam = this.add.polygon(x, y, [0, 0, 46, 4, 40, 22, 52, 34, 12, 40, 4, 24], col, 0.55).setOrigin(0); c.add(lam);
+    });
+    // les affiches
+    const avis = avisDeRecherche(G);
+    const affiches = [
+      this.afficheGazette(212, 250, -2),
+      this.afficheRecherche(avis[0], 422, 276, 2),
+      this.afficheRecherche(avis[1], 598, 286, -1.5),
+      this.afficheRecherche(avis[2], 774, 272, 2.5),
+    ];
+    // l'affiche des événements, plus petite, en bas à gauche (on la décale si le tableau est plein)
+    affiches.push(this.afficheEvenements(212, 436, 1));
+    affiches.forEach(a => c.add(a));
+    let grande = null;
+    const voile = this.add.rectangle(480, 270, 960, 540, 0x000000, 0.6).setVisible(false).setInteractive(); c.add(voile);
+    const reposer = () => {
+      if (!grande) return;
+      const a = grande; grande = null;
+      Son.jouer('page');
+      voile.setVisible(false);
+      this.tweens.add({ targets: a, x: a.place.x, y: a.place.y, scale: 1, angle: a.place.angle, duration: 260, ease: 'Quad.easeOut', onComplete: () => c.moveBelow(a, voile) });
+    };
+    voile.on('pointerdown', reposer);
+    affiches.forEach(a => {
+      a.place = { x: a.x, y: a.y, angle: a.angle };
+      a.zone.on('pointerover', () => { if (!grande) a.setScale(1.04); });
+      a.zone.on('pointerout', () => { if (grande !== a) a.setScale(1); });
+      a.zone.on('pointerdown', () => {
+        if (grande === a) return reposer();
+        if (grande) return;
+        grande = a;
+        Son.jouer('page');
+        voile.setVisible(true); c.bringToTop(voile); c.bringToTop(a);
+        const e = Math.min(1.9, 470 / a.hauteur);
+        this.tweens.add({ targets: a, x: 480, y: 270, scale: e, angle: 0, duration: 300, ease: 'Back.easeOut' });
+      });
+    });
+    c.add(this.add.text(480, 522, 'Clique sur une affiche pour la lire en grand', style(13, '#f3e6c8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
+    const reculer = creerBouton(this, 836, 32, 200, '◀ Reculer', fermer);
+    c.add([reculer.fond, reculer.label]);
+    c.bringToTop(reculer.fond); c.bringToTop(reculer.label);
+  }
+
+  // Une feuille d'affiche : le papier jauni, les bords brûlés et cornés, la punaise en haut.
+  feuilleAffiche(x, y, l, h, angle, couleur = 0xe8d6a4) {
+    const a = this.add.container(x, y).setAngle(angle);
+    a.hauteur = h;
+    const g = this.add.graphics();
+    g.fillStyle(0x000000, 0.35).fillRect(-l / 2 + 5, -h / 2 + 6, l, h);   // l'ombre sur le bois
+    g.fillStyle(0x8a6a3a).fillRect(-l / 2, -h / 2, l, h);                  // le bord bruni
+    g.fillStyle(couleur).fillRect(-l / 2 + 4, -h / 2 + 4, l - 8, h - 8);
+    g.fillStyle(0xf3e6c0, 0.5).fillRect(-l / 2 + 4, -h / 2 + 4, l - 8, 6);
+    // des taches et des déchirures sur le bord
+    for (let k = 0; k < 7; k++) g.fillStyle(0xb89a64, 0.45).fillRect(-l / 2 + 10 + ((k * 53) % (l - 26)), -h / 2 + 14 + ((k * 89) % (h - 30)), 6 + (k % 3) * 3, 3);
+    g.fillStyle(0x6e4a2a).fillTriangle(l / 2, h / 2, l / 2 - 16, h / 2, l / 2, h / 2 - 16);   // un coin corné
+    g.fillStyle(0xcab284).fillTriangle(l / 2 - 16, h / 2, l / 2, h / 2 - 16, l / 2 - 16, h / 2 - 16);
+    a.add(g);
+    // la punaise
+    a.add(this.add.circle(0, -h / 2 + 8, 5, 0xa02a20).setStrokeStyle(1, 0x3b0a08));
+    a.add(this.add.circle(-1.5, -h / 2 + 6.5, 1.6, 0xf0a090));
+    a.zone = this.add.rectangle(0, 0, l, h, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    a.add(a.zone);
+    return a;
+  }
+
+  // L'avis de recherche, façon primes de pirates : « AVIS DE RECHERCHE », le portrait, « MORT OU
+  // VIF », le nom en grand et la prime en gros chiffres.
+  afficheRecherche(avis, x, y, angle) {
+    const l = 164, h = 284, haut = -h / 2;
+    const a = this.feuilleAffiche(x, y, l, h, angle);
+    const encre = '#3a2210';
+    a.add(this.add.text(0, haut + 22, 'AVIS DE', style(13, encre, { fontStyle: 'bold' })).setOrigin(0.5));
+    a.add(this.add.text(0, haut + 41, 'RECHERCHE', style(22, encre, { fontStyle: 'bold' })).setOrigin(0.5));
+    // le portrait, imprimé à l'encre sépia, dans son cadre
+    const pl = 128, ph = 96, py = haut + 62 + ph / 2;
+    a.add(this.add.rectangle(0, py, pl + 6, ph + 6, 0x3a2210));
+    a.add(this.add.rectangle(0, py, pl, ph, 0xcdb98a));
+    const portrait = this.add.image(0, py + ph / 2, textureBusteHD(this, avis.personne, 'fache')).setOrigin(0.5, 1).setTint(0xd8b888);
+    const e = (ph + 18) / portrait.height;
+    portrait.setScale(e);
+    // (le buste dépasse du cadre : on le rogne)
+    const cw = Math.min(portrait.width, pl / e), ch = Math.min(portrait.height, ph / e);
+    portrait.setCrop((portrait.width - cw) / 2, portrait.height - ch, cw, ch);
+    a.add(portrait);
+    let yy = py + ph / 2 + 6;
+    const ligne = (texte, taille, extra = {}, ecart = 2) => {
+      const t = this.add.text(0, yy, texte, style(taille, extra.couleur || encre, { fontStyle: 'bold', align: 'center', wordWrap: { width: l - 18 }, lineSpacing: -2, ...extra })).setOrigin(0.5, 0);
+      a.add(t); yy += t.height + ecart; return t;
+    };
+    ligne('MORT OU VIF', 14, {}, 0);
+    ligne(avis.nom.toUpperCase(), avis.nom.length > 14 ? 11 : 13, {}, 0);
+    // la prime, en gros chiffres
+    const prime = avis.prime.toLocaleString('fr-FR').replace(/ | /g, ' ');
+    ligne(`${prime} p.`, 24, {}, 1);
+    ligne(avis.crime, 9, { fontStyle: 'italic', couleur: '#5a3a1c', lineSpacing: 0 });
+    if (avis.nouveau) a.add(this.add.text(l / 2 - 8, haut + 12, 'NOUVEAU', style(9, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#a02a20', padding: { x: 4, y: 1 } })).setOrigin(1, 0.5).setAngle(8));
+    a.bringToTop(a.zone);
+    return a;
+  }
+
+  // La gazette du jour : ce que le crieur annonce, imprimé
+  afficheGazette(x, y, angle) {
+    const G = this.G, l = 236, h = 240;
+    const a = this.feuilleAffiche(x, y, l, h, angle, 0xeee2c0);
+    const encre = '#2a1a10';
+    a.add(this.add.text(0, -h / 2 + 24, 'LA GAZETTE', style(19, encre, { fontStyle: 'bold' })).setOrigin(0.5));
+    a.add(this.add.text(0, -h / 2 + 42, `des Mastres · jour ${G.jour}`, style(10, '#5a3a1c', { fontStyle: 'italic' })).setOrigin(0.5));
+    a.add(this.add.rectangle(0, -h / 2 + 54, l - 30, 2, 0x2a1a10));
+    // (le papier du marché noir glissé sous ta porte, lui, ne s'affiche pas sur la place !)
+    const publiques = G.gazette && G.gazette.jour === G.jour ? G.gazette.lignes.filter(l => !l.startsWith('Un papier glissé')) : [];
+    const lignes = publiques.length ? publiques : ["Rien de neuf aujourd'hui. Même le crieur bâille."];
+    let yy = -h / 2 + 62;
+    for (const ligne of lignes) {
+      const t = this.add.text(-l / 2 + 16, yy, '• ' + ligne, style(10, encre, { wordWrap: { width: l - 32 }, lineSpacing: 1 }));
+      if (yy + t.height > h / 2 - 12) { t.destroy(); a.add(this.add.text(0, h / 2 - 16, '(la suite chez le crieur)', style(9, '#5a3a1c', { fontStyle: 'italic' })).setOrigin(0.5)); break; }
+      a.add(t); yy += t.height + 5;
+    }
+    a.bringToTop(a.zone);
+    return a;
+  }
+
+  // Les annonces du Conseil : les événements en cours et ceux qu'on sait venir
+  afficheEvenements(x, y, angle) {
+    const G = this.G, l = 236, h = 116;
+    const a = this.feuilleAffiche(x, y, l, h, angle, 0xe0d4b0);
+    const encre = '#2a1a10';
+    a.add(this.add.circle(-l / 2 + 22, -h / 2 + 22, 11, 0xa02a20).setStrokeStyle(2, 0x5a0e08));   // le sceau
+    a.add(this.add.text(-l / 2 + 22, -h / 2 + 22, 'C', style(11, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5));
+    a.add(this.add.text(10, -h / 2 + 20, 'AVIS À LA POPULATION', style(12, encre, { fontStyle: 'bold' })).setOrigin(0.5));
+    const lignes = [];
+    for (const e of (G.evenements || [])) {
+      const d = EVENEMENTS[e.id]; if (!d) continue;
+      if (e.debut <= G.jour) lignes.push(`En ce moment (encore ${e.fin - G.jour + 1} j) : ${d.nouvelle}`);
+      else lignes.push(`Dans ${e.debut - G.jour} j : ${d.nouvelle}`);
+    }
+    if (!lignes.length) lignes.push('Rien à signaler. Le Conseil veille sur la Comté.');
+    let yy = -h / 2 + 36;
+    for (const texte of lignes) {
+      const t = this.add.text(-l / 2 + 14, yy, '• ' + texte, style(9, encre, { wordWrap: { width: l - 28 }, lineSpacing: 0 }));
+      if (yy + t.height > h / 2 - 6) { t.destroy(); break; }
+      a.add(t); yy += t.height + 3;
+    }
+    a.bringToTop(a.zone);
+    return a;
   }
 
   // --- Le coin des jeux : les dés et le bonneteau ---
