@@ -498,6 +498,7 @@ class MarcheScene extends Phaser.Scene {
       ['sacsHD', 700, 466, 1.3, true], ['tonneauxHD', 628, 462, 1.4, true],
     ];
     for (const [cle, x, y, e, miroir] of decor) c.add(this.add.image(x, y, cle).setOrigin(0.5, 1).setScale(e).setFlipX(miroir));
+    c.add(panneauCarteMonde(this, 198, 468));   // (v0.93) la carte du monde, sur un panneau de la place
     const fontaine = this.add.image(480, 438, 'fontaineHD').setOrigin(0.5, 1).setScale(1.6).setInteractive({ useHandCursor: true });
     fontaine.on('pointerdown', () => this.vueFontaine());   // (v0.58 : on s'approche de la fontaine, comme d'un étal)
     c.add(fontaine);

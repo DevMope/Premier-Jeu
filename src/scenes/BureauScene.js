@@ -301,6 +301,11 @@ class BureauScene extends Phaser.Scene {
         { titre: 'Toi', lignes: [`${nomJoueur(G)}, ${ageJoueur(G)} ans`] },
         { titre: `Flair : ${Math.round(flair * 100)} %`, lignes: [flair < 1 ? `Tes estimations peuvent se tromper de ±${Math.round(35 * (1 - flair))} %.` : 'Tes estimations sont exactes.', flair < 1 ? `Il monte en servant des clients (${G.experience} / ${EXPERIENCE_MAX}).` : ''] },
         { titre: `Artisanat : niveau ${niveauArtisanat(G)}`, lignes: [`Réparations faites : ${G.reparations} (niveau suivant à ${prochainArtisanat})`, `Matériaux par réparation : ${materiauxRequis(G)}`, `${niveauArtisanat(G)} jour(s) de moins à l'atelier`] },
+        // (v0.93) la persuasion
+        (() => { const n = niveauPersuasion(G), suivant = PERSUASION.paliers[n + 1];
+          return { titre: `Persuasion : niveau ${n}`, lignes: [`Marchandages réussis : ${G.persuasion || 0}${suivant != null ? ` (niveau suivant à ${suivant})` : ''}`,
+            n ? `+${n} de patience aux clients · ils partent moins fâchés` : 'Elle monte quand tu obtiens plus que ce qu\'on te proposait.',
+            n ? `Parfois, un client lâche 5 % au-delà de sa limite (${Math.round(PERSUASION.auDela[n] * 100)} %)` : ''] }; })(),
       ];
       droite = [
         { titre: 'Marchandage', lignes: Object.entries(MARCHANDS).map(([m, d]) => `${d.nom} : ${niveauRelation(G, d.nom).nom}${remiseMarchand(G, m) ? ` (−${Math.round(remiseMarchand(G, m) * 100)} %)` : ''}`) },

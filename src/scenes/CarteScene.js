@@ -10,16 +10,18 @@ class CarteScene extends Phaser.Scene {
 
   init(data) {
     this.comptoir = data.comptoir || null;
-    this.planification = !this.comptoir;
+    // (v0.93) la carte consultée de partout (comptoir, arrière-boutique, chambre, marchés) : on ne fait que regarder
+    this.consultation = data.consultation ? data.retour : null;
+    this.planification = !this.comptoir && !this.consultation;
     this.zoneChoisie = null;
     this.devoilement = false;   // (audit v0.59) la scène est réutilisée : sans ça, une carte quittée pendant le dévoilement restait inerte
   }
 
   create() {
-    exclureScenes(this, 'Nuit', 'Dodo');   // (v0.62)
+    if (!this.consultation) exclureScenes(this, 'Nuit', 'Dodo');   // (v0.62)
     const G = this.G = window.GAME;
     // Les voyageurs à placer : tout ceux du jour sans destination, ou celui du comptoir.
-    this.voyageurs = this.comptoir ? [this.comptoir.voyageur]
+    this.voyageurs = this.consultation ? [] : this.comptoir ? [this.comptoir.voyageur]
       : G.file.filter(e => e.type === 'client' && (!e.voyageur.queteId || e.planifie)).map(e => e.voyageur);
     this.place = {}; // id du voyageur → zone choisie
     for (const e of G.file) if (e.planifie) this.place[e.voyageur.id] = e.voyageur.zone;
@@ -43,7 +45,7 @@ class CarteScene extends Phaser.Scene {
     this.cameras.main.fadeIn(300);
     this.camCarte.fadeIn(300);
     if (this.nouvelles.length) this.time.delayedCall(400, () => this.devoiler(this.nouvelles.slice()));
-    else if (!this.comptoir) this.time.delayedCall(500, () => conseilGarrick(this, 'carte'));
+    else if (this.planification) this.time.delayedCall(500, () => conseilGarrick(this, 'carte'));
   }
 
   // Le dévoilement d'une contrée qui vient de s'ouvrir : la caméra y glisse, la brume se dissipe,
@@ -52,7 +54,7 @@ class CarteScene extends Phaser.Scene {
     const cle = liste.shift();
     if (!cle) {
       // Le monde connu s'est agrandi : on dézoome pour le voir en entier
-      this.vue(this.kMin, this.limites.cx, this.limites.cy, () => { this.devoilement = false; if (!this.comptoir) conseilGarrick(this, 'carte'); });
+      this.vue(this.kMin, this.limites.cx, this.limites.cy, () => { this.devoilement = false; if (this.planification) conseilGarrick(this, 'carte'); });
       return;
     }
     this.devoilement = true;
@@ -380,7 +382,7 @@ class CarteScene extends Phaser.Scene {
     });
     this.add.rectangle(138, 476, 2, 84, 0x8a6a3a);
     this.cartes = this.add.container(0, 0);
-    const libelle = this.planification ? 'Préparer les sacs ▶' : 'Retour au comptoir';
+    const libelle = this.planification ? 'Préparer les sacs ▶' : this.consultation ? '◀ Ranger la carte' : 'Retour au comptoir';
     this.boutonFin = creerBouton(this, 840, 476, 190, libelle, () => this.terminer());
     this.boutonFin.label.setFontSize(16);
   }
@@ -402,7 +404,7 @@ class CarteScene extends Phaser.Scene {
           style(12, zone ? '#b8e0a0' : '#c9b48a', { align: 'center', wordWrap: { width: largeur - 12 } })).setOrigin(0.5, 0)]);
     });
     if (!this.voyageurs.length) {
-      this.cartes.add(this.add.text(440, 476, "Personne ne cherche l'aventure aujourd'hui : tes clients savent déjà où ils vont.",
+      this.cartes.add(this.add.text(440, 476, this.consultation ? 'Touche une contrée pour la découvrir : sa conquête, son butin, ce qu\'il faut y emporter.' : "Personne ne cherche l'aventure aujourd'hui : tes clients savent déjà où ils vont.",
         style(15, '#f3e6c8', { fontStyle: 'italic', wordWrap: { width: 580 } })).setOrigin(0.5));
     }
   }
@@ -527,6 +529,7 @@ class CarteScene extends Phaser.Scene {
   }
 
   terminer() {
+    if (this.consultation) { this.memoriserVue(); this.scene.stop(); this.scene.resume(this.consultation); return; }
     if (!this.planification) return this.fermer({ annule: true });
     if (enTransition(this)) return;
     this.memoriserVue();
@@ -554,4 +557,63 @@ function commencerJournee(scene, ouvrir = true, facade = true) {
   const suite = aPlacer ? 'Carte' : 'Comptoir';
   for (const cam of scene.cameras.cameras) cam.fadeOut(400);   // (v0.68 : toutes les caméras, interface comprise)
   scene.cameras.main.once('camerafadeoutcomplete', () => scene.scene.start(facade ? 'Facade' : suite, facade ? { suite } : {}));
+}
+
+// (v0.93) La carte du monde, consultée de partout : la page d'où l'on vient attend en pause.
+function ouvrirCarteMonde(scene) {
+  if (enTransition(scene) || scene.scene.isActive('Carte')) return;
+  Son.jouer('plume');
+  scene.scene.pause();
+  scene.scene.launch('Carte', { consultation: true, retour: scene.scene.key });
+}
+// Une petite carte roulée, dessinée en pixels (le bouton « La carte » des pages et des panneaux)
+function texCarteMonde(scene) {
+  const cle = 'iconeCarteMonde';
+  if (scene.textures.exists(cle)) return cle;
+  const g = scene.make.graphics({ add: false });
+  g.fillStyle(0x3b2410).fillRect(0, 2, 30, 20);                 // le contour
+  g.fillStyle(0xe8d4a0).fillRect(1, 3, 28, 18);                 // le parchemin
+  g.fillStyle(0xcdb27a).fillRect(10, 3, 1, 18).fillRect(20, 3, 1, 18);   // les plis
+  g.fillStyle(0x7aa05a).fillRect(3, 6, 6, 4).fillRect(13, 13, 5, 5);     // les bois
+  g.fillStyle(0x6a8ac0).fillRect(22, 5, 5, 3).fillRect(24, 8, 2, 6);     // un lac et sa rivière
+  g.fillStyle(0x8a6a4a).fillRect(4, 15, 2, 2).fillRect(17, 6, 2, 2);     // des montagnes
+  g.fillStyle(0xb82a20);
+  for (const [x, y] of [[5, 12], [8, 13], [11, 12], [14, 10], [17, 9], [20, 10], [23, 15]]) g.fillRect(x, y, 1, 1);   // le chemin
+  g.fillRect(22, 14, 3, 3);                                     // la croix
+  g.fillStyle(0x6b4a22).fillRect(0, 0, 3, 24).fillRect(27, 0, 3, 24);   // les rouleaux
+  g.fillStyle(0x9a7040).fillRect(1, 0, 1, 24).fillRect(28, 0, 1, 24);
+  g.generateTexture(cle, 30, 24); g.destroy();
+  return cle;
+}
+// Le bouton « La carte » : l'icône et son nom, qui grandissent un peu au survol
+function boutonCarteMonde(scene, x, y, { profondeur = 30, libelle = 'La carte', couleur = '#f3d98a', compact = false } = {}) {
+  const c = scene.add.container(x, y).setDepth(profondeur);
+  // (compact : en largeur, l'icône à gauche du nom, pour les pages où la place manque en hauteur)
+  const fond = compact ? scene.add.rectangle(0, 0, libelle.length > 5 ? 118 : 96, 34, 0x2a1a10, 0.85).setStrokeStyle(2, 0xc9a227) : scene.add.rectangle(0, 4, 74, 62, 0x2a1a10, 0.85).setStrokeStyle(2, 0xc9a227);
+  const icone = compact ? scene.add.image(libelle.length > 5 ? -36 : -26, 0, texCarteMonde(scene)).setScale(1.1) : scene.add.image(0, -4, texCarteMonde(scene)).setScale(2);
+  const texte = compact ? scene.add.text(libelle.length > 5 ? -14 : -4, 0, libelle, style(14, couleur, { fontStyle: 'bold' })).setOrigin(0, 0.5) : scene.add.text(0, 24, libelle, style(12, couleur, { fontStyle: 'bold' })).setOrigin(0.5);
+  const e = icone.scale;
+  c.add([fond, icone, texte]);
+  fond.setInteractive({ useHandCursor: true })
+    .on('pointerover', () => icone.setScale(e * 1.1)).on('pointerout', () => icone.setScale(e))
+    .on('pointerdown', () => ouvrirCarteMonde(scene));
+  return c;
+}
+// Le panneau de bois planté sur la place (marché, marché noir), une carte du monde punaisée dessus
+function panneauCarteMonde(scene, x, yBase, { echelle = 1, nom = 'La carte', sombre = false } = {}) {
+  const c = scene.add.container(x, yBase).setScale(echelle);
+  const bois = sombre ? 0x3a2a20 : 0x6b4a22, clair = sombre ? 0x5a4030 : 0x9a7040;
+  c.add([
+    scene.add.rectangle(0, -26, 6, 52, bois).setStrokeStyle(2, 0x1a0e06),             // le poteau
+    scene.add.rectangle(0, -62, 64, 44, bois).setStrokeStyle(2, 0x1a0e06),            // la planche
+    scene.add.rectangle(0, -75, 60, 3, clair), scene.add.rectangle(0, -52, 60, 2, clair),
+    scene.add.image(0, -62, texCarteMonde(scene)).setScale(1.6),                       // la carte punaisée
+    scene.add.circle(-20, -78, 2, 0xc82a20), scene.add.circle(20, -78, 2, 0xc82a20),
+  ]);
+  const t = scene.add.text(0, 4, nom, style(12, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5, 0);
+  c.add(t);
+  const zone = scene.add.rectangle(0, -40, 72, 100, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  zone.on('pointerdown', () => ouvrirCarteMonde(scene));
+  c.add(zone);
+  return c;
 }

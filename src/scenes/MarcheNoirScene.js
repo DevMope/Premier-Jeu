@@ -17,6 +17,7 @@ class MarcheNoirScene extends Phaser.Scene {
     this.cameras.main.setScroll(960, 0);
     this.dessinerCave();
     this.dessinerGens();
+    panneauCarteMonde(this, 1244, 362, { sombre: true }).setDepth(1);   // (v0.93) la carte du monde, même ici
     const fixe = o => o.setScrollFactor(0);
     this.titreCoin = fixe(this.add.text(480, 26, 'Le marché noir', style(26, '#ff9a70', { fontStyle: 'bold', stroke: '#1a0806', strokeThickness: 5 })).setOrigin(0.5).setDepth(5));
     this.texteBourse = fixe(this.add.text(940, 26, '', style(16, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0806', strokeThickness: 4 })).setOrigin(1, 0.5).setDepth(5));

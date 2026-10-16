@@ -39,6 +39,7 @@ class CounterScene extends Phaser.Scene {
     this.dessinerPiece();
     this.creerFenetre();
     this.creerPanneauGauche();
+    this.boutonCarte = boutonCarteMonde(this, 74, 440, { compact: true, libelle: 'Carte' });   // (v0.93) la carte du monde, à portée de main
     this.creerCommande();
     this.creerDialogue();
     this.creerStock();

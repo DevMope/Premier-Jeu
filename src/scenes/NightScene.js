@@ -26,6 +26,7 @@ class NightScene extends Phaser.Scene {
     vignette(this, 0.85, 0);
     poserLuminaire(this, 480, -40, niveauAmelioration(G, 'eclairage'), 0);
     this.add.text(480, 34, this.matin ? `Matin du jour ${G.jour} · chez toi` : `Soir du jour ${G.jour}`, style(30, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5);
+    boutonCarteMonde(this, 80, 44, { compact: true });   // (v0.93) la carte du monde, depuis la chambre
     // La dette, bien en vue en haut de l'écran
     if (G.prets.length) {
       const dette = G.prets.reduce((a, p) => a + p.restant, 0);

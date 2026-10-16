@@ -3190,7 +3190,8 @@ function ouvrirMarchandage(G, v) {
   if (!v.marchandage) {
     const st = styleMarchandage(v);
     const marge = st.marge[0] + Math.round(aleaClient(v, 'marge') * (st.marge[1] - st.marge[0]) / MARCHANDAGE.pas) * MARCHANDAGE.pas;
-    v.marchandage = { part: MARCHANDAGE.base, max: MARCHANDAGE.base + marge, patience: st.patience, patienceMax: st.patience, fini: false };
+    const patience = st.patience + niveauPersuasion(G);   // (v0.93) la persuasion le rend plus patient
+    v.marchandage = { part: MARCHANDAGE.base, max: MARCHANDAGE.base + marge, patience, patienceMax: patience, fini: false };
   }
   return v.marchandage;
 }
@@ -3198,10 +3199,12 @@ function ouvrirMarchandage(G, v) {
 function demanderPlus(G, v) {
   const m = ouvrirMarchandage(G, v), demande = m.part + MARCHANDAGE.pas;
   m.patience--;
+  // (v0.93) la persuasion : une fois, rarement, il lâche 5 % au-dessus de sa limite
+  if (demande > m.max && !m.auDela) { m.auDela = true; if (aleaClient(v, 'auDela') < PERSUASION.auDela[niveauPersuasion(G)]) m.max = demande; }
   if (demande <= m.max) { m.part = demande; return m.patience <= 0 ? conclureMarchandage(G, v, 'cede') : 'cede'; }
   if (m.patience <= 0) {
     // (v0.91) à bout de patience, il ne claque la porte que rarement ; le plus souvent, il s'en tient à sa dernière offre
-    if (aleaClient(v, 'depart') >= MARCHANDAGE.depart) return conclureMarchandage(G, v, 'dernierMot');
+    if (aleaClient(v, 'depart') >= MARCHANDAGE.depart * PERSUASION.depart[niveauPersuasion(G)]) return conclureMarchandage(G, v, 'dernierMot');
     m.fini = true;
     changerRelation(G, v.nom, -2);
     G.reputation -= REFUS_CLIENT;
@@ -3222,8 +3225,11 @@ function conclureMarchandage(G, v, issue = 'accepte') {
   v.butin = Math.round(v.butinBase * m.part / MARCHANDAGE.base);
   // le nain respecte qui tient bon jusqu'au bout de sa limite
   if (styleMarchandage(v).respect && m.part >= m.max) changerRelation(G, v.nom, 1);
+  if (m.part > MARCHANDAGE.base) G.persuasion = (G.persuasion || 0) + 1;   // (v0.93) un marchandage réussi
   return issue;
 }
+// (v0.93) Le niveau de persuasion (0 à 2) selon les marchandages réussis
+function niveauPersuasion(G) { return PERSUASION.paliers.filter(p => (G.persuasion || 0) >= p).length - 1; }
 function texteMarchandage(v, cle, valeurs = {}) {
   let t = texteImposture(styleMarchandage(v)[cle], v);
   for (const [k, x] of Object.entries(valeurs)) t = t.replaceAll(`{${k}}`, x);
@@ -3237,7 +3243,7 @@ function marchanderTrouvaille(G, v, t) {
   const plancher = Math.round(t.prixDepart * (st.plancher + (aleaClient(v, 't' + t.tresor.nom) - 0.5) * 0.1));
   const propose = Math.max(1, Math.round(t.prix * (1 - MARCHANDAGE.pasTrouvaille)));
   t.patience--;
-  if (propose >= plancher) { t.prix = propose; return { issue: 'cede', texte: auHasard(PAROLES_TROUVAILLE.cede).replaceAll('{prix}', propose).replaceAll('{J}', eJ(G)) }; }
+  if (propose >= plancher) { t.prix = propose; if (!t.persuade) { t.persuade = true; G.persuasion = (G.persuasion || 0) + 1; } return { issue: 'cede', texte: auHasard(PAROLES_TROUVAILLE.cede).replaceAll('{prix}', propose).replaceAll('{J}', eJ(G)) }; }
   if (t.patience <= 0) { t.retire = true; return { issue: 'part', texte: auHasard(PAROLES_TROUVAILLE.part) }; }
   return { issue: 'refuse', texte: auHasard(PAROLES_TROUVAILLE.refuse).replaceAll('{prix}', t.prix) };
 }

@@ -2225,6 +2225,9 @@ const FOUILLE_VEXE = ["Tu me soupçonnes de vol ?! Vas-y, fouille... Je m'en sou
 // les voit mieux)... sauf le gobelin, qui bluffe tout le temps. Chaque peuple a son style.
 // Les trouvailles après le récit se marchandent aussi : −10 % par demande, jusqu'à son plancher.
 const MARCHANDAGE = { jourMin: 3, base: 20, pas: 5, plancherTrouvaille: 0.75, pasTrouvaille: 0.1, depart: 0.25 };   // (v0.91) depart : la chance qu'un client à bout de patience s'en aille vraiment
+// (v0.93) La persuasion : elle monte avec les marchandages réussis. Par niveau : +1 de patience au
+// client, une petite chance qu'il lâche 5 % au-dessus de sa limite, et moins de départs fâchés.
+const PERSUASION = { paliers: [0, 5, 15], auDela: [0, 0.08, 0.15], depart: [1, 0.7, 0.45] };
 const STYLES_MARCHANDAGE = {
   defaut: { patience: 3, marge: [0, 10], plancher: 0.75, tic: "{Il} transpire un peu et détourne les yeux.",
     offre: "Je te reverserai {p} % de mon butin. C'est honnête, non ?", cede: "Bon... {p} %, mais c'est bien parce que c'est toi.",
