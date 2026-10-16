@@ -71,6 +71,7 @@ function rendreService(G, id) {
   const avant = rangMafia(G);
   m.services++;
   G.reussites.mal = (G.reussites.mal || 0) + 1;
+  pencher(G, 'piege');
   let reste = s.efface;
   for (const p of G.prets.filter(x => x.preteur === 'La Main Noire')) { const k = Math.min(reste, p.restant); p.restant -= k; reste -= k; }
   G.prets = G.prets.filter(p => p.restant > 0);
@@ -135,6 +136,7 @@ function denoncerMafia(G) {
   G.prets = G.prets.filter(p => p.preteur !== 'La Main Noire');
   G.reputation += 2;
   G.reussites.bien = (G.reussites.bien || 0) + 3;
+  pencher(G, 'denoncerMafia');
   G.decesAnnonces = G.decesAnnonces || [];
   G.annonceMafia = `Coup de filet de la Confrérie : ${nomBande(G)} démantelé${m.bande === 'serpent' ? '' : 'e'} ! Un commerçant courageux aurait parlé.`;
 }

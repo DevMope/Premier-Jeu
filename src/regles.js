@@ -611,6 +611,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     nouvellesPieces: [], // celles que le messager apporte ce matin : { piece, zone }
     mal: 0,            // la jauge du mal : les âmes que tu as offertes exprès
     reussites: { bien: 0, mal: 0 }, // missions réussies pour chaque camp (la jauge lumière ⟷ ombre)
+    lo: { points: 0, journal: [], serment: null, offres: {}, parjures: 0, carrefour: null, parjure: null },   // (v0.90) la balance lumière ⟷ ombre
     objetsCamp: { bien: 0, mal: 0 }, // objets marqués achetés au marché (étape 9c)
     palierJaugeVu: 0,  // le dernier palier de la jauge annoncé par la gazette
     decalageJours: 0,  // (v0.55) les jours de calendrier sautés aux paliers d'étoiles (le joueur grandit)
@@ -674,6 +675,8 @@ function partir(G, voyageur, colis, pieges = {}) {
   if (detour) message = (message ? message + ' ' : '') + detour;
   const mission = G.faucheuse.mission;
   if (mission && mission.cible.id === voyageur.id) mission.etat = pieges[mission.piege] > 0 ? 'posee' : 'ratee';
+  // (v0.90) un piège glissé dans le baluchon : un geste d'ombre
+  if (Object.values(pieges).some(n => n > 0)) pencher(G, 'piege', { qui: voyageur.nom });
   // Il demandait des comptes : sans objet en plus, il le prend très mal.
   if (voyageur.exige) {
     const h = G.habitues.find(x => x.nom === voyageur.nom);
@@ -881,6 +884,7 @@ function donnerAuMendiant(G, montant) {
   const avant = G.mendiant;
   payer(G, montant, 'dons');
   G.mendiant += montant;
+  if (G.mendiantLumiere !== G.jour) { G.mendiantLumiere = G.jour; pencher(G, 'mendiant'); }
   if (avant < MENDIANT_SEUIL && G.mendiant >= MENDIANT_SEUIL && !G.decorations.includes('trefle')) {
     G.decorations.push('trefle');
     return { recit: 'Il fouille dans sa besace et te tend un trèfle séché. Tu reçois le Trèfle du mendiant !', parole: `Tu as un grand cœur, ${eJ(G) ? 'petite marchande' : 'petit marchand'}. Prends ce trèfle, il m'a porté chance autrefois...` };
@@ -960,7 +964,7 @@ function acheterDeco(G, id) {
   payer(G, DECOS[id].prix, 'decoration');
   G.decos = [...(G.decos || []), id];
   // (une décoration de camp fait pencher la jauge)
-  if (DECOS[id].camp) { G.objetsCamp = G.objetsCamp || { bien: 0, mal: 0 }; G.objetsCamp[DECOS[id].camp]++; }
+  if (DECOS[id].camp) { G.objetsCamp = G.objetsCamp || { bien: 0, mal: 0 }; G.objetsCamp[DECOS[id].camp]++; pencher(G, DECOS[id].camp === 'bien' ? 'decoClaire' : 'decoSombre'); }
   return null;
 }
 
@@ -1167,6 +1171,7 @@ function dedommager(G, parti, niveau) {
   payer(G, verse, 'dedommagements');
   G.dernierDedommagement = { jour: G.jour, nom: v.nom, race: v.race, feminin: !!v.feminin, verse };   // (v0.57 : pour la fin « vengeance »)
   G.reputation += d.reputation;
+  if (niveau === 'maximum') pencher(G, 'dedommager', { qui: v.nom });
   if (Math.random() < d.releve) { ajouterVisite(G, v, parti.resultat.valeureux, 'releve'); return verse; }
   const pts = G.relations[v.nom] || 0;
   if (Math.random() < (Math.abs(pts) >= 3 ? 0.6 : 0.3)) {
@@ -1538,6 +1543,7 @@ function nuit(G) {
   // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
   for (const j of Object.keys(G.compta)) if (j < G.jour - JOURS_DE_COMPTES) delete G.compta[j];
+  surveillerLO(G);   // (v0.90) le Carrefour ou le parjure, s'il le faut
 }
 
 // Le réveil : ce que la chambre t'apporte ce matin (voir CHAMBRE dans data.js).
@@ -1771,6 +1777,7 @@ function honorerCommande(G, c) {
   encaisser(G, c.prix, 'marcheNoir');
   changerRelation(G, c.banni.nom, 2);
   G.objetsCamp.mal = (G.objetsCamp.mal || 0) + MARCHE_NOIR.ombreAffaire;
+  pencher(G, 'commande', { qui: c.banni.nom });
   soireeMarcheNoir(G).risque += MARCHE_NOIR.risqueCommande;
   return null;
 }
@@ -1810,7 +1817,8 @@ function gardeAuHasard(G) {
   const p = palierCamp(G);
   if (p >= 0) return false;
   const sombres = (G.decos || []).filter(d => DECOS[d].camp === 'mal').length;
-  return Math.random() < GARDE.chance + GARDE.parPalier * (-p - 1) + GARDE.parDeco * sombres;
+  // (v0.90) un serment aux Bannis : la Confrérie te surveille de près
+  return Math.random() < GARDE.chance + GARDE.parPalier * (-p - 1) + GARDE.parDeco * sombres + (sermentDe(G) === 'mal' ? SERMENT.surveillance : 0);
 }
 
 // Le garde qui accompagne le capitaine aujourd'hui (un peuple de la lumière)
@@ -2020,6 +2028,7 @@ function terminerAventure(G, parti) {
     // en fin de partie (refus, échecs et pièges continuent de coûter quelque chose).
     G.reputation += GAIN_REPUTATION_SUCCES * multReputationCamp(G, camp) * part / (1 + Math.max(0, G.reputation - 12) / 20);
     if (camp) {
+      pencher(G, camp === 'bien' ? 'missionL' : 'missionO', { qui: v.nom });
       G.reussites[camp] = (G.reussites[camp] || 0) + 1;   // (audit v0.53 : plus de G.mal ici, il ne compte que les âmes offertes)
       // (audit v0.54) l'écart est borné ici, pas seulement dans le calcul : la jauge peut toujours revenir
       const autre = camp === 'bien' ? 'mal' : 'bien';
@@ -2109,12 +2118,14 @@ function inventaireApres(parti) {
 
 // Soigner un cœur d'un aventurier revenu blessé : une potion, et il te paie.
 // Renvoie un message d'erreur, ou null.
-function soigner(G, nom) {
+function soigner(G, nom, { gratuit = false } = {}) {
   const h = G.habitues.find(x => x.nom === nom);
   if (!h || !h.blessures) return `${nom} n'a plus de blessure à soigner.`;
   if (G.stock.potion <= 0) return "Tu n'as plus de potion.";
   G.stock.potion--;
-  encaisser(G, PRIX_SOIN, 'soins');
+  // (v0.90) soigner sans faire payer : un geste de lumière
+  if (gratuit) { pencher(G, 'soigner', { qui: nom }); changerRelation(G, nom, 1); }
+  else encaisser(G, PRIX_SOIN, 'soins');
   h.blessures--;
   if (!h.blessures) h.convalescence = 0;
   else if (h.convalescence) h.convalescence -= CONVALESCENCE_PAR_COEUR;   // (v0.60) chaque cœur soigné raccourcit le repos
@@ -2496,6 +2507,7 @@ function recolter(G, partis) {
       if (F.reliques.length < RELIQUES_FAUCHEUSE.length) F.reliques.push(RELIQUES_FAUCHEUSE[F.reliques.length].id);
       const poids = MORTS_VOULUES[p.voulu].poids;
       G.mal += poids * (seductionFaucheuse(G).mal || 1);   // (plus elle t'aime, plus chaque âme pèse)
+      pencher(G, 'ame', { qui: p.voyageur.nom });   // (v0.90 : une âme ne pèse plus que +1 ☾ sur la balance)
       F.faveur += poids;
       bilan.voulues.push(p);
       if (p.voulu === 'piege' && Math.random() < CHANCE_DEMASQUE) {
@@ -2809,7 +2821,8 @@ function recompenserZones(G) {
   const resteArmure = G.armure.length < ARMURE.length;
   // (le sceau est un moment de l'histoire : la dernière pièce n'arrive pas avant le jour JOUR_SCEAU)
   // (audit v0.54) ... ni tant que tu n'as penché d'aucun côté : on ne te scelle pas sans que tu aies choisi
-  const derniereRetenue = resteArmure && G.armure.length === ARMURE.length - 1 && (G.jour < JOUR_SCEAU || palierCamp(G) === 0);
+  // (v0.90) ... mais plus en zone neutre : rester entre les deux est désormais un vrai choix (la fin neutre)
+  const derniereRetenue = resteArmure && G.armure.length === ARMURE.length - 1 && G.jour < JOUR_SCEAU;
   if (derniereRetenue) return;
   const r = G.piecesAVenir.shift();
   const arme = ARMES_LEGENDAIRES[r];
@@ -2822,8 +2835,13 @@ function recompenserZones(G) {
     n.avertit = G.armure.length === ARMURE.length - 1;
     // L'armure est complète : ton camp est scellé pour de bon.
     if (G.armure.length === ARMURE.length && !G.camp) {
-      G.camp = coteArmure(G) === 'sombre' ? 'mal' : 'bien';
-      n.scelle = G.camp;
+      // (v0.90) le serment l'emporte ; sans serment, dans la zone neutre, c'est la fin neutre
+      const serment = sermentDe(G);
+      if (serment) G.camp = serment;
+      else if (palierCamp(G) === 0) G.sceauNeutre = G.jour;
+      else G.camp = coteArmure(G) === 'sombre' ? 'mal' : 'bien';
+      n.scelle = G.camp || 'neutre';
+      if (G.lo) G.lo.carrefour = null;
     }
   }
   G.nouvellesPieces.push(n);
@@ -2842,11 +2860,89 @@ function coteArmure(G) {
 // De −100 (l'ombre) à +100 (la lumière) : les missions réussies pour chaque camp, les âmes offertes,
 // les objets marqués achetés.
 function jaugeCamp(G) {
+  return Math.round(etatLO(G).points);
+}
+// (avant la v0.90) la jauge se calculait d'après les réussites, les âmes et les objets : on s'en sert
+// une fois, pour reprendre une vieille partie là où elle en était
+function jaugeAncienne(G) {
   const r = G.reussites || { bien: 0, mal: 0 }, o = G.objetsCamp || { bien: 0, mal: 0 };
   const ecart = Math.max(-JAUGE_CAMP.ecartMax, Math.min(JAUGE_CAMP.ecartMax, r.bien - r.mal));
   const j = ecart * JAUGE_CAMP.reussite - (G.mal || 0) * JAUGE_CAMP.mal + (o.bien - o.mal) * JAUGE_CAMP.objet;
   return Math.max(-JAUGE_CAMP.max, Math.min(JAUGE_CAMP.max, Math.round(j)));
 }
+
+// --- (v0.90) Lumière et ombre : les points, le frein, le serment, le Carrefour, le parjure ---
+
+function etatLO(G) {
+  if (!G.lo) G.lo = { points: 0, journal: [], serment: null, offres: {}, parjures: 0, carrefour: null, parjure: null };
+  return G.lo;
+}
+
+// Un geste du barème fait pencher la balance (`fois` gestes d'un coup). Renvoie les points gagnés.
+function pencher(G, cle, { fois = 1, qui = null } = {}) {
+  const b = BAREME_CAMP[cle];
+  if (!b || fois <= 0) return 0;
+  const lo = etatLO(G), sg = b.camp === 'bien' ? 1 : -1;
+  const avant = lo.points;
+  for (let k = 0; k < fois; k++) {
+    let v = b.n * (lo.serment === b.camp ? SERMENT.mult : 1);
+    // (le frein : plus on s'éloigne du centre, plus chaque geste compte peu ; revenir compte en entier)
+    if (lo.points === 0 || Math.sign(lo.points) === sg) v *= FREIN_CAMP.find(([seuil]) => Math.abs(lo.points) < seuil)[1];
+    lo.points = Math.max(-JAUGE_CAMP.max, Math.min(JAUGE_CAMP.max, lo.points + sg * v));
+  }
+  lo.journal.unshift({ jour: G.jour, cle, n: b.n * fois, qui });
+  if (lo.journal.length > 40) lo.journal.length = 40;
+  surveillerLO(G);
+  return lo.points - avant;
+}
+
+// Un geste repris (le recherché caché qu'on finit par livrer) : ses points s'effacent, sans frein.
+function reprendreGeste(G, cle) {
+  const b = BAREME_CAMP[cle], lo = etatLO(G);
+  if (!b) return;
+  const i = lo.journal.findIndex(e => e.cle === cle && e.jour === G.jour);
+  if (i < 0) return;
+  lo.journal.splice(i, 1);
+  const sg = b.camp === 'bien' ? 1 : -1;
+  lo.points = sg > 0 ? Math.max(Math.min(0, lo.points), lo.points - b.n) : Math.min(Math.max(0, lo.points), lo.points + b.n);
+}
+
+// Après chaque geste (et chaque nuit) : le Carrefour qui s'ouvre, ou le serment rompu.
+function surveillerLO(G) {
+  const lo = etatLO(G), j = lo.points;
+  if (G.camp || G.sceauNeutre) return;
+  // le parjure : on a juré à un camp, et l'on a passé le 1er palier de l'autre côté
+  if (lo.serment && (lo.serment === 'bien' ? j <= -SERMENT.parjure : j >= SERMENT.parjure)) {
+    const c = lo.serment;
+    lo.serment = null; lo.offres[c] = 'parjure'; lo.parjures++; lo.carrefour = null;
+    lo.parjure = { camp: c, jour: G.jour };
+    G.reputation -= SERMENT.reputationParjure;
+    return;
+  }
+  if (lo.serment || lo.carrefour) return;
+  const camp = j >= SERMENT.palier ? 'bien' : j <= -SERMENT.palier ? 'mal' : null;
+  if (!camp) return;
+  const o = lo.offres[camp];
+  if (!o) lo.carrefour = { camp, derniere: false };
+  else if (o === 'refusee' && Math.abs(j) >= SERMENT.derniere) lo.carrefour = { camp, derniere: true };
+}
+
+// Au Carrefour : prêter serment au côté où penche la balance...
+function preterSerment(G) {
+  const lo = etatLO(G), c = lo.carrefour && lo.carrefour.camp;
+  if (!c) return;
+  lo.serment = c; lo.offres[c] = 'juree'; lo.carrefour = null; lo.jourSerment = G.jour;
+  // (la Confrérie t'offre sa bannière pour le comptoir)
+  if (c === 'bien' && DECOS.banniere && !aDeco(G, 'banniere')) G.decos = [...(G.decos || []), 'banniere'];
+}
+// ... ou rester libre (le camp refusé fera une dernière offre au 3e palier)
+function resterLibre(G) {
+  const lo = etatLO(G), cf = lo.carrefour;
+  if (!cf) return;
+  lo.offres[cf.camp] = cf.derniere ? 'refuseeDef' : 'refusee';
+  lo.carrefour = null;
+}
+function sermentDe(G) { return (G.lo && G.lo.serment) || null; }
 
 // Le palier : de −3 (ombre épaisse) à +3 (lumière éclatante), 0 entre les deux.
 function palierCamp(G) {
@@ -2883,7 +2979,9 @@ function multButinCamp(G, camp) {
 
 // Le taux d'un prêt : la Banque Centrale fait de meilleurs prix du côté de la lumière.
 function tauxPret(G, pret) {
-  if (pret.mal) return pret.taux;
+  // (v0.90) un serment aux Bannis : la Main Noire te prête sans intérêts ; à la Confrérie : la Banque fait un geste de plus
+  if (pret.mal) return sermentDe(G) === 'mal' ? 0 : pret.taux;
+  if (sermentDe(G) === 'bien') return Math.max(0.02, pret.taux - (Math.max(0, palierCamp(G)) + 1) * REMISE_BANQUE_LUMIERE);
   return Math.max(0.02, pret.taux - Math.max(0, palierCamp(G)) * REMISE_BANQUE_LUMIERE);
 }
 
@@ -3141,6 +3239,7 @@ function denoncerRecherche(G, v) {
     encaisser(G, part, 'primes');
     G.reputation += RECHERCHE.reputation;
     pencherCamp(G, 'bien');
+    pencher(G, 'denoncer', { qui: v.nom });
     return { juste: true, prime: part };
   }
   G.reputation -= RECHERCHE.erreur;
@@ -3157,6 +3256,7 @@ function cacherRecherche(G, v) {
   let objet = null;
   if (!v.recherche.innocent) {
     pencherCamp(G, 'mal');
+    pencher(G, 'cacher', { qui: v.nom });
     objet = auHasard(interditsDuPasseur());
     G.interdits[objet] = (G.interdits[objet] || 0) + 1;
   } else changerRelation(G, v.nom, 1);
@@ -3170,6 +3270,7 @@ function repondreGarde(G, v, livrer) {
   if (livrer) {
     if (v.recherche.innocent) return denoncerRecherche(G, v);
     G.reussites.mal = Math.max(0, (G.reussites.mal || 0) - 1);   // (l'ombre gagnée en le cachant s'efface ; la lumière vient de la dénonciation)
+    reprendreGeste(G, 'cacher');
     return denoncerRecherche(G, v);
   }
   const vu = Math.random() < RECHERCHE.mensongeVu && !v.recherche.innocent;

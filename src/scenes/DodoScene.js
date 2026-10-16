@@ -341,9 +341,14 @@ class DodoScene extends Cinematique {
         : `« ${ouvre} La Confrérie te confie une pièce de plus pour le champion. Garde-la bien. »`;
     if (arme) message += premiere ? `\nEt avec elle, une arme légendaire : ${armeLegendaire(arme).nom}. ${ouvre}`
       : `\nEt avec elle, l'arme légendaire du royaume : ${armeLegendaire(arme).nom}.`;
-    if (avertit && !scelle) message += `\nPlus qu'une pièce, et l'armure sera complète : ton camp sera scellé pour de bon. Aujourd'hui, ta jauge penche ${palierCamp(this.G) > 0 ? 'vers la lumière' : palierCamp(this.G) < 0 ? "vers l'ombre" : 'entre les deux (l\'armure restera claire)'}.`;
+    if (avertit && !scelle) {
+      const serment = sermentDe(this.G), pal = palierCamp(this.G);
+      message += `\nPlus qu'une pièce, et l'armure sera complète : ton camp sera scellé pour de bon. ` + (serment ? `Tu as juré ${serment === 'bien' ? 'à la Confrérie' : 'aux Bannis'} : c'est ce serment qui sera scellé.`
+        : pal > 0 ? "Aujourd'hui, ta balance penche vers la lumière." : pal < 0 ? "Aujourd'hui, ta balance penche vers l'ombre." : "Aujourd'hui, tu es entre les deux, sans serment : si tu le restes, ce ne sera ni la lumière, ni l'ombre...");
+    }
     if (scelle) {
       message += scelle === 'mal' ? "\nL'armure est complète. Ton camp est scellé : l'ombre. Il n'y aura plus de retour en arrière."
+        : scelle === 'neutre' ? "\nL'armure est complète. Tu n'as juré à personne, et ta balance n'a penché d'aucun côté. Ni la lumière, ni l'ombre : l'armure attend quelqu'un d'autre..."
         : "\nL'armure est complète. Ton camp est scellé : la lumière. Il n'y aura plus de retour en arrière.";
     }
     const texteMsg = this.add.text(185, haut + 110, message, style(13, '#3b2410', { wordWrap: { width: 590 }, lineSpacing: 3 }));

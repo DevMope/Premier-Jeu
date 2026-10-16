@@ -447,6 +447,9 @@ function mettreAJourPartie(G, brut = G) {
   }
   G.armure = G.armure.filter(id => ARMURE.some(p => p.id === id));
   if (!brut.revueV089) revoirVieillePartie(G);
+  // (v0.90) la balance devient un compteur de points : une vieille partie la reprend là où elle était
+  if (!brut.lo) G.lo = { points: jaugeAncienne(G), journal: [], serment: null, offres: {}, parjures: 0, carrefour: null, parjure: null };
+  G.lo = { journal: [], offres: {}, parjures: 0, ...G.lo };
 }
 
 // (v0.89) Une partie commencée avant les règles actuelles pouvait garder une pièce d'armure gagnée

@@ -784,6 +784,31 @@ const JOUR_SCEAU = 24;
 const TAXE_CONFRERIE = { franchise: 200, taux: { lumiere: 0.12, neutre: 0.16, ombre: 0.22 } };
 // (constat 14) Le coup de pouce de Garrick quand tu n'as plus rien : des provisions sur le pas de la porte
 const COUP_DE_POUCE = { argent: 12, stock: 2, delai: 15, cadeau: { ration: 2, gourde: 1, torche: 1 } };
+// (v0.90) Lumière et ombre : le barème. Chaque geste fait pencher la balance de quelques points,
+// classés du plus petit au plus gros (c'est l'ordre du livre des deux voies).
+const BAREME_CAMP = {
+  mendiant: { camp: 'bien', n: 1, texte: 'Donner au mendiant (une fois par jour)' },
+  soigner: { camp: 'bien', n: 1, texte: 'Soigner sans faire payer' },
+  dedommager: { camp: 'bien', n: 1, texte: 'Dédommager généreusement' },
+  decoClaire: { camp: 'bien', n: 2, texte: 'Une décoration de lumière au comptoir' },
+  missionL: { camp: 'bien', n: 3, texte: 'Mission réussie en terre de lumière' },
+  denoncer: { camp: 'bien', n: 4, texte: 'Dénoncer un vrai recherché' },
+  denoncerMafia: { camp: 'bien', n: 4, texte: 'Livrer la Main Noire à la Confrérie' },
+  ame: { camp: 'mal', n: 1, texte: 'Offrir une âme à la Faucheuse' },
+  piege: { camp: 'mal', n: 2, texte: 'Un piège, un service de la Main Noire' },
+  commande: { camp: 'mal', n: 2, texte: 'Une commande des Bannis au marché noir' },
+  decoSombre: { camp: 'mal', n: 2, texte: "Une décoration d'ombre au comptoir" },
+  missionO: { camp: 'mal', n: 3, texte: 'Mission réussie pour les Bannis' },
+  cacher: { camp: 'mal', n: 4, texte: 'Cacher un recherché' },
+};
+// Le frein : jusqu'au 1er palier chaque point compte en entier, puis ×0,4 jusqu'au 2e, puis ×0,25
+// (les points qui ramènent vers le centre comptent toujours en entier)
+const FREIN_CAMP = [[25, 1], [60, 0.4], [Infinity, 0.25]];
+// Le serment du Carrefour : ×1,5 de son côté ; le Carrefour vient à 60, une dernière offre à 90 ;
+// le parjure quand on passe le 1er palier de l'autre côté
+const SERMENT = { mult: 1.5, palier: 60, derniere: 90, parjure: 25, reputationParjure: 3, surveillance: 0.12 };
+// Le flair qu'il faut pour voir les ☀ / ☾ sur les boutons des choix
+const FLAIR_PICTOS = 0.4;
 const PALIERS_JAUGE = [25, 60, 90];                              // les paliers, de chaque côté
 const NOMS_PALIERS_JAUGE = {
   3: 'Lumière éclatante', 2: 'Lumière', 1: 'Lueur', 0: 'Entre les deux', '-1': 'Pénombre', '-2': 'Ombre', '-3': 'Ombre épaisse',
