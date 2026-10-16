@@ -800,7 +800,7 @@ class CounterScene extends Phaser.Scene {
     this.texteDialogue = this.add.text(256, 298, '', style(16, '#2a1a0c', { wordWrap: { width: 660 }, lineSpacing: 1 })).setOrigin(0, 0.5);
     // (v0.86) la narration (le jeu qui raconte, pas un personnage qui parle) : une plume à la place
     // du nom, le titre éventuel en italique, le texte à l'encre violette, le parchemin un peu plus pâle
-    this.plumeNarration = this.add.image(133, 298, texturePlume(this)).setScale(2.4).setVisible(false);
+    this.plumeNarration = this.add.image(133, 298, texturePlume(this)).setScale(2.2).setVisible(false);
     this.titreNarration = this.add.text(150, 298, '', style(13, '#5a3a1c', { fontStyle: 'italic bold', align: 'center', wordWrap: { width: 160 } })).setOrigin(0.5).setVisible(false);
   }
 
@@ -2086,7 +2086,7 @@ class CounterScene extends Phaser.Scene {
   dire(texte, nom = this.voyageur ? this.voyageur.nom : '', qui = null, narration = nom === '') {
     this.narration = narration;
     this.fondDialogue.setTint(narration ? 0xe6dccb : 0xffffff);
-    this.plumeNarration.setVisible(narration).setX(narration && nom ? 78 : 133);
+    this.plumeNarration.setVisible(narration).setX(narration && nom ? 70 : 133);
     this.titreNarration.setVisible(narration && !!nom).setText(narration ? nom : '');
     if (narration) {
       this.plaqueNom.setVisible(false); this.nomParleur.setText(''); this.sousNom.setText('');
