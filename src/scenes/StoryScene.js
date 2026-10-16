@@ -246,6 +246,8 @@ class StoryScene extends Cinematique {
         suite = `C'était perdu... et puis un coup de chance incroyable ! Ma bonne étoile m'a sauvé${this.e}.` + fanee;
       } else if (reussie) {
         suite = niveau === 'complet' ? 'Épreuve surmontée !' : `Je m'en suis sorti${this.e}... de justesse.`;
+        // (v0.93) la bénédiction de la nymphe a aidé
+        if (r.etapes[i].beni) suite += " L'eau s'est écartée devant moi, comme si quelqu'un veillait...";
       } else {
         // (v0.60) le texte « complet » raconte une victoire : la blessure arrive avant d'en finir
       suite = niveau === 'complet' ? `Mais avant d'en finir, j'ai pris un mauvais coup : j'ai été blessé${this.e} !` : `J'ai été blessé${this.e} !`;

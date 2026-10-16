@@ -184,8 +184,14 @@ function chanceEtapeBase(e, colis, voyageur) {
   const etoiles = ZONES[voyageur.zone] ? ZONES[voyageur.zone].danger : 1;
   const danger = Math.max(0, MALUS_DANGER * (etoiles - 1) - niv.bonus);
   // (v0.67) la bénédiction de la nymphe : les épreuves d'eau réussissent mieux pendant quelques jours
-  const B = NYMPHE.benediction, beni = window.GAME && window.GAME.nymphe && window.GAME.nymphe.benie >= window.GAME.jour && (B.types.includes(e.type) || B.besoins.includes(e.besoin)) ? B.bonus : 0;
+  const beni = bonusNymphe(window.GAME, e);
   return Phaser.Math.Clamp(chanceEpreuve(niveauEpreuve(e, colis, voyageur)) + enPlus * BONUS_SURPLUS + bonusArme + niv.bonus + evenement - danger + beni, 0.05, 0.97);
+}
+
+// (v0.93) Le bonus de la nymphe sur cette épreuve (0 si elle ne bénit pas, ou pas ce genre d'épreuve)
+function bonusNymphe(G, e) {
+  const B = NYMPHE.benediction;
+  return G && G.nymphe && G.nymphe.benie >= G.jour && (B.types.includes(e.type) || B.besoins.includes(e.besoin)) ? B.bonus : 0;
 }
 
 // Avec la chance : une épreuve ratée peut être rattrapée de justesse par son trèfle.
@@ -253,7 +259,7 @@ function simulerAventure(voyageur, colis, pieges = null) {
         }
       }
     }
-    etapes.push({ epreuve: e, niveau, reussie, sauvee, pvApres: pv, saignement, fane: sauvee ? fanerTrefle(voyageur) : false });
+    etapes.push({ epreuve: e, niveau, reussie, sauvee, pvApres: pv, saignement, fane: sauvee ? fanerTrefle(voyageur) : false, beni: reussie && bonusNymphe(window.GAME, e) > 0 });
     if (pv <= 0) break;
   }
   const derniere = etapes[etapes.length - 1];
@@ -869,6 +875,9 @@ function jeterPieceFontaine(G) {
   payer(G, 1, 'fontaine');
   G.fontaineJour = G.jour;
   G.fontainePieces = (G.fontainePieces || 0) + 1;
+  // (v0.93) après ses adieux, tous les 10 vœux, la fontaine s'illumine d'elle-même
+  const n = G.nymphe;
+  if (n && n.visites >= NYMPHE.plafond && (G.fontainePieces - NYMPHE.voeux) % NYMPHE.ensuite === 0) { n.benie = G.jour + NYMPHE.benediction.jours; G.fontaineIllumine = G.jour; }
   return null;
 }
 
@@ -1466,6 +1475,8 @@ function depensesDeLaNuit(G) {
 
 function nuit(G) {
   payerEcheances(G);
+  // (v0.93) la fiole de la nymphe se remplit chaque semaine : une potion de plus dans ta réserve
+  if (G.nymphe && G.nymphe.fiole && (G.jour + 1 - G.nymphe.fiole) % NYMPHE.fiole.tousLes === 0) { G.stock.potion = (G.stock.potion || 0) + 1; G.fioleRemplie = G.jour + 1; }
   // Les employés sont payés chaque nuit.
   for (const id of G.employes) { payer(G, EMPLOYES[id].salaire, 'salaires'); G.salairesPar = G.salairesPar || {}; G.salairesPar[id] = (G.salairesPar[id] || 0) + EMPLOYES[id].salaire; }
   // Le loyer, en fin de semaine
@@ -1934,8 +1945,11 @@ function mendiantAuMarcheNoir(G) { return hachage(G.jour, 5, 707) < 0.25; }
 
 function nympheAttend(G) {
   const n = G.nymphe || { visites: 0 };
+  if (n.visites >= NYMPHE.plafond) return false;   // (v0.93) elle a tout dit
   return (G.fontainePieces || 0) >= NYMPHE.voeux + n.visites * NYMPHE.ensuite;
 }
+// (v0.93) Bénie de la nymphe aujourd'hui ? (le jour jusqu'auquel, ou 0)
+function benieJusqua(G) { return G.nymphe && G.nymphe.benie >= G.jour ? G.nymphe.benie : 0; }
 // La rencontre : la bénédiction (et le souvenir, la première fois). Renvoie ce qu'elle laisse.
 function rencontrerNymphe(G) {
   const n = G.nymphe = G.nymphe || { visites: 0 };
@@ -1943,7 +1957,10 @@ function rencontrerNymphe(G) {
   n.benie = G.jour + NYMPHE.benediction.jours;
   const souvenir = n.visites === 1 && !(G.decos || []).includes(NYMPHE.souvenir);
   if (souvenir) G.decos = [...(G.decos || []), NYMPHE.souvenir];
-  return { visite: n.visites, souvenir, jusqua: n.benie };
+  // (v0.93) la 4e visite : la fiole, et ses adieux (elle a tout dit)
+  const fiole = n.visites === NYMPHE.plafond && !n.fiole;
+  if (fiole) n.fiole = G.jour;
+  return { visite: n.visites, souvenir, fiole, derniere: n.visites >= NYMPHE.plafond, jusqua: n.benie };
 }
 
 // --- (v0.66) La cheminée : une planche de bois, et le feu brûle toute la nuit ---

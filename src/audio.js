@@ -45,6 +45,63 @@ const Son = {
     this.appliquerVolumes();
     this.pret = true;
     if (this.themeVoulu) this.ambiance(this.themeVoulu);
+    if (this.natureVoulue) this.nature(true);
+  },
+
+  // --- (v0.93) La nature autour de l'écran titre, selon l'heure de l'appareil : les oiseaux le
+  // matin, les cigales l'après-midi, les grillons et la chouette le soir (sous la musique) ---
+  nature(allumer) {
+    this.natureVoulue = allumer;
+    if (!this.pret) return;
+    if (!allumer) {
+      (this.natureMinuteries || []).forEach(clearTimeout); this.natureMinuteries = [];
+      if (this.natureBus) { const b = this.natureBus, t = this.ctx.currentTime; b.gain.cancelScheduledValues(t); b.gain.setValueAtTime(b.gain.value, t); b.gain.linearRampToValueAtTime(0, t + 1);
+        const n = this.natureNoeuds || []; setTimeout(() => { n.forEach(x => { try { x.stop(); } catch (e) { /* (déjà arrêté) */ } }); b.disconnect(); }, 1200); }
+      this.natureBus = null; this.natureNoeuds = [];
+      return;
+    }
+    if (this.natureBus) return;
+    const ctx = this.ctx, sortie = this.natureBus = ctx.createGain(), noeuds = this.natureNoeuds = [], minuteries = this.natureMinuteries = [];
+    sortie.gain.setValueAtTime(0, ctx.currentTime); sortie.gain.linearRampToValueAtTime(1.3, ctx.currentTime + 2);
+    sortie.connect(this.busMusique);
+    const bruit = (duree = 2) => { const b = ctx.createBuffer(1, ctx.sampleRate * duree, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; };
+    const boucleBruit = (filtre, freq, q, gain) => { const src = ctx.createBufferSource(); src.buffer = bruit(3); src.loop = true; const f = ctx.createBiquadFilter(); f.type = filtre; f.frequency.value = freq; f.Q.value = q; const g = ctx.createGain(); g.gain.value = gain; src.connect(f).connect(g).connect(sortie); src.start(); noeuds.push(src); return { f, g }; };
+    const plus = (ms, f) => minuteries.push(setTimeout(() => { if (this.natureBus === sortie) f(); }, ms));
+    const chaque = (min, max, f) => { const tour = () => { f(); plus(min + Math.random() * (max - min), tour); }; plus(Math.random() * min, tour); };
+    const gazouillis = (base = 3200, vol = 0.05) => {
+      const t0 = ctx.currentTime, n = 2 + Math.floor(Math.random() * 5);
+      for (let k = 0; k < n; k++) {
+        const t = t0 + k * (0.08 + Math.random() * 0.06), o = ctx.createOscillator(), m = ctx.createOscillator(), mg = ctx.createGain(), g = ctx.createGain(), f = base * (0.8 + Math.random() * 0.5);
+        o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * (Math.random() < 0.5 ? 1.4 : 0.7), t + 0.07);
+        m.frequency.value = 40 + Math.random() * 60; mg.gain.value = f * 0.08; m.connect(mg).connect(o.frequency);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+        o.connect(g).connect(sortie); o.start(t); m.start(t); o.stop(t + 0.1); m.stop(t + 0.1);
+      }
+    };
+    const merle = () => { const t0 = ctx.currentTime;
+      [1, 1.25, 0.9].forEach((r, k) => { const t = t0 + k * 0.22, o = ctx.createOscillator(), g = ctx.createGain(), f = 1700 * r * (0.95 + Math.random() * 0.1); o.type = 'sine';
+        o.frequency.setValueAtTime(f, t); o.frequency.linearRampToValueAtTime(f * 1.08, t + 0.15);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.045, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2); o.connect(g).connect(sortie); o.start(t); o.stop(t + 0.22); }); };
+    const tourterelle = () => { const t0 = ctx.currentTime;
+      [[520, 0.35], [440, 0.5]].forEach(([f, d], k) => { const t = t0 + k * 0.45, o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = f;
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.025, t + 0.08); g.gain.linearRampToValueAtTime(0, t + d); o.connect(g).connect(sortie); o.start(t); o.stop(t + d); }); };
+    const chouette = () => { const t0 = ctx.currentTime;
+      [[0, 0.5], [0.9, 0.18], [1.15, 0.6]].forEach(([dt, d]) => { const t = t0 + dt, o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(390, t); o.frequency.linearRampToValueAtTime(360, t + d);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.04, t + 0.06); g.gain.linearRampToValueAtTime(0, t + d); o.connect(g).connect(sortie); o.start(t); o.stop(t + d); }); };
+    const vent = (vol = 0.05, freq = 500) => { const v = boucleBruit('lowpass', freq, 0.7, vol * 0.4);
+      const souffle = () => { const t = ctx.currentTime, d = 4 + Math.random() * 4; v.g.gain.linearRampToValueAtTime(vol * (0.5 + Math.random() * 0.8), t + d / 2); v.g.gain.linearRampToValueAtTime(vol * 0.25, t + d); v.f.frequency.linearRampToValueAtTime(freq * (0.7 + Math.random() * 0.8), t + d); };
+      souffle(); chaque(5000, 8000, souffle); };
+    const cigales = (vol = 0.06) => { const c = boucleBruit('bandpass', 4600, 8, 0), lfo = ctx.createOscillator(), lg = ctx.createGain();
+      lfo.frequency.value = 38; lg.gain.value = vol * 0.6; lfo.connect(lg).connect(c.g.gain); lfo.start(); noeuds.push(lfo);
+      const vague = () => { const t = ctx.currentTime; c.g.gain.cancelScheduledValues(t); c.g.gain.setValueAtTime(c.g.gain.value, t); c.g.gain.linearRampToValueAtTime(vol * (0.4 + Math.random() * 0.6), t + 2.5); c.g.gain.linearRampToValueAtTime(vol * 0.08, t + 6 + Math.random() * 3); };
+      vague(); chaque(7000, 11000, vague); };
+    const grillons = () => { for (const [f, ecart] of [[4200, 0], [4600, 340]]) chaque(700, 900, () => plus(ecart, () => { const t = ctx.currentTime;
+      for (let k = 0; k < 3; k++) { const o = ctx.createOscillator(), g = ctx.createGain(), tt = t + k * 0.05; o.frequency.value = f;
+        g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(0.018, tt + 0.008); g.gain.linearRampToValueAtTime(0, tt + 0.035); o.connect(g).connect(sortie); o.start(tt); o.stop(tt + 0.04); } })); };
+    const h = new Date().getHours();
+    if (h >= 6 && h < 12) { vent(0.012, 400); chaque(900, 2600, () => gazouillis(3000 + Math.random() * 1500)); chaque(3500, 7000, merle); chaque(9000, 16000, tourterelle); }
+    else if (h >= 12 && h < 19) { cigales(); vent(0.015, 350); chaque(5000, 9000, () => gazouillis(3600, 0.03)); }
+    else { grillons(); vent(0.018, 300); chaque(9000, 15000, chouette); }
   },
   // Safari ne laisse sortir le son qu'après une vraie action du joueur : on reprend le contexte et
   // on joue un échantillon muet pendant ce geste, ce qui « déverrouille » la sortie audio.

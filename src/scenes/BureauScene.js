@@ -38,11 +38,9 @@ class BureauScene extends Phaser.Scene {
     this.add.image(640, 505, plaqueBouton(this, 250)).setScale(2);
     const enseigne = this.add.text(640, 505, `✎ « ${G.nomShop} »`, style(13, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 }))
       .setOrigin(0.5).setInteractive({ useHandCursor: true });
-    enseigne.on('pointerdown', () => demanderTexte('Le nom de ton shop', G.nomShop, NOM_SHOP_MAX, nom => {
-      if (!nom) return;
-      G.nomShop = nom;
-      enseigne.setText(`✎ « ${nom} »`);
-    }));
+    // (v0.93) un clic ouvre l'enseigne : son nom, son écriture, la couleur de son fond
+    this.texteEnseigne = enseigne;
+    enseigne.on('pointerdown', () => this.ouvrirEnseigne());
 
     if (!this.comptoir) this.onglet = 'mission';
     this.afficherListe();
@@ -298,7 +296,10 @@ class BureauScene extends Phaser.Scene {
       const flair = niveauFlair(G);
       const prochainArtisanat = (niveauArtisanat(G) + 1) * 4;
       gauche = [
-        { titre: 'Toi', lignes: [`${nomJoueur(G)}, ${ageJoueur(G)} ans`] },
+        { titre: 'Toi', lignes: [`${nomJoueur(G)}, ${ageJoueur(G)} ans`,
+          // (v0.93) la bénédiction de la nymphe, et sa fiole
+          benieJusqua(G) ? `Bénie de la nymphe jusqu'au jour ${benieJusqua(G)} (+${Math.round(NYMPHE.benediction.bonus * 100)} % rivières, marais, gourdes)` : '',
+          G.nymphe && G.nymphe.fiole ? 'La fiole de la nymphe : une potion de plus chaque semaine' : ''] },
         { titre: `Flair : ${Math.round(flair * 100)} %`, lignes: [flair < 1 ? `Tes estimations peuvent se tromper de ±${Math.round(35 * (1 - flair))} %.` : 'Tes estimations sont exactes.', flair < 1 ? `Il monte en servant des clients (${G.experience} / ${EXPERIENCE_MAX}).` : ''] },
         { titre: `Artisanat : niveau ${niveauArtisanat(G)}`, lignes: [`Réparations faites : ${G.reparations} (niveau suivant à ${prochainArtisanat})`, `Matériaux par réparation : ${materiauxRequis(G)}`, `${niveauArtisanat(G)} jour(s) de moins à l'atelier`] },
         // (v0.93) la persuasion
@@ -509,6 +510,55 @@ class BureauScene extends Phaser.Scene {
       case 'atelier': return { cle: iconeObjet(this, 'enclume'), echelle: 2.6 + n * 0.5 };
       default: return { cle: luminaireHD(this, n), echelle: n >= 2 ? 1.6 : 2.6 };
     }
+  }
+
+  // (v0.93) L'atelier de l'enseigne : le nom, l'une des cinq écritures, la couleur du fond,
+  // avec l'enseigne telle qu'elle pend devant ta maison (elle s'embellit quand la maison grandit)
+  ouvrirEnseigne() {
+    const G = this.G;
+    if (this.pageEnseigne) this.pageEnseigne.destroy();
+    const c = this.pageEnseigne = this.add.container(0, 0).setDepth(60);
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.6).setInteractive());
+    c.add(this.add.image(480, 272, panneauHD(this, 760, 470)).setScale(2));
+    c.add(this.add.text(480, 66, 'Ton enseigne', style(24, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    const n = niveauFacade(G), NIVEAUX = ['la planche brute de la chaumière', 'le panneau encadré de la maison', 'le panneau peint de la belle maison', "l'enseigne de maître de la demeure"];
+    c.add(this.add.text(480, 92, `Aujourd'hui : ${NIVEAUX[n]}` + (n < 3 ? ' · elle s\'embellit quand ta maison grandit (améliore le comptoir)' : ''),
+      style(12, '#6a4a2a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 680 } })).setOrigin(0.5, 0));
+    const r = reglagesEnseigne(G);
+    // l'aperçu, sur un bout de mur
+    c.add(this.add.rectangle(480, 190, 420, 130, 0x6a5040).setStrokeStyle(2, 0x3b2410));
+    const apercu = poserEnseigne(this, 480, 128, n, G.nomShop).setScale(1.25);
+    c.add(apercu);
+    this.tweens.add({ targets: apercu, angle: { from: -2, to: 2 }, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    // les cinq écritures
+    c.add(this.add.text(120, 272, "L'écriture", style(15, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+    ENSEIGNE.polices.forEach(([famille, graisse, nom], i) => {
+      const x = 254 + i * 130, choisi = i === r.police;
+      const fond = this.add.rectangle(x, 272, 122, 40, choisi ? 0x6b4a22 : 0xe8d4a8).setStrokeStyle(2, choisi ? 0xffe066 : 0x8a6a3a).setInteractive({ useHandCursor: true });
+      const t = this.add.text(x, 272, nom, { fontFamily: `"${famille}", Georgia, serif`, fontSize: '16px', fontStyle: graisse, color: choisi ? '#fff4dc' : '#3b2410', resolution: 3 }).setOrigin(0.5);
+      if (t.width > 112) t.setScale(112 / t.width);
+      if (document.fonts) document.fonts.load(`16px "${famille}"`).then(() => { if (t.active) { t.updateText(); t.setScale(1); if (t.width > 112) t.setScale(112 / t.width); } }).catch(() => {});
+      fond.on('pointerdown', () => { G.enseigne = { ...reglagesEnseigne(G), police: i }; Son.jouer('plume'); this.ouvrirEnseigne(); });
+      c.add([fond, t]);
+    });
+    // la couleur du fond
+    c.add(this.add.text(120, 336, 'Le fond', style(15, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+    ENSEIGNE.couleurs.forEach((coul, i) => {
+      const x = 240 + i * 94, choisi = coul.cle === r.couleur;
+      const teinte = coul.c ? coul.c[1] : null;
+      const pastille = teinte != null ? this.add.rectangle(x, 330, 56, 30, teinte) : this.add.image(x, 330, texEnseigne(this, n, 'naturel')).setDisplaySize(56, 30);
+      const cadre = this.add.rectangle(x, 330, 60, 34).setStrokeStyle(choisi ? 4 : 2, choisi ? 0xffe066 : 0x3b2410).setInteractive({ useHandCursor: true });
+      cadre.on('pointerdown', () => { G.enseigne = { ...reglagesEnseigne(G), couleur: coul.cle }; Son.jouer('plume'); this.ouvrirEnseigne(); });
+      c.add([pastille, cadre, this.add.text(x, 352, coul.nom, style(11, choisi ? '#3b2410' : '#6a4a2a', { fontStyle: choisi ? 'bold' : '' })).setOrigin(0.5, 0)]);
+    });
+    const renommer = creerBouton(this, 360, 430, 230, '✎ Changer le nom', () => demanderTexte('Le nom de ton shop', G.nomShop, NOM_SHOP_MAX, nom => {
+      if (!nom) return;
+      G.nomShop = nom;
+      this.texteEnseigne.setText(`✎ « ${nom} »`);
+      this.ouvrirEnseigne();
+    }));
+    const fermer = creerBouton(this, 620, 430, 180, 'Fermer', () => { c.destroy(); this.pageEnseigne = null; });
+    c.add([renommer.fond, renommer.label, fermer.fond, fermer.label]);
   }
 
   fermer() {

@@ -527,17 +527,9 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   const ecran = ([x, y, l, h]) => [gauche + x * 2, haut + y * 2, l * 2, h * 2];
   const tonneaux = scene.add.image(gauche + FACADE.L * 2 - 26, sol + 4, 'tonneauxHD').setOrigin(0, 1).setScale(2);
   // L'enseigne pend à son support, et se balance un peu
-  const luxe = window.GAME ? niveauAmelioration(window.GAME, 'comptoir') : 1;
+  // (v0.93) elle s'améliore avec la maison entière ; l'écriture et la couleur du fond se choisissent au bureau
   const ex = gauche + (FACADE.enseigne[0] + 6) * 2, ey = haut + FACADE.enseigne[1] * 2;
-  const enseigne = scene.add.container(ex, ey);
-  const planche = scene.add.image(0, 22, 'enseigneHD_' + luxe).setScale(2).setOrigin(0.5, 0);
-  const chaines = scene.add.graphics();
-  chaines.lineStyle(2, 0x2a2a30).lineBetween(-62, 0, -62, 23).lineBetween(62, 0, 62, 23);
-  // Le nom du shop, en grand, peint en brun sombre et cerné de clair pour bien se lire de loin
-  const texte = scene.add.text(0, 46, nomShop, style(17, '#2a1608', { fontStyle: 'bold', stroke: '#fff4dc', strokeThickness: 3 })).setOrigin(0.5);
-  for (let taille = 17; texte.width > 148 && taille >= 10; taille--) texte.setFontSize(taille);
-  if (texte.width > 148) texte.setWordWrapWidth(148).setAlign('center');
-  enseigne.add([chaines, planche, texte]);
+  const enseigne = poserEnseigne(scene, ex, ey - (n === 3 ? 8 : 0), n, nomShop);
   scene.tweens.add({ targets: enseigne, angle: { from: -2.5, to: 2.5 }, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   // Un filet de fumée qui monte de la cheminée
   creerHalo(scene);

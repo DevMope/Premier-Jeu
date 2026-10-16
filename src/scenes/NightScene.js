@@ -183,6 +183,9 @@ class NightScene extends Phaser.Scene {
       let yAction = 455;
       if (ligne) { const t = this.add.text(x1 + 18, yLigne, ligne, style(12, '#5a2a4a', { fontStyle: 'bold italic', wordWrap: { width: x2 - x1 - 36 } })); c.add(t); yAction = Math.max(yAction, t.y + t.height + 6); }
       if (action) c.add(this.add.text(x1 + 18, yAction, action[0], style(12, '#8a1a1a', { fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 4, y: 2 } })).setInteractive({ useHandCursor: true }).on('pointerdown', action[1]));
+    } else if (G.fioleRemplie === G.jour) {
+      // (v0.93) le matin où la fiole de la nymphe s'est remplie
+      c.add(this.add.text(x1 + 18, Math.max(410, texteMissions.y + texteMissions.height + 8), 'La fiole de la nymphe s\'est remplie cette nuit : une potion de plus dans ta réserve.', style(12, '#2a4a7a', { fontStyle: 'bold italic', wordWrap: { width: x2 - x1 - 36 } })));
     }
   }
 

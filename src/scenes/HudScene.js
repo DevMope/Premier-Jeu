@@ -37,7 +37,18 @@ class HudScene extends Phaser.Scene {
     plaque.lineStyle(2, 0xc9a227, 1).strokeRect(-8, 17, 226, 8);
     this.jaugeCampG = this.add.graphics();
     const zoneCamp = this.add.rectangle(105, 21, 226, 10, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp]).setDepth(100);
+    // (v0.93) une goutte bleue tant que dure la bénédiction de la nymphe
+    const goutte = this.add.graphics();
+    goutte.fillStyle(0x1e130a, 0.92).fillCircle(0, 0, 11).lineStyle(2, 0xc9a227, 1).strokeCircle(0, 0, 11);
+    goutte.fillStyle(0x4aa8f0, 1).fillTriangle(-5, 1, 5, 1, 0, -9).fillCircle(0, 2, 5);
+    goutte.fillStyle(0xd8f4ff, 1).fillCircle(-2, 1, 1.5);
+    const zoneGoutte = this.add.circle(0, 0, 12, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    this.goutte = this.add.container(234, 10, [goutte, zoneGoutte]).setVisible(false);
+    zoneGoutte.on('pointerover', () => this.infoNymphe(true));
+    zoneGoutte.on('pointerout', () => this.infoNymphe(false));
+    zoneGoutte.on('pointerdown', () => this.infoNymphe(!this.bulleNymphe));
+    this.tweens.add({ targets: goutte, y: -2, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp, this.goutte]).setDepth(100);
     // (v0.84) pas assez d'argent : une grande alerte en haut de l'écran, par-dessus toutes les pages
     const surManque = m => this.alerteArgent(m);
     this.game.events.on('manqueArgent', surManque);
@@ -109,6 +120,15 @@ class HudScene extends Phaser.Scene {
     this.bulleCamp = this.add.text(4, 30, texte, style(12, '#fff4dc', { backgroundColor: '#1e130a', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
   }
 
+  // (v0.93) La bénédiction de la nymphe, en un coup d'œil
+  infoNymphe(montrer) {
+    if (this.bulleNymphe) { this.bulleNymphe.destroy(); this.bulleNymphe = null; }
+    const G = window.GAME;
+    if (!montrer || !G || !benieJusqua(G)) return;
+    const texte = `Bénie de la nymphe jusqu'au jour ${benieJusqua(G)} :\n+${Math.round(NYMPHE.benediction.bonus * 100)} % aux épreuves de rivière et de marais, et à celles où il faut une gourde.`;
+    this.bulleNymphe = this.add.text(222, 30, texte, style(12, '#e8f6ff', { backgroundColor: '#14283e', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
+  }
+
   // Un gain de lumière ou d'ombre : un « +3 lumière » qui monte, et une annonce quand un palier change
   gainCamp(d, palier, ancienPalier) {
     const lum = d > 0;
@@ -159,6 +179,7 @@ class HudScene extends Phaser.Scene {
         this.tweens.add({ targets: this, remplissage: cible, duration: 600, ease: 'Sine.easeOut', onUpdate: () => this.dessinerJauge() });
         this.dessinerJauge();
       }
+      this.goutte.setVisible(!!benieJusqua(G));
       // (v0.84) la lumière et l'ombre
       const j = jaugeCamp(G), pal = palierCamp(G);
       if (j !== this.campAffiche) {
@@ -169,6 +190,7 @@ class HudScene extends Phaser.Scene {
     } else {
       if (this.bulleReput) this.infoReput(false);
       if (this.bulleCamp) this.infoCamp(false);
+      if (this.bulleNymphe) this.infoNymphe(false);
       if (this.fenetre && !G) this.fermerMenu();
     }
     // Toujours au-dessus des autres pages

@@ -123,6 +123,10 @@ class TitleScene extends Phaser.Scene {
   preload() { chargerFx(this); }   // (v0.70 : les effets de fumée et d'eau)
 
   create() {
+    // (v0.93) la nature autour, selon l'heure de l'appareil ; elle se tait quand on quitte le titre
+    Son.nature(true);
+    this.events.once('shutdown', () => Son.nature(false));
+    this.events.once('sleep', () => Son.nature(false));
     creerToutesLesTextures(this);
 
     const g = this.add.graphics();

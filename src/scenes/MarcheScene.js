@@ -285,7 +285,8 @@ class MarcheScene extends Phaser.Scene {
     } });
     this.majInfos();
     const n = G.fontainePieces;
-    this.message(`Plouf ! Tu fermes les yeux et tu fais un vœu... ${n === 1 ? 'Ta première pièce dort au fond de la fontaine.' : `${n} pièces dorment au fond de la fontaine.`}`);
+    this.message(G.fontaineIllumine === G.jour ? `Plouf ! ${n} vœux... La fontaine s'illumine d'un coup : la bénédiction de la nymphe revient pour ${NYMPHE.benediction.jours} jours.`
+          : `Plouf ! Tu fermes les yeux et tu fais un vœu... ${n === 1 ? 'Ta première pièce dort au fond de la fontaine.' : `${n} pièces dorment au fond de la fontaine.`}`);
   }
 
   // (v0.58) La fontaine vue de près : le grand bassin, l'eau qui bouge, la vasque qui déborde, le
@@ -368,7 +369,8 @@ class MarcheScene extends Phaser.Scene {
         piece(tx, ty);
         const k = G.fontainePieces;
         sous.setText(`${k} pièce${k > 1 ? 's' : ''} brille${k > 1 ? 'nt' : ''} au fond de l'eau.`);
-        this.message(`Plouf ! Tu fermes les yeux et tu fais un vœu... ${k === 1 ? 'Ta première pièce dort au fond de la fontaine.' : `${k} pièces dorment au fond de la fontaine.`}`);
+        this.message(G.fontaineIllumine === G.jour ? `Plouf ! ${k} vœux... La fontaine s'illumine d'un coup : la bénédiction de la nymphe revient pour ${NYMPHE.benediction.jours} jours.`
+          : `Plouf ! Tu fermes les yeux et tu fais un vœu... ${k === 1 ? 'Ta première pièce dort au fond de la fontaine.' : `${k} pièces dorment au fond de la fontaine.`}`);
       });
     });
     if (deja) jeter.fond.setAlpha(0.6);
@@ -502,6 +504,13 @@ class MarcheScene extends Phaser.Scene {
     const fontaine = this.add.image(480, 438, 'fontaineHD').setOrigin(0.5, 1).setScale(1.6).setInteractive({ useHandCursor: true });
     fontaine.on('pointerdown', () => this.vueFontaine());   // (v0.58 : on s'approche de la fontaine, comme d'un étal)
     c.add(fontaine);
+    // (v0.93) les jours de bénédiction, la fontaine luit d'elle-même
+    if (benieJusqua(this.G)) {
+      creerHalo(this);
+      const lueur = this.add.image(480, 400, 'halo').setScale(1.1, 0.6).setTint(0x60c8ff).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
+      c.add(lueur);
+      this.tweens.add({ targets: lueur, alpha: 0.15, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
     // Le jet de la fontaine
     this.time.addEvent({ delay: 90, loop: true, callback: () => {
       if (!this.vue.visible) return;

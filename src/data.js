@@ -952,6 +952,10 @@ const NYMPHE = {
   voeux: 5, ensuite: 10,
   benediction: { jours: 7, bonus: 0.15, types: ['riviere', 'sangsues'], besoins: ['gourde'] },
   souvenir: 'coquillageNymphe',
+  // (v0.93) après la 4e visite, elle a tout dit : les pièces suivantes s'entassent au fond, et tous les
+  // 10 vœux la fontaine s'illumine d'elle-même (la bénédiction revient, sans cinématique).
+  // À la 4e visite, elle offre une fiole : une potion de plus dans ta réserve chaque semaine.
+  plafond: 4, fiole: { tousLes: 7 },
 };
 
 const MATERIAUX_DEPART = { fer: 2, cuir: 2, bois: 2, filOr: 1 };

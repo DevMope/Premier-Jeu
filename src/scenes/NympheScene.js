@@ -119,7 +119,8 @@ class NympheScene extends Cinematique {
       await parle("Je suis Ondine, la gardienne des sources et des rivières. Ton argent ne m'intéresse pas ; ta constance, si.");
       await parle("Ce village a la mémoire courte, tu sais. L'eau, elle, se souvient de tout ce qui a coulé... même de ce qu'on a voulu faire oublier.");
     } else {
-      const lignes = PAROLES_NYMPHE[r.visite] || PAROLES_NYMPHE_ENSUITE[r.visite % PAROLES_NYMPHE_ENSUITE.length];
+      // (v0.93) la 2e visite dit bien le 1er secret (il était sauté)
+      const lignes = PAROLES_NYMPHE[r.visite - 1] || PAROLES_NYMPHE_ENSUITE[r.visite % PAROLES_NYMPHE_ENSUITE.length];
       for (const l of lignes) await parle(l.replaceAll('{J}', eJ()));   // (accordé à la joueuse)
     }
     await parle("Pour sept jours, l'eau sera l'amie de tes aventuriers : les rivières les porteront, les marais les épargneront, et leurs gourdes ne les trahiront pas.");
@@ -138,7 +139,16 @@ class NympheScene extends Cinematique {
       this.tweens.add({ targets: [coq, lueur], x: this.heros.x, y: this.heros.y - 120, scale: 1.2, alpha: 0, duration: 900, ease: 'Quad.easeIn', onComplete: () => { coq.destroy(); lueur.destroy(); } });
       await this.replique('Un souvenir', `Tu reçois le ${DECOS[NYMPHE.souvenir].nom}. Il t'attend dans l'arrière-boutique, avec tes décorations.`);
     }
-    await parle(r.visite === 1 ? "Reviens quand tu auras encore fait dix vœux. J'aurai peut-être d'autres choses à te dire." : "Dix vœux de plus, et nous reparlerons.");
+    if (r.fiole) {
+      // (v0.93) la 4e visite : une fiole d'eau de la fontaine, et ses adieux
+      await parle("Prends aussi cette fiole. Elle se remplira d'elle-même, chaque semaine : de quoi soigner un de tes aventuriers.");
+      Son.jouer('trefle');
+      await this.replique('La fiole de la nymphe', 'Chaque semaine, une potion de plus apparaît dans ta réserve.');
+    }
+    if (r.derniere) {
+      await parle("Je t'ai dit tout ce que l'eau sait. Ne me rappelle plus : mes vœux sont épuisés, et le reste, c'est à toi de le trouver.");
+      await parle("Mais continue de jeter tes pièces. Tous les dix vœux, la fontaine brillera pour toi, et ma bénédiction reviendra.");
+    } else await parle(r.visite === 1 ? "Reviens quand tu auras encore fait dix vœux. J'aurai peut-être d'autres choses à te dire." : "Dix vœux de plus, et nous reparlerons.");
     this.montrerBoite(false);
     await this.transformer(true);
     pluie.remove();

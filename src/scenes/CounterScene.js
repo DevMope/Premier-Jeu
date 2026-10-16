@@ -554,19 +554,32 @@ class CounterScene extends Phaser.Scene {
     for (let k = 0; k <= n; k++) g.fillStyle(0xc9a227).fillRect(tx + k * tl / n - 0.5, cy + (k % 2 ? 2 : 1), 1, k % 2 ? 2 : 4);
     g.fillStyle(0x1a0e08).fillCircle(tx + tl * t, cy, 5);
     g.fillStyle(alerte ? 0xff7a40 : 0xffe060).fillCircle(tx + tl * t, cy, 4);
-    // le ciel : il se réchauffe dans l'après-midi, puis rougit avant la fermeture
-    if (this.voileSoir) this.voileSoir.setAlpha(Phaser.Math.Clamp((h - (f - 3)) / 3, 0, 1) * 0.6);
-    // (v0.91) ... et la nuit tombe avec l'heure, pas avec le dernier client
+    // (v0.91) le ciel suit l'heure, pas le dernier client
     this.ciel(h);
   }
 
-  // Le ciel de la fenêtre selon l'heure : la nuit monte dans la dernière heure et demie avant la fermeture
+  // (v0.93, planche 18) Le ciel de la fenêtre heure par heure : l'aube pâle et dorée, le plein jour,
+  // l'après-midi qui se réchauffe, l'heure dorée, le crépuscule rose et violet, puis la nuit.
+  // Les heures du soir suivent la fermeture (plus tard avec l'éclairage).
   ciel(h) {
     if (!this.cielNuit) return;
-    const nuit = Phaser.Math.Clamp((h - (heureFermeture(this.G) - 1.5)) / 1.5, 0, 1);
-    this.tweens.killTweensOf([this.cielNuit, this.voile]);
-    this.tweens.add({ targets: this.cielNuit, alpha: nuit, duration: 1200 });
-    this.tweens.add({ targets: this.voile, fillAlpha: 0.25 * nuit, duration: 1200 });
+    const d = heureFermeture(this.G) - JOURNEE.fermeture;
+    // [heure, aube, nuit, voile de nuit, teinte du soir (multipliée), son intensité, lumière chaude (ajoutée)]
+    const CLES = [[10, 0.35, 0, 0, 0xffffff, 0, 0.18], [11, 0, 0, 0, 0xffffff, 0, 0], [14, 0, 0, 0, 0xffd8a0, 0, 0],
+      [15 + d, 0, 0, 0, 0xffd8a0, 0.35, 0], [16.5 + d, 0, 0, 0, 0xff9a50, 0.55, 0.12], [17.5 + d, 0.85, 0, 0, 0x8a5ab0, 0.45, 0],
+      [18.5 + d, 0, 1, 0.2, 0x8a5ab0, 0, 0]];
+    let k = CLES.findIndex(c => c[0] > h);
+    if (k < 0) k = CLES.length - 1;
+    const a = CLES[Math.max(0, k - 1)], b = CLES[k];
+    const t = b[0] === a[0] ? 1 : Phaser.Math.Clamp((h - a[0]) / (b[0] - a[0]), 0, 1);
+    const m = i => a[i] + (b[i] - a[i]) * t;
+    const ca = Phaser.Display.Color.IntegerToColor(a[4]), cb = Phaser.Display.Color.IntegerToColor(b[4]);
+    const c = Phaser.Display.Color.Interpolate.ColorWithColor(ca, cb, 1, t);
+    this.cielAube.setAlpha(m(1));
+    this.cielNuit.setAlpha(m(2));
+    this.voile.setFillStyle(0x0a0a30, m(3));
+    this.voileSoir.setFillStyle(Phaser.Display.Color.GetColor(c.r, c.g, c.b), 1).setAlpha(m(5));
+    this.voileChaud.setAlpha(m(6));
   }
 
   // Le temps passe : l'heure avance (en glissant), et une petite ligne s'envole de l'horloge.
@@ -652,10 +665,12 @@ class CounterScene extends Phaser.Scene {
       const tex = this.textures.get(cle).getSourceImage();
       return this.add.image(x, y, cle).setOrigin(0).setScale(w / tex.width, h / tex.height);
     };
+    this.cielAube = ciel('aube').setAlpha(0);   // (v0.93) l'aube revient au crépuscule, en rose
     this.cielNuit = ciel(0.85).setAlpha(0);
     this.voile = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0x0a0a30, 0);
     // (v0.86) le ciel du soir : une lumière orangée qui teinte le paysage et la file, pas le client au comptoir
     this.voileSoir = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0xff8a50, 1).setBlendMode(Phaser.BlendModes.MULTIPLY).setAlpha(0).setDepth(1.6);
+    this.voileChaud = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0xffc070, 1).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(1.6);
 
     // Tout ce qui est dans la fenêtre est découpé à sa taille.
     const forme = this.make.graphics({ add: false });
