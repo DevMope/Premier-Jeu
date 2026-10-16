@@ -909,6 +909,7 @@ existent déjà (le marché noir n'a qu'une phrase du Passeur, par exemple) : pl
 - **Les passants de la rue** ne parlent que si on clique dessus (comme au marché).
 
 ### On le fera plus tard
+- **Les instruments de musique** (idée du 16/10) : le joueur peut jouer d'instruments qu'il collectionne au fil de la partie. **3 instruments de base**, trouvables sans prérequis ; **2 instruments de lumière** et **2 d'ombre**, qu'on ne peut débloquer qu'après avoir **prêté serment** au camp correspondant (au Carrefour). (À préciser : où on les trouve, où et quand on en joue, ce que ça apporte.)
 - **Plus de musiques** pour en enchaîner plusieurs et ne jamais lasser le joueur avec une seule.
 - **Le jeu du forgeron** : quand la forge est achetée, le joueur peut forger lui-même, avec tout
   un mécanisme façon Kingdom Come: Deliverance 2 (chauffer au soufflet, sortir le métal à la
