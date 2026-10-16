@@ -561,6 +561,7 @@ function voyageurAuHasard(G, aussi = []) {
 function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_DEFAUT } = {}) {
   const G = {
     nomShop,
+    revueV089: true,   // (v0.89) partie neuve : rien à revoir (voir revoirVieillePartie)
     graine: Math.floor(Math.random() * 1e9),   // (v0.60) le hasard de la partie (voir avecGraine)
     joueur: { feminin, apparence: apparence || apparenceParDefaut(feminin) },
     relations: {},     // nom → points

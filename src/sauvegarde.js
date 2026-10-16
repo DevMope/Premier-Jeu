@@ -426,8 +426,6 @@ function mettreAJourPartie(G, brut = G) {
   G.garderobe = G.garderobe || [...(G.tenue || [])];   // (v0.69 : ce qu'on possède ; G.tenue = ce qu'on porte)
   G.tenue = G.tenue || [];
   G.zonesDecouvertes = [...new Set(G.zonesDecouvertes)];
-  // (v0.58) Une partie d'avant, qui voyait déjà les contrées des Bannis, les garde
-  if (G.visiteMarcheNoir === undefined && (brut.zonesConnues || []).some(z => ZONES[z] && ZONES[z].camp === 'mal')) G.visiteMarcheNoir = 0;
   if (!brut.zonesConnues) {
     // Les zones déjà ouvertes avant l'armure : leurs pièces sont déjà sur le mannequin.
     const auDepart = Object.keys(ZONES).filter(z => ZONES[z].danger <= 2 && !ZONES[z].reputation);
@@ -448,6 +446,32 @@ function mettreAJourPartie(G, brut = G) {
     if (!G.armesLegendaires.includes('aubeLame')) G.armesLegendaires.push('aubeLame');
   }
   G.armure = G.armure.filter(id => ARMURE.some(p => p.id === id));
+  if (!brut.revueV089) revoirVieillePartie(G);
+}
+
+// (v0.89) Une partie commencée avant les règles actuelles pouvait garder une pièce d'armure gagnée
+// à l'ancienne (par contrée ouverte) et voir les terres des Bannis sans être jamais descendue au
+// marché noir. On la remet d'aplomb une fois : une pièce par royaume libéré, pas plus (sauf camp
+// déjà scellé), et les Bannis cachés tant qu'on n'a ni visité le marché noir ni rien fait chez eux.
+function revoirVieillePartie(G) {
+  G.revueV089 = true;
+  if (!G.camp) {
+    const liberes = Object.keys(ROYAUMES).filter(r => royaumeLibere(G, r)).length;
+    if (G.armure.length > liberes) {
+      G.armure = G.armure.slice(0, liberes);
+      G.nouvellesPieces = (G.nouvellesPieces || []).filter(n => !n.piece || G.armure.includes(n.piece));
+    }
+  }
+  const ombre = z => ZONES[z] && ZONES[z].camp === 'mal';
+  const vraimentDescendu = G.visiteMarcheNoir > 0;   // (0 : posé par l'ancienne migration v0.58)
+  const traces = (G.historique || []).some(h => ombre(h.zone))
+    || Object.keys(G.conquete || {}).some(z => ombre(z) && G.conquete[z] > 0)
+    || [...(G.annonces || []), ...(G.partis || [])].some(a => a.voyageur && ombre(a.voyageur.zone));
+  if (!vraimentDescendu && !traces) {
+    delete G.visiteMarcheNoir;
+    G.zonesDecouvertes = G.zonesDecouvertes.filter(z => !ombre(z));
+    G.zonesConnues = (G.zonesConnues || []).filter(z => !ombre(z));
+  }
 }
 
 // Une petite fenêtre pour écrire un texte (le nom du shop). `surValider(texte)` reçoit le texte

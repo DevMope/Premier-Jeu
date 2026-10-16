@@ -340,6 +340,7 @@ Chaque étape doit donner une version **jouable**.
 | v 0.86 | **Lot A « Le comptoir sous pression »** | **La journée** : une horloge au coin de la fenêtre (un petit cadran où le soleil tourne, l'heure, la course de 8 h à 18 h) ; servir prend 1 h (¾ h puis ½ h avec l'expérience), écouter un récit ¼ h, une visite ¼ h, passer chez Grippesou ½ h ; un sablier sur le coin des boutons ; le ciel rougit dans l'heure qui précède la fermeture ; à 18 h (½ h plus tard par niveau d'éclairage), une fiche : ceux qui t'avaient écrit reviennent demain en tête de file, les imprévus repartent, le colporteur remballe ; les retours de mission et les visites passent quand même. **Les recherchés** (dès la semaine 2, environ un par semaine, jamais le même jour) : une tête de l'avis de recherche entre... ou un honnête voyageur qui lui ressemble (un signe en commun) ; l'avis s'épingle sur l'ardoise pour comparer ; ☀ appeler la garde (ta part de la prime, réputation +1, lumière ; un innocent : réputation −2), ☾ le cacher derrière (ombre, un objet interdit sous le buffet ; la garde passe le plus souvent ensuite : mentir ou le livrer), le servir, le renvoyer ; au tableau du marché, un tampon « CAPTURÉ ». **Les imposteurs** (dès le jour 5, environ un client sur douze) : un faux héros, une fausse pèlerine, un faux neveu, un espion d'un marchand rival ; et des clients honnêtes qui ont l'air louches (l'héritier à l'armure neuve, le conteur, le vétéran rapiécé, le timide) ; « Inspecter » : observer (¼ h, ton flair choisit ce que tu vois) ou fouiller son sac (tout de suite, mais un honnête se vexe) ; une fiche d'indices et une jauge « louche » ; un imposteur refusé ou fouillé file (ton flair grandit) ; servi, il disparaît avec le baluchon et on apprend le lendemain ce qu'il en a fait. **Le marchandage** (dès le jour 3) : « Marchander » sa part du butin (20 %, puis +5 % par demande, ½ h) ; une jauge de patience ; il cède sous sa limite cachée, refuse au-delà, part fâché s'il n'a plus de patience ; ses tics trahissent qu'il a de la marge (ton flair les voit mieux) ; chaque peuple a son style (le hobbit pleurniche, le nain respecte qui tient bon, l'elfe s'impatiente, l'orc menace, le gobelin bluffe toujours) ; les trouvailles après le récit se marchandent aussi (−10 % par demande, jusqu'à son plancher, sinon il remballe). **Narration** : quand c'est le jeu qui raconte, une plume remplace le nom, le texte est en italique violet sur un parchemin plus pâle. |
 | v 0.87 | **Campagne de tests (6 h)** | Parties automatiques à travers tous les écrans (jusqu'à 60 jours d'affilée, avec et sans ouvertures de pages en plein service), fuzz sur 16 graines, relecture du code et des textes du lot A. **Bugs corrigés** : une page fantôme (sans caméra) pouvait rester ouverte par-dessus les autres si l'on ouvrait la banque, l'atelier ou la promenade pendant le fondu du coucher (on ne reprend plus une page qui n'était pas en pause, et la nuit n'ouvre plus de page pendant un fondu) ; cacher un bandit puis le livrer rapportait deux fois de la lumière ; un recherché pouvait entrer alors qu'il était en mission, mort, ou déjà dans la file ; un sosie pouvait porter le nom d'un client du jour ; les clients reportés au lendemain pouvaient être tirés une seconde fois ; la prime de la garde entre dans les comptes ; le bouton de la garde restait affiché après la réponse ; la plume de la narration restait sous l'ombre de la Faucheuse ; le verdict du flair suit le prix marchandé. **Textes** : accords au féminin (inconnue, cachée, vue, « marchande », « dure en affaires »...), lieux réels (abbaye de Clairval, taverne de Bourg-Joyeux, marché noir), « Sire Aldric servi » et non « Sire servi », la marque du bandit nommée (« cette balafre »...), « Il n'est que 14 h : tu peux fermer plus tôt » quand la journée finit tôt. **À noter** : dans toutes les parties automatiques, la fermeture de 18 h n'a jamais été atteinte (servir va vite : 1 h puis ½ h) ; la pression du temps ne vient que de l'Express, du marchandage et de l'inspection. |
 | v 0.88 | **La journée plus pleine** | Mesures : le nombre de clients monte (3 → 12 par jour) mais servir accélérait autant (1 h → ½ h) ; les journées finissaient toujours vers 12-15 h. Désormais le comptoir **ouvre à 10 h** (« Dix heures sonnent au clocher ») et servir passe de 1 h à **¾ h au plus vite** (dès 30 d'expérience). Fin de journée attendue : vers 14-15 h au début, 17 h en milieu de partie, 18-19 h en fin de partie (il faut alors choisir entre marchander, inspecter, l'Express... ou laisser repartir un imprévu) ; l'éclairage (jusqu'à 1 h 30 de plus) devient précieux. Les paliers de clients ne changent pas. Le taux d'imposteurs reste tel quel (à revoir avec les retours des amis testeurs). |
+| v 0.89 | **Les vieilles sauvegardes remises d'aplomb** | Une partie commencée avant les règles actuelles pouvait garder une pièce d'armure gagnée à l'ancienne (une par contrée ouverte) et voir les terres des Bannis sans être jamais descendue au marché noir. Au chargement, une seule fois : une pièce d'armure par royaume libéré, pas plus (sauf camp déjà scellé) ; les terres des Bannis redeviennent cachées tant qu'on n'est pas descendu au marché noir et qu'on n'y a rien fait (mission, conquête, voyageur en route). |
 | 10b | **La forge chez soi** (validé) | À ★3 (le saut d'un an), on peut construire une forge dans l'arrière-boutique et engager un premier forgeron ; un second à ★4. Chaque nuit, ils fabriquent des armes avec les matériaux en stock. |
 | 10c | **La rue et le familier** (validé : le chat chasse les rats de la réserve et prévient parfois de la garde) | La rue du comptoir s'agrandit : on y marche avec son personnage jusqu'aux lieux du quartier (marché, banque, forge, fontaine, plus tard le petit bar), en plus des raccourcis depuis la maison. En s'y promenant le soir, on croise le chat de gouttière : on le nourrit quelques soirs de suite, et il nous adopte (premier familier). |
 | 11 | **Aider pendant l'aventure** | Messages de détresse, le grand aigle, les mercenaires. |
@@ -792,6 +793,60 @@ d'armure. C'est peu, et le joueur ne voit pas qu'il choisit.
      déçue (étonnant pour elle), que les puissants sont ses meilleurs clients.
   4. **Le joueur peut continuer à jouer** après la fin ; plus tard, plus d'easter eggs et de choses à
      découvrir pour la partie libre.
+
+### Lumière et ombre : réponses sur les planches 16 (16/10)
+1. **Zone neutre** de −25 à +25 : validée. Le blanc du milieu doit **se fondre progressivement** dans
+   les deux camps (plusieurs teintes blanc → jaune côté lumière, blanc → violet côté ombre), au lieu
+   de trois aplats.
+2. **La fin neutre** = pas de serment + dans la zone neutre au sceau : validée, **à condition que
+   chaque combinaison ait une issue logique** (vérifié par Claude, ci-dessous).
+3. **Le barème** : validé si l'équilibrage tient (simulation à faire : le joueur ne doit pas monter
+   trop vite d'un côté), et **à présenter du plus petit gain au plus gros**.
+4. **Le Carrefour** : offres validées. Il doit être **un moment exceptionnel, au design unique**, qui
+   marque le début d'un nouvel axe du jeu : une **cinématique** avec un membre de la Confrérie et un
+   membre des Bannis, puis une **page de choix épique**. Deux pistes aimées : le chemin qui se sépare
+   entre le jour et la nuit (préférée) et les deux vitraux. Claude propose une planche.
+5. **Seuil de flair** de 40 % pour voir les ☀ / ☾ sur les boutons : validé.
+
+**La fin neutre, toutes les combinaisons (vérifiées par Claude)** — les deux conditions sont
+indépendantes, les quatre cas existent donc vraiment :
+
+| Au sceau (9e pièce) | Dans la zone neutre | Hors de la zone neutre |
+|---|---|---|
+| **Sans serment** (libre, ou Carrefour jamais atteint) | **Fin neutre** | Camp scellé du côté où l'on penche, sans les bonus du serment |
+| **Avec serment** | Le serment l'emporte : camp juré scellé (Garrick et le camp juré te reprochent ta tiédeur) | Même côté : camp juré scellé. Côté opposé : impossible, voir le parjure |
+
+- **Incohérence trouvée dans le code actuel** : la 9e pièce est retenue tant que la jauge est dans la
+  zone neutre (« on ne te scelle pas sans que tu aies choisi », audit v0.54). Avec la fin neutre, un
+  joueur neutre n'aurait donc jamais eu son sceau. À changer : la 9e pièce arrive normalement (après
+  le jour 24), et rester neutre devient un vrai choix, annoncé par Garrick à la 8e pièce.
+- **Le parjure** (proposé) : un joueur qui a juré à un camp et qui passe le 1er palier de l'autre côté
+  (au-delà de −25 pour un serment à la Confrérie, de +25 pour les Bannis) rompt son serment :
+  cinématique courte, bonus perdus, les deux camps se méfient de lui. Il redevient « libre », et l'on
+  retombe dans la première ligne du tableau.
+
+### Récit : réponses du 16/10 (9¾ bis)
+- **La Faucheuse et la jauge de la mort** : une âme offerte ne compte plus que **+1 ☾** dans la jauge
+  lumière/ombre (la mort reste un thème de l'ombre). À la place, **une jauge à part, la Mort**, mesure
+  ta relation avec la Faucheuse (elle s'appuie sur ses degrés actuels). Elle ne monte qu'avec les
+  morts **voulues** (envoyer quelqu'un à la mort, l'âme offerte), pas avec les accidents. Pour les
+  combats de la fin, la Faucheuse t'offre selon cette jauge **un pouvoir, une arme, un familier**...
+  ou rien du tout si la relation n'a pas vraiment avancé (un joueur qui n'a eu que des accidents).
+- **Garrick change complètement selon ton camp** : dialogues, visites, comportement.
+  - **Côté lumière** : il est déçu de toi, et de lui-même (il n'a pas réussi à te ramener
+    discrètement vers l'ombre) ; colère plus marquée au palier maximal de lumière. Il s'éloigne à
+    mesure que tu parles avec les hauts membres de la lumière, et il cesse complètement de te parler
+    quand tu rencontres le Grand Sage : une cinématique où il t'explique qu'il ne pourra plus te voir.
+  - **Côté ombre** : l'inverse. Vous vous rapprochez, tu le vois de plus en plus souvent, tu en
+    apprends plus sur l'histoire du monde, et ses théories, qui sonnaient complotistes au début, font
+    de plus en plus sens.
+  - Le reste est encore à définir.
+
+### Règle générale : un grand moment = une cinématique (16/10)
+Chaque grand changement ou grand choix du jeu a sa **cinématique et quelque chose de visuellement
+différent** pour marquer le coup : la découverte du marché noir, la nymphe de la fontaine, chaque
+pièce d'armure, le Carrefour, et tout autre événement important à venir. À revoir pour ceux qui
+existent déjà (le marché noir n'a qu'une phrase du Passeur, par exemple) : planches à faire.
 
 ### Retours du 19/10 (suite)
 - **Les rats** : au réveil, une phrase qu'on ne rate pas (« Cette nuit, tu as entendu de petits êtres
