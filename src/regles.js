@@ -1714,6 +1714,8 @@ function formerFileDuJour(G) {
   const visites = [];
   const g = GARRICK_VISITES.findIndex(x => x.jour === G.jour);
   if (g >= 0 && !(G.garrickVu || []).includes(g)) visites.push({ type: 'garrick', i: g });
+  // (v0.90) deux pièces avant la fin de l'armure, Garrick vient prévenir : à la dernière, le camp sera scellé
+  else if (G.armure.length === ARMURE.length - 2 && !G.garrickSceau && !G.camp) visites.push({ type: 'garrick', sceau: true });
   if (doitVenirGarde(G)) visites.push({ type: 'garde', garde: gardeDuJour(G) });
   visites.push(...visitesMafia(G));   // (v0.60) le collecteur de la Main Noire, le Serpent à deux têtes
   // (v0.56) Très rarement, à partir du milieu du jeu, un aîné des Bannis passe et laisse une phrase
@@ -2967,9 +2969,9 @@ function texteGeste(e) {
   const q = e.qui ? prenomDe(e.qui) : null;
   const t = {
     mendiant: 'une pièce au mendiant', soigner: q ? `${q}, soigné sans payer` : 'un soin offert', dedommager: q ? `la famille ${dePersonne(e.qui)} dédommagée` : 'une famille dédommagée',
-    decoClaire: 'une décoration de lumière', missionL: q ? `${q}, revenu d'une terre de lumière` : 'une mission de lumière', denoncer: q ? `${e.qui} dénoncé` : 'un recherché dénoncé',
+    decoClaire: 'une décoration de lumière', missionL: q ? `${q}, retour de mission` : 'une mission de lumière', denoncer: q ? `${e.qui} dénoncé` : 'un recherché dénoncé',
     denoncerMafia: 'la Main Noire livrée à la Confrérie', ame: q ? `l'âme ${dePersonne(e.qui)}, offerte` : 'une âme offerte', piege: q ? `un piège glissé à ${q}` : 'un service de la Main Noire',
-    commande: q ? `une commande pour ${q}` : 'une commande des Bannis', decoSombre: "une décoration d'ombre", missionO: q ? `${q}, revenu des terres des Bannis` : 'une mission pour les Bannis', cacher: q ? `${e.qui} caché` : 'un recherché caché',
+    commande: q ? `une commande pour ${q}` : 'une commande des Bannis', decoSombre: "une décoration d'ombre", missionO: q ? `${q}, mission pour les Bannis` : 'une mission pour les Bannis', cacher: q ? `${e.qui} caché` : 'un recherché caché',
   }[e.cle] || e.cle;
   return t;
 }

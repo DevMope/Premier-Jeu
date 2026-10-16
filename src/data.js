@@ -776,7 +776,7 @@ const EFFETS_CAMP = { bien: { reputation: 1.2, reputationAllie: 1.5, butin: 1, m
 // (Dans le monde, les deux camps s'appellent la Confrérie et les Bannis.)
 const NOMS_CAMPS = { bien: 'la Confrérie', mal: 'les Bannis' };
 const JAUGE_CAMP = { reussite: 8, mal: 5, objet: 6, max: 100, ecartMax: 14 };   // (ecartMax : l'écart des réussites compte au plus pour 14 missions : la jauge peut toujours revenir)
-// Le dernier jour avant lequel la 9e pièce d'armure (le sceau du camp) ne peut pas arriver
+// Le dernier jour avant lequel la dernière pièce d'armure (le sceau du camp) ne peut pas arriver
 const JOUR_SCEAU = 24;
 // (audit v0.53, constat 2) La taxe de la Confrérie, chaque fin de semaine (tous les 7 jours) : une
 // part de ce que tu as au-dessus de la franchise. « Pour la défense contre le dragon. » La
@@ -787,17 +787,17 @@ const COUP_DE_POUCE = { argent: 12, stock: 2, delai: 15, cadeau: { ration: 2, go
 // (v0.90) Lumière et ombre : le barème. Chaque geste fait pencher la balance de quelques points,
 // classés du plus petit au plus gros (c'est l'ordre du livre des deux voies).
 const BAREME_CAMP = {
-  mendiant: { camp: 'bien', n: 1, texte: 'Donner au mendiant (une fois par jour)' },
+  mendiant: { camp: 'bien', n: 1, texte: 'Donner au mendiant (1 fois par jour)' },
   soigner: { camp: 'bien', n: 1, texte: 'Soigner sans faire payer' },
   dedommager: { camp: 'bien', n: 1, texte: 'Dédommager généreusement' },
-  decoClaire: { camp: 'bien', n: 2, texte: 'Une décoration de lumière au comptoir' },
+  decoClaire: { camp: 'bien', n: 2, texte: 'Une décoration de lumière' },
   missionL: { camp: 'bien', n: 3, texte: 'Mission réussie en terre de lumière' },
   denoncer: { camp: 'bien', n: 4, texte: 'Dénoncer un vrai recherché' },
-  denoncerMafia: { camp: 'bien', n: 4, texte: 'Livrer la Main Noire à la Confrérie' },
+  denoncerMafia: { camp: 'bien', n: 4, texte: 'Livrer la Main Noire' },
   ame: { camp: 'mal', n: 1, texte: 'Offrir une âme à la Faucheuse' },
-  piege: { camp: 'mal', n: 2, texte: 'Un piège, un service de la Main Noire' },
-  commande: { camp: 'mal', n: 2, texte: 'Une commande des Bannis au marché noir' },
-  decoSombre: { camp: 'mal', n: 2, texte: "Une décoration d'ombre au comptoir" },
+  piege: { camp: 'mal', n: 2, texte: 'Un piège, un service mafieux' },
+  commande: { camp: 'mal', n: 2, texte: 'Une commande des Bannis' },
+  decoSombre: { camp: 'mal', n: 2, texte: "Une décoration d'ombre" },
   missionO: { camp: 'mal', n: 3, texte: 'Mission réussie pour les Bannis' },
   cacher: { camp: 'mal', n: 4, texte: 'Cacher un recherché' },
 };

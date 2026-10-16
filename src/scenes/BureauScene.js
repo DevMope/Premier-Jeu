@@ -435,7 +435,7 @@ class BureauScene extends Phaser.Scene {
       c.add(this.add.image(316, yy + 7, 'glyphe_' + (b.camp === 'bien' ? 'soleil' : 'lune')).setScale(1.2));
       c.add(this.add.text(328, yy, raccourcir(`Jour ${e.jour} · +${e.n} · ${texteGeste(e)}`, 40), style(11, '#3b2410')));
     });
-    c.add(this.add.text(425, yj + 108, "Au sceau (9e pièce d'armure), sans serment et dans la zone neutre : une autre fin...", style(10, '#7a5a3a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 230 } })).setOrigin(0.5, 0));
+    c.add(this.add.text(425, yj + 108, `Au sceau (${ARMURE.length}e pièce d'armure), sans serment et dans la zone neutre : une autre fin...`, style(10, '#7a5a3a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 230 } })).setOrigin(0.5, 0));
   }
 
   // --- Les améliorations du shop ---

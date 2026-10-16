@@ -1199,6 +1199,7 @@ class CounterScene extends Phaser.Scene {
 
   // --- Étape 9d : Garrick repasse prendre des nouvelles ---
   visiteGarrick(entree) {
+    if (entree.sceau) return this.avertissementSceau();
     const G = this.G, visite = GARRICK_VISITES[entree.i];
     G.garrickVu = [...(G.garrickVu || []), entree.i];
     this.titreCommande.setFontSize(17).setText('Une visite');
@@ -1207,6 +1208,22 @@ class CounterScene extends Phaser.Scene {
       if (visite.cadeau) { encaisser(G, visite.cadeau, 'cadeau'); this.dessinerPieces(); Son.jouer('pieces'); }
       this.dire(visite.cadeau ? `Garrick glisse ${visite.cadeau} pièces sur le comptoir. « Ne dis rien, ha ha ! Allez, au travail, petit. »` : "« Allez, au travail, petit. Je repasserai ! »", 'Garrick Cœur-de-Chêne');
       this.bouton('Au revoir !', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+    });
+  }
+
+  // (v0.90) Garrick, deux pièces avant la fin de l'armure : la dernière scellera ton camp (la lumière, l'ombre... ou rien)
+  avertissementSceau() {
+    const G = this.G, serment = sermentDe(G), j = jaugeCamp(G);
+    G.garrickSceau = true;
+    this.titreCommande.setFontSize(17).setText('Une visite');
+    const n = G.armure.length, total = ARMURE.length;
+    const lettres = ['Zéro', 'Une', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf', 'Dix'], rang = ['', 'première', 'deuxième', 'troisième', 'quatrième', 'cinquième', 'sixième', 'septième', 'huitième', 'neuvième', 'dixième'];
+    this.dire(`${lettres[n] || n} pièces de l'armure, déjà... Écoute-moi bien : à la ${rang[total] || total + 'e'}, ton camp sera scellé, pour de bon. La lumière, l'ombre... ou rien du tout. Réfléchis avant de la recevoir.`, 'Garrick Cœur-de-Chêne');
+    this.bouton('« Rien du tout ? »', () => {
+      this.dire(serment ? `« Tu as juré ${serment === 'bien' ? 'à la Confrérie' : 'aux Bannis'}. Un serment, ça se garde... ou ça se paie. Mais réfléchis bien à qui tu as donné ta parole. »`
+        : Math.abs(j) < PALIERS_JAUGE[0] ? "« Si tu restes entre les deux, sans avoir juré à personne, l'armure ira à quelqu'un d'autre. Je ne sais pas si ce serait une bonne chose... ni pour toi, ni pour le monde. »"
+          : `« Aujourd'hui, ta balance penche ${j > 0 ? 'vers la lumière' : "vers l'ombre"}. Ce n'est pas encore gravé dans le métal. Après la dernière pièce, ça le sera. »`, 'Garrick Cœur-de-Chêne');
+      this.bouton('« Merci, Garrick. »', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
     });
   }
 
