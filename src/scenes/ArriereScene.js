@@ -99,7 +99,7 @@ class ArriereScene extends Phaser.Scene {
   // des lingots quand on l'est vraiment. Et des reconnaissances de dettes quand ça va mal.
   dessinerFortune() {
     const G = this.G;
-    const cx = 792;   // (v0.66 : le coffre-fort contre le mur, entre le buffet et la porte de la chambre ; v0.84 : un peu à droite, pour la porte de la rue)
+    const cx = 790;   // (v0.66 : le coffre-fort contre le mur, entre le buffet et la porte de la chambre ; v0.84 : un peu à droite, pour la porte de la rue)
     const argent = Math.max(0, G.argent);
     // Des lingots, au-delà de 500 pièces
     const lingots = Math.min(6, Math.floor(argent / 500));
@@ -117,7 +117,7 @@ class ArriereScene extends Phaser.Scene {
       for (let k = 0; k < hauteur; k++) tas.push(this.add.image(cx + dx, base - k * 6, 'pieceTranche').setScale(2).setDepth(1));
     }
     // Le coffre
-    this.add.image(cx, SOL_ARRIERE + 6, coffreHD(this, niveauAmelioration(G, 'coffre'))).setOrigin(0.5, 1).setScale(2.6);
+    this.add.image(cx, SOL_ARRIERE + 6, coffreHD(this, niveauAmelioration(G, 'coffre'))).setOrigin(0.5, 1).setScale(2.35);
     // Des sacs de pièces, au-delà de 150
     const sacs = Math.min(4, Math.floor(argent / 150));
     for (let i = 0; i < sacs; i++) this.add.image(cx - 92 + i * 20, SOL_ARRIERE + 26 + (i % 2) * 4, 'sacHD').setOrigin(0.5, 1).setScale(2.5).setDepth(2);
@@ -145,7 +145,7 @@ class ArriereScene extends Phaser.Scene {
   // Les décorations achetées à la brocante, accrochées aux murs. Clic : leur effet.
   dessinerDecos() {
     const G = this.G;
-    const places = [[640, 66], [692, 66], [744, 66], [556, 206], [826, 206], [556, 338], [826, 338], [588, 66], [796, 66], [826, 272]];
+    const places = [[640, 66], [692, 66], [744, 66], [556, 206], [812, 196], [556, 338], [812, 300], [588, 66], [796, 66], [812, 248]];
     (G.decos || []).slice(0, places.length).forEach((id, i) => {
       const [x, y] = places[i];
       this.add.rectangle(x, y - 24, 3, 3, 0x2a1a10); // le clou
@@ -190,7 +190,7 @@ class ArriereScene extends Phaser.Scene {
 
   // La porte de la chambre
   dessinerPorte() {
-    const x = 900;
+    const x = 688;   // (v0.84 : la porte de la rue a pris sa place au bord, plus grande)
     this.add.image(x, SOL_ARRIERE, 'porteHD').setOrigin(0.5, 1).setScale(2);
     // Une bougie sur le petit appui à côté de la porte
     this.add.text(x, SOL_ARRIERE - 182, 'La chambre', style(12, '#3a2410', { fontStyle: 'bold italic' })).setOrigin(0.5);
@@ -200,11 +200,11 @@ class ArriereScene extends Phaser.Scene {
 
   // (v0.84) la porte de derrière, qui donne sur la ruelle et la rue (demandée par les testeurs)
   dessinerPorteRue() {
-    const x = 688;
-    this.add.image(x, SOL_ARRIERE + 4, 'porteRueHD').setOrigin(0.5, 1).setScale(1.7);
+    const x = 898;
+    this.add.image(x, SOL_ARRIERE + 4, 'porteRueHD').setOrigin(0.5, 1).setScale(1.9);
     // l'écriteau peint au-dessus
-    this.add.text(x, SOL_ARRIERE - 180, 'La rue', style(13, '#f3e6c8', { fontStyle: 'bold italic', stroke: '#2a1408', strokeThickness: 4 })).setOrigin(0.5);
-    const zone = this.add.rectangle(x, SOL_ARRIERE - 80, 96, 160, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    this.add.text(x, SOL_ARRIERE - 198, 'La rue', style(13, '#f3e6c8', { fontStyle: 'bold italic', stroke: '#2a1408', strokeThickness: 4 })).setOrigin(0.5);
+    const zone = this.add.rectangle(x, SOL_ARRIERE - 90, 108, 180, 0xffffff, 0).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => { if (this.porteRue) this.porteRue(); });
   }
 

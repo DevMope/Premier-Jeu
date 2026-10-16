@@ -744,6 +744,28 @@ d'armure. C'est peu, et le joueur ne voit pas qu'il choisit.
    ne le découvre qu'après) ?
 4. Le barème te va-t-il, ou certaines actions doivent-elles peser plus ?
 
+### Lumière et ombre : réponses du joueur (19/10)
+- **Tout le système est validé** : le barème, le Carrefour et le serment, le livre des deux voies, les
+  ☀ / ☾ sur les boutons des choix (en pixel art), l'avertissement de Garrick avant le sceau.
+- **Le livre des deux voies** montre seulement le palier suivant de chaque côté (ce qu'il offrira) ;
+  les paliers d'après restent cachés : mystère et découverte.
+- **Le Carrefour** : il y a 3 paliers de chaque côté (25, 60, 90 points) ; le Carrefour vient au
+  **2e palier** (60), d'un côté ou de l'autre.
+- **Les ☀ / ☾ sur les boutons** ne se voient qu'avec assez de flair (une faculté débloquée par
+  l'expérience), bien avant le moment du choix de camp.
+- **Le barème** : ce sont les points que chaque action rapporte (ex. mission en terre de lumière
+  +3 ☀, âme offerte +5 ☾, cacher un recherché +4 ☾...), listés plus haut.
+- **La fin neutre** (idée du joueur) : le joueur qui ne bascule jamais assez d'un côté remet l'armure
+  au bras droit guerrier du Grand Sage. Plus tard, on apprend que ce guerrier a « dompté » le dragon
+  (qui appartenait en fait au Grand Sage) et qu'ils ont anéanti les forces des Bannis : la paix
+  revient sur les contrées... une fausse paix. Le joueur ne sait rien du complot, n'a pas de combat
+  final avec son armure, et n'a jamais eu à choisir.
+  Points à préciser (proposés par Claude) : être neutre = ne pas avoir prêté serment au Carrefour (ou
+  ne jamais l'avoir atteint) et rester sous le 2e palier quand l'armure est complète ; quelques
+  indices pour donner envie de rejouer (une ligne étrange de la gazette, un clin d'œil de la
+  Faucheuse) ; ce que deviennent la Main Noire et la Faucheuse pour un joueur neutre ; si le comptoir
+  continue après la fin (partie libre).
+
 ### On le fera plus tard
 - **Plus de musiques** pour en enchaîner plusieurs et ne jamais lasser le joueur avec une seule.
 - **Le jeu du forgeron** : quand la forge est achetée, le joueur peut forger lui-même, avec tout

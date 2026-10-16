@@ -2015,7 +2015,7 @@ function terminerAventure(G, parti) {
   parti.progression = { avant, apres: { niveau: (h && h.niveau) || v.niveau, succes: succesDe(G, v.nom), relation: niveauRelation(G, v.nom).nom, reputation: G.reputation }, gain };
   connaitre(G, v);
   G.historique.unshift({
-    nom: v.nom, race: v.race, quete: v.quete, zone: v.zone, depart: parti.depart, retour: parti.retour,
+    nom: v.nom, race: v.race, feminin: !!v.feminin, quete: v.quete, zone: v.zone, depart: parti.depart, retour: parti.retour,
     issue: r.echec ? 'echec' : r.vivant ? 'vivant' : r.valeureux ? 'valeureux' : 'sans gloire', gain, chance: parti.chance,
     voulu: !r.vivant ? parti.voulu || null : null,
   });
@@ -2880,6 +2880,59 @@ function avisDeRecherche(G) {
     const a = AVIS_RECHERCHE[i];
     return { ...a, prime: Math.round(a.prime * (1 + 0.2 * anciennete) / 10) * 10, nouveau: anciennete === 0 };
   });
+}
+
+// (v0.84) Ce que disent les passants dans la rue : des nouvelles du jeu (événements, gazette, têtes
+// mises à prix, ton camp, tes dettes, tes héros...), ou des petites phrases pour rire.
+const PHRASES_RUE = [
+  "Ma voisine dit qu'un dragon a volé ses chaussettes. Moi je dis que c'est son mari.",
+  "J'ai acheté une épée chez Thorgal. Elle coupe très bien. Mon pain, surtout.",
+  "Les nains de la banque m'ont souri ce matin. Je vérifie mes poches depuis.",
+  "On dit que les elfes ne dorment jamais. Moi, je ne dors plus depuis qu'ils chantent la nuit.",
+  "Trois aventuriers m'ont demandé le chemin du donjon. Il n'y a pas de donjon. Ils sont partis quand même.",
+  "Mon âne refuse d'avancer s'il ne voit pas la fontaine. Il a ses habitudes.",
+  "Le crieur s'est enroué. Le silence, c'est merveilleux.",
+  "J'ai fait un vœu à la fontaine : que le prix du pain baisse. Il a monté. Elle m'a puni.",
+  "Paraît qu'un gobelin vend des choses « presque pas volées ». Presque.",
+  "Mon fils veut devenir aventurier. Je lui ai offert une corde. Il s'est attaché au lit.",
+  "Ils ont repeint la banque. Elle a l'air encore plus chère.",
+  "Hier j'ai croisé un orc très poli. Il m'a dit pardon en me marchant sur le pied. Deux fois.",
+  "Si tu vois un chat roux, ce n'est pas le mien. Le mien est roux aussi, mais lui, il est gentil.",
+  "On m'a dit d'acheter des bandages « au cas où ». J'en ai cent. Il ne m'arrive jamais rien.",
+  "Le hobbit d'à côté prend six repas par jour. Je l'ai suivi : il en prend sept.",
+];
+function phrasePassant(G, { nuit = false } = {}) {
+  const prendre = l => l[Math.floor(Math.random() * l.length)];
+  const nouvelles = [];
+  for (const e of evenementsActifs(G)) if (EVENEMENTS[e.id] && EVENEMENTS[e.id].nouvelle) nouvelles.push(`Tu as entendu ? ${EVENEMENTS[e.id].nouvelle}`);
+  const gaz = G.gazette && G.gazette.jour === G.jour ? G.gazette.lignes : [];
+  if (gaz.length) nouvelles.push(`La gazette dit : « ${prendre(gaz)} » Ça alors !`);
+  const avis = avisDeRecherche(G);
+  if (avis.length) {
+    const a = prendre(avis);
+    nouvelles.push(prendre([
+      `${a.nom}, ${a.prime} pièces la tête ! Si je le croise, je fais semblant de ne pas le voir. Ou pas.`,
+      `Tu as vu l'affiche de ${a.nom} au tableau ? ${a.prime} pièces ! Avec ça, je m'achète une vache. Deux, même.`,
+      `Ma tante jure avoir vu ${a.nom} acheter des navets. Elle voit des bandits partout, ma tante.`,
+    ]));
+  }
+  const p = palierCamp(G);
+  if (p >= 2) nouvelles.push(`Ton comptoir, c'est celui de la Confrérie, non ? Les gens disent que tu es quelqu'un de bien.`);
+  if (p <= -2) nouvelles.push(`On raconte que des Bannis entrent chez toi à la nuit tombée... Je n'ai rien dit, hein.`);
+  if ((G.prets || []).length) nouvelles.push(`Les banquiers nains parlent de toi. Rarement en bien.`);
+  if (G.argent > 600) nouvelles.push(`Il paraît que tu dors sur un tas d'or. Il n'est pas trop dur, le tas ?`);
+  const dernier = (G.historique || [])[0];
+  if (dernier && dernier.retour >= G.jour - 2) {
+    if (dernier.issue === 'vivant') nouvelles.push(`${dernier.nom.split(' ')[0]} est rentré${dernier.feminin ? 'e' : ''} les poches pleines, à ce qu'on dit ! Grâce à toi ?`);
+    else if (dernier.issue !== 'echec') nouvelles.push(`Pauvre ${dernier.nom.split(' ')[0]}... On dit qu'${dernier.feminin ? 'elle' : 'il'} n'est jamais revenu${dernier.feminin ? 'e' : ''}. Les temps sont durs.`);
+  }
+  if (typeof forgeConstruite === 'function' && forgeConstruite(G)) nouvelles.push(`Ça martèle fort chez toi, la nuit ! Ta forge réveille tout le quartier.`);
+  if (typeof chatAdopte === 'function' && chatAdopte(G)) nouvelles.push(`C'est ton chat, le matou qui dort sur ta fenêtre ? Il a l'air plus riche que moi.`);
+  if (G.mafia && G.mafia.engage && !G.mafia.sorti) nouvelles.push(`Des types en capuche noire traînent près de ta porte. Des amis à toi ?`);
+  if (nuit) nouvelles.push('Tu ne dors pas, toi non plus ? Les lanternes de la rue, ça me donne des idées.', 'Chut... la garde fait sa ronde.');
+  // une fois sur deux, une nouvelle du jeu ; sinon, une phrase pour rire
+  const part = Math.min(0.6, 0.25 + nouvelles.length * 0.08);   // (peu de nouvelles : surtout des phrases pour rire)
+  return nouvelles.length && Math.random() < part ? prendre(nouvelles) : prendre(PHRASES_RUE);
 }
 
 // Y a-t-il du neuf sur le tableau (un « ! » au-dessus) : un événement qui commence ou finit

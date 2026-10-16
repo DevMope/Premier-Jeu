@@ -75,7 +75,27 @@ class RueScene extends Phaser.Scene {
     const p = imageCorps(this, x0, SOL_PROMENADE + 4 + Math.random() * 8, quoi, 7.2).setFlipX(sens < 0).setDepth(8.45);
     const duree = Math.abs(x1 - x0) * 11;
     pasDeMarche(this, p, duree, { poussiere: false });
-    this.tweens.add({ targets: p, x: x1, duration: duree, onComplete: () => p.destroy() });
+    this.tweens.add({ targets: p, x: x1, duration: duree, onComplete: () => { if (p.bulle) p.bulle.destroy(); p.destroy(); } });
+    // (v0.84) un passant sur deux lâche une phrase en passant (une nouvelle du jeu, ou pour rire) ;
+    // on peut aussi cliquer sur lui
+    p.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.passantParle(p));
+    if (Math.random() < 0.5) this.time.delayedCall(1200 + Math.random() * 2500, () => this.passantParle(p));
+  }
+
+  passantParle(p) {
+    if (!p.active || (p.bulle && p.bulle.active)) return;
+    const cam = this.cameras.main;
+    if (p.x < cam.scrollX + 40 || p.x > cam.scrollX + 920) return;   // (hors de l'écran : il se tait)
+    const texte = phrasePassant(this.G);
+    Son.jouer('voix', { personne: { nom: p.texture.key, race: 'humain' }, ton: Phaser.Utils.Array.GetRandom(['content', 'rire', 'etonne', 'neutre']) });
+    const bulle = p.bulle = this.add.text(p.x, p.y - p.displayHeight - 8, texte, style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 230 }, align: 'center' })).setOrigin(0.5, 1).setDepth(9).setScale(0);
+    this.tweens.add({ targets: bulle, scale: 1, duration: 180, ease: 'Back.easeOut' });
+    const suivre = () => { if (bulle.active && p.active) bulle.setX(p.x); };
+    this.events.on('update', suivre);
+    this.time.delayedCall(Math.max(3000, texte.length * 60), () => {
+      this.events.off('update', suivre);
+      if (bulle.active) this.tweens.add({ targets: bulle, alpha: 0, duration: 300, onComplete: () => bulle.destroy() });
+    });
   }
 
   dire(texte) {
