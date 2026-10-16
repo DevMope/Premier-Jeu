@@ -113,3 +113,15 @@ function cssCurseur(modele, secours = 'auto') {
   const m = CURSEURS[modele];
   return `url(${imageCurseur(modele)}) ${m.pointe[0] * 2} ${m.pointe[1] * 2}, ${secours}`;
 }
+
+// (v0.86) La plume du curseur, en texture du jeu : elle signe la narration au comptoir
+function texturePlume(scene) {
+  if (scene.textures.exists('plumeNarration')) return 'plumeNarration';
+  const m = CURSEURS.plume, tex = scene.textures.createCanvas('plumeNarration', 16, 16), g = tex.getContext();
+  m.pixels.forEach((ligne, y) => [...ligne].forEach((ch, x) => {
+    if (ch === '.' || !m.couleurs[ch]) return;
+    g.fillStyle = m.couleurs[ch]; g.fillRect(x, y, 1, 1);
+  }));
+  tex.refresh();
+  return 'plumeNarration';
+}

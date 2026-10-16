@@ -523,7 +523,7 @@ function habitueAuHasard(G, pris) {
 // `aussi` : des voyageurs créés à l'instant, pas encore rangés dans la partie.
 function voyageurAuHasard(G, aussi = []) {
   // Les disparus ne reviennent pas (leur nom n'est jamais redonné à un nouveau venu).
-  const morts = Object.entries(G.personnes || {}).filter(([, p]) => p.mort).map(([n]) => n);
+  const morts = Object.entries(G.personnes || {}).filter(([, p]) => p.mort || p.banni).map(([n]) => n);   // (v0.86 : ni ceux que tu as fait arrêter à tort)
   for (const h of G.historique || []) if (h.issue === 'valeureux' || h.issue === 'sans gloire') morts.push(h.nom);
   const pris = [...nomsActifs(G), ...aussi.map(v => v.nom), ...morts];
   const habitue = habitueAuHasard(G, pris);
@@ -1501,6 +1501,9 @@ function nuit(G) {
   }
   G.cadeauxVillages = [];
   for (const l of nuitMafia(G)) G.reveil.lignes.push(l);
+  // (v0.86) les imposteurs servis hier : on apprend ce qu'est devenu ton baluchon
+  for (const a of (G.arnaques || []).filter(a => !a.dit)) { G.reveil.lignes.push(a.texte); a.dit = true; }
+  G.arnaques = (G.arnaques || []).filter(a => a.jour >= G.jour - 7);
   for (const l of nuitDuChat(G)) G.reveil.lignes.unshift(l);   // (v0.65) les rats, ou le cadeau du chat (v0.84 : en premier, pour ne pas le rater)
   if (G.forge && G.forge.construite && G.forge.nouvelle) { G.reveil.lignes.push("Les ouvriers ont monté ta forge dans l'arrière-boutique : le foyer, le soufflet, l'enclume. Il ne manque plus qu'un forgeron !"); G.forge.nouvelle = false; }
   if (nouvellesDeLaForge(G)) G.reveil.lignes.push(nouvellesDeLaForge(G));   // (v0.82) les armes sorties de la forge
@@ -1591,6 +1594,49 @@ function avecGraine(G, sel, fn) {
   try { return fn(); } finally { Math.random = avant; }
 }
 
+// --- (v0.86, lot A-1) La journée au comptoir ---
+function heureFermeture(G) { return JOURNEE.fermeture + JOURNEE.parEclairage * niveauAmelioration(G, 'eclairage'); }
+function dureeService(G) {
+  const k = JOURNEE.seuilsService.filter(s => (G.experience || 0) >= s).length;
+  return JOURNEE.service[k];
+}
+// « 9 h », « 9 h 15 », et les durées « ¼ h », « ½ h », « ¾ h », « 1 h »...
+function formatHeure(h) {
+  const hh = Math.floor(h + 1e-6), mm = Math.round((h - hh) * 60);
+  return `${hh} h${mm ? ' ' + String(mm).padStart(2, '0') : ''}`;
+}
+function formatDuree(d) {
+  const entier = Math.floor(d + 1e-6), reste = Math.round((d - entier) * 4);
+  const frac = ['', '¼', '½', '¾'][reste] || '';
+  return entier ? `${entier}${frac ? ' ' + frac : ''} h` : `${frac} h`;
+}
+function heureDuComptoir(G) { if (typeof G.heure !== 'number') G.heure = JOURNEE.ouverture; return G.heure; }
+function avancerHeure(G, d) { G.heure = heureDuComptoir(G) + d; return G.heure; }
+// À la fermeture : ceux qui avaient écrit reviendront demain matin, en tête de file ; les imprévus
+// repartent (ils retenteront leur chance un autre jour). Le colporteur remballe. Ce qu'un client
+// mis en attente avait déjà dans son baluchon revient dans ta réserve. Les retours de mission, les
+// visites et les carnets passent quand même : on frappe au volet.
+function fermerLeComptoir(G) {
+  const reviennent = [], repartent = [];
+  const cible = G.faucheuse && G.faucheuse.mission ? G.faucheuse.mission.cible : null;
+  G.file = G.file.filter(e => {
+    if (e.type === 'colporteur') return false;
+    if (e.type !== 'client') return true;
+    if (cible && e.voyageur === cible) return true;   // (la cible de la Faucheuse ne rate pas son rendez-vous)
+    for (const [id, n] of Object.entries(e.colis || {})) {
+      const p = (e.pieges || {})[id] || 0;
+      G.stock[id] = (G.stock[id] || 0) + n - p;
+      if (p) G.pieges[id] = (G.pieges[id] || 0) + p;
+    }
+    delete e.colis; delete e.pieges;
+    if (e.voyageur.prevu && !e.voyageur.recherche) reviennent.push(e.voyageur);
+    else repartent.push(e.voyageur);
+    return false;
+  });
+  G.reportes = [...(G.reportes || []), ...reviennent];
+  return { reviennent, repartent };
+}
+
 // On ouvre le comptoir : la file d'attente du jour se forme.
 function ouvrirComptoir(G) {
   // (une seule fois par jour : un double clic ne doit pas refaire la file)
@@ -1607,7 +1653,8 @@ function formerFileDuJour(G) {
   G.annonces = G.annonces.filter(a => a.jour !== G.jour);
   const imprevus = hasard(min, max); // (les clients des lettres viennent en plus)
   const clients = [...prevus.map(v => ({ ...v, prevu: true }))];
-  for (let i = 0; i < imprevus; i++) clients.push(voyageurAuHasard(G, clients));
+  for (let i = 0; i < imprevus; i++) clients.push(voyageurAuHasard(G, [...clients, ...(G.reportes || [])]));
+  deguiserClients(G, clients, prevus.length);   // (v0.86) parmi les imprévus, un menteur... ou un honnête qui en a l'air
   const file = Phaser.Utils.Array.Shuffle(clients.map(v => ({ type: 'client', voyageur: v })));
 
   // Les aventuriers dont la quête se termine aujourd'hui reviennent...
@@ -1664,7 +1711,13 @@ function formerFileDuJour(G) {
   // (v0.56) Très rarement, à partir du milieu du jeu, un aîné des Bannis passe et laisse une phrase
   const aine = aineDuJour(G, 'comptoir');
   if (aine) { G.ainesVus = [...(G.ainesVus || []), aine]; file.splice(hasard(0, file.length), 0, { type: 'aine', race: aine }); }
-  G.file = [...retours, ...notables, ...visites, ...file];
+  // (v0.86) une tête mise à prix (ou son sosie), environ une fois par semaine
+  const recherche = rechercheDuJour(G);
+  if (recherche) file.splice(hasard(0, file.length), 0, { type: 'client', voyageur: recherche });
+  // (v0.86) ceux qui t'avaient écrit et n'ont pas pu passer hier avant la fermeture : en tête de file
+  const reportes = (G.reportes || []).map(v => ({ type: 'client', voyageur: v, reporte: true }));
+  G.reportes = [];
+  G.file = [...retours, ...reportes, ...notables, ...visites, ...file];
 }
 
 // --- Étape 9e : le marché noir ---
@@ -2203,6 +2256,7 @@ function trouvailles(G, voyageur) {
 
 function acheterTrouvaille(G, t) {
   if (t.vendu) return 'Déjà acheté.';
+  if (t.retire) return "Il a remballé son objet.";
   if (G.tresors.length >= placesAtelier(G)) return `Ton atelier est plein (${placesAtelier(G)} objets). Un établi de plus (améliorations) donne plus de place.`;
   if (!peutPayer(G, t.prix)) return manqueArgent(G, t.prix, "Pas assez d'argent.");
   payer(G, t.prix, 'trouvailles');
@@ -2896,6 +2950,226 @@ function avisDeRecherche(G) {
     const a = AVIS_RECHERCHE[i];
     return { ...a, prime: Math.round(a.prime * (1 + 0.2 * anciennete) / 10) * 10, nouveau: anciennete === 0 };
   });
+}
+
+// --- (v0.86, lot A-3) Les imposteurs et l'inspection ---
+
+// Les textes d'imposture : {nom}, {prenom}, {ami}, {Il}/{il} et {e} s'accordent à la personne.
+function texteImposture(t, v, ami = '') {
+  return t.replaceAll('{nom}', v.nom).replaceAll('{prenom}', v.nom.split(' ')[0]).replaceAll('{ami}', ami)
+    .replaceAll('{Il}', v.feminin ? 'Elle' : 'Il').replaceAll('{il}', v.feminin ? 'elle' : 'il').replaceAll('{e}', v.feminin ? 'e' : '');
+}
+
+// Parmi les clients imprévus du jour : un imposteur (environ un sur douze, un peu plus quand ta
+// réputation grandit), et un honnête client qui a l'air louche (aussi souvent).
+function deguiserClients(G, clients, debut) {
+  if (G.jour < IMPOSTURE.jourMin) return;
+  const chance = Math.min(IMPOSTURE.chanceMax, IMPOSTURE.chance + Math.max(0, G.reputation) / 400);
+  for (let i = debut; i < clients.length; i++) {
+    const v = clients[i];
+    if (v.habitue || v.prestige || v.exige || v.recherche) continue;
+    const de = Math.random();
+    if (de < chance) {
+      const type = auHasard(Object.keys(IMPOSTEURS)), I = IMPOSTEURS[type];
+      let w = v;
+      if (I.race) {
+        // il se fait passer pour un autre : un nom d'emprunt, une allure de circonstance
+        const pris = [...nomsActifs(G), ...clients.map(c => c.nom), ...Object.keys(G.personnes || {})];
+        const prenoms = NOMS.humain.filter(([n, f]) => f === I.feminin && !pris.includes(I.nom(n.split(' ')[0])));
+        if (!prenoms.length) continue;
+        const prenom = auHasard(prenoms)[0].split(' ')[0];
+        w = clients[i] = creerVoyageur(G, { nom: I.nom(prenom), race: I.race, feminin: I.feminin, niveau: 'aguerri' });
+      }
+      const connus = Object.keys(G.personnes || {}).filter(n => n !== w.nom && !G.personnes[n].mort && !G.personnes[n].banni);
+      const ami = connus.length ? auHasard(connus) : 'Garrick Cœur-de-Chêne';
+      w.imposteur = { type, ami };
+      w.accueilImposture = texteImposture(auHasard(I.accueil), w, ami);
+    } else if (de < chance + IMPOSTURE.louche) {
+      const type = auHasard(Object.keys(LOUCHES));
+      v.louche = { type };
+      v.accueilImposture = texteImposture(auHasard(LOUCHES[type].accueil), v);
+    }
+  }
+}
+
+// Les indices qu'un client laisse voir (trois, du plus visible au plus discret).
+function indicesDe(v) {
+  const ami = v.imposteur ? v.imposteur.ami : '';
+  const liste = v.imposteur ? IMPOSTEURS[v.imposteur.type].indices : v.louche ? LOUCHES[v.louche.type].indices
+    : [0, 1, 2].map(k => INDICES_HONNETES[(v.id * 7 + k * 2) % INDICES_HONNETES.length]);
+  return liste.map(i => ({ ...i, t: texteImposture(i.t, v, ami) })).sort((a, b) => a.d - b.d);
+}
+
+// Inspecter : observer (ton flair décide de ce que tu remarques) ou fouiller son sac (tu vois tout,
+// mais un client honnête est vexé... et un imposteur démasqué s'enfuit).
+function inspecterClient(G, v, fouille) {
+  const flair = niveauFlair(G);
+  const indices = indicesDe(v).map(i => ({ ...i, vu: fouille || i.d <= flair * 0.8 + 0.2 }));
+  const vus = indices.filter(i => i.vu);
+  const louche = Math.max(0, Math.min(5, Math.round(2 + vus.filter(i => i.louche).length * 1.5 - vus.filter(i => !i.louche).length * 1.5)));
+  const r = { indices, louche, flair };
+  if (fouille && v.imposteur) r.demasque = true;
+  else if (fouille) r.vexe = changerRelation(G, v.nom, -2) || '';
+  return r;
+}
+
+// Un imposteur démasqué (refusé ou fouillé) : ton flair grandit.
+function demasquerImposteur(G, v) {
+  G.experience = Math.min(EXPERIENCE_MAX, (G.experience || 0) + IMPOSTURE.flairRefus);
+  G.stats.imposteurs = (G.stats.imposteurs || 0) + 1;
+  connaitre(G, v);
+}
+
+// Un imposteur servi : le baluchon est perdu ; on apprendra demain matin ce qu'il en a fait.
+function arnaquer(G, v, colis) {
+  const n = Object.values(colis).reduce((a, b) => a + b, 0);
+  G.arnaques = [...(G.arnaques || []), { jour: G.jour, nom: v.nom, objets: n, texte: texteImposture(IMPOSTEURS[v.imposteur.type].arnaque, v, v.imposteur.ami) }];
+  G.stats.arnaques = (G.stats.arnaques || 0) + 1;
+}
+
+// --- (v0.86, lot A-4) Le marchandage ---
+
+function styleMarchandage(v) { return { ...STYLES_MARCHANDAGE.defaut, ...(STYLES_MARCHANDAGE[v.race] || {}) }; }
+// Un nombre fixe par client (sa limite cachée ne change pas si on recharge la partie)
+function aleaClient(v, sel) { let h = (v.id || 1) * 2654435761; for (const ch of sel) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 1000) / 1000; }
+
+// Le marchandage de sa part du butin : on l'ouvre (il annonce sa part), on demande plus, on accepte.
+function ouvrirMarchandage(G, v) {
+  if (!v.marchandage) {
+    const st = styleMarchandage(v);
+    const marge = st.marge[0] + Math.round(aleaClient(v, 'marge') * (st.marge[1] - st.marge[0]) / MARCHANDAGE.pas) * MARCHANDAGE.pas;
+    v.marchandage = { part: MARCHANDAGE.base, max: MARCHANDAGE.base + marge, patience: st.patience, patienceMax: st.patience, fini: false };
+  }
+  return v.marchandage;
+}
+// Demander 5 % de plus : 'cede' (il accepte), 'refuse' (au-dessus de sa limite), 'part' (plus de patience)
+function demanderPlus(G, v) {
+  const m = ouvrirMarchandage(G, v), demande = m.part + MARCHANDAGE.pas;
+  m.patience--;
+  if (demande <= m.max) { m.part = demande; return m.patience <= 0 ? conclureMarchandage(G, v, 'cede') : 'cede'; }
+  if (m.patience <= 0) {
+    m.fini = true;
+    changerRelation(G, v.nom, -2);
+    G.reputation -= REFUS_CLIENT;
+    return 'part';
+  }
+  return 'refuse';
+}
+// Il a encore de la marge ? Ses tics le trahissent (ton flair les voit mieux) ; le gobelin bluffe toujours.
+function ticVisible(G, v) {
+  const m = ouvrirMarchandage(G, v), st = styleMarchandage(v);
+  if (st.bluffeur) return true;
+  return m.part < m.max && aleaClient(v, 'tic' + m.part) < 0.45 + niveauFlair(G) * 0.55;
+}
+function conclureMarchandage(G, v, issue = 'accepte') {
+  const m = ouvrirMarchandage(G, v);
+  m.fini = true;
+  if (v.butinBase == null) v.butinBase = v.butin;
+  v.butin = Math.round(v.butinBase * m.part / MARCHANDAGE.base);
+  // le nain respecte qui tient bon jusqu'au bout de sa limite
+  if (styleMarchandage(v).respect && m.part >= m.max) changerRelation(G, v.nom, 1);
+  return issue;
+}
+function texteMarchandage(v, cle, valeurs = {}) {
+  let t = texteImposture(styleMarchandage(v)[cle], v);
+  for (const [k, x] of Object.entries(valeurs)) t = t.replaceAll(`{${k}}`, x);
+  return t;
+}
+
+// Les trouvailles : proposer 10 % de moins, jusqu'à son plancher (caché) ; sans patience, il remballe.
+function marchanderTrouvaille(G, v, t) {
+  const st = styleMarchandage(v);
+  if (t.prixDepart == null) { t.prixDepart = t.prix; t.patience = st.patience; }
+  const plancher = Math.round(t.prixDepart * (st.plancher + (aleaClient(v, 't' + t.tresor.nom) - 0.5) * 0.1));
+  const propose = Math.max(1, Math.round(t.prix * (1 - MARCHANDAGE.pasTrouvaille)));
+  t.patience--;
+  if (propose >= plancher) { t.prix = propose; return { issue: 'cede', texte: auHasard(PAROLES_TROUVAILLE.cede).replaceAll('{prix}', propose) }; }
+  if (t.patience <= 0) { t.retire = true; return { issue: 'part', texte: auHasard(PAROLES_TROUVAILLE.part) }; }
+  return { issue: 'refuse', texte: auHasard(PAROLES_TROUVAILLE.refuse).replaceAll('{prix}', t.prix) };
+}
+
+// --- (v0.86, lot A-2) Les recherchés au comptoir ---
+
+// La lumière ou l'ombre penche d'un acte (comme une mission réussie dans une contrée de ce camp).
+function pencherCamp(G, camp, n = 1) {
+  G.reussites = G.reussites || { bien: 0, mal: 0 };
+  const autre = camp === 'bien' ? 'mal' : 'bien';
+  G.reussites[camp] = (G.reussites[camp] || 0) + n;
+  if (G.reussites[camp] - (G.reussites[autre] || 0) > JAUGE_CAMP.ecartMax) G.reussites[camp] = (G.reussites[autre] || 0) + JAUGE_CAMP.ecartMax;
+}
+
+// Le jour du recherché de la semaine (tiré une fois par semaine, au hasard), et lui (ou son sosie).
+function rechercheDuJour(G) {
+  if (G.jour < RECHERCHE.jourMin) return null;
+  const semaine = Math.floor((G.jour - 1) / 7);
+  G.joursRecherche = G.joursRecherche || {};
+  if (G.joursRecherche[semaine] == null) G.joursRecherche[semaine] = Math.max(G.jour, semaine * 7 + 1 + hasard(0, 6));
+  if (G.joursRecherche[semaine] !== G.jour) return null;
+  const avis = avisDeRecherche(G).filter(a => !(G.captures || []).includes(a.nom));
+  if (!avis.length) return null;
+  const a = auHasard(avis);
+  if (Math.random() < RECHERCHE.innocent) {
+    // un honnête voyageur qui partage un signe distinctif avec le bandit (du même peuple)
+    const race = NOMS[a.personne.race] ? a.personne.race : 'humain';
+    const pris = [...nomsActifs(G), ...Object.keys(G.personnes || {})];
+    const libres = NOMS[race].filter(([nom]) => !pris.includes(nom));
+    const [nom, feminin] = libres.length ? auHasard(libres) : auHasard(NOMS[race]);
+    const v = creerVoyageur(G, { nom, race, feminin });
+    v.apparence = { nom, race, feminin, marques: [a.personne.marques[0]] };
+    v.recherche = { avis: a.nom, innocent: true, prime: a.prime };
+    return v;
+  }
+  const v = creerVoyageur(G, { nom: a.nom, race: a.personne.race, feminin: !!a.personne.feminin, niveau: a.personne.niveau || 'aguerri' });
+  v.apparence = a.personne;
+  v.recherche = { avis: a.nom, innocent: false, prime: a.prime };
+  return v;
+}
+
+// Appeler la garde. Un vrai bandit : la prime, de la réputation, un peu de lumière. Un innocent :
+// la réputation en prend un coup, et il ne remettra plus les pieds chez toi.
+function denoncerRecherche(G, v) {
+  connaitre(G, v);
+  if (!v.recherche.innocent) {
+    G.captures = [...(G.captures || []), v.recherche.avis];
+    const part = Math.round(v.recherche.prime * RECHERCHE.part / 5) * 5;
+    G.argent += part;
+    G.reputation += RECHERCHE.reputation;
+    pencherCamp(G, 'bien');
+    return { juste: true, prime: part };
+  }
+  G.reputation -= RECHERCHE.erreur;
+  G.personnes[v.nom] = { ...(G.personnes[v.nom] || {}), banni: true };
+  changerRelation(G, v.nom, -5);
+  return { juste: false };
+}
+
+// Le cacher dans l'arrière-boutique. Un vrai bandit : un peu d'ombre, et un objet interdit glissé
+// sous ton buffet. Un innocent : il ne comprend pas bien, mais il te remercie. La garde passe
+// souvent juste après poser des questions.
+function cacherRecherche(G, v) {
+  connaitre(G, v);
+  let objet = null;
+  if (!v.recherche.innocent) {
+    pencherCamp(G, 'mal');
+    objet = auHasard(interditsDuPasseur());
+    G.interdits[objet] = (G.interdits[objet] || 0) + 1;
+  } else changerRelation(G, v.nom, 1);
+  const garde = Math.random() < RECHERCHE.garde;
+  if (garde) G.file.unshift({ type: 'gardeRecherche', voyageur: v });
+  return { objet, garde };
+}
+
+// La garde demande : mentir (elle ne s'en rend compte qu'une fois sur quatre) ou livrer.
+function repondreGarde(G, v, livrer) {
+  if (livrer) {
+    if (v.recherche.innocent) return denoncerRecherche(G, v);
+    pencherCamp(G, 'bien');   // (l'ombre gagnée en le cachant s'efface)
+    G.reussites.mal = Math.max(0, (G.reussites.mal || 0) - 1);
+    return denoncerRecherche(G, v);
+  }
+  const vu = Math.random() < RECHERCHE.mensongeVu && !v.recherche.innocent;
+  if (vu) G.reputation -= RECHERCHE.erreur;
+  return { vu };
 }
 
 // (v0.84) Ce que disent les passants dans la rue : des nouvelles du jeu (événements, gazette, têtes

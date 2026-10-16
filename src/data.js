@@ -1122,6 +1122,16 @@ const PLACES_ATELIER = 8;
 const PLACES_PAR_ETABLI = 2;
 // L'expérience compte jusqu'à ce nombre de clients servis (pour le flair et pour attirer du monde).
 const EXPERIENCE_MAX = 80;
+
+// (v0.86, lot A-1) La journée au comptoir : il ouvre à 8 h et ferme à 18 h ; chaque action prend du
+// temps (servir un client, écouter un récit, passer chez Grippesou...). L'éclairage fait fermer plus
+// tard (une demi-heure par niveau). Servir va plus vite avec l'expérience (1 h, puis ¾ h, puis ½ h).
+const JOURNEE = {
+  ouverture: 8, fermeture: 18, parEclairage: 0.5,
+  service: [1, 0.75, 0.5], seuilsService: [25, 55],   // (selon l'expérience)
+  recit: 0.25, visite: 0.25, express: 0.5, marchander: 0.5, observer: 0.25,
+  alerte: 1,   // une heure avant la fermeture, le ciel rougit et l'horloge prévient
+};
 // Les bonus d'attrait (stock varié, trophée, éclairage) peuvent dépasser le plafond du palier de réputation.
 const BONUS_CLIENTS_MAX = 2;
 
@@ -2041,6 +2051,166 @@ const AVIS_RECHERCHE = [
   { nom: 'Vorag le Comte Pâle', personne: { nom: 'Vorag', race: 'vampire', niveau: 'veteran', marques: ['monocle'] }, crime: 'Rôde la nuit autour des bergeries. On a retrouvé les moutons... pâles.', prime: 1500 },
   { nom: 'Brumos sous-le-Pont', personne: { nom: 'Brumos', race: 'troll', niveau: 'aguerri', marques: ['bandeau', 'balafre'] }, crime: 'Exige un péage de trois chèvres sur le pont de la Rivière.', prime: 900 },
 ];
+
+// (v0.86, lot A-2) Les recherchés au comptoir : à partir de la 2e semaine, environ un par semaine
+// (jamais le même jour), une tête de l'avis de recherche entre dans la file... ou un honnête
+// voyageur qui lui ressemble (un cache-œil, une balafre). Appeler la garde rapporte la prime ; le
+// cacher penche vers l'ombre (et la garde passe souvent poser des questions ensuite).
+const RECHERCHE = { jourMin: 8, innocent: 0.3, garde: 0.75, mensongeVu: 0.25, reputation: 1, erreur: 2, part: 0.25 };   // (part : ta part de la prime, le reste va à la garde)
+const PAROLES_RECHERCHE = {
+  bandit: [
+    "Une corde, des rations, et pas de questions. Je paie bien... et je suis pressé.",
+    "On m'a dit que tu ne posais pas de questions. C'est vrai, j'espère ?",
+    "Belle journée, hein ? Ne regarde pas trop ma figure, je suis timide.",
+    "Je voyage... discrètement. Tu vois ce que je veux dire. Sers-moi vite, et on ne s'est jamais vus.",
+    "Pas de nom, pas de registre. Juste de quoi partir loin. Très loin.",
+  ],
+  innocent: [
+    "Bonjour ! Ne fais pas cette tête : on me regarde de travers depuis qu'il y a ces affiches.",
+    "Bonjour, je cherche de quoi partir en mission. Et non, je ne suis pas celui de l'affiche.",
+    "Un loup m'a pris un œil, il y a longtemps. Depuis, les enfants ont peur de moi. Toi aussi ?",
+    "Je suis pressé, oui. Mais c'est la faute de ma belle-mère, pas de la garde.",
+    "Bonjour ! Une corde, des rations... Pourquoi tu me dévisages comme ça ?",
+  ],
+};
+
+// (v0.86, lot A-3) Les imposteurs : dès le jour 5, environ un client imprévu sur douze ment (un peu plus
+// quand ta réputation grandit). Servi, il disparaît avec le baluchon. Des indices le trahissent ;
+// « Inspecter » en montre plus ou moins selon ton flair (observer : ¼ h ; fouiller son sac : tout de
+// suite, mais un client honnête le prend très mal). Et certains clients honnêtes ont l'air louches...
+// Dans les textes : {nom}, {prenom}, {ami} ; {Il}/{il} et {e} s'accordent à la personne.
+const IMPOSTURE = { jourMin: 5, chance: 1 / 12, chanceMax: 1 / 8, louche: 1 / 12, flairRefus: 2 };
+const IMPOSTEURS = {
+  fauxHeros: {
+    race: 'humain', feminin: false, nom: p => `Sire ${p} le ${['Preux', 'Vaillant', 'Hardi', 'Magnifique'][p.length % 4]}`,
+    accueil: ["{nom}, tueur du dragon de la Comté ! Il me faut tout ton meilleur matériel. Je paierai... au retour, bien sûr.",
+      "On chante mes exploits dans trois royaumes ! Enfin, on va les chanter. Équipe-moi, marchand : la gloire n'attend pas."],
+    indices: [
+      { t: "Une armure qui brille comme au premier jour : pas une bosse, pas une rayure.", louche: true, d: 0.1 },
+      { t: "Un dragon... dans la Comté ? Personne n'en a jamais vu.", louche: true, d: 0.3 },
+      { t: "Ses mains sont douces comme celles d'un notaire : pas un cal.", louche: true, d: 0.6 },
+    ],
+    fuite: "Je... Bon. Je repasserai. J'ai, euh, un autre dragon sur le feu.",
+    merci: "Parfait ! Les bardes chanteront ta générosité. Je reviens couvert d'or, parole de chevalier !",
+    arnaque: "Ton « {nom} » n'a jamais quitté le village : il a revendu ton baluchon à la brocante de Firmin, hier soir.",
+  },
+  faussePelerine: {
+    race: 'humain', feminin: true, nom: p => `Sœur ${p}`,
+    accueil: ["Je marche jusqu'au monastère des Cimes, pieds nus, pour expier mes fautes. Les dieux te rendront ta générosité.",
+      "Une pauvre pèlerine, sans un sou... Les dieux voient tout, marchand. Ils sauront que tu m'as aidée."],
+    indices: [
+      { t: "Ses sandales sont neuves : pas un grain de poussière.", louche: true, d: 0.15 },
+      { t: "Elle ne connaît pas la prière du soir des pèlerins.", louche: true, d: 0.45 },
+      { t: "Une bague en or dépasse de sa manche.", louche: true, d: 0.7 },
+    ],
+    fuite: "Les dieux... euh... m'appellent ailleurs. Adieu !",
+    merci: "Que les dieux te bénissent, mon enfant. Je prierai pour toi... longtemps.",
+    arnaque: "La « {nom} » a été vue à la taverne du Gué : elle buvait ce qu'elle avait tiré de ton baluchon.",
+  },
+  fauxNeveu: {
+    accueil: ["Je viens de la part de mon oncle, {ami}. Il m'a dit que tu me ferais un bon prix... et crédit, si besoin.",
+      "Mon oncle {ami} te salue ! Il m'a tellement parlé de toi. Il a dit : « Va chez lui, il t'équipera. »"],
+    indices: [
+      { t: "{ami} ne t'a jamais parlé d'un neveu, ni d'une nièce.", louche: true, d: 0.25 },
+      { t: "{Il} ne sait même pas quelle arme porte son « oncle ».", louche: true, d: 0.5 },
+      { t: "Son accent vient de loin : pas de la Comté.", louche: true, d: 0.7 },
+    ],
+    fuite: "Ah... euh... j'ai dû me tromper de comptoir. Mon oncle est très vieux, tu sais.",
+    merci: "Merci ! Mon oncle sera ravi. Je te rapporte ta part en revenant, promis juré !",
+    arnaque: "Ton client « neveu de {ami} » ? {ami} n'a ni neveu ni nièce. Ton baluchon est déjà vendu au marché noir.",
+  },
+  espion: {
+    accueil: ["Une grosse commande ! Tout ton meilleur matériel. Et dis-moi combien tu l'as payé, par pure curiosité.",
+      "Je pars loin, très loin. Montre-moi tout ce que tu as... et tes prix, surtout tes prix."],
+    indices: [
+      { t: "Un carnet de comptes dépasse de sa poche.", louche: true, d: 0.2 },
+      { t: "{Il} regarde tes étagères plus que toi.", louche: true, d: 0.4 },
+      { t: "{Il} tient son épée par la lame.", louche: true, d: 0.7 },
+    ],
+    fuite: "Bon, bon. Je vois que tu as l'œil. Mon patron sera déçu.",
+    merci: "Excellent, excellent. Tout est noté. Euh, je veux dire : merci, je pars à l'aventure !",
+    arnaque: "Le marchand de la rue d'en bas vend depuis ce matin un baluchon qui ressemble beaucoup au tien... Ton client d'hier était son espion.",
+  },
+};
+// Des clients honnêtes qui ont l'air louches : leurs premiers indices trompent, les suivants rassurent.
+const LOUCHES = {
+  heritier: {
+    accueil: ["Ma première aventure ! Mon père m'a tout offert, regarde comme ça brille !"],
+    indices: [
+      { t: "Un équipement qui brille comme au premier jour : pas une bosse, pas une rayure.", louche: true, d: 0.1 },
+      { t: "{Il} porte le blason des Montclair, une vraie famille de chevaliers.", louche: false, d: 0.4 },
+      { t: "{Il} pose plein de questions sur les dangers de la route : {il} prend ça au sérieux.", louche: false, d: 0.65 },
+    ],
+  },
+  conteur: {
+    accueil: ["J'ai combattu trois trolls à mains nues ! Bon, deux. Un gros, en tout cas."],
+    indices: [
+      { t: "{Il} en rajoute à chaque phrase.", louche: true, d: 0.1 },
+      { t: "Ses bottes ont vu du pays : usées jusqu'à la corde.", louche: false, d: 0.3 },
+      { t: "Une vieille cicatrice sur l'avant-bras : une vraie morsure.", louche: false, d: 0.6 },
+    ],
+  },
+  veteran: {
+    accueil: ["Pas de belles paroles : de quoi survivre, c'est tout. Je paierai au retour, comme toujours."],
+    indices: [
+      { t: "Sa cape est rapiécée, son épée ébréchée : {il} a l'air bien pauvre.", louche: true, d: 0.1 },
+      { t: "Les cals de ses mains : un vrai combattant.", louche: false, d: 0.35 },
+      { t: "{Il} connaît chaque sentier de la carte par cœur.", louche: false, d: 0.6 },
+    ],
+  },
+  timide: {
+    accueil: ["Je... bonjour. Je voudrais... enfin, si possible... de quoi partir."],
+    indices: [
+      { t: "{Il} évite ton regard et tripote sa bourse.", louche: true, d: 0.1 },
+      { t: "Sa lettre de recommandation porte le sceau de la Confrérie.", louche: false, d: 0.4 },
+      { t: "{Il} compte et recompte ses pièces : c'est tout ce qu'{il} a.", louche: false, d: 0.65 },
+    ],
+  },
+};
+// Ce qu'on remarque chez un client ordinaire (rien de louche)
+const INDICES_HONNETES = [
+  { t: "Ses bottes sont usées par la route : un vrai voyageur.", louche: false, d: 0.1 },
+  { t: "Son équipement a été réparé souvent, avec soin.", louche: false, d: 0.3 },
+  { t: "{Il} connaît le nom des aubergistes de la route.", louche: false, d: 0.5 },
+  { t: "{Il} parle de sa mission sans détour, et sans se vanter.", louche: false, d: 0.2 },
+  { t: "Une vieille cicatrice : {il} a déjà vu le danger de près.", louche: false, d: 0.6 },
+];
+const FOUILLE_VEXE = ["Tu me prends pour un voleur ?! Vas-y, fouille... Je m'en souviendrai.",
+  "Hé ! On ne fouille pas les honnêtes gens comme ça ! C'est vexant, tu sais."];
+
+// (v0.86, lot A-4) Le marchandage. La part qu'un client te reversera au retour se dit en pourcents :
+// 20 %, c'est sa part habituelle. Tu peux demander 5 % de plus à chaque fois (½ h) ; chaque demande
+// use sa patience. Il cède tant que tu restes sous sa limite (cachée) ; au-delà il refuse, et s'il
+// n'a plus de patience, il part fâché. Ses tics trahissent qu'il a encore de la marge (ton flair
+// les voit mieux)... sauf le gobelin, qui bluffe tout le temps. Chaque peuple a son style.
+// Les trouvailles après le récit se marchandent aussi : −10 % par demande, jusqu'à son plancher.
+const MARCHANDAGE = { jourMin: 3, base: 20, pas: 5, plancherTrouvaille: 0.75, pasTrouvaille: 0.1 };
+const STYLES_MARCHANDAGE = {
+  defaut: { patience: 3, marge: [0, 10], plancher: 0.75, tic: "{Il} transpire un peu et détourne les yeux.",
+    offre: "Je te reverserai {p} % de mon butin. C'est honnête, non ?", cede: "Bon... {p} %, mais c'est bien parce que c'est toi.",
+    refuse: "Non. {p} %, c'est mon dernier mot.", part: "Tu me prends pour une vache à lait ? Je vais voir ailleurs !" },
+  hobbit: { patience: 3, marge: [5, 10], plancher: 0.7, tic: "{Il} renifle, se frotte les yeux... mais jette un œil à sa bourse.",
+    offre: "Je te reverserai {p} % de mon butin. C'est honnête, non ? Mes pauvres pieds vont faire tout le chemin, eux !",
+    cede: "{p} % ?! Tu veux ma ruine ! Bon... d'accord. Mais pas une miette de plus !", refuse: "Pas une miette de plus ! Pas une ! Je vais pleurer, je te préviens.",
+    part: "Tu es sans cœur ! Je vais chez quelqu'un de plus gentil, voilà !" },
+  nain: { patience: 4, marge: [5, 10], plancher: 0.85, respect: true, tic: "{Il} se lisse la barbe, longuement. Il réfléchit.",
+    offre: "{p} %. Un nain ne marchande pas deux fois.", cede: "{p} %. Tu sais tenir bon, toi. J'aime ça.",
+    refuse: "Non. {p} %, pas une pièce de plus. Un nain a sa fierté.", part: "Assez ! Mon or vaut mieux que tes manières." },
+  elfe: { patience: 2, marge: [0, 10], plancher: 0.8, tic: "{Il} soupire, les yeux au ciel... mais ne s'en va pas.",
+    offre: "{p} %. Ne me fais pas perdre mon temps, marchand.", cede: "Soit. {p} %. Que cela finisse.",
+    refuse: "Tu abuses de ma patience. {p} %.", part: "Les elfes ont la mémoire longue. Adieu." },
+  orc: { patience: 2, marge: [0, 5], plancher: 0.8, tic: "{Il} tapote le comptoir. Il grogne, mais il hésite.",
+    offre: "{p} %. Et estime-toi heureux.", cede: "Grrr... {p} %. Ne pousse pas ta chance.",
+    refuse: "Encore un mot sur ma part, marchand, et c'est ta tête que je rapporte au butin.", part: "Assez ! Je m'en vais avant de casser quelque chose." },
+  gobelin: { patience: 4, marge: [5, 15], plancher: 0.6, bluffeur: true, tic: "{Il} se frotte les mains, l'œil qui brille... comme toujours.",
+    offre: "{p} % ! Une affaire en or, pour toi seulement, mon ami !", cede: "{p} % ?! Tu me voles ! ... Marché conclu, hé hé.",
+    refuse: "Non non non ! Bon... non. {p} %.", part: "Tu es pire qu'un gobelin ! Je vais vendre mes services ailleurs !" },
+};
+const PAROLES_TROUVAILLE = {
+  cede: ["Bon... {prix} pièces. Tu es dur en affaires.", "{prix} pièces ? Allez, va. C'est bien parce que c'est toi."],
+  refuse: ["Non, {prix} pièces, c'est déjà donné.", "Tu plaisantes ? {prix} pièces, pas moins."],
+  part: ["Tant pis, je la garde. Quelqu'un d'autre saura l'apprécier.", "Je remballe. Tu ne sais pas reconnaître une belle pièce."],
+};
 
 // --- (v0.82, étape 10b) La forge chez soi ---
 // Les recettes (validées le 16/10) : ce que coûte une arme en matériaux.

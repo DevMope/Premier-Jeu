@@ -1409,6 +1409,8 @@ class MarcheScene extends Phaser.Scene {
     const prime = avis.prime.toLocaleString('fr-FR').replace(/ | /g, ' ');
     ligne(`${prime} p.`, 24, {}, 1);
     ligne(avis.crime, 9, { fontStyle: 'italic', couleur: '#5a3a1c', lineSpacing: 0 });
+    // (v0.86) un bandit arrêté grâce à toi : le tampon rouge de la garde
+    if ((this.G.captures || []).includes(avis.nom)) a.add(this.add.text(0, py, 'CAPTURÉ', style(26, '#b02018', { fontStyle: 'bold', stroke: '#f3e6c8', strokeThickness: 3 })).setOrigin(0.5).setAngle(-18).setAlpha(0.88));
     if (avis.nouveau) a.add(this.add.text(l / 2 - 8, haut + 12, 'NOUVEAU', style(9, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#a02a20', padding: { x: 4, y: 1 } })).setOrigin(1, 0.5).setAngle(8));
     a.bringToTop(a.zone);
     return a;

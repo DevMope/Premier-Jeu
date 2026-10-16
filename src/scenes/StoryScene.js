@@ -623,9 +623,22 @@ class StoryScene extends Cinematique {
         maj();
       });
       c.add([b.fond, b.label]);
+      // (v0.86, lot A-4) marchander : 10 % de moins à chaque fois, jusqu'à son plancher (caché)
+      const marchand = this.add.text(470, y + 29, '« marchander »', style(11, '#6a3a10', { fontStyle: 'bold italic' })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      marchand.on('pointerover', () => marchand.setColor('#a05a10'));
+      marchand.on('pointerout', () => marchand.setColor('#6a3a10'));
+      marchand.on('pointerdown', () => {
+        if (t.vendu || t.retire || !clicUnique(this)) return;
+        const r = marchanderTrouvaille(G, this.parti.voyageur, t);
+        Son.jouer(r.issue === 'cede' ? 'clic' : 'refus');
+        info.setColor(r.issue === 'cede' ? '#2f6a2a' : '#a03030').setText(`« ${r.texte} »`);
+        maj();
+      });
+      c.add(marchand);
       const maj = () => {
-        b.setTexte(t.vendu ? 'Acheté' : `Acheter ${t.prix} p.`);
-        b.setActif(!t.vendu);
+        b.setTexte(t.vendu ? 'Acheté' : t.retire ? 'Remballé' : `Acheter ${t.prix} p.`);
+        b.setActif(!t.vendu && !t.retire);
+        marchand.setVisible(!t.vendu && !t.retire);
       };
       maj();
     });

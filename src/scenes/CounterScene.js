@@ -43,12 +43,30 @@ class CounterScene extends Phaser.Scene {
     this.creerDialogue();
     this.creerStock();
     this.creerArgent();
+    this.creerHorloge();
 
     this.boutonExpress = creerBouton(this, 840, 360, 210, 'Marchand express', () => this.ouvrirExpress());
     this.boutonAttente = creerBouton(this, 840, 404, 210, 'Mettre en attente', () => this.mettreEnAttente());
     this.boutonRefuser = creerBouton(this, 840, 448, 210, 'Refuser ce client', () => (this.actionB ? this.actionB() : this.refuser()));
     this.boutonAction = creerBouton(this, 840, 496, 210, '', () => this.action && this.action());
     this.boutonAction.setTexte('');   // (pas de plaque vide tant qu'il n'y a rien à faire)
+    // (v0.86) le petit sablier sur le coin d'un bouton : le temps que prend l'action
+    const sablier = (b, y) => this.add.text(944, y - 17, '', style(11, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#1e130a', padding: { x: 4, y: 1 }, brut: true })).setOrigin(1, 0.5).setDepth(5).setVisible(false);
+    this.sablierExpress = sablier(this.boutonExpress, 360).setText(`⌛ ${formatDuree(JOURNEE.express)}`);
+    this.sablierAction = sablier(this.boutonAction, 496);
+    this.dureeAction = null;
+    // (v0.86, lot A-3) inspecter le client : une petite plaque sur le coin de la fenêtre
+    this.plaqueInspecter = this.add.text(FENETRE.x + 10, FENETRE.y + FENETRE.h - 28, '🔍 Inspecter', style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 4 } }))
+      .setDepth(4).setVisible(false).setInteractive({ useHandCursor: true });
+    this.plaqueInspecter.on('pointerover', () => this.plaqueInspecter.setColor('#ffe066'));
+    this.plaqueInspecter.on('pointerout', () => this.plaqueInspecter.setColor('#fff4dc'));
+    this.plaqueInspecter.on('pointerdown', () => this.choixInspection());
+    // (v0.86, lot A-4) marchander sa part du butin
+    this.plaqueMarchander = this.add.text(FENETRE.x + 134, FENETRE.y + FENETRE.h - 28, 'Marchander', style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 4 } }))
+      .setDepth(4).setVisible(false).setInteractive({ useHandCursor: true });
+    this.plaqueMarchander.on('pointerover', () => this.plaqueMarchander.setColor('#ffe066'));
+    this.plaqueMarchander.on('pointerout', () => this.plaqueMarchander.setColor('#fff4dc'));
+    this.plaqueMarchander.on('pointerdown', () => this.marchander());
     this.majBoutonsService();
 
     // Au retour de chez Grippesou, on remet l'affichage à jour.
@@ -58,9 +76,11 @@ class CounterScene extends Phaser.Scene {
     this.cameras.main.fadeIn(400);
     this.creerStore();
     if (this.G.comptoirOuvert !== this.G.jour) {
-      // Midi : on lève le store, le comptoir est officiellement ouvert.
+      // 8 h : on lève le store, le comptoir est officiellement ouvert.
       this.G.comptoirOuvert = this.G.jour;
-      this.dire('Midi sonne au clocher. Clique sur le store pour l\'ouvrir et commencer la journée !', '');
+      this.G.heure = this.heureAffichee = JOURNEE.ouverture;
+      this.majHorloge();
+      this.raconter('Huit heures sonnent au clocher. Clique sur le store pour l\'ouvrir et commencer la journée !');
       this.attendreStore();
     } else {
       this.store.setVisible(false);
@@ -157,25 +177,419 @@ class CounterScene extends Phaser.Scene {
   // Les boutons qui n'ont de sens que pendant qu'on sert un client.
   majBoutonsService() {
     const libre = !this.enConfirmation;
+    if (this.plaqueInspecter) {
+      const e = this.entree, v = this.voyageur;
+      this.plaqueInspecter.setVisible(!!(v && e && e.type === 'client' && libre && (this.enService || this.actionB) && !e.inspecte && !v.recherche
+        && this.G.jour >= IMPOSTURE.jourMin && !this.ficheInspection));
+    }
+    if (this.plaqueMarchander) {
+      const v = this.voyageur;
+      this.plaqueMarchander.setVisible(!!(v && this.enService && libre && v.queteId && !(v.marchandage && v.marchandage.fini)
+        && this.G.jour >= MARCHANDAGE.jourMin && !this.ficheMarchandage && !this.ficheInspection));
+      // (les deux plaques côte à côte, ou la seule visible dans le coin)
+      this.plaqueMarchander.setX(this.plaqueInspecter && this.plaqueInspecter.visible ? FENETRE.x + 134 : FENETRE.x + 10);
+    }
     this.boutonExpress.setVisible(this.enService && libre);
+    if (this.sablierExpress) this.sablierExpress.setVisible(this.enService && libre);
     this.boutonAttente.setVisible(!!this.voyageur && (this.enService || !!this.actionB) && libre);
     this.boutonRefuser.setVisible(this.enService || !!this.actionB);
     if (this.enService && !this.actionB) this.boutonRefuser.setTexte('Refuser ce client');
   }
 
   // Deux choix pour une visite : le bouton du bas (A) et celui du milieu (B).
-  choix([texteA, actionA], [texteB, actionB]) {
-    this.bouton(texteA, () => { this.actionB = null; actionA(); });
+  choix([texteA, actionA, dureeA = null], [texteB, actionB]) {
+    this.bouton(texteA, () => { this.actionB = null; actionA(); }, dureeA);
     this.actionB = () => { this.actionB = null; actionB(); };
     this.boutonRefuser.setTexte(texteB);
     this.majBoutonsService();
   }
 
   // Le bouton du bureau change selon la situation.
-  bouton(texte, action) {
+  // `duree` : le temps que prendra l'action (un sablier sur le coin du bouton)
+  bouton(texte, action, duree = null) {
     this.boutonAction.setTexte(texte);
     this.boutonAction.setActif(!!action);
     this.action = action;
+    this.dureeAction = action ? duree : null;
+    if (this.sablierAction) this.sablierAction.setText(this.dureeAction ? `⌛ ${formatDuree(this.dureeAction)}` : '').setVisible(!!this.dureeAction);
+  }
+
+  // --- (v0.86, lot A-4) Le marchandage de sa part ---
+
+  marchander() {
+    const v = this.voyageur, G = this.G;
+    if (!v || this.enConfirmation || !v.queteId) return;
+    const m = ouvrirMarchandage(G, v);
+    this.dire(texteMarchandage(v, 'offre', { p: m.part }), this.nomAvecRelation(v.nom));
+    this.etapeMarchandage();
+  }
+
+  // La fiche (sa part, ce qu'elle rapportera, sa patience, ses tics) et les deux boutons
+  etapeMarchandage(note = null) {
+    const v = this.voyageur, G = this.G, m = ouvrirMarchandage(G, v);
+    if (this.ficheMarchandage) this.ficheMarchandage.destroy();
+    const c = this.ficheMarchandage = this.add.container(0, 0).setDepth(6);
+    const x = 688, y = 22, L = 252, H = 226;
+    c.add(this.add.image(x + L / 2, y + H / 2, panneauHD(this, L, H)).setScale(2));
+    c.add(this.add.text(x + 14, y + 10, 'Marchandage', style(16, '#3b2410', { fontStyle: 'bold' })));
+    c.add(this.add.text(x + 14, y + 31, `${v.nom} · ${(NOMS_RACES[v.race] || v.race).toLowerCase()}`, style(11, '#6a4a2a', { fontStyle: 'italic' })));
+    const base = v.butinBase != null ? v.butinBase : v.butin;
+    const rouge = m.patience <= 1;
+    c.add(this.add.text(x + L / 2, y + 76, `${m.part} %`, style(38, rouge ? '#a02a20' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(x + L / 2, y + 104, `de son butin pour toi (≈ ${Math.round(base * m.part / MARCHANDAGE.base)} p.)`, style(11, '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    c.add(this.add.text(x + 14, y + 122, 'Patience :', style(12, '#3b2410', { fontStyle: 'bold' })));
+    const g = this.add.graphics();
+    for (let k = 0; k < m.patienceMax; k++) {
+      const cx = x + 104 + k * 20, cy = y + 130;
+      g.fillStyle(0x3b2410).fillRoundedRect(cx - 8, cy - 6, 16, 12, 3);
+      g.fillStyle(k < m.patience ? (m.patience <= 1 ? 0xd03028 : m.patience <= 2 ? 0xe08020 : 0x6aa040) : 0x8a7050).fillRoundedRect(cx - 6, cy - 4, 12, 8, 2);
+    }
+    c.add(g);
+    const tic = ticVisible(G, v);
+    const texteNote = note || (tic ? texteMarchandage(v, 'tic') : 'Rien ne trahit ce qu\'il pense.');
+    c.add(this.add.text(x + 14, y + 146, texteNote, style(11, tic ? '#7a3a10' : '#6a4a2a', { fontStyle: 'italic bold', wordWrap: { width: 224 } })));
+    if (tic && !note) {
+      creerGlyphesHD(this);
+      const goutte = this.add.image(FENETRE.x + FENETRE.w / 2 + 52, FENETRE.y + 70, 'glyphe_larme').setScale(2).setDepth(5);
+      this.tweens.add({ targets: goutte, y: goutte.y + 18, alpha: 0, delay: 600, duration: 900, onComplete: () => goutte.destroy() });
+    }
+    this.enConfirmation = true;
+    const fin = () => { this.enConfirmation = false; };
+    this.choix([`Demander ${m.part + MARCHANDAGE.pas} %`, () => { fin(); this.demanderPlusUI(); }, JOURNEE.marchander],
+      [`Accepter ${m.part} %`, () => { fin(); this.accepterMarchandage(); }]);
+    this.majBoutonsService();
+  }
+
+  demanderPlusUI() {
+    const v = this.voyageur, G = this.G;
+    this.avancer(JOURNEE.marchander, 'à marchander');
+    const issue = demanderPlus(G, v), m = v.marchandage;
+    if (issue === 'part') return this.departFache(texteMarchandage(v, 'part'));
+    this.exprimer(issue === 'refuse' ? 'fache' : 'inquiet');
+    this.dire(texteMarchandage(v, issue === 'refuse' ? 'refuse' : 'cede', { p: m.part }), this.nomAvecRelation(v.nom));
+    if (m.fini) return this.accepterMarchandage(true);
+    this.etapeMarchandage();
+  }
+
+  accepterMarchandage(deja = false) {
+    const v = this.voyageur, G = this.G;
+    if (!deja) conclureMarchandage(G, v);
+    if (this.ficheMarchandage) { this.ficheMarchandage.destroy(); this.ficheMarchandage = null; }
+    if (!deja) this.raconter(`Marché conclu : ${v.marchandage.part} % de son butin pour toi, à son retour (≈ ${v.butin} pièces).`, 'Marchandage');
+    this.restaurerService();
+    this.majCommande();
+  }
+
+  // Trop insisté : il reprend ses affaires et s'en va (ce qu'il avait dans son baluchon revient en réserve).
+  departFache(texte) {
+    const v = this.voyageur, G = this.G;
+    if (this.ficheMarchandage) { this.ficheMarchandage.destroy(); this.ficheMarchandage = null; }
+    for (const [id, n] of Object.entries(this.colis)) { const p = this.pieges[id] || 0; G.stock[id] += n - p; if (p) G.pieges[id] += p; }
+    this.colis = {}; this.pieges = {};
+    Son.jouer('refus');
+    this.enService = false; this.actionB = null;
+    this.majBoutonsService(); this.bouton('...', null); this.majStock();
+    this.exprimer('fache');
+    this.dire(`${texte} (réputation −${String(REFUS_CLIENT).replace('.', ',')})`, v.nom);
+    this.partirPar(FENETRE.x - 80);
+  }
+
+  // --- (v0.86, lot A-3) L'inspection ---
+
+  // Revenir là où on en était avec ce client : il connaît sa destination (on le sert), ou pas encore.
+  restaurerService() {
+    const v = this.voyageur;
+    if (!v) return;
+    if (v.queteId) this.servir();
+    else this.choix(['Choisir sa destination', () => this.ouvrirCarte()], ['Refuser ce client', () => this.refuser()]);
+  }
+
+  choixInspection() {
+    if (!this.voyageur || this.enConfirmation) return;
+    const v = this.voyageur;
+    this.enConfirmation = true;
+    const fin = () => { this.enConfirmation = false; };
+    this.raconter(`Comment t'y prends-tu ? Observer discrètement prend un peu de temps ; fouiller son sac est plus sûr... mais un client honnête n'aimera pas ça.`, 'Inspecter');
+    this.choix([`Fouiller son sac`, () => { fin(); this.inspecter(true); }], [`Observer · ⌛ ${formatDuree(JOURNEE.observer)}`, () => { fin(); this.inspecter(false); }]);
+    this.majBoutonsService();
+  }
+
+  inspecter(fouille) {
+    const v = this.voyageur, entree = this.entree, G = this.G;
+    entree.inspecte = true;
+    if (!fouille) this.avancer(JOURNEE.observer, 'à observer');
+    const r = inspecterClient(G, v, fouille);
+    if (r.demasque) return this.imposteurDemasque(fouille);
+    this.afficherInspection(r);
+    if (r.vexe != null) {
+      this.exprimer('fache');
+      this.dire(auHasard(FOUILLE_VEXE) + (r.vexe ? ' ' + r.vexe : ''), this.nomAvecRelation(v.nom));
+    } else this.raconter(fouille ? 'Tu fouilles son sac.' : `Tu fais le tour du comptoir, l'air de rien, et tu regardes ${v.nom} de plus près.`, 'Inspection');
+    this.restaurerService();
+  }
+
+  // La fiche d'inspection, posée sur le parchemin de la commande (un clic la referme).
+  afficherInspection(r) {
+    if (this.ficheInspection) this.ficheInspection.destroy();
+    const c = this.ficheInspection = this.add.container(0, 0).setDepth(6);
+    const x = 688, y = 22, L = 252, H = 226;
+    const fond = this.add.image(x + L / 2, y + H / 2, panneauHD(this, L, H)).setScale(2).setInteractive({ useHandCursor: true });
+    fond.on('pointerdown', () => { c.destroy(); this.ficheInspection = null; this.majBoutonsService(); });
+    c.add(fond);
+    c.add(this.add.text(x + 14, y + 10, 'Inspection', style(16, '#3b2410', { fontStyle: 'bold' })));
+    c.add(this.add.text(x + L - 12, y + 13, '✕', style(13, '#6a4a2a', { fontStyle: 'bold' })).setOrigin(1, 0));
+    c.add(this.add.text(x + 14, y + 31, `Ton flair : ${Math.round(r.flair * 100)} %${r.indices.some(i => !i.vu) ? ' · il te reste des doutes' : ''}`, style(11, '#6a4a2a', { fontStyle: 'italic' })));
+    let yy = y + 52;
+    for (const i of r.indices) {
+      const coul = !i.vu ? '#8a7a60' : i.louche ? '#a03a10' : '#2f6a2a';
+      c.add(this.add.text(x + 14, yy, i.vu ? (i.louche ? '✘' : '✔') : '?', style(13, coul, { fontStyle: 'bold' })));
+      const t = this.add.text(x + 32, yy, i.vu ? i.t : "Ton flair n'en tire rien de plus.", style(11, coul, { fontStyle: i.vu ? 'bold' : 'italic', wordWrap: { width: 206 }, lineSpacing: -1 }));
+      c.add(t); yy += t.height + 6;
+    }
+    c.add(this.add.text(x + 14, y + H - 38, 'Louche :', style(12, '#3b2410', { fontStyle: 'bold' })));
+    const g = this.add.graphics();
+    for (let k = 0; k < 5; k++) {
+      const cx = x + 100 + k * 20, cy = y + H - 30;
+      g.fillStyle(0x3b2410).fillRoundedRect(cx - 8, cy - 6, 16, 12, 3);
+      g.fillStyle(k < r.louche ? 0xc04020 : 0x8a7050).fillRoundedRect(cx - 6, cy - 4, 12, 8, 2);
+    }
+    c.add(g);
+    c.add(this.add.text(x + 14, y + H - 20, r.louche >= 4 ? 'Sans doute un imposteur... sans doute.' : r.louche <= 1 ? 'Rien de louche, à première vue.' : 'Difficile à dire.', style(11, '#6a4a2a', { fontStyle: 'italic' })));
+    this.majBoutonsService();
+  }
+
+  // Démasqué : il bafouille et file sans demander son reste (ce qu'il avait dans son baluchon revient en réserve).
+  imposteurDemasque(fouille) {
+    const v = this.voyageur, G = this.G;
+    for (const [id, n] of Object.entries(this.colis)) { const p = this.pieges[id] || 0; G.stock[id] += n - p; if (p) G.pieges[id] += p; }
+    this.colis = {}; this.pieges = {};
+    demasquerImposteur(G, v);
+    this.enService = false;
+    this.actionB = null;
+    this.majBoutonsService();
+    this.bouton('...', null);
+    this.majStock();
+    this.exprimer('inquiet');
+    this.dire(texteImposture(IMPOSTEURS[v.imposteur.type].fuite, v, v.imposteur.ami), v.nom);
+    this.time.delayedCall(1600, () => this.raconter(`${fouille ? `Au fond de son sac, rien de ce qu'${v.feminin ? 'elle' : 'il'} racontait` : `${v.feminin ? 'Elle' : 'Il'} blêmit`} : c'était ${v.feminin ? 'une imposteuse' : 'un imposteur'} ! Bien vu, ton flair grandit.`, 'Démasqué'));
+    this.time.delayedCall(2600, () => this.partirPar(FENETRE.x - 80));
+  }
+
+  // --- (v0.86, lot A-2) Les recherchés ---
+
+  // L'avis de recherche, épinglé sur l'ardoise de gauche : on compare avec le visage au comptoir.
+  epinglerAffiche(avis) {
+    const a = this.afficheEpinglee = this.add.container(140, 132).setDepth(6).setAngle(-4);
+    const l = 150, h = 214, haut = -h / 2, encre = '#3a2210';
+    a.add(this.add.image(0, 0, panneauHD(this, l, h)).setScale(2));
+    a.add(this.add.circle(0, haut + 6, 4, 0xa02a20));
+    a.add(this.add.text(0, haut + 17, 'AVIS DE', style(10, encre, { fontStyle: 'bold' })).setOrigin(0.5));
+    a.add(this.add.text(0, haut + 31, 'RECHERCHE', style(16, encre, { fontStyle: 'bold' })).setOrigin(0.5));
+    const pl = 112, ph = 76, py = haut + 44 + ph / 2;
+    a.add(this.add.rectangle(0, py, pl + 6, ph + 6, 0x3a2210)); a.add(this.add.rectangle(0, py, pl, ph, 0xcdb98a));
+    const pr = this.add.image(0, py + ph / 2, textureBusteHD(this, avis.personne, 'fache')).setOrigin(0.5, 1).setTint(0xd8b888);
+    const e = (ph + 16) / pr.height; pr.setScale(e);
+    const cw = Math.min(pr.width, pl / e), ch = Math.min(pr.height, ph / e);
+    pr.setCrop((pr.width - cw) / 2, pr.height - ch, cw, ch); a.add(pr);
+    a.add(this.add.text(0, py + ph / 2 + 12, avis.nom.toUpperCase(), style(avis.nom.length > 16 ? 9 : 11, encre, { fontStyle: 'bold' })).setOrigin(0.5));
+    a.add(this.add.text(0, py + ph / 2 + 32, `${avis.prime} p.`, style(20, encre, { fontStyle: 'bold' })).setOrigin(0.5));
+    // (un clic la décroche un instant : l'ardoise redevient lisible)
+    a.setSize(l, h).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.tweens.add({ targets: a, alpha: a.alpha < 1 ? 1 : 0.25, duration: 200 }));
+    return a;
+  }
+
+  finRecherche() {
+    if (this.timerRecherche) { this.timerRecherche.remove(); this.timerRecherche = null; }
+    if (this.afficheEpinglee) { this.afficheEpinglee.destroy(); this.afficheEpinglee = null; }
+    if (this.boutonsRecherche) { this.boutonsRecherche.forEach(b => { b.fond.destroy(); b.label.destroy(); }); this.boutonsRecherche = null; }
+  }
+
+  // Une tête qui ressemble à l'affiche du tableau... Lui, ou un honnête voyageur qui lui ressemble ?
+  accueilRecherche(entree) {
+    const v = entree.voyageur, G = this.G;
+    const avis = avisDeRecherche(G).find(a => a.nom === v.recherche.avis) || AVIS_RECHERCHE.find(a => a.nom === v.recherche.avis);
+    v.recherche.prime = avis.prime;
+    this.epinglerAffiche(avis);
+    this.majCommande();
+    this.titreCommande.setText('Un inconnu');
+    this.sousTitre.setText('');
+    this.texteSac.setText(''); this.texteChance.setText('');
+    this.bouton('', null);
+    this.enService = false;
+    this.majBoutonsService();
+    const parole = auHasard(PAROLES_RECHERCHE[v.recherche.innocent ? 'innocent' : 'bandit']);
+    this.raconter(`Ce visage... Tu as déjà vu ce ${v.apparence.marques && v.apparence.marques.includes('cacheOeil') ? 'cache-œil' : 'regard'} quelque part. L'avis de recherche du marché ?`);
+    this.timerRecherche = this.time.delayedCall(1800, () => this.dire(parole, 'Un inconnu', v.nom));
+    const choix = [
+      ['☀ Appeler la garde', () => this.appelerGarde(entree)],
+      ['☾ Le cacher derrière', () => this.cacherDerriere(entree)],
+      [`${v.feminin ? 'La' : 'Le'} servir`, () => { entree.decide = true; this.finRecherche(); this.arrivee(entree); }],
+      [`${v.feminin ? 'La' : 'Le'} renvoyer`, () => this.renvoyerRecherche(entree)],
+    ];
+    this.boutonsRecherche = choix.map(([t, f], i) => {
+      const b = creerBouton(this, 840, 360 + i * 44 + (i === 3 ? 4 : 0), 210, t, () => { if (this.boutonsRecherche) f(); });
+      b.fond.setDepth(6); b.label.setDepth(6.1);
+      return b;
+    });
+  }
+
+  appelerGarde(entree) {
+    const v = entree.voyageur, G = this.G;
+    this.finRecherche();
+    const r = denoncerRecherche(G, v);
+    Son.jouer('clochette');
+    this.raconter('Tu fais signe au gamin qui traîne devant la boutique : il file chercher la garde...');
+    this.time.delayedCall(1600, () => {
+      this.montrerBuste(GARDE.capitaine, r.juste ? 'content' : 'fache');
+      this.avancer(JOURNEE.visite, 'la garde');
+      if (r.juste) {
+        Son.jouer('caisse');
+        this.dire(`Bien vu, marchand ! ${v.recherche.avis} ne fera plus de mal à personne. Voici ta part de la prime : ${r.prime} pièces. (réputation +${RECHERCHE.reputation})`, GARDE.capitaine.nom);
+      } else {
+        this.dire(`Ce n'est pas ${v.recherche.avis}, marchand : ${v.nom.split(' ')[0]} n'a rien à voir avec lui. Tu as fait arrêter un honnête voyageur pour rien. (réputation −${RECHERCHE.erreur})`, GARDE.capitaine.nom);
+      }
+      this.majPanneauGauche(); this.majStock(); this.dessinerPieces();
+      this.bouton('Continuer', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+    });
+  }
+
+  cacherDerriere(entree) {
+    const v = entree.voyageur, G = this.G;
+    this.finRecherche();
+    const r = cacherRecherche(G, v);
+    this.exprimer(r.objet ? 'content' : 'inquiet');
+    this.dire(r.objet ? `Je n'oublierai pas. Quand la garde aura fini de fouiller la rue, regarde sous ton vieux buffet : un petit cadeau pour toi.`
+      : "Me cacher ? Mais... je n'ai rien fait ! Enfin... merci, je suppose. On ne sait jamais, avec la garde.", v.nom);
+    if (r.garde) this.reconstruireFile();
+    this.bouton('Continuer', () => {
+      if (r.objet) this.raconter(`Sous le buffet de l'arrière-boutique : ${INTERDITS[r.objet].article}.`, 'Un cadeau');
+      this.bouton('...', null); this.partirPar(FENETRE.x - 80);
+    });
+  }
+
+  renvoyerRecherche(entree) {
+    const v = entree.voyageur;
+    entree.decide = true;
+    this.finRecherche();
+    if (v.recherche.innocent) return this.refuser(true);
+    this.exprimer('fache');
+    this.dire("Pas de questions, pas de client ? Tant pis pour toi, marchand. On se reverra.", v.nom);
+    this.bouton('...', null);
+    this.partirPar(FENETRE.x - 80);
+  }
+
+  // La garde est sur la piste de celui que tu as caché.
+  visiteGardeRecherche(entree) {
+    const v = entree.voyageur, G = this.G;
+    this.titreCommande.setFontSize(17).setText('La garde de la Confrérie');
+    this.dire(v.recherche.innocent ? `On nous a signalé un individu louche entré chez toi tout à l'heure. ${v.feminin ? 'Une femme' : 'Un type'} qui ressemble à ${v.recherche.avis}. Tu ne l'aurais pas vu${v.feminin ? 'e' : ''}, par hasard ?`
+      : `On recherche ${v.recherche.avis}. Un voisin l'a vu entrer chez toi. Tu ne l'aurais pas vu, par hasard ?`, GARDE.capitaine.nom);
+    const fin = (texte, fache) => {
+      this.exprimer(fache ? 'fache' : 'neutre');
+      this.dire(texte, GARDE.capitaine.nom);
+      this.majPanneauGauche(); this.dessinerPieces();
+      this.bouton('...', null);
+      this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80));
+    };
+    this.choix(["Je n'ai vu personne", () => {
+      const r = repondreGarde(G, v, false);
+      fin(r.vu ? `Tu te moques de moi ? On l'a vu filer par ta porte de derrière ! Je m'en souviendrai, marchand. (réputation −${RECHERCHE.erreur})` : 'Bon. Ouvre l\'œil, marchand. Et préviens-nous si tu le vois.', r.vu);
+    }], [`${v.feminin ? 'Elle' : 'Il'} est derrière`, () => {
+      const r = repondreGarde(G, v, true);
+      fin(r.juste ? `Merci de ta coopération. ${v.recherche.avis} ne fera plus de mal à personne. Voici ta part de la prime : ${r.prime} pièces.`
+        : `${v.nom.split(' ')[0]} ? Ce n'est pas ${v.recherche.avis}, voyons ! Tu nous fais perdre notre temps. (réputation −${RECHERCHE.erreur})`, !r.juste);
+    }]);
+  }
+
+  // La file redessinée (quand quelqu'un s'y glisse en tête, ou que plusieurs s'en vont)
+  reconstruireFile() {
+    this.fileSprites.forEach(sp => sp.destroy());
+    this.fileSprites = this.G.file.map((entree, i) => this.spriteFile(entree, i));
+    this.majFileAttente();
+  }
+
+  // --- (v0.86, lot A-1) L'horloge du comptoir ---
+
+  // Une plaque en haut à droite de la fenêtre : un petit cadran où le soleil tourne, l'heure, et
+  // la course du jour de l'ouverture à la fermeture. Le ciel rougit dans l'heure qui précède.
+  creerHorloge() {
+    this.plaqueHorloge = this.add.graphics().setDepth(4);
+    this.texteHeure = this.add.text(FENETRE.x + 180, FENETRE.y + 22, '', style(14, '#f3d98a', { fontStyle: 'bold', brut: true })).setOrigin(0, 0.5).setDepth(4);
+    const zone = this.add.rectangle(FENETRE.x + 250, FENETRE.y + 22, 204, 28, 0xffffff, 0).setDepth(4).setInteractive({ useHandCursor: true });
+    zone.on('pointerdown', () => {
+      const G = this.G, f = heureFermeture(G);
+      this.raconter(`Il est ${formatHeure(heureDuComptoir(G))}. Le comptoir ferme à ${formatHeure(f)}. Servir un client prend ${formatDuree(dureeService(G))}${dureeService(G) > JOURNEE.service[2] ? " (moins, avec l'expérience)" : ''} ; écouter un récit ${formatDuree(JOURNEE.recit)} ; passer chez Grippesou ${formatDuree(JOURNEE.express)}.${niveauAmelioration(G, 'eclairage') < 3 ? ' Un meilleur éclairage fait fermer plus tard.' : ''}`, "L'horloge");
+    });
+    this.heureAffichee = heureDuComptoir(this.G);
+    this.majHorloge();
+  }
+
+  majHorloge(h = this.heureAffichee) {
+    const G = this.G, g = this.plaqueHorloge, f = heureFermeture(G), o = JOURNEE.ouverture;
+    if (!g) return;
+    const alerte = h >= f - JOURNEE.alerte;
+    const x0 = FENETRE.x + 148, y0 = FENETRE.y + 8, L = 204, H = 28;
+    g.clear();
+    g.fillStyle(0x1e130a, 0.92).fillRoundedRect(x0, y0, L, H, 5);
+    g.lineStyle(2, alerte ? 0xff6040 : 0xc9a227, 1).strokeRoundedRect(x0, y0, L, H, 5);
+    // le cadran : la moitié haute en ciel, l'astre sur l'aiguille (de l'ouverture à gauche à la fermeture à droite)
+    const cx = x0 + 15, cy = y0 + 14, t = Phaser.Math.Clamp((h - o) / (f - o), 0, 1);
+    g.fillStyle(0x8a6a20).fillCircle(cx, cy, 11);
+    g.fillStyle(alerte ? 0xff9a60 : h >= f ? 0x2a2a5a : 0x8ad0ff).fillCircle(cx, cy, 9);
+    g.fillStyle(0x3a6a2a).fillRect(cx - 9, cy + 1, 18, 8);
+    const a = Math.PI + t * Math.PI;
+    g.fillStyle(alerte ? 0xff6a30 : 0xffe060).fillCircle(cx + Math.cos(a) * 6, cy + Math.sin(a) * 6, 3);
+    this.texteHeure.setText(formatHeure(h)).setColor(alerte ? '#ff8a60' : '#f3d98a').setPosition(x0 + 32, cy);
+    // la course du jour : une graduation par heure, le soleil qui avance
+    const tx = x0 + 92, tl = 100, n = Math.round(f - o);
+    g.fillStyle(0x3b2a14).fillRect(tx, cy - 2, tl, 4);
+    g.fillStyle(alerte ? 0xff7040 : 0xe0a820).fillRect(tx, cy - 2, tl * t, 4);
+    for (let k = 0; k <= n; k++) g.fillStyle(0xc9a227).fillRect(tx + k * tl / n - 0.5, cy + (k % 2 ? 2 : 1), 1, k % 2 ? 2 : 4);
+    g.fillStyle(0x1a0e08).fillCircle(tx + tl * t, cy, 5);
+    g.fillStyle(alerte ? 0xff7a40 : 0xffe060).fillCircle(tx + tl * t, cy, 4);
+    // le ciel : il se réchauffe dans l'après-midi, puis rougit avant la fermeture
+    if (this.voileSoir) this.voileSoir.setAlpha(Phaser.Math.Clamp((h - (f - 3)) / 3, 0, 1) * 0.6);
+  }
+
+  // Le temps passe : l'heure avance (en glissant), et une petite ligne s'envole de l'horloge.
+  avancer(duree, texte = '') {
+    if (!duree) return;
+    const G = this.G, avant = heureDuComptoir(G), apres = avancerHeure(G, duree);
+    const mot = this.add.text(FENETRE.x + 250, FENETRE.y + 50, `+${formatDuree(duree)}${texte ? ' · ' + texte : ''}`,
+      style(14, '#a8f088', { fontStyle: 'bold', stroke: '#1e130a', strokeThickness: 4, brut: true })).setOrigin(0.5).setDepth(6);
+    this.tweens.add({ targets: mot, y: mot.y - 12, alpha: 0, delay: 1400, duration: 700, onComplete: () => mot.destroy() });
+    const suivi = { h: avant };
+    this.tweens.add({ targets: suivi, h: apres, duration: 900, ease: 'Sine.easeInOut', onUpdate: () => { this.heureAffichee = suivi.h; this.majHorloge(); },
+      onComplete: () => { this.heureAffichee = apres; this.majHorloge(); } });
+  }
+
+  // 18 h (ou plus tard, avec l'éclairage) : le comptoir ferme. Une fiche dit qui reviendra demain.
+  annoncerFermeture() {
+    const G = this.G;
+    G.fermeLe = G.jour;
+    const { reviennent, repartent } = fermerLeComptoir(G);
+    // la file d'attente se vide de ceux qui s'en vont
+    this.reconstruireFile();
+    Son.jouer('clochette');
+    const prenoms = l => { const n = l.map(v => v.nom.split(' ')[0]); return n.length > 1 ? n.slice(0, -1).join(', ') + ' et ' + n[n.length - 1] : n[0]; };
+    const fem = l => l.every(v => v.feminin);
+    const c = this.ficheFermeture = this.add.container(0, 0).setDepth(20);
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.45).setInteractive());
+    const x = 250, y = 50, L = 460, H = 300;
+    c.add(this.add.image(x + L / 2, y + H / 2, panneauHD(this, L, H)).setScale(2));
+    c.add(this.add.text(x + L / 2, y + 28, `${formatHeure(heureFermeture(G))} : le comptoir ferme`, style(22, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    let yy = y + 58;
+    const ligne = (texte, couleur, extra = {}) => { const t = this.add.text(x + 28, yy, texte, style(15, couleur, { fontStyle: 'bold', lineSpacing: 2, wordWrap: { width: L - 56 }, ...extra })); c.add(t); yy += t.height + 12; };
+    if (reviennent.length) ligne(`✉  ${prenoms(reviennent)} (${reviennent.length > 1 ? (fem(reviennent) ? 'elles' : 'ils') : reviennent[0].feminin ? 'elle' : 'il'} t'avai${reviennent.length > 1 ? 'en' : ''}t écrit) reviendr${reviennent.length > 1 ? 'ont' : 'a'} demain matin, en tête de file.`, '#2f5a2a');
+    if (repartent.length) ligne(`↩  ${prenoms(repartent)} (venu${fem(repartent) ? 'e' : ''}${repartent.length > 1 ? 's' : ''} sans lettre) repart${repartent.length > 1 ? 'ent' : ''} : ${repartent.length > 1 ? (fem(repartent) ? 'elles' : 'ils') + ' retenteront leur' : (repartent[0].feminin ? 'elle' : 'il') + ' retentera sa'} chance.`, '#7a3a10');
+    if (!reviennent.length && !repartent.length) ligne("Personne n'attendait plus : une journée bien menée.", '#2f5a2a');
+    const n = niveauAmelioration(G, 'eclairage');
+    if (n < 3) ligne(`✦  Avec un meilleur éclairage, ton comptoir fermerait plus tard (${formatHeure(heureFermeture(G) + JOURNEE.parEclairage)}).`, '#5a4a2a', { fontStyle: 'italic bold' });
+    const suite = creerBouton(this, x + L / 2, y + H - 60, 200, 'Continuer', () => { c.destroy(); this.ficheFermeture = null; this.voyageurSuivant(); });
+    c.add([suite.fond, suite.label]);
+    c.add(this.add.text(x + L / 2, y + H - 24, `Aujourd'hui : ${pluriel(G.journal.servis, 'client servi', 'clients servis')} · ${pluriel(G.journal.retours, 'retour de mission', 'retours de mission')}`, style(13, '#5a3a1c', { fontStyle: 'italic' })).setOrigin(0.5));
+    this.raconter(`${formatHeure(heureFermeture(G))} sonnent au clocher : tu retournes le petit écriteau, « Fermé ».${G.file.length ? ' Mais on frappe encore au volet...' : ''}`, 'Fermeture');
+    this.bouton('...', null);
   }
 
   // --- Décor ---
@@ -222,6 +636,8 @@ class CounterScene extends Phaser.Scene {
     };
     this.cielNuit = ciel(0.85).setAlpha(0);
     this.voile = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0x0a0a30, 0);
+    // (v0.86) le ciel du soir : une lumière orangée qui teinte le paysage et la file, pas le client au comptoir
+    this.voileSoir = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0xff8a50, 1).setBlendMode(Phaser.BlendModes.MULTIPLY).setAlpha(0).setDepth(1.6);
 
     // Tout ce qui est dans la fenêtre est découpé à sa taille.
     const forme = this.make.graphics({ add: false });
@@ -302,7 +718,8 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'famille') return corpsHD(this, entree.visite.parent, pose);
     if (entree.type === 'notable') { const p = this.personneDe(entree); return corpsHD(this, p.figurant || p, pose); }
     if (entree.type === 'colporteur') return corpsHD(this, 'colporteur', pose);
-    if (entree.type === 'garde') return corpsHD(this, GARDE.capitaine, pose);
+    if (entree.type === 'garde' || entree.type === 'gardeRecherche') return corpsHD(this, GARDE.capitaine, pose);
+    if (entree.type === 'client' && entree.voyageur.apparence) { const a = entree.voyageur.apparence; return corpsHD(this, a.figurant || a, pose); }
     if (entree.type === 'garrick') return corpsHD(this, 'mentor', pose);
     if (entree.type === 'collecteur') return corpsHD(this, collecteurDe(this.G), pose);
     if (entree.type === 'serpent') return corpsHD(this, CHEFS_SERPENT[0], pose);
@@ -381,6 +798,10 @@ class CounterScene extends Phaser.Scene {
     this.nomParleur = this.add.text(133, 288, '', style(15, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
     this.sousNom = this.add.text(133, 321, '', style(12, '#5a4028', { fontStyle: 'italic bold' })).setOrigin(0.5);
     this.texteDialogue = this.add.text(256, 298, '', style(16, '#2a1a0c', { wordWrap: { width: 660 }, lineSpacing: 1 })).setOrigin(0, 0.5);
+    // (v0.86) la narration (le jeu qui raconte, pas un personnage qui parle) : une plume à la place
+    // du nom, le titre éventuel en italique, le texte à l'encre violette, le parchemin un peu plus pâle
+    this.plumeNarration = this.add.image(133, 298, texturePlume(this)).setScale(2.4).setVisible(false);
+    this.titreNarration = this.add.text(150, 298, '', style(13, '#5a3a1c', { fontStyle: 'italic bold', align: 'center', wordWrap: { width: 160 } })).setOrigin(0.5).setVisible(false);
   }
 
   creerStock() {
@@ -637,7 +1058,7 @@ class CounterScene extends Phaser.Scene {
     g.fillStyle(0x2a1a10).fillRect(12, 426, 126, 1).fillRect(18, 427, 5, 6).fillRect(127, 427, 5, 6);
     this.G.decorations.forEach((id, i) => {
       const icone = this.add.image(24 + i * 25, 408, iconeObjet(this, id === 'trefle' ? 'trefleChance' : id)).setScale(1.6).setInteractive({ useHandCursor: true });
-      icone.on('pointerdown', () => this.dire(DECORATIONS[id].effet, DECORATIONS[id].nom));
+      icone.on('pointerdown', () => this.raconter(DECORATIONS[id].effet, DECORATIONS[id].nom));
     });
   }
 
@@ -666,9 +1087,14 @@ class CounterScene extends Phaser.Scene {
     this.actionB = null;
     this.majBoutonsService();
     if (this.carnetPose) { this.carnetPose.destroy(); this.carnetPose = null; }
+    if (this.ficheInspection) { this.ficheInspection.destroy(); this.ficheInspection = null; }
+    if (this.ficheMarchandage) { this.ficheMarchandage.destroy(); this.ficheMarchandage = null; }
     this.majPanneauGauche();
     this.majStock();
     this.dessinerPieces();
+    // (v0.86) l'heure de fermer : les clients qui attendent s'en vont (ou reviendront demain)
+    const G = this.G;
+    if (G.fermeLe !== G.jour && G.jour > 1 && heureDuComptoir(G) >= heureFermeture(G) && G.file.some(e => e.type === 'client' || e.type === 'colporteur')) return this.annoncerFermeture();
     if (this.G.file.length === 0) return this.finDeJournee();
 
     const entree = this.entree = this.G.file.shift();
@@ -685,7 +1111,13 @@ class CounterScene extends Phaser.Scene {
     const faucheuse = entree.type === 'faucheuse';
     Son.jouer(faucheuse ? 'froid' : 'clochette');
     if (faucheuse) Son.ambiance('faucheuse');
-    this.dire(faucheuse ? "Le froid tombe d'un coup. Les bougies vacillent..." : "Quelqu'un approche du comptoir...", '');
+    // (v0.86) une heure avant la fermeture, on prévient (une fois)
+    let soir = '';
+    if (G.fermeLe !== G.jour && G.alerteSoir !== G.jour && G.jour > 1 && heureDuComptoir(G) >= heureFermeture(G) - JOURNEE.alerte) {
+      G.alerteSoir = G.jour;
+      soir = `Le soleil décline : le comptoir ferme à ${formatHeure(heureFermeture(G))}. `;
+    }
+    this.raconter(faucheuse ? "Le froid tombe d'un coup. Les bougies vacillent..." : soir + "Quelqu'un approche du comptoir...");
     this.majFileAttente();
     this.perso.setVisible(true).setAlpha(1);
     if (faucheuse) this.assombrir(entree);
@@ -903,7 +1335,8 @@ class CounterScene extends Phaser.Scene {
   // --- Le client en buste : expressions, clignements, paroles ---
 
   personneDe(entree) {
-    if (entree.type === 'client') return entree.voyageur;
+    if (entree.type === 'client') return entree.voyageur.apparence || entree.voyageur;   // (v0.86 : un recherché a l'allure de son affiche)
+    if (entree.type === 'gardeRecherche') return GARDE.capitaine;
     if (entree.type === 'famille') return entree.visite.parent;
     if (entree.type === 'colporteur') return { nom: COLPORTEUR.nom, race: 'humain', feminin: false, figurant: 'colporteur' };
     if (entree.type === 'garde') return GARDE.capitaine;
@@ -982,9 +1415,12 @@ class CounterScene extends Phaser.Scene {
 
   arrivee(entree) {
     Son.jouer('pas');
+    // (v0.86) une visite prend un quart d'heure (les clients, eux, comptent au service)
+    if (['famille', 'notable', 'colporteur', 'garde', 'gardeRecherche', 'garrick', 'collecteur', 'serpent', 'aine'].includes(entree.type)) this.avancer(JOURNEE.visite);
     if (entree.type === 'client') {
       conseilGarrick(this, 'comptoir');
       const v = this.voyageur = entree.voyageur;
+      if (v.recherche && !entree.decide) return this.accueilRecherche(entree);   // (v0.86) une tête mise à prix ?
       this.preparerTutoriel(v);
       // Un client prestigieux vérifie d'abord que tu es à la hauteur
       if (v.prestige && !entree.attentes) {
@@ -1006,6 +1442,7 @@ class CounterScene extends Phaser.Scene {
         return;
       }
       let bonjour = v.prevu ? "C'est moi qui t'ai écrit, tu te souviens ? " : '';
+      if (entree.reporte) bonjour = "Bonjour ! Je suis revenu dès l'ouverture, comme convenu hier soir. ";
       if (entree.attentes) bonjour = "Me revoilà ! On reprend où on en était ? ";
       if (v.habitue) bonjour = 'Re-bonjour, c\'est encore moi ! ' + (this.aReparer(v).length ? 'Mon matériel a souffert la dernière fois... ' : '');
       if (v.exige && !entree.attentes) bonjour += "Et après ma dernière mission ratée, tu me dois bien un objet de plus que ma commande ! ";
@@ -1016,21 +1453,21 @@ class CounterScene extends Phaser.Scene {
       const exigeant = v.exigeant && !entree.attentes && v.queteId ? ` Et je suis exigeant${v.feminin ? 'e' : ''} : une grosse commande, et du matériel neuf, pas de vieilles cordes rafistolées.` : '';
       if (!v.queteId) {
         // Il vient chercher l'aventure : c'est toi qui choisis où l'envoyer.
-        this.dire(`${bonjour}${ENVIES[v.envie]} (${nomRang(v.niveau)} : ${EXPLICATION_RANGS[v.niveau]}${v.blessures ? `, encore blessé${v.feminin ? 'e' : ''}` : ''})`, this.nomAvecRelation(v.nom));
+        this.dire(`${bonjour}${v.accueilImposture && !entree.attentes ? v.accueilImposture : ENVIES[v.envie]} (${nomRang(v.niveau)} : ${EXPLICATION_RANGS[v.niveau]}${v.blessures ? `, encore blessé${v.feminin ? 'e' : ''}` : ''})`, this.nomAvecRelation(v.nom));
         this.choix(['Choisir sa destination', () => this.ouvrirCarte()], ['Refuser ce client', () => this.refuser()]);
         this.majCommande();
         return;
       }
       // Placé sur la carte ce matin : il connaît déjà sa destination.
       const planifie = entree.planifie && !entree.attentes && !(v.accueil || '').includes(ZONES[v.zone].nom) ? `${ZONES[v.zone].nom} ? Va pour ça ! ` : '';
-      this.dire(entree.attentes ? bonjour : bonjour + planifie + accord(v.accueil, v) + exigeant, this.nomAvecRelation(v.nom));
+      this.dire(entree.attentes ? bonjour : bonjour + planifie + (v.accueilImposture || accord(v.accueil, v)) + exigeant, this.nomAvecRelation(v.nom));
       this.servir();
     } else if (entree.type === 'retour') {
       const v = entree.parti.voyageur;
       this.dire(entree.parti.resultat.echec ? "Me revoilà... Vivant, au moins. Mais ça ne s'est pas passé comme prévu."
         : `Me revoilà, sain${v.feminin ? 'e' : ''} et ${v.feminin ? 'sauve' : 'sauf'} ! Tu ne devineras jamais ce qui m'est arrivé...`, v.nom);
       this.titreCommande.setFontSize(17).setText('Retour de mission');
-      this.bouton('Écouter son récit', () => this.ouvrirRecit(entree.parti));
+      this.bouton('Écouter son récit', () => this.ouvrirRecit(entree.parti), JOURNEE.recit);
     } else if (entree.type === 'famille') {
       this.visiteFamille(entree.visite);
     } else if (entree.type === 'notable') {
@@ -1039,6 +1476,8 @@ class CounterScene extends Phaser.Scene {
       this.visiteColporteur(entree);
     } else if (entree.type === 'garde') {
       this.visiteGarde(entree);
+    } else if (entree.type === 'gardeRecherche') {
+      this.visiteGardeRecherche(entree);
     } else if (entree.type === 'garrick') {
       this.visiteGarrick(entree);
     } else if (entree.type === 'collecteur') {
@@ -1247,7 +1686,7 @@ class CounterScene extends Phaser.Scene {
   servir() {
     this.enService = true;
     this.majBoutonsService();
-    this.bouton('Remettre le baluchon', () => this.remettreColis());
+    this.bouton('Remettre le baluchon', () => this.remettreColis(), dureeService(this.G));
     this.majCommande();
   }
 
@@ -1334,6 +1773,7 @@ class CounterScene extends Phaser.Scene {
 
   ouvrirRecit(parti) {
     if (enTransition(this)) return;
+    if (parti.resultat && parti.resultat.vivant) avancerHeure(this.G, JOURNEE.recit);   // (le temps du récit : l'horloge l'affichera au retour)
     this.bouton('...', null);
     this.cameras.main.fadeOut(400);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Recit', { id: parti.voyageur.id }));
@@ -1446,7 +1886,7 @@ class CounterScene extends Phaser.Scene {
     const dedans = Object.entries(this.colis).filter(([, n]) => n > 0);
     if (!confirme && dedans.length && this.enService && !this.enConfirmation) {
       const liste = dedans.map(([id, n]) => `${n} ${ITEMS[id] ? ITEMS[id].nom.toLowerCase() : id}`).join(', ');
-      this.dire(`Tu as déjà mis dans son baluchon : ${liste}. Si tu ${v.feminin ? 'la' : 'le'} refuses maintenant, ${v.feminin ? 'elle repart fâchée' : 'il repart fâché'} (−${REFUS_CLIENT} de réputation) ; ces objets reviennent dans ta réserve. ${v.feminin ? 'La' : 'Le'} refuser quand même ?`, 'Refuser ce client ?');
+      this.raconter(`Tu as déjà mis dans son baluchon : ${liste}. Si tu ${v.feminin ? 'la' : 'le'} refuses maintenant, ${v.feminin ? 'elle repart fâchée' : 'il repart fâché'} (−${REFUS_CLIENT} de réputation) ; ces objets reviennent dans ta réserve. ${v.feminin ? 'La' : 'Le'} refuser quand même ?`, 'Refuser ce client ?');
       this.enConfirmation = true;
       const fin = () => { this.enConfirmation = false; };
       return this.choix([`Non, je ${v.feminin ? 'la' : 'le'} sers`, () => { fin(); this.servir(); }], [`Oui, ${v.feminin ? 'la' : 'le'} refuser`, () => { fin(); this.refuser(true); }]);
@@ -1458,6 +1898,15 @@ class CounterScene extends Phaser.Scene {
     }
     this.colis = {};
     this.pieges = {};
+    // (v0.86) un imposteur refusé : il file, et ton flair grandit
+    if (v.imposteur) {
+      demasquerImposteur(this.G, v);
+      this.enService = false; this.majBoutonsService(); this.bouton('...', null); this.majStock();
+      this.exprimer('inquiet');
+      this.dire(texteImposture(IMPOSTEURS[v.imposteur.type].fuite, v, v.imposteur.ami), v.nom);
+      this.time.delayedCall(1500, () => this.raconter(`${v.feminin ? 'Elle' : 'Il'} ne proteste même pas : c'était ${v.feminin ? 'une imposteuse' : 'un imposteur'}. Bien vu, ton flair grandit.`, 'Démasqué'));
+      return this.time.delayedCall(2500, () => this.partirPar(FENETRE.x - 80));
+    }
     const msg = refuserClient(this.G, v);
     Son.jouer('refus');
     this.enService = false;
@@ -1600,6 +2049,7 @@ class CounterScene extends Phaser.Scene {
 
   ouvrirExpress() {
     if (!this.enService) return;
+    this.avancer(JOURNEE.express, 'chez Grippesou');
     this.scene.pause();
     this.scene.launch('Express', { comptoir: this });
   }
@@ -1618,7 +2068,7 @@ class CounterScene extends Phaser.Scene {
       this.servir();
     }
     if (data && data.achats && data.achats.length) {
-      this.dire(data.vendeur === 'colporteur' ? `Barnabé t'a vendu : ${data.achats.join(', ')}. « Merci, l'ami ! À la prochaine ! »`
+      this.raconter(data.vendeur === 'colporteur' ? `Barnabé t'a vendu : ${data.achats.join(', ')}. « Merci, l'ami ! À la prochaine ! »`
         : `Grippesou t'a vendu : ${data.achats.join(', ')}. C'est déjà sur ton comptoir, prêt à servir !`, '');
     }
     if (data && data.vendeur === 'colporteur') {
@@ -1630,7 +2080,23 @@ class CounterScene extends Phaser.Scene {
 
   // « qui » : la personne dont le nom prend la couleur de votre relation (rouge → vert).
   // Par défaut, le client au comptoir quand c'est lui qui parle.
-  dire(texte, nom = this.voyageur ? this.voyageur.nom : '', qui = null) {
+  // (v0.86) le jeu qui raconte : la même place, mais une autre allure (voir creerDialogue)
+  raconter(texte, titre = '') { this.dire(texte, titre, null, true); }
+
+  dire(texte, nom = this.voyageur ? this.voyageur.nom : '', qui = null, narration = nom === '') {
+    this.narration = narration;
+    this.fondDialogue.setTint(narration ? 0xe6dccb : 0xffffff);
+    this.plumeNarration.setVisible(narration).setX(narration && nom ? 78 : 133);
+    this.titreNarration.setVisible(narration && !!nom).setText(narration ? nom : '');
+    if (narration) {
+      this.plaqueNom.setVisible(false); this.nomParleur.setText(''); this.sousNom.setText('');
+      this.texteDialogue.setText(texte).setFontSize(16).setFontStyle('italic 500').setColor('#3e2c5a');
+      for (let taille = 15; this.texteDialogue.height > 70 && taille >= 12; taille--) this.texteDialogue.setFontSize(taille);
+      this.texteDialogue.setOrigin(0, 0).setY(Math.round(298 - this.texteDialogue.height / 2));
+      this.defileDialogue = texteQuiDefile(this, this.texteDialogue, texte, { vitesse: 16 });
+      return;
+    }
+    this.texteDialogue.setFontStyle('500').setColor('#2a1a0c');
     if (!qui && this.voyageur && nom && nom.startsWith(this.voyageur.nom)) qui = this.voyageur.nom;
     // « Pippa Boisclair — Inconnu » : le nom sur la plaque, la relation en dessous.
     // (« Dagna, fille de Borin » : pareil, la suite passe sous la plaque.)
@@ -1648,7 +2114,7 @@ class CounterScene extends Phaser.Scene {
     // le place d'après sa hauteur finale, pour qu'il ne remonte pas à chaque nouvelle ligne
     this.texteDialogue.setOrigin(0, 0).setY(Math.round(298 - this.texteDialogue.height / 2));
     this.defileDialogue = texteQuiDefile(this, this.texteDialogue, texte, { vitesse: 16 });
-    if (qui && this.buste && this.buste.personne.nom === qui) this.parler(Math.min(2400, 400 + texte.length * 22));
+    if (qui && this.buste && (this.buste.personne.nom === qui || qui.startsWith(this.buste.personne.nom + ' '))) this.parler(Math.min(2400, 400 + texte.length * 22));
   }
 
   remettreColis(confirme = false) {
@@ -1657,13 +2123,27 @@ class CounterScene extends Phaser.Scene {
     // (v0.84) un baluchon vide : on demande avant de l'envoyer les mains vides
     const cmd0 = commandeDe(v);
     if (!confirme && Object.keys(cmd0).length && !Object.values(this.colis).some(n => n > 0)) {
-      this.dire(`Son baluchon est vide ! ${v.nom} partira sans aucune provision : ses chances de revenir vivant${v.feminin ? 'e' : ''} sont bien minces. L'envoyer quand même ?`, 'Partir sans rien ?');
+      this.raconter(`Son baluchon est vide ! ${v.nom} partira sans aucune provision : ses chances de revenir vivant${v.feminin ? 'e' : ''} sont bien minces. L'envoyer quand même ?`, 'Partir sans rien ?');
       this.enConfirmation = true;
       const fin = () => { this.enConfirmation = false; };
       return this.choix([`Oui, ${v.feminin ? 'elle' : 'il'} part comme ça`, () => { fin(); this.remettreColis(true); }], [`Non, je ${v.feminin ? 'la' : 'le'} prépare`, () => { fin(); this.servir(); }]);
     }
     const chance = chanceDeRetour(v, this.colis);
+    if (v.imposteur) {
+      // (v0.86) servi, l'imposteur ne revient jamais : on apprendra demain ce qu'il a fait du baluchon
+      arnaquer(this.G, v, this.colis);
+      this.avancer(dureeService(this.G), `${v.nom.split(' ')[0]} servi${v.feminin ? 'e' : ''}`);
+      Son.jouer('caisse');
+      this.enService = false; this.majCommande(); this.majBoutonsService(); this.bouton('...', null); this.majPanneauGauche();
+      const objets = Object.entries(this.colis).flatMap(([id, n]) => Array(n).fill(id));
+      this.colis = {}; this.pieges = {};
+      const aller = colis => { this.dire(texteImposture(IMPOSTEURS[v.imposteur.type].merci, v, v.imposteur.ami), v.nom); this.partirPar(FENETRE.x + FENETRE.w + 60, colis); };
+      if (!objets.length) return aller(null);
+      this.raconter('Tu prépares le baluchon...');
+      return this.empaqueter(objets, aller);
+    }
     const msg = partir(this.G, v, this.colis, this.pieges);
+    this.avancer(dureeService(this.G), `${v.nom.split(' ')[0]} servi${v.feminin ? 'e' : ''}`);
     Son.jouer('caisse');
     this.enService = false;
     this.time.delayedCall(2500, () => conseilGarrick(this, 'remis'));
@@ -1695,7 +2175,7 @@ class CounterScene extends Phaser.Scene {
     this.majFileAttente();
     this.majCommande();
     this.bouton('Fermer le comptoir', () => { this.bouton('...', null); this.baisserStore(() => this.scene.start('Nuit', { matin: false })); });
-    this.dire('Le soleil se couche sur la Comté. Plus personne ne fait la queue.', 'Fin de la journée');
+    this.raconter('Le soleil se couche sur la Comté. Plus personne ne fait la queue.', 'Fin de la journée');
     this.tweens.add({ targets: this.cielNuit, alpha: 1, duration: 3000 });
     this.tweens.add({ targets: this.voile, fillAlpha: 0.25, duration: 3000 });
   }
