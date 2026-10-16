@@ -1062,7 +1062,7 @@ function changerRelation(G, nom, delta) {
     return `${nom} et toi êtes maintenant ${feminin && G.joueur.feminin ? 'sœurs' : feminin || G.joueur.feminin ? 'frère et sœur' : 'frères'} de sang ! ` + offrirDecoration(G, feminin) +
       (trophee ? ` Et pour ta chambre, un trophée de ses aventures : ${TROPHEES[trophee].nom.toLowerCase()}.` : '');
   }
-  if (apres.nom === 'Pires ennemis') {
+  if (apres.nom === 'Ennemis jurés') {
     const perdus = [];
     for (let i = 0; i < 3; i++) {
       const dispo = Object.keys(G.stock).filter(id => G.stock[id] > 0);
@@ -3182,6 +3182,8 @@ function demanderPlus(G, v) {
   m.patience--;
   if (demande <= m.max) { m.part = demande; return m.patience <= 0 ? conclureMarchandage(G, v, 'cede') : 'cede'; }
   if (m.patience <= 0) {
+    // (v0.91) à bout de patience, il ne claque la porte que rarement ; le plus souvent, il s'en tient à sa dernière offre
+    if (aleaClient(v, 'depart') >= MARCHANDAGE.depart) return conclureMarchandage(G, v, 'dernierMot');
     m.fini = true;
     changerRelation(G, v.nom, -2);
     G.reputation -= REFUS_CLIENT;
@@ -3365,10 +3367,9 @@ function phrasePassant(G, { nuit = false } = {}) {
 
 // Y a-t-il du neuf sur le tableau (un « ! » au-dessus) : un événement qui commence ou finit
 // aujourd'hui, ou de nouvelles têtes mises à prix ; jusqu'à ce que tu viennes lire.
+// (v0.91) il y a toujours les nouvelles du jour : tant qu'on ne les a pas lues, le tableau le signale
 function tableauANouveau(G) {
-  if (G.tableauLu === G.jour) return false;
-  const evts = (G.evenements || []).some(e => e.debut === G.jour || e.fin === G.jour);
-  return evts || (G.jour - 1) % 7 === 0;
+  return G.tableauLu !== G.jour;
 }
 
 // --- (v0.82, étape 10b) La forge chez soi ---

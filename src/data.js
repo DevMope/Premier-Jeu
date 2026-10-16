@@ -809,6 +809,18 @@ const FREIN_CAMP = [[25, 1], [60, 0.4], [Infinity, 0.25]];
 const SERMENT = { mult: 1.5, palier: 60, derniere: 90, parjure: 25, reputationParjure: 3, surveillance: 0.12 };
 // Le flair qu'il faut pour voir les ☀ / ☾ sur les boutons des choix
 const FLAIR_PICTOS = 0.4;
+// (v0.91) Devant le portrait de famille, JeuneGoy pense à ses parents, qu'il n'a pas connus (il croit
+// qu'ils l'ont abandonné ; la vérité viendra plus tard : voir « Les parents de JeuneGoy » au GDD)
+const PENSEES_PARENTS = [
+  "Deux silhouettes sans visage. Tu ne sais même pas à quoi ils ressemblaient.",
+  "Pourquoi sont-ils partis sans toi ? Peut-être que tu n'étais pas l'enfant qu'ils voulaient...",
+  "Parfois, tu te demandes s'ils pensent encore à toi, quelque part. Ou s'ils t'ont oublié depuis longtemps.",
+  "Le peintre a laissé leurs visages dans l'ombre. Comme s'il ne fallait pas les montrer.",
+  "Tu as grandi sans eux. Tu te répètes que ça t'est bien égal. Ce n'est pas vrai.",
+  "Un jour, tu leur demanderas pourquoi. Si tu les retrouves. S'ils veulent bien te répondre.",
+  "Garrick change toujours de sujet quand tu parles d'eux. Il sait quelque chose ?",
+  "Les soirs comme celui-ci, tu aurais aimé que quelqu'un t'attende à la maison.",
+];
 const PALIERS_JAUGE = [25, 60, 90];                              // les paliers, de chaque côté
 const NOMS_PALIERS_JAUGE = {
   3: 'Lumière éclatante', 2: 'Lumière', 1: 'Lueur', 0: 'Entre les deux', '-1': 'Pénombre', '-2': 'Ombre', '-3': 'Ombre épaisse',
@@ -837,8 +849,8 @@ const CHANCE_DECOUVERTE = 0.35;
 // Couleur du nom selon la relation : rouge pour les pires, vert vif pour les meilleurs.
 // « couleur » sur fond clair (parchemin), « vive » sur fond sombre.
 const NIVEAUX_RELATION = [
-  { nom: 'Pires ennemis', min: -Infinity, butin: 0.6, couleur: '#b01818', vive: '#ff4a3a' },
-  { nom: "Ne s'aiment pas", min: -8, butin: 0.8, couleur: '#c0481a', vive: '#ff8a3a' },
+  { nom: 'Ennemis jurés', min: -Infinity, butin: 0.6, couleur: '#b01818', vive: '#ff4a3a' },
+  { nom: 'En froid', min: -8, butin: 0.8, couleur: '#c0481a', vive: '#ff8a3a' },
   { nom: 'Hypocrite', min: -3, butin: 0.9, couleur: '#a8780a', vive: '#f0c040' },
   { nom: 'Neutre', min: 0, butin: 1, couleur: '#6b5a40', vive: '#e8dcc0' },
   { nom: 'Connaissance', min: 3, butin: 1, couleur: '#5a8a20', vive: '#c0e870' },
@@ -1819,7 +1831,7 @@ const TROPHEES = {
 // transformer une mort en simple échec : il rebrousse chemin, vivant.
 const TREFLE_BASE = 1;
 const TREFLE_MAX = 10;
-const TREFLE_RELATION = [-1, -1, 0, 0, 1, 2, 3]; // selon le niveau de relation (Pires ennemis → Frères de sang)
+const TREFLE_RELATION = [-1, -1, 0, 0, 1, 2, 3]; // selon le niveau de relation (Ennemis jurés → Frères de sang)
 const SAUVETAGE_PAR_TREFLE = 0.02;              // une épreuve ratée rattrapée
 const REPLI_PAR_TREFLE = 0.07;                  // la mort évitée : il rebrousse chemin
 // Quand la chance le sauve, le trèfle des cadeaux se fane : il perd la chance d'un cadeau aimé.
@@ -1871,7 +1883,7 @@ const MALUS_ECHEC = {
   rumeur: 'La rumeur court que tes baluchons ne suffisent pas : moins de clients demain.',
   comptes: '{nom} te demandera des comptes : la prochaine fois, {il} exigera un objet en plus.',
 };
-// Le nombre de malus selon la relation au départ (Pires ennemis → Frères de sang).
+// Le nombre de malus selon la relation au départ (Ennemis jurés → Frères de sang).
 const NB_MALUS_ECHEC = [4, 4, 3, 2, 2, 1, 1];
 const CONVALESCENCE = 3;
 const RUMEUR_CLIENTS = 2;
@@ -2210,7 +2222,7 @@ const FOUILLE_VEXE = ["Tu me soupçonnes de vol ?! Vas-y, fouille... Je m'en sou
 // n'a plus de patience, il part fâché. Ses tics trahissent qu'il a encore de la marge (ton flair
 // les voit mieux)... sauf le gobelin, qui bluffe tout le temps. Chaque peuple a son style.
 // Les trouvailles après le récit se marchandent aussi : −10 % par demande, jusqu'à son plancher.
-const MARCHANDAGE = { jourMin: 3, base: 20, pas: 5, plancherTrouvaille: 0.75, pasTrouvaille: 0.1 };
+const MARCHANDAGE = { jourMin: 3, base: 20, pas: 5, plancherTrouvaille: 0.75, pasTrouvaille: 0.1, depart: 0.25 };   // (v0.91) depart : la chance qu'un client à bout de patience s'en aille vraiment
 const STYLES_MARCHANDAGE = {
   defaut: { patience: 3, marge: [0, 10], plancher: 0.75, tic: "{Il} transpire un peu et détourne les yeux.",
     offre: "Je te reverserai {p} % de mon butin. C'est honnête, non ?", cede: "Bon... {p} %, mais c'est bien parce que c'est toi.",

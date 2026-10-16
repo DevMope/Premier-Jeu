@@ -268,8 +268,9 @@ class CounterScene extends Phaser.Scene {
     this.avancer(JOURNEE.marchander, 'à marchander');
     const issue = demanderPlus(G, v), m = v.marchandage;
     if (issue === 'part') return this.departFache(texteMarchandage(v, 'part'));
-    this.exprimer(issue === 'refuse' ? 'fache' : 'inquiet');
-    this.dire(texteMarchandage(v, issue === 'refuse' ? 'refuse' : 'cede', { p: m.part }), this.nomAvecRelation(v.nom));
+    const ferme = issue === 'refuse' || issue === 'dernierMot';   // (v0.91 : à bout de patience, il s'en tient à son dernier mot)
+    this.exprimer(ferme ? 'fache' : 'inquiet');
+    this.dire(texteMarchandage(v, ferme ? 'refuse' : 'cede', { p: m.part }), this.nomAvecRelation(v.nom));
     if (m.fini) return this.accepterMarchandage(true);
     this.etapeMarchandage();
   }

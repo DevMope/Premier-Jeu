@@ -116,7 +116,10 @@ class MarcheScene extends Phaser.Scene {
       this.etiquettesRue.push(this.add.text(1705, 262, 'Le tableau', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
       this.add.rectangle(1705, 200, 84, 110, 0xffffff, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirTableau());
       // un « ! » quand il y a du neuf
-      this.exclamTableau = this.add.text(1705, 120, '!', style(44, '#ffe066', { fontStyle: 'bold', stroke: '#3b2410', strokeThickness: 8 })).setOrigin(0.5).setVisible(tableauANouveau(G));
+      // (v0.91) une pastille rouge, comme une notification, tant que les nouvelles du jour ne sont pas lues
+      const nouv = Math.max(1, ((G.gazette && G.gazette.lignes) || []).length);
+      this.exclamTableau = this.add.container(1705, 120).setVisible(tableauANouveau(G));
+      this.exclamTableau.add([this.add.circle(0, 0, 17, 0xc82a20).setStrokeStyle(3, 0xfff4dc), this.add.text(0, 1, String(nouv), style(18, '#ffffff', { fontStyle: 'bold' })).setOrigin(0.5)]);
       this.grouper(avant, 1705);
       this.tweens.add({ targets: this.exclamTableau, y: '-=10', duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // (après le regroupement : ses coordonnées ont changé)
     }

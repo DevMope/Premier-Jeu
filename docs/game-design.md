@@ -118,12 +118,12 @@ Après la nuit, on se réveille au marché avant d'ouvrir le comptoir.
 - Le but : repérer l'objet abîmé qui prendra de la valeur une fois réparé.
 
 ### 2.6 Relations et familles
-- Chaque client a une relation avec le joueur : **Pires ennemis, Ne s'aiment pas, Hypocrite, Neutre (ou Inconnu), Connaissance, Amis, Frères de sang**.
+- Chaque client a une relation avec le joueur : **Ennemis jurés, En froid, Hypocrite, Neutre (ou Inconnu), Connaissance, Amis, Frères de sang**.
 - **La couleur des noms** suit la relation, du rouge (pires ennemis) au vert vif (frères de sang) en passant par l'orange, l'ambre et le neutre : au comptoir, dans le registre, sur les lettres, au marché et dans les récits.
 - Elle bouge selon tes actes : colis complet (+1), colis pauvre (−1), retour vivant (+2), réparation (+1), refus (−3), lettre refusée (−1).
 - Effets : la part de butin reversée va de ×0,6 (pires ennemis) à ×1,25 (frères de sang).
-- **Paliers de plus en plus durs** : une mission parfaite fait passer d'Inconnu à Connaissance (3 points), puis il en faut 8 pour Amis et 16 pour Frères de sang. Côté négatif : Hypocrite à −1, Ne s'aiment pas à −4, Pires ennemis sous −8.
-- Paliers franchis la première fois : **Amis** → cadeau de matériaux ; **Frères de sang** → une décoration pour le shop ; **Pires ennemis** → ta réserve est saccagée.
+- **Paliers de plus en plus durs** : une mission parfaite fait passer d'Inconnu à Connaissance (3 points), puis il en faut 8 pour Amis et 16 pour Frères de sang. Côté négatif : Hypocrite à −1, En froid à −4, Ennemis jurés sous −8.
+- Paliers franchis la première fois : **Amis** → cadeau de matériaux ; **Frères de sang** → une décoration pour le shop ; **Ennemis jurés** → ta réserve est saccagée.
 - **Les familles** : quand un aventurier meurt, un proche (fils, fille, frère, sœur, père, mère) peut venir au comptoir quelques jours plus tard. Ce qu'il veut dépend de la relation avec le disparu, plus un peu de hasard :
   - **la colère** : dédommager (25 p.) ou le renvoyer (il devient ton pire ennemi) ;
   - **un souvenir** : offrir un objet de ta réserve, ou refuser ;
@@ -907,6 +907,52 @@ existent déjà (le marché noir n'a qu'une phrase du Passeur, par exemple) : pl
 - **La porte d'entrée** : plus grande que celle de la chambre ; quatre modèles qui suivent la maison
   (chaumière, maison, belle maison, demeure), les mêmes vus de la rue et de l'arrière-boutique.
 - **Les passants de la rue** ne parlent que si on clique dessus (comme au marché).
+
+### Retours du 16/10 (lot v0.91)
+**Faits (v0.91)** : provisions « fantômes » derrière la page 1 du comptoir ; la lueur de la fontaine, le
+soir, ramenait chez soi après la nymphe (on revient maintenant dans la rue, devant l'arche) ; la nuit
+de la fenêtre suit l'horloge (fermer à 14 h laisse le jour dehors) ; l'écriture d'un carnet de mort
+tremble doucement (lisible) ; le bouton du matin s'appelle « Le marché » ; les relations « En froid »
+et « Ennemis jurés » (au lieu de « Ne s'aiment pas » et « Pires ennemis ») ; le tableau du marché
+porte une pastille rouge (le nombre de nouvelles) tant qu'on n'a pas lu les nouvelles du jour ; le
+portrait de famille de la chambre : une pensée mélancolique de JeuneGoy à chaque clic ; l'étagère des
+trophées dit ce qu'on y a et comment en gagner ; au marchandage, un client à bout de patience ne part
+plus qu'une fois sur quatre (sinon il s'en tient à son dernier mot).
+
+**Les parents de JeuneGoy (idée du joueur, à écrire)** : ils étaient humains, mais faisaient partie
+des « forces maléfiques » ; ils ont combattu le Grand Sage à l'époque et n'ont pas survécu. JeuneGoy,
+lui, croit qu'ils l'ont abandonné ou qu'ils ne voulaient pas de lui. (Garrick sait quelque chose :
+il change de sujet quand JeuneGoy parle d'eux.) À tisser avec le grand retournement et le sort d'oubli.
+
+**Les trophées (règle actuelle, maintenant dite en jeu)** : chaque aventurier qui devient frère ou sœur
+de sang rapporte un trophée de ses aventures (12 en tout), posé sur l'étagère de la chambre. À
+enrichir plus tard (proposé) : un trophée rapporté aussi par une quête personnelle réussie, et une
+petite fiche par trophée (qui, quand, où).
+
+**La nymphe : la logique d'aujourd'hui, et ce que Claude propose**
+- Aujourd'hui : 5 vœux pour la première visite, puis une visite tous les 10 vœux, sans fin. Chaque
+  visite **renouvelle la bénédiction 7 jours** (+15 % aux épreuves de rivière et de sangsues, et
+  quand il manque une gourde) ; le coquillage n'est offert qu'à la 1re visite ; les 3 premières
+  visites racontent un secret, ensuite elle ne dit plus que deux phrases. On ne voit nulle part la
+  bénédiction ni ce qu'elle a donné.
+- Proposé : (1) **un plafond** — après la 4e visite, ses paroles annoncent qu'elle a tout dit ; les
+  pièces suivantes s'entassent au fond (un compteur), et la fontaine brille d'elle-même les jours de
+  bénédiction ; (2) **voir la bénédiction** : une goutte bleue dans le bandeau du haut tant qu'elle
+  dure (un clic : « Bénie de la nymphe jusqu'au jour X : … »), une ligne dans le récit quand elle
+  aide (« L'eau s'écarte devant lui... »), et une ligne au bureau (« Toi ») ; (3) **ses cadeaux** :
+  le coquillage sur l'étagère de l'arrière-boutique (déjà), plus un 2e souvenir à la 4e visite (une
+  fiole d'eau de la fontaine : +1 cœur de soin, une fois par semaine).
+  → **à valider par le joueur.**
+
+**La persuasion (proposée par Claude, à valider)** : une nouvelle compétence au bureau (« Tes
+compétences »), qui monte avec les marchandages réussis (comme le flair avec l'expérience).
+Elle donne : +1 de patience au client par niveau (max +2), une chance qu'il lâche 5 % de plus même
+au-dessus de sa limite (rarement), et elle réduit encore la chance qu'il parte fâché.
+
+**À montrer en planches** : l'enseigne du comptoir qui s'améliore avec la maison (4 niveaux) et le
+choix de la police de l'enseigne ; les ambiances sonores de l'écran titre (oiseaux, cigales, ruisseau,
+vent dans les blés) ; les couleurs du ciel heure par heure (matin, midi, après-midi, fin de journée,
+crépuscule, nuit).
 
 ### On le fera plus tard
 - **Les instruments de musique** (idée du 16/10) : le joueur peut jouer d'instruments qu'il collectionne au fil de la partie. **3 instruments de base**, trouvables sans prérequis ; **2 instruments de lumière** et **2 d'ombre**, qu'on ne peut débloquer qu'après avoir **prêté serment** au camp correspondant (au Carrefour). (À préciser : où on les trouve, où et quand on en joue, ce que ça apporte.)

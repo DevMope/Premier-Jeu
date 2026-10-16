@@ -287,6 +287,21 @@ class PromenadeScene extends Cinematique {
       this.choixChat([`Allumer un feu (1 bois)`, () => { const err = allumerFeu(G); if (err) { Son.jouer('refus'); return this.dire(err); } Son.jouer('glisse'); this.allumerCheminee(); this.dire('Les flammes prennent. La fumée monte par la cheminée : la nuit sera douce' + (chatAdopte(G) ? `, et ${nomChat(G)} s'installe déjà devant l'âtre.` : '.')); }], ['Pas ce soir', () => this.dire('Tu laisses la cheminée froide. Le bois attendra.')]);
     });
     this.regarder(360, 110, 80, 80, "La vieille épée de Garrick. Il t'a dit qu'elle portait chance.");
+    // (v0.91) l'étagère des trophées : ce qu'on y a, et comment en gagner (la règle, dite clairement)
+    {
+      const tr = G.trophees || [], total = Object.keys(TROPHEES).length;
+      this.regarder(140, 170, 210, 60, tr.length
+        ? `Tes trophées (${tr.length} / ${total}) : ${tr.map(t => `${TROPHEES[t.id].nom.toLowerCase()}, de ${prenomDe(t.de)}`).join(' ; ')}. Chaque aventurier qui devient ton frère ou ta sœur de sang t'en rapporte un.`
+        : `L'étagère des trophées est vide (0 / ${total}). Quand un aventurier devient ton frère ou ta sœur de sang, il te rapporte un trophée de ses aventures.`);
+    }
+    // (v0.91) le portrait de famille : une pensée pour tes parents, une autre à chaque fois
+    const zp = this.add.rectangle(64, 96, 70, 80, 0xffffff, 0).setDepth(8.4).setInteractive({ useHandCursor: true });
+    zp.on('pointerdown', () => {
+      if (this.transition) return;
+      this.allerVers(120);
+      G.penseeParents = ((G.penseeParents ?? -1) + 1) % PENSEES_PARENTS.length;
+      this.dire(PENSEES_PARENTS[G.penseeParents]);
+    });
     const armes = G.armesLegendaires || [];
     if (armes.length) this.regarder(140, 88, 180, 88, `Tes armes légendaires (${armes.length} / ${Object.keys(ARMES_LEGENDAIRES).length}) : ${armes.map(id => armeLegendaire(id).nom).join(', ')}. La ville en parle : un peu plus de curieux au comptoir.`);
   }
