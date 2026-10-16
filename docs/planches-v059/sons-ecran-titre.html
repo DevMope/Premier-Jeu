@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ambiances de l'écran titre</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;700&display=swap">
+<style>
+  :root { --bois: #2a1a0e; --parchemin: #f0dfb8; --encre: #3b2410; --or: #c9a227; }
+  html, body { margin: 0; background: var(--bois); color: var(--encre); font-family: "Alegreya", Georgia, serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { color: #f3d98a; text-align: center; margin: 8px 0 4px; font-size: 28px; }
+  p.intro { color: #e8d0a8; text-align: center; font-style: italic; margin: 0 0 20px; }
+  .carte { background: var(--parchemin); border: 3px solid #6a4422; outline: 2px solid var(--or); outline-offset: -7px; border-radius: 4px; padding: 14px 18px; margin: 14px 0; display: flex; gap: 14px; align-items: center; }
+  .carte h2 { margin: 0 0 4px; font-size: 20px; }
+  .carte p { margin: 0; font-size: 15px; }
+  button { font: 700 17px "Alegreya", Georgia, serif; color: #fff0d0; background: #5a3a1e; border: 2px solid var(--or); border-radius: 6px; padding: 10px 16px; min-width: 110px; cursor: pointer; }
+  button.joue { background: #8a5a1a; }
+  .texte { flex: 1; }
+  .volume { color: #e8d0a8; text-align: center; margin-top: 18px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Ambiances de l'écran titre</h1>
+  <p class="intro">Fabriquées comme les autres sons du jeu (rien d'enregistré). Une seule joue à la fois, en boucle, sous la musique du titre.</p>
+
+  <div class="carte"><button data-a="oiseaux">▶ Écouter</button><div class="texte"><h2>1. Le matin dans la Comté</h2><p>Des oiseaux qui se répondent, un merle, une mésange, de temps en temps une tourterelle au loin.</p></div></div>
+  <div class="carte"><button data-a="cigales">▶ Écouter</button><div class="texte"><h2>2. L'été sur les collines</h2><p>Les cigales qui chantent par vagues, la chaleur, et un oiseau de temps en temps.</p></div></div>
+  <div class="carte"><button data-a="ruisseau">▶ Écouter</button><div class="texte"><h2>3. Le ruisseau</h2><p>L'eau qui coule sur les pierres (la rivière de l'intro), quelques oiseaux.</p></div></div>
+  <div class="carte"><button data-a="ble">▶ Écouter</button><div class="texte"><h2>4. Le vent dans les blés</h2><p>Un souffle doux qui monte et retombe, les épis qui frémissent, une alouette très haut.</p></div></div>
+  <div class="carte"><button data-a="soir">▶ Écouter</button><div class="texte"><h2>5. Le soir qui tombe</h2><p>Les grillons, une chouette au loin, le vent léger. Plus calme, un peu mélancolique.</p></div></div>
+  <div class="carte"><button data-a="mix">▶ Écouter</button><div class="texte"><h2>6. Proposé : selon l'heure de l'appareil</h2><p>Les oiseaux le matin, les cigales l'après-midi, les grillons et la chouette le soir.</p></div></div>
+  <p class="volume">Monte le son de l'iPad : ces ambiances sont volontairement discrètes.</p>
+</main>
+<script>
+(function () {
+  let ctx = null, sortie = null, actif = null, minuteries = [], noeuds = [];
+  const demarrer = () => { if (!ctx) { ctx = new (window.AudioContext || window.webkitAudioContext)(); sortie = ctx.createGain(); sortie.gain.value = 0.9; sortie.connect(ctx.destination); } if (ctx.state === 'suspended') ctx.resume(); };
+  const bruit = (duree = 2) => { const b = ctx.createBuffer(1, ctx.sampleRate * duree, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; };
+  const boucleBruit = (filtre, freq, q, gain) => { const s = ctx.createBufferSource(); s.buffer = bruit(3); s.loop = true; const f = ctx.createBiquadFilter(); f.type = filtre; f.frequency.value = freq; f.Q.value = q; const g = ctx.createGain(); g.gain.value = gain; s.connect(f).connect(g).connect(sortie); s.start(); noeuds.push(s); return { s, f, g }; };
+  const plus = (ms, f) => { const t = setTimeout(f, ms); minuteries.push(t); };
+  const chaque = (min, max, f) => { const tour = () => { f(); plus(min + Math.random() * (max - min), tour); }; plus(Math.random() * min, tour); };
+  // un gazouillis : une note qui glisse, modulée vite (FM), répétée 2 à 6 fois
+  function gazouillis(base = 3200, vol = 0.05) {
+    const t0 = ctx.currentTime, n = 2 + Math.floor(Math.random() * 5);
+    for (let k = 0; k < n; k++) {
+      const t = t0 + k * (0.08 + Math.random() * 0.06), o = ctx.createOscillator(), m = ctx.createOscillator(), mg = ctx.createGain(), g = ctx.createGain();
+      const f = base * (0.8 + Math.random() * 0.5);
+      o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * (Math.random() < 0.5 ? 1.4 : 0.7), t + 0.07);
+      m.frequency.value = 40 + Math.random() * 60; mg.gain.value = f * 0.08; m.connect(mg).connect(o.frequency);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+      o.connect(g).connect(sortie); o.start(t); m.start(t); o.stop(t + 0.1); m.stop(t + 0.1);
+    }
+  }
+  // un merle : trois notes flûtées, plus graves et plus longues
+  function merle() {
+    const t0 = ctx.currentTime;
+    [1, 1.25, 0.9].forEach((r, k) => { const t = t0 + k * 0.22, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; const f = 1700 * r * (0.95 + Math.random() * 0.1);
+      o.frequency.setValueAtTime(f, t); o.frequency.linearRampToValueAtTime(f * 1.08, t + 0.15);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.045, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2); o.connect(g).connect(sortie); o.start(t); o.stop(t + 0.22); });
+  }
+  // la tourterelle (ou le coucou) au loin : deux notes graves, très douces
+  function tourterelle() {
+    const t0 = ctx.currentTime;
+    [[520, 0.35], [440, 0.5]].forEach(([f, d], k) => { const t = t0 + k * 0.45, o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = f;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.025, t + 0.08); g.gain.linearRampToValueAtTime(0, t + d); o.connect(g).connect(sortie); o.start(t); o.stop(t + d); });
+  }
+  // la chouette : « hou... hou-hou »
+  function chouette() {
+    const t0 = ctx.currentTime;
+    [[0, 0.5], [0.9, 0.18], [1.15, 0.6]].forEach(([dt, d]) => { const t = t0 + dt, o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(390, t); o.frequency.linearRampToValueAtTime(360, t + d);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.04, t + 0.06); g.gain.linearRampToValueAtTime(0, t + d); o.connect(g).connect(sortie); o.start(t); o.stop(t + d); });
+  }
+  // les cigales : un bruit serré vers 4,5 kHz, haché très vite, qui gonfle et retombe par vagues
+  function cigales(vol = 0.06) {
+    const c = boucleBruit('bandpass', 4600, 8, 0), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    lfo.frequency.value = 38; lg.gain.value = vol * 0.6; lfo.connect(lg).connect(c.g.gain); lfo.start(); noeuds.push(lfo);
+    const vague = () => { const t = ctx.currentTime; c.g.gain.cancelScheduledValues(t); c.g.gain.setValueAtTime(c.g.gain.value, t); c.g.gain.linearRampToValueAtTime(vol * (0.4 + Math.random() * 0.6), t + 2.5); c.g.gain.linearRampToValueAtTime(vol * 0.08, t + 6 + Math.random() * 3); };
+    vague(); chaque(7000, 11000, vague);
+  }
+  // les grillons : de petites stridulations régulières, deux grillons qui se répondent
+  function grillons() {
+    for (const [f, ecart] of [[4200, 0], [4600, 340]]) chaque(700, 900, () => plus(ecart, () => { const t = ctx.currentTime; for (let k = 0; k < 3; k++) { const o = ctx.createOscillator(), g = ctx.createGain(), tt = t + k * 0.05; o.frequency.value = f;
+      g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(0.018, tt + 0.008); g.gain.linearRampToValueAtTime(0, tt + 0.035); o.connect(g).connect(sortie); o.start(tt); o.stop(tt + 0.04); } }));
+  }
+  // le vent : un bruit grave filtré, qui monte et retombe lentement
+  function vent(vol = 0.05, freq = 500) {
+    const v = boucleBruit('lowpass', freq, 0.7, vol * 0.4);
+    const souffle = () => { const t = ctx.currentTime, d = 4 + Math.random() * 4; v.g.gain.linearRampToValueAtTime(vol * (0.5 + Math.random() * 0.8), t + d / 2); v.g.gain.linearRampToValueAtTime(vol * 0.25, t + d); v.f.frequency.linearRampToValueAtTime(freq * (0.7 + Math.random() * 0.8), t + d); };
+    souffle(); chaque(5000, 8000, souffle);
+  }
+  // le ruisseau : du bruit filtré, et de petites bulles (des sinus brefs qui montent)
+  function ruisseau() {
+    boucleBruit('bandpass', 900, 0.6, 0.05); boucleBruit('highpass', 2500, 0.5, 0.012);
+    chaque(90, 260, () => { const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(), f = 500 + Math.random() * 900; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 1.8, t + 0.05);
+      g.gain.setValueAtTime(0.012, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06); o.connect(g).connect(sortie); o.start(t); o.stop(t + 0.07); });
+  }
+  const AMBIANCES = {
+    oiseaux: () => { vent(0.012, 400); chaque(900, 2600, () => gazouillis(3000 + Math.random() * 1500)); chaque(3500, 7000, merle); chaque(9000, 16000, tourterelle); },
+    cigales: () => { cigales(); vent(0.015, 350); chaque(5000, 9000, () => gazouillis(3600, 0.03)); },
+    ruisseau: () => { ruisseau(); chaque(2500, 5000, () => gazouillis(3300, 0.035)); },
+    ble: () => { vent(0.06, 650); boucleBruit('highpass', 5000, 0.4, 0.006); chaque(3000, 6000, () => gazouillis(4500, 0.025)); },
+    soir: () => { grillons(); vent(0.018, 300); chaque(9000, 15000, chouette); },
+    mix: () => { const h = new Date().getHours(); (h < 12 ? AMBIANCES.oiseaux : h < 18 ? AMBIANCES.cigales : AMBIANCES.soir)(); },
+  };
+  function arreter() { minuteries.forEach(clearTimeout); minuteries = []; noeuds.forEach(n => { try { n.stop(); } catch (e) {} }); noeuds = []; document.querySelectorAll('button').forEach(b => { b.classList.remove('joue'); b.textContent = '▶ Écouter'; }); actif = null; }
+  document.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    demarrer();
+    const a = b.dataset.a, etait = actif === a;
+    arreter();
+    if (etait) return;
+    actif = a; b.classList.add('joue'); b.textContent = '■ Arrêter';
+    AMBIANCES[a]();
+  }));
+})();
+</script>
+</body>
+</html>
