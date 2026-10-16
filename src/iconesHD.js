@@ -456,3 +456,22 @@ function creerIconesHD(scene) {
     t.texture(scene, 'arme_' + id);
   }
 }
+
+// (v0.93) La médaille de tes parents, rendue par le mendiant : un disque d'or terni, deux épées
+// croisées sous une étoile, pendu à un ruban rouge usé
+function texMedailleParents(scene) {
+  const cle = 'medailleParents';
+  if (scene.textures.exists(cle)) return cle;
+  const g = scene.make.graphics({ add: false });
+  g.fillStyle(0x5a1010).fillRect(4, 0, 10, 9);                          // le ruban
+  g.fillStyle(0xa82a24).fillRect(5, 0, 8, 8).fillStyle(0xd04a3a).fillRect(8, 0, 2, 8);
+  g.fillStyle(0x3a2408).fillCircle(9, 16, 8);                            // le disque
+  g.fillStyle(0xc89a30).fillCircle(9, 16, 7);
+  g.fillStyle(0xe8c050).fillCircle(8, 15, 5);
+  g.fillStyle(0x8a6a1a);                                                 // les épées croisées
+  for (let k = -3; k <= 3; k++) { g.fillRect(9 + k, 16 + k, 1, 1); g.fillRect(9 - k, 16 + k, 1, 1); }
+  g.fillStyle(0xfff0a0).fillRect(9, 11, 1, 1).fillRect(8, 12, 3, 1).fillRect(9, 13, 1, 1);   // l'étoile
+  g.fillStyle(0x7a5a18).fillRect(13, 19, 2, 1).fillRect(4, 14, 1, 2);    // l'usure
+  g.generateTexture(cle, 18, 25); g.destroy();
+  return cle;
+}

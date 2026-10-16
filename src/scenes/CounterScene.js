@@ -1521,7 +1521,10 @@ class CounterScene extends Phaser.Scene {
       this.dire(entree.parti.resultat.echec ? "Me revoilà... Vivant, au moins. Mais ça ne s'est pas passé comme prévu."
         : `Me revoilà, sain${v.feminin ? 'e' : ''} et ${v.feminin ? 'sauve' : 'sauf'} ! Tu ne devineras jamais ce qui m'est arrivé...`, v.nom);
       this.titreCommande.setFontSize(17).setText('Retour de mission');
-      this.bouton('Écouter son récit', () => this.ouvrirRecit(entree.parti), JOURNEE.recit);
+      // (v0.93, planche 19) plusieurs retours, et l'on connaît déjà les récits : tout résumer d'un coup
+      const retours = 1 + this.G.file.filter(e => e.type === 'retour').length;
+      if (retours >= 2 && (this.G.recitsVus || 0) > 0) this.choix(['Écouter son récit', () => this.ouvrirRecit(entree.parti), JOURNEE.recit], [`Tout résumer (${retours} retours)`, () => this.resumerRetours()]);
+      else this.bouton('Écouter son récit', () => this.ouvrirRecit(entree.parti), JOURNEE.recit);
     } else if (entree.type === 'famille') {
       this.visiteFamille(entree.visite);
     } else if (entree.type === 'notable') {
@@ -1823,6 +1826,71 @@ class CounterScene extends Phaser.Scene {
         fin('Tu es quelqu\'un de bien. Merci.');
       }]);
     }
+  }
+
+  // (v0.93, planche 19) Les retours du jour résumés : chacun est encaissé (sa part, la réputation, son
+  // rang), puis un tableau dit tout. Un clic sur une ligne rouvre son récit en entier (avec les soins et
+  // les trouvailles qu'il propose) ; « Tout encaisser » passe au suivant.
+  resumerRetours() {
+    const G = this.G;
+    if (this.resumeRetours || enTransition(this)) return;
+    const entrees = [this.entree, ...G.file.filter(e => e.type === 'retour')];
+    G.file = G.file.filter(e => e.type !== 'retour');
+    this.reconstruireFile();
+    const repAvant = G.reputation;
+    const lignes = entrees.map(e => {
+      const parti = e.parti, rep0 = G.reputation;
+      avancerHeure(G, JOURNEE.recit);
+      const { gain } = terminerAventure(G, parti);
+      G.recitsVus = (G.recitsVus || 0) + 1;
+      return { parti, gain, rep: G.reputation - rep0 };
+    });
+    this.heureAffichee = heureDuComptoir(G); this.majHorloge();
+    const c = this.resumeRetours = this.add.container(0, 0).setDepth(40);
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.55).setInteractive());
+    c.add(this.add.image(480, 270, panneauHD(this, 820, 500)).setScale(2));
+    c.add(this.add.text(480, 44, 'Les retours du jour', style(24, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(480, 70, `${lignes.length} aventuriers sont rentrés`, style(13, '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    [[120, 'Aventurier'], [440, 'Contrée'], [545, 'Issue'], [640, 'Cœurs'], [730, 'Ta part'], [820, 'Réput.']].forEach(([x, t]) =>
+      c.add(this.add.text(x, 96, t, style(12, '#6a4a2a', { fontStyle: 'bold' })).setOrigin(x === 120 ? 0 : 0.5, 0.5)));
+    c.add(this.add.rectangle(480, 108, 760, 2, 0x8a6a3a));
+    const h = Math.min(70, 270 / lignes.length);
+    let total = 0, trouv = 0, rangs = [];
+    lignes.forEach(({ parti, gain, rep }, i) => {
+      const v = parti.voyageur, r = parti.resultat, z = ZONES[v.zone], pr = parti.progression;
+      const y = 116 + h / 2 + i * h;
+      total += gain;
+      const fond = this.add.rectangle(480, y, 760, h - 6, i % 2 ? 0xe8d4a8 : 0xf0e0b8, 0.85).setStrokeStyle(1, 0xc9a870).setInteractive({ useHandCursor: true });
+      fond.on('pointerover', () => fond.setFillStyle(0xd8c498, 1)).on('pointerout', () => fond.setFillStyle(i % 2 ? 0xe8d4a8 : 0xf0e0b8, 0.85));
+      fond.on('pointerdown', () => { this.resumeRetours = null; this.ouvrirRecit(parti); });
+      c.add(fond);
+      c.add(this.add.image(130, y + h / 2 - 6, textureBusteHD(this, v, r.echec ? 'fache' : 'content')).setOrigin(0.5, 1).setScale(Math.min(0.5, (h - 8) / 120)));
+      const nom = this.add.text(170, y - 12, v.nom, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+      if (nom.width > 200) nom.setScale(200 / nom.width);
+      const monte = pr && pr.apres.niveau !== pr.avant.niveau;
+      if (monte) rangs.push(prenomDe(v.nom));
+      const sous = [monte ? `${NIVEAUX_AVENTURIER[pr.avant.niveau].nom} → ${NIVEAUX_AVENTURIER[pr.apres.niveau].nom} !` : nomRang(v.niveau, true)];
+      if ((parti.trouvailles || []).length) { trouv++; sous.push('+ trouvaille'); }
+      if (blessuresDe(this.G, v.nom)) sous.push('à soigner');
+      const st = this.add.text(170, y + 9, sous.join(' · '), style(11, monte ? '#b0701a' : '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5);
+      if (st.width > 190) st.setScale(190 / st.width);
+      c.add([nom, st]);
+      c.add(this.add.text(440, y, z ? `${z.nom} ${'★'.repeat(z.danger)}` : '', style(11, '#3b2410', { align: 'center', wordWrap: { width: 130 } })).setOrigin(0.5));
+      c.add(this.add.text(545, y, r.echec ? '✗ ratée' : '✓ réussie', style(13, r.echec ? '#a03020' : '#2f6a2a', { fontStyle: 'bold' })).setOrigin(0.5));
+      const pv = r.etapes.length ? r.etapes[r.etapes.length - 1].pvApres : v.pv, pvMax = Math.max(pv, r.pvDepart || v.pv);
+      c.add(this.add.text(640, y, '♥'.repeat(Math.max(0, pv)) + '♡'.repeat(Math.max(0, pvMax - pv)), style(14, '#c03030', { fontStyle: 'bold' })).setOrigin(0.5));
+      c.add(this.add.text(730, y, `+${gain} p.`, style(14, '#7a5a10', { fontStyle: 'bold' })).setOrigin(0.5));
+      const rr = Math.round(rep * 10) / 10;
+      c.add(this.add.text(820, y, `${rr >= 0 ? '+' : ''}${String(rr).replace('.', ',')}`, style(13, rr >= 0 ? '#2f6a2a' : '#a03020', { fontStyle: 'bold' })).setOrigin(0.5));
+    });
+    const dRep = Math.round((G.reputation - repAvant) * 10) / 10;
+    c.add(this.add.rectangle(480, 396, 760, 2, 0x8a6a3a));
+    c.add(this.add.text(480, 414, `En tout : +${total} pièces · réputation ${dRep >= 0 ? '+' : ''}${String(dRep).replace('.', ',')}` + (trouv ? ` · ${trouv} trouvaille${trouv > 1 ? 's' : ''}` : '') + (rangs.length ? ` · ${rangs.join(', ')} monte${rangs.length > 1 ? 'nt' : ''} en rang` : ''),
+      style(14, '#3b2410', { fontStyle: 'bold', align: 'center', wordWrap: { width: 740 } })).setOrigin(0.5));
+    c.add(this.add.text(480, 440, 'Un clic sur une ligne rouvre son récit en entier (la fiche de mission, les soins, les trouvailles).', style(11, '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    Son.jouer('pieces', { montant: total });
+    const b = creerBouton(this, 480, 482, 250, '✓ Tout encaisser', () => { this.resumeRetours = null; allerA(this, 'Comptoir'); });
+    c.add([b.fond, b.label]);
   }
 
   ouvrirRecit(parti) {

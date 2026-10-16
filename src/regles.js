@@ -893,16 +893,41 @@ function donnerAuMendiant(G, montant) {
   const avant = G.mendiant;
   payer(G, montant, 'dons');
   G.mendiant += montant;
+  G.mendiantSemaine = Math.floor((G.jour - 1) / 7);   // (v0.93) il a eu quelque chose cette semaine : il chuchotera
   if (G.mendiantLumiere !== G.jour) { G.mendiantLumiere = G.jour; pencher(G, 'mendiant'); }
   if (avant < MENDIANT_SEUIL && G.mendiant >= MENDIANT_SEUIL && !G.decorations.includes('trefle')) {
     G.decorations.push('trefle');
     return { recit: 'Il fouille dans sa besace et te tend un trèfle séché. Tu reçois le Trèfle du mendiant !', parole: `Tu as un grand cœur, ${eJ(G) ? 'petite marchande' : 'petit marchand'}. Prends ce trèfle, il m'a porté chance autrefois...` };
+  }
+  // (v0.93) il te reconnaît... presque
+  if (avant < MENDIANT_PALIERS.yeux && G.mendiant >= MENDIANT_PALIERS.yeux) {
+    return { recit: "Il lève les yeux vers toi, et te regarde longuement, comme s'il cherchait un visage derrière le tien.",
+      parole: `Tu as les yeux de ta mère... ${eJ(G) ? 'Pardon, petite' : 'Pardon, petit'}. Je ne sais plus pourquoi j'ai dit ça.` };
+  }
+  // (v0.93) la médaille de tes parents : une petite cinématique au marché
+  if (avant < MENDIANT_PALIERS.medaille && G.mendiant >= MENDIANT_PALIERS.medaille && !G.medailleParents) {
+    G.medailleParents = G.jour;
+    return { medaille: true, recit: 'Il fouille longtemps au fond de sa besace...', parole: "Attends. J'ai quelque chose à toi. Ça a toujours été à toi." };
   }
   return { parole: auHasard([
     'Merci... Que les étoiles veillent sur toi.',
     "Une pièce pour un vieil homme... Je n'oublierai pas ton visage.",
     "Tu es bon. C'est rare, par ici.",
   ]) };
+}
+
+// (v0.93) Une fois par semaine, si tu lui as donné quelque chose cette semaine-là, il chuchote une rumeur
+function rumeurMendiant(G) {
+  const semaine = Math.floor((G.jour - 1) / 7);
+  if (G.mendiantSemaine !== semaine || G.rumeurMendiant === semaine) return null;
+  G.rumeurMendiant = semaine;
+  const ev = (G.evenements || []).find(e => e.debut > G.jour && EVENEMENTS[e.id]);
+  if (ev) return `Écoute bien... J'ai entendu des choses. ${EVENEMENTS[ev.id].nouvelle.replace(/ !$/, '.')} D'ici ${ev.debut - G.jour} jour${ev.debut - G.jour > 1 ? 's' : ''}. Tu ne le tiens pas de moi.`;
+  const jr = G.joursRecherche && G.joursRecherche[semaine];
+  if (jr && jr > G.jour) return `Écoute bien... La garde cherche quelqu'un. Un visage d'affiche passera chez toi dans ${jr - G.jour} jour${jr - G.jour > 1 ? 's' : ''}. Regarde bien le tableau du marché.`;
+  return auHasard(["Écoute bien... Les marais de Brume-Noire rendent moins de corps, ces temps-ci. Les gourdes y sauvent des vies.",
+    "Écoute bien... Un nain parlait de bandits sur la route du col. Des boucliers ne seraient pas de trop.",
+    "Écoute bien... Les loups descendent plus bas que d'habitude. Une torche, la nuit, ça les tient loin."]);
 }
 
 // (v0.73) Ce que dit le mendiant et ce qui se passe, séparés : { recit, parole } -> une seule ligne
@@ -1752,6 +1777,29 @@ function formerFileDuJour(G) {
   const reportes = (G.reportes || []).map(v => ({ type: 'client', voyageur: v, reporte: true }));
   G.reportes = [];
   G.file = faucheuseAuBout([...retours, ...reportes, ...notables, ...visites, ...file]);
+  rangerFile(G);   // (v0.93) le rangement choisi sur la feuille du jour
+}
+
+// (v0.93, planche 19) Ranger la file : seuls les clients changent de place entre eux (les retours,
+// les visites restent où ils sont, la Faucheuse au bout). `mode` : un rang d'abord, les lettres d'abord.
+function rangerFile(G, mode = G.ordreFile || 'arrivee') {
+  if (mode === 'arrivee') return;
+  const places = [], clients = [];
+  G.file.forEach((e, i) => { if (e.type === 'client') { places.push(i); clients.push(e); } });
+  const rang = e => ORDRE_NIVEAUX.indexOf(e.voyageur.niveau);
+  const cle = mode === 'lettres' ? e => (e.voyageur.prevu ? 0 : 1)
+    : e => { const r = rang(e), cible = ORDRE_NIVEAUX.indexOf(mode); return mode === 'heros' ? (r >= cible ? ORDRE_NIVEAUX.length - r : 10 + cible - r) : r === cible ? -1 : Math.abs(r - cible) * 2 + (r < cible ? 1 : 0); };
+  const tries = clients.map((e, i) => [e, i]).sort((a, b) => cle(a[0]) - cle(b[0]) || a[1] - b[1]).map(x => x[0]);
+  places.forEach((p, k) => { G.file[p] = tries[k]; });
+}
+// Déplacer un client d'une place vers le haut (-1) ou le bas (+1), parmi les clients seulement
+function deplacerDansFile(G, entree, sens) {
+  const places = G.file.map((e, i) => (e.type === 'client' ? i : -1)).filter(i => i >= 0);
+  const k = places.indexOf(G.file.indexOf(entree)), autre = places[k + sens];
+  if (k < 0 || autre == null) return false;
+  const i = places[k];
+  [G.file[i], G.file[autre]] = [G.file[autre], G.file[i]];
+  return true;
 }
 
 // (v0.93) La Faucheuse ferme toujours la file : ceux qui s'y glissent après elle passent devant.

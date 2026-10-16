@@ -1141,7 +1141,9 @@ class MarcheScene extends Phaser.Scene {
     this.tweens.add({ targets: chien, scaleY: 2.24, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     c.add(this.add.text(480, 32, 'Le mendiant et Brisquet', style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
     // ce qu'il raconte : un peu plus de son histoire à mesure que tu l'aides
-    const paroles = G.mendiant >= 40 ? ["J'ai été aventurier, tu sais. Comme ceux que tu équipes. Un jour, je suis rentré... sans mes amis.", "Brisquet m'a tiré d'un torrent, cette fois-là. Depuis, on ne se quitte plus."]
+    const paroles = G.medailleParents ? ["Ta mère riait comme toi. Ton père, lui, ne riait qu'avec elle.", "Le jour de la dernière bataille, ils m'ont dit de rester en arrière. J'aurais dû désobéir.", "Tu la gardes près d'eux, la médaille ? C'est bien."]
+      : G.mendiant >= MENDIANT_PALIERS.yeux ? ["Il y a des visages qu'on n'oublie pas, même quand on a tout oublié.", "Parfois je rêve d'une tour blanche, et d'un vieil homme qui sourit trop. Je me réveille en sueur."]
+      : G.mendiant >= 40 ? ["J'ai été aventurier, tu sais. Comme ceux que tu équipes. Un jour, je suis rentré... sans mes amis.", "Brisquet m'a tiré d'un torrent, cette fois-là. Depuis, on ne se quitte plus."]
       : G.mendiant >= 10 ? ["Tu reviens souvent, toi. C'est rare, les gens qui reviennent.", "Le crieur raconte n'importe quoi, mais il crie bien. Ça me tient compagnie."]
       : ["Une petite pièce, pour un vieil homme et son chien ?", "Ne fais pas attention à Brisquet. Il grogne, mais il n'a plus de dents... presque plus."];
     const bulle = this.add.text(560, 150, `« ${Phaser.Utils.Array.GetRandom(paroles)} »`, style(15, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 12, y: 8 }, wordWrap: { width: 330 } })).setOrigin(0, 0);
@@ -1154,6 +1156,9 @@ class MarcheScene extends Phaser.Scene {
       bulle.setText(`« ${r.parole} »`);
       recit.setText(r.recit || '').setVisible(!!r.recit);
     };
+    // (v0.93) une fois par semaine, si tu lui as donné quelque chose : une rumeur, à voix basse
+    const rumeur = rumeurMendiant(G);
+    if (rumeur) raconter({ recit: "Il te fait signe d'approcher, et baisse la voix.", parole: rumeur });
     Son.jouer('voix', { personne, ton: G.mendiant >= 10 ? 'content' : 'triste' });
     // les dons et la ration
     [1, 5, 10].forEach((n, i) => {
@@ -1164,6 +1169,7 @@ class MarcheScene extends Phaser.Scene {
         // (v0.68) les pièces volent jusqu'à sa sébile, puis il pense à ce qu'il va en faire
         voleePieces(this, 150 + i * 170, 500, 520, 474, n, { conteneur: c, fin: () => {
           if (!c.active) return;
+          if (merci.medaille) return this.cinematiqueMedaille(c, buste, raconter);
           raconter(merci);
           const image = n >= 10 ? chienHD(this, 'profil', true) : n >= 5 ? 'hd_coeur' : iconeObjet(this, 'ration');
           bullePensee(this, 430, buste.y - buste.displayHeight + 10, image, { conteneur: c, echelle: n >= 10 ? 0.9 : 2.6 });
@@ -1179,6 +1185,57 @@ class MarcheScene extends Phaser.Scene {
     const reculer = creerBouton(this, 836, 46, 200, '◀ Reculer', fermer);
     c.add([ration.fond, ration.label, reculer.fond, reculer.label]);
     if (nourrir && !deja) this.time.delayedCall(500, () => this.nourrirBrisquet(c, chien, raconter, ration));
+  }
+
+  // (v0.93) Cent pièces données : le mendiant rend à JeuneGoy la médaille de ses parents. Une petite
+  // cinématique (un clic fait avancer) : la place s'assombrit, la médaille luit, puis rejoint le portrait.
+  cinematiqueMedaille(c, buste, raconter) {
+    const voile = this.add.rectangle(480, 270, 960, 540, 0x05030a, 0).setInteractive(); c.add(voile);
+    c.bringToTop(buste);
+    this.tweens.add({ targets: voile, fillAlpha: 0.7, duration: 900 });
+    Son.ambiance('cinematique');
+    const boite = this.add.text(480, 440, '', style(16, '#f3e6c8', { fontStyle: 'italic', align: 'center', backgroundColor: '#1a0e06ee', padding: { x: 16, y: 10 }, wordWrap: { width: 760 } })).setOrigin(0.5); c.add(boite);
+    const suite = this.add.text(860, 478, '▶', style(14, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5); c.add(suite);
+    this.tweens.add({ targets: suite, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
+    const personne = { nom: 'Le mendiant', race: 'humain', vieux: true };
+    const medaille = this.add.image(680, 250, texMedailleParents(this)).setScale(0).setDepth(2); c.add(medaille);
+    creerHalo(this);
+    const lueur = this.add.image(680, 256, 'halo').setScale(0).setTint(0xffd870).setAlpha(0.6).setBlendMode(Phaser.BlendModes.ADD); c.add(lueur);
+    c.bringToTop(medaille);
+    const ETAPES = [
+      ['recit', 'Il fouille longtemps au fond de sa besace. Brisquet se redresse, les oreilles tendues.'],
+      ['parole', "Je l'ai gardée tout ce temps. Je ne savais plus pour qui... jusqu'à aujourd'hui."],
+      ['medaille', "Une médaille d'or terni, deux épées croisées sous une étoile, au bout d'un ruban rouge usé."],
+      ['parole', "Elle était à tes parents. Ils se battaient contre... contre... (il se frotte le front) Je ne sais plus. Mais ils se battaient pour nous tous."],
+      ['parole', `Ils ne t'ont pas abandonné${eJ(this.G)}. Ça, j'en suis sûr. Garde-la près d'eux.`],
+      ['fin', 'La médaille rejoint le portrait de tes parents, dans ta chambre.'],
+    ];
+    let i = 0;
+    const avancer = () => {
+      const [quoi, texte] = ETAPES[i++] || [];
+      if (!quoi) {
+        voile.off('pointerdown');
+        this.tweens.add({ targets: [voile, boite, suite, lueur], alpha: 0, duration: 600, onComplete: () => { voile.destroy(); boite.destroy(); suite.destroy(); lueur.destroy(); } });
+        Son.ambiance('marche');
+        raconter({ recit: 'Tu ranges la médaille contre ton cœur.', parole: 'Va. Et reviens me voir, de temps en temps.' });
+        return;
+      }
+      boite.setText(quoi === 'parole' ? `« ${texte} »` : texte).setColor(quoi === 'parole' ? '#fff4dc' : '#e8d4a8');
+      if (quoi === 'parole') Son.jouer('voix', { personne, ton: 'triste' });
+      if (quoi === 'medaille') {
+        Son.jouer('succes');
+        this.tweens.add({ targets: medaille, scale: 5, duration: 700, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: lueur, scale: 1.4, duration: 700 });
+        this.tweens.add({ targets: [medaille], angle: { from: -6, to: 6 }, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 700 });
+      }
+      if (quoi === 'fin') {
+        this.tweens.killTweensOf(medaille);
+        this.tweens.add({ targets: [medaille, lueur], x: 140, y: 470, scale: 0.4, alpha: 0, duration: 1100, ease: 'Quad.easeIn' });
+        Son.jouer('trefle');
+      }
+    };
+    voile.on('pointerdown', avancer);
+    this.time.delayedCall(700, avancer);
   }
 
   // Brisquet mange : la ration vole jusqu'à lui, il se dresse, la croque (sa tête qui plonge,

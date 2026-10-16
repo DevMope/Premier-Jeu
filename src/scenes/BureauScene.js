@@ -94,10 +94,7 @@ class BureauScene extends Phaser.Scene {
             const p = e.visite.parent;
             return { nom: p.nom, race: p.race, ligne: `Visite : ${p.lien} ${dePersonne(e.visite.defunt.nom)}`, detail: () => [`Vient au sujet ${dePersonne(e.visite.defunt.nom)}.`] };
           }
-          if (e.type === 'faucheuse') {
-            return { nom: '???', race: 'faucheuse', ligne: 'Une silhouette noire, tout au bout de la file...',
-              detail: () => ['Elle ne dit rien. Elle attend son tour.'] };
-          }
+          if (e.type === 'faucheuse') return null;   // (v0.93) elle reste une surprise
           // (audit v0.61) les visites sans voyageur (garde, Garrick, collecteur, Serpent, colporteur,
           // notable, aîné...) faisaient planter le registre
           if (!e.parti) {
@@ -109,7 +106,7 @@ class BureauScene extends Phaser.Scene {
           return { nom: v.nom, race: v.race,
             ligne: e.type === 'retour' ? 'Revient de mission !' : 'Son carnet est posé sur ton comptoir...',
             detail: () => [`Parti${v.feminin ? 'e' : ''} le jour ${e.parti.depart} : ${v.quete}`] };
-        });
+        }).filter(Boolean);
       }
       case 'mission':
         return enMission(G).map(p => ({
@@ -178,6 +175,12 @@ class BureauScene extends Phaser.Scene {
       c.add(this.add.text(161, 452, `page ${this.pageListe + 1} / ${pages}`, style(11, '#6b4a2a')).setOrigin(0.5));
     }
     c.add(this.add.text(423, 250, fiches.length ? 'Clique sur un nom\npour ouvrir sa fiche.' : '', style(14, '#8a6a4a', { fontStyle: 'italic', align: 'center' })).setOrigin(0.5));
+    // (v0.93, planche 19) la feuille du jour : ranger la file
+    if (this.onglet === 'aujourdhui' && this.G.file.some(e => e.type === 'client')) {
+      const b = creerBouton(this, 423, 330, 220, '☰ Ranger la file', () => this.ouvrirFeuille());
+      b.label.setFontSize(15);
+      c.add([b.fond, b.label]);
+    }
     this.ficheDroite = null;
   }
 
@@ -510,6 +513,65 @@ class BureauScene extends Phaser.Scene {
       case 'atelier': return { cle: iconeObjet(this, 'enclume'), echelle: 2.6 + n * 0.5 };
       default: return { cle: luminaireHD(this, n), echelle: n >= 2 ? 1.6 : 2.6 };
     }
+  }
+
+  // (v0.93, planche 19) La feuille du jour : qui passe d'abord. On range tout d'un coup (un rangement
+  // gardé pour les jours suivants) ou chacun avec ses flèches. Les retours et les visites restent à leur
+  // place ; la Faucheuse n'y figure pas (elle reste une surprise, et passe toujours en dernier).
+  ouvrirFeuille(page = 0) {
+    const G = this.G;
+    if (this.feuille) this.feuille.destroy();
+    const c = this.feuille = this.add.container(0, 0).setDepth(60);
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.6).setInteractive());
+    c.add(this.add.image(480, 270, panneauHD(this, 900, 510)).setScale(2));
+    c.add(this.add.text(480, 44, `La feuille du jour ${G.jour}`, style(22, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(480, 68, "Qui passe d'abord ? Range tout d'un coup, ou déplace chacun avec ses flèches", style(12, '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    const changer = () => { if (this.comptoir && this.comptoir.reconstruireFile) this.comptoir.reconstruireFile(); Son.jouer('plume'); };
+    const mode = G.ordreFile || 'arrivee';
+    ORDRES_FILE.forEach(([cle, nom], i) => {
+      const x = 152 + i * 164, choisi = cle === mode;
+      const fond = this.add.rectangle(x, 100, 154, 30, choisi ? 0x6b4a22 : 0xe8d4a8).setStrokeStyle(2, choisi ? 0xffe066 : 0x8a6a3a).setInteractive({ useHandCursor: true });
+      fond.on('pointerdown', () => { G.ordreFile = cle; rangerFile(G, cle); changer(); this.ouvrirFeuille(page); });
+      c.add([fond, this.add.text(x, 100, nom, style(12, choisi ? '#fff4dc' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5)]);
+    });
+    const NOTES = { retour: 'Retour de mission', famille: 'Une famille en deuil', garde: 'La garde', gardeRecherche: 'La garde', garrick: 'Garrick', collecteur: 'Le collecteur', serpent: 'Le Serpent à deux têtes',
+      colporteur: 'Le colporteur', notable: 'Un visiteur de marque', aine: 'Un aîné des Bannis', carnet: 'Un carnet rapporté' };
+    const lignes = G.file.filter(e => e.type !== 'faucheuse');
+    const PAR = 8, pages = Math.max(1, Math.ceil(lignes.length / PAR));
+    page = Math.min(page, pages - 1);
+    const COULEURS = [0x7a9a5a, 0x4a7aa0, 0x8a5aa0, 0xc89a30, 0xc04a30];
+    lignes.slice(page * PAR, page * PAR + PAR).forEach((e, k) => {
+      const i = page * PAR + k, y = 140 + k * 38, client = e.type === 'client';
+      c.add(this.add.rectangle(480, y, 820, 34, !client ? 0xd8c8a0 : (i % 2 ? 0xe8d4a8 : 0xf0e0b8)).setStrokeStyle(1, 0xc9a870));
+      c.add(this.add.text(86, y, `${i + 1}.`, style(13, '#6a4a2a', { fontStyle: 'bold' })).setOrigin(0.5));
+      const p = client ? e.voyageur : e.parti ? e.parti.voyageur : e.type === 'famille' ? e.visite.parent : CounterScene.prototype.personneDe.call({ G }, e);
+      if (p) { try { c.add(this.add.image(118, y + 16, textureBusteHD(this, p)).setOrigin(0.5, 1).setScale(0.27)); } catch (err) { /* (pas de buste pour ce visiteur) */ } }
+      const v = client ? e.voyageur : null;
+      c.add(this.add.text(150, y - 8, (p && p.nom) || NOTES[e.type] || 'Un visiteur', style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      const note = client ? (e.reporte ? "T'avait écrit · revient d'hier" : v.prestige ? 'Client prestigieux' : v.prevu ? `Lettre · ${v.quete}` : 'De passage') : (NOTES[e.type] || 'Une visite') + ' · reste à sa place';
+      c.add(this.add.text(150, y + 8, raccourcir(note, 60), style(10, '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
+      if (v) {
+        const r = Math.max(0, ORDRE_NIVEAUX.indexOf(v.niveau));
+        c.add(this.add.rectangle(600, y, 110, 22, COULEURS[r]).setStrokeStyle(1, 0x2a1a08));
+        c.add(this.add.text(600, y, nomRang(v.niveau, true), style(11, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5));
+        for (const [x, sens, t] of [[790, -1, '▲'], [840, 1, '▼']]) {
+          const f = this.add.text(x, y, t, style(15, '#3b2410', { fontStyle: 'bold', backgroundColor: '#e0c890', padding: { x: 7, y: 1 } })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+          f.on('pointerdown', () => { if (deplacerDansFile(G, e, sens)) { G.ordreFile = 'arrivee'; changer(); } this.ouvrirFeuille(page); });
+          c.add(f);
+        }
+      } else c.add(this.add.text(815, y, 'fixe', style(12, '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    });
+    if (pages > 1) {
+      for (const [x, t, sens] of [[380, '◀', -1], [580, '▶', 1]]) {
+        const f = this.add.text(x, 450, t, style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        f.on('pointerdown', () => this.ouvrirFeuille((page + sens + pages) % pages));
+        c.add(f);
+      }
+      c.add(this.add.text(480, 450, `page ${page + 1} / ${pages}`, style(12, '#6a4a2a')).setOrigin(0.5));
+    }
+    c.add(this.add.text(480, 474, 'Le rangement choisi est gardé pour les jours suivants. Déplacer quelqu\'un à la main le remet sur « Comme ils viennent ».', style(11, '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    const fermer = creerBouton(this, 480, 506, 180, 'Fermer', () => { c.destroy(); this.feuille = null; this.afficherListe(); });
+    c.add([fermer.fond, fermer.label]);
   }
 
   // (v0.93) L'atelier de l'enseigne : le nom, l'une des cinq écritures, la couleur du fond,

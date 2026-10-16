@@ -560,6 +560,8 @@ const NIVEAUX_AVENTURIER = {
   legende: { nom: 'Légende', pv: 2, butin: 1.5, bonus: 0.08, succes: 10 },
 };
 const ORDRE_NIVEAUX = Object.keys(NIVEAUX_AVENTURIER);
+// (v0.93, planche 19) Les rangements de la file, choisis sur la feuille du jour (au bureau)
+const ORDRES_FILE = [['arrivee', 'Comme ils viennent'], ['novice', 'Novices d\u2019abord'], ['aguerri', 'Aguerris d\u2019abord'], ['heros', 'Héros d\u2019abord'], ['lettres', 'Lettres d\u2019abord']];
 // (v0.84) les rangs, lisibles pour qui ne les connaît pas : leur numéro sur cinq, et ce qu'ils changent
 const EXPLICATION_RANGS = {
   novice: 'débutant : fragile, rapporte un peu moins',
@@ -1004,6 +1006,8 @@ const MISES = [5, 10, 20];
 
 // Le mendiant : au-delà de ce total donné, il te remercie à sa façon.
 const MENDIANT_SEUIL = 30;
+// (v0.93) Ce qu'il se rappelle, à mesure que tu l'aides : il te reconnaît (60), puis la médaille de tes parents (100)
+const MENDIANT_PALIERS = { yeux: 60, medaille: 100 };
 
 // Chaque tranche dépensée chez un marchand vous rapproche un peu plus.
 const DEPENSE_PAR_POINT = 25;

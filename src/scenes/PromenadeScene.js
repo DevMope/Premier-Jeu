@@ -300,8 +300,11 @@ class PromenadeScene extends Cinematique {
       if (this.transition) return;
       this.allerVers(120);
       G.penseeParents = ((G.penseeParents ?? -1) + 1) % PENSEES_PARENTS.length;
+      // (v0.93) depuis la médaille, une pensée sur deux est pour elle
+      if (G.medailleParents && G.penseeParents % 2) return this.dire("La médaille de tes parents, rendue par le vieux mendiant. « Ils ne t'ont pas abandonné », a-t-il dit. Tu voudrais tant le croire.");
       this.dire(PENSEES_PARENTS[G.penseeParents]);
     });
+    if (G.medailleParents) this.add.image(64, 146, texMedailleParents(this)).setScale(1.3).setDepth(8.3);
     const armes = G.armesLegendaires || [];
     if (armes.length) this.regarder(140, 88, 180, 88, `Tes armes légendaires (${armes.length} / ${Object.keys(ARMES_LEGENDAIRES).length}) : ${armes.map(id => armeLegendaire(id).nom).join(', ')}. La ville en parle : un peu plus de curieux au comptoir.`);
   }
