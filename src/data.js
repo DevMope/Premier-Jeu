@@ -1123,12 +1123,13 @@ const PLACES_PAR_ETABLI = 2;
 // L'expérience compte jusqu'à ce nombre de clients servis (pour le flair et pour attirer du monde).
 const EXPERIENCE_MAX = 80;
 
-// (v0.86, lot A-1) La journée au comptoir : il ouvre à 8 h et ferme à 18 h ; chaque action prend du
+// (v0.86, lot A-1) La journée au comptoir : il ouvre à 10 h (v0.88) et ferme à 18 h ; chaque action prend du
 // temps (servir un client, écouter un récit, passer chez Grippesou...). L'éclairage fait fermer plus
-// tard (une demi-heure par niveau). Servir va plus vite avec l'expérience (1 h, puis ¾ h, puis ½ h).
+// tard (une demi-heure par niveau). Servir va un peu plus vite avec l'expérience (1 h, puis ¾ h) : en fin de partie, avec
+// beaucoup de clients, les journées deviennent pleines et l'horloge compte vraiment.
 const JOURNEE = {
-  ouverture: 8, fermeture: 18, parEclairage: 0.5,
-  service: [1, 0.75, 0.5], seuilsService: [25, 55],   // (selon l'expérience)
+  ouverture: 10, fermeture: 18, parEclairage: 0.5,
+  service: [1, 0.75], seuilsService: [30],   // (selon l'expérience)
   recit: 0.25, visite: 0.25, express: 0.5, marchander: 0.5, observer: 0.25,
   alerte: 1,   // une heure avant la fermeture, le ciel rougit et l'horloge prévient
 };

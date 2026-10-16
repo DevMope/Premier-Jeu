@@ -76,11 +76,11 @@ class CounterScene extends Phaser.Scene {
     this.cameras.main.fadeIn(400);
     this.creerStore();
     if (this.G.comptoirOuvert !== this.G.jour) {
-      // 8 h : on lève le store, le comptoir est officiellement ouvert.
+      // 10 h : on lève le store, le comptoir est officiellement ouvert.
       this.G.comptoirOuvert = this.G.jour;
       this.G.heure = this.heureAffichee = JOURNEE.ouverture;
       this.majHorloge();
-      this.raconter('Huit heures sonnent au clocher. Clique sur le store pour l\'ouvrir et commencer la journée !');
+      this.raconter('Dix heures sonnent au clocher. Clique sur le store pour l\'ouvrir et commencer la journée !');
       this.attendreStore();
     } else {
       this.store.setVisible(false);
@@ -519,7 +519,7 @@ class CounterScene extends Phaser.Scene {
     const zone = this.add.rectangle(FENETRE.x + 250, FENETRE.y + 22, 204, 28, 0xffffff, 0).setDepth(4).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => {
       const G = this.G, f = heureFermeture(G);
-      this.raconter(`Il est ${formatHeure(heureDuComptoir(G))}. Le comptoir ferme à ${formatHeure(f)}. Servir un client prend ${formatDuree(dureeService(G))}${dureeService(G) > JOURNEE.service[2] ? " (moins, avec l'expérience)" : ''} ; écouter un récit ${formatDuree(JOURNEE.recit)} ; passer chez Grippesou ${formatDuree(JOURNEE.express)}.${niveauAmelioration(G, 'eclairage') < 3 ? ' Un meilleur éclairage fait fermer plus tard.' : ''}`, "L'horloge");
+      this.raconter(`Il est ${formatHeure(heureDuComptoir(G))}. Le comptoir ferme à ${formatHeure(f)}. Servir un client prend ${formatDuree(dureeService(G))}${dureeService(G) > JOURNEE.service[JOURNEE.service.length - 1] ? " (moins, avec l'expérience)" : ''} ; écouter un récit ${formatDuree(JOURNEE.recit)} ; passer chez Grippesou ${formatDuree(JOURNEE.express)}.${niveauAmelioration(G, 'eclairage') < 3 ? ' Un meilleur éclairage fait fermer plus tard.' : ''}`, "L'horloge");
     });
     this.heureAffichee = heureDuComptoir(this.G);
     this.majHorloge();
