@@ -1037,7 +1037,7 @@ const POSTES = {
   jeux: 'Jeux', cadeaux: 'Cadeaux', marche: 'Achats au marché', express: 'Marchand express',
   trouvailles: 'Trouvailles', reserve: 'Agrandissements', dedommagements: 'Dédommagements',
   remboursements: 'Remboursements de prêts', dons: 'Dons au mendiant', prets: 'Prêts reçus', salaires: 'Salaires',
-  sabotages: 'Primes de la Faucheuse', colporteur: 'Le colporteur',
+  sabotages: 'Primes de la Faucheuse', colporteur: 'Le colporteur', primes: 'Primes de la garde',
   bazar: 'Cadeaux du Bazar',
   ameliorations: 'Améliorations du comptoir', interets: 'Intérêts du coffre',
   atelier: "Fournitures de l'atelier", loyer: 'Loyer du comptoir', revente: 'Reventes',
@@ -2059,7 +2059,7 @@ const AVIS_RECHERCHE = [
 const RECHERCHE = { jourMin: 8, innocent: 0.3, garde: 0.75, mensongeVu: 0.25, reputation: 1, erreur: 2, part: 0.25 };   // (part : ta part de la prime, le reste va à la garde)
 const PAROLES_RECHERCHE = {
   bandit: [
-    "Une corde, des rations, et pas de questions. Je paie bien... et je suis pressé.",
+    "Une corde, des rations, et pas de questions. Je paie bien... et j'ai hâte de partir.",
     "On m'a dit que tu ne posais pas de questions. C'est vrai, j'espère ?",
     "Belle journée, hein ? Ne regarde pas trop ma figure, je suis timide.",
     "Je voyage... discrètement. Tu vois ce que je veux dire. Sers-moi vite, et on ne s'est jamais vus.",
@@ -2067,9 +2067,9 @@ const PAROLES_RECHERCHE = {
   ],
   innocent: [
     "Bonjour ! Ne fais pas cette tête : on me regarde de travers depuis qu'il y a ces affiches.",
-    "Bonjour, je cherche de quoi partir en mission. Et non, je ne suis pas celui de l'affiche.",
-    "Un loup m'a pris un œil, il y a longtemps. Depuis, les enfants ont peur de moi. Toi aussi ?",
-    "Je suis pressé, oui. Mais c'est la faute de ma belle-mère, pas de la garde.",
+    "Bonjour, je cherche de quoi partir en mission. Et non, je n'ai rien à voir avec l'affiche.",
+    "Une vieille blessure, rien de plus. Depuis, les enfants ont peur de moi. Toi aussi ?",
+    "J'ai hâte, oui. Mais c'est la faute de ma belle-mère, pas de la garde.",
     "Bonjour ! Une corde, des rations... Pourquoi tu me dévisages comme ça ?",
   ],
 };
@@ -2096,16 +2096,16 @@ const IMPOSTEURS = {
   },
   faussePelerine: {
     race: 'humain', feminin: true, nom: p => `Sœur ${p}`,
-    accueil: ["Je marche jusqu'au monastère des Cimes, pieds nus, pour expier mes fautes. Les dieux te rendront ta générosité.",
+    accueil: ["Je marche jusqu'à l'abbaye de Clairval, pieds nus, pour expier mes fautes. Les dieux te rendront ta générosité.",
       "Une pauvre pèlerine, sans un sou... Les dieux voient tout, marchand. Ils sauront que tu m'as aidée."],
     indices: [
-      { t: "Ses sandales sont neuves : pas un grain de poussière.", louche: true, d: 0.15 },
+      { t: "Ses pieds sont propres et roses : pas une ampoule, pas un grain de poussière.", louche: true, d: 0.15 },
       { t: "Elle ne connaît pas la prière du soir des pèlerins.", louche: true, d: 0.45 },
       { t: "Une bague en or dépasse de sa manche.", louche: true, d: 0.7 },
     ],
     fuite: "Les dieux... euh... m'appellent ailleurs. Adieu !",
     merci: "Que les dieux te bénissent, mon enfant. Je prierai pour toi... longtemps.",
-    arnaque: "La « {nom} » a été vue à la taverne du Gué : elle buvait ce qu'elle avait tiré de ton baluchon.",
+    arnaque: "Ta « {nom} » a été vue à la taverne de Bourg-Joyeux : elle buvait ce qu'elle avait tiré de ton baluchon.",
   },
   fauxNeveu: {
     accueil: ["Je viens de la part de mon oncle, {ami}. Il m'a dit que tu me ferais un bon prix... et crédit, si besoin.",
@@ -2117,7 +2117,7 @@ const IMPOSTEURS = {
     ],
     fuite: "Ah... euh... j'ai dû me tromper de comptoir. Mon oncle est très vieux, tu sais.",
     merci: "Merci ! Mon oncle sera ravi. Je te rapporte ta part en revenant, promis juré !",
-    arnaque: "Ton client « neveu de {ami} » ? {ami} n'a ni neveu ni nièce. Ton baluchon est déjà vendu au marché noir.",
+    arnaque: "Ton visiteur « de la famille de {ami} » ? {ami} n'a ni neveu ni nièce. Ton baluchon est déjà vendu au marché noir.",
   },
   espion: {
     accueil: ["Une grosse commande ! Tout ton meilleur matériel. Et dis-moi combien tu l'as payé, par pure curiosité.",
@@ -2129,7 +2129,7 @@ const IMPOSTEURS = {
     ],
     fuite: "Bon, bon. Je vois que tu as l'œil. Mon patron sera déçu.",
     merci: "Excellent, excellent. Tout est noté. Euh, je veux dire : merci, je pars à l'aventure !",
-    arnaque: "Le marchand de la rue d'en bas vend depuis ce matin un baluchon qui ressemble beaucoup au tien... Ton client d'hier était son espion.",
+    arnaque: "Au marché noir, on vend depuis ce matin un baluchon qui ressemble beaucoup au tien... {nom} espionnait pour un concurrent.",
   },
 };
 // Des clients honnêtes qui ont l'air louches : leurs premiers indices trompent, les suivants rassurent.
@@ -2169,13 +2169,13 @@ const LOUCHES = {
 };
 // Ce qu'on remarque chez un client ordinaire (rien de louche)
 const INDICES_HONNETES = [
-  { t: "Ses bottes sont usées par la route : un vrai voyageur.", louche: false, d: 0.1 },
+  { t: "Ses bottes sont usées par la route : elles ont vu du pays.", louche: false, d: 0.1 },
   { t: "Son équipement a été réparé souvent, avec soin.", louche: false, d: 0.3 },
   { t: "{Il} connaît le nom des aubergistes de la route.", louche: false, d: 0.5 },
   { t: "{Il} parle de sa mission sans détour, et sans se vanter.", louche: false, d: 0.2 },
   { t: "Une vieille cicatrice : {il} a déjà vu le danger de près.", louche: false, d: 0.6 },
 ];
-const FOUILLE_VEXE = ["Tu me prends pour un voleur ?! Vas-y, fouille... Je m'en souviendrai.",
+const FOUILLE_VEXE = ["Tu me soupçonnes de vol ?! Vas-y, fouille... Je m'en souviendrai.",
   "Hé ! On ne fouille pas les honnêtes gens comme ça ! C'est vexant, tu sais."];
 
 // (v0.86, lot A-4) Le marchandage. La part qu'un client te reversera au retour se dit en pourcents :
@@ -2191,25 +2191,25 @@ const STYLES_MARCHANDAGE = {
     refuse: "Non. {p} %, c'est mon dernier mot.", part: "Tu me prends pour une vache à lait ? Je vais voir ailleurs !" },
   hobbit: { patience: 3, marge: [5, 10], plancher: 0.7, tic: "{Il} renifle, se frotte les yeux... mais jette un œil à sa bourse.",
     offre: "Je te reverserai {p} % de mon butin. C'est honnête, non ? Mes pauvres pieds vont faire tout le chemin, eux !",
-    cede: "{p} % ?! Tu veux ma ruine ! Bon... d'accord. Mais pas une miette de plus !", refuse: "Pas une miette de plus ! Pas une ! Je vais pleurer, je te préviens.",
+    cede: "{p} % ?! Tu veux ma ruine ! Bon... d'accord. Mais pas une miette de plus !", refuse: "Pas une miette de plus ! {p} %, pas un de plus ! Je vais pleurer, je te préviens.",
     part: "Tu es sans cœur ! Je vais chez quelqu'un de plus gentil, voilà !" },
-  nain: { patience: 4, marge: [5, 10], plancher: 0.85, respect: true, tic: "{Il} se lisse la barbe, longuement. Il réfléchit.",
+  nain: { patience: 4, marge: [5, 10], plancher: 0.85, respect: true, tic: "{Il} se lisse la barbe, longuement. {Il} réfléchit.",
     offre: "{p} %. Un nain ne marchande pas deux fois.", cede: "{p} %. Tu sais tenir bon, toi. J'aime ça.",
     refuse: "Non. {p} %, pas une pièce de plus. Un nain a sa fierté.", part: "Assez ! Mon or vaut mieux que tes manières." },
   elfe: { patience: 2, marge: [0, 10], plancher: 0.8, tic: "{Il} soupire, les yeux au ciel... mais ne s'en va pas.",
     offre: "{p} %. Ne me fais pas perdre mon temps, marchand.", cede: "Soit. {p} %. Que cela finisse.",
     refuse: "Tu abuses de ma patience. {p} %.", part: "Les elfes ont la mémoire longue. Adieu." },
-  orc: { patience: 2, marge: [0, 5], plancher: 0.8, tic: "{Il} tapote le comptoir. Il grogne, mais il hésite.",
-    offre: "{p} %. Et estime-toi heureux.", cede: "Grrr... {p} %. Ne pousse pas ta chance.",
-    refuse: "Encore un mot sur ma part, marchand, et c'est ta tête que je rapporte au butin.", part: "Assez ! Je m'en vais avant de casser quelque chose." },
+  orc: { patience: 2, marge: [0, 5], plancher: 0.8, tic: "{Il} tapote le comptoir. {Il} grogne, mais {il} hésite.",
+    offre: "{p} %. Et estime-toi heureux{J}.", cede: "Grrr... {p} %. Ne pousse pas ta chance.",
+    refuse: "{p} %. Encore un mot sur ma part, marchand, et c'est ta tête que je rapporte en trophée.", part: "Assez ! Je m'en vais avant de casser quelque chose." },
   gobelin: { patience: 4, marge: [5, 15], plancher: 0.6, bluffeur: true, tic: "{Il} se frotte les mains, l'œil qui brille... comme toujours.",
     offre: "{p} % ! Une affaire en or, pour toi seulement, mon ami !", cede: "{p} % ?! Tu me voles ! ... Marché conclu, hé hé.",
     refuse: "Non non non ! Bon... non. {p} %.", part: "Tu es pire qu'un gobelin ! Je vais vendre mes services ailleurs !" },
 };
 const PAROLES_TROUVAILLE = {
-  cede: ["Bon... {prix} pièces. Tu es dur en affaires.", "{prix} pièces ? Allez, va. C'est bien parce que c'est toi."],
+  cede: ["Bon... {prix} pièces. Tu es dur{J} en affaires.", "{prix} pièces ? Allez, va. C'est bien parce que c'est toi."],
   refuse: ["Non, {prix} pièces, c'est déjà donné.", "Tu plaisantes ? {prix} pièces, pas moins."],
-  part: ["Tant pis, je la garde. Quelqu'un d'autre saura l'apprécier.", "Je remballe. Tu ne sais pas reconnaître une belle pièce."],
+  part: ["Tant pis, je garde mon trésor. Quelqu'un d'autre saura l'apprécier.", "Je remballe. Tu ne sais pas reconnaître une belle pièce."],
 };
 
 // --- (v0.82, étape 10b) La forge chez soi ---

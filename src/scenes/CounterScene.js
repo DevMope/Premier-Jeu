@@ -246,7 +246,7 @@ class CounterScene extends Phaser.Scene {
     }
     c.add(g);
     const tic = ticVisible(G, v);
-    const texteNote = note || (tic ? texteMarchandage(v, 'tic') : 'Rien ne trahit ce qu\'il pense.');
+    const texteNote = note || (tic ? texteMarchandage(v, 'tic') : `Rien ne trahit ce qu'${v.feminin ? 'elle' : 'il'} pense.`);
     c.add(this.add.text(x + 14, y + 146, texteNote, style(11, tic ? '#7a3a10' : '#6a4a2a', { fontStyle: 'italic bold', wordWrap: { width: 224 } })));
     if (tic && !note) {
       creerGlyphesHD(this);
@@ -354,7 +354,7 @@ class CounterScene extends Phaser.Scene {
       g.fillStyle(k < r.louche ? 0xc04020 : 0x8a7050).fillRoundedRect(cx - 6, cy - 4, 12, 8, 2);
     }
     c.add(g);
-    c.add(this.add.text(x + 14, y + H - 20, r.louche >= 4 ? 'Sans doute un imposteur... sans doute.' : r.louche <= 1 ? 'Rien de louche, à première vue.' : 'Difficile à dire.', style(11, '#6a4a2a', { fontStyle: 'italic' })));
+    c.add(this.add.text(x + 14, y + H - 20, r.louche >= 4 ? (this.voyageur && this.voyageur.feminin ? 'Sans doute une imposteuse... probablement.' : 'Sans doute un imposteur... probablement.') : r.louche <= 1 ? 'Rien de louche, à première vue.' : 'Difficile à dire.', style(11, '#6a4a2a', { fontStyle: 'italic' })));
     this.majBoutonsService();
   }
 
@@ -411,18 +411,18 @@ class CounterScene extends Phaser.Scene {
     v.recherche.prime = avis.prime;
     this.epinglerAffiche(avis);
     this.majCommande();
-    this.titreCommande.setText('Un inconnu');
+    this.titreCommande.setText(v.feminin ? 'Une inconnue' : 'Un inconnu');
     this.sousTitre.setText('');
     this.texteSac.setText(''); this.texteChance.setText('');
     this.bouton('', null);
     this.enService = false;
     this.majBoutonsService();
     const parole = auHasard(PAROLES_RECHERCHE[v.recherche.innocent ? 'innocent' : 'bandit']);
-    this.raconter(`Ce visage... Tu as déjà vu ce ${v.apparence.marques && v.apparence.marques.includes('cacheOeil') ? 'cache-œil' : 'regard'} quelque part. L'avis de recherche du marché ?`);
-    this.timerRecherche = this.time.delayedCall(1800, () => this.dire(parole, 'Un inconnu', v.nom));
+    this.raconter(`Ce visage... Tu as déjà vu ${({ cacheOeil: 'ce cache-œil', balafre: 'cette balafre', cicatrice: 'cette cicatrice', tatouage: 'ce tatouage', monocle: 'ce monocle', bandeau: 'ce bandeau', dentOr: 'cette dent en or', boucle: "cette boucle d'oreille" })[(v.apparence.marques || [])[0]] || 'ce visage'} quelque part. L'avis de recherche du marché ?`);
+    this.timerRecherche = this.time.delayedCall(1800, () => this.dire(parole, v.feminin ? 'Une inconnue' : 'Un inconnu', v.nom));
     const choix = [
       ['☀ Appeler la garde', () => this.appelerGarde(entree)],
-      ['☾ Le cacher derrière', () => this.cacherDerriere(entree)],
+      [`☾ ${v.feminin ? 'La' : 'Le'} cacher derrière`, () => this.cacherDerriere(entree)],
       [`${v.feminin ? 'La' : 'Le'} servir`, () => { entree.decide = true; this.finRecherche(); this.arrivee(entree); }],
       [`${v.feminin ? 'La' : 'Le'} renvoyer`, () => this.renvoyerRecherche(entree)],
     ];
@@ -444,9 +444,9 @@ class CounterScene extends Phaser.Scene {
       this.avancer(JOURNEE.visite, 'la garde');
       if (r.juste) {
         Son.jouer('caisse');
-        this.dire(`Bien vu, marchand ! ${v.recherche.avis} ne fera plus de mal à personne. Voici ta part de la prime : ${r.prime} pièces. (réputation +${RECHERCHE.reputation})`, GARDE.capitaine.nom);
+        this.dire(`Bien vu, ${eJ() ? 'marchande' : 'marchand'} ! ${v.recherche.avis} ne fera plus de mal à personne. Voici ta part de la prime : ${r.prime} pièces. (réputation +${RECHERCHE.reputation})`, GARDE.capitaine.nom);
       } else {
-        this.dire(`Ce n'est pas ${v.recherche.avis}, marchand : ${v.nom.split(' ')[0]} n'a rien à voir avec lui. Tu as fait arrêter un honnête voyageur pour rien. (réputation −${RECHERCHE.erreur})`, GARDE.capitaine.nom);
+        this.dire(`Ce n'est pas ${v.recherche.avis}, marchand : ${prenomDe(v.nom)} n'a rien à voir avec ce bandit. Tu as fait arrêter ${v.feminin ? 'une honnête voyageuse' : 'un honnête voyageur'} pour rien. (réputation −${RECHERCHE.erreur})`, GARDE.capitaine.nom);
       }
       this.majPanneauGauche(); this.majStock(); this.dessinerPieces();
       this.bouton('Continuer', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
@@ -483,8 +483,9 @@ class CounterScene extends Phaser.Scene {
     const v = entree.voyageur, G = this.G;
     this.titreCommande.setFontSize(17).setText('La garde de la Confrérie');
     this.dire(v.recherche.innocent ? `On nous a signalé un individu louche entré chez toi tout à l'heure. ${v.feminin ? 'Une femme' : 'Un type'} qui ressemble à ${v.recherche.avis}. Tu ne l'aurais pas vu${v.feminin ? 'e' : ''}, par hasard ?`
-      : `On recherche ${v.recherche.avis}. Un voisin l'a vu entrer chez toi. Tu ne l'aurais pas vu, par hasard ?`, GARDE.capitaine.nom);
+      : `On recherche ${v.recherche.avis}. Un voisin l'a vu${v.feminin ? 'e' : ''} entrer chez toi. Tu ne l'aurais pas vu${v.feminin ? 'e' : ''}, par hasard ?`, GARDE.capitaine.nom);
     const fin = (texte, fache) => {
+      this.actionB = null; this.majBoutonsService();
       this.exprimer(fache ? 'fache' : 'neutre');
       this.dire(texte, GARDE.capitaine.nom);
       this.majPanneauGauche(); this.dessinerPieces();
@@ -493,11 +494,11 @@ class CounterScene extends Phaser.Scene {
     };
     this.choix(["Je n'ai vu personne", () => {
       const r = repondreGarde(G, v, false);
-      fin(r.vu ? `Tu te moques de moi ? On l'a vu filer par ta porte de derrière ! Je m'en souviendrai, marchand. (réputation −${RECHERCHE.erreur})` : 'Bon. Ouvre l\'œil, marchand. Et préviens-nous si tu le vois.', r.vu);
+      fin(r.vu ? `Tu te moques de moi ? On l'a vu${v.feminin ? 'e' : ''} filer par ta porte de derrière ! Je m'en souviendrai, marchand. (réputation −${RECHERCHE.erreur})` : `Bon. Ouvre l'œil, marchand. Et préviens-nous si tu ${v.feminin ? 'la' : 'le'} vois.`, r.vu);
     }], [`${v.feminin ? 'Elle' : 'Il'} est derrière`, () => {
       const r = repondreGarde(G, v, true);
       fin(r.juste ? `Merci de ta coopération. ${v.recherche.avis} ne fera plus de mal à personne. Voici ta part de la prime : ${r.prime} pièces.`
-        : `${v.nom.split(' ')[0]} ? Ce n'est pas ${v.recherche.avis}, voyons ! Tu nous fais perdre notre temps. (réputation −${RECHERCHE.erreur})`, !r.juste);
+        : `${prenomDe(v.nom)} ? Ce n'est pas ${v.recherche.avis}, voyons ! Tu nous fais perdre notre temps. (réputation −${RECHERCHE.erreur})`, !r.juste);
     }]);
   }
 
@@ -571,7 +572,7 @@ class CounterScene extends Phaser.Scene {
     // la file d'attente se vide de ceux qui s'en vont
     this.reconstruireFile();
     Son.jouer('clochette');
-    const prenoms = l => { const n = l.map(v => v.nom.split(' ')[0]); return n.length > 1 ? n.slice(0, -1).join(', ') + ' et ' + n[n.length - 1] : n[0]; };
+    const prenoms = l => { const n = l.map(v => prenomDe(v.nom)); return n.length > 1 ? n.slice(0, -1).join(', ') + ' et ' + n[n.length - 1] : n[0]; };
     const fem = l => l.every(v => v.feminin);
     const c = this.ficheFermeture = this.add.container(0, 0).setDepth(20);
     c.add(this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.45).setInteractive());
@@ -588,7 +589,7 @@ class CounterScene extends Phaser.Scene {
     const suite = creerBouton(this, x + L / 2, y + H - 60, 200, 'Continuer', () => { c.destroy(); this.ficheFermeture = null; this.voyageurSuivant(); });
     c.add([suite.fond, suite.label]);
     c.add(this.add.text(x + L / 2, y + H - 24, `Aujourd'hui : ${pluriel(G.journal.servis, 'client servi', 'clients servis')} · ${pluriel(G.journal.retours, 'retour de mission', 'retours de mission')}`, style(13, '#5a3a1c', { fontStyle: 'italic' })).setOrigin(0.5));
-    this.raconter(`${formatHeure(heureFermeture(G))} sonnent au clocher : tu retournes le petit écriteau, « Fermé ».${G.file.length ? ' Mais on frappe encore au volet...' : ''}`, 'Fermeture');
+    this.raconter(`Le clocher sonne ${formatHeure(heureFermeture(G))} : tu retournes le petit écriteau, « Fermé ».${G.file.length ? ' Mais on frappe encore au volet...' : ''}`, 'Fermeture');
     this.bouton('...', null);
   }
 
@@ -912,7 +913,7 @@ class CounterScene extends Phaser.Scene {
     const n = Math.max(1, ids.length), cols = Math.min(4, n), lignes = Math.ceil(n / cols);
     const l = (ids.length ? cols * 132 : 300) + 20, h = lignes * 40 + 46, x0 = 420 - l / 2, y0 = 352 - h;
     c.add(this.add.rectangle(x0 + l / 2, y0 + h / 2, l, h, 0x2a1a10, 0.94).setStrokeStyle(2, 0xc9a046).setInteractive());
-    c.add(this.add.text(x0 + 12, y0 + 8, 'Le râtelier' + (pref ? ` · ${v.nom.split(' ')[0]} préfère : ${ITEMS[pref].nom.toLowerCase()}` : ''), style(12, '#f3d98a', { fontStyle: 'bold' })));
+    c.add(this.add.text(x0 + 12, y0 + 8, 'Le râtelier' + (pref ? ` · ${prenomDe(v.nom)} préfère : ${ITEMS[pref].nom.toLowerCase()}` : ''), style(12, '#f3d98a', { fontStyle: 'bold' })));
     c.add(this.add.text(x0 + l - 10, y0 + 6, '✕', style(14, '#c9b48a', { fontStyle: 'bold' })).setOrigin(1, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirRatelier()));
     if (!ids.length) c.add(this.add.text(x0 + 12, y0 + 32, "Aucune arme en réserve. Thorgal en vend quelques-unes chaque matin.", style(11, '#e8dcc0', { fontStyle: 'italic', wordWrap: { width: l - 24 } })));
     ids.forEach((id, i) => {
@@ -1039,7 +1040,7 @@ class CounterScene extends Phaser.Scene {
     const commande = commandeDe(v);
     // (v0.64) l'épée fêlée passe pour l'arme qu'il a commandée, quelle qu'elle soit
     const besoin = estArme(id) ? Object.keys(commande).find(estArme) : id;
-    if (!besoin || !commande[besoin]) return this.dire(`${v.nom.split(' ')[0]} n'a pas commandé ${estArme(id) ? "d'arme" : deNom(ITEMS[id].nom.toLowerCase())} : ça éveillerait ses soupçons.`, '');
+    if (!besoin || !commande[besoin]) return this.dire(`${prenomDe(v.nom)} n'a pas commandé ${estArme(id) ? "d'arme" : deNom(ITEMS[id].nom.toLowerCase())} : ça éveillerait ses soupçons.`, '');
     if (fourni(v, this.colis, besoin) >= commande[besoin]) return this.dire(estArme(id) ? "Son baluchon a déjà son arme. Retires-en une d'abord." : `Son baluchon a déjà son compte ${deNom(ITEMS[id].nom.toLowerCase())}. Retires-en ${accordAdj(besoin, 'un', 'une', 'un', 'une')} d'abord.`, '');
     this.G.pieges[id]--;
     this.colis[id] = (this.colis[id] || 0) + 1;
@@ -1265,7 +1266,7 @@ class CounterScene extends Phaser.Scene {
     // (audit v0.61) dénoncée plus tôt dans la journée : personne ne vient
     if (!enMafia(G)) { this.bouton('...', null); return this.partirPar(FENETRE.x - 80); }
     // (audit v0.61) chez le Serpent, c'est Corvin le Crotale qui passe prendre la part
-    const col = collecteurDe(G), qui = col.nom, pre = col.nom.split(' ')[0];
+    const col = collecteurDe(G), qui = col.nom, pre = prenomDe(col.nom);
     const rang = rangMafia(G);
     const partir = () => { this.actionB = null; this.majBoutonsService(); this.dessinerPieces(); this.majStock(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
     this.titreCommande.setFontSize(17).setText(`${bande} · ${NOMS_RANGS[rang]}`);
@@ -1442,7 +1443,7 @@ class CounterScene extends Phaser.Scene {
         return;
       }
       let bonjour = v.prevu ? "C'est moi qui t'ai écrit, tu te souviens ? " : '';
-      if (entree.reporte) bonjour = "Bonjour ! Je suis revenu dès l'ouverture, comme convenu hier soir. ";
+      if (entree.reporte) bonjour = `Bonjour ! Je suis revenu${v.feminin ? 'e' : ''} dès l'ouverture, comme convenu hier soir. `;
       if (entree.attentes) bonjour = "Me revoilà ! On reprend où on en était ? ";
       if (v.habitue) bonjour = 'Re-bonjour, c\'est encore moi ! ' + (this.aReparer(v).length ? 'Mon matériel a souffert la dernière fois... ' : '');
       if (v.exige && !entree.attentes) bonjour += "Et après ma dernière mission ratée, tu me dois bien un objet de plus que ma commande ! ";
@@ -1508,7 +1509,7 @@ class CounterScene extends Phaser.Scene {
 
   // Ce qui reste visible dans l'obscurité : la Faucheuse, ses paroles et tes réponses.
   elementsDansLOmbre() {
-    return [this.fondDialogue, this.plaqueNom, this.nomParleur, this.sousNom, this.texteDialogue, this.boutonAction.fond, this.boutonAction.label,
+    return [this.plumeNarration, this.titreNarration, this.fondDialogue, this.plaqueNom, this.nomParleur, this.sousNom, this.texteDialogue, this.boutonAction.fond, this.boutonAction.label,
       this.boutonRefuser.fond, this.boutonRefuser.label];
   }
 
@@ -1580,16 +1581,16 @@ class CounterScene extends Phaser.Scene {
 
     // Ses commentaires sur tes choix.
     if (bilan.voulues.length) {
-      const offerts = bilan.voulues.map(p => p.voyageur.nom.split(' ')[0]);
+      const offerts = bilan.voulues.map(p => prenomDe(p.voyageur.nom));
       const seul = bilan.voulues[0].voyageur.feminin ? "celle-là, tu me l'as offerte" : "celui-là, tu me l'as offert";
       elle(`« ${enListe(offerts)}... ${offerts.length > 1 ? 'ceux-là, tu me les as offerts' : seul}. Je n'oublie jamais un cadeau. »`);
     } else {
       const bienPrepare = entree.partis.find(p => p.chance >= 0.7);
-      if (bienPrepare) elle(`« Tu avais pourtant tout fait pour ${bienPrepare.voyageur.nom.split(' ')[0]}. Ça ne suffit jamais. »`);
+      if (bienPrepare) elle(`« Tu avais pourtant tout fait pour ${prenomDe(bienPrepare.voyageur.nom)}. Ça ne suffit jamais. »`);
     }
     for (const p of bilan.demasques) {
       const id = Object.keys(p.pieges).find(k => p.pieges[k] > 0);
-      elle(`« Mais on a retrouvé ${PIEGES[id] ? leNom(id, PIEGES[id].nom.toLowerCase()) : 'ton piège'} ${dePersonne(p.voyageur.nom.split(' ')[0])}... Le village murmure ton nom. »`);
+      elle(`« Mais on a retrouvé ${PIEGES[id] ? leNom(id, PIEGES[id].nom.toLowerCase()) : 'ton piège'} ${dePersonne(prenomDe(p.voyageur.nom))}... Le village murmure ton nom. »`);
       recit(`Ton piège a été découvert. Réputation −${PERTE_DEMASQUE}.`);
     }
     if (bilan.sabotage) {
@@ -1710,7 +1711,7 @@ class CounterScene extends Phaser.Scene {
     const inverse = { fils: ['père', 'mère'], fille: ['père', 'mère'], frère: ['frère', 'sœur'], sœur: ['frère', 'sœur'], père: ['fils', 'fille'], mère: ['fils', 'fille'] };
     const proche = `${d.feminin ? 'ma' : 'mon'} ${inverse[p.lien][d.feminin ? 1 : 0]}`;
     const il = d.feminin ? 'elle' : 'il';
-    const prenom = d.nom.split(' ')[0];
+    const prenom = prenomDe(d.nom);
     rencontrer(G, p.nom);
     this.titreCommande.setFontSize(17).setText('Une visite...');
     const parler = texte => this.dire(texte, `${p.nom}, ${p.lien} ${dePersonne(d.nom)}`, p.nom);
@@ -2132,7 +2133,7 @@ class CounterScene extends Phaser.Scene {
     if (v.imposteur) {
       // (v0.86) servi, l'imposteur ne revient jamais : on apprendra demain ce qu'il a fait du baluchon
       arnaquer(this.G, v, this.colis);
-      this.avancer(dureeService(this.G), `${v.nom.split(' ')[0]} servi${v.feminin ? 'e' : ''}`);
+      this.avancer(dureeService(this.G), `${prenomDe(v.nom)} servi${v.feminin ? 'e' : ''}`);
       Son.jouer('caisse');
       this.enService = false; this.majCommande(); this.majBoutonsService(); this.bouton('...', null); this.majPanneauGauche();
       const objets = Object.entries(this.colis).flatMap(([id, n]) => Array(n).fill(id));
@@ -2143,7 +2144,7 @@ class CounterScene extends Phaser.Scene {
       return this.empaqueter(objets, aller);
     }
     const msg = partir(this.G, v, this.colis, this.pieges);
-    this.avancer(dureeService(this.G), `${v.nom.split(' ')[0]} servi${v.feminin ? 'e' : ''}`);
+    this.avancer(dureeService(this.G), `${prenomDe(v.nom)} servi${v.feminin ? 'e' : ''}`);
     Son.jouer('caisse');
     this.enService = false;
     this.time.delayedCall(2500, () => conseilGarrick(this, 'remis'));

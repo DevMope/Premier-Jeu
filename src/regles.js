@@ -504,6 +504,7 @@ function nomsActifs(G) {
     ...G.file.filter(e => e.type === 'client').map(e => e.voyageur.nom),
     ...enMission(G).map(p => p.voyageur.nom),
     ...(G.faucheuse && G.faucheuse.mission ? [G.faucheuse.mission.cible.nom] : []),
+    ...(G.reportes || []).map(v => v.nom),   // (v0.86 : ceux qui reviennent demain matin)
   ];
 }
 
@@ -1712,7 +1713,7 @@ function formerFileDuJour(G) {
   const aine = aineDuJour(G, 'comptoir');
   if (aine) { G.ainesVus = [...(G.ainesVus || []), aine]; file.splice(hasard(0, file.length), 0, { type: 'aine', race: aine }); }
   // (v0.86) une tête mise à prix (ou son sosie), environ une fois par semaine
-  const recherche = rechercheDuJour(G);
+  const recherche = rechercheDuJour(G, file.filter(e => e.type === 'client').map(e => e.voyageur.nom));
   if (recherche) file.splice(hasard(0, file.length), 0, { type: 'client', voyageur: recherche });
   // (v0.86) ceux qui t'avaient écrit et n'ont pas pu passer hier avant la fermeture : en tête de file
   const reportes = (G.reportes || []).map(v => ({ type: 'client', voyageur: v, reporte: true }));
@@ -2256,7 +2257,7 @@ function trouvailles(G, voyageur) {
 
 function acheterTrouvaille(G, t) {
   if (t.vendu) return 'Déjà acheté.';
-  if (t.retire) return "Il a remballé son objet.";
+  if (t.retire) return "L'objet est remballé.";
   if (G.tresors.length >= placesAtelier(G)) return `Ton atelier est plein (${placesAtelier(G)} objets). Un établi de plus (améliorations) donne plus de place.`;
   if (!peutPayer(G, t.prix)) return manqueArgent(G, t.prix, "Pas assez d'argent.");
   payer(G, t.prix, 'trouvailles');
@@ -2955,9 +2956,11 @@ function avisDeRecherche(G) {
 // --- (v0.86, lot A-3) Les imposteurs et l'inspection ---
 
 // Les textes d'imposture : {nom}, {prenom}, {ami}, {Il}/{il} et {e} s'accordent à la personne.
+// Le prénom d'un nom (« Sire Aldric le Hardi » → « Aldric », « Sœur Edwige » → « Edwige »)
+function prenomDe(nom) { const m = nom.split(' '); return m[1] && /^(Sire|Sœur|Dame|Maître|Mère|Capitaine|Sergent|Garde|Grand-mère|Aïeule|Le|La)$/.test(m[0]) ? m[1] : m[0]; }
 function texteImposture(t, v, ami = '') {
-  return t.replaceAll('{nom}', v.nom).replaceAll('{prenom}', v.nom.split(' ')[0]).replaceAll('{ami}', ami)
-    .replaceAll('{Il}', v.feminin ? 'Elle' : 'Il').replaceAll('{il}', v.feminin ? 'elle' : 'il').replaceAll('{e}', v.feminin ? 'e' : '');
+  return t.replaceAll('{nom}', v.nom).replaceAll('{prenom}', prenomDe(v.nom)).replaceAll('{ami}', ami)
+    .replaceAll('{Il}', v.feminin ? 'Elle' : 'Il').replaceAll('{il}', v.feminin ? 'elle' : 'il').replaceAll('{e}', v.feminin ? 'e' : '').replaceAll('{J}', eJ());
 }
 
 // Parmi les clients imprévus du jour : un imposteur (environ un sur douze, un peu plus quand ta
@@ -2980,7 +2983,7 @@ function deguiserClients(G, clients, debut) {
         const prenom = auHasard(prenoms)[0].split(' ')[0];
         w = clients[i] = creerVoyageur(G, { nom: I.nom(prenom), race: I.race, feminin: I.feminin, niveau: 'aguerri' });
       }
-      const connus = Object.keys(G.personnes || {}).filter(n => n !== w.nom && !G.personnes[n].mort && !G.personnes[n].banni);
+      const connus = Object.keys(G.personnes || {}).filter(n => n !== w.nom && !G.personnes[n].mort && !G.personnes[n].banni && !G.personnes[n].feminin);   // (un « oncle »)
       const ami = connus.length ? auHasard(connus) : 'Garrick Cœur-de-Chêne';
       w.imposteur = { type, ami };
       w.accueilImposture = texteImposture(auHasard(I.accueil), w, ami);
@@ -3083,7 +3086,7 @@ function marchanderTrouvaille(G, v, t) {
   const plancher = Math.round(t.prixDepart * (st.plancher + (aleaClient(v, 't' + t.tresor.nom) - 0.5) * 0.1));
   const propose = Math.max(1, Math.round(t.prix * (1 - MARCHANDAGE.pasTrouvaille)));
   t.patience--;
-  if (propose >= plancher) { t.prix = propose; return { issue: 'cede', texte: auHasard(PAROLES_TROUVAILLE.cede).replaceAll('{prix}', propose) }; }
+  if (propose >= plancher) { t.prix = propose; return { issue: 'cede', texte: auHasard(PAROLES_TROUVAILLE.cede).replaceAll('{prix}', propose).replaceAll('{J}', eJ(G)) }; }
   if (t.patience <= 0) { t.retire = true; return { issue: 'part', texte: auHasard(PAROLES_TROUVAILLE.part) }; }
   return { issue: 'refuse', texte: auHasard(PAROLES_TROUVAILLE.refuse).replaceAll('{prix}', t.prix) };
 }
@@ -3099,21 +3102,23 @@ function pencherCamp(G, camp, n = 1) {
 }
 
 // Le jour du recherché de la semaine (tiré une fois par semaine, au hasard), et lui (ou son sosie).
-function rechercheDuJour(G) {
+function rechercheDuJour(G, duJour = []) {
   if (G.jour < RECHERCHE.jourMin) return null;
   const semaine = Math.floor((G.jour - 1) / 7);
   G.joursRecherche = G.joursRecherche || {};
   if (G.joursRecherche[semaine] == null) G.joursRecherche[semaine] = Math.max(G.jour, semaine * 7 + 1 + hasard(0, 6));
   if (G.joursRecherche[semaine] !== G.jour) return null;
-  const avis = avisDeRecherche(G).filter(a => !(G.captures || []).includes(a.nom));
+  // (ni un bandit déjà arrêté, ni un qui est en mission ou dans la file, ni un mort)
+  const pris = [...nomsActifs(G), ...duJour, ...Object.keys(G.personnes || {}).filter(n => G.personnes[n].mort || G.personnes[n].banni)];
+  const avis = avisDeRecherche(G).filter(a => !(G.captures || []).includes(a.nom) && !pris.includes(a.nom));
   if (!avis.length) return null;
   const a = auHasard(avis);
   if (Math.random() < RECHERCHE.innocent) {
     // un honnête voyageur qui partage un signe distinctif avec le bandit (du même peuple)
     const race = NOMS[a.personne.race] ? a.personne.race : 'humain';
-    const pris = [...nomsActifs(G), ...Object.keys(G.personnes || {})];
-    const libres = NOMS[race].filter(([nom]) => !pris.includes(nom));
-    const [nom, feminin] = libres.length ? auHasard(libres) : auHasard(NOMS[race]);
+    const libres = NOMS[race].filter(([nom]) => !pris.includes(nom) && !(G.personnes || {})[nom]);
+    if (!libres.length) return null;
+    const [nom, feminin] = auHasard(libres);
     const v = creerVoyageur(G, { nom, race, feminin });
     v.apparence = { nom, race, feminin, marques: [a.personne.marques[0]] };
     v.recherche = { avis: a.nom, innocent: true, prime: a.prime };
@@ -3132,7 +3137,7 @@ function denoncerRecherche(G, v) {
   if (!v.recherche.innocent) {
     G.captures = [...(G.captures || []), v.recherche.avis];
     const part = Math.round(v.recherche.prime * RECHERCHE.part / 5) * 5;
-    G.argent += part;
+    encaisser(G, part, 'primes');
     G.reputation += RECHERCHE.reputation;
     pencherCamp(G, 'bien');
     return { juste: true, prime: part };
@@ -3163,8 +3168,7 @@ function cacherRecherche(G, v) {
 function repondreGarde(G, v, livrer) {
   if (livrer) {
     if (v.recherche.innocent) return denoncerRecherche(G, v);
-    pencherCamp(G, 'bien');   // (l'ombre gagnée en le cachant s'efface)
-    G.reussites.mal = Math.max(0, (G.reussites.mal || 0) - 1);
+    G.reussites.mal = Math.max(0, (G.reussites.mal || 0) - 1);   // (l'ombre gagnée en le cachant s'efface ; la lumière vient de la dénonciation)
     return denoncerRecherche(G, v);
   }
   const vu = Math.random() < RECHERCHE.mensongeVu && !v.recherche.innocent;

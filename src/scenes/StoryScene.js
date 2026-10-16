@@ -614,7 +614,8 @@ class StoryScene extends Cinematique {
       // Ton flair estime la revente (une fois restauré) et juge le prix demandé.
       const e = estimationFlair(G, t);
       c.add(this.add.text(170, y + 2, `Flair ${Math.round(e.flair * 100)} % · revente ~${e.min}–${e.max} p. restauré`, style(11, '#5a3a20')));
-      c.add(this.add.text(170, y + 17, `Ton flair : ${e.verdict.texte}`, style(12, e.verdict.couleur, { fontStyle: 'bold' })));
+      const verdict = this.add.text(170, y + 17, `Ton flair : ${e.verdict.texte}`, style(12, e.verdict.couleur, { fontStyle: 'bold' }));
+      c.add(verdict);
       const b = creerBouton(this, 470, y, 140, '', () => {
         const erreur = acheterTrouvaille(G, t);
         if (erreur) { Son.jouer('refus'); return info.setText(erreur); }
@@ -636,6 +637,8 @@ class StoryScene extends Cinematique {
       });
       c.add(marchand);
       const maj = () => {
+        const e2 = estimationFlair(G, t);   // (v0.86 : le verdict suit le prix marchandé)
+        verdict.setText(`Ton flair : ${e2.verdict.texte}`).setColor(e2.verdict.couleur);
         b.setTexte(t.vendu ? 'Acheté' : t.retire ? 'Remballé' : `Acheter ${t.prix} p.`);
         b.setActif(!t.vendu && !t.retire);
         marchand.setVisible(!t.vendu && !t.retire);
