@@ -344,6 +344,7 @@ Chaque étape doit donner une version **jouable**.
 | v 0.90 | **Lumière et ombre : la balance, le Carrefour, le serment** (planches 16 et 17, validées le 16/10) | **La balance devient un compteur de points** : chaque geste du barème la fait pencher (du plus petit au plus gros : le mendiant une fois par jour, soigner sans faire payer — un nouveau bouton au retour d'un blessé —, dédommager généreusement, une décoration +2, une mission de lumière +3, dénoncer un recherché +4 ; côté ombre, une âme offerte +1, un piège ou un service mafieux +2, une commande des Bannis +2, une mission pour les Bannis +3, cacher un recherché +4), avec le **frein** (×1 jusqu'à 25, ×0,4 jusqu'à 60, ×0,25 au-delà ; revenir vers le centre compte en entier) et un **journal** des derniers gestes. Une vieille partie reprend sa balance là où elle était. **La jauge en dégradé** (le blanc du milieu se fond dans le violet et le jaune, la zone neutre en pointillés, l'ombre à gauche et la lumière à droite partout, bandeau compris). **Le livre des deux voies** au bureau (le prochain palier de chaque côté, le barème, les derniers jours). **Les ☀ / ☾ en pixel art** sur les boutons des choix (appeler la garde, cacher un recherché, rendre un service, dédommager au maximum, soigner sans faire payer, donner au mendiant) dès 40 % de flair, expliqués la première fois. **Le Carrefour** : le soir où la balance atteint 60, la cinématique des deux visiteurs devant ta porte (Sire Aldric et Ilvane), puis la page jour/nuit et ses vitraux ; on ne peut jurer que du côté où l'on penche (le chemin d'en face est barré) ou rester libre ; le camp refusé fait une dernière offre à 90 ; l'autre camp s'ouvre si la balance atteint 60 de son côté. **Le serment** : ×1,5 de son côté ; Confrérie : sa bannière au comptoir, des taux d'ami à la Banque ; Bannis : la Main Noire prête sans intérêts, mais la garde passe plus souvent. **Le parjure** (passer le 1er palier de l'autre côté après avoir juré) : une scène, les avantages perdus, −3 de réputation, ce camp ne proposera plus. **Le sceau** : la dernière pièce n'est plus retenue en zone neutre ; le serment l'emporte ; sans serment et dans la zone neutre, l'armure attend quelqu'un d'autre (la fin neutre, à construire). **Garrick** prévient deux pièces avant la fin de l'armure. (L'armure compte 8 pièces depuis la v0.61 : les textes « 9e pièce » des planches correspondent à la dernière.) |
 | v 0.91 | **Retours des amis testeurs (16/10)** | Provisions « fantômes » derrière la page 1 du comptoir ; après la nymphe, on revient dans la rue (on était renvoyé chez soi, d'où le « téléporté au comptoir ») ; la nuit de la fenêtre suit l'horloge ; écriture d'un carnet de mort lisible ; « Le marché » ; « En froid » et « Ennemis jurés » ; pastille rouge du tableau tant que les nouvelles du jour ne sont pas lues ; pensées de JeuneGoy devant le portrait de ses parents ; la règle des trophées dite sur l'étagère ; au marchandage, un client à bout de patience ne part plus qu'une fois sur quatre. Planches 18 à valider : l'enseigne par niveau de maison et sa police, le ciel heure par heure, les ambiances de l'écran titre (page à écouter). |
 | v 0.92 | **Le matin, la réserve, Grippesou** | L'arrière-boutique s'ouvre aussi le matin, depuis la maison (« L'arrière-boutique », à côté du marché) ; sur l'étagère, un clic sur une planche permet de **jeter** une provision ou une arme dont on ne veut plus (1 ou tout, au rebut, sans argent en retour) ; à la fontaine vue de près, **très rarement** (1 fois sur 15, au plus une fois par jour, s'il y a au moins 3 pièces au fond), Grippesou vient pêcher les vœux des autres : il fouille l'eau, remonte une pièce, se voit pris sur le fait et la laisse retomber avant de détaler (« C'est pas c'que tu crois ! »). |
+| v 0.93 | **Retours du 17/10 : la carte partout, l'enseigne, le ciel, la nymphe, la persuasion** (planche 18 validée) | **Corrigés** : la ligne du soir (chat, nymphe, garde) ne recouvre plus la liste « En mission » ; la **Faucheuse ferme toujours la file** (même quand un client se remet en attente) ; Grippesou un peu plus grand à la fontaine, qui fouille l'eau et sautille quand il tient sa pièce ; **trop de clients au jour 17** : la file ne dépasse plus ce que la journée permet de servir (les heures d'ouverture divisées par un service et un récit, plus un — 7 à 10 selon l'expérience et l'éclairage), les lettres et les clients d'hier passent d'abord ; « Journée pleine » le dit au bilan du soir. **Nouveau** : la **carte du monde consultable de partout** (bouton « Carte » au comptoir, à l'arrière-boutique, dans la chambre ; un panneau de bois au marché et au marché noir) ; **l'enseigne suit la maison entière** (planche brute, panneau encadré, panneau peint, enseigne de maître), avec **5 écritures et 7 fonds** au choix au bureau (clic sur le nom du shop, aperçu en direct) ; **le ciel heure par heure** dans la fenêtre du comptoir (aube dorée, plein jour, après-midi chaud, heure dorée, crépuscule rose et violet, nuit) ; **la nature de l'écran titre** selon l'heure de l'appareil (oiseaux le matin, cigales l'après-midi, grillons et chouette le soir) ; **la nymphe** : la 2e visite dit bien le 1er secret (il était sauté), 4 visites au plus, la 4e offre **la fiole** (une potion de plus chaque semaine) et ses adieux, puis tous les 10 vœux la fontaine s'illumine d'elle-même et la bénédiction revient ; **une goutte bleue** dans le bandeau tant qu'elle dure (un clic l'explique), une ligne au récit quand elle aide (« L'eau s'est écartée devant moi... »), une ligne au bureau (« Toi ») et la fontaine qui luit au marché ; **la persuasion** (nouvelle compétence au bureau) : elle monte avec les marchandages réussis (niveau 1 à 5, niveau 2 à 15) ; par niveau, +1 de patience au client, une chance qu'il lâche 5 % au-delà de sa limite (8 %, puis 15 %), et moins de départs fâchés. Planches 19 à valider : les retours du jour résumés, la feuille du jour (l'ordre de la file), les fonds de l'enseigne. |
 | 10b | **La forge chez soi** (validé) | À ★3 (le saut d'un an), on peut construire une forge dans l'arrière-boutique et engager un premier forgeron ; un second à ★4. Chaque nuit, ils fabriquent des armes avec les matériaux en stock. |
 | 10c | **La rue et le familier** (validé : le chat chasse les rats de la réserve et prévient parfois de la garde) | La rue du comptoir s'agrandit : on y marche avec son personnage jusqu'aux lieux du quartier (marché, banque, forge, fontaine, plus tard le petit bar), en plus des raccourcis depuis la maison. En s'y promenant le soir, on croise le chat de gouttière : on le nourrit quelques soirs de suite, et il nous adopte (premier familier). |
 | 11 | **Aider pendant l'aventure** | Messages de détresse, le grand aigle, les mercenaires. |
@@ -955,6 +956,46 @@ au-dessus de sa limite (rarement), et elle réduit encore la chance qu'il parte 
 choix de la police de l'enseigne ; les ambiances sonores de l'écran titre (oiseaux, cigales, ruisseau,
 vent dans les blés) ; les couleurs du ciel heure par heure (matin, midi, après-midi, fin de journée,
 crépuscule, nuit).
+
+### Retours du 17/10 (lot v0.93)
+**Réponses aux questions**
+- **Les aînés au marché noir** : ils n'arrivent qu'**à partir du jour 30** (le milieu du jeu) ; ensuite, à
+  chaque descente au marché noir, une chance sur trois qu'un aîné soit au coin des doyens (à gauche de la
+  cave), et très rarement (4 % par jour) un aîné passe au comptoir. Chacun ne raconte qu'une fois. Être
+  du côté de la lumière ne les empêche pas : ça rend seulement le marché noir **plus rare** (un soir sur
+  trois au lieu d'un sur deux quand on penche vers l'ombre). Ton ami ne les a pas encore vus parce qu'il
+  n'a pas atteint le jour 30.
+- **Comment on améliore la maison entière** : c'est déjà défini et en jeu. Chaque amélioration achetée
+  au bureau (« Améliorer le comptoir » : l'étagère de la réserve, le comptoir, l'éclairage, le coffre, la
+  chambre...) compte, sauf l'atelier ; **tous les 4
+  niveaux d'amélioration, la maison monte d'un niveau** (chaumière → maison → belle maison → demeure),
+  avec la rénovation (la visite façon livre) et, depuis la v0.93, l'enseigne qui va avec.
+- **+10 clients par jour au jour 17** : le palier de réputation (7 à 8 clients), les bonus (+2), les
+  lettres (environ 3) et ceux qui revenaient de la veille s'additionnaient, au-delà des 7 à 9 qu'une
+  journée de 10 h à 18 h permet de servir. Corrigé en v0.93 (voir le tableau).
+
+**Le mendiant : ce que Claude propose (à valider)**
+- **Qui il est** : un ancien compagnon d'armes des parents de JeuneGoy, du temps où ils combattaient le
+  Grand Sage. Le sort d'oubli lui a pris son nom et son passé, mais pas tout à fait : il se souvient par
+  bribes, et il reconnaît quelque chose dans ton visage. (Ça répond à « le mendiant, quelqu'un du passé ? »
+  dans 9¾ bis.)
+- **Ce que la générosité débloque** (le total donné, déjà compté) : 30 pièces → le trèfle (déjà) ;
+  60 → il te regarde longuement : « Tu as les yeux de ta mère... » (une pensée à part, puis il se tait) ;
+  100 → **une petite cinématique** : il te donne une médaille usée aux armes de tes parents (un souvenir
+  pour l'étagère de la chambre, à côté du portrait), et une phrase sur la dernière bataille.
+- **Brisquet** : à 10 rations, le chien t'attend un matin devant la porte et t'emmène ; c'est
+  **la cinématique secrète** déjà prévue, vers l'aventure annexe hors de la carte (à écrire).
+- **Une petite utilité, sans le rendre obligatoire** : une fois par semaine, si tu lui as donné quelque
+  chose cette semaine-là, il chuchote une rumeur utile (une contrée où il se passera quelque chose demain,
+  ou le visage du prochain recherché). Ne rien lui donner n'a aucune conséquence.
+- **Au marché noir** (un soir sur quatre, déjà) : il parle à demi-mot ; si tu penches vers l'ombre, il a
+  l'air triste et te le dit à sa façon.
+
+**À montrer en planches (planche 19)** : les retours du jour résumés d'un coup (quand deux retours ou plus
+arrivent et que leurs récits sont déjà connus : un tableau, et « Écouter les récits » ou « Tout
+encaisser ») ; la feuille du jour au bureau, onglet « Aujourd'hui » (ranger la file d'un coup — novices,
+aguerris, héros ou lettres d'abord — ou chacun avec ses flèches ; les retours restent en tête et la
+Faucheuse au bout) ; les sept fonds de l'enseigne sur les quatre niveaux de la maison.
 
 ### On le fera plus tard
 - **Les instruments de musique** (idée du 16/10) : le joueur peut jouer d'instruments qu'il collectionne au fil de la partie. **3 instruments de base**, trouvables sans prérequis ; **2 instruments de lumière** et **2 d'ombre**, qu'on ne peut débloquer qu'après avoir **prêté serment** au camp correspondant (au Carrefour). (À préciser : où on les trouve, où et quand on en joue, ce que ça apporte.)
