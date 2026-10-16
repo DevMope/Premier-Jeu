@@ -73,11 +73,18 @@ class NightScene extends Phaser.Scene {
     afficherStatutSauvegarde(this, 940, 60, 1);
     if (!this.matin) this.time.delayedCall(600, () => conseilGarrick(this, 'soir'));
     // (v0.90) le soir du Carrefour (ou du parjure) : deux visiteurs frappent à la porte
-    const lo = etatLO(G);
-    if (!this.matin && (lo.carrefour || lo.parjure) && lo.soirVu !== G.jour) {
-      lo.soirVu = G.jour;
-      this.time.delayedCall(900, () => { if (!this.scene.isActive()) return; this.scene.pause(); this.scene.launch('Carrefour', { retour: 'Nuit' }); });
-    }
+    if (!this.matin) this.time.delayedCall(700, () => this.carrefourEnAttente());
+  }
+
+  // (v0.90) Le soir du Carrefour (ou du parjure) : deux visiteurs frappent à la porte. Renvoie vrai si la
+  // scène s'ouvre (le soir ne compte comme « vu » qu'une fois qu'elle s'est vraiment ouverte).
+  carrefourEnAttente() {
+    const G = this.G, lo = etatLO(G);
+    if (this.matin || !(lo.carrefour || lo.parjure) || lo.soirVu === G.jour || !this.scene.isActive() || enTransition(this)) return false;
+    lo.soirVu = G.jour;
+    this.scene.pause();
+    this.scene.launch('Carrefour', { retour: 'Nuit' });
+    return true;
   }
 
   allerA(scene) {
@@ -98,6 +105,7 @@ class NightScene extends Phaser.Scene {
   // bilan du jour), la nuit passe, et au matin, direction le Marché des Mastres.
   dormir() {
     if (enTransition(this)) return;
+    if (this.carrefourEnAttente()) return;   // (v0.90) on ne s'endort pas avant d'avoir ouvert la porte
     const G = this.G;
     const bilan = { jour: G.jour, servis: G.journal.servis, retours: G.journal.retours, morts: G.journal.morts,
       gain: G.argent - G.argentDebutJour, reputation: G.reputation, jauge: jaugeCamp(G), palier: nomPalierCamp(G) };
