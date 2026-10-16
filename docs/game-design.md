@@ -861,7 +861,7 @@ Carrefour jour/nuit et vitraux, après le serment), la jauge en dégradé, le pa
 palier et le dédommagement à +1. La lumière qui va un peu plus vite que l'ombre est gardée : elle sert
 l'histoire (c'est le chemin que le monde encourage).
 
-**Qui peut jurer quoi au Carrefour (proposé par Claude, à confirmer)** : on ne peut jurer que du côté
+**Qui peut jurer quoi au Carrefour (validé le 16/10)** : on ne peut jurer que du côté
 où penche sa balance. Le Carrefour vient quand la jauge atteint 60 d'un côté ; le chemin d'en face
 reste visible, mais il est barré (barrière, vitrail grisé et cadenassé, « Ce chemin t'est fermé : ta
 balance penche vers la lumière »). Le joueur choisit donc entre **prêter serment à son côté** et
