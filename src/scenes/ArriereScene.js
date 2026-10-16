@@ -7,7 +7,11 @@ class ArriereScene extends Phaser.Scene {
   constructor() { super('Arriere'); }
 
   init(data) {
-    this.comptoir = data.comptoir;
+    // (v0.92) on peut aussi y passer le matin, depuis la maison : pas de comptoir derrière
+    this.comptoir = (data && data.comptoir) || null;
+    this.retour = (data && data.retour) || 'Comptoir';
+    this.messageInitial = (data && data.message) || null;
+    this.sys.settings.data = {};
   }
 
   create() {
@@ -15,8 +19,9 @@ class ArriereScene extends Phaser.Scene {
     this.cameras.main.fadeIn(250);
     this.dessinerPiece();
     this.add.text(340, 30, "L'arrière-boutique", style(24, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5);
-    this.texteInfo = this.add.text(340, 54, this.comptoir.voyageur ? `${this.comptoir.voyageur.nom} attend au comptoir...` : '',
+    this.texteInfo = this.add.text(340, 54, this.comptoir && this.comptoir.voyageur ? `${this.comptoir.voyageur.nom} attend au comptoir...` : '',
       style(13, '#e8d4a8', { fontStyle: 'italic bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+    if (this.messageInitial) this.message(this.messageInitial);
     this.dessinerEtageres();
     this.dessinerFortune();
     this.dessinerPanier();
@@ -24,7 +29,7 @@ class ArriereScene extends Phaser.Scene {
     this.dessinerPorte();
     this.dessinerPorteRue();
     this.dessinerDecos();
-    creerBouton(this, 840, 505, 220, '↻ Retour au comptoir', () => this.fermer());
+    creerBouton(this, 840, 505, 220, this.comptoir ? '↻ Retour au comptoir' : '◀ Retour', () => this.fermer());
     // (v0.82, étape 10b) le coin de la forge, à partir du saut d'un an
     if (forgeProposee(G)) creerBouton(this, 600, 505, 220, forgeConstruite(G) ? '⚒ La forge' : '⚒ Le coin de la forge', () => { this.scene.pause(); this.scene.launch('Forge', { appelant: 'Arriere' }); });
     this.time.delayedCall(400, () => conseilGarrick(this, 'arriere'));
@@ -90,7 +95,14 @@ class ArriereScene extends Phaser.Scene {
       }
       this.add.text(x + 4, y + 13, `${armes ? 'Armes' : ITEMS[id].nom} ${n ? '× ' + n : '— vide'}`,
         style(11, n ? '#f3e6c8' : '#d0a890', { fontStyle: n ? 'bold' : 'bold italic', stroke: '#140c06', strokeThickness: 3 }));
+      // (v0.92) un clic sur la planche : jeter ce dont on ne veut plus
+      if (n) {
+        const z = this.add.rectangle(x + 54, y - 22, 112, 70, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        z.on('pointerover', () => z.setFillStyle(0xfff4dc, 0.12)); z.on('pointerout', () => z.setFillStyle(0xffffff, 0));
+        z.on('pointerdown', () => this.ouvrirJeter(id));
+      }
     });
+    this.add.text(276, 412, 'Un clic sur une planche : jeter ce dont tu ne veux plus', style(11, '#e8d4a8', { fontStyle: 'italic', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5);
     this.add.image(276, 78, plaqueBouton(this, 200)).setScale(2);
     this.add.text(276, 78, `Ta réserve : ${stockTotal(G)} / ${G.capacite}`, style(14, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
   }
@@ -215,6 +227,7 @@ class ArriereScene extends Phaser.Scene {
 
   porte() {
     const c = this.comptoir;
+    if (!c) return this.message('La chambre attendra ce soir : ta journée commence !');
     // (quelqu'un au comptoir : un client, un retour de mission, une famille, un carnet, la Faucheuse...)
     if (c.voyageur || c.entree || this.G.file.length) return this.message("Pas le temps de dormir : quelqu'un t'attend au comptoir !");
     // La journée est finie : on ferme le comptoir et on rentre se reposer.
@@ -224,6 +237,43 @@ class ArriereScene extends Phaser.Scene {
       this.scene.stop('Comptoir');
       this.scene.start('Nuit', { matin: false });
     });
+  }
+
+  // --- (v0.92) Jeter des provisions ou des armes ---
+  ouvrirJeter(id) {
+    const G = this.G;
+    if (this.liste) { this.liste.destroy(); this.liste = null; }
+    const ids = id === 'armes' ? IDS_ARMES.filter(w => (G.stock[w] || 0) > 0) : [id];
+    if (!ids.length) return;
+    const c = this.liste = this.add.container(0, 0).setDepth(10);
+    const h = 84 + ids.length * 34;
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.45).setInteractive());
+    c.add(this.add.rectangle(480, 270, 460, h, 0xead9b0).setStrokeStyle(3, 0x8a6a3a));
+    const haut = 270 - h / 2;
+    c.add(this.add.text(480, haut + 18, 'Jeter des objets de ta réserve', style(15, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(480, haut + 38, "(ils partent au rebut : pas d'argent en retour)", style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    ids.forEach((w, i) => {
+      const y = haut + 66 + i * 34;
+      c.add(this.add.image(290, y, iconeObjet(this, w)).setScale(2));
+      const t = this.add.text(310, y, `${ITEMS[w].nom} × ${G.stock[w]}`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+      c.add(t);
+      const bouton = (bx, texte, combien) => {
+        const b = this.add.text(bx, y, texte, style(12, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#8a3a2a', padding: { x: 6, y: 3 } })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        b.on('pointerdown', () => {
+          const n = Math.min(G.stock[w] || 0, combien === 'tout' ? Infinity : combien);
+          if (!n) return;
+          G.stock[w] -= n;
+          Son.jouer('glisse');
+          this.scene.restart({ comptoir: this.comptoir, retour: this.retour, message: `Au rebut : ${n} × ${ITEMS[w].nom.toLowerCase()}.` });
+        });
+        c.add(b);
+      };
+      bouton(600, 'Jeter 1', 1);
+      bouton(675, 'Tout', 'tout');
+    });
+    const fermer = this.add.text(480, haut + h - 14, 'Fermer', style(12, '#8a3a2a', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    fermer.on('pointerdown', () => { this.liste.destroy(); this.liste = null; });
+    c.add(fermer);
   }
 
   // --- Les listes : cadeaux et objets piégés ---
@@ -240,7 +290,7 @@ class ArriereScene extends Phaser.Scene {
     c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.45).setInteractive());
     c.add(this.add.rectangle(480, 270, 420, h, sombre ? 0x1a0e18 : 0xead9b0).setStrokeStyle(3, sombre ? 0x5a1a3a : 0x8a6a3a));
     const haut = 270 - h / 2;
-    const v = this.comptoir.enService ? this.comptoir.voyageur : null;
+    const v = this.comptoir && this.comptoir.enService ? this.comptoir.voyageur : null;
     c.add(this.add.text(480, haut + 18, v ? (sombre ? `Glisser dans le baluchon ${dePersonne(v.nom.split(' ')[0])} :` : `Offrir à ${v.nom.split(' ')[0]} :`) : "Personne à servir pour l'instant",
       style(14, sombre ? '#d08aa8' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     ids.forEach((id, i) => {
@@ -261,7 +311,7 @@ class ArriereScene extends Phaser.Scene {
   // On revient au comptoir avec l'objet : le comptoir s'occupe du reste.
   utiliser(type, id) {
     const c = this.comptoir;
-    if (!c.enService || !c.voyageur) return this.message("Il n'y a personne à servir pour l'instant.");
+    if (!c || !c.enService || !c.voyageur) return this.message("Il n'y a personne à servir pour l'instant.");
     this.fermer(() => (type === 'cadeaux' ? c.offrir(id) : c.glisserPiege(id)));
   }
 
@@ -270,8 +320,9 @@ class ArriereScene extends Phaser.Scene {
   }
 
   fermer(ensuite) {
+    if (this.comptoir) this.comptoir.majStock && this.comptoir.majStock();   // (ce qu'on a jeté disparaît du comptoir)
     this.scene.stop();
-    this.scene.resume('Comptoir');
+    this.scene.resume(this.retour);
     if (ensuite) ensuite();
   }
 }

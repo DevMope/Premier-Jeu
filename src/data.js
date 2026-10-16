@@ -821,6 +821,8 @@ const PENSEES_PARENTS = [
   "Garrick change toujours de sujet quand tu parles d'eux. Il sait quelque chose ?",
   "Les soirs comme celui-ci, tu aurais aimé que quelqu'un t'attende à la maison.",
 ];
+// (v0.92) Grippesou qui pêche les vœux dans la fontaine : une chance, quand on la regarde de près (une fois par jour au plus)
+const GRIPPESOU_FONTAINE = { chance: 1 / 15, pieces: 3 };
 const PALIERS_JAUGE = [25, 60, 90];                              // les paliers, de chaque côté
 const NOMS_PALIERS_JAUGE = {
   3: 'Lumière éclatante', 2: 'Lumière', 1: 'Lueur', 0: 'Entre les deux', '-1': 'Pénombre', '-2': 'Ombre', '-3': 'Ombre épaisse',

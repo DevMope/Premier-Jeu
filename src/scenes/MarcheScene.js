@@ -374,6 +374,59 @@ class MarcheScene extends Phaser.Scene {
     if (deja) jeter.fond.setAlpha(0.6);
     const reculer = creerBouton(this, 836, 46, 200, '◀ Reculer', () => { if (!this.pieceEnVol) fermer(); });
     c.add([jeter.fond, jeter.label, reculer.fond, reculer.label]);
+    // (v0.92) très rarement, Grippesou vient pêcher les vœux des autres au fond du bassin
+    if ((window.__grippesouFontaine || Math.random() < GRIPPESOU_FONTAINE.chance) && n >= GRIPPESOU_FONTAINE.pieces && G.grippesouFontaine !== G.jour) {
+      G.grippesouFontaine = G.jour;
+      this.time.delayedCall(1200, () => { if (c.active) this.grippesouPeche(c, cx, ey, rx, placer(0)); });
+    }
+  }
+
+  // Grippesou se glisse jusqu'au bassin, fouille l'eau, remonte une pièce... et se voit pris sur le fait
+  async grippesouPeche(c, cx, ey, rx, [px, py]) {
+    const attendre = ms => new Promise(r => this.time.delayedCall(ms, r));
+    const tween = cfg => new Promise(r => this.tweens.add({ ...cfg, onComplete: r }));
+    const sol = 506, bord = cx + rx * 0.82, poste = cx + rx + 34;
+    const g = imageCorps(this, 1010, sol, 'gobelin', 8).setFlipX(true); c.add(g);
+    const ombre = this.add.ellipse(1010, sol, 46, 10, 0x000000, 0.3); c.add(ombre); c.bringToTop(g);
+    const suivre = () => ombre.setX(g.x);
+    pasDeMarche(this, g, 1600, { poussiere: false });
+    this.message('Psst... Une petite silhouette verte se faufile entre les passants.');
+    await tween({ targets: g, x: poste, duration: 1600, ease: 'Sine.easeInOut', onUpdate: suivre });
+    if (!c.active) return;
+    // il se penche au-dessus de l'eau, regarde à droite, à gauche...
+    await tween({ targets: g, angle: -24, x: poste - 14, y: sol - 4, duration: 350 });
+    for (const flip of [false, true]) { g.setFlipX(flip); await attendre(350); }
+    // ... et plonge la main : des ronds dans l'eau
+    for (let k = 0; k < 3; k++) {
+      const o = this.add.ellipse(bord - 16 + k * 6, ey + 10, 10, 3).setStrokeStyle(1, 0xe8fcff, 0.8); c.add(o);
+      this.tweens.add({ targets: o, scaleX: 3, scaleY: 2, alpha: 0, duration: 600, onComplete: () => o.destroy() });
+      await attendre(200);
+    }
+    if (!c.active) return;
+    // une pièce remonte jusqu'à sa main
+    const piece = this.add.image(bord - 12, ey + 8, 'pieceFace').setScale(1.6); c.add(piece);
+    await tween({ targets: piece, x: poste - 40, y: sol - 96, duration: 500, ease: 'Back.easeOut' });
+    const hehe = this.add.text(g.x, sol - 190, 'Hé hé...', style(16, '#3b2410', { fontStyle: 'bold italic', backgroundColor: '#fff4dc', padding: { x: 8, y: 4 } })).setOrigin(0.5); c.add(hehe);
+    await attendre(900);
+    if (!c.active) return;
+    // il te voit ! La pièce retombe, et il détale
+    hehe.setText('!').setFontSize(28).setColor('#c82a20');
+    g.setAngle(0).setY(sol); g.setFlipX(false);
+    await attendre(500);
+    this.tweens.add({ targets: piece, x: bord - 20, y: ey + 6, duration: 420, ease: 'Quad.easeIn', onComplete: () => {
+      piece.destroy();
+      const o = this.add.ellipse(bord - 20, ey + 6, 10, 3).setStrokeStyle(1, 0xe8fcff, 0.9); c.add(o);
+      this.tweens.add({ targets: o, scaleX: 3, scaleY: 2, alpha: 0, duration: 600, onComplete: () => o.destroy() });
+      Son.jouer('piece');
+    } });
+    hehe.destroy();
+    const cri = this.add.text(g.x - 60, sol - 190, "C'est pas c'que tu crois !", style(15, '#3b2410', { fontStyle: 'bold italic', backgroundColor: '#fff4dc', padding: { x: 8, y: 4 } })).setOrigin(0.5); c.add(cri);
+    this.message("Grippesou, pris la main dans la fontaine, laisse retomber ta pièce et détale sans demander son reste. Toutes les pièces sont encore au fond.");
+    g.setFlipX(true);
+    pasDeMarche(this, g, 900, { poussiere: false });
+    this.tweens.add({ targets: cri, alpha: 0, delay: 1400, duration: 400, onComplete: () => cri.destroy() });
+    await tween({ targets: g, x: 1040, duration: 900, ease: 'Quad.easeIn', onUpdate: suivre });
+    g.destroy(); ombre.destroy();
   }
 
   // La pièce du vœu : elle part de ta main (en bas), tourne sur elle-même en volant, touche l'eau
