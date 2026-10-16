@@ -856,6 +856,27 @@ indépendantes, les quatre cas existent donc vraiment :
   | Mission réussie en terre de lumière | +3 | Cacher un recherché | +4 |
   | Dénoncer un vrai recherché | +4 | | |
 
+**Validé par le joueur (16/10, suite)** : les planches 17 (cinématique des deux visiteurs, page du
+Carrefour jour/nuit et vitraux, après le serment), la jauge en dégradé, le parjure, le frein par
+palier et le dédommagement à +1. La lumière qui va un peu plus vite que l'ombre est gardée : elle sert
+l'histoire (c'est le chemin que le monde encourage).
+
+**Qui peut jurer quoi au Carrefour (proposé par Claude, à confirmer)** : on ne peut jurer que du côté
+où penche sa balance. Le Carrefour vient quand la jauge atteint 60 d'un côté ; le chemin d'en face
+reste visible, mais il est barré (barrière, vitrail grisé et cadenassé, « Ce chemin t'est fermé : ta
+balance penche vers la lumière »). Le joueur choisit donc entre **prêter serment à son côté** et
+**rester libre**. La page montre les deux chemins pour faire sentir le passage d'un côté ou de
+l'autre. Planche : planche-17-carrefour-chemin-ferme.png.
+- Rester libre n'est pas définitif : si la jauge redescend sous 60 puis atteint 60 **de l'autre
+  côté**, le Carrefour revient avec l'autre camp ; et le camp refusé fait **une dernière offre** au
+  3e palier (90) de son côté.
+- Pour changer de camp après un serment, il faut passer par le parjure.
+
+**À faire : la jauge de la Mort, concrètement** (à proposer en planche) : ce qui la fait monter
+(morts voulues, âmes offertes) ou non (accidents), ses degrés (ceux de la Faucheuse aujourd'hui),
+ce qu'elle débloque pour les combats de la fin (un pouvoir, une arme, un familier... ou rien),
+et où on la voit (au livre des deux voies ? une page à part ?).
+
 ### Récit : réponses du 16/10 (9¾ bis)
 - **La Faucheuse et la jauge de la mort** : une âme offerte ne compte plus que **+1 ☾** dans la jauge
   lumière/ombre (la mort reste un thème de l'ombre). À la place, **une jauge à part, la Mort**, mesure
