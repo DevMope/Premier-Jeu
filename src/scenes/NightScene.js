@@ -53,7 +53,7 @@ class NightScene extends Phaser.Scene {
       ...(this.matin ? [] : [['Se promener', () => ouvrirPage('Promenade')]]),
       ...(!this.matin && marcheNoirCeSoir(G) ? [['La porte dérobée', () => ouvrirPage('MarcheNoir')]] : []),
       ...(this.matin
-        ? [['Retour au marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
+        ? [['Le marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
         : [['Aller dormir', () => this.dormir()]]),
     ];
     const largeur = 920 / boutons.length;

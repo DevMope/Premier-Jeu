@@ -23,6 +23,8 @@ const PAROLES_NYMPHE_ENSUITE = [
 class NympheScene extends Cinematique {
   constructor() { super('Nymphe'); }
 
+  init(data) { this.retour = (data && data.retour) || 'Nuit'; this.sys.settings.data = {}; }
+
   create() {
     const G = this.G = window.GAME;
     this.rapide = false; this.fini = false;
@@ -160,6 +162,6 @@ class NympheScene extends Cinematique {
     const nuit = this.scene.get('Nuit');
     if (nuit && nuit.lieu) Sauvegarde.planifier(this.G, nuit.lieu);
     this.cameras.main.fadeOut(500);
-    this.cameras.main.once('camerafadeoutcomplete', () => { this.scene.stop(); this.scene.resume('Nuit'); });
+    this.cameras.main.once('camerafadeoutcomplete', () => { this.scene.stop(); if (this.scene.isPaused(this.retour)) this.scene.resume(this.retour); else this.scene.resume('Nuit'); });
   }
 }

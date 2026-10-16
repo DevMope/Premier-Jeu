@@ -280,7 +280,8 @@ class StoryScene extends Cinematique {
     this.tweens.killTweensOf(this.texte);
     this.texte.setX(176).setAngle(0);
     if (perdus <= 0) return;
-    this.tweens.add({ targets: this.texte, x: 176 + Math.min(3, perdus), angle: Math.min(1.2, perdus * 0.3), duration: Math.max(40, 140 - perdus * 25), yoyo: true, repeat: -1 });
+    // (v0.91) un tremblement doux et lent : on le sent, mais on lit sans effort (avant : trop vif, illisible)
+    this.tweens.add({ targets: this.texte, x: 176 + Math.min(1, perdus * 0.4), angle: Math.min(0.35, perdus * 0.1), duration: Math.max(500, 900 - perdus * 100), yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }
 
   // Le trèfle de la chance qui brille au-dessus de lui.

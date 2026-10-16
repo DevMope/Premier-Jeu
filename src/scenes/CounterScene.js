@@ -554,6 +554,17 @@ class CounterScene extends Phaser.Scene {
     g.fillStyle(alerte ? 0xff7a40 : 0xffe060).fillCircle(tx + tl * t, cy, 4);
     // le ciel : il se réchauffe dans l'après-midi, puis rougit avant la fermeture
     if (this.voileSoir) this.voileSoir.setAlpha(Phaser.Math.Clamp((h - (f - 3)) / 3, 0, 1) * 0.6);
+    // (v0.91) ... et la nuit tombe avec l'heure, pas avec le dernier client
+    this.ciel(h);
+  }
+
+  // Le ciel de la fenêtre selon l'heure : la nuit monte dans la dernière heure et demie avant la fermeture
+  ciel(h) {
+    if (!this.cielNuit) return;
+    const nuit = Phaser.Math.Clamp((h - (heureFermeture(this.G) - 1.5)) / 1.5, 0, 1);
+    this.tweens.killTweensOf([this.cielNuit, this.voile]);
+    this.tweens.add({ targets: this.cielNuit, alpha: nuit, duration: 1200 });
+    this.tweens.add({ targets: this.voile, fillAlpha: 0.25 * nuit, duration: 1200 });
   }
 
   // Le temps passe : l'heure avance (en glissant), et une petite ligne s'envole de l'horloge.
@@ -855,6 +866,7 @@ class CounterScene extends Phaser.Scene {
   montrerPageStock(n) {
     this.pageStock = n;
     this.pagesStock.forEach((objets, k) => objets.forEach(o => { o.setVisible(k === n); if (o.input) o.input.enabled = k === n; }));
+    if (this.cases && this.texteReserve) this.majStock();   // (v0.91) les piles suivent le stock sur la page affichée
     const o = this.ongletPages;
     if (o) { o.num.setText(`${n + 1}/${this.pagesStock.length}`); o.fleche.setText(n === this.pagesStock.length - 1 ? '◀' : '▶'); }
     if (this.ratelier && n !== 0) { this.ratelier.destroy(); this.ratelier = null; }
@@ -888,7 +900,7 @@ class CounterScene extends Phaser.Scene {
       fond.on('pointerover', () => { fond.setFillStyle(0xfff6d8, 0.22); icone.setScale(2.25); });
       fond.on('pointerout', () => { fond.setFillStyle(0xfff6d8, 0.001); icone.setScale(2); });
       fond.on('pointerdown', () => this.donner(id));
-      ou[id] = { fond, qte, pile, icone };
+      ou[id] = { fond, qte, pile, icone, page: ou === this.casesArmes ? 1 : 0 };
     }
   }
 
@@ -2201,8 +2213,7 @@ class CounterScene extends Phaser.Scene {
     const h = heureDuComptoir(this.G), f = heureFermeture(this.G);
     this.raconter(h >= f - JOURNEE.alerte ? 'Le soleil se couche sur la Comté. Plus personne ne fait la queue.'
       : `Il n'est que ${formatHeure(h)}, mais plus personne ne fait la queue : tu peux fermer plus tôt aujourd'hui.`, 'Fin de la journée');
-    this.tweens.add({ targets: this.cielNuit, alpha: 1, duration: 3000 });
-    this.tweens.add({ targets: this.voile, fillAlpha: 0.25, duration: 3000 });
+    this.ciel(h);   // (v0.91) on ferme tôt ? Il fait encore jour dehors
   }
 
   // --- Mise à jour de l'affichage ---
@@ -2237,12 +2248,14 @@ class CounterScene extends Phaser.Scene {
         const montre = pref && this.G.stock[pref] > 0 ? pref : IDS_ARMES.slice().sort((a, b) => (this.G.stock[b] || 0) - (this.G.stock[a] || 0))[0];
         c.pile.forEach(img => img.setTexture(iconeObjet(this, montre)));
         c.qte.setText('x' + total).setColor(total > 0 ? '#3a2410' : '#a03020');
-        c.pile.forEach((img, k) => img.setVisible(k === 2 || total > 2 - k).setAlpha(total > 0 ? 1 : 0.35));
+        c.pile.forEach((img, k) => img.setVisible(this.pageStock === 0 && (k === 2 || total > 2 - k)).setAlpha(total > 0 ? 1 : 0.35));
         continue;
       }
       const n = this.G.stock[id];
+      // (v0.91) seulement sur la page affichée : sinon les armes de la page 2 restaient en « fantômes » derrière la page 1
+      const surPage = (c.page || 0) === (this.pageStock || 0);
       c.qte.setText('x' + n).setColor(n > 0 ? '#3a2410' : '#a03020');
-      c.pile.forEach((img, k) => img.setVisible(k === 2 || n > 2 - k).setAlpha(n > 0 ? 1 : 0.35));
+      c.pile.forEach((img, k) => img.setVisible(surPage && (k === 2 || n > 2 - k)).setAlpha(n > 0 ? 1 : 0.35));
     }
     this.majTiroirSecret();
     this.majTiroirCadeaux();

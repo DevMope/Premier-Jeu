@@ -432,11 +432,14 @@ class PromenadeScene extends Cinematique {
   // (v0.65) Entrer dans la banque ou par la porte dérobée : la promenade s'arrête là, le soir attend.
   async sortirVers(page, x) {
     if (this.transition || this.fini) return;
+    // (v0.91) revenu de la nymphe : la lueur s'est éteinte, on ne la revoit pas deux fois le même soir
+    if (page === 'Nymphe' && !nympheAttend(this.G)) { this.allerVers(x); this.dire("La lueur s'est éteinte. La place dort ; l'eau de la fontaine murmure encore un peu."); return; }
     this.transition = true;
     this.allerVers(x); await this.attendreArrivee();
     Son.jouer('porte');
     // (v0.68) la banque s'ouvre par-dessus la rue : en sortant, on se retrouve devant sa porte
-    if (page === 'Banque') { this.transition = false; this.cible = null; this.scene.pause(); this.scene.launch('Banque', { retour: 'Promenade' }); return; }
+    // (v0.91) ... et la nymphe aussi : après elle, on se retrouve dans la rue, devant l'arche (on était renvoyé chez soi)
+    if (page === 'Banque' || page === 'Nymphe') { this.transition = false; this.cible = null; this.scene.pause(); this.scene.launch(page, { retour: 'Promenade' }); return; }
     this.fini = true;
     const nuit = this.scene.get('Nuit');
     if (nuit && nuit.lieu) Sauvegarde.planifier(this.G, nuit.lieu);
