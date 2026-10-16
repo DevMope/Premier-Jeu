@@ -43,7 +43,9 @@ class NightScene extends Phaser.Scene {
     this.creerReserve(320, 640);
     this.creerPrevision(660, 940);
 
-    const ouvrirPage = (page, donnees) => { this.scene.pause(); this.scene.launch(page, donnees); };
+    // (v0.86) pas d'autre page pendant un fondu (« Dormir », « Ouvrir le comptoir ») : sinon elle s'ouvrait par-dessus la suivante
+    const enFondu = () => this._transition && performance.now() - this._transition < 1500;
+    const ouvrirPage = (page, donnees) => { if (enFondu()) return; this.scene.pause(); this.scene.launch(page, donnees); };
     const boutons = [
       ['Le bureau', () => ouvrirPage('Bureau', { retour: 'Nuit' })],
       ['La banque', () => this.ouvrirBanque()],
@@ -298,6 +300,7 @@ class NightScene extends Phaser.Scene {
   // --- La banque : une page à part, le soir attend en pause ---
 
   ouvrirBanque() {
+    if (this._transition && performance.now() - this._transition < 1500) return;   // (v0.86 : pas pendant un fondu)
     this.scene.pause();
     this.scene.launch('Banque', { retour: 'Nuit' });
   }
