@@ -72,6 +72,12 @@ class NightScene extends Phaser.Scene {
     this.tout();
     afficherStatutSauvegarde(this, 940, 60, 1);
     if (!this.matin) this.time.delayedCall(600, () => conseilGarrick(this, 'soir'));
+    // (v0.90) le soir du Carrefour (ou du parjure) : deux visiteurs frappent à la porte
+    const lo = etatLO(G);
+    if (!this.matin && (lo.carrefour || lo.parjure) && lo.soirVu !== G.jour) {
+      lo.soirVu = G.jour;
+      this.time.delayedCall(900, () => { if (!this.scene.isActive()) return; this.scene.pause(); this.scene.launch('Carrefour', { retour: 'Nuit' }); });
+    }
   }
 
   allerA(scene) {

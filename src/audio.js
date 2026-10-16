@@ -745,5 +745,5 @@ THEMES.personnage = Object.assign({}, THEMES.titre, {
 // Le thème de chaque scène du jeu
 const THEME_PAR_SCENE = {
   Titre: 'titre', Intro: 'personnage', IntroHistoire: 'cinematique', Comptoir: 'comptoir', Nuit: 'nuit', Dodo: 'nuit', Recit: 'recitEtonne', Faillite: 'faillite',
-  MarcheNoir: 'marcheNoir', Express: 'jeux', Banque: 'banque', Marche: 'marche', Atelier: 'comptoir', Bureau: 'comptoir', Carte: 'carte', Facade: 'marche', Arriere: 'comptoir', Renovation: 'cinematique', Promenade: 'nuit', Rue: 'marche', Nymphe: 'cinematique',
+  MarcheNoir: 'marcheNoir', Express: 'jeux', Banque: 'banque', Marche: 'marche', Atelier: 'comptoir', Bureau: 'comptoir', Carte: 'carte', Facade: 'marche', Arriere: 'comptoir', Renovation: 'cinematique', Promenade: 'nuit', Rue: 'marche', Nymphe: 'cinematique', Carrefour: 'cinematique',
 };
