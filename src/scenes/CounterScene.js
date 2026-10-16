@@ -2176,7 +2176,10 @@ class CounterScene extends Phaser.Scene {
     this.majFileAttente();
     this.majCommande();
     this.bouton('Fermer le comptoir', () => { this.bouton('...', null); this.baisserStore(() => this.scene.start('Nuit', { matin: false })); });
-    this.raconter('Le soleil se couche sur la Comté. Plus personne ne fait la queue.', 'Fin de la journée');
+    // (v0.86) ce qu'on dit suit l'horloge : on ferme parfois en plein après-midi
+    const h = heureDuComptoir(this.G), f = heureFermeture(this.G);
+    this.raconter(h >= f - JOURNEE.alerte ? 'Le soleil se couche sur la Comté. Plus personne ne fait la queue.'
+      : `Il n'est que ${formatHeure(h)}, mais plus personne ne fait la queue : tu peux fermer plus tôt aujourd'hui.`, 'Fin de la journée');
     this.tweens.add({ targets: this.cielNuit, alpha: 1, duration: 3000 });
     this.tweens.add({ targets: this.voile, fillAlpha: 0.25, duration: 3000 });
   }

@@ -51,6 +51,15 @@ Phaser.Scenes.Systems.prototype.start = function (data) {
   return demarrerSysteme.call(this, data);
 };
 
+// (v0.86) Une page qu'on « reprend » doit avoir été mise en pause. Sinon (elle s'est arrêtée entre-
+// temps : par ex. « Dormir », puis la banque ouverte pendant le fondu), Phaser la relançait à moitié :
+// une page fantôme, sans caméra, par-dessus la suivante. On ignore donc ces reprises-là.
+const reprendreSysteme = Phaser.Scenes.Systems.prototype.resume;
+Phaser.Scenes.Systems.prototype.resume = function (data) {
+  if (this.settings.status !== Phaser.Scenes.PAUSED) return this;
+  return reprendreSysteme.call(this, data);
+};
+
 // (v0.58) Le grand gel : dans Phaser, si une erreur survient pendant une image (une animation,
 // un minuteur, un clic...), la boucle du jeu ne demande plus l'image suivante et tout se fige
 // jusqu'au rafraîchissement de la page. On protège chaque image : l'erreur est notée (console et
