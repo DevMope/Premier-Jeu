@@ -472,26 +472,10 @@ function creerFacadeHD(scene, n = 3) {
     for (let x = fx - 6; x < fx + fl + 6; x++) t.poser(x, fy + fh + 6, 'cheneSombre', 0);
     for (const x of [fx, fx + fl - 4]) for (let y = fy + fh + 6; y < fy + fh + 13; y++) for (let k = 0; k < 3; k++) t.poser(x + k + (y - fy - fh - 6) * 0.3 * (x === fx ? 1 : -1), y, 'chene', 2);
   }
-  // La porte : de simples planches pour la chaumière, de chêne cintrée dans un arc de pierre ensuite
-  if (n === 0) {
+  // La porte d'entrée : (v0.84) la même que celle qu'on voit de l'arrière-boutique, selon le niveau
+  {
     const [px0, py0, pl, ph] = FACADE.porte;
-    for (let x = px0; x < px0 + pl; x += 6) planche(t, x, py0 + 6, Math.min(6, px0 + pl - x), ph - 6, 'chene', { horizontale: false, graine: 713 + x, noeuds: 1 });
-    for (const y of [py0 + 14, py0 + ph - 12]) for (let x = px0 + 1; x < px0 + pl - 1; x++) t.poser(x, y, 'chene', 1);
-    for (let y = py0 + 4; y < py0 + ph; y++) { t.poser(px0 - 1, y, 'chene', 4); t.poser(px0 + pl, y, 'chene', 1); }
-    for (let x = px0 - 2; x < px0 + pl + 2; x++) t.poser(x, py0 + 4, 'chene', 4);
-    t.poser(px0 + pl - 6, py0 + ph / 2, 'fer', 4);
-  } else {
-    const [px0, py0, pl, ph] = FACADE.porte;
-    const cx = px0 + pl / 2, r = pl / 2;
-    for (let y = py0 - 4; y < py0 + ph; y++) for (let x = px0 - 4; x < px0 + pl + 4; x++) {
-      const dy = Math.max(0, py0 + r - y);
-      const d = Math.hypot(x + 0.5 - cx, dy);
-      if (d > r + 4) continue;
-      if (d > r) { t.poser(x, y, 'pierre', 4 + (Math.floor(Math.atan2(dy, x - cx) * 4) % 2)); continue; }
-      t.poser(x, y, 'chene', 3 + (x < cx ? 0 : -1) + ((x - px0) % 6 === 0 ? -1 : 0) + (d > r - 1.5 ? -1 : 0));
-    }
-    for (const y of [py0 + 16, py0 + ph - 14]) for (let x = px0 + 2; x < px0 + pl - 2; x++) t.poser(x, y, 'fer', y % 2 ? 3 : 2);
-    t.forme('laiton', ellipsoide(px0 + pl - 8, py0 + ph / 2 + 4, 2.2, 2.2), { decalage: 0.4 });
+    porteEntree(t, px0 - 4, py0 - 6, pl + 8, ph + 6, n, { marche: false });
   }
   // Le support de fer de l'enseigne
   {

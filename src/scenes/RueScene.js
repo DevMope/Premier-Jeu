@@ -76,10 +76,9 @@ class RueScene extends Phaser.Scene {
     const duree = Math.abs(x1 - x0) * 11;
     pasDeMarche(this, p, duree, { poussiere: false });
     this.tweens.add({ targets: p, x: x1, duration: duree, onComplete: () => { if (p.bulle) p.bulle.destroy(); p.destroy(); } });
-    // (v0.84) un passant sur deux lâche une phrase en passant (une nouvelle du jeu, ou pour rire) ;
-    // on peut aussi cliquer sur lui
+    // (v0.84) un clic sur un passant : il s'arrête un instant et dit une phrase (une nouvelle du jeu,
+    // ou pour rire), comme au marché
     p.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.passantParle(p));
-    if (Math.random() < 0.5) this.time.delayedCall(1200 + Math.random() * 2500, () => this.passantParle(p));
   }
 
   passantParle(p) {
@@ -87,6 +86,9 @@ class RueScene extends Phaser.Scene {
     const cam = this.cameras.main;
     if (p.x < cam.scrollX + 40 || p.x > cam.scrollX + 920) return;   // (hors de l'écran : il se tait)
     const texte = phrasePassant(this.G);
+    // il s'arrête pour parler, puis reprend sa route
+    const tw = this.tweens.getTweensOf(p); tw.forEach(t => t.pause());
+    if (p.marche) p.marche.paused = true;
     Son.jouer('voix', { personne: { nom: p.texture.key, race: 'humain' }, ton: Phaser.Utils.Array.GetRandom(['content', 'rire', 'etonne', 'neutre']) });
     const bulle = p.bulle = this.add.text(p.x, p.y - p.displayHeight - 8, texte, style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 230 }, align: 'center' })).setOrigin(0.5, 1).setDepth(9).setScale(0);
     this.tweens.add({ targets: bulle, scale: 1, duration: 180, ease: 'Back.easeOut' });
@@ -95,6 +97,7 @@ class RueScene extends Phaser.Scene {
     this.time.delayedCall(Math.max(3000, texte.length * 60), () => {
       this.events.off('update', suivre);
       if (bulle.active) this.tweens.add({ targets: bulle, alpha: 0, duration: 300, onComplete: () => bulle.destroy() });
+      if (p.active) { tw.forEach(t => t.resume()); if (p.marche) p.marche.paused = false; }
     });
   }
 

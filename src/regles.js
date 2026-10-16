@@ -1500,7 +1500,7 @@ function nuit(G) {
   }
   G.cadeauxVillages = [];
   for (const l of nuitMafia(G)) G.reveil.lignes.push(l);
-  for (const l of nuitDuChat(G)) G.reveil.lignes.push(l);   // (v0.65) les rats, ou le cadeau du chat
+  for (const l of nuitDuChat(G)) G.reveil.lignes.unshift(l);   // (v0.65) les rats, ou le cadeau du chat (v0.84 : en premier, pour ne pas le rater)
   if (G.forge && G.forge.construite && G.forge.nouvelle) { G.reveil.lignes.push("Les ouvriers ont monté ta forge dans l'arrière-boutique : le foyer, le soufflet, l'enclume. Il ne manque plus qu'un forgeron !"); G.forge.nouvelle = false; }
   if (nouvellesDeLaForge(G)) G.reveil.lignes.push(nouvellesDeLaForge(G));   // (v0.82) les armes sorties de la forge
   if (loyer > 0) G.reveil.lignes.push(`Le bourgmastre a encaissé le loyer de la semaine : ${loyer} pièces.` + (loyer > (G.dernierLoyer || loyer) ? ' Le bail a augmenté : ton comptoir a pris de la valeur.' : ''));
@@ -1811,7 +1811,17 @@ function nuitDuChat(G) {
     G.stock[id]--; manges[id] = (manges[id] || 0) + 1;
   }
   const liste = Object.entries(manges).map(([id, n]) => `${n === 1 ? (genreDe(id).startsWith('f') ? 'une' : 'un') : n} ${ITEMS[id].nom.toLowerCase()}${n > 1 ? 's' : ''}`);
-  if (liste.length) lignes.push(`Cette nuit, des rats ont grignoté ta réserve : ${liste.join(' et ')}.${c.soirs.length ? '' : ' Un chat, peut-être, les tiendrait à distance...'}`);
+  // (v0.84) un réveil qu'on ne rate pas : une petite phrase, puis ce qui a disparu
+  if (liste.length) {
+    const entree = auHasard([
+      "Cette nuit, tu as entendu de petits êtres grignoter dans la réserve...",
+      "Quand le chat n'est pas là, les souris dansent : elles ont fait la fête dans ta réserve !",
+      "Crrr, crrr, crrr... Toute la nuit. Au matin, des miettes et des petites crottes partout.",
+      "Des petites traces de pattes dans la farine, jusqu'à tes étagères. Les rats sont passés.",
+      "Un festin cette nuit dans ta réserve. Tu n'étais pas invité.",
+    ]);
+    lignes.push(`🐭 ${entree} Disparu${liste.length > 1 || /^[2-9]/.test(liste[0]) ? 's' : ''} : ${liste.join(' et ')}.${c.soirs.length ? '' : ' Un chat, peut-être, les tiendrait à distance...'}`);
+  }
   return lignes;
 }
 // (appelé le soir) la garde viendra-t-elle demain ? On le tire dès ce soir : ton chat le sent parfois.

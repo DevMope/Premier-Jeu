@@ -76,6 +76,69 @@ function planche(t, x0, y0, l, h, mat = 'chene', { horizontale = true, graine = 
   }
 }
 
+// (v0.84) La porte d'entrée du shop, la même vue de la rue (sur la façade) et de l'arrière-boutique,
+// selon le niveau de la maison (0 à 3) : 0 de simples planches et un loquet ; 1 du chêne sombre dans
+// un encadrement de pierre, deux bandes de fer ; 2 trois pentures cloutées, un judas grillagé et
+// éclairé, un heurtoir ; 3 du bois noble à panneaux, un vitrail, des ferrures et un heurtoir dorés.
+function porteEntree(t, x0, y0, L, H, n, { marche = true } = {}) {
+  t.rampes.lueur = [0x7a4a10, 0xa86a18, 0xd8962a, 0xf0b848, 0xfad478, 0xfff0b8];
+  t.rampes.vitrail = [0x10204a, 0x1a3a7a, 0x2a5aa8, 0x4a82c8, 0x7aaee0, 0xb8dcf8];
+  const c = Math.max(3, Math.round(L * 0.1));                 // l'épaisseur de l'encadrement
+  const lin = n === 0 ? Math.max(2, Math.round(H * 0.05)) : Math.max(4, Math.round(H * 0.12));
+  const pas = marche && n > 0 ? Math.max(2, Math.round(H * 0.06)) : 0;
+  const dx0 = x0 + c, dx1 = x0 + L - c, dy0 = y0 + lin, dy1 = y0 + H - pas;
+  // l'encadrement : du bois brut pour la chaumière, de la pierre ensuite
+  for (let y = y0; y < y0 + H; y++) for (let x = x0; x < x0 + L; x++) {
+    if (x >= dx0 && x < dx1 && y >= dy0 && y < dy1) continue;
+    if (n === 0) { if (y < dy1) t.poser(x, y, 'chene', y === y0 ? 4 : (x === x0 || x === x0 + L - 1) ? 1 : 3); continue; }
+    if (y >= dy1) { t.poser(x, y, 'pierre', y === dy1 ? 5 : y === y0 + H - 1 ? 1 : 3); continue; }
+    const bloc = y < dy0 ? Math.floor((x - x0 + 3) / 9) : Math.floor((y - y0) / 8);
+    const joint = y < dy0 ? (x - x0 + 3) % 9 === 0 || y === dy0 - 1 : (y - y0) % 8 === 0 || x === dx0 - 1 || x === dx1;
+    t.poser(x, y, 'pierre', joint ? 1 : Math.max(0, Math.min(5, 3 + Math.round((fbm(x * 0.25, y * 0.25, 580 + bloc) - 0.5) * 2))));
+  }
+  if (n >= 2) for (let y = y0; y < dy0; y++) for (let x = Math.round(x0 + L / 2 - lin * 0.45 + (y - y0) * 0.3); x < Math.round(x0 + L / 2 + lin * 0.45 - (y - y0) * 0.3); x++) t.poser(x, y, n === 3 ? 'laiton' : 'pierre', y === y0 ? 5 : y === dy0 - 1 ? 1 : 4);
+  // le bois
+  const lp = Math.max(4, Math.round((dx1 - dx0) / (n === 0 ? 5 : 6)));
+  for (let x = dx0; x < dx1; x += lp) planche(t, x, dy0, Math.min(lp, dx1 - x), dy1 - dy0, n === 0 ? 'chene' : 'cheneSombre', { horizontale: false, graine: 590 + x + n * 7, noeuds: 1 });
+  const W = dx1 - dx0, Hd = dy1 - dy0;
+  const rangee = f => Math.round(dy0 + Hd * f);
+  if (n === 3) {
+    // des panneaux moulurés : un cadre sombre, un liseré clair
+    for (const [fx, fy, fw, fh] of [[0.12, 0.34, 0.33, 0.26], [0.55, 0.34, 0.33, 0.26], [0.12, 0.66, 0.33, 0.26], [0.55, 0.66, 0.33, 0.26]]) {
+      const ax = Math.round(dx0 + W * fx), ay = Math.round(dy0 + Hd * fy), aw = Math.round(W * fw), ah = Math.round(Hd * fh);
+      for (let x = ax; x < ax + aw; x++) { t.poser(x, ay, 'cheneSombre', 0); t.poser(x, ay + ah, 'cheneSombre', 5); }
+      for (let y = ay; y <= ay + ah; y++) { t.poser(ax, y, 'cheneSombre', 0); t.poser(ax + aw, y, 'cheneSombre', 5); }
+    }
+  }
+  // les bandes : de bois, de fer, cloutées ou dorées
+  const bandes = n === 0 ? [0.18, 0.78] : n === 1 ? [0.22, 0.78] : n === 2 ? [0.2, 0.5, 0.8] : [0.2, 0.8];
+  for (const f of bandes) {
+    const y1 = rangee(f), e = Math.max(2, Math.round(H * 0.035));
+    const x1 = n === 3 ? Math.round(dx0 + W * 0.45) : dx1;
+    for (let x = dx0; x < x1; x++) for (let y = y1; y < y1 + e; y++) t.poser(x, y, n === 0 ? 'chene' : n === 3 ? 'laiton' : 'fer', y === y1 ? 4 : y === y1 + e - 1 ? 1 : 2);
+    if (n >= 2) for (let x = dx0 + 3; x < x1 - 2; x += Math.max(4, Math.round(W / 6))) { if (n === 3) t.poser(x, y1, 'laiton', 5); else clou(t, x, y1); }
+  }
+  // le judas grillagé (2) ou le vitrail (3), avec la lumière derrière
+  if (n >= 2) {
+    const jw = Math.max(6, Math.round(W * 0.3)), jh = Math.max(5, Math.round(Hd * 0.13));
+    const jx = Math.round(dx0 + W / 2 - jw / 2), jy = Math.round(dy0 + Hd * (n === 3 ? 0.08 : 0.27));
+    for (let y = jy; y < jy + jh; y++) for (let x = jx; x < jx + jw; x++) {
+      const bord = x === jx || x === jx + jw - 1 || y === jy || y === jy + jh - 1;
+      if (n === 2) t.poser(x, y, bord || (x - jx) % 4 === 1 || (y - jy) % 5 === 0 ? 'fer' : 'lueur', bord ? 3 : 2 + ((x + y) % 3 === 0 ? 2 : 1));
+      else t.poser(x, y, bord ? 'laiton' : ((x - jx) + (y - jy)) % 6 < 3 ? 'vitrail' : 'lueur', bord ? 3 : 3 + ((x * y) % 3 === 0 ? 1 : 0));
+    }
+  }
+  // la poignée : un loquet, un anneau de fer, un heurtoir de laiton
+  const hx = Math.round(dx0 + W / 2), hy = Math.round(dy0 + Hd * 0.6);
+  if (n === 0) { for (let x = dx1 - Math.round(W * 0.35); x < dx1 - 2; x++) t.poser(x, hy, 'fer', 3); t.poser(dx1 - 3, hy - 1, 'fer', 4); }
+  else {
+    const r = Math.max(1.6, W * (n === 3 ? 0.09 : 0.07));
+    t.forme(n === 1 ? 'fer' : 'laiton', (x, y) => (Math.abs(Math.hypot(x + 0.5 - hx, y + 0.5 - hy) - r) < 0.9 ? [(x - hx) / (r + 1), (y - hy) / (r + 1), 0.7] : null));
+    if (n >= 2) t.forme('laiton', ellipsoide(hx, hy - r - 1.2, r * 0.8, r * 0.65), { decalage: 0.4 });
+    for (let y = hy + 2; y < hy + Math.max(4, Math.round(Hd * 0.06)); y++) t.poser(dx1 - Math.max(3, Math.round(W * 0.15)), y, n === 3 ? 'laiton' : 'fer', 3);
+  }
+}
+
 // Un clou ou un rivet de fer.
 function clou(t, x, y) {
   t.poser(x, y, 'fer', 4); t.poser(x + 1, y, 'fer', 2); t.poser(x, y + 1, 'fer', 2); t.poser(x + 1, y + 1, 'fer', 1);

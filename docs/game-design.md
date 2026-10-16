@@ -765,6 +765,25 @@ d'armure. C'est peu, et le joueur ne voit pas qu'il choisit.
   indices pour donner envie de rejouer (une ligne étrange de la gazette, un clin d'œil de la
   Faucheuse) ; ce que deviennent la Main Noire et la Faucheuse pour un joueur neutre ; si le comptoir
   continue après la fin (partie libre).
+- **Réponses du joueur sur la fin neutre (19/10)** :
+  1. Oui aux propositions, et **une zone de neutralité** au milieu de la jauge (entre la lumière et
+     l'ombre), visible comme telle.
+  2. **Des indices en plus seulement pour ceux qui ont fini le jeu en neutre** (Claude : un sceau
+     gardé dans le navigateur, d'une partie à l'autre, qui débloque des lignes étranges de la gazette,
+     des rêves, des phrases de passants, à la partie suivante).
+  3. **La Main Noire disparaît** sans qu'on sache où elle est partie. **La Faucheuse se moque** du
+     joueur neutre, qui n'a pas eu le cran de choisir ; à la fin, le Grand Sage ayant conquis toutes
+     les terres, une conversation en cinématique où la Mort dit, d'une façon poétique et presque
+     déçue (étonnant pour elle), que les puissants sont ses meilleurs clients.
+  4. **Le joueur peut continuer à jouer** après la fin ; plus tard, plus d'easter eggs et de choses à
+     découvrir pour la partie libre.
+
+### Retours du 19/10 (suite)
+- **Les rats** : au réveil, une phrase qu'on ne rate pas (« Cette nuit, tu as entendu de petits êtres
+  grignoter... », « Quand le chat n'est pas là, les souris dansent... »), en tête des nouvelles du matin.
+- **La porte d'entrée** : plus grande que celle de la chambre ; quatre modèles qui suivent la maison
+  (chaumière, maison, belle maison, demeure), les mêmes vus de la rue et de l'arrière-boutique.
+- **Les passants de la rue** ne parlent que si on clique dessus (comme au marché).
 
 ### On le fera plus tard
 - **Plus de musiques** pour en enchaîner plusieurs et ne jamais lasser le joueur avec une seule.
