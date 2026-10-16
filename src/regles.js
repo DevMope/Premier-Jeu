@@ -1819,6 +1819,8 @@ function nuitDuChat(G) {
       "Crrr, crrr, crrr... Toute la nuit. Au matin, des miettes et des petites crottes partout.",
       "Des petites traces de pattes dans la farine, jusqu'à tes étagères. Les rats sont passés.",
       "Un festin cette nuit dans ta réserve. Tu n'étais pas invité.",
+      "Au petit matin, un rat te fixe du haut de l'étagère, la panse ronde. Il ne s'excuse même pas.",
+      "Tu as rêvé d'une fanfare de souris... Ce n'était pas un rêve : ta réserve a servi de salle de bal.",
     ]);
     lignes.push(`🐭 ${entree} Disparu${liste.length > 1 || /^[2-9]/.test(liste[0]) ? 's' : ''} : ${liste.join(' et ')}.${c.soirs.length ? '' : ' Un chat, peut-être, les tiendrait à distance...'}`);
   }

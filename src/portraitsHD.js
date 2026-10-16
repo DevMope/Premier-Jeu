@@ -378,6 +378,7 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
       const nx = (x + 0.5 - cx) / (v.rx + 3);
       if (Math.abs(nx) > 1) return null;
       if (y < v.cy - v.ry - 2 || y > (long ? v.cy + v.ry + 14 : v.cy + 4)) return null;
+      if (g.race === 'magicienne' && y < v.cy - v.ry + 8) return null;   // (v0.84 : sous le chapeau, rien ne dépasse au-dessus du bord)
       const ny = (y + 0.5 - v.cy) / (v.ry + 3);
       if (y < v.cy && nx * nx + ny * ny > 1) return null;
       return [nx, Math.min(0.9, ny), Math.sqrt(Math.max(0.05, 1 - nx * nx))];
@@ -987,13 +988,15 @@ function coiffeHD(t, g, v, cx) {
     t.dessin(cx - 1, y - 1, ['.o.', 'oCo', '.o.'], { o: ['metal', 4], C: ['iris', 4] });
   } else if (g.race === 'magicienne') {
     // Le grand chapeau pointu, un peu de travers, avec son ruban d'or
+    // (v0.84) un cône qui couvre toute la tête à sa base, et une pointe qui ploie sans se détacher
     t.forme('habit', (x, y) => {
       if (y > v.cy - v.ry + 6) return null;
       const h = (v.cy - v.ry + 6) - y; // hauteur au-dessus du bord
-      const axe = cx + 3 - h * 0.18;
-      const demi = Math.max(0, 15 - h * 0.62);
-      const nx = (x + 0.5 - axe) / Math.max(1, demi);
-      return Math.abs(nx) > 1 ? null : [nx, -0.3, Math.sqrt(1 - nx * nx)];
+      if (h > 27) return null;
+      const axe = cx + 2 - h * h * 0.012;
+      const demi = Math.max(1.3, (v.rx + 4) * (1 - h / 24));
+      const nx = (x + 0.5 - axe) / demi;
+      return Math.abs(nx) > 1 ? null : [nx, -0.3, Math.sqrt(Math.max(0, 1 - nx * nx))];
     }, { decalage: -0.2 });
     t.forme('habit', (x, y) => (Math.abs(y + 0.5 - (v.cy - v.ry + 7)) < 2.2 && Math.abs(x + 0.5 - cx) < 27 ? [(x + 0.5 - cx) / 27, (y - v.cy + v.ry - 7) / 2, 0.7] : null), { decalage: -0.4 });
     t.forme('or', (x, y) => (y >= v.cy - v.ry + 2 && y <= v.cy - v.ry + 4 && Math.abs(x + 0.5 - cx - 1) < 12.5 ? [0, (y - v.cy + v.ry - 3), 0.8] : null));
