@@ -997,6 +997,64 @@ encaisser ») ; la feuille du jour au bureau, onglet « Aujourd'hui » (ranger l
 aguerris, héros ou lettres d'abord — ou chacun avec ses flèches ; les retours restent en tête et la
 Faucheuse au bout) ; les sept fonds de l'enseigne sur les quatre niveaux de la maison.
 
+### Préparation du lot B « L'année qui passe » (17/10, après la v0.93)
+Ce qui existe déjà : le calendrier (4 mois de 28 jours, nommés Semailles, Moissons, Brumes, Givre ; la
+date au bureau), les sauts de temps des paliers d'étoiles (28 jours, puis 1, 2, 3 ans), la cheminée et
+le bois (une planche le soir, un réveil en forme), le chat, les employés et leurs salaires.
+
+**B-1 Les saisons** (planche 20 : la façade aux quatre saisons)
+- Le paysage, la façade, la rue et le marché changent de couleurs et de détails : fleurs et bourgeons
+  (Semailles), blés dorés et grand soleil (Moissons), feuilles rousses et brume (Brumes), neige sur le
+  toit, flocons et tas de bois (Givre).
+- La saison se lit partout : une petite icône à côté du jour dans le bandeau, et la page « Calendrier »
+  au bureau (le mois en grille, les fêtes marquées, le prochain grand rendez-vous).
+- **Le premier matin d'une saison** : une petite cinématique sur la façade (les bourgeons qui s'ouvrent,
+  la première neige qui tombe...) — un grand changement, un moment à part.
+- **Ce que ça change au jeu (proposé, léger)** : Semailles, rivières en crue (épreuves de rivière un peu
+  plus dures) et plus de novices ; Moissons, rations et gourdes moins chères, mais la soif plus dure sur
+  les routes ; Brumes, on se perd plus facilement (torches plus demandées), potions moins chères ;
+  Givre, le froid (capes chaudes demandées), un client de moins par jour, et le bois de chauffage compte
+  (voir le foyer).
+- Pendant les sauts de temps : un défilé des saisons sur la façade pendant que le joueur grandit.
+
+**B-2 Les fêtes du village** (une par saison, annoncées une semaine avant par le crieur et le tableau)
+- **La Fête des Premières Pousses** (Semailles) : le marché fleuri, un concours du plus beau comptoir
+  (tes décorations comptent), une prime et de la réputation.
+- **La Foire des Moissons** (Moissons) : +3 clients ce jour-là, un étal de foire au marché (jeux et
+  lots), les prix montent un peu.
+- **La Nuit des Lanternes** (Brumes) : le village se souvient de ses disparus ; tu poses une lanterne
+  pour chaque aventurier mort que tu as équipé (un moment calme, ☀ si tu en poses, et la Faucheuse passe
+  au loin...).
+- **Le Solstice du Long Hiver** (Givre) : un banquet ; offrir un cadeau à tes habitués fait monter leur
+  relation ; Garrick vient trinquer.
+- Chaque fête a son matin mis en scène (le décor de la rue et du marché change pour la journée), et
+  respecte la règle « un seul grand rendez-vous par semaine ».
+
+**B-3 La diseuse et le présage du jour** (un personnage unique de plus)
+- Une vieille diseuse s'installe sous une tente violette dans la rue (petite cinématique de découverte :
+  la tente qui s'ouvre, les cartes qui se retournent seules).
+- Chaque matin, pour 2 pièces, elle retourne une carte : un **présage** pour la journée (« Le Corbeau :
+  quelqu'un te mentira aujourd'hui » → un imposteur dans la file ; « La Roue : un retour inattendu » ;
+  « La Tour : la garde passera cette semaine » ; « L'Étoile : un client généreux »...).
+- Proposé : ses présages disent vrai le plus souvent, mais pas toujours (plus ton flair est haut, mieux tu
+  les comprends). Elle en sait plus qu'elle ne le dit sur le sort d'oubli (un fil de l'histoire).
+
+**B-4 Le foyer à nourrir**
+- Une ligne « Le foyer » au bilan du soir, une fois par semaine : la gamelle du chat (une ration tous
+  les trois jours, sinon il boude et ne chasse plus les rats), le bois de chauffage en hiver (une planche
+  par nuit de Givre, sinon un réveil fatigué : un client de moins), les salaires (déjà là).
+- Plus tard (étape 14, la vie du personnage) : la famille.
+
+**Questions pour toi avant de commencer**
+1. Les effets des saisons sur le jeu : légers comme proposé, ou plus marqués ?
+2. Les fêtes : une par saison (4 par an) comme proposé, ou deux ?
+3. La diseuse : ses présages toujours vrais, ou parfois trompeurs ?
+4. Le foyer : le chat peut-il bouder s'il n'est pas nourri ? Et l'hiver sans bois, juste un réveil
+   fatigué, ou plus sévère ?
+
+Ensuite viendront les planches : les fêtes (le marché décoré), la diseuse (son portrait et sa tente),
+le calendrier du bureau et la petite icône de saison.
+
 ### On le fera plus tard
 - **Les instruments de musique** (idée du 16/10) : le joueur peut jouer d'instruments qu'il collectionne au fil de la partie. **3 instruments de base**, trouvables sans prérequis ; **2 instruments de lumière** et **2 d'ombre**, qu'on ne peut débloquer qu'après avoir **prêté serment** au camp correspondant (au Carrefour). (À préciser : où on les trouve, où et quand on en joue, ce que ça apporte.)
 - **Plus de musiques** pour en enchaîner plusieurs et ne jamais lasser le joueur avec une seule.
