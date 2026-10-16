@@ -78,7 +78,7 @@ class ForgeScene extends Phaser.Scene {
     // la lueur du foyer, qui danse
     const lueur = this.add.image(140, 370, 'halo').setScale(5).setTint(0xff7a20).setAlpha(f.construite ? 0.5 : 0.15).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: lueur, alpha: f.construite ? 0.32 : 0.1, scale: 4.6, duration: 260, yoyo: true, repeat: -1 });
-    this.add.text(300, 24, f.construite ? 'La forge' : 'Le coin de la future forge', style(24, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5);
+    this.add.text(360, 26, f.construite ? 'La forge' : 'Le coin de la future forge', style(24, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5);
     // le râtelier : les armes de ta réserve, celles en « bel ouvrage » brillent
     this.ratelier();
     if (f.construite) {

@@ -342,7 +342,7 @@ class CounterScene extends Phaser.Scene {
     const v = a.voyageur;
     this.dire(`« Je passerai à ton comptoir le jour ${a.jour}. Je pars : ${(t => t.charAt(0).toLowerCase() + t.slice(1))(v.quete)}. ` +
       `Prépare-moi s'il te plaît : ${commandeEnTexte(v)}. » — ${v.nom}` +
-      (a.acceptee ? ' (Tu as accepté.)' : ' (Pas encore répondu : accepte ou refuse ce soir.)'), 'Lettre de ' + v.nom);
+      (a.acceptee ? ' (Tu as accepté.)' : ' (Pas encore répondu : accepte ou refuse ce soir.)'), 'Lettre ' + dePersonne(v.nom));
   }
 
   creerCommande() {
@@ -619,7 +619,7 @@ class CounterScene extends Phaser.Scene {
     // (v0.64) l'épée fêlée passe pour l'arme qu'il a commandée, quelle qu'elle soit
     const besoin = estArme(id) ? Object.keys(commande).find(estArme) : id;
     if (!besoin || !commande[besoin]) return this.dire(`${v.nom.split(' ')[0]} n'a pas commandé ${estArme(id) ? "d'arme" : deNom(ITEMS[id].nom.toLowerCase())} : ça éveillerait ses soupçons.`, '');
-    if (fourni(v, this.colis, besoin) >= commande[besoin]) return this.dire(estArme(id) ? "Son baluchon a déjà son arme. Retires-en une d'abord." : `Son baluchon a déjà son compte ${deNom(ITEMS[id].nom.toLowerCase())}. Retires-en un d'abord.`, '');
+    if (fourni(v, this.colis, besoin) >= commande[besoin]) return this.dire(estArme(id) ? "Son baluchon a déjà son arme. Retires-en une d'abord." : `Son baluchon a déjà son compte ${deNom(ITEMS[id].nom.toLowerCase())}. Retires-en ${accordAdj(besoin, 'un', 'une', 'un', 'une')} d'abord.`, '');
     this.G.pieges[id]--;
     this.colis[id] = (this.colis[id] || 0) + 1;
     this.pieges[id] = (this.pieges[id] || 0) + 1;
@@ -881,14 +881,14 @@ class CounterScene extends Phaser.Scene {
     const G = this.G, [vesna, corvin] = CHEFS_SERPENT;
     if (!enMafia(G)) { this.bouton('...', null); return this.partirPar(FENETRE.x - 80); }   // (audit v0.61)
     this.titreCommande.setFontSize(17).setText('Le Serpent à deux têtes');
-    this.dire(`« On t'a vu travailler pour la Main Noire. » ${vesna.nom} parle bas, sans un sourire ; derrière elle, ${corvin.nom} garde la main sur son arc. « Le Serpent prend moins, et paie mieux. Choisis. On ne posera pas la question deux fois. »`, vesna.nom);
+    this.dire(`« On t'a vu${eJ()} travailler pour la Main Noire. » ${vesna.nom} parle bas, sans un sourire ; derrière elle, ${corvin.nom} garde la main sur son arc. « Le Serpent prend moins, et paie mieux. Choisis. On ne posera pas la question deux fois. »`, vesna.nom);
     const partir = () => { this.actionB = null; this.majBoutonsService(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
     this.choix(['Rester fidèle à la Main Noire', () => {
       choisirBande(G, 'main');
       this.dire(`${corvin.nom} se lève. « Le Serpent a deux têtes. Et il n'oublie rien. » (Ils se vengeront cette nuit.)`, corvin.nom); partir();
     }], ['Rejoindre le Serpent', () => {
       choisirBande(G, 'serpent');
-      this.dire(`${vesna.nom} te serre la main, longuement ; ${corvin.nom} pose la sienne par-dessus. « Tu es des nôtres. La Main Noire l'apprendra vite. Tiens-toi prêt. » (Elle se vengera cette nuit.)`, vesna.nom); partir();
+      this.dire(`${vesna.nom} te serre la main, longuement ; ${corvin.nom} pose la sienne par-dessus. « Tu es des nôtres. La Main Noire l'apprendra vite. Tiens-toi prêt${eJ()}. » (Elle se vengera cette nuit.)`, vesna.nom); partir();
     }]);
   }
 
@@ -1051,8 +1051,8 @@ class CounterScene extends Phaser.Scene {
       this.visiteFaucheuse(entree);
     } else {
       const v = entree.parti.voyageur;
-      this.dire(this.G.faucheuse.visites ? `Le carnet de voyage de ${v.nom} est posé sur ton comptoir. Sa couverture est glacée.`
-        : `Un berger a rapporté un carnet trouvé sur la route : celui de ${v.nom}... ${v.feminin ? 'Elle' : 'Il'} n'est jamais revenu${v.feminin ? 'e' : ''}.`, '');
+      this.dire(this.G.faucheuse.visites ? `Le carnet de voyage ${dePersonne(v.nom)} est posé sur ton comptoir. Sa couverture est glacée.`
+        : `Un berger a rapporté un carnet trouvé sur la route : celui ${dePersonne(v.nom)}... ${v.feminin ? 'Elle' : 'Il'} n'est jamais revenu${v.feminin ? 'e' : ''}.`, '');
       // Le carnet, couvert de givre, sur le rebord de la fenêtre.
       const g = this.carnetPose = this.add.graphics().setDepth(3);
       const cx = FENETRE.x + FENETRE.w / 2, cy = SOL_COMPTOIR + 2;
@@ -1150,7 +1150,7 @@ class CounterScene extends Phaser.Scene {
     }
     for (const p of bilan.demasques) {
       const id = Object.keys(p.pieges).find(k => p.pieges[k] > 0);
-      elle(`« Mais on a retrouvé ${PIEGES[id] ? leNom(id, PIEGES[id].nom.toLowerCase()) : 'ton piège'} de ${p.voyageur.nom.split(' ')[0]}... Le village murmure ton nom. »`);
+      elle(`« Mais on a retrouvé ${PIEGES[id] ? leNom(id, PIEGES[id].nom.toLowerCase()) : 'ton piège'} ${dePersonne(p.voyageur.nom.split(' ')[0])}... Le village murmure ton nom. »`);
       recit(`Ton piège a été découvert. Réputation −${PERTE_DEMASQUE}.`);
     }
     if (bilan.sabotage) {
@@ -1193,7 +1193,7 @@ class CounterScene extends Phaser.Scene {
         }]],
       });
     }
-    elle(sed.index >= 2 ? `« Je te laisse ${plusieurs ? 'leurs carnets' : 'son carnet'}... À très vite, mon marchand. »`
+    elle(sed.index >= 2 ? `« Je te laisse ${plusieurs ? 'leurs carnets' : 'son carnet'}... À très vite, ${eJ() ? 'ma marchande' : 'mon marchand'}. »`
       : `« Je te laisse ${plusieurs ? 'leurs carnets' : 'son carnet'}. Nous nous reverrons... »`);
 
     const parler = texte => {
@@ -1274,7 +1274,7 @@ class CounterScene extends Phaser.Scene {
     const prenom = d.nom.split(' ')[0];
     rencontrer(G, p.nom);
     this.titreCommande.setFontSize(17).setText('Une visite...');
-    const parler = texte => this.dire(texte, `${p.nom}, ${p.lien} de ${d.nom}`, p.nom);
+    const parler = texte => this.dire(texte, `${p.nom}, ${p.lien} ${dePersonne(d.nom)}`, p.nom);
     const fin = reponse => { parler(reponse); this.bouton('...', null); this.majBoutonsService(); this.dessinerPieces(); this.majStock(); this.partirPar(FENETRE.x - 80); };
 
     if (visite.intention === 'colere') {
@@ -1446,10 +1446,10 @@ class CounterScene extends Phaser.Scene {
     const dedans = Object.entries(this.colis).filter(([, n]) => n > 0);
     if (!confirme && dedans.length && this.enService && !this.enConfirmation) {
       const liste = dedans.map(([id, n]) => `${n} ${ITEMS[id] ? ITEMS[id].nom.toLowerCase() : id}`).join(', ');
-      this.dire(`Tu as déjà mis dans son baluchon : ${liste}. Si tu le refuses maintenant, il repart fâché (−${REFUS_CLIENT} de réputation) ; ces objets reviennent dans ta réserve. Le refuser quand même ?`, 'Refuser ce client ?');
+      this.dire(`Tu as déjà mis dans son baluchon : ${liste}. Si tu ${v.feminin ? 'la' : 'le'} refuses maintenant, ${v.feminin ? 'elle repart fâchée' : 'il repart fâché'} (−${REFUS_CLIENT} de réputation) ; ces objets reviennent dans ta réserve. ${v.feminin ? 'La' : 'Le'} refuser quand même ?`, 'Refuser ce client ?');
       this.enConfirmation = true;
       const fin = () => { this.enConfirmation = false; };
-      return this.choix(['Non, je le sers', () => { fin(); this.servir(); }], ['Oui, le refuser', () => { fin(); this.refuser(true); }]);
+      return this.choix([`Non, je ${v.feminin ? 'la' : 'le'} sers`, () => { fin(); this.servir(); }], [`Oui, ${v.feminin ? 'la' : 'le'} refuser`, () => { fin(); this.refuser(true); }]);
     }
     for (const [id, n] of Object.entries(this.colis)) {
       const pieges = this.pieges[id] || 0;
@@ -1657,10 +1657,10 @@ class CounterScene extends Phaser.Scene {
     // (v0.84) un baluchon vide : on demande avant de l'envoyer les mains vides
     const cmd0 = commandeDe(v);
     if (!confirme && Object.keys(cmd0).length && !Object.values(this.colis).some(n => n > 0)) {
-      this.dire(`Son baluchon est vide ! ${v.nom} partira sans aucune provision : ses chances de revenir vivant sont bien minces. L'envoyer quand même ?`, 'Partir sans rien ?');
+      this.dire(`Son baluchon est vide ! ${v.nom} partira sans aucune provision : ses chances de revenir vivant${v.feminin ? 'e' : ''} sont bien minces. L'envoyer quand même ?`, 'Partir sans rien ?');
       this.enConfirmation = true;
       const fin = () => { this.enConfirmation = false; };
-      return this.choix(['Oui, il part comme ça', () => { fin(); this.remettreColis(true); }], ['Non, je le prépare', () => { fin(); this.servir(); }]);
+      return this.choix([`Oui, ${v.feminin ? 'elle' : 'il'} part comme ça`, () => { fin(); this.remettreColis(true); }], [`Non, je ${v.feminin ? 'la' : 'le'} prépare`, () => { fin(); this.servir(); }]);
     }
     const chance = chanceDeRetour(v, this.colis);
     const msg = partir(this.G, v, this.colis, this.pieges);
@@ -1776,7 +1776,7 @@ class CounterScene extends Phaser.Scene {
           if (!donne) {
             const etat = etatObjet(v, donnee);
             const cout = `${materiauxRequis(this.G)} ${MATERIAUX[MATERIAU_DE[donnee]].nom.toLowerCase()}`;
-            ligne.txt.setText(etat > 0 ? `${ITEMS[donnee].nom} ${etat}/${USURE_MAX}${etat < USURE_MAX ? ` · réparer : ${cout}` : ' ✓'}` : `${ITEMS[donnee].nom} · cassée`).setFontSize(12).setColor(etat >= USURE_MAX ? '#2f6a2a' : etat > 0 ? '#b04a00' : '#8a5a10');
+            ligne.txt.setText(etat > 0 ? `${ITEMS[donnee].nom} ${etat}/${USURE_MAX}${etat < USURE_MAX ? ` · réparer : ${cout}` : ' ✓'}` : `${ITEMS[donnee].nom} · ${accordAdj(donnee, 'cassé', 'cassée', 'cassés', 'cassées')}`).setFontSize(12).setColor(etat >= USURE_MAX ? '#2f6a2a' : etat > 0 ? '#b04a00' : '#8a5a10');
             this.marquerReparation(ligne, etat > 0 && etat < USURE_MAX && this.enService);
           } else {
             this.marquerReparation(ligne, false);
@@ -1800,7 +1800,7 @@ class CounterScene extends Phaser.Scene {
         // Le client a déjà le sien : on peut le réparer au lieu d'en donner un neuf.
         const cout = `${materiauxRequis(this.G)} ${MATERIAUX[MATERIAU_DE[id]].nom.toLowerCase()}`;
         const texte = etat > 0 ? `${ITEMS[id].nom} ${etat}/${USURE_MAX}${etat < USURE_MAX ? ` · réparer : ${cout}` : ' ✓'}`
-          : `${ITEMS[id].nom} · la sienne est cassée`;
+          : `${ITEMS[id].nom} · ${accordAdj(id, 'le sien est cassé', 'la sienne est cassée', 'les siens sont cassés', 'les siennes sont cassées')}`;
         ligne.txt.setText(texte).setFontSize(12).setColor(etat >= USURE_MAX ? '#2f6a2a' : etat > 0 ? '#b04a00' : '#8a5a10');
         for (let t = 12; ligne.txt.width > 182 && t >= 9; t--) ligne.txt.setFontSize(t);
         this.marquerReparation(ligne, etat > 0 && etat < USURE_MAX && this.enService);

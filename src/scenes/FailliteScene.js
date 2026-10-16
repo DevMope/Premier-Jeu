@@ -331,7 +331,7 @@ class FailliteScene extends Cinematique {
     this.add.text(480, 240, `${phrase}\nAu matin du jour ${G.jour + 1}, tes dettes avaient atteint ${-SEUIL_FAILLITE} pièces.`,
       style(18, '#f3e6c8', { align: 'center', lineSpacing: 8 })).setOrigin(0.5).setDepth(31);
     this.add.text(480, 312,
-      `${G.jour} jours tenus · ${G.experience} aventuriers servis · réputation ${arrondi(G.reputation)}`,
+      `${G.jour} jours tenus · ${G.stats.servis ?? G.experience} aventuriers servis · réputation ${arrondi(G.reputation)}`,
       style(15, '#c9b48a')).setOrigin(0.5).setDepth(31);
     // (v0.57) Reprendre au dernier point de reprise, charger une de ses sauvegardes, ou recommencer
     const boutons = [];

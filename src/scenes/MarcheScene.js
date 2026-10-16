@@ -349,7 +349,7 @@ class MarcheScene extends Phaser.Scene {
     // les titres et les boutons
     c.add(this.add.text(480, 32, 'La fontaine de la grand-place', style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
     const n = G.fontainePieces || 0;
-    const sous = this.add.text(480, 60, n ? `${n} pièce${n > 1 ? 's' : ''} brille${n > 1 ? 'nt' : ''} au fond de l'eau.` : "Personne ne t'a encore vu y jeter une pièce.", style(14, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+    const sous = this.add.text(480, 60, n ? `${n} pièce${n > 1 ? 's' : ''} brille${n > 1 ? 'nt' : ''} au fond de l'eau.` : `Personne ne t'a encore vu${eJ(G)} y jeter une pièce.`, style(14, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
     c.add(sous);
     const deja = G.fontaineJour === G.jour;
     const jeter = creerBouton(this, 480, 516, 260, deja ? 'Vœu fait pour aujourd\'hui' : 'Jeter une pièce (1 p.)', () => {
@@ -839,7 +839,7 @@ class MarcheScene extends Phaser.Scene {
     const b = creerBouton(this, 836, 46, 200, '◀ Reculer', fermer);
     c.add([b.fond, b.label]);
     // (v0.68) ta bourse, en haut à gauche
-    c.add(bourse(this, 44, 82, G.argent, { echelle: 1.6, taille: 16, aDroite: true }));
+    c.add(bourse(this, 44, 96, G.argent, { echelle: 1.6, taille: 16, aDroite: true }));
     // (v0.84) les commandes prévues par lettre, consultables de tout près aussi
     const nLettres = G.annonces.filter(a => a.acceptee && a.jour >= G.jour).length;
     const bc = creerBouton(this, 124, 42, 220, `Commandes prévues (${nLettres}) ${this.commandesOuvertes ? '▲' : '▼'}`, () => {
@@ -1206,7 +1206,7 @@ class MarcheScene extends Phaser.Scene {
         const erreur = acheterDeco(G, id);
         if (!erreur) Son.jouer('achat');
         this.ouvrirBrocante();
-        this.message(erreur || `${d.nom} : accrochée dans ton arrière-boutique !`, erreur ? '#a03030' : '#2f6a2a');
+        this.message(erreur || `${d.nom} : ${d.f ? 'accrochée' : 'accroché'} dans ton arrière-boutique !`, erreur ? '#a03030' : '#2f6a2a');
       }, undefined, 19);
     });
   }
@@ -1243,14 +1243,14 @@ class MarcheScene extends Phaser.Scene {
         const erreur = revendreTenue(G, id);
         if (!erreur) Son.jouer('pieces');
         this.ouvrirGardeRobe();
-        this.message(erreur || `${d.nom} revendu à Marcelline : +${Math.floor(d.prix / 2)} p.`, erreur ? '#a03030' : '#2f6a2a');
+        this.message(erreur || `${d.nom} ${d.f ? 'revendue' : 'revendu'} à Marcelline : +${Math.floor(d.prix / 2)} p.`, erreur ? '#a03030' : '#2f6a2a');
       }, undefined, 21);
       else this.bouton(c, x + 340, y, 70, 'Acheter', () => {
         if (verrou()) return;
         const erreur = acheterTenue(G, id);
         if (!erreur) Son.jouer('achat');
         this.ouvrirGardeRobe();
-        this.message(erreur || `${d.nom} : tu le portes dès maintenant !`, erreur ? '#a03030' : '#2f6a2a');
+        this.message(erreur || `${d.nom} : tu ${d.f ? 'la' : 'le'} portes dès maintenant !`, erreur ? '#a03030' : '#2f6a2a');
       }, undefined, 21);
     });
   }
@@ -1469,14 +1469,14 @@ class MarcheScene extends Phaser.Scene {
     const c = this.panneau('Le coin des jeux', 'Tenu par Fil-de-Fer, cousin du vieux Grippesou');
     c.add(this.add.rectangle(480, 395, 2, 120, 0x8a6a3a));
     // Les dés
-    c.add(this.add.text(40, 340, `Les dés · le plus gros total gagne (${partiesRestantes(G, 'des')} parties restantes)`, style(13, '#3b2410', { fontStyle: 'bold' })));
+    c.add(this.add.text(40, 340, `Les dés · le plus gros total gagne (${pluriel(partiesRestantes(G, 'des'), 'partie restante', 'parties restantes')})`, style(13, '#3b2410', { fontStyle: 'bold' })));
     c.add(this.add.text(40, 362, 'Toi', style(12, '#6b4a2a')));
     c.add(this.add.text(250, 362, 'Fil-de-Fer', style(12, '#6b4a2a')));
     this.desToi = [this.creerDe(c, 70, 400), this.creerDe(c, 120, 400)];
     this.desLui = [this.creerDe(c, 280, 400), this.creerDe(c, 330, 400)];
     MISES.forEach((m, i) => this.bouton(c, 400, 365 + i * 30, 80, `Miser ${m}`, () => this.lancerDes(m)));
     // Le bonneteau
-    c.add(this.add.text(500, 340, `Le bonneteau · trouve la pièce, gagne le double (${partiesRestantes(G, 'bonneteau')} restantes)`, style(13, '#3b2410', { fontStyle: 'bold' })));
+    c.add(this.add.text(500, 340, `Le bonneteau · trouve la pièce, gagne le double (${pluriel(partiesRestantes(G, 'bonneteau'), 'restante', 'restantes')})`, style(13, '#3b2410', { fontStyle: 'bold' })));
     this.gobelets = [0, 1, 2].map(i => this.creerGobelet(c, 560 + i * 100, 420, i));
     this.piece = this.add.ellipse(0, 428, 18, 10, 0xe8c040).setStrokeStyle(2, 0x9a7a10).setVisible(false);
     c.add(this.piece);

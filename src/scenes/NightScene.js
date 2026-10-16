@@ -125,7 +125,7 @@ class NightScene extends Phaser.Scene {
       `Commandes par lettre : ${G.annonces.filter(a => a.acceptee && a.jour === G.jour).length}`,
       `Argent : ${G.argent} pièces`,
       `Réputation : ${arrondi(G.reputation)}`,
-      `Expérience : ${G.experience} clients`,
+      `Expérience : ${G.experience}`,
       `Flair : ${Math.round(niveauFlair(G) * 100)} % · Artisanat : niv. ${niveauArtisanat(G)}`,
       salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : '',
     ] : [
@@ -134,7 +134,7 @@ class NightScene extends Phaser.Scene {
       `Argent ce matin : ${G.argentDebutJour}`,
       `Argent ce soir : ${G.argent} (${gain >= 0 ? '+' : ''}${gain})`,
       `Réputation : ${arrondi(G.reputation)}`,
-      `Expérience : ${G.experience} clients`,
+      `Expérience : ${G.experience}`,
       `Flair : ${Math.round(niveauFlair(G) * 100)} % · Artisanat : niv. ${niveauArtisanat(G)}`,
     ];
     c.add(this.add.text(x1 + 18, 112, lignes.join('\n'), style(14, '#3b2410', { lineSpacing: 5 })));
@@ -235,7 +235,7 @@ class NightScene extends Phaser.Scene {
     liste.forEach((a, i) => {
       const y = 124 + (i + infos.length) * 52;
       const v = a.voyageur;
-      c.add(this.add.text(x1 + 14, y, `Lettre de ${v.nom}`, style(13, couleurNom(G, v.nom), { fontStyle: 'bold' })));
+      c.add(this.add.text(x1 + 14, y, `Lettre ${dePersonne(v.nom)}`, style(13, couleurNom(G, v.nom), { fontStyle: 'bold' })));
       c.add(this.add.text(x1 + 14, y + 17, `+1 client le jour ${a.jour} · butin ~${v.butin} p. · ${v.duree} j`, style(11, '#6b4a2a')));
       c.add(this.add.text(x1 + 14, y + 31, commandeEnTexte(v), style(11, '#3b2410', { wordWrap: { width: x2 - x1 - 24 } })));
       if (a.acceptee) {

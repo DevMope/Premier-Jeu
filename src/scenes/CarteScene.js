@@ -417,7 +417,10 @@ class CarteScene extends Phaser.Scene {
     } else {
       this.titre.setText(`Où envoyer ${v.nom} ? (${nomRang(v.niveau)}, ${NOMS_RACES[v.race] || v.race})`);
     }
-    if (this.titre.width > 930) this.titre.setFontSize(15);
+    // (v0.85) jamais sous les plaques du jour et de la réputation (en haut à gauche, jusqu'à x 226)
+    this.titre.setFontSize(19);
+    if (this.titre.width > 716) this.titre.setFontSize(15);
+    this.titre.setX(Math.max(480, 232 + this.titre.width / 2));
     this.dessinerBande();
     this.dessinerReperes();
     if (this.zoneChoisie) this.choisirZone(this.zoneChoisie);

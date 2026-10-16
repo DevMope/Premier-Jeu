@@ -94,7 +94,7 @@ class BureauScene extends Phaser.Scene {
           }
           if (e.type === 'famille') {
             const p = e.visite.parent;
-            return { nom: p.nom, race: p.race, ligne: `Visite : ${p.lien} de ${e.visite.defunt.nom}`, detail: () => [`Vient au sujet de ${e.visite.defunt.nom}.`] };
+            return { nom: p.nom, race: p.race, ligne: `Visite : ${p.lien} ${dePersonne(e.visite.defunt.nom)}`, detail: () => [`Vient au sujet ${dePersonne(e.visite.defunt.nom)}.`] };
           }
           if (e.type === 'faucheuse') {
             return { nom: '???', race: 'faucheuse', ligne: 'Une silhouette noire, tout au bout de la file...',
@@ -321,7 +321,7 @@ class BureauScene extends Phaser.Scene {
       const vivants = h.filter(x => x.issue === 'vivant').length;
       gauche = [
         { titre: 'Les missions', lignes: [`Réussies : ${vivants}`, `Ratées : ${h.filter(x => x.issue === 'echec').length}`, `Morts au combat : ${h.filter(x => x.issue === 'valeureux').length}`, `Morts sans gloire : ${h.filter(x => x.issue === 'sans gloire').length}`, `Taux de retour : ${h.length ? Math.round(vivants / h.length * 100) : 0} %`] },
-        { titre: 'Les clients', lignes: [`Servis : ${G.experience}`, `Refusés : ${G.stats.refus}`, `Lettres acceptées : ${G.stats.lettresAcceptees} · refusées : ${G.stats.lettresRefusees}`] },
+        { titre: 'Les clients', lignes: [`Servis : ${G.stats.servis ?? G.experience}`, `Refusés : ${G.stats.refus}`, `Lettres acceptées : ${G.stats.lettresAcceptees} · refusées : ${G.stats.lettresRefusees}`] },
       ];
       const gains = {};
       h.forEach(x => { if (x.issue === 'vivant') gains[x.nom] = (gains[x.nom] || 0) + x.gain; });

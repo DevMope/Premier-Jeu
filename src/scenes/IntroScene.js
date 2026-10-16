@@ -48,14 +48,14 @@ class IntroScene extends Phaser.Scene {
       return { cle, valeur, pastille };
     });
 
-    // Le nom de ton auberge : un vrai champ à remplir, avec un crayon
+    // Le nom de ton comptoir : un vrai champ à remplir, avec un crayon
     this.nomShop = NOM_SHOP_DEFAUT;
-    this.add.text(220, 432, "Le nom de ton auberge :", style(16, '#f3e6c8', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5);
+    this.add.text(220, 432, "Le nom de ton comptoir :", style(16, '#f3e6c8', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5);
     const champ = this.add.rectangle(190, 470, 300, 38, 0xfff8e8).setStrokeStyle(3, 0x8a6a3a).setInteractive({ useHandCursor: true });
     this.texteShop = this.add.text(50, 470, '', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
     this.curseur = this.add.rectangle(0, 470, 2, 22, 0x3b2410);
     this.tweens.add({ targets: this.curseur, alpha: 0, duration: 500, yoyo: true, repeat: -1 });
-    const ecrire = () => demanderTexte('Le nom de ton auberge', this.nomShop, NOM_SHOP_MAX, nom => {
+    const ecrire = () => demanderTexte('Le nom de ton comptoir', this.nomShop, NOM_SHOP_MAX, nom => {
       if (!this.sys.isActive()) return;   // (v0.58 : on a quitté l'écran pendant que la fenêtre était ouverte)
       if (nom) this.nomShop = nom;
       this.maj();

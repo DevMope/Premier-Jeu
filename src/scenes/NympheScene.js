@@ -6,11 +6,11 @@
 const PAROLES_NYMPHE = [
   // (première visite : voir premiereVisite)
   null,
-  ["Encore toi... Dix pièces de plus. Tu es têtu, petit marchand ; j'aime ça.",
+  ["Encore toi... Dix pièces de plus. Tu es têtu{J}, petit{J} marchand{J} ; j'aime ça.",
     "L'eau m'a raconté des choses, depuis. Des villages entiers vidés en une nuit, puis effacés des cartes.",
     "Et ceux qui gardent ce pays jurent qu'il n'y a jamais rien eu là-bas. Étrange, non ?"],
   ["Tu reviens toujours. Alors écoute bien.",
-    "Un sort d'oubli pèse sur vos têtes, à vous autres du Comté. Il ne tient pas sur l'eau : c'est pour ça que moi, je me souviens.",
+    "Un sort d'oubli pèse sur vos têtes, à vous autres de la Comté. Il ne tient pas sur l'eau : c'est pour ça que moi, je me souviens.",
     "Je ne peux pas le briser. Mais quelqu'un qui saurait où chercher... peut-être."],
   ["Les Bannis n'ont pas toujours été bannis, tu sais.",
     "Demande aux plus vieux d'entre eux ce qu'était leur terre, avant. Écoute ce qu'ils ne disent pas."],
@@ -118,7 +118,7 @@ class NympheScene extends Cinematique {
       await parle("Ce village a la mémoire courte, tu sais. L'eau, elle, se souvient de tout ce qui a coulé... même de ce qu'on a voulu faire oublier.");
     } else {
       const lignes = PAROLES_NYMPHE[r.visite] || PAROLES_NYMPHE_ENSUITE[r.visite % PAROLES_NYMPHE_ENSUITE.length];
-      for (const l of lignes) await parle(l);
+      for (const l of lignes) await parle(l.replaceAll('{J}', eJ()));   // (accordé à la joueuse)
     }
     await parle("Pour sept jours, l'eau sera l'amie de tes aventuriers : les rivières les porteront, les marais les épargneront, et leurs gourdes ne les trahiront pas.");
     Son.jouer('succes');

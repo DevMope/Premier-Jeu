@@ -7,7 +7,7 @@ const CONSEILS = {
   banque: "La Banque Centrale, chez les nains. Un prêt, ça dépanne, mais la banque prélève chaque nuit. Ne prends que ce que tu peux rendre, petit.",
   atelier: "L'atelier : les trouvailles que les aventuriers te laissent. Répare-les, et revends-les plus cher aux enchères. Un objet cassé ne vaut presque rien.",
   jauge: "La lumière et l'ombre : ce que le monde pense de toi. Les gens aiment les cases bien rangées, hein ? Ha ! Regarde surtout ce que ça change pour ton comptoir.",
-  marcheNoir: "Tu te souviens de ce que je t'avais dit ? La nuit, les honnêtes gens ont aussi leurs marchés. Sois prudent : chaque affaire fait du bruit, et la garde a de bonnes oreilles.",
+  marcheNoir: "Tu te souviens de ce que je t'avais dit ? La nuit, les honnêtes gens ont aussi leurs marchés. Sois prudent{J} : chaque affaire fait du bruit, et la garde a de bonnes oreilles.",
   comptoir: "Un client ! Sa commande est sur le parchemin, à droite. Clique sur tes marchandises, en bas, pour les glisser dans son baluchon. Mieux ton client est équipé, plus il a de chances de revenir... et de te reverser sa part du butin.",
   colis: "Bien ! Quand le baluchon est prêt, clique sur « Remettre le baluchon ». Ton flair, sous la commande, t'indique ses chances de revenir vivant.",
   remis: "Et un baluchon de parti ! Ton client reviendra te raconter son aventure, dès demain pour une course courte (si tout va bien...). Occupe-toi du suivant : la file attend.",
@@ -44,7 +44,7 @@ function conseilGarrick(scene, cle, toujours = false) {
   const texte = h.add.text(240, 372, '', style(16, '#24140a', { wordWrap: { width: 610 }, lineSpacing: 4 }));
   c.add(texte);
   let defile = null;
-  h.time.delayedCall(260, () => { if (texte.active) defile = texteQuiDefile(h, texte, `« ${CONSEILS[cle]} »`, { vitesse: 18 }); });
+  h.time.delayedCall(260, () => { if (texte.active) defile = texteQuiDefile(h, texte, `« ${CONSEILS[cle].replaceAll('{J}', eJ(G))} »`, { vitesse: 18 }); });
   // (v0.84) un clic n'importe où sur le conseil, ou Entrée / Espace / Échap : finir le texte, puis fermer
   const ouvert = h.time.now;
   let ferme = false;

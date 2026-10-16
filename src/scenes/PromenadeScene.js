@@ -387,7 +387,7 @@ class PromenadeScene extends Cinematique {
     if (eclairage === 0) { bougie(this, o + 880, 352, { rayon: 140, profondeur: 7.6 }); this.lumieres.push([o + 880, 316, 2.4]); }
     else { poserLuminaire(this, o + 480, 4, eclairage); this.lumieres.push([o + 480, 120, 3.4]); }
     this.regarder(o + 140, 340, 560, 120, `Ton comptoir : ${AMELIORATIONS.comptoir.niveaux[niveauAmelioration(G, 'comptoir')]}. Demain, la file d'attente recommencera ici.`);
-    this.regarder(o + 17, 340, 120, 60, `Le registre : ${G.experience} clients servis depuis le début.`);
+    this.regarder(o + 17, 340, 120, 60, `Le registre : ${G.stats.servis ?? G.experience} clients servis depuis le début.`);
   }
 
   pieceAtelier() {

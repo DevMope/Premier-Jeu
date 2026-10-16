@@ -696,6 +696,7 @@ function partir(G, voyageur, colis, pieges = {}) {
   });
   G.experience++;
   G.journal.servis++;
+  G.stats.servis = (G.stats.servis || 0) + 1;   // (v0.85) les vrais clients servis : l'expérience monte aussi la nuit
   connaitre(G, voyageur);
   for (const [id, n] of Object.entries(colis)) G.stats.objets[id] = (G.stats.objets[id] || 0) + n;
   return message;
@@ -1544,14 +1545,14 @@ function reveilDuMatin(G, mauvaisJour) {
   const chanceForme = CHAMBRE.forme * n + (auChaud ? CHEMINEE.forme : 0);
   if (chanceForme && Math.random() < chanceForme) {
     r.forme = Math.random() < 0.5 ? 'client' : 'remise';
-    r.lignes.push(r.forme === 'client' ? "Tu t'es réveillé en pleine forme : tu serviras un client de plus aujourd'hui !"
-      : `Tu t'es réveillé en pleine forme : les marchands te feront ${Math.round(CHAMBRE.remise * 100)} % de remise aujourd'hui !`);
+    r.lignes.push(r.forme === 'client' ? `Tu t'es réveillé${eJ(G)} en pleine forme : tu serviras un client de plus aujourd'hui !`
+      : `Tu t'es réveillé${eJ(G)} en pleine forme : les marchands te feront ${Math.round(CHAMBRE.remise * 100)} % de remise aujourd'hui !`);
   }
   // Un rêve qui révèle quelque chose
   if (n >= 2 && Math.random() < CHAMBRE.reve * (n - 1)) {
     const reves = [];
     const rentre = G.partis.find(p => !p.termine && p.retour === G.jour && p.resultat);
-    if (rentre) reves.push(() => `Tu as rêvé de ${rentre.voyageur.nom}... ${rentre.resultat.vivant ? (rentre.resultat.echec ? `Tu l'as vu${rentre.voyageur.feminin ? 'e' : ''} revenir les mains vides, mais vivant${rentre.voyageur.feminin ? 'e' : ''}.` : `Tu l'as vu${rentre.voyageur.feminin ? 'e' : ''} revenir, les bras chargés !`) : 'Tu as vu la Faucheuse marcher à ses côtés...'}`);
+    if (rentre) reves.push(() => `Tu as rêvé ${dePersonne(rentre.voyageur.nom)}... ${rentre.resultat.vivant ? (rentre.resultat.echec ? `Tu l'as vu${rentre.voyageur.feminin ? 'e' : ''} revenir les mains vides, mais vivant${rentre.voyageur.feminin ? 'e' : ''}.` : `Tu l'as vu${rentre.voyageur.feminin ? 'e' : ''} revenir, les bras chargés !`) : 'Tu as vu la Faucheuse marcher à ses côtés...'}`);
     const avenir = (G.evenements || []).find(e => e.debut > G.jour && EVENEMENTS[e.id]);
     if (avenir) reves.push(() => `Un rêve étrange : « ${EVENEMENTS[avenir.id].nouvelle} » Ça arrivera dans ${avenir.debut - G.jour} jour${avenir.debut - G.jour > 1 ? 's' : ''}.`);
     reves.push(() => { r.encheres = auHasard(Object.keys(CATEGORIES)); const pluriel = { arme: 'armes', armure: 'armures', bijou: 'bijoux', artefact: 'artefacts', vetement: 'vêtements' }[r.encheres]; return `Tu as rêvé d'enchérisseurs qui se disputaient... Les ${pluriel} se vendront cher aux enchères aujourd'hui !`; });
@@ -1562,7 +1563,7 @@ function reveilDuMatin(G, mauvaisJour) {
   if (mauvaisJour && (n || porte(G, 'echarpe'))) {
     r.reconfort = Math.round((CHAMBRE.reconfort * n + (porte(G, 'echarpe') ? 0.1 : 0)) * 100) / 100;
     G.reputation += r.reconfort;
-    r.lignes.push(`Une bonne nuit de sommeil t'a aidé à encaisser la mauvaise journée d'hier : réputation +${String(r.reconfort).replace('.', ',')}.`);
+    r.lignes.push(`Une bonne nuit de sommeil t'a aidé${eJ(G)} à encaisser la mauvaise journée d'hier : réputation +${String(r.reconfort).replace('.', ',')}.`);
   }
 }
 
@@ -1818,11 +1819,11 @@ function nuitDuChat(G) {
       "Quand le chat n'est pas là, les souris dansent : elles ont fait la fête dans ta réserve !",
       "Crrr, crrr, crrr... Toute la nuit. Au matin, des miettes et des petites crottes partout.",
       "Des petites traces de pattes dans la farine, jusqu'à tes étagères. Les rats sont passés.",
-      "Un festin cette nuit dans ta réserve. Tu n'étais pas invité.",
+      `Un festin cette nuit dans ta réserve. Tu n'étais pas invité${eJ(G)}.`,
       "Au petit matin, un rat te fixe du haut de l'étagère, la panse ronde. Il ne s'excuse même pas.",
       "Tu as rêvé d'une fanfare de souris... Ce n'était pas un rêve : ta réserve a servi de salle de bal.",
     ]);
-    lignes.push(`🐭 ${entree} Disparu${liste.length > 1 || /^[2-9]/.test(liste[0]) ? 's' : ''} : ${liste.join(' et ')}.${c.soirs.length ? '' : ' Un chat, peut-être, les tiendrait à distance...'}`);
+    lignes.push(`🐭 ${entree} Disparue${liste.length > 1 || /^[2-9]/.test(liste[0]) ? 's' : ''} : ${liste.join(' et ')}.${c.soirs.length ? '' : ' Un chat, peut-être, les tiendrait à distance...'}`);
   }
   return lignes;
 }
@@ -1991,7 +1992,7 @@ function terminerAventure(G, parti) {
         G.interdits[id] = (G.interdits[id] || 0) + 1;
         message = (message ? message + ' ' : '') + `${v.nom.split(' ')[0]} te glisse ${INTERDITS[id].article} : « Un souvenir. Cache-le bien. »`;
       }
-      if (Math.random() < CHANCE_GARDE_OMBRE) { G.gardeDemain = true; message = (message ? message + ' ' : '') + 'Des silhouettes en tabard bleu l\'ont suivi jusqu\'à ta porte...'; }
+      if (Math.random() < CHANCE_GARDE_OMBRE) { G.gardeDemain = true; message = (message ? message + ' ' : '') + `Des silhouettes en tabard bleu l'ont suivi${v.feminin ? 'e' : ''} jusqu'à ta porte...`; }
     }
     if (part0 < 1) message = (message ? message + ' ' : '') + `Sa commande n'était remplie qu'à ${Math.round(part0 * 100)} % : ta réputation en profite moins.`;
     if (blesse) message = (message ? message + ' ' : '') + `Revenu${v.feminin ? 'e' : ''} blessé${v.feminin ? 'e' : ''} : la mission compte un peu moins pour ta réputation, et sans soins il lui faudra ${CONVALESCENCE_PAR_COEUR * blesse} jours de repos.`;
@@ -2855,6 +2856,8 @@ function leNom(id, nom) {
 }
 // « de torche », « d'épée »
 function deNom(nom) { return (voyelle(nom) ? "d'" : 'de ') + nom; }
+// « le récit d'Aldric », « la lettre de Hilda » (les prénoms : pas de h muet)
+function dePersonne(nom) { return (/^[aeiouyéèêàâîôû]/i.test(nom) ? "d'" : 'de ') + nom; }
 // « une torche », « un bouclier », « des flèches »
 function unNom(id) { const g = genreDe(id); return g.includes('p') ? 'des' : g === 'm' ? 'un' : 'une'; }
 // « ma torche », « mon épée », « mon bouclier », « mes bandages »
@@ -2862,6 +2865,7 @@ function monNom(id, nom) { const g = genreDe(id); return g.includes('p') ? 'mes'
 // l'accord d'un adjectif : neuf / neuve / neufs / neuves
 // (v0.58) « ouvre » ou « ouvrent » selon le nom du lieu (Les enchères ouvrent...)
 function ouvrePluriel(cle) { return /^Les /.test(NOMS_LIEUX_MARCHE[cle] || '') ? 'ouvrent' : 'ouvre'; }
+function pluriel(n, un, plusieurs) { return `${n} ${n > 1 ? plusieurs : un}`; }   // « 1 partie restante », « 3 parties restantes »
 // Le genre du joueur : « réveillé(e) », « petit(e) »...
 function eJ(G = window.GAME) { return G && G.joueur && G.joueur.feminin ? 'e' : ''; }
 function accordAdj(id, m, f, mp, fp) { const g = genreDe(id); return g === 'm' ? m : g === 'f' ? f : g === 'mp' ? mp : fp; }

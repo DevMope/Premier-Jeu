@@ -241,7 +241,7 @@ class ArriereScene extends Phaser.Scene {
     c.add(this.add.rectangle(480, 270, 420, h, sombre ? 0x1a0e18 : 0xead9b0).setStrokeStyle(3, sombre ? 0x5a1a3a : 0x8a6a3a));
     const haut = 270 - h / 2;
     const v = this.comptoir.enService ? this.comptoir.voyageur : null;
-    c.add(this.add.text(480, haut + 18, v ? (sombre ? `Glisser dans le baluchon de ${v.nom.split(' ')[0]} :` : `Offrir à ${v.nom.split(' ')[0]} :`) : "Personne à servir pour l'instant",
+    c.add(this.add.text(480, haut + 18, v ? (sombre ? `Glisser dans le baluchon ${dePersonne(v.nom.split(' ')[0])} :` : `Offrir à ${v.nom.split(' ')[0]} :`) : "Personne à servir pour l'instant",
       style(14, sombre ? '#d08aa8' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     ids.forEach((id, i) => {
       const y = haut + 50 + i * 34;

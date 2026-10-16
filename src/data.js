@@ -243,8 +243,8 @@ const EPREUVES_COMBAT = ['araignee', 'loup', 'bandits', 'sanglier', 'pillards', 
 // {e} devient « e » pour une aventurière (blessé{e} → blessée).
 const QUETES = {
   lettre: {
-    titre: 'Porter une lettre à Brêche-Haute',
-    accueil: "Bonjour ! Je dois porter une lettre au village de Brêche-Haute, de l'autre côté de la rivière. Tu pourrais me préparer de quoi faire le voyage ?",
+    titre: 'Porter une lettre à Brèche-Haute',
+    accueil: "Bonjour ! Je dois porter une lettre au village de Brèche-Haute, de l'autre côté de la rivière. Tu pourrais me préparer de quoi faire le voyage ?",
     pv: 2, duree: [1, 2], butin: [25, 35],
     epreuves: [
       {
@@ -983,18 +983,18 @@ const DECORATIONS = {
 // Chacune se voit dans l'arrière-boutique, et attire un peuple (ou un peu tout le monde).
 const DECOS = {
   tropheeCerf: { court: 'plus de nains', nom: 'Trophée de cerf', prix: 45, attire: 'nain', effet: 'Les nains se sentent chez eux : plus de clients nains.' },
-  tapisserie: { court: 'plus d\'elfes', nom: 'Tapisserie des Trois Terres', prix: 60, attire: 'elfe', effet: 'Les elfes admirent le tissage : plus de clients elfes.' },
+  tapisserie: { court: 'plus d\'elfes', f: true, nom: 'Tapisserie des Trois Terres', prix: 60, attire: 'elfe', effet: 'Les elfes admirent le tissage : plus de clients elfes.' },
   carillon: { court: 'plus de hobbits', nom: 'Carillon de cuivre', prix: 30, attire: 'hobbit', effet: 'Son tintement plaît aux hobbits : plus de clients hobbits.' },
-  horloge: { court: 'plus d\'humains', nom: 'Horloge à coucou', prix: 55, attire: 'humain', effet: 'Les humains aiment la ponctualité : plus de clients humains.' },
+  horloge: { court: 'plus d\'humains', f: true, nom: 'Horloge à coucou', prix: 55, attire: 'humain', effet: 'Les humains aiment la ponctualité : plus de clients humains.' },
   globe: { court: 'plus de magiciennes', nom: 'Globe de cristal', prix: 70, attire: 'magicienne', effet: 'Les magiciennes y lisent des présages : plus de clientes magiciennes.' },
-  fougere: { court: '+0,4 client/jour', nom: 'Fougère rare', prix: 25, attire: null, attrait: 0.4, effet: 'Un comptoir accueillant : +0,4 client par jour.' },
+  fougere: { court: '+0,4 client/jour', f: true, nom: 'Fougère rare', prix: 25, attire: null, attrait: 0.4, effet: 'Un comptoir accueillant : +0,4 client par jour.' },
   // Étape 9c : les décorations des deux camps. Elles font pencher la jauge (lumière ou ombre),
   // attirent leur camp, et les clients de l'autre camp ne les aiment pas.
   chandelier: { court: 'lumière · attire les pandas', nom: "Chandelier d'argent", prix: 50, camp: 'bien', attire: 'panda', effet: 'Lumière : les pandas du Monastère se sentent chez eux. Les Bannis grimacent.' },
-  banniere: { court: 'lumière · attire les humains', nom: 'Bannière de la Confrérie', prix: 40, camp: 'bien', attire: 'humain', effet: 'Lumière : les humains te font confiance. Les Bannis se méfient.' },
+  banniere: { court: 'lumière · attire les humains', f: true, nom: 'Bannière de la Confrérie', prix: 40, camp: 'bien', attire: 'humain', effet: 'Lumière : les humains te font confiance. Les Bannis se méfient.' },
   craneTroll: { court: 'ombre · attire les Bannis', nom: 'Crâne de wyverne', prix: 45, camp: 'mal', attire: 'ombre', effet: "Ombre : les Bannis se sentent chez eux. Les gens de la lumière frissonnent." },
   coquillageNymphe: { court: 'souvenir de la nymphe · +0,3 client/jour', nom: 'Coquillage de la nymphe', prix: 0, cadeau: true, attire: null, attrait: 0.3, effet: "Le souvenir de la nymphe des fontaines : on y entend la rivière chanter. Les passants s'arrêtent pour l'écouter (+0,3 client par jour)." },
-  lanterneCrane: { court: 'ombre · attire les Bannis', nom: 'Lanterne-crâne', prix: 55, camp: 'mal', attire: 'ombre', effet: "Ombre : une lueur verte qui attire les Bannis. La Confrérie n'aime pas ça." },
+  lanterneCrane: { court: 'ombre · attire les Bannis', f: true, nom: 'Lanterne-crâne', prix: 55, camp: 'mal', attire: 'ombre', effet: "Ombre : une lueur verte qui attire les Bannis. La Confrérie n'aime pas ça." },
 };
 const BROCANTEUR = { nom: 'Firmin le brocanteur' };
 // Plus de clients du peuple qu'une décoration attire : le poids de ce peuple est multiplié.
@@ -1005,12 +1005,12 @@ const ATTIRANCE_DECO = 2.2;
 const GARDE_ROBE = {
   chapeau: { nom: 'Chapeau de vagabond', prix: 18, effet: 'Tu as de l\'allure : +0,2 client par jour.' },
   bandana: { nom: 'Bandana rouge', prix: 8, effet: 'Un air de baroudeur : les novices te font confiance (+0,1 client par jour).' },
-  cape: { nom: 'Cape de voyage', prix: 35, effet: 'Belle allure : +0,2 client par jour.' },
-  echarpe: { nom: 'Écharpe de laine', prix: 12, effet: 'Bien au chaud : tes nuits te consolent un peu plus (+0,1 de réputation après un mauvais jour).' },
+  cape: { f: true, nom: 'Cape de voyage', prix: 35, effet: 'Belle allure : +0,2 client par jour.' },
+  echarpe: { f: true, nom: 'Écharpe de laine', prix: 12, effet: 'Bien au chaud : tes nuits te consolent un peu plus (+0,1 de réputation après un mauvais jour).' },
   monocle: { nom: 'Monocle', prix: 24, effet: 'Tu vois mieux : +10 % de flair.' },
-  pipe: { nom: 'Pipe en bruyère', prix: 10, effet: 'Calme et posé : les marchands te font 2 % de remise.' },
-  montre: { nom: 'Montre à gousset', prix: 40, effet: "Toujours à l'heure : +1 d'expérience chaque jour." },
-  bague: { nom: 'Bague de marchand', prix: 30, effet: 'On te fait confiance : +1 de relation avec chaque nouveau client.' },
+  pipe: { f: true, nom: 'Pipe en bruyère', prix: 10, effet: 'Calme et posé : les marchands te font 2 % de remise.' },
+  montre: { f: true, nom: 'Montre à gousset', prix: 40, effet: "Toujours à l'heure : +1 d'expérience chaque jour." },
+  bague: { f: true, nom: 'Bague de marchand', prix: 30, effet: 'On te fait confiance : +1 de relation avec chaque nouveau client.' },
 };
 const MARCELLINE = { nom: 'Marcelline la couturière' };
 
@@ -1151,7 +1151,7 @@ Object.assign(QUETES, {
       {
         type: 'champignons', besoin: 'antidote', qte: 1,
         intro: "J'ai goûté un champignon pour vérifier. Mauvaise idée. Très mauvaise idée.",
-        complet: "Heureusement, ton antidote m'a remis d'aplomb.",
+        complet: "Heureusement, ton antidote m'a remis{e} d'aplomb.",
         partiel: 'Je voyais des lapins qui parlaient...',
         rien: "J'ai été malade pendant deux jours.",
       },
@@ -1876,7 +1876,7 @@ const EVENEMENTS = {
     annonce: 'Les yétis des Pics Gelés ont migré vers le nord. Leurs trésors sont sans surveillance.',
     nouvelle: 'Les yétis ont quitté les Pics : leurs trésors attendent.' },
   foire: { type: 'clients', clients: 2,
-    annonce: "La grande Foire d'automne se tiendra bientôt à Brêche-Haute. Des voyageurs vont affluer de partout !",
+    annonce: "La grande Foire d'automne se tiendra bientôt à Brèche-Haute. Des voyageurs vont affluer de partout !",
     nouvelle: "C'est la Foire ! Les voyageurs affluent." },
   orcs: { type: 'clients', clients: -2,
     annonce: 'Une armée d\'orcs a été aperçue près des collines. Les voyageurs se font rares.',
@@ -1894,7 +1894,7 @@ const NOUVELLES = [
   "Un vieux moine panda affirme se souvenir d'une chanson « d'avant ». Le Conseil l'a invité à venir la chanter. On ne l'a pas revu.",
   "Des fermiers ont trouvé des fondations de maisons dans le Bourbier. Le Conseil assure qu'il s'agit de très grands terriers de gobelins.",
   "Un gobelin a été enseveli sous une bouse de Groliphant, ces éléphants de dix mètres au garrot. On n'a retrouvé que son chapeau. Il était content du chapeau.",
-  'Le concours de lancer de nain de Brêche-Haute est annulé : le nain a gagné.',
+  'Le concours de lancer de nain de Brèche-Haute est annulé : le nain a gagné.',
   "Un troll a tenté de payer le péage du pont avec un caillou. Le péagiste, lui aussi troll, a rendu la monnaie en cailloux.",
   'La Guilde des Sorciers rappelle qu\'il est interdit de transformer son voisin en crapaud, même pendant les fêtes.',
   'Un dragon a été aperçu au-dessus des Pics Gelés. Vérification faite : un cerf-volant. Très gros. Avec des dents.',
@@ -1917,7 +1917,7 @@ const NOUVELLES = [
   'Un pêcheur a attrapé un poisson qui parlait. Il l\'a relâché : il refusait de se taire.',
   'Les pandas du Monastère ont médité si fort qu\'un village voisin s\'est endormi pour deux jours.',
   'Une sorcière a perdu son balai. Récompense honnête, pas de questions, pas de crapauds.',
-  "Un Groliphant s'est assis sur la diligence de Brêche-Haute. Les passagers sont arrivés à l'heure, mais plus plats.",
+  "Un Groliphant s'est assis sur la diligence de Brèche-Haute. Les passagers sont arrivés à l'heure, mais plus plats.",
   "Les nains banquiers de la Banque Centrale Goyenne ont ri hier. Une seule fois. Les intérêts ont augmenté aussitôt.",
   'Un gobelin a essayé de voler la lune avec une échelle. Il est tombé à la troisième marche. Il retentera demain.',
 ];
@@ -1995,7 +1995,7 @@ const FINS_QUETES = {
   col: "De l'autre côté du col des Glaces, la vallée était verte. On aurait dit un autre monde.",
   roiSorcier: "La couronne du Roi-Sorcier s'est brisée en mille éclats noirs. Le ciel au-dessus des ruines s'est éclairci.",
   bete: "La Bête a reculé dans les profondeurs de son antre. Pour la première fois, elle a eu peur.",
-  pelerins: "Les pèlerins sont arrivés au Monastère au son des cloches. Les moines m'ont béni trois fois.",
+  pelerins: "Les pèlerins sont arrivés au Monastère au son des cloches. Les moines m'ont béni{e} trois fois.",
   graine: "La Graine d'argent a germé dès qu'elle a touché la terre du Sanctuaire. Les elfes ont chanté toute la nuit.",
   siege: "Les assiégeants ont levé le camp à l'aube. Sur les remparts, on agitait des bannières.",
   pillage: "Les chariots « de pèlerins » sont restés sur la route. Ce qu'il y avait dedans, mieux vaut ne pas en parler.",
@@ -2016,7 +2016,7 @@ const FINS_QUETES = {
   garnison: "Le Fort de Hautgarde a ses vivres pour l'hiver. Les soldats m'ont offert une chope.",
   remedes: "Les chamans ont reçu les remèdes. Dans le village, on a recommencé à rire.",
   filon: "Le filon des Mines Rouges a livré son minerai. Les orcs m'ont donné un éclat, en souvenir.",
-  meute: "Au sommet du col, la meute s'est écartée pour me laisser passer. Ils m'ont regardé partir sans un bruit.",
+  meute: "Au sommet du col, la meute s'est écartée pour me laisser passer. Ils m'ont regardé{e} partir sans un bruit.",
 };
 
 // (v0.60) Les souvenirs que la Faucheuse laisse sur l'étagère du comptoir, un par âme offerte

@@ -180,7 +180,7 @@ class StoryScene extends Cinematique {
     const r = this.parti.resultat;
     const etapes = v.epreuves.length;
 
-    this.titre.setText(r.vivant ? 'Le récit de ' + v.nom : 'Le carnet de ' + v.nom).setColor(couleurNom(this.G, v.nom, true));
+    this.titre.setText(r.vivant ? 'Le récit ' + dePersonne(v.nom) : 'Le carnet ' + dePersonne(v.nom)).setColor(couleurNom(this.G, v.nom, true));
     this.musique(r.vivant ? 'recitEtonne' : 'recitTriste');   // (la musique suit le récit : étonnement, peur, joie, tristesse)
     this.ecrire(v.quete, r.vivant
       ? `${v.nom} est revenu${this.e} au comptoir, ${this.etatAuRetour()}. Assis${this.e} sur le rebord de la fenêtre, ${v.feminin ? 'elle' : 'il'} te raconte son aventure...`
@@ -449,7 +449,7 @@ class StoryScene extends Cinematique {
       const y = y0 + 80 + i * 34, ep = e.epreuve;
       if (ep.besoin && ITEMS[ep.besoin]) c.add(this.add.image(x0 + 38, y, iconeObjet(this, ep.besoin)).setScale(1.6));
       c.add(this.add.text(x0 + 60, y - 8, `${i + 1}. ${NOMS[ep.type] || (ep.type || '').replace(/^./, m => m.toUpperCase())}`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
-      const prepa = e.niveau === 'complet' ? 'bien équipé' : e.niveau === 'partiel' ? 'à moitié équipé' : `sans ${ITEMS[ep.besoin] ? ITEMS[ep.besoin].nom.toLowerCase() : 'rien'}`;
+      const prepa = e.niveau === 'complet' ? `bien équipé${this.e}` : e.niveau === 'partiel' ? `à moitié équipé${this.e}` : `sans ${ITEMS[ep.besoin] ? ITEMS[ep.besoin].nom.toLowerCase() : 'rien'}`;
       c.add(this.add.text(x0 + 60, y + 8, prepa + (e.piege ? ' · objet piégé !' : ''), style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
       const perdu = Math.max(0, (e.pvAvant ?? e.pvApres) - e.pvApres);
       c.add(this.add.text(x0 + 426, y, e.reussie ? '✓ réussie' : `✗ ratée${perdu ? ` · −${perdu} ♥` : ''}`, style(13, e.reussie ? '#2f6a2a' : '#a03030', { fontStyle: 'bold' })).setOrigin(1, 0.5));
@@ -586,7 +586,7 @@ class StoryScene extends Cinematique {
     };
     // (v0.60) la fin selon le camp de la contrée
     const camp = ZONES[v.zone] && ZONES[v.zone].camp;
-    const fin = camp === 'bien' ? ' Au village, on a sonné les cloches pour moi.' : camp === 'mal' ? " Personne ne m'a vu revenir. C'est mieux ainsi." : '';
+    const fin = camp === 'bien' ? ' Au village, on a sonné les cloches pour moi.' : camp === 'mal' ? ` Personne ne m'a vu${this.e} revenir. C'est mieux ainsi.` : '';
     return perso + (parPeuple[v.race] || "Sans ton baluchon, je ne serais pas là.") + fin;
   }
 
@@ -642,7 +642,7 @@ class StoryScene extends Cinematique {
         const verse = dedommager(G, this.parti, cle);
         boutons.forEach(x => x.setVisible(false));
         const rep = d.reputation ? ` Réputation +${d.reputation}.` : '';
-        this.ecrire('Dédommagement', `Tu as versé ${verse} pièces à la famille de ${v.nom}.${rep}` +
+        this.ecrire('Dédommagement', `Tu as versé ${verse} pièces à la famille ${dePersonne(v.nom)}.${rep}` +
           (G.argent < 0 ? `\nTu es à découvert (${G.argent} pièces). Faillite à ${SEUIL_FAILLITE} !` : ''));
         const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => allerA(this, 'Comptoir'));
         this.dansUI(retour);
