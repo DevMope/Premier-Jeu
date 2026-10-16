@@ -165,7 +165,10 @@ class NightScene extends Phaser.Scene {
 
     c.add(this.add.text(x1 + 18, 352, 'En mission', style(14, '#3b2410', { fontStyle: 'bold' })));
     const missions = enMission(G).map(p => `${p.voyageur.nom} — jour ${p.retour}`);
-    c.add(this.add.text(x1 + 18, 372, listeCourte(missions, 4, 'Personne'), style(12, '#5a3a20', { lineSpacing: 2 })));
+    // (v0.93) le soir, la ligne du chat/de la nymphe se place sous la liste (elle la recouvrait avec 3 missions)
+    const evenement = !this.matin && (alerteChat(G) || nympheAttend(G) || chatCeSoir(G));
+    const texteMissions = this.add.text(x1 + 18, 372, listeCourte(missions, evenement ? 2 : 4, 'Personne'), style(12, '#5a3a20', { lineSpacing: 2 }));
+    c.add(texteMissions);
     // (v0.65, étape 10c) le chat : celui de gouttière qui rôde, ou le tien qui sent venir la garde
     if (!this.matin) {
       let ligne = null, action = null;
@@ -175,8 +178,10 @@ class NightScene extends Phaser.Scene {
         if (!cache && aCacher(G)) action = ['▸ Tout cacher sous le plancher', () => { cacherMarchandise(G); Son.jouer('glisse'); this.tout(); }];
       } else if (nympheAttend(G)) ligne = 'Une lueur bleue monte de la place du marché... Sors voir, par la rue !';
       else if (chatCeSoir(G)) ligne = 'Un chat de gouttière rôde devant ta porte ce soir.';
-      if (ligne) c.add(this.add.text(x1 + 18, 424, ligne, style(12, '#5a2a4a', { fontStyle: 'bold italic', wordWrap: { width: x2 - x1 - 36 } })));
-      if (action) c.add(this.add.text(x1 + 18, 455, action[0], style(12, '#8a1a1a', { fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 4, y: 2 } })).setInteractive({ useHandCursor: true }).on('pointerdown', action[1]));
+      const yLigne = Math.max(410, texteMissions.y + texteMissions.height + 8);
+      let yAction = 455;
+      if (ligne) { const t = this.add.text(x1 + 18, yLigne, ligne, style(12, '#5a2a4a', { fontStyle: 'bold italic', wordWrap: { width: x2 - x1 - 36 } })); c.add(t); yAction = Math.max(yAction, t.y + t.height + 6); }
+      if (action) c.add(this.add.text(x1 + 18, yAction, action[0], style(12, '#8a1a1a', { fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 4, y: 2 } })).setInteractive({ useHandCursor: true }).on('pointerdown', action[1]));
     }
   }
 
@@ -309,6 +314,8 @@ class NightScene extends Phaser.Scene {
       (evenements ? ` · Événements ${evenements > 0 ? '+' : ''}${evenements}` : '') + (rumeur ? ` · Rumeur ${rumeur}` : ''));
     const pal = p.palier;
     this.texteFacteurs.setText(this.texteFacteurs.text + `\nPalier : ${pal.max} clients (+${BONUS_CLIENTS_MAX})` + (pal.suivant ? ` · ${pal.suivant.max} dès ${pal.suivant.reputation} de réput.` : ''));
+    // (v0.93) quand la journée est pleine, on le dit à la place du palier
+    if (p.plein) this.texteFacteurs.setText(this.texteFacteurs.text.replace(/\nPalier.*$/, `\nJournée pleine : ${p.capacite} clients au plus`));
   }
 
   // --- La banque : une page à part, le soir attend en pause ---

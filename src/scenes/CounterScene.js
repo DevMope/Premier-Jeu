@@ -724,8 +724,11 @@ class CounterScene extends Phaser.Scene {
     this.bouton('...', null);
     this.exprimer(entree.attentes > 1 ? 'fache' : 'neutre');
     this.dire(phrase + (msg ? ' ' + msg : ''), v.nom);
-    this.G.file.push(entree);
-    this.fileSprites.push(this.spriteFile(entree, this.G.file.length - 1).setVisible(false));
+    // (v0.93) ... mais devant la Faucheuse, qui reste toujours la dernière
+    const iF = this.G.file.findIndex(e => e.type === 'faucheuse');
+    const place = iF >= 0 ? iF : this.G.file.length;
+    this.G.file.splice(place, 0, entree);
+    this.fileSprites.splice(place, 0, this.spriteFile(entree, place).setVisible(false));
     this.majFileAttente();
     this.partirPar(FENETRE.x - 80);
   }

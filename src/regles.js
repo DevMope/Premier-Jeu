@@ -1393,7 +1393,20 @@ function prevision(G, jour = G.jour + 1) {
   max = Math.max(min, max + bonus + forme);
   // (v0.60) les premiers jours : pas trop de monde, mais au moins deux clients (le rythme des débuts)
   if (jour <= CLIENTS_DEBUT.jours) { min = Math.max(2, Math.min(min, CLIENTS_DEBUT.max)); max = Math.max(min, Math.min(max, CLIENTS_DEBUT.max)); }
-  return { min, max, annonces, palier };
+  // (v0.93) jamais plus de monde que la journée ne permet d'en servir : les lettres et ceux qui
+  // reviennent d'hier prennent leur place d'abord (avant, au jour 17, il fallait en refuser chaque jour)
+  const capacite = capaciteClients(G);
+  const reportes = jour === G.jour + 1 || jour === G.jour ? (G.reportes || []).length : 0;
+  const place = Math.max(annonces + reportes ? 0 : 1, capacite - annonces - reportes);
+  const plein = max > place;
+  max = Math.min(max, place); min = Math.min(min, max);
+  return { min, max, annonces, palier, capacite, plein };
+}
+
+// (v0.93) Combien de clients une journée permet de servir sans courir : les heures d'ouverture
+// divisées par le temps d'un service et d'un récit, plus un (on se presse un peu).
+function capaciteClients(G) {
+  return Math.floor((heureFermeture(G) - JOURNEE.ouverture) / (dureeService(G) + JOURNEE.recit)) + 1;
 }
 
 // Le palier de réputation atteint, et le suivant (ou null).
@@ -1727,7 +1740,12 @@ function formerFileDuJour(G) {
   // (v0.86) ceux qui t'avaient écrit et n'ont pas pu passer hier avant la fermeture : en tête de file
   const reportes = (G.reportes || []).map(v => ({ type: 'client', voyageur: v, reporte: true }));
   G.reportes = [];
-  G.file = [...retours, ...reportes, ...notables, ...visites, ...file];
+  G.file = faucheuseAuBout([...retours, ...reportes, ...notables, ...visites, ...file]);
+}
+
+// (v0.93) La Faucheuse ferme toujours la file : ceux qui s'y glissent après elle passent devant.
+function faucheuseAuBout(file) {
+  return [...file.filter(e => e.type !== 'faucheuse'), ...file.filter(e => e.type === 'faucheuse')];
 }
 
 // --- Étape 9e : le marché noir ---

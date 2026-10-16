@@ -385,9 +385,10 @@ class MarcheScene extends Phaser.Scene {
   async grippesouPeche(c, cx, ey, rx, [px, py]) {
     const attendre = ms => new Promise(r => this.time.delayedCall(ms, r));
     const tween = cfg => new Promise(r => this.tweens.add({ ...cfg, onComplete: r }));
-    const sol = 506, bord = cx + rx * 0.82, poste = cx + rx + 34;
-    const g = imageCorps(this, 1010, sol, 'gobelin', 8).setFlipX(true); c.add(g);
-    const ombre = this.add.ellipse(1010, sol, 46, 10, 0x000000, 0.3); c.add(ombre); c.bringToTop(g);
+    const sol = 510, bord = cx + rx * 0.82, poste = cx + rx + 40;
+    // (v0.93) un peu plus grand : à la mesure du bassin
+    const g = imageCorps(this, 1010, sol, 'gobelin', 10).setFlipX(true); c.add(g);
+    const ombre = this.add.ellipse(1010, sol, 56, 12, 0x000000, 0.3); c.add(ombre); c.bringToTop(g);
     const suivre = () => ombre.setX(g.x);
     pasDeMarche(this, g, 1600, { poussiere: false });
     this.message('Psst... Une petite silhouette verte se faufile entre les passants.');
@@ -396,7 +397,8 @@ class MarcheScene extends Phaser.Scene {
     // il se penche au-dessus de l'eau, regarde à droite, à gauche...
     await tween({ targets: g, angle: -24, x: poste - 14, y: sol - 4, duration: 350 });
     for (const flip of [false, true]) { g.setFlipX(flip); await attendre(350); }
-    // ... et plonge la main : des ronds dans l'eau
+    // ... et plonge la main : il fouille l'eau en se penchant davantage (des ronds dans l'eau)
+    this.tweens.add({ targets: g, angle: -32, x: poste - 20, duration: 200, yoyo: true, repeat: 2, ease: 'Sine.easeInOut' });
     for (let k = 0; k < 3; k++) {
       const o = this.add.ellipse(bord - 16 + k * 6, ey + 10, 10, 3).setStrokeStyle(1, 0xe8fcff, 0.8); c.add(o);
       this.tweens.add({ targets: o, scaleX: 3, scaleY: 2, alpha: 0, duration: 600, onComplete: () => o.destroy() });
@@ -405,8 +407,14 @@ class MarcheScene extends Phaser.Scene {
     if (!c.active) return;
     // une pièce remonte jusqu'à sa main
     const piece = this.add.image(bord - 12, ey + 8, 'pieceFace').setScale(1.6); c.add(piece);
-    await tween({ targets: piece, x: poste - 40, y: sol - 96, duration: 500, ease: 'Back.easeOut' });
-    const hehe = this.add.text(g.x, sol - 190, 'Hé hé...', style(16, '#3b2410', { fontStyle: 'bold italic', backgroundColor: '#fff4dc', padding: { x: 8, y: 4 } })).setOrigin(0.5); c.add(hehe);
+    await tween({ targets: piece, x: poste - 48, y: sol - 118, duration: 500, ease: 'Back.easeOut' });
+    // il la serre contre lui et sautille de joie
+    Son.jouer('piece');
+    this.tweens.add({ targets: piece, x: poste - 30, y: sol - 104, duration: 200 });
+    this.tweens.add({ targets: g, angle: -6, duration: 200 });
+    this.tweens.add({ targets: g, y: sol - 14, duration: 160, yoyo: true, repeat: 1, ease: 'Quad.easeOut', delay: 200,
+      onUpdate: () => piece.active && piece.setY(g.y - 104) });
+    const hehe = this.add.text(g.x, sol - 236, 'Hé hé...', style(16, '#3b2410', { fontStyle: 'bold italic', backgroundColor: '#fff4dc', padding: { x: 8, y: 4 } })).setOrigin(0.5); c.add(hehe);
     await attendre(900);
     if (!c.active) return;
     // il te voit ! La pièce retombe, et il détale
@@ -420,7 +428,7 @@ class MarcheScene extends Phaser.Scene {
       Son.jouer('piece');
     } });
     hehe.destroy();
-    const cri = this.add.text(g.x - 60, sol - 190, "C'est pas c'que tu crois !", style(15, '#3b2410', { fontStyle: 'bold italic', backgroundColor: '#fff4dc', padding: { x: 8, y: 4 } })).setOrigin(0.5); c.add(cri);
+    const cri = this.add.text(g.x - 60, sol - 236, "C'est pas c'que tu crois !", style(15, '#3b2410', { fontStyle: 'bold italic', backgroundColor: '#fff4dc', padding: { x: 8, y: 4 } })).setOrigin(0.5); c.add(cri);
     this.message("Grippesou, pris la main dans la fontaine, laisse retomber ta pièce et détale sans demander son reste. Toutes les pièces sont encore au fond.");
     g.setFlipX(true);
     pasDeMarche(this, g, 900, { poussiere: false });
