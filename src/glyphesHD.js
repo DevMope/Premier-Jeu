@@ -12,8 +12,12 @@ const PALETTE_GLYPHES = {
   a: 0x8a96a4, A: 0xdce4ec,   // acier (épées)
   w: 0xe8e0d0, W: 0xffffff,   // os, blanc
   g: 0x5a4a3a,                // gris-brun (haut-parleur)
+  v: 0x5a3a9a, V: 0xb494ff,   // violet (la lune de l'ombre)
 };
 const GLYPHES = {
+  // (v0.90) la lumière et l'ombre : le soleil et la lune des boutons et du livre des deux voies
+  soleil: ['.....j.....', '.j..nnn..j.', '...nJJJn...', '..nJJJJJn..', '.nJJJJJJJn.', 'jnJJJJJJJnj', '.nJJJJJJJn.', '..nJJJJJn..', '...nJJJn...', '.j..nnn..j.', '.....j.....'],
+  lune: ['...nnnn....', '..nVVVVn...', '.nVVvnn....', 'nVVvn......', 'nVVn.......', 'nVVn.......', 'nVVvn......', '.nVVvn..nn.', '.nnVVvnnVn.', '..nnVVVVn..', '....nnnn...'],
   colere: [
     '...nn.nn...',
     '..nRn.nRn..',

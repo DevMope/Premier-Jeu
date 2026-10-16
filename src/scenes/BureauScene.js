@@ -381,45 +381,61 @@ class BureauScene extends Phaser.Scene {
 
   // --- La jauge lumière ⟷ ombre (étape 9a) ---
 
-  // Page de gauche : la jauge, le palier, ce qui l'a fait bouger. Page de droite : ce que ça change.
+  // (v0.90) Le livre des deux voies. Page de gauche : la balance, et le prochain palier de chaque
+  // côté (pas ceux d'après). Page de droite : ce qui fait pencher la balance, et tes derniers gestes.
   afficherCamps(c) {
-    const G = this.G, j = jaugeCamp(G), p = palierCamp(G), cote = coteCamp(G);
-    const r = G.reussites || { bien: 0, mal: 0 };
+    const G = this.G, j = jaugeCamp(G), lo = etatLO(G), serment = sermentDe(G);
     this.time.delayedCall(300, () => conseilGarrick(this, 'jauge', true));
-    c.add(this.add.text(161, 72, 'Lumière et ombre', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    c.add(this.add.text(161, 94, `De quel côté le monde te voit`, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5, 0));
-    c.add(barreJauge(this, 161, 136, 230, j, { h: 14 }));
-    // les écus des deux camps, au bout de la jauge (les Bannis côté ombre, la Confrérie côté lumière)
-    creerEmblemesHD(this);
-    c.add(this.add.image(58, 116, 'embleme_bannis').setScale(0.55));
-    c.add(this.add.image(264, 116, 'embleme_confrerie').setScale(0.55));
-    c.add(this.add.text(161, 166, nomPalierCamp(G), style(15, j > 0 ? '#9a7a10' : j < 0 ? '#5a3a8a' : '#5a3a20', { fontStyle: 'bold' })).setOrigin(0.5, 0));
-    const prochain = PALIERS_JAUGE.find(s => s > Math.abs(j));
-    c.add(this.add.text(161, 190, `Jauge : ${j > 0 ? '+' : ''}${j}` + (prochain ? ` · prochain palier à ${j >= 0 ? '+' : '−'}${prochain}` : ' · au bout de la jauge'), style(11, '#3b2410')).setOrigin(0.5, 0));
-    const oc = G.objetsCamp || {};
-    const gauche = [
-      { titre: 'Ce qui la fait bouger', lignes: [
-        `Réussites pour ${NOMS_CAMPS.bien} : ${r.bien} (+${JAUGE_CAMP.reussite} chacune)`,
-        `Réussites pour ${NOMS_CAMPS.mal} : ${r.mal} (−${JAUGE_CAMP.reussite} chacune)`,
-        `Âmes offertes, sabotages : ${arrondi(G.mal)} (−${JAUGE_CAMP.mal} par point)`,
-        `Décorations : ${oc.bien || 0} lumière, ${oc.mal || 0} ombre (±${JAUGE_CAMP.objet} chacune)`] },
-      { titre: 'Le sceau', lignes: [G.camp ? `Camp scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}`
-        : `Le camp se scelle à la ${ARMURE.length}e pièce d'armure (${(G.armure || []).length} / ${ARMURE.length}).`] },
-    ];
-    const taux = PRETS.filter(x => !x.mal).map(x => `${x.nom} : ${Math.round(tauxPret(G, x) * 100)} %`);
-    const droite = [
-      { titre: 'Ce que ça change', lignes: [
-        `Réputation en terres de lumière : ×${multReputationCamp(G, 'bien')}` + (cote === 'bien' ? ' (ton camp)' : ` (×${EFFETS_CAMP.bien.reputationAllie} côté lumière)`),
-        `Butin des terres d'ombre : ×${multButinCamp(G, 'mal')}` + (cote === 'mal' ? ' (ton camp)' : ` (×${EFFETS_CAMP.mal.butinAllie} côté ombre)`)] },
-      { titre: 'Les prêteurs', lignes: [
-        p > 0 ? `Banque Centrale : −${p * REMISE_BANQUE_LUMIERE * 100} points sur les taux` : 'Banque Centrale : taux normaux (la lumière les fait baisser)',
-        ...taux,
-        mainNoireOuverte(G) ? 'La Main Noire te prête sans questions.' : "La Main Noire ne te connaît pas encore."] },
-      ...(mafia(G).engage ? [{ titre: NomBande(G), lignes: [mafia(G).sorti ? (mafia(G).sorti === 'denonce' ? `Dénoncé${mafia(G).bande === 'serpent' ? '' : 'e'} à la Confrérie. Méfie-toi des ombres.` : 'Liberté rachetée. Tu ne leur dois plus rien.') : `Ton rang : ${NOMS_RANGS[rangMafia(G)]} · ${mafia(G).services} service${mafia(G).services > 1 ? 's' : ''} rendu${mafia(G).services > 1 ? 's' : ''}`, !mafia(G).sorti && rangMafia(G) < 2 ? `Le collecteur passe en milieu de semaine (≈ ${montantPizzo(G)} p.)` : ''] }] : []),
-      { titre: 'Qui te réclame', lignes: [cote === 'mal' ? `${NOMS_CAMPS.mal.charAt(0).toUpperCase() + NOMS_CAMPS.mal.slice(1)} te font confiance : ils viendront bientôt au comptoir.` : cote === 'bien' ? `${NOMS_CAMPS.bien.charAt(0).toUpperCase() + NOMS_CAMPS.bien.slice(1)} te tient en estime.` : 'Aucun camp ne te réclame encore.'] },
-    ];
-    this.pageEnBlocs(c, 42, 214, gauche);
-    this.pageEnBlocs(c, 304, 96, droite);
+    creerGlyphesHD(this); creerEmblemesHD(this);
+    c.add(this.add.text(161, 70, 'Le livre des deux voies', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(161, 90, 'De quel côté le monde te voit', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5, 0));
+    c.add(this.add.image(50, 128, 'embleme_bannis').setScale(0.5));
+    c.add(this.add.image(272, 128, 'embleme_confrerie').setScale(0.5));
+    c.add(barreJauge(this, 161, 132, 196, j, { h: 14 }));
+    c.add(this.add.text(161, 160, nomPalierCamp(G), style(15, j > 0 ? '#9a7a10' : j < 0 ? '#5a3a8a' : '#5a3a20', { fontStyle: 'bold' })).setOrigin(0.5, 0));
+    const etat = G.camp ? `ton camp est scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}`
+      : G.sceauNeutre ? "ni la lumière, ni l'ombre : l'armure attend quelqu'un d'autre"
+        : serment ? `serment prêté ${serment === 'bien' ? 'à la Confrérie' : 'aux Bannis'}` : Math.abs(j) < PALIERS_JAUGE[0] ? 'tu es dans la zone neutre' : `tu penches ${j > 0 ? 'vers la lumière' : "vers l'ombre"}`;
+    c.add(this.add.text(161, 180, `Balance : ${j > 0 ? '+' : ''}${j} · ${etat}`, style(11, '#5a3a20', { wordWrap: { width: 240 }, align: 'center' })).setOrigin(0.5, 0));
+    // le prochain palier de chaque côté (la lumière en haut, l'ombre en dessous)
+    const pp = prochainsPaliers(G);
+    let y = 210;
+    for (const camp of ['bien', 'mal']) {
+      const p = pp[camp];
+      const fond = this.add.rectangle(161, y + 42, 236, 88, 0xe8d6b0).setStrokeStyle(2, 0x8a6a40);
+      c.add(fond);
+      c.add(this.add.image(56, y + 13, 'glyphe_' + (camp === 'bien' ? 'soleil' : 'lune')).setScale(2));
+      const titre = p ? `${NOMS_PALIERS_JAUGE[p.palier]} (${p.seuil > 0 ? '+' : '−'}${Math.abs(p.seuil)})` : `${NOMS_PALIERS_JAUGE[camp === 'bien' ? 3 : -3]} : atteint`;
+      c.add(this.add.text(70, y + 4, titre + (p && Math.abs(p.palier) === 2 ? ' · le Carrefour' : ''), style(13, camp === 'bien' ? '#8a6a10' : '#5a3a8a', { fontStyle: 'bold' })));
+      let texte = p ? OFFRES_PALIERS[p.palier] : 'Tu es allé au bout de ce chemin.';
+      const o = lo.offres[camp];
+      if (p && Math.abs(p.palier) === 2 && o) texte = o === 'juree' ? 'Tu as déjà prêté serment de ce côté.' : o === 'parjure' ? 'Tu as rompu ton serment : ce camp ne te le proposera plus.' : 'Tu as choisi de rester libre. Le camp refusé reviendra une dernière fois au 3e palier.';
+      c.add(this.add.text(52, y + 26, texte, style(11, '#3b2410', { wordWrap: { width: 214 }, lineSpacing: 1 })));
+      y += 98;
+    }
+    const armure = `Le sceau : ${(G.armure || []).length} / ${ARMURE.length} pièces d'armure.`;
+    c.add(this.add.text(161, y + 2, mafia(G).engage && !mafia(G).sorti ? `${armure}\n${NomBande(G)} : ${NOMS_RANGS[rangMafia(G)]}` : `${armure}\nLes paliers d'après ? Le livre ne les montre pas encore...`,
+      style(10, '#7a5a3a', { fontStyle: 'italic', wordWrap: { width: 236 }, align: 'center' })).setOrigin(0.5, 0));
+    // page de droite : le barème, du plus petit au plus gros
+    c.add(this.add.text(425, 70, 'Ce qui fait pencher la balance', style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    const bareme = Object.values(BAREME_CAMP).sort((a, b) => (a.camp === b.camp ? a.n - b.n : a.camp === 'bien' ? -1 : 1));
+    bareme.forEach((b, i) => {
+      const yy = 88 + i * 17;
+      c.add(this.add.image(316, yy + 7, 'glyphe_' + (b.camp === 'bien' ? 'soleil' : 'lune')).setScale(1.2));
+      c.add(this.add.text(328, yy, `+${b.n}`, style(11, b.camp === 'bien' ? '#8a6a10' : '#5a3a8a', { fontStyle: 'bold' })));
+      c.add(this.add.text(350, yy + 1, b.texte, style(10, '#3b2410')));
+    });
+    const yj = 88 + bareme.length * 17 + 6;
+    c.add(this.add.rectangle(425, yj, 236, 2, 0x8a6a40));
+    c.add(this.add.text(425, yj + 6, 'Ces derniers jours', style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5, 0));
+    const journal = lo.journal.slice(0, 4);
+    if (!journal.length) c.add(this.add.text(425, yj + 30, "Rien encore : la balance attend tes premiers gestes.", style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5, 0));
+    journal.forEach((e, i) => {
+      const yy = yj + 28 + i * 19, b = BAREME_CAMP[e.cle] || { camp: 'bien' };
+      c.add(this.add.image(316, yy + 7, 'glyphe_' + (b.camp === 'bien' ? 'soleil' : 'lune')).setScale(1.2));
+      c.add(this.add.text(328, yy, raccourcir(`Jour ${e.jour} · +${e.n} · ${texteGeste(e)}`, 40), style(11, '#3b2410')));
+    });
+    c.add(this.add.text(425, yj + 108, "Au sceau (9e pièce d'armure), sans serment et dans la zone neutre : une autre fin...", style(10, '#7a5a3a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 230 } })).setOrigin(0.5, 0));
   }
 
   // --- Les améliorations du shop ---

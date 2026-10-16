@@ -1096,6 +1096,8 @@ class MarcheScene extends Phaser.Scene {
         } });
       });
       c.add([b.fond, b.label]);
+      // (v0.90) un geste de lumière, une fois par jour
+      if (G.mendiantLumiere !== G.jour) marquerCamp(this, b, 'bien');
     });
     const deja = G.chienJour === G.jour;
     const ration = creerBouton(this, 690, 516, 220, deja ? 'Brisquet a mangé' : 'Une ration au chien', () => this.nourrirBrisquet(c, chien, raconter, ration));

@@ -663,7 +663,9 @@ class StoryScene extends Cinematique {
         const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => allerA(this, 'Comptoir'));
         this.dansUI(retour);
       });
-      return this.dansUI(b);
+      this.dansUI(b);
+      if (cle === 'maximum') marquerCamp(this, b, 'bien');   // (v0.90) dédommager généreusement : un geste de lumière
+      return b;
     });
   }
 
@@ -672,8 +674,9 @@ class StoryScene extends Cinematique {
     const G = this.G;
     const v = this.parti.voyageur;
     if (!blessuresDe(G, v.nom)) return;
-    const bouton = creerBouton(this, 540, 345, 290, '', () => {
-      const erreur = soigner(G, v.nom);
+    // (v0.90) deux façons de soigner : contre paiement, ou sans rien demander (un geste de lumière)
+    const soin = gratuit => {
+      const erreur = soigner(G, v.nom, { gratuit });
       if (erreur) { Son.jouer('refus'); return this.ecrire('Soins', erreur); }
       Son.jouer('coeur');
       const coeur = this.coeurs.find(c => c.texture.key === 'hd_coeurVide');
@@ -683,16 +686,19 @@ class StoryScene extends Cinematique {
       }
       this.perso.setTint(0x80ff80);
       this.time.delayedCall(300, () => this.perso.clearTint());
-      this.ecrire('Soins', `« Ah, ça fait du bien ! Tiens, ${PRIX_SOIN} pièces pour la potion. »` +
+      this.ecrire('Soins', (gratuit ? `« Tu... tu ne me fais rien payer ? Je ne l'oublierai pas. »` : `« Ah, ça fait du bien ! Tiens, ${PRIX_SOIN} pièces pour la potion. »`) +
         (blessuresDe(G, v.nom) ? `\nEncore ${blessuresDe(G, v.nom)} cœur(s) à soigner.` : `\nComplètement remis${this.e} sur pied !`));
       maj();
-    });
-    this.dansUI(bouton);
+    };
+    const bouton = this.dansUI(creerBouton(this, 255, 345, 250, '', () => soin(false)));
+    const offert = this.dansUI(creerBouton(this, 530, 345, 270, '', () => soin(true)));
     const maj = () => {
       const reste = blessuresDe(G, v.nom);
-      bouton.setVisible(reste > 0);
+      bouton.setVisible(reste > 0); offert.setVisible(reste > 0);
       bouton.setTexte(`Soigner un cœur (+${PRIX_SOIN} p.)`);
-      bouton.setActif(G.stock.potion > 0);
+      offert.setTexte('Soigner sans faire payer');
+      bouton.setActif(G.stock.potion > 0); offert.setActif(G.stock.potion > 0);
+      if (reste > 0) marquerCamp(this, offert, 'bien');
     };
     maj();
     const n = blessuresDe(G, v.nom);

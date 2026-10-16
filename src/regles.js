@@ -2944,6 +2944,36 @@ function resterLibre(G) {
 }
 function sermentDe(G) { return (G.lo && G.lo.serment) || null; }
 
+// (v0.90) Ce qu'un palier de la balance t'apporte (le livre des deux voies ne montre que le prochain)
+const OFFRES_PALIERS = {
+  1: "Les gens te saluent dans la rue, et la Banque Centrale baisse ses taux.",
+  2: "Le Carrefour : la Confrérie t'offrira un serment (tes gains de lumière ×1,5, sa bannière, des taux d'ami à la Banque).",
+  3: "Le Conseil des Gardiens lui-même connaîtra ton nom.",
+  '-1': "Les Bannis viendront te voir au comptoir, et le marché noir te fera ses prix d'ami.",
+  '-2': "Le Carrefour : les Bannis t'offriront un serment (tes gains d'ombre ×1,5, la Main Noire qui prête sans intérêts).",
+  '-3': "Les Bannis te traiteront comme l'un des leurs.",
+};
+// Le prochain palier de chaque côté, depuis où tu es : { bien: { palier, seuil }, mal: { ... } }
+function prochainsPaliers(G) {
+  const j = jaugeCamp(G), out = {};
+  const b = PALIERS_JAUGE.findIndex(s => s > j);
+  if (b >= 0) out.bien = { palier: b + 1, seuil: PALIERS_JAUGE[b] };
+  const m = PALIERS_JAUGE.findIndex(s => -s < j);
+  if (m >= 0) out.mal = { palier: -(m + 1), seuil: -PALIERS_JAUGE[m] };
+  return out;
+}
+// Une ligne du journal de la balance, pour le livre des deux voies
+function texteGeste(e) {
+  const q = e.qui ? prenomDe(e.qui) : null;
+  const t = {
+    mendiant: 'une pièce au mendiant', soigner: q ? `${q}, soigné sans payer` : 'un soin offert', dedommager: q ? `la famille ${dePersonne(e.qui)} dédommagée` : 'une famille dédommagée',
+    decoClaire: 'une décoration de lumière', missionL: q ? `${q}, revenu d'une terre de lumière` : 'une mission de lumière', denoncer: q ? `${e.qui} dénoncé` : 'un recherché dénoncé',
+    denoncerMafia: 'la Main Noire livrée à la Confrérie', ame: q ? `l'âme ${dePersonne(e.qui)}, offerte` : 'une âme offerte', piege: q ? `un piège glissé à ${q}` : 'un service de la Main Noire',
+    commande: q ? `une commande pour ${q}` : 'une commande des Bannis', decoSombre: "une décoration d'ombre", missionO: q ? `${q}, revenu des terres des Bannis` : 'une mission pour les Bannis', cacher: q ? `${e.qui} caché` : 'un recherché caché',
+  }[e.cle] || e.cle;
+  return t;
+}
+
 // Le palier : de −3 (ombre épaisse) à +3 (lumière éclatante), 0 entre les deux.
 function palierCamp(G) {
   const j = jaugeCamp(G);

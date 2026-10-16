@@ -197,17 +197,20 @@ class CounterScene extends Phaser.Scene {
   }
 
   // Deux choix pour une visite : le bouton du bas (A) et celui du milieu (B).
-  choix([texteA, actionA, dureeA = null], [texteB, actionB]) {
-    this.bouton(texteA, () => { this.actionB = null; actionA(); }, dureeA);
+  // (v0.90) `campA` / `campB` : le côté vers lequel penche ce choix (un ☀ ou un ☾, avec assez de flair)
+  choix([texteA, actionA, dureeA = null, campA = null], [texteB, actionB, campB = null]) {
+    this.bouton(texteA, () => { this.actionB = null; actionA(); }, dureeA, campA);
     this.actionB = () => { this.actionB = null; actionB(); };
     this.boutonRefuser.setTexte(texteB);
+    marquerCamp(this, this.boutonRefuser, campB);
     this.majBoutonsService();
   }
 
   // Le bouton du bureau change selon la situation.
   // `duree` : le temps que prendra l'action (un sablier sur le coin du bouton)
-  bouton(texte, action, duree = null) {
+  bouton(texte, action, duree = null, camp = null) {
     this.boutonAction.setTexte(texte);
+    marquerCamp(this, this.boutonAction, camp);
     this.boutonAction.setActif(!!action);
     this.action = action;
     this.dureeAction = action ? duree : null;
@@ -401,7 +404,7 @@ class CounterScene extends Phaser.Scene {
   finRecherche() {
     if (this.timerRecherche) { this.timerRecherche.remove(); this.timerRecherche = null; }
     if (this.afficheEpinglee) { this.afficheEpinglee.destroy(); this.afficheEpinglee = null; }
-    if (this.boutonsRecherche) { this.boutonsRecherche.forEach(b => { b.fond.destroy(); b.label.destroy(); }); this.boutonsRecherche = null; }
+    if (this.boutonsRecherche) { this.boutonsRecherche.forEach(b => { b.fond.destroy(); b.label.destroy(); if (b.picto) b.picto.destroy(); }); this.boutonsRecherche = null; }
   }
 
   // Une tête qui ressemble à l'affiche du tableau... Lui, ou un honnête voyageur qui lui ressemble ?
@@ -421,14 +424,15 @@ class CounterScene extends Phaser.Scene {
     this.raconter(`Ce visage... Tu as déjà vu ${({ cacheOeil: 'ce cache-œil', balafre: 'cette balafre', cicatrice: 'cette cicatrice', tatouage: 'ce tatouage', monocle: 'ce monocle', bandeau: 'ce bandeau', dentOr: 'cette dent en or', boucle: "cette boucle d'oreille" })[(v.apparence.marques || [])[0]] || 'ce visage'} quelque part. L'avis de recherche du marché ?`);
     this.timerRecherche = this.time.delayedCall(1800, () => this.dire(parole, v.feminin ? 'Une inconnue' : 'Un inconnu', v.nom));
     const choix = [
-      ['☀ Appeler la garde', () => this.appelerGarde(entree)],
-      [`☾ ${v.feminin ? 'La' : 'Le'} cacher derrière`, () => this.cacherDerriere(entree)],
+      ['Appeler la garde', () => this.appelerGarde(entree), 'bien'],
+      [`${v.feminin ? 'La' : 'Le'} cacher derrière`, () => this.cacherDerriere(entree), 'mal'],
       [`${v.feminin ? 'La' : 'Le'} servir`, () => { entree.decide = true; this.finRecherche(); this.arrivee(entree); }],
       [`${v.feminin ? 'La' : 'Le'} renvoyer`, () => this.renvoyerRecherche(entree)],
     ];
-    this.boutonsRecherche = choix.map(([t, f], i) => {
+    this.boutonsRecherche = choix.map(([t, f, camp], i) => {
       const b = creerBouton(this, 840, 360 + i * 44 + (i === 3 ? 4 : 0), 210, t, () => { if (this.boutonsRecherche) f(); });
       b.fond.setDepth(6); b.label.setDepth(6.1);
+      marquerCamp(this, b, camp);
       return b;
     });
   }
@@ -1295,9 +1299,9 @@ class CounterScene extends Phaser.Scene {
       this.choix([`Rendre le service (${s.nom.toLowerCase()})`, () => {
         const msg = rendreService(G, entree.service);
         Son.jouer('glisse');
-        this.dire(`${pre} hoche à peine la tête. « Bien. »${msg ? ' ' + msg : ''} (La jauge penche vers l'ombre, et la garde pourrait s'y intéresser.)`, qui);
+        this.dire(`${pre} hoche à peine la tête. « Bien. »${msg ? ' ' + msg : ''} (La balance penche vers l'ombre, et la garde pourrait s'y intéresser.)`, qui);
         partir();
-      }], [`Payer plutôt (${pizzo} p.)`, () => { payerPizzo(G); Son.jouer('pieces'); this.dire('« L\'argent fera l\'affaire. Cette fois. »', qui); partir(); }]);
+      }, null, 'mal'], [`Payer plutôt (${pizzo} p.)`, () => { payerPizzo(G); Son.jouer('pieces'); this.dire('« L\'argent fera l\'affaire. Cette fois. »', qui); partir(); }]);
       return;
     }
     this.dire(`« ${bande} protège ton comptoir. La protection a un prix : ${pizzo} pièces cette semaine. » ${pre} pose un long regard sur ta vitrine. « Les vitres sont fragiles, par ici. »`, qui);

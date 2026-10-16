@@ -85,16 +85,15 @@ class HudScene extends Phaser.Scene {
     this.bulleReput = this.add.text(116, 30, texte, style(12, '#fff4dc', { backgroundColor: '#1e130a', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
   }
 
-  // (v0.84) la petite jauge du bandeau : la lumière à gauche (or), l'ombre à droite (violet)
+  // (v0.90) la petite jauge du bandeau : la balance en dégradé, l'ombre à gauche, la lumière à droite
   dessinerCamp(j) {
-    const g = this.jaugeCampG, x0 = -6, l = 222, y0 = 19, h = 4;
+    const g = this.jaugeCampG, x0 = -6, l = 222, y0 = 18, h = 6;
     g.clear();
-    g.fillStyle(0x0a0604, 1).fillRect(x0, y0, l, h);
-    const milieu = x0 + l / 2, pos = milieu - (j / JAUGE_CAMP.max) * (l / 2);
-    if (j > 0) g.fillStyle(0xf0c040, 1).fillRect(pos, y0, milieu - pos, h);
-    if (j < 0) g.fillStyle(0x9a6ad8, 1).fillRect(milieu, y0, pos - milieu, h);
-    g.fillStyle(0x8a7a5a, 1).fillRect(milieu, y0 - 1, 1, h + 2);
-    g.fillStyle(0xfff4dc, 1).fillRect(Math.round(pos) - 1, y0 - 2, 3, h + 4);
+    g.fillStyle(0x0a0604, 1).fillRect(x0 - 1, y0 - 1, l + 2, h + 2);
+    const X = peindreJauge(g, x0, y0, l, h, { pas: 2, paliers: false });
+    const pos = Math.round(X(Math.max(-100, Math.min(100, j))));
+    g.fillStyle(0x1e130a, 1).fillRect(pos - 2, y0 - 3, 5, h + 6);
+    g.fillStyle(0xfff4dc, 1).fillRect(pos - 1, y0 - 2, 3, h + 4);
   }
 
   infoCamp(montrer) {
@@ -102,8 +101,10 @@ class HudScene extends Phaser.Scene {
     const G = window.GAME;
     if (!montrer || !G) return;
     const j = jaugeCamp(G), p = palierCamp(G);
-    const texte = `Lumière ⟷ Ombre : ${NOMS_PALIERS_JAUGE[p]} (${j > 0 ? '+' : ''}${j})\n` +
-      'Plus de lumière : missions réussies en terres de lumière, objets du bien.\nPlus d\'ombre : missions pour les Bannis, âmes offertes, objets de l\'ombre.' +
+    const serment = sermentDe(G);
+    const texte = `Ombre ⟷ Lumière : ${NOMS_PALIERS_JAUGE[p]} (${j > 0 ? '+' : ''}${j})` + (Math.abs(j) < PALIERS_JAUGE[0] ? ' · zone neutre' : '') + '\n' +
+      (serment ? `Tu as prêté serment ${serment === 'bien' ? 'à la Confrérie du Dernier Rempart' : 'aux Bannis'}.\n` : '') +
+      'Le détail (ce qui fait pencher la balance, tes derniers gestes) : au bureau, « Lumière et ombre ».' +
       (G.camp ? `\nTon camp est scellé : ${G.camp === 'bien' ? 'la lumière' : 'l\'ombre'}.` : '');
     this.bulleCamp = this.add.text(4, 30, texte, style(12, '#fff4dc', { backgroundColor: '#1e130a', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
   }

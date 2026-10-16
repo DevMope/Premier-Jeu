@@ -511,6 +511,39 @@ function creerBouton(scene, x, y, largeur, texte, action) {
   };
 }
 
+// (v0.90) Avec assez de flair, un ☀ ou un ☾ en pixel art sur le bouton d'un choix qui fait pencher
+// la balance (camp : 'bien', 'mal' ou null pour l'enlever). Le même bouton peut changer de choix :
+// un nouveau texte efface le picto, qu'on repose ensuite s'il le faut.
+function marquerCamp(scene, b, camp) {
+  const G = window.GAME;
+  if (!b || !b.fond || !b.fond.active) return;
+  const voir = !!camp && !!G && typeof niveauFlair === 'function' && niveauFlair(G) >= FLAIR_PICTOS;
+  if (!b.picto && !voir) return;
+  if (!b.picto) {
+    creerGlyphesHD(scene);
+    const ic = scene.add.image(0, 0, 'glyphe_soleil').setScale(1.8);
+    if (b.fond.parentContainer) b.fond.parentContainer.add(ic);
+    b.picto = ic;
+    const texte = b.setTexte, vis = b.setVisible;
+    b.setTexte = t => { texte(t); b.picto.setVisible(false); b.label.setX(b.fond.x); };
+    b.setVisible = v => { vis(v); if (!v) b.picto.setVisible(false); };
+  }
+  const ic = b.picto;
+  ic.setVisible(voir && b.fond.visible);
+  if (!voir) { b.label.setX(b.fond.x); return; }
+  ic.setTexture('glyphe_' + (camp === 'bien' ? 'soleil' : 'lune'));
+  ic.setPosition(b.fond.x - b.fond.displayWidth / 2 + 17, b.fond.y).setDepth(b.label.depth + 0.01).setScrollFactor(b.fond.scrollFactorX, b.fond.scrollFactorY);
+  b.label.setX(b.fond.x + 9);
+  // la première fois : le jeu explique ce que veulent dire le soleil et la lune
+  G.tutoVu = G.tutoVu || {};
+  if (!G.tutoVu.pictosCamp) {
+    G.tutoVu.pictosCamp = true;
+    const t = scene.add.text(480, 96, "Ton flair s'aiguise : il te souffle quels choix font pencher la balance. Le soleil, vers la lumière ; la lune, vers l'ombre.",
+      style(14, '#fff4dc', { fontStyle: 'italic', backgroundColor: '#1e130aee', padding: { x: 12, y: 8 }, wordWrap: { width: 620 }, align: 'center' })).setOrigin(0.5).setDepth(120).setScrollFactor(0);
+    scene.tweens.add({ targets: t, alpha: 0, delay: 6000, duration: 800, onComplete: () => t.destroy() });
+  }
+}
+
 // Paysage paisible façon « Comté » : ciel, collines, chemin.
 // `nuit` assombrit le tout (de 0 à 1).
 // Les couleurs de chaque paysage (ciel en haut, ciel en bas, collines lointaines, proches, chemin).
@@ -667,24 +700,46 @@ function dessinerMannequin(scene, x, sol, possedees, u = 4, cote = 'clair') {
 
 // Étape 9a. La jauge lumière ⟷ ombre : une barre violette à gauche, dorée à droite, et un curseur.
 // `valeur` de −100 à +100. Renvoie un conteneur centré en (x, y), large de `l`.
-function barreJauge(scene, x, y, l, valeur, { h = 10 } = {}) {
+// (v0.90) Les teintes de la balance : le blanc du milieu se fond peu à peu dans le violet (l'ombre,
+// à gauche) et dans le jaune (la lumière, à droite), par petits paliers comme en pixel art
+const TEINTES_JAUGE = [[-100, 0x2a1652], [-75, 0x3e2478], [-55, 0x5a3a9a], [-40, 0x7e62bc], [-30, 0xa490d4], [-20, 0xc8bce4], [-10, 0xe6e0f0], [0, 0xf8f4ea],
+  [10, 0xf6eed0], [20, 0xf2e2a0], [30, 0xeed27a], [40, 0xe8c050], [55, 0xe0a828], [75, 0xcc8a16], [100, 0xa86a0e]];
+function couleurJauge(v) {
+  for (let i = 0; i < TEINTES_JAUGE.length - 1; i++) {
+    const [v0, c0] = TEINTES_JAUGE[i], [v1, c1] = TEINTES_JAUGE[i + 1];
+    if (v <= v1) return (v - v0) / (v1 - v0) < 0.5 ? c0 : c1;
+  }
+  return TEINTES_JAUGE[TEINTES_JAUGE.length - 1][1];
+}
+// Dessine le dégradé de la balance dans un Graphics (de x à x + l), avec la zone neutre en pointillés
+function peindreJauge(g, x, y, l, h, { pas = 2, paliers = true } = {}) {
+  const n = Math.max(1, Math.floor(l / pas)), w = l / n;
+  for (let i = 0; i < n; i++) g.fillStyle(couleurJauge(-100 + 200 * (i + 0.5) / n), 1).fillRect(x + i * w, y, Math.ceil(w), h);
+  const r = Math.max(1, Math.round(h / 6));
+  g.fillStyle(0xffffff, 0.22).fillRect(x, y, l, r);
+  g.fillStyle(0x000000, 0.18).fillRect(x, y + h - r, l, r);
+  const X = v => x + l / 2 + v / 100 * (l / 2);
+  if (h >= 6) for (const b of [-25, 25]) for (let k = 0; k < h; k += 3) g.fillStyle(0x5a4a3a, 0.8).fillRect(X(b) - 0.5, y + k, 1, Math.min(2, h - k));
+  if (paliers) for (const p of [60, 90]) for (const sg of [-1, 1]) g.fillStyle(0x2a1a10, 1).fillRect(X(sg * p) - 1, y - 4, 2, 4);
+  return X;
+}
+
+function barreJauge(scene, x, y, l, valeur, { h = 10, textes = true } = {}) {
   const c = scene.add.container(x, y);
   const g = scene.add.graphics();
-  const n = 24, pas = l / n;
-  for (let i = 0; i < n; i++) {
-    const u = i / (n - 1);   // 0 = ombre, 1 = lumière
-    const teinte = Phaser.Display.Color.Interpolate.ColorWithColor(new Phaser.Display.Color(0x4a, 0x2a, 0x7a), new Phaser.Display.Color(0xf0, 0xc8, 0x40), 100, Math.round(u * 100));
-    g.fillStyle(Phaser.Display.Color.GetColor(teinte.r, teinte.g, teinte.b), 1).fillRect(-l / 2 + i * pas, -h / 2, Math.ceil(pas), h);
-  }
+  const X = peindreJauge(g, -l / 2, -h / 2, l, h);
   g.lineStyle(2, 0x2a1a10, 1).strokeRect(-l / 2, -h / 2, l, h);
-  g.fillStyle(0x2a1a10, 1).fillRect(-1, -h / 2 - 2, 2, h + 4);   // le milieu
-  const cx = (Math.max(-100, Math.min(100, valeur)) / 100) * (l / 2 - 4);
-  g.fillStyle(0xfff4dc, 1).fillTriangle(cx - 6, -h / 2 - 7, cx + 6, -h / 2 - 7, cx, -h / 2 - 1);
-  g.lineStyle(1, 0x2a1a10, 1).strokeTriangle(cx - 6, -h / 2 - 7, cx + 6, -h / 2 - 7, cx, -h / 2 - 1);
-  g.fillStyle(0xfff4dc, 1).fillRect(cx - 1.5, -h / 2, 3, h);
+  const cx = X(Math.max(-100, Math.min(100, valeur)));
+  g.fillStyle(0xfff4dc, 1).fillTriangle(cx - 6, -h / 2 - 8, cx + 6, -h / 2 - 8, cx, -h / 2 - 1);
+  g.lineStyle(1, 0x2a1a10, 1).strokeTriangle(cx - 6, -h / 2 - 8, cx + 6, -h / 2 - 8, cx, -h / 2 - 1);
+  g.fillStyle(0x2a1a10, 1).fillRect(cx - 2, -h / 2, 4, h);
+  g.fillStyle(0xfff4dc, 1).fillRect(cx - 1, -h / 2 + 1, 2, h - 2);
   c.add(g);
-  c.add(scene.add.text(-l / 2, h / 2 + 2, 'Ombre', style(10, '#5a3a8a', { fontStyle: 'bold' })));
-  c.add(scene.add.text(l / 2, h / 2 + 2, 'Lumière', style(10, '#9a7a10', { fontStyle: 'bold' })).setOrigin(1, 0));
+  if (textes) {
+    c.add(scene.add.text(-l / 2, h / 2 + 2, 'Ombre', style(10, '#4a2a7a', { fontStyle: 'bold' })));
+    c.add(scene.add.text(0, h / 2 + 2, 'zone neutre', style(10, '#6a5a48', { fontStyle: 'bold italic' })).setOrigin(0.5, 0));
+    c.add(scene.add.text(l / 2, h / 2 + 2, 'Lumière', style(10, '#8a6a08', { fontStyle: 'bold' })).setOrigin(1, 0));
+  }
   return c;
 }
 
