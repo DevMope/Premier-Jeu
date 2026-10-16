@@ -707,6 +707,43 @@ dans la file (le tableau d'affichage et les visages sont faits), 6 les imposteur
   après le premier visionnage d'un récit, le choix entre la cinématique et une fiche résumé de
   l'aventure ; une porte dans l'arrière-boutique pour sortir dans la rue.
 
+### Lumière et ombre : un vrai système de points, et un choix clair (à réfléchir, 19/10)
+Le joueur (19/10) : il faut une façon *complète* de gagner des points de lumière ou d'ombre, et que
+le choix de rejoindre un camp soit plus clair. Les gains plus visibles (v0.84) lui plaisent aussi.
+
+**Aujourd'hui** : la jauge ne bouge qu'avec les missions réussies en terres de lumière ou d'ombre,
+les âmes offertes à la Faucheuse et les objets marqués achetés. Le camp se scelle avec la 9e pièce
+d'armure. C'est peu, et le joueur ne voit pas qu'il choisit.
+
+**Proposition de Claude**
+1. *Toutes les grandes actions comptent*, avec un barème connu :
+   - ☀ lumière : mission réussie en terre de lumière (+3) ; dénoncer un recherché à la garde (+4,
+     lot A) ; donner au mendiant (+1, une fois par jour) ; soigner un héros sans le faire payer (+1) ;
+     dédommager une famille généreusement (+2) ; répondre à un message de détresse (+3, lot C) ;
+     refuser le pizzo ou un service de la Main Noire (+2) ; vendre un objet du bien (+1).
+   - ☾ ombre : mission réussie pour les Bannis (+3) ; âme offerte (+5) ; cacher un recherché (+4,
+     lot A) ; vendre une arme interdite au marché noir (+2) ; glisser un objet piégé (+2) ; rendre un
+     service à la Main Noire (+2) ; vendre un objet de l'ombre (+1).
+2. *Le Carrefour* : la première fois que la jauge franchit un palier (d'un côté ou de l'autre), deux
+   émissaires viennent le même soir : le héraut de la Confrérie et un messager des Bannis. Chacun dit
+   ce que son camp offre (une page claire : remises, clients, objets, quêtes, ce qu'on perd chez
+   l'autre camp). Le joueur peut **prêter serment** à l'un (ses gains comptent ×1,5 de ce côté), ou
+   **rester libre** pour l'instant (il pourra prêter serment plus tard, au bureau).
+3. *Le livre des deux voies*, au bureau (dans « Lumière et ombre ») : les paliers de chaque côté et ce
+   qu'ils débloquent, le barème ci-dessus, et ce qui a fait bouger la jauge ces derniers jours.
+4. *Les choix qui comptent se voient* : un petit ☀ ou ☾ sur les boutons des choix qui font bouger la
+   jauge (au comptoir, au marché noir, avec la Faucheuse, avec les recherchés).
+5. *Le point de non-retour annoncé* : quelques jours avant le sceau (la 9e pièce d'armure), Garrick
+   prévient : « bientôt, ton camp sera scellé ».
+
+**Questions au joueur**
+1. Le Carrefour et le serment : oui ? À quel moment (au premier palier franchi, ou à un jour fixe) ?
+2. Peut-on rester neutre jusqu'au bout ? Si oui, que gagne-t-on (par exemple : les deux marchés, mais
+   aucune récompense de palier) ?
+3. Les ☀ / ☾ sur les boutons : les montrer (le joueur sait ce qu'il fait) ou les garder cachés (il
+   ne le découvre qu'après) ?
+4. Le barème te va-t-il, ou certaines actions doivent-elles peser plus ?
+
 ### On le fera plus tard
 - **Plus de musiques** pour en enchaîner plusieurs et ne jamais lasser le joueur avec une seule.
 - **Le jeu du forgeron** : quand la forge est achetée, le joueur peut forger lui-même, avec tout

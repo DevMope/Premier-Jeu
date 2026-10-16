@@ -285,6 +285,50 @@ function creerInterieurHD(scene) {
     t.texture(scene, 'porteHD');
   }
 
+  // (v0.84) La porte de la rue, au fond de l'arrière-boutique : une vraie porte d'entrée, plus large et
+  // plus lourde que celle de la chambre. Un encadrement de pierre et son linteau, des planches de
+  // chêne sombre, trois pentures cloutées, un judas grillagé où passe la lumière de la ruelle, un
+  // heurtoir de laiton, et la marche du seuil.
+  {
+    const L = 58, H = 98;
+    const t = toileDecor(L, H);
+    t.rampes.lueur = [0x7a4a10, 0xa86a18, 0xd8962a, 0xf0b848, 0xfad478, 0xfff0b8];
+    // l'encadrement de pierre (montants et linteau à clé), et la marche
+    for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+      const cadre = x < 6 || x >= L - 6 || y < 12 || y >= H - 6;
+      if (!cadre) continue;
+      const bloc = y < 12 ? Math.floor((x + 3) / 10) : Math.floor(y / 9);
+      const joint = (y < 12 ? (x + 3) % 10 === 0 : y % 9 === 0) || (y === 11) || (x === 5 || x === L - 6);
+      let i = joint ? 1 : 3 + Math.round((fbm(x * 0.25, y * 0.25, 580 + bloc) - 0.5) * 2);
+      if (y >= H - 6) i = y === H - 6 ? 5 : y >= H - 2 ? 1 : 3;   // la marche, usée au milieu
+      t.poser(x, y, 'pierre', Math.max(0, Math.min(5, i)));
+    }
+    // la clé de voûte du linteau
+    for (let y = 0; y < 12; y++) for (let x = L / 2 - 5 + Math.floor(y / 4); x < L / 2 + 5 - Math.floor(y / 4); x++) t.poser(x, y, 'pierre', y === 0 ? 5 : y === 11 ? 1 : 4);
+    // les planches de chêne sombre, verticales
+    for (let x = 6; x < L - 6; x += 9) planche(t, x, 12, Math.min(9, L - 6 - x), H - 18, 'cheneSombre', { horizontale: false, graine: 590 + x, noeuds: 1 });
+    // trois pentures de fer, cloutées
+    for (const y0 of [24, 52, 80]) {
+      for (let x = 6; x < L - 6; x++) for (let y = y0; y < y0 + 4; y++) t.poser(x, y, 'fer', y === y0 ? 4 : y === y0 + 3 ? 1 : 2);
+      for (let x = 10; x < L - 8; x += 8) clou(t, x, y0 + 1);
+    }
+    // le judas grillagé, avec la lumière de la ruelle derrière
+    const jx = L / 2 - 7, jy = 32;
+    for (let y = jy; y < jy + 12; y++) for (let x = jx; x < jx + 14; x++) {
+      const bord = x === jx || x === jx + 13 || y === jy || y === jy + 11;
+      const barreau = (x - jx) % 4 === 1 || (y - jy) % 5 === 0;
+      t.poser(x, y, bord ? 'fer' : barreau ? 'fer' : 'lueur', bord ? 3 : barreau ? 2 : 3 + ((x + y) % 3 === 0 ? 1 : 0));
+    }
+    // le heurtoir : un anneau de laiton sous une tête de lion stylisée
+    t.forme('laiton', (x, y) => (Math.abs(Math.hypot(x + 0.5 - L / 2, y + 0.5 - 66) - 3.4) < 1 ? [(x - L / 2) / 4, (y - 66) / 4, 0.7] : null));
+    t.forme('laiton', ellipsoide(L / 2, 61, 2.6, 2.2), { decalage: 0.4 });
+    // la poignée et la serrure
+    for (let y = 70; y < 76; y++) t.poser(L - 13, y, 'fer', y === 70 ? 4 : 2);
+    t.forme('laiton', ellipsoide(L - 13, 67, 1.6, 1.4), { decalage: 0.4 });
+    t.contour();
+    t.texture(scene, 'porteRueHD');
+  }
+
   // Une reconnaissance de dette, clouée au mur
   {
     const t = toileDecor(30, 24);

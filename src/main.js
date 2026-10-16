@@ -106,6 +106,18 @@ function lancerJeu() {
   // La musique et les sons : le son démarre au premier clic (les navigateurs l'exigent), et
   // chaque scène qui s'ouvre lance son ambiance.
   window.jeu.events.once('ready', () => {
+    // (v0.84) les curseurs du jeu (planche validée : la flèche de bois et d'or, et la main gantée)
+    // à la place de la flèche et de la main du système, partout
+    try {
+      const fleche = cssCurseur('fleche'), main = cssCurseur('main', 'pointer');
+      const im = window.jeu.input;
+      im.setDefaultCursor(fleche);
+      const poserCurseur = im.setCursor;
+      im.setCursor = function (objet) {
+        if (objet && objet.cursor === 'pointer') { objet.cursor = main; }
+        return poserCurseur.call(this, objet);
+      };
+    } catch (e) { console.warn('curseurs', e); }
     if (window.diag) {
       diag('prêt');
       // chaque écran ouvert est noté ; après 20 secondes sans plantage, le lancement est réussi

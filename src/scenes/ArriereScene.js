@@ -201,9 +201,10 @@ class ArriereScene extends Phaser.Scene {
   // (v0.84) la porte de derrière, qui donne sur la ruelle et la rue (demandée par les testeurs)
   dessinerPorteRue() {
     const x = 688;
-    this.add.image(x, SOL_ARRIERE, 'porteHD').setOrigin(0.5, 1).setScale(1.7, 1.75).setTint(0xd8c0a0);
-    this.add.text(x, SOL_ARRIERE - 162, 'La rue', style(12, '#3a2410', { fontStyle: 'bold italic' })).setOrigin(0.5);
-    const zone = this.add.rectangle(x, SOL_ARRIERE - 74, 80, 148, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    this.add.image(x, SOL_ARRIERE + 4, 'porteRueHD').setOrigin(0.5, 1).setScale(1.7);
+    // l'écriteau peint au-dessus
+    this.add.text(x, SOL_ARRIERE - 180, 'La rue', style(13, '#f3e6c8', { fontStyle: 'bold italic', stroke: '#2a1408', strokeThickness: 4 })).setOrigin(0.5);
+    const zone = this.add.rectangle(x, SOL_ARRIERE - 80, 96, 160, 0xffffff, 0).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => { if (this.porteRue) this.porteRue(); });
   }
 
