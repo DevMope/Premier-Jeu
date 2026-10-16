@@ -825,6 +825,37 @@ indépendantes, les quatre cas existent donc vraiment :
   cinématique courte, bonus perdus, les deux camps se méfient de lui. Il redevient « libre », et l'on
   retombe dans la première ligne du tableau.
 
+**Équilibrage du barème (simulation de Claude, 16/10, 60 parties × 120 jours par stratégie)**
+- **Sans frein**, un joueur engagé côté lumière atteint le Carrefour (60) vers le **jour 19** et le
+  3e palier (90) vers le **jour 21** : beaucoup trop vite (le sceau ne vient qu'après le jour 24).
+  Le premier responsable : le dédommagement (+2), très fréquent puisque les morts le sont.
+- **Proposé** :
+  1. le dédommagement passe à **+1** ;
+  2. un **frein** : jusqu'au 1er palier chaque point compte en entier, entre 25 et 60 il compte
+     **×0,4**, au-delà de 60 **×0,25** (les points qui te ramènent vers le centre comptent toujours
+     en entier : on peut revenir, se racheter, ou rester neutre) ;
+  3. le serment multiplie par 1,5 les points de ton côté (après le frein).
+- **Avec ces réglages** (jour médian, joueur qui joue franchement un camp) :
+
+  | | 1er palier (25) | Carrefour (60) | 3e palier (90) |
+  |---|---|---|---|
+  | Lumière | jour 14 | jour 25 | jour 64 (46 avec serment) |
+  | Ombre | jour 14 | jour 41 | jour 74 (63 avec serment) |
+  | Joueur qui ne choisit pas | jour ~66 | jamais | jamais |
+
+  La lumière va un peu plus vite que l'ombre : c'est le chemin que le monde encourage (et c'est un
+  mensonge, cf. « Le grand retournement »). À garder ainsi, ou à resserrer (au choix du joueur).
+  Les chiffres seront revérifiés avec la partie automatique une fois le système branché.
+- **Le barème, du plus petit au plus gros** :
+
+  | ☀ Lumière | | ☾ Ombre | |
+  |---|---|---|---|
+  | Donner au mendiant (une fois par jour) | +1 | Offrir une âme à la Faucheuse | +1 |
+  | Soigner sans faire payer | +1 | Un piège, un service de la Main Noire | +2 |
+  | Dédommager généreusement | +1 | Mission réussie pour les Bannis | +3 |
+  | Mission réussie en terre de lumière | +3 | Cacher un recherché | +4 |
+  | Dénoncer un vrai recherché | +4 | | |
+
 ### Récit : réponses du 16/10 (9¾ bis)
 - **La Faucheuse et la jauge de la mort** : une âme offerte ne compte plus que **+1 ☾** dans la jauge
   lumière/ombre (la mort reste un thème de l'ombre). À la place, **une jauge à part, la Mort**, mesure
