@@ -1479,3 +1479,4 @@ un moment de mémoire (les lanternes des ancêtres).
 - **Bras de fer à trois niveaux** (demande du joueur) : Grisk le gobelin (facile, mise 5 p., monte sur un tonneau),
   Mog l'orc (moyen, 10 p.), Bourk le troll (difficile, 20 p.). Battre l'un débloque le suivant ; chacun une fois par
   soir ; ils poussent plus fort, avec une zone verte plus étroite et un repère plus rapide, à mesure qu'on monte.
+- **Nom de la race : « orc »**, jamais « orque » (même au féminin : « une orc », « les femmes orcs »).
