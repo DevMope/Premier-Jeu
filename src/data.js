@@ -815,6 +815,9 @@ const FREIN_CAMP = [[25, 1], [60, 0.4], [Infinity, 0.25]];
 // Le serment du Carrefour : ×1,5 de son côté ; le Carrefour vient à 60, une dernière offre à 90 ;
 // le parjure quand on passe le 1er palier de l'autre côté
 const SERMENT = { mult: 1.5, palier: 60, derniere: 90, parjure: 25, reputationParjure: 3, surveillance: 0.12 };
+// (v0.95) Les avantages du serment, en plus (validés le 17/10) : la lumière attire du monde, soigne,
+// protège et escorte ; l'ombre ouvre sa porte chaque soir, recèle mieux et rend ce que les morts portaient.
+const AVANTAGES_SERMENT = { butin: 0.10, clients: 1, escorte: 1, recel: 0.10 };
 // Le flair qu'il faut pour voir les ☀ / ☾ sur les boutons des choix
 const FLAIR_PICTOS = 0.4;
 // (v0.91) Devant le portrait de famille, JeuneGoy pense à ses parents, qu'il n'a pas connus (il croit

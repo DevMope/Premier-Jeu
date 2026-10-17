@@ -820,7 +820,11 @@ class CounterScene extends Phaser.Scene {
       this.lignesCommande.push({ icone, txt, zone, moins, moinsTexte, id: null });
     }
     this.texteSac = this.add.text(700, 184, '', style(11, '#5a3a20'));
-    this.add.text(700, 226, '− : retirer · clic sur une ligne : réparer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
+    this.aideCommande = this.add.text(700, 226, '− : retirer · clic sur une ligne : réparer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
+    // (v0.95) sous serment de lumière : un paladin de la Confrérie peut escorter une mission par semaine
+    this.boutonEscorte = this.add.text(700, 226, '', style(12, '#2a4a8a', { fontStyle: 'bold', backgroundColor: '#e8dcb8', padding: { x: 4, y: 1 } }))
+      .setInteractive({ useHandCursor: true }).setVisible(false);
+    this.boutonEscorte.on('pointerdown', () => { this.escorteChoisie = !this.escorteChoisie; Son.jouer('clic'); this.majCommande(); });
     this.texteChance = this.add.text(815, 208, '', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
   }
 
@@ -2264,7 +2268,9 @@ class CounterScene extends Phaser.Scene {
       this.raconter('Tu prépares le baluchon...');
       return this.empaqueter(objets, aller);
     }
-    const msg = partir(this.G, v, this.colis, this.pieges);
+    if (this.escorteChoisie && escorteDisponible(this.G)) { v.escorte = true; this.G.escorteSemaine = Math.floor((this.G.jour - 1) / 7); }
+    this.escorteChoisie = false;
+    const msg = (v.escorte ? `Un paladin de la Confrérie l'accompagnera sur la route. ` : '') + (partir(this.G, v, this.colis, this.pieges) || '');
     this.avancer(dureeService(this.G), `${prenomDe(v.nom)} servi${v.feminin ? 'e' : ''}`);
     Son.jouer('caisse');
     this.enService = false;
@@ -2354,6 +2360,11 @@ class CounterScene extends Phaser.Scene {
 
   majCommande() {
     const v = this.voyageur;
+    // (v0.95) l'escorte du paladin : seulement sous serment de lumière, une fois par semaine
+    const escorte = !!(v && v.queteId && this.enService && escorteDisponible(this.G));
+    if (!escorte) this.escorteChoisie = false;
+    this.boutonEscorte.setVisible(escorte).setText(`⚔ Escorte du paladin : ${this.escorteChoisie ? 'oui, +1 cœur' : 'non (1/sem.)'}`);
+    this.aideCommande.setVisible(!escorte);
     const commande = v ? commandeDe(v) : {};
     const plus = v ? surplus(v, this.colis) : {};
     // La commande, puis les soins donnés en plus.

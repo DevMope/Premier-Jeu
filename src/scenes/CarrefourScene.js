@@ -27,9 +27,9 @@ const PAROLES_CARREFOUR = {
 };
 const OFFRES_SERMENT = {
   bien: { titre: 'La Confrérie\ndu Dernier Rempart', embleme: 'confrerie', couleur: '#f6d878', contour: 0xe0b040, verres: [0x2a5ab0, 0x1e3e86, 0xe0b040, 0xf6d878, 0x3a72c8],
-    lignes: ['tes gains de lumière ×1,5', 'sa bannière au comptoir', "la Banque te fait des taux d'ami"], prix: 'les Bannis ne viendront plus' },
+    lignes: ['tes gains de lumière ×1,5', '+1 client par jour', "taux d'ami à la Banque", 'plus de fouille de la garde', '1 soin sur 2 sans potion', 'un paladin escorte 1 mission/sem.', '+10 % de butin en lumière'], prix: 'les Bannis ne viendront plus' },
   mal: { titre: 'Les Bannis', embleme: 'bannis', couleur: '#d8c4ff', contour: 0xb494ff, verres: [0x4a2a7a, 0x2e1a52, 0x8a2a4a, 0x6a3aa0, 0x241640],
-    lignes: ["tes gains d'ombre ×1,5", 'la Main Noire te prête sans intérêts', 'les Bannis te tiennent pour des leurs'], prix: 'la Confrérie te surveillera' },
+    lignes: ["tes gains d'ombre ×1,5", 'prêts sans intérêts (Main Noire)', 'marché noir chaque soir', 'objets interdits +10 %', 'le Passeur rend 1 baluchon/sem.', "+10 % de butin en ombre"], prix: 'la Confrérie te surveillera' },
 };
 
 const ARMEMENT_CARREFOUR = 900;   // (ms avant que les choix du Carrefour répondent aux clics)
@@ -156,9 +156,10 @@ class CarrefourScene extends Cinematique {
       const p = this.add.graphics().setDepth(2.5); p.fillStyle(0x0e0a12, 0.9).fillRect(x - 108, 264, 216, 172); p.lineStyle(2, o.contour, 0.9).strokeRect(x - 108, 264, 216, 172);
       const coul = camp === ferme ? 0.45 : 1;
       this.add.text(x, 272, o.titre, style(14, o.couleur, { fontStyle: 'bold', align: 'center', lineSpacing: -2 })).setOrigin(0.5, 0).setDepth(2.6).setAlpha(coul);
-      let yy = o.titre.includes('\n') ? 314 : 298;
-      for (const l of o.lignes) { const t = this.add.text(x - 98, yy, '◆ ' + l, style(13, '#f3e6c8', { wordWrap: { width: 196 } })).setDepth(2.6).setAlpha(coul); yy += t.height + 4; }
-      this.add.text(x - 98, yy + 2, '◇ ' + o.prix, style(13, '#ff9a8a', { fontStyle: 'italic', wordWrap: { width: 196 } })).setDepth(2.6).setAlpha(coul);
+      let yy = o.titre.includes('\n') ? 308 : 298;
+      // (v0.95) plus d'avantages : un peu plus petit, une ligne chacun
+      for (const l of o.lignes) { const t = this.add.text(x - 98, yy, '◆ ' + l, style(11, '#f3e6c8', { wordWrap: { width: 200 } })).setDepth(2.6).setAlpha(coul); if (t.width > 200) t.setScale(200 / t.width); yy += t.displayHeight; }
+      this.add.text(x - 98, yy + 2, '◇ ' + o.prix, style(11, '#ff9a8a', { fontStyle: 'italic', wordWrap: { width: 200 } })).setDepth(2.6).setAlpha(coul);
       if (camp === ferme) {
         // le chemin d'en face : visible, mais barré
         v.setTint(0x5a5a6e);

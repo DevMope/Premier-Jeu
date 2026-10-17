@@ -406,6 +406,8 @@ class StoryScene extends Cinematique {
         const id = Object.keys(this.parti.pieges).find(k => this.parti.pieges[k] > 0);
         this.ajouterTexte(`\nOn a retrouvé ${PIEGES[id] ? leNom(id, PIEGES[id].nom.toLowerCase()) : 'ton piège'} près du corps. Au village, on t'accuse.`);
       }
+      // (v0.95) le Passeur des Bannis rapporte ce qui pouvait l'être
+      if (this.parti.passeur) this.ajouterTexte(`\nLe Passeur des Bannis dépose son baluchon sur ton comptoir : ${this.parti.passeur} reviennent dans ta réserve.`);
       this.tweens.add({ targets: this.voile, fillAlpha: 0.5, duration: 1500 });
       this.indice.destroy();
       return this.proposerDedommagement();

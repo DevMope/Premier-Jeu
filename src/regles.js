@@ -168,7 +168,7 @@ function bandagesEnPlus(voyageur, colis) {
 }
 
 function pvAuDepart(voyageur, colis) {
-  return voyageur.pv + coeursEnPlus(voyageur, colis);
+  return voyageur.pv + coeursEnPlus(voyageur, colis) + (voyageur.escorte ? AVANTAGES_SERMENT.escorte : 0);   // (v0.95 : le paladin de la Confrérie)
 }
 
 // La chance de réussir une épreuve, avec le bonus des objets en plus qu'elle demande.
@@ -1427,8 +1427,9 @@ function prevision(G, jour = G.jour + 1) {
   const bonus = Math.min(BONUS_CLIENTS_MAX, Math.floor(a.bonus)) + evenements + rumeur;
   // Réveillé en forme ce matin : un client de plus
   const forme = G.reveil && G.reveil.jour === jour && G.reveil.forme === 'client' ? 1 : 0;
-  min = Math.max(1, min + bonus + forme);
-  max = Math.max(min, max + bonus + forme);
+  const pelerins = sermentDe(G) === 'bien' ? AVANTAGES_SERMENT.clients : 0;   // (v0.95 : la Confrérie envoie du monde)
+  min = Math.max(1, min + bonus + forme + pelerins);
+  max = Math.max(min, max + bonus + forme + pelerins);
   // (v0.60) les premiers jours : pas trop de monde, mais au moins deux clients (le rythme des débuts)
   if (jour <= CLIENTS_DEBUT.jours) { min = Math.max(2, Math.min(min, CLIENTS_DEBUT.max)); max = Math.max(min, Math.min(max, CLIENTS_DEBUT.max)); }
   // (v0.93) jamais plus de monde que la journée ne permet d'en servir : les lettres et ceux qui
@@ -1806,6 +1807,9 @@ function deplacerDansFile(G, entree, sens) {
   return true;
 }
 
+// (v0.95) L'escorte du paladin est-elle libre cette semaine ?
+function escorteDisponible(G) { return sermentDe(G) === 'bien' && G.escorteSemaine !== Math.floor((G.jour - 1) / 7); }
+
 // (v0.93) La Faucheuse ferme toujours la file : ceux qui s'y glissent après elle passent devant.
 function faucheuseAuBout(file) {
   return [...file.filter(e => e.type !== 'faucheuse'), ...file.filter(e => e.type === 'faucheuse')];
@@ -1835,7 +1839,7 @@ function soireeMarcheNoir(G) {
   if (G.marcheNoir.soiree) return G.marcheNoir.soiree;
   const races = Phaser.Utils.Array.Shuffle([...PEUPLES_OMBRE]).slice(0, 2);
   const bannis = races.map(race => { const [nom, feminin] = auHasard(NOMS[race]); return { nom, race, feminin, niveau: 'aguerri' }; });
-  const commandes = bannis.map(b => { const id = auHasard(interditsCommandables(G)); return { banni: b, objet: id, prix: hasard(...INTERDITS[id].vente), faite: false }; });
+  const commandes = bannis.map(b => { const id = auHasard(interditsCommandables(G)); return { banni: b, objet: id, prix: Math.round(hasard(...INTERDITS[id].vente) * (sermentDe(G) === 'mal' ? 1 + AVANTAGES_SERMENT.recel : 1)), faite: false }; });
   // (v0.56) parfois, un aîné est là ce soir, et raconte
   const aine = aineDuJour(G, 'marcheNoir');
   G.marcheNoir.soiree = { bannis, commandes, risque: 0, murmure: auHasard(MURMURES), aine };
@@ -2029,7 +2033,7 @@ function allumerFeu(G) {
 // Renvoie { fouille, amende, saisis } ; la fouille saisit les objets interdits.
 function visiteGarde(G) {
   G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 };
-  const fouille = G.garde.visites > 0;
+  const fouille = G.garde.visites > 0 && sermentDe(G) !== 'bien';   // (v0.95 : la Confrérie te sait loyal)
   G.garde.visites++;
   G.garde.dernier = G.jour;
   const saisis = [];
@@ -2079,7 +2083,10 @@ function partDuButin(G, voyageur) {
   // (le camp qui ne t'aime pas paie moins : un Banni chez un comptoir de la lumière, et l'inverse)
   const cote = coteCamp(G), banni = PEUPLES_OMBRE.includes(voyageur.race);
   const froid = banni && cote === 'bien' ? 0.85 : 1;
-  return Math.round(voyageur.butin * niveauRelation(G, voyageur.nom).butin * lanterne * comptoir * froid);
+  // (v0.95) le serment : +10 % de butin dans les terres de son camp
+  const zc = ZONES[voyageur.zone] && ZONES[voyageur.zone].camp, juré = sermentDe(G);
+  const benie = juré && zc === juré ? 1 + AVANTAGES_SERMENT.butin : 1;
+  return Math.round(voyageur.butin * niveauRelation(G, voyageur.nom).butin * lanterne * comptoir * froid * benie);
 }
 
 // Appelé à la fin du récit : on encaisse le butin, la réputation et la relation évoluent.
@@ -2174,6 +2181,17 @@ function terminerAventure(G, parti) {
     connaitre(G, v).mort = true;
     G.journal.morts++;
     recolter(G, [parti]); // si la Faucheuse ne l'a pas déjà emporté
+    // (v0.95) sous serment d'ombre, le Passeur rapporte, une fois par semaine, le baluchon d'un mort
+    const semaine = Math.floor((G.jour - 1) / 7);
+    if (sermentDe(G) === 'mal' && G.passeurSemaine !== semaine) {
+      // (ses objets durables, et la moitié de ses provisions)
+      const liste = Object.entries(parti.colis || {}).map(([id, n]) => [id, ITEMS[id] && ITEMS[id].durable ? n : Math.floor(n / 2)]).filter(([id, n]) => n > 0 && ITEMS[id]);
+      if (liste.length) {
+        G.passeurSemaine = semaine;
+        for (const [id, n] of liste) G.stock[id] = (G.stock[id] || 0) + n;
+        parti.passeur = liste.map(([id, n]) => `${n} ${nomObjet(id).toLowerCase()}`).join(', ');
+      }
+    }
     // La famille attend un dédommagement : il est choisi à la fin du carnet.
   }
   parti.bilan = { gain, message };
@@ -2210,8 +2228,10 @@ function inventaireApres(parti) {
 function soigner(G, nom, { gratuit = false } = {}) {
   const h = G.habitues.find(x => x.nom === nom);
   if (!h || !h.blessures) return `${nom} n'a plus de blessure à soigner.`;
-  if (G.stock.potion <= 0) return "Tu n'as plus de potion.";
-  G.stock.potion--;
+  // (v0.95) les clercs de la Confrérie : un soin sur deux ne coûte pas de potion
+  const clercs = sermentDe(G) === 'bien' && (G.soinsClercs = (G.soinsClercs || 0) + 1) % 2 === 0;
+  if (!clercs && G.stock.potion <= 0) { if (sermentDe(G) === 'bien') G.soinsClercs--; return "Tu n'as plus de potion."; }
+  if (!clercs) G.stock.potion--;
   // (v0.90) soigner sans faire payer : un geste de lumière
   if (gratuit) { pencher(G, 'soigner', { qui: nom }); changerRelation(G, nom, 1); }
   else encaisser(G, PRIX_SOIN, 'soins');
@@ -2817,7 +2837,7 @@ function avancerEvenements(G) {
   G.nouvellesLues.push(i);
   lignes.push(NOUVELLES[i]);
   // Un soir de marché noir : un papier glissé sous la porte, avec le mot de passe
-  if (G.jour >= MARCHE_NOIR.debut && Math.random() < (palierCamp(G) <= -1 ? MARCHE_NOIR.chanceOmbre : MARCHE_NOIR.chance)) {
+  if (G.jour >= MARCHE_NOIR.debut && (sermentDe(G) === 'mal' || Math.random() < (palierCamp(G) <= -1 ? MARCHE_NOIR.chanceOmbre : MARCHE_NOIR.chance))) {   // (v0.95 : sous serment d'ombre, chaque soir)
     G.marcheNoir = { jour: G.jour, mot: auHasard(MARCHE_NOIR.mots) };
     lignes.push(`Un papier glissé sous ta porte : « Ce soir. Derrière le tonneau. Mot : ${G.marcheNoir.mot}. »`);
   }
