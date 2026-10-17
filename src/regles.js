@@ -185,7 +185,9 @@ function chanceEtapeBase(e, colis, voyageur) {
   const danger = Math.max(0, MALUS_DANGER * (etoiles - 1) - niv.bonus);
   // (v0.67) la bénédiction de la nymphe : les épreuves d'eau réussissent mieux pendant quelques jours
   const beni = bonusNymphe(window.GAME, e);
-  return Phaser.Math.Clamp(chanceEpreuve(niveauEpreuve(e, colis, voyageur)) + enPlus * BONUS_SURPLUS + bonusArme + niv.bonus + evenement - danger + beni, 0.05, 0.97);
+  // (v0.99) la saison durcit certaines épreuves quand l'objet manque (crues, soif, brume, froid)
+  const nivE = niveauEpreuve(e, colis, voyageur), saison = typeof malusSaison === 'function' ? malusSaison(window.GAME, e, nivE) : 1;
+  return Phaser.Math.Clamp((chanceEpreuve(nivE) + enPlus * BONUS_SURPLUS + bonusArme + niv.bonus + evenement - danger + beni) * saison, 0.05, 0.97);
 }
 
 // (v0.93) Le bonus de la nymphe sur cette épreuve (0 si elle ne bénit pas, ou pas ce genre d'épreuve)
@@ -282,7 +284,7 @@ function simulerAventure(voyageur, colis, pieges = null) {
 function niveauAuHasard(G) {
   const r = Math.max(0, G.reputation || 0), j = G.jour || 1;
   const poids = {
-    novice: 6,
+    novice: 6 * (saisonDe(G) === 'semailles' ? 1 + SAISON_REGLES.novicesPrintemps : 1),   // (v0.99 : le printemps des premiers départs)
     aguerri: 0.5 + r * 0.6 + j * 0.12,
     veteran: Math.max(0, r - 3) * 0.45 + Math.max(0, j - 10) * 0.06,
     heros: Math.max(0, r - 8) * 0.3 + (G.legendes ? 1.5 : 0),
@@ -703,7 +705,7 @@ function partir(G, voyageur, colis, pieges = {}) {
     chance: reelle,
     relationDepart,
     depart: G.jour,
-    retour: G.jour + voyageur.duree,
+    retour: G.jour + voyageur.duree + (saisonDe(G) === 'brumes' && Math.random() < SAISON_REGLES.retardBrume ? 1 : 0),   // (v0.99 : la brume retarde le retour)
     resultat: null,
     termine: false,
   });
@@ -805,7 +807,7 @@ function remiseMarchand(G, cle) {
 function prixMarchand(G, cle, id) {
   const offre = G.etals[cle][id];
   const evenement = modifEvenement(G, 'prix', id) || 1;
-  return Math.max(1, Math.round(offre.prix * evenement * (1 - remiseMarchand(G, cle))));
+  return Math.max(1, Math.round(offre.prix * evenement * prixSaison(G, id) * (1 - remiseMarchand(G, cle))));   // (v0.99 : les prix de saison)
 }
 
 // Acheter un objet à un étal. Renvoie { erreur } ou { message } (palier de relation franchi).
@@ -1435,8 +1437,9 @@ function prevision(G, jour = G.jour + 1) {
   // Réveillé en forme ce matin : un client de plus
   const forme = G.reveil && G.reveil.jour === jour && G.reveil.forme === 'client' ? 1 : 0;
   const pelerins = sermentDe(G) === 'bien' ? AVANTAGES_SERMENT.clients : 0;   // (v0.95 : la Confrérie envoie du monde)
-  min = Math.max(1, min + bonus + forme + pelerins);
-  max = Math.max(min, max + bonus + forme + pelerins);
+  const hiver = saisonDe(G, jour) === 'givre' ? SAISON_REGLES.clientsHiver : 0;   // (v0.99 : le froid garde les gens chez eux)
+  min = Math.max(1, min + bonus + forme + pelerins + hiver);
+  max = Math.max(min, max + bonus + forme + pelerins + hiver);
   // (v0.60) les premiers jours : pas trop de monde, mais au moins deux clients (le rythme des débuts)
   if (jour <= CLIENTS_DEBUT.jours) { min = Math.max(2, Math.min(min, CLIENTS_DEBUT.max)); max = Math.max(min, Math.min(max, CLIENTS_DEBUT.max)); }
   // (v0.93) jamais plus de monde que la journée ne permet d'en servir : les lettres et ceux qui
