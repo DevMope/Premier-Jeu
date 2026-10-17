@@ -1468,3 +1468,8 @@ un moment de mémoire (les lanternes des ancêtres).
 - **Le bar du joueur** (à mettre en place plus tard) se fournira **au bar des Bannis** : prix forts si le
   joueur penche vers la lumière, vrais prix s'il est du côté de l'ombre (ça rééquilibre aussi l'argent de
   l'ombre).
+- **Planche 28 validée** (coin bar des Bannis « Au Gobelet Fêlé », Mère Nok, contrats de l'ombre, fournisseur du bar).
+  Équilibrage : l'ombre peut monter jusqu'à **7 000** (cible 4 000-7 000).
+- **Design féminin des peuples de l'ombre** (planche 29, à valider) : jusqu'ici les Bannies ne se distinguaient
+  des hommes que par les lèvres ; désormais cheveux (queue de cheval, longue chevelure, crinière), cils,
+  boucles d'oreilles, fleurs (trollesse, louve), diadème au rubis (momie).
