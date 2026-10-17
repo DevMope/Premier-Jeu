@@ -301,8 +301,8 @@ class PromenadeScene extends Cinematique {
       this.allerVers(120);
       G.penseeParents = ((G.penseeParents ?? -1) + 1) % PENSEES_PARENTS.length;
       // (v0.93) depuis la médaille, une pensée sur deux est pour elle
-      if (G.medailleParents && G.penseeParents % 2) return this.dire("La médaille de tes parents, rendue par le vieux mendiant. « Ils ne t'ont pas abandonné », a-t-il dit. Tu voudrais tant le croire.");
-      this.dire(PENSEES_PARENTS[G.penseeParents]);
+      if (G.medailleParents && G.penseeParents % 2) return this.dire(`La médaille de tes parents, rendue par le vieux mendiant. « Ils ne t'ont pas abandonné${eJ(G)} », a-t-il dit. Tu voudrais tant le croire.`);
+      this.dire(PENSEES_PARENTS[G.penseeParents].replaceAll('{J}', eJ(G)));
     });
     if (G.medailleParents) this.add.image(64, 146, texMedailleParents(this)).setScale(1.3).setDepth(8.3);
     const armes = G.armesLegendaires || [];

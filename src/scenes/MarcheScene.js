@@ -1720,7 +1720,7 @@ class MarcheScene extends Phaser.Scene {
     await Promise.all(this.gobelets.map(x => this.animer({ targets: x, y: 385, duration: 250 })));
     if (g === this.gagnant) {
       gagnerAuBonneteau(this.G, this.mise);
-      this.message(`Trouvé ! Tu gagnes ${this.mise * 2} pièces.`, '#2f6a2a');
+      this.message(`Trouvé ! Tu récupères ${this.mise * 2} pièces (+${this.mise}).`, '#2f6a2a');
     } else {
       this.message(triche ? `Raté ?! Tu l'avais pourtant bien suivie... « Hé hé, la main est plus rapide que l'œil ! »` : `Raté ! « Hé hé, l'œil est plus lent que la main... »`, '#a03030');
     }

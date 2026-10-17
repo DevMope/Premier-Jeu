@@ -825,7 +825,7 @@ const FLAIR_PICTOS = 0.4;
 const PENSEES_PARENTS = [
   "Deux silhouettes sans visage. Tu ne sais même pas à quoi ils ressemblaient.",
   "Pourquoi sont-ils partis sans toi ? Peut-être que tu n'étais pas l'enfant qu'ils voulaient...",
-  "Parfois, tu te demandes s'ils pensent encore à toi, quelque part. Ou s'ils t'ont oublié depuis longtemps.",
+  "Parfois, tu te demandes s'ils pensent encore à toi, quelque part. Ou s'ils t'ont oublié{J} depuis longtemps.",
   "Le peintre a laissé leurs visages dans l'ombre. Comme s'il ne fallait pas les montrer.",
   "Tu as grandi sans eux. Tu te répètes que ça t'est bien égal. Ce n'est pas vrai.",
   "Un jour, tu leur demanderas pourquoi. Si tu les retrouves. S'ils veulent bien te répondre.",
@@ -2166,7 +2166,7 @@ const IMPOSTEURS = {
   },
   fauxNeveu: {
     accueil: ["Je viens de la part de mon oncle, {ami}. Il m'a dit que tu me ferais un bon prix... et crédit, si besoin.",
-      "Mon oncle {ami} te salue ! Il m'a tellement parlé de toi. Il a dit : « Va chez lui, il t'équipera. »"],
+      "Mon oncle {ami} te salue ! Il m'a tellement parlé de toi. Il a dit : « Va à ce comptoir, on t'y équipera. »"],
     indices: [
       { t: "{ami} ne t'a jamais parlé d'un neveu, ni d'une nièce.", louche: true, d: 0.25 },
       { t: "{Il} ne sait même pas quelle arme porte son « oncle ».", louche: true, d: 0.5 },
@@ -2174,7 +2174,7 @@ const IMPOSTEURS = {
     ],
     fuite: "Ah... euh... j'ai dû me tromper de comptoir. Mon oncle est très vieux, tu sais.",
     merci: "Merci ! Mon oncle sera ravi. Je te rapporte ta part en revenant, promis juré !",
-    arnaque: "Ton visiteur « de la famille de {ami} » ? {ami} n'a ni neveu ni nièce. Ton baluchon est déjà vendu au marché noir.",
+    arnaque: "Ta visite « de la famille de {ami} » ? {ami} n'a ni neveu ni nièce. Ton baluchon est déjà vendu au marché noir.",
   },
   espion: {
     accueil: ["Une grosse commande ! Tout ton meilleur matériel. Et dis-moi combien tu l'as payé, par pure curiosité.",

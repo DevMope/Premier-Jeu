@@ -79,7 +79,7 @@ class BureauScene extends Phaser.Scene {
           nom: a.voyageur.nom, race: a.voyageur.race,
           ligne: `Jour ${a.jour} · ${a.acceptee ? 'commande acceptée' : 'lettre à répondre'}`,
           detail: () => [`Arrive le jour ${a.jour} (lettre ${a.acceptee ? 'acceptée' : 'sans réponse'})`,
-            `Quête : ${a.voyageur.quete}`, `Durée : ${a.voyageur.duree} jour(s) · butin espéré ~${a.voyageur.butin} p.`,
+            `Quête : ${a.voyageur.quete}`, `Durée : ${pluriel(a.voyageur.duree, "jour", "jours")} · butin espéré ~${a.voyageur.butin} p.`,
             `Commande : ${commandeEnTexte(a.voyageur)}`],
         }));
       case 'aujourdhui': {
@@ -88,7 +88,7 @@ class BureauScene extends Phaser.Scene {
           if (e.type === 'client') {
             const v = e.voyageur;
             return { nom: v.nom, race: v.race, ligne: (e === (this.comptoir && this.comptoir.entree) ? 'Au comptoir · ' : 'Dans la file · ') + v.quete,
-              detail: () => [`Quête : ${v.quete}`, `Commande : ${commandeEnTexte(v)}`, `Durée : ${v.duree} jour(s) · butin espéré ~${v.butin} p.`] };
+              detail: () => [`Quête : ${v.quete}`, `Commande : ${commandeEnTexte(v)}`, `Durée : ${pluriel(v.duree, "jour", "jours")} · butin espéré ~${v.butin} p.`] };
           }
           if (e.type === 'famille') {
             const p = e.visite.parent;
@@ -313,7 +313,7 @@ class BureauScene extends Phaser.Scene {
       ];
       droite = [
         { titre: 'Marchandage', lignes: Object.entries(MARCHANDS).map(([m, d]) => `${d.nom} : ${niveauRelation(G, d.nom).nom}${remiseMarchand(G, m) ? ` (−${Math.round(remiseMarchand(G, m) * 100)} %)` : ''}`) },
-        { titre: "Main-d'œuvre", lignes: [`${ouvriers(G).map(nomOuvrier).join(', ')}`, `${ouvriers(G).length} réparation(s) à la fois`, salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : 'Aucun employé',
+        { titre: "Main-d'œuvre", lignes: [`${ouvriers(G).map(nomOuvrier).join(', ')}`, `${pluriel(ouvriers(G).length, "réparation", "réparations")} à la fois`, salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : 'Aucun employé',
           // (v0.60) le bilan de chacun : ce qu'il coûte, ce qu'il a fait gagner en valeur à l'atelier
           ...G.employes.map(id => { const b = bilanEmploye(G, id); return `${EMPLOYES[id].nom} : ${b.reparations} réparation${b.reparations > 1 ? 's' : ''}, +${b.valeur} p. de valeur pour ${b.cout} p. de salaire` + (b.cout >= 20 ? (b.solde >= 0 ? ' ✓' : ' (donne-lui du travail !)') : ''); })] },
       ];
@@ -416,14 +416,14 @@ class BureauScene extends Phaser.Scene {
       c.add(this.add.image(56, y + 13, 'glyphe_' + (camp === 'bien' ? 'soleil' : 'lune')).setScale(2));
       const titre = p ? `${NOMS_PALIERS_JAUGE[p.palier]} (${p.seuil > 0 ? '+' : '−'}${Math.abs(p.seuil)})` : `${NOMS_PALIERS_JAUGE[camp === 'bien' ? 3 : -3]} : atteint`;
       c.add(this.add.text(70, y + 4, titre + (p && Math.abs(p.palier) === 2 ? ' · le Carrefour' : ''), style(13, camp === 'bien' ? '#8a6a10' : '#5a3a8a', { fontStyle: 'bold' })));
-      let texte = p ? OFFRES_PALIERS[p.palier] : 'Tu es allé au bout de ce chemin.';
+      let texte = p ? OFFRES_PALIERS[p.palier] : `Tu es allé${eJ(G)} au bout de ce chemin.`;
       const o = lo.offres[camp];
       if (p && Math.abs(p.palier) === 2 && o) texte = o === 'juree' ? 'Tu as déjà prêté serment de ce côté.' : o === 'parjure' ? 'Tu as rompu ton serment : ce camp ne te le proposera plus.' : 'Tu as choisi de rester libre. Le camp refusé reviendra une dernière fois au 3e palier.';
       c.add(this.add.text(52, y + 26, texte, style(11, '#3b2410', { wordWrap: { width: 214 }, lineSpacing: 1 })));
       y += 98;
     }
     const armure = `Le sceau : ${(G.armure || []).length} / ${ARMURE.length} pièces d'armure.`;
-    c.add(this.add.text(161, y + 2, mafia(G).engage && !mafia(G).sorti ? `${armure}\n${NomBande(G)} : ${NOMS_RANGS[rangMafia(G)]}` : `${armure}\nLes paliers d'après ? Le livre ne les montre pas encore...`,
+    c.add(this.add.text(161, y + 2, mafia(G).engage && !mafia(G).sorti ? `${armure}\n${NomBande(G)} : ${nomRang(rangMafia(G), G)}` : `${armure}\nLes paliers d'après ? Le livre ne les montre pas encore...`,
       style(10, '#7a5a3a', { fontStyle: 'italic', wordWrap: { width: 236 }, align: 'center' })).setOrigin(0.5, 0));
     // page de droite : le barème, du plus petit au plus gros
     c.add(this.add.text(425, 70, 'Ce qui fait pencher la balance', style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
@@ -613,7 +613,7 @@ class BureauScene extends Phaser.Scene {
       cadre.on('pointerdown', () => { G.enseigne = { ...reglagesEnseigne(G), couleur: coul.cle }; Son.jouer('plume'); this.ouvrirEnseigne(); });
       c.add([pastille, cadre, this.add.text(x, 352, coul.nom, style(11, choisi ? '#3b2410' : '#6a4a2a', { fontStyle: choisi ? 'bold' : '' })).setOrigin(0.5, 0)]);
     });
-    const renommer = creerBouton(this, 360, 430, 230, '✎ Changer le nom', () => demanderTexte('Le nom de ton shop', G.nomShop, NOM_SHOP_MAX, nom => {
+    const renommer = creerBouton(this, 360, 430, 230, '✎ Changer le nom', () => demanderTexte('Le nom de ton comptoir', G.nomShop, NOM_SHOP_MAX, nom => {
       if (!nom) return;
       G.nomShop = nom;
       this.texteEnseigne.setText(`✎ « ${nom} »`);

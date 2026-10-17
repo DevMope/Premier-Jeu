@@ -915,7 +915,7 @@ function donnerAuMendiant(G, montant) {
   return { parole: auHasard([
     'Merci... Que les étoiles veillent sur toi.',
     "Une pièce pour un vieil homme... Je n'oublierai pas ton visage.",
-    "Tu es bon. C'est rare, par ici.",
+    `Tu es ${eJ(G) ? 'bonne' : 'bon'}. C'est rare, par ici.`,
   ]) };
 }
 
@@ -1579,7 +1579,7 @@ function nuit(G) {
   if (G.argent < COUP_DE_POUCE.argent && stock < COUP_DE_POUCE.stock && G.jour - (G.coupDePouce || -99) >= COUP_DE_POUCE.delai) {
     G.coupDePouce = G.jour;
     for (const [id, n] of Object.entries(COUP_DE_POUCE.cadeau)) G.stock[id] = (G.stock[id] || 0) + n;
-    G.reveil.lignes.push("Au réveil, des provisions sur le pas de la porte : deux rations, une gourde, une torche. Un mot : « Tiens bon, petit. — G. »");
+    G.reveil.lignes.push(`Au réveil, des provisions sur le pas de la porte : deux rations, une gourde, une torche. Un mot : « Tiens bon, petit${eJ(G)}. — G. »`);
   }
   recompenserZones(G);
   // (v0.55) Un nouveau palier d'étoiles vient de s'ouvrir : le temps passe, le joueur grandit
@@ -2195,7 +2195,8 @@ function terminerAventure(G, parti) {
       if (liste.length) {
         G.passeurSemaine = semaine;
         for (const [id, n] of liste) G.stock[id] = (G.stock[id] || 0) + n;
-        parti.passeur = liste.map(([id, n]) => `${n} ${nomObjet(id).toLowerCase()}`).join(', ');
+        parti.passeur = liste.map(([id, n]) => `${n} ${nomObjet(id).toLowerCase()}${n > 1 && !/[sx]$/.test(nomObjet(id)) ? 's' : ''}`).join(', ');
+        parti.passeurPluriel = liste.length > 1 || liste[0][1] > 1;
       }
     }
     // La famille attend un dédommagement : il est choisi à la fin du carnet.
@@ -3167,6 +3168,11 @@ function ouvrePluriel(cle) { return /^Les /.test(NOMS_LIEUX_MARCHE[cle] || '') ?
 function pluriel(n, un, plusieurs) { return `${n} ${n > 1 ? plusieurs : un}`; }   // « 1 partie restante », « 3 parties restantes »
 // Le genre du joueur : « réveillé(e) », « petit(e) »...
 function eJ(G = window.GAME) { return G && G.joueur && G.joueur.feminin ? 'e' : ''; }
+// (v0.97) « ..., marchand. » : quand on s'adresse à JeuneGoy, au féminin si c'est une marchande.
+// (appliqué à tous les textes affichés : voir pixels.js)
+function accordJoueur(t, G = window.GAME) {
+  return typeof t === 'string' && eJ(G) && t.includes('marchand') ? t.replace(/(, |au |Ah, |Bienvenue, )marchand\b(?![es])/g, '$1marchande') : t;
+}
 function accordAdj(id, m, f, mp, fp) { const g = genreDe(id); return g === 'm' ? m : g === 'f' ? f : g === 'mp' ? mp : fp; }
 
 // (v0.60) Le nombre de cœurs au départ d'un récit
@@ -3460,7 +3466,7 @@ function phrasePassant(G, { nuit = false } = {}) {
   if (avis.length) {
     const a = prendre(avis);
     nouvelles.push(prendre([
-      `${a.nom}, ${a.prime} pièces la tête ! Si je le croise, je fais semblant de ne pas le voir. Ou pas.`,
+      `${a.nom}, ${a.prime} pièces la tête ! Si je ${a.personne && a.personne.feminin ? 'la' : 'le'} croise, je fais semblant de ne pas ${a.personne && a.personne.feminin ? 'la' : 'le'} voir. Ou pas.`,
       `Tu as vu l'affiche de ${a.nom} au tableau ? ${a.prime} pièces ! Avec ça, je m'achète une vache. Deux, même.`,
       `Ma tante jure avoir vu ${a.nom} acheter des navets. Elle voit des bandits partout, ma tante.`,
     ]));

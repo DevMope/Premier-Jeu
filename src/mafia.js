@@ -14,6 +14,7 @@ const MAFIA = {
   vengeance: 0.35,                 // après une dénonciation : les restes de la bande se vengent parfois
 };
 const NOMS_RANGS = ['Débiteur', 'Associé', 'Lieutenant'];
+function nomRang(rang, G = window.GAME) { return eJ(G) ? ['Débitrice', 'Associée', 'Lieutenante'][rang] : NOMS_RANGS[rang]; }
 const COLLECTEUR = { nom: 'Silas Doigts-Noirs', race: 'humain', feminin: false, costume: 'mainNoire', niveau: 'aguerri', serieux: true };
 const CHEFS_SERPENT = [
   { nom: 'Vesna la Vipère', race: 'humain', feminin: true, costume: 'serpent', niveau: 'veteran', serieux: true },
@@ -81,7 +82,7 @@ function rendreService(G, id) {
   if (id === 'aventurier') m.detour = true;
   if (Math.random() < s.risque * (m.bande === 'serpent' ? 1.5 : 1)) G.gardeDemain = true;
   const apres = rangMafia(G);
-  return apres > avant ? `Tu montes en grade : te voilà ${NOMS_RANGS[apres].toLowerCase()} de ${nomBande(G)}.` + (apres === 1 ? ' Ta part de la semaine est réduite de moitié.' : ' Plus de part à payer : c\'est toi qu\'on paie, désormais.') : null;
+  return apres > avant ? `Tu montes en grade : te voilà ${nomRang(apres, G).toLowerCase()} de ${nomBande(G)}.` + (apres === 1 ? ' Ta part de la semaine est réduite de moitié.' : ' Plus de part à payer : c\'est toi qu\'on paie, désormais.') : null;
 }
 
 // Le lieutenant touche sa part chaque semaine
@@ -168,6 +169,6 @@ function detourMafia(G, v) {
   m.detour = false;
   const bandits = Object.values(QUETES).flatMap(q => q.epreuves).find(e => e.type === 'bandits');
   // (une épreuve en plus, que le voyageur n'avait pas demandée : elle ne compte pas dans sa commande)
-  if (bandits) v.epreuves.push({ ...bandits, detour: true, intro: "Le détour pour le paquet m'a mené dans un coin mal famé..." });
+  if (bandits) v.epreuves.push({ ...bandits, detour: true, intro: "Le détour pour le paquet m'a mené{e} dans un coin mal famé..." });
   return `${v.nom.split(' ')[0]} emporte, sans le savoir, un paquet pour ${nomBande(G)}.`;
 }

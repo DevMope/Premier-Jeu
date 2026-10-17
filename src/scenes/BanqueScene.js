@@ -59,7 +59,7 @@ class BanqueScene extends Phaser.Scene {
   accueil() {
     const r = this.G.reputation;
     if (r < 0) return 'Hmpf. Ta réputation sent le moisi. Estime-toi heureu' + (eJ() ? 'se' : 'x') + ' qu\'on te reçoive.';
-    if (r < 4) return 'Un petit marchand de rien du tout... On peut te prêter un peu. Un tout petit peu.';
+    if (r < 4) return (eJ() ? 'Une petite marchande' : 'Un petit marchand') + ' de rien du tout... On peut te prêter un peu. Un tout petit peu.';
     if (r < 10) return 'Ta réputation grandit, marchand. La Banque Centrale Goyenne... t\'écoute. Pour l\'instant.';
     return 'Ah, ' + (eJ() ? 'une cliente respectable' : 'un client respectable') + ' ! Assieds-toi. Ah non, nous n\'avons pas de chaises à ta taille.';
   }

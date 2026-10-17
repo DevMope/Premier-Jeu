@@ -1242,7 +1242,7 @@ class CounterScene extends Phaser.Scene {
     this.dire(visite.texte, 'Garrick Cœur-de-Chêne');
     this.bouton('« Merci, Garrick ! »', () => {
       if (visite.cadeau) { encaisser(G, visite.cadeau, 'cadeau'); this.dessinerPieces(); Son.jouer('pieces'); }
-      this.dire(visite.cadeau ? `Garrick glisse ${visite.cadeau} pièces sur le comptoir. « Ne dis rien, ha ha ! Allez, au travail, petit. »` : "« Allez, au travail, petit. Je repasserai ! »", 'Garrick Cœur-de-Chêne');
+      this.dire(visite.cadeau ? `Garrick glisse ${visite.cadeau} pièces sur le comptoir. « Ne dis rien, ha ha ! Allez, au travail, petit${eJ()}. »` : `« Allez, au travail, petit${eJ()}. Je repasserai ! »`, 'Garrick Cœur-de-Chêne');
       this.bouton('Au revoir !', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
     });
   }
@@ -1326,7 +1326,7 @@ class CounterScene extends Phaser.Scene {
     const col = collecteurDe(G), qui = col.nom, pre = prenomDe(col.nom);
     const rang = rangMafia(G);
     const partir = () => { this.actionB = null; this.majBoutonsService(); this.dessinerPieces(); this.majStock(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
-    this.titreCommande.setFontSize(17).setText(`${bande} · ${NOMS_RANGS[rang]}`);
+    this.titreCommande.setFontSize(17).setText(`${bande} · ${nomRang(rang)}`);
     for (let t = 16; this.titreCommande.width > 235 && t >= 11; t--) this.titreCommande.setFontSize(t);
     const sortie = () => {
       const prix = prixRachat(G);

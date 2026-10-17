@@ -920,3 +920,7 @@ function oublierPortraits(jeu) {
   }
   return n;
 }
+
+// (v0.97) Tous les textes affichés passent par l'accord au féminin de « marchand » (voir accordJoueur)
+{ const setText = Phaser.GameObjects.Text.prototype.setText;
+  Phaser.GameObjects.Text.prototype.setText = function (t) { return setText.call(this, typeof accordJoueur === 'function' ? accordJoueur(t) : t); }; }
