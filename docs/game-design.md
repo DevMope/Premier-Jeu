@@ -1473,3 +1473,5 @@ un moment de mémoire (les lanternes des ancêtres).
 - **Design féminin des peuples de l'ombre** (planche 29, à valider) : jusqu'ici les Bannies ne se distinguaient
   des hommes que par les lèvres ; désormais cheveux (queue de cheval, longue chevelure, crinière), cils,
   boucles d'oreilles, fleurs (trollesse, louve), diadème au rubis (momie).
+- **Planche 29 v2 validée** (femmes de l'ombre : diadème au rubis et bandelettes roses de la momie, fleurs à cinq
+  pétales, trollesse plus pâle, plus de col de fourrure-barbe).
