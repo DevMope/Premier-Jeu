@@ -14,7 +14,8 @@ class NightScene extends Phaser.Scene {
   create() {
     exclureScenes(this, 'Carte', 'Comptoir', 'Dodo');   // (v0.62)
     const G = this.G = window.GAME;
-    if (!this.matin) { preparerSoir(G); tirerGardeDuLendemain(G); }   // (v0.65 : la garde de demain se tire dès ce soir, le chat la sent parfois)
+    if (!this.matin) { preparerSoir(G); tirerGardeDuLendemain(G); }
+    if (!this.matin) this.time.delayedCall(800, () => { const n = oublierPortraits(this.game); if (n && typeof noterJournal === 'function') noterJournal(`(${n} portraits oubliés)`); });   // (v0.96)   // (v0.65 : la garde de demain se tire dès ce soir, le chat la sent parfois)
     this.lieu = this.matin ? 'Maison' : 'Nuit';
 
     this.cameras.main.setBackgroundColor(this.matin ? '#2a1e12' : '#1e140c');

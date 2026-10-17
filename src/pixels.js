@@ -900,3 +900,23 @@ function eclaboussure(scene, x, y, { taille = 1, profondeur = null, conteneur = 
     scene.tweens.add({ targets: r, scaleX: ok ? E * 2 : 5, scaleY: ok ? E * 1 : 3, alpha: 0, delay: k * 240, duration: 1200, onComplete: () => r.destroy() });
   }
 }
+
+// (v0.96) Les portraits et les corps des clients sont dessinés à la demande, puis gardés : au fil des
+// jours, il y en a des centaines. Chaque soir, on oublie ceux qu'aucune image n'affiche (ils seront
+// redessinés s'ils reviennent au comptoir).
+function oublierPortraits(jeu) {
+  if (!jeu || !jeu.textures) return 0;
+  const enUsage = new Set();
+  const visiter = l => { for (const o of l) { if (o.texture && o.texture.key) enUsage.add(o.texture.key); if (o.list) visiter(o.list); } };
+  for (const s of jeu.scene.scenes) if (s.sys && s.sys.displayList && (s.sys.isActive() || s.sys.isPaused() || s.sys.isSleeping())) visiter(s.sys.displayList.list);
+  let n = 0;
+  for (const cle of Object.keys(jeu.textures.list)) {
+    if (!/^(busteHD_|corps_)/.test(cle) || enUsage.has(cle)) continue;
+    const src = jeu.textures.get(cle).getSourceImage();
+    jeu.textures.remove(cle);
+    if (src && src.width) { src.width = 1; src.height = 1; }   // (le canevas rendu à la réserve ne garde pas sa taille)
+    if (typeof MAINS_CORPS !== 'undefined') delete MAINS_CORPS[cle];
+    n++;
+  }
+  return n;
+}
