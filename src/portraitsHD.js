@@ -192,6 +192,14 @@ const BASES_PEAU = [0, 1, 2, 3, 4];
 
 // La couleur des lèvres selon la peau : sur une peau foncée, des lèvres sombres disparaissent
 // (et avec elles, l'expression du visage) ; on les éclaircit pour qu'elles ressortent.
+// (v0.98) Une fleur piquée dans les cheveux : cinq pétales autour d'un cœur d'or, deux petites feuilles
+function fleurHD(t, x, y, r, couleur) {
+  t.rampes.fleur = rampeVive(couleur); t.rampes.feuille = rampeVive(0x4a8a3a);
+  for (const a of [2.4, 0.7]) t.forme('feuille', ellipsoide(x + Math.cos(a) * r * 1.25, y + Math.sin(a) * r * 1.1, r * 0.6, r * 0.38), { decalage: -0.3, ombre: false });
+  for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * Math.PI * 2 / 5; t.forme('fleur', ellipsoide(x + Math.cos(a) * r * 0.62, y + Math.sin(a) * r * 0.62, r * 0.5, r * 0.5), { decalage: 0.3, ombre: false }); }
+  t.forme('or', ellipsoide(x, y, Math.max(1, r * 0.3), Math.max(1, r * 0.3)), { decalage: 0.5, ombre: false, bord: false });
+}
+
 function levresPour(peau, feminin) {
   if (peau >= 4) return rampe(feminin ? 0xffb0b8 : 0xf0a898);
   if (peau >= 3) return rampe(feminin ? 0xf09aa4 : 0xd8907e);
@@ -547,8 +555,7 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
     t.relief = false;
   }
   if (ombreF && ombreF.meches) for (const sens of [-1, 1]) { const mx = cx + sens * (v.rx - 2) - T * 0.5; t.relief = true; t.forme('cheveux', (x, y) => (y >= v.cy - v.ry + 3 && y <= v.cy + v.ry + 6 && Math.abs(x + 0.5 - mx - sens * Math.max(0, y - v.cy) * 0.12) < 2.4 ? [sens * 0.5, 0, 0.8] : null), { decalage: 0.2, motif: MECHES }); t.relief = false; }
-  if (ombreF && ombreF.fleurs) { t.rampes.fleur = rampeVive(0xe86a9a); t.relief = true; for (const [i, j] of [[-v.rx + 3, -v.ry + 5], [v.rx - 6, -v.ry + 2]]) { t.forme('fleur', ellipsoide(cx + i, v.cy + j, 3.2, 3), { decalage: 0.4, ombre: false }); t.poser(cx + i, v.cy + j, 'or', 5); } t.relief = false; }
-  if (ombreF && ombreF.diademe) { t.rampes.rubis = rampeVive(0xc02040); const dy = Math.round(v.cy - v.ry + 5); for (let i = -12; i <= 12; i++) { t.poser(cx + i, dy + Math.round((i * i) / 60), 'or', 4); t.poser(cx + i, dy + 1 + Math.round((i * i) / 60), 'or', 2); } t.forme('rubis', ellipsoide(cx + T * 0.5, dy + 1, 2.2, 2.6), { ombre: false }); }
+  if (ombreF && ombreF.fleurs) { t.relief = true; for (const [i, j, r] of [[-v.rx + 2, -v.ry + 6, 4.2], [v.rx - 5, -v.ry + 1, 3.6], [-v.rx + 9, -v.ry - 1, 3]]) fleurHD(t, cx + i, v.cy + j, r, ombreF.fleurs); t.relief = false; }
   if (TR.mousse) { t.relief = true; for (const [i, j, r] of [[-14, -16, 3.5], [11, -18, 3], [-22, 8, 3], [20, 26, 4], [-18, 30, 3.5]]) t.forme('mousse', ellipsoide(cx + i, v.cy + j, r, r * 0.7), { motif: (x, y) => (hachage(x, y, 5) > 0.6 ? 0.6 : 0) }); }
 
   // 7. Les sourcils, par-dessus tout (ils débordent du casque des nains)
@@ -592,6 +599,16 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
       t.poser(x, y, 'bande', b < 0.7 ? 0 : b > 3.3 ? Math.max(1, ton - 1) : Math.min(5, Math.max(2, ton)));
     }
     // les pupilles jaunâtres, qui luisent au fond des orbites
+    // (v0.98) la momie : quelques bandelettes roses parmi les blanches, et un diadème d'or au rubis
+    for (let y = 0; y < HD_H; y++) for (let x = 0; x < HD_L; x++) if (ombreF && ombreF.rose && t.mat(x, y) === 'bande' && (((Math.floor((y + x * (y < v.torse ? -0.3 : 0.42)) / 4)) % 6) + 6) % 6 === 2) { t.rampes.bandeRose = rampe(0xe8a0b8); t.poser(x, y, 'bandeRose', t.k[y * t.l + x]); }
+    if (ombreF && ombreF.diademe) {
+      t.rampes.rubis = rampeVive(0xd02040); t.relief = true;
+      const dy = Math.round(v.cy - v.ry + 7), bombe = i => Math.round((i * i) / 70);
+      t.forme('or', (x, y) => { const i = x + 0.5 - cx; return Math.abs(i) <= v.rx + 1 && y >= dy + bombe(i) - 1 && y <= dy + bombe(i) + 2 ? [i / v.rx, 0, 0.8] : null; }, { decalage: 0.4 });
+      for (const [i, h] of [[0, 8], [-8, 5], [8, 5], [-15, 3], [15, 3]]) t.forme('or', (x, y) => { const d = Math.abs(x + 0.5 - cx - i); return y < dy + bombe(i) && y >= dy + bombe(i) - h + d * (h / 3) ? [0, -0.3, 0.8] : null; }, { decalage: 0.4 });
+      t.forme('rubis', ellipsoide(cx + T * 0.5, dy + 1, 3, 3.4), { decalage: 0.6, ombre: false });
+      t.relief = false;
+    }
     for (const ox of [fx - 9, fx + 8]) { t.poser(ox, ey, 'iris', 5); t.poser(ox + 1, ey, 'iris', 4); t.poser(ox, ey - 1, 'iris', 4); t.poser(ox + 1, ey - 1, 'iris', 3); t.poser(ox, ey + 1, 'iris', 2); t.poser(ox + 1, ey + 1, 'iris', 1); }
   }
   if (TR.touffu) {
@@ -859,7 +876,7 @@ function torseHD(t, g, v, cx) {
     t.forme('cape', ellipsoide(cx, v.torse + 1, 10, 4), { decalage: -1.4, bord: false });
     // (v0.57) Les orcs et les trolls : un épais col de fourrure autour du cou (plus de col lacé, qui
     // leur faisait un cou trop fin) ; les vampires : un haut col dressé et un jabot de dentelle
-    if (g.race === 'orc' || g.race === 'troll') {
+    if ((g.race === 'orc' || g.race === 'troll') && !g.feminin) {   // (v0.98 : pas chez les femmes, où il faisait une barbe)
       t.rampes.colFourrure = rampe(g.race === 'troll' ? 0x5a5248 : 0x5a4636);
       t.forme('colFourrure', ellipsoide(cx, v.torse, g.race === 'troll' ? 21 : 18, 9), { decalage: -0.2, motif: (x, y) => ((x * 3 + y * 5) % 7 === 0 ? -0.9 : (x + y) % 5 === 0 ? 0.6 : 0) });
       for (let x = Math.round(cx - 19); x <= cx + 19; x += 2) if (hachage(x, 1, 77) > 0.4 && t.mat(x, v.torse - 2) === 'colFourrure') t.poser(x, v.torse - 6 + Math.round(hachage(x, 2, 78) * 2), 'colFourrure', 3);

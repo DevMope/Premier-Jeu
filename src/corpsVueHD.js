@@ -55,9 +55,9 @@ const FEMININ_OMBRE = {
   gobelin: { cheveux: undefined, coiffure: 'queue', teinte: 0x2a1622, sourire: false },
   orc: { cheveux: undefined, coiffure: 'queue', teinte: 0x1a1210, carre: false, sourcil: 1 },
   vampire: { cheveux: undefined, coiffure: 'long', teinte: 0x16101c, meches: true, levres: 0xa01830 },
-  loupgarou: { cheveux: undefined, coiffure: 'long', teinte: 0xd8d8e2, fleurs: true },
-  troll: { sourcil: 1.2, nez: 2.5, fleurs: true },
-  momie: { diademe: true },
+  loupgarou: { cheveux: undefined, coiffure: 'long', teinte: 0xd8d8e2, fleurs: 0x8a6ae8 },
+  troll: { sourcil: 1.2, nez: 2.5, fleurs: 0xf07aa8, peau: 0xbcb8ae },
+  momie: { diademe: true, rose: true },
 };
 
 // Les Bannis ont l'air fâché tant qu'ils ne te connaissent pas (le joueur est du côté de la lumière
@@ -966,12 +966,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   }
   // (v0.98) les mèches qui encadrent le visage de la vampire, les fleurs piquées dans les cheveux
   if (T.meches && !dos) for (const cote of [loin, pres]) { const u = cote * P.rx * 0.92; if (Z(u, P.rx * 0.35) < 0) continue; const mx = X(u, P.rx * 0.35); t.forme('cheveux', (x, y) => (y >= cy - P.ry * 0.5 && y <= cy + P.ry + 3 * k && Math.abs(x + 0.5 - mx) < 1.3 * k ? [cote * 0.5, 0, 0.8] : null), { decalage: 0.2, motif: MECHES }); }
-  if (T.fleurs && !dos) { t.rampes.fleur = rampeVive(0xe86a9a); for (const [u, dy] of [[-0.75, -0.75], [0.55, -0.9]]) { const fx0 = X(u * P.rx, P.rx * 0.4), fy0 = cy + dy * P.ry; t.forme('fleur', ellipsoide(fx0, fy0, 1.6 * k, 1.5 * k), { decalage: 0.4, ombre: false }); t.poser(Math.round(fx0), Math.round(fy0), 'or', 5); } }
+  if (T.fleurs && !dos) for (const [u, dy, r] of [[-0.8, -0.7, 2.4], [0.5, -0.95, 2.1], [-0.25, -1.05, 1.7]]) fleurHD(t, X(u * P.rx, P.rx * 0.45), cy + dy * P.ry, r * k, T.fleurs);
   if (!dos) { t.relief = false; poserYeux(); t.relief = true; }
   if (porte('monocle') && !dos && yeux.length) { const [ox] = yeux[yeux.length - 1]; for (let a = 0; a < 6.3; a += 0.25) t.poser(Math.round(ox + Math.cos(a) * 2.6 * k), Math.round(ey + 0.3 * k + Math.sin(a) * 2.8 * k), 'or', a < 3 ? 4 : 2); for (let j = 0; j < 5 * k; j++) t.poser(Math.round(ox + 2.6 * k + (j % 2 ? 1 : 0)), Math.round(ey + 3 * k + j), 'or', 3); }
   if (porte('pipe') && !dos) { const bx = X(0, P.rx * 0.85); const px = Math.round(bx + s * 2 * k - 2 * k); for (let j = 0; j < 5 * k; j++) for (let e = 0; e < k; e++) t.poser(px - j, by + Math.floor(j / (2 * k)) * k + e, 'bruyere', 3); t.forme('bruyere', ellipsoide(px - 5 * k, by + 2.5 * k, 1.4 * k, 1.6 * k), { decalage: 0.1, ombre: false }); for (let j = 0; j < 3; j++) t.poser(px - 5 * k - j, by - 1 * k - j * 2 * k, 'blanc', 4 + (j % 2)); }
   if (longs && dos) t.forme('cheveux', (x, y) => (y >= cy && y <= yT + 10 * k && Math.abs(x + 0.5 - cx) < P.rx + 1 * k - Math.max(0, y - yT - 4 * k) * 0.4 ? [(x + 0.5 - cx) / (P.rx + 2 * k), 0, 0.8] : null), { decalage: -0.3, motif: MECHES });
-  if ((tenue >= 4 || T.diademe) && race !== 'nain' && race !== 'magicienne') for (let j = -5; j <= 5; j++) { const x = Math.round(X(j * k, Math.sqrt(Math.max(0, P.rx * P.rx - (j * k) ** 2)) * 0.9)); for (let e = 0; e < k; e++) t.poser(x + e, cy - P.ry + 1 * k + (j % 3 === 0 ? -1 * k : 0), 'or', j % 3 === 0 ? 5 : 4); } // le diadème
+  if (tenue >= 4 && race !== 'nain' && race !== 'magicienne') for (let j = -5; j <= 5; j++) { const x = Math.round(X(j * k, Math.sqrt(Math.max(0, P.rx * P.rx - (j * k) ** 2)) * 0.9)); for (let e = 0; e < k; e++) t.poser(x + e, cy - P.ry + 1 * k + (j % 3 === 0 ? -1 * k : 0), 'or', j % 3 === 0 ? 5 : 4); } // le diadème
 
   // --- Les couvre-chefs des peuples ---
   if (race === 'nain' && costume !== 'banquier' && !forgeron) {
@@ -1120,6 +1120,16 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
     // Les yeux : deux lueurs dans la fente
     if (!dos) for (const [ox] of yeux) { t.poser(Math.round(ox), Math.round(ey), 'iris', 5); t.poser(Math.round(ox) + 1, Math.round(ey), 'iris', 4); t.poser(Math.round(ox), Math.round(ey) - 1, 'iris', 3); }
+    // (v0.98) la momie : quelques bandelettes roses parmi les blanches, et un diadème d'or au rubis
+    if (T.rose) { t.rampes.bandeRose = rampe(0xe8a0b8); for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'bande' && (((Math.floor((y + x * (y < yT ? -0.3 : y > yB ? 0.22 : 0.42)) / k / 3)) % 6) + 6) % 6 === 2) t.poser(x, y, 'bandeRose', t.k[y * t.l + x]); }
+    if (T.diademe && !dos) {
+      t.rampes.rubis = rampeVive(0xd02040);
+      const dy = cy - P.ry * 0.5;
+      t.forme('or', (x, y) => { const nx = (x + 0.5 - cx) / (P.rx + 0.6 * k); return Math.abs(nx) <= 1 && Math.abs(y + 0.5 - dy - nx * nx * 1.5 * k) < 0.9 * k ? [nx, 0, 0.8] : null; }, { decalage: 0.4 });
+      const front = X(0, P.rx);
+      for (const [du, h] of [[0, 3.8], [-2.6, 2.4], [2.6, 2.4]]) { const px = front + du * k * Math.max(0.5, c); t.forme('or', (x, y) => { const d = Math.abs(x + 0.5 - px); return y <= dy && y >= dy - h * k + d * h / 1.3 ? [0, -0.4, 0.8] : null; }, { decalage: 0.4 }); }
+      t.forme('rubis', ellipsoide(front, dy + 0.2 * k, 1.2 * k, 1.3 * k), { decalage: 0.6, ombre: false });
+    }
     // Un bout de bandelette qui pend du poignet
     const bx0 = X(pres * (ep + 1 * k), 1 * k);
     for (let j = 0; j < 7 * k; j++) for (let e = 0; e < k; e++) t.poser(Math.round(bx0 + Math.sin(j / (2 * k)) * 0.8 * k) + e, Math.round(yB + 3 * k + j), 'bande', j % (3 * k) === 0 ? 1 : 3);
