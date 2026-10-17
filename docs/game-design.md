@@ -1636,3 +1636,13 @@ de loin (pas de fête manquée en silence).
   Un jour, vos enfants passeront la Grande Muraille sans baisser les yeux. Gardez vos lanternes allumées : des jours
   meilleurs viendront. »
 - **La Fête du Long Hiver et la grande roue des cadeaux** : validées telles que proposées (B-3c, après la Nuit des Brumes).
+
+### Réponses du joueur (18/10, après la v1.01)
+- **Planche 31 v2 : validée** (« magnifique ») : la Nuit des Brumes est ouverte (v1.01).
+- **Le dessin du Grand Sage** est arrivé (une image de référence) : couronne d'or aux pierres bleues, longue barbe et
+  longs cheveux blancs, cape d'écailles de dragon rouges, robe violette brodée d'or sur une robe d'ivoire à l'arbre d'or,
+  bâton torsadé au cristal bleu, avant-bras aux runes qui luisent, fioles bleues et grimoire à la ceinture. Construit
+  dans le moteur des corps (figurant `sage`) et mis en scène : **planche 32, à valider**. La scène du discours est
+  prête (`DiscoursSage` : les cloches, le cortège du Conseil, la colonne de lumière, le discours en trois morceaux,
+  l'acclamation, puis Garrick qui n'applaudit pas) mais **fermée** (`SAGE_OUVERT = false`) jusqu'à la validation.
+- *Note de Claude* : la cape d'écailles rouges est un indice de plus (le dragon appartenait au Grand Sage).

@@ -80,9 +80,8 @@ class VisionScene extends Phaser.Scene {
     // le cœur qui bat (boum-boum... boum-boum) : le voile se resserre un instant
     this.time.addEvent({ delay: 1700, loop: true, callback: () => {
       if (!this.voileActif) return;
-      this.voiles.forEach(v => this.tweens.add({ targets: v, alpha: v.alpha + 0.05, duration: 90, yoyo: true, repeat: 1, hold: 60 }));
-      this.cameras.main.zoomTo(1.012, 110, 'Sine.easeOut', true);
-      this.time.delayedCall(260, () => this.cameras.main.zoomTo(1, 500, 'Sine.easeInOut', true));
+      // (pas de zoom de la caméra : elle est déjà zoomée pour la netteté de l'écran, depuis son coin)
+      this.voiles.forEach(v => this.tweens.add({ targets: v, alpha: v.alpha + 0.05, displayWidth: v.displayWidth * 0.985, displayHeight: v.displayHeight * 0.985, duration: 90, yoyo: true, repeat: 1, hold: 60 }));
     } });
     this.voileActif = true;
   }
@@ -92,12 +91,11 @@ class VisionScene extends Phaser.Scene {
       const a = v.angle0 + t * v.vitesse;
       v.setPosition(480 + Math.cos(a) * 500, 270 + Math.sin(a) * 300);
     }
-    // l'image tangue doucement, comme une tête lourde
-    if (this.voileActif) this.cameras.main.setRotation(Math.sin(t / 1900) * 0.006);
+    // le voile tangue doucement, comme une tête lourde
+    if (this.voileActif) this.voiles.forEach((v, j) => v.setRotation(Math.sin(t / 1900 + j) * 0.012));
   }
   fermerVoile() {
     this.voileActif = false;
-    this.cameras.main.setRotation(0);
     this.tweens.add({ targets: [...this.voiles, ...this.volutes], alpha: 0, duration: 600 });
   }
 

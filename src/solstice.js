@@ -157,6 +157,14 @@ function lanternesCelestesDues(G) {
   return !!(f && f.jour === 2 && G.lanternesVues !== dateDuJour(G).an);
 }
 
+// (v1.02, planche 32) Le discours du Grand Sage : au deuxième Solstice, le grand jour, en arrivant au marché
+// (une seule fois). Fermé tant que la planche n'est pas validée par le joueur.
+let SAGE_OUVERT = false;   // (let : les tests peuvent l'ouvrir)
+function discoursSageDu(G) {
+  const f = SAGE_OUVERT && solsticeActif(G) ? feteDuJour(G) : null;
+  return !!(f && f.jour === 1 && dateDuJour(G).an === 2 && !G.discoursSageVu);
+}
+
 // La nuit : la tarte ne se garde pas
 function nuitSolstice(G) {
   if (G.cadeaux && G.cadeaux.tarte) G.cadeaux.tarte = 0;

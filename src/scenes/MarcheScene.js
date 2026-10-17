@@ -12,6 +12,12 @@ class MarcheScene extends Phaser.Scene {
 
   create() {
     const G = this.G = window.GAME;
+    // (v1.02) au deuxième Solstice, le grand jour : le Grand Sage parle sur la place (une fois)
+    if (typeof discoursSageDu === 'function' && discoursSageDu(G)) {
+      G.discoursSageVu = true;
+      this.scene.start('DiscoursSage', { retour: 'Marche' });
+      return;
+    }
     this.pieceEnVol = false; this.chienMange = false;   // (audit v0.59 : sinon la fontaine et Brisquet restaient bloqués)
     G.banniere = G.jour;
     // (Phaser réutilise la scène d'un jour à l'autre : on repart de zéro)

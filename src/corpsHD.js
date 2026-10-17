@@ -49,6 +49,8 @@ const FIGURANTS = {
   // (v0.82, étape 10b) les forgerons du comptoir
   aldo: { race: 'humain', nom: "Aldo l'apprenti", costume: 'forgeron', habit: 0x8a6a4a, cheveux: 0xa86a2a, coiffure: 'court', peau: 1, niveau: 0, buste: true },
   baba: { race: 'nain', nom: "Baba Marteau-d'Or", feminin: true, costume: 'forgeron', habit: 0x8a2a2a, cheveux: 0x141010, coiffure: 'court', peau: 3, niveau: 1, buste: true, marques: ['khol', 'anneauNez'] },
+  // (v1.02, dessin du joueur) le Grand Sage : il apparaît au deuxième Solstice
+  sage: { race: 'humain', nom: 'Le Grand Sage', costume: 'sage', habit: 0x4a2466, cheveux: 0xe8e8ec, cape: 0xa02a22, barbe: 'sage', coiffure: 'long', peau: 1, niveau: 2, vieux: true, bouche: 1 },
   mendiant: { race: 'humain', nom: 'Le mendiant', costume: 'mendiant', habit: 0x6a6252, cheveux: 0x8a8a80, cape: 0x4a4236, barbe: 'pleine', niveau: 0 },
 };
 
@@ -70,12 +72,13 @@ function tenueDe(niveau) {
 function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   if (quoi === 'faucheuse') return 'perso_faucheuse';
   if (typeof quoi === 'string' && !FIGURANTS[quoi] && !PROPORTIONS[quoi]) return 'perso_' + quoi;   // (le joueur, etc.)
-  let gene, tenue, costume = null, cle;
+  let gene, tenue, costume = null, cle, bouche;
   if (typeof quoi === 'string' && FIGURANTS[quoi]) {
     const fig = FIGURANTS[quoi];
-    gene = { ...geneHD({ nom: fig.nom, race: fig.race === 'gobelin' ? 'humain' : fig.race, feminin: !!fig.feminin }), race: fig.race, habit: fig.habit, cheveux: fig.cheveux, cape: fig.cape, barbe: fig.barbe ?? null, coiffure: fig.coiffure || 'court', ...(fig.peau !== undefined ? { peau: fig.peau } : {}) };
+    gene = { ...geneHD({ nom: fig.nom, race: fig.race === 'gobelin' ? 'humain' : fig.race, feminin: !!fig.feminin }), race: fig.race, habit: fig.habit, cheveux: fig.cheveux, cape: fig.cape, barbe: fig.barbe ?? null, coiffure: fig.coiffure || 'court', ...(fig.peau !== undefined ? { peau: fig.peau } : {}), ...(fig.vieux ? { vieux: true } : {}) };
     tenue = fig.niveau ?? 1;
     costume = fig.costume;
+    bouche = fig.bouche;
     cle = 'corps_' + quoi;
   } else if (typeof quoi === 'string') {
     gene = geneHD({ nom: 'Un ' + quoi, race: quoi, feminin: quoi === 'magicienne' });
@@ -102,14 +105,14 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   const blesse = typeof quoi === 'string' ? !!(FIGURANTS[quoi] && FIGURANTS[quoi].blesse) : !!quoi.blesse;
   if (blesse && typeof quoi !== 'string') cle += '_blesse';
   if (!scene.textures.exists(cle)) {
-    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache, blesse });
+    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}) });
     toile.texture(scene, cle);
     MAINS_CORPS[cle] = toile.mains;
     if (toile.bout) BOUTS_CORPS[cle] = toile.bout;
     if (toile.piedsAssis) PIEDS_ASSIS[cle] = toile.piedsAssis;
     REPERES_CORPS[cle] = toile.reperes;
-    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache, blesse }).texture(scene, cle + '_pas1');
-    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache, blesse }).texture(scene, cle + '_pas2');
+    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}) }).texture(scene, cle + '_pas1');
+    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}) }).texture(scene, cle + '_pas2');
   }
   return cle;
 }
