@@ -2882,6 +2882,13 @@ function avancerEvenements(G) {
   }
   G.decesAnnonces = [];
   if (G.annonceMafia) { lignes.unshift(G.annonceMafia); G.annonceMafia = null; }
+  // (v0.99) le premier jour d'une saison : le crieur l'annonce, avec ce qu'elle change au marché
+  if (typeof saisonDe === 'function' && dateDuJour(G).jourDuMois === 1) {
+    const s = saisonDe(G), prix = Object.entries(PRIX_SAISON[s] || {});
+    const hausse = prix.filter(([, k]) => k > 1).map(([id]) => nomObjet(id).toLowerCase()), baisse = prix.filter(([, k]) => k < 1).map(([id]) => nomObjet(id).toLowerCase());
+    const effet = SAISONS[s].effet.split(' : ').slice(1).join(' : ') || SAISONS[s].effet;
+    lignes.unshift(`${{ semailles: 'Le printemps est là', moissons: "L'été est là", brumes: "L'automne est là", givre: "L'hiver est là" }[s]} : ${effet} !${hausse.length ? ` Au marché, hausse sur : ${hausse.join(', ')}.` : ''}${baisse.length ? ` Baisse sur : ${baisse.join(', ')}.` : ''}`);
+  }
   G.gazette = { jour: G.jour, lignes };
 }
 
