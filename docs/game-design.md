@@ -1480,3 +1480,65 @@ un moment de mémoire (les lanternes des ancêtres).
   Mog l'orc (moyen, 10 p.), Bourk le troll (difficile, 20 p.). Battre l'un débloque le suivant ; chacun une fois par
   soir ; ils poussent plus fort, avec une zone verte plus étroite et un repère plus rapide, à mesure qu'on monte.
 - **Nom de la race : « orc »**, jamais « orque » (même au féminin : « une orc », « les femmes orcs »).
+
+### Préparatifs de la construction du lot B « L'année qui passe » (18/10, après la v0.98)
+Toutes les planches sont validées (21, 22 v3, 22b v2, 23, 24, 25, 26). Ce qui existe déjà : le calendrier
+(4 mois de 28 jours, un par saison : Semailles, Moissons, Brumes, Givre ; `dateDuJour`), les sauts de temps
+des paliers d'étoiles (1 mois à 3 ans d'un coup), le chat adopté, le bois du foyer (`G.feu`), le crieur et le
+tableau d'affichage, la garde-robe. Le lot B s'appuie dessus.
+
+**Le découpage (une version par morceau, chacun testé : simulation, pilote, captures)**
+- **B-1 · v0.99 — Les saisons qui se voient et qui comptent.** Le décor change avec le mois : façade, rue,
+  marché, paysage du comptoir, carte (bourgeons et pétales ; blés et soleil haut ; feuilles rousses et brume ;
+  arbres dégarnis puis nus, neige sur les toits, bonhomme de neige). L'icône de saison à côté du jour (bandeau),
+  la page « Calendrier » du bureau (le mois en grille, les fêtes marquées). Les effets validés : épreuves de crue,
+  de soif, de brume, de froid plus dures sans le bon objet (×0,85) ; les prix de saison au marché (cordes +10 %
+  et potions −10 % aux Semailles, gourdes +10 % et rations −10 % aux Moissons, potions +10 % aux Brumes, capes
+  +10 % au Givre) ; plus de novices au printemps, une mission sur dix retardée d'un jour dans la brume, un client
+  de moins par jour l'hiver.
+- **B-2 · v0.99 — Les passages de saison** (planche 21) : une petite cinématique le premier matin de chaque mois
+  (3-4 images) ; pendant un saut de temps, les saisons défilent en accéléré (« Tu as vu passer deux hivers... »).
+- **B-3 · v1.00 — Les deux fêtes**, annoncées une semaine avant par le crieur et le tableau d'affichage, trois jours
+  chacune (la veille, le grand jour, le lendemain) :
+  - **B-3a, la Fête du Solstice** (lumière, Moissons) : le marché pavoisé, l'étal et le **tir à l'arc** en plein
+    écran à trois jauges (planche 22b), le **mât de cocagne**, les **atours de l'Union**, la tarte du Solstice, la
+    bénédiction du comptoir, les **lanternes célestes** du dernier soir ;
+  - **B-3b, la Nuit des Brumes** (Bannis, Brumes, si le marché noir est connu) : les lanternes rouges, le grand
+    feu, les **osselets** (avec le gobelin tricheur), les **atours des ancêtres**, l'**hydromel noir** (respect des
+    Bannis + la vision d'enfance + le réveil difficile), le **pain de cendre**, les **lanternes pour tes morts**
+    (trois qualités, les familles qui réagissent), l'histoire du Passeur ; l'accueil plus forcé si tu penches vers
+    la lumière.
+- **B-4 · v1.01 — Madame Ysmée, la diseuse** (planche 23) : la tente violette dans la rue dès le jour 10 (une
+  cinématique de découverte), 2 pièces le présage, une fois par jour, parfois trompeur ; les indices du flair.
+- **B-5 · v1.01 — Le foyer et le chat** (planches 24 et 25) : l'hiver sans bois (fatigué, puis malade et ouverture
+  à midi ; la confirmation au coucher, la bûche rouge dans le bandeau), le chat qui boude après 3 jours sans ration
+  (le mot sur le comptoir, le panier vide, son retour).
+- Après chaque morceau : un petit house keep ; après la v1.01, un grand house keep et Cloudflare (sur ta demande).
+
+**Les dates proposées** (dans le mois de 28 jours) : la Fête du Solstice les **13, 14 et 15 des Moissons** (le grand
+jour au milieu de l'été) ; la Nuit des Brumes les **26, 27 et 28 des Brumes** (le grand soir à la fin de l'automne,
+juste avant le Givre). Dans une partie de 90 jours, on croise chaque fête au moins une fois (le 14 des Moissons tombe
+au jour 42 sans saut de temps). Si un saut de temps passe par-dessus une fête, la gazette dit qu'on l'a vue passer
+de loin (pas de fête manquée en silence).
+
+**À valider par le joueur avant B-3b** (Claude propose, le joueur contrôle) :
+1. **La première vision de l'hydromel noir** (proposition) :
+   - une cuisine qui sent la cannelle ; une femme aux mains pleines de farine rit : « Doucement, petit voleur,
+     ce sont les gâteaux du Solstice ! » ;
+   - un homme te hisse sur ses épaules ; au loin, des lanternes montent au-dessus des toits : « Regarde, elles
+     vont dire bonjour aux étoiles. » ;
+   - ta mère te passe une médaille autour du cou (celle dont le mendiant se souvient) : « Elle te gardera,
+     quand nous ne serons pas là. » ;
+   - le ciel devient orange, une ombre immense passe sur le village, le feu du dragon dévore la cuisine, les
+     rires, les visages... ;
+   - tu rouvres les yeux près du grand feu : un vieil orc et une vieille gobeline penchés sur toi. « Ça va,
+     petit ? » « Encore une coupe ? Cette boisson-là, c'est que pour les vrais ! »
+2. **L'histoire du Passeur** (le soir de la Nuit des Brumes, proposition) : « Mon grand-père disait qu'avant, il
+   n'y avait ni lumière ni ombre. Juste des voisins. Une nuit, quelqu'un a chanté sur la ville, une chanson que
+   personne n'a entendue. Au matin, la moitié des gens avaient oublié qu'ils avaient été amis. L'autre moitié, on
+   l'a appelée les Bannis. Bah. Les vieux racontent n'importe quoi. » (un fil de plus vers le sort d'oubli)
+
+**Questions au joueur**
+- Les dates des fêtes proposées te vont-elles ?
+- La vision et l'histoire du Passeur : validées, ou à retoucher ?
+- On garde l'ordre B-1 → B-5 (les saisons d'abord, la diseuse et le foyer à la fin) ?
