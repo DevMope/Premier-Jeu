@@ -49,7 +49,7 @@ const TRAITS_PEUPLES = {
   panda: { peau: 0xf0ece4, yeux: 0x2a1a10, oreilles: 'rondes', museau: 0xf0ece4, truffe: true, taches: 0x201c1c, fourrure: 53, cheveux: false, nez: 0, bas: 0x24201e, jambes: 'noir', pattes: 'noir', mains: 'noir', touffu: 2 },
 };
 // (v0.98) Les femmes des peuples de l'ombre : des cheveux à elles (la queue de cheval de la gobeline et
-// de l'orque, la longue chevelure de la vampire, la crinière de la louve), des cils, des boucles
+// de l'orc, la longue chevelure de la vampire, la crinière de la louve), des cils, des boucles
 // d'oreilles ; la trollesse garde sa tignasse, la momie porte un diadème d'or
 const FEMININ_OMBRE = {
   gobelin: { cheveux: undefined, coiffure: 'queue', teinte: 0x2a1622, sourire: false },

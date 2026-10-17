@@ -1976,7 +1976,7 @@ const NOUVELLES = [
   'Perdu : un mouton-garou, répond au nom de Bêêêrnard. Ne pas sortir les soirs de pleine lune.',
   'Un Groliphant a éternué dans la Forêt des Murmures : trois arbres ont déménagé.',
   "Le vieux Grippesou nie avoir vendu une épée en bois peinte à un chevalier. Le chevalier, lui, ne nie plus rien : il est en convalescence.",
-  "Un mage a voulu faire pleuvoir de l'or. Il a fait pleuvoir des orques. La confusion est compréhensible.",
+  "Un mage a voulu faire pleuvoir de l'or. Il a fait pleuvoir des orcs. La confusion est compréhensible.",
   'Un yéti des Pics Gelés réclame une écharpe. Les tricoteuses de la Comté ont lancé une collecte.',
   'Un champignon de lune a été élu « champignon le plus suspect de l\'année ». Il n\'a pas souhaité commenter.',
   "Un chevalier a combattu un moulin pendant trois heures. Le moulin l'a emporté aux points.",
