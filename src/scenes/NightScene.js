@@ -106,8 +106,8 @@ class NightScene extends Phaser.Scene {
   // Dormir : la fin de la journée. Ton personnage va se coucher (une petite scène, avec le
   // bilan du jour), la nuit passe, et au matin, direction le Marché des Mastres.
   dormir() {
-    if (enTransition(this)) return;
-    if (this.carrefourEnAttente()) return;   // (v0.90) on ne s'endort pas avant d'avoir ouvert la porte
+    if (this.carrefourEnAttente()) return;   // (v0.97) avant le verrou de transition, qui le faisait sauter
+    if (enTransition(this)) return;   // (v0.90) on ne s'endort pas avant d'avoir ouvert la porte
     const G = this.G;
     const bilan = { jour: G.jour, servis: G.journal.servis, retours: G.journal.retours, morts: G.journal.morts,
       gain: G.argent - G.argentDebutJour, reputation: G.reputation, jauge: jaugeCamp(G), palier: nomPalierCamp(G) };

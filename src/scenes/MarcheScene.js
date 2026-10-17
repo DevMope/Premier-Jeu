@@ -1071,6 +1071,7 @@ class MarcheScene extends Phaser.Scene {
     const actuel = this.add.text(930, 345, '', style(14, '#a03030', { fontStyle: 'bold' })).setOrigin(1, 0);
     c.add(actuel);
     r.deroule.forEach((b, i) => this.time.delayedCall(400 + i * 380, () => {
+      if (!actuel.active) return;   // (v0.97) le panneau a été fermé pendant la vente
       Object.values(bulles).forEach(t => t.setAlpha(0.35));
       bulles[b.nom].setText(`${b.montant} p. !`).setAlpha(1);
       this.tweens.add({ targets: bulles[b.nom], scale: { from: 1.3, to: 1 }, duration: 200 });
@@ -1184,7 +1185,7 @@ class MarcheScene extends Phaser.Scene {
     if (deja) ration.fond.setAlpha(0.6);
     const reculer = creerBouton(this, 836, 46, 200, '◀ Reculer', fermer);
     c.add([ration.fond, ration.label, reculer.fond, reculer.label]);
-    if (nourrir && !deja) this.time.delayedCall(500, () => this.nourrirBrisquet(c, chien, raconter, ration));
+    if (nourrir && !deja) this.time.delayedCall(500, () => { if (c.active) this.nourrirBrisquet(c, chien, raconter, ration); });
     // (la cinématique de la médaille a été interrompue : elle reprend ici)
     else if (G.medailleParents && G.medailleVue === false) this.time.delayedCall(400, () => { if (c.active) this.cinematiqueMedaille(c, buste, raconter); });
   }
@@ -1264,6 +1265,7 @@ class MarcheScene extends Phaser.Scene {
         if (n++ >= 4) {
           // la fête : il frétille de tout son corps
           this.tweens.add({ targets: chien, angle: { from: -4, to: 4 }, duration: 90, yoyo: true, repeat: 7, onComplete: () => {
+            if (!c.active) { this.chienMange = false; return; }   // (v0.97) on a reculé pendant qu'il frétillait
             chien.setAngle(0);
             creerIconesHD(this);
             bullePensee(this, chien.x - 20, chien.y - chien.displayHeight - 4, iconeObjet(this, 'ration'), { conteneur: c, echelle: 2.6, cote: -1 });   // (v0.68) il rêve déjà de la prochaine
@@ -1470,7 +1472,7 @@ class MarcheScene extends Phaser.Scene {
       const a = grande; grande = null;
       Son.jouer('page');
       voile.setVisible(false);
-      this.tweens.add({ targets: a, x: a.place.x, y: a.place.y, scale: 1, angle: a.place.angle, duration: 260, ease: 'Quad.easeOut', onComplete: () => c.moveBelow(a, voile) });
+      this.tweens.add({ targets: a, x: a.place.x, y: a.place.y, scale: 1, angle: a.place.angle, duration: 260, ease: 'Quad.easeOut', onComplete: () => { if (c.active && a.active) c.moveBelow(a, voile); } });
     };
     voile.on('pointerdown', reposer);
     affiches.forEach(a => {

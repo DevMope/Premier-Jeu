@@ -9,6 +9,7 @@ class MarcheNoirScene extends Phaser.Scene {
   create() {
     const G = this.G = window.GAME;
     this.part = false;   // (audit v0.59 : sinon « Remonter » ne marchait plus à la 2e visite)
+    this.aine = null; this.sceneAine = null;   // (v0.97)
     this.cameras.main.fadeIn(600);
     this.soiree = soireeMarcheNoir(G);
     this.mainNoireOuverte = mainNoireOuverte(G);
@@ -188,6 +189,8 @@ class MarcheNoirScene extends Phaser.Scene {
   // L'accueil : le Passeur, et ce qu'on peut faire ce soir
   accueil(message = null) {
     const G = this.G, s = this.soiree;
+    // (v0.97) un récit d'aîné quitté par les flèches : son voile et son souvenir s'en vont aussi
+    if (this.sceneAine) { const sa = this.sceneAine; this.sceneAine = null; sa.forEach(o => { this.tweens.killTweensOf(o); o.destroy(); }); }
     this.vider();
     // (v0.58) La première fois qu'on descend : on entend parler des contrées des Bannis, qui
     // apparaîtront sur la carte dès demain
@@ -303,6 +306,7 @@ class MarcheNoirScene extends Phaser.Scene {
     const conteur = this.add.image(190, 82, textureBusteHD(this, personneAine(race), 'neutre')).setOrigin(0.5, 0).setScale(2.6).setDepth(3.8).setAlpha(0).setScrollFactor(0);
     const nom = this.add.text(190, 64, a.nom, style(18, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0806', strokeThickness: 4 })).setOrigin(0.5).setDepth(3.9).setAlpha(0).setScrollFactor(0);
     scene.push(voile, souvenir, conteur, nom);
+    this.sceneAine = scene;
     this.tweens.add({ targets: voile, alpha: 0.88, duration: 900 });
     this.tweens.add({ targets: [conteur, nom], alpha: 1, duration: 900, delay: 300 });
     this.tweens.add({ targets: souvenir, alpha: 0.95, duration: 1600, delay: 700 });
@@ -322,6 +326,7 @@ class MarcheNoirScene extends Phaser.Scene {
       this.bouton(840, 503, 180, fin ? (a.feminin ? 'La remercier' : 'Le remercier') : 'Suite ▸', () => {
         if (!fin) { page++; Son.jouer('page'); montrer(); return; }
         G.ainesRecits = [...new Set([...(G.ainesRecits || []), race])];
+        this.sceneAine = null;   // (elle s'efface d'elle-même)
         this.tweens.add({ targets: scene, alpha: 0, duration: 900, onComplete: () => scene.forEach(o => o.destroy()) });
         if (this.aine) { this.tweens.add({ targets: this.aine, alpha: 0, duration: 1200 }); }
         this.accueil(`${a.nom} se tait. Le Passeur hausse les épaules : « Les vieux racontent n'importe quoi. » Mais toi, tu te souviendras.`);

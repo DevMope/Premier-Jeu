@@ -924,3 +924,17 @@ function oublierPortraits(jeu) {
 // (v0.97) Tous les textes affichés passent par l'accord au féminin de « marchand » (voir accordJoueur)
 { const setText = Phaser.GameObjects.Text.prototype.setText;
   Phaser.GameObjects.Text.prototype.setText = function (t) { return setText.call(this, typeof accordJoueur === 'function' ? accordJoueur(t) : t); }; }
+
+// (v0.97) Phaser n'arrête pas une animation quand son objet est détruit : les animations sans fin
+// (respiration, scintillement, balancement...) des panneaux refermés tournaient dans le vide jusqu'à
+// la fin de la scène. On les arrête avec l'objet (seulement celles qui ne visent plus rien de vivant).
+{ const detruire = Phaser.GameObjects.GameObject.prototype.destroy;
+  Phaser.GameObjects.GameObject.prototype.destroy = function (fromScene) {
+    const tw = !fromScene && this.scene && this.scene.tweens;
+    if (tw && tw.getTweensOf) {
+      try {
+        for (const t of tw.getTweensOf(this)) if (t.isInfinite && t.targets.every(o => o === this || !o.active)) t.stop();
+      } catch (e) { /* (rien : l'objet part quand même) */ }
+    }
+    return detruire.apply(this, arguments);
+  }; }

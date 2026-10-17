@@ -94,6 +94,7 @@ class RueScene extends Phaser.Scene {
     this.tweens.add({ targets: bulle, scale: 1, duration: 180, ease: 'Back.easeOut' });
     const suivre = () => { if (bulle.active && p.active) bulle.setX(p.x); };
     this.events.on('update', suivre);
+    this.events.once('shutdown', () => this.events.off('update', suivre));   // (v0.97) sinon il survivait à la scène
     this.time.delayedCall(Math.max(3000, texte.length * 60), () => {
       this.events.off('update', suivre);
       if (bulle.active) this.tweens.add({ targets: bulle, alpha: 0, duration: 300, onComplete: () => bulle.destroy() });

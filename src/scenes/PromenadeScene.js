@@ -21,6 +21,7 @@ class PromenadeScene extends Cinematique {
     const G = this.G = window.GAME;
     this.fini = false;
     this.transition = false;   // (audit v0.59)
+    this.assis = null;   // (v0.97) on n'est plus assis sur le banc d'hier soir
     this.cameras.main.fadeIn(500);
     creerInterieurHD(this); creerDecorComptoir(this); creerObjetsHD(this); creerHalo(this);
     creerAtelierHD(this); creerFenetreHD(this); creerDouilletHD(this);
@@ -82,6 +83,7 @@ class PromenadeScene extends Cinematique {
         if (this.transition) return;
         this.transition = true;
         if (PIECES_PROMENADE[this.piece].marche !== false) { this.allerVers(x); await this.attendreArrivee(); }
+        if (this.fini) { this.transition = false; return; }
         Son.jouer('porte');
         this.entrer(vers.piece, vers.x);
         this.transition = false;
@@ -454,6 +456,7 @@ class PromenadeScene extends Cinematique {
     if (page === 'Nymphe' && !nympheAttend(this.G)) { this.allerVers(x); this.dire("La lueur s'est éteinte. La place dort ; l'eau de la fontaine murmure encore un peu."); return; }
     this.transition = true;
     this.allerVers(x); await this.attendreArrivee();
+    if (this.fini) { this.transition = false; return; }   // (v0.97) « Retour » cliqué pendant la marche
     Son.jouer('porte');
     // (v0.68) la banque s'ouvre par-dessus la rue : en sortant, on se retrouve devant sa porte
     // (v0.91) ... et la nymphe aussi : après elle, on se retrouve dans la rue, devant l'arche (on était renvoyé chez soi)
