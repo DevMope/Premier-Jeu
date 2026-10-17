@@ -884,7 +884,10 @@ class MarcheScene extends Phaser.Scene {
       // l'étiquette pend du plateau, au bout d'une ficelle
       c.add(this.add.rectangle(x, 360, 2, 22, 0x3b2410));
       const etiquette = this.add.image(x, 384, panneauHD(this, 64, 30)).setScale(1.5).setAngle(3);
-      const texte = this.add.text(x, 384, `${prix} p.`, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5).setAngle(3);
+      // (v0.99) le prix de saison se voit : ▲ en rouge s'il monte, ▼ en vert s'il baisse
+      const ks = typeof prixSaison === 'function' ? prixSaison(G, id) : 1;
+      const texte = this.add.text(x, 384, `${prix} p.`, style(14, ks > 1 ? '#a02818' : ks < 1 ? '#2a6a1a' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5).setAngle(3);
+      if (ks !== 1) c.add(this.add.text(x + 30, 370, ks > 1 ? '▲' : '▼', style(13, ks > 1 ? '#ff7a5a' : '#8ae05a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5).setDepth(2));
       const serre = pas < 95;
       const nom = this.add.text(x, 418, serre ? nomObjet(id) : `${nomObjet(id)} × ${o.qte}`, style(serre ? 11 : 12, '#fff4dc', { align: 'center', stroke: '#1a0e06', strokeThickness: 3, wordWrap: { width: pas - 4 } })).setOrigin(0.5, 0);
       // (v0.68) ce que tu en as déjà, juste dessous
@@ -985,7 +988,8 @@ class MarcheScene extends Phaser.Scene {
         c.add(this.add.text(x + (k3 ? 174 : 260), y, "Pas aujourd'hui", style(k3 ? 11 : 12, '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
         return;
       }
-      c.add(this.add.text(x + (k3 ? 174 : 230), y, `${prixMarchand(G, cle, id)} p.`, style(k3 ? 12 : 14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      const ks = typeof prixSaison === 'function' ? prixSaison(G, id) : 1;   // (v0.99) ▲ / ▼ : le prix de saison
+      c.add(this.add.text(x + (k3 ? 174 : 230), y, `${prixMarchand(G, cle, id)} p.${ks > 1 ? ' ▲' : ks < 1 ? ' ▼' : ''}`, style(k3 ? 12 : 14, ks > 1 ? '#a02818' : ks < 1 ? '#2a6a1a' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
       c.add(ajuster(this.add.text(x + (k3 ? 210 : 300), y, o.qte > 0 ? `${o.qte} en vente` : 'Épuisé', style(k3 ? 11 : 12, o.qte > 0 ? '#4a6a2a' : '#8a6a4a', { fontStyle: 'italic' })).setOrigin(0, 0.5), k3 ? 82 : 120));
       // (v0.84) on achète de nouveau d'ici : un clic sur la ligne en achète un (de près, ça marche aussi)
       if (o.qte > 0) {
