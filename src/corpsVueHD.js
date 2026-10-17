@@ -48,6 +48,18 @@ const TRAITS_PEUPLES = {
   // Le panda : gros et touffu, des pattes noires, les taches autour des yeux
   panda: { peau: 0xf0ece4, yeux: 0x2a1a10, oreilles: 'rondes', museau: 0xf0ece4, truffe: true, taches: 0x201c1c, fourrure: 53, cheveux: false, nez: 0, bas: 0x24201e, jambes: 'noir', pattes: 'noir', mains: 'noir', touffu: 2 },
 };
+// (v0.98) Les femmes des peuples de l'ombre : des cheveux à elles (la queue de cheval de la gobeline et
+// de l'orque, la longue chevelure de la vampire, la crinière de la louve), des cils, des boucles
+// d'oreilles ; la trollesse garde sa tignasse, la momie porte un diadème d'or
+const FEMININ_OMBRE = {
+  gobelin: { cheveux: undefined, coiffure: 'queue', teinte: 0x2a1622, sourire: false },
+  orc: { cheveux: undefined, coiffure: 'queue', teinte: 0x1a1210, carre: false, sourcil: 1 },
+  vampire: { cheveux: undefined, coiffure: 'long', teinte: 0x16101c, meches: true, levres: 0xa01830 },
+  loupgarou: { cheveux: undefined, coiffure: 'long', teinte: 0xd8d8e2, fleurs: true },
+  troll: { sourcil: 1.2, nez: 2.5, fleurs: true },
+  momie: { diademe: true },
+};
+
 // Les Bannis ont l'air fâché tant qu'ils ne te connaissent pas (le joueur est du côté de la lumière
 // au départ) ; une fois amis, ou quand ton comptoir penche franchement vers l'ombre, leur visage s'adoucit.
 function banniFache(personne) {
@@ -151,7 +163,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   t.cel = true;
   const cx = L / 2;
   const f = g.feminin;
-  const T = TRAITS_PEUPLES[race] || {};
+  const ombreF = f ? FEMININ_OMBRE[race] : null;
+  const T = ombreF ? { ...TRAITS_PEUPLES[race], ...ombreF } : TRAITS_PEUPLES[race] || {};
+  if (ombreF && ombreF.coiffure) g = { ...g, coiffure: ombreF.coiffure, cheveux: ombreF.teinte };
   if (costume === 'mainNoire' || costume === 'serpent') g = { ...g, coiffure: 'court' };   // (sous la capuche)
   if (T.cheveux !== undefined) g = { ...g, coiffure: T.cheveux === 'plaque' ? 'court' : 'chauve', barbe: T.barbe || null };   // (pas de cheveux longs derrière)
   const gobelin = costume === 'gobelin' || race === 'gobelin';
@@ -671,6 +685,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   oreille(loin);
   t.forme('peau', tete, { decalage: 0.05 });
   oreille(pres);
+  // (v0.98) les boucles d'oreilles des femmes de l'ombre : un petit anneau d'or sous l'oreille
+  if (ombreF && !dos && !['loupgarou', 'momie'].includes(race)) for (const cote of [loin, pres]) {
+    const u = cote * P.rx * 1.02, z = -P.rx * 0.25; if (Z(u, z) < -P.rx * 0.3) continue;
+    const bx = X(u, z) + cote * (T.oreilles === 'grandes' ? 1.5 : 0.5) * k, byo = cy + (T.oreilles === 'grandes' ? 3.2 : 4) * k;
+    for (let a = 0; a < 6.3; a += 0.3) t.poser(Math.round(bx + Math.cos(a) * 1.1 * k), Math.round(byo + Math.sin(a) * 1.3 * k), 'or', a < 3 ? 5 : 3);
+  }
   if (race === 'hobbit' && !dos) for (const cote of [-1, 1]) if (Z(cote * 4.5 * k, P.rx * 0.7) > 0) t.forme('peau', ellipsoide(X(cote * 4.5 * k, P.rx * 0.7), cy + 3.5 * k, 2.6 * k, 2 * k), { decalage: 0.35, bord: false, ombre: false });
   const ey = Math.round(cy + 1 * k);
   const by = ey + (T.nezBas ? 7.5 : 5) * k;
@@ -702,6 +722,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (irisJoueur) t.poser(Math.round(ix), Math.round(ey + 0.3 * k), 'pupille', 1);
     t.poser(Math.round(ix - 0.4 * k), Math.round(ey - 0.4 * k), 'blanc', 5);
     for (let i = -Math.round(w); i <= Math.round(w); i++) t.poser(Math.round(ox + i), Math.round(ey - h), 'pupille', 2);
+    if (ombreF) for (let j = 1; j <= k; j++) t.poser(Math.round(ox + cote * (w + j * 0.6)), Math.round(ey - h - j * 0.7), 'pupille', 1);   // (les cils)
     if (fache) {
       // Fâché : la paupière du haut descend en biais, plus bas du côté du nez
       const versNez = Math.sign(X(0, P.rx) - ox) || 1;
@@ -943,11 +964,14 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (coupe === 'chignon') t.forme('cheveux', ellipsoide(X(0, -P.rx * 0.6), cy - P.ry - 0.5 * k, 3.5 * k, 3 * k), { motif: MECHES });
     if (coupe === 'queue' && (s > 0.3 || dos)) t.forme('cheveux', (x, y) => { const qx = X(0, -P.rx - 1 * k); return y >= cy - 2 * k && y <= yT + 8 * k && Math.abs(x + 0.5 - qx) < 2.2 * k - Math.max(0, y - yT - 2 * k) * 0.15 ? [(x + 0.5 - qx) / (2.2 * k), 0, 0.8] : null; }, { motif: MECHES });
   }
+  // (v0.98) les mèches qui encadrent le visage de la vampire, les fleurs piquées dans les cheveux
+  if (T.meches && !dos) for (const cote of [loin, pres]) { const u = cote * P.rx * 0.92; if (Z(u, P.rx * 0.35) < 0) continue; const mx = X(u, P.rx * 0.35); t.forme('cheveux', (x, y) => (y >= cy - P.ry * 0.5 && y <= cy + P.ry + 3 * k && Math.abs(x + 0.5 - mx) < 1.3 * k ? [cote * 0.5, 0, 0.8] : null), { decalage: 0.2, motif: MECHES }); }
+  if (T.fleurs && !dos) { t.rampes.fleur = rampeVive(0xe86a9a); for (const [u, dy] of [[-0.75, -0.75], [0.55, -0.9]]) { const fx0 = X(u * P.rx, P.rx * 0.4), fy0 = cy + dy * P.ry; t.forme('fleur', ellipsoide(fx0, fy0, 1.6 * k, 1.5 * k), { decalage: 0.4, ombre: false }); t.poser(Math.round(fx0), Math.round(fy0), 'or', 5); } }
   if (!dos) { t.relief = false; poserYeux(); t.relief = true; }
   if (porte('monocle') && !dos && yeux.length) { const [ox] = yeux[yeux.length - 1]; for (let a = 0; a < 6.3; a += 0.25) t.poser(Math.round(ox + Math.cos(a) * 2.6 * k), Math.round(ey + 0.3 * k + Math.sin(a) * 2.8 * k), 'or', a < 3 ? 4 : 2); for (let j = 0; j < 5 * k; j++) t.poser(Math.round(ox + 2.6 * k + (j % 2 ? 1 : 0)), Math.round(ey + 3 * k + j), 'or', 3); }
   if (porte('pipe') && !dos) { const bx = X(0, P.rx * 0.85); const px = Math.round(bx + s * 2 * k - 2 * k); for (let j = 0; j < 5 * k; j++) for (let e = 0; e < k; e++) t.poser(px - j, by + Math.floor(j / (2 * k)) * k + e, 'bruyere', 3); t.forme('bruyere', ellipsoide(px - 5 * k, by + 2.5 * k, 1.4 * k, 1.6 * k), { decalage: 0.1, ombre: false }); for (let j = 0; j < 3; j++) t.poser(px - 5 * k - j, by - 1 * k - j * 2 * k, 'blanc', 4 + (j % 2)); }
   if (longs && dos) t.forme('cheveux', (x, y) => (y >= cy && y <= yT + 10 * k && Math.abs(x + 0.5 - cx) < P.rx + 1 * k - Math.max(0, y - yT - 4 * k) * 0.4 ? [(x + 0.5 - cx) / (P.rx + 2 * k), 0, 0.8] : null), { decalage: -0.3, motif: MECHES });
-  if (tenue >= 4 && race !== 'nain' && race !== 'magicienne') for (let j = -5; j <= 5; j++) { const x = Math.round(X(j * k, Math.sqrt(Math.max(0, P.rx * P.rx - (j * k) ** 2)) * 0.9)); for (let e = 0; e < k; e++) t.poser(x + e, cy - P.ry + 1 * k + (j % 3 === 0 ? -1 * k : 0), 'or', j % 3 === 0 ? 5 : 4); } // le diadème
+  if ((tenue >= 4 || T.diademe) && race !== 'nain' && race !== 'magicienne') for (let j = -5; j <= 5; j++) { const x = Math.round(X(j * k, Math.sqrt(Math.max(0, P.rx * P.rx - (j * k) ** 2)) * 0.9)); for (let e = 0; e < k; e++) t.poser(x + e, cy - P.ry + 1 * k + (j % 3 === 0 ? -1 * k : 0), 'or', j % 3 === 0 ? 5 : 4); } // le diadème
 
   // --- Les couvre-chefs des peuples ---
   if (race === 'nain' && costume !== 'banquier' && !forgeron) {

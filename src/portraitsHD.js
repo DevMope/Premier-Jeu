@@ -336,6 +336,9 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   // Les peuples de l'ombre et le panda : leurs traits (peau, oreilles, museau, crocs...) sont dans
   // TRAITS_PEUPLES (corpsVueHD.js), les mêmes que pour les corps en pied
   let TR = (typeof TRAITS_PEUPLES !== 'undefined' && TRAITS_PEUPLES[g.race]) || {};
+  // (v0.98) les femmes de l'ombre ont leurs cheveux à elles, des boucles d'oreilles (voir corpsVueHD)
+  const ombreF = g.feminin && typeof FEMININ_OMBRE !== 'undefined' ? FEMININ_OMBRE[g.race] : null;
+  if (ombreF) { TR = { ...TR, ...ombreF }; if (ombreF.coiffure) g = { ...g, coiffure: ombreF.coiffure, cheveux: ombreF.teinte }; }
   if (TR.cheveux !== undefined) g = { ...g, coiffure: TR.cheveux === 'plaque' ? 'court' : 'chauve', armure: false, barbe: null };
   if (TR.poils) g = { ...g, cheveux: TR.poils };
   // Les aînés : les cheveux (ou les poils) gris, la fourrure qui blanchit
@@ -538,6 +541,14 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   else if (oreilles === 'rondes') for (const sens of [-1, 1]) t.forme('noir', ellipsoide(cx + sens * (v.rx - 2) - T * 0.5, v.cy - v.ry + 2, 6.5, 6), { decalage: 0.1 });
   if (TR.touffes) for (const sens of [-1, 1]) t.forme('peau', (x, y) => { const d = sens * (x + 0.5 - cx + T * 0.5) - v.rx + 3, h = y + 0.5 - (ey + 9); return d > -3 && d < 8 && Math.abs(h - d * 0.35) < 5 - d * 0.6 ? [sens, 0.2, 0.6] : null; }, { motif: MECHES });
   if (TR.collerette) t.forme('peau', (x, y) => { const nx = (x + 0.5 - cx) / 26, ny = (y + 0.5 - v.torse - 3) / 8; return nx * nx + ny * ny <= 1 && y > v.bouche + 4 - hachage(x, 3, 11) * 3 ? [nx * 0.6, ny * 0.4, 0.8] : null; }, { decalage: -0.1, motif: MECHES });
+  if (ombreF && !['loupgarou', 'momie'].includes(g.race)) for (const [ax, ay] of oreilles === 'grandes' ? [[cx - v.rx - 9 - T * 0.8, ey + 9], [cx + v.rx + 8 - T * 0.8, ey + 9]] : [[cx - v.rx - 1 - T * 0.7, ey + 11]]) {
+    t.relief = true;
+    for (let a = 0; a < 6.3; a += 0.25) t.poser(Math.round(ax + Math.cos(a) * 2), Math.round(ay + Math.sin(a) * 2.6), 'or', a < 3 ? 5 : 3);
+    t.relief = false;
+  }
+  if (ombreF && ombreF.meches) for (const sens of [-1, 1]) { const mx = cx + sens * (v.rx - 2) - T * 0.5; t.relief = true; t.forme('cheveux', (x, y) => (y >= v.cy - v.ry + 3 && y <= v.cy + v.ry + 6 && Math.abs(x + 0.5 - mx - sens * Math.max(0, y - v.cy) * 0.12) < 2.4 ? [sens * 0.5, 0, 0.8] : null), { decalage: 0.2, motif: MECHES }); t.relief = false; }
+  if (ombreF && ombreF.fleurs) { t.rampes.fleur = rampeVive(0xe86a9a); t.relief = true; for (const [i, j] of [[-v.rx + 3, -v.ry + 5], [v.rx - 6, -v.ry + 2]]) { t.forme('fleur', ellipsoide(cx + i, v.cy + j, 3.2, 3), { decalage: 0.4, ombre: false }); t.poser(cx + i, v.cy + j, 'or', 5); } t.relief = false; }
+  if (ombreF && ombreF.diademe) { t.rampes.rubis = rampeVive(0xc02040); const dy = Math.round(v.cy - v.ry + 5); for (let i = -12; i <= 12; i++) { t.poser(cx + i, dy + Math.round((i * i) / 60), 'or', 4); t.poser(cx + i, dy + 1 + Math.round((i * i) / 60), 'or', 2); } t.forme('rubis', ellipsoide(cx + T * 0.5, dy + 1, 2.2, 2.6), { ombre: false }); }
   if (TR.mousse) { t.relief = true; for (const [i, j, r] of [[-14, -16, 3.5], [11, -18, 3], [-22, 8, 3], [20, 26, 4], [-18, 30, 3.5]]) t.forme('mousse', ellipsoide(cx + i, v.cy + j, r, r * 0.7), { motif: (x, y) => (hachage(x, y, 5) > 0.6 ? 0.6 : 0) }); }
 
   // 7. Les sourcils, par-dessus tout (ils débordent du casque des nains)
