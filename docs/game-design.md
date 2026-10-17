@@ -1417,3 +1417,19 @@ un moment de mémoire (les lanternes des ancêtres).
   repli au lieu de la mort) et les Bannis qui l'apprennent le saluent plus chaleureusement.
 - **Le temps de la fête** (à définir avec le joueur) : proposé, les trois jours de la fête ; l'hydromel et
   le pain de cendre seulement le grand jour (le soir de la Nuit des Brumes).
+
+### Retours du joueur au réveil (18/10)
+- **Planche 26 validée** : le Passeur en capitaine pirate / contrebandier (costume « pirate »).
+- **Lanternes : validé.** **Hydromel noir : on combine** l'idée de Claude (le partage, le respect des
+  Bannis) et celle du joueur (la vision d'enfance, les anciens) ; **oui au réveil difficile** ; **oui à un
+  fragment de vision par an, mais chaque vision est écrite avec le joueur et validée par lui** (Claude peut
+  proposer, le joueur contrôle). **Pain de cendre : validé.**
+- **Le tir à l'arc, à refaire** (pas satisfait, le réalisme compte) :
+  - un **étal simple**, bien intégré au marché comme les autres (pas d'incrustation) ;
+  - le jeu se joue **en plein écran**, sans le décor du marché autour : un vrai mini-jeu dans le jeu ;
+  - **trois jauges** : **largeur** (gauche-droite, avec la zone rouge), **hauteur** (haut-bas, avec la
+    même zone rouge) et **puissance** ; avec les trois, on vise le centre de la cible ;
+  - réalisme : rien ne flotte (le drapeau sur un mât planté, l'emblème sur une bannière accrochée).
+- **Équilibre de l'ombre** : viser **4 000 à 6 000 pièces au jour 90** si possible (aujourd'hui ~2 800) ;
+  sinon, que la lumière rapporte plus lui plaît aussi. Idée : **une activité de plus au marché noir**, autre
+  que d'envoyer des gens en voyage.
