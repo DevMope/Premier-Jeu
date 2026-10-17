@@ -1433,3 +1433,19 @@ un moment de mémoire (les lanternes des ancêtres).
 - **Équilibre de l'ombre** : viser **4 000 à 6 000 pièces au jour 90** si possible (aujourd'hui ~2 800) ;
   sinon, que la lumière rapporte plus lui plaît aussi. Idée : **une activité de plus au marché noir**, autre
   que d'envoyer des gens en voyage.
+
+### Retours du joueur (18/10, suite)
+- **Planche 22b v2 validée** (l'étal simple au marché, le mini-jeu en plein écran à trois jauges).
+- **Les atours** (question du joueur) : ce sont des **tenues de fête à acheter** à l'étal de la fête, le temps
+  des trois jours ; on les garde ensuite dans la garde-robe ; portées, elles font monter la relation avec les
+  clients du camp ce jour-là. Rien à gagner d'avance.
+- **La caisse du Passeur : validée** (contrebande achetée au marché noir, revendue le lendemain au comptoir,
+  saisie et amende si la garde passe).
+- **Les paris de la fosse : validés**, et **le bras de fer de Mog devient permanent** au marché noir (il n'y
+  a pas de jeux à l'année là-bas) ; les osselets restent un jeu de fête.
+- Question du joueur : envoyer des clients ou des missions spéciales depuis le marché noir ? **Jamais prévu**
+  jusqu'ici (le plus proche : le service « Prêter un aventurier » de la Main Noire). Proposition de Claude :
+  **les contrats de l'ombre** (à valider).
+- **Réputation : on ne touche à rien**, et **les lanternes permettent de se racheter** (+0,5 quand la
+  lanterne convient à la famille ; un peu de réputation en moins si l'on n'honore personne). Le joueur suivra
+  les parties de son ami.
