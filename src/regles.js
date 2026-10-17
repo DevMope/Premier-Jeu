@@ -3177,7 +3177,7 @@ function eJ(G = window.GAME) { return G && G.joueur && G.joueur.feminin ? 'e' : 
 // (v0.97) « ..., marchand. » : quand on s'adresse à JeuneGoy, au féminin si c'est une marchande.
 // (appliqué à tous les textes affichés : voir pixels.js)
 function accordJoueur(t, G = window.GAME) {
-  return typeof t === 'string' && eJ(G) && t.includes('marchand') ? t.replace(/(, |au |Ah, |Bienvenue, )marchand\b(?![es])/g, '$1marchande') : t;
+  return typeof t === 'string' && eJ(G) && t.includes('marchand') ? t.replace(/\bau marchand\b(?![es])/g, 'à la marchande').replace(/(, |Ah, |Bienvenue, )marchand\b(?![es])/g, '$1marchande') : t;
 }
 function accordAdj(id, m, f, mp, fp) { const g = genreDe(id); return g === 'm' ? m : g === 'f' ? f : g === 'mp' ? mp : fp; }
 
