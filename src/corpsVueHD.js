@@ -144,7 +144,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const L = 52 * k;
   // (v0.58) + une marge en haut : sans elle, le sommet du crâne (cheveux, contour) touchait le bord
   // de l'image et paraissait coupé à plat
-  const coiffe = (race === 'magicienne' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' ? 8 : costume === 'garde' ? 2 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : 0) * k + (pose === 'leves' ? 12 * k : 0) + 3 * k;
+  const coiffe = (race === 'magicienne' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' || costume === 'pirate' ? 8 : costume === 'garde' ? 2 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : 0) * k + (pose === 'leves' ? 12 * k : 0) + 3 * k;
   const H = P.H + coiffe;
   const t = new ToileHD(L, H);
   t.relief = true;
@@ -174,7 +174,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   t.rampes.cuir = costume === 'mentor' ? rampe(0x4a3426) : rampeVive(0x6a3f22);   // (le cuir usé et sombre du rôdeur)
   t.rampes.metal = rampeVive(0x7a8498);
   t.rampes.levres = levresPour(g.peau ?? 1, f);
-  t.rampes.chapeau = rampeVive(race === 'magicienne' ? 0x3a2a8a : costume === 'banquier' ? 0x1a1a22 : costume === 'colporteur' ? 0x5a4630 : costume === 'noble' ? 0x4a1a3a : g.habit);
+  t.rampes.chapeau = rampeVive(race === 'magicienne' ? 0x3a2a8a : costume === 'banquier' ? 0x1a1a22 : costume === 'colporteur' ? 0x5a4630 : costume === 'noble' ? 0x4a1a3a : costume === 'pirate' ? 0x1c1a22 : g.habit);
   t.rampes.plume = rampeVive(0xf0e8d0); t.rampes.fourrure = rampeVive(0xe8e0d0); t.rampes.osier = rampeVive(0xb08a48); t.rampes.foulard = rampeVive(0xc03a30); t.rampes.laine = rampeVive(0x8a3030);
   t.rampes.levres = T.levres ? rampeVive(T.levres) : gobelin ? rampeVive(f ? 0xb84a5a : 0x8a3a34) : t.rampes.levres;
   t.rampes.feutre = rampeVive(0x4a3a2a); t.rampes.capeV = rampeVive(0x5a2a2a); t.rampes.bruyere = rampeVive(0x6a3a22); t.rampes.ruban = rampeVive(0x9a2a3a); t.rampes.echarpe = rampeVive(0xc04040);
@@ -185,6 +185,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   // de cuir sanglé, carquois, hautes bottes noires)
   if (costume === 'mainNoire') {
     t.rampes.habit = rampe(0x24222a); t.rampes.cape = rampe(0x1a181e); t.rampes.metal = rampeVive(0x5c606c); t.rampes.cuir = rampe(0x2a282e);
+  } else if (costume === 'pirate') {
+    // (v0.97, planche) le Passeur en capitaine pirate : long manteau bleu nuit à galons d'or, grande cape
+    // rouge en lambeaux (à la Albator), écharpe rouge à la taille, bottes hautes
+    t.rampes.habit = rampe(0x1e2236); t.rampes.cape = rampe(0x8a1616); t.rampes.cuir = rampe(0x2a1c14); t.rampes.bas = rampe(0x3a3440);
   } else if (costume === 'serpent') {
     t.rampes.habit = rampe(0x4a6428); t.rampes.cape = rampe(0x34501e); t.rampes.cuir = rampe(0x26222a); t.rampes.bas = rampe(0x2a2630);
     t.rampes.gilet = rampeVive(0x6a4426); t.rampes.argent = rampeVive(0xc8ccd4); t.rampes.emeraude = rampeVive(0x2ec860); t.rampes.fleche = rampeVive(0xe8b020);
@@ -198,8 +202,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const ep = P.ep;                         // la demi-largeur d'épaules
   const prof = ep * 0.55;                  // la demi-épaisseur du torse
   const longue = race === 'magicienne' || costume === 'mainNoire';    // la robe descend jusqu'aux pieds
-  const manteau = race === 'elfe' || costume === 'colporteur' || costume === 'mentor';   // la tunique descend à mi-cuisse
-  const capee = (tenue >= 3 && !joueur) || ['mentor', 'colporteur', 'mendiant', 'noble', 'passeur', 'mainNoire'].includes(costume) || porte('cape') || !!T.cape;
+  const manteau = race === 'elfe' || costume === 'colporteur' || costume === 'mentor' || costume === 'pirate';   // la tunique descend à mi-cuisse
+  const capee = (tenue >= 3 && !joueur) || ['mentor', 'colporteur', 'mendiant', 'noble', 'passeur', 'mainNoire', 'pirate'].includes(costume) || porte('cape') || !!T.cape;
   const aventurier = !costume || ['colporteur', 'mentor', 'mendiant'].includes(costume);
   if (joueur) tenue = 1;   // (le joueur a sa tenue à lui : manches simples, pas d'épaulières)
 
@@ -330,7 +334,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const dessinerCape = (devant) => {
     t.forme(porte('cape') ? 'capeV' : 'cape', (x, y) => {
       if (y < yT + 1 * k || y > sol - 4 * k) return null;
-      if ((costume === 'mendiant' || costume === 'mainNoire') && y > sol - 12 * k && hachage(Math.floor(x / k), 0, 77) * 10 * k > sol - y) return null; // le bas en lambeaux
+      if ((costume === 'mendiant' || costume === 'mainNoire' || costume === 'pirate') && y > sol - (costume === 'pirate' ? 20 : 12) * k && hachage(Math.floor(x / k), 0, 77) * 10 * k > sol - y) return null; // le bas en lambeaux
       const demi = (ep + 1.5 * k + (y - yT) * 0.12) * (devant ? 1 : Math.max(0.55, c) + 0.1);
       const centre = devant ? cx : X(0, -prof * 0.9);
       const nx = (x + 0.5 - centre) / demi;
@@ -454,6 +458,21 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   // L'ourlet de la tunique retombe sur les cuisses : le tissu est tendu sur la cuisse proche (plus
   // clair), et fait un pli de chaque côté
   if (!dos && !longue && !joueur && !forgeron) t.forme('habit', (x, y) => (y > yB && t.mat(x, y) === 'habit' ? torse(x, y) : null), { bord: false, ombre: false, motif: motifCuisse });
+  if (costume === 'pirate' && !dos) {
+    // les revers et le bord du manteau galonnés d'or, deux rangées de boutons dorés
+    const galon = [];
+    for (let y = yT + 1 * k; y < yB + Math.round((sol - yB) * 0.55); y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'habit' && (t.mat(x - 1, y) !== 'habit' || t.mat(x + 1, y) !== 'habit')) galon.push([x, y]);
+    for (const [x, y] of galon) t.poser(x, y, 'or', 3);
+    // le devant ouvert du manteau : la chemise claire entre les revers
+    t.forme('lin', (x, y) => (y >= yT + 1 * k && y <= yB - 3 * k && Math.abs(x + 0.5 - X(0, prof)) < Math.max(0.6 * k, 2.4 * k - (y - yT) * 0.12) && t.mat(x, y) === 'habit' ? [0, 0, 1] : null), { ombre: false });
+    for (let j = 0; j < 4; j++) for (const du of [-2.2, 2.2]) t.forme('or', ellipsoide(X(du * k, prof), yT + (4 + j * 3.2) * k, 0.8 * k, 0.8 * k), { decalage: 0.6, ombre: false });
+    // l'écharpe rouge nouée à la taille, et son pan qui tombe sur la hanche
+    t.forme('echarpe', (x, y) => { const n = torse(x, y); return n && y >= yB - 2 * k && y <= yB + 1.5 * k ? n : null; }, { motif: (x, y) => (Math.floor(y / k) % 2 ? 0.4 : -0.2) });
+    t.forme('echarpe', (x, y) => (y >= yB && y <= yB + 9 * k && Math.abs(x + 0.5 - X(-3 * k - (y - yB) * 0.08, prof)) < 1.4 * k ? [0.2, 0, 0.9] : null), { motif: (x, y) => (Math.floor(y / k) % 3 === 0 ? 0.5 : 0) });
+    // le sabre au côté : la garde dorée et la lame courbe le long de la jambe
+    t.forme('or', ellipsoide(X(5 * k, prof * 0.7), yB + 1 * k, 1.6 * k, 1.2 * k), { decalage: 0.4 });
+    for (let j = 0; j < 14 * k; j++) { const x = Math.round(X(5.5 * k + j * 0.12 + Math.sin(j / (14 * k) * 1.4) * 1.5 * k, prof * 0.7)), y = yB + 2 * k + j; t.poser(x, y, 'metal', 4); t.poser(x + 1, y, 'metal', 2); }
+  }
   // L'écharpe de laine, la chaîne de montre, la bague
   if (porte('echarpe') && !dos) {
     t.forme('echarpe', (x, y) => (y >= yT - 2 * k && y <= yT + 2 * k && Math.abs(x + 0.5 - X(0, prof * 0.6)) < 5 * k * Math.max(0.4, Math.abs(c)) ? [(x + 0.5 - cx) / (5 * k) * 0.5, 0, 0.9] : null), { motif: (x, y) => (Math.floor(y / k) % 2 ? 0.5 : -0.2) });
@@ -993,6 +1012,15 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme('chapeau', (x, y) => (y >= haut && y <= haut + 1.5 * k && Math.abs(x + 0.5 - cx) < P.rx + 2 * k ? [0, -0.5, 0.8] : null), { decalage: -0.2 });
     for (let x = Math.round(cx - 6 * k); x <= cx + 6 * k; x++) for (let e = 0; e < k; e++) t.poser(x, haut - 2 * k + e, 'or', 3 + e);
     if (race === 'nain' && !dos) for (let a = 0; a < 6.3; a += 0.2) t.poser(Math.round(X(P.rx * 0.46, P.rx * 0.78) + Math.cos(a) * 2.8 * k), Math.round(ey + 0.3 * k + Math.sin(a) * 3 * k), 'or', 4); // le monocle
+  } else if (costume === 'pirate') {
+    // Le tricorne : une calotte basse, un large bord relevé en trois cornes, bordé d'or
+    const haut = cy - P.ry;
+    t.forme('chapeau', (x, y) => (y >= haut - 5 * k && y <= haut + 1 * k && Math.abs(x + 0.5 - X(0, -0.5 * k)) < 5.5 * k - (haut - y) * 0.2 ? [(x + 0.5 - cx) / (7 * k), -0.3, 0.8] : null));
+    t.forme('chapeau', (x, y) => { const d = x + 0.5 - cx, ad = Math.abs(d); const releve = ad > P.rx * 0.5 ? (ad - P.rx * 0.5) * 0.45 : 0;
+      return y >= haut - 1.2 * k - releve && y <= haut + 1.2 * k - releve * 0.5 && ad < P.rx + 4 * k ? [d / (P.rx + 6 * k), -0.4, 0.8] : null; }, { decalage: -0.1 });
+    const bord = [];
+    for (let y = haut - 12 * k; y <= haut + 2 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'chapeau' && t.mat(x, y - 1) !== 'chapeau' && y > haut - 2.5 * k - Math.abs(x + 0.5 - cx) * 0.5) bord.push([x, y]);
+    for (const [x, y] of bord) t.poser(x, y, 'or', 3);
   } else if (costume === 'noble') {
     // Le chapeau de velours à large bord, sa broche d'or, sa longue plume blanche
     const haut = cy - P.ry;
