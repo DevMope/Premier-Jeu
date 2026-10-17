@@ -1619,3 +1619,13 @@ de loin (pas de fête manquée en silence).
    gardés dans la malle), armes 15 % (une arme au hasard), décorations 15 % (une décoration de la brocante), **le gros
    lot 5 %** (une décoration exclusive : le sapin de cristal, +0,4 client par jour). On la placerait en **B-3c**, après
    la Nuit des Brumes.
+
+### Réponses du joueur (18/10, après la v1.00)
+- **Planche 30 v2 : tout est validé** (le mouvement de grimpe, la mécanique main gauche / main droite, les lots).
+- **Le discours du Grand Sage** (an 2, Solstice) : **validé**. **Le joueur enverra un dessin du Grand Sage : Claude
+  doit le lui rappeler** avant de construire la scène.
+- **Le discours de Garrick aux Bannis** : validé, avec la fin retouchée : « Je sais ce qu'on dit de vous, là-haut. Je
+  sais ce qu'on vous a pris, et ce qu'on vous a fait oublier. Mais écoutez-moi : la brume finit toujours par se lever.
+  Un jour, vos enfants passeront la Grande Muraille sans baisser les yeux. Gardez vos lanternes allumées : des jours
+  meilleurs viendront. »
+- **La Fête du Long Hiver et la grande roue des cadeaux** : validées telles que proposées (B-3c, après la Nuit des Brumes).
