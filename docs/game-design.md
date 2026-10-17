@@ -1339,3 +1339,42 @@ On pousse sur Cloudflare après ces préparatifs et le grand house keep de la nu
   l'atelier d'alchimie de *Kingdom Come: Deliverance 2* : la recette pas à pas, les ingrédients, le
   chaudron, le temps de cuisson) ; **un seul employé** possible à engager pour les potions.
 
+### Les fêtes, enrichies (idée du joueur, 17/10 ; prix des saisons validés)
+Chaque fête dure **trois jours** (la veille, le grand jour, le lendemain) : décor, jeux, étals et tenues
+n'existent que pendant ces trois jours. **Les tenues achetées sont gardées** dans la garde-robe (on peut les
+remettre l'année suivante) ; ce sont les étals qui disparaissent.
+
+**La Fête du Solstice (lumière, en Moissons) : « l'Union de la Confrérie »**
+- Le marché en fête : guirlandes de fleurs sur chaque étal, bannières bleu et or, une estrade avec les
+  musiciens, le défilé des paladins le grand jour.
+- **Deux mini-jeux exclusifs** :
+  1. *Le tir à l'arc de la Confrérie* : trois flèches, une cible, le vent qui tourne (viser au bon
+     moment). Lots : pièces, un trèfle, et au meilleur score le titre « Œil du Rempart » (+réputation).
+  2. *Le mât de cocagne* : grimper en rythme (cliquer au bon tempo) pour décrocher le jambon... ou un
+     objet rare accroché tout en haut.
+- **L'étal « Atours de l'Union »** : la couronne de fleurs du Solstice, l'écharpe bleu et or de la
+  Confrérie, la cape blanche de l'Union (portées : +relation avec les clients de lumière ce jour-là).
+- **Autres idées** : la tarte aux fruits du Solstice (un en-cas : +1 cœur au départ pour un client le
+  jour même) ; la bénédiction du comptoir par un paladin (+réputation, le comptoir brille un jour) ;
+  le soir, **les lanternes célestes** que tout le village lâche ensemble (la clôture de la fête).
+
+**La Nuit des Brumes (Bannis, en Brumes) : « la nuit des ancêtres »**
+- La salle du marché noir : le grand feu, **les lanternes rouges des ancêtres** partout, des tables de
+  jeu, des conteurs.
+- **Deux mini-jeux exclusifs** :
+  1. *Les osselets des Bannis* : un jeu de dés en os, avec du bluff (miser, relancer, ou se coucher
+     face à un gobelin qui triche un peu... et que le flair peut démasquer).
+  2. *Le bras de fer de Mog* : tenir face à l'orc (cliquer en rythme sans craquer) ; gagner fait monter
+     le respect des Bannis.
+- **L'étal « Atours des ancêtres »** : le masque d'os ancestral, le châle de brume, la petite lanterne
+  rouge à la ceinture (portés : +relation avec les clients d'ombre ce jour-là).
+- **Autres idées** : l'hydromel noir et le pain de cendre (partagés autour du feu) ; **une lanterne
+  pour chacun de tes aventuriers morts** (un moment calme, la Faucheuse passe au loin, ☾ si tu en
+  allumes) ; le Passeur raconte une histoire des anciens (un fil de plus vers le sort d'oubli).
+- Plus le joueur penche vers la lumière, plus l'accueil est forcé (et les gobelins trichent un peu plus
+  aux osselets).
+
+**Les deux camps se répondent** : un jeu d'adresse et un jeu de rythme (lumière) contre un jeu de bluff
+et un jeu de force (ombre) ; trois atours chacun ; un moment de lumière (les lanternes célestes) contre
+un moment de mémoire (les lanternes des ancêtres).
+
