@@ -35,6 +35,8 @@ class CounterScene extends Phaser.Scene {
     this.enTrainDeParler = false;
     this.aura = this.flottement = this.carnetPose = null;
     this.buste = null;
+    // (v0.97) les panneaux de la veille (ou d'avant un chargement) n'existent plus
+    this.resumeRetours = this.ratelier = this.panneauCadeaux = this.panneauSecret = this.infoRelique = this.afficheEpinglee = null;
 
     this.dessinerPiece();
     this.creerFenetre();
@@ -1837,7 +1839,7 @@ class CounterScene extends Phaser.Scene {
   // les trouvailles qu'il propose) ; « Tout encaisser » passe au suivant.
   resumerRetours() {
     const G = this.G;
-    if (this.resumeRetours || enTransition(this)) return;
+    if (this.resumeRetours || this.enPartance || (this._transition && performance.now() - this._transition < 1500)) return;
     const entrees = [this.entree, ...G.file.filter(e => e.type === 'retour')];
     G.file = G.file.filter(e => e.type !== 'retour');
     this.reconstruireFile();
@@ -1866,7 +1868,7 @@ class CounterScene extends Phaser.Scene {
       total += gain;
       const fond = this.add.rectangle(480, y, 760, h - 6, i % 2 ? 0xe8d4a8 : 0xf0e0b8, 0.85).setStrokeStyle(1, 0xc9a870).setInteractive({ useHandCursor: true });
       fond.on('pointerover', () => fond.setFillStyle(0xd8c498, 1)).on('pointerout', () => fond.setFillStyle(i % 2 ? 0xe8d4a8 : 0xf0e0b8, 0.85));
-      fond.on('pointerdown', () => { this.resumeRetours = null; this.ouvrirRecit(parti, true); });
+      fond.on('pointerdown', () => { if (this.enPartance) return; this.ouvrirRecit(parti, true); });
       c.add(fond);
       c.add(this.add.image(130, y + h / 2 - 6, textureBusteHD(this, v, r.echec ? 'fache' : 'content')).setOrigin(0.5, 1).setScale(Math.min(0.5, (h - 8) / 120)));
       const nom = this.add.text(170, y - 12, v.nom, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
@@ -1893,7 +1895,7 @@ class CounterScene extends Phaser.Scene {
       style(14, '#3b2410', { fontStyle: 'bold', align: 'center', wordWrap: { width: 740 } })).setOrigin(0.5));
     c.add(this.add.text(480, 440, 'Un clic sur une ligne rouvre son récit en entier (la fiche de mission, les soins, les trouvailles).', style(11, '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
     Son.jouer('pieces', { montant: total });
-    const b = creerBouton(this, 480, 482, 250, '✓ Tout encaisser', () => { this.resumeRetours = null; allerA(this, 'Comptoir'); });
+    const b = creerBouton(this, 480, 482, 250, '✓ Tout encaisser', () => { if (this.enPartance) return; c.list.slice(1).forEach(o => o.disableInteractive && o.disableInteractive()); allerA(this, 'Comptoir'); });
     c.add([b.fond, b.label]);
   }
 
@@ -1904,8 +1906,8 @@ class CounterScene extends Phaser.Scene {
     if (enTransition(this)) return;
     if (!dejaCompte && parti.resultat && parti.resultat.vivant) avancerHeure(this.G, JOURNEE.recit);   // (le temps du récit : l'horloge l'affichera au retour)
     this.bouton('...', null);
-    this.cameras.main.fadeOut(400);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Recit', { id: parti.voyageur.id }));
+    if (this.resumeRetours) this.resumeRetours.list.slice(1).forEach(o => o.disableInteractive && o.disableInteractive());   // (le voile, lui, continue de bloquer les clics)
+    allerA(this, 'Recit', { id: parti.voyageur.id }, 400);   // (v0.97) une seule transition, même avec un clic de plus
   }
 
   // Petit dandinement pendant la marche.

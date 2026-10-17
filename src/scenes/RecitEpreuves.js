@@ -13,7 +13,13 @@ Object.assign(StoryScene.prototype, {
 
   // --- Les outils de mise en scène ---
 
-  garder(o) { (this.menace.objets = this.menace.objets || []).push(o); return o; },
+  garder(o) {
+    const liste = (this.menace.objets = this.menace.objets || []);
+    liste.push(o);
+    // (v0.97) une particule qui s'efface d'elle-même quitte la liste (sinon des centaines s'y entassaient)
+    if (o && o.once) o.once('destroy', () => { const i = liste.indexOf(o); if (i >= 0) liste.splice(i, 1); });
+    return o;
+  },
   chaqueImage(fn) { this.events.on('update', fn); this.garder({ destroy: () => this.events.off('update', fn) }); },
 
   // On efface tout ce que la scène précédente a créé, et le voyageur redevient lui-même.

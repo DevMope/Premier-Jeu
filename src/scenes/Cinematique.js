@@ -55,6 +55,7 @@ class Cinematique extends Phaser.Scene {
     if (this.rapide) return this.attendre(150);
     return new Promise(resoudre => {
       this.time.delayedCall(200, () => {
+        if (this.rapide) return resoudre();   // (v0.97) « Passer » cliqué juste avant
         this.indice.setVisible(true);
         const suite = (pointeur) => {
           // (v0.68) un clic pendant que le texte s'écrit l'affiche en entier ; le suivant fait avancer

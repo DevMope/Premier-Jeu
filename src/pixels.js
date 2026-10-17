@@ -842,10 +842,11 @@ function yeuxDansLeNoir(scene, x, y, couleur = 0xffd040, { ecart = 13, taille = 
     c.add(o); yeux.push(o);
   }
   // un clignement, de temps en temps (les deux yeux ensemble)
-  scene.time.addEvent({ delay: 1800 + Math.random() * 1400, loop: true, callback: () => {
+  const ev = scene.time.addEvent({ delay: 1800 + Math.random() * 1400, loop: true, callback: () => {
     if (!c.active) return;
     scene.tweens.add({ targets: yeux, scaleY: 0.1, duration: 70, yoyo: true });
   } });
+  c.once('destroy', () => ev.remove());   // (v0.97)
   return c;
 }
 

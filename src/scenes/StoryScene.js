@@ -87,8 +87,11 @@ class StoryScene extends Cinematique {
       this.events.emit('passer');
     });
     if (passer) this.ui.add(passer);
+    // (v0.97) quitter un récit en cours (☰) : ses écouteurs d'image et ses particules partent avec lui
+    this.events.once('shutdown', () => { const m = this.menace; if (m && m.objets) m.objets.splice(0).forEach(o => { try { o.destroy && o.destroy(); } catch (e) { /* rien */ } }); });
 
-    this.raconter();
+    // (v0.97) une erreur pendant une épreuve : on saute à la fin du récit plutôt que de rester bloqué
+    this.raconter().catch(e => { if (typeof noterJournal === 'function') noterJournal('ERREUR récit : ' + ((e && e.message) || e)); if (this.scene.isActive() && !this.conclu) { this.conclu = true; this.conclure().catch(() => allerA(this, 'Comptoir')); } });
   }
 
   // Tout ce qui n'est pas dans `this.ui` est caché à la caméra de l'interface, et seule la caméra
