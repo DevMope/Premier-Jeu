@@ -197,7 +197,7 @@ function lancerFaune(scene, quoi, plan) {
     dessiner(true);
     let h = true; const battre = scene.time.addEvent({ delay: forme === 'plane' ? 600 : 180, loop: true, callback: () => { h = !h; dessiner(h); } });
     g.setPosition(sens > 0 ? -40 : 1000, y);
-    scene.tweens.add({ targets: g, x: sens > 0 ? 1000 : -40, duration: duree, ease: 'Linear', onComplete: () => { battre.remove(); g.destroy(); } });
+    scene.tweens.add({ targets: g, x: sens > 0 ? 1000 : -40, duration: duree, ease: 'Linear', onComplete: () => { battre.remove(); scene.tweens.killTweensOf(g); g.destroy(); } });   // (v0.96 : son flottement en boucle ne mourait pas avec lui)
     scene.tweens.add({ targets: g, y: y + 14, duration: duree / 6, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   };
   const petit = (couleur, x, y, r, alpha = 1) => { const c = scene.add.circle(x, y, r, couleur, alpha); plan.add(c); return c; };
@@ -245,7 +245,7 @@ function lancerFaune(scene, quoi, plan) {
       const l = scene.add.container(-30, ciel(70, 200)); plan.add(l);
       const g = scene.add.graphics(); l.add(g);   // (v0.81) un vrai petit livre : la couverture, les pages blanches au milieu
       g.fillStyle(Phaser.Utils.Array.GetRandom([0x8a2a3a, 0x2a4a8a, 0x2a6a3a]), 1).fillRect(-11, -7, 22, 14); g.fillStyle(0xf4ecd4, 1).fillRect(-9, -6, 8, 11).fillRect(1, -6, 8, 11); g.lineStyle(1, 0x5a4a3a, 0.8).lineBetween(-7, -3, -3, -3).lineBetween(3, -3, 7, -3).lineBetween(-7, 0, -3, 0).lineBetween(3, 0, 7, 0);
-      scene.tweens.add({ targets: l, x: 1000, duration: 9000, ease: 'Linear', onComplete: () => l.destroy() });
+      scene.tweens.add({ targets: l, x: 1000, duration: 9000, ease: 'Linear', onComplete: () => { scene.tweens.killTweensOf(l); l.destroy(); } });
       scene.tweens.add({ targets: l, scaleY: 0.3, y: l.y - 16, duration: 300, yoyo: true, repeat: -1 });
     } });
     case 'moutons': {

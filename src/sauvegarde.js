@@ -268,7 +268,7 @@ async function ouvrirFenetreEmplacements({ peutSauver = false, surCharger, surFe
     return b;
   };
   const fermer = () => { fond.remove(); if (surFermer) surFermer(); };
-  const decrire = p => p ? `${p.nom}, jour ${p.jour} · ${dureeDeJeu(p.temps ?? (p.partie && p.partie.tempsJeu))} de jeu — ${new Date(p.date).toLocaleString('fr-FR')}` : 'vide';
+  const decrire = p => p ? `${p.nom}, jour ${p.jour}${tempsDeJeu(p)} — ${new Date(p.date).toLocaleString('fr-FR')}` : 'vide';
   const dessiner = async () => {
     liste.textContent = 'Recherche...';
     const e = await Sauvegarde.emplacements();
@@ -519,6 +519,11 @@ function demanderTexte(titre, valeur, max, surValider) {
 }
 
 // (v0.95) Le temps passé dans la partie, lisible : « 3 h 25 », « 12 min », « moins d'une minute »
+// « · 3 h 27 de jeu », ou rien pour une sauvegarde d'avant le compteur (v0.96)
+function tempsDeJeu(p, suffixe = ' de jeu') {
+  const s = p.temps ?? (p.partie && p.partie.tempsJeu);
+  return s == null ? '' : ` · ${dureeDeJeu(s)}${suffixe}`;
+}
 function dureeDeJeu(secondes) {
   const m = Math.floor((secondes || 0) / 60);
   if (m < 1) return "moins d'une minute";

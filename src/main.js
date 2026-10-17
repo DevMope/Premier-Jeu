@@ -72,7 +72,7 @@ let journalJeu = [], journalPrecedent = [];
 try { const j = JSON.parse(localStorage.getItem(CLE_JOURNAL) || 'null'); if (j && j.lignes) journalPrecedent = j.lignes; } catch (e) { /* rien */ }
 let minuterieJournal = null;
 function noterJournal(texte) {
-  const G = window.GAME, h = G && typeof G.heure === 'number' ? `${Math.floor(G.heure)}h${String(Math.round((G.heure % 1) * 60)).padStart(2, '0')}` : '';
+  const G = window.GAME, h = G && typeof G.heure === 'number' ? `${Math.floor(G.heure)}h${String(Math.floor((G.heure % 1) * 60)).padStart(2, '0')}` : '';
   journalJeu.push(`${new Date().toLocaleTimeString('fr-FR')} · ${G ? 'jour ' + G.jour + (h ? ' ' + h : '') + ' · ' : ''}${texte}`);
   if (journalJeu.length > 60) journalJeu = journalJeu.slice(-40);
   clearTimeout(minuterieJournal);

@@ -1897,6 +1897,9 @@ class CounterScene extends Phaser.Scene {
     c.add([b.fond, b.label]);
   }
 
+  // (le paladin choisi compte déjà dans sa mine, avant même le départ)
+  avecEscorte(v) { return this.escorteChoisie && escorteDisponible(this.G) ? { ...v, escorte: true } : v; }
+
   ouvrirRecit(parti, dejaCompte) {
     if (enTransition(this)) return;
     if (!dejaCompte && parti.resultat && parti.resultat.vivant) avancerHeure(this.G, JOURNEE.recit);   // (le temps du récit : l'horloge l'affichera au retour)
@@ -2254,7 +2257,7 @@ class CounterScene extends Phaser.Scene {
       const fin = () => { this.enConfirmation = false; };
       return this.choix([`Oui, ${v.feminin ? 'elle' : 'il'} part comme ça`, () => { fin(); this.remettreColis(true); }], [`Non, je ${v.feminin ? 'la' : 'le'} prépare`, () => { fin(); this.servir(); }]);
     }
-    const chance = chanceDeRetour(v, this.colis);
+    const chance = chanceDeRetour(this.avecEscorte(v), this.colis);
     if (v.imposteur) {
       // (v0.86) servi, l'imposteur ne revient jamais : on apprendra demain ce qu'il a fait du baluchon
       arnaquer(this.G, v, this.colis);
@@ -2437,7 +2440,7 @@ class CounterScene extends Phaser.Scene {
     });
     // Son visage suit son colis : content s'il est bien équipé, inquiet s'il manque des choses.
     if (v && this.enService && v.queteId && this.buste && this.buste.personne === v) {
-      const c = chanceDeRetour(v, this.colis);
+      const c = chanceDeRetour(this.avecEscorte(v), this.colis);
       const vide = !Object.values(this.colis).some(n => n > 0);
       // (tant que le baluchon est vide, il garde l'humeur de son arrivée : rien ne s'est encore passé)
       this.exprimer(vide ? this.expressionArrivee(this.entree) : v.exige && !totalSurplus(v, this.colis) ? 'fache' : c >= 0.75 ? 'content' : c < 0.4 ? 'inquiet' : 'neutre');

@@ -900,13 +900,16 @@ function donnerAuMendiant(G, montant) {
     return { recit: 'Il fouille dans sa besace et te tend un trèfle séché. Tu reçois le Trèfle du mendiant !', parole: `Tu as un grand cœur, ${eJ(G) ? 'petite marchande' : 'petit marchand'}. Prends ce trèfle, il m'a porté chance autrefois...` };
   }
   // (v0.93) il te reconnaît... presque
-  if (avant < MENDIANT_PALIERS.yeux && G.mendiant >= MENDIANT_PALIERS.yeux) {
+  // (on regarde un drapeau plutôt que le passage du seuil : une vieille sauvegarde déjà au-delà y a droit aussi)
+  if (G.mendiant >= MENDIANT_PALIERS.yeux && G.mendiant < MENDIANT_PALIERS.medaille && !G.mendiantYeux) {
+    G.mendiantYeux = true;
     return { recit: "Il lève les yeux vers toi, et te regarde longuement, comme s'il cherchait un visage derrière le tien.",
       parole: `Tu as les yeux de ta mère... ${eJ(G) ? 'Pardon, petite' : 'Pardon, petit'}. Je ne sais plus pourquoi j'ai dit ça.` };
   }
   // (v0.93) la médaille de tes parents : une petite cinématique au marché
-  if (avant < MENDIANT_PALIERS.medaille && G.mendiant >= MENDIANT_PALIERS.medaille && !G.medailleParents) {
+  if (G.mendiant >= MENDIANT_PALIERS.medaille && !G.medailleParents) {
     G.medailleParents = G.jour;
+    G.medailleVue = false;   // (vraie à la fin de la cinématique : sinon, elle se rejoue à la prochaine visite)
     return { medaille: true, recit: 'Il fouille longtemps au fond de sa besace...', parole: "Attends. J'ai quelque chose à toi. Ça a toujours été à toi." };
   }
   return { parole: auHasard([
@@ -2001,6 +2004,7 @@ function mendiantAuMarcheNoir(G) { return hachage(G.jour, 5, 707) < 0.25; }
 
 function nympheAttend(G) {
   const n = G.nymphe || { visites: 0 };
+  if (n.visites >= NYMPHE.plafond && !n.fiole) n.fiole = G.jour;   // (une sauvegarde d'avant le plafond y a droit aussi)
   if (n.visites >= NYMPHE.plafond) return false;   // (v0.93) elle a tout dit
   return (G.fontainePieces || 0) >= NYMPHE.voeux + n.visites * NYMPHE.ensuite;
 }
@@ -2185,7 +2189,9 @@ function terminerAventure(G, parti) {
     const semaine = Math.floor((G.jour - 1) / 7);
     if (sermentDe(G) === 'mal' && G.passeurSemaine !== semaine) {
       // (ses objets durables, et la moitié de ses provisions)
-      const liste = Object.entries(parti.colis || {}).map(([id, n]) => [id, ITEMS[id] && ITEMS[id].durable ? n : Math.floor(n / 2)]).filter(([id, n]) => n > 0 && ITEMS[id]);
+      // (les objets piégés restent au fond du ravin, et la réserve ne déborde pas)
+      let place = Math.max(0, G.capacite - stockTotal(G));
+      const liste = Object.entries(parti.colis || {}).map(([id, n]) => { n -= (parti.pieges || {})[id] || 0; n = ITEMS[id] && ITEMS[id].durable ? n : Math.floor(n / 2); n = Math.min(n, place); place -= Math.max(0, n); return [id, n]; }).filter(([id, n]) => n > 0 && ITEMS[id]);
       if (liste.length) {
         G.passeurSemaine = semaine;
         for (const [id, n] of liste) G.stock[id] = (G.stock[id] || 0) + n;

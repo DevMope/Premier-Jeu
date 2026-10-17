@@ -1185,6 +1185,8 @@ class MarcheScene extends Phaser.Scene {
     const reculer = creerBouton(this, 836, 46, 200, '◀ Reculer', fermer);
     c.add([ration.fond, ration.label, reculer.fond, reculer.label]);
     if (nourrir && !deja) this.time.delayedCall(500, () => this.nourrirBrisquet(c, chien, raconter, ration));
+    // (la cinématique de la médaille a été interrompue : elle reprend ici)
+    else if (G.medailleParents && G.medailleVue === false) this.time.delayedCall(400, () => { if (c.active) this.cinematiqueMedaille(c, buste, raconter); });
   }
 
   // (v0.93) Cent pièces données : le mendiant rend à JeuneGoy la médaille de ses parents. Une petite
@@ -1214,6 +1216,7 @@ class MarcheScene extends Phaser.Scene {
     const avancer = () => {
       const [quoi, texte] = ETAPES[i++] || [];
       if (!quoi) {
+        this.G.medailleVue = true;
         voile.off('pointerdown');
         this.tweens.add({ targets: [voile, boite, suite, lueur], alpha: 0, duration: 600, onComplete: () => { voile.destroy(); boite.destroy(); suite.destroy(); lueur.destroy(); } });
         Son.ambiance('marche');
@@ -1234,8 +1237,8 @@ class MarcheScene extends Phaser.Scene {
         Son.jouer('trefle');
       }
     };
-    voile.on('pointerdown', avancer);
-    this.time.delayedCall(700, avancer);
+    const depart = this.time.delayedCall(700, avancer);
+    voile.on('pointerdown', () => { if (depart.getProgress() < 1) depart.remove(false); avancer(); });   // (un clic avant le départ ne saute pas la 1re étape)
   }
 
   // Brisquet mange : la ration vole jusqu'à lui, il se dresse, la croque (sa tête qui plonge,

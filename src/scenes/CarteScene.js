@@ -561,7 +561,8 @@ function commencerJournee(scene, ouvrir = true, facade = true) {
 
 // (v0.93) La carte du monde, consultée de partout : la page d'où l'on vient attend en pause.
 function ouvrirCarteMonde(scene) {
-  if (enTransition(scene) || scene.scene.isActive('Carte')) return;
+  // (on regarde s'il y a une transition sans en marquer une : sinon le clic suivant serait ignoré)
+  if ((scene._transition && performance.now() - scene._transition < 1500) || scene.enPartance || scene.scene.isActive('Carte')) return;
   Son.jouer('plume');
   scene.scene.pause();
   scene.scene.launch('Carte', { consultation: true, retour: scene.scene.key });
