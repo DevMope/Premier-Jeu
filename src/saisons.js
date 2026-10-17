@@ -56,7 +56,7 @@ function prochaineFete(G) {
 }
 
 // Les fêtes ne s'annoncent (et n'ont lieu) qu'une fois construites : d'ici là, le calendrier les montre seulement
-const FETES_OUVERTES = { solstice: true, brumes: false };   // (v1.00 : le Solstice ; la Nuit des Brumes en B-3b)
+const FETES_OUVERTES = { solstice: true, brumes: true };   // (v1.00 : le Solstice ; v1.01 : la Nuit des Brumes)
 function feteOuverte(id) { return !!FETES_OUVERTES[id]; }
 // (v0.99) Prévenir le joueur : la veille du premier jour, puis chaque jour de la fête (au réveil, quand rien
 // d'autre ne se passe : dans les nouvelles du matin)
