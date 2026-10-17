@@ -24,7 +24,8 @@ class RueScene extends Phaser.Scene {
       },
     };
     const r = construireRue(this, 0, { jour: true, ici });
-    decorSaison(this, { sol: sol, largeur: LARGEUR_RUE, prof: 8.3, meules: [[LARGEUR_RUE * 0.42, 22]], bonhomme: LARGEUR_RUE * 0.62 });   // (v0.99 : la saison)
+    const toits = this.children.list.filter(o => o.type === 'Image' && o.texture && /^(rueMaisonHD|rueForgeHD|rueImpasseHD|facadeHD)/.test(o.texture.key)).map(o => [o, /^facadeHD/.test(o.texture.key) ? 0.34 : 0.12]);
+    decorSaison(this, { sol: sol, largeur: LARGEUR_RUE, prof: 8.3, meules: [[LARGEUR_RUE * 0.42, 22]], bonhomme: LARGEUR_RUE * 0.62, toits });   // (v0.99 : la saison)
     this.porteShop = r.porteShop;
     // la porte du shop : on rentre chez soi
     const zp = this.add.rectangle(this.porteShop.x, sol - 60, 70, 120, 0xffffff, 0).setDepth(8.65).setInteractive({ useHandCursor: true });

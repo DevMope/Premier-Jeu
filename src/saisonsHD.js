@@ -68,6 +68,13 @@ function decorSaison(scene, opts = {}) {
     if (opts.facade.zones.fenetre) { const [fx, fy, fl] = opts.facade.zones.fenetre; ajout(scene.add.rectangle(fx + fl / 2, fy - 3, fl + 12, 5, 0xf8fbff).setDepth(im.depth + 0.02)); }
   }
 
+  // (v0.99) la neige sur d'autres toits (les maisons de la rue) : le haut de chaque image, peint en blanc
+  if (s === 'givre') for (const [im, part] of opts.toits || []) {
+    if (!im || !im.active) continue;
+    const n = ajout(scene.add.image(im.x, im.y, im.texture.key, im.frame.name).setOrigin(im.originX, im.originY).setScale(im.scaleX, im.scaleY).setDepth(im.depth + 0.01).setTintFill(0xf8fbff).setAlpha(0.93));
+    n.setCrop(0, 0, im.width, im.height * part);
+  }
+
   // Les deux arbres du premier plan, au feuillage de saison
   const feuilles = { semailles: [0x7ac860, 0xa8e080, 0xf8c0d8], moissons: [0x3a8a30, 0x4ea040, 0x2e7228], brumes: [0xd0702a, 0xe8a030, 0xb04a20], givre: null }[s];
   for (const [x, ech] of opts.arbres || []) {
