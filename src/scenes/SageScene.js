@@ -4,7 +4,7 @@
 // et, au fond de la place, Garrick n'applaudit pas (un indice pour les attentifs). Un clic à chaque étape.
 // La cape d'écailles rouges du Sage est un autre indice : le dragon lui appartenait.
 // (planche 33, à valider) le cortège du Conseil sur l'estrade : fermé tant que les dessins du Conseil ne sont pas validés
-let CONSEIL_VALIDE = false;
+let CONSEIL_VALIDE = true;   // (planche 33 validée le 18/10)
 const DISCOURS_SAGE = [
   "Peuple du Comté ! Voilà bien des hivers que le dragon ne trouble plus nos ciels.",
   "Ce n'est pas la chance qui vous garde : c'est l'Union. Que chaque comptoir soit une lanterne, chaque voisin un frère.",
