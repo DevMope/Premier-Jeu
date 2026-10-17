@@ -215,7 +215,7 @@ class MarcheNoirScene extends Phaser.Scene {
     const l = 900 / choix.length;
     choix.forEach(([t, a], i) => this.bouton(30 + l * (i + 0.5), 452, l - 14, t, a));
     // (v0.98) toute l'année : le coin bar, la fosse, le bras de fer de Mog
-    const annee = [['Au Gobelet Fêlé (le bar)', () => this.pageBar()], ['La fosse (les paris)', () => this.pageFosse()], ['Le bras de fer de Mog', () => this.pageBrasDeFer()]];
+    const annee = [['Au Gobelet Fêlé (le bar)', () => this.pageBar()], ['La fosse (les paris)', () => this.pageFosse()], ['Le bras de fer', () => this.pageBrasDeFer()]];
     annee.forEach(([t, a], i) => this.bouton(140 + i * 250, 494, 236, t, a));
     this.bouton(870, 494, 130, 'Remonter', () => this.partir(true));
     this.texteRisque();

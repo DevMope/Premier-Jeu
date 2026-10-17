@@ -290,62 +290,77 @@ Object.assign(MarcheNoirScene.prototype, {
     conclure(`Coup bas ! ${noms[r.tricheur]} est disqualifié : ${noms[g]} gagne sans finir le combat.`, 3200);
   },
 
-  // --- Le bras de fer de Mog ---
-  dessinerBrasDeFer() {
-    this.mogBras = this.corpsVue(560, 352, { nom: 'Mog Poing-de-Fer', race: 'orc', niveau: 'veteran' }, 6.4, 3.72).setFlipX(true);
+  // --- Le bras de fer : Grisk le gobelin, Mog l'orc, Bourk le troll (de plus en plus forts) ---
+  dessinerBrasDeFer(a) {
+    const corps = { nom: a.nom, race: a.race, niveau: a.niveau };
+    if (a.race === 'gobelin') {   // (Grisk monte sur un tonneau pour être à ta hauteur)
+      const t = this.vueObj(this.add.graphics(), 3.71);
+      t.fillStyle(0x5a3a1c).fillRoundedRect(532, 328, 56, 42, 8).fillStyle(0x6a4624).fillRect(538, 328, 44, 42);
+      t.fillStyle(0x3a3a40).fillRect(532, 334, 56, 4).fillRect(532, 360, 56, 4).lineStyle(2, 0x2a1a0c).strokeRoundedRect(532, 328, 56, 42, 8);
+      this.advCorps = this.corpsVue(560, 330, corps, 6.2, 3.72).setFlipX(true);
+    } else this.advCorps = this.corpsVue(a.race === 'troll' ? 572 : 560, 352, corps, a.race === 'troll' ? 6.6 : 6.4, 3.72).setFlipX(true);
+    this.advX = this.advCorps.x;
     this.vueObj(this.add.image(405, 352, textureJoueur(this, this.G, 'troisQuarts')).setOrigin(0.5, 1).setScale(echelleJoueur(6.4)), 3.72);
     const ga = this.vueObj(this.add.graphics(), 3.75);
     ga.fillStyle(0x4a3018).fillRect(360, 296, 240, 16).fillStyle(0x5a3a20).fillRect(360, 296, 240, 4).fillStyle(0x3a2410).fillRect(375, 312, 14, 56).fillRect(571, 312, 14, 56);
     this.brasG = this.vueObj(this.add.graphics(), 3.76);
+    this.advBrasStyle = { gobelin: { peau: 0x6a9a3a, poing: 0x5a8a2a, manche: 0x6a5a30, epaule: [540, 278], ep: 9 }, orc: { peau: 0x5a8a3a, poing: 0x4a7a2a, manche: 0x6a4a2a, epaule: [546, 264], ep: 12 }, troll: { peau: 0x9a9284, poing: 0x8a8274, manche: 0x5a6a2a, epaule: [556, 244], ep: 15 } }[a.race];
     this.dessinerBras(0.5);
-    for (const [x, r] of [[180, 'troll'], [760, 'gobelin'], [840, 'vampire']]) { const p = this.corpsVue(x, 368, { nom: 'Spectateur ' + x, race: r, niveau: 'aguerri' }, 5.4, 3.71).setFlipX(x > 480).setTint(0xb8a098); this.tweens.add({ targets: p, y: 364, duration: 600 + x % 200, yoyo: true, repeat: -1 }); }
+    for (const [x, r] of [[180, 'vampire'], [760, a.race === 'gobelin' ? 'orc' : 'gobelin'], [840, 'loupgarou']]) { const p = this.corpsVue(x, 368, { nom: 'Spectateur ' + x, race: r, niveau: 'aguerri' }, 5.4, 3.71).setFlipX(x > 480).setTint(0xb8a098); this.tweens.add({ targets: p, y: 364, duration: 600 + x % 200, yoyo: true, repeat: -1 }); }
   },
   // Les deux avant-bras qui se rejoignent : ils penchent selon qui gagne (p = 1 : tu as gagné)
   dessinerBras(p) {
-    const g = this.brasG; if (!g || !g.active) return;
+    const g = this.brasG, st = this.advBrasStyle; if (!g || !g.active || !st) return;
     g.clear();
-    // les coudes posés sur la table, les mains serrées au-dessus ; p = 1 : le bras de Mog est plaqué de son côté
+    // les coudes posés sur la table, les mains serrées au-dessus ; p = 1 : son bras est plaqué de son côté
     const a = (p - 0.5) * 2.4, cx = 480, cy = 294, L = 34;
     const fx = cx + Math.sin(a) * L, fy = cy - Math.cos(a) * L;
-    const moi = [[418, 268], [462, cy]], mog = [[546, 264], [498, cy]];
+    const moi = [[418, 268], [462, cy]], lui = [st.epaule, [498, cy]];
     g.lineStyle(11, 0x3a5a8a).lineBetween(moi[0][0], moi[0][1], moi[1][0], moi[1][1]);   // (la manche)
-    g.lineStyle(13, 0x6a4a2a).lineBetween(mog[0][0], mog[0][1], mog[1][0], mog[1][1]);
+    g.lineStyle(st.ep + 1, st.manche).lineBetween(lui[0][0], lui[0][1], lui[1][0], lui[1][1]);
     g.lineStyle(9, 0xe8b890).lineBetween(moi[1][0], moi[1][1], fx - 3, fy);
-    g.lineStyle(12, 0x5a8a3a).lineBetween(mog[1][0], mog[1][1], fx + 3, fy);
-    g.fillStyle(0xd8a880).fillCircle(fx - 3, fy, 8); g.fillStyle(0x4a7a2a).fillCircle(fx + 4, fy - 2, 9);
+    g.lineStyle(st.ep, st.peau).lineBetween(lui[1][0], lui[1][1], fx + 3, fy);
+    g.fillStyle(0xd8a880).fillCircle(fx - 3, fy, 8); g.fillStyle(st.poing).fillCircle(fx + 4, fy - 2, st.ep * 0.75);
   },
 
-  pageBrasDeFer(message = null) {
-    const G = this.G, s = soireeAnnee(G);
+  pageBrasDeFer(message = null, id = null) {
+    const G = this.G, s = soireeAnnee(G), b = brasDeFerDe(G);
+    // (par défaut : le plus fort de ceux que tu peux affronter)
+    if (id) this.advBras = id;
+    if (!this.advBras || !brasDebloque(G, this.advBras)) this.advBras = [...ADVERSAIRES_BRAS].reverse().find(x => brasDebloque(G, x.id)).id;
+    const a = adversaireBras(this.advBras), prenom = a.nom.split(' ')[0];
     this.ouvrirVue();
-    this.dessinerBrasDeFer();
-    this.titreCoin.setText('Le bras de fer de Mog');
+    this.dessinerBrasDeFer(a);
+    this.titreCoin.setText(`Le bras de fer · ${prenom} ${a.titre}`);
     this.vider();
-    const v = G.brasDeFer || { victoires: 0, defaites: 0 };
-    this.texte(40, 374, message || "Mog fait craquer ses doigts : « Assieds-toi, marchand. Clique en rythme quand le repère passe dans le vert. Chaque coup manqué, je reprends l'avantage. »", 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
-    this.texte(40, 420, `Mise : ${OMBRE_ANNEE.brasDeFer.mise} p. · si tu gagnes : ta mise doublée, et le respect des Bannis. (Tes victoires contre Mog : ${v.victoires}.)`, 12, '#e8c890', { fontStyle: 'italic' });
-    if (!s.brasDeFer) this.bouton(240, 470, 300, `Relever le défi (${OMBRE_ANNEE.brasDeFer.mise} p.)`, () => {
-      const e = commencerBrasDeFer(G);
+    this.texte(40, 374, message || a.defi, 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    this.texte(40, 424, `Mise : ${a.mise} p. · si tu gagnes : ta mise doublée, et le respect des Bannis. (Tes victoires contre ${prenom} : ${b.victoires[a.id] || 0}.)`, 12, '#e8c890', { fontStyle: 'italic' });
+    ADVERSAIRES_BRAS.forEach((x, k) => {
+      const ouvert = brasDebloque(G, x.id), choisi = x.id === a.id;
+      this.bouton(170 + k * 250, 458, 236, ouvert ? `${choisi ? '▸ ' : ''}${x.nom.split(' ')[0]} ${x.titre} (${['facile', 'moyen', 'difficile'][k]})` : `🔒 Bats d'abord ${ADVERSAIRES_BRAS[k - 1].nom.split(' ')[0]}`, () => this.pageBrasDeFer(null, x.id), ouvert && !choisi);
+    });
+    if (!(s.brasDeFer || {})[a.id]) this.bouton(240, 500, 300, `Défier ${prenom} (${a.mise} p.)`, () => {
+      const e = commencerBrasDeFer(G, a.id);
       if (e) return this.pageBrasDeFer(e);
-      Son.jouer('pieces'); this.majBourse(); this.jeuBrasDeFer();
-    }, peutPayer(G, OMBRE_ANNEE.brasDeFer.mise));
-    else this.texte(40, 470, 'Mog se masse le bras : une fois par soir.', 13, '#a89080', { fontStyle: 'italic' });
+      Son.jouer('pieces'); this.majBourse(); this.jeuBrasDeFer(a);
+    }, peutPayer(G, a.mise));
+    else this.texte(40, 500, `${prenom} se masse le bras : une fois par soir.`, 13, '#a89080', { fontStyle: 'italic' }).setOrigin(0, 0.5);
     this.bouton(860, 503, 140, '◂ Retour', () => this.accueil());
   },
 
   // Le mini-jeu : le repère fait l'aller-retour sur la barre ; un clic dans le vert fait pencher
   // le bras de Mog, un clic à côté lui redonne l'avantage. Il pousse sans arrêt.
-  jeuBrasDeFer() {
-    const G = this.G;
+  jeuBrasDeFer(a) {
+    const G = this.G, prenom = a.nom.split(' ')[0];
     this.vider();
     const jeu = this.jeuBras = { p: 0.5, x: 0, sens: 1, fini: false, temps: 0, coup: 0 };
     const gb = this.vueObj(this.add.graphics(), 3.9);
     this.texteVue(280, 102, 'Toi', 12, '#a8e0a0', { fontStyle: 'bold' });
-    this.texteVue(680, 102, 'Mog', 12, '#ffb0a0', { fontStyle: 'bold' }).setOrigin(1, 0);
+    this.texteVue(680, 102, prenom, 12, '#ffb0a0', { fontStyle: 'bold' }).setOrigin(1, 0);
     this.texteVue(480, 190, 'clique (ou Espace) quand le repère passe dans le vert', 11, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0a06', strokeThickness: 3 }).setOrigin(0.5);
     this.texte(40, 380, 'Le bras de fer !', 16, '#f3d98a', { fontStyle: 'bold' });
     const zone = this.vueObj(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.001).setInteractive(), 3.95);
-    const vert = [0.38, 0.62];
+    const vert = a.vert;
     const dessiner = () => {
       gb.clear();
       gb.fillStyle(0x1a120c).fillRect(280, 120, 400, 22); gb.fillStyle(0x2a6a2a).fillRect(280, 120, 400 * jeu.p, 22); gb.fillStyle(0x8a2a1a).fillRect(280 + 400 * jeu.p, 120, 400 * (1 - jeu.p), 22); gb.fillStyle(0xf3d98a).fillRect(277 + 400 * jeu.p, 114, 6, 34);
@@ -365,23 +380,23 @@ Object.assign(MarcheNoirScene.prototype, {
       jeu.fini = true; this.jeuBras = null;
       if (espace) espace.removeAllListeners();
       zone.disableInteractive();
-      finirBrasDeFer(G, gagne);
+      const avant = ADVERSAIRES_BRAS.filter(x => brasDebloque(G, x.id)).length;
+      finirBrasDeFer(G, gagne, a.id);
       this.majBourse();
-      if (gagne) { Son.jouer('fanfare'); this.cameras.main.shake(250, 0.012); this.tweens.add({ targets: this.mogBras, angle: 6, duration: 200, yoyo: true }); }
+      if (gagne) { Son.jouer('fanfare'); this.cameras.main.shake(250, 0.012); this.tweens.add({ targets: this.advCorps, angle: 6, duration: 200, yoyo: true }); }
       else Son.jouer('refus');
-      this.time.delayedCall(900, () => this.pageBrasDeFer(gagne
-        ? `BAM ! Le poing de Mog touche la table. La cave explose de rire et d'applaudissements. Mog te tend la main : « Pas mal, pour un marchand. » (+${OMBRE_ANNEE.brasDeFer.mise} p., respect des Bannis)`
-        : 'Mog plaque ton bras sur la table sans forcer. Quelques rires... Il te tape sur l\'épaule : « Reviens quand tu auras mangé ta soupe. »'));
+      const suivant = ADVERSAIRES_BRAS.filter(x => brasDebloque(G, x.id)).length > avant ? ADVERSAIRES_BRAS[avant] : null;
+      this.time.delayedCall(900, () => this.pageBrasDeFer((gagne ? `${a.victoire} (+${a.mise} p., respect des Bannis)` : a.defaite) + (suivant ? ` Au fond de la cave, ${suivant.nom.split(' ')[0]} ${suivant.titre} se lève : il veut t'affronter.` : ''), a.id));
     };
-    const pousse = forceMog(G);
+    const pousse = forceAdversaire(G, a.id);
     // (le temps réel de la scène : sur une machine lente, le repère ne ralentit pas)
     const maj = (t, delta) => {
       if (jeu.fini || !gb.active) { this.events.off('update', maj); return; }
       const dt = Math.min(0.05, delta / 1000);
       jeu.temps += dt;
-      jeu.x += jeu.sens * dt / 0.6; if (jeu.x > 1) { jeu.x = 1; jeu.sens = -1; } if (jeu.x < 0) { jeu.x = 0; jeu.sens = 1; }
+      jeu.x += jeu.sens * dt / a.balayage; if (jeu.x > 1) { jeu.x = 1; jeu.sens = -1; } if (jeu.x < 0) { jeu.x = 0; jeu.sens = 1; }
       jeu.p -= pousse * dt;
-      if (this.mogBras && this.mogBras.active) this.mogBras.x = 560 + Math.sin(jeu.temps * 40) * (1 - jeu.p) * 1.5;   // il force, il tremble
+      if (this.advCorps && this.advCorps.active) this.advCorps.x = this.advX + Math.sin(jeu.temps * 40) * (1 - jeu.p) * 1.5;   // il force, il tremble
       dessiner();
       if (jeu.p >= 1) { this.events.off('update', maj); finir(true); } else if (jeu.p <= 0 || jeu.temps > 30) { this.events.off('update', maj); finir(false); }
     };

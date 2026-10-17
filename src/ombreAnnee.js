@@ -5,7 +5,6 @@
 const OMBRE_ANNEE = {
   caisse: { remise: 0.62, objets: [9, 14], risque: 0.08, amende: 2.5 },   // ~40 % moins cher ; l'amende : 2,5 fois son prix
   fosse: { mise: [5, 30], risque: 0.03 },
-  brasDeFer: { mise: 10 },
   verre: 3,
   contrat: { chance: 0.55, debut: 10, risqueEchec: 0.5, mort: 0.4 },
 };
@@ -63,7 +62,7 @@ function soireeAnnee(G) {
     const c = auHasard(CONTRATS_OMBRE), race = auHasard(PEUPLES_OMBRE), [nom, feminin] = auHasard(NOMS[race]);
     contrat = { ...c, banni: { nom, race, feminin, niveau: 'veteran' }, paie: hasard(...c.paie), niveauMin: c.danger >= 4 ? 'veteran' : 'aguerri', duree: 2, pris: false };
   }
-  s.annee = { caisse, combat, contrat, brasDeFer: false, verres: 0 };
+  s.annee = { caisse, combat, contrat, brasDeFer: {}, verres: 0 };
   return s.annee;
 }
 
@@ -136,23 +135,50 @@ function parierFosse(G, cote, mise) {
   return cb.resultat;
 }
 
-// --- Le bras de fer de Mog (toute l'année) ---
-// La difficulté : Mog pousse plus fort à chaque victoire contre lui
-function forceMog(G) { return 0.09 + Math.min(0.06, (G.brasDeFer ? G.brasDeFer.victoires : 0) * 0.015); }
-function commencerBrasDeFer(G) {
-  const s = soireeAnnee(G);
-  if (s.brasDeFer) return 'Mog se masse le bras : « Une fois par soir, l\'ami. Reviens une autre fois. »';
-  const mise = OMBRE_ANNEE.brasDeFer.mise;
-  if (!peutPayer(G, mise)) return manqueArgent(G, mise, "Pas assez d'argent.");
-  payer(G, mise, 'jeux');
-  s.brasDeFer = true;
+// --- Le bras de fer (toute l'année) : trois adversaires de plus en plus forts ---
+// On débloque le suivant en battant le précédent. `pousse` : la force avec laquelle il ramène ton
+// bras (par seconde) ; `vert` : la zone où il faut cliquer ; `balayage` : le temps d'un aller du repère.
+const ADVERSAIRES_BRAS = [
+  { id: 'grisk', nom: 'Grisk Mâche-Clou', race: 'gobelin', titre: 'le gobelin', mise: 5, pousse: 0.06, vert: [0.34, 0.66], balayage: 0.7, niveau: 'aguerri',
+    defi: "Grisk grimpe sur un tonneau pour être à ta hauteur : « Moi, petit, mais moi nerveux ! Cinq pièces que je te plie le bras ! »",
+    victoire: "Le bras de Grisk claque sur la table. Il secoue sa main en couinant : « Triché ! Tu as triché ! » Toute la cave rit... de lui.",
+    defaite: "Grisk te plaque le bras avec un cri de victoire et danse sur son tonneau. « Personne ne bat Grisk ! Personne ! »" },
+  { id: 'mog', nom: 'Mog Poing-de-Fer', race: 'orc', titre: "l'orc", mise: 10, pousse: 0.09, vert: [0.38, 0.62], balayage: 0.6, niveau: 'veteran',
+    defi: "Mog fait craquer ses doigts : « Assieds-toi, marchand. Clique en rythme quand le repère passe dans le vert. Chaque coup manqué, je reprends l'avantage. »",
+    victoire: "BAM ! Le poing de Mog touche la table. La cave explose de rire et d'applaudissements. Mog te tend la main : « Pas mal, pour un marchand. »",
+    defaite: "Mog plaque ton bras sur la table sans forcer. Quelques rires... Il te tape sur l'épaule : « Reviens quand tu auras mangé ta soupe. »" },
+  { id: 'bourk', nom: 'Bourk', race: 'troll', titre: 'le troll', mise: 20, pousse: 0.12, vert: [0.42, 0.58], balayage: 0.5, niveau: 'veteran',
+    defi: "La table craque quand Bourk y pose le coude. Sa main avale la tienne jusqu'au poignet. « Bourk pas méchant. Bourk juste... fort. »",
+    victoire: "Impossible... et pourtant : le bras de Bourk touche la table, qui se fend en deux ! Silence. Puis Bourk éclate d'un rire énorme : « Toi, ami de Bourk ! »",
+    defaite: "Bourk pose ton bras sur la table aussi doucement qu'une feuille morte. « Bourk a gagné. Toi pas pleurer. »" },
+];
+function adversaireBras(id) { return ADVERSAIRES_BRAS.find(a => a.id === id) || ADVERSAIRES_BRAS[1]; }
+function brasDeFerDe(G) {
+  const b = G.brasDeFer = G.brasDeFer || { victoires: {}, defaites: 0 };
+  if (typeof b.victoires === 'number') b.victoires = { mog: b.victoires };   // (les parties de la v0.98 : Mog seul)
+  return b;
+}
+// Battre le précédent ouvre le suivant
+function brasDebloque(G, id) {
+  const i = ADVERSAIRES_BRAS.findIndex(a => a.id === id);
+  return i <= 0 || (brasDeFerDe(G).victoires[ADVERSAIRES_BRAS[i - 1].id] || 0) > 0;
+}
+// Chacun pousse un peu plus fort à chaque fois que tu l'as battu
+function forceAdversaire(G, id) { const a = adversaireBras(id); return a.pousse + Math.min(0.04, (brasDeFerDe(G).victoires[id] || 0) * 0.01); }
+function commencerBrasDeFer(G, id = 'mog') {
+  const s = soireeAnnee(G), a = adversaireBras(id);
+  if (typeof s.brasDeFer !== 'object' || !s.brasDeFer) s.brasDeFer = {};
+  if (!brasDebloque(G, id)) return `${a.nom.split(' ')[0]} ne s'assoit qu'en face de ceux qui ont battu ${ADVERSAIRES_BRAS[ADVERSAIRES_BRAS.indexOf(a) - 1].nom.split(' ')[0]}.`;
+  if (s.brasDeFer[id]) return `${a.nom.split(' ')[0]} se masse le bras : « Une fois par soir, l'ami. Reviens une autre fois. »`;
+  if (!peutPayer(G, a.mise)) return manqueArgent(G, a.mise, "Pas assez d'argent.");
+  payer(G, a.mise, 'jeux');
+  s.brasDeFer[id] = true;
   return null;
 }
-function finirBrasDeFer(G, gagne) {
-  G.brasDeFer = G.brasDeFer || { victoires: 0, defaites: 0 };
-  const mise = OMBRE_ANNEE.brasDeFer.mise;
-  if (gagne) { G.brasDeFer.victoires++; encaisser(G, mise * 2, 'jeux'); changerRelation(G, 'Mog Poing-de-Fer', 2); G.respectBannis = (G.respectBannis || 0) + 1; }
-  else { G.brasDeFer.defaites++; changerRelation(G, 'Mog Poing-de-Fer', 1); }
+function finirBrasDeFer(G, gagne, id = 'mog') {
+  const b = brasDeFerDe(G), a = adversaireBras(id);
+  if (gagne) { b.victoires[id] = (b.victoires[id] || 0) + 1; encaisser(G, a.mise * 2, 'jeux'); changerRelation(G, a.nom, 2); G.respectBannis = (G.respectBannis || 0) + 1; }
+  else { b.defaites++; changerRelation(G, a.nom, 1); }
 }
 
 // --- Le coin bar de Mère Nok ---

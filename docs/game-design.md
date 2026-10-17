@@ -1476,3 +1476,6 @@ un moment de mémoire (les lanternes des ancêtres).
   boucles d'oreilles, fleurs (trollesse, louve), diadème au rubis (momie).
 - **Planche 29 v2 validée** (femmes de l'ombre : diadème au rubis et bandelettes roses de la momie, fleurs à cinq
   pétales, trollesse plus pâle, plus de col de fourrure-barbe).
+- **Bras de fer à trois niveaux** (demande du joueur) : Grisk le gobelin (facile, mise 5 p., monte sur un tonneau),
+  Mog l'orc (moyen, 10 p.), Bourk le troll (difficile, 20 p.). Battre l'un débloque le suivant ; chacun une fois par
+  soir ; ils poussent plus fort, avec une zone verte plus étroite et un repère plus rapide, à mesure qu'on monte.
