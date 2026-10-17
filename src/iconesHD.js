@@ -288,6 +288,48 @@ const DESSINS_ICONES = {
     trait(t, 'cheneSombre', 2, 4, 14, 14, 0.7);
     for (const [x, y] of [[2, 4], [13, 4], [2, 13], [13, 13]]) t.poser(x, y, 'fer', 5);
   },
+  // --- (v1.00) La Fête du Solstice ---
+  tarte(t) { // une tarte aux fruits rouges, croisillons dorés, une part entamée
+    t.rampes.feuille = rampe(0x4a9a3a);
+    t.rampes.fruit = rampe(0xc0283a);
+    t.forme('pain', (x, y) => { const d = Math.hypot((x + 0.5 - 8) / 7, (y + 0.5 - 9) / 4.6); return d < 1 && !(x >= 9 && y <= 8 && x - 9 > 8 - y - 1) ? [(x + 0.5 - 8) / 8, (y - 9) / 6, 0.8] : null; });
+    t.forme('fruit', (x, y) => { const d = Math.hypot((x + 0.5 - 8) / 5.6, (y + 0.5 - 8.6) / 3.4); return d < 1 && !(x >= 9 && y <= 8 && x - 9 > 8 - y - 1) ? [(x + 0.5 - 8) / 8, -0.3, 0.9] : null; }, { motif: (x, y) => ((x + y) % 3 === 0 ? 0.9 : 0) });
+    for (const [x0, y0, x1, y1] of [[4, 7, 11, 11], [5, 10, 10, 6], [3, 9, 8, 6], [7, 11, 12, 8]]) trait(t, 'pain', x0, y0, x1, y1, 0.6, { decalage: 0.6, bord: false });
+    t.poser(6, 6, 'feuille', 3); t.poser(7, 5, 'feuille', 4);
+  },
+  trefleSolstice(t) { // un trèfle à quatre feuilles noué d'un ruban bleu et or
+    t.rampes.feuille = rampe(0x4a9a3a);
+    for (const [cx, cy] of [[8, 4.5], [11.5, 8], [8, 11.5], [4.5, 8]]) t.forme('feuille', ellipsoide(cx, cy, 3, 3), { decalage: 0.2 });
+    for (const [x, y] of [[8, 5], [11, 8], [8, 11], [5, 8]]) t.poser(x, y, 'feuille', 5);
+    trait(t, 'feuille', 9, 10, 12, 15, 0.7, { decalage: -0.4 });
+    t.rampes.ruban = rampe(0x2a5aa8);
+    t.forme('ruban', ellipsoide(8, 8, 1.6, 1.6), { decalage: 0.3 });
+    t.poser(8, 8, 'or', 5);
+  },
+  couronneFleurs(t) { // une couronne tressée de blé, de fleurs blanches, jaunes et roses
+    t.rampes.feuille = rampe(0x4a9a3a);
+    t.rampes.paille = rampe(0xd0a040); t.rampes.fleurB = rampe(0xf4f0e8); t.rampes.fleurJ = rampe(0xf0c830); t.rampes.fleurR = rampe(0xe87aa0);
+    t.forme('paille', (x, y) => { const d = Math.hypot((x + 0.5 - 8) / 7, (y + 0.5 - 8) / 4.2); return d > 0.62 && d < 1 ? [(x + 0.5 - 8) / 8, (y - 8) / 5, 0.8] : null; }, { motif: (x, y) => ((x + y * 2) % 3 === 0 ? -0.6 : 0) });
+    [[2, 8, 'fleurB'], [4, 5, 'fleurJ'], [8, 4, 'fleurR'], [12, 5, 'fleurB'], [14, 8, 'fleurJ'], [11, 11, 'fleurR'], [5, 11, 'fleurB'], [8, 12, 'fleurJ']]
+      .forEach(([x, y, m]) => { t.forme(m, ellipsoide(x, y, 1.6, 1.6), { decalage: 0.4 }); t.poser(x, y, 'fleurJ', 2); });
+    t.poser(6, 4, 'feuille', 3); t.poser(10, 12, 'feuille', 3);
+  },
+  echarpeUnion(t) { // l'écharpe de la Confrérie : bleu roi, bordée d'or, une tour brodée
+    t.rampes.bleuRoi = rampe(0x2a4a9a);
+    t.forme('bleuRoi', (x, y) => (y >= 2 && y <= 8 && x >= 2 && x <= 13 ? [0, (y - 5) / 4, 0.9] : null), { motif: (x, y) => (y === 2 || y === 8 ? 1.6 : 0) });
+    t.forme('bleuRoi', (x, y) => (y >= 8 && y <= 14 && x >= 9 && x <= 12 ? [(x - 10.5) / 2, 0, 0.9] : null));
+    for (let x = 2; x <= 13; x++) { t.poser(x, 2, 'or', 4); t.poser(x, 8, 'or', 3); }
+    for (let y = 9; y <= 14; y++) { t.poser(9, y, 'or', 3); t.poser(12, y, 'or', 4); }
+    for (const [x, y] of [[6, 4], [7, 4], [8, 4], [6, 5], [8, 5], [6, 6], [7, 6], [8, 6], [5, 3], [7, 3], [9, 3]]) t.poser(x, y, 'or', 5);
+    for (const x of [9, 10, 11, 12]) t.poser(x, 15, 'or', 4);
+  },
+  capeUnion(t) { // la cape blanche de l'Union, pliée, sa bordure d'or et sa broche bleue
+    t.rampes.capeB = rampe(0xe8e8f0); t.rampes.saphir = rampe(0x2a5ac8);
+    t.forme('capeB', (x, y) => (y >= 3 && y <= 14 && Math.abs(x + 0.5 - 8) < 3 + (y - 3) * 0.45 ? [(x + 0.5 - 8) / 8, 0, 0.8] : null), { motif: (x) => (x % 4 === 0 ? -0.5 : 0) });
+    for (let y = 3; y <= 14; y++) { const d = Math.round(3 + (y - 3) * 0.45); t.poser(8 - d, y, 'or', 3); t.poser(7 + d, y, 'or', 4); }
+    for (let x = 3; x <= 12; x++) t.poser(x, 14, 'or', 4);
+    t.forme('saphir', ellipsoide(8, 4, 1.6, 1.6), { decalage: 0.6 });
+  },
 };
 
 // Les pièces de l'armure : une version claire (Confrérie) et une sombre (Main Noire).

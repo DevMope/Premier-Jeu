@@ -42,6 +42,8 @@ class MarcheScene extends Phaser.Scene {
     decorSaison(this, { fixe: true, sansSol: true, prof: 4, sol: 540 });   // (v0.99 : ce qui tombe du ciel selon la saison)
     this.add.text(480, 22, `Le Marché des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setDepth(5);
 
+    this.fete = solsticeActif(G);   // (v1.00) la Fête du Solstice
+    if (this.fete) this.decorFeteRue();
     // Les étals, les enchères, les jeux et le mendiant
     this.positions = { mendiant: [70, 'lieu'], bazar: [1030, 'lieu'], encheres: [1220, 'lieu'], jeux: [1410, 'lieu'], crieur: [1595, 'lieu'], tableau: [1705, 'lieu'], brocante: [1850, 'lieu'], garderobe: [2045, 'lieu'] };
     Object.entries(MARCHANDS).forEach(([cle, m], i) => {
@@ -69,8 +71,9 @@ class MarcheScene extends Phaser.Scene {
       ['tropheeCerf', 'horloge', 'globe', 'carillon'], 'La brocante de Firmin', 'Décorations', () => this.ouvrirBrocante(), 'firmin');
     else this.creerChantier(1850, 'brocante');
     if (lieuOuvert(G, 'garderobe')) this.creerEchoppe(2045, 0x7a3a6a, { nom: 'Marcelline', race: 'humain', feminin: true, niveau: 'aguerri' },
-      ['chapeau', 'bandana', 'montre', 'pipe'], 'La garde-robe de Marcelline', 'Vêtements et accessoires', () => this.ouvrirGardeRobe(), 'marcelline');
+      ['chapeau', 'bandana', 'montre', 'pipe'], 'La garde-robe de Marcelline', solsticeActif(G) ? "L'étal de l'Union" : 'Vêtements et accessoires', () => (this.fete ? this.ouvrirAtours() : this.ouvrirGardeRobe()), 'marcelline');
     else this.creerChantier(2045, 'garderobe');
+    if (this.fete && lieuOuvert(G, 'garderobe')) this.decorerEtalUnion(2045);
     // Les enchères : une estrade drapée de velours, un portique à bannière, le commissaire au pupitre
     if (!lieuOuvert(G, 'encheres')) this.creerChantier(1220, 'encheres');
     else {
@@ -84,8 +87,10 @@ class MarcheScene extends Phaser.Scene {
       this.add.rectangle(1220, 200, 150, 110, 0xffffff, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirEncheres());
       this.grouper(avant, 1220);
     }
+    // (v1.00) Pendant la Fête du Solstice, le tir à l'arc de la Confrérie prend la place du coin des jeux
+    if (this.fete) this.creerTirArc(1410);
     // Le coin des jeux : un auvent violet, Grippesou derrière sa table de dés et de gobelets
-    if (!lieuOuvert(G, 'jeux')) this.creerChantier(1410, 'jeux');
+    else if (!lieuOuvert(G, 'jeux')) this.creerChantier(1410, 'jeux');
     else {
       const avant = this.children.list.length;
       this.add.image(1410, 252, 'auventJeux').setOrigin(0.5, 1).setScale(2);
@@ -131,6 +136,7 @@ class MarcheScene extends Phaser.Scene {
     this.retour.label.setFontSize(15);
     this.retour.fond.setDepth(21); this.retour.label.setDepth(21);
     this.creerVueEnsemble();
+    if (this.fete) this.decorFeteVue();
     this.add.rectangle(480, 510, 960, 60, 0x2a1a10);
     this.bourse = bourse(this, 34, 532, this.G.argent, { echelle: 1.4, taille: 14, aDroite: true });
     this.texteInfos = this.add.text(112, 498, '', style(13, '#f3e6c8', { lineSpacing: 4 }));
@@ -532,13 +538,13 @@ class MarcheScene extends Phaser.Scene {
         this.tweens.add({ targets: pigeon, x: x0 + Phaser.Math.Between(-80, 80), y: y0 - 70, duration: 700, yoyo: true, ease: 'Sine.easeOut' });
       } });
     }
-    const noms = { mendiant: 'Le mendiant', bazar: 'Le Bazar de Rosalie', encheres: 'Les enchères', jeux: 'Le coin des jeux', crieur: 'Le crieur', tableau: "Le tableau d'affichage", brocante: 'La brocante', garderobe: 'La garde-robe' };
-    const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => this.ouvrirJeux(), crieur: () => this.ouvrirCrieur(), tableau: () => this.ouvrirTableau(),
-      brocante: () => this.ouvrirBrocante(), garderobe: () => this.ouvrirGardeRobe() };
+    const noms = { mendiant: 'Le mendiant', bazar: 'Le Bazar de Rosalie', encheres: 'Les enchères', jeux: this.fete ? "Le tir à l'arc" : 'Le coin des jeux', crieur: 'Le crieur', tableau: "Le tableau d'affichage", brocante: 'La brocante', garderobe: this.fete ? "L'étal de l'Union" : 'La garde-robe' };
+    const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => (this.fete ? this.ouvrirTirArc() : this.ouvrirJeux()), crieur: () => this.ouvrirCrieur(), tableau: () => this.ouvrirTableau(),
+      brocante: () => this.ouvrirBrocante(), garderobe: () => (this.fete ? this.ouvrirAtours() : this.ouvrirGardeRobe()) };
     // (v0.57) les étiquettes voisines se décalent une sur deux en hauteur : elles ne se chevauchent plus
     const ordre = Object.entries(this.positions).sort((a, b) => a[1][0] - b[1][0]);
     for (const [rang, [cle, [x, type]]] of ordre.entries()) {
-      const ferme = type !== 'etal' && !lieuOuvert(this.G, cle);
+      const ferme = type !== 'etal' && !lieuOuvert(this.G, cle) && !(cle === 'jeux' && this.fete);
       const nom = type === 'etal' ? MARCHANDS[cle].nom : ferme ? 'En travaux' : noms[cle];   // (v0.68 : pas de nom avant l'ouverture)
       const t = this.add.text(ox + x * echelle, oy + (250 + this.arcVue(x).dy) * echelle + 6 + (rang % 2) * 34, nom, style(12, ferme ? '#c9b48a' : '#fff4dc', { fontStyle: ferme ? 'italic' : 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 92 }, lineSpacing: -2 }))
         .setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
