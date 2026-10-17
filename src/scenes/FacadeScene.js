@@ -15,6 +15,7 @@ class FacadeScene extends Cinematique {
     dessinerComte(g, 0, 0, 960, 470, 0); // midi : le soleil est haut, on ouvre le comptoir
     this.add.image(0, 440, pavesHD(this, 960, 100)).setOrigin(0).setScale(2);
     const facade = dessinerFacade(this, 560, 440, G.nomShop);
+    decorSaison(this, { sol: 440, arbres: [[70, 1.15], [905, 1.05]], facade, bonhomme: 790, prof: 3 });   // (v0.99 : la saison)
     this.add.text(480, 34, `Jour ${G.jour} · ${G.nomShop}`, style(26, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 6 })).setOrigin(0.5);
     // Une petite foule attend déjà devant la fenêtre, s'il y a du monde aujourd'hui.
     const clients = G.file.filter(e => e.type === 'client').slice(0, 4);

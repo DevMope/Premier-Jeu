@@ -24,6 +24,7 @@ class RueScene extends Phaser.Scene {
       },
     };
     const r = construireRue(this, 0, { jour: true, ici });
+    decorSaison(this, { sol: sol, largeur: LARGEUR_RUE, prof: 8.3, meules: [[LARGEUR_RUE * 0.42, 22]], bonhomme: LARGEUR_RUE * 0.62 });   // (v0.99 : la saison)
     this.porteShop = r.porteShop;
     // la porte du shop : on rentre chez soi
     const zp = this.add.rectangle(this.porteShop.x, sol - 60, 70, 120, 0xffffff, 0).setDepth(8.65).setInteractive({ useHandCursor: true });

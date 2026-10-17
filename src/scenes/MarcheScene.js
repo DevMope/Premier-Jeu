@@ -39,6 +39,7 @@ class MarcheScene extends Phaser.Scene {
     this.paveRue = this.add.image(0, 250, pavesHD(this, LARGEUR_MARCHE, 50)).setOrigin(0).setScale(2);
     this.monde.add(this.paveRue);
     this.time.delayedCall(600, () => Son.jouer('coq'));
+    decorSaison(this, { fixe: true, sansSol: true, prof: 4, sol: 540 });   // (v0.99 : ce qui tombe du ciel selon la saison)
     this.add.text(480, 22, `Le Marché des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setDepth(5);
 
     // Les étals, les enchères, les jeux et le mendiant

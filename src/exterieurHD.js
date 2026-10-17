@@ -57,9 +57,11 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
   const L = Math.round(largeur / 2), H = Math.round(hauteur / 2);
   const aube = nuit === 'aube';
   if (aube) nuit = 0;
-  const cle = `paysage_${biome}_${L}x${H}_${aube ? 'aube' : Math.round(nuit * 10)}${sansAstre ? '_sans' : ''}`;
+  // (v0.99) la Comté change avec la saison : ses couleurs, ses arbres, ses fleurs (voir saisonsHD.js)
+  const saison = biome === 'comte' && typeof saisonActuelle === 'function' ? saisonActuelle() : null;
+  const cle = `paysage_${biome}${saison ? '_' + saison : ''}_${L}x${H}_${aube ? 'aube' : Math.round(nuit * 10)}${sansAstre ? '_sans' : ''}`;
   if (scene.textures.exists(cle)) return cle;
-  const b = BIOMES[biome] || BIOMES.comte, r = RELIEFS[biome] || {};
+  const b = (saison && BIOMES_SAISON[saison]) || BIOMES[biome] || BIOMES.comte, r = saison ? { ...(RELIEFS[biome] || {}), ...RELIEFS_SAISON[saison] } : RELIEFS[biome] || {};
   const graine = biome.length * 31;
   // À l'aube, tout prend une lumière rose orangée, rasante ; la nuit, tout bleuit et s'assombrit.
   const soir = aube ? (c => melangeCouleur(c, melangeCouleur(teinte(c, 0.85), 0xff9a60, 0.55), 0.32))
