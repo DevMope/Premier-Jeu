@@ -146,6 +146,7 @@ const Sauvegarde = {
     // (audit v0.53) Les objets imbriqués (faucheuse, stats, journal...) gardent les sous-champs
     // ajoutés depuis : on complète avec les valeurs de départ au lieu de les écraser.
     for (const [k, d] of Object.entries(defauts)) {
+      if (k === 'express' || k === 'expressMateriaux') continue;   // (v0.97) sinon recharger remplissait l'étal de Grippesou
       if (d && typeof d === 'object' && !Array.isArray(d) && brut[k] && typeof brut[k] === 'object' && !Array.isArray(brut[k])) G[k] = { ...d, ...brut[k] };
     }
     mettreAJourPartie(G, brut);

@@ -224,6 +224,7 @@ function fanerTrefle(voyageur) {
 }
 
 function simulerAventure(voyageur, colis, pieges = null) {
+  const condamne = piegeFatal(voyageur, pieges);   // (v0.97) un piège fatal : sa bonne étoile ne le sauvera pas
   const pvDepart = pvAuDepart(voyageur, colis);
   let pv = pvDepart;
   let bandages = bandagesEnPlus(voyageur, colis);
@@ -239,7 +240,7 @@ function simulerAventure(voyageur, colis, pieges = null) {
     const tirage = Math.random();
     const reussie = tirage < chanceEtape(e, colis, voyageur);
     const sauvee = reussie && tirage >= chanceEtapeBase(e, colis, voyageur);
-    if (!reussie && pv === 1 && Math.random() < chanceRepli(voyageur)) {
+    if (!reussie && pv === 1 && !condamne && Math.random() < chanceRepli(voyageur)) {
       // Sa bonne étoile : il sent que la prochaine fois sera la dernière, et rebrousse chemin.
       etapes.push({ epreuve: e, niveau, reussie: false, pvApres: 1, repli: true, fane: fanerTrefle(voyageur) });
       return { etapes, pvDepart, vivant: true, echec: true, valeureux: false };
@@ -251,7 +252,7 @@ function simulerAventure(voyageur, colis, pieges = null) {
       if (EPREUVES_COMBAT.includes(e.type) && Math.random() < CHANCE_SAIGNEMENT) {
         if (bandages > 0) { bandages--; saignement = 'bande'; } else if (pv > 0) {
           // Le saignement va l'achever : sa bonne étoile peut encore le faire rebrousser chemin.
-          if (pv === 1 && Math.random() < chanceRepli(voyageur)) {
+          if (pv === 1 && !condamne && Math.random() < chanceRepli(voyageur)) {
             etapes.push({ epreuve: e, niveau, reussie: false, pvApres: 1, repli: true, fane: fanerTrefle(voyageur) });
             return { etapes, pvDepart, vivant: true, echec: true, valeureux: false };
           }
@@ -333,6 +334,7 @@ function appliquerQuete(G, v, queteId, { butin, duree } = {}) {
   // Les clients exigeants des hauts paliers : une commande plus grosse, parfois un objet rare en
   // plus, et du matériel neuf (voir niveauEpreuve). Les nobles le sont toujours.
   const palier = palierClients(G).index;
+  v.exigeant = false;   // (v0.97) une quête retirée repart de zéro
   if (v.prestige || (palier >= PALIER_EXIGEANT && Math.random() < (CHANCE_EXIGEANT[palier] ?? 0.9))) {
     v.exigeant = true;
     const e = auHasard(epreuves);
@@ -689,7 +691,7 @@ function partir(G, voyageur, colis, pieges = {}) {
     if (h) h.exige = false;
     if (totalSurplus(voyageur, colis) === 0) {
       const m = changerRelation(G, voyageur.nom, -3);
-      message = `« Pas le moindre geste, après ce que j'ai vécu ? Je m'en souviendrai. »${m ? ' ' + m : ''}`;
+      message = (message ? message + ' ' : '') + `« Pas le moindre geste, après ce que j'ai vécu ? Je m'en souviendrai. »${m ? ' ' + m : ''}`;
     }
   }
   G.partis.push({
@@ -719,7 +721,9 @@ function recevoirLettres(G, nombre) {
     // Celui qui écrit sait déjà où il veut aller (une zone ouverte).
     const voyageur = voyageurAuHasard(G);
     delete voyageur.quetePerso;   // (sa lettre annonce une autre quête : l'ancienne quête personnelle tombe)
-    envoyerDans(G, voyageur, auHasard(zonesPour(G, voyageur).filter(z => ZONES[z].camp !== 'mal')));
+    const zones = zonesPour(G, voyageur).filter(z => ZONES[z].camp !== 'mal');
+    if (!zones.length) continue;   // (v0.97) personne n'écrit pour une contrée qu'il refuse
+    envoyerDans(G, voyageur, auHasard(zones));
     rendreExigeant(voyageur);
     G.annonces.push({ voyageur, jour: G.jour + hasard(2, 3), acceptee: false });
   }
@@ -1503,7 +1507,8 @@ function jourDeLoyer(G, jour = G.jour) { return jour % 7 === 0; }
 // Ce qui sera prélevé cette nuit (prêts, salaires, loyer), pour prévenir le joueur le soir.
 function depensesDeLaNuit(G) {
   const prets = G.prets.reduce((s, p) => s + Math.min(p.parJour, p.restant), 0);
-  return prets + salaires(G) + (jourDeLoyer(G) ? loyerSemaine(G) : 0);
+  const forge = G.forge ? (G.forge.aldo ? FORGE.forgerons.aldo.salaire : 0) + (G.forge.baba ? FORGE.forgerons.baba.salaire : 0) : 0;   // (v0.97)
+  return prets + salaires(G) + forge + (jourDeLoyer(G) ? loyerSemaine(G) : 0);
 }
 
 function nuit(G) {
@@ -2644,6 +2649,7 @@ function recolter(G, partis) {
   const m = F.mission;
   if (m && m.etat === 'ratee') {
     F.faveur -= 1;
+    if (G.pieges[m.piege] > 0) G.pieges[m.piege]--;   // (v0.97) comme la nuit : la Faucheuse reprend son objet
     bilan.sabotage = { reussi: false, mission: m };
     F.mission = null;
   }
@@ -2776,7 +2782,7 @@ function acheterCadeau(G, id) {
 function appliquerMalusEchec(G, parti, h) {
   const v = parti.voyageur;
   const n = NB_MALUS_ECHEC[parti.relationDepart ?? 3] || 2;
-  const choisis = Phaser.Utils.Array.Shuffle(Object.keys(MALUS_ECHEC)).slice(0, n);
+  const choisis = Phaser.Utils.Array.Shuffle(Object.keys(MALUS_ECHEC).filter(m => m !== 'blesse' || (h && h.blessures > 0))).slice(0, n);
   const textes = [`Ta mise est perdue, et ta réputation baisse (−${String(PERTE_ECHEC).replace('.', ',')}).`];
   for (const m of choisis) {
     if (m === 'rumine') changerRelation(G, v.nom, -2);
