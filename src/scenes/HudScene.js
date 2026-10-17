@@ -12,6 +12,8 @@ class HudScene extends Phaser.Scene {
     plaque.fillStyle(0x1e130a, 0.92).fillRoundedRect(-8, -8, 118, 26, 7);
     plaque.lineStyle(2, 0xc9a227, 1).strokeRoundedRect(-8, -8, 118, 26, 7);
     this.texteJour = this.add.text(36, 9, '', style(15, '#f3d98a', { fontStyle: 'bold', brut: true })).setOrigin(0, 0.5);
+    creerIconesSaison(this);
+    this.iconeSaison = this.add.image(100, 9, 'iconeSaison_semailles').setScale(0.9);   // (v0.99 : la saison, à côté du jour)
     const menu = this.add.text(16, 9, '☰', style(17, '#fff4dc', { fontStyle: 'bold', brut: true })).setOrigin(0.5);
     const zone = this.add.rectangle(55, 9, 110, 20, 0xffffff, 0).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => this.ouvrirMenu());
@@ -48,7 +50,7 @@ class HudScene extends Phaser.Scene {
     zoneGoutte.on('pointerout', () => this.infoNymphe(false));
     zoneGoutte.on('pointerdown', () => this.infoNymphe(!this.bulleNymphe));
     this.tweens.add({ targets: goutte, y: -2, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp, this.goutte]).setDepth(100);
+    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, this.iconeSaison, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp, this.goutte]).setDepth(100);
     // (v0.84) pas assez d'argent : une grande alerte en haut de l'écran, par-dessus toutes les pages
     const surManque = m => this.alerteArgent(m);
     this.game.events.on('manqueArgent', surManque);
@@ -186,6 +188,9 @@ class HudScene extends Phaser.Scene {
     this.bandeau.setVisible(visible && !this.fenetre);
     if (visible) {
       this.texteJour.setText(`Jour ${G.jour}`);
+      const sa = typeof saisonDe === 'function' && G.jour ? saisonDe(G) : null;
+      if (sa && this.iconeSaison.texture.key !== 'iconeSaison_' + sa) this.iconeSaison.setTexture('iconeSaison_' + sa);
+      this.iconeSaison.setVisible(!!sa).setX(Math.min(103, this.texteJour.x + this.texteJour.width + 9));
       const r = Math.round(G.reputation * 10) / 10;
       if (r !== this.reputAffichee) {
         if (this.reputAffichee !== null) {

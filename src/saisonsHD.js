@@ -115,3 +115,20 @@ function decorSaison(scene, opts = {}) {
   }
   return objets;
 }
+
+// Les petites icônes de saison (16×16) : une fleur rose, un épi de blé, une feuille rousse, un flocon
+function creerIconesSaison(scene) {
+  if (scene.textures.exists('iconeSaison_givre')) return;
+  const dessins = {
+    semailles: [['..p..', '.ppp.', 'pjpjp', '.ppp.', '..v..', '.vv..', '..v..'], { p: 0xf070a0, j: 0xffe060, v: 0x4a9a3a }],
+    moissons: [['..o..', '.ooo.', '.ooo.', '..o..', '.ooo.', '..t..', '..t..'], { o: 0xf0c040, t: 0xb08a2a }],
+    brumes: [['...o.', '..oor', '.oorr', 'oorr.', '.rr..', '.t...', 't....'], { o: 0xe8902a, r: 0xc0501e, t: 0x6a4020 }],
+    givre: [['b..b..b', '.b.b.b.', '..bbb..', 'bbbwbbb', '..bbb..', '.b.b.b.', 'b..b..b'], { b: 0xd8ecff, w: 0xffffff }],
+  };
+  for (const [s, [lignes, couleurs]] of Object.entries(dessins)) {
+    const g = scene.make.graphics({ x: 0, y: 0, add: false }), k = 2, ox = (16 - lignes[0].length * k) / 2, oy = (16 - lignes.length * k) / 2;
+    lignes.forEach((l, y) => [...l].forEach((ch, x) => { if (couleurs[ch]) { g.fillStyle(0x1a0e06).fillRect(ox + x * k - 1, oy + y * k - 1, k + 2, k + 2); } }));
+    lignes.forEach((l, y) => [...l].forEach((ch, x) => { if (couleurs[ch]) g.fillStyle(couleurs[ch]).fillRect(ox + x * k, oy + y * k, k, k); }));
+    g.generateTexture('iconeSaison_' + s, 16, 16); g.destroy();
+  }
+}

@@ -32,7 +32,10 @@ class BureauScene extends Phaser.Scene {
     this.creerOnglets();
     this.creerArdoise();
     this.creerTiroirs();
-    this.add.text(24, 500, `${dateEnTexte(G)} · semaine ${dateDuJour(G).semaine} · jour ${G.jour}`, style(14, '#f3e6c8', { fontStyle: 'italic' }));
+    // (v0.99) la date ouvre le calendrier du mois (planche 24)
+    const date = this.add.text(24, 500, `${dateEnTexte(G)} · semaine ${dateDuJour(G).semaine} · jour ${G.jour}  ▸ le calendrier`, style(14, '#f3e6c8', { fontStyle: 'italic' })).setInteractive({ useHandCursor: true });
+    date.on('pointerover', () => date.setColor('#ffe066')); date.on('pointerout', () => date.setColor('#f3e6c8'));
+    date.on('pointerdown', () => { Son.jouer('page'); this.ouvrirCalendrier(); });
     creerBouton(this, 850, 505, 180, 'Fermer', () => this.fermer());
     // Renommer le shop (l'enseigne de la façade)
     this.add.image(640, 505, plaqueBouton(this, 250)).setScale(2);
@@ -45,6 +48,48 @@ class BureauScene extends Phaser.Scene {
     if (!this.comptoir) this.onglet = 'mission';
     this.afficherListe();
     this.time.delayedCall(300, () => conseilGarrick(this, 'bureau'));
+  }
+
+  // (v0.99, planche 24) Le calendrier du mois : les jours passés barrés, aujourd'hui entouré, les loyers,
+  // les fêtes, la saison et ses effets, le prochain grand rendez-vous
+  ouvrirCalendrier() {
+    const G = this.G;
+    if (this.calendrier) this.calendrier.destroy();
+    creerIconesSaison(this);
+    const c = this.calendrier = this.add.container(0, 0).setDepth(60);
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.55).setInteractive());
+    const g = this.add.graphics(); c.add(g);
+    g.fillStyle(0xf0e2bc).fillRect(40, 30, 880, 470).lineStyle(4, 0x8a6a30).strokeRect(40, 30, 880, 470).lineStyle(1, 0xc8a050).strokeRect(48, 38, 864, 454);
+    const d = dateDuJour(G), saison = saisonDe(G), S = SAISONS[saison];
+    c.add(this.add.image(330, 66, 'iconeSaison_' + saison).setScale(1.6));
+    c.add(this.add.image(630, 66, 'iconeSaison_' + saison).setScale(1.6));
+    c.add(this.add.text(480, 66, `${MOIS[d.mois]} · an ${d.an}`, style(22, '#3b2410', { fontFamily: 'MedievalSharp, serif' })).setOrigin(0.5));
+    const prix = Object.entries(PRIX_SAISON[saison]).map(([id, k]) => `${nomObjet(id).toLowerCase()} ${k > 1 ? '+' : '−'}${Math.round(Math.abs(k - 1) * 100)} %`).join(', ');
+    c.add(this.add.text(480, 92, `${S.effet} · au marché : ${prix}`, style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.'].forEach((n, i) => c.add(this.add.text(140 + i * 102, 116, n, style(12, '#5a3a20', { fontStyle: 'bold' })).setOrigin(0.5)));
+    for (let k = 0; k < JOURS_PAR_MOIS; k++) {
+      const col = k % 7, ligne = Math.floor(k / 7), x = 92 + col * 102, y = 128 + ligne * 62, jeu = G.jour + (k + 1 - d.jourDuMois);
+      const f = feteDuJour(G, jeu);
+      g.fillStyle(f ? (f.camp === 'bien' ? 0xf8e8a0 : 0xd8c8e8) : 0xf8f0d8).fillRect(x, y, 96, 56).lineStyle(1, 0xb89a6a).strokeRect(x, y, 96, 56);
+      c.add(this.add.text(x + 5, y + 3, String(k + 1), style(11, '#3b2410', { fontStyle: 'bold' })));
+      if (k + 1 < d.jourDuMois) g.lineStyle(2, 0x9a7a50, 0.8).lineBetween(x + 8, y + 50, x + 88, y + 8);   // (les jours passés, barrés)
+      if (k + 1 === d.jourDuMois) g.lineStyle(3, 0xc02a1a).strokeEllipse(x + 48, y + 28, 90, 50);        // (aujourd'hui)
+      if (jeu > 0 && jourDeLoyer(G, jeu)) { c.add(this.add.text(x + 48, y + 44, 'loyer', style(10, '#8a5a2a', { fontStyle: 'italic' })).setOrigin(0.5)); g.fillStyle(0xe8b830).fillCircle(x + 84, y + 12, 6).lineStyle(1, 0x8a6a10).strokeCircle(x + 84, y + 12, 6); }
+      if (f) c.add(this.add.text(x + 48, y + 26, f.jour === 1 ? f.titre.replace('La ', '') : f.jour === 0 ? 'la veille' : 'le lendemain', style(10, f.camp === 'bien' ? '#2a4a8a' : '#5a2a6a', { fontStyle: 'bold', align: 'center', wordWrap: { width: 90 } })).setOrigin(0.5));
+    }
+    // les quatre saisons de l'année, celle d'aujourd'hui en avant
+    ORDRE_SAISONS.forEach((s2, i) => {
+      const x = 150 + i * 120;
+      if (s2 === saison) g.fillStyle(0xf8e098).fillRect(x - 46, 380, 92, 56);
+      c.add(this.add.image(x, 398, 'iconeSaison_' + s2).setScale(1.5));
+      c.add(this.add.text(x, 424, SAISONS[s2].nom, style(12, '#3b2410', { fontStyle: s2 === saison ? 'bold' : 'normal' })).setOrigin(0.5));
+    });
+    const p = prochaineFete(G), now = feteDuJour(G);
+    g.fillStyle(0xf8f0d8).fillRoundedRect(640, 378, 250, 64, 8).lineStyle(2, 0xb89a6a).strokeRoundedRect(640, 378, 250, 64, 8);
+    c.add(this.add.text(765, 392, 'Prochain grand rendez-vous', style(12, '#5a3a20', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(765, 418, now ? `${now.titre} : c'est ${['demain le grand jour', "aujourd'hui", 'le dernier jour'][now.jour]} !` : p ? `${p.titre} dans ${pluriel(p.dans, 'jour', 'jours')}` : '—', style(12, '#2a4a8a', { fontStyle: 'bold', wordWrap: { width: 230 }, align: 'center' })).setOrigin(0.5));
+    const b = creerBouton(this, 480, 470, 160, 'Fermer', () => { c.destroy(); this.calendrier = null; });
+    c.add([b.fond, b.label].filter(Boolean));
   }
 
   // --- Les onglets du registre ---

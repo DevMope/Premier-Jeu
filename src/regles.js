@@ -1651,7 +1651,8 @@ function reveilDuJour(G) {
 
 // Les nouvelles du matin : l'atelier, et ce que la nuit t'a apporté.
 function nouvellesDuMatin(G) {
-  return [...(G.nouvellesAtelier || []), ...reveilDuJour(G).lignes];
+  const fete = typeof annonceFete === 'function' ? annonceFete(G) : null;   // (v0.99 : la fête qui approche)
+  return [...(fete ? [fete] : []), ...(G.nouvellesAtelier || []), ...reveilDuJour(G).lignes];
 }
 
 // (v0.60) Le hasard d'une journée est fixé par une graine propre à la partie : recharger la
