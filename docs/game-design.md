@@ -1285,3 +1285,38 @@ On pousse sur Cloudflare après ces préparatifs et le grand house keep de la nu
    est connu, et le joueur y est mieux reçu selon sa jauge.
 4. La diseuse arrive au jour 10 (une cinématique de découverte), 2 pièces le présage, une fois par jour.
 5. Le chat boude après 3 jours sans ration : il part un jour (un mot sur le comptoir), puis revient.
+
+### Réponses du joueur sur le plan du lot B (17/10)
+1. **Effets des saisons : oui**, Claude choisit les conséquences concrètes :
+   - **Semailles, les rivières en crue** : les épreuves de rivière sont plus dures sans corde
+     (chance ×0,85 si l'aventurier n'est pas bien équipé), les cordes plus demandées dans les commandes,
+     et plus de novices dans la file (le printemps des premiers départs).
+   - **Moissons, la soif** : les épreuves de soif et de faim plus dures sans gourde ni ration (×0,85) ;
+     au marché, rations et gourdes −20 % (la récolte).
+   - **Brumes, la brume** : on se perd plus souvent (l'épreuve « Perdu » plus fréquente, plus dure sans
+     torche, ×0,85) ; une mission sur dix dure un jour de plus (la brume retarde le retour) ; potions −20 %.
+   - **Givre, le froid** : l'épreuve du froid plus dure sans cape chaude (×0,85), un client de moins
+     par jour, et le bois du foyer compte (point 2).
+2. **L'hiver sans bois : oui** tel que proposé (fatigué, puis malade et ouverture à midi, le chat part se
+   réchauffer ; confirmation au coucher et bûche rouge dans le bandeau).
+3. **Les fêtes : oui**, et chez les Bannis, **plus le joueur est du côté de la lumière, plus on sent
+   qu'ils se forcent à être gentils** (sourires crispés, politesses appuyées, un regard échangé dans
+   son dos, « Bienvenue... ami. »).
+4. **La diseuse : oui** (jour 10, 2 pièces, une fois par jour).
+5. **Le chat qui boude : oui**, et l'idée du **chat qui parle** (ci-dessous).
+
+### Le secret du chat (idée du joueur, 17/10, « encore à peaufiner »)
+- Quand le joueur atteint **la petite famille du chat** (la compagne sauvée, les deux petits), le chat
+  révèle qu'**il savait parler depuis le début** : il attendait de voir si JeuneGoy était digne de
+  confiance. Le mot qu'il laisse quand il boude était un premier indice.
+- La scène : un **nouveau skin**, le chat **debout sur ses pattes arrière**, qui **s'allume un cigare**
+  avant de parler. Une cinématique (grand changement).
+- Son histoire : il appartenait à **un ancien sorcier** (le Grand Sage), mais il ne sait plus du tout qui
+  c'était ; il sait juste que « c'était un bel enfoiré ». Un jour il s'est réveillé dans la ville de
+  JeuneGoy, a erré, trouvé une compagne, puis JeuneGoy (un fil de plus vers le sort d'oubli).
+- Il a gardé pour lui qu'il parlait et comprenait la langue commune, **pour sa sécurité et celle de sa
+  compagne** : elle est au courant, mais ne fait pas confiance aux humains (sauf JeuneGoy, avec le temps).
+- Son ton : **intelligent, mais perdu** par son manque de souvenirs. Sa compagne et ses petits **ne
+  parlent que le chat**.
+- Il aimerait retrouver **son vrai nom**, mais **le nom que JeuneGoy lui a donné lui plaît bien**.
+- À placer avec la quête du chat amoureux (après le lot B) ; à peaufiner avec le joueur.
