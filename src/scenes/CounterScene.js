@@ -82,7 +82,7 @@ class CounterScene extends Phaser.Scene {
     if (this.G.comptoirOuvert !== this.G.jour) {
       // 10 h : on lève le store, le comptoir est officiellement ouvert.
       this.G.comptoirOuvert = this.G.jour;
-      this.G.heure = this.heureAffichee = JOURNEE.ouverture;
+      this.G.heure = this.heureAffichee = heureOuverture(this.G);
       this.majHorloge();
       this.raconter('Dix heures sonnent au clocher. Clique sur le store pour l\'ouvrir et commencer la journée !');
       this.attendreStore();
@@ -558,7 +558,7 @@ class CounterScene extends Phaser.Scene {
   }
 
   majHorloge(h = this.heureAffichee) {
-    const G = this.G, g = this.plaqueHorloge, f = heureFermeture(G), o = JOURNEE.ouverture;
+    const G = this.G, g = this.plaqueHorloge, f = heureFermeture(G), o = heureOuverture(G);
     if (!g) return;
     const alerte = h >= f - JOURNEE.alerte;
     const x0 = FENETRE.x + 148, y0 = FENETRE.y + 8, L = 204, H = 28;

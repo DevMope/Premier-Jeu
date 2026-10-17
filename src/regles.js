@@ -204,6 +204,7 @@ function chanceEtape(e, colis, voyageur) {
 
 // La chance de rebrousser chemin au lieu de mourir.
 function chanceRepli(voyageur) {
+  if (typeof paindeCendreProtege === 'function' && paindeCendreProtege(voyageur)) return 1;   // (v1.01) le pain de cendre
   return trefleDe(window.GAME, voyageur.nom) * REPLI_PAR_TREFLE;
 }
 
@@ -1018,7 +1019,7 @@ function acheterDeco(G, id) {
 function remarqueCamp(G, v) {
   if (!v || v.remarqueJour === G.jour) return null;
   v.remarqueJour = G.jour;
-  const fete = typeof remarqueAtours === 'function' ? remarqueAtours(G, v) : null;   // (v1.00 : les atours de l'Union)
+  const fete = (typeof remarqueAtours === 'function' ? remarqueAtours(G, v) : null) || (typeof remarqueAtoursAncetres === 'function' ? remarqueAtoursAncetres(G, v) : null);   // (v1.00 : les atours de l'Union ; v1.01 : ceux des ancêtres)
   if (fete) return fete;
   const banni = PEUPLES_OMBRE.includes(v.race);
   const decos = (G.decos || []).filter(d => DECOS[d].camp);
@@ -1458,7 +1459,7 @@ function prevision(G, jour = G.jour + 1) {
 // (v0.93) Combien de clients une journée permet de servir sans courir : les heures d'ouverture
 // divisées par le temps d'un service et d'un récit, plus un (on se presse un peu).
 function capaciteClients(G) {
-  return Math.floor((heureFermeture(G) - JOURNEE.ouverture) / (dureeService(G) + JOURNEE.recit)) + 1;
+  return Math.floor((heureFermeture(G) - heureOuverture(G)) / (dureeService(G) + JOURNEE.recit)) + 1;
 }
 
 // Le palier de réputation atteint, et le suivant (ou null).
@@ -1578,6 +1579,7 @@ function nuit(G) {
   for (const l of nuitMafia(G)) G.reveil.lignes.push(l);
   for (const l of nuitOmbreAnnee(G)) G.reveil.lignes.push(l);   // (v0.98) la caisse du Passeur, les contrats de l'ombre
   if (typeof nuitSolstice === 'function') nuitSolstice(G);   // (v1.00) la tarte du Solstice ne se garde pas
+  if (typeof nuitBrumes === 'function') for (const l of nuitBrumes(G)) G.reveil.lignes.push(l);   // (v1.01) la Nuit des Brumes
   // (v0.86) les imposteurs servis hier : on apprend ce qu'est devenu ton baluchon
   for (const a of (G.arnaques || []).filter(a => !a.dit)) { G.reveil.lignes.push(a.texte); a.dit = true; }
   G.arnaques = (G.arnaques || []).filter(a => a.jour >= G.jour - 7);
@@ -1693,7 +1695,9 @@ function formatDuree(d) {
   const frac = ['', '¼', '½', '¾'][reste] || '';
   return entier ? `${entier}${frac ? ' ' + frac : ''} h` : `${frac} h`;
 }
-function heureDuComptoir(G) { if (typeof G.heure !== 'number') G.heure = JOURNEE.ouverture; return G.heure; }
+function heureDuComptoir(G) { if (typeof G.heure !== 'number') G.heure = heureOuverture(G); return G.heure; }
+// (v1.01) L'heure d'ouverture : une heure plus tard au lendemain de l'hydromel noir (la tête lourde)
+function heureOuverture(G) { return JOURNEE.ouverture + (G.reveilDifficile === G.jour ? BRUMES.hydromel.retard : 0); }
 function avancerHeure(G, d) { G.heure = heureDuComptoir(G) + d; return G.heure; }
 // À la fermeture : ceux qui avaient écrit reviendront demain matin, en tête de file ; les imprévus
 // repartent (ils retenteront leur chance un autre jour). Le colporteur remballe. Ce qu'un client
@@ -2771,6 +2775,7 @@ function offrirCadeau(G, v, id) {
   p.cadeauJour = G.jour;
   // (v1.00) les cadeaux du Solstice : la tarte (un cœur de plus au départ), le trèfle (tout le monde l'aime)
   if (id === 'tarte') { const m = changerRelation(G, v.nom, 1); return { gout: 'aime', texte: offrirTarte(G, v) + (m ? ' ' + m : '') }; }
+  if (id === 'painCendre') return { gout: 'aime', texte: offrirPain(G, v) };
   if (id === 'trefleSolstice') {
     p.trefle = Math.min(TREFLE_MAX, (p.trefle || 0) + EFFET_CADEAU.aime.trefle);
     const m = changerRelation(G, v.nom, 1);
@@ -2879,6 +2884,11 @@ function avancerEvenements(G) {
   if (G.jour >= MARCHE_NOIR.debut && (sermentDe(G) === 'mal' || Math.random() < (palierCamp(G) <= -1 ? MARCHE_NOIR.chanceOmbre : MARCHE_NOIR.chance))) {   // (v0.95 : sous serment d'ombre, chaque soir)
     G.marcheNoir = { jour: G.jour, mot: auHasard(MARCHE_NOIR.mots) };
     lignes.push(`Un papier glissé sous ta porte : « Ce soir. Derrière le tonneau. Mot : ${G.marcheNoir.mot}. »`);
+  }
+  // (v1.01) La Nuit des Brumes : trois soirs, la porte dérobée reste ouverte (pas de mot de passe)
+  if (typeof brumesActives === 'function' && brumesActives(G)) {
+    G.marcheNoir = { jour: G.jour, mot: null, entre: true, fete: true };
+    lignes.push(`Ce soir, la porte dérobée reste ouverte : c'est ${feteDuJour(G).jour === 1 ? 'le grand soir de ' : ''}la Nuit des Brumes. Les Bannis honorent leurs ancêtres.`);
   }
   if (G.palierNouveau && PALIERS_CLIENTS[G.palierNouveau].gazette) lignes.unshift(PALIERS_CLIENTS[G.palierNouveau].gazette);
   // La jauge lumière ⟷ ombre a franchi un palier
