@@ -1449,3 +1449,22 @@ un moment de mémoire (les lanternes des ancêtres).
 - **Réputation : on ne touche à rien**, et **les lanternes permettent de se racheter** (+0,5 quand la
   lanterne convient à la famille ; un peu de réputation en moins si l'on n'honore personne). Le joueur suivra
   les parties de son ami.
+
+### Retours du joueur (18/10, fin)
+- **Les atours des ancêtres** (précision) : c'est l'étal de la Nuit des Brumes. La fête honore les ancêtres des
+  Bannis, ceux qu'on a chassés avant eux et qui reposent dans les brumes ; on s'habille « comme eux » pour
+  qu'ils reconnaissent les vivants : le **masque d'os** (le visage des anciens), le **châle de brume** (gris,
+  effiloché, la brume où errent les âmes), la **petite lanterne rouge de ceinture** (pour guider les morts
+  jusqu'au feu). À acheter pendant la fête, gardés ensuite ; portés : +relation avec les clients d'ombre ce jour-là.
+- **La caisse du Passeur : amende sévère** si la garde trouve la caisse (caisse saisie + une amende qui fait
+  mal, à régler à la simulation : de l'ordre de deux à trois fois le prix de la caisse).
+- **Plus tard : la prison** (et un mécanisme autour : être arrêté, la boutique fermée, payer une caution, s'évader
+  ?). Idée mise de côté.
+- **Planche 27 : tout est validé.** Les combats de la fosse doivent avoir des animations « de blockbuster »
+  (coups, esquives, ralenti, poussière, foule qui hurle, K.O. spectaculaire) ; un combat ne finit **pas toujours
+  par K.O.** (abandon, aux points, arbitre qui arrête, coup bas...).
+- **Les contrats de l'ombre : validés**, reçus au **coin bar des Bannis** : un petit comptoir de bar dans la cave
+  du marché noir (il n'y a pas de table). Un Banni s'y accoude et propose la mission.
+- **Le bar du joueur** (à mettre en place plus tard) se fournira **au bar des Bannis** : prix forts si le
+  joueur penche vers la lumière, vrais prix s'il est du côté de l'ombre (ça rééquilibre aussi l'argent de
+  l'ombre).
