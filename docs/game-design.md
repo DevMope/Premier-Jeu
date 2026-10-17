@@ -702,6 +702,12 @@ dans la file (le tableau d'affichage et les visages sont faits), 6 les imposteur
 - Les quatre planches (horloge, recherché, inspection, marchandage) sont validées telles quelles.
 - **Narration** : quand c'est le jeu qui raconte (et non un personnage qui parle), le texte doit se
   distinguer clairement des dialogues au comptoir.
+- **(Règle générale, planche 31)** partout dans le jeu, une petite différence entre la narration et les
+  paroles : la narration en italique couleur de vieux parchemin, les paroles « ... » droites, plus claires et
+  plus appuyées, même au milieu d'une phrase (`texteMixte`, et `texte()` du marché noir le fait tout seul).
+- **(Planche 31)** la vision des parents a son cadre à elle (pas les bulles de nuage des récits) : un voile de
+  fumée violette qui ondule autour d'un ovale, des poussières d'or, un battement de cœur, l'image qui tangue ;
+  le souvenir du feu brûle comme un vieux parchemin avant le réveil (les paupières qui se rouvrent).
 - **Le sablier** sur les boutons : parfait.
 - **Le recherché caché** : la garde passe ensuite le plus souvent (forte probabilité), mais pas à chaque fois.
 - **L'inspection** : le joueur choisit entre deux façons : observer discrètement (¼ h, sans risque) ou

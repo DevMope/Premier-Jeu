@@ -56,6 +56,7 @@ const FIGURANTS = {
 const MAINS_CORPS = {};
 const BOUTS_CORPS = {};
 const PIEDS_ASSIS = {};   // (v0.68) la hauteur des pieds d'un personnage assis, en pixels de la texture   // (v0.68) le bout du bâton du baluchon, en pixels de la texture
+const REPERES_CORPS = {};   // (v1.01) le centre de la tête, le haut du torse, la taille, la hauteur : en pixels de la texture
 
 // L'ordre des tenues : novice 0 … légende 4.
 function tenueDe(niveau) {
@@ -106,6 +107,7 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
     MAINS_CORPS[cle] = toile.mains;
     if (toile.bout) BOUTS_CORPS[cle] = toile.bout;
     if (toile.piedsAssis) PIEDS_ASSIS[cle] = toile.piedsAssis;
+    REPERES_CORPS[cle] = toile.reperes;
     dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache, blesse }).texture(scene, cle + '_pas1');
     dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache, blesse }).texture(scene, cle + '_pas2');
   }

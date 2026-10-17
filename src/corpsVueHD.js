@@ -156,7 +156,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const L = 52 * k;
   // (v0.58) + une marge en haut : sans elle, le sommet du crâne (cheveux, contour) touchait le bord
   // de l'image et paraissait coupé à plat
-  const coiffe = (race === 'magicienne' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' || costume === 'pirate' ? 8 : costume === 'garde' ? 2 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : 0) * k + (pose === 'leves' || pose === 'grimpe1' || pose === 'grimpe2' ? 12 * k : 0) + 3 * k;
+  const coiffe = (race === 'magicienne' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' || costume === 'pirate' ? 8 : costume === 'garde' ? 2 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : 0) * k + (pose === 'leves' || pose === 'epaules' || pose === 'grimpe1' || pose === 'grimpe2' ? 12 * k : 0) + 3 * k;
   const H = P.H + coiffe;
   const t = new ToileHD(L, H);
   t.relief = true;
@@ -169,7 +169,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   if (costume === 'mainNoire' || costume === 'serpent') g = { ...g, coiffure: 'court' };   // (sous la capuche)
   if (T.cheveux !== undefined) g = { ...g, coiffure: T.cheveux === 'plaque' ? 'court' : 'chauve', barbe: T.barbe || null };   // (pas de cheveux longs derrière)
   const gobelin = costume === 'gobelin' || race === 'gobelin';
-  const leves = pose === 'leves', grimpe = pose === 'grimpe1' || pose === 'grimpe2';
+  const leves = pose === 'leves' || pose === 'epaules', grimpe = pose === 'grimpe1' || pose === 'grimpe2';
   const joueur = costume === 'joueur';
   const porte = id => joueur && (options.tenue || []).includes(id);
   t.rampes.peau = T.peau ? rampeVive(T.peau) : gobelin ? rampeVive(0x6a9a3a) : PEAUX_VIVES[g.peau ?? 1] || PEAUX_VIVES[1];
@@ -269,6 +269,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       if (hautMain) { coude.splice(0, 3, cote * (ep + 0.8 * k), 1.5 * k, cy - P.ry - 1 * k); main.splice(0, 3, cote * 0.8 * k, 2.5 * k, cy - P.ry - 11 * k); }
       else { coude.splice(0, 3, cote * (ep + 3.5 * k), 1 * k, yT + 5 * k); main.splice(0, 3, cote * 1.4 * k, 2.5 * k, yT + 1 * k); }
     }
+    // (v1.01) le porteur (un père, son enfant sur les épaules) : les coudes écartés, les avant-bras qui
+    // remontent, les mains posées en haut des épaules, sur les jambes de l'enfant
+    if (pose === 'porteur') { coude.splice(0, 3, cote * (ep + 3.2 * k), -0.5 * k, yT + 6 * k); main.splice(0, 3, cote * (ep + 0.6 * k), 1 * k, yT - 1 * k); }
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
     const r = 2.6 * k * P.membre;
     const dec = devant ? 0 : -0.5;
@@ -307,8 +310,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       if (plie) { genou.splice(0, 3, cote * ep * 0.8, 2.5 * k, yB + (sol - yB) * 0.22); }
       else genou.splice(0, 3, cote * ep * 0.36, 0.5 * k, yB + (sol - yB) * 0.5);
     }
+    if (pose === 'epaules') genou.splice(0, 3, cote * (ep + 2.4 * k), 2 * k, yB + 2 * k);
     const piedGrimpe = grimpe && !assis ? ((cote === pres) !== (pose === 'grimpe1') ? [cote * ep * 0.3, 2 * k, yB + (sol - yB) * 0.55] : [cote * ep * 0.22, 1 * k, sol - 3 * k]) : null;
-    const pied = piedGrimpe || (assis ? [cote * ep * 0.48, (sol - yB) * 1.05, sol - 3 * k] : pose === 'accueil' ? [cote * ep * 0.85, 0.5 * k, sol - 3 * k] : [cote * ep * 0.48, bal * 3.8 * k, sol - 3 * k - leve]);   // (accueil : les jambes un peu écartées, bien campé)
+    const pied = pose === 'epaules' ? [cote * (ep + 2.4 * k), 3 * k, yB + 9 * k] : piedGrimpe || (assis ? [cote * ep * 0.48, (sol - yB) * 1.05, sol - 3 * k] : pose === 'accueil' ? [cote * ep * 0.85, 0.5 * k, sol - 3 * k] : [cote * ep * 0.48, bal * 3.8 * k, sol - 3 * k - leve]);   // (accueil : les jambes un peu écartées, bien campé)
     const Hh = [X(hanche[0], hanche[1]), hanche[2]], G = [X(genou[0], genou[1]), genou[2]], Pd = [X(pied[0], pied[1]), pied[2]];
     const dec = devant ? 0 : -0.5;
     const r = 2.9 * k * P.membre;
@@ -515,10 +519,6 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     for (let y = yT + 2 * k; y <= yT + 11 * k; y++) { const x0 = Math.round(X(-3 * k, prof) - 1.4 * k), x1 = Math.round(X(-3 * k, prof) + 1.4 * k) - 1; if (t.mat(x0, y) === 'echarpeU') t.poser(x0, y, 'or', 3); if (t.mat(x1, y) === 'echarpeU') t.poser(x1, y, 'or', 4); }
     for (let x = Math.round(X(-3 * k, prof) - 1.4 * k); x < X(-3 * k, prof) + 1.4 * k; x++) t.poser(x, yT + 11 * k, 'or', 4);
   }
-  // (v1.01) le châle de brume des ancêtres : gris, effiloché, sur les épaules et en pointe sur la poitrine
-  if (porte('chaleBrume')) {
-    t.forme('brumeC', (x, y) => { const d = Math.abs(x + 0.5 - X(0, prof * 0.6)); const larg = (ep + 2.5 * k) * Math.max(0.5, Math.abs(c) + 0.2); return y >= yT - 2 * k && y <= yT + 9 * k && d < larg - Math.max(0, y - yT - 1 * k) * (dos ? 0.2 : 0.9) && (hachage(Math.floor(x / k), Math.floor(y / k), 31) > 0.12 || y < yT + 6 * k) ? [(x + 0.5 - cx) / (6 * k) * 0.5, 0, 0.85] : null; }, { motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 3 === 0 ? 0.5 : 0) });
-  }
   // (v1.01) la petite lanterne rouge, pendue à la ceinture
   if (porte('lanterneCeinture') && !dos) {
     const lx = X(pres * (ep - 0.5 * k), prof * 0.8), ly = yB + 3.5 * k;
@@ -641,6 +641,13 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   }
   // --- 3. Devant : le bras et la jambe du côté proche ---
   if (!dos) bras(pres, true); else bras(loin, true);
+  // (v1.01) le châle de brume des ancêtres, gris et effiloché : posé par-dessus les deux bras, il couvre les
+  // épaules et le haut des bras (rien ne dépasse), descend en pointe dans le dos et sur la poitrine
+  if (porte('chaleBrume')) {
+    const xc = X(0, dos ? 0 : prof * 0.3), W = section(ep + 4 * k, prof + 1.5 * k);
+    const bas = (x) => { const d = Math.abs(x + 0.5 - xc) / W; return yT + 12 * k - d * d * 6 * k + (hachage(Math.floor(x / k), 3, 31) > 0.5 ? 1 * k : 0); };
+    t.forme('brumeC', (x, y) => { const d = Math.abs(x + 0.5 - xc); if (d >= W) return null; const haut = yT - 2.5 * k + Math.max(0, d - W * 0.3) * 0.5; if (y < haut || y > bas(x)) return null; if (y > bas(x) - 2 * k && hachage(Math.floor(x / k), Math.floor(y / k), 17) < 0.25) return null; return [(x + 0.5 - xc) / W * 0.8, y < haut + 2 * k ? -0.6 : 0.1, 0.8]; }, { decalage: 0.2, motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 4 === 0 ? 0.45 : y > bas(x) - 2 * k ? -0.4 : 0) });
+  }
 
   if (porte('bague') && !dos) { const hx = X(pres * (ep + 0.6 * k), 1 * k); t.poser(Math.round(hx), Math.round(yB + 2.5 * k), 'or', 5); t.poser(Math.round(hx) + 1, Math.round(yB + 2.5 * k), 'or', 3); }
   if (costume === 'mentor' && !dos) pansManteau(yB + 2 * k, sol - 6 * k);
@@ -1285,6 +1292,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     for (let y = solAssis + 1; y < t.h; y++) for (let x = 0; x < t.l; x++) { const i = y * t.l + x; t.c[i] = null; t.m[i] = null; t.k[i] = 0; }
     t.piedsAssis = solAssis;
   }
+  if (pose === 'epaules') {
+    const coupe = Math.round(yB + 6 * k);
+    for (let y = coupe + 1; y < t.h; y++) for (let x = 0; x < t.l; x++) { const i = y * t.l + x; t.c[i] = null; t.m[i] = null; t.k[i] = 0; }
+    t.assise = yB + 1 * k;   // (la hauteur des fesses : à poser sur la nuque du porteur)
+  }
+  t.reperes = { cy, yT, yB, H };   // (v1.01 : pour poser un enfant sur des épaules, etc.)
   contourEpais(t, CONTOUR_CORPS.tours);
   // Où sont les mains (depuis le sol), pour y accrocher le baluchon
   t.mains = H - (leves ? cy - P.ry - 7 * k : T.brasLongs ? yB + (sol - yB) * 0.48 + 2 * k : yB + 2.5 * k);

@@ -439,6 +439,57 @@ function style(taille, couleur = '#f3e6c8', extra = {}) {
   return { fontFamily: POLICE, fontSize: taille + 'px', color: couleur, resolution: typeof ZOOM_ECRAN === 'number' ? Math.max(2, ZOOM_ECRAN + 1) : 3, ...reste, fontStyle };
 }
 
+// (v1.01) La narration et les paroles, bien distinctes dans un même texte : ce que le jeu raconte est en
+// italique, couleur de vieux parchemin ; ce que les personnages disent (entre « ») est droit, plus clair,
+// plus appuyé. Le texte va à la ligne tout seul (`largeur`) ; renvoie un conteneur (à détruire comme un texte).
+const COULEUR_NARRATION = '#d6bf98', COULEUR_PAROLE = '#fff8e6';
+function texteMixte(scene, x, y, texte, { taille = 14, largeur = 880, align = 'left', narration = COULEUR_NARRATION, parole = COULEUR_PAROLE, interligne = 1.32, extra = {} } = {}) {
+  const c = scene.add.container(x, y);
+  // les morceaux : [texte, dit] (dit = entre guillemets)
+  const morceaux = [];
+  let dit = false;
+  for (const bout of String(texte).split(/(«|»)/)) {
+    if (bout === '«') { dit = true; morceaux.push(['«', true]); continue; }
+    if (bout === '»') { morceaux.push(['»', true]); dit = false; continue; }
+    if (bout) morceaux.push([bout, dit]);
+  }
+  const styleDe = (d) => style(taille, d ? parole : narration, { ...extra, fontStyle: d ? 'bold' : 'italic' });
+  const mesure = scene.add.text(0, 0, '', styleDe(false)).setVisible(false);
+  const largeurDe = (t, d) => { mesure.setStyle(styleDe(d)).setText(t); return mesure.width; };
+  const lignes = [[]];
+  let ligne = lignes[0], xl = 0;
+  const pousser = (t, d) => {   // ajoute un mot (ou une espace) à la ligne en cours, en fusionnant les mêmes styles
+    const dernier = ligne[ligne.length - 1];
+    if (dernier && dernier.d === d) dernier.t += t; else ligne.push({ t, d });
+  };
+  for (const [bout, d] of morceaux) {
+    for (const [i, para] of bout.split('\n').entries()) {
+      if (i > 0) { ligne = []; lignes.push(ligne); xl = 0; }
+      for (const mot of para.split(/(\s+)/)) {
+        if (!mot) continue;
+        const w = largeurDe(mot, d);
+        if (/^\s+$/.test(mot)) { if (xl > 0) { pousser(' ', d); xl += w; } continue; }
+        if (xl > 0 && xl + w > largeur) { const der = ligne[ligne.length - 1]; if (der) der.t = der.t.replace(/\s+$/, ''); ligne = []; lignes.push(ligne); xl = 0; }
+        pousser(mot, d); xl += w;
+      }
+    }
+  }
+  mesure.destroy();
+  const h = Math.round(taille * 1.25 * interligne);
+  lignes.forEach((l, j) => {
+    const objets = l.map(({ t, d }) => scene.add.text(0, j * h, t, styleDe(d)).setOrigin(0, 0));
+    const total = objets.reduce((a, o) => a + o.width, 0);
+    let xo = align === 'center' ? -total / 2 : 0;
+    for (const o of objets) { o.x = xo; xo += o.width; c.add(o); }
+  });
+  c.hauteur = lignes.length * h;
+  c.largeurTexte = Math.max(0, ...c.list.map(o => o.x + o.width));
+  c.list.forEach(o => { o.bx = o.x; o.by = o.y; });
+  // comme un texte : setOrigin(0.5) centre le bloc sur (x, y)
+  c.setOrigin = (ox = 0.5, oy = ox) => { const w = align === 'center' ? 0 : c.largeurTexte; c.list.forEach(o => { o.x = o.bx - ox * w; o.y = o.by - oy * c.hauteur; }); return c; };
+  return c;
+}
+
 // Coupe un texte trop long (avec « … »).
 // Empêche un double clic de lancer deux fois la même transition (pendant le fondu au noir).
 // Renvoie true si une transition est déjà en cours sur cette scène.

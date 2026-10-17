@@ -159,7 +159,15 @@ class MarcheNoirScene extends Phaser.Scene {
 
   // --- Le panneau du bas : une page à la fois ---
   vider() { for (const e of this.elements) e.destroy(); this.elements = []; }
-  texte(x, y, t, taille = 15, couleur = '#f3e6c8', extra = {}) { const o = this.add.text(x, y, t, style(taille, couleur, extra)).setDepth(6).setScrollFactor(0); this.elements.push(o); return o; }
+  texte(x, y, t, taille = 15, couleur = '#f3e6c8', extra = {}) {
+    // (v1.01) un récit où quelqu'un parle (« ... ») : la narration et les paroles se distinguent
+    if (/«/.test(t) && /italic/.test(extra.fontStyle || '')) {
+      const neutre = ['#f3d9b0', '#f3e6c8', '#c8a890', '#e8c890'].includes(couleur);
+      const o = texteMixte(this, x, y, t, { taille, largeur: (extra.wordWrap && extra.wordWrap.width) || 880, narration: neutre ? COULEUR_NARRATION : couleur }).setDepth(6).setScrollFactor(0);
+      this.elements.push(o); return o;
+    }
+    const o = this.add.text(x, y, t, style(taille, couleur, extra)).setDepth(6).setScrollFactor(0); this.elements.push(o); return o;
+  }
   bouton(x, y, l, t, action, actif = true) {
     // (v0.57) les mêmes plaques de bois doré que partout ailleurs dans le jeu
     const cle = plaqueBouton(this, l);
