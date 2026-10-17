@@ -392,7 +392,7 @@ Object.assign(MarcheNoirScene.prototype, {
     // (le temps réel de la scène : sur une machine lente, le repère ne ralentit pas)
     const maj = (t, delta) => {
       if (jeu.fini || !gb.active) { this.events.off('update', maj); return; }
-      const dt = Math.min(0.05, delta / 1000);
+      const dt = Math.min(0.2, delta / 1000);   // (même sur une machine lente, la partie dure le même temps)
       jeu.temps += dt;
       jeu.x += jeu.sens * dt / a.balayage; if (jeu.x > 1) { jeu.x = 1; jeu.sens = -1; } if (jeu.x < 0) { jeu.x = 0; jeu.sens = 1; }
       jeu.p -= pousse * dt;
