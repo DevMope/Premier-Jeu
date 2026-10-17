@@ -51,6 +51,15 @@ const FIGURANTS = {
   baba: { race: 'nain', nom: "Baba Marteau-d'Or", feminin: true, costume: 'forgeron', habit: 0x8a2a2a, cheveux: 0x141010, coiffure: 'court', peau: 3, niveau: 1, buste: true, marques: ['khol', 'anneauNez'] },
   // (v1.02, dessin du joueur) le Grand Sage : il apparaît au deuxième Solstice
   sage: { race: 'humain', nom: 'Le Grand Sage', costume: 'sage', habit: 0x4a2466, cheveux: 0xe8e8ec, cape: 0xa02a22, barbe: 'sage', coiffure: 'long', peau: 1, niveau: 2, vieux: true, bouche: 1 },
+  // (v1.02, planche 33) le Conseil des Gardiens, que préside le Grand Sage : un Gardien par royaume, en robe aux
+  // couleurs de son royaume, l'étole blanche du Conseil, et la broche d'écaille rouge (un indice : le dragon)
+  gardienComte: { race: 'hobbit', nom: 'Maître Bertolin Pommeval', costume: 'gardien', habit: 0x4a8a3a, cape: 0x2e5a24, cheveux: 0x6a4424, coiffure: 'court', barbe: 'moustache', peau: 1, niveau: 2, bouche: 0, atours: { metal: 'or', coiffe: 'chaine' } },
+  gardienneHommes: { race: 'humain', feminin: true, nom: 'Dame Aliénor de Hautval', costume: 'gardien', habit: 0x9a2424, cape: 0x5a1414, cheveux: 0x3a2418, coiffure: 'long', peau: 2, niveau: 2, bouche: 1, atours: { metal: 'argent', coiffe: 'cercle' } },
+  gardienNains: { race: 'nain', nom: 'Durgan Barbe-de-Fer', costume: 'gardien', habit: 0x3a3a44, cape: 0x26262e, cheveux: 0x9a9aa0, barbe: 'nain', peau: 3, niveau: 2, vieux: true, bouche: 1, atours: { metal: 'or', coiffe: 'couronne' } },
+  gardienneElfes: { race: 'elfe', feminin: true, nom: 'Dame Ilyriel', costume: 'gardien', habit: 0x1f6a62, cape: 0x14443e, cheveux: 0xe8dca0, coiffure: 'long', peau: 0, niveau: 2, bouche: 1, atours: { metal: 'argent', coiffe: 'feuilles' } },
+  gardienneMages: { race: 'magicienne', feminin: true, nom: "L'Archimage Séraphine", costume: 'gardien', habit: 0x4a2a8a, cape: 0x2a1a5a, cheveux: 0xc8c8d0, coiffure: 'long', peau: 1, niveau: 2, vieux: true, bouche: 1, atours: { metal: 'or' } },
+  // le bras droit du Grand Sage : le Champion du Rempart, qui a « dompté » le dragon
+  champion: { race: 'humain', nom: 'Sire Valdric', costume: 'champion', habit: 0x2a1a1a, cape: 0xa02a22, cheveux: 0x1a1414, barbe: 'courte', coiffure: 'court', peau: 1, niveau: 4, bouche: 3 },
   mendiant: { race: 'humain', nom: 'Le mendiant', costume: 'mendiant', habit: 0x6a6252, cheveux: 0x8a8a80, cape: 0x4a4236, barbe: 'pleine', niveau: 0 },
 };
 
@@ -72,13 +81,13 @@ function tenueDe(niveau) {
 function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   if (quoi === 'faucheuse') return 'perso_faucheuse';
   if (typeof quoi === 'string' && !FIGURANTS[quoi] && !PROPORTIONS[quoi]) return 'perso_' + quoi;   // (le joueur, etc.)
-  let gene, tenue, costume = null, cle, bouche;
+  let gene, tenue, costume = null, cle, bouche, atours;
   if (typeof quoi === 'string' && FIGURANTS[quoi]) {
     const fig = FIGURANTS[quoi];
     gene = { ...geneHD({ nom: fig.nom, race: fig.race === 'gobelin' ? 'humain' : fig.race, feminin: !!fig.feminin }), race: fig.race, habit: fig.habit, cheveux: fig.cheveux, cape: fig.cape, barbe: fig.barbe ?? null, coiffure: fig.coiffure || 'court', ...(fig.peau !== undefined ? { peau: fig.peau } : {}), ...(fig.vieux ? { vieux: true } : {}) };
     tenue = fig.niveau ?? 1;
     costume = fig.costume;
-    bouche = fig.bouche;
+    bouche = fig.bouche; atours = fig.atours;
     cle = 'corps_' + quoi;
   } else if (typeof quoi === 'string') {
     gene = geneHD({ nom: 'Un ' + quoi, race: quoi, feminin: quoi === 'magicienne' });
@@ -105,14 +114,14 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   const blesse = typeof quoi === 'string' ? !!(FIGURANTS[quoi] && FIGURANTS[quoi].blesse) : !!quoi.blesse;
   if (blesse && typeof quoi !== 'string') cle += '_blesse';
   if (!scene.textures.exists(cle)) {
-    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}) });
+    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}) });
     toile.texture(scene, cle);
     MAINS_CORPS[cle] = toile.mains;
     if (toile.bout) BOUTS_CORPS[cle] = toile.bout;
     if (toile.piedsAssis) PIEDS_ASSIS[cle] = toile.piedsAssis;
     REPERES_CORPS[cle] = toile.reperes;
-    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}) }).texture(scene, cle + '_pas1');
-    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}) }).texture(scene, cle + '_pas2');
+    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}) }).texture(scene, cle + '_pas1');
+    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}) }).texture(scene, cle + '_pas2');
   }
   return cle;
 }

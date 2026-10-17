@@ -144,8 +144,10 @@ function contourEpais(t, tours = 1) {
 }
 
 // `options.tenue` : les accessoires portés par le joueur (garde-robe) ; `options.bouche` : sa bouche de création.
+const BARBES_VOLUME = ['sage'];   // (les barbes qu'on dessine avec leur profondeur : voir le visage)
 function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vue = 'troisQuarts', options = {}) {
   const k = FINESSE;
+  const atours = options.atours || {};   // (v1.02 : le métal et la coiffe d'un Gardien du Conseil)
   g = { ...g };
   const race = PROPORTIONS[g.race] ? g.race : 'humain';
   const P0 = PROPORTIONS[race];
@@ -209,6 +211,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // cape d'écailles de dragon rouges, la couronne d'or aux pierres bleues, le bâton torsadé au cristal
     t.rampes.cape = rampeVive(0xa02a22); t.rampes.lin = rampeVive(0xe8dcc0); t.rampes.cristal = rampeVive(0x70e8f8); t.rampes.batonS = rampeVive(0x6a4626);
     t.rampes.argent = rampeVive(0xc8ccd4); t.rampes.livre = rampeVive(0x5a3418); t.rampes.cuir = rampeVive(0x5a3420);
+  } else if (costume === 'gardien') {
+    // (v1.02) les Gardiens du Conseil : la robe aux couleurs de leur royaume, l'étole blanche du Conseil
+    t.rampes.lin = rampeVive(0xece4d0); t.rampes.argent = rampeVive(0xc8ccd4); t.rampes.ecaille = rampeVive(0xb02a22); t.rampes.cristal = rampeVive(0x70c8f8);
+  } else if (costume === 'champion') {
+    // (v1.02) le Champion du Rempart, bras droit du Grand Sage : l'acier noirci, l'or, la cape d'écailles
+    t.rampes.metal = rampeVive(0x3e3e4c); t.rampes.ecaille = rampeVive(0xb02a22); t.rampes.cuir = rampeVive(0x2a1c18);
   } else if (costume === 'serpent') {
     t.rampes.habit = rampe(0x4a6428); t.rampes.cape = rampe(0x34501e); t.rampes.cuir = rampe(0x26222a); t.rampes.bas = rampe(0x2a2630);
     t.rampes.gilet = rampeVive(0x6a4426); t.rampes.argent = rampeVive(0xc8ccd4); t.rampes.emeraude = rampeVive(0x2ec860); t.rampes.fleche = rampeVive(0xe8b020);
@@ -221,10 +229,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const solDebout = sol, solAssis = Math.round(yB + (sol - yB) * 0.52);   // (v0.68 : la hauteur du banc, pour la pose assise)
   const ep = P.ep;                         // la demi-largeur d'épaules
   const prof = ep * 0.55;                  // la demi-épaisseur du torse
-  const longue = race === 'magicienne' || costume === 'mainNoire' || costume === 'sage';    // la robe descend jusqu'aux pieds
+  const longue = race === 'magicienne' || costume === 'mainNoire' || costume === 'sage' || costume === 'gardien';    // la robe descend jusqu'aux pieds
   const manteau = race === 'elfe' || costume === 'colporteur' || costume === 'mentor' || costume === 'pirate';   // la tunique descend à mi-cuisse
-  const capee = (tenue >= 3 && !joueur) || ['mentor', 'colporteur', 'mendiant', 'noble', 'passeur', 'mainNoire', 'pirate', 'sage'].includes(costume) || porte('cape') || porte('capeUnion') || !!T.cape;
-  const aventurier = !costume || ['colporteur', 'mentor', 'mendiant'].includes(costume);
+  const capee = (tenue >= 3 && !joueur) || ['mentor', 'colporteur', 'mendiant', 'noble', 'passeur', 'mainNoire', 'pirate', 'sage', 'gardien'].includes(costume) || porte('cape') || porte('capeUnion') || !!T.cape;
+  const aventurier = !costume || ['colporteur', 'mentor', 'mendiant', 'champion'].includes(costume);
   if (joueur) tenue = 1;   // (le joueur a sa tenue à lui : manches simples, pas d'épaulières)
 
   // La projection : un point (u, z) → x à l'écran ; et sa profondeur (devant > 0).
@@ -238,7 +246,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
 
   // --- Les membres ---
   const forgeron = costume === 'forgeron';   // (v0.82) Aldo et Baba : tablier de cuir, manches retroussées
-  const matBras = (race === 'nain' && costume !== 'banquier' && !forgeron) || costume === 'garde' ? 'metal' : 'habit';
+  const matBras = (race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && !forgeron) || costume === 'garde' ? 'metal' : 'habit';
   const bras = (cote, devant) => {
     const bal = pas ? (cote === pres ? pas : -pas) : 0;   // les bras se balancent avec la marche
     const epaule = [cote * (ep - 0.8 * k), 0.3 * k, yT + 2 * k];
@@ -255,7 +263,11 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
     // (v0.68) Le baluchon sur l'épaule : le bras proche se plie, la main tient le bâton devant la
     // poitrine (elle ne se balance plus avec la marche) ; l'autre bras, lui, continue de balancer
-    if (costume === 'sage' && devant && !leves && !pose) { coude.splice(0, 3, cote * (ep + 4.5 * k), 1 * k, yT + P.torse * 0.5); main.splice(0, 3, cote * (ep + 7 * k), 2 * k, yT + 3 * k); }
+    if (costume === 'sage' && devant && !leves && !pose) {
+      // (de profil, le bâton est tenu devant lui : il ne passe plus devant son visage)
+      const avant = Math.abs(s) > 0.9 ? P.rx + 4 * k : 0;
+      coude.splice(0, 3, cote * (ep + 4.5 * k), 1 * k + avant * 0.5, yT + P.torse * 0.5); main.splice(0, 3, cote * (ep + 7 * k), 2 * k + avant, yT + 3 * k);
+    }
     if (pose === 'accueil') {   // (v0.71) les bras grands ouverts, paumes vers le ciel : « Bienvenue, l'ami ! »
       coude.splice(0, 3, cote * (ep + 7.5 * k), 0.8 * k, yT + 0.5 * k);   // (v0.72) levés en V, comme on salue
       main.splice(0, 3, cote * Math.min(ep + 16 * k, L / 2 - 2.5 * k), 1.6 * k, yT - 7 * k);   // un vieil ami
@@ -377,12 +389,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme(porte('capeUnion') ? 'capeU' : porte('cape') ? 'capeV' : 'cape', (x, y) => {
       if (y < yT + 1 * k || y > sol - 4 * k) return null;
       if ((costume === 'mendiant' || costume === 'mainNoire' || costume === 'pirate') && y > sol - (costume === 'pirate' ? 20 : 12) * k && hachage(Math.floor(x / k), 0, 77) * 10 * k > sol - y) return null; // le bas en lambeaux
-      if (costume === 'sage' && y > sol - 6 * k && Math.abs(((x + 0.5) % (3 * k)) - 1.5 * k) * 2 > (sol - y)) return null;   // le bas en pointes d'écailles
+      if ((costume === 'sage' || costume === 'champion') && y > sol - 6 * k && Math.abs(((x + 0.5) % (3 * k)) - 1.5 * k) * 2 > (sol - y)) return null;   // le bas en pointes d'écailles
       const demi = (ep + 1.5 * k + (y - yT) * 0.12) * (devant ? 1 : Math.max(0.55, c) + 0.1);
       const centre = devant ? cx : X(0, -prof * 0.9);
       const nx = (x + 0.5 - centre) / demi;
       return Math.abs(nx) <= 1 ? [nx * 0.6, 0.1, 0.8] : null;
-    }, { decalage: -0.9, motif: costume === 'sage' ? ecailles : (x) => (Math.floor(x / k) % 5 === 0 ? -0.5 : 0) });
+    }, { decalage: -0.9, motif: costume === 'sage' || costume === 'champion' ? ecailles : (x) => (Math.floor(x / k) % 5 === 0 ? -0.5 : 0) });
     // Le liséré d'or de la cape des elfes et des légendes
     if (race === 'elfe' || (tenue >= 4 && race !== 'hobbit')) {
       const bord = [];
@@ -439,7 +451,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   };
   t.forme(race === 'hobbit' ? 'lin' : 'habit', torse, { decalage: -0.1, motif: (x, y) => (!dos && Math.abs(x + 0.5 - X(0, prof)) < 0.6 * k && y > yT + 3 * k ? -0.6 : race === 'magicienne' && (Math.floor(x / k) * 7 + Math.floor(y / k) * 3) % 23 === 0 ? 0.9 : 0) });
   if (race === 'hobbit') t.forme('habit', (x, y) => { const n = torse(x, y); return n && y >= yT + 2 * k && Math.abs(x + 0.5 - X(0, prof * 0.9)) > 2 * k + Math.max(0, 6 * k - (y - yT)) * 0.5 ? n : null; }, { decalage: -0.2 });
-  if ((race === 'nain' && costume !== 'banquier' && !forgeron) || costume === 'garde') t.forme('metal', (x, y) => { const n = torse(x, y); return n && y >= yT + 1 * k && y <= yB - 2 * k ? n : null; }, { motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.3 : -0.3) });
+  if ((race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && !forgeron) || costume === 'garde') t.forme('metal', (x, y) => { const n = torse(x, y); return n && y >= yT + 1 * k && y <= yB - 2 * k ? n : null; }, { motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.3 : -0.3) });
   if (costume === 'garde' && !dos) {
     // Le tabard bleu de la Confrérie, son soleil d'or, et le pan qui tombe devant les cuisses
     const larg = ep * 0.62 * Math.max(0.55, Math.abs(c));
@@ -614,7 +626,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   // Les pièces cousues des novices
   if (tenue === 0 && !longue && aventurier) for (const [du, dy] of [[-3, 6], [2, 11]]) for (let i = 0; i < 3 * k; i++) for (let j = 0; j < 3 * k; j++) { const x = Math.round(X(du * k, prof * 0.8)) + i, y = yT + dy * k + j; if (t.mat(x, y) === 'habit') t.poser(x, y, 'habit', (i === 0 || j === 0 || i === 3 * k - 1 || j === 3 * k - 1) ? 1 : 2); }
   // La ceinture, la boucle
-  t.forme(tenue === 0 ? 'lin' : 'cuir', (x, y) => (y >= yB - 2 * k && y <= yB - 1 && torse(x, y) ? [0, y < yB - 1 * k ? -0.6 : 0.4, 0.8] : null), { ombre: false });
+  // (v1.02 : les Gardiens n'ont qu'une fine cordelière de métal sur leur robe, pas de ceinture de cuir)
+  if (costume === 'gardien') t.forme(atours.metal || 'or', (x, y) => (y >= yB - 1.5 * k && y <= yB - 0.5 * k && torse(x, y) ? [0, 0, 0.9] : null), { ombre: false });
+  else t.forme(tenue === 0 ? 'lin' : 'cuir', (x, y) => (y >= yB - 2 * k && y <= yB - 1 && torse(x, y) ? [0, y < yB - 1 * k ? -0.6 : 0.4, 0.8] : null), { ombre: false });
   if (tenue >= 1 && !dos && Z(0, prof) > 0) t.forme(tenue >= 4 ? 'or' : 'metal', ellipsoide(X(0, prof), yB - 1.5 * k, 1.6 * k, 1.3 * k), { decalage: 0.4, ombre: false });
   // La bandoulière et la sacoche (aguerri et plus)
   if (tenue >= 1 && !dos && !longue && aventurier) {
@@ -651,6 +665,45 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   }
   // --- 3. Devant : le bras et la jambe du côté proche ---
   if (!dos) bras(pres, true); else bras(loin, true);
+  if (costume === 'gardien') {
+    const metal = atours.metal || 'or';
+    if (!dos) {
+      // l'étole blanche du Conseil : deux bandes qui tombent du col jusque sous la taille, frangées de métal
+      for (const d of [-1, 1]) {
+        t.forme('lin', (x, y) => (y >= yT && y <= yB + 9 * k && Math.abs(x + 0.5 - X(d * 2.6 * k, prof * 1.02)) < 1.3 * k * Math.max(0.5, Math.abs(c) + 0.1) && (t.mat(x, y) === 'habit' || t.mat(x, y) === 'cape') ? [d * 0.2, 0, 1] : null), { decalage: 0.3, ombre: false });
+        for (let y = yB + 7 * k; y <= yB + 9 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'lin' && Math.abs(x + 0.5 - X(d * 2.6 * k, prof)) < 1.4 * k) t.poser(x, y, metal, y > yB + 8 * k && x % 2 ? 2 : 4);
+        t.forme(metal, ellipsoide(X(d * 2.6 * k, prof * 1.02), yB + 3 * k, 0.7 * k, 0.7 * k), { decalage: 0.6, ombre: false });   // le petit sceau brodé
+      }
+      // l'ourlet et le devant de la robe, galonnés de métal
+      for (let y = sol - 2 * k; y < sol; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'habit') t.poser(x, y, metal, 3);
+      for (let y = yB + 9 * k; y < sol - 2 * k; y++) { const x = Math.round(X(0, prof)); if (t.mat(x, y) === 'habit') t.poser(x, y, metal, 3); }
+      // la broche d'écaille rouge, au col (tous les Gardiens la portent)
+      t.forme(metal, (x, y) => { const dx = Math.abs(x + 0.5 - X(0, prof)), dy = y + 0.5 - (yT + 3.2 * k); return dx / (1.9 * k) + Math.abs(dy) / (2.4 * k) <= 1 ? [0, dy / (2.4 * k), 0.9] : null; }, { decalage: 0.6, ombre: false });   // (sa monture de métal : elle se voit même sur une robe rouge)
+      t.forme('ecaille', (x, y) => { const dx = Math.abs(x + 0.5 - X(0, prof)), dy = y + 0.5 - (yT + 3.2 * k); return dx / (1.3 * k) + Math.abs(dy) / (1.7 * k) <= 1 ? [0, dy / (1.6 * k), 0.9] : null; }, { decalage: 0.7, ombre: false });
+      // la chaîne d'office du Gardien du Comté
+      if (atours.coiffe === 'chaine') { for (let j = -5 * k; j <= 5 * k; j++) { const y = Math.round(yT + 1 * k + (1 - (j / (5 * k)) ** 2) * 5 * k); t.poser(Math.round(X(j * 0.9, prof)), y, metal, j % 2 ? 3 : 5); } t.forme(metal, ellipsoide(X(0, prof), yT + 7 * k, 1.8 * k, 1.8 * k), { decalage: 0.6 }); t.poser(Math.round(X(0, prof)), yT + 7 * k, 'ecaille', 4); }
+    } else for (let y = yT - 1 * k; y < yT + 3 * k; y++) for (let x = 0; x < L; x++) if ((t.mat(x, y) === 'habit' || t.mat(x, y) === 'cape') && Math.abs(Math.abs(x + 0.5 - cx) - 2.6 * k) < 1.3 * k) t.poser(x, y, 'lin', 4);   // (de dos : l'étole sur les épaules)
+  }
+  if (costume === 'champion' && !dos) {
+    // la grande épée dans son dos : la poignée et la garde d'or dépassent au-dessus de l'épaule, le pommeau d'écaille
+    const ex = X(loin * (ep + 1.5 * k), -prof * 0.5), ey0 = yT - 10 * k;
+    {
+      for (let j = 0; j < 6 * k; j++) for (let e = 0; e < Math.round(1.4 * k); e++) { const x = Math.round(ex + loin * j * 0.25) + e, y = ey0 + j; if (!t.mat(x, y) || t.mat(x, y) === 'cape') t.poser(x, y, j % (2 * k) < k ? 'or' : 'cuir', j % (2 * k) < k ? 3 : 4); }   // (la poignée gainée de cuir, cerclée d'or)
+      for (let e = -2.5 * k; e <= 2.5 * k; e++) { const x = Math.round(ex + loin * 6 * k * 0.25 + e), y = Math.round(ey0 + 6 * k + e * loin * 0.25); if (!t.mat(x, y) || t.mat(x, y) === 'cape') { t.poser(x, y, 'or', 4); t.poser(x, y + 1, 'or', 2); } }
+      t.forme('ecaille', ellipsoide(ex - loin * 0.2 * k, ey0 - 0.8 * k, 1.5 * k, 1.5 * k), { decalage: 0.6, ombre: false });
+    }
+    // de larges spalières d'acier noirci bordées d'or
+    for (const cote of [-1, 1]) {
+      const px = X(cote * (ep + 0.2 * k), 0.5 * k);
+      if (Z(cote * ep, 0) < -3 * k) continue;
+      t.forme('metal', ellipsoide(px, yT + 1.5 * k, 3.6 * k * Math.max(0.6, Math.abs(c) + 0.2), 2.6 * k, (x, y) => y <= yT + 3.6 * k), { decalage: 0.5 });
+      for (let x = Math.round(px - 3.6 * k); x <= px + 3.6 * k; x++) { const y = Math.round(yT + 3.6 * k); if (t.mat(x, y) === 'metal') t.poser(x, y, 'or', 4); }
+    }
+    // la gemme d'écaille rouge au cœur de sa cuirasse
+    t.forme('ecaille', (x, y) => { const dx = Math.abs(x + 0.5 - X(0, prof)), dy = y + 0.5 - (yT + 7 * k); return dx / (1.4 * k) + Math.abs(dy) / (1.9 * k) <= 1 ? [0, dy / (1.9 * k), 0.9] : null; }, { decalage: 0.9, ombre: false });
+    // la broche d'écaille rouge qui ferme sa cape, sur l'épaule
+    t.forme('ecaille', (x, y) => { const dx = Math.abs(x + 0.5 - X(pres * (ep - 1 * k), prof * 0.6)), dy = y + 0.5 - (yT + 1 * k); return dx / (1.4 * k) + Math.abs(dy) / (1.9 * k) <= 1 ? [0, dy / (1.9 * k), 0.9] : null; }, { decalage: 0.8, ombre: false });
+  }
   if (costume === 'sage') {
     if (!dos) {
       // la robe d'ivoire qui s'ouvre sous la robe violette, son arbre brodé d'or
@@ -952,7 +1005,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       t.forme('cheveux', (x, y) => {
         if (y < ey + 3 * k || y > long) return null;
         if (barbe !== 'sage' && y >= by - 1 * k && y <= by + 1.8 * k && Math.abs(x + 0.5 - bx) < (barbe === 'nain' ? 3.6 : 3) * k) return null;
-        const demi = (barbe === 'nain' ? P.rx - 0.8 * k : P.rx + 0.5 * k) - Math.max(0, y - cy - P.ry) * (barbe === 'nain' ? 0.25 : barbe === 'sage' ? 0.3 : 0.6);
+        let demi = (barbe === 'nain' ? P.rx - 0.8 * k : P.rx + 0.5 * k) - Math.max(0, y - cy - P.ry) * (barbe === 'nain' ? 0.25 : barbe === 'sage' ? 0.3 : 0.6);
+        // (v1.02) une longue barbe a un volume : de profil, elle tombe sous le menton (sa profondeur), au lieu de
+        // déborder devant le visage et sur les cheveux de la nuque
+        if (BARBES_VOLUME.includes(barbe)) demi = section(demi, P.rx * 0.55 - Math.max(0, y - cy - P.ry) * 0.12);
         const centre = X(0, P.rx * 0.35 + Math.max(0, y - cy - P.ry) * 0.1);
         const nx = (x + 0.5 - centre) / demi;
         if (Math.abs(nx) > 1 || (barbe === 'bouc' && Math.abs(x + 0.5 - bx) > 3 * k)) return null;
@@ -1071,7 +1127,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   if (tenue >= 4 && race !== 'nain' && race !== 'magicienne') for (let j = -5; j <= 5; j++) { const x = Math.round(X(j * k, Math.sqrt(Math.max(0, P.rx * P.rx - (j * k) ** 2)) * 0.9)); for (let e = 0; e < k; e++) t.poser(x + e, cy - P.ry + 1 * k + (j % 3 === 0 ? -1 * k : 0), 'or', j % 3 === 0 ? 5 : 4); } // le diadème
 
   // --- Les couvre-chefs des peuples ---
-  if (race === 'nain' && costume !== 'banquier' && !forgeron) {
+  if (race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && !forgeron) {
     // Le casque à cornes : une calotte de métal, un nasal, deux cornes d'ivoire qui s'écartent
     t.forme('metal', (x, y) => { const n = ellipsoide(cx, cy - 2 * k, P.rx + 0.8 * k, P.ry)(x, y); return n && y <= cy - 4 * k ? n : null; }, { decalage: 0.2, motif: (x, y) => (y === Math.round(cy - 4 * k) ? -0.9 : 0) });
     if (!dos) for (let y = cy - 2 * k; y <= cy + 3 * k; y++) for (let e = 0; e < k; e++) t.poser(Math.round(X(0, P.rx)) - (k - 1) + e - Math.round(s * k), y, 'metal', 4);
@@ -1199,6 +1255,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (!dos) t.forme('emeraude', ellipsoide(X(0, prof * 1.05), yT + 1 * k, 1.1 * k, 1.1 * k), { decalage: 0.5, ombre: false });
   } else if (costume === 'mentor') {
     // Rien sur la tête : Garrick a ses cheveux bruns, longs et ondulés
+  }
+  // (v1.02) les coiffes des Gardiens : le cercle d'argent, la petite couronne des nains, le diadème de feuilles
+  if (costume === 'gardien' && ['cercle', 'couronne', 'feuilles'].includes(atours.coiffe)) {
+    const metal = atours.metal || 'or', yc = cy - P.ry + 2.5 * k, haut = atours.coiffe === 'couronne' ? 2.4 : atours.coiffe === 'feuilles' ? 2 : 0;
+    t.forme(metal, (x, y) => { const d = Math.abs(x + 0.5 - X(0, -0.5 * k)); if (d > P.rx + 0.6 * k) return null; const pointe = Math.abs(((x + 0.5 - cx) % (2.6 * k) + 2.6 * k) % (2.6 * k) - 1.3 * k); return y >= yc - 0.8 * k - Math.max(0, 1.3 * k - pointe) * haut * 0.8 && y <= yc + 0.6 * k ? [(x + 0.5 - cx) / (P.rx + 1 * k), -0.2, 0.8] : null; }, { decalage: 0.3 });
+    if (Z(0, P.rx * 0.8) > 0) t.forme(atours.coiffe === 'couronne' ? 'ecaille' : 'cristal', ellipsoide(X(0, P.rx * 0.8), yc - 0.1 * k, 0.8 * k, 0.8 * k), { decalage: 0.6, ombre: false });
   }
   // (v1.02) la couronne d'or du Grand Sage : un bandeau, des pointes, des pierres bleues
   if (costume === 'sage') {

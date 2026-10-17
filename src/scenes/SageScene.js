@@ -3,6 +3,8 @@
 // dans une colonne de lumière. Son discours de « paix et bienveillance » (validé) ; la foule l'acclame...
 // et, au fond de la place, Garrick n'applaudit pas (un indice pour les attentifs). Un clic à chaque étape.
 // La cape d'écailles rouges du Sage est un autre indice : le dragon lui appartenait.
+// (planche 33, à valider) le cortège du Conseil sur l'estrade : fermé tant que les dessins du Conseil ne sont pas validés
+let CONSEIL_VALIDE = false;
 const DISCOURS_SAGE = [
   "Peuple du Comté ! Voilà bien des hivers que le dragon ne trouble plus nos ciels.",
   "Ce n'est pas la chance qui vous garde : c'est l'Union. Que chaque comptoir soit une lanterne, chaque voisin un frère.",
@@ -33,6 +35,8 @@ class SageScene extends Phaser.Scene {
     this.lueur = this.add.image(480 + (c[0] - this.sage.width / 2) * S, 332 - (this.sage.height - c[1]) * S, 'halo').setScale(0.5).setTint(0x80e8ff).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD).setDepth(4.2);
     this.lueurDx = this.lueur.x - 480; this.lueurDy = this.lueur.y - 332;
     // les gardes du cortège, qui arriveront des deux côtés
+    // (planche 33) le cortège du Conseil : le Gardien du Comté et le Champion du Rempart montent sur l'estrade
+    this.cortege = (CONSEIL_VALIDE ? [['gardienComte', 318, 372], ['champion', 642, 598]] : []).map(([f, x0, x]) => { const c = imageCorps(this, x0, 332, f, 9).setDepth(3.9).setAlpha(0).setFlipX(x0 > 480); c.cible = x; return c; });
     this.gardes = [[-80, 290, false], [1040, 670, true]].map(([x0, x, flip]) => { const g = imageCorps(this, x0, 432, 'garde', 7).setDepth(5).setFlipX(flip); g.cible = x; return g; });
     // Garrick, au fond à droite, à l'écart
     this.garrick = imageCorps(this, 872, 404, 'mentor', 5.2).setDepth(2.5).setFlipX(true).setTint(0xd8d0c8);
@@ -108,8 +112,9 @@ class SageScene extends Phaser.Scene {
     const fin = () => { if (!this.fini) this.indice.setText('▶ clique pour continuer'); this.occupe = false; };
     this.occupe = true;
     if (this.etape === 1) {
-      this.dire("Le grand jour du Solstice. Les cloches sonnent à toute volée : le cortège du Conseil des Gardiens arrive sur la place.");
+      this.dire("Le grand jour du Solstice. Les cloches sonnent à toute volée : le cortège du Conseil des Gardiens arrive sur la place." + (this.cortege.length ? " Maître Pommeval, le Gardien du Comté, et Sire Valdric, le Champion du Rempart, montent sur l'estrade." : ""));
       this.sonner(3);
+      for (const c of this.cortege) { pasDeMarche(this, c, 1800); this.tweens.add({ targets: c, x: c.cible, alpha: 1, duration: 1800, ease: 'Sine.easeOut', onComplete: () => this.tweens.add({ targets: c, y: c.y - 2, duration: 1200 + c.x, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }) }); }
       for (const g of this.gardes) { pasDeMarche(this, g, 2200); this.tweens.add({ targets: g, x: g.cible, duration: 2200, ease: 'Sine.easeOut', onComplete: () => g.setFlipX(g.cible > 480) }); }
       await this.attendre(2400); fin();
     } else if (this.etape === 2) {
