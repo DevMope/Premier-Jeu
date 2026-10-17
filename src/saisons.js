@@ -55,13 +55,14 @@ function prochaineFete(G) {
   return null;
 }
 
-// Les fêtes ne s'annoncent qu'une fois construites (lot B-3) : d'ici là, le calendrier les montre seulement
-const FETES_OUVERTES = false;
+// Les fêtes ne s'annoncent (et n'ont lieu) qu'une fois construites : d'ici là, le calendrier les montre seulement
+const FETES_OUVERTES = { solstice: true, brumes: false };   // (v1.00 : le Solstice ; la Nuit des Brumes en B-3b)
+function feteOuverte(id) { return !!FETES_OUVERTES[id]; }
 // (v0.99) Prévenir le joueur : la veille du premier jour, puis chaque jour de la fête (au réveil, quand rien
 // d'autre ne se passe : dans les nouvelles du matin)
 function annonceFete(G) {
-  if (!FETES_OUVERTES) return null;
-  const f = feteDuJour(G), d = prochaineFete(G);
+  const f0 = feteDuJour(G), d0 = prochaineFete(G);
+  const f = f0 && feteOuverte(f0.id) ? f0 : null, d = d0 && feteOuverte(d0.id) ? d0 : null;
   if (f) return [`Aujourd'hui commence ${f.nom} ! Trois jours de fête au marché.`, `C'est le grand jour : ${f.nom} bat son plein !`, `Dernier jour de ${f.nom} : profites-en, ça ne reviendra que l'an prochain.`][f.jour];
   if (d && d.dans === 1) return `Demain commence ${d.nom} ! Le village s'y prépare déjà.`;
   return null;

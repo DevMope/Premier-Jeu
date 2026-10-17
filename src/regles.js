@@ -168,7 +168,7 @@ function bandagesEnPlus(voyageur, colis) {
 }
 
 function pvAuDepart(voyageur, colis) {
-  return voyageur.pv + coeursEnPlus(voyageur, colis) + (voyageur.escorte ? AVANTAGES_SERMENT.escorte : 0);   // (v0.95 : le paladin de la Confrérie)
+  return voyageur.pv + coeursEnPlus(voyageur, colis) + (voyageur.escorte ? AVANTAGES_SERMENT.escorte : 0) + (typeof coeurTarte === 'function' ? coeurTarte(voyageur) : 0);   // (v0.95 : le paladin de la Confrérie ; v1.00 : la tarte du Solstice)
 }
 
 // La chance de réussir une épreuve, avec le bonus des objets en plus qu'elle demande.
@@ -1017,6 +1017,8 @@ function acheterDeco(G, id) {
 function remarqueCamp(G, v) {
   if (!v || v.remarqueJour === G.jour) return null;
   v.remarqueJour = G.jour;
+  const fete = typeof remarqueAtours === 'function' ? remarqueAtours(G, v) : null;   // (v1.00 : les atours de l'Union)
+  if (fete) return fete;
   const banni = PEUPLES_OMBRE.includes(v.race);
   const decos = (G.decos || []).filter(d => DECOS[d].camp);
   const clair = decos.filter(d => DECOS[d].camp === 'bien'), sombre = decos.filter(d => DECOS[d].camp === 'mal');
@@ -1574,6 +1576,7 @@ function nuit(G) {
   G.cadeauxVillages = [];
   for (const l of nuitMafia(G)) G.reveil.lignes.push(l);
   for (const l of nuitOmbreAnnee(G)) G.reveil.lignes.push(l);   // (v0.98) la caisse du Passeur, les contrats de l'ombre
+  if (typeof nuitSolstice === 'function') nuitSolstice(G);   // (v1.00) la tarte du Solstice ne se garde pas
   // (v0.86) les imposteurs servis hier : on apprend ce qu'est devenu ton baluchon
   for (const a of (G.arnaques || []).filter(a => !a.dit)) { G.reveil.lignes.push(a.texte); a.dit = true; }
   G.arnaques = (G.arnaques || []).filter(a => a.jour >= G.jour - 7);
@@ -1604,6 +1607,10 @@ function nuit(G) {
     if (d === FORGE.etoiles && !(G.forge && G.forge.construite)) G.reveil.lignes.push("Garrick passe en coup de vent : « Tu as grandi, et ton comptoir aussi. Il y a de la place dans l'arrière-boutique pour une forge : avec un forgeron, tu aurais toutes les armes que tu veux, quand tu veux. Penses-y ! »");
     if (d === FORGE.forgerons.baba.etoiles && G.forge && G.forge.construite && !G.forge.baba) G.reveil.lignes.push("Une naine aux tresses noires frappe à la porte de ta forge : Baba Marteau-d'Or cherche du travail. Elle t'attend dans l'arrière-boutique.");
     G.reveil.lignes.push(`Les saisons ont passé : ${dureeEnMois(mois)} plus tard, les contrées à ${d} étoiles s'ouvrent à tes aventuriers.` + (ageJoueur(G) > avant ? ` Tu as maintenant ${ageJoueur(G)} ans.` : ''));
+    // (v1.00) une fête passée pendant le saut : on l'a vue de loin (elle reviendra l'an prochain)
+    const fetesVues = [];   // (les grands jours des fêtes tombés pendant le saut)
+    if (typeof feteDuJour === 'function') for (let k = 1; k <= SAUTS_TEMPS[d]; k++) { const f = feteDuJour(G, G.jour - k); if (f && f.jour === 1 && feteOuverte(f.id) && !fetesVues.includes(f.nom)) fetesVues.push(f.nom); }
+    if (fetesVues.length) G.reveil.lignes.push(fetesVues.length > 1 ? `Pendant ce temps, ${fetesVues.join(' et ')} sont passées sans toi : tu les as vues de loin, entre deux clients. Elles reviendront l'an prochain.` : `Pendant ce temps, ${fetesVues[0]} est passée sans toi : tu l'as vue de loin, entre deux clients. Elle reviendra l'an prochain.`);
   }
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
@@ -2761,6 +2768,13 @@ function offrirCadeau(G, v, id) {
   if (p.cadeauJour === G.jour) return { erreur: `${v.nom.split(' ')[0]} a déjà reçu un cadeau aujourd'hui.` };
   G.cadeaux[id]--;
   p.cadeauJour = G.jour;
+  // (v1.00) les cadeaux du Solstice : la tarte (un cœur de plus au départ), le trèfle (tout le monde l'aime)
+  if (id === 'tarte') { const m = changerRelation(G, v.nom, 1); return { gout: 'aime', texte: offrirTarte(G, v) + (m ? ' ' + m : '') }; }
+  if (id === 'trefleSolstice') {
+    p.trefle = Math.min(TREFLE_MAX, (p.trefle || 0) + EFFET_CADEAU.aime.trefle);
+    const m = changerRelation(G, v.nom, 1);
+    return { gout: 'aime', texte: `« Un trèfle à quatre feuilles, gagné au tir à l'arc du Solstice ? Il me portera chance ! » (chance +${EFFET_CADEAU.aime.trefle})${m ? ' ' + m : ''}` };
+  }
   const gouts = GOUTS[v.race] || { aime: [], deteste: [] };
   const gout = gouts.aime.includes(id) ? 'aime' : gouts.deteste.includes(id) ? 'deteste' : 'neutre';
   const effet = EFFET_CADEAU[gout];
@@ -2888,6 +2902,11 @@ function avancerEvenements(G) {
     const hausse = prix.filter(([, k]) => k > 1).map(([id]) => nomObjet(id).toLowerCase()), baisse = prix.filter(([, k]) => k < 1).map(([id]) => nomObjet(id).toLowerCase());
     const effet = SAISONS[s].effet.split(' : ').slice(1).join(' : ') || SAISONS[s].effet;
     lignes.unshift(`${{ semailles: 'Le printemps est là', moissons: "L'été est là", brumes: "L'automne est là", givre: "L'hiver est là" }[s]} : ${effet} !${hausse.length ? ` Au marché, hausse sur : ${hausse.join(', ')}.` : ''}${baisse.length ? ` Baisse sur : ${baisse.join(', ')}.` : ''}`);
+  }
+  // (v1.00) une semaine avant une fête, le crieur l'annonce
+  if (typeof prochaineFete === 'function') {
+    const f = prochaineFete(G);
+    if (f && f.dans === 7 && feteOuverte(f.id)) lignes.push(`Dans une semaine, ${f.nom} ! ${f.id === 'solstice' ? "Le tir à l'arc de la Confrérie, le mât de cocagne, les atours de l'Union et, le dernier soir, les lanternes célestes." : 'Les Bannis allument leurs lanternes...'}`);
   }
   G.gazette = { jour: G.jour, lignes };
 }

@@ -1307,14 +1307,15 @@ class MarcheScene extends Phaser.Scene {
     const c = this.panneau('Le Bazar de Rosalie', 'Un cadeau par client et par jour · chacun ses goûts, à toi de les découvrir');
     c.add(this.add.text(30, 340, "« Un petit cadeau, et la chance leur sourit ! Mais attention : un nain n'aime pas ce qu'aime un elfe. »",
       style(12, '#6b4a2a', { fontStyle: 'italic' })));
-    Object.entries(CADEAUX).forEach(([id, cad], i) => {
+    // (v1.00) les cadeaux de fête (la tarte du Solstice) seulement pendant leur fête ; les lots jamais
+    Object.entries(CADEAUX).filter(([, cad]) => !cad.lot && (!cad.fete || (cad.fete === 'solstice' && solsticeActif(G)))).forEach(([id, cad], i) => {
       const x = 40 + (i % 2) * 460;
       const y = 372 + Math.floor(i / 2) * 26;
       c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(2));
       c.add(this.add.text(x + 20, y, `${cad.nom} · ${cad.prix} p.`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
       c.add(this.add.text(x + 280, y, `tu en as ${G.cadeaux[id] || 0}`, style(11, '#6b4a2a')).setOrigin(0, 0.5));
       this.bouton(c, x + 390, y, 70, 'Acheter', () => {
-        const erreur = acheterCadeau(G, id);
+        const erreur = id === 'tarte' ? acheterTarte(G) : acheterCadeau(G, id);
         if (!erreur) Son.jouer('achat');
         this.ouvrirBazar();
         this.message(erreur || `${cad.nom} : dans ton tiroir à cadeaux, au comptoir.`, erreur ? '#a03030' : '#2f6a2a');
@@ -1366,7 +1367,7 @@ class MarcheScene extends Phaser.Scene {
     // Toi, dans ta tenue du moment
     textureJoueur(this, G);
     c.add(this.add.image(900, 500, textureJoueur(this, G, 'troisQuarts')).setOrigin(0.5, 1).setScale(echelleJoueur(7)).setFlipX(true));   // (tourné vers la marchande)
-    Object.entries(GARDE_ROBE).forEach(([id, d], i) => {
+    Object.entries(GARDE_ROBE).filter(([, d]) => !d.fete).forEach(([id, d], i) => {   // (v1.00 : les atours de fête ont leur étal)
       const x = 40 + (i % 2) * 400;
       const y = 364 + Math.floor(i / 2) * 25;   // (audit v0.61 : la dernière rangée passait sous le message)
       c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(1.6));
