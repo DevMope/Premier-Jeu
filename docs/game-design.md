@@ -1320,3 +1320,22 @@ On pousse sur Cloudflare après ces préparatifs et le grand house keep de la nu
   parlent que le chat**.
 - Il aimerait retrouver **son vrai nom**, mais **le nom que JeuneGoy lui a donné lui plaît bien**.
 - À placer avec la quête du chat amoureux (après le lot B) ; à peaufiner avec le joueur.
+
+### Retours du joueur sur les planches 21 à 25 (17/10)
+- **Planche 21 validée** (Givre · 1 retouché : les arbres presque dégarnis avant d'être nus).
+- **Planche 22 validée** avec, dans la salle de la Nuit des Brumes, **des lanternes rouges partout** (à la
+  chinoise) : la tradition des Bannis pour **honorer les ancêtres**.
+- **Planche 23 validée.** La diseuse (Madame Ysmée) reste un mystère : **personne ne sait son vrai âge,
+  d'où elle vient, son réel but, ni si elle a vraiment des pouvoirs** (à creuser plus tard, peut-être).
+- **Planches 24 et 25 validées.**
+- **Les prix des saisons, revus** (idée du joueur : ce qui manque coûte plus cher, pas moins) :
+  - Semailles : les **cordes +10 %** (les crues) ; les **potions −10 %** (les herbes fraîches du printemps).
+  - Moissons : les **gourdes +10 %** (l'eau est rare) ; les **rations −10 %** (la récolte).
+  - Brumes : les **potions +10 %** (moins de plantes à cueillir dans les bois).
+  - Givre : les **capes chaudes +10 %**.
+  Claude a gardé une petite baisse au printemps et l'été (ce qui abonde vraiment) pour que chaque saison
+  ait une bonne et une mauvaise nouvelle au marché ; l'automne et l'hiver n'en ont pas (les saisons dures).
+- **Plus tard : l'atelier d'alchimie**, pour les potions, avec le même principe que la forge (inspiré de
+  l'atelier d'alchimie de *Kingdom Come: Deliverance 2* : la recette pas à pas, les ingrédients, le
+  chaudron, le temps de cuisson) ; **un seul employé** possible à engager pour les potions.
+
