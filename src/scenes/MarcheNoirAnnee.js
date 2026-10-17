@@ -20,6 +20,7 @@ Object.assign(MarcheNoirScene.prototype, {
     this.tweens.timeScale = 1;
     for (const o of this.vue || []) { this.tweens.killTweensOf(o); o.destroy(); }
     this.vue = [];
+    this.decorOsselets = false; this.tableO = null;   // (v1.01 : la table des osselets se redessine à la prochaine vue)
   },
   corpsVue(x, y, quoi, echelle, prof = 3.75) { return this.vueObj(imageCorps(this, x, y, quoi, echelle), prof); },
   texteVue(x, y, t, taille, couleur, extra = {}, prof = 3.9) { return this.vueObj(this.add.text(x, y, t, style(taille, couleur, extra)), prof); },

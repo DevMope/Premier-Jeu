@@ -192,7 +192,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   t.rampes.plume = rampeVive(0xf0e8d0); t.rampes.fourrure = rampeVive(0xe8e0d0); t.rampes.osier = rampeVive(0xb08a48); t.rampes.foulard = rampeVive(0xc03a30); t.rampes.laine = rampeVive(0x8a3030);
   t.rampes.levres = T.levres ? rampeVive(T.levres) : gobelin ? rampeVive(f ? 0xb84a5a : 0x8a3a34) : t.rampes.levres;
   t.rampes.feutre = rampeVive(0x4a3a2a); t.rampes.capeV = rampeVive(0x5a2a2a); t.rampes.bruyere = rampeVive(0x6a3a22); t.rampes.ruban = rampeVive(0x9a2a3a); t.rampes.echarpe = rampeVive(0xc04040);
-  t.rampes.capeU = rampeVive(0xe4e4ee); t.rampes.echarpeU = rampeVive(0x2a4a9a); t.rampes.paille = rampeVive(0xd0a040); t.rampes.fleurB = rampeVive(0xf4f0e8); t.rampes.fleurJ = rampeVive(0xf0c830); t.rampes.fleurR = rampeVive(0xe87aa0);   // (v1.00 : les atours de l'Union)
+  t.rampes.osM = rampeVive(0xe8dcc0); t.rampes.brumeC = rampeVive(0x8a8a9a); t.rampes.lanterneR = rampeVive(0xc81e18); t.rampes.capeU = rampeVive(0xe4e4ee); t.rampes.echarpeU = rampeVive(0x2a4a9a); t.rampes.paille = rampeVive(0xd0a040); t.rampes.fleurB = rampeVive(0xf4f0e8); t.rampes.fleurJ = rampeVive(0xf0c830); t.rampes.fleurR = rampeVive(0xe87aa0);   // (v1.00 : les atours de l'Union)
   t.rampes.blanc = rampeVive(0xf4f0ea);
   t.rampes.pupille = [0x060608, 0x0c0c12, 0x14141c, 0x1c1c26, 0x2a2a36, 0x3a3a48];
   // (v0.61) Les deux bandes : la Main Noire en robe noire à capuche profonde, comme des spectres
@@ -514,6 +514,17 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme('echarpeU', (x, y) => (y >= yT + 2 * k && y <= yT + 11 * k && Math.abs(x + 0.5 - X(-3 * k, prof)) < 1.4 * k ? [-0.3, 0, 0.9] : null));
     for (let y = yT + 2 * k; y <= yT + 11 * k; y++) { const x0 = Math.round(X(-3 * k, prof) - 1.4 * k), x1 = Math.round(X(-3 * k, prof) + 1.4 * k) - 1; if (t.mat(x0, y) === 'echarpeU') t.poser(x0, y, 'or', 3); if (t.mat(x1, y) === 'echarpeU') t.poser(x1, y, 'or', 4); }
     for (let x = Math.round(X(-3 * k, prof) - 1.4 * k); x < X(-3 * k, prof) + 1.4 * k; x++) t.poser(x, yT + 11 * k, 'or', 4);
+  }
+  // (v1.01) le châle de brume des ancêtres : gris, effiloché, sur les épaules et en pointe sur la poitrine
+  if (porte('chaleBrume')) {
+    t.forme('brumeC', (x, y) => { const d = Math.abs(x + 0.5 - X(0, prof * 0.6)); const larg = (ep + 2.5 * k) * Math.max(0.5, Math.abs(c) + 0.2); return y >= yT - 2 * k && y <= yT + 9 * k && d < larg - Math.max(0, y - yT - 1 * k) * (dos ? 0.2 : 0.9) && (hachage(Math.floor(x / k), Math.floor(y / k), 31) > 0.12 || y < yT + 6 * k) ? [(x + 0.5 - cx) / (6 * k) * 0.5, 0, 0.85] : null; }, { motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 3 === 0 ? 0.5 : 0) });
+  }
+  // (v1.01) la petite lanterne rouge, pendue à la ceinture
+  if (porte('lanterneCeinture') && !dos) {
+    const lx = X(pres * (ep - 0.5 * k), prof * 0.8), ly = yB + 3.5 * k;
+    for (let j = 0; j < 2 * k; j++) t.poser(Math.round(lx), Math.round(yB + j), 'cuir', 2);
+    t.forme('lanterneR', ellipsoide(lx, ly, 2.2 * k, 2 * k), { decalage: 0.4, ombre: false });
+    t.poser(Math.round(lx), Math.round(ly), 'or', 5);
   }
   if (porte('montre') && !dos) { for (let j = 0; j < 7 * k; j++) t.poser(Math.round(X(-4 * k + j, prof)), yB - 2 * k + Math.round(j / (3 * k)), 'or', j % 2 ? 4 : 3); t.forme('or', ellipsoide(X(4 * k, prof), yB + 1 * k, 1.6 * k, 1.6 * k), { decalage: 0.5, ombre: false }); }
   // La capuche et le col de fourrure du noble
@@ -991,6 +1002,11 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   if (T.meches && !dos) for (const cote of [loin, pres]) { const u = cote * P.rx * 0.92; if (Z(u, P.rx * 0.35) < 0) continue; const mx = X(u, P.rx * 0.35); t.forme('cheveux', (x, y) => (y >= cy - P.ry * 0.5 && y <= cy + P.ry + 3 * k && Math.abs(x + 0.5 - mx) < 1.3 * k ? [cote * 0.5, 0, 0.8] : null), { decalage: 0.2, motif: MECHES }); }
   if (T.fleurs && !dos) for (const [u, dy, r] of [[-0.8, -0.7, 2.4], [0.5, -0.95, 2.1], [-0.25, -1.05, 1.7]]) fleurHD(t, X(u * P.rx, P.rx * 0.45), cy + dy * P.ry, r * k, T.fleurs);
   if (!dos) { t.relief = false; poserYeux(); t.relief = true; }
+  // (v1.01) le masque d'os des anciens, sur le visage : deux orbites sombres
+  if (porte('masqueOs') && !dos) {
+    t.forme('osM', (x, y) => { const n = ellipsoide(X(0, P.rx * 0.6), cy + 0.5 * k, P.rx * 0.78, P.ry * 0.78)(x, y); return n && y > cy - P.ry * 0.55 ? n : null; }, { decalage: 0.5, ombre: false, motif: (x, y) => (hachage(Math.floor(x / k), Math.floor(y / k), 47) > 0.9 ? -0.8 : 0) });
+    for (const [ox] of yeux) for (let dy = -k; dy <= k; dy++) for (let dx = -k; dx <= k; dx++) t.poser(Math.round(ox + dx), Math.round(ey + 0.3 * k + dy), 'cuir', 0);
+  }
   if (porte('monocle') && !dos && yeux.length) { const [ox] = yeux[yeux.length - 1]; for (let a = 0; a < 6.3; a += 0.25) t.poser(Math.round(ox + Math.cos(a) * 2.6 * k), Math.round(ey + 0.3 * k + Math.sin(a) * 2.8 * k), 'or', a < 3 ? 4 : 2); for (let j = 0; j < 5 * k; j++) t.poser(Math.round(ox + 2.6 * k + (j % 2 ? 1 : 0)), Math.round(ey + 3 * k + j), 'or', 3); }
   if (porte('pipe') && !dos) { const bx = X(0, P.rx * 0.85); const px = Math.round(bx + s * 2 * k - 2 * k); for (let j = 0; j < 5 * k; j++) for (let e = 0; e < k; e++) t.poser(px - j, by + Math.floor(j / (2 * k)) * k + e, 'bruyere', 3); t.forme('bruyere', ellipsoide(px - 5 * k, by + 2.5 * k, 1.4 * k, 1.6 * k), { decalage: 0.1, ombre: false }); for (let j = 0; j < 3; j++) t.poser(px - 5 * k - j, by - 1 * k - j * 2 * k, 'blanc', 4 + (j % 2)); }
   if (longs && dos) t.forme('cheveux', (x, y) => (y >= cy && y <= yT + 10 * k && Math.abs(x + 0.5 - cx) < P.rx + 1 * k - Math.max(0, y - yT - 4 * k) * 0.4 ? [(x + 0.5 - cx) / (P.rx + 2 * k), 0, 0.8] : null), { decalage: -0.3, motif: MECHES });

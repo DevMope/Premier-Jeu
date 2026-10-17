@@ -288,6 +288,33 @@ const DESSINS_ICONES = {
     trait(t, 'cheneSombre', 2, 4, 14, 14, 0.7);
     for (const [x, y] of [[2, 4], [13, 4], [2, 13], [13, 13]]) t.poser(x, y, 'fer', 5);
   },
+  // --- (v1.01) La Nuit des Brumes ---
+  masqueOs(t) { // le masque d'os des anciens : deux orbites, une fente pour la bouche, un lien de cuir
+    t.rampes.os = rampe(0xe8dcc0);
+    t.forme('os', (x, y) => { const d = Math.hypot((x + 0.5 - 8) / 5.6, (y + 0.5 - 8) / 6.8); return d < 1 ? [(x + 0.5 - 8) / 7, (y - 8) / 8, 0.8] : null; }, { motif: (x, y) => ((x * 7 + y * 3) % 11 === 0 ? -0.8 : 0) });
+    for (const ox of [5, 10]) for (let y = 6; y <= 8; y++) for (let x = ox; x <= ox + 1; x++) t.poser(x, y, 'encre', 1);
+    for (let x = 6; x <= 10; x++) t.poser(x, 12, 'encre', 2);
+    for (let y = 5; y <= 9; y++) { t.poser(2, y, 'cuir', 2); t.poser(13, y, 'cuir', 2); }
+  },
+  chaleBrume(t) { // le châle de brume : gris, effiloché, plié en triangle
+    t.rampes.brume = rampe(0x8a8a9a);
+    t.forme('brume', (x, y) => (y >= 3 && y <= 13 && Math.abs(x + 0.5 - 8) < 7 - (y - 3) * 0.6 ? [(x + 0.5 - 8) / 8, 0, 0.85] : null), { motif: (x, y) => ((x + y) % 3 === 0 ? 0.6 : 0) });
+    for (let x = 2; x <= 13; x++) t.poser(x, 3, 'brume', 5);
+    for (const [x, y] of [[4, 14], [7, 15], [9, 14], [12, 13]]) t.poser(x, y, 'brume', 2);
+  },
+  lanterneCeinture(t) { // la petite lanterne rouge de ceinture, son crochet et ses franges d'or
+    t.rampes.rouge = rampe(0xc81e18);
+    t.forme('rouge', ellipsoide(8, 8, 5, 4.5), { decalage: 0.2, motif: (x) => (x % 3 === 0 ? -0.6 : 0) });
+    for (let x = 5; x <= 10; x++) { t.poser(x, 3, 'encre', 2); t.poser(x, 13, 'encre', 2); }
+    trait(t, 'or', 8, 0, 8, 3, 0.6);
+    for (const x of [6, 8, 10]) for (let y = 14; y <= 15; y++) t.poser(x, y, 'or', 4);
+    t.poser(8, 8, 'or', 5);
+  },
+  painCendre(t) { // le pain de cendre : une miche sombre, cuite sous la braise, un peu de cendre dessus
+    t.forme('pain', (x, y) => { const d = Math.hypot((x + 0.5 - 8) / 6.5, (y + 0.5 - 9) / 4.5); return d < 1 ? [(x + 0.5 - 8) / 8, (y - 9) / 6, 0.8] : null; }, { motif: (x, y) => ((x * 5 + y * 3) % 7 === 0 ? -1.4 : -0.5) });
+    for (const [x0, x1] of [[5, 7], [8, 10]]) trait(t, 'pain', x0, 7, x1, 9, 0.4, { decalage: -1, bord: false });
+    for (const [x, y] of [[6, 6], [10, 7], [8, 5], [11, 9]]) t.poser(x, y, 'lin', 3);
+  },
   // --- (v1.00) La Fête du Solstice ---
   tarte(t) { // une tarte aux fruits rouges, croisillons dorés, une part entamée
     t.rampes.feuille = rampe(0x4a9a3a);

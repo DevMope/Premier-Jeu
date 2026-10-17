@@ -160,7 +160,7 @@ Object.assign(MarcheScene.prototype, {
       const erreur = benirComptoir(G);
       if (!erreur) Son.jouer('trefle');
       this.ouvrirAtours();
-      this.message(erreur || `Frère Anselme lève la main : ton comptoir est béni ! (+${B.reputation} de réputation)`, erreur ? '#a03030' : '#2f6a2a');
+      this.message(erreur || `Frère Anselme lève la main : ton comptoir est béni ! (+${String(B.reputation).replace(".", ",")} de réputation)`, erreur ? '#a03030' : '#2f6a2a');
     }, 0x2a4a8a, 26);
     this.bouton(c, 700, 452, 250, 'Les vêtements de Marcelline ▸', () => this.ouvrirGardeRobe(), undefined, 22);
   },

@@ -16,7 +16,9 @@ class MarcheNoirScene extends Phaser.Scene {
     // (v0.57) La cave a trois coins côte à côte : les doyens, les voyageurs (l'arrivée), la Main Noire
     this.coin = 1;
     this.cameras.main.setScroll(960, 0);
+    this.fete = typeof brumesActives === 'function' && brumesActives(G);   // (v1.01) la Nuit des Brumes
     this.dessinerCave();
+    if (this.fete) { this.decorBrumes(); etatBrumes(G).venu = true; }
     this.dessinerGens();
     panneauCarteMonde(this, 1244, 362, { sombre: true }).setDepth(1);   // (v0.93) la carte du monde, même ici
     const fixe = o => o.setScrollFactor(0);
@@ -27,6 +29,7 @@ class MarcheNoirScene extends Phaser.Scene {
     this.elements = [];
     this.majBourse();
     if (G.marcheNoir.entre) this.accueil(); else this.porte();
+    if (this.fete && garrickParleCeSoir(G)) this.time.delayedCall(1200, () => this.discoursGarrick());   // (v1.01, an 1)
     this.time.delayedCall(900, () => conseilGarrick(this, 'marcheNoir', true));
   }
 
@@ -81,7 +84,7 @@ class MarcheNoirScene extends Phaser.Scene {
     const G = this.G;
     this.passeur = imageCorps(this, 1170, 370, 'passeur', 6.4).setTint(0xd8b8b0);
     this.soiree.bannis.forEach((b, i) => {
-      const img = imageCorps(this, 1600 + i * 150, 370, b, 5.8).setFlipX(true).setTint(0xd8b0a8);
+      const img = imageCorps(this, this.fete ? [1520, 1890][i] : 1600 + i * 150, 370, b, 5.8).setFlipX(true).setTint(0xd8b0a8);   // (v1.01 : les soirs de fête, autour du feu)
       this.tweens.add({ targets: img, y: 368, duration: 1400 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     });
     // Les familles des doyens : un enfant gobelin, une mère orc qui étend le linge, un vieux troll qui somnole
@@ -201,7 +204,7 @@ class MarcheNoirScene extends Phaser.Scene {
       if (!message) message = "Le Passeur : « Bienvenue en bas. Ici, on parle de contrées que ta carte ne montre pas... Le Bourbier, le Pont des Trolls, la Clairière des Chamans. Demain, tu sauras où elles sont. »";
     }
     const b = s.bannis[0];
-    this.texte(40, 374, message || `Le Passeur : « Bienvenue en bas. Ici, personne ne pose de questions. »`, 15, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    this.texte(40, 374, message || (this.fete ? accueilBrumes(G) : `Le Passeur : « Bienvenue en bas. Ici, personne ne pose de questions. »`), 15, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
     this.texte(40, 400, `${b.nom} murmure : « ${s.murmure} »`, 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } });
     const mainNoire = this.mainNoireOuverte;
     const ici = page => () => this.allerCoin(1, page);
@@ -216,7 +219,9 @@ class MarcheNoirScene extends Phaser.Scene {
     choix.forEach(([t, a], i) => this.bouton(30 + l * (i + 0.5), 452, l - 14, t, a));
     // (v0.98) toute l'année : le coin bar, la fosse, le bras de fer de Mog
     const annee = [['Au Gobelet Fêlé (le bar)', () => this.pageBar()], ['La fosse (les paris)', () => this.pageFosse()], ['Le bras de fer', () => this.pageBrasDeFer()]];
-    annee.forEach(([t, a], i) => this.bouton(140 + i * 250, 494, 236, t, a));
+    if (this.fete) annee.unshift(['🏮 La Nuit des Brumes', () => this.pageBrumes()]);   // (v1.01)
+    const la = this.fete ? 184 : 236, pas = this.fete ? 196 : 250, x0 = this.fete ? 100 : 140;
+    annee.forEach(([t, a], i) => this.bouton(x0 + i * pas, 494, la, t, a));
     this.bouton(870, 494, 130, 'Remonter', () => this.partir(true));
     this.texteRisque();
   }
