@@ -1379,3 +1379,26 @@ remettre l'année suivante) ; ce sont les étals qui disparaissent.
 et un jeu de force (ombre) ; trois atours chacun ; un moment de lumière (les lanternes célestes) contre
 un moment de mémoire (les lanternes des ancêtres).
 
+
+### Retours du joueur sur la planche 22 v3 (17/10, au coucher)
+- **Tout est validé, y compris toutes les idées en plus**, sauf la maquette du **tir à l'arc**, trop simple
+  et hors de la direction artistique : à refaire en pixel art, dans le décor du marché, avec JeuneGoy.
+- **Les lanternes pour les aventuriers morts** (Nuit des Brumes), précisées par le joueur :
+  - le joueur **paie chaque lanterne** et **choisit à qui il rend hommage** (parmi ses morts) ;
+  - trois qualités, trois animations :
+    - **basse qualité** : elle peine à s'envoler, hésite, retombe un peu, repart... (une touche d'humour) ;
+    - **qualité moyenne** : elle monte droite et calme, c'est ce qu'il faut (une touche de sobriété) ;
+    - **meilleure qualité** : beaucoup trop (« too much ») : des feux d'artifice, des gerbes d'étincelles,
+      tout ça pour une seule personne ;
+  - **les familles réagissent** au choix (une lanterne basse qualité ne convient que très rarement à une
+    famille ; la moyenne honore ; la meilleure peut toucher... ou gêner) ;
+  - le joueur peut **n'honorer personne** : la foule et les familles le voient d'un mauvais œil.
+- **L'hydromel noir** (idée du joueur) : pendant le temps de la fête (à définir), le joueur peut en boire ou
+  non. S'il boit, il finit complètement ivre et a **des visions de son enfance** : des bribes de ses parents,
+  des moments joyeux, vite arrêtés par **le feu du dragon** qui dévore les derniers instants de la vision et
+  le ramène à la réalité. Un ou deux anciens l'entourent, lui demandent si ça va, et lui disent en rigolant
+  qu'il devrait boire encore un peu, que « cette boisson n'est que pour les vrais ». **Le joueur ne parle
+  jamais dans le jeu** (règle générale).
+- **Le Passeur** : un design propre à lui, **style un peu pirate** (références du joueur : Albator — la
+  grande cape rouge en lambeaux, la cicatrice ; un capitaine pirate — le tricorne, le long manteau sombre à
+  galons d'or, l'écharpe rouge à la taille, le sabre ; un corsaire — le foulard, les bottes hautes).
