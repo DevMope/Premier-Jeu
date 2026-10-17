@@ -1542,3 +1542,11 @@ de loin (pas de fête manquée en silence).
 - Les dates des fêtes proposées te vont-elles ?
 - La vision et l'histoire du Passeur : validées, ou à retoucher ?
 - On garde l'ordre B-1 → B-5 (les saisons d'abord, la diseuse et le foyer à la fin) ?
+
+### Réponses du joueur sur les préparatifs du lot B (18/10)
+- **Dates des fêtes validées** (Solstice : 13-15 des Moissons ; Nuit des Brumes : 26-28 des Brumes). Rater une fête
+  à cause d'un saut de temps n'est pas grave (elles reviennent chaque année).
+- **Prévenir le joueur** : la veille et le jour même, un avertissement (« Demain, c'est la Fête du Solstice ! »),
+  affiché quand le joueur n'est pas occupé (pas au milieu d'un client, d'un récit ou d'une cinématique).
+- **La première vision de l'hydromel noir : validée** telle que proposée. **L'histoire du Passeur : validée.**
+- **L'ordre B-1 → B-5 : validé.** v0.98 poussée sur Cloudflare.
