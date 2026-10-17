@@ -151,6 +151,12 @@ function decrocherLot(G, choix) {
   return `Le sac mystère ! Dedans : ${texte}. Tout file dans ta réserve.`;
 }
 
+// Les lanternes célestes : le soir du dernier jour du Solstice (une fois par an)
+function lanternesCelestesDues(G) {
+  const f = solsticeActif(G) ? feteDuJour(G) : null;
+  return !!(f && f.jour === 2 && G.lanternesVues !== dateDuJour(G).an);
+}
+
 // La nuit : la tarte ne se garde pas
 function nuitSolstice(G) {
   if (G.cadeaux && G.cadeaux.tarte) G.cadeaux.tarte = 0;

@@ -16,6 +16,12 @@ class DodoScene extends Cinematique {
   create() {
     exclureScenes(this, 'Nuit', 'Carte', 'Comptoir');   // (v0.62)
     const G = this.G = window.GAME;
+    // (v1.00) le dernier soir du Solstice, avant d'aller dormir : les lanternes célestes, une fois par an
+    if (typeof lanternesCelestesDues === 'function' && lanternesCelestesDues(G)) {
+      G.lanternesVues = dateDuJour(G).an;
+      this.scene.start('Lanternes', { suite: 'Dodo', donnees: { bilan: this.bilan } });
+      return;
+    }
     this.cameras.main.fadeIn(500);
     this.dessinerChambre();
     this.joueur = this.add.image(1000, SOL_CHAMBRE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(3);
