@@ -1055,6 +1055,55 @@ le bois (une planche le soir, un réveil en forme), le chat, les employés et le
 Ensuite viendront les planches : les fêtes (le marché décoré), la diseuse (son portrait et sa tente),
 le calendrier du bureau et la petite icône de saison.
 
+### Réponses du joueur sur le lot B (17/10)
+1. **Les saisons, plus marquées** : des arbres au premier plan dont les feuilles changent (bourgeons,
+   pleine feuille, roux, branches nues et neige), beaucoup de fleurs au printemps, des blés l'été, un
+   **bonhomme de neige** dans le décor l'hiver, etc. Et **une jolie cinématique de passage pour chaque
+   saison** (quatre cinématiques).
+2. **Les fêtes : une par camp**. Côté lumière, une fête **officielle et très festive** (le village, la
+   Confrérie, des bannières, des lampions, de la musique) ; côté Bannis, une fête **plus discrète mais
+   très conviviale** (au marché noir, autour d'un feu, chants, partage). (À préciser : la date de chacune,
+   et ce que le joueur y gagne selon son camp.)
+3. **La diseuse : parfois trompeuse**. Avec un flair à 100 %, de **tout petits indices**, pas dans ses
+   paroles mais **dans le décor de l'animation du présage** (la flamme de la bougie qui vacille, une carte
+   à l'envers, le chat de la diseuse qui détourne la tête...).
+4. **Le chat peut bouder** s'il n'est pas nourri : par exemple il part un jour, et le joueur en est
+   prévenu (une notification, un mot, sa gamelle vide...). **L'hiver sans bois doit être sévère**, mais le
+   joueur doit être **mieux averti** quand il n'a pas mis de bûches.
+
+### Idées du joueur (17/10)
+- **Le chat amoureux** (quête annexe) : un jour, le chat disparaît ; le joueur lance une petite quête et
+  découvre que le chat s'est trouvé une **compagne**, qui est **en danger** (noyade, prédateurs, accident :
+  à choisir) et qu'il faut sauver. Plus tard, le couple a **deux petits** (une fille et un garçon). Le
+  joueur peut **renommer tous les chats**, et aménager une **petite maison pour chats** avec leur espace.
+- **L'étage** : la maison gagne un étage visible avec les améliorations ; on pourra exploiter cet espace
+  pour de nouvelles fonctionnalités (la maison des chats, une nouvelle pièce...).
+- **Le Carrefour à rééquilibrer** : le bonus de l'ombre est plus alléchant que celui de la lumière ;
+  rendre la lumière plus attirante, et ajouter des bonus aux deux camps.
+- **Plus tard** : plus d'améliorations, une nouvelle pièce (comme la forge ou l'atelier) ; le rival et le
+  petit bar restent à faire (lot C).
+
+### Le Carrefour rééquilibré : ce que Claude propose (à valider)
+Aujourd'hui, après le serment : ×1,5 sur les gestes de son côté, et **Confrérie** : sa bannière au
+comptoir et des taux d'ami à la Banque ; **Bannis** : la Main Noire prête **sans intérêts** (mais la garde
+passe plus souvent). Les prêts gratuits pèsent plus lourd que des taux réduits : l'ombre est plus
+alléchante. Proposé, en plus de ce qui existe :
+- **Serment de lumière (la Confrérie du Dernier Rempart)**
+  1. *Les pèlerins* : +1 client par jour (la Confrérie envoie du monde au comptoir).
+  2. *Les clercs* : les soins coûtent moitié moins cher au retour des blessés.
+  3. *La protection* : la garde ne fouille plus jamais ton comptoir (elle te sait loyal).
+  4. *L'escorte* : une fois par semaine, un paladin accompagne une mission de ton choix (+1 cœur au
+     départ), avec une petite scène au comptoir.
+  5. *La bénédiction* : +10 % de butin dans les terres de lumière.
+- **Serment d'ombre (les Bannis)**
+  1. *La porte toujours ouverte* : le marché noir ouvre chaque soir.
+  2. *Les receleurs* : les objets interdits se vendent 20 % plus cher.
+  3. *Le Passeur* : une fois par semaine, il rapporte le baluchon d'un aventurier mort (ses objets
+     reviennent dans ta réserve).
+  4. *Les ombres* : +10 % de butin dans les terres d'ombre.
+  (La garde qui passe plus souvent reste le prix à payer.)
+- L'écran du Carrefour montrerait ces avantages sur chaque vitrail, pour qu'on choisisse en sachant.
+
 ### On le fera plus tard
 - **Les instruments de musique** (idée du 16/10) : le joueur peut jouer d'instruments qu'il collectionne au fil de la partie. **3 instruments de base**, trouvables sans prérequis ; **2 instruments de lumière** et **2 d'ombre**, qu'on ne peut débloquer qu'après avoir **prêté serment** au camp correspondant (au Carrefour). (À préciser : où on les trouve, où et quand on en joue, ce que ça apporte.)
 - **Plus de musiques** pour en enchaîner plusieurs et ne jamais lasser le joueur avec une seule.

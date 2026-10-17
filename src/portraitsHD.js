@@ -611,6 +611,8 @@ const POSES_BUSTE = {
   nain: { neutre: ['croises', 'hanche'], content: ['pouce', 'croises', 'salut'], inquiet: ['tete', 'croises'], fache: ['poing', 'croises'] },
   elfe: { neutre: ['menton', 'croises', 'hanche'], content: ['salut', 'coeur'], inquiet: ['coeur', 'mains'], fache: ['croises', 'hanche'] },
   magicienne: { neutre: ['baton', 'menton'], content: ['baton', 'salut'], inquiet: ['coeur', 'baton'], fache: ['baton', 'poing'] },
+  // (v0.94) le panda est trop large pour lever le bras dans le cadre : ses pattes restent devant lui
+  panda: { neutre: ['ventre', 'croises'], content: ['ventre', 'coeur'], inquiet: ['coeur', 'ventre'], fache: ['croises'] },
 };
 function poseBuste(g, expression) {
   const race = POSES_BUSTE[g.race] ? g.race : 'humain';
@@ -627,7 +629,10 @@ function brasBuste(t, g, v, cx, pose) {
   const sx = largeur + 2, sy = v.torse + 12;
   const epaule = s => [cx + s * sx, sy];
   const bras = (pts) => traitHD(t, manche, pts, ep, -0.2);
-  const main = (x, y, rx = 5.8, ry = 5) => t.forme('peau', ellipsoide(x, y, rx, ry), { decalage: 0.1 });
+  // (v0.94) le panda a des pattes noires, pas des mains roses
+  const peau = g.race === 'panda' ? 'patte' : 'peau';
+  if (peau === 'patte') t.rampes.patte = rampe(0x2c2622);
+  const main = (x, y, rx = 5.8, ry = 5) => t.forme(peau, ellipsoide(x, y, rx, ry), { decalage: 0.1 });
   // Une main ouverte : la paume, quatre doigts séparés, le pouce sur le côté
   const ouverte = (x, y, s = 1) => {
     main(x, y, 6, 4.8);
@@ -1258,7 +1263,11 @@ function textureBusteHD(scene, personne, expression = 'neutre', etat = {}) {
   // (les Bannis ont l'air fâché tant qu'ils ne te connaissent pas : leur humeur « neutre » est fâchée)
   if (expression === 'neutre' && typeof banniFache === 'function' && banniFache(personne)) expression = 'fache';
   const cle = `busteHD_${personne.race}_${personne.nom}${personne.marques ? '_' + personne.marques.join('-') : ''}${personne.prestige ? "_noble" : ""}${personne.figurant ? '_' + personne.figurant : ''}${personne.vieux ? '_vieux' : ''}${personne.costume ? '_' + personne.costume : ''}_${expression}${etat.pose ? '_' + etat.pose : ''}${etat.cligne ? '_c' : ''}${etat.parle ? '_p' : ''}`;
-  if (!scene.textures.exists(cle)) dessinerBusteHD(geneHD(personne), expression, etat).texture(scene, cle);
+  if (!scene.textures.exists(cle)) {
+    const t = dessinerBusteHD(geneHD(personne), expression, etat);
+    if (personne.race === 'panda') nettoyerIlots(t);   // (v0.94 : une petite tache flottait au-dessus de son oreille)
+    t.texture(scene, cle);
+  }
   return cle;
 }
 
@@ -1374,5 +1383,23 @@ function marqueVisage(t, marque, { fx, ey, cx, v, T }) {
     t.rampes.or = rampe(0xe8b830);
     for (let a = 0; a < 28; a++) { const x = Math.round(fx + 8 + Math.cos(a / 28 * Math.PI * 2) * 5.5), y = Math.round(ey + 0.5 + Math.sin(a / 28 * Math.PI * 2) * 5); t.poser(x, y, 'or', a < 14 ? 2 : 4); }
     trait(fx + 13, ey + 3, fx + 17, ey + 20, 'or', 3, true);
+  }
+}
+
+// (v0.94) Efface les petits îlots de pixels détachés du reste du dessin (moins de `max` pixels)
+function nettoyerIlots(t, max = 12) {
+  const vu = new Uint8Array(t.l * t.h);
+  for (let i = 0; i < t.m.length; i++) {
+    if (!t.m[i] || vu[i]) continue;
+    const pile = [i], comp = []; vu[i] = 1;
+    while (pile.length) {
+      const j = pile.pop(); comp.push(j);
+      const x = j % t.l, y = Math.floor(j / t.l);
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy, k = ny * t.l + nx;
+        if (t.dans(nx, ny) && t.m[k] && !vu[k]) { vu[k] = 1; pile.push(k); }
+      }
+    }
+    if (comp.length < max) for (const j of comp) { t.m[j] = null; t.c[j] = null; t.k[j] = 0; }
   }
 }

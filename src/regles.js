@@ -654,7 +654,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
   G.file = JOUR_1.map(v => ({ type: 'client', voyageur: creerVoyageur(G, v) }));
   // Deux lettres déjà sur le bureau le premier matin, à accepter ou refuser le soir.
   recevoirLettres(G, 2);
-  G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2);
+  G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2, hasard(2, 3));   // (v0.94 : un petit choix, pas tout le marché)
   G.expressMateriaux = materiauxExpress();
   G.zonesConnues = zonesOuvertes(G); // les zones ouvertes au départ ne donnent pas de pièce
 }
@@ -1242,12 +1242,12 @@ function intentionFamille(pts, valeureux, niveau) {
 
 // Un assortiment : les objets de base toujours là, plus quelques autres au hasard.
 // Les prix bougent un peu d'un jour à l'autre.
-function offreDuJour(multiplicateur, nbAutres, qteMin, qteMax) {
+function offreDuJour(multiplicateur, nbAutres, qteMin, qteMax, nombre = null) {
   // (v0.63) des armes, seulement l'épée : les autres, c'est chez Thorgal
   const courants = Object.keys(ITEMS).filter(id => !estArme(id) || id === 'epee');
   const autres = Phaser.Utils.Array.Shuffle(courants.filter(id => !ITEMS[id].base));
   const ids = multiplicateur > 1
-    ? Phaser.Utils.Array.Shuffle(courants.slice()).slice(0, hasard(3, 4))
+    ? Phaser.Utils.Array.Shuffle(courants.slice()).slice(0, nombre || hasard(3, 4))
     : [...courants.filter(id => ITEMS[id].base), ...autres.slice(0, hasard(1, nbAutres))];
   const offre = {};
   for (const id of Object.keys(ITEMS)) {
@@ -1264,8 +1264,10 @@ function offreDuJour(multiplicateur, nbAutres, qteMin, qteMax) {
 // Le fer et le cuir de Grippesou : pas tous les jours, et hors de prix.
 function materiauxExpress() {
   const offre = {};
-  for (const [id, m] of Object.entries(MATERIAUX)) {
-    if (Math.random() >= EXPRESS_MATERIAUX.chance) continue;
+  // (v0.94) un seul matériau à la fois, certains jours : sa carriole n'est pas une forge
+  if (Math.random() >= EXPRESS_MATERIAUX.chance) return offre;
+  const choisi = auHasard(Object.keys(MATERIAUX));
+  for (const [id, m] of Object.entries(MATERIAUX).filter(([k]) => k === choisi)) {
     offre[id] = { prix: Math.round(m.prix * EXPRESS_MATERIAUX.multiplicateur * Phaser.Math.FloatBetween(0.9, 1.3)), qte: hasard(1, 3) };
   }
   return offre;
@@ -1307,7 +1309,7 @@ function agrandirReserve(G) {
 
 // Le niveau de luxe d'un meuble (0 à 3). L'étagère suit les agrandissements de la réserve.
 function niveauAmelioration(G, cle) {
-  if (cle === 'reserve') return AGRANDISSEMENTS.filter(a => a.capacite <= G.capacite).length;
+  if (cle === 'reserve') return Math.min(3, AGRANDISSEMENTS.filter(a => a.capacite <= G.capacite).length);
   return (G.ameliorations && G.ameliorations[cle]) || 0;
 }
 
@@ -1315,8 +1317,10 @@ function niveauAmelioration(G, cle) {
 function ameliorationSuivante(G, cle) {
   const n = niveauAmelioration(G, cle);
   const a = AMELIORATIONS[cle];
+  // (v0.94) l'étagère s'agrandit encore une fois au plus beau bois (75, puis 100 places)
+  if (cle === 'reserve') { const agr = agrandissementSuivant(G); return agr ? { niveau: Math.min(3, n + 1), nom: a.niveaux[Math.min(3, n + 1)], prix: agr.prix } : null; }
   if (n >= a.niveaux.length - 1) return null;
-  const prix = cle === 'reserve' ? AGRANDISSEMENTS[n].prix : a.prix[n];
+  const prix = a.prix[n];
   return { niveau: n + 1, nom: a.niveaux[n + 1], prix };
 }
 
@@ -1522,7 +1526,7 @@ function nuit(G) {
     if (G.pieges[mission.piege] > 0) G.pieges[mission.piege]--;
     G.faucheuse.mission = null;
   }
-  G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2);
+  G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2, hasard(2, 3));   // (v0.94 : un petit choix, pas tout le marché)
   G.expressMateriaux = materiauxExpress();
   const mauvaisJour = G.journal.morts > 0 || G.argent <= SEUIL_FAILLITE + 30;
   // La taxe de la Confrérie, en fin de semaine
@@ -2166,7 +2170,7 @@ function terminerAventure(G, parti) {
       message = (message ? message + ' ' : '') + `« Au fait... J'ai aperçu au loin ${ZONES[z].nom.replace(/^(Le|La|Les|L') /, m => m.toLowerCase()).replace(/^L'/, "l'")}. » Nouvelle zone sur ta carte !`;
     }
   } else {
-    if (!r.valeureux) G.reputation--;
+    G.reputation -= r.valeureux ? PERTE_MORT.valeureux : PERTE_MORT.sansGloire;   // (v0.94 : plus lourd qu'avant, −1 ou 0)
     connaitre(G, v).mort = true;
     G.journal.morts++;
     recolter(G, [parti]); // si la Faucheuse ne l'a pas déjà emporté

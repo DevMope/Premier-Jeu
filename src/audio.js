@@ -42,8 +42,8 @@ const Son = {
     this.busMusique = this.ctx.createGain(); this.busMusique.connect(this.maitre); this.busMusique.connect(this.reverb);
     this.busVoix = this.ctx.createGain(); this.busVoix.connect(this.maitre); this.busVoix.connect(this.reverb);
     this.busInterface = this.ctx.createGain(); this.busInterface.connect(this.maitre);
-    this.appliquerVolumes();
     this.pret = true;
+    this.appliquerVolumes();   // (v0.94 : après « prêt », sinon les volumes gardés étaient ignorés au rechargement)
     if (this.themeVoulu) this.ambiance(this.themeVoulu);
     if (this.natureVoulue) this.nature(true);
   },

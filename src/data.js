@@ -150,6 +150,9 @@ const AGRANDISSEMENTS = [
   { capacite: 30, prix: 60 },
   { capacite: 40, prix: 140 },
   { capacite: 55, prix: 260 },
+  // (v0.94) le joueur grandit vite : deux agrandissements de plus (l'étagère garde son plus beau bois)
+  { capacite: 75, prix: 520 },
+  { capacite: 100, prix: 950 },
 ];
 
 // Les améliorations du shop : chaque meuble a 4 niveaux de luxe (0 à 3), commandés le soir au
@@ -205,6 +208,9 @@ const DEDOMMAGEMENTS = {
 // Réputation perdue quand on refuse.
 const REFUS_LETTRE = 0.2;
 const REFUS_CLIENT = 0.5;
+// (v0.94) Un aventurier mort : la réputation en prend un coup (moins s'il est tombé en héros).
+// Un bon dédommagement en rattrape un peu.
+const PERTE_MORT = { valeureux: 1, sansGloire: 2 };
 
 // Les prêts : les banquiers nains prêtent plus, et moins cher, quand ta réputation grandit.
 // La Main Noire (`mal`) ne prête qu'à ceux qui ont choisi le camp du mal (plus tard dans le jeu).

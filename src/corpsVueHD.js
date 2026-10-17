@@ -221,8 +221,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // Les bras levés : du coude écarté, les mains montent au-dessus de la tête (pour porter quelque chose)
     // (les longs bras du troll, comme un orang-outan : les mains pendent presque aux genoux)
     const long = T.brasLongs && !leves;
-    const coude = leves ? [cote * (ep + 2.5 * k), 1 * k, yT - 5 * k] : [cote * (ep + (long ? 2.2 : 1.2) * k), (-0.8 + bal * 1.5) * k, long ? yT + P.torse * 0.68 : yT + P.torse * 0.5];
-    const main = leves ? [cote * 6.5 * k, 2 * k, cy - P.ry - 7 * k] : [cote * (ep + (long ? 2.2 : 0.6) * k), (1 + bal * 3.5) * k, long ? yB + (sol - yB) * 0.48 : yB + (1.5 - Math.abs(bal) * 0.5) * k];
+    const coude = leves ? [cote * Math.max(ep + 2.5 * k, P.rx * 1.15), 1 * k, yT - 5 * k] : [cote * (ep + (long ? 2.2 : 1.2) * k), (-0.8 + bal * 1.5) * k, long ? yT + P.torse * 0.68 : yT + P.torse * 0.5];
+    const main = leves ? [cote * Math.max(6.5 * k, P.rx * 1.05), 2 * k, cy - P.ry - 7 * k]   /* (v0.94 : au-dessus d'une grosse tête, les mains s'écartent) */ : [cote * (ep + (long ? 2.2 : 0.6) * k), (1 + bal * 3.5) * k, long ? yB + (sol - yB) * 0.48 : yB + (1.5 - Math.abs(bal) * 0.5) * k];
     // Les aînés : le bras de la canne bien plié, le coude écarté en arrière, la main en avant qui
     // appuie de tout son poids sur le pommeau
     if (g.vieux && devant && !leves && pose !== 'baluchon') {
