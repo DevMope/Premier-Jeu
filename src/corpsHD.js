@@ -39,7 +39,8 @@ const FIGURANTS = {
   gobelin: { race: 'gobelin', nom: 'Grippesou', costume: 'gobelin', habit: 0x6a5030, cheveux: 0x5a3a20 },
   bourgmastre: { race: 'humain', nom: 'Odilon Bonnefoi', costume: 'banquier', habit: 0x4a2a5a, cheveux: 0xb0b0b8, barbe: 'moustache', niveau: 3 },
   heraut: { race: 'humain', nom: 'Le héraut', costume: 'garde', habit: 0x2a4a8a, cheveux: 0x5a3a1a },
-  passeur: { race: 'humain', nom: 'Le Passeur', costume: 'passeur', habit: 0x2a2430, cheveux: 0x1a1418, cape: 0x1a1620, barbe: 'courte', niveau: 1 },
+  passeur: { race: 'humain', nom: 'Le Passeur', costume: 'pirate', coiffure: 'long', habit: 0x1e2236, cheveux: 0x1a1418, cape: 0x8a1616, barbe: 'courte', niveau: 2 },
+  silhouette: { race: 'humain', nom: 'Silhouette encapuchonnée', costume: 'passeur', habit: 0x2a2430, cheveux: 0x1a1418, cape: 0x1a1620, barbe: 'courte', niveau: 1 },
   // (v0.59) les brigands et les pillards des récits, capuche sur la tête, l'air mauvais
   brigand: { race: 'humain', nom: 'Brigand', costume: 'passeur', habit: 0x4a2e2a, cheveux: 0x2a1a12, cape: 0x2e2622, barbe: 'courte', niveau: 1, fache: true },
   brigande: { race: 'humain', nom: 'Brigande', feminin: true, costume: 'passeur', habit: 0x34402a, cheveux: 0x6a2a1a, cape: 0x26301e, niveau: 1, fache: true },

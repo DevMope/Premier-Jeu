@@ -113,7 +113,7 @@ class MarcheNoirScene extends Phaser.Scene {
       });
     }
     // La Main Noire : une silhouette encapuchonnée derrière sa table, deux gardes orcs
-    this.add.image(2440, 350, corpsHD(this, 'passeur')).setOrigin(0.5, 1).setScale(6.6 * echelleCorps(corpsHD(this, 'passeur'))).setTint(0x3a2830);
+    this.add.image(2440, 350, corpsHD(this, 'silhouette')).setOrigin(0.5, 1).setScale(6.6 * echelleCorps(corpsHD(this, 'silhouette'))).setTint(0x3a2830);
     this.add.image(2440, 392, 'tableMainNoire').setOrigin(0.5, 1).setScale(2.2);
     [[2150, false], [2730, true]].forEach(([x, flip], i) => imageCorps(this, x, 370, { nom: i ? 'Krug Briseur' : 'Mog Poing-de-Fer', race: 'orc', niveau: 'veteran' }, 6.2).setFlipX(flip).setTint(0xc8a8a0));
     // Tant que la Main Noire ne s'intéresse pas à toi, le rideau est gardé

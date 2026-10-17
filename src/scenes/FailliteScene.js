@@ -77,7 +77,7 @@ class FailliteScene extends Cinematique {
     await this.nouveauPlan(() => {
       sol = this.decorFacade(0.95);
       this.p = this.joueur(400, sol);
-      this.ombre = this.o(this.add.image(1040, sol, corpsHD(this, 'passeur')).setOrigin(0.5, 1).setScale(6.6 * echelleCorps(corpsHD(this, 'passeur'))).setTint(0x2a1c24).setDepth(3));
+      this.ombre = this.o(this.add.image(1040, sol, corpsHD(this, 'silhouette')).setOrigin(0.5, 1).setScale(6.6 * echelleCorps(corpsHD(this, 'silhouette'))).setTint(0x2a1c24).setDepth(3));
       this.orcs = [0, 1].map(i => this.corps(1110 + i * 80, sol, { nom: i ? 'Krug Briseur' : 'Mog Poing-de-Fer', race: 'orc', niveau: 'veteran' }).setFlipX(true));
     });
     this.ecrire('', "Cette nuit-là, personne ne frappa à la porte. Elle s'ouvrit toute seule.");
@@ -101,7 +101,7 @@ class FailliteScene extends Cinematique {
       this.o(this.add.rectangle(480, 270, 960, 540, 0x100608, 0.35).setDepth(2.5));
       for (const x of [170, 480, 790]) this.o(lumiere(this, x, 60, 110, 0xff4a20, 0.35));
       this.o(this.add.image(120, 372, 'caissesContrebande').setOrigin(0.5, 1).setScale(2.4).setDepth(3));
-      this.ombre = this.o(this.add.image(820, 372, corpsHD(this, 'passeur')).setOrigin(0.5, 1).setScale(6.6 * echelleCorps(corpsHD(this, 'passeur'))).setTint(0x2a1c24).setFlipX(true).setDepth(3));
+      this.ombre = this.o(this.add.image(820, 372, corpsHD(this, 'silhouette')).setOrigin(0.5, 1).setScale(6.6 * echelleCorps(corpsHD(this, 'silhouette'))).setTint(0x2a1c24).setFlipX(true).setDepth(3));
       this.p = this.joueur(200, 372);
       this.caisse = this.o(this.add.image(200, 372 - 120, 'hd_caisse').setScale(3).setDepth(3.5));
     });
@@ -124,7 +124,7 @@ class FailliteScene extends Cinematique {
       creerEmblemesHD(this);
       this.o(this.add.image(520, 128, 'embleme_mainNoire').setScale(2.6));
       this.o(lumiere(this, 430, 300, 120, 0xffc070, 0.5));
-      this.o(this.add.image(520, 350, corpsHD(this, 'passeur')).setOrigin(0.5, 1).setScale(6.6 * echelleCorps(corpsHD(this, 'passeur'))).setTint(0x3a2830));
+      this.o(this.add.image(520, 350, corpsHD(this, 'silhouette')).setOrigin(0.5, 1).setScale(6.6 * echelleCorps(corpsHD(this, 'silhouette'))).setTint(0x3a2830));
       this.o(this.add.image(520, 392, 'tableMainNoire').setOrigin(0.5, 1).setScale(2.2).setDepth(3));
       this.p = this.joueur(250, 372, 7.5).setTint(0x8a7a90);
       this.client = this.corps(780, 372, { nom: 'Petit marchand', race: 'hobbit', niveau: 'novice' }, 5.6).setFlipX(true);
