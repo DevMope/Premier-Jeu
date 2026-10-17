@@ -154,7 +154,7 @@ class TitleScene extends Phaser.Scene {
     if (!this.scene.isActive()) return;
     const p = this.trouvees.meilleure;
     this.boutonContinuer.setVisible(!!p);
-    if (p) this.boutonContinuer.setTexte(`Continuer · ${p.nom}, jour ${p.jour}`);
+    if (p) this.boutonContinuer.setTexte(`Continuer · ${p.nom}, jour ${p.jour} · ${dureeDeJeu(p.temps ?? (p.partie && p.partie.tempsJeu))}`);
     this.texteSauvegarde.setText(p
       ? `Dernière sauvegarde : ${new Date(p.date).toLocaleString('fr-FR')}${this.trouvees.compte ? ' · aussi sur ton compte' : ''}`
       : 'Aucune sauvegarde pour le moment.');

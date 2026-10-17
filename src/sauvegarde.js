@@ -34,7 +34,7 @@ const Sauvegarde = {
   // Le paquet sauvegardé : la partie, et de quoi l'afficher dans la liste.
   paquet(G, lieu) {
     G.lieu = lieu;
-    return JSON.parse(JSON.stringify({ version: VERSION_SAUVEGARDE, date: Date.now(), jour: G.jour, nom: nomJoueur(G), partie: G }));
+    return JSON.parse(JSON.stringify({ version: VERSION_SAUVEGARDE, date: Date.now(), jour: G.jour, nom: nomJoueur(G), temps: G.tempsJeu || 0, partie: G }));
   },
 
   // Sauvegarde un peu plus tard (on regroupe les clics rapprochés).
@@ -268,7 +268,7 @@ async function ouvrirFenetreEmplacements({ peutSauver = false, surCharger, surFe
     return b;
   };
   const fermer = () => { fond.remove(); if (surFermer) surFermer(); };
-  const decrire = p => p ? `${p.nom}, jour ${p.jour} — ${new Date(p.date).toLocaleString('fr-FR')}` : 'vide';
+  const decrire = p => p ? `${p.nom}, jour ${p.jour} · ${dureeDeJeu(p.temps ?? (p.partie && p.partie.tempsJeu))} de jeu — ${new Date(p.date).toLocaleString('fr-FR')}` : 'vide';
   const dessiner = async () => {
     liste.textContent = 'Recherche...';
     const e = await Sauvegarde.emplacements();
@@ -516,4 +516,12 @@ function demanderTexte(titre, valeur, max, surValider) {
   document.body.appendChild(fond);
   champ.focus();
   champ.select();
+}
+
+// (v0.95) Le temps passé dans la partie, lisible : « 3 h 25 », « 12 min », « moins d'une minute »
+function dureeDeJeu(secondes) {
+  const m = Math.floor((secondes || 0) / 60);
+  if (m < 1) return "moins d'une minute";
+  const h = Math.floor(m / 60);
+  return h ? `${h} h ${String(m % 60).padStart(2, '0')}` : `${m} min`;
 }

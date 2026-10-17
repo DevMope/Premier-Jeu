@@ -495,6 +495,7 @@ function creerBouton(scene, x, y, largeur, texte, action) {
     fond.setTexture(cle + '_enfonce');
     label.setY(y + 2);
     scene.time.delayedCall(110, repos);
+    if (window.noterJournal) noterJournal(`[${scene.scene.key}] « ${label.text} »`);   // (v0.95 : le journal de bord)
     action();
   });
   return {

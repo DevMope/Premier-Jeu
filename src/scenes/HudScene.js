@@ -129,6 +129,33 @@ class HudScene extends Phaser.Scene {
     this.bulleNymphe = this.add.text(222, 30, texte, style(12, '#e8f6ff', { backgroundColor: '#14283e', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
   }
 
+  // (v0.95) Le journal de bord : ce que le jeu a fait juste avant (et lors de la session précédente),
+  // pour savoir où un gel s'est produit. Une page HTML par-dessus, qu'on peut lire et copier.
+  ouvrirJournal() {
+    this.fenetre.setVisible(false);
+    const fond = document.createElement('div');
+    fond.style.cssText = 'position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:12px';
+    const boite = document.createElement('div');
+    boite.style.cssText = 'background:#f2e4c0;color:#3b2410;border:3px solid #8a6a3a;border-radius:8px;max-width:720px;width:100%;max-height:90vh;display:flex;flex-direction:column;font:14px Georgia,serif';
+    const titre = document.createElement('div');
+    titre.style.cssText = 'padding:10px 14px;font-weight:bold;font-size:18px;border-bottom:2px solid #b8965e';
+    titre.textContent = 'Journal de bord';
+    const aide = document.createElement('div');
+    aide.style.cssText = 'padding:6px 14px;font-style:italic;font-size:13px';
+    aide.textContent = "Après un gel : recharge la page, puis ouvre ce journal. La partie « Session précédente » montre ce que le jeu faisait juste avant. Envoie une capture à Claude.";
+    const zone = document.createElement('pre');
+    zone.style.cssText = 'margin:0;padding:8px 14px;overflow:auto;white-space:pre-wrap;font:12px/1.45 Menlo,Consolas,monospace;flex:1';
+    zone.textContent = `${VERSION_JEU}\n\n— Session en cours —\n` + (journalJeu.slice(-25).join('\n') || '(rien)') + '\n\n— Session précédente (avant le dernier rechargement) —\n' + (journalPrecedent.slice(-25).join('\n') || '(rien)');
+    const bas = document.createElement('div');
+    bas.style.cssText = 'padding:10px 14px;text-align:right;border-top:2px solid #b8965e';
+    const ok = document.createElement('button');
+    ok.textContent = 'Fermer';
+    ok.style.cssText = 'font:bold 15px Georgia,serif;background:#6b4a22;color:#fff4dc;border:2px solid #c9a227;border-radius:6px;padding:6px 16px;cursor:pointer';
+    ok.onclick = () => { fond.remove(); if (this.fenetre) this.fenetre.setVisible(true); };
+    bas.append(ok); boite.append(titre, aide, zone, bas); fond.append(boite); document.body.append(fond);
+    zone.scrollTop = 0;
+  }
+
   // Un gain de lumière ou d'ombre : un « +3 lumière » qui monte, et une annonce quand un palier change
   gainCamp(d, palier, ancienPalier) {
     const lum = d > 0;
@@ -206,7 +233,7 @@ class HudScene extends Phaser.Scene {
     if (this.scenePausee) this.scenePausee.scene.pause();
     const c = this.fenetre = this.add.container(0, 0).setDepth(110);
     c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.55).setInteractive());
-    c.add(this.add.image(480, 270, panneauHD(this, 480, 300)).setScale(2));
+    c.add(this.add.image(480, 270, panneauHD(this, 480, 320)).setScale(2));
     c.add(this.add.text(480, 150, 'Pause', style(26, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     c.add(this.add.text(480, 186, 'Ta partie est sauvegardée. En pleine journée,\ntu la reprendras au matin de ce jour-là.', style(14, '#4a2e18', { align: 'center', lineSpacing: 3 })).setOrigin(0.5));
     // (v0.57) un bouton par chose à faire, les uns sous les autres
@@ -217,9 +244,10 @@ class HudScene extends Phaser.Scene {
         this.fenetre.setVisible(false);
         ouvrirFenetreEmplacements({ peutSauver: !!window.GAME && !window.GAME.faillite, surCharger: p => { this.fermerMenu(); lancerPartieChargee(this, p); }, surFermer: () => { if (this.fenetre) this.fenetre.setVisible(true); } });
       }],
+      ['Journal de bord', () => this.ouvrirJournal()],
       ['Écran titre', () => this.retourTitre()],
     ];
-    boutons.forEach(([texte, action], k) => { const b = creerBouton(this, 480, 236 + k * 46, 240, texte, action); c.add([b.fond, b.label]); });
+    boutons.forEach(([texte, action], k) => { const b = creerBouton(this, 480, 228 + k * 40, 240, texte, action); c.add([b.fond, b.label]); });
   }
 
   // (v0.57) Les réglages du son : cinq volumes, chacun avec sa glissière et son interrupteur.

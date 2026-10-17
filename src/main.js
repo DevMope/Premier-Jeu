@@ -1,5 +1,5 @@
 // La version du jeu (affichée sur l'écran titre) : on l'augmente à chaque mise à jour publiée.
-const VERSION_JEU = 'v 0.95';
+const VERSION_JEU = 'v 0.96';
 // Point d'entrée : configuration de Phaser et liste des scènes.
 
 // Le jeu est en pixel art (pixels nets), mais les textes doivent rester lisses et lisibles :
@@ -64,6 +64,24 @@ Phaser.Scenes.Systems.prototype.resume = function (data) {
 // un minuteur, un clic...), la boucle du jeu ne demande plus l'image suivante et tout se fige
 // jusqu'au rafraîchissement de la page. On protège chaque image : l'erreur est notée (console et
 // carnet de bord), et le jeu continue à l'image suivante.
+// (v0.95) Le journal de bord : les dernières pages ouvertes, les boutons touchés et les erreurs, gardés
+// dans le navigateur (même après un rechargement). Après un gel, on le lit dans le menu (☰ > Journal de
+// bord) pour savoir où le jeu s'est arrêté.
+const CLE_JOURNAL = 'passage_journal';
+let journalJeu = [], journalPrecedent = [];
+try { const j = JSON.parse(localStorage.getItem(CLE_JOURNAL) || 'null'); if (j && j.lignes) journalPrecedent = j.lignes; } catch (e) { /* rien */ }
+let minuterieJournal = null;
+function noterJournal(texte) {
+  const G = window.GAME, h = G && typeof G.heure === 'number' ? `${Math.floor(G.heure)}h${String(Math.round((G.heure % 1) * 60)).padStart(2, '0')}` : '';
+  journalJeu.push(`${new Date().toLocaleTimeString('fr-FR')} · ${G ? 'jour ' + G.jour + (h ? ' ' + h : '') + ' · ' : ''}${texte}`);
+  if (journalJeu.length > 60) journalJeu = journalJeu.slice(-40);
+  clearTimeout(minuterieJournal);
+  minuterieJournal = setTimeout(() => { try { localStorage.setItem(CLE_JOURNAL, JSON.stringify({ lignes: journalJeu.slice(-40), version: VERSION_JEU })); } catch (e) { /* rien */ } }, 400);
+}
+window.noterJournal = noterJournal;
+window.addEventListener('error', e => noterJournal('ERREUR : ' + (e.message || e) + ' (' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || 0) + ')'));
+window.addEventListener('unhandledrejection', e => noterJournal('ERREUR : ' + ((e.reason && e.reason.message) || e.reason)));
+
 const etapeJeuOrigine = Phaser.Game.prototype.step;
 let erreursJeu = 0, derniereErreurJeu = '';
 Phaser.Game.prototype.step = function (temps, delta) {
@@ -74,6 +92,7 @@ Phaser.Game.prototype.step = function (temps, delta) {
     const msg = (e && e.message) || String(e);
     if (msg !== derniereErreurJeu || erreursJeu % 300 === 1) {
       console.error('[jeu] erreur rattrapée :', e);
+      noterJournal('ERREUR : ' + msg + ' · ' + String((e && e.stack) || '').split('\n').slice(1, 3).map(l => l.trim().split('/').pop()).join(' < '));
       if (window.diag) diag('erreur rattrapée : ' + msg);
     }
     derniereErreurJeu = msg;
@@ -149,6 +168,14 @@ function lancerJeu() {
     // à l'intérieur, l'air du dehors quand on sort
     const DEHORS = new Set(['Marche', 'Facade', 'Carte', 'Rue', 'Nymphe']);
     const SANS_PASSAGE = new Set(['Titre', 'Intro', 'IntroHistoire', 'Recit', 'Faillite', 'Renovation', 'Hud']);
+    // (v0.95) le journal de bord : chaque page ouverte, mise en pause, reprise, fermée
+    for (const s of window.jeu.scene.scenes) {
+      if (s.scene.key === 'Hud') continue;
+      s.events.on('create', () => noterJournal('→ ' + s.scene.key));
+      s.events.on('pause', () => noterJournal('⏸ ' + s.scene.key));
+      s.events.on('resume', () => noterJournal('▶ ' + s.scene.key));
+      s.events.on('shutdown', () => noterJournal('✕ ' + s.scene.key));
+    }
     for (const s of window.jeu.scene.scenes) {
       if (SANS_PASSAGE.has(s.scene.key)) continue;
       s.events.on('create', () => Son.jouer(DEHORS.has(s.scene.key) ? 'passageDehors' : 'passage'));
@@ -159,6 +186,16 @@ function lancerJeu() {
     for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'click', 'keydown']) document.addEventListener(ev, reveil, true);
     // Revenu sur le jeu après une mise en veille ou un autre onglet : le son repart au prochain geste
     document.addEventListener('visibilitychange', () => { if (!document.hidden) Son.reprendre(); });
+    // (v0.95) Le temps de jeu, écrit sur les sauvegardes : il ne compte que la page visible, hors écran
+    // titre, et pas quand personne n'a touché au jeu depuis cinq minutes
+    let dernierGeste = Date.now();
+    for (const ev of ['pointerdown', 'keydown', 'touchstart']) document.addEventListener(ev, () => { dernierGeste = Date.now(); }, true);
+    setInterval(() => {
+      const G = window.GAME;
+      if (!G || document.hidden || Date.now() - dernierGeste > 5 * 60 * 1000) return;
+      if (window.jeu.scene.isActive('Titre')) return;
+      G.tempsJeu = (G.tempsJeu || 0) + 5;
+    }, 5000);
   });
 }
 
