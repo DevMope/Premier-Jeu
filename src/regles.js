@@ -1570,6 +1570,7 @@ function nuit(G) {
   }
   G.cadeauxVillages = [];
   for (const l of nuitMafia(G)) G.reveil.lignes.push(l);
+  for (const l of nuitOmbreAnnee(G)) G.reveil.lignes.push(l);   // (v0.98) la caisse du Passeur, les contrats de l'ombre
   // (v0.86) les imposteurs servis hier : on apprend ce qu'est devenu ton baluchon
   for (const a of (G.arnaques || []).filter(a => !a.dit)) { G.reveil.lignes.push(a.texte); a.dit = true; }
   G.arnaques = (G.arnaques || []).filter(a => a.jour >= G.jour - 7);
@@ -1925,7 +1926,8 @@ function gardeDuJour(G) {
 
 // L'amende : un pourcentage de la bourse, au moins le minimum
 function amendeGarde(G) {
-  return Math.max(GARDE.amendeMin, Math.round(Math.max(0, G.argent) * GARDE.amendePart));
+  // (v0.98) au-delà de 1 500 p., la bourse ne compte plus : l'amende pique, sans ruiner un comptoir prospère
+  return Math.max(GARDE.amendeMin, Math.round(Math.min(GARDE.amendePlafond, Math.max(0, G.argent)) * GARDE.amendePart));
 }
 
 // --- (v0.65, étape 10c) Le chat de gouttière ---
@@ -2047,15 +2049,20 @@ function visiteGarde(G) {
   G.garde.dernier = G.jour;
   const saisis = [];
   // (v0.65) prévenu par le chat, tu as tout caché sous le plancher : la fouille ne trouve rien
-  if (fouille && G.cachette === G.jour) return { fouille, amende: amendeGarde(G), saisis, cache: true };
-  if (fouille) for (const [id, n] of Object.entries(G.interdits || {})) if (n > 0) { saisis.push(`${n} × ${INTERDITS[id].nom.toLowerCase()}`); G.garde.saisies += n; G.interdits[id] = 0; }
+  // (v0.98 : la caisse du Passeur est trop grosse pour le plancher : elle, on la trouve toujours)
+  const cache = fouille && G.cachette === G.jour;
+  if (cache && !G.caisse) return { fouille, amende: amendeGarde(G), saisis, cache: true };
+  if (fouille && !cache) for (const [id, n] of Object.entries(G.interdits || {})) if (n > 0) { saisis.push(`${n} × ${INTERDITS[id].nom.toLowerCase()}`); G.garde.saisies += n; G.interdits[id] = 0; }
   // (v0.60) ce que cache la Main Noire chez toi : le colis, les bijoux volés (l'amende double)
   let double = false;
   const m = mafia(G);
-  if (fouille && m.colis) { saisis.push('un colis scellé de cire noire'); m.colis = false; m.represailles = m.bande; double = true; }
+  if (fouille && !cache && m.colis) { saisis.push('un colis scellé de cire noire'); m.colis = false; m.represailles = m.bande; double = true; }
+  // (v0.98) la caisse du Passeur, encore cachée : saisie, et l'amende est sévère
+  let amendeCaisse = 0;
+  if (G.caisse) { saisis.push(`la caisse du Passeur (${texteContenu(G.caisse.contenu)})`); amendeCaisse = Math.round(G.caisse.prix * OMBRE_ANNEE.caisse.amende); G.caisse = null; }
   const voles = G.tresors.filter(t => t.vole && !t.reparation);
-  if (fouille && voles.length) { saisis.push(`${voles.length} lot${voles.length > 1 ? 's' : ''} de bijoux volés`); G.tresors = G.tresors.filter(t => !voles.includes(t)); double = true; }
-  return { fouille, amende: amendeGarde(G) * (double ? 2 : 1), saisis };
+  if (fouille && !cache && voles.length) { saisis.push(`${voles.length} lot${voles.length > 1 ? 's' : ''} de bijoux volés`); G.tresors = G.tresors.filter(t => !voles.includes(t)); double = true; }
+  return { fouille, amende: amendeGarde(G) * (double ? 2 : 1) + amendeCaisse, saisis, caisse: amendeCaisse > 0 };
 }
 
 function payerAmende(G, montant) {

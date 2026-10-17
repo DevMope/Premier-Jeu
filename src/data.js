@@ -68,7 +68,7 @@ const GARDE = {
   peuples: ['humain', 'nain', 'elfe', 'hobbit', 'panda'],
   noms: { humain: ['Sergent Basile Courtepaille', 'Garde Odette Vifargent'], nain: ['Garde Brokk Ferpoing', 'Garde Hilde Rocdur'], elfe: ['Garde Aelar Feuillevent', 'Garde Ilwen Clairebrise'],
     hobbit: ['Garde Pippin Rondelet', 'Garde Marguerite Fourneau'], panda: ['Garde Wen Bambou-Sage', 'Garde Lan Pas-Tranquille'] },
-  amendeMin: 15, amendePart: 0.12,     // l'amende : 12 % de ta bourse, au moins 15 pièces
+  amendeMin: 15, amendePart: 0.12, amendePlafond: 1500,   // l'amende : 12 % de ta bourse (comptée jusqu'à 1 500 p.), au moins 15 pièces
   soudoiement: 0.1, bonusGout: 0.3, bonusValeur: 0.45, gardeObjet: 0.15,   // les chances, et le risque qu'il garde l'objet sans rien faire
   chance: 0.16, parPalier: 0.1, parDeco: 0.06, delai: 5,                    // une visite surprise quand le comptoir penche vers l'ombre
 };
@@ -1097,7 +1097,7 @@ const POSTES = {
   bazar: 'Cadeaux du Bazar',
   ameliorations: 'Améliorations du comptoir', interets: 'Intérêts du coffre',
   atelier: "Fournitures de l'atelier", loyer: 'Loyer du comptoir', revente: 'Reventes',
-  pizzo: 'La Main Noire', taxe: 'Taxe de la Confrérie', amende: 'Amendes de la garde', marcheNoir: 'Marché noir', primes: 'Primes des paliers', fontaine: 'Pièces à la fontaine', decoration: 'Décorations', garderobe: 'Garde-robe', cadeau: 'Cadeaux reçus',
+  pizzo: 'La Main Noire', taxe: 'Taxe de la Confrérie', amende: 'Amendes de la garde', marcheNoir: 'Marché noir', contrats: "Contrats de l'ombre", primes: 'Primes des paliers', fontaine: 'Pièces à la fontaine', decoration: 'Décorations', garderobe: 'Garde-robe', cadeau: 'Cadeaux reçus',
 };
 // On garde le détail des derniers jours (un peu plus d'une année).
 const JOURS_DE_COMPTES = 120;

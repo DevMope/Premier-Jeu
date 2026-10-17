@@ -192,6 +192,8 @@ class MarcheNoirScene extends Phaser.Scene {
     // (v0.97) un récit d'aîné quitté par les flèches : son voile et son souvenir s'en vont aussi
     if (this.sceneAine) { const sa = this.sceneAine; this.sceneAine = null; sa.forEach(o => { this.tweens.killTweensOf(o); o.destroy(); }); }
     this.vider();
+    this.fermerVue();   // (v0.98) le bar, la fosse, le bras de fer
+    this.majFleches();
     // (v0.58) La première fois qu'on descend : on entend parler des contrées des Bannis, qui
     // apparaîtront sur la carte dès demain
     if (G.visiteMarcheNoir === undefined) {
@@ -211,15 +213,18 @@ class MarcheNoirScene extends Phaser.Scene {
       choix.push([aine.feminin ? "Écouter l'aïeule" : "Écouter l'aïeul", () => this.allerCoin(0, () => this.pageAine())]);
     }
     const l = 900 / choix.length;
-    choix.forEach(([t, a], i) => this.bouton(30 + l * (i + 0.5), 460, l - 14, t, a));
-    this.bouton(860, 503, 140, 'Remonter', () => this.partir(true));
+    choix.forEach(([t, a], i) => this.bouton(30 + l * (i + 0.5), 452, l - 14, t, a));
+    // (v0.98) toute l'année : le coin bar, la fosse, le bras de fer de Mog
+    const annee = [['Au Gobelet Fêlé (le bar)', () => this.pageBar()], ['La fosse (les paris)', () => this.pageFosse()], ['Le bras de fer de Mog', () => this.pageBrasDeFer()]];
+    annee.forEach(([t, a], i) => this.bouton(140 + i * 250, 494, 236, t, a));
+    this.bouton(870, 494, 130, 'Remonter', () => this.partir(true));
     this.texteRisque();
   }
 
   texteRisque() {
     const r = this.soiree.risque;
     const mot = r <= 0 ? 'La ruelle est calme.' : r < 0.15 ? 'Le chat noir dresse une oreille.' : r < 0.3 ? 'Le chat noir fixe l\'escalier...' : 'Le chat noir crache vers l\'escalier !';
-    this.texte(40, 503, mot, 12, r < 0.15 ? '#a89080' : '#ff8a6a', { fontStyle: 'italic' }).setOrigin(0, 0.5);
+    this.texte(920, 424, mot, 12, r < 0.15 ? '#a89080' : '#ff8a6a', { fontStyle: 'italic' }).setOrigin(1, 0.5);
   }
 
   // Le Passeur : les objets interdits
@@ -238,6 +243,16 @@ class MarcheNoirScene extends Phaser.Scene {
         this.pagePasseur(e || `« Bon choix. » ${o.nom} rejoint ta cachette.`);
       }, peutPayer(G, o.prix));
     });
+    // (v0.98) la caisse « tombée d'une charrette », une par soir
+    const c = soireeAnnee(G).caisse;
+    const yc = 414 + Math.ceil(interditsDuPasseur().length / 2) * 36;
+    this.texte(40, yc, c.achetee ? 'La caisse de ce soir est à toi. Cache-la bien.' : `La caisse « tombée d'une charrette » : ${texteContenu(c.contenu)} · ${c.prix} p. (au marché : ~${c.valeur} p.)`, 12, c.achetee ? '#7a9a6a' : '#f3e6c8', { fontStyle: 'bold', wordWrap: { width: 520 } }).setOrigin(0, 0.5);
+    if (!c.achetee) this.bouton(650, yc, 150, 'Acheter la caisse', () => {
+      const e = acheterCaisse(G);
+      if (!e) Son.jouer('caisse');
+      this.majBourse();
+      this.pagePasseur(e || "« Tombée d'une charrette. » Tu la revendras demain au comptoir... si la garde ne passe pas d'ici là. Sinon : saisie, et une amende salée.");
+    }, peutPayer(G, c.prix) && !G.caisse);
     this.bouton(860, 503, 140, '◂ Retour', () => this.accueil());
   }
 
@@ -342,6 +357,7 @@ class MarcheNoirScene extends Phaser.Scene {
     if (this.part) return;
     this.part = true;
     const plainte = entre ? quitterMarcheNoir(G) : false;
+    this.fermerVue();
     this.vider();
     this.texte(480, 420, plainte ? "En remontant, tu crois voir une ombre filer vers la caserne... La garde viendra peut-être demain." : 'Tu remontes sans bruit. La ruelle est calme.', 15, plainte ? '#ff8a6a' : '#f3d9b0', { fontStyle: 'italic' }).setOrigin(0.5);
     Sauvegarde.maintenant(G, 'Nuit');

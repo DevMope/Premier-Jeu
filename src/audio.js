@@ -714,6 +714,14 @@ const SONS = {
     const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.22, t + duree * 0.5); g.gain.exponentialRampToValueAtTime(0.0005, t + duree);
     src.connect(f); f.connect(g); g.connect(bus); src.start(t); src.stop(t + duree + 0.05);
   },
+  // (v0.98) La foule de la fosse qui rugit : un grand souffle de voix qui enfle et retombe
+  foule(t, bus, o) {
+    const duree = (o && o.duree) || 1.6, fort = (o && o.fort) || 1;
+    for (const [freq, v] of [[420, 0.22], [900, 0.16], [1700, 0.08]]) this.bruit(duree, t, bus, v * fort, freq);
+    for (let i = 0; i < 5; i++) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; const f0 = 140 + Math.random() * 160; osc.frequency.setValueAtTime(f0, t + i * 0.05); osc.frequency.linearRampToValueAtTime(f0 * 1.25, t + duree * 0.4); const fl = this.ctx.createBiquadFilter(); fl.frequency.value = 700; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.03 * fort, t + duree * 0.3); g.gain.exponentialRampToValueAtTime(0.0005, t + duree); osc.connect(fl); fl.connect(g); g.connect(bus); osc.start(t); osc.stop(t + duree + 0.05); }
+  },
+  // (v0.98) BAM : un coup de poing qui porte, sourd et lourd
+  impact(t, bus) { this.bruit(0.08, t, bus, 0.6, 500, 'lowpass'); const osc = this.ctx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(140, t); osc.frequency.exponentialRampToValueAtTime(45, t + 0.18); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.22); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.25); this.bruit(0.02, t, bus, 0.3, 3000, 'highpass'); },
   // L'âne de Barnabé, les sabots sur les pavés
   sabots(t, bus) { for (let i = 0; i < 6; i++) { const dt = i * 0.17 + (i % 2) * 0.04; this.bruit(0.03, t + dt, bus, 0.45, 1600 + (i % 2) * 500); const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(260, t + dt); osc.frequency.exponentialRampToValueAtTime(120, t + dt + 0.05); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.14, t + dt); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.07); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.08); } },
 };
