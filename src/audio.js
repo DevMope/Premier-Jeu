@@ -66,7 +66,9 @@ const Son = {
     sortie.connect(this.busMusique);
     const bruit = (duree = 2) => { const b = ctx.createBuffer(1, ctx.sampleRate * duree, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; };
     const boucleBruit = (filtre, freq, q, gain) => { const src = ctx.createBufferSource(); src.buffer = bruit(3); src.loop = true; const f = ctx.createBiquadFilter(); f.type = filtre; f.frequency.value = freq; f.Q.value = q; const g = ctx.createGain(); g.gain.value = gain; src.connect(f).connect(g).connect(sortie); src.start(); noeuds.push(src); return { f, g }; };
-    const plus = (ms, f) => minuteries.push(setTimeout(() => { if (this.natureBus === sortie) f(); }, ms));
+    // (v0.97) une minuterie qui a sonné quitte la liste (elle grossissait sans fin) ; son coupé
+    // (onglet en veille), on attend au lieu d'empiler des sons qui partiraient tous d'un coup au retour
+    const plus = (ms, f) => { const id = setTimeout(() => { const i = minuteries.indexOf(id); if (i >= 0) minuteries.splice(i, 1); if (this.natureBus !== sortie) return; if (ctx.state === 'running') f(); else plus(1000, f); }, ms); minuteries.push(id); };
     const chaque = (min, max, f) => { const tour = () => { f(); plus(min + Math.random() * (max - min), tour); }; plus(Math.random() * min, tour); };
     const gazouillis = (base = 3200, vol = 0.05) => {
       const t0 = ctx.currentTime, n = 2 + Math.floor(Math.random() * 5);
@@ -188,7 +190,7 @@ const Son = {
     const T = THEMES[theme];
     const bus = this.ctx.createGain(); bus.gain.setValueAtTime(0.0005, this.ctx.currentTime); bus.gain.exponentialRampToValueAtTime(1, this.ctx.currentTime + 1.5);
     bus.connect(this.busMusique);
-    if (T.reverb) { const r = this.ctx.createGain(); r.gain.value = T.reverb; bus.connect(r); r.connect(this.reverb); } // (plus de résonance pour ce thème)
+    if (T.reverb) { const r = this.ctx.createGain(); r.gain.value = T.reverb; bus.connect(r); r.connect(this.reverb); bus.resonance = r; } // (plus de résonance pour ce thème)
     this.courant = bus;
     this.mesure = 0; this.graine = 7; this.derniereNote = null;
     this.horloge = this.ctx.currentTime + 0.1;
@@ -204,7 +206,7 @@ const Son = {
   },
   arreter() {
     if (this.boucle) { clearInterval(this.boucle); this.boucle = null; }
-    if (this.courant && this.ctx) { const b = this.courant, t = this.ctx.currentTime; b.gain.cancelScheduledValues(t); b.gain.setValueAtTime(b.gain.value || 1, t); b.gain.exponentialRampToValueAtTime(0.0005, t + 1.2); setTimeout(() => b.disconnect(), 1500); }
+    if (this.courant && this.ctx) { const b = this.courant, t = this.ctx.currentTime; b.gain.cancelScheduledValues(t); b.gain.setValueAtTime(b.gain.value || 1, t); b.gain.exponentialRampToValueAtTime(0.0005, t + 1.2); setTimeout(() => { b.disconnect(); if (b.resonance) b.resonance.disconnect(); }, 1500); }
     this.courant = null; this.theme = null;
   },
   // Un tirage déterministe par thème (la même partie de la musique revient, mais pas à l'identique)

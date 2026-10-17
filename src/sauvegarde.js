@@ -1,3 +1,8 @@
+// (v0.97) Le compte claude.ai peut ne jamais répondre (réseau coupé, demande d'autorisation laissée
+// ouverte) : au bout de quelques secondes, on fait comme s'il n'était pas là.
+function delai(promesse, ms = 6000) {
+  return Promise.race([promesse, new Promise((_, non) => setTimeout(() => non(new Error('le compte ne répond pas')), ms))]);
+}
 // La sauvegarde de la partie, à trois endroits :
 // 1. ce navigateur (localStorage), automatiquement ;
 // 2. ton compte claude.ai (version en ligne uniquement), dans un espace privé ;
@@ -22,9 +27,9 @@ const Sauvegarde = {
     this.nuagePret = (async () => {
       try {
         if (!window.claude || !window.claude.use) return;
-        const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+        const [db, user] = await delai(Promise.all([window.claude.use('db'), window.claude.use('user')]), 8000);
         if (!db || !user) return;
-        const id = await user.id();
+        const id = await delai(user.id());
         if (id) { this.nuage = db.doc('data/users/' + id + '/sauvegarde'); this.docCompte = nom => db.doc('data/users/' + id + '/' + nom); }
       } catch (e) { this.nuage = null; }
     })();
@@ -59,7 +64,7 @@ const Sauvegarde = {
       await this.connecterNuage();
       let nuage = false;
       if (this.nuage) {
-        try { await this.nuage.set(p); nuage = true; } catch (e) { nuage = false; }
+        try { await delai(this.nuage.set(p)); nuage = true; } catch (e) { nuage = false; }
       }
       this.changerStatut(local || nuage
         ? `Partie sauvegardée ✓ (${[local && 'ce navigateur', nuage && 'ton compte'].filter(Boolean).join(' + ')})`
@@ -76,14 +81,14 @@ const Sauvegarde = {
     let ok = false;
     try { localStorage.setItem(this.cle(nom), JSON.stringify(p)); ok = true; } catch (e) { /* stockage bloqué */ }
     await this.connecterNuage();
-    if (this.docCompte) { try { await this.docCompte(nom === 'reprise' ? 'reprise' : 'emplacement' + nom).set(p); ok = true; } catch (e) { /* tant pis */ } }
+    if (this.docCompte) { try { await delai(this.docCompte(nom === 'reprise' ? 'reprise' : 'emplacement' + nom).set(p)); ok = true; } catch (e) { /* tant pis */ } }
     return ok;
   },
   async lireEmplacement(nom) {
     let locale = null, nuage = null;
     try { locale = JSON.parse(localStorage.getItem(this.cle(nom))); } catch (e) { locale = null; }
     await this.connecterNuage();
-    if (this.docCompte) { try { const d = await this.docCompte(nom === 'reprise' ? 'reprise' : 'emplacement' + nom).get(); nuage = d.exists ? JSON.parse(JSON.stringify(d.data())) : null; } catch (e) { nuage = null; } }
+    if (this.docCompte) { try { const d = await delai(this.docCompte(nom === 'reprise' ? 'reprise' : 'emplacement' + nom).get()); nuage = d.exists ? JSON.parse(JSON.stringify(d.data())) : null; } catch (e) { nuage = null; } }
     return [locale, nuage].filter(p => p && p.partie).sort((a, b) => b.date - a.date)[0] || null;
   },
   async emplacements() {
@@ -104,7 +109,9 @@ const Sauvegarde = {
   // Sauvegarder à la main dans un emplacement : on y copie la dernière sauvegarde « au calme »
   // (le matin ou le soir), comme le dit le menu : en pleine journée, on reprend au matin.
   async sauverEmplacement(G, n) {
-    const p = this.lireLocale() || this.paquet(G, 'Nuit');
+    // (v0.97) la sauvegarde « au calme » seulement si c'est bien celle de cette partie (et de ce jour)
+    const l = this.lireLocale();
+    const p = l && l.partie && l.partie.graine === G.graine && l.jour === G.jour ? l : this.paquet(G, 'Nuit');
     return this.ecrireEmplacement(n, { ...p, date: Date.now() });
   },
 
@@ -124,7 +131,7 @@ const Sauvegarde = {
     await this.connecterNuage();
     if (!this.nuage) return null;
     try {
-      const s = await this.nuage.get();
+      const s = await delai(this.nuage.get());
       return s.exists ? JSON.parse(JSON.stringify(s.data())) : null;
     } catch (e) { return null; }
   },
@@ -139,6 +146,10 @@ const Sauvegarde = {
 
   // Recharge une partie sauvegardée. Les champs ajoutés au jeu depuis gardent leur valeur de départ.
   charger(p) {
+    const ancien = window.GAME;
+    try { return this.chargerSansFilet(p); } catch (e) { window.GAME = ancien; throw e; }   // (v0.97) tout ou rien
+  },
+  chargerSansFilet(p) {
     nouvellePartie();
     const defauts = JSON.parse(JSON.stringify(window.GAME));
     const brut = JSON.parse(JSON.stringify(p.partie));
@@ -156,7 +167,7 @@ const Sauvegarde = {
   async supprimer() {
     try { localStorage.removeItem(CLE_LOCALE); } catch (e) { /* rien à faire */ }
     await this.connecterNuage();
-    if (this.nuage) { try { await this.nuage.delete(); } catch (e) { /* tant pis */ } }
+    if (this.nuage) { try { await delai(this.nuage.delete()); } catch (e) { /* tant pis */ } }
   },
 
   // Le code de sauvegarde : la partie, en texte copiable.
@@ -220,8 +231,8 @@ function ouvrirFenetreSauvegardes(trouvees, surCharger, surFermer) {
   bouton('Charger ce code', () => {
     try {
       const p = Sauvegarde.importer(zone.value);
-      fond.remove();
       surCharger(p);
+      fond.remove();   // (v0.97) seulement si le chargement a réussi : sinon on lit le message d'erreur
     } catch (e) {
       message.textContent = e.message || 'Ce code ne fonctionne pas.';
     }

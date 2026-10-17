@@ -75,12 +75,22 @@ function noterJournal(texte) {
   const G = window.GAME, h = G && typeof G.heure === 'number' ? `${Math.floor(G.heure)}h${String(Math.floor((G.heure % 1) * 60)).padStart(2, '0')}` : '';
   journalJeu.push(`${new Date().toLocaleTimeString('fr-FR')} · ${G ? 'jour ' + G.jour + (h ? ' ' + h : '') + ' · ' : ''}${texte}`);
   if (journalJeu.length > 60) journalJeu = journalJeu.slice(-40);
+  const ecrire = () => { try { localStorage.setItem(CLE_JOURNAL, JSON.stringify({ lignes: journalJeu.slice(-40), version: VERSION_JEU })); } catch (e) { /* rien */ } };
   clearTimeout(minuterieJournal);
-  minuterieJournal = setTimeout(() => { try { localStorage.setItem(CLE_JOURNAL, JSON.stringify({ lignes: journalJeu.slice(-40), version: VERSION_JEU })); } catch (e) { /* rien */ } }, 400);
+  // (v0.97) une erreur ou un changement de page s'écrit tout de suite : c'est ce qu'on veut lire après un gel
+  if (/^ERREUR|→/.test(texte)) ecrire(); else minuterieJournal = setTimeout(ecrire, 400);
 }
 window.noterJournal = noterJournal;
 window.addEventListener('error', e => noterJournal('ERREUR : ' + (e.message || e) + ' (' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || 0) + ')'));
 window.addEventListener('unhandledrejection', e => noterJournal('ERREUR : ' + ((e.reason && e.reason.message) || e.reason)));
+
+// (v0.97) Chaque scène est protégée à part : une erreur qui revient à chaque image dans une scène ne
+// bloque plus les autres scènes ni le dessin de l'image (avant, tout l'écran se figeait).
+{ const etapeScene = Phaser.Scenes.Systems.prototype.step, dessinScene = Phaser.Scenes.Systems.prototype.render;
+  let n = 0, dernier = '';
+  const noter = (sys, e) => { n++; const msg = (e && e.message) || String(e); if (msg !== dernier || n % 300 === 1) { console.error('[jeu] erreur dans ' + sys.settings.key + ' :', e); noterJournal('ERREUR (' + sys.settings.key + ') : ' + msg + ' · ' + String((e && e.stack) || '').split('\n').slice(1, 3).map(l => l.trim().split('/').pop()).join(' < ')); } dernier = msg; };
+  Phaser.Scenes.Systems.prototype.step = function (t, d) { try { return etapeScene.call(this, t, d); } catch (e) { noter(this, e); } };
+  Phaser.Scenes.Systems.prototype.render = function (r) { try { return dessinScene.call(this, r); } catch (e) { noter(this, e); } }; }
 
 const etapeJeuOrigine = Phaser.Game.prototype.step;
 let erreursJeu = 0, derniereErreurJeu = '';
@@ -102,6 +112,10 @@ Phaser.Game.prototype.step = function (temps, delta) {
     // refuse ensuite de la relancer : on l'arrête, et l'on retombe sur l'écran titre
     try {
       const S = Phaser.Scenes;
+      // (v0.97) la file des démarrages n'est vidée par Phaser qu'une fois tout lancé : sans ça, la scène
+      // fautive était relancée à chaque image, sans fin
+      const sm = this.scene;
+      if (sm._queue) sm._queue.length = 0; if (sm._pending) sm._pending.length = 0; if (sm._start) sm._start.length = 0; sm.isProcessing = false;
       for (const sc of this.scene.scenes) {
         if (sc.sys.settings.status === S.CREATING) {
           this.scene.stop(sc.sys.settings.key);
