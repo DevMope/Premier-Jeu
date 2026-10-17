@@ -1247,3 +1247,41 @@ Quand le joueur dit « house keep », cela veut dire : optimisation et nettoyage
 ### Les mécanismes proposés par le joueur (règle du 17/10)
 
 Quand le joueur propose de changer un mécanisme, Claude dit franchement s'il a un doute (simulation à l'appui si possible) avant ou pendant le changement, et propose de revenir en arrière si le résultat est moins bon. Exemple : la réputation perdue à la mort (v0.94 : −2/−1, trop punitif en simulation ; v0.96 : −1,5/−0,5, un compromis).
+
+### Plan du lot B « L'année qui passe » (préparatifs du 17/10, après la v0.96)
+Ordre : d'abord les planches (à valider), puis la construction en cinq morceaux, testés un par un.
+On pousse sur Cloudflare après ces préparatifs et le grand house keep de la nuit.
+
+**Les planches à venir**
+- **Planche 21, les quatre passages de saison** (une petite cinématique chacune, en 3-4 images) :
+  les bourgeons qui s'ouvrent et les pétales qui volent (Semailles) ; le soleil qui se lève sur les
+  blés, les moissonneurs (Moissons) ; un coup de vent, les feuilles rousses et la brume qui monte
+  (Brumes) ; les premiers flocons, le toit qui blanchit, des enfants qui font le bonhomme de neige (Givre).
+- **Planche 22, les deux fêtes** : la Fête du Solstice (lumière, en Moissons : le village pavoisé,
+  bannières de la Confrérie, lampions, musiciens) et la Nuit des Brumes (Bannis : au marché noir,
+  un grand feu, des chants, on partage le pain).
+- **Planche 23, la diseuse** : son portrait, sa tente violette dans la rue, l'animation du présage
+  (les cartes qui se retournent) et les petits indices du flair (la bougie qui vacille, une carte à
+  l'envers, son chat qui détourne la tête).
+- **Planche 24, le calendrier et le foyer** : la page « Calendrier » du bureau (le mois en grille, les
+  fêtes marquées), l'icône de saison à côté du jour, et l'avertissement « le foyer est vide ».
+- **Planche 25, le chat qui boude** : la gamelle vide, le petit mot, le panier vide le lendemain, son retour.
+
+**La construction**
+- B-1 Les saisons : façade, rue, marché, paysage du comptoir ; arbres au premier plan, fleurs, blés,
+  bonhomme de neige ; l'icône de saison et le calendrier.
+- B-2 Les quatre cinématiques de passage (et le défilé des saisons pendant les sauts de temps).
+- B-3 Les deux fêtes, annoncées une semaine avant (crieur, tableau d'affichage).
+- B-4 La diseuse et ses présages (parfois trompeurs, indices selon le flair).
+- B-5 Le foyer : le chat qui boude, l'hiver sans bois sévère mais annoncé.
+
+**Propositions à valider**
+1. Effets des saisons sur le jeu : ceux, légers, de la préparation (crues au printemps, soif l'été,
+   brume l'automne, froid et un client de moins l'hiver), le visuel étant, lui, très marqué.
+2. Hiver sans bois : 1re nuit sans bûche, réveil fatigué (un client de moins) ; 2e nuit de suite,
+   malade (la boutique ouvre à midi) ; le chat part se réchauffer ailleurs. Averti : au coucher, une
+   confirmation « Le foyer est vide, dormir quand même ? », et une bûche rouge dans le bandeau.
+3. Les fêtes : celle de la lumière est ouverte à tous ; celle des Bannis seulement si le marché noir
+   est connu, et le joueur y est mieux reçu selon sa jauge.
+4. La diseuse arrive au jour 10 (une cinématique de découverte), 2 pièces le présage, une fois par jour.
+5. Le chat boude après 3 jours sans ration : il part un jour (un mot sur le comptoir), puis revient.
