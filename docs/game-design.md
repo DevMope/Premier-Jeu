@@ -1402,3 +1402,18 @@ un moment de mémoire (les lanternes des ancêtres).
 - **Le Passeur** : un design propre à lui, **style un peu pirate** (références du joueur : Albator — la
   grande cape rouge en lambeaux, la cicatrice ; un capitaine pirate — le tricorne, le long manteau sombre à
   galons d'or, l'écharpe rouge à la taille, le sabre ; un corsaire — le foulard, les bottes hautes).
+
+### L'hydromel noir et le pain de cendre (réponse de Claude, à valider)
+- **Ce que Claude prévoyait** : l'hydromel noir était un geste de partage — en boire avec les Bannis fait
+  monter leur respect (comme le bras de fer), le refuser les vexe un peu. **L'idée du joueur le remplace et le
+  dépasse** : on garde le partage (accepter la coupe = respect), et l'ivresse ouvre la **vision de l'enfance**
+  (les parents, un moment joyeux, puis le feu du dragon qui dévore la vision), suivie des anciens qui
+  rigolent autour du joueur. Proposé : la vision change un peu chaque année (un nouveau fragment du passé),
+  pour faire avancer le fil des parents et du sort d'oubli ; le lendemain, un réveil difficile (la boutique
+  ouvre une heure plus tard).
+- **Le pain de cendre** : le pain des ancêtres, cuit sous la cendre du grand feu ; chacun en rompt un morceau
+  « pour les absents ». Proposé : JeuneGoy en rapporte un quignon, qui devient une provision unique au
+  comptoir : donné à un aventurier qui part en terre d'ombre, il le protège une fois (comme le trèfle, un
+  repli au lieu de la mort) et les Bannis qui l'apprennent le saluent plus chaleureusement.
+- **Le temps de la fête** (à définir avec le joueur) : proposé, les trois jours de la fête ; l'hydromel et
+  le pain de cendre seulement le grand jour (le soir de la Nuit des Brumes).
