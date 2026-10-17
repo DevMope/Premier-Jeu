@@ -628,6 +628,18 @@ function textureJoueurAssis(scene, G) {
   return cle;
 }
 
+// (v1.00) Le joueur dans une pose (grimper, bras levés...) et sous un angle : renvoie la clé de la texture
+function textureJoueurPose(scene, G, vue, pose) {
+  const stade = stadeJoueur(G), tenue = (G.tenue || []).join(',');
+  const cle = `joueur_${stade}_${vue}_${pose}`;
+  if (!scene.textures.exists(cle) || scene.textures.get(cle).tenue !== tenue) {
+    if (scene.textures.exists(cle)) scene.textures.remove(cle);
+    dessinerJoueurHD(G.joueur.apparence, stade, G.joueur.feminin, 0, G.tenue || [], vue, pose).texture(scene, cle);
+    scene.textures.get(cle).tenue = tenue;
+  }
+  return cle;
+}
+
 function creerTexturesJoueur(scene, ap, feminin = false, tenue = []) {
   for (const stade of ['petit', 'adulte', 'ancien']) {
     dessinerJoueurHD(ap, stade, feminin, 0, tenue).texture(scene, 'joueur_' + stade);

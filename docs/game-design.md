@@ -1571,3 +1571,21 @@ de loin (pas de fête manquée en silence).
 - **Planche 30, à valider** : les atours portés par JeuneGoy, le comptoir béni, le mât de cocagne (maquette :
   cliquer à chaque temps pour grimper, trois glissades et c'est la chute, 20 secondes, 5 p. ; en haut le jambon ou un
   objet rare) et les lanternes célestes (le soir du 15, dans la rue).
+
+### Retours du joueur sur la planche 30 (18/10)
+- **Validés** : les atours portés (A), le comptoir béni (B), les lanternes célestes (D, « bravo »).
+- **Grippesou** : ses jeux restent fermés pendant les fêtes (le tir à l'arc prend sa place) : c'est voulu.
+- **Le mât de cocagne** : le jeu de grimper est gardé, mais la maquette était trop peu animée. **Règle générale** :
+  dans toutes les animations du jeu, les personnages doivent avoir un minimum de mouvement (bras, jambes), jamais
+  une image figée qui glisse.
+- Le joueur trouvait dommage que le mât reprenne la mécanique du bras de fer (cliquer en rythme). **Proposition de
+  Claude (planche 30 v2)** : *main gauche, main droite* (Q / D, ← / →, ou un clic à gauche / à droite) ; la même main
+  deux fois de suite fait glisser ; la **force** s'épuise à chaque prise (il faut souffler, et l'on glisse un peu
+  pendant ce temps) ; des **coulées de graisse** descendent le mât : attraper quand l'une passe sous la main, c'est
+  une glissade ; trois glissades, c'est la chute ; 25 secondes, 5 p., trois essais par jour.
+- **Les lots, tout en haut** : le **jambon fumé** (6 rations dans la réserve, à coup sûr) ou le **sac mystère** (au
+  hasard : 2 amulettes, 3 potions, 2 capes chaudes et 2 antidotes, ou un bouclier et une arme rare : rapière,
+  khopesh ou marteau de guerre).
+- **Le moteur des corps sait maintenant grimper** (poses `grimpe1` / `grimpe2` : une main au-dessus de la tête, l'autre
+  à hauteur du visage, un genou relevé ; pour tous les personnages) ; `textureJoueurPose` donne le joueur dans n'importe
+  quelle pose et sous n'importe quel angle.

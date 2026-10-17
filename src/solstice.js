@@ -12,7 +12,8 @@ const SOLSTICE = {
     record: [22, 27],          // le meilleur score du sergent Aubrin, chaque jour de la fête
     reputationTitre: 1,        // battre le record : le titre « Œil du Rempart » (une fois par an)
   },
-  mat: { prix: 5, parties: 3 },
+  // le mât de cocagne : main gauche, main droite, sans lâcher ; la graisse coule, la force s'épuise
+  mat: { prix: 5, parties: 3, duree: 25, prise: 0.04, mauvaiseMain: 0.03, gouttes: 0.08, glissadesMax: 3, effort: 0.08, repos: 0.3, glisseRepos: 0.025 },
   tarte: { prix: 6 },
   benediction: { prix: 15, reputation: 0.5, jours: 3 },
 };
@@ -119,6 +120,35 @@ function remarqueAtours(G, v) {
   changerRelation(G, v.nom, 1);
   const id = portes[Math.floor(Math.random() * portes.length)];
   return { couronneFleurs: 'Quelle jolie couronne de fleurs ! Joyeux Solstice !', echarpeUnion: "L'écharpe de la Confrérie ! Vive l'Union !", capeUnion: "Une cape blanche de l'Union, rien que ça ! Joyeux Solstice !" }[id];
+}
+
+// --- Le mât de cocagne ---
+function partiesMatRestantes(G) { return SOLSTICE.mat.parties - (etatSolstice(G).mat[G.jour] || 0); }
+function commencerMat(G) {
+  if (!solsticeActif(G)) return "Le mât de cocagne n'est dressé que pendant la Fête du Solstice.";
+  if (partiesMatRestantes(G) <= 0) return 'On regraisse le mât pour demain : trois essais par jour, pas plus.';
+  if (!peutPayer(G, SOLSTICE.mat.prix)) return manqueArgent(G, SOLSTICE.mat.prix, "Pas assez d'argent pour un essai.");
+  payer(G, SOLSTICE.mat.prix, 'fete');
+  const s = etatSolstice(G);
+  s.mat[G.jour] = (s.mat[G.jour] || 0) + 1;
+  return null;
+}
+// Les lots tout en haut : le jambon fumé (6 rations), ou le sac mystère (tiré au sort)
+const SAC_MYSTERE = [
+  { poids: 30, objets: { amulette: 2 }, texte: 'deux amulettes' },
+  { poids: 25, objets: { potion: 3 }, texte: 'trois potions' },
+  { poids: 25, objets: { cape: 2, antidote: 2 }, texte: 'deux capes chaudes et deux antidotes' },
+  { poids: 20, objets: { bouclier: 1 }, arme: true, texte: 'un bouclier et une arme rare' },
+];
+function decrocherLot(G, choix) {
+  const ajouter = (id, n) => { G.stock[id] = (G.stock[id] || 0) + n; };
+  if (choix === 'jambon') { ajouter('ration', 6); return 'Le jambon fumé du Solstice ! Découpé en tranches : 6 rations dans ta réserve.'; }
+  let r = Math.random() * SAC_MYSTERE.reduce((a, l) => a + l.poids, 0), lot = SAC_MYSTERE[0];
+  for (const l of SAC_MYSTERE) { if ((r -= l.poids) < 0) { lot = l; break; } }
+  for (const [id, n] of Object.entries(lot.objets)) ajouter(id, n);
+  let texte = lot.texte;
+  if (lot.arme) { const arme = ['rapiere', 'khopesh', 'marteau'][Math.floor(Math.random() * 3)]; ajouter(arme, 1); texte = `un bouclier et ${nomObjet(arme).toLowerCase() === 'marteau de guerre' ? 'un marteau de guerre' : nomObjet(arme) === 'Rapière' ? 'une rapière' : 'un khopesh'}`; }
+  return `Le sac mystère ! Dedans : ${texte}. Tout file dans ta réserve.`;
 }
 
 // La nuit : la tarte ne se garde pas

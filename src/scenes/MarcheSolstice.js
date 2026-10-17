@@ -97,7 +97,7 @@ Object.assign(MarcheScene.prototype, {
     const c = this.panneau("Le tir à l'arc de la Confrérie", 'Tenu par le sergent Aubrin, le temps de la Fête du Solstice');
     const T = SOLSTICE.tir, reste = partiesTirRestantes(G);
     c.add(this.add.text(40, 344, `Trois flèches pour viser le cœur de la cible : la largeur, la hauteur, puis la puissance.\n${T.prix} pièces la partie · lots : ${T.lots.map(l => `${l.score} points, ${l.argent} p.${l.trefle ? ' et un trèfle' : ''}`).reverse().join(' · ')}\nBattre le record du sergent : le titre « Œil du Rempart » (+${T.reputationTitre} de réputation).`,
-      style(12, '#3b2410', { lineSpacing: 4, wordWrap: { width: 640 } })));
+      style(12, '#3b2410', { lineSpacing: 3, wordWrap: { width: 470 } })));
     const s = etatSolstice(G);
     c.add(this.add.text(40, 420, `Meilleur score du jour : le sergent Aubrin, ${recordTir(G)}${s.meilleur ? ` · ton meilleur : ${s.meilleur}` : ''}${G.titreRempart === s.an ? ' · tu es « Œil du Rempart » !' : ''}`, style(12, '#6b4a2a', { fontStyle: 'italic' })));
     c.add(this.add.text(820, 446, reste > 0 ? `encore ${reste} partie${reste > 1 ? 's' : ''} aujourd'hui` : 'plus de partie aujourd\'hui', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
@@ -109,6 +109,17 @@ Object.assign(MarcheScene.prototype, {
       this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('TirArc', { retour: 'Marche' }));
     });
     c.add([b.fond, b.label]);
+    // le mât de cocagne, dressé à côté : main gauche, main droite
+    const resteM = partiesMatRestantes(G);
+    const m = creerBouton(this, 600, 408, 190, `Le mât (${SOLSTICE.mat.prix} p.)`, () => {
+      const erreur = commencerMat(G);
+      if (erreur) return this.message(erreur, '#a03030');
+      Son.jouer('pieces');
+      this.cameras.main.fadeOut(400);
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Mat', { retour: 'Marche' }));
+    });
+    c.add([m.fond, m.label]);
+    c.add(this.add.text(600, 446, resteM > 0 ? `mât : encore ${resteM} essai${resteM > 1 ? 's' : ''}` : 'mât : plus d\'essai aujourd\'hui', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
   },
 
   // --- L'étal de l'Union : les atours (Marcelline) et la bénédiction (Frère Anselme) ---
