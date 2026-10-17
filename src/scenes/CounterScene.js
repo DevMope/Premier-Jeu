@@ -78,6 +78,7 @@ class CounterScene extends Phaser.Scene {
 
     this.cameras.main.fadeIn(400);
     this.creerStore();
+    if (typeof comptoirBeni === 'function' && comptoirBeni(this.G)) this.lumiereBenie();   // (v1.00 : la bénédiction de Frère Anselme)
     if (this.G.comptoirOuvert !== this.G.jour) {
       // 10 h : on lève le store, le comptoir est officiellement ouvert.
       this.G.comptoirOuvert = this.G.jour;
@@ -111,6 +112,29 @@ class CounterScene extends Phaser.Scene {
       this.time.delayedCall(1200, () => conseilGarrick(this, 'refus'));
     }
     this.majStock();
+  }
+
+  // (v1.00) Le comptoir béni par le paladin du Solstice : une lumière dorée tombe sur la fenêtre, et de
+  // petites étincelles montent du comptoir, le temps de la bénédiction
+  lumiereBenie() {
+    creerHalo(this);
+    const { x, y, w, h } = FENETRE;
+    // des rayons dorés qui tombent en biais sur la fenêtre
+    const rayons = this.add.graphics().setDepth(4.6).setBlendMode(Phaser.BlendModes.ADD);
+    for (const [x0, l] of [[x + 40, 60], [x + 150, 46], [x + 250, 70]]) rayons.fillStyle(0xffe08a, 0.22).fillTriangle(x0, y, x0 + l, y, x0 + l * 0.6 + 70, y + h).fillTriangle(x0, y, x0 + l * 0.6 + 70, y + h, x0 + 50, y + h);
+    this.tweens.add({ targets: rayons, alpha: 0.45, duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    const halo = this.add.image(x + w / 2, y + h * 0.4, 'halo').setScale(w / 90, h / 120).setTint(0xffd060).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD).setDepth(4.6);
+    this.tweens.add({ targets: halo, alpha: 0.18, duration: 2200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    // un liseré d'or autour de la fenêtre
+    const cadre = this.add.graphics().setDepth(4.65).setBlendMode(Phaser.BlendModes.ADD);
+    cadre.lineStyle(4, 0xffd060, 0.5).strokeRect(x - 2, y - 2, w + 4, h + 4);
+    this.tweens.add({ targets: cadre, alpha: 0.3, duration: 1600, yoyo: true, repeat: -1 });
+    // et des étincelles qui montent
+    this.time.addEvent({ delay: 220, loop: true, callback: () => {
+      const t = Phaser.Math.Between(2, 3);
+      const e = this.add.rectangle(x + Phaser.Math.Between(10, w - 10), y + h - 6, t, t, Phaser.Math.RND.pick([0xfff0a0, 0xffe066, 0xffffff])).setDepth(4.7).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: e, y: e.y - Phaser.Math.Between(60, 150), x: e.x + Phaser.Math.Between(-14, 14), alpha: 0, duration: 2400, onComplete: () => e.destroy() });
+    } });
   }
 
   // Le store de bois qui ferme la fenêtre du comptoir (et sa pancarte).
@@ -1328,7 +1352,7 @@ class CounterScene extends Phaser.Scene {
     const col = collecteurDe(G), qui = col.nom, pre = prenomDe(col.nom);
     const rang = rangMafia(G);
     const partir = () => { this.actionB = null; this.majBoutonsService(); this.dessinerPieces(); this.majStock(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
-    this.titreCommande.setFontSize(17).setText(`${bande} · ${nomRang(rang)}`);
+    this.titreCommande.setFontSize(17).setText(`${bande} · ${nomRangMafia(rang)}`);
     for (let t = 16; this.titreCommande.width > 235 && t >= 11; t--) this.titreCommande.setFontSize(t);
     const sortie = () => {
       const prix = prixRachat(G);

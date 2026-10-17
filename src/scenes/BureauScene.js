@@ -468,7 +468,7 @@ class BureauScene extends Phaser.Scene {
       y += 98;
     }
     const armure = `Le sceau : ${(G.armure || []).length} / ${ARMURE.length} pièces d'armure.`;
-    c.add(this.add.text(161, y + 2, mafia(G).engage && !mafia(G).sorti ? `${armure}\n${NomBande(G)} : ${nomRang(rangMafia(G), G)}` : `${armure}\nLes paliers d'après ? Le livre ne les montre pas encore...`,
+    c.add(this.add.text(161, y + 2, mafia(G).engage && !mafia(G).sorti ? `${armure}\n${NomBande(G)} : ${nomRangMafia(rangMafia(G), G)}` : `${armure}\nLes paliers d'après ? Le livre ne les montre pas encore...`,
       style(10, '#7a5a3a', { fontStyle: 'italic', wordWrap: { width: 236 }, align: 'center' })).setOrigin(0.5, 0));
     // page de droite : le barème, du plus petit au plus gros
     c.add(this.add.text(425, 70, 'Ce qui fait pencher la balance', style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));

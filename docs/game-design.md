@@ -1551,3 +1551,23 @@ de loin (pas de fête manquée en silence).
   affiché quand le joueur n'est pas occupé (pas au milieu d'un client, d'un récit ou d'une cinématique).
 - **La première vision de l'hydromel noir : validée** telle que proposée. **L'histoire du Passeur : validée.**
 - **L'ordre B-1 → B-5 : validé.** v0.98 poussée sur Cloudflare.
+
+### B-3a, la Fête du Solstice : construction (18/10)
+- **Construit** (planches 22 v3 et 22b v2 validées) : les règles (`solstice.js`) ; le marché en fête les 13, 14 et 15
+  des Moissons (lampions au-dessus de la place et de la rue, deux grandes bannières de la Confrérie pendues à leur
+  traverse) ; **le tir à l'arc du sergent Aubrin** à la place du coin des jeux (10 p. la partie, 3 parties par jour) et
+  le **mini-jeu plein écran à trois jauges** (largeur décalée par le vent, hauteur, puissance qu'on maintient puis
+  qu'on lâche dans la bande) ; lots : 12 points → 8 p., 18 → 20 p., 24 → 35 p. et un **trèfle du Solstice** (un
+  cadeau que tout le monde aime) ; battre le record du jour du sergent (22 à 27) : le titre **« Œil du Rempart »**
+  (+1 de réputation, une fois par an) ; **l'étal de l'Union** chez Marcelline (couronne de fleurs 15 p., écharpe bleu
+  et or 20 p., cape blanche 40 p. ; portés pendant la fête, +1 de relation avec chaque client de la lumière) ; **la
+  bénédiction du comptoir** par Frère Anselme (offrande 15 p., +0,5 de réputation, le comptoir brille 3 jours) ; **la
+  tarte du Solstice** chez Rosalie (6 p., un cadeau : +1 cœur au départ pour ce voyage, elle ne se garde pas la nuit) ;
+  l'annonce du crieur une semaine avant ; la veille et chaque jour au réveil ; la fête « vue de loin » pendant un saut
+  de temps.
+- **Bug ancien corrigé** : `mafia.js` redéfinissait `nomRang` et écrasait celle des rangs d'aventurier : le rang des
+  clients s'affichait « undefined » (dialogue d'accueil, panneau de commande, carte, récits). La version de la mafia
+  s'appelle maintenant `nomRangMafia`.
+- **Planche 30, à valider** : les atours portés par JeuneGoy, le comptoir béni, le mât de cocagne (maquette :
+  cliquer à chaque temps pour grimper, trois glissades et c'est la chute, 20 secondes, 5 p. ; en haut le jambon ou un
+  objet rare) et les lanternes célestes (le soir du 15, dans la rue).
