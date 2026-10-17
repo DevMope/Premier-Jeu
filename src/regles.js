@@ -1603,7 +1603,7 @@ function nuit(G) {
     G.sautTemps = { danger: d, mois, ageAvant: avant, ageApres: ageJoueur(G) };
     if (d === FORGE.etoiles && !(G.forge && G.forge.construite)) G.reveil.lignes.push("Garrick passe en coup de vent : « Tu as grandi, et ton comptoir aussi. Il y a de la place dans l'arrière-boutique pour une forge : avec un forgeron, tu aurais toutes les armes que tu veux, quand tu veux. Penses-y ! »");
     if (d === FORGE.forgerons.baba.etoiles && G.forge && G.forge.construite && !G.forge.baba) G.reveil.lignes.push("Une naine aux tresses noires frappe à la porte de ta forge : Baba Marteau-d'Or cherche du travail. Elle t'attend dans l'arrière-boutique.");
-    G.reveil.lignes.push(`Les saisons ont passé : ${mois >= 4 ? `${Math.round(mois / 4)} an${mois >= 8 ? 's' : ''}` : `${mois} mois`} plus tard, les contrées à ${d} étoiles s'ouvrent à tes aventuriers.` + (ageJoueur(G) > avant ? ` Tu as maintenant ${ageJoueur(G)} ans.` : ''));
+    G.reveil.lignes.push(`Les saisons ont passé : ${dureeEnMois(mois)} plus tard, les contrées à ${d} étoiles s'ouvrent à tes aventuriers.` + (ageJoueur(G) > avant ? ` Tu as maintenant ${ageJoueur(G)} ans.` : ''));
   }
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.

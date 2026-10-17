@@ -66,3 +66,10 @@ function annonceFete(G) {
   if (d && d.dans === 1) return `Demain commence ${d.nom} ! Le village s'y prépare déjà.`;
   return null;
 }
+
+// « 3 mois », « 1 an », « 1 an et 2 mois », « 2 ans » (un an = quatre mois, un par saison)
+function dureeEnMois(m) {
+  const ans = Math.floor(m / 4), reste = m % 4;
+  if (!ans) return `${m} mois`;
+  return `${ans} an${ans > 1 ? 's' : ''}${reste ? ` et ${reste} mois` : ''}`;
+}

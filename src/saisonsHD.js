@@ -5,7 +5,9 @@
 // neige de l'hiver.
 
 // La saison du jour (pour la peinture des paysages ; rien hors d'une partie)
+let SAISON_FORCEE = null;   // (le passage de saison peint l'ancienne puis la nouvelle)
 function saisonActuelle() {
+  if (SAISON_FORCEE) return SAISON_FORCEE;
   const G = window.GAME;
   return G && G.jour && typeof saisonDe === 'function' ? saisonDe(G) : null;
 }
