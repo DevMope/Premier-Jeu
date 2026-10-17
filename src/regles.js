@@ -611,6 +611,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     gazette: null,     // les nouvelles du jour, criées au marché
     decos: [],         // les décorations achetées à la brocante (visibles dans l'arrière-boutique)
     tenue: [],         // ce que tu portes (acheté à la garde-robe)
+    conqueteV100: true,   // (v1.00 : la conquête à 5 + étoiles, déjà en place)
     garderobe: [],     // (v0.69) tout ce que tu possèdes : ce que tu ne portes pas dort dans la malle, au pied du lit
     palierVu: 0,       // le plus haut palier de réputation déjà fêté
     palierNouveau: null, // un palier franchi cette nuit : le visiteur notable vient ce matin
@@ -2165,7 +2166,7 @@ function terminerAventure(G, parti) {
     G.conquete = G.conquete || {};
     if (ZONES[v.zone]) {
       G.conquete[v.zone] = (G.conquete[v.zone] || 0) + 1;
-      if (G.conquete[v.zone] === CONQUETE_ZONE) parti.conquise = true;
+      if (G.conquete[v.zone] === conqueteZone(v.zone)) parti.conquise = true;
     }
     connaitre(G, v).succes = succesDe(G, v.nom) + 1;
     message = changerRelation(G, v.nom, POINTS_RELATION.retourVivant);
@@ -2945,18 +2946,18 @@ function recompensePalier(G, index) {
 
 // --- L'Armure du Dernier Rempart ---
 
-// (v0.61) Chaque royaume LIBÉRÉ (toutes ses contrées conquises : CONQUETE_ZONE missions réussies
+// (v0.61) Chaque royaume LIBÉRÉ (toutes ses contrées conquises : conqueteZone(z) missions réussies
 // dans chacune) vaut une pièce de l'armure et l'arme légendaire du royaume, apportées par un
 // messager au réveil. (La Citadelle et Hautgarde, forts de la Confrérie, ne sont d'aucun royaume.)
 function contreesDuRoyaume(r) { return Object.keys(ZONES).filter(z => ZONES[z].royaume === r); }
 function royaumeLibere(G, r) {
   const zs = contreesDuRoyaume(r);
-  return zs.length > 0 && zs.every(z => ((G.conquete || {})[z] || 0) >= CONQUETE_ZONE);
+  return zs.length > 0 && zs.every(z => ((G.conquete || {})[z] || 0) >= conqueteZone(z));
 }
 // Pour la carte : où en est la libération d'un royaume (contrées conquises / contrées)
 function avanceeRoyaume(G, r) {
   const zs = contreesDuRoyaume(r);
-  return { faites: zs.filter(z => ((G.conquete || {})[z] || 0) >= CONQUETE_ZONE).length, total: zs.length };
+  return { faites: zs.filter(z => ((G.conquete || {})[z] || 0) >= conqueteZone(z)).length, total: zs.length };
 }
 function recompenserZones(G) {
   G.nouvellesPieces = [];

@@ -462,6 +462,11 @@ function mettreAJourPartie(G, brut = G) {
   // (v0.90) la balance devient un compteur de points : une vieille partie la reprend là où elle était
   if (!brut.lo) G.lo = { points: jaugeAncienne(G), journal: [], serment: null, offres: {}, parjures: 0, carrefour: null, parjure: null };
   G.lo = { journal: [], offres: {}, parjures: 0, ...G.lo };
+  // (v1.00) la conquête demande une mission de plus par étoile : ce qui était déjà conquis le reste
+  if (!G.conqueteV100) {
+    for (const z of Object.keys(G.conquete || {})) if (ZONES[z] && G.conquete[z] >= CONQUETE_ZONE) G.conquete[z] = Math.max(G.conquete[z], conqueteZone(z));
+    G.conqueteV100 = true;
+  }
 }
 
 // (v0.89) Une partie commencée avant les règles actuelles pouvait garder une pièce d'armure gagnée

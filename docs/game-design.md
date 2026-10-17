@@ -1589,3 +1589,32 @@ de loin (pas de fête manquée en silence).
 - **Le moteur des corps sait maintenant grimper** (poses `grimpe1` / `grimpe2` : une main au-dessus de la tête, l'autre
   à hauteur du visage, un genou relevé ; pour tous les personnages) ; `textureJoueurPose` donne le joueur dans n'importe
   quelle pose et sous n'importe quel angle.
+
+### Idées du joueur (18/10, après la planche 30 v2)
+- **Lots du mât (vue C) : validés.** Règle des animations : validée (le passage complet se fera au bon moment).
+- **La conquête d'une contrée** demande une mission de plus par étoile : **5 à 1 étoile, 6 à 2, 7 à 3, 8 à 4, 9 à 5**
+  (construit en v1.00 ; les contrées déjà conquises d'une vieille partie le restent).
+- **Le Grand Sage apparaît pour la première fois au deuxième Solstice** (an 2, le grand jour) : un discours de « paix et
+  bienveillance » sur la place (cortège du Conseil, cloches). Il faut d'abord son dessin (planche à faire).
+- **Garrick fait un discours pour les Bannis à la Nuit des Brumes, dès la première année** : pour les rassurer, des
+  jours meilleurs sont à venir.
+- **Une fête d'hiver (« Noël »)** avec **la grande roue des cadeaux** : un pourcentage de chances pour chaque sorte de
+  lot (décorations, vêtements, provisions, armes...).
+
+**Propositions de Claude, à valider**
+1. *Le discours du Grand Sage* (an 2, Solstice, le 14 des Moissons, au marché) : « Peuple du Comté ! Voilà bien des
+   hivers que le dragon ne trouble plus nos ciels. Ce n'est pas la chance qui vous garde : c'est l'Union. Que chaque
+   comptoir soit une lanterne, chaque voisin un frère. Le Conseil ne vous demande qu'une chose : la bienveillance...
+   et un peu de vigilance envers ceux qui ont choisi l'ombre. » Il sourit, la foule l'acclame. Au fond, Garrick ne
+   l'applaudit pas (un indice pour les attentifs : les paroles sont belles, le regard l'est moins).
+2. *Le discours de Garrick aux Bannis* (an 1, Nuit des Brumes, près du grand feu, si le marché noir est connu) : « Je
+   sais ce qu'on dit de vous, là-haut. Je sais ce qu'on vous a pris, et ce qu'on vous a fait oublier. Mais écoutez-moi :
+   la brume finit toujours par se lever. Un jour, vos enfants passeront la Grande Muraille sans baisser les yeux.
+   Gardez vos lanternes allumées. Des jours meilleurs viennent. » (Les Bannis se taisent, puis lèvent leurs coupes ;
+   JeuneGoy se demande ce que Garrick fait là.)
+3. *La fête d'hiver* : **la Fête du Long Hiver**, les 20, 21 et 22 du Givre (la neige, le grand sapin de la place, le
+   banquet). **La grande roue des cadeaux** (8 p. le tour, un tour par jour) : provisions 30 % (3 à 6 rations, torches,
+   capes chaudes), pièces 20 % (10 à 40 p.), vêtements 15 % (un bonnet, des moufles, une écharpe d'hiver : nouveaux,
+   gardés dans la malle), armes 15 % (une arme au hasard), décorations 15 % (une décoration de la brocante), **le gros
+   lot 5 %** (une décoration exclusive : le sapin de cristal, +0,4 client par jour). On la placerait en **B-3c**, après
+   la Nuit des Brumes.

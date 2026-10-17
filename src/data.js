@@ -551,7 +551,9 @@ const COLPORTEUR = { nom: 'Barnabé le colporteur', multiplicateur: 1.25 };
 // Le premier jour où la Faucheuse peut venir annoncer les morts.
 const JOUR_FAUCHEUSE = 5;
 // Une contrée est « conquise » après ce nombre de missions réussies : son drapeau flotte sur ta carte.
+// (v1.00, idée du joueur) une de plus par étoile : 5 à une étoile, 6 à deux, 7 à trois...
 const CONQUETE_ZONE = 5;
+function conqueteZone(id) { return CONQUETE_ZONE + Math.max(0, ((ZONES[id] && ZONES[id].danger) || 1) - 1); }
 
 // --- Le dispatch : les zones où envoyer les aventuriers ---
 

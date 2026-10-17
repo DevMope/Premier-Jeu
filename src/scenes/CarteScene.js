@@ -156,8 +156,8 @@ class CarteScene extends Phaser.Scene {
       // La conquête : un fanion avec le compte des missions réussies, doré une fois conquise
       if (ouverte) {
         const n = (G.conquete || {})[cle] || 0;
-        const conquise = n >= CONQUETE_ZONE;
-        const fanion = ajouter(this.add.text(z.x + 50, z.y - 22, conquise ? '⚑ Conquise' : `⚑ ${n}/${CONQUETE_ZONE}`,
+        const conquise = n >= conqueteZone(cle);
+        const fanion = ajouter(this.add.text(z.x + 50, z.y - 22, conquise ? '⚑ Conquise' : `⚑ ${n}/${conqueteZone(cle)}`,
           style(11, conquise ? '#7a4a00' : '#3b2410', { fontStyle: 'bold', backgroundColor: conquise ? '#f0c840' : '#e8d8b0', padding: { x: 3, y: 1 } })).setOrigin(0.5), { etiquette: true, detail: true });
         if (conquise) this.tweens.add({ targets: fanion, angle: { from: -4, to: 4 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
@@ -185,7 +185,7 @@ class CarteScene extends Phaser.Scene {
         return n;
       });
     }
-    const conquises = Object.keys(ZONES).filter(c => ((G.conquete || {})[c] || 0) >= CONQUETE_ZONE).length;
+    const conquises = Object.keys(ZONES).filter(c => ((G.conquete || {})[c] || 0) >= conqueteZone(c)).length;
     this.dessus.add(this.add.text(938, 402, `⚑ Contrées conquises : ${conquises} / ${Object.keys(ZONES).length} · royaumes libérés : ${Object.keys(ROYAUMES).filter(r => royaumeLibere(G, r)).length} / ${Object.keys(ROYAUMES).length}`, style(12, '#f3e6c8', { fontStyle: 'bold', backgroundColor: '#2a1a10cc', padding: { x: 5, y: 2 } })).setOrigin(1, 0.5));
     G.zonesVuesCarte = zonesOuvertes(G);
   }
@@ -464,7 +464,7 @@ class CarteScene extends Phaser.Scene {
     } else {
       contenu.add(this.add.text(0, 0, `${z.nom}  ${'★'.repeat(z.danger)}`, style(14, '#f3d98a', { fontStyle: 'bold' })));
       const nc = (G.conquete || {})[cle] || 0;
-      contenu.add(this.add.text(w - 44, 2, nc >= CONQUETE_ZONE ? '⚑ Conquise !' : `⚑ Conquête ${nc}/${CONQUETE_ZONE}`, style(12, nc >= CONQUETE_ZONE ? '#f0c840' : '#c9b48a', { fontStyle: 'bold' })).setOrigin(1, 0));
+      contenu.add(this.add.text(w - 44, 2, nc >= conqueteZone(cle) ? '⚑ Conquise !' : `⚑ Conquête ${nc}/${conqueteZone(cle)}`, style(12, nc >= conqueteZone(cle) ? '#f0c840' : '#c9b48a', { fontStyle: 'bold' })).setOrigin(1, 0));
       const quetes = z.quetes.map(q => QUETES[q]);
       const dureeMin = Math.min(...quetes.map(q => q.duree[0]));
       const dureeMax = Math.max(...quetes.map(q => q.duree[1]));
