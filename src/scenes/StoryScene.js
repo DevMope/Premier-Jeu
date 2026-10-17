@@ -396,8 +396,8 @@ class StoryScene extends Cinematique {
       Son.jouer('glas');
       await this.animer({ targets: this.perso, angle: -90, alpha: 0.6, duration: 700, ease: 'Bounce.easeOut' });
       this.ecrire('Fin du carnet', r.valeureux
-        ? `${v.nom} est mort${this.e} valeureusement au combat. On chantera son nom dans les tavernes.\nTon investissement est perdu, et ta réputation baisse (−${PERTE_MORT.valeureux}).`
-        : `${v.nom} est mort${this.e} loin de chez ${v.feminin ? 'elle' : 'lui'}, sans gloire. Il fallait sans doute mieux ${v.feminin ? 'la' : 'le'} préparer...\nTon investissement est perdu, et ta réputation baisse (−${PERTE_MORT.sansGloire}).`);
+        ? `${v.nom} est mort${this.e} valeureusement au combat. On chantera son nom dans les tavernes.\nTon investissement est perdu, et ta réputation baisse (−${String(PERTE_MORT.valeureux).replace(".", ",")}).`
+        : `${v.nom} est mort${this.e} loin de chez ${v.feminin ? 'elle' : 'lui'}, sans gloire. Il fallait sans doute mieux ${v.feminin ? 'la' : 'le'} préparer...\nTon investissement est perdu, et ta réputation baisse (−${String(PERTE_MORT.sansGloire).replace(".", ",")}).`);
       // (v0.60) la dernière ligne du carnet, interrompue
       const proche = auHasard(['ma sœur', 'mon frère', 'ma mère', 'mon père', 'mes enfants', 'ma bien-aimée']);
       this.ajouterTexte(`\nLa dernière ligne du carnet, à peine lisible : « Dis à ${proche} que je... »`);

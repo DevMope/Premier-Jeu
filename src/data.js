@@ -210,7 +210,7 @@ const REFUS_LETTRE = 0.2;
 const REFUS_CLIENT = 0.5;
 // (v0.94) Un aventurier mort : la réputation en prend un coup (moins s'il est tombé en héros).
 // Un bon dédommagement en rattrape un peu.
-const PERTE_MORT = { valeureux: 1, sansGloire: 2 };
+const PERTE_MORT = { valeureux: 0.5, sansGloire: 1.5 };
 
 // Les prêts : les banquiers nains prêtent plus, et moins cher, quand ta réputation grandit.
 // La Main Noire (`mal`) ne prête qu'à ceux qui ont choisi le camp du mal (plus tard dans le jeu).

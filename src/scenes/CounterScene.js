@@ -1844,7 +1844,7 @@ class CounterScene extends Phaser.Scene {
     const repAvant = G.reputation;
     const lignes = entrees.map(e => {
       const parti = e.parti, rep0 = G.reputation;
-      avancerHeure(G, JOURNEE.recit);
+      if (parti.resultat && parti.resultat.vivant) avancerHeure(G, JOURNEE.recit);   // (comme un récit écouté)
       const { gain } = terminerAventure(G, parti);
       G.recitsVus = (G.recitsVus || 0) + 1;
       return { parti, gain, rep: G.reputation - rep0 };
@@ -1866,7 +1866,7 @@ class CounterScene extends Phaser.Scene {
       total += gain;
       const fond = this.add.rectangle(480, y, 760, h - 6, i % 2 ? 0xe8d4a8 : 0xf0e0b8, 0.85).setStrokeStyle(1, 0xc9a870).setInteractive({ useHandCursor: true });
       fond.on('pointerover', () => fond.setFillStyle(0xd8c498, 1)).on('pointerout', () => fond.setFillStyle(i % 2 ? 0xe8d4a8 : 0xf0e0b8, 0.85));
-      fond.on('pointerdown', () => { this.resumeRetours = null; this.ouvrirRecit(parti); });
+      fond.on('pointerdown', () => { this.resumeRetours = null; this.ouvrirRecit(parti, true); });
       c.add(fond);
       c.add(this.add.image(130, y + h / 2 - 6, textureBusteHD(this, v, r.echec ? 'fache' : 'content')).setOrigin(0.5, 1).setScale(Math.min(0.5, (h - 8) / 120)));
       const nom = this.add.text(170, y - 12, v.nom, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
@@ -1897,9 +1897,9 @@ class CounterScene extends Phaser.Scene {
     c.add([b.fond, b.label]);
   }
 
-  ouvrirRecit(parti) {
+  ouvrirRecit(parti, dejaCompte) {
     if (enTransition(this)) return;
-    if (parti.resultat && parti.resultat.vivant) avancerHeure(this.G, JOURNEE.recit);   // (le temps du récit : l'horloge l'affichera au retour)
+    if (!dejaCompte && parti.resultat && parti.resultat.vivant) avancerHeure(this.G, JOURNEE.recit);   // (le temps du récit : l'horloge l'affichera au retour)
     this.bouton('...', null);
     this.cameras.main.fadeOut(400);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Recit', { id: parti.voyageur.id }));

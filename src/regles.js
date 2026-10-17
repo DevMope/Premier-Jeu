@@ -2177,7 +2177,7 @@ function terminerAventure(G, parti) {
       message = (message ? message + ' ' : '') + `« Au fait... J'ai aperçu au loin ${ZONES[z].nom.replace(/^(Le|La|Les|L') /, m => m.toLowerCase()).replace(/^L'/, "l'")}. » Nouvelle zone sur ta carte !`;
     }
   } else {
-    G.reputation -= r.valeureux ? PERTE_MORT.valeureux : PERTE_MORT.sansGloire;   // (v0.94 : plus lourd qu'avant, −1 ou 0)
+    G.reputation -= r.valeureux ? PERTE_MORT.valeureux : PERTE_MORT.sansGloire;   // (v0.96 : un peu plus lourd qu'avant, −1,5 ou −0,5)
     connaitre(G, v).mort = true;
     G.journal.morts++;
     recolter(G, [parti]); // si la Faucheuse ne l'a pas déjà emporté
