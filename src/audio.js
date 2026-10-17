@@ -50,8 +50,11 @@ const Son = {
 
   // --- (v0.93) La nature autour de l'écran titre, selon l'heure de l'appareil : les oiseaux le
   // matin, les cigales l'après-midi, les grillons et la chouette le soir (sous la musique) ---
-  nature(allumer) {
+  // (v0.99) dehors, dans la rue et devant le comptoir : la nature de la saison (opts.saison), plus bas
+  nature(allumer, opts = {}) {
     this.natureVoulue = allumer;
+    if (allumer) this.natureOpts = opts;
+    opts = this.natureOpts || {};
     if (!this.pret) return;
     if (!allumer) {
       (this.natureMinuteries || []).forEach(clearTimeout); this.natureMinuteries = [];
@@ -62,7 +65,7 @@ const Son = {
     }
     if (this.natureBus) return;
     const ctx = this.ctx, sortie = this.natureBus = ctx.createGain(), noeuds = this.natureNoeuds = [], minuteries = this.natureMinuteries = [];
-    sortie.gain.setValueAtTime(0, ctx.currentTime); sortie.gain.linearRampToValueAtTime(1.3, ctx.currentTime + 2);
+    sortie.gain.setValueAtTime(0, ctx.currentTime); sortie.gain.linearRampToValueAtTime(opts.volume || 1.3, ctx.currentTime + 2);
     sortie.connect(this.busMusique);
     const bruit = (duree = 2) => { const b = ctx.createBuffer(1, ctx.sampleRate * duree, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; };
     const boucleBruit = (filtre, freq, q, gain) => { const src = ctx.createBufferSource(); src.buffer = bruit(3); src.loop = true; const f = ctx.createBiquadFilter(); f.type = filtre; f.frequency.value = freq; f.Q.value = q; const g = ctx.createGain(); g.gain.value = gain; src.connect(f).connect(g).connect(sortie); src.start(); noeuds.push(src); return { f, g }; };
@@ -101,7 +104,11 @@ const Son = {
       for (let k = 0; k < 3; k++) { const o = ctx.createOscillator(), g = ctx.createGain(), tt = t + k * 0.05; o.frequency.value = f;
         g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(0.018, tt + 0.008); g.gain.linearRampToValueAtTime(0, tt + 0.035); o.connect(g).connect(sortie); o.start(tt); o.stop(tt + 0.04); } })); };
     const h = new Date().getHours();
-    if (h >= 6 && h < 12) { vent(0.012, 400); chaque(900, 2600, () => gazouillis(3000 + Math.random() * 1500)); chaque(3500, 7000, merle); chaque(9000, 16000, tourterelle); }
+    if (opts.saison === 'semailles') { vent(0.01, 400); chaque(700, 2000, () => gazouillis(3000 + Math.random() * 1500)); chaque(3000, 6000, merle); chaque(8000, 14000, tourterelle); }
+    else if (opts.saison === 'moissons') { cigales(0.05); vent(0.012, 350); chaque(6000, 10000, () => gazouillis(3600, 0.025)); }
+    else if (opts.saison === 'brumes') { vent(0.05, 520); chaque(9000, 16000, () => gazouillis(2600, 0.02)); }
+    else if (opts.saison === 'givre') { vent(0.03, 260); }
+    else if (h >= 6 && h < 12) { vent(0.012, 400); chaque(900, 2600, () => gazouillis(3000 + Math.random() * 1500)); chaque(3500, 7000, merle); chaque(9000, 16000, tourterelle); }
     else if (h >= 12 && h < 19) { cigales(); vent(0.015, 350); chaque(5000, 9000, () => gazouillis(3600, 0.03)); }
     else { grillons(); vent(0.018, 300); chaque(9000, 15000, chouette); }
   },

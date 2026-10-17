@@ -16,6 +16,8 @@ class FacadeScene extends Cinematique {
     this.add.image(0, 440, pavesHD(this, 960, 100)).setOrigin(0).setScale(2);
     const facade = dessinerFacade(this, 560, 440, G.nomShop);
     decorSaison(this, { sol: 440, arbres: [[70, 1.15], [905, 1.05]], facade, bonhomme: 790, prof: 3 });   // (v0.99 : la saison)
+    // (v0.99) les bruits de la saison, doucement, sous la musique : oiseaux, cigales, vent
+    if (typeof saisonDe === 'function') { Son.nature(true, { saison: saisonDe(G), volume: 0.7 }); this.events.once('shutdown', () => Son.nature(false)); this.events.once('sleep', () => Son.nature(false)); }
     this.add.text(480, 34, `Jour ${G.jour} · ${G.nomShop}`, style(26, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 6 })).setOrigin(0.5);
     // Une petite foule attend déjà devant la fenêtre, s'il y a du monde aujourd'hui.
     const clients = G.file.filter(e => e.type === 'client').slice(0, 4);
