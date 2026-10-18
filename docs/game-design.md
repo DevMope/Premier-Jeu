@@ -1931,3 +1931,23 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
   bar** (une pièce de plus, le soir : rencontres, rumeurs, clients qui reviennent).
 - Le score reste visible en haut de l'écran, près de ta réputation (un clic ouvre le détail).
 
+### Réponses du joueur sur la planche 41 (19/10) : tout validé, version A
+- **Le mois des comptoirs : version A** (en aventuriers revenus vainqueurs).
+- **3.** Le crieur vient **à la fin de la file d'attente** (avant la Faucheuse, si elle vient le même jour) annoncer les
+  résultats du mois.
+- **5.** Le petit bar : parfait ; y prévoir **une ou deux missions secondaires**, un peu comme le mendiant ou le chat
+  (à penser plus tard). Les coursiers de l'orphelinat : « une course du matin, c'est-à-dire ? » → à définir
+  concrètement ; question du joueur : **nouvel axe d'améliorations avec de nouvelles choses, ou au service des
+  mécaniques déjà en place ?**
+- **Proposition de Claude pour les coursiers** (à valider) : **les deux**, dans cet ordre.
+  - *Au service de l'existant* : (1) **la liste des courses**, le soir au bureau (ou le matin au réveil) : tu coches
+    jusqu'à 6 objets parmi ce que le marché vend demain, au prix du marché ; ils sont sur ton comptoir à l'ouverture,
+    sans aller au marché toi-même (le matin devient libre pour la diseuse, la nymphe, la forge...). (2) **Le coursier
+    de la journée**, au comptoir, à côté de Grippesou : un gamin court au marché chercher un objet au prix normal, en
+    ¼ h (Grippesou : ½ h et deux fois le prix). Une course par jour au début.
+  - *Un petit axe nouveau, qui mange de l'argent* : l'orphelinat s'améliore, comme les meubles du comptoir :
+    **le dortoir** (deux courses par jour), **l'école** (les orphelins apprennent : les courses ne prennent plus de
+    temps, et ils rapportent une rumeur du marché le matin), **la grande salle** (les enfants grandis deviennent
+    des novices qui viennent chez toi, fidèles dès le premier jour, avec un petit fil d'histoires). Chaque niveau
+    coûte cher (1 000 à 5 000 p.), ce qui sert aussi la dépense du jour 100.
+
