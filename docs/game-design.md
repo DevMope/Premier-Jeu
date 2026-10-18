@@ -1834,3 +1834,28 @@ de loin (pas de fête manquée en silence).
   - on le bat en réputation sur un mois ; alors on peut racheter sa boutique (les orphelins, ou le petit bar).
   - À dessiner sur la planche 40 : trois propositions de physique et de tenue, avec ses répliques.
 - **La quête du chat amoureux** : Claude la place quand il le juge bon.
+
+### C-1 et l'impôt du Conseil : chiffres proposés (simulation du 19/10, v1.09)
+40 parties de 300 jours par réglage (stratégies mélangées ; la moitié des robots fait faillite avant le jour 15,
+dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le début du jeu).
+
+| Réglage | Argent médian jour 50 | jour 100 | jour 200 |
+| --- | --- | --- | --- |
+| Aujourd'hui (rien) | 11 700 | 18 500 | 37 700 |
+| Impôt 10 % par mois au-delà de 400 p. × étoiles | 5 900 | 14 000 | 29 800 |
+| Impôt 20 % | 4 500 | 11 100 | 18 700 |
+| Impôt 30 % | 5 200 | 9 000 | 20 500 |
+| Impôt 20 % + commandes royales | 6 600 | 17 400 | 32 900 |
+| Impôt progressif (5 % × étoiles) + commandes + ristourne | 9 900 | 18 900 | — |
+
+- **Ce que ça montre** : l'impôt divise le magot par deux environ, sans faire tomber personne ; mais l'argent continue
+  de monter (les revenus grandissent avec les étoiles). L'impôt seul ne fera pas « peur » : la vraie tension viendra de
+  la menace (C-2), du rival (C-5) et de **grosses dépenses qui valent le coup** (racheter le rival, le petit bar, les
+  collections).
+- **Proposition, impôt du Conseil** : le 1er de chaque mois, dès ★2, un percepteur passe (une lettre au sceau du
+  Conseil) : **5 % × tes étoiles** (10 % à ★2, 25 % à ★5) de ce que tu as **au-delà de 300 p. × étoiles**. Moitié prix le
+  mois qui suit une commande royale réussie. Pas assez d'argent : une dette envers le Conseil (comme un prêt), pas la
+  faillite tout de suite.
+- **Proposition, commande royale** : une par mois, dès ★2 (le 14 du mois, hors fête). Prime **600 p. à ★2, +50 % par
+  étoile**, +1 de réputation ; 7 jours pour livrer. La marchandise coûte environ 150 p. au marché, mais il faut des
+  armes « bel ouvrage » (la forge, ou le marché noir). Ratée : -1 de réputation, et pas de commande le mois suivant.
