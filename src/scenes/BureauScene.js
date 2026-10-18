@@ -70,12 +70,12 @@ class BureauScene extends Phaser.Scene {
     for (let k = 0; k < JOURS_PAR_MOIS; k++) {
       const col = k % 7, ligne = Math.floor(k / 7), x = 92 + col * 102, y = 128 + ligne * 62, jeu = G.jour + (k + 1 - d.jourDuMois);
       const f = feteDuJour(G, jeu);
-      g.fillStyle(f ? (f.camp === 'bien' ? 0xf8e8a0 : 0xd8c8e8) : 0xf8f0d8).fillRect(x, y, 96, 56).lineStyle(1, 0xb89a6a).strokeRect(x, y, 96, 56);
+      g.fillStyle(f ? (f.camp === 'bien' ? 0xf8e8a0 : f.camp === 'tous' ? 0xd8ecf8 : 0xd8c8e8) : 0xf8f0d8).fillRect(x, y, 96, 56).lineStyle(1, 0xb89a6a).strokeRect(x, y, 96, 56);
       c.add(this.add.text(x + 5, y + 3, String(k + 1), style(11, '#3b2410', { fontStyle: 'bold' })));
       if (k + 1 < d.jourDuMois) g.lineStyle(2, 0x9a7a50, 0.8).lineBetween(x + 8, y + 50, x + 88, y + 8);   // (les jours passés, barrés)
       if (k + 1 === d.jourDuMois) g.lineStyle(3, 0xc02a1a).strokeEllipse(x + 48, y + 28, 90, 50);        // (aujourd'hui)
       if (jeu > 0 && jourDeLoyer(G, jeu)) { c.add(this.add.text(x + 48, y + 44, 'loyer', style(10, '#8a5a2a', { fontStyle: 'italic' })).setOrigin(0.5)); g.fillStyle(0xe8b830).fillCircle(x + 84, y + 12, 6).lineStyle(1, 0x8a6a10).strokeCircle(x + 84, y + 12, 6); }
-      if (f) c.add(this.add.text(x + 48, y + 26, f.jour === 1 ? f.titre.replace('La ', '') : f.jour === 0 ? 'la veille' : 'le lendemain', style(10, f.camp === 'bien' ? '#2a4a8a' : '#5a2a6a', { fontStyle: 'bold', align: 'center', wordWrap: { width: 90 } })).setOrigin(0.5));
+      if (f) c.add(this.add.text(x + 48, y + 26, f.jour === 1 ? f.titre.replace('La ', '') : f.jour === 0 ? 'la veille' : 'le lendemain', style(10, f.camp === 'bien' ? '#2a4a8a' : f.camp === 'tous' ? '#1e5a8a' : '#5a2a6a', { fontStyle: 'bold', align: 'center', wordWrap: { width: 90 } })).setOrigin(0.5));
     }
     // les quatre saisons de l'année, celle d'aujourd'hui en avant
     ORDRE_SAISONS.forEach((s2, i) => {

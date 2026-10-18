@@ -143,7 +143,7 @@ function lancerJeu() {
   fps: { min: 1, smoothStep: false },
   backgroundColor: '#1a120a',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [TitleScene, IntroScene, IntroHistoireScene, CounterScene, NightScene, StoryScene, FailliteScene, ExpressScene, BanqueScene, MarcheScene, AtelierScene, BureauScene, CarteScene, DodoScene, FacadeScene, ArriereScene, RenovationScene, PromenadeScene, MarcheNoirScene, RueScene, NympheScene, ForgeScene, CarrefourScene, SaisonScene, TirArcScene, MatScene, LanternesScene, VisionScene, SageScene, HudScene],
+  scene: [TitleScene, IntroScene, IntroHistoireScene, CounterScene, NightScene, StoryScene, FailliteScene, ExpressScene, BanqueScene, MarcheScene, AtelierScene, BureauScene, CarteScene, DodoScene, FacadeScene, ArriereScene, RenovationScene, PromenadeScene, MarcheNoirScene, RueScene, NympheScene, ForgeScene, CarrefourScene, SaisonScene, TirArcScene, MatScene, RoueScene, BanquetScene, LanternesScene, VisionScene, SageScene, HudScene],
 });
   // La musique et les sons : le son démarre au premier clic (les navigateurs l'exigent), et
   // chaque scène qui s'ouvre lance son ambiance.

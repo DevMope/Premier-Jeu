@@ -357,6 +357,36 @@ const DESSINS_ICONES = {
     for (let x = 3; x <= 12; x++) t.poser(x, 14, 'or', 4);
     t.forme('saphir', ellipsoide(8, 4, 1.6, 1.6), { decalage: 0.6 });
   },
+  // --- (v1.05) La Fête du Long Hiver ---
+  bonnetHiver(t) { // le bonnet de laine rouge côtelé, son revers blanc et son pompon
+    t.rampes.rouge = rampe(0xc0302c); t.rampes.laineB = rampe(0xf4f2ee);
+    t.forme('rouge', (x, y) => { const d = Math.hypot((x + 0.5 - 8) / 6, (y + 0.5 - 11) / 7); return d < 1 && y <= 11 ? [(x + 0.5 - 8) / 7, (y - 9) / 7, 0.8] : null; }, { motif: (x) => (x % 3 === 0 ? -0.5 : 0) });
+    t.forme('laineB', (x, y) => (y >= 10 && y <= 13 && x >= 1 && x <= 14 ? [(x - 7.5) / 8, (y - 11.5) / 3, 0.85] : null), { motif: (x, y) => ((x + y) % 2 ? 0.4 : -0.2) });
+    t.forme('laineB', ellipsoide(8, 3, 2.4, 2.2), { decalage: 0.3, motif: (x, y) => ((x + y) % 2 ? 0.4 : -0.2) });
+  },
+  mouflesHiver(t) { // deux moufles vert sapin, leur pouce, leur revers de fourrure blanche, reliées d'un cordon
+    t.rampes.sapin = rampe(0x2e6a3a); t.rampes.laineB = rampe(0xf4f2ee);
+    for (const [ox, sens] of [[4.5, -1], [11.5, 1]]) {
+      t.forme('sapin', ellipsoide(ox, 8, 3, 4), { decalage: 0.1 });
+      t.forme('sapin', ellipsoide(ox + sens * 3, 9, 1.2, 1.8), { decalage: 0.3 });
+      t.forme('laineB', (x, y) => (y >= 11 && y <= 14 && Math.abs(x + 0.5 - ox) < 3.4 ? [(x + 0.5 - ox) / 4, 0, 0.85] : null), { motif: (x, y) => ((x + y) % 2 ? 0.4 : -0.2) });
+    }
+    trait(t, 'lin', 4, 3, 12, 3, 0.4);
+  },
+  echarpeHiver(t) { // l'écharpe du Long Hiver, rayée rouge et blanc, à franges
+    t.rampes.rouge = rampe(0xc8302c); t.rampes.laineB = rampe(0xf4f2ee);
+    t.forme('rouge', (x, y) => (y >= 2 && y <= 7 && x >= 1 && x <= 14 ? [0, (y - 4.5) / 4, 0.9] : null));
+    t.forme('rouge', (x, y) => (y >= 7 && y <= 13 && x >= 9 && x <= 12 ? [(x - 10.5) / 2, 0, 0.9] : null));
+    for (const x of [3, 6, 13]) for (let y = 2; y <= 7; y++) t.poser(x, y, 'laineB', 4);
+    for (const y of [9, 12]) for (let x = 9; x <= 12; x++) t.poser(x, y, 'laineB', 4);
+    for (const x of [9, 11, 12]) for (let y = 14; y <= 15; y++) t.poser(x, y, 'rouge', 2);
+  },
+  sapinCristal(t) { // le sapin de cristal : trois étages de verre bleu, une étoile d'or, un pied d'argent
+    t.rampes.cristal = rampe(0x70d8f0); t.rampes.argent = rampe(0xc8ccd4);
+    for (const [y0, y1, l] of [[2, 7, 3.5], [5, 11, 5.2], [8, 14, 6.8]]) t.forme('cristal', (x, y) => (y >= y0 && y <= y1 && Math.abs(x + 0.5 - 8) < (y - y0 + 1) / (y1 - y0 + 1) * l ? [(x + 0.5 - 8) / 8, -0.2, 0.9] : null), { decalage: 0.2, motif: (x, y) => ((x * 3 + y * 5) % 7 === 0 ? 1.2 : 0) });
+    t.forme('argent', (x, y) => (y >= 14 && y <= 15 && x >= 6 && x <= 9 ? [0, 0, 1] : null));
+    t.poser(8, 1, 'or', 5); t.poser(7, 2, 'or', 4); t.poser(9, 2, 'or', 4); t.poser(8, 0, 'or', 3);
+  },
 };
 
 // Les pièces de l'armure : une version claire (Confrérie) et une sombre (Main Noire).

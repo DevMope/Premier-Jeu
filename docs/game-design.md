@@ -1672,3 +1672,27 @@ de loin (pas de fête manquée en silence).
   **à la taille** : la dague, la rapière, le khopesh, la fronde. La salle du Conseil : un dallage de marbre crème veiné
   d'or (`dallageConseil`), une rosace et un tapis pourpre, au lieu du damier.
 - **Planche 34 : validée** (18/10), avec des armes un peu plus grosses pour les petites silhouettes de la file (v1.04).
+
+### B-3c, la Fête du Long Hiver : construite, fermée en attendant la planche 35 (18/10)
+- **Les dates** : les 20, 21 et 22 du Givre (la fête de tout le village, les deux camps). Annoncée une semaine avant par
+  le crieur, la veille et chaque jour au réveil ; marquée en bleu glacé dans le calendrier. Fermée tant que la planche 35
+  n'est pas validée (`FETES_OUVERTES.hiver = false`, dans `hiver.js`).
+- **Le marché** : la neige tassée sur les pavés, le grand sapin de la place (étages enneigés, guirlande rouge, boules,
+  bougies, étoile d'or qui pulse), des guirlandes de sapin à nœuds rouges à la place des fanions, un bonhomme de neige.
+- **La grande roue des cadeaux** (validée le 18/10), à la place du coin des jeux, tenue par **le Père Givrin** (proposé :
+  un vieux nain jovial, manteau rouge bordé de fourrure, long bonnet à pompon) : 8 p. le tour, un tour par jour ; une
+  roue en plein écran qui ralentit en faisant cliqueter ses clous. Lots : provisions 30 % (3 à 6 rations, 3 à 5 torches
+  ou 2 capes chaudes), pièces 20 % (10 à 40 p.), habit d'hiver 15 %, une arme 15 % (celles des peuples de l'ombre
+  seulement si on connaît le marché noir), une décoration de la brocante 15 % (jamais une décoration de camp : la roue
+  ne fait pencher personne), **le gros lot 5 %** : le sapin de cristal (+0,4 client par jour, posé sur le plancher de
+  l'arrière-boutique, il scintille). Déjà tout gagné : des pièces à la place.
+- **Proposé, à valider** : les **habits d'hiver** (bonnet à pompon, moufles fourrées, écharpe du Long Hiver rayée rouge et
+  blanc), gagnés seulement à la roue, rangés dans la malle ; portés pendant la fête, +1 de relation avec chaque client
+  (les deux camps, une fois par jour), comme les atours des deux autres fêtes.
+- **Proposé, à valider** : **le banquet du grand soir** (le 21, avant d'aller dormir, une fois par an) : tout le village
+  attablé sous le sapin illuminé ; Garrick arrive dans la neige et lève sa chope : « Au Long Hiver ! Que vos foyers
+  restent chauds... et vos portes ouvertes, même à ceux qu'on n'attend pas. » ; un voisin (Rosalie, Mère Sauge, Thorgal
+  ou Firmin) glisse un petit cadeau près de ton assiette ; le lendemain, réveil en pleine forme (un client de plus).
+- **Proposé, à valider** : **l'esprit du Long Hiver** : pendant les trois jours, tout cadeau offert au comptoir donne +1
+  de relation en plus.
+- **Petit bug corrigé au passage** : les dépenses des fêtes s'affichaient « fete » au registre (libellé : « Fêtes du village »).

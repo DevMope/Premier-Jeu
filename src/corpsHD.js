@@ -60,6 +60,8 @@ const FIGURANTS = {
   gardienneMages: { race: 'magicienne', feminin: true, nom: "L'Archimage Séraphine", costume: 'gardien', habit: 0x4a2a8a, cape: 0x2a1a5a, cheveux: 0xc8c8d0, coiffure: 'long', peau: 1, niveau: 2, vieux: true, bouche: 1, atours: { metal: 'or' } },
   // le bras droit du Grand Sage : le Champion du Rempart, qui a « dompté » le dragon
   champion: { race: 'humain', nom: 'Sire Valdric', costume: 'champion', habit: 0x2a1a1a, cape: 0xa02a22, cheveux: 0x1a1414, barbe: 'courte', coiffure: 'court', peau: 1, niveau: 4, bouche: 3 },
+  // (v1.05, planche 35) le Père Givrin, qui fait tourner la grande roue des cadeaux du Long Hiver
+  givrin: { race: 'nain', nom: 'Le Père Givrin', costume: 'givrin', habit: 0xb0242a, cheveux: 0xf0f0f4, barbe: 'nain', peau: 1, niveau: 2, bouche: 3 },
   mendiant: { race: 'humain', nom: 'Le mendiant', costume: 'mendiant', habit: 0x6a6252, cheveux: 0x8a8a80, cape: 0x4a4236, barbe: 'pleine', niveau: 0 },
 };
 

@@ -1019,7 +1019,7 @@ function acheterDeco(G, id) {
 function remarqueCamp(G, v) {
   if (!v || v.remarqueJour === G.jour) return null;
   v.remarqueJour = G.jour;
-  const fete = (typeof remarqueAtours === 'function' ? remarqueAtours(G, v) : null) || (typeof remarqueAtoursAncetres === 'function' ? remarqueAtoursAncetres(G, v) : null);   // (v1.00 : les atours de l'Union ; v1.01 : ceux des ancêtres)
+  const fete = (typeof remarqueAtours === 'function' ? remarqueAtours(G, v) : null) || (typeof remarqueAtoursAncetres === 'function' ? remarqueAtoursAncetres(G, v) : null) || (typeof remarqueHabitsHiver === 'function' ? remarqueHabitsHiver(G, v) : null);   // (v1.00 : les atours de l'Union ; v1.01 : ceux des ancêtres ; v1.05 : les habits du Long Hiver)
   if (fete) return fete;
   const banni = PEUPLES_OMBRE.includes(v.race);
   const decos = (G.decos || []).filter(d => DECOS[d].camp);
@@ -1580,6 +1580,7 @@ function nuit(G) {
   for (const l of nuitOmbreAnnee(G)) G.reveil.lignes.push(l);   // (v0.98) la caisse du Passeur, les contrats de l'ombre
   if (typeof nuitSolstice === 'function') nuitSolstice(G);   // (v1.00) la tarte du Solstice ne se garde pas
   if (typeof nuitBrumes === 'function') for (const l of nuitBrumes(G)) G.reveil.lignes.push(l);   // (v1.01) la Nuit des Brumes
+  if (typeof reveilApresBanquet === 'function') reveilApresBanquet(G, G.reveil);   // (v1.05) le banquet du Long Hiver
   // (v0.86) les imposteurs servis hier : on apprend ce qu'est devenu ton baluchon
   for (const a of (G.arnaques || []).filter(a => !a.dit)) { G.reveil.lignes.push(a.texte); a.dit = true; }
   G.arnaques = (G.arnaques || []).filter(a => a.jour >= G.jour - 7);
@@ -2767,7 +2768,13 @@ function trefleDe(G, nom) {
 
 // Offrir un cadeau : selon ses goûts, beaucoup de chance, un peu, ou rien (et il le prend mal).
 // Un cadeau par personne et par jour. Renvoie { erreur } ou { gout, texte }.
+// (v1.05) Pendant la Fête du Long Hiver, l'esprit de la fête : tout cadeau touche un peu plus
 function offrirCadeau(G, v, id) {
+  const r = offrirCadeauSansFete(G, v, id);
+  const esprit = !r.erreur && typeof espritHiver === 'function' ? espritHiver(G, v) : null;
+  return esprit ? { ...r, texte: r.texte + ' ' + esprit } : r;
+}
+function offrirCadeauSansFete(G, v, id) {
   if (!G.cadeaux[id]) return { erreur: "Tu n'as plus ce cadeau." };
   const p = connaitre(G, v);
   if (p.cadeauJour === G.jour) return { erreur: `${v.nom.split(' ')[0]} a déjà reçu un cadeau aujourd'hui.` };
@@ -2917,7 +2924,7 @@ function avancerEvenements(G) {
   // (v1.00) une semaine avant une fête, le crieur l'annonce
   if (typeof prochaineFete === 'function') {
     const f = prochaineFete(G);
-    if (f && f.dans === 7 && feteOuverte(f.id)) lignes.push(`Dans une semaine, ${f.nom} ! ${f.id === 'solstice' ? "Le tir à l'arc de la Confrérie, le mât de cocagne, les atours de l'Union et, le dernier soir, les lanternes célestes." : 'Les Bannis allument leurs lanternes...'}`);
+    if (f && f.dans === 7 && feteOuverte(f.id)) lignes.push(`Dans une semaine, ${f.nom} ! ${{ solstice: "Le tir à l'arc de la Confrérie, le mât de cocagne, les atours de l'Union et, le dernier soir, les lanternes célestes.", hiver: 'La neige sur la place, le grand sapin, la roue des cadeaux du Père Givrin et, le grand soir, le banquet.' }[f.id] || 'Les Bannis allument leurs lanternes...'}`);
   }
   G.gazette = { jour: G.jour, lignes };
 }

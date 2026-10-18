@@ -22,6 +22,12 @@ class DodoScene extends Cinematique {
       this.scene.start('Lanternes', { suite: 'Dodo', donnees: { bilan: this.bilan } });
       return;
     }
+    // (v1.05) le grand soir du Long Hiver, avant d'aller dormir : le banquet sous le sapin, une fois par an
+    if (typeof banquetDu === 'function' && banquetDu(G)) {
+      etatHiver(G).banquet = true;
+      this.scene.start('Banquet', { suite: 'Dodo', donnees: { bilan: this.bilan } });
+      return;
+    }
     this.cameras.main.fadeIn(500);
     this.dessinerChambre();
     this.joueur = this.add.image(1000, SOL_CHAMBRE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(3);

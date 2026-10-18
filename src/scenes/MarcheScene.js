@@ -50,6 +50,8 @@ class MarcheScene extends Phaser.Scene {
 
     this.fete = solsticeActif(G);   // (v1.00) la Fête du Solstice
     if (this.fete) this.decorFeteRue();
+    this.feteHiver = typeof hiverActif === 'function' && hiverActif(G);   // (v1.05) la Fête du Long Hiver
+    if (this.feteHiver) this.decorHiverRue();
     // Les étals, les enchères, les jeux et le mendiant
     this.positions = { mendiant: [70, 'lieu'], bazar: [1030, 'lieu'], encheres: [1220, 'lieu'], jeux: [1410, 'lieu'], crieur: [1595, 'lieu'], tableau: [1705, 'lieu'], brocante: [1850, 'lieu'], garderobe: [2045, 'lieu'] };
     Object.entries(MARCHANDS).forEach(([cle, m], i) => {
@@ -95,6 +97,8 @@ class MarcheScene extends Phaser.Scene {
     }
     // (v1.00) Pendant la Fête du Solstice, le tir à l'arc de la Confrérie prend la place du coin des jeux
     if (this.fete) this.creerTirArc(1410);
+    // (v1.05) Pendant le Long Hiver, la grande roue des cadeaux du Père Givrin
+    else if (this.feteHiver) this.creerRoue(1410);
     // Le coin des jeux : un auvent violet, Grippesou derrière sa table de dés et de gobelets
     else if (!lieuOuvert(G, 'jeux')) this.creerChantier(1410, 'jeux');
     else {
@@ -143,6 +147,7 @@ class MarcheScene extends Phaser.Scene {
     this.retour.fond.setDepth(21); this.retour.label.setDepth(21);
     this.creerVueEnsemble();
     if (this.fete) this.decorFeteVue();
+    if (this.feteHiver) this.decorHiverVue();
     this.add.rectangle(480, 510, 960, 60, 0x2a1a10);
     this.bourse = bourse(this, 34, 532, this.G.argent, { echelle: 1.4, taille: 14, aDroite: true });
     this.texteInfos = this.add.text(112, 498, '', style(13, '#f3e6c8', { lineSpacing: 4 }));
@@ -507,6 +512,7 @@ class MarcheScene extends Phaser.Scene {
       guirlande.fillStyle(couleurs[k % couleurs.length]).fillTriangle(x - 6, fil(x - 6), x + 6, fil(x + 6), x, fil(x) + 12);
     }
     c.add(guirlande);
+    this.guirlandeFanions = guirlande;   // (v1.05 : au Long Hiver, une guirlande de sapin la remplace)
     const decor = [
       ['charretteHD', 92, 448, 1.5, false], ['charretteHD', 872, 452, 1.5, true],
       ['sacsHD', 262, 462, 1.4, false], ['tonneauxHD', 330, 466, 1.3, false],
@@ -544,13 +550,13 @@ class MarcheScene extends Phaser.Scene {
         this.tweens.add({ targets: pigeon, x: x0 + Phaser.Math.Between(-80, 80), y: y0 - 70, duration: 700, yoyo: true, ease: 'Sine.easeOut' });
       } });
     }
-    const noms = { mendiant: 'Le mendiant', bazar: 'Le Bazar de Rosalie', encheres: 'Les enchères', jeux: this.fete ? "Le tir à l'arc" : 'Le coin des jeux', crieur: 'Le crieur', tableau: "Le tableau d'affichage", brocante: 'La brocante', garderobe: this.fete ? "L'étal de l'Union" : 'La garde-robe' };
-    const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => (this.fete ? this.ouvrirTirArc() : this.ouvrirJeux()), crieur: () => this.ouvrirCrieur(), tableau: () => this.ouvrirTableau(),
+    const noms = { mendiant: 'Le mendiant', bazar: 'Le Bazar de Rosalie', encheres: 'Les enchères', jeux: this.fete ? "Le tir à l'arc" : this.feteHiver ? 'La grande roue' : 'Le coin des jeux', crieur: 'Le crieur', tableau: "Le tableau d'affichage", brocante: 'La brocante', garderobe: this.fete ? "L'étal de l'Union" : 'La garde-robe' };
+    const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => (this.fete ? this.ouvrirTirArc() : this.feteHiver ? this.ouvrirRoue() : this.ouvrirJeux()), crieur: () => this.ouvrirCrieur(), tableau: () => this.ouvrirTableau(),
       brocante: () => this.ouvrirBrocante(), garderobe: () => (this.fete ? this.ouvrirAtours() : this.ouvrirGardeRobe()) };
     // (v0.57) les étiquettes voisines se décalent une sur deux en hauteur : elles ne se chevauchent plus
     const ordre = Object.entries(this.positions).sort((a, b) => a[1][0] - b[1][0]);
     for (const [rang, [cle, [x, type]]] of ordre.entries()) {
-      const ferme = type !== 'etal' && !lieuOuvert(this.G, cle) && !(cle === 'jeux' && this.fete);
+      const ferme = type !== 'etal' && !lieuOuvert(this.G, cle) && !(cle === 'jeux' && (this.fete || this.feteHiver));
       const nom = type === 'etal' ? MARCHANDS[cle].nom : ferme ? 'En travaux' : noms[cle];   // (v0.68 : pas de nom avant l'ouverture)
       const t = this.add.text(ox + x * echelle, oy + (250 + this.arcVue(x).dy) * echelle + 6 + (rang % 2) * 34, nom, style(12, ferme ? '#c9b48a' : '#fff4dc', { fontStyle: ferme ? 'italic' : 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 92 }, lineSpacing: -2 }))
         .setOrigin(0.5, 0).setInteractive({ useHandCursor: true });

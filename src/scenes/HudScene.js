@@ -1,7 +1,7 @@
 // Le bandeau toujours visible, par-dessus toutes les pages du jeu : le jour en cours, et le
 // menu « ☰ » pour retourner à l'écran titre quand on veut.
 // Cette scène tourne en permanence, au-dessus des autres (elle s'y remet à chaque image).
-const SCENES_SANS_BANDEAU = ['Titre', 'Intro', 'IntroHistoire', 'Renovation', 'Faillite', 'Carrefour', 'Saison', 'TirArc', 'Mat', 'Lanternes', 'Vision', 'DiscoursSage', 'Hud'];
+const SCENES_SANS_BANDEAU = ['Titre', 'Intro', 'IntroHistoire', 'Renovation', 'Faillite', 'Carrefour', 'Saison', 'TirArc', 'Mat', 'Roue', 'Banquet', 'Lanternes', 'Vision', 'DiscoursSage', 'Hud'];
 
 class HudScene extends Phaser.Scene {
   constructor() { super({ key: 'Hud', active: false }); }

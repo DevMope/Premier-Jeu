@@ -159,7 +159,7 @@ class ArriereScene extends Phaser.Scene {
   dessinerDecos() {
     const G = this.G;
     const places = [[640, 66], [692, 66], [744, 66], [556, 206], [812, 196], [556, 338], [812, 300], [588, 66], [796, 66], [812, 248]];
-    (G.decos || []).slice(0, places.length).forEach((id, i) => {
+    (G.decos || []).filter(id => id !== 'sapinCristal').slice(0, places.length).forEach((id, i) => {
       const [x, y] = places[i];
       this.add.rectangle(x, y - 24, 3, 3, 0x2a1a10); // le clou
       const img = this.add.image(x, y, iconeObjet(this, id)).setScale(3).setInteractive({ useHandCursor: true });
@@ -168,6 +168,19 @@ class ArriereScene extends Phaser.Scene {
       if (id === 'lanterneCrane' || id === 'chandelier') { const halo = this.add.circle(x, y, 26, id === 'chandelier' ? 0xffd870 : 0x80ff60, 0.16).setBlendMode(Phaser.BlendModes.ADD); this.tweens.add({ targets: halo, alpha: 0.32, scale: 1.15, duration: 900 + Math.random() * 500, yoyo: true, repeat: -1 }); }
       img.on('pointerdown', () => this.message(`${DECOS[id].nom} : ${DECOS[id].effet}`));
     });
+    // (v1.05) le sapin de cristal, gros lot du Long Hiver : posé sur le plancher, il luit en bleu et scintille
+    if (aDeco(G, 'sapinCristal')) {
+      const x = 292, y = SOL_ARRIERE + 56;
+      creerHalo(this);
+      const lueur = this.add.image(x, y - 34, 'halo').setScale(0.9).setTint(0x60d8ff).setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: lueur, alpha: 0.12, scale: 0.8, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      const sapin = this.add.image(x, y, iconeObjet(this, 'sapinCristal')).setOrigin(0.5, 1).setScale(4.4).setInteractive({ useHandCursor: true });
+      sapin.on('pointerdown', () => this.message(`${DECOS.sapinCristal.nom} : ${DECOS.sapinCristal.effet}`));
+      this.time.addEvent({ delay: 420, loop: true, callback: () => {
+        const e = this.add.rectangle(x + Phaser.Math.Between(-24, 24), y - Phaser.Math.Between(10, 64), 3, 3, 0xe8fbff);
+        this.tweens.add({ targets: e, alpha: 0, scale: 0.2, duration: 700, onComplete: () => e.destroy() });
+      } });
+    }
   }
 
   // Le panier des cadeaux (du Bazar de Rosalie)
