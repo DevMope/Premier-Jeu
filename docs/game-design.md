@@ -1859,3 +1859,15 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
 - **Proposition, commande royale** : une par mois, dès ★2 (le 14 du mois, hors fête). Prime **600 p. à ★2, +50 % par
   étoile**, +1 de réputation ; 7 jours pour livrer. La marchandise coûte environ 150 p. au marché, mais il faut des
   armes « bel ouvrage » (la forge, ou le marché noir). Ratée : -1 de réputation, et pas de commande le mois suivant.
+
+### Réponses du joueur sur les planches 38 et 40 (19/10)
+- **Le rival** : le **design A** (Lucien Belhomme, le paon du Conseil) est le préféré. Son caractère mélange A et B,
+  avec une préférence pour A : vaniteux et moqueur au quotidien, mais avec le fond du va-t-en-guerre (il voulait la
+  guerre, il menace de dénoncer les Bannis). On garde **uniquement le design de A**.
+- **Sa boutique** : juste à côté de celle du joueur. **Sa façade ne doit jamais ressembler à celle du joueur**, quelles
+  que soient leurs améliorations : une architecture à lui (planche 40 v2).
+- **Planche 38 validée**, avec le **messager A** (le héraut bleu de la Confrérie). Il manque l'**échec** : le design du
+  jour où la commande n'est pas remplie, et ses conséquences en plus (perte de réputation, **impôt plus cher pendant un
+  temps**) : planche 38 v2.
+- **Les chiffres de l'impôt du Conseil sont validés** (5 % × étoiles au-delà de 300 p. × étoiles, le 1er du mois dès ★2,
+  moitié prix après une commande réussie, une dette envers le Conseil si on ne peut pas payer).
