@@ -50,7 +50,18 @@ class HudScene extends Phaser.Scene {
     zoneGoutte.on('pointerout', () => this.infoNymphe(false));
     zoneGoutte.on('pointerdown', () => this.infoNymphe(!this.bulleNymphe));
     this.tweens.add({ targets: goutte, y: -2, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, this.iconeSaison, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp, this.goutte]).setDepth(100);
+    // (v1.06, planche 24 C) la bûche rouge : le soir, en Givre, tant que le foyer est vide
+    const buche = this.add.graphics();
+    buche.fillStyle(0x1e130a, 0.92).fillRoundedRect(-20, -11, 40, 22, 6).lineStyle(2, 0xc02a1a, 1).strokeRoundedRect(-20, -11, 40, 22, 6);
+    buche.fillStyle(0x6a3a1a).fillRoundedRect(-12, -4, 22, 9, 4).fillStyle(0x8a5a2a).fillEllipse(10, 0, 6, 9).fillStyle(0x4a2a12).fillEllipse(10, 0, 3, 5);
+    buche.lineStyle(2, 0xe03020, 1).lineBetween(-14, 7, 14, -7);
+    const zoneBuche = this.add.rectangle(0, 0, 40, 22, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    this.buche = this.add.container(268, 9, [buche, zoneBuche]).setVisible(false);
+    zoneBuche.on('pointerover', () => this.infoBuche(true));
+    zoneBuche.on('pointerout', () => this.infoBuche(false));
+    zoneBuche.on('pointerdown', () => this.infoBuche(!this.bulleBuche));
+    this.tweens.add({ targets: buche, alpha: 0.55, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, this.iconeSaison, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp, this.goutte, this.buche]).setDepth(100);
     // (v0.84) pas assez d'argent : une grande alerte en haut de l'écran, par-dessus toutes les pages
     const surManque = m => this.alerteArgent(m);
     this.game.events.on('manqueArgent', surManque);
@@ -123,6 +134,13 @@ class HudScene extends Phaser.Scene {
   }
 
   // (v0.93) La bénédiction de la nymphe, en un coup d'œil
+  // (v1.06) la bûche rouge expliquée
+  infoBuche(montrer) {
+    if (this.bulleBuche) { this.bulleBuche.destroy(); this.bulleBuche = null; }
+    if (!montrer) return;
+    this.bulleBuche = this.add.text(this.buche.x - 10, 28, "Le foyer est vide : dehors, il gèle. Mets une bûche dans la cheminée avant de dormir (1 planche de bois), sinon tu te réveilleras fatigué.", style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 260 } })).setDepth(102);
+  }
+
   infoNymphe(montrer) {
     if (this.bulleNymphe) { this.bulleNymphe.destroy(); this.bulleNymphe = null; }
     const G = window.GAME;
@@ -212,6 +230,9 @@ class HudScene extends Phaser.Scene {
         this.dessinerJauge();
       }
       this.goutte.setVisible(!!benieJusqua(G));
+      const sansFeu = typeof foyerVide === 'function' && soirDuJour(G) && foyerVide(G);
+      this.buche.setVisible(sansFeu).setX(this.goutte.visible ? 270 : 242);
+      if (!sansFeu && this.bulleBuche) this.infoBuche(false);
       // (v0.84) la lumière et l'ombre
       const j = jaugeCamp(G), pal = palierCamp(G);
       if (j !== this.campAffiche) {

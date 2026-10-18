@@ -1720,3 +1720,19 @@ de loin (pas de fête manquée en silence).
   la carte à l'envers, le chat qui détourne la tête ; à 100 %, les trois).
 - Simulation (16 parties de 160 jours, un présage 7 matins sur 10) : aucun problème ; les amendes de la garde montent
   d'environ 10 % (la simulation ne profite pas de l'avertissement de la Tour pour cacher ce qu'il faut).
+
+### B-5, le foyer et le chat qui boude : construits (planches 24 et 25 validées, 18/10)
+- **L'hiver sans bois** : une nuit de Givre sans bûche, réveil fatigué (un client de moins, pas de « pleine forme ») ;
+  deux nuits de suite, malade (le comptoir n'ouvre qu'à midi, un client de moins) et le chat part se réchauffer chez
+  les voisins pour la journée. Le soir du banquet du Long Hiver compte comme une nuit au chaud.
+- **Prévenu** : la bûche rouge clignote dans le bandeau le soir tant que le foyer est vide (un clic l'explique) ; la ligne
+  « Le foyer est vide » au bilan du soir, avec « ▸ Mettre une bûche (1 planche) » ; et au coucher, la confirmation de la
+  planche 24 (« Mettre une bûche » ou « Dormir quand même » ; sans bois : « Thorgal en vend à la forge »).
+- **La gamelle du chat** (à son nom, dans l'arrière-boutique, pleine ou vide) : une ration tous les trois jours, prise
+  dans la réserve. Plus de ration : la gamelle reste vide (ligne du soir) ; au bout de trois jours il boude (il te tourne
+  le dos, « Rrrr. »), puis il part un jour : au matin, son coussin est vide et **un mot sur le comptoir** : « Parti voir
+  ailleurs. Pas de ration, pas de chat. — M. » (l'initiale de son nom, et une empreinte de patte). Le lendemain soir, il
+  revient comme si de rien n'était, une souris entre les dents ; il se méfie une semaine (il chasse moins bien les rats,
+  une nuit sur deux ; il ne sent plus venir la garde). Parti, il ne te suit pas en promenade et ne protège pas la réserve.
+- Simulation (16 parties de 160 jours, un joueur qui met une bûche 85 % des soirs d'hiver et garde le plus souvent une
+  ration pour la gamelle) : aucun problème ; 33 réveils fatigués et 6 malades en tout.

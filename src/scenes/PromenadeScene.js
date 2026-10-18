@@ -51,7 +51,7 @@ class PromenadeScene extends Cinematique {
     this.rue = [];   // (les animations de la rue, vues du comptoir)
     // (v0.65) ton chat te suit de pièce en pièce ; le chat de gouttière, lui, attend dehors
     this.compagnon = null;
-    if (chatAdopte(G)) this.creerCompagnon();
+    if (chatAdopte(G) && !(typeof chatParti === 'function' && chatParti(G))) this.creerCompagnon();   // (v1.06 : parti, il ne te suit pas)
     if (chatCeSoir(G)) this.chatDeGouttiere();
 
     // L'interface, fixe à l'écran
@@ -544,6 +544,7 @@ class PromenadeScene extends Cinematique {
     c.etape = 0; c.temps = 0;
     c.on('pointerdown', () => {
       if (this.transition) return;
+      if (typeof chatBoude === 'function' && chatBoude(this.G)) { Son.jouer('grogne'); return this.dire(`${nomChatMaj(this.G)} te tourne le dos. « Rrrr. » Sa gamelle est vide depuis trois jours...`); }   // (v1.06)
       Son.jouer('miaou');
       this.dire(`${nomChat(this.G)} ronronne et se frotte contre ta jambe.`);
       ouvrirPanneauChat(this, { quandFini: () => { this.cleChat = creerChatHD(this, lookChat(this.G)); c.setTexture(this.cleChat + '_assis0'); } });

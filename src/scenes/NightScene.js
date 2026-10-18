@@ -109,10 +109,34 @@ class NightScene extends Phaser.Scene {
     if (this.carrefourEnAttente()) return;   // (v0.97) avant le verrou de transition, qui le faisait sauter
     if (enTransition(this)) return;   // (v0.90) on ne s'endort pas avant d'avoir ouvert la porte
     const G = this.G;
+    if (typeof foyerVide === 'function' && foyerVide(G) && this.froidAccepte !== G.jour) return this.confirmerFoyer();   // (v1.06, planche 24 B)
     const bilan = { jour: G.jour, servis: G.journal.servis, retours: G.journal.retours, morts: G.journal.morts,
       gain: G.argent - G.argentDebutJour, reputation: G.reputation, jauge: jaugeCamp(G), palier: nomPalierCamp(G) };
     this.cameras.main.fadeOut(500);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Dodo', { bilan }));
+  }
+
+  // (v1.06, planche 24 B) En Givre, au coucher, sans bûche dans la cheminée : on prévient avant de dormir
+  confirmerFoyer() {
+    if (this.fenetreFoyer) return;
+    const G = this.G, bois = G.materiaux.bois || 0;
+    const c = this.fenetreFoyer = this.add.container(0, 0).setDepth(40);
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.55).setInteractive());
+    c.add(this.add.image(480, 300, panneauHD(this, 520, 250)).setScale(2));
+    c.add(this.add.text(480, 206, 'Le foyer est vide', style(22, '#a02020', { fontStyle: 'bold' })).setOrigin(0.5));
+    const b = this.add.graphics(); b.fillStyle(0x6a3a1a).fillRoundedRect(-16, -6, 32, 12, 5).fillStyle(0xc8501e).fillEllipse(13, 0, 7, 11).fillStyle(0xa02020).fillRect(-18, -1, 36, 3);
+    b.setPosition(480, 240).setAngle(-28); c.add(b);
+    c.add(this.add.text(480, 296, `Dehors, il gèle. Sans une bûche dans la cheminée, tu te réveilleras fatigué${eJ(G)} (un client de moins demain). Deux nuits de suite : tu tomberas malade, et le comptoir n'ouvrira qu'à midi.`, style(14, '#3b2410', { align: 'center', wordWrap: { width: 470 }, lineSpacing: 3 })).setOrigin(0.5));
+    const fermer = () => { c.destroy(); this.fenetreFoyer = null; };
+    const b1 = creerBouton(this, 360, 372, 230, bois > 0 ? 'Mettre une bûche (1 planche)' : 'Plus une planche de bois', () => {
+      const err = allumerFeu(G);
+      if (err) return this.annoncer(err);
+      Son.jouer('glisse'); fermer(); this.tout(); this.dormir();
+    });
+    if (!bois) { b1.fond.setAlpha(0.5); b1.label.setAlpha(0.6); }
+    const b2 = creerBouton(this, 600, 372, 210, 'Dormir quand même', () => { this.froidAccepte = G.jour; fermer(); this.dormir(); });
+    c.add([b1.fond, b1.label, b2.fond, b2.label]);
+    if (!bois) c.add(this.add.text(480, 410, "Thorgal vend du bois à la forge (au marché, demain matin).", style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
   }
 
   parchemin(x1, x2, titre) {
@@ -168,7 +192,8 @@ class NightScene extends Phaser.Scene {
     c.add(this.add.text(x1 + 18, 352, 'En mission', style(14, '#3b2410', { fontStyle: 'bold' })));
     const missions = enMission(G).map(p => `${p.voyageur.nom} — jour ${p.retour}`);
     // (v0.93) le soir, la ligne du chat/de la nymphe se place sous la liste (elle la recouvrait avec 3 missions)
-    const evenement = !this.matin && (alerteChat(G) || nympheAttend(G) || chatCeSoir(G));
+    const foyer = !this.matin && typeof ligneFoyer === 'function' ? ligneFoyer(G) : null;   // (v1.06) le bois de l'hiver, la gamelle du chat
+    const evenement = !this.matin && (alerteChat(G) || foyer || nympheAttend(G) || chatCeSoir(G));
     const texteMissions = this.add.text(x1 + 18, 372, listeCourte(missions, evenement ? 2 : 4, 'Personne'), style(12, '#5a3a20', { lineSpacing: 2 }));
     c.add(texteMissions);
     // (v0.65, étape 10c) le chat : celui de gouttière qui rôde, ou le tien qui sent venir la garde
@@ -178,6 +203,9 @@ class NightScene extends Phaser.Scene {
         const cache = G.cachette === G.jour + 1;
         ligne = `${nomChat(G)[0].toUpperCase() + nomChat(G).slice(1)} crache vers la porte. La garde, demain ?` + (cache ? ' Tout est caché.' : aCacher(G) ? '' : ' (Rien à cacher.)');
         if (!cache && aCacher(G)) action = ['▸ Tout cacher sous le plancher', () => { cacherMarchandise(G); Son.jouer('glisse'); this.tout(); }];
+      } else if (foyer) {
+        ligne = foyer;
+        if (foyerVide(G) && (G.materiaux.bois || 0) > 0) action = ['▸ Mettre une bûche (1 planche)', () => { const err = allumerFeu(G); if (err) return this.annoncer(err); Son.jouer('glisse'); this.tout(); }];
       } else if (nympheAttend(G)) ligne = 'Une lueur bleue monte de la place du marché... Sors voir, par la rue !';
       else if (chatCeSoir(G)) ligne = 'Un chat de gouttière rôde devant ta porte ce soir.';
       const yLigne = Math.max(410, texteMissions.y + texteMissions.height + 8);

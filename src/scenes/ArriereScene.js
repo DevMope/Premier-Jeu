@@ -69,7 +69,24 @@ class ArriereScene extends Phaser.Scene {
     this.add.image(430, SOL_ARRIERE + 64, tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(2.2);
     // (le coussin attend un familier : le chat de gouttière, une fois adopté, y dort en boule)
     this.add.image(196, SOL_ARRIERE + 86, 'coussinHD').setOrigin(0.5, 1).setScale(2.4);
-    if (chatAdopte(this.G) && this.scene.key !== 'Promenade') {   // (en promenade, il te suit)
+    // (v1.06, planche 25) sa gamelle, à son nom : pleine, ou vide quand la réserve n'a plus de ration
+    if (chatAdopte(this.G) && typeof gamellePleine === 'function') {
+      const g = this.add.graphics(), gx = 284, gy = SOL_ARRIERE + 84;
+      g.fillStyle(0x5a3418).fillEllipse(gx, gy, 52, 18).fillStyle(0x8a5a2a).fillEllipse(gx, gy - 3, 48, 13).fillStyle(0x3a2010).fillEllipse(gx, gy - 4, 38, 8);
+      if (gamellePleine(this.G)) for (let k = 0; k < 9; k++) g.fillStyle(k % 2 ? 0xa86a30 : 0xc88a48).fillCircle(gx - 14 + (k % 5) * 7, gy - 5 - Math.floor(k / 5) * 2, 2.5);
+      this.add.text(gx, gy + 3, nomChat(this.G).toUpperCase().slice(0, 8), style(8, '#f3e6c8', { fontStyle: 'bold' })).setOrigin(0.5);
+    }
+    if (chatAdopte(this.G) && this.scene.key !== 'Promenade' && typeof chatParti === 'function' && chatParti(this.G)) {
+      // (v1.06) parti voir ailleurs (ou se réchauffer chez les voisins) : le coussin est vide
+      this.add.text(200, SOL_ARRIERE + 30, 'Coussin vide', style(11, '#d0a890', { fontStyle: 'bold italic', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5, 0);
+    } else if (chatAdopte(this.G) && this.scene.key !== 'Promenade' && typeof chatBoude === 'function' && chatBoude(this.G)) {
+      // (v1.06) il boude : assis, il te tourne le dos (la queue bat), et grogne si on l'approche
+      const k = creerChatHD(this, lookChat(this.G));
+      const chat = this.add.image(200, SOL_ARRIERE + 76, k + '_assis0').setOrigin(0.5, 1).setScale(2.4).setFlipX(true).setInteractive({ useHandCursor: true });
+      this.time.addEvent({ delay: 700, loop: true, callback: () => { if (chat.active) chat.setTexture(k + (chat.texture.key.endsWith('0') ? '_assis1' : '_assis0')); } });
+      chat.on('pointerdown', () => { Son.jouer('grogne'); this.message(`${nomChatMaj(this.G)} te tourne le dos. « Rrrr. » (Il boude : sa gamelle est vide depuis trois jours.)`); });
+      this.add.text(200, SOL_ARRIERE + 2, nomChat(this.G), style(11, '#f3e6c8', { fontStyle: 'bold italic', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5, 0);
+    } else if (chatAdopte(this.G) && this.scene.key !== 'Promenade') {   // (en promenade, il te suit)
       const k = creerChatHD(this, lookChat(this.G));
       const chat = this.add.image(200, SOL_ARRIERE + 76, k + '_dort0').setOrigin(0.5, 1).setScale(2.4).setInteractive({ useHandCursor: true });
       let souffle = 0;
