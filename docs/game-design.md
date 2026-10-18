@@ -1746,3 +1746,65 @@ de loin (pas de fête manquée en silence).
 - **« Fichu » n'est pas un mot courant** : Madame Ysmée porte un **foulard violet**.
 - **Madame Ysmée se trompe 2 fois sur 5** (au lieu d'une fois sur quatre).
 - **Planche 36 (le foyer, le chat qui boude) : parfait.**
+
+### Retours du joueur (18/10, au coucher)
+- **Garrick qui flotte dans l'intro** : à refaire (le joueur y pensait déjà). **Planche 37** préparée (trois pistes : sur
+  le dos bras en croix, affalé sur un rondin, cramponné à un vieux tonneau ; Claude préfère le tonneau, qui colle au texte
+  « comme un vieux tonneau »). Rien n'est changé dans le jeu avant validation.
+- **« Cui cui »** : c'étaient les oiseaux de l'aube, mais le mot s'affichait près du voyageur, comme s'il le disait. En
+  v1.07, trois petits oiseaux traversent le ciel de l'aube en gazouillant, avec leurs notes au-dessus d'eux.
+- **v1.06 poussée sur Cloudflare** (accord du joueur).
+
+## Lot C « Les grands enjeux » — préparatifs (19/10, après la v1.07)
+
+### État des lieux
+- **Faits** : lot A (la journée, le tableau et les avis de recherche, imposteurs et flair, marchandage), lot B (saisons,
+  trois fêtes, Madame Ysmée, le foyer et le chat qui boude), la forge, le marché noir de l'année, la Main Noire.
+- **Le constat des simulations (v1.07, 12 parties de 400 jours)** : le danger reste concentré sur les jours 5 à 15 ;
+  ensuite l'argent s'envole (médiane ≈ 1 300 p. au jour 20, 5 700 au jour 30, 14 000 au jour 100 ; en moyenne plus de 100 000 au
+  jour 400). Passé le premier mois, plus rien ne fait vraiment peur : c'est exactement ce que le lot C doit corriger.
+- **Garde-fou déjà décidé** (17/10) : **un seul grand rendez-vous par semaine** (menace, commande royale, fête ou
+  collection, tour à tour selon le calendrier) ; chaque action au comptoir reste courte ; foyer, mises, prix et rival
+  réglés ensemble par la simulation.
+
+### Le découpage proposé (dans cet ordre)
+- **C-1 Les commandes royales** (8) : un messager du Conseil, sceau rouge, une fois par mois environ. Une grosse
+  commande à livrer avant une date (par exemple 4 épées « bel ouvrage », 10 rations et 3 capes en 7 jours). Prime très
+  grosse et réputation ; échec : réputation en baisse et le Conseil se méfie un temps. Fait travailler la forge et le
+  stock, et donne un vrai but à l'argent accumulé.
+- **C-2 La menace qui grandit** (7) : chaque semaine (hors fêtes et commandes), une contrée est menacée (orcs, pillards,
+  la Bête...). On équipe une **escouade** (trois aventuriers, colis choisis) ; si elle échoue, la contrée est **perdue** :
+  plus de missions là-bas, et ses prix montent, jusqu'à la reconquérir. La menace grandit avec les étoiles.
+- **C-3 Les mises** (5) : avancer de l'argent à un aventurier avant son départ (20 à 100 p.) contre une plus grosse
+  part du butin à son retour. S'il meurt, la mise est perdue. Un vrai pari, réservé aux aventuriers qu'on connaît.
+- **C-4 Les prix qui suivent la renommée** (15) : plus tu es connu, plus tes clients acceptent de payer cher... mais le
+  Conseil lève un **impôt du comptoir** chaque mois, proportionnel à ta fortune et à ta renommée (avec une ristourne
+  pour les commandes royales réussies). L'argent garde de la valeur au jour 100.
+- **C-5 Le comptoir rival** (14) : un concurrent ouvre en face, un personnage **vraiment agaçant** (physique, répliques,
+  manières : à dessiner sur une planche). Il te vole des clients, casse les prix, raconte des bobards au crieur. On le
+  bat en réputation sur un mois ; alors on peut **le racheter** : le donner aux orphelins (réputation, petits coursiers)
+  ou en faire **le petit bar** (une pièce de plus, des rencontres le soir).
+- **C-6 Les collections du Conseil** (12) : des séries à réunir (les trophées des sept royaumes, les armes des peuples,
+  les souvenirs de la nymphe...) exposées dans une vitrine ; chaque série complète donne un titre et un petit bonus.
+- **C-7 Les messages de détresse** (9) : un pigeon arrive au comptoir pendant une mission (« Borin est coincé, il lui
+  faut 2 torches ») ; on aide (l'aigle du Conseil, un mercenaire : argent et temps de journée) ou non ; le récit montre
+  la conséquence.
+- **Hors lot, à placer quand tu veux** : la **quête du chat amoureux** (sa compagne en danger, puis deux petits, la
+  maison des chats ; le secret du chat qui parle pour plus tard), et **Garrick qui flotte** (planche 37).
+
+### Les planches à venir (avant de construire)
+- Planche 38 : le messager royal, la lettre scellée et le panneau de la commande (avec son compte à rebours).
+- Planche 39 : la carte menacée (la contrée qui rougit, l'escouade à équiper, une contrée perdue).
+- Planche 40 : **le rival** (trois propositions de personnage agaçant) et sa boutique en face.
+- Planche 41 : la vitrine des collections, et le petit bar.
+
+### Questions au joueur (lot C)
+1. **L'ordre** te va-t-il (commandes royales, menace, mises, prix et impôt, rival, collections, messages) ? Ou tu
+   préfères commencer par le rival, le plus « personnage » ?
+2. **L'impôt du Conseil** (pour que l'argent garde de la valeur) : d'accord sur le principe ? Le rival et les commandes
+   royales suffiraient peut-être, mais la simulation montre qu'il faut un vrai « puits » d'argent.
+3. **Une contrée perdue** : on peut la reconquérir (une mission spéciale), ou elle reste perdue jusqu'à la fin de
+   l'année ?
+4. **Le rival** : plutôt un **noble prétentieux**, un **gobelin bonimenteur**, ou un **ancien apprenti de Garrick**
+   jaloux de toi (avec un lien au récit) ?
+5. **La quête du chat amoureux** : avant le lot C, au milieu, ou après ?
