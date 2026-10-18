@@ -1961,3 +1961,26 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
 - **Ce qui attend sa planche** : le visage de la maison rachetée (orphelinat, petit bar), les coursiers, les missions
   secondaires du bar ; et la maison du paon dans la rue du marché (pour l'instant, on la voit le matin devant ta porte).
 
+### Planches 42 et 43 : l'orphelinat (et les coursiers), le petit bar (19/10, à valider)
+- **Planche 42, l'orphelinat** : la maison du paon repeinte (vert tendre, bois, linge qui sèche, craies, les enfants
+  devant : jamais pareille à la tienne). **Les coursiers, concrètement** : (1) **la liste des courses**, le soir chez
+  toi : jusqu'à 6 objets de ce que le marché vend demain, au prix du marché, sur ton comptoir à l'ouverture (le matin
+  devient libre pour la diseuse, la nymphe, la forge) ; (2) **un coursier au comptoir** (à côté de Grippesou) : un gamin
+  court chercher un objet qui manque, en ¼ h, au prix de l'étal (Grippesou : ½ h et le double) ; une course par jour.
+  **Trois améliorations, chères** : le dortoir (1 500 p. : deux courses par jour, liste de 10), l'école (3 000 p. : les
+  courses ne prennent plus de temps au comptoir, une rumeur du marché chaque matin), la grande salle (6 000 p. : de
+  temps en temps un ancien de l'orphelinat vient chez toi en novice, ami dès le premier jour, avec son fil d'histoires).
+  Réponse à la question du joueur : **les deux** (au service du marché et de Grippesou, et un petit axe neuf qui mange de
+  l'argent).
+- **Planche 43, le petit bar** : la maison du paon le soir (pierre ocre, étage bordeaux, lanternes, fenêtres allumées).
+  Un bouton « Le petit bar » le soir, chez toi : toi derrière le comptoir, trois tables, des habitués qui disent une
+  chose chacun (une rumeur vraie sur ce qui arrive demain, un merci, une bêtise), quelques pièces de verres, un habitué
+  qui revient demain (+1 client), parfois un jeu de dés. Une soirée prend ½ h de sommeil (réveil un peu plus tard).
+  **Deux missions secondaires** (comme le mendiant et le chat) : **A, le ménestrel sans luth** (des gobelins l'ont volé
+  au Pont des Ronces ; un aventurier le rapporte comme épreuve en plus ; alors le barde joue chaque soir et le bar
+  attire un client de plus par jour) ; **B, la recette perdue de la brasseuse** (trois ingrédients, un par contrée, en
+  trouvailles ; la bière des Sept Royaumes donne +1 cœur aux aventuriers qui partent de chez toi). **Trois
+  améliorations** : la cave (2 000 p. : plus de verres, rumeurs des deux côtés), la scène (4 000 p. : une veillée par
+  semaine, un vieux récit avec un indice sur le monde), la terrasse (8 000 p. : ouvert à midi, +2 clients par jour, les
+  nobles du Conseil y traînent).
+
