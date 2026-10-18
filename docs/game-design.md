@@ -1907,3 +1907,10 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
     aventuriers, port...), chaque bâtiment très cher, visible dans la rue, avec ses visiteurs et ses petites histoires.
 - **Place dans le lot C** : après C-5 (le rival), car le rachat de sa boutique et les enchères le concernent.
 
+### Réponses du joueur sur la dépense du jour 100 (19/10)
+- **B (les enchères du Conseil) validée** : l'idée plaît ; **les reliques sont à définir**.
+- **C (racheter et bâtir le quartier) validée** : « racheter le quartier est une bonne idée ».
+- **A (la Grande Expédition contre le dragon) : pas au jour 100.** Elle annoncera **le dernier arc du jeu**, tout proche
+  de la fin officielle : son moment doit être calculé par rapport à la vie du jeu (ses événements, ses mécaniques), pas
+  sur un jour fixe. À garder pour la fin, avec les secrets de Garrick et de la Confrérie.
+
