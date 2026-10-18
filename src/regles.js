@@ -1559,6 +1559,7 @@ function nuit(G) {
   }
   if (G.feu === G.jour) G.nuitAuChaud = G.jour + 1;   // (v0.66 : la nuit au chaud, pour le réveil)
   if (typeof nuitDuFoyer === 'function') nuitDuFoyer(G);   // (v1.05) le froid de l'hiver, la gamelle du chat
+  if (typeof nuitDuRival === 'function') nuitDuRival(G);   // (v1.11) les comptes du jour face au paon
   if (typeof echeancesDuConseil === 'function') echeancesDuConseil(G);   // (v1.10) une commande royale qui n'est pas venue
   G.jour++;
   G.argentDebutJour = G.argent;
@@ -1624,6 +1625,7 @@ function nuit(G) {
     if (fetesVues.length) G.reveil.lignes.push(fetesVues.length > 1 ? `Pendant ce temps, ${fetesVues.join(' et ')} sont passées sans toi : tu les as vues de loin, entre deux clients. Elles reviendront l'an prochain.` : `Pendant ce temps, ${fetesVues[0]} est passée sans toi : tu l'as vue de loin, entre deux clients. Elle reviendra l'an prochain.`);
   }
   if (typeof matinDuConseil === 'function') for (const l of matinDuConseil(G)) G.reveil.lignes.push(l);   // (v1.10) l'impôt du Conseil, la commande royale
+  if (typeof matinDuRival === 'function') for (const l of matinDuRival(G)) G.reveil.lignes.push(l);   // (v1.11) le paon ouvre, le bilan du mois
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
@@ -1760,6 +1762,7 @@ function formerFileDuJour(G) {
   deguiserClients(G, clients, prevus.length);   // (v0.86) parmi les imprévus, un menteur... ou un honnête qui en a l'air
   if (typeof presageSurLaFile === 'function') presageSurLaFile(G, clients, prevus.length);   // (v1.05) le présage de Madame Ysmée
   const file = Phaser.Utils.Array.Shuffle(clients.map(v => ({ type: 'client', voyageur: v })));
+  if (typeof volerClients === 'function') volerClients(G, file);   // (v1.11) le paon d'à côté attire quelques clients de passage
 
   // Les aventuriers dont la quête se termine aujourd'hui reviennent...
   // ... les autres, c'est la Faucheuse qui vient les annoncer, tout au bout de la file.
@@ -1815,6 +1818,7 @@ function formerFileDuJour(G) {
   if (doitVenirGarde(G)) visites.push({ type: 'garde', garde: gardeDuJour(G) });
   visites.push(...visitesMafia(G));   // (v0.60) le collecteur de la Main Noire, le Serpent à deux têtes
   if (typeof visitesDuConseil === 'function') visites.unshift(...visitesDuConseil(G));   // (v1.10) le héraut et sa commande royale
+  if (typeof visitesDuRival === 'function') visites.push(...visitesDuRival(G));   // (v1.11) Lucien Belhomme vient se présenter, se pavaner, se moquer
   // (v0.56) Très rarement, à partir du milieu du jeu, un aîné des Bannis passe et laisse une phrase
   const aine = aineDuJour(G, 'comptoir');
   if (aine) { G.ainesVus = [...(G.ainesVus || []), aine]; file.splice(hasard(0, file.length), 0, { type: 'aine', race: aine }); }
@@ -1824,7 +1828,8 @@ function formerFileDuJour(G) {
   // (v0.86) ceux qui t'avaient écrit et n'ont pas pu passer hier avant la fermeture : en tête de file
   const reportes = (G.reportes || []).map(v => ({ type: 'client', voyageur: v, reporte: true }));
   G.reportes = [];
-  G.file = faucheuseAuBout([...retours, ...reportes, ...notables, ...visites, ...file]);
+  // (v1.11) le crieur annonce le mois des comptoirs tout au bout de la file (avant la Faucheuse)
+  G.file = faucheuseAuBout([...retours, ...reportes, ...notables, ...visites, ...file, ...(typeof crieurDuJour === 'function' ? crieurDuJour(G) : [])]);
   rangerFile(G);   // (v0.93) le rangement choisi sur la feuille du jour
 }
 
@@ -2938,6 +2943,7 @@ function avancerEvenements(G) {
   G.decesAnnonces = [];
   if (G.annonceMafia) { lignes.unshift(G.annonceMafia); G.annonceMafia = null; }
   if (G.annonceConseil) { lignes.unshift(G.annonceConseil); G.annonceConseil = null; }   // (v1.10) la commande royale, livrée ou manquée
+  if (G.annonceRival) { lignes.unshift(G.annonceRival); G.annonceRival = null; }   // (v1.11) le paon ouvre, ferme, ou sa maison change de mains
   // (v0.99) le premier jour d'une saison : le crieur l'annonce, avec ce qu'elle change au marché
   if (typeof saisonDe === 'function' && dateDuJour(G).jourDuMois === 1) {
     const s = saisonDe(G), prix = Object.entries(PRIX_SAISON[s] || {});

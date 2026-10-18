@@ -39,6 +39,8 @@ const FIGURANTS = {
   gobelin: { race: 'gobelin', nom: 'Grippesou', costume: 'gobelin', habit: 0x6a5030, cheveux: 0x5a3a20 },
   bourgmastre: { race: 'humain', nom: 'Odilon Bonnefoi', costume: 'banquier', habit: 0x4a2a5a, cheveux: 0xb0b0b8, barbe: 'moustache', niveau: 3 },
   heraut: { race: 'humain', nom: 'Le héraut', costume: 'garde', habit: 0x2a4a8a, cheveux: 0x5a3a1a },
+  crieur: { race: 'humain', nom: 'Le crieur', costume: 'garde', habit: 0x7a4a1a, cheveux: 0x2a1a10, barbe: 'moustache', niveau: 2 },   // (v1.11) le crieur du marché, quand il vient au comptoir
+  rivalA: { race: 'humain', nom: 'Lucien Belhomme', costume: 'noble', habit: 0x2a4a8a, cape: 0xece6d8, cheveux: 0xd8b048, barbe: 'moustache', coiffure: 'court', peau: 0, niveau: 3, buste: true },   // (v1.11, planche 40 v2) le paon du Conseil
   passeur: { race: 'humain', nom: 'Le Passeur', costume: 'pirate', coiffure: 'long', habit: 0x1e2236, cheveux: 0x1a1418, cape: 0x8a1616, barbe: 'courte', niveau: 2 },
   silhouette: { race: 'humain', nom: 'Silhouette encapuchonnée', costume: 'passeur', habit: 0x2a2430, cheveux: 0x1a1418, cape: 0x1a1620, barbe: 'courte', niveau: 1 },
   // (v0.59) les brigands et les pillards des récits, capuche sur la tête, l'air mauvais

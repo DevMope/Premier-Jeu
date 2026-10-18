@@ -61,7 +61,17 @@ class HudScene extends Phaser.Scene {
     zoneBuche.on('pointerout', () => this.infoBuche(false));
     zoneBuche.on('pointerdown', () => this.infoBuche(!this.bulleBuche));
     this.tweens.add({ targets: buche, alpha: 0.55, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, this.iconeSaison, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp, this.goutte, this.buche]).setDepth(100);
+    // (v1.11, planche 41) le mois des comptoirs, face au paon d'à côté : le score, et un clic ouvre le panneau
+    const med = this.add.graphics();
+    med.fillStyle(0x1e130a, 0.92).fillRoundedRect(-42, -11, 84, 22, 6).lineStyle(2, 0xc9a227, 1).strokeRoundedRect(-42, -11, 84, 22, 6);
+    med.fillStyle(0x2a4a8a).fillCircle(-29, 0, 7).lineStyle(1, 0xc9a227).strokeCircle(-29, 0, 7).fillStyle(0xd8b048).fillCircle(-29, -2, 2);
+    this.texteRival = this.add.text(7, 0, '', style(12, '#f3d98a', { fontStyle: 'bold', brut: true })).setOrigin(0.5);
+    const zoneRival = this.add.rectangle(0, 0, 84, 22, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    this.medaillonRival = this.add.container(290, 9, [med, this.texteRival, zoneRival]).setVisible(false);
+    zoneRival.on('pointerdown', () => this.infoRival(!this.panneauRival));
+    zoneRival.on('pointerover', () => this.texteRival.setColor('#ffe066'));
+    zoneRival.on('pointerout', () => this.texteRival.setColor('#f3d98a'));
+    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, this.iconeSaison, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp, this.goutte, this.buche, this.medaillonRival]).setDepth(100);
     // (v0.84) pas assez d'argent : une grande alerte en haut de l'écran, par-dessus toutes les pages
     const surManque = m => this.alerteArgent(m);
     this.game.events.on('manqueArgent', surManque);
@@ -96,6 +106,15 @@ class HudScene extends Phaser.Scene {
     g.lineStyle(1, 0xc9a227).strokeRoundedRect(x0, y0, l, h, 4);
     g.lineStyle(1, 0x0e0904, 0.5);
     for (let k = 1; k < 5; k++) g.lineBetween(x0 + l * k / 5, y0 + 2, x0 + l * k / 5, y0 + h - 2);
+  }
+
+  // (v1.11) Le panneau du mois des comptoirs, sous le médaillon
+  infoRival(montrer) {
+    if (this.panneauRival) { this.panneauRival.destroy(); this.panneauRival = null; }
+    const G = window.GAME;
+    if (!montrer || !G || typeof panneauMoisDesComptoirs !== 'function') return;
+    this.panneauRival = panneauMoisDesComptoirs(this, this.medaillonRival.x + 76, 134, G).setDepth(105);
+    this.panneauRival.setSize(236, 214).setInteractive().on('pointerdown', () => this.infoRival(false));
   }
 
   // Le détail de la réputation : son palier (le plafond de clients) et le suivant.
@@ -232,6 +251,11 @@ class HudScene extends Phaser.Scene {
       this.goutte.setVisible(!!benieJusqua(G));
       const sansFeu = typeof foyerVide === 'function' && soirDuJour(G) && foyerVide(G);
       this.buche.setVisible(sansFeu).setX(this.goutte.visible ? 270 : 242);
+      // (v1.11) le score du mois des comptoirs, tant que le paon est ouvert
+      const paon = typeof rivalOuvert === 'function' && rivalOuvert(G);
+      this.medaillonRival.setVisible(paon).setX(sansFeu ? 340 : this.goutte.visible ? 300 : 290);
+      if (paon) { const sc = scoreDuMois(G), t = `${sc.toi} – ${sc.lui}`; if (this.texteRival.text !== t) this.texteRival.setText(t); }
+      else if (this.panneauRival) this.infoRival(false);
       if (!sansFeu && this.bulleBuche) this.infoBuche(false);
       // (v0.84) la lumière et l'ombre
       const j = jaugeCamp(G), pal = palierCamp(G);

@@ -55,6 +55,7 @@ class NightScene extends Phaser.Scene {
       [`L'atelier (${G.tresors.length})`, () => ouvrirPage('Atelier')],
       ...(this.matin ? [] : [['Se promener', () => ouvrirPage('Promenade')]]),
       ...(!this.matin && marcheNoirCeSoir(G) ? [['La porte dérobée', () => ouvrirPage('MarcheNoir')]] : []),
+      ...(!this.matin && typeof rivalDe === 'function' && G.rival && G.rival.etat === 'aVendre' ? [['Chez le notaire', () => { if (enFondu()) return; lettreDuNotaire(this, () => { if (G.rival.etat !== 'aVendre') this.scene.restart({ matin: false }); }); }]] : []),   // (v1.11) la boutique d'à côté est à vendre
       ...(this.matin
         ? [["L'arrière-boutique", () => ouvrirPage('Arriere', { retour: 'Nuit' })], ['Le marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
         : [['Aller dormir', () => this.dormir()]]),

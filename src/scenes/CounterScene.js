@@ -24,9 +24,13 @@ class CounterScene extends Phaser.Scene {
     this.G = window.GAME;
     // (v1.05, planche 25 B) le matin où le chat est parti : un petit mot sur le comptoir, signé d'une patte
     // (v1.10) le 1er du mois, la lettre du percepteur du Conseil (avant le mot du chat, s'il y en a un)
-    const motChat = typeof motDuChatDu === 'function' && motDuChatDu(this.G);
-    if (typeof lettreImpotDuJour === 'function' && lettreImpotDuJour(this.G)) this.time.delayedCall(900, () => this.montrerLettreImpot(() => { if (motChat) montrerMotDuChat(this); }));
-    else if (motChat) this.time.delayedCall(900, () => montrerMotDuChat(this));
+    // (v1.11 : puis la lettre du notaire, le matin où la boutique d'à côté est à vendre)
+    const motChat = typeof motDuChatDu === 'function' && motDuChatDu(this.G), suites = [];
+    if (typeof lettreImpotDuJour === 'function' && lettreImpotDuJour(this.G)) suites.push(cb => this.montrerLettreImpot(cb));
+    if (typeof lettreNotaireDuJour === 'function' && lettreNotaireDuJour(this.G)) suites.push(cb => lettreDuNotaire(this, cb));
+    if (motChat) suites.push(cb => { montrerMotDuChat(this); cb(); });
+    const lancer = i => { if (i < suites.length && this.scene.isActive()) suites[i](() => lancer(i + 1)); };
+    if (suites.length) this.time.delayedCall(900, () => lancer(0));
     this.entree = null;   // ce qui est au comptoir : client, retour ou carnet
     this.voyageur = null; // le client à servir, s'il y en a un
     this.enService = false;
@@ -797,6 +801,8 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'serpent') return corpsHD(this, CHEFS_SERPENT[0], pose);
     if (entree.type === 'aine') return corpsHD(this, personneAine(entree.race), pose);
     if (entree.type === 'heraut') return corpsHD(this, 'heraut', pose);
+    if (entree.type === 'rival') return corpsHD(this, 'rivalA', pose);   // (v1.11)
+    if (entree.type === 'crieur') return corpsHD(this, 'crieur', pose);
     const v = entree.type === 'client' ? entree.voyageur : entree.parti.voyageur;
     return corpsHD(this, v, pose);
   }
@@ -1177,6 +1183,7 @@ class CounterScene extends Phaser.Scene {
     if (this.G.file.length === 0) return this.finDeJournee();
 
     const entree = this.entree = this.G.file.shift();
+    if (entree.vole && this.clientVole) return this.clientVole(entree);   // (v1.11) attiré par le paon : il file chez le voisin
     // Un client mis en attente retrouve son colis commencé (et ce que tu y as glissé).
     this.colis = entree.colis || {};
     this.pieges = entree.pieges || {};
@@ -1441,6 +1448,8 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'garrick') return { nom: 'Garrick Cœur-de-Chêne', race: 'humain', feminin: false, figurant: 'mentor' };
     if (entree.type === 'aine') return personneAine(entree.race);
     if (entree.type === 'heraut') return HERAUT_CONSEIL.buste;   // (v1.10) le héraut de la Confrérie, pour le Conseil
+    if (entree.type === 'rival') return RIVAL_BUSTE;   // (v1.11) le paon d'à côté
+    if (entree.type === 'crieur') return CRIEUR_BUSTE;
     if (entree.type === 'notable') {
       // Le visiteur notable du palier : le bourgmastre, le héraut de la Confrérie, une légende...
       const v = PALIERS_CLIENTS[entree.palier].visiteur;
@@ -1457,6 +1466,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'notable' || entree.type === 'colporteur' || entree.type === 'garrick') return 'content';
     if (entree.type === 'aine') return 'neutre';
     if (entree.type === 'heraut') return entree.mode === 'livraison' ? 'neutre' : 'content';
+    if (entree.type === 'rival' || entree.type === 'crieur') return 'content';
     if (entree.type === 'collecteur' || entree.type === 'serpent') return 'neutre';
     if (entree.type === 'garde') return (this.G.garde && this.G.garde.visites) ? 'fache' : 'neutre';
     if (entree.type === 'famille') return entree.visite.intention === 'colere' ? 'fache' : entree.visite.intention === 'releve' ? 'neutre' : 'inquiet';
@@ -1514,7 +1524,7 @@ class CounterScene extends Phaser.Scene {
   arrivee(entree) {
     Son.jouer('pas');
     // (v0.86) une visite prend un quart d'heure (les clients, eux, comptent au service)
-    if (['famille', 'notable', 'colporteur', 'garde', 'gardeRecherche', 'garrick', 'collecteur', 'serpent', 'aine', 'heraut'].includes(entree.type)) this.avancer(JOURNEE.visite);
+    if (['famille', 'notable', 'colporteur', 'garde', 'gardeRecherche', 'garrick', 'collecteur', 'serpent', 'aine', 'heraut', 'rival', 'crieur'].includes(entree.type)) this.avancer(JOURNEE.visite);
     if (entree.type === 'client') {
       conseilGarrick(this, 'comptoir');
       const v = this.voyageur = entree.voyageur;
@@ -1589,6 +1599,10 @@ class CounterScene extends Phaser.Scene {
       this.visiteAine(entree);
     } else if (entree.type === 'heraut') {
       this.visiteHeraut(entree);   // (v1.10) la commande royale du Conseil
+    } else if (entree.type === 'rival') {
+      this.visiteRival(entree);   // (v1.11) Lucien Belhomme, le paon d'à côté
+    } else if (entree.type === 'crieur') {
+      this.visiteCrieur(entree);   // (v1.11) le mois des comptoirs
     } else if (entree.type === 'faucheuse') {
       this.visiteFaucheuse(entree);
     } else {
