@@ -74,7 +74,17 @@ function tirerCommandeRoyale(G) {
   // (jamais plus que ce que ta réserve peut garder, avec un peu de place pour tes clients)
   const place = Math.max(8, (G.capacite || RESERVE_DEPART) - 4), total = Object.values(objets).reduce((a, n) => a + n, 0);
   if (total > place) for (const id of Object.keys(objets)) objets[id] = Math.max(1, Math.floor(objets[id] * place / total));
-  const bel = forgeQuiTourne(G) && modele.bel ? Object.fromEntries(Object.entries(modele.bel).map(([id, n]) => [id, Math.min(n, objets[id] || 0)])) : {};
+  // (relecture v1.10) jamais plus de « bel ouvrage » que ta forge ne peut en sortir pendant le délai (avec un peu de
+  // marge), plus ceux que tu as déjà : Aldo apprenti seul n'en fait presque jamais, Baba souvent
+  const bel = {};
+  if (forgeQuiTourne(G) && modele.bel) {
+    const f = G.forge, ra = rangAldo(G) || FORGE.rangsAldo[0], taux = (f.baba ? FORGE.forgerons.baba.vitesse * FORGE.forgerons.baba.belOuvrage : 0) + (f.aldo ? ra.vitesse * ra.belOuvrage : 0);
+    for (const [id, n] of Object.entries(modele.bel)) {
+      const possible = Math.floor(((G.belOuvrage || {})[id] || 0) + taux * CONSEIL.commande.delai * 0.6);
+      const k = Math.min(n, objets[id] || 0, possible);
+      if (k > 0) bel[id] = k;
+    }
+  }
   return { etat: 'proposee', jour: G.jour, limite: G.jour + CONSEIL.commande.delai, objets, bel, prime: primeRoyale(G) };
 }
 
@@ -156,7 +166,7 @@ function calculImpot(G) {
   const majore = (cs.majoreJusqua || 0) >= G.jour, ristourne = !!cs.ristourne;
   const taux = I.taux * et * (majore ? CONSEIL.commande.echec.majoration : 1) * (ristourne ? I.ristourne : 1);
   const montant = Math.round(Math.max(0, fortune - franchise) * taux);
-  return { et, fortune, franchise, tauxBase: I.taux * et, taux, majore, ristourne, montant };
+  return { et, fortune, dettes: Math.round(dettes), franchise, tauxBase: I.taux * et, taux, majore, ristourne, montant };
 }
 
 function payerImpotDuConseil(G) {
@@ -191,7 +201,7 @@ function lettreImpotDuJour(G) {
 function reprocheRoyal(manque) {
   return manque.slice(0, 2).map((l, i) => {
     const f = femininRoyal(l.id);
-    const p = l.a >= l.n && l.aBel < l.bel ? `Des ${nomRoyal(l.id, 2)} ordinaires, là où le Conseil voulait du « bel ouvrage » ?`
+    const p = l.aBel < l.bel && l.a > l.aBel ? `Des ${nomRoyal(l.id, 2)} ordinaires, là où le Conseil voulait du « bel ouvrage » ?`
       : l.pret === 0 ? `Pas ${f ? 'une seule' : 'un seul'} ${nomRoyal(l.id)} ?`
         : `${majuscule(enLettres(l.pret, f))} ${nomRoyal(l.id, l.pret)} sur ${enLettres(l.n, f)} ?`;
     return i ? 'Et ' + p.charAt(0).toLowerCase() + p.slice(1) : p;
@@ -215,13 +225,19 @@ function matinDuConseil(G) {
   if (d.jourDuMois === 1 && cs.impotJour !== G.jour) {
     cs.impotJour = G.jour;
     const l = payerImpotDuConseil(G);
-    if (l.montant > 0) lignes.push(`Le percepteur du Conseil est passé : ${l.montant} pièces d'impôt pour le mois${l.majore ? ' (majoré : ta commande royale ratée)' : l.ristourne ? ' (moitié prix : ta commande royale réussie)' : ''}.${l.dette ? ` Il te manquait ${l.dette} pièces : une dette envers le Conseil.` : ''}`);
+    if (l.montant > 0) lignes.push(`Le percepteur du Conseil est passé : ${pluriel(l.montant, "pièce d'impôt", "pièces d'impôt")} pour le mois${l.majore ? ' (majoré : ta commande royale ratée)' : l.ristourne ? ' (moitié prix : ta commande royale réussie)' : ''}.${l.dette ? ` Il te manquait ${pluriel(l.dette, 'pièce', 'pièces')} : une dette envers le Conseil.` : ''}`);
   }
   // (le rappel du matin : ce qui manque encore, avant d'aller au marché)
   const c = G.commandeRoyale;
   if (c && c.etat === 'acceptee' && G.jour <= c.limite) {
     const e = etatCommandeRoyale(G), j = c.limite - G.jour;
-    const manque = e.lignes.filter(l => !l.complet).map(l => l.a >= l.n ? `${l.bel - l.aBel} ${nomRoyal(l.id, l.bel - l.aBel)} « bel ouvrage »` : `${l.n - l.pret} ${nomRoyal(l.id, l.n - l.pret)}`);
+    const manque = e.lignes.filter(l => !l.complet).map(l => {
+      const belManque = l.bel - l.aBel, ordinaires = Math.max(0, (l.n - l.bel) - (l.pret - l.aBel));
+      const parts = [];
+      if (ordinaires > 0) parts.push(`${ordinaires} ${nomRoyal(l.id, ordinaires)}`);
+      if (belManque > 0) parts.push(`${belManque} ${nomRoyal(l.id, belManque)} « bel ouvrage »`);
+      return parts.join(' et ');
+    });
     const quand = j === 0 ? 'ce matin' : j === 1 ? 'demain matin' : `le jour ${c.limite}`;
     lignes.push(manque.length ? `Commande royale du Conseil : il manque encore ${manque.length > 1 ? manque.slice(0, -1).join(', ') + ' et ' + manque[manque.length - 1] : manque[0]}. Le héraut repasse ${quand}.`
       : `Commande royale du Conseil : tout est prêt. Le héraut repasse ${quand}.`);

@@ -1890,6 +1890,13 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
   (au lieu de 18 500 sans le Conseil). Pas de faillite en plus. L'impôt ne peut jamais dépasser ce que tu as : la dette
   envers le Conseil reste un filet de sécurité.
 - **À venir avec C-5** : Lucien Belhomme se moque d'une commande manquée (au comptoir et dans la gazette).
+- **Relecture (19/10, après la v1.11)** : la part de « bel ouvrage » demandée se règle sur ce que ta forge peut sortir
+  pendant les 7 jours (Aldo apprenti seul : aucune ; Aldo confirmé : une ; Baba : deux ou trois) ; le rappel du matin
+  liste aussi les belles pièces qui manquent ; « 1 pièce d'impôt » au singulier ; la lettre d'impôt reprend les dettes
+  comptées ce jour-là ; le joueur ne parle jamais (« Le raccompagner », « Le laisser partir », « Le laisser parler »,
+  « Le remercier d'un signe ») ; après un refus, le récit « Le héraut tourne les talons... (réputation −1) » reste à
+  l'écran jusqu'à ce que tu le laisses partir ; le panneau punaisé s'estompe d'un clic (l'ardoise dessous redevient
+  cliquable) et revient d'un clic sur son sceau.
 
 ### Demande du joueur (19/10) : vers le jour 100, de quoi dépenser toute sa fortune (ou une grande partie)
 - **La demande** : « au jour 100 il faudra inclure une mécanique pour que le joueur puisse dépenser toute sa fortune »,

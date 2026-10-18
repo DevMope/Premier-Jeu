@@ -3624,7 +3624,7 @@ function engagerForgeron(G, id) {
 }
 
 function rangAldo(G) {
-  const n = etatForge(G).armesAldo;
+  const n = etatForge(G).armesAldo || 0;
   return [...FORGE.rangsAldo].reverse().find(r => n >= r.armes);
 }
 

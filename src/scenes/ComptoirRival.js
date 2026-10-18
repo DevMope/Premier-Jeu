@@ -76,7 +76,7 @@ Object.assign(CounterScene.prototype, {
     const porte = () => this.bouton('Lui montrer la porte', () => { this.exprimer('neutre'); this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
     if (entree.mode === 'ouverture') {
       this.direRival(REPLIQUES_RIVAL.ouverture[0]);
-      this.bouton('« ... »', () => { this.geste('salut', 1800); this.direRival(REPLIQUES_RIVAL.ouverture[1]); porte(); });
+      this.bouton('Le laisser parler', () => { this.geste('salut', 1800); this.direRival(REPLIQUES_RIVAL.ouverture[1]); porte(); });
       return;
     }
     if (entree.mode === 'moquerie') { this.direRival(REPLIQUES_RIVAL.moquerie); return porte(); }
@@ -110,7 +110,7 @@ Object.assign(CounterScene.prototype, {
       F.add(this.add.text(0, 56, verdict, style(13, b.gagne === 'toi' ? '#2f5a2a' : b.gagne === 'lui' ? '#b02020' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
       F.add(this.add.text(0, 80, b.ferme ? 'sa maison est à vendre chez le notaire' : `il attire ${RIVAL.vols[b.pression] < 1 ? 'un client tous les deux jours' : RIVAL.vols[b.pression] === 1 ? 'un client par jour' : RIVAL.vols[b.pression] + ' clients par jour'}`, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
     }
-    this.bouton('« Merci ! »', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+    this.bouton("Le remercier d'un signe", () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
   },
 
   // Un client de passage attiré par le paon : il hésite dans la file... puis file chez le voisin

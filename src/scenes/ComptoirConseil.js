@@ -78,7 +78,13 @@ Object.assign(CounterScene.prototype, {
       const grain = this.add.rectangle(-89, 80, 2, 2, 0xd8b048); P.add(grain);
       this.tweens.add({ targets: grain, y: 88, duration: 700, repeat: -1, ease: 'Quad.easeIn' });
       // (un clic le décroche un instant : l'ardoise redevient lisible)
-      P.setSize(236, 214).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.tweens.add({ targets: P, alpha: P.alpha < 1 ? 1 : 0.25, duration: 200 }));
+      // (un clic l'estompe : l'ardoise redevient lisible ET cliquable ; un clic sur son sceau le ramène)
+      const basculer = () => { const estompe = P.alpha >= 1; this.tweens.add({ targets: P, alpha: estompe ? 0.25 : 1, duration: 200 }); if (estompe) P.disableInteractive(); else P.setInteractive(); };
+      P.setSize(236, 214).setInteractive({ useHandCursor: true }).on('pointerdown', basculer);
+      const pastille = this.add.circle(146, 48, 16, 0xffffff, 0.001).setDepth(3.6).setInteractive({ useHandCursor: true });
+      pastille.on('pointerdown', () => { if (P.alpha < 1) basculer(); });
+      P.on('destroy', () => pastille.destroy());
+      this.pastilleRoyale = pastille;
       if (arrivee) { P.setY(-120).setAngle(-8); this.tweens.add({ targets: P, y: 134, angle: 0, duration: 650, ease: 'Bounce.easeOut', onComplete: () => Son.jouer('poser') }); }
     }
     const P = this.panneauRoyal, d = P.dyn;
@@ -90,6 +96,7 @@ Object.assign(CounterScene.prototype, {
     const j = e.joursRestants;
     d.add(this.add.text(-72, 80, j >= 2 ? `encore ${j} jours` : j === 1 ? 'le héraut passe demain' : "le héraut passe aujourd'hui", style(14, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0, 0.5));
     P.setVisible(!this.afficheEpinglee);
+    if (this.pastilleRoyale) this.pastilleRoyale.setVisible(!this.afficheEpinglee);
   },
 
   // La feuille posée sur le parchemin de droite pendant la visite du héraut
@@ -175,8 +182,12 @@ Object.assign(CounterScene.prototype, {
     this.bouton('Briser le sceau', () => this.lireCommandeRoyale(true));
   },
 
-  auRevoirHeraut(texte = 'Au revoir !') {
-    this.bouton(texte, () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+  auRevoirHeraut(texte = 'Le raccompagner') {
+    // (relecture v1.10) la feuille de droite ne se rouvre plus pendant qu'il s'en va ; et un double clic sur le bouton
+    // d'avant ne le fait pas partir avant qu'on ait lu sa réponse
+    if (this.feuilleConseil) this.feuilleConseil.disableInteractive();
+    this.bouton(texte, null);
+    this.time.delayedCall(600, () => { if (this.entree && this.entree.type === 'heraut') this.bouton(texte, () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); }); });
   },
 
   // La lettre ouverte : la commande, son délai, sa prime (la première fois, le héraut attend ta réponse)
@@ -225,10 +236,15 @@ Object.assign(CounterScene.prototype, {
     if (!refuserCommandeRoyale(this.G)) return;
     Son.jouer('refus');
     this.exprimer('fache');
-    this.direHeraut('« Comme tu voudras. Je dirai au Conseil que ton comptoir a peur du travail. » (réputation −1)');
+    this.direHeraut('« Comme tu voudras. Je dirai au Conseil que ton comptoir a peur du travail. »');
     if (this.feuilleConseil) { this.feuilleConseil.destroy(); this.feuilleConseil = null; }
     this.bouton('...', null);
-    this.time.delayedCall(2200, () => { if (this.entree && this.entree.type === 'heraut') this.partirPar(FENETRE.x - 80); });
+    // (le récit reste à l'écran : c'est le joueur qui le laisse partir)
+    this.time.delayedCall(1800, () => {
+      if (!this.entree || this.entree.type !== 'heraut') return;
+      this.raconter('Le héraut tourne les talons. Tout le Comté saura que tu as refusé (réputation −1).', 'Le messager du Conseil');
+      this.bouton('Le laisser partir', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+    });
   },
 
   // Le jour dit : il vient chercher la commande
@@ -267,7 +283,7 @@ Object.assign(CounterScene.prototype, {
       this.bouton('...', null);
       this.mecontentementDuConseil(r, () => {
         this.direHeraut("« Voilà ce qu'il en coûte. La prochaine fois, ne promets que ce que tu peux tenir. »");
-        this.auRevoirHeraut('...');
+        this.auRevoirHeraut('Le laisser partir');
       });
     });
   },
@@ -304,7 +320,7 @@ Object.assign(CounterScene.prototype, {
       L.add(this.sceauConseil(0, -150, 1.2));
       L.add(this.add.text(0, -112, 'IMPÔT DU CONSEIL', style(21, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
       L.add(this.add.text(0, -86, l.premiere ? `Désormais, le percepteur passe le 1er de chaque mois · ★${l.et}` : `Le percepteur passe le 1er du mois · ★${l.et}`, style(12, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5));
-      const rangs = [[l.fortune < G.argent ? 'Ta fortune (sans tes dettes)' : 'Ta fortune', p(l.fortune)], [`Franchise (300 p. × ★${l.et})`, `− ${p(l.franchise)}`], [`Taux du mois (5 % × ★${l.et})`, pc(l.tauxBase)]];
+      const rangs = [[(l.dettes !== undefined ? l.dettes > 0 : l.fortune < G.argent) ? 'Ta fortune (sans tes dettes)' : 'Ta fortune', p(l.fortune)], [`Franchise (300 p. × ★${l.et})`, `− ${p(l.franchise)}`], [`Taux du mois (5 % × ★${l.et})`, pc(l.tauxBase)]];
       if (l.majore) rangs.push(['Majoration (commande manquée)', `× 1,5  →  ${pc(l.taux)}`]);
       else if (l.ristourne) rangs.push(['Ristourne (commande livrée)', `× ½  →  ${pc(l.taux)}`]);
       rangs.forEach(([a, b], i) => {
@@ -317,7 +333,7 @@ Object.assign(CounterScene.prototype, {
       L.add(this.add.text(190, 88, l.montant > 0 ? p(l.montant) : 'rien', style(18, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(1, 0));
       const sans = Math.round(Math.max(0, l.fortune - l.franchise) * l.tauxBase);
       const note = l.dette ? `Il te manquait ${p(l.dette)} : une dette envers le Conseil, remboursée chaque nuit.`
-        : l.montant === 0 ? `Ce mois-ci, ta fortune ne dépasse pas la franchise : rien à payer.`
+        : l.montant === 0 ? (l.fortune <= l.franchise ? `Ce mois-ci, ta fortune ne dépasse pas la franchise : rien à payer.` : 'Ce mois-ci, presque rien au-delà de la franchise : rien à payer.')
           : l.majore ? `(sans la majoration : ${p(sans)}${l.encoreMajore ? ' ; encore un mois majoré après celui-ci' : ''})`
             : l.ristourne ? `(sans la ristourne : ${p(sans)})` : 'Une commande royale livrée, et le prochain impôt sera moitié prix.';
       const t = this.add.text(0, 132, note, style(11, l.dette ? '#b02020' : '#6b4a2a', { fontStyle: 'italic', wordWrap: { width: 440 }, align: 'center' })).setOrigin(0.5);
