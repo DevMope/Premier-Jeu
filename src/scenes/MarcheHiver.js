@@ -191,8 +191,10 @@ Object.assign(MarcheScene.prototype, {
     c.add(this.add.text(40, 446, `Gros lot : le sapin de cristal (+0,4 client/jour) · habits d'hiver gagnés : ${gagnes}/${HABITS_HIVER.length}`, style(11, '#6b4a2a', { fontStyle: 'italic' })));
     c.add(this.add.text(780, 446, reste > 0 ? 'ton tour du jour t\'attend' : 'tu as eu ton tour aujourd\'hui', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
     const b = creerBouton(this, 780, 408, 220, `Tourner la roue (${R.prix} p.)`, () => {
+      if (this.jeuLance || this.sortieEnCours()) return;   // (v1.08 : pas deux départs à la fois)
       if (toursRoueRestants(G) <= 0) return this.message("Le Père Givrin arrête la roue : « Un tour par jour, mon petit. Reviens demain ! »", '#a03030');
       if (!peutPayer(G, R.prix)) return this.message(manqueArgent(G, R.prix, "Pas assez d'argent pour un tour."), '#a03030');
+      this.jeuLance = true; this._transition = performance.now();
       this.cameras.main.fadeOut(400);
       this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Roue', { retour: 'Marche' }));
     });

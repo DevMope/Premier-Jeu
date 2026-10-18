@@ -30,7 +30,7 @@ class MarcheNoirScene extends Phaser.Scene {
     this.elements = [];
     this.majBourse();
     if (G.marcheNoir.entre) this.accueil(); else this.porte();
-    if (this.fete && garrickParleCeSoir(G)) this.time.delayedCall(1200, () => this.discoursGarrick());   // (v1.01, an 1)
+    if (this.fete && garrickParleCeSoir(G)) this.time.delayedCall(1200, () => { if (!this.part && !this.bloqueCoins) this.discoursGarrick(); });   // (v1.01, an 1)
     this.time.delayedCall(900, () => conseilGarrick(this, 'marcheNoir', true));
   }
 
@@ -132,14 +132,14 @@ class MarcheNoirScene extends Phaser.Scene {
       const fond = this.add.circle(x, 200, 20, 0x2a1810, 0.85).setStrokeStyle(2, 0xc9a227).setScrollFactor(0).setDepth(5).setInteractive({ useHandCursor: true });
       const signe = this.add.text(x, 200, sens < 0 ? '◀' : '▶', style(18, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5).setScrollFactor(0).setDepth(5);
       const nom = this.add.text(x + (sens < 0 ? 26 : -26), 200, '', style(13, '#f3d98a', { fontStyle: 'italic bold', stroke: '#1a0806', strokeThickness: 4 })).setOrigin(sens < 0 ? 0 : 1, 0.5).setScrollFactor(0).setDepth(5);
-      fond.on('pointerdown', () => { if (this.bloqueCoins || !this.G.marcheNoir.entre) return; Son.jouer('clic'); this.allerCoin(this.coin + sens); });   // (v1.07 : pas pendant un combat, un bras de fer ou un discours)
+      fond.on('pointerdown', () => { if (this.bloqueCoins || this.part || !this.G.marcheNoir.entre) return; Son.jouer('clic'); this.allerCoin(this.coin + sens); });   // (v1.07 : pas pendant un combat, un bras de fer ou un discours)
       return { fond, signe, nom };
     };
     this.flecheG = fleche(-1); this.flecheD = fleche(1);
     this.majFleches = () => {
       for (const [f, sens] of [[this.flecheG, -1], [this.flecheD, 1]]) {
         // (v1.08) devant la trappe, on n'est pas encore entré : pas de flèches (on passait sans le mot de passe)
-        const cible = this.coin + sens, ok = cible >= 0 && cible <= 2 && !!this.G.marcheNoir.entre;
+        const cible = this.coin + sens, ok = cible >= 0 && cible <= 2 && !!this.G.marcheNoir.entre && !this.part;
         f.fond.setVisible(ok); f.signe.setVisible(ok); f.nom.setVisible(ok).setText(ok ? noms[cible] : '');
       }
       this.titreCoin.setText(['Le coin des doyens', 'Le marché noir', 'La table de la Main Noire'][this.coin]);
@@ -155,8 +155,9 @@ class MarcheNoirScene extends Phaser.Scene {
     this.tweens.add({ targets: this.cameras.main, scrollX: coin * 960, duration: 900, ease: 'Sine.easeInOut', onComplete: () => { if (apres) apres(); } });
     this.majFleches();
     // le garde orc arrête ceux que la Main Noire n'a pas invités
-    if (coin === 2 && !this.mainNoireOuverte) this.time.delayedCall(900, () => { if (this.coin === 2) this.accueil("Un orc énorme te barre le passage : « La table du fond, c'est sur invitation. Reviens quand on parlera de toi, marchand. »"); });
-    if (coin === 0 && !this.aine) this.time.delayedCall(900, () => { if (this.coin === 0) this.accueil('Le feu crépite. Une vieille gobeline te sourit sans un mot : ce soir, aucun aîné ne raconte.'); });
+    // (v1.08) sauf si l'on est reparti, ou si un jeu a commencé entre-temps (la mise était perdue)
+    if (coin === 2 && !this.mainNoireOuverte) this.time.delayedCall(900, () => { if (this.coin === 2 && !this.part && !this.bloqueCoins) this.accueil("Un orc énorme te barre le passage : « La table du fond, c'est sur invitation. Reviens quand on parlera de toi, marchand. »"); });
+    if (coin === 0 && !this.aine) this.time.delayedCall(900, () => { if (this.coin === 0 && !this.part && !this.bloqueCoins) this.accueil('Le feu crépite. Une vieille gobeline te sourit sans un mot : ce soir, aucun aîné ne raconte.'); });
   }
 
   // --- Le panneau du bas : une page à la fois ---
@@ -371,6 +372,7 @@ class MarcheNoirScene extends Phaser.Scene {
     const G = this.G;
     if (this.part) return;
     this.part = true;
+    this.majFleches();   // (v1.08) on remonte : plus de flèches
     const plainte = entre ? quitterMarcheNoir(G) : false;
     this.fermerVue();
     this.vider();

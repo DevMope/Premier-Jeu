@@ -733,6 +733,7 @@ class MarcheScene extends Phaser.Scene {
       this.G.jeux.bonneteau = Math.max(0, this.G.jeux.bonneteau - 1);
     }
     this.etatBonneteau = 'attente';
+    this.partieBonneteau = (this.partieBonneteau || 0) + 1;   // (v1.08) le mélange en cours s'arrête là
     if (this.contenu) this.contenu.destroy();
     this.tweens.killTweensOf(this.cibles || []);
     this.cibles = [];
@@ -1717,10 +1718,15 @@ class MarcheScene extends Phaser.Scene {
     this.majInfos();
     this.mise = mise;
     this.etatBonneteau = 'melange';
+    // (v1.08) on quitte l'étal pendant le mélange puis on revient jouer : l'ancien mélange ne doit pas
+    // continuer sur les nouveaux gobelets ni annoncer « choisis » trop tôt
+    const partie = this.partieBonneteau = (this.partieBonneteau || 0) + 1;
+    const finie = () => this.partieBonneteau !== partie || this.etatBonneteau !== 'melange';
     // La pièce se cache sous un gobelet...
     this.gagnant = Phaser.Utils.Array.GetRandom(this.gobelets);
     this.piece.setPosition(this.gagnant.x, 428).setVisible(true);
     await this.animer({ targets: this.gagnant, y: 385, duration: 250, yoyo: true, hold: 500 });
+    if (finie()) return;
     this.piece.setVisible(false);
     // ... puis Fil-de-Fer mélange.
     // (plus de passes et plus vite à mesure qu'on joue dans la journée : Fil-de-Fer s'échauffe)
@@ -1732,6 +1738,7 @@ class MarcheScene extends Phaser.Scene {
         this.animer({ targets: a, x: xb, duration: vitesse, ease: 'Sine.easeInOut' }),
         this.animer({ targets: b, x: xa, duration: vitesse, ease: 'Sine.easeInOut' }),
       ]);
+      if (finie()) return;
     }
     this.etatBonneteau = 'choix';
     this.message('Alors, sous quel gobelet est la pièce ?');
@@ -1768,15 +1775,18 @@ class MarcheScene extends Phaser.Scene {
   }
 
   // Repasser chez soi avant d'ouvrir : réserve, atelier, bureau, banque.
+  // (v1.08) une sortie ou un jeu de la fête vient de partir : on ne lance pas un second départ
+  sortieEnCours() { return !!(this._transition && performance.now() - this._transition < 1500); }
+
   rentrer() {
-    if (enTransition(this)) return;
+    if (this.jeuLance || enTransition(this)) return;
     Sauvegarde.maintenant(this.G, 'Maison');
     this.cameras.main.fadeOut(300);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Rue', { depuis: 'marche' }));   // (v0.65 : on rentre à pied, par la rue)
   }
 
   ouvrir() {
-    if (this._transition && performance.now() - this._transition < 1500) return;
+    if (this.jeuLance || this.sortieEnCours()) return;
     // On sauvegarde avant que la file d'attente du jour se forme.
     Sauvegarde.maintenant(this.G, 'Marche');
     commencerJournee(this);

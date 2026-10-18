@@ -148,13 +148,14 @@ Object.assign(MarcheNoirScene.prototype, {
 
   partieOsselets(p, message = null) {
     const G = this.G;
+    this.bloqueCoins = true;   // (v1.08) pendant une partie, les flèches attendent : la mise n'est plus perdue en quittant
     this.dessinerTableOsselets(p);
     this.vider();
     this.texte(40, 374, message || (p.relance ? 'Grik te regarde par-dessus ses osselets cachés. À toi : miser plus, montrer, ou te coucher.' : 'Clique sur les osselets à relancer (une seule relance), ou joue tout de suite.'), 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
-    const fin = (choix) => { const r = finirOsselets(G, p, choix); Son.jouer(r.gain > p.mise ? 'pieces' : 'des'); this.majBourse(); this.dessinerTableOsselets(p); this.vider(); this.texte(40, 374, r.texte, 14, r.gain ? '#a8e090' : '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } }); this.bouton(330, 470, 260, 'Encore une partie', () => this.pageOsselets(), partiesOsseletsRestantes(G) > 0); this.bouton(860, 500, 140, '◂ La fête', () => this.pageBrumes()); };
+    const fin = (choix) => { this.bloqueCoins = false; const r = finirOsselets(G, p, choix); Son.jouer(r.gain > p.mise ? 'pieces' : 'des'); this.majBourse(); this.dessinerTableOsselets(p); this.vider(); this.texte(40, 374, r.texte, 14, r.gain ? '#a8e090' : '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } }); this.bouton(330, 470, 260, 'Encore une partie', () => this.pageOsselets(), partiesOsseletsRestantes(G) > 0); this.bouton(860, 500, 140, '◂ La fête', () => this.pageBrumes()); };
     const boutons = [];
     if (!p.relance) boutons.push(['Relancer', () => { p.relance = true; p.joueur = p.joueur.map((v, k) => (p.choisis && p.choisis[k] ? 1 + Math.floor(Math.random() * 6) : v)); p.choisis = []; Son.jouer('des'); this.partieOsselets(p); }]);
-    boutons.push(['Miser plus', () => { const r = miserPlus(G, p); this.majBourse(); if (r && r.couche) { this.dessinerTableOsselets(p); this.vider(); this.texte(40, 374, r.texte, 14, '#a8e090', { fontStyle: 'italic' }); this.bouton(330, 470, 260, 'Encore une partie', () => this.pageOsselets(), partiesOsseletsRestantes(G) > 0); this.bouton(860, 500, 140, '◂ La fête', () => this.pageBrumes()); return; } this.partieOsselets(p, typeof r === 'string' ? r : `Tu ajoutes ${BRUMES.osselets.mise} p. Grik plisse les yeux...`); }]);
+    boutons.push(['Miser plus', () => { const r = miserPlus(G, p); this.majBourse(); if (r && r.couche) { this.bloqueCoins = false; this.dessinerTableOsselets(p); this.vider(); this.texte(40, 374, r.texte, 14, '#a8e090', { fontStyle: 'italic' }); this.bouton(330, 470, 260, 'Encore une partie', () => this.pageOsselets(), partiesOsseletsRestantes(G) > 0); this.bouton(860, 500, 140, '◂ La fête', () => this.pageBrumes()); return; } this.partieOsselets(p, typeof r === 'string' ? r : `Tu ajoutes ${BRUMES.osselets.mise} p. Grik plisse les yeux...`); }]);
     boutons.push(['Montrer', () => fin('montrer')]);
     if (p.flair) boutons.push(['Dénoncer la triche', () => fin('denoncer')]);
     boutons.push(['Se coucher', () => fin('coucher')]);
@@ -168,7 +169,7 @@ Object.assign(MarcheNoirScene.prototype, {
     this.fermerVue(); this.vider(); this.allerCoin(1); this.titreCoin.setText('Le grand feu');
     this.texte(40, 374, message || "Un vieil orc te tend une coupe d'hydromel noir, épais comme la nuit : « Pour nos morts. Et pour les tiens. » À côté, on rompt le pain de cendre « pour les absents ».", 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
     if (!s.hydromel) {
-      this.bouton(200, 456, 300, "Boire l'hydromel noir", () => { boireHydromel(G); Son.jouer('glou'); this.cameras.main.fadeOut(1400, 20, 10, 30); this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Vision', { retour: 'MarcheNoir' })); });
+      this.bouton(200, 456, 300, "Boire l'hydromel noir", () => { boireHydromel(G); Son.jouer('glou'); this.vider(); this.bloqueCoins = true; this.cameras.main.fadeOut(1400, 20, 10, 30); this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Vision', { retour: 'MarcheNoir' })); });
       this.bouton(520, 456, 240, 'Refuser poliment', () => { refuserHydromel(G); this.pageGrandFeu("Le vieil orc hausse les épaules et boit ta part. Quelques regards se détournent."); });
     } else this.texte(40, 420, s.hydromel === 'refuse' ? "Tu as refusé la coupe, ce soir." : "L'hydromel noir te tourne encore un peu la tête...", 12, '#c8a890', { fontStyle: 'italic' });
     if (!s.pain) this.bouton(200, 500, 300, 'Rompre le pain de cendre', () => { prendrePain(G); Son.jouer('miam'); this.pageGrandFeu("Tu romps le pain « pour les absents ». On t'en glisse un quignon dans la poche : donné à un aventurier qui part en terre d'ombre, il le fera rebrousser chemin au lieu de mourir."); });
