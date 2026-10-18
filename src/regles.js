@@ -685,6 +685,8 @@ function partir(G, voyageur, colis, pieges = {}) {
   // (v0.60) le détour pour la Main Noire (un service rendu)
   const detour = detourMafia(G, voyageur);
   if (detour) message = (message ? message + ' ' : '') + detour;
+  const pourboire = typeof pourboireAuDepart === 'function' ? pourboireAuDepart(G, voyageur) : null;   // (v1.06) le client généreux de l'Étoile
+  if (pourboire) message = (message ? message + ' ' : '') + pourboire;
   const mission = G.faucheuse.mission;
   if (mission && mission.cible.id === voyageur.id) mission.etat = pieges[mission.piege] > 0 ? 'posee' : 'ratee';
   // (v0.90) un piège glissé dans le baluchon : un geste d'ombre
@@ -1663,7 +1665,8 @@ function reveilDuJour(G) {
 // Les nouvelles du matin : l'atelier, et ce que la nuit t'a apporté.
 function nouvellesDuMatin(G) {
   const fete = typeof annonceFete === 'function' ? annonceFete(G) : null;   // (v0.99 : la fête qui approche)
-  return [...(fete ? [fete] : []), ...(G.nouvellesAtelier || []), ...reveilDuJour(G).lignes];
+  const ysmee = typeof nouvelleYsmee === 'function' ? nouvelleYsmee(G) : null;   // (v1.06 : la tente de la diseuse)
+  return [...(fete ? [fete] : []), ...(ysmee ? [ysmee] : []), ...(G.nouvellesAtelier || []), ...reveilDuJour(G).lignes];
 }
 
 // (v0.60) Le hasard d'une journée est fixé par une graine propre à la partie : recharger la
@@ -1743,6 +1746,7 @@ function formerFileDuJour(G) {
   const clients = [...prevus.map(v => ({ ...v, prevu: true }))];
   for (let i = 0; i < imprevus; i++) clients.push(voyageurAuHasard(G, [...clients, ...(G.reportes || [])]));
   deguiserClients(G, clients, prevus.length);   // (v0.86) parmi les imprévus, un menteur... ou un honnête qui en a l'air
+  if (typeof presageSurLaFile === 'function') presageSurLaFile(G, clients, prevus.length);   // (v1.06) le présage de Madame Ysmée
   const file = Phaser.Utils.Array.Shuffle(clients.map(v => ({ type: 'client', voyageur: v })));
 
   // Les aventuriers dont la quête se termine aujourd'hui reviennent...
@@ -1922,6 +1926,7 @@ function quitterMarcheNoir(G) {
 function doitVenirGarde(G) {
   G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 };
   if (G.gardeDemain) { G.gardeDemain = false; return true; }
+  if (typeof gardePresageDuJour === 'function' && gardePresageDuJour(G)) return true;   // (v1.06) la Tour d'Ysmée avait prévenu
   if (G.gardeTiree === G.jour) return false;   // (v0.65 : déjà tirée la veille au soir, pour le chat)
   return gardeAuHasard(G);
 }
@@ -3352,7 +3357,7 @@ function ouvrirMarchandage(G, v) {
   if (!v.marchandage) {
     const st = styleMarchandage(v);
     const marge = st.marge[0] + Math.round(aleaClient(v, 'marge') * (st.marge[1] - st.marge[0]) / MARCHANDAGE.pas) * MARCHANDAGE.pas;
-    const patience = st.patience + niveauPersuasion(G);   // (v0.93) la persuasion le rend plus patient
+    const patience = st.patience + niveauPersuasion(G) + (typeof patiencePresage === 'function' ? patiencePresage(G) : 0);   // (v0.93) la persuasion le rend plus patient ; (v1.06) le Soleil d'Ysmée aussi
     v.marchandage = { part: MARCHANDAGE.base, max: MARCHANDAGE.base + marge, patience, patienceMax: patience, fini: false };
   }
   return v.marchandage;

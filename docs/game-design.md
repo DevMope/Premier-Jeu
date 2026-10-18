@@ -1696,3 +1696,27 @@ de loin (pas de fête manquée en silence).
 - **Proposé, à valider** : **l'esprit du Long Hiver** : pendant les trois jours, tout cadeau offert au comptoir donne +1
   de relation en plus.
 - **Petit bug corrigé au passage** : les dépenses des fêtes s'affichaient « fete » au registre (libellé : « Fêtes du village »).
+
+### B-4, Madame Ysmée, la diseuse : construite (planche 23 validée, 18/10)
+- **Sa tente violette** se dresse dans la rue au jour 10, entre ton comptoir et la maison des Brindeloup (une ligne
+  dans les nouvelles du matin ce jour-là). Le jour, on y entre (« Madame Ysmée ») ; le soir, ses rideaux sont tirés,
+  une lueur violette passe sous la toile.
+- **La découverte** (la première fois) : la tente s'ouvre toute seule, la bougie s'allume, les cartes se retournent
+  seules : « Entre, petit marchand. Les cartes m'avaient dit que tu viendrais. Je suis Ysmée. »
+- **Son portrait** : celui de la planche 23, avec **son fichu violet** (qui restait à dessiner) noué sur la tête, ses pans
+  derrière les oreilles et une rangée de petites pièces d'or sur le front. Elle respire, cligne des yeux ; son chat noir
+  bat de la queue au bout de la table.
+- **Le présage** : 2 p., une carte par matin, **avant l'ouverture du comptoir** (après, « les cartes ne parlent qu'au
+  matin »). Cinq cartes :
+  - **Le Corbeau** : quelqu'un te mentira aujourd'hui (un imposteur est glissé parmi les clients imprévus) ;
+  - **La Roue** : un retour inattendu (un aventurier en mission, qui reviendra vivant, rentre aujourd'hui ; la carte ne
+    sort que si quelqu'un est en mission) ;
+  - **La Tour** : la garde passera cette semaine (dans 1 à 5 jours ; la carte ne sort que si la garde te surveille déjà,
+    c'est-à-dire si ton comptoir penche vers l'ombre : elle prévient, elle n'invente pas de visite) ;
+  - **L'Étoile** : un client généreux (8 à 18 p. de pourboire à son départ) ;
+  - **Le Soleil** : des clients au cœur léger (+1 de patience au marchandage, toute la journée).
+- **Parfois trompeuse** (une fois sur quatre) : le présage ne se réalise pas. Aucun indice dans ses paroles ; avec du
+  flair, chacun des trois petits détails apparaît d'autant plus souvent que le flair est grand (la flamme qui vacille,
+  la carte à l'envers, le chat qui détourne la tête ; à 100 %, les trois).
+- Simulation (16 parties de 160 jours, un présage 7 matins sur 10) : aucun problème ; les amendes de la garde montent
+  d'environ 10 % (la simulation ne profite pas de l'avertissement de la Tour pour cacher ce qu'il faut).

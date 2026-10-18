@@ -349,6 +349,12 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
     scene.add.rectangle(o + P.impasse, sol - 66, 6, 9, 0xff4a2a).setDepth(9.6);
     ici.porte(o + P.impasse, sol, 'La porte dérobée', 'MarcheNoir');
   }
+  // (v1.06) la tente violette de Madame Ysmée, dès le jour 10 : on y entre le matin
+  if (typeof ysmeeArrivee === 'function' && ysmeeArrivee(G) && typeof tenteDiseuse === 'function') {
+    tenteDiseuse(scene, o + DISEUSE.tente, sol, jour);
+    if (jour) ici.porte(o + DISEUSE.tente, sol, 'Madame Ysmée', 'Diseuse', { large: 120, haut: 150 });
+    else ici.regarder(o + DISEUSE.tente - 100, 280, 200, 190, "La tente de Madame Ysmée est fermée pour la nuit. Une lueur violette filtre sous la toile... Elle ne dort donc jamais ?");
+  }
   // ce qu'on regarde
   ici.regarder(o + 10, 160, 300, 310, jour ? 'Madame Pommeroy bat ses tapis à la fenêtre. Elle te salue d\'un hochement de tête.' : Phaser.Utils.Array.GetRandom(['La maison des Pommeroy. Leur chien ronfle derrière la porte.', 'Une bougie veille chez la vieille Berthe Pommeroy. Elle tricote, comme chaque soir.']));
   ici.regarder(o + P.impasse - 90, 240, 180, 230, ouvert ? "Une lanterne rouge brûle au fond de l'impasse du Corbeau. La porte dérobée est ouverte ce soir..." : jour ? "L'impasse du Corbeau. Même en plein jour, le fond reste dans l'ombre." : G.visiteMarcheNoir !== undefined ? "L'impasse est noire. La lanterne rouge est éteinte ce soir." : "Une impasse si sombre qu'on n'en voit pas le fond. On dit qu'une porte basse s'y ouvre, certains soirs.");
