@@ -50,7 +50,7 @@ class HudScene extends Phaser.Scene {
     zoneGoutte.on('pointerout', () => this.infoNymphe(false));
     zoneGoutte.on('pointerdown', () => this.infoNymphe(!this.bulleNymphe));
     this.tweens.add({ targets: goutte, y: -2, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    // (v1.06, planche 24 C) la bûche rouge : le soir, en Givre, tant que le foyer est vide
+    // (v1.05, planche 24 C) la bûche rouge : le soir, en Givre, tant que le foyer est vide
     const buche = this.add.graphics();
     buche.fillStyle(0x1e130a, 0.92).fillRoundedRect(-20, -11, 40, 22, 6).lineStyle(2, 0xc02a1a, 1).strokeRoundedRect(-20, -11, 40, 22, 6);
     buche.fillStyle(0x6a3a1a).fillRoundedRect(-12, -4, 22, 9, 4).fillStyle(0x8a5a2a).fillEllipse(10, 0, 6, 9).fillStyle(0x4a2a12).fillEllipse(10, 0, 3, 5);
@@ -134,7 +134,7 @@ class HudScene extends Phaser.Scene {
   }
 
   // (v0.93) La bénédiction de la nymphe, en un coup d'œil
-  // (v1.06) la bûche rouge expliquée
+  // (v1.05) la bûche rouge expliquée
   infoBuche(montrer) {
     if (this.bulleBuche) { this.bulleBuche.destroy(); this.bulleBuche = null; }
     if (!montrer) return;

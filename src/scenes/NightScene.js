@@ -107,16 +107,16 @@ class NightScene extends Phaser.Scene {
   // bilan du jour), la nuit passe, et au matin, direction le Marché des Mastres.
   dormir() {
     if (this.carrefourEnAttente()) return;   // (v0.97) avant le verrou de transition, qui le faisait sauter
-    if (enTransition(this)) return;   // (v0.90) on ne s'endort pas avant d'avoir ouvert la porte
     const G = this.G;
-    if (typeof foyerVide === 'function' && foyerVide(G) && this.froidAccepte !== G.jour) return this.confirmerFoyer();   // (v1.06, planche 24 B)
+    if (typeof foyerVide === 'function' && foyerVide(G) && this.froidAccepte !== G.jour && !(typeof banquetDu === 'function' && banquetDu(G))) return this.confirmerFoyer();   // (v1.05, planche 24 B ; avant le verrou de transition)
+    if (enTransition(this)) return;   // (v0.90) on ne s'endort pas avant d'avoir ouvert la porte
     const bilan = { jour: G.jour, servis: G.journal.servis, retours: G.journal.retours, morts: G.journal.morts,
       gain: G.argent - G.argentDebutJour, reputation: G.reputation, jauge: jaugeCamp(G), palier: nomPalierCamp(G) };
     this.cameras.main.fadeOut(500);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Dodo', { bilan }));
   }
 
-  // (v1.06, planche 24 B) En Givre, au coucher, sans bûche dans la cheminée : on prévient avant de dormir
+  // (v1.05, planche 24 B) En Givre, au coucher, sans bûche dans la cheminée : on prévient avant de dormir
   confirmerFoyer() {
     if (this.fenetreFoyer) return;
     const G = this.G, bois = G.materiaux.bois || 0;
@@ -192,7 +192,7 @@ class NightScene extends Phaser.Scene {
     c.add(this.add.text(x1 + 18, 352, 'En mission', style(14, '#3b2410', { fontStyle: 'bold' })));
     const missions = enMission(G).map(p => `${p.voyageur.nom} — jour ${p.retour}`);
     // (v0.93) le soir, la ligne du chat/de la nymphe se place sous la liste (elle la recouvrait avec 3 missions)
-    const foyer = !this.matin && typeof ligneFoyer === 'function' ? ligneFoyer(G) : null;   // (v1.06) le bois de l'hiver, la gamelle du chat
+    const foyer = !this.matin && typeof ligneFoyer === 'function' ? ligneFoyer(G) : null;   // (v1.05) le bois de l'hiver, la gamelle du chat
     const evenement = !this.matin && (alerteChat(G) || foyer || nympheAttend(G) || chatCeSoir(G));
     const texteMissions = this.add.text(x1 + 18, 372, listeCourte(missions, evenement ? 2 : 4, 'Personne'), style(12, '#5a3a20', { lineSpacing: 2 }));
     c.add(texteMissions);

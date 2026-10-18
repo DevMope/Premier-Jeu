@@ -355,6 +355,7 @@ Chaque étape doit donner une version **jouable**.
 | v 1.02 | **Le Grand Sage** (planche 32, d'après le dessin du joueur) | Le Grand Sage dans le moteur des corps (couronne d'or aux pierres bleues, longue barbe blanche qui tombe sous le menton même de profil, cape d'écailles de dragon rouges, robe violette brodée d'or sur la robe d'ivoire à l'arbre d'or, bâton torsadé au cristal bleu, runes, fioles, grimoire). **Son discours au deuxième Solstice** (le grand jour, en arrivant au marché, une fois) : les cloches, le cortège, la colonne de lumière, le discours validé en trois morceaux, l'acclamation, et Garrick qui n'applaudit pas. Corrigé : le zoom de la vision de l'hydromel sur les écrans HD (iPad). |
 | v 1.03 | **Le Conseil des Gardiens** (planche 33 validée) | Les cinq Gardiens (Maître Bertolin Pommeval, Dame Aliénor de Hautval, Durgan Barbe-de-Fer, Dame Ilyriel, l'Archimage Séraphine), en robe aux couleurs de leur royaume, l'étole blanche du Conseil et la broche d'écaille rouge ; Sire Valdric, le Champion du Rempart. Au Solstice de l'an 2, le Gardien du Comté et le Champion montent sur l'estrade avant le Grand Sage. |
 | v 1.04 | **Les armes portées** (planche 34 validée) | Chaque voyageur porte son arme sur lui, partout où on le voit en pied : dans le dos (épée, hache, marteau, arc, bambou), à la main (lance, bâton de mage, massue), aux mains (griffes), à la taille (dague, rapière, khopesh, fronde) ; avec le baluchon, la lance et le bâton passent dans le dos. Celui qui vient faire réparer son arme l'a déjà dans la file ; celui qui en achète une repart avec. Les armes sont un peu plus grosses (×1,3) pour se voir sur les petites silhouettes de la file. La salle du Conseil a son dallage de marbre crème veiné d'or (le damier est abandonné). |
+| v 1.05 | **Le Long Hiver, Madame Ysmée, le foyer** (planches 35 et 36 validées) | **La Fête du Long Hiver** (20-22 du Givre) : la place enneigée, le grand sapin, les guirlandes, le bonhomme de neige ; la grande roue des cadeaux du Père Givrin (8 p., un tour par jour) ; les habits d'hiver (bonnet, moufles, écharpe : +1 de relation pendant la fête) ; le sapin de cristal (gros lot, +0,4 client/jour) ; le banquet du grand soir (Garrick trinque, un cadeau d'un voisin, réveil en forme) ; les cadeaux offerts pendant la fête touchent davantage. **Madame Ysmée** : sa tente violette dès le jour 10, son foulard violet, le présage du matin (le Corbeau, la Roue, la Tour, l'Étoile, le Soleil), trompeuse 2 fois sur 5, et les indices du flair. **Le foyer** : l'hiver sans bûche (fatigué, puis malade), la bûche rouge du bandeau et la confirmation au coucher ; la gamelle du chat, le chat qui boude, son mot sur le comptoir et son retour. |
 | 10b | **La forge chez soi** (validé) | À ★3 (le saut d'un an), on peut construire une forge dans l'arrière-boutique et engager un premier forgeron ; un second à ★4. Chaque nuit, ils fabriquent des armes avec les matériaux en stock. |
 | 10c | **La rue et le familier** (validé : le chat chasse les rats de la réserve et prévient parfois de la garde) | La rue du comptoir s'agrandit : on y marche avec son personnage jusqu'aux lieux du quartier (marché, banque, forge, fontaine, plus tard le petit bar), en plus des raccourcis depuis la maison. En s'y promenant le soir, on croise le chat de gouttière : on le nourrit quelques soirs de suite, et il nous adopte (premier familier). |
 | 11 | **Aider pendant l'aventure** | Messages de détresse, le grand aigle, les mercenaires. |
@@ -1703,7 +1704,7 @@ de loin (pas de fête manquée en silence).
   une lueur violette passe sous la toile.
 - **La découverte** (la première fois) : la tente s'ouvre toute seule, la bougie s'allume, les cartes se retournent
   seules : « Entre, petit marchand. Les cartes m'avaient dit que tu viendrais. Je suis Ysmée. »
-- **Son portrait** : celui de la planche 23, avec **son fichu violet** (qui restait à dessiner) noué sur la tête, ses pans
+- **Son portrait** : celui de la planche 23, avec **son foulard violet** (qui restait à dessiner) noué sur la tête, ses pans
   derrière les oreilles et une rangée de petites pièces d'or sur le front. Elle respire, cligne des yeux ; son chat noir
   bat de la queue au bout de la table.
 - **Le présage** : 2 p., une carte par matin, **avant l'ouverture du comptoir** (après, « les cartes ne parlent qu'au
@@ -1715,7 +1716,7 @@ de loin (pas de fête manquée en silence).
     c'est-à-dire si ton comptoir penche vers l'ombre : elle prévient, elle n'invente pas de visite) ;
   - **L'Étoile** : un client généreux (8 à 18 p. de pourboire à son départ) ;
   - **Le Soleil** : des clients au cœur léger (+1 de patience au marchandage, toute la journée).
-- **Parfois trompeuse** (une fois sur quatre) : le présage ne se réalise pas. Aucun indice dans ses paroles ; avec du
+- **Parfois trompeuse** (deux fois sur cinq, demandé par le joueur) : le présage ne se réalise pas. Aucun indice dans ses paroles ; avec du
   flair, chacun des trois petits détails apparaît d'autant plus souvent que le flair est grand (la flamme qui vacille,
   la carte à l'envers, le chat qui détourne la tête ; à 100 %, les trois).
 - Simulation (16 parties de 160 jours, un présage 7 matins sur 10) : aucun problème ; les amendes de la garde montent
@@ -1736,3 +1737,10 @@ de loin (pas de fête manquée en silence).
   une nuit sur deux ; il ne sent plus venir la garde). Parti, il ne te suit pas en promenade et ne protège pas la réserve.
 - Simulation (16 parties de 160 jours, un joueur qui met une bûche 85 % des soirs d'hiver et garde le plus souvent une
   ration pour la gamelle) : aucun problème ; 33 réveils fatigués et 6 malades en tout.
+
+### Réponses du joueur (18/10, après les planches 35 et 36)
+- **Planche 35 : tout est validé** (« bravo ») : la Fête du Long Hiver est ouverte (v1.05), Père Givrin, habits d'hiver, banquet
+  et esprit du Long Hiver compris.
+- **« Fichu » n'est pas un mot courant** : Madame Ysmée porte un **foulard violet**.
+- **Madame Ysmée se trompe 2 fois sur 5** (au lieu d'une fois sur quatre).
+- **Planche 36 (le foyer, le chat qui boude) : parfait.**

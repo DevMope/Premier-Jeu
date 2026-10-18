@@ -1,10 +1,10 @@
-// (v1.06, lot B-4, planche 23) Madame Ysmée, la diseuse : sa tente violette se dresse dans la rue au jour 10.
+// (v1.05, lot B-4, planche 23) Madame Ysmée, la diseuse : sa tente violette se dresse dans la rue au jour 10.
 // Chaque matin, avant l'ouverture du comptoir, elle retourne une carte pour 2 pièces : un présage pour la
 // journée. Elle dit vrai le plus souvent, pas toujours ; jamais un mot ne la trahit, mais avec du flair on
 // remarque de tout petits détails sous la tente (la flamme qui vacille, une carte à l'envers, son chat qui
 // détourne la tête). Personne ne sait son âge, d'où elle vient, ni si elle a vraiment des pouvoirs.
 
-const DISEUSE = { jour: 10, prix: 2, trompe: 0.25, tente: 1610, pourboire: [8, 18], gardeDans: [1, 5] };
+const DISEUSE = { jour: 10, prix: 2, trompe: 0.4, tente: 1610, pourboire: [8, 18], gardeDans: [1, 5] };
 POSTES.diseuse = 'Madame Ysmée'; POSTES.pourboires = 'Pourboires';
 const PRESAGES = {
   corbeau: { nom: 'Le Corbeau', dit: "« Le Corbeau... Quelqu'un te mentira aujourd'hui. Méfie-toi des visages trop aimables. »", bref: "quelqu'un te mentira aujourd'hui" },

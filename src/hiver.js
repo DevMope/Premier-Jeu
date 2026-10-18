@@ -4,7 +4,7 @@
 // du Long Hiver : pendant la fête, un cadeau offert au comptoir touche davantage.
 
 FETES.hiver = { nom: 'la Fête du Long Hiver', titre: 'La Fête du Long Hiver', saison: 'givre', jours: [20, 21, 22], camp: 'tous' };
-FETES_OUVERTES.hiver = false;   // (planche 35, à valider)
+FETES_OUVERTES.hiver = true;   // (planche 35 validée le 18/10)
 
 const HIVER = {
   roue: { prix: 8, tours: 1 },

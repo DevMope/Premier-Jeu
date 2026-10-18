@@ -1,4 +1,4 @@
-// (v1.06, lot B-4, planche 23 validée) Sous la tente de Madame Ysmée : ses tentures violettes semées d'étoiles,
+// (v1.05, lot B-4, planche 23 validée) Sous la tente de Madame Ysmée : ses tentures violettes semées d'étoiles,
 // la table ronde et sa nappe à franges d'or, la boule de cristal, la bougie, les cartes, et son chat noir au bout
 // de la table. La première fois : la tente s'ouvre toute seule, les bougies s'allument, les cartes se retournent.
 // Ensuite, pour 2 pièces le matin, une carte : le présage du jour. Quand elle se trompe, rien dans ses paroles ;
@@ -130,7 +130,7 @@ class DiseuseScene extends Phaser.Scene {
       Son.jouer('page');
     }));
     this.time.delayedCall(4800, () => {
-      this.dire("La tente s'est ouverte toute seule. Une vieille femme au fichu violet lève les yeux de ses cartes : « Entre, petit marchand. Les cartes m'avaient dit que tu viendrais. Je suis Ysmée. »");
+      this.dire("La tente s'est ouverte toute seule. Une vieille femme au foulard violet lève les yeux de ses cartes : « Entre, petit marchand. Les cartes m'avaient dit que tu viendrais. Je suis Ysmée. »");
       this.indice.setText('▶ clique pour continuer');
       this.input.once('pointerdown', () => {
         this.indice.setText('');

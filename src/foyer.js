@@ -1,4 +1,4 @@
-// (v1.06, lot B-5, planches 24 et 25 validées) Le foyer à nourrir : le bois de l'hiver et la gamelle du chat.
+// (v1.05, lot B-5, planches 24 et 25 validées) Le foyer à nourrir : le bois de l'hiver et la gamelle du chat.
 // - L'hiver sans bois : une nuit de Givre sans bûche, réveil fatigué (un client de moins) ; deux nuits de suite,
 //   malade (le comptoir n'ouvre qu'à midi) et le chat part se réchauffer chez les voisins. On est prévenu : la
 //   bûche rouge dans le bandeau, et une confirmation avant d'aller dormir.

@@ -685,7 +685,7 @@ function partir(G, voyageur, colis, pieges = {}) {
   // (v0.60) le détour pour la Main Noire (un service rendu)
   const detour = detourMafia(G, voyageur);
   if (detour) message = (message ? message + ' ' : '') + detour;
-  const pourboire = typeof pourboireAuDepart === 'function' ? pourboireAuDepart(G, voyageur) : null;   // (v1.06) le client généreux de l'Étoile
+  const pourboire = typeof pourboireAuDepart === 'function' ? pourboireAuDepart(G, voyageur) : null;   // (v1.05) le client généreux de l'Étoile
   if (pourboire) message = (message ? message + ' ' : '') + pourboire;
   const mission = G.faucheuse.mission;
   if (mission && mission.cible.id === voyageur.id) mission.etat = pieges[mission.piege] > 0 ? 'posee' : 'ratee';
@@ -1443,7 +1443,7 @@ function prevision(G, jour = G.jour + 1) {
   // Réveillé en forme ce matin : un client de plus
   const forme = G.reveil && G.reveil.jour === jour && G.reveil.forme === 'client' ? 1 : 0;
   const pelerins = sermentDe(G) === 'bien' ? AVANTAGES_SERMENT.clients : 0;   // (v0.95 : la Confrérie envoie du monde)
-  const hiver = (saisonDe(G, jour) === 'givre' ? SAISON_REGLES.clientsHiver : 0) + (typeof clientsFroid === 'function' ? clientsFroid(G, jour) : 0);   // (v0.99 : le froid garde les gens chez eux ; v1.06 : une nuit sans feu)
+  const hiver = (saisonDe(G, jour) === 'givre' ? SAISON_REGLES.clientsHiver : 0) + (typeof clientsFroid === 'function' ? clientsFroid(G, jour) : 0);   // (v0.99 : le froid garde les gens chez eux ; v1.05 : une nuit sans feu)
   min = Math.max(1, min + bonus + forme + pelerins + hiver);
   max = Math.max(min, max + bonus + forme + pelerins + hiver);
   // (v0.60) les premiers jours : pas trop de monde, mais au moins deux clients (le rythme des débuts)
@@ -1556,7 +1556,7 @@ function nuit(G) {
     if (taxe > 0) payer(G, taxe, 'taxe');
   }
   if (G.feu === G.jour) G.nuitAuChaud = G.jour + 1;   // (v0.66 : la nuit au chaud, pour le réveil)
-  if (typeof nuitDuFoyer === 'function') nuitDuFoyer(G);   // (v1.06) le froid de l'hiver, la gamelle du chat
+  if (typeof nuitDuFoyer === 'function') nuitDuFoyer(G);   // (v1.05) le froid de l'hiver, la gamelle du chat
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1583,7 +1583,7 @@ function nuit(G) {
   for (const l of nuitOmbreAnnee(G)) G.reveil.lignes.push(l);   // (v0.98) la caisse du Passeur, les contrats de l'ombre
   if (typeof nuitSolstice === 'function') nuitSolstice(G);   // (v1.00) la tarte du Solstice ne se garde pas
   if (typeof nuitBrumes === 'function') for (const l of nuitBrumes(G)) G.reveil.lignes.push(l);   // (v1.01) la Nuit des Brumes
-  if (typeof reveilDuFoyer === 'function') reveilDuFoyer(G, G.reveil);   // (v1.06) la nuit froide, le panier vide
+  if (typeof reveilDuFoyer === 'function') reveilDuFoyer(G, G.reveil);   // (v1.05) la nuit froide, le panier vide
   if (typeof reveilApresBanquet === 'function') reveilApresBanquet(G, G.reveil);   // (v1.05) le banquet du Long Hiver
   // (v0.86) les imposteurs servis hier : on apprend ce qu'est devenu ton baluchon
   for (const a of (G.arnaques || []).filter(a => !a.dit)) { G.reveil.lignes.push(a.texte); a.dit = true; }
@@ -1667,7 +1667,7 @@ function reveilDuJour(G) {
 // Les nouvelles du matin : l'atelier, et ce que la nuit t'a apporté.
 function nouvellesDuMatin(G) {
   const fete = typeof annonceFete === 'function' ? annonceFete(G) : null;   // (v0.99 : la fête qui approche)
-  const ysmee = typeof nouvelleYsmee === 'function' ? nouvelleYsmee(G) : null;   // (v1.06 : la tente de la diseuse)
+  const ysmee = typeof nouvelleYsmee === 'function' ? nouvelleYsmee(G) : null;   // (v1.05 : la tente de la diseuse)
   return [...(fete ? [fete] : []), ...(ysmee ? [ysmee] : []), ...(G.nouvellesAtelier || []), ...reveilDuJour(G).lignes];
 }
 
@@ -1703,7 +1703,7 @@ function formatDuree(d) {
 }
 function heureDuComptoir(G) { if (typeof G.heure !== 'number') G.heure = heureOuverture(G); return G.heure; }
 // (v1.01) L'heure d'ouverture : une heure plus tard au lendemain de l'hydromel noir (la tête lourde)
-function heureOuverture(G) { return JOURNEE.ouverture + (G.reveilDifficile === G.jour ? BRUMES.hydromel.retard : 0) + (typeof retardFroid === 'function' ? retardFroid(G) : 0); }   // (v1.06 : malade, à midi)
+function heureOuverture(G) { return JOURNEE.ouverture + (G.reveilDifficile === G.jour ? BRUMES.hydromel.retard : 0) + (typeof retardFroid === 'function' ? retardFroid(G) : 0); }   // (v1.05 : malade, à midi)
 function avancerHeure(G, d) { G.heure = heureDuComptoir(G) + d; return G.heure; }
 // À la fermeture : ceux qui avaient écrit reviendront demain matin, en tête de file ; les imprévus
 // repartent (ils retenteront leur chance un autre jour). Le colporteur remballe. Ce qu'un client
@@ -1748,7 +1748,7 @@ function formerFileDuJour(G) {
   const clients = [...prevus.map(v => ({ ...v, prevu: true }))];
   for (let i = 0; i < imprevus; i++) clients.push(voyageurAuHasard(G, [...clients, ...(G.reportes || [])]));
   deguiserClients(G, clients, prevus.length);   // (v0.86) parmi les imprévus, un menteur... ou un honnête qui en a l'air
-  if (typeof presageSurLaFile === 'function') presageSurLaFile(G, clients, prevus.length);   // (v1.06) le présage de Madame Ysmée
+  if (typeof presageSurLaFile === 'function') presageSurLaFile(G, clients, prevus.length);   // (v1.05) le présage de Madame Ysmée
   const file = Phaser.Utils.Array.Shuffle(clients.map(v => ({ type: 'client', voyageur: v })));
 
   // Les aventuriers dont la quête se termine aujourd'hui reviennent...
@@ -1928,7 +1928,7 @@ function quitterMarcheNoir(G) {
 function doitVenirGarde(G) {
   G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 };
   if (G.gardeDemain) { G.gardeDemain = false; return true; }
-  if (typeof gardePresageDuJour === 'function' && gardePresageDuJour(G)) return true;   // (v1.06) la Tour d'Ysmée avait prévenu
+  if (typeof gardePresageDuJour === 'function' && gardePresageDuJour(G)) return true;   // (v1.05) la Tour d'Ysmée avait prévenu
   if (G.gardeTiree === G.jour) return false;   // (v0.65 : déjà tirée la veille au soir, pour le chat)
   return gardeAuHasard(G);
 }
@@ -1983,7 +1983,7 @@ function nomChat(G) { return (G.chat && G.chat.nom) || 'ton chat'; }
 // La nuit : sans chat, des rats grignotent parfois les provisions ; avec lui, plus de rats (et parfois un cadeau)
 function nuitDuChat(G) {
   const c = chatDe(G), lignes = [];
-  // (v1.06) parti, ou méfiant après avoir boudé : il chasse moins bien les rats
+  // (v1.05) parti, ou méfiant après avoir boudé : il chasse moins bien les rats
   const absent = typeof chatParti === 'function' && (chatParti(G, G.jour) || (chatMefiant(G) && Math.random() < FOYER.ratsMefiant));
   if (c.adopte && !absent) {
     if (Math.random() < CHAT.cadeau) lignes.push(`Une souris morte sur ton oreiller : un cadeau de ${nomChat(G)}, qui ronronne, très fier.`);
@@ -2019,7 +2019,7 @@ function tirerGardeDuLendemain(G) {
   G.gardeTiree = G.jour + 1;
   if (!G.gardeDemain) { G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 }; G.jour++; const vient = gardeAuHasard(G); G.jour--; if (vient) G.gardeDemain = true; }
   const c = chatDe(G);
-  const distrait = typeof chatMefiant === 'function' && (chatMefiant(G) || chatParti(G));   // (v1.06 : fâché ou parti, il ne prévient pas)
+  const distrait = typeof chatMefiant === 'function' && (chatMefiant(G) || chatParti(G));   // (v1.05 : fâché ou parti, il ne prévient pas)
   if (c.adopte && !distrait && G.gardeDemain && G.garde && G.garde.visites > 0 && Math.random() < CHAT.alerte) c.alerte = G.jour + 1;
   return !!G.gardeDemain;
 }
@@ -3362,7 +3362,7 @@ function ouvrirMarchandage(G, v) {
   if (!v.marchandage) {
     const st = styleMarchandage(v);
     const marge = st.marge[0] + Math.round(aleaClient(v, 'marge') * (st.marge[1] - st.marge[0]) / MARCHANDAGE.pas) * MARCHANDAGE.pas;
-    const patience = st.patience + niveauPersuasion(G) + (typeof patiencePresage === 'function' ? patiencePresage(G) : 0);   // (v0.93) la persuasion le rend plus patient ; (v1.06) le Soleil d'Ysmée aussi
+    const patience = st.patience + niveauPersuasion(G) + (typeof patiencePresage === 'function' ? patiencePresage(G) : 0);   // (v0.93) la persuasion le rend plus patient ; (v1.05) le Soleil d'Ysmée aussi
     v.marchandage = { part: MARCHANDAGE.base, max: MARCHANDAGE.base + marge, patience, patienceMax: patience, fini: false };
   }
   return v.marchandage;

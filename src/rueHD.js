@@ -349,7 +349,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
     scene.add.rectangle(o + P.impasse, sol - 66, 6, 9, 0xff4a2a).setDepth(9.6);
     ici.porte(o + P.impasse, sol, 'La porte dérobée', 'MarcheNoir');
   }
-  // (v1.06) la tente violette de Madame Ysmée, dès le jour 10 : on y entre le matin
+  // (v1.05) la tente violette de Madame Ysmée, dès le jour 10 : on y entre le matin
   if (typeof ysmeeArrivee === 'function' && ysmeeArrivee(G) && typeof tenteDiseuse === 'function') {
     tenteDiseuse(scene, o + DISEUSE.tente, sol, jour);
     if (jour) ici.porte(o + DISEUSE.tente, sol, 'Madame Ysmée', 'Diseuse', { large: 120, haut: 150 });

@@ -22,7 +22,7 @@ class CounterScene extends Phaser.Scene {
   create() {
     exclureScenes(this, 'Nuit', 'Dodo');   // (v0.62)
     this.G = window.GAME;
-    // (v1.06, planche 25 B) le matin où le chat est parti : un petit mot sur le comptoir, signé d'une patte
+    // (v1.05, planche 25 B) le matin où le chat est parti : un petit mot sur le comptoir, signé d'une patte
     if (typeof motDuChatDu === 'function' && motDuChatDu(this.G)) this.time.delayedCall(900, () => montrerMotDuChat(this));
     this.entree = null;   // ce qui est au comptoir : client, retour ou carnet
     this.voyageur = null; // le client à servir, s'il y en a un

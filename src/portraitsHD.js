@@ -255,7 +255,7 @@ function geneHDBase(p) {
     colporteur: p.figurant === 'colporteur',
     mendiant: p.figurant === 'mendiant',
     bande: p.costume === 'mainNoire' ? 'main' : p.costume === 'serpent' ? 'serpent' : null,   // (v0.61) les deux bandes, encapuchonnées
-    fichu: p.costume === 'diseuse',   // (v1.06) le fichu violet de Madame Ysmée
+    foulard: p.costume === 'diseuse',   // (v1.05) le foulard violet de Madame Ysmée
     marques: p.marques || (FIGURANTS_BUSTE(p) || {}).marques || null,   // (v0.75) les signes distinctifs des bandits recherchés
     nom: p.nom,
     habitNoble: choix([0x6a1a3a, 0x1a2a6a, 0x3a1a5a, 0x7a4a10]),
@@ -573,7 +573,7 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
 
   // (v0.61) La capuche des deux bandes, par-dessus les cheveux et les sourcils
   if (g.bande) capucheBuste(t, g, v, fx, ey);
-  if (g.fichu) fichuBuste(t, g, v, fx, ey);
+  if (g.foulard) foulardBuste(t, g, v, fx, ey);
 
   // 8. Les bras et les mains : la pose, selon l'humeur et le peuple
   const avantBras = g.bande || TR.bandelettes ? null : t.m.slice();
@@ -1048,20 +1048,20 @@ function coiffeHD(t, g, v, cx) {
   }
 }
 
-// (v1.06, planche 23) Le fichu violet de Madame Ysmée : noué sur la tête, il couvre les cheveux jusqu'au-dessus des
+// (v1.05, planche 23) Le foulard violet de Madame Ysmée : noué sur la tête, il couvre les cheveux jusqu'au-dessus des
 // sourcils, ses pans retombent derrière les oreilles jusqu'au cou ; une rangée de petites pièces d'or pend sur le front.
-function fichuBuste(t, g, v, cx, ey) {
-  t.rampes.fichu = rampe(0x6a2a8a); t.rampes.or = t.rampes.or || rampe(0xe8b830);
+function foulardBuste(t, g, v, cx, ey) {
+  t.rampes.foulard = rampe(0x6a2a8a); t.rampes.or = t.rampes.or || rampe(0xe8b830);
   const hc = v.cy - 2, hrx = v.rx + 2.5, hry = v.ry + 2.5;
   const arche = x => ey - 7 + ((x + 0.5 - cx) / hrx) ** 2 * 6;   // (le bord descend un peu vers les tempes)
-  t.forme('fichu', (x, y) => {
+  t.forme('foulard', (x, y) => {
     const dx = x + 0.5 - cx;
     const tete = (dx / hrx) ** 2 + ((y + 0.5 - hc) / hry) ** 2 <= 1 && y < arche(x);
     const pan = Math.abs(dx) > v.rx + 0.5 && Math.abs(dx) < v.rx + 4 && y >= arche(x) - 1 && y < v.cy + v.ry + 3;
     if (!tete && !pan) return null;
     return [dx / hrx * 0.9, (y - hc) / hry * 0.8, 0.6];
   }, { decalage: -0.1, motif: (x, y) => ((x + y * 2) % 7 === 0 ? 0.6 : (x * 3 + y) % 11 === 0 ? -0.5 : 0) });
-  for (let x = Math.round(cx - hrx); x <= cx + hrx; x++) { const y = Math.round(arche(x)) - 1; if (t.mat(x, y) === 'fichu') { t.poser(x, y, 'fichu', 5); t.poser(x, y - 1, 'fichu', 4); } }   // (le bord replié)
+  for (let x = Math.round(cx - hrx); x <= cx + hrx; x++) { const y = Math.round(arche(x)) - 1; if (t.mat(x, y) === 'foulard') { t.poser(x, y, 'foulard', 5); t.poser(x, y - 1, 'foulard', 4); } }   // (le bord replié)
   for (let k = -4; k <= 4; k++) { const x = Math.round(cx + k * 2.4), y = Math.round(arche(x)) + 1; t.poser(x, y, 'or', 5); t.poser(x, y + 1, 'or', 3); }   // (les pièces d'or)
 }
 

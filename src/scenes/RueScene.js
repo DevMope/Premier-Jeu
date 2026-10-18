@@ -121,7 +121,7 @@ class RueScene extends Phaser.Scene {
     const aller = () => {
       Son.jouer('porte');
       if (page === 'Banque') { this.transition = false; this.scene.pause(); this.scene.launch('Banque', { retour: 'Rue' }); return; }
-      if (page === 'Diseuse') { this.transition = false; this.scene.pause(); this.scene.launch('Diseuse', { retour: 'Rue' }); return; }   // (v1.06) sous la tente de Madame Ysmée
+      if (page === 'Diseuse') { this.transition = false; this.scene.pause(); this.scene.launch('Diseuse', { retour: 'Rue' }); return; }   // (v1.05) sous la tente de Madame Ysmée
       this.fini = true;
       Sauvegarde.maintenant(this.G, page === 'Maison' ? 'Maison' : 'Marche');
       this.cameras.main.fadeOut(300);
