@@ -144,7 +144,7 @@ class BureauScene extends Phaser.Scene {
           // notable, aîné...) faisaient planter le registre
           if (!e.parti) {
             const p = CounterScene.prototype.personneDe.call({ G }, e) || {};
-            const LIGNES = { garde: 'La garde de la Confrérie', garrick: 'Garrick passe te voir', collecteur: `Le collecteur de ${nomBande(G)}`, serpent: 'Le Serpent à deux têtes', colporteur: 'Le colporteur et sa hotte', notable: 'Un visiteur de marque', aine: 'Un aîné vient te parler' };
+            const LIGNES = { garde: 'La garde de la Confrérie', garrick: 'Garrick passe te voir', collecteur: `Le collecteur de ${nomBande(G)}`, serpent: 'Le Serpent à deux têtes', colporteur: 'Le colporteur et sa hotte', notable: 'Un visiteur de marque', aine: 'Un aîné vient te parler', heraut: 'Le héraut du Conseil (commande royale)' };
             return { nom: p.nom || 'Un visiteur', race: p.race || 'humain', ligne: LIGNES[e.type] || 'Une visite', detail: () => [] };
           }
           const v = e.parti.voyageur;
@@ -580,7 +580,7 @@ class BureauScene extends Phaser.Scene {
       c.add([fond, this.add.text(x, 100, nom, style(12, choisi ? '#fff4dc' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5)]);
     });
     const NOTES = { retour: 'Retour de mission', famille: 'Une famille en deuil', garde: 'La garde', gardeRecherche: 'La garde', garrick: 'Garrick', collecteur: 'Le collecteur', serpent: 'Le Serpent à deux têtes',
-      colporteur: 'Le colporteur', notable: 'Un visiteur de marque', aine: 'Un aîné des Bannis', carnet: 'Un carnet rapporté' };
+      colporteur: 'Le colporteur', notable: 'Un visiteur de marque', aine: 'Un aîné des Bannis', carnet: 'Un carnet rapporté', heraut: 'Le messager du Conseil' };
     const lignes = G.file.filter(e => e.type !== 'faucheuse');
     const PAR = 8, pages = Math.max(1, Math.ceil(lignes.length / PAR));
     page = Math.min(page, pages - 1);

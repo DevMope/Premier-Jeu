@@ -23,7 +23,10 @@ class CounterScene extends Phaser.Scene {
     exclureScenes(this, 'Nuit', 'Dodo');   // (v0.62)
     this.G = window.GAME;
     // (v1.05, planche 25 B) le matin où le chat est parti : un petit mot sur le comptoir, signé d'une patte
-    if (typeof motDuChatDu === 'function' && motDuChatDu(this.G)) this.time.delayedCall(900, () => montrerMotDuChat(this));
+    // (v1.10) le 1er du mois, la lettre du percepteur du Conseil (avant le mot du chat, s'il y en a un)
+    const motChat = typeof motDuChatDu === 'function' && motDuChatDu(this.G);
+    if (typeof lettreImpotDuJour === 'function' && lettreImpotDuJour(this.G)) this.time.delayedCall(900, () => this.montrerLettreImpot(() => { if (motChat) montrerMotDuChat(this); }));
+    else if (motChat) this.time.delayedCall(900, () => montrerMotDuChat(this));
     this.entree = null;   // ce qui est au comptoir : client, retour ou carnet
     this.voyageur = null; // le client à servir, s'il y en a un
     this.enService = false;
@@ -39,6 +42,7 @@ class CounterScene extends Phaser.Scene {
     this.buste = null;
     // (v0.97) les panneaux de la veille (ou d'avant un chargement) n'existent plus
     this.resumeRetours = this.ratelier = this.panneauCadeaux = this.panneauSecret = this.infoRelique = this.afficheEpinglee = null;
+    this.panneauRoyal = this.feuilleConseil = this.minuterieGeste = this.tweenGeste = null; this.lettreOuverte = false;   // (v1.10)
 
     this.dessinerPiece();
     this.creerFenetre();
@@ -49,6 +53,7 @@ class CounterScene extends Phaser.Scene {
     this.creerStock();
     this.creerArgent();
     this.creerHorloge();
+    if (this.majCommandeRoyale) this.majCommandeRoyale();   // (v1.10) la commande royale, punaisée sur l'ardoise
 
     this.boutonExpress = creerBouton(this, 840, 360, 210, 'Marchand express', () => this.ouvrirExpress());
     this.boutonAttente = creerBouton(this, 840, 404, 210, 'Mettre en attente', () => this.mettreEnAttente());
@@ -228,8 +233,9 @@ class CounterScene extends Phaser.Scene {
   // Deux choix pour une visite : le bouton du bas (A) et celui du milieu (B).
   // (v0.90) `campA` / `campB` : le côté vers lequel penche ce choix (un ☀ ou un ☾, avec assez de flair)
   choix([texteA, actionA, dureeA = null, campA = null], [texteB, actionB, campB = null]) {
-    this.bouton(texteA, () => { this.actionB = null; actionA(); }, dureeA, campA);
-    this.actionB = () => { this.actionB = null; actionB(); };
+    // (v1.10) une fois le choix fait, le bouton du milieu s'en va (il restait affiché, et un clic dessus refusait... personne)
+    this.bouton(texteA, () => { this.actionB = null; this.majBoutonsService(); actionA(); }, dureeA, campA);
+    this.actionB = () => { this.actionB = null; this.majBoutonsService(); actionB(); };
     this.boutonRefuser.setTexte(texteB);
     marquerCamp(this, this.boutonRefuser, campB);
     this.majBoutonsService();
@@ -428,12 +434,14 @@ class CounterScene extends Phaser.Scene {
     a.add(this.add.text(0, py + ph / 2 + 32, `${avis.prime} p.`, style(20, encre, { fontStyle: 'bold' })).setOrigin(0.5));
     // (un clic la décroche un instant : l'ardoise redevient lisible)
     a.setSize(l, h).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.tweens.add({ targets: a, alpha: a.alpha < 1 ? 1 : 0.25, duration: 200 }));
+    if (this.panneauRoyal) this.panneauRoyal.setVisible(false);   // (v1.10 : la commande royale passe derrière l'affiche)
     return a;
   }
 
   finRecherche() {
     if (this.timerRecherche) { this.timerRecherche.remove(); this.timerRecherche = null; }
     if (this.afficheEpinglee) { this.afficheEpinglee.destroy(); this.afficheEpinglee = null; }
+    if (this.panneauRoyal) this.panneauRoyal.setVisible(true);
     if (this.boutonsRecherche) { this.boutonsRecherche.forEach(b => { b.fond.destroy(); b.label.destroy(); if (b.picto) b.picto.destroy(); }); this.boutonsRecherche = null; }
   }
 
@@ -788,6 +796,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'collecteur') return corpsHD(this, collecteurDe(this.G), pose);
     if (entree.type === 'serpent') return corpsHD(this, CHEFS_SERPENT[0], pose);
     if (entree.type === 'aine') return corpsHD(this, personneAine(entree.race), pose);
+    if (entree.type === 'heraut') return corpsHD(this, 'heraut', pose);
     const v = entree.type === 'client' ? entree.voyageur : entree.parti.voyageur;
     return corpsHD(this, v, pose);
   }
@@ -1158,6 +1167,7 @@ class CounterScene extends Phaser.Scene {
     if (this.carnetPose) { this.carnetPose.destroy(); this.carnetPose = null; }
     if (this.ficheInspection) { this.ficheInspection.destroy(); this.ficheInspection = null; }
     if (this.ficheMarchandage) { this.ficheMarchandage.destroy(); this.ficheMarchandage = null; }
+    if (this.feuilleConseil) { this.feuilleConseil.destroy(); this.feuilleConseil = null; }
     this.majPanneauGauche();
     this.majStock();
     this.dessinerPieces();
@@ -1430,6 +1440,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'serpent') return CHEFS_SERPENT[0];
     if (entree.type === 'garrick') return { nom: 'Garrick Cœur-de-Chêne', race: 'humain', feminin: false, figurant: 'mentor' };
     if (entree.type === 'aine') return personneAine(entree.race);
+    if (entree.type === 'heraut') return HERAUT_CONSEIL.buste;   // (v1.10) le héraut de la Confrérie, pour le Conseil
     if (entree.type === 'notable') {
       // Le visiteur notable du palier : le bourgmastre, le héraut de la Confrérie, une légende...
       const v = PALIERS_CLIENTS[entree.palier].visiteur;
@@ -1445,6 +1456,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'retour') return entree.parti.resultat.echec ? 'inquiet' : 'content';
     if (entree.type === 'notable' || entree.type === 'colporteur' || entree.type === 'garrick') return 'content';
     if (entree.type === 'aine') return 'neutre';
+    if (entree.type === 'heraut') return entree.mode === 'livraison' ? 'neutre' : 'content';
     if (entree.type === 'collecteur' || entree.type === 'serpent') return 'neutre';
     if (entree.type === 'garde') return (this.G.garde && this.G.garde.visites) ? 'fache' : 'neutre';
     if (entree.type === 'famille') return entree.visite.intention === 'colere' ? 'fache' : entree.visite.intention === 'releve' ? 'neutre' : 'inquiet';
@@ -1463,7 +1475,7 @@ class CounterScene extends Phaser.Scene {
       // Il cligne des yeux de temps en temps.
       this.minuterieCligne = this.time.addEvent({ delay: 2600, loop: true, callback: () => {
         if (!this.buste || this.enTrainDeParler || Math.random() < 0.3) return;
-        this.perso.setTexture(textureBusteHD(this, this.buste.personne, this.buste.expression, { cligne: true }));
+        this.perso.setTexture(textureBusteHD(this, this.buste.personne, this.buste.expression, { cligne: true, pose: this.buste.pose }));
         this.time.delayedCall(140, () => this.majVisage());
       } });
     }
@@ -1471,7 +1483,7 @@ class CounterScene extends Phaser.Scene {
 
   majVisage(parle = false) {
     if (!this.buste) return;
-    this.perso.setTexture(textureBusteHD(this, this.buste.personne, this.buste.expression, { parle }));
+    this.perso.setTexture(textureBusteHD(this, this.buste.personne, this.buste.expression, { parle, pose: this.buste.pose }));
   }
 
   exprimer(expression) {
@@ -1502,7 +1514,7 @@ class CounterScene extends Phaser.Scene {
   arrivee(entree) {
     Son.jouer('pas');
     // (v0.86) une visite prend un quart d'heure (les clients, eux, comptent au service)
-    if (['famille', 'notable', 'colporteur', 'garde', 'gardeRecherche', 'garrick', 'collecteur', 'serpent', 'aine'].includes(entree.type)) this.avancer(JOURNEE.visite);
+    if (['famille', 'notable', 'colporteur', 'garde', 'gardeRecherche', 'garrick', 'collecteur', 'serpent', 'aine', 'heraut'].includes(entree.type)) this.avancer(JOURNEE.visite);
     if (entree.type === 'client') {
       conseilGarrick(this, 'comptoir');
       const v = this.voyageur = entree.voyageur;
@@ -1575,6 +1587,8 @@ class CounterScene extends Phaser.Scene {
       this.visiteSerpent(entree);
     } else if (entree.type === 'aine') {
       this.visiteAine(entree);
+    } else if (entree.type === 'heraut') {
+      this.visiteHeraut(entree);   // (v1.10) la commande royale du Conseil
     } else if (entree.type === 'faucheuse') {
       this.visiteFaucheuse(entree);
     } else {
@@ -2390,6 +2404,7 @@ class CounterScene extends Phaser.Scene {
     this.majOngletPages();
     const m = this.G.materiaux;
     this.texteReserve.setText(`Réserve ${stockTotal(this.G)}/${this.G.capacite} · Fer ${m.fer} · Cuir ${m.cuir} · Bois ${m.bois || 0}`);
+    if (this.majCommandeRoyale) this.majCommandeRoyale();   // (v1.10) ce qui manque encore pour le Conseil
   }
 
   majCommande() {

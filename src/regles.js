@@ -1559,6 +1559,7 @@ function nuit(G) {
   }
   if (G.feu === G.jour) G.nuitAuChaud = G.jour + 1;   // (v0.66 : la nuit au chaud, pour le réveil)
   if (typeof nuitDuFoyer === 'function') nuitDuFoyer(G);   // (v1.05) le froid de l'hiver, la gamelle du chat
+  if (typeof echeancesDuConseil === 'function') echeancesDuConseil(G);   // (v1.10) une commande royale qui n'est pas venue
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1622,6 +1623,7 @@ function nuit(G) {
     if (typeof feteDuJour === 'function') for (let k = 1; k <= SAUTS_TEMPS[d]; k++) { const f = feteDuJour(G, G.jour - k); if (f && f.jour === 1 && feteOuverte(f.id) && !fetesVues.includes(f.nom)) fetesVues.push(f.nom); }
     if (fetesVues.length) G.reveil.lignes.push(fetesVues.length > 1 ? `Pendant ce temps, ${fetesVues.join(' et ')} sont passées sans toi : tu les as vues de loin, entre deux clients. Elles reviendront l'an prochain.` : `Pendant ce temps, ${fetesVues[0]} est passée sans toi : tu l'as vue de loin, entre deux clients. Elle reviendra l'an prochain.`);
   }
+  if (typeof matinDuConseil === 'function') for (const l of matinDuConseil(G)) G.reveil.lignes.push(l);   // (v1.10) l'impôt du Conseil, la commande royale
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
@@ -1812,6 +1814,7 @@ function formerFileDuJour(G) {
   else if (G.armure.length === ARMURE.length - 2 && !G.garrickSceau && !G.camp) visites.push({ type: 'garrick', sceau: true });
   if (doitVenirGarde(G)) visites.push({ type: 'garde', garde: gardeDuJour(G) });
   visites.push(...visitesMafia(G));   // (v0.60) le collecteur de la Main Noire, le Serpent à deux têtes
+  if (typeof visitesDuConseil === 'function') visites.unshift(...visitesDuConseil(G));   // (v1.10) le héraut et sa commande royale
   // (v0.56) Très rarement, à partir du milieu du jeu, un aîné des Bannis passe et laisse une phrase
   const aine = aineDuJour(G, 'comptoir');
   if (aine) { G.ainesVus = [...(G.ainesVus || []), aine]; file.splice(hasard(0, file.length), 0, { type: 'aine', race: aine }); }
@@ -2934,6 +2937,7 @@ function avancerEvenements(G) {
   }
   G.decesAnnonces = [];
   if (G.annonceMafia) { lignes.unshift(G.annonceMafia); G.annonceMafia = null; }
+  if (G.annonceConseil) { lignes.unshift(G.annonceConseil); G.annonceConseil = null; }   // (v1.10) la commande royale, livrée ou manquée
   // (v0.99) le premier jour d'une saison : le crieur l'annonce, avec ce qu'elle change au marché
   if (typeof saisonDe === 'function' && dateDuJour(G).jourDuMois === 1) {
     const s = saisonDe(G), prix = Object.entries(PRIX_SAISON[s] || {});
@@ -3724,7 +3728,9 @@ function acheterLotGros(G, mat) {
 function belOuvrageAuDepart(G, voyageur, colis) {
   const bel = [];
   for (const [id, n] of Object.entries(colis)) {
-    const k = Math.min(n, (G.belOuvrage && G.belOuvrage[id]) || 0);
+    // (v1.10) on garde de côté les « bel ouvrage » promis au Conseil, tant qu'il reste des armes ordinaires
+    const b = (G.belOuvrage && G.belOuvrage[id]) || 0, garde = typeof belOuvrageReserve === 'function' ? belOuvrageReserve(G, id) : 0;
+    const k = Math.min(n, b, Math.max(b - garde, b - (G.stock[id] || 0)));
     if (k > 0) { G.belOuvrage[id] -= k; bel.push(id); }
   }
   return bel;
