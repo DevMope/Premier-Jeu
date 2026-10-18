@@ -160,3 +160,33 @@ class SageScene extends Phaser.Scene {
     }
   }
 }
+
+// (v1.04, planche 34) Le dallage de la salle du Conseil, à la Citadelle : de grandes dalles de marbre crème aux
+// veines dorées (en perspective : plus grandes vers le bas), des joints d'or fin, une rosace d'or et de pourpre
+// devant l'estrade, et le long tapis pourpre bordé d'or qui mène au trône. (Plus doux et plus noble qu'un damier.)
+function dallageConseil(scene, y0 = 380, y1 = 540, xTrone = 480) {
+  const g = scene.add.graphics();
+  let y = y0, h = 12, rang = 0;
+  while (y < y1) {
+    const l = 60 + rang * 14, decale = (rang % 2) * l / 2;
+    for (let x = -decale; x < 960; x += l) {
+      const t = ((Math.round(x / l) + rang) % 3 + 3) % 3;
+      g.fillStyle([0xe0d2b4, 0xd6c6a4, 0xdccbaa][t]).fillRect(x, y, l, h);
+      g.fillStyle(0xf0e6cc, 0.5).fillRect(x + 2, y + 1, l - 4, 2);                       // le poli de la dalle
+      for (let v = 0; v < 2; v++) { const vx = x + ((x * 7 + rang * 13 + v * 29) % l + l) % l, vy = y + 3 + v * (h / 3); g.lineStyle(1, 0xb8a27a, 0.6).lineBetween(vx, vy, vx + 14 + v * 6, vy + 3); }   // les veines
+      g.fillStyle(0xc8a050).fillRect(x, y, 1, h);                                          // les joints d'or
+    }
+    g.fillStyle(0xc8a050).fillRect(0, y, 960, 1);
+    y += h; h = Math.round(h * 1.18); rang++;
+  }
+  // la rosace d'or et de pourpre devant l'estrade
+  const ry = y0 + 26;
+  g.fillStyle(0x8a1a24).fillEllipse(xTrone, ry, 170, 34); g.lineStyle(3, 0xd8b048).strokeEllipse(xTrone, ry, 170, 34).strokeEllipse(xTrone, ry, 120, 22);
+  for (let a = 0; a < 16; a++) { const an = a / 16 * Math.PI * 2; g.lineStyle(2, a % 2 ? 0xd8b048 : 0xf0dca0).lineBetween(xTrone, ry, xTrone + Math.cos(an) * 80, ry + Math.sin(an) * 16); }
+  g.fillStyle(0xf0dca0).fillEllipse(xTrone, ry, 26, 8);
+  // le tapis pourpre bordé d'or, de l'estrade jusqu'au bas de la salle (il s'élargit en approchant)
+  g.fillStyle(0x7a1420).fillPoints([{ x: xTrone - 34, y: y0 }, { x: xTrone + 34, y: y0 }, { x: xTrone + 70, y: y1 }, { x: xTrone - 70, y: y1 }], true);
+  g.lineStyle(3, 0xd8b048).lineBetween(xTrone - 34, y0, xTrone - 70, y1).lineBetween(xTrone + 34, y0, xTrone + 70, y1);
+  for (let yy = y0 + 18; yy < y1; yy += 26) { const w = 30 + (yy - y0) / (y1 - y0) * 34; g.fillStyle(0xd8b048).fillTriangle(xTrone, yy - 5, xTrone - w * 0.25, yy, xTrone, yy + 5).fillTriangle(xTrone, yy - 5, xTrone + w * 0.25, yy, xTrone, yy + 5); }
+  return g;
+}

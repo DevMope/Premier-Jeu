@@ -1664,3 +1664,9 @@ de loin (pas de fête manquée en silence).
 - **Les armes portées par les voyageurs** (idée du joueur, née de l'épée dans le dos du Champion) : un voyageur qui
   repart avec une arme la porte sur lui (dans le dos, à la main, à la taille... selon l'arme) ; et celui qui vient
   faire réparer son arme l'a déjà sur lui dans la file d'attente.
+- **Construit pour la planche 34 (à valider)** : chaque voyageur qui possède une arme la porte (`armePortee` : celle qu'il
+  vient d'acheter, sinon celle de son inventaire, même abîmée), partout où on le voit en pied. **Dans le dos** : l'épée,
+  la hache, le marteau, l'arc, le bâton de bambou ; **à la main** : la lance, le bâton de mage, la massue (avec le
+  baluchon, la lance et le bâton passent dans le dos, la massue à la taille) ; **aux mains** : les griffes ;
+  **à la taille** : la dague, la rapière, le khopesh, la fronde. La salle du Conseil : un dallage de marbre crème veiné
+  d'or (`dallageConseil`), une rosace et un tapis pourpre, au lieu du damier.

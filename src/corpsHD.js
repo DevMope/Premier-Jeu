@@ -69,6 +69,14 @@ const BOUTS_CORPS = {};
 const PIEDS_ASSIS = {};   // (v0.68) la hauteur des pieds d'un personnage assis, en pixels de la texture   // (v0.68) le bout du bâton du baluchon, en pixels de la texture
 const REPERES_CORPS = {};   // (v1.01) le centre de la tête, le haut du torse, la taille, la hauteur : en pixels de la texture
 
+// (v1.04) L'arme qu'un voyageur porte sur lui : celle qu'il vient d'acheter (elle part avec lui), sinon celle de son
+// inventaire (même abîmée : il vient justement la faire réparer).
+function armePortee(p) {
+  if (!p || typeof ITEMS === 'undefined') return null;
+  if (p.armeEmportee && ITEMS[p.armeEmportee]) return p.armeEmportee;
+  return Object.keys(p.inventaire || {}).find(id => ITEMS[id] && ITEMS[id].arme) || null;
+}
+
 // L'ordre des tenues : novice 0 … légende 4.
 function tenueDe(niveau) {
   const i = ORDRE_NIVEAUX.indexOf(niveau);
@@ -103,6 +111,9 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
     if (quoi.vieux) cle += '_vieux';
     if (quoi.figurant === 'mentor') { gene = { ...gene, habit: 0x2e2420, cheveux: 0x3a281a, cape: 0x3e4a2a, barbe: 'rase', coiffure: 'long', peau: 1 }; costume = 'mentor'; tenue = 2; }
   }
+  // (v1.04) l'arme qu'il porte sur lui (celle de son inventaire, ou celle qu'il vient d'acheter)
+  const arme = typeof quoi === 'object' ? armePortee(quoi) : null;
+  if (arme) cle += '_arme_' + arme;
   if (pose) cle += '_' + pose;
   if (vue && vue !== 'troisQuarts') cle += '_' + vue;
   // Les Bannis ont l'air fâché tant qu'ils ne te connaissent pas
@@ -114,14 +125,14 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   const blesse = typeof quoi === 'string' ? !!(FIGURANTS[quoi] && FIGURANTS[quoi].blesse) : !!quoi.blesse;
   if (blesse && typeof quoi !== 'string') cle += '_blesse';
   if (!scene.textures.exists(cle)) {
-    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}) });
+    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}) });
     toile.texture(scene, cle);
     MAINS_CORPS[cle] = toile.mains;
     if (toile.bout) BOUTS_CORPS[cle] = toile.bout;
     if (toile.piedsAssis) PIEDS_ASSIS[cle] = toile.piedsAssis;
     REPERES_CORPS[cle] = toile.reperes;
-    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}) }).texture(scene, cle + '_pas1');
-    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}) }).texture(scene, cle + '_pas2');
+    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}) }).texture(scene, cle + '_pas1');
+    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}) }).texture(scene, cle + '_pas2');
   }
   return cle;
 }

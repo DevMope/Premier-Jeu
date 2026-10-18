@@ -2319,6 +2319,9 @@ class CounterScene extends Phaser.Scene {
       : chance >= 0.4 ? `Ce n'est pas tout ce que je voulais... mais je ferai avec. Rendez-vous ${jours} !`
       : "C'est tout ? Bon... Souhaite-moi bonne chance.";
     const objets = Object.entries(this.colis).flatMap(([id, n]) => Array(n).fill(id));
+    // (v1.04) l'arme qu'il vient d'acheter, il la porte sur lui en partant
+    const armeNeuve = objets.find(id => estArme(id));
+    if (armeNeuve) v.armeEmportee = armeNeuve;
     const sEnAller = colis => {
       this.dire(phrase + (msg ? ' ' + msg : ''), this.nomAvecRelation(v.nom));
       this.partirPar(FENETRE.x + FENETRE.w + 60, colis);

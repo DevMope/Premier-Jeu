@@ -415,6 +415,49 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme('peau', (x, y) => { if (y < yB - 1 * k || y > sol - 6 * k) return null; const u = (y - yB) / (sol - 6 * k - yB); const qx = qx0 + (dos ? 0 : -s * (2 + u * 8) * k) + Math.sin(u * 3) * 1.5 * k; const demi = (1.6 + Math.sin(u * Math.PI) * 1.6) * k; const nx = (x + 0.5 - qx) / demi; return Math.abs(nx) <= 1 ? [nx * 0.7, 0.1, 0.8] : null; }, { decalage: -0.5, motif: MECHES });
   }
   if (capee && !dos) dessinerCape(false);
+  // (v1.04, idée du joueur) l'arme du voyageur, portée sur lui : dans le dos, à la main ou à la taille selon l'arme
+  const arme = options.arme || null;
+  const enMain = !pose && !leves && !grimpe;   // (avec le baluchon, assis, les bras levés : la lance et le bâton passent dans le dos)
+  const placeArme = !arme ? null : ['dague', 'rapiere', 'khopesh', 'fronde'].includes(arme) ? 'taille' : arme === 'griffes' ? 'mains'
+    : (arme === 'lance' || arme === 'baton' || arme === 'massue') && enMain ? 'main' : arme === 'massue' ? 'taille' : 'dos';
+  if (arme) { t.rampes.lameA = rampeVive(0xdce6f0); t.rampes.boisA = rampeVive(0x7a4a24); t.rampes.ferA = rampeVive(0x6a6e78); t.rampes.cordeA = rampeVive(0xe0d4b0); t.rampes.laitonA = rampeVive(0xd8a838); t.rampes.bambouA = rampeVive(0x8aa84a); t.rampes.gemmeA = rampeVive(0x70c8f8); }
+  // Une arme le long d'un axe : `A` le bout du haut (la tête, la poignée), `B` le bout du bas
+  const dessinerArmeAxe = (A, B) => {
+    const dx = B[0] - A[0], dy = B[1] - A[1], l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, nx = -uy, ny = ux;
+    const P = (u, v) => [A[0] + ux * u + nx * v, A[1] + uy * u + ny * v];   // u : le long de l'arme depuis le haut, v : de côté
+    if (arme === 'epee') {
+      cylindre(t, 'lameA', P(6 * k, 0), B, 1.1 * k, { decalage: 0.3 });
+      cylindre(t, 'ferA', P(5.2 * k, -2.6 * k), P(5.2 * k, 2.6 * k), 0.8 * k, { decalage: 0.5 });   // la garde
+      cylindre(t, 'boisA', P(1 * k, 0), P(5 * k, 0), 0.8 * k, { decalage: 0.4 });                   // la poignée
+      t.forme('ferA', ellipsoide(...P(0.4 * k, 0), 1.1 * k, 1.1 * k), { decalage: 0.6 });            // le pommeau
+    } else if (arme === 'hache' || arme === 'marteau' || arme === 'massue') {
+      cylindre(t, 'boisA', P(2 * k, 0), B, 0.8 * k, { decalage: 0.3 });
+      if (arme === 'hache') t.forme('lameA', (x, y) => { const rx = (x + 0.5 - A[0]) * ux + (y + 0.5 - A[1]) * uy, ry = (x + 0.5 - A[0]) * nx + (y + 0.5 - A[1]) * ny; return rx > 0.5 * k && rx < 7 * k && ry > 0 && ry < 4.5 * k - Math.abs(rx - 3.8 * k) * 0.35 ? [0.3, -0.3, 0.8] : null; }, { decalage: 0.5 });
+      else if (arme === 'marteau') t.forme('ferA', (x, y) => { const rx = (x + 0.5 - A[0]) * ux + (y + 0.5 - A[1]) * uy, ry = (x + 0.5 - A[0]) * nx + (y + 0.5 - A[1]) * ny; return rx > 0.5 * k && rx < 4.5 * k && Math.abs(ry) < 3.4 * k ? [ry / (3.4 * k) * 0.6, -0.2, 0.8] : null; }, { decalage: 0.5 });
+      else { t.forme('boisA', (x, y) => { const rx = (x + 0.5 - A[0]) * ux + (y + 0.5 - A[1]) * uy, ry = (x + 0.5 - A[0]) * nx + (y + 0.5 - A[1]) * ny; return rx > 0 && rx < 8 * k && Math.abs(ry) < 1.2 * k + (8 * k - rx) * 0.22 ? [ry / (3 * k), 0, 0.8] : null; }, { decalage: 0.5 }); for (const [u, v] of [[2, -1.6], [4, 1.4], [5.5, -1], [1.5, 1.2]]) t.forme('ferA', ellipsoide(...P(u * k, v * k), 0.6 * k, 0.6 * k), { decalage: 0.8, ombre: false }); }
+    } else if (arme === 'arc') {
+      // le bois de l'arc en arc de cercle, la corde tendue
+      const n = 14; let prec = null;
+      for (let i = 0; i <= n; i++) { const u = l * i / n, v = Math.sin(i / n * Math.PI) * 4 * k, p = P(u, v); if (prec) cylindre(t, 'boisA', prec, p, 1.05 * k, { decalage: 0.4 }); prec = p; }
+      cylindre(t, 'cordeA', A, B, 0.3 * k, { decalage: 0.2 });
+      cylindre(t, 'cuir', P(l * 0.45, 4 * k), P(l * 0.55, 4 * k), 1.2 * k, { decalage: 0.6 });   // la poignée
+    } else if (arme === 'lance') {
+      cylindre(t, 'boisA', P(5 * k, 0), B, 0.7 * k, { decalage: 0.3 });
+      t.forme('lameA', (x, y) => { const rx = (x + 0.5 - A[0]) * ux + (y + 0.5 - A[1]) * uy, ry = (x + 0.5 - A[0]) * nx + (y + 0.5 - A[1]) * ny; return rx > 0 && rx < 6 * k && Math.abs(ry) < Math.sin(rx / (6 * k) * Math.PI) * 1.6 * k + 0.2 ? [ry / (1.6 * k) * 0.6, -0.3, 0.8] : null; }, { decalage: 0.6 });
+    } else if (arme === 'baton' || arme === 'bambou') {
+      cylindre(t, arme === 'bambou' ? 'bambouA' : 'boisA', P(1 * k, 0), B, 0.9 * k, { decalage: 0.3, motif: arme === 'bambou' ? (x, y) => (Math.floor(((x + 0.5 - A[0]) * ux + (y + 0.5 - A[1]) * uy) / k) % 6 === 0 ? -0.9 : 0) : null });
+      if (arme === 'baton') { t.forme('boisA', ellipsoide(...P(1.2 * k, 0), 1.8 * k, 1.8 * k), { decalage: 0.5 }); t.forme('gemmeA', ellipsoide(...P(1.2 * k, 0), 1 * k, 1 * k), { decalage: 0.8, ombre: false }); }
+    }
+  };
+  // Dans le dos : en travers, le haut au-dessus de l'épaule, le bas vers la hanche opposée (derrière lui)
+  const armeDansLeDos = () => {
+    const haut = Math.abs(s) > 0.3 && !dos ? pres : loin, basC = -haut;
+    const long = arme === 'arc' || arme === 'lance' || arme === 'baton' || arme === 'bambou';
+    const A = [X(haut * (ep + 3.5 * k), -prof * 1.5), Math.max(2, yT - (long ? 12 : 7) * k)];   // (bien en dehors de la tête et de l'épaule)
+    const B = [X(basC * ep * 0.6, -prof * 1.5), Math.min(sol - 2, yB + (long ? 14 : 9) * k)];
+    dessinerArmeAxe(A, B);
+  };
+  if (placeArme === 'dos' && !dos) armeDansLeDos();
   // Le carquois du Serpent, en travers du dos : on voit dépasser les empennages au-dessus de l'épaule
   if (costume === 'serpent' && !dos) {
     const A = [X(loin * ep * 0.6, -prof * 1.1), yT - 5 * k], B = [X(pres * ep * 0.5, -prof * 1.1), yB + 2 * k];
@@ -612,7 +655,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     for (let y = sol - 6 * k; y < sol - 1 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'habit' && hachage(Math.floor(x / k), Math.floor(y / k), 53) > 0.82 && Math.abs(x + 0.5 - X(3 * k, prof)) < 3 * k) t.poser(x, y, 'habit', 2);
   }
   // L'épée au côté (héros et légende) : le fourreau pend à la hanche gauche
-  if (aventurier && tenue >= 3 && !longue) {
+  if (aventurier && tenue >= 3 && !longue && !arme) {
     const ex = X(-ep * 0.9, 0.2 * k);
     if (Z(-ep * 0.9, 0.2 * k) > -prof) {
       for (let j = 0; j < 14 * k; j++) for (let e = 0; e < Math.round(1.4 * k); e++) t.poser(Math.round(ex - j * 0.08 * k) + e, yB + j, 'cuir', j % (3 * k) === 0 ? 1 : 3);
@@ -664,6 +707,15 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme('metal', ellipsoide(hx + loin * 0.7 * k, hy - 3.5 * k, 0.9 * k, 0.9 * k), { decalage: 0.5, ombre: false });
   }
   // --- 3. Devant : le bras et la jambe du côté proche ---
+  // (v1.04) l'arme à la taille : par-dessus les habits, sous le bras de devant
+  if (placeArme === 'taille' && !dos) {
+    const hx = X(pres * ep * 0.55, prof * 0.95), hy = yB - 0.5 * k;   // (sur le devant de la hanche : le bras ne la cache pas)
+    if (arme === 'dague') { cylindre(t, 'cuir', [hx, hy + 1 * k], [hx - pres * 0.6 * k, hy + 7 * k], 1 * k, { decalage: 0.2 }); cylindre(t, 'ferA', [hx - 1.8 * k, hy + 0.5 * k], [hx + 1.8 * k, hy + 0.5 * k], 0.6 * k, { decalage: 0.5 }); cylindre(t, 'boisA', [hx, hy - 2.5 * k], [hx, hy], 0.6 * k, { decalage: 0.4 }); }
+    else if (arme === 'rapiere') { cylindre(t, 'cuir', [hx, hy + 1 * k], [hx - pres * 2.5 * k, sol - 10 * k], 0.8 * k, { decalage: 0.2 }); t.forme('laitonA', ellipsoide(hx, hy, 2 * k, 1.5 * k), { decalage: 0.5 }); cylindre(t, 'laitonA', [hx, hy - 1 * k], [hx + pres * 1 * k, hy - 3 * k], 0.4 * k, { decalage: 0.6 }); cylindre(t, 'boisA', [hx, hy - 3 * k], [hx, hy - 1 * k], 0.5 * k, { decalage: 0.6 }); }
+    else if (arme === 'khopesh') { const n = 10; let prec = null; for (let i = 0; i <= n; i++) { const a = i / n, p = [hx - pres * (Math.sin(a * 2.4) * 3 * k), hy + 1 * k + a * 10 * k]; if (prec) cylindre(t, 'lameA', prec, p, 0.9 * k, { decalage: 0.4 }); prec = p; } cylindre(t, 'boisA', [hx, hy - 2.5 * k], [hx, hy + 1 * k], 0.6 * k, { decalage: 0.5 }); }
+    else if (arme === 'fronde') { for (let a = 0; a < 6.3; a += 0.15) for (let e = 0; e < k; e++) t.poser(Math.round(hx + Math.cos(a) * 2.2 * k) + e, Math.round(hy + 3.5 * k + Math.sin(a) * 3 * k), 'cordeA', 3); t.forme('cuir', ellipsoide(hx, hy + 6.5 * k, 1.9 * k, 1.4 * k), { decalage: 0.4 }); }
+    else if (arme === 'massue') { cylindre(t, 'boisA', [hx, hy - 1 * k], [hx - pres * 1 * k, hy + 4 * k], 0.7 * k, { decalage: 0.3 }); t.forme('boisA', ellipsoide(hx - pres * 1.8 * k, hy + 8 * k, 2.4 * k, 3.6 * k), { decalage: 0.4 }); for (const [u, v] of [[-1, 6.5], [1, 8], [-0.6, 10]]) t.forme('ferA', ellipsoide(hx - pres * 1.8 * k + u * k, hy + v * k, 0.6 * k, 0.6 * k), { decalage: 0.8, ombre: false }); }
+  }
   if (!dos) bras(pres, true); else bras(loin, true);
   if (costume === 'gardien') {
     const metal = atours.metal || 'or';
@@ -1272,6 +1324,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   if (costume === 'mendiant' && !dos) { const mx = X(pres * (ep + 0.6 * k), 2.5 * k); t.forme('metal', ellipsoide(mx, yB + 0.5 * k, 3.2 * k, 1.6 * k), { decalage: -0.2 }); t.poser(Math.round(mx), Math.round(yB - 0.5 * k), 'or', 4); t.poser(Math.round(mx) + 1, Math.round(yB - 0.5 * k), 'or', 5); }
   // --- 6. De dos : la cape par-dessus tout ---
   if (capee && dos) dessinerCape(true);
+  if (placeArme === 'dos' && dos) armeDansLeDos();
 
   // La collerette de poils du loup-garou, sur les épaules ; la mousse sur les épaules du troll
   if (T.collerette) t.forme('peau', (x, y) => { const nx = (x + 0.5 - cx) / (ep + 2 * k), ny = (y + 0.5 - yT - 2 * k) / (4 * k); return nx * nx + ny * ny <= 1 && y > cy + P.ry * 0.6 - hachage(Math.floor(x / k), 3, 11) * 2 * k ? [nx * 0.6, ny * 0.4, 0.8] : null; }, { decalage: -0.1, motif: MECHES });
@@ -1335,6 +1388,13 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.poser(Math.round(haut[0] - 0.5 * k), Math.round(haut[1] - 4.5 * k), 'blanc', 5);
     t.forme(matMain, ellipsoide(M[0], M[1] + 1 * k * gm, 2.2 * k * gm, 2.3 * k * gm), { decalage: 0.6 });   // la main serrée dessus
     t.bout = null; t.batonSage = [haut[0], haut[1] - 3.5 * k];   // (le cœur du cristal : pour sa lueur)
+  } else if ((placeArme === 'main' || placeArme === 'mains') && mainDevant) {
+    const { M, matMain, gm } = mainDevant;
+    const dehors = M[0] < cx ? -1 : 1;
+    if (arme === 'griffes') { t.forme('cuir', ellipsoide(M[0], M[1] + 0.5 * k, 2.6 * k, 1.4 * k), { decalage: 0.7 }); for (const d of [-1, 0, 1]) cylindre(t, 'lameA', [M[0] + d * 1.1 * k, M[1] + 2 * k], [M[0] + d * 1.6 * k + dehors * 1.2 * k, M[1] + 7.5 * k], 0.55 * k, { decalage: 0.9 }); }
+    else if (arme === 'massue') { cylindre(t, 'boisA', [M[0], M[1] - 1 * k], [M[0] + dehors * 2 * k, M[1] + 6 * k], 0.8 * k, { decalage: 0.5 }); t.forme('boisA', ellipsoide(M[0] + dehors * 3 * k, M[1] + 10 * k, 2.6 * k, 4 * k), { decalage: 0.5 }); for (const [u, v] of [[-1, 8.5], [1.2, 10], [-0.4, 12.5], [0.8, 7.5]]) t.forme('ferA', ellipsoide(M[0] + dehors * 3 * k + u * k, M[1] + v * k, 0.6 * k, 0.6 * k), { decalage: 0.9, ombre: false }); }
+    else dessinerArmeAxe([M[0] + dehors * 0.3 * k, Math.max(2, cy - P.ry - (arme === 'lance' ? 8 : 4) * k)], [M[0] + dehors * 1.2 * k, sol]);   // (la lance, le bâton : debout, tenus à la main)
+    t.forme(matMain, ellipsoide(M[0], M[1] + 1 * k * gm, 2.2 * k * gm, 2.3 * k * gm), { decalage: 0.95 });   // la main serrée dessus
   } else if (g.vieux && !leves && mainDevant && pose !== 'baluchon') {
     const { M, matMain, gm } = mainDevant;
     t.rampes.canne = rampe(0xa0703c);
