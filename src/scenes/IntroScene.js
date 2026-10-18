@@ -220,6 +220,109 @@ class IntroHistoireScene extends Cinematique {
     this.raconter();
   }
 
+  // --- (v1.08, planche 37 C) Garrick dans le courant : le rondin raté, puis le vieux tonneau ---
+  // Le rondin (une bûche ronde qui flotte, sa mousse, ses cernes) et le vieux tonneau cerclé de fer
+  texturesRiviere() {
+    if (!this.textures.exists('rondinRiviere')) {
+      const t = this.make.graphics({ add: false });
+      t.fillStyle(0x4a2e18).fillRoundedRect(0, 6, 200, 30, 14).fillStyle(0x6a4424).fillRoundedRect(4, 8, 192, 12, 8);
+      for (let x = 14; x < 186; x += 22) t.fillStyle(0x3a2210).fillRect(x, 12 + (x % 3) * 4, 12, 2);
+      t.fillStyle(0xc8a070).fillEllipse(196, 21, 14, 28).lineStyle(2, 0x8a6030).strokeEllipse(196, 21, 8, 18);
+      t.fillStyle(0x3a6a2a).fillRect(60, 2, 3, 8).fillRect(58, 0, 8, 3);
+      t.generateTexture('rondinRiviere', 206, 40); t.destroy();
+    }
+    if (!this.textures.exists('tonneauRiviere')) {
+      const t = this.make.graphics({ add: false });
+      t.fillStyle(0x7a4a22).fillRoundedRect(0, 0, 64, 80, 10);
+      for (let x = 6; x < 60; x += 11) t.fillStyle(0x5a3416).fillRect(x, 2, 2, 76);
+      t.fillStyle(0x3a3a40).fillRect(0, 12, 64, 6).fillRect(0, 62, 64, 6).fillStyle(0x8a8a90).fillRect(0, 12, 64, 2).fillRect(0, 62, 64, 2);
+      t.fillStyle(0x9a6a3a).fillEllipse(32, 4, 60, 10);
+      t.generateTexture('tonneauRiviere', 64, 82); t.destroy();
+    }
+  }
+
+  // Il bat des bras dans l'eau : ses images de pas, en boucle (jamais une image figée qui glisse)
+  nagerAvec(pose) {
+    const cle = corpsHD(this, 'mentorBlesse', pose);
+    const imgs = [cle, cle + '_pas1', cle, cle + '_pas2'];
+    if (this.brasse) this.brasse.remove();
+    let k = 0;
+    this.mentor.setTexture(cle);
+    this.brasse = this.time.addEvent({ delay: 300, loop: true, callback: () => { if (this.mentor.active) this.mentor.setTexture(imgs[++k % 4]); } });
+  }
+
+  // Une bulle « blub » qui remonte (il boit la tasse)
+  blub(x, y) {
+    const t = this.add.text(x, y, 'blub', style(13, '#e8fcff', { fontStyle: 'bold italic', stroke: '#1a4a5a', strokeThickness: 3 })).setOrigin(0.5).setDepth(3);
+    this.tweens.add({ targets: t, y: y - 30, alpha: 0, duration: 1200, onComplete: () => t.destroy() });
+  }
+
+  async garrickDansLeCourant() {
+    const eau = 342, g = this.mentor, E = 7 * ECHELLE_CORPS;
+    this.texturesRiviere();
+    // il arrive en se débattant, les bras en l'air, la tête à peine hors de l'eau
+    g.setOrigin(0.5, 0.45).setScale(E * 1.05).setAngle(-8).setPosition(-90, eau - 10);
+    this.nagerAvec('leves');
+    this.tweens.add({ targets: g, angle: 8, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    // le rondin flotte devant lui, il tangue doucement
+    // (plus loin que toi, au milieu de la rivière : on voit bien la scène)
+    const rondin = this.add.image(200, eau + 6, 'rondinRiviere').setScale(1.1);
+    this.children.moveBelow(rondin, g);
+    this.tweens.add({ targets: rondin, x: 470, duration: 2600, ease: 'Sine.easeOut' });
+    const roulis = this.tweens.add({ targets: rondin, angle: { from: -4, to: 4 }, y: eau + 2, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    await this.animer({ targets: g, x: 380, duration: 2100, ease: 'Sine.easeOut' });
+    if (this.fini) return;
+    // il s'y agrippe et se hisse dessus...
+    this.emotion(g, '!', 900);
+    Son.jouer('voix', { personne: this.voixGarrick, ton: 'etonne', duree: 0.5 });
+    this.tweens.killTweensOf(g);
+    await this.animer({ targets: g, x: 432, y: eau - 30, angle: -24, duration: 450, ease: 'Quad.easeOut' });
+    // ... mais le rondin bascule et l'envoie au fond
+    roulis.remove();
+    this.onomatopee(g.x + 80, eau - 130, 'OUPS !', '#f3d98a');
+    this.tweens.add({ targets: rondin, angle: 200, duration: 650, ease: 'Quad.easeIn' });
+    await this.animer({ targets: g, x: 420, y: eau + 40, angle: 30, duration: 500, ease: 'Quad.easeIn' });
+    if (this.fini) return;
+    eclaboussure(this, g.x, eau, { taille: 1.4, profondeur: 3, ronds: true });
+    this.onomatopee(g.x - 60, eau - 50, 'PLOUF !', '#c8e8ff');
+    // le rondin s'en va avec le courant, en roulant
+    this.tweens.add({ targets: rondin, x: 1180, angle: 560, duration: 3000, ease: 'Sine.easeIn', onComplete: () => rondin.destroy() });
+    this.time.delayedCall(250, () => this.blub(g.x - 10, eau - 20));
+    this.time.delayedCall(650, () => this.blub(g.x + 14, eau - 26));
+    await this.attendre(800);
+    // il remonte en crachant de l'eau... et voit arriver un vieux tonneau
+    await this.animer({ targets: g, y: eau - 10, angle: -6, duration: 450, ease: 'Back.easeOut' });
+    this.onomatopee(g.x + 40, eau - 80, 'KOF KOF !');
+    this.tweens.add({ targets: g, angle: 8, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    const tonneau = this.tonneau = this.add.image(60, eau + 10, 'tonneauRiviere').setScale(1.15).setAngle(84);
+    this.children.moveBelow(tonneau, this.eauDevant);
+    this.tweens.add({ targets: tonneau, angle: { from: 78, to: 90 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    g.setFlipX(true);   // (il se retourne vers lui)
+    await this.animer({ targets: tonneau, x: g.x - 30, duration: 1600, ease: 'Sine.easeOut' });
+    if (this.fini) return;
+    // il s'y cramponne de tout son poids : on voit sa tête et ses bras par-dessus
+    g.setFlipX(false);
+    this.tweens.killTweensOf(g);
+    this.nagerAvec('accueil');
+    this.onomatopee(g.x, eau - 90, 'OUF !', '#fff4dc');
+    await this.animer({ targets: g, x: tonneau.x + 6, y: eau - 22, angle: -10, duration: 350, ease: 'Quad.easeOut' });
+    // désormais, le tonneau le porte : il le suit, et tous deux tanguent avec le courant
+    const suivre = () => { if (tonneau.active && g.active && this.tonneau === tonneau) tonneau.setPosition(g.x - 6, g.y + 32); };
+    this.events.on('update', suivre);
+    this.events.once('shutdown', () => this.events.off('update', suivre));
+    this.suivreTonneau = suivre;
+    this.tweens.add({ targets: g, angle: { from: -12, to: -2 }, y: eau - 18, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+
+  // Tiré sur la berge : il lâche le tonneau, qui file avec le courant ; on le sort allongé, comme avant
+  lacherTonneau() {
+    if (this.brasse) { this.brasse.remove(); this.brasse = null; }
+    if (this.suivreTonneau) { this.events.off('update', this.suivreTonneau); this.suivreTonneau = null; }
+    const t = this.tonneau; this.tonneau = null;
+    if (t && t.active) this.tweens.add({ targets: t, x: 1100, angle: 300, duration: 3200, ease: 'Sine.easeIn', onComplete: () => t.destroy() });
+    this.mentor.setTexture(corpsHD(this, 'mentorBlesse')).setOrigin(0.5, 0.5).setScale(7 * ECHELLE_CORPS).setFlipX(false).setAngle(90).setY(345);
+  }
+
   finir() {
     if (this.fini) return;
     this.fini = true;
@@ -251,11 +354,13 @@ class IntroHistoireScene extends Cinematique {
     this.ecrire('Il y a bien longtemps...', `Dans la Comté vivait un${e} jeune orphelin${e}. Pas de famille, pas de maison... juste la rivière, et beaucoup d'imagination.`);
     await this.attendreClic();
 
-    // L'aventurier arrive en flottant, comme un vieux tonneau.
-    this.tweens.add({ targets: this.mentor, y: 349, angle: 86, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.ecrire('Un matin...', "La rivière a charrié quelque chose d'inhabituel : un aventurier à moitié noyé, qui flottait comme un vieux tonneau.");
+    // (v1.08, planche 37 C validée) L'aventurier arrive en se débattant dans le courant : il tente
+    // d'agripper un rondin qui roule et lui échappe, boit la tasse, puis se cramponne à un vieux tonneau.
+    this.ecrire('Un matin...', "La rivière a charrié quelque chose d'inhabituel : un aventurier à moitié noyé, qui se débattait dans le courant.");
     this.time.delayedCall(1300, () => { this.emotion(this.heros, '!'); Son.jouer('voix', { personne: this.voixHeros, ton: 'peur' }); this.geste(this.heros, 'recule'); });
-    await this.animer({ targets: this.mentor, x: 520, duration: 2600, ease: 'Sine.easeOut' });
+    await this.garrickDansLeCourant();
+    this.ajouterTexte(" Il a raté un rondin, bu la moitié de la rivière... et s'est cramponné à un vieux tonneau.");
+    await this.animer({ targets: this.mentor, x: 520, duration: 2400, ease: 'Sine.easeOut' });   // (le tonneau le suit)
     await this.attendreClic();
 
     // Tu tires... et tu tombes sur les fesses.
@@ -271,6 +376,7 @@ class IntroHistoireScene extends Cinematique {
     await this.attendre(500);
     this.tweens.killTweensOf(this.mentor);
     this.dansLEau = false;
+    this.lacherTonneau();   // (il lâche le tonneau, qui file avec le courant ; on le sort de l'eau allongé)
     // Il sort de l'eau dans une gerbe d'éclaboussures
     for (const dx of [-30, 20]) eclaboussure(this, this.mentor.x + dx, 342, { taille: 1.6, profondeur: 3, ronds: dx < 0 });   // (v0.70)
     await this.animer({ targets: this.mentor, x: 470, y: 308, angle: 90, duration: 600, ease: 'Back.easeOut' });
