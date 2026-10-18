@@ -1809,3 +1809,27 @@ de loin (pas de fête manquée en silence).
 4. **Le rival** : plutôt un **noble prétentieux**, un **gobelin bonimenteur**, ou un **ancien apprenti de Garrick**
    jaloux de toi (avec un lien au récit) ?
 5. **La quête du chat amoureux** : avant le lot C, au milieu, ou après ?
+
+### Réponses du joueur sur le lot C (19/10)
+- **Cloudflare** : le compte s'appelle maintenant **goyniverse** (avant : goyland). Le jeu est à
+  `premier-jeu.goyniverse.workers.dev`, en **v1.08** (accord du joueur). Les sauvegardes d'un navigateur restent
+  attachées à l'ancienne adresse : on les transporte avec le code de sauvegarde (☰ > Sauvegardes).
+- **Planche 37** : piste **C validée** (cramponné au vieux tonneau), avec une suite : Garrick essaie d'abord de
+  s'accrocher au **rondin**, le rate (il roule et lui échappe), puis voit le tonneau et finit par s'y cramponner.
+- **Le lot C** : il faut de nouveaux enjeux quand le joueur a autant d'argent ; tout est à définir. **L'ordre proposé
+  est gardé** (Claude choisit l'ordre des tâches ; le joueur dira s'il veut une chose à un moment précis). Le joueur
+  a très envie de se pencher sur le **rival**.
+- **L'impôt du Conseil** : d'accord sur le principe, montants et règles à définir (simulation).
+- **La contrée perdue** : c'était une proposition de Claude (C-2, la menace qui grandit), le joueur la trouve bonne.
+  **D'abord définir la mécanique de perte** ; la reconquête est possible ensuite.
+- **Le rival : l'ancien apprenti de Garrick.** Devenu le **lèche-bottes du Conseil et du Grand Sage**, dans l'espoir
+  de rabattre son caquet à Garrick. Garrick a **arrêté son apprentissage** : l'apprenti était trop instable, il ne
+  voulait que la guerre au lieu d'essayer de comprendre ce que Garrick essayait de lui dire (les révélations sur
+  le monde, que Garrick ne connaît que par les récits des anciens doyens, un peu de fouille **en secret** dans les
+  archives de la Confrérie, et ses **soupçons sur la Confrérie**). À tisser avec le grand retournement :
+  - ses piques visent Garrick (« le vieux fou qui écoute les radotages des doyens ») : des indices, jamais la vérité ;
+  - il a l'oreille du Conseil (fournisseur « agréé », prix cassés, faveurs) et il pourrait un jour **dénoncer
+    Garrick** : une menace qui grandit avec lui ;
+  - on le bat en réputation sur un mois ; alors on peut racheter sa boutique (les orphelins, ou le petit bar).
+  - À dessiner sur la planche 40 : trois propositions de physique et de tenue, avec ses répliques.
+- **La quête du chat amoureux** : Claude la place quand il le juge bon.
