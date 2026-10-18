@@ -86,7 +86,7 @@ class CounterScene extends Phaser.Scene {
       this.G.comptoirOuvert = this.G.jour;
       this.G.heure = this.heureAffichee = heureOuverture(this.G);
       this.majHorloge();
-      this.raconter('Dix heures sonnent au clocher. Clique sur le store pour l\'ouvrir et commencer la journée !');
+      this.raconter(`${heureQuiSonne(this.G.heure)} au clocher. Clique sur le store pour l'ouvrir et commencer la journée !`);
       this.attendreStore();
     } else {
       this.store.setVisible(false);

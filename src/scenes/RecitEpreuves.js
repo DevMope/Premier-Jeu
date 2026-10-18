@@ -14,6 +14,7 @@ Object.assign(StoryScene.prototype, {
   // --- Les outils de mise en scène ---
 
   garder(o) {
+    if (!this.menace) return o;   // (entre deux épreuves, rien à ranger)
     const liste = (this.menace.objets = this.menace.objets || []);
     liste.push(o);
     // (v0.97) une particule qui s'efface d'elle-même quitte la liste (sinon des centaines s'y entassaient)
@@ -71,6 +72,28 @@ Object.assign(StoryScene.prototype, {
     p.setTexture(this.cleCorps(leves ? 'leves' : null));
   },
   marcherA(x, vitesse = 5, sprite = this.perso) { return this.marcher(sprite, x, vitesse); },
+  // (v1.07) L'aube : trois petits oiseaux traversent le ciel en battant des ailes, et c'est eux qui
+  // gazouillent (le « cui cui » s'affichait près du voyageur, comme si c'était lui qui le disait)
+  oiseauxDuMatin() {
+    Son.jouer('oiseaux');
+    const sens = Math.random() < 0.5 ? 1 : -1, y0 = 70 + Math.random() * 40;
+    for (let k = 0; k < 3; k++) {
+      const g = this.garder(this.add.graphics().setDepth(6.5)), t = 1.3 - k * 0.15;
+      const dessiner = (haut) => { g.clear().lineStyle(3 * t, 0x2a2430, 1); g.lineBetween(-7 * t, haut ? -5 * t : 3 * t, 0, 0); g.lineBetween(0, 0, 7 * t, haut ? -5 * t : 3 * t); g.fillStyle(0x2a2430).fillCircle(0, 1, 2 * t); };
+      let h = true; dessiner(h);
+      const battre = this.time.addEvent({ delay: 140 + k * 20, loop: true, callback: () => { if (!g.active) { battre.remove(); return; } h = !h; dessiner(h); } });
+      const x0 = sens > 0 ? -40 - k * 46 : 1000 + k * 46, y = y0 + k * 16 + (k % 2) * 8;
+      g.setPosition(x0, y);
+      this.tweens.add({ targets: g, x: sens > 0 ? 1040 : -80, duration: 4200 + k * 300, delay: k * 160, ease: 'Linear', onComplete: () => { battre.remove(); g.destroy(); } });
+      this.tweens.add({ targets: g, y: y - 10, duration: 500 + k * 80, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      // leurs petites notes, qui naissent au-dessus d'eux et s'envolent
+      for (let n = 0; n < 3; n++) this.time.delayedCall(700 + k * 300 + n * 800, () => {
+        if (!g.active || g.x < 40 || g.x > 920) return;
+        const note = this.garder(this.add.text(g.x, g.y - 16, n === 1 && k === 0 ? 'cui cui' : '♪', style(n === 1 && k === 0 ? 15 : 19, '#fff6e8', { fontStyle: 'bold italic', stroke: '#5a3a4a', strokeThickness: 4 })).setOrigin(0.5).setDepth(6.6));
+        this.tweens.add({ targets: note, y: note.y - 30, x: note.x + sens * 24, alpha: 0, duration: 1300, ease: 'Sine.easeOut', onComplete: () => note.destroy() });
+      });
+    }
+  },
   // Un saut en cloche jusqu'à (x, y)
   sauter(o, x, y, haut = 60, duree = 500, tourne = 0) {
     const x0 = o.x, y0 = o.y, a0 = o.angle, u = { t: 0 };
@@ -378,7 +401,7 @@ const SCENES_EPREUVES = {
           // la nuit passe ; l'aube, rose, puis le soleil
           await this.ciel(0xff9ab0, 0.25, 900);
           this.ciel(0xffffff, 0, 900);
-          this.onomatopee(p.x + 60, 150, 'Cui cui !', '#ffe0f0');
+          this.oiseauxDuMatin();
         }
         await this.geste(p, 'bras', this.corpsVoyageurPose());
         await this.marcherA(p.x + 50, 4);
@@ -513,7 +536,7 @@ const SCENES_EPREUVES = {
         if (M.torche) this.tweens.add({ targets: M.torche.o, alpha: 0, duration: 600 });
         await this.animer({ targets: this.ombreNuit, alpha: 0, duration: 1500 });
         this.ciel(0xff9ab0, 0.2, 800);
-        this.onomatopee(p.x + 80, 150, 'Cui cui !', '#ffe0f0');
+        this.oiseauxDuMatin();
         await this.ciel(0xffffff, 0, 900);
         return;
       }

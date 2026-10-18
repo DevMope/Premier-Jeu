@@ -39,7 +39,7 @@ const DESSINS_CARTES = {
 class DiseuseScene extends Phaser.Scene {
   constructor() { super('Diseuse'); }
 
-  init(data) { this.retour = (data && data.retour) || 'Rue'; this.occupe = false; }
+  init(data) { this.retour = (data && data.retour) || 'Rue'; this.occupe = false; this.sorti = false; }   // (Phaser garde la même scène d'une visite à l'autre)
 
   create() {
     const G = this.G = window.GAME;

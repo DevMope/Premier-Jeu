@@ -272,7 +272,7 @@ function simulerAventure(voyageur, colis, pieges = null) {
     pvDepart,
     vivant: pv > 0,
     echec: false,
-    valeureux: pv <= 0 && EPREUVES_COMBAT.includes(derniere.epreuve.type),
+    valeureux: pv <= 0 && !!derniere && EPREUVES_COMBAT.includes(derniere.epreuve.type),   // (sans épreuve, rien à juger)
   };
 }
 
@@ -663,6 +663,8 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
   G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2, hasard(2, 3));   // (v0.94 : un petit choix, pas tout le marché)
   G.expressMateriaux = materiauxExpress();
   G.zonesConnues = zonesOuvertes(G); // les zones ouvertes au départ ne donnent pas de pièce
+  // (v1.07) la saison du premier jour est « vue » : le saut d'un mois de la première nuit joue son passage de saison
+  if (typeof dateDuJour === 'function') { const d = dateDuJour(G); G.saisonVue = `${d.an}-${d.mois}`; }
 }
 
 // `pieges` : les objets piégés glissés dans le colis (ils comptent aussi dans `colis`).
@@ -1450,7 +1452,7 @@ function prevision(G, jour = G.jour + 1) {
   if (jour <= CLIENTS_DEBUT.jours) { min = Math.max(2, Math.min(min, CLIENTS_DEBUT.max)); max = Math.max(min, Math.min(max, CLIENTS_DEBUT.max)); }
   // (v0.93) jamais plus de monde que la journée ne permet d'en servir : les lettres et ceux qui
   // reviennent d'hier prennent leur place d'abord (avant, au jour 17, il fallait en refuser chaque jour)
-  const capacite = capaciteClients(G);
+  const capacite = capaciteClients(G, jour);
   const reportes = jour === G.jour + 1 || jour === G.jour ? (G.reportes || []).length : 0;
   const place = Math.max(annonces + reportes ? 0 : 1, capacite - annonces - reportes);
   const plein = max > place;
@@ -1460,8 +1462,8 @@ function prevision(G, jour = G.jour + 1) {
 
 // (v0.93) Combien de clients une journée permet de servir sans courir : les heures d'ouverture
 // divisées par le temps d'un service et d'un récit, plus un (on se presse un peu).
-function capaciteClients(G) {
-  return Math.floor((heureFermeture(G) - heureOuverture(G)) / (dureeService(G) + JOURNEE.recit)) + 1;
+function capaciteClients(G, jour = G.jour) {
+  return Math.floor((heureFermeture(G) - heureOuverture(G, jour)) / (dureeService(G) + JOURNEE.recit)) + 1;
 }
 
 // Le palier de réputation atteint, et le suivant (ou null).
@@ -1696,6 +1698,12 @@ function formatHeure(h) {
   const hh = Math.floor(h + 1e-6), mm = Math.round((h - hh) * 60);
   return `${hh} h${mm ? ' ' + String(mm).padStart(2, '0') : ''}`;
 }
+// (v1.07) L'heure que sonne le clocher : « Dix heures sonnent », « Midi sonne »
+function heureQuiSonne(h) {
+  const n = Math.round(h), mots = ['Minuit', 'Une', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf', 'Dix', 'Onze', 'Midi', 'Treize', 'Quatorze', 'Quinze'];
+  if (n === 12 || n === 0) return `${mots[n]} sonne`;
+  return `${mots[n] || n} heure${n > 1 ? 's' : ''} sonne${n > 1 ? 'nt' : ''}`;
+}
 function formatDuree(d) {
   const entier = Math.floor(d + 1e-6), reste = Math.round((d - entier) * 4);
   const frac = ['', '¼', '½', '¾'][reste] || '';
@@ -1703,7 +1711,7 @@ function formatDuree(d) {
 }
 function heureDuComptoir(G) { if (typeof G.heure !== 'number') G.heure = heureOuverture(G); return G.heure; }
 // (v1.01) L'heure d'ouverture : une heure plus tard au lendemain de l'hydromel noir (la tête lourde)
-function heureOuverture(G) { return JOURNEE.ouverture + (G.reveilDifficile === G.jour ? BRUMES.hydromel.retard : 0) + (typeof retardFroid === 'function' ? retardFroid(G) : 0); }   // (v1.05 : malade, à midi)
+function heureOuverture(G, jour = G.jour) { return JOURNEE.ouverture + (G.reveilDifficile === jour ? BRUMES.hydromel.retard : 0) + (typeof retardFroid === 'function' ? retardFroid(G, jour) : 0); }   // (v1.07 : aussi pour demain, dans la prévision)   // (v1.05 : malade, à midi)
 function avancerHeure(G, d) { G.heure = heureDuComptoir(G) + d; return G.heure; }
 // À la fermeture : ceux qui avaient écrit reviendront demain matin, en tête de file ; les imprévus
 // repartent (ils retenteront leur chance un autre jour). Le colporteur remballe. Ce qu'un client
@@ -1927,10 +1935,12 @@ function quitterMarcheNoir(G) {
 // comptoir penche vers l'ombre (et plus souvent avec des décorations sombres au mur).
 function doitVenirGarde(G) {
   G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 };
-  if (G.gardeDemain) { G.gardeDemain = false; return true; }
+  if (G.gardeDemain) { G.gardeDemain = false; delete G.gardePresage; return true; }   // (v1.07 : la visite annoncée par la Tour, c'est celle-ci)
   if (typeof gardePresageDuJour === 'function' && gardePresageDuJour(G)) return true;   // (v1.05) la Tour d'Ysmée avait prévenu
   if (G.gardeTiree === G.jour) return false;   // (v0.65 : déjà tirée la veille au soir, pour le chat)
-  return gardeAuHasard(G);
+  const vient = gardeAuHasard(G);
+  if (vient) delete G.gardePresage;   // (v1.07 : une seule visite pour la semaine annoncée)
+  return vient;
 }
 function gardeAuHasard(G) {
   if (G.jour < 8 || G.jour - (G.garde.dernier || 0) < GARDE.delai) return false;
@@ -2934,7 +2944,7 @@ function avancerEvenements(G) {
   // (v1.00) une semaine avant une fête, le crieur l'annonce
   if (typeof prochaineFete === 'function') {
     const f = prochaineFete(G);
-    if (f && f.dans === 7 && feteOuverte(f.id)) lignes.push(`Dans une semaine, ${f.nom} ! ${{ solstice: "Le tir à l'arc de la Confrérie, le mât de cocagne, les atours de l'Union et, le dernier soir, les lanternes célestes.", hiver: 'La neige sur la place, le grand sapin, la roue des cadeaux du Père Givrin et, le grand soir, le banquet.' }[f.id] || 'Les Bannis allument leurs lanternes...'}`);
+    if (f && f.dans === 7 && (typeof feteAnnoncee === 'function' ? feteAnnoncee(G, f.id) : feteOuverte(f.id))) lignes.push(`Dans une semaine, ${f.nom} ! ${{ solstice: "Le tir à l'arc de la Confrérie, le mât de cocagne, les atours de l'Union et, le dernier soir, les lanternes célestes.", hiver: 'La neige sur la place, le grand sapin, la roue des cadeaux du Père Givrin et, le grand soir, le banquet.' }[f.id] || 'Les Bannis allument leurs lanternes...'}`);
   }
   G.gazette = { jour: G.jour, lignes };
 }

@@ -629,6 +629,18 @@ const SONS = {
   echec(t, bus) { [7, 3, 0].forEach((d, i) => this.note('piano', 261.63 * Math.pow(2, d / 12), t + i * 0.16, 0.6, 0.7, bus)); },
   // Des pas sur le plancher
   pas(t, bus) { for (let i = 0; i < 4; i++) { this.bruit(0.05, t + i * 0.26, bus, 0.5, 320 + (i % 2) * 120); const o = this.ctx.createOscillator(); o.frequency.setValueAtTime(120, t + i * 0.26); o.frequency.exponentialRampToValueAtTime(60, t + i * 0.26 + 0.08); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.25, t + i * 0.26); g.gain.exponentialRampToValueAtTime(0.0005, t + i * 0.26 + 0.12); o.connect(g); g.connect(bus); o.start(t + i * 0.26); o.stop(t + i * 0.26 + 0.15); } },
+  // (v1.07) Les oiseaux de l'aube : des gazouillis vifs et aigus, en petites rafales
+  oiseaux(t, bus) {
+    for (let r = 0; r < 3; r++) {
+      const t1 = t + r * 0.45 + Math.random() * 0.1, n = 3 + Math.floor(Math.random() * 3), base = 2800 + Math.random() * 1400;
+      for (let k = 0; k < n; k++) {
+        const tk = t1 + k * (0.07 + Math.random() * 0.04), f0 = base * (0.85 + Math.random() * 0.4), osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+        osc.frequency.setValueAtTime(f0, tk); osc.frequency.exponentialRampToValueAtTime(f0 * (Math.random() < 0.5 ? 1.35 : 0.75), tk + 0.06);
+        g.gain.setValueAtTime(0.0005, tk); g.gain.exponentialRampToValueAtTime(0.09, tk + 0.01); g.gain.exponentialRampToValueAtTime(0.0005, tk + 0.08);
+        osc.connect(g); g.connect(bus); osc.start(tk); osc.stop(tk + 0.09);
+      }
+    }
+  },
   // Le hibou de la nuit
   hibou(t, bus) { for (const dt of [0, 0.32]) { const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(420, t + dt); osc.frequency.exponentialRampToValueAtTime(360, t + dt + 0.25); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + dt); g.gain.exponentialRampToValueAtTime(0.22, t + dt + 0.05); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.28); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.3); } },
   // La cloche du crieur

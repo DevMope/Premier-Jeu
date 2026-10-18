@@ -136,7 +136,7 @@ function mortsAHonorer(G) {
   const vus = new Set(), morts = [];
   for (const h of G.historique || []) if ((h.issue === 'valeureux' || h.issue === 'sans gloire') && !vus.has(h.nom)) { vus.add(h.nom); morts.push(h); }
   const deja = etatBrumes(G).lanternes.map(l => l.nom);
-  return morts.filter(m => !deja.includes(m.nom)).slice(0, 8);
+  return morts.slice(0, 8).filter(m => !deja.includes(m.nom));   // (v1.07 : huit lanternes au plus par Nuit des Brumes, pour tes morts les plus récents)
 }
 // Allumer une lanterne : la famille réagit selon la qualité
 function allumerLanterne(G, nom, qualite) {
@@ -156,8 +156,9 @@ function allumerLanterne(G, nom, qualite) {
 // --- Les paroles ---
 const HISTOIRE_PASSEUR = "« Mon grand-père disait qu'avant, il n'y avait ni lumière ni ombre. Juste des voisins. Une nuit, quelqu'un a chanté sur la ville, une chanson que personne n'a entendue. Au matin, la moitié des gens avaient oublié qu'ils avaient été amis. L'autre moitié, on l'a appelée les Bannis. Bah. Les vieux racontent n'importe quoi. »";
 const DISCOURS_GARRICK = "« Je sais ce qu'on dit de vous, là-haut. Je sais ce qu'on vous a pris, et ce qu'on vous a fait oublier. Mais écoutez-moi : la brume finit toujours par se lever. Un jour, vos enfants passeront la Grande Muraille sans baisser les yeux. Gardez vos lanternes allumées : des jours meilleurs viendront. »";
-// Garrick parle aux Bannis le grand soir de la première année
-function garrickParleCeSoir(G) { return grandSoirBrumes(G) && dateDuJour(G).an === 1 && !etatBrumes(G).garrick; }
+// Garrick parle aux Bannis le grand soir de ta première Nuit des Brumes au marché noir (v1.07 : quelle que soit
+// l'année ; les sauts de temps sautaient souvent celle de la première année)
+function garrickParleCeSoir(G) { return grandSoirBrumes(G) && !G.garrickBrumes && !etatBrumes(G).garrick; }
 
 // La nuit (G.jour est déjà le lendemain) : sans hommage le dernier soir, la foule le voit d'un mauvais œil ;
 // l'hydromel se paie au réveil

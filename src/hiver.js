@@ -85,7 +85,7 @@ function donnerLotRoue(G, id) {
     const armes = Object.keys(ITEMS).filter(o => ITEMS[o].arme && (ombre || !ITEMS[o].ombre));
     const a = armes[Math.floor(Math.random() * armes.length)];
     ajouter(a, 1);
-    const ap = APPARENCE[a] || 'f', f = ap.includes('f'), pl = ap.includes('p');
+    const ap = genreDe(a), f = ap.includes('f'), pl = ap.includes('p');   // (v1.07 : le genre de l'objet, pas l'apparence)
     return { texte: `${nomObjet(a)} ! ${pl ? (f ? 'Elles rejoignent' : 'Ils rejoignent') : (f ? 'Elle rejoint' : 'Il rejoint')} ta réserve.`, objet: a };
   }
   if (id === 'deco') {

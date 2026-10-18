@@ -353,6 +353,7 @@ function mettreAJourPartie(G, brut = G) {
   G.materiaux = G.materiaux || {};
   for (const id of Object.keys(MATERIAUX)) if (G.materiaux[id] === undefined) G.materiaux[id] = 0;
   G.mal = G.mal || 0;
+  if (G.brumes && G.brumes.garrick) G.garrickBrumes = true;   // (v1.07 : Garrick ne répète pas son discours aux Bannis)
   if (!brut.reussites) {
     // (audit v0.53) Les réussites par camp d'avant la jauge : on les retrouve dans l'historique
     G.reussites = { bien: 0, mal: 0 };

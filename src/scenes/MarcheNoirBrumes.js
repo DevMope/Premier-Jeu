@@ -107,6 +107,7 @@ Object.assign(MarcheNoirScene.prototype, {
     if (reste > 0) this.bouton(330, 470, 260, `Jouer (${BRUMES.osselets.mise} p.)`, () => {
       const p = commencerOsselets(G);
       if (typeof p === 'string') return this.pageOsselets(p);
+      Sauvegarde.maintenant(G, 'Nuit');   // (v1.07 : la mise est jouée, même si l'on recharge)
       Son.jouer('des'); this.majBourse(); this.partieOsselets(p);
     }, peutPayer(G, BRUMES.osselets.mise));
     this.bouton(860, 500, 140, '◂ La fête', () => this.pageBrumes());
@@ -197,6 +198,7 @@ Object.assign(MarcheNoirScene.prototype, {
   lacherLanterne(nom, qualite) {
     const G = this.G, r = allumerLanterne(G, nom, qualite);
     if (r.erreur) return this.pageLanternesMorts(r.erreur);
+    Sauvegarde.maintenant(G, 'Nuit');
     this.majBourse(); this.vider();
     this.texte(40, 374, `La lanterne pour ${nom} quitte tes mains et monte vers la voûte...`, 14, '#f3d9b0', { fontStyle: 'italic' });
     const x = FEU_BRUMES + Phaser.Math.Between(-60, 60), y0 = 330;
@@ -228,8 +230,8 @@ Object.assign(MarcheNoirScene.prototype, {
   // --- Le discours de Garrick aux Bannis (le grand soir, la première année) ---
   discoursGarrick() {
     const G = this.G;
-    etatBrumes(G).garrick = true;
     this.vider(); this.allerCoin(1);
+    this.bloqueCoins = true;
     const garrick = imageCorps(this, 960 + 980, 372, 'mentor', 5.8).setFlipX(true).setDepth(2.8);
     pasDeMarche(this, garrick, 2200);
     this.tweens.add({ targets: garrick, x: FEU_BRUMES + 120, duration: 2200, ease: 'Sine.easeOut' });
@@ -248,6 +250,7 @@ Object.assign(MarcheNoirScene.prototype, {
         // les Bannis se taisent, puis lèvent leurs coupes
         (this.fetards || []).forEach((f, k) => this.time.delayedCall(k * 200, () => { if (f.active) { f.setTexture(corpsHD(this, f.qui, 'leves')); this.time.delayedCall(1800, () => f.active && f.setTexture(corpsHD(this, f.qui))); } }));
         Son.jouer('foule', { duree: 1.4 });
+        G.garrickBrumes = true; etatBrumes(G).garrick = true; this.bloqueCoins = false;   // (v1.07 : entendu jusqu'au bout, une fois pour toutes)
         this.texte(40, 374, "Un long silence... puis les Bannis lèvent leurs coupes vers Garrick. Tu te demandes ce qu'il fait ici, au milieu d'eux.", 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
         this.bouton(860, 500, 140, 'Continuer', () => this.pageBrumes());
       }

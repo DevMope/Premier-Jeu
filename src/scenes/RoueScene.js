@@ -6,7 +6,7 @@ class RoueScene extends Phaser.Scene {
 
   init(data) {
     this.retour = (data && data.retour) || 'Marche';
-    this.tourne = false; this.fini = false;
+    this.tourne = false; this.fini = false; this.parti = false;   // (Phaser garde la même scène d'une visite à l'autre)
   }
 
   create() {
@@ -76,6 +76,7 @@ class RoueScene extends Phaser.Scene {
     const G = this.G, r = tournerRoue(G);
     if (r.erreur) { this.dire(r.erreur); return; }
     this.tourne = true;
+    Sauvegarde.maintenant(G, 'Marche');   // (v1.07 : le lot est tiré ; recharger la page ne relance pas la roue)
     Son.jouer('pieces'); this.bourse.maj && this.bourse.maj(G.argent);
     this.bouton.fond.setVisible(false); this.bouton.label.setVisible(false);
     this.dire('« Et hop ! Elle tourne, elle tourne... »');

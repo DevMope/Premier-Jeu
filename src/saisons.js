@@ -60,10 +60,12 @@ const FETES_OUVERTES = { solstice: true, brumes: true };   // (v1.00 : le Solsti
 function feteOuverte(id) { return !!FETES_OUVERTES[id]; }
 // (v0.99) Prévenir le joueur : la veille du premier jour, puis chaque jour de la fête (au réveil, quand rien
 // d'autre ne se passe : dans les nouvelles du matin)
+// (v1.07) La Nuit des Brumes se fête dans la cave du marché noir : on n'en parle qu'à ceux qui y descendent
+function feteAnnoncee(G, id) { return feteOuverte(id) && (id !== 'brumes' || G.visiteMarcheNoir !== undefined); }
 function annonceFete(G) {
   const f0 = feteDuJour(G), d0 = prochaineFete(G);
-  const f = f0 && feteOuverte(f0.id) ? f0 : null, d = d0 && feteOuverte(d0.id) ? d0 : null;
-  if (f) return [`Aujourd'hui commence ${f.nom} ! Trois jours de fête au marché.`, `C'est le grand jour : ${f.nom} bat son plein !`, `Dernier jour de ${f.nom} : profites-en, ça ne reviendra que l'an prochain.`][f.jour];
+  const f = f0 && feteAnnoncee(G, f0.id) ? f0 : null, d = d0 && feteAnnoncee(G, d0.id) ? d0 : null;
+  if (f) return [`Aujourd'hui commence ${f.nom} ! Trois jours de fête ${f.id === 'brumes' ? 'dans la cave du marché noir' : 'au marché'}.`, `C'est le grand jour : ${f.nom} bat son plein !`, `Dernier jour de ${f.nom} : profites-en, ça ne reviendra que l'an prochain.`][f.jour];
   if (d && d.dans === 1) return `Demain commence ${d.nom} ! Le village s'y prépare déjà.`;
   return null;
 }

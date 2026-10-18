@@ -325,6 +325,7 @@ class FailliteScene extends Cinematique {
       gestion: ['Retour à la forêt', 'Plus rien à vendre, plus rien à perdre : tu repars de zéro.'],
     };
     const [titre, phrase] = fins[this.cause.type] || fins.gestion;
+    [this.boite, this.entete, this.texte, this.indice].forEach(o => o && o.setVisible && o.setVisible(false));   // (v1.07 : le dernier texte du récit transparaissait derrière les boutons)
     this.add.rectangle(480, 270, 960, 540, 0x140c08, 0.92).setDepth(30);
     this.add.text(480, 120, 'Faillite', style(22, '#c9b48a', { fontStyle: 'italic' })).setOrigin(0.5).setDepth(31);
     this.add.text(480, 170, titre, style(48, '#d8604a', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(31);

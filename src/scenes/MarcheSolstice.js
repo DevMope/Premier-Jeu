@@ -102,8 +102,10 @@ Object.assign(MarcheScene.prototype, {
     c.add(this.add.text(40, 420, `Meilleur score du jour : le sergent Aubrin, ${recordTir(G)}${s.meilleur ? ` · ton meilleur : ${s.meilleur}` : ''}${G.titreRempart === s.an ? ' · tu es « Œil du Rempart » !' : ''}`, style(12, '#6b4a2a', { fontStyle: 'italic' })));
     c.add(this.add.text(820, 446, reste > 0 ? `encore ${reste} partie${reste > 1 ? 's' : ''} aujourd'hui` : 'plus de partie aujourd\'hui', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
     const b = creerBouton(this, 820, 408, 190, `Jouer (${T.prix} p.)`, () => {
+      if (this.jeuLance) return;   // (v1.07 : un double-clic faisait payer deux parties)
       const erreur = commencerTir(G);
       if (erreur) return this.message(erreur, '#a03030');
+      this.jeuLance = true; Sauvegarde.maintenant(G, 'Marche');   // (la partie est payée, même si l'on recharge)
       Son.jouer('pieces');
       this.cameras.main.fadeOut(400);
       this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('TirArc', { retour: 'Marche' }));
@@ -112,8 +114,10 @@ Object.assign(MarcheScene.prototype, {
     // le mât de cocagne, dressé à côté : main gauche, main droite
     const resteM = partiesMatRestantes(G);
     const m = creerBouton(this, 600, 408, 190, `Le mât (${SOLSTICE.mat.prix} p.)`, () => {
+      if (this.jeuLance) return;
       const erreur = commencerMat(G);
       if (erreur) return this.message(erreur, '#a03030');
+      this.jeuLance = true; Sauvegarde.maintenant(G, 'Marche');   // (la partie est payée, même si l'on recharge)
       Son.jouer('pieces');
       this.cameras.main.fadeOut(400);
       this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Mat', { retour: 'Marche' }));

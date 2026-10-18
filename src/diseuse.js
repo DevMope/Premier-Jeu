@@ -17,13 +17,6 @@ const INDICES_PRESAGE = ['flamme', 'carte', 'chat'];
 
 function ysmeeArrivee(G) { return G.jour >= DISEUSE.jour; }
 function presageDuJour(G) { return G.presage && G.presage.jour === G.jour ? G.presage : null; }
-// Les missions en cours dont l'aventurier reviendra vivant (pour la Roue)
-function retoursPossibles(G) {
-  return (G.partis || []).filter(p => !p.termine && p.retour > G.jour).filter(p => {
-    if (!p.resultat) p.resultat = simulerAventure(p.voyageur, p.colis, p.pieges);   // (le sort est tiré une fois, et gardé)
-    return p.resultat.vivant;
-  });
-}
 // Peut-on tirer une carte ce matin ? null si oui, sinon la raison
 function refusPresage(G) {
   if (!ysmeeArrivee(G)) return "La tente est fermée.";
@@ -39,13 +32,23 @@ function tirerPresage(G) {
   payer(G, DISEUSE.prix, 'diseuse');
   // (la Roue, s'il y a quelqu'un en mission ; la Tour, seulement si la garde te surveille déjà : elle prévient d'une
   // visite qui pouvait venir, elle ne l'invente pas)
-  const possibles = Object.keys(PRESAGES).filter(id => (id !== 'roue' || retoursPossibles(G).length) && (id !== 'tour' || palierCamp(G) < 0));
+  // (v1.07 : on ne tire le sort des absents que si la Roue dit vrai, pas à chaque carte)
+  const enRoute = (G.partis || []).some(p => !p.termine && p.retour > G.jour);
+  const possibles = Object.keys(PRESAGES).filter(id => (id !== 'roue' || enRoute) && (id !== 'tour' || palierCamp(G) < 0));
   const id = auHasard(possibles), vrai = Math.random() >= DISEUSE.trompe;
   // un présage trompeur se trahit par de petits détails, d'autant plus visibles que ton flair est grand
   const indices = vrai ? [] : INDICES_PRESAGE.filter(() => Math.random() < niveauFlair(G));
   const p = G.presage = { jour: G.jour, id, vrai, indices };
   G.stats.presages = (G.stats.presages || 0) + 1;
-  if (vrai && id === 'roue') { const r = auHasard(retoursPossibles(G)); if (r) r.retour = G.jour; }
+  if (vrai && id === 'roue') {
+    // (un absent au hasard, qui rentrera vivant : on ne tire le sort que de ceux qu'on regarde)
+    const enCours = (G.partis || []).filter(q => !q.termine && q.retour > G.jour);
+    while (enCours.length) {
+      const q = enCours.splice(Math.floor(Math.random() * enCours.length), 1)[0];
+      if (!q.resultat) q.resultat = simulerAventure(q.voyageur, q.colis, q.pieges);
+      if (q.resultat.vivant) { q.retour = G.jour; break; }
+    }
+  }
   if (vrai && id === 'tour') G.gardePresage = G.jour + hasard(...DISEUSE.gardeDans);
   return p;
 }

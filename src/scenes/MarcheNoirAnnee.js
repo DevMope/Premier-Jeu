@@ -148,6 +148,7 @@ Object.assign(MarcheNoirScene.prototype, {
     [cb.a, cb.b].forEach((p, i) => this.bouton(440 + i * 260, 440, 240, `Parier sur ${prenom(p)} (${String(cb.cotes[i]).replace('.', ',')} contre 1)`, () => {
       const r = parierFosse(G, i, this.miseFosse);
       if (r.erreur) return this.pageFosse(r.erreur);
+      Sauvegarde.maintenant(G, 'Nuit');   // (v1.07 : le pari est joué ; recharger la page ne rend plus la mise)
       Son.jouer('pieces'); this.majBourse();
       this.combatFosse(cb, r, i);
     }, peutPayer(G, this.miseFosse)));
@@ -158,6 +159,7 @@ Object.assign(MarcheNoirScene.prototype, {
   // Le combat : de vrais échanges, des esquives, la poussière, la foule ; et une fin qui claque
   // (le K.O. n'est pas systématique : aux points, abandon, l'arbitre, ou un coup bas).
   combatFosse(cb, r, choix) {
+    this.bloqueCoins = true;
     this.vider();
     const [A, B] = this.combattants;
     for (const p of [A, B]) { this.tweens.killTweensOf(p); p.y = 318; }
@@ -222,7 +224,7 @@ Object.assign(MarcheNoirScene.prototype, {
   finCombat(cb, r, choix, noms, { cri, poussiere, flashBlanc, titre }) {
     const g = r.gagnant, gagnant = this.combattants[g], perdant = this.combattants[1 - g], sens = g === 0 ? 1 : -1;
     const conclure = (texteFin, delai) => this.time.delayedCall(delai, () => {
-      this.tweens.timeScale = 1;
+      this.tweens.timeScale = 1; this.bloqueCoins = false;
       const moi = r.gain ? `Tu avais misé sur ${noms[choix]} : tu encaisses ${r.gain} pièces !` : `Tu avais misé sur ${noms[choix]} : ta mise est perdue.`;
       if (r.gain) Son.jouer('pieces'); else Son.jouer('refus');
       this.majBourse();
@@ -343,6 +345,7 @@ Object.assign(MarcheNoirScene.prototype, {
     if (!(s.brasDeFer || {})[a.id]) this.bouton(240, 500, 300, `Défier ${prenom} (${a.mise} p.)`, () => {
       const e = commencerBrasDeFer(G, a.id);
       if (e) return this.pageBrasDeFer(e);
+      Sauvegarde.maintenant(G, 'Nuit');
       Son.jouer('pieces'); this.majBourse(); this.jeuBrasDeFer(a);
     }, peutPayer(G, a.mise));
     else this.texte(40, 500, `${prenom} se masse le bras : une fois par soir.`, 13, '#a89080', { fontStyle: 'italic' }).setOrigin(0, 0.5);
@@ -355,6 +358,7 @@ Object.assign(MarcheNoirScene.prototype, {
     const G = this.G, prenom = a.nom.split(' ')[0];
     this.vider();
     const jeu = this.jeuBras = { p: 0.5, x: 0, sens: 1, fini: false, temps: 0, coup: 0 };
+    this.bloqueCoins = true;
     const gb = this.vueObj(this.add.graphics(), 3.9);
     this.texteVue(280, 102, 'Toi', 12, '#a8e0a0', { fontStyle: 'bold' });
     this.texteVue(680, 102, prenom, 12, '#ffb0a0', { fontStyle: 'bold' }).setOrigin(1, 0);
@@ -378,7 +382,7 @@ Object.assign(MarcheNoirScene.prototype, {
     if (espace) { espace.removeAllListeners(); espace.on('down', taper); this.espaceBras = espace; }
     const finir = gagne => {
       if (jeu.fini) return;
-      jeu.fini = true; this.jeuBras = null;
+      jeu.fini = true; this.jeuBras = null; this.bloqueCoins = false;
       if (espace) espace.removeAllListeners();
       zone.disableInteractive();
       const avant = ADVERSAIRES_BRAS.filter(x => brasDebloque(G, x.id)).length;

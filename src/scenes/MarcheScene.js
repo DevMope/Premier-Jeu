@@ -18,7 +18,8 @@ class MarcheScene extends Phaser.Scene {
       this.scene.start('DiscoursSage', { retour: 'Marche' });
       return;
     }
-    this.pieceEnVol = false; this.chienMange = false;   // (audit v0.59 : sinon la fontaine et Brisquet restaient bloqués)
+    if (typeof noterSolsticeVu === 'function') noterSolsticeVu(G);
+    this.pieceEnVol = false; this.chienMange = false; this.jeuLance = false;   // (audit v0.59 : sinon la fontaine et Brisquet restaient bloqués)
     G.banniere = G.jour;
     // (Phaser réutilise la scène d'un jour à l'autre : on repart de zéro)
     this.groupes = [];
@@ -178,7 +179,8 @@ class MarcheScene extends Phaser.Scene {
 
     // Les nouvelles de l'atelier (une réparation terminée cette nuit)
     if (nouvellesDuMatin(G).length) {
-      const t = this.add.text(480, 52, nouvellesDuMatin(G).join('\n'), style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 3 }, align: 'center', wordWrap: { width: 640 } })).setOrigin(0.5).setDepth(5);
+      // (v1.07 : sous la barre du haut, pour ne plus cacher le titre, les commandes ni la sauvegarde)
+      const t = this.add.text(480, 78, nouvellesDuMatin(G).join('\n'), style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 3 }, align: 'center', wordWrap: { width: 720 } })).setOrigin(0.5, 0).setDepth(5);
       this.tweens.add({ targets: t, alpha: 0, delay: 6000, duration: 800 });
     }
   }

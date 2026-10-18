@@ -10,6 +10,7 @@ class MarcheNoirScene extends Phaser.Scene {
     const G = this.G = window.GAME;
     this.part = false;   // (audit v0.59 : sinon « Remonter » ne marchait plus à la 2e visite)
     this.aine = null; this.sceneAine = null;   // (v0.97)
+    this.bloqueCoins = false;   // (v1.07)
     this.cameras.main.fadeIn(600);
     this.soiree = soireeMarcheNoir(G);
     this.mainNoireOuverte = mainNoireOuverte(G);
@@ -131,7 +132,7 @@ class MarcheNoirScene extends Phaser.Scene {
       const fond = this.add.circle(x, 200, 20, 0x2a1810, 0.85).setStrokeStyle(2, 0xc9a227).setScrollFactor(0).setDepth(5).setInteractive({ useHandCursor: true });
       const signe = this.add.text(x, 200, sens < 0 ? '◀' : '▶', style(18, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5).setScrollFactor(0).setDepth(5);
       const nom = this.add.text(x + (sens < 0 ? 26 : -26), 200, '', style(13, '#f3d98a', { fontStyle: 'italic bold', stroke: '#1a0806', strokeThickness: 4 })).setOrigin(sens < 0 ? 0 : 1, 0.5).setScrollFactor(0).setDepth(5);
-      fond.on('pointerdown', () => { Son.jouer('clic'); this.allerCoin(this.coin + sens); });
+      fond.on('pointerdown', () => { if (this.bloqueCoins) return; Son.jouer('clic'); this.allerCoin(this.coin + sens); });   // (v1.07 : pas pendant un combat, un bras de fer ou un discours)
       return { fond, signe, nom };
     };
     this.flecheG = fleche(-1); this.flecheD = fleche(1);

@@ -157,12 +157,20 @@ function lanternesCelestesDues(G) {
   return !!(f && f.jour === 2 && G.lanternesVues !== dateDuJour(G).an);
 }
 
-// (v1.02, planche 32) Le discours du Grand Sage : au deuxième Solstice, le grand jour, en arrivant au marché
-// (une seule fois).
+// (v1.02, planche 32) Le discours du Grand Sage : à ton deuxième Solstice, en arrivant au marché (une seule fois).
+// (v1.07 : le deuxième Solstice que tu as vécu, n'importe quel jour de la fête ; avant, c'était le grand jour de
+// l'an 2 seulement, et les sauts de temps le faisaient souvent manquer)
 let SAGE_OUVERT = true;   // (planche 32 validée le 18/10)
 function discoursSageDu(G) {
-  const f = SAGE_OUVERT && solsticeActif(G) ? feteDuJour(G) : null;
-  return !!(f && f.jour === 1 && dateDuJour(G).an === 2 && !G.discoursSageVu);
+  if (!SAGE_OUVERT || !solsticeActif(G) || G.discoursSageVu) return false;
+  const an = dateDuJour(G).an;
+  return (G.solsticesVus || []).some(a => a < an) || !!(G.solstice && G.solstice.an < an);
+}
+// Un passage au marché pendant le Solstice : cette année compte comme un Solstice vécu
+function noterSolsticeVu(G) {
+  if (!solsticeActif(G)) return;
+  const an = dateDuJour(G).an, vus = G.solsticesVus = G.solsticesVus || [];
+  if (!vus.includes(an)) vus.push(an);
 }
 
 // La nuit : la tarte ne se garde pas

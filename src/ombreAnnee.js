@@ -199,7 +199,8 @@ function boireUnVerre(G) {
 // Ceux qui peuvent partir : les habitués libres, du niveau demandé
 function candidatsContrat(G, c) {
   const min = ORDRE_NIVEAUX.indexOf(c.niveauMin);
-  return (G.habitues || []).filter(h => ORDRE_NIVEAUX.indexOf(h.niveau || 'novice') >= min && !(h.convalescence > G.jour && h.blessures > 0));
+  const occupes = new Set(nomsActifs(G));   // (v1.07 : pas ceux qui sont déjà en mission, dans la file ou attendus)
+  return (G.habitues || []).filter(h => ORDRE_NIVEAUX.indexOf(h.niveau || 'novice') >= min && !(h.convalescence > G.jour && h.blessures > 0) && !occupes.has(h.nom) && !(G.personnes[h.nom] || {}).mort);
 }
 function kitManquant(G, c) { return c.kit.filter(id => !(G.stock[id] > 0)); }
 function chanceContrat(c, h) {
@@ -214,7 +215,7 @@ function accepterContrat(G, nom) {
   if (manque.length) return `Il te manque : ${manque.map(id => nomObjet(id).toLowerCase()).join(', ')}.`;
   for (const id of c.kit) G.stock[id]--;
   G.habitues = G.habitues.filter(x => x !== h);   // (parti pour deux jours : il ne vient pas au comptoir)
-  G.contrats = [...(G.contrats || []), { titre: c.titre, banni: c.banni, paie: c.paie, danger: c.danger, h, retour: G.jour + c.duree, chance: chanceContrat(c, h) }];
+  G.contrats = [...(G.contrats || []), { titre: c.titre, banni: c.banni, paie: c.paie, danger: c.danger, h, depart: G.jour, retour: G.jour + c.duree, chance: chanceContrat(c, h) }];
   c.pris = true;
   return null;
 }
@@ -233,6 +234,10 @@ function nuitOmbreAnnee(G) {
       lignes.push(`Contrat de l'ombre : ${prenom} est rentré${k.h.feminin ? 'e' : ''} de « ${k.titre} ». ${k.banni.nom} a laissé ${k.paie} pièces sous ta porte.`);
     } else if (Math.random() < OMBRE_ANNEE.contrat.mort) {
       G.reputation -= PERTE_MORT.sansGloire * 0.5;
+      // (v1.07) mort pour de bon : son nom ne reviendra plus, et on pourra lui allumer une lanterne aux Brumes
+      connaitre(G, k.h).mort = true;
+      G.historique.unshift({ nom: k.h.nom, race: k.h.race, feminin: !!k.h.feminin, quete: `Contrat de l'ombre : ${k.titre}`, zone: null, depart: k.depart || k.retour - 2, retour: G.jour, issue: 'sans gloire', gain: 0, chance: k.chance });
+      G.historique = G.historique.slice(0, TAILLE_HISTORIQUE);
       lignes.push(`Contrat de l'ombre : ${prenom} n'est pas revenu${k.h.feminin ? 'e' : ''} de « ${k.titre} ». Personne ne parlera de ${k.h.feminin ? 'elle' : 'lui'}. Pas même ${k.banni.nom}.`);
     } else {
       k.h.blessures = Math.max(1, k.h.blessures || 0); k.h.convalescence = G.jour + CONVALESCENCE_PAR_COEUR;

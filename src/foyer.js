@@ -13,13 +13,23 @@ const FOYER = { gamelle: 3, boude: 3, part: 4, mefiance: 7, ratsMefiant: 0.5, ou
 function foyerVide(G) { return typeof saisonDe === 'function' && saisonDe(G) === 'givre' && !feuAllume(G); }
 function soirDuJour(G) { return G.lettresDuJour === G.jour; }
 function froidDuJour(G, jour = G.jour) { return G.froid && G.froid.jour === jour ? G.froid.etat : null; }
-function clientsFroid(G, jour = G.jour) { return froidDuJour(G, jour) ? -1 : 0; }
-function retardFroid(G) { return froidDuJour(G) === 'malade' ? Math.max(0, FOYER.ouvertureMalade - JOURNEE.ouverture) : 0; }   // (malade : on n'ouvre qu'à midi)
+// (v1.07) Demain se prévoit dès ce soir : sans bûche, la nuit sera froide (fatigué, ou malade si c'est la deuxième)
+function nuitFroideCeSoir(G) { return saisonDe(G) === 'givre' && G.feu !== G.jour && G.banquetHiver !== G.jour + 1 && !(typeof banquetDu === 'function' && banquetDu(G)); }
+function froidPrevu(G, jour = G.jour) {
+  if (jour !== G.jour + 1) return froidDuJour(G, jour);
+  return nuitFroideCeSoir(G) ? ((G.nuitsFroides || 0) + 1 >= 2 ? 'malade' : 'fatigue') : null;
+}
+function clientsFroid(G, jour = G.jour) { return froidPrevu(G, jour) ? -1 : 0; }
+function retardFroid(G, jour = G.jour) { return froidPrevu(G, jour) === 'malade' ? Math.max(0, FOYER.ouvertureMalade - JOURNEE.ouverture) : 0; }   // (malade : on n'ouvre qu'à midi)
 
 // --- La gamelle du chat ---
 function etatGamelle(G) { const c = chatDe(G); if (c.adopte && c.repas === undefined) c.repas = c.adopteJour ?? G.jour; return c; }
 function gamellePleine(G) { const c = etatGamelle(G); return c.adopte && G.jour - c.repas < FOYER.gamelle && !(c.faim > 0); }
-function chatParti(G, jour = G.jour) { const c = G.chat; return !!(c && c.adopte && (c.parti === jour || c.rechauffe === jour)); }
+function chatParti(G, jour = G.jour) {
+  const c = G.chat;
+  if (!(c && c.adopte && (c.parti === jour || c.rechauffe === jour))) return false;
+  return !(jour === G.jour && soirDuJour(G));   // (v1.07 : le soir, il est rentré, comme le dit le bilan)
+}
 function chatBoude(G) { const c = G.chat; return !!(c && c.adopte && (c.faim || 0) >= FOYER.boude && c.parti !== G.jour); }
 function chatMefiant(G) { const c = G.chat; return !!(c && c.adopte && c.mefiant >= G.jour); }
 function nomChatMaj(G) { const n = nomChat(G); return n[0].toUpperCase() + n.slice(1); }
