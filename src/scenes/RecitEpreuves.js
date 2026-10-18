@@ -916,8 +916,8 @@ const SCENES_EPREUVES = {
       await this.sauter(p, p.x - 40, SOL_RECIT, 120, 650, -360);
       this.poussiere(p.x, SOL_RECIT, 10);
       await this.renverse(false);
-      this.arreterBete(b, 'sanglierHD');
       b.setFlipX(true);
+      this.animerBete(b, ['sanglierHD_pas', 'sanglierHD'], 90);   // (il détale en trottinant)
       this.tweens.add({ targets: b, x: -150, duration: 900 });
       await this.attendre(600);
       await this.debout(500);

@@ -58,7 +58,22 @@ Object.assign(StoryScene.prototype, {
     if (teinte) m.setTint(teinte);
     m.echelle = echelle;
     m.respire = () => this.tweens.add({ targets: m, scaleY: echelle * 1.04, scaleX: echelle * 0.98, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    m.dandine = true;
     return m;
+  },
+  // (v1.05) Un monstre (texture fixe) qui se déplace ne glisse pas : il se dandine, lourdement, à chaque pas
+  dandiner(m, duree, { sautille = true } = {}) {
+    if (!m.active || duree < 300) return;
+    const pas = 190, n = Math.max(1, Math.round(duree / (pas * 2)));
+    m.setAngle(-4);
+    this.tweens.add({ targets: m, angle: 4, duration: pas, yoyo: true, repeat: n - 1, ease: 'Sine.easeInOut', onComplete: () => m.active && m.setAngle(0) });
+    if (sautille) this.tweens.add({ targets: m, y: m.y - 5, duration: pas / 2, yoyo: true, repeat: n * 2 - 1, ease: 'Quad.easeOut' });
+  },
+  // (les déplacements des monstres passent par ici : on les fait dandiner)
+  animer(config) {
+    const m = config.targets;
+    if (m && m.dandine && config.x !== undefined && config.angle === undefined && (config.duration || 0) >= 300) this.dandiner(m, config.duration, { sautille: config.y === undefined });
+    return Cinematique.prototype.animer.call(this, config);
   },
   // Un coup de lame (l'arc blanc) depuis le voyageur
   coupDeLame(lame, versDroite = true) {
@@ -263,6 +278,7 @@ Object.assign(SCENES_EPREUVES, {
       this.tweens.add({ targets: tas, alpha: 0, scaleX: 1.5, duration: 400 });
       await this.animer({ targets: p, angle: 10, duration: 100, yoyo: true, repeat: 3 });   // il s'ébroue
       y.setFlipX(true);
+      this.time.delayedCall(200, () => this.dandiner(y, 1400));
       this.tweens.add({ targets: y, x: 1100, duration: 1400, delay: 200 });
       await this.attendre(500);
     },

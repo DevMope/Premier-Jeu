@@ -657,8 +657,11 @@ function textureJoueur(scene, G, vue = 'face') {
   // Sous un autre angle (de trois-quarts, il regarde vers la droite : à retourner pour regarder à gauche)
   const cle = `joueur_${stade}_${vue}`;
   if (!scene.textures.exists(cle) || scene.textures.get(cle).tenue !== tenue) {
-    if (scene.textures.exists(cle)) scene.textures.remove(cle);
-    dessinerJoueurHD(G.joueur.apparence, stade, G.joueur.feminin, 0, G.tenue || [], vue).texture(scene, cle);
+    // (v1.05) avec ses deux images de pas, pour qu'il marche vraiment sous cet angle aussi
+    for (const [pas, k] of [[0, cle], [-1, cle + '_pas1'], [1, cle + '_pas2']]) {
+      if (scene.textures.exists(k)) scene.textures.remove(k);
+      dessinerJoueurHD(G.joueur.apparence, stade, G.joueur.feminin, pas, G.tenue || [], vue).texture(scene, k);
+    }
     scene.textures.get(cle).tenue = tenue;
   }
   return cle;

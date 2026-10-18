@@ -1358,6 +1358,7 @@ class StoryScene extends Cinematique {
       this.onomatopee(p.x, fond - 120, 'PLOUF !', '#a8d0ff');
       eclaboussure(this, p.x, fond - 8, { taille: 2, conteneur: this.decor });   // (v0.70)
       p.setAlpha(0.6);
+      this.tweens.add({ targets: p, angle: 148, y: fond + 6, duration: 175, yoyo: true, repeat: 1, ease: 'Sine.easeInOut' });   // (il se débat dans les remous)
       await this.animer({ targets: p, x: p.x - 60, duration: 700, ease: 'Sine.easeInOut' });   // le courant l'emporte
     } else {
       this.onomatopee(p.x, fond - 120, 'AÏE !', '#ff8080');

@@ -224,6 +224,7 @@ class BanqueScene extends Phaser.Scene {
         this.tweens.add({ targets: titre, scale: 1, duration: 450, ease: 'Back.easeOut' });
         this.tweens.add({ targets: titre, angle: { from: -4, to: 4 }, duration: 300, yoyo: true, repeat: -1 });
         this.banquiers.forEach((b, i) => {
+          pasDeMarche(this, b, 3600, { poussiere: false });   // (leurs petites jambes gigotent pendant la farandole)
           this.tweens.add({ targets: b, x: { from: b.place.x - 140, to: b.place.x + 140 }, duration: 900, yoyo: true, repeat: 1, ease: 'Sine.easeInOut',
             onYoyo: () => b.setFlipX(!b.flipX), onRepeat: () => b.setFlipX(!b.flipX) });
           this.tweens.add({ targets: b, y: pieds - 30, duration: 225, yoyo: true, repeat: 7, delay: i * 75 });

@@ -18,7 +18,7 @@ class VisionScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#140a06');
     // JeuneGoy enfant (le stade « petit » de son apparence)
     this.enfant = 'joueur_vision_enfant';
-    if (!this.textures.exists(this.enfant)) dessinerJoueurHD(G.joueur.apparence, 'petit', G.joueur.feminin, 0, [], 'troisQuarts').texture(this, this.enfant);
+    if (!this.textures.exists(this.enfant)) for (const [pas, suffixe] of [[0, ''], [-1, '_pas1'], [1, '_pas2']]) dessinerJoueurHD(G.joueur.apparence, 'petit', G.joueur.feminin, pas, [], 'troisQuarts').texture(this, this.enfant + suffixe);
     // sur les épaules de son père : de dos, les cuisses de part et d'autre de sa tête, les bras levés
     this.enfantEpaules = 'joueur_vision_enfant_epaules';
     const toile = dessinerJoueurHD(G.joueur.apparence, 'petit', G.joueur.feminin, 0, [], 'dos', 'epaules');
@@ -139,6 +139,7 @@ class VisionScene extends Phaser.Scene {
       for (let k = 0; k < 22; k++) { const f = this.o(this.add.rectangle(380 + Math.random() * 180, 230 + Math.random() * 100, 2, 2, 0xffffff, 0.85)); this.tweens.add({ targets: f, y: f.y - 40, alpha: 0, duration: 1600 + Math.random() * 1200, repeat: -1 }); }   // la farine qui vole
       this.parent(470, 470, true, 11, true);
       const e = this.o(this.add.image(250, 470, this.enfant).setOrigin(0.5, 1).setScale(echelleJoueur(8)));
+      pasDeMarche(this, e, 0, { poussiere: false });   // (ses petites jambes trottinent)
       this.tweens.add({ targets: e, x: 222, duration: 520, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // il chipe un gâteau et recule
       this.dire("Une cuisine qui sent la cannelle. Une femme aux mains pleines de farine éclate de rire :\n« Doucement, petit voleur, ce sont les gâteaux du Solstice ! »");
     } else if (this.etape === 2) {

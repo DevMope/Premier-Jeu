@@ -148,8 +148,8 @@ function pasDeMarche(scene, sprite, duree, { poussiere = true } = {}) {
   let k = 0;
   if (sprite.marche) sprite.marche.remove();
   creerHalo(scene);
-  sprite.marche = scene.time.addEvent({ delay: 125, loop: true, callback: () => {
-    if (!sprite.active) { sprite.marche.remove(); return; }
+  const marche = sprite.marche = scene.time.addEvent({ delay: 125, loop: true, callback: () => {
+    if (!sprite.active) { marche.remove(); if (sprite.marche === marche) sprite.marche = null; return; }
     k = (k + 1) % 4;
     sprite.setTexture(images[k]);
     if (poussiere && k % 2 === 1 && sprite.visible && sprite.alpha > 0.5 && !sprite.mask && !sprite.parentContainer) {
@@ -157,10 +157,18 @@ function pasDeMarche(scene, sprite, duree, { poussiere = true } = {}) {
       scene.tweens.add({ targets: p, scale: 0.32, alpha: 0, y: p.y - 8, duration: 420, onComplete: () => p.destroy() });
     }
   } });
-  scene.time.delayedCall(duree, () => {
-    if (sprite.marche) { sprite.marche.remove(); sprite.marche = null; }
+  if (!(duree > 0)) return;   // (0 : il marche sans s'arrêter, comme les passants)
+  // (v1.05) Il s'arrête de marcher quand il s'arrête d'avancer : au début d'une scène chargée, l'horloge
+  // prend de l'avance sur les déplacements, et il finissait le trajet en glissant, les jambes immobiles.
+  let sursis = Math.ceil((duree / 2 + 1000) / 60);
+  const arreter = () => {
+    if (sprite.marche !== marche) return;   // (une autre marche a pris la suite)
+    const avance = sprite.active && scene.tweens.getTweensOf(sprite).some(t => t.isPlaying() && (t.data || []).some(d => d && d.key === 'x'));
+    if (avance && sursis-- > 0) { scene.time.delayedCall(60, arreter); return; }
+    marche.remove(); sprite.marche = null;
     if (sprite.active) sprite.setTexture(base);
-  });
+  };
+  scene.time.delayedCall(duree, arreter);
 }
 
 // L'échelle à appliquer à une texture de personnage (les anciennes gardent leur taille).
