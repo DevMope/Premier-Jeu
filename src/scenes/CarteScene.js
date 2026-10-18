@@ -19,6 +19,9 @@ class CarteScene extends Phaser.Scene {
 
   create() {
     if (!this.consultation) exclureScenes(this, 'Nuit', 'Dodo');   // (v0.62)
+    // (v1.07) consultée depuis une page rangée après elle (arrière-boutique, promenade, rue, marché noir) :
+    // elle passe devant, sinon cette page la cachait et le jeu semblait figé
+    else this.scene.moveAbove(this.consultation);
     const G = this.G = window.GAME;
     // Les voyageurs à placer : tout ceux du jour sans destination, ou celui du comptoir.
     this.voyageurs = this.consultation ? [] : this.comptoir ? [this.comptoir.voyageur]
