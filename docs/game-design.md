@@ -1890,8 +1890,9 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
   envers le Conseil reste un filet de sécurité.
 - **À venir avec C-5** : Lucien Belhomme se moque d'une commande manquée (au comptoir et dans la gazette).
 
-### Demande du joueur (19/10) : vers le jour 100, de quoi dépenser toute sa fortune
-- **La demande** : « au jour 100 il faudra inclure une mécanique pour que le joueur puisse dépenser toute sa fortune ».
+### Demande du joueur (19/10) : vers le jour 100, de quoi dépenser toute sa fortune (ou une grande partie)
+- **La demande** : « au jour 100 il faudra inclure une mécanique pour que le joueur puisse dépenser toute sa fortune »,
+  puis « ou une grande partie » : le joueur choisit combien il y met, mais ça doit pouvoir avaler l'essentiel du magot.
   Repère des simulations : vers le jour 100, l'argent médian est d'environ 15 000 p. (impôt du Conseil compris), et bien
   plus pour les bons joueurs. Il faut donc une dépense **sans plafond** (qui avale 5 000 comme 100 000 p.), qui **vaut
   le coup** sans rapporter d'argent en retour (sinon la fortune remonte), et qui pèse sur l'histoire.
