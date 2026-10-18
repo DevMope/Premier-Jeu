@@ -1914,3 +1914,20 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
   de la fin officielle : son moment doit être calculé par rapport à la vie du jeu (ses événements, ses mécaniques), pas
   sur un jour fixe. À garder pour la fin, avec les secrets de Garrick et de la Confrérie.
 
+### C-5 Le rival au quotidien : proposition (planche 41, à valider)
+- **L'ouverture** : le 1er du mois qui suit ta première commande royale (acceptée ou non), « Au Comptoir Agréé » ouvre
+  juste à côté (façade de la planche 40 v2). La gazette l'annonce, et Lucien vient se présenter au comptoir le jour même.
+- **Sa « pression »** (de 1 à 3) : chaque jour, il attire des clients de ta file (1 tous les 2 jours, puis 1 par jour,
+  puis 2 par jour). Jamais ceux qui t'ont écrit, ni les retours de mission, ni les visites.
+- **Le mois des comptoirs** : le crieur compare chaque mois les deux comptoirs. Deux façons de compter :
+  - **A (conseillée)** : les **aventuriers revenus vainqueurs** de chez toi, contre les siens (ses chiffres montent
+    chaque jour, selon la taille de ton comptoir). Ombre ou lumière, les deux peuvent gagner.
+  - **B** : la **réputation gagnée** dans le mois. Simple, mais nos simulations montrent que la voie de l'ombre gagne
+    très peu de réputation (environ +2 par mois, contre +5 à +25 pour la lumière) : elle perdrait presque toujours.
+- **La fin du mois** : tu gagnes, sa pression baisse d'un cran ; il gagne, elle monte d'un cran (3 au plus) et il vient
+  se pavaner. **Tu gagnes un mois à pression 1** : il ferme, sa boutique est **à vendre** (on le reverra aux enchères).
+- **Le rachat** (piste C validée, le premier terrain de ton quartier) : **1 500 p. × étoiles** (3 000 à ★2), quand tu
+  veux. **L'orphelinat** (+3 de réputation, des petits coursiers qui font un achat du matin pour toi) ou **le petit
+  bar** (une pièce de plus, le soir : rencontres, rumeurs, clients qui reviennent).
+- Le score reste visible en haut de l'écran, près de ta réputation (un clic ouvre le détail).
+
