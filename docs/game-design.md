@@ -2132,3 +2132,23 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
     pupille. Une ou deux Engeances par sorte de contrée (forêt, marais, montagne, désert, ruines, mer), avec leur
     façon d'attaquer dans les récits (et l'objet qui aide contre elles). Plus on avance dans le jeu, plus elles sont
     nombreuses : la porte s'entrouvre.
+
+### Planche 43 v2 : le petit bar façon Dave the Diver (19/10, à valider : docs/planches-v059/planche-43-v2-le-bar.png)
+- **1. La soirée jouée** (19 h – minuit) : un bandeau en haut (l'heure, la caisse, les clients servis, la renommée).
+  Chaque table montre sa commande (une chope, un plat, ou les deux) et sa patience (vert, orange, rouge). Le barman
+  et le cuisinier (derrière la passe-plat de la cuisine) préparent, avec leur jauge ; toi, le plateau à la main, et
+  les serveurs, vous portez. Clic sur une table : la commande ; clic sur le comptoir : la chope ; clic sur la table :
+  servir.
+- **2. Les imprévus** : calmer une bagarre (¼ h, une chope offerte, sinon la garde le lendemain), rattraper un
+  filou (¼ h, sinon l'ardoise est perdue), un pourboire, une rumeur vraie sur demain.
+- **3. Les trois bandes** : les Trois Gobelets (hobbits et gobelins, flûtes-tuyaux, tambour bosselé, 10 p. le soir),
+  les Cornes de Brume (orcs et trolls, grosses cornes de cuivre, 18 p.), les Ombres Douces (elfes et vampires sous
+  des masques de cuir aux grands yeux noirs, longs tubes de verre lumineux, 30 p.).
+- **4. L'équipe et les installations** : cuisinier 12 p., barman 10 p., serveurs 6 p. chacun (le deuxième dès
+  12 clients) ; la cuisine 3 000 p., la scène 6 000 p., la terrasse et l'ouverture à midi 12 000 p. ; l'avertissement
+  en rouge (« les paies viennent en plus ») ; le conteur du jour (renommée sur 5, paie, clients en plus).
+- **5. Le bilan** : soirée jouée (exemple : +69 p., renommée, rumeur, habitué, mission) contre bar tout seul
+  (exemple : +14 p., aucun bonus).
+- **6. Les trois styles** (esthétiques) : la taverne de quartier (au départ), l'auberge (4 000 p. : vert, fleurs,
+  fanions), la grande brasserie (15 000 p. : vert-bleu profond, cuivre, lustre, carrelage, terrasse éclairée) ;
+  intérieur et extérieur changent ensemble.
