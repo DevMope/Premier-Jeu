@@ -370,6 +370,7 @@ Chaque étape doit donner une version **jouable**.
 | v 1.17 | **Les gains et les pertes en direct** (demande du joueur, planche 47) | Chaque gain ou perte s'affiche là où ça se passe, en vert ou en rouge : l'argent au-dessus de la bourse (« +36 p. », « −60 p. »), la réputation sous sa plaque (« +0,6 réputation »), la relation près de l'aventurier au comptoir (« +1 relation ») ou sous le bandeau avec son nom. Corrigés : le bras levé des grands gabarits (nain, orc, troll, panda) coupé net au bord du buste ; au marché noir, le premier accueil du Passeur (sur deux lignes) recouvrait le murmure. |
 | v 1.18 | **Le bras levé des bustes** (retour du joueur) | Le bras levé (salut, pouce, poing brandi) des grands gabarits faisait un bord droit tout raide, comme s'il manquait des pixels : le coude ressort un peu plus loin que la main, l'avant-bras penche et garde son contour. **La pose « il pense »** du joueur (planche 50 v2, à valider) : le poing sous le menton, les sourcils qui montent, le regard en l'air sur le côté (de face, de trois-quarts, de profil). |
 | v 1.19 | **Les mises** (lot C-3, planche 47 v3) | Au comptoir, une plaque **« Miser »** (à côté de « Marchander ») pour un aventurier au moins *Connaissance* qui part en mission, trois mises au plus en cours. **La fiche** : trois bourses selon son rang (novice 20/40/60 p. … légende 80/160/240 p.), ce que devient la mise (vainqueur × 1,6 ; revenu sans rien : la moitié ; mort : perdue). La mise se paie **au départ** (+1 de relation) et l'encourage (+1 % de chance à chaque épreuve, environ +3 % sur la mission, affiché en direct). **Une pièce dorée tourne** près de son nom sur l'ardoise « En mission » ; « ta mise : 60 p. » sous sa destination ; la fiche des retours note « mise 60 → 96 p. » ; poste « Mises sur les aventuriers » au bureau. **Corrigé** : la liste « En mission » de l'ardoise montrait la dernière lettre reçue (la mesure des lignes écrasait son texte, depuis la v0.59). |
+| v 1.20 | **La mise noire** (planche 47 v3) | Au marché noir, un bouton **« Grisouille (paris contre) »** : dans la grande salle, au pied de l'escalier, Grisouille le preneur de paris, son ardoise « Paris contre » à la craie (les aventuriers en route, leur cote), sa bourse sur un tonneau. On mise (10 à 300 p.) **contre** un aventurier parti en mission (pas un sur qui l'on a misé, trois paris au plus) : **s'il échoue** (revenu sans rien, ou mort), la mise × la cote ; s'il réussit, perdue. **La cote suit ses vraies chances** (bien équipé, elle monte jusqu'à 6 contre 1 ; mal parti, elle tombe à 1,5). Un geste d'ombre (−2 ☾) ; et s'il meurt, la Faucheuse t'aime un peu plus. Grisouille paie au retour (« la bourse est glissée sous ta porte »). Poste « Paris contre les aventuriers » au bureau. |
 | 10b | **La forge chez soi** (validé) | À ★3 (le saut d'un an), on peut construire une forge dans l'arrière-boutique et engager un premier forgeron ; un second à ★4. Chaque nuit, ils fabriquent des armes avec les matériaux en stock. |
 | 10c | **La rue et le familier** (validé : le chat chasse les rats de la réserve et prévient parfois de la garde) | La rue du comptoir s'agrandit : on y marche avec son personnage jusqu'aux lieux du quartier (marché, banque, forge, fontaine, plus tard le petit bar), en plus des raccourcis depuis la maison. En s'y promenant le soir, on croise le chat de gouttière : on le nourrit quelques soirs de suite, et il nous adopte (premier familier). |
 | 11 | **Aider pendant l'aventure** | Messages de détresse, le grand aigle, les mercenaires. |
@@ -2580,3 +2581,18 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
   petits face à la fortune du milieu de partie : un plaisir de confiance plutôt qu'une source d'argent.
 - **La mise noire** (côté ombre, au marché noir) et les autres planches validées (collections, messages de détresse,
   envie de partir) viennent ensuite.
+
+
+### La mise noire : construite (20/10, v1.20)
+- Règles dans **src/mises.js** (MISE_NOIRE, coteContre, parierContre, pariNoirAuRetour) ; la page dans
+  **MarcheNoirAnnee.js** (pageParisNoirs), un 4e bouton dans la rangée du bas du marché noir.
+- La cote = 0,85 ÷ (1 − ses chances), arrondie au demi, entre 1,5 et 6 : parier contre un aventurier bien équipé
+  rapporte gros s'il échoue, mais il échoue rarement ; le vrai coup d'ombre (piéger son baluchon puis parier contre lui)
+  reste possible, et coûte cher en lumière.
+
+### Question du joueur (20/10) : novices et aguerris vainqueurs 9 fois sur 10, trop ?
+- Mesure (300 missions par case, v1.19) : **avec le baluchon complet**, un novice revient vainqueur 95 % (★1), 82 % (★2),
+  58 % (★3 et ★4) ; un aguerri 96 / 87 / 65 / 59 % ; un vétéran 100 / 99 / 91 / 91 %. **À moitié rempli**, c'est déjà
+  la catastrophe (5 à 26 % de vainqueurs, 70 à 90 % de morts) ; sans rien, presque toujours la mort.
+- Le « 9 fois sur 10 » ne vaut donc que pour les contrées faciles et le baluchon complet. Proposition de Claude (en
+  attente de l'accord du joueur, car elle change la difficulté de tout le jeu) : voir le message du 20/10.

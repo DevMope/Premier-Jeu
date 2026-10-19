@@ -232,8 +232,10 @@ class MarcheNoirScene extends Phaser.Scene {
     choix.forEach(([t, a], i) => this.bouton(30 + l * (i + 0.5), 452, l - 14, t, a));
     // (v0.98) toute l'année : le coin bar, la fosse, le bras de fer de Mog
     const annee = [['Au Gobelet Fêlé (le bar)', () => this.pageBar()], ['La fosse (les paris)', () => this.pageFosse()], ['Le bras de fer', () => this.pageBrasDeFer()]];
+    if (typeof cibleParisNoirs === 'function') annee.push(['Grisouille (paris contre)', () => this.pageParisNoirs()]);   // (v1.20)
     if (this.fete) annee.unshift(['🏮 La Nuit des Brumes', () => this.pageBrumes()]);   // (v1.01)
-    const la = this.fete ? 184 : 236, pas = this.fete ? 196 : 250, x0 = this.fete ? 100 : 140;
+    // (v1.20) les boutons se partagent la largeur, jusqu'au bouton « Remonter »
+    const la = Math.min(236, (770 - (annee.length - 1) * 10) / annee.length), pas = la + 10, x0 = 30 + la / 2;
     annee.forEach(([t, a], i) => this.bouton(x0 + i * pas, 494, la, t, a));
     this.bouton(870, 494, 130, 'Remonter', () => this.partir(true));
     this.texteRisque();

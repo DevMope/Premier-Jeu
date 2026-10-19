@@ -806,6 +806,7 @@ const BAREME_CAMP = {
   denoncerMafia: { camp: 'bien', n: 4, texte: 'Livrer la Main Noire' },
   ame: { camp: 'mal', n: 1, texte: 'Offrir une âme à la Faucheuse' },
   piege: { camp: 'mal', n: 2, texte: 'Un piège, un service mafieux' },
+  miseNoire: { camp: 'mal', n: 2, texte: 'Parier contre un aventurier' },
   commande: { camp: 'mal', n: 2, texte: 'Une commande des Bannis' },
   decoSombre: { camp: 'mal', n: 2, texte: "Une décoration d'ombre" },
   missionO: { camp: 'mal', n: 3, texte: 'Mission réussie pour les Bannis' },
@@ -1091,7 +1092,7 @@ const MOIS = ['Mois des Semailles', 'Mois des Moissons', 'Mois des Brumes', 'Moi
 // --- La comptabilité ---
 // Les catégories de recettes et de dépenses, pour l'ardoise et les statistiques.
 const POSTES = {
-  butins: 'Parts de butin', mises: 'Mises sur les aventuriers', reparations: 'Réparations', soins: 'Soins', encheres: 'Enchères',
+  butins: 'Parts de butin', mises: 'Mises sur les aventuriers', parisNoirs: 'Paris contre les aventuriers', reparations: 'Réparations', soins: 'Soins', encheres: 'Enchères',
   jeux: 'Jeux', cadeaux: 'Cadeaux', marche: 'Achats au marché', express: 'Marchand express',
   trouvailles: 'Trouvailles', reserve: 'Agrandissements', dedommagements: 'Dédommagements',
   remboursements: 'Remboursements de prêts', dons: 'Dons au mendiant', prets: 'Prêts reçus', salaires: 'Salaires',

@@ -48,3 +48,40 @@ function texteMise(m, v) {
   if (!m.rendu) return `Ta mise sur ${prenom} (${m.mise} p.) est perdue.`;
   return `Ta mise sur ${prenom} : ${m.mise} p. → ${m.rendu} p.${m.rendu < m.mise ? ' (revenu sans rien, il te rend la moitié)' : ''}`;
 }
+
+// --- (v1.20, planche 47 v3) La mise noire : au marché noir, chez Grisouille, parier CONTRE un aventurier parti en
+// mission. S'il échoue (revenu sans rien, ou mort), ta mise × la cote ; s'il réussit, perdue. Un geste d'ombre ;
+// et s'il meurt, la Faucheuse t'aime un peu plus. La cote suit ses vraies chances : bien équipé, elle est haute.
+const MISE_NOIRE = { mise: [10, 300], pas: 10, max: 3, coteMin: 1.5, coteMax: 6, marge: 0.85, faveur: 1 };
+
+function coteContre(parti) {
+  const p = Phaser.Math.Clamp(parti.chance == null ? 0.7 : parti.chance, 0.05, 0.95);
+  return Phaser.Math.Clamp(Math.round(MISE_NOIRE.marge / (1 - p) * 2) / 2, MISE_NOIRE.coteMin, MISE_NOIRE.coteMax);
+}
+function parisNoirsEnCours(G) { return (G.partis || []).filter(p => !p.termine && p.voyageur.pariNoir).length; }
+// Ceux sur qui on peut parier ce soir : partis, pas rentrés, pas déjà « misés » (on ne parie pas pour et contre)
+function cibleParisNoirs(G) { return enMission(G).filter(p => p.retour > G.jour && !(p.voyageur.mise > 0) && !p.voyageur.pariNoir); }
+
+function parierContre(G, parti, mise) {
+  if (parisNoirsEnCours(G) >= MISE_NOIRE.max) return { erreur: `« Trois paris à la fois, c'est assez. Reviens quand l'un d'eux sera rentré... ou pas. »` };
+  if (!peutPayer(G, mise)) return { erreur: manqueArgent(G, mise, "Pas assez d'argent pour cette mise.") };
+  const cote = coteContre(parti);
+  payer(G, mise, 'parisNoirs');
+  parti.voyageur.pariNoir = { mise, cote };
+  pencher(G, 'miseNoire', { qui: parti.voyageur.nom });
+  return { ok: true, cote };
+}
+
+// À son retour : Grisouille paie (ou garde ta mise). Renvoie une petite phrase de narration, ou null.
+function pariNoirAuRetour(G, parti) {
+  const v = parti.voyageur, r = parti.resultat, pn = v.pariNoir;
+  if (!pn || parti.pariNoirRegle) return null;
+  parti.pariNoirRegle = true;
+  const prenom = v.nom.split(' ')[0];
+  if (r.vivant && !r.echec) { G.stats.parisNoirs = (G.stats.parisNoirs || 0) - pn.mise; return `(Au marché noir, ton pari contre ${prenom} est perdu.)`; }
+  const gain = Math.round(pn.mise * pn.cote);
+  encaisser(G, gain, 'parisNoirs');
+  G.stats.parisNoirs = (G.stats.parisNoirs || 0) + gain - pn.mise;
+  if (!r.vivant) G.faucheuse.faveur = (G.faucheuse.faveur || 0) + MISE_NOIRE.faveur;
+  return `(Grisouille te doit ${gain} p. pour ton pari contre ${prenom} : la bourse est glissée sous ta porte.)`;
+}

@@ -2269,6 +2269,8 @@ function terminerAventure(G, parti) {
   }
   // (v1.19) la mise : × 1,6 s'il revient vainqueur, la moitié s'il revient sans rien, perdue s'il meurt
   if (typeof miseAuRetour === 'function') { parti.mise = miseAuRetour(G, parti); const t = texteMise(parti.mise, v); if (t) message = (message ? message + ' ' : '') + t; }
+  // (v1.20) la mise noire, chez Grisouille
+  if (typeof pariNoirAuRetour === 'function') { const t = pariNoirAuRetour(G, parti); if (t) message = (message ? message + ' ' : '') + t; }
   parti.bilan = { gain, message };
   const h = G.habitues.find(x => x.nom === v.nom);
   parti.progression = { avant, apres: { niveau: (h && h.niveau) || v.niveau, succes: succesDe(G, v.nom), relation: niveauRelation(G, v.nom).nom, reputation: G.reputation }, gain };

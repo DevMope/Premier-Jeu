@@ -124,6 +124,59 @@ Object.assign(MarcheNoirScene.prototype, {
     this.combattants.forEach((p, i) => this.tweens.add({ targets: p, y: 314, duration: 500 + i * 90, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }));
   },
 
+  // --- (v1.20, planche 47 v3) La mise noire : Grisouille, au pied de l'escalier, prend les paris CONTRE les aventuriers ---
+  pageParisNoirs(message = null) {
+    const G = this.G, cibles = cibleParisNoirs(G), enCours = enMission(G).filter(p => p.voyageur.pariNoir);
+    this.ouvrirVue(0.2);
+    creerBoursesHD(this);
+    this.titreCoin.setText('Les paris contre');
+    // l'ardoise accrochée au mur, écrite à la craie
+    this.vueObj(this.add.image(800, 112, panneauHD(this, 236, 152, 'ardoise')).setScale(2), 3.8);
+    const craie = (x, y, t, taille = 13, c = '#ece6d6', o = 0) => this.vueObj(this.add.text(x, y, t, style(taille, c, { fontStyle: 'bold' })).setOrigin(o, 0.5).setAlpha(0.92), 3.81);
+    craie(800, 52, 'PARIS CONTRE', 14, '#f4eedc', 0.5);
+    this.vueObj(this.add.rectangle(800, 63, 140, 2, 0xece6d6, 0.7), 3.81);
+    const lignes = [...enCours.map(p => [p, true]), ...cibles.map(p => [p, false])].slice(0, 3);
+    if (!lignes.length) craie(800, 110, 'personne en route', 12, '#b8b2a2', 0.5);
+    lignes.forEach(([p, pris], i) => {
+      craie(696, 78 + i * 34, p.voyageur.nom.length > 18 ? p.voyageur.nom.slice(0, 17) + '…' : p.voyageur.nom, 11, pris ? '#f0c870' : '#ece6d6');
+      craie(696, 92 + i * 34, ZONES[p.voyageur.zone] ? ZONES[p.voyageur.zone].nom : '', 9, '#b8b2a2');
+      craie(906, 84 + i * 34, pris ? `${p.voyageur.pariNoir.mise} p. ✓` : `${String(coteContre(p)).replace('.', ',')} contre 1`, 12, '#f0c870', 1);
+    });
+    // Grisouille et sa bourse sur un vieux tonneau ; toi en face
+    const tg = this.vueObj(this.add.graphics(), 3.77);
+    tg.fillStyle(0x3a2412).fillRoundedRect(740, 318, 44, 50, 6).fillStyle(0x5a3a1e).fillRoundedRect(743, 321, 38, 44, 5);
+    tg.fillStyle(0x7a7e86).fillRect(740, 328, 44, 4).fillRect(740, 354, 44, 4); tg.fillStyle(0x2a1a0c).fillRect(760, 321, 2, 44);
+    this.vueObj(this.add.image(762, 320, 'bourseHD3').setOrigin(0.5, 1).setScale(1.8), 3.79);
+    const gob = this.corpsVue(705, 368, { nom: 'Grisouille', race: 'gobelin', niveau: 'veteran' }, 5.4, 3.78).setFlipX(true);
+    this.tweens.add({ targets: gob, scaleY: gob.scaleY * 1.02, duration: 700, yoyo: true, repeat: -1 });
+    this.vueObj(this.add.image(610, 368, textureJoueur(this, G, 'troisQuarts')).setOrigin(0.5, 1).setScale(echelleJoueur(6.4)), 3.78);
+    // le panneau du bas
+    this.vider();
+    const cible = cibles[0];
+    const dit = !cible ? "Grisouille, le preneur de paris : « Personne en route sur qui parier ce soir. Envoie-moi des aventuriers, et reviens. »"
+      : `Grisouille, le preneur de paris : « Tu paries qu'il n'en revient pas ? ${String(coteContre(cible)).replace('.', ',')} contre 1 sur ${cible.voyageur.nom.split(' ')[0]}. Personne n'en saura rien... »`;
+    this.texte(40, 374, message || dit, 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    if (cible) this.texte(40, 400, 'La cote suit ses vraies chances : bien équipé, elle monte. Ton flair les connaît aussi.', 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    if (cibles.length && parisNoirsEnCours(G) < MISE_NOIRE.max) {
+      const [mn, mx] = MISE_NOIRE.mise;
+      this.miseNoire = Phaser.Math.Clamp(this.miseNoire || 30, mn, mx);
+      const texteMise = this.texte(160, 440, `Mise : ${this.miseNoire} p.`, 15, '#f3d98a', { fontStyle: 'bold' }).setOrigin(0.5);
+      const changer = d => { this.miseNoire = Phaser.Math.Clamp(this.miseNoire + d, mn, Math.min(mx, Math.max(mn, G.argent))); texteMise.setText(`Mise : ${this.miseNoire} p.`); };
+      this.bouton(70, 440, 50, '−', () => changer(-MISE_NOIRE.pas));
+      this.bouton(250, 440, 50, '+', () => changer(MISE_NOIRE.pas));
+      const n = Math.min(3, cibles.length), l = n === 1 ? 300 : n === 2 ? 250 : 180;
+      cibles.slice(0, n).forEach((p, i) => this.bouton(300 + l / 2 + 20 + i * (l + 10), 440, l, `Contre ${p.voyageur.nom.split(' ')[0]} (${String(coteContre(p)).replace('.', ',')} contre 1)`, () => {
+        const r = parierContre(G, p, this.miseNoire);
+        if (r.erreur) return this.pageParisNoirs(r.erreur);
+        Sauvegarde.maintenant(G, 'Nuit');
+        Son.jouer('pieces'); this.majBourse();
+        this.pageParisNoirs(`Grisouille crache dans sa main et tope : « ${this.miseNoire} p. contre ${p.voyageur.nom.split(' ')[0]}, à ${String(r.cote).replace('.', ',')} contre 1. S'il échoue, je te paie. »`);
+      }, peutPayer(G, this.miseNoire)));
+    } else if (cibles.length) this.texte(40, 440, "« Trois paris à la fois, c'est assez. »", 13, '#a89080', { fontStyle: 'italic' });
+    this.texte(40, 482, "S'il échoue (sans rien, ou mort), ta mise × la cote. Un geste d'ombre (☾), et la Faucheuse s'y intéresse.", 11, '#b89a80', { fontStyle: 'italic' });
+    this.bouton(860, 503, 140, '◂ Retour', () => this.accueil());
+  },
+
   pageFosse(message = null) {
     const G = this.G, cb = soireeAnnee(G).combat;
     this.ouvrirVue();
