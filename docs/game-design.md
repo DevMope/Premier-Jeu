@@ -2070,3 +2070,18 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
   jours d'écart) ; les anciens reviennent ensuite et poursuivent leur fil d'histoires.
 - **Pas encore fait** : le camp d'entraînement (après les trois améliorations ; sa planche d'abord) ; le bar (planche
   43 v2 d'abord, d'après les réponses du joueur).
+
+### Question du joueur (19/10) : équilibrer l'orphelinat face au bar, par un avantage au combat
+- **La demande** : le bar aura beaucoup plus de choses à faire que l'orphelinat. Donner à l'orphelinat un avantage de
+  même poids, par exemple dans les combats de la suite du jeu.
+- **Avis de Claude** (à valider) : oui. Chaque voie garde son caractère au combat.
+  - **L'orphelinat, « les nôtres »** : au dernier arc, jusqu'à trois anciens se battent à tes côtés, à leur niveau
+    (le camp d'entraînement les fait plus forts). Quand tu pars apprendre à te battre, tu t'entraînes au camp : tu
+    commences le combat un rang plus haut, avec une technique de plus. Un ancien mort en mission manque ce jour-là.
+  - **Le bar, « l'argent et les oreilles »** : plus d'argent pour un meilleur équipement, et des rumeurs qui révèlent
+    les faiblesses des ennemis avant le combat. Avantage plus petit au combat, puisque le bar rapporte déjà de l'argent
+    et du jeu.
+  - **Le réglage** : les deux voies arrivent au combat final à peu près aussi fortes, par des chemins différents. Les
+    chiffres se règlent par simulation quand le combat existera.
+  - **Le dire au joueur au moment du choix** : sur la lettre du notaire, l'orphelinat dit « plus calme, mais ils se
+    souviendront de toi le jour venu ».
