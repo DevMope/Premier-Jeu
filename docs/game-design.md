@@ -2617,3 +2617,10 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
   novice −0,06, aguerri −0,03, comptés une seule fois et non plus aussi dans le danger). Vainqueurs avec le baluchon
   complet : novice 94 / 78 / 50 / 50 %, aguerri 96 / 84 / 55 / 55 %. L'économie d'un joueur prudent ne bouge pas
   (même courbe qu'avant à ±3 %). Si le joueur veut la version plus dure (aussi en ★1-★2), il suffit de régler `bonus`.
+
+### Planche 51 : les reliques du Conseil (21/10, à valider)
+- **51** (docs/planches-v059/planche-51-reliques-du-conseil.png) : un nouveau dessin pour les cinq reliques de la vitrine
+  (une à chaque commande royale livrée) : le sceau de cire rouge (la tour des Gardiens frappée dedans, deux rubans bleus),
+  la clé de la salle des Gardiens (or ancien), la plume de l'archiviste (plume d'oie, l'encre sèche au bout), la médaille
+  du Rempart (l'étoile gravée, ruban bleu et blanc), la fiole de lumière (une lueur dorée). En attendant la validation, la
+  vitrine montre l'écu du Conseil à leur place.
