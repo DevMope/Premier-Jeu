@@ -2247,6 +2247,8 @@ function terminerAventure(G, parti) {
     parti.trouvailles = trouvailles(G, v);
     // (v1.23) une pièce pour la vitrine : l'écu de son royaume, une curiosité de Banni, un fragment de la carte ancienne
     if (typeof piecesAuRetour === 'function') { const t = piecesAuRetour(G, v); if (t) message = (message ? message + ' ' : '') + t; }
+    // (v1.24) un héros revenu de loin : ses histoires réveillent l'envie de partir
+    if (typeof penserAPartir === 'function' && ['heros', 'legende'].includes(v.niveau) && ZONES[v.zone] && ZONES[v.zone].danger >= 4) penserAPartir(G, 'heros', { zone: ZONES[v.zone].nom });
     // Il a peut-être aperçu une zone plus dangereuse, encore inconnue.
     const d = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
     // (une zone déjà découverte, ou que la réputation suffit déjà à ouvrir, ne compte pas)
@@ -3313,6 +3315,7 @@ function noterEtrangete(G, texte, v) {
   const t = accord(texte, v);   // (on compare le texte accordé : sinon « payé{e} » ≠ « payée » et l'indice revient sans fin)
   if (G.etrangetes.some(e => e.texte === t || e.texte === texte)) return;
   G.etrangetes.push({ jour: G.jour, nom: v.nom, texte: t });
+  if (typeof penserAPartir === 'function') penserAPartir(G, 'secret');   // (v1.24) chaque secret rend l'envie de savoir plus forte
 }
 
 // (v0.74) Les avis de recherche de la semaine : trois têtes, et des primes qui grimpent tant

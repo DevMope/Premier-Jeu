@@ -316,8 +316,10 @@ class BureauScene extends Phaser.Scene {
 
   creerTiroirs() {
     // (v0.82) un tiroir de plus, vers la forge, une fois qu'elle est proposée
-    const tiroirs = forgeProposee(this.G) ? [...TIROIRS, ['forge', '⚒ La forge']] : TIROIRS;
-    const pas = tiroirs.length > 7 ? 25.5 : tiroirs.length > 6 ? 29 : 34, y0 = tiroirs.length > 7 ? 288 : tiroirs.length > 6 ? 292 : 300;   // (v0.82 : avec la forge, huit tiroirs plus serrés)
+    let tiroirs = forgeProposee(this.G) ? [...TIROIRS, ['forge', '⚒ La forge']] : TIROIRS;
+    // (v1.24) le carnet de JeuneGoy, dès sa première pensée de départ
+    if (this.G.envie && this.G.envie.pensees && this.G.envie.pensees.length) tiroirs = [...tiroirs, ['carnet', 'Le carnet de JeuneGoy']];
+    const pas = tiroirs.length > 8 ? 23 : tiroirs.length > 7 ? 25.5 : tiroirs.length > 6 ? 29 : 34, y0 = tiroirs.length > 8 ? 284 : tiroirs.length > 7 ? 288 : tiroirs.length > 6 ? 292 : 300;   // (v0.82 : avec la forge, huit tiroirs plus serrés)
     tiroirs.forEach(([cle, nom], i) => {
       const y = y0 + i * pas;
       const t = this.add.image(760, y, 'tiroirHD').setScale(2, Math.min(2, pas / 17)).setInteractive({ useHandCursor: true });
@@ -362,6 +364,12 @@ class BureauScene extends Phaser.Scene {
           // (v0.60) le bilan de chacun : ce qu'il coûte, ce qu'il a fait gagner en valeur à l'atelier
           ...G.employes.map(id => { const b = bilanEmploye(G, id); return `${EMPLOYES[id].nom} : ${b.reparations} réparation${b.reparations > 1 ? 's' : ''}, +${b.valeur} p. de valeur pour ${b.cout} p. de salaire` + (b.cout >= 20 ? (b.solde >= 0 ? ' ✓' : ' (donne-lui du travail !)') : ''); })] },
       ];
+    } else if (cle === 'carnet') {
+      // (v1.24, planche 50 v3) le carnet de JeuneGoy : chaque pensée de départ, datée (les dix dernières)
+      const notes = ((G.envie || {}).pensees || []).slice(-10);
+      const blocs = notes.map(n => ({ titre: `Jour ${n.jour} · ${n.age} ans`, lignes: [n.texte.replace(/^« | »$/g, '')] }));
+      gauche = blocs.slice(0, 5); droite = blocs.slice(5);
+      if (!droite.length) droite = [{ titre: 'Le chemin parcouru', lignes: ['15 ans : rêver → 18 ans : voir → les secrets : savoir'] }];
     } else if (cle === 'etrange') {
       // (v0.60) le carnet des choses étranges : les indices glissés dans les récits
       // (les huit dernières : la page n'en tient pas plus)

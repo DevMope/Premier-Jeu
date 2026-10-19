@@ -49,7 +49,7 @@ function gagnerPiece(G, serie, piece) {
   (G.piecesNouvelles = G.piecesNouvelles || []).push(r);   // (la scène l'annonce : « Nouvelle pièce ! »)
   if (complete) {
     G.annonceCollection = `${COLLECTIONS[serie].nom}, au complet ! On vient de loin admirer la vitrine « ${COLLECTIONS[serie].titre} ».`;
-    if (serie === 'carte') G.carteAncienne = true;
+    if (serie === 'carte') { G.carteAncienne = true; if (typeof penserAPartir === 'function') penserAPartir(G, 'carte', { force: true }); }
   }
   return r;
 }

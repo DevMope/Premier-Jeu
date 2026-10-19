@@ -235,6 +235,24 @@ class HudScene extends Phaser.Scene {
     });
   }
 
+  // (v1.24, planche 50 v3) Une pensée de départ : JeuneGoy en médaillon (la pose « il pense ») et sa bulle
+  penseesEnDirect(G) {
+    if (this.penseeAffichee || this.fichePiece || !G.penseesNouvelles || !G.penseesNouvelles.length || typeof bulleDePensee !== 'function') return;
+    const p = G.penseesNouvelles.shift();
+    const md = medaillonJeuneGoy(this, 884, 132, G, 38, 128);
+    const age = this.add.text(884, 186, `${p.age} ans · ${{ reve: 'il rêve', voir: 'il veut voir', savoir: 'il veut savoir', heros: 'il rêve', carte: 'il veut voir' }[p.temps] || ''}`,
+      style(12, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#2a1a10cc', padding: { x: 6, y: 2 } })).setOrigin(0.5).setDepth(129);
+    const b = bulleDePensee(this, 676, 118, p.texte, 290, [1, 0], 128);
+    const tous = [md, age, b];
+    tous.forEach(o => o.setAlpha(0)); this.tweens.add({ targets: tous, alpha: 1, duration: 500 });
+    this.tweens.add({ targets: b, y: 114, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // (la bulle flotte un peu)
+    Son.jouer('page');
+    this.penseeAffichee = tous;
+    const fin = () => { if (this.penseeAffichee !== tous) return; this.penseeAffichee = null; this.tweens.add({ targets: tous, alpha: 0, duration: 500, onComplete: () => { tous.forEach(o => o.destroy()); if (md.masque) md.masque.destroy(); } }); };
+    this.time.delayedCall(6500, fin);
+    b.list[0].setInteractive(new Phaser.Geom.Rectangle(-145, -60, 290, 120), Phaser.Geom.Rectangle.Contains).on('pointerdown', fin);
+  }
+
   // (v1.23, planche 48 v2) Une pièce de collection gagnée : une petite fiche en haut à droite, le temps de la voir
   piecesEnDirect(G) {
     if (this.fichePiece || !G.piecesNouvelles || !G.piecesNouvelles.length || typeof dessinerPieceCollection !== 'function') return;
@@ -296,6 +314,7 @@ class HudScene extends Phaser.Scene {
       if (!sansFeu && this.bulleBuche) this.infoBuche(false);
       this.relationsEnDirect(G, s);
       this.piecesEnDirect(G);   // (v1.23) « Nouvelle pièce ! » pour la vitrine
+      this.penseesEnDirect(G);   // (v1.24) JeuneGoy pense à partir
       // (v0.84) la lumière et l'ombre
       const j = jaugeCamp(G), pal = palierCamp(G);
       if (j !== this.campAffiche) {

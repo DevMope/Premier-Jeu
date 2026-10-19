@@ -8,6 +8,7 @@ class MarcheNoirScene extends Phaser.Scene {
 
   create() {
     const G = this.G = window.GAME;
+    if (typeof penserAPartir === 'function') this.time.delayedCall(2500, () => penserAPartir(G, 'marcheNoir'));   // (v1.24) côté ombre, l'envie de savoir
     this.part = false;   // (audit v0.59 : sinon « Remonter » ne marchait plus à la 2e visite)
     this.aine = null; this.sceneAine = null;   // (v0.97)
     this.bloqueCoins = false;   // (v1.07)

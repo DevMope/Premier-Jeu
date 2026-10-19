@@ -131,6 +131,11 @@ class PromenadeScene extends Cinematique {
       this.heros.setVisible(piece.marche !== false);
       for (const b of this.boutonsComptoir) { b.fond.setVisible(index === P_COMPTOIR); b.label.setVisible(index === P_COMPTOIR); }
       if (piece.marche !== false) { this.heros.x = xHeros; this.heros.setFlipX(xHeros > piece.x + (piece.largeur || 960) / 2); }
+      // (v1.24, planche 50 v3) le soir, à la fenêtre ou dehors sous les étoiles, il pense parfois à partir
+      if (typeof penserAPartir === 'function' && (index === P_COMPTOIR || index === P_DEHORS) && penserAPartir(this.G, index === P_COMPTOIR ? 'fenetre' : 'dehors') && index === P_DEHORS) {
+        const avant = this.heros.texture.key; this.heros.setTexture(textureJoueurPose(this, this.G, 'face', 'pense'));
+        this.time.delayedCall(6000, () => { if (this.heros && this.heros.texture.key.endsWith('_pense')) this.heros.setTexture(avant); });
+      }
       if (this.compagnon) { this.compagnon.setVisible(piece.marche !== false); this.compagnon.x = Phaser.Math.Clamp(xHeros + (xHeros > piece.x + 480 ? 70 : -70), piece.x + 30, piece.x + (piece.largeur || 960) - 30); }
       this.arreterRue();
       if (index === P_COMPTOIR) this.animerRue();
