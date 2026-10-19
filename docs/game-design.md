@@ -2460,3 +2460,57 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
 - **Les poses nouvelles** du moteur des corps : « plateau » (toi, au service) et « empoigne » (le videur).
 - **Pas encore fait** : la mission secondaire « la brasserie » (planche 43 v2, bilan), le bar dans les autres villes
   (déménagements), l'ouverture du bar à un employé quand le joueur part (~85 %).
+
+### Réponses du joueur (20/10) : la frise, les places à part, l'Antre, C-3 / C-6 / C-7 en planches, l'envie de partir
+- **La frise** (artefact « La frise du Passage ») : validée. Elle range tout, du prologue à la fin, en trois états (dans le
+  jeu, validé à construire, idée).
+- **Les places à part sont toutes validées** : les monts de bambou (pandas), le lac gelé (nains) et les **pyramides des
+  momies** chez les Bannis (« toute la mécanique me plaît », à approfondir). On les fera au bon moment.
+- **L'Antre de la Bête comme diversion** : encore à définir. Elle reste une mission sur la carte, mais son rôle de leurre
+  et le dernier combat « officiel » ne sont pas faits.
+- **C-3 les mises, C-6 les collections, C-7 les messages de détresse** : c'est parti, en planches (47, 48, 49).
+- **Idée : l'envie de partir à l'aventure.** De temps en temps, JeuneGoy pense à partir : sa soif de découvrir le monde
+  et la vérité. Elle se montre surtout chez un joueur de l'ombre, qui découvre peu à peu les secrets du monde.
+  Proposition de Claude (à valider) : une bulle de pensée, rare, à des moments choisis (à la fenêtre le soir, devant la
+  carte, au retour d'un héros d'une contrée lointaine, en lisant un indice étrange) ; elle revient plus souvent avec l'âge
+  et avec les secrets découverts (les indices étranges déjà semés comptent), deux fois plus côté ombre. Ses pensées
+  changent : rêver du monde (15 ans), vouloir voir de ses yeux (18 ans), vouloir savoir la vérité (secrets découverts).
+  Elle prépare le jour où il confie le comptoir (vers 85 %).
+
+### Planches 47, 48 et 49 : les mises, les collections, les messages de détresse (20/10, à valider)
+**C-3 Les mises (planche 47)**
+- Une plaque **« Miser »** à côté de « Marchander », pour un aventurier au moins **Connaissance** qui part en mission.
+- Trois mises, selon son rang : novice 20 / 40 / 60 p., aguerri 30 / 60 / 90, vétéran 40 / 80 / 120, héros 60 / 120 / 180,
+  légende 80 / 160 / 240.
+- **Il revient vainqueur** : il te rend ta mise **× 1,6**. **Il revient sans rien** : la moitié. **Il meurt** : perdue.
+- Ta confiance l'encourage : **+1 de relation**, et **+3 % de chances** (il s'équipe mieux en route).
+- **Trois mises en cours au plus.** Une petite pièce dorée près de son nom, dans la liste « En mission ».
+- À trancher : **la mise noire** (côté ombre, au marché noir) : parier contre un aventurier, sur son échec. Gros gain
+  s'il échoue, un geste d'ombre, et la Faucheuse s'y intéresse.
+
+**C-6 Les collections (planche 48)**
+- **La vitrine des collections**, un meuble du comptoir : une étagère par série, la silhouette des pièces qui manquent.
+- **Six séries** :
+  1. **Les trophées des royaumes** (7) : rapportés parfois (1 fois sur 5) par un aventurier revenu vainqueur d'une
+     contrée ★3 ou plus, la première fois. Complète : titre « Le comptoir des sept royaumes », +1 client par jour.
+  2. **Les armes des peuples** (8) : une arme de chaque peuple, forgée ou achetée. Complète : +5 % de chance de « bel
+     ouvrage » à la forge.
+  3. **Les souvenirs de la nymphe** (5) : un tous les 10 vœux à la fontaine. Complète : un vœu exaucé par saison.
+  4. **Les reliques du Conseil** (5) : gagnées aux enchères (piste B). Complète : l'impôt du Conseil −10 %.
+  5. **Les curiosités des Bannis** (5) : au marché noir et dans les contrats de l'ombre. Complète : recel +5 %.
+  6. **La carte ancienne** (6 fragments) : très rares, dans les trouvailles des lieux anciens et des vestiges. Complète :
+     le tracé très ancien, à l'ouest de la Grande Muraille, apparaît sur la carte (un lieu caché), et JeuneGoy a très
+     envie d'y aller (lien avec l'envie de partir et la vérité).
+- **Le collectionneur** passe parfois au comptoir et veut racheter une pièce, très cher : vendre défait la série.
+- Une série complète : la gazette en parle, et le titre s'affiche au bureau.
+
+**C-7 Les messages de détresse (planche 49)**
+- Un **pigeon** se pose à la fenêtre du comptoir pendant une mission de 2 jours ou plus. Au plus un par semaine.
+- Sa lettre dit ce qui manque, selon l'épreuve qui l'attend : « Borin est coincé aux Pics : il lui faut 2 torches. »
+- Quatre réponses :
+  - **L'aigle du Conseil** (pas pour un Banni) : sûr, cher (15 p. × étoiles de la contrée, plus les objets) ;
+  - **un mercenaire** : 8 p. × étoiles, plus les objets ; une heure de ta journée ; il arrive 4 fois sur 5 ;
+  - **le corbeau de la Main Noire** (ombre) : 5 p., plus les objets, et un service dû ;
+  - **ne rien faire** : ses chances baissent de 15 %.
+- Les objets arrivent dans son baluchon : ses chances remontent, **+2 de relation** (« il ne l'oubliera pas »).
+- **Le récit montre la suite** : l'aigle qui lâche les torches dans la grotte, le mercenaire qui arrive, ou l'attente.
