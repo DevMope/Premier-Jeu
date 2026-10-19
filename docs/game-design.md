@@ -2529,3 +2529,21 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
   fenêtre (pas en lévitation) ; il faut **plusieurs dessins** du pigeon et de l'aigle (un pigeon ne vole pas les ailes
   fermées), et l'aigle doit pouvoir **voler de gauche à droite** pour les animations.
 - **L'envie de partir** : oui pour une planche (planche 50).
+
+### Planches 47 v2, 48 v2, 49 v2 et 50 (20/10, à valider)
+- **47 v2** (docs/planches-v059/planche-47-v2-les-mises.png) : la mise noire dessinée dans la **vraie fosse du marché
+  noir** : l'ardoise « Paris contre » écrite à la craie, Grisouille le preneur de paris (gobelin), sa bourse sur un vieux
+  tonneau, le panneau du bas comme les autres paris (mise − / +, « Parier contre Borin (3 contre 1) »). S'il échoue :
+  ta mise × la cote ; un geste d'ombre, et la Faucheuse s'y intéresse.
+- **48 v2** (planche-48-v2-les-collections.png) : la carte ancienne faite de **la vraie carte du monde**, vieillie,
+  tachée, déchirée en six morceaux posés sur le bureau à la bougie ; deux morceaux manquent ; le tracé oublié repassé à
+  l'encre rouge, à l'ouest de la Grande Muraille ; JeuneGoy en médaillon qui y pense.
+- **49 v2** (planche-49-v2-messages-de-detresse.png) : de nouveaux oiseaux, peints comme les objets du jeu. **Pigeon et
+  corbeau** : posé (sur le rebord de la fenêtre, il picore), ailes hautes, ailes basses (deux images de battement).
+  **L'aigle du Conseil** : de profil, trois battements (ailes hautes, à plat, basses) pour voler de gauche à droite (et
+  retourné, de droite à gauche), posé redressé (sur le bras du fauconnier).
+- **50** (planche-50-l-envie-de-partir.png) : **l'envie de partir**, en trois temps : *rêver* (15 ans, le soir à la
+  fenêtre du comptoir, une bulle de pensée rare), *voir* (18 ans, dehors sous les étoiles, plus souvent avec l'âge),
+  *savoir* (côté ombre, chaque secret découvert la rend plus forte, deux fois plus souvent). Elle vient aussi après le
+  récit d'un héros revenu de loin. **Le carnet de JeuneGoy**, au bureau, garde chaque pensée datée. **Vers 85 %** : il
+  confie le comptoir (à un ancien de l'orphelinat, à un employé...) et prend la route, le baluchon à l'épaule.
