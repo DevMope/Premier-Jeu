@@ -797,8 +797,37 @@ function creerCarteHD(scene) {
       }
     }
   };
-  fleuve([[440, 58], [400, 110], [350, 160], [300, 215], [250, 270], [215, 300], [175, 320], [120, 330], [70, 336], [40, 338]], 3);
-  fleuve([[520, 225], [490, 260], [470, 300], [455, 340], [445, 368]], 2);
+  // (v1.15) Les eaux du monde : des lacs (dont l'étang où l'on pêche, près de ton comptoir), une baie au sud-ouest,
+  // le lac gelé des Nains, le Fleuve des Cendres chez les Bannis, et des affluents. Une forme d'eau, bruitée sur ses
+  // bords, cernée d'encre ; les fleuves sont tracés par-dessus.
+  t.rampes.glace = rampe(melangeCouleur(0xa8d0e8, 0xe8d4a4, 0.35));
+  t.rampes.cendres = rampe(melangeCouleur(0x4a4a6a, 0xe8d4a4, 0.35));
+  const eau = (cx, cy, rx, ry, mat, graine) => {
+    const dedans = (x, y) => { const nx = (x - cx) / rx, ny = (y - cy) / ry; return nx * nx + ny * ny + (fbm(x * 0.09, y * 0.09, graine) - 0.5) * 0.7 < 1; };
+    for (let y = Math.floor(cy - ry - 4); y <= cy + ry + 4; y++) for (let x = Math.floor(cx - rx - 4); x <= cx + rx + 4; x++) {
+      if (!t.dans(x, y) || !dedans(x, y)) continue;
+      t.poser(x, y, mat, 3 + (fbm(x * 0.1, y * 0.1, graine + 1) > 0.6 ? 1 : 0) + ((x * 7 + y * 3) % 29 === 0 ? 1 : 0));
+      if (!dedans(x - 1, y) || !dedans(x + 1, y) || !dedans(x, y - 1)) encre(x, y, 1); else if (!dedans(x, y + 1)) encre(x, y, 2);
+    }
+  };
+  eau(323, 118, 58, 24, 'mer', 791);      // le lac de Lune, chez les Elfes (la contrée « le lac » est en son milieu)
+  eau(436, 362, 15, 8, 'fleuve', 792);    // l'étang du Moulin, près de ton comptoir : on y pêche
+  eau(120, 402, 130, 34, 'mer', 793);     // la baie des Brisants, au sud-ouest
+  eau(468, 34, 20, 8, 'glace', 794);      // le lac gelé, entre les Pics et la Forge des Nains
+  fleuve([[440, 58], [400, 110], [350, 160], [300, 215], [250, 270], [215, 300], [175, 320], [120, 330], [70, 336], [40, 338]], 4);
+  fleuve([[300, 138], [292, 172], [298, 210]], 2);                                   // l'affluent qui descend du lac de Lune
+  fleuve([[520, 225], [490, 260], [470, 300], [455, 340], [442, 358]], 2);           // le ruisseau de la Comté, jusqu'à l'étang
+  fleuve([[560, 120], [528, 150], [500, 172], [470, 180], [430, 168], [398, 128]], 3); // le torrent des Nains, qui rejoint le Grand Fleuve
+  { // le Fleuve des Cendres, chez les Bannis : il passe sous le pont, une eau grise et lente
+    const sauve = t.rampes.fleuve; t.rampes.fleuve = t.rampes.cendres;
+    fleuve([[902, 8], [896, 80], [906, 150], [890, 220], [873, 270], [862, 312], [880, 368], [888, 398]], 3);
+    t.rampes.fleuve = sauve;
+  }
+  // une barque sur le Grand Fleuve, une tortue géante qui nage dans la mer d'Opale (on voit sa carapace et ses nageoires)
+  for (let k = -4; k <= 4; k++) encre(262 + k, 262 + Math.abs(k) * 0.3, 0); encre(262, 258, 1); encre(262, 259, 1); encre(263, 257, 2);
+  { const tx = 26, ty = 250; for (let a = 0; a < Math.PI; a += 0.08) encre(tx + Math.cos(a) * 9, ty - Math.sin(a) * 5, 1);
+    for (let k = -9; k <= 9; k++) encre(tx + k, ty, 1); for (const [dx, dy] of [[-10, 1], [-11, 2], [10, 1], [11, 2], [12, -1], [13, -1]]) encre(tx + dx, ty + dy, 2);
+    for (let k = -5; k <= 5; k += 5) encre(tx + k, ty - 3, 3); }
   // Les routes : depuis ton comptoir, chaque contrée se relie à la plus proche déjà reliée (en pointillé)
   const noeuds = [[MONDE_CARTE.comptoir.x / 2, MONDE_CARTE.comptoir.y / 2]];
   const reste = Object.values(ZONES).filter(z => z.camp !== 'mal').map(z => [z.x / 2, z.y / 2]);

@@ -2372,3 +2372,29 @@ Subtiles, mais qu'un joueur attentif peut remarquer :
   **cryptes vampires** sous les vignes d'un domaine noble ; une **berceuse** que fredonnent les plus vieux sans savoir
   d'où elle vient ; des **totems** pris dans le tronc d'un vieil arbre ; un **mot de la langue orque** gravé sur une
   vieille cloche.
+
+### Réponses du joueur (20/10, suite) : planche 44 v3 validée, Maître Ombrel, tout le reste validé
+- **Planche 44 v3 validée.**
+- **Le représentant des Bannis au Conseil** : **Maître Ombrel Doux-Verbe**, le gobelin lettré (lunettes, rouleaux sous
+  le bras, toujours un « compromis » à la bouche). Naïf, choisi par le Grand Sage, à la botte du Conseil sans le
+  savoir. **Il passe au comptoir** et dit des choses qui ont l'air justes, mais qui servent le Sage.
+- **La ville vivante** : toutes les idées sont validées (oiseaux, rongeurs, chantiers, enfants, lavoir, rémouleur,
+  arroser ses plantes, ricochets, osselets, lanternes...). **Ajout : un petit lac pour pêcher.**
+- **Les déménagements** : toutes les propositions sont validées (orphelinat et bar qui tournent seuls avec une lettre
+  et une rente, un avantage par amélioration, un bâtiment propre à chaque royaume, la ligne régulière de petites
+  tortues pour revisiter, le prix ≈ trois mois de bénéfice avec plancher et prêt de déménagement, le voyage vécu à bord
+  de plus en plus long, le Conseil des Bannis avec Garrick et les dons).
+- **Les vestiges des Bannis** : tous validés.
+- **Idées en plus** :
+  - **dessiner les cours d'eau et les mers sur la carte du jeu** ;
+  - **les tortues** de déménagement et de voyage **nagent autant qu'elles marchent** : des nageoires **et** des pattes ;
+  - **des chimères façon griffons** (World of Warcraft) qui se débloquent **plus tard** et permettent de voyager plus
+    vite.
+- **Encore ouvert** : le lieu de chaque nouvelle ville (dans les cieux, sous l'eau, dans les arbres géants, dans la
+  montagne, sur un lac gelé...) et à quel royaume il va.
+- **Planche 46 : les eaux de la carte** (docs/planches-v059/planche-46-les-eaux-de-la-carte.png, à valider) : la baie
+  des Brisants (sud-ouest), le lac de Lune (Elfes, autour de la contrée « le lac »), le lac gelé (Nains), l'étang du
+  Moulin près du comptoir (pour la pêche), le torrent des Nains et l'affluent du lac qui rejoignent le Grand Fleuve
+  (élargi), le ruisseau de la Comté jusqu'à l'étang, le Fleuve des Cendres chez les Bannis (gris, sous le pont) ; une
+  barque sur le fleuve et une tortue géante qui nage dans la mer d'Opale. Les noms s'écrivent à la plume. **Dessiné dans
+  le jeu (`creerCarteHD`), pas encore publié sur l'artefact** (en attente de validation).

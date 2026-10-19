@@ -119,7 +119,8 @@ class CarteScene extends Phaser.Scene {
       this.monde.add(groupe);
       this.etiquettes.push({ o: groupe, royaume: true });
     }
-    for (const [x, y, nom, angle] of [[60, 520, "Mer d'Opale", -80], [1440, 600, 'La Grande Muraille', 88], [300, 540, 'Le Grand Fleuve', -42]]) {
+    for (const [x, y, nom, angle] of [[60, 520, "Mer d'Opale", -80], [1440, 600, 'La Grande Muraille', 88], [300, 540, 'Le Grand Fleuve', -42],
+      [646, 196, 'Lac de Lune', 0], [872, 744, "L'étang du Moulin", 0], [240, 780, 'Baie des Brisants', 0], [936, 50, 'Lac gelé', 0], [1820, 300, 'Fleuve des Cendres', 88]]) {
       const t = this.add.text(x, y, nom, style(12, '#3b2a4a', { fontStyle: 'italic', stroke: '#f0e2bc', strokeThickness: 3 })).setOrigin(0.5).setAngle(angle).setAlpha(0.8);
       this.monde.add(t);
       this.etiquettes.push({ o: t, detail: true });
