@@ -89,7 +89,7 @@ Object.assign(CounterScene.prototype, {
     }
     const P = this.panneauRoyal, d = P.dyn;
     d.removeAll(true);
-    const titre = this.add.text(0, -60, e.complet ? 'Commande royale : prête !' : 'Commande royale', style(15, e.complet ? '#2f5a2a' : '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5);
+    const titre = this.add.text(0, -60, e.complet ? 'Commande scellée : prête !' : 'Commande scellée', style(15, e.complet ? '#2f5a2a' : '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5);
     for (let k = 15; titre.width > 220 && k >= 11; k--) titre.setFontSize(k);
     d.add(titre);
     this.lignesRoyales(d, e, -34);
@@ -119,7 +119,7 @@ Object.assign(CounterScene.prototype, {
     }
     F.add(this.add.image(0, 0, panneauHD(this, 236, 214)).setScale(2));
     F.add(this.sceauConseil(0, -86, 0.9, etat !== 'livraison' && etat !== 'manquee'));
-    F.add(this.add.text(0, -60, 'Commande royale', style(15, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
+    F.add(this.add.text(0, -60, 'Commande scellée', style(15, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
     if (etat === 'lue') {
       // la lettre ouverte, en petit : un clic la rouvre en grand
       const n = Object.keys(c.objets).length, pas = n >= 4 ? 24 : 28;
@@ -130,7 +130,7 @@ Object.assign(CounterScene.prototype, {
         for (let s = 13; t.width > 180 && s >= 9; s--) t.setFontSize(s);
         F.add(t);
       });
-      F.add(this.add.text(0, 66, `Le jour ${c.limite} · ${c.prime} p.`, style(14, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
+      F.add(this.add.text(0, 66, c.pardon ? `Le jour ${c.limite} · le pardon` : `Le jour ${c.limite} · ${c.prime} p.`, style(14, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
       F.add(this.add.text(0, 88, 'clic : relire la lettre', style(11, '#7a5a3a', { fontStyle: 'italic' })).setOrigin(0.5));
       F.setSize(236, 214).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.lireCommandeRoyale(false));
       return;
@@ -140,8 +140,8 @@ Object.assign(CounterScene.prototype, {
       if (etat === 'manquee') this.tamponRoyal(F, 10, 76, 'MANQUÉE', 150);
       return;
     }
-    // livrée : la prime, la faveur du Conseil, l'impôt moitié prix
-    F.add(this.add.text(0, -14, `+${info.prime} p.`, style(26, '#2f5a2a', { fontStyle: 'bold' })).setOrigin(0.5));
+    // livrée : la prime, la faveur du Conseil, l'impôt moitié prix (ou, pour la commande du pardon : le sceau rendu)
+    F.add(this.add.text(0, -14, info.pardon ? 'Pardonné' : `+${info.prime} p.`, style(26, '#2f5a2a', { fontStyle: 'bold' })).setOrigin(0.5));
     F.add(this.add.text(0, 18, '+1 de réputation', style(14, '#2f5a2a', { fontStyle: 'bold' })).setOrigin(0.5));
     F.add(this.add.text(0, 38, "et l'impôt du mois prochain moitié prix", style(11, '#2f5a2a', { fontStyle: 'italic' })).setOrigin(0.5));
     this.tamponRoyal(F, 40, 74, 'LIVRÉE', 110);
@@ -177,7 +177,8 @@ Object.assign(CounterScene.prototype, {
     if (!c || c.etat !== 'proposee') { this.direHeraut('« Le Conseil des Gardiens te salue, marchand. »'); return this.auRevoirHeraut(); }
     Son.jouer('fanfare');
     this.geste('salut', 1800);
-    this.direHeraut("« Par ordre du Conseil des Gardiens ! Ton comptoir fait parler de lui jusqu'au palais. Voici une commande royale, marchand : lis-la bien. »");
+    this.direHeraut(c.pardon ? "« Par ordre du Conseil des Gardiens ! Il t'offre une chance de te racheter, marchand : la commande du pardon. Pas de prime, seulement ton honneur. »"
+      : "« Par ordre du Conseil des Gardiens ! Ton comptoir fait parler de lui jusqu'au palais. Voici une commande scellée, marchand : lis-la bien. »");
     this.feuilleRoyale('scellee');
     this.bouton('Briser le sceau', () => this.lireCommandeRoyale(true));
   },
@@ -199,7 +200,7 @@ Object.assign(CounterScene.prototype, {
     if (!this.textures.exists('embleme_conseil')) creerEmblemesHD(this);
     this.grandPapier(560, 400, L => {
       L.add(this.add.image(0, -150, 'embleme_conseil').setScale(0.55));
-      L.add(this.add.text(0, -112, 'COMMANDE ROYALE', style(22, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
+      L.add(this.add.text(0, -112, c.pardon ? 'COMMANDE DU PARDON' : 'COMMANDE SCELLÉE', style(22, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
       const sous = this.add.text(0, -86, `Par ordre du Conseil des Gardiens, au comptoir « ${G.nomShop} »`, style(12, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5);
       for (let k = 12; sous.width > 520 && k >= 9; k--) sous.setFontSize(k);
       L.add(sous);
@@ -211,7 +212,7 @@ Object.assign(CounterScene.prototype, {
       });
       const y = n >= 4 ? 70 : 62;
       L.add(this.add.text(0, y, `À livrer le jour ${c.limite}, au matin (dans ${c.limite - c.jour} jours).`, style(15, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
-      L.add(this.add.text(0, y + 26, `Prime : ${c.prime} pièces, et la faveur du Conseil (+1 de réputation).`, style(13, '#2f5a2a', { fontStyle: 'bold' })).setOrigin(0.5));
+      L.add(this.add.text(0, y + 26, c.pardon ? 'Pas de prime : livrée, elle efface tes fautes et te rend le sceau du Conseil.' : `Prime : ${c.prime} pièces, et la faveur du Conseil (+1 de réputation).`, style(13, '#2f5a2a', { fontStyle: 'bold' })).setOrigin(0.5));
       L.add(this.add.text(0, y + 48, "Faute de quoi, le Conseil s'en souviendra.", style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
       L.add(this.sceauConseil(150, 150, 1.2, true));
       L.add(this.add.text(-120, 156, '— le sceau brisé', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
@@ -233,7 +234,8 @@ Object.assign(CounterScene.prototype, {
   },
 
   refuserRoyale() {
-    if (!refuserCommandeRoyale(this.G)) return;
+    const res = refuserCommandeRoyale(this.G);
+    if (!res) return;
     Son.jouer('refus');
     this.exprimer('fache');
     this.direHeraut('« Comme tu voudras. Je dirai au Conseil que ton comptoir a peur du travail. »');
@@ -242,7 +244,7 @@ Object.assign(CounterScene.prototype, {
     // (le récit reste à l'écran : c'est le joueur qui le laisse partir)
     this.time.delayedCall(1800, () => {
       if (!this.entree || this.entree.type !== 'heraut') return;
-      this.raconter('Le héraut tourne les talons. Tout le Comté saura que tu as refusé (réputation −1).', 'Le messager du Conseil');
+      this.raconter('Le héraut tourne les talons. Tout le Comté saura que tu as refusé (réputation −1).' + (res.pause ? ' Trois refus de suite : le Conseil ne te proposera plus rien pendant deux mois.' : ''), 'Le messager du Conseil');
       this.bouton('Le laisser partir', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
     });
   },
@@ -267,12 +269,13 @@ Object.assign(CounterScene.prototype, {
     this.bouton('...', null);
     this.majStock(); this.dessinerPieces();
     if (r.ok) {
-      this.feuilleRoyale('livree', { c, prime: r.prime });
+      this.feuilleRoyale('livree', { c, prime: r.prime, pardon: r.pardon });
       Son.jouer('pieces'); this.time.delayedCall(350, () => Son.jouer('fanfare'));
       this.cameras.main.flash(250, 255, 240, 160);
       this.exprimer('content');
       this.geste('pouce', 2000);
-      this.direHeraut(`« ${objetsRoyaux(c.objets)} : tout y est ! Le Conseil n'oubliera pas ton service. Voici ta prime. »`);
+      this.direHeraut(r.pardon ? `« ${objetsRoyaux(c.objets)} : tout y est. Le Conseil te pardonne, marchand. Ton sceau retrouve sa place à ta porte. »`
+        : `« ${objetsRoyaux(c.objets)} : tout y est ! Le Conseil n'oubliera pas ton service. Voici ta prime. »`);
       return this.auRevoirHeraut();
     }
     this.feuilleRoyale('manquee', { c, e });
@@ -290,23 +293,31 @@ Object.assign(CounterScene.prototype, {
 
   // Les conséquences, écrites par le Conseil (planche 38 v2)
   mecontentementDuConseil(r, suite) {
-    const G = this.G;
+    const G = this.G, f = r.fautes || 1;
+    const fois = x => String(Math.round(x * 100) / 100).replace('.', ',');
     Son.jouer('echec');
     this.grandPapier(560, 400, L => {
-      L.add(this.add.image(0, -150, 'embleme_conseil').setScale(0.55));
-      L.add(this.add.text(0, -112, 'LE CONSEIL EST MÉCONTENT', style(21, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
-      const sous = this.add.text(0, -86, `Commande royale manquée par le comptoir « ${G.nomShop} »`, style(12, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5);
+      L.add(this.add.image(0, -150, 'embleme_conseil').setScale(0.55).setTint(f >= 2 ? 0x3a3a3a : 0xffffff));
+      L.add(this.add.text(0, -112, f >= 3 ? 'LA DISGRÂCE' : f === 2 ? 'LE SCEAU NOIR' : 'LE CONSEIL EST MÉCONTENT', style(21, f >= 2 ? '#1e1e1e' : '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
+      const sous = this.add.text(0, -86, `${r.pardonRate ? 'Commande du pardon' : 'Commande scellée'} manquée par le comptoir « ${G.nomShop} »${f >= 2 ? ` · ${f >= 3 ? 'troisième' : 'deuxième'} faute` : ''}`, style(12, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5);
       for (let k = 12; sous.width > 520 && k >= 9; k--) sous.setFontSize(k);
       L.add(sous);
-      const lignes = [[`−${r.reputation} de réputation`, 'tout le Comté le saura'], ['Impôt du Conseil majoré de moitié', `pendant ${r.mois} mois`],
-        ['Pas de commande royale', 'le mois prochain'], ['La marchandise te reste sur les bras', 'rien n’est payé']];
+      const lignes = [[`−${r.reputation} de réputation`, 'tout le Comté le saura'],
+        [`Impôt du Conseil × ${fois(r.majoration || 1.5)}`, `pendant ${r.mois} mois${r.ombre ? ' (plus dur pour qui penche vers les Bannis)' : ''}`]];
+      if (f >= 3) lignes.push(['Le sceau du Conseil quitte ta porte', 'plus de nobles au comptoir, plus de commande pendant deux mois']);
+      else lignes.push(['Pas de commande scellée', 'le mois prochain']);
+      if (f === 2) lignes.push(['Un avertissement', r.rival ? 'le Conseil confie ses commandes au paon d’à côté (sa pression monte)' : 'à la prochaine faute, la disgrâce']);
+      lignes.push(['La marchandise te reste sur les bras', 'rien n’est payé']);
+      const pas = lignes.length > 4 ? 33 : 38;
       lignes.forEach(([t, d], i) => {
-        L.add(this.add.text(-200, -50 + i * 38, '✗', style(18, '#b02020', { fontStyle: 'bold' })).setOrigin(0.5));
-        L.add(this.add.text(-180, -58 + i * 38, t, style(15, '#3b2410', { fontStyle: 'bold' })));
-        L.add(this.add.text(-180, -38 + i * 38, d, style(11, '#6b4a2a', { fontStyle: 'italic' })));
+        L.add(this.add.text(-200, -50 + i * pas, '✗', style(18, '#b02020', { fontStyle: 'bold' })).setOrigin(0.5));
+        L.add(this.add.text(-180, -58 + i * pas, t, style(15, '#3b2410', { fontStyle: 'bold' })));
+        const det = this.add.text(-180, -38 + i * pas, d, style(11, '#6b4a2a', { fontStyle: 'italic' }));
+        for (let k = 11; det.width > 390 && k >= 9; k--) det.setFontSize(k);
+        L.add(det);
       });
-      L.add(this.add.text(0, 112, 'Réussis la suivante, et le Conseil oubliera.', style(13, '#2f5a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
-      L.add(this.sceauConseil(170, 150, 1.2));
+      L.add(this.add.text(0, 124, f >= 3 ? 'Dans deux mois, le héraut t’apportera la commande du pardon.' : f === 2 ? 'Une faute de plus, et c’est la disgrâce. Une commande livrée en efface une.' : 'Réussis la suivante, et le Conseil oubliera.', style(13, '#2f5a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
+      L.add(this.sceauConseil(200, 160, 1.1));
     }, suite);
   },
 
@@ -321,7 +332,7 @@ Object.assign(CounterScene.prototype, {
       L.add(this.add.text(0, -112, 'IMPÔT DU CONSEIL', style(21, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
       L.add(this.add.text(0, -86, l.premiere ? `Désormais, le percepteur passe le 1er de chaque mois · ★${l.et}` : `Le percepteur passe le 1er du mois · ★${l.et}`, style(12, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5));
       const rangs = [[(l.dettes !== undefined ? l.dettes > 0 : l.fortune < G.argent) ? 'Ta fortune (sans tes dettes)' : 'Ta fortune', p(l.fortune)], [`Franchise (300 p. × ★${l.et})`, `− ${p(l.franchise)}`], [`Taux du mois (5 % × ★${l.et})`, pc(l.tauxBase)]];
-      if (l.majore) rangs.push(['Majoration (commande manquée)', `× 1,5  →  ${pc(l.taux)}`]);
+      if (l.majore) rangs.push([`Majoration (${(G.conseil && G.conseil.fautes) >= 2 ? `${G.conseil.fautes >= 3 ? 'la disgrâce' : 'le sceau noir'}` : 'commande manquée'})`, `× ${String(Math.round((l.majoration || 1.5) * 100) / 100).replace('.', ',')}  →  ${pc(l.taux)}`]);
       else if (l.ristourne) rangs.push(['Ristourne (commande livrée)', `× ½  →  ${pc(l.taux)}`]);
       rangs.forEach(([a, b], i) => {
         const coul = i === 3 ? (l.majore ? '#b02020' : '#2f5a2a') : '#3b2410';
@@ -335,7 +346,7 @@ Object.assign(CounterScene.prototype, {
       const note = l.dette ? `Il te manquait ${p(l.dette)} : une dette envers le Conseil, remboursée chaque nuit.`
         : l.montant === 0 ? (l.fortune <= l.franchise ? `Ce mois-ci, ta fortune ne dépasse pas la franchise : rien à payer.` : 'Ce mois-ci, presque rien au-delà de la franchise : rien à payer.')
           : l.majore ? `(sans la majoration : ${p(sans)}${l.encoreMajore ? ' ; encore un mois majoré après celui-ci' : ''})`
-            : l.ristourne ? `(sans la ristourne : ${p(sans)})` : 'Une commande royale livrée, et le prochain impôt sera moitié prix.';
+            : l.ristourne ? `(sans la ristourne : ${p(sans)})` : 'Une commande scellée livrée, et le prochain impôt sera moitié prix.';
       const t = this.add.text(0, 132, note, style(11, l.dette ? '#b02020' : '#6b4a2a', { fontStyle: 'italic', wordWrap: { width: 440 }, align: 'center' })).setOrigin(0.5);
       L.add(t);
     }, suite);

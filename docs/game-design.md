@@ -363,6 +363,7 @@ Chaque étape doit donner une version **jouable**.
 | v 1.10 | **Lot C-1 : les commandes royales et l'impôt du Conseil** (planches 38 et 38 v2 validées) | Dès ★2, le 9 de chaque mois, le héraut de la Confrérie apporte une **commande royale** scellée (provisions, armes, et des « bel ouvrage » dès que ta forge tourne) : on brise le sceau, on lit la lettre, on accepte ou on refuse (−1). Acceptée, elle est **punaisée sur l'ardoise** (ce qui manque, le sablier). Le 16 au matin, il revient : tout y est (**LIVRÉE** : 600 p. à ★2, +50 % par étoile, +1 de réputation, l'impôt suivant moitié prix), ou c'est **MANQUÉE** (« Le Conseil est mécontent » : −2, impôt ×1,5 pendant 2 mois, pas de commande le mois suivant). Le 1er du mois, la **lettre du percepteur** : 5 % × étoiles au-delà de 300 p. × étoiles. Les « bel ouvrage » promis au Conseil ne partent plus dans les baluchons. Corrigé au passage : après un choix à deux boutons, le bouton du milieu restait affiché. |
 | v 1.11 | **Lot C-5 : Lucien Belhomme, le paon d'à côté** (planches 40 v2 et 41 validées, version A) | Le 1er du mois qui suit ta première commande royale, l'ancien apprenti de Garrick ouvre « Au Comptoir Agréé » juste à côté de ta maison (sa façade à lui : pierre blanche, bleu du Conseil, enseigne ovale dorée) : banderole, ballons et badauds le matin, et il vient se présenter au comptoir. Selon sa **pression** (1 à 3), il attire un client de passage tous les deux jours, un par jour ou deux par jour : le client hésite dans la file, puis file chez le voisin sous tes yeux. Le **mois des comptoirs** : tes aventuriers revenus vainqueurs contre les siens (il sert autant de clients que toi, et en ramène vivants 55, 65 ou 75 sur 100 selon sa pression) ; le score reste en haut de l'écran (clic : le panneau). Le 1er du mois, le **crieur** vient en fin de file annoncer le bilan : tu gagnes, sa pression baisse ; il gagne, elle monte et il vient se pavaner ; battu à pression 1, il ferme et plie bagage. Il se moque aussi d'une commande royale manquée (au comptoir et dans la gazette). Sa boutique **à vendre** : la lettre du notaire le matin, puis « Chez le notaire » le soir ; 1 500 p. × étoiles pour en faire **l'orphelinat** (+3 de réputation ; les coursiers viendront avec leur planche) ou **le petit bar** (sa planche aussi) : en attendant, la maison est en travaux. |
 | v 1.12 | **L'orphelinat du Comté** (planche 42 validée) | La maison du paon rachetée pour les orphelins : façade repeinte (vert tendre, bois, linge qui sèche au vent, craies, enfants qui jouent au cerceau). **Le soir, « L'orphelinat »** : la liste des courses des petits (6 objets, 10 avec le dortoir, jamais plus cher que le soir même), faite à l'aube et posée sur ton comptoir ; et l'onglet **Bâtir** : le dortoir (2 500 p. : deux courses par jour, liste de 10), l'école (5 000 p. : les courses ne prennent plus de temps, une rumeur du marché chaque matin), la grande salle (9 000 p. : de temps en temps un ancien de l'orphelinat en novice, ami dès le premier jour, avec son petit fil d'histoires) ; chacune bâtie en une nuit (+1 de réputation). **Au comptoir, le coursier** partage la ligne de Grippesou : un objet de l'étal, au prix du marché, en ¼ h (une course par jour, deux avec le dortoir) ; il court derrière la fenêtre et revient l'objet sous le bras. Aussi : les noms trop longs des lettres du soir ne passent plus sous Oui / Non ; les boutons de la lettre du notaire sont dans son panneau. |
+| v 1.13 | **La disgrâce et la commande scellée** | « Commande royale » devient **« commande scellée »** partout. **L'échelle de la disgrâce** : chaque commande manquée est une faute (une livrée en efface une) ; 1re : −2, impôt ×1,5 ; 2e, **le sceau noir** : −3, impôt ×1,75, le paon reçoit tes commandes (sa pression monte) ; 3e, **la disgrâce** : −3, impôt ×2, le sceau quitte ta porte, plus de nobles, deux mois sans commande, puis **la commande du pardon** (plus grosse, 10 jours, sans prime) qui efface tout et rend le sceau. Penché vers les Bannis : l'impôt monte d'un quart de plus à chaque faute (jamais plus de ×2,5). Trois refus de suite : deux mois sans proposition. Le **sceau du Conseil** à droite de ta porte (première commande livrée). **Les anciens de l'orphelinat** parlent de l'orphelinat à chaque visite et au retour de mission. |
 | 10b | **La forge chez soi** (validé) | À ★3 (le saut d'un an), on peut construire une forge dans l'arrière-boutique et engager un premier forgeron ; un second à ★4. Chaque nuit, ils fabriquent des armes avec les matériaux en stock. |
 | 10c | **La rue et le familier** (validé : le chat chasse les rats de la réserve et prévient parfois de la garde) | La rue du comptoir s'agrandit : on y marche avec son personnage jusqu'aux lieux du quartier (marché, banque, forge, fontaine, plus tard le petit bar), en plus des raccourcis depuis la maison. En s'y promenant le soir, on croise le chat de gouttière : on le nourrit quelques soirs de suite, et il nous adopte (premier familier). |
 | 11 | **Aider pendant l'aventure** | Messages de détresse, le grand aigle, les mercenaires. |
@@ -2085,3 +2086,49 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
     chiffres se règlent par simulation quand le combat existera.
   - **Le dire au joueur au moment du choix** : sur la lettre du notaire, l'orphelinat dit « plus calme, mais ils se
     souviendront de toi le jour venu ».
+
+### Réponses du joueur (19/10) : anciens, disgrâce, « commande scellée », surnom des voyageurs, la vraie histoire du Grand Sage
+- **Les anciens de l'orphelinat** parlent de l'orphelinat à chaque visite (le fil de six phrases, puis une phrase au
+  hasard parmi six), et aussi **au retour de mission** (réussie : « Ce soir, à l'orphelinat, je vais tout raconter aux
+  petits » ; ratée : « Ne dis rien aux petits »). Accordés au féminin pour les anciennes. **Construit (v1.13).**
+- **Planche 43 v2 et toutes les idées du bar : validées.** (La planche dessinée vient d'abord : la salle, la soirée
+  jouée, les trois bandes, les trois styles.)
+- **L'échelle de la disgrâce : validée**, avec en plus **l'impôt qui monte à chaque faute**, plus fort pour qui penche
+  vers les Bannis, sans abuser. **Construit (v1.13)** :
+  | Faute | Réputation | Impôt | Pendant | Ce qui arrive |
+  |---|---|---|---|---|
+  | 1re | −2 | × 1,5 (ombre × 1,75) | 2 mois | pas de commande le mois suivant |
+  | 2e, le sceau noir | −3 | × 1,75 (ombre × 2,25) | 3 mois | le paon reçoit tes commandes (sa pression +1) |
+  | 3e, la disgrâce | −3 | × 2 (ombre × 2,5) | 3 mois | le sceau quitte ta porte, plus de nobles, deux mois sans commande |
+  Une commande livrée efface une faute ; **la commande du pardon** (×1,5 d'objets, 10 jours, sans prime) les efface
+  toutes et rend le sceau. Trois refus de suite : deux mois sans proposition (ce n'est pas une faute). Le **sceau du
+  Conseil** est accroché à droite de ta porte dès ta première commande livrée ; dans la disgrâce, il ne reste qu'une
+  marque plus claire sur le mur et le clou.
+- **« Commande scellée »** remplace « commande royale » partout dans le jeu. **Fait (v1.13).**
+- **Le surnom des voyageurs** : le joueur garde « voyageur », mais veut un surnom, comme « ceux qui tracent » (ceux
+  qui tracent la route à travers les zones et les royaumes pour tout libérer). Propositions de Claude :
+  **« les Ouvre-Routes »** (recommandé : clair, fier, se dit bien : « un Ouvre-Route de plus ! »), « les
+  Fraie-Chemins », « les Traceurs d'Aube » (ceux qui ramènent le jour sur les terres libérées), « les
+  Arpente-Royaumes ». (« Les Passeurs » irait avec le titre, mais le Passeur est déjà le vendeur du marché noir.)
+- **Pourquoi tant de monstres dans ce monde** (récit du joueur) :
+  - *La version officielle*, dite par le Grand Sage : « le dragon a ouvert la porte au mal, qui en a profité pour
+    s'installer ».
+  - *La vérité* : c'est le Grand Sage qui a **pactisé avec le chef des vraies forces maléfiques**, pour avoir assez de
+    puissance et faire oublier au monde ce qu'il avait commis (le sort d'oubli). Les forces maléfiques se sont
+    installées, comme le pacte l'avait prévu. Rusé, le Grand Sage a tout mis sur le dos du **dragon, fils du chef des
+    forces maléfiques**. Avec la force offerte par le démon, il a **renvoyé le démon dans son monde** ; mais ce n'est
+    qu'une question de temps avant son retour : **la vraie menace, avec le Grand Sage**.
+  - **Les vraies forces maléfiques doivent avoir un nom** (à ne pas confondre avec les Bannis). Propositions de
+    Claude : **« les Engeances »** (recommandé : on dit « une Engeance » pour un monstre, « les Engeances » pour
+    l'armée), « l'Ost d'Outre-Porte », « la Marée Noire », « les Sans-Nom ». Pour leur chef, le démon : « Malgrim,
+    le Roi d'Outre-Porte », « Vorhal l'Affamé », « Azarth ». Pour le dragon, son fils : à nommer avec le joueur.
+  - **À accorder avec ce qui existe déjà** (proposition de Claude) : la fin neutre dit que le dragon « appartenait
+    en fait au Grand Sage », et les visions des parents finissent dans le feu du dragon. Les deux tiennent si le
+    Grand Sage **a enchaîné le dragon** avec la force du démon : le feu était bien celui du dragon, mais la volonté
+    était celle du Sage. Le dragon serait alors une victime, lui aussi, et peut-être un allié possible à la fin.
+  - **Les monstres à étoffer** (les actuels ne sont pas encore très originaux dans les récits) : proposition de
+    Claude, une **planche 44 des Engeances**. Elles portent une même marque, pour ne jamais les confondre avec les
+    peuples bannis (qui ne sont pas des monstres) : des fissures de lumière violette sur la peau et des yeux sans
+    pupille. Une ou deux Engeances par sorte de contrée (forêt, marais, montagne, désert, ruines, mer), avec leur
+    façon d'attaquer dans les récits (et l'objet qui aide contre elles). Plus on avance dans le jeu, plus elles sont
+    nombreuses : la porte s'entrouvre.

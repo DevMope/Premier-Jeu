@@ -67,7 +67,7 @@ Object.assign(CounterScene.prototype, {
   direRival(texte) { this.dire(texte, `${RIVAL.nom} — ${RIVAL.sous}`, RIVAL.nom); },
 
   // Lucien Belhomme au comptoir : il se présente le jour de l'ouverture, se pavane après un mois gagné, se moque
-  // d'une commande royale manquée. Tu ne lui réponds pas : tu le laisses parler, puis tu lui montres la porte.
+  // d'une commande scellée manquée. Tu ne lui réponds pas : tu le laisses parler, puis tu lui montres la porte.
   visiteRival(entree) {
     const G = this.G;
     this.titreCommande.setText(''); this.sousTitre.setText(''); this.texteSac.setText(''); this.texteChance.setText('');

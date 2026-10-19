@@ -1,4 +1,4 @@
-// (v1.10, lot C-1, planches 38 et 38 v2 validées) Le Conseil des Gardiens : ses commandes royales, et son impôt.
+// (v1.10, lot C-1, planches 38 et 38 v2 validées) Le Conseil des Gardiens : ses commandes scellées, et son impôt.
 // Une fois par mois (dès ★2), le héraut de la Confrérie apporte une commande scellée : des provisions et des armes à
 // livrer en 7 jours, contre une grosse prime et la faveur du Conseil. Ratée, elle coûte de la réputation, et l'impôt
 // du Conseil est majoré pendant deux mois. L'impôt, lui, tombe le 1er de chaque mois.
@@ -14,6 +14,15 @@ const CONSEIL = {
     echec: { reputation: 2, majoration: 1.5, mois: 2 },   // ratée : −2, impôt ×1,5 pendant 2 mois, pas de commande le mois suivant
   },
   impot: { taux: 0.05, franchise: 300, ristourne: 0.5, etalement: 14 },   // 5 % × étoiles au-delà de 300 p. × étoiles
+  // (v1.13) l'échelle de la disgrâce : chaque commande manquée est une faute, chaque commande livrée en efface une.
+  // L'impôt monte à chaque faute (un peu plus si tu penches vers les Bannis), sans jamais dépasser ×2 (×2,5 pour l'ombre).
+  disgrace: {
+    reputation: [2, 3, 3], majoration: [1.5, 1.75, 2], mois: [2, 3, 3],
+    ombre: 0.25, plafond: { autre: 2, mal: 2.5 },
+    pause: 2,              // mois sans commande après la 3e faute (puis vient la commande du pardon)
+    refusDeSuite: 3,       // trois refus de suite : le Conseil ne propose plus rien pendant deux mois
+    pardon: { quantite: 1.5, delai: 10 },
+  },
 };
 
 // Les commandes, selon les étoiles : surtout ce qu'on trouve toujours au marché (rations, gourdes, torches,
@@ -42,7 +51,7 @@ const COMMANDES_ROYALES = {
   ],
 };
 
-POSTES.conseil = 'Commandes royales'; POSTES.impot = 'Impôt du Conseil';
+POSTES.conseil = 'Commandes scellées'; POSTES.impot = 'Impôt du Conseil';
 
 // Les noms des objets des commandes (singulier, pluriel, féminin) : « dix rations », « pas un seul bouclier »
 const NOMS_ROYAUX = {
@@ -85,6 +94,14 @@ function tirerCommandeRoyale(G) {
       if (k > 0) bel[id] = k;
     }
   }
+  // (v1.13) dans la disgrâce : la commande du pardon, plus grosse, plus longue, sans prime
+  if (conseilDe(G).disgrace) {
+    const P = CONSEIL.disgrace.pardon;
+    for (const id of Object.keys(objets)) objets[id] = Math.ceil(objets[id] * P.quantite);
+    const t2 = Object.values(objets).reduce((a, n) => a + n, 0), place2 = Math.max(10, (G.capacite || RESERVE_DEPART) - 2);
+    if (t2 > place2) for (const id of Object.keys(objets)) objets[id] = Math.max(1, Math.floor(objets[id] * place2 / t2));
+    return { etat: 'proposee', jour: G.jour, limite: G.jour + P.delai, objets, bel, prime: 0, pardon: true };
+  }
   return { etat: 'proposee', jour: G.jour, limite: G.jour + CONSEIL.commande.delai, objets, bel, prime: primeRoyale(G) };
 }
 
@@ -110,6 +127,7 @@ function accepterCommandeRoyale(G) {
   const c = G.commandeRoyale;
   if (!c || c.etat !== 'proposee') return false;
   c.etat = 'acceptee';
+  conseilDe(G).refusDeSuite = 0;
   return true;
 }
 
@@ -118,7 +136,11 @@ function refuserCommandeRoyale(G) {
   if (!c || c.etat !== 'proposee') return false;
   G.reputation -= CONSEIL.commande.refus;
   G.commandeRoyale = null;
-  return true;
+  // (v1.13) trois refus de suite : le Conseil cesse de proposer pendant deux mois (refuser n'est pas une faute)
+  const cs = conseilDe(G), D = CONSEIL.disgrace;
+  cs.refusDeSuite = (cs.refusDeSuite || 0) + 1;
+  if (cs.refusDeSuite >= D.refusDeSuite) { cs.refusDeSuite = 0; cs.sansCommandeAvant = G.jour + D.pause * JOURS_PAR_MOIS; return { ok: true, pause: true }; }
+  return { ok: true };
 }
 
 // Le jour dit, le héraut repasse : tout y est (prime, réputation, ristourne sur l'impôt), ou c'est l'échec
@@ -136,26 +158,54 @@ function livrerCommandeRoyale(G) {
       G.belOuvrage[id] = Math.max(0, Math.min(G.stock[id], G.belOuvrage[id] - prisesBelles));
     }
   }
-  encaisser(G, c.prime, 'conseil');
+  const cs = conseilDe(G);
+  if (c.prime) encaisser(G, c.prime, 'conseil');
   G.reputation += CONSEIL.commande.reputation;
-  conseilDe(G).ristourne = true;
-  conseilDe(G).reussies = (conseilDe(G).reussies || 0) + 1;
+  cs.ristourne = true;
+  cs.reussies = (cs.reussies || 0) + 1;
+  cs.refusDeSuite = 0;
+  // (v1.13) une commande livrée efface une faute ; celle du pardon les efface toutes, et rend le sceau
+  const pardon = !!c.pardon;
+  if (pardon) { cs.fautes = 0; cs.disgrace = false; cs.majoreJusqua = 0; }
+  else cs.fautes = Math.max(0, (cs.fautes || 0) - 1);
   G.commandeRoyale = null;
-  G.annonceConseil = `Le Conseil des Gardiens salue « ${G.nomShop} » : sa commande royale est arrivée à temps, jusqu'${femininRoyal(Object.keys(c.objets)[0]) ? 'à la dernière' : 'au dernier'} ${nomRoyal(Object.keys(c.objets)[0])}.`;
+  if (pardon) { G.annonceConseil = `Le Conseil des Gardiens pardonne à « ${G.nomShop} » : la commande du pardon est livrée, et le sceau du Conseil retrouve sa place à sa porte.`; return { ok: true, prime: 0, pardon: true }; }
+  G.annonceConseil = `Le Conseil des Gardiens salue « ${G.nomShop} » : sa commande scellée est arrivée à temps, jusqu'${femininRoyal(Object.keys(c.objets)[0]) ? 'à la dernière' : 'au dernier'} ${nomRoyal(Object.keys(c.objets)[0])}.`;
   return { ok: true, prime: c.prime };
 }
 
-// L'échec : moins de réputation, l'impôt majoré deux mois, pas de commande le mois suivant
-function echecCommandeRoyale(G) {
-  const E = CONSEIL.commande.echec, cs = conseilDe(G);
-  G.reputation -= E.reputation;
-  cs.majoreJusqua = G.jour + E.mois * JOURS_PAR_MOIS;
-  cs.sansCommandeAvant = G.jour + JOURS_PAR_MOIS;
-  cs.ratees = (cs.ratees || 0) + 1;
-  G.commandeRoyale = null;
-  G.annonceConseil = `On dit que « ${G.nomShop} » a fait faux bond au Conseil des Gardiens : sa commande royale n'est jamais arrivée.`;
-  return { reputation: E.reputation, majoration: E.majoration, mois: E.mois };
+// L'échec : une faute de plus sur l'échelle de la disgrâce (v1.13).
+// 1re : −2, impôt ×1,5 pendant 2 mois, pas de commande le mois suivant. 2e : le sceau noir, −3, impôt ×1,75 pendant
+// 3 mois, et le paon d'à côté reçoit tes commandes (sa pression monte). 3e : la disgrâce, −3, impôt ×2 pendant 3 mois,
+// plus de nobles au comptoir ni de commande pendant deux mois, puis la commande du pardon. Penché vers les Bannis :
+// l'impôt monte d'un quart de plus à chaque faute (jamais plus de ×2,5).
+function majorationDeFaute(G, f) {
+  const D = CONSEIL.disgrace, i = Math.min(f, 3) - 1, mal = coteCamp(G) === 'mal';
+  return Math.min(mal ? D.plafond.mal : D.plafond.autre, D.majoration[i] + (mal ? D.ombre * f : 0));
 }
+function echecCommandeRoyale(G) {
+  const D = CONSEIL.disgrace, cs = conseilDe(G), c = G.commandeRoyale || {};
+  const pardonRate = !!c.pardon;
+  cs.fautes = pardonRate ? Math.max(3, cs.fautes || 3) : (cs.fautes || 0) + 1;
+  const f = Math.min(3, cs.fautes), i = f - 1;
+  const reputation = D.reputation[i], majoration = majorationDeFaute(G, f), mois = D.mois[i];
+  G.reputation -= reputation;
+  cs.majoration = majoration;
+  cs.majoreJusqua = G.jour + mois * JOURS_PAR_MOIS;
+  cs.ratees = (cs.ratees || 0) + 1;
+  let rival = false;
+  if (f >= 2 && typeof rivalOuvert === 'function' && rivalOuvert(G) && G.rival.pression < RIVAL.pression.max) { G.rival.pression++; rival = true; }
+  if (f >= 3) { cs.disgrace = true; cs.sansCommandeAvant = G.jour + D.pause * JOURS_PAR_MOIS; }
+  else cs.sansCommandeAvant = G.jour + JOURS_PAR_MOIS;
+  G.commandeRoyale = null;
+  G.annonceConseil = f >= 3 ? `Disgrâce ! Le Conseil des Gardiens retire son sceau de la porte de « ${G.nomShop} » : ${pardonRate ? 'même la commande du pardon' : 'une troisième commande scellée'} n'est jamais arrivée.`
+    : f === 2 ? `Le Conseil des Gardiens envoie le sceau noir à « ${G.nomShop} » : une deuxième commande scellée manquée.${rival ? ' Ses commandes iront désormais « Au Comptoir Agréé ».' : ''}`
+      : `On dit que « ${G.nomShop} » a fait faux bond au Conseil des Gardiens : sa commande scellée n'est jamais arrivée.`;
+  return { reputation, majoration, mois, fautes: f, rival, disgrace: f >= 3, pardonRate, ombre: coteCamp(G) === 'mal' };
+}
+// Le sceau du Conseil à ta porte : accroché à ta première commande livrée, décroché dans la disgrâce
+function sceauALaPorte(G) { const cs = G.conseil || {}; return (cs.reussies || 0) > 0 && !cs.disgrace; }
+function enDisgrace(G) { return !!(G.conseil && G.conseil.disgrace); }
 
 // L'impôt du mois : 5 % × étoiles de ce que tu as au-delà de la franchise (l'argent emprunté n'est pas taxé),
 // moitié prix après une commande réussie, ×1,5 après une commande ratée
@@ -164,9 +214,10 @@ function calculImpot(G) {
   const dettes = G.prets.reduce((s, p) => s + p.restant, 0);
   const fortune = Math.max(0, Math.round(G.argent - dettes)), franchise = I.franchise * et;
   const majore = (cs.majoreJusqua || 0) >= G.jour, ristourne = !!cs.ristourne;
-  const taux = I.taux * et * (majore ? CONSEIL.commande.echec.majoration : 1) * (ristourne ? I.ristourne : 1);
+  const majoration = majore ? (cs.majoration || CONSEIL.commande.echec.majoration) : 1;
+  const taux = I.taux * et * majoration * (ristourne ? I.ristourne : 1);
   const montant = Math.round(Math.max(0, fortune - franchise) * taux);
-  return { et, fortune, dettes: Math.round(dettes), franchise, tauxBase: I.taux * et, taux, majore, ristourne, montant };
+  return { et, fortune, dettes: Math.round(dettes), franchise, tauxBase: I.taux * et, taux, majore, majoration, ristourne, montant };
 }
 
 function payerImpotDuConseil(G) {
@@ -217,7 +268,7 @@ function echeancesDuConseil(G) {
   else if (c.etat === 'proposee' && G.jour >= c.jour) G.commandeRoyale = null;
 }
 
-// Au matin : l'impôt le 1er du mois, la commande royale le 9 (dès ★2). Renvoie les lignes du réveil.
+// Au matin : l'impôt le 1er du mois, la commande scellée le 9 (dès ★2). Renvoie les lignes du réveil.
 function matinDuConseil(G) {
   const lignes = [];
   if (etoilesDe(G) < CONSEIL.etoiles) return lignes;
@@ -225,7 +276,7 @@ function matinDuConseil(G) {
   if (d.jourDuMois === 1 && cs.impotJour !== G.jour) {
     cs.impotJour = G.jour;
     const l = payerImpotDuConseil(G);
-    if (l.montant > 0) lignes.push(`Le percepteur du Conseil est passé : ${pluriel(l.montant, "pièce d'impôt", "pièces d'impôt")} pour le mois${l.majore ? ' (majoré : ta commande royale ratée)' : l.ristourne ? ' (moitié prix : ta commande royale réussie)' : ''}.${l.dette ? ` Il te manquait ${pluriel(l.dette, 'pièce', 'pièces')} : une dette envers le Conseil.` : ''}`);
+    if (l.montant > 0) lignes.push(`Le percepteur du Conseil est passé : ${pluriel(l.montant, "pièce d'impôt", "pièces d'impôt")} pour le mois${l.majore ? ` (majoré : ${(cs.fautes || 0) >= 3 ? 'la disgrâce' : (cs.fautes || 0) === 2 ? 'le sceau noir' : 'ta commande scellée ratée'})` : l.ristourne ? ' (moitié prix : ta commande scellée réussie)' : ''}.${l.dette ? ` Il te manquait ${pluriel(l.dette, 'pièce', 'pièces')} : une dette envers le Conseil.` : ''}`);
   }
   // (le rappel du matin : ce qui manque encore, avant d'aller au marché)
   const c = G.commandeRoyale;
@@ -239,8 +290,8 @@ function matinDuConseil(G) {
       return parts.join(' et ');
     });
     const quand = j === 0 ? 'ce matin' : j === 1 ? 'demain matin' : `le jour ${c.limite}`;
-    lignes.push(manque.length ? `Commande royale du Conseil : il manque encore ${manque.length > 1 ? manque.slice(0, -1).join(', ') + ' et ' + manque[manque.length - 1] : manque[0]}. Le héraut repasse ${quand}.`
-      : `Commande royale du Conseil : tout est prêt. Le héraut repasse ${quand}.`);
+    lignes.push(manque.length ? `Commande scellée du Conseil : il manque encore ${manque.length > 1 ? manque.slice(0, -1).join(', ') + ' et ' + manque[manque.length - 1] : manque[0]}. Le héraut repasse ${quand}.`
+      : `Commande scellée du Conseil : tout est prêt. Le héraut repasse ${quand}.`);
   }
   if (d.jourDuMois === CONSEIL.commande.jourDuMois && !G.commandeRoyale && (cs.sansCommandeAvant || 0) <= G.jour && !G.faillite) {
     G.commandeRoyale = tirerCommandeRoyale(G);

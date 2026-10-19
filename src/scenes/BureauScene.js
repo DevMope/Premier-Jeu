@@ -144,7 +144,7 @@ class BureauScene extends Phaser.Scene {
           // notable, aîné...) faisaient planter le registre
           if (!e.parti) {
             const p = CounterScene.prototype.personneDe.call({ G }, e) || {};
-            const LIGNES = { garde: 'La garde de la Confrérie', garrick: 'Garrick passe te voir', collecteur: `Le collecteur de ${nomBande(G)}`, serpent: 'Le Serpent à deux têtes', colporteur: 'Le colporteur et sa hotte', notable: 'Un visiteur de marque', aine: 'Un aîné vient te parler', heraut: 'Le héraut du Conseil (commande royale)', rival: "Lucien Belhomme, le voisin", crieur: 'Le crieur : le mois des comptoirs' };
+            const LIGNES = { garde: 'La garde de la Confrérie', garrick: 'Garrick passe te voir', collecteur: `Le collecteur de ${nomBande(G)}`, serpent: 'Le Serpent à deux têtes', colporteur: 'Le colporteur et sa hotte', notable: 'Un visiteur de marque', aine: 'Un aîné vient te parler', heraut: 'Le héraut du Conseil (commande scellée)', rival: "Lucien Belhomme, le voisin", crieur: 'Le crieur : le mois des comptoirs' };
             return { nom: p.nom || 'Un visiteur', race: p.race || 'humain', ligne: LIGNES[e.type] || 'Une visite', detail: () => [] };
           }
           const v = e.parti.voyageur;

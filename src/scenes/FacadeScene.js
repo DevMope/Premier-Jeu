@@ -18,6 +18,19 @@ class FacadeScene extends Cinematique {
     const rival = typeof rivalVisible === 'function' && rivalVisible(G) ? G.rival : null;
     const facade = dessinerFacade(this, rival ? 268 : 560, 440, G.nomShop);
     if (rival) this.dessinerVoisin(rival, 728);
+    // (v1.13) le sceau du Conseil, à côté de ta porte (ta première commande scellée livrée) ; dans la disgrâce, on l'a
+    // décroché : il ne reste que la marque plus claire sur le mur, et le clou
+    if (typeof sceauALaPorte === 'function' && ((G.conseil || {}).reussies || 0) > 0) {
+      const sx = facade.porteX + 58, sy = facade.porteY - 62;
+      if (sceauALaPorte(G)) {
+        if (!this.textures.exists('embleme_conseil')) creerEmblemesHD(this);
+        this.add.circle(sx, sy, 15, 0x2a1a10).setDepth(4); this.add.circle(sx, sy, 13, 0xa81a18).setDepth(4.01);
+        this.add.image(sx, sy, 'embleme_conseil').setScale(0.24).setDepth(4.02);
+      } else {
+        this.add.circle(sx, sy, 14, 0xfff4dc, 0.22).setDepth(4);
+        this.add.rectangle(sx, sy - 15, 3, 3, 0x2a2a30).setDepth(4.01);
+      }
+    }
     decorSaison(this, { sol: 440, arbres: rival ? [[36, 1.05]] : [[70, 1.15], [905, 1.05]], facade, bonhomme: rival ? 500 : 790, prof: 3 });   // (v0.99 : la saison)
     // (v0.99) les bruits de la saison, doucement, sous la musique : oiseaux, cigales, vent
     if (typeof saisonDe === 'function') { Son.nature(true, { saison: saisonDe(G), volume: 0.7 }); this.events.once('shutdown', () => Son.nature(false)); this.events.once('sleep', () => Son.nature(false)); }

@@ -34,13 +34,37 @@ const ANCIENS_ORPHELINAT = [
   { nom: 'Bastien Roc', petit: 'Bastien', race: 'nain', feminin: false },
   { nom: 'Nora Plume', petit: 'Nora', race: 'elfe', feminin: true },
 ];
-// Leur petit fil d'histoires : ce qu'ils disent à chaque visite (puis la dernière ligne, ensuite)
+// Leur petit fil d'histoires : ce qu'ils disent à chaque visite, dans l'ordre (toujours sur l'orphelinat) ;
+// une fois le fil fini, une phrase au hasard parmi celles d'après. `p` : le petit qu'il était ; `a`, `b` : deux enfants de l'orphelinat ;
+// `e` : « e » si c'est une ancienne (les accords)
 const FIL_DES_ANCIENS = [
-  p => `Tu te souviens de ${p} ? J'ai grandi ! Tu nous as donné un toit ; aujourd'hui, c'est moi qui pars à l'aventure. Pour toi, patron !`,
-  p => `Encore moi ! À l'orphelinat, les petits ne parlent que de toi. Ils jouent au « comptoir » dans la cour, avec des cailloux pour pièces.`,
-  p => `La maîtresse dit que je suis son pire élève et son meilleur souvenir. Je lui rapporterai quelque chose de ma prochaine mission.`,
-  p => `J'ai vu le monde, patron. Mais il n'y a qu'un endroit où je reviens toujours : ici.`,
+  (p) => `Tu te souviens de ${p} ? J'ai grandi ! Tu nous as donné un toit ; aujourd'hui, c'est moi qui pars à l'aventure. Pour toi, patron !`,
+  (p, a, b, e) => `Encore moi ! Je suis passé${e} à l'orphelinat ce matin : ${a} m'a demandé si j'avais déjà tué un dragon. Je lui ai dit « pas encore ».`,
+  (p, a, b) => `À l'orphelinat, les petits jouent au « comptoir » dans la cour, avec des cailloux pour pièces. ${b} fait toujours le patron : c'est fou comme ça te ressemble.`,
+  (p) => `La maîtresse dit que j'étais son pire élève et son meilleur souvenir. Je lui rapporterai quelque chose de ma prochaine mission.`,
+  (p, a) => `Le soir, à la veillée de la grande salle, je raconte mes missions aux petits. ${a} veut faire comme moi. Je lui ai dit : d'abord, l'école !`,
+  (p) => `J'ai vu le monde, patron. Mais il n'y a qu'un endroit où je reviens toujours : la maison verte à côté de la tienne.`,
 ];
+const PHRASES_DES_ANCIENS = [
+  (p, a) => `J'ai laissé ma vieille couverture du dortoir à ${a}. Elle est pleine de trous, mais elle porte bonheur.`,
+  (p, a, b, e) => `Quand j'étais petit${e}, je regardais les aventuriers sortir de chez toi. Maintenant, c'est moi qu'on regarde !`,
+  (p, a, b) => `${a} et ${b} se sont encore battus pour savoir qui ferait tes courses demain. Tu as des petits soldats, patron.`,
+  (p) => `Une partie de mon butin ira à l'orphelinat. Il faut bien que quelqu'un paie les ardoises de l'école !`,
+  (p) => `On m'appelait ${p}, là-bas. Ici aussi, tu peux. Mais pas devant les autres aventuriers, d'accord ?`,
+  (p, a) => `${a} m'a dessiné une carte au trésor à la craie. Elle mène à la cuisine de l'orphelinat. Je la garde quand même.`,
+];
+// Au retour de mission : ce qu'ils disent en rentrant (réussite ou échec)
+const RETOURS_DES_ANCIENS = {
+  reussi: [
+    (p) => `Me revoilà, patron ! Ce soir, à l'orphelinat, je vais tout raconter aux petits. Ils vont faire des yeux ronds !`,
+    (p, a, b, e) => `Rentré${e} vivant${e}, et pas les mains vides ! ${a} va vouloir toucher chaque pièce, tu verras.`,
+    (p, a, b, e) => `Tu vois ? ${e ? 'La petite' : 'Le petit'} ${p} est revenu${e} en ${e ? 'héroïne' : 'héros'}. La maîtresse ne va jamais me croire.`,
+  ],
+  rate: [
+    (p) => `Me revoilà... Ne dis rien aux petits de l'orphelinat, d'accord ? Je ne veux pas qu'ils s'inquiètent pour moi.`,
+    (p, a) => `Raté, cette fois. Mais à l'orphelinat, on apprend à se relever : je repartirai. Ne le dis pas à ${a}.`,
+  ],
+};
 
 function orphelinatDe(G) {
   return (G.orphelinat = G.orphelinat || { bati: {}, chantier: null, liste: null, coursesJour: 0, coursesFaites: 0, anciens: {}, dernierAncien: 0, salleLe: 0 });
@@ -211,7 +235,8 @@ function ancienDuJour(G, file = []) {
   return { type: 'client', voyageur: v };
 }
 function estAncien(G, nom) { return ANCIENS_ORPHELINAT.find(a => a.nom === nom) || null; }
-// Ce qu'il dit en arrivant (son fil d'histoires), et la visite suivante
+// Ce qu'il dit en arrivant (son fil d'histoires, puis une phrase sur l'orphelinat au hasard)
+function enfantsPourAncien(G, a) { const e = enfantsOrphelinat(G).filter(n => n !== a.petit); return [a.petit, e[0] || 'Mirabelle', e[1] || 'Gusse', a.feminin ? 'e' : '']; }
 function bonjourDeLAncien(G, v) {
   const a = estAncien(G, v.nom);
   if (!a || !G.orphelinat) return null;
@@ -219,5 +244,11 @@ function bonjourDeLAncien(G, v) {
   if (o.vuLe && o.vuLe[a.nom] === G.jour) return null;
   o.anciens[a.nom] = n + 1;
   o.vuLe = o.vuLe || {}; o.vuLe[a.nom] = G.jour;
-  return FIL_DES_ANCIENS[Math.min(n, FIL_DES_ANCIENS.length - 1)](a.petit);
+  const ligne = n < FIL_DES_ANCIENS.length ? FIL_DES_ANCIENS[n] : auHasard(PHRASES_DES_ANCIENS);
+  return ligne(...enfantsPourAncien(G, a));
+}
+function retourDeLAncien(G, v, echec) {
+  const a = estAncien(G, v.nom);
+  if (!a || !G.orphelinat) return null;
+  return auHasard(RETOURS_DES_ANCIENS[echec ? 'rate' : 'reussi'])(...enfantsPourAncien(G, a));
 }

@@ -1,5 +1,5 @@
 // (v1.11, lot C-5, planches 40 v2 et 41 validées) Lucien Belhomme, le paon du Conseil : l'ancien apprenti de Garrick,
-// devenu fournisseur « agréé ». Le 1er du mois qui suit ta première commande royale, il ouvre « Au Comptoir Agréé »
+// devenu fournisseur « agréé ». Le 1er du mois qui suit ta première commande scellée, il ouvre « Au Comptoir Agréé »
 // juste à côté de chez toi. Chaque jour, il attire des clients de ta file (selon sa « pression », de 1 à 3) ; chaque
 // mois, le crieur compare vos deux comptoirs en aventuriers revenus vainqueurs. Tu gagnes : sa pression baisse ; il
 // gagne : elle monte, et il vient se pavaner. Battu à pression 1, il ferme : sa boutique est à vendre.
@@ -25,7 +25,7 @@ const REPLIQUES_RIVAL = {
     "« Mes aventuriers reviennent vivants, les tiens reviennent... quand ils reviennent. Le crieur a compté, pas moi ! »",
   ],
   pavaneOmbre: "« Un Banni rôde près de ta porte, à ce qu'on dit ? Préviens-moi. J'ai des amis à la caserne. »",
-  moquerie: "« Alors, on a fait faux bond au Conseil ? Chez moi, les commandes royales arrivent à l'heure. Garrick t'a appris à rater, aussi ? »",
+  moquerie: "« Alors, on a fait faux bond au Conseil ? Chez moi, les commandes scellées arrivent à l'heure. Garrick t'a appris à rater, aussi ? »",
   depart: "« Ce n'est qu'un repli. Le Conseil se souviendra de moi... et de toi. »",
 };
 
@@ -42,7 +42,7 @@ function scoreDuMois(G) {
 }
 
 // La nuit, avant le changement de jour : les comptes du jour (tes retours vainqueurs, ses clients), et la moquerie
-// qui se prépare après une commande royale manquée
+// qui se prépare après une commande scellée manquée
 function nuitDuRival(G) {
   const r = rivalDe(G);
   if (r.etat !== 'ouvert') return;
@@ -58,7 +58,7 @@ function nuitDuRival(G) {
   }
 }
 
-// Au matin : l'ouverture (le 1er du mois après ta première commande royale), puis chaque 1er du mois le bilan
+// Au matin : l'ouverture (le 1er du mois après ta première commande scellée), puis chaque 1er du mois le bilan
 function matinDuRival(G) {
   const r = rivalDe(G), lignes = [], d = dateDuJour(G);
   if (r.etat === 'absent') {

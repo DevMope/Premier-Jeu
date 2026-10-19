@@ -58,7 +58,7 @@ class CounterScene extends Phaser.Scene {
     this.creerStock();
     this.creerArgent();
     this.creerHorloge();
-    if (this.majCommandeRoyale) this.majCommandeRoyale();   // (v1.10) la commande royale, punaisée sur l'ardoise
+    if (this.majCommandeRoyale) this.majCommandeRoyale();   // (v1.10) la commande scellée, punaisée sur l'ardoise
 
     // (v1.12) avec l'orphelinat, Grippesou partage sa ligne avec le coursier
     const coursier = typeof orphelinatOuvert === 'function' && orphelinatOuvert(this.G);
@@ -445,7 +445,7 @@ class CounterScene extends Phaser.Scene {
     a.add(this.add.text(0, py + ph / 2 + 32, `${avis.prime} p.`, style(20, encre, { fontStyle: 'bold' })).setOrigin(0.5));
     // (un clic la décroche un instant : l'ardoise redevient lisible)
     a.setSize(l, h).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.tweens.add({ targets: a, alpha: a.alpha < 1 ? 1 : 0.25, duration: 200 }));
-    if (this.panneauRoyal) this.panneauRoyal.setVisible(false);   // (v1.10 : la commande royale passe derrière l'affiche)
+    if (this.panneauRoyal) this.panneauRoyal.setVisible(false);   // (v1.10 : la commande scellée passe derrière l'affiche)
     return a;
   }
 
@@ -1580,8 +1580,9 @@ class CounterScene extends Phaser.Scene {
       this.servir();
     } else if (entree.type === 'retour') {
       const v = entree.parti.voyageur;
-      this.dire(entree.parti.resultat.echec ? "Me revoilà... Vivant, au moins. Mais ça ne s'est pas passé comme prévu."
-        : `Me revoilà, sain${v.feminin ? 'e' : ''} et ${v.feminin ? 'sauve' : 'sauf'} ! Tu ne devineras jamais ce qui m'est arrivé...`, v.nom);
+      const ancien = typeof retourDeLAncien === 'function' ? retourDeLAncien(this.G, v, entree.parti.resultat.echec) : null;   // (v1.12) un ancien de l'orphelinat
+      this.dire(ancien || (entree.parti.resultat.echec ? "Me revoilà... Vivant, au moins. Mais ça ne s'est pas passé comme prévu."
+        : `Me revoilà, sain${v.feminin ? 'e' : ''} et ${v.feminin ? 'sauve' : 'sauf'} ! Tu ne devineras jamais ce qui m'est arrivé...`), v.nom);
       this.titreCommande.setFontSize(17).setText('Retour de mission');
       // (v0.93, planche 19) plusieurs retours, et l'on connaît déjà les récits : tout résumer d'un coup
       const retours = 1 + this.G.file.filter(e => e.type === 'retour').length;
@@ -1606,7 +1607,7 @@ class CounterScene extends Phaser.Scene {
     } else if (entree.type === 'aine') {
       this.visiteAine(entree);
     } else if (entree.type === 'heraut') {
-      this.visiteHeraut(entree);   // (v1.10) la commande royale du Conseil
+      this.visiteHeraut(entree);   // (v1.10) la commande scellée du Conseil
     } else if (entree.type === 'rival') {
       this.visiteRival(entree);   // (v1.11) Lucien Belhomme, le paon d'à côté
     } else if (entree.type === 'crieur') {

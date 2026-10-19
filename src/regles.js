@@ -1561,7 +1561,7 @@ function nuit(G) {
   if (typeof nuitDuFoyer === 'function') nuitDuFoyer(G);   // (v1.05) le froid de l'hiver, la gamelle du chat
   if (typeof nuitDuRival === 'function') nuitDuRival(G);   // (v1.11) les comptes du jour face au paon
   if (typeof nuitDeLOrphelinat === 'function') nuitDeLOrphelinat(G);   // (v1.12) le chantier de l'orphelinat
-  if (typeof echeancesDuConseil === 'function') echeancesDuConseil(G);   // (v1.10) une commande royale qui n'est pas venue
+  if (typeof echeancesDuConseil === 'function') echeancesDuConseil(G);   // (v1.10) une commande scellée qui n'est pas venue
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1625,7 +1625,7 @@ function nuit(G) {
     if (typeof feteDuJour === 'function') for (let k = 1; k <= SAUTS_TEMPS[d]; k++) { const f = feteDuJour(G, G.jour - k); if (f && f.jour === 1 && feteOuverte(f.id) && !fetesVues.includes(f.nom)) fetesVues.push(f.nom); }
     if (fetesVues.length) G.reveil.lignes.push(fetesVues.length > 1 ? `Pendant ce temps, ${fetesVues.join(' et ')} sont passées sans toi : tu les as vues de loin, entre deux clients. Elles reviendront l'an prochain.` : `Pendant ce temps, ${fetesVues[0]} est passée sans toi : tu l'as vue de loin, entre deux clients. Elle reviendra l'an prochain.`);
   }
-  if (typeof matinDuConseil === 'function') for (const l of matinDuConseil(G)) G.reveil.lignes.push(l);   // (v1.10) l'impôt du Conseil, la commande royale
+  if (typeof matinDuConseil === 'function') for (const l of matinDuConseil(G)) G.reveil.lignes.push(l);   // (v1.10) l'impôt du Conseil, la commande scellée
   if (typeof matinDuRival === 'function') for (const l of matinDuRival(G)) G.reveil.lignes.push(l);   // (v1.11) le paon ouvre, le bilan du mois
   if (typeof matinDeLOrphelinat === 'function') for (const l of matinDeLOrphelinat(G)) G.reveil.lignes.push(l);   // (v1.12) les courses des petits, la rumeur
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
@@ -1794,7 +1794,7 @@ function formerFileDuJour(G) {
   if (morts.length && G.jour >= JOUR_FAUCHEUSE) file.push({ type: 'faucheuse', partis: morts });
   else if (morts.length) file.push(...morts.map(parti => ({ type: 'carnet', parti })));
   // Un client prestigieux, certains jours (dès que les nobles s'intéressent à toi).
-  if (G.prestige && Math.random() < CHANCE_PRESTIGE) {
+  if (G.prestige && !(typeof enDisgrace === "function" && enDisgrace(G)) && Math.random() < CHANCE_PRESTIGE) {   // (v1.13 : pas de nobles dans la disgrâce)
     const pris = [...nomsActifs(G), ...clients.map(v => v.nom)];
     const libres = PRESTIGIEUX.filter(p => !pris.includes(p.nom) && !(G.personnes[p.nom] && G.personnes[p.nom].mort));
     if (libres.length) {
@@ -1820,7 +1820,7 @@ function formerFileDuJour(G) {
   else if (G.armure.length === ARMURE.length - 2 && !G.garrickSceau && !G.camp) visites.push({ type: 'garrick', sceau: true });
   if (doitVenirGarde(G)) visites.push({ type: 'garde', garde: gardeDuJour(G) });
   visites.push(...visitesMafia(G));   // (v0.60) le collecteur de la Main Noire, le Serpent à deux têtes
-  if (typeof visitesDuConseil === 'function') visites.unshift(...visitesDuConseil(G));   // (v1.10) le héraut et sa commande royale
+  if (typeof visitesDuConseil === 'function') visites.unshift(...visitesDuConseil(G));   // (v1.10) le héraut et sa commande scellée
   if (typeof visitesDuRival === 'function') visites.push(...visitesDuRival(G));   // (v1.11) Lucien Belhomme vient se présenter, se pavaner, se moquer
   // (v0.56) Très rarement, à partir du milieu du jeu, un aîné des Bannis passe et laisse une phrase
   const aine = aineDuJour(G, 'comptoir');
@@ -2945,7 +2945,7 @@ function avancerEvenements(G) {
   }
   G.decesAnnonces = [];
   if (G.annonceMafia) { lignes.unshift(G.annonceMafia); G.annonceMafia = null; }
-  if (G.annonceConseil) { lignes.unshift(G.annonceConseil); G.annonceConseil = null; }   // (v1.10) la commande royale, livrée ou manquée
+  if (G.annonceConseil) { lignes.unshift(G.annonceConseil); G.annonceConseil = null; }   // (v1.10) la commande scellée, livrée ou manquée
   if (G.annonceRival) { lignes.unshift(G.annonceRival); G.annonceRival = null; }   // (v1.11) le paon ouvre, ferme, ou sa maison change de mains
   // (v0.99) le premier jour d'une saison : le crieur l'annonce, avec ce qu'elle change au marché
   if (typeof saisonDe === 'function' && dateDuJour(G).jourDuMois === 1) {
