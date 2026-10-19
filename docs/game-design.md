@@ -2222,3 +2222,28 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
 - **Le dragon enchaîné** dans sa caverne par les chaînes d'or du Sage : l'otage contre Vorhal'Düm et le gardien
   du sort d'oubli. Noms proposés : **Vhaldrak le Terrible** (recommandé), Ignarök le Terrible, Skarvath la
   Cendre-Vive, Draugmor le Dévoreur d'Aube.
+
+### Réponses du joueur (19/10, nuit) : planche 43 v3 validée (deux retouches), planche 44 validée (sauf trois points)
+- **Planche 43 v3 validée**, avec deux retouches (planche 43 v4 : docs/planches-v059/planche-43-v4-le-bar.png) :
+  - les **bulles de commande** sur **fond noir** (bordées de clair) : la chope et le plat ressortent mieux ;
+  - le **videur** tient le filou avec **sa vraie main** : nouvelle pose « empoigne » dans le moteur des corps
+    (`src/corpsVueHD.js`, le bras du côté où il regarde, tendu devant lui à hauteur d'épaule). **Règle** : pour une
+    animation, on peut créer une pose nouvelle, mais **jamais de bras en plus** dessiné par-dessus.
+- **Planche 44** : tous les monstres validés. Retouches (planche 44 v2 : docs/planches-v059/planche-44-v2-l-engeance.png) :
+  - la barre violette n'était pas claire : c'est **la Porte qui s'entrouvre au fil du jeu** (plus le jeu avance,
+    plus il y a de bêtes de l'Engeance dans les récits). Redessinée : trois petites portes de plus en plus ouvertes,
+    avec de plus en plus d'yeux ;
+  - **Vorhal'Düm validé, mais sans bouche** (ni au ventre, ni au visage) : **il parle directement dans la tête** de
+    ceux à qui il s'adresse ;
+  - **la Porte** : plus mystique, **façon le Voile** (Harry Potter 5) : une arche de pierre brute, seule sur son
+    estrade, au milieu de gradins ; un voile pâle et déchiré qui ondule et murmure ; Vorhal'Düm à peine visible
+    derrière ; le sceau d'or du Sage, fêlé, en haut de l'arche ;
+  - **le dragon s'appelle Vhaldrak le Terrible** (validé). Nouveau dessin, d'après Smaug, les dragons de House of
+    the Dragon et l'image du joueur : une vouivre noire au ventre de braises, les ailes pour bras, le long cou en S,
+    les cornes en arrière, l'œil d'or ; enchaînée au cou par les chaînes d'or du Sage.
+- **Le pacte, corrigé** (pour bien comprendre) : **Vorhal'Düm** obtient du Sage le droit de **faire entrer son
+  Engeance sur les terres des Bannis**, en les **partageant avec le Sage** ; en échange, il **donne au Sage une part
+  de sa force**. Ce n'est pas le Sage qui a créé l'Engeance.
+- **Ce que veut Vorhal'Düm** : que son Engeance **connaisse enfin la vie à la surface** (à approfondir plus tard).
+- **Vhaldrak en allié** : les trois conditions sont validées : (1) assez d'**éclats de vérité**, (2) **briser ses
+  chaînes** avec un objet très rare forgé chez soi, (3) n'avoir **jamais vendu d'arme « tueuse de dragon »**.

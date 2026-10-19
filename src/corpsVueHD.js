@@ -296,6 +296,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // (v1.01) le porteur (un père, son enfant sur les épaules) : les coudes écartés, les avant-bras qui
     // remontent, les mains posées en haut des épaules, sur les jambes de l'enfant
     if (pose === 'porteur') { coude.splice(0, 3, cote * (ep + 3.2 * k), -0.5 * k, yT + 6 * k); main.splice(0, 3, cote * (ep + 0.6 * k), 1 * k, yT - 1 * k); }
+    // (v1.15) empoigner (le videur qui tient un filou par le col) : le bras du côté où il regarde, tendu devant
+    // lui, la main à hauteur d'épaule ; l'autre bras reste le long du corps
+    if (pose === 'empoigne' && cote === loin) {
+      const u = Math.min(ep + 9 * k, L / 2 - 4 * k);
+      coude.splice(0, 3, cote * (ep + 4 * k), 2 * k, yT + 3 * k); main.splice(0, 3, cote * u, 3 * k, yT - 1 * k);
+    }
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
     const r = 2.6 * k * P.membre;
     const dec = devant ? 0 : -0.5;
