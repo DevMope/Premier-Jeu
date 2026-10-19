@@ -147,6 +147,6 @@ function racheterBoutique(G, choix) {
   r.etat = choix; r.racheteLe = G.jour; r.prixPaye = prix;
   if (choix === 'orphelinat') G.reputation += RIVAL.orphelinat.reputation;
   G.annonceRival = choix === 'orphelinat' ? `« ${G.nomShop} » a racheté la boutique du paon pour en faire un orphelinat ! Tout le Comté en parle.`
-    : `« ${G.nomShop} » a racheté la boutique d'à côté : on y ouvrira bientôt un petit bar.`;
+    : `« ${G.nomShop} » a racheté la boutique d'à côté pour en faire un petit bar. Le Comté a hâte d'y trinquer !`;
   return { ok: true, prix };
 }

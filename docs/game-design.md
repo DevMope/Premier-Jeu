@@ -2435,3 +2435,13 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
   - **le village sur la glace** du lac gelé des Nains ;
   - **les pyramides des momies**, chez les Bannis (idée du joueur) : une nécropole qui dort le jour et s'éveille la
     nuit ; ses archives parlent du temps d'avant le sort d'oubli (un éclat de vérité).
+
+### Réponses du joueur (20/10) : les escales validées, Ossemont, les squelettes
+- **Les escales** (Monts de Bambou, village sur la glace, pyramides des momies) : **validées**.
+- **Ossemont** : **validé** (la ville bâtie dans le squelette d'un dragon ancien, sur la route de l'Antre). **Ce dragon
+  était la mère de Vhaldrak** : validé (« une merveilleuse idée »).
+- **Une nouvelle race neutre : les squelettes.** Fragiles physiquement, bêtes, mais **insensibles à la magie**. Ce sont
+  des vestiges du **combat magique entre le dragon et le Sage** : un combat si acharné que des fragments de magie pure,
+  très puissante, et de feu du dragon ont **réveillé des êtres endormis sous terre**, qui auraient dû le rester. Ils
+  vivent à Ossemont (ni lumière, ni ombre).
+- **Le bar** : le joueur donne le feu vert pour le construire (planche 43 v5 validée).

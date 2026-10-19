@@ -1562,6 +1562,7 @@ function nuit(G) {
   if (typeof echeancesDuConseil === 'function') echeancesDuConseil(G);   // (v1.10) une commande scellée qui n'est pas venue
   if (typeof nuitDuRival === 'function') nuitDuRival(G);   // (v1.11) les comptes du jour face au paon (après le Conseil : il voit la commande manquée le soir même)
   if (typeof nuitDeLOrphelinat === 'function') nuitDeLOrphelinat(G);   // (v1.12) le chantier de l'orphelinat
+  if (typeof nuitDuBar === 'function') nuitDuBar(G);   // (v1.16) le chantier du petit bar
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1628,6 +1629,7 @@ function nuit(G) {
   if (typeof matinDuConseil === 'function') for (const l of matinDuConseil(G)) G.reveil.lignes.push(l);   // (v1.10) l'impôt du Conseil, la commande scellée
   if (typeof matinDuRival === 'function') for (const l of matinDuRival(G)) G.reveil.lignes.push(l);   // (v1.11) le paon ouvre, le bilan du mois
   if (typeof matinDeLOrphelinat === 'function') for (const l of matinDeLOrphelinat(G)) G.reveil.lignes.push(l);   // (v1.12) les courses des petits, la rumeur
+  if (typeof matinDuBar === 'function') for (const l of matinDuBar(G)) G.reveil.lignes.push(l);   // (v1.16) le petit bar : l'installation, la rumeur vraie
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
