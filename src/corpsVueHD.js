@@ -302,6 +302,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       const u = Math.min(ep + 9 * k, L / 2 - 4 * k);
       coude.splice(0, 3, cote * (ep + 4 * k), 2 * k, yT + 3 * k); main.splice(0, 3, cote * u, 3 * k, yT - 1 * k);
     }
+    // (v1.15) le plateau (au bar) : le bras du côté où il regarde, plié, la main ouverte à hauteur d'épaule,
+    // écartée de la tête, sous le plateau ; l'autre bras reste le long du corps
+    if (pose === 'plateau' && cote === loin) { coude.splice(0, 3, cote * (ep + 5 * k), 1 * k, yT + 5 * k); main.splice(0, 3, cote * Math.min(ep + 9 * k, L / 2 - 4 * k), 1 * k, yT - 2 * k); }
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
     const r = 2.6 * k * P.membre;
     const dec = devant ? 0 : -0.5;

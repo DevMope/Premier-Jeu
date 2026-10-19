@@ -2247,3 +2247,49 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
 - **Ce que veut Vorhal'Düm** : que son Engeance **connaisse enfin la vie à la surface** (à approfondir plus tard).
 - **Vhaldrak en allié** : les trois conditions sont validées : (1) assez d'**éclats de vérité**, (2) **briser ses
   chaînes** avec un objet très rare forgé chez soi, (3) n'avoir **jamais vendu d'arme « tueuse de dragon »**.
+
+### Réponses du joueur (19/10, fin de nuit) : planches 43 v5, 44 v3, 45 ; idées (18 ans, icône, Conseil, ville, tortues)
+- **Planche 43 v5** (docs/planches-v059/planche-43-v5-le-bar.png) :
+  - le videur tient le filou **par les chevilles, tête en bas**, et le **secoue** : les pièces tombent de ses poches
+    (bulle : « Vide tes poches. Toutes. Et après, tu sors. ») ;
+  - le joueur (**adulte**, HommeGoy, à ce moment du jeu) **porte vraiment le plateau** : nouvelle pose « plateau »
+    dans le moteur des corps (le bras du côté où il regarde, plié, la main ouverte à hauteur d'épaule, sous le
+    plateau) ;
+  - le reste est validé (« le troll qui se sert de son bras pour le porter, c'est mieux »).
+- **Planche 44 v3** (docs/planches-v059/planche-44-v3-l-engeance.png) :
+  - la nouvelle Porte est validée ; **la salle autour**, façon l'intérieur du vaisseau de Ronan (Les Gardiens de la
+    Galaxie) : une salle immense et silencieuse, des piliers en lames qui montent dans le noir, **un sol de cercles de
+    runes** autour du milieu (là où Ronan pose son marteau) ; **la Porte au centre**. **À 50 km à la ronde, même les
+    bêtes les plus féroces n'osent pas approcher** ;
+  - **Vhaldrak** : pattes et queue remises au propre (deux pattes bien posées : cuisse, jarret, pied à trois serres
+    vers l'avant ; la queue en une seule courbe qui s'affine jusqu'à la pointe).
+- **Planche 45 : l'icône de goyniverse sur l'écran d'accueil iPhone** (docs/planches-v059/planche-45-icone-ecran-accueil.png) :
+  trois propositions : A le jeune héros au coucher du soleil, B la tête de Vhaldrak dans un anneau d'or, C le baluchon
+  sur la route. Une fois choisie : une image 180 × 180 (`apple-touch-icon`), le nom sous l'icône, et l'ouverture en
+  plein écran (sans la barre de Safari). Mise en ligne seulement avec l'accord du joueur (Cloudflare).
+
+#### Idées du joueur (à mettre en place plus tard)
+- **L'anniversaire des 18 ans** : pour que le joueur ne rate pas le passage de **JeuneGoy à HommeGoy**, une **fête
+  d'anniversaire**, quand le moment est venu : Garrick, les **frères de sang**, les amis que le joueur s'est faits,
+  **le mendiant** si sa relation est au maximum (quêtes secondaires), etc. Proposition de Claude : la veille du saut
+  de temps vers 18 ans, un soir de fête au shop (gâteau, chandelles, cadeaux selon les amitiés), puis le réveil en
+  HommeGoy (« Te voilà un homme, petit... enfin, plus si petit »). Les invités dépendent de ce que le joueur a fait.
+- **Les Gardiens du Conseil, chacun son rôle** (à réfléchir ensemble). Propositions de Claude, pour lancer :
+  Maître Bertolin Pommeval (le Comté) : **le trésor et l'impôt** ; Dame Aliénor de Hautval : **la justice et les
+  primes** (les recherchés) ; Durgan Barbe-de-Fer : **la forge et les armes** (les commandes scellées) ; Dame
+  Ilyriel : **les routes et les contrées** (les cartes, les permis) ; l'Archimage Séraphine : **le savoir et le sort
+  d'oubli** (elle sait, peut-être) ; Sire Valdric : **la guerre** (le Rempart).
+- **Une ville plus grande et plus vivante** : plus de maisons pendant la promenade, des bâtiments **en
+  construction** (qui finissent par s'ouvrir), **des enfants qui jouent**, plus de passants qui font des choses.
+- **Changer de ville en gardant sa maison** : **les tortues géantes** (la taille d'un bateau de croisière pour les
+  plus grandes) transportent maisons, bâtiments et choses très lourdes ; tout le royaume les connaît et s'en sert
+  pour déménager (comme la grande tortue de Spellcaster University, ou Zunesha, l'éléphant géant de One Piece qui
+  porte une civilisation). **Un emplacement de maison par royaume.** Changer de ville change **les habitants, les
+  décors, les marchés** (petites différences) et donne **des événements propres à chaque royaume**. Un joueur
+  **d'ombre** peut s'installer **en terre des Bannis**, pas un joueur de lumière.
+  - **Questions de Claude** (pour régler les incohérences, à voir avec le joueur) : ce qui suit la maison (le shop, la
+    forge, l'arrière-boutique : oui ; **l'orphelinat, le bar, le paon, la banque** : restent dans leur ville ?) ;
+    **les clients habitués et les héros** (ils suivent, ou on recommence des amitiés ?) ; **le prix et la durée** du
+    voyage (un mois de fermeture ? une somme ?) ; **quand** (après un palier d'étoiles ? une fois par an ?) ;
+    **revenir** dans une ancienne ville (oui, la maison peut repartir) ; **les commandes scellées et l'impôt** (le
+    Conseil suit le joueur partout, ou chaque royaume a ses règles ?).
