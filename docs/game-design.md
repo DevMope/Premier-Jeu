@@ -2653,3 +2653,34 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
 - **Constat** : côté lumière et neutre, le joueur a **trop d'argent** : tout le socle est payé avant le jour 30, et au
   jour 120 il lui reste 40 000 à 50 000 p. de trop s'il choisit l'orphelinat (seul le bar absorbe tout). Côté ombre,
   ça tient à peu près. Et **les achats propres à un camp sont presque inexistants** (90 p. lumière, ~500 p. ombre).
+
+### Réponse du joueur (21/10) : « oui à toutes les propositions » — de nouvelles dépenses (planches 52 à 54)
+Chaque projet se paie en plusieurs étapes (une à la fois, un chantier d'une nuit), avec un vrai effet en jeu. Les prix
+visent le trop-plein mesuré (lumière et neutre : 40 000 à 50 000 p. de trop au jour 120 ; ombre : ~15 000 p.).
+
+**Planche 52 — Financer la Confrérie du Dernier Rempart (côté lumière : jauge côté lumière ou serment de la lumière)**
+1. **L'hospice de la Confrérie** — 6 000 p. : les aventuriers blessés y guérissent deux fois plus vite (la
+   convalescence est divisée par deux), et un soin par jour y est gratuit.
+2. **La chapelle du Rempart** — 12 000 p. : sa cloche bénit les départs : +3 % de chances à chaque épreuve dans les
+   contrées de la lumière.
+3. **L'escouade de la Confrérie** — 20 000 p. : six soldats équipés à tes frais ; chaque semaine, ils font avancer la
+   conquête d'une contrée de la lumière (+1), et la gazette en parle.
+Total 38 000 p.
+
+**Planche 53 — Le repaire sous le comptoir (côté ombre : jauge côté ombre, serment de l'ombre ou Main Noire)**
+1. **La cave de contrebande** — 3 000 p. : une trappe derrière le comptoir ; la garde ne trouve plus les caisses du
+   Passeur ni les objets interdits (le risque de saisie est divisé par deux), +10 places pour les interdits.
+2. **Le réseau d'informateurs** — 7 000 p. : chaque matin, un gamin des rues glisse un tuyau (la garde viendra-t-elle,
+   le vrai favori de la fosse, une tête mise à prix) ; et parfois un secret de plus pour le carnet des choses étranges.
+3. **La garde achetée** — 12 000 p. (puis 100 p. par semaine) : le capitaine ferme les yeux : plus de descentes ni
+   d'amendes tant que l'enveloppe arrive chaque semaine.
+Total 22 000 p.
+
+**Planche 54 — Le luxe et l'étage (pour tous)**
+1. **Un cinquième niveau de luxe** pour le comptoir, le coffre, la chambre et l'éclairage (« le luxe ») : 1 800 à
+   3 500 p. chacun, ~11 000 p. en tout ; chacun ajoute un peu à son effet (butin, coffre, repos, heure de fermeture).
+2. **L'étage au-dessus du shop**, en trois chantiers :
+   - **le grenier aménagé** — 8 000 p. : +20 places de réserve ;
+   - **le salon** — 12 000 p. : on y reçoit les clients prestigieux (un de plus par semaine, ils paient mieux) ;
+   - **l'appartement** — 18 000 p. : JeuneGoy dort mieux (plus souvent « en forme » le matin) et la façade gagne un étage.
+Total ~49 000 p.
