@@ -2293,3 +2293,82 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
     voyage (un mois de fermeture ? une somme ?) ; **quand** (après un palier d'étoiles ? une fois par an ?) ;
     **revenir** dans une ancienne ville (oui, la maison peut repartir) ; **les commandes scellées et l'impôt** (le
     Conseil suit le joueur partout, ou chaque royaume a ses règles ?).
+
+### Réponses du joueur (20/10) : planche 43 v5 validée, icône A, le représentant des Bannis, la vie en ville, les déménagements
+- **Planche 43 v5 : tout est validé.** (Planche 44 v3 : pas encore de retour.)
+- **Planche 45 : on garde l'icône A** (le jeune héros). **Fait (v1.15)** : `assets/icones/icone-180.png` pour l'écran
+  d'accueil de l'iPhone (`apple-touch-icon`), une petite icône d'onglet, un `manifest.webmanifest` (Android) ; le nom
+  sous l'icône est « goyniverse » ; le jeu s'ouvre en plein écran. En ligne seulement avec l'accord du joueur
+  (Cloudflare).
+- **Les 18 ans** : validé tel que proposé (la fête au shop la veille, les invités selon les amitiés, le réveil en
+  HommeGoy).
+- **Les rôles des Gardiens** : validés tels que proposés. **Et un septième siège : le « représentant des Bannis »**,
+  choisi par le Grand Sage. Il est **à la botte du Conseil** et trahit les Bannis sans le savoir : le Conseil s'en
+  sert pour faire dire et faire aux Bannis et aux peuples de la Confrérie ce qui arrange le Grand Sage. **Très naïf** :
+  il croit sincèrement que la situation des Bannis se réglera par la politique. À peaufiner. Propositions de nom
+  (Claude) : **Maître Ombrel Doux-Verbe** (un gobelin lettré, lunettes, rouleaux sous le bras, toujours un
+  « compromis » à la bouche) ; « Brogan Main-Tendue » (un orc diplomate) ; « Sire Lucan des Deux-Rives » (un vampire
+  poli). Il pourrait venir au comptoir et dire des choses qui sonnent juste... mais qui servent le Sage.
+- **Rendre la ville plus vivante** (validé, et des idées en plus de Claude) : des **oiseaux** (pigeons sur les toits,
+  hirondelles au printemps), des **rongeurs** (souris aux caves, écureuils dans les arbres), des chantiers qui
+  avancent jour après jour, des enfants qui jouent (marelle, cerceau, cache-cache), un crieur, un rémouleur, des
+  lavandières au lavoir, des chats, des chiens, du linge qui sèche. **Des petites choses à faire pour se détendre** :
+  **arroser ses plantes** (des pots au rebord des fenêtres, qui fleurissent si on s'en occupe), nourrir les pigeons,
+  jeter des ricochets dans le canal, pêcher un peu, cueillir des pommes, jouer aux osselets avec les enfants, allumer
+  les lanternes le soir, donner un os au chien du marché. Rien d'obligatoire, rien qui rapporte beaucoup : juste du
+  plaisir (et parfois un petit souvenir pour l'étagère).
+- **Les tortues géantes de déménagement** : validé.
+
+#### Les déménagements : réponses du joueur et propositions de Claude
+1. **La Banque goyenne est dans tous les royaumes**, et ses bâtiments sont de plus en plus puissants et riches à
+   mesure qu'on avance. **L'orphelinat et le bar restent dans leur ville** : il faut alors **un dédommagement**, ou que
+   le joueur **garde certains avantages** selon les améliorations qu'il y avait faites. Et chaque royaume aura **ses
+   propres mécaniques** (à inventer pour qu'elles collent avec le royaume).
+   - *Proposition de Claude* : l'orphelinat et le bar **continuent de tourner tout seuls** dans l'ancienne ville (le
+     bar avec son équipe, l'orphelinat avec les grands qui s'occupent des petits). Le joueur reçoit **chaque mois une
+     petite lettre et une petite rente** (le bar seul, comme aujourd'hui), et garde **un avantage par amélioration**
+     faite : l'école → la rumeur du matin continue (par lettre) ; la grande salle → les anciens de l'orphelinat
+     peuvent encore venir le voir ; la scène du bar → le conteur du jour passe parfois en tournée, etc. Chaque nouveau
+     royaume a son **bâtiment à lui** à la place (par exemple une écurie de griffons dans le royaume du ciel, une
+     serre sous l'eau...).
+2. **Les frères de sang et les voyageurs « avant-héros » ou héros** voyagent avec le joueur ; il dit au revoir aux
+   autres et se fait de nouvelles amitiés. **Le joueur peut revenir voir ses anciennes villes.**
+   - *Proposition de Claude* : une **ligne régulière de tortues** (plus petites, pour les voyageurs) relie les villes
+     déjà habitées : un voyage d'un jour, pour une visite (on voit le bar, l'orphelinat, les anciens amis, on prend
+     une lettre), puis on rentre. La maison, elle, ne bouge que pour un vrai déménagement.
+3. **Le prix et le voyage** (cher, mais sans bloquer trop longtemps) :
+   - *Conseil de Claude* : **un prix lié à ce que le joueur gagne**, pour qu'il ne soit jamais bloqué : environ
+     **trois mois de bénéfice moyen**, avec un **plancher** (10 000 p. pour le premier déménagement) et un plafond qui
+     monte à chaque royaume (×1,5 à chaque fois). Le prix comprend la tortue et le nouveau terrain. Et la Banque
+     goyenne propose un **« prêt de déménagement »** à rembourser dans la nouvelle ville, pour ceux qui sont juste.
+   - **Le voyage se vit** (proposition) : une cinématique de départ (la tortue soulève la maison), puis **quelques
+     jours sur le dos de la tortue** : un **petit comptoir de voyage** pour les passagers, des **quêtes de bord** (un
+     passager malade, un passager clandestin, une tempête, un marché flottant quand on croise une autre tortue) qui
+     font avancer les jours, puis une cinématique d'arrivée. **De plus en plus long à chaque royaume** : 3 jours, puis
+     5, puis 7, etc.
+   - **Des lieux bien différents** pour chaque royaume (demandé par le joueur) : par exemple **une ville dans les
+     cieux** (sur des îles volantes), **une ville sous l'eau** (sous une grande bulle), une ville dans les arbres
+     géants, une ville creusée dans la montagne, une ville sur un lac gelé... (à choisir avec le joueur, un par royaume).
+4. **Quand peut-on déménager** : quand un royaume est **complètement conquis/libéré**. Si un royaume est libéré trop
+   vite, on peut **ajouter des lieux à libérer**, avec les nouvelles bêtes de **l'Engeance** (rare, voire presque
+   absente au début, comme le montre la petite jauge de la Porte).
+5. **Revenir dans ses anciennes villes** : voir le point 2 (la ligne régulière de tortues, pour une visite).
+6. **Le Conseil gère tous les royaumes sauf ceux des Bannis.** Chez les Bannis, une autre mécanique :
+   - **un Conseil des Bannis**, qui a l'air moins organisé, mais plus déterminé ; il réunit **les meilleurs
+     guerriers**. **Garrick en fait partie**, et le joueur ne l'apprend **pas tout de suite** ;
+   - comme un joueur d'ombre gagne moins d'argent, **pas d'impôt** chez les Bannis : le joueur **choisit ce qu'il
+     offre en dons** ; les dons vont **aux familles les plus démunies** et à **reconstruire** les royaumes ravagés par
+     le Grand Sage, le dragon et l'Engeance (et on le voit : les décors se réparent peu à peu).
+
+#### Les vestiges des Bannis dans les royaumes du Conseil (idée du joueur)
+Dans les décors des royaumes du Conseil, des **traces discrètes** que ces terres appartenaient autrefois aux Bannis.
+Subtiles, mais qu'un joueur attentif peut remarquer :
+- **les défenses de groliphants** (d'énormes bêtes, un mélange d'éléphant, de mammouth et d'hippopotame ; seuls les
+  orcs s'en servent pour leurs maisons et bâtiments) : une défense couverte de mousse au loin dans un décor de
+  hobbit, une autre qui sert de banc dans un jardin du Comté ;
+- *idées de Claude, à compléter* : des **pierres levées gobelines** retournées pour faire des bornes de champ ; une
+  **fresque orque** qui réapparaît sous la chaux d'un mur qui s'écaille ; un **pont de troll** (immense, aux marches
+  trop hautes) repris pour une route ; des **noms de lieux** à moitié effacés (« Grokval » devenu « Grandval ») ; des
+  **cryptes vampires** sous les vignes d'un domaine noble ; une **berceuse** que fredonnent les plus vieux sans savoir
+  d'où elle vient ; des **totems** pris dans le tronc d'un vieil arbre ; un **mot de la langue orque** gravé sur une
+  vieille cloche.
