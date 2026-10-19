@@ -2565,3 +2565,5 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
 - **50 v2** : mieux centrer JeuneGoy dans la petite vignette de pensée. **50 v3**
   (docs/planches-v059/planche-50-v3-l-envie-de-partir.png) : le médaillon cadre toute la tête, des cheveux au poing sous
   le menton, bien au milieu.
+- **50 v3, retouche** : « mieux centrer sa tête au milieu » : la tête est mesurée dans le dessin (du haut des cheveux au
+  menton) et posée pile au centre du médaillon, le poing juste dessous.
