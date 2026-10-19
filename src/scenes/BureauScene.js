@@ -580,7 +580,7 @@ class BureauScene extends Phaser.Scene {
       c.add([fond, this.add.text(x, 100, nom, style(12, choisi ? '#fff4dc' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5)]);
     });
     const NOTES = { retour: 'Retour de mission', famille: 'Une famille en deuil', garde: 'La garde', gardeRecherche: 'La garde', garrick: 'Garrick', collecteur: 'Le collecteur', serpent: 'Le Serpent à deux têtes',
-      colporteur: 'Le colporteur', notable: 'Un visiteur de marque', aine: 'Un aîné des Bannis', carnet: 'Un carnet rapporté', heraut: 'Le messager du Conseil', rival: 'Le voisin', crieur: 'Le crieur' };
+      colporteur: 'Le colporteur', notable: 'Un visiteur de marque', aine: 'Un aîné des Bannis', carnet: 'Un carnet rapporté', heraut: 'Le messager du Conseil', rival: 'Le voisin', crieur: 'Le crieur', detresse: 'Un pigeon : appel à l\'aide' };
     const lignes = G.file.filter(e => e.type !== 'faucheuse');
     const PAR = 8, pages = Math.max(1, Math.ceil(lignes.length / PAR));
     page = Math.min(page, pages - 1);

@@ -191,7 +191,9 @@ function chanceEtapeBase(e, colis, voyageur) {
   const nivE = niveauEpreuve(e, colis, voyageur), saison = typeof malusSaison === 'function' ? malusSaison(window.GAME, e, nivE) : 1;
   // (v1.19) une mise : ta confiance l'encourage, il s'équipe un peu mieux en route
   const mise = voyageur.mise > 0 && typeof MISE_AVENTURIER !== 'undefined' ? MISE_AVENTURIER.bonusEtape : 0;
-  return Phaser.Math.Clamp((chanceEpreuve(nivE) + enPlus * BONUS_SURPLUS + bonusArme + nb + evenement - danger + beni + mise) * saison, 0.05, 0.97);
+  // (v1.22) un appel à l'aide resté sans réponse : cette épreuve-là sera plus dure
+  const abandon = e.malusDetresse || 0;
+  return Phaser.Math.Clamp((chanceEpreuve(nivE) + enPlus * BONUS_SURPLUS + bonusArme + nb + evenement - danger + beni + mise - abandon) * saison, 0.05, 0.97);
 }
 
 // (v0.93) Le bonus de la nymphe sur cette épreuve (0 si elle ne bénit pas, ou pas ce genre d'épreuve)
@@ -1833,6 +1835,8 @@ function formerFileDuJour(G) {
   // (v0.56) Très rarement, à partir du milieu du jeu, un aîné des Bannis passe et laisse une phrase
   const aine = aineDuJour(G, 'comptoir');
   if (aine) { G.ainesVus = [...(G.ainesVus || []), aine]; file.splice(hasard(0, file.length), 0, { type: 'aine', race: aine }); }
+  // (v1.22) un pigeon : un aventurier en mission appelle à l'aide
+  if (typeof detresseDuJour === 'function') { const d = detresseDuJour(G); if (d) file.splice(hasard(0, file.length), 0, d); }
   // (v0.86) une tête mise à prix (ou son sosie), environ une fois par semaine
   const recherche = rechercheDuJour(G, file.filter(e => e.type === 'client').map(e => e.voyageur.nom));
   if (recherche) file.splice(hasard(0, file.length), 0, { type: 'client', voyageur: recherche });
@@ -2273,6 +2277,8 @@ function terminerAventure(G, parti) {
   if (typeof miseAuRetour === 'function') { parti.mise = miseAuRetour(G, parti); const t = texteMise(parti.mise, v); if (t) message = (message ? message + ' ' : '') + t; }
   // (v1.20) la mise noire, chez Grisouille
   if (typeof pariNoirAuRetour === 'function') { const t = pariNoirAuRetour(G, parti); if (t) message = (message ? message + ' ' : '') + t; }
+  // (v1.22) secouru pendant sa mission : il s'en souvient
+  if (typeof detresseAuRetour === 'function' && r.vivant) { const t = detresseAuRetour(G, parti); if (t) message = (message ? message + ' ' : '') + t; }
   parti.bilan = { gain, message };
   const h = G.habitues.find(x => x.nom === v.nom);
   parti.progression = { avant, apres: { niveau: (h && h.niveau) || v.niveau, succes: succesDe(G, v.nom), relation: niveauRelation(G, v.nom).nom, reputation: G.reputation }, gain };

@@ -216,6 +216,9 @@ class StoryScene extends Cinematique {
       // (v0.59) la scène se joue pendant qu'on lit : la bête arrive, la nuit tombe...
       if (scene && scene.avant) await scene.avant.call(this);
       await this.attendreClic();
+      // (v1.22) le pigeon envoyé au comptoir : le secours arrive ici (ou personne ne vient)
+      const sos = this.parti.detresse;
+      if (sos && sos.choix && sos.i === i) await this.secoursDetresse(sos);
 
       if (niveau !== 'rien') {
         await this.montrerObjet(epreuve.besoin);
@@ -304,6 +307,62 @@ class StoryScene extends Cinematique {
     const icone = this.add.image(this.perso.x, this.perso.y - 88, cle).setScale(0).setDepth(5);
     await this.animer({ targets: icone, scale: cle.startsWith('hd_') ? 3 : 5, y: icone.y - 30, duration: 350, ease: 'Back.easeOut' });
     this.tweens.add({ targets: icone, alpha: 0, y: icone.y - 30, duration: 900, delay: 500, onComplete: () => icone.destroy() });
+  }
+
+  // (v1.22, planche 49 v2) Le secours d'un message de détresse : l'aigle du Conseil qui lâche le paquet,
+  // le corbeau de la Main Noire, le mercenaire qui arrive à pied... ou l'attente, seul.
+  async secoursDetresse(d) {
+    const v = this.parti.voyageur, x = this.perso.x, y = this.perso.y, e = this.e;
+    creerObjetsHD(this); creerOiseauxMessagers(this);
+    const id = d.objet || d.id, n = Math.min(3, d.qte);
+    const nom = d.arme ? (d.qte > 1 ? 'des armes' : 'une arme') : `${d.qte > 1 ? d.qte + ' ' : 'un' + (ITEMS[id] && /e$/.test(ITEMS[id].nom) && !/^(Bouclier|Antidote)/.test(ITEMS[id].nom) ? 'e ' : ' ')}${nomObjet(id).toLowerCase()}${d.qte > 1 && !/[sx]$/.test(nomObjet(id)) ? 's' : ''}`;
+    const lacher = async (sx, sy) => {   // le paquet tombe à ses pieds
+      for (let k = 0; k < n; k++) {
+        const o = this.add.image(sx + k * 8, sy, iconeObjet(this, id)).setScale(3).setDepth(6);
+        this.tweens.add({ targets: o, x: x + 34 + k * 20, y: y - 8, angle: 160 + k * 40, duration: 900, delay: k * 160, ease: 'Quad.easeIn',
+          onComplete: () => this.tweens.add({ targets: o, alpha: 0, delay: 1400, duration: 500, onComplete: () => o.destroy() }) });
+      }
+      await this.attendre(900 + n * 160);
+    };
+    if (d.choix === 'rien' || (d.choix === 'mercenaire' && !d.arrive)) {
+      this.ecrire(this.titreEtape, d.choix === 'rien'
+        ? "« J'avais envoyé un pigeon au comptoir... Personne ne viendra. Bon. Il faudra faire sans. »"
+        : "« Le comptoir m'envoyait un mercenaire, paraît-il. Je l'ai attendu longtemps... Il n'est jamais arrivé. »");
+      if (this.conteur) this.conteur.setTexture(textureBusteHD(this, v, 'inquiet'));
+      for (let k = 0; k < 3 && d.choix === 'rien'; k++) {
+        const pg = this.add.sprite(x + 60 + k * 46, y - 150 - k * 26, 'pigeonVolH').setScale(2.4).setFlipX(true).setDepth(7).play('volPigeon');
+        this.tweens.add({ targets: pg, x: pg.x + 520, y: pg.y - 220, duration: 2400, delay: k * 220, ease: 'Sine.easeIn', onComplete: () => pg.destroy() });
+      }
+      await this.attendreClic();
+      return;
+    }
+    if (d.choix === 'aigle' || d.choix === 'corbeau') {
+      const aigle = d.choix === 'aigle';
+      const oiseau = this.add.sprite(x - 460, y - 280, aigle ? 'aigleVolM' : 'corbeauVolH').setScale(aigle ? 3.2 : 3).setDepth(7)
+        .setFlipX(!aigle).play(aigle ? 'volAigle' : 'volCorbeau');
+      Son.jouer('glisse');
+      await this.animer({ targets: oiseau, x: x + 10, y: y - 210, duration: 1500, ease: 'Sine.easeOut' });
+      await lacher(oiseau.x + 6, oiseau.y + (aigle ? 40 : 20));
+      this.tweens.add({ targets: oiseau, x: x + 620, y: y - 420, duration: 1800, ease: 'Sine.easeIn', onComplete: () => oiseau.destroy() });
+      this.ecrire(this.titreEtape, aigle
+        ? `« Un aigle ?! Par la barbe de mes ancêtres... Il m'apporte ${nom} ! Le comptoir ne m'a pas oublié${e}. »`
+        : `« Un corbeau noir s'est posé près de moi, a lâché ${nom} à mes pieds, et s'est envolé sans un cri. Je n'ose pas demander qui l'envoie. »`);
+    } else {
+      // le mercenaire arrive à pied, pose le paquet, et repart
+      const m = this.add.image(x - 420, y, corpsHD(this, { race: 'humain', nom: 'Mercenaire', niveau: 'veteran' })).setOrigin(0.5, 1).setScale(this.perso.scaleX).setDepth(Math.max(4, this.perso.depth));
+      pasDeMarche(this, m, 1600);
+      await this.animer({ targets: m, x: x - 70, duration: 1600, ease: 'Sine.easeOut' });
+      await lacher(m.x + 10, y - 60);
+      this.ecrire(this.titreEtape, `« Un mercenaire, envoyé par le comptoir ! Il m'a tendu ${nom} sans un mot, puis il est reparti. »`);
+      if (this.conteur) this.conteur.setTexture(textureBusteHD(this, v, 'content'));
+      await this.attendreClic();
+      // (il reste là le temps qu'on lise, puis repart d'où il vient)
+      m.setFlipX(true); pasDeMarche(this, m, 1800);
+      this.tweens.add({ targets: m, x: x - 520, duration: 1800, onComplete: () => m.destroy() });
+      return;
+    }
+    if (this.conteur) this.conteur.setTexture(textureBusteHD(this, v, 'content'));
+    await this.attendreClic();
   }
 
   // Une épreuve surmontée : un bond de joie (et quelques étincelles si c'était bien préparé).
@@ -458,7 +517,11 @@ class StoryScene extends Cinematique {
       if (ep.besoin && ITEMS[ep.besoin]) c.add(this.add.image(x0 + 38, y, iconeObjet(this, ep.besoin)).setScale(1.6));
       c.add(this.add.text(x0 + 60, y - 8, `${i + 1}. ${NOMS[ep.type] || (ep.type || '').replace(/^./, m => m.toUpperCase())}`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
       const prepa = e.niveau === 'complet' ? `bien équipé${this.e}` : e.niveau === 'partiel' ? `à moitié équipé${this.e}` : `sans ${ITEMS[ep.besoin] ? ITEMS[ep.besoin].nom.toLowerCase() : 'rien'}`;
-      c.add(this.add.text(x0 + 60, y + 8, prepa + (e.piege ? ' · objet piégé !' : ''), style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
+      // (v1.22) le secours d'un message de détresse, sur l'épreuve où il est arrivé
+      const sos = this.parti.detresse && this.parti.detresse.choix && this.parti.detresse.i === i ? this.parti.detresse : null;
+      const secours = !sos ? '' : sos.choix === 'rien' ? ' · personne n\'est venu' : sos.choix === 'mercenaire' && !sos.arrive ? ' · le mercenaire n\'est pas arrivé'
+        : ` · ${{ aigle: "l'aigle", mercenaire: 'le mercenaire', corbeau: 'le corbeau' }[sos.choix]} est venu`;
+      c.add(this.add.text(x0 + 60, y + 8, prepa + (e.piege ? ' · objet piégé !' : '') + secours, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
       const perdu = Math.max(0, (e.pvAvant ?? e.pvApres) - e.pvApres);
       c.add(this.add.text(x0 + 426, y, e.reussie ? '✓ réussie' : `✗ ratée${perdu ? ` · −${perdu} ♥` : ''}`, style(13, e.reussie ? '#2f6a2a' : '#a03030', { fontStyle: 'bold' })).setOrigin(1, 0.5));
     });

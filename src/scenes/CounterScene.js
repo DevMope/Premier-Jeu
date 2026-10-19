@@ -732,6 +732,7 @@ class CounterScene extends Phaser.Scene {
     creerDecorComptoir(this);
     this.dessinerReliques();
     creerObjetsHD(this);
+    creerOiseauxMessagers(this);   // (v1.22) le pigeon des messages de détresse
     this.add.image(0, 0, 'murComptoir').setOrigin(0).setScale(2);
     this.add.image(0, 340, plateauComptoir(this, niveauAmelioration(this.G, 'comptoir'))).setOrigin(0).setScale(2);
   }
@@ -811,6 +812,7 @@ class CounterScene extends Phaser.Scene {
 
   // Un personnage qui attend dans la file, à la place `i`.
   spriteFile(entree, i) {
+    if (entree.type === 'detresse') return this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'pigeonPose').setVisible(false);   // (v1.22 : le pigeon ne fait pas la queue)
     const cle = this.texturePour(entree);
     const sprite = this.add.image(FILE.x - i * FILE.ecart, FILE.y, cle)
       .setOrigin(0.5, 1).setScale(FILE.echelle * echelleCorps(cle)).setTint(0xd8d0c0).setDepth(1);
@@ -1252,6 +1254,12 @@ class CounterScene extends Phaser.Scene {
     this.pieges = entree.pieges || {};
     this.bouton('...', null);
     this.majCommande();
+    // (v1.22) un pigeon se pose sur le rebord : personne ne s'avance
+    if (entree.type === 'detresse') {
+      this.perso.setVisible(false);
+      const place = this.fileSprites.shift(); if (place) place.destroy();
+      return this.visiteDetresse(entree);
+    }
     // Un carnet laissé par la Faucheuse : personne ne s'avance, il est déjà là.
     if (entree.type === 'carnet') {
       this.perso.setVisible(false);
@@ -1445,6 +1453,18 @@ class CounterScene extends Phaser.Scene {
         Son.jouer('pieces'); this.dire(`${pre} compte les pièces, une à une, en silence. « Te voilà libre. Nous ne nous sommes jamais vus. » La porte se referme sans un bruit.`, qui); partir();
       }], ['Non, oublie', () => { this.dire('« Alors rien ne change. »', qui); partir(); }]);
     };
+    // (v1.22) le corbeau d'un message de détresse : le service dû
+    if (entree.du && entree.service) {
+      const s = SERVICES_MAFIA[entree.service];
+      this.dire(`« Notre corbeau a porté ton paquet. À ton tour. » ${s.demande}`, qui);
+      this.choix([`Rendre le service (${s.nom.toLowerCase()})`, () => {
+        const msg = rendreService(G, entree.service);
+        Son.jouer('glisse');
+        this.dire(`${pre} hoche à peine la tête. « Nous sommes quittes. »${msg ? ' ' + msg : ''}`, qui);
+        partir();
+      }, null, 'mal'], ['Refuser', () => { refuserPizzo(G); this.exprimer('fache'); this.dire(`« On ne refuse rien à ${nomBande(G)}. » ${pre} sort sans un mot de plus. Cette nuit, garde un œil sur ta vitrine...`, qui); partir(); }]);
+      return;
+    }
     if (rang >= 2) {
       const part = partLieutenant(G);
       encaisser(G, part, 'pizzo');
@@ -1496,6 +1516,98 @@ class CounterScene extends Phaser.Scene {
     this.dire("Salut, l'ami ! J'ai de belles choses dans ma hotte aujourd'hui. Un coup d'œil ? C'est un peu plus cher qu'au marché, mais c'est là, sous ton nez.", COLPORTEUR.nom);
     this.choix(['Voir sa marchandise', () => { this.scene.pause(); this.scene.launch('Express', { comptoir: this, vendeur: 'colporteur' }); }],
       ['Pas aujourd\'hui', () => { this.dire('Comme tu veux ! Je repasserai.', COLPORTEUR.nom); this.bouton('...', null); this.partirPar(FENETRE.x - 80); }]);
+  }
+
+  // --- (v1.22, planche 49 v2) Un message de détresse : le pigeon, sa lettre, quatre réponses ---
+  visiteDetresse(entree) {
+    const G = this.G;
+    // (la partie a pu être rechargée : on retrouve la mission elle-même, pas sa copie)
+    const p = G.partis.find(x => x.voyageur.id === entree.parti.voyageur.id && x.depart === entree.parti.depart) || entree.parti;
+    if (!p.detresse) p.detresse = entree.parti.detresse;
+    const v = p.voyageur, prenom = v.nom.split(' ')[0];
+    this.titreCommande.setFontSize(17).setText('Un message');
+    this.avancer(JOURNEE.visite);
+    // il arrive à tire-d'aile par la droite, puis se pose sur le rebord de la fenêtre et picore
+    const rebord = { x: FENETRE.x + 318, y: FENETRE.y + FENETRE.h + 3 };
+    const pg = this.pigeon = this.add.sprite(FENETRE.x + FENETRE.w + 70, FENETRE.y + 30, 'pigeonVolH').setScale(3.2).setOrigin(0.5, 1).setDepth(12).play('volPigeon');
+    Son.jouer('oiseaux');
+    this.tweens.add({ targets: pg, x: rebord.x, y: rebord.y, duration: 1300, ease: 'Sine.easeOut', onComplete: () => {
+      pg.stop(); pg.setTexture('pigeonPose');
+      this.becPigeon = this.tweens.add({ targets: pg, angle: { from: -3, to: 5 }, duration: 520, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    } });
+    this.raconter(`Un pigeon se pose sur le rebord de la fenêtre, un petit rouleau attaché à la patte. Il vient ${deLieu(ZONES[v.zone] ? ZONES[v.zone].nom : 'loin')} : là où est parti${v.feminin ? 'e' : ''} ${prenom}.`, 'Un message');
+    this.bouton('Lire le message', () => this.lettreDetresse(p));
+  }
+
+  lettreDetresse(p) {
+    const G = this.G, d = p.detresse, v = p.voyageur, id = objetDetresse(G, p);
+    this.bouton('...', null);
+    const fermer = () => { voile.destroy(); L.destroy(); };
+    const voile = this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.55).setDepth(40).setInteractive();
+    const L = this.add.container(480, 262).setDepth(41);
+    L.add(this.add.image(0, 0, panneauHD(this, 860, 440)).setScale(2));
+    const lettre = this.add.text(0, -186, lettreDetresse(p), style(15, '#3b2410', { fontStyle: 'italic', align: 'center', wordWrap: { width: 780 } })).setOrigin(0.5);
+    L.add(lettre);
+    L.add(this.add.text(0, lettre.y + lettre.height / 2 + 2, `— un berger ${deLieu(ZONES[v.zone] ? ZONES[v.zone].nom : 'là-bas')}`, style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5, 0));
+    const n = Math.min(d.qte, 4);
+    for (let k = 0; k < n; k++) L.add(this.add.image(-60 + k * 30 - (n - 2) * 15, -126, iconeObjet(this, id)).setScale(2));
+    L.add(this.add.text(-30 + n * 15, -126, `× ${d.qte} (dans ton stock : ${G.stock[id] || 0})`, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+    const etoiles = etoilesDetresse(p), objets = d.arme ? 'l\'arme' : `${nomObjet(id).toLowerCase()}${d.qte > 1 && !/[sx]$/.test(nomObjet(id)) ? 's' : ''}`;
+    const CARTES = [
+      ['aigle', 'aigleVolM', "L'aigle du Conseil", `${prixDetresse(p, 'aigle')} p. + ${objets}`, 'Sûr : il arrive toujours.', `${DETRESSE.aigle.parEtoile} p. × ${etoiles} étoile${etoiles > 1 ? 's' : ''}. Pas pour un Banni.`, 0x2a4a8a],
+      ['mercenaire', null, 'Un mercenaire', `${prixDetresse(p, 'mercenaire')} p. + ${objets}`, 'Il arrive 4 fois sur 5. Une heure de ta journée.', `${DETRESSE.mercenaire.parEtoile} p. × ${etoiles} étoile${etoiles > 1 ? 's' : ''}. Pour tout le monde.`, 0x8a6a3a],
+      ['corbeau', 'corbeauPose', 'Le corbeau de la Main Noire', `${prixDetresse(p, 'corbeau')} p. + ${objets}`, 'Sûr et pas cher...', 'mais tu leur devras un service. (ombre)', 0x5a2a6a],
+      ['rien', null, 'Ne rien faire', '0 p.', `Ses chances baissent de ${Math.round(DETRESSE.malusRien * 100)} % sur cette épreuve.`, 'Le pigeon repart sans réponse.', 0xa01818],
+    ];
+    CARTES.forEach(([choix, tex, nom, prix, l1, l2, coul], i) => {
+      const ok = peutSecourir(G, p, choix);
+      const c = this.add.container(-306 + i * 204, 40);
+      const fond = this.add.rectangle(0, 0, 196, 250, ok.ok ? 0xf3e6c8 : 0xe0d6c0).setStrokeStyle(3, coul);
+      c.add(fond);
+      if (tex) c.add(this.add.image(0, -78, tex).setScale(tex === 'aigleVolM' ? 1.6 : 3));
+      else if (choix === 'mercenaire') c.add(imageCorps(this, 0, -44, { race: 'humain', nom: 'Mercenaire', niveau: 'veteran' }, 4.4));
+      else c.add(this.add.text(0, -78, '✕', style(40, '#a01818', { fontStyle: 'bold' })).setOrigin(0.5));
+      c.add(this.add.text(0, -26, nom, style(15, '#3b2410', { fontStyle: 'bold', align: 'center', wordWrap: { width: 180 } })).setOrigin(0.5));
+      c.add(this.add.text(0, 6, prix, style(14, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
+      c.add(this.add.text(0, 42, l1, style(12, '#3b2410', { align: 'center', wordWrap: { width: 180 } })).setOrigin(0.5));
+      c.add(this.add.text(0, 92, ok.ok ? l2 : ok.raison, style(11, ok.ok ? '#6b4a2a' : '#8a1a1a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 180 } })).setOrigin(0.5));
+      if (!ok.ok) { c.setAlpha(0.6); L.add(c); return; }
+      fond.setInteractive({ useHandCursor: true })
+        .on('pointerover', () => fond.setFillStyle(0xfff4d8)).on('pointerout', () => fond.setFillStyle(0xf3e6c8))
+        .on('pointerdown', () => { fermer(); this.repondreDetresse(p, choix); });
+      L.add(c);
+    });
+    L.add(this.add.text(0, 196, 'Clique sur une réponse. Le corbeau ne vient que si tu as affaire à la Main Noire.', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+  }
+
+  repondreDetresse(p, choix) {
+    const G = this.G, avant = chanceDeRetour(p.voyageur, p.colis, p.pieges);
+    const texte = repondreDetresse(G, p, choix);
+    const apres = chanceDeRetour(p.voyageur, p.colis, p.pieges);
+    this.majStock(); this.dessinerPieces(); this.majPanneauGauche();
+    if (choix === 'mercenaire') this.avancer(DETRESSE.mercenaire.heure, 'un mercenaire');
+    if (choix !== 'mercenaire') {   // (le mercenaire : on ne sait qu'au retour s'il est arrivé)
+      const ecart = Math.round((apres - avant) * 100);
+      if (ecart) gainEnDirect(this, FENETRE.x + FENETRE.w / 2, FENETRE.y + 120, `${ecart > 0 ? '+' : '−'}${Math.abs(ecart)} % de chances de retour`, ecart > 0);
+    }
+    if (choix === 'corbeau') pencher(G, 'piege');
+    this.raconter(texte, choix === 'rien' ? 'Pas de réponse' : 'Le secours part');
+    Son.jouer(choix === 'rien' ? 'froid' : 'glisse');
+    // l'oiseau qui part : l'aigle traverse le ciel de gauche à droite, le corbeau s'en va, le pigeon repart
+    if (choix === 'aigle' || choix === 'corbeau') {
+      const ai = this.add.sprite(FENETRE.x - 60, FENETRE.y + 70, choix === 'aigle' ? 'aigleVolM' : 'corbeauVolH').setScale(choix === 'aigle' ? 2.2 : 2.6).setDepth(1.4)
+        .setFlipX(choix === 'corbeau').play(choix === 'aigle' ? 'volAigle' : 'volCorbeau');
+      ai.setMask(this.masqueFenetre);
+      this.tweens.add({ targets: ai, x: FENETRE.x + FENETRE.w + 80, y: FENETRE.y + 30, duration: 2600, ease: 'Sine.easeIn', onComplete: () => ai.destroy() });
+    }
+    const pg = this.pigeon;
+    this.time.delayedCall(choix === 'rien' ? 1200 : 600, () => {
+      if (!pg || !pg.active) return;
+      if (this.becPigeon) this.becPigeon.remove();
+      pg.setAngle(0).play('volPigeon');
+      this.tweens.add({ targets: pg, x: FENETRE.x + FENETRE.w + 90, y: FENETRE.y - 30, duration: 1400, ease: 'Sine.easeIn', onComplete: () => pg.destroy() });
+    });
+    this.bouton('Continuer', () => { this.bouton('...', null); this.voyageurSuivant(); });
   }
 
   // --- Le client en buste : expressions, clignements, paroles ---

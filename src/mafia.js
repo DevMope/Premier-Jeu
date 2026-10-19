@@ -55,8 +55,10 @@ function visitesMafia(G) {
   if (!enMafia(G)) return [];
   // associé : le Serpent à deux têtes vient te débaucher (une seule fois)
   if (!m.serpentVu && rangMafia(G) >= 1) { m.serpentVu = true; return [{ type: 'serpent' }]; }
-  if (G.jour % 7 !== MAFIA.jourCollecte) return [];
   const services = Object.keys(SERVICES_MAFIA).filter(s => (s !== 'colis' || !m.colis) && (s !== 'aventurier' || !m.detour));
+  // (v1.22) le corbeau d'un message de détresse : le collecteur vient réclamer son service dès le lendemain
+  if (m.serviceDu && services.length) { m.serviceDu = false; return [{ type: 'collecteur', service: auHasard(services), du: true }]; }
+  if (G.jour % 7 !== MAFIA.jourCollecte) return [];
   return [{ type: 'collecteur', service: rangMafia(G) < 2 && Math.random() < 0.5 ? auHasard(services) : null }];
 }
 
