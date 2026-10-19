@@ -49,14 +49,16 @@ class NightScene extends Phaser.Scene {
     // (v0.86) pas d'autre page pendant un fondu (« Dormir », « Ouvrir le comptoir ») : sinon elle s'ouvrait par-dessus la suivante
     const enFondu = () => this._transition && performance.now() - this._transition < 1500;
     const ouvrirPage = (page, donnees) => { if (enFondu()) return; this.scene.pause(); this.scene.launch(page, donnees); };
+    const soireeAuBar = !this.matin && G.bar && G.bar.ce && G.bar.ce.jour === G.jour && G.bar.ce.mode === 'joue';   // (v1.16) la soirée jouée a pris tout le soir
     const boutons = [
       ['Le bureau', () => ouvrirPage('Bureau', { retour: 'Nuit' })],
       ['La banque', () => this.ouvrirBanque()],
       [`L'atelier (${G.tresors.length})`, () => ouvrirPage('Atelier')],
-      ...(this.matin ? [] : [['Se promener', () => ouvrirPage('Promenade')]]),
+      ...(this.matin ? [] : [['Se promener', () => { if (soireeAuBar) return this.annoncer('Ta soirée s’est passée au petit bar : il est trop tard pour te promener.'); ouvrirPage('Promenade'); }]]),
       ...(!this.matin && marcheNoirCeSoir(G) ? [['La porte dérobée', () => ouvrirPage('MarcheNoir')]] : []),
       ...(!this.matin && typeof rivalDe === 'function' && G.rival && G.rival.etat === 'aVendre' ? [['Chez le notaire', () => { if (enFondu()) return; lettreDuNotaire(this, () => { if (G.rival.etat !== 'aVendre') this.scene.restart({ matin: false }); }); }]] : []),   // (v1.11) la boutique d'à côté est à vendre
       ...(!this.matin && typeof orphelinatOuvert === 'function' && orphelinatOuvert(G) ? [["L'orphelinat", () => { if (enFondu()) return; orphelinatDuSoir(this, () => this.tout()); }]] : []),   // (v1.12) la liste des courses, les améliorations
+      ...(!this.matin && typeof barOuvert === 'function' && barOuvert(G) ? [['Le petit bar', () => { if (enFondu()) return; barDuSoir(this, () => this.tout()); }]] : []),   // (v1.16) la soirée, l'équipe, les installations
       ...(this.matin
         ? [["L'arrière-boutique", () => ouvrirPage('Arriere', { retour: 'Nuit' })], ['Le marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
         : [['Aller dormir', () => this.dormir()]]),
@@ -77,6 +79,7 @@ class NightScene extends Phaser.Scene {
     this.tout();
     afficherStatutSauvegarde(this, 940, 60, 1);
     if (!this.matin) this.time.delayedCall(600, () => conseilGarrick(this, 'soir'));
+    if (!this.matin && typeof midiDuBar === 'function') { const m = midiDuBar(G); if (m) this.time.delayedCall(900, () => this.annoncer(m)); }   // (v1.16) la terrasse, à midi
     // (v0.90) le soir du Carrefour (ou du parjure) : deux visiteurs frappent à la porte
     if (!this.matin) this.time.delayedCall(700, () => this.carrefourEnAttente());
   }

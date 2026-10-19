@@ -55,6 +55,18 @@ const BAR = {
     { id: 'facade', nom: 'La façade', prix: [800, 3000] },
   ],
   styles: ['La taverne de quartier', "L'auberge", 'La grande brasserie'],
+  // La façade (planche 43 v2) : la maison du paon repeinte selon la pièce « façade »
+  facades: {
+    taverne: { nom: 'barTaverne', enseigne: [0x5a3a1a, 0x3a0a10, 0xf0c850], rampes: {
+      blanche: [0x4a3a28, 0x7a6448, 0xa48a68, 0xc4ac88, 0xd8c4a0, 0xece0c4], bleu: [0x2a0a10, 0x4a1420, 0x6a1e2c, 0x8a2838, 0xa8404c, 0xc86070], or: [0x3a2a10, 0x5a4020, 0x7a5a30, 0x9a7a44, 0xb89a60, 0xd8c090],
+      vitreBleue: [0x3a2010, 0x6a3a14, 0xa06020, 0xd89030, 0xf0b850, 0xffe0a0], rouge: [0x3a2a1a, 0x5a4428, 0x7a5e38, 0x9a7a4c, 0xb49664, 0xccb080] } },
+    auberge: { nom: 'barAuberge', enseigne: [0x3a5a2a, 0xe8d8b0, 0x2a3a1a], rampes: {
+      blanche: [0x5a4a3a, 0x8a7458, 0xb49a78, 0xd0b894, 0xe0ccaa, 0xf0e4cc], bleu: [0x1a2a1a, 0x2a4428, 0x3a5a34, 0x4a7040, 0x5a8a4c, 0x7aa868], or: [0x3a2410, 0x5a3a1a, 0x7a5228, 0x9a6a36, 0xb88a50, 0xd8b078],
+      vitreBleue: [0x3a2010, 0x6a3a14, 0xa06020, 0xd89030, 0xf0b850, 0xffe0a0], rouge: [0x2a3a1a, 0x3e5a2a, 0x527a38, 0x669a48, 0x7ab05a, 0x9cc87a] } },
+    brasserie: { nom: 'barBrasserie', enseigne: [0xd8a830, 0x0a1e1e, 0xffe08a], rampes: {
+      blanche: [0x6a6458, 0x9a948a, 0xc4beb2, 0xdcd6ca, 0xece8de, 0xfaf8f2], bleu: [0x061414, 0x0a2424, 0x0e3434, 0x144646, 0x1e5a5a, 0x2e7a78], or: [0x6a4a08, 0x9a6e10, 0xc8961c, 0xe8b830, 0xffd858, 0xfff0a8],
+      vitreBleue: [0x3a2010, 0x6a3a14, 0xa06020, 0xd89030, 0xf0b850, 0xffe0a0], rouge: [0x3a0608, 0x5e0c10, 0x861418, 0xa8201e, 0xc83a30, 0xe06050] } },
+  },
 };
 POSTES.bar = 'Le petit bar';
 
@@ -261,6 +273,8 @@ function midiDuBar(G) {
 function nuitDuBar(G) {
   const b = G.bar;
   if (!b || !barOuvert(G)) return;
+  // un soir où tu n'as rien décidé : si l'équipe sait tourner seule (et qu'on peut la payer), elle ouvre ; sinon, fermé
+  if (!soireeDecidee(G) && peutTournerSeul(G)) { const r = soireeSeule(G); b.auto = r.erreur ? { ferme: r.erreur } : r; }
   if (b.chantier) { b.installations[b.chantier] = G.jour + 1; b.annonce = b.chantier; b.chantier = null; }
 }
 // Au matin : la nouvelle installation, la rumeur qui se réalise, la garde
@@ -272,6 +286,10 @@ function matinDuBar(G) {
     const i = BAR.installations.find(x => x.id === b.annonce);
     if (i) lignes.push(`Des coups de marteau toute la nuit, à côté : ${i.nom.charAt(0).toLowerCase() + i.nom.slice(1)} du petit bar est prête. ${i.effet}`);
     b.annonce = null;
+  }
+  if (b.auto) {
+    lignes.push(b.auto.ferme ? `Le petit bar est resté fermé hier soir : ${b.auto.ferme.charAt(0).toLowerCase() + b.auto.ferme.slice(1)}` : `Hier soir, l'équipe a tenu le petit bar toute seule : ${b.auto.clients} clients, ${b.auto.gain >= 0 ? '+' : ''}${b.auto.gain} p. une fois les paies faites.`);
+    b.auto = null;
   }
   const r = rumeurDuBarAuMatin(G);
   if (r) lignes.push(r);

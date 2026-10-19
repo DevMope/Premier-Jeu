@@ -53,8 +53,10 @@ class FacadeScene extends Cinematique {
     const G = this.G, sol = 440;
     const fort = r.etat === 'ouvert' && r.pression >= RIVAL.pression.max;
     const nom = r.etat === 'orphelinat' ? "L'orphelinat" : r.etat === 'bar' ? 'Le petit bar' : RIVAL.boutique;
-    const f = this.voisin = dessinerFacadeRival(this, cx, sol, fort ? 2 : 1, nom, r.etat === 'orphelinat' ? ORPHELINAT.facade : null);
+    const stBar = r.etat === 'bar' && typeof styleDuBar === 'function' ? styleDuBar(G) : null;   // (v1.16) le petit bar : sa façade selon la pièce « façade »
+    const f = this.voisin = dessinerFacadeRival(this, cx, sol, fort || stBar === 'brasserie' ? 2 : 1, nom, r.etat === 'orphelinat' ? ORPHELINAT.facade : stBar ? BAR.facades[stBar] : null);
     if (r.etat === 'orphelinat') return this.dessinerOrphelinat(r, f, sol);
+    if (stBar) return this.dessinerBar(r, f, sol, stBar);
     if (r.etat === 'ouvert') {
       const ouverture = r.ouvertureJour === G.jour, pavane = r.pavaneJour === G.jour;
       if (ouverture) {
@@ -93,6 +95,39 @@ class FacadeScene extends Cinematique {
     pa.add(this.add.rectangle(0, 0, 150, 46, 0xd8b878).setStrokeStyle(3, 0x5a3a1a));
     pa.add(this.add.text(0, -7, 'TRAVAUX', style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     pa.add(this.add.text(0, 13, r.etat === 'orphelinat' ? "bientôt : l'orphelinat" : 'bientôt : le petit bar', style(10, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5));
+  }
+
+  // (v1.16, planche 43 v2) Le petit bar : des lanternes de chaque côté de la porte ; la taverne a ses tonneaux,
+  // l'auberge ses fleurs et ses fanions, la brasserie sa guirlande de lampions et ses tables de terrasse ; l'ardoise
+  // du soir (la bande, le conteur) ; le chantier, la nuit d'avant
+  dessinerBar(r, f, sol, st) {
+    const G = this.G, b = barDe(G), g2 = this.add.graphics().setDepth(6.1);
+    creerHalo(this);
+    for (const dx of [-56, 56]) {
+      const h = this.add.image(f.porteX + dx, f.haut + 230, 'halo').setScale(1.4).setTint(0xffa040).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD).setDepth(6);
+      this.tweens.add({ targets: h, alpha: 0.25, duration: 900 + dx * 3, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // (la flamme qui vacille)
+      g2.fillStyle(0x2a1a10).fillRect(f.porteX + dx - 5, f.haut + 218, 10, 16).fillStyle(0xffd060).fillRect(f.porteX + dx - 3, f.haut + 221, 6, 10);
+    }
+    if (st === 'taverne') this.add.image(f.gauche + 372, sol + 4, 'tonneauxHD').setOrigin(0, 1).setScale(1.6).setDepth(7);
+    if (st === 'auberge') {
+      for (const x of [f.gauche + 60, f.gauche + 300]) { g2.fillStyle(0x3a5a2a).fillRect(x, f.haut + 196, 40, 10); for (let k = 0; k < 5; k++) g2.fillStyle([0xe86060, 0xf0e0a0, 0xf0a0c0][k % 3]).fillCircle(x + 4 + k * 8, f.haut + 194, 4); }
+      const fan = this.add.graphics().setDepth(6.2); fan.fillStyle(0x3a5a2a).fillRect(f.gauche + 150, f.haut + 100, 100, 6);
+      for (let k = 0; k < 6; k++) fan.fillStyle(k % 2 ? 0xe8d8b0 : 0x3a5a2a).fillTriangle(f.gauche + 150 + k * 17, f.haut + 106, f.gauche + 167 + k * 17, f.haut + 106, f.gauche + 158 + k * 17, f.haut + 122);
+      this.tweens.add({ targets: fan, y: 2, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // (les fanions au vent)
+    }
+    if (st === 'brasserie') {
+      for (const tx of [f.gauche - 30, f.gauche + 430]) { g2.fillStyle(0x2a1a10).fillEllipse(tx, sol - 20, 60, 14).fillStyle(0xd8a830).fillEllipse(tx, sol - 22, 56, 10).fillStyle(0x2a1a10).fillRect(tx - 3, sol - 22, 6, 22); g2.fillStyle(0xfff0c0).fillCircle(tx, sol - 36, 5); this.add.image(tx, sol - 36, 'halo').setScale(0.6).setTint(0xffd060).setAlpha(0.6).setBlendMode(Phaser.BlendModes.ADD).setDepth(6); }
+      for (let k = 0; k < 9; k++) { const lx = f.gauche + 20 + k * 45, l = this.add.circle(lx, f.haut + 20 + Math.sin(k) * 4, 4, 0xffe08a).setDepth(6.2); this.tweens.add({ targets: l, alpha: 0.5, duration: 700 + k * 90, yoyo: true, repeat: -1 }); }
+    }
+    // l'ardoise du soir, à côté de la porte
+    const ct = typeof conteurDuJour === 'function' ? conteurDuJour(G) : null, bande = b.bande && BAR.bandes[b.bande];
+    if (bande || ct) {
+      const ard = this.add.container(f.porteX + 108, sol - 30).setDepth(7);
+      ard.add(this.add.rectangle(0, 0, 92, 60, 0x1e2420).setStrokeStyle(4, 0x6a4424));
+      ard.add(this.add.text(0, -18, 'Ce soir', style(11, '#f0f0e0', { fontStyle: 'bold italic', brut: true })).setOrigin(0.5));
+      ard.add(this.add.text(0, 6, [bande ? bande.nom : '', ct ? `${ct.nom} ${'★'.repeat(ct.etoiles)}` : ''].filter(Boolean).join('\n'), style(9, '#e8e8d8', { brut: true, align: 'center', wordWrap: { width: 86 } })).setOrigin(0.5));
+    }
+    if (b.chantier) this.bulleVoisin(f.porteX + 20, 150, '« Cette nuit, les ouvriers viennent bâtir ! »', 230, 20);
   }
 
   // (v1.12, planche 42) L'orphelinat : du linge qui sèche, un soleil et une marelle à la craie, les enfants devant
