@@ -29,7 +29,7 @@ const BAR = {
   conteurs: ['Vieux Bran', 'Maître Pell', 'Sœur Aube', 'Garance la Voix', 'Old Tobin', 'Mélisse Plume', 'Barde Orvin'],
   conteur: { paieParEtoile: 6 },
   // Ce que paie un client : une chope, et un plat s'il y a la cuisine et le cuisinier
-  prix: { chope: 4, plat: 7, partPlat: 0.6 },
+  prix: { chope: 5, plat: 8, partPlat: 0.6 },
   clients: { base: 4, parRenommee: 2, max: 20, serveuse: 12 },
   renommee: { depart: 1, max: 5, gain: 0.25, perte: 0.15, bon: 0.8 },   // gagnée en jouant (≥ 80 % servis), perdue sinon
   // tout seul : au complet depuis 5 soirs joués ; 65 % de ce que rapporte une salle jouée, sans conteur (il ne vient
