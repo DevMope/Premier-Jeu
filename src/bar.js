@@ -32,10 +32,10 @@ const BAR = {
   prix: { chope: 5, plat: 8, partPlat: 0.6 },
   clients: { base: 4, parRenommee: 2, max: 20, serveuse: 12 },
   renommee: { depart: 1, max: 5, gain: 0.25, perte: 0.15, bon: 0.8 },   // gagnée en jouant (≥ 80 % servis), perdue sinon
-  // tout seul : au complet depuis 5 soirs joués ; 65 % de ce que rapporte une salle jouée, sans conteur (il ne vient
+  // tout seul : au complet depuis 5 soirs joués ; la moitié de ce que rapporte une salle jouée, sans conteur (il ne vient
   // que quand tu es là) ; ce que le videur rate coûte moins cher (une ardoise, un peu de casse)
-  seul: { soirsComplets: 5, rendement: 0.65, perte: [4, 10] },
-  midi: { rendement: 0.55, clients: 0.7 },       // à midi (la terrasse) : moins de monde qu'un soir, pas de bande, pas d'imprévu
+  seul: { soirsComplets: 5, rendement: 0.5, perte: [4, 10] },
+  midi: { rendement: 0.45, clients: 0.7 },       // à midi (la terrasse) : moins de monde qu'un soir, pas de bande, pas d'imprévu
   // Les imprévus d'une soirée (par soirée : la chance d'en avoir un de chaque)
   imprevus: { bagarre: 0.35, filou: 0.3, pourboire: 0.6, rumeur: 0.5, perteFilou: [8, 18], garde: 1 },
   // Le videur : chaque soir, selon son niveau (planche 43 v4) ; il monte d'un niveau toutes les 15 soirées
