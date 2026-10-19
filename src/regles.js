@@ -182,14 +182,16 @@ function chanceEtapeBase(e, colis, voyageur) {
   const niv = NIVEAUX_AVENTURIER[voyageur.niveau] || NIVEAUX_AVENTURIER.novice;
   const evenement = modifEvenement(window.GAME, 'danger', voyageur.zone);
   const etoiles = ZONES[voyageur.zone] ? ZONES[voyageur.zone].danger : 1;
-  const danger = Math.max(0, MALUS_DANGER * (etoiles - 1) - niv.bonus);
+  // (v1.21) novices et aguerris fragiles loin de chez eux (★3 et plus) : leur malus ne compte qu'une fois
+  const nb = etoiles >= 3 && niv.loin !== undefined ? niv.loin : niv.bonus;
+  const danger = Math.max(0, MALUS_DANGER * (etoiles - 1) - Math.max(0, nb));
   // (v0.67) la bénédiction de la nymphe : les épreuves d'eau réussissent mieux pendant quelques jours
   const beni = bonusNymphe(window.GAME, e);
   // (v0.99) la saison durcit certaines épreuves quand l'objet manque (crues, soif, brume, froid)
   const nivE = niveauEpreuve(e, colis, voyageur), saison = typeof malusSaison === 'function' ? malusSaison(window.GAME, e, nivE) : 1;
   // (v1.19) une mise : ta confiance l'encourage, il s'équipe un peu mieux en route
   const mise = voyageur.mise > 0 && typeof MISE_AVENTURIER !== 'undefined' ? MISE_AVENTURIER.bonusEtape : 0;
-  return Phaser.Math.Clamp((chanceEpreuve(nivE) + enPlus * BONUS_SURPLUS + bonusArme + niv.bonus + evenement - danger + beni + mise) * saison, 0.05, 0.97);
+  return Phaser.Math.Clamp((chanceEpreuve(nivE) + enPlus * BONUS_SURPLUS + bonusArme + nb + evenement - danger + beni + mise) * saison, 0.05, 0.97);
 }
 
 // (v0.93) Le bonus de la nymphe sur cette épreuve (0 si elle ne bénit pas, ou pas ce genre d'épreuve)

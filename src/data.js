@@ -559,10 +559,10 @@ function conqueteZone(id) { return CONQUETE_ZONE + Math.max(0, ((ZONES[id] && ZO
 
 // Le niveau d'un aventurier : un vétéran a un cœur de plus et vise plus gros.
 // Les niveaux d'un aventurier, gagnés au fil de ses missions réussies (`succes`).
-// `bonus` : un petit plus à chaque épreuve. Seuls les héros osent les zones à 5 étoiles.
+// `bonus` : un petit plus à chaque épreuve ; `loin` (v1.21) : ce qu'il devient dès ★3 (novices, aguerris). Seuls les héros osent les zones à 5 étoiles.
 const NIVEAUX_AVENTURIER = {
-  novice: { nom: 'Novice', pv: 0, butin: 0.9, bonus: 0, succes: 0 },
-  aguerri: { nom: 'Aguerri', pv: 0, butin: 1, bonus: 0.02, succes: 1 },
+  novice: { nom: 'Novice', pv: 0, butin: 0.9, bonus: 0, loin: -0.06, succes: 0 },
+  aguerri: { nom: 'Aguerri', pv: 0, butin: 1, bonus: 0.02, loin: -0.03, succes: 1 },
   veteran: { nom: 'Vétéran', pv: 1, butin: 1.15, bonus: 0.04, succes: 3 },
   heros: { nom: 'Héros', pv: 1, butin: 1.3, bonus: 0.06, succes: 6 },
   legende: { nom: 'Légende', pv: 2, butin: 1.5, bonus: 0.08, succes: 10 },
@@ -572,8 +572,8 @@ const ORDRE_NIVEAUX = Object.keys(NIVEAUX_AVENTURIER);
 const ORDRES_FILE = [['arrivee', 'Comme ils viennent'], ['novice', 'Novices d\u2019abord'], ['aguerri', 'Aguerris d\u2019abord'], ['heros', 'Héros d\u2019abord'], ['lettres', 'Lettres d\u2019abord']];
 // (v0.84) les rangs, lisibles pour qui ne les connaît pas : leur numéro sur cinq, et ce qu'ils changent
 const EXPLICATION_RANGS = {
-  novice: 'débutant : fragile, rapporte un peu moins',
-  aguerri: 'a fait ses preuves (1 mission réussie)',
+  novice: 'débutant : fragile loin de chez lui (★3 et plus), rapporte un peu moins',
+  aguerri: 'a fait ses preuves (1 mission réussie), encore fragile dès ★3',
   veteran: 'solide : un cœur de plus, meilleur butin (3 missions)',
   heros: 'redoutable : butin ×1,3 (6 missions), exigeant sur les contrées',
   legende: 'le sommet : deux cœurs de plus, butin ×1,5 (10 missions)',
