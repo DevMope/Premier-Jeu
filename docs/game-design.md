@@ -2641,3 +2641,15 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
 - **Idée pour le bon moment : les animations des récits, encore une fois.** Qu'un aventurier puisse vraiment manger
   sa ration, boire à sa gourde, se réchauffer les mains au coin du feu... Chaque animation de ce genre est une vraie
   amélioration, ce serait une grande réussite visuelle (sans troisième bras : de nouvelles poses si besoin).
+
+### Tout ce qui s'achète, comparé à l'argent (21/10, mesure)
+- **Achats permanents disponibles** (une fois par partie) : meubles 4 920 p., réserve 1 930 p., forge 300 p., décorations
+  285 p. (+ 90 p. lumière, + 100 p. ombre), vêtements 304 p. ; liberté de la Main Noire 250 à 490 p. (ombre) ; rachat de
+  la boutique du paon 3 000 à 7 500 p. ; puis **l'orphelinat 16 500 p.** ou **le bar 55 000 p.** (36 000 de constructions
+  + 19 000 d'embellissements). Total : ~7 700 p. pour le socle, ~30 000 p. avec l'orphelinat, ~70 000 p. avec le bar.
+- **L'argent d'un bon joueur** (robot malin, impôt du Conseil payé, 16 parties de 120 jours, médianes) :
+  lumière 37 000 p. au jour 60 et **80 000 p. au jour 120** ; neutre 31 000 → **72 000 p.** ; ombre 15 000 → **33 000 p.**
+  (le robot n'achète rien de permanent : un vrai joueur qui améliore son comptoir gagne encore plus).
+- **Constat** : côté lumière et neutre, le joueur a **trop d'argent** : tout le socle est payé avant le jour 30, et au
+  jour 120 il lui reste 40 000 à 50 000 p. de trop s'il choisit l'orphelinat (seul le bar absorbe tout). Côté ombre,
+  ça tient à peu près. Et **les achats propres à un camp sont presque inexistants** (90 p. lumière, ~500 p. ombre).
