@@ -3265,7 +3265,13 @@ function eJ(G = window.GAME) { return G && G.joueur && G.joueur.feminin ? 'e' : 
 // (v0.97) « ..., marchand. » : quand on s'adresse à JeuneGoy, au féminin si c'est une marchande.
 // (appliqué à tous les textes affichés : voir pixels.js)
 function accordJoueur(t, G = window.GAME) {
-  return typeof t === 'string' && eJ(G) && t.includes('marchand') ? t.replace(/\bau marchand\b(?![es])/g, 'à la marchande').replace(/(, |Ah, |Bienvenue, )marchand\b(?![es])/g, '$1marchande') : t;
+  if (typeof t !== 'string' || !eJ(G)) return t;
+  if (t.includes('marchand')) t = t.replace(/\bau marchand\b(?![es])/g, 'à la marchande').replace(/(, |Ah, |Bienvenue, )marchand\b(?![es])/g, '$1marchande');
+  // (housekeep v1.14) « Pour toi, patron ! », « le patron du comptoir », et le paon : « le petit protégé », « voisin »
+  if (t.includes('patron')) t = t.replace(/, patron\b(?![nes])/g, ', patronne').replace(/\ble patron du comptoir\b/g, 'la patronne du comptoir');
+  if (t.includes('petit protégé')) t = t.replace(/\b([Ll])e petit protégé(?![e\w])/g, (m, l) => (l === 'L' ? 'La' : 'la') + ' petite protégée');
+  if (t.includes('voisin')) t = t.replace(/, voisin([.!])/g, ', voisine$1');
+  return t;
 }
 function accordAdj(id, m, f, mp, fp) { const g = genreDe(id); return g === 'm' ? m : g === 'f' ? f : g === 'mp' ? mp : fp; }
 

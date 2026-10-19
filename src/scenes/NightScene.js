@@ -295,7 +295,7 @@ class NightScene extends Phaser.Scene {
       // (v1.12) un nom long ne passe plus sous les boutons Oui / Non : la police rapetisse, puis le nom s'abrège
       const titre = this.add.text(x1 + 14, y, `Lettre ${dePersonne(v.nom)}`, style(13, couleurNom(G, v.nom), { fontStyle: 'bold' }));
       const place = (a.acceptee ? x2 - 70 : x2 - 92) - (x1 + 14);
-      for (let t = 13; titre.width > place && t > 11; t--) titre.setFontSize(t);
+      for (let t = 13; titre.width > place && t > 10; t--) titre.setFontSize(t);
       while (titre.width > place && titre.text.length > 12) titre.setText(titre.text.replace(/…$/, '').slice(0, -1) + '…');
       c.add(titre);
       c.add(this.add.text(x1 + 14, y + 17, `+1 client le jour ${a.jour} · butin ~${v.butin} p. · ${v.duree} j`, style(11, '#6b4a2a')));

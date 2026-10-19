@@ -6,6 +6,7 @@
 const ORPHELINAT = {
   enfants: ['Petit Tom', 'Mirabelle', 'Gusse', 'Lili'],
   enfantsDortoir: ['Bastien', 'Nora'],
+  filles: ['Mirabelle', 'Lili', 'Nora'],
   liste: [6, 10],            // objets sur la liste des courses (sans, avec le dortoir)
   courses: [1, 2],           // courses du coursier par jour (sans, avec le dortoir)
   dureeCourse: 0.25,         // ¼ h au comptoir (rien avec l'école)
@@ -58,7 +59,7 @@ const RETOURS_DES_ANCIENS = {
   reussi: [
     (p) => `Me revoilà, patron ! Ce soir, à l'orphelinat, je vais tout raconter aux petits. Ils vont faire des yeux ronds !`,
     (p, a, b, e) => `Rentré${e} vivant${e}, et pas les mains vides ! ${a} va vouloir toucher chaque pièce, tu verras.`,
-    (p, a, b, e) => `Tu vois ? ${e ? 'La petite' : 'Le petit'} ${p} est revenu${e} en ${e ? 'héroïne' : 'héros'}. La maîtresse ne va jamais me croire.`,
+    (p, a, b, e) => `Tu vois ? ${e ? 'La petite' : 'Le petit'} ${p.replace(/^Petit /, '')} est revenu${e} en ${e ? 'héroïne' : 'héros'}. La maîtresse ne va jamais me croire.`,
   ],
   rate: [
     (p) => `Me revoilà... Ne dis rien aux petits de l'orphelinat, d'accord ? Je ne veux pas qu'ils s'inquiètent pour moi.`,
@@ -135,8 +136,14 @@ function coursesDuMatin(G) {
   if (Object.keys(pris).length) { const t = objetsRoyaux(pris); lignes.push(`${a} et ${b} sont revenus du marché avant le jour : ${t.charAt(0).toLowerCase() + t.slice(1)} (${depense} p.). Tout est sur ton comptoir.`); }
   else lignes.push(`${a} et ${b} sont revenus du marché les mains vides.`);
   if (manques.length) { const m = [...new Set(manques)].map(de); lignes.push(`Pas ${m.join(' ni ')} aux étals ce matin.`); }
-  if (plein) lignes.push('Ta réserve était pleine : ils ont gardé le reste de la liste pour une autre fois.');
-  if (sansSous) lignes.push("Il n'y avait plus assez de pièces dans le coffre pour tout acheter.");
+  // (housekeep v1.14) ce qui n'a pas pu être pris (réserve pleine, coffre vide) reste sur la liste pour demain
+  if (plein || sansSous) {
+    const reste = {};
+    for (const [id, { n, prix }] of Object.entries(L.objets)) { const k = n - (pris[id] || 0); if (k > 0 && !manques.includes(id)) reste[id] = { n: k, prix }; }
+    if (Object.keys(reste).length) o.liste = { jour: G.jour, objets: reste };
+  }
+  if (plein) lignes.push('Ta réserve était pleine : ils ont gardé le reste de la liste pour demain.');
+  if (sansSous) lignes.push("Il n'y avait plus assez de pièces dans le coffre pour tout acheter : le reste attend sur la liste.");
   lignes.push(...messages);
   return lignes;
 }
@@ -164,10 +171,11 @@ function offreDuCoursier(G) {
   for (const a of articlesDuMarche(G, true)) offre[a.id] = { prix: a.prix, qte: 1, cle: a.cle };
   return offre;
 }
-function courseDuCoursier(G, id) {
+function courseDuCoursier(G, id, pourLeClient = false) {
   const offre = (G.etals[(offreDuCoursier(G)[id] || {}).cle] || {})[id];
   if (!offre || offre.qte <= 0) return { erreur: 'Plus rien à l’étal.' };
   if (coursesRestantes(G) <= 0) return { erreur: 'Plus de course aujourd’hui.' };
+  if (!pourLeClient && stockTotal(G) >= G.capacite) return { erreur: 'Ta réserve est pleine : il n’y a nulle part où poser ça.' };
   const a = offreDuCoursier(G)[id];
   if (!peutPayer(G, a.prix)) return { erreur: manqueArgent(G, a.prix, 'Pas assez de pièces pour cette course.') };
   offre.qte--;

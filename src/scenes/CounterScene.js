@@ -788,7 +788,7 @@ class CounterScene extends Phaser.Scene {
     this.exprimer(entree.attentes > 1 ? 'fache' : 'neutre');
     this.dire(phrase + (msg ? ' ' + msg : ''), v.nom);
     // (v0.93) ... mais devant la Faucheuse, qui reste toujours la dernière
-    const iF = this.G.file.findIndex(e => e.type === 'faucheuse');
+    const iF = this.G.file.findIndex(e => e.type === 'faucheuse' || e.type === 'crieur');   // (housekeep v1.14 : le crieur reste en fin de file)
     const place = iF >= 0 ? iF : this.G.file.length;
     this.G.file.splice(place, 0, entree);
     this.fileSprites.splice(place, 0, this.spriteFile(entree, place).setVisible(false));

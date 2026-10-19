@@ -268,6 +268,7 @@ class HudScene extends Phaser.Scene {
       if (this.bulleReput) this.infoReput(false);
       if (this.bulleCamp) this.infoCamp(false);
       if (this.bulleNymphe) this.infoNymphe(false);
+      if (this.panneauRival) this.infoRival(false);   // (housekeep v1.14 : il flottait par-dessus les scènes sans bandeau)
       if (this.fenetre && !G) this.fermerMenu();
     }
     // Toujours au-dessus des autres pages

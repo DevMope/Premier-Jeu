@@ -38,7 +38,8 @@ function joursAvantLePremier(G) { const d = dateDuJour(G); return d.jourDuMois =
 // Le score du mois en cours : tes aventuriers revenus vainqueurs, les siens (arrondis), les jours qui restent
 function scoreDuMois(G) {
   const r = rivalDe(G), m = r.mois || { toi: 0, lui: 0 };
-  return { toi: m.toi, lui: Math.floor(m.lui), joursRestants: joursAvantLePremier(G), pression: r.pression, etat: r.etat };
+  const j = joursAvantLePremier(G), bilanAujourdhui = r.dernierMois && r.dernierMois.jour === G.jour;
+  return { toi: m.toi, lui: Math.floor(m.lui), joursRestants: j === 0 && !bilanAujourdhui ? JOURS_PAR_MOIS : j, pression: r.pression, etat: r.etat };
 }
 
 // La nuit, avant le changement de jour : les comptes du jour (tes retours vainqueurs, ses clients), et la moquerie
@@ -84,7 +85,7 @@ function matinDuRival(G) {
       // (trop sûr de lui après plusieurs mois au maximum, il se relâche : une chance de revenir)
       if (r.serie >= RIVAL.pression.relache) { r.pression = 1; r.serie = 0; bilan.relache = true; }
       else r.pression = Math.min(RIVAL.pression.max, r.pression + 1);
-      r.pavaneJour = G.jour;
+      r.pavaneJour = G.jour + 1;   // (housekeep v1.14 : le lendemain du crieur)
     } else r.serie = 0;
     bilan.pression = r.pression;
     r.dernierMois = bilan;
@@ -103,7 +104,8 @@ function volerClients(G, file) {
   r.vols -= n;
   for (let i = file.length - 1; i >= 0 && n > 0; i--) {
     const e = file[i];
-    if (e.type !== 'client' || e.voyageur.prevu || e.voyageur.prestige || e.voyageur.recherche || e.voyageur.ancienOrphelinat) continue;
+    const v = e.voyageur;
+    if (e.type !== 'client' || v.prevu || v.prestige || v.recherche || v.ancienOrphelinat || v.genereux || v.exige || v.imposteur) continue;   // (housekeep v1.14 : ni les présages de la diseuse, ni ceux qui reviennent fâchés)
     e.vole = true; n--; r.volesAujourdhui++;
   }
 }
@@ -130,7 +132,8 @@ function texteDuCrieur(G) {
   if (b.ferme) return `${compte} Lucien Belhomme ferme boutique ! Sa maison est à vendre chez le notaire du Conseil.`;
   if (b.gagne === 'toi') return `${compte} Le paon perd de sa superbe : il attirera moins de monde ce mois-ci.`;
   if (b.gagne === 'lui' && b.relache) return `${compte} Lucien Belhomme pavoise... et se relâche : trop sûr de lui, il attirera bien moins de monde ce mois-ci.`;
-  if (b.gagne === 'lui') return `${compte} Lucien Belhomme pavoise : il attirera encore plus de tes clients ce mois-ci${b.pression >= RIVAL.pression.max && b.pressionAvant >= RIVAL.pression.max ? ' (il ne peut pas faire pire)' : ''}.`;
+  if (b.gagne === 'lui' && b.pression >= RIVAL.pression.max && b.pressionAvant >= RIVAL.pression.max) return `${compte} Lucien Belhomme pavoise : il attirera toujours autant de tes clients ce mois-ci.`;
+  if (b.gagne === 'lui') return `${compte} Lucien Belhomme pavoise : il attirera encore plus de tes clients ce mois-ci.`;
   return `${compte} Égalité : rien ne bouge.`;
 }
 

@@ -58,6 +58,12 @@ const NOMS_ROYAUX = {
   ration: ['ration', 'rations', true], gourde: ['gourde', 'gourdes', true], torche: ['torche', 'torches', true],
   bandage: ['bandage', 'bandages', false], epee: ['épée', 'épées', true], cape: ['cape chaude', 'capes chaudes', true],
   bouclier: ['bouclier', 'boucliers', false], potion: ['potion', 'potions', true], antidote: ['antidote', 'antidotes', false],
+  // (housekeep v1.14) tout ce que vendent les étals : les courses des petits en parlent chaque jour
+  fleches: ['carquois de flèches', 'carquois de flèches', false], corde: ['corde', 'cordes', true], amulette: ['amulette', 'amulettes', true],
+  hache: ['hache de guerre', 'haches de guerre', true], marteau: ['marteau de guerre', 'marteaux de guerre', false], arc: ['arc long', 'arcs longs', false],
+  lance: ['lance', 'lances', true], baton: ['bâton de mage', 'bâtons de mage', false], bambou: ['bâton de bambou', 'bâtons de bambou', false],
+  fronde: ['fronde', 'frondes', true], dague: ['dague', 'dagues', true], rapiere: ['rapière', 'rapières', true], khopesh: ['khopesh', 'khopeshs', false],
+  griffes: ['paire de griffes de fer', 'paires de griffes de fer', true], massue: ['massue', 'massues', true],
 };
 const EN_LETTRES = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf', 'vingt'];
 function nomRoyal(id, n = 1) { const t = NOMS_ROYAUX[id] || [nomObjet(id).toLowerCase(), nomObjet(id).toLowerCase() + 's', false]; return n > 1 ? t[1] : t[0]; }

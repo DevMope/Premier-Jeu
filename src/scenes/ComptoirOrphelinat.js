@@ -8,7 +8,7 @@ function orphelinatDuSoir(scene, suite, page = 'courses') {
   const voile = scene.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.55).setDepth(80).setInteractive();
   const L = scene.add.container(480, 258).setDepth(81);
   objets.push(voile, L);
-  L.add(scene.add.image(0, 0, panneauHD(scene, 620, 420)).setScale(2));
+  L.add(scene.add.image(0, 0, panneauHD(scene, 620, 420)).setScale(2).setInteractive());   // (housekeep v1.14 : un clic dans le panneau ne le ferme pas)
   const fermer = (relancer = false) => {
     if (!voile.active) return;
     for (const x of objets) { if (x.fond) { x.fond.destroy(); x.label.destroy(); } else if (x.active) x.destroy(); }
@@ -126,9 +126,9 @@ Object.assign(CounterScene.prototype, {
     const voile = this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.5).setDepth(80).setInteractive();
     const L = this.add.container(480, 250).setDepth(81);
     objets.push(voile, L);
-    L.add(this.add.image(0, 0, panneauHD(this, 620, 400)).setScale(2));
-    const petit = auHasard(enfantsOrphelinat(G));
-    L.add(this.add.text(0, -172, `${petit.toUpperCase()}, LE COURSIER`, style(18, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
+    L.add(this.add.image(0, 0, panneauHD(this, 620, 400)).setScale(2).setInteractive());
+    const petit = auHasard(enfantsOrphelinat(G)), fille = ORPHELINAT.filles.includes(petit);
+    L.add(this.add.text(0, -172, `${petit.toUpperCase()}, ${fille ? 'LA COURSIÈRE' : 'LE COURSIER'}`, style(18, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
     const d = dureeCourse(G);
     L.add(this.add.text(0, -150, `Un objet de l'étal, au prix du marché${d ? `, en ${formatDuree(d)}` : ', sans te faire attendre'} · ${pluriel(coursesRestantes(G), 'course restante', 'courses restantes')} aujourd'hui`, style(12, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5));
     const fermer = () => { for (const x of objets) if (x.active) x.destroy(); this.fenetreCoursier = null; };
@@ -156,10 +156,10 @@ Object.assign(CounterScene.prototype, {
   },
   // Il file au marché derrière la fenêtre, et revient l'objet sous le bras
   envoyerCoursier(id, petit) {
-    const G = this.G, res = courseDuCoursier(G, id);
-    if (!res.ok) { Son.jouer('refus'); this.raconter(res.erreur, 'Le coursier'); return; }
-    const v = this.voyageur, commande = v ? commandeDe(v) : {};
+    const G = this.G, v = this.voyageur, commande = v ? commandeDe(v) : {};
     const pourLeClient = !!(commande[id] && fourni(v, this.colis, id) < commande[id]);
+    const res = courseDuCoursier(G, id, pourLeClient);
+    if (!res.ok) { Son.jouer('refus'); this.raconter(res.erreur, 'Les coursiers'); return; }
     if (pourLeClient) this.colis[id] = (this.colis[id] || 0) + 1;
     else G.stock[id] = (G.stock[id] || 0) + 1;
     Son.jouer('achat');
@@ -168,7 +168,7 @@ Object.assign(CounterScene.prototype, {
     this.coursierEnRoute = true;
     this.majBoutonsService();
     // la petite course, derrière la fenêtre : il part à gauche, revient en courant
-    const tom = imageCorps(this, FENETRE.x + FENETRE.w - 30, FILE.y + 2, { race: 'hobbit', nom: petit, niveau: 'novice' }, 4.4).setDepth(1.6).setFlipX(true);
+    const tom = imageCorps(this, FENETRE.x + FENETRE.w - 30, FILE.y + 2, { race: 'hobbit', nom: petit, feminin: ORPHELINAT.filles.includes(petit), niveau: 'novice' }, 4.4).setDepth(1.6).setFlipX(true);
     if (this.masqueFenetre) tom.setMask(this.masqueFenetre);
     pasDeMarche(this, tom, 900);
     this.tweens.add({ targets: tom, x: FENETRE.x - 40, duration: 900, ease: 'Sine.easeIn', onComplete: () => {
@@ -179,8 +179,9 @@ Object.assign(CounterScene.prototype, {
       this.coursierEnRoute = false;
       this.majStock(); this.majCommande(); this.dessinerPieces();
       this.majBoutonsService();
+      if (this.voyageur !== v) return;   // (housekeep v1.14 : le client est déjà parti)
       const nom = nomRoyal(id);
-      this.raconter(`${petit} revient en courant : ${femininRoyal(id) ? 'une' : 'un'} ${nom}, au prix de l'étal (${res.prix} p.). ${pourLeClient ? 'Droit dans le baluchon.' : 'Dans ta réserve.'}${res.message ? ' ' + res.message : ''}`, 'Le coursier');
+      this.raconter(`${petit} revient en courant : ${femininRoyal(id) ? 'une' : 'un'} ${nom}, au prix de l'étal (${res.prix} p.). ${pourLeClient ? 'Droit dans le baluchon.' : 'Dans ta réserve.'}${res.message ? ' ' + res.message : ''}`, ORPHELINAT.filles.includes(petit) ? 'La coursière' : 'Le coursier');
     });
   },
 });
