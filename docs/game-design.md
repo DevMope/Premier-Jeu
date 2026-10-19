@@ -2567,3 +2567,5 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
   le menton, bien au milieu.
 - **50 v3, retouche** : « mieux centrer sa tête au milieu » : la tête est mesurée dans le dessin (du haut des cheveux au
   menton) et posée pile au centre du médaillon, le poing juste dessous.
+- **50 v3 : validée** (20/10). Toutes les planches 47 à 50 sont validées : on peut construire les mises, la mise noire,
+  les collections, les messages de détresse et l'envie de partir (avec la pose « il pense » et le carnet).
