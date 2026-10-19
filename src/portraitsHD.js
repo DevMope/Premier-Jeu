@@ -659,7 +659,10 @@ function brasBuste(t, g, v, cx, pose) {
   const sx = largeur + 2, sy = v.torse + 12;
   const epaule = s => [cx + s * sx, sy];
   // (v1.17) les grands gabarits (nain, orc, troll, panda) : le bras levé et sa main restent dans le cadre du buste
-  const dedans = (x, r) => Math.min(HD_L - 1.5 - r, Math.max(1.5 + r, x));
+  // (v1.18) avec la place du contour, et le coude un peu plus loin que la main : l'avant-bras penche, sans
+  // ce bord droit tout raide qui faisait croire qu'il manquait des pixels
+  const dedans = (x, r) => Math.min(HD_L - 2.5 - r, Math.max(2.5 + r, x));
+  const coudeLeve = (dx) => Math.min(cx + sx + dx, HD_L - 3 - ep), mainLevee = (dx, coude) => Math.min(cx + sx + dx, coude - 4);
   const bras = (pts) => traitHD(t, manche, pts.map(([x, y]) => [dedans(x, ep), y]), ep, -0.2);
   // (v0.94) le panda a des pattes noires, pas des mains roses
   const peau = g.race === 'panda' ? 'patte' : 'peau';
@@ -691,14 +694,14 @@ function brasBuste(t, g, v, cx, pose) {
     bras([epaule(1), [cx + sx + 8, sy + 19], [cx + 9, v.bouche + 9]]); main(cx + 8, v.bouche + 9, 4.6, 3.6);
   } else if (pose === 'salut') {
     // La main levée, paume ouverte
-    bras([epaule(1), [cx + sx + 12, sy - 7], [cx + sx + 8, sy - 24]]); ouverte(cx + sx + 8, sy - 28);
+    { const c = coudeLeve(12), m = mainLevee(8, c); bras([epaule(1), [c, sy - 7], [m, sy - 24]]); ouverte(m, sy - 28); }
   } else if (pose === 'pouce') {
     // Le pouce levé
-    bras([epaule(1), [cx + sx + 12, sy - 3], [cx + sx + 7, sy - 17]]); poing(cx + sx + 7, sy - 18);
-    t.forme('peau', ellipsoide(dedans(cx + sx + 7, 6.4) - 4, sy - 27, 2.2, 5), { decalage: 0.2 });
+    { const c = coudeLeve(12), m = mainLevee(7, c); bras([epaule(1), [c, sy - 3], [m, sy - 17]]); poing(m, sy - 18);
+      t.forme('peau', ellipsoide(dedans(m, 6.4) - 4, sy - 27, 2.2, 5), { decalage: 0.2 }); }
   } else if (pose === 'poing') {
     // Le poing brandi
-    bras([epaule(1), [cx + sx + 12, sy + 2], [cx + sx + 4, sy - 9]]); poing(cx + sx + 4, sy - 10);
+    { const c = coudeLeve(12), m = mainLevee(4, c); bras([epaule(1), [c, sy + 2], [m, sy - 9]]); poing(m, sy - 10); }
   } else if (pose === 'tete') {
     // La main qui se gratte la tempe, embarrassée
     bras([epaule(1), [cx + sx + 15, sy - 6], [cx + v.rx + 6, v.yeux - 2]]); main(cx + v.rx + 4, v.yeux - 4, 4.4, 5);

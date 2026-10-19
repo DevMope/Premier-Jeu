@@ -179,6 +179,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   t.rampes.ivoire = rampe(0xe8dcb4); t.rampes.mousse = rampeVive(T.mousse || 0x5a6a2a); t.rampes.griffe = rampe(0x2a2420);
   if (T.poils) t.rampes.cheveux = rampeVive(T.poils);
   const fache = !!options.fache;
+  const pensif = pose === 'pense';   // (v1.18) il pense : la main au menton, le regard qui monte
   t.rampes.museau = rampeVive(T.museau || 0x5a4030); t.rampes.noir = rampeVive(T.taches || 0x201c1c); t.rampes.bande = rampe(T.bandelettes || 0xd8cfae); t.rampes.truffe = rampe(0x1a1410);
   t.rampes.cheveux = rampeVive(g.cheveux);
   // Les aînés : cheveux et poils gris, et la fourrure des bêtes qui blanchit un peu
@@ -304,6 +305,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
     // (v1.15) le plateau (au bar) : le bras du côté où il regarde, plié, la main ouverte à hauteur d'épaule,
     // écartée de la tête, sous le plateau ; l'autre bras reste le long du corps
+    // (v1.18) il pense : le bras proche plié, le poing sous le menton (redessiné par-dessus la tête plus bas)
+    if (pensif && cote === pres) { coude.splice(0, 3, cote * (ep + 1 * k), 2 * k, yT + P.torse * 0.55); main.splice(0, 3, cote * 1.2 * k, P.rx * 0.95, cy + P.ry + 1.9 * k); }
     if (pose === 'plateau' && cote === loin) { coude.splice(0, 3, cote * (ep + 5 * k), 1 * k, yT + 5 * k); main.splice(0, 3, cote * Math.min(ep + 9 * k, L / 2 - 4 * k), 1 * k, yT - 2 * k); }
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
     const r = 2.6 * k * P.membre;
@@ -322,7 +325,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme(matMain, ellipsoide(M[0], M[1] + 1 * k * gm, 2.2 * k * gm, 2.3 * k * gm), { decalage: dec + 0.1 });
     t.forme(matMain, ellipsoide(M[0] + cote * c * 1.6 * k * gm + s * 1.2 * k, M[1] + 0.6 * k, 0.9 * k * gm, 1.2 * k * gm), { decalage: dec + 0.3, ombre: false });
     if (T.griffes) for (const d of [-1, 0, 1]) for (let j = 0; j < Math.round(0.9 * k * gm); j++) t.poser(Math.round(M[0] + d * 1.1 * k * gm), Math.round(M[1] + 3.2 * k * gm) + j, 'griffe', j ? 2 : 4);
-    if (devant) mainDevant = { M, matMain, gm, cote };
+    if (devant) mainDevant = { M, C, r, matMain, matAvant, gm, cote };
   };
   let mainDevant = null;
   const segBras = [], segJambes = [];   // (v0.64) pour les plis des manches et des jambes
@@ -944,15 +947,16 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   let yeux = [];
   const poserYeux = () => { for (const [ox, large, cote] of yeux) {
     // Un œil simple et posé : un petit blanc, la pupille sombre, un reflet d'un pixel, la paupière
-    const w = large ? 1.3 * k : 0.8 * k, h = 1.4 * k;
+    const w = large ? 1.3 * k : 0.8 * k, h = (pensif ? 1.75 : 1.4) * k;   // (il pense : les yeux grands ouverts vers le haut)
     // (les yeux de bête : tout l'œil de la couleur de l'iris, une pupille en fente)
     t.forme(T.fente ? 'iris' : 'blanc', ellipsoide(ox, ey, w, h), { decalage: T.fente ? 0.4 : 0.2, ombre: false, bord: false });
     const ix = ox + (large ? 0 : cote * 0.15 * k);
     // (v0.68) le joueur : l'iris prend la couleur choisie à la création, la pupille au milieu
     const irisJoueur = costume === 'joueur' && !T.fente;
-    t.forme(irisJoueur ? 'iris' : 'pupille', ellipsoide(ix, ey + 0.15 * k, T.fente ? 0.3 * k : large ? 0.75 * k : 0.5 * k, 1.05 * k), { ombre: false, bord: false });
-    if (irisJoueur) t.poser(Math.round(ix), Math.round(ey + 0.3 * k), 'pupille', 1);
-    t.poser(Math.round(ix - 0.4 * k), Math.round(ey - 0.4 * k), 'blanc', 5);
+    const iy = pensif ? ey - 0.55 * k : ey + 0.15 * k, ix2 = pensif ? ix + (Math.abs(s) > 0.05 ? s : 1) * 0.35 * k : ix;   // (il pense : le regard part en l'air, sur le côté)
+    t.forme(irisJoueur ? 'iris' : 'pupille', ellipsoide(ix2, iy, T.fente ? 0.3 * k : large ? 0.75 * k : 0.5 * k, (pensif ? 0.85 : 1.05) * k), { ombre: false, bord: false });
+    if (irisJoueur) t.poser(Math.round(ix2), Math.round(iy + 0.15 * k), 'pupille', 1);
+    t.poser(Math.round(ix2 - 0.4 * k), Math.round(iy - 0.55 * k), 'blanc', 5);
     for (let i = -Math.round(w); i <= Math.round(w); i++) t.poser(Math.round(ox + i), Math.round(ey - h), 'pupille', 2);
     if (ombreF) for (let j = 1; j <= k; j++) t.poser(Math.round(ox + cote * (w + j * 0.6)), Math.round(ey - h - j * 0.7), 'pupille', 1);   // (les cils)
     if (fache) {
@@ -1025,7 +1029,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       const w = large ? 2 * k : 1.1 * k, versNez = Math.sign(X(0, P.rx) - ox) || 1;
       for (let i = -Math.round(w); i <= Math.round(w); i++) for (let e = 0; e < epSourcil + (fache ? 1 : 0); e++) {
         // (fâché : le sourcil plonge vers le nez)
-        const dy = fache ? -2.6 * k + (i * versNez) / w * 1.3 * k : -3.2 * k + (i * i) / (w * w) * (race === 'elfe' ? 1.6 : 1) * k;
+        // (il pense : les sourcils montent, l'un un peu plus que l'autre)
+        const dy = fache ? -2.6 * k + (i * versNez) / w * 1.3 * k : -3.2 * k + (i * i) / (w * w) * (race === 'elfe' ? 1.6 : 1) * k - (pensif ? (large ? 0.9 : 0.4) * k : 0);
         t.poser(Math.round(ox + i), Math.round(ey + dy) + e, 'cheveux', e ? 2 : 1);
       }
     }
@@ -1431,6 +1436,13 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     for (const [x, y, m, ton] of ajouts) if (t.dans(x, y) && !t.mat(x, y)) t.poser(x, y, m, ton);
   }
   // Les aînés s'appuient sur une canne noueuse, tenue dans la main de devant
+  if (pensif && mainDevant && !dos) {
+    const { M, C, r: rb, matMain, matAvant: mA, gm } = mainDevant;
+    const mi = [C[0] + (M[0] - C[0]) * 0.55, C[1] + (M[1] - C[1]) * 0.55];
+    cylindre(t, mA, mi, M, rb - 0.3 * k, { decalage: 0.5 });
+    t.forme(matMain, ellipsoide(M[0], M[1] + 0.4 * k * gm, 2.3 * k * gm, 2 * k * gm), { decalage: 0.6 });
+    for (const d of [-1, 0, 1]) t.poser(Math.round(M[0] + d * 0.9 * k), Math.round(M[1] - 1 * k), matMain, 1);   // (les doigts repliés)
+  }
   if (costume === 'sage' && mainDevant && !leves && !pose) {
     const { M, matMain, gm } = mainDevant;
     const dehors = M[0] < cx ? -1 : 1;
