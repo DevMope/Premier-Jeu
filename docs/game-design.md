@@ -2414,3 +2414,24 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
 | ombre | les Terres des Bannis | **Cendrebourg, une ville qui se reconstruit** dans les ruines, au bord du Fleuve des Cendres ; les maisons orques en défenses de groliphants (seulement pour un joueur d'ombre, à la place d'un royaume du Conseil) | la tortue passe la Grande Muraille de nuit | les dons et la reconstruction (on voit la ville se relever) | 6 jours |
 | fin | les Terres sauvages | **la ville-tortue** : la ville entière vit sur le dos de la plus grande tortue, qui marche et nage sans jamais s'arrêter (comme Zunesha), au plus près de l'Antre du dragon | on ne la rejoint pas : on monte à bord | (vers ~85 % du jeu : le joueur confie le comptoir et part apprendre à se battre) | — |
 - Le lac gelé des Nains pourrait accueillir un **petit village de pêcheurs sur la glace** (une visite, pas une ville).
+
+### Réponses du joueur (20/10) : les villes validées ; les escales ; plus de ville-tortue
+- **Les cinq villes dans l'ordre des étoiles : validées** (Port-Brisant sur pilotis, la ville creusée des Nains, la
+  ville sous la bulle des Elfes, les îles volantes des Mages, et les griffons qui s'y débloquent).
+- **Cendrebourg** (joueur d'ombre) : tout est validé.
+- **La ville-tortue : refusée** (trop proche de Spellcaster University). Il faut trouver mieux pour la fin. Propositions
+  de Claude :
+  - **Ossemont** (recommandé) : une ville bâtie **dans le squelette d'un dragon ancien**, sur la route de l'Antre ; les
+    côtes font les remparts, le crâne fait la porte. Le lien avec l'histoire : ce dragon a été tué par le Grand Sage
+    il y a très longtemps... et c'était peut-être **la mère de Vhaldrak**. Un éclat de vérité attend là-bas ;
+  - **Cendre-Couronne** : une ville dans le cratère d'un volcan éteint, au bord des Terres sauvages ;
+  - **le Bastion des Ouvre-Routes** : la dernière forteresse libre avant l'Antre, où tous les Ouvre-Routes se
+    retrouvent (et le camp d'entraînement y est).
+- **Les escales** (idée du joueur, à partir des Monts de Bambou) : *précision de Claude, les « 4 jours » étaient la
+  durée du voyage, pas du séjour.* Mais l'idée est meilleure : certains lieux ne sont pas des villes où l'on
+  s'installe, ce sont des **escales** : **une histoire palpitante, jouée sur quelques jours**, de l'inédit, et l'on
+  repart avec **des souvenirs** (pour l'étagère, et parfois un ami). Trois escales :
+  - **les Monts de Bambou** (les pandas) ;
+  - **le village sur la glace** du lac gelé des Nains ;
+  - **les pyramides des momies**, chez les Bannis (idée du joueur) : une nécropole qui dort le jour et s'éveille la
+    nuit ; ses archives parlent du temps d'avant le sort d'oubli (un éclat de vérité).
