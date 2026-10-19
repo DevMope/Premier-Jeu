@@ -39,7 +39,7 @@ function lettreDuNotaire(scene, suite) {
   L.add(scene.add.text(0, -118, 'LA BOUTIQUE D’À CÔTÉ EST À VENDRE', style(19, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
   L.add(scene.add.text(0, -94, `Le notaire du Conseil · prix : ${prix} p. (${RIVAL.rachat.parEtoile} p. × ★${et})`, style(12, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5));
   const choix = (x, nom, l1, l2, coul) => { const c = scene.add.container(x, 10); c.add(scene.add.rectangle(0, 0, 250, 170, 0xf3e6c8).setStrokeStyle(3, coul)); c.add(scene.add.text(0, -66, nom, style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5)); c.add(scene.add.text(0, -6, l1, style(12, '#3b2410', { wordWrap: { width: 226 }, align: 'center' })).setOrigin(0.5)); c.add(scene.add.text(0, 56, l2, style(11, '#6b4a2a', { fontStyle: 'italic', wordWrap: { width: 226 }, align: 'center' })).setOrigin(0.5)); L.add(c); };
-  choix(-140, "L'orphelinat", `Tu l'offres aux orphelins du Comté : +${RIVAL.orphelinat.reputation} de réputation, et bientôt des petits coursiers.`, 'Ils courront au marché pour toi (les courses du matin).', 0x4a8a3a);
+  choix(-140, "L'orphelinat", `Tu l'offres aux orphelins du Comté : +${RIVAL.orphelinat.reputation} de réputation, et des petits coursiers.`, 'Ils font tes courses au marché, et courent pour toi au comptoir.', 0x4a8a3a);
   choix(140, 'Le petit bar', 'Tu en fais ton petit bar : une pièce de plus, ouverte le soir.', 'Des rencontres et des rumeurs le soir, et des clients qui reviennent.', 0x8a5a2a);
   L.add(scene.add.text(0, 132, peutPayer(G, prix) ? 'Le premier terrain de ton quartier. Rien ne presse : le notaire attend ton offre.' : `Il te manque ${prix - Math.floor(G.argent)} pièces. Rien ne presse : le notaire attend ton offre (le soir, chez toi).`, style(12, peutPayer(G, prix) ? '#2f5a2a' : '#b02020', { fontStyle: 'bold italic', wordWrap: { width: 560 }, align: 'center' })).setOrigin(0.5));
   const objets = [voile, L];
@@ -52,8 +52,8 @@ function lettreDuNotaire(scene, suite) {
     if (typeof noterJournal === 'function') noterJournal(`rachat : ${quoi}`);
   };
   if (peutPayer(G, prix)) {
-    const b1 = creerBouton(scene, 340, 470, 230, "Acheter : l'orphelinat", () => acheter('orphelinat')); b1.fond.setDepth(82); b1.label.setDepth(82.1); objets.push(b1);
-    const b2 = creerBouton(scene, 620, 470, 230, 'Acheter : le petit bar', () => acheter('bar')); b2.fond.setDepth(82); b2.label.setDepth(82.1); objets.push(b2);
+    const b1 = creerBouton(scene, 345, 428, 230, "Acheter : l'orphelinat", () => acheter('orphelinat')); b1.fond.setDepth(82); b1.label.setDepth(82.1); objets.push(b1);
+    const b2 = creerBouton(scene, 615, 428, 230, 'Acheter : le petit bar', () => acheter('bar')); b2.fond.setDepth(82); b2.label.setDepth(82.1); objets.push(b2);
   }
   objets.push(scene.add.text(950, 530, '▶ clique pour refermer', style(12, '#d6bf98', { fontStyle: 'italic' })).setOrigin(1, 1).setDepth(82));
   L.setScale(0.2).setAlpha(0);

@@ -362,6 +362,7 @@ Chaque étape doit donner une version **jouable**.
 | v 1.09 | **Garrick et le vieux tonneau** (planche 37 v2 validée) | Dans l'intro, Garrick arrive en se débattant dans la rivière : il agrippe un rondin qui bascule et l'envoie au fond (PLOUF, il boit la tasse), remonte en toussant, puis se cramponne à un vieux tonneau qui le porte jusqu'à toi ; tiré de l'eau, il lâche le tonneau, qui file avec le courant. |
 | v 1.10 | **Lot C-1 : les commandes royales et l'impôt du Conseil** (planches 38 et 38 v2 validées) | Dès ★2, le 9 de chaque mois, le héraut de la Confrérie apporte une **commande royale** scellée (provisions, armes, et des « bel ouvrage » dès que ta forge tourne) : on brise le sceau, on lit la lettre, on accepte ou on refuse (−1). Acceptée, elle est **punaisée sur l'ardoise** (ce qui manque, le sablier). Le 16 au matin, il revient : tout y est (**LIVRÉE** : 600 p. à ★2, +50 % par étoile, +1 de réputation, l'impôt suivant moitié prix), ou c'est **MANQUÉE** (« Le Conseil est mécontent » : −2, impôt ×1,5 pendant 2 mois, pas de commande le mois suivant). Le 1er du mois, la **lettre du percepteur** : 5 % × étoiles au-delà de 300 p. × étoiles. Les « bel ouvrage » promis au Conseil ne partent plus dans les baluchons. Corrigé au passage : après un choix à deux boutons, le bouton du milieu restait affiché. |
 | v 1.11 | **Lot C-5 : Lucien Belhomme, le paon d'à côté** (planches 40 v2 et 41 validées, version A) | Le 1er du mois qui suit ta première commande royale, l'ancien apprenti de Garrick ouvre « Au Comptoir Agréé » juste à côté de ta maison (sa façade à lui : pierre blanche, bleu du Conseil, enseigne ovale dorée) : banderole, ballons et badauds le matin, et il vient se présenter au comptoir. Selon sa **pression** (1 à 3), il attire un client de passage tous les deux jours, un par jour ou deux par jour : le client hésite dans la file, puis file chez le voisin sous tes yeux. Le **mois des comptoirs** : tes aventuriers revenus vainqueurs contre les siens (il sert autant de clients que toi, et en ramène vivants 55, 65 ou 75 sur 100 selon sa pression) ; le score reste en haut de l'écran (clic : le panneau). Le 1er du mois, le **crieur** vient en fin de file annoncer le bilan : tu gagnes, sa pression baisse ; il gagne, elle monte et il vient se pavaner ; battu à pression 1, il ferme et plie bagage. Il se moque aussi d'une commande royale manquée (au comptoir et dans la gazette). Sa boutique **à vendre** : la lettre du notaire le matin, puis « Chez le notaire » le soir ; 1 500 p. × étoiles pour en faire **l'orphelinat** (+3 de réputation ; les coursiers viendront avec leur planche) ou **le petit bar** (sa planche aussi) : en attendant, la maison est en travaux. |
+| v 1.12 | **L'orphelinat du Comté** (planche 42 validée) | La maison du paon rachetée pour les orphelins : façade repeinte (vert tendre, bois, linge qui sèche au vent, craies, enfants qui jouent au cerceau). **Le soir, « L'orphelinat »** : la liste des courses des petits (6 objets, 10 avec le dortoir, jamais plus cher que le soir même), faite à l'aube et posée sur ton comptoir ; et l'onglet **Bâtir** : le dortoir (2 500 p. : deux courses par jour, liste de 10), l'école (5 000 p. : les courses ne prennent plus de temps, une rumeur du marché chaque matin), la grande salle (9 000 p. : de temps en temps un ancien de l'orphelinat en novice, ami dès le premier jour, avec son petit fil d'histoires) ; chacune bâtie en une nuit (+1 de réputation). **Au comptoir, le coursier** partage la ligne de Grippesou : un objet de l'étal, au prix du marché, en ¼ h (une course par jour, deux avec le dortoir) ; il court derrière la fenêtre et revient l'objet sous le bras. Aussi : les noms trop longs des lettres du soir ne passent plus sous Oui / Non ; les boutons de la lettre du notaire sont dans son panneau. |
 | 10b | **La forge chez soi** (validé) | À ★3 (le saut d'un an), on peut construire une forge dans l'arrière-boutique et engager un premier forgeron ; un second à ★4. Chaque nuit, ils fabriquent des armes avec les matériaux en stock. |
 | 10c | **La rue et le familier** (validé : le chat chasse les rats de la réserve et prévient parfois de la garde) | La rue du comptoir s'agrandit : on y marche avec son personnage jusqu'aux lieux du quartier (marché, banque, forge, fontaine, plus tard le petit bar), en plus des raccourcis depuis la maison. En s'y promenant le soir, on croise le chat de gouttière : on le nourrit quelques soirs de suite, et il nous adopte (premier familier). |
 | 11 | **Aider pendant l'aventure** | Messages de détresse, le grand aigle, les mercenaires. |
@@ -1991,3 +1992,81 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
   semaine, un vieux récit avec un indice sur le monde), la terrasse (8 000 p. : ouvert à midi, +2 clients par jour, les
   nobles du Conseil y traînent).
 
+
+### Réponses du joueur (19/10) : commandes manquées, noms, planche 42 validée, camp d'entraînement, le bar façon Dave the Diver
+- **Planche 42 : tout validé**, avec deux demandes. (1) Les trois améliorations de l'orphelinat **plus chères** :
+  le dortoir **2 500 p.**, l'école **5 000 p.**, la grande salle **9 000 p.** (au lieu de 1 500 / 3 000 / 6 000).
+  (2) **Plus tard**, une fois les trois bâties : **un camp d'entraînement** pour préparer ceux qui veulent partir à
+  l'aventure. Les anciens de l'orphelinat y gagnent, en plus d'être amis, une chance d'arriver à un niveau plus haut.
+- **Proposition de Claude pour le camp** (à valider avec sa planche) : **20 000 p.**, la plus chère de toutes. Le niveau
+  d'un ancien qui sort du camp : novice 55 %, aguerri 30 %, vétéran 12 %, héros 2,9 %, **légende 0,1 %** (un sur mille :
+  sur une partie, à peu près 2 chances sur 100 d'en voir un). Le camp sert aussi le **dernier arc** : vers 85 % du jeu,
+  quand tu laisses le comptoir à quelqu'un pour partir apprendre à te battre, c'est là que tu t'entraînes.
+- **Le comptoir laissé à un autre vers 85 % du jeu** (idée du joueur) : tu embauches quelqu'un pour prendre ta place, et
+  tu pars à l'aventure apprendre à combattre avant le dénouement. À relier au camp, au bar qui tourne seul et à la
+  Grande Expédition contre le dragon.
+- **« Commande royale » : un mot mal choisi** (il n'y a pas de rois). Propositions de Claude (à choisir) :
+  **« commande scellée »** (recommandée : la lettre au sceau rouge, déjà dessinée), « la Levée du Conseil »,
+  « commande des Gardiens », « réquisition du Conseil ».
+- **Un nom stylé pour « les voyageurs »** (à choisir) : **« les Arpenteurs »** (recommandé : ceux qui arpentent le
+  monde), « les Baluchonniers » (le surnom tendre, lié au baluchon), « les Errants », « les Lames-Vagabondes ».
+- **Commande manquée deux fois de suite, ou plus** : aujourd'hui, chaque échec fait la même chose (−2 de réputation,
+  impôt ×1,5 pendant 2 mois, pas de commande le mois suivant) ; rien ne monte. **Proposition de Claude, « l'échelle
+  de la disgrâce »** (à valider) : chaque commande manquée est une **faute** ; une commande livrée en efface une.
+  Refuser n'est pas une faute (c'est la sortie honnête), mais trois refus de suite et le Conseil ne propose plus rien
+  pendant deux mois.
+  - **1re faute** : comme aujourd'hui.
+  - **2e faute** : −3 de réputation, impôt ×1,75 pendant 3 mois ; le héraut apporte une **lettre au sceau noir**
+    (un avertissement) ; le Conseil confie tes commandes au paon : **sa pression monte d'un cran** tout de suite
+    (s'il a fermé, rien) ; la gazette en parle.
+  - **3e faute, la disgrâce** : on décroche le **sceau du Conseil** de ta porte (un petit écusson, accroché à ta
+    première commande livrée), les **clients prestigieux** ne viennent plus, impôt ×2 pendant 3 mois, aucune commande
+    pendant 2 mois. Pour en sortir : la **commande du pardon**, plus grosse, 10 jours, sans prime ; livrée, elle
+    efface toutes les fautes et rend le sceau ; ratée, on recommence deux mois plus tard (rien de pire : c'est le
+    plafond).
+  - Garde-fous : jamais de fin de partie par là ; l'impôt ne dépasse jamais ce que tu as ; jamais plus de ×2.
+- **Le petit bar, façon restaurant de Dave the Diver** (demande du joueur, à mettre en planche 43 v2) :
+  - **Une soirée de bar jouable**, quand le joueur le veut, avec son horloge comme une journée de comptoir. Le joueur
+    embauche **un cuisinier, un barman, un ou deux serveurs** (selon le monde qui peut venir en une soirée). C'est la
+    première mécanique un peu complexe, comme la forge ou le combat de la fin.
+  - **Le bar tourne seul** au bout de quelques jours, l'équipe au complet : aucun bonus, mais de quoi payer les
+    employés et gagner un peu.
+  - **Pas un ménestrel : une bande de musiciens** façon cantina de Star Wars (accoutrements et instruments bizarres).
+    **Trois bandes au choix**, chacune avec sa paie.
+  - **Le conteur du jour** (le joueur ne le choisit pas) : sa paie dépend de sa **renommée**, qui joue aussi sur le
+    prix et le nombre de clients.
+  - **Les prix sont ceux des installations, plus chers** ; il faut dire au joueur qu'il y aura des paies en plus.
+  - **Ouvert à midi** à partir d'un moment, si le personnel est au complet **et** que le joueur a l'argent : à midi,
+    le bar tourne seul (le joueur est à son comptoir).
+  - **Personnalisable** : la pancarte, le plancher, le comptoir du bar, le mobilier. En plus des améliorations
+    (caisses, musiciens, ouverture à midi), **trois améliorations esthétiques payantes**, dites « esthétiques » au
+    joueur, qui changent l'intérieur et l'extérieur, le genre de bar et le mobilier.
+- **Avis de Claude sur le bar** (à valider) : très bonne idée, et la plus grosse mécanique du jeu ; à construire en
+  morceaux, comme la forge, chacun testé avant le suivant. Propositions :
+  - **La soirée jouée** (19 h – minuit, cinq heures de jeu en quelques minutes) : les clients s'assoient, commandent ;
+    le cuisinier et le barman préparent (une jauge au-dessus de chacun) ; toi, tu prends les commandes, tu portes les
+    plats et les chopes (les serveurs portent le reste) ; il faut servir avant que la patience d'une table tombe. Des
+    petits imprévus : une bagarre à calmer, un client qui file sans payer, un pourboire. La soirée jouée remplace les
+    autres choses du soir (promenade, forge du soir, notaire) : c'est son prix en temps.
+  - **Ce que la soirée jouée apporte de plus** que le bar seul : les pourboires, les rumeurs (vraies, sur demain),
+    les missions secondaires, les habitués (+1 client au comptoir le lendemain), et la **renommée du bar**, qui monte.
+  - **Le bar seul** : rentré chaque nuit, ≈ les salaires + 10 à 20 %. Jamais assez pour remplacer le comptoir.
+  - **Les trois bandes** (inspirées de la cantina, sans la copier) : « Les Trois Gobelets » (gnomes et hobbits,
+    flûtes-tuyaux et tambours bosselés : pas chers, un peu plus de monde) ; « Les Cornes de Brume » (orcs et ogres,
+    grosses cornes de cuivre : plus de boissons fortes vendues, plus de bagarres) ; « Les Ombres Douces » (elfes et
+    vampires sous des masques de cuir aux grands yeux noirs, longs instruments de verre : chères, attirent les nobles,
+    prix plus hauts).
+  - **Les missions secondaires** de la planche 43 restent, adaptées : A devient **l'instrument volé du chef de la
+    bande** (au Pont des Ronces) ; B, **la recette perdue de la brasseuse**, ne change pas.
+  - **Prix proposés** (installations seules, paies en plus, à valider en planche) : la cuisine 3 000 p., la scène des
+    musiciens 6 000 p., la terrasse et l'ouverture à midi 12 000 p. ; les trois améliorations esthétiques 4 000,
+    8 000 et 15 000 p. (taverne de quartier → auberge → grande brasserie).
+
+### L'orphelinat : construit (19/10, v1.12)
+- **Ce qui est fait** : tout ce que dit la planche 42, aux nouveaux prix (2 500 / 5 000 / 9 000 p.). Les objets que
+  les petits achètent comptent pour ta relation avec les marchands, comme si tu y allais toi-même.
+- **Les chiffres** (90 nuits simulées, une liste pleine chaque soir) : environ dix objets rapportés par jour avec le
+  dortoir ; un ancien de l'orphelinat tous les quinze jours environ après la grande salle (jamais deux à moins de six
+  jours d'écart) ; les anciens reviennent ensuite et poursuivent leur fil d'histoires.
+- **Pas encore fait** : le camp d'entraînement (après les trois améliorations ; sa planche d'abord) ; le bar (planche
+  43 v2 d'abord, d'après les réponses du joueur).

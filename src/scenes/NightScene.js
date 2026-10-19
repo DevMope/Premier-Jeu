@@ -56,6 +56,7 @@ class NightScene extends Phaser.Scene {
       ...(this.matin ? [] : [['Se promener', () => ouvrirPage('Promenade')]]),
       ...(!this.matin && marcheNoirCeSoir(G) ? [['La porte dérobée', () => ouvrirPage('MarcheNoir')]] : []),
       ...(!this.matin && typeof rivalDe === 'function' && G.rival && G.rival.etat === 'aVendre' ? [['Chez le notaire', () => { if (enFondu()) return; lettreDuNotaire(this, () => { if (G.rival.etat !== 'aVendre') this.scene.restart({ matin: false }); }); }]] : []),   // (v1.11) la boutique d'à côté est à vendre
+      ...(!this.matin && typeof orphelinatOuvert === 'function' && orphelinatOuvert(G) ? [["L'orphelinat", () => { if (enFondu()) return; orphelinatDuSoir(this, () => this.tout()); }]] : []),   // (v1.12) la liste des courses, les améliorations
       ...(this.matin
         ? [["L'arrière-boutique", () => ouvrirPage('Arriere', { retour: 'Nuit' })], ['Le marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
         : [['Aller dormir', () => this.dormir()]]),
@@ -291,7 +292,12 @@ class NightScene extends Phaser.Scene {
     liste.forEach((a, i) => {
       const y = 124 + (i + infos.length) * 52;
       const v = a.voyageur;
-      c.add(this.add.text(x1 + 14, y, `Lettre ${dePersonne(v.nom)}`, style(13, couleurNom(G, v.nom), { fontStyle: 'bold' })));
+      // (v1.12) un nom long ne passe plus sous les boutons Oui / Non : la police rapetisse, puis le nom s'abrège
+      const titre = this.add.text(x1 + 14, y, `Lettre ${dePersonne(v.nom)}`, style(13, couleurNom(G, v.nom), { fontStyle: 'bold' }));
+      const place = (a.acceptee ? x2 - 70 : x2 - 92) - (x1 + 14);
+      for (let t = 13; titre.width > place && t > 11; t--) titre.setFontSize(t);
+      while (titre.width > place && titre.text.length > 12) titre.setText(titre.text.replace(/…$/, '').slice(0, -1) + '…');
+      c.add(titre);
       c.add(this.add.text(x1 + 14, y + 17, `+1 client le jour ${a.jour} · butin ~${v.butin} p. · ${v.duree} j`, style(11, '#6b4a2a')));
       c.add(this.add.text(x1 + 14, y + 31, commandeEnTexte(v), style(11, '#3b2410', { wordWrap: { width: x2 - x1 - 24 } })));
       if (a.acceptee) {

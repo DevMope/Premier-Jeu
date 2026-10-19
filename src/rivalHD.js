@@ -2,8 +2,9 @@
 // Conseil, des colonnes et un fronton, des vitrines cintrées sous des auvents rayés, un tapis rouge. Rien de commun
 // avec le comptoir du joueur (chaumière, pierre et colombages), à aucun niveau.
 const FACADE_RIVAL = { L: 200, H: 176, porte: [86, 122, 28, 54], enseigne: [128, 112] };
-function creerFacadeRivalHD(scene, n = 1) {
-  const cle = 'facadeRivalHD_' + n;
+// (v1.12) `v` : la même maison repeinte (l'orphelinat, plus tard le bar) : d'autres couleurs, sans l'emblème du Conseil
+function creerFacadeRivalHD(scene, n = 1, v = null) {
+  const cle = 'facadeRivalHD_' + n + (v ? '_' + v.nom : '');
   if (scene.textures.exists(cle)) return cle;
   const { L, H } = FACADE_RIVAL;
   const t = toileDecor(L, H);
@@ -13,6 +14,7 @@ function creerFacadeRivalHD(scene, n = 1) {
   t.rampes.or = [0x5a3a08, 0x8a5e10, 0xb8861c, 0xd8a830, 0xf0c850, 0xfff0a0];
   t.rampes.rouge = [0x3a0608, 0x5e0c10, 0x861418, 0xa8201e, 0xc83a30, 0xe06050];
   t.rampes.vitreBleue = [0x2a2010, 0x5a4220, 0x9a7638, 0xd8b060, 0xf0d890, 0xfff6d8];
+  if (v && v.rampes) Object.assign(t.rampes, v.rampes);
   const P = (x, y, m, i) => { if (x >= 0 && y >= 0 && x < L && y < H) t.poser(x, y, m, Math.max(0, Math.min(5, i))); };
   // pierre de taille : de grands blocs réguliers, joints fins, lumière en haut à gauche
   const taille = (x0, y0, l, h, bl = 22, bh = 10, g = 1) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + l; x++) {
@@ -67,18 +69,20 @@ function creerFacadeRivalHD(scene, n = 1) {
   return cle;
 }
 // La façade du paon posée dans une scène, avec son enseigne ovale dorée (pas celle du joueur), sa bannière et ses affiches
-function dessinerFacadeRival(scene, cx, sol, n = 1, nom = 'Au Comptoir Agréé') {
-  const cle = creerFacadeRivalHD(scene, n); creerEmblemesHD(scene);
+function dessinerFacadeRival(scene, cx, sol, n = 1, nom = 'Au Comptoir Agréé', v = null) {
+  const cle = creerFacadeRivalHD(scene, n, v); creerEmblemesHD(scene);
+  const [eC, eF, eL] = (v && v.enseigne) || [0xb8861c, 0x101e3a, 0xf0c850];
   const image = scene.add.image(cx, sol + 2, cle).setOrigin(0.5, 1).setScale(2);
   const gauche = cx - FACADE_RIVAL.L, haut = sol + 2 - FACADE_RIVAL.H * 2;
-  scene.add.image(gauche + 100 * 2, haut + 34 * 2, 'embleme_conseil').setScale(0.42);
+  if (!v) scene.add.image(gauche + 100 * 2, haut + 34 * 2, 'embleme_conseil').setScale(0.42);
   // l'enseigne ovale : fond bleu nuit, cadre d'or, lettres d'or, pendue à une potence de fer forgé
   const ex = gauche + 172 * 2, ey = haut + 118 * 2;
   const g = scene.add.graphics();
   g.lineStyle(4, 0x2a2a30).lineBetween(ex - 40, ey - 18, ex + 38, ey - 18).lineBetween(ex + 34, ey - 18, ex + 34, ey - 36);
   g.lineStyle(2, 0x2a2a30).lineBetween(ex - 22, ey - 18, ex - 22, ey - 6).lineBetween(ex + 22, ey - 18, ex + 22, ey - 6);
-  g.fillStyle(0xb8861c).fillEllipse(ex, ey + 14, 120, 44).fillStyle(0x101e3a).fillEllipse(ex, ey + 14, 110, 36).lineStyle(2, 0xf0c850).strokeEllipse(ex, ey + 14, 100, 30);
-  scene.add.text(ex, ey + 14, nom, style(11, '#f0c850', { fontStyle: 'bold', stroke: '#101e3a', strokeThickness: 2 })).setOrigin(0.5);
+  g.fillStyle(eC).fillEllipse(ex, ey + 14, 120, 44).fillStyle(eF).fillEllipse(ex, ey + 14, 110, 36).lineStyle(2, eL).strokeEllipse(ex, ey + 14, 100, 30);
+  const hex = c => '#' + c.toString(16).padStart(6, '0');
+  scene.add.text(ex, ey + 14, nom, style(11, hex(eL), { fontStyle: 'bold', stroke: hex(eF), strokeThickness: 2 })).setOrigin(0.5);
   const porteX = gauche + (FACADE_RIVAL.porte[0] + FACADE_RIVAL.porte[2] / 2) * 2;
   return { image, porteX, gauche, haut };
 }

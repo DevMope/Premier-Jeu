@@ -1560,6 +1560,7 @@ function nuit(G) {
   if (G.feu === G.jour) G.nuitAuChaud = G.jour + 1;   // (v0.66 : la nuit au chaud, pour le réveil)
   if (typeof nuitDuFoyer === 'function') nuitDuFoyer(G);   // (v1.05) le froid de l'hiver, la gamelle du chat
   if (typeof nuitDuRival === 'function') nuitDuRival(G);   // (v1.11) les comptes du jour face au paon
+  if (typeof nuitDeLOrphelinat === 'function') nuitDeLOrphelinat(G);   // (v1.12) le chantier de l'orphelinat
   if (typeof echeancesDuConseil === 'function') echeancesDuConseil(G);   // (v1.10) une commande royale qui n'est pas venue
   G.jour++;
   G.argentDebutJour = G.argent;
@@ -1626,6 +1627,7 @@ function nuit(G) {
   }
   if (typeof matinDuConseil === 'function') for (const l of matinDuConseil(G)) G.reveil.lignes.push(l);   // (v1.10) l'impôt du Conseil, la commande royale
   if (typeof matinDuRival === 'function') for (const l of matinDuRival(G)) G.reveil.lignes.push(l);   // (v1.11) le paon ouvre, le bilan du mois
+  if (typeof matinDeLOrphelinat === 'function') for (const l of matinDeLOrphelinat(G)) G.reveil.lignes.push(l);   // (v1.12) les courses des petits, la rumeur
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
@@ -1762,6 +1764,7 @@ function formerFileDuJour(G) {
   deguiserClients(G, clients, prevus.length);   // (v0.86) parmi les imprévus, un menteur... ou un honnête qui en a l'air
   if (typeof presageSurLaFile === 'function') presageSurLaFile(G, clients, prevus.length);   // (v1.05) le présage de Madame Ysmée
   const file = Phaser.Utils.Array.Shuffle(clients.map(v => ({ type: 'client', voyageur: v })));
+  if (typeof ancienDuJour === 'function') { const anc = ancienDuJour(G, [...file, ...(G.reportes || []).map(v => ({ voyageur: v }))]); if (anc) file.splice(hasard(0, file.length), 0, anc); }   // (v1.12) un ancien de l'orphelinat
   if (typeof volerClients === 'function') volerClients(G, file);   // (v1.11) le paon d'à côté attire quelques clients de passage
 
   // Les aventuriers dont la quête se termine aujourd'hui reviennent...

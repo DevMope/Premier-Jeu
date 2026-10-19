@@ -103,7 +103,7 @@ function volerClients(G, file) {
   r.vols -= n;
   for (let i = file.length - 1; i >= 0 && n > 0; i--) {
     const e = file[i];
-    if (e.type !== 'client' || e.voyageur.prevu || e.voyageur.prestige || e.voyageur.recherche) continue;
+    if (e.type !== 'client' || e.voyageur.prevu || e.voyageur.prestige || e.voyageur.recherche || e.voyageur.ancienOrphelinat) continue;
     e.vole = true; n--; r.volesAujourdhui++;
   }
 }

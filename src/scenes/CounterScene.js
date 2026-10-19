@@ -47,6 +47,7 @@ class CounterScene extends Phaser.Scene {
     // (v0.97) les panneaux de la veille (ou d'avant un chargement) n'existent plus
     this.resumeRetours = this.ratelier = this.panneauCadeaux = this.panneauSecret = this.infoRelique = this.afficheEpinglee = null;
     this.panneauRoyal = this.feuilleConseil = this.minuterieGeste = this.tweenGeste = this.pastilleRoyale = null; this.lettreOuverte = false;   // (v1.10)
+    this.coursierEnRoute = false; this.fenetreCoursier = null;   // (v1.12)
 
     this.dessinerPiece();
     this.creerFenetre();
@@ -59,7 +60,11 @@ class CounterScene extends Phaser.Scene {
     this.creerHorloge();
     if (this.majCommandeRoyale) this.majCommandeRoyale();   // (v1.10) la commande royale, punaisée sur l'ardoise
 
-    this.boutonExpress = creerBouton(this, 840, 360, 210, 'Marchand express', () => this.ouvrirExpress());
+    // (v1.12) avec l'orphelinat, Grippesou partage sa ligne avec le coursier
+    const coursier = typeof orphelinatOuvert === 'function' && orphelinatOuvert(this.G);
+    this.boutonExpress = creerBouton(this, coursier ? 784 : 840, 360, coursier ? 100 : 210, coursier ? 'Grippesou' : 'Marchand express', () => this.ouvrirExpress());
+    this.boutonCoursier = null;
+    if (coursier && this.creerCoursier) this.creerCoursier();
     this.boutonAttente = creerBouton(this, 840, 404, 210, 'Mettre en attente', () => this.mettreEnAttente());
     this.boutonRefuser = creerBouton(this, 840, 448, 210, 'Refuser ce client', () => (this.actionB ? this.actionB() : this.refuser()));
     this.boutonAction = creerBouton(this, 840, 496, 210, '', () => this.action && this.action());
@@ -67,6 +72,7 @@ class CounterScene extends Phaser.Scene {
     // (v0.86) le petit sablier sur le coin d'un bouton : le temps que prend l'action
     const sablier = (b, y) => this.add.text(944, y - 17, '', style(11, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#1e130a', padding: { x: 4, y: 1 }, brut: true })).setOrigin(1, 0.5).setDepth(5).setVisible(false);
     this.sablierExpress = sablier(this.boutonExpress, 360).setText(`⌛ ${formatDuree(JOURNEE.express)}`);
+    if (coursier) this.sablierExpress.setX(832);
     this.sablierAction = sablier(this.boutonAction, 496);
     this.dureeAction = null;
     // (v0.86, lot A-3) inspecter le client : une petite plaque sur le coin de la fenêtre
@@ -229,6 +235,7 @@ class CounterScene extends Phaser.Scene {
     }
     this.boutonExpress.setVisible(this.enService && libre);
     if (this.sablierExpress) this.sablierExpress.setVisible(this.enService && libre);
+    if (this.majCoursier) this.majCoursier(libre);   // (v1.12) le coursier de l'orphelinat
     this.boutonAttente.setVisible(!!this.voyageur && (this.enService || !!this.actionB) && libre);
     this.boutonRefuser.setVisible(this.enService || !!this.actionB);
     if (this.enService && !this.actionB) this.boutonRefuser.setTexte('Refuser ce client');
@@ -1553,6 +1560,7 @@ class CounterScene extends Phaser.Scene {
       if (entree.reporte) bonjour = `Bonjour ! Je suis revenu${v.feminin ? 'e' : ''} dès l'ouverture, comme convenu hier soir. `;
       if (entree.attentes) bonjour = "Me revoilà ! On reprend où on en était ? ";
       if (v.habitue) bonjour = 'Re-bonjour, c\'est encore moi ! ' + (this.aReparer(v).length ? 'Mon matériel a souffert la dernière fois... ' : '');
+      if (typeof bonjourDeLAncien === 'function' && !entree.attentes) { const anc = bonjourDeLAncien(this.G, v); if (anc) bonjour = anc + ' '; }   // (v1.12) un ancien de l'orphelinat
       if (v.exige && !entree.attentes) bonjour += "Et après ma dernière mission ratée, tu me dois bien un objet de plus que ma commande ! ";
       // Ce qu'il pense de ton comptoir (ses décorations, ton côté de la jauge)
       const remarque = !entree.attentes && !v.habitue ? remarqueCamp(this.G, v) : null;

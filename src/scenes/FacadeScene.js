@@ -40,7 +40,8 @@ class FacadeScene extends Cinematique {
     const G = this.G, sol = 440;
     const fort = r.etat === 'ouvert' && r.pression >= RIVAL.pression.max;
     const nom = r.etat === 'orphelinat' ? "L'orphelinat" : r.etat === 'bar' ? 'Le petit bar' : RIVAL.boutique;
-    const f = this.voisin = dessinerFacadeRival(this, cx, sol, fort ? 2 : 1, nom);
+    const f = this.voisin = dessinerFacadeRival(this, cx, sol, fort ? 2 : 1, nom, r.etat === 'orphelinat' ? ORPHELINAT.facade : null);
+    if (r.etat === 'orphelinat') return this.dessinerOrphelinat(r, f, sol);
     if (r.etat === 'ouvert') {
       const ouverture = r.ouvertureJour === G.jour, pavane = r.pavaneJour === G.jour;
       if (ouverture) {
@@ -79,6 +80,34 @@ class FacadeScene extends Cinematique {
     pa.add(this.add.rectangle(0, 0, 150, 46, 0xd8b878).setStrokeStyle(3, 0x5a3a1a));
     pa.add(this.add.text(0, -7, 'TRAVAUX', style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     pa.add(this.add.text(0, 13, r.etat === 'orphelinat' ? "bientôt : l'orphelinat" : 'bientôt : le petit bar', style(10, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5));
+  }
+
+  // (v1.12, planche 42) L'orphelinat : du linge qui sèche, un soleil et une marelle à la craie, les enfants devant
+  dessinerOrphelinat(r, f, sol) {
+    const G = this.G, g = this.add.graphics().setDepth(5);
+    g.lineStyle(2, 0x3a2a1a).lineBetween(f.gauche + 108, f.haut + 122, f.gauche + 292, f.haut + 118);
+    const linge = [[0xe86060, 14, 16], [0x6a9ad8, 10, 20], [0xf0e0a0, 16, 12], [0x5ab06a, 12, 18], [0xf0a0c0, 10, 14]].map(([c, l, h], i) => {
+      const x = f.gauche + 124 + i * 36, y = f.haut + 121 - i * 0.8;
+      const p = this.add.container(x, y).setDepth(5.1);
+      p.add(this.add.rectangle(0, 0, l, h, c).setOrigin(0)); p.add(this.add.rectangle(2, -2, 2, 3, 0x2a1a10).setOrigin(0)); p.add(this.add.rectangle(l - 4, -2, 2, 3, 0x2a1a10).setOrigin(0));
+      this.tweens.add({ targets: p, angle: 4, duration: 1100 + i * 170, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: i * 120 });   // (le vent dans le linge)
+      return p;
+    });
+    g.fillStyle(0xfff0a0, 0.9).fillCircle(f.gauche + 190, f.haut + 300, 7); g.lineStyle(2, 0xfff0a0, 0.9);
+    for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; g.lineBetween(f.gauche + 190 + Math.cos(a) * 10, f.haut + 300 + Math.sin(a) * 10, f.gauche + 190 + Math.cos(a) * 15, f.haut + 300 + Math.sin(a) * 15); }
+    g.fillStyle(0xf0e0e0, 0.9).fillRect(f.gauche + 208, f.haut + 292, 4, 4).fillRect(f.gauche + 216, f.haut + 296, 4, 4).fillRect(f.gauche + 224, f.haut + 300, 4, 4);
+    // les enfants : un qui joue au cerceau, deux qui regardent (et qui bougent un peu)
+    const enfants = enfantsOrphelinat(G), enfant = (x, nom, feminin, flip) => {
+      const e = imageCorps(this, x, sol + 6, { race: 'hobbit', nom, feminin, niveau: 'novice' }, 4.6).setFlipX(flip).setDepth(8);
+      this.tweens.add({ targets: e, y: sol + 3, duration: 600 + Math.random() * 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: Math.random() * 600 });
+      return e;
+    };
+    enfant(f.porteX - 70, enfants[0], false, false); enfant(f.porteX + 60, enfants[1], true, true); enfant(f.porteX + 120, enfants[2], false, true);
+    const cerceau = this.add.circle(f.porteX - 20, sol - 12, 12).setStrokeStyle(3, 0x8a6a2a).setDepth(8.1);
+    this.tweens.add({ targets: cerceau, x: f.porteX + 30, angle: 360, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    // le premier matin : ils te remercient
+    if (r.racheteLe === G.jour - 1) this.bulleVoisin(f.porteX + 20, 150, "« C'est toi, le patron du comptoir ? Merci pour la maison ! On peut t'aider ? »", 260, 20);
+    else if (G.orphelinat && G.orphelinat.chantier) this.bulleVoisin(f.porteX + 20, 150, '« Cette nuit, les ouvriers viennent bâtir ! »', 230, 20);
   }
 
   // une bulle de parole au-dessus du voisin (coin arrondi, petite pointe vers lui)
