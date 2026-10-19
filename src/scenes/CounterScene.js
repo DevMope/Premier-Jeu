@@ -1448,7 +1448,7 @@ class CounterScene extends Phaser.Scene {
     this.titreCommande.setFontSize(17).setText(`${bande} · ${nomRangMafia(rang)}`);
     for (let t = 16; this.titreCommande.width > 235 && t >= 11; t--) this.titreCommande.setFontSize(t);
     const sortie = () => {
-      const prix = prixRachat(G);
+      const prix = prixLiberte(G);   // (v1.27 : avant, le rachat du paon portait le même nom et coûtait 3000 p. et plus)
       this.dire(`${pre} ne cille pas. « Sortir ? Ça se paie. ${prix} pièces. Et ton nom disparaît de nos registres. »`, qui);
       this.choix([`Racheter ta liberté (${prix} p.)`, () => {
         const err = racheterLiberte(G);

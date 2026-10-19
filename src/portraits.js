@@ -15,12 +15,8 @@ function hasardDuNom(nom) {
   };
 }
 
-function teinte(c, f) {
-  const r = Math.min(255, Math.round(((c >> 16) & 255) * f));
-  const g = Math.min(255, Math.round(((c >> 8) & 255) * f));
-  const b = Math.min(255, Math.round((c & 255) * f));
-  return (r << 16) | (g << 8) | b;
-}
+// (v1.27) « teinte » vivait ici aussi, mais celle d'exterieurHD.js (chargée après) la remplaçait déjà partout :
+// on garde celle-là seule, pour ne rien changer aux dessins.
 
 // Une toile de pixels : on y peint des formes, puis on la transforme en texture.
 class Toile {

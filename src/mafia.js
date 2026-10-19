@@ -47,7 +47,7 @@ function montantPizzo(G) {
   if (rangMafia(G) === 1) x = Math.round(x / 2);
   return x;
 }
-function prixRachat(G) { return MAFIA.rachat + MAFIA.rachatParRang * rangMafia(G); }
+function prixLiberte(G) { return MAFIA.rachat + MAFIA.rachatParRang * rangMafia(G); }
 
 // Les visites de la bande, à glisser dans la file du jour
 function visitesMafia(G) {
@@ -123,7 +123,7 @@ function represaillesDeLaNuit(G) {
 
 // Sortir de la mafia : racheter sa liberté...
 function racheterLiberte(G) {
-  const prix = prixRachat(G);
+  const prix = prixLiberte(G);
   if (G.argent < prix) return `Ta liberté coûte ${prix} pièces. Tu ne les as pas.`;
   payer(G, prix, 'pizzo');
   mafia(G).sorti = 'rachat';

@@ -120,7 +120,7 @@ function barDuSoir(scene, suite, page = 'soir') {
         c.add(scene.add.text(0, -36, `paie : ${B.paie} p. chaque soir`, style(13, '#8a1a14', { fontStyle: 'bold' })).setOrigin(0.5));
         c.add(scene.add.text(0, -12, `+${B.clients} clients · ${B.effet}`, style(12, '#2f5a2a', { fontStyle: 'bold', wordWrap: { width: 240 }, align: 'center' })).setOrigin(0.5));
         if (choisie) c.add(scene.add.text(0, 60, '♪ sur la scène ce soir ♪', style(13, '#2f5a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
-        bouton(480 + x, 258 + 70, 170, choisie ? 'Pas de bande' : 'La choisir', () => { choisirBande(G, choisie ? null : cle); Son.jouer('clic'); fermer('bande'); });
+        bouton(480 + x, 258 + 70, 170, choisie ? 'Pas de bande' : 'La choisir', () => { choisirBandeDuBar(G, choisie ? null : cle); Son.jouer('clic'); fermer('bande'); });
       });
     }
   } else {

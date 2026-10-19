@@ -114,7 +114,7 @@ function batirAuBar(G) {
   b.chantier = i.id;
   return { ok: true, installation: i };
 }
-function choisirBande(G, cle) {
+function choisirBandeDuBar(G, cle) {   // (v1.27 : avant « choisirBande », le même nom que le choix du Serpent à deux têtes)
   if (!barA(G, 'scene')) return { erreur: 'Il faut la scène.' };
   if (cle && !BAR.bandes[cle]) return { erreur: 'Inconnue.' };
   barDe(G).bande = cle || null;
