@@ -1559,9 +1559,9 @@ function nuit(G) {
   }
   if (G.feu === G.jour) G.nuitAuChaud = G.jour + 1;   // (v0.66 : la nuit au chaud, pour le réveil)
   if (typeof nuitDuFoyer === 'function') nuitDuFoyer(G);   // (v1.05) le froid de l'hiver, la gamelle du chat
-  if (typeof nuitDuRival === 'function') nuitDuRival(G);   // (v1.11) les comptes du jour face au paon
-  if (typeof nuitDeLOrphelinat === 'function') nuitDeLOrphelinat(G);   // (v1.12) le chantier de l'orphelinat
   if (typeof echeancesDuConseil === 'function') echeancesDuConseil(G);   // (v1.10) une commande scellée qui n'est pas venue
+  if (typeof nuitDuRival === 'function') nuitDuRival(G);   // (v1.11) les comptes du jour face au paon (après le Conseil : il voit la commande manquée le soir même)
+  if (typeof nuitDeLOrphelinat === 'function') nuitDeLOrphelinat(G);   // (v1.12) le chantier de l'orphelinat
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
