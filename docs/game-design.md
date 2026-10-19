@@ -2153,3 +2153,72 @@ dans tous les réglages : l'impôt ne commence qu'à ★2 et ne touche pas le d�
 - **6. Les trois styles** (esthétiques) : la taverne de quartier (au départ), l'auberge (4 000 p. : vert, fleurs,
   fanions), la grande brasserie (15 000 p. : vert-bleu profond, cuivre, lustre, carrelage, terrasse éclairée) ;
   intérieur et extérieur changent ensemble.
+
+### Réponses du joueur (19/10, soir) : planche 43 v2 validée, le videur, les Ouvre-Routes, l'Engeance, Vorhal'Düm
+- **Planche 43 v2 validée**, avec trois retouches (planche 43 v3) :
+  - les clients étaient assis **sur** les tables : ils doivent être assis **sur des chaises**, à côté de la table ;
+  - le damier de la grande brasserie **débordait sur le mur** : il reste au sol ;
+  - de la taverne à l'auberge, l'intérieur ne change pas assez. Proposition retenue à montrer : **à chaque style,
+    plusieurs pièces à changer** (le sol, les murs, les tables, les chaises, le comptoir, les lumières), comme les
+    améliorations du comptoir.
+- **Le videur** (nouveau) : la **dernière installation** du bar, et un employé de plus à embaucher. Il gère les
+  bagarres et rattrape les filous, sans que tu y passes ton quart d'heure. Selon son niveau, il peut ne rien gérer
+  du tout, en gérer un sur deux, ou tout gérer. Chiffres proposés sur la planche 43 v3.
+- **Le surnom des voyageurs** : **les Ouvre-Routes** (validé). « Voyageur » reste le mot de tous les jours ; « un
+  Ouvre-Route » est le surnom, fier, de ceux qui tracent la route à travers les royaumes pour tout libérer.
+- **Les vraies forces du mal** : **l'Engeance** (validé). Un monstre de l'Engeance, l'armée de l'Engeance.
+- **Leur chef, le démon** : **Vorhal'Düm l'Affamé** (choisi par le joueur).
+- **Le dragon, son fils** : un nom à la façon de « Smaug le Terrible ». Propositions de Claude : **« Vhaldrak le
+  Terrible »** (recommandé : « Vhal- » comme son père Vorhal'Düm, « -drak » pour le dragon ; on entend le lien sans
+  qu'on le dise), « Ignarök le Terrible », « Skarvath la Cendre-Vive », « Draugmor le Dévoreur d'Aube ».
+- **La vraie histoire, accordée** (validé par le joueur) :
+  - le Grand Sage **garde le dragon prisonnier** : pour faire pression sur Vorhal'Düm (ça ne marchera pas
+    éternellement), et pour que **sa version de l'histoire** reste dans toutes les têtes, sous le **sort d'oubli** ;
+  - le dragon **a bien aidé** le Sage, avec l'Engeance et avec les pouvoirs que Vorhal'Düm avait donnés au Sage,
+    comme le voulait leur pacte ;
+  - **le dragon en allié** est possible si le joueur fait les bons choix, mais **ce doit être difficile**.
+    Proposition de Claude (à valider plus tard) : il faut réunir trois choses, (1) assez d'**éclats de vérité**
+    (des souvenirs qui percent le sort d'oubli : visions de la Nuit des Brumes, Madame Ysmée, lettres rares),
+    (2) **briser ses chaînes** (un objet très rare, forgé chez toi), (3) ne **jamais** avoir vendu d'arme
+    « tueuse de dragon » ni accepté de mission contre lui.
+- **Le camp d'entraînement** : **validé tel quel** (20 000 p., après les trois améliorations de l'orphelinat ; les
+  anciens de l'orphelinat ont des chances d'arriver à un niveau plus haut, 0,1 % en légende). Sa planche d'abord.
+
+### Planche 43 v3 : le petit bar, retouches (19/10, à valider : docs/planches-v059/planche-43-v3-le-bar.png)
+- **Les clients sur des chaises** : chacun a sa chaise à côté de sa table (tabouret dans la taverne, chaise à
+  dossier dans l'auberge, velours rouge dans la brasserie), assis dessus, tourné vers la table.
+- **Un vrai sol en profondeur** (du bas du mur jusqu'au bas de l'écran) : tables et clients sont posés dessus, sur
+  deux rangs. Le damier de la brasserie ne monte plus jamais sur le mur.
+- **Le videur** : dernière installation (15 000 p.), puis on l'embauche. Chaque soir, selon son niveau :
+  | niveau | paie | ne gère rien | un sur deux | gère tout |
+  |---|---|---|---|---|
+  | novice | 8 p. | 30 % | 50 % | 20 % |
+  | aguerri | 14 p. | 15 % | 45 % | 40 % |
+  | vétéran | 22 p. | 5 % | 30 % | 65 % |
+  Ce qu'il rate revient au joueur (¼ h), sinon la garde le lendemain ou l'ardoise perdue. Il monte d'un niveau
+  toutes les 15 soirées. Quand le bar tourne seul, il évite aussi une partie des pertes.
+- **Trois salles bien à elles** : la taverne (planches, poteaux, tabourets, bougies) ; l'auberge (chaux et
+  colombages, soubassement vert, fenêtre fleurie, nappes à carreaux, tapis, lanternes, fanions) ; la grande
+  brasserie (vert-bleu et moulures d'or, boiserie, miroir, marbre et cuivre, velours, damier, lustres).
+- **Embellir pièce par pièce** : sept pièces (sol, murs, tables, chaises, comptoir, lumières, façade), achetées une
+  par une, dans l'ordre qu'on veut, et qui se mélangent. Auberge : 500, 700, 600, 400, 700, 300, 800 p. (4 000 en
+  tout) ; brasserie : 2 000, 2 200, 2 000, 1 500, 3 000, 1 300, 3 000 p. (15 000 en tout). Les pièces de la
+  brasserie s'ouvrent quand l'auberge est complète. Esthétique seulement.
+
+### Planche 44 : l'Engeance, Vorhal'Düm et le dragon (19/10, à valider : docs/planches-v059/planche-44-l-engeance.png)
+- **La marque** : fissures de lumière violette sur tout le corps et yeux sans pupille. Des monstres, pas un peuple :
+  jamais au comptoir (les Bannis, eux, sont des peuples). **La Porte s'entrouvre** : quelques-unes au début, de plus
+  en plus, puis la marée vers la fin.
+- **Une bête par sorte de contrée**, avec sa façon d'attaquer dans les récits et ce qui aide contre elle :
+  - **le Cerf-Charogne** (forêts) : charge, bois de ronces → la hache, le bouclier ;
+  - **la Noyeuse** (marais) : tire par les chevilles sous l'eau des gués → la corde, l'amulette ;
+  - **le Brise-Roc** (montagnes, cols) : faux éboulis, fait tomber la montagne → le marteau ;
+  - **le Scarabée-Sablier** (déserts) : creuse sous les pas, avale les chariots → la lance, de l'eau ;
+  - **le Sans-Visage** (ruines, cryptes) : éteint les torches, **mange les souvenirs** (un lien avec le sort
+    d'oubli) → les torches, l'amulette ;
+  - **la Gueule-d'Abysse** (mer, grands lacs) : brise les barques par en dessous → l'arc, la lance.
+- **Vorhal'Düm l'Affamé** : décharné, six cornes, six yeux sans pupille, une gueule au ventre. On le voit à peine,
+  derrière l'arche de la Porte, enchaîné par le **sceau d'or du Sage**, qui se fêle peu à peu.
+- **Le dragon enchaîné** dans sa caverne par les chaînes d'or du Sage : l'otage contre Vorhal'Düm et le gardien
+  du sort d'oubli. Noms proposés : **Vhaldrak le Terrible** (recommandé), Ignarök le Terrible, Skarvath la
+  Cendre-Vive, Draugmor le Dévoreur d'Aube.
