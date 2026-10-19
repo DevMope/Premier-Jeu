@@ -215,8 +215,10 @@ class MarcheNoirScene extends Phaser.Scene {
       if (!message) message = "Le Passeur : « Bienvenue en bas. Ici, on parle de contrées que ta carte ne montre pas... Le Bourbier, le Pont des Trolls, la Clairière des Chamans. Demain, tu sauras où elles sont. »";
     }
     const b = s.bannis[0];
-    this.texte(40, 374, message || (this.fete ? accueilBrumes(G) : `Le Passeur : « Bienvenue en bas. Ici, personne ne pose de questions. »`), 15, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
-    this.texte(40, 400, `${b.nom} murmure : « ${s.murmure} »`, 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    const t1 = this.texte(40, 374, message || (this.fete ? accueilBrumes(G) : `Le Passeur : « Bienvenue en bas. Ici, personne ne pose de questions. »`), 15, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    // (v1.17) un accueil sur deux lignes recouvrait le murmure : celui-ci attend la prochaine fois
+    const basAccueil = t1.getBounds().bottom;
+    if (basAccueil <= 400) this.texte(40, 400, `${b.nom} murmure : « ${s.murmure} »`, 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } });
     const mainNoire = this.mainNoireOuverte;
     const ici = page => () => this.allerCoin(1, page);
     const choix = [['Le Passeur (objets interdits)', ici(() => this.pagePasseur())], ['Les commandes des Bannis', ici(() => this.pageCommandes())], ['Vendre une trouvaille', ici(() => this.pageTrouvailles())]];

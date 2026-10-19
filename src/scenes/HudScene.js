@@ -218,6 +218,23 @@ class HudScene extends Phaser.Scene {
     return actives[actives.length - 1];
   }
 
+  // (v1.17) Une relation qui bouge, en direct : « +1 relation » près de celui qui est au comptoir, sinon sous
+  // le bandeau avec son nom. (Plusieurs d'un coup, comme au matin des retours, ne s'affichent pas : trop de bruit.)
+  relationsEnDirect(G, s) {
+    const R = G.relations || {};
+    if (this.relationsDe !== G) { this.relationsDe = G; this.relationsVues = { ...R }; return; }
+    const changes = [];
+    for (const nom in R) if (R[nom] !== (this.relationsVues[nom] || 0)) changes.push([nom, R[nom] - (this.relationsVues[nom] || 0)]);
+    if (!changes.length) return;
+    this.relationsVues = { ...R };
+    if (changes.length > 2) return;
+    changes.forEach(([nom, d], i) => {
+      const ici = s && s.scene.key === 'Comptoir' && s.voyageur && s.voyageur.nom === nom && typeof FENETRE !== 'undefined';
+      const texte = `${ici ? '' : nom + ' : '}${d > 0 ? '+' : '−'}${Math.abs(d)} relation`;
+      gainEnDirect(this, ici ? FENETRE.x + 120 : 480, (ici ? FENETRE.y + 70 : 64) + i * 26, texte, d > 0);
+    });
+  }
+
   update() {
     const G = window.GAME;
     const s = this.scenePrincipale();
@@ -234,9 +251,8 @@ class HudScene extends Phaser.Scene {
           const d = Math.round((r - this.reputAffichee) * 10) / 10;
           // (à droite de la plaque, pour ne rien cacher en dessous)
           Son.jouer('pieces', { montant: Math.abs(d) });
-          const t = this.add.text(226, 9, `${d > 0 ? '+' : ''}${String(d).replace('.', ',')}`, style(15, d > 0 ? '#a8f088' : '#ff8070', { fontStyle: 'bold', stroke: '#1e130a', strokeThickness: 4, brut: true })).setOrigin(0, 0.5).setDepth(101);
-          this.tweens.add({ targets: t, x: 250, alpha: 0, duration: 1600, delay: 300, onComplete: () => t.destroy() });
-          this.tweens.add({ targets: this.texteReput, scale: 1.25, duration: 150, yoyo: true });
+          // (v1.17) en direct, sous la plaque : « +0,6 réputation »
+          gainEnDirect(this, 196, 44, `${d > 0 ? '+' : '−'}${String(Math.abs(d)).replace('.', ',')} réputation`, d > 0, { taille: 13 });
         }
         this.reputAffichee = r;
         this.texteReput.setText(String(r).replace('.', ','));
@@ -257,6 +273,7 @@ class HudScene extends Phaser.Scene {
       if (paon) { const sc = scoreDuMois(G), t = `${sc.toi} – ${sc.lui}`; if (this.texteRival.text !== t) this.texteRival.setText(t); }
       else if (this.panneauRival) this.infoRival(false);
       if (!sansFeu && this.bulleBuche) this.infoBuche(false);
+      this.relationsEnDirect(G, s);
       // (v0.84) la lumière et l'ombre
       const j = jaugeCamp(G), pal = palierCamp(G);
       if (j !== this.campAffiche) {

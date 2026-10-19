@@ -427,6 +427,17 @@ const POLICE = '"Alegreya", Georgia, "Times New Roman", serif';
 // Le style des textes. Pour qu'on lise sans plisser les yeux, les petits textes sont
 // grossis, et la police est plus épaisse : medium (500) au lieu de normale, extra-gras (800)
 // au lieu de gras. Les boutons gardent leur style à eux (`brut`).
+// (v1.17) Un gain ou une perte, affiché en direct là où ça se passe (« +1 relation », « −60 p. ») : vert si
+// c'est un gain, rouge si c'est une perte ; il monte un peu, reste lisible, puis s'efface.
+function gainEnDirect(scene, x, y, texte, positif = true, { taille = 15, duree = 1900, profondeur = 120 } = {}) {
+  const t = scene.add.text(x, y, texte, style(taille, positif ? '#c8ffb0' : '#ffb4a8', { fontStyle: 'bold', stroke: positif ? '#14240a' : '#2a0a08', strokeThickness: 5, align: 'center' }))
+    .setOrigin(0.5).setDepth(profondeur).setScale(0.6).setAlpha(0);
+  scene.tweens.add({ targets: t, scale: 1, alpha: 1, duration: 220, ease: 'Back.easeOut' });
+  scene.tweens.add({ targets: t, y: y - 22, duration: duree, ease: 'Sine.easeOut' });
+  scene.tweens.add({ targets: t, alpha: 0, delay: duree - 500, duration: 500, onComplete: () => t.destroy() });
+  return t;
+}
+
 function style(taille, couleur = '#f3e6c8', extra = {}) {
   const { brut, ...reste } = extra;
   let fontStyle = reste.fontStyle || '';

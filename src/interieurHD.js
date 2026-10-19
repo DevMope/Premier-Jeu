@@ -1220,6 +1220,12 @@ function bourse(scene, x, y, argent, { echelle = 2, taille = 14, couleur = '#f3d
   c.add([img, texte]);
   c.niveau = -1;
   c.maj = (a) => {
+    // (v1.17) le gain ou la dépense, en direct au-dessus de la bourse
+    if (c.dernier !== undefined && a !== c.dernier && c.visible && scene.sys.isActive()) {
+      const d = a - c.dernier, m = c.getWorldTransformMatrix();
+      gainEnDirect(scene, m.tx + (aDroite ? echelle * 13 + 30 : 0), m.ty - echelle * (aDroite ? 24 : 14) - 8, `${d > 0 ? '+' : '−'}${Math.abs(d)} p.`, d > 0, { taille: 14 });
+    }
+    c.dernier = a;
     const n = niveauBourse(a);
     texte.setText(`${a} p.`).setColor(a < 0 ? '#f0a8a0' : couleur);
     if (n !== c.niveau) {

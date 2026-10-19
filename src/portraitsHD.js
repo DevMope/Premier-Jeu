@@ -658,20 +658,24 @@ function brasBuste(t, g, v, cx, pose) {
   const ep = g.race === 'nain' || g.race === 'troll' || g.race === 'orc' ? 5.2 : 4.4;
   const sx = largeur + 2, sy = v.torse + 12;
   const epaule = s => [cx + s * sx, sy];
-  const bras = (pts) => traitHD(t, manche, pts, ep, -0.2);
+  // (v1.17) les grands gabarits (nain, orc, troll, panda) : le bras levé et sa main restent dans le cadre du buste
+  const dedans = (x, r) => Math.min(HD_L - 1.5 - r, Math.max(1.5 + r, x));
+  const bras = (pts) => traitHD(t, manche, pts.map(([x, y]) => [dedans(x, ep), y]), ep, -0.2);
   // (v0.94) le panda a des pattes noires, pas des mains roses
   const peau = g.race === 'panda' ? 'patte' : 'peau';
   if (peau === 'patte') t.rampes.patte = rampe(0x2c2622);
-  const main = (x, y, rx = 5.8, ry = 5) => t.forme(peau, ellipsoide(x, y, rx, ry), { decalage: 0.1 });
+  const main = (x, y, rx = 5.8, ry = 5) => t.forme(peau, ellipsoide(dedans(x, rx), y, rx, ry), { decalage: 0.1 });
   // Une main ouverte : la paume, quatre doigts séparés, le pouce sur le côté
-  const ouverte = (x, y, s = 1) => {
+  const ouverte = (x0, y, s = 1) => {
+    const x = dedans(x0, 9.4);
     main(x, y, 6, 4.8);
     for (const k of [-5, -1.7, 1.7, 5]) t.forme('peau', ellipsoide(x + k, y - 7, 1.8, 4.6), { decalage: 0.1 });
     t.forme('peau', ellipsoide(x - s * 7.5, y - 1, 1.9, 3.4), { decalage: 0.1 });
     for (const k of [-3.4, 0, 3.4]) for (let j = -10; j <= -4; j++) t.poser(Math.round(x + k), y + j, 'peau', 1);
   };
   // Un poing : les phalanges en relief, le pouce replié devant
-  const poing = (x, y) => {
+  const poing = (x0, y) => {
+    const x = dedans(x0, 6.4);
     main(x, y, 6.4, 5.4);
     for (const k of [-4.2, -1.4, 1.4, 4.2]) { t.poser(Math.round(x + k), y - 4, 'peau', 5); t.poser(Math.round(x + k), y - 3, 'peau', 1); }
     t.forme('peau', ellipsoide(x - 1, y + 2, 4, 1.8), { decalage: 0.3 });
@@ -691,7 +695,7 @@ function brasBuste(t, g, v, cx, pose) {
   } else if (pose === 'pouce') {
     // Le pouce levé
     bras([epaule(1), [cx + sx + 12, sy - 3], [cx + sx + 7, sy - 17]]); poing(cx + sx + 7, sy - 18);
-    t.forme('peau', ellipsoide(cx + sx + 3, sy - 27, 2.2, 5), { decalage: 0.2 });
+    t.forme('peau', ellipsoide(dedans(cx + sx + 7, 6.4) - 4, sy - 27, 2.2, 5), { decalage: 0.2 });
   } else if (pose === 'poing') {
     // Le poing brandi
     bras([epaule(1), [cx + sx + 12, sy + 2], [cx + sx + 4, sy - 9]]); poing(cx + sx + 4, sy - 10);
