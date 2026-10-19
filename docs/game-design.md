@@ -2478,7 +2478,7 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
   Elle prépare le jour où il confie le comptoir (vers 85 %).
 
 ### Planches 47, 48 et 49 : les mises, les collections, les messages de détresse (20/10, à valider)
-**C-3 Les mises (planche 47)**
+**C-3 Les mises (planche 47 : docs/planches-v059/planche-47-les-mises.png)**
 - Une plaque **« Miser »** à côté de « Marchander », pour un aventurier au moins **Connaissance** qui part en mission.
 - Trois mises, selon son rang : novice 20 / 40 / 60 p., aguerri 30 / 60 / 90, vétéran 40 / 80 / 120, héros 60 / 120 / 180,
   légende 80 / 160 / 240.
@@ -2488,23 +2488,23 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
 - À trancher : **la mise noire** (côté ombre, au marché noir) : parier contre un aventurier, sur son échec. Gros gain
   s'il échoue, un geste d'ombre, et la Faucheuse s'y intéresse.
 
-**C-6 Les collections (planche 48)**
+**C-6 Les collections (planche 48 : docs/planches-v059/planche-48-les-collections.png)**
 - **La vitrine des collections**, un meuble du comptoir : une étagère par série, la silhouette des pièces qui manquent.
 - **Six séries** :
-  1. **Les trophées des royaumes** (7) : rapportés parfois (1 fois sur 5) par un aventurier revenu vainqueur d'une
-     contrée ★3 ou plus, la première fois. Complète : titre « Le comptoir des sept royaumes », +1 client par jour.
-  2. **Les armes des peuples** (8) : une arme de chaque peuple, forgée ou achetée. Complète : +5 % de chance de « bel
+  1. **Les trophées des royaumes** (6 : Comté, Hommes, Nains, Elfes, Mages, Bambous) : rapportés parfois (1 fois sur 5) par un aventurier revenu vainqueur d'une
+     contrée ★3 ou plus, la première fois. Complète : titre et +1 client par jour.
+  2. **Les armes des peuples** (6 : épée, hache, arc, bâton, fronde, bambou), forgées ou achetées. Complète : +5 % de chance de « bel
      ouvrage » à la forge.
   3. **Les souvenirs de la nymphe** (5) : un tous les 10 vœux à la fontaine. Complète : un vœu exaucé par saison.
   4. **Les reliques du Conseil** (5) : gagnées aux enchères (piste B). Complète : l'impôt du Conseil −10 %.
-  5. **Les curiosités des Bannis** (5) : au marché noir et dans les contrats de l'ombre. Complète : recel +5 %.
+  5. **Les curiosités des Bannis** (6 : dague, rapière, khopesh, griffes, massue, l'écu des Bannis) : au marché noir et dans les contrats de l'ombre. Complète : recel +5 %.
   6. **La carte ancienne** (6 fragments) : très rares, dans les trouvailles des lieux anciens et des vestiges. Complète :
      le tracé très ancien, à l'ouest de la Grande Muraille, apparaît sur la carte (un lieu caché), et JeuneGoy a très
      envie d'y aller (lien avec l'envie de partir et la vérité).
 - **Le collectionneur** passe parfois au comptoir et veut racheter une pièce, très cher : vendre défait la série.
 - Une série complète : la gazette en parle, et le titre s'affiche au bureau.
 
-**C-7 Les messages de détresse (planche 49)**
+**C-7 Les messages de détresse (planche 49 : docs/planches-v059/planche-49-messages-de-detresse.png)**
 - Un **pigeon** se pose à la fenêtre du comptoir pendant une mission de 2 jours ou plus. Au plus un par semaine.
 - Sa lettre dit ce qui manque, selon l'épreuve qui l'attend : « Borin est coincé aux Pics : il lui faut 2 torches. »
 - Quatre réponses :
