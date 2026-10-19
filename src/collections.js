@@ -25,7 +25,7 @@ const REGLES_COLLECTIONS = {
   trophee: { loin: 0.2, pres: 0.07 },     // chance qu'un vainqueur rapporte l'écu de son royaume (★3 et plus / sinon)
   banni: 0.25,                            // un Banni vainqueur laisse sa curiosité
   ecuContrat: 0.35,                       // un contrat de l'ombre réussi rapporte l'écu des Bannis
-  fragment: 0.08,                         // un vainqueur revenu de ruines ou d'un lieu ancien
+  fragment: 0.03, ecartFragment: 28,      // un vainqueur revenu de ruines ou d'un lieu ancien ; au plus un par mois (très rare)
   voeux: 10,                              // un souvenir de la nymphe tous les 10 vœux
   belOuvrage: 0.05, impot: 0.9, recel: 1.05, clients: 1,
   collectionneur: { jourMin: 20, chance: 0.05, piecesMin: 3, prixBase: 150, parPiece: 50 },
@@ -70,7 +70,8 @@ function piecesAuRetour(G, v) {
   }
   const ancien = LIEUX_ANCIENS.biomes.includes(z.biome) || LIEUX_ANCIENS.vignettes.includes(z.vignette);
   const reste = Object.keys(COLLECTIONS.carte.pieces).filter(f => !aPiece(G, 'carte', f));
-  if (ancien && reste.length && Math.random() < R.fragment) {
+  if (ancien && reste.length && G.jour - (G.dernierFragment || -99) >= R.ecartFragment && Math.random() < R.fragment) {
+    G.dernierFragment = G.jour;
     const p = gagnerPiece(G, 'carte', auHasard(reste));
     return `« Dans les ruines, j'ai trouvé ça : un morceau de vieille carte. Ça ne ressemble à rien de connu... » (fragment ${p.n}/${p.total})`;
   }

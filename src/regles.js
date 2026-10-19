@@ -182,9 +182,9 @@ function chanceEtapeBase(e, colis, voyageur) {
   const niv = NIVEAUX_AVENTURIER[voyageur.niveau] || NIVEAUX_AVENTURIER.novice;
   const evenement = modifEvenement(window.GAME, 'danger', voyageur.zone);
   const etoiles = ZONES[voyageur.zone] ? ZONES[voyageur.zone].danger : 1;
-  // (v1.21) novices et aguerris fragiles loin de chez eux (★3 et plus) : leur malus ne compte qu'une fois
-  const nb = etoiles >= 3 && niv.loin !== undefined ? niv.loin : niv.bonus;
-  const danger = Math.max(0, MALUS_DANGER * (etoiles - 1) - Math.max(0, nb));
+  // (v1.25) le bonus (ou le malus) du rang : un novice est fragile partout, un aguerri n'a plus rien en plus
+  const nb = niv.bonus;
+  const danger = Math.max(0, MALUS_DANGER * (etoiles - 1) - nb);
   // (v0.67) la bénédiction de la nymphe : les épreuves d'eau réussissent mieux pendant quelques jours
   const beni = bonusNymphe(window.GAME, e);
   // (v0.99) la saison durcit certaines épreuves quand l'objet manque (crues, soif, brume, froid)
