@@ -87,6 +87,12 @@ class CounterScene extends Phaser.Scene {
     this.plaqueMarchander.on('pointerover', () => this.plaqueMarchander.setColor('#ffe066'));
     this.plaqueMarchander.on('pointerout', () => this.plaqueMarchander.setColor('#fff4dc'));
     this.plaqueMarchander.on('pointerdown', () => this.marchander());
+    // (v1.19, planche 47) miser sur un aventurier qu'on connaît
+    this.plaqueMiser = this.add.text(FENETRE.x + 240, FENETRE.y + FENETRE.h - 28, 'Miser', style(13, '#ffe066', { fontStyle: 'bold', backgroundColor: '#5a3a08', padding: { x: 8, y: 4 } }))
+      .setDepth(4).setVisible(false).setInteractive({ useHandCursor: true });
+    this.plaqueMiser.on('pointerover', () => this.plaqueMiser.setColor('#fff4dc'));
+    this.plaqueMiser.on('pointerout', () => this.plaqueMiser.setColor('#ffe066'));
+    this.plaqueMiser.on('pointerdown', () => this.ouvrirMise());
     this.majBoutonsService();
 
     // Au retour de chez Grippesou, on remet l'affichage à jour.
@@ -233,6 +239,13 @@ class CounterScene extends Phaser.Scene {
       // (les deux plaques côte à côte, ou la seule visible dans le coin)
       this.plaqueMarchander.setX(this.plaqueInspecter && this.plaqueInspecter.visible ? FENETRE.x + 134 : FENETRE.x + 10);
     }
+    if (this.plaqueMiser) {
+      const v = this.voyageur;
+      this.plaqueMiser.setVisible(!!(v && this.enService && libre && typeof peutMiser === 'function' && peutMiser(this.G, v)
+        && !this.ficheMarchandage && !this.ficheInspection && !this.ficheMise));
+      const avant = [this.plaqueInspecter, this.plaqueMarchander].filter(p => p && p.visible).pop();
+      this.plaqueMiser.setX(avant ? avant.x + avant.width + 8 : FENETRE.x + 10);
+    }
     this.boutonExpress.setVisible(this.enService && libre);
     if (this.sablierExpress) this.sablierExpress.setVisible(this.enService && libre);
     if (this.majCoursier) this.majCoursier(libre);   // (v1.12) le coursier de l'orphelinat
@@ -326,6 +339,48 @@ class CounterScene extends Phaser.Scene {
     if (!deja) conclureMarchandage(G, v);
     if (this.ficheMarchandage) { this.ficheMarchandage.destroy(); this.ficheMarchandage = null; }
     if (!deja) this.raconter(`Marché conclu : ${v.marchandage.part} % de son butin pour toi, à son retour (≈ ${v.butin} pièces).`, 'Marchandage');
+    this.restaurerService();
+    this.majCommande();
+  }
+
+  // --- (v1.19, lot C-3, planche 47) Les mises ---
+  ouvrirMise(choisie = 1) {
+    const v = this.voyageur, G = this.G;
+    if (!v || this.enConfirmation || !peutMiser(G, v)) return;
+    if (this.ficheMise) this.ficheMise.destroy();
+    creerBoursesHD(this);
+    const montants = montantsMise(v), m = montants[choisie];
+    const c = this.ficheMise = this.add.container(0, 0).setDepth(6);
+    const x = 688, y = 22, L = 252, H = 226;
+    c.add(this.add.image(x + L / 2, y + H / 2, panneauHD(this, L, H)).setScale(2));
+    c.add(this.add.text(x + 14, y + 10, `Miser sur ${v.nom.split(' ')[0]}`, style(16, '#5a0e0e', { fontStyle: 'bold' })));
+    c.add(this.add.text(x + 14, y + 31, `${NIVEAUX_AVENTURIER[v.niveau].nom} · ${ZONES[v.zone] ? ZONES[v.zone].nom : ''}`, style(11, '#6a4a2a', { fontStyle: 'italic' })));
+    montants.forEach((mt, i) => {
+      const cx = x + L / 2 + (i - 1) * 80, cy = y + 84, choisi = i === choisie;
+      const fond = this.add.rectangle(cx, cy, 72, 74, choisi ? 0xf8e8b8 : 0xf3e6c8).setStrokeStyle(choisi ? 3 : 1, choisi ? 0xc08a10 : 0x8a6a3a).setInteractive({ useHandCursor: true });
+      fond.on('pointerdown', () => { Son.jouer('clic'); this.ouvrirMise(i); });
+      c.add(fond); c.add(this.add.image(cx, cy - 10, 'bourseHD' + (2 + i)).setScale(1.5));
+      c.add(this.add.text(cx, cy + 22, `${mt} p.`, style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    });
+    const ligne = (yy, a, b, coul) => { c.add(this.add.text(x + 14, y + yy, a, style(12, coul, { fontStyle: 'bold' }))); c.add(this.add.text(x + L - 14, y + yy, b, style(12, coul, { fontStyle: 'bold' })).setOrigin(1, 0)); };
+    ligne(130, 'Vainqueur', `× 1,6 → ${Math.round(m * MISE_AVENTURIER.vainqueur)} p.`, '#2f5a2a');
+    ligne(148, 'Revenu sans rien', `la moitié → ${Math.round(m * MISE_AVENTURIER.sansRien)} p.`, '#8a5a10');
+    ligne(166, 'Ne revient pas', 'perdue', '#a01818');
+    c.add(this.add.text(x + L / 2, y + 196, 'Ta confiance l’encourage : +1 de relation, +3 % de chances.', style(11, '#3b2410', { fontStyle: 'italic', wordWrap: { width: 230 }, align: 'center' })).setOrigin(0.5));
+    this.enConfirmation = true;
+    const fin = () => { this.enConfirmation = false; if (this.ficheMise) { this.ficheMise.destroy(); this.ficheMise = null; } };
+    this.choix([`Miser ${m} p.`, () => { fin(); this.miser(m); }], ['Pas cette fois', () => { fin(); this.restaurerService(); this.majCommande(); }]);
+    this.majBoutonsService();
+  }
+
+  miser(montant) {
+    const v = this.voyageur, G = this.G;
+    const avant = v ? chanceDeRetour(v, this.colis) : 0;
+    choisirMise(G, v, montant);
+    const apres = chanceDeRetour(v, this.colis);
+    this.raconter(`Tu mises ${montant} p. sur ${v.nom.split(' ')[0]} : la bourse lui sera remise au départ. Il revient vainqueur : ${Math.round(montant * MISE_AVENTURIER.vainqueur)} p.`, 'Ta mise');
+    Son.jouer('pieces', { montant });
+    gainEnDirect(this, 815, 186, `+${Math.max(1, Math.round((apres - avant) * 100))} % de chances`, true);
     this.restaurerService();
     this.majCommande();
   }
@@ -1180,6 +1235,7 @@ class CounterScene extends Phaser.Scene {
     if (this.carnetPose) { this.carnetPose.destroy(); this.carnetPose = null; }
     if (this.ficheInspection) { this.ficheInspection.destroy(); this.ficheInspection = null; }
     if (this.ficheMarchandage) { this.ficheMarchandage.destroy(); this.ficheMarchandage = null; }
+    if (this.ficheMise) { this.ficheMise.destroy(); this.ficheMise = null; }
     if (this.feuilleConseil) { this.feuilleConseil.destroy(); this.feuilleConseil = null; }
     this.majPanneauGauche();
     this.majStock();
@@ -1940,6 +1996,7 @@ class CounterScene extends Phaser.Scene {
       if (monte) rangs.push(prenomDe(v.nom));
       const sous = [monte ? `${NIVEAUX_AVENTURIER[pr.avant.niveau].nom} → ${NIVEAUX_AVENTURIER[pr.apres.niveau].nom} !` : nomRang(v.niveau, true)];
       if ((parti.trouvailles || []).length) { trouv++; sous.push('+ trouvaille'); }
+      if (parti.mise) sous.push(`mise ${parti.mise.mise} → ${parti.mise.rendu} p.`);   // (v1.19)
       if (blessuresDe(this.G, v.nom)) sous.push('à soigner');
       const st = this.add.text(170, y + 9, sous.join(' · '), style(11, monte ? '#b0701a' : '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5);
       if (st.width > 190) st.setScale(190 / st.width);
@@ -2390,13 +2447,27 @@ class CounterScene extends Phaser.Scene {
     // (v0.57) chaque ligne tient dans l'ardoise : un nom trop long est raccourci avec « … »
     // (v0.59) on mesure avec le texte de l'ardoise lui-même (même police, même taille)
     const LARGEUR_ARDOISE = 218;
-    const mesure = this.texteMissions;
+    // (v1.19) un texte à part, invisible : mesurer avec l'ardoise elle-même effaçait la liste « En mission »
+    // (elle finissait par montrer la dernière lettre mesurée)
+    if (!this.mesureArdoise) this.mesureArdoise = this.add.text(-1000, -1000, '', this.texteMissions.style.toJSON ? this.texteMissions.style.toJSON() : style(13, '#f3e6c8')).setVisible(false);
+    const mesure = this.mesureArdoise;
     const tenir = (debut, nom, fin) => {
       let n = nom;
       while (n.length > 3 && mesure.setText(debut + n + fin).width > LARGEUR_ARDOISE) n = n.slice(0, -1);
       return debut + (n === nom ? n : n.trimEnd() + '…') + fin;
     };
     this.texteMissions.setText(listeCourte(enMission(this.G).map(p => tenir('', p.voyageur.nom, ` — retour ${p.retour <= this.G.jour ? "aujourd'hui" : 'jour ' + p.retour}`)), 4, 'Personne pour l\'instant'));
+    // (v1.19) une pièce dorée tourne près du nom de ceux sur qui tu as misé
+    if (this.piecesMise) this.piecesMise.forEach(o => { this.tweens.killTweensOf(o); o.destroy(); });
+    this.piecesMise = [];
+    const partis = enMission(this.G), nL = Math.min(partis.length, 4), hL = nL ? this.texteMissions.height / nL : 0;
+    if (typeof creerPiecesHD === 'function') creerPiecesHD(this);
+    partis.slice(0, partis.length > 4 ? 3 : 4).forEach((p, i) => {
+      if (!(p.voyageur.mise > 0)) return;
+      const pc = this.add.image(this.texteMissions.x + LARGEUR_ARDOISE + 6, this.texteMissions.y + hL * (i + 0.5), 'pieceFace').setScale(1.2).setDepth(this.texteMissions.depth + 0.1);
+      this.tweens.add({ targets: pc, scaleX: 0.25, duration: 700, yoyo: true, repeat: -1, delay: i * 200 });
+      this.piecesMise.push(pc);
+    });
 
     this.lignesLettres.forEach((t, i) => {
       const a = this.G.annonces[i];
@@ -2446,7 +2517,7 @@ class CounterScene extends Phaser.Scene {
       this.titreCommande.setText(cible + v.nom).setFontSize(17);
       for (let taille = 16; this.titreCommande.width > 235 && taille >= 12; taille--) this.titreCommande.setFontSize(taille);
     }
-    this.sousTitre.setText(v ? (v.queteId ? `→ ${ZONES[v.zone].nom}` : "cherche l'aventure") : '');
+    this.sousTitre.setText(v ? (v.queteId ? `→ ${ZONES[v.zone].nom}${v.mise > 0 ? ` · ta mise : ${v.mise} p.` : ''}` : "cherche l'aventure") : '');
     this.texteSac.setText(v ? (v.queteId ? `Sac : ${totalSurplus(v, this.colis)} / ${tailleSac(v)} en plus` +
       (coeursEnPlus(v, this.colis) ? ` · +${coeursEnPlus(v, this.colis)} cœur${coeursEnPlus(v, this.colis) > 1 ? 's' : ''}` : '') +
       (bandagesEnPlus(v, this.colis) ? ` · +${bandagesEnPlus(v, this.colis)} bandage${bandagesEnPlus(v, this.colis) > 1 ? 's' : ''}` : '') + ' · ' : '') +

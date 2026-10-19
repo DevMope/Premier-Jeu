@@ -187,7 +187,9 @@ function chanceEtapeBase(e, colis, voyageur) {
   const beni = bonusNymphe(window.GAME, e);
   // (v0.99) la saison durcit certaines épreuves quand l'objet manque (crues, soif, brume, froid)
   const nivE = niveauEpreuve(e, colis, voyageur), saison = typeof malusSaison === 'function' ? malusSaison(window.GAME, e, nivE) : 1;
-  return Phaser.Math.Clamp((chanceEpreuve(nivE) + enPlus * BONUS_SURPLUS + bonusArme + niv.bonus + evenement - danger + beni) * saison, 0.05, 0.97);
+  // (v1.19) une mise : ta confiance l'encourage, il s'équipe un peu mieux en route
+  const mise = voyageur.mise > 0 && typeof MISE_AVENTURIER !== 'undefined' ? MISE_AVENTURIER.bonusEtape : 0;
+  return Phaser.Math.Clamp((chanceEpreuve(nivE) + enPlus * BONUS_SURPLUS + bonusArme + niv.bonus + evenement - danger + beni + mise) * saison, 0.05, 0.97);
 }
 
 // (v0.93) Le bonus de la nymphe sur cette épreuve (0 si elle ne bénit pas, ou pas ce genre d'épreuve)
@@ -689,6 +691,8 @@ function partir(G, voyageur, colis, pieges = {}) {
   if (detour) message = (message ? message + ' ' : '') + detour;
   const pourboire = typeof pourboireAuDepart === 'function' ? pourboireAuDepart(G, voyageur) : null;   // (v1.05) le client généreux de l'Étoile
   if (pourboire) message = (message ? message + ' ' : '') + pourboire;
+  // (v1.19) la mise se paie au départ
+  if (typeof miseAuDepart === 'function') { const m = miseAuDepart(G, voyageur); if (m) message = (message ? message + ' ' : '') + m; }
   const mission = G.faucheuse.mission;
   if (mission && mission.cible.id === voyageur.id) mission.etat = pieges[mission.piege] > 0 ? 'posee' : 'ratee';
   // (v0.90) un piège glissé dans le baluchon : un geste d'ombre
@@ -2263,6 +2267,8 @@ function terminerAventure(G, parti) {
     }
     // La famille attend un dédommagement : il est choisi à la fin du carnet.
   }
+  // (v1.19) la mise : × 1,6 s'il revient vainqueur, la moitié s'il revient sans rien, perdue s'il meurt
+  if (typeof miseAuRetour === 'function') { parti.mise = miseAuRetour(G, parti); const t = texteMise(parti.mise, v); if (t) message = (message ? message + ' ' : '') + t; }
   parti.bilan = { gain, message };
   const h = G.habitues.find(x => x.nom === v.nom);
   parti.progression = { avant, apres: { niveau: (h && h.niveau) || v.niveau, succes: succesDe(G, v.nom), relation: niveauRelation(G, v.nom).nom, reputation: G.reputation }, gain };
