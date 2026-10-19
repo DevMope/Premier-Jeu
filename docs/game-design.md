@@ -2558,3 +2558,10 @@ On suit les étoiles des royaumes ; chaque ville a sa façon d'arriver (la tortu
 - **50** : une **pose et un visage « il pense »** à dessiner (de face et de côté) ; le panneau 6 (le départ) vient trop tôt
   et ne convient pas : on le dessinera plus tard. **50 v2** : la pose « il pense », partout où il pense.
 - **Le bras du nain** : ce n'était pas le cadre, mais le bord droit du bras levé, tout raide (corrigé en v1.18).
+
+### Réponses du joueur (20/10) : 47 v3 validée, 50 v2 presque, les bras validés
+- **47 v3** : validée (la mise noire dans la grande salle).
+- **Les bras levés corrigés** (v1.18) : validés.
+- **50 v2** : mieux centrer JeuneGoy dans la petite vignette de pensée. **50 v3**
+  (docs/planches-v059/planche-50-v3-l-envie-de-partir.png) : le médaillon cadre toute la tête, des cheveux au poing sous
+  le menton, bien au milieu.
