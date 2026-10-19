@@ -1730,7 +1730,7 @@ function formatDuree(d) {
 }
 function heureDuComptoir(G) { if (typeof G.heure !== 'number') G.heure = heureOuverture(G); return G.heure; }
 // (v1.01) L'heure d'ouverture : une heure plus tard au lendemain de l'hydromel noir (la tête lourde)
-function heureOuverture(G, jour = G.jour) { return JOURNEE.ouverture + (G.reveilDifficile === jour ? BRUMES.hydromel.retard : 0) + (typeof retardFroid === 'function' ? retardFroid(G, jour) : 0); }   // (v1.07 : aussi pour demain, dans la prévision)   // (v1.05 : malade, à midi)
+function heureOuverture(G, jour = G.jour) { return JOURNEE.ouverture - (typeof avanceOuverture === 'function' ? avanceOuverture(G) : 0) + (G.reveilDifficile === jour ? BRUMES.hydromel.retard : 0) + (typeof retardFroid === 'function' ? retardFroid(G, jour) : 0); }   // (v1.07 : aussi pour demain, dans la prévision)   // (v1.05 : malade, à midi)
 function avancerHeure(G, d) { G.heure = heureDuComptoir(G) + d; return G.heure; }
 // À la fermeture : ceux qui avaient écrit reviendront demain matin, en tête de file ; les imprévus
 // repartent (ils retenteront leur chance un autre jour). Le colporteur remballe. Ce qu'un client

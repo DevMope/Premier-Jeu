@@ -2,7 +2,7 @@
 // Chaque série complète donne un titre (affiché au bureau), un petit bonus, et la gazette en parle.
 // Le collectionneur passe parfois racheter une pièce, très cher : vendre défait la série.
 const COLLECTIONS = {
-  trophees: { nom: 'Les trophées des royaumes', titre: 'Le comptoir des six royaumes', bonus: '+1 client par jour',
+  trophees: { nom: 'Les trophées des royaumes', titre: 'Le comptoir des six royaumes', bonus: '+1 client par jour (on ouvre plus tôt)',
     source: 'rapportés par un aventurier vainqueur (plus souvent d\'une contrée ★3 ou plus)',
     pieces: { comte: "L'écu de la Comté", humains: "L'écu des Hommes", nains: "L'écu des Nains", elfes: "L'écu des Elfes", mages: "L'écu des Mages", bambous: "L'écu des Monts de Bambou" } },
   armes: { nom: 'Les armes des peuples', titre: "L'armurerie des six peuples", bonus: '+5 % de « bel ouvrage » à la forge',
@@ -95,6 +95,9 @@ function pieceContrat(G) { return !aPiece(G, 'bannis', 'ecu') && Math.random() <
 
 // --- Les bonus des séries complètes ---
 function bonusClientsCollection(G) { return serieComplete(G, 'trophees') ? REGLES_COLLECTIONS.clients : 0; }
+// (v1.26) les curieux qui viennent voir les trophées arrivent tôt : le comptoir ouvre plus tôt, le temps d'un client de plus
+// (sinon, une journée déjà pleine n'aurait pas la place de le servir)
+function avanceOuverture(G) { return serieComplete(G, 'trophees') ? dureeService(G) + JOURNEE.recit : 0; }
 function bonusBelOuvrage(G) { return serieComplete(G, 'armes') ? REGLES_COLLECTIONS.belOuvrage : 0; }
 function multImpotCollection(G) { return serieComplete(G, 'conseil') ? REGLES_COLLECTIONS.impot : 1; }
 function multRecel(G) { return serieComplete(G, 'bannis') ? REGLES_COLLECTIONS.recel : 1; }
