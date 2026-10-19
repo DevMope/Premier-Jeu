@@ -864,6 +864,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'collecteur') return corpsHD(this, collecteurDe(this.G), pose);
     if (entree.type === 'serpent') return corpsHD(this, CHEFS_SERPENT[0], pose);
     if (entree.type === 'aine') return corpsHD(this, personneAine(entree.race), pose);
+    if (entree.type === 'collectionneur') return corpsHD(this, COLLECTIONNEUR, pose);   // (v1.23)
     if (entree.type === 'heraut') return corpsHD(this, 'heraut', pose);
     if (entree.type === 'rival') return corpsHD(this, 'rivalA', pose);   // (v1.11)
     if (entree.type === 'crieur') return corpsHD(this, 'crieur', pose);
@@ -965,6 +966,7 @@ class CounterScene extends Phaser.Scene {
       this.scene.pause();
       this.scene.launch('Bureau', { retour: 'Comptoir', comptoir: this });
     });
+    this.creerVitrine();
     this.cases = {}; this.casesArmes = {};
     // (v0.63) toutes les armes partagent une case : le râtelier, qui s'ouvre sur celles du stock
     const cases = Object.keys(ITEMS).filter(id => !estArme(id) || id === 'epee').map(id => (id === 'epee' ? 'armes' : id));
@@ -1238,6 +1240,7 @@ class CounterScene extends Phaser.Scene {
     if (this.ficheInspection) { this.ficheInspection.destroy(); this.ficheInspection = null; }
     if (this.ficheMarchandage) { this.ficheMarchandage.destroy(); this.ficheMarchandage = null; }
     if (this.ficheMise) { this.ficheMise.destroy(); this.ficheMise = null; }
+    if (this.ficheCollection) { this.ficheCollection.destroy(); this.ficheCollection = null; }
     if (this.feuilleConseil) { this.feuilleConseil.destroy(); this.feuilleConseil = null; }
     this.majPanneauGauche();
     this.majStock();
@@ -1518,6 +1521,53 @@ class CounterScene extends Phaser.Scene {
       ['Pas aujourd\'hui', () => { this.dire('Comme tu veux ! Je repasserai.', COLPORTEUR.nom); this.bouton('...', null); this.partirPar(FENETRE.x - 80); }]);
   }
 
+  // (v1.23, planche 48 v2) Le collectionneur : il veut la pièce qui te manquerait le plus, et la paie très cher
+  visiteCollectionneur(entree) {
+    const G = this.G, v = entree.voulue, qui = `${COLLECTIONNEUR.nom}`;
+    this.titreCommande.setFontSize(17).setText('Le collectionneur');
+    if (!v || !aPiece(G, v.serie, v.piece)) {
+      this.dire("« Ah... La pièce que je cherchais n'est plus dans votre vitrine. Tant pis. Une autre fois, peut-être. »", qui);
+      this.bouton('Au revoir', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+      return;
+    }
+    const C = COLLECTIONS[v.serie], n = nbPieces(G, v.serie), total = totalSerie(v.serie);
+    creerEmblemesHD(this);
+    const f = this.ficheCollection = this.add.container(814, 135).setDepth(20);
+    f.add(this.add.image(0, 0, panneauHD(this, 236, 214)).setScale(2));
+    f.add(this.add.text(0, -84, 'Il veut ta pièce', style(16, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
+    const o = dessinerPieceCollection(this, v.serie, v.piece, 0, 0, 1.5, true); o.setPosition(0, -40); f.add(o);
+    f.add(this.add.text(0, 2, v.nom, style(12, '#3b2410', { fontStyle: 'bold', align: 'center', wordWrap: { width: 210 } })).setOrigin(0.5));
+    f.add(this.add.text(0, 30, `Vendre : ${v.prix} p.`, style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    f.add(this.add.text(0, 56, `${C.nom.replace(/^Les |^La /, m => m.toLowerCase())} ${n === total ? 'ne seront plus complets' : 'repassent'} à ${n - 1} / ${total}`, style(11, '#a03030', { fontStyle: 'italic', align: 'center', wordWrap: { width: 210 } })).setOrigin(0.5));
+    f.add(this.add.text(0, 80, n === total ? `(et le titre « ${C.titre} » s'en irait)` : '(il faudra en retrouver une)', style(10, '#6b4a2a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 210 } })).setOrigin(0.5));
+    const nomCourt = v.nom.charAt(0).toLowerCase() + v.nom.slice(1);
+    this.dire(`« ${nomCourt.replace(/^l'|^le |^la |^les /, m => (m === "l'" ? 'Cet ' : m === 'le ' ? 'Ce ' : m === 'la ' ? 'Cette ' : 'Ces '))}, dans votre vitrine... ${v.prix} pièces, et je l'emporte ce soir. Vous ne me refuserez pas ? »`, qui);
+    this.choix([`Vendre (${v.prix} p.)`, () => {
+      const msg = vendreAuCollectionneur(G, v);
+      Son.jouer('pieces', { montant: v.prix }); this.dessinerPieces();
+      this.dire(`« Merveilleux ! Elle sera en de bonnes mains. »${msg ? ' ' + msg : ''}`, qui);
+      this.bouton('Au revoir', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+    }], ['Garder ma pièce', () => {
+      this.exprimer('inquiet');
+      this.dire("« Dommage... Je repasserai. Les collectionneurs sont patients, vous savez. »", qui);
+      this.bouton('Au revoir', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+    }]);
+  }
+
+  // (v1.23, planche 48 v2) La petite vitrine des collections, posée près de la bourse : un clic l'ouvre
+  creerVitrine() {
+    const x = 124, y = 490, c = this.add.container(x, y).setDepth(2), g = this.add.graphics();
+    g.fillStyle(0x1e1208).fillRoundedRect(-17, -30, 34, 58, 4).fillStyle(0x6a3e1a).fillRoundedRect(-15, -28, 30, 54, 3);
+    g.fillStyle(0x24324a).fillRect(-11, -24, 22, 44).fillStyle(0x7a4a22).fillRect(-11, -4, 22, 2).fillRect(-11, 10, 22, 2);
+    g.fillStyle(0xc9a227).fillCircle(-5, -10, 3).fillStyle(0xa83a2a).fillRoundedRect(1, -16, 7, 9, 2).fillStyle(0xd8c090).fillTriangle(-7, 7, -1, 2, 2, 8).fillStyle(0xb8c0c8).fillRect(4, 0, 2, 9);
+    g.fillStyle(0xffffff, 0.12).fillTriangle(4, -24, 10, -24, -6, 20).fillStyle(0xc9a227).fillRect(-15, -28, 30, 2);
+    c.add(g);
+    const zone = this.add.rectangle(x, y, 38, 62, 0xffffff, 0).setDepth(2.1).setInteractive({ useHandCursor: true });
+    zone.on('pointerover', () => { c.setY(y - 2); this.raconter(`La vitrine des collections : ${Object.keys(COLLECTIONS).reduce((n, k) => n + nbPieces(this.G, k), 0)} pièces rangées. Clique pour la regarder.`, 'La vitrine'); });
+    zone.on('pointerout', () => c.setY(y));
+    zone.on('pointerdown', () => { Son.jouer('page'); this.scene.pause(); this.scene.launch('Vitrine', { retour: 'Comptoir' }); });
+  }
+
   // --- (v1.22, planche 49 v2) Un message de détresse : le pigeon, sa lettre, quatre réponses ---
   visiteDetresse(entree) {
     const G = this.G;
@@ -1622,6 +1672,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'serpent') return CHEFS_SERPENT[0];
     if (entree.type === 'garrick') return { nom: 'Garrick Cœur-de-Chêne', race: 'humain', feminin: false, figurant: 'mentor' };
     if (entree.type === 'aine') return personneAine(entree.race);
+    if (entree.type === 'collectionneur') return COLLECTIONNEUR;
     if (entree.type === 'heraut') return HERAUT_CONSEIL.buste;   // (v1.10) le héraut de la Confrérie, pour le Conseil
     if (entree.type === 'rival') return RIVAL_BUSTE;   // (v1.11) le paon d'à côté
     if (entree.type === 'crieur') return CRIEUR_BUSTE;
@@ -1640,6 +1691,7 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'retour') return entree.parti.resultat.echec ? 'inquiet' : 'content';
     if (entree.type === 'notable' || entree.type === 'colporteur' || entree.type === 'garrick') return 'content';
     if (entree.type === 'aine') return 'neutre';
+    if (entree.type === 'collectionneur') return 'content';
     if (entree.type === 'heraut') return entree.mode === 'livraison' ? 'neutre' : 'content';
     if (entree.type === 'rival' || entree.type === 'crieur') return 'content';
     if (entree.type === 'collecteur' || entree.type === 'serpent') return 'neutre';
@@ -1699,7 +1751,7 @@ class CounterScene extends Phaser.Scene {
   arrivee(entree) {
     Son.jouer('pas');
     // (v0.86) une visite prend un quart d'heure (les clients, eux, comptent au service)
-    if (['famille', 'notable', 'colporteur', 'garde', 'gardeRecherche', 'garrick', 'collecteur', 'serpent', 'aine', 'heraut', 'rival', 'crieur'].includes(entree.type)) this.avancer(JOURNEE.visite);
+    if (['famille', 'notable', 'colporteur', 'garde', 'gardeRecherche', 'garrick', 'collecteur', 'serpent', 'aine', 'heraut', 'rival', 'crieur', 'collectionneur'].includes(entree.type)) this.avancer(JOURNEE.visite);
     if (entree.type === 'client') {
       conseilGarrick(this, 'comptoir');
       const v = this.voyageur = entree.voyageur;
@@ -1780,6 +1832,8 @@ class CounterScene extends Phaser.Scene {
       this.visiteRival(entree);   // (v1.11) Lucien Belhomme, le paon d'à côté
     } else if (entree.type === 'crieur') {
       this.visiteCrieur(entree);   // (v1.11) le mois des comptoirs
+    } else if (entree.type === 'collectionneur') {
+      this.visiteCollectionneur(entree);   // (v1.23) il veut une pièce de ta vitrine
     } else if (entree.type === 'faucheuse') {
       this.visiteFaucheuse(entree);
     } else {

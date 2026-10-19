@@ -228,6 +228,7 @@ function nuitOmbreAnnee(G) {
     const prenom = k.h.nom.split(' ')[0];
     if (Math.random() < k.chance) {
       encaisser(G, k.paie, 'contrats');
+      if (typeof pieceContrat === 'function' && pieceContrat(G)) lignes.push(`${prenom} rapporte aussi un vieil écu cabossé, aux armes des Bannis : il ira dans ta vitrine.`);
       pencher(G, 'missionO', { qui: k.h.nom });
       changerRelation(G, k.banni.nom, 3); changerRelation(G, k.h.nom, 1);
       G.habitues.push(k.h);

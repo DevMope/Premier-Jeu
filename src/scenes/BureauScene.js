@@ -403,6 +403,10 @@ class BureauScene extends Phaser.Scene {
       droite = [
         { titre: 'Tes relations', lignes: NIVEAUX_RELATION.slice().reverse().map(n => `${n.nom} : ${parNiveau[n.nom] || 0}`) },
         { titre: 'Décorations du comptoir', lignes: G.decorations.length ? G.decorations.map(id => `• ${DECORATIONS[id].nom}`) : ["aucune pour l'instant"] },
+        // (v1.23) les collections de la vitrine, et les titres des séries complètes
+        ...(typeof COLLECTIONS !== 'undefined' ? [{ titre: 'La vitrine des collections', lignes: [
+          ...titresCollections(G).map(t => `★ « ${t} »`),
+          Object.keys(COLLECTIONS).map(k => `${nbPieces(G, k)}/${totalSerie(k)}`).join(' · ') + ' (trophées · armes · nymphe · Conseil · Bannis · carte)'] }] : []),
       ];
     }
     this.pageEnBlocs(c, 42, 96, gauche);
@@ -580,7 +584,7 @@ class BureauScene extends Phaser.Scene {
       c.add([fond, this.add.text(x, 100, nom, style(12, choisi ? '#fff4dc' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5)]);
     });
     const NOTES = { retour: 'Retour de mission', famille: 'Une famille en deuil', garde: 'La garde', gardeRecherche: 'La garde', garrick: 'Garrick', collecteur: 'Le collecteur', serpent: 'Le Serpent à deux têtes',
-      colporteur: 'Le colporteur', notable: 'Un visiteur de marque', aine: 'Un aîné des Bannis', carnet: 'Un carnet rapporté', heraut: 'Le messager du Conseil', rival: 'Le voisin', crieur: 'Le crieur', detresse: 'Un pigeon : appel à l\'aide' };
+      colporteur: 'Le colporteur', notable: 'Un visiteur de marque', aine: 'Un aîné des Bannis', carnet: 'Un carnet rapporté', heraut: 'Le messager du Conseil', rival: 'Le voisin', crieur: 'Le crieur', detresse: 'Un pigeon : appel à l\'aide', collectionneur: 'Le collectionneur' };
     const lignes = G.file.filter(e => e.type !== 'faucheuse');
     const PAR = 8, pages = Math.max(1, Math.ceil(lignes.length / PAR));
     page = Math.min(page, pages - 1);

@@ -169,6 +169,7 @@ function livrerCommandeRoyale(G) {
   G.reputation += CONSEIL.commande.reputation;
   cs.ristourne = true;
   cs.reussies = (cs.reussies || 0) + 1;
+  if (typeof pieceConseil === 'function') pieceConseil(G);   // (v1.23) le Conseil te confie une relique pour ta vitrine
   cs.refusDeSuite = 0;
   // (v1.13) une commande livrée efface une faute ; celle du pardon les efface toutes, et rend le sceau
   const pardon = !!c.pardon;
@@ -222,7 +223,7 @@ function calculImpot(G) {
   const majore = (cs.majoreJusqua || 0) >= G.jour, ristourne = !!cs.ristourne;
   const majoration = majore ? (cs.majoration || CONSEIL.commande.echec.majoration) : 1;
   const taux = I.taux * et * majoration * (ristourne ? I.ristourne : 1);
-  const montant = Math.round(Math.max(0, fortune - franchise) * taux);
+  const montant = Math.round(Math.max(0, fortune - franchise) * taux * (typeof multImpotCollection === 'function' ? multImpotCollection(G) : 1));   // (v1.23 : les reliques du Conseil, −10 %)
   return { et, fortune, dettes: Math.round(dettes), franchise, tauxBase: I.taux * et, taux, majore, majoration, ristourne, montant };
 }
 

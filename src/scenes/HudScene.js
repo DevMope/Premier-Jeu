@@ -235,6 +235,27 @@ class HudScene extends Phaser.Scene {
     });
   }
 
+  // (v1.23, planche 48 v2) Une pièce de collection gagnée : une petite fiche en haut à droite, le temps de la voir
+  piecesEnDirect(G) {
+    if (this.fichePiece || !G.piecesNouvelles || !G.piecesNouvelles.length || typeof dessinerPieceCollection !== 'function') return;
+    const p = G.piecesNouvelles.shift(), C = COLLECTIONS[p.serie];
+    creerEmblemesHD(this); creerObjetsHD(this); creerIconesHD(this);
+    const x = 838, y = 150, c = this.fichePiece = this.add.container(x, y).setDepth(130);
+    const h = p.complete ? 210 : 176;
+    c.add(this.add.image(0, 0, panneauHD(this, 220, h)).setScale(2));
+    c.add(this.add.text(0, -h / 2 + 18, p.complete ? 'Série complète !' : 'Nouvelle pièce !', style(16, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
+    const o = dessinerPieceCollection(this, p.serie, p.piece, 0, 0, 1.6, true); o.setPosition(0, -h / 2 + 62); c.add(o);
+    c.add(this.add.text(0, -h / 2 + 104, p.nom, style(12, '#3b2410', { fontStyle: 'bold', align: 'center', wordWrap: { width: 196 } })).setOrigin(0.5));
+    c.add(this.add.text(0, -h / 2 + 128, `${C.nom} · ${p.n} / ${p.total}`, style(11, '#3b2410', { align: 'center', wordWrap: { width: 200 } })).setOrigin(0.5));
+    c.add(this.add.text(0, -h / 2 + 150, p.complete ? `Ton titre : « ${C.titre} »\n${C.bonus}` : 'rangée dans ta vitrine', style(11, p.complete ? '#2f6a2a' : '#6b4a2a', { fontStyle: p.complete ? 'bold' : 'italic', align: 'center', wordWrap: { width: 200 } })).setOrigin(0.5, 0));
+    Son.jouer(p.complete ? 'fanfare' : 'clochette');
+    c.setAlpha(0).setScale(0.85);
+    this.tweens.add({ targets: c, alpha: 1, scale: 1, duration: 350, ease: 'Back.easeOut' });
+    const fin = () => { if (!c.active) return; this.tweens.add({ targets: c, alpha: 0, duration: 400, onComplete: () => { c.destroy(); this.fichePiece = null; } }); };
+    this.time.delayedCall(p.complete ? 5200 : 3600, fin);
+    c.setSize(220, h).setInteractive({ useHandCursor: true }).on('pointerdown', fin);
+  }
+
   update() {
     const G = window.GAME;
     const s = this.scenePrincipale();
@@ -274,6 +295,7 @@ class HudScene extends Phaser.Scene {
       else if (this.panneauRival) this.infoRival(false);
       if (!sansFeu && this.bulleBuche) this.infoBuche(false);
       this.relationsEnDirect(G, s);
+      this.piecesEnDirect(G);   // (v1.23) « Nouvelle pièce ! » pour la vitrine
       // (v0.84) la lumière et l'ombre
       const j = jaugeCamp(G), pal = palierCamp(G);
       if (j !== this.campAffiche) {

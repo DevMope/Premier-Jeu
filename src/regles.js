@@ -637,6 +637,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     garde: { visites: 0, dernier: 0, saisies: 0 },   // les visites de la garde de la Confrérie
     interdits: {},     // les objets interdits achetés au marché noir (étape 9e)
     forge: null,       // (v0.82, étape 10b) la forge chez soi : voir etatForge
+    collections: {},   // (v1.23) les pièces de la vitrine, par série
     belOuvrage: {},    // les armes « bel ouvrage » de la réserve (une partie de G.stock)
     garrickVu: [],     // les visites de Garrick déjà faites
     trophees: [],      // (v0.57) les trophées offerts par les habitués devenus frères de sang
@@ -834,7 +835,7 @@ function acheterAuMarche(G, cle, id) {
   if (!materiau && stockTotal(G) >= G.capacite) return { erreur: 'Ta réserve est pleine.' };
   offre.qte--;
   if (materiau) G.materiaux[id] = (G.materiaux[id] || 0) + 1;
-  else G.stock[id]++;
+  else { G.stock[id]++; if (typeof pieceArme === 'function') pieceArme(G, id); }   // (v1.23 : une arme pour la vitrine)
   return { message: depenserChez(G, cle, prix) };
 }
 
@@ -895,6 +896,7 @@ function jeterPieceFontaine(G) {
   payer(G, 1, 'fontaine');
   G.fontaineJour = G.jour;
   G.fontainePieces = (G.fontainePieces || 0) + 1;
+  if (typeof pieceNymphe === 'function') pieceNymphe(G);   // (v1.23) un souvenir de la nymphe tous les 10 vœux
   // (v0.93) après ses adieux, tous les 10 vœux, la fontaine s'illumine d'elle-même
   const n = G.nymphe;
   if (n && n.visites >= NYMPHE.plafond && (G.fontainePieces - NYMPHE.voeux) % NYMPHE.ensuite === 0) { n.benie = G.jour + NYMPHE.benediction.jours; G.fontaineIllumine = G.jour; }
@@ -1452,7 +1454,7 @@ function prevision(G, jour = G.jour + 1) {
   const bonus = Math.min(BONUS_CLIENTS_MAX, Math.floor(a.bonus)) + evenements + rumeur;
   // Réveillé en forme ce matin : un client de plus
   const forme = G.reveil && G.reveil.jour === jour && G.reveil.forme === 'client' ? 1 : 0;
-  const pelerins = sermentDe(G) === 'bien' ? AVANTAGES_SERMENT.clients : 0;   // (v0.95 : la Confrérie envoie du monde)
+  const pelerins = (sermentDe(G) === 'bien' ? AVANTAGES_SERMENT.clients : 0) + (typeof bonusClientsCollection === 'function' ? bonusClientsCollection(G) : 0);   // (v0.95 : la Confrérie envoie du monde ; v1.23 : on vient voir les trophées)
   const hiver = (saisonDe(G, jour) === 'givre' ? SAISON_REGLES.clientsHiver : 0) + (typeof clientsFroid === 'function' ? clientsFroid(G, jour) : 0);   // (v0.99 : le froid garde les gens chez eux ; v1.05 : une nuit sans feu)
   min = Math.max(1, min + bonus + forme + pelerins + hiver);
   max = Math.max(min, max + bonus + forme + pelerins + hiver);
@@ -1637,7 +1639,8 @@ function nuit(G) {
   if (typeof matinDuConseil === 'function') for (const l of matinDuConseil(G)) G.reveil.lignes.push(l);   // (v1.10) l'impôt du Conseil, la commande scellée
   if (typeof matinDuRival === 'function') for (const l of matinDuRival(G)) G.reveil.lignes.push(l);   // (v1.11) le paon ouvre, le bilan du mois
   if (typeof matinDeLOrphelinat === 'function') for (const l of matinDeLOrphelinat(G)) G.reveil.lignes.push(l);   // (v1.12) les courses des petits, la rumeur
-  if (typeof matinDuBar === 'function') for (const l of matinDuBar(G)) G.reveil.lignes.push(l);   // (v1.16) le petit bar : l'installation, la rumeur vraie
+  if (typeof matinDuBar === 'function') for (const l of matinDuBar(G)) G.reveil.lignes.push(l);
+  if (typeof voeuDeSaison === 'function') { const l = voeuDeSaison(G); if (l) G.reveil.lignes.push(l); }   // (v1.23) les souvenirs de la nymphe au complet   // (v1.16) le petit bar : l'installation, la rumeur vraie
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
@@ -1835,6 +1838,8 @@ function formerFileDuJour(G) {
   // (v0.56) Très rarement, à partir du milieu du jeu, un aîné des Bannis passe et laisse une phrase
   const aine = aineDuJour(G, 'comptoir');
   if (aine) { G.ainesVus = [...(G.ainesVus || []), aine]; file.splice(hasard(0, file.length), 0, { type: 'aine', race: aine }); }
+  // (v1.23) le collectionneur vient racheter une pièce
+  if (typeof collectionneurDuJour === 'function') { const c = collectionneurDuJour(G); if (c) file.splice(hasard(0, file.length), 0, c); }
   // (v1.22) un pigeon : un aventurier en mission appelle à l'aide
   if (typeof detresseDuJour === 'function') { const d = detresseDuJour(G); if (d) file.splice(hasard(0, file.length), 0, d); }
   // (v0.86) une tête mise à prix (ou son sosie), environ une fois par semaine
@@ -1902,7 +1907,7 @@ function soireeMarcheNoir(G) {
   if (G.marcheNoir.soiree) return G.marcheNoir.soiree;
   const races = Phaser.Utils.Array.Shuffle([...PEUPLES_OMBRE]).slice(0, 2);
   const bannis = races.map(race => { const [nom, feminin] = auHasard(NOMS[race]); return { nom, race, feminin, niveau: 'aguerri' }; });
-  const commandes = bannis.map(b => { const id = auHasard(interditsCommandables(G)); return { banni: b, objet: id, prix: Math.round(hasard(...INTERDITS[id].vente) * (sermentDe(G) === 'mal' ? 1 + AVANTAGES_SERMENT.recel : 1)), faite: false }; });
+  const commandes = bannis.map(b => { const id = auHasard(interditsCommandables(G)); return { banni: b, objet: id, prix: Math.round(hasard(...INTERDITS[id].vente) * (sermentDe(G) === 'mal' ? 1 + AVANTAGES_SERMENT.recel : 1) * (typeof multRecel === 'function' ? multRecel(G) : 1)), faite: false }; });
   // (v0.56) parfois, un aîné est là ce soir, et raconte
   const aine = aineDuJour(G, 'marcheNoir');
   G.marcheNoir.soiree = { bannis, commandes, risque: 0, murmure: auHasard(MURMURES), aine };
@@ -1932,7 +1937,7 @@ function honorerCommande(G, c) {
   return null;
 }
 
-function prixTresorMarcheNoir(t) { return Math.round(valeurTresor(t) * MARCHE_NOIR.venteTresor); }
+function prixTresorMarcheNoir(t) { return Math.round(valeurTresor(t) * MARCHE_NOIR.venteTresor * (typeof multRecel === 'function' ? multRecel(window.GAME) : 1)); }   // (v1.23 : la série des Bannis, recel +5 %)
 
 function vendreTresorMarcheNoir(G, t) {
   const prix = prixTresorMarcheNoir(t);
@@ -2240,6 +2245,8 @@ function terminerAventure(G, parti) {
     if (niveau !== v.niveau) message = (message ? message + ' ' : '') + `${v.nom.split(' ')[0]} devient ${NIVEAUX_AVENTURIER[niveau].nom.toLowerCase()} !`;
     G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau, prestige: v.prestige || null, convalescence: blessures ? G.jour + CONVALESCENCE_PAR_COEUR * blessures : 0 });
     parti.trouvailles = trouvailles(G, v);
+    // (v1.23) une pièce pour la vitrine : l'écu de son royaume, une curiosité de Banni, un fragment de la carte ancienne
+    if (typeof piecesAuRetour === 'function') { const t = piecesAuRetour(G, v); if (t) message = (message ? message + ' ' : '') + t; }
     // Il a peut-être aperçu une zone plus dangereuse, encore inconnue.
     const d = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
     // (une zone déjà découverte, ou que la réputation suffit déjà à ouvrir, ne compte pas)
@@ -2963,7 +2970,8 @@ function avancerEvenements(G) {
   }
   G.decesAnnonces = [];
   if (G.annonceMafia) { lignes.unshift(G.annonceMafia); G.annonceMafia = null; }
-  if (G.annonceConseil) { lignes.unshift(G.annonceConseil); G.annonceConseil = null; }   // (v1.10) la commande scellée, livrée ou manquée
+  if (G.annonceConseil) { lignes.unshift(G.annonceConseil); G.annonceConseil = null; }
+  if (G.annonceCollection) { lignes.unshift(G.annonceCollection); G.annonceCollection = null; }   // (v1.23) une série complète dans la vitrine   // (v1.10) la commande scellée, livrée ou manquée
   if (G.annonceRival) { lignes.unshift(G.annonceRival); G.annonceRival = null; }   // (v1.11) le paon ouvre, ferme, ou sa maison change de mains
   // (v0.99) le premier jour d'une saison : le crieur l'annonce, avec ce qu'elle change au marché
   if (typeof saisonDe === 'function' && dateDuJour(G).jourDuMois === 1) {
@@ -3717,15 +3725,16 @@ function nuitDeLaForge(G) {
     if (INTERDITS[id]) G.interdits[id] = (G.interdits[id] || 0) + 1;
     else { G.stock[id] = (G.stock[id] || 0) + 1; if (bel) G.belOuvrage[id] = (G.belOuvrage[id] || 0) + 1; }
     f.nuit.push({ id, qui, bel: !!bel && !INTERDITS[id] });
+    if (typeof pieceArme === 'function') pieceArme(G, id);   // (v1.23) la première de chaque peuple, pour la vitrine
   };
-  if (f.baba) for (let k = 0; k < FORGE.forgerons.baba.vitesse && f.file.length; k++) sortir(f.file.shift(), 'baba', Math.random() < FORGE.forgerons.baba.belOuvrage);
+  if (f.baba) for (let k = 0; k < FORGE.forgerons.baba.vitesse && f.file.length; k++) sortir(f.file.shift(), 'baba', Math.random() < FORGE.forgerons.baba.belOuvrage + (typeof bonusBelOuvrage === 'function' ? bonusBelOuvrage(G) : 0));
   if (f.aldo && f.file.length) {
     const r = rangAldo(G);
     f.progresAldo += r.vitesse;
     while (f.progresAldo >= 1 && f.file.length) {
       f.progresAldo -= 1;
       f.armesAldo++;
-      sortir(f.file.shift(), 'aldo', Math.random() < r.belOuvrage);
+      sortir(f.file.shift(), 'aldo', Math.random() < r.belOuvrage + (typeof bonusBelOuvrage === 'function' ? bonusBelOuvrage(G) : 0));
       const nouveau = rangAldo(G);
       if (nouveau !== r) f.nuit.push({ rang: nouveau.nom });
     }
