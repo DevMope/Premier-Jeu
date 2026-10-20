@@ -115,11 +115,22 @@ Object.assign(StoryScene.prototype, {
     const u = { s: 0 }; dessiner(0);
     this.tweens.add({ targets: u, s: 3, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', onUpdate: () => dessiner(u.s) });
     const tete = { x: p.x + sens * p.displayHeight * 0.85, y: y - 40 };
-    const zz = this.time.addEvent({ delay: 700, loop: true, callback: () => {
+    const zz = this.zz = this.time.addEvent({ delay: 700, loop: true, callback: () => {
       const z = this.garder(this.add.text(tete.x, tete.y, 'z', style(14 + Math.random() * 8, '#e8e0ff', { fontStyle: 'bold' })).setDepth(8));
       this.tweens.add({ targets: z, y: z.y - 70, x: z.x + sens * -20, alpha: 0, duration: 2000, onComplete: () => z.destroy() });
     } });
     this.garder({ destroy: () => zz.remove() });
-    return { couverture: g, debout };
+    return { couverture: g, sac, debout };
   },
+  // Il se réveille : la couverture et le sac s'en vont, il se relève
+  async bivouacReveil(etat) {
+    const p = this.perso;
+    if (this.zz) { this.zz.remove(); this.zz = null; }
+    if (etat && etat.couverture) { this.tweens.killTweensOf(etat.couverture); etat.couverture.destroy(); }
+    if (etat && etat.sac) etat.sac.destroy();
+    this.poserPose(null);
+    await this.animer({ targets: p, angle: 0, y: SOL_RECIT, duration: 450, ease: 'Sine.easeOut' });
+  },
+  // La couleur de sa cape (pour la couverture) : celle de son baluchon s'il en a une, sinon une laine brune
+  couleurCape() { const c = this.parti && this.parti.colis && this.parti.colis.cape; return c ? 0x3a5a7a : 0x6a4a2a; },
 });

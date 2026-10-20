@@ -1117,6 +1117,8 @@ class StoryScene extends Cinematique {
         break;
       }
       case 'ration': case 'gourde': {
+        // (v1.34, planche 59) il boit vraiment à sa gourde : le coude levé, la gourde sur les lèvres
+        if (id === 'gourde' && typeof this.bivouacBoire === 'function') { await this.bivouacBoire(); break; }
         // Une pause au coin du feu : le feu s'allume à côté de lui, la lumière baisse, il mange
         if (id === 'ration') {
           const feu = this.add.image(p.x - 70, sol + 2, 'feuCampHD').setOrigin(0.5, 1).setScale(0).setDepth(2);
@@ -1132,6 +1134,14 @@ class StoryScene extends Cinematique {
           this.cadrer(p.x - 20, 280, 1.3, 700);
           for (let k = 0; k < 10; k++) { const e = this.add.image(feu.x + Phaser.Math.Between(-8, 8), sol - 30, 'lueurHD').setScale(0.7).setTint(0xffa040).setBlendMode(Phaser.BlendModes.ADD).setDepth(7); this.decor.add(e); this.tweens.add({ targets: e, y: sol - 110 - Math.random() * 40, x: e.x + Phaser.Math.Between(-20, 20), alpha: 0, duration: 1200, delay: 300 + k * 120, onComplete: () => e.destroy() }); }
           await this.attendre(700);
+          // (v1.34, planche 59) il s'assoit sur un rondin et mange vraiment sa ration, puis se relève
+          if (typeof this.bivouacManger === 'function') {
+            this.rondin(p.x); p.setY(sol - 18);
+            await this.bivouacManger();
+            this.poserPose(null); p.setY(sol);
+            this.cadrer(p.x + 120, 250, 1.12, 700);
+            break;
+          }
         }
         const o = icone(id).setPosition(p.x + 10, sol - 110);
         this.onomatopee(p.x, sol - 160, id === 'ration' ? 'Miam !' : 'Glou glou !', '#f3d98a');

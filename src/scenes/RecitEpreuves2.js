@@ -1106,6 +1106,15 @@ Object.assign(SCENES_EPREUVES, {
       if (id !== 'cape') { await this.utiliserObjet(id); return; }
       this.enroulerCape(true);
       await this.attendre(500);
+      if (reussie && typeof this.bivouacChauffer === 'function') {
+        // (v1.34, planche 59) bien couvert, il allume un petit feu, s'assoit et se réchauffe les mains
+        this.enroulerCape(false);
+        this.feuDeCamp(Math.min(900, p.x + 92), { lumiere: 130 });
+        this.rondin(p.x); p.setY(SOL_RECIT - 18);
+        await this.bivouacChauffer();
+        this.poserPose(null); p.setY(SOL_RECIT); p.clearTint();
+        return;
+      }
       if (reussie) {
         this.onomatopee(p.x, p.y - 170, 'Ahhh...', '#ffe0c0');
         this.emotion(p, 'joie', 900);

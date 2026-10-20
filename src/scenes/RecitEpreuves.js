@@ -37,7 +37,7 @@ Object.assign(StoryScene.prototype, {
     const p = this.perso; if (!p || !p.active) return;
     this.tweens.killTweensOf(p);
     if (p.marche) { p.marche.remove(); p.marche = null; }
-    p.setTexture(this.cleCorps()).setAngle(0).setAlpha(1).clearTint().setScale(6 * this.fCorps).setFlipX(false).setY(SOL_RECIT).setDepth(3).setVisible(true);
+    p.setTexture(this.cleCorps()).setOrigin(0.5, 1).setAngle(0).setAlpha(1).clearTint().setScale(6 * this.fCorps).setFlipX(false).setY(SOL_RECIT).setDepth(3).setVisible(true);
   },
   // La texture du voyageur (avec ses bandages, une fois soigné)
   cleCorps(pose = null) {
@@ -378,6 +378,7 @@ const SCENES_EPREUVES = {
     },
     async utiliser(id, reussie) {
       const p = this.perso;
+      if (id === 'gourde' && typeof this.bivouacBoire === 'function') { await this.bivouacBoire(); if (reussie) this.emotion(p, 'joie', 1200); return; }   // (v1.34, planche 59)
       if (id === 'gourde') {
         // il décroche sa gourde, la porte à sa bouche, et boit à grandes gorgées
         const o = this.tenir(iconeObjet(this, 'gourde'), { echelle: 2.4, angle: -20 });
@@ -398,8 +399,12 @@ const SCENES_EPREUVES = {
       const M = this.menace, p = this.perso;
       if (reussie) {
         if (!M.soif) {
+          // (v1.34, planche 59) il dort près des braises, sous sa cape ; puis la nuit passe
+          const dodo = typeof this.bivouacDormir === 'function' ? await this.bivouacDormir(this.couleurCape()) : null;
+          if (dodo) await this.attendre(1600);
           // la nuit passe ; l'aube, rose, puis le soleil
           await this.ciel(0xff9ab0, 0.25, 900);
+          if (dodo) await this.bivouacReveil(dodo);
           this.ciel(0xffffff, 0, 900);
           this.oiseauxDuMatin();
         }
