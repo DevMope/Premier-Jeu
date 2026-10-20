@@ -2684,3 +2684,14 @@ Total 22 000 p.
    - **le salon** — 12 000 p. : on y reçoit les clients prestigieux (un de plus par semaine, ils paient mieux) ;
    - **l'appartement** — 18 000 p. : JeuneGoy dort mieux (plus souvent « en forme » le matin) et la façade gagne un étage.
 Total ~49 000 p.
+
+**Planches 52 à 54 dessinées (à valider)** — `docs/planches-v059/planche-52-confrerie.png`, `planche-53-repaire.png`,
+`planche-54-luxe-et-etage.png`. Ce que les dessins proposent en plus du design ci-dessus :
+- 52 : l'hospice et la chapelle se bâtissent sur un terrain vague à gauche des Pommeroy (la rue s'allonge) ; la sœur
+  Aveline tient l'hospice ; l'escouade a six soldats de peuples différents, en tabard bleu, la bannière en tête.
+- 53 : la trappe est sous le tapis de l'arrière-boutique ; le gamin informateur s'appelle Fil-de-Fer ; le capitaine
+  Brisefer prend l'enveloppe à minuit. « −100 p. (l'enveloppe) » s'affiche en direct chaque semaine.
+- 54 : les quatre meubles du luxe et leur petit effet : comptoir de marbre et d'or (3 500 p., +3 % de butin), coffre du
+  trésorier serti de gemmes (2 500 p., la banque prête 20 % de plus), lit royal de velours bleu étoilé (3 000 p., un jour
+  « en forme » de plus par semaine), grand lustre à deux couronnes (2 000 p., le comptoir ferme une demi-heure plus tard).
+  L'appartement ajoute un étage et un balcon fleuri à la façade.
