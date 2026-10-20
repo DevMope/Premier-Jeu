@@ -2810,3 +2810,14 @@ renversée sur les lèvres), **se réchauffer les mains** (assis face au feu, le
 **dormir** (couché, les yeux fermés, la tête sur son sac, la cape en couverture qui respire). Une fois validées, elles
 remplacent les objets qui « flottaient » jusqu'à la bouche dans les récits (la pause du soir, la soif sur la route, le
 froid, la nuit au bivouac).
+
+### Idées du joueur (20/10, soir) : le chat amoureux en vrai décor, la maison sur pattes, le Sage, la météo
+- **Le chat amoureux** : pas dans la rue, mais **un nouveau décor** qu'on parcourt avec son personnage (comme la rue :
+  on marche, on regarde, on agit), pour vivre l'aventure pleinement, avec **un petit succès (achievement) à la fin**.
+  La première planche 60 (dans la rue, trois dangers au choix) est remplacée ; questions de Claude en attente.
+- **Une maison sur pattes plutôt qu'une tortue** (pour changer de ville : la ville-tortue avait été refusée, trop
+  proche de Spellcaster University) : à approfondir.
+- **Une réplique du Grand Sage**, égocentrique : « Je suis trop intelligent pour avoir un corps humain. »
+- **La météo** : le joueur demande s'il y a un système de météo (il n'y en a pas en ville : seulement les saisons, la
+  brume, la neige d'hiver et le temps propre à chaque contrée dans les récits), et s'il manque d'autres logiques
+  évidentes. Propositions de Claude en attente.
