@@ -2734,3 +2734,22 @@ difficulté facile / normale / difficile pourra jouer là-dessus.
   joueur devient mécène), le Sage qui vient remercier au comptoir un joueur de lumière qui donne beaucoup, des
   récompenses **qui ne touchent pas à l'argent**, et peut-être **une retraite de lumière** à la fin ; **un autre
   système pour les neutres**. Proposition de Claude dans la conversation, en attente de réponse.
+
+### Réponses du joueur (planches 55 et 56, mécénat, neutralité, fin neutre)
+- **Personnalisation** : le nouvel adulte (homme et femme) est préféré. **Élargir la création** : beaucoup plus de
+  barbes, de coiffures, de couleurs (habits, chaussures, cheveux, barbes). L'ancienne barbe et la nouvelle restent
+  toutes deux au choix. Le joueur enverra des références de coupes pour s'en inspirer.
+- **Planche 55 validée** (« superbe ») : la tapissière, le carnet d'échantillons, les cinq styles.
+- **Planche 56** : images 1 (le vrai adulte) et 3 (le miroir) **validées** ; image 2 (la fête) **refaite en v2** : table
+  à hauteur de hanche avec des pieds tournés, invités à l'échelle du jeu, Garrick aux cheveux bruns.
+- **Le mécénat du Grand Sage (lumière) : validé** — le seuil, les récompenses sans argent (plaque des mécènes, visite
+  du Sage au comptoir, vitrail, titre, la retraite de lumière à la fin), **et en plus des changements de décor et des
+  choses qui bougent dans le monde** à mesure que le joueur donne. **La piste du secret validée** (où va vraiment
+  l'argent ?), en tenant compte de ce qui existe déjà (le Sage, ses secrets, le carnet des choses étranges).
+- **Le prix de la neutralité : validé**, avec **plus de répercussions sur l'environnement** du jeu.
+- **La fin neutre (vision du joueur)** : en fin de partie, **les Bannis sont rasés de la carte** après un nouvel
+  événement tragique : personne de ceux qui étaient sur place ne sait dire ce qui s'est passé, ni ne s'en souvient. **Le
+  Grand Sage, avec le Conseil, fait un discours** : une véritable tragédie, mais il faut aller de l'avant ; les terres des
+  Bannis ne sont pas maudites, au contraire, elles sont prêtes à accueillir de nouveaux peuples, « c'est le cycle de la
+  vie ». Le joueur neutre **paie le prix de n'avoir pas pris parti**, et **ne comprend pas toute l'histoire s'il n'a pas
+  vraiment cherché** (les secrets, le carnet). À peaufiner ensemble.
