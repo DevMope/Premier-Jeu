@@ -20,7 +20,13 @@ class NightScene extends Phaser.Scene {
     if (!this.matin) this.time.delayedCall(800, () => { const n = oublierPortraits(this.game); if (n && typeof noterJournal === 'function') noterJournal(`(${n} portraits oubliés)`); });   // (v0.96)   // (v0.65 : la garde de demain se tire dès ce soir, le chat la sent parfois)
     this.lieu = this.matin ? 'Maison' : 'Nuit';
     // (v1.32) le premier matin d'adulte : le miroir des 18 ans (une fois)
-    if (this.matin && typeof miroirAFaire === 'function' && miroirAFaire(G)) this.time.delayedCall(700, () => miroirDes18Ans(this, () => this.annoncer && this.annoncer(`Te voilà ${nomJoueur(G)}. Le miroir garde ton nouveau reflet.`)));
+    if (this.matin && typeof miroirAFaire === 'function' && miroirAFaire(G)) {
+      // (si un saut de temps a enjambé la veille, la fête est notée comme passée : le miroir vient quand même)
+      if (!G.feteFaite) G.feteFaite = G.jour;
+      this.time.delayedCall(700, () => miroirDes18Ans(this, () => this.annoncer && this.annoncer(`Te voilà ${nomJoueur(G)}. Le miroir garde ton nouveau reflet.`)));
+    }
+    // (v1.32, planche 56 v2 validée) la veille des 18 ans, le soir : la fête à l'arrière-boutique
+    if (!this.matin && typeof feteAFaire === 'function' && feteAFaire(G)) this.time.delayedCall(600, () => feteDes18Ans(this, () => {}));
 
     this.cameras.main.setBackgroundColor(this.matin ? '#2a1e12' : '#1e140c');
     this.cameras.main.fadeIn(500);
