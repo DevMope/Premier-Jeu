@@ -30,7 +30,16 @@ POSTES.neutralite = 'Prix de la neutralité';
 
 function mecenatDe(G) { return (G.mecenat = G.mecenat || { donne: 0, conseil: 0, bannis: 0, paliers: [] }); }
 // Le régime du comptoir : 'lumiere', 'neutre', ou null (l'ombre ne paie pas)
-function regimeDesRiches(G) { const p = palierCamp(G); return p > 0 ? 'lumiere' : p < 0 ? null : 'neutre'; }
+// (le camp scellé ou juré décide ; sinon il faut pencher nettement, au 2e palier : un marchand qui penche à peine
+// d'un côté n'a encore choisi personne, et paie le prix de la neutralité)
+function regimeDesRiches(G) {
+  const c = G.camp || sermentDe(G);
+  if (c === 'bien') return 'lumiere';
+  if (c === 'mal') return null;
+  if (G.sceauNeutre) return 'neutre';
+  const p = palierCamp(G);
+  return p >= 2 ? 'lumiere' : p <= -2 ? null : 'neutre';
+}
 function nomPartDesRiches(regime) { return regime === 'lumiere' ? 'mécénat du Grand Sage' : 'prix de la neutralité'; }
 // La part d'un butin qui s'en va (0 sous le seuil, en ★1-★2, ou pour l'ombre)
 function partDesRiches(G, brut) {
