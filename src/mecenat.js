@@ -69,6 +69,9 @@ function matinDesRiches(G) {
   for (const p of MECENAT[m.regime]) {
     if (m.donne < p.donne || m.paliers.includes(p.id)) continue;
     m.paliers.push(p.id);
+    // (planche 58) la visite du Grand Sage, les deux percepteurs : au comptoir, le jour même
+    if (p.id === 'visite') m.visite = G.jour;
+    if (p.id === 'saufConduit') m.percepteurs = G.jour;
     lignes.push(`${m.regime === 'lumiere' ? 'Le mécénat du Grand Sage' : 'Le prix de la neutralité'} (${m.donne.toLocaleString('fr-FR')} p. donnés) : ${p.texte}`);
     if (!G.annonceMecenat) G.annonceMecenat = p.texte;
   }

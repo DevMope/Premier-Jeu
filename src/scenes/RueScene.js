@@ -24,6 +24,7 @@ class RueScene extends Phaser.Scene {
       },
     };
     const r = construireRue(this, 0, { jour: true, ici });
+    if (typeof rueDuMecenat === 'function') rueDuMecenat(this, 0, sol, G);   // (v1.32, planche 58) ce que le monde montre de tes dons
     const toits = this.children.list.filter(o => o.type === 'Image' && o.texture && /^(rueMaisonHD|rueForgeHD|rueImpasseHD|facadeHD)/.test(o.texture.key)).map(o => [o, o.texture.key === 'facadeHD_4' ? 0.26 : /^facadeHD/.test(o.texture.key) ? 0.34 : 0.12]);   // (v1.31 : avec l'étage, le toit ne fait plus qu'un quart de l'image)
     decorSaison(this, { sol: sol, largeur: LARGEUR_RUE, prof: 8.3, meules: [[LOT_CONFRERIE + (LARGEUR_RUE - LOT_CONFRERIE) * 0.42, 22]], bonhomme: LOT_CONFRERIE + (LARGEUR_RUE - LOT_CONFRERIE) * 0.62, toits });   // (v0.99 : la saison)
     // (v0.99) les bruits de la saison, doucement, sous la musique : oiseaux, cigales, vent
@@ -77,6 +78,13 @@ class RueScene extends Phaser.Scene {
     const sens = Math.random() < 0.5 ? 1 : -1, cam = this.cameras.main.scrollX;
     const x0 = sens > 0 ? cam - 60 : cam + 1020, x1 = sens > 0 ? cam + 1100 : cam - 140;
     const p = imageCorps(this, x0, SOL_PROMENADE + 4 + Math.random() * 8, quoi, 7.2).setFlipX(sens < 0).setDepth(8.45);
+    // (v1.32) le neutre qui paie les deux camps : parfois, un garde et un Banni font la ronde ensemble
+    if (typeof patrouilleMelee === 'function' && patrouilleMelee(this.G)) {
+      p.setTexture(corpsHD(this, GARDE.capitaine)).setScale(7.2 * echelleCorps(p.texture.key));
+      const b = imageCorps(this, x0 - sens * 46, SOL_PROMENADE + 6, PERCEPTEUR_BANNI, 7.2).setFlipX(sens < 0).setDepth(8.45);
+      pasDeMarche(this, b, Math.abs(x1 - x0) * 11, { poussiere: false });
+      this.tweens.add({ targets: b, x: x1 - sens * 46, duration: Math.abs(x1 - x0) * 11, onComplete: () => b.destroy() });
+    }
     const duree = Math.abs(x1 - x0) * 11;
     pasDeMarche(this, p, duree, { poussiere: false });
     this.tweens.add({ targets: p, x: x1, duration: duree, onComplete: () => { if (p.bulle) p.bulle.destroy(); p.destroy(); } });

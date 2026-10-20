@@ -1860,7 +1860,8 @@ function formerFileDuJour(G) {
   if (doitVenirGarde(G)) visites.push({ type: 'garde', garde: gardeDuJour(G) });
   visites.push(...visitesMafia(G));   // (v0.60) le collecteur de la Main Noire, le Serpent à deux têtes
   if (typeof visitesDuConseil === 'function') visites.unshift(...visitesDuConseil(G));   // (v1.10) le héraut et sa commande scellée
-  if (typeof visitesDuRival === 'function') visites.push(...visitesDuRival(G));   // (v1.11) Lucien Belhomme vient se présenter, se pavaner, se moquer
+  if (typeof visitesDuRival === 'function') visites.push(...visitesDuRival(G));
+  if (typeof visitesDuMecenat === 'function') visites.push(...visitesDuMecenat(G));   // (v1.32, planche 58) le Grand Sage, les percepteurs   // (v1.11) Lucien Belhomme vient se présenter, se pavaner, se moquer
   // (v0.56) Très rarement, à partir du milieu du jeu, un aîné des Bannis passe et laisse une phrase
   const aine = aineDuJour(G, 'comptoir');
   if (aine) { G.ainesVus = [...(G.ainesVus || []), aine]; file.splice(hasard(0, file.length), 0, { type: 'aine', race: aine }); }

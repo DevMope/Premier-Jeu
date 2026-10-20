@@ -855,6 +855,7 @@ class CounterScene extends Phaser.Scene {
 
   texturePour(entree, pose = null) {
     if (entree.type === 'faucheuse') return 'perso_faucheuse';
+    if (entree.type === 'sage' || entree.type === 'percepteur') return corpsHD(this, entree.type === 'sage' ? 'sage' : personneDuPercepteur(entree), pose);   // (v1.32, planche 58)
     if (entree.type === 'famille') return corpsHD(this, entree.visite.parent, pose);
     if (entree.type === 'notable') { const p = this.personneDe(entree); return corpsHD(this, p.figurant || p, pose); }
     if (entree.type === 'colporteur') return corpsHD(this, 'colporteur', pose);
@@ -1686,6 +1687,8 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'heraut') return HERAUT_CONSEIL.buste;   // (v1.10) le héraut de la Confrérie, pour le Conseil
     if (entree.type === 'rival') return RIVAL_BUSTE;   // (v1.11) le paon d'à côté
     if (entree.type === 'crieur') return CRIEUR_BUSTE;
+    if (entree.type === 'sage') return SAGE_PERSONNE;
+    if (entree.type === 'percepteur') return personneDuPercepteur(entree);
     if (entree.type === 'notable') {
       // Le visiteur notable du palier : le bourgmastre, le héraut de la Confrérie, une légende...
       const v = PALIERS_CLIENTS[entree.palier].visiteur;
@@ -1703,7 +1706,8 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'aine') return 'neutre';
     if (entree.type === 'collectionneur') return 'content';
     if (entree.type === 'heraut') return entree.mode === 'livraison' ? 'neutre' : 'content';
-    if (entree.type === 'rival' || entree.type === 'crieur') return 'content';
+    if (entree.type === 'rival' || entree.type === 'crieur' || entree.type === 'sage') return 'content';
+    if (entree.type === 'percepteur') return 'neutre';
     if (entree.type === 'collecteur' || entree.type === 'serpent') return 'neutre';
     if (entree.type === 'garde') return (this.G.garde && this.G.garde.visites) ? 'fache' : 'neutre';
     if (entree.type === 'famille') return entree.visite.intention === 'colere' ? 'fache' : entree.visite.intention === 'releve' ? 'neutre' : 'inquiet';
@@ -1721,7 +1725,7 @@ class CounterScene extends Phaser.Scene {
     if (!this.minuterieCligne) {
       // Il cligne des yeux de temps en temps.
       this.minuterieCligne = this.time.addEvent({ delay: 2600, loop: true, callback: () => {
-        if (!this.buste || this.enTrainDeParler || Math.random() < 0.3) return;
+        if (!this.buste || this.buste.enPied || this.enTrainDeParler || Math.random() < 0.3) return;
         this.perso.setTexture(textureBusteHD(this, this.buste.personne, this.buste.expression, { cligne: true, pose: this.buste.pose }));
         this.time.delayedCall(140, () => this.majVisage());
       } });
@@ -1729,7 +1733,7 @@ class CounterScene extends Phaser.Scene {
   }
 
   majVisage(parle = false) {
-    if (!this.buste) return;
+    if (!this.buste || this.buste.enPied) return;   // (le Grand Sage : son vrai dessin, en pied, ne change pas de visage)
     this.perso.setTexture(textureBusteHD(this, this.buste.personne, this.buste.expression, { parle, pose: this.buste.pose }));
   }
 
@@ -1761,7 +1765,7 @@ class CounterScene extends Phaser.Scene {
   arrivee(entree) {
     Son.jouer('pas');
     // (v0.86) une visite prend un quart d'heure (les clients, eux, comptent au service)
-    if (['famille', 'notable', 'colporteur', 'garde', 'gardeRecherche', 'garrick', 'collecteur', 'serpent', 'aine', 'heraut', 'rival', 'crieur', 'collectionneur'].includes(entree.type)) this.avancer(JOURNEE.visite);
+    if (['famille', 'notable', 'colporteur', 'garde', 'gardeRecherche', 'garrick', 'collecteur', 'serpent', 'aine', 'heraut', 'rival', 'crieur', 'collectionneur', 'sage', 'percepteur'].includes(entree.type)) this.avancer(JOURNEE.visite);
     if (entree.type === 'client') {
       conseilGarrick(this, 'comptoir');
       const v = this.voyageur = entree.voyageur;
@@ -1840,6 +1844,10 @@ class CounterScene extends Phaser.Scene {
       this.visiteHeraut(entree);   // (v1.10) la commande scellée du Conseil
     } else if (entree.type === 'rival') {
       this.visiteRival(entree);   // (v1.11) Lucien Belhomme, le paon d'à côté
+    } else if (entree.type === 'sage') {
+      this.visiteSage(entree);   // (v1.32, planche 58) le Grand Sage vient remercier son mécène
+    } else if (entree.type === 'percepteur') {
+      this.visitePercepteur(entree);   // (v1.32) le prix de la neutralité
     } else if (entree.type === 'crieur') {
       this.visiteCrieur(entree);   // (v1.11) le mois des comptoirs
     } else if (entree.type === 'collectionneur') {
@@ -2358,6 +2366,7 @@ class CounterScene extends Phaser.Scene {
       // Il se retourne : on le voit de nouveau en entier.
       if (!this.buste) return;
       this.buste = null;
+      this.perso.setCrop();   // (v1.32 : le Grand Sage était cadré en buste)
       if (this.paroles) { this.paroles.remove(); this.paroles = null; this.enTrainDeParler = false; }
       // (v0.68) avec un baluchon, il le tient par le bâton, sur l'épaule (une pose à part)
       if (entree) this.perso.setTexture(this.texturePour(entree, porte && entree.type !== 'faucheuse' ? 'baluchon' : null));

@@ -32,8 +32,12 @@ class NightScene extends Phaser.Scene {
     this.cameras.main.fadeIn(500);
     // Le décor : l'arrière-boutique, à la lueur du luminaire (plus sombre le soir)
     creerInterieurHD(this);
-    this.add.image(0, 0, murInterieur(this, 'murArriere', { poteaux: [272, 412], graine: 310 })).setOrigin(0).setScale(2).setTint(this.matin ? 0xb8946c : 0x7a5c44);
-    this.add.image(0, 440, plancher(this, 'plancherArriere', { graine: 410 })).setOrigin(0).setScale(2).setTint(this.matin ? 0xc8a888 : 0x8a6c54);
+    const murN = this.add.image(0, 0, murInterieur(this, 'murArriere', { poteaux: [272, 412], graine: 310 })).setOrigin(0).setScale(2).setTint(this.matin ? 0xb8946c : 0x7a5c44);
+    const solN = this.add.image(0, 440, plancher(this, 'plancherArriere', { graine: 410 })).setOrigin(0).setScale(2).setTint(this.matin ? 0xc8a888 : 0x8a6c54);
+    // (v1.32) la décoration choisie dans le carnet de la tapissière : c'est la même pièce, le matin et le soir
+    const deco = typeof texturesDeco === 'function' ? texturesDeco(this, G) : null;
+    if (deco && deco.mur) murN.setTexture(deco.mur).setTint(this.matin ? 0xd8c8b8 : 0x8a7868);
+    if (deco && deco.sol) solN.setTexture(deco.sol).setTint(this.matin ? 0xe0d4c8 : 0x9a8a7a);
     vignette(this, 0.85, 0);
     poserLuminaire(this, 480, -40, niveauAmelioration(G, 'eclairage'), 0);
     this.add.text(480, 34, this.matin ? `Matin du jour ${G.jour} · chez toi` : `Soir du jour ${G.jour}`, style(30, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5);
