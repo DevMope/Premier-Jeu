@@ -221,7 +221,7 @@ class NightScene extends Phaser.Scene {
       let ligne = null, action = null;
       if (billet || alerteChat(G)) {
         const cache = G.cachette === G.jour + 1;
-        ligne = (billet ? 'Un billet sous la porte, signé Fil-de-Fer : « La garde, demain. Sûr et certain. »' : `${nomChat(G)[0].toUpperCase() + nomChat(G).slice(1)} crache vers la porte. La garde, demain ?`) + (cache ? ' Tout est caché.' : aCacher(G) ? '' : ' (Rien à cacher.)');
+        ligne = (billet ? 'Billet de Fil-de-Fer : « La garde, demain. Sûr et certain. »' : `${nomChat(G)[0].toUpperCase() + nomChat(G).slice(1)} crache vers la porte. La garde, demain ?`) + (cache ? ' Tout est caché.' : aCacher(G) ? '' : ' (Rien à cacher.)');
         if (!cache && aCacher(G)) action = ['▸ Tout cacher sous le plancher', () => { cacherMarchandise(G); Son.jouer('glisse'); this.tout(); }];
       } else if (foyer) {
         ligne = foyer;
@@ -230,7 +230,12 @@ class NightScene extends Phaser.Scene {
       else if (chatCeSoir(G)) ligne = 'Un chat de gouttière rôde devant ta porte ce soir.';
       const yLigne = Math.max(410, texteMissions.y + texteMissions.height + 8);
       let yAction = 455;
-      if (ligne) { const t = this.add.text(x1 + 18, yLigne, ligne, style(12, '#5a2a4a', { fontStyle: 'bold italic', wordWrap: { width: x2 - x1 - 36 } })); c.add(t); yAction = Math.max(yAction, t.y + t.height + 6); }
+      if (ligne) {
+        const t = this.add.text(x1 + 18, yLigne, ligne, style(12, '#5a2a4a', { fontStyle: 'bold italic', wordWrap: { width: x2 - x1 - 36 } })); c.add(t);
+        // (v1.31) le lien d'action ne descend jamais sur la rangée de boutons : la ligne remonte plutôt
+        if (action && t.y + t.height + 6 > 460) t.y = 460 - 6 - t.height;
+        yAction = Math.min(460, Math.max(yAction, t.y + t.height + 6));
+      }
       if (action) c.add(this.add.text(x1 + 18, yAction, action[0], style(12, '#8a1a1a', { fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 4, y: 2 } })).setInteractive({ useHandCursor: true }).on('pointerdown', action[1]));
     } else if (G.fioleRemplie === G.jour) {
       // (v0.93) le matin où la fiole de la nymphe s'est remplie

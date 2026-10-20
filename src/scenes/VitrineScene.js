@@ -55,7 +55,7 @@ class VitrineScene extends Phaser.Scene {
     g.fillStyle(0x2a160a).fillRoundedRect(x0 - 14, y0 - 40, L + 28, Hc * 3 + 70, 10).fillStyle(0x5a3418).fillRoundedRect(x0 - 8, y0 - 34, L + 16, Hc * 3 + 58, 8);
     g.fillStyle(0xc9a227).fillRect(x0 - 8, y0 - 34, L + 16, 4);
     this.add.text(x0 + L / 2, y0 - 18, 'LA VITRINE DES COLLECTIONS', style(15, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
-    this.info = this.add.text(480, 500, 'Passe sur une pièce pour la voir ; la carte ancienne s\'ouvre d\'un clic.', style(13, '#f3e6c8', { fontStyle: 'italic', align: 'center', wordWrap: { width: 600 } })).setOrigin(0.5);
+    this.info = this.add.text(480, 508, 'Passe sur une pièce pour la voir ; la carte ancienne s\'ouvre d\'un clic.', style(13, '#f3e6c8', { fontStyle: 'italic', align: 'center', wordWrap: { width: 600 } })).setOrigin(0.5);
     Object.keys(COLLECTIONS).forEach((serie, k) => {
       const C = COLLECTIONS[serie], col = k % 2, row = Math.floor(k / 2), cx = x0 + col * (L / 2), cy = y0 + row * Hc, l = L / 2 - 6;
       const complete = serieComplete(G, serie), n = nbPieces(G, serie), total = totalSerie(serie);
@@ -83,7 +83,11 @@ class VitrineScene extends Phaser.Scene {
       });
     });
     const titres = titresCollections(G);
-    if (titres.length) this.add.text(480, 470, `Tes titres : ${titres.map(t => `« ${t} »`).join(' · ')}`, style(13, '#ffe066', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3, align: 'center', wordWrap: { width: 800 } })).setOrigin(0.5);
+    // (v1.31) sous les étagères, jamais dessus : deux lignes au plus
+    if (titres.length) {
+      const t = this.add.text(480, 461, `Tes titres : ${titres.map(t => `« ${t} »`).join(' · ')}`, style(13, '#ffe066', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3, align: 'center', wordWrap: { width: 880 } })).setOrigin(0.5, 0);
+      for (let f = 14; t.height > 36 && f >= 10; f--) t.setFontSize(f);
+    }
     creerBouton(this, 850, 515, 160, 'Fermer', () => this.fermer());
   }
 

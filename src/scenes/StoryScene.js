@@ -521,9 +521,13 @@ class StoryScene extends Cinematique {
       const sos = this.parti.detresse && this.parti.detresse.choix && this.parti.detresse.i === i ? this.parti.detresse : null;
       const secours = !sos ? '' : sos.choix === 'rien' ? ' · personne n\'est venu' : sos.choix === 'mercenaire' && !sos.arrive ? ' · le mercenaire n\'est pas arrivé'
         : ` · ${{ aigle: "l'aigle", mercenaire: 'le mercenaire', corbeau: 'le corbeau' }[sos.choix]} est venu`;
-      c.add(this.add.text(x0 + 60, y + 8, prepa + (e.piege ? ' · objet piégé !' : '') + secours, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
+      const detail = this.add.text(x0 + 60, y + 8, prepa + (e.piege ? ' · objet piégé !' : '') + secours, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5);
+      c.add(detail);
       const perdu = Math.max(0, (e.pvAvant ?? e.pvApres) - e.pvApres);
-      c.add(this.add.text(x0 + 426, y, e.reussie ? '✓ réussie' : `✗ ratée${perdu ? ` · −${perdu} ♥` : ''}`, style(13, e.reussie ? '#2f6a2a' : '#a03030', { fontStyle: 'bold' })).setOrigin(1, 0.5));
+      const resultat = this.add.text(x0 + 426, y, e.reussie ? '✓ réussie' : `✗ ratée${perdu ? ` · −${perdu} ♥` : ''}`, style(13, e.reussie ? '#2f6a2a' : '#a03030', { fontStyle: 'bold' })).setOrigin(1, 0.5);
+      c.add(resultat);
+      // (v1.31) la ligne du détail (secours, piège) s'arrête avant le résultat
+      for (let f = 12; detail.width > 426 - 60 - resultat.width - 10 && f >= 9; f--) detail.setFontSize(f);
     });
     const fin = r.vivant ? (r.echec ? `Revenu${this.e} vivant${this.e}, mais la mission a échoué.` : `Revenu${this.e} au comptoir : mission accomplie !`) : `N'est jamais revenu${this.e}...`;
     c.add(this.add.text(x0 + 24, y0 + h - 26, fin, style(13, r.vivant && !r.echec ? '#2f6a2a' : '#a03030', { fontStyle: 'bold italic' })));
