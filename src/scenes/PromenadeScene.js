@@ -8,10 +8,10 @@ const PIECES_PROMENADE = [
   { nom: "L'arrière-boutique", x: 960 },
   { nom: 'Le comptoir, la nuit', x: 1920, marche: false },
   { nom: "L'atelier", x: 2880 },
-  { nom: 'Dehors, sous les étoiles', x: 3840, largeur: 2960 },   // (v0.65 : toute la rue, la caméra suit)
+  { nom: 'Dehors, sous les étoiles', x: 3840, largeur: LARGEUR_RUE },   // (v0.65 : toute la rue, la caméra suit)
 ];
 const P_CHAMBRE = 0, P_ARRIERE = 1, P_COMPTOIR = 2, P_ATELIER = 3, P_DEHORS = 4;
-const LARGEUR_PROMENADE = 3840 + 2960;
+const LARGEUR_PROMENADE = 3840 + LARGEUR_RUE;
 const SOL_PROMENADE = 505;
 
 class PromenadeScene extends Cinematique {

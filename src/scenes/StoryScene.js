@@ -757,7 +757,8 @@ class StoryScene extends Cinematique {
       }
       this.perso.setTint(0x80ff80);
       this.time.delayedCall(300, () => this.perso.clearTint());
-      this.ecrire('Soins', (gratuit ? `« Tu... tu ne me fais rien payer ? Je ne l'oublierai pas. »` : `« Ah, ça fait du bien ! Tiens, ${PRIX_SOIN} pièces pour la potion. »`) +
+      if (G.soinParHospice) gainEnDirect(this, this.perso.x, this.perso.y - this.perso.displayHeight - 20, 'Soin offert (hospice) : pas de potion', true);   // (v1.28)
+      this.ecrire('Soins', (G.soinParHospice ? 'La sœur Aveline est venue de l’hospice avec ses bandes et ses onguents. ' : '') + (gratuit ? `« Tu... tu ne me fais rien payer ? Je ne l'oublierai pas. »` : `« Ah, ça fait du bien ! Tiens, ${PRIX_SOIN} pièces pour la potion. »`) +
         (blessuresDe(G, v.nom) ? `\nEncore ${blessuresDe(G, v.nom)} cœur(s) à soigner.` : `\nComplètement remis${this.e} sur pied !`));
       maj();
     };
@@ -768,12 +769,15 @@ class StoryScene extends Cinematique {
       bouton.setVisible(reste > 0); offert.setVisible(reste > 0);
       bouton.setTexte(`Soigner un cœur (+${PRIX_SOIN} p.)`);
       offert.setTexte('Soigner sans faire payer');
-      bouton.setActif(G.stock.potion > 0); offert.setActif(G.stock.potion > 0);
+      const hosp = typeof soinHospiceLibre === 'function' && soinHospiceLibre(G);   // (v1.28) le soin du jour de l'hospice
+      bouton.setActif(G.stock.potion > 0 || hosp); offert.setActif(G.stock.potion > 0 || hosp);
+      if (hosp) bouton.setTexte(`Soigner un cœur (+${PRIX_SOIN} p., hospice)`);
       if (reste > 0) marquerCamp(this, offert, 'bien');
     };
     maj();
     const n = blessuresDe(G, v.nom);
     this.ajouterTexte(`\n${v.feminin ? 'Elle' : 'Il'} a perdu ${n} cœur${n > 1 ? 's' : ''}. ` +
+      (typeof soinHospiceLibre === 'function' && soinHospiceLibre(G) ? 'Aujourd\'hui, le premier soin vient de l\'hospice de la Confrérie : il ne coûte pas de potion. ' : '') +
       (G.stock.potion > 0 ? `Une potion par cœur (il te reste ${G.stock.potion} potion${G.stock.potion > 1 ? 's' : ''}).` : `Tu n'as pas de potion pour ${v.feminin ? 'la' : 'le'} soigner.`));
   }
 

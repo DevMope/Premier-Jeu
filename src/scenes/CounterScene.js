@@ -2584,8 +2584,11 @@ class CounterScene extends Phaser.Scene {
     // (v1.04) l'arme qu'il vient d'acheter, il la porte sur lui en partant
     const armeNeuve = objets.find(id => estArme(id));
     if (armeNeuve) v.armeEmportee = armeNeuve;
+    // (v1.28) la cloche de la chapelle du Rempart sonne pour les départs vers les contrées de la lumière
+    const cloche = typeof bonusChapelle === 'function' && bonusChapelle(this.G, v.zone) > 0;
     const sEnAller = colis => {
-      this.dire(phrase + (msg ? ' ' + msg : ''), this.nomAvecRelation(v.nom));
+      this.dire(phrase + (msg ? ' ' + msg : '') + (cloche ? ' Au loin, la cloche de la chapelle sonne pour son départ.' : ''), this.nomAvecRelation(v.nom));
+      if (cloche) { Son.jouer('cloche'); gainEnDirect(this, FENETRE.x + FENETRE.w / 2, FENETRE.y + 60, `+${Math.round(CONFRERIE.chapelle * 100)} % à chaque épreuve (chapelle)`, true); }
       this.partirPar(FENETRE.x + FENETRE.w + 60, colis);
     };
     if (!objets.length) return sEnAller(null);

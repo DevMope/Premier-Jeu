@@ -193,7 +193,9 @@ function chanceEtapeBase(e, colis, voyageur) {
   const mise = voyageur.mise > 0 && typeof MISE_AVENTURIER !== 'undefined' ? MISE_AVENTURIER.bonusEtape : 0;
   // (v1.22) un appel à l'aide resté sans réponse : cette épreuve-là sera plus dure
   const abandon = e.malusDetresse || 0;
-  return Phaser.Math.Clamp((chanceEpreuve(nivE) + enPlus * BONUS_SURPLUS + bonusArme + nb + evenement - danger + beni + mise - abandon) * saison, 0.05, 0.97);
+  // (v1.28) la cloche de la chapelle du Rempart bénit les départs vers les contrées de la lumière
+  const cloche = typeof bonusChapelle === 'function' ? bonusChapelle(window.GAME, voyageur.zone) : 0;
+  return Phaser.Math.Clamp((chanceEpreuve(nivE) + enPlus * BONUS_SURPLUS + bonusArme + nb + evenement - danger + beni + mise - abandon + cloche) * saison, 0.05, 0.97);
 }
 
 // (v0.93) Le bonus de la nymphe sur cette épreuve (0 si elle ne bénit pas, ou pas ce genre d'épreuve)
@@ -1518,6 +1520,8 @@ function mainNoireOuverte(G) {
 }
 const LOYER = { base: 20, parPalier: 15 };
 const CONVALESCENCE_PAR_COEUR = 2;
+// (v1.28) les jours de repos par cœur perdu (deux fois moins avec l'hospice de la Confrérie)
+function reposCoeur(G) { return typeof reposParCoeur === 'function' ? reposParCoeur(G) : CONVALESCENCE_PAR_COEUR; }
 const CHANCE_GRATITUDE = 0.4, CHANCE_INTERDIT_OMBRE = 0.35, CHANCE_GARDE_OMBRE = 0.25;
 const CADEAUX_VILLAGES = [['ration', 2], ['potion', 1], ['bandage', 2], ['gourde', 1], ['torche', 2], ['antidote', 1]];   // (v0.60) jours de repos par cœur perdu, pour un blessé revenu de mission
 function loyerSemaine(G) {
@@ -1573,6 +1577,7 @@ function nuit(G) {
   if (typeof nuitDuRival === 'function') nuitDuRival(G);   // (v1.11) les comptes du jour face au paon (après le Conseil : il voit la commande manquée le soir même)
   if (typeof nuitDeLOrphelinat === 'function') nuitDeLOrphelinat(G);   // (v1.12) le chantier de l'orphelinat
   if (typeof nuitDuBar === 'function') nuitDuBar(G);   // (v1.16) le chantier du petit bar
+  if (typeof nuitDeLaConfrerie === 'function') nuitDeLaConfrerie(G);   // (v1.28) les chantiers de la Confrérie, la marche de l'escouade
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1640,6 +1645,7 @@ function nuit(G) {
   if (typeof matinDuRival === 'function') for (const l of matinDuRival(G)) G.reveil.lignes.push(l);   // (v1.11) le paon ouvre, le bilan du mois
   if (typeof matinDeLOrphelinat === 'function') for (const l of matinDeLOrphelinat(G)) G.reveil.lignes.push(l);   // (v1.12) les courses des petits, la rumeur
   if (typeof matinDuBar === 'function') for (const l of matinDuBar(G)) G.reveil.lignes.push(l);
+  if (typeof matinDeLaConfrerie === 'function') for (const l of matinDeLaConfrerie(G)) G.reveil.lignes.push(l);   // (v1.28)
   if (typeof voeuDeSaison === 'function') { const l = voeuDeSaison(G); if (l) G.reveil.lignes.push(l); }   // (v1.23) les souvenirs de la nymphe au complet   // (v1.16) le petit bar : l'installation, la rumeur vraie
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
@@ -2236,14 +2242,14 @@ function terminerAventure(G, parti) {
       if (Math.random() < CHANCE_GARDE_OMBRE) { G.gardeDemain = true; message = (message ? message + ' ' : '') + `Des silhouettes en tabard bleu l'ont suivi${v.feminin ? 'e' : ''} jusqu'à ta porte...`; }
     }
     if (part0 < 1) message = (message ? message + ' ' : '') + `Sa commande n'était remplie qu'à ${Math.round(part0 * 100)} % : ta réputation en profite moins.`;
-    if (blesse) message = (message ? message + ' ' : '') + `Revenu${v.feminin ? 'e' : ''} blessé${v.feminin ? 'e' : ''} : la mission compte un peu moins pour ta réputation, et sans soins il lui faudra ${CONVALESCENCE_PAR_COEUR * blesse} jours de repos.`;
+    if (blesse) message = (message ? message + ' ' : '') + `Revenu${v.feminin ? 'e' : ''} blessé${v.feminin ? 'e' : ''} : la mission compte un peu moins pour ta réputation, et sans soins il lui faudra ${reposCoeur(G) * blesse} jours de repos${typeof confrerieA === 'function' && confrerieA(G, 'hospice') ? " (l'hospice de la Confrérie : deux fois moins)" : ''}.`;
     const derniere = r.etapes[r.etapes.length - 1];
     // Les cœurs perdus (au-delà des cœurs gagnés grâce aux soins en plus) restent des blessures.
     const blessures = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - derniere.pvApres));
     // Chaque succès le fait progresser : novice, aguerri, vétéran, héros, légende.
     const niveau = meilleurNiveau(v.niveau, succesDe(G, v.nom));
     if (niveau !== v.niveau) message = (message ? message + ' ' : '') + `${v.nom.split(' ')[0]} devient ${NIVEAUX_AVENTURIER[niveau].nom.toLowerCase()} !`;
-    G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau, prestige: v.prestige || null, convalescence: blessures ? G.jour + CONVALESCENCE_PAR_COEUR * blessures : 0 });
+    G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau, prestige: v.prestige || null, convalescence: blessures ? G.jour + reposCoeur(G) * blessures : 0 });
     parti.trouvailles = trouvailles(G, v);
     // (v1.23) une pièce pour la vitrine : l'écu de son royaume, une curiosité de Banni, un fragment de la carte ancienne
     if (typeof piecesAuRetour === 'function') { const t = piecesAuRetour(G, v); if (t) message = (message ? message + ' ' : '') + t; }
@@ -2323,15 +2329,18 @@ function soigner(G, nom, { gratuit = false } = {}) {
   const h = G.habitues.find(x => x.nom === nom);
   if (!h || !h.blessures) return `${nom} n'a plus de blessure à soigner.`;
   // (v0.95) les clercs de la Confrérie : un soin sur deux ne coûte pas de potion
-  const clercs = sermentDe(G) === 'bien' && (G.soinsClercs = (G.soinsClercs || 0) + 1) % 2 === 0;
-  if (!clercs && G.stock.potion <= 0) { if (sermentDe(G) === 'bien') G.soinsClercs--; return "Tu n'as plus de potion."; }
-  if (!clercs) G.stock.potion--;
+  // (v1.28) l'hospice de la Confrérie : le premier soin de la journée ne coûte pas de potion
+  const hospice = typeof soinHospice === 'function' && soinHospice(G);
+  G.soinParHospice = hospice;
+  const clercs = !hospice && sermentDe(G) === 'bien' && (G.soinsClercs = (G.soinsClercs || 0) + 1) % 2 === 0;
+  if (!hospice && !clercs && G.stock.potion <= 0) { if (sermentDe(G) === 'bien') G.soinsClercs--; return "Tu n'as plus de potion."; }
+  if (!hospice && !clercs) G.stock.potion--;
   // (v0.90) soigner sans faire payer : un geste de lumière
   if (gratuit) { pencher(G, 'soigner', { qui: nom }); changerRelation(G, nom, 1); }
   else encaisser(G, PRIX_SOIN, 'soins');
   h.blessures--;
   if (!h.blessures) h.convalescence = 0;
-  else if (h.convalescence) h.convalescence -= CONVALESCENCE_PAR_COEUR;   // (v0.60) chaque cœur soigné raccourcit le repos
+  else if (h.convalescence) h.convalescence -= reposCoeur(G);   // (v0.60) chaque cœur soigné raccourcit le repos
   changerRelation(G, nom, 1);
   return null;
 }
@@ -2882,7 +2891,7 @@ function appliquerMalusEchec(G, parti, h) {
   const textes = [`Ta mise est perdue, et ta réputation baisse (−${String(PERTE_ECHEC).replace('.', ',')}).`];
   for (const m of choisis) {
     if (m === 'rumine') changerRelation(G, v.nom, -2);
-    if (m === 'blesse') h.convalescence = G.jour + CONVALESCENCE;
+    if (m === 'blesse') h.convalescence = G.jour + (typeof confrerieA === 'function' && confrerieA(G, 'hospice') ? Math.ceil(CONVALESCENCE / 2) : CONVALESCENCE);
     if (m === 'rumeur') G.rumeur = { jour: G.jour + 1 };
     if (m === 'comptes') h.exige = true;
     textes.push(MALUS_ECHEC[m].replace('{nom}', v.nom.split(' ')[0]).replace('{e}', v.feminin ? 'e' : '')
@@ -2974,7 +2983,8 @@ function avancerEvenements(G) {
   if (G.annonceMafia) { lignes.unshift(G.annonceMafia); G.annonceMafia = null; }
   if (G.annonceConseil) { lignes.unshift(G.annonceConseil); G.annonceConseil = null; }
   if (G.annonceCollection) { lignes.unshift(G.annonceCollection); G.annonceCollection = null; }   // (v1.23) une série complète dans la vitrine   // (v1.10) la commande scellée, livrée ou manquée
-  if (G.annonceRival) { lignes.unshift(G.annonceRival); G.annonceRival = null; }   // (v1.11) le paon ouvre, ferme, ou sa maison change de mains
+  if (G.annonceRival) { lignes.unshift(G.annonceRival); G.annonceRival = null; }
+  if (G.annonceConfrerie) { lignes.unshift(G.annonceConfrerie); G.annonceConfrerie = null; }   // (v1.28) la Confrérie remercie, l'escouade avance   // (v1.11) le paon ouvre, ferme, ou sa maison change de mains
   // (v0.99) le premier jour d'une saison : le crieur l'annonce, avec ce qu'elle change au marché
   if (typeof saisonDe === 'function' && dateDuJour(G).jourDuMois === 1) {
     const s = saisonDe(G), prix = Object.entries(PRIX_SAISON[s] || {});

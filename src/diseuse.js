@@ -4,7 +4,8 @@
 // remarque de tout petits détails sous la tente (la flamme qui vacille, une carte à l'envers, son chat qui
 // détourne la tête). Personne ne sait son âge, d'où elle vient, ni si elle a vraiment des pouvoirs.
 
-const DISEUSE = { jour: 10, prix: 2, trompe: 0.4, tente: 1610, pourboire: [8, 18], gardeDans: [1, 5] };
+// (v1.28 : la tente a reculé avec la rue, allongée de 700 à gauche pour la Confrérie)
+const DISEUSE = { jour: 10, prix: 2, trompe: 0.4, tente: 2310, pourboire: [8, 18], gardeDans: [1, 5] };
 POSTES.diseuse = 'Madame Ysmée'; POSTES.pourboires = 'Pourboires';
 const PRESAGES = {
   corbeau: { nom: 'Le Corbeau', dit: "« Le Corbeau... Quelqu'un te mentira aujourd'hui. Méfie-toi des visages trop aimables. »", bref: "quelqu'un te mentira aujourd'hui" },

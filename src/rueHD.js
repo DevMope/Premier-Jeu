@@ -303,8 +303,10 @@ function ecriteauRue(scene, x, y, texte, { taille = 12, couleur = '#2a1608', fon
 // (v0.65, étape 10c) Toute la rue, posée à partir de x = o, le soir ou le jour. `ici` reçoit les
 // choses à regarder et les portes : { regarder(x, y, l, h, texte), porte(x, sol, etiquette, action) }.
 // Renvoie la porte du shop et les lumières (fenêtres, réverbères, braises) pour la nuit.
-const LARGEUR_RUE = 2960;
-const PLACES_RUE = { maison0: 160, impasse: 405, forge: 680, shop: 1320, maison1: 1820, fontaine: 2090, banque: 2360, arche: 2780 };
+// (v1.28) la rue s'allonge à gauche : le terrain de la Confrérie (l'hospice, la chapelle), avant les Pommeroy
+const LOT_CONFRERIE = 700;
+const LARGEUR_RUE = 2960 + LOT_CONFRERIE;
+const PLACES_RUE = { hospice: 200, chapelle: 545, maison0: 160 + LOT_CONFRERIE, impasse: 405 + LOT_CONFRERIE, forge: 680 + LOT_CONFRERIE, shop: 1320 + LOT_CONFRERIE, maison1: 1820 + LOT_CONFRERIE, fontaine: 2090 + LOT_CONFRERIE, banque: 2360 + LOT_CONFRERIE, arche: 2780 + LOT_CONFRERIE };
 function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   const G = window.GAME, P = PLACES_RUE, lumieres = [];
   creerRueHD(scene);
@@ -318,16 +320,44 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   }
   const poser = (cle, cx) => scene.add.image(o + cx, sol + 2, cle).setOrigin(0.5, 1).setScale(2);
   const ouvert = !jour && marcheNoirCeSoir(G);
+  // (v1.28) le terrain de la Confrérie : vague au début ; l'hospice et la chapelle s'y bâtissent (planche 52)
+  if (typeof creerConfrerieHD === 'function') {
+    creerConfrerieHD(scene);
+    const bati = id => typeof confrerieA === 'function' && confrerieA(G, id);
+    for (const [id, cle] of [['hospice', 'rueHospiceHD'], ['chapelle', jour ? 'rueChapelleHD_jour' : 'rueChapelleHD']]) {
+      if (bati(id)) poser(cle, P[id]);
+      else scene.add.image(o + P[id], sol + 4, 'terrainConfrerie').setOrigin(0.5, 1).setScale(1.15, 2);
+    }
+    if (!bati('hospice') || !bati('chapelle')) ecriteauRue(scene, o + (bati('hospice') ? P.chapelle : P.hospice + 170), sol - 70, 'Terrain de la Confrérie', { taille: 10, fond: '#b8c8e0' });
+    if (bati('hospice')) ecriteauRue(scene, o + P.hospice - 90, sol - 104, 'Hospice de la Confrérie', { taille: 10 });
+    if (bati('chapelle')) {
+      ecriteauRue(scene, o + P.chapelle, sol - 194, 'CHAPELLE DU REMPART', { taille: 11, grave: true });
+      if (!jour) for (const [dx, dy, r, c] of [[0, -256, 70, 0xffe0a0], [-74, -142, 50, 0x80a0ff], [74, -142, 50, 0x80a0ff]]) {
+        const h = scene.add.image(o + P.chapelle + dx, sol + dy, 'halo').setScale(r / 64).setTint(c).setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(9.5);
+        scene.tweens.add({ targets: h, alpha: 0.18, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      }
+      lumieres.push([o + P.chapelle, sol - 250, 1.6]);
+    }
+    // le jour, deux soldats de l'escouade montent la garde devant la chapelle
+    if (jour && bati('escouade')) for (const [k, dx] of [[0, -110], [3, 112]]) {
+      const q = imageCorps(scene, o + P.chapelle + dx, sol + 34, 'soldat' + k, 7.2).setFlipX(dx > 0).setDepth(8.45);
+      scene.tweens.add({ targets: q, scaleY: q.scaleY * 1.012, duration: 1500 + k * 200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
+    const quoi = !bati('hospice') ? (confrerieOuverte(G) ? "Un terrain vague, une palissade. La Confrérie du Dernier Rempart cherche un donateur pour y bâtir un hospice (le soir : « La Confrérie »)." : 'Un terrain vague. On dit que la Confrérie voudrait y bâtir quelque chose, si quelqu\'un payait.')
+      : jour ? "L'hospice de la Confrérie. La sœur Aveline étend des draps propres ; un blessé prend le soleil sur le banc." : "L'hospice de la Confrérie. Une bougie veille à chaque fenêtre de l'étage.";
+    ici.regarder(o + P.hospice - 190, 160, 380, 310, quoi);
+    if (bati('chapelle')) ici.regarder(o + P.chapelle - 150, 20, 300, 450, jour ? 'La chapelle du Rempart. Sa cloche sonne pour chaque aventurier qui part vers les terres de la lumière.' + (bati('escouade') ? " Deux soldats de l'escouade montent la garde." : '') : 'La chapelle du Rempart. Les vitraux veillent toute la nuit.');
+  }
   poser('rueMaisonHD_0', P.maison0);
   poser('rueImpasseHD', P.impasse);
   poser(jour ? 'rueForgeHD_jour' : 'rueForgeHD', P.forge);
-  scene.add.image(o + 990, sol + 30, 'bancRue').setOrigin(0.5, 1).setScale(2.6);
+  scene.add.image(o + P.shop - 330, sol + 30, 'bancRue').setOrigin(0.5, 1).setScale(2.6);
   const f = dessinerFacade(scene, o + P.shop, sol, G.nomShop, undefined, { fumee: feuAllume(G, jour) });   // (v0.66 : la fumée, seulement si le feu brûle)
   poser('rueMaisonHD_1', P.maison1);
   scene.add.image(o + P.fontaine, sol + 30, 'fontaineHD').setOrigin(0.5, 1).setScale(2.4);
   poser('rueBanqueHD', P.banque);
   poser(jour ? 'rueArcheHD_jour' : 'rueArcheHD', P.arche);
-  for (const x of [560, 1060, 1640, 2200, 2585]) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
+  for (const x of [380, 560, 1060, 1640, 2200, 2585].map((x, i) => i ? x + LOT_CONFRERIE : x)) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
   lumieres.push([f.porteX, 400, 2.4], [o + P.forge, sol - 10, 1.8], [o + P.banque, sol - 150, 1.4]);
   // les noms : écriteaux peints, lettres gravées, bannière
   ecriteauRue(scene, o + P.maison0 + 4, sol - 112, 'Les Pommeroy', { taille: 10 });
@@ -356,7 +386,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
     else ici.regarder(o + DISEUSE.tente - 100, 280, 200, 190, "La tente de Madame Ysmée est fermée pour la nuit. Une lueur violette filtre sous la toile... Elle ne dort donc jamais ?");
   }
   // ce qu'on regarde
-  ici.regarder(o + 10, 160, 300, 310, jour ? 'Madame Pommeroy bat ses tapis à la fenêtre. Elle te salue d\'un hochement de tête.' : Phaser.Utils.Array.GetRandom(['La maison des Pommeroy. Leur chien ronfle derrière la porte.', 'Une bougie veille chez la vieille Berthe Pommeroy. Elle tricote, comme chaque soir.']));
+  ici.regarder(o + P.maison0 - 150, 160, 300, 310, jour ? 'Madame Pommeroy bat ses tapis à la fenêtre. Elle te salue d\'un hochement de tête.' : Phaser.Utils.Array.GetRandom(['La maison des Pommeroy. Leur chien ronfle derrière la porte.', 'Une bougie veille chez la vieille Berthe Pommeroy. Elle tricote, comme chaque soir.']));
   ici.regarder(o + P.impasse - 90, 240, 180, 230, ouvert ? "Une lanterne rouge brûle au fond de l'impasse du Corbeau. La porte dérobée est ouverte ce soir..." : jour ? "L'impasse du Corbeau. Même en plein jour, le fond reste dans l'ombre." : G.visiteMarcheNoir !== undefined ? "L'impasse est noire. La lanterne rouge est éteinte ce soir." : "Une impasse si sombre qu'on n'en voit pas le fond. On dit qu'une porte basse s'y ouvre, certains soirs.");
   ici.regarder(o + P.forge - 180, 160, 360, 310, jour ? 'Le marteau de Thorgal sonne sur l\'enclume. Pour lui acheter quelque chose, c\'est à son étal, au marché.' : "La forge de Thorgal. Les braises rougeoient encore derrière les vantaux ; on l'entend ronfler à l'étage.");
   ici.regarder(o + P.shop - 220, 200, 440, 270, `${G.nomShop}, ton shop. ${['Une humble chaumière', 'Une jolie maison', 'Une belle maison', 'La plus belle maison du village'][niveauFacade(G)]}.`);
@@ -379,7 +409,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
     ici.porte(o + P.arche, sol, 'La lueur de la fontaine', 'Nymphe', arche);
   }
   if (jour) ici.porte(o + P.arche, sol, 'Le marché ▶', 'Marche', arche);
-  return { porteShop: { x: f.porteX, y: f.porteY }, lumieres, banc: { x: o + 990, sol: sol + 30 } };   // (v0.68 : le banc, où l'on peut s'asseoir)
+  return { porteShop: { x: f.porteX, y: f.porteY }, lumieres, banc: { x: o + P.shop - 330, sol: sol + 30 } };   // (v0.68 : le banc, où l'on peut s'asseoir)
 }
 
 // (v0.66) Le logo de la Banque Centrale Goyenne, dessiné par le joueur : l'inquisiteur barbu à

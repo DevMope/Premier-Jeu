@@ -13,7 +13,7 @@ class LanternesScene extends Phaser.Scene {
   create() {
     const G = this.G = window.GAME;
     this.cameras.main.fadeIn(900);
-    construireRue(this, -600, { jour: false, ici: { regarder: () => {}, porte: () => {} } });
+    construireRue(this, -600 - LOT_CONFRERIE, { jour: false, ici: { regarder: () => {}, porte: () => {} } });
     this.add.rectangle(480, 270, 960, 540, 0x0a0820, 0.25).setDepth(9);
     creerHalo(this);
     // les voisins, de dos, qui regardent le ciel (certains lèvent les bras pour lâcher la leur)
