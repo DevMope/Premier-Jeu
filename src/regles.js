@@ -197,7 +197,9 @@ function chanceEtapeBase(e, colis, voyageur) {
   const abandon = e.malusDetresse || 0;
   // (v1.28) la cloche de la chapelle du Rempart bénit les départs vers les contrées de la lumière
   const cloche = typeof bonusChapelle === 'function' ? bonusChapelle(window.GAME, voyageur.zone) : 0;
-  return Phaser.Math.Clamp((chanceEpreuve(nivE) + enPlus * BONUS_SURPLUS + bonusArme + nb + evenement - danger + beni + mise - abandon + cloche) * saison, 0.05, 0.97);
+  // (v1.33) reprendre une contrée perdue : un peu plus dur selon les points de conquête perdus
+  const reprise = typeof malusDeReprise === 'function' ? malusDeReprise(voyageur) : 0;
+  return Phaser.Math.Clamp((chanceEpreuve(nivE) + enPlus * BONUS_SURPLUS + bonusArme + nb + evenement - danger + beni + mise - abandon + cloche - reprise) * saison, 0.05, 0.97);
 }
 
 // (v0.93) Le bonus de la nymphe sur cette épreuve (0 si elle ne bénit pas, ou pas ce genre d'épreuve)
@@ -375,6 +377,7 @@ function appliquerQuete(G, v, queteId, { butin, duree } = {}) {
 
 // Envoyer un aventurier dans une zone : une des quêtes de la zone, au hasard.
 function envoyerDans(G, v, zone) {
+  delete v.defense; delete v.reprise;   // (v1.33) une défense ou une reprise retirée
   appliquerQuete(G, v, auHasard(ZONES[zone].quetes));
   if (aSaMesure(v, zone)) { v.butin = Math.round(v.butin * BONUS_A_SA_MESURE); v.aSaMesure = true; }
   return v;
@@ -484,8 +487,10 @@ function refusZone(G, v, zone) {
   return null;
 }
 
-function refusDeBase(G, v, zone) {
+function refusDeBase(G, v, zone, sansMenace = false) {
   const z = ZONES[zone];
+  const perdue = !sansMenace && typeof refusMenace === 'function' && refusMenace(G, v, zone);   // (v1.33) les pillards y campent
+  if (perdue) return perdue;
   const banni = PEUPLES_OMBRE.includes(v.race);
   if (z.camp === 'bien' && banni) return "« Les terres de la Confrérie ? Ils me pendraient à l'entrée. Trouve-moi autre chose. »";
   if (z.camp === 'mal' && v.envie !== 'or' && !banni) return "« Les terres d'ombre ? Jamais ! Le Conseil des Gardiens dit que c'est le repaire du mal. Trouve-moi une quête honnête. »";
@@ -826,7 +831,8 @@ function remiseMarchand(G, cle) {
 function prixMarchand(G, cle, id) {
   const offre = G.etals[cle][id];
   const evenement = modifEvenement(G, 'prix', id) || 1;
-  return Math.max(1, Math.round(offre.prix * evenement * prixSaison(G, id) * (1 - remiseMarchand(G, cle))));   // (v0.99 : les prix de saison)
+  const menace = typeof hausseMenace === 'function' ? hausseMenace(G, id) : 1;   // (v1.33) les provisions d'une contrée perdue
+  return Math.max(1, Math.round(offre.prix * evenement * prixSaison(G, id) * menace * (1 - remiseMarchand(G, cle))));   // (v0.99 : les prix de saison)
 }
 
 // Acheter un objet à un étal. Renvoie { erreur } ou { message } (palier de relation franchi).
@@ -1595,6 +1601,7 @@ function nuit(G) {
   sansPlanter('nuitDeLaConfrerie', () => typeof nuitDeLaConfrerie === 'function' && nuitDeLaConfrerie(G));
   sansPlanter('nuitDuRepaire', () => typeof nuitDuRepaire === 'function' && nuitDuRepaire(G));
   sansPlanter('nuitDeLEtage', () => typeof nuitDeLEtage === 'function' && nuitDeLEtage(G));
+  sansPlanter('nuitDeLaMenace', () => typeof nuitDeLaMenace === 'function' && nuitDeLaMenace(G));   // (v1.33) l'annonce, la bataille
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1665,6 +1672,7 @@ function nuit(G) {
   sansPlanter('matinDeLaConfrerie', () => typeof matinDeLaConfrerie === 'function' && G.reveil.lignes.push(...matinDeLaConfrerie(G)));   // (v1.28)
   sansPlanter('matinDuRepaire', () => typeof matinDuRepaire === 'function' && G.reveil.lignes.push(...matinDuRepaire(G)));   // (v1.29)
   sansPlanter('matinDeLEtage', () => typeof matinDeLEtage === 'function' && G.reveil.lignes.push(...matinDeLEtage(G)));   // (v1.30)
+  sansPlanter('matinDeLaMenace', () => typeof matinDeLaMenace === 'function' && G.reveil.lignes.push(...matinDeLaMenace(G)));   // (v1.33) le crieur, la bataille
   sansPlanter('matinDesRiches', () => typeof matinDesRiches === 'function' && G.reveil.lignes.push(...matinDesRiches(G)));   // (v1.32) le mécénat, la neutralité
   sansPlanter('voeuDeSaison', () => { const l = typeof voeuDeSaison === 'function' && voeuDeSaison(G); if (l) G.reveil.lignes.push(l); });   // (v1.23) les souvenirs de la nymphe au complet
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
@@ -2265,6 +2273,9 @@ function terminerAventure(G, parti) {
     }
     connaitre(G, v).succes = succesDe(G, v.nom) + 1;
     message = changerRelation(G, v.nom, POINTS_RELATION.retourVivant);
+    // (v1.33) une défense ne compte pas pour la conquête (la bataille s'en charge) ; une reprise compte pour la reprise
+    const menace = typeof apresMissionMenace === 'function' ? apresMissionMenace(G, parti) : null;
+    if (menace) message = (message ? message + ' ' : '') + menace;
     if (parti.conquise) message = (message ? message + ' ' : '') + `⚑ ${ZONES[v.zone].nom} : contrée conquise ! Son drapeau flotte sur ta carte.`;
     // (v0.60) Lumière : les villages remercient (un cadeau en nature demain matin).
     // Ombre : plus d'or, un objet interdit glissé sous le manteau... et la garde qui rôde.
@@ -3021,6 +3032,7 @@ function avancerEvenements(G) {
   if (G.annonceCollection) { lignes.unshift(G.annonceCollection); G.annonceCollection = null; }   // (v1.23) une série complète dans la vitrine   // (v1.10) la commande scellée, livrée ou manquée
   if (G.annonceRival) { lignes.unshift(G.annonceRival); G.annonceRival = null; }
   if (G.annonceMecenat) { lignes.unshift(G.annonceMecenat); G.annonceMecenat = null; }   // (v1.32) le mécénat, la neutralité
+  if (G.annonceMenace) { lignes.unshift(G.annonceMenace); G.annonceMenace = null; }   // (v1.33) la contrée menacée, tenue, tombée ou reprise
   if (G.annonceConfrerie) { lignes.unshift(G.annonceConfrerie); G.annonceConfrerie = null; }   // (v1.28) la Confrérie remercie, l'escouade avance   // (v1.11) le paon ouvre, ferme, ou sa maison change de mains
   // (v0.99) le premier jour d'une saison : le crieur l'annonce, avec ce qu'elle change au marché
   if (typeof saisonDe === 'function' && dateDuJour(G).jourDuMois === 1) {
