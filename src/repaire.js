@@ -45,6 +45,15 @@ function installerRepaire(G) {
 function gardeAchetee(G) { return repaireA(G, 'garde') && !(G.repaire.manquee > 0); }
 // (appelé à la place d'une visite) la garde passe son chemin
 function gardeDetournee(G) { return gardeAchetee(G); }
+// (v1.31) le soir, pour demain : l'enveloppe de cette nuit compte déjà (payée ou manquée)
+function gardeAcheteeDemain(G) {
+  const r = G.repaire;
+  if (!r) return false;
+  if (r.chantier === 'garde' || (repaireA(G, 'garde') && G.jour % 7 === 0)) return peutPayer(G, REPAIRE.enveloppe);
+  return gardeAchetee(G);
+}
+// (v1.31) l'enveloppe va manquer cette nuit : la garde viendra demain, fâchée
+function enveloppeVaManquer(G) { return repaireA(G, 'garde') && G.jour % 7 === 0 && !peutPayer(G, REPAIRE.enveloppe); }
 
 // --- La cave : ce que la fouille trouve quand même ---
 // Renvoie la liste des interdits saisis {id: n}, en laissant les autres à leur place
@@ -62,7 +71,7 @@ function interditsTotal(G) { return Object.values(G.interdits || {}).reduce((s, 
 
 // --- Les informateurs ---
 // La veille au soir : le billet qui prévient de la garde (comme le chat, mais à coup sûr)
-function alerteInformateurs(G) { return repaireA(G, 'informateurs') && !gardeAchetee(G) && !!G.gardeDemain && G.garde && G.garde.visites > 0; }
+function alerteInformateurs(G) { return repaireA(G, 'informateurs') && !gardeAcheteeDemain(G) && !!G.gardeDemain && G.garde && G.garde.visites > 0; }
 // Le tuyau du matin (et, parfois, un secret de plus pour le carnet)
 function tuyauDuMatin(G) {
   if (!repaireA(G, 'informateurs')) return [];
@@ -89,7 +98,11 @@ function tuyauDuMatin(G) {
 function nuitDuRepaire(G) {
   const r = G.repaire;
   if (!r) return;
-  if (r.chantier) { r.bati[r.chantier] = G.jour + 1; r.annonce = r.chantier; r.chantier = null; }
+  if (r.chantier) {
+    // (v1.31) la garde achetée : le capitaine prend la première enveloppe dès cette nuit
+    if (r.chantier === 'garde' && peutPayer(G, REPAIRE.enveloppe)) { payer(G, REPAIRE.enveloppe, 'repaire'); r.enveloppe = G.jour; r.manquee = 0; }
+    r.bati[r.chantier] = G.jour + 1; r.annonce = r.chantier; r.chantier = null;
+  }
   if (repaireA(G, 'garde') && G.jour % 7 === 0) {
     if (peutPayer(G, REPAIRE.enveloppe)) { payer(G, REPAIRE.enveloppe, 'repaire'); r.enveloppe = G.jour; r.manquee = 0; }
     else { r.manquee = (r.manquee || 0) + 1; G.gardeDemain = true; }   // (pas d'enveloppe : la garde revient dès demain, et elle est fâchée)
@@ -98,13 +111,14 @@ function nuitDuRepaire(G) {
 function matinDuRepaire(G) {
   const lignes = [], r = G.repaire;
   if (!r) return lignes;
+  const premiere = r.annonce === 'garde';
   if (r.annonce) {
     lignes.push({ cave: "Cette nuit, des ouvriers sans nom ont creusé sous l'arrière-boutique : la cave est prête, la trappe cachée sous le tapis.",
       informateurs: 'Fil-de-Fer et deux autres gamins des rues travaillent pour toi désormais. Ils voient tout, ils entendent tout.',
-      garde: "Minuit. Le capitaine Brisefer a pris la première enveloppe sans un mot. La garde fermera les yeux, tant qu'elle arrive chaque semaine." }[r.annonce] + ' ' + (REPAIRE.projets.find(p => p.id === r.annonce) || {}).effet);
+      garde: (r.enveloppe === G.jour - 1 ? `Minuit. Le capitaine Brisefer a pris la première enveloppe sans un mot (−${REPAIRE.enveloppe} p.).` : 'Minuit. Le capitaine Brisefer est passé : il prendra sa première enveloppe en fin de semaine.') + " La garde fermera les yeux, tant qu'elle arrive chaque semaine." }[r.annonce] + ' ' + (REPAIRE.projets.find(p => p.id === r.annonce) || {}).effet);
     r.annonce = null;
   }
-  if (r.enveloppe === G.jour - 1) lignes.push(`Minuit : le capitaine Brisefer est passé prendre l'enveloppe de la semaine (−${REPAIRE.enveloppe} p.).`);
+  if (r.enveloppe === G.jour - 1 && !premiere) lignes.push(`Minuit : le capitaine Brisefer est passé prendre l'enveloppe de la semaine (−${REPAIRE.enveloppe} p.).`);
   if (r.manquee > 0 && G.gardeDemain) lignes.push("L'enveloppe n'est pas arrivée cette semaine. Le capitaine n'aime pas attendre : la garde vient aujourd'hui, et elle est fâchée.");
   lignes.push(...tuyauDuMatin(G));
   return lignes;

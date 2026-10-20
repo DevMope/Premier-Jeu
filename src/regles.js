@@ -182,7 +182,9 @@ function chanceEtapeBase(e, colis, voyageur) {
   const niv = NIVEAUX_AVENTURIER[voyageur.niveau] || NIVEAUX_AVENTURIER.novice;
   const evenement = modifEvenement(window.GAME, 'danger', voyageur.zone);
   const etoiles = ZONES[voyageur.zone] ? ZONES[voyageur.zone].danger : 1;
-  // (v1.25) le bonus (ou le malus) du rang : un novice est fragile partout, un aguerri n'a plus rien en plus
+  // (v1.25) le bonus (ou le malus) du rang : un novice est fragile partout, un aguerri n'a plus rien en plus.
+  // Le malus du novice compte deux fois (dans `nb` et dans `danger`) : −10 % par épreuve en tout. C'est ce réglage-là
+  // qui a été mesuré (novice 86/67/47/42 %) et retenu en v1.25 : on le garde tel quel (housekeep v1.31).
   const nb = niv.bonus;
   const danger = Math.max(0, MALUS_DANGER * (etoiles - 1) - nb);
   // (v0.67) la bénédiction de la nymphe : les épreuves d'eau réussissent mieux pendant quelques jours
@@ -1538,6 +1540,15 @@ function depensesDeLaNuit(G) {
   return prets + salaires(G) + forge + (jourDeLoyer(G) ? loyerSemaine(G) : 0);
 }
 
+// (v1.31) une mécanique de la nuit ou du matin qui lève une erreur : on la note et la nuit continue
+const ERREURS_NOTEES = new Set();
+function sansPlanter(nom, f) {
+  try { f(); } catch (e) {
+    if (ERREURS_NOTEES.has(nom)) return;   // (une fois suffit : le HUD l'appelle à chaque image)
+    ERREURS_NOTEES.add(nom); console.error(nom, e);
+    if (typeof noterJournal === 'function') noterJournal(`erreur ${nom} : ${e.message}`);
+  }
+}
 function nuit(G) {
   payerEcheances(G);
   // (v0.93) la fiole de la nymphe se remplit chaque semaine : une potion de plus dans ta réserve
@@ -1579,9 +1590,11 @@ function nuit(G) {
   if (typeof nuitDuRival === 'function') nuitDuRival(G);   // (v1.11) les comptes du jour face au paon (après le Conseil : il voit la commande manquée le soir même)
   if (typeof nuitDeLOrphelinat === 'function') nuitDeLOrphelinat(G);   // (v1.12) le chantier de l'orphelinat
   if (typeof nuitDuBar === 'function') nuitDuBar(G);   // (v1.16) le chantier du petit bar
-  if (typeof nuitDeLaConfrerie === 'function') nuitDeLaConfrerie(G);
-  if (typeof nuitDuRepaire === 'function') nuitDuRepaire(G);
-  if (typeof nuitDeLEtage === 'function') nuitDeLEtage(G);   // (v1.30) le chantier de l'étage   // (v1.29) le chantier du repaire, l'enveloppe du capitaine   // (v1.28) les chantiers de la Confrérie, la marche de l'escouade
+  // (v1.28) les chantiers de la Confrérie, la marche de l'escouade ; (v1.29) le repaire, l'enveloppe du capitaine ; (v1.30) l'étage
+  // (v1.31) une erreur dans l'un d'eux ne doit jamais bloquer la nuit
+  sansPlanter('nuitDeLaConfrerie', () => typeof nuitDeLaConfrerie === 'function' && nuitDeLaConfrerie(G));
+  sansPlanter('nuitDuRepaire', () => typeof nuitDuRepaire === 'function' && nuitDuRepaire(G));
+  sansPlanter('nuitDeLEtage', () => typeof nuitDeLEtage === 'function' && nuitDeLEtage(G));
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1649,10 +1662,10 @@ function nuit(G) {
   if (typeof matinDuRival === 'function') for (const l of matinDuRival(G)) G.reveil.lignes.push(l);   // (v1.11) le paon ouvre, le bilan du mois
   if (typeof matinDeLOrphelinat === 'function') for (const l of matinDeLOrphelinat(G)) G.reveil.lignes.push(l);   // (v1.12) les courses des petits, la rumeur
   if (typeof matinDuBar === 'function') for (const l of matinDuBar(G)) G.reveil.lignes.push(l);
-  if (typeof matinDeLaConfrerie === 'function') for (const l of matinDeLaConfrerie(G)) G.reveil.lignes.push(l);   // (v1.28)
-  if (typeof matinDuRepaire === 'function') for (const l of matinDuRepaire(G)) G.reveil.lignes.push(l);   // (v1.29)
-  if (typeof matinDeLEtage === 'function') for (const l of matinDeLEtage(G)) G.reveil.lignes.push(l);   // (v1.30)
-  if (typeof voeuDeSaison === 'function') { const l = voeuDeSaison(G); if (l) G.reveil.lignes.push(l); }   // (v1.23) les souvenirs de la nymphe au complet   // (v1.16) le petit bar : l'installation, la rumeur vraie
+  sansPlanter('matinDeLaConfrerie', () => typeof matinDeLaConfrerie === 'function' && G.reveil.lignes.push(...matinDeLaConfrerie(G)));   // (v1.28)
+  sansPlanter('matinDuRepaire', () => typeof matinDuRepaire === 'function' && G.reveil.lignes.push(...matinDuRepaire(G)));   // (v1.29)
+  sansPlanter('matinDeLEtage', () => typeof matinDeLEtage === 'function' && G.reveil.lignes.push(...matinDeLEtage(G)));   // (v1.30)
+  sansPlanter('voeuDeSaison', () => { const l = typeof voeuDeSaison === 'function' && voeuDeSaison(G); if (l) G.reveil.lignes.push(l); });   // (v1.23) les souvenirs de la nymphe au complet
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);
@@ -2067,7 +2080,8 @@ function nuitDuChat(G) {
 }
 // (appelé le soir) la garde viendra-t-elle demain ? On le tire dès ce soir : ton chat le sent parfois.
 function tirerGardeDuLendemain(G) {
-  if (typeof gardeDetournee === 'function' && gardeDetournee(G)) { G.gardeDemain = false; return false; }   // (v1.29) la garde achetée
+  if (typeof gardeAcheteeDemain === 'function' && gardeAcheteeDemain(G)) { G.gardeDemain = false; return false; }   // (v1.29) la garde achetée (v1.31 : l'enveloppe de cette nuit comprise)
+  if (typeof enveloppeVaManquer === 'function' && enveloppeVaManquer(G)) G.gardeDemain = true;   // (v1.31 : et sans enveloppe, les informateurs le savent dès ce soir)
   if (G.gardeTiree === G.jour + 1) return !!G.gardeDemain;
   G.gardeTiree = G.jour + 1;
   if (!G.gardeDemain) { G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 }; G.jour++; const vient = gardeAuHasard(G); G.jour--; if (vient) G.gardeDemain = true; }

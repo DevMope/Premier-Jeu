@@ -77,12 +77,14 @@ function piecesAuRetour(G, v) {
   }
   return null;
 }
+// (v1.31) une pièce vendue au collectionneur ne revient pas d'un simple achat (une fronde à 6 p., un vœu à 1 p.)
+function pieceVendue(G, serie, id) { return !!(G.piecesVendues && (G.piecesVendues[serie] || []).includes(id)); }
 // Une arme forgée ou achetée : la première de chaque peuple entre dans la vitrine
-function pieceArme(G, id) { return COLLECTIONS.armes.pieces[id] ? gagnerPiece(G, 'armes', id) : null; }
+function pieceArme(G, id) { return COLLECTIONS.armes.pieces[id] && !pieceVendue(G, 'armes', id) ? gagnerPiece(G, 'armes', id) : null; }
 // Un vœu à la fontaine : un souvenir tous les dix
 function pieceNymphe(G) {
   if (!G.fontainePieces || G.fontainePieces % REGLES_COLLECTIONS.voeux) return null;
-  const reste = Object.keys(COLLECTIONS.nymphe.pieces).filter(p => !aPiece(G, 'nymphe', p));
+  const reste = Object.keys(COLLECTIONS.nymphe.pieces).filter(p => !aPiece(G, 'nymphe', p) && !pieceVendue(G, 'nymphe', p));
   return reste.length ? gagnerPiece(G, 'nymphe', reste[0]) : null;
 }
 // Une commande royale livrée : le Conseil te confie une relique
@@ -107,7 +109,7 @@ function voeuDeSaison(G) {
   const cle = saisonDe(G) + ':' + Math.floor((G.jour - 1) / 112);   // (une fois par saison de chaque année)
   if (G.voeuSaison === cle) return null;
   G.voeuSaison = cle;
-  G.nymphe = G.nymphe || {};
+  G.nymphe = G.nymphe || { visites: 0 };
   G.nymphe.benie = G.jour + NYMPHE.benediction.jours - 1;
   return "Un souffle frais passe sous la porte : la nymphe a exaucé ton vœu de saison. Les rivières te seront douces cette semaine.";
 }
@@ -134,6 +136,7 @@ function vendreAuCollectionneur(G, v) {
   const etaitComplete = serieComplete(G, v.serie);
   G.collections[v.serie] = G.collections[v.serie].filter(p => p !== v.piece);
   if (v.serie === 'carte') G.carteAncienne = false;
+  G.piecesVendues = G.piecesVendues || {}; (G.piecesVendues[v.serie] = G.piecesVendues[v.serie] || []).push(v.piece);
   encaisser(G, v.prix, 'collections');
   return etaitComplete ? `La série n'est plus complète : le titre « ${COLLECTIONS[v.serie].titre} » et son bonus s'en vont avec la pièce.` : null;
 }

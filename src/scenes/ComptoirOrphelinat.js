@@ -162,6 +162,7 @@ Object.assign(CounterScene.prototype, {
     if (!res.ok) { Son.jouer('refus'); this.raconter(res.erreur, 'Les coursiers'); return; }
     if (pourLeClient) this.colis[id] = (this.colis[id] || 0) + 1;
     else G.stock[id] = (G.stock[id] || 0) + 1;
+    if (typeof pieceArme === 'function') pieceArme(G, id);   // (v1.31 : une arme achetée ici compte aussi pour la vitrine)
     Son.jouer('achat');
     const d = dureeCourse(G);
     if (d) this.avancer(d, 'le coursier court au marché');

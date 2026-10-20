@@ -32,7 +32,7 @@ function repaireDuSoir(scene, suite) {
   L.add(scene.add.text(0, -139, `Déjà payé : ${paye.toLocaleString('fr-FR')} p. sur ${total.toLocaleString('fr-FR')} p.`, style(11, '#f0c8a0', { fontStyle: 'bold' })).setOrigin(0.5, 0));
   const suivant = projetRepaire(G);
   REPAIRE.projets.forEach((p, i) => {
-    const x = -212 + i * 212, k = scene.add.container(x, 28); L.add(k);
+    const x = -212 + i * 212, k = scene.add.container(x, 22); L.add(k);
     const fait = !!(r.bati[p.id]), chantier = r.chantier === p.id, bloque = !fait && !chantier && suivant && suivant.id !== p.id;
     k.add(scene.add.rectangle(0, 0, 200, 290, fait ? 0x2a1414 : 0x3a1c1a).setStrokeStyle(3, 0xa02a20));
     k.add(scene.add.text(0, -130, p.nom, style(15, '#f0c8a0', { fontStyle: 'bold' })).setOrigin(0.5));
@@ -48,8 +48,8 @@ function repaireDuSoir(scene, suite) {
   let note = 'Le repaire est complet. Personne ne sait ce qui dort sous ton comptoir.';
   if (r.chantier) note = 'Des ouvriers sans nom viendront cette nuit. Tu n’entendras rien.';
   else if (suivant) note = peutPayer(G, suivant.prix) ? 'Chaque projet s’installe en une nuit, sans bruit.' : `Il te manque ${(suivant.prix - Math.floor(G.argent)).toLocaleString('fr-FR')} pièces pour ${suivant.nom.toLowerCase()}.`;
-  if (repaireA(G, 'garde')) note += ` L'enveloppe du capitaine : ${REPAIRE.enveloppe} p. chaque fin de semaine.`;
-  L.add(scene.add.text(0, 186, note, style(12, suivant && !r.chantier && !peutPayer(G, suivant.prix) ? '#ff8a7a' : '#e0c8a8', { fontStyle: 'bold italic', wordWrap: { width: 580 }, align: 'center' })).setOrigin(0.5));
+  if (repaireA(G, 'garde')) note = (suivant ? note + ' ' : 'Le repaire est complet. ') + `L'enveloppe du capitaine : ${REPAIRE.enveloppe} p. chaque fin de semaine.`;
+  L.add(scene.add.text(0, 191, note, style(12, suivant && !r.chantier && !peutPayer(G, suivant.prix) ? '#ff8a7a' : '#e0c8a8', { fontStyle: 'bold italic', wordWrap: { width: 580 }, align: 'center' })).setOrigin(0.5));
   if (suivant && !r.chantier) bouton(480, 492, 340, `${suivant.id === 'garde' ? 'Acheter' : suivant.id === 'cave' ? 'Creuser' : 'Payer'} ${suivant.nom.toLowerCase()} (${suivant.prix.toLocaleString('fr-FR')} p.)`, () => {
     const res = installerRepaire(G);
     if (!res.ok) { Son.jouer('refus'); return; }

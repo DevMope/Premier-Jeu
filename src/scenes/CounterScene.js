@@ -1464,7 +1464,7 @@ class CounterScene extends Phaser.Scene {
       const s = SERVICES_MAFIA[entree.service];
       this.dire(`« Notre corbeau a porté ton paquet. À ton tour. » ${s.demande}`, qui);
       this.choix([`Rendre le service (${s.nom.toLowerCase()})`, () => {
-        const msg = rendreService(G, entree.service);
+        const msg = rendreService(G, entree.service, true);
         Son.jouer('glisse');
         this.dire(`${pre} hoche à peine la tête. « Nous sommes quittes. »${msg ? ' ' + msg : ''}`, qui);
         partir();

@@ -57,7 +57,8 @@ function visitesMafia(G) {
   if (!m.serpentVu && rangMafia(G) >= 1) { m.serpentVu = true; return [{ type: 'serpent' }]; }
   const services = Object.keys(SERVICES_MAFIA).filter(s => (s !== 'colis' || !m.colis) && (s !== 'aventurier' || !m.detour));
   // (v1.22) le corbeau d'un message de détresse : le collecteur vient réclamer son service dès le lendemain
-  if (m.serviceDu && services.length) { m.serviceDu = false; return [{ type: 'collecteur', service: auHasard(services), du: true }]; }
+  // (le jour de la collecte, le pizzo passe d'abord : le service attend le lendemain)
+  if (m.serviceDu && services.length && G.jour % 7 !== MAFIA.jourCollecte) { m.serviceDu = false; return [{ type: 'collecteur', service: auHasard(services), du: true }]; }
   if (G.jour % 7 !== MAFIA.jourCollecte) return [];
   return [{ type: 'collecteur', service: rangMafia(G) < 2 && Math.random() < 0.5 ? auHasard(services) : null }];
 }
@@ -69,13 +70,14 @@ function payerPizzo(G) { const x = montantPizzo(G); payer(G, x, 'pizzo'); return
 function refuserPizzo(G) { const m = mafia(G); m.represailles = m.bande; m.impayes++; }
 
 // Un service rendu : la dette fond (ou la bande te paie), la jauge penche vers l'ombre, et l'on monte en grade
-function rendreService(G, id) {
+// (v1.31) `du` : le service dû pour le corbeau ne fait que solder la faveur : ni dette effacée, ni paie, ni grade
+function rendreService(G, id, du = false) {
   const m = mafia(G), s = SERVICES_MAFIA[id];
   const avant = rangMafia(G);
-  m.services++;
+  if (!du) m.services++;
   G.reussites.mal = (G.reussites.mal || 0) + 1;
   pencher(G, 'piege');
-  let reste = s.efface;
+  let reste = du ? 0 : s.efface;
   for (const p of G.prets.filter(x => x.preteur === 'La Main Noire')) { const k = Math.min(reste, p.restant); p.restant -= k; reste -= k; }
   G.prets = G.prets.filter(p => p.restant > 0);
   if (reste > 0) encaisser(G, Math.round(reste / 2), 'pizzo');

@@ -336,7 +336,9 @@ Object.assign(CounterScene.prototype, {
       const maj = l.majore ? (l.majoration || 1.5) : 1;
       if (l.majore) rangs.push([`Majoration (${(G.conseil && G.conseil.fautes) >= 2 ? `${G.conseil.fautes >= 3 ? 'la disgrâce' : 'le sceau noir'}` : 'commande manquée'})`, `× ${String(Math.round(maj * 100) / 100).replace('.', ',')}  →  ${pc(l.tauxBase * maj)}`, '#b02020']);
       if (l.ristourne) rangs.push(['Ristourne (commande livrée)', `× ½  →  ${pc(l.taux)}`, '#2f5a2a']);
-      const pasR = rangs.length > 4 ? 26 : 30;
+      // (v1.31) les reliques du Conseil : −10 %, à voir sur la lettre
+      if ((l.reliques || 1) < 1) rangs.push(['Reliques du Conseil', `× ${String(l.reliques).replace('.', ',')}  →  ${pc(l.taux * l.reliques)}`, '#2f5a2a']);
+      const pasR = rangs.length > 5 ? 22 : rangs.length > 4 ? 26 : 30;
       rangs.forEach(([a, b, c], i) => {
         const coul = c || '#3b2410';
         L.add(this.add.text(-190, -52 + i * pasR, a, style(14, coul, { fontStyle: 'bold' })));
@@ -345,7 +347,7 @@ Object.assign(CounterScene.prototype, {
       L.add(this.add.rectangle(0, 76, 380, 2, 0x8a6a3a));
       L.add(this.add.text(-190, 88, 'À payer', style(18, '#5a0e0e', { fontStyle: 'bold' })));
       L.add(this.add.text(190, 88, l.montant > 0 ? p(l.montant) : 'rien', style(18, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(1, 0));
-      const sans = Math.round(Math.max(0, l.fortune - l.franchise) * l.tauxBase * (l.majore && l.ristourne ? 0.5 : 1));   // (sans la majoration, mais avec la ristourne s'il y en a une)
+      const sans = Math.round(Math.max(0, l.fortune - l.franchise) * l.tauxBase * (l.majore && l.ristourne ? 0.5 : 1) * (l.reliques || 1));   // (sans la majoration, mais avec la ristourne s'il y en a une)
       const note = l.dette ? `Il te manquait ${p(l.dette)} : une dette envers le Conseil, remboursée chaque nuit.`
         : l.montant === 0 ? (l.fortune <= l.franchise ? `Ce mois-ci, ta fortune ne dépasse pas la franchise : rien à payer.` : 'Ce mois-ci, presque rien au-delà de la franchise : rien à payer.')
           : l.majore ? `(sans la majoration : ${p(sans)}${l.encoreMajore ? ' ; encore un mois majoré après celui-ci' : ''})`

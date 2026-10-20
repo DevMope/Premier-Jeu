@@ -313,8 +313,9 @@ class HudScene extends Phaser.Scene {
       else if (this.panneauRival) this.infoRival(false);
       if (!sansFeu && this.bulleBuche) this.infoBuche(false);
       this.relationsEnDirect(G, s);
-      this.piecesEnDirect(G);   // (v1.23) « Nouvelle pièce ! » pour la vitrine
-      this.penseesEnDirect(G);   // (v1.24) JeuneGoy pense à partir
+      // (v1.23) « Nouvelle pièce ! » pour la vitrine ; (v1.24) JeuneGoy pense à partir (v1.31 : jamais de quoi figer le jeu)
+      sansPlanter('piecesEnDirect', () => this.piecesEnDirect(G));
+      sansPlanter('penseesEnDirect', () => this.penseesEnDirect(G));
       // (v0.84) la lumière et l'ombre
       const j = jaugeCamp(G), pal = palierCamp(G);
       if (j !== this.campAffiche) {

@@ -48,12 +48,12 @@ function bonusChapelle(G, zone) { return G && confrerieA(G, 'chapelle') && ZONES
 
 // L'escouade : chaque fin de semaine, une contrée de la lumière (ouverte, pas encore conquise) avance d'un cran
 function marcheDeLEscouade(G) {
+  G.conquete = G.conquete || {};
   const zs = Object.keys(ZONES).filter(z => ZONES[z].camp === 'bien' && zoneOuverte(G, z) && ((G.conquete || {})[z] || 0) < conqueteZone(z));
   if (!zs.length) return null;
   // (la plus avancée d'abord : l'escouade finit ce qui est commencé)
   zs.sort((a, b) => ((G.conquete[b] || 0) / conqueteZone(b)) - ((G.conquete[a] || 0) / conqueteZone(a)));
   const z = zs[0];
-  G.conquete = G.conquete || {};
   G.conquete[z] = (G.conquete[z] || 0) + 1;
   const conquise = G.conquete[z] >= conqueteZone(z);
   return { zone: z, conquise };

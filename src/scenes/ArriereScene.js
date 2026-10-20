@@ -360,7 +360,7 @@ class ArriereScene extends Phaser.Scene {
   }
   // On descend l'échelle : la voûte, les caisses, ce qui dort à l'abri
   ouvrirCave() {
-    if (this.cave) return;
+    if (this.cave && this.cave.active) return;   // (v1.31 : une cave quittée par le menu ne bloque plus la trappe)
     const G = this.G, c = this.cave = this.add.container(0, 0).setDepth(50);
     Son.jouer('porte');
     c.add(this.add.image(0, 0, 'caveRepaire').setOrigin(0).setScale(2).setInteractive());

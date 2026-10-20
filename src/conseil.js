@@ -223,8 +223,9 @@ function calculImpot(G) {
   const majore = (cs.majoreJusqua || 0) >= G.jour, ristourne = !!cs.ristourne;
   const majoration = majore ? (cs.majoration || CONSEIL.commande.echec.majoration) : 1;
   const taux = I.taux * et * majoration * (ristourne ? I.ristourne : 1);
-  const montant = Math.round(Math.max(0, fortune - franchise) * taux * (typeof multImpotCollection === 'function' ? multImpotCollection(G) : 1));   // (v1.23 : les reliques du Conseil, −10 %)
-  return { et, fortune, dettes: Math.round(dettes), franchise, tauxBase: I.taux * et, taux, majore, majoration, ristourne, montant };
+  const reliques = typeof multImpotCollection === 'function' ? multImpotCollection(G) : 1;   // (v1.23 : les reliques du Conseil, −10 %)
+  const montant = Math.round(Math.max(0, fortune - franchise) * taux * reliques);
+  return { et, fortune, dettes: Math.round(dettes), franchise, tauxBase: I.taux * et, taux, majore, majoration, ristourne, reliques, montant };
 }
 
 function payerImpotDuConseil(G) {

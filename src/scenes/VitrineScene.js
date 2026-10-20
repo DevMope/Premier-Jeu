@@ -42,7 +42,9 @@ class VitrineScene extends Phaser.Scene {
     if (this.vue === 'carte') this.carteAncienne(); else this.vitrine();
   }
 
-  vider() { this.children.removeAll(true); this.tweens.killAll(); }
+  // (v1.31) les masques (make.graphics) ne sont pas dans la scène : on les détruit à la main
+  vider() { this.children.removeAll(true); this.tweens.killAll(); (this.masques || []).forEach(m => m.destroy()); this.masques = []; }
+  masque(g) { (this.masques = this.masques || []).push(g); return g; }
 
   vitrine() {
     this.vider(); this.vue = 'vitrine';
@@ -98,14 +100,14 @@ class VitrineScene extends Phaser.Scene {
       [[604, 184], [660, 196], [740, 206], [840, 198], [W, 204], [W, H], [596, H], [610, 330], [598, 260]],
     ];
     const ids = Object.keys(COLLECTIONS.carte.pieces), n = nbPieces(G, 'carte');
-    const masqueTrace = s.make.graphics();
+    const masqueTrace = this.masque(s.make.graphics());
     decoupe.forEach((poly, i) => {
       const dx = [0, 6, 0, 0, 4, 10][i], dy = [0, 3, 0, 0, 8, 5][i];
       const pts = poly.map(([x, y]) => { const q = P(x, y); return { x: q.x + dx, y: q.y + dy }; });
       if (!aPiece(G, 'carte', ids[i])) { s.add.graphics().lineStyle(2, 0xd8c090, 0.25).strokePoints(pts, true); return; }
       s.add.graphics().fillStyle(0x0a0602, 0.45).fillPoints(pts.map(q => ({ x: q.x + 5, y: q.y + 6 })), true);
       const im = s.add.image(X0 + dx, Y0 + dy, 'carteHD').setOrigin(0).setScale(S).setTint(0xd8b48a);
-      const m = s.make.graphics(); m.fillStyle(0xffffff).fillPoints(pts, true); im.setMask(m.createGeometryMask());
+      const m = this.masque(s.make.graphics()); m.fillStyle(0xffffff).fillPoints(pts, true); im.setMask(m.createGeometryMask());
       masqueTrace.fillStyle(0xffffff).fillPoints(pts, true);
       const taches = s.add.graphics(); taches.setMask(m.createGeometryMask());
       for (let k = 0; k < 6; k++) taches.fillStyle(0x5a3a14, 0.08 + (k % 3) * 0.03).fillCircle(pts[0].x + 40 + ((k * 97 + i * 53) % 200), pts[0].y + 30 + ((k * 61 + i * 37) % 120), 18 + (k * 7) % 22);
@@ -130,7 +132,7 @@ class VitrineScene extends Phaser.Scene {
     const mx = 880, my = 300, md = s.add.container(mx, my).setDepth(10);
     md.add(s.add.circle(0, 0, 48, 0x2a1a10)); md.add(s.add.circle(0, 0, 45, 0xc9a227)); md.add(s.add.circle(0, 0, 41, 0x3a4a6a));
     const j = s.add.image(mx, my + 132, textureJoueur(s, G)).setOrigin(0.5, 1).setScale(echelleJoueur(11)).setDepth(10.1);
-    const mk = s.make.graphics().fillCircle(mx, my, 41); j.setMask(mk.createGeometryMask());
+    const mk = this.masque(s.make.graphics()).fillCircle(mx, my, 41); j.setMask(mk.createGeometryMask());
     s.tweens.add({ targets: j, y: j.y - 2, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     const manque = totalSerie('carte') - n;
     const pense = !n ? '« Rien qu\'un vieux coin de table... Un jour, peut-être, j\'aurai un morceau de cette carte dont parlent les anciens. »'

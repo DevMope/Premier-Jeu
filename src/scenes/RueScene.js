@@ -25,7 +25,7 @@ class RueScene extends Phaser.Scene {
     };
     const r = construireRue(this, 0, { jour: true, ici });
     const toits = this.children.list.filter(o => o.type === 'Image' && o.texture && /^(rueMaisonHD|rueForgeHD|rueImpasseHD|facadeHD)/.test(o.texture.key)).map(o => [o, /^facadeHD/.test(o.texture.key) ? 0.34 : 0.12]);
-    decorSaison(this, { sol: sol, largeur: LARGEUR_RUE, prof: 8.3, meules: [[LARGEUR_RUE * 0.42, 22]], bonhomme: LARGEUR_RUE * 0.62, toits });   // (v0.99 : la saison)
+    decorSaison(this, { sol: sol, largeur: LARGEUR_RUE, prof: 8.3, meules: [[LOT_CONFRERIE + (LARGEUR_RUE - LOT_CONFRERIE) * 0.42, 22]], bonhomme: LOT_CONFRERIE + (LARGEUR_RUE - LOT_CONFRERIE) * 0.62, toits });   // (v0.99 : la saison)
     // (v0.99) les bruits de la saison, doucement, sous la musique : oiseaux, cigales, vent
     if (typeof saisonDe === 'function') { Son.nature(true, { saison: saisonDe(G), volume: 0.7 }); this.events.once('shutdown', () => Son.nature(false)); this.events.once('sleep', () => Son.nature(false)); }
     this.porteShop = r.porteShop;

@@ -116,6 +116,7 @@ class ExpressScene extends Phaser.Scene {
     offre.qte--;
     if (pourLeClient) c.colis[id] = (c.colis[id] || 0) + 1;
     else G.stock[id]++;
+    if (typeof pieceArme === 'function') pieceArme(G, id);   // (v1.31 : une arme achetée ici compte aussi pour la vitrine)
     Son.jouer('achat');
     this.achats.push(`${ITEMS[id].nom} (${pourLeClient ? 'dans le baluchon' : 'dans ta réserve'})`);
     this.parler(colporteur ? auHasard(['Bien choisi ! Ça te servira, crois-moi.', 'Et une chose de moins à porter. Merci !']) : auHasard(['Hé hé ! Merci pour les pièces...', 'Excellent choix. Excellent prix. Pour moi.', 'Vendu ! Grippesou est content.']));

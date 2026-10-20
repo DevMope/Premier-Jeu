@@ -149,7 +149,7 @@ class BureauScene extends Phaser.Scene {
           }
           const v = e.parti.voyageur;
           return { nom: v.nom, race: v.race,
-            ligne: e.type === 'retour' ? 'Revient de mission !' : 'Son carnet est posé sur ton comptoir...',
+            ligne: e.type === 'retour' ? 'Revient de mission !' : e.type === 'detresse' ? 'Un pigeon : son appel à l’aide' : 'Son carnet est posé sur ton comptoir...',
             detail: () => [`Parti${v.feminin ? 'e' : ''} le jour ${e.parti.depart} : ${v.quete}`] };
         }).filter(Boolean);
       }

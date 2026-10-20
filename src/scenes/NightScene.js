@@ -6,7 +6,8 @@ class NightScene extends Phaser.Scene {
 
   init(data) {
     this.matin = !!(data && data.matin);
-    this.fenetreFoyer = null;   // (v1.07 : une fenêtre du foyer d'une soirée quittée par le menu bloquait le coucher)
+    this.fenetreFoyer = null;
+    this.menuProjets = null;   // (v1.31 : pareil pour le menu « Tes projets »)   // (v1.07 : une fenêtre du foyer d'une soirée quittée par le menu bloquait le coucher)
     // Phaser garde les données d'un démarrage à l'autre : sans ce ménage, le soir du jour 2
     // (lancé sans données) se croyait encore « le matin » — plus de bouton pour aller dormir.
     this.sys.settings.data = {};
