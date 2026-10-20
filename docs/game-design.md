@@ -2770,3 +2770,21 @@ difficulté facile / normale / difficile pourra jouer là-dessus.
 - **Planche 56 v2 : tout validé** (la table, l'échelle des personnages).
 - **Planche 58 : validée**, sauf le personnage au comptoir de l'image 1 qui n'était pas le dessin du Grand Sage de la
   librairie → en jeu, c'est son vrai dessin (couronne, barbe, cape d'écailles, bâton au cristal).
+
+### C-2 La menace qui grandit : proposition (planche 39, à valider : docs/planches-v059/planche-39-la-menace.png)
+- **Quand** : dès ★3, **une fois par mois**, annoncée le **jour 15** (semaine 3 : la semaine 2 est celle de la commande
+  royale) ; décalée de quelques jours si une fête tombe dessus. **Bataille 6 jours plus tard.** Un seul grand
+  rendez-vous par semaine, comme décidé.
+- **Où** : une contrée ouverte (jamais les Collines de la Comté), plutôt une de ton camp : la lumière défend les terres
+  du Conseil, l'ombre celles des Bannis (ils te le demandent eux-mêmes), le neutre reçoit les deux appels et choisit.
+- **Qui attaque** : le crieur dit « des pillards » (la version officielle). En vrai, c'est **l'Engeance** qui sort par la
+  Porte entrouverte : des yeux violets dans la brume, que les survivants racontent ; un indice de plus pour le carnet.
+  La menace **grandit avec la Porte** : plus forte à ★4, à ★5 parfois deux contrées le même mois.
+- **L'escouade** : trois places. Au comptoir, on peut envoyer un Ouvre-Route **défendre** au lieu d'une mission ; il part
+  avec le colis d'une mission ★+1 (du combat) et revient le jour de la bataille. Une barre montre la force de
+  l'escouade contre la menace. L'escouade de la Confrérie (si achetée) compte pour une place, gratuite.
+- **Tenue** : prime (900 p. à ★3, plus aux étoiles suivantes), +3 réputation, +1 ⚑ de conquête, la gazette.
+- **Perdue** (défaite, ou personne envoyé) : plus de missions là-bas, deux provisions de la contrée +30 % au marché, son
+  royaume ne peut plus être libéré, la conquête retombe à 0. **Au plus deux contrées perdues à la fois.**
+- **Reprendre** : 7 jours après, une mission spéciale ★+1 pour deux Ouvre-Routes ; réussie, la contrée revient (conquête à
+  moitié), +6 réputation.
