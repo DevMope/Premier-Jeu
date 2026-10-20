@@ -2760,6 +2760,13 @@ difficulté facile / normale / difficile pourra jouer là-dessus.
   le grand afro (sur la tête, pas en fond), longs et lisses (un vrai design, pas la coupe de base avec deux bandes), le
   chignon (derrière la tête), les longueurs de la frange et du carré (et un carré vraiment différent), les couettes (plus
   claires, moins larges, plus petites boucles) → **planche 57 v2** envoyée.
+- **Planche 57 v2 → v5 : les six coupes refaites sont validées** (afro et chignon, puis longs lisses, frange et carré d'un
+  seul volume sans couture, enfin les couettes : symétriques, visibles de biais et de profil, avec **leur propre ligne du
+  front** — raie au milieu, mèches tirées vers les attaches — et la nuque couverte jusqu'au col). Elles sont toutes dans la
+  création et au miroir.
+- **Planche 57 v2 → v5 : les six coupes refaites sont validées** (afro et chignon, puis longs lisses, frange et carré d'un
+  seul volume sans couture, enfin les couettes : symétriques, visibles de biais et de profil, avec **leur propre ligne du
+  front** — raie au milieu, mèches tirées vers les attaches). Elles sont toutes dans la création et au miroir.
 - **Planche 56 v2 : tout validé** (la table, l'échelle des personnages).
 - **Planche 58 : validée**, sauf le personnage au comptoir de l'image 1 qui n'était pas le dessin du Grand Sage de la
   librairie → en jeu, c'est son vrai dessin (couronne, barbe, cape d'écailles, bâton au cristal).

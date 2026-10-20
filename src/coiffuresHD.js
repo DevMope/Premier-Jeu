@@ -112,12 +112,12 @@ function bouclesHD(C, dans, rayon = 1.6, pas = 2.4, decalage = 0) {
 // (planche 57 v4) Le crâne des couettes, à lui : une raie au milieu, les cheveux tirés de chaque côté vers les couettes (les
 // mèches filent en biais vers les oreilles), le front dégagé en arc, la même teinte claire et le même frisé que les couettes
 function calotteCouettes(C) {
-  const { t, k, cx, cy, P, s, c, dos } = C, R = P.rx + 0.9 * k, Ry = P.ry + 1.4 * k;
+  const { t, k, cx, cy, P, s, c, dos } = C, R = P.rx + 0.9 * k, Ry = P.ry + 1.8 * k;
   const geo = (x, y) => { const nx = (x + 0.5 - cx) / R, ny = (y + 0.5 - cy) / Ry, d2 = nx * nx + ny * ny; if (d2 > 1) return null; const nz = Math.sqrt(1 - d2); return { nx, ny, nz, fz: nx * s + nz * c, fu: nx * c - nz * s }; };
   const ligne = fu => -0.5 + 0.9 * fu * fu;   // le bord du front, en arc (plus bas sur les tempes)
   const devant = (fz, fu) => (fz > 0.15 && Math.abs(fu) < 0.66) || fz > 0.42;
   t.forme('cheveux', (x, y) => {
-    const g = geo(x, y); if (!g || g.ny > (dos || g.fz < -0.1 ? 0.78 : 0.28)) return null;   // (derrière, les cheveux descendent jusqu'à la nuque)
+    const g = geo(x, y); if (!g || (!dos && g.fz >= -0.1 && g.ny > 0.28)) return null;   // (derrière, les cheveux descendent jusqu'au col)
     if (!dos && devant(g.fz, g.fu) && g.ny > ligne(Math.min(Math.abs(g.fu), 0.62))) return null;
     return [g.nx, g.ny, g.nz];
   }, { decalage: 0.45, motif: (x, y) => { const g = geo(x, y); if (!g) return 0;
@@ -245,8 +245,8 @@ function fendreHD(C, y0, y1) {
 }
 
 // (v1.32) Les coupes et barbes validées entrent dans la création, au bout des listes (les vieilles sauvegardes gardent leurs
-// numéros). Les coupes refaites attendent la validation de la planche 57 v2.
-const COIFFURES_EN_ATTENTE = ['couettes'];
+// numéros). Une coupe pas encore validée attend dans COIFFURES_EN_ATTENTE (les couettes, validées en planche 57 v5).
+const COIFFURES_EN_ATTENTE = [];
 // (l'ordre est fixé une fois pour toutes : une coupe validée plus tard s'ajoute toujours au bout)
 const COIFFURES_ORDRE = ['militaire', 'degrade', 'degarni', 'iroquoise', 'pointes', 'afroDegrade', 'bol', 'tresses', 'chignonHaut', 'viking', 'nattes',
   'chignonHomme', 'afro', 'longLisse', 'frange', 'carre', 'couettes'];
