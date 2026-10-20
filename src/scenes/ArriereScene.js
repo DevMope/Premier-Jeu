@@ -33,6 +33,12 @@ class ArriereScene extends Phaser.Scene {
     boutonCarteMonde(this, 884, 112);   // (v0.93) la carte du monde
     // (v0.82, étape 10b) le coin de la forge, à partir du saut d'un an
     if (forgeProposee(G)) creerBouton(this, 600, 505, 220, forgeConstruite(G) ? '⚒ La forge' : '⚒ Le coin de la forge', () => { this.scene.pause(); this.scene.launch('Forge', { appelant: 'Arriere' }); });
+    // (v1.32, planche 55) la tapissière et son carnet, quand toutes les améliorations sont faites
+    if (typeof decoProposee === 'function' && decoProposee(G)) {
+      const ouvrir = () => decoDe(G) ? carnetDeco(this, () => this.appliquerDeco()) : visiteTapissiere(this, ok => { if (ok) { this.boutonDeco.label.setText('🎨 Le carnet'); this.appliquerDeco(); carnetDeco(this, () => this.appliquerDeco()); } });
+      this.boutonDeco = creerBouton(this, 370, 505, 200, decoDe(G) ? '🎨 Le carnet' : '🎨 La tapissière', ouvrir);
+      if (!G.decoVue) this.time.delayedCall(700, ouvrir);
+    }
     this.time.delayedCall(400, () => conseilGarrick(this, 'arriere'));
   }
 
@@ -40,12 +46,23 @@ class ArriereScene extends Phaser.Scene {
 
   dessinerPiece() {
     creerInterieurHD(this);
-    this.add.image(0, 0, murInterieur(this, 'murArriere', { poteaux: [272, 412], graine: 310 })).setOrigin(0).setScale(2).setTint(0xc8a47c);
-    this.add.image(0, SOL_ARRIERE, plancher(this, 'plancherArriere', { graine: 410 })).setOrigin(0).setScale(2).setTint(0xd8bc98);
+    this.imMur = this.add.image(0, 0, murInterieur(this, 'murArriere', { poteaux: [272, 412], graine: 310 })).setOrigin(0).setScale(2).setTint(0xc8a47c);
+    this.imSol = this.add.image(0, SOL_ARRIERE, plancher(this, 'plancherArriere', { graine: 410 })).setOrigin(0).setScale(2).setTint(0xd8bc98);
     vignette(this, 0.75, 0); // (sous les objets : seuls les murs et le sol s'assombrissent)
     // La lanterne qui pend de la poutre, et sa lumière chaude
     poserLuminaire(this, 640, 18, niveauAmelioration(this.G, 'eclairage'));
     this.dessinerCoinDouillet();
+  }
+
+  // (v1.32, planche 55) le décor choisi dans le carnet de la tapissière : murs et boiseries, sol, tapis, tableau
+  appliquerDeco() {
+    const T = typeof texturesDeco === 'function' ? texturesDeco(this, this.G) : null;
+    if (!T) return;
+    this.imMur.setTexture(T.mur || 'murArriere').setTint(T.mur ? T.teinteMur : 0xc8a47c);
+    this.imSol.setTexture(T.sol || 'plancherArriere').setTint(T.sol ? T.teinteSol : 0xd8bc98);
+    if (this.imTapis) this.imTapis.setTexture(T.tapis || tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(T.tapis ? 2.4 : 2.2);
+    if (this.imTableau) { this.imTableau.destroy(); this.imTableau = null; }
+    if (T.tableau) { creerEmblemesHD(this); this.imTableau = tableauDeco(this, 690, 168, STYLES_DECO[T.tableau], 3); }
   }
 
   // Le coin douillet : des herbes qui sèchent sous la poutre, une petite étagère murale avec
@@ -68,7 +85,8 @@ class ArriereScene extends Phaser.Scene {
     // Le tapis, et le chat
     // (v1.29) avec la cave du repaire, le tapis est roulé de côté : la trappe s'ouvre dans le plancher
     if (typeof repaireA === 'function' && repaireA(this.G, 'cave')) this.dessinerTrappe();
-    else this.add.image(430, SOL_ARRIERE + 64, tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(2.2);
+    else this.imTapis = this.add.image(430, SOL_ARRIERE + 64, tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(2.2);
+    this.appliquerDeco();
     // (le coussin attend un familier : le chat de gouttière, une fois adopté, y dort en boule)
     this.add.image(196, SOL_ARRIERE + 86, 'coussinHD').setOrigin(0.5, 1).setScale(2.4);
     // (v1.05, planche 25) sa gamelle, à son nom : pleine, ou vide quand la réserve n'a plus de ration

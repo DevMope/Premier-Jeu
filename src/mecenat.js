@@ -10,7 +10,7 @@ const MECENAT = {
   // la fortune (dettes déduites) au-delà de laquelle on paie, et la part de chaque butin par étoile au-delà de ★2
   // (★5 au plus : trois fois la part). Le Sage demande plus à ceux qui l'ont choisi.
   seuil: { lumiere: 15000, neutre: 20000 },
-  parEtoile: { lumiere: 0.15, neutre: 0.10 },
+  parEtoile: { lumiere: 0.14, neutre: 0.10 },
   lumiere: [
     { donne: 2000, id: 'plaque', texte: 'Ton nom est gravé sur la plaque des mécènes, à la fontaine du marché.' },
     { donne: 6000, id: 'visite', texte: 'Le Grand Sage a fait savoir qu’il viendrait en personne te remercier au comptoir.' },
