@@ -109,6 +109,18 @@ function bouclesHD(C, dans, rayon = 1.6, pas = 2.4, decalage = 0) {
   }
 }
 
+// (v1.32, planche 57 v3) Les deux couettes bouclées, en miroir : les mêmes boucles, à la même place, de chaque côté.
+// Elles partent de l'arrière des oreilles (un peu en retrait) : de profil, on les voit pendre sur l'épaule.
+function couettesHD(C, cotes) {
+  const { t, k, cy, P, X, Z, dos, s } = C, retrait = Math.abs(s) > 0.2 ? -P.rx * 0.35 : 0;
+  for (const cote of cotes) for (let j = 0; j * 1.6 * k < P.ry + 11 * k; j++) {
+    const v = -1 * k + j * 1.6 * k, larg = 1.9 - Math.max(0, v - P.ry) / (12 * k) * 0.6;
+    for (const i of [-1, 0, 1]) { if (Math.abs(i) * 1.25 > larg) continue;
+      const h = hachage(i + 4, j, 91) - 0.5, u = cote * (P.rx + 2.2 * k + i * 1.25 * k + h * 0.4 * k);
+      t.forme('cheveux', ellipsoide(X(u, retrait + i * 0.6 * k * Math.abs(s)), cy + v + h * 0.5 * k, 1.25 * k, 1.25 * k), { decalage: 0.45, motif: (x, y) => (hachage(Math.abs(x - X(0, 0)), y, 92) > 0.7 ? 0.5 : 0) }); }
+  }
+}
+
 const COIFFURES_HD = {
   // (la coupe militaire : un duvet ras partout)
   militaire: { nom: 'Militaire', dessus: C => calotteHD(C, { ras: true, gonfle: 0.4, hauteur: 0.7, frange: -0.52, ondes: 0.04 }) },
@@ -146,17 +158,10 @@ const COIFFURES_HD = {
     dessus: C => { const { k, cy, P, X, Z, yT, dos } = C; calotteHD(C, { gonfle: 0.6, hauteur: 1.2, frange: -0.55, ondes: 0.04, motif: (x, y) => (Math.abs(((x - C.cx) / C.k) % 5) < 1 ? -0.6 : 0.2) });
       if (!dos) for (const cote of [-1, 1]) if (Z(cote * P.rx, 0) >= -1 * k) tresseHD(C, X(cote * (P.rx + 0.8 * k), 0), cy + 1 * k, X(cote * (P.rx + 1.5 * k), P.rx * 0.3), yT + 12 * k, 1.8); } },
   chignonHaut: { nom: 'Chignon haut', marge: 5, dessus: C => { const { t, k, cy, P, X } = C; calotteHD(C, { gonfle: 0.8, hauteur: 1.4, frange: -0.55 }); t.forme('cheveux', ellipsoide(X(0, -P.rx * 0.1), cy - P.ry - 2.5 * k, 3.6 * k, 3 * k), { motif: MECHES }); rideauxHD(C, cy + P.ry * 0.6, 0.7); } },
-  couettes: { nom: 'Couettes bouclées', derriere: C => {
-    // (les deux couettes en miroir : les mêmes boucles, à la même place, de chaque côté)
-    const { t, k, cy, P, X, Z, dos } = C;
-    for (const cote of [-1, 1]) for (let j = 0; j * 1.6 * k < P.ry + 11 * k; j++) {
-      const v = -1 * k + j * 1.6 * k, larg = 1.9 - Math.max(0, v - P.ry) / (12 * k) * 0.6;
-      for (const i of [-1, 0, 1]) { if (Math.abs(i) * 1.25 > larg) continue;
-        const h = hachage(i + 4, j, 91) - 0.5, u = cote * (P.rx + 2.2 * k + i * 1.25 * k + h * 0.4 * k);
-        if (Z(u, 0) < -2 * k && !dos) continue;
-        t.forme('cheveux', ellipsoide(X(u, 0), cy + v + h * 0.5 * k, 1.25 * k, 1.25 * k), { decalage: 0.45, motif: (x, y) => (hachage(Math.abs(x - X(0, 0)), y, 92) > 0.7 ? 0.5 : 0) }); }
-    } },
-    dessus: C => { const { t, k, cy, P, X, Z } = C; calotteHD(C, { frange: -0.45 }); for (const cote of [-1, 1]) if (Z(cote * P.rx, 0) > -2 * k) t.forme('or', ellipsoide(X(cote * (P.rx + 1.2 * k), 0), cy - 1 * k, 1.3 * k, 1.3 * k), { decalage: 0.4, ombre: false }); } },
+  couettes: { nom: 'Couettes bouclées',
+    // de face et de dos, les deux couettes pendent derrière ; de biais et de profil, celle de ton côté passe devant
+    derriere: C => couettesHD(C, Math.abs(C.s) > 0.2 && !C.dos ? [C.loin] : [-1, 1]),
+    dessus: C => { const { t, k, cy, P, X, Z } = C; calotteHD(C, { frange: -0.45 }); if (Math.abs(C.s) > 0.2 && !C.dos) couettesHD(C, [C.pres]); for (const cote of [-1, 1]) if (Z(cote * P.rx, 0) > -2 * k) t.forme('or', ellipsoide(X(cote * (P.rx + 1.2 * k), 0), cy - 1 * k, 1.3 * k, 1.3 * k), { decalage: 0.4, ombre: false }); } },
   frange: { nom: 'Frange et longueurs', derriere: C => { if (!C.dos) chuteHD(C, C.yT + 12 * C.k, { largeur: 1.8, rentre: 0.4 }); }, dessus: C => longsHD(C, { bas: C.yT + 11 * C.k, frange: -0.12, gonfle: 1.3, hauteur: 1.7, evase: 2 }) },
   carre: { nom: 'Carré', dessus: C => longsHD(C, { bas: C.cy + C.P.ry + 2 * C.k, raie: 'cote', gonfle: 1.8, hauteur: 2, evase: 1.2, rentre: 1.4, pointes: false, interieur: 0.78 }), derriere: C => { if (!C.dos) chuteHD(C, C.cy + C.P.ry + 2 * C.k, { largeur: 2.6, rentre: 0 }); } },
   viking: { nom: 'Viking', derriere: C => { const { k, cy, P, X, yT } = C; tresseHD(C, X(0, -P.rx * 0.9), cy - 1 * k, X(0, -P.rx * 1.05), yT + 9 * k, 1.9); },
@@ -224,6 +229,9 @@ function fendreHD(C, y0, y1) {
 
 // (v1.32) Les coupes et barbes validées entrent dans la création, au bout des listes (les vieilles sauvegardes gardent leurs
 // numéros). Les coupes refaites attendent la validation de la planche 57 v2.
-const COIFFURES_EN_ATTENTE = ['longLisse', 'frange', 'carre', 'couettes'];
-for (const [id, c] of Object.entries(COIFFURES_HD)) if (!COIFFURES_EN_ATTENTE.includes(id)) { COIFFURES_IDS.push(id); APPARENCE.coiffure.push(c.nom); }
+const COIFFURES_EN_ATTENTE = ['couettes'];
+// (l'ordre est fixé une fois pour toutes : une coupe validée plus tard s'ajoute toujours au bout)
+const COIFFURES_ORDRE = ['militaire', 'degrade', 'degarni', 'iroquoise', 'pointes', 'afroDegrade', 'bol', 'tresses', 'chignonHaut', 'viking', 'nattes',
+  'chignonHomme', 'afro', 'longLisse', 'frange', 'carre', 'couettes'];
+for (const id of COIFFURES_ORDRE) if (COIFFURES_HD[id] && !COIFFURES_EN_ATTENTE.includes(id)) { COIFFURES_IDS.push(id); APPARENCE.coiffure.push(COIFFURES_HD[id].nom); }
 for (const [id, b] of Object.entries(BARBES_HD)) { BARBES_IDS.push(id); APPARENCE.barbe.push(b.nom); }
