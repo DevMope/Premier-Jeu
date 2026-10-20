@@ -2695,3 +2695,9 @@ Total ~49 000 p.
   trésorier serti de gemmes (2 500 p., la banque prête 20 % de plus), lit royal de velours bleu étoilé (3 000 p., un jour
   « en forme » de plus par semaine), grand lustre à deux couronnes (2 000 p., le comptoir ferme une demi-heure plus tard).
   L'appartement ajoute un étage et un balcon fleuri à la façade.
+
+**Réponse du joueur (planches 52 à 54)** : 52 validée telle quelle (prix gardés) ; 53 validée, sauf le tableau 1 (la
+trappe débordait : refaite en v2, un trou net dans le plancher, l'échelle seulement dans le trou, l'abattant penché sur
+ses charnières, le tapis roulé à côté) ; 54 validée. Idée du joueur pour plus tard : « faire débloquer au joueur le même
+système d'amélioration de décoration de maison, vers la fin » → quand l'appartement est bâti, JeuneGoy décore son
+propre logis avec les mêmes paliers (planche 55 à proposer).
