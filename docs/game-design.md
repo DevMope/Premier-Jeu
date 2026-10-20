@@ -2704,3 +2704,7 @@ trappe débordait : refaite en v2, un trou net dans le plancher, l'échelle seul
 ses charnières, le tapis roulé à côté) ; 54 validée. Idée du joueur pour plus tard : « faire débloquer au joueur le même
 système d'amélioration de décoration de maison, vers la fin » → quand l'appartement est bâti, JeuneGoy décore son
 propre logis avec les mêmes paliers (planche 55 à proposer).
+
+**Réponse du joueur** : planche 53 validée (avec la trappe refaite). « Quand t'as fini tout ça tu peux lancer un grand
+housekeep [...] Et après le housekeep tu peux publier sur Cloudflare. » La planche 55 (JeuneGoy décore son propre logis,
+vers la fin) attend sa confirmation.
