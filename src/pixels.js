@@ -655,7 +655,7 @@ function dessinerComte(g, x, y, w, h, nuit = 0, biome = 'comte') {
 
 // L'apparence par défaut, selon que tu joues un garçon ou une fille.
 function apparenceParDefaut(feminin) {
-  return { coiffure: feminin ? 1 : 0, cheveux: 0, peau: 0, yeux: 0, bouche: 0, barbe: 0, haut: feminin ? 1 : 0, bas: 0, bottes: 0 };
+  return { coiffure: feminin ? 1 : 0, cheveux: 0, peau: 0, yeux: 0, bouche: 0, barbe: 0, couleurBarbe: 0, haut: feminin ? 1 : 0, bas: 0, bottes: 0 };
 }
 
 // La texture du joueur à son âge actuel (créée si besoin).

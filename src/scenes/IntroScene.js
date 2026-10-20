@@ -28,26 +28,15 @@ class IntroScene extends Phaser.Scene {
       const b = creerBouton(this, x, 112, 140, texte, () => {
         this.feminin = feminin;
         this.ap.coiffure = apparenceParDefaut(feminin).coiffure;
+        if (feminin) this.ap.barbe = 0;
+        this.menu.regler({ feminin, barbe: !feminin });
         this.maj();
       });
       return { feminin, b };
     });
 
-    // Les choix, sur un parchemin
-    this.add.image(705, 262, panneauHD(this, 470, 380)).setScale(2);
-    const options = [
-      ['coiffure', 'Coiffure'], ['cheveux', 'Cheveux'], ['peau', 'Peau'], ['yeux', 'Yeux'],
-      ['bouche', 'Bouche'], ['barbe', 'Barbe'], ['haut', 'Habit du haut'], ['bas', 'Habit du bas'], ['bottes', 'Bottes'],
-    ];
-    this.lignes = options.map(([cle, libelle], i) => {
-      const y = 100 + i * 38;
-      this.add.text(496, y, libelle, style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
-      this.fleche(660, y, '◀', () => this.changer(cle, -1));
-      this.fleche(890, y, '▶', () => this.changer(cle, 1));
-      const valeur = this.add.text(785, y, '', style(17, '#5a2a10', { fontStyle: 'bold' })).setOrigin(0.5);
-      const pastille = this.add.rectangle(705, y, 18, 18, 0xffffff).setStrokeStyle(2, 0x3b2410);
-      return { cle, valeur, pastille };
-    });
+    // Les choix, sur un parchemin : des onglets et des vignettes (v1.32, planche 57)
+    this.menu = panneauApparence(this, { x: 705, y: 258, l: 470, h: 410, ap: this.ap, feminin: this.feminin, stade: 'petit', barbe: !this.feminin, quandChange: () => this.maj(true) });
 
     // Le nom de ton comptoir : un vrai champ à remplir, avec un crayon
     this.nomShop = NOM_SHOP_DEFAUT;
@@ -73,19 +62,11 @@ class IntroScene extends Phaser.Scene {
     this.maj();
   }
 
-  fleche(x, y, texte, action) {
-    const b = creerBouton(this, x, y, 50, texte, action);
-    b.label.setFontSize(16);
-  }
-
-  changer(cle, sens) {
-    const n = APPARENCE[cle].length;
-    this.ap[cle] = (this.ap[cle] + sens + n) % n;
-    this.maj();
-  }
-
   auHasard() {
     for (const cle of Object.keys(this.ap)) this.ap[cle] = Phaser.Math.Between(0, APPARENCE[cle].length - 1);
+    if (Math.random() < 0.7) this.ap.couleurBarbe = 0;   // (le plus souvent, la barbe suit les cheveux)
+    if (this.feminin) this.ap.barbe = 0;
+    this.menu.rafraichir();
     this.maj();
   }
 
@@ -102,13 +83,6 @@ class IntroScene extends Phaser.Scene {
       const choisi = g.feminin === this.feminin;
       g.b.fond.setTint(choisi ? 0xffffff : 0x8a7a6a);
       g.b.label.setColor(choisi ? '#ffe9a0' : '#c8b8a0');
-    }
-    for (const l of this.lignes) {
-      const choix = APPARENCE[l.cle][this.ap[l.cle]];
-      const couleur = Array.isArray(choix);
-      l.valeur.setText(couleur ? choix[0] : choix);
-      l.pastille.setVisible(couleur);
-      if (couleur) l.pastille.setFillStyle(choix[1]);
     }
   }
 

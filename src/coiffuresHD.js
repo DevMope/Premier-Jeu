@@ -211,3 +211,9 @@ function fendreHD(C, y0, y1) {
   const { t, k, c, bx } = C, lc = Math.max(0.55, Math.abs(c));
   for (let y = Math.round(y0); y <= y1; y++) { const w = Math.round((y - y0) / (y1 - y0) * 1.6 * k * lc); for (let x = Math.round(bx - w); x <= bx + w; x++) if (t.mat(x, y) === 'barbe') { t.c[y * t.l + x] = null; t.m[y * t.l + x] = null; } }
 }
+
+// (v1.32) Les coupes et barbes validées entrent dans la création, au bout des listes (les vieilles sauvegardes gardent leurs
+// numéros). Les coupes refaites attendent la validation de la planche 57 v2.
+const COIFFURES_EN_ATTENTE = ['longLisse', 'frange', 'carre', 'afro', 'chignonHomme', 'couettes'];
+for (const [id, c] of Object.entries(COIFFURES_HD)) if (!COIFFURES_EN_ATTENTE.includes(id)) { COIFFURES_IDS.push(id); APPARENCE.coiffure.push(c.nom); }
+for (const [id, b] of Object.entries(BARBES_HD)) { BARBES_IDS.push(id); APPARENCE.barbe.push(b.nom); }

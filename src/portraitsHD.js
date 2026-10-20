@@ -1356,8 +1356,9 @@ function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0, tenue =
     bottes: APPARENCE.bottes[ap.bottes ?? 0][1],
     cape: 0x5a2a2a,
     yeux: APPARENCE.yeux[ap.yeux][1],
-    coiffure: ['court', 'long', 'boucles', 'herisse', 'chauve'][ap.coiffure] || 'court',
-    barbe: stade !== 'petit' && ap.barbe ? ['moustache', 'moustache', 'courte', 'pleine'][ap.barbe] : null,
+    coiffure: COIFFURES_IDS[ap.coiffure] || 'court',
+    barbe: stade !== 'petit' && ap.barbe ? BARBES_IDS[ap.barbe] || null : null,
+    couleurBarbe: ap.couleurBarbe && !ancien ? (APPARENCE.couleurBarbe[ap.couleurBarbe] || [])[1] || null : null,
     nom: 'JeuneGoy',
   };
   // (v1.32, planche 56 validée) l'adulte n'est plus JeuneGoy agrandi : plus grand, épaules plus larges, torse plus

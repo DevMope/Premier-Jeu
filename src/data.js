@@ -1111,15 +1111,27 @@ const TAILLE_HISTORIQUE = 150;
 // Les choix de la création du personnage.
 const APPARENCE = {
   coiffure: ['Courts', 'Longs', 'Bouclés', 'Hérissés', 'Chauve'],
-  cheveux: [['Châtain', 0x8a5a2a], ['Noir', 0x2a1a10], ['Roux', 0xb5532a], ['Blond', 0xe8d890], ['Auburn', 0x7a2a1a], ['Bleu nuit', 0x2a3a6a]],
+  cheveux: [['Châtain', 0x8a5a2a], ['Noir', 0x2a1a10], ['Roux', 0xb5532a], ['Blond', 0xe8d890], ['Auburn', 0x7a2a1a], ['Bleu nuit', 0x2a3a6a],
+    // (v1.32, planche 57 validée : les nouvelles couleurs, ajoutées au bout pour garder les vieilles sauvegardes)
+    ['Brun foncé', 0x4a2e18], ['Châtain clair', 0xa8784a], ['Blond vénitien', 0xd0a060], ['Platine', 0xf0ecd8], ['Cuivré', 0xc86a30], ['Rouge vif', 0xa82020],
+    ['Gris argent', 0xa8a8b0], ['Blanc', 0xe8e8e8], ['Vert sapin', 0x2a5a3a], ['Prune', 0x5a2a5a], ['Rose', 0xc87a9a], ['Bleu glacier', 0x7aa8c8]],
   peau: [['Claire', 0xf0c8a0], ['Dorée', 0xd8a070], ['Mate', 0xa86a40], ['Sombre', 0x6a4028]],
   yeux: [['Marron', 0x4a2a10], ['Bleus', 0x2f6ac0], ['Verts', 0x2f8a3a], ['Gris', 0x6a7080], ['Violets', 0x7a3aa0]],
   bouche: ['Souriante', 'Neutre', 'Étonnée', 'Grognon'],
-  barbe: ['Aucune', 'Moustache', 'Courte', 'Longue'],
-  haut: [['Bleu', 0x3a5a8a], ['Rouge', 0x9a3a2a], ['Vert', 0x4f7a3a], ['Violet', 0x6a4aa0], ['Moutarde', 0xc9a227], ['Gris', 0x6a6f78]],
-  bas: [['Brun', 0x6a5a40], ['Noir', 0x2a2a30], ['Vert', 0x3a4a3a], ['Bleu', 0x3a4a6a], ['Beige', 0xb09a70]],
-  bottes: [['Cuir', 0x6a3f22], ['Noires', 0x2a2228], ['Fauves', 0xa0703a], ['Rouges', 0x7a2a22], ['Vertes', 0x3a4a2a]],   // (v0.68)
+  barbe: ['Aucune', 'Moustache', 'Courte', 'Longue', 'Courte nette'],
+  haut: [['Bleu', 0x3a5a8a], ['Rouge', 0x9a3a2a], ['Vert', 0x4f7a3a], ['Violet', 0x6a4aa0], ['Moutarde', 0xc9a227], ['Gris', 0x6a6f78],
+    ['Bordeaux', 0x6a1a2a], ['Orange', 0xc8682a], ['Jaune', 0xd8c040], ['Vert sapin', 0x2a4a2a], ['Turquoise', 0x2a8a8a], ['Bleu ciel', 0x6a9ac8],
+    ['Marine', 0x1a2a4a], ['Lavande', 0x9a8ac0], ['Rose', 0xb86a8a], ['Blanc cassé', 0xe0d8c8], ['Noir', 0x2a2a2e], ['Brun', 0x6a4a2a]],
+  bas: [['Brun', 0x6a5a40], ['Noir', 0x2a2a30], ['Vert', 0x3a4a3a], ['Bleu', 0x3a4a6a], ['Beige', 0xb09a70],
+    ['Gris', 0x5a5a60], ['Bordeaux', 0x5a1a22], ['Marine', 0x1e2a44], ['Kaki', 0x6a6a3a], ['Blanc cassé', 0xd8d0b8], ['Rouille', 0x8a4a22], ['Prune', 0x4a2a4a]],
+  bottes: [['Cuir', 0x6a3f22], ['Noires', 0x2a2228], ['Fauves', 0xa0703a], ['Rouges', 0x7a2a22], ['Vertes', 0x3a4a2a],   // (v0.68)
+    ['Grises', 0x5a5a5a], ['Bleues', 0x2a3a5a], ['Blanches', 0xd8d0c0], ['Bordeaux', 0x4a1a1a], ['Miel', 0xb8862a]],
 };
+// (v1.32) la couleur de la barbe : celle des cheveux (0), ou une couleur à part
+APPARENCE.couleurBarbe = [['Comme les cheveux', null], ...APPARENCE.cheveux];
+// Ce que dessine chaque choix de coiffure et de barbe (les nouvelles coupes s'ajoutent au bout, dans coiffuresHD.js)
+const COIFFURES_IDS = ['court', 'long', 'boucles', 'herisse', 'chauve'];
+const BARBES_IDS = [null, 'moustache', 'courte', 'pleine', 'rase'];
 
 // --- Achat-revente : trouvailles, atelier, enchères ---
 

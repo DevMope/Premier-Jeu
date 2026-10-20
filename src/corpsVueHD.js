@@ -1091,7 +1091,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     else if (barbe === 'rase') {
       // Une barbe courte et nette : un aplat sombre qui suit la mâchoire et le menton, une
       // moustache fine au-dessus de la bouche (lisible même de loin)
-      t.forme('cheveux', (x, y) => {
+      t.forme('barbe', (x, y) => {
         if (y < by - 1.6 * k || y > cy + P.ry + 0.6 * k) return null;
         if (y >= by - 0.4 * k && y <= by + 0.9 * k && Math.abs(x + 0.5 - bx) < lb + 0.6 * k) return null;   // (la bouche)
         const n = tete(x, y); if (!n) return null;
@@ -1100,10 +1100,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
         const joue = y < by - 0.4 * k && Math.abs(x + 0.5 - bx) > lb + 1.2 * k;   // (pas de barbe sur les joues, au-dessus de la bouche)
         return joue ? null : n;
       }, { decalage: -0.9, bord: false, ombre: false });
-    } else if (barbe === 'moustache') { for (let i = -lb - 1; i <= lb + 1; i++) for (let e = 0; e < k; e++) t.poser(Math.round(bx + i), by - 1.6 * k + e + (Math.abs(i) > lb - 1 ? 1 : 0), 'cheveux', 3); }
+    } else if (barbe === 'moustache') { for (let i = -lb - 1; i <= lb + 1; i++) for (let e = 0; e < k; e++) t.poser(Math.round(bx + i), by - 1.6 * k + e + (Math.abs(i) > lb - 1 ? 1 : 0), 'barbe', 3); }
     else if (barbe) {
       const long = barbe === 'sage' ? yT + 11 * k : barbe === 'nain' ? yB - 2 * k : barbe === 'pleine' ? cy + P.ry + 4 * k : cy + P.ry + 1.5 * k;
-      t.forme('cheveux', (x, y) => {
+      t.forme('barbe', (x, y) => {
         if (y < ey + 3 * k || y > long) return null;
         if (barbe !== 'sage' && y >= by - 1 * k && y <= by + 1.8 * k && Math.abs(x + 0.5 - bx) < (barbe === 'nain' ? 3.6 : 3) * k) return null;
         let demi = (barbe === 'nain' ? P.rx - 0.8 * k : P.rx + 0.5 * k) - Math.max(0, y - cy - P.ry) * (barbe === 'nain' ? 0.25 : barbe === 'sage' ? 0.3 : 0.6);
@@ -1117,7 +1117,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
         return fz > 0.2 ? [nx * 0.8, (y - ey) / (20 * k), 0.8] : null;
       }, { motif: MECHES });
       // (v1.02) le Grand Sage : la longue barbe couvre la bouche, dont on ne voit qu'un trait d'ombre sous la moustache
-      if (barbe === 'sage') for (let i = -Math.round(1.8 * k); i <= Math.round(1.8 * k); i++) { const x = Math.round(bx + i), y = by - (Math.abs(i) > 1.2 * k ? 1 : 0); if (t.mat(x, y) === 'cheveux') t.poser(x, y, 'cheveux', 0); }
+      if (barbe === 'sage') for (let i = -Math.round(1.8 * k); i <= Math.round(1.8 * k); i++) { const x = Math.round(bx + i), y = by - (Math.abs(i) > 1.2 * k ? 1 : 0); if (t.mat(x, y) === 'barbe') t.poser(x, y, 'barbe', 0); }
       if (barbe === 'nain') for (let y = yT + 6 * k; y < yB; y += 3 * k) { t.poser(Math.round(bx), y, 'or', 3); t.poser(Math.round(bx) + 1, y, 'or', 5); }
     }
     // Les grandes dents de Grippesou (et des gobelins), les défenses des orcs et des trolls, les
