@@ -405,6 +405,7 @@ function etagereHD(scene, n) {
 // Le coffre de la fortune : du vieux coffre de bois au coffre-fort doré.
 // Vu de trois quarts : le dessus (en perspective), la face avant, le flanc droit dans l'ombre.
 function coffreHD(scene, n) {
+  if (n >= 4 && typeof textureLuxe === 'function') return textureLuxe(scene, 'coffre');   // (v1.30) le luxe
   const cle = 'coffreHD_' + n;
   if (scene.textures.exists(cle)) return cle;
   const L = 44, H = 36;
@@ -480,6 +481,7 @@ function coffreHD(scene, n) {
 
 // Le lit : de la paillasse au lit à baldaquin.
 function litHD(scene, n) {
+  if (n >= 4 && typeof textureLuxe === 'function') return textureLuxe(scene, 'lit');   // (v1.30) le luxe
   const cle = 'litHD_' + n;
   if (scene.textures.exists(cle)) return cle;
   const L = 172, H = n === 3 ? 150 : 62, b = H - 62; // b : décalage vers le bas (le baldaquin est plus haut)
@@ -549,6 +551,7 @@ function litHD(scene, n) {
 
 // La couverture : laine rayée, patchwork, édredon de velours, velours pourpre brodé d'or.
 function couvertureHD(scene, n) {
+  n = Math.min(3, n);   // (v1.30 : le lit royal garde l'édredon du baldaquin)
   const cle = 'couvertureHD_' + n;
   if (scene.textures.exists(cle)) return cle;
   const L = 120, H = 26;
@@ -592,6 +595,7 @@ function couvertureHD(scene, n) {
 
 // La table de chevet.
 function chevetHD(scene, n) {
+  n = Math.min(3, n);
   const cle = 'chevetHD_' + n;
   if (scene.textures.exists(cle)) return cle;
   const t = toileLuxe(36, 32, n);
@@ -618,6 +622,7 @@ function chevetHD(scene, n) {
 
 // Le tapis : une natte, un tapis tressé, un grand tapis tressé, un tapis d'Orient à franges.
 function tapisHD(scene, n) {
+  n = Math.min(3, n);
   const cle = 'tapisHD_' + n;
   if (scene.textures.exists(cle)) return cle;
   const L = [100, 150, 170, 180][n], H = [14, 20, 22, 24][n];
@@ -648,6 +653,7 @@ function tapisHD(scene, n) {
 
 // Les luminaires : applique à bougie, lanterne, chandelier de fer, lustre de cristal.
 function luminaireHD(scene, n) {
+  if (n >= 4 && typeof textureLuxe === 'function') return textureLuxe(scene, 'luminaire');   // (v1.30) le luxe
   const cle = 'luminaire_' + n;
   if (scene.textures.exists(cle)) return cle;
   creerInterieurHD(scene);
@@ -694,9 +700,9 @@ function luminaireHD(scene, n) {
 // (au plafond ; l'applique se fixe au mur, plus bas). Renvoie { image, halos }.
 function poserLuminaire(scene, x, y, n, profondeur = 1) {
   const cle = luminaireHD(scene, n);
-  const echelle = 3;
+  const echelle = n >= 4 ? 2 : 3;   // (v1.30 : le grand lustre est plus haut)
   const image = scene.add.image(x, n === 0 ? y + 90 : y, cle).setOrigin(0.5, 0).setScale(echelle).setDepth(profondeur);
-  const centre = n === 0 ? y + 90 + 12 * echelle : y + (n === 1 ? 14 : n === 2 ? 18 : 24) * echelle;
+  const centre = n === 0 ? y + 90 + 12 * echelle : y + (n === 1 ? 14 : n === 2 ? 18 : n === 3 ? 24 : 55) * echelle;
   const halos = [
     lumiere(scene, x, centre, 260 + 70 * n, 0xffb060, 0.34 + 0.05 * n).setDepth(profondeur + 0.1),
     lumiere(scene, x, centre, 70 + 20 * n, 0xffd890, 0.45).setDepth(profondeur + 0.1),

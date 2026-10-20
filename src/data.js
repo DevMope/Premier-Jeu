@@ -156,18 +156,19 @@ const AGRANDISSEMENTS = [
 ];
 
 // Les améliorations du shop : chaque meuble a 4 niveaux de luxe (0 à 3), commandés le soir au
+// (v1.30, planche 54) ... et un cinquième, « le luxe » (4), pour le comptoir, le coffre, la chambre et l'éclairage ;
 // bureau ; les ouvriers les installent pendant la nuit. Chacune donne un petit bonus, et un
 // shop plus beau gagne un peu de réputation. (La réserve suit ses agrandissements.)
 const AMELIORATIONS = {
   reserve: { nom: "L'étagère de la réserve", niveaux: ['Planches brutes', 'Chêne ciré', 'Noyer à moulures', 'Ébène et dorures'],
     effet: 'Plus de place dans ta réserve.' },
-  comptoir: { nom: 'Le comptoir', niveaux: ['Chêne brut', 'Chêne verni', 'Noyer et laiton', 'Ébène et dorures'], prix: [150, 400, 900],
+  comptoir: { nom: 'Le comptoir', niveaux: ['Chêne brut', 'Chêne verni', 'Noyer et laiton', 'Ébène et dorures', 'Marbre et or'], prix: [150, 400, 900, 3500],
     effet: 'Un beau comptoir inspire confiance : les aventuriers te reversent +4 % de butin par niveau.' },
-  coffre: { nom: 'Le coffre de la fortune', niveaux: ['Coffre de bois', 'Coffre ferré', 'Coffre-fort de nain', "Coffre d'or gravé"], prix: [100, 280, 650],
+  coffre: { nom: 'Le coffre de la fortune', niveaux: ['Coffre de bois', 'Coffre ferré', 'Coffre-fort de nain', "Coffre d'or gravé", 'Coffre serti de gemmes'], prix: [100, 280, 650, 2500],
     effet: 'Ta fortune rapporte des intérêts chaque nuit : 1 % par niveau (15 p. max par niveau).' },
-  chambre: { nom: 'La chambre', niveaux: ['Paillasse', 'Lit de bois', 'Lit sculpté et édredon', 'Lit à baldaquin'], prix: [80, 220, 500],
-    effet: "Mieux reposé : +1 d'expérience par nuit et par niveau ; des réveils en forme (un client ou une remise de plus) ; des rêves qui révèlent un indice ; et une nuit qui console après un mauvais jour." },
-  eclairage: { nom: "L'éclairage", niveaux: ['Bougies', 'Lanternes', 'Chandeliers', 'Lustre de cristal'], prix: [90, 250, 600],
+  chambre: { nom: 'La chambre', niveaux: ['Paillasse', 'Lit de bois', 'Lit sculpté et édredon', 'Lit à baldaquin', 'Lit royal étoilé'], prix: [80, 220, 500, 3000],
+    effet: "Mieux reposé : +1 d'expérience par nuit et par niveau, des réveils en forme, des rêves qui révèlent un indice, une nuit qui console après un mauvais jour." },
+  eclairage: { nom: "L'éclairage", niveaux: ['Bougies', 'Lanternes', 'Chandeliers', 'Lustre de cristal', 'Grand lustre de cristal'], prix: [90, 250, 600, 2000],
     effet: 'Un comptoir bien éclairé attire le regard : +0,3 client par jour et par niveau.' },
   atelier: { nom: "L'atelier", niveaux: ['Un établi', 'Deux établis', 'Trois établis'], prix: [220, 480],
     effet: "2 employés au départ, puis un de plus pour chaque établi ajouté (et 2 places de plus pour les objets)." },

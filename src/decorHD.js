@@ -334,6 +334,7 @@ function creerDecorComptoir(scene) {
 // veinées, casiers du stock creusés dedans, têtes de clous, rayures, une tache d'encre, des
 // traces de chopes ; laiton puis dorures aux niveaux supérieurs.
 function plateauComptoir(scene, n = 1) {
+  if (n >= 4 && typeof textureLuxe === 'function') return textureLuxe(scene, 'comptoir');   // (v1.30) le luxe
   const cle = 'plateauComptoir_' + n;
   if (scene.textures.exists(cle)) return cle;
   const t = toileLuxe(480, 100, n);

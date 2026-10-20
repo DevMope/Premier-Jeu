@@ -61,10 +61,20 @@ class NightScene extends Phaser.Scene {
       ...(!this.matin && typeof barOuvert === 'function' && barOuvert(G) ? [['Le petit bar', () => { if (enFondu()) return; barDuSoir(this, () => this.tout()); }]] : []),   // (v1.16) la soirée, l'équipe, les installations
       ...(!this.matin && typeof confrerieOuverte === 'function' && confrerieOuverte(G) ? [['La Confrérie', () => { if (enFondu()) return; confrerieDuSoir(this, () => this.tout()); }]] : []),   // (v1.28) le livre des dons
       ...(!this.matin && typeof repaireOuvert === 'function' && repaireOuvert(G) ? [['Le repaire', () => { if (enFondu()) return; repaireDuSoir(this, () => this.tout()); }]] : []),   // (v1.29) le livre noir
+      ...(!this.matin && typeof etageOuvert === 'function' && etageOuvert(G) ? [["L'étage", () => { if (enFondu()) return; etageDuSoir(this, () => this.tout()); }]] : []),   // (v1.30) le grenier, le salon, l'appartement
       ...(this.matin
         ? [["L'arrière-boutique", () => ouvrirPage('Arriere', { retour: 'Nuit' })], ['Le marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
         : [['Aller dormir', () => this.dormir()]]),
     ];
+    // (v1.30) trop de boutons pour une rangée lisible : les projets (orphelinat, bar, Confrérie, repaire, étage, notaire)
+    // se rangent derrière un seul bouton, qui ouvre leur liste
+    const PROJETS = ["L'orphelinat", 'Le petit bar', 'La Confrérie', 'Le repaire', "L'étage", 'Chez le notaire'];
+    const projets = boutons.filter(([t]) => PROJETS.includes(t));
+    if (boutons.length > 8 && projets.length >= 2) {
+      const i0 = boutons.findIndex(([t]) => PROJETS.includes(t));
+      boutons.splice(0, boutons.length, ...boutons.filter(([t]) => !PROJETS.includes(t)));
+      boutons.splice(i0, 0, [`Tes projets (${projets.length}) ▴`, () => this.listeProjets(projets, 20 + (920 / boutons.length) * (i0 + 0.5))]);
+    }
     const largeur = 920 / boutons.length;
     boutons.forEach(([texte, action], i) => {
       const b = creerBouton(this, 20 + largeur * (i + 0.5), 505, largeur - 16, texte, action);
@@ -366,6 +376,20 @@ class NightScene extends Phaser.Scene {
   }
 
   // --- La banque : une page à part, le soir attend en pause ---
+
+  // (v1.30) La liste des projets du soir, au-dessus de leur bouton : un clic à côté la referme
+  listeProjets(projets, x) {
+    if (this.menuProjets) { this.menuProjets.forEach(o => (o.fond ? (o.fond.destroy(), o.label.destroy()) : o.destroy())); this.menuProjets = null; return; }
+    const h = projets.length * 44 + 16, cx = Phaser.Math.Clamp(x, 130, 830), y0 = 480 - h;
+    const voile = this.add.rectangle(480, 270, 960, 540, 0x000000, 0.001).setDepth(60).setInteractive();
+    const fond = this.add.rectangle(cx, y0 + h / 2, 236, h, 0x2a1a10, 0.94).setStrokeStyle(2, 0xc9a227).setDepth(61);
+    this.menuProjets = [voile, fond];
+    projets.forEach(([texte, action], i) => {
+      const b = creerBouton(this, cx, y0 + 30 + i * 44, 212, texte, () => { this.listeProjets(); action(); });
+      b.fond.setDepth(62); b.label.setDepth(62.1); this.menuProjets.push(b);
+    });
+    voile.on('pointerdown', () => this.listeProjets());
+  }
 
   ouvrirBanque() {
     if (this._transition && performance.now() - this._transition < 1500) return;   // (v0.86 : pas pendant un fondu)

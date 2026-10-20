@@ -360,7 +360,7 @@ function appliquerQuete(G, v, queteId, { butin, duree } = {}) {
   v.pv = Math.max(1, q.pv + niv.pv - v.blessures);
   const camp = multButinCamp(G, ZONES[zone].camp);
   const evenement = modifEvenement(G, 'butin', zone) || 1;
-  const prestige = v.prestige ? PRESTIGE_BUTIN : 1; // les nobles paient le double
+  const prestige = v.prestige ? PRESTIGE_BUTIN * (typeof paieSalon === 'function' ? paieSalon(G) : 1) : 1; // les nobles paient le double (et mieux encore, reçus au salon)
   v.butin = butin ?? Math.round(hasard(...q.butin) * (1 + 0.3 * enPlus) * BUTIN_PAR_DANGER[ZONES[zone].danger] / BUTIN_PAR_DANGER[1] * niv.butin * camp * evenement * prestige);
   v.duree = d;
   v.queteId = queteId;
@@ -1322,7 +1322,9 @@ function manqueArgent(G, prix, texte) {
 }
 
 function agrandissementSuivant(G) {
-  return AGRANDISSEMENTS.find(a => a.capacite > G.capacite) || null;
+  // (v1.30) les places du grenier comptent à part : l'étagère suit ses propres agrandissements
+  const bonus = G.capaciteBonus || 0, a = AGRANDISSEMENTS.find(x => x.capacite > G.capacite - bonus);
+  return a ? { ...a, capacite: a.capacite + bonus } : null;
 }
 
 function agrandirReserve(G) {
@@ -1338,7 +1340,7 @@ function agrandirReserve(G) {
 
 // Le niveau de luxe d'un meuble (0 à 3). L'étagère suit les agrandissements de la réserve.
 function niveauAmelioration(G, cle) {
-  if (cle === 'reserve') return Math.min(3, AGRANDISSEMENTS.filter(a => a.capacite <= G.capacite).length);
+  if (cle === 'reserve') return Math.min(3, AGRANDISSEMENTS.filter(a => a.capacite <= G.capacite - (G.capaciteBonus || 0)).length);
   return (G.ameliorations && G.ameliorations[cle]) || 0;
 }
 
@@ -1578,7 +1580,8 @@ function nuit(G) {
   if (typeof nuitDeLOrphelinat === 'function') nuitDeLOrphelinat(G);   // (v1.12) le chantier de l'orphelinat
   if (typeof nuitDuBar === 'function') nuitDuBar(G);   // (v1.16) le chantier du petit bar
   if (typeof nuitDeLaConfrerie === 'function') nuitDeLaConfrerie(G);
-  if (typeof nuitDuRepaire === 'function') nuitDuRepaire(G);   // (v1.29) le chantier du repaire, l'enveloppe du capitaine   // (v1.28) les chantiers de la Confrérie, la marche de l'escouade
+  if (typeof nuitDuRepaire === 'function') nuitDuRepaire(G);
+  if (typeof nuitDeLEtage === 'function') nuitDeLEtage(G);   // (v1.30) le chantier de l'étage   // (v1.29) le chantier du repaire, l'enveloppe du capitaine   // (v1.28) les chantiers de la Confrérie, la marche de l'escouade
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1648,6 +1651,7 @@ function nuit(G) {
   if (typeof matinDuBar === 'function') for (const l of matinDuBar(G)) G.reveil.lignes.push(l);
   if (typeof matinDeLaConfrerie === 'function') for (const l of matinDeLaConfrerie(G)) G.reveil.lignes.push(l);   // (v1.28)
   if (typeof matinDuRepaire === 'function') for (const l of matinDuRepaire(G)) G.reveil.lignes.push(l);   // (v1.29)
+  if (typeof matinDeLEtage === 'function') for (const l of matinDeLEtage(G)) G.reveil.lignes.push(l);   // (v1.30)
   if (typeof voeuDeSaison === 'function') { const l = voeuDeSaison(G); if (l) G.reveil.lignes.push(l); }   // (v1.23) les souvenirs de la nymphe au complet   // (v1.16) le petit bar : l'installation, la rumeur vraie
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
@@ -1663,7 +1667,7 @@ function reveilDuMatin(G, mauvaisJour) {
   // En forme : un client de plus, ou une remise au marché
   const auChaud = G.nuitAuChaud === G.jour;   // (v0.66 : le feu de cheminée a brûlé cette nuit)
   if (auChaud) r.lignes.push(chatAdopte(G) ? `Le feu a crépité toute la nuit ; ${nomChat(G)} a dormi devant les braises. Tu te réveilles bien reposé${eJ(G)}.` : `Le feu a crépité toute la nuit : tu te réveilles bien reposé${eJ(G)}.`);
-  const chanceForme = CHAMBRE.forme * n + (auChaud ? CHEMINEE.forme : 0);
+  const chanceForme = CHAMBRE.forme * n + (auChaud ? CHEMINEE.forme : 0) + (typeof formeAppartement === 'function' ? formeAppartement(G) : 0);   // (v1.30 : l'appartement)
   if (chanceForme && Math.random() < chanceForme) {
     r.forme = Math.random() < 0.5 ? 'client' : 'remise';
     r.lignes.push(r.forme === 'client' ? `Tu t'es réveillé${eJ(G)} en pleine forme : tu serviras un client de plus aujourd'hui !`
@@ -1815,7 +1819,7 @@ function formerFileDuJour(G) {
   if (morts.length && G.jour >= JOUR_FAUCHEUSE) file.push({ type: 'faucheuse', partis: morts });
   else if (morts.length) file.push(...morts.map(parti => ({ type: 'carnet', parti })));
   // Un client prestigieux, certains jours (dès que les nobles s'intéressent à toi).
-  if (G.prestige && !(typeof enDisgrace === "function" && enDisgrace(G)) && Math.random() < CHANCE_PRESTIGE) {   // (v1.13 : pas de nobles dans la disgrâce)
+  if (G.prestige && !(typeof enDisgrace === "function" && enDisgrace(G)) && Math.random() < CHANCE_PRESTIGE + (typeof bonusPrestigeSalon === 'function' ? bonusPrestigeSalon(G) : 0)) {   // (v1.13 : pas de nobles dans la disgrâce ; v1.30 : un de plus par semaine avec le salon)
     const pris = [...nomsActifs(G), ...clients.map(v => v.nom)];
     const libres = PRESTIGIEUX.filter(p => !pris.includes(p.nom) && !(G.personnes[p.nom] && G.personnes[p.nom].mort));
     if (libres.length) {

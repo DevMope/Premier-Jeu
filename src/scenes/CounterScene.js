@@ -627,7 +627,7 @@ class CounterScene extends Phaser.Scene {
     const zone = this.add.rectangle(FENETRE.x + 250, FENETRE.y + 22, 204, 28, 0xffffff, 0).setDepth(4).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => {
       const G = this.G, f = heureFermeture(G);
-      this.raconter(`Il est ${formatHeure(heureDuComptoir(G))}. Le comptoir ferme à ${formatHeure(f)}. Servir un client prend ${formatDuree(dureeService(G))}${dureeService(G) > JOURNEE.service[JOURNEE.service.length - 1] ? " (moins, avec l'expérience)" : ''} ; écouter un récit ${formatDuree(JOURNEE.recit)} ; passer chez Grippesou ${formatDuree(JOURNEE.express)}.${niveauAmelioration(G, 'eclairage') < 3 ? ' Un meilleur éclairage fait fermer plus tard.' : ''}`, "L'horloge");
+      this.raconter(`Il est ${formatHeure(heureDuComptoir(G))}. Le comptoir ferme à ${formatHeure(f)}. Servir un client prend ${formatDuree(dureeService(G))}${dureeService(G) > JOURNEE.service[JOURNEE.service.length - 1] ? " (moins, avec l'expérience)" : ''} ; écouter un récit ${formatDuree(JOURNEE.recit)} ; passer chez Grippesou ${formatDuree(JOURNEE.express)}.${niveauAmelioration(G, 'eclairage') < AMELIORATIONS.eclairage.niveaux.length - 1 ? ' Un meilleur éclairage fait fermer plus tard.' : ''}`, "L'horloge");
     });
     this.heureAffichee = heureDuComptoir(this.G);
     this.majHorloge();
@@ -717,7 +717,7 @@ class CounterScene extends Phaser.Scene {
     if (repartent.length) ligne(`↩  ${prenoms(repartent)} (venu${fem(repartent) ? 'e' : ''}${repartent.length > 1 ? 's' : ''} sans lettre) repart${repartent.length > 1 ? 'ent' : ''} : ${repartent.length > 1 ? (fem(repartent) ? 'elles' : 'ils') + ' retenteront leur' : (repartent[0].feminin ? 'elle' : 'il') + ' retentera sa'} chance.`, '#7a3a10');
     if (!reviennent.length && !repartent.length) ligne("Personne n'attendait plus : une journée bien menée.", '#2f5a2a');
     const n = niveauAmelioration(G, 'eclairage');
-    if (n < 3) ligne(`✦  Avec un meilleur éclairage, ton comptoir fermerait plus tard (${formatHeure(heureFermeture(G) + JOURNEE.parEclairage)}).`, '#5a4a2a', { fontStyle: 'italic bold' });
+    if (n < AMELIORATIONS.eclairage.niveaux.length - 1) ligne(`✦  Avec un meilleur éclairage, ton comptoir fermerait plus tard (${formatHeure(heureFermeture(G) + JOURNEE.parEclairage)}).`, '#5a4a2a', { fontStyle: 'italic bold' });
     const suite = creerBouton(this, x + L / 2, y + H - 60, 200, 'Continuer', () => { c.destroy(); this.ficheFermeture = null; this.voyageurSuivant(); });
     c.add([suite.fond, suite.label]);
     c.add(this.add.text(x + L / 2, y + H - 24, `Aujourd'hui : ${pluriel(G.journal.servis, 'client servi', 'clients servis')} · ${pluriel(G.journal.retours, 'retour de mission', 'retours de mission')}`, style(13, '#5a3a1c', { fontStyle: 'italic' })).setOrigin(0.5));

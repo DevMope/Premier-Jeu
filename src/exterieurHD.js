@@ -524,7 +524,11 @@ function creerAccessoiresFacade(scene) {
 // Renvoie la porte, l'image, l'enseigne et les zones de la façade (à l'écran).
 function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3, { fumee = true } = {}) {
   creerFacadeHD(scene, n);
-  const image = scene.add.image(cx, sol + 2, 'facadeHD_' + n).setOrigin(0.5, 1).setScale(2);
+  // (v1.30, planche 54) l'appartement : la belle maison gagne un étage et un balcon (le toit et la cheminée montent d'autant)
+  const etage = n === 3 && typeof etageA === 'function' && window.GAME && etageA(window.GAME, 'appartement');
+  if (etage) creerEtageHD(scene);
+  const monte = etage ? FACADE.etage[3] * 2 : 0;
+  const image = scene.add.image(cx, sol + 2, etage ? 'facadeHD_4' : 'facadeHD_' + n).setOrigin(0.5, 1).setScale(2);
   const gauche = cx - FACADE.L, haut = sol + 2 - FACADE.H * 2;
   const ecran = ([x, y, l, h]) => [gauche + x * 2, haut + y * 2, l * 2, h * 2];
   const tonneaux = scene.add.image(gauche + FACADE.L * 2 - 26, sol + 4, 'tonneauxHD').setOrigin(0, 1).setScale(2);
@@ -535,7 +539,7 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   scene.tweens.add({ targets: enseigne, angle: { from: -2.5, to: 2.5 }, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   // Un filet de fumée qui monte de la cheminée
   creerHalo(scene);
-  const [chx, chy, chl] = ecran(chemineeFacade(n));
+  const [chx, chy0, chl] = ecran(chemineeFacade(n)), chy = chy0 - monte;
   if (fumee) scene.time.addEvent({ delay: 420, loop: true, callback: () => {
     if (!image.active) return;
     bouffeeFumee(scene, chx + chl / 2, chy, { echelle: 2.2, monte: 110, vent: 40, duree: 3200, alpha: 0.95, profondeur: image.depth + 0.01 });   // (v0.70 : la vraie fumée)
@@ -543,7 +547,7 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   const [px, , pl] = ecran(FACADE.porte);
   return {
     porteX: px + pl / 2, porteY: sol, image, enseigne, tonneaux,
-    zones: { toit: ecran(n >= 2 ? FACADE.toit : [0, 42, 200, 72]), etage: n >= 2 ? ecran(FACADE.etage) : null, fenetre: ecran(FACADE.fenetre), porte: ecran(FACADE.porte),
+    zones: { toit: ((z) => [z[0], z[1] - monte, z[2], z[3]])(ecran(n >= 2 ? FACADE.toit : [0, 42, 200, 72])), etage: n >= 2 ? ecran(FACADE.etage) : null, fenetre: ecran(FACADE.fenetre), porte: ecran(FACADE.porte),
       // (v0.57) le cadre de l'enseigne s'arrête avant la fenêtre : les deux cadres ne se chevauchent plus
       enseigne: [ex - 80, ey + 18, Math.max(70, Math.min(160, ecran(FACADE.fenetre)[0] - 6 - (ex - 80))), Math.min(56, ecran(FACADE.fenetre)[1] - 2 - (ey + 18) > 30 ? 56 : 56)] },
   };

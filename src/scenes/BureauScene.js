@@ -529,11 +529,15 @@ class BureauScene extends Phaser.Scene {
     const n = niveauAmelioration(G, choisi);
     const suivant = ameliorationSuivante(G, choisi);
     c.add(this.add.text(423, 72, a.nom, style(15, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    c.add(this.add.text(423, 92, a.effet, style(11, '#5a3a20', { align: 'center', wordWrap: { width: 236 } })).setOrigin(0.5, 0));
+    const texteEffet = this.add.text(423, 92, a.effet, style(11, '#5a3a20', { align: 'center', wordWrap: { width: 236 } })).setOrigin(0.5, 0);
+    c.add(texteEffet);
+    // (v1.30) l'image du meuble ne recouvre jamais le texte de l'effet (la chambre en a un long)
     const apercu = (niveau, y) => {
       const { cle, echelle } = this.apercuMeuble(choisi, niveau);
-      c.add(this.add.image(423, y, cle).setScale(echelle));
-      c.add(this.add.text(423, y + 46, `${niveau ? '★'.repeat(niveau) + '  ' : ''}${a.niveaux[niveau]}`, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+      const im = this.add.image(423, y, cle).setScale(echelle);
+      if (y < 260) im.y = Math.max(y, texteEffet.y + texteEffet.height + 6 + im.displayHeight / 2);
+      c.add(im);
+      c.add(this.add.text(423, Math.max(y + 46, im.y + im.displayHeight / 2 + 8), `${niveau ? '★'.repeat(niveau) + '  ' : ''}${a.niveaux[niveau]}`, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     };
     apercu(n, 196);
     if (!suivant) {
@@ -566,9 +570,9 @@ class BureauScene extends Phaser.Scene {
       case 'reserve': return { cle: etagereHD(this, n), echelle: 0.42 };
       case 'comptoir': return { cle: plateauComptoir(this, n), echelle: 0.5 };
       case 'coffre': return { cle: coffreHD(this, n), echelle: 2.4 };
-      case 'chambre': return { cle: litHD(this, n), echelle: n === 3 ? 0.55 : 1.2 };
+      case 'chambre': return { cle: litHD(this, n), echelle: n >= 3 ? 0.55 : 1.2 };
       case 'atelier': return { cle: iconeObjet(this, 'enclume'), echelle: 2.6 + n * 0.5 };
-      default: return { cle: luminaireHD(this, n), echelle: n >= 2 ? 1.6 : 2.6 };
+      default: return { cle: luminaireHD(this, n), echelle: n >= 4 ? 1.1 : n >= 2 ? 1.6 : 2.6 };
     }
   }
 
