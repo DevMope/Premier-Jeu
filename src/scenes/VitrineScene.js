@@ -4,12 +4,12 @@
 // Une pièce de collection, dessinée (x, y : son centre ; e : l'échelle ; la : possédée, sinon en ombre)
 function dessinerPieceCollection(s, serie, piece, x, y, e = 1, la = true) {
   const ombre = o => { if (!la) { (o.list || [o]).forEach(k => k.setTint && k.setTint(0x000000)); o.setAlpha(0.22); } return o; };
-  // un écu de bois verni, l'emblème dessus (les trophées, l'écu des Bannis, et pour l'instant les reliques du Conseil)
+  // un écu de bois verni, l'emblème dessus (les trophées, l'écu des Bannis)
   const ecu = cle => { const c = s.add.container(x, y), g = s.add.graphics();
     g.fillStyle(0x3a2210).fillRoundedRect(-17 * e, -20 * e, 34 * e, 40 * e, 6 * e).fillStyle(0x7a4a22).fillRoundedRect(-15 * e, -18 * e, 30 * e, 36 * e, 5 * e).fillStyle(0xc9a227).fillRect(-15 * e, 14 * e, 30 * e, 3 * e);
     c.add(g); const em = s.add.image(0, -2 * e, 'embleme_' + cle); em.setScale(28 * e / em.width); c.add(em); return ombre(c); };
   if (serie === 'trophees') return ecu(EMBLEME_ROYAUME[piece] || piece);
-  if (serie === 'conseil') return ecu('conseil');
+  if (serie === 'conseil') { creerReliques(s); return ombre(s.add.image(x, y, 'relique_' + piece).setScale(2 * e)); }   // (v1.32 : les reliques de la planche 51)
   if (serie === 'bannis' && piece === 'ecu') return ecu('bannis');
   if (serie === 'armes' || serie === 'bannis') return ombre(s.add.image(x, y, iconeObjet(s, piece)).setScale(2 * e).setAngle(-30));
   const g = s.add.graphics({ x, y });

@@ -423,3 +423,50 @@ function creerPiecesHD(scene) {
     t.texture(scene, 'etiquette');
   }
 }
+
+// (v1.32, planche 51 validée) Les reliques du Conseil : cinq objets peints comme les objets du jeu (24 × 24),
+// une à chaque commande royale livrée, rangées dans la vitrine.
+function creerReliques(s) { if (s.textures.exists('relique_sceau')) return;
+    const R = (t, o) => { for (const [k, c] of Object.entries(o)) t.rampes[k] = rampe(c); };
+    // le sceau de cire : un disque rouge aux bords coulés, la tour du Conseil en relief, deux rubans
+    { const t = toileObjet(24, 24); R(t, { cire: 0xa81c18, ruban: 0x2a4a8a });
+      t.forme('ruban', polygoneHD([[8, 14], [11, 14], [9, 23], [5, 22]])); t.forme('ruban', polygoneHD([[13, 14], [16, 14], [19, 22], [15, 23]]));
+      t.forme('cire', (x, y) => { const dx = x + 0.5 - 12, dy = y + 0.5 - 10.5, r = Math.hypot(dx, dy), bord = 8.2 + Math.sin(Math.atan2(dy, dx) * 7) * 0.7; return r <= bord ? [dx / bord, dy / bord, Math.sqrt(Math.max(0, 1 - (r / bord) ** 2))] : null; });
+      // la tour des Gardiens frappée dans la cire : en creux, l'ombre en bas à droite, la lumière en haut à gauche
+      const tour = ['x.x.x.x', 'xxxxxxx', '.xxxxx.', '.xxoxx.', '.xxxxx.', '.xxxxx.', '.xxoxx.', '.xxoxx.', 'xxxxxxx'];
+      tour.forEach((ligne, j) => [...ligne].forEach((c, i) => { if (c === '.') return; const x = 9 + i, y = 5 + j;
+        t.poser(x, y, 'cire', c === 'o' ? 0 : 1); if (c === 'x') { t.poser(x - 1, y - 1, 'cire', 5); } }));
+      tour.forEach((ligne, j) => [...ligne].forEach((c, i) => { if (c !== '.') t.poser(9 + i, 5 + j, 'cire', c === 'o' ? 0 : 1); }));
+      t.contour(); t.texture(s, 'relique_sceau'); }
+    // la clé de la salle des Gardiens : un grand anneau ouvragé, la tige, le panneton à dents
+    { const t = toileObjet(24, 24); R(t, { or: 0xc9a227 });
+      t.forme('or', (x, y) => { const dx = x + 0.5 - 7, dy = y + 0.5 - 7, r = Math.hypot(dx, dy); return r <= 5.2 && r >= 2.6 ? [dx / 5, dy / 5, 0.7] : null; });
+      for (const [x, y] of [[7, 7], [6, 7], [7, 6]]) t.poser(x, y, 'or', 1);
+      trait(t, 'or', 10.5, 10.5, 20, 20, 1.2);
+      t.forme('or', polygoneHD([[15, 19], [18, 16], [21, 19.5], [19.5, 21], [18.5, 20], [17.5, 21], [16.5, 20]]));
+      t.contour(); t.texture(s, 'relique_cle'); }
+    // la plume de l'archiviste : une grande plume d'oie, le tuyau au milieu, les barbes fendues par endroits, l'encre au bout
+    { const t = toileObjet(24, 24); R(t, { plume: 0xe8e4d8, tuyau: 0xb8b0a0, encreP: 0x1a1a2a });
+      const S2 = Math.SQRT2, axe = (x, y) => [((x + 0.5 - 3) + (y + 0.5 - 2)) / S2, ((x + 0.5 - 3) - (y + 0.5 - 2)) / S2];
+      t.forme('plume', (x, y) => { const [a, v] = axe(x, y), u = a / 21; if (u < 0.02 || u > 0.74) return null;
+        const larg = v < 0 ? 3.4 * Math.sin(Math.min(1, u / 0.74) * Math.PI) ** 0.7 : 2.2 * Math.sin(Math.min(1, u / 0.74) * Math.PI) ** 0.7;
+        if (Math.abs(v) > larg) return null;
+        if (Math.abs(v) > 1.2 && [5, 11].includes(Math.floor(a))) return null;   // (deux barbes fendues)
+        return [v / 3.4, -0.5, 0.75]; }, { motif: (x, y) => ((x + y) % 2 ? -0.35 : 0) });
+      t.forme('tuyau', (x, y) => { const [a, v] = axe(x, y); return a > 1 && a < 19 && Math.abs(v) <= 0.45 ? [0, -0.3, 0.9] : null; }, { decalage: 0.4 });
+      t.forme('encreP', (x, y) => { const [a, v] = axe(x, y); return a >= 19 && a < 22.5 && Math.abs(v) <= 0.6 * (22.5 - a) / 3.5 + 0.2 ? [0, 0, 1] : null; });
+      t.contour(); t.texture(s, 'relique_plume'); }
+    // la médaille du Rempart : un disque d'or, l'étoile gravée, un ruban bleu et blanc
+    { const t = toileObjet(24, 24); R(t, { or: 0xc9a227, ruban: 0x2a4a8a, blanc: 0xe8e4d8 });
+      t.forme('ruban', polygoneHD([[7, 0], [11, 0], [12, 9], [9, 9]])); t.forme('blanc', polygoneHD([[11, 0], [13, 0], [13.5, 9], [12, 9]])); t.forme('ruban', polygoneHD([[13, 0], [17, 0], [15, 9], [13.5, 9]]));
+      t.forme('or', (x, y) => { const dx = x + 0.5 - 12.5, dy = y + 0.5 - 15, r = Math.hypot(dx, dy); return r <= 6.6 ? [dx / 6.6, dy / 6.6, Math.sqrt(Math.max(0, 1 - (r / 6.6) ** 2))] : null; });
+      for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; for (let d = 0; d <= 3.4; d += 0.7) t.poser(Math.round(12 + Math.cos(a) * d), Math.round(14.5 + Math.sin(a) * d), 'or', 5); }
+      t.contour(); t.texture(s, 'relique_medaille'); }
+    // la fiole de lumière : un petit flacon de verre, un bouchon de cire, une lueur dorée dedans
+    { const t = toileObjet(24, 24); R(t, { lueur: 0xf8d860, bouchon: 0x8a3a1a });
+      t.forme('verre', (x, y) => { const dx = x + 0.5 - 12, dy = y + 0.5 - 15.5, r = Math.hypot(dx / 1.0, dy / 1.05); return (r <= 6.4) || (Math.abs(dx) <= 2 && y >= 4 && y <= 10) ? [dx / 6, dy / 6, 0.6] : null; });
+      t.forme('lueur', (x, y) => { const dx = x + 0.5 - 12, dy = y + 0.5 - 16.5, r = Math.hypot(dx, dy); return r <= 4.4 ? [dx / 5, dy / 5, 1] : null; }, { decalage: 0.8 });
+      t.forme('bouchon', polygoneHD([[9.5, 2], [14.5, 2], [14, 5], [10, 5]]));
+      for (const [x, y] of [[9, 12], [9, 13], [10, 11]]) t.poser(x, y, 'verre', 5);
+      t.contour(); t.texture(s, 'relique_fiole'); }
+  }

@@ -20,7 +20,8 @@ class IntroScene extends Phaser.Scene {
     this.add.image(220, 250, panneauHD(this, 380, 330)).setScale(2);
     this.apercu = this.add.image(220, 350, 'perso_heros').setOrigin(0.5, 1).setScale(echelleJoueur(13));
     this.nomApercu = this.add.text(220, 372, '', style(20, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
-    this.add.text(220, 396, `${AGE_DEPART} ans`, style(14, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
+    // (v1.32) pour un garçon, on prévient : la barbe choisie ne pousse qu'à 18 ans
+    this.texteAge = this.add.text(220, 396, `${AGE_DEPART} ans`, style(14, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
 
     // Garçon ou fille
     this.boutonsGenre = [[false, 'Garçon', 140], [true, 'Fille', 300]].map(([feminin, texte, x]) => {
@@ -93,6 +94,7 @@ class IntroScene extends Phaser.Scene {
     const genre = this.feminin ? 'fille' : 'garcon';
     this.apercu.setTexture('joueur_petit');
     this.nomApercu.setText(NOMS_JOUEUR[genre].petit);
+    this.texteAge.setText(this.feminin ? `${AGE_DEPART} ans` : `${AGE_DEPART} ans · la barbe poussera à 18 ans`);
     this.texteShop.setText(this.nomShop);
     for (let taille = 16; this.texteShop.width > 270 && taille >= 10; taille--) this.texteShop.setFontSize(taille);
     this.curseur.setX(this.texteShop.x + this.texteShop.width + 3);
