@@ -151,7 +151,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const atours = options.atours || {};   // (v1.02 : le métal et la coiffe d'un Gardien du Conseil)
   g = { ...g };
   const race = PROPORTIONS[g.race] ? g.race : 'humain';
-  const P0 = PROPORTIONS[race];
+  const P0 = options.proportions || PROPORTIONS[race];   // (v1.32 : le joueur adulte a les siennes)
   const P = { H: P0.H * k, ep: P0.ep * k, torse: P0.torse * k, rx: P0.rx * k, ry: P0.ry * k, membre: P0.membre || 1 };
   const th = ANGLES_VUE[vue] ?? ANGLES_VUE.troisQuarts;
   const c = Math.cos(th), s = Math.sin(th);
@@ -159,7 +159,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const L = 52 * k;
   // (v0.58) + une marge en haut : sans elle, le sommet du crâne (cheveux, contour) touchait le bord
   // de l'image et paraissait coupé à plat
-  const coiffe = (race === 'magicienne' || costume === 'sage' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' || costume === 'pirate' ? 8 : costume === 'garde' ? 2 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : 0) * k + (pose === 'leves' || pose === 'epaules' || pose === 'grimpe1' || pose === 'grimpe2' ? 12 * k : 0) + 3 * k;
+  const coiffe = (race === 'magicienne' || costume === 'sage' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' || costume === 'pirate' ? 8 : costume === 'garde' ? 2 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : costume === 'joueur' && typeof COIFFURES_HD !== 'undefined' && COIFFURES_HD[g.coiffure] ? (COIFFURES_HD[g.coiffure].marge || 0) : 0) * k + (pose === 'leves' || pose === 'epaules' || pose === 'grimpe1' || pose === 'grimpe2' ? 12 * k : 0) + 3 * k;
   const H = P.H + coiffe;
   const t = new ToileHD(L, H);
   t.relief = true;
@@ -184,6 +184,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   t.rampes.cheveux = rampeVive(g.cheveux);
   // Les aînés : cheveux et poils gris, et la fourrure des bêtes qui blanchit un peu
   if (g.vieux) { t.rampes.cheveux = rampeVive(grisonner(T.poils || g.cheveux)); if (T.fourrure) t.rampes.peau = rampeVive(grisonner(T.peau, 0.35)); if (T.bandelettes) t.rampes.bande = rampe(0xb0a070); }
+  // (v1.32, planche 57) la barbe peut avoir sa propre couleur (sinon, celle des cheveux)
+  t.rampes.barbe = g.couleurBarbe ? rampeVive(g.vieux ? grisonner(g.couleurBarbe) : g.couleurBarbe) : t.rampes.cheveux;
   t.rampes.habit = rampeVive(g.habit);
   t.rampes.cape = rampeVive(T.cape || (race === 'elfe' ? 0x8aa0b8 : g.cape || 0x4a3a2a));
   t.rampes.iris = rampeVive(T.yeux || g.yeux || 0x4a3a20);
@@ -491,6 +493,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   }
   // Le bâton noueux du mendiant, dans son dos
   if (costume === 'mendiant' && !dos) { const bx0 = X(ep + 3 * k, -1 * k); for (let y = yT - 6 * k; y < sol; y++) for (let e = 0; e < k; e++) t.poser(Math.round(bx0 + Math.sin(y / (6 * k)) * 0.6 * k) + e, y, 'cuir', Math.floor(y / k) % 6 === 0 ? 1 : 3); }
+  // (v1.32, planche 57) les coupes de la création élargie : leur contexte de tête, et ce qui tombe dans le dos
+  const coupeHD = typeof COIFFURES_HD !== 'undefined' && T.cheveux === undefined ? COIFFURES_HD[g.coiffure] : null;
+  const ctxTete = (extra = {}) => ({ t, k, cx, cy, P, s, c, X, Z, dos, yT, yB, loin, pres, race, f, ...extra });
+  if (coupeHD && coupeHD.derriere && !dos) coupeHD.derriere(ctxTete());
   const longs = ['long', 'queue', 'chignon'].includes(g.coiffure) || race === 'elfe' || race === 'magicienne';
   if (longs && !dos) {
     const bas = g.coiffure === 'chignon' ? cy + 4 * k : race === 'elfe' || race === 'magicienne' ? yT + 10 * k : yT + 4 * k;
@@ -1081,7 +1087,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (!grinch && !elfeF && Math.abs(c) > 0.9) t.poser(Math.round(bx + lb + 1), by, matLevre, tonFente);
     // La barbe : sur la moitié avant du menton et des joues
     const barbe = race === 'nain' && !(forgeron && f) ? 'nain' : g.barbe;   // (v0.82 : Baba n'a pas de barbe)
-    if (barbe === 'rase') {
+    if (typeof BARBES_HD !== 'undefined' && BARBES_HD[barbe]) BARBES_HD[barbe].dessin(ctxTete({ tete, bx, by, lb, ey }));   // (v1.32, planche 57)
+    else if (barbe === 'rase') {
       // Une barbe courte et nette : un aplat sombre qui suit la mâchoire et le menton, une
       // moustache fine au-dessus de la bouche (lisible même de loin)
       t.forme('cheveux', (x, y) => {
@@ -1185,6 +1192,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       if (Z(u * k, z * k) < -3 * k && !dos) continue;
       t.forme('cheveux', ellipsoide(X(u * k, z * k), cy + dy * k, 3 * k, 3 * k));
     }
+  } else if (coupeHD) {
+    coupeHD.dessus(ctxTete({ tete }));
   } else if (coupe !== 'chauve') {
     t.forme('cheveux', (x, y) => {
       const nx = (x + 0.5 - cx) / (P.rx + 1 * k), ny = (y + 0.5 - cy) / (P.ry + 1.8 * k);
@@ -1217,6 +1226,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   }
   if (porte('monocle') && !dos && yeux.length) { const [ox] = yeux[yeux.length - 1]; for (let a = 0; a < 6.3; a += 0.25) t.poser(Math.round(ox + Math.cos(a) * 2.6 * k), Math.round(ey + 0.3 * k + Math.sin(a) * 2.8 * k), 'or', a < 3 ? 4 : 2); for (let j = 0; j < 5 * k; j++) t.poser(Math.round(ox + 2.6 * k + (j % 2 ? 1 : 0)), Math.round(ey + 3 * k + j), 'or', 3); }
   if (porte('pipe') && !dos) { const bx = X(0, P.rx * 0.85); const px = Math.round(bx + s * 2 * k - 2 * k); for (let j = 0; j < 5 * k; j++) for (let e = 0; e < k; e++) t.poser(px - j, by + Math.floor(j / (2 * k)) * k + e, 'bruyere', 3); t.forme('bruyere', ellipsoide(px - 5 * k, by + 2.5 * k, 1.4 * k, 1.6 * k), { decalage: 0.1, ombre: false }); for (let j = 0; j < 3; j++) t.poser(px - 5 * k - j, by - 1 * k - j * 2 * k, 'blanc', 4 + (j % 2)); }
+  if (coupeHD && coupeHD.derriere && dos) coupeHD.derriere(ctxTete());
   if (longs && dos) t.forme('cheveux', (x, y) => (y >= cy && y <= yT + 10 * k && Math.abs(x + 0.5 - cx) < P.rx + 1 * k - Math.max(0, y - yT - 4 * k) * 0.4 ? [(x + 0.5 - cx) / (P.rx + 2 * k), 0, 0.8] : null), { decalage: -0.3, motif: MECHES });
   if (tenue >= 4 && race !== 'nain' && race !== 'magicienne') for (let j = -5; j <= 5; j++) { const x = Math.round(X(j * k, Math.sqrt(Math.max(0, P.rx * P.rx - (j * k) ** 2)) * 0.9)); for (let e = 0; e < k; e++) t.poser(x + e, cy - P.ry + 1 * k + (j % 3 === 0 ? -1 * k : 0), 'or', j % 3 === 0 ? 5 : 4); } // le diadème
 

@@ -1360,13 +1360,19 @@ function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0, tenue =
     barbe: stade !== 'petit' && ap.barbe ? ['moustache', 'moustache', 'courte', 'pleine'][ap.barbe] : null,
     nom: 'JeuneGoy',
   };
-  return dessinerCorpsVue(gene, 1, 'joueur', pas, pose, vue, { tenue, bouche: ap.bouche ?? 0 });
+  // (v1.32, planche 56 validée) l'adulte n'est plus JeuneGoy agrandi : plus grand, épaules plus larges, torse plus
+  // long, visage plus long et plus fin
+  const proportions = stade === 'petit' ? undefined : PROPORTIONS_JOUEUR_ADULTE[feminin ? 'fille' : 'garcon'];
+  return dessinerCorpsVue(gene, 1, 'joueur', pas, pose, vue, { tenue, bouche: ap.bouche ?? 0, proportions });
 }
 
 // L'échelle d'affichage du joueur : ses anciens sprites faisaient 16 pixels de haut.
 // Le joueur a 15 ans au début : un peu plus petit que les adultes (qui sont les plus grands),
 // puis il grandit, et se tasse un peu avec l'âge.
-const TAILLE_SELON_AGE = { petit: 0.86, adulte: 1, ancien: 0.95 };
+const PROPORTIONS_JOUEUR_ADULTE = { garcon: { H: 73, ep: 11.4, torse: 25.5, rx: 8.0, ry: 9.8, membre: 1 }, fille: { H: 70, ep: 9.8, torse: 24.5, rx: 7.8, ry: 9.5, membre: 1 } };
+// (v1.32) le corps adulte est déjà plus grand (73 au lieu de 64) : l'échelle d'adulte baisse d'autant, pour qu'il reste à
+// la taille d'un homme du village (un peu plus grand que la moyenne), et JeuneGoy à 15 ans un peu plus petit
+const TAILLE_SELON_AGE = { petit: 0.86, adulte: 0.94, ancien: 0.9 };
 function echelleJoueur(ancienneEchelle) {
   const stade = window.GAME && GAME.joueur ? stadeJoueur(GAME) : 'petit';
   return ancienneEchelle * 16 / JOUEUR_H * (TAILLE_SELON_AGE[stade] || 1);

@@ -1665,6 +1665,7 @@ function nuit(G) {
   sansPlanter('matinDeLaConfrerie', () => typeof matinDeLaConfrerie === 'function' && G.reveil.lignes.push(...matinDeLaConfrerie(G)));   // (v1.28)
   sansPlanter('matinDuRepaire', () => typeof matinDuRepaire === 'function' && G.reveil.lignes.push(...matinDuRepaire(G)));   // (v1.29)
   sansPlanter('matinDeLEtage', () => typeof matinDeLEtage === 'function' && G.reveil.lignes.push(...matinDeLEtage(G)));   // (v1.30)
+  sansPlanter('matinDesRiches', () => typeof matinDesRiches === 'function' && G.reveil.lignes.push(...matinDesRiches(G)));   // (v1.32) le mécénat, la neutralité
   sansPlanter('voeuDeSaison', () => { const l = typeof voeuDeSaison === 'function' && voeuDeSaison(G); if (l) G.reveil.lignes.push(l); });   // (v1.23) les souvenirs de la nymphe au complet
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
@@ -2205,13 +2206,6 @@ function partDuButin(G, voyageur) {
   const benie = juré && zc === juré ? 1 + AVANTAGES_SERMENT.butin : 1;
   return Math.round(voyageur.butin * niveauRelation(G, voyageur.nom).butin * lanterne * comptoir * froid * benie);
 }
-// (v1.32) La dîme de la Confrérie sur un butin (0 pour un comptoir de l'ombre)
-function tauxDime(G) {
-  const p = palierCamp(G), cle = p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre';
-  const et = typeof etoilesDe === 'function' ? Math.min(5, etoilesDe(G)) : 1;
-  return DIME_CONFRERIE.parEtoile[cle] * Math.max(0, et - 2);   // (rien en ★1-★2 : le début de partie reste le même)
-}
-function dimeSurButin(G, brut) { return Math.round(brut * tauxDime(G)); }
 
 // Appelé à la fin du récit : on encaisse le butin, la réputation et la relation évoluent.
 // Renvoie { gain, message }.
@@ -2237,9 +2231,10 @@ function terminerAventure(G, parti) {
   } else if (r.vivant) {
     gain = partDuButin(G, v);
     encaisser(G, gain, 'butins');
-    // (v1.32) la dîme de la Confrérie, reversée aussitôt (affichée sur la fiche du retour)
-    const dime = dimeSurButin(G, gain);
-    if (dime > 0) { payer(G, dime, 'dime'); gain -= dime; parti.dime = dime; }
+    // (v1.32) au-delà d'une belle fortune : le mécénat du Grand Sage (lumière) ou le prix de la neutralité (neutre),
+    // versé aussitôt et affiché sur la fiche du retour
+    const riche = typeof verserPartDesRiches === 'function' ? verserPartDesRiches(G, gain) : { montant: 0 };
+    if (riche.montant > 0) { gain -= riche.montant; parti.dime = riche.montant; parti.dimeNom = nomPartDesRiches(riche.regime); }
     // Une commande par lettre remplie à moitié ne rapporte que la moitié de la réputation.
     const part0 = v.prevu ? partCommandeRemplie(v, parti.colis) : 1;
     // (v0.60) Revenu, mais blessé : la mission compte moins (un quart de réputation en moins par cœur
@@ -2336,7 +2331,7 @@ function terminerAventure(G, parti) {
   if (typeof detresseAuRetour === 'function' && r.vivant) { const t = detresseAuRetour(G, parti); if (t) message = (message ? message + ' ' : '') + t; }
   parti.bilan = { gain, message };
   const h = G.habitues.find(x => x.nom === v.nom);
-  parti.progression = { avant, apres: { niveau: (h && h.niveau) || v.niveau, succes: succesDe(G, v.nom), relation: niveauRelation(G, v.nom).nom, reputation: G.reputation }, gain, dime: parti.dime || 0 };
+  parti.progression = { avant, apres: { niveau: (h && h.niveau) || v.niveau, succes: succesDe(G, v.nom), relation: niveauRelation(G, v.nom).nom, reputation: G.reputation }, gain, dime: parti.dime || 0, dimeNom: parti.dimeNom };
   connaitre(G, v);
   G.historique.unshift({
     nom: v.nom, race: v.race, feminin: !!v.feminin, quete: v.quete, zone: v.zone, depart: parti.depart, retour: parti.retour,
@@ -3024,6 +3019,7 @@ function avancerEvenements(G) {
   if (G.annonceConseil) { lignes.unshift(G.annonceConseil); G.annonceConseil = null; }
   if (G.annonceCollection) { lignes.unshift(G.annonceCollection); G.annonceCollection = null; }   // (v1.23) une série complète dans la vitrine   // (v1.10) la commande scellée, livrée ou manquée
   if (G.annonceRival) { lignes.unshift(G.annonceRival); G.annonceRival = null; }
+  if (G.annonceMecenat) { lignes.unshift(G.annonceMecenat); G.annonceMecenat = null; }   // (v1.32) le mécénat, la neutralité
   if (G.annonceConfrerie) { lignes.unshift(G.annonceConfrerie); G.annonceConfrerie = null; }   // (v1.28) la Confrérie remercie, l'escouade avance   // (v1.11) le paon ouvre, ferme, ou sa maison change de mains
   // (v0.99) le premier jour d'une saison : le crieur l'annonce, avec ce qu'elle change au marché
   if (typeof saisonDe === 'function' && dateDuJour(G).jourDuMois === 1) {
