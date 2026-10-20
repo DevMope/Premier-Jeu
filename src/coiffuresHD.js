@@ -70,19 +70,20 @@ function longsHD(C, { bas, gonfle = 1.1, hauteur = 1.5, evase = 1.6, raie = 'mil
     const coins = [X(-ext, -R * 0.95), X(ext, -R * 0.95), X(-ext, P.rx * 0.05), X(ext, P.rx * 0.05)];
     const xa = Math.min(...coins), xb = Math.max(...coins);
     if (px < xa || px > xb) return null;
-    if (dos) return [(px - cx) / (ext + 1) * 0.7, 0.05, 0.75];
+    // (le relief continue celui du crâne, sans couture : même centre, même rayon, la pente qui s'adoucit vers le bas)
+    const nxL = Math.max(-0.98, Math.min(0.98, (px - cx) / (R + 0.5 * evase * k))), nyL = Math.max(0.05, 0.32 - (y - (cy + Ry * 0.32)) / (4 * Ry) ), nzL = Math.sqrt(Math.max(0.05, 1 - nxL * nxL - nyL * nyL));
+    if (dos) return [nxL, nyL, nzL];
     if (visage(x, y)) return null;
     // sous le menton, le cou et la poitrine restent visibles au milieu
     if (y >= menton - 1 * k || !tete(x, y)) { const xi1 = X(-P.rx * interieur, P.rx * 0.35), xi2 = X(P.rx * interieur, P.rx * 0.35); if (px > Math.min(xi1, xi2) && px < Math.max(xi1, xi2) && (y >= menton - 1 * k)) return null; }
-    const cote = px < X(0, P.rx * 0.35) ? -1 : 1, bordX = cote < 0 ? xa : xb;
-    const u = Math.min(1, Math.abs(px - bordX) / (3 * k));   // arrondi vers le bord extérieur
-    return [cote * (0.75 - u * 0.5), 0.05, 0.6 + u * 0.3];
+    return [nxL, nyL, nzL];
   }, { motif: (x, y) => { const g = geo(x, y);
       if (g && g.ny <= 0.32) {
         if (frange === null && !dos && g.fz > 0 && Math.abs(g.fu - decal) < 0.035 && g.ny < ligne(g.fu)) return -1.4;   // la raie
-        return (Math.floor((g.fu - decal) * 16 + 40) % 3 === 0 ? -0.45 : 0) + (Math.abs(g.ny + 0.55) < 0.07 ? lumiere : 0);   // mèches et reflet
+        // les mèches partent de la raie en haut du crâne, puis deviennent les mêmes mèches que les longueurs
+        if (g.ny < -0.25) return (Math.floor((g.fu - decal) * 16 + 40) % 3 === 0 ? -0.45 : 0) + (Math.abs(g.ny + 0.55) < 0.07 ? lumiere : 0);
       }
-      return (Math.floor((x - cx) / k * 1.4 + 40) % 4 === 0 ? -0.5 : 0) + (Math.abs(y - (cy + P.ry * 0.2)) < 1.2 * k ? lumiere * 0.6 : 0);
+      return (Math.floor((x - cx) / k * 1.4 + 40) % 4 === 0 ? -0.45 : 0) + (Math.abs(y - (cy + P.ry * 0.2)) < 1.2 * k ? lumiere * 0.5 : 0);
     } });
 }
 // Une tresse : un seul cordon d'un point à un autre, qui s'affine, tressé en chevrons (les mèches croisées)
@@ -124,7 +125,7 @@ const COIFFURES_HD = {
     derriere: C => { const { t, k, cy, P, X } = C; const bx = X(0, -P.rx * 0.85), by = cy - P.ry * 0.85;
       t.forme('cheveux', ellipsoide(bx, by, 3.6 * k, 3.2 * k), { motif: (x, y) => (Math.floor((x + y) / k) % 3 === 0 ? -0.5 : MECHES(x, y)) });
       t.forme('cuir', ellipsoide(X(0, -P.rx * 0.6), by + 2.6 * k, 1.8 * k, 0.8 * k), { decalage: 0.2, ombre: false }); } },
-  longLisse: { nom: 'Longs et lisses', derriere: C => chuteHD(C, C.yT + 16 * C.k, { largeur: 1.4, rentre: 0.3 }), dessus: C => longsHD(C, { bas: C.yT + 15 * C.k }) },
+  longLisse: { nom: 'Longs et lisses', derriere: C => { if (!C.dos) chuteHD(C, C.yT + 16 * C.k, { largeur: 1.4, rentre: 0.3 }); }, dessus: C => longsHD(C, { bas: C.yT + 15 * C.k }) },
   afroDegrade: { nom: 'Boucles dégradées', marge: 3, dessus: C => { cotesRases(C); bouclesHD(C, (u, v, z) => v < -C.P.ry * 0.42 && u * u / (C.P.rx + 0.8 * C.k) ** 2 + (v + C.P.ry * 0.1) ** 2 / (C.P.ry + 2.6 * C.k) ** 2 < 1, 1.9, 2.6); } },
   afro: { nom: 'Grand afro', marge: 6, dessus: C => {
     // (une seule masse de boucles qui remplace la coupe : posée sur la tête, plus large que le crâne, le visage dégagé)
@@ -145,10 +146,19 @@ const COIFFURES_HD = {
     dessus: C => { const { k, cy, P, X, Z, yT, dos } = C; calotteHD(C, { gonfle: 0.6, hauteur: 1.2, frange: -0.55, ondes: 0.04, motif: (x, y) => (Math.abs(((x - C.cx) / C.k) % 5) < 1 ? -0.6 : 0.2) });
       if (!dos) for (const cote of [-1, 1]) if (Z(cote * P.rx, 0) >= -1 * k) tresseHD(C, X(cote * (P.rx + 0.8 * k), 0), cy + 1 * k, X(cote * (P.rx + 1.5 * k), P.rx * 0.3), yT + 12 * k, 1.8); } },
   chignonHaut: { nom: 'Chignon haut', marge: 5, dessus: C => { const { t, k, cy, P, X } = C; calotteHD(C, { gonfle: 0.8, hauteur: 1.4, frange: -0.55 }); t.forme('cheveux', ellipsoide(X(0, -P.rx * 0.1), cy - P.ry - 2.5 * k, 3.6 * k, 3 * k), { motif: MECHES }); rideauxHD(C, cy + P.ry * 0.6, 0.7); } },
-  couettes: { nom: 'Couettes bouclées', derriere: C => { const { k, cy, P, X, yT } = C; for (const cote of [-1, 1]) bouclesHD(C, (u, v, z) => Math.abs(u - cote * (P.rx + 2.2 * k)) < (1.9 - Math.max(0, v - P.ry) / (12 * k) * 0.6) * k && v > -1 * k && v < P.ry + 11 * k && z === 0, 1.25, 1.6, 0.45); },
+  couettes: { nom: 'Couettes bouclées', derriere: C => {
+    // (les deux couettes en miroir : les mêmes boucles, à la même place, de chaque côté)
+    const { t, k, cy, P, X, Z, dos } = C;
+    for (const cote of [-1, 1]) for (let j = 0; j * 1.6 * k < P.ry + 11 * k; j++) {
+      const v = -1 * k + j * 1.6 * k, larg = 1.9 - Math.max(0, v - P.ry) / (12 * k) * 0.6;
+      for (const i of [-1, 0, 1]) { if (Math.abs(i) * 1.25 > larg) continue;
+        const h = hachage(i + 4, j, 91) - 0.5, u = cote * (P.rx + 2.2 * k + i * 1.25 * k + h * 0.4 * k);
+        if (Z(u, 0) < -2 * k && !dos) continue;
+        t.forme('cheveux', ellipsoide(X(u, 0), cy + v + h * 0.5 * k, 1.25 * k, 1.25 * k), { decalage: 0.45, motif: (x, y) => (hachage(Math.abs(x - X(0, 0)), y, 92) > 0.7 ? 0.5 : 0) }); }
+    } },
     dessus: C => { const { t, k, cy, P, X, Z } = C; calotteHD(C, { frange: -0.45 }); for (const cote of [-1, 1]) if (Z(cote * P.rx, 0) > -2 * k) t.forme('or', ellipsoide(X(cote * (P.rx + 1.2 * k), 0), cy - 1 * k, 1.3 * k, 1.3 * k), { decalage: 0.4, ombre: false }); } },
-  frange: { nom: 'Frange et longueurs', derriere: C => chuteHD(C, C.yT + 12 * C.k, { largeur: 1.8, rentre: 0.4 }), dessus: C => longsHD(C, { bas: C.yT + 11 * C.k, frange: -0.12, gonfle: 1.3, hauteur: 1.7, evase: 2 }) },
-  carre: { nom: 'Carré', dessus: C => longsHD(C, { bas: C.cy + C.P.ry + 2 * C.k, raie: 'cote', gonfle: 1.8, hauteur: 2, evase: 1.2, rentre: 1.4, pointes: false, interieur: 0.78 }), derriere: C => chuteHD(C, C.cy + C.P.ry + 2 * C.k, { largeur: 2.6, rentre: 0 }) },
+  frange: { nom: 'Frange et longueurs', derriere: C => { if (!C.dos) chuteHD(C, C.yT + 12 * C.k, { largeur: 1.8, rentre: 0.4 }); }, dessus: C => longsHD(C, { bas: C.yT + 11 * C.k, frange: -0.12, gonfle: 1.3, hauteur: 1.7, evase: 2 }) },
+  carre: { nom: 'Carré', dessus: C => longsHD(C, { bas: C.cy + C.P.ry + 2 * C.k, raie: 'cote', gonfle: 1.8, hauteur: 2, evase: 1.2, rentre: 1.4, pointes: false, interieur: 0.78 }), derriere: C => { if (!C.dos) chuteHD(C, C.cy + C.P.ry + 2 * C.k, { largeur: 2.6, rentre: 0 }); } },
   viking: { nom: 'Viking', derriere: C => { const { k, cy, P, X, yT } = C; tresseHD(C, X(0, -P.rx * 0.9), cy - 1 * k, X(0, -P.rx * 1.05), yT + 9 * k, 1.9); },
     dessus: C => { cotesRases(C); calotteHD(C, { gonfle: 1, hauteur: 1.5, frange: -0.58, limite: (nx, ny, fz, fu) => Math.abs(fu) < 0.42, motif: (x, y) => (Math.floor((x - C.cx) / C.k) % 3 === 0 ? 0.6 : 0) }); } },
   nattes: { nom: 'Nattes plaquées', derriere: C => { const { k, cy, P, X, yT } = C; for (const u of [-0.5, -0.17, 0.17, 0.5]) tresseHD(C, X(u * P.rx, -P.rx * 0.8), cy + 3 * k, X(u * P.rx * 1.2, -P.rx * 0.7), yT + 5 * k, 0.9); },
@@ -214,6 +224,6 @@ function fendreHD(C, y0, y1) {
 
 // (v1.32) Les coupes et barbes validées entrent dans la création, au bout des listes (les vieilles sauvegardes gardent leurs
 // numéros). Les coupes refaites attendent la validation de la planche 57 v2.
-const COIFFURES_EN_ATTENTE = ['longLisse', 'frange', 'carre', 'afro', 'chignonHomme', 'couettes'];
+const COIFFURES_EN_ATTENTE = ['longLisse', 'frange', 'carre', 'couettes'];
 for (const [id, c] of Object.entries(COIFFURES_HD)) if (!COIFFURES_EN_ATTENTE.includes(id)) { COIFFURES_IDS.push(id); APPARENCE.coiffure.push(c.nom); }
 for (const [id, b] of Object.entries(BARBES_HD)) { BARBES_IDS.push(id); APPARENCE.barbe.push(b.nom); }
