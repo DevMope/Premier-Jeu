@@ -2715,3 +2715,22 @@ lumière 117 000 p. en moyenne au jour 120 après avoir tout acheté (luxe, Conf
 39 000 p. (luxe, repaire, étage). Une faillite sur 12 parties au tout début (jour 12 à 14), comme avant. **Constat pour
 plus tard** : en lumière et en neutre, l'argent s'accumule encore beaucoup en fin de partie, même en achetant tout : la
 difficulté facile / normale / difficile pourra jouer là-dessus.
+
+### Réponses du joueur (planches 51, 55, 18 ans, argent de fin de partie)
+- **Planche 51 validée** : les cinq reliques du Conseil sont dans la vitrine (v1.32).
+- **La barbe à 18 ans** : de nouveau annoncée dans la création (pour un garçon).
+- **HommeGoy n'avait pas de dessin d'adulte** (le même que JeuneGoy, agrandi, avec la barbe) : **planche 56** (à valider)
+  propose un vrai adulte (plus grand, épaules plus larges, visage plus long), la fête de la veille des 18 ans (déjà
+  validée en idée) et **le miroir** : au matin des 18 ans, coiffure, couleur, barbe et habits au choix (offert une
+  fois ; ensuite le barbier du marché, 20 p.).
+- **Planche 55** (à valider) : quand toutes les améliorations sont faites, la tapissière Ysaline Bellecroix vend son
+  carnet d'échantillons (1 500 p.) ; cinq pièces (murs, boiseries, sol, tapis, tableau) × quatre styles (rustique,
+  bourgeois 400 p., royal 1 200 p., le style de son camp 800 p. : le Rempart, Nocturne ou Sylvestre) ; un style acheté se
+  remet quand on veut. Esthétique seulement.
+- **Argent au jour 120** : le joueur veut **lumière ≈ 60 000, neutre ≈ 70 000, ombre ≈ 39 000 (inchangé)**. La taxe de la
+  Confrérie seule n'y suffit pas (même doublée : ~85 000 en lumière), car en fin de partie les butins rapportent près
+  de 4 000 p. par jour. Essai en cours : une part de chaque butin, dès les contrées ★3 (rien avant : le début de partie
+  ne change pas). **Idée du joueur** : en faire **une taxe des riches voulue par le Grand Sage** (au-delà d'un seuil, le
+  joueur devient mécène), le Sage qui vient remercier au comptoir un joueur de lumière qui donne beaucoup, des
+  récompenses **qui ne touchent pas à l'argent**, et peut-être **une retraite de lumière** à la fin ; **un autre
+  système pour les neutres**. Proposition de Claude dans la conversation, en attente de réponse.
