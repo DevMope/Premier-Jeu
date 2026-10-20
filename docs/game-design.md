@@ -2801,3 +2801,11 @@ difficulté facile / normale / difficile pourra jouer là-dessus.
   carte. Ajout de Claude : l'Engeance vise plus souvent les contrées mal tenues. Un royaume déjà libéré garde son armure et
   son arme si une de ses contrées tombe.
 - **Construit en v1.33** (voir le tableau des versions).
+
+### Planche 59 : les gestes du bivouac (à valider : docs/planches-v059/planche-59-bivouac.png)
+Idée du joueur (« les animations des récits ») : de vraies poses dans le moteur des corps, sans bras en plus. **Manger**
+(assis sur un rondin, la ration à la bouche, trois bouchées, elle rapetisse), **boire** (le coude levé, la gourde
+renversée sur les lèvres), **se réchauffer les mains** (assis face au feu, les deux mains tendues ; il grelotte puis rosit),
+**dormir** (couché, les yeux fermés, la tête sur son sac, la cape en couverture qui respire). Une fois validées, elles
+remplacent les objets qui « flottaient » jusqu'à la bouche dans les récits (la pause du soir, la soif sur la route, le
+froid, la nuit au bivouac).

@@ -69,6 +69,7 @@ const FIGURANTS = {
 
 // Les mains de chaque texture (en pixels HD depuis le sol), pour porter le baluchon.
 const MAINS_CORPS = {};
+const MAINS_XY = {};   // (v1.34) la main de devant, depuis le milieu des pieds (pour les gestes du bivouac)
 const BOUTS_CORPS = {};
 const PIEDS_ASSIS = {};   // (v0.68) la hauteur des pieds d'un personnage assis, en pixels de la texture   // (v0.68) le bout du bâton du baluchon, en pixels de la texture
 const REPERES_CORPS = {};   // (v1.01) le centre de la tête, le haut du torse, la taille, la hauteur : en pixels de la texture
@@ -132,6 +133,7 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
     const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}) });
     toile.texture(scene, cle);
     MAINS_CORPS[cle] = toile.mains;
+    if (toile.mainXY) MAINS_XY[cle] = { x: toile.mainXY[0] - toile.l / 2, y: toile.h - toile.mainXY[1] };   // (v1.34)
     if (toile.bout) BOUTS_CORPS[cle] = toile.bout;
     if (toile.piedsAssis) PIEDS_ASSIS[cle] = toile.piedsAssis;
     REPERES_CORPS[cle] = toile.reperes;

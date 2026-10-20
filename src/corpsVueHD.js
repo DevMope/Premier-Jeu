@@ -180,6 +180,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   if (T.poils) t.rampes.cheveux = rampeVive(T.poils);
   const fache = !!options.fache;
   const pensif = pose === 'pense';   // (v1.18) il pense : la main au menton, le regard qui monte
+  // (v1.34, planche 59) les gestes du bivouac : manger (debout ou assis), boire à la gourde, se réchauffer les mains
+  // au feu (assis, les deux mains tendues devant lui), dormir (les yeux fermés : la scène le couche)
+  const mange = pose === 'mange' || pose === 'mangeAssis', boit = pose === 'boit', chauffe = pose === 'chauffe', dort = pose === 'dort';
+  const assise = pose === 'assis' || pose === 'mangeAssis' || chauffe;
   t.rampes.museau = rampeVive(T.museau || 0x5a4030); t.rampes.noir = rampeVive(T.taches || 0x201c1c); t.rampes.bande = rampe(T.bandelettes || 0xd8cfae); t.rampes.truffe = rampe(0x1a1410);
   t.rampes.cheveux = rampeVive(g.cheveux);
   // Les aînés : cheveux et poils gris, et la fourrure des bêtes qui blanchit un peu
@@ -281,7 +285,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       coude.splice(0, 3, cote * (ep + 7.5 * k), 0.8 * k, yT + 0.5 * k);   // (v0.72) levés en V, comme on salue
       main.splice(0, 3, cote * Math.min(ep + 16 * k, L / 2 - 2.5 * k), 1.6 * k, yT - 7 * k);   // un vieil ami
     }
-    if (pose === 'assis') {   // (v0.68) assis : les mains posées sur les cuisses
+    if (assise) {   // (v0.68) assis : les mains posées sur les cuisses
       coude.splice(0, 3, cote * (ep + 0.8 * k), 1 * k, yT + P.torse * 0.62);
       main.splice(0, 3, cote * ep * 0.55, (solAssis - yB) * 0.55, yB);
     }
@@ -309,6 +313,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // écartée de la tête, sous le plateau ; l'autre bras reste le long du corps
     // (v1.18) il pense : le bras proche plié, le poing sous le menton (redessiné par-dessus la tête plus bas)
     if (pensif && cote === pres) { coude.splice(0, 3, cote * (ep + 1 * k), 2 * k, yT + P.torse * 0.55); main.splice(0, 3, cote * 1.2 * k, P.rx * 0.95, cy + P.ry + 1.9 * k); }
+    // (v1.34) manger, boire : le bras proche plié, la main (et ce qu'elle tient) à la bouche ; pour boire, le coude
+    // monte plus haut (la gourde se lève) ; se réchauffer : les deux avant-bras tendus devant, paumes vers le feu
+    if ((mange || boit) && cote === pres) { coude.splice(0, 3, cote * (ep + (boit ? 2.4 : 1.2) * k), (boit ? 3.2 : 2.6) * k, boit ? yT + 0.5 * k : yT + P.torse * 0.45); main.splice(0, 3, cote * 0.6 * k, P.rx * 1.05, cy + P.ry * (boit ? 0.3 : 0.55)); }
+    if (chauffe) { coude.splice(0, 3, cote * ep * 0.95, P.rx * 0.7, yT + P.torse * 0.6); main.splice(0, 3, cote * ep * 0.5, P.rx * 1.35 + 4 * k, yT + P.torse * 0.38); }
     if (pose === 'plateau' && cote === loin) { coude.splice(0, 3, cote * (ep + 5 * k), 1 * k, yT + 5 * k); main.splice(0, 3, cote * Math.min(ep + 9 * k, L / 2 - 4 * k), 1 * k, yT - 2 * k); }
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
     const r = 2.6 * k * P.membre;
@@ -340,7 +348,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const hanche = [cote * ep * 0.42, 0, yB - 1 * k];
     // (v0.68) assis : la cuisse à l'horizontale vers l'avant, le mollet qui descend jusqu'au sol (le
     // sol est alors à mi-hauteur de la jambe debout : c'est la hauteur du banc)
-    const assis = pose === 'assis', sol = assis ? solAssis : solDebout;
+    const assis = assise, sol = assis ? solAssis : solDebout;
     const genou = assis ? [cote * ep * 0.45, (sol - yB) * 0.95, yB + 1 * k] : [cote * ep * 0.45, (bal * 2.2 + (bal > 0 ? 1 : 0)) * k, yB + (sol - yB) * 0.5];
     // Le pas : le pied avant reste posé au sol, c'est le talon arrière qui se décolle (à peine de
     // face, où l'on ne voit pas le pied partir en arrière)
@@ -952,6 +960,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   if (T.verrues && !dos) for (const [u, z, dy] of [[-3.5, 0.8, 2.5], [4, 0.75, -1], [2, 0.6, 6], [-5, 0.5, -3]]) if (Z(u * k, P.rx * z) > 0) t.forme('peau', ellipsoide(X(u * k, P.rx * z), cy + dy * k, 0.9 * k, 0.8 * k), { decalage: -0.6, bord: false });
   let yeux = [];
   const poserYeux = () => { for (const [ox, large, cote] of yeux) {
+    // (v1.34) il dort : les yeux fermés, une paupière en arc
+    if (dort) { const w = large ? 1.3 * k : 0.8 * k; for (let i = -Math.round(w); i <= Math.round(w); i++) t.poser(Math.round(ox + i), Math.round(ey + 0.6 * k * (1 - (i / Math.max(1, w)) ** 2)), 'pupille', 1); continue; }
     // Un œil simple et posé : un petit blanc, la pupille sombre, un reflet d'un pixel, la paupière
     const w = large ? 1.3 * k : 0.8 * k, h = (pensif ? 1.75 : 1.4) * k;   // (il pense : les yeux grands ouverts vers le haut)
     // (les yeux de bête : tout l'œil de la couleur de l'iris, une pupille en fente)
@@ -1446,7 +1456,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     for (const [x, y, m, ton] of ajouts) if (t.dans(x, y) && !t.mat(x, y)) t.poser(x, y, m, ton);
   }
   // Les aînés s'appuient sur une canne noueuse, tenue dans la main de devant
-  if (pensif && mainDevant && !dos) {
+  if ((pensif || mange || boit) && mainDevant && !dos) {
     const { M, C, r: rb, matMain, matAvant: mA, gm } = mainDevant;
     const mi = [C[0] + (M[0] - C[0]) * 0.55, C[1] + (M[1] - C[1]) * 0.55];
     cylindre(t, mA, mi, M, rb - 0.3 * k, { decalage: 0.5 });
@@ -1553,7 +1563,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme(matMain, ellipsoide(M[0], M[1] + 0.3 * k, 1.9 * k * gm, 1.6 * k * gm), { decalage: 0.3 });   // les doigts autour du bâton
     t.bout = [Math.round(bout[0]), Math.round(bout[1])];
   }
-  if (pose === 'assis') {
+  if (assise) {
     // sous les pieds, plus rien : la cape et la robe se posent sur le banc au lieu de descendre au sol
     for (let y = solAssis + 1; y < t.h; y++) for (let x = 0; x < t.l; x++) { const i = y * t.l + x; t.c[i] = null; t.m[i] = null; t.k[i] = 0; }
     t.piedsAssis = solAssis;
@@ -1563,6 +1573,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     for (let y = coupe + 1; y < t.h; y++) for (let x = 0; x < t.l; x++) { const i = y * t.l + x; t.c[i] = null; t.m[i] = null; t.k[i] = 0; }
     t.assise = yB + 1 * k;   // (la hauteur des fesses : à poser sur la nuque du porteur)
   }
+  t.mainXY = mainDevant ? [mainDevant.M[0], mainDevant.M[1]] : null;   // (v1.34 : où est la main, pour y tenir un objet)
   t.reperes = { cy, yT, yB, H, ...(t.batonSage ? { cristal: t.batonSage } : {}) };   // (v1.01 : pour poser un enfant sur des épaules, etc.)
   contourEpais(t, CONTOUR_CORPS.tours);
   // Où sont les mains (depuis le sol), pour y accrocher le baluchon
