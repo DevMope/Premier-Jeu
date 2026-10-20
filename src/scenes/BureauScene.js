@@ -537,15 +537,19 @@ class BureauScene extends Phaser.Scene {
       const im = this.add.image(423, y, cle).setScale(echelle);
       if (y < 260) im.y = Math.max(y, texteEffet.y + texteEffet.height + 6 + im.displayHeight / 2);
       c.add(im);
-      c.add(this.add.text(423, Math.max(y + 46, im.y + im.displayHeight / 2 + 8), `${niveau ? '★'.repeat(niveau) + '  ' : ''}${a.niveaux[niveau]}`, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+      const lab = this.add.text(423, Math.max(y + 46, im.y + im.displayHeight / 2 + 8), `${niveau ? '★'.repeat(niveau) + '  ' : ''}${a.niveaux[niveau]}`, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+      c.add(lab);
+      return lab.y + lab.height / 2;
     };
-    apercu(n, 196);
+    const bas = apercu(n, 196);
     if (!suivant) {
       c.add(this.add.text(423, 330, 'Le plus beau qui soit !', style(14, '#8a6a10', { fontStyle: 'bold italic' })).setOrigin(0.5));
       return;
     }
-    c.add(this.add.text(423, 262, '▼', style(16, '#8a6a4a')).setOrigin(0.5));
-    apercu(suivant.niveau, 318);
+    // (v1.31) la flèche et l'aperçu suivant se placent sous le premier libellé (le texte de la chambre est long)
+    const yFleche = Math.max(262, bas + 12);
+    c.add(this.add.text(423, yFleche, '▼', style(16, '#8a6a4a')).setOrigin(0.5));
+    apercu(suivant.niveau, yFleche + 56);
     // (v0.84) l'étagère : combien de places on gagne, par rapport à aujourd'hui
     const agr = choisi === 'reserve' ? agrandissementSuivant(G) : null;
     if (agr) c.add(this.add.text(423, 394, `${G.capacite} places → ${agr.capacite} places (+${agr.capacite - G.capacite})`, style(13, '#2a5a20', { fontStyle: 'bold' })).setOrigin(0.5));

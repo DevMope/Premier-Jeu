@@ -16,8 +16,11 @@ class SaisonScene extends Phaser.Scene {
     const G = this.G = window.GAME;
     this.nouvelle = saisonDe(G);
     this.cameras.main.fadeIn(600);
-    this.add.rectangle(480, 270, 960, 540, 0x000000).setDepth(-10);
-    this.indice = this.add.text(940, 525, '▶ clique pour passer', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(1, 0.5).setDepth(30);
+    // (v1.31) avec l'appartement, la maison est plus haute : on recule la vue (titres et indices restent fixes à l'écran)
+    this.recul = facadeAvecEtage(G) ? RECUL_ETAGE : 0;
+    this.cameras.main.setScroll(0, -this.recul);
+    this.add.rectangle(480, 270, 960, 540, 0x000000).setDepth(-10).setScrollFactor(0);
+    this.indice = this.add.text(940, 525, '▶ clique pour passer', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(1, 0.5).setDepth(30).setScrollFactor(0);
     this.input.on('pointerdown', () => { if (this.attenteClic) this.continuer(); else this.terminer(); });
     this.derouler();
   }
@@ -26,7 +29,7 @@ class SaisonScene extends Phaser.Scene {
   couche(saison) {
     SAISON_FORCEE = saison;
     const n0 = this.children.list.length;
-    this.add.image(0, 0, paysageHD(this, 960, 470, 'comte', 0)).setOrigin(0).setDisplaySize(960, 470);
+    this.add.image(0, -this.recul, paysageHD(this, 960, 470 + this.recul, 'comte', 0)).setOrigin(0).setDisplaySize(960, 470 + this.recul);
     this.add.image(0, 440, pavesHD(this, 960, 100)).setOrigin(0).setScale(2);
     const facade = dessinerFacade(this, 560, 440, this.G.nomShop);
     decorSaison(this, { sol: 440, arbres: [[70, 1.15], [905, 1.05]], facade, bonhomme: 790, prof: 3 });
@@ -49,7 +52,7 @@ class SaisonScene extends Phaser.Scene {
     // (après un saut de temps : les saisons défilent, de plus en plus vite)
     if (this.mois > 1) {
       const etapes = Math.min(8, this.mois - 1);
-      const texte = this.add.text(480, 270, 'Les saisons passent...', style(30, '#fff4dc', { fontFamily: 'MedievalSharp, serif', stroke: '#1a0e06', strokeThickness: 6 })).setOrigin(0.5).setDepth(20);
+      const texte = this.add.text(480, 270, 'Les saisons passent...', style(30, '#fff4dc', { fontFamily: 'MedievalSharp, serif', stroke: '#1a0e06', strokeThickness: 6 })).setOrigin(0.5).setDepth(20).setScrollFactor(0);
       let i = ordre.indexOf(avant);
       for (let k = 0; k < etapes && !this.fini; k++) {
         i = (i + 1) % 4;
@@ -76,8 +79,9 @@ class SaisonScene extends Phaser.Scene {
     t.fillStyle(0x1a0e06, 0.82).fillRoundedRect(250, 40, 460, 110, 14).lineStyle(4, 0xd8b048).strokeRoundedRect(250, 40, 460, 110, 14).lineStyle(1, 0xf3d98a).strokeRoundedRect(258, 48, 444, 94, 10);
     const titre = this.add.text(480, 82, S.nom, style(46, '#f3d98a', { fontFamily: 'MedievalSharp, serif', stroke: '#1a0e06', strokeThickness: 6 })).setOrigin(0.5).setDepth(22);
     const sous = this.add.text(480, 126, this.mois > 1 ? `${dureeEnMois(this.mois)} plus tard · ${S.sous}` : S.sous, style(16, '#e8d4a8', { fontStyle: 'italic' })).setOrigin(0.5).setDepth(22);
+    for (const o of [t, titre, sous]) o.setScrollFactor(0);
     for (const o of [t, titre, sous]) { o.setAlpha(0); this.tweens.add({ targets: o, alpha: 1, duration: 700 }); }
-    this.add.text(480, 175, S.effet, style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(22);
+    this.add.text(480, 175, S.effet, style(14, '#fff4dc', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(22).setScrollFactor(0);
     this.indice.setText('▶ clique pour continuer');
     this.attenteClic = true;   // (pas d'enchaînement automatique : on attend le joueur)
   }

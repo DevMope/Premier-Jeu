@@ -66,7 +66,11 @@ class VitrineScene extends Phaser.Scene {
       g.fillStyle(0xffffff, 0.04).fillTriangle(cx + l - 80, cy + 6, cx + l - 40, cy + 6, cx + l - 110, cy + Hc - 8);
       this.add.text(cx + 14, cy + 12, C.nom, style(13, '#f3e6c8', { fontStyle: 'bold' }));
       this.add.text(cx + l - 8, cy + 12, `${n} / ${total}`, style(13, complete ? '#ffe066' : '#d8c8a8', { fontStyle: 'bold' })).setOrigin(1, 0);
-      this.add.text(cx + 14, cy + Hc - 22, complete ? `« ${C.titre} » · ${C.bonus}` : `complète : ${C.bonus}`, style(11, complete ? '#c8f0a0' : '#c8b898', { fontStyle: 'italic' }));
+      // (v1.31) la ligne du bas tient dans l'étagère : plus petite s'il le faut, puis le bonus seul
+      const bas = this.add.text(cx + 14, cy + Hc - 22, complete ? `« ${C.titre} » · ${C.bonus}` : `complète : ${C.bonus}`, style(11, complete ? '#c8f0a0' : '#c8b898', { fontStyle: 'italic' }));
+      for (let t = 12; bas.width > l - 22 && t >= 10; t--) bas.setFontSize(t);
+      if (bas.width > l - 22) bas.setText(complete ? C.bonus : `complète : ${C.bonus}`);
+      for (let t = 10; bas.width > l - 22 && t >= 8; t--) bas.setFontSize(t);
       const pieces = Object.keys(C.pieces), pas = Math.min(54, (l - 30) / pieces.length);
       pieces.forEach((piece, i) => {
         const px = cx + 34 + i * pas, py = cy + 64, la = aPiece(G, serie, piece);

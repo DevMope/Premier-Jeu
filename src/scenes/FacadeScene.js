@@ -11,8 +11,11 @@ class FacadeScene extends Cinematique {
   create() {
     const G = this.G = window.GAME;
     this.cameras.main.fadeIn(400);
+    // (v1.31) avec l'appartement, la maison est plus haute : on recule la vue (le ciel est peint plus haut d'autant)
+    const recul = facadeAvecEtage(G) ? RECUL_ETAGE : 0;
+    this.cameras.main.setScroll(0, -recul);
     const g = this.add.graphics();
-    dessinerComte(g, 0, 0, 960, 470, 0); // midi : le soleil est haut, on ouvre le comptoir
+    dessinerComte(g, 0, -recul, 960, 470 + recul, 0); // midi : le soleil est haut, on ouvre le comptoir
     this.add.image(0, 440, pavesHD(this, 960, 100)).setOrigin(0).setScale(2);
     // (v1.11, planches 40 v2 et 41) la boutique du paon, juste à côté : ta maison se pousse vers la gauche
     const rival = typeof rivalVisible === 'function' && rivalVisible(G) ? G.rival : null;
@@ -34,7 +37,9 @@ class FacadeScene extends Cinematique {
     decorSaison(this, { sol: 440, arbres: rival ? [[36, 1.05]] : [[70, 1.15], [905, 1.05]], facade, bonhomme: rival ? 500 : 790, prof: 3 });   // (v0.99 : la saison)
     // (v0.99) les bruits de la saison, doucement, sous la musique : oiseaux, cigales, vent
     if (typeof saisonDe === 'function') { Son.nature(true, { saison: saisonDe(G), volume: 0.7 }); this.events.once('shutdown', () => Son.nature(false)); this.events.once('sleep', () => Son.nature(false)); }
-    this.add.text(480, 34, `Jour ${G.jour} · ${G.nomShop}`, style(26, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 6 })).setOrigin(0.5);
+    // (le titre, fixe à l'écran ; avec l'appartement, il se range dans le coin, loin du toit)
+    const titre = this.add.text(480, 34, `Jour ${G.jour} · ${G.nomShop}`, style(26, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 6 })).setOrigin(0.5).setScrollFactor(0).setDepth(20);
+    if (recul) { if (rival) titre.setPosition(940, 34).setOrigin(1, 0.5); else titre.setPosition(20, 34).setOrigin(0, 0.5); }
     // Une petite foule attend déjà devant la fenêtre, s'il y a du monde aujourd'hui.
     const clients = G.file.filter(e => e.type === 'client').slice(0, 4);
     clients.forEach((e, i) => imageCorps(this, (rival ? 236 : 330) - i * 40, 440, e.voyageur, 5.6).setTint(0xf0dcc8));
@@ -42,7 +47,7 @@ class FacadeScene extends Cinematique {
       this.add.text(rival ? 196 : 250, rival ? 466 : 300, `${G.file.length} visite${G.file.length > 1 ? 's' : ''} aujourd'hui`, style(13, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5).setDepth(rival ? 9 : 0);
     }
     this.joueur = this.add.image(-40, 440, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7));
-    this.indicePasser = this.add.text(940, 520, '▶ clique pour passer', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(1, 0.5);
+    this.indicePasser = this.add.text(940, 520, '▶ clique pour passer', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(1, 0.5).setScrollFactor(0).setDepth(20);
     this.input.once('pointerdown', () => { if (this.indicePasser.visible) this.entrer(); });
     this.facadeVue = facade;
     this.derouler(facade);

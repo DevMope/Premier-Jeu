@@ -41,7 +41,7 @@ class FailliteScene extends Cinematique {
   decorFacade(moment = 0) {
     const sol = 362;
     this.o(this.add.image(0, 0, paysageHD(this, 960, 380, 'comte', moment)).setOrigin(0).setScale(2));
-    this.facade = dessinerFacade(this, 560, sol);
+    this.facade = dessinerFacade(this, 560, sol, undefined, undefined, { etage: false });
     for (const ob of [this.facade.image, this.facade.enseigne, this.facade.tonneaux]) if (ob) this.o(ob);
     this.o(this.add.image(0, sol, pavesHD(this, 960, 60)).setOrigin(0).setScale(2));
     this.nuit = moment >= 0.6;

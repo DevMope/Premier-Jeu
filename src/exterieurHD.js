@@ -522,10 +522,13 @@ function creerAccessoiresFacade(scene) {
 
 // La façade du comptoir, vue de dehors. `cx` = centre, `sol` = bas des murs.
 // Renvoie la porte, l'image, l'enseigne et les zones de la façade (à l'écran).
-function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3, { fumee = true } = {}) {
+// (v1.31) l'appartement bâti : la façade est plus haute de tout un étage (les scènes en plan serré reculent la vue d'autant)
+function facadeAvecEtage(G) { return !!G && niveauFacade(G) === 3 && typeof etageA === 'function' && etageA(G, 'appartement'); }
+const RECUL_ETAGE = 56;
+function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3, { fumee = true, etage: avecEtage = true } = {}) {
   creerFacadeHD(scene, n);
   // (v1.30, planche 54) l'appartement : la belle maison gagne un étage et un balcon (le toit et la cheminée montent d'autant)
-  const etage = n === 3 && typeof etageA === 'function' && window.GAME && etageA(window.GAME, 'appartement');
+  const etage = avecEtage && n === 3 && facadeAvecEtage(window.GAME);   // (v1.31 : jamais dans le passé, ni dans la faillite)
   if (etage) creerEtageHD(scene);
   const monte = etage ? FACADE.etage[3] * 2 : 0;
   const image = scene.add.image(cx, sol + 2, etage ? 'facadeHD_4' : 'facadeHD_' + n).setOrigin(0.5, 1).setScale(2);

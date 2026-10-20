@@ -812,7 +812,7 @@ class CounterScene extends Phaser.Scene {
 
   // Un personnage qui attend dans la file, à la place `i`.
   spriteFile(entree, i) {
-    if (entree.type === 'detresse') return this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'pigeonPose').setVisible(false);   // (v1.22 : le pigeon ne fait pas la queue)
+    if (entree.type === 'detresse') { const p = this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'pigeonPose').setVisible(false); p.estPigeon = true; return p; }   // (v1.22 : le pigeon ne fait pas la queue ; v1.31 : et ne s'y montre jamais)
     const cle = this.texturePour(entree);
     const sprite = this.add.image(FILE.x - i * FILE.ecart, FILE.y, cle)
       .setOrigin(0.5, 1).setScale(FILE.echelle * echelleCorps(cle)).setTint(0xd8d0c0).setDepth(1);
@@ -1261,6 +1261,12 @@ class CounterScene extends Phaser.Scene {
     if (entree.type === 'detresse') {
       this.perso.setVisible(false);
       const place = this.fileSprites.shift(); if (place) place.destroy();
+      // (v1.31) la file avance quand même d'une place
+      this.fileSprites.forEach((sprite, i) => {
+        sprite.setVisible(!sprite.estPigeon);
+        this.tweens.add({ targets: sprite, x: FILE.x - i * FILE.ecart, duration: 900, delay: 300 + i * 150, ease: 'Sine.easeInOut', onStart: () => sprite.estPigeon || pasDeMarche(this, sprite, 900) });
+      });
+      this.majFileAttente();
       return this.visiteDetresse(entree);
     }
     // Un carnet laissé par la Faucheuse : personne ne s'avance, il est déjà là.
@@ -1292,9 +1298,9 @@ class CounterScene extends Phaser.Scene {
     if (premier) premier.destroy();
     // ... et les autres avancent d'une place.
     this.fileSprites.forEach((sprite, i) => {
-      sprite.setVisible(true);
+      sprite.setVisible(!sprite.estPigeon);
       this.tweens.add({ targets: sprite, x: FILE.x - i * FILE.ecart, duration: 900, delay: 300 + i * 150, ease: 'Sine.easeInOut',
-        onStart: () => pasDeMarche(this, sprite, 900) });
+        onStart: () => sprite.estPigeon || pasDeMarche(this, sprite, 900) });
     });
 
     if (faucheuse) {
@@ -1657,6 +1663,7 @@ class CounterScene extends Phaser.Scene {
     this.time.delayedCall(choix === 'rien' ? 1200 : 600, () => {
       if (!pg || !pg.active) return;
       if (this.becPigeon) this.becPigeon.remove();
+      this.tweens.killTweensOf(pg);   // (v1.31 : s'il n'avait pas fini de se poser, il ne se fige plus en repartant)
       pg.setAngle(0).play('volPigeon');
       this.tweens.add({ targets: pg, x: FENETRE.x + FENETRE.w + 90, y: FENETRE.y - 30, duration: 1400, ease: 'Sine.easeIn', onComplete: () => pg.destroy() });
     });

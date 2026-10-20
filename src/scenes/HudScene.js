@@ -255,7 +255,7 @@ class HudScene extends Phaser.Scene {
 
   // (v1.23, planche 48 v2) Une pièce de collection gagnée : une petite fiche en haut à droite, le temps de la voir
   piecesEnDirect(G) {
-    if (this.fichePiece || !G.piecesNouvelles || !G.piecesNouvelles.length || typeof dessinerPieceCollection !== 'function') return;
+    if (this.fichePiece || this.penseeAffichee || !G.piecesNouvelles || !G.piecesNouvelles.length || typeof dessinerPieceCollection !== 'function') return;
     const p = G.piecesNouvelles.shift(), C = COLLECTIONS[p.serie];
     creerEmblemesHD(this); creerObjetsHD(this); creerIconesHD(this);
     const x = 838, y = 150, c = this.fichePiece = this.add.container(x, y).setDepth(130);

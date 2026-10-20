@@ -153,7 +153,7 @@ class RenovationScene extends Cinematique {
     const g = this.add.graphics().setPosition(0, 0);
     dessinerComte(g, o, 0, 960, 470, 0.15);
     const sol = this.add.image(o, 470, pavesHD(this, 960, 70)).setOrigin(0).setScale(2);
-    const f = dessinerFacade(this, o + 520, 470, this.G.nomShop);
+    const f = dessinerFacade(this, o + 520, 470, this.G.nomShop, undefined, { etage: false });
     const z = f.zones;
     this.porteFacade = f.porteX;
     this.endroit('facade', 'Le toit', [f.image], z.toit, { toiles: 3 });

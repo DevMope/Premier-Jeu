@@ -120,7 +120,7 @@ Object.assign(CounterScene.prototype, {
     this.majFileAttente();
     this.perso.setVisible(false);
     const premier = this.fileSprites.shift();
-    this.fileSprites.forEach((sprite, i) => { sprite.setVisible(true); this.tweens.add({ targets: sprite, x: FILE.x - i * FILE.ecart, duration: 900, delay: 900, ease: 'Sine.easeInOut', onStart: () => pasDeMarche(this, sprite, 900) }); });
+    this.fileSprites.forEach((sprite, i) => { sprite.setVisible(!sprite.estPigeon); this.tweens.add({ targets: sprite, x: FILE.x - i * FILE.ecart, duration: 900, delay: 900, ease: 'Sine.easeInOut', onStart: () => sprite.estPigeon || pasDeMarche(this, sprite, 900) }); });
     // le paon qui fait signe depuis sa vitrine, en médaillon au coin de la fenêtre
     const mx = FENETRE.x + FENETRE.w - 48, my = FENETRE.y + 148, m = this.add.container(mx, my).setDepth(3.2).setScale(0);
     m.add(this.add.circle(0, 0, 46, 0xc9a227)); m.add(this.add.circle(0, 0, 42, 0x7aa0c8));
