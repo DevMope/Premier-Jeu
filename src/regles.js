@@ -2205,6 +2205,13 @@ function partDuButin(G, voyageur) {
   const benie = juré && zc === juré ? 1 + AVANTAGES_SERMENT.butin : 1;
   return Math.round(voyageur.butin * niveauRelation(G, voyageur.nom).butin * lanterne * comptoir * froid * benie);
 }
+// (v1.32) La dîme de la Confrérie sur un butin (0 pour un comptoir de l'ombre)
+function tauxDime(G) {
+  const p = palierCamp(G), cle = p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre';
+  const et = typeof etoilesDe === 'function' ? Math.min(5, etoilesDe(G)) : 1;
+  return DIME_CONFRERIE.parEtoile[cle] * Math.max(0, et - 2);   // (rien en ★1-★2 : le début de partie reste le même)
+}
+function dimeSurButin(G, brut) { return Math.round(brut * tauxDime(G)); }
 
 // Appelé à la fin du récit : on encaisse le butin, la réputation et la relation évoluent.
 // Renvoie { gain, message }.
@@ -2230,6 +2237,9 @@ function terminerAventure(G, parti) {
   } else if (r.vivant) {
     gain = partDuButin(G, v);
     encaisser(G, gain, 'butins');
+    // (v1.32) la dîme de la Confrérie, reversée aussitôt (affichée sur la fiche du retour)
+    const dime = dimeSurButin(G, gain);
+    if (dime > 0) { payer(G, dime, 'dime'); gain -= dime; parti.dime = dime; }
     // Une commande par lettre remplie à moitié ne rapporte que la moitié de la réputation.
     const part0 = v.prevu ? partCommandeRemplie(v, parti.colis) : 1;
     // (v0.60) Revenu, mais blessé : la mission compte moins (un quart de réputation en moins par cœur
@@ -2326,7 +2336,7 @@ function terminerAventure(G, parti) {
   if (typeof detresseAuRetour === 'function' && r.vivant) { const t = detresseAuRetour(G, parti); if (t) message = (message ? message + ' ' : '') + t; }
   parti.bilan = { gain, message };
   const h = G.habitues.find(x => x.nom === v.nom);
-  parti.progression = { avant, apres: { niveau: (h && h.niveau) || v.niveau, succes: succesDe(G, v.nom), relation: niveauRelation(G, v.nom).nom, reputation: G.reputation }, gain };
+  parti.progression = { avant, apres: { niveau: (h && h.niveau) || v.niveau, succes: succesDe(G, v.nom), relation: niveauRelation(G, v.nom).nom, reputation: G.reputation }, gain, dime: parti.dime || 0 };
   connaitre(G, v);
   G.historique.unshift({
     nom: v.nom, race: v.race, feminin: !!v.feminin, quete: v.quete, zone: v.zone, depart: parti.depart, retour: parti.retour,

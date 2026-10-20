@@ -793,6 +793,10 @@ const JOUR_SCEAU = 24;
 // part de ce que tu as au-dessus de la franchise. « Pour la défense contre le dragon. » La
 // Confrérie taxe moins ceux qui penchent vers la lumière, et plus ceux qui penchent vers l'ombre.
 const TAXE_CONFRERIE = { franchise: 200, taux: { lumiere: 0.12, neutre: 0.16, ombre: 0.22 } };
+// (v1.32) La dîme de la Confrérie : un comptoir sous sa protection (lumière ou neutre) lui reverse une part de chaque
+// butin, à partir des contrées ★3, plus grande à chaque étoile (★5 au plus).
+// Le comptoir de l'ombre n'en paie pas (il a ses amendes, la Main Noire et le recel).
+const DIME_CONFRERIE = { parEtoile: { lumiere: 0.08, neutre: 0.08, ombre: 0 } };
 // (constat 14) Le coup de pouce de Garrick quand tu n'as plus rien : des provisions sur le pas de la porte
 const COUP_DE_POUCE = { argent: 12, stock: 2, delai: 15, cadeau: { ration: 2, gourde: 1, torche: 1 } };
 // (v0.90) Lumière et ombre : le barème. Chaque geste fait pencher la balance de quelques points,
@@ -1101,7 +1105,7 @@ const POSTES = {
   bazar: 'Cadeaux du Bazar',
   ameliorations: 'Améliorations du comptoir', interets: 'Intérêts du coffre',
   atelier: "Fournitures de l'atelier", loyer: 'Loyer du comptoir', revente: 'Reventes',
-  pizzo: 'La Main Noire', taxe: 'Taxe de la Confrérie', amende: 'Amendes de la garde', marcheNoir: 'Marché noir', contrats: "Contrats de l'ombre", primes: 'Primes des paliers', fontaine: 'Pièces à la fontaine', decoration: 'Décorations', garderobe: 'Garde-robe', cadeau: 'Cadeaux reçus', fete: 'Fêtes du village',
+  pizzo: 'La Main Noire', taxe: 'Taxe de la Confrérie', dime: 'Dîme de la Confrérie', amende: 'Amendes de la garde', marcheNoir: 'Marché noir', contrats: "Contrats de l'ombre", primes: 'Primes des paliers', fontaine: 'Pièces à la fontaine', decoration: 'Décorations', garderobe: 'Garde-robe', cadeau: 'Cadeaux reçus', fete: 'Fêtes du village',
 };
 // On garde le détail des derniers jours (un peu plus d'une année).
 const JOURS_DE_COMPTES = 120;

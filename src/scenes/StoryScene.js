@@ -448,7 +448,7 @@ class StoryScene extends Cinematique {
         await this.attendreClic();
       }
       this.pleuvoirPieces();
-      const ajuste = gain !== v.butin ? ` (prévu : ${v.butin}, ajusté selon votre relation et tes décorations)` : '';
+      const ajuste = (gain !== v.butin ? ` (prévu : ${v.butin}, ajusté selon votre relation et tes décorations)` : '') + (this.parti.dime ? ` · dîme de la Confrérie : −${this.parti.dime}` : '');   // (v1.32)
       this.ecrire('Retour au comptoir',
         `« ${this.remerciement()} Voici ta part du butin ! »\n` +
         `+ ${gain} pièces${ajuste} · Relation : ${relation.nom}${message ? '\n' + message : ''}`);
@@ -569,7 +569,7 @@ class StoryScene extends Cinematique {
     const lignes = [];
     if (pr.apres.relation !== pr.avant.relation) lignes.push([`Relation : ${pr.avant.relation} → ${pr.apres.relation}`, '#1f5aa0']);
     else lignes.push([`Relation : ${pr.apres.relation}`, '#3b2410']);
-    if (pr.gain) lignes.push([`+ ${pr.gain} pièces (sa part du butin)`, '#8a6a10']);
+    if (pr.gain) lignes.push([`+ ${pr.gain} pièces (sa part du butin)${pr.dime ? ` · dîme de la Confrérie −${pr.dime}` : ''}`, '#8a6a10']);   // (v1.32 : la dîme, en direct)
     const dr = Math.round((pr.apres.reputation - pr.avant.reputation) * 10) / 10;
     if (dr) lignes.push([`Réputation ${dr > 0 ? '+' : ''}${String(dr).replace('.', ',')}`, dr > 0 ? '#2f6a2a' : '#a03030']);
     lignes.forEach(([t, col], k) => c.add(this.add.text(bx, by + 34 + k * 20, t, style(13, col, { fontStyle: 'bold' }))));

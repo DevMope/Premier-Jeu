@@ -2156,11 +2156,11 @@ class CounterScene extends Phaser.Scene {
       c.add(this.add.text(x, 96, t, style(12, '#6a4a2a', { fontStyle: 'bold' })).setOrigin(x === 120 ? 0 : 0.5, 0.5)));
     c.add(this.add.rectangle(480, 108, 760, 2, 0x8a6a3a));
     const h = Math.min(70, 270 / lignes.length);
-    let total = 0, trouv = 0, rangs = [];
+    let total = 0, trouv = 0, rangs = [], dimes = 0;
     lignes.forEach(({ parti, gain, rep }, i) => {
       const v = parti.voyageur, r = parti.resultat, z = ZONES[v.zone], pr = parti.progression;
       const y = 116 + h / 2 + i * h;
-      total += gain;
+      total += gain; dimes += parti.dime || 0;
       const fond = this.add.rectangle(480, y, 760, h - 6, i % 2 ? 0xe8d4a8 : 0xf0e0b8, 0.85).setStrokeStyle(1, 0xc9a870).setInteractive({ useHandCursor: true });
       fond.on('pointerover', () => fond.setFillStyle(0xd8c498, 1)).on('pointerout', () => fond.setFillStyle(i % 2 ? 0xe8d4a8 : 0xf0e0b8, 0.85));
       fond.on('pointerdown', () => { if (this.enPartance) return; this.ouvrirRecit(parti, true); });
@@ -2187,7 +2187,7 @@ class CounterScene extends Phaser.Scene {
     });
     const dRep = Math.round((G.reputation - repAvant) * 10) / 10;
     c.add(this.add.rectangle(480, 396, 760, 2, 0x8a6a3a));
-    c.add(this.add.text(480, 414, `En tout : +${total} pièces · réputation ${dRep >= 0 ? '+' : ''}${String(dRep).replace('.', ',')}` + (trouv ? ` · ${trouv} trouvaille${trouv > 1 ? 's' : ''}` : '') + (rangs.length ? ` · ${rangs.join(', ')} monte${rangs.length > 1 ? 'nt' : ''} en rang` : ''),
+    c.add(this.add.text(480, 414, `En tout : +${total} pièces · réputation ${dRep >= 0 ? '+' : ''}${String(dRep).replace('.', ',')}` + (trouv ? ` · ${trouv} trouvaille${trouv > 1 ? 's' : ''}` : '') + (rangs.length ? ` · ${rangs.join(', ')} monte${rangs.length > 1 ? 'nt' : ''} en rang` : '') + (dimes ? ` · dîme de la Confrérie −${dimes} p.` : ''),
       style(14, '#3b2410', { fontStyle: 'bold', align: 'center', wordWrap: { width: 740 } })).setOrigin(0.5));
     c.add(this.add.text(480, 440, 'Un clic sur une ligne rouvre son récit en entier (la fiche de mission, les soins, les trouvailles).', style(11, '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
     Son.jouer('pieces', { montant: total });
