@@ -1577,7 +1577,8 @@ function nuit(G) {
   if (typeof nuitDuRival === 'function') nuitDuRival(G);   // (v1.11) les comptes du jour face au paon (après le Conseil : il voit la commande manquée le soir même)
   if (typeof nuitDeLOrphelinat === 'function') nuitDeLOrphelinat(G);   // (v1.12) le chantier de l'orphelinat
   if (typeof nuitDuBar === 'function') nuitDuBar(G);   // (v1.16) le chantier du petit bar
-  if (typeof nuitDeLaConfrerie === 'function') nuitDeLaConfrerie(G);   // (v1.28) les chantiers de la Confrérie, la marche de l'escouade
+  if (typeof nuitDeLaConfrerie === 'function') nuitDeLaConfrerie(G);
+  if (typeof nuitDuRepaire === 'function') nuitDuRepaire(G);   // (v1.29) le chantier du repaire, l'enveloppe du capitaine   // (v1.28) les chantiers de la Confrérie, la marche de l'escouade
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1646,6 +1647,7 @@ function nuit(G) {
   if (typeof matinDeLOrphelinat === 'function') for (const l of matinDeLOrphelinat(G)) G.reveil.lignes.push(l);   // (v1.12) les courses des petits, la rumeur
   if (typeof matinDuBar === 'function') for (const l of matinDuBar(G)) G.reveil.lignes.push(l);
   if (typeof matinDeLaConfrerie === 'function') for (const l of matinDeLaConfrerie(G)) G.reveil.lignes.push(l);   // (v1.28)
+  if (typeof matinDuRepaire === 'function') for (const l of matinDuRepaire(G)) G.reveil.lignes.push(l);   // (v1.29)
   if (typeof voeuDeSaison === 'function') { const l = voeuDeSaison(G); if (l) G.reveil.lignes.push(l); }   // (v1.23) les souvenirs de la nymphe au complet   // (v1.16) le petit bar : l'installation, la rumeur vraie
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
@@ -1969,6 +1971,8 @@ function quitterMarcheNoir(G) {
 // comptoir penche vers l'ombre (et plus souvent avec des décorations sombres au mur).
 function doitVenirGarde(G) {
   G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 };
+  // (v1.29) la garde achetée : tant que l'enveloppe arrive, le capitaine passe son chemin
+  if (typeof gardeDetournee === 'function' && gardeDetournee(G)) { G.gardeDemain = false; delete G.gardePresage; return false; }
   if (G.gardeDemain) { G.gardeDemain = false; delete G.gardePresage; return true; }   // (v1.07 : la visite annoncée par la Tour, c'est celle-ci)
   if (typeof gardePresageDuJour === 'function' && gardePresageDuJour(G)) return true;   // (v1.05) la Tour d'Ysmée avait prévenu
   if (G.gardeTiree === G.jour) return false;   // (v0.65 : déjà tirée la veille au soir, pour le chat)
@@ -2059,6 +2063,7 @@ function nuitDuChat(G) {
 }
 // (appelé le soir) la garde viendra-t-elle demain ? On le tire dès ce soir : ton chat le sent parfois.
 function tirerGardeDuLendemain(G) {
+  if (typeof gardeDetournee === 'function' && gardeDetournee(G)) { G.gardeDemain = false; return false; }   // (v1.29) la garde achetée
   if (G.gardeTiree === G.jour + 1) return !!G.gardeDemain;
   G.gardeTiree = G.jour + 1;
   if (!G.gardeDemain) { G.garde = G.garde || { visites: 0, dernier: 0, saisies: 0 }; G.jour++; const vient = gardeAuHasard(G); G.jour--; if (vient) G.gardeDemain = true; }
@@ -2123,17 +2128,24 @@ function visiteGarde(G) {
   // (v0.98 : la caisse du Passeur est trop grosse pour le plancher : elle, on la trouve toujours)
   const cache = fouille && G.cachette === G.jour;
   if (cache && !G.caisse) return { fouille, amende: amendeGarde(G), saisis, cache: true };
-  if (fouille && !cache) for (const [id, n] of Object.entries(G.interdits || {})) if (n > 0) { saisis.push(`${n} × ${INTERDITS[id].nom.toLowerCase()}`); G.garde.saisies += n; G.interdits[id] = 0; }
+  // (v1.29) la cave du repaire : dix interdits toujours à l'abri, le reste trouvé une fois sur deux
+  const cave = typeof repaireA === 'function' && repaireA(G, 'cave');
+  const trouve = () => !cave || Math.random() < REPAIRE.trouve;
+  let gardesCave = 0;
+  if (fouille && !cache) for (const [id, n] of Object.entries(cave ? saisieAvecCave(G) : G.interdits || {})) if (n > 0) { saisis.push(`${n} × ${INTERDITS[id].nom.toLowerCase()}`); G.garde.saisies += n; G.interdits[id] -= n; }
+  if (fouille && !cache && cave) gardesCave = interditsTotal(G);
   // (v0.60) ce que cache la Main Noire chez toi : le colis, les bijoux volés (l'amende double)
   let double = false;
   const m = mafia(G);
-  if (fouille && !cache && m.colis) { saisis.push('un colis scellé de cire noire'); m.colis = false; m.represailles = m.bande; double = true; }
+  if (fouille && !cache && m.colis && trouve()) { saisis.push('un colis scellé de cire noire'); m.colis = false; m.represailles = m.bande; double = true; }
   // (v0.98) la caisse du Passeur, encore cachée : saisie, et l'amende est sévère
   let amendeCaisse = 0;
-  if (G.caisse) { saisis.push(`la caisse du Passeur (${texteContenu(G.caisse.contenu)})`); amendeCaisse = Math.round(G.caisse.prix * OMBRE_ANNEE.caisse.amende); G.caisse = null; }
+  if (G.caisse && trouve()) { saisis.push(`la caisse du Passeur (${texteContenu(G.caisse.contenu)})`); amendeCaisse = Math.round(G.caisse.prix * OMBRE_ANNEE.caisse.amende); G.caisse = null; }
   const voles = G.tresors.filter(t => t.vole && !t.reparation);
-  if (fouille && !cache && voles.length) { saisis.push(`${voles.length} lot${voles.length > 1 ? 's' : ''} de bijoux volés`); G.tresors = G.tresors.filter(t => !voles.includes(t)); double = true; }
-  return { fouille, amende: amendeGarde(G) * (double ? 2 : 1) + amendeCaisse, saisis, caisse: amendeCaisse > 0 };
+  if (fouille && !cache && voles.length && trouve()) { saisis.push(`${voles.length} lot${voles.length > 1 ? 's' : ''} de bijoux volés`); G.tresors = G.tresors.filter(t => !voles.includes(t)); double = true; }
+  // (v1.29) l'enveloppe du capitaine a manqué : la garde est fâchée, l'amende double
+  const colere = typeof REPAIRE !== 'undefined' && G.repaire && G.repaire.manquee > 0 ? REPAIRE.colere : 1;
+  return { fouille, amende: (amendeGarde(G) * (double ? 2 : 1) + amendeCaisse) * colere, saisis, caisse: amendeCaisse > 0, cave: gardesCave, colere: colere > 1 };
 }
 
 function payerAmende(G, montant) {

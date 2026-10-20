@@ -66,7 +66,9 @@ class ArriereScene extends Phaser.Scene {
     this.add.image(730, ye + 1, 'planteHD').setOrigin(0.5, 1).setScale(2);
     bougie(this, 768, ye, { rayon: 70 });
     // Le tapis, et le chat
-    this.add.image(430, SOL_ARRIERE + 64, tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(2.2);
+    // (v1.29) avec la cave du repaire, le tapis est roulé de côté : la trappe s'ouvre dans le plancher
+    if (typeof repaireA === 'function' && repaireA(this.G, 'cave')) this.dessinerTrappe();
+    else this.add.image(430, SOL_ARRIERE + 64, tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(2.2);
     // (le coussin attend un familier : le chat de gouttière, une fois adopté, y dort en boule)
     this.add.image(196, SOL_ARRIERE + 86, 'coussinHD').setOrigin(0.5, 1).setScale(2.4);
     // (v1.05, planche 25) sa gamelle, à son nom : pleine, ou vide quand la réserve n'a plus de ration
@@ -344,6 +346,38 @@ class ArriereScene extends Phaser.Scene {
     const c = this.comptoir;
     if (!c || !c.enService || !c.voyageur) return this.message("Il n'y a personne à servir pour l'instant.");
     this.fermer(() => (type === 'cadeaux' ? c.offrir(id) : c.glisserPiege(id)));
+  }
+
+  // (v1.29, planche 53) La trappe de la cave, ouverte : la lueur de la lanterne monte du trou
+  dessinerTrappe() {
+    creerRepaireHD(this); creerHalo(this);
+    this.add.image(330, SOL_ARRIERE + 90, 'trappeOuverte').setOrigin(0.5, 1).setScale(2);
+    this.add.image(500, SOL_ARRIERE + 40, 'tapisRoule').setOrigin(0.5, 1).setScale(2);
+    const h = this.add.image(330, SOL_ARRIERE + 68, 'halo').setScale(1.1).setTint(0xff9a40).setAlpha(0.5).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: h, alpha: 0.3, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.add.text(330, SOL_ARRIERE + 22, 'La cave', style(12, '#ffcfa0', { fontStyle: 'bold', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5);
+    this.add.zone(330, SOL_ARRIERE + 60, 190, 80).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirCave());
+  }
+  // On descend l'échelle : la voûte, les caisses, ce qui dort à l'abri
+  ouvrirCave() {
+    if (this.cave) return;
+    const G = this.G, c = this.cave = this.add.container(0, 0).setDepth(50);
+    Son.jouer('porte');
+    c.add(this.add.image(0, 0, 'caveRepaire').setOrigin(0).setScale(2).setInteractive());
+    const g = this.add.graphics().setBlendMode(Phaser.BlendModes.ADD); g.fillStyle(0xffc070, 0.12).fillPoints([{ x: 128, y: 40 }, { x: 216, y: 40 }, { x: 300, y: 420 }, { x: 100, y: 420 }], true); c.add(g);
+    c.add([this.add.rectangle(480, 140, 2, 40, 0x202020), this.add.rectangle(480, 168, 16, 22, 0x3a0a0a).setStrokeStyle(2, 0x1a1a1a), this.add.rectangle(480, 168, 10, 14, 0xff4a2a)]);
+    const l = this.add.image(480, 168, 'halo').setScale(2.6).setTint(0xff3020).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD); c.add(l);
+    this.tweens.add({ targets: l, alpha: 0.28, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    creerAccessoiresFacade(this); creerIconesHD(this);
+    c.add([this.add.image(580, 480, 'caissesContrebande').setOrigin(0.5, 1).setScale(4), this.add.image(760, 490, 'caissesContrebande').setOrigin(0.5, 1).setScale(4.6).setFlipX(true), this.add.image(380, 486, 'tonneauxHD').setOrigin(0.5, 1).setScale(3)]);
+    // les interdits rangés sur les deux étagères (un de chaque, tant qu'il y en a)
+    const ids = Object.entries(G.interdits || {}).filter(([, n]) => n > 0).flatMap(([id, n]) => Array(Math.min(n, 4)).fill(id)).slice(0, 8);
+    ids.forEach((id, i) => c.add(this.add.image(652 + (i % 4) * 56, (i < 4 ? 208 : 288) - 2, iconeObjet(this, id)).setOrigin(0.5, 1).setScale(2.3)));
+    const n = interditsTotal(G), abri = Math.min(n, REPAIRE.abri);
+    c.add(this.add.text(480, 34, 'La cave de contrebande', style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
+    c.add(this.add.text(480, 64, n ? `${n} objet${n > 1 ? 's' : ''} interdit${n > 1 ? 's' : ''} ici · ${abri} toujours à l'abri de la garde${n > abri ? `, ${n - abri} trouvé${n - abri > 1 ? 's' : ''} une fois sur deux` : ''}` : 'Les étagères sont vides. Le Passeur a de quoi les remplir...', style(13, '#ffd8c8', { fontStyle: 'italic bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
+    const b = creerBouton(this, 840, 505, 220, '▲ Remonter', () => { b.fond.destroy(); b.label.destroy(); c.destroy(); this.cave = null; Son.jouer('porte'); });
+    b.fond.setDepth(51); b.label.setDepth(51.1);
   }
 
   message(texte) {

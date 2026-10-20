@@ -60,6 +60,7 @@ class NightScene extends Phaser.Scene {
       ...(!this.matin && typeof orphelinatOuvert === 'function' && orphelinatOuvert(G) ? [["L'orphelinat", () => { if (enFondu()) return; orphelinatDuSoir(this, () => this.tout()); }]] : []),   // (v1.12) la liste des courses, les améliorations
       ...(!this.matin && typeof barOuvert === 'function' && barOuvert(G) ? [['Le petit bar', () => { if (enFondu()) return; barDuSoir(this, () => this.tout()); }]] : []),   // (v1.16) la soirée, l'équipe, les installations
       ...(!this.matin && typeof confrerieOuverte === 'function' && confrerieOuverte(G) ? [['La Confrérie', () => { if (enFondu()) return; confrerieDuSoir(this, () => this.tout()); }]] : []),   // (v1.28) le livre des dons
+      ...(!this.matin && typeof repaireOuvert === 'function' && repaireOuvert(G) ? [['Le repaire', () => { if (enFondu()) return; repaireDuSoir(this, () => this.tout()); }]] : []),   // (v1.29) le livre noir
       ...(this.matin
         ? [["L'arrière-boutique", () => ouvrirPage('Arriere', { retour: 'Nuit' })], ['Le marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
         : [['Aller dormir', () => this.dormir()]]),
@@ -200,15 +201,16 @@ class NightScene extends Phaser.Scene {
     const missions = enMission(G).map(p => `${p.voyageur.nom} — jour ${p.retour}`);
     // (v0.93) le soir, la ligne du chat/de la nymphe se place sous la liste (elle la recouvrait avec 3 missions)
     const foyer = !this.matin && typeof ligneFoyer === 'function' ? ligneFoyer(G) : null;   // (v1.05) le bois de l'hiver, la gamelle du chat
-    const evenement = !this.matin && (alerteChat(G) || foyer || nympheAttend(G) || chatCeSoir(G));
+    const billet = typeof alerteInformateurs === 'function' && alerteInformateurs(G);   // (v1.29) le billet de Fil-de-Fer
+    const evenement = !this.matin && (billet || alerteChat(G) || foyer || nympheAttend(G) || chatCeSoir(G));
     const texteMissions = this.add.text(x1 + 18, 372, listeCourte(missions, evenement ? 2 : 4, 'Personne'), style(12, '#5a3a20', { lineSpacing: 2 }));
     c.add(texteMissions);
     // (v0.65, étape 10c) le chat : celui de gouttière qui rôde, ou le tien qui sent venir la garde
     if (!this.matin) {
       let ligne = null, action = null;
-      if (alerteChat(G)) {
+      if (billet || alerteChat(G)) {
         const cache = G.cachette === G.jour + 1;
-        ligne = `${nomChat(G)[0].toUpperCase() + nomChat(G).slice(1)} crache vers la porte. La garde, demain ?` + (cache ? ' Tout est caché.' : aCacher(G) ? '' : ' (Rien à cacher.)');
+        ligne = (billet ? 'Un billet sous la porte, signé Fil-de-Fer : « La garde, demain. Sûr et certain. »' : `${nomChat(G)[0].toUpperCase() + nomChat(G).slice(1)} crache vers la porte. La garde, demain ?`) + (cache ? ' Tout est caché.' : aCacher(G) ? '' : ' (Rien à cacher.)');
         if (!cache && aCacher(G)) action = ['▸ Tout cacher sous le plancher', () => { cacherMarchandise(G); Son.jouer('glisse'); this.tout(); }];
       } else if (foyer) {
         ligne = foyer;
