@@ -39,6 +39,12 @@ class RueScene extends Phaser.Scene {
     const x0 = this.depuis === 'marche' ? PLACES_RUE.arche - 60 : this.porteShop.x + 40;
     this.heros = this.add.image(x0, SOL_PROMENADE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(8.5).setFlipX(this.depuis === 'marche');
     this.cible = null; this.pas = 0;
+    // (v1.40) le matin du jour 1, avec le didacticiel : Garrick t'accompagne jusqu'au marché
+    this.garrick = null;
+    if (typeof didacticiel === 'function' && didacticiel(G) && G.tuto && G.jour === 1 && this.depuis !== 'marche') {
+      this.garrick = imageCorps(this, x0 - 80, SOL_PROMENADE, 'mentor', 7.5).setOrigin(0.5, 1).setDepth(8.49);
+      this.time.delayedCall(700, () => this.garrickDit("« Allez, en route ! Le marché, c'est au bout de la rue, sous l'arche. Suis-moi, je te présente les marchands. »"));
+    }
     this.cameras.main.scrollX = Phaser.Math.Clamp(x0 - 480, 0, LARGEUR_RUE - 960);
 
     // l'interface, fixe à l'écran
@@ -114,6 +120,17 @@ class RueScene extends Phaser.Scene {
     });
   }
 
+  // (v1.40) Garrick parle : une bulle au-dessus de lui, qui le suit
+  garrickDit(texte) {
+    const g = this.garrick;
+    if (!g || !g.active) return;
+    if (g.bulle) g.bulle.destroy();
+    Son.jouer('voix', { personne: { nom: 'Garrick', race: 'humain' }, ton: 'content', duree: 1.4 });
+    const b = g.bulle = this.add.text(g.x, g.y - g.displayHeight - 10, texte, style(13, '#2a1a0c', { backgroundColor: '#fff8e8', padding: { x: 9, y: 6 }, wordWrap: { width: 300 }, align: 'center' })).setOrigin(0.5, 1).setDepth(9).setScale(0);
+    this.tweens.add({ targets: b, scale: 1, duration: 180, ease: 'Back.easeOut' });
+    this.time.delayedCall(Math.max(3500, texte.length * 55), () => { if (b.active) this.tweens.add({ targets: b, alpha: 0, duration: 300, onComplete: () => b.destroy() }); });
+  }
+
   dire(texte) {
     this.bulle.setText(texte).setVisible(true).setAlpha(1);
     this.tweens.killTweensOf(this.bulle);
@@ -125,7 +142,7 @@ class RueScene extends Phaser.Scene {
   // Entrer quelque part : à pied jusqu'à la porte (si on la donne), puis on y va.
   passerPar(page, x = null) {
     if (this.transition || this.fini) return;
-    if (page === 'Banque' && typeof lieuOuvert === 'function' && !lieuOuvert(window.GAME, 'banque')) return this.dire('La porte de la banque est close pour toi. Elle s\'ouvrira au jour 4.');   // (v1.40)
+    if (page === 'Banque' && typeof lieuDebloque === 'function' && !lieuDebloque(window.GAME, 'banque')) return this.dire('La porte de la banque est close pour toi. Elle s\'ouvrira au jour 4.');   // (v1.40)
     this.transition = true;
     const aller = () => {
       Son.jouer('porte');
@@ -160,6 +177,17 @@ class RueScene extends Phaser.Scene {
       if (!this.heros.marche) pasDeMarche(this, this.heros, 260);
       this.heros.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
     } else this.heros.y = SOL_PROMENADE;
+    // (v1.40) Garrick suit le joueur, un pas derrière lui
+    const g = this.garrick;
+    if (g && g.active) {
+      const cible = this.heros.x + (this.heros.flipX ? 80 : -80), reste = cible - g.x;
+      if (Math.abs(reste) > 6) {
+        g.x += Math.sign(reste) * Math.min(Math.abs(reste), 0.3 * delta);
+        g.setFlipX(reste < 0);
+        if (!g.marche) pasDeMarche(this, g, 260);
+      }
+      if (g.bulle && g.bulle.active) g.bulle.setPosition(g.x, g.y - g.displayHeight - 10);
+    }
     this.cameras.main.scrollX = Phaser.Math.Clamp(this.heros.x - 480, 0, LARGEUR_RUE - 960);
   }
 }

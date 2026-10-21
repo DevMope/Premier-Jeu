@@ -22,7 +22,7 @@ const DEBLOCAGES = {
   atelier: { jour: 5, nom: "L'atelier", quand: 'ta 1re trouvaille', si: G => (G.tresors || []).length > 0, texte: "Les trouvailles que tes clients rapportent : répare-les, et revends-les plus cher aux enchères." },
   banque: { jour: 4, nom: 'La banque', quand: 'au jour 4', texte: "Un prêt pour te dépanner. Mais la banque prélève chaque nuit : ne prends que ce que tu peux rendre." },
 };
-function lieuOuvert(G, cle) {
+function lieuDebloque(G, cle) {
   const d = DEBLOCAGES[cle];
   if (!d || !didacticiel(G)) return true;
   return G.jour >= d.jour || !!(d.si && d.si(G));
@@ -31,7 +31,7 @@ function lieuOuvert(G, cle) {
 function nouveautes(G) {
   if (!didacticiel(G)) return [];
   G.nouveautesVues = G.nouveautesVues || {};
-  return Object.keys(DEBLOCAGES).filter(c => lieuOuvert(G, c) && !G.nouveautesVues[c]);
+  return Object.keys(DEBLOCAGES).filter(c => lieuDebloque(G, c) && !G.nouveautesVues[c]);
 }
 
 // --- Le carnet des objectifs ---
@@ -40,14 +40,14 @@ const OBJECTIFS = [
     aide: "Au comptoir : lis sa commande, glisse les marchandises dans son baluchon, puis remets-le-lui." },
   { id: 'marche', groupe: 'jour', des: G => G.jour >= 1, texte: 'Achète des provisions au Marché des Mastres', prog: G => [Object.values(G.depenses || {}).some(x => x > 0) ? 1 : 0, 1], argent: 15,
     aide: "Le matin, avant d'ouvrir : « Le marché ». Approche-toi d'un étal et achète ce qui manque à ta réserve." },
-  { id: 'bureau', groupe: 'jour', des: G => lieuOuvert(G, 'bureau') && G.jour >= 1, texte: 'Améliore une chose au bureau', prog: G => [(G.travaux || []).length + Object.values(G.ameliorations || {}).reduce((a, b) => a + b, 0) > 0 ? 1 : 0, 1], argent: 25,
+  { id: 'bureau', groupe: 'jour', des: G => lieuDebloque(G, 'bureau') && G.jour >= 1, texte: 'Améliore une chose au bureau', prog: G => [(G.travaux || []).length + Object.values(G.ameliorations || {}).reduce((a, b) => a + b, 0) > 0 ? 1 : 0, 1], argent: 25,
     aide: "Le soir, « Le bureau », le tiroir « Améliorer le comptoir » : les ouvriers viennent pendant la nuit." },
   { id: 'vivants3', groupe: 'semaine', texte: 'Fais revenir 3 aventuriers vivants', prog: G => [Object.values(G.succes || {}).reduce((a, b) => a + b, 0), 3], argent: 40,
     aide: "Un baluchon complet, une contrée à leur mesure : regarde ce que dit ton flair avant de les laisser partir." },
   { id: 'deuxEtoiles', groupe: 'semaine', des: G => G.jour >= (typeof JOUR_DEUX_ETOILES === 'number' ? JOUR_DEUX_ETOILES : 2), texte: 'Envoie quelqu’un dans une contrée à 2 étoiles',
     prog: G => [(G.succes && G.succes[2]) || (G.partis || []).some(p => p.voyageur && ZONES[p.voyageur.zone] && ZONES[p.voyageur.zone].danger >= 2) ? 1 : 0, 1], argent: 30,
     aide: "Sur la carte, le matin : les contrées à deux étoiles rapportent plus... pour un aventurier qui a déjà fait ses preuves." },
-  { id: 'trouvaille', groupe: 'semaine', des: G => lieuOuvert(G, 'atelier'), texte: 'Revends une trouvaille', prog: G => [Math.min(1, (G.stats && G.stats.ventes) || 0), 1], argent: 30,
+  { id: 'trouvaille', groupe: 'semaine', des: G => lieuDebloque(G, 'atelier'), texte: 'Revends une trouvaille', prog: G => [Math.min(1, (G.stats && G.stats.ventes) || 0), 1], argent: 30,
     aide: "Le soir, l'atelier : répare la trouvaille, puis mets-la aux enchères au marché, le matin." },
   { id: 'marchandage', groupe: 'semaine', des: G => G.jour >= 3, texte: 'Réussis un marchandage', prog: G => [Math.min(1, G.persuasion || 0), 1], argent: 20,
     aide: "Quand un client discute sa part du butin ou le prix d'une trouvaille : propose, et ne cède pas trop vite." },

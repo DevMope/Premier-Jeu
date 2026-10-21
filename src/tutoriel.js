@@ -20,7 +20,7 @@ const CONSEILS = {
 
 // Affiche le conseil `cle` de Garrick, si c'est la première fois (et si le tutoriel est actif).
 // `toujours` : un conseil des mécaniques d'après le premier jour (il s'affiche même après le tutoriel)
-function conseilGarrick(scene, cle, toujours = false) {
+function conseilGarrick(scene, cle, toujours = false, fin = null) {
   const G = window.GAME;
   // (v1.40) le didacticiel désactivé : plus aucun conseil ; activé, chaque conseil vient une fois, au bon moment
   if (!G || !CONSEILS[cle] || (typeof didacticiel === 'function' && !didacticiel(G))) return;
@@ -57,7 +57,7 @@ function conseilGarrick(scene, cle, toujours = false) {
   };
   const touche = (e) => { if (['Enter', 'Space', ' ', 'Escape'].includes(e.key) || e.code === 'Space') compris(); };
   if (h.input.keyboard) h.input.keyboard.on('keydown', touche);
-  c.once('destroy', () => { if (h.input && h.input.keyboard) h.input.keyboard.off('keydown', touche); });
+  c.once('destroy', () => { if (h.input && h.input.keyboard) h.input.keyboard.off('keydown', touche); if (fin) fin(); });   // (v1.40 : la suite, une fois le conseil fermé)
   // la page se ferme (on change de lieu) : le conseil part avec elle
   const partir = () => { if (c.active) c.destroy(); };
   if (h !== scene) { scene.events.once('shutdown', partir); scene.events.once('sleep', partir); }

@@ -95,9 +95,9 @@ class NightScene extends Phaser.Scene {
     const neufs = typeof nouveautes === 'function' ? nouveautes(G) : [];
     for (const bt of boutons) {
       const k = CLES_SOIR.find(([t]) => bt[0].startsWith(t));
-      if (!k || typeof lieuOuvert !== 'function') continue;
+      if (!k || typeof lieuDebloque !== 'function') continue;
       const d = DEBLOCAGES[k[1]];
-      if (!lieuOuvert(G, k[1])) { bt[0] = k[0]; bt[1] = () => { Son.jouer('refus'); this.annoncer(`${d.nom} s'ouvrira ${d.quand === 'ta 1re trouvaille' ? 'avec ta première trouvaille' : d.quand}.`); }; bt[2] = { ferme: d }; }
+      if (!lieuDebloque(G, k[1])) { bt[0] = k[0]; bt[1] = () => { Son.jouer('refus'); this.annoncer(`${d.nom} s'ouvrira ${d.quand === 'ta 1re trouvaille' ? 'avec ta première trouvaille' : d.quand}.`); }; bt[2] = { ferme: d }; }
       else if (neufs.includes(k[1])) bt[2] = { neuf: true };
     }
     if (neufs.length) this.time.delayedCall(1000, () => { if (!this.scene.isActive()) return; neufs.forEach((c, i) => { G.nouveautesVues[c] = true; vignetteGuide(this, 'NOUVEAU', DEBLOCAGES[c].nom, DEBLOCAGES[c].texte, { y: 92 + i * 96, prof: 60, duree: 6000 }); }); });

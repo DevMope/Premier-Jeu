@@ -156,7 +156,23 @@ class MarcheScene extends Phaser.Scene {
     creerBouton(this, 840, 510, 210, 'Ouvrir le comptoir', () => this.ouvrir());
 
     this.vueEnsemble(true);
-    this.time.delayedCall(700, () => conseilGarrick(this, 'marche'));
+    // (v1.40) avec le didacticiel, Garrick t'a accompagné : il présente le marché, puis reprend la route
+    const garrickIci = typeof didacticiel === 'function' && didacticiel(G) && G.tuto && !(G.tutoVu && G.tutoVu.marche);
+    let garrick = null;
+    if (garrickIci) { garrick = imageCorps(this, 330, 476, 'mentor', 3.6).setOrigin(0.5, 1).setDepth(15); this.tweens.add({ targets: garrick, scaleY: garrick.scaleY * 1.02, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
+    this.time.delayedCall(700, () => conseilGarrick(this, 'marche', false, () => {
+      if (!garrick || !garrick.active || !this.sys.isActive()) return;
+      this.tweens.killTweensOf(garrick);
+      const b = this.add.text(garrick.x, garrick.y - garrick.displayHeight - 8, '« Bonne chance, petit ! Je repasserai te voir. »', style(13, '#2a1a0c', { backgroundColor: '#fff8e8', padding: { x: 8, y: 5 } })).setOrigin(0.5, 1).setDepth(16);
+      Son.jouer('voix', { personne: { nom: 'Garrick', race: 'humain' }, ton: 'content', duree: 1.2 });
+      this.time.delayedCall(1800, () => {
+        if (!garrick.active) return;
+        garrick.setFlipX(true);
+        pasDeMarche(this, garrick, 0, { poussiere: false });
+        this.tweens.add({ targets: [garrick, b], x: '-=400', duration: 4200, onComplete: () => { garrick.destroy(); b.destroy(); } });
+        this.tweens.add({ targets: b, alpha: 0, delay: 1200, duration: 500 });
+      });
+    }));
     afficherStatutSauvegarde(this, 940, 46, 1);
     // Les commandes prévues, qu'on déroule ou referme
     this.commandesOuvertes = false;
