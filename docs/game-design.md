@@ -2948,6 +2948,11 @@ fumée direct et qu'il doit voir le chat en faire une nouvelle dans sa maison po
 - Le carnet des formes ne montre que celles que tu as vues (les autres : une silhouette « ??? ») ; chaque nouvelle forme
   soufflée à la maison s'y ajoute (`voirForme`). Au Vieux Moulin : le navire, le cœur, le poisson.
 
+### Idée du joueur (21/10) : la pêche au Vieux Moulin (à mettre en planche 71)
+- Après le Moulin et l'histoire du chat, le joueur peut retourner pêcher à l'étang du Moulin (« le parfait endroit » ; la carte l'annonçait déjà : « on y pêchera »).
+- **Le chat offre la première canne**, d'une longue lignée de cannes à pêche, quand ils sont rentrés à la maison, **après le moment explication** (la conversation au coin du feu, v1.37).
+- Proposition de Claude, à valider sur planche : le soir, une sortie « L'étang du Moulin » ; un mini-jeu en trois temps (lancer : une jauge de force ; la touche : le bouchon plonge, ferrer à temps ; la remontée : garder la tension dans la zone, façon Dave the Diver) ; des poissons de l'étang (gardon, perche, tanche, brochet, anguille, la carpe dorée rare) et quelques prises étranges (vieille botte, bouteille à message, pièce ancienne pour les collections) ; un carnet de pêche (records de taille, succès) ; les poissons fumés deviennent des rations, se vendent au marché ou se donnent au chat (+1 ♥) ; la lignée des cannes (roseau du chat, noisetier, frêne à moulinet, bambou laqué, argent elfique, et la dernière, d'ébène et de fil d'or, offerte par le Parrain) ; parfois le chat vient sur le ponton et vole un poisson. Tuto : la première fois, c'est le chat qui explique (règle du joueur).
+
 ### Construit en v1.35 : l'aventure du Vieux Moulin (voir le tableau des versions)
 - `src/moulin.js` (règles : complicité, soir du chat, fin, formes vues), `src/succes.js` (les succès et leur vignette),
   `src/scenes/MoulinScene.js` (la scène jouée, et la fenêtre du soir), `src/moulinHD.js` (le décor, la fumée, le cercle).
