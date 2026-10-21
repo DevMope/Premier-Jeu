@@ -125,12 +125,13 @@ function creerMoulinHD(scene) {
 
 // Le décor entier (largeur LARGEUR_MOULIN) : le ciel (la nuit, ou l'aube en grande pompe), les collines, les arbres, le
 // chemin, le ruisseau et son pont, le bief et le moulin à la roue qui tourne, l'étang. Renvoie de quoi animer la scène.
-function construireMoulin(scene, { aube = false } = {}) {
+function construireMoulin(scene, { aube = false, jour = false } = {}) {
+  if (jour) aube = true;   // (v1.45, la pêche : le jour reprend l'aube, avec un ciel bleu et une eau claire)
   creerMoulinHD(scene); creerEauHD(scene); creerHalo(scene);
   const P = PLACES_MOULIN, sol = SOL_MOULIN, W = LARGEUR_MOULIN, r = {};
   // le ciel : une nuit d'encre bleue, ou l'aube (bleu, rose, or)
   const ciel = scene.add.graphics().setDepth(-3).setScrollFactor(0);
-  const bandes = aube ? [[0x2a3a7a, 0], [0x6a5a9a, 0.25], [0xe08a7a, 0.5], [0xf8b870, 0.72], [0xffe0a0, 1]] : [[0x060a20, 0], [0x0e1636, 0.45], [0x22305a, 0.85], [0x34406a, 1]];
+  const bandes = jour ? [[0x3a7ad0, 0], [0x6aa4e4, 0.45], [0xb4d8f0, 0.85], [0xd8ecf4, 1]] : aube ? [[0x2a3a7a, 0], [0x6a5a9a, 0.25], [0xe08a7a, 0.5], [0xf8b870, 0.72], [0xffe0a0, 1]] : [[0x060a20, 0], [0x0e1636, 0.45], [0x22305a, 0.85], [0x34406a, 1]];
   for (let y = 0; y < sol; y += 2) {
     const v = y / sol; let i = 0; while (i < bandes.length - 2 && v > bandes[i + 1][1]) i++;
     const [c0, v0] = bandes[i], [c1, v1] = bandes[i + 1], k = Phaser.Math.Clamp((v - v0) / (v1 - v0), 0, 1);
@@ -142,26 +143,26 @@ function construireMoulin(scene, { aube = false } = {}) {
     scene.add.circle(780, 80, 22, 0xf3ecc8).setDepth(-2.8).setScrollFactor(0);
   } else {
     // le soleil qui se lève derrière les collines de l'étang, et ses rayons
-    r.soleil = scene.add.circle(P.fin, sol - 96, 46, 0xfff0b0).setDepth(-2.6).setScrollFactor(1);
-    r.halo = scene.add.image(P.fin, sol - 96, 'halo').setScale(6).setTint(0xffd080).setAlpha(0.75).setBlendMode(Phaser.BlendModes.ADD).setDepth(-2.5);
+    r.soleil = scene.add.circle(P.fin - (jour ? 380 : 0), sol - (jour ? 330 : 96), jour ? 26 : 46, 0xfff0b0).setDepth(-2.6).setScrollFactor(1);
+    r.halo = scene.add.image(P.fin - (jour ? 380 : 0), sol - (jour ? 330 : 96), 'halo').setScale(jour ? 3 : 6).setTint(0xffd080).setAlpha(0.75).setBlendMode(Phaser.BlendModes.ADD).setDepth(-2.5);
     r.rayons = [];
-    for (let k = 0; k < 9; k++) { const a = -Math.PI + (k + 0.5) * Math.PI / 9, ry = scene.add.triangle(P.fin, sol - 96, 0, 0, Math.cos(a - 0.05) * 900, Math.sin(a - 0.05) * 900, Math.cos(a + 0.05) * 900, Math.sin(a + 0.05) * 900, 0xfff0c0, 0.16).setOrigin(0, 0).setBlendMode(Phaser.BlendModes.ADD).setDepth(-2.55);
+    if (!jour) for (let k = 0; k < 9; k++) { const a = -Math.PI + (k + 0.5) * Math.PI / 9, ry = scene.add.triangle(P.fin, sol - 96, 0, 0, Math.cos(a - 0.05) * 900, Math.sin(a - 0.05) * 900, Math.cos(a + 0.05) * 900, Math.sin(a + 0.05) * 900, 0xfff0c0, 0.16).setOrigin(0, 0).setBlendMode(Phaser.BlendModes.ADD).setDepth(-2.55);
       scene.tweens.add({ targets: ry, alpha: 0.05, duration: 2200 + k * 200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); r.rayons.push(ry); }
   }
   // les collines lointaines, en deux plans qui glissent moins vite
-  for (const [f, c, h, g] of [[0.25, aube ? 0x7a6a9a : 0x141c34, 120, 921], [0.5, aube ? 0x5a5a7a : 0x1a2440, 80, 922]]) {
+  for (const [f, c, h, g] of [[0.25, jour ? 0x8aa4bc : aube ? 0x7a6a9a : 0x141c34, 120, 921], [0.5, jour ? 0x6a8a7a : aube ? 0x5a5a7a : 0x1a2440, 80, 922]]) {
     const gc = scene.add.graphics().setDepth(f === 0.25 ? -2.4 : -2.2).setScrollFactor(f);
     gc.fillStyle(c);
     const pts = [{ x: 0, y: sol }]; for (let x = 0; x <= W * f + 960; x += 40) pts.push({ x, y: sol - 40 - h * fbm(x * 0.004, 1, g) });
     pts.push({ x: W * f + 960, y: sol }); gc.fillPoints(pts, true);
   }
   // une rangée d'arbres sombres au loin, et quelques saules près du chemin
-  for (let x = 40; x < W; x += 150) if (!aube || Math.abs(x - (P.fin - 0.2 * (W - 960))) > 120) scene.add.image(x + hachage(x, 1, 923) * 60, sol - 4, textureArbre(scene, hachage(x, 2, 923) > 0.5 ? 'chenes' : 'ronds')).setOrigin(0.5, 1).setScale(1.6).setTint(aube ? 0x6a5a7a : 0x1e2a3e).setDepth(-1.5).setScrollFactor(0.8);
-  for (const x of [P.saule0, 760, 1380, 2190]) scene.add.image(x, sol + 6, textureArbre(scene, 'saules')).setOrigin(0.5, 1).setScale(2.6).setTint(aube ? 0xd8c8b8 : 0x6a7a9a).setDepth(1);
+  for (let x = 40; x < W; x += 150) if (!aube || Math.abs(x - (P.fin - 0.2 * (W - 960))) > 120) scene.add.image(x + hachage(x, 1, 923) * 60, sol - 4, textureArbre(scene, hachage(x, 2, 923) > 0.5 ? 'chenes' : 'ronds')).setOrigin(0.5, 1).setScale(1.6).setTint(jour ? 0xa0b4a0 : aube ? 0x6a5a7a : 0x1e2a3e).setDepth(-1.5).setScrollFactor(0.8);
+  for (const x of [P.saule0, 760, 1380, 2190]) scene.add.image(x, sol + 6, textureArbre(scene, 'saules')).setOrigin(0.5, 1).setScale(2.6).setTint(jour ? 0xffffff : aube ? 0xd8c8b8 : 0x6a7a9a).setDepth(1);
   // l'eau : une vraie surface (le ciel s'y reflète, plus clair au loin, plus sombre devant), des rides qui scintillent
   // et qui suivent le courant. `xl`/`xr` : les bords de l'eau à chaque hauteur (un lit, un canal, un étang).
-  const C = aube ? { haut: 0xd8946e, bas: 0x2a3060, ride: 0xffe8b0, rive: 0x2e3420, berge: 0x6a5434 } : { haut: 0x4a6aa0, bas: 0x0a1028, ride: 0xb8d0ff, rive: 0x141c14, berge: 0x2a2218 };
-  const EAU_ETANG = { niveau: sol - 54, teintes: aube ? [0xf0b47a, 0xc07a74, 0x6a4a70, 0x2a2a50] : [0x3a5488, 0x1a2a54, 0x0a1028] };   // (le bief et l'étang : une même eau)
+  const C = jour ? { haut: 0x9ccce8, bas: 0x2a5a7a, ride: 0xffffff, rive: 0x3a5a24, berge: 0x7a6040 } : aube ? { haut: 0xd8946e, bas: 0x2a3060, ride: 0xffe8b0, rive: 0x2e3420, berge: 0x6a5434 } : { haut: 0x4a6aa0, bas: 0x0a1028, ride: 0xb8d0ff, rive: 0x141c14, berge: 0x2a2218 };
+  const EAU_ETANG = { niveau: sol - 54, teintes: jour ? [0xb4dcf0, 0x7ab0d4, 0x4a7ea0, 0x245470] : aube ? [0xf0b47a, 0xc07a74, 0x6a4a70, 0x2a2a50] : [0x3a5488, 0x1a2a54, 0x0a1028] };   // (le bief et l'étang : une même eau)
   const melange = (c0, c1, k) => Phaser.Display.Color.GetColor(...[16, 8, 0].map(d => { const a = (c0 >> d) & 255, b = (c1 >> d) & 255; return Math.round(a + (b - a) * k); }));
   const surface = (y0, y1, xl, xr, prof, { courant = null, rides = 30, clair = 1, teintes = null, gamme = null } = {}) => {
     const ge = scene.add.graphics().setDepth(prof);
@@ -317,7 +318,7 @@ function construireMoulin(scene, { aube = false } = {}) {
   scene.tweens.add({ targets: barque, y: barque.y + 3, angle: 2, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   // (la barque s'enfonce dans l'eau : sa coque disparaît sous la ligne de flottaison, son reflet tremble dessous)
   const flot = scene.add.graphics().setDepth(2.32); const bas = barque.y + barque.displayHeight / 2 + 4;
-  flot.fillStyle(aube ? 0x9a6476 : 0x1e305e, 0.8).fillRect(barque.x - barque.displayWidth / 2 - 4, sol - 2, barque.displayWidth + 8, bas - sol + 2).fillStyle(C.ride, 0.5).fillRect(barque.x - barque.displayWidth / 2 - 2, sol - 2, barque.displayWidth + 4, 2);
+  flot.fillStyle(jour ? 0x4a7a9a : aube ? 0x9a6476 : 0x1e305e, 0.8).fillRect(barque.x - barque.displayWidth / 2 - 4, sol - 2, barque.displayWidth + 8, bas - sol + 2).fillStyle(C.ride, 0.5).fillRect(barque.x - barque.displayWidth / 2 - 2, sol - 2, barque.displayWidth + 4, 2);
   const refl = scene.add.image(barque.x, sol + 14, 'barqueHD').setScale(2, -1.2).setTint(0x000000).setAlpha(0.3).setDepth(1.93);
   scene.tweens.add({ targets: refl, scaleX: 2.05, alpha: 0.18, duration: 900, yoyo: true, repeat: -1 });
   for (const dx of [-60, 0, 60]) r.ronds(barque.x + dx, sol + 2, 30);

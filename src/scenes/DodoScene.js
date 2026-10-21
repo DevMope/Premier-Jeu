@@ -134,6 +134,13 @@ class DodoScene extends Cinematique {
     this.add.image(64, 96, 'portraitFamille').setScale(2).setDepth(1.3);
     this.add.image(140, 210, 'etagereTrophees').setOrigin(0, 0).setScale(2).setDepth(1.3);
     (this.G.trophees || []).slice(0, 6).forEach((t, i) => this.add.image(160 + i * 32, 212, 'trophee_' + t.id).setOrigin(0.5, 1).setScale(2).setDepth(1.35));
+    // (v1.45) Grand-Mère Écaille, naturalisée, sur sa plaque de chêne au-dessus de l'étagère
+    if (this.G.peche && this.G.peche.trophee && typeof texturePoisson === 'function') {
+      this.add.rectangle(246, 146, 150, 58, 0x4a2e18).setStrokeStyle(3, 0x2a1808).setDepth(1.31);
+      this.add.rectangle(246, 146, 140, 48, 0x6a4424).setDepth(1.32);
+      this.add.image(246, 144, texturePoisson(this, 'legende')).setScale(1.6).setDepth(1.33);
+      this.add.rectangle(246, 172, 60, 8, 0xc9a227).setStrokeStyle(1, 0x5a3a08).setDepth(1.34);
+    }
     if (!(this.G.trophees || []).length) this.add.text(244, 196, 'Trophées des aventuriers', style(10, '#c8a878', { fontStyle: 'italic' })).setOrigin(0.5).setAlpha(0.55).setDepth(1.35);
     this.add.image(480, 60, 'tableauLettres').setOrigin(0, 0).setScale(2).setDepth(1.3);
     const nLettres = Math.min(6, (this.G.courrier || []).length + Math.floor(((this.G.stats || {}).lettresAcceptees || 0) / 3));

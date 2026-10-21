@@ -235,6 +235,13 @@ async function conversationDuChat(scene) {
     }
   }
   if (bulle) { bulle.destroy(); bulle = null; }
+  // (v1.45, planche 71 v2) une dernière chose : la canne de son grand-père
+  if (typeof cadeauCanneDuChat === 'function' && !etatPeche(G).grandPere) {
+    dire("Il pousse du bout de la patte une vieille canne appuyée contre la cheminée.");
+    await parler("« Une dernière chose. La canne de mon grand-père.\nIl pêchait à l'étang du Moulin. Prends-la : moi, j'ai des gens pour ça. »");
+    if (bulle) { bulle.destroy(); bulle = null; }
+    await new Promise(ok => { if (!cadeauCanneDuChat(scene, ok, true)) ok(); });
+  }
   // où installer le coin
   dire('Où installer le coin des chats ?', 'Tu pourras l\'aménager ensuite, petit à petit (un clic sur leur panier).');
   const cartes = [];

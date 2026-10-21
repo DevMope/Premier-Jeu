@@ -80,6 +80,14 @@ class NightScene extends Phaser.Scene {
         ? [["L'arrière-boutique", () => ouvrirPage('Arriere', { retour: 'Nuit' })], ['Le marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
         : [['Aller dormir', () => this.dormir()]]),
     ];
+    // (v1.45, la pêche) l'étang du Moulin, dès qu'on a une canne : l'aube le matin ; le soir, le jour (comptoir fermé tôt) ou la nuit
+    if (typeof aUneCanne === 'function' && aUneCanne(G)) boutons.splice(boutons.length - (this.matin ? 2 : 1), 0, ["L'étang", () => {
+      if (enFondu()) return;
+      Sauvegarde.maintenant(G, 'Nuit');
+      this._transition = performance.now();
+      this.cameras.main.fadeOut(400);
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Peche', { plage: plageDePeche(G, this.matin), retour: this.matin ? 'NuitMatin' : 'NuitSoir' }));
+    }]);
     // (v1.30) trop de boutons pour une rangée lisible : les projets (orphelinat, bar, Confrérie, repaire, étage, notaire)
     // se rangent derrière un seul bouton, qui ouvre leur liste
     const PROJETS = ["L'orphelinat", 'Le petit bar', 'La Confrérie', 'Le repaire', "L'étage", 'Chez le notaire'];
@@ -145,7 +153,7 @@ class NightScene extends Phaser.Scene {
     // (v0.90) le soir du Carrefour (ou du parjure) : deux visiteurs frappent à la porte
     if (!this.matin) this.time.delayedCall(700, () => this.carrefourEnAttente());
     // (v1.35) le soir où ton chat boude sa gamelle et gratte à la porte : l'aventure du Vieux Moulin
-    if (!this.matin && typeof soireeDuMoulin === 'function') this.time.delayedCall(1300, () => { if (this.scene.isActive() && !(this._transition && performance.now() - this._transition < 1500)) soireeDuMoulin(this) || (typeof soireeDeLaConversation === 'function' && soireeDeLaConversation(this)) || (typeof soireeDuParrain === 'function' && soireeDuParrain(this)); });
+    if (!this.matin && typeof soireeDuMoulin === 'function') this.time.delayedCall(1300, () => { if (this.scene.isActive() && !(this._transition && performance.now() - this._transition < 1500)) soireeDuMoulin(this) || (typeof soireeDeLaConversation === 'function' && soireeDeLaConversation(this)) || (typeof soireeDuParrain === 'function' && soireeDuParrain(this)) || (typeof cadeauCanneDuChat === 'function' && cadeauCanneDuChat(this)); });   // (v1.45 : la canne du grand-père, pour qui a déjà eu la conversation)
   }
 
   // (v0.90) Le soir du Carrefour (ou du parjure) : deux visiteurs frappent à la porte. Renvoie vrai si la

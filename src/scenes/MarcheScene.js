@@ -2,10 +2,10 @@
 // quatre étals (épicerie, forge, apothicaire, tailleuse), le Bazar de Rosalie (les cadeaux), les enchères,
 // le coin des jeux, le mendiant, et le crieur qui annonce les nouvelles du jour.
 // La rue est plus large que l'écran : on la parcourt avec les flèches ◀ ▶.
-const LARGEUR_MARCHE = 2150;
+const LARGEUR_MARCHE = 2340;   // (v1.45 : la cabane de Barnabé, le pêcheur, au bout de la rue)
 const DEPLACEMENT_RUE = 360;
 // La vue d'ensemble : la rue entière, réduite, posée sur la grand-place.
-const VUE_MARCHE = { echelle: 0.44, x: 12, y: 170 };
+const VUE_MARCHE = { echelle: 0.405, x: 6, y: 180 };
 // On clique sur un lieu pour l'ouvrir dans le panneau du bas.
 class MarcheScene extends Phaser.Scene {
   constructor() { super('Marche'); }
@@ -54,7 +54,7 @@ class MarcheScene extends Phaser.Scene {
     this.feteHiver = typeof hiverActif === 'function' && hiverActif(G);   // (v1.05) la Fête du Long Hiver
     if (this.feteHiver) this.decorHiverRue();
     // Les étals, les enchères, les jeux et le mendiant
-    this.positions = { mendiant: [70, 'lieu'], bazar: [1030, 'lieu'], encheres: [1220, 'lieu'], jeux: [1410, 'lieu'], crieur: [1595, 'lieu'], tableau: [1705, 'lieu'], brocante: [1850, 'lieu'], garderobe: [2045, 'lieu'] };
+    this.positions = { mendiant: [70, 'lieu'], bazar: [1030, 'lieu'], encheres: [1220, 'lieu'], jeux: [1410, 'lieu'], crieur: [1595, 'lieu'], tableau: [1705, 'lieu'], brocante: [1850, 'lieu'], garderobe: [2045, 'lieu'], peche: [2240, 'lieu'] };
     Object.entries(MARCHANDS).forEach(([cle, m], i) => {
       this.positions[cle] = [260 + i * 190, 'etal'];
       this.creerEtal(cle, m, 260 + i * 190);
@@ -83,6 +83,15 @@ class MarcheScene extends Phaser.Scene {
       ['chapeau', 'bandana', 'montre', 'pipe'], 'La garde-robe de Marcelline', solsticeActif(G) ? "L'étal de l'Union" : 'Vêtements et accessoires', () => (this.fete ? this.ouvrirAtours() : this.ouvrirGardeRobe()), 'marcelline');
     else this.creerChantier(2045, 'garderobe');
     if (this.fete && lieuOuvert(G, 'garderobe')) this.decorerEtalUnion(2045);
+    // (v1.45, planche 71 v2) la cabane de Barnabé Goujon, le pêcheur, posée sur son assise de pierre au bout de la rue
+    if (typeof poserCabanePecheur === 'function' && lieuOuvert(G, 'peche')) {
+      const avant = this.children.list.length;
+      poserCabanePecheur(this, 2240);
+      this.etiquettesRue.push(this.add.text(2240, 268, 'La cabane de Barnabé', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5),
+        this.add.text(2240, 286, 'Pêcheur · cannes, poissons', style(11, '#fff4dc', { stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5));
+      this.add.rectangle(2240, 170, 190, 160, 0xffffff, 0).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirPeche());
+      this.grouper(avant, 2240);
+    } else if (typeof poserCabanePecheur === 'function') this.creerChantier(2240, 'peche');
     // Les enchères : une estrade drapée de velours, un portique à bannière, le commissaire au pupitre
     if (!lieuOuvert(G, 'encheres')) this.creerChantier(1220, 'encheres');
     else {
@@ -568,9 +577,9 @@ class MarcheScene extends Phaser.Scene {
         this.tweens.add({ targets: pigeon, x: x0 + Phaser.Math.Between(-80, 80), y: y0 - 70, duration: 700, yoyo: true, ease: 'Sine.easeOut' });
       } });
     }
-    const noms = { mendiant: 'Le mendiant', bazar: 'Le Bazar de Rosalie', encheres: 'Les enchères', jeux: this.fete ? "Le tir à l'arc" : this.feteHiver ? 'La grande roue' : 'Le coin des jeux', crieur: 'Le crieur', tableau: "Le tableau d'affichage", brocante: 'La brocante', garderobe: this.fete ? "L'étal de l'Union" : 'La garde-robe' };
+    const noms = { mendiant: 'Le mendiant', bazar: 'Le Bazar de Rosalie', encheres: 'Les enchères', jeux: this.fete ? "Le tir à l'arc" : this.feteHiver ? 'La grande roue' : 'Le coin des jeux', crieur: 'Le crieur', tableau: "Le tableau d'affichage", brocante: 'La brocante', garderobe: this.fete ? "L'étal de l'Union" : 'La garde-robe' , peche: 'La cabane de Barnabé' };
     const ouvrir = { mendiant: () => this.ouvrirMendiant(), bazar: () => this.ouvrirBazar(), encheres: () => this.ouvrirEncheres(), jeux: () => (this.fete ? this.ouvrirTirArc() : this.feteHiver ? this.ouvrirRoue() : this.ouvrirJeux()), crieur: () => this.ouvrirCrieur(), tableau: () => this.ouvrirTableau(),
-      brocante: () => this.ouvrirBrocante(), garderobe: () => (this.fete ? this.ouvrirAtours() : this.ouvrirGardeRobe()) };
+      brocante: () => this.ouvrirBrocante(), garderobe: () => (this.fete ? this.ouvrirAtours() : this.ouvrirGardeRobe()), peche: () => this.ouvrirPeche() };
     // (v0.57) les étiquettes voisines se décalent une sur deux en hauteur : elles ne se chevauchent plus
     const ordre = Object.entries(this.positions).sort((a, b) => a[1][0] - b[1][0]);
     for (const [rang, [cle, [x, type]]] of ordre.entries()) {
@@ -1434,6 +1443,50 @@ class MarcheScene extends Phaser.Scene {
         this.message(erreur || `${d.nom} : tu ${d.f ? 'la' : 'le'} portes dès maintenant !`, erreur ? '#a03030' : '#2f6a2a');
       }, undefined, 21);
     });
+  }
+
+  // --- (v1.45, planche 71 v2) La cabane de Barnabé : les cannes, ton niveau de pêcheur, le carnet, et l'étang ---
+  ouvrirPeche() {
+    const G = this.G, p = etatPeche(G);
+    if (!lieuOuvert(G, 'peche')) return this.message(`${NOMS_LIEUX_MARCHE.peche} ouvre le jour ${OUVERTURE_LIEUX.peche}.`);
+    this.montrer('peche');
+    const c = this.panneau('Barnabé Goujon', 'Le pêcheur du Comté · cannes, poissons, et l’étang du Moulin');
+    // la première fois : il se présente et explique (le tuto, par lui)
+    if (!p.barnabe) {
+      const pages = ["« Tiens, un nouveau visage ! Barnabé Goujon, pêcheur depuis que j'ai des pieds poilus. Tu veux apprendre ? Une canne de roseau, vingt pièces, et je te montre. »",
+        "« L'étang du Moulin, au bout du vieux sentier. À l'aube, ça mord : tanches et carpes. Le jour, perches et brochets. La nuit... les anguilles. Pêcher ne te prendra pas ta journée, va ! »",
+        "« Mais l'étang n'est pas bête : prends-en trop d'affilée, et il se méfie. Et les gros, les coriaces, il faut du métier pour les sortir de l'eau. Ça viendra. Et ce que tu prends, je te le rachète. Six par jour, hein : mon étal est petit ! »"];
+      let i = 0;
+      const t = this.add.text(30, 344, pages[0], style(14, '#3b2410', { wordWrap: { width: 880 }, lineSpacing: 4 })); c.add(t);
+      this.bouton(c, 860, 440, 120, 'Suite ▸', () => { if (++i < pages.length) return t.setText(pages[i]); p.barnabe = true; this.ouvrirPeche(); }, undefined, 26);
+      Son.jouer('page');
+      return;
+    }
+    const pr = progresPeche(G);
+    c.add(this.add.text(30, 336, aUneCanne(G) ? "« Alors, ça mord ? Ce que tu pêches, tu peux me le vendre directement à l'étang : je passe prendre la bourriche. »" : "« Une canne de roseau, et je t'apprends le reste. »", style(11, '#6b4a2a', { fontStyle: 'italic' })));
+    ['roseau', 'noisetier', 'grandPere'].forEach((id, i) => {
+      const k = CANNES_PECHE[id], a = p.cannes.includes(id);
+      if (id === 'grandPere' && !a) return;
+      const y = 366 + i * 30;
+      c.add(this.add.image(60, y, textureCanne(this, id)).setScale(1.2).setOrigin(0, 0.6));
+      c.add(this.add.text(220, y - 8, `${k.nom}${k.prix ? ' · ' + k.prix + ' p.' : ''}`, style(12, '#3b2410', { fontStyle: 'bold' })));
+      c.add(this.add.text(220, y + 6, k.texte.length > 80 ? k.texte.slice(0, k.texte.indexOf('.') + 1) : k.texte, style(10, '#6b4a2a', { fontStyle: 'italic' })));
+      if (a) c.add(this.add.text(700, y, p.canne === id ? '✓ dans ta main' : '✓ à toi', style(12, '#2f6a2a', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      else this.bouton(c, 740, y, 110, 'Acheter', () => {
+        const r = acheterCanne(G, id);
+        if (r.erreur) return this.message(r.erreur, '#a03030');
+        Son.jouer('achat');
+        ecranNouvelObjet(this, textureCanne(this, id), { nom: k.nom, de: 'achetée à Barnabé Goujon', texte: k.texte + (id === 'roseau' ? "\nL'étang du Moulin t'attend : le matin (l'aube), ou le soir." : ''), ech: id === 'roseau' ? 5 : 4.4, bouton: 'Merci, Barnabé' }).then(() => this.ouvrirPeche());
+      }, undefined, 24);
+    });
+    c.add(this.add.text(30, 448, `Pêcheur · niveau ${pr.niveau}${pr.haut ? ` (${pr.xp}/${pr.haut})` : ' (le plus haut)'} · vendus aujourd'hui : ${ventesDuJour(G)}/${PECHE.venteParJour}`, style(12, '#1f4a7a', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+    this.bouton(c, 620, 448, 160, 'Le carnet de pêche', () => carnetDePeche(this), undefined, 24);
+    if (aUneCanne(G)) this.bouton(c, 820, 448, 190, "Aller à l'étang (l'aube)", () => {
+      if (this.jeuLance || enTransition(this)) return;
+      Sauvegarde.maintenant(G, 'Marche');
+      this.cameras.main.fadeOut(400);
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Peche', { plage: 'aube', retour: 'Marche' }));
+    }, 0x3a6a4a, 24);
   }
 
   // --- Le crieur : les nouvelles du jour ---
