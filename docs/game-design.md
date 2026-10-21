@@ -2997,3 +2997,13 @@ du joueur).
 - Des interfaces plus claires et plus distinctes : il y a beaucoup d'infos.
 - Plus de guidage : découvrir les fonctionnalités petit à petit, les débloquer au fur et à mesure.
 - **Idée du joueur** : le premier jour (le tuto) ne compte pas comme une vraie journée, et Garrick accompagne vraiment : l'environnement, les fonctionnalités, le monde autour, les objectifs ; que le joueur ait du contexte au lieu d'être lâché dans le jeu.
+
+### Planche 67 (à valider) : le Jour Zéro, un vrai accueil (docs/planches-v059/planche-67-le-jour-zero.png)
+1. **La rénovation : un clic par pièce** (façade, comptoir, arrière-boutique, chambre), au lieu de 25 objets un par un ; « Laisser faire les ouvriers » pour aller vite.
+2. **Pendant que la pièce brille, Garrick explique** à quoi elle sert (le comptoir : les baluchons, la part du butin, le risque).
+3. **La visite du monde** sur la carte : la Comté, les étoiles (danger et butin), les nuages qui se lèveront ; la visite a cinq étapes (ta maison, le monde, la lumière et l'ombre, le marché, ton premier client).
+4. **Le premier client, pas à pas** : un projecteur sur la chose à faire, une flèche, une bulle courte ; quatre étapes (lire la commande, glisser les marchandises, regarder le flair, remettre le baluchon).
+5. **Le soir, au coin du feu : le but** (demain, cette saison, toute une vie). **Le Jour Zéro ne compte pas** : ni loyer, ni pizzo, ni impôt.
+6. **Une chose nouvelle à la fois** : ce qui s'ouvre luit (NOUVEAU) avec une vignette ; le suivant est montré avec un cadenas et sa condition ; les autres restent cachés.
+7. **Le carnet des objectifs** : une pastille dans le bandeau, 2 ou 3 buts courts avec leur récompense, « objectif atteint » en direct.
+8. **Les dix premiers jours** : jour 0 la maison ; jour 1 le marché (avec Garrick, qui part ensuite) et le bureau ; jour 2 les ★★ et les lettres ; jour 3 l'atelier et le marchandage ; jour 4 la banque ; jour 5 la Faucheuse, les imposteurs, les rats ; jour 6 la porte dérobée ; jour 8 les recherchés ; ensuite comme aujourd'hui.
