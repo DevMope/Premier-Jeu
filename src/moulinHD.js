@@ -388,7 +388,7 @@ function textureChatDebout(scene, look, { cigare = true } = {}) {
 }
 
 // (v1.35, demande du joueur) La fumée des cigares, animée : des bouffées de pixels gris qui naissent au bout du cigare,
-// montent en ondulant, grossissent et s'effacent ; le nuage qu'on souffle après une bouffée ; le rond de fumée de Caramel.
+// montent en ondulant, grossissent et s'effacent ; le nuage qu'on souffle après une bouffée ; le rond de fumée de ton chat.
 function creerFumeeHD(scene) {
   if (scene.textures.exists('fumeeHD_0')) return;
   for (let v = 0; v < 3; v++) {
@@ -450,7 +450,7 @@ function fermetureEnCercle(scene, x, y, { rayonPause = 70, duree = 1400, pause =
   return { g, dessiner, promesse };
 }
 
-// (v1.35, demande du joueur) Caramel est un maître de la fumée : comme le vieux magicien qui fait voguer un navire de
+// (v1.35, demande du joueur) Ton chat est un maître de la fumée : comme le vieux magicien qui fait voguer un navire de
 // fumée à travers le rond de son ami, il souffle des formes. Chaque forme est faite de traits (des listes de points, en
 // unités : x vers la droite, y vers le bas, environ de -1 à 1) ; les bouffées partent de sa bouche, viennent se poser sur
 // les traits comme un dessin qui se trace, puis la forme vit un moment (le navire vogue, le poisson nage, le cœur bat...)

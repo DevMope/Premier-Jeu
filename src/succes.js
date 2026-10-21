@@ -2,7 +2,7 @@
 // quand, et la vignette qui glisse en haut à droite quand tu en débloques un.
 const SUCCES = {
   coeurDeChat: { nom: 'Cœur de chat', texte: 'Sauver la compagne de ton chat au Vieux Moulin', icone: '🐾♥' },
-  repertoireComplet: { nom: 'Le répertoire complet', texte: 'Voir Caramel souffler toutes ses formes de fumée', icone: '💨', cache: true },
+  repertoireComplet: { nom: 'Le répertoire complet', texte: 'Voir ton chat souffler toutes ses formes de fumée', icone: '💨', cache: true },
 };
 function succesDe(G) { return (G.succes = G.succes || {}); }
 function aLeSucces(G, cle) { return !!(G.succes && G.succes[cle]); }

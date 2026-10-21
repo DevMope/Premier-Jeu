@@ -2937,3 +2937,8 @@ fumée direct et qu'il doit voir le chat en faire une nouvelle dans sa maison po
   `src/scenes/MoulinScene.js` (la scène jouée, et la fenêtre du soir), `src/moulinHD.js` (le décor, la fumée, le cercle).
 - Reste à faire : la suite à la maison (la conversation qui continue, le coin aménagé pour le couple de chats — planche à
   montrer avant), le carnet des formes (avec la page des succès, planche 61), Caramel qui fume ailleurs dans la maison.
+
+Précisions du joueur (21/10) : « Caramel » n'est qu'un exemple pour les planches. **Le nom du chat est celui que le joueur
+lui a donné** (le jeu l'utilise partout) ; le chat **ne se souvient pas de son vrai nom**, et celui que le joueur lui a
+donné lui plaît bien. **La fermeture en cercle façon cartoon est validée.** La v1.35 est poussée sur Cloudflare (accord
+du joueur).

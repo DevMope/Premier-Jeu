@@ -2,7 +2,7 @@
 // - La complicité avec ton chat (0 à 20) : elle monte chaque nuit où sa gamelle est pleine et quand tu le caresses
 //   (une fois par jour, à la promenade) ; elle baisse quand il a faim (−2 la nuit) et quand il part (−6). Il faut
 //   l'avoir au plus haut, et l'y garder, pour qu'il te fasse confiance.
-// - Le soir où elle est au maximum (au moins 8 jours après l'avoir adopté, pas avant le jour 12), Caramel ne touche
+// - Le soir où elle est au maximum (au moins 8 jours après l'avoir adopté, pas avant le jour 12), ton chat ne touche
 //   plus à sa gamelle : il gratte à la porte et te regarde. Tu peux le suivre (l'aventure du Moulin, toute la nuit),
 //   ou remettre à un autre soir.
 // - Au bout : sa compagne sauvée (tu lui donnes un nom), le succès « Cœur de chat », et le secret : il parle. Fumer
@@ -52,7 +52,7 @@ function matinDuLien(G) {
   return [`${nomChatMaj(G)} t'en veut un peu (complicité ${c.lienNuit.d}).`];
 }
 
-// Ce soir, Caramel boude sa gamelle et gratte à la porte ?
+// Ce soir, ton chat boude sa gamelle et gratte à la porte ?
 function moulinCeSoir(G) {
   const c = G.chat, m = etatMoulin(G);
   if (!(c && c.adopte) || m.fait || m.refus === G.jour) return false;

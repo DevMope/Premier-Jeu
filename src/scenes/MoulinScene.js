@@ -1,7 +1,7 @@
 // (v1.35, planches 60 v5, fin et formes de fumée validées) L'aventure du Vieux Moulin, jouée : on marche (◀ ▶, ou un
-// clic au sol), Caramel guide et s'arrête là où il faut regarder. Le pont à la planche pourrie (un saut au bon moment),
-// le renard de l'Engeance et la chatte sur sa planche qui file vers la roue (trois chances ; sinon Caramel s'en charge :
-// elle est toujours sauvée), le sauvetage, puis l'aube sur l'étang : son nom, le succès, et le secret de Caramel. Il
+// clic au sol), ton chat guide et s'arrête là où il faut regarder. Le pont à la planche pourrie (un saut au bon moment),
+// le renard de l'Engeance et la chatte sur sa planche qui file vers la roue (trois chances ; sinon ton chat s'en charge :
+// elle est toujours sauvée), le sauvetage, puis l'aube sur l'étang : son nom, le succès, et le secret de ton chat. Il
 // parle ; il tend son cigare (fumer ou non), souffle ses formes, et le cercle noir se referme sur lui, comme à la fin
 // d'un dessin animé. La nuit est passée : on rentre se coucher.
 class MoulinScene extends Phaser.Scene {
@@ -100,7 +100,7 @@ class MoulinScene extends Phaser.Scene {
       this.tweens.add({ targets: this.heros, x, duration: d / vitesse, onComplete: ok });
     });
   }
-  // Caramel trottine jusqu'à x, puis s'assoit et attend (la queue qui bat)
+  // Ton chat trottine jusqu'à x, puis s'assoit et attend (la queue qui bat)
   guider(x, { vitesse = 0.25 } = {}) {
     const c = this.chat; this.tweens.killTweensOf(c); if (c.queue) c.queue.remove();
     const d = Math.abs(x - c.x); c.setFlipX(x < c.x);
@@ -225,7 +225,7 @@ class MoulinScene extends Phaser.Scene {
         await this.attendre(700);
       }
     }
-    // chassé : la magie le quitte ; ou, les trois ratées, Caramel bondit lui-même
+    // chassé : la magie le quitte ; ou, les trois ratées, ton chat bondit lui-même
     if (!chasse) {
       this.dire(nomChatMaj(G) + " en a assez. Il bondit, toutes griffes dehors, et se jette sur le renard en feulant comme un tigre !", '');
       Son.jouer('grogne');
@@ -242,7 +242,7 @@ class MoulinScene extends Phaser.Scene {
     await this.animer({ targets: renard, x: X + 300, duration: 1400 });
     renard.destroy();
     this.etat.chances = essai;
-    // le sauvetage : Caramel bondit sur la planche ; toi, tu tends une branche et tu la tires jusqu'au bord
+    // le sauvetage : ton chat bondit sur la planche ; toi, tu tends une branche et tu la tires jusqu'au bord
     derive.stop(); this.tweens.killTweensOf(planche);
     this.tweens.add({ targets: planche, y: yP + 2, duration: 500, yoyo: true, repeat: -1 });
     this.dire('Vite, avant la roue !', 'Tends-lui une branche.');
@@ -385,7 +385,7 @@ class MoulinScene extends Phaser.Scene {
   }
 }
 
-// Le soir où Caramel boude sa gamelle : il gratte à la porte. Le suivre, ou remettre à un autre soir.
+// Le soir où ton chat boude sa gamelle : il gratte à la porte. Le suivre, ou remettre à un autre soir.
 function soireeDuMoulin(scene) {
   const G = scene.G;
   if (!(typeof moulinCeSoir === 'function' && moulinCeSoir(G)) || scene.fenetreMoulin) return false;
