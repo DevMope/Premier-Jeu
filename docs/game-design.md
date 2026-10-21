@@ -2883,3 +2883,15 @@ JeuneGoy puisse avoir le choix de fumer avec le chat ou non » et « que JeuneGo
 - Le choix du cigare : « Tirer une bouffée avec lui » (il tousse, Caramel rigole ; +1 complicité, il en proposera
   parfois le soir au coin du feu) ou « Non merci » (aucune pénalité ; « Plus pour moi. »). La conversation continue à la
   maison dans les deux cas.
+
+Demande du joueur (21/10) : « pour la fin de cette scène il faudra faire une fin en cercle comme dans la fin des cartoons,
+comme quand le cercle se referme sur Bugs Bunny comme un rideau qui se referme, sans le The End écrit » ; « ajouter de la
+fumée animée lorsqu'ils fument ».
+
+### Planche 60 — la fin : fumée animée et fermeture en cercle (à valider : docs/planches-v059/planche-60-fin-fumee-et-cercle.png)
+Dans `src/moulinHD.js`, réutilisable partout :
+- `filetDeFumee(scene, suivre)` : un filet de bouffées de pixels gris (trois tons) qui naît au bout du cigare, monte en
+  ondulant, grossit et s'efface ; `souffleDeFumee(scene, x, y, sens)` : le nuage qu'on recrache (il part, ralentit,
+  s'étale, monte) ; `rondDeFumee(scene, x, y, sens)` : l'anneau qui s'élargit en tremblant et se défait.
+- `fermetureEnCercle(scene, x, y)` : le cercle noir qui se resserre sur les héros (centré sur Caramel), marque une pause
+  serrée sur lui avec un petit « ting », puis se ferme tout à fait. Aucun texte. Puis retour à la maison.

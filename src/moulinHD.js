@@ -377,3 +377,66 @@ function textureChatDebout(scene, look, { cigare = true } = {}) {
   t.contour(); t.texture(scene, cle);
   return cle;
 }
+
+// (v1.35, demande du joueur) La fumée des cigares, animée : des bouffées de pixels gris qui naissent au bout du cigare,
+// montent en ondulant, grossissent et s'effacent ; le nuage qu'on souffle après une bouffée ; le rond de fumée de Caramel.
+function creerFumeeHD(scene) {
+  if (scene.textures.exists('fumeeHD_0')) return;
+  for (let v = 0; v < 3; v++) {
+    const g = scene.make.graphics({}, false), n = 7 + v * 2;
+    // (un petit nuage irrégulier : trois tons, plus clair en haut à gauche)
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const dx = (x - n / 2 + 0.5) / (n / 2), dy = (y - n / 2 + 0.5) / (n / 2), d = dx * dx + dy * dy + (hachage(x, y, 940 + v) - 0.5) * 0.35;
+      if (d > 1) continue;
+      g.fillStyle(d < 0.3 && dx + dy < 0 ? 0xf4f4f8 : d < 0.65 ? 0xd4d4dc : 0xa8a8b4).fillRect(x, y, 1, 1);
+    }
+    g.generateTexture('fumeeHD_' + v, n, n); g.destroy();
+  }
+}
+// Le filet de fumée qui monte du bout du cigare (suivre() rend la position du bout) ; renvoie de quoi l'arrêter
+function filetDeFumee(scene, suivre, { profondeur = 8.7, cadence = 200, echelle = 3.2 } = {}) {
+  creerFumeeHD(scene);
+  const ev = scene.time.addEvent({ delay: cadence, loop: true, callback: () => {
+    const p = suivre(); if (!p) return;
+    const f = scene.add.image(p.x, p.y, 'fumeeHD_' + Phaser.Math.Between(0, 1)).setScale(echelle * 0.5).setAlpha(0.75).setDepth(profondeur);
+    const duree = 2200 + Math.random() * 600, sens = Math.random() < 0.5 ? -1 : 1;
+    scene.tweens.add({ targets: f, y: p.y - 70 - Math.random() * 30, scale: echelle * 1.4, alpha: 0, angle: sens * 40, duration: duree, ease: 'Sine.easeOut', onComplete: () => f.destroy() });
+    scene.tweens.add({ targets: f, x: p.x + sens * 10, duration: duree / 3, yoyo: true, repeat: 1, ease: 'Sine.easeInOut' });   // (il ondule en montant)
+  } });
+  return ev;
+}
+// Le nuage qu'on souffle : il part devant la bouche, ralentit, s'étale et monte
+function souffleDeFumee(scene, x, y, sens = 1, { nombre = 10, profondeur = 8.75, echelle = 3.4 } = {}) {
+  creerFumeeHD(scene);
+  for (let k = 0; k < nombre; k++) {
+    const f = scene.add.image(x, y, 'fumeeHD_' + (k % 3)).setScale(echelle * 0.4).setAlpha(0.85).setDepth(profondeur);
+    const loin = 14 + k * 3.5 + Math.random() * 8;   // (pas trop loin : le nuage ne doit pas cacher celui d'en face)
+    scene.tweens.add({ targets: f, x: x + sens * loin, y: y - 10 - k * 2 + (Math.random() - 0.5) * 12, scale: echelle * (0.9 + k * 0.05), duration: 500 + k * 40, delay: k * 35, ease: 'Quad.easeOut',
+      onComplete: () => scene.tweens.add({ targets: f, y: f.y - 50 - Math.random() * 30, x: f.x + sens * 14, scale: f.scale * 1.6, alpha: 0, duration: 1800, ease: 'Sine.easeOut', onComplete: () => f.destroy() }) });
+  }
+}
+// Le rond de fumée parfait : un anneau qui s'élargit, monte en tremblant et se défait
+function rondDeFumee(scene, x, y, sens = 1, { profondeur = 8.75 } = {}) {
+  const g = scene.add.graphics().setDepth(profondeur), r = { t: 0 };
+  scene.tweens.add({ targets: r, t: 1, duration: 2600, ease: 'Sine.easeOut', onUpdate: () => {
+    const t = r.t, cx = x + sens * (20 + t * 60), cy = y - t * 46, rx = 7 + t * 20, ry = 4 + t * 11, a = 0.95 * (1 - t * t);
+    g.clear(); g.lineStyle(5, 0xd8d8e0, a).strokeEllipse(cx + Math.sin(t * 12) * 2, cy, rx * 2, ry * 2); g.lineStyle(2, 0xffffff, a * 0.9).strokeEllipse(cx - 1 + Math.sin(t * 12) * 2, cy - 2, rx * 2 - 3, ry * 2 - 3);
+  }, onComplete: () => g.destroy() });
+  return g;
+}
+
+// (v1.35, demande du joueur) La fin façon dessin animé : un cercle noir qui se referme sur les héros, comme un rideau
+// (sans « The End ») ; il s'arrête un instant serré sur eux, puis se ferme tout à fait. x, y : le centre, à l'écran.
+function fermetureEnCercle(scene, x, y, { rayonPause = 70, duree = 1400, pause = 900, fin = 450 } = {}) {
+  const cam = scene.cameras.main, W = cam.width, H = cam.height, rMax = Math.hypot(Math.max(x, W - x), Math.max(y, H - y)) + 10;
+  const g = scene.add.graphics().setScrollFactor(0).setDepth(1000), etat = { r: rMax }, L = 2 * rMax + 20;
+  const dessiner = r => { etat.r = r; g.clear(); if (r <= 0.5) { g.fillStyle(0x000000).fillRect(0, 0, W, H); return; } g.lineStyle(L, 0x000000).strokeCircle(x, y, r + L / 2); };
+  dessiner(rMax);
+  const promesse = new Promise(ok => {
+    scene.tweens.add({ targets: etat, r: rayonPause, duration: duree, ease: 'Cubic.easeIn', onUpdate: () => dessiner(etat.r), onComplete: () => {
+      if (typeof Son !== 'undefined') Son.jouer('clochette');   // (le petit « ting » des fins de dessin animé)
+      scene.time.delayedCall(pause, () => scene.tweens.add({ targets: etat, r: 0, duration: fin, ease: 'Cubic.easeIn', onUpdate: () => dessiner(etat.r), onComplete: () => { dessiner(0); ok(); } }));
+    } });
+  });
+  return { g, dessiner, promesse };
+}
