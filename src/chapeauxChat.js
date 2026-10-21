@@ -1,21 +1,30 @@
-// (planche 65, à valider) Les chapeaux du chat : le rayon des chats chez Marcelline. Chacun se dessine dans la même
-// toile que le chat (mêmes contours), posé sur sa tête : cx, cy est le centre de la tête (le museau à droite).
-// `pourElle` : pour sa compagne ; `refuse` : il ne le portera jamais ; `cache` : il ne se vend pas (il se mérite).
+// (planche 65 v2, à valider) Les chapeaux du chat. Quatre au départ, au rayon des chats de Marcelline ; les autres se
+// trouvent de par le monde : portés par quelqu'un (on peut les échanger), perdus, cachés, ou rapportés d'une mission.
+// Le carnet des chapeaux les montre en silhouette « ? » avec un indice, jusqu'à ce qu'on les trouve. Chacun se dessine
+// dans la même toile que le chat (mêmes contours), posé sur sa tête : cx, cy est le centre de la tête (le museau à droite).
+// `pourElle` : pour sa compagne ; `refuse` : il ne le portera jamais ; `ou` : comment on le trouve.
+const OU_CHAPEAU = { marcelline: '🧵 Au rayon des chats', porte: '🧑 Porté par quelqu\'un', perdu: '🎩 Perdu, oublié', cache: '🔍 Caché', mission: '🗺 Rapporté de mission', parrain: '🕴 Il se mérite' };
 const CHAPEAUX_CHAT = {
-  beret: { nom: 'Le béret', prix: 14, c: [0x1c1c24], replique: '« Ça me donne un air d’artiste. »' },
-  bonnet: { nom: 'Le bonnet à pompon', prix: 10, c: [0xb02a2a, 0xeae0cc, 0xf4ecdc], replique: '« Il gratte. Mais mes oreilles te disent merci. »', saison: 'hiver' },
-  bonnetNuit: { nom: 'Le bonnet de nuit', prix: 8, c: [0x3a5a9a, 0xe8e4dc, 0xf4ecdc], replique: '« Pour dormir. Et seulement pour dormir. »' },
-  gavroche: { nom: 'La casquette de gavroche', prix: 12, c: [0x6a5238, 0x4a3828], replique: '« Comme au bon vieux temps, dans la rue. »' },
-  paille: { nom: 'Le canotier de paille', prix: 16, c: [0xd8b860, 0x2a3a6a], replique: '« L’été, un chat a le droit d’avoir de l’allure. »', saison: 'ete' },
-  melon: { nom: 'Le chapeau melon', prix: 30, c: [0x1e1e24, 0x5a3a24], replique: '« Très distingué. Je garde. »' },
-  sherlock: { nom: 'La casquette de détective', prix: 28, c: [0x8a6a48, 0x5a3a20], replique: '« Élémentaire, mon cher. »' },
-  fez: { nom: 'Le fez', prix: 22, c: [0xa82020, 0x18161a], replique: '« Je ne sais pas d’où il vient. Je l’adore. »' },
-  tricorne: { nom: 'Le tricorne de pirate', prix: 35, c: [0x201c1c, 0xc9a227, 0xf0ece0], replique: '« Moussaillon ! Hisse le cigare ! »' },
-  hautDeForme: { nom: 'Le haut-de-forme', prix: 45, c: [0x16161a, 0x7a1a24], replique: '« Enfin un chapeau à ma hauteur. »' },
-  couronne: { nom: 'La couronne de fleurs', prix: 10, pourElle: true, c: [0xe87aa0, 0xf4d860, 0xf4f0e8, 0x4a8a3a], replique: 'Elle la garde toute la journée, et ne laisse personne y toucher.' },
-  sorcier: { nom: 'Le chapeau pointu', prix: 20, refuse: true, c: [0x4a2a7a, 0xf4d860], replique: 'Il crache. « Jamais. Plutôt mourir. »' },
-  borsalino: { nom: 'Le borsalino', prix: 0, cache: true, c: [0x2c2c32, 0x0e0e10], replique: '(Il ne se vend pas. Il se mérite.)' },
+  beret: { nom: 'Le béret', c: [0x1c1c24], ou: 'marcelline', prix: 14, replique: '« Ça me donne un air d’artiste. »' },
+  bonnet: { nom: 'Le bonnet à pompon', c: [0xb02a2a, 0xeae0cc, 0xf4ecdc], ou: 'marcelline', prix: 10, replique: '« Il gratte. Mais mes oreilles te disent merci. »', saison: 'hiver' },
+  gavroche: { nom: 'La casquette de gavroche', c: [0x6a5238, 0x4a3828], ou: 'marcelline', prix: 12, replique: '« Comme au bon vieux temps, dans la rue. »' },
+  bonnetNuit: { nom: 'Le bonnet de nuit', c: [0x3a5a9a, 0xe8e4dc, 0xf4ecdc], ou: 'marcelline', prix: 8, replique: '« Pour dormir. Et seulement pour dormir. »' },
+  paille: { nom: 'Le canotier de paille', c: [0xd8b860, 0x2a3a6a], ou: 'porte', indice: 'Une hobbite de la Comté le porte aux moissons. Elle l’échangerait bien.', replique: '« L’été, un chat a le droit d’avoir de l’allure. »', saison: 'ete' },
+  melon: { nom: 'Le chapeau melon', c: [0x1e1e24, 0x5a3a24], ou: 'perdu', indice: 'Un client de la Banque l’oublie parfois sur le banc, en sortant.', replique: '« Très distingué. Je garde. »' },
+  sherlock: { nom: 'La casquette de détective', c: [0x8a6a48, 0x5a3a20], ou: 'porte', indice: 'L’inspecteur de la Garde ne la quitte jamais... sauf contre un tuyau.', replique: '« Élémentaire, mon cher. »' },
+  fez: { nom: 'Le fez', c: [0xa82020, 0x18161a], ou: 'cache', indice: 'Quelque chose de rouge dépasse des tonneaux, au marché.', replique: '« Je ne sais pas d’où il vient. Je l’adore. »' },
+  tricorne: { nom: 'Le tricorne de pirate', c: [0x201c1c, 0xc9a227, 0xf0ece0], ou: 'mission', indice: 'Une épave, du côté de Port-Brisant. Un aventurier pourrait le rapporter.', replique: '« Moussaillon ! Hisse le cigare ! »' },
+  hautDeForme: { nom: 'Le haut-de-forme', c: [0x16161a, 0x7a1a24], ou: 'perdu', indice: 'Un noble pressé l’oubliera bien un jour sur ton comptoir.', replique: '« Enfin un chapeau à ma hauteur. »' },
+  couronne: { nom: 'La couronne de fleurs', c: [0xe87aa0, 0xf4d860, 0xf4f0e8, 0x4a8a3a], ou: 'mission', pourElle: true, indice: 'Les guérisseuses du Vallon en tressent pour qui les aide.', replique: 'Elle la garde toute la journée, et ne laisse personne y toucher.' },
+  sorcier: { nom: 'Le chapeau pointu', c: [0x4a2a7a, 0xf4d860], ou: 'porte', refuse: true, indice: 'Un mage de passage au comptoir en porte un. Ton chat le reconnaît... (un éclat de vérité ?)', replique: 'Il crache. « Jamais. Plutôt mourir. »' },
+  borsalino: { nom: 'Le borsalino', c: [0x2c2c32, 0x0e0e10], ou: 'parrain', indice: 'Il ne se vend pas. Il ne se trouve pas. Il se mérite.', replique: '« ... »' },
 };
+// (pour plus tard, quand ces lieux s'ouvriront) d'autres chapeaux à cacher dans le monde, sans dessin pour l'instant
+const CHAPEAUX_A_VENIR = [
+  { nom: 'Le chapeau conique des pandas', indice: 'Les Monts de Bambou (★4)' },
+  { nom: 'Le casque à cornes des nains', indice: 'Les Pics Gelés' },
+  { nom: 'La toque du petit bar', indice: 'Le cuisinier de ton bar, un soir de fête' },
+];
 
 function dessinerChapeauChat(t, cle, cx, cy) {
   const C = CHAPEAUX_CHAT[cle]; if (!C) return;
@@ -102,7 +111,7 @@ function dessinerChapeauChat(t, cle, cx, cy) {
   }
 }
 
-// Le chapeau seul (pour le poser sur les autres poses du chat, ou le pendre à la patère)
+// Le chapeau seul (pour le poser sur les autres poses du chat, ou le pendre au porte-manteau)
 function textureChapeauSeul(scene, cle) {
   const k = 'chapeauChat_' + cle;
   if (scene.textures.exists(k)) return k;

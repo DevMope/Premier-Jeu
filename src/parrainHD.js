@@ -1,6 +1,6 @@
 // (planche 66, à valider) Le Parrain : les accessoires de la révélation. Le grand fauteuil de cuir à oreilles, le haut
 // tabouret (sous la robe, il fallait bien monter à hauteur d'homme), le gant noir (la Main Noire, c'est lui), la robe
-// tombée en tas, et la patère du coin des chats (où pendent ses chapeaux).
+// tombée en tas, et le porte-manteau du coin des chats (où pendent ses chapeaux).
 function creerParrainHD(scene) {
   if (scene.textures.exists('fauteuilParrainHD')) return;
   // --- Le fauteuil : cuir sang-de-bœuf capitonné, oreilles, accoudoirs roulés, pieds tournés ---
@@ -59,13 +59,13 @@ function creerParrainHD(scene) {
     t.forme('rose', ellipsoide(12, 2.8, 1.4, 1.4)); t.poser(16, 5, 'rose', 3); t.poser(14, 5, 'encre', 0);
     t.contour(); t.texture(scene, 'sourisBlancheHD');
   }
-  // --- La patère du coin des chats : un pied de bois, quatre crochets ---
+  // --- Le porte-manteau du coin des chats : un pied de bois, quatre crochets ---
   {
     const t = toileDecor(30, 70);
     planche(t, 4, 64, 22, 6, 'chene', { graine: 991 });
     for (let y = 6; y < 64; y++) { t.poser(14, y, 'chene', 3); t.poser(15, y, 'chene', 2); }
     t.forme('chene', ellipsoide(14.5, 5, 2.4, 2.4), { decalage: 0.3 });
     for (const [x, y, sx] of [[10, 12, -1], [19, 12, 1], [9, 26, -1], [20, 26, 1]]) for (let k = 0; k < 4; k++) t.poser(x + sx * k * 0.75 | 0, y + (k === 3 ? -1 : 0), 'laiton', 4);
-    t.contour(); t.texture(scene, 'patereChatHD');
+    t.contour(); t.texture(scene, 'porteManteauChatHD');
   }
 }
