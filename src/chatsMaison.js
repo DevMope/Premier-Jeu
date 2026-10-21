@@ -185,8 +185,8 @@ async function conversationDuChat(scene) {
   const lookElle = (G.moulin.compagne && G.moulin.compagne.look) || lookCompagne(G), kE = creerChatHD(scene, lookElle);
   const elle = scene.add.image(330, SOL_PROMENADE, kE + '_dort0').setOrigin(0.5, 1).setScale(2.2).setDepth(8.55);
   let souffle = 0; scene.time.addEvent({ delay: 1200, loop: true, callback: () => { if (elle.active) elle.setTexture(kE + '_dort' + (++souffle % 2)); } });
-  const cleA = textureJoueurAssis(scene, G), avant = scene.heros.texture.key.replace(/_pas[12]$/, '');
-  scene.heros.setTexture(cleA).setOrigin(0.5, (PIEDS_ASSIS[cleA] + 1) / scene.heros.height).setX(440).setY(436).setFlipX(true);
+  const avant = scene.heros.texture.key.replace(/_pas[12]$/, '');
+  asseoirJoueurSur(scene, scene.heros, G, 520, SOL_CHAMBRE - 46).setFlipX(true);   // (v1.44) assis sur le bord de son lit (et non dans le vide devant)
   // le bandeau (narration en italique, consigne en gras) et les choix
   const fond = fixe(scene.add.rectangle(480, 12, 920, 40, 0x2a1a10, 0.94).setStrokeStyle(2, 0xc9a227).setOrigin(0.5, 0));
   const narr = fixe(scene.add.text(40, 22, '', style(13, '#c9b48a', { fontStyle: 'italic', wordWrap: { width: 880 } })));

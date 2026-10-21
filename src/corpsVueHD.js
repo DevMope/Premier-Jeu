@@ -1571,6 +1571,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // sous les pieds, plus rien : la cape et la robe se posent sur le banc au lieu de descendre au sol
     for (let y = solAssis + 1; y < t.h; y++) for (let x = 0; x < t.l; x++) { const i = y * t.l + x; t.c[i] = null; t.m[i] = null; t.k[i] = 0; }
     t.piedsAssis = solAssis;
+    t.tailleAssis = yB;   // (v1.44) la taille : là où il s'assoit, pour le poser sur un lit ou un rebord
   }
   if (pose === 'epaules') {
     const coupe = Math.round(yB + 6 * k);

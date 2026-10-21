@@ -717,8 +717,17 @@ function textureJoueurAssis(scene, G) {
     t.texture(scene, cle);
     scene.textures.get(cle).tenue = tenue;
     PIEDS_ASSIS[cle] = t.piedsAssis;
+    scene.textures.get(cle).tailleAssis = t.tailleAssis;
   }
   return cle;
+}
+
+// (v1.44) Asseoir le joueur sur un lit, un rebord... : sa taille posée à la hauteur `yAssise` (et non ses pieds par terre)
+function asseoirJoueurSur(scene, heros, G, x, yAssise) {
+  const cle = textureJoueurAssis(scene, G), tex = scene.textures.get(cle), pieds = PIEDS_ASSIS[cle];
+  heros.setTexture(cle).setOrigin(0.5, (pieds + 1) / heros.height);
+  const taille = tex.tailleAssis !== undefined ? tex.tailleAssis : pieds - 14;
+  return heros.setX(x).setY(yAssise + (pieds - taille + 3) * heros.scaleY);
 }
 
 // (v1.00) Le joueur dans une pose (grimper, bras levés...) et sous un angle : renvoie la clé de la texture
