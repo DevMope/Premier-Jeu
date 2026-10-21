@@ -2843,3 +2843,11 @@ froid, la nuit au bivouac).
   sort de nulle part, il se montre exprès...).
 - **Le jour de marché** : oui. **Les anniversaires des habitués** : oui.
 - **Les cadeaux au comptoir** : rendre le système plus clair.
+
+### Planche 60 v2 : le Vieux Moulin (à valider : docs/planches-v059/planche-60-v2-vieux-moulin.png)
+Le décor (`src/moulinHD.js`) : un monde de trois écrans qu'on parcourt à pied, la nuit ; le sentier (saules, roseaux,
+lucioles, l'écriteau), le pont de planches sur le ruisseau (la planche pourrie à enjamber), le moulin à colombages et sa
+roue à aubes qui tourne sur le bief, l'étang et son ponton, sa barque. Le renard roux, et le renard gagné par l'Engeance
+(poil terni, veines violettes, yeux qui luisent, une fumée violette qui sort de lui ; elle le quitte quand on le chasse).
+La fin : l'aube en grande pompe (le soleil qui se lève derrière l'étang, ses rayons, l'eau d'or, les oiseaux), la vignette
+du succès « Cœur de chat », puis le chat debout sur ses pattes arrière, un petit cigare, qui parle.
