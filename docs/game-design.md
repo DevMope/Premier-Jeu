@@ -2984,3 +2984,16 @@ du joueur).
   - **le porte-manteau** (et non « patère ») : un vrai menu, chaque chapeau sur sa ligne, « Lui mettre » / « Il le porte », la ligne de sa compagne, « Sans chapeau » ;
   - **il change de chapeau tout seul** de temps en temps, pour se faire plaisir, et le dit (« J'avais envie d'un autre chapeau. Le béret, c'était hier. ») ; le tableau « selon la saison et l'humeur » est validé.
 
+
+### Réponses du joueur (22/10, suite)
+- **Planche 65 v2 : validée, sauf l'image 5** (le marin de Port-Brisant qui rapporte le tricorne). Le ponton est vide et le bateau (un triangle sur un trapèze) n'a pas le niveau du jeu : **jamais plus de formes de remplissage dans une planche**. Un lieu nouveau (le port) aura sa propre planche de décor, au niveau des autres. En attendant, les chapeaux « rapportés de mission » arrivent par un lieu qui existe déjà (le comptoir, quand l'aventurier revient).
+- **Planche 66 v2 : tout est validé.**
+
+### Retours d'un ami (22/10) : un joueur de jeux indé (Hadès, Slay the Spire, Terraria, Deep Rock Galactic), qui n'aime pas ce genre de jeu, deux jours de jeu, sans rien en avoir vu avant
+- Plus d'animations, et de meilleures.
+- Cohérence des graphismes : les personnages de près et de loin ne se ressemblent pas assez ; **et le personnage de la création ne ressemble pas à celui qu'on joue ensuite**.
+- L'intro est trop « facile » et redondante : cliquer un par un sur chaque élément à réparer, c'est long. Soit une vraie mécanique de missions pour réparer le shop petit à petit, soit un clic qui règle tout, une petite présentation et on passe à la suite.
+- Un tuto pour l'interface du comptoir (le shop).
+- Des interfaces plus claires et plus distinctes : il y a beaucoup d'infos.
+- Plus de guidage : découvrir les fonctionnalités petit à petit, les débloquer au fur et à mesure.
+- **Idée du joueur** : le premier jour (le tuto) ne compte pas comme une vraie journée, et Garrick accompagne vraiment : l'environnement, les fonctionnalités, le monde autour, les objectifs ; que le joueur ait du contexte au lieu d'être lâché dans le jeu.
