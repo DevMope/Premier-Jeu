@@ -150,6 +150,8 @@ function chatQuiFume(scene, f) {
   chat.on('pointerdown', () => {
     if (f.vue) return scene.dire(`${nomChatMaj(G)} fume tranquillement. « Une par soir, gamin. »`);
     f.vue = true; signe.destroy();
+    const gainFumee = changerLien(G, 1);   // (v1.39 : une fumée partagée, c'est de la confiance)
+    if (gainFumee) scene.time.delayedCall(1200, () => gainEnDirect(scene, x, y - 150, '+1 ♥ confiance', true));
     const mx = x + sens * 16 * e / 2.6, my = y - 96 * e / 2.6;
     formeDeFumee(scene, f.forme, mx, my, x + sens * 170, Math.max(210, y - 230), { taille: 42, sens });   // (sous la bulle du texte)
     const nouvelle = f.neuve && voirForme(G, f.forme);

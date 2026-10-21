@@ -43,6 +43,7 @@ function enMafia(G) { const m = mafia(G); return m.engage && !m.sorti; }
 // Le pizzo de la semaine : un dixième de la bourse (un peu moins chez le Serpent), moitié prix pour un associé
 function montantPizzo(G) {
   const m = mafia(G);
+  if (typeof exonereDePizzo === 'function' && exonereDePizzo(G)) return 0;   // (v1.39 : la Famille, le pacte, le silence du Parrain)
   let x = Math.max(MAFIA.pizzoMin, Math.round(Math.max(0, G.argent) * (m.bande === 'serpent' ? MAFIA.pizzoSerpent : MAFIA.pizzo)));
   if (rangMafia(G) === 1) x = Math.round(x / 2);
   return x;
@@ -53,6 +54,7 @@ function prixLiberte(G) { return MAFIA.rachat + MAFIA.rachatParRang * rangMafia(
 function visitesMafia(G) {
   const m = mafia(G);
   if (!enMafia(G)) return [];
+  if (typeof exonereDePizzo === 'function' && exonereDePizzo(G)) return [];   // (v1.39 : Silas ne passe plus chez toi)
   // associé : le Serpent à deux têtes vient te débaucher (une seule fois)
   if (!m.serpentVu && rangMafia(G) >= 1) { m.serpentVu = true; return [{ type: 'serpent' }]; }
   const services = Object.keys(SERVICES_MAFIA).filter(s => (s !== 'colis' || !m.colis) && (s !== 'aventurier' || !m.detour));

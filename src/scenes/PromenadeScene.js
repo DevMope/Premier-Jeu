@@ -682,10 +682,10 @@ function ouvrirPanneauChat(scene, { adoption = false, quandFini = null } = {}) {
   choix(adoption ? 274 : 200, 'Son collier', COLLIERS_CHAT, 'collier');
   // (v1.35) la complicité : dix cœurs (deux points chacun) ; au plus haut, il te fera confiance
   if (!adoption && typeof lienChat === 'function') {
-    const l = lienChat(G), pleins = Math.floor(l / 2), demi = l % 2;
+    const lt = lienChat(G), l = Math.min(lt, MOULIN.lienMax), pleins = Math.floor(l / 2), demi = l % 2;
     fixe(scene.add.text(300, 324, 'Complicité', style(12, '#6b4a2a', { fontStyle: 'bold' })).setOrigin(0.5));
     fixe(scene.add.text(300, 344, '♥'.repeat(pleins) + (demi ? '♡' : '') + '·'.repeat(10 - pleins - demi), style(15, '#c0304a', { fontStyle: 'bold' })).setOrigin(0.5));
-    fixe(scene.add.text(300, 364, l >= MOULIN.lienMax ? (moulinFait(G) ? 'Il te dit tout, maintenant.' : 'Il te fait confiance.') : 'Nourris-le, caresse-le chaque jour.', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    fixe(scene.add.text(300, 364, l >= MOULIN.lienMax ? (moulinFait(G) ? `Confiance : ${lt} / ${PARRAIN.lienMax} · ${palierLien(G)}` : 'Il te fait confiance.') : 'Nourris-le, caresse-le chaque jour.', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));   // (v1.39 : la confiance, après le Moulin)
   }
   let nom = c.nom || '';
   const texteNom = fixe(scene.add.text(560, adoption ? 330 : 270, '', style(16, '#3b2410', { fontStyle: 'bold italic' })).setOrigin(0.5).setInteractive({ useHandCursor: true }));

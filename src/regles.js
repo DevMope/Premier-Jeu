@@ -1604,6 +1604,7 @@ function nuit(G) {
   sansPlanter('nuitDeLaMenace', () => typeof nuitDeLaMenace === 'function' && nuitDeLaMenace(G));   // (v1.33) l'annonce, la bataille
   sansPlanter('nuitDuLien', () => typeof nuitDuLien === 'function' && nuitDuLien(G));   // (v1.35) la complicité avec le chat
   sansPlanter('nuitDeLaCompagne', () => typeof nuitDeLaCompagne === 'function' && nuitDeLaCompagne(G));   // (v1.37) sa gamelle à elle
+  sansPlanter('nuitDuParrain', () => typeof nuitDuParrain === 'function' && nuitDuParrain(G));   // (v1.39) la part de la Famille
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1677,6 +1678,7 @@ function nuit(G) {
   sansPlanter('matinDeLaMenace', () => typeof matinDeLaMenace === 'function' && G.reveil.lignes.push(...matinDeLaMenace(G)));   // (v1.33) le crieur, la bataille
   sansPlanter('matinDuMoulin', () => typeof matinDuMoulin === 'function' && G.reveil.lignes.push(...matinDuMoulin(G)));   // (v1.35) le retour du Moulin
   sansPlanter('matinDuLien', () => typeof matinDuLien === 'function' && G.reveil.lignes.push(...matinDuLien(G)));   // (v1.35) la complicité, les rations des deux chats
+  sansPlanter('matinDuParrain', () => typeof matinDuParrain === 'function' && G.reveil.lignes.push(...matinDuParrain(G)));   // (v1.39) la part de la Famille
   sansPlanter('matinDesRiches', () => typeof matinDesRiches === 'function' && G.reveil.lignes.push(...matinDesRiches(G)));   // (v1.32) le mécénat, la neutralité
   sansPlanter('voeuDeSaison', () => { const l = typeof voeuDeSaison === 'function' && voeuDeSaison(G); if (l) G.reveil.lignes.push(l); });   // (v1.23) les souvenirs de la nymphe au complet
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :

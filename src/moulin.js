@@ -18,7 +18,7 @@ const MOULIN = {
 function lienChat(G) { const c = chatDe(G); return c.lien || 0; }
 function changerLien(G, d) {
   const c = chatDe(G), avant = c.lien || 0;
-  c.lien = Math.max(0, Math.min(MOULIN.lienMax, avant + d));
+  c.lien = Math.max(0, Math.min(typeof lienMaxDe === 'function' ? lienMaxDe(G) : MOULIN.lienMax, avant + d));   // (v1.39 : jusqu'à 40 après le Moulin, la confiance)
   return c.lien - avant;
 }
 function etatMoulin(G) { return (G.moulin = G.moulin || { fait: false, refus: null, compagne: null, fume: null, jour: null }); }
@@ -41,6 +41,7 @@ function nuitDuLien(G) {
   if (c.parti === G.jour + 1) d = -MOULIN.pertePartie;            // (il part demain matin : il t'en veut)
   else if (c.parti === G.jour) d = 0;                               // (revenu ce soir, il se méfie : rien ne bouge)
   else if ((c.faim || 0) > 0) d = -MOULIN.perteFaim;
+  else if (G.moulin && G.moulin.fait && (G.moulin.faimElle || 0) > 0) d = 0;   // (v1.39 : au-delà, les deux gamelles doivent être pleines)
   else d = MOULIN.gainNuit;
   const reel = changerLien(G, d);
   c.lienNuit = { jour: G.jour + 1, d: reel };
