@@ -2821,3 +2821,25 @@ froid, la nuit au bivouac).
 - **La météo** : le joueur demande s'il y a un système de météo (il n'y en a pas en ville : seulement les saisons, la
   brume, la neige d'hiver et le temps propre à chaque contrée dans les récits), et s'il manque d'autres logiques
   évidentes. Propositions de Claude en attente.
+
+### Réponses du joueur (21/10) : le chat amoureux, les succès, la maison sur pattes, la météo et les logiques du quotidien
+- **Le chat amoureux** (validé) : **le Vieux Moulin, près de l'étang**, un nouveau décor qu'on parcourt avec son
+  personnage (le sentier et ses roseaux, le pont de planches, la roue à aubes, le grenier du moulin, le bief) ; la fin
+  au bord d'un bel étang, **au lever du soleil, en grande pompe**. Le danger : **un renard infecté par la magie de
+  l'Engeance**, qui pousse la chatte vers l'eau (la combinaison renard + noyade). Elle est **toujours sauvée** : le
+  joueur a **trois chances** (il a déjà la relation maximale avec son chat, qu'il faut entretenir pour débloquer la quête).
+  **Le chat révèle qu'il parle à la fin de cette aventure.**
+- **Les succès, comme sur Steam** (validé, dans l'idée de sortir un jour le jeu sur Steam) : une page au bureau, une
+  vignette qui s'affiche quand on en débloque un.
+- **La maison sur pattes** (validée) pour changer de ville ; **la maison des mages-charpentiers** sera un bâtiment de plus
+  en construction dans la ville.
+- **Le Grand Sage** : « Je suis trop intelligent pour avoir un corps humain », au moment où un éclat de vérité laisse
+  entrevoir sa vraie forme (la nouvelle forme du Sage : à dessiner plus tard).
+- **La météo du jour** (oui à tout, selon les saisons) : pluie, orage, canicule, vent (et la neige l'hiver) ; elle change
+  la demande, les clients et les épreuves ; Madame Ysmée peut l'annoncer.
+- **Les rations qui se périment** : oui.
+- **Les cambriolages** : oui, mais **rares** ; et si le chat a déjà révélé qu'il parle, il **fait toujours fuir le
+  cambrioleur**, avec des petites cinématiques façon film d'horreur, mais drôles (il surgit, des bruits, une voix qui
+  sort de nulle part, il se montre exprès...).
+- **Le jour de marché** : oui. **Les anniversaires des habitués** : oui.
+- **Les cadeaux au comptoir** : rendre le système plus clair.
