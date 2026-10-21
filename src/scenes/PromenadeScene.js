@@ -552,6 +552,8 @@ class PromenadeScene extends Cinematique {
       if (typeof chatBoude === 'function' && chatBoude(this.G)) { Son.jouer('grogne'); return this.dire(`${nomChatMaj(this.G)} te tourne le dos. « Rrrr. » Sa gamelle est vide depuis trois jours...`); }   // (v1.05)
       Son.jouer('miaou');
       this.dire(`${nomChat(this.G)} ronronne et se frotte contre ta jambe.`);
+      // (v1.35) une caresse par jour : la complicité monte (et se voit)
+      if (typeof caresserChat === 'function' && caresserChat(this.G)) gainEnDirect(this, c.x, c.y - 70, '+1 ♥ complicité', true);
       ouvrirPanneauChat(this, { quandFini: () => { this.cleChat = creerChatHD(this, lookChat(this.G)); c.setTexture(this.cleChat + '_assis0'); } });
     });
   }
@@ -677,6 +679,13 @@ function ouvrirPanneauChat(scene, { adoption = false, quandFini = null } = {}) {
   };
   if (adoption) { choix(170, 'Son pelage', PELAGES_CHAT, 'pelage'); choix(222, 'Ses yeux', YEUX_CHAT, 'yeux'); }
   choix(adoption ? 274 : 200, 'Son collier', COLLIERS_CHAT, 'collier');
+  // (v1.35) la complicité : dix cœurs (deux points chacun) ; au plus haut, il te fera confiance
+  if (!adoption && typeof lienChat === 'function') {
+    const l = lienChat(G), pleins = Math.floor(l / 2), demi = l % 2;
+    fixe(scene.add.text(300, 324, 'Complicité', style(12, '#6b4a2a', { fontStyle: 'bold' })).setOrigin(0.5));
+    fixe(scene.add.text(300, 344, '♥'.repeat(pleins) + (demi ? '♡' : '') + '·'.repeat(10 - pleins - demi), style(15, '#c0304a', { fontStyle: 'bold' })).setOrigin(0.5));
+    fixe(scene.add.text(300, 364, l >= MOULIN.lienMax ? (moulinFait(G) ? 'Il te dit tout, maintenant.' : 'Il te fait confiance.') : 'Nourris-le, caresse-le chaque jour.', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+  }
   let nom = c.nom || '';
   const texteNom = fixe(scene.add.text(560, adoption ? 330 : 270, '', style(16, '#3b2410', { fontStyle: 'bold italic' })).setOrigin(0.5).setInteractive({ useHandCursor: true }));
   const majNom = () => texteNom.setText(`✎ ${nom ? '« ' + nom + ' »' : 'Lui donner un nom'}`);

@@ -107,6 +107,8 @@ class NightScene extends Phaser.Scene {
     if (!this.matin && typeof midiDuBar === 'function') { const m = midiDuBar(G); if (m) this.time.delayedCall(900, () => this.annoncer(m)); }   // (v1.16) la terrasse, à midi
     // (v0.90) le soir du Carrefour (ou du parjure) : deux visiteurs frappent à la porte
     if (!this.matin) this.time.delayedCall(700, () => this.carrefourEnAttente());
+    // (v1.35) le soir où ton chat boude sa gamelle et gratte à la porte : l'aventure du Vieux Moulin
+    if (!this.matin && typeof soireeDuMoulin === 'function') this.time.delayedCall(1300, () => { if (this.scene.isActive() && !enTransition(this)) soireeDuMoulin(this); });
   }
 
   // (v0.90) Le soir du Carrefour (ou du parjure) : deux visiteurs frappent à la porte. Renvoie vrai si la
