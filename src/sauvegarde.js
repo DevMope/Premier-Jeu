@@ -394,7 +394,7 @@ function mettreAJourPartie(G, brut = G) {
   // (v1.40) le didacticiel de Garrick : une vieille partie l'a déjà vécu (ses premiers conseils ne reviennent pas)
   if (G.didacticiel === undefined) {
     G.didacticiel = true;
-    if (G.jour > 1) for (const k of ['carte', 'comptoir', 'colis', 'remis', 'refus', 'arriere', 'soir', 'bureau', 'marche']) G.tutoVu[k] = true;
+    if (G.jour > 1) { for (const k of ['carte', 'comptoir', 'colis', 'remis', 'refus', 'arriere', 'soir', 'bureau', 'marche']) G.tutoVu[k] = true; G.nouveautesVues = { bureau: true, banque: true, atelier: true }; }
   }
   G.travauxFinis = G.travauxFinis || [];
   // Le forgeron s'appelle désormais Thorgal : on garde votre relation.

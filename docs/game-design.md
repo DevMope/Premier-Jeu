@@ -3009,3 +3009,11 @@ du joueur).
 6. **Une chose nouvelle à la fois** : ce qui s'ouvre luit (NOUVEAU) avec une vignette ; le suivant est montré avec un cadenas et sa condition ; les autres restent cachés.
 7. **Le carnet des objectifs** : une pastille dans le bandeau, 2 ou 3 buts courts avec leur récompense, « objectif atteint » en direct.
 8. **Les dix premiers jours** : jour 0 la maison ; jour 1 le marché (avec Garrick, qui part ensuite) et le bureau ; jour 2 les ★★ et les lettres ; jour 3 l'atelier et le marchandage ; jour 4 la banque ; jour 5 la Faucheuse, les imposteurs, les rats ; jour 6 la porte dérobée ; jour 8 les recherchés ; ensuite comme aujourd'hui.
+
+### Planche 68 (à valider) : des écrans plus clairs (docs/planches-v059/planche-68-ecrans-plus-clairs.png)
+Avant / après sur les écrans les plus chargés, d'après les retours de l'ami joueur (« beaucoup d'infos ») :
+- **Le comptoir** : quatre zones de couleur (toi, le client, ta réserve, tes actions) ; l'ardoise en trois lignes (en mission, lettres à répondre, prochain client ; le détail sur un clic) ; les chances de revenir en grand, dans une barre ; les aides en petit ; « Marchand express » rejoint la réserve ; un seul bouton qui luit : « Remettre le baluchon ».
+- **Le soir** : ta journée en quatre chiffres (pièces, clients servis, réputation, morts ; le détail sur un clic) et « Demain » en grand à gauche ; la colonne des lettres pour les lettres seules.
+- **Le bureau** : le bénéfice du jour en grand (recettes et dépenses sur un clic) ; les huit tiroirs en tuiles avec picto, rangés par famille de couleur.
+- **La carte** : un titre court (« Où envoyer Borin ? »), le rang dans une étiquette, « encore 3 à placer » près du bouton.
+- **Cinq règles pour tous les écrans** : une couleur par sujet ; un seul bouton qui luit ; le chiffre qui compte en grand, le détail sur un clic ; les aides s'effacent une fois servies ; une chose à la fois (les vignettes font la queue, titres courts).
