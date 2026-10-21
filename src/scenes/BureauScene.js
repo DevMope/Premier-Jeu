@@ -283,52 +283,87 @@ class BureauScene extends Phaser.Scene {
 
   // --- L'ardoise du chiffre d'affaires ---
 
+  // (v1.42, planche 68) le bénéfice du jour en grand ; le tableau complet (recettes, dépenses) sur un clic
   creerArdoise() {
     const G = this.G;
     this.add.image(578, 18, panneauHD(this, 364, 262, 'ardoise')).setOrigin(0).setScale(2);
-    const g = this.add.graphics();
     const craie = (x, y, texte, taille = 13, couleur = '#e8ecdf', origine = 0) =>
       this.add.text(x, y, texte, style(taille, couleur, { fontStyle: 'italic' })).setOrigin(origine, 0.5);
     craie(760, 48, "Chiffre d'affaires", 18, '#f3f0d8', 0.5);
+    const d = debutsDePeriodes(G), signe = v => (v > 0 ? '+' : '') + v;
+    const jour = bilanPeriode(G, G.jour, G.jour).benefice;
+    craie(760, 92, 'Ton bénéfice aujourd’hui', 13, '#c9d4dc', 0.5);
+    this.add.text(760, 132, signe(jour) + ' p.', style(34, jour >= 0 ? '#b8e0a0' : '#f0a8a0', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.add.graphics().lineStyle(1, 0x8a9a88).lineBetween(598, 160, 922, 160);
+    const [sem, mois, an] = [d.semaine, d.mois, d.an].map(debut => bilanPeriode(G, debut, G.jour).benefice);
+    craie(760, 178, `cette semaine ${signe(sem)} · ce mois ${signe(mois)} · cette année ${signe(an)}`, 12, '#c9d4dc', 0.5);
+    const lien = this.add.text(760, 226, 'Recettes et dépenses ▸', style(13, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    lien.on('pointerover', () => lien.setColor('#fff4c0'));
+    lien.on('pointerout', () => lien.setColor('#f3d98a'));
+    lien.on('pointerdown', () => { Son.jouer('page'); this.detailComptes(); });
+  }
+
+  // le tableau complet : recettes, dépenses, bénéfice sur quatre périodes (un clic pour refermer)
+  detailComptes() {
+    if (this.comptes) return;
+    const G = this.G, c = this.comptes = this.add.container(0, 0).setDepth(60);
+    const voile = this.add.rectangle(480, 270, 960, 540, 0x000000, 0.45).setInteractive();
+    c.add(voile);
+    c.add(this.add.image(480, 262, panneauHD(this, 400, 270, 'ardoise')).setScale(2));
+    const craie = (x, y, texte, taille = 13, couleur = '#e8ecdf', origine = 0) =>
+      c.add(this.add.text(x, y, texte, style(taille, couleur, { fontStyle: 'italic' })).setOrigin(origine, 0.5));
+    craie(480, 154, 'Recettes et dépenses', 18, '#f3f0d8', 0.5);
     const d = debutsDePeriodes(G);
-    const periodes = [
-      ["Aujourd'hui", bilanPeriode(G, G.jour, G.jour)],
-      ['Semaine', bilanPeriode(G, d.semaine, G.jour)],
-      ['Mois', bilanPeriode(G, d.mois, G.jour)],
-      ['Année', bilanPeriode(G, d.an, G.jour)],
-    ];
-    periodes.forEach(([nom], i) => craie(700 + i * 66, 84, nom, 11, '#c8d4c0', 0.5));
+    const periodes = [["Aujourd'hui", bilanPeriode(G, G.jour, G.jour)], ['Semaine', bilanPeriode(G, d.semaine, G.jour)],
+      ['Mois', bilanPeriode(G, d.mois, G.jour)], ['Année', bilanPeriode(G, d.an, G.jour)]];
+    periodes.forEach(([nom], i) => craie(420 + i * 72, 190, nom, 11, '#c8d4c0', 0.5));
     [['Recettes', 'recettes', '#b8e0a0'], ['Dépenses', 'depenses', '#f0a8a0'], ['Bénéfice', 'benefice', '#f3f0d8']].forEach(([nom, cle, couleur], r) => {
-      const y = 118 + r * 34;
-      craie(598, y, nom, 13, couleur);
+      const y = 222 + r * 32;
+      craie(298, y, nom, 13, couleur);
       periodes.forEach(([, b], i) => {
         const v = b[cle];
-        craie(700 + i * 66, y, (cle === 'benefice' && v > 0 ? '+' : '') + v, 14, cle === 'benefice' ? (v >= 0 ? '#b8e0a0' : '#f0a8a0') : couleur, 0.5);
+        craie(420 + i * 72, y, (cle === 'benefice' && v > 0 ? '+' : '') + v, 14, cle === 'benefice' ? (v >= 0 ? '#b8e0a0' : '#f0a8a0') : couleur, 0.5);
       });
     });
-    g.lineStyle(1, 0x8a9a88).lineBetween(598, 168, 922, 168);
+    c.add(this.add.graphics().lineStyle(1, 0x8a9a88).lineBetween(298, 270, 662, 270));
     const total = Object.values(G.comptaTotal.pret).reduce((a, b) => a + b, 0);
-    craie(598, 230, `Depuis le début : ${Object.values(G.comptaTotal.r).reduce((a, b) => a + b, 0)} p. de recettes`, 11, '#c8d4c0');
-    craie(598, 250, total ? `Prêts reçus (hors chiffre d'affaires) : ${total} p.` : 'Les prêts ne comptent pas comme des recettes.', 11, '#c8d4c0');
+    craie(298, 312, `Depuis le début : ${Object.values(G.comptaTotal.r).reduce((a, b) => a + b, 0)} p. de recettes`, 11, '#c8d4c0');
+    craie(298, 330, total ? `Prêts reçus (hors chiffre d'affaires) : ${total} p.` : 'Les prêts ne comptent pas comme des recettes.', 11, '#c8d4c0');
+    craie(480, 366, 'un clic pour refermer', 11, '#a8b4a0', 0.5);
+    voile.on('pointerdown', () => { c.destroy(); this.comptes = null; });
   }
 
   // --- Les tiroirs ---
 
+  // (v1.42, planche 68) en tuiles, chacune son picto, rangées par famille de couleur :
+  // or = la boutique, bleu = toi, violet = l'étrange, vert = les chiffres
   creerTiroirs() {
+    const OR = 0xd8a838, BLEU = 0x6a9ac9, VIOLET = 0x9a6ac9, VERT = 0x6a9a4a;
+    const PICTOS = { ameliorations: ['balai', OR], forge: ['epees', OR], competences: ['idee', BLEU], reputation: ['etoile', BLEU], camps: ['soleil', BLEU],
+      etrange: ['lune', VIOLET], carnet: ['lettre', VIOLET], formes: ['son', VIOLET], aventuriers: ['crane', VERT], commerce: ['pieceFace', VERT] };
+    const ORDRE = ['ameliorations', 'forge', 'competences', 'reputation', 'camps', 'etrange', 'carnet', 'formes', 'aventuriers', 'commerce'];
     // (v0.82) un tiroir de plus, vers la forge, une fois qu'elle est proposée
-    let tiroirs = forgeProposee(this.G) ? [...TIROIRS, ['forge', '⚒ La forge']] : TIROIRS;
+    let tiroirs = forgeProposee(this.G) ? [...TIROIRS, ['forge', 'La forge']] : TIROIRS;
     // (v1.24) le carnet de JeuneGoy, dès sa première pensée de départ
     if (this.G.envie && this.G.envie.pensees && this.G.envie.pensees.length) tiroirs = [...tiroirs, ['carnet', 'Le carnet de JeuneGoy']];
     // (v1.37) le carnet des formes de fumée, dès que ton chat a parlé
-    if (typeof moulinFait === 'function' && moulinFait(this.G)) tiroirs = [...tiroirs, ['formes', '💨 Le carnet des formes']];
-    const pas = tiroirs.length > 9 ? 21 : tiroirs.length > 8 ? 23 : tiroirs.length > 7 ? 25.5 : tiroirs.length > 6 ? 29 : 34, y0 = tiroirs.length > 9 ? 280 : tiroirs.length > 8 ? 284 : tiroirs.length > 7 ? 288 : tiroirs.length > 6 ? 292 : 300;   // (v0.82 : avec la forge, huit tiroirs plus serrés)
+    if (typeof moulinFait === 'function' && moulinFait(this.G)) tiroirs = [...tiroirs, ['formes', 'Le carnet des formes']];
+    tiroirs = tiroirs.slice().sort((a, b) => ORDRE.indexOf(a[0]) - ORDRE.indexOf(b[0]));
+    creerGlyphesHD(this); if (typeof creerPiecesHD === 'function') creerPiecesHD(this);
+    const rangs = Math.ceil(tiroirs.length / 2), h = rangs > 4 ? 36 : 44, pas = h + 4;
     tiroirs.forEach(([cle, nom], i) => {
-      const y = y0 + i * pas;
-      const t = this.add.image(760, y, 'tiroirHD').setScale(2, Math.min(2, pas / 17)).setInteractive({ useHandCursor: true });
-      this.add.text(745, y, nom, style(14, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
-      t.on('pointerover', () => t.setTexture('tiroirHD_clair'));
-      t.on('pointerout', () => t.setTexture('tiroirHD'));
-      t.on('pointerdown', () => this.ouvrirTiroir(cle, nom));
+      const [picto, coul] = PICTOS[cle] || ['etoile', OR];
+      const x = 594 + (i % 2) * 176, y = 288 + Math.floor(i / 2) * pas;
+      const g = this.add.graphics();
+      const dessiner = survol => g.clear().fillStyle(survol ? 0x3e2818 : 0x2a1a10, 0.94).fillRoundedRect(x, y, 168, h, 7)
+        .fillStyle(coul).fillRoundedRect(x, y, 7, h, { tl: 7, bl: 7, tr: 0, br: 0 }).lineStyle(2, coul, survol ? 1 : 0.8).strokeRoundedRect(x, y, 168, h, 7);
+      dessiner(false);
+      this.add.image(x + 24, y + h / 2, picto === 'pieceFace' ? 'pieceFace' : 'glyphe_' + picto).setScale(picto === 'pieceFace' ? 1.6 : 1.9);
+      this.add.text(x + 42, y + h / 2, nom, style(13, '#fff4dc', { fontStyle: 'bold', wordWrap: { width: 120 } })).setOrigin(0, 0.5);
+      const zone = this.add.rectangle(x + 84, y + h / 2, 168, h, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      zone.on('pointerover', () => dessiner(true));
+      zone.on('pointerout', () => dessiner(false));
+      zone.on('pointerdown', () => this.ouvrirTiroir(cle, nom));
     });
   }
 

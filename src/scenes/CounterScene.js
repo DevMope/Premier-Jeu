@@ -56,22 +56,35 @@ class CounterScene extends Phaser.Scene {
     this.creerCommande();
     this.creerDialogue();
     this.creerStock();
+    this.creerZones();
     this.creerArgent();
     this.creerHorloge();
     if (this.majCommandeRoyale) this.majCommandeRoyale();   // (v1.10) la commande scellée, punaisée sur l'ardoise
 
     // (v1.12) avec l'orphelinat, Grippesou partage sa ligne avec le coursier
     const coursier = typeof orphelinatOuvert === 'function' && orphelinatOuvert(this.G);
-    this.boutonExpress = creerBouton(this, coursier ? 784 : 840, 360, coursier ? 100 : 210, coursier ? 'Grippesou' : 'Marchand express', () => this.ouvrirExpress());
+    this.boutonExpress = creerBouton(this, coursier ? 784 : 840, 368, coursier ? 100 : 210, coursier ? 'Grippesou' : 'Marchand express', () => this.ouvrirExpress());
     this.boutonCoursier = null;
     if (coursier && this.creerCoursier) this.creerCoursier();
     this.boutonAttente = creerBouton(this, 840, 404, 210, 'Mettre en attente', () => this.mettreEnAttente());
     this.boutonRefuser = creerBouton(this, 840, 448, 210, 'Refuser ce client', () => (this.actionB ? this.actionB() : this.refuser()));
+    // (v1.42, planche 68) pendant le service, « En attente » et « Refuser » en petit côte à côte ;
+    // les grands boutons gardent les choix des visites (B au milieu)
+    this.petitAttente = creerBouton(this, 790, 426, 110, 'En attente', () => this.mettreEnAttente());
+    this.petitRefuser = creerBouton(this, 896, 426, 96, 'Refuser', () => this.refuser());
+    for (const b of [this.petitAttente, this.petitRefuser]) { b.label.setFontSize(14); b.setVisible(false); }
+    // le bouton de l'action principale luit doucement (la seule chose à faire pour avancer)
     this.boutonAction = creerBouton(this, 840, 496, 210, '', () => this.action && this.action());
     this.boutonAction.setTexte('');   // (pas de plaque vide tant qu'il n'y a rien à faire)
+    this.lueurAction = lueurBouton(this, this.boutonAction, 210).setVisible(false);
+    this.events.on('update', () => {
+      const f = this.boutonAction.fond, luit = f.visible && !f.vide && !!this.action && this.boutonAction.label.text !== '...';
+      this.lueurAction.setVisible(luit);
+      this.boutonAction.label.setColor(luit ? '#ffe9a0' : '#fff0d0');
+    });
     // (v0.86) le petit sablier sur le coin d'un bouton : le temps que prend l'action
     const sablier = (b, y) => this.add.text(944, y - 17, '', style(11, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#1e130a', padding: { x: 4, y: 1 }, brut: true })).setOrigin(1, 0.5).setDepth(5).setVisible(false);
-    this.sablierExpress = sablier(this.boutonExpress, 360).setText(`⌛ ${formatDuree(JOURNEE.express)}`);
+    this.sablierExpress = sablier(this.boutonExpress, 368).setText(`⌛ ${formatDuree(JOURNEE.express)}`);
     if (coursier) this.sablierExpress.setX(832);
     this.sablierAction = sablier(this.boutonAction, 496);
     this.dureeAction = null;
@@ -249,9 +262,12 @@ class CounterScene extends Phaser.Scene {
     this.boutonExpress.setVisible(this.enService && libre);
     if (this.sablierExpress) this.sablierExpress.setVisible(this.enService && libre);
     if (this.majCoursier) this.majCoursier(libre);   // (v1.12) le coursier de l'orphelinat
-    this.boutonAttente.setVisible(!!this.voyageur && (this.enService || !!this.actionB) && libre);
-    this.boutonRefuser.setVisible(this.enService || !!this.actionB);
-    if (this.enService && !this.actionB) this.boutonRefuser.setTexte('Refuser ce client');
+    // (v1.42) en service : les deux petits boutons ; pendant un choix : les grands (B au milieu)
+    const petits = this.enService && !this.actionB;
+    this.petitAttente.setVisible(petits && !!this.voyageur && libre);
+    this.petitRefuser.setVisible(petits);
+    this.boutonAttente.setVisible(!petits && !!this.voyageur && !!this.actionB && libre);
+    this.boutonRefuser.setVisible(!!this.actionB);
   }
 
   // Deux choix pour une visite : le bouton du bas (A) et celui du milieu (B).
@@ -880,21 +896,50 @@ class CounterScene extends Phaser.Scene {
   }
 
   // À gauche : qui est en mission, et les lettres reçues (cliquables).
+  // (v1.42, planche 68) l'ardoise en trois lignes ; un clic sur une ligne ouvre le détail, « ◂ » revient
   creerPanneauGauche() {
     this.add.image(20, 20, 'ardoiseComptoir').setOrigin(0).setScale(2); // l'ardoise dans son cadre
     this.texteJour = this.add.text(30, 28, '', style(22, '#f3d98a', { fontStyle: 'bold' }));
     this.texteJoueur = this.add.text(262, 36, '', style(13, '#c9b48a', { fontStyle: 'italic' })).setOrigin(1, 0);
-    this.add.text(30, 62, 'En mission', style(14, '#c9b48a', { fontStyle: 'bold' }));
-    this.texteMissions = this.add.text(30, 82, '', style(13, '#f3e6c8', { lineSpacing: 3 }));
-    this.add.text(30, 160, 'Lettres (clients en plus) — clique', style(14, '#c9b48a', { fontStyle: 'bold' }));
+    creerGlyphesHD(this);
+    this.modeArdoise = 'resume';
+    this.lignesResume = [['epees', 'En mission', 'missions'], ['lettre', 'Lettres à répondre', 'lettres'], ['etoile', 'Prochain client', null]].map(([g, libelle, mode], i) => {
+      const y = 78 + i * 34;
+      const zone = this.add.rectangle(146, y, 236, 30, 0xf3d98a, 0).setInteractive({ useHandCursor: !!mode });
+      const ico = this.add.image(44, y, 'glyphe_' + g).setScale(1.8);
+      const lib = this.add.text(62, y, libelle, style(15, '#f3e6c8', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+      const val = this.add.text(256, y, '', style(15, '#f3d98a', { fontStyle: 'bold' })).setOrigin(1, 0.5);
+      if (mode) {
+        zone.on('pointerover', () => zone.setFillStyle(0xf3d98a, 0.08));
+        zone.on('pointerout', () => zone.setFillStyle(0xf3d98a, 0));
+        zone.on('pointerdown', () => { Son.jouer('page'); marquerAide(this.G, 'ardoise'); this.modeArdoise = mode; this.majPanneauGauche(); });
+      }
+      return { zone, ico, lib, val, objets: [zone, ico, lib, val] };
+    });
+    this.aideArdoise = this.add.text(146, 224, 'un clic sur une ligne : le détail', style(11, '#a89878', { fontStyle: 'italic' })).setOrigin(0.5);
+    // le détail
+    this.titreDetail = this.add.text(30, 62, '', style(14, '#c9b48a', { fontStyle: 'bold' }));
+    this.retourArdoise = this.add.text(258, 62, '◂ retour', style(13, '#f3d98a', { fontStyle: 'bold' })).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+    this.retourArdoise.on('pointerdown', () => { Son.jouer('page'); this.modeArdoise = 'resume'; this.majPanneauGauche(); });
+    this.texteMissions = this.add.text(30, 86, '', style(13, '#f3e6c8', { lineSpacing: 3 }));
     this.lignesLettres = [];
-    for (let i = 0; i < 4; i++) {
-      const t = this.add.text(30, 180 + i * 17, '', style(13, '#f3e6c8')).setInteractive({ useHandCursor: true });
+    for (let i = 0; i < 6; i++) {
+      const t = this.add.text(30, 86 + i * 20, '', style(13, '#f3e6c8')).setInteractive({ useHandCursor: true });
       t.on('pointerover', () => t.setColor('#f3d98a'));
       t.on('pointerout', () => t.setColor('#f3e6c8'));
       t.on('pointerdown', () => this.lireLettre(i));
       this.lignesLettres.push(t);
     }
+  }
+
+  // le nom du prochain dans la file (ou ce qui vient : un retour, Garrick, une visite)
+  prochainDeLaFile() {
+    const f = this.G.file[0];
+    if (!f) return 'personne';
+    if (f.voyageur) return prenomDe(f.voyageur.nom);
+    if (f.parti) return prenomDe(f.parti.voyageur.nom) + ' ↩';
+    if (f.type === 'garrick') return 'Garrick';
+    return 'une visite';
   }
 
   lireLettre(i) {
@@ -934,7 +979,28 @@ class CounterScene extends Phaser.Scene {
     this.boutonEscorte = this.add.text(700, 226, '', style(12, '#2a4a8a', { fontStyle: 'bold', backgroundColor: '#e8dcb8', padding: { x: 4, y: 1 } }))
       .setInteractive({ useHandCursor: true }).setVisible(false);
     this.boutonEscorte.on('pointerdown', () => { this.escorteChoisie = !this.escorteChoisie; Son.jouer('clic'); this.majCommande(); });
-    this.texteChance = this.add.text(815, 208, '', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+    // (v1.42, planche 68) les chances dans un encart : un libellé, une jauge de couleur, le chiffre en grand.
+    // (les comptoirs à part — rival, Conseil, Sage — vident texteChance : l'encart disparaît avec lui)
+    this.boiteFlair = this.add.graphics();
+    this.boiteFlair.fillStyle(0x3b2410, 0.16).fillRoundedRect(700, 199, 232, 40, 8);
+    this.libelleFlair = this.add.text(712, 209, '', style(12, '#5a3a1a', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+    this.jaugeFlair = this.add.graphics();
+    this.texteChance = this.add.text(922, 219, '', style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(1, 0.5);
+    const ecrire = this.texteChance.setText.bind(this.texteChance);
+    this.texteChance.setText = t => { ecrire(t); if (!t) { this.boiteFlair.setVisible(false); this.libelleFlair.setText(''); this.jaugeFlair.clear(); } return this.texteChance; };
+    this.texteChance.setText('');
+  }
+
+  // l'encart des chances : libellé, jauge (part remplie, couleur), chiffre
+  majFlair(libelle, chiffre, part, couleur) {
+    this.boiteFlair.setVisible(true);
+    this.libelleFlair.setText(libelle);
+    this.texteChance.setText(chiffre).setColor(couleur);
+    this.jaugeFlair.clear();
+    if (part === null) return;
+    const c = Phaser.Display.Color.HexStringToColor(couleur).color;
+    this.jaugeFlair.fillStyle(0x2a1a10).fillRoundedRect(712, 223, 140, 9, 4);
+    if (part > 0) this.jaugeFlair.fillStyle(c).fillRoundedRect(713, 224, Math.max(6, 138 * Math.min(1, part)), 7, 3);
   }
 
   creerDialogue() {
@@ -953,9 +1019,23 @@ class CounterScene extends Phaser.Scene {
     this.titreNarration = this.add.text(150, 298, '', style(13, '#5a3a1c', { fontStyle: 'italic bold', align: 'center', wordWrap: { width: 160 } })).setOrigin(0.5).setVisible(false);
   }
 
+  // (v1.42, planche 68) quatre zones de couleur : de quoi parle chaque panneau, d'un coup d'œil
+  // (profondeur 0, posées tôt : les fiches et fenêtres ouvertes plus tard passent par-dessus)
+  creerZones() {
+    const g = this.add.graphics();
+    const zones = [[22, 22, 246, 226, 0x6a9ac9, 145, 248, 'TOI', '#8ab0d0'], [687, 22, 256, 226, 0xd8a838, 815, 248, 'LE CLIENT', '#e8c060'],
+      [142, 348, 560, 180, 0x6a9a4a, 422, 346, 'TA RÉSERVE', '#9ac87a'], [732, 344, 216, 182, 0xc04a3a, 840, 342, 'TES ACTIONS', '#e88a7a']];
+    for (const [x, y, l, h, coul, ex, ey, texte, fond] of zones) {
+      g.lineStyle(3, coul, 0.8).strokeRoundedRect(x, y, l, h, 8);
+      this.add.text(ex, ey, texte, style(11, '#14100a', { fontStyle: 'bold', backgroundColor: fond, padding: { x: 7, y: 2 } })).setOrigin(0.5);
+    }
+  }
+
   creerStock() {
-    this.add.text(150, 357, 'Ton stock — clic : ajouter au baluchon', style(12, '#f3e6c8', { fontStyle: 'italic', stroke: '#1a100a', strokeThickness: 3 }));
-    this.texteReserve = this.add.text(660, 357, '', style(12, '#f3d98a', { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 3 })).setOrigin(1, 0);
+    // (v1.42, planche 68) un seul chiffre en titre ; l'aide « clic : ajouter » s'efface après le premier objet donné
+    this.texteReserve = this.add.text(150, 355, '', style(14, '#f3e6c8', { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 3 }));
+    this.aideStock = this.add.text(0, 358, 'clic : ajouter au baluchon', style(11, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a100a', strokeThickness: 3 }));
+    this.texteMateriaux = this.add.text(660, 358, '', style(11, '#e8d4a8', { stroke: '#1a100a', strokeThickness: 3 })).setOrigin(1, 0);
     this.creerEtagere();
     // Le registre posé sur le bureau : clic pour ouvrir le bureau (fiches, comptes, statistiques)
     // Un gros livre de comptes ouvert ; son titre est écrit à l'encre sur la page de gauche.
@@ -2015,7 +2095,7 @@ class CounterScene extends Phaser.Scene {
       if (!e.choix) return this.bouton('...', () => montrer(i + 1));
       const repondre = action => {
         const reponse = action();
-        this.boutonRefuser.setVisible(false);
+        this.boutonRefuser.setVisible(false); this.petitRefuser.setVisible(false);
         parler(reponse);
         this.bouton('...', () => montrer(i + 1));
       };
@@ -2248,6 +2328,7 @@ class CounterScene extends Phaser.Scene {
     // les testeurs) : le client le dit, et le sac affiche « (en plus) » ; on peut le reprendre d'un clic
     this.G.stock[id]--;
     this.colis[id] = (this.colis[id] || 0) + 1;
+    marquerAide(this.G, 'stock');
     Son.jouer('poser');
     if (enPlus) this.dire((id === 'potion' ? "Une potion de plus ? Merci, ça me fera un cœur de réserve !"
       : id === 'bandage' ? "Un bandage de plus ? Si je saigne après un combat, ça m'évitera de perdre un cœur !" : "Un de plus ? Ça peut toujours servir, merci !") +
@@ -2275,6 +2356,7 @@ class CounterScene extends Phaser.Scene {
     const id = this.lignesCommande[i].id;
     if (!this.enService || this.enConfirmation || !id || !this.colis[id]) return;
     this.colis[id]--;
+    marquerAide(this.G, 'commande');
     if (this.pieges[id] > 0) {
       this.pieges[id]--;
       this.G.pieges[id]++;
@@ -2291,7 +2373,7 @@ class CounterScene extends Phaser.Scene {
     if (this.colis[id]) {
       return this.retirer(i);
     } else if (this.aReparer(this.voyageur).includes(id)) {
-      this.reparer(id);
+      this.reparer(id); marquerAide(this.G, 'commande');
     }
     this.majStock();
     this.majCommande();
@@ -2634,7 +2716,17 @@ class CounterScene extends Phaser.Scene {
   majPanneauGauche() {
     this.texteJour.setText('Jour ' + this.G.jour);
     this.texteJoueur.setText(`${nomJoueur(this.G)}, ${ageJoueur(this.G)} ans`);
-
+    // (v1.42) le résumé en trois lignes, ou le détail d'une ligne
+    const mode = this.modeArdoise || 'resume', resume = mode === 'resume';
+    const aRepondre = this.G.annonces.filter(a => !a.acceptee).length;
+    const valeurs = [`${enMission(this.G).length}  ▸`, `${aRepondre}${this.G.annonces.length > aRepondre ? ' / ' + this.G.annonces.length : ''}  ▸`, this.prochainDeLaFile()];
+    this.lignesResume.forEach((l, i) => { l.objets.forEach(o => o.setVisible(resume)); l.val.setText(valeurs[i]); });
+    this.texteJoueur.setVisible(resume);
+    this.aideArdoise.setVisible(resume && !aideVue(this.G, 'ardoise'));
+    this.titreDetail.setVisible(!resume).setText(mode === 'missions' ? 'En mission' : 'Lettres (clients en plus)');
+    this.retourArdoise.setVisible(!resume);
+    this.texteMissions.setVisible(mode === 'missions');
+    this.lignesLettres.forEach(t => t.setVisible(mode === 'lettres'));
     // (v0.57) chaque ligne tient dans l'ardoise : un nom trop long est raccourci avec « … »
     // (v0.59) on mesure avec le texte de l'ardoise lui-même (même police, même taille)
     const LARGEUR_ARDOISE = 218;
@@ -2647,14 +2739,14 @@ class CounterScene extends Phaser.Scene {
       while (n.length > 3 && mesure.setText(debut + n + fin).width > LARGEUR_ARDOISE) n = n.slice(0, -1);
       return debut + (n === nom ? n : n.trimEnd() + '…') + fin;
     };
-    this.texteMissions.setText(listeCourte(enMission(this.G).map(p => tenir('', p.voyageur.nom, ` — retour ${p.retour <= this.G.jour ? "aujourd'hui" : 'jour ' + p.retour}`)), 4, 'Personne pour l\'instant'));
+    this.texteMissions.setText(listeCourte(enMission(this.G).map(p => tenir('', p.voyageur.nom, ` — retour ${p.retour <= this.G.jour ? "aujourd'hui" : 'jour ' + p.retour}`)), 7, 'Personne pour l\'instant'));
     // (v1.19) une pièce dorée tourne près du nom de ceux sur qui tu as misé
     if (this.piecesMise) this.piecesMise.forEach(o => { this.tweens.killTweensOf(o); o.destroy(); });
     this.piecesMise = [];
-    const partis = enMission(this.G), nL = Math.min(partis.length, 4), hL = nL ? this.texteMissions.height / nL : 0;
+    const partis = enMission(this.G), nL = Math.min(partis.length, 7), hL = nL ? this.texteMissions.height / nL : 0;
     if (typeof creerPiecesHD === 'function') creerPiecesHD(this);
-    partis.slice(0, partis.length > 4 ? 3 : 4).forEach((p, i) => {
-      if (!(p.voyageur.mise > 0)) return;
+    partis.slice(0, partis.length > 7 ? 6 : 7).forEach((p, i) => {
+      if (!(p.voyageur.mise > 0) || mode !== 'missions') return;
       const pc = this.add.image(this.texteMissions.x + LARGEUR_ARDOISE + 6, this.texteMissions.y + hL * (i + 0.5), 'pieceFace').setScale(1.2).setDepth(this.texteMissions.depth + 0.1);
       this.tweens.add({ targets: pc, scaleX: 0.25, duration: 700, yoyo: true, repeat: -1, delay: i * 200 });
       this.piecesMise.push(pc);
@@ -2688,7 +2780,9 @@ class CounterScene extends Phaser.Scene {
     this.majTiroirCadeaux();
     this.majOngletPages();
     const m = this.G.materiaux;
-    this.texteReserve.setText(`Réserve ${stockTotal(this.G)}/${this.G.capacite} · Fer ${m.fer} · Cuir ${m.cuir} · Bois ${m.bois || 0}`);
+    this.texteReserve.setText(`Ta réserve · ${stockTotal(this.G)} / ${this.G.capacite}`);
+    this.aideStock.setX(this.texteReserve.x + this.texteReserve.width + 12).setVisible(!aideVue(this.G, 'stock'));
+    this.texteMateriaux.setText(`Fer ${m.fer} · Cuir ${m.cuir} · Bois ${m.bois || 0}`);
     if (this.majCommandeRoyale) this.majCommandeRoyale();   // (v1.10) ce qui manque encore pour le Conseil
   }
 
@@ -2698,11 +2792,15 @@ class CounterScene extends Phaser.Scene {
     const escorte = !!(v && v.queteId && this.enService && escorteDisponible(this.G));
     if (!escorte) this.escorteChoisie = false;
     this.boutonEscorte.setVisible(escorte).setText(`⚔ Escorte du paladin : ${this.escorteChoisie ? 'oui, +1 cœur' : 'non (1/sem.)'}`);
-    this.aideCommande.setVisible(!escorte);
     const commande = v ? commandeDe(v) : {};
     const plus = v ? surplus(v, this.colis) : {};
     // La commande, puis les soins donnés en plus.
     const ids = [...Object.keys(commande), ...Object.keys(plus).filter(id => !commande[id])];
+    // (v1.42) l'aide et l'escorte se rangent juste sous la dernière ligne ; l'aide s'efface une fois servie
+    const nL = Math.min(ids.length, 5), sousLignes = 76 + nL * 22 - 6;
+    this.boutonEscorte.setY(nL >= 5 ? 184 : sousLignes);
+    this.texteSac.setVisible(!(escorte && nL >= 5));
+    this.aideCommande.setY(sousLignes).setVisible(!escorte && !!v && this.enService && nL < 5 && !aideVue(this.G, 'commande'));
     const cible = v && estCible(this.G, v) ? '(ta cible) ' : '';
     if (v) {
       this.titreCommande.setText(cible + v.nom).setFontSize(17);
@@ -2777,14 +2875,14 @@ class CounterScene extends Phaser.Scene {
       this.exprimer(vide ? this.expressionArrivee(this.entree) : v.exige && !totalSurplus(v, this.colis) ? 'fache' : c >= 0.75 ? 'content' : c < 0.4 ? 'inquiet' : 'neutre');
     }
     if (v && !v.queteId) {
-      this.texteChance.setText('Choisis sa destination').setColor('#8a6a10');
+      this.majFlair('Choisis sa destination', '?', null, '#8a6a10');
     } else if (v) {
       // Ton flair estime les chances : faussé au début, précis avec l'expérience.
       const c = chanceEstimee(this.G, v, this.colis, this.pieges);
       const couleur = c >= 0.75 ? '#2f6a2a' : c >= 0.4 ? '#8a6a10' : '#a03030';
       const exact = niveauFlair(this.G) >= 1;
-      if (piegeFatal(v, this.pieges)) this.texteChance.setText('Chances de retour : aucune').setColor('#7a1a4a');
-      else this.texteChance.setText(`${exact ? 'Chances de retour' : 'Ton flair dit'} : ${exact ? '' : '~'}${Math.round(c * 100)} %`).setColor(couleur);
+      if (piegeFatal(v, this.pieges)) this.majFlair('Ses chances de revenir', 'aucune', 0, '#7a1a4a');
+      else this.majFlair(exact ? 'Ses chances de revenir' : 'Ton flair dit', `${exact ? '' : '~'}${Math.round(c * 100)} %`, c, couleur);
     } else {
       this.texteChance.setText('');
     }

@@ -105,7 +105,7 @@ Object.assign(CounterScene.prototype, {
   creerCoursier() {
     const G = this.G;
     if (!orphelinatOuvert(G)) return;
-    this.boutonCoursier = creerBouton(this, 896, 360, 100, 'Coursier', () => this.ouvrirCoursier());
+    this.boutonCoursier = creerBouton(this, 896, 368, 100, 'Coursier', () => this.ouvrirCoursier());
     this.sablierCoursier = this.add.text(944, 343, '', style(11, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#1e130a', padding: { x: 4, y: 1 }, brut: true })).setOrigin(1, 0.5).setDepth(5).setVisible(false);
   },
   majCoursier(libre) {

@@ -53,7 +53,7 @@ class NightScene extends Phaser.Scene {
     }
     this.bourse = bourse(this, 846, 50, this.G.argent, { echelle: 1.5, taille: 19, aDroite: true });
 
-    this.parchemin(20, 300, this.matin ? "Aujourd'hui" : 'La journée');
+    this.parchemin(20, 300, this.matin ? "Aujourd'hui" : 'Ta journée');
     this.parchemin(320, 640, 'Ta réserve');
     this.parchemin(660, 940, 'Lettres reçues');
     this.add.text(800, 108, '1 lettre acceptée = 1 client EN PLUS', style(12, '#8a3a1a', { fontStyle: 'bold italic' })).setOrigin(0.5);
@@ -100,7 +100,7 @@ class NightScene extends Phaser.Scene {
       if (!lieuDebloque(G, k[1])) { bt[0] = k[0]; bt[1] = () => { Son.jouer('refus'); this.annoncer(`${d.nom} s'ouvrira ${d.quand === 'ta 1re trouvaille' ? 'avec ta première trouvaille' : d.quand}.`); }; bt[2] = { ferme: d }; }
       else if (neufs.includes(k[1])) bt[2] = { neuf: true };
     }
-    if (neufs.length) this.time.delayedCall(1000, () => { if (!this.scene.isActive()) return; neufs.forEach((c, i) => { G.nouveautesVues[c] = true; vignetteGuide(this, 'NOUVEAU', DEBLOCAGES[c].nom, DEBLOCAGES[c].texte, { y: 92 + i * 96, prof: 60, duree: 6000 }); }); });
+    if (neufs.length) this.time.delayedCall(1000, () => { if (!this.scene.isActive()) return; neufs.forEach((c, i) => { G.nouveautesVues[c] = true; vignetteGuide(this, 'NOUVEAU', DEBLOCAGES[c].nom, DEBLOCAGES[c].texte, { y: 92, prof: 60, duree: 5000 }); }); });
     const largeur = 920 / boutons.length;
     boutons.forEach(([texte, action, marque], i) => {
       const b = creerBouton(this, 20 + largeur * (i + 0.5), 505, largeur - 16, texte, action);
@@ -112,12 +112,10 @@ class NightScene extends Phaser.Scene {
         const tag = this.add.text(b.fond.x, b.fond.y - 34, 'NOUVEAU', style(12, '#14181e', { fontStyle: 'bold', backgroundColor: '#8ab0d0', padding: { x: 8, y: 2 } })).setOrigin(0.5);
         this.tweens.add({ targets: tag, y: tag.y - 3, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
-      // Le soir, le bouton pour aller dormir (et passer au lendemain) se voit bien : il luit.
-      if (!this.matin && i === boutons.length - 1) {
+      // Le bouton pour avancer (aller dormir le soir, ouvrir le comptoir le matin) se voit bien : il luit (planche 68).
+      if (i === boutons.length - 1) {
         b.label.setColor('#ffe9a0');
-        creerHalo(this);
-        const lueur = this.add.image(b.fond.x, b.fond.y, 'halo').setScale(2.2, 0.7).setTint(0xffd060).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
-        this.tweens.add({ targets: lueur, alpha: 0.1, duration: 900, yoyo: true, repeat: -1 });
+        lueurBouton(this, b, largeur - 16);
       }
     });
     this.events.off('resume', this.tout, this);
@@ -210,6 +208,7 @@ class NightScene extends Phaser.Scene {
   // --- La journée ---
 
   majJournee(x1, x2) {
+    if (!this.matin) return this.majJourneeSoir(x1, x2);
     const G = this.G;
     const j = G.journal;
     if (this.journee) this.journee.destroy();
@@ -278,6 +277,79 @@ class NightScene extends Phaser.Scene {
     }
   }
 
+  // (v1.42, planche 68) Le soir : ta journée en quatre chiffres (le détail sur un clic), puis « Demain » en grand,
+  // ceux qui sont en mission, les prêts, et la ligne du soir (le chat, le foyer, le billet de la garde)
+  majJourneeSoir(x1, x2) {
+    const G = this.G, j = G.journal;
+    if (this.journee) this.journee.destroy();
+    const c = this.journee = this.add.container(0, 0);
+    const gain = G.argent - G.argentDebutJour;
+    creerGlyphesHD(this); creerPiecesHD(this);
+    const tuile = (x, y, icone, n, lib, coul) => {
+      const g = this.add.graphics(); g.fillStyle(0x3b2410, 0.1).fillRoundedRect(x - 58, y - 30, 116, 60, 8); c.add(g);
+      c.add(this.add.image(x - 34, y - 6, icone).setScale(1.8));
+      c.add(this.add.text(x + 10, y - 8, n, style(n.length > 6 ? 15 : 18, coul, { fontStyle: 'bold' })).setOrigin(0.5));
+      c.add(this.add.text(x, y + 16, lib, style(11, '#5a3a1a')).setOrigin(0.5));
+    };
+    const signe = n => (n >= 0 ? '+' : '−') + Math.abs(n).toLocaleString('fr-FR');
+    tuile(98, 146, 'pieceFace', signe(gain), 'pièces', gain >= 0 ? '#3a6a2a' : '#a03020');
+    tuile(222, 146, 'glyphe_epees', String(j.servis), j.servis > 1 ? 'clients servis' : 'client servi', '#3b2410');
+    tuile(98, 214, 'glyphe_etoile', String(arrondi(G.reputation)).replace('.', ','), 'réputation', '#3b2410');
+    tuile(222, 214, 'glyphe_crane', String(j.morts), j.morts > 1 ? 'morts' : 'mort', j.morts ? '#a03020' : '#3b2410');
+    const detail = this.add.text(160, 256, 'Le détail de la journée ▸', style(12, '#7a4a1a', { fontStyle: 'bold italic' })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    detail.on('pointerover', () => detail.setColor('#a0601a')); detail.on('pointerout', () => detail.setColor('#7a4a1a'));
+    detail.on('pointerdown', () => this.detailJournee());
+    c.add(detail);
+    const sep = this.add.graphics(); sep.lineStyle(2, 0x8a6a3a, 0.6).lineBetween(46, 278, 274, 278); c.add(sep);
+    c.add(this.add.text(160, 300, 'Demain', style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    const partis = enMission(G);
+    c.add(this.add.text(40, 386, `En mission : ${partis.length ? partis.length + ' (' + partis.slice(0, 2).map(p => prenomDe(p.voyageur.nom)).join(', ') + (partis.length > 2 ? '…' : '') + ')' : 'personne'}`, style(12, '#3b2410', { wordWrap: { width: 240 } })));
+    const dette = G.prets.reduce((a, p) => a + p.restant, 0);
+    c.add(this.add.text(40, 404, G.prets.length ? `Prêts : ${G.prets.length} (reste ${dette} p.)` : 'Prêts : aucun', style(12, G.prets.length ? '#8a1a1a' : '#3b2410')));
+    if (G.argent < 0) c.add(this.add.text(40, 420, `À découvert ! Faillite à ${SEUIL_FAILLITE} p.`, style(12, '#a03030', { fontStyle: 'bold' })));
+    // la ligne du soir (le chat, le foyer, le billet de Fil-de-Fer, la nymphe) et son action
+    const foyer = typeof ligneFoyer === 'function' ? ligneFoyer(G) : null;
+    const billet = typeof alerteInformateurs === 'function' && alerteInformateurs(G);
+    let ligne = null, action = null;
+    if (billet || alerteChat(G)) {
+      const cache = G.cachette === G.jour + 1;
+      ligne = (billet ? 'Billet de Fil-de-Fer : « La garde, demain. Sûr et certain. »' : `${nomChat(G)[0].toUpperCase() + nomChat(G).slice(1)} crache vers la porte. La garde, demain ?`) + (cache ? ' Tout est caché.' : aCacher(G) ? '' : ' (Rien à cacher.)');
+      if (!cache && aCacher(G)) action = ['▸ Tout cacher sous le plancher', () => { cacherMarchandise(G); Son.jouer('glisse'); this.tout(); }];
+    } else if (foyer) {
+      ligne = foyer;
+      if (foyerVide(G) && (G.materiaux.bois || 0) > 0) action = ['▸ Mettre une bûche (1 planche)', () => { const err = allumerFeu(G); if (err) return this.annoncer(err); Son.jouer('glisse'); this.tout(); }];
+    } else if (nympheAttend(G)) ligne = 'Une lueur bleue monte de la place du marché... Sors voir, par la rue !';
+    else if (chatCeSoir(G)) ligne = 'Un chat de gouttière rôde devant ta porte ce soir.';
+    if (ligne) {
+      const t = this.add.text(40, G.argent < 0 ? 438 : 424, ligne, style(11, '#5a2a4a', { fontStyle: 'bold italic', wordWrap: { width: 240 } })); c.add(t);
+      if (action) { if (t.y + t.height + 22 > 466) t.y = 466 - 22 - t.height; c.add(this.add.text(40, t.y + t.height + 3, action[0], style(12, '#8a1a1a', { fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 4, y: 2 } })).setInteractive({ useHandCursor: true }).on('pointerdown', action[1])); }
+    }
+  }
+
+  // Le détail de la journée (l'ancienne colonne, entière) : un parchemin par-dessus, un clic le ferme
+  detailJournee() {
+    const G = this.G, j = G.journal, gain = G.argent - G.argentDebutJour;
+    Son.jouer('page');
+    const c = this.add.container(0, 0).setDepth(60);
+    const voile = this.add.rectangle(480, 270, 960, 540, 0x000000, 0.45).setInteractive();
+    c.add(voile);
+    c.add(this.add.image(480, 270, panneauHD(this, 520, 380)).setScale(2));
+    c.add(this.add.text(480, 104, 'Le détail de ta journée', style(20, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    const lignes = [
+      `Clients servis : ${j.servis}`,
+      `Revenus : ${j.retours} · Ratées : ${j.echecs || 0} · Morts : ${j.morts}`,
+      `Argent ce matin : ${G.argentDebutJour} · ce soir : ${G.argent} (${gain >= 0 ? '+' : ''}${gain})`,
+      `Réputation : ${arrondi(G.reputation)} · Expérience : ${G.experience}`,
+      `Flair : ${Math.round(niveauFlair(G) * 100)} % · Artisanat : niv. ${niveauArtisanat(G)}`,
+      '', 'Demain : ' + this.textePrevision.text.replace('\n', ' '), this.texteFacteurs.text,
+      '', 'En mission : ' + (listeCourte(enMission(G).map(p => `${p.voyageur.nom} (jour ${p.retour})`), 4, 'personne').replace(/\n/g, ' · ')),
+      'Prêts : ' + (G.prets.length ? G.prets.map(p => `${p.nom}, reste ${p.restant} (−${p.parJour}/nuit)`).join(' · ') : 'aucun'),
+    ];
+    c.add(this.add.text(240, 130, lignes.join('\n'), style(13, '#3b2410', { lineSpacing: 4, wordWrap: { width: 480 } })));
+    c.add(this.add.text(480, 440, 'Un clic pour fermer', style(12, '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    voile.on('pointerdown', () => c.destroy());
+  }
+
   // --- Ta réserve (on achète le matin, au Marché des Mastres) ---
 
   creerReserve(x1, x2) {
@@ -342,7 +414,7 @@ class NightScene extends Phaser.Scene {
     });
     // ... puis les commandes (à accepter ou refuser), les nouvelles d'abord.
     // (audit v0.53 : on peut feuilleter toutes les lettres, aucune n'est refusée sans avoir été vue)
-    const max = 4 - infos.length, toutes = [...G.annonces].sort((a, b) => a.acceptee - b.acceptee);
+    const max = (this.matin ? 4 : 6) - infos.length, toutes = [...G.annonces].sort((a, b) => a.acceptee - b.acceptee);
     if ((this.pageLettres || 0) * max >= toutes.length) this.pageLettres = 0;
     const liste = toutes.slice((this.pageLettres || 0) * max, (this.pageLettres || 0) * max + max);
     if (!liste.length && !infos.length) c.add(this.add.text(x1 + 16, 127, 'Aucune lettre pour le moment.\nLes lettres sont rares.', style(13, '#3b2410')));
@@ -367,7 +439,7 @@ class NightScene extends Phaser.Scene {
     const cachees = G.annonces.length - liste.length;
     if (cachees > 0) {
       const nonLues = toutes.filter((x, i) => !x.acceptee && !liste.includes(x)).length;
-      const suite = this.add.text(x2 - 12, 344, `▸ ${cachees} autre${cachees > 1 ? 's' : ''} lettre${cachees > 1 ? 's' : ''}${nonLues ? ` (${nonLues} sans réponse)` : ''}`, style(12, nonLues ? '#a03a1a' : '#6b4a2a', { fontStyle: 'bold italic' })).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+      const suite = this.add.text(x2 - 12, this.matin ? 344 : 452, `▸ ${cachees} autre${cachees > 1 ? 's' : ''} lettre${cachees > 1 ? 's' : ''}${nonLues ? ` (${nonLues} sans réponse)` : ''}`, style(12, nonLues ? '#a03a1a' : '#6b4a2a', { fontStyle: 'bold italic' })).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
       suite.on('pointerdown', () => { this.pageLettres = (this.pageLettres || 0) + 1; Son.jouer('page'); this.tout(); });
       c.add(suite);
     }
@@ -384,6 +456,13 @@ class NightScene extends Phaser.Scene {
   // --- La prévision pour demain ---
 
   creerPrevision(x1, x2) {
+    // (v1.42, planche 68) le soir, « Demain » est en grand dans la colonne de gauche ; les lettres ont la leur
+    if (!this.matin) {
+      this.texteAlerte = this.add.text(160, 362, '', style(12, '#a02010', { fontStyle: 'bold', align: 'center' })).setOrigin(0.5, 0);
+      this.textePrevision = this.add.text(160, 334, '', style(22, '#7a2a10', { fontStyle: 'bold', align: 'center' })).setOrigin(0.5);
+      this.texteFacteurs = this.add.text(-1000, -1000, '', style(11, '#5a3a20')).setVisible(false);   // (le détail, sur un clic)
+      return;
+    }
     this.add.rectangle((x1 + x2) / 2, 412, x2 - x1 - 40, 112, 0xc8b080, 0.55).setStrokeStyle(2, 0x8a6a3a);
     this.add.text(x1 + 22, 366, this.matin ? "Aujourd'hui" : 'Demain', style(15, '#3b2410', { fontStyle: 'bold' }));
     // (v0.60) l'alerte : ce que la nuit va prélever, et la faillite si on n'a pas de quoi payer
@@ -403,7 +482,8 @@ class NightScene extends Phaser.Scene {
     const p = prevision(this.G, this.matin ? this.G.jour : this.G.jour + 1);
     const a = attrait(this.G);
     this.textePrevision.setText(`${p.min === p.max ? p.min : p.min + ' à ' + p.max} clients` +
-      (p.annonces ? ` (+ ${p.annonces} par lettre)` : ''));
+      (p.annonces ? (this.matin ? ` (+ ${p.annonces} par lettre)` : `\n+ ${p.annonces} par lettre`) : ''));
+    if (!this.matin) this.textePrevision.setFontSize(p.annonces ? 18 : 22);
     const signe = n => (n >= 0 ? '+' : '') + n.toFixed(1);
     const jour = this.matin ? this.G.jour : this.G.jour + 1;
     const evenements = modifEvenement(this.G, 'clients', null, jour);

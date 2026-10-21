@@ -39,6 +39,8 @@ class CarteScene extends Phaser.Scene {
     this.etiquettes = [];        // les textes du monde qui gardent la même taille à l'écran
     this.dessinerParchemin();
     this.titre = this.add.text(480, 24, '', style(19, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5);
+    // (v1.42, planche 68) un titre court ; le rang et le peuple dans une petite étiquette à côté
+    this.puceTitre = this.add.text(0, 25, '', style(12, '#2a1608', { fontStyle: 'bold', backgroundColor: '#c9b48a', padding: { x: 6, y: 2 } })).setOrigin(0, 0.5);
     this.dessinerZones();
     this.reperes = this.add.container(0, 0).setDepth(5);
     this.monde.add(this.reperes);
@@ -389,6 +391,9 @@ class CarteScene extends Phaser.Scene {
     const libelle = this.planification ? 'Préparer les sacs ▶' : this.consultation ? '◀ Ranger la carte' : 'Retour au comptoir';
     this.boutonFin = creerBouton(this, 840, 476, 190, libelle, () => this.terminer());
     this.boutonFin.label.setFontSize(16);
+    // (v1.42) ce qu'il reste à faire, près du bouton ; le bouton luit quand tout est prêt
+    this.texteRestants = this.add.text(840, 444, '', style(12, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+    this.lueurFin = lueurBouton(this, this.boutonFin, 190).setVisible(false);
   }
 
   dessinerBande() {
@@ -416,17 +421,20 @@ class CarteScene extends Phaser.Scene {
   tout() {
     const v = this.selection;
     const restants = this.voyageurs.filter(x => !this.place[x.id]).length;
+    const puce = v ? `${nomRang(v.niveau)} · ${NOMS_RACES[v.race] || v.race}` : '';
     if (!v) this.titre.setText('La carte de tes alentours');
-    else if (this.planification) {
-      this.titre.setText(restants ? `Où envoyer ${v.nom} ? (${nomRang(v.niveau)}, ${NOMS_RACES[v.race] || v.race}) · encore ${restants} à placer`
-        : 'Tout le monde a sa destination : à toi de préparer les sacs !');
-    } else {
-      this.titre.setText(`Où envoyer ${v.nom} ? (${nomRang(v.niveau)}, ${NOMS_RACES[v.race] || v.race})`);
-    }
+    else if (this.planification && !restants) this.titre.setText('Tout le monde a sa destination !');
+    else this.titre.setText(`Où envoyer ${prenomDe(v.nom)} ?`);
+    const avecPuce = !!v && !(this.planification && !restants);
+    this.puceTitre.setText(puce).setVisible(avecPuce);
+    this.texteRestants.setText(this.planification ? (restants ? `encore ${restants} à placer` : 'à toi de préparer les sacs') : '');
+    this.lueurFin.setVisible(!!this.planification && !restants);
     // (v0.85) jamais sous les plaques du jour et de la réputation (en haut à gauche, jusqu'à x 226)
     this.titre.setFontSize(19);
-    if (this.titre.width > 716) this.titre.setFontSize(15);
-    this.titre.setX(Math.max(480, 232 + this.titre.width / 2));
+    const largeurTotale = this.titre.width + (avecPuce ? 10 + this.puceTitre.width : 0);
+    const gauche = Math.max(480 - largeurTotale / 2, 232);
+    this.titre.setX(gauche + this.titre.width / 2);
+    this.puceTitre.setX(gauche + this.titre.width + 10);
     this.dessinerBande();
     this.dessinerReperes();
     if (this.zoneChoisie) this.choisirZone(this.zoneChoisie);

@@ -41,7 +41,7 @@ const OBJECTIFS = [
   { id: 'marche', groupe: 'jour', des: G => G.jour >= 1, texte: 'Achète des provisions au Marché des Mastres', prog: G => [Object.values(G.depenses || {}).some(x => x > 0) ? 1 : 0, 1], argent: 15,
     aide: "Le matin, avant d'ouvrir : « Le marché ». Approche-toi d'un étal et achète ce qui manque à ta réserve." },
   { id: 'bureau', groupe: 'jour', des: G => lieuDebloque(G, 'bureau') && G.jour >= 1, texte: 'Améliore une chose au bureau', prog: G => [(G.travaux || []).length + Object.values(G.ameliorations || {}).reduce((a, b) => a + b, 0) > 0 ? 1 : 0, 1], argent: 25,
-    aide: "Le soir, « Le bureau », le tiroir « Améliorer le comptoir » : les ouvriers viennent pendant la nuit." },
+    aide: "Le soir, « Le bureau », la tuile « Améliorer le comptoir » : les ouvriers viennent pendant la nuit." },
   { id: 'vivants3', groupe: 'semaine', texte: 'Fais revenir 3 aventuriers vivants', prog: G => [Object.values(G.succes || {}).reduce((a, b) => a + b, 0), 3], argent: 40,
     aide: "Un baluchon complet, une contrée à leur mesure : regarde ce que dit ton flair avant de les laisser partir." },
   { id: 'deuxEtoiles', groupe: 'semaine', des: G => G.jour >= (typeof JOUR_DEUX_ETOILES === 'number' ? JOUR_DEUX_ETOILES : 2), texte: 'Envoie quelqu’un dans une contrée à 2 étoiles',
@@ -151,8 +151,29 @@ function etapesGuide(s, y, liste, enCours, titre = '', prof = 150) {
   return c;
 }
 // La vignette en haut à droite : NOUVEAU, OBJECTIF ATTEINT...
-function vignetteGuide(s, entete, titre, texte, { x = 760, y = 92, prof = 160, duree = 4200 } = {}) {
+// (v1.42, planche 68) le bouton de l'action principale luit : une lueur dorée et un liseré d'or qui respirent.
+// Renvoie le conteneur (à montrer / cacher selon que l'action est possible).
+function lueurBouton(s, b, largeur) {
+  creerHalo(s);
+  const x = b.fond.x, y = b.fond.y;
+  const lueur = s.add.image(x, y, 'halo').setScale(largeur / 88, 0.8).setTint(0xffc040).setBlendMode(Phaser.BlendModes.ADD);
+  const lisere = s.add.graphics(); lisere.lineStyle(3, 0xffd34a, 1).strokeRoundedRect(x - largeur / 2 - 6, y - 23, largeur + 12, 46, 8);
+  s.tweens.add({ targets: lueur, alpha: { from: 0.5, to: 0.15 }, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  s.tweens.add({ targets: lisere, alpha: { from: 1, to: 0.45 }, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  return s.add.container(0, 0, [lueur, lisere]);
+}
+// (v1.42, planche 68) les aides en petit texte (« clic : ... ») disparaissent une fois l'action faite
+function aideVue(G, cle) { return !!(G && G.aidesVues && G.aidesVues[cle]); }
+function marquerAide(G, cle) { if (!G) return; G.aidesVues = G.aidesVues || {}; G.aidesVues[cle] = true; }
+// (planche 68 : une seule à la fois ; les suivantes attendent leur tour)
+function vignetteGuide(s, entete, titre, texte, options = {}) {
+  s._fileVignettes = s._fileVignettes || [];
+  if (s._vignette && s._vignette.active) { s._fileVignettes.push([entete, titre, texte, options]); return null; }
+  const { x = 760, y = 92, prof = 160, duree = 4200 } = options;
   const c = s.add.container(x, y).setDepth(prof).setScrollFactor(0);
+  s._vignette = c;
+  c.once('destroy', () => { s._vignette = null; const suite = s._fileVignettes.shift();
+    if (!s.sys.isActive()) s._fileVignettes = []; else if (suite) s.time.delayedCall(200, () => vignetteGuide(s, ...suite)); });
   const t1 = s.add.text(-176, -26, entete, style(11, '#8ab0d0', { fontStyle: 'bold' }));
   const t2 = s.add.text(-176, -10, titre, style(15, '#fff4dc', { fontStyle: 'bold' }));
   const t3 = s.add.text(-176, 12, texte, style(12, '#c9d4dc', { wordWrap: { width: 350 } }));
@@ -251,7 +272,7 @@ function guideClient(comptoir, etape) {
   const PAS = {
     commande: { zone: [683, 16, 262, 236], fleche: [640, 130, 0], texte: "« D'abord, lis sa commande, là, sur le parchemin. Chaque ligne, c'est ce qu'il lui faut pour revenir vivant. »", bouton: 'Compris ▶', suite: 'marchandises', n: 0 },
     marchandises: { zone: [142, 352, 556, 172], fleche: [420, 330, 90], texte: "« Clique sur tes marchandises, en bas, pour les glisser dans son baluchon. Tout ce qui est sur le parchemin. »", n: 1, bulle: { x: 470, y: 200, pointe: null } },
-    flair: { zone: [683, 170, 262, 50], fleche: [640, 195, 0], texte: "« Tout y est ! Sous la commande, ton flair : ses chances de revenir vivant. Plus le baluchon est complet, plus elles montent. »", bouton: 'Compris ▶', suite: 'remettre', n: 2 },
+    flair: { zone: [683, 192, 262, 54], fleche: [640, 219, 0], texte: "« Tout y est ! Sous la commande, la jauge de ton flair : ses chances de revenir vivant. Plus le baluchon est complet, plus elle monte. »", bouton: 'Compris ▶', suite: 'remettre', n: 2 },
     remettre: { zone: [732, 476, 216, 40], fleche: [690, 496, 0], texte: "« Il ne reste qu'à lui remettre son baluchon. Clique sur « Remettre le baluchon ». »", n: 3, bulle: { x: 470, y: 420, pointe: null } },
   };
   if (etape === 'fini') {
