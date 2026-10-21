@@ -2851,3 +2851,20 @@ roue à aubes qui tourne sur le bief, l'étang et son ponton, sa barque. Le rena
 (poil terni, veines violettes, yeux qui luisent, une fumée violette qui sort de lui ; elle le quitte quand on le chasse).
 La fin : l'aube en grande pompe (le soleil qui se lève derrière l'étang, ses rayons, l'eau d'or, les oiseaux), la vignette
 du succès « Cœur de chat », puis le chat debout sur ses pattes arrière, un petit cigare, qui parle.
+
+Retours du joueur sur la v2 (21/10) : « on comprend pas trop où est le pont par rapport à l'eau » ; « on comprend pas que la
+chatte va se faire emporter par le courant, en plus que l'eau soit mal incrustée » ; « la chatte littéralement assise sur
+l'eau » ; décors magnifiques, révélation du chat qui parle parfaite ; « il pourra continuer la conversation d'explication
+une fois rentré et en profiter pour en même temps mettre en place le nouvel espace aménagé pour le nouveau couple de chats ».
+
+### Planche 60 v3 : l'eau refaite (à valider : docs/planches-v059/planche-60-v3-vieux-moulin.png)
+- Le ruisseau vient vers nous entre deux berges d'herbe (de plus en plus étroit au loin, roseaux, reflet de la lune) et
+  passe sous le pont : l'eau continue jusqu'au bas de l'écran, on la voit entre les poteaux.
+- Le bief : un canal de pierre plus large ; de longs filets de courant filent vers la roue en accélérant, l'écume
+  bouillonne et gicle sous les aubes ; la chatte est posée sur sa planche (sillage en V, flèche rouge vers la roue,
+  jauge « la roue approche »).
+- L'étang : un dégradé qui reflète l'aube (or près de la rive d'en face, violet devant), le reflet déchiré des arbres, la
+  colonne d'or sous le soleil, qui se lève maintenant au-dessus des collines ; la barque s'enfonce dans l'eau (ligne de
+  flottaison, reflet) ; des ronds d'eau autour des poteaux du ponton et des roseaux ; les chats assis sur le ponton.
+- À construire après validation : la conversation du chat qui continue à la maison, pendant qu'on aménage le coin du
+  nouveau couple de chats (plus tard, deux chatons).
