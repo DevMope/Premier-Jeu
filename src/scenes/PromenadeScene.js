@@ -664,7 +664,7 @@ function ouvrirPanneauChat(scene, { adoption = false, quandFini = null } = {}) {
   fixe(scene.add.text(480, 86, adoption ? 'Un nouveau compagnon !' : nomChat(G).replace(/^ton chat$/, 'Ton chat'), style(22, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
   fixe(scene.add.text(480, 114, adoption ? "Un bon bain plus tard, son vrai pelage apparaît. Comment est-il ?" : 'Un nouveau collier ? Un autre nom ?', style(13, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
   // l'aperçu : assis, la queue qui bat
-  const apercu = fixe(scene.add.image(300, 300, 'chatRue_assis0').setScale(6).setOrigin(0.5, 1));
+  const apercu = fixe(scene.add.image(316, 300, 'chatRue_assis0').setScale(5.2).setOrigin(0.5, 1));
   let q = 0;
   const queue = scene.time.addEvent({ delay: 400, loop: true, callback: () => { if (apercu.active) apercu.setTexture(cleChat(look) + '_assis' + (++q % 2)); } });
   const maj = () => { creerChatHD(scene, look); apercu.setTexture(cleChat(look) + '_assis0'); for (const l of lignes) l.maj(); };
