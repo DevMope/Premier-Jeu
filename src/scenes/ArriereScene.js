@@ -29,16 +29,21 @@ class ArriereScene extends Phaser.Scene {
     this.dessinerPorte();
     this.dessinerPorteRue();
     this.dessinerDecos();
-    creerBouton(this, 840, 505, 220, this.comptoir ? '↻ Retour au comptoir' : '◀ Retour', () => this.fermer());
+    const retour = creerBouton(this, 840, 505, 220, this.comptoir ? '↻ Retour au comptoir' : '◀ Retour', () => this.fermer());
     boutonCarteMonde(this, 884, 112);   // (v0.93) la carte du monde
     // (v0.82, étape 10b) le coin de la forge, à partir du saut d'un an
-    if (forgeProposee(G)) creerBouton(this, 600, 505, 220, forgeConstruite(G) ? '⚒ La forge' : '⚒ Le coin de la forge', () => { this.scene.pause(); this.scene.launch('Forge', { appelant: 'Arriere' }); });
+    const forge = forgeProposee(G) && creerBouton(this, 600, 505, 220, forgeConstruite(G) ? '⚒ La forge' : '⚒ Le coin de la forge', () => { this.scene.pause(); this.scene.launch('Forge', { appelant: 'Arriere' }); });
     // (v1.32, planche 55) la tapissière et son carnet, quand toutes les améliorations sont faites
     if (typeof decoProposee === 'function' && decoProposee(G)) {
       const ouvrir = () => decoDe(G) ? carnetDeco(this, () => this.appliquerDeco()) : visiteTapissiere(this, ok => { if (ok) { this.boutonDeco.label.setText('🎨 Le carnet'); this.appliquerDeco(); carnetDeco(this, () => this.appliquerDeco()); } });
       this.boutonDeco = creerBouton(this, 370, 505, 200, decoDe(G) ? '🎨 Le carnet' : '🎨 La tapissière', ouvrir);
       this.boutonDeco.fond.setDepth(2); this.boutonDeco.label.setDepth(2.01);   // (au-dessus du coin des chats)
       if (!G.decoVue) this.time.delayedCall(700, ouvrir);
+    }
+    // (v1.38) le coin des chats est posé au sol, devant l'étagère : les étiquettes et les boutons restent par-dessus
+    if (typeof coinDesChats === 'function' && (coinDesChats(G) || {}).lieu === 'arriere') {
+      for (const o of this.children.list) if (o.type === 'Text' && o.depth === 0) o.setDepth(2.5);
+      for (const bt of [retour, forge]) if (bt) { bt.fond.setDepth(2); bt.label.setDepth(2.01); }
     }
     this.time.delayedCall(400, () => conseilGarrick(this, 'arriere'));
   }
