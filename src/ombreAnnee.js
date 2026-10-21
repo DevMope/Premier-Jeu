@@ -188,7 +188,7 @@ function boireUnVerre(G) {
   payer(G, OMBRE_ANNEE.verre, 'marcheNoir');
   s.verres++;
   changerRelation(G, 'Mère Nok', 1);
-  if (s.verres > 2) return { texte: "« Encore un ? Tu vas finir sous le comptoir, mon petit. » Elle te ressert quand même." };
+  if (s.verres > 2) return { texte: typeof ageJoueur === 'function' && ageJoueur(G) < 18 ? "« Encore un jus ? Tu vas finir avec les dents violettes, mon petit. » Elle te ressert quand même." : "« Encore un ? Tu vas finir sous le comptoir, mon petit. » Elle te ressert quand même." };
   // le premier verre : un bon tuyau, parfois (la garde qui viendra demain, la caisse du soir...)
   if (s.verres === 1 && G.gardeDemain) return { texte: "Mère Nok se penche : « Un conseil gratuit avec ton verre : la garde a reçu une plainte. Ils passeront chez toi demain. Range tes affaires. »" };
   if (s.verres === 1 && Math.random() < 0.4) return { texte: `Mère Nok essuie un verre : « Ce soir, dans la fosse... ${indiceFosse(G)} Moi, je dis ça... »` };

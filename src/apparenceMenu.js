@@ -13,7 +13,7 @@ function textureVignetteApparence(scene, ap, feminin, stade) {
   return cle;
 }
 
-function panneauApparence(scene, { x = 705, y = 262, l = 470, h = 400, ap, feminin = false, stade = 'petit', barbe = true, visage = true, prof = 0, quandChange = null, onglet = 'coiffure' } = {}) {
+function panneauApparence(scene, { x = 705, y = 262, l = 470, h = 400, ap, feminin = false, stade = 'petit', barbe = true, visage = true, prof = 0, quandChange = null, onglet = 'coiffure', aDixHuitAns = false } = {}) {
   const fond = scene.add.image(x, y, panneauHD(scene, l, h)).setScale(2).setDepth(prof);
   const x0 = x - l / 2 + 22, x1 = x + l / 2 - 22, haut = y - h / 2;
   const onglets = [], contenu = [], pages = { coiffure: 0, barbe: 0 };
@@ -83,6 +83,11 @@ function panneauApparence(scene, { x = 705, y = 262, l = 470, h = 400, ap, femin
       const g = scene.add.graphics().setDepth(prof + 1); g.fillStyle(sel ? 0x8a3a1a : off ? 0xb8a888 : 0xc8b088).fillRoundedRect(ox - lo / 2 + 2, haut + 16, lo - 4, 28, 6); onglets.push(g);
       const t = scene.add.text(ox, haut + 30, nom, style(13, sel ? '#f8e8c8' : off ? '#8a7a6a' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(prof + 2); onglets.push(t);
       if (!off) { const z = scene.add.zone(ox, haut + 30, lo - 4, 28).setInteractive({ useHandCursor: true }).setDepth(prof + 3); onglets.push(z); z.on('pointerdown', () => { actif = id; Son.jouer('page'); dessiner(); }); }
+      else if (aDixHuitAns) {   // (v1.46 : à la création, la barbe attend les 18 ans ; on le dit au survol)
+        const z = scene.add.zone(ox, haut + 30, lo - 4, 28).setInteractive().setDepth(prof + 3); onglets.push(z);
+        z.on('pointerover', () => infobulle.setText('À 18 ans, devant le miroir').setPosition(ox, haut + 14).setVisible(true));
+        z.on('pointerout', () => infobulle.setVisible(false));
+      }
     });
     let py = haut + 62;
     if (actif === 'visage') {

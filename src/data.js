@@ -1068,7 +1068,7 @@ const GARDE_ROBE = {
   cape: { f: true, nom: 'Cape de voyage', prix: 35, effet: 'Belle allure : +0,2 client par jour.' },
   echarpe: { f: true, nom: 'Écharpe de laine', prix: 12, effet: 'Bien au chaud : tes nuits te consolent un peu plus (+0,1 de réputation après un mauvais jour).' },
   monocle: { nom: 'Monocle', prix: 24, effet: 'Tu vois mieux : +10 % de flair.' },
-  pipe: { f: true, nom: 'Pipe en bruyère', prix: 10, effet: 'Calme et posé : les marchands te font 2 % de remise.' },
+  pipe: { f: true, majeur: true, nom: 'Pipe en bruyère', prix: 10, effet: 'Calme et posé : les marchands te font 2 % de remise.' },
   montre: { f: true, nom: 'Montre à gousset', prix: 40, effet: "Toujours à l'heure : +1 d'expérience chaque jour." },
   bague: { f: true, nom: 'Bague de marchand', prix: 30, effet: 'On te fait confiance : +1 de relation avec chaque nouveau client.' },
 };

@@ -1417,7 +1417,7 @@ class MarcheScene extends Phaser.Scene {
       const x = 40 + (i % 2) * 400;
       const y = 364 + Math.floor(i / 2) * 25;   // (audit v0.61 : la dernière rangée passait sous le message)
       c.add(this.add.image(x, y, iconeObjet(this, id)).setScale(1.6));
-      c.add(this.add.text(x + 18, y - 6, `${d.nom} · ${d.prix} p.`, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      c.add(this.add.text(x + 18, y - 6, `${d.nom} · ${d.prix} p.${d.majeur && ageJoueur(G) < 18 ? ' · dès 18 ans' : ''}`, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
       // (v0.84) l'effet tient sur une ligne (il débordait sur la rangée suivante) ; en entier au survol
       const effet = this.add.text(x + 18, y + 7, d.effet, style(10, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5);
       if (effet.width > 290) {

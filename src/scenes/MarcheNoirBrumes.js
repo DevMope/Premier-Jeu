@@ -167,11 +167,12 @@ Object.assign(MarcheNoirScene.prototype, {
   pageGrandFeu(message = null) {
     const G = this.G, s = etatBrumes(G);
     this.fermerVue(); this.vider(); this.allerCoin(1); this.titreCoin.setText('Le grand feu');
-    this.texte(40, 374, message || "Un vieil orc te tend une coupe d'hydromel noir, épais comme la nuit : « Pour nos morts. Et pour les tiens. » À côté, on rompt le pain de cendre « pour les absents ».", 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    const mineur = typeof ageJoueur === 'function' && ageJoueur(G) < 18;   // (v1.46 : pas d'hydromel avant 18 ans : la tisane des anciens, qui fait voir loin aussi)
+    this.texte(40, 374, message || (mineur ? "Un vieil orc lève une coupe d'hydromel noir, te regarde... et la repose : « Pas pour toi, petit. Tiens : la tisane des anciens. Elle fait voir loin, elle aussi. Pour nos morts, et pour les tiens. » À côté, on rompt le pain de cendre « pour les absents »." : "Un vieil orc te tend une coupe d'hydromel noir, épais comme la nuit : « Pour nos morts. Et pour les tiens. » À côté, on rompt le pain de cendre « pour les absents »."), 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
     if (!s.hydromel) {
-      this.bouton(200, 456, 300, "Boire l'hydromel noir", () => { boireHydromel(G); Son.jouer('glou'); this.vider(); this.bloqueCoins = true; this.cameras.main.fadeOut(1400, 20, 10, 30); this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Vision', { retour: 'MarcheNoir' })); });
+      this.bouton(200, 456, 300, mineur ? 'Boire la tisane des anciens' : "Boire l'hydromel noir", () => { boireHydromel(G); Son.jouer('glou'); this.vider(); this.bloqueCoins = true; this.cameras.main.fadeOut(1400, 20, 10, 30); this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Vision', { retour: 'MarcheNoir' })); });
       this.bouton(520, 456, 240, 'Refuser poliment', () => { refuserHydromel(G); this.pageGrandFeu("Le vieil orc hausse les épaules et boit ta part. Quelques regards se détournent."); });
-    } else this.texte(40, 420, s.hydromel === 'refuse' ? "Tu as refusé la coupe, ce soir." : "L'hydromel noir te tourne encore un peu la tête...", 12, '#c8a890', { fontStyle: 'italic' });
+    } else this.texte(40, 420, s.hydromel === 'refuse' ? "Tu as refusé la coupe, ce soir." : (mineur ? 'La tisane des anciens te laisse un goût de fumée et d’étoiles...' : "L'hydromel noir te tourne encore un peu la tête..."), 12, '#c8a890', { fontStyle: 'italic' });
     if (!s.pain) this.bouton(200, 500, 300, 'Rompre le pain de cendre', () => { prendrePain(G); Son.jouer('miam'); this.pageGrandFeu("Tu romps le pain « pour les absents ». On t'en glisse un quignon dans la poche : donné à un aventurier qui part en terre d'ombre, il le fera rebrousser chemin au lieu de mourir."); });
     this.bouton(860, 500, 140, '◂ La fête', () => this.pageBrumes());
   },

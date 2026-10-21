@@ -28,15 +28,15 @@ class IntroScene extends Phaser.Scene {
       const b = creerBouton(this, x, 112, 140, texte, () => {
         this.feminin = feminin;
         this.ap.coiffure = apparenceParDefaut(feminin).coiffure;
-        if (feminin) this.ap.barbe = 0;
-        this.menu.regler({ feminin, barbe: !feminin });
+        this.ap.barbe = 0;
+        this.menu.regler({ feminin, barbe: false });
         this.maj();
       });
       return { feminin, b };
     });
 
     // Les choix, sur un parchemin : des onglets et des vignettes (v1.32, planche 57)
-    this.menu = panneauApparence(this, { x: 705, y: 258, l: 470, h: 410, ap: this.ap, feminin: this.feminin, stade: 'petit', barbe: !this.feminin, quandChange: () => this.maj(true) });
+    this.menu = panneauApparence(this, { x: 705, y: 258, l: 470, h: 410, ap: this.ap, feminin: this.feminin, stade: 'petit', barbe: false, aDixHuitAns: true, quandChange: () => this.maj(true) });
 
     // Le nom de ton comptoir : un vrai champ à remplir, avec un crayon
     this.nomShop = NOM_SHOP_DEFAUT;
@@ -73,7 +73,7 @@ class IntroScene extends Phaser.Scene {
   auHasard() {
     for (const cle of Object.keys(this.ap)) this.ap[cle] = Phaser.Math.Between(0, APPARENCE[cle].length - 1);
     if (Math.random() < 0.7) this.ap.couleurBarbe = 0;   // (le plus souvent, la barbe suit les cheveux)
-    if (this.feminin) this.ap.barbe = 0;
+    this.ap.barbe = 0;   // (la barbe se choisit à 18 ans, devant le miroir)
     this.menu.rafraichir();
     this.maj();
   }
@@ -83,7 +83,7 @@ class IntroScene extends Phaser.Scene {
     const genre = this.feminin ? 'fille' : 'garcon';
     this.apercu.setTexture('joueur_petit');
     this.nomApercu.setText(NOMS_JOUEUR[genre].petit);
-    this.texteAge.setText(this.feminin ? `${AGE_DEPART} ans` : `${AGE_DEPART} ans · la barbe poussera à 18 ans`);
+    this.texteAge.setText(this.feminin ? `${AGE_DEPART} ans` : `${AGE_DEPART} ans · la barbe se choisira à 18 ans, au miroir`);
     this.texteShop.setText(this.nomShop);
     for (let taille = 16; this.texteShop.width > 270 && taille >= 10; taille--) this.texteShop.setFontSize(taille);
     this.curseur.setX(this.texteShop.x + this.texteShop.width + 3);

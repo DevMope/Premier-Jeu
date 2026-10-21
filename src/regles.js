@@ -825,7 +825,7 @@ function etalsDuJour(G) {
 function remiseMarchand(G, cle) {
   const forme = reveilDuJour(G).forme === 'remise' ? CHAMBRE.remise : 0;
   const blason = aDecoration(G, 'blason') ? 0.05 : 0;
-  const pipe = porte(G, 'pipe') ? 0.02 : 0;
+  const pipe = porte(G, 'pipe') && ageJoueur(G) >= 18 ? 0.02 : 0;   // (v1.46 : pas avant 18 ans)
   return (REMISES[niveauRelation(G, MARCHANDS[cle].nom).nom] || 0) + forme + blason + pipe;
 }
 
@@ -1066,6 +1066,7 @@ function possede(G, id) {
 
 function acheterTenue(G, id) {
   if (possede(G, id)) return 'Tu l\'as déjà.';
+  if (GARDE_ROBE[id].majeur && ageJoueur(G) < 18) return `« ${GARDE_ROBE[id].nom} ? À ton âge ? Reviens me voir à tes dix-huit ans. »`;   // (v1.46)
   if (!peutPayer(G, GARDE_ROBE[id].prix)) return manqueArgent(G, GARDE_ROBE[id].prix, "Pas assez d'argent.");
   payer(G, GARDE_ROBE[id].prix, 'garderobe');
   G.garderobe = [...(G.garderobe || G.tenue || []), id];

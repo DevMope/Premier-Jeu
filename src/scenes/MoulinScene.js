@@ -318,9 +318,11 @@ class MoulinScene extends Phaser.Scene {
     ex.destroy(); goutte.destroy();
     this.heros.setTexture(this.cleHeros).setAngle(0);
     // il tend son cigare
-    const offre = this.bulle(X - 30, SOL_PROMENADE - 150, '« Une bouffée ? »', '#2a1608', 14);
-    this.dire(`${nom} te tend son cigare, l'air de rien.`, 'À toi de choisir.');
-    const fume = (await this.choisir(['🚬 Tirer une bouffée avec lui', '✋ Non merci'], ['#4f7a3a', '#6a4a2a'])) === 0;
+    // (v1.46) pas avant 18 ans : il ne le propose pas à un gamin
+    const mineur = typeof ageJoueur === 'function' && ageJoueur(G) < 18;
+    const offre = this.bulle(X - 30, SOL_PROMENADE - 150, mineur ? "« Je t'en offrirais bien une bouffée...\nT'as quel âge, toi ? Pas avant tes dix-huit ans, gamin. »" : '« Une bouffée ? »', '#2a1608', 14);
+    this.dire(mineur ? `${nom} tire sur son cigare et te toise des oreilles aux bottes.` : `${nom} te tend son cigare, l'air de rien.`, mineur ? '' : 'À toi de choisir.');
+    const fume = mineur ? (await this.choisir(['Suite ▸']), false) : (await this.choisir(['🚬 Tirer une bouffée avec lui', '✋ Non merci'], ['#4f7a3a', '#6a4a2a'])) === 0;
     offre.destroy();
     this.etat.fume = fume;
     let cx = 0, cy = 0;
@@ -346,8 +348,8 @@ class MoulinScene extends Phaser.Scene {
       await this.attendre(5200); this.tweens.add({ targets: g, alpha: 0, duration: 800, onComplete: () => g.destroy() });
     } else {
       this.heros.setTexture(textureJoueurPose(this, G, 'troisQuarts', 'empoigne'));
-      const r = this.bulle(X - 30, SOL_PROMENADE - 150, "« Comme tu veux. Plus pour moi. »", '#2a1608', 14);
-      this.dire('Tu lèves la main : non merci. ' + nom + ' hausse les épaules, tire une longue bouffée... et souffle un rond de fumée parfait.', '');
+      const r = this.bulle(X - 30, SOL_PROMENADE - 150, mineur ? '« Plus pour moi. »' : "« Comme tu veux. Plus pour moi. »", '#2a1608', 14);
+      this.dire(mineur ? nom + ' tire une longue bouffée... et souffle un rond de fumée parfait.' : 'Tu lèves la main : non merci. ' + nom + ' hausse les épaules, tire une longue bouffée... et souffle un rond de fumée parfait.', '');
       rondDeFumee(this, c.x + 16, c.y - 96, 1);
       await this.attendre(1800); r.destroy(); this.heros.setTexture(this.cleHeros);
       this.dire('Puis il tire une autre bouffée, la garde... et souffle doucement. La fumée ne monte pas : elle se range, trait par trait.', '');

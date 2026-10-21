@@ -55,10 +55,11 @@ Object.assign(MarcheNoirScene.prototype, {
     this.dessinerBar(c && !c.pris ? c.banni : null);
     this.titreCoin.setText('Au Gobelet Fêlé');
     this.vider();
-    this.texte(40, 374, message || "Mère Nok essuie un verre sans te regarder : « Qu'est-ce que je te sers ? Et ne me dis pas « du lait ». »", 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    const mineur = typeof ageJoueur === 'function' && ageJoueur(G) < 18;   // (v1.46 : avant 18 ans, Mère Nok sert un jus de mûre)
+    this.texte(40, 374, message || (mineur ? "Mère Nok te jauge par-dessus son comptoir : « Toi ? Un jus de mûre, et estime-toi heureux. »" : "Mère Nok essuie un verre sans te regarder : « Qu'est-ce que je te sers ? Et ne me dis pas « du lait ». »"), 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
     if (c && !c.pris) this.texte(40, 420, `${c.banni.nom} s'accoude à côté de toi et pose un pli scellé sur le comptoir.`, 12, '#e8c890', { fontStyle: 'italic' });
     else if (c && c.pris) this.texte(40, 420, 'Le contrat de ce soir est déjà parti, avec ton aventurier.', 12, '#a89080', { fontStyle: 'italic' });
-    this.bouton(170, 462, 260, `Un verre (${OMBRE_ANNEE.verre} p.)`, () => {
+    this.bouton(170, 462, 260, mineur ? `Un jus de mûre (${OMBRE_ANNEE.verre} p.)` : `Un verre (${OMBRE_ANNEE.verre} p.)`, () => {
       const r = boireUnVerre(G);
       if (r.erreur) return this.pageBar(r.erreur);
       Son.jouer('glou'); this.majBourse(); this.pageBar(r.texte);
