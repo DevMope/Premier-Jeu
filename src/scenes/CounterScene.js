@@ -1021,7 +1021,9 @@ class CounterScene extends Phaser.Scene {
 
   // (v1.42, planche 68) quatre zones de couleur : de quoi parle chaque panneau, d'un coup d'œil
   // (profondeur 0, posées tôt : les fiches et fenêtres ouvertes plus tard passent par-dessus)
+  // Seulement pendant le didacticiel (Jour Zéro et jour 1) : ensuite le comptoir reste sans liserés (demandé par le joueur)
   creerZones() {
+    if (!(typeof didacticiel === 'function' && didacticiel(this.G) && this.G.jour <= 1)) return;
     const g = this.add.graphics();
     const zones = [[22, 22, 246, 226, 0x6a9ac9, 145, 248, 'TOI', '#8ab0d0'], [687, 22, 256, 226, 0xd8a838, 815, 248, 'LE CLIENT', '#e8c060'],
       [142, 348, 560, 180, 0x6a9a4a, 422, 346, 'TA RÉSERVE', '#9ac87a'], [732, 344, 216, 182, 0xc04a3a, 840, 342, 'TES ACTIONS', '#e88a7a']];
