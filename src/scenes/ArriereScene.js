@@ -57,7 +57,7 @@ class ArriereScene extends Phaser.Scene {
   // (v1.32, planche 55) le décor choisi dans le carnet de la tapissière : murs et boiseries, sol, tapis, tableau
   appliquerDeco() {
     const T = typeof texturesDeco === 'function' ? texturesDeco(this, this.G) : null;
-    if (!T) return;
+    if (!T || !this.imMur || !this.imSol) return;
     this.imMur.setTexture(T.mur || 'murArriere').setTint(T.mur ? T.teinteMur : 0xc8a47c);
     this.imSol.setTexture(T.sol || 'plancherArriere').setTint(T.sol ? T.teinteSol : 0xd8bc98);
     if (this.imTapis) this.imTapis.setTexture(T.tapis || tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(T.tapis ? 2.4 : 2.2);

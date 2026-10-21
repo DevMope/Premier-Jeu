@@ -320,7 +320,7 @@ class PromenadeScene extends Cinematique {
     const G = this.G;
     // (les dessins de l'arrière-boutique s'appellent entre eux : on les emprunte)
     for (const nom of Object.getOwnPropertyNames(ArriereScene.prototype)) {
-      if (nom.startsWith('dessiner') && !this[nom]) this[nom] = ArriereScene.prototype[nom];
+      if ((nom.startsWith('dessiner') || nom === 'appliquerDeco') && !this[nom]) this[nom] = ArriereScene.prototype[nom];   // (v1.35 : le décor de la tapissière aussi, sans quoi la promenade plantait)
     }
     let etagere = [];
     this.decaler(960, () => {
