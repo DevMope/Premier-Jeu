@@ -220,6 +220,7 @@ async function conversationDuChat(scene) {
       await parler("« Je me taisais pour elle, et pour moi. Un chat qui cause,\nça finit en cage chez un mage. Ou pire. »");
     } else {
       dire(`${elleNom} ouvre un œil, te regarde, et le referme.`);
+      await parler("« Le Vieux Moulin, c'était notre lune de miel.\nJusqu'à ce que ce maudit renard s'en mêle. »");
       await parler("« Elle ne parle que le chat. Et elle ne fait confiance\nà personne — sauf à toi. »");
       await parler("« Il lui faut un coin à elle. Un vrai.\nPas un vieux coussin dans un courant d'air. »");
     }
