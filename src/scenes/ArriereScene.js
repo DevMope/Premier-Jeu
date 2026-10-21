@@ -87,6 +87,12 @@ class ArriereScene extends Phaser.Scene {
     if (typeof repaireA === 'function' && repaireA(this.G, 'cave')) this.dessinerTrappe();
     else this.imTapis = this.add.image(430, SOL_ARRIERE + 64, tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(2.2);
     this.appliquerDeco();
+    // (v1.37) le coin des chats, s'il a été installé ici (dans la promenade, il est posé à part, avec son décalage)
+    if (typeof coinDesChats === 'function' && (coinDesChats(this.G) || {}).lieu === 'arriere') {
+      if (this.scene.key !== 'Promenade') poserCoinChats(this, 'arriere', { profondeur: 0.5 });
+      return;
+    }
+    const avantCoin = this.children.list.length;
     // (le coussin attend un familier : le chat de gouttière, une fois adopté, y dort en boule)
     this.add.image(196, SOL_ARRIERE + 86, 'coussinHD').setOrigin(0.5, 1).setScale(2.4);
     // (v1.05, planche 25) sa gamelle, à son nom : pleine, ou vide quand la réserve n'a plus de ration
@@ -96,6 +102,7 @@ class ArriereScene extends Phaser.Scene {
       if (gamellePleine(this.G)) for (let k = 0; k < 9; k++) g.fillStyle(k % 2 ? 0xa86a30 : 0xc88a48).fillCircle(gx - 14 + (k % 5) * 7, gy - 5 - Math.floor(k / 5) * 2, 2.5);
       this.add.text(gx, gy + 3, nomChat(this.G).toUpperCase().slice(0, 8), style(8, '#f3e6c8', { fontStyle: 'bold' })).setOrigin(0.5);
     }
+    this.vieuxCoin = this.children.list.slice(avantCoin);   // (le soir où l'on installe le coin ici, on l'efface)
     if (chatAdopte(this.G) && this.scene.key !== 'Promenade' && typeof chatParti === 'function' && chatParti(this.G)) {
       // (v1.05) parti voir ailleurs (ou se réchauffer chez les voisins) : le coussin est vide
       this.add.text(200, SOL_ARRIERE + 30, 'Coussin vide', style(11, '#d0a890', { fontStyle: 'bold italic', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5, 0);

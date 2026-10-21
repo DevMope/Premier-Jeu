@@ -98,3 +98,49 @@ function voirForme(G, forme) {
   if (typeof FORMES_FUMEE !== 'undefined' && Object.keys(FORMES_FUMEE).every(f => c.formesVues.includes(f)) && typeof debloquerSucces === 'function') debloquerSucces(G, 'repertoireComplet');
   return true;
 }
+
+// --- (v1.37, planche 60 suite validée) De retour à la maison ---
+// La conversation au coin du feu : le premier soir après le Moulin (il a promis de tout t'expliquer)
+function conversationAFaire(G) { const m = G.moulin; return !!(m && m.fait && !m.conversation && G.jour > m.jour); }
+// Le coin des chats : où il est (ta chambre ou l'arrière-boutique), et ce qu'on y a mis
+function coinDesChats(G) { return (G.chat && G.chat.coin) || null; }
+function installerCoin(G, lieu) {
+  const c = chatDe(G);
+  c.coin = { lieu: lieu === 'chambre' ? 'chambre' : 'arriere', elements: ['panier', 'gamelles'], jour: G.jour };
+  if (G.moulin) G.moulin.conversation = G.jour;
+  return c.coin;
+}
+// Aménager le coin : renvoie { erreur } ou { gain } (la complicité gagnée : ils ronronnent)
+function acheterCoin(G, cle) {
+  const coin = coinDesChats(G), e = typeof COIN_CHATS !== 'undefined' ? COIN_CHATS[cle] : null;
+  if (!coin || !e) return { erreur: "Il n'y a pas encore de coin des chats." };
+  if (coin.elements.includes(cle)) return { erreur: 'Ils l’ont déjà.' };
+  if (G.argent < e.prix) return { erreur: `Il te manque ${e.prix - G.argent} pièces.` };
+  if (e.prix) payer(G, e.prix, 'coinChats');
+  coin.elements.push(cle);
+  return { gain: changerLien(G, 1) };
+}
+// La gamelle de la compagne : une ration tous les trois jours, elle aussi (prise dans ta réserve s'il en reste)
+function nuitDeLaCompagne(G) {
+  const m = G.moulin;
+  if (!(m && m.fait)) return;
+  if (m.repasElle === undefined) m.repasElle = G.jour;
+  if (G.jour - m.repasElle < (typeof FOYER !== 'undefined' ? FOYER.gamelle : 3)) return;
+  if ((G.stock.ration || 0) > 0) { G.stock.ration--; m.repasElle = G.jour; m.faimElle = 0; } else m.faimElle = (m.faimElle || 0) + 1;
+}
+// Le soir, il fume parfois quelque part dans la maison (à ta fenêtre, au coin du feu, dans l'arrière-boutique) ; il
+// souffle alors une forme — de temps en temps une forme que tu n'as jamais vue. Tiré une fois par soir.
+const FUMEE_MAISON = { chance: 0.4, neuve: 0.5, lieux: ['fenetre', 'feu', 'arriere'] };
+function fumeeDuSoir(G) {
+  const c = G.chat;
+  if (!(c && c.adopte && moulinFait(G)) || (typeof chatParti === 'function' && chatParti(G))) return null;
+  if (!c.fumee || c.fumee.jour !== G.jour) {
+    const fume = Math.random() < FUMEE_MAISON.chance;
+    const vues = formesVues(G), toutes = typeof FORMES_FUMEE !== 'undefined' ? Object.keys(FORMES_FUMEE) : vues;
+    const neuves = toutes.filter(f => !vues.includes(f));
+    const neuve = neuves.length > 0 && Math.random() < FUMEE_MAISON.neuve;
+    const forme = neuve ? Phaser.Utils.Array.GetRandom(neuves) : (vues.length ? Phaser.Utils.Array.GetRandom(vues) : null);
+    c.fumee = { jour: G.jour, lieu: fume && forme ? Phaser.Utils.Array.GetRandom(FUMEE_MAISON.lieux) : null, forme, neuve, vue: false };
+  }
+  return c.fumee.lieu ? c.fumee : null;
+}

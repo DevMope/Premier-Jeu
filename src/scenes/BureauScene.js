@@ -319,7 +319,9 @@ class BureauScene extends Phaser.Scene {
     let tiroirs = forgeProposee(this.G) ? [...TIROIRS, ['forge', '⚒ La forge']] : TIROIRS;
     // (v1.24) le carnet de JeuneGoy, dès sa première pensée de départ
     if (this.G.envie && this.G.envie.pensees && this.G.envie.pensees.length) tiroirs = [...tiroirs, ['carnet', 'Le carnet de JeuneGoy']];
-    const pas = tiroirs.length > 8 ? 23 : tiroirs.length > 7 ? 25.5 : tiroirs.length > 6 ? 29 : 34, y0 = tiroirs.length > 8 ? 284 : tiroirs.length > 7 ? 288 : tiroirs.length > 6 ? 292 : 300;   // (v0.82 : avec la forge, huit tiroirs plus serrés)
+    // (v1.37) le carnet des formes de fumée, dès que ton chat a parlé
+    if (typeof moulinFait === 'function' && moulinFait(this.G)) tiroirs = [...tiroirs, ['formes', '💨 Le carnet des formes']];
+    const pas = tiroirs.length > 9 ? 21 : tiroirs.length > 8 ? 23 : tiroirs.length > 7 ? 25.5 : tiroirs.length > 6 ? 29 : 34, y0 = tiroirs.length > 9 ? 280 : tiroirs.length > 8 ? 284 : tiroirs.length > 7 ? 288 : tiroirs.length > 6 ? 292 : 300;   // (v0.82 : avec la forge, huit tiroirs plus serrés)
     tiroirs.forEach(([cle, nom], i) => {
       const y = y0 + i * pas;
       const t = this.add.image(760, y, 'tiroirHD').setScale(2, Math.min(2, pas / 17)).setInteractive({ useHandCursor: true });
@@ -332,6 +334,7 @@ class BureauScene extends Phaser.Scene {
 
   ouvrirTiroir(cle, nom = (TIROIRS.find(t => t[0] === cle) || [])[1]) {
     const G = this.G;
+    if (cle === 'formes') return ouvrirCarnetFormes(this);
     if (cle === 'forge') { this.scene.pause(); this.scene.launch('Forge', { appelant: 'Bureau' }); return; }
     this.onglet = null;
     const c = this.vider();

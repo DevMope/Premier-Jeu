@@ -1603,6 +1603,7 @@ function nuit(G) {
   sansPlanter('nuitDeLEtage', () => typeof nuitDeLEtage === 'function' && nuitDeLEtage(G));
   sansPlanter('nuitDeLaMenace', () => typeof nuitDeLaMenace === 'function' && nuitDeLaMenace(G));   // (v1.33) l'annonce, la bataille
   sansPlanter('nuitDuLien', () => typeof nuitDuLien === 'function' && nuitDuLien(G));   // (v1.35) la complicité avec le chat
+  sansPlanter('nuitDeLaCompagne', () => typeof nuitDeLaCompagne === 'function' && nuitDeLaCompagne(G));   // (v1.37) sa gamelle à elle
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };

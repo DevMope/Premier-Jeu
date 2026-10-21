@@ -61,22 +61,26 @@ const COIN_CHATS = {
   cabane: { nom: 'La cabane en bois', prix: 250, texte: 'Une maison à eux, avec une porte ronde. Assez grande pour plus tard...' },
 };
 
-// Le coin des chats posé au sol, à partir de x (le panier au milieu, l'arbre à gauche, la cabane à droite)
-function dessinerCoinChats(scene, x, sol, { elements = ['panier', 'gamelles'], noms = ['', ''], profondeur = 2 } = {}) {
+// Le coin des chats posé au sol, à partir de x. `places` : où va chaque chose (en décalage depuis x ; le coussin peut
+// avoir sa hauteur à lui, [dx, dy]) ; par défaut, l'arbre à gauche, le panier, les gamelles devant, la cabane à droite.
+const PLACES_COIN = { arbre: 0, panier: 130, gamelles: 228, cabane: 300, pelote: 52, coussin: [300, -100] };
+function dessinerCoinChats(scene, x, sol, { elements = ['panier', 'gamelles'], noms = ['', ''], profondeur = 2, places = PLACES_COIN, pleines = [true, true] } = {}) {
   creerCoinChatsHD(scene);
-  const o = {};
-  if (elements.includes('arbre')) o.arbre = scene.add.image(x, sol, 'arbreChatHD').setOrigin(0.5, 1).setScale(2.4).setDepth(profondeur);
-  if (elements.includes('cabane')) o.cabane = scene.add.image(x + 300, sol, 'cabaneChatHD').setOrigin(0.5, 1).setScale(2.4).setDepth(profondeur);
-  if (elements.includes('panier')) o.panier = scene.add.image(x + 130, sol + 6, 'panierDoubleHD').setOrigin(0.5, 1).setScale(2.4).setDepth(profondeur + 0.01);
-  if (elements.includes('coussin')) o.coussin = scene.add.image(x + 300, sol - 100, 'coussinBrodeHD').setOrigin(0.5, 1).setScale(2.2).setDepth(profondeur + 0.02);
-  if (elements.includes('pelote')) o.pelote = scene.add.image(x + 52, sol + 12, 'peloteHD').setOrigin(0.5, 1).setScale(2.2).setDepth(profondeur + 0.03);
+  const o = {}, P = { ...PLACES_COIN, ...places };
+  if (elements.includes('arbre')) o.arbre = scene.add.image(x + P.arbre, sol, 'arbreChatHD').setOrigin(0.5, 1).setScale(2.4).setDepth(profondeur);
+  if (elements.includes('cabane')) o.cabane = scene.add.image(x + P.cabane, sol, 'cabaneChatHD').setOrigin(0.5, 1).setScale(2.4).setDepth(profondeur);
+  if (elements.includes('panier')) o.panier = scene.add.image(x + P.panier, sol + 6, 'panierDoubleHD').setOrigin(0.5, 1).setScale(2.4).setDepth(profondeur + 0.01);
+  if (elements.includes('coussin')) o.coussin = scene.add.image(x + P.coussin[0], sol + P.coussin[1], 'coussinBrodeHD').setOrigin(0.5, 1).setScale(2.2).setDepth(profondeur + 0.02);
+  if (elements.includes('pelote')) o.pelote = scene.add.image(x + P.pelote, sol + 12, 'peloteHD').setOrigin(0.5, 1).setScale(2.2).setDepth(profondeur + 0.03);
   if (elements.includes('gamelles')) {
-    const g = scene.add.graphics().setDepth(profondeur + 0.05);   // (devant le panier et la cabane)
+    const g = o.gamelles = scene.add.graphics().setDepth(profondeur + 0.05);   // (devant le panier et la cabane)
     noms.forEach((n, i) => {
-      const gx = x + 228 + i * 66, gy = sol + 16;
-      g.fillStyle(0x5a3418).fillEllipse(gx, gy, 50, 17).fillStyle(0x8a5a2a).fillEllipse(gx, gy - 3, 46, 12).fillStyle(0x3a2010).fillEllipse(gx, gy - 4, 36, 7);
-      for (let k = 0; k < 8; k++) g.fillStyle(k % 2 ? 0xa86a30 : 0xc88a48).fillCircle(gx - 12 + (k % 4) * 8, gy - 5 - Math.floor(k / 4) * 2, 2.5);
-      scene.add.text(gx, gy + 2, (n || '').toUpperCase().slice(0, 8), style(8, '#f3e6c8', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(profondeur + 0.06);
+      const gx = x + P.gamelles + i * 66, gy = sol + 16;
+      // (une gamelle en terre vernissée, son bord clair : qu'on la voie bien sur le plancher, même le soir)
+      g.fillStyle(0x140c06, 0.45).fillEllipse(gx + 2, gy + 6, 62, 14);
+      g.fillStyle(0x1a0e06).fillEllipse(gx, gy, 58, 22).fillStyle(0x7a4a22).fillEllipse(gx, gy, 54, 18).fillStyle(0xc89058).fillEllipse(gx, gy - 4, 50, 13).fillStyle(0x4a2a12).fillEllipse(gx, gy - 4, 40, 8);
+      if (pleines[i]) for (let k = 0; k < 8; k++) g.fillStyle(k % 2 ? 0x7a3a14 : 0x9a5222).fillCircle(gx - 12 + (k % 4) * 8, gy - 5 - Math.floor(k / 4) * 2, 2.5);
+      scene.add.text(gx, gy + 4, (n || '').toUpperCase().slice(0, 8), style(8, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 2 })).setOrigin(0.5).setDepth(profondeur + 0.06);
     });
   }
   return o;
