@@ -2974,6 +2974,29 @@ fumée direct et qu'il doit voir le chat en faire une nouvelle dans sa maison po
 - **L'étang** : gardon, perche, tanche, brochet, anguille, carpe, carpe dorée ; la légende **Grand-Mère Écaille** (carpe centenaire, œil laiteux, lichen, l'anneau d'or du meunier dans la lèvre ; sous la roue, à l'aube, en hiver) ; prises étranges du Comté : vieille botte, bouteille à message (une piste), pièce ancienne (collections).
 - **Les eaux du monde** (proposition) : Lac de Lune (Ilwen, elfe ; la Truite-Lune), lac gelé (Thrain Glacepêche, nain ; le Brochet de Fer), rivière aux bambous (Maître Bao, panda ; le Koï-Dragon), baie des Brisants (Mère Varech ; le Lanternier des abysses), Fleuve des Cendres (Grisk, gobelin ; le Silure-Charbon).
 - **La lignée des cannes** : roseau, canne du grand-père, noisetier à moulinet (180 p.) au début ; bambou laqué, argent elfique, fer des Nains chez les pêcheurs des autres contrées ; ébène et fil d'or, offerte par le Parrain.
+- **Réponse du joueur (21/10)** : l'idée « sans l'histoire du chat » est **validée** (Barnabé ouvre sa cabane au jour 6, vend la canne de roseau et fait le tuto ; le chat offre en plus la canne du grand-père si son histoire a eu lieu). Le reste de la planche attend encore sa validation (dont les noms des légendes).
+
+### Idées du joueur (21/10) : de vrais coups dans les animations (pour après)
+- **Un vrai coup d'arme** quand un voyageur frappe, avec **un flash selon sa puissance**.
+- **Le son de l'impact.**
+- **Des particules** qui montrent que l'ennemi (ou le voyageur) est blessé ou touché.
+- **Du recul** après l'impact : un peu, ou beaucoup selon la force.
+- **Pour un coup vraiment fort** : un léger tremblement de la caméra, **suivi d'un retour net, sans tremblement qui traîne**.
+- **Toute action / attaque se découpe en trois temps** : 1. l'anticipation (la préparation du coup), 2. l'action elle-même (le coup), 3. les conséquences (la gravité qui agit après le coup : le *follow-through*).
+- À appliquer à **toutes les cinématiques existantes**.
+
+État des lieux (Claude, 21/10) :
+- Le coup actuel des récits (`coupDeLame`, RecitEpreuves2) : la lame pivote d'un coup (130 ms, aller-retour), un arc blanc, le son « coup ». **Pas d'anticipation, pas de recul de la cible, pas de particules d'impact.** Utilisé dans 5 épreuves.
+- Les tremblements de caméra : ~50 dans le jeu, certains très longs (jusqu'à 1,4 à 1,5 s), qui traînent au lieu de revenir net.
+- Les combats de la fosse (MarcheNoirAnnee : flash blanc, impact, poussière, cri) sont les plus avancés : ils serviront de base.
+- Ailleurs : l'intro (Garrick), le renard du Moulin, le bras de fer, le videur du bar, le tir à l'arc, les assauts de l'Engeance, les monstres des récits.
+
+Proposition de Claude (à montrer sur une planche avant de construire, planche 72) : une seule « grammaire du coup » partagée par toutes les scènes, réglée par la force du voyageur et le poids de l'arme :
+1. **Anticipation** (200 à 400 ms) : il arme son bras, le corps se tasse et recule d'un pas, l'arme passe derrière l'épaule (une vraie pose du moteur des corps, sans troisième bras) ; plus le coup est fort, plus il arme longtemps.
+2. **Le coup** (80 à 120 ms) : l'arme traverse avec une traînée, **un flash à l'impact** (blanc pour un coup faible, doré pour un fort, la couleur du camp pour les héros), puis **un arrêt sur image très court** (50 à 100 ms) qui donne le poids.
+3. **Les conséquences** : la cible recule (quelques pixels à un vrai vol plané), clignote rouge, des particules selon ce qu'on touche (étincelles sur le métal, éclats sur la pierre, poussière, gouttes de sang discrètes) ; le frappeur finit son geste et revient en garde. **Le tremblement seulement pour les coups forts** : court (150 à 250 ms) puis net.
+- Le son de l'impact selon l'arme et la cible (lame sur chair, lame sur métal, masse, griffe, flèche).
+- Les mêmes trois temps pour les gestes qui ne sont pas des coups (sauter, lancer, tomber, se relever).
 
 ### Construit en v1.35 : l'aventure du Vieux Moulin (voir le tableau des versions)
 - `src/moulin.js` (règles : complicité, soir du chat, fin, formes vues), `src/succes.js` (les succès et leur vignette),
