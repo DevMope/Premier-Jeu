@@ -37,6 +37,7 @@ class ArriereScene extends Phaser.Scene {
     if (typeof decoProposee === 'function' && decoProposee(G)) {
       const ouvrir = () => decoDe(G) ? carnetDeco(this, () => this.appliquerDeco()) : visiteTapissiere(this, ok => { if (ok) { this.boutonDeco.label.setText('🎨 Le carnet'); this.appliquerDeco(); carnetDeco(this, () => this.appliquerDeco()); } });
       this.boutonDeco = creerBouton(this, 370, 505, 200, decoDe(G) ? '🎨 Le carnet' : '🎨 La tapissière', ouvrir);
+      this.boutonDeco.fond.setDepth(2); this.boutonDeco.label.setDepth(2.01);   // (au-dessus du coin des chats)
       if (!G.decoVue) this.time.delayedCall(700, ouvrir);
     }
     this.time.delayedCall(400, () => conseilGarrick(this, 'arriere'));
@@ -381,7 +382,7 @@ class ArriereScene extends Phaser.Scene {
     const h = this.add.image(330, SOL_ARRIERE + 68, 'halo').setScale(1.1).setTint(0xff9a40).setAlpha(0.5).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: h, alpha: 0.3, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     this.add.text(330, SOL_ARRIERE + 22, 'La cave', style(12, '#ffcfa0', { fontStyle: 'bold', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5);
-    this.add.zone(330, SOL_ARRIERE + 60, 190, 80).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirCave());
+    this.add.zone(330, SOL_ARRIERE + 60, 190, 80).setDepth(2).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.ouvrirCave());
   }
   // On descend l'échelle : la voûte, les caisses, ce qui dort à l'abri
   ouvrirCave() {

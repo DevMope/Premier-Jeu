@@ -9,7 +9,7 @@
 // Où va chaque chose, selon la pièce (le coussin brodé : sur le rebord de ta fenêtre, ou sur la cabane)
 const COIN_LIEUX = {
   chambre: { x: 0, sol: 503, places: { arbre: 650, panier: 290, gamelles: 380, cabane: 790, pelote: 210, coussin: [744, -272] } },
-  arriere: { x: 130, sol: SOL_ARRIERE + 68, places: { arbre: 420, panier: 130, gamelles: 228, cabane: 300, pelote: 52, coussin: [300, -100] } },   // (l'arbre devant le buffet : à gauche, il cachait l'étagère)
+  arriere: { x: 130, sol: SOL_ARRIERE + 68, places: { arbre: 420, panier: 130, gamelles: -70, cabane: 300, pelote: 52, coussin: [300, -100] } },   // (l'arbre devant le buffet : à gauche, il cachait l'étagère)
 };
 // Le coin, ses chats (endormis dans le panier ; le tien te suit en promenade), et son panneau d'aménagement au clic
 function poserCoinChats(scene, lieu, { dx = 0, chatDort = true, profondeur = 7.6 } = {}) {
@@ -32,7 +32,7 @@ function poserCoinChats(scene, lieu, { dx = 0, chatDort = true, profondeur = 7.6
   zone.on('pointerdown', () => { if (scene.enConversation) return; Son.jouer('miaou'); ouvrirCoinChats(scene, () => poserCoinChats(scene, lieu, { dx, chatDort, profondeur })); });
   if (chatDort && !absent) {
     const moi = scene.add.image(px - 22, SOL_COIN - 10, k + '_dort1').setOrigin(0.5, 1).setScale(2.2).setDepth(p + 0.9);
-    if (typeof ouvrirPanneauChat === 'function' && scene.scene.key !== 'Promenade' && scene.scene.key !== 'Dodo') moi.setInteractive({ useHandCursor: true }).on('pointerdown', () => { Son.jouer('miaou'); ouvrirPanneauChat(scene); });
+    if (typeof ouvrirPanneauChat === 'function' && scene.scene.key !== 'Promenade' && scene.scene.key !== 'Dodo') moi.setInteractive({ useHandCursor: true }).on('pointerdown', () => { Son.jouer('miaou'); ouvrirPanneauChat(scene, { quandFini: () => poserCoinChats(scene, lieu, { dx, chatDort, profondeur }) }); });
   }
   scene.add.text(px, SOL_COIN - 78, 'Le coin des chats', style(11, '#f3e6c8', { fontStyle: 'bold italic', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5).setDepth(p + 0.86);
   scene._coin = scene.children.list.slice(avant);
@@ -42,7 +42,7 @@ function poserCoinChats(scene, lieu, { dx = 0, chatDort = true, profondeur = 7.6
 // Le panneau « Le coin des chats » : ce qu'il y a, ce qu'on peut acheter (un clic, puis un second pour confirmer)
 function ouvrirCoinChats(scene, quandAchat) {
   const G = window.GAME, coin = coinDesChats(G);
-  if (!coin || scene.panneauCoin) return;
+  if (!coin || (scene.panneauCoin && scene.panneauCoin.active)) return;
   const fixe = o => { o.setScrollFactor(0).setDepth(60); boite.add(o); return o; };
   const boite = scene.panneauCoin = scene.add.container(0, 0).setDepth(60);
   boite.add(scene.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.55).setScrollFactor(0).setInteractive());
@@ -90,7 +90,7 @@ function vignetteForme(scene, forme) {
 // Le carnet des formes : celles que tu as vues sont dessinées, les autres restent « ??? »
 function ouvrirCarnetFormes(scene) {
   const G = window.GAME;
-  if (scene.carnetFormes) return;
+  if (scene.carnetFormes && scene.carnetFormes.active) return;
   creerFumeeHD(scene);
   const boite = scene.carnetFormes = scene.add.container(0, 0).setDepth(60);
   const fixe = o => { o.setScrollFactor(0); boite.add(o); return o; };
@@ -125,7 +125,8 @@ function ouvrirCarnetFormes(scene) {
     // le coin dans ta chambre (celui de l'arrière-boutique est dessiné avec la pièce)
     poserCoinChats(this, 'chambre', { chatDort: false });
     poserCoinChats(this, 'arriere', { dx: 960, chatDort: false });
-    if (d.conversation && conversationAFaire(G)) { this.time.delayedCall(500, () => conversationDuChat(this)); return; }
+    if (conversationAFaire(G)) {   // (lancée depuis la Nuit, ou à la promenade d'un soir où on avait dit « Plus tard »)
+      this.time.delayedCall(500, () => conversationDuChat(this)); return; }
     const f = fumeeDuSoir(G);
     if (f && !f.vue) chatQuiFume(this, f);
   };
@@ -162,23 +163,27 @@ function chatQuiFume(scene, f) {
 // --- La conversation au coin du feu (le soir suivant le Moulin) ---
 async function conversationDuChat(scene) {
   const G = scene.G;
+  if (scene.fini || scene.enConversation) return;
   scene.enConversation = true;
+  scene.cible = null;
+  if (scene.heros.marche) { scene.heros.marche.remove(); scene.heros.marche = null; }
   scene.entrer(P_CHAMBRE, 440, true);
   if (scene.compagnon) scene.compagnon.setVisible(false);
-  if (scene.allumerCheminee) scene.allumerCheminee();
+  if (scene.allumerCheminee && typeof feuAllume === 'function' && feuAllume(G)) scene.allumerCheminee();   // (seulement si le feu brûle vraiment)
   const caches = scene.children.list.filter(o => o.scrollFactorX === 0 && o.visible);   // (le nom de la pièce, Retour... : rangés le temps de parler)
   for (const o of caches) o.setVisible(false);
   const ui = [], fixe = o => { o.setScrollFactor(0).setDepth(40); ui.push(o); return o; };
+  fixe(scene.add.rectangle(480, 270, 960, 540, 0x000000, 0.001).setInteractive()).setDepth(39);   // (le décor ne se clique pas pendant qu'on parle)
   const attendre = ms => new Promise(ok => scene.time.delayedCall(ms, ok));
   // le décor : lui debout au coin du feu, elle qui dort sur le tapis, toi assis sur ton lit
   const chat = scene.add.image(250, SOL_PROMENADE, textureChatDebout(scene, lookChat(G))).setOrigin(0.5, 1).setScale(2.6).setDepth(8.6);
   const bout = { x: chat.x + 36, y: chat.y - 98 };
-  scene.add.image(bout.x, bout.y, 'halo').setScale(0.1).setTint(0xff8030).setBlendMode(Phaser.BlendModes.ADD).setDepth(8.7);
+  const braise = scene.add.image(bout.x, bout.y, 'halo').setScale(0.1).setTint(0xff8030).setBlendMode(Phaser.BlendModes.ADD).setDepth(8.7);
   filetDeFumee(scene, () => (chat.active ? bout : null));
   const lookElle = (G.moulin.compagne && G.moulin.compagne.look) || lookCompagne(G), kE = creerChatHD(scene, lookElle);
   const elle = scene.add.image(330, SOL_PROMENADE, kE + '_dort0').setOrigin(0.5, 1).setScale(2.2).setDepth(8.55);
   let souffle = 0; scene.time.addEvent({ delay: 1200, loop: true, callback: () => { if (elle.active) elle.setTexture(kE + '_dort' + (++souffle % 2)); } });
-  const cleA = textureJoueurAssis(scene, G), avant = scene.heros.texture.key;
+  const cleA = textureJoueurAssis(scene, G), avant = scene.heros.texture.key.replace(/_pas[12]$/, '');
   scene.heros.setTexture(cleA).setOrigin(0.5, (PIEDS_ASSIS[cleA] + 1) / scene.heros.height).setX(440).setY(436).setFlipX(true);
   // le bandeau (narration en italique, consigne en gras) et les choix
   const fond = fixe(scene.add.rectangle(480, 12, 920, 40, 0x2a1a10, 0.94).setStrokeStyle(2, 0xc9a227).setOrigin(0.5, 0));
@@ -242,7 +247,7 @@ async function conversationDuChat(scene) {
   if (typeof Sauvegarde !== 'undefined') Sauvegarde.planifier(G, 'Nuit');
   // le premier soir : on y va, ils s'installent
   scene.heros.setTexture(avant).setOrigin(0.5, 1).setY(SOL_PROMENADE);
-  chat.destroy(); elle.destroy();
+  chat.destroy(); elle.destroy(); braise.destroy();
   if (lieu === 'chambre') poserCoinChats(scene, 'chambre', { chatDort: true });
   else { scene.entrer(P_ARRIERE, 960 + 560, true); for (const o of scene.vieuxCoin || []) o.setVisible(false); poserCoinChats(scene, 'arriere', { dx: 960, chatDort: true }); }
   Son.jouer('miaou');
@@ -251,7 +256,8 @@ async function conversationDuChat(scene) {
   for (const o of ui) o.destroy();
   for (const o of caches) if (o.active) o.setVisible(true);
   scene.enConversation = false;
-  if (scene.compagnon) scene.compagnon.setVisible(false);   // (ce soir, il dort avec elle)
+  if (scene.compagnon) { scene.compagnon.destroy(); scene.compagnon = null; }   // (ce soir, il dort avec elle)
+  scene.cible = null;
   scene.dire(`${nom} ronronne déjà. Toi aussi, tu devrais aller dormir.`);
 }
 
