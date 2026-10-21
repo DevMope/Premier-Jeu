@@ -699,8 +699,10 @@ function textureJoueurPose(scene, G, vue, pose) {
   const cle = `joueur_${stade}_${vue}_${pose}`;
   if (!scene.textures.exists(cle) || scene.textures.get(cle).tenue !== tenue) {
     if (scene.textures.exists(cle)) scene.textures.remove(cle);
-    dessinerJoueurHD(G.joueur.apparence, stade, G.joueur.feminin, 0, G.tenue || [], vue, pose).texture(scene, cle);
+    const t = dessinerJoueurHD(G.joueur.apparence, stade, G.joueur.feminin, 0, G.tenue || [], vue, pose);
+    t.texture(scene, cle);
     scene.textures.get(cle).tenue = tenue;
+    if (t.mainXY) MAINS_XY[cle] = { x: t.mainXY[0] - t.l / 2, y: t.h - t.mainXY[1] };   // (v1.35 : pour lui mettre un objet en main)
   }
   return cle;
 }

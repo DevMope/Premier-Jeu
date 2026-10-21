@@ -186,31 +186,48 @@ function construireMoulin(scene, { aube = false } = {}) {
     for (let x = x0; x < x1; x += 9) { const h = 4 + hachage(x, 3, 924) * 8; g.fillStyle(aube ? 0x6a8a3a : 0x2e4a26).fillTriangle(x, sol - 4, x + 3, sol - 4 - h, x + 6, sol - 4); }
     for (let k = 0; k < 40; k++) g.fillStyle(aube ? 0x6a5434 : 0x2a2218).fillRect(x0 + hachage(k, 4, 924 + x0) * (x1 - x0), sol + 22 + hachage(k, 5, 924) * 30, 4, 2);
   }
-  // --- le ruisseau : il coupe le chemin. Ses deux berges descendent jusqu'à l'eau ; on le voit filer au loin vers les
-  // collines (de plus en plus étroit), et ses rides viennent vers nous. Le pont l'enjambe à hauteur des pieds.
+  // --- le ruisseau : il coupe le chemin. Il vient du fond (entre deux rives d'herbe, de plus en plus étroit vers les
+  // collines) et coule vers nous d'un seul tenant, en s'élargissant ; à hauteur du chemin, la terre est entaillée : deux
+  // berges en pente descendent jusqu'à l'eau, qui file sous le pont jusqu'au bas de l'écran.
   {
-    const a0 = P.ruisseau, b0 = P.ruisseauFin, m = (a0 + b0) / 2, yEau = sol - 4, yLoin = sol - 74;
-    const xl = y => y >= sol - 6 ? a0 + 34 + Math.max(0, y - yEau) * 0.2 : m - 26 + (a0 + 34 - (m - 26)) * (y - yLoin) / (sol - 6 - yLoin);
-    const xr = y => y >= sol - 6 ? b0 - 34 - Math.max(0, y - yEau) * 0.2 : m + 26 + (b0 - 34 - (m + 26)) * (y - yLoin) / (sol - 6 - yLoin);
-    // le lit : la terre mouillée des berges, en pente, sous l'eau et autour
-    const lit = scene.add.graphics().setDepth(1.95);
-    lit.fillStyle(C.berge).fillPoints([{ x: a0, y: sol - 6 }, { x: a0 + 40, y: yEau + 4 }, { x: a0 + 40, y: 540 }, { x: a0, y: 540 }], true);
-    lit.fillStyle(C.berge).fillPoints([{ x: b0, y: sol - 6 }, { x: b0 - 40, y: yEau + 4 }, { x: b0 - 40, y: 540 }, { x: b0, y: 540 }], true);
-    lit.fillStyle(aube ? 0x3a2c1c : 0x14100c).fillRect(a0 + 30, yEau, b0 - a0 - 60, 540 - yEau);
-    for (const sx of [1, -1]) for (let k = 0; k < 8; k++) { const x = sx > 0 ? a0 + 6 + k * 4 : b0 - 6 - k * 4; lit.fillStyle(0x000000, 0.25).fillRect(x, sol - 4 + k * 5, 3, 3); }   // (des cailloux dans la pente)
-    // l'eau qui file au loin, entre deux rives d'herbe, puis la surface devant, au fond du lit
-    const ge = surface(yLoin, sol - 6, xl, xr, 1.96, { rides: 26, clair: 2.2, courant: (x, y) => ({ y: sol - 8, x: x + (x - m) * 0.4, scaleX: 1.8 }) });
-    // ses deux rives qui fuient vers les collines : une bande d'herbe, des cailloux, des roseaux de plus en plus petits
+    const a0 = P.ruisseau, b0 = P.ruisseauFin, m = (a0 + b0) / 2, yLoin = sol - 74, yBas = 545;
+    // (la demi-largeur de l'eau, du lointain jusqu'à nous, d'une seule courbe ; en bas, l'eau touche presque le bord
+    // du chemin coupé, en haut, ce n'est plus qu'un filet)
+    const demi = y => 22 + Phaser.Math.Clamp(y - yLoin, 0, yBas - yLoin) * ((b0 - a0) / 2 - 40) / (yBas - yLoin);   // (en perspective : la largeur croît comme la distance au fond)
+    const xl = y => m - demi(y), xr = y => m + demi(y);
+    // les rives qui fuient vers les collines : une bande d'herbe qui s'élargit et rejoint le chemin à sa hauteur
     const rv = scene.add.graphics().setDepth(1.97);
-    for (const sx of [-1, 1]) {
-      const bord = y => sx < 0 ? xl(y) : xr(y);
-      for (let y = yLoin; y < sol - 6; y += 2) { const k = (y - yLoin) / (sol - 6 - yLoin), w = 3 + k * 26; rv.fillStyle(aube ? 0x4a5a2a : 0x22301e).fillRect(sx < 0 ? bord(y) - w : bord(y), y, w, 2); rv.fillStyle(C.berge).fillRect(sx < 0 ? bord(y) - 2 - k * 3 : bord(y), y, 2 + k * 3, 2); }
-      for (let k = 0; k < 5; k++) { const y = yLoin + 6 + k * 7, e = 0.5 + k * 0.22; const ro = scene.add.image(bord(y) + sx * (6 + k * 4), y + 2, 'roseauxHD_' + (k % 2)).setOrigin(0.5, 1).setScale(e).setDepth(1.98).setTint(aube ? 0xffffff : 0x8a9ab8); scene.tweens.add({ targets: ro, angle: 2, duration: 1400 + k * 200, yoyo: true, repeat: -1 }); }
+    for (let y = yLoin - 2; y < sol - 4; y += 2) {
+      const u = (y - yLoin) / (sol - 4 - yLoin), w = 4 + u * u * (demi(sol - 4) - demi(y) + 40 - 4);
+      for (const sx of [-1, 1]) {
+        const bord = sx < 0 ? xl(y) : xr(y);
+        rv.fillStyle(aube ? 0x4a5a2a : 0x22301e).fillRect(sx < 0 ? bord - w : bord, y, w, 2);
+        rv.fillStyle(C.berge).fillRect(sx < 0 ? bord - 2 - u * 3 : bord, y, 2 + u * 3, 2);   // (le liseré de terre mouillée)
+      }
     }
+    // l'eau, d'un seul tenant, du lointain jusqu'au bas de l'écran
+    surface(yLoin, yBas, xl, xr, 1.96, { rides: 40, clair: 2.2, courant: (x, y) => ({ y: Math.min(yBas - 4, y + 60), x: x + (x - m) * 0.35, scaleX: 1.7 }) });
+    // les berges de notre côté : la terre entaillée, en pente du bord du chemin jusqu'à l'eau (plus sombre en bas, des
+    // cailloux, des racines, l'herbe qui pend au bord) — elles prolongent le chemin au lieu de le couper net
+    const lit = scene.add.graphics().setDepth(2.02);
+    for (const sx of [-1, 1]) {
+      const bordChemin = sx < 0 ? a0 : b0;
+      for (let y = sol - 6; y < yBas; y += 2) {
+        const eau = sx < 0 ? xl(y) : xr(y), x0 = Math.min(bordChemin, eau), x1 = Math.max(bordChemin, eau);
+        const u = (y - sol + 6) / (yBas - sol + 6);
+        lit.fillStyle(melange(C.berge, 0x0a0806, u * 0.55)).fillRect(x0, y, x1 - x0, 2);
+        lit.fillStyle(0x000000, 0.35).fillRect(sx < 0 ? x1 - 3 : x0, y, 3, 2);   // (l'ombre au ras de l'eau)
+      }
+      lit.fillStyle(aube ? 0x4a5a2a : 0x22301e).fillRect(Math.min(bordChemin, bordChemin - sx * 14), sol - 6, 14, 5);   // (l'herbe qui déborde)
+      for (let k = 0; k < 6; k++) { const x = bordChemin - sx * (4 + k * 3), h = 4 + hachage(k, 2, 930 + sx) * 6; lit.fillStyle(aube ? 0x6a8a3a : 0x2e4a26).fillTriangle(x, sol - 4, x + 2, sol + h, x + 4, sol - 4); }   // (des brins qui pendent)
+      for (let k = 0; k < 10; k++) { const y = sol + hachage(k, 3, 930 + sx) * (yBas - sol - 10), e = sx < 0 ? xl(y) : xr(y), x = bordChemin + (e - bordChemin) * hachage(k, 4, 930 + sx); lit.fillStyle(0x000000, 0.3).fillRect(x, y, 4, 3).fillStyle(0x8a8070, 0.6).fillRect(x, y, 3, 2); }   // (des cailloux)
+      for (let k = 0; k < 2; k++) { const y = sol + 10 + k * 18; lit.lineStyle(2, 0x1a120a, 0.8).lineBetween(bordChemin, y, bordChemin + ((sx < 0 ? xl(y) : xr(y)) - bordChemin) * 0.6, y + 8); }   // (des racines)
+    }
+    // de petits roseaux sur les rives lointaines, de plus en plus petits
+    for (const sx of [-1, 1]) for (let k = 0; k < 5; k++) { const y = yLoin + 6 + k * 7, e = 0.5 + k * 0.22; const ro = scene.add.image((sx < 0 ? xl(y) : xr(y)) + sx * (6 + k * 4), y + 2, 'roseauxHD_' + (k % 2)).setOrigin(0.5, 1).setScale(e).setDepth(1.98).setTint(aube ? 0xffffff : 0x8a9ab8); scene.tweens.add({ targets: ro, angle: 2, duration: 1400 + k * 200, yoyo: true, repeat: -1 }); }
     // le reflet de la lune (ou du ciel) qui tremble au milieu du courant
-    for (let k = 0; k < 10; k++) { const y = yLoin + 4 + k * 4, ri = scene.add.rectangle(m + (hachage(k, 2, 929) - 0.5) * 10, y, 4 + k * 3, 2, aube ? 0xfff0c0 : 0xe8f0ff, 0.7).setDepth(1.965).setBlendMode(Phaser.BlendModes.ADD); scene.tweens.add({ targets: ri, alpha: 0.15, scaleX: 0.5, duration: 400 + k * 60, yoyo: true, repeat: -1 }); }
-    surface(yEau, 540, y => a0 + 36 + (y - yEau) * 0.2, y => b0 - 36 - (y - yEau) * 0.2, 2.2, { rides: 18, clair: 0.8, courant: (x, y) => ({ y: 540, alpha: 0 }) });
-    void ge;
+    for (let k = 0; k < 14; k++) { const y = yLoin + 4 + k * 5, ri = scene.add.rectangle(m + (hachage(k, 2, 929) - 0.5) * 10, y, 4 + k * 3, 2, aube ? 0xfff0c0 : 0xe8f0ff, 0.7).setDepth(1.965).setBlendMode(Phaser.BlendModes.ADD); scene.tweens.add({ targets: ri, alpha: 0.15, scaleX: 0.5, duration: 400 + k * 60, yoyo: true, repeat: -1 }); }
+    r.ruisseau = { xl, xr };
   }
   // --- le bief : un canal de pierre au pied du moulin ; l'eau y file vite vers la roue (on voit les rides courir)
   {
@@ -230,18 +247,38 @@ function construireMoulin(scene, { aube = false } = {}) {
     const ecume = scene.add.graphics().setDepth(1.62);
     for (let k = 0; k < 18; k++) ecume.fillStyle(0xe8f4ff, 0.35 + hachage(k, 3, 932) * 0.4).fillEllipse(P.roue - 70 + hachage(k, 4, 932) * 140, y0 + 2 + hachage(k, 5, 932) * 14, 10 + hachage(k, 6, 932) * 16, 4 + hachage(k, 7, 932) * 4);
     scene.tweens.add({ targets: ecume, alpha: 0.55, duration: 300, yoyo: true, repeat: -1 });
+    // la tête du bief : un pilier de pierre et la vanne de bois (une crémaillère, sa manivelle) ; l'eau du ruisseau
+    // entre par-dessous en bouillonnant. Au bout, un pilier aussi, et l'eau qui se déverse dans l'étang.
+    const tete = scene.add.graphics().setDepth(1.64);
+    for (const [x, haut] of [[P.bief - 18, 70], [P.biefFin - 6, 14]]) {
+      tete.fillStyle(0x141418).fillRect(x - 2, y1 + 9 - haut - 2, 26, haut + 4);
+      for (let yy = y1 + 9 - haut; yy < y1 + 9; yy += 10) for (let xx = x; xx < x + 22; xx += 11) tete.fillStyle([0x7a7680, 0x6a6670, 0x8a8690][(xx + yy) % 3]).fillRect(xx + ((yy / 10) % 2) * 2, yy + 1, 10, 9);
+      tete.fillStyle(0x9a96a0).fillRect(x - 3, y1 + 9 - haut - 4, 28, 4);
+    }
+    const xv = P.bief + 4;
+    tete.fillStyle(0x1a1008).fillRect(xv, y0 - 46, 30, 46 + 12).fillStyle(0x6a4a2a).fillRect(xv + 2, y0 - 44, 26, 52);
+    for (let k = 0; k < 4; k++) tete.fillStyle(0x4a2e18).fillRect(xv + 2, y0 - 40 + k * 12, 26, 2);   // (les planches de la vanne)
+    tete.fillStyle(0x2a2a30).fillRect(xv + 13, y0 - 66, 4, 22).fillStyle(0x5a5a64).fillCircle(xv + 15, y0 - 68, 5).fillStyle(0x2a2a30).fillCircle(xv + 15, y0 - 68, 2);   // (la crémaillère et la manivelle)
+    for (let k = 0; k < 10; k++) {
+      const b = scene.add.ellipse(xv + 34 + Math.random() * 10, y0 + 6 + (k % 5) * 6, 10, 4, 0xe8f4ff, 0.6).setDepth(1.62);
+      scene.tweens.add({ targets: b, x: b.x + 60 + k * 6, alpha: 0, scaleX: 1.8, duration: 900 + k * 70, repeat: -1, delay: k * 90 });
+    }
+    for (let k = 0; k < 8; k++) {   // (au bout, la petite chute dans l'étang)
+      const c = scene.add.rectangle(P.biefFin + 22 + Math.random() * 6, y0 + 4, 3, 6, 0xd8ecff, 0.7).setDepth(1.95);
+      scene.tweens.add({ targets: c, y: sol - 30, x: c.x + 8, alpha: 0.1, duration: 500, repeat: -1, delay: k * 70 });
+    }
     r.bief = { y0, y1 };
   }
   // --- l'étang : la rive d'en face (herbe sombre, roseaux, le reflet des arbres), la surface où le ciel se reflète, et
   // au lever du soleil, une colonne d'or qui tremble sous lui
   {
-    const y0 = sol - 44, x0 = P.ponton - 20;
+    const y0 = sol - 44, x0 = P.biefFin - 2;   // (l'étang commence là où le bief se jette)
     surface(y0, 540, () => x0, () => W, 1.9, { rides: 60, clair: 1.2, teintes: aube ? [0xf0b47a, 0xc07a74, 0x6a4a70, 0x2a2a50] : [0x3a5488, 0x1a2a54, 0x0a1028] });
     const rf = scene.add.graphics().setDepth(1.91);
     // le reflet sombre de la rive d'en face et de ses arbres : des masses renversées, déchirées par les rides
     for (let x = x0; x < W; x += 6) { const h = 10 + fbm(x * 0.02, 1, 933) * 26; for (let y = y0; y < y0 + h; y += 2) if (hachage(x, y, 934) > (y - y0) / h * 0.7) rf.fillStyle(0x000000, (aube ? 0.22 : 0.32) * (1 - (y - y0) / h * 0.6)).fillRect(x, y, 6, 2); }
-    rf.fillStyle(C.rive).fillRect(x0 - 40, y0 - 5, W - x0 + 40, 6);
-    for (let x = x0 - 40; x < W; x += 7) rf.fillStyle(C.rive).fillTriangle(x, y0 - 4, x + 2, y0 - 9 - hachage(x, 1, 927) * 8, x + 5, y0 - 4);
+    rf.fillStyle(C.rive).fillRect(x0, y0 - 5, W - x0, 6);
+    for (let x = x0; x < W; x += 7) rf.fillStyle(C.rive).fillTriangle(x, y0 - 4, x + 2, y0 - 9 - hachage(x, 1, 927) * 8, x + 5, y0 - 4);
     // la berge de notre côté, qui descend dans l'eau au pied du ponton
     const bg = scene.add.graphics().setDepth(2.05);
     bg.fillStyle(C.berge).fillPoints([{ x: P.ponton + 30, y: sol - 6 }, { x: P.ponton + 80, y: 528 }, { x: P.ponton + 80, y: 540 }, { x: P.ponton + 30, y: 540 }], true);

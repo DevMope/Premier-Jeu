@@ -184,6 +184,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   // au feu (assis, les deux mains tendues devant lui), dormir (les yeux fermés : la scène le couche)
   const mange = pose === 'mange' || pose === 'mangeAssis', boit = pose === 'boit', chauffe = pose === 'chauffe', dort = pose === 'dort';
   const assise = pose === 'assis' || pose === 'mangeAssis' || chauffe;
+  // (v1.35, planche 60 v3) la stupeur : les yeux ronds, la pupille rétrécie, les sourcils tout en haut du front, la
+  // bouche en O, les deux mains levées devant lui, paumes en avant (« Quoi ?! »)
+  const stupeur = pose === 'stupeur';
   t.rampes.museau = rampeVive(T.museau || 0x5a4030); t.rampes.noir = rampeVive(T.taches || 0x201c1c); t.rampes.bande = rampe(T.bandelettes || 0xd8cfae); t.rampes.truffe = rampe(0x1a1410);
   t.rampes.cheveux = rampeVive(g.cheveux);
   // Les aînés : cheveux et poils gris, et la fourrure des bêtes qui blanchit un peu
@@ -316,6 +319,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // (v1.34) manger, boire : le bras proche plié, la main (et ce qu'elle tient) à la bouche ; pour boire, le coude
     // monte plus haut (la gourde se lève) ; se réchauffer : les deux avant-bras tendus devant, paumes vers le feu
     if ((mange || boit) && cote === pres) { coude.splice(0, 3, cote * (ep + (boit ? 2.4 : 1.2) * k), (boit ? 3.2 : 2.6) * k, boit ? yT + 0.5 * k : yT + P.torse * 0.45); main.splice(0, 3, cote * 0.6 * k, P.rx * 1.05, cy + P.ry * (boit ? 0.3 : 0.55)); }
+    if (stupeur) { coude.splice(0, 3, cote * (ep + 4.5 * k), 1.5 * k, yT + P.torse * 0.4); main.splice(0, 3, cote * Math.min(ep + 8 * k, L / 2 - 3 * k), 2.5 * k, yT - 2.5 * k); }
     if (chauffe) { coude.splice(0, 3, cote * ep * 0.95, P.rx * 0.7, yT + P.torse * 0.6); main.splice(0, 3, cote * ep * 0.5, P.rx * 1.35 + 4 * k, yT + P.torse * 0.38); }
     if (pose === 'plateau' && cote === loin) { coude.splice(0, 3, cote * (ep + 5 * k), 1 * k, yT + 5 * k); main.splice(0, 3, cote * Math.min(ep + 9 * k, L / 2 - 4 * k), 1 * k, yT - 2 * k); }
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
@@ -963,14 +967,14 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // (v1.34) il dort : les yeux fermés, une paupière en arc
     if (dort) { const w = large ? 1.3 * k : 0.8 * k; for (let i = -Math.round(w); i <= Math.round(w); i++) t.poser(Math.round(ox + i), Math.round(ey + 0.6 * k * (1 - (i / Math.max(1, w)) ** 2)), 'pupille', 1); continue; }
     // Un œil simple et posé : un petit blanc, la pupille sombre, un reflet d'un pixel, la paupière
-    const w = large ? 1.3 * k : 0.8 * k, h = (pensif ? 1.75 : 1.4) * k;   // (il pense : les yeux grands ouverts vers le haut)
+    const w = (large ? 1.3 * k : 0.8 * k) * (stupeur ? 1.15 : 1), h = (pensif ? 1.75 : stupeur ? 1.95 : 1.4) * k;   // (il pense : les yeux grands ouverts vers le haut)
     // (les yeux de bête : tout l'œil de la couleur de l'iris, une pupille en fente)
     t.forme(T.fente ? 'iris' : 'blanc', ellipsoide(ox, ey, w, h), { decalage: T.fente ? 0.4 : 0.2, ombre: false, bord: false });
     const ix = ox + (large ? 0 : cote * 0.15 * k);
     // (v0.68) le joueur : l'iris prend la couleur choisie à la création, la pupille au milieu
     const irisJoueur = costume === 'joueur' && !T.fente;
     const iy = pensif ? ey - 0.55 * k : ey + 0.15 * k, ix2 = pensif ? ix + (Math.abs(s) > 0.05 ? s : 1) * 0.35 * k : ix;   // (il pense : le regard part en l'air, sur le côté)
-    t.forme(irisJoueur ? 'iris' : 'pupille', ellipsoide(ix2, iy, T.fente ? 0.3 * k : large ? 0.75 * k : 0.5 * k, (pensif ? 0.85 : 1.05) * k), { ombre: false, bord: false });
+    t.forme(irisJoueur ? 'iris' : 'pupille', ellipsoide(ix2, iy, T.fente ? 0.3 * k : (large ? 0.75 * k : 0.5 * k) * (stupeur ? 0.7 : 1), (pensif ? 0.85 : stupeur ? 0.75 : 1.05) * k), { ombre: false, bord: false });
     if (irisJoueur) t.poser(Math.round(ix2), Math.round(iy + 0.15 * k), 'pupille', 1);
     t.poser(Math.round(ix2 - 0.4 * k), Math.round(iy - 0.55 * k), 'blanc', 5);
     for (let i = -Math.round(w); i <= Math.round(w); i++) t.poser(Math.round(ox + i), Math.round(ey - h), 'pupille', 2);
@@ -1046,7 +1050,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       for (let i = -Math.round(w); i <= Math.round(w); i++) for (let e = 0; e < epSourcil + (fache ? 1 : 0); e++) {
         // (fâché : le sourcil plonge vers le nez)
         // (il pense : les sourcils montent, l'un un peu plus que l'autre)
-        const dy = fache ? -2.6 * k + (i * versNez) / w * 1.3 * k : -3.2 * k + (i * i) / (w * w) * (race === 'elfe' ? 1.6 : 1) * k - (pensif ? (large ? 0.9 : 0.4) * k : 0);
+        const dy = fache ? -2.6 * k + (i * versNez) / w * 1.3 * k : -3.2 * k + (i * i) / (w * w) * (race === 'elfe' ? 1.6 : 1) * k - (pensif ? (large ? 0.9 : 0.4) * k : 0) - (stupeur ? 1.3 * k : 0);
         t.poser(Math.round(ox + i), Math.round(ey + dy) + e, 'cheveux', e ? 2 : 1);
       }
     }
@@ -1062,7 +1066,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const tonFente = sombre ? 0 : 1, tonBas = sombre ? 4 : (race === 'nain' ? 3 : 4), tonHaut = sombre ? 1 : 2;
     const largeur = profil ? 1.2 : race === 'troll' ? 4.6 : race === 'hobbit' ? 2.1 : race === 'nain' ? 3 : race === 'elfe' ? (f ? 1.9 : 2.8) : race === 'magicienne' ? 2.3 : 2.8;
     const lb = Math.max(1, Math.round(largeur * k * (profil ? 1 : Math.abs(c))));
-    const bouche = options.bouche ?? 0;   // 0 souriante, 1 neutre, 2 étonnée, 3 grognon
+    const bouche = stupeur ? 2 : options.bouche ?? 0;   // 0 souriante, 1 neutre, 2 étonnée, 3 grognon
     const courbe = (g.vieux && race === 'troll' ? -0.4 : T.sourire ? 1.4 : bouche === 1 ? 0 : bouche === 3 ? -0.8 : race === 'hobbit' ? 1.2 : race === 'elfe' ? 0.3 : 0.8) * (profil ? 0.5 : 1);
     const epaisseur = elfeF ? 1 : Math.max(1, Math.round((profil ? 0.9 : 0.65) * k));
     // (v0.73) Grippesou qui t'accueille : le sourire du Grinch, un croissant immense qui remonte
@@ -1085,7 +1089,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       }
     }
     else if (museauLoup) { /* (la gueule est dessinée avec le museau) */ }
-    else if (bouche === 2) t.forme('bouche', ellipsoide(bx, by + 0.5 * k, 1.2 * k, 1.5 * k), { decalage: -0.5, ombre: false });
+    else if (bouche === 2) t.forme('bouche', ellipsoide(bx, by + (stupeur ? 0.9 : 0.5) * k, (stupeur ? 1.5 : 1.2) * k, (stupeur ? 2.1 : 1.5) * k), { decalage: -0.5, ombre: false });
     else for (let i = -lb; i <= lb; i++) {
       const yy = by + Math.round((1 - (i * i) / (lb * lb)) * courbe * k);
       for (let e = 0; e < epaisseur; e++) t.poser(Math.round(bx + i), yy + e, matLevre, tonFente);               // la fente

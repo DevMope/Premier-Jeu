@@ -2868,3 +2868,18 @@ une fois rentré et en profiter pour en même temps mettre en place le nouvel es
   flottaison, reflet) ; des ronds d'eau autour des poteaux du ponton et des roseaux ; les chats assis sur le ponton.
 - À construire après validation : la conversation du chat qui continue à la maison, pendant qu'on aménage le coin du
   nouveau couple de chats (plus tard, deux chatons).
+
+Retours du joueur sur la v3 (21/10) : « déjà immensément mieux » ; restent : les deux côtés d'où part l'eau du ruisseau
+pas très compréhensibles, l'embouchure du bief mal réalisée, un vide entre la fin du bief et l'étang. Nouveau : « faire que
+JeuneGoy puisse avoir le choix de fumer avec le chat ou non » et « que JeuneGoy ait un design choqué et soit surpris ».
+
+### Planche 60 v4 (à valider : docs/planches-v059/planche-60-v4-vieux-moulin.png)
+- Le ruisseau : un canal droit en perspective (sa largeur croît régulièrement du fond vers nous), d'un seul tenant jusque
+  sous le pont ; ses rives d'herbe rejoignent le chemin, des berges de terre en pente (cailloux, racines, herbe qui pend).
+- La tête du bief : un pilier de pierre, la vanne de bois (crémaillère, manivelle), l'eau qui entre en bouillonnant.
+- Le bout du bief : il se jette dans l'étang par une petite chute ; l'étang commence là, plus de vide.
+- JeuneGoy stupéfait (nouvelle pose « stupeur » du moteur des corps, sans bras en plus) : yeux ronds, pupilles rétrécies,
+  sourcils tout en haut, bouche en O, les deux mains levées, il recule d'un coup ; une goutte de sueur, « !? ».
+- Le choix du cigare : « Tirer une bouffée avec lui » (il tousse, Caramel rigole ; +1 complicité, il en proposera
+  parfois le soir au coin du feu) ou « Non merci » (aucune pénalité ; « Plus pour moi. »). La conversation continue à la
+  maison dans les deux cas.
