@@ -27,7 +27,8 @@ function poserCoinChats(scene, lieu, { dx = 0, chatDort = true, profondeur = 7.6
   let souffle = 0;
   scene.time.addEvent({ delay: 1200, loop: true, callback: () => { if (elle.active) elle.setTexture(kE + '_dort' + (++souffle % 2)); } });
   // le panier se clique : ce qu'on peut ajouter au coin (et ton chat, quand il y dort : son panneau à lui)
-  const zone = scene.add.rectangle(px, SOL_COIN - 20, 170, 60, 0xffffff, 0).setDepth(p + 0.85).setInteractive({ useHandCursor: true });
+  const zone = scene.add.rectangle(px, SOL_COIN - 20, 170, 60, 0xffffff, 0).setDepth(p + 0.85);
+  if (scene.scene.key !== 'Dodo') zone.setInteractive({ useHandCursor: true });   // (pas au coucher : la scène avance au clic)
   zone.on('pointerdown', () => { if (scene.enConversation) return; Son.jouer('miaou'); ouvrirCoinChats(scene, () => poserCoinChats(scene, lieu, { dx, chatDort, profondeur })); });
   if (chatDort && !absent) {
     const moi = scene.add.image(px - 22, SOL_COIN - 10, k + '_dort1').setOrigin(0.5, 1).setScale(2.2).setDepth(p + 0.9);
@@ -47,7 +48,7 @@ function ouvrirCoinChats(scene, quandAchat) {
   boite.add(scene.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.55).setScrollFactor(0).setInteractive());
   fixe(scene.add.image(480, 275, panneauHD(scene, 560, 400)).setScale(2));
   fixe(scene.add.text(480, 98, 'Le coin des chats', style(21, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-  fixe(scene.add.text(480, 122, `${nomChatMaj(G)} et ${nomCompagne(G)} · ${coin.lieu === 'chambre' ? 'dans ta chambre, au coin du feu' : "dans l'arrière-boutique"} · bourse : ${G.argent} p.`, style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+  fixe(scene.add.text(480, 122, `${nomChatMaj(G)} et ${nomCompagne(G)} · ${coin.lieu === 'chambre' ? 'dans ta chambre, au coin du feu' : "dans l'arrière-boutique"} · bourse : ${Math.floor(G.argent)} p.`, style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
   let attente = null;
   const lignes = [];
   Object.entries(COIN_CHATS).forEach(([cle, e], i) => {
@@ -119,11 +120,12 @@ function ouvrirCarnetFormes(scene) {
   PromenadeScene.prototype.create = function () {
     creer.call(this);
     const G = this.G, d = this.sys.settings.data || {};
+    this.sys.settings.data = {};   // (sinon « Se promener » relancerait la conversation : Phaser garde les données d'avant)
     if (!(typeof moulinFait === 'function' && moulinFait(G))) return;
     // le coin dans ta chambre (celui de l'arrière-boutique est dessiné avec la pièce)
     poserCoinChats(this, 'chambre', { chatDort: false });
     poserCoinChats(this, 'arriere', { dx: 960, chatDort: false });
-    if (d.conversation) { this.time.delayedCall(500, () => conversationDuChat(this)); return; }
+    if (d.conversation && conversationAFaire(G)) { this.time.delayedCall(500, () => conversationDuChat(this)); return; }
     const f = fumeeDuSoir(G);
     if (f && !f.vue) chatQuiFume(this, f);
   };
@@ -150,7 +152,7 @@ function chatQuiFume(scene, f) {
     const mx = x + sens * 16 * e / 2.6, my = y - 96 * e / 2.6;
     formeDeFumee(scene, f.forme, mx, my, x + sens * 170, Math.max(210, y - 230), { taille: 42, sens });   // (sous la bulle du texte)
     const nouvelle = f.neuve && voirForme(G, f.forme);
-    if (nouvelle) { vignetteForme(scene, f.forme); scene.dire(`${nomChatMaj(G)} tire une longue bouffée... et souffle ${FORMES_FUMEE[f.forme].nom}. Une forme que tu n'avais jamais vue !`); }
+    if (nouvelle) { vignetteForme(scene, f.forme); if (typeof montrerSuccesEnAttente === 'function') montrerSuccesEnAttente(scene); scene.dire(`${nomChatMaj(G)} tire une longue bouffée... et souffle ${FORMES_FUMEE[f.forme].nom}. Une forme que tu n'avais jamais vue !`); }
     else scene.dire(`${nomChatMaj(G)} souffle ${FORMES_FUMEE[f.forme].nom}, pour le plaisir.`);
   });
   if (f.lieu === 'arriere') return;
@@ -211,7 +213,7 @@ async function conversationDuChat(scene) {
     if (k === 'origine') {
       dire('Il souffle doucement : la fumée dessine un grand chapeau pointu, qui flotte un moment au-dessus du lit.');
       formeDeFumee(scene, 'chapeau', chat.x + 16, chat.y - 96, 420, 210, { taille: 46, tenue: 5200 });
-      if (voirForme(G, 'chapeau')) vignetteForme(scene, 'chapeau');
+      if (voirForme(G, 'chapeau')) { vignetteForme(scene, 'chapeau'); if (typeof montrerSuccesEnAttente === 'function') montrerSuccesEnAttente(scene); }
       await parler("« Un vieux sorcier. Je ne me rappelle ni son visage, ni son nom...\nJuste son chapeau. Et que c'était un bel enfoiré. »");
       await parler("« Un matin, je me suis réveillé dans ta ville. Sans rien.\nJ'ai erré. Puis je l'ai trouvée, elle. Puis toi. »");
     } else if (k === 'mot') {

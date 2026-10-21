@@ -48,8 +48,11 @@ function nuitDuLien(G) {
 }
 function matinDuLien(G) {
   const c = G.chat;
-  if (!(c && c.lienNuit && c.lienNuit.jour === G.jour && c.lienNuit.d < 0)) return [];
-  return [`${nomChatMaj(G)} t'en veut un peu (complicité ${c.lienNuit.d}).`];
+  const l = [];
+  if (c && c.lienNuit && c.lienNuit.jour === G.jour && c.lienNuit.d < 0) l.push(`${nomChatMaj(G)} t'en veut un peu (complicité ${c.lienNuit.d}).`);
+  // (v1.38) deux chats à nourrir : on prévient quand la réserve ne suffit plus pour les deux
+  if (c && c.adopte && moulinFait(G) && (G.stock.ration || 0) < 2) l.push(`Plus que ${G.stock.ration || 0} ration${(G.stock.ration || 0) > 1 ? 's' : ''} dans la réserve : il en faut pour ${nomChatMaj(G)} et pour ${nomCompagne(G)}.`);
+  return l;
 }
 
 // Ce soir, ton chat boude sa gamelle et gratte à la porte ?
@@ -75,7 +78,6 @@ function finirMoulin(G, { nom, fume = false, chances = 1 } = {}) {
   m.fait = true; m.jour = G.jour; m.fume = !!fume; m.chances = chances;
   m.compagne = { nom: (nom || '').trim() || 'Minette', look: lookCompagne(G) };
   c.formesVues = Array.from(new Set([...(c.formesVues || []), ...MOULIN.formesDuMoulin]));
-  if (fume) changerLien(G, 1);
   if (typeof debloquerSucces === 'function') debloquerSucces(G, 'coeurDeChat');
   return m;
 }
@@ -106,7 +108,7 @@ function conversationAFaire(G) { const m = G.moulin; return !!(m && m.fait && !m
 function coinDesChats(G) { return (G.chat && G.chat.coin) || null; }
 function installerCoin(G, lieu) {
   const c = chatDe(G);
-  c.coin = { lieu: lieu === 'chambre' ? 'chambre' : 'arriere', elements: ['panier', 'gamelles'], jour: G.jour };
+  c.coin = { lieu: lieu === 'chambre' ? 'chambre' : 'arriere', elements: (c.coin && c.coin.elements) || ['panier', 'gamelles'], jour: G.jour };   // (ce qui était déjà acheté reste)
   if (G.moulin) G.moulin.conversation = G.jour;
   return c.coin;
 }
@@ -115,7 +117,7 @@ function acheterCoin(G, cle) {
   const coin = coinDesChats(G), e = typeof COIN_CHATS !== 'undefined' ? COIN_CHATS[cle] : null;
   if (!coin || !e) return { erreur: "Il n'y a pas encore de coin des chats." };
   if (coin.elements.includes(cle)) return { erreur: 'Ils l’ont déjà.' };
-  if (G.argent < e.prix) return { erreur: `Il te manque ${e.prix - G.argent} pièces.` };
+  if (G.argent < e.prix) return { erreur: `Il te manque ${Math.ceil(e.prix - G.argent)} pièces.` };
   if (e.prix) payer(G, e.prix, 'coinChats');
   coin.elements.push(cle);
   return { gain: changerLien(G, 1) };
@@ -126,10 +128,12 @@ function nuitDeLaCompagne(G) {
   if (!(m && m.fait)) return;
   if (m.repasElle === undefined) m.repasElle = G.jour;
   if (G.jour - m.repasElle < (typeof FOYER !== 'undefined' ? FOYER.gamelle : 3)) return;
-  if ((G.stock.ration || 0) > 0) { G.stock.ration--; m.repasElle = G.jour; m.faimElle = 0; } else m.faimElle = (m.faimElle || 0) + 1;
+  // (elle laisse toujours la dernière ration à ton chat)
+  if ((G.stock.ration || 0) > 1) { G.stock.ration--; m.repasElle = G.jour; m.faimElle = 0; } else m.faimElle = (m.faimElle || 0) + 1;
 }
 // Le soir, il fume parfois quelque part dans la maison (à ta fenêtre, au coin du feu, dans l'arrière-boutique) ; il
 // souffle alors une forme — de temps en temps une forme que tu n'as jamais vue. Tiré une fois par soir.
+if (typeof POSTES !== 'undefined') POSTES.coinChats = 'Le coin des chats';
 const FUMEE_MAISON = { chance: 0.4, neuve: 0.5, lieux: ['fenetre', 'feu', 'arriere'] };
 function fumeeDuSoir(G) {
   const c = G.chat;

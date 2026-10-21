@@ -1097,7 +1097,7 @@ const POSTES = {
   jeux: 'Jeux', cadeaux: 'Cadeaux', marche: 'Achats au marché', express: 'Marchand express',
   trouvailles: 'Trouvailles', reserve: 'Agrandissements', dedommagements: 'Dédommagements',
   remboursements: 'Remboursements de prêts', dons: 'Dons au mendiant', prets: 'Prêts reçus', salaires: 'Salaires',
-  sabotages: 'Primes de la Faucheuse', colporteur: 'Le colporteur', primes: 'Primes de la garde',
+  sabotages: 'Primes de la Faucheuse', colporteur: 'Le colporteur', denonciations: 'Primes de la garde',
   bazar: 'Cadeaux du Bazar',
   ameliorations: 'Améliorations du comptoir', interets: 'Intérêts du coffre',
   atelier: "Fournitures de l'atelier", loyer: 'Loyer du comptoir', revente: 'Reventes',

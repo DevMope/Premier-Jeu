@@ -4,12 +4,14 @@ const SUCCES = {
   coeurDeChat: { nom: 'Cœur de chat', texte: 'Sauver la compagne de ton chat au Vieux Moulin', icone: '🐾♥' },
   repertoireComplet: { nom: 'Le répertoire complet', texte: 'Voir ton chat souffler toutes ses formes de fumée', icone: '💨', cache: true },
 };
-function succesDe(G) { return (G.succes = G.succes || {}); }
-function aLeSucces(G, cle) { return !!(G.succes && G.succes[cle]); }
+// (v1.38) rangés dans G.hautsFaits : G.succes compte déjà les missions réussies par étoiles, et succesDe() les missions
+// d'un aventurier (le même nom ici écrasait celui des règles : plus personne ne montait de rang)
+function hautsFaitsDe(G) { return (G.hautsFaits = G.hautsFaits || {}); }
+function aLeSucces(G, cle) { return !!(G.hautsFaits && G.hautsFaits[cle]); }
 // Débloquer : renvoie vrai la première fois (la vignette attend alors d'être montrée)
 function debloquerSucces(G, cle) {
   if (!SUCCES[cle] || aLeSucces(G, cle)) return false;
-  succesDe(G)[cle] = G.jour;
+  hautsFaitsDe(G)[cle] = G.jour;
   (G.succesAMontrer = G.succesAMontrer || []).push(cle);
   return true;
 }

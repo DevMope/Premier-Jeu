@@ -1675,7 +1675,8 @@ function nuit(G) {
   sansPlanter('matinDuRepaire', () => typeof matinDuRepaire === 'function' && G.reveil.lignes.push(...matinDuRepaire(G)));   // (v1.29)
   sansPlanter('matinDeLEtage', () => typeof matinDeLEtage === 'function' && G.reveil.lignes.push(...matinDeLEtage(G)));   // (v1.30)
   sansPlanter('matinDeLaMenace', () => typeof matinDeLaMenace === 'function' && G.reveil.lignes.push(...matinDeLaMenace(G)));   // (v1.33) le crieur, la bataille
-  sansPlanter('matinDuMoulin', () => typeof matinDuMoulin === 'function' && G.reveil.lignes.push(...matinDuMoulin(G), ...matinDuLien(G)));   // (v1.35) le retour du Moulin, la complicité
+  sansPlanter('matinDuMoulin', () => typeof matinDuMoulin === 'function' && G.reveil.lignes.push(...matinDuMoulin(G)));   // (v1.35) le retour du Moulin
+  sansPlanter('matinDuLien', () => typeof matinDuLien === 'function' && G.reveil.lignes.push(...matinDuLien(G)));   // (v1.35) la complicité, les rations des deux chats
   sansPlanter('matinDesRiches', () => typeof matinDesRiches === 'function' && G.reveil.lignes.push(...matinDesRiches(G)));   // (v1.32) le mécénat, la neutralité
   sansPlanter('voeuDeSaison', () => { const l = typeof voeuDeSaison === 'function' && voeuDeSaison(G); if (l) G.reveil.lignes.push(l); });   // (v1.23) les souvenirs de la nymphe au complet
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
@@ -3586,7 +3587,7 @@ function denoncerRecherche(G, v) {
   if (!v.recherche.innocent) {
     G.captures = [...(G.captures || []), v.recherche.avis];
     const part = Math.round(v.recherche.prime * RECHERCHE.part / 5) * 5;
-    encaisser(G, part, 'primes');
+    encaisser(G, part, 'denonciations');   // (v1.38 : une clé à elle, « primes » était aussi celle des paliers)
     G.reputation += RECHERCHE.reputation;
     pencherCamp(G, 'bien');
     pencher(G, 'denoncer', { qui: v.nom });

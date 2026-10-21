@@ -28,7 +28,7 @@ class MoulinScene extends Phaser.Scene {
     this.heros = this.add.image(aube ? P.ponton + 100 : P.entree, SOL_PROMENADE, this.cleHeros).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(8.5);
     this.chat = this.add.image(aube ? P.ponton + 200 : P.entree + 120, SOL_PROMENADE, this.cleChat + '_assis0').setOrigin(0.5, 1).setScale(2.4).setDepth(8.6);
     this.limite = { min: 60, max: aube ? P.ponton + 330 : P.pont - 80 };   // (le pont, d'abord, arrête tes pas)
-    this.cible = null; this.pas = 0; this.libre = !aube; this.fini = false;
+    this.cible = null; this.pas = 0; this.libre = !aube; this.fini = false; this.cameraLibre = false; this.enSaut = false;
     this.touches = this.input.keyboard ? this.input.keyboard.createCursorKeys() : null;
     this.input.on('pointerdown', (p, sous) => { if (this.libre && !sous.length) this.cible = Phaser.Math.Clamp(p.worldX, this.limite.min, this.limite.max); });
     this.creerBandeau();
@@ -88,7 +88,7 @@ class MoulinScene extends Phaser.Scene {
       const x = Phaser.Math.Clamp(this.heros.x + dx, this.limite.min, this.limite.max);
       if (x !== this.heros.x) { this.heros.x = x; this.heros.setFlipX(dx < 0); this.pas += delta; if (!this.heros.marche) pasDeMarche(this, this.heros, 260); }
       this.heros.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
-    } else this.heros.y = SOL_PROMENADE;
+    } else if (!this.enSaut) this.heros.y = SOL_PROMENADE;   // (v1.38 : sinon l'arc du saut était effacé à chaque image)
     if (!this.cameraLibre) this.cameras.main.scrollX = Phaser.Math.Clamp(this.heros.x - 420, 0, LARGEUR_MOULIN - 960);
     if (this.libre && this.quandArrive && this.heros.x >= this.quandArrive.x) { const f = this.quandArrive.f; this.quandArrive = null; f(); }
   }
@@ -150,8 +150,9 @@ class MoulinScene extends Phaser.Scene {
     this.heros.setFlipX(false);
     const xA = this.heros.x, xB = P.pont + 40;
     const saut = { t: 0 };
+    this.enSaut = true;
     await this.animer({ targets: saut, t: 1, duration: 520, onUpdate: () => { this.heros.x = xA + (xB - xA) * saut.t; this.heros.y = SOL_PROMENADE - Math.sin(saut.t * Math.PI) * (reussi ? 40 : 18); } });
-    this.heros.y = SOL_PROMENADE;
+    this.enSaut = false; this.heros.y = SOL_PROMENADE;
     if (!reussi) {
       Son.jouer('plouf');
       for (let k = 0; k < 8; k++) { const g = this.add.image(xA + 60, SOL_PROMENADE + 20, 'halo').setScale(0.1).setTint(0xa8d8ff).setDepth(8.7); this.tweens.add({ targets: g, x: g.x + (Math.random() - 0.5) * 50, y: g.y - 20 - Math.random() * 30, alpha: 0, duration: 600, onComplete: () => g.destroy() }); }
@@ -188,7 +189,7 @@ class MoulinScene extends Phaser.Scene {
     // la jauge de la roue
     const jg = this.add.graphics().setDepth(9.9);
     const majJauge = () => { const k = Phaser.Math.Clamp((planche.x - (X - 290)) / 220, 0, 1); jg.clear(); jg.fillStyle(0x2a1a10, 0.9).fillRoundedRect(X - 196, SOL_MOULIN - 108, 92, 12, 4).fillStyle(0xe04030).fillRoundedRect(X - 194, SOL_MOULIN - 106, 88 * Math.max(0.08, k), 8, 3); };
-    this.add.text(X - 150, SOL_MOULIN - 110, 'la roue approche', style(11, '#ffd0c0', { fontStyle: 'bold' })).setOrigin(0.5, 1).setDepth(9.9);
+    const libJauge = this.add.text(X - 150, SOL_MOULIN - 110, 'la roue approche', style(11, '#ffd0c0', { fontStyle: 'bold' })).setOrigin(0.5, 1).setDepth(9.9);
     this.events.on('update', majJauge);
     // le renard sort des roseaux, la fumée violette autour de lui
     const renard = this.renard = this.add.image(X - 220, SOL_PROMENADE, 'renardHD_infecte').setOrigin(0.5, 1).setScale(2.2).setDepth(8.55);
@@ -257,7 +258,7 @@ class MoulinScene extends Phaser.Scene {
     this.tweens.killTweensOf(planche);
     await Promise.all([this.animer({ targets: planche, x: this.heros.x + 70, duration: 1400 }), this.animer({ targets: this.chat, x: this.heros.x + 80, duration: 1400 })]);
     branche.destroy();
-    elle.destroy(); planche.destroy(); miaou.destroy(); jg.destroy(); points.destroy();
+    elle.destroy(); planche.destroy(); miaou.destroy(); jg.destroy(); libJauge.destroy(); points.destroy();
     this.events.off('update', majJauge);
     this.elle = this.add.image(this.heros.x + 100, SOL_PROMENADE, this.cleElle + '_assis0').setOrigin(0.5, 1).setScale(2.2).setDepth(8.6).setFlipX(true);
     this.chat.setDepth(8.6).setY(SOL_PROMENADE).setX(this.heros.x + 60).setTexture(this.cleChat + '_assis0');
@@ -398,6 +399,7 @@ function soireeDuMoulin(scene) {
   c.add(scene.add.text(480, 260, `Ce soir, ${nomChat(G)} ne touche pas à sa gamelle. Il gratte à la porte, te regarde, miaule doucement... puis recommence. On dirait qu'il veut que tu le suives.`, style(14, '#5a3a1a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 500 }, lineSpacing: 3 })).setOrigin(0.5, 0));
   const fermer = () => { queue.remove(); c.destroy(); scene.fenetreMoulin = null; };
   const b1 = creerBouton(scene, 360, 386, 250, `Suivre ${nomChat(G)} (toute la nuit)`, () => {
+    if (enTransition(scene)) return;   // (v1.38 : « Aller dormir » pendant le fondu lançait le Moulin et le coucher ensemble)
     fermer(); Son.jouer('porte');
     scene.cameras.main.fadeOut(700);
     scene.cameras.main.once('camerafadeoutcomplete', () => scene.scene.start('Moulin'));

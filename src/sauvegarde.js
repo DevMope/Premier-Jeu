@@ -468,6 +468,19 @@ function mettreAJourPartie(G, brut = G) {
     for (const z of Object.keys(G.conquete || {})) if (ZONES[z] && G.conquete[z] >= CONQUETE_ZONE) G.conquete[z] = Math.max(G.conquete[z], conqueteZone(z));
     G.conqueteV100 = true;
   }
+  // (v1.38) de la v1.35 à la v1.37, les succès façon Steam écrasaient le compte des missions de chaque aventurier
+  // (« [object Object]1 ») et se rangeaient avec les missions réussies par étoiles : on remet chacun à sa place.
+  if (!G.succesV138) {
+    G.hautsFaits = G.hautsFaits || {};
+    for (const k of Object.keys(G.succes || {})) if (!/^\d+$/.test(k)) { G.hautsFaits[k] = G.hautsFaits[k] || G.succes[k]; delete G.succes[k]; }
+    for (const [nom, p] of Object.entries(G.personnes || {})) {
+      if (p.succes === undefined || typeof p.succes === 'number') continue;
+      const depuis = (String(p.succes).match(/1/g) || []).length;   // (chaque « 1 » collé, une mission réussie depuis)
+      const registre = (G.historique || []).filter(h => h.nom === nom && h.issue === 'vivant').length;
+      p.succes = Math.max(depuis, registre);
+    }
+    G.succesV138 = true;
+  }
 }
 
 // (v0.89) Une partie commencée avant les règles actuelles pouvait garder une pièce d'armure gagnée

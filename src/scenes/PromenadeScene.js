@@ -21,6 +21,7 @@ class PromenadeScene extends Cinematique {
     const G = this.G = window.GAME;
     this.fini = false;
     this.transition = false;   // (audit v0.59)
+    this.enConversation = false; this.panneauCoin = null; this.carnetFormes = null;   // (v1.38 : une soirée quittée par le menu les laissait posés)
     this.assis = null;   // (v0.97) on n'est plus assis sur le banc d'hier soir
     this.cameras.main.fadeIn(500);
     creerInterieurHD(this); creerDecorComptoir(this); creerObjetsHD(this); creerHalo(this);
@@ -689,10 +690,10 @@ function ouvrirPanneauChat(scene, { adoption = false, quandFini = null } = {}) {
   let nom = c.nom || '';
   const texteNom = fixe(scene.add.text(560, adoption ? 330 : 270, '', style(16, '#3b2410', { fontStyle: 'bold italic' })).setOrigin(0.5).setInteractive({ useHandCursor: true }));
   const majNom = () => texteNom.setText(`✎ ${nom ? '« ' + nom + ' »' : 'Lui donner un nom'}`);
-  texteNom.on('pointerdown', () => demanderTexte('Le nom de ton chat', nom, NOM_CHAT_MAX, n => { nom = n.trim() || nom; majNom(); }));
+  texteNom.on('pointerdown', () => demanderTexte('Le nom de ton chat', nom, NOM_CHAT_MAX, n => { nom = (n || '').trim() || nom; majNom(); }));
   majNom(); maj();
   const fin = creerBouton(scene, 480, 430, 220, adoption ? 'Bienvenue à la maison !' : 'Valider', () => {
-    if (!nom) { Son.jouer('refus'); return demanderTexte('Le nom de ton chat', '', NOM_CHAT_MAX, n => { nom = n.trim(); majNom(); }); }
+    if (!nom) { Son.jouer('refus'); return demanderTexte('Le nom de ton chat', '', NOM_CHAT_MAX, n => { nom = (n || '').trim(); majNom(); }); }
     c.look = { ...look }; c.nom = nom;
     Son.jouer('miaou');
     queue.remove(); boite.destroy();

@@ -7,6 +7,7 @@ class NightScene extends Phaser.Scene {
   init(data) {
     this.matin = !!(data && data.matin);
     this.fenetreFoyer = null;
+    this.fenetreMoulin = null;   // (v1.38 : la fenêtre du chat d'un soir quitté par le menu bloquait les suivantes)
     this.menuProjets = null;   // (v1.31 : pareil pour le menu « Tes projets »)   // (v1.07 : une fenêtre du foyer d'une soirée quittée par le menu bloquait le coucher)
     // Phaser garde les données d'un démarrage à l'autre : sans ce ménage, le soir du jour 2
     // (lancé sans données) se croyait encore « le matin » — plus de bouton pour aller dormir.
@@ -108,7 +109,7 @@ class NightScene extends Phaser.Scene {
     // (v0.90) le soir du Carrefour (ou du parjure) : deux visiteurs frappent à la porte
     if (!this.matin) this.time.delayedCall(700, () => this.carrefourEnAttente());
     // (v1.35) le soir où ton chat boude sa gamelle et gratte à la porte : l'aventure du Vieux Moulin
-    if (!this.matin && typeof soireeDuMoulin === 'function') this.time.delayedCall(1300, () => { if (this.scene.isActive() && !enTransition(this)) soireeDuMoulin(this) || (typeof soireeDeLaConversation === 'function' && soireeDeLaConversation(this)); });
+    if (!this.matin && typeof soireeDuMoulin === 'function') this.time.delayedCall(1300, () => { if (this.scene.isActive() && !(this._transition && performance.now() - this._transition < 1500)) soireeDuMoulin(this) || (typeof soireeDeLaConversation === 'function' && soireeDeLaConversation(this)); });
   }
 
   // (v0.90) Le soir du Carrefour (ou du parjure) : deux visiteurs frappent à la porte. Renvoie vrai si la
