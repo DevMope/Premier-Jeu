@@ -7,6 +7,7 @@
 // la chambre (0), l'arrière-boutique (960), le comptoir (1920), la façade (2880).
 
 const LIEUX_RENOVATION = { chambre: 0, arriere: 960, comptoir: 1920, facade: 2880 };
+const NOMS_PIECES = { facade: 'La façade', comptoir: 'Le comptoir', arriere: "L'arrière-boutique", chambre: 'La chambre' };
 
 // --- Les versions délabrées des textures ---
 
@@ -101,7 +102,8 @@ class RenovationScene extends Cinematique {
     // Pendant le nettoyage, Garrick parle dans une bulle en haut (la boîte du bas cacherait la pièce).
     this.bulle = this.add.text(480, 52, '', style(14, '#3b2410', { fontStyle: 'italic', backgroundColor: '#ead9b0ee', padding: { x: 10, y: 6 },
       wordWrap: { width: 760 }, align: 'center' })).setOrigin(0.5, 0).setScrollFactor(0).setDepth(20).setVisible(false);
-    this.boutonPasser(() => this.finir());
+    this.guide = typeof didacticiel === 'function' && didacticiel(G);
+    this.boutonPasser(() => this.finir()).setText('Laisser faire les ouvriers ▶▶');
     this.derouler();
   }
 
@@ -263,13 +265,47 @@ class RenovationScene extends Cinematique {
     if (this.endroits[lieu].every(x => x.propre) && this.finLieu) { const f = this.finLieu; this.finLieu = null; f(); }
   }
 
-  majConsigne() {
-    const liste = this.endroits[this.actif] || [];
-    const restants = liste.filter(e => !e.propre).length;
-    this.consigne.setText(restants ? `Clique sur ce qui est délabré pour le remettre à neuf · encore ${restants}` : '');
+  // La vague : chaque endroit de la pièce se nettoie à son tour, de gauche à droite
+  async nettoyerPiece(lieu) {
+    if (this.occupe || this.actif !== lieu) return;
+    this.occupe = true;
+    if (this.cadrePiece) { this.cadrePiece.destroy(); this.cadrePiece = null; }
+    for (const e of this.endroits[lieu]) e.sales.forEach(x => x.clearTint());
+    const liste = this.endroits[lieu].filter(e => !e.propre).sort((a, b) => a.zone[0] - b.zone[0]);
+    if (this.heros.visible) await this.marcher(this.heros, LIEUX_RENOVATION[lieu] + 470, 2.2);
+    this.onomatopee(LIEUX_RENOVATION[lieu] + 480, 200, 'Frotte, frotte !', '#f3d98a');
+    for (const e of liste) { this.nettoyerEndroit(e); await this.attendre(260); }
+    await this.attendre(700);
+    this.occupe = false;
+    if (this.finLieu) { const f = this.finLieu; this.finLieu = null; f(); }
   }
 
-  // Le joueur rénove un lieu : on attend que tout soit propre.
+  // Un endroit retrouve sa beauté : la poussière, le coup de chiffon, les éclats
+  nettoyerEndroit(e) {
+    const [zx, zy, zl, zh] = e.zone;
+    for (let k = 0; k < 9; k++) {
+      const p = this.add.image(zx + Math.random() * zl, zy + Math.random() * zh, 'halo').setScale(0.3).setTint(0xb8a888).setAlpha(0.8).setDepth(7);
+      this.tweens.add({ targets: p, scale: 1 + Math.random(), alpha: 0, y: p.y - 30, duration: 700 + Math.random() * 400, onComplete: () => p.destroy() });
+    }
+    if (this.heros.visible) this.tweens.add({ targets: this.heros, angle: { from: -8, to: 8 }, duration: 90, yoyo: true, repeat: 1, onComplete: () => this.heros.setAngle(0) });
+    e.propre = true;
+    e.cible.disableInteractive();
+    if (e.indice) { e.indice.destroy(); e.indice = null; }
+    this.tweens.add({ targets: e.sales, alpha: 0, duration: 500 });
+    e.ajouts.forEach((a, i) => this.tweens.add({ targets: a, y: a.y + 300, angle: a.angle + 40, alpha: 0, duration: 700, delay: i * 60, ease: 'Quad.easeIn' }));
+    e.cache.forEach(c => this.tweens.add({ targets: c, alpha: c.texture && c.texture.key === 'halo' ? 0.5 : 1, duration: 500 }));
+    creerObjetsHD(this);
+    for (let k = 0; k < 4; k++) {
+      const s = this.add.image(zx + Math.random() * zl, zy + Math.random() * zh, 'eclat').setScale(0).setDepth(7);
+      this.tweens.add({ targets: s, scale: 3, angle: 90, duration: 260, delay: 200 + k * 90, yoyo: true, onComplete: () => s.destroy() });
+    }
+    Son.jouer('glisse');
+  }
+
+  majConsigne() { this.consigne.setText(''); }
+
+  // (v1.40, planche 67) Une pièce, un clic : un grand cadre doré autour de toute la pièce ; au clic, une vague
+  // de propreté la traverse, endroit après endroit, pendant que Garrick explique à quoi elle sert.
   renover(lieu) {
     this.actif = lieu;
     this.majConsigne();
@@ -277,25 +313,35 @@ class RenovationScene extends Cinematique {
     boite.forEach(o => o.setVisible(false));
     if (this.defile) this.defile.finir();
     this.bulle.setText(`${this.entete.text} : ${this.texteComplet ?? this.texte.text}`).setVisible(true);
-    // Les endroits encore sales clignotent doucement, pour aider à les trouver
-    // Chaque endroit à nettoyer est entouré d'un cadre doré qui pulse, avec un petit balai
-    for (const e of this.endroits[lieu]) {
-      const [zx, zy, zl, zh] = e.zone;
-      const c = this.add.container(0, 0).setDepth(5);
-      const cadre = this.add.graphics();
-      cadre.lineStyle(4, 0x1a0e06, 0.6).strokeRoundedRect(zx + 2, zy + 2, zl - 4, zh - 4, 8);
-      cadre.lineStyle(2, 0xffd860, 1).strokeRoundedRect(zx + 2, zy + 2, zl - 4, zh - 4, 8);
-      creerGlyphesHD(this);
-      const balai = this.add.image(zx + zl / 2, zy + Math.min(zh / 2, 40), 'glyphe_balai').setScale(2.6);
-      const nom = this.add.text(zx + zl / 2, zy + Math.min(zh / 2, 40) + 26, e.nom, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5);
-      c.add([cadre, balai, nom]);
-      this.tweens.add({ targets: cadre, alpha: 0.35, duration: 650, yoyo: true, repeat: -1 });
-      this.tweens.add({ targets: balai, angle: { from: -15, to: 15 }, y: balai.y - 4, duration: 420, yoyo: true, repeat: -1, delay: Math.random() * 400 });
-      e.indice = c;
-    }
+    const ordre = ['facade', 'comptoir', 'arriere', 'chambre'];
+    if (this.rubanPieces) this.rubanPieces.destroy();
+    this.rubanPieces = etapesGuide(this, 22, ordre.map(k => NOMS_PIECES[k]), ordre.indexOf(lieu), 'Remettre à neuf :', 20);
+    this.rubanPieces.x = -90;
+    for (const e of this.endroits[lieu]) e.cible.disableInteractive();
+    const o = LIEUX_RENOVATION[lieu], zs = this.endroits[lieu].filter(e => e.nom !== 'Le chemin').map(e => e.zone);
+    const x0 = Math.max(o + 8, Math.min(...zs.map(z => z[0])) - 12), x1 = Math.min(o + 952, Math.max(...zs.map(z => z[0] + z[2])) + 12);
+    const y0 = Math.max(96 + this.bulle.height, Math.min(...zs.map(z => z[1])) - 12), y1 = Math.min(530, Math.max(...zs.map(z => z[1] + z[3])) + 12);
+    const c = this.cadrePiece = this.add.container(0, 0).setDepth(5);
+    const cadre = this.add.graphics();
+    cadre.lineStyle(6, 0x1a0e06, 0.6).strokeRoundedRect(x0, y0, x1 - x0, y1 - y0, 10);
+    cadre.lineStyle(3, 0xffd860, 1).strokeRoundedRect(x0, y0, x1 - x0, y1 - y0, 10);
+    creerGlyphesHD(this);
+    const cx = (x0 + x1) / 2, cy = Math.min(y0 + 40, (y0 + y1) / 2);
+    const balai = this.add.image(cx, cy, 'glyphe_balai').setScale(3);
+    const nom = this.add.text(cx, cy + 30, `${NOMS_PIECES[lieu]}\nclique pour la remettre à neuf`, style(15, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5, align: 'center' })).setOrigin(0.5, 0);
+    c.add([cadre, balai, nom]);
+    this.tweens.add({ targets: cadre, alpha: 0.4, duration: 650, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: balai, angle: { from: -15, to: 15 }, y: balai.y - 4, duration: 420, yoyo: true, repeat: -1 });
+    const cible = this.add.rectangle((x0 + x1) / 2, (y0 + y1) / 2, x1 - x0, y1 - y0, 0xffffff, 0).setDepth(5).setInteractive({ useHandCursor: true });
+    c.add(cible);
+    cible.on('pointerover', () => { for (const e of this.endroits[lieu]) if (!e.propre) e.sales.forEach(x => x.setTint(0xfff0c0)); });
+    cible.on('pointerout', () => { for (const e of this.endroits[lieu]) e.sales.forEach(x => x.clearTint()); });
+    cible.on('pointerdown', () => this.nettoyerPiece(lieu));
     return new Promise(resoudre => {
       this.finLieu = () => {
         for (const e of this.endroits[lieu]) if (e.indice) e.indice.destroy();
+        if (this.cadrePiece) { this.cadrePiece.destroy(); this.cadrePiece = null; }
+        if (lieu === 'chambre' && this.rubanPieces) { this.rubanPieces.destroy(); this.rubanPieces = null; }
         resoudre();
       };
     }).then(() => {
@@ -350,7 +396,7 @@ class RenovationScene extends Cinematique {
     if (this.fini) return;
     this.garrickDit(`« Et voilà ton comptoir, ${petit} ! Bon... il a un peu souffert. Mais avec de l'huile de coude, il sera magnifique. Au travail ! »`, { ton: 'content', emotion: 'joie', geste: 'bras' });
     await this.attendreClic();
-    this.garrickDit('« Commence par la façade : décloue les planches, chasse les toiles d\'araignée, remets l\'enseigne. »', { ton: 'neutre', geste: 'hoche' });
+    this.garrickDit(this.guide ? "« La façade, c'est ce que voient les passants. Une façade qui tient debout, et ils s'arrêtent. Un clic, et on s'y met tous les deux ! »" : '« Commence par la façade : décloue les planches, chasse les toiles d\'araignée, remets l\'enseigne. »', { ton: 'neutre', geste: 'hoche' });
     await this.renover('facade');
     if (this.fini) return;
     // La porte grince...
@@ -360,7 +406,7 @@ class RenovationScene extends Cinematique {
     if (this.fini) return;
     this.boiteEnHaut(false);
     await this.allerA('comptoir');
-    this.garrickDit('« Le comptoir ! C\'est ici que tu serviras les aventuriers, par cette fenêtre. Il y a du travail... »', { ton: 'etonne', emotion: '!' });
+    this.garrickDit(this.guide ? "« Le comptoir, c'est ton cœur de métier. Par cette fenêtre, les aventuriers te passent commande : tu remplis leur baluchon. S'ils reviennent vivants, ils te reversent une part du butin. S'ils meurent... tu as tout perdu avec eux. »" : '« Le comptoir ! C\'est ici que tu serviras les aventuriers, par cette fenêtre. Il y a du travail... »', { ton: 'etonne', emotion: '!' });
     await this.renover('comptoir');
     if (this.fini) return;
     // (après chaque pièce, Garrick prend le temps d'un mot : rien ne s'enchaîne tout seul)
@@ -368,14 +414,14 @@ class RenovationScene extends Cinematique {
     await this.attendreClic();
     if (this.fini) return;
     await this.allerA('arriere', 860);
-    this.garrickDit('« L\'arrière-boutique : tes étagères, ton coffre, et la porte de ta chambre. Une bonne araignée y a élu domicile... »', { ton: 'inquiet', emotion: '…' });
+    this.garrickDit(this.guide ? "« L'arrière-boutique : ta réserve sur les étagères, ta fortune dans le coffre. Ce qui manque sur l'étagère manquera au comptoir : jette un œil chaque soir. »" : '« L\'arrière-boutique : tes étagères, ton coffre, et la porte de ta chambre. Une bonne araignée y a élu domicile... »', { ton: 'inquiet', emotion: '…' });
     await this.renover('arriere');
     if (this.fini) return;
     this.garrickDit('« Tes étagères brillent comme un sou neuf ! Et ce coffre... il attend tes premières pièces d\'or. Il ne reste que ta chambre. »', { ton: 'content', emotion: 'idee', pensee: 'pieceFace' });
     await this.attendreClic();
     if (this.fini) return;
     await this.allerA('chambre', 880);
-    this.garrickDit('« Et ta chambre ! Un lit, une fenêtre sur les collines... Tu seras bien, ici. »', { ton: 'content', emotion: '♥' });
+    this.garrickDit(this.guide ? "« Et ta chambre. Une bonne nuit, et tu seras en forme demain : plus vif au comptoir. Le soir, c'est ici que la journée se termine. »" : '« Et ta chambre ! Un lit, une fenêtre sur les collines... Tu seras bien, ici. »', { ton: 'content', emotion: '♥' });
     await this.renover('chambre');
     if (this.fini) return;
     this.garrickDit('« Tout est propre, du toit à la cave ! Viens, on fait le tour du propriétaire. »', { ton: 'rire', emotion: 'joie', geste: 'saut' });
@@ -456,7 +502,9 @@ class RenovationScene extends Cinematique {
   finir() {
     if (this.fini) return;
     this.fini = true;
-    this.G.tuto = true;
+    // (v1.40) le didacticiel : le Jour Zéro (la visite, le premier client guidé) ; sinon, on ouvre au jour 1
+    if (this.guide) return lancerJourZero(this);
+    this.G.tuto = false;
     commencerJournee(this, false, false);
   }
 }

@@ -89,9 +89,29 @@ class NightScene extends Phaser.Scene {
       boutons.splice(0, boutons.length, ...boutons.filter(([t]) => !PROJETS.includes(t)));
       boutons.splice(i0, 0, [`Tes projets (${projets.length}) ▴`, () => this.listeProjets(projets, 20 + (920 / boutons.length) * (i0 + 0.5))]);
     }
+    // (v1.40, planche 67) le didacticiel : ce qui n'est pas encore ouvert a son cadenas et dit quand il s'ouvrira ;
+    // ce qui vient de s'ouvrir porte « NOUVEAU » et une vignette l'explique
+    const CLES_SOIR = [['Le bureau', 'bureau'], ['La banque', 'banque'], ["L'atelier", 'atelier']];
+    const neufs = typeof nouveautes === 'function' ? nouveautes(G) : [];
+    for (const bt of boutons) {
+      const k = CLES_SOIR.find(([t]) => bt[0].startsWith(t));
+      if (!k || typeof lieuOuvert !== 'function') continue;
+      const d = DEBLOCAGES[k[1]];
+      if (!lieuOuvert(G, k[1])) { bt[0] = k[0]; bt[1] = () => { Son.jouer('refus'); this.annoncer(`${d.nom} s'ouvrira ${d.quand === 'ta 1re trouvaille' ? 'avec ta première trouvaille' : d.quand}.`); }; bt[2] = { ferme: d }; }
+      else if (neufs.includes(k[1])) bt[2] = { neuf: true };
+    }
+    if (neufs.length) this.time.delayedCall(1000, () => { if (!this.scene.isActive()) return; neufs.forEach((c, i) => { G.nouveautesVues[c] = true; vignetteGuide(this, 'NOUVEAU', DEBLOCAGES[c].nom, DEBLOCAGES[c].texte, { y: 92 + i * 96, prof: 60, duree: 6000 }); }); });
     const largeur = 920 / boutons.length;
-    boutons.forEach(([texte, action], i) => {
+    boutons.forEach(([texte, action, marque], i) => {
       const b = creerBouton(this, 20 + largeur * (i + 0.5), 505, largeur - 16, texte, action);
+      if (marque && marque.ferme) {
+        b.fond.setTint(0x6a6a6a); b.label.setAlpha(0.5);
+        this.add.image(b.label.x - b.label.width / 2 - 14, b.label.y, texCadenas(this)).setScale(2);
+        this.add.text(b.fond.x, b.fond.y - 34, marque.ferme.quand, style(12, '#e8dcc0', { fontStyle: 'bold italic', backgroundColor: '#2a1a10e0', padding: { x: 6, y: 2 } })).setOrigin(0.5);
+      } else if (marque && marque.neuf) {
+        const tag = this.add.text(b.fond.x, b.fond.y - 34, 'NOUVEAU', style(12, '#14181e', { fontStyle: 'bold', backgroundColor: '#8ab0d0', padding: { x: 8, y: 2 } })).setOrigin(0.5);
+        this.tweens.add({ targets: tag, y: tag.y - 3, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      }
       // Le soir, le bouton pour aller dormir (et passer au lendemain) se voit bien : il luit.
       if (!this.matin && i === boutons.length - 1) {
         b.label.setColor('#ffe9a0');

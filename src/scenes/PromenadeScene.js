@@ -466,6 +466,7 @@ class PromenadeScene extends Cinematique {
     Son.jouer('porte');
     // (v0.68) la banque s'ouvre par-dessus la rue : en sortant, on se retrouve devant sa porte
     // (v0.91) ... et la nymphe aussi : après elle, on se retrouve dans la rue, devant l'arche (on était renvoyé chez soi)
+    if (page === 'Banque' && typeof lieuOuvert === 'function' && !lieuOuvert(this.G || window.GAME, 'banque')) { this.transition = false; this.cible = null; return this.dire('La porte de la banque est close pour toi. Elle s\'ouvrira au jour 4.'); }   // (v1.40)
     if (page === 'Banque' || page === 'Nymphe') { this.transition = false; this.cible = null; this.scene.pause(); this.scene.launch(page, { retour: 'Promenade' }); return; }
     this.fini = true;
     const nuit = this.scene.get('Nuit');

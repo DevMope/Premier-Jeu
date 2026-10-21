@@ -121,11 +121,11 @@ class CounterScene extends Phaser.Scene {
   // renvoyer un client qu'on ne peut pas bien équiper (contre un peu de réputation).
   preparerTutoriel(v) {
     const G = this.G;
-    if (G.jour !== 1 || !G.tuto || !v.queteId) return;
+    if (G.jour > 1 || !G.tuto || !v.queteId) return;
     const commande = commandeDe(v);
     const ids = Object.keys(commande);
     if (!ids.length) return;
-    const dernier = G.file.filter(e => e.type === 'client').length === 0;
+    const dernier = G.jour === 1 && G.file.filter(e => e.type === 'client').length === 0;   // (v1.40 : le Jour Zéro, tout y est)
     if (!dernier) {
       for (const id of ids) G.stock[id] = Math.max(G.stock[id] || 0, commande[id]);
     } else {
@@ -1767,7 +1767,9 @@ class CounterScene extends Phaser.Scene {
     // (v0.86) une visite prend un quart d'heure (les clients, eux, comptent au service)
     if (['famille', 'notable', 'colporteur', 'garde', 'gardeRecherche', 'garrick', 'collecteur', 'serpent', 'aine', 'heraut', 'rival', 'crieur', 'collectionneur', 'sage', 'percepteur'].includes(entree.type)) this.avancer(JOURNEE.visite);
     if (entree.type === 'client') {
-      conseilGarrick(this, 'comptoir');
+      // (v1.40) le Jour Zéro : le premier client, pas à pas (sinon le conseil de Garrick, une fois)
+      if (jourZero(this.G) && didacticiel(this.G) && this.G.jourZeroEtape === 'client') this.time.delayedCall(1600, () => guideClient(this, 'commande'));
+      else conseilGarrick(this, 'comptoir');
       const v = this.voyageur = entree.voyageur;
       if (v.recherche && !entree.decide) return this.accueilRecherche(entree);   // (v0.86) une tête mise à prix ?
       this.preparerTutoriel(v);
@@ -2255,6 +2257,7 @@ class CounterScene extends Phaser.Scene {
     else if (estArme(id)) this.dire(`${(unNom(id) + ' ' + ITEMS[id].nom.toLowerCase()).replace(/^./, c => c.toUpperCase())} ! Exactement ce qu'il me fallait.`, v.nom);
     this.majStock();
     this.majCommande();
+    guideApresDon(this);   // (v1.40) le Jour Zéro : tout y est ? on passe au flair
   }
 
   // (v0.84) un objet du client à réparer : un marteau qui bat à côté de la ligne, pour ne pas le rater
@@ -2584,7 +2587,7 @@ class CounterScene extends Phaser.Scene {
     this.avancer(dureeService(this.G), `${prenomDe(v.nom)} servi${v.feminin ? 'e' : ''}`);
     Son.jouer('caisse');
     this.enService = false;
-    this.time.delayedCall(2500, () => conseilGarrick(this, 'remis'));
+    if (!guideClient(this, 'fini')) this.time.delayedCall(2500, () => conseilGarrick(this, 'remis'));   // (v1.40) le Jour Zéro : la première course est partie
     this.majCommande(); // le colis est remis : on ne peut plus rien retirer
     this.majBoutonsService();
     this.bouton('...', null);

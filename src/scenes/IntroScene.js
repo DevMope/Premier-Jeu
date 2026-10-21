@@ -57,6 +57,14 @@ class IntroScene extends Phaser.Scene {
     crayon.label.setFontSize(20);
     this.add.text(220, 500, '(touche le champ pour changer le nom)', style(13, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
 
+    // (v1.40) le didacticiel de Garrick : une case claire, cochée par défaut (on la retrouve dans le menu ☰)
+    this.didacticiel = typeof didacticielPrefere === 'function' ? didacticielPrefere() : true;
+    const caseD = this.add.text(805, 22, '', style(15, '#f3e6c8', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const noteD = this.add.text(805, 42, '', style(11, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+    const majD = () => { caseD.setText(`${this.didacticiel ? '☑' : '☐'} Didacticiel de Garrick`); noteD.setText(this.didacticiel ? 'conseillé pour une première partie' : 'pas de conseils, tout ouvert dès le jour 1'); };
+    caseD.on('pointerdown', () => { this.didacticiel = !this.didacticiel; Son.jouer('clic'); majD(); });
+    caseD.on('pointerover', () => caseD.setColor('#ffe066')); caseD.on('pointerout', () => caseD.setColor('#f3e6c8'));
+    majD();
     creerBouton(this, 590, 495, 180, 'Au hasard', () => this.auHasard());
     creerBouton(this, 815, 495, 240, "Commencer l'histoire", () => this.commencer());
     this.maj();
@@ -87,6 +95,7 @@ class IntroScene extends Phaser.Scene {
   }
 
   commencer() {
+    if (typeof reglerDidacticiel === 'function') reglerDidacticiel(this.didacticiel, null);
     nouvellePartie({ feminin: this.feminin, apparence: { ...this.ap }, nomShop: this.nomShop });
     allerA(this, 'IntroHistoire');
   }

@@ -125,6 +125,7 @@ class RueScene extends Phaser.Scene {
   // Entrer quelque part : à pied jusqu'à la porte (si on la donne), puis on y va.
   passerPar(page, x = null) {
     if (this.transition || this.fini) return;
+    if (page === 'Banque' && typeof lieuOuvert === 'function' && !lieuOuvert(window.GAME, 'banque')) return this.dire('La porte de la banque est close pour toi. Elle s\'ouvrira au jour 4.');   // (v1.40)
     this.transition = true;
     const aller = () => {
       Son.jouer('porte');

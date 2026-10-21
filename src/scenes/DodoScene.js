@@ -32,7 +32,12 @@ class DodoScene extends Cinematique {
     this.dessinerChambre();
     this.joueur = this.add.image(1000, SOL_CHAMBRE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(3);
     this.boutonPasser(() => this.passer());
-    this.derouler();
+    // (v1.40, planche 67) le soir du Jour Zéro : la veillée au coin du feu avec Garrick, puis la nuit
+    if (typeof veilleeDuJourZero === 'function' && jourZero(G) && didacticiel(G) && !G.veilleeFaite) {
+      if (this.allumerCheminee) this.allumerCheminee();
+      this.joueur.setX(470).setFlipX(true);
+      veilleeDuJourZero(this, () => { this.joueur.setX(1000).setFlipX(false); this.derouler(); });
+    } else this.derouler();
   }
 
   // --- Le décor ---

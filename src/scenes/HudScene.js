@@ -71,11 +71,37 @@ class HudScene extends Phaser.Scene {
     zoneRival.on('pointerdown', () => this.infoRival(!this.panneauRival));
     zoneRival.on('pointerover', () => this.texteRival.setColor('#ffe066'));
     zoneRival.on('pointerout', () => this.texteRival.setColor('#f3d98a'));
-    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, this.iconeSaison, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp, this.goutte, this.buche, this.medaillonRival]).setDepth(100);
+    // (v1.40, planche 67) le carnet des objectifs : une pastille à droite des plaques ; un clic l'ouvre
+    this.pastilleObjectifs = this.add.text(0, 9, '', style(12, '#2a1608', { fontStyle: 'bold', backgroundColor: '#f3d98a', padding: { x: 7, y: 2 }, brut: true })).setOrigin(0, 0.5).setInteractive({ useHandCursor: true }).setVisible(false);
+    this.pastilleObjectifs.on('pointerdown', () => { Son.jouer('plume'); ouvrirCarnetObjectifs(this); });
+    this.pastilleObjectifs.on('pointerover', () => this.pastilleObjectifs.setBackgroundColor('#ffe9a0'));
+    this.pastilleObjectifs.on('pointerout', () => this.pastilleObjectifs.setBackgroundColor('#f3d98a'));
+    this.compteObjectifs = 0;
+    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, this.iconeSaison, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp, this.goutte, this.buche, this.medaillonRival, this.pastilleObjectifs]).setDepth(100);
     // (v0.84) pas assez d'argent : une grande alerte en haut de l'écran, par-dessus toutes les pages
     const surManque = m => this.alerteArgent(m);
     this.game.events.on('manqueArgent', surManque);
     this.events.once('shutdown', () => this.game.events.off('manqueArgent', surManque));
+  }
+
+  // (v1.40) Le carnet des objectifs : la pastille suit les plaques visibles ; un objectif atteint s'annonce en direct
+  objectifsEnDirect(G) {
+    if (typeof verifierObjectifs !== 'function') return;
+    let x = 226;
+    if (this.goutte.visible) x = 250;
+    if (this.buche.visible) x = this.buche.x + 24;
+    if (this.medaillonRival.visible) x = this.medaillonRival.x + 46;
+    this.pastilleObjectifs.setX(x + 4);
+    if (++this.compteObjectifs % 20) return;
+    for (const o of verifierObjectifs(G)) {
+      Son.jouer('pieces', { montant: o.argent || 3 });
+      vignetteGuide(this, 'OBJECTIF ATTEINT ✓', o.texte, o.argent ? `Ta récompense : +${o.argent} pièces.` : `Ta récompense : ${recompenseObjectif(o)}.`, { y: 92, prof: 112 });
+      gainEnDirect(this, this.pastilleObjectifs.x + 60, 44, recompenseObjectif(o), true, { taille: 14 });
+    }
+    const n = objectifsEnCours(G).length;
+    const t = `✎ Objectifs (${n})`;
+    if (this.pastilleObjectifs.text !== t) this.pastilleObjectifs.setText(t);
+    this.pastilleObjectifs.setVisible(n > 0);
   }
 
   alerteArgent(manque) {
@@ -312,6 +338,7 @@ class HudScene extends Phaser.Scene {
       if (paon) { const sc = scoreDuMois(G), t = `${sc.toi} – ${sc.lui}`; if (this.texteRival.text !== t) this.texteRival.setText(t); }
       else if (this.panneauRival) this.infoRival(false);
       if (!sansFeu && this.bulleBuche) this.infoBuche(false);
+      sansPlanter('objectifsEnDirect', () => this.objectifsEnDirect(G));
       this.relationsEnDirect(G, s);
       // (v1.23) « Nouvelle pièce ! » pour la vitrine ; (v1.24) JeuneGoy pense à partir (v1.31 : jamais de quoi figer le jeu)
       sansPlanter('piecesEnDirect', () => this.piecesEnDirect(G));
@@ -343,9 +370,9 @@ class HudScene extends Phaser.Scene {
     if (this.scenePausee) this.scenePausee.scene.pause();
     const c = this.fenetre = this.add.container(0, 0).setDepth(110);
     c.add(this.add.rectangle(480, 270, 960, 540, 0x000000, 0.55).setInteractive());
-    c.add(this.add.image(480, 270, panneauHD(this, 480, 320)).setScale(2));
-    c.add(this.add.text(480, 150, 'Pause', style(26, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    c.add(this.add.text(480, 186, 'Ta partie est sauvegardée. En pleine journée,\ntu la reprendras au matin de ce jour-là.', style(14, '#4a2e18', { align: 'center', lineSpacing: 3 })).setOrigin(0.5));
+    c.add(this.add.image(480, 270, panneauHD(this, 480, 400)).setScale(2));
+    c.add(this.add.text(480, 110, 'Pause', style(26, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(480, 146, 'Ta partie est sauvegardée. En pleine journée,\ntu la reprendras au matin de ce jour-là.', style(14, '#4a2e18', { align: 'center', lineSpacing: 3 })).setOrigin(0.5));
     // (v0.57) un bouton par chose à faire, les uns sous les autres
     const boutons = [
       ['Continuer', () => this.fermerMenu()],
@@ -357,7 +384,16 @@ class HudScene extends Phaser.Scene {
       ['Journal de bord', () => this.ouvrirJournal()],
       ['Écran titre', () => this.retourTitre()],
     ];
-    boutons.forEach(([texte, action], k) => { const b = creerBouton(this, 480, 228 + k * 40, 240, texte, action); c.add([b.fond, b.label]); });
+    boutons.forEach(([texte, action], k) => { const b = creerBouton(this, 480, 188 + k * 40, 240, texte, action); c.add([b.fond, b.label]); });
+    // (v1.40) le didacticiel de Garrick : on l'active ou on le coupe, ici, à tout moment
+    if (typeof reglerDidacticiel === 'function' && window.GAME) {
+      const G = window.GAME;
+      const libelle = () => `Didacticiel : ${didacticiel(G) ? 'activé ✓' : 'désactivé'}`;
+      const explication = () => didacticiel(G) ? 'Garrick te guide, et les lieux s\'ouvrent petit à petit.' : 'Pas de conseils : tout est ouvert d\'emblée.';
+      const b = creerBouton(this, 480, 408, 300, libelle(), () => { reglerDidacticiel(!didacticiel(G), G); b.label.setText(libelle()); note.setText(explication()); });
+      const note = this.add.text(480, 436, explication(), style(12, '#5a3a1a', { fontStyle: 'italic' })).setOrigin(0.5);
+      c.add([b.fond, b.label, note]);
+    }
   }
 
   // (v0.57) Les réglages du son : cinq volumes, chacun avec sa glissière et son interrupteur.

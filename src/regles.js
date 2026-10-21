@@ -615,6 +615,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     encheresJour: 0,   // le jour de la dernière vente aux enchères
     visites: [],       // familles qui viendront au comptoir : { jour, defunt, parent }
     jour: 1,
+    didacticiel: typeof didacticielPrefere === 'function' ? didacticielPrefere() : true,   // (v1.40) le didacticiel de Garrick (voir didacticiel.js)
     argent: ARGENT_DEPART,
     argentDebutJour: ARGENT_DEPART,
     // Tous les objets du jeu, à 0 sauf le stock de départ.
@@ -1537,7 +1538,7 @@ const CADEAUX_VILLAGES = [['ration', 2], ['potion', 1], ['bandage', 2], ['gourde
 function loyerSemaine(G) {
   return LOYER.base + LOYER.parPalier * palierClients(G).index;
 }
-function jourDeLoyer(G, jour = G.jour) { return jour % 7 === 0; }
+function jourDeLoyer(G, jour = G.jour) { return jour > 0 && jour % 7 === 0; }   // (v1.40 : le Jour Zéro ne compte pas)
 
 // Ce qui sera prélevé cette nuit (prêts, salaires, loyer), pour prévenir le joueur le soir.
 function depensesDeLaNuit(G) {
@@ -1584,7 +1585,7 @@ function nuit(G) {
   const mauvaisJour = G.journal.morts > 0 || G.argent <= SEUIL_FAILLITE + 30;
   // La taxe de la Confrérie, en fin de semaine
   let taxe = 0;
-  if (G.jour % 7 === 0) {
+  if (G.jour > 0 && G.jour % 7 === 0) {
     const p = palierCamp(G);
     const dette = G.prets.reduce((s, x) => s + x.restant, 0);   // (audit v0.54 : l'argent emprunté n'est pas taxé)
     taxe = Math.round(Math.max(0, G.argent - dette - TAXE_CONFRERIE.franchise) * TAXE_CONFRERIE.taux[p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre']);
@@ -2444,7 +2445,7 @@ function bilanPeriode(G, du, au) {
 // --- Le calendrier ---
 
 function dateDuJour(G, jour = G.jour) {
-  const j = jour - 1 + (G.decalageJours || 0);   // (les sauts de temps des paliers d'étoiles)
+  const j = Math.max(0, jour - 1) + (G.decalageJours || 0);   // (les sauts de temps des paliers d'étoiles ; v1.40 : le Jour Zéro a la date du jour 1)
   return {
     an: Math.floor(j / JOURS_PAR_AN) + 1,
     mois: Math.floor((j % JOURS_PAR_AN) / JOURS_PAR_MOIS),

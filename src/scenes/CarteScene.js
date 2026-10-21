@@ -48,7 +48,7 @@ class CarteScene extends Phaser.Scene {
     this.cameras.main.fadeIn(300);
     this.camCarte.fadeIn(300);
     if (this.nouvelles.length) this.time.delayedCall(400, () => this.devoiler(this.nouvelles.slice()));
-    else if (this.planification) this.time.delayedCall(500, () => conseilGarrick(this, 'carte'));
+    else if (this.planification && !visiteDuMonde(this)) this.time.delayedCall(500, () => conseilGarrick(this, 'carte'));   // (v1.40) le Jour Zéro : la visite du monde
   }
 
   // Le dévoilement d'une contrée qui vient de s'ouvrir : la caméra y glisse, la brume se dissipe,
