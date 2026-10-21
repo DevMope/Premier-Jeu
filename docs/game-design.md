@@ -2963,6 +2963,18 @@ fumée direct et qu'il doit voir le chat en faire une nouvelle dans sa maison po
 - **Le chat voleur** : oui, sauf si c'est la première prise de cette espèce, ou un légendaire.
 - **Le carnet de pêche** : oui.
 
+### Planche 71 (à valider) : la pêche (docs/planches-v059/planche-71-la-peche.png)
+- **La cabane de Barnabé Goujon** (hobbit, vieux pêcheur), nouvelle construction au bout de la rue du marché : la canne de roseau (20 p.), la vente des poissons ; il explique la pêche la première fois (le tuto). Elle ouvre au jour 6, avec ou sans l'histoire du chat.
+- **Le cadeau du chat** : à la fin de la conversation au coin du feu, la canne de son grand-père (un peu meilleure ; ton chat viendra parfois pêcher avec toi).
+- **L'étang du Moulin à l'aube, le jour, la nuit** (le décor du Moulin, avec une version de jour : ciel bleu, eau claire). Pêcher ne prend pas de temps ; chaque moment a ses poissons.
+- **Le mini-jeu** : lancer (jauge de force ; plus loin, plus gros, plus long à mordre), la touche (ferrer tout de suite), la remontée (garder le poisson dans la zone verte jusqu'à 100 %). **La méfiance de l'étang** : plus de prises d'affilée dans la même plage, plus la touche tarde et plus la zone verte rétrécit.
+- **La prise** : taille, record, « nouveau dans le carnet » ; garder (fumée : une ration), vendre à Barnabé, donner au chat (+1 ♥), relâcher.
+- **Le chat voleur** : il file avec une prise, jamais une espèce pas encore attrapée ni un légendaire.
+- **Le carnet de pêche** : espèces, records, moments ; la légende reste une ombre avec un indice ; les prises étranges.
+- **L'étang** : gardon, perche, tanche, brochet, anguille, carpe, carpe dorée ; la légende **Grand-Mère Écaille** (carpe centenaire, œil laiteux, lichen, l'anneau d'or du meunier dans la lèvre ; sous la roue, à l'aube, en hiver) ; prises étranges du Comté : vieille botte, bouteille à message (une piste), pièce ancienne (collections).
+- **Les eaux du monde** (proposition) : Lac de Lune (Ilwen, elfe ; la Truite-Lune), lac gelé (Thrain Glacepêche, nain ; le Brochet de Fer), rivière aux bambous (Maître Bao, panda ; le Koï-Dragon), baie des Brisants (Mère Varech ; le Lanternier des abysses), Fleuve des Cendres (Grisk, gobelin ; le Silure-Charbon).
+- **La lignée des cannes** : roseau, canne du grand-père, noisetier à moulinet (180 p.) au début ; bambou laqué, argent elfique, fer des Nains chez les pêcheurs des autres contrées ; ébène et fil d'or, offerte par le Parrain.
+
 ### Construit en v1.35 : l'aventure du Vieux Moulin (voir le tableau des versions)
 - `src/moulin.js` (règles : complicité, soir du chat, fin, formes vues), `src/succes.js` (les succès et leur vignette),
   `src/scenes/MoulinScene.js` (la scène jouée, et la fenêtre du soir), `src/moulinHD.js` (le décor, la fumée, le cercle).
