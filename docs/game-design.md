@@ -2895,3 +2895,14 @@ Dans `src/moulinHD.js`, réutilisable partout :
   s'étale, monte) ; `rondDeFumee(scene, x, y, sens)` : l'anneau qui s'élargit en tremblant et se défait.
 - `fermetureEnCercle(scene, x, y)` : le cercle noir qui se resserre sur les héros (centré sur Caramel), marque une pause
   serrée sur lui avec un petit « ting », puis se ferme tout à fait. Aucun texte. Puis retour à la maison.
+
+Retours du joueur (21/10) : « l'eau sous le pont est beaucoup mieux, maintenant faire des contours moins linéaires, plus
+irréguliers, le long de l'eau qui part vers l'horizon » ; « images 5 à 8 : toujours un très léger problème de raccordement
+entre les deux eaux ».
+
+### Planche 60 v5 (à valider : docs/planches-v059/planche-60-v5-vieux-moulin.png)
+- Le ruisseau serpente : tout son cours ondule doucement, chaque rive a ses anses et ses avancées (plus marquées de près),
+  des touffes d'herbe avancent sur l'eau.
+- Le bief et l'étang ne font qu'une eau : même niveau, mêmes teintes à la même hauteur (`EAU_ETANG`, option `gamme` de
+  la surface), le reflet des arbres naît doucement après le bief, la margelle du fond se prolonge par la rive d'en face
+  (sa dernière pierre mangée par l'herbe) ; au bout du bief, le courant s'épanouit en rides qui s'élargissent.
