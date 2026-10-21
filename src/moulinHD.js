@@ -356,8 +356,12 @@ function brumeEngeance(scene, bete) {
 }
 
 // Le chat debout sur ses pattes arrière, un cigare à la patte : le secret du chat (il parle depuis le début)
-function textureChatDebout(scene, look, { cigare = true } = {}) {
-  const cle = `chatDebout_${look.pelage}_${look.yeux}_${look.collier}${cigare ? '' : '_sans'}`;
+// (planches 65-66, à valider) `chapeau` : un des CHAPEAUX_CHAT posé sur la tête (la toile grandit vers le haut, les pieds
+// ne bougent pas) ; `tenue: 'parrain'` : le costume trois pièces (veste, gilet, nœud papillon, la rose à la boutonnière),
+// le gant noir à la patte qui tient le cigare ; `assis` : assis au bord d'un fauteuil ; `caresse` : l'autre patte
+// tendue vers ses genoux (pour la souris qu'il caresse).
+function textureChatDebout(scene, look, { cigare = true, chapeau = null, tenue = null, assis = false, caresse = false } = {}) {
+  const cle = `chatDebout_${look.pelage}_${look.yeux}_${look.collier}${cigare ? '' : '_sans'}${chapeau ? '_' + chapeau : ''}${tenue ? '_' + tenue : ''}${assis ? '_assis' : ''}${caresse ? '_caresse' : ''}`;
   if (scene.textures.exists(cle)) return cle;
   const P = PELAGES_CHAT[look.pelage] || PELAGES_CHAT.gris, Y = YEUX_CHAT[look.yeux] || YEUX_CHAT.vert, C = COLLIERS_CHAT[look.collier] || COLLIERS_CHAT.aucun;
   const t = toileDecor(32, 44);
@@ -366,11 +370,28 @@ function textureChatDebout(scene, look, { cigare = true } = {}) {
   if (C.couleur) t.rampes.collier = rampe(C.couleur);
   t.rampes.cigare = rampe(0x6a3a1a); t.rampes.braise = rampe(0xff7020);
   const rayures = P.rayures ? (x, y) => ((y + Math.floor(x * 0.6)) % 4 === 0 ? -1 : 0) : (x, y) => (hachage(x, y, 17) > 0.9 ? -0.4 : 0);
+  const parrain = tenue === 'parrain', habit = parrain ? 'costume' : 'poil';
+  if (parrain) { t.rampes.costume = rampe(0x2a2a34); t.rampes.satin = rampe(0x52525e); t.rampes.gilet = rampe(0x4e4856); t.rampes.chemise = rampe(0xe8e4dc); t.rampes.gant = rampe(0x18161a); t.rampes.rose = rampe(0xc01828); t.rampes.feuille = rampe(0x3a6a2a); }
   traitHD(t, 'poil', [[9, 40], [4, 38], [2, 33], [4, 29]], 1.4);                                  // la queue, enroulée
-  for (const [x, d] of [[12, -0.3], [17, 0]]) { traitHD(t, 'poil', [[x, 33], [x, 40]], 1.6, d); t.forme('poil', ellipsoide(x + 2, 41.5, 3, 1.4), { decalage: d }); }   // les pattes arrière, les pieds
+  if (assis) {   // (assis au bord du siège : les cuisses vers l'avant, les jambes qui pendent)
+    for (const [x, d] of [[12, -0.3], [15, 0]]) { traitHD(t, habit, [[x, 34], [x + 7, 35.5], [x + 7.5, 40]], 1.6, d); t.forme('poil', ellipsoide(x + 9.5, 41.5, 3, 1.4), { decalage: d }); }
+  } else for (const [x, d] of [[12, -0.3], [17, 0]]) { traitHD(t, habit, [[x, 33], [x, 40]], 1.6, d); t.forme('poil', ellipsoide(x + 2, 41.5, 3, 1.4), { decalage: d }); }   // les pattes arrière, les pieds
   t.forme('poil', ellipsoide(15, 27, 6.5, 9), { motif: rayures });                                // le corps, debout
   t.forme('ventre', ellipsoide(17, 28, 3.6, 6.5), { decalage: 0.3 });
-  traitHD(t, 'poil', [[11, 22], [8, 27], [11, 30]], 1.2, -0.2);                                   // une patte sur la hanche
+  if (parrain) {
+    // la veste, ouverte en V sur le gilet et la chemise ; les revers de satin ; trois boutons ; la rose
+    const V = (x, y) => y >= 18 && y <= 30 && Math.abs(x + 0.5 - 18.2) <= (30 - y) * 0.4 + 0.4;
+    t.forme('costume', ellipsoide(15, 27.5, 6.9, 8.9, (x, y) => !V(x, y)), { motif: (x, y) => ((x + 1) % 3 === 0 && y > 20 ? 0.25 : 0) });   // (les fines rayures)
+    t.forme('gilet', ellipsoide(18.2, 27, 3.2, 6.2, (x, y) => V(x, y) && y >= 23));
+    t.forme('chemise', ellipsoide(18.2, 21, 4, 3.6, (x, y) => V(x, y) && y < 23), { decalage: 0.5 });
+    for (let y = 19; y <= 29; y++) for (const sx of [-1, 1]) { const x = Math.round(18.2 + sx * ((30 - y) * 0.4 + 0.7) - 0.5); if (t.mat(x, y) === 'costume') t.poser(x, y, 'satin', y < 23 ? 4 : 3); }
+    for (const y of [24, 26, 28]) t.poser(18, y, 'laiton', 4);
+    for (const [x, y, i] of [[17, 19, 3], [18, 19, 1], [19, 19, 3], [16, 18, 2], [20, 18, 2], [18, 18, 1]]) t.poser(x, y, 'gant', i);   // (le nœud papillon)
+    for (const [x, y, i] of [[13, 21, 4], [14, 21, 3], [13, 22, 3], [14, 22, 2], [13, 23, 1]]) t.poser(x, y, x === 13 && y === 23 ? 'feuille' : 'rose', i);
+  }
+  if (caresse) traitHD(t, habit, [[11, 22], [13, 28], [18, 31.5]], 1.2, -0.2);                   // la patte tendue vers ses genoux
+  else traitHD(t, habit, [[11, 22], [8, 27], [11, 30]], 1.2, -0.2);                                // une patte sur la hanche
+  if (parrain) t.forme('poil', ellipsoide(caresse ? 19 : 11.5, caresse ? 31.8 : 30.5, 1.3, 1.1));   // (le bout de la patte, qui dépasse de la manche)
   // la tête, les oreilles, l'œil mi-clos (l'air de celui qui en sait long)
   const cx = 16, cy = 12;
   for (const ox of [-2.4, 1.8]) t.forme('poil', (x, y) => (y >= cy - 8 && y <= cy - 2 && Math.abs(x + 0.5 - (cx + ox)) <= (y - (cy - 8)) * 0.42 + 0.2 ? [0, -0.6, 0.8] : null), { decalage: 0.2 });
@@ -378,11 +399,21 @@ function textureChatDebout(scene, look, { cigare = true } = {}) {
   t.forme('ventre', ellipsoide(cx + 3.4, cy + 1.6, 2.4, 1.8), { decalage: 0.2 });
   t.poser(cx + 2, cy - 1, 'oeil', 4); t.poser(cx + 3, cy - 1, 'oeil', 2); t.poser(cx + 2, cy - 2, 'poil', 1); t.poser(cx + 3, cy - 2, 'poil', 1);   // (la paupière lourde)
   t.poser(cx + 5, cy + 1, 'verreRouge', 3);
-  if (C.couleur) for (let x = cx - 4; x <= cx + 2; x++) for (const y of [cy + 4, cy + 5]) if (t.mat(x, y)) t.poser(x, y, 'collier', y === cy + 4 ? 4 : 2);
-  // l'autre patte levée vers la bouche, le cigare entre les doigts, sa braise
-  traitHD(t, 'poil', [[19, 21], [23, 19], [22, 15]], 1.2, 0.3);
+  if (C.couleur && !parrain) for (let x = cx - 4; x <= cx + 2; x++) for (const y of [cy + 4, cy + 5]) if (t.mat(x, y)) t.poser(x, y, 'collier', y === cy + 4 ? 4 : 2);
+  // l'autre patte levée vers la bouche, le cigare entre les doigts, sa braise (en Parrain : la manche, et le gant noir)
+  traitHD(t, habit, [[19, 21], [23, 19]], 1.2, 0.3);
+  traitHD(t, parrain ? 'gant' : 'poil', [[23, 19], [22, 15]], 1.2, 0.3);
   if (cigare) { traitHD(t, 'cigare', [[21, 15], [28, 13]], 0.7, 0.4); t.poser(28, 13, 'braise', 5); t.poser(29, 13, 'braise', 3); }
   if (P.taches) for (let y = 0; y < t.h; y++) for (let x = 0; x < t.l; x++) if (t.mat(x, y) === 'poil' && fbm(x * 0.22, y * 0.22, 433) > 0.56) t.poser(x, y, 'tache', t.k[y * t.l + x]);
+  if (chapeau && typeof dessinerChapeauChat === 'function') {
+    // la toile grandit vers le haut (les pieds restent où ils sont), puis le chapeau sur la tête
+    const H = 14, T = toileDecor(t.l, t.h + H);
+    Object.assign(T.rampes, t.rampes);
+    for (let i = 0; i < t.l * t.h; i++) { T.c[i + H * t.l] = t.c[i]; T.m[i + H * t.l] = t.m[i]; T.k[i + H * t.l] = t.k[i]; }
+    dessinerChapeauChat(T, chapeau, cx, cy + H);
+    T.contour(); T.texture(scene, cle);
+    return cle;
+  }
   t.contour(); t.texture(scene, cle);
   return cle;
 }
