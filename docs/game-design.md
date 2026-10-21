@@ -2906,3 +2906,22 @@ entre les deux eaux ».
 - Le bief et l'étang ne font qu'une eau : même niveau, mêmes teintes à la même hauteur (`EAU_ETANG`, option `gamme` de
   la surface), le reflet des arbres naît doucement après le bief, la margelle du fond se prolonge par la rive d'en face
   (sa dernière pierre mangée par l'herbe) ; au bout du bief, le courant s'épanouit en rides qui s'élargissent.
+
+Demande du joueur (21/10) : « que le chat maîtrise bien l'art de faire des formes en fumant, comme quand Gandalf fume le
+vieux tobi avec Bilbon et qu'il dessine un navire avec sa fumée, et faire que le chat pour plus tard fume dans différents
+endroits de la maison du joueur en faisant une forme nouvelle à chaque fois ».
+
+### Planche 60 — Caramel, maître de la fumée (à valider : docs/planches-v059/planche-60-formes-de-fumee.png)
+- `FORMES_FUMEE` (`src/moulinHD.js`) : douze formes faites de traits — navire, cœur, poisson, papillon, étoile, lune,
+  souris, oiseau, couronne, petit dragon, tête de chat, ancre. `formeDeFumee(scene, forme, bouche, centre)` : les bouffées
+  quittent sa bouche et se posent le long des traits, comme un dessin qui se trace ; puis la forme vit à sa façon (le
+  navire vogue en tanguant, le poisson nage, l'oiseau, le papillon et le dragon battent des ailes, le cœur bat, l'étoile
+  tourne, la souris trotte, le reste flotte) avant de se défaire bouffée par bouffée.
+- Au Vieux Moulin : le navire ; s'il a fumé avec lui, JeuneGoy souffle un rond et le navire passe au travers ; un cœur
+  pour la chatte ; un poisson au-dessus de l'étang.
+- Plus tard, à la maison (avec le coin des chats) : Caramel fume à des endroits différents (au coin du feu, à la fenêtre,
+  sur le comptoir le soir, au grenier, sur le toit...) et souffle chaque fois une forme jamais vue
+  (`formeDeFumeeSuivante(G.chat.formesVues)`) ; une fois toutes vues, il recommence au hasard. Idée de succès : « Le
+  répertoire complet ».
+- Correction : le joueur ne parle jamais ; la réplique « ... Frimeur. » de la planche de fin est remplacée par la
+  narration (« Tu ne peux pas t'empêcher de sourire »).

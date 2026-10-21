@@ -449,3 +449,66 @@ function fermetureEnCercle(scene, x, y, { rayonPause = 70, duree = 1400, pause =
   });
   return { g, dessiner, promesse };
 }
+
+// (v1.35, demande du joueur) Caramel est un maître de la fumée : comme le vieux magicien qui fait voguer un navire de
+// fumée à travers le rond de son ami, il souffle des formes. Chaque forme est faite de traits (des listes de points, en
+// unités : x vers la droite, y vers le bas, environ de -1 à 1) ; les bouffées partent de sa bouche, viennent se poser sur
+// les traits comme un dessin qui se trace, puis la forme vit un moment (le navire vogue, le poisson nage, le cœur bat...)
+// avant de se défaire. Plus tard, à la maison, il en soufflera une nouvelle à chaque fois, ailleurs (voir le GDD).
+const cercleFumee = (cx, cy, rx, ry, a0 = 0, a1 = Math.PI * 2, n = 14) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]; });
+const FORMES_FUMEE = {
+  navire: { nom: 'un navire', mouvement: 'vogue', traits: [
+    [[-1.1, 0], [-0.85, 0.32], [0.85, 0.32], [1.15, -0.05]], [[-1.1, 0], [1.15, -0.05]],                 // (la coque, le pont)
+    [[0, 0], [0, -1.25]], [[0, -1.15], [0.62, -0.42], [0, -0.32]], [[0, -1.05], [-0.55, -0.45], [0, -0.38]],   // (le mât, les deux voiles)
+    [[0, -1.25], [0.3, -1.14], [0, -1.05]], [[0.85, -0.05], [1.35, -0.42]] ] },                            // (le fanion, le beaupré)
+  coeur: { nom: 'un cœur', mouvement: 'bat', traits: [Array.from({ length: 25 }, (_, i) => { const t = i / 24 * Math.PI * 2; return [0.06 * 16 * Math.sin(t) ** 3, -0.06 * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t))]; })] },
+  poisson: { nom: 'un poisson', mouvement: 'nage', traits: [cercleFumee(0, 0, 0.75, 0.42), [[-0.7, 0], [-1.25, -0.42], [-1.15, 0], [-1.25, 0.42], [-0.7, 0]], [[0.42, -0.1], [0.44, -0.08]], [[0.05, -0.38], [-0.15, -0.7], [-0.35, -0.38]]] },
+  papillon: { nom: 'un papillon', mouvement: 'vol', traits: [cercleFumee(-0.5, -0.35, 0.45, 0.38), cercleFumee(0.5, -0.35, 0.45, 0.38), cercleFumee(-0.38, 0.35, 0.3, 0.26), cercleFumee(0.38, 0.35, 0.3, 0.26), [[0, -0.6], [0, 0.6]], [[0, -0.6], [-0.25, -1]], [[0, -0.6], [0.25, -1]]] },
+  etoile: { nom: 'une étoile', mouvement: 'tourne', traits: [Array.from({ length: 11 }, (_, i) => { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 0.42 : 1; return [Math.cos(a) * r, Math.sin(a) * r]; })] },
+  lune: { nom: 'une lune', mouvement: 'flotte', traits: [cercleFumee(0, 0, 1, 1, -Math.PI * 0.6, Math.PI * 0.6, 18), cercleFumee(0.42, 0, 0.72, 0.85, -Math.PI * 0.55, Math.PI * 0.55, 14)] },
+  souris: { nom: 'une souris', mouvement: 'trotte', traits: [[[1.05, 0.1], [0.55, -0.42], [0, -0.5], [-0.55, -0.35], [-0.72, 0.1], [1.05, 0.1]], cercleFumee(0.42, -0.7, 0.24, 0.24), [[0.78, -0.12], [0.8, -0.1]], [[-0.72, 0.05], [-1.05, -0.1], [-1.25, -0.4], [-1.1, -0.65], [-0.9, -0.55]]] },
+  oiseau: { nom: 'un oiseau', mouvement: 'vol', traits: [[[-1, -0.3], [-0.5, -0.55], [0, 0]], [[0, 0], [0.5, -0.55], [1, -0.3]], [[0, 0], [0.1, 0.25]]] },
+  couronne: { nom: 'une couronne', mouvement: 'flotte', traits: [[[-0.9, 0.35], [-0.9, -0.45], [-0.45, -0.05], [0, -0.65], [0.45, -0.05], [0.9, -0.45], [0.9, 0.35], [-0.9, 0.35]]] },
+  dragon: { nom: 'un petit dragon', mouvement: 'vol', traits: [[[-1.4, 0.15], [-1.15, 0.35], [-0.7, 0.1], [-0.2, 0.3], [0.3, 0.1], [0.65, -0.25]], [[-1.4, 0.15], [-1.55, 0], [-1.4, -0.1]], [[0.65, -0.25], [1.1, -0.2], [0.75, -0.45], [0.65, -0.25]], [[0.75, -0.45], [0.7, -0.7]], [[-0.3, 0.2], [-0.55, -0.6], [-0.15, -0.35], [0.05, -0.9], [0.25, -0.3], [0.1, 0.18]]] },
+  chat: { nom: 'une tête de chat', mouvement: 'flotte', traits: [cercleFumee(0, 0, 0.75, 0.62), [[-0.62, -0.32], [-0.55, -1], [-0.18, -0.6]], [[0.62, -0.32], [0.55, -1], [0.18, -0.6]], [[-0.3, -0.1], [-0.28, -0.08]], [[0.3, -0.1], [0.32, -0.08]], [[-0.85, 0.15], [-0.35, 0.18]], [[0.85, 0.15], [0.35, 0.18]]] },
+  ancre: { nom: 'une ancre', mouvement: 'flotte', traits: [[[0, -0.9], [0, 0.8]], cercleFumee(0, -1.05, 0.17, 0.17), [[-0.4, -0.55], [0.4, -0.55]], cercleFumee(0, 0.25, 0.7, 0.6, 0, Math.PI, 10)] },
+};
+// La forme suivante : une qu'il n'a jamais soufflée, sinon au hasard
+function formeDeFumeeSuivante(dejaVues = []) {
+  const neuves = Object.keys(FORMES_FUMEE).filter(f => !dejaVues.includes(f));
+  return Phaser.Utils.Array.GetRandom(neuves.length ? neuves : Object.keys(FORMES_FUMEE));
+}
+// Souffler une forme : de la bouche (bx, by) vers le centre (cx, cy), à la taille voulue (en pixels pour une unité)
+function formeDeFumee(scene, forme, bx, by, cx, cy, { taille = 46, profondeur = 8.75, tenue = 2600, sens = 1, vit = true } = {}) {
+  creerFumeeHD(scene);
+  const F = FORMES_FUMEE[forme]; if (!F) return null;
+  const c = scene.add.container(cx, cy).setDepth(profondeur), bouffees = [];
+  // les points des traits, à intervalles réguliers (un dessin qui se trace dans l'ordre des traits)
+  const pas = 0.15;
+  for (const trait of F.traits) for (let i = 0; i < trait.length - 1; i++) {
+    const [x0, y0] = trait[i], [x1, y1] = trait[i + 1], n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / pas));
+    for (let k = 0; k < n; k++) bouffees.push([(x0 + (x1 - x0) * k / n) * sens, y0 + (y1 - y0) * k / n]);
+  }
+  const fin = F.traits[F.traits.length - 1].slice(-1)[0]; bouffees.push([fin[0] * sens, fin[1]]);
+  const ech = Math.max(0.9, taille / 36);   // (des bouffées fines : la forme se lit mieux)
+  bouffees.forEach(([ux, uy], i) => {
+    const f = scene.add.image(bx - cx, by - cy, 'fumeeHD_' + (i % 3)).setScale(ech * 0.4).setAlpha(0.9);
+    c.add(f);
+    scene.tweens.add({ targets: f, x: ux * taille + (Math.random() - 0.5) * 2, y: uy * taille + (Math.random() - 0.5) * 2, scale: ech * (0.85 + Math.random() * 0.25), duration: 420, delay: i * 22, ease: 'Quad.easeOut',
+      onComplete: () => scene.tweens.add({ targets: f, x: f.x + (Math.random() - 0.5) * 3, y: f.y + (Math.random() - 0.5) * 3, duration: 600 + Math.random() * 400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }) });
+  });
+  const trace = bouffees.length * 22 + 420;
+  // la forme vit : chacune à sa façon
+  const vie = { vogue: { x: cx + sens * 160, angle: 3 }, nage: { x: cx + sens * 120 }, vol: { x: cx + sens * 90, y: cy - 50 }, trotte: { x: cx + sens * 140 }, bat: {}, tourne: { angle: 30 }, flotte: { y: cy - 24 } }[F.mouvement] || {};
+  if (vit) scene.time.delayedCall(trace, () => {
+    scene.tweens.add({ targets: c, ...vie, duration: tenue, ease: 'Sine.easeInOut' });
+    if (F.mouvement === 'vogue') scene.tweens.add({ targets: c, y: cy + 5, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // (le navire tangue sur les vagues)
+    if (F.mouvement === 'nage') scene.tweens.add({ targets: c, y: cy + 8, angle: 4 * sens, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    if (F.mouvement === 'vol') scene.tweens.add({ targets: c, scaleY: 0.82, duration: 260, yoyo: true, repeat: -1 });   // (les ailes battent)
+    if (F.mouvement === 'trotte') scene.tweens.add({ targets: c, y: cy - 4, duration: 160, yoyo: true, repeat: -1 });
+    if (F.mouvement === 'bat') scene.tweens.add({ targets: c, scale: 1.12, duration: 300, yoyo: true, repeat: -1, ease: 'Quad.easeOut' });
+    // puis elle se défait : chaque bouffée s'élargit et monte, de proche en proche
+    scene.time.delayedCall(tenue, () => c.list.forEach((f, i) => { scene.tweens.killTweensOf(f); scene.tweens.add({ targets: f, y: f.y - 30 - Math.random() * 30, x: f.x + (Math.random() - 0.5) * 20, scale: f.scale * 2.2, alpha: 0, duration: 1400, delay: i * 8, onComplete: () => { if (i === c.list.length - 1) c.destroy(); } }); }));
+  });
+  return c;
+}
