@@ -474,7 +474,21 @@ class RenovationScene extends Cinematique {
     this.boiteEnHaut(true);
     [this.boite, this.entete, this.texte].forEach(o => o.setVisible(true));
     this.ecrire('Garrick Cœur-de-Chêne', `« Magnifique ! “${G.nomShop}” est prêt à ouvrir. Demain, je reste avec toi pour ta première journée : je te montrerai tout. »`);
-    await this.attendreSuite('▶ Clique pour commencer');
+    // (v1.43, planche 70) avec le didacticiel : Garrick montre les boutons, en sapin brut comme la maison
+    if (this.guide && typeof pierreSeule === 'function') {
+      await this.attendreSuite('▶ Suite');
+      if (this.fini) return;
+      this.ecrire('Garrick Cœur-de-Chêne', "« Et tes boutons, tu les as vus ? Du sapin brut, comme ta maison. Embellis-la, et eux aussi s'embelliront : un jour, des pierres précieuses, une couleur pour chaque chose. »");
+      const pierres = [['rubis', 'tes actions'], ['emeraude', 'ta réserve'], ['saphir', 'toi']].map(([m, quoi], i) => {
+        const x = 330 + i * 150, img = this.add.image(x, 214, pierreSeule(this, m, 13, 3)).setScale(3).setScrollFactor(0).setDepth(20).setAlpha(0);
+        const t = this.add.text(x, 250, quoi, style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5).setScrollFactor(0).setDepth(20).setAlpha(0);
+        this.tweens.add({ targets: [img, t], alpha: 1, delay: 300 + i * 250, duration: 400 });
+        this.tweens.add({ targets: img, y: 210, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: i * 200 });
+        return [img, t];
+      });
+      await this.attendreSuite('▶ Clique pour commencer');
+      pierres.flat().forEach(o => o.destroy());
+    } else await this.attendreSuite('▶ Clique pour commencer');
     this.finir();
   }
 

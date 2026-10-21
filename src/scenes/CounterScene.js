@@ -57,6 +57,7 @@ class CounterScene extends Phaser.Scene {
     this.creerDialogue();
     this.creerStock();
     this.creerZones();
+    this.creerPierresDesPanneaux();
     this.creerArgent();
     this.creerHorloge();
     if (this.majCommandeRoyale) this.majCommandeRoyale();   // (v1.10) la commande scellée, punaisée sur l'ardoise
@@ -1009,7 +1010,9 @@ class CounterScene extends Phaser.Scene {
     this.fondDialogue = this.add.image(480, 298, 'parcheminDialogue').setScale(2);
     // (v0.68) un clic n'importe où affiche d'un coup la phrase en train de s'écrire
     this.input.on('pointerdown', () => { if (this.defileDialogue) this.defileDialogue.finir(); });
-    this.plaqueNom = this.add.image(133, 288, plaqueBouton(this, 196)).setScale(2);
+    const pl = plaqueDuRang(this, 196, 'topaze', false);   // (v1.43) la plaque du nom : topaze (le client), une pierre de chaque côté
+    this.placeNom = pl.place;
+    this.plaqueNom = this.add.image(133, 288, pl.cle).setScale(2);
     this.nomParleur = this.add.text(133, 288, '', style(15, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
     this.sousNom = this.add.text(133, 321, '', style(12, '#5a4028', { fontStyle: 'italic bold' })).setOrigin(0.5);
     this.texteDialogue = this.add.text(256, 298, '', style(16, '#2a1a0c', { wordWrap: { width: 660 }, lineSpacing: 1 })).setOrigin(0, 0.5);
@@ -1031,6 +1034,15 @@ class CounterScene extends Phaser.Scene {
       g.lineStyle(3, coul, 0.8).strokeRoundedRect(x, y, l, h, 8);
       this.add.text(ex, ey, texte, style(11, '#14100a', { fontStyle: 'bold', backgroundColor: fond, padding: { x: 7, y: 2 } })).setOrigin(0.5);
     }
+  }
+
+  // (v1.43, planche 70) dès la Maison, une pierre aux coins de l'ardoise (saphir : toi) et du parchemin (topaze : le client)
+  creerPierresDesPanneaux() {
+    const rang = typeof rangInterface === 'function' ? rangInterface(this) : 1;
+    if (rang < 2) return;
+    for (const [x, y] of [[29, 29], [259, 29], [29, 239], [259, 239]]) coinPierre(this, x, y, 'saphir', rang, 0);
+    for (const [x, y] of [[694, 29], [936, 29], [694, 239], [936, 239]]) coinPierre(this, x, y, 'topaze', rang, 0);
+    if (rang >= 4) for (const [x, y] of [[255, 25], [932, 25]]) etincelle(this, x, y, 0.5);
   }
 
   creerStock() {
@@ -2627,7 +2639,7 @@ class CounterScene extends Phaser.Scene {
     const [nomSeul, ...reste] = nom.split(coupure);
     this.plaqueNom.setVisible(!!nomSeul);
     this.nomParleur.setText(nomSeul).setColor(qui ? couleurNom(this.G, qui, true) : '#f3d98a').setFontSize(15);
-    for (let taille = 14; this.nomParleur.width > 176 && taille >= 10; taille--) this.nomParleur.setFontSize(taille);
+    for (let taille = 14; this.nomParleur.width > (this.placeNom || 180) - 4 && taille >= 10; taille--) this.nomParleur.setFontSize(taille);
     this.sousNom.setText(reste.join(coupure)).setColor(qui ? couleurNom(this.G, qui) : '#5a4028').setFontSize(12);
     for (let taille = 11; this.sousNom.width > 200 && taille >= 9; taille--) this.sousNom.setFontSize(taille);
     // Le texte rapetisse un peu s'il est long, pour toujours tenir dans le parchemin.

@@ -38,8 +38,9 @@ class BureauScene extends Phaser.Scene {
     date.on('pointerdown', () => { Son.jouer('page'); this.ouvrirCalendrier(); });
     creerBouton(this, 850, 505, 180, 'Fermer', () => this.fermer());
     // Renommer le shop (l'enseigne de la façade)
-    this.add.image(640, 505, plaqueBouton(this, 250)).setScale(2);
-    const enseigne = this.add.text(640, 505, `✎ « ${G.nomShop} »`, style(13, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 }))
+    const pl = plaqueDuRang(this, 250, 'saphir');   // (v1.43) au rang de la maison
+    this.add.image(640, 505, pl.cle).setScale(2);
+    const enseigne = this.add.text(640 + pl.decal, 505, `✎ « ${G.nomShop} »`, style(13, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 }))
       .setOrigin(0.5).setInteractive({ useHandCursor: true });
     // (v0.93) un clic ouvre l'enseigne : son nom, son écriture, la couleur de son fond
     this.texteEnseigne = enseigne;

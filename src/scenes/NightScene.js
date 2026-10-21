@@ -87,7 +87,7 @@ class NightScene extends Phaser.Scene {
     if (boutons.length > 8 && projets.length >= 2) {
       const i0 = boutons.findIndex(([t]) => PROJETS.includes(t));
       boutons.splice(0, boutons.length, ...boutons.filter(([t]) => !PROJETS.includes(t)));
-      boutons.splice(i0, 0, [`Tes projets (${projets.length}) ▴`, () => this.listeProjets(projets, 20 + (920 / boutons.length) * (i0 + 0.5))]);
+      boutons.splice(i0, 0, [`Tes projets (${projets.length}) ▴`, () => this.listeProjets(projets, this.xBoutons[i0])]);
     }
     // (v1.40, planche 67) le didacticiel : ce qui n'est pas encore ouvert a son cadenas et dit quand il s'ouvrira ;
     // ce qui vient de s'ouvrir porte « NOUVEAU » et une vignette l'explique
@@ -100,10 +100,28 @@ class NightScene extends Phaser.Scene {
       if (!lieuDebloque(G, k[1])) { bt[0] = k[0]; bt[1] = () => { Son.jouer('refus'); this.annoncer(`${d.nom} s'ouvrira ${d.quand === 'ta 1re trouvaille' ? 'avec ta première trouvaille' : d.quand}.`); }; bt[2] = { ferme: d }; }
       else if (neufs.includes(k[1])) bt[2] = { neuf: true };
     }
+    // (v1.43, planche 70) le matin qui suit les travaux qui font changer de rang : les boutons ont changé avec la maison
+    if (this.matin && typeof rangInterface === 'function') {
+      const r = rangInterface(this), avant = G.rangInterfaceVu;
+      G.rangInterfaceVu = r;
+      const TEXTES = [null, 'Chêne et coins de laiton : tes boutons ont pris du galon, comme ta façade.',
+        'Les premières pierres, polies en cabochon : une couleur pour chaque chose. Saphir pour toi, topaze pour le client, émeraude pour ta réserve, rubis pour tes actions, améthyste pour l’étrange.',
+        'Acajou et or : les pierres sont maintenant taillées et serties.',
+        'Ébène et or : tes pierres scintillent. Une demeure, enfin !'];
+      let vignette = null;
+      if (avant === undefined && G.jour > 1) vignette = ['NOUVEAU', 'Tes boutons suivent ta maison', `Ta maison est au rang « ${RANGS[r].nom} ». Embellis-la : sapin brut, puis chêne, puis des pierres précieuses (saphir : toi, topaze : le client, émeraude : ta réserve, rubis : tes actions).`];
+      else if (avant !== undefined && r > avant) vignette = ['TA MAISON S’EMBELLIT', RANGS[r].nom, TEXTES[r]];
+      if (vignette) this.time.delayedCall(1100, () => { if (this.scene.isActive()) vignetteGuide(this, vignette[0], vignette[1], vignette[2], { y: 92, prof: 60, duree: 7000 }); });
+    }
     if (neufs.length) this.time.delayedCall(1000, () => { if (!this.scene.isActive()) return; neufs.forEach((c, i) => { G.nouveautesVues[c] = true; vignetteGuide(this, 'NOUVEAU', DEBLOCAGES[c].nom, DEBLOCAGES[c].texte, { y: 92, prof: 60, duree: 5000 }); }); });
-    const largeur = 920 / boutons.length;
+    // (v1.43) chaque bouton prend une largeur selon son libellé : les longs (« Ouvrir le comptoir ») ne s'écrivent plus en tout petit
+    const poids = boutons.map(([t]) => t.length + 8), somme = poids.reduce((a, b) => a + b, 0);
+    let cumul = 20;
+    const places = poids.map(p => { const l = 920 * p / somme, c = cumul + l / 2; cumul += l; return [c, l]; });
+    this.xBoutons = places.map(([c]) => c);
     boutons.forEach(([texte, action, marque], i) => {
-      const b = creerBouton(this, 20 + largeur * (i + 0.5), 505, largeur - 16, texte, action);
+      const [cx, l] = places[i], largeur = l + 4;   // (largeur - 16 = la plaque : 12 px entre deux boutons)
+      const b = creerBouton(this, cx, 505, largeur - 16, texte, action);
       if (marque && marque.ferme) {
         b.fond.setTint(0x6a6a6a); b.label.setAlpha(0.5);
         this.add.image(b.label.x - b.label.width / 2 - 14, b.label.y, texCadenas(this)).setScale(2);
@@ -369,8 +387,10 @@ class NightScene extends Phaser.Scene {
     // (v0.66) la cheminée de la chambre : une planche de bois, et la nuit passe au chaud
     this.texteFeu = this.matin ? null : this.add.text(x2 - 18, 398, '', style(13, '#8a3a10', { fontStyle: 'bold' })).setOrigin(1, 0).setInteractive({ useHandCursor: true });
     if (this.texteFeu) this.texteFeu.on('pointerdown', () => { const err = allumerFeu(this.G); if (err) return this.annoncer(err); Son.jouer('glisse'); this.tout(); });
-    const btn = this.add.image((x1 + x2) / 2, 444, plaqueBouton(this, x2 - x1 - 36)).setScale(2).setInteractive({ useHandCursor: true });
-    this.texteAgrandir = this.add.text((x1 + x2) / 2, 444, '', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+    const pl = plaqueDuRang(this, x2 - x1 - 36, 'emeraude');   // (v1.43) au rang de la maison
+    this.placeAgrandir = pl.place;
+    const btn = this.add.image((x1 + x2) / 2, 444, pl.cle).setScale(2).setInteractive({ useHandCursor: true });
+    this.texteAgrandir = this.add.text((x1 + x2) / 2 + pl.decal, 444, '', style(13, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
     btn.on('pointerdown', () => {
       if (agrandirReserve(this.G)) return this.tout();
       if (agrandissementSuivant(this.G)) this.annoncer(manqueArgent(this.G, agrandissementSuivant(this.G).prix, "Pas assez d'argent pour agrandir la réserve."));
@@ -397,6 +417,8 @@ class NightScene extends Phaser.Scene {
     if (this.texteFeu) this.texteFeu.setText(feuAllume(G) ? 'Le feu brûle' : 'Allumer le feu (1 bois)').setColor(feuAllume(G) ? '#a05010' : (G.materiaux.bois || 0) > 0 ? '#8a3a10' : '#a08070');
     const a = agrandissementSuivant(G);
     this.texteAgrandir.setText(a ? `Agrandir : ${G.capacite} → ${a.capacite} places (+${a.capacite - G.capacite}) — ${a.prix} p.` : 'Réserve au maximum');
+    this.texteAgrandir.setFontSize(13);
+    for (let t = 12; this.texteAgrandir.width > (this.placeAgrandir || 999) && t >= 9; t--) this.texteAgrandir.setFontSize(t);
     this.boutonAgrandir.setAlpha(a && peutPayer(G, a.prix) ? 1 : 0.5);
   }
 

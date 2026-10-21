@@ -525,30 +525,44 @@ function raccourcir(texte, max) {
 }
 
 // Bouton en bois cliquable. Renvoie un objet avec setActif(bool).
+// (v1.43, planche 70) La plaque suit la maison (rangInterface : sapin brut … ébène et or) et, dès la Maison, porte
+// la pierre de son sujet (pierreDe : saphir, topaze, émeraude, rubis, améthyste). Un libellé long garde sa taille :
+// une seule pierre, à gauche, et le texte se décale un peu à droite.
 function creerBouton(scene, x, y, largeur, texte, action) {
-  // Un panneau de chêne dans un cadre de noyer à coins de laiton : plus clair au survol,
-  // il s'enfonce quand on appuie.
-  const cle = plaqueBouton(scene, largeur);
+  const rang = typeof rangInterface === 'function' ? rangInterface(scene) : 1;
+  let cle = plaqueBouton(scene, largeur), gemme = null, une = false, marge = 16, decal = 0;
   const fond = scene.add.image(x, y, cle).setScale(2).setInteractive({ useHandCursor: true });
   const label = scene.add.text(x, y, texte, style(18, '#fff0d0', { fontStyle: 'bold', stroke: '#24140a', strokeThickness: 4, brut: true })).setOrigin(0.5);
   label.setShadow(0, 2, '#120a04', 0, true, true); // comme gravé dans le bois
+  const taille = t => Phaser.GameObjects.Text.prototype.setFontSize.call(label, t);
+  // la plaque qui va avec le libellé (sa pierre, une ou deux)
+  const plaque = (forcerUne = false) => {
+    gemme = rang >= 2 && label.text && label.text !== '...' && typeof pierreDe === 'function' ? pierreDe(label.text) : null;
+    une = false;
+    if (gemme) { taille(16); une = forcerUne || label.width > largeur - (rang >= 3 ? 64 : 52); }
+    cle = rang !== 1 || gemme ? plaqueRang(scene, largeur, rang, gemme, une) : plaqueBouton(scene, largeur);
+    marge = gemme ? (une ? (rang >= 3 ? 42 : 30) + (forcerUne ? 24 : 0) : (rang >= 3 ? 64 : 52)) : 16;   // (forcerUne : le picto ☀/☾ à droite)
+    decal = une ? (rang >= 3 ? 13 : 9) : 0;
+  };
   // (v0.60) le texte tient toujours dans sa plaque : trop long, la police rapetisse
   // (audit v0.61) on repart toujours de la taille voulue : sinon, après un long libellé, le bouton
   // gardait sa petite police pour tous les textes suivants
   let base = 18;
   const tenir = () => {
     let t = base;
-    Phaser.GameObjects.Text.prototype.setFontSize.call(label, t);
-    while (label.text && label.width > largeur - 16 && t > 10) { t--; Phaser.GameObjects.Text.prototype.setFontSize.call(label, t); }
+    taille(t);
+    while (label.text && label.width > largeur - marge && t > 10) taille(--t);
   };
   label.setFontSize = function (t) { base = parseInt(t, 10) || base; tenir(); return this; };
-  tenir();
   let actif = true, survol = false;
   const repos = () => {
     if (!fond.active) return;
     fond.setTexture(survol && actif ? cle + '_clair' : cle);
     label.setY(y);
   };
+  const habiller = (forcerUne = false) => { plaque(forcerUne); tenir(); label.setX(x + decal); repos(); };
+  habiller();
+  if (rang >= 4) label.setColor('#fff0c8');
   fond.on('pointerover', () => { survol = true; repos(); });
   fond.on('pointerout', () => { survol = false; repos(); });
   fond.on('pointerdown', () => {
@@ -560,6 +574,13 @@ function creerBouton(scene, x, y, largeur, texte, action) {
     if (window.noterJournal) noterJournal(`[${scene.scene.key}] « ${label.text} »`);   // (v0.95 : le journal de bord)
     action();
   });
+  // (Demeure) la pierre scintille de temps en temps
+  if (rang >= 4 && typeof etincelle === 'function' && !fond.parentContainer) {
+    const e = etincelle(scene, x - largeur / 2 + 20, y - 7, fond.depth + 0.5);
+    const suivre = () => { if (!fond.active) return; e.setVisible(!!gemme && fond.visible && !fond.vide && !fond.parentContainer).setDepth(fond.depth + 0.5).setScrollFactor(fond.scrollFactorX, fond.scrollFactorY); };
+    scene.events.on('update', suivre);
+    fond.once('destroy', () => { scene.events.off('update', suivre); if (e.active) { scene.tweens.killTweensOf(e); e.destroy(); } });
+  }
   return {
     fond, label,
     setActif(a) {
@@ -570,7 +591,11 @@ function creerBouton(scene, x, y, largeur, texte, action) {
     },
     setVisible(v) { fond.setVisible(v); label.setVisible(v); },
     // (v0.57) un bouton sans texte ne montre pas sa plaque vide ; il revient quand on lui redonne un texte
-    setTexte(t) { label.setText(t); tenir(); if (!t) { fond.setVisible(false); fond.vide = true; } else if (fond.vide) { fond.setVisible(true); fond.vide = false; } },
+    setTexte(t) { label.setText(t); habiller(); if (!t) { fond.setVisible(false); fond.vide = true; } else if (fond.vide) { fond.setVisible(true); fond.vide = false; } },
+    // (v1.43) pour marquerCamp : la place du libellé, et une seule pierre quand un picto prend la droite
+    xLabel() { return x + decal; },
+    pierre() { return gemme; },
+    uneSeulePierre(oui) { habiller(oui); },
   };
 }
 
@@ -588,15 +613,18 @@ function marquerCamp(scene, b, camp) {
     if (b.fond.parentContainer) b.fond.parentContainer.add(ic);
     b.picto = ic;
     const texte = b.setTexte, vis = b.setVisible;
-    b.setTexte = t => { texte(t); b.picto.setVisible(false); b.label.setX(b.fond.x); };
+    b.setTexte = t => { texte(t); b.picto.setVisible(false); b.label.setX(b.xLabel ? b.xLabel() : b.fond.x); };
     b.setVisible = v => { vis(v); if (!v) b.picto.setVisible(false); };
   }
   const ic = b.picto;
   ic.setVisible(voir && b.fond.visible);
-  if (!voir) { b.label.setX(b.fond.x); return; }
+  if (!voir) { if (b.uneSeulePierre && b.pierre()) b.uneSeulePierre(false); b.label.setX(b.xLabel ? b.xLabel() : b.fond.x); return; }
   ic.setTexture('glyphe_' + (camp === 'bien' ? 'soleil' : 'lune'));
-  ic.setPosition(b.fond.x - b.fond.displayWidth / 2 + 17, b.fond.y).setDepth(b.label.depth + 0.01).setScrollFactor(b.fond.scrollFactorX, b.fond.scrollFactorY);
-  b.label.setX(b.fond.x + 9);
+  // (v1.43) un bouton à pierre : la pierre reste à gauche (une seule), le picto prend la droite
+  const avecPierre = !!(b.pierre && b.pierre());
+  if (avecPierre) b.uneSeulePierre(true);
+  ic.setPosition(avecPierre ? b.fond.x + b.fond.displayWidth / 2 - 17 : b.fond.x - b.fond.displayWidth / 2 + 17, b.fond.y).setDepth(b.label.depth + 0.01).setScrollFactor(b.fond.scrollFactorX, b.fond.scrollFactorY);
+  b.label.setX(avecPierre ? b.fond.x + 1 : b.fond.x + 9);
   // la première fois : le jeu explique ce que veulent dire le soleil et la lune
   G.tutoVu = G.tutoVu || {};
   if (!G.tutoVu.pictosCamp) {

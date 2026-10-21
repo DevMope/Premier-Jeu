@@ -154,8 +154,9 @@ class ArriereScene extends Phaser.Scene {
       }
     });
     this.add.text(276, 412, 'Un clic sur une planche : jeter ce dont tu ne veux plus', style(11, '#e8d4a8', { fontStyle: 'italic', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5);
-    this.add.image(276, 78, plaqueBouton(this, 200)).setScale(2);
-    this.add.text(276, 78, `Ta réserve : ${stockTotal(G)} / ${G.capacite}`, style(14, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
+    const pl = plaqueDuRang(this, 200, 'emeraude');   // (v1.43) au rang de la maison
+    this.add.image(276, 78, pl.cle).setScale(2);
+    this.add.text(276 + pl.decal, 78, `Ta réserve : ${stockTotal(G)} / ${G.capacite}`, style(14, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5);
   }
 
   // Le coin de la fortune : des piles de pièces autour du coffre, des sacs quand on est riche,
