@@ -2953,6 +2953,16 @@ fumée direct et qu'il doit voir le chat en faire une nouvelle dans sa maison po
 - **Le chat offre la première canne**, d'une longue lignée de cannes à pêche, quand ils sont rentrés à la maison, **après le moment explication** (la conversation au coin du feu, v1.37).
 - Proposition de Claude, à valider sur planche : le soir, une sortie « L'étang du Moulin » ; un mini-jeu en trois temps (lancer : une jauge de force ; la touche : le bouchon plonge, ferrer à temps ; la remontée : garder la tension dans la zone, façon Dave the Diver) ; des poissons de l'étang (gardon, perche, tanche, brochet, anguille, la carpe dorée rare) et quelques prises étranges (vieille botte, bouteille à message, pièce ancienne pour les collections) ; un carnet de pêche (records de taille, succès) ; les poissons fumés deviennent des rations, se vendent au marché ou se donnent au chat (+1 ♥) ; la lignée des cannes (roseau du chat, noisetier, frêne à moulinet, bambou laqué, argent elfique, et la dernière, d'ébène et de fil d'or, offerte par le Parrain) ; parfois le chat vient sur le ponton et vole un poisson. Tuto : la première fois, c'est le chat qui explique (règle du joueur).
 
+### Réponses du joueur sur la pêche (21/10)
+- **Sans l'histoire du chat** (question du joueur) : la pêche ne doit pas en dépendre. Proposition : le pêcheur ouvre sa cabane au marché à un jour fixe, vend la première canne et explique lui-même (tuto) ; si l'histoire du chat a eu lieu, le chat offre en plus « la canne de son grand-père », un peu meilleure, et peut venir pêcher avec toi.
+- **Quand** : à l'aube, la journée et le soir (en promenade). Pêcher ne consomme pas de temps, mais plus on attrape de poissons d'affilée dans la même plage (aube / journée / nuit), plus ça devient dur.
+- **Les cannes** : chez un nouveau personnage, avec une nouvelle construction au marché. Moins de cannes au début : chaque nouvelle grande localisation a son pêcheur, qu'on découvre.
+- **Le style** : façon Cast n Chill et Dave the Diver.
+- **Les eaux du monde** : chaque nouvelle grande localisation de la carte débloquée a son coin de pêche, avec de nouveaux poissons et certains déjà vus selon les eaux (pour ne pas en créer trop, comme Cast n Chill), et **un poisson fantastique / légendaire par localisation** (à imaginer).
+- **Les prises étranges** : oui, selon les royaumes.
+- **Le chat voleur** : oui, sauf si c'est la première prise de cette espèce, ou un légendaire.
+- **Le carnet de pêche** : oui.
+
 ### Construit en v1.35 : l'aventure du Vieux Moulin (voir le tableau des versions)
 - `src/moulin.js` (règles : complicité, soir du chat, fin, formes vues), `src/succes.js` (les succès et leur vignette),
   `src/scenes/MoulinScene.js` (la scène jouée, et la fenêtre du soir), `src/moulinHD.js` (le décor, la fumée, le cercle).
