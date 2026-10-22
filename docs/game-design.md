@@ -18,6 +18,7 @@
 - **Ne jamais hésiter à allonger la rue** : s'il y a trop de maisons, on fera des quartiers (22/10).
 - **Pour une joueuse, les mécaniques du corps ont leur équivalent** : la barbe qui pousse devient les cheveux qui poussent (22/10).
 - **Tout le monde à la même échelle** : JeuneGoy, les marchands et les passants ont les vraies proportions du monde ; si l'un paraît minuscule à côté de l'autre, c'est un bug (22/10).
+- **Toujours parler français au joueur** : les résumés et tout ce qui s'adresse à lui sont en français (le travail interne peut être en anglais) (22/10).
 
 ## 1. Pitch
 
@@ -3160,3 +3161,11 @@ Idée du joueur : la couleur par sujet portée par des pierres précieuses sur l
 - **Les marques du temps** (Bandholz gardée sans entretien) : en bataille (+20 jours : des mèches rebiquent), sale (+40 jours : miettes, brindille, feuille, poils collés), à l'abandon (+60 jours : nœuds, mèches ternes, une mouche).
 - **Chez Orvin** : laver et peigner 10 p. (efface les marques), tailler 15 p. (la barbe reprend sa forme, la pousse repart), raser 10 p., changer de barbe 15 p.
 - **Les clients le remarquent** : les nains adorent une grande barbe ; les nobles et le Conseil font la grimace devant une barbe sale.
+
+### Planche 61 : les succès, façon Steam (à valider) (docs/planches-v059/planche-61-les-succes.png)
+- **La vignette** : quand un succès se débloque, elle glisse en haut à droite pendant 4 s avec un petit air ; s'il y en a plusieurs, elles passent l'une après l'autre. La médaille remplace l'ancienne icône.
+- **Au bureau** : une tuile « Tes succès » avec le compte (4 / 32) et une étiquette NOUVEAU tant que le dernier n'a pas été regardé.
+- **La page** : barre de progrès, catégories à gauche (Tous, le comptoir, les aventuriers, la ville, lumière et ombre, le chat, la pêche, les fêtes, ta vie), médailles à droite : en couleur si gagnées, grisées sinon, « ? » si secrètes ; 20 par page.
+- **Le détail** : obtenue (le jour et le lieu), à gagner (la condition et une barre de progrès quand ça se compte), secrète (seulement un indice).
+- **Quatre médailles** : bronze (vite gagnées), argent (un vrai défi), or (une partie entière, liseré doré et air plus long), secret (à découvrir).
+- **32 succès proposés**, à compléter ensemble (liste sur la planche). Les trois succès de la pêche existent déjà dans le jeu (v1.50 : ils ne se comptaient pas, corrigé).

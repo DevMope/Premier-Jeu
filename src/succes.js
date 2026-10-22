@@ -3,6 +3,10 @@
 const SUCCES = {
   coeurDeChat: { nom: 'Cœur de chat', texte: 'Sauver la compagne de ton chat au Vieux Moulin', icone: '🐾♥' },
   repertoireComplet: { nom: 'Le répertoire complet', texte: 'Voir ton chat souffler toutes ses formes de fumée', icone: '💨', cache: true },
+  // (v1.50) ceux de la pêche : peche.js les débloquait déjà, mais sans entrée ici ils ne comptaient jamais
+  premierePrise: { nom: 'Première prise', texte: 'Pêcher ton premier poisson', icone: '🐟' },
+  carnetEtang: { nom: 'Le carnet de l\u2019étang', texte: 'Pêcher toutes les espèces de l\u2019étang', icone: '📖' },
+  grandMere: { nom: 'Grand-Mère Écaille', texte: 'Ferrer la légende de l\u2019étang', icone: '🐉' },
 };
 // (v1.38) rangés dans G.hautsFaits : G.succes compte déjà les missions réussies par étoiles, et succesDe() les missions
 // d'un aventurier (le même nom ici écrasait celui des règles : plus personne ne montait de rang)
