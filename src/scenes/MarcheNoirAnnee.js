@@ -396,7 +396,8 @@ Object.assign(MarcheNoirScene.prototype, {
     this.titreCoin.setText(`Le bras de fer · ${prenom} ${a.titre}`);
     this.vider();
     this.texte(40, 374, message || a.defi, 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
-    this.texte(40, 424, `Mise : ${a.mise} p. · si tu gagnes : ta mise doublée, et le respect des Bannis. (Tes victoires contre ${prenom} : ${b.victoires[a.id] || 0}.)`, 12, '#e8c890', { fontStyle: 'italic' });
+    const mAge = malusAgeBras(G);
+    this.texte(40, 424, `Mise : ${a.mise} p. · si tu gagnes : ta mise doublée, et le respect des Bannis. (Tes victoires contre ${prenom} : ${b.victoires[a.id] || 0}.)${mAge.texte ? ' ' + mAge.texte : ''}`, 12, mAge.texte ? '#ffb090' : '#e8c890', { fontStyle: 'italic', wordWrap: { width: 880 } });
     ADVERSAIRES_BRAS.forEach((x, k) => {
       const ouvert = brasDebloque(G, x.id), choisi = x.id === a.id;
       this.bouton(170 + k * 250, 458, 236, ouvert ? `${choisi ? '▸ ' : ''}${prenomDe(x.nom)} ${x.titre} (${['facile', 'moyen', 'difficile'][k]})` : `🔒 Bats d'abord ${prenomDe(ADVERSAIRES_BRAS[k - 1].nom)}`, () => this.pageBrasDeFer(null, x.id), ouvert && !choisi);
@@ -419,7 +420,8 @@ Object.assign(MarcheNoirScene.prototype, {
     const jeu = this.jeuBras = { p: 0.5, x: 0, sens: 1, fini: false, temps: 0, coup: 0 };
     this.bloqueCoins = true;
     const gb = this.vueObj(this.add.graphics(), 3.9);
-    this.texteVue(280, 102, 'Toi', 12, '#a8e0a0', { fontStyle: 'bold' });
+    const mAge = malusAgeBras(G);
+    this.texteVue(280, 102, mAge.texte ? `Toi (${mAge.age} ans : −${Math.round((1 - mAge.force) * 100)} %)` : 'Toi', 12, '#a8e0a0', { fontStyle: 'bold' });
     this.texteVue(680, 102, prenom, 12, '#ffb0a0', { fontStyle: 'bold' }).setOrigin(1, 0);
     this.texteVue(480, 190, 'clique (ou Espace) quand le repère passe dans le vert', 11, '#e8d4a8', { fontStyle: 'italic', stroke: '#1a0a06', strokeThickness: 3 }).setOrigin(0.5);
     this.texte(40, 380, 'Le bras de fer !', 16, '#f3d98a', { fontStyle: 'bold' });
@@ -433,7 +435,7 @@ Object.assign(MarcheNoirScene.prototype, {
     };
     const taper = () => {
       if (jeu.fini) return;
-      if (jeu.x >= vert[0] && jeu.x <= vert[1]) { jeu.p = Math.min(1, jeu.p + 0.1); Son.jouer('coup'); this.cameras.main.shake(60, 0.004); }
+      if (jeu.x >= vert[0] && jeu.x <= vert[1]) { jeu.p = Math.min(1, jeu.p + 0.1 * mAge.force); Son.jouer('coup'); this.cameras.main.shake(60, 0.004); }
       else { jeu.p = Math.max(0, jeu.p - 0.06); Son.jouer('grogne'); }
     };
     zone.on('pointerdown', taper);
@@ -452,7 +454,7 @@ Object.assign(MarcheNoirScene.prototype, {
       const suivant = ADVERSAIRES_BRAS.filter(x => brasDebloque(G, x.id)).length > avant ? ADVERSAIRES_BRAS[avant] : null;
       this.time.delayedCall(900, () => this.pageBrasDeFer((gagne ? `${a.victoire} (+${a.mise} p., respect des Bannis)` : a.defaite) + (suivant ? ` Au fond de la cave, ${prenomDe(suivant.nom)} ${suivant.titre} se lève : il veut t'affronter.` : ''), a.id));
     };
-    const pousse = forceAdversaire(G, a.id);
+    const pousse = forceAdversaire(G, a.id) * mAge.pousse;
     // (le temps réel de la scène : sur une machine lente, le repère ne ralentit pas)
     const maj = (t, delta) => {
       if (jeu.fini || !gb.active) { this.events.off('update', maj); return; }

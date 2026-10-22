@@ -31,9 +31,9 @@ class MarcheScene extends Phaser.Scene {
     this.cameras.main.fadeIn(500);
 
     // Le fond de la vue d'ensemble : le ciel, les collines, et la grand-place pavée
-    const fondVue = this.add.graphics();
+    const fondVue = this.fondVue = this.add.graphics();
     dessinerComte(fondVue, 0, 0, 960, VUE_MARCHE.y + 300 * VUE_MARCHE.echelle, 'aube'); // le matin, au lever du soleil
-    this.add.image(0, VUE_MARCHE.y + 182 * VUE_MARCHE.echelle, placeMarcheHD(this)).setOrigin(0).setScale(2);
+    this.solVue = this.add.image(0, VUE_MARCHE.y + 182 * VUE_MARCHE.echelle, placeMarcheHD(this)).setOrigin(0).setScale(2);
     creerLieuxMarcheHD(this);
     this.etiquettesRue = [];
 
@@ -165,14 +165,19 @@ class MarcheScene extends Phaser.Scene {
     creerBouton(this, 840, 510, 210, 'Ouvrir le comptoir', () => this.ouvrir());
 
     this.vueEnsemble(true);
+    // (v1.49, planche 73 v2) la grand-place où l'on se promène remplace la vue en demi-cercle
+    this.construirePlace();
+    // (v1.49) un conseil pour la nouvelle place, une fois (même pour qui connaît déjà le marché)
+    if (G.tutoVu && G.tutoVu.marche && !G.tutoVu.place) this.time.delayedCall(900, () => conseilGarrick(this, 'place', true));
     // (v1.40) avec le didacticiel, Garrick t'a accompagné : il présente le marché, puis reprend la route
     const garrickIci = typeof didacticiel === 'function' && didacticiel(G) && G.tuto && !(G.tutoVu && G.tutoVu.marche);
     let garrick = null;
-    if (garrickIci) { garrick = imageCorps(this, 330, 476, 'mentor', 3.6).setOrigin(0.5, 1).setDepth(15); this.tweens.add({ targets: garrick, scaleY: garrick.scaleY * 1.02, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
+    if (garrickIci) { garrick = imageCorps(this, this.heros.x - 70, this.heros.y, 'mentor', PLACE_MARCHE.echelle).setOrigin(0.5, 1); this.place.add(garrick); this.tweens.add({ targets: garrick, scaleY: garrick.scaleY * 1.02, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
     this.time.delayedCall(700, () => conseilGarrick(this, 'marche', false, () => {
       if (!garrick || !garrick.active || !this.sys.isActive()) return;
       this.tweens.killTweensOf(garrick);
-      const b = this.add.text(garrick.x, garrick.y - garrick.displayHeight - 8, '« Bonne chance, petit ! Je repasserai te voir. »', style(13, '#2a1a0c', { backgroundColor: '#fff8e8', padding: { x: 8, y: 5 } })).setOrigin(0.5, 1).setDepth(16);
+      const b = this.add.text(garrick.x, garrick.y - garrick.displayHeight - 8, '« Bonne chance, petit ! Je repasserai te voir. »', style(13, '#2a1a0c', { backgroundColor: '#fff8e8', padding: { x: 8, y: 5 } })).setOrigin(0.5, 1);
+      b.yTri = 1e6 + 3; this.place.add(b);
       Son.jouer('voix', { personne: { nom: 'Garrick', race: 'humain' }, ton: 'content', duree: 1.2 });
       this.time.delayedCall(1800, () => {
         if (!garrick.active) return;
@@ -191,7 +196,7 @@ class MarcheScene extends Phaser.Scene {
     this.majBoutonCommandes();
 
     // Le crieur annonce la première nouvelle du jour (clic : toutes les nouvelles).
-    if (G.gazette && G.gazette.jour === G.jour && G.gazette.lignes.length) {
+    if (!this.place && G.gazette && G.gazette.jour === G.jour && G.gazette.lignes.length) {
       // Une bulle qui sort de la bouche du crieur (dans la vue d'ensemble)
       const arc = this.arcVue(1600);
       const cx = VUE_MARCHE.x + 1590 * VUE_MARCHE.echelle, cy = VUE_MARCHE.y + (250 + arc.dy - 100 * arc.echelle) * VUE_MARCHE.echelle;
@@ -613,9 +618,9 @@ class MarcheScene extends Phaser.Scene {
 
   // (v0.58) Ce que disent les passants : leur journée, les nouvelles du crieur, les événements
   // du moment, les gens du marché... avec un peu d'humour.
-  passantParle(p, i) {
+  // (v1.49) Ce que disent les passants, tiré au sort (servi aussi aux flâneurs de la grand-place)
+  phraseMarche() {
     const G = this.G;
-    if (p.bulle && p.bulle.active) return;
     const gazette = G.gazette && G.gazette.jour === G.jour ? G.gazette.lignes : [];
     const actifs = evenementsActifs(G).map(e => EVENEMENTS[e.id].nouvelle);
     const phrases = [
@@ -637,6 +642,12 @@ class MarcheScene extends Phaser.Scene {
     // (v0.68) de temps en temps, une rumeur sur un chantier de la place (un indice, jamais le nom)
     const chantiers = Object.keys(RUMEURS_CHANTIER).filter(k => !lieuOuvert(G, k));
     const texte = chantiers.length && Math.random() < 0.25 ? Phaser.Utils.Array.GetRandom(RUMEURS_CHANTIER[Phaser.Utils.Array.GetRandom(chantiers)]) : Phaser.Utils.Array.GetRandom(phrases);
+    return texte;
+  }
+
+  passantParle(p, i) {
+    if (p.bulle && p.bulle.active) return;
+    const texte = this.phraseMarche();
     // il s'arrête, se tourne vers toi, parle, puis reprend sa route
     const tw = this.tweens.getTweensOf(p); tw.forEach(t => t.pause());
     if (p.marche) p.marche.paused = true;

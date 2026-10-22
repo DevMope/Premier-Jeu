@@ -166,6 +166,14 @@ function brasDebloque(G, id) {
 }
 // Chacun pousse un peu plus fort à chaque fois que tu l'as battu
 function forceAdversaire(G, id) { const a = adversaireBras(id); return a.pousse + Math.min(0.04, (brasDeFerDe(G).victoires[id] || 0) * 0.01); }
+// (v1.49, réponse du joueur) Avant 18 ans, le bras de fer reste permis, mais le bras est encore frêle :
+// chaque bon coup pousse moins fort (−8 % par année qui manque), et l'adversaire pousse un peu plus fort
+function malusAgeBras(G) {
+  const age = typeof ageJoueur === 'function' ? ageJoueur(G) : 18;
+  if (age >= 18) return { force: 1, pousse: 1, age, texte: '' };
+  const k = 18 - age;
+  return { force: 1 - 0.08 * k, pousse: 1 + 0.05 * k, age, texte: `Tu n'as que ${age} ans : ton bras est encore frêle (−${Math.round(8 * k)} % de force).` };
+}
 function commencerBrasDeFer(G, id = 'mog') {
   const s = soireeAnnee(G), a = adversaireBras(id);
   if (typeof s.brasDeFer !== 'object' || !s.brasDeFer) s.brasDeFer = {};
