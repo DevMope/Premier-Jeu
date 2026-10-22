@@ -653,6 +653,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   if (costume === 'duc') {
     const poil = (x, y) => (hachage(Math.floor(x / k), Math.floor(y / k), 77) > 0.5 ? 0.45 : -0.25) + ((Math.floor(x / k) + Math.floor(y / (2 * k))) % 3 === 0 ? -0.35 : 0);
     if (!dos) for (let y = yT; y <= sol - 1 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'habit' && (Math.floor(x / k) * 5 + Math.floor(y / k) * 3) % 11 === 0) t.poser(x, y, 'habit', t.teinte(x, y) + 1);
+    // (de profil et de biais) le manteau s'évase depuis les épaules au lieu de tomber comme une planche
+    if (!dos && Math.abs(s) > 0.3) for (let y = yT - 2 * k; y < sol; y++) {
+      let xb = -1; for (let x = 0; x < L; x++) { const m = t.mat(x, y); if (m && m !== 'cape') { xb = x; break; } }
+      if (xb < 0) continue; const permis = 1.5 * k + Math.max(0, y - yT) / (sol - yT) * 7 * k * Math.abs(s);
+      for (let x = 0; x < xb - permis; x++) if (t.mat(x, y) === 'cape') { t.c[y * L + x] = null; t.m[y * L + x] = null; }
+    }
     // le bord du manteau (la cape) : une épaisse bande de fourrure, des touffes qui dépassent
     const bordCape = [];
     for (let y = yT; y < sol; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'cape') { const pres2 = [-2, -1, 1, 2].some(d => !t.mat(x + d * k, y)); if (pres2) bordCape.push([x, y]); }
@@ -660,10 +666,11 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     for (const [x, y] of bordCape) if (hachage(x, y, 83) > 0.86) { const d = t.mat(x - 1, y) ? 1 : -1; for (let j = 1; j <= 1 + Math.floor(hachage(x, y, 84) * 2 * k); j++) if (!t.mat(x + d * j, y)) t.poser(x + d * j, y, 'fourrure', 3); }
     // le col, haut et ébouriffé, et les deux revers qui descendent jusqu'au sol
     t.forme('fourrure', (x, y) => { if (y < yT - 3 * k || y > sol - 1 * k) return null; const d = x + 0.5 - X(0, prof);
-      const col = ((x + 0.5 - cx) / (ep + 5 * k)) ** 2 + ((y - yT - 1.5 * k) / (6.5 * k)) ** 2 < 1 + (hachage(Math.floor(x / k), Math.floor(y / k), 81) - 0.5) * 0.35 && y >= yT - 3 * k;
+      const col = ((x + 0.5 - X(0, prof * 0.3)) / (ep * Math.abs(c) + prof * Math.abs(s) + 4 * k)) ** 2 + ((y - yT - 1.5 * k) / (6.5 * k)) ** 2 < 1 + (hachage(Math.floor(x / k), Math.floor(y / k), 81) - 0.5) * 0.35 && y >= yT - 3 * k;
       const ragged = (hachage(Math.floor(y / k), d > 0 ? 3 : 4, 82) - 0.5) * 1.6 * k;
-      const revers = !dos && y > yT && t.mat(x, y) && Math.abs(Math.abs(d) - 4.8 * k * Math.max(0.6, Math.abs(c))) < 3.4 * k + ragged;
-      return col || revers ? [d / (ep * 2), -0.2, 0.85] : null; }, { decalage: 0.15, motif: poil });
+      const revers = !dos && y > yT && t.mat(x, y) && Math.abs(Math.abs(d) - 4.8 * k * Math.max(0.3, Math.abs(c))) < 3.4 * k * Math.max(0.45, Math.abs(c)) + ragged * Math.max(0.5, Math.abs(c));
+      const tient = t.mat(x, y) || t.mat(x - 2 * k, y) || t.mat(x + 2 * k, y) || t.mat(x, y + 2 * k);
+      return (col && tient) || revers ? [d / (ep * 2), -0.2, 0.85] : null; }, { decalage: 0.15, motif: poil });
     if (!dos) { const jx = X(0, prof), jy = yT + 1 * k; t.forme('lin', (x, y) => (Math.abs(x + 0.5 - jx) < (2.4 * k - Math.abs(y - jy - 2 * k) * 0.3) && y >= jy - 1 * k && y <= jy + 5 * k ? [0, 0, 1] : null), { decalage: 0.2, motif: (x, y) => (Math.floor((y - jy) / k) % 2 ? 0.4 : -0.2) });
       for (let j = 0; j <= 10; j++) { const u = j / 10, x = Math.round(jx + (u - 0.5) * 6.5 * k * Math.max(0.6, Math.abs(c))), y = Math.round(jy + 6 * k + Math.sin(u * Math.PI) * 3 * k); t.poser(x, y, 'or', j % 2 ? 3 : 5); } }
   }
