@@ -173,6 +173,9 @@ const AMELIORATIONS = {
   atelier: { nom: "L'atelier", niveaux: ['Un établi', 'Deux établis', 'Trois établis'], prix: [220, 480],
     effet: "2 employés au départ, puis un de plus pour chaque établi ajouté (et 2 places de plus pour les objets)." },
   // (v1.54, planche 62) le cellier, sous l'arrière-boutique : les provisions s'y gardent deux fois plus
+  // (v1.55, planche 63) la serrure de la porte de la rue : une fois sur deux, le cambrioleur renonce
+  serrure: { nom: 'La serrure de fer', niveaux: ['Un loquet de bois', 'Une serrure de fer'], prix: [300],
+    effet: "Une grosse serrure de fer à la porte de la rue : un cambrioleur sur deux renonce devant elle." },
   cellier: { nom: 'Le cellier', niveaux: ['Pas de cellier', 'Un cellier frais'], prix: [650],
     effet: "Une cave fraîche sous l'arrière-boutique : les rations et les gâteaux s'y gardent deux fois plus longtemps." },
 };

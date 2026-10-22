@@ -1401,7 +1401,7 @@ function commanderAmelioration(G, cle) {
 // Le niveau de la façade (0 : humble chaumière … 3 : belle maison à colombages), qui suit
 // l'ensemble des améliorations du shop.
 function niveauFacade(G) {
-  const total = Object.keys(AMELIORATIONS).filter(c => c !== 'atelier' && c !== 'cellier').reduce((somme, cle) => somme + niveauAmelioration(G, cle), 0);
+  const total = Object.keys(AMELIORATIONS).filter(c => c !== 'atelier' && c !== 'cellier' && c !== 'serrure').reduce((somme, cle) => somme + niveauAmelioration(G, cle), 0);
   return Math.min(3, Math.floor(total / 4));
 }
 
@@ -1662,6 +1662,7 @@ function nuit(G) {
   // (v0.86) les imposteurs servis hier : on apprend ce qu'est devenu ton baluchon
   for (const a of (G.arnaques || []).filter(a => !a.dit)) { G.reveil.lignes.push(a.texte); a.dit = true; }
   G.arnaques = (G.arnaques || []).filter(a => a.jour >= G.jour - 7);
+  sansPlanter('nuitDuCambrioleur', () => { if (typeof nuitDuCambrioleur === 'function') for (const l of nuitDuCambrioleur(G)) G.reveil.lignes.unshift(l); });   // (v1.55, planche 63) le cambrioleur
   for (const l of nuitDuChat(G)) G.reveil.lignes.unshift(l);   // (v0.65) les rats, ou le cadeau du chat (v0.84 : en premier, pour ne pas le rater)
   if (G.forge && G.forge.construite && G.forge.nouvelle) { G.reveil.lignes.push("Les ouvriers ont monté ta forge dans l'arrière-boutique : le foyer, le soufflet, l'enclume. Il ne manque plus qu'un forgeron !"); G.forge.nouvelle = false; }
   if (nouvellesDeLaForge(G)) G.reveil.lignes.push(nouvellesDeLaForge(G));   // (v0.82) les armes sorties de la forge
@@ -3074,6 +3075,7 @@ function avancerEvenements(G) {
   if (G.annonceConseil) { lignes.unshift(G.annonceConseil); G.annonceConseil = null; }
   if (G.annonceCollection) { lignes.unshift(G.annonceCollection); G.annonceCollection = null; }   // (v1.23) une série complète dans la vitrine   // (v1.10) la commande scellée, livrée ou manquée
   if (G.annonceRival) { lignes.unshift(G.annonceRival); G.annonceRival = null; }
+  if (G.annonceCambrioleur) { lignes.unshift(G.annonceCambrioleur); G.annonceCambrioleur = null; }   // (v1.55) le cambrioleur qui s'est rendu en pleurant
   if (G.annonceMecenat) { lignes.unshift(G.annonceMecenat); G.annonceMecenat = null; }   // (v1.32) le mécénat, la neutralité
   if (G.annonceMenace) { lignes.unshift(G.annonceMenace); G.annonceMenace = null; }   // (v1.33) la contrée menacée, tenue, tombée ou reprise
   if (G.annonceConfrerie) { lignes.unshift(G.annonceConfrerie); G.annonceConfrerie = null; }   // (v1.28) la Confrérie remercie, l'escouade avance   // (v1.11) le paon ouvre, ferme, ou sa maison change de mains

@@ -37,6 +37,7 @@ const SUCCES = {
   dixHuit: { nom: 'Dix-huit ans', texte: 'Fêter tes dix-huit ans', cat: 'vie', palier: 'bronze', icone: 'ration', verifier: G => !!G.feteFaite },
   anneaux: { nom: 'Les trois anneaux', texte: 'Avoir les trois anneaux de fête d\u2019Orvin', cat: 'vie', palier: 'argent', icone: 'amulette', verifier: G => typeof possede === 'function' && ['anneauArgent', 'anneauOr', 'anneauFer'].every(id => possede(G, id)), progres: G => [['anneauArgent', 'anneauOr', 'anneauFer'].filter(id => possede(G, id)).length, 3] },
   roiMiettes: { nom: 'Le roi des miettes', texte: 'Laisser ta barbe (ou tes cheveux) à l\u2019abandon', indice: 'une barbe très, très libre', cat: 'vie', palier: 'secret', icone: 'ration', cache: true, verifier: G => { const e = typeof etatPilosite === 'function' ? etatPilosite(G) : null; return !!(e && e.negligence >= 3); } },
+  bouh: { nom: 'Bouh.', texte: 'Que ton chat fasse fuir un cambrioleur', indice: 'une nuit agitée', cat: 'chat', palier: 'secret', icone: 'torche', cache: true },   // (v1.55, planche 63)
   uneVie: { nom: 'Une vie entière', texte: 'Tenir ton comptoir jusqu\u2019à tes soixante ans', cat: 'vie', palier: 'or', icone: 'potion', verifier: G => ageJoueur(G) >= 60, progres: G => [ageJoueur(G), 60] },
 };
 function joursSansPerte(G) { return G.jour - (G.dernierePerte ?? 0); }

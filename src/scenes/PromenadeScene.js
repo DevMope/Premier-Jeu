@@ -15,7 +15,7 @@ const LARGEUR_PROMENADE = 3840 + LARGEUR_RUE;
 const SOL_PROMENADE = 505;
 
 class PromenadeScene extends Cinematique {
-  constructor() { super('Promenade'); }
+  constructor(cle = 'Promenade') { super(cle); }   // (v1.55 : la nuit du cambrioleur réutilise le décor)
 
   create() {
     const G = this.G = window.GAME;

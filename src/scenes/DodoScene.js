@@ -578,6 +578,9 @@ class DodoScene extends Cinematique {
     this.cameras.main.fadeOut(500);
     // (v0.99) le premier matin d'une nouvelle saison : la petite cinématique de passage, puis la rue
     const passage = scene === 'Rue' && typeof passageDeSaison === 'function' ? passageDeSaison(this.G) : null;
+    // (v1.55, planche 63) cette nuit, ton chat a fait fuir un cambrioleur : le petit film d'abord
+    const c = this.G.cambriolage;
+    if (scene === 'Rue' && c && c.chat && c.jour === this.G.jour && !c.vu) { c.vu = true; this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Cambrioleur', { suite: scene, passage })); return; }
     this.cameras.main.once('camerafadeoutcomplete', () => (passage ? this.scene.start('Saison', { suite: scene, ...passage }) : this.scene.start(scene)));
   }
 }
