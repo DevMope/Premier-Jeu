@@ -525,7 +525,7 @@ function creerAccessoiresFacade(scene) {
 // (v1.31) l'appartement bâti : la façade est plus haute de tout un étage (les scènes en plan serré reculent la vue d'autant)
 function facadeAvecEtage(G) { return !!G && niveauFacade(G) === 3 && typeof etageA === 'function' && etageA(G, 'appartement'); }
 const RECUL_ETAGE = 56;
-function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3, { fumee = true, etage: avecEtage = true } = {}) {
+function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3, { fumee = true, etage: avecEtage = true, vent = 40 } = {}) {
   creerFacadeHD(scene, n);
   // (v1.30, planche 54) l'appartement : la belle maison gagne un étage et un balcon (le toit et la cheminée montent d'autant)
   const etage = avecEtage && n === 3 && facadeAvecEtage(window.GAME);   // (v1.31 : jamais dans le passé, ni dans la faillite)
@@ -545,7 +545,7 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   const [chx, chy0, chl] = ecran(chemineeFacade(n)), chy = chy0 - monte;
   if (fumee) scene.time.addEvent({ delay: 420, loop: true, callback: () => {
     if (!image.active) return;
-    bouffeeFumee(scene, chx + chl / 2, chy, { echelle: 2.2, monte: 110, vent: 40, duree: 3200, alpha: 0.95, profondeur: image.depth + 0.01 });   // (v0.70 : la vraie fumée)
+    bouffeeFumee(scene, chx + chl / 2, chy, { echelle: 2.2, monte: 110, vent, duree: 3200, alpha: 0.95, profondeur: image.depth + 0.01 });   // (v0.70 : la vraie fumée ; vent < 0 : elle part à gauche, quand la maison sur pattes marche vers la droite)
   } });
   const [px, , pl] = ecran(FACADE.porte);
   return {
