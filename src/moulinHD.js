@@ -564,6 +564,30 @@ function formeDeFumee(scene, forme, bx, by, cx, cy, { taille = 46, profondeur = 
       onComplete: () => scene.tweens.add({ targets: f, x: f.x + (Math.random() - 0.5) * 3, y: f.y + (Math.random() - 0.5) * 3, duration: 600 + Math.random() * 400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }) });
   });
   const trace = bouffees.length * dt + 420;
+  // (v1.51, planche 63 v3) le filet de fumée : de la bouche du chat jusqu'au bout le plus proche de la forme, qu'on
+  // voie bien que c'est lui qui la souffle ; il tient tant que la forme vit, et de petites volutes sortent de sa bouche
+  const mx = bx - cx, my = by - cy;
+  if (Math.hypot(mx, my) > 20) {   // (pas de filet pour une forme dessinée sur place, comme dans le carnet)
+  let [px, py] = bouffees.reduce((m, [ux, uy]) => Math.hypot(ux * taille - mx, uy * taille - my) < Math.hypot(m[0] * taille - mx, m[1] * taille - my) ? [ux, uy] : m, bouffees[0]);
+  px *= taille; py *= taille;
+  const filet = scene.add.container(cx, cy).setDepth(profondeur - 0.01), nf = Math.max(4, Math.round(Math.hypot(px - mx, py - my) / 5));
+  for (let i = 0; i <= nf; i++) {
+    const u = i / nf, x = mx + (px - mx) * u, y = my + (py - my) * u - Math.sin(u * Math.PI) * 14 + Math.sin(u * 9) * 3;   // (un filet qui ondule et monte un peu)
+    for (const d of [-1, 1]) {   // (deux bouffées côte à côte : un filet épais, qui s'élargit en approchant de la forme)
+      const e = (1.5 + u * 3) * d, f = scene.add.image(x + e * 0.4, y + e, 'fumeeHD_' + ((i + d + 3) % 3)).setScale(ech * (0.7 + u * 0.4)).setAlpha(0);
+      filet.add(f);
+      scene.tweens.add({ targets: f, alpha: 0.9 - u * 0.15, duration: 200, delay: i * 30 });
+      scene.tweens.add({ targets: f, y: f.y - 2, x: f.x + (Math.random() - 0.5) * 2, duration: 700 + Math.random() * 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: Math.random() * 400 });
+    }
+  }
+  const volutes = scene.time.addEvent({ delay: 420, loop: true, callback: () => {
+    if (!filet.active) return;
+    const v = scene.add.image(bx, by, 'fumeeHD_' + Phaser.Math.Between(0, 2)).setScale(ech * 0.4).setAlpha(0.7).setDepth(profondeur - 0.01);
+    scene.tweens.add({ targets: v, x: bx + (Math.random() - 0.5) * 16, y: by - 22 - Math.random() * 12, scale: ech, alpha: 0, duration: 1300, onComplete: () => v.destroy() }); } });
+  const finFilet = () => { volutes.remove(); filet.list.forEach(f => scene.tweens.killTweensOf(f)); scene.tweens.add({ targets: filet.list, alpha: 0, y: '-=20', duration: 1000, onComplete: () => filet.destroy() }); };
+  c.once('destroy', () => { if (filet.active) finFilet(); });
+  if (vit) scene.time.delayedCall(trace + tenue, () => { if (filet.active) finFilet(); });
+  }
   // la forme vit : chacune à sa façon
   const vie = { vogue: { x: cx + sens * 160, angle: 3 }, nage: { x: cx + sens * 120 }, vol: { x: cx + sens * 90, y: cy - 50 }, trotte: { x: cx + sens * 140 }, bat: {}, tourne: { angle: 30 }, flotte: { y: cy - 24 } }[F.mouvement] || {};
   if (vit) scene.time.delayedCall(trace, () => {
