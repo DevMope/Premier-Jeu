@@ -172,6 +172,9 @@ const AMELIORATIONS = {
     effet: 'Un comptoir bien éclairé attire le regard : +0,3 client par jour et par niveau.' },
   atelier: { nom: "L'atelier", niveaux: ['Un établi', 'Deux établis', 'Trois établis'], prix: [220, 480],
     effet: "2 employés au départ, puis un de plus pour chaque établi ajouté (et 2 places de plus pour les objets)." },
+  // (v1.54, planche 62) le cellier, sous l'arrière-boutique : les provisions s'y gardent deux fois plus
+  cellier: { nom: 'Le cellier', niveaux: ['Pas de cellier', 'Un cellier frais'], prix: [650],
+    effet: "Une cave fraîche sous l'arrière-boutique : les rations et les gâteaux s'y gardent deux fois plus longtemps." },
 };
 // Ce qu'une bonne chambre apporte au réveil, par niveau de lit :
 // - `forme` : chance de se réveiller en forme (un client de plus, ou 10 % de remise au marché ce jour-là) ;

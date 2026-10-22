@@ -104,7 +104,16 @@ const Son = {
       for (let k = 0; k < 3; k++) { const o = ctx.createOscillator(), g = ctx.createGain(), tt = t + k * 0.05; o.frequency.value = f;
         g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(0.018, tt + 0.008); g.gain.linearRampToValueAtTime(0, tt + 0.035); o.connect(g).connect(sortie); o.start(tt); o.stop(tt + 0.04); } })); };
     const h = new Date().getHours();
-    if (opts.saison === 'semailles') { vent(0.01, 400); chaque(700, 2000, () => gazouillis(3000 + Math.random() * 1500)); chaque(3000, 6000, merle); chaque(8000, 14000, tourterelle); }
+    // (v1.53) le temps du jour passe avant la saison : la pluie qui crépite, le grand vent, la neige qui étouffe tout
+    const pluie = (vol = 0.06) => { boucleBruit('highpass', 1400, 0.5, vol); boucleBruit('lowpass', 600, 0.7, vol * 0.6);
+      chaque(60, 160, () => { const t = ctx.currentTime, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); src.buffer = bruit(0.05); f.type = 'bandpass'; f.frequency.value = 2500 + Math.random() * 3500; f.Q.value = 6;
+        g.gain.setValueAtTime(vol * 0.5 * Math.random(), t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04); src.connect(f).connect(g).connect(sortie); src.start(t); src.stop(t + 0.05); }); };
+    const m = opts.meteo;
+    if (m === 'pluie' || m === 'orage') { pluie(m === 'orage' ? 0.08 : 0.05); if (m === 'orage') vent(0.04, 420); }
+    else if (m === 'vent') { vent(0.1, 720); chaque(9000, 15000, () => gazouillis(2400, 0.015)); }
+    else if (m === 'neige') { vent(0.02, 220); }
+    else if (m === 'canicule') { cigales(0.09); vent(0.008, 300); }
+    else if (opts.saison === 'semailles') { vent(0.01, 400); chaque(700, 2000, () => gazouillis(3000 + Math.random() * 1500)); chaque(3000, 6000, merle); chaque(8000, 14000, tourterelle); }
     else if (opts.saison === 'moissons') { cigales(0.05); vent(0.012, 350); chaque(6000, 10000, () => gazouillis(3600, 0.025)); }
     else if (opts.saison === 'brumes') { vent(0.05, 520); chaque(9000, 16000, () => gazouillis(2600, 0.02)); }
     else if (opts.saison === 'givre') { vent(0.03, 260); }
@@ -174,6 +183,16 @@ const Son = {
       const b = this.bruit(I.bruit.duree, t, bus, I.bruit.volume * force, I.bruit.filtre);
     }
   },
+  // (v1.53) le tonnerre : un grondement grave qui roule, plus ou moins loin (dans `retard` secondes)
+  tonnerre(retard = 0, force = 1) {
+    if (!this.pret || !this.ctx) return;
+    const ctx = this.ctx, t = ctx.currentTime + retard, d = 2.5 + Math.random() * 1.5, b = ctx.createBuffer(1, ctx.sampleRate * d, ctx.sampleRate), x = b.getChannelData(0);
+    for (let i = 0, v = 0; i < x.length; i++) { v = v * 0.97 + (Math.random() * 2 - 1) * 0.03; x[i] = v * 6; }
+    const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); src.buffer = b; f.type = 'lowpass'; f.frequency.value = 180 + Math.random() * 120;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.5 * force, t + 0.08); g.gain.setValueAtTime(0.35 * force, t + 0.6); g.gain.exponentialRampToValueAtTime(0.001, t + d);
+    src.connect(f).connect(g).connect(this.busMusique); src.start(t); src.stop(t + d);
+  },
+
   bruit(duree, t, bus, volume = 0.3, filtre = 2000, type = 'bandpass') {
     const ctx = this.ctx; const n = Math.floor(ctx.sampleRate * duree); const buf = ctx.createBuffer(1, n, ctx.sampleRate);
     const d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;

@@ -623,6 +623,7 @@ class BureauScene extends Phaser.Scene {
       case 'coffre': return { cle: coffreHD(this, n), echelle: 2.4 };
       case 'chambre': return { cle: litHD(this, n), echelle: n >= 3 ? 0.55 : 1.2 };
       case 'atelier': return { cle: iconeObjet(this, 'enclume'), echelle: 2.6 + n * 0.5 };
+      case 'cellier': return { cle: cellierHD(this, n), echelle: 2.2 };   // (v1.54)
       default: return { cle: luminaireHD(this, n), echelle: n >= 4 ? 1.1 : n >= 2 ? 1.6 : 2.6 };
     }
   }

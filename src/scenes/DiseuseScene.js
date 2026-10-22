@@ -177,7 +177,10 @@ class DiseuseScene extends Phaser.Scene {
       if (p.indices.includes('flamme')) { this.tweens.killTweensOf(this.flamme); this.flamme.setAngle(-55); this.tweens.add({ targets: this.flamme, angle: -35, duration: 260, yoyo: true, repeat: -1 }); }
       if (p.indices.includes('chat')) this.chat.setFlipX(false);
       this.humeur = 'neutre';
-      this.dire(PRESAGES[p.id].dit + (deja ? " Elle rassemble ses cartes : « C'est tout pour aujourd'hui. »" : ''));
+      // (v1.53) puis sa boule de cristal : le temps de demain, en toutes lettres la première fois, en image ensuite
+      this.dire(PRESAGES[p.id].dit + (!deja && typeof bouleDeCristal === 'function' ? bouleDeCristal(G) : '') + (deja ? " Elle rassemble ses cartes : « C'est tout pour aujourd'hui. »" : ''));
+      if (typeof iconeMeteoHD === 'function' && !this.meteoBoule) { this.meteoBoule = this.add.image(480, 339, iconeMeteoHD(this, meteoAnnoncee(G, G.jour + 1))).setScale(1.1).setAlpha(0);
+        this.tweens.add({ targets: this.meteoBoule, alpha: 0.85, duration: 900 }); this.tweens.add({ targets: this.meteoBoule, y: 335, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
       this.viderBoutons();
       this.bouton(480, 180, 'Sortir', () => this.sortir());
     });

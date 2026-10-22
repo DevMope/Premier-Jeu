@@ -28,7 +28,7 @@ class RueScene extends Phaser.Scene {
     const toits = this.children.list.filter(o => o.type === 'Image' && o.texture && /^(rueMaisonHD|rueForgeHD|rueImpasseHD|facadeHD)/.test(o.texture.key)).map(o => [o, o.texture.key === 'facadeHD_4' ? 0.26 : /^facadeHD/.test(o.texture.key) ? 0.34 : 0.12]);   // (v1.31 : avec l'étage, le toit ne fait plus qu'un quart de l'image)
     decorSaison(this, { sol: sol, largeur: LARGEUR_RUE, prof: 8.3, meules: [[LOT_CONFRERIE + (LARGEUR_RUE - LOT_CONFRERIE) * 0.42, 22]], bonhomme: LOT_CONFRERIE + (LARGEUR_RUE - LOT_CONFRERIE) * 0.62, toits });   // (v0.99 : la saison)
     // (v0.99) les bruits de la saison, doucement, sous la musique : oiseaux, cigales, vent
-    if (typeof saisonDe === 'function') { Son.nature(true, { saison: saisonDe(G), volume: 0.7 }); this.events.once('shutdown', () => Son.nature(false)); this.events.once('sleep', () => Son.nature(false)); }
+    if (typeof saisonDe === 'function') { Son.nature(true, { saison: saisonDe(G), volume: 0.7, meteo: typeof meteoDu === 'function' ? meteoDu(G) : null }); this.events.once('shutdown', () => Son.nature(false)); this.events.once('sleep', () => Son.nature(false)); }
     this.porteShop = r.porteShop;
     // la porte du shop : on rentre chez soi
     const zp = this.add.rectangle(this.porteShop.x, sol - 60, 70, 120, 0xffffff, 0).setDepth(8.65).setInteractive({ useHandCursor: true });
@@ -67,6 +67,12 @@ class RueScene extends Phaser.Scene {
     this.time.addEvent({ delay: 4500, startAt: 3500, loop: true, callback: () => this.passant() });
     this.passant();
     // (v0.68) quelqu'un se repose sur le banc, de temps en temps
+    // (v1.53, planche 62 v2) le temps qu'il fait : l'ardoise d'Ysmée entre sa tente et les Brindeloup, la pluie, les flaques...
+    if (typeof ambianceMeteo === 'function') {
+      if (typeof ysmeeArrivee === 'function' && ysmeeArrivee(G)) ardoiseMeteo(this, PLACES_RUE.ardoise, 478, G);
+      const P = PLACES_RUE;
+      ambianceMeteo(this, { sol, flaques: [[P.hospice + 160, 500, 120, 14], [P.impasse + 60, 512, 150, 16], [P.shop - 230, 498, 130, 14], [P.ardoise - 30, 515, 140, 16], [P.maison1 + 200, 502, 120, 13], [P.banque - 160, 508, 150, 16], [P.arche - 240, 500, 110, 13]] });
+    }
     this.banc = r.banc; this.surLeBanc = null;
     this.time.addEvent({ delay: 9000, startAt: 8000, loop: true, callback: () => this.reposBanc() });
     if (Math.random() < 0.6) this.reposBanc();

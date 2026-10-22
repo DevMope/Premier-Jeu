@@ -102,7 +102,8 @@ Object.assign(MarcheScene.prototype, {
     // les arbres, les buissons, les barrières : dans l'herbe, jamais sur les chemins
     [[70, 420, 0], [70, 760, 1], [1740, 420, 1], [1720, 1030, 0], [420, 740, 1], [1390, 760, 0], [560, 200, 0], [1250, 200, 1], [40, 1040, 0], [330, 1040, 1]].forEach(([x, y, v]) => {
       ombre(x + 10, y, 120); place.add(this.add.image(x, y, arbrePlaceHD(this, pal, v)).setOrigin(0.5, 1).setScale(2.2)); this.obstacles.push([x - 16, y - 16, x + 16, y + 2]); });
-    [[250, 760], [1520, 760], [700, 760], [1100, 760], [460, 470], [1340, 470]].forEach(([x, y]) => { ombre(x, y, 70); place.add(this.add.image(x, y, buissonPlaceHD(this, pal)).setOrigin(0.5, 1).setScale(2.2)); });
+    const marcheDuJour = typeof jourDeMarche === 'function' && jourDeMarche(G);   // (v1.54 : les jours de marché, les charrettes des colporteurs prennent la place de deux buissons)
+    [[250, 760], [1520, 760], [700, 760], [1100, 760], ...(marcheDuJour ? [] : [[460, 470], [1340, 470]])].forEach(([x, y]) => { ombre(x, y, 70); place.add(this.add.image(x, y, buissonPlaceHD(this, pal)).setOrigin(0.5, 1).setScale(2.2)); });
     [[640, 1020], [1160, 1020]].forEach(([x, y]) => { ombre(x, y, 100); place.add(this.add.image(x, y, barrierePlaceHD(this, 5)).setOrigin(0.5, 1).setScale(2.2)); });
     // les jours de fête, des guirlandes au-dessus de la place
     if (this.fete || this.feteHiver) {
@@ -135,7 +136,11 @@ Object.assign(MarcheScene.prototype, {
     // les passants, à la même échelle que tout le monde
     this.passantsPlace = [];
     const peuples = ['humain', 'nain', 'elfe', 'hobbit', 'humain', 'magicienne'];
-    for (let i = 0; i < 5; i++) this.ajouterPassantPlace(i, peuples[(G.jour + i) % peuples.length]);
+    const marche = typeof jourDeMarche === 'function' && jourDeMarche(G);
+    for (let i = 0; i < (marche ? 8 : 5); i++) this.ajouterPassantPlace(i, peuples[(G.jour + i) % peuples.length]);
+    if (marche) this.jourDeMarchePlace();
+    // (v1.53, planche 62) le temps qu'il fait sur la place, sous l'interface
+    if (typeof ambianceMeteo === 'function') ambianceMeteo(this, { ciel: false, prof: -0.6 });
     // l'interface de la place : l'invite devant un lieu, la carte (M), la liste de courses (L)
     this.add.rectangle(480, 22, 960, 40, 0x1a120a, 0.45).setDepth(4);
     this.invitePlace = this.add.text(480, 462, '', style(14, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#1a120add', padding: { x: 12, y: 5 } })).setOrigin(0.5).setDepth(6).setVisible(false);
@@ -167,9 +172,45 @@ Object.assign(MarcheScene.prototype, {
     this.cadrerPlace(true);
   },
 
-  // Un passant qui flâne d'un lieu à l'autre, s'arrête un peu, repart
-  ajouterPassantPlace(i, race) {
-    const quoi = { nom: 'Flâneur ' + i, race, feminin: i % 2 === 1, niveau: 'novice' };
+  // (v1.54, planche 62) Le jour de marché : des fanions, deux charrettes de colporteurs de passage, du monde, et Garrick
+  // qui flâne entre les étals (un clic : ce qu'il en dit)
+  jourDeMarchePlace() {
+    const c = this.add.container(0, 0); c.yTri = 5000;
+    for (const [x0, x1, y] of [[40, 900, 236], [900, 1760, 236]]) guirlandeFanions(this, c, x0, x1, y, 30, 44, 1.2);
+    this.place.add(c);
+    const lignes = [
+      "Jour de marché ! Je viens de loin, alors je vends moins cher qu'eux : tout est un dixième en dessous, sur toute la place.",
+      "Des colporteurs, il en passe un jour par semaine. Le reste du temps, on est sur les routes, avec l'âne.",
+      "Tu tiens un comptoir ? Aujourd'hui, du monde de passage ira jusqu'à chez toi. Fais le plein avant !",
+    ];
+    [[450, 486, false], [1350, 486, true]].forEach(([x, y, miroir], i) => {
+      this.ombrePlace(x, y, 230);
+      const ch = this.add.image(x, y, charretteColporteurHD(this)).setOrigin(0.5, 1).setScale(2.2).setFlipX(miroir).setInteractive({ useHandCursor: true });
+      ch.yTri = y; this.place.add(ch); this.obstacles.push([x - 120, y - 40, x + 120, y + 2]);
+      const cle = corpsHD(this, 'colporteur', null, 'face');
+      const v = this.add.image(x + (miroir ? -70 : 70), y + 44, cle).setOrigin(0.5, 1).setScale(PLACE_MARCHE.echelle * echelleCorps(cle)).setInteractive({ useHandCursor: true });
+      v.yTri = y + 44; this.place.add(v); this.ombrePlace(v.x, v.y, 40);
+      this.tweens.add({ targets: v, scaleY: v.scaleY * 1.015, duration: 1400 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // (il respire)
+      const parle = () => this.bulleSur(v, lignes[(this.G.jour + i + (v.n = (v.n || 0) + 1)) % lignes.length], { nom: 'Colporteur ' + i, race: 'humain' });
+      ch.on('pointerdown', parle); v.on('pointerdown', parle);
+    });
+    // Garrick, qui fait ses courses comme tout le monde
+    this.ajouterPassantPlace(9, null, 'mentor');
+  },
+
+  // Une bulle au-dessus de quelqu'un sur la place
+  bulleSur(img, texte, personne) {
+    if (img.bulle && img.bulle.active) return;
+    Son.jouer('voix', { personne, ton: 'content' });
+    const b = img.bulle = this.add.text(img.x, img.y - img.displayHeight - 8, texte, style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 260 }, align: 'center' })).setOrigin(0.5, 1).setScale(0);
+    b.yTri = 1e6 + 2; this.place.add(b);
+    this.tweens.add({ targets: b, scale: 1 / this.place.scaleX, duration: 180, ease: 'Back.easeOut' });
+    this.time.delayedCall(Math.max(2600, texte.length * 55), () => b.active && this.tweens.add({ targets: b, alpha: 0, duration: 300, onComplete: () => b.destroy() }));
+  },
+
+  // Un passant qui flâne d'un lieu à l'autre, s'arrête un peu, repart (figurant : 'mentor' pour Garrick)
+  ajouterPassantPlace(i, race, figurant = null) {
+    const quoi = figurant || { nom: 'Flâneur ' + i, race, feminin: i % 2 === 1, niveau: 'novice' };
     const pts = Object.keys(LIEUX_PLACE).filter(k => k !== 'arche').map(k => this.devantLieu(k));
     const [x, y] = pts[(i * 3 + this.G.jour) % pts.length];
     const cle = corpsHD(this, quoi, null, 'face');
@@ -183,8 +224,9 @@ Object.assign(MarcheScene.prototype, {
   passantPlaceParle(o) {
     if (o.bulle && o.bulle.active) return;
     o.pause = 4200; o.cible = null;
-    const texte = this.phraseMarche();
-    Son.jouer('voix', { personne: { nom: o.quoi.nom, race: o.quoi.race, feminin: o.quoi.feminin }, ton: Phaser.Utils.Array.GetRandom(['content', 'rire', 'etonne', 'neutre']) });
+    const garrick = o.quoi === 'mentor';
+    const texte = garrick ? Phaser.Utils.Array.GetRandom(PHRASES_GARRICK_MARCHE) : this.phraseMarche();
+    Son.jouer('voix', { personne: garrick ? { nom: 'Garrick', race: 'humain' } : { nom: o.quoi.nom, race: o.quoi.race, feminin: o.quoi.feminin }, ton: Phaser.Utils.Array.GetRandom(['content', 'rire', 'etonne', 'neutre']) });
     const b = o.bulle = this.add.text(o.img.x, o.img.y - o.img.displayHeight - 8, texte, style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 240 }, align: 'center' })).setOrigin(0.5, 1).setScale(0);
     b.yTri = 1e6 + 2; this.place.add(b);
     this.tweens.add({ targets: b, scale: 1 / this.place.scaleX, duration: 180, ease: 'Back.easeOut' });

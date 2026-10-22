@@ -36,7 +36,7 @@ function malusSaison(G, e, niveau) {
   const s = EPREUVES_SAISON[saisonDe(G)];
   return s && (s.types.includes(e.type) || s.besoins.includes(e.besoin)) ? MALUS_SAISON : 1;
 }
-function prixSaison(G, id) { return (PRIX_SAISON[saisonDe(G)] || {})[id] || 1; }
+function prixSaison(G, id) { return ((PRIX_SAISON[saisonDe(G)] || {})[id] || 1) * (typeof prixMeteo === 'function' ? prixMeteo(G, id) : 1) * (typeof prixJourDeMarche === 'function' ? prixJourDeMarche(G) : 1); }   // (v1.53 : et le temps du jour ; v1.54 : le jour de marché)
 
 // Les fêtes : trois jours chacune (la veille, le grand jour, le lendemain)
 const FETES = {

@@ -212,7 +212,7 @@ class MarcheScene extends Phaser.Scene {
     // Les nouvelles de l'atelier (une réparation terminée cette nuit)
     if (nouvellesDuMatin(G).length) {
       // (v1.07 : sous la barre du haut, pour ne plus cacher le titre, les commandes ni la sauvegarde)
-      const t = this.add.text(480, 78, nouvellesDuMatin(G).join('\n'), style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 3 }, align: 'center', wordWrap: { width: 720 } })).setOrigin(0.5, 0).setDepth(5);
+      const t = this.add.text(480, 78, nouvellesDuMatin(G).join('\n'), style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 3 }, align: 'center', wordWrap: { width: 600 } })).setOrigin(0.5, 0).setDepth(5);   // (v1.53 : plus étroit, il ne passe plus sous les boutons de la place)
       this.tweens.add({ targets: t, alpha: 0, delay: 6000, duration: 800 });
     }
   }

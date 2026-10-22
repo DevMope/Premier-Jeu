@@ -16,7 +16,7 @@ class FacadeScene extends Cinematique {
     this.cameras.main.setScroll(0, -recul);
     const g = this.add.graphics();
     dessinerComte(g, 0, -recul, 960, 470 + recul, 0); // midi : le soleil est haut, on ouvre le comptoir
-    this.add.image(0, 440, pavesHD(this, 960, 100)).setOrigin(0).setScale(2);
+    const sol = this.add.image(0, 440, pavesHD(this, 960, 100)).setOrigin(0).setScale(2);
     // (v1.11, planches 40 v2 et 41) la boutique du paon, juste à côté : ta maison se pousse vers la gauche
     const rival = typeof rivalVisible === 'function' && rivalVisible(G) ? G.rival : null;
     const facade = dessinerFacade(this, rival ? 268 : 560, 440, G.nomShop);
@@ -36,7 +36,9 @@ class FacadeScene extends Cinematique {
     }
     decorSaison(this, { sol: 440, arbres: rival ? [[36, 1.05]] : [[70, 1.15], [905, 1.05]], facade, bonhomme: rival ? 500 : 790, prof: 3 });   // (v0.99 : la saison)
     // (v0.99) les bruits de la saison, doucement, sous la musique : oiseaux, cigales, vent
-    if (typeof saisonDe === 'function') { Son.nature(true, { saison: saisonDe(G), volume: 0.7 }); this.events.once('shutdown', () => Son.nature(false)); this.events.once('sleep', () => Son.nature(false)); }
+    // (v1.53, planche 62) le temps qu'il fait : le ciel, la pluie et ses flaques (sous les clients qui attendent)...
+    if (typeof ambianceMeteo === 'function') ambianceMeteo(this, { sol: 440, apres: sol, flaques: [[rival ? 420 : 180, 470, 130, 14], [rival ? 640 : 720, 495, 150, 16], [880, 462, 90, 11]] });
+    if (typeof saisonDe === 'function') { Son.nature(true, { saison: saisonDe(G), volume: 0.7, meteo: typeof meteoDu === 'function' ? meteoDu(G) : null }); this.events.once('shutdown', () => Son.nature(false)); this.events.once('sleep', () => Son.nature(false)); }
     // (le titre, fixe à l'écran ; avec l'appartement, il se range dans le coin, loin du toit)
     const titre = this.add.text(480, 34, `Jour ${G.jour} · ${G.nomShop}`, style(26, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 6 })).setOrigin(0.5).setScrollFactor(0).setDepth(20);
     if (recul) { if (rival) titre.setPosition(940, 34).setOrigin(1, 0.5); else titre.setPosition(20, 34).setOrigin(0, 0.5); }

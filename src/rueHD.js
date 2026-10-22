@@ -305,8 +305,10 @@ function ecriteauRue(scene, x, y, texte, { taille = 12, couleur = '#2a1608', fon
 // Renvoie la porte du shop et les lumières (fenêtres, réverbères, braises) pour la nuit.
 // (v1.28) la rue s'allonge à gauche : le terrain de la Confrérie (l'hospice, la chapelle), avant les Pommeroy
 const LOT_CONFRERIE = 700;
-const LARGEUR_RUE = 3260 + LOT_CONFRERIE;   // (v1.48 : +300, le lot du barbier)
-const PLACES_RUE = { hospice: 200, chapelle: 545, maison0: 160 + LOT_CONFRERIE, impasse: 405 + LOT_CONFRERIE, forge: 680 + LOT_CONFRERIE, shop: 1320 + LOT_CONFRERIE, maison1: 1820 + LOT_CONFRERIE, barbier: 2150 + LOT_CONFRERIE, fontaine: 2390 + LOT_CONFRERIE, banque: 2660 + LOT_CONFRERIE, arche: 3080 + LOT_CONFRERIE };
+// (v1.53, planche 62 v2) un peu d'air entre la tente d'Ysmée et les Brindeloup : l'ardoise du temps y a sa place
+const ECART_ARDOISE = 190;
+const LARGEUR_RUE = 3260 + LOT_CONFRERIE + ECART_ARDOISE;   // (v1.48 : +300, le lot du barbier ; v1.53 : +190, l'ardoise)
+const PLACES_RUE = { hospice: 200, chapelle: 545, maison0: 160 + LOT_CONFRERIE, impasse: 405 + LOT_CONFRERIE, forge: 680 + LOT_CONFRERIE, shop: 1320 + LOT_CONFRERIE, maison1: 1820 + LOT_CONFRERIE + ECART_ARDOISE, barbier: 2150 + LOT_CONFRERIE + ECART_ARDOISE, fontaine: 2390 + LOT_CONFRERIE + ECART_ARDOISE, banque: 2660 + LOT_CONFRERIE + ECART_ARDOISE, arche: 3080 + LOT_CONFRERIE + ECART_ARDOISE, ardoise: 2505 };
 function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   const G = window.GAME, P = PLACES_RUE, lumieres = [];
   creerRueHD(scene);
@@ -373,7 +375,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   scene.add.image(o + P.fontaine, sol + 30, 'fontaineHD').setOrigin(0.5, 1).setScale(2.4);
   poser('rueBanqueHD', P.banque);
   poser(jour ? 'rueArcheHD_jour' : 'rueArcheHD', P.arche);
-  for (const x of [380, 560, 1060, 1640, 2500, 2885].map((x, i) => i ? x + LOT_CONFRERIE : x)) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
+  for (const x of [380, 560, 1060, 1640, 2500, 2885].map((x, i) => i ? x + LOT_CONFRERIE + (x >= 1700 ? ECART_ARDOISE : 0) : x)) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
   lumieres.push([f.porteX, 400, 2.4], [o + P.forge, sol - 10, 1.8], [o + P.banque, sol - 150, 1.4]);
   // les noms : écriteaux peints, lettres gravées, bannière
   ecriteauRue(scene, o + P.maison0 + 4, sol - 112, 'Les Pommeroy', { taille: 10 });

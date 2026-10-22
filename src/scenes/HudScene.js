@@ -39,6 +39,15 @@ class HudScene extends Phaser.Scene {
     plaque.lineStyle(2, 0xc9a227, 1).strokeRect(-8, 17, 226, 8);
     this.jaugeCampG = this.add.graphics();
     const zoneCamp = this.add.rectangle(105, 21, 226, 10, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    // (v1.53, planche 62) le temps du jour : un médaillon rond juste après les plaques ; survolé, il dit ce qu'il change
+    const fondMeteo = this.add.graphics();
+    fondMeteo.fillStyle(0x1e130a, 0.92).fillCircle(0, 0, 12).lineStyle(2, 0xc9a227, 1).strokeCircle(0, 0, 12);
+    this.iconeMeteo = this.add.image(0, 0, '__DEFAULT').setScale(0.7);
+    const zoneMeteo = this.add.circle(0, 0, 13, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    this.medaillonMeteo = this.add.container(234, 10, [fondMeteo, this.iconeMeteo, zoneMeteo]).setVisible(false);
+    zoneMeteo.on('pointerover', () => this.infoMeteo(true));
+    zoneMeteo.on('pointerout', () => this.infoMeteo(false));
+    zoneMeteo.on('pointerdown', () => this.infoMeteo(!this.bulleMeteo));
     // (v0.93) une goutte bleue tant que dure la bénédiction de la nymphe
     const goutte = this.add.graphics();
     goutte.fillStyle(0x1e130a, 0.92).fillCircle(0, 0, 11).lineStyle(2, 0xc9a227, 1).strokeCircle(0, 0, 11);
@@ -77,7 +86,7 @@ class HudScene extends Phaser.Scene {
     this.pastilleObjectifs.on('pointerover', () => this.pastilleObjectifs.setBackgroundColor('#ffe9a0'));
     this.pastilleObjectifs.on('pointerout', () => this.pastilleObjectifs.setBackgroundColor('#f3d98a'));
     this.compteObjectifs = 0;
-    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, this.iconeSaison, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp, this.goutte, this.buche, this.medaillonRival, this.pastilleObjectifs]).setDepth(100);
+    this.bandeau = this.add.container(0, 0, [plaque, menu, this.texteJour, this.iconeSaison, zone, this.etoileReput, this.jaugeReput, this.texteReput, zoneReput, this.jaugeCampG, zoneCamp, this.medaillonMeteo, this.goutte, this.buche, this.medaillonRival, this.pastilleObjectifs]).setDepth(100);
     // (v0.84) pas assez d'argent : une grande alerte en haut de l'écran, par-dessus toutes les pages
     const surManque = m => this.alerteArgent(m);
     this.game.events.on('manqueArgent', surManque);
@@ -88,7 +97,8 @@ class HudScene extends Phaser.Scene {
   objectifsEnDirect(G) {
     if (typeof verifierObjectifs !== 'function') return;
     let x = 226;
-    if (this.goutte.visible) x = 250;
+    if (this.medaillonMeteo && this.medaillonMeteo.visible) x = 250;
+    if (this.goutte.visible) x = this.goutte.x + 16;
     if (this.buche.visible) x = this.buche.x + 24;
     if (this.medaillonRival.visible) x = this.medaillonRival.x + 46;
     this.pastilleObjectifs.setX(x + 4);
@@ -184,6 +194,18 @@ class HudScene extends Phaser.Scene {
     if (this.bulleBuche) { this.bulleBuche.destroy(); this.bulleBuche = null; }
     if (!montrer) return;
     this.bulleBuche = this.add.text(this.buche.x - 10, 28, "Le foyer est vide : dehors, il gèle. Mets une bûche dans la cheminée avant de dormir (1 planche de bois), sinon tu te réveilleras fatigué.", style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 260 } })).setDepth(102);
+  }
+
+  // (v1.53) Le temps du jour : son nom, ce qu'il change au comptoir, et l'ardoise d'Ysmée si elle s'est trompée
+  infoMeteo(montrer) {
+    if (this.bulleMeteo) { this.bulleMeteo.destroy(); this.bulleMeteo = null; }
+    const G = window.GAME;
+    if (!montrer || !G || typeof infoMeteo !== 'function') return;
+    const m = infoMeteo(G), prix = Object.entries(PRIX_METEO[m.id] || {}).map(([id, k]) => `${k > 1 ? '▲' : '▼'} ${nomObjet(id).toLowerCase()}`);
+    const lignes = [m.nom + ' aujourd\'hui', m.clients ? `${m.clients > 0 ? '+' : '−'}${Math.abs(m.clients)} client${Math.abs(m.clients) > 1 ? 's' : ''} de passage` : 'les clients comme d\'habitude'];
+    if (prix.length) lignes.push('au marché : ' + prix.join(', '));
+    if (EPREUVES_METEO[m.id]) lignes.push('les aventuriers qui partent sans ' + EPREUVES_METEO[m.id].besoins.map(b => nomObjet(b).toLowerCase()).join(' ni ') + ' auront plus de mal');
+    this.bulleMeteo = this.add.text(222, 30, lignes.join('\n'), style(12, '#fff4dc', { backgroundColor: '#2a1c10', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
   }
 
   infoNymphe(montrer) {
@@ -335,12 +357,15 @@ class HudScene extends Phaser.Scene {
         this.tweens.add({ targets: this, remplissage: cible, duration: 600, ease: 'Sine.easeOut', onUpdate: () => this.dessinerJauge() });
         this.dessinerJauge();
       }
-      this.goutte.setVisible(!!benieJusqua(G));
+      const meteo = typeof meteoDu === 'function' && G.jour ? meteoDu(G) : null, dm = meteo ? 26 : 0;   // (v1.53) le médaillon du temps pousse les autres
+      if (meteo) { const k = iconeMeteoHD(this, meteo); if (this.iconeMeteo.texture.key !== k) this.iconeMeteo.setTexture(k); }
+      this.medaillonMeteo.setVisible(!!meteo);
+      this.goutte.setVisible(!!benieJusqua(G)).setX(234 + dm);
       const sansFeu = typeof foyerVide === 'function' && soirDuJour(G) && foyerVide(G);
-      this.buche.setVisible(sansFeu).setX(this.goutte.visible ? 270 : 242);
+      this.buche.setVisible(sansFeu).setX((this.goutte.visible ? 270 : 242) + dm);
       // (v1.11) le score du mois des comptoirs, tant que le paon est ouvert
       const paon = typeof rivalOuvert === 'function' && rivalOuvert(G);
-      this.medaillonRival.setVisible(paon).setX(sansFeu ? 340 : this.goutte.visible ? 300 : 290);
+      this.medaillonRival.setVisible(paon).setX((sansFeu ? 340 : this.goutte.visible ? 300 : 290) + dm);
       if (paon) { const sc = scoreDuMois(G), t = `${sc.toi} – ${sc.lui}`; if (this.texteRival.text !== t) this.texteRival.setText(t); }
       else if (this.panneauRival) this.infoRival(false);
       if (!sansFeu && this.bulleBuche) this.infoBuche(false);

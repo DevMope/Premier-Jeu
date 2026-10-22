@@ -815,6 +815,8 @@ class CounterScene extends Phaser.Scene {
 
     // L'ébrasement, le cadre de chêne et l'appui de pierre de la fenêtre
     this.add.image(x - 16, y - 16, 'cadreFenetre').setOrigin(0).setScale(2).setDepth(3);
+    // (v1.53, planche 62) le temps qu'il fait, derrière la vitre
+    if (typeof meteoFenetre === 'function') meteoFenetre(this, FENETRE, masque);
   }
 
   // Les voyageurs qui attendent leur tour, visibles par la fenêtre.
@@ -1129,6 +1131,12 @@ class CounterScene extends Phaser.Scene {
       fond.on('pointerout', () => { fond.setFillStyle(0xfff6d8, 0.001); icone.setScale(2); });
       fond.on('pointerdown', () => this.donner(id));
       ou[id] = { fond, qte, pile, icone, page: ou === this.casesArmes ? 1 : 0 };
+      // (v1.54, planche 62) les provisions qui se périment : une petite barre de fraîcheur (la plus vieille), et au survol, combien de jours
+      if (typeof FRAICHEUR !== 'undefined' && FRAICHEUR[id] && FRAICHEUR[id].ou === 'stock') {
+        const fondB = this.add.rectangle(x - 9, y + 6, 26, 6, 0x3a2410).setOrigin(0, 0.5), barre = this.add.rectangle(x - 8, y + 6, 24, 4, 0x4a9a3a).setOrigin(0, 0.5);
+        const jours = this.add.text(x - 9, y + 15, '', style(9, '#5a3a20', { fontStyle: 'bold italic' })).setOrigin(0, 0.5);
+        ou[id].fraiche = { fondB, barre, jours };
+      }
     }
   }
 
@@ -1205,21 +1213,57 @@ class CounterScene extends Phaser.Scene {
 
   ouvrirTiroirCadeaux() {
     if (this.panneauCadeaux) { this.panneauCadeaux.destroy(); this.panneauCadeaux = null; return; }
-    const ids = Object.keys(this.G.cadeaux).filter(id => this.G.cadeaux[id] > 0);
+    const G = this.G, ids = Object.keys(G.cadeaux).filter(id => G.cadeaux[id] > 0);
     if (!ids.length) return;
-    const c = this.panneauCadeaux = this.add.container(0, 0).setDepth(8);
-    const h = 34 + ids.length * 30;
-    c.add(this.add.rectangle(416, 470 - h / 2, 240, h, 0x1e2a14, 0.97).setStrokeStyle(2, 0x4a7a3a));
-    c.add(this.add.text(416, 470 - h + 14, 'Offrir au client :', style(12, '#c8e0a0', { fontStyle: 'italic' })).setOrigin(0.5));
+    // (v1.54, planche 62) pour chaque cadeau : ce que le client en pensera (s'il le sait), et ce que ça rapporte
+    const v = this.voyageur && !this.enConfirmation ? this.voyageur : null, anniv = !!(v && v.anniversaire === G.jour);
+    const c = this.panneauCadeaux = this.add.container(0, 0).setDepth(80), X = 440, h = 74 + ids.length * 27, haut = 520 - h;
+    c.add(this.add.rectangle(X, haut + h / 2, 600, h, 0x1e2a14, 0.97).setStrokeStyle(3, 0x4a7a3a).setInteractive());
+    c.add(this.add.text(X, haut + 16, v ? `Offrir à ${v.nom}` : 'Tes cadeaux', style(15, '#e8f0c8', { fontStyle: 'bold' })).setOrigin(0.5));
+    c.add(this.add.text(X, haut + 34, v ? (anniv ? "c'est son anniversaire : un cadeau qui plaît compte double" : 'un cadeau par personne et par jour') : "personne au comptoir pour l'instant", style(11, '#a8c890', { fontStyle: 'italic' })).setOrigin(0.5));
     ids.forEach((id, i) => {
-      const y = 470 - h + 40 + i * 30;
-      const ligne = this.add.rectangle(416, y, 226, 26, 0x2a3a1e).setInteractive({ useHandCursor: true });
+      const y = haut + 56 + i * 27, avis = v && typeof avisConnu === 'function' ? avisConnu(G, v, id) : null, A = avis ? AVIS_CADEAU[avis] : null;
+      const ligne = this.add.rectangle(X, y, 576, 25, 0x2a3a1e).setInteractive({ useHandCursor: true });
       ligne.on('pointerover', () => ligne.setFillStyle(0x3a5a2a));
       ligne.on('pointerout', () => ligne.setFillStyle(0x2a3a1e));
       ligne.on('pointerdown', () => this.offrir(id));
-      c.add([ligne, this.add.image(316, y, iconeObjet(this, id)).setScale(2),
-        this.add.text(334, y, `${CADEAUX[id].nom} x ${this.G.cadeaux[id]}`, style(12, '#f3f0d0', { fontStyle: 'bold' })).setOrigin(0, 0.5)]);
+      c.add([ligne, this.add.image(X - 268, y, iconeObjet(this, id)).setScale(1.4),
+        this.add.text(X - 248, y, `${CADEAUX[id].nom}  ×${G.cadeaux[id]}${typeof FRAICHEUR !== 'undefined' && FRAICHEUR[id] ? ` · ${fraicheurRestante(G, id) <= 1 ? 'ce soir' : fraicheurRestante(G, id) + ' j'}` : ''}`, style(13, '#f3f0d0', { fontStyle: 'bold' })).setOrigin(0, 0.5)]);
+      if (A) { c.add(this.add.text(X - 40, y, A.signe, style(13, A.couleur, { fontStyle: 'bold' })).setOrigin(0, 0.5));
+        c.add(this.add.text(X + 280, y, texteEffetCadeau(avis, anniv), style(12, '#e8f0c8')).setOrigin(1, 0.5)); }
     });
+    c.add(this.add.text(X, haut + h - 12, "Ses goûts s'apprennent en offrant (ou avec du flair), et le registre s'en souvient.", style(11, '#a8c890', { fontStyle: 'italic' })).setOrigin(0.5));
+    const croix = this.add.text(X + 286, haut + 12, '✕', style(16, '#e8f0c8', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    croix.on('pointerdown', () => { c.destroy(); this.panneauCadeaux = null; if (this.anniversaireApres) { const e = this.anniversaireApres; this.anniversaireApres = null; this.arrivee(e); } });
+    c.add(croix);
+  }
+
+  // (v1.54, planche 62 v2) L'anniversaire d'un habitué : le chapeau de fête sur la tête, des confettis, et trois réponses
+  feteAnniversaire(v, entree) {
+    const G = this.G, age = ageDe(G, v.nom), elle = v.feminin;
+    this.exprimer('content');
+    // le chapeau, posé sur le haut de sa tête (le premier pixel plein au milieu du buste)
+    const cle = this.perso.texture.key, src = this.textures.get(cle).getSourceImage(), w = src.width, h = src.height;
+    let top = 0; for (let y = 0; y < h && !top; y++) for (const x of [w * 0.45, w * 0.5, w * 0.55]) if (this.textures.getPixel(Math.floor(x), y, cle) && this.textures.getPixel(Math.floor(x), y, cle).alpha > 0) { top = y; break; }
+    const ech = this.perso.scaleX, yTete = this.perso.y - (h - top) * ech;
+    this.chapeauFete = this.add.image(this.perso.x - 6, yTete + 10, chapeauFeteHD(this)).setOrigin(0.5, 1).setScale(3.2).setAngle(-14).setDepth(2.1).setMask(this.masqueFenetre);
+    const couleurs = [0xe85a8a, 0xf0d040, 0x4a8ad8, 0x5ac85a];
+    const pluie = this.time.addEvent({ delay: 60, repeat: 40, callback: () => { const c = this.add.rectangle(FENETRE.x + Math.random() * FENETRE.w, FENETRE.y, 4, 4, couleurs[Math.floor(Math.random() * 4)]).setDepth(2.2).setMask(this.masqueFenetre);
+      this.tweens.add({ targets: c, y: FENETRE.y + FENETRE.h, angle: 360, x: c.x + (Math.random() - 0.5) * 40, duration: 1600 + Math.random() * 900, onComplete: () => c.destroy() }); } });
+    Son.jouer('fanfare');
+    this.dire("« Tu ne devineras jamais quel jour on est ! ... Quoi, tu l'avais noté ? Dans ton registre ? Oh, ça alors. »", this.nomAvecRelation(v.nom), v.nom);
+    const c = this.panneauAnniv = this.add.container(0, 0).setDepth(80);
+    const fermer = () => { c.destroy(); this.panneauAnniv = null; };
+    c.add(this.add.rectangle(440, 438, 560, 168, 0x1e140a, 0.96).setStrokeStyle(3, 0xd8b048).setInteractive());
+    c.add(this.add.text(440, 370, `C'est l'anniversaire de ${prenomDe(v.nom)} : ${elle ? 'elle' : 'il'} fête ses ${age} ans (le registre l'avait noté ce matin).`, style(12, '#f3d98a', { fontStyle: 'italic', wordWrap: { width: 540 }, align: 'center' })).setOrigin(0.5));
+    const aCadeau = Object.values(G.cadeaux || {}).some(n => n > 0);
+    const options = [
+      ['Lui offrir un cadeau', aCadeau ? 'le cadeau compte double : +4 relation' : "tu n'as pas de cadeau sous la main", aCadeau ? '#7ad86a' : '#8a8070', () => { if (!aCadeau) return; fermer(); this.anniversaireApres = entree; this.ouvrirTiroirCadeaux(); }],
+      ['Lui souhaiter, de tout cœur', '+1 relation', '#c8e0a0', () => { fermer(); this.dire(feterAnniversaire(G, v, 'souhait')); this.time.delayedCall(2600, () => this.arrivee(entree)); }],
+      ['Ne rien dire', `−1 relation : ${elle ? 'elle' : 'il'} s'en souviendra`, '#e08a6a', () => { fermer(); this.exprimer('inquiet'); this.dire(feterAnniversaire(G, v, 'oubli')); this.time.delayedCall(2600, () => this.arrivee(entree)); }],
+    ];
+    options.forEach(([t, e, col, f], i) => { const b = creerBouton(this, 330, 404 + i * 42, 220, t, f); c.add([b.fond, b.label]); if (i === 0 && !aCadeau) b.fond.setAlpha(0.5);
+      c.add(this.add.text(450, 404 + i * 42, e, style(12, col, { fontStyle: 'bold' })).setOrigin(0, 0.5)); });
   }
 
   offrir(id) {
@@ -1232,6 +1276,8 @@ class CounterScene extends Phaser.Scene {
     this.tweens.add({ targets: this.perso, y: this.perso.y - 14, duration: 140, yoyo: true });
     this.majStock();
     this.majCommande();
+    // (v1.54) le cadeau d'anniversaire offert : la visite reprend son cours
+    if (this.anniversaireApres) { const e = this.anniversaireApres; this.anniversaireApres = null; this.time.delayedCall(2600, () => this.arrivee(e)); }
   }
 
   // Le tiroir secret, sous le comptoir : les objets piégés que la Faucheuse t'a laissés.
@@ -1866,6 +1912,7 @@ class CounterScene extends Phaser.Scene {
       else conseilGarrick(this, 'comptoir');
       const v = this.voyageur = entree.voyageur;
       if (v.recherche && !entree.decide) return this.accueilRecherche(entree);   // (v0.86) une tête mise à prix ?
+      if (v.anniversaire === this.G.jour && !entree.anniversaireVu && !entree.attentes) { entree.anniversaireVu = true; return this.feteAnniversaire(v, entree); }   // (v1.54) son anniversaire
       this.preparerTutoriel(v);
       // Un client prestigieux vérifie d'abord que tu es à la hauteur
       if (v.prestige && !entree.attentes) {
@@ -2456,6 +2503,7 @@ class CounterScene extends Phaser.Scene {
   // `porte` : le baluchon que le client emporte, sur l'épaule (le bâton devant, le tissu
   // noué dans son dos).
   partirPar(x, porte = null) {
+    if (this.chapeauFete) { this.chapeauFete.destroy(); this.chapeauFete = null; }   // (v1.54) le chapeau d'anniversaire part avec lui
     if (this.buste) Son.jouer('voix', { personne: this.buste.personne, ton: this.buste.expression === 'fache' ? 'grogne' : 'auRevoir' });
     this.time.delayedCall(350, () => Son.jouer('porte'));
     if (Son.theme === 'faucheuse') Son.ambiance('comptoir');
@@ -2789,6 +2837,11 @@ class CounterScene extends Phaser.Scene {
       const surPage = (c.page || 0) === (this.pageStock || 0);
       c.qte.setText('x' + n).setColor(n > 0 ? '#3a2410' : '#a03020');
       c.pile.forEach((img, k) => img.setVisible(surPage && (k === 2 || n > 2 - k)).setAlpha(n > 0 ? 1 : 0.35));
+      if (c.fraiche) {   // (v1.54) la fraîcheur de la plus vieille
+        const reste = n > 0 ? fraicheurRestante(this.G, id) : null, total = dureeFraicheur(this.G, id), vis = surPage && reste !== null;
+        c.fraiche.fondB.setVisible(vis); c.fraiche.barre.setVisible(vis).setFillStyle(couleurFraicheur(reste || 0, total)); c.fraiche.barre.width = 24 * Math.max(0.08, Math.min(1, (reste || 0) / total));
+        c.fraiche.jours.setVisible(vis).setText(reste === null ? '' : reste <= 1 ? 'ce soir !' : `${reste} j`).setColor(reste !== null && reste <= 2 ? '#a8401a' : '#5a3a20');
+      }
     }
     this.majTiroirSecret();
     this.majTiroirCadeaux();

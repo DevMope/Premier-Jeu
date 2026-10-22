@@ -190,7 +190,8 @@ function chanceEtapeBase(e, colis, voyageur) {
   // (v0.67) la bénédiction de la nymphe : les épreuves d'eau réussissent mieux pendant quelques jours
   const beni = bonusNymphe(window.GAME, e);
   // (v0.99) la saison durcit certaines épreuves quand l'objet manque (crues, soif, brume, froid)
-  const nivE = niveauEpreuve(e, colis, voyageur), saison = typeof malusSaison === 'function' ? malusSaison(window.GAME, e, nivE) : 1;
+  const nivE = niveauEpreuve(e, colis, voyageur), saison = (typeof malusSaison === 'function' ? malusSaison(window.GAME, e, nivE) : 1)
+    * (typeof malusMeteo === 'function' ? malusMeteo(window.GAME, e, nivE, voyageur) : 1);   // (v1.53) et le temps qu'il faisait au départ
   // (v1.19) une mise : ta confiance l'encourage, il s'équipe un peu mieux en route
   const mise = voyageur.mise > 0 && typeof MISE_AVENTURIER !== 'undefined' ? MISE_AVENTURIER.bonusEtape : 0;
   // (v1.22) un appel à l'aide resté sans réponse : cette épreuve-là sera plus dure
@@ -687,6 +688,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
 // `pieges` : les objets piégés glissés dans le colis (ils comptent aussi dans `colis`).
 // L'aventurier, lui, ne voit que le colis : sa réaction et votre relation n'en tiennent pas compte.
 function partir(G, voyageur, colis, pieges = {}) {
+  if (typeof meteoDu === 'function') voyageur.meteo = meteoDu(G);   // (v1.53) le temps du départ durcit certaines épreuves de son voyage
   const chance = chanceDeRetour(voyageur, colis);
   const reelle = chanceDeRetour(voyageur, colis, pieges);
   const relationDepart = niveauRelation(G, voyageur.nom).index;
@@ -1399,7 +1401,7 @@ function commanderAmelioration(G, cle) {
 // Le niveau de la façade (0 : humble chaumière … 3 : belle maison à colombages), qui suit
 // l'ensemble des améliorations du shop.
 function niveauFacade(G) {
-  const total = Object.keys(AMELIORATIONS).filter(c => c !== 'atelier').reduce((somme, cle) => somme + niveauAmelioration(G, cle), 0);
+  const total = Object.keys(AMELIORATIONS).filter(c => c !== 'atelier' && c !== 'cellier').reduce((somme, cle) => somme + niveauAmelioration(G, cle), 0);
   return Math.min(3, Math.floor(total / 4));
 }
 
@@ -1488,7 +1490,8 @@ function prevision(G, jour = G.jour + 1) {
   // Réveillé en forme ce matin : un client de plus
   const forme = G.reveil && G.reveil.jour === jour && G.reveil.forme === 'client' ? 1 : 0;
   const pelerins = (sermentDe(G) === 'bien' ? AVANTAGES_SERMENT.clients : 0) + (typeof bonusClientsCollection === 'function' ? bonusClientsCollection(G) : 0);   // (v0.95 : la Confrérie envoie du monde ; v1.23 : on vient voir les trophées)
-  const hiver = (saisonDe(G, jour) === 'givre' ? SAISON_REGLES.clientsHiver : 0) + (typeof clientsFroid === 'function' ? clientsFroid(G, jour) : 0);   // (v0.99 : le froid garde les gens chez eux ; v1.05 : une nuit sans feu)
+  const hiver = (saisonDe(G, jour) === 'givre' ? SAISON_REGLES.clientsHiver : 0) + (typeof clientsFroid === 'function' ? clientsFroid(G, jour) : 0)
+    + (typeof clientsMeteo === 'function' ? clientsMeteo(G, jour) : 0) + (typeof clientsJourDeMarche === 'function' ? clientsJourDeMarche(G, jour) : 0);   // (v1.54 : le jour de marché, du monde de passage)   // (v1.53) la pluie, l'orage, la neige gardent les gens chez eux ; la canicule les fait venir tôt   // (v0.99 : le froid garde les gens chez eux ; v1.05 : une nuit sans feu)
   min = Math.max(1, min + bonus + forme + pelerins + hiver);
   max = Math.max(min, max + bonus + forme + pelerins + hiver);
   // (v0.60) les premiers jours : pas trop de monde, mais au moins deux clients (le rythme des débuts)
@@ -1652,6 +1655,7 @@ function nuit(G) {
   for (const l of nuitMafia(G)) G.reveil.lignes.push(l);
   for (const l of nuitOmbreAnnee(G)) G.reveil.lignes.push(l);   // (v0.98) la caisse du Passeur, les contrats de l'ombre
   if (typeof nuitSolstice === 'function') nuitSolstice(G);   // (v1.00) la tarte du Solstice ne se garde pas
+  sansPlanter('nuitDesProvisions', () => { if (typeof nuitDesProvisions === 'function') for (const l of nuitDesProvisions(G)) G.reveil.lignes.push(l); });   // (v1.54) les provisions qui ont tourné
   if (typeof nuitBrumes === 'function') for (const l of nuitBrumes(G)) G.reveil.lignes.push(l);   // (v1.01) la Nuit des Brumes
   if (typeof reveilDuFoyer === 'function') reveilDuFoyer(G, G.reveil);   // (v1.05) la nuit froide, le panier vide
   if (typeof reveilApresBanquet === 'function') reveilApresBanquet(G, G.reveil);   // (v1.05) le banquet du Long Hiver
@@ -1753,7 +1757,9 @@ function reveilDuJour(G) {
 function nouvellesDuMatin(G) {
   const fete = typeof annonceFete === 'function' ? annonceFete(G) : null;   // (v0.99 : la fête qui approche)
   const ysmee = typeof nouvelleYsmee === 'function' ? nouvelleYsmee(G) : null;   // (v1.05 : la tente de la diseuse)
-  return [...(fete ? [fete] : []), ...(ysmee ? [ysmee] : []), ...(G.nouvellesAtelier || []), ...reveilDuJour(G).lignes];
+  const meteo = typeof nouvelleMeteo === 'function' ? nouvelleMeteo(G) : null;   // (v1.53 : le temps qu'il fait)
+  const marche = typeof nouvelleJourDeMarche === 'function' ? nouvelleJourDeMarche(G) : null, anniv = typeof nouvelleAnniversaire === 'function' ? nouvelleAnniversaire(G) : null;   // (v1.54)
+  return [...(meteo ? [meteo] : []), ...(marche ? [marche] : []), ...(anniv ? [anniv] : []), ...(fete ? [fete] : []), ...(ysmee ? [ysmee] : []), ...(G.nouvellesAtelier || []), ...reveilDuJour(G).lignes];
 }
 
 // (v0.60) Le hasard d'une journée est fixé par une graine propre à la partie : recharger la
@@ -1838,6 +1844,7 @@ function formerFileDuJour(G) {
   const imprevus = hasard(min, max); // (les clients des lettres viennent en plus)
   const clients = [...prevus.map(v => ({ ...v, prevu: true }))];
   for (let i = 0; i < imprevus; i++) clients.push(voyageurAuHasard(G, [...clients, ...(G.reportes || [])]));
+  if (typeof clientAnniversaire === 'function') { const a = clientAnniversaire(G, [...nomsActifs(G), ...clients.map(v => v.nom)]); if (a) clients.unshift(a); }   // (v1.54) l'habitué dont c'est l'anniversaire vient le dire
   deguiserClients(G, clients, prevus.length);   // (v0.86) parmi les imprévus, un menteur... ou un honnête qui en a l'air
   if (typeof presageSurLaFile === 'function') presageSurLaFile(G, clients, prevus.length);   // (v1.05) le présage de Madame Ysmée
   const file = Phaser.Utils.Array.Shuffle(clients.map(v => ({ type: 'client', voyageur: v })));
@@ -2933,21 +2940,26 @@ function offrirCadeauSansFete(G, v, id) {
     const m = changerRelation(G, v.nom, 1);
     return { gout: 'aime', texte: `« Un trèfle à quatre feuilles, gagné au tir à l'arc du Solstice ? Il me portera chance ! » (chance +${EFFET_CADEAU.aime.trefle})${m ? ' ' + m : ''}` };
   }
-  const gouts = GOUTS[v.race] || { aime: [], deteste: [] };
-  const gout = gouts.aime.includes(id) ? 'aime' : gouts.deteste.includes(id) ? 'deteste' : 'neutre';
-  const effet = EFFET_CADEAU[gout];
-  p.trefle = Math.min(TREFLE_MAX, (p.trefle || 0) + effet.trefle);
+  // (v1.54, planche 62) quatre avis : adore (le premier de ses goûts), aime, bof, déteste ; un jour d'anniversaire, un cadeau
+  // qui plaît compte double
+  const avis = typeof avisCadeau === 'function' ? avisCadeau(v, id) : 'bof', A = AVIS_CADEAU[avis];
+  const gout = avis === 'adore' || avis === 'aime' ? 'aime' : avis === 'deteste' ? 'deteste' : 'neutre';
+  const fete = v.anniversaire === G.jour && A.relation > 0, relation = A.relation * (fete ? EFFET_ANNIVERSAIRE.cadeau : 1);
+  p.trefle = Math.min(TREFLE_MAX, (p.trefle || 0) + A.trefle);
   p.gouts = p.gouts || {};
   p.gouts[id] = gout;
+  if (fete) p.anniversaireFete = G.jour;
   rencontrer(G, v.nom);
-  const message = effet.relation ? changerRelation(G, v.nom, effet.relation) : null;
+  const message = changerRelation(G, v.nom, relation);
   const e = v.feminin ? 'e' : '';
+  const gain = `(${relation > 0 ? '+' : '−'}${Math.abs(relation)} relation${A.trefle ? `, +${A.trefle} trèfle` : ''}${fete ? ', le jour de son anniversaire' : ''})`;
   const textes = {
-    aime: `« Pour moi ? ${CADEAUX[id].nom} ! C'est exactement ce que j'adore ! » (chance +${effet.trefle})`,
-    neutre: `« Oh... merci, c'est gentil. » ${v.feminin ? 'Elle' : 'Il'} range le cadeau poliment. (chance +${effet.trefle})`,
-    deteste: `« ${CADEAUX[id].nom} ? Tu te moques de moi ? » ${v.feminin ? 'Elle' : 'Il'} est vexé${e}.`,
+    adore: `« Pour moi ? ${CADEAUX[id].nom} ! Tu as retenu que j'adore ça... » ${gain}`,
+    aime: `« Oh, ${CADEAUX[id].nom.toLowerCase()} ! J'aime beaucoup, merci. » ${gain}`,
+    bof: `« Oh... merci, c'est gentil. » ${v.feminin ? 'Elle' : 'Il'} range le cadeau poliment. ${gain}`,
+    deteste: `« ${CADEAUX[id].nom} ? Tu te moques de moi ? » ${v.feminin ? 'Elle' : 'Il'} est vexé${e}. ${gain}`,
   };
-  return { gout, texte: textes[gout] + (message ? ' ' + message : '') };
+  return { gout, avis, texte: textes[avis] + (message ? ' ' + message : '') };
 }
 
 function acheterCadeau(G, id) {
@@ -3510,7 +3522,7 @@ function ouvrirMarchandage(G, v) {
   if (!v.marchandage) {
     const st = styleMarchandage(v);
     const marge = st.marge[0] + Math.round(aleaClient(v, 'marge') * (st.marge[1] - st.marge[0]) / MARCHANDAGE.pas) * MARCHANDAGE.pas;
-    const patience = st.patience + niveauPersuasion(G) + (typeof patiencePresage === 'function' ? patiencePresage(G) : 0);   // (v0.93) la persuasion le rend plus patient ; (v1.05) le Soleil d'Ysmée aussi
+    const patience = Math.max(1, st.patience + niveauPersuasion(G) + (typeof patiencePresage === 'function' ? patiencePresage(G) : 0) + (typeof patienceMeteo === 'function' ? patienceMeteo(G) : 0));   // (v0.93) la persuasion le rend plus patient ; (v1.05) le Soleil d'Ysmée aussi ; (v1.53) la canicule l'énerve
     v.marchandage = { part: MARCHANDAGE.base, max: MARCHANDAGE.base + marge, patience, patienceMax: patience, fini: false };
   }
   return v.marchandage;
