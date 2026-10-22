@@ -1194,19 +1194,31 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
             const x = Math.round(X(u, z) + Math.sin(y / (3 * k) + m) * 0.5 * k);
             if (t.mat(x, y) === 'peau' && y < cy + P.ry && tete(x, y) && Z(u, z) > -P.rx * 0.2) continue;   // (jamais sur le visage)
             t.poser(x, y, 'cheveux', 2 + ((y + m) % 3 === 0 ? 1 : 0) - (m === 3 ? 1 : 0)); } }
-        // (de biais et de profil) une vraie masse de cheveux longs, qui part du crâne (sous la calotte, derrière
-        // l'oreille) et descend en s'élargissant jusque sur la fourrure, avec ses mèches
+        // (de biais et de profil) la coupe du duc, d'un seul tenant : le front dégarni, le dessus du crâne plaqué vers
+        // l'arrière, puis les cheveux qui coulent du crâne jusque sur la fourrure. On repeint aussi la calotte de la coupe
+        // de base, pour que tout soit la même chevelure (mêmes mèches, même sens).
         if (!dos && Math.abs(s) >= 0.2) {
-          const arr = s > 0 ? -1 : 1, zb = -P.rx * 0.75;
-          const bordArriere = y => { const dy = (y - cy) / P.ry; return X(0, zb) + arr * (P.rx * 0.55) * Math.sqrt(Math.max(0, 1 - Math.min(1, dy) ** 2 * 0.5)) + arr * Math.max(0, y - cy - P.ry) * 0.12; };
-          for (let y = Math.round(cy - P.ry * 0.55); y < yT + 12 * k; y++) {
-            const xb = bordArriere(y), larg = (y < cy ? 3.2 * k : 4.2 * k + (y - cy) * 0.05) * (0.8 + Math.abs(s) * 0.3);
-            for (let x = Math.round(Math.min(xb, xb - arr * larg)); x <= Math.max(xb, xb - arr * larg); x++) {
-              const m = t.mat(x, y); if (m === 'peau' && y < cy + P.ry * 0.9 && Math.abs(x + 0.5 - xb) > larg * 0.9) continue;
-              if (m === 'blanc' || m === 'pupille' || m === 'iris') continue;
-              if (y > yT + 12 * k - hachage(Math.floor(x / k), 3, 71) * 4 * k) continue;   // (les pointes, effilées, pas coupées net)
-              const meche = Math.floor((x + Math.round(y * 0.15 * arr)) / k) % 3;
-              t.poser(x, y, 'cheveux', meche === 0 ? 1 : meche === 1 ? 3 : 2 + (y > yT + 8 * k ? -1 : 0)); }
+          const av = s > 0 ? 1 : -1, ar = -av, sa = Math.abs(s);
+          const enCalotte = (x, y) => { const nx = (x + 0.5 - cx) / (P.rx + 0.6 * k), ny = (y + 0.5 - cy) / (P.ry + 0.6 * k);
+            if (nx * nx + ny * ny > 1 || ny > 0.8) return false;
+            return nx * av < -0.12 - 0.5 * (1 - sa) + 0.42 * ny + (ny < -0.6 ? 0.25 : 0); };   // (la ligne des cheveux : du haut du crâne, en arrière, jusque derrière l'oreille)
+          const basM = yT + 12 * k;
+          const dansChute = (x, y) => { if (y < cy || y > basM) return false; const d = (x + 0.5 - cx) * ar;
+            const arriere = P.rx * (0.98 + 0.12 * (1 - sa)) + Math.max(0, y - cy) * 0.11, avant = P.rx * (0.1 + 0.35 * (1 - sa)) - Math.max(0, y - cy - P.ry) * 0.02;
+            return d >= avant && d <= arriere; };
+          const pts = [];
+          for (let y = Math.round(cy - P.ry - 2 * k); y <= basM; y++) for (let x = 0; x < L; x++) {
+            const m = t.mat(x, y); if (m === 'blanc' || m === 'pupille' || m === 'iris') continue;
+            const vieux = m === 'cheveux' && y < cy + P.ry;
+            if (!(vieux || enCalotte(x, y) || dansChute(x, y))) continue;
+            if (y > basM - hachage(Math.floor(x / k), 3, 71) * 4 * k) continue;   // (les pointes effilées)
+            pts.push([x, y]); }
+          for (const [x, y] of pts) {
+            // le sens des mèches : en arc autour du crâne, puis tout droit vers le bas
+            const ang = Math.atan2(y + 0.5 - cy, (x + 0.5 - cx) * ar), r = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+            const fil = y < cy + P.ry * 0.3 ? Math.floor(r / (1.1 * k)) : Math.floor(((x + 0.5 - cx) * ar - Math.max(0, y - cy) * 0.06) / (1.1 * k));
+            const lum = (y < cy && ang < -1.2 ? 1 : 0) - (y > yT + 8 * k ? 1 : 0);
+            t.poser(x, y, 'cheveux', Math.max(0, Math.min(5, [2, 3, 1, 3, 2][((fil % 5) + 5) % 5] + lum)));
           }
         }
       } }
