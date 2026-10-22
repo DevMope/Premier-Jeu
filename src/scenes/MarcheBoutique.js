@@ -11,6 +11,14 @@ Object.assign(MarcheScene.prototype, {
   // Ce que tu as d'un article (les matériaux à part)
   aDejaMarche(id) { const G = this.G; return id in MATERIAUX ? G.materiaux[id] || 0 : G.stock[id] || 0; },
   articlesEtal(cle) { const offre = (this.G.etals || {})[cle] || {}; return MARCHANDS[cle].objets.filter(id => offre[id] && offre[id].qte > 0); },
+  // (v1.49) le panier ne garde que ce qui est encore en vente, pas plus que le stock
+  nettoyerPanier() {
+    const G = this.G; this.panier = this.panier || {};
+    for (const [k, q] of Object.entries(this.panier)) {
+      const [cle, id] = k.split(':'), o = G.etals && G.etals[cle] && G.etals[cle][id];
+      if (!o || o.qte <= 0) delete this.panier[k]; else if (q > o.qte) this.panier[k] = o.qte;
+    }
+  },
   totalPanier() { let t = 0; for (const [k, q] of Object.entries(this.panier || {})) { const [cle, id] = k.split(':'); t += prixMarchand(this.G, cle, id) * q; } return t; },
 
   ajouterAuPanier(cle, id, n) {
@@ -34,7 +42,7 @@ Object.assign(MarcheScene.prototype, {
         const ids = this.articlesEtal(this.ongletBoutique);
         if (e.key === 'Tab') { e.preventDefault && e.preventDefault(); const i = ONGLETS_BOUTIQUE.indexOf(this.ongletBoutique); this.ongletBoutique = ONGLETS_BOUTIQUE[(i + (e.shiftKey ? -1 : 1) + ONGLETS_BOUTIQUE.length) % ONGLETS_BOUTIQUE.length]; this.carteSel = 0; Son.jouer('page'); this.dessinerBoutique(); }
         else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { this.carteSel = Phaser.Math.Clamp(this.carteSel + (e.key === 'ArrowLeft' ? -1 : 1), 0, Math.max(0, ids.length - 1)); this.dessinerBoutique(); }
-        else if ((e.key === ' ' || e.key === '+') && ids[this.carteSel]) { this.ajouterAuPanier(this.ongletBoutique, ids[this.carteSel], e.shiftKey ? 5 : 1); this.dessinerBoutique(); }
+        else if ((e.key === ' ' || e.key === '+') && ids[this.carteSel]) { this.ajouterAuPanier(this.ongletBoutique, ids[this.carteSel], e.key === ' ' && e.shiftKey ? 5 : 1); this.dessinerBoutique(); }   // (« + » demande Maj sur un clavier français : il ajoute 1)
         else if (e.key === '-' && ids[this.carteSel]) { this.ajouterAuPanier(this.ongletBoutique, ids[this.carteSel], -1); this.dessinerBoutique(); }
         else if (e.key === 'Enter') this.payerPanier();
         else if (e.key === 'Escape') this.fermerBoutique();
@@ -61,6 +69,7 @@ Object.assign(MarcheScene.prototype, {
   },
 
   dessinerBoutique() {
+    this.nettoyerPanier();
     const G = this.G, c = this.boutiqueC, cle = this.ongletBoutique, m = MARCHANDS[cle];
     c.removeAll(true);
     const T = (x, y, t, taille = 13, coul = '#fff4dc', o = {}) => { const tx = this.add.text(x, y, t, style(taille, coul, { fontStyle: 'bold', ...o })); c.add(tx); return tx; };
@@ -172,8 +181,9 @@ Object.assign(MarcheScene.prototype, {
   },
 
   // On paie tout le panier : article par article, chez chaque marchand (comme à l'étal)
-  payerPanier() {
-    const G = this.G, lignes = Object.entries(this.panier || {});
+  payerPanier(panier = null) {
+    this.nettoyerPanier();
+    const G = this.G, propre = !panier, lePanier = panier || this.panier, lignes = Object.entries(lePanier || {});
     if (!lignes.length) return;
     const avant = G.argent, achats = [], relations = [];
     let erreur = null;
@@ -181,7 +191,7 @@ Object.assign(MarcheScene.prototype, {
       const [cle, id] = k.split(':');
       let pris = 0;
       for (; pris < q; pris++) { const r = acheterAuMarche(G, cle, id); if (r.erreur) { erreur = r.erreur; break; } if (r.message) relations.push(r.message); }
-      if (pris) { achats.push([cle, id, pris]); if (pris >= q) delete this.panier[k]; else this.panier[k] = q - pris; }
+      if (pris) { achats.push([cle, id, pris]); if (pris >= q) delete lePanier[k]; else lePanier[k] = q - pris; }
       if (erreur) break;
     }
     const depense = avant - G.argent;
@@ -193,6 +203,7 @@ Object.assign(MarcheScene.prototype, {
       this.majInfos();
       if (this.commandesOuvertes && this.panneauCommandes) { this.panneauCommandes.destroy(); this.creerPanneauCommandes(); }
     }
+    if (!propre) this.nettoyerPanier();   // (ce qui reste au panier ne dépasse pas ce qui reste en vente)
     if (this.boutiqueC) this.dessinerBoutique();
     if (erreur) this.messageBoutique(erreur, '#ffb0a0');
     else if (relations.length) this.messageBoutique(relations[relations.length - 1], '#9ae07a');
@@ -203,12 +214,15 @@ Object.assign(MarcheScene.prototype, {
   // --- La liste de courses (L) ---
   // Ce qui manque pour les commandes acceptées, chez le marchand le moins cher qui en a ce matin
   calculerListe() {
-    const G = this.G, besoin = totalCommandes(G), lignes = [];
+    this.nettoyerPanier();
+    const G = this.G, besoin = totalCommandes(G), lignes = [], auPanier = {};
+    for (const [k, q] of Object.entries(this.panier)) { const id = k.split(':')[1]; auPanier[id] = (auPanier[id] || 0) + q; }
     for (const id of Object.keys(besoin)) {
-      let manque = besoin[id] - this.aDejaMarche(id);
+      let manque = besoin[id] - this.aDejaMarche(id) - (auPanier[id] || 0);   // (v1.49 : ce qui est déjà au panier est compté)
       if (manque <= 0) continue;
-      const offres = Object.keys(MARCHANDS).filter(k => G.etals[k] && G.etals[k][id] && G.etals[k][id].qte > 0).sort((a, b) => prixMarchand(G, a, id) - prixMarchand(G, b, id));
-      for (const k of offres) { const q = Math.min(manque, G.etals[k][id].qte); lignes.push({ cle: k, id, q, ok: true }); manque -= q; if (!manque) break; }
+      const dispo = k => G.etals[k][id].qte - (this.panier[k + ':' + id] || 0);
+      const offres = Object.keys(MARCHANDS).filter(k => G.etals[k] && G.etals[k][id] && dispo(k) > 0).sort((a, b) => prixMarchand(G, a, id) - prixMarchand(G, b, id));
+      for (const k of offres) { const q = Math.min(manque, dispo(k)); lignes.push({ cle: k, id, q, ok: true }); manque -= q; if (!manque) break; }
       if (manque > 0) lignes.push({ cle: null, id, q: manque, ok: false });
     }
     return lignes;
@@ -261,11 +275,10 @@ Object.assign(MarcheScene.prototype, {
     const toutAcheter = () => {
       const choisies = L.filter(l => l.ok && !l.decoche);
       if (!choisies.length) return;
-      const garde = this.panier; this.panier = {};
-      for (const l of choisies) this.panier[l.cle + ':' + l.id] = l.q;
-      const r = this.payerPanier() || {};
-      // ce qui était déjà au panier y reste
-      this.panier = { ...garde, ...this.panier };
+      // (v1.49) un panier à part : celui de la boutique n'est pas touché
+      const aPart = {};
+      for (const l of choisies) aPart[l.cle + ':' + l.id] = (aPart[l.cle + ':' + l.id] || 0) + l.q;
+      const r = this.payerPanier(aPart) || {};
       fermer();
       if (r.achats && r.achats.length) {
         // le butin, qui tombe dans le baluchon

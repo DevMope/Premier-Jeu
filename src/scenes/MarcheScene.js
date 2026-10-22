@@ -23,6 +23,8 @@ class MarcheScene extends Phaser.Scene {
     G.banniere = G.jour;
     // (Phaser réutilise la scène d'un jour à l'autre : on repart de zéro)
     this.groupes = [];
+    // (v1.49) les fenêtres de la grand-place et le panier : remis à zéro chaque matin (Phaser réutilise la scène)
+    this.panier = {}; this.boutiqueC = null; this.listeC = null; this.carteC = null; this.vitrineOuverte = null; this.panneauOuvert = false; this.chemin = null; this.cible = null; this.apresMarche = null;
     this.desEnCours = false;
     this.etatBonneteau = 'attente';
     // Les étals du jour (s'ils n'ont pas été garnis cette nuit, par exemple avec une vieille sauvegarde)

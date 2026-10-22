@@ -64,14 +64,15 @@ Object.assign(MarcheScene.prototype, {
     Object.keys(MARCHANDS).forEach((k, i) => { xs[260 + i * 190] = k; });
     const cleDe = x => { let best = null, d = 1e9; for (const k of Object.keys(xs)) { const e = Math.abs(k - x); if (e < d) { d = e; best = xs[k]; } } return d < 40 ? best : null; };
     this.actionsLieux = {};
+    const poses = new Set();
     for (const g of this.groupes) {
       const k = cleDe(g.x); if (!k || !LIEUX_PLACE[k]) continue;
       const [x, y] = LIEUX_PLACE[k];
       this.monde.remove(g);
       g.setPosition(x, y).setScale(0.9).setVisible(true).setAlpha(1);
-      ombre(x, y + 4, PETITS_LIEUX.includes(k) ? 90 : 200);
       place.add(g); g.cle = k;
-      if (!PETITS_LIEUX.includes(k)) this.obstacles.push([x - 70, y - 30, x + 70, y + 4]);
+      // (v1.49 : un second groupe au même endroit, comme le décor de l'étal de l'Union, n'a ni ombre ni obstacle de plus)
+      if (!poses.has(k)) { poses.add(k); ombre(x, y + 4, PETITS_LIEUX.includes(k) ? 90 : 200); if (!PETITS_LIEUX.includes(k)) this.obstacles.push([x - 70, y - 30, x + 70, y + 4]); }
       // un clic sur le lieu : JeuneGoy y va à pied, puis ce que le lieu faisait déjà
       const zones = g.list.filter(o => o.input && o.input.enabled && o.type !== 'Text');
       let action = null;
@@ -81,7 +82,9 @@ Object.assign(MarcheScene.prototype, {
         z.removeAllListeners('pointerdown');
         z.on('pointerdown', () => this.allerVersLieu(k));
       }
-      this.actionsLieux[k] = MARCHANDS[k] ? () => this.boutique(k) : action || (() => {});
+      if (MARCHANDS[k]) this.actionsLieux[k] = () => this.boutique(k);
+      else if (action) this.actionsLieux[k] = action;   // (un groupe sans zone ne remplace pas l'action du lieu)
+      else if (!this.actionsLieux[k]) this.actionsLieux[k] = () => {};
     }
     // la fontaine, l'arche, la carte, le sentier
     ombre(900, 662, 200);
@@ -159,7 +162,7 @@ Object.assign(MarcheScene.prototype, {
       // (un clic sur la place, panneau ouvert au-dessus : on le referme et on repart à pied)
       if (this.panneauOuvert && !this.vitrineOuverte && !this.boutiqueC && !this.listeC && !this.carteC && !this.jeuLance && p.y < 300) this.vueEnsemble();
       if (this.bloquePlace()) return;
-      this.cible = [(p.x - place.x) / place.scaleX, (p.y - place.y) / place.scaleY]; this.apresMarche = null; this.courir = false;
+      this.partirVers((p.x - place.x) / place.scaleX, (p.y - place.y) / place.scaleY);
     });
     this.cadrerPlace(true);
   },
@@ -196,15 +199,75 @@ Object.assign(MarcheScene.prototype, {
 
   bloqueParObstacle(x, y) { return this.obstacles.some(([x0, y0, x1, y1]) => x > x0 && x < x1 && y > y0 && y < y1); },
 
+  // (v1.49) Un itinéraire : une recherche sur une grille de 20 px (les étals, la fontaine, les troncs bloquent), puis on
+  // lisse le chemin en ne gardant que les tournants nécessaires. Une cible inaccessible : la case libre la plus proche.
+  libreEntre(x0, y0, x1, y1) {
+    const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 6);
+    for (let k = 1; k <= n; k++) if (this.bloqueParObstacle(x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n)) return false;
+    return true;
+  },
+  itineraire(dx, dy, ax, ay) {
+    const P = PLACE_MARCHE, C = 20, W = Math.ceil(P.L / C), Hc = Math.ceil(P.H / C);
+    ax = Phaser.Math.Clamp(ax, 30, P.L - 30); ay = Phaser.Math.Clamp(ay, 196, P.H - 6);
+    if (this.libreEntre(dx, dy, ax, ay) && !this.bloqueParObstacle(ax, ay)) return [[ax, ay]];
+    if (!this.grillePlace) {
+      this.grillePlace = new Uint8Array(W * Hc);
+      for (let j = 0; j < Hc; j++) for (let i = 0; i < W; i++) {
+        const x = i * C + C / 2, y = j * C + C / 2;
+        this.grillePlace[j * W + i] = y < 196 || x < 30 || x > P.L - 30 || this.obstacles.some(([x0, y0, x1, y1]) => x > x0 - 8 && x < x1 + 8 && y > y0 - 8 && y < y1 + 8) ? 1 : 0;
+      }
+    }
+    const g = this.grillePlace, cel = (x, y) => [Phaser.Math.Clamp(Math.floor(x / C), 0, W - 1), Phaser.Math.Clamp(Math.floor(y / C), 0, Hc - 1)];
+    const [si, sj] = cel(dx, dy);
+    let [gi, gj] = cel(ax, ay);
+    if (g[gj * W + gi]) {   // la case libre la plus proche de la cible
+      let best = null, bd = 1e9;
+      for (let j = 0; j < Hc; j++) for (let i = 0; i < W; i++) if (!g[j * W + i]) { const d = (i - gi) ** 2 + (j - gj) ** 2; if (d < bd) { bd = d; best = [i, j]; } }
+      if (!best) return [[ax, ay]];
+      [gi, gj] = best; ax = gi * C + C / 2; ay = gj * C + C / 2;
+    }
+    const prec = new Int32Array(W * Hc).fill(-1), vu = new Uint8Array(W * Hc), file = [sj * W + si];
+    vu[sj * W + si] = 1;
+    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+    let trouve = false;
+    for (let q = 0; q < file.length && !trouve; q++) {
+      const c = file[q], ci = c % W, cj = (c - ci) / W;
+      for (const [di, dj] of dirs) {
+        const ni = ci + di, nj = cj + dj; if (ni < 0 || nj < 0 || ni >= W || nj >= Hc) continue;
+        const n = nj * W + ni; if (vu[n] || g[n]) continue;
+        if (di && dj && (g[cj * W + ni] || g[nj * W + ci])) continue;   // (pas de coin coupé)
+        vu[n] = 1; prec[n] = c; file.push(n);
+        if (ni === gi && nj === gj) { trouve = true; break; }
+      }
+    }
+    if (!trouve) return [[ax, ay]];
+    const cases = [];
+    for (let c = gj * W + gi; c !== -1 && c !== sj * W + si; c = prec[c]) cases.unshift([(c % W) * C + C / 2, Math.floor(c / W) * C + C / 2]);
+    cases[cases.length - 1] = [ax, ay];
+    // lissage : de là où l'on est, on file au point visible le plus loin
+    const pts = []; let [cx, cy] = [dx, dy], k = 0;
+    while (k < cases.length) {
+      let loin = k;
+      for (let m = cases.length - 1; m > k; m--) if (this.libreEntre(cx, cy, cases[m][0], cases[m][1])) { loin = m; break; }
+      pts.push(cases[loin]); [cx, cy] = cases[loin]; k = loin + 1;
+    }
+    return pts;
+  },
+  partirVers(x, y, cle = null, courir = false) {
+    const pts = this.itineraire(this.heros.x, this.heros.y, x, y);
+    this.cible = pts.shift(); this.chemin = pts; this.apresMarche = cle; this.courir = courir;
+    this.meilleur = { d: 1e9, t: this.time.now };
+  },
+
   allerVersLieu(cle, courir = false) {
     if (!this.place || this.bloquePlace()) return;
     const [x, y] = this.devantLieu(cle);
     if (Math.hypot(this.heros.x - x, this.heros.y - y) < 40) return this.agirLieu(cle);
-    this.cible = [x, y]; this.apresMarche = cle; this.courir = courir || Math.hypot(this.heros.x - x, this.heros.y - y) > 600;
+    this.partirVers(x, y, cle, courir || Math.hypot(this.heros.x - x, this.heros.y - y) > 600);
   },
 
   agirLieu(cle) {
-    this.cible = null; this.apresMarche = null;
+    this.cible = null; this.chemin = null; this.apresMarche = null;
     this.vueHeros = cle === 'arche' ? 'face' : 'dos'; this.poserHeros(0);
     const a = this.actionsLieux[cle];
     if (a) { Son.jouer('clic'); a(); }
@@ -285,7 +348,7 @@ Object.assign(MarcheScene.prototype, {
       const gauche = bas(t && t.left) || bas(z && z.Q) || bas(z && z.A), droite = bas(t && t.right) || bas(z && z.D);
       const haut = bas(t && t.up) || bas(z && z.Z) || bas(z && z.W), basT = bas(t && t.down) || bas(z && z.S);
       if (gauche || droite || haut || basT) {
-        this.cible = null; this.apresMarche = null; this.courir = false;
+        this.cible = null; this.chemin = null; this.apresMarche = null; this.courir = false;
         dx = (droite ? 1 : 0) - (gauche ? 1 : 0); dy = (basT ? 1 : 0) - (haut ? 1 : 0);
         const n = Math.hypot(dx, dy) || 1; dx *= P.vitesse * dt / n; dy *= P.vitesse * dt / n;
       } else if (this.cible) {
@@ -310,12 +373,26 @@ Object.assign(MarcheScene.prototype, {
       this.pasHeros += dt;
       const f = Math.floor(this.pasHeros / (this.courir ? 90 : 125)) % 4;
       this.poserHeros(f === 1 ? 1 : f === 3 ? 2 : 0);
-      if (this.cible && Math.hypot(this.cible[0] - h.x, this.cible[1] - h.y) < 1) {
+      // (v1.49) il n'avance plus vers son but depuis une demi-seconde : il s'arrête (jamais de marche sur place)
+      if (this.cible) {
+        const d = Math.hypot(this.cible[0] - h.x, this.cible[1] - h.y);
+        if (!this.meilleur || d < this.meilleur.d - 1.5) this.meilleur = { d, t: this.time.now };
+        else if (this.time.now - this.meilleur.t > 500) { this.cible = null; this.chemin = null; this.apresMarche = null; this.courir = false; this.poserHeros(0); }
+      }
+      if (this.cible && Math.hypot(this.cible[0] - h.x, this.cible[1] - h.y) < 1 && this.chemin && this.chemin.length) { this.cible = this.chemin.shift(); this.meilleur = { d: 1e9, t: this.time.now }; }
+      else if (this.cible && Math.hypot(this.cible[0] - h.x, this.cible[1] - h.y) < 1) {
         this.cible = null; this.courir = false;
         const cle = this.apresMarche; this.apresMarche = null;
         if (cle) this.agirLieu(cle); else this.poserHeros(0);
       }
-    } else if (this.pasHeros) { this.pasHeros = 0; this.poserHeros(0); }
+    } else {
+      if (this.pasHeros) { this.pasHeros = 0; this.poserHeros(0); }
+      // (v1.49) déjà sur le point visé (un détour de longueur nulle) : on passe au suivant, ou on arrive
+      if (this.cible && Math.hypot(this.cible[0] - h.x, this.cible[1] - h.y) < 1 && !this.bloquePlace()) {
+        if (this.chemin && this.chemin.length) { this.cible = this.chemin.shift(); this.meilleur = { d: 1e9, t: this.time.now }; }
+        else { const cle = this.apresMarche; this.cible = null; this.apresMarche = null; this.courir = false; if (cle) this.agirLieu(cle); }
+      }
+    }
     this.ombreHeros.setPosition(h.x + 2, h.y - 2); this.ombreHeros.yTri = h.y - 0.5;
     // les passants
     for (const o of this.passantsPlace) {
