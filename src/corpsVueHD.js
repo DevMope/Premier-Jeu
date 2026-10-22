@@ -261,7 +261,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const section = (ru, rz) => Math.sqrt((ru * c) ** 2 + (rz * s) ** 2);
 
   // --- Les membres ---
-  const forgeron = costume === 'forgeron';   // (v0.82) Aldo et Baba : tablier de cuir, manches retroussées
+  const forgeron = costume === 'forgeron' || costume === 'barbier';   // (v0.82) Aldo et Baba : tablier de cuir, manches retroussées (v1.48 : le barbier, tablier de lin blanc)
   const matBras = (race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && costume !== 'givrin' && !forgeron) || costume === 'garde' ? 'metal' : 'habit';
   const bras = (cote, devant) => {
     const bal = pas ? (cote === pres ? pas : -pas) : 0;   // les bras se balancent avec la marche
@@ -578,7 +578,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   }
   // Le tablier de marchand du joueur : la bavette, la poche et son crayon, les bretelles, le cordon noué
   if ((joueur || forgeron) && !dos) {
-    const matTab = forgeron ? 'cuir' : 'lin';   // (le tablier de cuir épais du forgeron)
+    const matTab = costume === 'forgeron' ? 'cuir' : 'lin';   // (le tablier de cuir épais du forgeron)
     const tab = (x, y) => { if (y < yT + 7 * k || y > yB + 6 * k) return null; const cxx = X(0, prof * 0.7); const demi = section((6.5 + (y - yT - 7 * k) / k * 0.12) * k, prof * 0.95) * 0.95; const nx = (x + 0.5 - cxx) / demi; return Math.abs(nx) > 1 || !torse(x, y) && y <= yB + 2 * k ? null : [nx * 0.7, 0, 0.9]; };
     t.forme(matTab, tab, { decalage: -0.1, motif: (x, y) => (y === yT + 7 * k || y === yB + 5 * k ? -0.8 : 0) });
     const px = X(-2 * k, prof);
