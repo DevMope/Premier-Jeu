@@ -159,7 +159,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const L = 52 * k;
   // (v0.58) + une marge en haut : sans elle, le sommet du crâne (cheveux, contour) touchait le bord
   // de l'image et paraissait coupé à plat
-  const coiffe = (race === 'magicienne' || costume === 'sage' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' || costume === 'pirate' ? 8 : costume === 'garde' ? 2 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'cambrioleur' ? 4 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : costume === 'joueur' && typeof COIFFURES_HD !== 'undefined' && COIFFURES_HD[g.coiffure] ? (COIFFURES_HD[g.coiffure].marge || 0) : 0) * k + (pose === 'leves' || pose === 'epaules' || pose === 'grimpe1' || pose === 'grimpe2' ? 12 * k : 0) + 3 * k;
+  const coiffe = (race === 'magicienne' || costume === 'sage' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' || costume === 'pirate' ? 8 : costume === 'garde' ? 2 : costume === 'gardeRoyal' ? 14 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'cambrioleur' ? 4 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : costume === 'joueur' && typeof COIFFURES_HD !== 'undefined' && COIFFURES_HD[g.coiffure] ? (COIFFURES_HD[g.coiffure].marge || 0) : 0) * k + (pose === 'leves' || pose === 'epaules' || pose === 'grimpe1' || pose === 'grimpe2' ? 12 * k : 0) + 3 * k;
   const H = P.H + coiffe;
   const t = new ToileHD(L, H);
   t.relief = true;
@@ -233,6 +233,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // (v1.05, planche 35) le Père Givrin, à la roue du Long Hiver : le manteau rouge bordé de fourrure blanche,
     // le large ceinturon noir à boucle d'or, le long bonnet à pompon
     t.rampes.fourrure = rampeVive(0xf4f2ee); t.rampes.cuir = rampeVive(0x24201e); t.rampes.bonnetH = rampeVive(0xb0242a);
+  } else if (costume === 'gardeRoyal') {
+    // (planche 75 v2, à valider) la garde de Pont-Royal : acier poli, surcot noir à l'emblème d'argent, casque haut à ailes
+    t.rampes.metal = rampe(0x9298a6); t.rampes.habit = rampe(0x1c1c24); t.rampes.argent = rampeVive(0xdadee6); t.rampes.bas = rampe(0x26262e); t.rampes.cuir = rampe(0x2e2420); t.rampes.plume = rampeVive(0xf4f2ec); t.rampes.ecaille = rampeVive(0x9a2424);
+  } else if (costume === 'duc') {
+    // (planche 75 v2, à valider) le duc de Pont-Royal : robe de brocart lie-de-vin, grand manteau de fourrure grise, jabot cuivre, bagues
+    t.rampes.habit = rampe(0x5a1a2a); t.rampes.cape = rampe(0x3e1e30); t.rampes.bas = rampe(0x2a1a14); t.rampes.fourrure = rampe(0x8e887c); t.rampes.lin = rampeVive(0xc8682a); t.rampes.or = rampeVive(0xd8a838); t.rampes.rubis = rampeVive(0xc81828);
   } else if (costume === 'cambrioleur') {
     // (planche 63) le cambrioleur : bonnet noir, loup noir sur les yeux, pull rayé, pantalon sombre
     t.rampes.habit = rampe(0x2a2c36); t.rampes.lin = rampeVive(0xd8d4c8); t.rampes.bas = rampe(0x22242c); t.rampes.cuir = rampe(0x1e1a18);
@@ -249,7 +255,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const solDebout = sol, solAssis = Math.round(yB + (sol - yB) * 0.52);   // (v0.68 : la hauteur du banc, pour la pose assise)
   const ep = P.ep;                         // la demi-largeur d'épaules
   const prof = ep * 0.55;                  // la demi-épaisseur du torse
-  const longue = race === 'magicienne' || costume === 'mainNoire' || costume === 'sage' || costume === 'gardien';    // la robe descend jusqu'aux pieds
+  const longue = race === 'magicienne' || costume === 'mainNoire' || costume === 'sage' || costume === 'gardien' || costume === 'duc';    // la robe descend jusqu'aux pieds
   const manteau = race === 'elfe' || costume === 'colporteur' || costume === 'mentor' || costume === 'pirate' || costume === 'givrin';   // la tunique descend à mi-cuisse
   const capee = (tenue >= 3 && !joueur) || ['mentor', 'colporteur', 'mendiant', 'noble', 'passeur', 'mainNoire', 'pirate', 'sage', 'gardien'].includes(costume) || porte('cape') || porte('capeUnion') || !!T.cape;
   const aventurier = !costume || ['colporteur', 'mentor', 'mendiant', 'champion'].includes(costume);
@@ -266,7 +272,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
 
   // --- Les membres ---
   const forgeron = costume === 'forgeron' || costume === 'barbier';   // (v0.82) Aldo et Baba : tablier de cuir, manches retroussées (v1.48 : le barbier, tablier de lin blanc)
-  const matBras = (race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && costume !== 'givrin' && !forgeron) || costume === 'garde' ? 'metal' : 'habit';
+  const matBras = (race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && costume !== 'givrin' && !forgeron) || costume === 'garde' || costume === 'gardeRoyal' ? 'metal' : 'habit';
   const bras = (cote, devant) => {
     const bal = pas ? (cote === pres ? pas : -pas) : 0;   // les bras se balancent avec la marche
     const epaule = [cote * (ep - 0.8 * k), 0.3 * k, yT + 2 * k];
@@ -537,7 +543,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   };
   t.forme(race === 'hobbit' ? 'lin' : 'habit', torse, { decalage: -0.1, motif: (x, y) => (!dos && Math.abs(x + 0.5 - X(0, prof)) < 0.6 * k && y > yT + 3 * k ? -0.6 : race === 'magicienne' && (Math.floor(x / k) * 7 + Math.floor(y / k) * 3) % 23 === 0 ? 0.9 : 0) });
   if (race === 'hobbit') t.forme('habit', (x, y) => { const n = torse(x, y); return n && y >= yT + 2 * k && Math.abs(x + 0.5 - X(0, prof * 0.9)) > 2 * k + Math.max(0, 6 * k - (y - yT)) * 0.5 ? n : null; }, { decalage: -0.2 });
-  if ((race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && costume !== 'givrin' && !forgeron) || costume === 'garde') t.forme('metal', (x, y) => { const n = torse(x, y); return n && y >= yT + 1 * k && y <= yB - 2 * k ? n : null; }, { motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.3 : -0.3) });
+  if ((race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && costume !== 'givrin' && !forgeron) || costume === 'garde' || costume === 'gardeRoyal') t.forme('metal', (x, y) => { const n = torse(x, y); return n && y >= yT + 1 * k && y <= yB - 2 * k ? n : null; }, { motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.3 : -0.3) });
   if (costume === 'garde' && !dos) {
     // Le tabard bleu de la Confrérie, son soleil d'or, et le pan qui tombe devant les cuisses
     const larg = ep * 0.62 * Math.max(0.55, Math.abs(c));
@@ -623,6 +629,43 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme('fourrure', (x, y) => { const n = torse(x, y); if (!n) return null; const devant = !dos && Math.abs(x + 0.5 - X(0, prof)) < 1.6 * k * Math.max(0.5, Math.abs(c)); return y >= basM - 2.5 * k || y <= yT + 2 * k || (devant && y > yT) ? n : null; }, { decalage: 0.15, motif: poil });
     t.forme('cuir', (x, y) => { const n = torse(x, y); return n && y >= yB - 2 * k && y <= yB + 0.5 * k ? n : null; }, { decalage: 0.1 });
     if (!dos) { const bx = X(0, prof), lb = Math.max(0.5, Math.abs(c)); t.forme('or', (x, y) => (Math.abs(x + 0.5 - bx) < 1.9 * k * lb && y >= yB - 2.6 * k && y <= yB + 1 * k ? [0, 0, 1] : null), { decalage: 0.4 }); t.forme('cuir', (x, y) => (Math.abs(x + 0.5 - bx) < 0.8 * k * lb && y >= yB - 1.6 * k && y <= yB ? [0, 0, 1] : null), { ombre: false }); }
+  }
+  // (planche 75 v2) le surcot noir de la garde de Pont-Royal : un pan devant jusqu'aux genoux, bordé d'argent, la couronne
+  // et les deux épées croisées du royaume brodées d'argent sur la poitrine, la ceinture de cuir
+  if (costume === 'gardeRoyal' && !dos) {
+    const larg = ep * 0.7 * Math.max(0.55, Math.abs(c)), bas = yB + 10 * k;
+    t.forme('habit', (x, y) => { const n = torse(x, y); return (n || (y > yB - 2 * k && y < bas)) && y >= yT + 1 * k && Math.abs(x + 0.5 - X(0, prof)) < larg ? (n || [0, 0.2, 0.9]) : null; }, { decalage: 0.05 });
+    for (let y = yT + 1 * k; y < bas; y++) for (const sx of [-1, 1]) { const x = Math.round(X(0, prof) + sx * (larg - 0.5)); if (t.mat(x, y) === 'habit') t.poser(x, y, 'argent', 3); }
+    for (let x = Math.round(X(0, prof) - larg); x <= X(0, prof) + larg; x++) t.poser(x, bas - 1, 'argent', 4);
+    const sx = X(0, prof), sy = yT + P.torse * 0.38, lc = Math.max(0.6, Math.abs(c));
+    for (let j = -3; j <= 3; j++) { t.poser(Math.round(sx + j * k * lc), Math.round(sy + 2 * k + j * k), 'argent', 4); t.poser(Math.round(sx - j * k * lc), Math.round(sy + 2 * k + j * k), 'argent', 4); }
+    for (let x = Math.round(sx - 2.5 * k * lc); x <= sx + 2.5 * k * lc; x++) t.poser(x, Math.round(sy - 2 * k), 'argent', 5);
+    for (const d of [-2, 0, 2]) t.poser(Math.round(sx + d * k * lc), Math.round(sy - 3 * k), 'argent', 5);
+    t.forme('cuir', (x, y) => { const n = torse(x, y); return n && y >= yB - 1.5 * k && y <= yB + 0.5 * k ? n : null; }, { decalage: 0.1, ombre: false });
+  }
+  // (planche 75 v2) l'acier de la garde en plaques : un joint sombre tous les trois pixels, un reflet sur l'arête
+  if (costume === 'gardeRoyal') for (let y = yT; y < sol; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'metal') {
+    if ((y - yT) % (3 * k) === 0) t.poser(x, y, 'metal', t.teinte(x, y) - 1);
+    else if ((y - yT) % (3 * k) === 1 && t.mat(x - 1, y) === 'metal' && t.mat(x + 1, y) === 'metal') t.poser(x, y, 'metal', t.teinte(x, y) + 1);
+  }
+  // (planche 75 v2) le duc : le grand manteau de fourrure grise (le col haut, deux larges revers qui descendent jusqu'au
+  // sol), le brocart de la robe, le jabot cuivré sous le menton, une chaîne d'or
+  if (costume === 'duc') {
+    const poil = (x, y) => (hachage(Math.floor(x / k), Math.floor(y / k), 77) > 0.5 ? 0.45 : -0.25) + ((Math.floor(x / k) + Math.floor(y / (2 * k))) % 3 === 0 ? -0.35 : 0);
+    if (!dos) for (let y = yT; y <= sol - 1 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'habit' && (Math.floor(x / k) * 5 + Math.floor(y / k) * 3) % 11 === 0) t.poser(x, y, 'habit', t.teinte(x, y) + 1);
+    // le bord du manteau (la cape) : une épaisse bande de fourrure, des touffes qui dépassent
+    const bordCape = [];
+    for (let y = yT; y < sol; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'cape') { const pres2 = [-2, -1, 1, 2].some(d => !t.mat(x + d * k, y)); if (pres2) bordCape.push([x, y]); }
+    for (const [x, y] of bordCape) t.poser(x, y, 'fourrure', 2 + Math.round(hachage(Math.floor(x / k), Math.floor(y / k), 79) * 2.4));
+    for (const [x, y] of bordCape) if (hachage(x, y, 83) > 0.86) { const d = t.mat(x - 1, y) ? 1 : -1; for (let j = 1; j <= 1 + Math.floor(hachage(x, y, 84) * 2 * k); j++) if (!t.mat(x + d * j, y)) t.poser(x + d * j, y, 'fourrure', 3); }
+    // le col, haut et ébouriffé, et les deux revers qui descendent jusqu'au sol
+    t.forme('fourrure', (x, y) => { if (y < yT - 3 * k || y > sol - 1 * k) return null; const d = x + 0.5 - X(0, prof);
+      const col = ((x + 0.5 - cx) / (ep + 5 * k)) ** 2 + ((y - yT - 1.5 * k) / (6.5 * k)) ** 2 < 1 + (hachage(Math.floor(x / k), Math.floor(y / k), 81) - 0.5) * 0.35 && y >= yT - 3 * k;
+      const ragged = (hachage(Math.floor(y / k), d > 0 ? 3 : 4, 82) - 0.5) * 1.6 * k;
+      const revers = !dos && y > yT && t.mat(x, y) && Math.abs(Math.abs(d) - 4.8 * k * Math.max(0.6, Math.abs(c))) < 3.4 * k + ragged;
+      return col || revers ? [d / (ep * 2), -0.2, 0.85] : null; }, { decalage: 0.15, motif: poil });
+    if (!dos) { const jx = X(0, prof), jy = yT + 1 * k; t.forme('lin', (x, y) => (Math.abs(x + 0.5 - jx) < (2.4 * k - Math.abs(y - jy - 2 * k) * 0.3) && y >= jy - 1 * k && y <= jy + 5 * k ? [0, 0, 1] : null), { decalage: 0.2, motif: (x, y) => (Math.floor((y - jy) / k) % 2 ? 0.4 : -0.2) });
+      for (let j = 0; j <= 10; j++) { const u = j / 10, x = Math.round(jx + (u - 0.5) * 6.5 * k * Math.max(0.6, Math.abs(c))), y = Math.round(jy + 6 * k + Math.sin(u * Math.PI) * 3 * k); t.poser(x, y, 'or', j % 2 ? 3 : 5); } }
   }
   // L'écharpe de laine, la chaîne de montre, la bague
   if (porte('echarpe') && !dos) {
@@ -1120,7 +1163,22 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
         const joue = y < by - 0.4 * k && Math.abs(x + 0.5 - bx) > lb + 1.2 * k;   // (pas de barbe sur les joues, au-dessus de la bouche)
         return joue ? null : n;
       }, { decalage: -0.9, bord: false, ombre: false });
-    } else if (barbe === 'moustache') { for (let i = -lb - 1; i <= lb + 1; i++) for (let e = 0; e < k; e++) t.poser(Math.round(bx + i), by - 1.6 * k + e + (Math.abs(i) > lb - 1 ? 1 : 0), 'barbe', 3); }
+    } else if (barbe === 'moustache') { for (let i = -lb - 1; i <= lb + 1; i++) for (let e = 0; e < k; e++) t.poser(Math.round(bx + i), by - 1.6 * k + e + (Math.abs(i) > lb - 1 ? 1 : 0), 'barbe', 3);
+      if (costume === 'duc') {
+        // (planche 75 v2) le duc : la moustache cirée, longue, aux pointes recourbées vers le haut, et une petite mouche
+        for (const cote of [-1, 1]) for (let j = 0; j <= 14; j++) { const a = j / 14 * Math.PI * 1.25, r = 3 * k * (1 - j / 26);
+          const x = Math.round(bx + cote * (lb + 1 + 2.4 * k + Math.sin(a) * r)), y = Math.round(by - 1 * k - (1 - Math.cos(a)) * r); for (let e = 0; e < Math.max(1, k - Math.floor(j / 6)); e++) t.poser(x, y + e, 'barbe', 3 + (j % 3 === 0 ? 1 : 0)); }
+        for (let y = by + 1.6 * k; y < by + 4 * k; y++) for (let e = -k; e <= k; e++) if (Math.abs(e) < k * (1 - (y - by - 1.6 * k) / (3 * k))) t.poser(Math.round(bx + e), Math.round(y), 'barbe', 3);
+        // les paupières lourdes (l'air satisfait de lui-même), les sourcils hauts, et le pli des bajoues
+        const yeux = []; for (let y = ey - 4 * k; y <= ey + 3 * k; y++) for (let x = 0; x < L; x++) { const m = t.mat(x, y); if (m && m !== 'peau' && m !== 'cheveux' && m !== 'barbe' && m !== 'metal' && tete(x, y)) yeux.push([x, y]); }
+        if (yeux.length) { const y0 = Math.min(...yeux.map(p => p[1])), y1 = Math.max(...yeux.map(p => p[1])), lid = Math.round(y0 + (y1 - y0) * 0.5);
+          for (const [x, y] of yeux) { if (y < lid) t.poser(x, y, 'peau', 3); else if (y === lid) t.poser(x, y, 'peau', 1); } }
+        for (const cote of [-1, 1]) for (let j = 0; j < 3 * k; j++) { const x = Math.round(bx + cote * (lb + 3.2 * k + j * 0.25)), y = Math.round(by - 1 * k + j); if (t.mat(x, y) === 'peau') t.poser(x, y, 'peau', 2); }
+        // les longues mèches fines, rejetées en arrière, qui tombent sur la fourrure (le front est dégarni)
+        if (!dos) for (const cote of [-1, 1]) { const u = cote * (P.rx + 0.2 * k); if (Z(u, -P.rx * 0.2) < -P.rx * 0.5) continue;
+          for (let m = 0; m < 3; m++) for (let y = cy - 1 * k; y < yT + 9 * k; y++) { const x = Math.round(X(u + cote * m * 0.9 * k + cote * (y - cy) * 0.08, -P.rx * 0.2) + Math.sin(y / (3 * k) + m) * 0.6 * k);
+            if (t.mat(x, y) !== 'peau' || y > ey + 4 * k) t.poser(x, y, 'cheveux', 2 + ((y + m) % 3 === 0 ? 1 : 0)); } }
+      } }
     else if (barbe) {
       const long = barbe === 'sage' ? yT + 11 * k : barbe === 'nain' ? yB - 2 * k : barbe === 'pleine' ? cy + P.ry + 4 * k : cy + P.ry + 1.5 * k;
       t.forme('barbe', (x, y) => {
@@ -1336,6 +1394,21 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     else t.forme('metal', ellipsoide(cx, cy - P.ry - 1 * k, 1.5 * k, 2.5 * k), { decalage: 0.1 });
     if (race === 'elfe') { t.rampes.cimier = rampeVive(0x3a6ad8); for (let j = 0; j < 7 * k; j++) for (let e = 0; e < k; e++) t.poser(Math.round(X(-j * 0.35, -j * 0.6)) + e, Math.round(cy - P.ry - 2 * k - Math.sin(j / (7 * k) * Math.PI) * 2 * k), 'cimier', 3 + (j % 2)); }
     if (!dos && race !== 'panda' && race !== 'hobbit') for (let y = cy - 2 * k; y <= cy + 3 * k; y++) for (let e = 0; e < k; e++) t.poser(Math.round(X(0, P.rx)) - (k - 1) + e - Math.round(s * k), y, 'metal', 4);
+  } else if (costume === 'gardeRoyal') {
+    // (planche 75 v2) le casque haut de la garde de Pont-Royal : une ogive d'acier poli qui monte en pointe, les
+    // joues fermées, un nasal ; de chaque côté, une aile blanche d'oiseau de mer, les plumes vers le haut
+    const sommet = cy - P.ry - 12 * k;
+    t.forme('metal', (x, y) => { if (y < sommet || y > cy + 3.5 * k) return null; const dx = x + 0.5 - cx;
+      const demi = y <= cy - 2 * k ? (P.rx + 1.2 * k) * Math.pow(Math.max(0, (y - sommet) / (cy - 2 * k - sommet)), 0.85) : P.rx + 1.2 * k;
+      if (Math.abs(dx) > demi) return null;
+      if (y > cy - 3.2 * k && !dos && Math.abs(x + 0.5 - X(0, P.rx * 0.9)) < P.rx * 0.8 * Math.max(0.6, Math.abs(c)) + 0.5 * k) return null;   // (le visage reste à l'air)
+      return [dx / (P.rx + 1.5 * k), (y - cy) / (P.ry + 12 * k), 0.75]; }, { decalage: 0.25, motif: (x, y) => (Math.floor((x + 0.5 - cx) / k) % 3 === 0 && y < cy - 3 * k ? 0.4 : 0) });
+    if (!dos) for (let y = cy - 3 * k; y <= cy + 2 * k; y++) for (let e = 0; e < k; e++) t.poser(Math.round(X(0, P.rx)) - (k - 1) + e - Math.round(s * k), y, 'metal', 5);
+    for (let y = sommet + 2 * k; y < cy - 3 * k; y++) for (let e = 0; e < k; e++) { const x = Math.round(X(0, P.rx * Math.min(1, (y - sommet) / (P.ry + 8 * k)))) + e; if (t.mat(x, y) === 'metal') t.poser(x, y, 'argent', 5); }
+    for (let y = cy - 3 * k; y < cy - 2 * k; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'metal') t.poser(x, y, 'argent', 4);
+    for (const cote of [-1, 1]) { const bx = X(cote * (P.rx + 0.4 * k), 0), by = cy - 2 * k;
+      for (let f = 0; f < 7; f++) { const a = -Math.PI / 2 + cote * (0.15 + f * 0.13), lg = (9 - Math.abs(f - 2) * 0.8) * k;
+        for (let j = 0; j < lg; j++) { const x = Math.round(bx + Math.cos(a) * j + cote * j * 0.08), y = Math.round(by + Math.sin(a) * j); for (let e = 0; e < Math.max(1, k * 0.8); e++) t.poser(x + e * cote, y, 'plume', j > lg - 2 * k ? 5 : f % 2 ? 3 : 4); } } }
   } else if (costume === 'banquier') {
     // Le haut-de-forme, et son ruban d'or
     const haut = cy - P.ry;

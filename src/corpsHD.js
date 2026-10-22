@@ -31,6 +31,9 @@ const PROPORTIONS = {
 // Les figurants : un peuple, des couleurs fixes, un costume.
 const FIGURANTS = {
   garde: { race: 'humain', nom: 'Garde', costume: 'garde', habit: 0x8a2a2a, cheveux: 0x3a2a1a },
+  // (planche 75 v2, à valider) Pont-Royal : son duc, gras et arrogant, et la garde du pont
+  duc: { race: 'humain', nom: 'Le duc Aldebert Pansard', costume: 'duc', habit: 0x5a1a26, cheveux: 0xc0662a, barbe: 'moustache', coiffure: 'degarni', peau: 0, niveau: 3, proportions: { H: 70, ep: 15.2, torse: 26, rx: 8.6, ry: 9.4, membre: 1.25 }, cape: 0x3e1e30 },
+  gardeRoyal: { race: 'humain', nom: 'Garde du pont', costume: 'gardeRoyal', habit: 0x1c1c24, cheveux: 0x1a1612, coiffure: 'long', niveau: 2, fache: true },
   banquier: { race: 'humain', nom: 'Banquier', costume: 'banquier', habit: 0x26262e, cheveux: 0x1a1a20 },
   nainBanquier: { race: 'nain', nom: 'Thorgrim', costume: 'banquier', habit: 0x26262e, cheveux: 0xe0e0e0 },
   colporteur: { race: 'humain', nom: 'Colporteur', costume: 'colporteur', habit: 0x6a5a40, cheveux: 0x4a3a2a, cape: 0x4a3a2a },
@@ -95,13 +98,13 @@ function tenueDe(niveau) {
 function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   if (quoi === 'faucheuse') return 'perso_faucheuse';
   if (typeof quoi === 'string' && !FIGURANTS[quoi] && !PROPORTIONS[quoi]) return 'perso_' + quoi;   // (le joueur, etc.)
-  let gene, tenue, costume = null, cle, bouche, atours;
+  let gene, tenue, costume = null, cle, bouche, atours, proportions;
   if (typeof quoi === 'string' && FIGURANTS[quoi]) {
     const fig = FIGURANTS[quoi];
     gene = { ...geneHD({ nom: fig.nom, race: fig.race === 'gobelin' ? 'humain' : fig.race, feminin: !!fig.feminin }), race: fig.race, habit: fig.habit, cheveux: fig.cheveux, cape: fig.cape, barbe: fig.barbe ?? null, coiffure: fig.coiffure || 'court', ...(fig.peau !== undefined ? { peau: fig.peau } : {}), ...(fig.vieux ? { vieux: true } : {}) };
     tenue = fig.niveau ?? 1;
     costume = fig.costume;
-    bouche = fig.bouche; atours = fig.atours;
+    bouche = fig.bouche; atours = fig.atours; proportions = fig.proportions;
     cle = 'corps_' + quoi;
   } else if (typeof quoi === 'string') {
     gene = geneHD({ nom: 'Un ' + quoi, race: quoi, feminin: quoi === 'magicienne' });
@@ -115,6 +118,7 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
     if (quoi.prestige) { costume = 'noble'; gene.habit = gene.habitNoble; gene.cape = 0x5a1a3a; cle += '_noble'; }
     if (quoi.costume) { costume = quoi.costume; cle += '_' + quoi.costume; }
     if (quoi.vieux) cle += '_vieux';
+    if (quoi.proportions) { proportions = quoi.proportions; cle += '_carrure'; }
     if (quoi.figurant === 'mentor') { gene = { ...gene, habit: 0x2e2420, cheveux: 0x3a281a, cape: 0x3e4a2a, barbe: 'rase', coiffure: 'long', peau: 1 }; costume = 'mentor'; tenue = 2; }
   }
   // (v1.04) l'arme qu'il porte sur lui (celle de son inventaire, ou celle qu'il vient d'acheter)
@@ -131,15 +135,15 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   const blesse = typeof quoi === 'string' ? !!(FIGURANTS[quoi] && FIGURANTS[quoi].blesse) : !!quoi.blesse;
   if (blesse && typeof quoi !== 'string') cle += '_blesse';
   if (!scene.textures.exists(cle)) {
-    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}) });
+    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}), ...(proportions ? { proportions } : {}) });
     toile.texture(scene, cle);
     MAINS_CORPS[cle] = toile.mains;
     if (toile.mainXY) MAINS_XY[cle] = { x: toile.mainXY[0] - toile.l / 2, y: toile.h - toile.mainXY[1] };   // (v1.34)
     if (toile.bout) BOUTS_CORPS[cle] = toile.bout;
     if (toile.piedsAssis) PIEDS_ASSIS[cle] = toile.piedsAssis;
     REPERES_CORPS[cle] = toile.reperes;
-    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}) }).texture(scene, cle + '_pas1');
-    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}) }).texture(scene, cle + '_pas2');
+    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}), ...(proportions ? { proportions } : {}) }).texture(scene, cle + '_pas1');
+    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}), ...(proportions ? { proportions } : {}) }).texture(scene, cle + '_pas2');
   }
   return cle;
 }
