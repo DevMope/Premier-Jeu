@@ -36,7 +36,7 @@ class RueScene extends Phaser.Scene {
     zp.on('pointerdown', () => this.passerPar('Maison', this.porteShop.x));
 
     textureJoueur(this, G);
-    const x0 = this.depuis === 'marche' ? PLACES_RUE.arche - 60 : this.porteShop.x + 40;
+    const x0 = this.depuis === 'marche' ? PLACES_RUE.arche - 60 : this.depuis === 'mages' ? PLACES_RUE.mages - 40 : this.depuis === 'essai' ? this.porteShop.x + 260 : this.porteShop.x + 40;   // (v1.56 : en sortant des Mages, ou après la marche d'essai)
     this.heros = this.add.image(x0, SOL_PROMENADE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(8.5).setFlipX(this.depuis === 'marche');
     this.cible = null; this.pas = 0;
     // (v1.40) le matin du jour 1, avec le didacticiel : Garrick t'accompagne jusqu'au marché
@@ -161,6 +161,7 @@ class RueScene extends Phaser.Scene {
       Son.jouer('porte');
       if (page === 'Banque') { this.transition = false; this.scene.pause(); this.scene.launch('Banque', { retour: 'Rue' }); return; }
       if (page === 'Barbier') { this.transition = false; this.scene.pause(); this.scene.launch('Barbier', { retour: 'Rue' }); return; }   // (v1.48) chez Orvin
+      if (page === 'Mages') { this.transition = false; this.scene.pause(); this.scene.launch('Mages', { retour: 'Rue' }); return; }   // (v1.56) chez les Mages-Charpentiers
       if (page === 'Diseuse') { this.transition = false; this.scene.pause(); this.scene.launch('Diseuse', { retour: 'Rue' }); return; }   // (v1.05) sous la tente de Madame Ysmée
       this.fini = true;
       Sauvegarde.maintenant(this.G, page === 'Maison' ? 'Maison' : 'Marche');

@@ -20,6 +20,7 @@ class FacadeScene extends Cinematique {
     // (v1.11, planches 40 v2 et 41) la boutique du paon, juste à côté : ta maison se pousse vers la gauche
     const rival = typeof rivalVisible === 'function' && rivalVisible(G) ? G.rival : null;
     const facade = dessinerFacade(this, rival ? 268 : 560, 440, G.nomShop);
+    if (typeof pattesPosees === 'function' && pattesPosees(G)) pattesRepliees(this, facade, { sorte: etatPattes(G).sorte, sol: 440 });   // (v1.56) ses pattes, repliées au coin des murs
     if (rival) this.dessinerVoisin(rival, 728);
     // (v1.13) le sceau du Conseil, à côté de ta porte (ta première commande scellée livrée) ; dans la disgrâce, on l'a
     // décroché : il ne reste que la marque plus claire sur le mur, et le clou

@@ -307,8 +307,10 @@ function ecriteauRue(scene, x, y, texte, { taille = 12, couleur = '#2a1608', fon
 const LOT_CONFRERIE = 700;
 // (v1.53, planche 62 v2) un peu d'air entre la tente d'Ysmée et les Brindeloup : l'ardoise du temps y a sa place
 const ECART_ARDOISE = 190;
-const LARGEUR_RUE = 3260 + LOT_CONFRERIE + ECART_ARDOISE;   // (v1.48 : +300, le lot du barbier ; v1.53 : +190, l'ardoise)
-const PLACES_RUE = { hospice: 200, chapelle: 545, maison0: 160 + LOT_CONFRERIE, impasse: 405 + LOT_CONFRERIE, forge: 680 + LOT_CONFRERIE, shop: 1320 + LOT_CONFRERIE, maison1: 1820 + LOT_CONFRERIE + ECART_ARDOISE, barbier: 2150 + LOT_CONFRERIE + ECART_ARDOISE, fontaine: 2390 + LOT_CONFRERIE + ECART_ARDOISE, banque: 2660 + LOT_CONFRERIE + ECART_ARDOISE, arche: 3080 + LOT_CONFRERIE + ECART_ARDOISE, ardoise: 2505 };
+// (v1.56, planche 64 v5) le lot des Mages-Charpentiers, après la fontaine : la banque et l'arche reculent d'autant
+const LOT_MAGES = 360;
+const LARGEUR_RUE = 3260 + LOT_CONFRERIE + ECART_ARDOISE + LOT_MAGES;   // (v1.48 : +300, le lot du barbier ; v1.53 : +190, l'ardoise ; v1.56 : +360, les Mages)
+const PLACES_RUE = { hospice: 200, chapelle: 545, maison0: 160 + LOT_CONFRERIE, impasse: 405 + LOT_CONFRERIE, forge: 680 + LOT_CONFRERIE, shop: 1320 + LOT_CONFRERIE, maison1: 1820 + LOT_CONFRERIE + ECART_ARDOISE, barbier: 2150 + LOT_CONFRERIE + ECART_ARDOISE, fontaine: 2390 + LOT_CONFRERIE + ECART_ARDOISE, mages: 2700 + LOT_CONFRERIE + ECART_ARDOISE, banque: 2660 + LOT_CONFRERIE + ECART_ARDOISE + LOT_MAGES, arche: 3080 + LOT_CONFRERIE + ECART_ARDOISE + LOT_MAGES, ardoise: 2505 };
 function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   const G = window.GAME, P = PLACES_RUE, lumieres = [];
   creerRueHD(scene);
@@ -355,6 +357,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   poser(jour ? 'rueForgeHD_jour' : 'rueForgeHD', P.forge);
   scene.add.image(o + P.shop - 330, sol + 30, 'bancRue').setOrigin(0.5, 1).setScale(2.6);
   const f = dessinerFacade(scene, o + P.shop, sol, G.nomShop, undefined, { fumee: feuAllume(G, jour) });   // (v0.66 : la fumée, seulement si le feu brûle)
+  if (typeof pattesPosees === 'function' && pattesPosees(G)) pattesRepliees(scene, f, { sorte: etatPattes(G).sorte, sol });   // (v1.56) ses pattes, repliées au coin des murs
   poser('rueMaisonHD_1', P.maison1);
   // (v1.48, planches 72 et 72 v2) le Fil d'Argent, la boutique d'Orvin : close avant tes 18 ans ; ouverte le jour, volets clos la nuit
   if (typeof boutiqueBarbierHD === 'function') {
@@ -373,9 +376,25 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
     }
   }
   scene.add.image(o + P.fontaine, sol + 30, 'fontaineHD').setOrigin(0.5, 1).setScale(2.4);
+  // (v1.56, planche 64 v5) le lot des Mages-Charpentiers : d'abord un chantier (les poutres montent seules), puis l'atelier
+  if (typeof chantierMages === 'function') {
+    const xm = o + P.mages;
+    if (atelierMagesOuvert(G)) {
+      scene.add.image(xm, sol + 2, atelierMagesHD(scene)).setOrigin(0.5, 1).setScale(2);
+      ecriteauRue(scene, xm - 230, sol - 110, 'Les Mages-\nCharpentiers', { taille: 11 });
+      if (jour) [[MAITRESSE_MAGES, xm - 120, false], [CHARPENTIER_NAIN, xm + 130, true]].forEach(([q, x, fl], i) => {
+        const p = imageCorps(scene, x, SOL_PROMENADE, q, 7.2).setFlipX(fl).setDepth(8.44);
+        scene.tweens.add({ targets: p, scaleY: p.scaleY * 1.012, duration: 1500 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      });
+      lumieres.push([xm, sol - 120, 1.6]);
+    } else if (chantierMages(G)) {
+      scene.add.image(xm, sol + 2, chantierMagesHD(scene)).setOrigin(0.5, 1).setScale(2);
+      ecriteauRue(scene, xm - 250, sol - 170, 'Ici bientôt :\nles Mages-Charpentiers', { taille: 10 });
+    }
+  }
   poser('rueBanqueHD', P.banque);
   poser(jour ? 'rueArcheHD_jour' : 'rueArcheHD', P.arche);
-  for (const x of [380, 560, 1060, 1640, 2500, 2885].map((x, i) => i ? x + LOT_CONFRERIE + (x >= 1700 ? ECART_ARDOISE : 0) : x)) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
+  for (const x of [380, 560, 1060, 1640, 2500, 2885].map((x, i) => i ? x + LOT_CONFRERIE + (x >= 1700 ? ECART_ARDOISE : 0) + (x >= 2700 ? LOT_MAGES : 0) : x)) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
   lumieres.push([f.porteX, 400, 2.4], [o + P.forge, sol - 10, 1.8], [o + P.banque, sol - 150, 1.4]);
   // les noms : écriteaux peints, lettres gravées, bannière
   ecriteauRue(scene, o + P.maison0 + 4, sol - 112, 'Les Pommeroy', { taille: 10 });
@@ -415,6 +434,11 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
     else ici.regarder(o + P.barbier - 120, 230, 240, 240, "Le Fil d'Argent est fermé pour la nuit. Derrière les volets, Orvin affûte ses rasoirs en chantonnant.");
   }
   ici.regarder(o + P.fontaine - 80, 360, 160, 110, jour ? 'La fontaine chante. Pour y jeter une pièce, c\'est celle de la place du marché.' : 'La fontaine murmure dans la nuit. Au fond du bassin, des pièces luisent sous la lune.');
+  // (v1.56) les Mages-Charpentiers : le chantier se regarde, l'atelier s'ouvre le jour
+  if (typeof chantierMages === 'function') {
+    if (atelierMagesOuvert(G)) { if (jour) ici.porte(o + P.mages + 6, sol, 'Les Mages-Charpentiers', 'Mages', { large: 120, haut: 150 }); else ici.regarder(o + P.mages - 160, 180, 320, 290, "L'atelier des Mages-Charpentiers dort. Sur les poutres, les runes luisent encore un peu, bleu pâle."); }
+    else if (chantierMages(G)) ici.regarder(o + P.mages - 180, 160, 360, 310, "Un chantier, à côté de la fontaine : pas de grue, pas de corde... les poutres montent toutes seules, dans une lueur bleue. « Les Mages-Charpentiers », dit l'écriteau. Ils ouvriront quand un royaume sera entièrement libéré.");
+  }
   ici.regarder(o + P.banque - 200, 120, 400, 350, jour ? 'La Banque Centrale Goyenne. Des nains en redingote montent les marches, un registre sous le bras.' : 'La Banque Centrale Goyenne. Une lumière brûle encore : les nains comptent, même la nuit.');
   ici.porte(o + P.banque, sol, 'Entrer', 'Banque');
   // (v0.67, v0.68) après assez de vœux, la nymphe attend ; quand l'arche mène quelque part, toute l'ouverture se clique

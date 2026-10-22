@@ -1629,6 +1629,7 @@ function nuit(G) {
   sansPlanter('nuitDuLien', () => typeof nuitDuLien === 'function' && nuitDuLien(G));   // (v1.35) la complicité avec le chat
   sansPlanter('nuitDeLaCompagne', () => typeof nuitDeLaCompagne === 'function' && nuitDeLaCompagne(G));   // (v1.37) sa gamelle à elle
   sansPlanter('nuitDuParrain', () => typeof nuitDuParrain === 'function' && nuitDuParrain(G));   // (v1.39) la part de la Famille
+  sansPlanter('nuitDesMages', () => typeof nuitDesMages === 'function' && nuitDesMages(G));   // (v1.56) le chantier, puis l'atelier des Mages-Charpentiers
   sansPlanter('nuitDesSucces', () => typeof nuitDesSucces === 'function' && nuitDesSucces(G));   // (v1.50) les séries, et les succès du jour
   G.jour++;
   G.argentDebutJour = G.argent;
@@ -3075,6 +3076,7 @@ function avancerEvenements(G) {
   if (G.annonceConseil) { lignes.unshift(G.annonceConseil); G.annonceConseil = null; }
   if (G.annonceCollection) { lignes.unshift(G.annonceCollection); G.annonceCollection = null; }   // (v1.23) une série complète dans la vitrine   // (v1.10) la commande scellée, livrée ou manquée
   if (G.annonceRival) { lignes.unshift(G.annonceRival); G.annonceRival = null; }
+  if (G.annonceMages) { lignes.unshift(G.annonceMages); G.annonceMages = null; }   // (v1.56)
   if (G.annonceCambrioleur) { lignes.unshift(G.annonceCambrioleur); G.annonceCambrioleur = null; }   // (v1.55) le cambrioleur qui s'est rendu en pleurant
   if (G.annonceMecenat) { lignes.unshift(G.annonceMecenat); G.annonceMecenat = null; }   // (v1.32) le mécénat, la neutralité
   if (G.annonceMenace) { lignes.unshift(G.annonceMenace); G.annonceMenace = null; }   // (v1.33) la contrée menacée, tenue, tombée ou reprise
