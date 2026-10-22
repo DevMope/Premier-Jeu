@@ -62,9 +62,9 @@ class BarbierScene extends Phaser.Scene {
     // la bourse, en haut à gauche, et la bulle d'Orvin en bas
     this.bourse = this.add.text(14, 12, '', style(15, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setDepth(50);
     this.majBourse();
-    this.fondBulle = this.add.rectangle(280, 506, 548, 60, 0x1a120a, 0.9).setStrokeStyle(2, 0x8a6a3a).setDepth(48);
-    this.qui = this.add.text(14, 482, 'Orvin :', style(14, '#f3d98a', { fontStyle: 'bold' })).setDepth(49);
-    this.dit = this.add.text(80, 482, '', style(13, '#fff4dc', { wordWrap: { width: 470 }, lineSpacing: 2 })).setDepth(49);
+    this.fondBulle = this.add.rectangle(280, 500, 548, 74, 0x1a120a, 0.9).setStrokeStyle(2, 0x8a6a3a).setDepth(48);
+    this.qui = this.add.text(14, 470, 'Orvin :', style(14, '#f3d98a', { fontStyle: 'bold' })).setDepth(49);
+    this.dit = this.add.text(80, 470, '', style(13, '#fff4dc', { wordWrap: { width: 470 }, lineSpacing: 1 })).setDepth(49);
     const b = etatBarbier(G);
     if (!b.vu) this.tuto(); else { this.parler(this.accueil()); this.ouvrirMenu(); }
     this.input.keyboard && this.input.keyboard.on('keydown-ESC', () => this.sortir());
@@ -223,8 +223,10 @@ class BarbierScene extends Phaser.Scene {
     this.menu = panneauApparence(this, { x: 712, y: 240, l: 470, h: 400, ap, feminin: f, stade: 'adulte', barbe: !f, visage: false, habits: false, prof: 40, onglet: f ? 'coiffure' : 'barbe', quandChange: () => maj() });
     this.ajouter(this.add.text(712, 26, f ? 'TA COUPE, TA COULEUR' : 'TA COUPE, TA BARBE', style(16, '#f3e6c8', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(46));
     this.bouton(660, 506, 170, 'Couper !', () => {
+      // (v1.49) rien de changé : rien à couper (et le service offert reste à prendre)
+      if (['coiffure', 'cheveux', 'barbe', 'couleurBarbe', 'bouche'].every(k => (ap[k] || 0) === (avant[k] || 0))) { this.parler(`« Rien à couper, alors ? Pour remettre ${f ? 'ta coupe' : 'ta barbe'} en forme, c'est « Tailler ». »`); this.peindre(); this.ouvrirMenu(); return; }
       const p = gratuit ? 0 : prixChangement(G, avant, ap);
-      const r = changerApparenceBarbier(G, { coiffure: ap.coiffure, cheveux: ap.cheveux, barbe: ap.barbe, couleurBarbe: ap.couleurBarbe }, p);
+      const r = changerApparenceBarbier(G, { coiffure: ap.coiffure, cheveux: ap.cheveux, barbe: ap.barbe, couleurBarbe: ap.couleurBarbe, bouche: ap.bouche }, p);
       if (r) { this.parler(`« ${r} »`); return; }
       if (gratuit) etatBarbier(G).premierRasage = G.jour; else if (p) this.flotter(`−${p} p.`);
       this.viderMenu();
@@ -237,6 +239,7 @@ class BarbierScene extends Phaser.Scene {
 
   // Les anneaux de fête : une coutume des nains, portés pendant leur fête
   anneaux() {
+    if (this.occupe) return;   // (v1.49 : pas pendant un service)
     this.viderMenu();
     const G = this.G, t = (x, y, s, taille = 13, c = '#3b2410', o = {}) => this.ajouter(this.add.text(x, y, s, style(taille, c, { fontStyle: 'bold', ...o })).setDepth(41));
     this.ajouter(this.add.image(712, 262, panneauHD(this, 470, 470)).setScale(2).setDepth(40));

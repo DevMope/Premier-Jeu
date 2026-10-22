@@ -690,7 +690,7 @@ function apparenceParDefaut(feminin) {
 // (v1.48) L'apparence du jour (la barbe ou les cheveux poussés, les marques du temps) et sa signature :
 // le joueur est redessiné quand sa tenue change, ou quand sa barbe a poussé
 function apparenceDuJour(G) { return typeof apparenceJoueur === 'function' ? apparenceJoueur(G) : G.joueur.apparence; }
-function signatureJoueur(G) { return (G.tenue || []).join(',') + (typeof signaturePilosite === 'function' ? '|' + signaturePilosite(G) : ''); }
+function signatureJoueur(G) { return (G.tenue || []).join(',') + '|' + Object.values(G.joueur.apparence || {}).join('.') + (typeof signaturePilosite === 'function' ? '|' + signaturePilosite(G) : ''); }   // (v1.49 : la coupe et les couleurs aussi)
 function textureJoueur(scene, G, vue = 'face') {
   // (on redessine le joueur quand sa tenue change : ce qu'il achète à la garde-robe, il le porte)
   const tenue = signatureJoueur(G);

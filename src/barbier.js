@@ -80,10 +80,10 @@ function payerBarbier(G, cle, gratuit = false) {
   if (prix) payer(G, prix, 'barbier');
   return null;
 }
-function laverBarbe(G) { const r = payerBarbier(G, 'laver'); if (r) return r; G.pilosite.lave = G.jour; return null; }
+function laverBarbe(G) { const r = payerBarbier(G, 'laver'); if (r) return r; G.pilosite.lave = G.jour; noterPilositeVue(G); return null; }
 // Tailler : la barbe (ou la coupe) reprend la forme choisie, la pousse repart de zéro
-function taillerBarbe(G, gratuit = false) { const r = payerBarbier(G, 'tailler', gratuit); if (r) return r; G.pilosite.entretien = G.pilosite.lave = G.jour; return null; }
-function raserBarbe(G, gratuit = false) { const r = payerBarbier(G, 'raser', gratuit); if (r) return r; G.joueur.apparence.barbe = 0; G.pilosite.entretien = G.pilosite.lave = G.jour; return null; }
+function taillerBarbe(G, gratuit = false) { const r = payerBarbier(G, 'tailler', gratuit); if (r) return r; G.pilosite.entretien = G.pilosite.lave = G.jour; noterPilositeVue(G); return null; }
+function raserBarbe(G, gratuit = false) { const r = payerBarbier(G, 'raser', gratuit); if (r) return r; G.joueur.apparence.barbe = 0; G.pilosite.entretien = G.pilosite.lave = G.jour; noterPilositeVue(G); return null; }
 // Un nouveau reflet choisi dans le fauteuil : coiffure, couleur, barbe (chacun se paie à part)
 function prixChangement(G, avant, apres, premierGratuit = false) {
   let p = 0;
@@ -95,10 +95,15 @@ function prixChangement(G, avant, apres, premierGratuit = false) {
 function changerApparenceBarbier(G, apres, prix) {
   if (prix && !peutPayer(G, prix)) return manqueArgent(G, prix, "Pas assez d'argent.");
   if (prix) payer(G, prix, 'barbier');
-  G.joueur.apparence = { ...G.joueur.apparence, ...apres };
-  G.pilosite.entretien = G.pilosite.lave = G.jour;
+  const avant = G.joueur.apparence;
+  G.joueur.apparence = { ...avant, ...apres };
+  // (v1.49) une nouvelle coupe ou une nouvelle barbe repart de zéro ; une couleur seule ne lave ni ne taille rien
+  if (apres.coiffure !== avant.coiffure || apres.barbe !== avant.barbe) G.pilosite.entretien = G.pilosite.lave = G.jour;
+  noterPilositeVue(G);
   return null;
 }
+// (v1.49) Après un service, le réveil ne doit pas croire que « ça a poussé » : on note ce qu'on voit maintenant
+function noterPilositeVue(G) { const e = etatPilosite(G); if (e && G.pilosite) G.pilosite.vu = { id: e.id, negligence: e.negligence }; }
 function acheterAnneau(G, id) {
   if (possede(G, id)) return 'Tu l’as déjà.';
   const r = payerBarbier(G, 'anneau'); if (r) return r;
@@ -112,7 +117,12 @@ function matinPilosite(G) {
   const l = [];
   if (!barbierOuvert(G)) return l;
   const b = etatBarbier(G);
-  if (!b.ouvertureVue && !b.vu) { b.ouvertureVue = G.jour; l.push("Dans ta rue, les volets cloués du « Fil d'Argent » sont tombés : Orvin, le barbier nain, ouvre aujourd'hui. Le premier rasage est offert."); }
+  if (!b.ouvertureVue && !b.vu) {
+    b.ouvertureVue = G.jour;
+    // (v1.49) une vieille partie déjà adulte : Orvin vient de s'installer, ce n'est pas l'anniversaire
+    b.anniversaire = 15 + Math.floor((G.jour - 2 + (G.decalageJours || 0)) / 112) < BARBIER.age;
+    l.push(b.anniversaire ? "Dans ta rue, les volets cloués du « Fil d'Argent » sont tombés : Orvin, le barbier nain, ouvre aujourd'hui. Le premier rasage est offert." : "Dans ta rue, un barbier nain vient de s'installer : Orvin, au « Fil d'Argent ». Le premier rasage est offert.");
+  }
   const e = etatPilosite(G); if (!e) return l;
   const p = G.pilosite, avant = p.vu || { id: e.id, negligence: e.negligence };
   const quoi = e.cible === 'barbe' ? 'Ta barbe' : 'Tes cheveux';

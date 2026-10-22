@@ -185,7 +185,7 @@ class RueScene extends Phaser.Scene {
       if (!this.heros.marche) pasDeMarche(this, this.heros, 260);
       this.heros.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
     } else this.heros.y = SOL_PROMENADE;
-    if (this.orvin && !this.orvinSalue && Math.abs(this.heros.x - this.orvin.x) < 420) { this.orvinSalue = true; this.dire("Orvin : « Dix-huit ans ! J'attendais ce jour pour ouvrir : le premier rasage est pour moi. Entre, l'ami ! »"); }
+    if (this.orvin && !this.orvinSalue && Math.abs(this.heros.x - this.orvin.x) < 420) { this.orvinSalue = true; this.dire(etatBarbier(this.G).anniversaire === false ? "Orvin : « Bienvenue au Fil d'Argent ! Je viens de m'installer : le premier rasage est pour moi. Entre, l'ami ! »" : "Orvin : « Dix-huit ans ! J'attendais ce jour pour ouvrir : le premier rasage est pour moi. Entre, l'ami ! »"); }
     // (v1.40) Garrick suit le joueur, un pas derrière lui
     const g = this.garrick;
     if (g && g.active) {
