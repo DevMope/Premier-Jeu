@@ -22,9 +22,10 @@ function tenteDiseuse(scene, x, y, jour) {
   scene.tweens.add({ targets: l, alpha: jour ? 0.2 : 0.4, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   // l'écriteau
   const pan = scene.add.graphics().setDepth(1.6);
-  pan.fillStyle(0x5a3a20).fillRect(x - 150, y - 40, 6, 40).fillStyle(0xe8d4a8).fillRect(x - 178, y - 66, 64, 34).lineStyle(2, 0x5a3a20).strokeRect(x - 178, y - 66, 64, 34);
-  scene.add.text(x - 146, y - 57, 'Madame Ysmée', style(9, '#4a2a6a', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(1.7);
-  scene.add.text(x - 146, y - 42, `présages · ${DISEUSE.prix} p.`, style(8, '#5a3a20', { fontStyle: 'italic' })).setOrigin(0.5).setDepth(1.7);
+  // (v1.50) sur un petit chevalet, devant le pan gauche de la tente (avant, il mordait sur la porte du comptoir)
+  pan.fillStyle(0x5a3a20).fillRect(x - 104, y - 22, 4, 22).fillRect(x - 44, y - 22, 4, 22).fillStyle(0xe8d4a8).fillRect(x - 112, y - 50, 80, 32).lineStyle(2, 0x5a3a20).strokeRect(x - 112, y - 50, 80, 32);
+  scene.add.text(x - 72, y - 41, 'Madame Ysmée', style(9, '#4a2a6a', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(1.7);
+  scene.add.text(x - 72, y - 27, `présages · ${DISEUSE.prix} p.`, style(8, '#5a3a20', { fontStyle: 'italic' })).setOrigin(0.5).setDepth(1.7);
 }
 
 // Le dessin de chaque carte (sur sa face d'ivoire)

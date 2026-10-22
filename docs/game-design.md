@@ -3169,3 +3169,14 @@ Idée du joueur : la couleur par sujet portée par des pierres précieuses sur l
 - **Le détail** : obtenue (le jour et le lieu), à gagner (la condition et une barre de progrès quand ça se compte), secrète (seulement un indice).
 - **Quatre médailles** : bronze (vite gagnées), argent (un vrai défi), or (une partie entière, liseré doré et air plus long), secret (à découvrir).
 - **32 succès proposés**, à compléter ensemble (liste sur la planche). Les trois succès de la pêche existent déjà dans le jeu (v1.50 : ils ne se comptaient pas, corrigé).
+
+### Planche 62 : la météo du jour, et les petites logiques du quotidien (à valider) (docs/planches-v059/planche-62-meteo-et-quotidien.png)
+- **Six temps** : beau temps, pluie, orage, canicule, grand vent, neige (seulement au Mois du Givre). Un temps par jour, jamais deux orages de suite ; chaque saison a les siens (tableau sur la planche).
+- **Madame Ysmée l'annonce** chaque matin : dans sa boule de cristal, et gratuitement sur son ardoise devant la tente. Elle dit juste quatre fois sur cinq.
+- **Ce que ça change** : la demande (▲ capes, gourdes, torches, cordes... marqué « ▲ demandée » dans la réserve), le nombre de clients (−2 sous la pluie, −4 à l'orage, −3 sous la neige, +1 tôt le matin en canicule), et les épreuves (chemins glissants, gués gonflés, cols fermés, flèches qui dévient, déserts plus durs).
+- **On le voit partout** : ciel couvert, averse, flaques avec les vrais reflets de la rue, éclair à la fenêtre du comptoir, air qui tremble à la canicule, feuilles au vent, neige qui tombe dru.
+- **Les provisions se périment** : une barre de fraîcheur (ration 7 jours, poisson 2, gâteau 4, tarte du Solstice 1 soir) ; la plus vieille part en premier ; un cellier les garde deux fois plus ; la canicule les gâte, le givre les garde ; une ration à 1 jour se vend moitié prix.
+- **Le jour de marché** : chaque semaine, le 6e jour : deux étals de colporteurs en plus, prix −10 % mais la place est pleine, +2 clients de passage au comptoir, Garrick passe souvent.
+- **L'anniversaire des habitués** : le registre le note le matin ; l'habitué vient le dire : un cadeau compte double (+4), le souhaiter +1, l'oublier −1.
+- **Les cadeaux, plus clairs** : pour chaque cadeau, ce que le client en pense (♥ adore, ✓ aime, ? jamais offert, · bof, ✗ déteste) et ce que ça rapporte, avant de l'offrir ; les goûts s'apprennent en offrant (ou avec du flair).
+- (v1.50, corrigé au passage : l'écriteau de la tente d'Ysmée mordait sur la porte du comptoir ; il est maintenant sur un petit chevalet devant la tente.)
