@@ -79,7 +79,7 @@ function acheterCaisse(G) {
   return null;
 }
 function texteContenu(contenu) {
-  return Object.entries(contenu).map(([id, n]) => { const nom = nomObjet(id).toLowerCase(); return `${n} ${n > 1 ? nom.split(' ').map(w => /^(de|du|des)$/.test(w) || /[sx]$/.test(w) ? w : w + 's').join(' ') : nom}`; }).join(', ');
+  return Object.entries(contenu).map(([id, n]) => { if (typeof NOMS_ROYAUX !== 'undefined' && NOMS_ROYAUX[id]) return `${n} ${NOMS_ROYAUX[id][n > 1 ? 1 : 0]}`; const nom = nomObjet(id).toLowerCase(); return `${n} ${n > 1 ? nom.split(' ').map(w => /^(de|du|des)$/.test(w) || /[sx]$/.test(w) ? w : w + 's').join(' ') : nom}`; }).join(', ');
 }
 
 // La nuit : si la garde vient demain, la caisse reste cachée (et sera trouvée) ; sinon, on la déballe
@@ -104,7 +104,7 @@ function indiceFosse(G) {
   const fort = cb.a.force >= cb.b.force ? cb.a : cb.b, faible = fort === cb.a ? cb.b : cb.a;
   const juste = Math.random() < 0.55 + niveauFlair(G) * 0.35;
   const [vise, sens] = Math.random() < 0.5 ? [juste ? faible : fort, 'faible'] : [juste ? fort : faible, 'fort'];
-  cb.indice = `${vise.nom.split(' ')[0]} ${auHasard(INDICES_FOSSE[sens])}.`;
+  cb.indice = `${prenomDe(vise.nom)} ${auHasard(INDICES_FOSSE[sens])}.`;
   return cb.indice;
 }
 
@@ -113,6 +113,7 @@ function indiceFosse(G) {
 function parierFosse(G, cote, mise) {
   const cb = soireeAnnee(G).combat;
   if (cb.pari) return { erreur: 'Tu as déjà parié ce soir.' };
+  if (tropJeunePourParier(G)) return { erreur: "Le bookmaker te toise : « Les paris, c'est à dix-huit ans. Regarde le combat si tu veux, mais garde tes sous. »" };
   if (!peutPayer(G, mise)) return { erreur: manqueArgent(G, mise, "Pas assez d'argent.") };
   payer(G, mise, 'jeux');
   const pa = cb.a.force / (cb.a.force + cb.b.force);
@@ -168,8 +169,8 @@ function forceAdversaire(G, id) { const a = adversaireBras(id); return a.pousse 
 function commencerBrasDeFer(G, id = 'mog') {
   const s = soireeAnnee(G), a = adversaireBras(id);
   if (typeof s.brasDeFer !== 'object' || !s.brasDeFer) s.brasDeFer = {};
-  if (!brasDebloque(G, id)) return `${a.nom.split(' ')[0]} ne s'assoit qu'en face de ceux qui ont battu ${ADVERSAIRES_BRAS[ADVERSAIRES_BRAS.indexOf(a) - 1].nom.split(' ')[0]}.`;
-  if (s.brasDeFer[id]) return `${a.nom.split(' ')[0]} se masse le bras : « Une fois par soir, l'ami. Reviens une autre fois. »`;
+  if (!brasDebloque(G, id)) return `${prenomDe(a.nom)} ne s'assoit qu'en face de ceux qui ont battu ${prenomDe(ADVERSAIRES_BRAS[ADVERSAIRES_BRAS.indexOf(a) - 1].nom)}.`;
+  if (s.brasDeFer[id]) return `${prenomDe(a.nom)} se masse le bras : « Une fois par soir, l'ami. Reviens une autre fois. »`;
   if (!peutPayer(G, a.mise)) return manqueArgent(G, a.mise, "Pas assez d'argent.");
   payer(G, a.mise, 'jeux');
   s.brasDeFer[id] = true;
@@ -225,7 +226,7 @@ function nuitOmbreAnnee(G) {
   const lignes = [];
   if (G.caisse && !G.gardeDemain) { const l = deballerCaisse(G); if (l) lignes.push(l); }
   for (const k of (G.contrats || []).filter(x => x.retour <= G.jour)) {
-    const prenom = k.h.nom.split(' ')[0];
+    const prenom = prenomDe(k.h.nom);
     if (Math.random() < k.chance) {
       encaisser(G, k.paie, 'contrats');
       if (typeof pieceContrat === 'function' && pieceContrat(G)) lignes.push(`${prenom} rapporte aussi un vieil écu cabossé, aux armes des Bannis : il ira dans ta vitrine.`);
@@ -239,7 +240,7 @@ function nuitOmbreAnnee(G) {
       connaitre(G, k.h).mort = true;
       G.historique.unshift({ nom: k.h.nom, race: k.h.race, feminin: !!k.h.feminin, quete: `Contrat de l'ombre : ${k.titre}`, zone: null, depart: k.depart || k.retour - 2, retour: G.jour, issue: 'sans gloire', gain: 0, chance: k.chance });
       G.historique = G.historique.slice(0, TAILLE_HISTORIQUE);
-      lignes.push(`Contrat de l'ombre : ${prenom} n'est pas revenu${k.h.feminin ? 'e' : ''} de « ${k.titre} ». Personne ne parlera de ${k.h.feminin ? 'elle' : 'lui'}. Pas même ${k.banni.nom}.`);
+      lignes.push(`Contrat de l'ombre : ${prenom} n'est pas revenu${k.h.feminin ? 'e' : ''} de « ${k.titre} ». Personne ne parlera ${k.h.feminin ? 'd\'elle' : 'de lui'}. Pas même ${k.banni.nom}.`);
     } else {
       k.h.blessures = Math.max(1, k.h.blessures || 0); k.h.convalescence = G.jour + CONVALESCENCE_PAR_COEUR;
       G.habitues.push(k.h);

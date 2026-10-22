@@ -1701,8 +1701,15 @@ class MarcheScene extends Phaser.Scene {
   ouvrirJeux() {
     const G = this.G;
     if (!lieuOuvert(G, 'jeux')) return this.message(`${NOMS_LIEUX_MARCHE.jeux} ouvre le jour ${OUVERTURE_LIEUX.jeux}.`);
+    // (v1.47) pas de mise avant 18 ans... sauf si l'on insiste : le vieux Grippesou finit par céder
+    let cede = false;
+    if (!coinDesJeuxPermis(G)) {
+      if (!insisterAuCoinDesJeux(G)) return this.message(REFUS_COIN_DES_JEUX[Math.min(G.insistanceJeux, REFUS_COIN_DES_JEUX.length) - 1], '#a03030');
+      cede = true;
+    }
     this.montrer('jeux');
     const c = this.panneau('Le coin des jeux', 'Tenu par Fil-de-Fer, cousin du vieux Grippesou');
+    if (cede) this.time.delayedCall(250, () => this.message("Le vieux Grippesou passe la tête sous l'auvent : « Laisse, cousin... C'est le business. Mais fais vite, petit. »", '#5a2a6a'));
     c.add(this.add.rectangle(480, 395, 2, 120, 0x8a6a3a));
     // Les dés
     c.add(this.add.text(40, 340, `Les dés · le plus gros total gagne (${pluriel(partiesRestantes(G, 'des'), 'partie restante', 'parties restantes')})`, style(13, '#3b2410', { fontStyle: 'bold' })));

@@ -152,7 +152,7 @@ function bulleDeMenace(c, cle) {
       const per = d.parti ? d.parti.voyageur : d.v;
       if (d.confrerie) { if (!c.textures.exists('embleme_conseil') && typeof creerEmblemesHD === 'function') creerEmblemesHD(c); if (c.textures.exists('embleme_conseil')) ct.add(c.add.image(x, y + 38, 'embleme_conseil').setScale(0.32)); }
       else if (per) { try { const im = c.add.image(x, y + 70, textureBusteHD(c, per)).setOrigin(0.5, 1); im.setScale(58 / im.height); ct.add(im); } catch (e) { /* (pas de buste) */ } }
-      txt(x, y + 72, d.confrerie ? 'La Confrérie' : d.nom.split(' ')[0], 12, { fontStyle: 'bold' }).setOrigin(0.5, 0);
+      txt(x, y + 72, d.confrerie ? 'La Confrérie' : prenomDe(d.nom), 12, { fontStyle: 'bold' }).setOrigin(0.5, 0);
       txt(x, y + 2, d.part ? `${Math.round(d.chance * 100)} %` : 'prévu', 12, { couleur: d.part ? '#b8e0a0' : '#f3d98a', fontStyle: 'bold', backgroundColor: '#1a1008', padding: { x: 2, y: 0 } }).setOrigin(0.5, 0);
     }
     // la force de l'escouade contre l'assaut
@@ -169,7 +169,7 @@ function bulleDeMenace(c, cle) {
     const s = soutienVoisines(G, cle);
     const lignes = [
       s.points > 0 ? `⚑ Voisines conquises (${s.conquises.length}) : +${s.points} %` : s.isolee ? `⚑ Contrée isolée : ${s.points} %` : '⚑ Aucune voisine conquise : pas de renforts',
-      avecLui ? `Avec ${v.nom.split(' ')[0]} bien équipé${v.feminin ? 'e' : ''} : environ ${estime} %` : '',
+      avecLui ? `Avec ${prenomDe(v.nom)} bien équipé${v.feminin ? 'e' : ''} : environ ${estime} %` : '',
       `Prime ${z.camp === 'mal' ? 'des Bannis' : 'du Conseil'} : ${MENACE.prime[z.danger] || 900} p. · +${MENACE.reputation} réputation · +1 ⚑`,
       'Chacun part avec le colis de la contrée, et un combat de plus.',
     ].filter(Boolean);
@@ -179,7 +179,7 @@ function bulleDeMenace(c, cle) {
       const r = refusDefense(G, v, cle);
       if (r) bas = refus(bas + 6, r);
       else if (!libre) bas = refus(bas + 6, 'Les trois places sont prises.');
-      else bas = bouton(bas + 6, `Envoyer ${v.nom.split(' ')[0]} défendre ⚔`, '#8a2a1a', () => c.envoyerMenace(cle, 'defendre'));
+      else bas = bouton(bas + 6, `Envoyer ${prenomDe(v.nom)} défendre ⚔`, '#8a2a1a', () => c.envoyerMenace(cle, 'defendre'));
       // (la contrée reste ouverte aux missions ordinaires)
       if (!refusZone(G, v, cle)) { const o = c.add.text(0, bas - 22, 'ou une mission ordinaire ▶', style(12, '#c9b48a', { fontStyle: 'italic' })).setInteractive({ useHandCursor: true }); o.on('pointerdown', () => c.envoyer(cle)); ct.add(o); }
     }
@@ -199,7 +199,7 @@ function bulleDeMenace(c, cle) {
     ].filter((l, i, a) => l || (a[i - 1] && a[i + 1]));
     const t = txt(0, 24, lignes.join('\n'), 13);
     bas = t.y + t.height;
-    if (v && reprise) { const r = refusDefense(G, v, cle); bas = r ? refus(bas + 6, r) : bouton(bas + 6, `Envoyer ${v.nom.split(' ')[0]} reprendre ⚔`, '#5a2a6a', () => c.envoyerMenace(cle, 'reprendre')); }
+    if (v && reprise) { const r = refusDefense(G, v, cle); bas = r ? refus(bas + 6, r) : bouton(bas + 6, `Envoyer ${prenomDe(v.nom)} reprendre ⚔`, '#5a2a6a', () => c.envoyerMenace(cle, 'reprendre')); }
   }
   ct.add(fermer);
   const h = bas + 20, e = c.versEcran(z.x, z.y), ecart = 62 * c.k;

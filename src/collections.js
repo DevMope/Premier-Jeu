@@ -58,7 +58,7 @@ function gagnerPiece(G, serie, piece) {
 // Au retour d'un vainqueur : un écu de royaume, une curiosité de Banni, un fragment de la carte. Renvoie sa phrase.
 function piecesAuRetour(G, v) {
   const z = ZONES[v.zone]; if (!z) return null;
-  const R = REGLES_COLLECTIONS, prenom = v.nom.split(' ')[0];
+  const R = REGLES_COLLECTIONS, prenom = prenomDe(v.nom);
   if (COLLECTIONS.trophees.pieces[z.royaume] && !aPiece(G, 'trophees', z.royaume) && Math.random() < (z.danger >= 3 ? R.trophee.loin : R.trophee.pres)) {
     const p = gagnerPiece(G, 'trophees', z.royaume);
     return `« Au retour, je suis passé${v.feminin ? 'e' : ''} par ${aLieu(z.nom)}. Tiens : ${p.nom.charAt(0).toLowerCase() + p.nom.slice(1)}, pour ta vitrine. » (${p.n}/${p.total})`;

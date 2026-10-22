@@ -79,7 +79,7 @@ function peutSecourir(G, p, choix) {
 
 // La réponse : les objets partent de ton stock, et arrivent (ou non) dans son baluchon
 function repondreDetresse(G, p, choix) {
-  const d = p.detresse, v = p.voyageur, prenom = v.nom.split(' ')[0];
+  const d = p.detresse, v = p.voyageur, prenom = prenomDe(v.nom);
   d.choix = choix;
   if (choix === 'rien') {
     v.epreuves[d.i].malusDetresse = DETRESSE.malusRien;
@@ -98,7 +98,7 @@ function repondreDetresse(G, p, choix) {
 
 // Le texte de la lettre
 function lettreDetresse(p) {
-  const d = p.detresse, v = p.voyageur, prenom = v.nom.split(' ')[0];
+  const d = p.detresse, v = p.voyageur, prenom = prenomDe(v.nom);
   let raison = RAISONS_DETRESSE[d.arme ? 'arme' : d.id] || 'il lui manque quelque chose';
   if (v.feminin) raison = raison.replace(/\bil\b/g, 'elle').replace(/\ble (transperce|hante)/, 'la $1');
   const lieu = ZONES[v.zone] ? ZONES[v.zone].nom : 'là-bas';

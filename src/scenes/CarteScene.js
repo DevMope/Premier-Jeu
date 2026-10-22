@@ -351,7 +351,7 @@ class CarteScene extends Phaser.Scene {
       ajouter(e.voyageur.zone, e.voyageur.race, '', '#1f5aa0', false, estCible(G, e.voyageur) ? 'crane' : 'lettre');
     }
     for (const v of this.voyageurs) {
-      if (this.place[v.id]) ajouter(this.place[v.id], v.race, v.nom.split(' ')[0].slice(0, 6), '#2f6a2a', v === this.selection);
+      if (this.place[v.id]) ajouter(this.place[v.id], v.race, prenomDe(v.nom).slice(0, 6), '#2f6a2a', v === this.selection);
     }
     for (const [zone, liste] of Object.entries(parZone)) {
       const z = ZONES[zone];
@@ -408,7 +408,7 @@ class CarteScene extends Phaser.Scene {
       fond.on('pointerdown', () => { this.selection = v; this.tout(); });
       this.cartes.add([fond,
         imageCorps(this, x, 470, v, 2.4),
-        this.add.text(x, 474, v.nom.split(' ')[0], style(14, couleurNom(this.G, v.nom, true), { fontStyle: 'bold' })).setOrigin(0.5, 0),
+        this.add.text(x, 474, prenomDe(v.nom), style(14, couleurNom(this.G, v.nom, true), { fontStyle: 'bold' })).setOrigin(0.5, 0),
         this.add.text(x, 490, zone ? '→ ' + ZONES[zone].nom.replace(/^(Les |La |L')/, '') : nomRang(v.niveau, true),
           style(12, zone ? '#b8e0a0' : '#c9b48a', { align: 'center', wordWrap: { width: largeur - 12 } })).setOrigin(0.5, 0)]);
     });
@@ -485,7 +485,7 @@ class CarteScene extends Phaser.Scene {
         const mult = BUTIN_PAR_DANGER[z.danger] / BUTIN_PAR_DANGER[1] * NIVEAUX_AVENTURIER[v.niveau].butin * (aSaMesure(v, cle) ? BONUS_A_SA_MESURE : 1);
         const butinMin = Math.round(Math.min(...quetes.map(q => q.butin[0])) * mult);
         const butinMax = Math.round(Math.max(...quetes.map(q => q.butin[1])) * mult);
-        ligne = `Butin espéré pour ${v.nom.split(' ')[0]} : ${butinMin} à ${butinMax} p. · ${ligne}` + (aSaMesure(v, cle) ? `\n★ À sa mesure : ${v.feminin ? 'elle' : 'il'} y va avec plaisir (+15 % de butin)` : '');
+        ligne = `Butin espéré pour ${prenomDe(v.nom)} : ${butinMin} à ${butinMax} p. · ${ligne}` + (aSaMesure(v, cle) ? `\n★ À sa mesure : ${v.feminin ? 'elle' : 'il'} y va avec plaisir (+15 % de butin)` : '');
       }
       const texte = this.add.text(0, 22, `${z.description}\n${ligne}`, style(13, '#f3e6c8', { wordWrap: { width: w - 24 }, lineSpacing: 2 }));
       contenu.add(texte);
@@ -507,7 +507,7 @@ class CarteScene extends Phaser.Scene {
           contenu.add(t);
           bas = t.y + t.height;
         } else {
-          const envoyer = this.add.text(w - 24, bas + 6, `Envoyer ${v.nom.split(' ')[0]} ici ▶`,
+          const envoyer = this.add.text(w - 24, bas + 6, `Envoyer ${prenomDe(v.nom)} ici ▶`,
             style(15, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#4f7a3a', padding: { x: 8, y: 5 } })).setOrigin(1, 0).setInteractive({ useHandCursor: true });
           envoyer.on('pointerdown', () => this.envoyer(cle));
           contenu.add(envoyer);

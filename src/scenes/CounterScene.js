@@ -370,7 +370,7 @@ class CounterScene extends Phaser.Scene {
     const c = this.ficheMise = this.add.container(0, 0).setDepth(6);
     const x = 688, y = 22, L = 252, H = 226;
     c.add(this.add.image(x + L / 2, y + H / 2, panneauHD(this, L, H)).setScale(2));
-    c.add(this.add.text(x + 14, y + 10, `Miser sur ${v.nom.split(' ')[0]}`, style(16, '#5a0e0e', { fontStyle: 'bold' })));
+    c.add(this.add.text(x + 14, y + 10, `Miser sur ${prenomDe(v.nom)}`, style(16, '#5a0e0e', { fontStyle: 'bold' })));
     c.add(this.add.text(x + 14, y + 31, `${NIVEAUX_AVENTURIER[v.niveau].nom} · ${ZONES[v.zone] ? ZONES[v.zone].nom : ''}`, style(11, '#6a4a2a', { fontStyle: 'italic' })));
     montants.forEach((mt, i) => {
       const cx = x + L / 2 + (i - 1) * 80, cy = y + 84, choisi = i === choisie;
@@ -395,7 +395,7 @@ class CounterScene extends Phaser.Scene {
     const avant = v ? chanceDeRetour(v, this.colis) : 0;
     choisirMise(G, v, montant);
     const apres = chanceDeRetour(v, this.colis);
-    this.raconter(`Tu mises ${montant} p. sur ${v.nom.split(' ')[0]} : la bourse lui sera remise au départ. Il revient vainqueur : ${Math.round(montant * MISE_AVENTURIER.vainqueur)} p.`, 'Ta mise');
+    this.raconter(`Tu mises ${montant} p. sur ${prenomDe(v.nom)} : la bourse lui sera remise au départ. Il revient vainqueur : ${Math.round(montant * MISE_AVENTURIER.vainqueur)} p.`, 'Ta mise');
     Son.jouer('pieces', { montant });
     gainEnDirect(this, 815, 186, `+${Math.max(1, Math.round((apres - avant) * 100))} % de chances`, true);
     this.restaurerService();
@@ -1678,7 +1678,7 @@ class CounterScene extends Phaser.Scene {
     // (la partie a pu être rechargée : on retrouve la mission elle-même, pas sa copie)
     const p = G.partis.find(x => x.voyageur.id === entree.parti.voyageur.id && x.depart === entree.parti.depart) || entree.parti;
     if (!p.detresse) p.detresse = entree.parti.detresse;
-    const v = p.voyageur, prenom = v.nom.split(' ')[0];
+    const v = p.voyageur, prenom = prenomDe(v.nom);
     this.titreCommande.setFontSize(17).setText('Un message');
     this.avancer(JOURNEE.visite);
     // il arrive à tire-d'aile par la droite, puis se pose sur le rebord de la fenêtre et picore

@@ -190,7 +190,7 @@ function nuitDeLaMenace(G) {
       M.tenues = (M.tenues || 0) + 1;
       M.drapeaux = { ...(M.drapeaux || {}), [m.zone]: demain };   // (la bannière dorée, une semaine sur la carte)
       M.nouvelles.push({ zone: m.zone, tenue: true, gains: `+${prime} p. · +${MENACE.reputation} réputation · +1 ⚑` });
-      G.annonceMenace = `${z.nom.toUpperCase()} : LA CONTRÉE TIENT BON ! ${ds.length > 1 ? `${ds.length} défenseurs ont` : 'Un défenseur a'} repoussé les pillards.${temoin ? ` ${temoin.nom.split(' ')[0]} ${indice}. Le Conseil parle de fièvre.` : ''}`;
+      G.annonceMenace = `${z.nom.toUpperCase()} : LA CONTRÉE TIENT BON ! ${ds.length > 1 ? `${ds.length} défenseurs ont` : 'Un défenseur a'} repoussé les pillards.${temoin ? ` ${prenomDe(temoin.nom)} ${indice}. Le Conseil parle de fièvre.` : ''}`;
     } else {
       const ecart = assaut - force;
       const points = ds.length <= 1 ? 3 : ecart <= MENACE.perte.peu ? 1 : ecart <= MENACE.perte.net ? 2 : 3;

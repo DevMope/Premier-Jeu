@@ -52,7 +52,7 @@ function matinDuLien(G) {
   const l = [];
   if (c && c.lienNuit && c.lienNuit.jour === G.jour && c.lienNuit.d < 0) l.push(`${nomChatMaj(G)} t'en veut un peu (complicité ${c.lienNuit.d}).`);
   // (v1.38) deux chats à nourrir : on prévient quand la réserve ne suffit plus pour les deux
-  if (c && c.adopte && moulinFait(G) && (G.stock.ration || 0) < 2) l.push(`Plus que ${G.stock.ration || 0} ration${(G.stock.ration || 0) > 1 ? 's' : ''} dans la réserve : il en faut pour ${nomChatMaj(G)} et pour ${nomCompagne(G)}.`);
+  if (c && c.adopte && moulinFait(G) && (G.stock.ration || 0) < 2) { const n = G.stock.ration || 0; l.push(`${n ? 'Plus qu\'une ration' : 'Plus aucune ration'} dans la réserve : il en faut pour ${nomChat(G)} et pour ${nomCompagne(G)}.`); }
   return l;
 }
 

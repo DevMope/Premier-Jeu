@@ -141,7 +141,7 @@ class AtelierScene extends Phaser.Scene {
       const droite = x0 + 436;
       if (t.reparation) {
         const cible = ETATS[t.reparation.cible || t.etat + 1];
-        const qui = t.reparation.ouvrier === 'toi' ? 'Toi' : EMPLOYES[t.reparation.ouvrier].nom.split(' ')[0];
+        const qui = t.reparation.ouvrier === 'toi' ? 'Toi' : prenomDe(EMPLOYES[t.reparation.ouvrier].nom);
         c.add(this.add.text(droite, y, `${qui} → ${cible.nom}\nencore ${t.reparation.jours} j`,
           style(11, '#2f6a2a', { fontStyle: 'bold', align: 'right' })).setOrigin(1, 0.5));
       } else if (t.etat >= ETATS.length - 1) {

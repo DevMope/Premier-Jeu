@@ -102,9 +102,10 @@ Object.assign(MarcheNoirScene.prototype, {
     this.ouvrirVue(0.55); this.dessinerTableOsselets(null);
     this.titreCoin.setText('Les osselets de Grik');
     this.vider();
+    if (!message && tropJeunePourParier(G)) message = "Grik referme sa main griffue : « Les osselets, c'est pour les grands. Reviens à dix-huit ans, l'ami. »";
     this.texte(40, 374, message || "Grik le Rusé fait rouler cinq osselets dans sa main griffue : « Une petite partie, l'ami ? Le plus beau coup gagne. Paires, brelans, carrés... »", 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
     this.texte(40, 420, `Mise : ${BRUMES.osselets.mise} p. (tu peux miser plus) · une relance · gagné : ta mise doublée · ${reste > 0 ? `encore ${reste} partie${reste > 1 ? 's' : ''} ce soir` : 'plus de partie ce soir'}`, 12, '#e8c890', { fontStyle: 'italic' });
-    if (reste > 0) this.bouton(330, 470, 260, `Jouer (${BRUMES.osselets.mise} p.)`, () => {
+    if (reste > 0 && !tropJeunePourParier(G)) this.bouton(330, 470, 260, `Jouer (${BRUMES.osselets.mise} p.)`, () => {
       const p = commencerOsselets(G);
       if (typeof p === 'string') return this.pageOsselets(p);
       Sauvegarde.maintenant(G, 'Nuit');   // (v1.07 : la mise est jouée, même si l'on recharge)

@@ -64,6 +64,7 @@ function nomCoup(des) {
 }
 function commencerOsselets(G) {
   if (!brumesActives(G)) return "Les osselets ne roulent que pendant la Nuit des Brumes.";
+  if (tropJeunePourParier(G)) return "Grik referme sa main griffue : « Les osselets, c'est pour les grands. Reviens à dix-huit ans, l'ami. »";
   if (partiesOsseletsRestantes(G) <= 0) return "Grik range ses osselets : « Trois parties par soir, l'ami. Reviens demain. »";
   if (!peutPayer(G, BRUMES.osselets.mise)) return manqueArgent(G, BRUMES.osselets.mise, "Pas assez d'argent pour la mise.");
   payer(G, BRUMES.osselets.mise, 'fete');

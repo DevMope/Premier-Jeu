@@ -76,7 +76,7 @@ Object.assign(MarcheNoirScene.prototype, {
     g.fillStyle(0x2a2016).fillRect(300, 40, 600, 310); g.lineStyle(3, 0xc8a050).strokeRect(300, 40, 600, 310); g.fillStyle(0x7a1a1a).fillCircle(870, 70, 16);
     this.vueObj(this.add.image(170, 360, textureBusteHD(this, c.banni, 'neutre')).setOrigin(0.5, 1).setScale(1.6), 3.8);
     this.texteVue(320, 52, `Contrat de l'ombre — « ${c.titre} »`, 16, '#f3d98a', { fontStyle: 'bold' });
-    this.texteVue(320, 84, `${c.banni.nom.split(' ')[0]} : « ${c.texte} »`, 13, '#f3e6c8', { fontStyle: 'italic', lineSpacing: 4, wordWrap: { width: 575 } });
+    this.texteVue(320, 84, `${prenomDe(c.banni.nom)} : « ${c.texte} »`, 13, '#f3e6c8', { fontStyle: 'italic', lineSpacing: 4, wordWrap: { width: 575 } });
     const manque = kitManquant(G, c);
     this.texteVue(320, 160, `Qui : un de tes aventuriers (${NIVEAUX_AVENTURIER[c.niveauMin].nom.toLowerCase()} ou plus)\nÉquipement à fournir : ${c.kit.map(id => nomObjet(id).toLowerCase()).join(', ')}\nDanger : ${'★'.repeat(c.danger)}${'☆'.repeat(5 - c.danger)}\nPaie : ${c.paie} p.   ·   Durée : ${c.duree} jours   ·   ☾ (ombre)`, 13, '#f3e6c8', { lineSpacing: 6 });
     this.texteVue(320, 262, "Si ça tourne mal : l'aventurier peut ne pas revenir, et la garde se souvient des visages.", 12, '#ff9a80', { fontStyle: 'italic' });
@@ -91,14 +91,14 @@ Object.assign(MarcheNoirScene.prototype, {
     this.texte(40, 374, message || (candidats.length ? 'Qui envoies-tu ? (Il sera absent deux jours.)' : `Aucun de tes habitués n'a le niveau (${NIVEAUX_AVENTURIER[c.niveauMin].nom.toLowerCase()} ou plus), ou ils se remettent de leurs blessures.`), 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
     candidats.forEach((h, i) => {
       const ch = chanceContrat(c, h), mot = ch >= 0.7 ? 'bonnes' : ch >= 0.5 ? 'moyennes' : 'minces';
-      this.bouton(160 + i * 280, 440, 260, `${h.nom.split(' ')[0]} (${NIVEAUX_AVENTURIER[h.niveau || 'novice'].nom}) · chances ${mot}`, () => {
+      this.bouton(160 + i * 280, 440, 260, `${prenomDe(h.nom)} (${NIVEAUX_AVENTURIER[h.niveau || 'novice'].nom}) · chances ${mot}`, () => {
         const e = accepterContrat(G, h.nom);
         if (e) return this.pageContrat(e);
         Son.jouer('tampon'); this.majBourse();
-        this.pageBar(`${c.banni.nom.split(' ')[0]} glisse le pli dans sa manche : « ${h.nom.split(' ')[0]} partira cette nuit. Dans deux jours, tu auras de ses nouvelles. Ou pas. »`);
+        this.pageBar(`${prenomDe(c.banni.nom)} glisse le pli dans sa manche : « ${prenomDe(h.nom)} partira cette nuit. Dans deux jours, tu auras de ses nouvelles. Ou pas. »`);
       }, !manque.length);
     });
-    this.bouton(860, 503, 140, 'Refuser', () => this.pageBar(`${c.banni.nom.split(' ')[0]} reprend son pli sans rien dire. « On ne t'en voudra pas... cette fois. »`));
+    this.bouton(860, 503, 140, 'Refuser', () => this.pageBar(`${prenomDe(c.banni.nom)} reprend son pli sans rien dire. « On ne t'en voudra pas... cette fois. »`));
   },
 
   // --- La fosse ---
@@ -154,11 +154,11 @@ Object.assign(MarcheNoirScene.prototype, {
     // le panneau du bas
     this.vider();
     const cible = cibles[0];
-    const dit = !cible ? "Grisouille, le preneur de paris : « Personne en route sur qui parier ce soir. Envoie-moi des aventuriers, et reviens. »"
-      : `Grisouille, le preneur de paris : « Tu paries qu'il n'en revient pas ? ${String(coteContre(cible)).replace('.', ',')} contre 1 sur ${cible.voyageur.nom.split(' ')[0]}. Personne n'en saura rien... »`;
+    const dit = tropJeunePourParier(G) ? "Grisouille ricane : « Parier sur la mort des autres, à ton âge ? Reviens à dix-huit ans, morveux. »" : !cible ? "Grisouille, le preneur de paris : « Personne en route sur qui parier ce soir. Envoie-moi des aventuriers, et reviens. »"
+      : `Grisouille, le preneur de paris : « Tu paries qu'il n'en revient pas ? ${String(coteContre(cible)).replace('.', ',')} contre 1 sur ${prenomDe(cible.voyageur.nom)}. Personne n'en saura rien... »`;
     this.texte(40, 374, message || dit, 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
     if (cible) this.texte(40, 400, 'La cote suit ses vraies chances : bien équipé, elle monte. Ton flair les connaît aussi.', 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } });
-    if (cibles.length && parisNoirsEnCours(G) < MISE_NOIRE.max) {
+    if (cibles.length && parisNoirsEnCours(G) < MISE_NOIRE.max && !tropJeunePourParier(G)) {
       const [mn, mx] = MISE_NOIRE.mise;
       this.miseNoire = Phaser.Math.Clamp(this.miseNoire || 30, mn, mx);
       const texteMise = this.texte(160, 440, `Mise : ${this.miseNoire} p.`, 15, '#f3d98a', { fontStyle: 'bold' }).setOrigin(0.5);
@@ -166,14 +166,14 @@ Object.assign(MarcheNoirScene.prototype, {
       this.bouton(70, 440, 50, '−', () => changer(-MISE_NOIRE.pas));
       this.bouton(250, 440, 50, '+', () => changer(MISE_NOIRE.pas));
       const n = Math.min(3, cibles.length), l = n === 1 ? 300 : n === 2 ? 250 : 180;
-      cibles.slice(0, n).forEach((p, i) => this.bouton(300 + l / 2 + 20 + i * (l + 10), 440, l, `Contre ${p.voyageur.nom.split(' ')[0]} (${String(coteContre(p)).replace('.', ',')} contre 1)`, () => {
+      cibles.slice(0, n).forEach((p, i) => this.bouton(300 + l / 2 + 20 + i * (l + 10), 440, l, `Contre ${prenomDe(p.voyageur.nom)} (${String(coteContre(p)).replace('.', ',')} contre 1)`, () => {
         const r = parierContre(G, p, this.miseNoire);
         if (r.erreur) return this.pageParisNoirs(r.erreur);
         Sauvegarde.maintenant(G, 'Nuit');
         Son.jouer('pieces'); this.majBourse();
-        this.pageParisNoirs(`Grisouille crache dans sa main et tope : « ${this.miseNoire} p. contre ${p.voyageur.nom.split(' ')[0]}, à ${String(r.cote).replace('.', ',')} contre 1. S'il échoue, je te paie. »`);
+        this.pageParisNoirs(`Grisouille crache dans sa main et tope : « ${this.miseNoire} p. contre ${prenomDe(p.voyageur.nom)}, à ${String(r.cote).replace('.', ',')} contre 1. S'il échoue, je te paie. »`);
       }, peutPayer(G, this.miseNoire)));
-    } else if (cibles.length) this.texte(40, 440, "« Trois paris à la fois, c'est assez. »", 13, '#a89080', { fontStyle: 'italic' });
+    } else if (cibles.length && !tropJeunePourParier(G)) this.texte(40, 440, "« Trois paris à la fois, c'est assez. »", 13, '#a89080', { fontStyle: 'italic' });
     this.texte(40, 482, "S'il échoue (sans rien, ou mort), ta mise × la cote. Un geste d'ombre (☾), et la Faucheuse s'y intéresse.", 11, '#b89a80', { fontStyle: 'italic' });
     this.bouton(860, 503, 140, '◂ Retour', () => this.accueil());
   },
@@ -184,7 +184,7 @@ Object.assign(MarcheNoirScene.prototype, {
     this.dessinerFosse(cb);
     this.titreCoin.setText('La fosse');
     this.vider();
-    const prenom = p => p.nom.split(' ')[0];
+    const prenom = p => prenomDe(p.nom);
     if (cb.pari) {
       const r = cb.resultat, gagnant = r.gagnant ? cb.b : cb.a;
       this.texte(40, 374, message || `Le combat de ce soir est fini : ${prenom(gagnant)} a gagné. ${r.gain ? `Tu as encaissé ${r.gain} pièces.` : 'Ta mise est perdue.'}`, 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
@@ -195,6 +195,11 @@ Object.assign(MarcheNoirScene.prototype, {
     this.miseFosse = Phaser.Math.Clamp(this.miseFosse || 10, OMBRE_ANNEE.fosse.mise[0], OMBRE_ANNEE.fosse.mise[1]);
     this.texte(40, 374, message || `Ce soir : ${cb.a.nom} contre ${cb.b.nom}. La foule tape du pied.`, 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
     this.texte(40, 400, `Ton flair : ${indiceFosse(G)}`, 12, '#e8c890', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    if (tropJeunePourParier(G)) {   // (v1.47) les paris attendent les 18 ans
+      this.texte(40, 440, "Le bookmaker te toise : « Les paris, c'est à dix-huit ans. Regarde si tu veux, mais garde tes sous. »", 13, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 780 } });
+      this.bouton(860, 503, 140, '◂ Retour', () => this.accueil());
+      return;
+    }
     const texteMise = this.texte(160, 440, `Mise : ${this.miseFosse} p.`, 15, '#f3d98a', { fontStyle: 'bold' }).setOrigin(0.5);
     const changer = d => { this.miseFosse = Phaser.Math.Clamp(this.miseFosse + d, OMBRE_ANNEE.fosse.mise[0], Math.min(OMBRE_ANNEE.fosse.mise[1], Math.max(OMBRE_ANNEE.fosse.mise[0], G.argent))); texteMise.setText(`Mise : ${this.miseFosse} p.`); Son.jouer('piece'); };
     this.bouton(70, 440, 50, '−', () => changer(-5));
@@ -218,7 +223,7 @@ Object.assign(MarcheNoirScene.prototype, {
     const [A, B] = this.combattants;
     for (const p of [A, B]) { this.tweens.killTweensOf(p); p.y = 318; }
     const base = [A.x, B.x];
-    const noms = [cb.a.nom.split(' ')[0], cb.b.nom.split(' ')[0]];
+    const noms = [prenomDe(cb.a.nom), prenomDe(cb.b.nom)];
     const titre = this.texte(480, 448, '', 18, '#ffcf70', { fontStyle: 'bold', stroke: '#1a0806', strokeThickness: 5 }).setOrigin(0.5);
     const cri = (t, x, y, coul = '#ffb090', taille = 14) => {
       const o = this.texteVue(x, y, t, taille, coul, { fontStyle: 'italic bold', stroke: '#1a0a06', strokeThickness: 4 }, 3.95).setOrigin(0.5).setScale(0.3);
@@ -385,7 +390,7 @@ Object.assign(MarcheNoirScene.prototype, {
     // (par défaut : le plus fort de ceux que tu peux affronter)
     if (id) this.advBras = id;
     if (!this.advBras || !brasDebloque(G, this.advBras)) this.advBras = [...ADVERSAIRES_BRAS].reverse().find(x => brasDebloque(G, x.id)).id;
-    const a = adversaireBras(this.advBras), prenom = a.nom.split(' ')[0];
+    const a = adversaireBras(this.advBras), prenom = prenomDe(a.nom);
     this.ouvrirVue();
     this.dessinerBrasDeFer(a);
     this.titreCoin.setText(`Le bras de fer · ${prenom} ${a.titre}`);
@@ -394,7 +399,7 @@ Object.assign(MarcheNoirScene.prototype, {
     this.texte(40, 424, `Mise : ${a.mise} p. · si tu gagnes : ta mise doublée, et le respect des Bannis. (Tes victoires contre ${prenom} : ${b.victoires[a.id] || 0}.)`, 12, '#e8c890', { fontStyle: 'italic' });
     ADVERSAIRES_BRAS.forEach((x, k) => {
       const ouvert = brasDebloque(G, x.id), choisi = x.id === a.id;
-      this.bouton(170 + k * 250, 458, 236, ouvert ? `${choisi ? '▸ ' : ''}${x.nom.split(' ')[0]} ${x.titre} (${['facile', 'moyen', 'difficile'][k]})` : `🔒 Bats d'abord ${ADVERSAIRES_BRAS[k - 1].nom.split(' ')[0]}`, () => this.pageBrasDeFer(null, x.id), ouvert && !choisi);
+      this.bouton(170 + k * 250, 458, 236, ouvert ? `${choisi ? '▸ ' : ''}${prenomDe(x.nom)} ${x.titre} (${['facile', 'moyen', 'difficile'][k]})` : `🔒 Bats d'abord ${prenomDe(ADVERSAIRES_BRAS[k - 1].nom)}`, () => this.pageBrasDeFer(null, x.id), ouvert && !choisi);
     });
     if (!(s.brasDeFer || {})[a.id]) this.bouton(240, 500, 300, `Défier ${prenom} (${a.mise} p.)`, () => {
       const e = commencerBrasDeFer(G, a.id);
@@ -409,7 +414,7 @@ Object.assign(MarcheNoirScene.prototype, {
   // Le mini-jeu : le repère fait l'aller-retour sur la barre ; un clic dans le vert fait pencher
   // le bras de Mog, un clic à côté lui redonne l'avantage. Il pousse sans arrêt.
   jeuBrasDeFer(a) {
-    const G = this.G, prenom = a.nom.split(' ')[0];
+    const G = this.G, prenom = prenomDe(a.nom);
     this.vider();
     const jeu = this.jeuBras = { p: 0.5, x: 0, sens: 1, fini: false, temps: 0, coup: 0 };
     this.bloqueCoins = true;
@@ -445,7 +450,7 @@ Object.assign(MarcheNoirScene.prototype, {
       if (gagne) { Son.jouer('fanfare'); this.cameras.main.shake(250, 0.012); this.tweens.add({ targets: this.advCorps, angle: 6, duration: 200, yoyo: true }); }
       else Son.jouer('refus');
       const suivant = ADVERSAIRES_BRAS.filter(x => brasDebloque(G, x.id)).length > avant ? ADVERSAIRES_BRAS[avant] : null;
-      this.time.delayedCall(900, () => this.pageBrasDeFer((gagne ? `${a.victoire} (+${a.mise} p., respect des Bannis)` : a.defaite) + (suivant ? ` Au fond de la cave, ${suivant.nom.split(' ')[0]} ${suivant.titre} se lève : il veut t'affronter.` : ''), a.id));
+      this.time.delayedCall(900, () => this.pageBrasDeFer((gagne ? `${a.victoire} (+${a.mise} p., respect des Bannis)` : a.defaite) + (suivant ? ` Au fond de la cave, ${prenomDe(suivant.nom)} ${suivant.titre} se lève : il veut t'affronter.` : ''), a.id));
     };
     const pousse = forceAdversaire(G, a.id);
     // (le temps réel de la scène : sur une machine lente, le repère ne ralentit pas)

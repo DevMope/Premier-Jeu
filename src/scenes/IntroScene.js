@@ -101,7 +101,7 @@ class IntroScene extends Phaser.Scene {
   }
 }
 
-const SOL_FORET = 337, SOL_COMTE = 352;   // (v0.58 : les pieds posés sur la berge, puis sur le chemin)
+const SOL_FORET = 335, SOL_COMTE = 352;   // (v0.58 : les pieds posés sur la berge, puis sur le chemin)
 
 class IntroHistoireScene extends Cinematique {
   constructor() { super('IntroHistoire'); }
@@ -123,7 +123,9 @@ class IntroHistoireScene extends Cinematique {
     creerForetPremierPlanHD(this);
     this.foret = this.add.container(0, 0);
     // (la berge est derrière les personnages : on marche dessus, et l'aventurier flotte devant)
-    this.berge = this.add.tileSprite(0, 318, 960, 14, 'bergeHD').setOrigin(0).setTileScale(2).setDepth(-0.5);
+    // (v1.47 : la berge était dessinée sous le fond, donc invisible, et l'on voyait JeuneGoy debout sur
+    // l'eau ; la voici devant la rivière du fond : de l'herbe, de la terre et des galets jusqu'au courant)
+    this.berge = this.add.tileSprite(0, 322, 960, 28, 'bergeHD').setOrigin(0).setTileScale(2);
     this.foret.add(this.add.rectangle(480, 185, 960, 370, 0x06140a, 0.2));
     for (let k = 0; k < 4; k++) {
       const r = this.add.triangle(0, 0, 120 + k * 230, 0, 160 + k * 230, 0, 260 + k * 230, 330, 0xfff4c0, 0.07).setOrigin(0).setBlendMode(Phaser.BlendModes.ADD);

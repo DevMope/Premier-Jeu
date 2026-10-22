@@ -775,7 +775,7 @@ const MONDE_CARTE = { L: 1864, H: 800, comptoir: { x: 945, y: 660 } };
 const JOUR_DEUX_ETOILES = 2;
 // Chaque nouveau palier d'étoiles fait passer le temps (en jours de calendrier, sans toucher aux
 // échéances du jeu) : le joueur grandit à mesure que le monde s'ouvre. 112 jours = un an.
-const SAUTS_TEMPS = { 2: 28, 3: 112, 4: 224, 5: 336 };
+const SAUTS_TEMPS = { 3: 112, 4: 224, 5: 336 };   // (v1.47 : plus de saut au palier ★2 : il s'ouvre au jour 2, et le temps sautait d'une saison dès le deuxième matin)
 
 // Pour ouvrir une zone à 3, 4 ou 5 étoiles : des retours réussis dans l'étoile d'avant.
 const RETOURS_POUR_ETOILE = { 3: 3, 4: 5, 5: 8 };

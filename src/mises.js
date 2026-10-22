@@ -15,6 +15,7 @@ function misesEnCours(G) { return (G.partis || []).filter(p => !p.termine && p.v
 // Peut-on miser sur lui ? (un aventurier qu'on connaît, qui part en mission, et pas plus de trois mises à la fois)
 function peutMiser(G, v) {
   if (!v || !v.queteId || v.mise > 0) return false;
+  if (tropJeunePourParier(G)) return false;   // (v1.47 : les mises attendent les 18 ans)
   if (niveauRelation(G, v.nom).index < MISE_AVENTURIER.relationMin) return false;
   return misesEnCours(G) < MISE_AVENTURIER.max;
 }
@@ -44,7 +45,7 @@ function miseAuRetour(G, parti) {
 
 function texteMise(m, v) {
   if (!m) return null;
-  const prenom = v.nom.split(' ')[0];
+  const prenom = prenomDe(v.nom);
   if (!m.rendu) return `Ta mise sur ${prenom} (${m.mise} p.) est perdue.`;
   return `Ta mise sur ${prenom} : ${m.mise} p. → ${m.rendu} p.${m.rendu < m.mise ? ' (revenu sans rien, il te rend la moitié)' : ''}`;
 }
@@ -63,6 +64,7 @@ function parisNoirsEnCours(G) { return (G.partis || []).filter(p => !p.termine &
 function cibleParisNoirs(G) { return enMission(G).filter(p => p.retour > G.jour && !(p.voyageur.mise > 0) && !p.voyageur.pariNoir); }
 
 function parierContre(G, parti, mise) {
+  if (tropJeunePourParier(G)) return { erreur: "Grisouille ricane : « Parier sur la mort des autres, à ton âge ? Reviens à dix-huit ans, morveux. »" };
   if (parisNoirsEnCours(G) >= MISE_NOIRE.max) return { erreur: `« Trois paris à la fois, c'est assez. Reviens quand l'un d'eux sera rentré... ou pas. »` };
   if (!peutPayer(G, mise)) return { erreur: manqueArgent(G, mise, "Pas assez d'argent pour cette mise.") };
   const cote = coteContre(parti);
@@ -77,7 +79,7 @@ function pariNoirAuRetour(G, parti) {
   const v = parti.voyageur, r = parti.resultat, pn = v.pariNoir;
   if (!pn || parti.pariNoirRegle) return null;
   parti.pariNoirRegle = true;
-  const prenom = v.nom.split(' ')[0];
+  const prenom = prenomDe(v.nom);
   if (r.vivant && !r.echec) { G.stats.parisNoirs = (G.stats.parisNoirs || 0) - pn.mise; return `(Au marché noir, ton pari contre ${prenom} est perdu.)`; }
   const gain = Math.round(pn.mise * pn.cote);
   encaisser(G, gain, 'parisNoirs');

@@ -864,13 +864,30 @@ function depenserChez(G, cle, montant) {
 
 // --- Les jeux d'argent ---
 
+// (v1.47) Les jeux d'argent attendent les 18 ans : dés, bonneteau, fosse, osselets, paris contre et
+// mises au comptoir. Une seule exception : au coin des jeux, quand un mineur insiste assez, le vieux
+// Grippesou finit par le laisser jouer (« C'est le business... mais fais vite, petit. »).
+const AGE_JEUX = 18, INSISTANCE_GRIPPESOU = 3;
+function tropJeunePourParier(G) { return ageJoueur(G) < AGE_JEUX; }
+function coinDesJeuxPermis(G) { return !tropJeunePourParier(G) || !!G.grippesouPermet; }
+// Une tentative de plus au coin des jeux : true quand Grippesou cède (une fois pour toutes)
+function insisterAuCoinDesJeux(G) {
+  G.insistanceJeux = (G.insistanceJeux || 0) + 1;
+  if (G.insistanceJeux >= INSISTANCE_GRIPPESOU) G.grippesouPermet = true;
+  return !!G.grippesouPermet;
+}
+const REFUS_COIN_DES_JEUX = [
+  "Fil-de-Fer cache ses dés dans sa manche : « Pas de mise pour les mioches. Reviens à dix-huit ans. »",
+  "Fil-de-Fer soupire : « Encore toi ? La garde me ferme l'étal si je fais jouer un gamin. File ! »",
+];
+
 function partiesRestantes(G, jeu) {
   return PARTIES_PAR_JOUR - G.jeux[jeu];
 }
 
 // Les dés : deux dés chacun, le plus gros total gagne (égalité : on récupère sa mise).
 function jouerAuxDes(G, mise) {
-  if (partiesRestantes(G, 'des') <= 0 || !peutPayer(G, mise)) return null;
+  if (!coinDesJeuxPermis(G) || partiesRestantes(G, 'des') <= 0 || !peutPayer(G, mise)) return null;
   G.jeux.des++;
   const de = () => hasard(1, 6);
   const toi = [de(), de()];
@@ -887,7 +904,7 @@ function jouerAuxDes(G, mise) {
 
 // Le bonneteau : on paie la mise, et on récupère le double si on trouve la pièce.
 function miserAuBonneteau(G, mise) {
-  if (partiesRestantes(G, 'bonneteau') <= 0 || !peutPayer(G, mise)) return false;
+  if (!coinDesJeuxPermis(G) || partiesRestantes(G, 'bonneteau') <= 0 || !peutPayer(G, mise)) return false;
   G.jeux.bonneteau++;
   payer(G, mise, 'jeux');
   return true;
@@ -1626,7 +1643,7 @@ function nuit(G) {
     const [id, n] = auHasard(CADEAUX_VILLAGES);
     G.stock[id] = (G.stock[id] || 0) + n;
     const nom = ITEMS[id].nom.toLowerCase();
-    G.reveil.lignes.push(`Un panier devant la porte, de la part ${ZONES[c.zone] ? 'des gens ' + deLieu(ZONES[c.zone].nom) : 'd\'un village'} : ${n} ${nom}${n > 1 && !/[sx]$/.test(nom) ? 's' : ''}, pour te remercier d'avoir aidé ${c.nom.split(' ')[0]}.`);
+    G.reveil.lignes.push(`Un panier devant la porte, de la part ${ZONES[c.zone] ? 'des gens ' + deLieu(ZONES[c.zone].nom) : 'd\'un village'} : ${n} ${nom}${n > 1 && !/[sx]$/.test(nom) ? 's' : ''}, pour te remercier d'avoir aidé ${prenomDe(c.nom)}.`);
   }
   G.cadeauxVillages = [];
   for (const l of nuitMafia(G)) G.reveil.lignes.push(l);
@@ -2292,7 +2309,7 @@ function terminerAventure(G, parti) {
       if (Math.random() < CHANCE_INTERDIT_OMBRE) {
         const id = auHasard(interditsDuPasseur());
         G.interdits[id] = (G.interdits[id] || 0) + 1;
-        message = (message ? message + ' ' : '') + `${v.nom.split(' ')[0]} te glisse ${INTERDITS[id].article} : « Un souvenir. Cache-le bien. »`;
+        message = (message ? message + ' ' : '') + `${prenomDe(v.nom)} te glisse ${INTERDITS[id].article} : « Un souvenir. Cache-le bien. »`;
       }
       if (Math.random() < CHANCE_GARDE_OMBRE) { G.gardeDemain = true; message = (message ? message + ' ' : '') + `Des silhouettes en tabard bleu l'ont suivi${v.feminin ? 'e' : ''} jusqu'à ta porte...`; }
     }
@@ -2303,7 +2320,7 @@ function terminerAventure(G, parti) {
     const blessures = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - derniere.pvApres));
     // Chaque succès le fait progresser : novice, aguerri, vétéran, héros, légende.
     const niveau = meilleurNiveau(v.niveau, succesDe(G, v.nom));
-    if (niveau !== v.niveau) message = (message ? message + ' ' : '') + `${v.nom.split(' ')[0]} devient ${NIVEAUX_AVENTURIER[niveau].nom.toLowerCase()} !`;
+    if (niveau !== v.niveau) message = (message ? message + ' ' : '') + `${prenomDe(v.nom)} devient ${NIVEAUX_AVENTURIER[niveau].nom.toLowerCase()} !`;
     G.habitues.push({ nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau, prestige: v.prestige || null, convalescence: blessures ? G.jour + reposCoeur(G) * blessures : 0 });
     parti.trouvailles = trouvailles(G, v);
     // (v1.23) une pièce pour la vitrine : l'écu de son royaume, une curiosité de Banni, un fragment de la carte ancienne
@@ -2899,7 +2916,7 @@ function offrirCadeau(G, v, id) {
 function offrirCadeauSansFete(G, v, id) {
   if (!G.cadeaux[id]) return { erreur: "Tu n'as plus ce cadeau." };
   const p = connaitre(G, v);
-  if (p.cadeauJour === G.jour) return { erreur: `${v.nom.split(' ')[0]} a déjà reçu un cadeau aujourd'hui.` };
+  if (p.cadeauJour === G.jour) return { erreur: `${prenomDe(v.nom)} a déjà reçu un cadeau aujourd'hui.` };
   G.cadeaux[id]--;
   p.cadeauJour = G.jour;
   // (v1.00) les cadeaux du Solstice : la tarte (un cœur de plus au départ), le trèfle (tout le monde l'aime)
@@ -2949,7 +2966,7 @@ function appliquerMalusEchec(G, parti, h) {
     if (m === 'blesse') h.convalescence = G.jour + (typeof confrerieA === 'function' && confrerieA(G, 'hospice') ? Math.ceil(CONVALESCENCE / 2) : CONVALESCENCE);
     if (m === 'rumeur') G.rumeur = { jour: G.jour + 1 };
     if (m === 'comptes') h.exige = true;
-    textes.push(MALUS_ECHEC[m].replace('{nom}', v.nom.split(' ')[0]).replace('{e}', v.feminin ? 'e' : '')
+    textes.push(MALUS_ECHEC[m].replace('{nom}', prenomDe(v.nom)).replace('{e}', v.feminin ? 'e' : '')
       .replace('{le}', v.feminin ? 'la' : 'le').replace('{il}', v.feminin ? 'elle' : 'il'));
   }
   return textes;
@@ -3403,7 +3420,7 @@ function avisDeRecherche(G) {
 
 // Les textes d'imposture : {nom}, {prenom}, {ami}, {Il}/{il} et {e} s'accordent à la personne.
 // Le prénom d'un nom (« Sire Aldric le Hardi » → « Aldric », « Sœur Edwige » → « Edwige »)
-function prenomDe(nom) { const m = nom.split(' '); return m[1] && /^(Sire|Sœur|Dame|Maître|Mère|Capitaine|Sergent|Garde|Grand-mère|Aïeule|Le|La)$/.test(m[0]) ? m[1] : m[0]; }
+function prenomDe(nom) { const m = nom.split(' '); if (m[1] && /^(Le|La)$/.test(m[0])) return nom; return m[1] && /^(Sire|Sœur|Dame|Maître|Mère|Capitaine|Sergent|Garde|Grand-mère|Aïeule|Seigneur|Lord|Comtesse|Comte|Frère|Père|Le|La)$/.test(m[0]) ? m[1] : m[0]; }
 function texteImposture(t, v, ami = '') {
   return t.replaceAll('{nom}', v.nom).replaceAll('{prenom}', prenomDe(v.nom)).replaceAll('{ami}', ami)
     .replaceAll('{Il}', v.feminin ? 'Elle' : 'Il').replaceAll('{il}', v.feminin ? 'elle' : 'il').replaceAll('{e}', v.feminin ? 'e' : '').replaceAll('{J}', eJ());
@@ -3674,8 +3691,8 @@ function phrasePassant(G, { nuit = false } = {}) {
   if (G.argent > 600) nouvelles.push(`Il paraît que tu dors sur un tas d'or. Il n'est pas trop dur, le tas ?`);
   const dernier = (G.historique || [])[0];
   if (dernier && dernier.retour >= G.jour - 2) {
-    if (dernier.issue === 'vivant') nouvelles.push(`${dernier.nom.split(' ')[0]} est rentré${dernier.feminin ? 'e' : ''} les poches pleines, à ce qu'on dit ! Grâce à toi ?`);
-    else if (dernier.issue !== 'echec') nouvelles.push(`Pauvre ${dernier.nom.split(' ')[0]}... On dit qu'${dernier.feminin ? 'elle' : 'il'} n'est jamais revenu${dernier.feminin ? 'e' : ''}. Les temps sont durs.`);
+    if (dernier.issue === 'vivant') nouvelles.push(`${prenomDe(dernier.nom)} est rentré${dernier.feminin ? 'e' : ''} les poches pleines, à ce qu'on dit ! Grâce à toi ?`);
+    else if (dernier.issue !== 'echec') nouvelles.push(`Pauvre ${prenomDe(dernier.nom)}... On dit qu'${dernier.feminin ? 'elle' : 'il'} n'est jamais revenu${dernier.feminin ? 'e' : ''}. Les temps sont durs.`);
   }
   if (typeof forgeConstruite === 'function' && forgeConstruite(G)) nouvelles.push(`Ça martèle fort chez toi, la nuit ! Ta forge réveille tout le quartier.`);
   if (typeof chatAdopte === 'function' && chatAdopte(G)) nouvelles.push(`C'est ton chat, le matou qui dort sur ta fenêtre ? Il a l'air plus riche que moi.`);

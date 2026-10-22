@@ -176,5 +176,5 @@ function detourMafia(G, v) {
   const bandits = Object.values(QUETES).flatMap(q => q.epreuves).find(e => e.type === 'bandits');
   // (une épreuve en plus, que le voyageur n'avait pas demandée : elle ne compte pas dans sa commande)
   if (bandits) v.epreuves.push({ ...bandits, detour: true, intro: "Le détour pour le paquet m'a mené{e} dans un coin mal famé..." });
-  return `${v.nom.split(' ')[0]} emporte, sans le savoir, un paquet pour ${nomBande(G)}.`;
+  return `${prenomDe(v.nom)} emporte, sans le savoir, un paquet pour ${nomBande(G)}.`;
 }
