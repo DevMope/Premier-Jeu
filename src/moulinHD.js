@@ -501,7 +501,23 @@ const FORMES_FUMEE = {
   souris: { nom: 'une souris', mouvement: 'trotte', traits: [[[1.05, 0.1], [0.55, -0.42], [0, -0.5], [-0.55, -0.35], [-0.72, 0.1], [1.05, 0.1]], cercleFumee(0.42, -0.7, 0.24, 0.24), [[0.78, -0.12], [0.8, -0.1]], [[-0.72, 0.05], [-1.05, -0.1], [-1.25, -0.4], [-1.1, -0.65], [-0.9, -0.55]]] },
   oiseau: { nom: 'un oiseau', mouvement: 'vol', traits: [[[-1, -0.3], [-0.5, -0.55], [0, 0]], [[0, 0], [0.5, -0.55], [1, -0.3]], [[0, 0], [0.1, 0.25]]] },
   couronne: { nom: 'une couronne', mouvement: 'flotte', traits: [[[-0.9, 0.35], [-0.9, -0.45], [-0.45, -0.05], [0, -0.65], [0.45, -0.05], [0.9, -0.45], [0.9, 0.35], [-0.9, 0.35]]] },
-  dragon: { nom: 'un petit dragon', mouvement: 'vol', traits: [[[-1.4, 0.15], [-1.15, 0.35], [-0.7, 0.1], [-0.2, 0.3], [0.3, 0.1], [0.65, -0.25]], [[-1.4, 0.15], [-1.55, 0], [-1.4, -0.1]], [[0.65, -0.25], [1.1, -0.2], [0.75, -0.45], [0.65, -0.25]], [[0.75, -0.45], [0.7, -0.7]], [[-0.3, 0.2], [-0.55, -0.6], [-0.15, -0.35], [0.05, -0.9], [0.25, -0.3], [0.1, 0.18]]] },
+  // (v1.50, planche 63 : on ne reconnaissait pas l'ancien, un simple trait) une vraie silhouette pleine, de profil et
+  // tournée vers la droite : la tête cornue à la gueule ouverte, le long cou, le corps, la grande aile de chauve-souris
+  // levée (une voile plus légère, ses os bien marqués), deux pattes griffues, la longue queue en pointe de flèche
+  dragon: { nom: 'un petit dragon', mouvement: 'vol', fin: 0.6, pleins: [
+    { poly: [[-0.72, 0.1], [-0.45, -0.08], [-0.1, -0.14], [0.22, -0.16], [0.42, -0.06], [0.48, 0.14], [0.32, 0.36], [0, 0.44], [-0.38, 0.42], [-0.66, 0.3]] },   // (le corps)
+    { trait: [[0.3, -0.02, 0.2], [0.5, -0.32, 0.15], [0.64, -0.56, 0.12], [0.8, -0.7, 0.11]] },                                                          // (le cou)
+    { poly: [[0.66, -0.78], [0.8, -0.92], [1.08, -0.92], [1.48, -0.82], [1.5, -0.72], [1.06, -0.7], [1.38, -0.56], [1.3, -0.46], [0.96, -0.48], [0.78, -0.56]] },   // (la tête, la gueule ouverte)
+    { trait: [[-0.62, 0.22, 0.17], [-1.02, 0.36, 0.11], [-1.38, 0.3, 0.08], [-1.62, 0.08, 0.06], [-1.72, -0.14, 0.045]] },                               // (la queue)
+    { poly: [[-1.74, -0.1], [-1.92, -0.22], [-1.76, -0.48], [-1.6, -0.24]] },                                                                           // (sa pointe)
+    { trait: [[0.2, 0.3, 0.1], [0.32, 0.52, 0.07], [0.22, 0.7, 0.055], [0.44, 0.72, 0.045]] }, { trait: [[-0.46, 0.3, 0.11], [-0.5, 0.55, 0.07], [-0.58, 0.72, 0.055], [-0.36, 0.74, 0.045]] },   // (les pattes)
+    { voile: true, poly: [[0.05, -0.14], [0.3, -0.85], [0.02, -1.5], [-0.85, -1.78], [-0.8, -1.42], [-1.28, -1.26], [-1.06, -0.98], [-1.3, -0.66], [-0.96, -0.5], [-0.98, -0.2], [-0.55, -0.08]] },   // (la voile de la grande aile)
+    { voile: true, poly: [[0.3, -0.16], [0.52, -0.62], [0.48, -1.12], [0.72, -1.0], [0.62, -0.7], [0.78, -0.52], [0.5, -0.14]] },                       // (l'autre aile, derrière)
+  ], traits: [
+    [[0.05, -0.14], [0.3, -0.85], [0.02, -1.5], [-0.85, -1.78]], [[0.02, -1.5], [-1.28, -1.26]], [[0.02, -1.5], [-1.3, -0.66]], [[0.02, -1.5], [-0.98, -0.2]],   // (les os de l'aile)
+    [[0.82, -0.9], [0.62, -1.14], [0.46, -1.2]], [[0.98, -0.92], [0.9, -1.16]],                                                     // (les cornes)
+    [[1.58, -0.74], [1.74, -0.78], [1.9, -0.7]], [[1.56, -0.62], [1.8, -0.58]],                                                       // (un petit souffle)
+  ] },
   chat: { nom: 'une tête de chat', mouvement: 'flotte', traits: [cercleFumee(0, 0, 0.75, 0.62), [[-0.62, -0.32], [-0.55, -1], [-0.18, -0.6]], [[0.62, -0.32], [0.55, -1], [0.18, -0.6]], [[-0.3, -0.1], [-0.28, -0.08]], [[0.3, -0.1], [0.32, -0.08]], [[-0.85, 0.15], [-0.35, 0.18]], [[0.85, 0.15], [0.35, 0.18]]] },
   chapeau: { nom: 'un chapeau de sorcier', mouvement: 'flotte', traits: [[[-1.15, 0.45], [1.15, 0.45]], [[-0.72, 0.45], [-0.1, -0.9], [0.3, -1.25], [0.62, -1.05], [0.25, -0.85], [0.72, 0.45]], [[-0.05, -0.15], [0.06, -0.3], [0.17, -0.15], [0.06, 0]]] },   // (le seul souvenir de son ancien maître)
   ancre: { nom: 'une ancre', mouvement: 'flotte', traits: [[[0, -0.9], [0, 0.8]], cercleFumee(0, -1.05, 0.17, 0.17), [[-0.4, -0.55], [0.4, -0.55]], cercleFumee(0, 0.25, 0.7, 0.6, 0, Math.PI, 10)] },
@@ -517,20 +533,37 @@ function formeDeFumee(scene, forme, bx, by, cx, cy, { taille = 46, profondeur = 
   const F = FORMES_FUMEE[forme]; if (!F) return null;
   const c = scene.add.container(cx, cy).setDepth(profondeur), bouffees = [];
   // les points des traits, à intervalles réguliers (un dessin qui se trace dans l'ordre des traits)
-  const pas = 0.15;
+  const pas = 0.15 * (F.fin || 1);   // (v1.50 : une forme fine, des bouffées plus petites et plus serrées)
   for (const trait of F.traits) for (let i = 0; i < trait.length - 1; i++) {
     const [x0, y0] = trait[i], [x1, y1] = trait[i + 1], n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / pas));
     for (let k = 0; k < n; k++) bouffees.push([(x0 + (x1 - x0) * k / n) * sens, y0 + (y1 - y0) * k / n]);
   }
   const fin = F.traits[F.traits.length - 1].slice(-1)[0]; bouffees.push([fin[0] * sens, fin[1]]);
-  const ech = Math.max(0.9, taille / 36);   // (des bouffées fines : la forme se lit mieux)
+  const alphas = bouffees.map(() => 0.9);
+  // (v1.50) les formes pleines : une grille de bouffées dans la silhouette, plus serrées sur le bord, plus légères dans
+  // une voile (l'aile du dragon) ; elles arrivent de la plus proche de la bouche à la plus lointaine
+  if (F.pleins) {
+    const dans = (x, y, P) => { if (P.poly) { let d = false; for (let i = 0, j = P.poly.length - 1; i < P.poly.length; j = i++) { const [xi, yi] = P.poly[i], [xj, yj] = P.poly[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) d = !d; } return d; }
+      for (let i = 0; i < P.trait.length - 1; i++) { const [x0, y0, r0] = P.trait[i], [x1, y1, r1] = P.trait[i + 1], L = (x1 - x0) ** 2 + (y1 - y0) ** 2, t = Math.max(0, Math.min(1, ((x - x0) * (x1 - x0) + (y - y0) * (y1 - y0)) / L));
+        if (Math.hypot(x - x0 - (x1 - x0) * t, y - y0 - (y1 - y0) * t) <= r0 + (r1 - r0) * t) return true; } return false; };
+    const g = 0.085, ou = (x, y) => F.pleins.find(P => dans(x, y, P)), pleins = [];
+    for (let y = -2; y <= 2; y += g) for (let x = -2.2; x <= 2.2; x += g) { const P = ou(x, y); if (!P) continue;
+      const bord = !ou(x + g, y) || !ou(x - g, y) || !ou(x, y + g) || !ou(x, y - g);
+      if (P.voile && !bord && (Math.round(x / g) + Math.round(y / g)) % 2) continue;   // (la voile : une bouffée sur deux)
+      pleins.push([x * sens, y, P.voile ? (bord ? 0.75 : 0.4) : bord ? 0.95 : 0.6]); }
+    const mx = (bx - cx) / taille, my = (by - cy) / taille;
+    pleins.sort((p, q) => Math.hypot(p[0] - mx, p[1] - my) - Math.hypot(q[0] - mx, q[1] - my));
+    pleins.forEach(([x, y, a]) => { bouffees.push([x, y]); alphas.push(a); });
+  }
+  const ech = Math.max(0.9, taille / 36) * (F.fin || 1);   // (des bouffées fines : la forme se lit mieux)
+  const dt = Math.min(22, 2400 / bouffees.length);   // (une forme pleine se trace aussi vite qu'un trait)
   bouffees.forEach(([ux, uy], i) => {
-    const f = scene.add.image(bx - cx, by - cy, 'fumeeHD_' + (i % 3)).setScale(ech * 0.4).setAlpha(0.9);
+    const f = scene.add.image(bx - cx, by - cy, 'fumeeHD_' + (i % 3)).setScale(ech * 0.4).setAlpha(alphas[i]);
     c.add(f);
-    scene.tweens.add({ targets: f, x: ux * taille + (Math.random() - 0.5) * 2, y: uy * taille + (Math.random() - 0.5) * 2, scale: ech * (0.85 + Math.random() * 0.25), duration: 420, delay: i * 22, ease: 'Quad.easeOut',
+    scene.tweens.add({ targets: f, x: ux * taille + (Math.random() - 0.5) * 2, y: uy * taille + (Math.random() - 0.5) * 2, scale: ech * (0.85 + Math.random() * 0.25), duration: 420, delay: i * dt, ease: 'Quad.easeOut',
       onComplete: () => scene.tweens.add({ targets: f, x: f.x + (Math.random() - 0.5) * 3, y: f.y + (Math.random() - 0.5) * 3, duration: 600 + Math.random() * 400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }) });
   });
-  const trace = bouffees.length * 22 + 420;
+  const trace = bouffees.length * dt + 420;
   // la forme vit : chacune à sa façon
   const vie = { vogue: { x: cx + sens * 160, angle: 3 }, nage: { x: cx + sens * 120 }, vol: { x: cx + sens * 90, y: cy - 50 }, trotte: { x: cx + sens * 140 }, bat: {}, tourne: { angle: 30 }, flotte: { y: cy - 24 } }[F.mouvement] || {};
   if (vit) scene.time.delayedCall(trace, () => {

@@ -10,7 +10,7 @@ const servisSucces = G => (G.stats && G.stats.servis) || 0;
 const SUCCES = {
   premierClient: { nom: 'Premier baluchon', texte: 'Remettre ton premier baluchon', cat: 'comptoir', palier: 'bronze', icone: 'ration', verifier: G => servisSucces(G) >= 1 },
   centClients: { nom: 'Cent baluchons', texte: 'Servir cent aventuriers', cat: 'comptoir', palier: 'argent', icone: 'gourde', verifier: G => servisSucces(G) >= 100, progres: G => [servisSucces(G), 100] },
-  milleClients: { nom: 'Le comptoir de légende', texte: 'Servir mille aventuriers', cat: 'comptoir', palier: 'or', icone: 'amulette', verifier: G => servisSucces(G) >= 1000, progres: G => [servisSucces(G), 1000] },
+  milleClients: { nom: 'Le comptoir de légende', texte: 'Servir trois mille aventuriers', cat: 'comptoir', palier: 'or', icone: 'amulette', verifier: G => servisSucces(G) >= 3000, progres: G => [servisSucces(G), 3000] },   // (v1.50 : mille tombait vers le jour 200, trop facile pour de l'or)
   sansRefus: { nom: 'Jamais un refus', texte: 'Sept jours de suite sans refuser un client', cat: 'comptoir', palier: 'argent', icone: 'bandage', verifier: G => (G.serieSansRefus || 0) >= 7, progres: G => [G.serieSansRefus || 0, 7] },
   luxe: { nom: 'Le plus beau comptoir', texte: 'Rénover le comptoir jusqu\u2019au luxe', cat: 'comptoir', palier: 'or', icone: 'cape', verifier: G => typeof AMELIORATIONS !== 'undefined' && niveauAmelioration(G, 'comptoir') >= AMELIORATIONS.comptoir.niveaux.length - 1 },
   premierRetour: { nom: 'Ils reviennent !', texte: 'Un aventurier rentre et te raconte son aventure', cat: 'aventuriers', palier: 'bronze', icone: 'torche', verifier: G => ((G.stats && G.stats.retours) || 0) >= 1 },
