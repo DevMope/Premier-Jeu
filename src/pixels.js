@@ -687,10 +687,14 @@ function apparenceParDefaut(feminin) {
 }
 
 // La texture du joueur à son âge actuel (créée si besoin).
+// (v1.48) L'apparence du jour (la barbe ou les cheveux poussés, les marques du temps) et sa signature :
+// le joueur est redessiné quand sa tenue change, ou quand sa barbe a poussé
+function apparenceDuJour(G) { return typeof apparenceJoueur === 'function' ? apparenceJoueur(G) : G.joueur.apparence; }
+function signatureJoueur(G) { return (G.tenue || []).join(',') + (typeof signaturePilosite === 'function' ? '|' + signaturePilosite(G) : ''); }
 function textureJoueur(scene, G, vue = 'face') {
   // (on redessine le joueur quand sa tenue change : ce qu'il achète à la garde-robe, il le porte)
-  const tenue = (G.tenue || []).join(',');
-  if (!scene.textures.exists('joueur_petit') || scene.textures.get('joueur_petit').tenue !== tenue) creerTexturesJoueur(scene, G.joueur.apparence, G.joueur.feminin, G.tenue || []);
+  const tenue = signatureJoueur(G);
+  if (!scene.textures.exists('joueur_petit') || scene.textures.get('joueur_petit').tenue !== tenue) creerTexturesJoueur(scene, apparenceDuJour(G), G.joueur.feminin, G.tenue || [], tenue);
   const stade = stadeJoueur(G);
   if (vue === 'face') return 'joueur_' + stade;
   // Sous un autre angle (de trois-quarts, il regarde vers la droite : à retourner pour regarder à gauche)
@@ -699,7 +703,7 @@ function textureJoueur(scene, G, vue = 'face') {
     // (v1.05) avec ses deux images de pas, pour qu'il marche vraiment sous cet angle aussi
     for (const [pas, k] of [[0, cle], [-1, cle + '_pas1'], [1, cle + '_pas2']]) {
       if (scene.textures.exists(k)) scene.textures.remove(k);
-      dessinerJoueurHD(G.joueur.apparence, stade, G.joueur.feminin, pas, G.tenue || [], vue).texture(scene, k);
+      dessinerJoueurHD(apparenceDuJour(G), stade, G.joueur.feminin, pas, G.tenue || [], vue).texture(scene, k);
     }
     scene.textures.get(cle).tenue = tenue;
   }
@@ -709,11 +713,11 @@ function textureJoueur(scene, G, vue = 'face') {
 // Crée (ou recrée) les trois textures du joueur, en HD : joueur_petit, joueur_adulte, joueur_ancien.
 // (v0.68) Le joueur assis (sur un banc) : renvoie la clé de la texture ; ses pieds sont à PIEDS_ASSIS[clé]
 function textureJoueurAssis(scene, G) {
-  const stade = stadeJoueur(G), tenue = (G.tenue || []).join(',');
+  const stade = stadeJoueur(G), tenue = signatureJoueur(G);
   const cle = `joueur_${stade}_assis`;
   if (!scene.textures.exists(cle) || scene.textures.get(cle).tenue !== tenue) {
     if (scene.textures.exists(cle)) scene.textures.remove(cle);
-    const t = dessinerJoueurHD(G.joueur.apparence, stade, G.joueur.feminin, 0, G.tenue || [], 'troisQuarts', 'assis');
+    const t = dessinerJoueurHD(apparenceDuJour(G), stade, G.joueur.feminin, 0, G.tenue || [], 'troisQuarts', 'assis');
     t.texture(scene, cle);
     scene.textures.get(cle).tenue = tenue;
     PIEDS_ASSIS[cle] = t.piedsAssis;
@@ -732,11 +736,11 @@ function asseoirJoueurSur(scene, heros, G, x, yAssise) {
 
 // (v1.00) Le joueur dans une pose (grimper, bras levés...) et sous un angle : renvoie la clé de la texture
 function textureJoueurPose(scene, G, vue, pose) {
-  const stade = stadeJoueur(G), tenue = (G.tenue || []).join(',');
+  const stade = stadeJoueur(G), tenue = signatureJoueur(G);
   const cle = `joueur_${stade}_${vue}_${pose}`;
   if (!scene.textures.exists(cle) || scene.textures.get(cle).tenue !== tenue) {
     if (scene.textures.exists(cle)) scene.textures.remove(cle);
-    const t = dessinerJoueurHD(G.joueur.apparence, stade, G.joueur.feminin, 0, G.tenue || [], vue, pose);
+    const t = dessinerJoueurHD(apparenceDuJour(G), stade, G.joueur.feminin, 0, G.tenue || [], vue, pose);
     t.texture(scene, cle);
     scene.textures.get(cle).tenue = tenue;
     if (t.mainXY) MAINS_XY[cle] = { x: t.mainXY[0] - t.l / 2, y: t.h - t.mainXY[1] };   // (v1.35 : pour lui mettre un objet en main)
@@ -744,12 +748,12 @@ function textureJoueurPose(scene, G, vue, pose) {
   return cle;
 }
 
-function creerTexturesJoueur(scene, ap, feminin = false, tenue = []) {
+function creerTexturesJoueur(scene, ap, feminin = false, tenue = [], signature = tenue.join(',')) {
   for (const stade of ['petit', 'adulte', 'ancien']) {
     dessinerJoueurHD(ap, stade, feminin, 0, tenue).texture(scene, 'joueur_' + stade);
     dessinerJoueurHD(ap, stade, feminin, -1, tenue).texture(scene, 'joueur_' + stade + '_pas1');
     dessinerJoueurHD(ap, stade, feminin, 1, tenue).texture(scene, 'joueur_' + stade + '_pas2');
-    scene.textures.get('joueur_' + stade).tenue = tenue.join(',');
+    scene.textures.get('joueur_' + stade).tenue = signature;
   }
 }
 
@@ -969,7 +973,7 @@ function yeuxDansLeNoir(scene, x, y, couleur = 0xffd040, { ecart = 13, taille = 
 // (v0.69) Le joueur change de tenue : on redessine ses textures, puis on rebranche toutes les images
 // de la scène qui les montraient (sinon elles pointent vers une texture détruite et le rendu casse).
 function rafraichirJoueur(scene, G) {
-  creerTexturesJoueur(scene, G.joueur.apparence, G.joueur.feminin, G.tenue || []);
+  creerTexturesJoueur(scene, apparenceDuJour(G), G.joueur.feminin, G.tenue || [], signatureJoueur(G));
   const tous = l => l.flatMap(o => (o.list ? [o, ...tous(o.list)] : [o]));
   for (const o of tous(scene.children.list)) {
     if (o.texture && /^joueur_(petit|adulte|ancien)(_pas[12])?$/.test(o.texture.key)) o.setTexture(o.texture.key);

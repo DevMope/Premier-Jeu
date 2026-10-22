@@ -305,8 +305,8 @@ function ecriteauRue(scene, x, y, texte, { taille = 12, couleur = '#2a1608', fon
 // Renvoie la porte du shop et les lumières (fenêtres, réverbères, braises) pour la nuit.
 // (v1.28) la rue s'allonge à gauche : le terrain de la Confrérie (l'hospice, la chapelle), avant les Pommeroy
 const LOT_CONFRERIE = 700;
-const LARGEUR_RUE = 2960 + LOT_CONFRERIE;
-const PLACES_RUE = { hospice: 200, chapelle: 545, maison0: 160 + LOT_CONFRERIE, impasse: 405 + LOT_CONFRERIE, forge: 680 + LOT_CONFRERIE, shop: 1320 + LOT_CONFRERIE, maison1: 1820 + LOT_CONFRERIE, fontaine: 2090 + LOT_CONFRERIE, banque: 2360 + LOT_CONFRERIE, arche: 2780 + LOT_CONFRERIE };
+const LARGEUR_RUE = 3260 + LOT_CONFRERIE;   // (v1.48 : +300, le lot du barbier)
+const PLACES_RUE = { hospice: 200, chapelle: 545, maison0: 160 + LOT_CONFRERIE, impasse: 405 + LOT_CONFRERIE, forge: 680 + LOT_CONFRERIE, shop: 1320 + LOT_CONFRERIE, maison1: 1820 + LOT_CONFRERIE, barbier: 2150 + LOT_CONFRERIE, fontaine: 2390 + LOT_CONFRERIE, banque: 2660 + LOT_CONFRERIE, arche: 3080 + LOT_CONFRERIE };
 function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   const G = window.GAME, P = PLACES_RUE, lumieres = [];
   creerRueHD(scene);
@@ -354,10 +354,26 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   scene.add.image(o + P.shop - 330, sol + 30, 'bancRue').setOrigin(0.5, 1).setScale(2.6);
   const f = dessinerFacade(scene, o + P.shop, sol, G.nomShop, undefined, { fumee: feuAllume(G, jour) });   // (v0.66 : la fumée, seulement si le feu brûle)
   poser('rueMaisonHD_1', P.maison1);
+  // (v1.48, planches 72 et 72 v2) le Fil d'Argent, la boutique d'Orvin : close avant tes 18 ans ; ouverte le jour, volets clos la nuit
+  if (typeof boutiqueBarbierHD === 'function') {
+    const ouvert = typeof barbierOuvert === 'function' && barbierOuvert(G), xb = o + P.barbier;
+    scene.add.image(xb, sol + 2, boutiqueBarbierHD(scene)).setOrigin(0.5, 1).setScale(2);
+    if (!ouvert || !jour) scene.add.image(xb, sol + 2, boutiqueFermeeHD(scene)).setOrigin(0.5, 1).setScale(2);
+    if (!ouvert) scene.add.text(xb + 52, sol + 2 - 2 * 66, 'Ouvrira bientôt', style(11, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+    else {
+      if (!jour) scene.add.text(xb + 52, sol + 2 - 2 * 66, 'Fermé', style(11, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
+      const poteau = scene.add.image(xb - 112, sol + 2 - 2 * 76, poteauBarbierHD(scene, 0)).setScale(2);
+      poteauBarbierHD(scene, 1);
+      if (jour) scene.time.addEvent({ delay: 260, loop: true, callback: () => poteau.active && poteau.setTexture(poteau.texture.key === 'poteauBarbierHD0' ? 'poteauBarbierHD1' : 'poteauBarbierHD0') });
+      scene.add.image(xb + 40, sol + 2 - 2 * 92, enseigneBarbierHD(scene)).setScale(2);
+      ecriteauRue(scene, xb - 30, sol - 112, "Le Fil d'Argent", { taille: 10 });
+      lumieres.push([xb, sol - 60, 1.2]);
+    }
+  }
   scene.add.image(o + P.fontaine, sol + 30, 'fontaineHD').setOrigin(0.5, 1).setScale(2.4);
   poser('rueBanqueHD', P.banque);
   poser(jour ? 'rueArcheHD_jour' : 'rueArcheHD', P.arche);
-  for (const x of [380, 560, 1060, 1640, 2200, 2585].map((x, i) => i ? x + LOT_CONFRERIE : x)) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
+  for (const x of [380, 560, 1060, 1640, 2500, 2885].map((x, i) => i ? x + LOT_CONFRERIE : x)) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
   lumieres.push([f.porteX, 400, 2.4], [o + P.forge, sol - 10, 1.8], [o + P.banque, sol - 150, 1.4]);
   // les noms : écriteaux peints, lettres gravées, bannière
   ecriteauRue(scene, o + P.maison0 + 4, sol - 112, 'Les Pommeroy', { taille: 10 });
@@ -391,6 +407,11 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   ici.regarder(o + P.forge - 180, 160, 360, 310, jour ? 'Le marteau de Thorgal sonne sur l\'enclume. Pour lui acheter quelque chose, c\'est à son étal, au marché.' : "La forge de Thorgal. Les braises rougeoient encore derrière les vantaux ; on l'entend ronfler à l'étage.");
   ici.regarder(o + P.shop - 220, 200, 440, 270, `${G.nomShop}, ton shop. ${['Une humble chaumière', 'Une jolie maison', 'Une belle maison', 'La plus belle maison du village'][niveauFacade(G)]}.`);
   ici.regarder(o + P.maison1 - 130, 160, 260, 310, jour ? 'Le petit Brindeloup te regarde passer : il rêve de partir à l\'aventure.' : Phaser.Utils.Array.GetRandom(["Chez les Brindeloup. On s'y dispute à voix basse : l'aîné veut partir à l'aventure.", 'Les volets sont clos chez les Brindeloup. Tout le monde dort.']));
+  if (typeof barbierOuvert === 'function') {
+    if (!barbierOuvert(G)) ici.regarder(o + P.barbier - 120, 230, 240, 240, "Les volets sont cloués. Sur l'écriteau : « Le Fil d'Argent, barbier. Ouvrira bientôt. » On entend parfois quelqu'un siffler dedans, derrière les planches.");
+    else if (jour) ici.porte(o + P.barbier + 52, sol, "Chez Orvin, le barbier", 'Barbier', { large: 80, haut: 100 });
+    else ici.regarder(o + P.barbier - 120, 230, 240, 240, "Le Fil d'Argent est fermé pour la nuit. Derrière les volets, Orvin affûte ses rasoirs en chantonnant.");
+  }
   ici.regarder(o + P.fontaine - 80, 360, 160, 110, jour ? 'La fontaine chante. Pour y jeter une pièce, c\'est celle de la place du marché.' : 'La fontaine murmure dans la nuit. Au fond du bassin, des pièces luisent sous la lune.');
   ici.regarder(o + P.banque - 200, 120, 400, 350, jour ? 'La Banque Centrale Goyenne. Des nains en redingote montent les marches, un registre sous le bras.' : 'La Banque Centrale Goyenne. Une lumière brûle encore : les nains comptent, même la nuit.');
   ici.porte(o + P.banque, sol, 'Entrer', 'Banque');

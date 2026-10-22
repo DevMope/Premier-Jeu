@@ -323,6 +323,6 @@ function textureBouchon(scene) {
 // JeuneGoy qui tient sa canne (une main en avant) : sa texture et la position de sa main
 function joueurPecheur(scene) {
   const G = window.GAME, stade = stadeJoueur(G), cle = 'joueurPeche_' + stade;
-  if (!scene.textures.exists(cle)) { const t = dessinerJoueurHD(G.joueur.apparence, stade, G.joueur.feminin, 0, G.tenue || [], 'troisQuarts', 'empoigne'); t.texture(scene, cle); scene.textures.get(cle).main = t.mainXY ? { x: t.mainXY[0] - t.l / 2, y: t.h - t.mainXY[1] } : { x: 6, y: 30 }; }
+  if (!scene.textures.exists(cle)) { const t = dessinerJoueurHD(apparenceDuJour(G), stade, G.joueur.feminin, 0, G.tenue || [], 'troisQuarts', 'empoigne'); t.texture(scene, cle); scene.textures.get(cle).main = t.mainXY ? { x: t.mainXY[0] - t.l / 2, y: t.h - t.mainXY[1] } : { x: 6, y: 30 }; }
   return cle;
 }

@@ -33,7 +33,7 @@ function miroirDes18Ans(scene, suite) {
   const menu = panneauApparence(scene, { x: 700, y: 283, l: 460, h: 384, ap, feminin: f, stade: 'adulte', barbe: !f, visage: false, prof: 82, quandChange: () => peindre() });
   objets.push({ destroy: () => menu.detruire(), active: true });
   const garder = creerBouton(scene, 700, 505, 240, 'Garder ce reflet', () => {
-    G.joueur.apparence = ap; G.miroirFait = G.jour;
+    G.joueur.apparence = ap; G.miroirFait = G.jour; G.pilosite = { entretien: G.jour, lave: G.jour };   // (v1.48 : la barbe pousse à partir d'ici)
     oublierTexturesJoueur(scene);
     if (scene.textures.exists('miroir_reflet')) { reflet.setTexture('__DEFAULT'); scene.textures.remove('miroir_reflet'); }
     if (typeof noterJournal === 'function') noterJournal('miroir des 18 ans');

@@ -46,6 +46,13 @@ class RueScene extends Phaser.Scene {
       this.time.delayedCall(700, () => this.garrickDit("« Allez, en route ! Le marché, c'est au bout de la rue, sous l'arche. Suis-moi, je te présente les marchands. »"));
     }
     this.cameras.main.scrollX = Phaser.Math.Clamp(x0 - 480, 0, LARGEUR_RUE - 960);
+    // (v1.48) le jour où il ouvre (et tant qu'on n'est pas entré), Orvin attend sur le pas de sa porte
+    this.orvin = null;
+    if (typeof barbierOuvert === 'function' && barbierOuvert(G) && !etatBarbier(G).vu) {
+      this.orvin = imageCorps(this, PLACES_RUE.barbier + 150, SOL_PROMENADE, FIGURANT_BARBIER, 6.2, 'accueil').setFlipX(true).setDepth(8.45).setInteractive({ useHandCursor: true });
+      this.orvin.on('pointerdown', () => this.passerPar('Barbier', PLACES_RUE.barbier + 52));
+      this.orvinSalue = false;
+    }
 
     // l'interface, fixe à l'écran
     const fixe = o => o.setScrollFactor(0).setDepth(30);
@@ -147,6 +154,7 @@ class RueScene extends Phaser.Scene {
     const aller = () => {
       Son.jouer('porte');
       if (page === 'Banque') { this.transition = false; this.scene.pause(); this.scene.launch('Banque', { retour: 'Rue' }); return; }
+      if (page === 'Barbier') { this.transition = false; this.scene.pause(); this.scene.launch('Barbier', { retour: 'Rue' }); return; }   // (v1.48) chez Orvin
       if (page === 'Diseuse') { this.transition = false; this.scene.pause(); this.scene.launch('Diseuse', { retour: 'Rue' }); return; }   // (v1.05) sous la tente de Madame Ysmée
       this.fini = true;
       Sauvegarde.maintenant(this.G, page === 'Maison' ? 'Maison' : 'Marche');
@@ -177,6 +185,7 @@ class RueScene extends Phaser.Scene {
       if (!this.heros.marche) pasDeMarche(this, this.heros, 260);
       this.heros.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
     } else this.heros.y = SOL_PROMENADE;
+    if (this.orvin && !this.orvinSalue && Math.abs(this.heros.x - this.orvin.x) < 420) { this.orvinSalue = true; this.dire("Orvin : « Dix-huit ans ! J'attendais ce jour pour ouvrir : le premier rasage est pour moi. Entre, l'ami ! »"); }
     // (v1.40) Garrick suit le joueur, un pas derrière lui
     const g = this.garrick;
     if (g && g.active) {

@@ -1364,7 +1364,14 @@ function dessinerJoueurHD(ap, stade = 'petit', feminin = false, pas = 0, tenue =
   // (v1.32, planche 56 validée) l'adulte n'est plus JeuneGoy agrandi : plus grand, épaules plus larges, torse plus
   // long, visage plus long et plus fin
   const proportions = stade === 'petit' ? undefined : PROPORTIONS_JOUEUR_ADULTE[feminin ? 'fille' : 'garcon'];
-  return dessinerCorpsVue(gene, 1, 'joueur', pas, pose, vue, { tenue, bouche: ap.bouche ?? 0, proportions });
+  const t = dessinerCorpsVue(gene, 1, 'joueur', pas, pose, vue, { tenue, bouche: ap.bouche ?? 0, proportions });
+  // (v1.48) la barbe (ou les cheveux) négligée, et l'anneau de fête porté par-dessus
+  if (stade !== 'petit' && typeof negligerToile === 'function') {
+    const cible = ap.cibleNegligence || (feminin ? 'cheveux' : 'barbe');
+    anneauSurToile(t, tenue, cible);
+    if (ap.negligence) negligerToile(t, ap.negligence, cible);
+  }
+  return t;
 }
 
 // L'échelle d'affichage du joueur : ses anciens sprites faisaient 16 pixels de haut.

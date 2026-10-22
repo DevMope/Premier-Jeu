@@ -1094,7 +1094,7 @@ const MOIS = ['Mois des Semailles', 'Mois des Moissons', 'Mois des Brumes', 'Moi
 // Les catégories de recettes et de dépenses, pour l'ardoise et les statistiques.
 const POSTES = {
   butins: 'Parts de butin', mises: 'Mises sur les aventuriers', parisNoirs: 'Paris contre les aventuriers', secours: 'Secours en mission', collections: 'Pièces vendues au collectionneur', reparations: 'Réparations', soins: 'Soins', encheres: 'Enchères',
-  jeux: 'Jeux', cadeaux: 'Cadeaux', marche: 'Achats au marché', express: 'Marchand express',
+  jeux: 'Jeux', cadeaux: 'Cadeaux', marche: 'Achats au marché', express: 'Marchand express', barbier: 'Le barbier',
   trouvailles: 'Trouvailles', reserve: 'Agrandissements', dedommagements: 'Dédommagements',
   remboursements: 'Remboursements de prêts', dons: 'Dons au mendiant', prets: 'Prêts reçus', salaires: 'Salaires',
   sabotages: 'Primes de la Faucheuse', colporteur: 'Le colporteur', denonciations: 'Primes de la garde',

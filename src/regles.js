@@ -1061,7 +1061,7 @@ function acheterDeco(G, id) {
 function remarqueCamp(G, v) {
   if (!v || v.remarqueJour === G.jour) return null;
   v.remarqueJour = G.jour;
-  const fete = (typeof remarqueAtours === 'function' ? remarqueAtours(G, v) : null) || (typeof remarqueAtoursAncetres === 'function' ? remarqueAtoursAncetres(G, v) : null) || (typeof remarqueHabitsHiver === 'function' ? remarqueHabitsHiver(G, v) : null);   // (v1.00 : les atours de l'Union ; v1.01 : ceux des ancêtres ; v1.05 : les habits du Long Hiver)
+  const fete = (typeof remarqueAtours === 'function' ? remarqueAtours(G, v) : null) || (typeof remarqueAtoursAncetres === 'function' ? remarqueAtoursAncetres(G, v) : null) || (typeof remarqueHabitsHiver === 'function' ? remarqueHabitsHiver(G, v) : null) || (typeof remarqueBarbe === 'function' ? remarqueBarbe(G, v) : null);   // (v1.48 : la barbe, les anneaux de fête)   // (v1.00 : les atours de l'Union ; v1.01 : ceux des ancêtres ; v1.05 : les habits du Long Hiver)
   if (fete) return fete;
   const banni = PEUPLES_OMBRE.includes(v.race);
   const decos = (G.decos || []).filter(d => DECOS[d].camp);
@@ -1696,7 +1696,8 @@ function nuit(G) {
   sansPlanter('matinDeLEtage', () => typeof matinDeLEtage === 'function' && G.reveil.lignes.push(...matinDeLEtage(G)));   // (v1.30)
   sansPlanter('matinDeLaMenace', () => typeof matinDeLaMenace === 'function' && G.reveil.lignes.push(...matinDeLaMenace(G)));   // (v1.33) le crieur, la bataille
   sansPlanter('matinDuMoulin', () => typeof matinDuMoulin === 'function' && G.reveil.lignes.push(...matinDuMoulin(G)));   // (v1.35) le retour du Moulin
-  sansPlanter('matinDuLien', () => typeof matinDuLien === 'function' && G.reveil.lignes.push(...matinDuLien(G)));   // (v1.35) la complicité, les rations des deux chats
+  sansPlanter('matinDuLien', () => typeof matinDuLien === 'function' && G.reveil.lignes.push(...matinDuLien(G)));
+  sansPlanter('matinPilosite', () => typeof matinPilosite === 'function' && G.reveil.lignes.push(...matinPilosite(G)));   // (v1.48) le barbier ouvre, la barbe pousse   // (v1.35) la complicité, les rations des deux chats
   sansPlanter('matinDuParrain', () => typeof matinDuParrain === 'function' && G.reveil.lignes.push(...matinDuParrain(G)));   // (v1.39) la part de la Famille
   sansPlanter('matinDesRiches', () => typeof matinDesRiches === 'function' && G.reveil.lignes.push(...matinDesRiches(G)));   // (v1.32) le mécénat, la neutralité
   sansPlanter('voeuDeSaison', () => { const l = typeof voeuDeSaison === 'function' && voeuDeSaison(G); if (l) G.reveil.lignes.push(l); });   // (v1.23) les souvenirs de la nymphe au complet

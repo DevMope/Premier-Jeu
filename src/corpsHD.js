@@ -64,6 +64,7 @@ const FIGURANTS = {
   champion: { race: 'humain', nom: 'Sire Valdric', costume: 'champion', habit: 0x2a1a1a, cape: 0xa02a22, cheveux: 0x1a1414, barbe: 'courte', coiffure: 'court', peau: 1, niveau: 4, bouche: 3 },
   // (v1.05, planche 35) le Père Givrin, qui fait tourner la grande roue des cadeaux du Long Hiver
   givrin: { race: 'nain', nom: 'Le Père Givrin', costume: 'givrin', habit: 0xb0242a, cheveux: 0xf0f0f4, barbe: 'nain', peau: 1, niveau: 2, bouche: 3 },
+  barbier: { race: 'nain', nom: "Orvin Tresse-d'Argent", costume: 'barbier', habit: 0x2a4a6e, cheveux: 0xb4b4bc, barbe: 'nain', coiffure: 'court', peau: 1, niveau: 1, bouche: 3 },   // (v1.48, planche 72) le barbier de la rue
   mendiant: { race: 'humain', nom: 'Le mendiant', costume: 'mendiant', habit: 0x6a6252, cheveux: 0x8a8a80, cape: 0x4a4236, barbe: 'pleine', niveau: 0 },
 };
 
