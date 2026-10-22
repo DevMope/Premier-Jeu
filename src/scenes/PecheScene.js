@@ -47,7 +47,7 @@ class PecheScene extends Phaser.Scene {
     if (typeof Son !== 'undefined') Son.ambiance(nuit ? 'nuit' : 'recitHeureux');
     const textes = { aube: 'L’aube sur l’étang du Moulin. La brume se lève ; des ronds dans l’eau, près des roseaux.', jour: 'Il fait encore jour sur l’étang. Les libellules rasent l’eau ; un brochet chasse quelque part.', nuit: 'La nuit sur l’étang. Les grenouilles chantent, la lune tremble sur l’eau. Les anguilles sortent.' };
     this.textePlage = textes[this.plage];
-    if (!p.tuto) this.time.delayedCall(700, () => this.tuto());
+    if (!p.tuto) { this.etat = 'tuto'; this.time.delayedCall(700, () => this.tuto()); }   // (v1.49 : pas de lancer pendant que Barnabé explique)
     else this.attendreLancer();
   }
 
@@ -157,6 +157,10 @@ class PecheScene extends Phaser.Scene {
   attendreLancer() {
     this.etat = 'pret'; this.cible = null; this.tensionCanne = 0;
     this.bouchon.setVisible(false);
+    // (v1.49) ce qui restait d'une prise interrompue : le « ! », l'ombre du poisson, le bouchon qui flotte
+    if (this.flotte) { this.flotte.stop(); this.flotte = null; }
+    if (this.excl) { this.excl.destroy(); this.excl = null; }
+    if (this.ombrePoisson) { this.ombrePoisson.destroy(); this.ombrePoisson = null; }
     this.jauge.clear(); this.barre.clear(); this.anneau.clear(); this.texteAnneau.setText('');
     if (this.iconeRemontee) { this.iconeRemontee.destroy(); this.iconeRemontee = null; }
     if (plusRienNeMord(this.G, this.plage)) return this.dire(this.textePlage, 'Plus rien ne mord : l’étang se méfie. Reviens à un autre moment de la journée (l’aube, le jour, la nuit).');
@@ -395,7 +399,7 @@ class PecheScene extends Phaser.Scene {
   }
   fermerFiche(relancer = true) {
     if (this.carte) { this.carte.destroy(); this.carte = null; }
-    if (typeof Sauvegarde !== 'undefined') Sauvegarde.planifier(this.G, 'Nuit');
+    if (typeof Sauvegarde !== 'undefined') Sauvegarde.planifier(this.G, this.retour === 'NuitMatin' ? 'Maison' : this.retour === 'Marche' ? 'Marche' : 'Nuit');   // (v1.49 : le bon lieu au rechargement)
     if (relancer) this.time.delayedCall(300, () => this.attendreLancer());
   }
 
@@ -429,8 +433,13 @@ class PecheScene extends Phaser.Scene {
   // --- La légende : quatre choix (et la relâcher, pour rire), chacun confirmé une fois ---
   choixLegende() {
     const G = this.G, P = this.prise, L = PECHE.legende;
-    const confirmer = (titre, ok) => {
-      const c = this.add.container(0, 0).setScrollFactor(0).setDepth(1550);
+    this.legendeChoisie = false; this.confirmLegende = null;
+    // (v1.49) une seule confirmation à la fois, et un seul choix : sinon deux « Oui » payaient deux fois
+    const confirmer = (titre, ok0) => {
+      if (this.confirmLegende || this.legendeChoisie || this.relacheEnCours) return;
+      const ok = () => { if (this.legendeChoisie) return; this.legendeChoisie = true; ok0(); };
+      const c = this.confirmLegende = this.add.container(0, 0).setScrollFactor(0).setDepth(1550);
+      c.once('destroy', () => { if (this.confirmLegende === c) this.confirmLegende = null; });
       c.add(this.add.rectangle(480, 488, 520, 92, 0x2a1a10, 0.97).setStrokeStyle(2, 0xc9a227).setInteractive());
       c.add(this.add.text(480, 458, titre, style(15, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5));
       c.add(this.add.text(480, 478, 'Tu ne pourras plus jamais la pêcher.', style(12, '#e8dcc0', { fontStyle: 'italic' })).setOrigin(0.5));
@@ -449,12 +458,13 @@ class PecheScene extends Phaser.Scene {
     ];
     if (this.chat) choix.push([`À ${nomChat(G)} · +${L.lien} ♥`, () => confirmer(`Donner Grand-Mère Écaille à ${nomChat(G)} ?`, () => { const r = donnerAuChat(G, P); this.fermerFiche(false); this.danse(P, r.gain, true); })]);
     choix.push(['La naturaliser, au mur', () => confirmer('La naturaliser et l’accrocher dans ta chambre ?', () => { naturaliserLegende(G); this.gain('Un trophée pour ta chambre !', '#f3d98a'); this.fermerFiche(); })]);
-    choix.push(['La relâcher', () => this.relacherLegende()]);
+    choix.push(['La relâcher', () => { if (!this.confirmLegende && !this.legendeChoisie && !this.relacheEnCours) this.relacherLegende(); }]);
     this.boutonsFiche(choix, 324);
   }
   // On ne relâche pas une légende : ton chat la rattrape au vol (sans lui : l'épuisette de Barnabé)
   async relacherLegende() {
-    this.carte.setVisible(false);
+    this.relacheEnCours = true;
+    if (this.carte) this.carte.setVisible(false);
     const X = this.heros.x, poisson = this.add.image(X + 40, SOL_PROMENADE - 90, texturePoisson(this, 'legende')).setScale(2.4).setDepth(8.65);
     Son.jouer('glisse');
     const lx = X + 170, ly = SOL_MOULIN - 60;
@@ -480,7 +490,8 @@ class PecheScene extends Phaser.Scene {
     const bulle = this.add.text(qui.x - this.X0, qui.y, qui.texte, style(13, '#2a1608', { fontStyle: 'bold', backgroundColor: '#f4ead2', padding: { x: 6, y: 3 } })).setOrigin(0.5, 1).setScrollFactor(0).setDepth(30);
     await new Promise(ok => this.time.delayedCall(1400, ok));
     bulle.destroy(); poisson.destroy();
-    this.carte.setVisible(true);
+    this.relacheEnCours = false;
+    if (this.carte) this.carte.setVisible(true);
   }
   barnabeDit(texte) {
     const b = imageCorps(this, this.X0 + 420, SOL_PROMENADE, PECHEUR_COMTE, 5).setDepth(8.4);
@@ -541,7 +552,7 @@ function cadeauCanneDuChat(scene, ensuite = null, pendantLaConversation = false)
   if (typeof chatParti === 'function' && chatParti(G)) return false;
   if (!pendantLaConversation) scene.fenetreMoulin = true;
   donnerCanne(G, 'grandPere');
-  if (typeof Sauvegarde !== 'undefined') Sauvegarde.planifier(G, 'Nuit');
+  if (typeof Sauvegarde !== 'undefined') Sauvegarde.planifier(G, scene.lieu || 'Nuit');
   ecranNouvelObjet(scene, textureCanne(scene, 'grandPere'), { nom: 'La canne du grand-père', de: `offerte par ${nomChat(G)}`,
     texte: (pendantLaConversation ? 'Trois brins de roseau emmanchés de laiton, une plume rouge porte-bonheur.' : `« Une dernière chose. La canne de mon grand-père : il pêchait à l'étang du Moulin. Prends-la, moi, j'ai des gens pour ça. »`) + `\nElle lance un peu plus loin, et ${nomChat(G)} viendra pêcher avec toi.`, ech: 4.2, angle: -14, bouton: `Merci, ${nomChat(G)}` })
     .then(() => { if (!pendantLaConversation) scene.fenetreMoulin = null; if (ensuite) ensuite(); });

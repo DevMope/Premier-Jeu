@@ -83,7 +83,7 @@ class NightScene extends Phaser.Scene {
     // (v1.45, la pêche) l'étang du Moulin, dès qu'on a une canne : l'aube le matin ; le soir, le jour (comptoir fermé tôt) ou la nuit
     if (typeof aUneCanne === 'function' && aUneCanne(G)) boutons.splice(boutons.length - (this.matin ? 2 : 1), 0, ["L'étang", () => {
       if (enFondu()) return;
-      Sauvegarde.maintenant(G, 'Nuit');
+      Sauvegarde.maintenant(G, this.lieu);   // (v1.49 : le matin, c'est la maison qu'on recharge, pas le soir)
       this._transition = performance.now();
       this.cameras.main.fadeOut(400);
       this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Peche', { plage: plageDePeche(G, this.matin), retour: this.matin ? 'NuitMatin' : 'NuitSoir' }));

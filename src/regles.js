@@ -1673,8 +1673,9 @@ function nuit(G) {
   G.paliersEtoiles = G.paliersEtoiles || [1];
   for (const z of zonesOuvertes(G)) {
     const d = ZONES[z].danger;
-    if (G.paliersEtoiles.includes(d) || !SAUTS_TEMPS[d]) continue;
-    G.paliersEtoiles.push(d);
+    if (G.paliersEtoiles.includes(d)) continue;
+    G.paliersEtoiles.push(d);   // (v1.49 : noté même sans saut de temps, sinon ★2 n'était jamais compté : Conseil, objectifs)
+    if (!SAUTS_TEMPS[d]) continue;
     const avant = ageJoueur(G);
     G.decalageJours = (G.decalageJours || 0) + SAUTS_TEMPS[d];
     const mois = Math.round(SAUTS_TEMPS[d] / JOURS_PAR_MOIS);
