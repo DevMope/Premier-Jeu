@@ -423,6 +423,8 @@ class NightScene extends Phaser.Scene {
     const plein = stockTotal(G) >= G.capacite;
     this.texteReserve.setText(`Réserve : ${stockTotal(G)} / ${G.capacite}${plein ? ' — pleine !' : ''}`);
     if (this.texteFeu) this.texteFeu.setText(feuAllume(G) ? 'Le feu brûle' : 'Allumer le feu (1 bois)').setColor(feuAllume(G) ? '#a05010' : (G.materiaux.bois || 0) > 0 ? '#8a3a10' : '#a08070');
+    // (v1.49) réserve pleine et feu sur la même ligne : les deux rétrécissent plutôt que de se chevaucher
+    if (this.texteFeu) for (let t = 13; t >= 10 && this.texteReserve.x + this.texteReserve.width + 10 > this.texteFeu.x - this.texteFeu.width; t--) { this.texteReserve.setFontSize(t); this.texteFeu.setFontSize(t); }
     const a = agrandissementSuivant(G);
     this.texteAgrandir.setText(a ? `Agrandir : ${G.capacite} → ${a.capacite} places (+${a.capacite - G.capacite}) — ${a.prix} p.` : 'Réserve au maximum');
     this.texteAgrandir.setFontSize(13);
