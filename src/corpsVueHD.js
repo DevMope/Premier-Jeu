@@ -238,7 +238,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.rampes.metal = rampe(0x9298a6); t.rampes.habit = rampe(0x1c1c24); t.rampes.argent = rampeVive(0xdadee6); t.rampes.bas = rampe(0x26262e); t.rampes.cuir = rampe(0x2e2420); t.rampes.plume = rampeVive(0xf4f2ec); t.rampes.ecaille = rampeVive(0x9a2424);
   } else if (costume === 'duc') {
     // (planche 75 v2, à valider) le duc de Pont-Royal : robe de brocart lie-de-vin, grand manteau de fourrure grise, jabot cuivre, bagues
-    t.rampes.habit = rampe(0x5a1a2a); t.rampes.cape = rampe(0x3e1e30); t.rampes.bas = rampe(0x2a1a14); t.rampes.fourrure = rampe(0x8e887c); t.rampes.lin = rampeVive(0xc8682a); t.rampes.or = rampeVive(0xd8a838); t.rampes.rubis = rampeVive(0xc81828);
+    t.rampes.habit = rampe(0x5a1a2a); t.rampes.cape = rampe(0x3e1e30); t.rampes.bas = rampe(0x2a1a14); t.rampes.fourrure = rampe(0x8e887c); t.rampes.lin = rampe(0xa85a3a); t.rampes.or = rampeVive(0xd8a838); t.rampes.rubis = rampeVive(0xc81828);
   } else if (costume === 'cambrioleur') {
     // (planche 63) le cambrioleur : bonnet noir, loup noir sur les yeux, pull rayé, pantalon sombre
     t.rampes.habit = rampe(0x2a2c36); t.rampes.lin = rampeVive(0xd8d4c8); t.rampes.bas = rampe(0x22242c); t.rampes.cuir = rampe(0x1e1a18);
@@ -671,7 +671,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       const revers = !dos && y > yT && t.mat(x, y) && Math.abs(Math.abs(d) - 4.8 * k * Math.max(0.3, Math.abs(c))) < 3.4 * k * Math.max(0.45, Math.abs(c)) + ragged * Math.max(0.5, Math.abs(c));
       const tient = t.mat(x, y) || t.mat(x - 2 * k, y) || t.mat(x + 2 * k, y) || t.mat(x, y + 2 * k);
       return (col && tient) || revers ? [d / (ep * 2), -0.2, 0.85] : null; }, { decalage: 0.15, motif: poil });
-    if (!dos) { const jx = X(0, prof), jy = yT + 1 * k; t.forme('lin', (x, y) => (Math.abs(x + 0.5 - jx) < (2.4 * k - Math.abs(y - jy - 2 * k) * 0.3) && y >= jy - 1 * k && y <= jy + 5 * k ? [0, 0, 1] : null), { decalage: 0.2, motif: (x, y) => (Math.floor((y - jy) / k) % 2 ? 0.4 : -0.2) });
+    if (!dos) { const jx = X(0, prof * 0.4), jy = yT + 0.5 * k; t.forme('lin', (x, y) => (Math.abs(x + 0.5 - jx) < (1.9 * k - Math.abs(y - jy - 1.5 * k) * 0.3) * Math.max(0.6, Math.abs(c)) && y >= jy && y <= jy + 4 * k ? [0, 0, 1] : null), { decalage: 0.2, motif: (x, y) => (Math.floor((y - jy) / k) % 2 ? 0.4 : -0.2) });
       for (let j = 0; j <= 10; j++) { const u = j / 10, x = Math.round(jx + (u - 0.5) * 6.5 * k * Math.max(0.6, Math.abs(c))), y = Math.round(jy + 6 * k + Math.sin(u * Math.PI) * 3 * k); t.poser(x, y, 'or', j % 2 ? 3 : 5); } }
   }
   // L'écharpe de laine, la chaîne de montre, la bague
@@ -1173,18 +1173,26 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     } else if (barbe === 'moustache') { for (let i = -lb - 1; i <= lb + 1; i++) for (let e = 0; e < k; e++) t.poser(Math.round(bx + i), by - 1.6 * k + e + (Math.abs(i) > lb - 1 ? 1 : 0), 'barbe', 3);
       if (costume === 'duc') {
         // (planche 75 v2) le duc : la moustache cirée, longue, aux pointes recourbées vers le haut, et une petite mouche
-        for (const cote of [-1, 1]) for (let j = 0; j <= 14; j++) { const a = j / 14 * Math.PI * 1.25, r = 3 * k * (1 - j / 26);
-          const x = Math.round(bx + cote * (lb + 1 + 2.4 * k + Math.sin(a) * r)), y = Math.round(by - 1 * k - (1 - Math.cos(a)) * r); for (let e = 0; e < Math.max(1, k - Math.floor(j / 6)); e++) t.poser(x, y + e, 'barbe', 3 + (j % 3 === 0 ? 1 : 0)); }
-        for (let y = by + 1.6 * k; y < by + 4 * k; y++) for (let e = -k; e <= k; e++) if (Math.abs(e) < k * (1 - (y - by - 1.6 * k) / (3 * k))) t.poser(Math.round(bx + e), Math.round(y), 'barbe', 3);
+        const colle = (x, y, tol) => { for (let d = 0; d <= tol; d++) if (tete(x - d, y) || tete(x + d, y)) return true; return false; };
+        for (const cote of [-1, 1]) {
+          const long = lb + 2.2 * k;
+          for (let j = 0; j <= long; j++) { const x = Math.round(bx + cote * j), y = Math.round(by - 1.5 * k + j * 0.1); for (let e = 0; e < 2 * k - Math.floor(j / long * k); e++) if (colle(x, y + e, k)) t.poser(x, y + e, 'barbe', e < k * 0.6 ? 3 : 2); }
+          const cxT = bx + cote * long, cyT = by - 2.6 * k, r = 1.3 * k;
+          for (let a = 0; a <= Math.PI * 1.35; a += 0.12) { const x = Math.round(cxT + cote * Math.sin(a) * r), y = Math.round(cyT + Math.cos(a) * r); if (colle(x, y, k)) { t.poser(x, y, 'barbe', 3); t.poser(x, y + 1, 'barbe', 2); } }
+        }
+        for (let y = by + 1.6 * k; y < by + 4 * k; y++) for (let e = -k; e <= k; e++) if (Math.abs(e) < k * (1 - (y - by - 1.6 * k) / (3 * k))) { const gx = Math.round(bx + e), gy = Math.round(y); if (tete(gx, gy)) t.poser(gx, gy, 'barbe', 3); }
         // les paupières lourdes (l'air satisfait de lui-même), les sourcils hauts, et le pli des bajoues
         const yeux = []; for (let y = ey - 4 * k; y <= ey + 3 * k; y++) for (let x = 0; x < L; x++) { const m = t.mat(x, y); if (m && m !== 'peau' && m !== 'cheveux' && m !== 'barbe' && m !== 'metal' && tete(x, y)) yeux.push([x, y]); }
         if (yeux.length) { const y0 = Math.min(...yeux.map(p => p[1])), y1 = Math.max(...yeux.map(p => p[1])), lid = Math.round(y0 + (y1 - y0) * 0.5);
           for (const [x, y] of yeux) { if (y < lid) t.poser(x, y, 'peau', 3); else if (y === lid) t.poser(x, y, 'peau', 1); } }
         for (const cote of [-1, 1]) for (let j = 0; j < 3 * k; j++) { const x = Math.round(bx + cote * (lb + 3.2 * k + j * 0.25)), y = Math.round(by - 1 * k + j); if (t.mat(x, y) === 'peau') t.poser(x, y, 'peau', 2); }
         // les longues mèches fines, rejetées en arrière, qui tombent sur la fourrure (le front est dégarni)
-        if (!dos) for (const cote of [-1, 1]) { const u = cote * (P.rx + 0.2 * k); if (Z(u, -P.rx * 0.2) < -P.rx * 0.5) continue;
-          for (let m = 0; m < 3; m++) for (let y = cy - 1 * k; y < yT + 9 * k; y++) { const x = Math.round(X(u + cote * m * 0.9 * k + cote * (y - cy) * 0.08, -P.rx * 0.2) + Math.sin(y / (3 * k) + m) * 0.6 * k);
-            if (t.mat(x, y) !== 'peau' || y > ey + 4 * k) t.poser(x, y, 'cheveux', 2 + ((y + m) % 3 === 0 ? 1 : 0)); } }
+        // (sous tous les angles : elles partent de derrière les oreilles et tombent jusque sur le col de fourrure)
+        if (!dos) for (const cote of [-1, 1]) { const u0 = cote * P.rx * 0.92, z0 = -P.rx * 0.5; if (Z(u0, z0) < -P.rx * 0.85) continue;
+          for (let m = 0; m < 4; m++) for (let y = cy - 2 * k; y < yT + 11 * k; y++) { const dy = Math.max(0, y - cy), u = u0 + cote * (m * 0.7 * k + dy * 0.06), z = z0 - m * 0.7 * k - dy * 0.05;
+            const x = Math.round(X(u, z) + Math.sin(y / (3 * k) + m) * 0.5 * k);
+            if (t.mat(x, y) === 'peau' && y < cy + P.ry && tete(x, y) && Z(u, z) > -P.rx * 0.2) continue;   // (jamais sur le visage)
+            t.poser(x, y, 'cheveux', 2 + ((y + m) % 3 === 0 ? 1 : 0) - (m === 3 ? 1 : 0)); } }
       } }
     else if (barbe) {
       const long = barbe === 'sage' ? yT + 11 * k : barbe === 'nain' ? yB - 2 * k : barbe === 'pleine' ? cy + P.ry + 4 * k : cy + P.ry + 1.5 * k;
