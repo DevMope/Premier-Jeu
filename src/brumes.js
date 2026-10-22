@@ -147,6 +147,7 @@ function allumerLanterne(G, nom, qualite) {
   const s = etatBrumes(G); s.hommage = true;
   const convient = Math.random() < L.convient;
   s.lanternes.push({ nom, qualite, convient });
+  if (!mortsAHonorer(G).length && typeof debloquerSucces === 'function') debloquerSucces(G, 'lanternes', 'à la Nuit des Brumes');   // (v1.50)
   if (convient) G.reputation += BRUMES.lanternes.reputation;
   const famille = { basse: convient ? "La famille sourit malgré tout : « C'est le geste qui compte. »" : "La famille regarde la lanterne qui peine à monter... et détourne les yeux.",
     moyenne: convient ? "La famille s'incline : « Merci. C'est exactement ce qu'il fallait. »" : "La famille hoche la tête, poliment, sans un mot.",

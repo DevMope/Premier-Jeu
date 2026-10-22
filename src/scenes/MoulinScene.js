@@ -290,7 +290,7 @@ class MoulinScene extends Phaser.Scene {
     this.etat.nom = nom;
     Son.jouer('miaou');
     this.dire(`Elle s'appellera ${nom}. Elle cligne lentement des yeux : chez les chats, c'est un « je t'aime bien ».`, '');
-    debloquerSucces(G, 'coeurDeChat'); vignetteSucces(this, 'coeurDeChat');
+    debloquerSucces(G, 'coeurDeChat', 'au Vieux Moulin'); vignetteSucces(this, 'coeurDeChat');
     await this.attendre(4600);
     await this.leSecret();
   }

@@ -342,16 +342,18 @@ class BureauScene extends Phaser.Scene {
     const OR = 0xd8a838, BLEU = 0x6a9ac9, VIOLET = 0x9a6ac9, VERT = 0x6a9a4a;
     const PICTOS = { ameliorations: ['balai', OR], forge: ['epees', OR], competences: ['idee', BLEU], reputation: ['etoile', BLEU], camps: ['soleil', BLEU],
       etrange: ['lune', VIOLET], carnet: ['lettre', VIOLET], formes: ['son', VIOLET], aventuriers: ['crane', VERT], commerce: ['pieceFace', VERT] };
-    const ORDRE = ['ameliorations', 'forge', 'competences', 'reputation', 'camps', 'etrange', 'carnet', 'formes', 'aventuriers', 'commerce'];
+    const ORDRE = ['ameliorations', 'forge', 'competences', 'reputation', 'camps', 'succes', 'etrange', 'carnet', 'formes', 'aventuriers', 'commerce'];
     // (v0.82) un tiroir de plus, vers la forge, une fois qu'elle est proposée
     let tiroirs = forgeProposee(this.G) ? [...TIROIRS, ['forge', 'La forge']] : TIROIRS;
     // (v1.24) le carnet de JeuneGoy, dès sa première pensée de départ
     if (this.G.envie && this.G.envie.pensees && this.G.envie.pensees.length) tiroirs = [...tiroirs, ['carnet', 'Le carnet de JeuneGoy']];
     // (v1.37) le carnet des formes de fumée, dès que ton chat a parlé
     if (typeof moulinFait === 'function' && moulinFait(this.G)) tiroirs = [...tiroirs, ['formes', 'Le carnet des formes']];
+    // (v1.50, planche 61) les succès, façon Steam
+    if (typeof SUCCES !== 'undefined') tiroirs = [...tiroirs, ['succes', 'Tes succès']];
     tiroirs = tiroirs.slice().sort((a, b) => ORDRE.indexOf(a[0]) - ORDRE.indexOf(b[0]));
     creerGlyphesHD(this); if (typeof creerPiecesHD === 'function') creerPiecesHD(this);
-    const rangs = Math.ceil(tiroirs.length / 2), h = rangs > 4 ? 36 : 44, pas = h + 4;
+    const rangs = Math.ceil(tiroirs.length / 2), h = rangs > 5 ? 30 : rangs > 4 ? 36 : 44, pas = h + (rangs > 5 ? 3 : 4);
     tiroirs.forEach(([cle, nom], i) => {
       const [picto, coul] = PICTOS[cle] || ['etoile', OR];
       const x = 594 + (i % 2) * 176, y = 288 + Math.floor(i / 2) * pas;
@@ -359,7 +361,12 @@ class BureauScene extends Phaser.Scene {
       const dessiner = survol => g.clear().fillStyle(survol ? 0x3e2818 : 0x2a1a10, 0.94).fillRoundedRect(x, y, 168, h, 7)
         .fillStyle(coul).fillRoundedRect(x, y, 7, h, { tl: 7, bl: 7, tr: 0, br: 0 }).lineStyle(2, coul, survol ? 1 : 0.8).strokeRoundedRect(x, y, 168, h, 7);
       dessiner(false);
-      this.add.image(x + 24, y + h / 2, picto === 'pieceFace' ? 'pieceFace' : 'glyphe_' + picto).setScale(picto === 'pieceFace' ? 1.6 : 1.9);
+      if (cle === 'succes') {
+        // la médaille d'or, le compte, et « NOUVEAU » tant qu'on n'a pas regardé le dernier
+        poserMedaille(this, x + 24, y + h / 2 - 2, 'or', 'amulette', h < 40 ? 0.5 : 0.62);
+        nom = `Tes succès · ${nombreSucces(this.G)}/${Object.keys(SUCCES).length}`;
+        if (this.G.succesNonVus) this.badgeSucces = this.add.text(x + 162, y + 2, `${this.G.succesNonVus}`, style(10, '#1a0e06', { fontStyle: 'bold', backgroundColor: '#e8b830', padding: { x: 4, y: 0 } })).setOrigin(0.5).setDepth(2);   // (le nombre de nouveaux, tant qu'on n'a pas regardé)
+      } else this.add.image(x + 24, y + h / 2, picto === 'pieceFace' ? 'pieceFace' : 'glyphe_' + picto).setScale(picto === 'pieceFace' ? 1.6 : 1.9);
       this.add.text(x + 42, y + h / 2, nom, style(13, '#fff4dc', { fontStyle: 'bold', wordWrap: { width: 120 } })).setOrigin(0, 0.5);
       const zone = this.add.rectangle(x + 84, y + h / 2, 168, h, 0xffffff, 0).setInteractive({ useHandCursor: true });
       zone.on('pointerover', () => dessiner(true));
@@ -371,6 +378,7 @@ class BureauScene extends Phaser.Scene {
   ouvrirTiroir(cle, nom = (TIROIRS.find(t => t[0] === cle) || [])[1]) {
     const G = this.G;
     if (cle === 'formes') return ouvrirCarnetFormes(this);
+    if (cle === 'succes') { if (this.badgeSucces) { this.badgeSucces.destroy(); this.badgeSucces = null; } return ouvrirPageSucces(this); }
     if (cle === 'forge') { this.scene.pause(); this.scene.launch('Forge', { appelant: 'Bureau' }); return; }
     this.onglet = null;
     const c = this.vider();

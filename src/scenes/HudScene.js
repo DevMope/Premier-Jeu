@@ -305,6 +305,12 @@ class HudScene extends Phaser.Scene {
     const s = this.scenePrincipale();
     const visible = !!(G && s && !SCENES_SANS_BANDEAU.includes(s.scene.key));
     this.bandeau.setVisible(visible && !this.fenetre);
+    // (v1.50, planche 61) les succès débloqués : une vignette à la fois, en haut à droite, dès que le bandeau est là
+    if (visible && G.succesAMontrer && G.succesAMontrer.length && !this.vignetteEnCours && typeof vignetteSucces === 'function') {
+      this.vignetteEnCours = true;
+      try { vignetteSucces(this, G.succesAMontrer[0], { fin: () => this.time.delayedCall(500, () => { this.vignetteEnCours = false; }) }); }
+      catch (e) { G.succesAMontrer.shift(); this.vignetteEnCours = false; }
+    }
     if (visible) {
       this.texteJour.setText(`Jour ${G.jour}`);
       const sa = typeof saisonDe === 'function' && G.jour ? saisonDe(G) : null;

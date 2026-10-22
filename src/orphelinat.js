@@ -180,6 +180,7 @@ function courseDuCoursier(G, id, pourLeClient = false) {
   if (!peutPayer(G, a.prix)) return { erreur: manqueArgent(G, a.prix, 'Pas assez de pièces pour cette course.') };
   offre.qte--;
   orphelinatDe(G).coursesFaites++;
+  orphelinatDe(G).coursesTotal = (orphelinatDe(G).coursesTotal || 0) + 1;   // (v1.50) pour le succès « Les petites mains »
   const message = depenserChez(G, a.cle, a.prix);
   return { ok: true, prix: a.prix, message };
 }

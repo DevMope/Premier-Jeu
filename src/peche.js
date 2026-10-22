@@ -52,10 +52,11 @@ if (typeof POSTES !== 'undefined') { POSTES.peche = 'La pêche'; POSTES.cannes =
 if (typeof OUVERTURE_LIEUX !== 'undefined') OUVERTURE_LIEUX.peche = PECHE.ouverture;
 if (typeof NOMS_LIEUX_MARCHE !== 'undefined') NOMS_LIEUX_MARCHE.peche = 'La cabane de Barnabé';
 if (typeof RUMEURS_CHANTIER !== 'undefined') RUMEURS_CHANTIER.peche = ["Un vieux hobbit traîne des cannes, des filets et une odeur de vase derrière les planches. Il sifflote en ficelant des bouchons.", "On a vu passer un tonneau qui frétillait. Vous trouvez ça normal, vous, un tonneau qui frétille ?"];
+// (v1.50, planche 61) leurs médailles : catégorie « La pêche », bronze / argent / or
 if (typeof SUCCES !== 'undefined') Object.assign(SUCCES, {
-  premierePrise: { nom: 'Ça mord !', texte: 'Pêcher ton premier poisson à l’étang du Moulin', icone: '🎣' },
-  grandMere: { nom: 'Cinquante ans qu’il la guettait', texte: 'Prendre Grand-Mère Écaille, la légende de l’étang', icone: '🐟★' },
-  carnetEtang: { nom: 'L’étang n’a plus de secrets', texte: 'Prendre toutes les espèces de l’étang du Moulin', icone: '📖', cache: true },
+  premierePrise: { nom: 'Ça mord !', texte: 'Pêcher ton premier poisson à l’étang du Moulin', cat: 'peche', palier: 'bronze', icone: 'corde' },
+  carnetEtang: { nom: 'L’étang n’a plus de secrets', texte: 'Prendre toutes les espèces de l’étang du Moulin', cat: 'peche', palier: 'argent', icone: 'corde' },
+  grandMere: { nom: 'Cinquante ans qu’il la guettait', texte: 'Prendre Grand-Mère Écaille, la légende de l’étang', cat: 'peche', palier: 'or', icone: 'gourde' },
 });
 
 function etatPeche(G) {

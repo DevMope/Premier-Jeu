@@ -79,6 +79,7 @@ function finirTir(G, points) {
     G.titreRempart = s.an;
     G.reputation += SOLSTICE.tir.reputationTitre;
     r.titre = true;
+    if (typeof debloquerSucces === 'function') debloquerSucces(G, 'tirArc', 'au tir à l\u2019arc du Solstice');
   }
   r.texte = !lot ? "Pas de lot cette fois... Le sergent te tape sur l'épaule : « La prochaine sera la bonne ! »"
     : `Bravo ! ${r.argent} pièces${r.trefle ? ' et un trèfle du Solstice (à offrir au comptoir)' : ''}.`;

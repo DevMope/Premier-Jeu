@@ -737,6 +737,7 @@ function partir(G, voyageur, colis, pieges = {}) {
   G.experience++;
   G.journal.servis++;
   G.stats.servis = (G.stats.servis || 0) + 1;   // (v0.85) les vrais clients servis : l'expérience monte aussi la nuit
+  if (typeof verifierSucces === 'function') verifierSucces(G);   // (v1.50) « Premier baluchon », « Cent baluchons »...
   connaitre(G, voyageur);
   for (const [id, n] of Object.entries(colis)) G.stats.objets[id] = (G.stats.objets[id] || 0) + n;
   return message;
@@ -1445,6 +1446,7 @@ function payerEcheances(G) {
     payer(G, montant, 'remboursements');
     p.restant -= montant;
   }
+  G.pretsRembourses = (G.pretsRembourses || 0) + G.prets.filter(p => p.restant <= 0).length;   // (v1.50) le succès « Libre comme l'air »
   G.prets = G.prets.filter(p => p.restant > 0);
 }
 
@@ -1624,6 +1626,7 @@ function nuit(G) {
   sansPlanter('nuitDuLien', () => typeof nuitDuLien === 'function' && nuitDuLien(G));   // (v1.35) la complicité avec le chat
   sansPlanter('nuitDeLaCompagne', () => typeof nuitDeLaCompagne === 'function' && nuitDeLaCompagne(G));   // (v1.37) sa gamelle à elle
   sansPlanter('nuitDuParrain', () => typeof nuitDuParrain === 'function' && nuitDuParrain(G));   // (v1.39) la part de la Famille
+  sansPlanter('nuitDesSucces', () => typeof nuitDesSucces === 'function' && nuitDesSucces(G));   // (v1.50) les séries, et les succès du jour
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -2289,6 +2292,7 @@ function terminerAventure(G, parti) {
       if (G.reussites[camp] - (G.reussites[autre] || 0) > JAUGE_CAMP.ecartMax) G.reussites[camp] = (G.reussites[autre] || 0) + JAUGE_CAMP.ecartMax;
     }
     G.journal.retours++;
+    G.stats.retours = (G.stats.retours || 0) + 1;   // (v1.50) pour le succès « Ils reviennent ! »
     // Un succès de plus : il progresse, et la carte aussi (déblocage des étoiles).
     const danger = ZONES[v.zone] ? ZONES[v.zone].danger : 1;
     G.succes[danger] = (G.succes[danger] || 0) + 1;

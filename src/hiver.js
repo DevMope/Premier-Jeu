@@ -97,6 +97,7 @@ function donnerLotRoue(G, id) {
     return { texte: `${DECOS[d].nom}, de la brocante de Firmin ! ${DECOS[d].f ? 'Accrochée' : 'Accroché'} dans ton arrière-boutique.`, objet: d };
   }
   // le gros lot
+  if (typeof debloquerSucces === 'function') debloquerSucces(G, 'roue', 'à la fête du Long Hiver');   // (v1.50)
   if (aDeco(G, 'sapinCristal')) return { ...pieces(HIVER.grosLotDeja), texte: `Le gros lot, encore ! Tu as déjà ton sapin de cristal : le Père Givrin te donne ${HIVER.grosLotDeja} pièces à la place.` };
   G.decos = [...(G.decos || []), 'sapinCristal'];
   return { texte: "LE GROS LOT ! Le sapin de cristal : il brillera dans ton arrière-boutique (+0,4 client par jour).", objet: 'sapinCristal' };
