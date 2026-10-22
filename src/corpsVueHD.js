@@ -1174,8 +1174,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       if (costume === 'duc') {
         // (planche 75 v2) le duc : la moustache cirée, longue, aux pointes recourbées vers le haut, et une petite mouche
         const colle = (x, y, tol) => { for (let d = 0; d <= tol; d++) if (tete(x - d, y) || tete(x + d, y)) return true; return false; };
-        for (const cote of [-1, 1]) {
-          const long = lb + 2.2 * k;
+        const profilDuc = Math.abs(s) > 0.85, arriere = s > 0 ? -1 : 1;   // (de profil, on ne voit que le côté qui file vers la joue)
+        for (const cote of [-1, 1]) { if (profilDuc && cote !== arriere) continue;
+          const long = profilDuc ? lb + 1.2 * k : lb + 2.2 * k;
           for (let j = 0; j <= long; j++) { const x = Math.round(bx + cote * j), y = Math.round(by - 1.5 * k + j * 0.1); for (let e = 0; e < 2 * k - Math.floor(j / long * k); e++) if (colle(x, y + e, k)) t.poser(x, y + e, 'barbe', e < k * 0.6 ? 3 : 2); }
           const cxT = bx + cote * long, cyT = by - 2.6 * k, r = 1.3 * k;
           for (let a = 0; a <= Math.PI * 1.35; a += 0.12) { const x = Math.round(cxT + cote * Math.sin(a) * r), y = Math.round(cyT + Math.cos(a) * r); if (colle(x, y, k)) { t.poser(x, y, 'barbe', 3); t.poser(x, y + 1, 'barbe', 2); } }
@@ -1188,11 +1189,26 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
         for (const cote of [-1, 1]) for (let j = 0; j < 3 * k; j++) { const x = Math.round(bx + cote * (lb + 3.2 * k + j * 0.25)), y = Math.round(by - 1 * k + j); if (t.mat(x, y) === 'peau') t.poser(x, y, 'peau', 2); }
         // les longues mèches fines, rejetées en arrière, qui tombent sur la fourrure (le front est dégarni)
         // (sous tous les angles : elles partent de derrière les oreilles et tombent jusque sur le col de fourrure)
-        if (!dos) for (const cote of [-1, 1]) { const u0 = cote * P.rx * 0.92, z0 = -P.rx * 0.5; if (Z(u0, z0) < -P.rx * 0.85) continue;
+        if (!dos && Math.abs(s) < 0.2) for (const cote of [-1, 1]) { const u0 = cote * P.rx * 0.92, z0 = -P.rx * 0.5; if (Z(u0, z0) < -P.rx * 0.85) continue;
           for (let m = 0; m < 4; m++) for (let y = cy - 2 * k; y < yT + 11 * k; y++) { const dy = Math.max(0, y - cy), u = u0 + cote * (m * 0.7 * k + dy * 0.06), z = z0 - m * 0.7 * k - dy * 0.05;
             const x = Math.round(X(u, z) + Math.sin(y / (3 * k) + m) * 0.5 * k);
             if (t.mat(x, y) === 'peau' && y < cy + P.ry && tete(x, y) && Z(u, z) > -P.rx * 0.2) continue;   // (jamais sur le visage)
             t.poser(x, y, 'cheveux', 2 + ((y + m) % 3 === 0 ? 1 : 0) - (m === 3 ? 1 : 0)); } }
+        // (de biais et de profil) une vraie masse de cheveux longs, qui part du crâne (sous la calotte, derrière
+        // l'oreille) et descend en s'élargissant jusque sur la fourrure, avec ses mèches
+        if (!dos && Math.abs(s) >= 0.2) {
+          const arr = s > 0 ? -1 : 1, zb = -P.rx * 0.75;
+          const bordArriere = y => { const dy = (y - cy) / P.ry; return X(0, zb) + arr * (P.rx * 0.55) * Math.sqrt(Math.max(0, 1 - Math.min(1, dy) ** 2 * 0.5)) + arr * Math.max(0, y - cy - P.ry) * 0.12; };
+          for (let y = Math.round(cy - P.ry * 0.55); y < yT + 12 * k; y++) {
+            const xb = bordArriere(y), larg = (y < cy ? 3.2 * k : 4.2 * k + (y - cy) * 0.05) * (0.8 + Math.abs(s) * 0.3);
+            for (let x = Math.round(Math.min(xb, xb - arr * larg)); x <= Math.max(xb, xb - arr * larg); x++) {
+              const m = t.mat(x, y); if (m === 'peau' && y < cy + P.ry * 0.9 && Math.abs(x + 0.5 - xb) > larg * 0.9) continue;
+              if (m === 'blanc' || m === 'pupille' || m === 'iris') continue;
+              if (y > yT + 12 * k - hachage(Math.floor(x / k), 3, 71) * 4 * k) continue;   // (les pointes, effilées, pas coupées net)
+              const meche = Math.floor((x + Math.round(y * 0.15 * arr)) / k) % 3;
+              t.poser(x, y, 'cheveux', meche === 0 ? 1 : meche === 1 ? 3 : 2 + (y > yT + 8 * k ? -1 : 0)); }
+          }
+        }
       } }
     else if (barbe) {
       const long = barbe === 'sage' ? yT + 11 * k : barbe === 'nain' ? yB - 2 * k : barbe === 'pleine' ? cy + P.ry + 4 * k : cy + P.ry + 1.5 * k;
