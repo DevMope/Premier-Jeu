@@ -159,7 +159,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const L = 52 * k;
   // (v0.58) + une marge en haut : sans elle, le sommet du crâne (cheveux, contour) touchait le bord
   // de l'image et paraissait coupé à plat
-  const coiffe = (race === 'magicienne' || costume === 'sage' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' || costume === 'pirate' ? 8 : costume === 'garde' ? 2 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : costume === 'joueur' && typeof COIFFURES_HD !== 'undefined' && COIFFURES_HD[g.coiffure] ? (COIFFURES_HD[g.coiffure].marge || 0) : 0) * k + (pose === 'leves' || pose === 'epaules' || pose === 'grimpe1' || pose === 'grimpe2' ? 12 * k : 0) + 3 * k;
+  const coiffe = (race === 'magicienne' || costume === 'sage' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' || costume === 'pirate' ? 8 : costume === 'garde' ? 2 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'cambrioleur' ? 4 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : costume === 'joueur' && typeof COIFFURES_HD !== 'undefined' && COIFFURES_HD[g.coiffure] ? (COIFFURES_HD[g.coiffure].marge || 0) : 0) * k + (pose === 'leves' || pose === 'epaules' || pose === 'grimpe1' || pose === 'grimpe2' ? 12 * k : 0) + 3 * k;
   const H = P.H + coiffe;
   const t = new ToileHD(L, H);
   t.relief = true;
@@ -169,7 +169,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const ombreF = f ? FEMININ_OMBRE[race] : null;
   const T = ombreF ? { ...TRAITS_PEUPLES[race], ...ombreF } : TRAITS_PEUPLES[race] || {};
   if (ombreF && ombreF.coiffure) g = { ...g, coiffure: ombreF.coiffure, cheveux: ombreF.teinte };
-  if (costume === 'mainNoire' || costume === 'serpent') g = { ...g, coiffure: 'court' };   // (sous la capuche)
+  if (costume === 'mainNoire' || costume === 'serpent' || costume === 'cambrioleur') g = { ...g, coiffure: 'court', ...(costume === 'cambrioleur' ? { cheveux: 0x2a2018 } : {}) };   // (sous la capuche, sous le bonnet)
   if (T.cheveux !== undefined) g = { ...g, coiffure: T.cheveux === 'plaque' ? 'court' : 'chauve', barbe: T.barbe || null };   // (pas de cheveux longs derrière)
   const gobelin = costume === 'gobelin' || race === 'gobelin';
   const leves = pose === 'leves' || pose === 'epaules', grimpe = pose === 'grimpe1' || pose === 'grimpe2';
@@ -233,6 +233,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // (v1.05, planche 35) le Père Givrin, à la roue du Long Hiver : le manteau rouge bordé de fourrure blanche,
     // le large ceinturon noir à boucle d'or, le long bonnet à pompon
     t.rampes.fourrure = rampeVive(0xf4f2ee); t.rampes.cuir = rampeVive(0x24201e); t.rampes.bonnetH = rampeVive(0xb0242a);
+  } else if (costume === 'cambrioleur') {
+    // (planche 63) le cambrioleur : bonnet noir, loup noir sur les yeux, pull rayé, pantalon sombre
+    t.rampes.habit = rampe(0x2a2c36); t.rampes.lin = rampeVive(0xd8d4c8); t.rampes.bas = rampe(0x22242c); t.rampes.cuir = rampe(0x1e1a18);
+    t.rampes.bonnetH = rampe(0x26282e); t.rampes.masque = rampe(0x0e0e12);
   } else if (costume === 'serpent') {
     t.rampes.habit = rampe(0x4a6428); t.rampes.cape = rampe(0x34501e); t.rampes.cuir = rampe(0x26222a); t.rampes.bas = rampe(0x2a2630);
     t.rampes.gilet = rampeVive(0x6a4426); t.rampes.argent = rampeVive(0xc8ccd4); t.rampes.emeraude = rampeVive(0x2ec860); t.rampes.fleche = rampeVive(0xe8b020);
@@ -543,6 +547,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     for (const [dx, dy] of [[0, -2.8], [0, 2.8], [-2.6, 0], [2.6, 0], [-2, -2], [2, -2], [-2, 2], [2, 2]]) t.poser(Math.round(sx + dx * k * Math.max(0.6, Math.abs(c))), Math.round(sy + dy * k), 'or', 4);
     for (let x = Math.round(X(0, prof) - larg); x <= X(0, prof) + larg; x++) t.poser(x, Math.round(yB + 6 * k) - 1, 'or', 3);
   }
+  // (planche 63) le pull rayé du cambrioleur : une bande claire sur deux, sur le torse et les bras
+  if (costume === 'cambrioleur') for (let y = yT; y < yB + 3 * k; y++) if (Math.floor((y - yT) / (2 * k)) % 2 === 1) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'habit') t.poser(x, y, 'lin', t.teinte(x, y));
   // La Main Noire : la robe en lambeaux jusqu'au sol, ses plis, une chaîne de fer pour ceinture
   if (costume === 'mainNoire') {
     for (let y = sol - 8 * k; y <= sol; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'habit' && hachage(Math.floor(x / k), 0, 41) * 8 * k > sol - y + 1) { t.c[y * L + x] = null; t.m[y * L + x] = null; }
@@ -1388,6 +1394,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (!dos && Math.abs(s) > 0.3) for (let j = 0; j < 16 * k; j++) { const u = j / (16 * k); const px = X(0, -P.rx * (0.9 + u * 0.6)) - Math.sin(u * 2.2) * 2 * k * (s > 0 ? 1 : -1), py = cy - P.ry * 0.7 + j * 0.95; t.forme('cape', ellipsoide(px, py, Math.max(0.6 * k, 2.4 * k * (1 - u * 0.8)), 1.1 * k), { decalage: -0.5 }); }
     t.forme('cape', (x, y) => (y >= yT - 1 * k && y <= yT + 6 * k && Math.abs(x + 0.5 - cx) < ep + 2 * k - Math.max(0, yT + 1 * k - y) * 0.8 && !(y > yT + 4 * k && Math.floor(x / k) % 3 === 1) ? [(x + 0.5 - cx) / (ep + 3 * k), 0, 0.8] : null), { decalage: -0.2 });
     if (!dos) t.forme('emeraude', ellipsoide(X(0, prof * 1.05), yT + 1 * k, 1.1 * k, 1.1 * k), { decalage: 0.5, ombre: false });
+  } else if (costume === 'cambrioleur') {
+    // Le bonnet serré, roulé au bord ; puis le loup noir en travers des yeux (les yeux restent visibles)
+    const bh = cy - 1.2 * k;
+    t.forme('bonnetH', (x, y) => { const n = ellipsoide(X(0, -0.3 * k), cy - 0.6 * k, P.rx + 0.8 * k, P.ry + 1.2 * k)(x, y); return n && y < bh ? n : null; }, { decalage: -0.2, motif: (x, y) => (Math.floor(x / k) % 2 ? -0.4 : 0) });
+    t.forme('bonnetH', (x, y) => (y >= bh - 1.4 * k && y < bh + 0.4 * k && Math.abs(x + 0.5 - X(0, -0.3 * k)) < P.rx + 1.2 * k ? [(x + 0.5 - cx) / (P.rx + 2 * k), 0.2, 0.8] : null), { decalage: 0.1 });
+    for (let y = Math.round(ey - 1.8 * k); y <= Math.round(ey + 1.3 * k); y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'peau' || t.mat(x, y) === 'cheveux') t.poser(x, y, 'masque', y < ey - 1 * k ? 3 : 2);
   } else if (costume === 'mentor') {
     // Rien sur la tête : Garrick a ses cheveux bruns, longs et ondulés
   }

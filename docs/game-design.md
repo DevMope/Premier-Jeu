@@ -3180,3 +3180,12 @@ Idée du joueur : la couleur par sujet portée par des pierres précieuses sur l
 - **L'anniversaire des habitués** : le registre le note le matin ; l'habitué vient le dire : un cadeau compte double (+4), le souhaiter +1, l'oublier −1.
 - **Les cadeaux, plus clairs** : pour chaque cadeau, ce que le client en pense (♥ adore, ✓ aime, ? jamais offert, · bof, ✗ déteste) et ce que ça rapporte, avant de l'offrir ; les goûts s'apprennent en offrant (ou avec du flair).
 - (v1.50, corrigé au passage : l'écriteau de la tente d'Ysmée mordait sur la porte du comptoir ; il est maintenant sur un petit chevalet devant la tente.)
+
+### Planche 63 : le cambrioleur, et le chat qui lui fait peur (à valider) (docs/planches-v059/planche-63-cambrioleur-et-chat.png)
+- **Le cambrioleur** (« Le Rat ») : un nouveau personnage dans le moteur des corps (tenue `cambrioleur` : bonnet noir, loup noir sur les yeux, pull rayé, pantalon sombre).
+- **Rare** : une nuit tous les 40 à 60 jours, plus souvent si ta fortune dort à la maison. Il prend un peu d'or, une potion, un objet de la vitrine, jamais tout.
+- **Au matin, sans chat qui parle** : la porte de la rue entrouverte, des traces de bottes, des pièces semées, et la liste de ce qui manque.
+- **Ce qui le décourage** : une serrure de fer (amélioration, une fois sur deux), la banque (l'or qui n'est pas chez toi ne craint rien), la garde achetée du repaire (il n'ose pas venir), et ton chat s'il t'a parlé : toujours.
+- **Les mini-films « d'horreur » drôles**, un au hasard, en cadre de cinéma (bandes noires, grain, titre rouge) : I. Les yeux (le noir, deux yeux sur le buffet, « Tu cherches quelque chose... l'ami ? ») ; II. L'ombre (une bougie, l'ombre immense d'un chat debout sur la grande porte, « Je compte jusqu'à trois. ») ; III. La fumée (un dragon de fumée en pleine figure, « Bouh. ») ; IV. Le Parrain (seulement si ton chat dirige la Main Noire : « On ne vole pas chez la famille. »).
+- **La fuite** : il détale dans la rue en hurlant et sème son butin, qu'on retrouve au matin ; il ne revient jamais.
+- **Le lendemain** : la gazette raconte qu'il s'est rendu à la garde en pleurant ; ton chat dort dans son panier, l'air de rien. La première fois : le succès secret « Bouh. ».
