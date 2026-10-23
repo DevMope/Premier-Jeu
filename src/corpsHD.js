@@ -32,7 +32,7 @@ const PROPORTIONS = {
 const FIGURANTS = {
   garde: { race: 'humain', nom: 'Garde', costume: 'garde', habit: 0x8a2a2a, cheveux: 0x3a2a1a },
   // (planche 75 v2, à valider) Pont-Royal : son duc, gras et arrogant, et la garde du pont
-  duc: { race: 'humain', nom: 'Le duc Aldebert Pansard', costume: 'duc', habit: 0x5a1a26, cheveux: 0xc0662a, barbe: 'moustache', coiffure: 'degarni', peau: 0, niveau: 3, proportions: { H: 70, ep: 15.2, torse: 26, rx: 8.6, ry: 9.4, membre: 1.25 }, cape: 0x3e1e30 },
+  duc: { race: 'humain', nom: 'Le duc Aldebert Pansard', costume: 'duc', habit: 0x5a1a26, cheveux: 0xc0662a, barbe: 'moustache', coiffure: 'degarniDuc', peau: 0, niveau: 3, proportions: { H: 70, ep: 15.2, torse: 26, rx: 8.6, ry: 9.4, membre: 1.25 }, cape: 0x3e1e30 },
   gardeRoyal: { race: 'humain', nom: 'Garde du pont', costume: 'gardeRoyal', habit: 0x1c1c24, cheveux: 0x1a1612, coiffure: 'long', niveau: 2, fache: true },
   banquier: { race: 'humain', nom: 'Banquier', costume: 'banquier', habit: 0x26262e, cheveux: 0x1a1a20 },
   nainBanquier: { race: 'nain', nom: 'Thorgrim', costume: 'banquier', habit: 0x26262e, cheveux: 0xe0e0e0 },

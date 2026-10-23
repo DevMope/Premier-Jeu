@@ -142,6 +142,10 @@ const COIFFURES_HD = {
   // (la coupe militaire : un duvet ras partout)
   militaire: { nom: 'Militaire', dessus: C => calotteHD(C, { ras: true, gonfle: 0.4, hauteur: 0.7, frange: -0.52, ondes: 0.04 }) },
   degrade: { nom: 'Dégradé court', dessus: C => { cotesRases(C); calotteHD(C, { gonfle: 0.9, hauteur: 1.6, frange: -0.5, ondes: 0.05, limite: (nx, ny) => ny < -0.45 }); } },
+  // (planche 75 v2) le duc : la même coupe, mais de profil le côté de la tête est dégarni (l'oreille reste nue) et la limite
+  // des cheveux recule doucement vers l'arrière du crâne en descendant
+  degarniDuc: { nom: 'Dégarni (duc)', dessus: C => { const lim = (nx, ny, fz) => Math.abs(C.s) <= 0.85 || fz < 0.05 - Math.max(0, ny + 0.5) * 1.1;
+    calotteHD(C, { gonfle: 0.6, hauteur: 1.1, frange: -0.8, ondes: 0.02, limite: lim }); calotteHD(C, { gonfle: 0.7, hauteur: 1.2, frange: -0.72, ondes: 0, limite: (nx, ny, fz, fu) => Math.abs(fu) < 0.12 && lim(nx, ny, fz) }); } },
   degarni: { nom: 'Dégarni', dessus: C => { calotteHD(C, { gonfle: 0.6, hauteur: 1.1, frange: -0.8, ondes: 0.02 }); calotteHD(C, { gonfle: 0.7, hauteur: 1.2, frange: -0.72, ondes: 0, limite: (nx, ny, fz, fu) => Math.abs(fu) < 0.12 }); } },
   iroquoise: { nom: 'Iroquoise', marge: 7, dessus: C => { cotesRases(C); const { t, k, cy, P, s, c, X } = C;
     for (let i = -4; i <= 5; i++) { const z = i * P.rx * 0.2, ux = X(0, z), base = cy - Math.sqrt(Math.max(0, 1 - (z / P.rx) ** 2)) * P.ry - 0.5 * k, h = (6 + (i % 2) * 1.5 - Math.abs(i - 0.5) * 0.4) * k;
