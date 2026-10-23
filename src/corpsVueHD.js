@@ -1255,6 +1255,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
               // (et quelques-unes qui passent par-dessus les cheveux près du cuir chevelu, au-dessus et en arrière de l'oreille)
               [[-0.22, -0.45], [-0.3, 0.35], [-0.5, 3]], [[-0.4, -0.5], [-0.45, 0.3], [-0.72, 4]], [[-0.56, -0.42], [-0.62, 0.25], [-0.9, 5]],
               [[-0.7, -0.3], [-0.78, 0.3], [-1.02, 4]], [[-0.84, -0.15], [-0.92, 0.35], [-1.12, 6]] ];
+            // (cinq de moins, réparties de l'arrière vers l'avant, pour le dégarnir un peu)
+            [10, 9, 6, 3, 1].forEach(i => meches.splice(i, 1));
             meches.forEach(([a, m, b], i) => {
               const [x0, y0] = PX(a[0], a[1]), [x1, y1] = PX(m[0], m[1]), x2 = cx + avP * b[0] * P.rx, y2 = basM + b[1] * k;
               let dernier = null;

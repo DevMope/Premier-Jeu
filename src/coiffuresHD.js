@@ -145,7 +145,12 @@ const COIFFURES_HD = {
   // (planche 75 v2) le duc : la même coupe, mais de profil le côté de la tête est dégarni (l'oreille reste nue) et la limite
   // des cheveux recule doucement vers l'arrière du crâne en descendant
   degarniDuc: { nom: 'Dégarni (duc)', dessus: C => { const lim = (nx, ny, fz) => Math.abs(C.s) <= 0.85 || fz < 0.05 - Math.max(0, ny + 0.5) * 1.1;
-    calotteHD(C, { gonfle: 0.6, hauteur: 1.1, frange: -0.8, ondes: 0.02, limite: lim }); calotteHD(C, { gonfle: 0.7, hauteur: 1.2, frange: -0.72, ondes: 0, limite: (nx, ny, fz, fu) => Math.abs(fu) < 0.12 && lim(nx, ny, fz) }); } },
+    calotteHD(C, { gonfle: 0.6, hauteur: 1.1, frange: -0.8, ondes: 0.02, limite: lim }); const profil = Math.abs(C.s) > 0.85;
+    // la bande du dessus (comme de face et de biais) : de profil, elle court le long du haut du crâne jusqu'au-dessus du front
+    calotteHD(C, { gonfle: 0.7, hauteur: 1.2, frange: -0.72, ondes: 0, limite: (nx, ny, fz, fu) => profil ? ny < -0.62 && fz < 0.7 && Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny)) < 0.45 : Math.abs(fu) < 0.12 && lim(nx, ny, fz) });
+    // et de profil, la touffe arrondie qui couvre l'oreille (comme de biais)
+    if (profil && !C.dos) { const { t, k, cy, P, X, pres } = C, ox = X(pres * P.rx, -P.rx * 0.32);
+      t.forme('cheveux', ellipsoide(ox, cy + 0.6 * k, 3.1 * k, 4.4 * k), { motif: MECHES, decalage: 0.1 }); } } },
   degarni: { nom: 'Dégarni', dessus: C => { calotteHD(C, { gonfle: 0.6, hauteur: 1.1, frange: -0.8, ondes: 0.02 }); calotteHD(C, { gonfle: 0.7, hauteur: 1.2, frange: -0.72, ondes: 0, limite: (nx, ny, fz, fu) => Math.abs(fu) < 0.12 }); } },
   iroquoise: { nom: 'Iroquoise', marge: 7, dessus: C => { cotesRases(C); const { t, k, cy, P, s, c, X } = C;
     for (let i = -4; i <= 5; i++) { const z = i * P.rx * 0.2, ux = X(0, z), base = cy - Math.sqrt(Math.max(0, 1 - (z / P.rx) ** 2)) * P.ry - 0.5 * k, h = (6 + (i % 2) * 1.5 - Math.abs(i - 0.5) * 0.4) * k;
