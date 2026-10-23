@@ -517,6 +517,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   if (costume === 'mendiant' && !dos) { const bx0 = X(ep + 3 * k, -1 * k); for (let y = yT - 6 * k; y < sol; y++) for (let e = 0; e < k; e++) t.poser(Math.round(bx0 + Math.sin(y / (6 * k)) * 0.6 * k) + e, y, 'cuir', Math.floor(y / k) % 6 === 0 ? 1 : 3); }
   // (v1.32, planche 57) les coupes de la création élargie : leur contexte de tête, et ce qui tombe dans le dos
   const coupeHD = typeof COIFFURES_HD !== 'undefined' && T.cheveux === undefined ? COIFFURES_HD[g.coiffure] : null;
+  const apresCoiffure = [];   // (des détails à poser par-dessus la coiffure : les petites mèches du duc)
   const ctxTete = (extra = {}) => ({ t, k, cx, cy, P, s, c, X, Z, dos, yT, yB, loin, pres, race, f, ...extra });
   if (coupeHD && coupeHD.derriere && !dos) coupeHD.derriere(ctxTete());
   const longs = ['long', 'queue', 'chignon'].includes(g.coiffure) || race === 'elfe' || race === 'magicienne';
@@ -1245,12 +1246,15 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
           }
           // de profil : de petites mèches fines et séparées (comme celles de face) qui partent de la lisière des cheveux, en haut
           // du crâne ; les unes filent vers la nuque et le dos, les autres passent derrière l'oreille et tombent devant l'épaule
-          if (profilDuc) {
+          if (profilDuc) apresCoiffure.push(() => {
             const avP = s > 0 ? 1 : -1, PX = (f, v) => [cx + avP * f * P.rx, cy + v * P.ry];
             const meches = [   // [départ (f, v), passage, arrivée (f, y sous basM en k)]
               [[-0.12, -0.9], [-0.7, 0.2], [-1.05, 5]], [[-0.2, -0.75], [-0.6, 0.5], [-0.85, 6]], [[-0.3, -0.6], [-0.5, 0.7], [-0.62, 4]],
               [[-0.08, -0.85], [-0.25, 0.45], [0.05, 5]], [[-0.18, -0.65], [-0.15, 0.7], [0.35, 3]], [[-0.02, -0.95], [-0.05, 0.6], [0.65, 2]],
-              [[-0.38, -0.45], [-0.3, 0.9], [0.9, 1]] ];
+              [[-0.38, -0.45], [-0.3, 0.9], [0.9, 1]],
+              // (et quelques-unes qui passent par-dessus les cheveux près du cuir chevelu, au-dessus et en arrière de l'oreille)
+              [[-0.22, -0.45], [-0.3, 0.35], [-0.5, 3]], [[-0.4, -0.5], [-0.45, 0.3], [-0.72, 4]], [[-0.56, -0.42], [-0.62, 0.25], [-0.9, 5]],
+              [[-0.7, -0.3], [-0.78, 0.3], [-1.02, 4]], [[-0.84, -0.15], [-0.92, 0.35], [-1.12, 6]] ];
             meches.forEach(([a, m, b], i) => {
               const [x0, y0] = PX(a[0], a[1]), [x1, y1] = PX(m[0], m[1]), x2 = cx + avP * b[0] * P.rx, y2 = basM + b[1] * k;
               let dernier = null;
@@ -1262,9 +1266,20 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
                   t.poser(xx, y, 'cheveux', e === k - 1 ? 1 : (q > 0.93 ? 2 : (Math.floor(y / k) + i) % 3 === 0 ? 2 : 4)); }
               }
             });
-          }
+          });
           // de biais : trois petites mèches fines et bien séparées, posées par-dessus, qui partent à hauteur des yeux et
           // descendent un peu plus bas que la chevelure (comme les petits cheveux de face)
+          // (et deux autres, plus en avant, qui partent plus haut, devant la chevelure)
+          if (biais && !profilDuc) apresCoiffure.push(() => { for (const [zz, hv] of [[0.15, 0.42], [0.28, 0.36]]) {
+            const u0 = pres * P.rx * 1.0, z0 = P.rx * zz, y0 = Math.round(cy - P.ry * hv), y1 = Math.round(basM + 1 * k);
+            for (let y = y0; y <= y1; y++) {
+              const dy = y - y0, x = Math.round(X(u0 + pres * dy * 0.04, -z0 - dy * 0.015) + Math.sin(y / (3.4 * k) + zz * 9) * 0.6 * k);
+              for (let e = 0; e < k; e++) { const xx = x + e * pres, m = t.mat(xx, y);
+                if (m === 'blanc' || m === 'pupille' || m === 'iris' || (m === 'peau' && surVisage(xx, y))) continue;
+                t.poser(xx, y, 'cheveux', e === k - 1 ? 0 : (y > y1 - 2 * k ? 2 : (Math.floor(y / k) % 3 === 0 ? 2 : 4))); }
+              t.poser(x - pres, y, 'cheveux', 1);
+            }
+          } });
           if (biais && !profilDuc) for (let i = 0; i < 3; i++) {
             const u0 = pres * P.rx * 0.98, z0 = -P.rx * [0.42, 0.6, 0.78][i];
             const y0 = Math.round(cy - P.ry * 0.12 + i * 0.6 * k), y1 = Math.round(basM + (3 + i * 1.5) * k);
@@ -1371,6 +1386,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
   } else if (coupeHD) {
     coupeHD.dessus(ctxTete({ tete }));
+    for (const f of apresCoiffure) f();
   } else if (coupe !== 'chauve') {
     t.forme('cheveux', (x, y) => {
       const nx = (x + 0.5 - cx) / (P.rx + 1 * k), ny = (y + 0.5 - cy) / (P.ry + 1.8 * k);
