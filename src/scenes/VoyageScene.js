@@ -19,7 +19,7 @@ class VoyageScene extends Cinematique {
     this.cameras.main.setZoom(0.75 * Z).setScroll(-160, -180);
     // le décor qui défile : trois tuiles de paysage, le chemin ; ce qui est posé au bord du chemin défile avec lui
     this.biome = 'comte';
-    this.tuiles = [-960, 0, 960].map(x => this.add.image(x, -160, paysageHD(this, 960, sol + 160, 'comte', 0, { sansAstre: true })).setOrigin(0).setDisplaySize(960, sol + 160).setDepth(0));
+    this.tuiles = [-960, 0, 960].map(x => this.add.image(x, -180, paysageHD(this, 960, sol + 180, 'comte', 0, { sansAstre: true })).setOrigin(0).setDisplaySize(960, sol + 180).setDepth(0));
     this.sols = [-960, 0, 960].map(x => this.add.image(x, sol, cheminTerreHD(this, 960, 70)).setOrigin(0).setDisplaySize(960, 70).setDepth(0.5));
     this.bordChemin = [];   // (les gens, la Porte, le feu... : { o, x } dans le monde, qui reculent quand elle avance)
     this.parcouru = 0;
@@ -45,7 +45,7 @@ class VoyageScene extends Cinematique {
     this.debout = false;
     this.placer();
     // le soir qui tombe (un voile sur le monde) et le feu de camp
-    this.voile = this.add.rectangle(480, 180, 2600, 1400, 0x1a1030, 0).setDepth(6.5);
+    this.voile = this.add.rectangle(480, 180, 2600, 1400, 0x1a1030, 1).setAlpha(0).setDepth(6.5);
     // l'interface, sur sa caméra à elle (sans recul)
     const ui = this.uiObjets = [];
     this.uiCam = this.cameras.add(0, 0, 960 * Z, 540 * Z).setOrigin(0, 0).setZoom(Z);
@@ -170,8 +170,8 @@ class VoyageScene extends Cinematique {
   changerBiome(biome, nuit = 0) {
     if (this.biome === biome) return;
     this.biome = biome;
-    const cle = paysageHD(this, 960, this.sol + 160, biome, nuit, { sansAstre: true });
-    for (const t of this.tuiles) { const n = this.add.image(t.x, t.y, cle).setOrigin(0).setDisplaySize(960, this.sol + 160).setDepth(0.01).setAlpha(0); this.tweens.add({ targets: n, alpha: 1, duration: 1200, onComplete: () => { t.setTexture(cle).setDisplaySize(960, this.sol + 160); n.destroy(); } }); }
+    const cle = paysageHD(this, 960, this.sol + 180, biome, nuit, { sansAstre: true });
+    for (const t of this.tuiles) { const n = this.add.image(t.x, t.y, cle).setOrigin(0).setDisplaySize(960, this.sol + 180).setDepth(0.01).setAlpha(0); this.tweens.add({ targets: n, alpha: 1, duration: 1200, onComplete: () => { t.setTexture(cle).setDisplaySize(960, this.sol + 180); n.destroy(); } }); }
   }
   fumeeSoir(on) { this.tweens.add({ targets: this.voile, alpha: on ? 0.55 : 0, duration: 1600 }); }
 

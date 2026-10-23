@@ -44,6 +44,8 @@ if (typeof BAREME_CAMP !== 'undefined') Object.assign(BAREME_CAMP, {
   routeRancon: { camp: 'mal', n: 1, texte: 'Faire payer un blessé sur la route' },
 });
 
+// (les étoiles du comptoir : conseil.js les compte ; sinon, le plus haut palier atteint)
+function etoilesVoyage(G) { return typeof etoilesDe === 'function' ? etoilesDe(G) : Math.max(1, ...(G.paliersEtoiles || [1])); }
 function etatVoyage(G) { return (G.voyage = G.voyage || { lettre: null, lettreLue: false, depart: null, enRoute: false, jourRoute: 0, imprevus: [], arrive: null, pip: false }); }
 function villeActuelle(G) { return G.ville || 'comte'; }
 function aPontRoyal(G) { return villeActuelle(G) === 'pontRoyal'; }
@@ -114,7 +116,7 @@ function matinDuVoyage(G) {
 const IMPREVUS = {
   orage: { nom: "L'orage", texte: 'Le ciel noircit d\'un coup. Sous un vieux pont de pierre, des voyageurs trempés s\'abritent avec toi.',
     choix: [
-      { nom: 'Leur vendre des capes et des torches', fait: G => { const p = 40 + 10 * etoilesDe(G); encaisser(G, p, 'voyage'); return { texte: 'Ils achètent tout ce qui protège de la pluie, ravis.', gains: [`+${p} p.`] }; } },
+      { nom: 'Leur vendre des capes et des torches', fait: G => { const p = 40 + 10 * etoilesVoyage(G); encaisser(G, p, 'voyage'); return { texte: 'Ils achètent tout ce qui protège de la pluie, ravis.', gains: [`+${p} p.`] }; } },
       { nom: "Les faire entrer au chaud, gratuitement", fait: G => { pencher(G, 'routeAider'); G.reputation += 0.5; return { texte: 'On boit une tisane au comptoir en écoutant la pluie. Ils parleront de toi à Pont-Royal.', gains: ['+0,5 réputation', '☀'] }; } },
     ] },
   clandestin: { nom: 'Le passager clandestin', texte: 'Un ronflement dans le filet à bois : un petit gobelin dort entre deux bûches, une pomme à moitié mangée dans la main.',
@@ -139,7 +141,7 @@ const IMPREVUS = {
     ] },
   fete: { nom: 'Un village en fête', texte: 'Des lampions, une danse sur la place, des tonneaux en perce : tout un village fête la moisson.',
     choix: [
-      { nom: 'S\'arrêter et vendre aux fêtards', fait: G => { const p = 60 + 15 * etoilesDe(G); encaisser(G, p, 'voyage'); return { texte: 'On vend des gourdes et des torches jusqu\'au soir, et on danse un peu.', gains: [`+${p} p.`] }; } },
+      { nom: 'S\'arrêter et vendre aux fêtards', fait: G => { const p = 60 + 15 * etoilesVoyage(G); encaisser(G, p, 'voyage'); return { texte: 'On vend des gourdes et des torches jusqu\'au soir, et on danse un peu.', gains: [`+${p} p.`] }; } },
       { nom: 'Leur offrir une tournée', si: G => peutPayer(G, 30), fait: G => { payer(G, 30, 'voyage'); G.reputation += 0.8; return { texte: 'Le village lève son verre « à la maison qui marche ». La nouvelle courra jusqu\'au pont.', gains: ['−30 p.', '+0,8 réputation'] }; } },
     ] },
   blesse: { nom: 'Un héros blessé', texte: 'Au bord du chemin, un aventurier assis contre une borne, le bras en écharpe, son épée cassée à côté de lui.',
@@ -186,7 +188,7 @@ function marcherLeJour(G) {
 }
 // La vente par la fenêtre : une voyageuse marche à côté et achète ce qu'il lui faut
 function venteParLaFenetre(G) {
-  const p = VOYAGE.fenetre.min + VOYAGE.fenetre.parEtoile * etoilesDe(G) + Math.floor(Math.random() * 20);
+  const p = VOYAGE.fenetre.min + VOYAGE.fenetre.parEtoile * etoilesVoyage(G) + Math.floor(Math.random() * 20);
   encaisser(G, p, 'voyage');
   return p;
 }

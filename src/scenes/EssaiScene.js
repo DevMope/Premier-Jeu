@@ -10,7 +10,7 @@ class EssaiScene extends Cinematique {
     const G = this.G = window.GAME, sol = this.sol = 470;
     this.cameras.main.fadeIn(400);
     // (la caméra recule un peu : debout, la maison est haute ; l'interface a sa propre caméra, qui ne recule pas)
-    for (const x of [-960, 0, 960]) { dessinerComte(this.add.graphics(), x, -160, 960, sol + 160, 0); for (const y of [sol, sol + 70, sol + 140, sol + 210]) this.add.image(x, y, pavesHD(this, 960, 70)).setOrigin(0).setScale(2); }
+    for (const x of [-960, 0, 960]) { dessinerComte(this.add.graphics(), x, -180, 960, sol + 180, 0); for (const y of [sol, sol + 70, sol + 140, sol + 210]) this.add.image(x, y, pavesHD(this, 960, 70)).setOrigin(0).setScale(2); }
     // (v1.57) en tenant compte du zoom de l'écran (sinon, en 1080p ou sur iPad, la vue reculait deux fois trop)
     const Z = this.cameras.main.zoom;
     this.cameras.main.setZoom(0.75 * Z).setScroll(-160, -180);   // (la caméra zoome depuis son coin en haut à gauche)
