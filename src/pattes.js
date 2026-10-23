@@ -18,6 +18,7 @@ const PATTES = {
   journee: 8,                             // (une journée de route : 8 heures de marche)
   essai: 1,                               // (la marche d'essai, dans la rue : une heure de marche)
 };
+if (typeof POSTES !== 'undefined') POSTES.pattes = 'Les Mages-Charpentiers';   // (v1.57 : les comptes du bureau affichaient « pattes »)
 // Le bois qu'elle mange : une place du filet chacun ; les heures de marche ; d'où il vient
 const COMBUSTIBLES = {
   fagot: { nom: 'Fagot de bois mort', heures: 1, prix: 0, ou: 'ramassé en route', fumee: 'claire' },

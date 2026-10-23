@@ -37,6 +37,7 @@ const DUC = {
   ombre: 1.5,                          // il soupçonne l'ombre : ses taxes sont plus fortes
   humains: 4,                          // à Pont-Royal, un Homme a quatre fois plus de chances de passer la porte
 };
+if (typeof POSTES !== 'undefined') { POSTES.voyage = 'Le grand voyage'; POSTES.taxeDuc = 'Taxes du duc'; }
 // Les gestes de la route, pour la jauge lumière / ombre
 if (typeof BAREME_CAMP !== 'undefined') Object.assign(BAREME_CAMP, {
   routeAider: { camp: 'bien', n: 1, texte: 'Aider quelqu\'un sur la route du grand voyage' },
