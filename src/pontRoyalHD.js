@@ -5,7 +5,7 @@ function rampesVille(t) {
   t.rampes.eau = rampe(0x3a6a90); t.rampes.refl = rampe(0x34506a); t.rampes.tuile = rampe(0xa84a2e); t.rampes.ocre = rampe(0xd8a860);
   t.rampes.rose = rampe(0xd89a88); t.rampes.vert = rampe(0x6a8a5a); t.rampes.or = rampe(0xd8b048); t.rampes.bleuRoi = rampe(0x2a4a8a);
   t.rampes.verre = rampe(0x6a8aa8); t.rampes.lueur = rampe(0xf0c050); t.rampes.mousse = rampe(0x5e7a3a); t.rampes.rive = rampe(0x6a7a4a);
-  t.rampes.pierreB = rampe(0xd4cec0); t.rampes.banniere = rampe(0x9a2424); t.rampes.argent = rampe(0xdadee6); t.rampes.noirB = rampe(0x24242e);
+  t.rampes.pierreB = rampe(0xd4cec0); t.rampes.banniere = rampe(0x9a2424); t.rampes.terreT = rampe(0x7a6448); t.rampes.argent = rampe(0xdadee6); t.rampes.noirB = rampe(0x24242e);
 }
 // une maison à colombages, vue de face : base (bx, by) au sol, largeur l, étages n ; enduit, toit, encorbellement
 function maisonColombages(t, bx, by, l, n, { enduit = 'platre', toit = 'tuile', graine = 1, encorbellement = 2, boutique = false, lumiere = false } = {}) {
@@ -56,9 +56,15 @@ function pontRoyalHD(scene, { lot = true } = {}) {
   const eauY = 176, tablier = 120;
   // la rive lointaine à gauche (les remparts de la ville basse) et le rocher de la citadelle à droite
   for (let x = 0; x < 60; x++) { const h = 150 + Math.round(fbm(x * 0.05, 1, 3) * 8); for (let y = h; y < eauY; y++) t.poser(x, y, y < h + 3 ? 'rive' : 'pierre', y < h + 3 ? 3 : 2 + ((x + y) % 7 === 0 ? 1 : 0)); }
-  for (let x = 418; x < L; x++) { const h = 96 - Math.round(Math.sin((x - 418) / 62 * Math.PI * 0.9) * 26 + fbm(x * 0.1, 2, 9) * 8); for (let y = h; y < eauY; y++) t.poser(x, y, y < h + 2 ? 'mousse' : 'pierre', y < h + 2 ? 3 : 1 + Math.round(fbm(x * 0.12, y * 0.12, 11) * 3)); }
+  // (le rocher monte en pente derrière le bout du pont, ses strates et ses failles, la mousse sur les replats ; son pied est
+  // caché par le tablier et la culée : il ne descend jamais en plaque grise jusqu'à l'eau)
+  const roc = x => Math.round(Math.max(70, 124 - (x - 392) * 1.15) + (fbm(x * 0.09, 2, 9) - 0.5) * 7);
+  for (let x = 392; x < L; x++) for (let y = roc(x); y < tablier + 4; y++) {
+    const n = fbm(x * 0.12, y * 0.3, 23), faille = Math.abs(fbm(x * 0.05, y * 0.05, 29) - 0.5) < 0.014, strate = (y + Math.round(x * 0.35)) % 9 === 0;
+    t.poser(x, y, y < roc(x) + 2 && n > 0.4 ? 'mousse' : 'pierre', faille || strate ? 1 : Math.min(4, 1 + Math.round(n * 2.4) + (x < 430 ? 0 : 1))); }
   // la citadelle sur son rocher : un donjon, une tour ronde, la bannière d'or du royaume
   pierresTaille(t, 432, 30, 470, 82, 21, 'pierreB');
+  for (let x = 432; x < 470; x++) for (let y = 82; y < roc(x) + 2; y++) t.poser(x, y, 'pierreB', (y % 5 === 4 || x % 12 === 0) ? 1 : 2);   // (ses fondations, jusqu'au rocher)
   for (let x = 430; x < 472; x++) if ((x - 430) % 6 < 3) for (let y = 24; y < 30; y++) t.poser(x, y, 'pierreB', 4);
   // la tour blanche du duc, fine et haute, son toit pointu d'ardoise
   pierresTaille(t, 440, -6, 456, 30, 23, 'pierreB');
@@ -67,8 +73,8 @@ function pontRoyalHD(scene, { lot = true } = {}) {
   for (let y = 40; y < 52; y++) for (let x = 446; x < 452; x++) t.poser(x, y, 'lueur', 3);
 
   // le pont : le tablier et le parapet, les piles et leurs avant-becs, les cinq arches
-  const piles = [26, 112, 198, 284, 370, 456], demi = 10;
-  for (let y = tablier; y < eauY + 4; y++) for (let x = 20; x < 462; x++) {
+  const piles = [26, 112, 198, 284, 370, 454], demi = 10;
+  for (let y = tablier; y < eauY + 4; y++) for (let x = 20; x < 444; x++) {
     let trou = false;
     for (let k = 0; k < piles.length - 1; k++) { const a = piles[k] + demi, b = piles[k + 1] - demi, c = (a + b) / 2, r = (b - a) / 2;
       if (x >= a && x < b && y > tablier + 12 + r - Math.sqrt(Math.max(0, r * r - (x + 0.5 - c) ** 2))) trou = true; }
@@ -84,7 +90,23 @@ function pontRoyalHD(scene, { lot = true } = {}) {
   // les avant-becs triangulaires au pied des piles, la mousse au ras de l'eau
   for (const p of piles.slice(1, -1)) for (let y = eauY - 18; y < eauY + 4; y++) { const w = demi + 2 - Math.max(0, (eauY - 18 - y)); for (let x = p - w; x < p + w; x++) t.poser(x, y, 'pierreB', x < p ? 3 : 2); for (let x = p - w; x < p + w; x++) if (y > eauY - 4 && hachage(x, y, 4) > 0.4) t.poser(x, y, 'mousse', 2); }
   // le parapet, ses balustres
-  for (let x = 0; x < 462; x++) for (let y = tablier - 6; y < tablier; y++) t.poser(x, y, 'pierreB', y === tablier - 6 ? 4 : (x % 5 === 0 ? 1 : 3));
+  for (let x = 0; x < 452; x++) for (let y = tablier - 6; y < tablier; y++) t.poser(x, y, 'pierreB', y === tablier - 6 ? 4 : (x % 5 === 0 ? 1 : 3));
+  // la culée de droite : un massif de pierre qui porte la dernière arche, du tablier jusqu'au lit du fleuve ; son pied s'évase
+  // en gradins (l'empattement), un contrefort, deux cordons de pierre ; la mousse au ras de l'eau
+  for (let y = tablier - 6; y < eauY + 4; y++) {
+    const x0 = 444 - (y > eauY - 22 ? Math.min(3, Math.floor((y - (eauY - 22)) / 6)) * 3 : 0);
+    for (let x = x0; x < L; x++) { const r = Math.floor((y - tablier) / 5), dec = (r % 2) * 6, joint = (y - tablier) % 5 === 4 || (x + dec) % 12 === 0, cordon = y === tablier + 14 || y === eauY - 22;
+      t.poser(x, y, 'pierreB', cordon ? 4 : joint ? 1 : 2 + (hachage(Math.floor((x + dec) / 12), r, 41) > 0.7 ? 1 : 0) + (x < x0 + 2 ? 1 : 0) - (y > eauY - 8 ? 1 : 0)); }
+    if (y > eauY - 6) for (let x = x0; x < L; x++) if (hachage(x, y, 6) > 0.5) t.poser(x, y, 'mousse', 2);
+  }
+  for (let y = tablier + 15; y < eauY - 22; y++) for (let x = 446; x < 454; x++) t.poser(x, y, 'pierreB', x === 446 ? 4 : x === 453 ? 1 : 3);   // (le contrefort)
+  // au bout du tablier, la porte de la citadelle, taillée dans le rocher : son arc de pierre, la herse levée, une lanterne
+  for (let y = 74; y < tablier - 6; y++) for (let x = 452; x < L; x++) {
+    const dx = x + 0.5 - 466, haut = y + 0.5 < 90, dedans = Math.abs(dx) < 9 && (!haut || Math.hypot(dx, y + 0.5 - 90) < 9), cadre = Math.abs(dx) < 13 && (!haut || Math.hypot(dx, y + 0.5 - 90) < 13);
+    if (dedans) t.poser(x, y, (y - 82) % 6 === 0 && y < 92 ? 'fer' : 'noirB', (y - 82) % 6 === 0 && y < 92 ? 2 : 1);
+    else if (cadre) t.poser(x, y, 'pierreB', haut ? (Math.round(Math.atan2(90 - y, dx) * 4) % 2 ? 4 : 2) : (y % 5 === 4 ? 1 : 3));
+  }
+  for (let y = 98; y < 104; y++) for (let x = 450; x < 452; x++) t.poser(x, y, 'lueur', 4);
   // les maisons sur le pont, serrées, de hauteurs différentes (le lot vide reste vide)
   const M = [[42, 22, 3, 'platre', 'ardoise'], [66, 22, 2, 'ocre', 'ardoise'], [90, 26, 3, 'platre', 'tuile'], [118, 20, 2, 'platre', 'ardoise'],
              [140, 22, 3, 'rose', 'ardoise'], [222, 24, 3, 'platre', 'ardoise'], [248, 30, 2, 'platre', 'tuile'], [350, 26, 3, 'platre', 'ardoise'], [378, 22, 2, 'ocre', 'ardoise'], [402, 24, 3, 'platre', 'ardoise']];
@@ -98,8 +120,19 @@ function pontRoyalHD(scene, { lot = true } = {}) {
   for (let y = 32; y < 42; y++) for (let x = 186; x < 194; x++) t.poser(x, y, y < 35 ? 'cheneSombre' : 'laiton', y < 35 ? 1 : 3 + (x < 189 ? 1 : 0));
   for (let y = 84; y < 106; y++) for (let x = 184; x < 196; x++) if (Math.hypot(x + 0.5 - 190, Math.max(0, 90 - y)) < 6) t.poser(x, y, 'verre', 2 + ((x + y) % 3 === 0 ? 2 : 0));
   // la porte fortifiée à l'entrée du pont : une tour carrée et son toit
-  pierresTaille(t, 0, tablier, 40, eauY + 2, 33, 'pierreB');   // (la culée : la tour est posée sur un vrai pied de pierre, jusqu'à l'eau)
-  for (let y = eauY - 4; y < eauY + 2; y++) for (let x = 0; x < 40; x++) if (hachage(x, y, 5) > 0.45) t.poser(x, y, 'mousse', 2);
+  // (planche 77) la rive gauche est haute : la route arrive à plat, à hauteur du tablier, jusqu'à la tour ; sous la tour,
+  // le talus de terre et de roche descend jusqu'au fleuve sous la première arche (herbe, buissons, un sentier vers l'eau)
+  const talus = x => Math.round(tablier + 2 + Math.max(0, x - 30) * 1.25 + (fbm(x * 0.2, 5, 51) - 0.5) * 4);
+  for (let x = 0; x < 80; x++) for (let y = Math.max(tablier, talus(x)); y < eauY + 3; y++) {
+    const n = fbm(x * 0.15, y * 0.2, 53), haut = y < talus(x) + 3;
+    const herbe = n < 0.47 || haut;
+    t.poser(x, y, herbe ? 'rive' : n > 0.64 ? 'pierre' : 'terreT', herbe ? 3 - (haut && y > talus(x) + 1 ? 1 : 0) - (y > eauY - 8 ? 1 : 0) + (hachage(x, y, 57) > 0.85 ? 1 : 0) : n > 0.64 ? 2 + (n > 0.72 ? 1 : 0) : 2 + Math.round((n - 0.5) * 4));
+    if (!haut && hachage(x, y, 55) > 0.93) t.poser(x, y, 'rive', 2);
+  }
+  pierresTaille(t, 0, tablier - 1, 40, tablier + 14, 33, 'pierreB');   // (le soubassement de la tour, posé sur le talus)
+  for (const [bx, by, r] of [[46, talus(46) - 1, 4], [60, talus(60), 3.5], [8, tablier + 20, 3]]) { disqueHD(t, bx, by, r, 'vert', 2); disqueHD(t, bx - 1, by - 1, r * 0.6, 'vert', 3); }
+  for (let k = 0; k < 9; k++) { const x = 34 + k * 5, y = talus(x) - 1; t.poser(x, y, 'pierreB', 4); t.poser(x + 1, y, 'pierreB', 3); }   // (les marches du sentier qui descend au fleuve)
+  for (let y = eauY - 3; y < eauY + 3; y++) for (let x = 60; x < 84; x++) if (hachage(x, y, 5) > 0.45 && t.mat(x, y)) t.poser(x, y, 'mousse', 2);
   pierresTaille(t, 6, 50, 36, tablier, 31, 'pierreB');
   for (let y = 30; y < 50; y++) for (let x = 2; x < 40; x++) if (Math.abs(x + 0.5 - 21) <= (y - 30) * 0.95 + 1) t.poser(x, y, 'ardoise', x < 21 ? 4 : 2);
   for (let y = 86; y < tablier; y++) for (let x = 14; x < 28; x++) if (Math.hypot(x + 0.5 - 21, Math.max(0, 92 - y)) < 7) t.poser(x, y, 'cheneSombre', 1);
@@ -166,8 +199,8 @@ function poserBarge(s, x, y, sc = 2, flip = false) {
 // La rue sur le pont (vue de la rue, à l'échelle du jeu) : à gauche le tonnelier, au milieu le lot vide où la
 // maison s'accroupit (derrière : le parapet, le fleuve, l'autre rive et la citadelle), à droite une maison haute et
 // la Halle des Bateliers avec sa poutre de levage et une caisse au bout de la corde.
-function rueDuPontHD(scene) {
-  const cle = 'rueDuPontHD'; if (scene.textures.exists(cle)) return cle;
+function rueDuPontHD(scene, { nu = false } = {}) {
+  const cle = 'rueDuPontHD' + (nu ? '_nu' : ''); if (scene.textures.exists(cle)) return cle;   // (nu : le pont sans ses maisons, juste après la tour de tête de pont)
   const L = 480, H = 235, t = toileDecor(L, H); rampesVille(t);
   const sol = H, eauY = 158;
   // au loin : l'autre rive, ses toits, la citadelle sur son rocher (petite), puis le fleuve
@@ -193,6 +226,7 @@ function rueDuPontHD(scene) {
   for (let y = 196; y < sol; y++) for (let x = 0; x < L; x++) { const main = y < 202, bal = y >= 202 && y < 226;
     if (bal) { const k = (x % 12); if (k < 3 || k > 8) continue; t.poser(x, y, 'pierre', k === 4 ? 4 : k === 8 ? 1 : 3 - (Math.abs(y - 214) > 8 ? 0 : 0)); }
     else t.poser(x, y, 'pierre', main ? (y === 196 ? 5 : 3) : 2 + ((x + (y % 2) * 6) % 12 === 0 ? -1 : 0)); }
+  if (nu) { t.contour(); t.texture(scene, cle); return cle; }
   // à gauche : le tonnelier (trois étages, sa boutique, ses tonneaux)
   maisonColombages(t, 2, sol, 78, 3, { enduit: 'platre', toit: 'ardoise', graine: 3, boutique: true, encorbellement: 3 });
   for (const x of [8, 24]) for (let y = sol - 18; y < sol; y++) for (let xx = x; xx < x + 13; xx++) t.poser(xx, y, (y - sol + 18) % 6 === 2 ? 'fer' : 'chene', (y - sol + 18) % 6 === 2 ? 3 : 3 + (xx === x + 3 ? 1 : 0) - (xx === x + 12 ? 1 : 0));
@@ -626,16 +660,6 @@ function tableauVoyage(s, niveau, heures, filet) {
 function bulle74(s, x, y, t, l = 260) { const tx = s.add.text(x, y, t, style(13, '#2a1a10', { fontStyle: 'bold', align: 'center', wordWrap: { width: l } })).setOrigin(0.5).setDepth(41); s.add.rectangle(x, y, tx.width + 20, tx.height + 14, 0xfff4dc).setStrokeStyle(2, 0x6b4a2a).setDepth(40); }
 function narration74(s, x, y, t, l = 320) { const tx = s.add.text(x, y, t, style(13, '#f6ead0', { fontStyle: 'italic', align: 'center', wordWrap: { width: l } })).setOrigin(0.5).setDepth(41); s.add.rectangle(x, y, tx.width + 22, tx.height + 14, 0x1a120a, 0.88).setDepth(40); }
 
-// Le gué : une bande de rivière vue de côté (l'eau qui coule, des rides claires, l'écume au bord), qui borde le chemin
-function eauGueHD(scene) {
-  const cle = 'eauGueHD'; if (scene.textures.exists(cle)) return cle;
-  const L = 480, H = 36, t = toileDecor(L, H); rampesVille(t); t.rampes.ecume = rampe(0xe8f2f8);
-  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
-    const ride = (Math.floor(x / 9 + Math.sin(y * 0.9 + x * 0.05) * 2) + y * 3) % 17 === 0, fond = y > H - 8;
-    t.poser(x, y, y < 2 ? 'ecume' : 'eau', y < 2 ? 4 - (x % 5 === 0 ? 1 : 0) : ride ? 5 : fond ? 1 + (fbm(x * 0.1, y * 0.3, 7) > 0.6 ? 1 : 0) : 3 - (y > 18 ? 1 : 0) + (fbm(x * 0.08, y * 0.2, 3) > 0.7 ? 1 : 0));
-  }
-  t.texture(scene, cle); return cle;
-}
 // Le feu de camp : deux bûches croisées, des pierres autour, et la flamme en trois images (on les alterne)
 function feuDeCampHD(scene, k = 0) {
   const cle = 'feuDeCampHD_' + k; if (scene.textures.exists(cle)) return cle;

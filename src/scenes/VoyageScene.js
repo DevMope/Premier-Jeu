@@ -19,8 +19,9 @@ class VoyageScene extends Cinematique {
     this.cameras.main.setZoom(0.75 * Z).setScroll(-160, -180);
     // le décor qui défile : trois tuiles de paysage, le chemin ; ce qui est posé au bord du chemin défile avec lui
     this.biome = 'comte';
-    this.tuiles = [-960, 0, 960].map(x => this.add.image(x, -180, paysageHD(this, 960, sol + 180, 'comte', 0, { sansAstre: true })).setOrigin(0).setDisplaySize(960, sol + 180).setDepth(0));
-    this.sols = [-960, 0, 960].map(x => this.add.image(x, sol, cheminTerreHD(this, 960, 70)).setOrigin(0).setDisplaySize(960, 70).setDepth(0.5));
+    // (quatre tuiles, une sur deux retournée : leurs bords se raccordent toujours, sans couture dans les collines)
+    this.tuiles = [-960, 0, 960, 1920].map((x, i) => this.add.image(x, -180, paysageHD(this, 960, sol + 180, 'comte', 0, { sansAstre: true })).setOrigin(0).setDisplaySize(960, sol + 180).setDepth(0).setFlipX(i % 2 === 1));
+    this.sols = [-960, 0, 960, 1920].map((x, i) => this.add.image(x, sol, cheminTerreHD(this, 960, 70)).setOrigin(0).setDisplaySize(960, 70).setDepth(0.5).setFlipX(i % 2 === 1));
     this.bordChemin = [];   // (les gens, la Porte, le feu... : { o, x } dans le monde, qui reculent quand elle avance)
     this.parcouru = 0;
     // la maison, ses pattes, son filet, le chat sur le faîte (comme pour la marche d'essai)
@@ -108,15 +109,31 @@ class VoyageScene extends Cinematique {
   }
 
   // --- La maison ---
+  // Le sol sous un point du monde : le chemin, ou le lit du gué (chaque patte pose le pied sur son bout de terrain)
+  solSous(x) { const g = this.gueEau; return this.sol + (g && !g.pont ? profondeurGue(x - g.c.x, this.sol, g.P) : 0); }
+  // (au gué) l'eau autour d'une patte : ce qui est sous la surface disparaît dans l'eau, une ride entoure la patte
+  eauAutour(l) {
+    if (!l.eau) { const tons = COULEURS_GUE[(this.gueEau && this.gueEau.P.nom === 'ruisseau' ? 'ruisseauHD_' : 'gueHD_') + this.tuiles[0].texture.key] || [0, 0, 0x3a6c88, 0x3a6c88]; l.eau = this.add.rectangle(0, 0, 30, 4, tons[4], 0.9).setOrigin(0.5, 0).setDepth(l.devant ? 4.62 : 4.12); l.ride = this.add.rectangle(0, 0, 40, 2, 0xe8f6ff, 0.7).setDepth(l.devant ? 4.63 : 4.13); this.uiCam.ignore([l.eau, l.ride]); }
+    const surf = this.sol + GUE.niveau - (l.devant ? 0 : 6), dedans = this.gueEau && !this.gueEau.pont && this.debout && dansLEauGue(l.p.x - this.gueEau.c.x, this.sol, this.gueEau.P), h = l.p.y - surf;
+    l.eau.setVisible(dedans && h > 0); l.ride.setVisible(dedans && h > 0);
+    if (dedans && h > 0) { l.eau.setPosition(l.p.x + (l.devant ? 0 : 2), surf).setSize(l.devant ? 50 : 42, h + 1); l.ride.setPosition(l.p.x, surf).setSize((l.devant ? 60 : 50) + Math.sin(this.time.now / 300 + l.dx) * 4, 2); }
+  }
   placer() {
-    const { x, haut } = this.etat, lev = this.sol - haut;
+    const { x } = this.etat;
+    // la maison descend avec ses pattes : de la moyenne de ce qu'il y a sous ses quatre pieds
+    const creux = this.pattes.reduce((s, l) => s + this.solSous(x + l.dx) - this.sol, 0) / this.pattes.length;
+    const haut = this.etat.haut + (this.debout ? creux : 0);
     for (const m of this.maison) m.o.setPosition(x + m.dx, haut + m.dy);
     this.repliees.forEach((p, i) => p.setPosition(x + this.bords[i], this.sol + 4));
-    this.dessous.setPosition(x, haut - 6); this.attaches.setPosition(x, haut - 4); this.filet.setPosition(x + 4, haut + 60);
+    this.dessous.setPosition(x, haut - 6); this.attaches.setPosition(x, haut - 4); this.filet.setPosition(x + 4, haut + 60 - (this.filetHisse || 0));
     for (const l of this.pattes) {
       l.p.x = x + l.dx;
-      l.p.scaleY = (l.devant ? 1.75 : 1.68) * Math.max(0.15, lev / 142);
-      l.p.y = this.sol - (l.devant ? 0 : 6) - (l.leve ? (l.devant ? 14 : 24) : 0);
+      const pied = this.solSous(l.p.x);
+      // (accroupie : la pose aux genoux pliés, deux fois moins haute ; son pied est au milieu de l'image)
+      l.p.scaleY = (l.devant ? 1.75 : 1.68) * Math.max(0.15, (pied - haut) / (this.accroupie ? 70 : 142));
+      l.p.setOrigin(0.5, this.accroupie ? 0.5 : 1);
+      l.p.y = pied - (l.devant ? 0 : 6) - (l.leve ? (this.accroupie ? 8 : l.devant ? 14 : 24) : 0);
+      if (this.gueEau || l.eau) this.eauAutour(l);
     }
     if (this.chat) this.chat.o.setPosition(x + this.chat.dx, haut + this.chat.dy);
   }
@@ -140,14 +157,29 @@ class VoyageScene extends Cinematique {
     this.repliees.forEach(p => p.setVisible(true)); this.placer();
     this.debout = false;
   }
+  // Plier les genoux (pour passer sous une voûte) ou se redresser, sans quitter le sol
+  async plierGenoux(oui) {
+    if (!this.debout || !!this.accroupie === oui) return;
+    // (le filet de bois remonte sous le plancher : accroupie, il traînerait par terre)
+    const filet = h => new Promise(ok => this.tweens.add({ targets: this, filetHisse: h, duration: 500, ease: 'Sine.easeInOut', onUpdate: () => this.placer(), onComplete: ok }));
+    if (oui) { this.filetAvant = this.filetHisse || 0; await filet(Math.max(this.filetAvant, 66)); }
+    else this.time.delayedCall(700, () => filet(this.filetAvant || 0));
+    if (oui) { await this.animerEtat({ haut: this.sol - 110 }, 500); this.accroupie = true; this.pattes.forEach(l => l.p.setTexture(patteMaisonHD(this, 'accroupie', this.sorte, l.recul))); await this.animerEtat({ haut: this.sol - 70 }, 500); }
+    else { this.accroupie = false; this.pattes.forEach(l => l.p.setTexture(patteMaisonHD(this, 'debout', this.sorte, l.recul))); this.etat.haut = this.sol - 100; this.placer(); await this.animerEtat({ haut: this.sol - 142 }, 700, 'Back.easeOut'); }
+  }
   // Marcher n pas : la maison lève ses pattes en diagonale, le décor recule d'autant (elle avance, rien ne glisse)
   async marcher(n, { pas = 56 } = {}) {
     this.vent = -90;
+    const bas = () => this.accroupie ? 70 : 142, poseLevee = () => this.accroupie ? 'accroupie' : 'pas', posePosee = () => this.accroupie ? 'accroupie' : 'debout';
     for (let k = 0; k < n && !this.fini; k++) {
-      this.pattes.forEach((l, i) => { l.leve = (k % 2 === 0) === (i === 1 || i === 2); l.p.setTexture(patteMaisonHD(this, l.leve ? 'pas' : 'debout', this.sorte, l.recul)); });
-      await Promise.all([this.animerEtat({ haut: this.sol - 148 }, 260), this.defiler(pas, 260)]);
-      this.pattes.forEach(l => { l.leve = false; l.p.setTexture(patteMaisonHD(this, 'debout', this.sorte, l.recul)); });
-      await Promise.all([this.animerEtat({ haut: this.sol - 142 }, 200), this.defiler(pas * 0.4, 200)]);
+      this.pattes.forEach((l, i) => { l.leve = (k % 2 === 0) === (i === 1 || i === 2); l.p.setTexture(patteMaisonHD(this, l.leve ? poseLevee() : posePosee(), this.sorte, l.recul)); });
+      await Promise.all([this.animerEtat({ haut: this.sol - bas() - 6 }, 260), this.defiler(pas, 260)]);
+      this.pattes.forEach(l => { l.leve = false; l.p.setTexture(patteMaisonHD(this, posePosee(), this.sorte, l.recul)); });
+      await Promise.all([this.animerEtat({ haut: this.sol - bas() }, 200), this.defiler(pas * 0.4, 200)]);
+      // (dans le gué) chaque pied qui se pose dans l'eau fait une éclaboussure et des ronds ; sur le chemin, un peu de poussière
+      const mouilles = this.gueEau && !this.gueEau.pont ? this.pattes.filter(l => dansLEauGue(l.p.x - this.gueEau.c.x, this.sol, this.gueEau.P)) : [];
+      for (const l of mouilles.filter(m => (k % 2 === 0) === (m === this.pattes[1] || m === this.pattes[2]))) eclaboussure(this, l.p.x, this.sol + GUE.niveau - (l.devant ? 0 : 6), { taille: l.devant ? 0.4 : 0.3, profondeur: l.devant ? 4.64 : 4.14, ronds: true });
+      if (mouilles.length) { if (k % 2 === 0) Son.jouer('plouf', { volume: 0.25 }); if (mouilles.length === 4) continue; }
       const nu = this.add.circle(this.etat.x - 150 + Math.random() * 30, this.sol + 6, 10, 0xd8c098, 0.5).setDepth(4.9);
       this.tweens.add({ targets: nu, scale: 2.2, alpha: 0, x: nu.x - 40, duration: 1100, onComplete: () => nu.destroy() });
       if (k % 2 === 0) Son.jouer('pas', { volume: 0.5 });
@@ -161,17 +193,32 @@ class VoyageScene extends Cinematique {
   }
   placerDecor() {
     const p = this.parcouru;
-    this.tuiles.forEach((t, i) => { t.x = ((i - 1) * 960 - p * 0.5) % 2880; if (t.x < -1440) t.x += 2880; });
-    this.sols.forEach((t, i) => { t.x = ((i - 1) * 960 - p) % 2880; if (t.x < -1440) t.x += 2880; });
-    for (const b of this.bordChemin) if (b.o.active) b.o.x = b.x - p;
+    this.tuiles.forEach((t, i) => { t.x = ((i - 1) * 960 - p * 0.5) % 3840; if (t.x < -1440) t.x += 3840; });
+    this.sols.forEach((t, i) => { t.x = ((i - 1) * 960 - p) % 3840; if (t.x < -1440) t.x += 3840; });
+    for (const b of this.bordChemin) if (b.o.active) b.o.x = b.x - p * (b.f || 1);
+    // (la route pavée du Royaume, depuis l'entrée de la Porte jusqu'au bord droit de la vue)
+    const pr = this.paveRoyaume;
+    if (pr) { const x0 = pr.porte.active ? pr.porte.x - PORTE_FR.demi : -1000, x = Math.max(-170, x0); pr.ts.x = x; pr.ts.width = Math.max(2, 1130 - x); pr.ts.tilePositionX = (x - x0) / 2; pr.ts.setVisible(x < 1130); }
+    // (le gué) la rivière défile avec la route ; une fois loin derrière, on la retire
+    const g = this.gueEau;
+    if (g) { g.devant.x = g.c.x; if (g.c.x < -160 - 360) { g.c.destroy(); g.devant.destroy(); this.gueEau = null; for (const l of this.pattes) if (l.eau) { l.eau.destroy(); l.ride.destroy(); l.eau = null; } } }
+  }
+  // Le gué : la rivière (voyageDecorHD.js) posée à x, hors de la vue à droite
+  poserGue(x, P = GUE) {
+    const { c, devant } = poserGueHD(this, this.sol, this.tuiles[0].texture.key, P);
+    c.setDepth(0.6); devant.setDepth(6.2);
+    this.uiCam.ignore([c, devant]);
+    this.gueEau = { c, devant, P };
+    this.bord(c, x); devant.x = c.x;
   }
   // Poser quelque chose au bord du chemin, à x (à l'écran, maintenant) : il reculera quand elle avance
-  bord(o, x = o.x) { this.bordChemin.push({ o, x: x + this.parcouru }); o.x = x; return o; }
+  // (f : la vitesse de défilement, 1 pour ce qui borde le chemin, moins pour ce qui est loin)
+  bord(o, x = o.x, f = 1) { this.bordChemin.push({ o, x: x + this.parcouru * f, f }); o.x = x; return o; }
   changerBiome(biome, nuit = 0) {
     if (this.biome === biome) return;
     this.biome = biome;
     const cle = paysageHD(this, 960, this.sol + 180, biome, nuit, { sansAstre: true });
-    for (const t of this.tuiles) { const n = this.add.image(t.x, t.y, cle).setOrigin(0).setDisplaySize(960, this.sol + 180).setDepth(0.01).setAlpha(0); this.tweens.add({ targets: n, alpha: 1, duration: 1200, onComplete: () => { t.setTexture(cle).setDisplaySize(960, this.sol + 180); n.destroy(); } }); }
+    for (const t of this.tuiles) { const n = this.add.image(t.x, t.y, cle).setOrigin(0).setDisplaySize(960, this.sol + 180).setDepth(0.01).setAlpha(0).setFlipX(t.flipX); this.tweens.add({ targets: n, alpha: 1, duration: 1200, onComplete: () => { t.setTexture(cle).setDisplaySize(960, this.sol + 180); n.destroy(); } }); }
   }
   fumeeSoir(on) { this.tweens.add({ targets: this.voile, alpha: on ? 0.55 : 0, duration: 1600 }); }
 
@@ -208,12 +255,33 @@ class VoyageScene extends Cinematique {
     }
   }
 
-  // Le départ : les voisins, les adieux de Garrick ; elle se lève et s'en va
+  // (planche 77) La rue de la Comté autour de la maison, telle qu'on la voit en se promenant (la forge, l'impasse, les
+  // Pommeroy à gauche ; les Brindeloup, le barbier, la fontaine, les Mages, la banque et l'arche du marché à droite) : elle
+  // défile avec la route. On la construit comme la vraie rue, sans sa façade (la maison, c'est elle, debout au milieu).
+  rueDuDepart() {
+    const avant = new Set(this.children.list), o = this.etat.x - PLACES_RUE.shop;
+    const facade = window.dessinerFacade, pattes = window.pattesRepliees;
+    window.dessinerFacade = (scene, cx, sol) => ({ porteX: cx, porteY: sol - 60 }); window.pattesRepliees = () => [];
+    try { construireRue(this, o, { jour: true, ici: { regarder() {}, porte() {} } }); } finally { window.dessinerFacade = facade; window.pattesRepliees = pattes; }
+    for (const x of this.children.list.filter(x => !avant.has(x))) {
+      if (x.type === 'Graphics' || (x.texture && /^paysage/.test(x.texture.key))) { x.destroy(); continue; }   // (le paysage : on a déjà le nôtre)
+      x.setDepth((x.depth || 0) > 3 ? 3.2 : 0.52 + (x.depth || 0) * 0.01);   // (tout derrière la maison, au-dessus du chemin)
+      this.uiCam.ignore(x); this.bord(x, x.x);
+    }
+    return o;
+  }
+  // Le départ : toute la rue est sortie ; les adieux de Garrick ; elle se lève et descend la rue jusqu'à l'arche, puis la
+  // route de la Comté
   async depart() {
     const G = this.G, sol = this.sol;
+    const o = this.rueDuDepart();
     const voisins = [['Rosalie', { race: 'humain', nom: 'Rosalie', feminin: true, niveau: 'novice' }, 640], ['Garrick', 'mentor', 720], ['Thorgal', { race: 'nain', nom: 'Thorgal', costume: 'forgeron', niveau: 'aguerri' }, 800], ['Barnabé', { race: 'hobbit', nom: 'Barnabé', niveau: 'novice' }, 870]];
-    this.voisins = voisins.map(([nom, q, x]) => this.bord(imageCorps(this, x, sol + 40, q, 6.4).setFlipX(true).setDepth(7)));
+    this.voisins = voisins.map(([nom, q, x]) => { const p = imageCorps(this, x, sol + 40, q, 6.4).setFlipX(true).setDepth(7); this.uiCam.ignore(p); return this.bord(p); });
+    // (plus loin dans la rue, d'autres sont sortis sur le pas de leur porte pour la voir passer)
+    const rue = [[PLACES_RUE.maison1 + 60, { race: 'hobbit', nom: 'Une Brindeloup', feminin: true }], [PLACES_RUE.fontaine - 40, { race: 'humain', nom: 'Une porteuse d\'eau', feminin: true }], [PLACES_RUE.fontaine + 60, { race: 'nain', nom: 'Un vieux nain' }], [PLACES_RUE.banque - 120, 'banquier'], [PLACES_RUE.arche - 160, { race: 'elfe', nom: 'Une voyageuse', feminin: true }]];
+    this.badauds = rue.map(([x, q]) => { const p = imageCorps(this, o + x, sol + 36, q, 6.2).setFlipX(true).setDepth(6.9); this.uiCam.ignore(p); return this.bord(p); });
     this.joueur = this.add.image(560, sol + 44, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(6.6)).setFlipX(true).setDepth(7);
+    this.uiCam.ignore(this.joueur);
     this.ecrire(`Le grand jour. Toute la rue est venue. Garrick : « Le filet est plein, ${etatPattes(G).bois.length} places de bois. Alors file, petit... et écris-moi. »`);
     this.emotion(this.voisins[1], '♥', 1600);
     await this.attendreClic(); if (this.fini) return;
@@ -225,18 +293,37 @@ class VoyageScene extends Cinematique {
     this.ecrire(`${G.nomShop} frémit, déplie ses pattes et se lève. Les fanions claquent, la cheminée crache une grosse fumée.`);
     await this.seLever(); if (this.fini) return;
     this.voisins.forEach(p => this.emotion(p, '!', 1200));
-    await this.marcher(8);
-    this.ecrire('Les champs de la Comté défilent. Derrière, les voisins ne sont plus que des points qui agitent les bras.');
     await this.marcher(6);
+    const barbier = typeof barbierOuvert === 'function' && barbierOuvert(G);
+    this.ecrire(`Elle descend la rue au pas, entre les maisons. Aux portes, aux fenêtres, on agite des mouchoirs ; ${barbier ? 'le barbier sort sur son seuil, ' : 'les Brindeloup sortent sur leur seuil, '}la porteuse d'eau en lâche son seau.`);
+    for (let k = 0; k < 16 && !this.fini; k++) { await this.marcher(1); this.badauds.forEach(p => { if (p.active && Math.abs(p.x - this.etat.x) < 260 && !p.salue) { p.salue = true; this.emotion(p, k % 2 ? '!' : 'joie', 1200); } }); }
+    this.ecrire('L\'arche du marché, la dernière maison... et la route de la Comté s\'ouvre devant elle. Derrière, la rue n\'est plus qu\'une rangée de toits.');
+    for (let k = 0; k < 20 && !this.fini && o + LARGEUR_RUE - this.parcouru > this.etat.x - 360; k++) await this.marcher(1);
+    await this.marcher(4);
   }
-  // Les vergers : une voyageuse marche à côté et achète par la fenêtre
+  // Les vergers : des rangées de pommiers des deux côtés de la route (leurs pommes, des échelles, des paniers) ; une
+  // voyageuse marche à côté de la maison et achète par la fenêtre
+  verger() {
+    const sol = this.sol, saison = typeof saisonActuelle === 'function' ? saisonActuelle() : null;
+    const cle = saison === 'hiver' ? arbreRiveHD(this, 'hiver', 'aulne', 4) : textureArbre(this, 'pommiers');
+    const poser = (x, y, e, prof) => { const a = this.add.image(x, y, cle).setOrigin(0.5, 1).setScale(e).setDepth(prof); this.uiCam.ignore(a); return this.bord(a, x); };
+    for (let k = 0; k < 18; k++) {
+      const x = 1180 + k * 170;
+      poser(x + (k % 2) * 40, sol - 74, 0.9, 0.31); poser(x + 85, sol - 46, 1.2, 0.33);   // (deux rangées au fond, en quinconce)
+      poser(x + 40, sol - 8, 1.75, 0.36);   // (la rangée du bord de la route)
+      if (k % 4 === 1) { const p = this.add.image(x + 70, sol - 2, vergerHD(this, 'panier')).setOrigin(0.5, 1).setScale(2).setDepth(0.37); this.uiCam.ignore(p); this.bord(p, x + 70); }
+      if (k % 5 === 2) { const e = this.add.image(x + 22, sol - 6, vergerHD(this, 'echelle')).setOrigin(0.5, 1).setScale(2).setDepth(0.365); this.uiCam.ignore(e); this.bord(e, x + 22); }
+    }
+  }
   async vergers() {
     const G = this.G;
-    this.changerBiome('foret');
-    this.ecrire('Les vergers : des pommiers à perte de vue. Une voyageuse marche à côté de la maison et frappe à la vitrine.');
-    await this.marcher(4);
+    this.changerBiome('comte');
+    this.verger();
+    this.ecrire('Les vergers : des rangées de pommiers à perte de vue, des échelles contre les troncs, des paniers pleins au pied des arbres. Une voyageuse marche à côté de la maison et frappe à la vitrine.');
+    await this.marcher(6);
     const q = { race: 'elfe', nom: 'Une voyageuse', feminin: true, niveau: 'aguerri' };
     const p = imageCorps(this, -60, this.sol + 40, q, 6.4).setDepth(7);
+    this.uiCam.ignore(p);
     // elle rattrape la maison, puis marche à son pas devant la vitrine
     pasDeMarche(this, p, 1200);
     await new Promise(ok => this.tweens.add({ targets: p, x: this.etat.x + 120, duration: 1200, onComplete: ok }));
@@ -251,24 +338,41 @@ class VoyageScene extends Cinematique {
     await this.attendreClic();
   }
   // Le gué : elle traverse la rivière, l'eau aux genoux
+  // Le gué : une rivière large et peu profonde coupe la route. On hisse le filet sous le plancher (le bois reste au sec),
+  // elle descend la berge, traverse l'eau aux chevilles, remonte de l'autre côté ; on ne s'arrête jamais dans l'eau
   async gue() {
     this.changerBiome('comte');
-    this.ecrire('Le gué : la rivière est large et lente. Elle y entre pas à pas, l\'eau jusqu\'aux genoux ; les poissons s\'écartent.');
-    // la rivière coupe le chemin : trois bandes d'eau de suite, qui reculent avec le sol
-    for (let k = 0; k < 3; k++) { const e = this.bord(this.add.image(900 + k * 960, this.sol - 30, eauGueHD(this)).setOrigin(0, 0).setScale(2).setDepth(4.95)); this.tweens.add({ targets: e, alpha: { from: 0.92, to: 1 }, duration: 700, yoyo: true, repeat: -1 }); }
-    await this.marcher(12);
-    for (let k = 0; k < 6; k++) { const g = this.add.circle(this.etat.x - 110 + k * 44, this.sol + 4, 6, 0xd8ecff, 0.8).setDepth(5); this.tweens.add({ targets: g, y: g.y - 30, alpha: 0, duration: 700, delay: k * 90, onComplete: () => g.destroy() }); }
-    await this.marcher(12);
+    this.poserGue(1500);
+    const g = GUE, berge = () => this.gueEau.c.x - g.demiRoute - g.berge, autre = () => this.gueEau.c.x + g.demiRoute + g.berge;
+    this.ecrire('Une rivière large et lente coupe la route : le gué. Avant d\'y entrer, tu hisses le filet sous le plancher, pour garder le bois au sec.');
+    // (elle s'arrête sur la route, avant la berge, le temps de hisser le filet)
+    for (let k = 0; k < 30 && berge() - (this.etat.x + 190) > 40; k++) await this.marcher(1);
+    await new Promise(ok => this.tweens.add({ targets: this, filetHisse: 46, duration: 900, ease: 'Sine.easeInOut', onUpdate: () => this.placer(), onComplete: ok }));
+    for (let k = 0; k < 30 && this.gueEau.c.x - this.etat.x > 70; k++) await this.marcher(1);
+    this.ecrire('Elle descend la berge à petits pas et entre dans l\'eau. Le courant lui monte aux chevilles, les poissons s\'écartent, les roseaux se couchent.');
+    for (let k = 0; k < 40 && autre() - (this.etat.x - 110) > -20; k++) await this.marcher(1);
+    await new Promise(ok => this.tweens.add({ targets: this, filetHisse: 0, duration: 800, ease: 'Sine.easeInOut', onUpdate: () => this.placer(), onComplete: ok }));
+    this.ecrire('Elle remonte sur l\'autre rive et s\'ébroue. Le filet redescend : pas une bûche de mouillée.');
     await this.attendreClic();
+    for (let k = 0; k < 12 && this.gueEau; k++) await this.marcher(1);   // (la rivière s'éloigne derrière elle)
   }
   // La Porte des Hommes : la frontière, la garde, la taxe ; la lettre du duc ou la fouille
   async porte() {
     const G = this.G, sol = this.sol;
-    this.changerBiome('citadelle');
-    const porte = this.bord(this.add.image(1500, sol + 2, porteDesHommesHD(this)).setOrigin(0.5, 1).setScale(2).setDepth(3));
-    const gardes = [[1180, 'Le sergent de la Porte'], [1260, 'Garde du pont'], [1720, 'Garde du pont']].map(([x, nom]) => { const g = gardePont(this, x, sol + 40, 6.4, true, nom); this.bord(g.b, g.b.x); g.b.setDepth(7.01); this.bord(g.g.setDepth(7)); return g.g; });
-    this.ecrire('La Porte des Hommes : deux tours de pierre blanche, la herse levée, les bannières du royaume. La garde barre la route.');
-    await this.marcher(10);
+    this.changerBiome('comte');
+    // la frontière : le mur qui descend des collines et le châtelet qui enjambe la route (voyageDecorHD.js) ;
+    // passé la porte, la route du Royaume est pavée
+    const { c: porte, ombre: ombreVoute } = poserPorteFrontiereHD(this, sol, this.tuiles[0].texture.key);
+    porte.setDepth(3); ombreVoute.setDepth(0.56); this.uiCam.ignore([porte, ombreVoute]);
+    this.bord(porte, 1500); this.bord(ombreVoute, 1500);
+    this.paveRoyaume = { porte, ts: this.add.tileSprite(0, sol, 16, 70, pavesHD(this, 960, 70)).setOrigin(0).setTileScale(2).setDepth(0.55) };
+    this.uiCam.ignore(this.paveRoyaume.ts); this.placerDecor();
+    // de l'autre côté : les villages de pierre blanche sur leurs collines (au loin, ils défilent moins vite), une borne
+    for (const [x, y, e, g] of [[1700, sol - 92, 1.5, 1], [2350, sol - 108, 1.2, 2]]) { const v = this.add.image(x, y, villageRoyaumeHD(this, g)).setOrigin(0.5, 1).setScale(e).setDepth(0.3); this.uiCam.ignore(v); this.bord(v, x, 0.55); }
+    { const b = this.add.image(2150, sol + 2, borneRoyaumeHD(this)).setOrigin(0.5, 1).setScale(2.4).setDepth(3.5); this.uiCam.ignore(b); this.bord(b, 2150); }
+    const gardes = [[1160, 'Le sergent de la Porte'], [1216, 'Garde du pont'], [1850, 'Garde du pont']].map(([x, nom]) => { const g = gardePont(this, x, sol + 40, 6.4, true, nom); this.bord(g.b, g.b.x); g.b.setDepth(7.01); this.bord(g.g.setDepth(7)); return g.g; });
+    this.ecrire('La Porte des Hommes : le grand mur de la frontière descend des collines jusqu\'à la route, et la route passe sous son châtelet. La garde barre le passage.');
+    await this.marcher(7);
     this.emotion(gardes[0], '!', 1400);
     const ombre = coteCamp(G) === 'mal';
     this.ecrire('Le sergent : « Halte ! Une maison qui marche... Nom, provenance, marchandises. Et la taxe de passage : deux pièces par patte. »');
@@ -284,13 +388,21 @@ class VoyageScene extends Cinematique {
     this.majTableau();
     if (!ombre) gardes.forEach(g => this.emotion(g, '♪', 1200));
     await this.attendreClic(); if (this.fini) return;
-    this.ecrire('La maison passe sous l\'arche en baissant la cheminée. Le Royaume des Hommes : des routes pavées, des bornes, des villages de pierre blanche.');
-    await this.marcher(14);
+    this.ecrire('La voûte est plus basse que la cheminée : la maison plie les genoux et s\'engage sous la porte, à petits pas, la cheminée frôlant la pierre. Les torches, l\'écho des pas, le vantail grand ouvert...');
+    await this.plierGenoux(true);
+    await this.marcher(13);
+    await this.plierGenoux(false);
+    this.ecrire('... et de l\'autre côté, le Royaume des Hommes : la route pavée, des bornes, des villages de pierre blanche.');
+    await this.marcher(4);
   }
-  // Un imprévu : le récit, puis le choix, puis ce qui a changé (en direct)
+  // Un imprévu : on le voit arriver (sa mise en scène), le récit, le choix, puis ce qui a changé (en direct) et ce qu'on voit
   async imprevu(id) {
     const G = this.G, I = IMPREVUS[id];
-    await this.marcher(4);
+    await this.marcher(2);
+    const sc = (await this.scenette(id)) || {};
+    if (this.fini) return;
+    this.ecrire(I.texte);
+    await this.attendreClic(); if (this.fini) return;
     const o = choixPossibles(G, id);
     const i = await this.choisir(I.nom, I.texte, o);
     const r = choisirImprevu(G, id, i);
@@ -298,8 +410,116 @@ class VoyageScene extends Cinematique {
     (r.gains || []).forEach((t, k) => this.time.delayedCall(k * 500, () => this.gain(t, !/^−/.test(t), 160 + k * 26)));
     if (/[+]|♥|☀/.test((r.gains || []).join(' '))) Son.jouer('pieces');
     this.majTableau();
-    if (id === 'brigands' && i === 1 && this.chat) { this.emotion(this.chat.o, '!', 1600); this.cameras.main.shake(300, 0.004); }
+    if (sc.apres) await sc.apres(i, r);
     await this.attendreClic();
+    if (sc.fin) await sc.fin();
+  }
+  // (planche 77) La mise en scène de chaque imprévu : ce qui arrive se voit, avant le choix ; `apres(i)` montre ce que
+  // le choix a changé, `fin()` range. Tout ce qui est posé au bord du chemin défile avec lui.
+  posePerso(q, x, y, e, { prof = 6.9, flip = true, pose = null } = {}) { const p = imageCorps(this, x, y, q, e, pose).setFlipX(flip).setDepth(prof); return this.bord(p); }
+  allerA(p, x, duree, flip = x > p.x ? false : true) { p.setFlipX(flip); pasDeMarche(this, p, duree); return new Promise(ok => this.tweens.add({ targets: p, x, duration: duree, onComplete: () => { const b = this.bordChemin.find(b => b.o === p); if (b) b.x = x + this.parcouru; ok(); } })); }
+  cheminee() { const im = this.facade.image, [cx, cy, cl] = chemineeFacade(niveauFacade(this.G)); return { x: im.x - im.displayWidth / 2 + (cx + cl / 2) * 2, y: im.y - im.displayHeight + cy * 2 }; }
+  // le ruisseau du pont étroit et du troll : la rivière du gué, et un pont de planches posé dessus
+  ruisseauEtPont(x) {
+    this.poserGue(x, RUISSEAU);
+    const g = this.gueEau, pont = [this.add.image(-180, this.sol - 24, 'pontMoulinHD').setOrigin(0, 0).setScale(2)];
+    pont.forEach(o => { o.setDepth(0.62); g.c.add(o); });   // (dans le conteneur du gué : il défile avec lui)
+    g.pont = false; return g;
+  }
+  async traverserRuisseau({ parLePont = false } = {}) {
+    const g = this.gueEau; if (!g) return;
+    g.pont = parLePont;   // (sur le pont, les pieds restent au sec)
+    for (let k = 0; k < 30 && this.gueEau && g.c.x + g.P.demiRoute + g.P.berge - (this.etat.x - 110) > -20; k++) await this.marcher(1);
+  }
+  async scenette(id) {
+    const G = this.G, sol = this.sol, X = this.etat.x;
+    if (id === 'orage') {
+      creerTexturesMeteo(this);
+      const pluie = this.enInterface(() => {
+        voileMeteo(this, 0x5a6088, 1, 'MULTIPLY', -2).setAlpha(0);
+        panMeteo(this, 'meteoPluie', { prof: -1.5, alpha: 0.8, vx: -260, vy: 1100 }); panMeteo(this, 'meteoPluie', { prof: -1.5, alpha: 0.45, vx: -200, vy: 800, echelle: 0.7 });
+      });
+      pluie.forEach(o => { if (o.alpha !== undefined) { const a = o.alpha || 1; o.setAlpha(0); this.tweens.add({ targets: o, alpha: a, duration: 900 }); } });
+      const eclair = () => this.enInterface(() => eclairMeteo(this, -1.2));
+      eclair(); const ev = this.time.addEvent({ delay: 3800, loop: true, callback: eclair });
+      const gens = [[{ race: 'humain', nom: 'Un colporteur trempé', costume: 'colporteur' }, 1180], [{ race: 'hobbit', nom: 'Une voyageuse trempée', feminin: true }, 1260]].map(([q, x]) => this.posePerso(q, x, sol + 38, 6.2));
+      await Promise.all(gens.map((p, k) => this.allerA(p, X + 120 + k * 52, 1300 + k * 200)));
+      gens.forEach(p => this.emotion(p, '…', 1200));
+      return {
+        apres: async i => { if (i === 1) { await Promise.all(gens.map((p, k) => this.allerA(p, this.facade.porteX, 600 + k * 200))); gens.forEach(p => this.tweens.add({ targets: p, alpha: 0, duration: 300 })); } else gens.forEach(p => this.emotion(p, 'joie', 1200)); },
+        fin: async () => { ev.remove(); pluie.forEach(o => this.tweens.add({ targets: o, alpha: 0, duration: 1400, onComplete: () => o.destroy() })); gens.forEach(p => { if (p.alpha > 0.5) this.allerA(p, -300, 2600); }); },
+      };
+    }
+    if (id === 'clandestin') {
+      // (couché sur le tas de bûches, dans le filet)
+      const f = this.filet, pip = imageCorps(this, f.x + 6, f.y + f.displayHeight * 0.34, { race: 'gobelin', nom: 'Pip', niveau: 'novice' }, 4.4).setOrigin(0.5).setAngle(-84).setDepth(4.31);
+      const ronfle = this.time.addEvent({ delay: 1400, loop: true, callback: () => { if (!pip.active || pip.angle > -40) return; const z = this.add.text(pip.x - 14, pip.y - 26, 'z', style(14, '#3b2410', { fontStyle: 'bold italic' })).setDepth(4.9); this.uiCam.ignore(z); this.tweens.add({ targets: z, y: z.y - 26, x: z.x - 10, alpha: 0, duration: 1300, onComplete: () => z.destroy() }); } });
+      return { apres: async i => {
+        ronfle.remove(); pip.setAngle(0).setOrigin(0.5, 1).setY(f.y + f.displayHeight * 0.8);   // (il se réveille et se redresse dans le filet)
+        if (i === 0) { this.emotion(pip, 'colere', 1200); await new Promise(ok => this.tweens.add({ targets: pip, x: pip.x - 90, y: sol + 40, duration: 600, ease: 'Quad.easeIn', onComplete: ok })); pip.setDepth(6.9); this.bord(pip); this.allerA(pip, -300, 2400); }
+        else { this.emotion(pip, 'joie', 1400); await new Promise(ok => this.tweens.add({ targets: pip, x: this.facade.porteX, y: sol - 10, alpha: 0, duration: 900, onComplete: ok })); pip.destroy(); }
+      } };
+    }
+    if (id === 'maison') {
+      const isba = this.bord(this.add.image(1300, sol + 4, isbaPoulesHD(this, 0)).setOrigin(0.5, 1).setScale(2.3).setFlipX(true).setDepth(3.6));
+      let k = 0; const pas = this.time.addEvent({ delay: 220, loop: true, callback: () => isba.setTexture(isbaPoulesHD(this, (k = 1 - k))) });
+      await new Promise(ok => this.tweens.add({ targets: isba, x: 900, duration: 2600, onUpdate: () => { const b = this.bordChemin.find(b => b.o === isba); if (b) b.x = isba.x + this.parcouru; }, onComplete: ok }));
+      pas.remove();
+      const marchand = this.posePerso({ race: 'humain', nom: 'Le marchand nomade', costume: 'colporteur', niveau: 'aguerri' }, 830, sol + 40, 6.2);
+      this.emotion(marchand, 'joie', 1400); if (this.chat) this.emotion(this.chat.o, '?', 1400);
+      return { fin: async () => { marchand.setFlipX(false); this.allerA(marchand, 900, 500).then(() => marchand.setVisible(false));
+        const pas2 = this.time.addEvent({ delay: 220, loop: true, callback: () => isba.setTexture(isbaPoulesHD(this, (k = 1 - k))) }); isba.setFlipX(false);
+        this.tweens.add({ targets: isba, x: 1500, duration: 3200, onUpdate: () => { const b = this.bordChemin.find(b => b.o === isba); if (b) b.x = isba.x + this.parcouru; }, onComplete: () => { pas2.remove(); isba.destroy(); } }); } };
+    }
+    if (id === 'pont' || id === 'troll') {
+      creerMoulinHD(this);
+      const g = this.ruisseauEtPont(1500);
+      for (let k = 0; k < 20 && g.c.x - g.P.demiRoute - g.P.berge - (X + 190) > 30; k++) await this.marcher(1);
+      if (id === 'pont') return { apres: async (i, r) => { if (i === 0) { await new Promise(ok => this.tweens.add({ targets: this, filetHisse: 46, duration: 700, onUpdate: () => this.placer(), onComplete: ok })); await this.traverserRuisseau(); this.tweens.add({ targets: this, filetHisse: 0, duration: 700, onUpdate: () => this.placer() }); }
+        else { await this.traverserRuisseau({ parLePont: true }); if (/Crac/.test(r.texte)) { this.cameras.main.shake(300, 0.006); Son.jouer('porte'); } } } };
+      creerRecitHD(this);
+      const troll = this.bord(this.add.image(g.c.x - 70, sol + 74, 'trollHD').setOrigin(0.5, 1).setScale(2.4).setDepth(6.4));
+      this.tweens.add({ targets: troll, y: troll.y - 4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      this.emotion(troll, 'colere', 1600);
+      return { apres: async i => { this.emotion(troll, i === 1 ? 'larme' : 'joie', 1600); await new Promise(ok => this.tweens.add({ targets: troll, x: troll.x - 60, duration: 900, onUpdate: () => { const b = this.bordChemin.find(b => b.o === troll); if (b) b.x = troll.x + this.parcouru; }, onComplete: ok })); await this.traverserRuisseau({ parLePont: true }); } };
+    }
+    if (id === 'fete') {
+      creerRueHD(this);
+      const x0 = 1260;
+      for (const [cle, dx] of [['rueMaisonHD_0', 0], ['rueMaisonHD_1', 420]]) { const m = this.add.image(x0 + dx, sol + 2, cle).setOrigin(0.5, 1).setScale(2).setDepth(0.52); this.bord(m, m.x); }
+      const c = this.add.container(0, 0).setDepth(0.6); guirlandeFanions(this, c, x0 + 90, x0 + 330, sol - 190, 26, 34, 1); this.bord(c, 0);
+      for (let k = 0; k < 4; k++) { const l = this.add.image(x0 + 110 + k * 66, sol - 172 + Math.sin(k + 1) * 18, 'halo').setScale(0.35).setTint(0xffb050).setAlpha(0.7).setBlendMode(Phaser.BlendModes.ADD).setDepth(0.61); this.bord(l, l.x); const lp = this.add.ellipse(l.x, l.y, 10, 12, 0xe8783a).setDepth(0.62); this.bord(lp, lp.x); }
+      { const t = this.add.image(x0 + 210, sol + 14, 'tonneauxHD').setOrigin(0.5, 1).setScale(2).setDepth(0.7); this.bord(t, t.x); }
+      const danse = [[{ race: 'hobbit', nom: 'Un danseur' }, x0 + 140], [{ race: 'hobbit', nom: 'Une danseuse', feminin: true }, x0 + 190], [{ race: 'humain', nom: 'Une fermière', feminin: true }, x0 + 270], [{ race: 'nain', nom: 'Un vieux nain' }, x0 + 330]].map(([q, x]) => this.posePerso(q, x, sol + 36, 6.0, { prof: 3.5 }));
+      danse.forEach((p, k) => { this.tweens.add({ targets: p, y: p.y - 10, duration: 260, yoyo: true, repeat: -1, delay: k * 130, ease: 'Quad.easeOut' }); this.time.addEvent({ delay: 520, loop: true, callback: () => p.active && p.setFlipX(!p.flipX) }); });
+      for (let k = 0; k < 10 && !this.fini; k++) await this.marcher(1);
+      return { apres: async i => danse.forEach(p => this.emotion(p, i === 1 ? '♥' : 'joie', 1400)) };
+    }
+    if (id === 'blesse') {
+      const borne = this.bord(this.add.image(1064, sol + 32, borneComteHD(this)).setOrigin(0.5, 1).setScale(2.4).setDepth(6.6));
+      const q = { race: 'humain', nom: 'Un héros blessé', niveau: 'aguerri', blesse: true };
+      const h = this.posePerso(q, 1010, sol + 34, 6.2, { prof: 6.7, pose: 'assis', flip: false });
+      const epee = this.bord(this.add.image(1100, sol + 36, epeeCasseeHD(this)).setOrigin(0.5, 1).setScale(2).setDepth(6.65));
+      void borne; void epee;
+      for (let k = 0; k < 6 && !this.fini; k++) await this.marcher(1);
+      this.emotion(h, '…', 1400);
+      return { apres: async i => {
+        if (i === 0) { h.setTexture(corpsHD(this, q)).setOrigin(0.5, 1); this.emotion(h, '♥', 1600); }
+        else if (i === 1) this.emotion(h, '…', 1400);
+        else { await this.marcher(3); h.setFlipX(true); this.emotion(h, '…', 1600); }
+      } };
+    }
+    if (id === 'brigands') {
+      const bandits = [[{ ...FIGURANTS.brigand, serieux: true, armeEmportee: 'arc' }, 780], [{ ...FIGURANTS.brigande, serieux: true, armeEmportee: 'dague' }, 850], [{ ...FIGURANTS.pillard, serieux: true, armeEmportee: 'arc' }, 925]].map(([q, x]) => this.posePerso(q, x + 300, sol + 40, 6.4));
+      await Promise.all(bandits.map((p, k) => this.allerA(p, 760 + k * 72, 1100 + k * 150)));
+      bandits.forEach(p => this.emotion(p, 'colere', 1400));
+      return { apres: async i => {
+        if (i === 0) { await new Promise(ok => this.time.delayedCall(500, ok)); await Promise.all(bandits.map((p, k) => this.allerA(p, 1400, 1400 + k * 100, false))); }
+        else if (i === 1) { const c = this.cheminee(); formeDeFumee(this, 'chat', c.x, c.y, c.x + 40, c.y - 150, { taille: 120, profondeur: 6.2, tenue: 2800 }); this.cameras.main.shake(400, 0.004); bandits.forEach(p => this.emotion(p, '!', 1200)); await new Promise(ok => this.time.delayedCall(900, ok)); await Promise.all(bandits.map((p, k) => this.allerA(p, 1500, 1000 + k * 120, false))); }
+        else { for (let k = 0; k < 6 && !this.fini; k++) await this.marcher(1, { pas: 90 }); bandits.forEach(p => this.emotion(p, '!', 1000)); }
+      } };
+    }
+    return null;
   }
   // Le soir : elle s'accroupit au bord du chemin ; le feu, les fagots
   async soir() {
@@ -345,13 +565,19 @@ class VoyageScene extends Cinematique {
       this.add.image(0, 40, pontRoyalHD(this)).setOrigin(0).setScale(2).setDepth(20.3);
       for (const [x, y, sc, fl] of [[220, 470, 2, false], [790, 500, 1.6, true]]) { const avant = new Set(this.children.list); poserBarge(this, x, y, sc, fl); this.children.list.filter(o => !avant.has(o)).forEach(o => { o.setDepth(20.5); if (o.type === 'Image') this.tweens.add({ targets: o, y: o.y + 2, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }); }
       this.add.rectangle(480, 32, 940, 46, 0x1a120a, 0.9).setStrokeStyle(2, 0xd8b048).setDepth(21);
-      this.add.text(30, 32, 'Pont-Royal : le grand pont de pierre blanche à cinq arches, les maisons serrées dessus, la chapelle, la citadelle sur son rocher. Les barges descendent le fleuve.', style(14, '#f6ead0', { fontStyle: 'italic', wordWrap: { width: 860 } })).setOrigin(0, 0.5).setDepth(21.1);
+      this.add.text(30, 32, 'Pont-Royal : le grand pont de pierre blanche, les maisons serrées dessus, la chapelle, la citadelle sur son rocher. La route arrive par la haute rive, à hauteur du pont.', style(14, '#f6ead0', { fontStyle: 'italic', wordWrap: { width: 860 } })).setOrigin(0, 0.5).setDepth(21.1);
     });
     this.cameras.main.fadeIn(600);
     await this.attendreClic();
     vue.forEach(o => o.destroy());
+    if (this.fini) return;
+    // (planche 77) la tête de pont : la route arrive à plat sur la haute rive jusqu'à la tour qui garde le pont ; la
+    // maison plie les genoux pour passer sous la voûte, et la voilà sur le pont (le fleuve est en bas, dans son lit)
+    await this.versLeTeteDePont();
+    if (this.fini) return;
     // la rue du pont : elle arrive debout par la gauche, à pas comptés, jusqu'au lot
     for (const t of [...this.tuiles, ...this.sols]) t.setVisible(false);
+    if (this.paveRoyaume) { this.paveRoyaume.ts.destroy(); this.paveRoyaume = null; }
     for (const b of this.bordChemin) if (b.o.active) b.o.destroy();
     this.bordChemin = [];
     // (la vue recule : de chaque côté de la rue, le parapet et le fleuve continuent)
@@ -387,6 +613,29 @@ class VoyageScene extends Cinematique {
     await this.attendreClic();
     decor.forEach(o => o.destroy());
     this.finir();
+  }
+  async versLeTeteDePont() {
+    const sol = this.sol;
+    if (!this.paveRoyaume) { this.paveRoyaume = { porte: { active: false }, ts: this.add.tileSprite(0, sol, 16, 70, pavesHD(this, 960, 70)).setOrigin(0).setTileScale(2).setDepth(0.55) }; this.uiCam.ignore(this.paveRoyaume.ts); }
+    const { c, pont, ombre } = poserTeteDePontHD(this, sol);
+    c.setDepth(3); ombre.setDepth(0.56); pont.forEach(o => o.setDepth(0.4));
+    this.uiCam.ignore([c, ombre, ...pont]);
+    this.bord(c, 1400); this.bord(ombre, 1400); pont.forEach(o => this.bord(o, o.x + 1400));
+    const gardes = [[1180, 'Garde du pont'], [1640, 'Garde du pont']].map(([x, nom]) => { const g = gardePont(this, x, sol + 40, 6.4, x < 1400, nom); this.uiCam.ignore([g.g, g.b]); this.bord(g.b, g.b.x); g.b.setDepth(7.01); this.bord(g.g.setDepth(7)); return g.g; });
+    this.placerDecor();
+    if (!this.debout) await this.seLever();
+    this.ecrire('La route du Royaume court sur la haute rive, à hauteur du pont : le fleuve coule tout en bas, dans son lit. Au bout, la tour de la tête de pont et sa garde.');
+    for (let k = 0; k < 20 && !this.fini && c.x - TETE_PONT.demi - (this.etat.x + 190) > 40; k++) await this.marcher(1);
+    this.emotion(gardes[0], '!', 1400);
+    this.ecrire('Un garde en lâche sa lance. La maison plie les genoux et passe sous la tour à petits pas, la cheminée frôlant la voûte.');
+    await this.plierGenoux(true);
+    for (let k = 0; k < 20 && !this.fini && (this.etat.x - 190) - (c.x + TETE_PONT.demi) < 16; k++) await this.marcher(1);
+    await this.plierGenoux(false);
+    await this.marcher(2);
+    this.cameras.main.fadeOut(500); await new Promise(ok => this.time.delayedCall(520, ok));
+    for (const b of this.bordChemin) if (b.o.active) b.o.destroy();
+    this.bordChemin = [];
+    this.cameras.main.fadeIn(500);
   }
   // Les pattes se rangent : elle plie les genoux, les pattes rentrent dessous, plus rien ne dépasse
   async rangerPattes() {

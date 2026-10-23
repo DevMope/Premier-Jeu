@@ -115,7 +115,7 @@ function matinDuVoyage(G) {
 // --- La route ---
 // Les imprévus : un par jour de route, tirés au sort sans répétition. Chaque choix renvoie ce qui a changé.
 const IMPREVUS = {
-  orage: { nom: "L'orage", texte: 'Le ciel noircit d\'un coup. Sous un vieux pont de pierre, des voyageurs trempés s\'abritent avec toi.',
+  orage: { nom: "L'orage", texte: 'Le ciel noircit d\'un coup, la pluie tombe en cordes. Deux voyageurs trempés courent se coller sous l\'avant-toit de ta maison.',
     choix: [
       { nom: 'Leur vendre des capes et des torches', fait: G => { const p = 40 + 10 * etoilesVoyage(G); encaisser(G, p, 'voyage'); return { texte: 'Ils achètent tout ce qui protège de la pluie, ravis.', gains: [`+${p} p.`] }; } },
       { nom: "Les faire entrer au chaud, gratuitement", fait: G => { pencher(G, 'routeAider'); G.reputation += 0.5; return { texte: 'On boit une tisane au comptoir en écoutant la pluie. Ils parleront de toi à Pont-Royal.', gains: ['+0,5 réputation', '☀'] }; } },
@@ -125,7 +125,7 @@ const IMPREVUS = {
       { nom: 'Le gronder et le déposer au bord du chemin', fait: G => ({ texte: 'Il file en grommelant, sa pomme à la main.', gains: [] }) },
       { nom: "L'embaucher pour ramasser le bois", fait: G => { etatVoyage(G).pip = true; return { texte: 'Il s\'appelle Pip. Chaque soir, il rapportera des fagots en plus.', gains: ['+2 fagots chaque soir'] }; } },
     ] },
-  maison: { nom: 'Une autre maison qui marche', texte: 'Sur la crête, une maison à pattes de poule croise la route : un marchand nomade, qui propose un marché de passage d\'une heure.',
+  maison: { nom: 'Une autre maison qui marche', texte: 'Sur la route, une cabane à pattes de poule vient à ta rencontre : un marchand nomade, qui propose un marché de passage d\'une heure.',
     choix: [
       { nom: 'Lui acheter des provisions (60 p.)', si: G => peutPayer(G, 60), fait: G => { payer(G, 60, 'voyage'); for (const [id, n] of [['ration', 4], ['potion', 2], ['bandage', 3]]) G.stock[id] = (G.stock[id] || 0) + n; return { texte: 'Des rations, des potions, des bandages : de quoi équiper tes premiers clients du pont.', gains: ['−60 p.', '+4 rations', '+2 potions', '+3 bandages'] }; } },
       { nom: 'Le saluer et continuer', fait: G => ({ texte: 'Les deux maisons se saluent d\'un coup de fumée. Les chats, sur les toits, se toisent.', gains: [] }) },
@@ -151,7 +151,7 @@ const IMPREVUS = {
       { nom: 'Lui vendre les soins (30 p.)', si: G => (G.stock.bandage || 0) >= 1, fait: G => { G.stock.bandage--; encaisser(G, 30, 'voyage'); pencher(G, 'routeRancon'); return { texte: 'Il paie, sans un mot.' + (chatAdopte(G) ? ' Ton chat détourne les yeux.' : ' Il ne te regarde plus.'), gains: ['−1 bandage', '+30 p.', '☾'] }; } },
       { nom: 'Passer son chemin', fait: G => ({ texte: 'Tu ne t\'arrêtes pas. Par la fenêtre du fond, tu le vois te regarder partir.', gains: [] }) },
     ] },
-  brigands: { nom: 'Les brigands', texte: 'Trois brigands barrent la route, l\'arbalète levée. « La bourse, ou on met le feu au filet ! »',
+  brigands: { nom: 'Les brigands', texte: 'Trois brigands barrent la route, l\'arc bandé. « La bourse, ou on met le feu au filet ! »',
     choix: [
       { nom: 'Payer (10 % de ta bourse, 150 p. au plus)', fait: G => { const p = Math.min(150, Math.round(Math.max(0, G.argent) * 0.1)); payer(G, p, 'voyage'); return { texte: 'Ils filent avec la bourse. La maison souffle de la fumée noire, de rage.', gains: [`−${p} p.`] }; } },
       { nom: 'Laisser faire le chat', si: G => chatAdopte(G), fait: G => ({ texte: 'Du haut du toit, ton chat se gonfle, feule... et une ombre immense se dresse dans la fumée de la cheminée. Les brigands s\'enfuient en hurlant.', gains: ['le chat ♥'] }) },
