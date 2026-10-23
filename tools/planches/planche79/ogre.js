@@ -1,6 +1,6 @@
 // Planche 79 : l'ogre du péage (il ne peut plus s'appeler troll : c'est un peuple du jeu).
 // Un ogre ventru, deux fois plus grand qu'un homme, une marmite cabossée pour casque, un tablier de cuir rapiécé,
-// la caisse du péage à la ceinture, une massue taillée dans un poteau de pont. Il regarde à gauche (la maison arrive
+// la caisse du péage à la ceinture, un gros gourdin : un vrai rondin de bois, mince au manche, énorme au bout. Il regarde à gauche (la maison arrive
 // de la gauche). Dessiné à la finesse des personnages (cel, relief, contour), en plusieurs poses : il marche vraiment.
 module.exports = `
   const dansP = pts => (x, y) => { const px = x + 0.5, py = y + 0.5; let d = false;
@@ -18,7 +18,7 @@ module.exports = `
     const L = 200, H = 300, t = new ToileHD(L, H); t.relief = true; t.cel = true;
     Object.assign(t.rampes, { peau: rampe(0xc8906a), joue: rampe(0xd0705a), nez: rampe(0xc85a4a), ongle: rampe(0x6a5040), dent: rampe(0xe0d4b0),
       gilet: rampe(0x8a3a2a), cuir: rampe(0x7a5838), rapiece: rampe(0x9a7a48), rapiece2: rampe(0x5a4a3e), corde: rampe(0xb89a5a),
-      marmite: rampe(0x4a4e56), bois: rampe(0x8a6a44), boisF: rampe(0x6a4e32), fer: rampe(0x6a6e78), laiton: rampe(0xc8a040), poil: rampe(0x5a3a24),
+      marmite: rampe(0x4a4e56), bois: rampe(0x8a6a44), boisF: rampe(0x6a4e32), ecorce: rampe(0x6e4c30), aubier: rampe(0xd8b07a), noeud: rampe(0x4a3220), fer: rampe(0x6a6e78), laiton: rampe(0xc8a040), poil: rampe(0x5a3a24),
       oeil: [0x1a0e08, 0x2a180c, 0x6a4a1a, 0xc89a3a, 0xf0e8d0, 0xffffff], larme: [0x2a5a8a, 0x4a8ac0, 0x6ab0e0, 0x9ad0f0, 0xc8ecff, 0xffffff] });
     const sol = 296, dy = souffle ? 1 : 0;   // (il respire : le haut du corps monte d'un pixel)
     // --- les jambes : courtes et massives, les pieds nus, larges, aux orteils ronds ---
@@ -89,22 +89,34 @@ module.exports = `
     t.forme('marmite', polyO([[hx - 33, hy - 16], [hx + 32, hy - 16], [hx + 30, hy - 11], [hx - 31, hy - 11]], cylO(hx, 33, -0.6)), { decalage: 0.2 });
     traitHD(t, 'fer', [[hx + 24, hy - 26], [hx + 34, hy - 30], [hx + 36, hy - 22]], 1.3, 0.2);   // (l'anse)
     for (let k = 0; k < 5; k++) traitHD(t, 'poil', [[hx + 22 + k * 2, hy - 10], [hx + 26 + k * 3, hy - 2 + k]], 0.7, 0);
-    // --- le bras de devant (sa main droite) et la massue : un poteau de pont, carré, cerclé de fer, hérissé de clous ---
-    const massue = (a, b, ep = 7) => { const [ax, ay] = a, [bx, by] = b, ux = bx - ax, uy = by - ay, l = Math.hypot(ux, uy), nx = -uy / l, ny = ux / l;
-      const coin = (u, e) => [ax + ux * u + nx * e, ay + uy * u + ny * e];
-      t.forme('boisF', polyO([coin(0, -ep * 0.6), coin(0, ep * 0.6), coin(1, ep), coin(1, -ep)], (x, y) => [nx * 0.5, ny * 0.5 - 0.2, 0.8]), { motif: (x, y) => { const e = (x + 0.5 - ax) * nx + (y + 0.5 - ay) * ny; return Math.abs(e % 4) < 0.7 ? -0.6 : 0; } });
-      for (const u of [0.55, 0.85]) traitHD(t, 'fer', [coin(u, -ep - 0.5), coin(u, ep + 0.5)], 1.4, 0.2);
-      for (const [u, e] of [[0.68, -ep], [0.72, ep], [0.95, -ep * 0.6], [0.78, -ep * 0.9], [0.92, ep * 0.9]]) { const [px, py] = coin(u, e * 1.15); t.poser(Math.round(px), Math.round(py), 'fer', 4); t.poser(Math.round(px + nx), Math.round(py + ny), 'fer', 2); } };
-    if (bras === 'leve') {   // (la massue levée à deux mains, au-dessus de la marmite)
-      massue([120, 40], [20, 2], 8);
+    // --- le bras de devant (sa main droite) et le gourdin : un rondin d'écorce, mince au manche, renflé au bout,
+    // ses nœuds, un moignon de branche, et ses deux bouts sciés ronds (on voit les cernes du bois au gros bout) ---
+    const gourdin = (m, b0) => { const [mx, my] = m, [gx, gy] = b0, ux = gx - mx, uy = gy - my, l = Math.hypot(ux, uy), ax = ux / l, ay = uy / l, nx = -ay, ny = ax;
+      const demi = u => 4.2 + 11 * Math.pow(u, 1.7) + Math.sin(u * 9) * 0.6;   // (le manche, puis le gros bout)
+      t.forme('ecorce', (x, y) => { const px = x + 0.5 - mx, py = y + 0.5 - my, u = (px * ax + py * ay) / l, e = px * nx + py * ny;
+        if (u < -0.02 || u > 1) return null; const w = demi(Math.max(0, u)); if (Math.abs(e) > w) return null;
+        const r = e / w; return [nx * r * 0.85, ny * r * 0.85 - 0.15, Math.sqrt(Math.max(0.08, 1 - r * r))]; },
+        { motif: (x, y) => { const px = x + 0.5 - mx, py = y + 0.5 - my, u = (px * ax + py * ay) / l, e = px * nx + py * ny, w = demi(Math.max(0, u));
+          return Math.abs(Math.sin(e / w * 4.2 + fbm(u * 6, e * 0.2, 41) * 2.4)) < 0.22 ? -0.8 : (hachage(Math.round(u * 60), Math.round(e), 43) > 0.93 ? 0.5 : 0); } });   // (les sillons de l'écorce, dans le sens du bois)
+      const P = (u, e) => [mx + ax * l * u + nx * e, my + ay * l * u + ny * e];
+      // les nœuds, et le moignon d'une branche coupée
+      for (const [u, e, r] of [[0.55, -2, 2.2], [0.78, 4, 2.6], [0.4, 1.5, 1.6]]) { const [x, y] = P(u, e); t.forme('noeud', ellipsoide(x, y, r, r * 0.8), { decalage: -0.2, ombre: false }); t.poser(Math.round(x), Math.round(y), 'noeud', 0); }
+      { const [x0, y0] = P(0.66, -demi(0.66) + 0.5), [x1, y1] = P(0.62, -demi(0.66) - 5); traitHD(t, 'ecorce', [[x0, y0], [x1, y1]], 2.4, 0.2); t.forme('aubier', ellipsoide(x1, y1, 2, 1.6), { decalage: 0.2, ombre: false }); }
+      // le gros bout scié : la tranche claire et ses cernes ; le manche, usé et lisse là où il le tient
+      const [ex, ey] = P(1, 0), W = demi(1);
+      t.forme('aubier', (x, y) => { const px = x + 0.5 - ex, py = y + 0.5 - ey, a = px * ax + py * ay, e = px * nx + py * ny; const d = Math.hypot(a / (W * 0.42), e / W); return d <= 1 ? [ax * 0.6, ay * 0.6 - 0.2, 0.7] : null; },
+        { decalage: 0.1, motif: (x, y) => { const px = x + 0.5 - ex, py = y + 0.5 - ey, a = px * ax + py * ay, e = px * nx + py * ny; const d = Math.hypot(a / (W * 0.42), e / W); return Math.abs((d * 4) % 1 - 0.5) < 0.14 ? -0.9 : 0; } });
+      const [hx0, hy0] = P(0, 0); t.forme('bois', ellipsoide(hx0, hy0, 3.8, 3.8), { decalage: 0.2 }); };
+    if (bras === 'leve') {   // (le gourdin levé à deux mains, au-dessus de la marmite)
+      gourdin([118, 40], [30, 12]);
       membre(t, 'peau', [74, 98 - dy], [70, 64], [108, 34], 13, 11, 0.1);
       t.forme('peau', ellipsoide(112, 36, 10, 9), { decalage: 0.1 }); t.forme('peau', ellipsoide(130, 34, 9, 8), { decalage: -0.2 });
-    } else if (bras === 'piece') {   // (il mord la pièce : la massue posée contre lui, la main à la bouche)
-      massue([44, 294], [70, 196], 7);
+    } else if (bras === 'piece') {   // (il mord la pièce : le gourdin posé contre lui, la main à la bouche)
+      gourdin([68, 196], [46, 286]);
       membre(t, 'peau', [74, 98 - dy], [44, 132], [40, 86], 13, 11, 0.1);
       t.forme('peau', ellipsoide(40, 82, 9, 8), { decalage: 0.1 }); t.forme('laiton', ellipsoide(33, 80, 3.4, 3.4), { decalage: 0.6, ombre: false });
-    } else {   // (appuyé sur sa massue, plantée devant lui comme une canne)
-      massue([26, 294], [32, 172], 8);
+    } else {   // (appuyé sur son gourdin, planté devant lui, le gros bout par terre)
+      gourdin([32, 174], [26, 284]);
       membre(t, 'peau', [74, 98 - dy], [52, 140 - dy], [34, 168 - dy], 12, 13, 0.1);
       traitHD(t, 'joue', [[60, 120 - dy], [66, 128 - dy]], 0.8, -0.3);   // (une vieille cicatrice)
       t.forme('peau', ellipsoide(33, 170 - dy, 10, 9), { decalage: 0.1 });

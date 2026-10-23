@@ -135,10 +135,11 @@ const IMPREVUS = {
       { nom: 'Faire le détour par le gué (3 h de bois)', fait: G => { const b = brulerBois(G, 3); return { texte: 'Elle descend la berge à petits pas et remonte de l\'autre côté, trempée jusqu\'aux genoux.', gains: [`−${b.manges.length} bois`] }; } },
       { nom: 'Passer en crabe, pattes serrées', fait: G => { if (Math.random() < 0.5) { payer(G, 50, 'voyage'); return { texte: 'Crac ! Le coin du mur a frotté la rambarde. Il faudra reboucher ça (50 p.).', gains: ['−50 p.'] }; } return { texte: 'Elle passe de profil, une patte après l\'autre, sans toucher la rambarde. Les canards applaudissent.', gains: [] }; } },
     ] },
-  troll: { nom: 'Le troll du péage', texte: 'Sous le pont, un troll lève une massue grosse comme un tonneau. « Péage ! Ou je mange une patte. »',
+  // (v1.59, planche 79) l'ogre du péage (ce n'est plus un troll : les trolls sont un peuple du jeu ; l'id reste pour les vieilles parties)
+  troll: { nom: 'L’ogre du péage', texte: 'Sous le petit pont, un ogre se lève du ruisseau, une marmite cabossée sur la tête, et lève son gourdin au-dessus du chemin. « Péage ! Ou je mange une patte. »',
     choix: [
-      { nom: 'Payer le péage (40 p.)', fait: G => { payer(G, 40, 'voyage'); return { texte: 'Il mord la pièce, la trouve bonne, et s\'écarte en grognant.', gains: ['−40 p.'] }; } },
-      { nom: 'Lui offrir trois rations et une histoire', si: G => (G.stock.ration || 0) >= 3, fait: G => { G.stock.ration -= 3; return { texte: 'Il mange les rations, écoute l\'histoire du dragon jusqu\'au bout, et pleure un peu. « Passe, conteur. »', gains: ['−3 rations'] }; } },
+      { nom: 'Payer le péage (40 p.)', fait: G => { payer(G, 40, 'voyage'); return { texte: 'Il mord la pièce, la trouve bonne, et s\'écarte en traînant les pieds dans l\'eau.', gains: ['−40 p.'] }; } },
+      { nom: 'Lui offrir trois rations et une histoire', si: G => (G.stock.ration || 0) >= 3, fait: G => { G.stock.ration -= 3; return { texte: 'Il mange les rations, écoute l\'histoire du dragon jusqu\'au bout, et renifle dans sa marmite. « Passe, conteur. »', gains: ['−3 rations'] }; } },
     ] },
   fete: { nom: 'Un village en fête', texte: 'Des lampions, une danse sur la place, des tonneaux en perce : tout un village fête la moisson.',
     choix: [
@@ -151,20 +152,19 @@ const IMPREVUS = {
       { nom: 'Lui vendre les soins (30 p.)', si: G => (G.stock.bandage || 0) >= 1, fait: G => { G.stock.bandage--; encaisser(G, 30, 'voyage'); pencher(G, 'routeRancon'); return { texte: 'Il paie, sans un mot.' + (chatAdopte(G) ? ' Ton chat détourne les yeux.' : ' Il ne te regarde plus.'), gains: ['−1 bandage', '+30 p.', '☾'] }; } },
       { nom: 'Passer son chemin', fait: G => ({ texte: 'Tu ne t\'arrêtes pas. Par la fenêtre du fond, tu le vois te regarder partir.', gains: [] }) },
     ] },
-  brigands: { nom: 'Les brigands', texte: 'Trois brigands barrent la route, l\'arc bandé. « La bourse, ou on met le feu au filet ! »',
+  // (v1.59, planche 79) les brigands sont des pandas renégats, déserteurs de la Confrérie (l'id reste pour les vieilles parties)
+  brigands: { nom: 'Les pandas renégats', texte: 'Trois pandas en capuche barrent la route, l\'arc bandé. Sur leur poitrine, l\'insigne de la Confrérie est rayé d\'un coup de couteau. « Ta bourse, voyageur. Le Conseil ne nous paie plus depuis qu\'on se souvient. »',
     choix: [
-      { nom: 'Payer (10 % de ta bourse, 150 p. au plus)', fait: G => { const p = Math.min(150, Math.round(Math.max(0, G.argent) * 0.1)); payer(G, p, 'voyage'); return { texte: 'Ils filent avec la bourse. La maison souffle de la fumée noire, de rage.', gains: [`−${p} p.`] }; } },
-      { nom: 'Laisser faire le chat', si: G => chatAdopte(G), fait: G => ({ texte: 'Du haut du toit, ton chat se gonfle, feule... et une ombre immense se dresse dans la fumée de la cheminée. Les brigands s\'enfuient en hurlant.', gains: ['le chat ♥'] }) },
-      { nom: 'Faire courir la maison (4 h de bois)', fait: G => { const b = brulerBois(G, 4); return { texte: 'Elle prend ses pattes à son cou. Les carreaux tremblent, les brigands mangent la poussière.', gains: [`−${b.manges.length} bois`] }; } },
+      { nom: 'Payer (10 % de ta bourse, 150 p. au plus)', fait: G => { const p = Math.min(150, Math.round(Math.max(0, G.argent) * 0.1)); payer(G, p, 'voyage'); return { texte: 'Ils filent avec la bourse, sans un regard en arrière. La maison souffle de la fumée noire, de rage.', gains: [`−${p} p.`] }; } },
+      { nom: 'Laisser faire le chat', si: G => chatAdopte(G), fait: G => ({ texte: 'Du haut du toit, ton chat se gonfle, feule... et une ombre immense se dresse dans la fumée de la cheminée. Les trois pandas détalent dans les fourrés.', gains: ['le chat ♥'] }) },
+      { nom: 'Faire courir la maison (4 h de bois)', fait: G => { const b = brulerBois(G, 4); return { texte: 'Elle prend ses pattes à son cou. Les carreaux tremblent, les renégats mangent la poussière.', gains: [`−${b.manges.length} bois`] }; } },
+      { nom: 'Leur demander pourquoi ils ont déserté (et partager 2 rations)', si: G => (G.stock.ration || 0) >= 2, fait: G => { G.stock.ration -= 2; return { texte: 'Le plus vieux baisse son arc. « Le Conseil nous a jugés pour complots sur le passé. On disait seulement ce qu\'on avait vu, avant que tout le monde oublie. » Ils prennent les rations et s\'effacent dans les fourrés.', gains: ['−2 rations'] }; } },
     ] },
 };
-// (v1.58) Ceux qui attendent leur nouveau dessin (planche 79) ne sortent plus sur la route : le gardien du péage
-// (qui ne peut pas s'appeler « troll », c'est un peuple du jeu) et les brigands (qui deviennent des pandas renégats)
-const IMPREVUS_EN_ATTENTE = ['troll', 'brigands'];
 // Le plan de la route, tiré au départ : pour chaque jour, ses étapes et son imprévu (le dernier jour : l'arrivée)
 function partirEnVoyage(G) {
   const v = etatVoyage(G), plan = VOYAGE.jours[(G.pattes && G.pattes.sorte) || 'chene'];
-  const tires = Object.keys(IMPREVUS).filter(id => !IMPREVUS_EN_ATTENTE.includes(id)).sort(() => Math.random() - 0.5);
+  const tires = Object.keys(IMPREVUS).sort(() => Math.random() - 0.5);
   v.enRoute = true; v.jourRoute = 0; v.pip = false; v.depuis = G.jour;
   v.plan = plan.map((etapes, i) => ({ etapes, imprevu: i < plan.length - 1 && !etapes.includes(3) ? tires.pop() : null }));
   v.imprevus = [];

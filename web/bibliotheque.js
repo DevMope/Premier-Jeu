@@ -445,7 +445,13 @@ async function categories(scene) {
     sur(() => ({ cle: epeeCasseeHD(scene), nom: "L'épée cassée du héros blessé" })),
     ...Object.keys(SAISONS_NOM).map(sa => sur(() => ({ cle: arbreRiveHD(scene, sa, 'aulne', 1), nom: `Un aulne de la rive, ${SAISONS_NOM[sa]}` }))),
     sur(() => ({ cle: arbreRiveHD(scene, 'ete', 'buisson', 2), nom: 'Un buisson de la rive' })));
-  await ajouter('voyage', 'Le grand voyage', 'La maison sur ses quatre pattes, sur la route de Pont-Royal : elle marche pas à pas, et le soir elle se pose au bord du chemin. Et le décor de la route (planche 77) : le gué, la Porte des Hommes dans son mur, la tête de pont, les villages et les bornes, les vergers, la cabane à pattes de poule, les arbres des rives.', voyage, true);
+  // (v1.59, planche 79 validée) l'ogre du péage et les pandas renégats
+  const OGRE = [[{ souffle: 0 }, 'il garde le pont'], [{ souffle: 1 }, 'il garde le pont (il respire)'], [{ bras: 'leve', visage: 'colere' }, '« Péage ! », le gourdin levé'],
+    [{ bras: 'piece', visage: 'joie' }, 'il mord la pièce'], [{ visage: 'larmes' }, "il pleure à l'histoire"], [{ jambes: 'pas1' }, 'il marche (pas 1)'], [{ jambes: 'pas2' }, 'il marche (pas 2)']];
+  for (const [o, nom] of OGRE) voyage.push(sur(() => ({ cle: ogreHD(scene, o), nom: `L'ogre du péage : ${nom}` })));
+  for (const k of ['renegatWen', 'renegateLin', 'renegatHao']) for (const vue of ['troisQuarts', 'face', 'profil'])
+    voyage.push(sur(() => ({ cle: corpsHD(scene, k, null, vue), nom: `${FIGURANTS[k].nom}, panda renégat${FIGURANTS[k].feminin ? 'e' : ''} (${VUES[vue]})` })));
+  await ajouter('voyage', 'Le grand voyage', 'La maison sur ses quatre pattes, sur la route de Pont-Royal : elle marche pas à pas, et le soir elle se pose au bord du chemin. Et le décor de la route (planche 77) : le gué, la Porte des Hommes dans son mur, la tête de pont, les villages et les bornes, les vergers, la cabane à pattes de poule, les arbres des rives. Et ceux qu’on croise en chemin (planche 79) : l’ogre du péage et son gourdin, les trois pandas renégats.', voyage, true);
 
   // Pont-Royal
   const pont = liste({ pontRoyalHD: 'Pont-Royal vu du fleuve (le lot vide attend ta maison)', pontRoyalHD_plein: 'Pont-Royal vu du fleuve', rueDuPontHD: 'La rue du pont : le tonnelier, ton lot, la maison rose, la Halle des Bateliers' });

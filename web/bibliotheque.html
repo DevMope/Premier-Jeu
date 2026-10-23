@@ -30,7 +30,7 @@
   .carte { background: var(--vitrine); border: 1px solid #3a2616; border-radius: 6px; padding: 10px; display: grid; grid-template-rows: 150px auto; gap: 8px; cursor: zoom-in; min-width: 0; text-align: left; color: inherit; font: inherit; }
   .grille.large .carte { grid-template-rows: 190px auto; }
   .carte:hover { border-color: var(--liseré); }
-  .socle { display: grid; place-items: center; overflow: hidden; border-radius: 4px;
+  .socle { display: flex; align-items: center; justify-content: center; min-height: 0; overflow: hidden; border-radius: 4px;
     background: repeating-conic-gradient(#2e2014 0% 25%, #261a10 0% 50%) 0 0 / 16px 16px; }
   .socle img { image-rendering: pixelated; max-width: 100%; max-height: 100%; height: auto; object-fit: contain; }
   .nom { font-weight: 700; font-size: 14px; line-height: 1.25; overflow-wrap: anywhere; }
@@ -130,6 +130,7 @@
 <script src="src/pontRoyalHD.js"></script>
 <script src="src/voyageHD.js"></script>
 <script src="src/voyageDecorHD.js"></script>
+<script src="src/ogreHD.js"></script>
 <script src="src/enseigneHD.js"></script>
 <script src="src/rueHD.js"></script>
 <script src="src/nympheHD.js"></script>

@@ -419,7 +419,7 @@ class VoyageScene extends Cinematique {
   posePerso(q, x, y, e, { prof = 6.9, flip = true, pose = null } = {}) { const p = imageCorps(this, x, y, q, e, pose).setFlipX(flip).setDepth(prof); return this.bord(p); }
   allerA(p, x, duree, flip = x > p.x ? false : true) { p.setFlipX(flip); pasDeMarche(this, p, duree); return new Promise(ok => this.tweens.add({ targets: p, x, duration: duree, onComplete: () => { const b = this.bordChemin.find(b => b.o === p); if (b) b.x = x + this.parcouru; ok(); } })); }
   cheminee() { const im = this.facade.image, [cx, cy, cl] = chemineeFacade(niveauFacade(this.G)); return { x: im.x - im.displayWidth / 2 + (cx + cl / 2) * 2, y: im.y - im.displayHeight + cy * 2 }; }
-  // le ruisseau du pont étroit et du troll : la rivière du gué, et un pont de planches posé dessus
+  // le ruisseau du pont étroit et de l'ogre du péage : la rivière du gué, et un pont de planches posé dessus
   ruisseauEtPont(x) {
     this.poserGue(x, RUISSEAU);
     const g = this.gueEau, pont = [this.add.image(-180, this.sol - 24, 'pontMoulinHD').setOrigin(0, 0).setScale(2)];
@@ -477,11 +477,24 @@ class VoyageScene extends Cinematique {
       for (let k = 0; k < 20 && g.c.x - g.P.demiRoute - g.P.berge - (X + 190) > 30; k++) await this.marcher(1);
       if (id === 'pont') return { apres: async (i, r) => { if (i === 0) { await new Promise(ok => this.tweens.add({ targets: this, filetHisse: 46, duration: 700, onUpdate: () => this.placer(), onComplete: ok })); await this.traverserRuisseau(); this.tweens.add({ targets: this, filetHisse: 0, duration: 700, onUpdate: () => this.placer() }); }
         else { await this.traverserRuisseau({ parLePont: true }); if (/Crac/.test(r.texte)) { this.cameras.main.shake(300, 0.006); Son.jouer('porte'); } } } };
-      creerRecitHD(this);
-      const troll = this.bord(this.add.image(g.c.x - 70, sol + 74, 'trollHD').setOrigin(0.5, 1).setScale(2.4).setDepth(6.4));
-      this.tweens.add({ targets: troll, y: troll.y - 4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-      this.emotion(troll, 'colere', 1600);
-      return { apres: async i => { this.emotion(troll, i === 1 ? 'larme' : 'joie', 1600); await new Promise(ok => this.tweens.add({ targets: troll, x: troll.x - 60, duration: 900, onUpdate: () => { const b = this.bordChemin.find(b => b.o === troll); if (b) b.x = troll.x + this.parcouru; }, onComplete: ok })); await this.traverserRuisseau({ parLePont: true }); } };
+      // (v1.59, planche 79) l'ogre du péage : il se lève du ruisseau, sous le petit pont, et lève son gourdin. Il respire
+      // (deux images), et quand il s'écarte, il marche vraiment dans l'eau (ses deux images de pas)
+      let pose = { bras: 'epaule', visage: 'colere' }, souffle = 0, marche = false;
+      const ogre = this.bord(this.add.image(g.c.x + 25, sol + 80, ogreHD(this, pose)).setOrigin(0.5, 1).setScale(0.8).setDepth(6.4));
+      const poser = q => { pose = q; ogre.setTexture(ogreHD(this, { ...q, souffle })); };
+      const respire = this.time.addEvent({ delay: 650, loop: true, callback: () => { if (!ogre.active) { respire.remove(); return; } if (!marche) { souffle = 1 - souffle; poser(pose); } } });
+      this.time.delayedCall(700, () => { if (ogre.active) { poser({ bras: 'leve', visage: 'colere' }); Son.jouer('grogne'); } });
+      this.emotion(ogre, 'colere', 1600);
+      return { apres: async i => {
+        poser(i === 1 ? { bras: 'epaule', visage: 'larmes' } : { bras: 'piece', visage: 'joie' });
+        this.emotion(ogre, i === 1 ? 'larme' : 'joie', 1600);
+        await new Promise(ok => this.time.delayedCall(1500, ok));
+        // il recule dans le ruisseau, en aval du pont, pour laisser passer la maison
+        marche = true; ogre.setFlipX(true); let k = 0;
+        const pas = this.time.addEvent({ delay: 230, loop: true, callback: () => { if (ogre.active) ogre.setTexture(ogreHD(this, { jambes: (k = 1 - k) ? 'pas1' : 'pas2', bras: 'epaule', visage: 'neutre' })); } });
+        await new Promise(ok => this.tweens.add({ targets: ogre, x: ogre.x + 34, y: ogre.y + 18, scale: 0.86, duration: 1500, onUpdate: () => { const b = this.bordChemin.find(b => b.o === ogre); if (b) b.x = ogre.x + this.parcouru; }, onComplete: ok }));
+        pas.remove(); ogre.setFlipX(false); marche = false; poser({ bras: 'epaule', visage: 'neutre' });
+        await this.traverserRuisseau({ parLePont: true }); } };
     }
     if (id === 'fete') {
       creerRueHD(this);
@@ -510,12 +523,15 @@ class VoyageScene extends Cinematique {
       } };
     }
     if (id === 'brigands') {
-      const bandits = [[{ ...FIGURANTS.brigand, serieux: true, armeEmportee: 'arc' }, 780], [{ ...FIGURANTS.brigande, serieux: true, armeEmportee: 'dague' }, 850], [{ ...FIGURANTS.pillard, serieux: true, armeEmportee: 'arc' }, 925]].map(([q, x]) => this.posePerso(q, x + 300, sol + 40, 6.4));
+      // (v1.59, planche 79) les pandas renégats, déserteurs de la Confrérie
+      const bandits = [[{ ...FIGURANTS.renegatWen, serieux: true, armeEmportee: 'arc' }, 780], [{ ...FIGURANTS.renegateLin, serieux: true, armeEmportee: 'dague' }, 850], [{ ...FIGURANTS.renegatHao, serieux: true, armeEmportee: 'baton' }, 925]].map(([q, x]) => this.posePerso(q, x + 300, sol + 40, 6.4));
       await Promise.all(bandits.map((p, k) => this.allerA(p, 760 + k * 72, 1100 + k * 150)));
       bandits.forEach(p => this.emotion(p, 'colere', 1400));
       return { apres: async i => {
-        if (i === 0) { await new Promise(ok => this.time.delayedCall(500, ok)); await Promise.all(bandits.map((p, k) => this.allerA(p, 1400, 1400 + k * 100, false))); }
-        else if (i === 1) { const c = this.cheminee(); formeDeFumee(this, 'chat', c.x, c.y, c.x + 40, c.y - 150, { taille: 120, profondeur: 6.2, tenue: 2800 }); this.cameras.main.shake(400, 0.004); bandits.forEach(p => this.emotion(p, '!', 1200)); await new Promise(ok => this.time.delayedCall(900, ok)); await Promise.all(bandits.map((p, k) => this.allerA(p, 1500, 1000 + k * 120, false))); }
+        const partis = () => bandits.forEach(p => p.setVisible(false));   // (une fois dans les fourrés, on ne les voit plus)
+        if (i === 0) { await new Promise(ok => this.time.delayedCall(500, ok)); await Promise.all(bandits.map((p, k) => this.allerA(p, 1700, 1900 + k * 100, false))); partis(); }
+        else if (i === 1) { const c = this.cheminee(); formeDeFumee(this, 'chat', c.x, c.y, c.x + 40, c.y - 150, { taille: 120, profondeur: 6.2, tenue: 2800 }); this.cameras.main.shake(400, 0.004); bandits.forEach(p => this.emotion(p, '!', 1200)); await new Promise(ok => this.time.delayedCall(900, ok)); await Promise.all(bandits.map((p, k) => this.allerA(p, 1700, 1300 + k * 120, false))); partis(); }
+        else if (i === 3) { bandits.forEach(p => this.emotion(p, '…', 1000)); await new Promise(ok => this.time.delayedCall(1100, ok)); await Promise.all(bandits.map((p, k) => this.allerA(p, 1700, 2100 + k * 140, false))); partis(); }   // (ils s'effacent dans les fourrés)
         else { for (let k = 0; k < 6 && !this.fini; k++) await this.marcher(1, { pas: 90 }); bandits.forEach(p => this.emotion(p, '!', 1000)); }
       } };
     }

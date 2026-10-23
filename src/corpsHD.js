@@ -51,6 +51,10 @@ const FIGURANTS = {
   brigande: { race: 'humain', nom: 'Brigande', feminin: true, costume: 'passeur', habit: 0x34402a, cheveux: 0x6a2a1a, cape: 0x26301e, niveau: 1, fache: true },
   pillard: { race: 'humain', nom: 'Pillard', costume: 'passeur', habit: 0x9a7a4a, cheveux: 0x1a1410, cape: 0x7a5a36, barbe: 'pleine', peau: 4, niveau: 1, fache: true },
   pillarde: { race: 'humain', nom: 'Pillarde', feminin: true, costume: 'passeur', habit: 0x8a4a2a, cheveux: 0x1a1410, cape: 0x6a4a30, peau: 3, niveau: 1, fache: true },
+  // (v1.59, planche 79) les pandas renégats : des déserteurs de la Confrérie, condamnés pour « propagation de complots sur le passé »
+  renegatWen: { race: 'panda', nom: 'Wen Ombre-de-Bambou', costume: 'renegat', habit: 0x3a5276, cheveux: 0x201c1c, cape: 0x3e4452, niveau: 2, fache: true },
+  renegateLin: { race: 'panda', nom: 'Lin Patte-Grise', feminin: true, costume: 'renegat', habit: 0x3a5276, cheveux: 0x201c1c, cape: 0x3e4452, niveau: 1, fache: true },
+  renegatHao: { race: 'panda', nom: 'Hao Sans-Serment', costume: 'renegat', habit: 0x3a5276, cheveux: 0x201c1c, cape: 0x3e4452, niveau: 1, fache: true },
   // (v0.82, étape 10b) les forgerons du comptoir
   aldo: { race: 'humain', nom: "Aldo l'apprenti", costume: 'forgeron', habit: 0x8a6a4a, cheveux: 0xa86a2a, coiffure: 'court', peau: 1, niveau: 0, buste: true },
   baba: { race: 'nain', nom: "Baba Marteau-d'Or", feminin: true, costume: 'forgeron', habit: 0x8a2a2a, cheveux: 0x141010, coiffure: 'court', peau: 3, niveau: 1, buste: true, marques: ['khol', 'anneauNez'] },
