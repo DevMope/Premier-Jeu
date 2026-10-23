@@ -21,11 +21,14 @@ const OUTILS = V + `
     for (const [sc, al] of [[3.4, 0.35], [1.6, 0.55], [0.7, 0.7]]) s.add.image(x, y, 'halo').setScale(sc * e).setTint(0xc8f0ff).setAlpha(al).setBlendMode(Phaser.BlendModes.ADD).setDepth(0.9);
     return c; };
   // Vorhal'Düm posé par le bas, et les points de lumière qui vont avec (la flamme de la main, l'étoile de l'agrafe)
-  const poserVorhal = (s, x, y, e, cle = 'vorhal_trone', teinte = 0xb0e4ff, prof = 2) => { const im = s.add.image(x, y, cle).setOrigin(0.5, 1).setScale(e).setDepth(prof);
+  const poserVorhal = (s, x, y, e, cle = 'vorhal_trone', teinte = 0xc070ff, prof = 2) => { const im = s.add.image(x, y, cle).setOrigin(0.5, 1).setScale(e).setDepth(prof);
     const P = (tx, ty) => [x + (tx - 150) * e, y - (344 - ty) * e];
-    const [fx, fy] = P(243, 82); const f = s.add.image(fx, fy, 'halo').setScale(0.55 * e).setTint(teinte).setAlpha(0.8).setBlendMode(Phaser.BlendModes.ADD).setDepth(prof + 0.1);
-    s.tweens.add({ targets: f, alpha: 0.5, scale: 0.45 * e, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    const [ax, ay] = P(150, 96); s.add.image(ax, ay, 'halo').setScale(0.14 * e).setTint(0xe8f8ff).setAlpha(0.9).setBlendMode(Phaser.BlendModes.ADD).setDepth(prof + 0.1);
+    const [fx, fy] = P(243, 108); const f = s.add.image(fx, fy, 'halo').setScale(0.7 * e).setTint(teinte).setAlpha(0.75).setBlendMode(Phaser.BlendModes.ADD).setDepth(prof + 0.1);
+    s.tweens.add({ targets: f, alpha: 0.5, scale: 0.6 * e, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    // la flamme de pouvoir : quatre images deux fois plus fines, qui bouclent
+    const [bx, by] = P(243, 124); const fl = s.add.image(bx, by, flammeVorhalHD(s, 0)).setOrigin(0.5, 1).setScale(e * 0.6).setDepth(prof + 0.2); let kf = 0;
+    s.time.addEvent({ delay: 110, loop: true, callback: () => fl.setTexture(flammeVorhalHD(s, (kf = (kf + 1) % 4))) });
+    const [ax, ay] = P(150, 126); s.add.image(ax, ay, 'halo').setScale(0.14 * e).setTint(0xe8f8ff).setAlpha(0.9).setBlendMode(Phaser.BlendModes.ADD).setDepth(prof + 0.1);
     return { im, P }; };
 `;
 const NOM = process.env.NOM || 'Bastien Roche';
@@ -34,14 +37,14 @@ const PANNEAUX = [
   { nom: 'p78_1', code: `
     salleOutrePorte(s); vorhalTroneHD(s);
     const { P } = poserVorhal(s, 480, 532, 1.5);
-    const [hx, hy] = P(150, 46); tourbillon(s, hx, hy, 1.1);
+    const [hx, hy] = P(150, 76); tourbillon(s, hx, hy, 1.1);
     // la brume au ras du sol, et la lumière pâle derrière l'homme (sa silhouette se détache)
     for (let k = 0; k < 6; k++) { const b = s.add.image(220 + k * 104, 528, 'halo').setScale(2.8, 0.45).setTint(0xb8d8e0).setAlpha(0.13).setDepth(3); s.tweens.add({ targets: b, x: b.x + 40, duration: 4000 + k * 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
     s.add.image(480, 512, 'halo').setScale(1.1, 0.9).setTint(0xd8f0f8).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD).setDepth(3.1);
     const cle = corpsHD(s, { race: 'humain', nom: '${NOM}', niveau: 'aguerri' }, null, 'dos');
-    s.add.image(480, 536, cle).setOrigin(0.5, 1).setScale(3 * 0.125).setDepth(3.2);
+    s.add.image(480, 536, cle).setOrigin(0.5, 1).setScale((318 - 32) * 1.5 / 10 / 128).setDepth(3.2);
     // la toise : du plateau du trône au sommet de la capuche, dix hommes
-    const [, yPlat] = P(150, 318), [, yHaut] = P(150, 2); const g = s.add.graphics().setDepth(70);
+    const [, yPlat] = P(150, 318), [, yHaut] = P(150, 32); const g = s.add.graphics().setDepth(70);
     g.lineStyle(2, 0xd8c8a0, 0.85).lineBetween(900, yPlat, 900, yHaut); for (let k = 0; k <= 10; k++) { const y = yPlat + (yHaut - yPlat) * k / 10; g.lineBetween(k % 5 ? 894 : 888, y, k % 5 ? 906 : 912, y); }
     g.lineStyle(1, 0xd8c8a0, 0.4).lineBetween(560, yHaut, 888, yHaut).lineBetween(690, yPlat, 888, yPlat);
     tag(s, 880, (yPlat + yHaut) / 2, 'assis :\\ndix hommes\\nde haut', '#ffe8b0', 1, 12).setAlign('right');
@@ -67,6 +70,14 @@ const PANNEAUX = [
       zoom(cle, 213, 34, 62, 80, X, Y, 2.4); tag(s, X + 75, Y + 212, txt, i ? '#e0b0ff' : '#c8f0ff', 0.5, 11); }
     tag(s, 880, 386, 'sa magie :\\nA ou B ?', '#ffe8b0', 0.5, 14).setAlign('center');
     tag(s, 18, 22, 'Les détails', '#c8f0ff', 0, 15);` },
+  // 2 bis. la flamme de pouvoir, en grand : ses quatre images
+  { nom: 'p78v2_flamme', code: `
+    const g0 = s.add.graphics().setDepth(0); for (let y = 0; y < 540; y += 4) g0.fillStyle(Phaser.Display.Color.GetColor(10 + y / 60 | 0, 10 + y / 70 | 0, 16 + y / 45 | 0)).fillRect(0, y, 960, 4);
+    creerHalo(s);
+    for (let k = 0; k < 4; k++) { const x = 150 + k * 220; s.add.image(x, 330, 'halo').setScale(2.2).setTint(0xc070ff).setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(0.5);
+      s.add.image(x, 450, flammeVorhalHD(s, k)).setOrigin(0.5, 1).setScale(3.2).setDepth(1); tag(s, x, 478, 'image ' + (k + 1), '#e0b0ff', 0.5, 12); }
+    tag(s, 480, 512, 'elle monte, ondule et se sépare en langues ; un cœur presque blanc ; des braises s’en échappent', '#fff4dc', 0.5, 12);
+    tag(s, 18, 22, 'La flamme de pouvoir, violette (quatre images qui bouclent)', '#e0b0ff', 0, 15);` },
   // 3. dans le jeu : derrière le Voile de la Porte (la salle validée en planche 44 v3), on le devine, immense, sur son trône
   { nom: 'p78_3', code: `
     vorhalTroneHD(s); creerHalo(s);
@@ -114,6 +125,6 @@ const PANNEAUX = [
 (async () => {
   const seul = process.argv[2];
   const { b, p, errs, libre } = await ouvrir();
-  for (const P of PANNEAUX) { if (seul && P.nom !== seul) continue; await libre(P.code, { outils: OUTILS, attente: 1800 }); await p.screenshot({ path: `${D}${P.nom}.png` }); }
+  for (const P of PANNEAUX) { if (seul && !seul.split(',').includes(P.nom)) continue; await libre(P.code, { outils: OUTILS, attente: 1800 }); await p.screenshot({ path: `${D}${P.nom}.png` }); }
   console.log('erreurs', errs.slice(0, 5)); await b.close();
 })();

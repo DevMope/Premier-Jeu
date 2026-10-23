@@ -3386,3 +3386,14 @@ Idée du joueur : la couleur par sujet portée par des pierres précieuses sur l
 - **Question au joueur** : la couleur de sa magie, **A bleu-blanc** (comme son image) ou **B violet** (la couleur de la marque de l'Engeance).
 - Dessin : `vorhalTroneHD` (ToileHD 300 × 344, même moteur que les bêtes, avec un liseré froid), source de la planche dans `tools/planches/planche78/`. Il n'entre dans `src/` qu'une fois validé.
 
+### Réponses du joueur (23/10, soir) : planche 77 validée (sauf le péage et les brigands), planche 78 presque parfaite
+- **Planche 77 validée**, sauf deux imprévus :
+  - **le « troll du péage »** : il ne peut pas s'appeler troll, puisqu'un peuple porte ce nom (**règle : une créature ne prend jamais le nom d'un peuple du jeu**) ; et son dessin est bien trop simple ;
+  - **les brigands** deviennent des **pandas renégats** : des déserteurs qui ont quitté la Confrérie après avoir été **déclarés coupables de « propagation de complots sur le passé »** (ils se souviennent de ce que le sort d'oubli cache, et le Conseil les a condamnés pour ça).
+  - Les deux attendent leur planche (79) ; d'ici là, ils ne sortent plus sur la route.
+- **À faire plus tard** : une **refonte complète des monstres des récits et de leurs animations**.
+- Le joueur demande un GIF de la maison qui se lève et qui marche.
+- **Planche 78 : « presque parfait »**. Deux retouches (planche 78 v2 : docs/planches-v059/planche-78-v2-vorhal-dum.png) :
+  - il doit être **calé au fond du trône** (on aurait dit qu'il se tenait au bord du siège, en gainage) : tout le haut du corps descend de 30 pixels, les hanches sur le siège, les coudes sur les accoudoirs, le dossier se dresse au-dessus de ses épaules ;
+  - **sa magie est violette** (choix B), et la flamme est **plus fine** : une image à part, deux fois plus fine que lui, en quatre images qui bouclent (`flammeVorhalHD`). L'étoile de l'agrafe et le liseré restent froids.
+
