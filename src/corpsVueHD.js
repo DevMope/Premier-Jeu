@@ -1243,6 +1243,26 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
               }
             }
           }
+          // de profil : de petites mèches fines et séparées (comme celles de face) qui partent de la lisière des cheveux, en haut
+          // du crâne ; les unes filent vers la nuque et le dos, les autres passent derrière l'oreille et tombent devant l'épaule
+          if (profilDuc) {
+            const avP = s > 0 ? 1 : -1, PX = (f, v) => [cx + avP * f * P.rx, cy + v * P.ry];
+            const meches = [   // [départ (f, v), passage, arrivée (f, y sous basM en k)]
+              [[-0.12, -0.9], [-0.7, 0.2], [-1.05, 5]], [[-0.2, -0.75], [-0.6, 0.5], [-0.85, 6]], [[-0.3, -0.6], [-0.5, 0.7], [-0.62, 4]],
+              [[-0.08, -0.85], [-0.25, 0.45], [0.05, 5]], [[-0.18, -0.65], [-0.15, 0.7], [0.35, 3]], [[-0.02, -0.95], [-0.05, 0.6], [0.65, 2]],
+              [[-0.38, -0.45], [-0.3, 0.9], [0.9, 1]] ];
+            meches.forEach(([a, m, b], i) => {
+              const [x0, y0] = PX(a[0], a[1]), [x1, y1] = PX(m[0], m[1]), x2 = cx + avP * b[0] * P.rx, y2 = basM + b[1] * k;
+              let dernier = null;
+              for (let j = 0; j <= 600; j++) { const q = j / 600, w = 1 - q;
+                const x = Math.round(w * w * x0 + 2 * w * q * x1 + q * q * x2 + Math.sin(q * 9 + i * 1.3) * 0.5 * k), y = Math.round(w * w * y0 + 2 * w * q * y1 + q * q * y2);
+                const cle = x + ',' + y; if (cle === dernier) continue; dernier = cle;
+                for (let e = 0; e < k; e++) { const xx = x - e * avP, mm = t.mat(xx, y);
+                  if (mm === 'blanc' || mm === 'pupille' || mm === 'iris' || (mm === 'peau' && surVisage(xx, y))) continue;
+                  t.poser(xx, y, 'cheveux', e === k - 1 ? 1 : (q > 0.93 ? 2 : (Math.floor(y / k) + i) % 3 === 0 ? 2 : 4)); }
+              }
+            });
+          }
           // de biais : trois petites mèches fines et bien séparées, posées par-dessus, qui partent à hauteur des yeux et
           // descendent un peu plus bas que la chevelure (comme les petits cheveux de face)
           if (biais && !profilDuc) for (let i = 0; i < 3; i++) {
