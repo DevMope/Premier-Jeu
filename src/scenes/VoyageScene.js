@@ -6,7 +6,7 @@
 class VoyageScene extends Cinematique {
   constructor() { super('Voyage'); }
 
-  init() { this.fini = false; }
+  init() { this.fini = false; this.gueEau = null; this.paveRoyaume = null; this.accroupie = false; this.filetHisse = 0; this.gainsVifs = []; }   // (la scène peut être rejouée : rien de la fois d'avant)
 
   create() {
     const G = this.G = window.GAME, v = etatVoyage(G);
@@ -63,7 +63,9 @@ class VoyageScene extends Cinematique {
     this.texteBourse = this.add.text(110, 112, '', style(13, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5); ui.push(this.texteBourse);
     this.cameras.main.ignore(ui);
     this.uiCam.ignore(this.children.list.filter(o => !ui.includes(o)));
-    this.sys.events.on('addedtoscene', o => { if (this.uiCam && !this.enUI) this.uiCam.ignore(o); });
+    // (l'écouteur est retiré à l'arrêt de la scène : sinon, à la scène suivante, il cachait aussi l'interface toute neuve)
+    const neSurUI = o => { if (this.uiCam && !this.enUI) this.uiCam.ignore(o); };
+    this.sys.events.on('addedtoscene', neSurUI); this.events.once('shutdown', () => this.sys.events.off('addedtoscene', neSurUI));
     this.majTableau();
     // la fumée de la cheminée, qui file à l'opposé de sa marche
     this.vent = 40;
@@ -201,7 +203,13 @@ class VoyageScene extends Cinematique {
     if (pr) { const x0 = pr.porte.active ? pr.porte.x - PORTE_FR.demi : -1000, x = Math.max(-170, x0); pr.ts.x = x; pr.ts.width = Math.max(2, 1130 - x); pr.ts.tilePositionX = (x - x0) / 2; pr.ts.setVisible(x < 1130); }
     // (le gué) la rivière défile avec la route ; une fois loin derrière, on la retire
     const g = this.gueEau;
-    if (g) { g.devant.x = g.c.x; if (g.c.x < -160 - 360) { g.c.destroy(); g.devant.destroy(); this.gueEau = null; for (const l of this.pattes) if (l.eau) { l.eau.destroy(); l.ride.destroy(); l.eau = null; } } }
+    if (g) { g.devant.x = g.c.x; if (g.c.x < -160 - 360) this.retirerGue(); }
+  }
+  // (house keep v1.59) la rivière ou le ruisseau, retirés pour de bon : le lit, les roseaux de devant, l'eau autour des pieds
+  retirerGue() {
+    const g = this.gueEau; if (!g) return;
+    if (g.c.active) g.c.destroy(); if (g.devant.active) g.devant.destroy(); this.gueEau = null;
+    for (const l of this.pattes) if (l.eau) { l.eau.destroy(); l.ride.destroy(); l.eau = null; }
   }
   // Le gué : la rivière (voyageDecorHD.js) posée à x, hors de la vue à droite
   poserGue(x, P = GUE) {
@@ -249,8 +257,8 @@ class VoyageScene extends Cinematique {
       await this.soir();
       if (this.fini) return;
       nuitEnRoute(G);
+      if (G.faillite) { Sauvegarde.supprimer(); this.fini = true; this.scene.start('Faillite'); return; }   // (comme au coucher : une partie en faillite ne se sauve pas)
       Sauvegarde.maintenant(G, 'Voyage');
-      if (G.faillite) { this.fini = true; this.scene.start('Faillite'); return; }
       await this.matin();
     }
   }
@@ -262,7 +270,8 @@ class VoyageScene extends Cinematique {
     const avant = new Set(this.children.list), o = this.etat.x - PLACES_RUE.shop;
     const facade = window.dessinerFacade, pattes = window.pattesRepliees;
     window.dessinerFacade = (scene, cx, sol) => ({ porteX: cx, porteY: sol - 60 }); window.pattesRepliees = () => [];
-    try { construireRue(this, o, { jour: true, ici: { regarder() {}, porte() {} } }); } finally { window.dessinerFacade = facade; window.pattesRepliees = pattes; }
+    // (sans les étincelles de la forge : elles ne suivraient pas la rue qui défile)
+    try { construireRue(this, o, { jour: true, etincelles: false, ici: { regarder() {}, porte() {} } }); } finally { window.dessinerFacade = facade; window.pattesRepliees = pattes; }
     for (const x of this.children.list.filter(x => !avant.has(x))) {
       if (x.type === 'Graphics' || (x.texture && /^paysage/.test(x.texture.key))) { x.destroy(); continue; }   // (le paysage : on a déjà le nôtre)
       x.setDepth((x.depth || 0) > 3 ? 3.2 : 0.52 + (x.depth || 0) * 0.01);   // (tout derrière la maison, au-dessus du chemin)
@@ -507,7 +516,7 @@ class VoyageScene extends Cinematique {
       for (let k = 0; k < 4; k++) { const l = this.add.image(x0 + 110 + k * 66, sol - 172 + Math.sin(k + 1) * 18, 'halo').setScale(0.35).setTint(0xffb050).setAlpha(0.7).setBlendMode(Phaser.BlendModes.ADD).setDepth(0.61); this.bord(l, l.x); const lp = this.add.ellipse(l.x, l.y, 10, 12, 0xe8783a).setDepth(0.62); this.bord(lp, lp.x); }
       { const t = this.add.image(x0 + 210, sol + 14, 'tonneauxHD').setOrigin(0.5, 1).setScale(2).setDepth(0.7); this.bord(t, t.x); }
       const danse = [[{ race: 'hobbit', nom: 'Un danseur' }, x0 + 140], [{ race: 'hobbit', nom: 'Une danseuse', feminin: true }, x0 + 190], [{ race: 'humain', nom: 'Une fermière', feminin: true }, x0 + 270], [{ race: 'nain', nom: 'Un vieux nain' }, x0 + 330]].map(([q, x]) => this.posePerso(q, x, sol + 36, 6.0, { prof: 3.5 }));
-      danse.forEach((p, k) => { this.tweens.add({ targets: p, y: p.y - 10, duration: 260, yoyo: true, repeat: -1, delay: k * 130, ease: 'Quad.easeOut' }); this.time.addEvent({ delay: 520, loop: true, callback: () => p.active && p.setFlipX(!p.flipX) }); });
+      danse.forEach((p, k) => { this.tweens.add({ targets: p, y: p.y - 10, duration: 260, yoyo: true, repeat: -1, delay: k * 130, ease: 'Quad.easeOut' }); const tour = this.time.addEvent({ delay: 520, loop: true, callback: () => { if (!p.active) { tour.remove(); return; } p.setFlipX(!p.flipX); } }); });   // (la boucle s'arrête avec le danseur)
       for (let k = 0; k < 10 && !this.fini; k++) await this.marcher(1);
       return { apres: async i => danse.forEach(p => this.emotion(p, i === 1 ? '♥' : 'joie', 1400)) };
     }
@@ -550,7 +559,7 @@ class VoyageScene extends Cinematique {
     const halo = this.add.image(0, -30, 'halo').setScale(1.8).setTint(0xff9a40).setAlpha(0.55).setBlendMode(Phaser.BlendModes.ADD); f.add(halo);
     const feu = this.add.image(0, 12, feuDeCampHD(this, 0)).setOrigin(0.5, 1).setScale(2.4); f.add(feu);
     let k = 0; const flamme = this.time.addEvent({ delay: 150, loop: true, callback: () => { if (!feu.active) { flamme.remove(); return; } feu.setTexture(feuDeCampHD(this, (k = (k + 1) % 3))); } });
-    this.tweens.add({ targets: halo, alpha: { from: 0.4, to: 0.7 }, duration: 420, yoyo: true, repeat: -1 });
+    const lueur = this.tweens.add({ targets: halo, alpha: { from: 0.4, to: 0.7 }, duration: 420, yoyo: true, repeat: -1 }); halo.once('destroy', () => lueur.remove());   // (pas de lueur sans feu)
     this.joueur = this.add.image(fx - 70, this.sol + 44, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(6.6)).setDepth(7.1);
     const n = soirEnRoute(G);
     this.majTableau();
@@ -565,6 +574,7 @@ class VoyageScene extends Cinematique {
   async matin() {
     const G = this.G;
     this.voile.setAlpha(0);
+    this.retirerGue();   // (le ruisseau du pont étroit ou de l'ogre ne suit pas au matin : ses roseaux restaient figés devant la maison)
     for (const b of this.bordChemin) if (b.o.active && b.o !== this.voile) b.o.destroy();
     this.bordChemin = [];
     this.cameras.main.fadeIn(700);
@@ -576,6 +586,7 @@ class VoyageScene extends Cinematique {
   async arrivee() {
     const G = this.G;
     for (const t of this.gainsVifs || []) if (t.active) t.destroy();   // (un « +2 fagots » du soir ne flotte pas sur Pont-Royal)
+    this.retirerGue();
     this.ecrire('L\'aube du dernier jour. Au détour d\'une colline, le grand fleuve... et Pont-Royal.');
     // la vue du fleuve, plein écran (sur l'interface : elle ne recule pas)
     const vue = this.enInterface(() => {

@@ -161,6 +161,7 @@ const Sauvegarde = {
       if (d && typeof d === 'object' && !Array.isArray(d) && brut[k] && typeof brut[k] === 'object' && !Array.isArray(brut[k])) G[k] = { ...d, ...brut[k] };
     }
     mettreAJourPartie(G, brut);
+    if (G.lieu === 'Marche' && typeof departAujourdhui === 'function' && departAujourdhui(G)) return 'Voyage';   // (rechargée le matin du grand départ : on part, comme au réveil)
     return ['Marche', 'Maison'].includes(G.lieu) ? G.lieu : 'Nuit';
   },
 

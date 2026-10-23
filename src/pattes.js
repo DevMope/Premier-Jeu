@@ -40,7 +40,7 @@ function atelierMagesOuvert(G) { return royaumesLiberes(G).length > 0; }
 function pattesPosees(G) { return !!etatPattes(G).sorte; }
 function sorteSuivante(G) { const s = etatPattes(G).sorte; return s ? PATTES.ordre[PATTES.ordre.indexOf(s) + 1] || null : 'chene'; }
 function placesFilet(G) { return PATTES.filets[etatPattes(G).filet].places; }
-function heuresDeBois(G) { return etatPattes(G).bois.reduce((h, id) => h + COMBUSTIBLES[id].heures, 0); }
+function heuresDeBois(G) { const e = etatPattes(G); return e.bois.reduce((h, id) => h + COMBUSTIBLES[id].heures, 0) + (e.entame || 0); }   // (avec ce qui reste de la bûche entamée)
 function combustibleEnVente(G, id) { const c = COMBUSTIBLES[id]; return !c.royaume || royaumeLibere(G, c.royaume); }
 
 // Acheter (ou améliorer) les pattes : on paie, les Mages les posent cette nuit... ou tout de suite (elles sont prêtes)
@@ -73,7 +73,8 @@ function acheterCombustible(G, id, n = 1) {
   let deReserve = 0;
   if (c.bois) { deReserve = Math.min(n, G.materiaux.bois || 0); G.materiaux.bois -= deReserve; }
   const prix = (n - deReserve) * c.prix;
-  if (!peutPayer(G, prix)) { if (deReserve) G.materiaux.bois += deReserve; return { erreur: `Il te manque ${prix - G.argent} pièces.` }; }
+  if (prix && !peutPayer(G, prix)) { if (deReserve) G.materiaux.bois += deReserve;   // (les planches de ta réserve, elles, sont gratuites)
+    return { erreur: `Il te manque ${prix - G.argent} pièces.` }; }
   if (prix) payer(G, prix, 'pattes');
   for (let k = 0; k < n; k++) e.bois.push(id);
   return { n, prix, deReserve };
@@ -84,7 +85,9 @@ function brulerBois(G, h) {
   e.bois.sort((a, b) => COMBUSTIBLES[a].heures - COMBUSTIBLES[b].heures);
   const manges = [];
   let reste = h;
+  const dEntame = Math.min(reste, e.entame || 0); e.entame = (e.entame || 0) - dEntame; reste -= dEntame;   // (d'abord la bûche qui brûle déjà)
   while (reste > 0 && e.bois.length) { const id = e.bois.shift(); manges.push(id); reste -= COMBUSTIBLES[id].heures; }
+  if (reste < 0) { e.entame = -reste; reste = 0; }   // (le reste de la dernière bûche couve et servira demain : rien ne se perd)
   return { manges, assez: reste <= 0 };
 }
 // La marche d'essai dans la rue : une fois par jour, une heure de bois

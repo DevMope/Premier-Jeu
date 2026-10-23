@@ -311,7 +311,7 @@ const ECART_ARDOISE = 190;
 const LOT_MAGES = 360;
 const LARGEUR_RUE = 3260 + LOT_CONFRERIE + ECART_ARDOISE + LOT_MAGES;   // (v1.48 : +300, le lot du barbier ; v1.53 : +190, l'ardoise ; v1.56 : +360, les Mages)
 const PLACES_RUE = { hospice: 200, chapelle: 545, maison0: 160 + LOT_CONFRERIE, impasse: 405 + LOT_CONFRERIE, forge: 680 + LOT_CONFRERIE, shop: 1320 + LOT_CONFRERIE, maison1: 1820 + LOT_CONFRERIE + ECART_ARDOISE, barbier: 2150 + LOT_CONFRERIE + ECART_ARDOISE, fontaine: 2390 + LOT_CONFRERIE + ECART_ARDOISE, mages: 2700 + LOT_CONFRERIE + ECART_ARDOISE, banque: 2660 + LOT_CONFRERIE + ECART_ARDOISE + LOT_MAGES, arche: 3080 + LOT_CONFRERIE + ECART_ARDOISE + LOT_MAGES, ardoise: 2505 };
-function construireRue(scene, o, { jour = false, sol = 470, ici }) {
+function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = true }) {
   const G = window.GAME, P = PLACES_RUE, lumieres = [];
   creerRueHD(scene);
   creerDecorPlaceHD(scene);   // (avant la façade : il redessine aussi les tonneaux, qu'elle utilise)
@@ -405,7 +405,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici }) {
   scene.add.image(o + P.banque, sol - 263, creerLogoBanque(scene)).setOrigin(0.5, 1).setScale(1.5).setDepth(8.3);
   ecriteauRue(scene, o + P.arche, sol - 250, 'Marché des Mastres', { taille: 13, grave: true });
   // les flammes de la forge, le jour : des étincelles qui jaillissent
-  if (jour) scene.time.addEvent({ delay: 260, loop: true, callback: () => {
+  if (jour && etincelles) scene.time.addEvent({ delay: 260, loop: true, callback: () => {
     const e = scene.add.rectangle(o + P.forge - 40 + Math.random() * 30, sol - 30, 2, 2, Math.random() < 0.5 ? 0xffd060 : 0xff8020).setDepth(8.2);
     scene.tweens.add({ targets: e, y: e.y - 20 - Math.random() * 30, x: e.x + (Math.random() - 0.5) * 30, alpha: 0, duration: 500 + Math.random() * 400, onComplete: () => e.destroy() });
   } });

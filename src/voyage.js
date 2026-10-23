@@ -133,12 +133,15 @@ const IMPREVUS = {
   pont: { nom: 'Un pont trop étroit', texte: 'Un petit pont de bois enjambe le ruisseau. Il est deux fois plus étroit que ta maison.',
     choix: [
       { nom: 'Faire le détour par le gué (3 h de bois)', fait: G => { const b = brulerBois(G, 3); return { texte: 'Elle descend la berge à petits pas et remonte de l\'autre côté, trempée jusqu\'aux genoux.', gains: [`−${b.manges.length} bois`] }; } },
-      { nom: 'Passer en crabe, pattes serrées', fait: G => { if (Math.random() < 0.5) { payer(G, 50, 'voyage'); return { texte: 'Crac ! Le coin du mur a frotté la rambarde. Il faudra reboucher ça (50 p.).', gains: ['−50 p.'] }; } return { texte: 'Elle passe de profil, une patte après l\'autre, sans toucher la rambarde. Les canards applaudissent.', gains: [] }; } },
+      { nom: 'Passer en crabe, pattes serrées', fait: G => { if (Math.random() < 0.5) { const p = payerCeQuOnPeut(G, 50); return p ? { texte: `Crac ! Le coin du mur a frotté la rambarde. Il faudra reboucher ça (${p} p.).`, gains: [`−${p} p.`] } : { texte: 'Crac ! Le coin du mur a frotté la rambarde. Faute de pièces, tu bouches le trou avec de la paille.', gains: [] }; } return { texte: 'Elle passe de profil, une patte après l\'autre, sans toucher la rambarde. Les canards applaudissent.', gains: [] }; } },
     ] },
   // (v1.59, planche 79) l'ogre du péage (ce n'est plus un troll : les trolls sont un peuple du jeu ; l'id reste pour les vieilles parties)
   troll: { nom: 'L’ogre du péage', texte: 'Sous le petit pont, un ogre se lève du ruisseau, une marmite cabossée sur la tête, et lève son gourdin au-dessus du chemin. « Péage ! Ou je mange une patte. »',
     choix: [
-      { nom: 'Payer le péage (40 p.)', fait: G => { payer(G, 40, 'voyage'); return { texte: 'Il mord la pièce, la trouve bonne, et s\'écarte en traînant les pieds dans l\'eau.', gains: ['−40 p.'] }; } },
+      { nom: 'Payer le péage (40 p.)', fait: G => { const p = payerCeQuOnPeut(G, 40);
+        return { texte: p >= 40 ? 'Il mord la pièce, la trouve bonne, et s\'écarte en traînant les pieds dans l\'eau.'
+          : p > 0 ? 'Il vide ta bourse dans sa grosse main, mord les pièces une à une, grogne que ça ne fait pas le compte... et s\'écarte quand même en traînant les pieds dans l\'eau.'
+          : 'Ta bourse est vide. Il la secoue, la renifle, la jette dans le ruisseau... et s\'écarte en grognant.', gains: p ? [`−${p} p.`] : [] }; } },
       { nom: 'Lui offrir trois rations et une histoire', si: G => (G.stock.ration || 0) >= 3, fait: G => { G.stock.ration -= 3; return { texte: 'Il mange les rations, écoute l\'histoire du dragon jusqu\'au bout, et renifle dans sa marmite. « Passe, conteur. »', gains: ['−3 rations'] }; } },
     ] },
   fete: { nom: 'Un village en fête', texte: 'Des lampions, une danse sur la place, des tonneaux en perce : tout un village fête la moisson.',
@@ -196,10 +199,11 @@ function venteParLaFenetre(G) {
   encaisser(G, p, 'voyage');
   return p;
 }
+// (house keep v1.59) la route ne fait jamais passer la bourse sous zéro : on donne ce qu'on a
+function payerCeQuOnPeut(G, n) { const p = Math.min(n, Math.max(0, Math.floor(G.argent))); if (p > 0) payer(G, p, 'voyage'); return p; }
 // La Porte des Hommes : la taxe de passage, puis la lettre du duc (lumière, neutre) ou la fouille (ombre)
 function passerLaPorte(G, choix) {
-  const taxe = VOYAGE.taxePorte * 4, ombre = coteCamp(G) === 'mal';
-  payer(G, taxe, 'voyage');
+  const taxe = payerCeQuOnPeut(G, VOYAGE.taxePorte * 4), ombre = coteCamp(G) === 'mal';
   if (!ombre) return { texte: 'Tu montres la lettre du duc. Le sergent la lit deux fois, se redresse : « Le comptoir de la Comté ! Passez, et bienvenue au royaume. » La garde salue ton enseigne.', gains: [`−${taxe} p. (deux pièces par patte)`] };
   if (choix === 'sergent' && peutPayer(G, VOYAGE.sergent)) { payer(G, VOYAGE.sergent, 'voyage'); pencher(G, 'routeSergent'); return { texte: 'Une pièce glissée dans le gant du sergent. Il ne regarde même pas la cave. « Bonne route. »', gains: [`−${taxe} p.`, `−${VOYAGE.sergent} p. (le sergent)`, '☾'] }; }
   return { texte: 'On fouille la maison du grenier à la cave : les gardes retournent les tiroirs, comptent tes fioles, soupèsent tes pièges. Rien de saisi... cette fois. « On a l\'œil sur vous. »', gains: [`−${taxe} p. (deux pièces par patte)`] };

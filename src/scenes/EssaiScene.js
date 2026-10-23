@@ -52,7 +52,8 @@ class EssaiScene extends Cinematique {
     ui.push(this.boutonPasser(() => this.finir()));
     this.cameras.main.ignore(ui);
     this.uiCam.ignore(this.children.list.filter(o => !ui.includes(o)));
-    this.sys.events.on('addedtoscene', o => this.uiCam && this.uiCam.ignore(o));   // (ce qui naît ensuite, fumée, poussière, bulles : seulement dans le monde)
+    const neSurUI = o => this.uiCam && this.uiCam.ignore(o);   // (ce qui naît ensuite, fumée, poussière, bulles : seulement dans le monde)
+    this.sys.events.on('addedtoscene', neSurUI); this.events.once('shutdown', () => this.sys.events.off('addedtoscene', neSurUI));   // (retiré à l'arrêt : sinon il cache l'interface du prochain essai)
     // la fumée de la cheminée, qui suit la maison et file à l'opposé de sa marche
     this.vent = 40;
     this.time.addEvent({ delay: 380, loop: true, callback: () => {
