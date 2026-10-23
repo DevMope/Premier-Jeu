@@ -494,7 +494,10 @@ class VoyageScene extends Cinematique {
         const pas = this.time.addEvent({ delay: 230, loop: true, callback: () => { if (ogre.active) ogre.setTexture(ogreHD(this, { jambes: (k = 1 - k) ? 'pas1' : 'pas2', bras: 'epaule', visage: 'neutre' })); } });
         await new Promise(ok => this.tweens.add({ targets: ogre, x: ogre.x + 34, y: ogre.y + 18, scale: 0.86, duration: 1500, onUpdate: () => { const b = this.bordChemin.find(b => b.o === ogre); if (b) b.x = ogre.x + this.parcouru; }, onComplete: ok }));
         pas.remove(); ogre.setFlipX(false); marche = false; poser({ bras: 'epaule', visage: 'neutre' });
-        await this.traverserRuisseau({ parLePont: true }); } };
+        await this.traverserRuisseau({ parLePont: true });
+        // (on ne campe pas sous le nez de l'ogre) elle marche encore jusqu'à ce que le pont et son gardien soient hors de vue
+        for (let k = 0; k < 14 && ogre.active && ogre.x + ogre.displayWidth / 2 > -10; k++) await this.marcher(1);
+        respire.remove(); if (ogre.active) ogre.destroy(); } };
     }
     if (id === 'fete') {
       creerRueHD(this);
