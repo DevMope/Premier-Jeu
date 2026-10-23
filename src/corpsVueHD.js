@@ -1198,27 +1198,37 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
         // l'arrière, puis les cheveux qui coulent du crâne jusque sur la fourrure. On repeint aussi la calotte de la coupe
         // de base, pour que tout soit la même chevelure (mêmes mèches, même sens).
         if (!dos && Math.abs(s) >= 0.2) {
-          const av = s > 0 ? 1 : -1, ar = -av, sa = Math.abs(s);
-          const enCalotte = (x, y) => { const nx = (x + 0.5 - cx) / (P.rx + 0.6 * k), ny = (y + 0.5 - cy) / (P.ry + 0.6 * k);
-            if (nx * nx + ny * ny > 1 || ny > 0.8) return false;
-            return nx * av < -0.12 - 0.5 * (1 - sa) + 0.42 * ny + (ny < -0.6 ? 0.25 : 0); };   // (la ligne des cheveux : du haut du crâne, en arrière, jusque derrière l'oreille)
-          const basM = yT + 12 * k;
-          const dansChute = (x, y) => { if (y < cy || y > basM) return false; const d = (x + 0.5 - cx) * ar;
-            const arriere = P.rx * (0.98 + 0.12 * (1 - sa)) + Math.max(0, y - cy) * 0.11, avant = P.rx * (0.1 + 0.35 * (1 - sa)) - Math.max(0, y - cy - P.ry) * 0.02;
-            return d >= avant && d <= arriere; };
+          // la chevelure tombe sur le côté de la tête qui nous fait face : elle part du haut du crâne, couvre l'oreille, et
+          // descend tout droit jusque sur l'épaule de notre côté (le front reste dégarni)
+          const av = s > 0 ? 1 : -1, xe = X(pres * P.rx * 0.95, -0.1 * P.rx), basM = yT + 12 * k;
+          const dansTete = (x, y) => { const nx = (x + 0.5 - cx) / (P.rx + 0.7 * k), ny = (y + 0.5 - cy) / (P.ry + 0.7 * k); return nx * nx + ny * ny <= 1; };
           const pts = [];
           for (let y = Math.round(cy - P.ry - 2 * k); y <= basM; y++) for (let x = 0; x < L; x++) {
             const m = t.mat(x, y); if (m === 'blanc' || m === 'pupille' || m === 'iris') continue;
-            const vieux = m === 'cheveux' && y < cy + P.ry;
-            if (!(vieux || enCalotte(x, y) || dansChute(x, y))) continue;
+            const f = (x + 0.5 - xe) * av;   // (en avant de l'oreille si > 0)
+            let dedans = false;
+            if (dansTete(x, y) && y < cy + P.ry * 0.55) {
+              // sur le crâne : tout ce qui est derrière une ligne qui passe juste devant l'oreille et recule vers le haut (le front dégarni)
+              const recul = Math.max(0, (cy - P.ry * 0.2) - y) * 0.55;
+              dedans = f < P.rx * 0.32 - recul;
+            } else if (y >= cy - P.ry * 0.3) {
+              // le rideau de cheveux, de l'oreille jusqu'à l'épaule, qui s'élargit un peu en descendant
+              const lisse = (a, b) => Math.max(0, Math.min(1, (y - a) / (b - a)));
+              const onde = Math.sin(y / (3.5 * k)) * 0.5 * k;
+              const arriere = -P.rx * (0.9 - 0.22 * lisse(cy, cy + P.ry * 1.2) + 0.18 * lisse(yT, basM)) + onde;
+              const avant = P.rx * (0.3 - 0.16 * lisse(cy + P.ry * 0.3, yT) + 0.14 * lisse(yT, basM)) + onde * 0.6;
+              dedans = f > arriere && f < avant;
+            }
+            if (!dedans) continue;
             if (y > basM - hachage(Math.floor(x / k), 3, 71) * 4 * k) continue;   // (les pointes effilées)
-            pts.push([x, y]); }
-          for (const [x, y] of pts) {
-            // le sens des mèches : en arc autour du crâne, puis tout droit vers le bas
-            const ang = Math.atan2(y + 0.5 - cy, (x + 0.5 - cx) * ar), r = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
-            const fil = y < cy + P.ry * 0.3 ? Math.floor(r / (1.1 * k)) : Math.floor(((x + 0.5 - cx) * ar - Math.max(0, y - cy) * 0.06) / (1.1 * k));
-            const lum = (y < cy && ang < -1.2 ? 1 : 0) - (y > yT + 8 * k ? 1 : 0);
-            t.poser(x, y, 'cheveux', Math.max(0, Math.min(5, [2, 3, 1, 3, 2][((fil % 5) + 5) % 5] + lum)));
+            pts.push([x, y, f]); }
+          for (const [x, y, f] of pts) {
+            // les mèches : en arc sur le crâne, puis tout droit
+            const surCrane = y < cy - P.ry * 0.1;
+            const fil = surCrane ? Math.floor(Math.hypot(x + 0.5 - xe, y + 0.5 - (cy + P.ry * 0.3)) / (1.1 * k)) : Math.floor((f + P.rx + Math.sin(y / (4 * k)) * 0.7 * k) / (1.1 * k));
+            const lum = (y < cy - P.ry * 0.5 ? 1 : 0) - (y > yT + 8 * k ? 1 : 0) - (f > P.rx * 0.2 && !surCrane ? 1 : 0);
+            const motif = [3, 2, 3, 1, 2, 3, 0][((fil % 7) + 7) % 7];   // (des mèches nettes : une raie sombre de temps en temps)
+            t.poser(x, y, 'cheveux', Math.max(0, Math.min(5, motif + lum)));
           }
         }
       } }
