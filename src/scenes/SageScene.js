@@ -3,7 +3,7 @@
 // dans une colonne de lumière. Son discours de « paix et bienveillance » (validé) ; la foule l'acclame...
 // et, au fond de la place, Garrick n'applaudit pas (un indice pour les attentifs). Un clic à chaque étape.
 // La cape d'écailles rouges du Sage est un autre indice : le dragon lui appartenait.
-// (planche 33, à valider) le cortège du Conseil sur l'estrade : fermé tant que les dessins du Conseil ne sont pas validés
+// (planche 33, validée le 18/10) le cortège du Conseil sur l'estrade (CONSEIL_VALIDE le ferme si on doit retirer les dessins)
 let CONSEIL_VALIDE = true;   // (planche 33 validée le 18/10)
 const DISCOURS_SAGE = [
   "Peuple du Comté ! Voilà bien des hivers que le dragon ne trouble plus nos ciels.",

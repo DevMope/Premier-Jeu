@@ -1,4 +1,4 @@
-// (v0.78, planche à valider) Les récits d'un même royaume ne se ressemblent plus tous : le ciel,
+// (v0.78, planche validée) Les récits d'un même royaume ne se ressemblent plus tous : le ciel,
 // le sol et les couleurs du royaume restent (on sait toujours où l'on est), mais chaque destination
 // a ses arbres, son repère au loin, ses fleurs ou ses cailloux au premier plan, et ses bêtes.
 //  - arbres : la forme des arbres du plan moyen

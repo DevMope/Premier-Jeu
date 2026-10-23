@@ -1,4 +1,4 @@
-// (planche 60 suite, à valider) Le coin des chats : le grand panier d'osier pour deux, l'arbre à griffer (de la corde,
+// (planche 60 suite, validée) Le coin des chats : le grand panier d'osier pour deux, l'arbre à griffer (de la corde,
 // deux plateaux), la petite cabane en bois à porte ronde, le coussin brodé d'un cœur, la pelote de laine ; et les deux
 // gamelles, chacune à son nom.
 function creerCoinChatsHD(scene) {
