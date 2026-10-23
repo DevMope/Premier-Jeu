@@ -38,7 +38,7 @@ class CambrioleurScene extends PromenadeScene {
       if (this.fini) return;
       const avant = new Set(this.children.list);
       t();
-      await this.attendreSuite();
+      await this.attendreSuite(undefined, { prof: 952 });   // (par-dessus les bandes noires du film)
       for (const o of this.children.list.slice()) if (!avant.has(o) && o.active) o.destroy();
     }
     this.finir();
@@ -68,7 +68,7 @@ class CambrioleurScene extends PromenadeScene {
     const grain = () => { if (!g.active) return; g.clear(); const d = Math.floor(Math.random() * 400); for (let k = 0; k < 900; k++) g.fillStyle(k % 2 ? 0xffffff : 0x000000, 0.06).fillRect((k * 397 + d) % 960, (k * 173 + d * 3) % 540, 2, 2); };
     grain(); this.time.addEvent({ delay: 90, loop: true, callback: grain });
     this.add.text(28, 22, titre, style(16, '#e83a2a', { fontStyle: 'bold', stroke: '#000000', strokeThickness: 3, letterSpacing: 3 })).setOrigin(0, 0.5).setScrollFactor(0).setDepth(951);
-    if (sous) this.add.text(932, 518, sous, style(12, '#c8c0b0', { fontStyle: 'italic' })).setOrigin(1, 0.5).setScrollFactor(0).setDepth(951);
+    if (sous) this.add.text(28, 518, sous, style(12, '#c8c0b0', { fontStyle: 'italic' })).setOrigin(0, 0.5).setScrollFactor(0).setDepth(951);   // (à gauche : « Clique pour continuer » prend la droite)
   }
   bulleNuit(x, y, texte, { coul = '#f0f0e8', fond = 0x0a0a12, l = 330, prof = 960, retard = 0 } = {}) {
     const t = this.add.text(x, y, texte, style(14, coul, { fontStyle: 'bold', align: 'center', wordWrap: { width: l - 24 } })).setOrigin(0.5).setScrollFactor(0).setDepth(prof + 1);

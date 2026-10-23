@@ -79,7 +79,7 @@ class VoyageScene extends Cinematique {
 
   // --- L'interface : ce qui est créé ici n'est vu que par la caméra de l'interface ---
   enInterface(f) { this.enUI = true; const avant = new Set(this.children.list); try { f(); } finally { this.enUI = false; } const nv = this.children.list.filter(o => !avant.has(o)); this.cameras.main.ignore(nv); return nv; }
-  gain(texte, positif = true, y = 160) { this.enInterface(() => gainEnDirect(this, 480, y, texte, positif, { taille: 15, duree: 2600 })); }
+  gain(texte, positif = true, y = 160) { this.enInterface(() => (this.gainsVifs = (this.gainsVifs || []).filter(t => t.active)).push(gainEnDirect(this, 480, y, texte, positif, { taille: 15, duree: 2600 }))); }
   majTableau() {
     const G = this.G, v = G.voyage, j = Math.min(v.plan.length, v.jourRoute + 1);
     this.titreJour.setText(`Le grand voyage · jour ${j} sur ${v.plan.length}`);
@@ -575,6 +575,7 @@ class VoyageScene extends Cinematique {
   // L'arrivée : Pont-Royal vue du fleuve, à l'aube ; puis la rue du pont, les pattes qui se rangent, le duc
   async arrivee() {
     const G = this.G;
+    for (const t of this.gainsVifs || []) if (t.active) t.destroy();   // (un « +2 fagots » du soir ne flotte pas sur Pont-Royal)
     this.ecrire('L\'aube du dernier jour. Au détour d\'une colline, le grand fleuve... et Pont-Royal.');
     // la vue du fleuve, plein écran (sur l'interface : elle ne recule pas)
     const vue = this.enInterface(() => {

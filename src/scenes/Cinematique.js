@@ -40,9 +40,9 @@ class Cinematique extends Phaser.Scene {
 
   // À la fin d'une cinématique : on attend que le joueur clique pour passer à la suite
   // (rien ne s'enchaîne tout seul).
-  attendreSuite(texte = '▶ Clique pour continuer') {
+  attendreSuite(texte = '▶ Clique pour continuer', { prof = 30 } = {}) {
     const t = this.add.text(940, 520, texte, style(15, '#fff4dc', { fontStyle: 'bold italic', stroke: '#2a1a10', strokeThickness: 4 }))
-      .setOrigin(1, 0.5).setDepth(30).setScrollFactor(0);
+      .setOrigin(1, 0.5).setDepth(prof).setScrollFactor(0);
     this.tweens.add({ targets: t, alpha: 0.4, duration: 700, yoyo: true, repeat: -1 });
     return new Promise(resoudre => this.time.delayedCall(300, () => {
       const suite = () => { if (this.enEcriture()) { this.defile.finir(); this.input.once('pointerdown', suite); return; } t.destroy(); resoudre(); };
