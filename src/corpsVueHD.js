@@ -1188,15 +1188,6 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
           for (const [x, y] of yeux) { if (y < lid) t.poser(x, y, 'peau', 3); else if (y === lid) t.poser(x, y, 'peau', 1); } }
         for (const cote of [-1, 1]) for (let j = 0; j < 3 * k; j++) { const x = Math.round(bx + cote * (lb + 3.2 * k + j * 0.25)), y = Math.round(by - 1 * k + j); if (t.mat(x, y) === 'peau') t.poser(x, y, 'peau', 2); }
         // les longues mèches fines, rejetées en arrière, qui tombent sur la fourrure (le front est dégarni)
-        // (sous tous les angles : elles partent de derrière les oreilles et tombent jusque sur le col de fourrure)
-        if (!dos && Math.abs(s) < 0.2) for (const cote of [-1, 1]) { const u0 = cote * P.rx * 0.92, z0 = -P.rx * 0.5; if (Z(u0, z0) < -P.rx * 0.85) continue;
-          for (let m = 0; m < 4; m++) for (let y = cy - 2 * k; y < yT + 11 * k; y++) { const dy = Math.max(0, y - cy), u = u0 + cote * (m * 0.7 * k + dy * 0.06), z = z0 - m * 0.7 * k - dy * 0.05;
-            const x = Math.round(X(u, z) + Math.sin(y / (3 * k) + m) * 0.5 * k);
-            if (t.mat(x, y) === 'peau' && y < cy + P.ry && tete(x, y) && Z(u, z) > -P.rx * 0.2) continue;   // (jamais sur le visage)
-            t.poser(x, y, 'cheveux', 2 + ((y + m) % 3 === 0 ? 1 : 0) - (m === 3 ? 1 : 0)); } }
-        // (de biais et de profil) la coupe du duc, d'un seul tenant : le front dégarni, le dessus du crâne plaqué vers
-        // l'arrière, puis les cheveux qui coulent du crâne jusque sur la fourrure. On repeint aussi la calotte de la coupe
-        // de base, pour que tout soit la même chevelure (mêmes mèches, même sens).
         if (!dos && Math.abs(s) >= 0.2) {
           // la chevelure tombe sur le côté de la tête qui nous fait face : elle part du haut du crâne, couvre l'oreille, et
           // descend tout droit jusque sur l'épaule de notre côté (le front reste dégarni)
@@ -1211,13 +1202,6 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
               // sur le crâne : tout ce qui est derrière une ligne qui passe juste devant l'oreille et recule vers le haut (le front dégarni)
               const recul = Math.max(0, (cy - P.ry * 0.2) - y) * 0.55;
               dedans = f < P.rx * 0.32 - recul;
-            } else if (y >= cy - P.ry * 0.3) {
-              // le rideau de cheveux, de l'oreille jusqu'à l'épaule, qui s'élargit un peu en descendant
-              const lisse = (a, b) => Math.max(0, Math.min(1, (y - a) / (b - a)));
-              const onde = Math.sin(y / (3.5 * k)) * 0.5 * k;
-              const arriere = -P.rx * (0.9 - 0.22 * lisse(cy, cy + P.ry * 1.2) + 0.18 * lisse(yT, basM)) + onde;
-              const avant = P.rx * (0.3 - 0.16 * lisse(cy + P.ry * 0.3, yT) + 0.14 * lisse(yT, basM)) + onde * 0.6;
-              dedans = f > arriere && f < avant;
             }
             if (!dedans) continue;
             if (y > basM - hachage(Math.floor(x / k), 3, 71) * 4 * k) continue;   // (les pointes effilées)
@@ -1229,6 +1213,29 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
             const lum = (y < cy - P.ry * 0.5 ? 1 : 0) - (y > yT + 8 * k ? 1 : 0) - (f > P.rx * 0.2 && !surCrane ? 1 : 0);
             const motif = [3, 2, 3, 1, 2, 3, 0][((fil % 7) + 7) % 7];   // (des mèches nettes : une raie sombre de temps en temps)
             t.poser(x, y, 'cheveux', Math.max(0, Math.min(5, motif + lum)));
+          }
+        }
+        // les longues mèches fines et détachées, des deux côtés, sous tous les angles : elles partent du côté du crâne, à
+        // mi-hauteur de la tête (aux tempes), et tombent librement jusque sur les épaules, en ondulant un peu
+        if (!dos) {
+          const basM = yT + 12 * k, xe0 = X(pres * P.rx * 0.95, -0.1 * P.rx), av0 = s > 0 ? 1 : -1;
+          const surVisage = (x, y) => { if (y > cy + P.ry * 0.95) return false; if (Math.abs(s) < 0.2) return Math.abs(x + 0.5 - cx) < P.rx * 0.74; return (x + 0.5 - xe0) * av0 > P.rx * 0.28; };
+          const N = 11;
+          for (const cote of [-1, 1]) {
+            const u0 = cote * P.rx * 0.93;
+            for (let i = 0; i < N; i++) {
+              const ta = i / (N - 1), z0 = -P.rx * (0.02 + 0.62 * ta);
+              if (Z(u0, z0) < -P.rx * 0.72) continue;   // (de l'autre côté de la tête : on ne la voit pas)
+              const y0 = Math.round(cy - P.ry * (0.72 - 0.5 * ta * ta)), y1 = Math.round(basM - hachage(i, cote + 2, 73) * 5 * k);
+              const ton = [3, 2, 3, 2, 4, 2, 3, 1, 3, 2, 3][i];
+              for (let y = y0; y <= y1; y++) {
+                const dy = y - y0, u = u0 + cote * (dy * 0.06 + (i % 3) * 0.55 * k * Math.abs(c)), z = z0 - dy * 0.03 - (i % 2) * 0.4 * k * Math.abs(s);
+                const x = Math.round(X(u, z) + Math.sin(y / (3.6 * k) + i * 1.7) * 0.55 * k);
+                for (let e = 0; e < k; e++) { const xx = x + e * cote; const m = t.mat(xx, y);
+                  if (m === 'blanc' || m === 'pupille' || m === 'iris' || (m === 'peau' && surVisage(xx, y))) continue;
+                  t.poser(xx, y, 'cheveux', Math.max(0, Math.min(5, ton + (dy < 2 * k ? 1 : 0) - (y > y1 - 2 * k ? 1 : 0) - (e === k - 1 ? 1 : 0)))); }
+              }
+            }
           }
         }
       } }
