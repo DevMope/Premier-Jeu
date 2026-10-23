@@ -431,17 +431,30 @@ async function categories(scene) {
   // Le grand voyage : la maison qui marche sur la route
   const voyage = [sur(() => ({ cle: photo(scene, 'photoRouteMarche', 960, 540, p => { decorRoute(p, 0); maisonEnRoute(p, 480, 470, { pose: 'marche' }); }), nom: 'Sur la route : la maison marche' })),
     sur(() => ({ cle: photo(scene, 'photoRouteSoir', 960, 540, p => { decorRoute(p, 0.6); maisonEnRoute(p, 480, 470, { pose: 'assise', fumee: 'maigre', filet: 4 }); }), nom: "Le soir : elle s'accroupit au bord du chemin" }))];
-  await ajouter('voyage', 'Le grand voyage', 'La maison sur ses quatre pattes, sur la route de Pont-Royal : elle marche pas à pas, et le soir elle se pose au bord du chemin.', voyage, true);
+  // (v1.58, planche 77 validée) le décor de la route refait : le gué, la Porte des Hommes dans son mur, la tête de pont, les vergers, les imprévus
+  const fondRoute = sur(() => paysageHD(scene, 960, 650, 'comte', 0, { sansAstre: true }));
+  const SAISONS_NOM = { printemps: 'au printemps', ete: 'en été', automne: 'en automne', hiver: 'en hiver' };
+  voyage.push(sur(() => ({ cle: textureGueHD(scene, 470, fondRoute), nom: 'Le gué : la rivière qui coupe la route, ses berges et son lit de galets' })),
+    sur(() => ({ cle: textureGueHD(scene, 470, fondRoute, RUISSEAU), nom: 'Le ruisseau du petit pont' })),
+    sur(() => ({ cle: porteFrontiereHD(scene, 470, fondRoute), nom: 'La Porte des Hommes, dans le mur de la frontière (en coupe : le passage sous la voûte)' })),
+    sur(() => ({ cle: teteDePontHD(scene, 470), nom: 'La tour de la tête de pont, sur la haute rive' })),
+    ...[6, 12, 18].map(g => sur(() => ({ cle: villageRoyaumeHD(scene, g), nom: 'Un village du Royaume des Hommes, sur les collines' }))),
+    sur(() => ({ cle: borneRoyaumeHD(scene), nom: 'La borne aux couleurs du roi' })), sur(() => ({ cle: borneComteHD(scene), nom: 'La borne de la Comté' })),
+    sur(() => ({ cle: vergerHD(scene, 'panier'), nom: 'Un panier de pommes, au pied des pommiers' })), sur(() => ({ cle: vergerHD(scene, 'echelle'), nom: "L'échelle contre le tronc" })),
+    sur(() => ({ cle: isbaPoulesHD(scene, 0), nom: 'La cabane à pattes de poule du marchand nomade (pas 1)' })), sur(() => ({ cle: isbaPoulesHD(scene, 1), nom: 'La cabane à pattes de poule (pas 2)' })),
+    sur(() => ({ cle: epeeCasseeHD(scene), nom: "L'épée cassée du héros blessé" })),
+    ...Object.keys(SAISONS_NOM).map(sa => sur(() => ({ cle: arbreRiveHD(scene, sa, 'aulne', 1), nom: `Un aulne de la rive, ${SAISONS_NOM[sa]}` }))),
+    sur(() => ({ cle: arbreRiveHD(scene, 'ete', 'buisson', 2), nom: 'Un buisson de la rive' })));
+  await ajouter('voyage', 'Le grand voyage', 'La maison sur ses quatre pattes, sur la route de Pont-Royal : elle marche pas à pas, et le soir elle se pose au bord du chemin. Et le décor de la route (planche 77) : le gué, la Porte des Hommes dans son mur, la tête de pont, les villages et les bornes, les vergers, la cabane à pattes de poule, les arbres des rives.', voyage, true);
 
   // Pont-Royal
-  // (la vue du fleuve attend la validation de la planche 77 : ses rives et sa culée y ont été retouchées)
-  const pont = liste({ rueDuPontHD: 'La rue du pont : le tonnelier, ton lot, la maison rose, la Halle des Bateliers' });
-  sur(() => { rueDuPontHD(scene); });
+  const pont = liste({ pontRoyalHD: 'Pont-Royal vu du fleuve (le lot vide attend ta maison)', pontRoyalHD_plein: 'Pont-Royal vu du fleuve', rueDuPontHD: 'La rue du pont : le tonnelier, ton lot, la maison rose, la Halle des Bateliers' });
+  sur(() => { pontRoyalHD(scene); pontRoyalHD(scene, { lot: false }); rueDuPontHD(scene); });
   for (const id of ORDRE_STYLES_PONT_ROYAL) pont.push(sur(() => ({ cle: maisonStylePR(scene, id), nom: `${STYLES_PONT_ROYAL[id].nom} (chez l'architecte)` })));
   pont.push(sur(() => ({ cle: bargeHD(scene), nom: 'Une barge du fleuve' })), sur(() => ({ cle: photo(scene, 'photoBarge', 300, 176, p => poserBarge(p, 150, 110, 2)), nom: 'La barge, son batelier et son reflet' })),
     sur(() => ({ cle: bouclierPontHD(scene), nom: 'Le bouclier de la garde' })), sur(() => ({ cle: photo(scene, 'photoGardePont', 150, 216, p => gardePont(p, 75, 212)), nom: 'Un garde du pont, sa lance et son bouclier' })),
     sur(() => ({ cle: corpsHD(scene, 'duc'), nom: FIGURANTS.duc.nom })), sur(() => ({ cle: corpsHD(scene, 'gardeRoyal'), nom: FIGURANTS.gardeRoyal.nom })));
-  await ajouter('pontRoyal', 'Pont-Royal', "La ville du Royaume des Hommes bâtie sur le grand pont du fleuve : la rue du pont et la Halle des Bateliers, les quatre styles de maison, les barges, la garde et le duc.", pont, true);
+  await ajouter('pontRoyal', 'Pont-Royal', "La ville du Royaume des Hommes bâtie sur le grand pont du fleuve : le pont à cinq arches et sa haute rive, la rue du pont et la Halle des Bateliers, les quatre styles de maison, les barges, la garde et le duc.", pont, true);
 
   // La menace sur la carte : le patch de la carte (menaceHD) pose ses dessins sur le parchemin, autour du médaillon de la contrée
   // (on prête à la partie une contrée menacée, puis une contrée perdue, le temps des photos)

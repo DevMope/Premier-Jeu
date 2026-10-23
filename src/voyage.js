@@ -158,10 +158,13 @@ const IMPREVUS = {
       { nom: 'Faire courir la maison (4 h de bois)', fait: G => { const b = brulerBois(G, 4); return { texte: 'Elle prend ses pattes à son cou. Les carreaux tremblent, les brigands mangent la poussière.', gains: [`−${b.manges.length} bois`] }; } },
     ] },
 };
+// (v1.58) Ceux qui attendent leur nouveau dessin (planche 79) ne sortent plus sur la route : le gardien du péage
+// (qui ne peut pas s'appeler « troll », c'est un peuple du jeu) et les brigands (qui deviennent des pandas renégats)
+const IMPREVUS_EN_ATTENTE = ['troll', 'brigands'];
 // Le plan de la route, tiré au départ : pour chaque jour, ses étapes et son imprévu (le dernier jour : l'arrivée)
 function partirEnVoyage(G) {
   const v = etatVoyage(G), plan = VOYAGE.jours[(G.pattes && G.pattes.sorte) || 'chene'];
-  const tires = Object.keys(IMPREVUS).sort(() => Math.random() - 0.5);
+  const tires = Object.keys(IMPREVUS).filter(id => !IMPREVUS_EN_ATTENTE.includes(id)).sort(() => Math.random() - 0.5);
   v.enRoute = true; v.jourRoute = 0; v.pip = false; v.depuis = G.jour;
   v.plan = plan.map((etapes, i) => ({ etapes, imprevu: i < plan.length - 1 && !etapes.includes(3) ? tires.pop() : null }));
   v.imprevus = [];
