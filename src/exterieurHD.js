@@ -523,15 +523,18 @@ function creerAccessoiresFacade(scene) {
 // La façade du comptoir, vue de dehors. `cx` = centre, `sol` = bas des murs.
 // Renvoie la porte, l'image, l'enseigne et les zones de la façade (à l'écran).
 // (v1.31) l'appartement bâti : la façade est plus haute de tout un étage (les scènes en plan serré reculent la vue d'autant)
-function facadeAvecEtage(G) { return !!G && niveauFacade(G) === 3 && typeof etageA === 'function' && etageA(G, 'appartement'); }
+function facadeAvecEtage(G) { return !!G && niveauFacade(G) === 3 && typeof etageA === 'function' && etageA(G, 'appartement') && !(typeof styleDeMaison === 'function' && styleDeMaison(G)); }
 const RECUL_ETAGE = 56;
 function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3, { fumee = true, etage: avecEtage = true, vent = 40 } = {}) {
   creerFacadeHD(scene, n);
   // (v1.30, planche 54) l'appartement : la belle maison gagne un étage et un balcon (le toit et la cheminée montent d'autant)
+  // (v1.57) un style de maison acheté chez l'architecte de Pont-Royal remplace la façade (la porte, la vitrine et l'enseigne restent à leur place)
+  const stylePR = window.GAME && typeof styleDeMaison === 'function' ? styleDeMaison(window.GAME) : null;
   const etage = avecEtage && n === 3 && facadeAvecEtage(window.GAME);   // (v1.31 : jamais dans le passé, ni dans la faillite)
   if (etage) creerEtageHD(scene);
   const monte = etage ? FACADE.etage[3] * 2 : 0;
-  const image = scene.add.image(cx, sol + 2, etage ? 'facadeHD_4' : 'facadeHD_' + n).setOrigin(0.5, 1).setScale(2);
+  if (stylePR) fumee = false;   // (leurs cheminées ne sont pas au même endroit)
+  const image = scene.add.image(cx, sol + 2, stylePR ? maisonStylePR(scene, stylePR) : etage ? 'facadeHD_4' : 'facadeHD_' + n).setOrigin(0.5, 1).setScale(2);
   const gauche = cx - FACADE.L, haut = sol + 2 - FACADE.H * 2;
   const ecran = ([x, y, l, h]) => [gauche + x * 2, haut + y * 2, l * 2, h * 2];
   const tonneaux = scene.add.image(gauche + FACADE.L * 2 - 26, sol + 4, 'tonneauxHD').setOrigin(0, 1).setScale(2);

@@ -17,6 +17,8 @@ class NightScene extends Phaser.Scene {
   create() {
     exclureScenes(this, 'Carte', 'Comptoir', 'Dodo');   // (v0.62)
     const G = this.G = window.GAME;
+    // (v1.57) une partie rechargée en plein grand voyage : on reprend la route
+    if (typeof enRoute === 'function' && enRoute(G)) { this.time.delayedCall(0, () => this.scene.start('Voyage')); return; }
     if (!this.matin) { preparerSoir(G); tirerGardeDuLendemain(G); }
     if (!this.matin) this.time.delayedCall(800, () => { const n = oublierPortraits(this.game); if (n && typeof noterJournal === 'function') noterJournal(`(${n} portraits oubliés)`); });   // (v0.96)   // (v0.65 : la garde de demain se tire dès ce soir, le chat la sent parfois)
     this.lieu = this.matin ? 'Maison' : 'Nuit';
@@ -64,15 +66,17 @@ class NightScene extends Phaser.Scene {
     const enFondu = () => this._transition && performance.now() - this._transition < 1500;
     const ouvrirPage = (page, donnees) => { if (enFondu()) return; this.scene.pause(); this.scene.launch(page, donnees); };
     const soireeAuBar = !this.matin && G.bar && G.bar.ce && G.bar.ce.jour === G.jour && G.bar.ce.mode === 'joue';   // (v1.16) la soirée jouée a pris tout le soir
+    // (v1.57) à Pont-Royal, ce qui est resté dans la Comté (la rue, la porte dérobée, le notaire, l'orphelinat, le petit bar, l'étang) n'est pas à deux pas
+    const comte = typeof villeActuelle !== 'function' || villeActuelle(G) === 'comte';
     const boutons = [
       ['Le bureau', () => ouvrirPage('Bureau', { retour: 'Nuit' })],
       ['La banque', () => this.ouvrirBanque()],
       [`L'atelier (${G.tresors.length})`, () => ouvrirPage('Atelier')],
-      ...(this.matin ? [] : [['Se promener', () => { if (soireeAuBar) return this.annoncer('Ta soirée s’est passée au petit bar : il est trop tard pour te promener.'); ouvrirPage('Promenade'); }]]),
-      ...(!this.matin && marcheNoirCeSoir(G) ? [['La porte dérobée', () => ouvrirPage('MarcheNoir')]] : []),
-      ...(!this.matin && typeof rivalDe === 'function' && G.rival && G.rival.etat === 'aVendre' ? [['Chez le notaire', () => { if (enFondu()) return; lettreDuNotaire(this, () => { if (G.rival.etat !== 'aVendre') this.scene.restart({ matin: false }); }); }]] : []),   // (v1.11) la boutique d'à côté est à vendre
-      ...(!this.matin && typeof orphelinatOuvert === 'function' && orphelinatOuvert(G) ? [["L'orphelinat", () => { if (enFondu()) return; orphelinatDuSoir(this, () => this.tout()); }]] : []),   // (v1.12) la liste des courses, les améliorations
-      ...(!this.matin && typeof barOuvert === 'function' && barOuvert(G) ? [['Le petit bar', () => { if (enFondu()) return; barDuSoir(this, () => this.tout()); }]] : []),   // (v1.16) la soirée, l'équipe, les installations
+      ...(this.matin || !comte ? [] : [['Se promener', () => { if (soireeAuBar) return this.annoncer('Ta soirée s’est passée au petit bar : il est trop tard pour te promener.'); ouvrirPage('Promenade'); }]]),
+      ...(!this.matin && comte && marcheNoirCeSoir(G) ? [['La porte dérobée', () => ouvrirPage('MarcheNoir')]] : []),
+      ...(!this.matin && comte && typeof rivalDe === 'function' && G.rival && G.rival.etat === 'aVendre' ? [['Chez le notaire', () => { if (enFondu()) return; lettreDuNotaire(this, () => { if (G.rival.etat !== 'aVendre') this.scene.restart({ matin: false }); }); }]] : []),   // (v1.11) la boutique d'à côté est à vendre
+      ...(!this.matin && comte && typeof orphelinatOuvert === 'function' && orphelinatOuvert(G) ? [["L'orphelinat", () => { if (enFondu()) return; orphelinatDuSoir(this, () => this.tout()); }]] : []),   // (v1.12) la liste des courses, les améliorations
+      ...(!this.matin && comte && typeof barOuvert === 'function' && barOuvert(G) ? [['Le petit bar', () => { if (enFondu()) return; barDuSoir(this, () => this.tout()); }]] : []),   // (v1.16) la soirée, l'équipe, les installations
       ...(!this.matin && typeof confrerieOuverte === 'function' && confrerieOuverte(G) ? [['La Confrérie', () => { if (enFondu()) return; confrerieDuSoir(this, () => this.tout()); }]] : []),   // (v1.28) le livre des dons
       ...(!this.matin && typeof repaireOuvert === 'function' && repaireOuvert(G) ? [['Le repaire', () => { if (enFondu()) return; repaireDuSoir(this, () => this.tout()); }]] : []),   // (v1.29) le livre noir
       ...(!this.matin && typeof etageOuvert === 'function' && etageOuvert(G) ? [["L'étage", () => { if (enFondu()) return; etageDuSoir(this, () => this.tout()); }]] : []),   // (v1.30) le grenier, le salon, l'appartement
@@ -81,7 +85,7 @@ class NightScene extends Phaser.Scene {
         : [['Aller dormir', () => this.dormir()]]),
     ];
     // (v1.45, la pêche) l'étang du Moulin, dès qu'on a une canne : l'aube le matin ; le soir, le jour (comptoir fermé tôt) ou la nuit
-    if (typeof aUneCanne === 'function' && aUneCanne(G)) boutons.splice(boutons.length - (this.matin ? 2 : 1), 0, ["L'étang", () => {
+    if (comte && typeof aUneCanne === 'function' && aUneCanne(G)) boutons.splice(boutons.length - (this.matin ? 2 : 1), 0, ["L'étang", () => {
       if (enFondu()) return;
       Sauvegarde.maintenant(G, this.lieu);   // (v1.49 : le matin, c'est la maison qu'on recharge, pas le soir)
       this._transition = performance.now();

@@ -16,11 +16,14 @@ class FacadeScene extends Cinematique {
     this.cameras.main.setScroll(0, -recul);
     const g = this.add.graphics();
     dessinerComte(g, 0, -recul, 960, 470 + recul, 0); // midi : le soleil est haut, on ouvre le comptoir
+    // (v1.57) à Pont-Royal : la rue sur le pont (le tonnelier, ton lot, la maison rose, la Halle des Bateliers), le fleuve derrière
+    const pont = typeof aPontRoyal === 'function' && aPontRoyal(G);
+    if (pont) this.add.image(0, -30, rueDuPontHD(this)).setOrigin(0).setScale(2);
     const sol = this.add.image(0, 440, pavesHD(this, 960, 100)).setOrigin(0).setScale(2);
     // (v1.11, planches 40 v2 et 41) la boutique du paon, juste à côté : ta maison se pousse vers la gauche
-    const rival = typeof rivalVisible === 'function' && rivalVisible(G) ? G.rival : null;
-    const facade = dessinerFacade(this, rival ? 268 : 560, 440, G.nomShop);
-    if (typeof pattesPosees === 'function' && pattesPosees(G)) pattesRepliees(this, facade, { sorte: etatPattes(G).sorte, sol: 440 });   // (v1.56) ses pattes, repliées au coin des murs
+    const rival = !pont && typeof rivalVisible === 'function' && rivalVisible(G) ? G.rival : null;
+    const facade = dessinerFacade(this, pont ? 398 : rival ? 268 : 560, 440, G.nomShop);
+    if (!pont && typeof pattesPosees === 'function' && pattesPosees(G)) pattesRepliees(this, facade, { sorte: etatPattes(G).sorte, sol: 440 });   // (v1.56) ses pattes, repliées au coin des murs (à Pont-Royal, rangées dessous)
     if (rival) this.dessinerVoisin(rival, 728);
     // (v1.13) le sceau du Conseil, à côté de ta porte (ta première commande scellée livrée) ; dans la disgrâce, on l'a
     // décroché : il ne reste que la marque plus claire sur le mur, et le clou
@@ -35,7 +38,7 @@ class FacadeScene extends Cinematique {
         this.add.rectangle(sx, sy - 15, 3, 3, 0x2a2a30).setDepth(4.01);
       }
     }
-    decorSaison(this, { sol: 440, arbres: rival ? [[36, 1.05]] : [[70, 1.15], [905, 1.05]], facade, bonhomme: rival ? 500 : 790, prof: 3 });   // (v0.99 : la saison)
+    decorSaison(this, { sol: 440, arbres: pont ? [] : rival ? [[36, 1.05]] : [[70, 1.15], [905, 1.05]], facade, bonhomme: pont ? 590 : rival ? 500 : 790, prof: 3 });   // (v0.99 : la saison)
     // (v0.99) les bruits de la saison, doucement, sous la musique : oiseaux, cigales, vent
     // (v1.53, planche 62) le temps qu'il fait : le ciel, la pluie et ses flaques (sous les clients qui attendent)...
     if (typeof ambianceMeteo === 'function') ambianceMeteo(this, { sol: 440, apres: sol, flaques: [[rival ? 420 : 180, 470, 130, 14], [rival ? 640 : 720, 495, 150, 16], [880, 462, 90, 11]] });
@@ -45,7 +48,7 @@ class FacadeScene extends Cinematique {
     if (recul) { if (rival) titre.setPosition(940, 34).setOrigin(1, 0.5); else titre.setPosition(20, 34).setOrigin(0, 0.5); }
     // Une petite foule attend déjà devant la fenêtre, s'il y a du monde aujourd'hui.
     const clients = G.file.filter(e => e.type === 'client').slice(0, 4);
-    clients.forEach((e, i) => imageCorps(this, (rival ? 236 : 330) - i * 40, 440, e.voyageur, 5.6).setTint(0xf0dcc8));
+    clients.forEach((e, i) => imageCorps(this, (pont ? 250 : rival ? 236 : 330) - i * 40, 440, e.voyageur, 5.6).setTint(0xf0dcc8));
     if (clients.length) {
       this.add.text(rival ? 196 : 250, rival ? 466 : 300, `${G.file.length} visite${G.file.length > 1 ? 's' : ''} aujourd'hui`, style(13, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5).setDepth(rival ? 9 : 0);
     }

@@ -625,3 +625,26 @@ function tableauVoyage(s, niveau, heures, filet) {
 }
 function bulle74(s, x, y, t, l = 260) { const tx = s.add.text(x, y, t, style(13, '#2a1a10', { fontStyle: 'bold', align: 'center', wordWrap: { width: l } })).setOrigin(0.5).setDepth(41); s.add.rectangle(x, y, tx.width + 20, tx.height + 14, 0xfff4dc).setStrokeStyle(2, 0x6b4a2a).setDepth(40); }
 function narration74(s, x, y, t, l = 320) { const tx = s.add.text(x, y, t, style(13, '#f6ead0', { fontStyle: 'italic', align: 'center', wordWrap: { width: l } })).setOrigin(0.5).setDepth(41); s.add.rectangle(x, y, tx.width + 22, tx.height + 14, 0x1a120a, 0.88).setDepth(40); }
+
+// Le gué : une bande de rivière vue de côté (l'eau qui coule, des rides claires, l'écume au bord), qui borde le chemin
+function eauGueHD(scene) {
+  const cle = 'eauGueHD'; if (scene.textures.exists(cle)) return cle;
+  const L = 480, H = 36, t = toileDecor(L, H); rampesVille(t); t.rampes.ecume = rampe(0xe8f2f8);
+  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+    const ride = (Math.floor(x / 9 + Math.sin(y * 0.9 + x * 0.05) * 2) + y * 3) % 17 === 0, fond = y > H - 8;
+    t.poser(x, y, y < 2 ? 'ecume' : 'eau', y < 2 ? 4 - (x % 5 === 0 ? 1 : 0) : ride ? 5 : fond ? 1 + (fbm(x * 0.1, y * 0.3, 7) > 0.6 ? 1 : 0) : 3 - (y > 18 ? 1 : 0) + (fbm(x * 0.08, y * 0.2, 3) > 0.7 ? 1 : 0));
+  }
+  t.texture(scene, cle); return cle;
+}
+// Le feu de camp : deux bûches croisées, des pierres autour, et la flamme en trois images (on les alterne)
+function feuDeCampHD(scene, k = 0) {
+  const cle = 'feuDeCampHD_' + k; if (scene.textures.exists(cle)) return cle;
+  const L = 34, H = 40, t = toileDecor(L, H); rampesVille(t); t.rampes.flamme = [0x7a1e08, 0xb83a10, 0xe8661c, 0xf8a030, 0xffd860, 0xfff4c0]; t.rampes.braise = rampe(0xc84a18);
+  for (const [x0, y0, x1, y1] of [[3, 36, 30, 30], [4, 30, 31, 36]]) segmentHD(t, [x0, y0], [x1, y1], 2.2, 'chene', {});
+  for (const [x, y] of [[2, 37], [9, 38], [17, 38], [25, 38], [31, 37]]) disqueHD(t, x, y, 2.2, 'pierre', 2);
+  const hauteur = [24, 28, 22][k % 3], penche = [0, 1.5, -1.5][k % 3];
+  for (let y = 36 - hauteur; y < 34; y++) { const u = (y - (36 - hauteur)) / hauteur, l = Math.sin(u * Math.PI * 0.9) * 8 + 1, cx = 17 + penche * (1 - u);
+    for (let x = Math.floor(cx - l); x <= cx + l; x++) { const d = Math.abs(x + 0.5 - cx) / l; t.poser(x, y, 'flamme', Math.max(0, Math.min(5, Math.round(5 - d * 3 - (1 - u) * 1.5 + (u > 0.7 ? 1 : 0))))); } }
+  for (const [x, y] of [[11, 33], [21, 33], [16, 34]]) t.poser(x, y, 'braise', 5);
+  t.contour(); t.texture(scene, cle); return cle;
+}

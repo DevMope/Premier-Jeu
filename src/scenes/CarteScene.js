@@ -128,7 +128,7 @@ class CarteScene extends Phaser.Scene {
       this.etiquettes.push({ o: t, detail: true });
     }
     // Ton comptoir
-    const depart = MONDE_CARTE.comptoir;
+    const depart = typeof positionComptoir === 'function' ? positionComptoir(this.G) : MONDE_CARTE.comptoir;   // (v1.57) à Pont-Royal, ta maison est sur le pont
     this.monde.add(this.add.image(depart.x, depart.y + 14, 'halo').setScale(0.9, 0.5).setTint(0xffe8a0).setAlpha(0.7));
     this.monde.add(this.add.image(depart.x, depart.y + 14, 'comptoirCarteHD').setOrigin(0.5, 1).setScale(2));
     const ici = this.add.text(depart.x, depart.y + 16, 'Ton comptoir', style(12, '#3b2410', { fontStyle: 'bold', stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0);
@@ -259,7 +259,8 @@ class CarteScene extends Phaser.Scene {
   // Les limites du monde connu : un rectangle autour des contrées ouvertes et du comptoir, avec
   // de la marge, jamais plus grand que le monde ; le zoom minimal est celui qui le montre en entier.
   limiter(ouvertes) {
-    const pts = [[MONDE_CARTE.comptoir.x, MONDE_CARTE.comptoir.y], ...ouvertes.map(c => [ZONES[c].x, ZONES[c].y])];
+    const dep = typeof positionComptoir === 'function' ? positionComptoir(this.G) : MONDE_CARTE.comptoir;
+    const pts = [[dep.x, dep.y], ...ouvertes.map(c => [ZONES[c].x, ZONES[c].y])];
     const marge = 150;
     const x0 = Math.max(0, Math.min(...pts.map(p => p[0])) - marge), x1 = Math.min(MONDE_CARTE.L, Math.max(...pts.map(p => p[0])) + marge);
     const y0 = Math.max(0, Math.min(...pts.map(p => p[1])) - marge), y1 = Math.min(MONDE_CARTE.H, Math.max(...pts.map(p => p[1])) + marge + 30);

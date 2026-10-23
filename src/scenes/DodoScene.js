@@ -574,6 +574,8 @@ class DodoScene extends Cinematique {
 
   partir(scene) {
     if (this.fini) return;
+    // (v1.57) le matin du grand départ : la route, au lieu de la rue
+    if (scene === 'Rue' && typeof departAujourdhui === 'function' && departAujourdhui(this.G)) scene = 'Voyage';
     this.fini = true;
     this.cameras.main.fadeOut(500);
     // (v0.99) le premier matin d'une nouvelle saison : la petite cinématique de passage, puis la rue

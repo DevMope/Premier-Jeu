@@ -28,6 +28,7 @@ class CounterScene extends Phaser.Scene {
     const motChat = typeof motDuChatDu === 'function' && motDuChatDu(this.G), suites = [];
     if (typeof lettreImpotDuJour === 'function' && lettreImpotDuJour(this.G)) suites.push(cb => this.montrerLettreImpot(cb));
     if (typeof lettreNotaireDuJour === 'function' && lettreNotaireDuJour(this.G)) suites.push(cb => lettreDuNotaire(this, cb));
+    if (typeof lettreDucDuJour === 'function' && lettreDucDuJour(this.G)) suites.push(cb => lettreDuDuc(this, cb));   // (v1.57) la lettre du duc : Pont-Royal t'attend
     if (motChat) suites.push(cb => { montrerMotDuChat(this); cb(); });
     const lancer = i => { if (i < suites.length && this.scene.isActive()) suites[i](() => lancer(i + 1)); };
     if (suites.length) this.time.delayedCall(900, () => lancer(0));

@@ -11,7 +11,9 @@ class EssaiScene extends Cinematique {
     this.cameras.main.fadeIn(400);
     // (la caméra recule un peu : debout, la maison est haute ; l'interface a sa propre caméra, qui ne recule pas)
     for (const x of [-960, 0, 960]) { dessinerComte(this.add.graphics(), x, -160, 960, sol + 160, 0); for (const y of [sol, sol + 70, sol + 140, sol + 210]) this.add.image(x, y, pavesHD(this, 960, 70)).setOrigin(0).setScale(2); }
-    this.cameras.main.setZoom(0.75).centerOn(480, 180);
+    // (v1.57) en tenant compte du zoom de l'écran (sinon, en 1080p ou sur iPad, la vue reculait deux fois trop)
+    const Z = this.cameras.main.zoom;
+    this.cameras.main.setZoom(0.75 * Z).setScroll(-160, -180);   // (la caméra zoome depuis son coin en haut à gauche)
     const sorte = this.sorte = etatPattes(G).sorte || 'chene';
     // la maison assise : sa façade, ses pattes repliées au coin des murs
     this.etat = { x: 330, haut: sol };
@@ -42,7 +44,7 @@ class EssaiScene extends Cinematique {
     this.placer();
     // l'interface : une ligne de récit en haut, « Passer », le clic pour continuer (caméra à part, sans recul)
     const ui = [];
-    this.uiCam = this.cameras.add(0, 0, 960, 540);
+    this.uiCam = this.cameras.add(0, 0, 960 * Z, 540 * Z).setOrigin(0, 0).setZoom(Z);   // (v1.57 : au zoom de l'écran)
     ui.push(this.add.rectangle(480, 62, 940, 40, 0x1a120a, 0.88).setStrokeStyle(2, 0xd8b048));
     this.ligne = this.add.text(30, 62, '', style(15, '#f6ead0', { fontStyle: 'italic', wordWrap: { width: 760 } })).setOrigin(0, 0.5); ui.push(this.ligne);
     this.indiceClic = this.add.text(930, 62, '▶ clique', style(13, '#f3d98a', { fontStyle: 'bold italic' })).setOrigin(1, 0.5).setVisible(false); ui.push(this.indiceClic);

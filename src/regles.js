@@ -574,7 +574,8 @@ function voyageurAuHasard(G, aussi = []) {
   // Une race au hasard d'abord, pour que les races avec beaucoup de noms ne dominent pas...
   // ... sauf que tes décorations attirent certains peuples plus que d'autres.
   const races = [...new Set(libres.map(l => l.race))];
-  const poids = races.map(r => 1 + (G.decos || []).filter(d => DECOS[d].attire === r || (DECOS[d].attire === 'ombre' && PEUPLES_OMBRE.includes(r))).length * (ATTIRANCE_DECO - 1));
+  const poids = races.map(r => (1 + (G.decos || []).filter(d => DECOS[d].attire === r || (DECOS[d].attire === 'ombre' && PEUPLES_OMBRE.includes(r))).length * (ATTIRANCE_DECO - 1))
+    * (r === 'humain' && typeof aPontRoyal === 'function' && aPontRoyal(G) ? DUC.humains : 1));   // (v1.57) à Pont-Royal, surtout des Hommes
   let tirage = Math.random() * poids.reduce((a, b) => a + b, 0);
   let race = races[0];
   for (let k = 0; k < races.length; k++) { tirage -= poids[k]; if (tirage <= 0) { race = races[k]; break; } }
@@ -1559,6 +1560,7 @@ function reposCoeur(G) { return typeof reposParCoeur === 'function' ? reposParCo
 const CHANCE_GRATITUDE = 0.4, CHANCE_INTERDIT_OMBRE = 0.35, CHANCE_GARDE_OMBRE = 0.25;
 const CADEAUX_VILLAGES = [['ration', 2], ['potion', 1], ['bandage', 2], ['gourde', 1], ['torche', 2], ['antidote', 1]];   // (v0.60) jours de repos par cœur perdu, pour un blessé revenu de mission
 function loyerSemaine(G) {
+  if (typeof villeActuelle === 'function' && (villeActuelle(G) !== 'comte' || enRoute(G))) return 0;   // (v1.57) à Pont-Royal, le lot est à toi : ce sont les taxes du duc
   return LOYER.base + LOYER.parPalier * palierClients(G).index;
 }
 function jourDeLoyer(G, jour = G.jour) { return jour > 0 && jour % 7 === 0; }   // (v1.40 : le Jour Zéro ne compte pas)
@@ -1630,6 +1632,7 @@ function nuit(G) {
   sansPlanter('nuitDeLaCompagne', () => typeof nuitDeLaCompagne === 'function' && nuitDeLaCompagne(G));   // (v1.37) sa gamelle à elle
   sansPlanter('nuitDuParrain', () => typeof nuitDuParrain === 'function' && nuitDuParrain(G));   // (v1.39) la part de la Famille
   sansPlanter('nuitDesMages', () => typeof nuitDesMages === 'function' && nuitDesMages(G));   // (v1.56) le chantier, puis l'atelier des Mages-Charpentiers
+  sansPlanter('nuitDuVoyage', () => typeof nuitDuVoyage === 'function' && nuitDuVoyage(G));   // (v1.57) la lettre du duc, les taxes de Pont-Royal
   sansPlanter('nuitDesSucces', () => typeof nuitDesSucces === 'function' && nuitDesSucces(G));   // (v1.50) les séries, et les succès du jour
   G.jour++;
   G.argentDebutJour = G.argent;
@@ -1710,6 +1713,7 @@ function nuit(G) {
   sansPlanter('matinPilosite', () => typeof matinPilosite === 'function' && G.reveil.lignes.push(...matinPilosite(G)));   // (v1.48) le barbier ouvre, la barbe pousse   // (v1.35) la complicité, les rations des deux chats
   sansPlanter('matinDuParrain', () => typeof matinDuParrain === 'function' && G.reveil.lignes.push(...matinDuParrain(G)));   // (v1.39) la part de la Famille
   sansPlanter('matinDesRiches', () => typeof matinDesRiches === 'function' && G.reveil.lignes.push(...matinDesRiches(G)));   // (v1.32) le mécénat, la neutralité
+  sansPlanter('matinDuVoyage', () => typeof matinDuVoyage === 'function' && G.reveil.lignes.push(...matinDuVoyage(G), ...matinDuDuc(G)));   // (v1.57) le départ, le percepteur du duc
   sansPlanter('voeuDeSaison', () => { const l = typeof voeuDeSaison === 'function' && voeuDeSaison(G); if (l) G.reveil.lignes.push(l); });   // (v1.23) les souvenirs de la nymphe au complet
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.

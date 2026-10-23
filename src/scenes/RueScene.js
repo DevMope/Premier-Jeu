@@ -23,6 +23,10 @@ class RueScene extends Phaser.Scene {
         z.on('pointerdown', () => this.passerPar(page, x));
       },
     };
+    // (v1.57) à Pont-Royal : la rue sur le pont
+    this.pont = typeof aPontRoyal === 'function' && aPontRoyal(G);
+    this.largeur = this.pont ? 960 : LARGEUR_RUE;
+    if (this.pont) return this.creerRuePont(ici, sol);
     const r = construireRue(this, 0, { jour: true, ici });
     if (typeof rueDuMecenat === 'function') rueDuMecenat(this, 0, sol, G);   // (v1.32, planche 58) ce que le monde montre de tes dons
     const toits = this.children.list.filter(o => o.type === 'Image' && o.texture && /^(rueMaisonHD|rueForgeHD|rueImpasseHD|facadeHD)/.test(o.texture.key)).map(o => [o, o.texture.key === 'facadeHD_4' ? 0.26 : /^facadeHD/.test(o.texture.key) ? 0.34 : 0.12]);   // (v1.31 : avec l'étage, le toit ne fait plus qu'un quart de l'image)
@@ -78,6 +82,46 @@ class RueScene extends Phaser.Scene {
     if (Math.random() < 0.6) this.reposBanc();
   }
 
+  // (v1.57, planche 75 v2) La rue sur le pont de Pont-Royal : à gauche le tonnelier, ta maison sur son lot, la maison rose
+  // et la Halle des Bateliers ; derrière le parapet, le fleuve, l'autre rive et la citadelle sur son rocher.
+  creerRuePont(ici, sol) {
+    const G = this.G;
+    dessinerComte(this.add.graphics(), 0, 0, 960, sol, 0);
+    this.add.image(0, 0, rueDuPontHD(this)).setOrigin(0).setScale(2);
+    this.add.image(0, sol, pavesHD(this, 960, 70)).setOrigin(0).setScale(2);
+    const facade = dessinerFacade(this, 398, sol, G.nomShop);
+    for (const o of [facade.image, facade.tonneaux, facade.enseigne]) if (o) o.setDepth(4);
+    this.porteShop = { x: facade.porteX };
+    const zp = this.add.rectangle(this.porteShop.x, sol - 60, 70, 120, 0xffffff, 0).setDepth(8.65).setInteractive({ useHandCursor: true });
+    this.add.text(this.porteShop.x, sol - 150, 'Rentrer', style(12, '#fff4dc', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(8.6);
+    zp.on('pointerdown', () => this.passerPar('Maison', this.porteShop.x));
+    ici.porte(846, sol, 'La Halle des Bateliers', 'Halle', { large: 160, haut: 150 });
+    ici.regarder(0, 250, 160, 220, "La tonnelière cercle un tonneau à grands coups de maillet. « Bienvenue sur le pont, voisin ! Ici, tout arrive par le fleuve... et tout repart en tonneau. »");
+    ici.regarder(612, 200, 98, 270, 'Une maison rose, haute et étroite. À la fenêtre du deuxième, une vieille dame arrose ses géraniums... et la rue en dessous.');
+    ici.regarder(160, 300, 80, 90, 'Derrière le parapet, le grand fleuve. Les barges descendent vers la Halle, chargées de caisses et de tonneaux venus d\'autres royaumes.');
+    // le panneau de la ville basse : le marché, la banque, l'architecte
+    const pan = ecriteauRue(this, 196, 452, '◀ La ville basse', { taille: 13, profondeur: 8.62 }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    pan.on('pointerdown', () => this.passerPar('VilleBasse', 250));
+    textureJoueur(this, G);
+    const x0 = this.depuis === 'marche' ? 120 : this.porteShop.x + 40;
+    this.heros = this.add.image(x0, SOL_PROMENADE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(8.5);
+    this.cible = null; this.pas = 0; this.garrick = null; this.orvin = null;
+    const fixe = o => o.setScrollFactor(0).setDepth(30);
+    fixe(this.add.text(480, 22, `Le pont de Pont-Royal · jour ${G.jour}`, style(22, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
+    fixe(this.add.text(480, 48, '◀ ▶ ou clique au sol pour marcher · clique sur les maisons pour les regarder · le panneau mène à la ville basse', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
+    this.bulle = fixe(this.add.text(480, 78, '', style(14, '#3b2410', { fontStyle: 'italic', backgroundColor: '#ead9b0', padding: { x: 10, y: 6 }, wordWrap: { width: 640 }, align: 'center' })).setOrigin(0.5, 0).setVisible(false));
+    for (const [x, l, texte, page] of [[110, 190, '◀ Chez toi', 'Maison'], [850, 200, 'Au marché ▶▶', 'Marche']]) { const b = creerBouton(this, x, 505, l, texte, () => this.passerPar(page)); fixe(b.fond); fixe(b.label); }
+    this.input.on('pointerdown', (pointeur, sous) => { if (!sous.length) this.allerVers(pointeur.worldX); });
+    this.touches = this.input.keyboard ? this.input.keyboard.createCursorKeys() : null;
+    this.time.addEvent({ delay: 4500, startAt: 3500, loop: true, callback: () => this.passant() });
+    this.passant();
+    if (typeof ambianceMeteo === 'function') ambianceMeteo(this, { sol, flaques: [[250, 500, 120, 14], [640, 508, 150, 15]] });
+    if (typeof saisonDe === 'function') { Son.nature(true, { saison: saisonDe(G), volume: 0.7, meteo: typeof meteoDu === 'function' ? meteoDu(G) : null }); this.events.once('shutdown', () => Son.nature(false)); }
+    // (la première fois) le batelier salue le nouveau voisin
+    const P = etatPontRoyal(G);
+    if (!P.salueBatelier) { P.salueBatelier = true; this.time.delayedCall(900, () => this.dire('Le batelier, de la porte de la Halle : « Bienvenue sur le pont ! Ici, tout arrive par le fleuve. Passe voir la barge de la semaine. »')); }
+  }
+
   reposBanc() {
     if (this.surLeBanc && this.surLeBanc.active) {
       if (Math.random() < 0.4) { const p = this.surLeBanc; this.surLeBanc = null; this.tweens.add({ targets: p, alpha: 0, duration: 500, onComplete: () => p.destroy() }); }
@@ -92,8 +136,10 @@ class RueScene extends Phaser.Scene {
   }
 
   passant() {
-    const race = auHasard(['humain', 'humain', 'hobbit', 'nain', 'elfe', 'magicienne']);
-    const quoi = { nom: auHasard(NOMS_PASSANTS_RUE) + ' ' + Math.floor(Math.random() * 99), race, niveau: auHasard(['novice', 'aguerri']) };
+    const race = auHasard(this.pont ? ['humain', 'humain', 'humain', 'humain', 'nain', 'elfe', 'hobbit'] : ['humain', 'humain', 'hobbit', 'nain', 'elfe', 'magicienne']);
+    // (v1.57) sur le pont, la garde fait sa ronde de temps en temps
+    const quoi = this.pont && Math.random() < 0.22 ? { race: 'humain', nom: 'Garde du pont ' + Math.floor(Math.random() * 99), costume: 'gardeRoyal', habit: 0x1c1c24, cheveux: 0x1a1612, coiffure: 'long', niveau: 'aguerri', armeEmportee: 'lance', serieux: true }
+      : { nom: auHasard(NOMS_PASSANTS_RUE) + ' ' + Math.floor(Math.random() * 99), race, niveau: auHasard(['novice', 'aguerri']) };
     const sens = Math.random() < 0.5 ? 1 : -1, cam = this.cameras.main.scrollX;
     const x0 = sens > 0 ? cam - 60 : cam + 1020, x1 = sens > 0 ? cam + 1100 : cam - 140;
     const p = imageCorps(this, x0, SOL_PROMENADE + 4 + Math.random() * 8, quoi, 7.2).setFlipX(sens < 0).setDepth(8.45);
@@ -150,7 +196,7 @@ class RueScene extends Phaser.Scene {
     this.tweens.add({ targets: this.bulle, alpha: 0, delay: 4000, duration: 600 });
   }
 
-  allerVers(x) { this.cible = Phaser.Math.Clamp(x, 40, LARGEUR_RUE - 40); }
+  allerVers(x) { this.cible = Phaser.Math.Clamp(x, 40, (this.largeur || LARGEUR_RUE) - 40); }
 
   // Entrer quelque part : à pied jusqu'à la porte (si on la donne), puis on y va.
   passerPar(page, x = null) {
@@ -162,6 +208,8 @@ class RueScene extends Phaser.Scene {
       if (page === 'Banque') { this.transition = false; this.scene.pause(); this.scene.launch('Banque', { retour: 'Rue' }); return; }
       if (page === 'Barbier') { this.transition = false; this.scene.pause(); this.scene.launch('Barbier', { retour: 'Rue' }); return; }   // (v1.48) chez Orvin
       if (page === 'Mages') { this.transition = false; this.scene.pause(); this.scene.launch('Mages', { retour: 'Rue' }); return; }   // (v1.56) chez les Mages-Charpentiers
+      if (page === 'Halle') { this.transition = false; ouvrirHalle(this); return; }   // (v1.57) Pont-Royal
+      if (page === 'VilleBasse') { this.transition = false; menuVilleBasse(this); return; }
       if (page === 'Diseuse') { this.transition = false; this.scene.pause(); this.scene.launch('Diseuse', { retour: 'Rue' }); return; }   // (v1.05) sous la tente de Madame Ysmée
       this.fini = true;
       Sauvegarde.maintenant(this.G, page === 'Maison' ? 'Maison' : 'Marche');
@@ -186,7 +234,7 @@ class RueScene extends Phaser.Scene {
       if (Math.abs(reste) < 1) this.cible = null;
     }
     if (dx) {
-      this.heros.x = Phaser.Math.Clamp(this.heros.x + dx, 40, LARGEUR_RUE - 40);
+      this.heros.x = Phaser.Math.Clamp(this.heros.x + dx, 40, this.largeur - 40);
       this.heros.setFlipX(dx < 0);
       this.pas += delta;
       if (!this.heros.marche) pasDeMarche(this, this.heros, 260);
@@ -204,7 +252,7 @@ class RueScene extends Phaser.Scene {
       }
       if (g.bulle && g.bulle.active) g.bulle.setPosition(g.x, g.y - g.displayHeight - 10);
     }
-    this.cameras.main.scrollX = Phaser.Math.Clamp(this.heros.x - 480, 0, LARGEUR_RUE - 960);
+    this.cameras.main.scrollX = Phaser.Math.Clamp(this.heros.x - 480, 0, this.largeur - 960);
   }
 }
 

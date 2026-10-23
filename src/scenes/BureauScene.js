@@ -341,8 +341,8 @@ class BureauScene extends Phaser.Scene {
   creerTiroirs() {
     const OR = 0xd8a838, BLEU = 0x6a9ac9, VIOLET = 0x9a6ac9, VERT = 0x6a9a4a;
     const PICTOS = { ameliorations: ['balai', OR], forge: ['epees', OR], competences: ['idee', BLEU], reputation: ['etoile', BLEU], camps: ['soleil', BLEU],
-      etrange: ['lune', VIOLET], carnet: ['lettre', VIOLET], formes: ['son', VIOLET], aventuriers: ['crane', VERT], commerce: ['pieceFace', VERT] };
-    const ORDRE = ['ameliorations', 'forge', 'competences', 'reputation', 'camps', 'succes', 'etrange', 'carnet', 'formes', 'aventuriers', 'commerce'];
+      etrange: ['lune', VIOLET], carnet: ['lettre', VIOLET], voyage: ['etoile', OR], formes: ['son', VIOLET], aventuriers: ['crane', VERT], commerce: ['pieceFace', VERT] };
+    const ORDRE = ['voyage', 'ameliorations', 'forge', 'competences', 'reputation', 'camps', 'succes', 'etrange', 'carnet', 'formes', 'aventuriers', 'commerce'];
     // (v0.82) un tiroir de plus, vers la forge, une fois qu'elle est proposée
     let tiroirs = forgeProposee(this.G) ? [...TIROIRS, ['forge', 'La forge']] : TIROIRS;
     // (v1.24) le carnet de JeuneGoy, dès sa première pensée de départ
@@ -351,6 +351,8 @@ class BureauScene extends Phaser.Scene {
     if (typeof moulinFait === 'function' && moulinFait(this.G)) tiroirs = [...tiroirs, ['formes', 'Le carnet des formes']];
     // (v1.50, planche 61) les succès, façon Steam
     if (typeof SUCCES !== 'undefined') tiroirs = [...tiroirs, ['succes', 'Tes succès']];
+    // (v1.57) le grand voyage, dès la lettre du duc (et tant qu'on n'est pas parti)
+    if (this.G.voyage && this.G.voyage.lettreLue && !aPontRoyal(this.G)) tiroirs = [...tiroirs, ['voyage', 'Le grand voyage']];
     tiroirs = tiroirs.slice().sort((a, b) => ORDRE.indexOf(a[0]) - ORDRE.indexOf(b[0]));
     creerGlyphesHD(this); if (typeof creerPiecesHD === 'function') creerPiecesHD(this);
     const rangs = Math.ceil(tiroirs.length / 2), h = rangs > 5 ? 30 : rangs > 4 ? 36 : 44, pas = h + (rangs > 5 ? 3 : 4);
@@ -378,6 +380,7 @@ class BureauScene extends Phaser.Scene {
   ouvrirTiroir(cle, nom = (TIROIRS.find(t => t[0] === cle) || [])[1]) {
     const G = this.G;
     if (cle === 'formes') return ouvrirCarnetFormes(this);
+    if (cle === 'voyage') return ouvrirPageVoyage(this);   // (v1.57)
     if (cle === 'succes') { if (this.badgeSucces) { this.badgeSucces.destroy(); this.badgeSucces = null; } return ouvrirPageSucces(this); }
     if (cle === 'forge') { this.scene.pause(); this.scene.launch('Forge', { appelant: 'Bureau' }); return; }
     this.onglet = null;
