@@ -36,13 +36,15 @@ const FIGURANTS = {
   gardeRoyal: { race: 'humain', nom: 'Garde du pont', costume: 'gardeRoyal', habit: 0x1c1c24, cheveux: 0x1a1612, coiffure: 'long', niveau: 2, fache: true },
   banquier: { race: 'humain', nom: 'Banquier', costume: 'banquier', habit: 0x26262e, cheveux: 0x1a1a20 },
   nainBanquier: { race: 'nain', nom: 'Thorgrim', costume: 'banquier', habit: 0x26262e, cheveux: 0xe0e0e0 },
-  colporteur: { race: 'humain', nom: 'Colporteur', costume: 'colporteur', habit: 0x6a5a40, cheveux: 0x4a3a2a, cape: 0x4a3a2a },
+  colporteur: { race: 'humain', nom: 'Colporteur', costume: 'colporteur', habit: 0x6a5a40, cheveux: 0x4a3a2a, cape: 0x4a3a2a, barbe: 'courte' },   // (v1.61 : la barbe courte de son buste)
   mentor: { race: 'humain', nom: 'Garrick', costume: 'mentor', habit: 0x2e2420, cheveux: 0x3a281a, cape: 0x3e4a2a, barbe: 'rase', coiffure: 'long', peau: 1, niveau: 2 },   // (peau : la même teinte que son buste)
   mentorBlesse: { race: 'humain', nom: 'Garrick', costume: 'mentor', habit: 0x2e2420, cheveux: 0x3a281a, cape: 0x3e4a2a, barbe: 'rase', coiffure: 'long', peau: 1, niveau: 2, blesse: true },   // (v0.58 : repêché dans la rivière)
   gobelin: { race: 'gobelin', nom: 'Grippesou', costume: 'gobelin', habit: 0x6a5030, cheveux: 0x5a3a20 },
-  bourgmastre: { race: 'humain', nom: 'Odilon Bonnefoi', costume: 'banquier', habit: 0x4a2a5a, cheveux: 0xb0b0b8, barbe: 'moustache', niveau: 3 },
-  heraut: { race: 'humain', nom: 'Le héraut', costume: 'garde', habit: 0x2a4a8a, cheveux: 0x5a3a1a },
-  crieur: { race: 'humain', nom: 'Le crieur', costume: 'garde', habit: 0x7a4a1a, cheveux: 0x2a1a10, barbe: 'moustache', niveau: 2 },   // (v1.11) le crieur du marché, quand il vient au comptoir
+  // (v1.61) le bourgmastre, le héraut et le crieur passent au comptoir : avec `buste`, leur buste prend leurs couleurs (et
+  // la tenue de la garde pour le héraut et le crieur) ; `peau` : celle que leur nom leur donnait déjà en pied
+  bourgmastre: { race: 'humain', nom: 'Odilon Bonnefoi', costume: 'banquier', habit: 0x4a2a5a, cheveux: 0xb0b0b8, barbe: 'moustache', niveau: 3, peau: 2, buste: true },
+  heraut: { race: 'humain', nom: 'Le héraut', costume: 'garde', habit: 0x2a4a8a, cheveux: 0x5a3a1a, peau: 4, buste: true },
+  crieur: { race: 'humain', nom: 'Le crieur', costume: 'garde', habit: 0x7a4a1a, cheveux: 0x2a1a10, barbe: 'moustache', niveau: 2, peau: 4, buste: true },   // (v1.11) le crieur du marché, quand il vient au comptoir
   rivalA: { race: 'humain', nom: 'Lucien Belhomme', costume: 'noble', habit: 0x2a4a8a, cape: 0xece6d8, cheveux: 0xd8b048, barbe: 'moustache', coiffure: 'court', peau: 0, niveau: 3, buste: true },   // (v1.11, planche 40 v2) le paon du Conseil
   passeur: { race: 'humain', nom: 'Le Passeur', costume: 'pirate', coiffure: 'long', habit: 0x1e2236, cheveux: 0x1a1418, cape: 0x8a1616, barbe: 'courte', niveau: 2 },
   silhouette: { race: 'humain', nom: 'Silhouette encapuchonnée', costume: 'passeur', habit: 0x2a2430, cheveux: 0x1a1418, cape: 0x1a1620, barbe: 'courte', niveau: 1 },
@@ -105,7 +107,8 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   let gene, tenue, costume = null, cle, bouche, atours, proportions;
   if (typeof quoi === 'string' && FIGURANTS[quoi]) {
     const fig = FIGURANTS[quoi];
-    gene = { ...geneHD({ nom: fig.nom, race: fig.race === 'gobelin' ? 'humain' : fig.race, feminin: !!fig.feminin }), race: fig.race, habit: fig.habit, cheveux: fig.cheveux, cape: fig.cape, barbe: fig.barbe ?? null, coiffure: fig.coiffure || 'court', ...(fig.peau !== undefined ? { peau: fig.peau } : {}), ...(fig.vieux ? { vieux: true } : {}) };
+    gene = { ...geneHD({ nom: fig.nom, race: fig.race === 'gobelin' ? 'humain' : fig.race, feminin: !!fig.feminin }), race: fig.race, habit: fig.habit, cheveux: fig.cheveux, cape: fig.cape, barbe: fig.barbe ?? null, coiffure: fig.coiffure || 'court', ...(fig.peau !== undefined ? { peau: fig.peau } : {}), ...(fig.vieux ? { vieux: true } : {}),
+      ...(fig.buste ? { armure: false } : {}) };   // (v1.61) comme son buste (FIGURANTS_BUSTE) : pas de brigandine tirée de son nom
     tenue = fig.niveau ?? 1;
     costume = fig.costume;
     bouche = fig.bouche; atours = fig.atours; proportions = fig.proportions;
@@ -119,7 +122,8 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
     tenue = tenueDe(quoi.niveau);
     cle = `corps_${quoi.race}_${quoi.nom}_${tenue}`;
     // Les nobles et les collectionneurs : velours, fourrure et chapeau à plume
-    if (quoi.prestige) { costume = 'noble'; gene.habit = gene.habitNoble; gene.cape = 0x5a1a3a; cle += '_noble'; }
+    // (v1.61) dans les couleurs de leur gène, comme leur buste (et le collectionneur en costume de noble)
+    if (quoi.prestige) { costume = 'noble'; cle += '_noble'; }
     if (quoi.costume) { costume = quoi.costume; cle += '_' + quoi.costume; }
     if (quoi.vieux) cle += '_vieux';
     if (quoi.proportions) { proportions = quoi.proportions; cle += '_carrure'; }

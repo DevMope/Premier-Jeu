@@ -691,6 +691,13 @@ const SONS = {
   // Le coup de chiffon, le balai : trois « swish » de plus en plus vifs
   balai(t, bus) { for (let i = 0; i < 3; i++) this.bruit(0.16, t + i * 0.2, bus, 0.18 + i * 0.04, 1200 + i * 400, 'bandpass'); },
   // Une fanfare : un nouveau palier de réputation (quatre notes de trompette, la dernière tenue)
+  // (v1.61) un rang qui monte : doux mais qui fait plaisir (façon WoW) — un arpège de harpe qui s'élève, un accord
+  // tenu de flûtes, et des étincelles de carillon tout en haut (avant : la fanfare de trompettes, trop forte)
+  niveau(t, bus) {
+    [0, 4, 7, 12, 16].forEach((d, i) => this.note('harpe', 392 * Math.pow(2, d / 12), t + i * 0.075, 0.9, 0.55, bus));
+    [0, 4, 7].forEach(d => this.note('fluteDouce', 523.25 * Math.pow(2, d / 12), t + 0.32, 1.3, 0.32, bus));
+    [24, 28, 31].forEach((d, i) => this.note('carillon', 392 * Math.pow(2, d / 12), t + 0.42 + i * 0.11, 0.8, 0.35, bus));
+  },
   fanfare(t, bus) { const trompette = [392, 523.25, 659.25, 783.99]; trompette.forEach((f, i) => this.note('vielle', f, t + i * 0.16, i === 3 ? 0.9 : 0.14, 1.6, bus)); this.note('vielle', 523.25, t + 0.48, 0.9, 0.9, bus); },
   // Le glas : un aventurier qui ne reviendra pas
   glas(t, bus) { this.note('glas', 110, t, 2, 1, bus); this.note('glas', 110, t + 1.4, 2, 0.8, bus); },

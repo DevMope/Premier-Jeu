@@ -1,5 +1,5 @@
 // La version du jeu (affichée sur l'écran titre) : on l'augmente à chaque mise à jour publiée.
-const VERSION_JEU = 'v 1.60';
+const VERSION_JEU = 'v 1.61';
 // Point d'entrée : configuration de Phaser et liste des scènes.
 
 // Le jeu est en pixel art (pixels nets), mais les textes doivent rester lisses et lisibles :
@@ -143,7 +143,7 @@ function lancerJeu() {
   fps: { min: 1, smoothStep: false },
   backgroundColor: '#1a120a',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [TitleScene, IntroScene, IntroHistoireScene, CounterScene, NightScene, StoryScene, FailliteScene, ExpressScene, BanqueScene, MarcheScene, AtelierScene, BureauScene, CarteScene, DodoScene, FacadeScene, ArriereScene, RenovationScene, PromenadeScene, CambrioleurScene, MagesScene, EssaiScene, VoyageScene, MarcheNoirScene, RueScene, NympheScene, ForgeScene, CarrefourScene, SaisonScene, TirArcScene, MatScene, RoueScene, BanquetScene, DiseuseScene, LanternesScene, VisionScene, SageScene, BarScene, VitrineScene, MoulinScene, ParrainScene, PecheScene, BarbierScene, HudScene],
+  scene: [TitleScene, IntroScene, IntroHistoireScene, CounterScene, NightScene, StoryScene, FailliteScene, ExpressScene, BanqueScene, MarcheScene, AtelierScene, BureauScene, CarteScene, DodoScene, FacadeScene, ArriereScene, RenovationScene, PromenadeScene, CambrioleurScene, MagesScene, EssaiScene, VoyageScene, MarcheNoirScene, RueScene, NympheScene, ForgeScene, CarrefourScene, SaisonScene, TirArcScene, MatScene, RoueScene, BanquetScene, DiseuseScene, LanternesScene, VisionScene, SageScene, BarScene, VitrineScene, MoulinScene, ParrainScene, PecheScene, BarbierScene, HudScene, VoletScene],
 });
   // La musique et les sons : le son démarre au premier clic (les navigateurs l'exigent), et
   // chaque scène qui s'ouvre lance son ambiance.

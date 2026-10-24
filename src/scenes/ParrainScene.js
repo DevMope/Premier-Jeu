@@ -162,7 +162,7 @@ function soireeDuParrain(scene) {
   creerParrainHD(scene);
   c.add(scene.add.image(480, 222, 'gantNoirHD').setScale(3.2));
   const texte = redemande ? `${nom} t'attend à ta fenêtre, son cigare au bec. « Alors, gamin ? La Famille attend ta réponse. Ce soir, minuit. »`
-    : camp === 'ombre' ? "Ce soir, le panier est vide : ni lui, ni elle. Sur le coussin, un gant de cuir noir et une carte, signée d'une patte : « Minuit. La table du fond. Viens seul. — M. N. »"
+    : camp === 'ombre' ? `Ce soir, le panier est vide : ni lui, ni elle. Sur le coussin, un gant de cuir noir et une carte, signée d'une patte : « Minuit. La table du fond. Viens seul${eJ()}. — M. N. »`
       : camp === 'neutre' ? `À ta fenêtre, cigare au bec, ${nom} t'attend : « On parle affaires, ce soir ? Minuit, au marché noir. La table du fond. »`
         : `Depuis des jours, ${nom} tourne autour de toi sans rien dire. Ce soir, enfin : « Promets-moi de ne pas crier. Minuit, au marché noir. La table du fond. »`;
   c.add(scene.add.text(480, 262, texte, style(14, '#5a3a1a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 520 }, lineSpacing: 3 })).setOrigin(0.5, 0));

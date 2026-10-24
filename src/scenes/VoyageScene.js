@@ -461,10 +461,10 @@ class VoyageScene extends Cinematique {
     }
     if (id === 'clandestin') {
       // (couché sur le tas de bûches, dans le filet)
-      const f = this.filet, pip = imageCorps(this, f.x + 6, f.y + f.displayHeight * 0.34, { race: 'gobelin', nom: 'Pip', niveau: 'novice' }, 4.4).setOrigin(0.5).setAngle(-84).setDepth(4.31);
+      const f = this.filet, pip = imageCorps(this, f.x + 6, f.y + f.displayHeight * 0.34, { race: 'gobelin', nom: 'Pip', niveau: 'novice' }, 4.4, 'dort').setOrigin(0.5).setAngle(-84).setDepth(4.31);   // (v1.61 : il dort les yeux fermés)
       const ronfle = this.time.addEvent({ delay: 1400, loop: true, callback: () => { if (!pip.active || pip.angle > -40) return; const z = this.add.text(pip.x - 14, pip.y - 26, 'z', style(14, '#3b2410', { fontStyle: 'bold italic' })).setDepth(4.9); this.uiCam.ignore(z); this.tweens.add({ targets: z, y: z.y - 26, x: z.x - 10, alpha: 0, duration: 1300, onComplete: () => z.destroy() }); } });
       return { apres: async i => {
-        ronfle.remove(); pip.setAngle(0).setOrigin(0.5, 1).setY(f.y + f.displayHeight * 0.8);   // (il se réveille et se redresse dans le filet)
+        ronfle.remove(); pip.setTexture(corpsHD(this, { race: 'gobelin', nom: 'Pip', niveau: 'novice' })).setAngle(0).setOrigin(0.5, 1).setY(f.y + f.displayHeight * 0.8);   // (il se réveille et se redresse dans le filet)
         if (i === 0) { this.emotion(pip, 'colere', 1200); await new Promise(ok => this.tweens.add({ targets: pip, x: pip.x - 90, y: sol + 40, duration: 600, ease: 'Quad.easeIn', onComplete: ok })); pip.setDepth(6.9); this.bord(pip); this.allerA(pip, -300, 2400); }
         else { this.emotion(pip, 'joie', 1400); await new Promise(ok => this.tweens.add({ targets: pip, x: this.facade.porteX, y: sol - 10, alpha: 0, duration: 900, onComplete: ok })); pip.destroy(); }
       } };

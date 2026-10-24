@@ -86,7 +86,7 @@ function matinDeLaConfrerie(G) {
   if (c.marche) {
     const z = ZONES[c.marche.zone];
     lignes.push(`L'escouade de la Confrérie est revenue ${deLieu(z.nom)} : la conquête avance (+1).` + (c.marche.conquise ? ` ⚑ ${z.nom} : contrée conquise !` : ''));
-    if (!G.annonceConfrerie) G.annonceConfrerie = `L'escouade de la Confrérie, payée par un marchand du Comté, a repris du terrain ${aLieu(z.nom)}. ${c.marche.conquise ? 'La contrée est libérée !' : 'Les Bannis reculent.'}`;
+    if (!G.annonceConfrerie) G.annonceConfrerie = `L'escouade de la Confrérie, payée par un marchand de la Comté, a repris du terrain ${aLieu(z.nom)}. ${c.marche.conquise ? 'La contrée est libérée !' : 'Les Bannis reculent.'}`;
     c.marcheVue = c.marche;
     c.marche = null;
   }

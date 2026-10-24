@@ -165,7 +165,7 @@ class FacadeScene extends Cinematique {
     const cerceau = this.add.circle(f.porteX - 20, sol - 12, 12).setStrokeStyle(3, 0x8a6a2a).setDepth(8.1);
     this.tweens.add({ targets: cerceau, x: f.porteX + 30, angle: 360, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     // le premier matin : ils te remercient
-    if (r.racheteLe === G.jour - 1) this.bulleVoisin(f.porteX + 20, 150, "« C'est toi, le patron du comptoir ? Merci pour la maison ! On peut t'aider ? »", 260, 20);
+    if (r.racheteLe === G.jour - 1) this.bulleVoisin(f.porteX + 20, 150, `« C'est toi, ${eJ() ? 'la patronne' : 'le patron'} du comptoir ? Merci pour la maison ! On peut t'aider ? »`, 260, 20);
     else if (G.orphelinat && G.orphelinat.chantier) this.bulleVoisin(f.porteX + 20, 150, '« Cette nuit, les ouvriers viennent bâtir ! »', 230, 20);
   }
 

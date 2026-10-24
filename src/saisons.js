@@ -6,7 +6,7 @@ const SAISONS = {
   semailles: { nom: 'Semailles', mois: 0, sous: 'Le printemps est là', effet: 'Le printemps : les rivières en crue, plus de novices au comptoir', icone: 'fleur' },
   moissons: { nom: 'Moissons', mois: 1, sous: 'Le temps des récoltes', effet: "L'été : la soif sur les routes", icone: 'epi' },
   brumes: { nom: 'Brumes', mois: 2, sous: 'Les jours raccourcissent', effet: "L'automne : la brume, on se perd plus souvent", icone: 'feuille' },
-  givre: { nom: 'Givre', mois: 3, sous: "L'hiver tombe sur le Comté", effet: "L'hiver : le froid, un client de moins par jour", icone: 'flocon' },
+  givre: { nom: 'Givre', mois: 3, sous: "L'hiver tombe sur la Comté", effet: "L'hiver : le froid, un client de moins par jour", icone: 'flocon' },
 };
 const ORDRE_SAISONS = ['semailles', 'moissons', 'brumes', 'givre'];
 

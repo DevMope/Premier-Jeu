@@ -55,7 +55,7 @@ function creerCoinChatsHD(scene) {
 const COIN_CHATS = {
   panier: { nom: 'Le grand panier pour deux', prix: 0, texte: 'Ils y dorment en boule, serrés l’un contre l’autre.' },
   gamelles: { nom: 'Les deux gamelles à leur nom', prix: 0, texte: 'Une ration tous les trois jours chacun.' },
-  arbre: { nom: "L'arbre à griffer", prix: 60, texte: 'Ils y font leurs griffes (et plus ta malle).' },
+  arbre: { nom: "L'arbre à griffer", prix: 60, texte: 'Ils y font leurs griffes (et plus sur ta malle).' },
   coussin: { nom: 'Le coussin brodé', prix: 90, texte: 'Un cœur brodé : elle y dort quand il fume à la fenêtre.' },
   pelote: { nom: 'La pelote de laine', prix: 15, texte: 'Elle joue, il fait semblant de ne pas regarder.' },
   cabane: { nom: 'La cabane en bois', prix: 250, texte: 'Une maison à eux, avec une porte ronde. Assez grande pour plus tard...' },

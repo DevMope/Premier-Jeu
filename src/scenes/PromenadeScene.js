@@ -649,7 +649,7 @@ class PromenadeScene extends Cinematique {
     this.cameras.main.fadeOut(400);
     const nuit = this.scene.get('Nuit');
     if (nuit && nuit.lieu) Sauvegarde.planifier(this.G, nuit.lieu);   // (v0.65 : le chat adopté, nourri...)
-    this.cameras.main.once('camerafadeoutcomplete', () => { this.scene.stop(); this.scene.resume('Nuit'); if (nuit && nuit.tout) nuit.tout(); });
+    this.cameras.main.once('camerafadeoutcomplete', () => { this.scene.stop(); this.scene.resume('Nuit'); if (nuit && nuit.G && nuit.tout) nuit.tout(); });
   }
 }
 
@@ -713,7 +713,7 @@ function ouvrirMalle(scene, quandFini = null) {
   fixe(scene.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.6).setInteractive());
   fixe(scene.add.image(480, 270, panneauHD(scene, 700, 430)).setScale(2));
   fixe(scene.add.text(480, 80, 'Ta malle à vêtements', style(22, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-  fixe(scene.add.text(480, 106, 'Ce que tu portes, on le voit sur toi, partout ; le reste reste plié ici.', style(13, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+  fixe(scene.add.text(480, 106, 'Ce que tu portes, on le voit sur toi, partout ; le reste attend ici, plié.', style(13, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
   creerIconesHD(scene);
   const apercu = fixe(scene.add.image(250, 430, 'joueur_' + stadeJoueur(G)).setOrigin(0.5, 1).setScale(echelleJoueur(9)));
   const lignes = scene.add.container(0, 0); boite.add(lignes);

@@ -272,6 +272,16 @@ const DESSINS_ICONES = {
     }, { decalage: 0.4 });
     t.poser(5, 5, 'verre', 5); t.poser(5, 6, 'verre', 4);
   },
+  // (v1.61) un cœur en plus (potion, escorte, tarte) : doré, et le perdre n'est pas une blessure
+  coeurOr(t) {
+    t.rampes.orCoeur = rampe(0xe8b030);
+    t.forme('orCoeur', (x, y) => {
+      const dx = x + 0.5 - 8, dy = y + 0.5 - 8;
+      const dedans = Math.hypot(dx + 3, dy + 1.5) < 3.7 || Math.hypot(dx - 3, dy + 1.5) < 3.7 || (dy >= -1.5 && Math.abs(dx) < 6.7 - (dy + 1.5) * 1.05);
+      return dedans && y <= 14 ? [dx / 8, dy / 8, 0.8] : null;
+    }, { decalage: 0.4 });
+    t.poser(5, 5, 'verre', 5); t.poser(5, 6, 'verre', 4);
+  },
   coeurVide(t) {
     t.rampes.vide = rampe(0x3a2a2e);
     t.forme('vide', (x, y) => {

@@ -383,7 +383,7 @@ class CarteScene extends Phaser.Scene {
     // La légende des repères, à part dans la bande : rien ne peut la cacher.
     this.add.text(24, 438, 'Sur la carte :', style(12, '#c9b48a', { fontStyle: 'bold italic' }));
     creerGlyphesHD(this);
-    [['epees', 'en mission (jour\ndu retour)', 466], ['lettre', "t'a écrit", 492], ['crane', 'ta cible', 510]].forEach(([g, t, y]) => {
+    [['epees', 'en mission (jour\ndu retour)', 466], ['lettre', 'une quête', 492], ['crane', 'ta cible', 510]].forEach(([g, t, y]) => {
       this.add.image(32, y, 'glyphe_' + g).setScale(1.7);
       this.add.text(44, y, t, style(11, '#f3e6c8', { lineSpacing: -2 })).setOrigin(0, 0.5);
     });

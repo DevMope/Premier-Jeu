@@ -157,7 +157,7 @@ class MarcheNoirScene extends Phaser.Scene {
     this.majFleches();
     // le garde orc arrête ceux que la Main Noire n'a pas invités
     // (v1.08) sauf si l'on est reparti, ou si un jeu a commencé entre-temps (la mise était perdue)
-    if (coin === 2 && !this.mainNoireOuverte) this.time.delayedCall(900, () => { if (this.coin === 2 && !this.part && !this.bloqueCoins) this.accueil("Un orc énorme te barre le passage : « La table du fond, c'est sur invitation. Reviens quand on parlera de toi, marchand. »"); });
+    if (coin === 2 && !this.mainNoireOuverte) this.time.delayedCall(900, () => { if (this.coin === 2 && !this.part && !this.bloqueCoins) this.accueil(`Un orc énorme te barre le passage : « La table du fond, c'est sur invitation. Reviens quand on parlera de toi, marchand${eJ()}. »`); });
     if (coin === 0 && !this.aine) this.time.delayedCall(900, () => { if (this.coin === 0 && !this.part && !this.bloqueCoins) this.accueil('Le feu crépite. Une vieille gobeline te sourit sans un mot : ce soir, aucun aîné ne raconte.'); });
   }
 
@@ -216,17 +216,19 @@ class MarcheNoirScene extends Phaser.Scene {
       if (!message) message = "Le Passeur : « Bienvenue en bas. Ici, on parle de contrées que ta carte ne montre pas... Le Bourbier, le Pont des Trolls, la Clairière des Chamans. Demain, tu sauras où elles sont. »";
     }
     const b = s.bannis[0];
-    const t1 = this.texte(40, 374, message || (this.fete ? accueilBrumes(G) : `Le Passeur : « Bienvenue en bas. Ici, personne ne pose de questions. »`), 15, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    // (v1.61) les lignes se posent l'une sous l'autre, au-dessus des boutons (y ≈ 439), et laissent à droite la place
+    // du chat qui guette l'escalier (texteRisque)
+    const t1 = this.texte(40, 370, message || (this.fete ? accueilBrumes(G) : `Le Passeur : « Bienvenue en bas. Ici, personne ne pose de questions. »`), 15, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 660 } });
     // (v1.17) un accueil sur deux lignes recouvrait le murmure : celui-ci attend la prochaine fois
-    const basAccueil = t1.getBounds().bottom;
-    if (basAccueil <= 400) this.texte(40, 400, `${b.nom} murmure : « ${s.murmure} »`, 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    let basLignes = t1.getBounds().bottom + 2;
+    if (basLignes <= 394) basLignes = this.texte(40, basLignes, `${b.nom} murmure : « ${s.murmure} »`, 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } }).getBounds().bottom + 2;
     const mainNoire = this.mainNoireOuverte;
     const ici = page => () => this.allerCoin(1, page);
     const choix = [['Le Passeur (objets interdits)', ici(() => this.pagePasseur())], ['Les commandes des Bannis', ici(() => this.pageCommandes())], ['Vendre une trouvaille', ici(() => this.pageTrouvailles())]];
     if (mainNoire) choix.push(['La table du fond', () => this.allerCoin(2, () => this.pageMainNoire())]);
     const aine = s.aine && !(G.ainesRecits || []).includes(s.aine) ? AINES[s.aine] : null;
     if (aine) {
-      this.texte(40, 424, `Près du feu des doyens, ${aine.nom} tapote sa canne : « Tu as un peu de temps pour une vieille histoire ? »`, 12, '#e8c890', { fontStyle: 'italic', wordWrap: { width: 880 } });
+      if (basLignes <= 421) this.texte(40, basLignes, `Près du feu des doyens, ${aine.nom} tapote sa canne : « Tu as un peu de temps pour une vieille histoire ? »`, 12, '#e8c890', { fontStyle: 'italic', wordWrap: { width: 880 } });
       choix.push([aine.feminin ? "Écouter l'aïeule" : "Écouter l'aïeul", () => this.allerCoin(0, () => this.pageAine())]);
     }
     const l = 900 / choix.length;
@@ -245,7 +247,7 @@ class MarcheNoirScene extends Phaser.Scene {
   texteRisque() {
     const r = this.soiree.risque;
     const mot = r <= 0 ? 'La ruelle est calme.' : r < 0.15 ? 'Le chat noir dresse une oreille.' : r < 0.3 ? 'Le chat noir fixe l\'escalier...' : 'Le chat noir crache vers l\'escalier !';
-    this.texte(920, 424, mot, 12, r < 0.15 ? '#a89080' : '#ff8a6a', { fontStyle: 'italic' }).setOrigin(1, 0.5);
+    this.texte(920, 380, mot, 12, r < 0.15 ? '#a89080' : '#ff8a6a', { fontStyle: 'italic' }).setOrigin(1, 0.5);   // (v1.61 : en haut à droite, à côté de l'accueil)
   }
 
   // Le Passeur : les objets interdits
@@ -291,7 +293,7 @@ class MarcheNoirScene extends Phaser.Scene {
         const e = honorerCommande(G, c);
         if (!e) Son.jouer('pieces');
         this.majBourse();
-        this.pageCommandes(e || `${c.banni.nom} glisse ${c.prix} pièces sur le tonneau. « On se reverra, marchand. »`);
+        this.pageCommandes(e || `${c.banni.nom} glisse ${c.prix} pièces sur le tonneau. « On se reverra, marchand${eJ()}. »`);
       }, (G.interdits[c.objet] || 0) > 0);
     });
     this.bouton(860, 503, 140, '◂ Retour', () => this.accueil());

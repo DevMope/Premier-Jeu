@@ -20,7 +20,7 @@ const FILMS_CAMBRIOLEUR = {
   yeux: { titre: 'I.  LES YEUX', replique: '« Tu cherches quelque chose... l\'ami ? »' },
   ombre: { titre: 'II.  L\'OMBRE', replique: '« Je compte jusqu\'à trois. »' },
   fumee: { titre: 'III.  LA FUMÉE', replique: '« Bouh. »' },
-  parrain: { titre: 'IV.  LE PARRAIN', replique: '« On ne vole pas chez la famille. Tu vas dire bonsoir... et oublier cette adresse. »' },
+  parrain: { titre: 'IV.  LE PARRAIN', replique: '« On ne vole pas chez la Famille. Tu vas dire bonsoir... et oublier cette adresse. »' },
 };
 
 function etatCambrioleur(G) { return (G.cambrioleur = G.cambrioleur || { prochain: null, fois: 0, fini: false }); }

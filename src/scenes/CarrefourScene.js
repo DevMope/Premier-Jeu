@@ -239,7 +239,7 @@ class CarrefourScene extends Cinematique {
       this.apres(camp, false, 'Tu restes libre', 'Aucun serment ne te lie.');
       await this.dire('La pierre ne prie personne', cf.derniere
         ? `${camp === 'bien' ? 'Sire Aldric' : 'Ilvane'} s'en va sans un mot. ${camp === 'bien' ? 'La Confrérie' : 'Les Bannis'} ne te ${camp === 'bien' ? 'le proposera' : 'le proposeront'} plus.`
-        : `${ENVOYES[camp].nom} remet sa lanterne en marche. ${camp === 'bien' ? 'La Confrérie' : 'Les Bannis'} reviendr${camp === 'bien' ? 'a' : 'ont'} une dernière fois si ta balance atteint le 3e palier. Et si un jour elle penche de l'autre côté, l'autre chemin pourrait s'ouvrir.`);
+        : `${ENVOYES[camp].nom} repart, sa lanterne à la main. ${camp === 'bien' ? 'La Confrérie' : 'Les Bannis'} reviendr${camp === 'bien' ? 'a' : 'ont'} une dernière fois si ta balance atteint le 3e palier. Et si un jour elle penche de l'autre côté, l'autre chemin pourrait s'ouvrir.`);
     }
     this.finir();
   }

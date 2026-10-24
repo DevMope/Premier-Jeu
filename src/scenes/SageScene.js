@@ -6,7 +6,7 @@
 // (planche 33, validée le 18/10) le cortège du Conseil sur l'estrade (CONSEIL_VALIDE le ferme si on doit retirer les dessins)
 let CONSEIL_VALIDE = true;   // (planche 33 validée le 18/10)
 const DISCOURS_SAGE = [
-  "Peuple du Comté ! Voilà bien des hivers que le dragon ne trouble plus nos ciels.",
+  "Peuple de la Comté ! Voilà bien des hivers que le dragon ne trouble plus nos ciels.",
   "Ce n'est pas la chance qui vous garde : c'est l'Union. Que chaque comptoir soit une lanterne, chaque voisin un frère.",
   "Le Conseil ne vous demande qu'une chose : la bienveillance... et un peu de vigilance envers ceux qui ont choisi l'ombre.",
 ];
@@ -112,7 +112,7 @@ class SageScene extends Phaser.Scene {
     const fin = () => { if (!this.fini) this.indice.setText('▶ clique pour continuer'); this.occupe = false; };
     this.occupe = true;
     if (this.etape === 1) {
-      this.dire("Le grand jour du Solstice. Les cloches sonnent à toute volée : le cortège du Conseil des Gardiens arrive sur la place." + (this.cortege.length ? " Maître Pommeval, le Gardien du Comté, et Sire Valdric, le Champion du Rempart, montent sur l'estrade." : ""));
+      this.dire("Le grand jour du Solstice. Les cloches sonnent à toute volée : le cortège du Conseil des Gardiens arrive sur la place." + (this.cortege.length ? " Maître Pommeval, le Gardien de la Comté, et Sire Valdric, le Champion du Rempart, montent sur l'estrade." : ""));
       this.sonner(3);
       for (const c of this.cortege) { pasDeMarche(this, c, 1800); this.tweens.add({ targets: c, x: c.cible, alpha: 1, duration: 1800, ease: 'Sine.easeOut', onComplete: () => this.tweens.add({ targets: c, y: c.y - 2, duration: 1200 + c.x, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }) }); }
       for (const g of this.gardes) { pasDeMarche(this, g, 2200); this.tweens.add({ targets: g, x: g.cible, duration: 2200, ease: 'Sine.easeOut', onComplete: () => g.setFlipX(g.cible > 480) }); }

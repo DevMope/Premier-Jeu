@@ -19,7 +19,7 @@ function jourZero(G) { return !!G && G.jour === 0; }
 // --- Les lieux qui s'ouvrent petit à petit ---
 const DEBLOCAGES = {
   bureau: { jour: 1, nom: 'Le bureau', quand: 'demain soir', texte: "Le soir, améliore ton comptoir : les ouvriers viennent pendant que tu dors." },
-  atelier: { jour: 5, nom: "L'atelier", quand: 'ta 1re trouvaille', si: G => (G.tresors || []).length > 0, texte: "Les trouvailles que tes clients rapportent : répare-les, et revends-les plus cher aux enchères." },
+  atelier: { jour: 5, nom: "L'atelier", quand: 'ta 1re trouvaille', si: G => (G.tresors || []).length > 0, texte: "Les trouvailles que tes clients rapportent : embauche un ouvrier pour les réparer, et revends-les plus cher aux enchères." },
   banque: { jour: 4, nom: 'La banque', quand: 'au jour 4', texte: "Un prêt pour te dépanner. Mais la banque prélève chaque nuit : ne prends que ce que tu peux rendre." },
 };
 function lieuDebloque(G, cle) {
@@ -27,7 +27,9 @@ function lieuDebloque(G, cle) {
   if (!d || !didacticiel(G)) return true;
   return G.jour >= d.jour || !!(d.si && d.si(G));
 }
-// Ce qui vient de s'ouvrir et n'a pas encore été annoncé (une seule fois chacun)
+// (v1.61) un lieu est « vu » quand on y entre : son « NOUVEAU » disparaît alors (avant : dès le premier soir)
+function lieuVu(cle) { const G = window.GAME; if (G) (G.nouveautesVues = G.nouveautesVues || {})[cle] = true; }
+// Ce qui s'est ouvert et où l'on n'est pas encore entré (annoncé une seule fois chacun : G.nouveautesAnnoncees)
 function nouveautes(G) {
   if (!didacticiel(G)) return [];
   G.nouveautesVues = G.nouveautesVues || {};
@@ -48,7 +50,7 @@ const OBJECTIFS = [
     prog: G => [(G.succes && G.succes[2]) || (G.partis || []).some(p => p.voyageur && ZONES[p.voyageur.zone] && ZONES[p.voyageur.zone].danger >= 2) ? 1 : 0, 1], argent: 30,
     aide: "Sur la carte, le matin : les contrées à deux étoiles rapportent plus... pour un aventurier qui a déjà fait ses preuves." },
   { id: 'trouvaille', groupe: 'semaine', des: G => lieuDebloque(G, 'atelier'), texte: 'Revends une trouvaille', prog: G => [Math.min(1, (G.stats && G.stats.ventes) || 0), 1], argent: 30,
-    aide: "Le soir, l'atelier : répare la trouvaille, puis mets-la aux enchères au marché, le matin." },
+    aide: "Le soir, l'atelier : fais réparer la trouvaille par un ouvrier, puis mets-la aux enchères au marché, le matin." },
   { id: 'marchandage', groupe: 'semaine', des: G => G.jour >= 3, texte: 'Réussis un marchandage', prog: G => [Math.min(1, G.persuasion || 0), 1], argent: 20,
     aide: "Quand un client discute sa part du butin ou le prix d'une trouvaille : propose, et ne cède pas trop vite." },
   { id: 'clients10', groupe: 'semaine', des: G => G.jour >= 2, texte: 'Sers 10 clients', prog: G => [G.experience || 0, 10], argent: 50,
@@ -245,7 +247,7 @@ function visiteDuMonde(carte) {
   const ETAPES = ['Ta maison', 'Le monde', 'La lumière et l’ombre', 'Le marché', 'Ton premier client'];
   const PAS = [
     { zone: [255, 140, 480, 200], texte: "« Ici, c'est la Comté : chez nous. Chaque matin, des aventuriers cherchent où aller, et c'est toi qui choisis. Les étoiles, c'est le danger... et le butin. Sous les nuages, le reste du monde : il s'ouvrira à mesure que ton nom circulera. »" },
-    { zone: null, texte: "« Le monde aime ranger les gens : la lumière d'un côté, l'ombre de l'autre. Ce que tu vends, à qui tu le vends, et ce que tu fermes les yeux dessus : tout se sait. La jauge, sous ta réputation, te dira de quel côté tu penches. Personne ne choisira pour toi. »", fleche: [120, 54, -90] },
+    { zone: null, texte: "« Le monde aime ranger les gens : la lumière d'un côté, l'ombre de l'autre. Ce que tu vends, à qui tu le vends, et ce sur quoi tu fermes les yeux : tout se sait. La jauge, sous ta réputation, te dira de quel côté tu penches. Personne ne choisira pour toi. »", fleche: [120, 54, -90] },
     { zone: null, texte: "« Demain matin, avant d'ouvrir, je t'emmène au Marché des Mastres : c'est là que tu rachètes de quoi remplir ta réserve. Chaque marchand a ses prix du jour. Ce qui manque sur tes étagères manquera au comptoir. »" },
     { zone: null, texte: "« Assez parlé ! Une cliente t'attend déjà : Pippa, une hobbite qui doit porter une lettre de l'autre côté de la rivière. Une course facile, pour commencer. Je reste à côté de toi. »", bouton: 'Ouvrir le comptoir ▶' },
   ];
@@ -270,9 +272,9 @@ function guideClient(comptoir, etape) {
   for (const k of ['comptoir', 'colis', 'remis', 'refus', 'carte']) G.tutoVu[k] = true;   // (le guide remplace ces conseils-là)
   const et = n => ({ y: 338, liste: ETAPES_CLIENT, enCours: n, titre: 'Ton premier client :' });
   const PAS = {
-    commande: { zone: [683, 16, 262, 236], fleche: [640, 130, 0], texte: "« D'abord, lis sa commande, là, sur le parchemin. Chaque ligne, c'est ce qu'il lui faut pour revenir vivant. »", bouton: 'Compris ▶', suite: 'marchandises', n: 0 },
+    commande: { zone: [683, 16, 262, 236], fleche: [640, 130, 0], texte: "« D'abord, lis sa commande, là, sur le parchemin. Chaque ligne, c'est ce qu'il lui faut pour revenir vivante. »", bouton: 'Compris ▶', suite: 'marchandises', n: 0 },
     marchandises: { zone: [142, 352, 556, 172], fleche: [420, 330, 90], texte: "« Clique sur tes marchandises, en bas, pour les glisser dans son baluchon. Tout ce qui est sur le parchemin. »", n: 1, bulle: { x: 470, y: 200, pointe: null } },
-    flair: { zone: [683, 192, 262, 54], fleche: [640, 219, 0], texte: "« Tout y est ! Sous la commande, la jauge de ton flair : ses chances de revenir vivant. Plus le baluchon est complet, plus elle monte. »", bouton: 'Compris ▶', suite: 'remettre', n: 2 },
+    flair: { zone: [683, 192, 262, 54], fleche: [640, 219, 0], texte: "« Tout y est ! Sous la commande, la jauge de ton flair : ses chances de revenir vivante. Plus le baluchon est complet, plus elle monte. »", bouton: 'Compris ▶', suite: 'remettre', n: 2 },
     remettre: { zone: [732, 476, 216, 40], fleche: [690, 496, 0], texte: "« Il ne reste qu'à lui remettre son baluchon. Clique sur « Remettre le baluchon ». »", n: 3, bulle: { x: 470, y: 420, pointe: null } },
   };
   if (etape === 'fini') {

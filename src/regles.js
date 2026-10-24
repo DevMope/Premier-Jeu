@@ -677,8 +677,6 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
   };
   window.GAME = G;
   G.file = JOUR_1.map(v => ({ type: 'client', voyageur: creerVoyageur(G, v) }));
-  // Deux lettres déjà sur le bureau le premier matin, à accepter ou refuser le soir.
-  recevoirLettres(G, 2);
   G.express = offreDuJour(MARCHAND_EXPRESS.multiplicateur, 3, 1, 2, hasard(2, 3));   // (v0.94 : un petit choix, pas tout le marché)
   G.expressMateriaux = materiauxExpress();
   G.zonesConnues = zonesOuvertes(G); // les zones ouvertes au départ ne donnent pas de pièce
@@ -765,8 +763,8 @@ function recevoirLettres(G, nombre) {
 function preparerSoir(G) {
   if (G.lettresDuJour === G.jour) return;
   G.lettresDuJour = G.jour;
-  // Les lettres de commande sont rares.
-  recevoirLettres(G, Math.random() < CHANCE_LETTRE ? 1 : 0);
+  // (v1.61) plus de lettres de commande : le joueur les a retirées du jeu (24/10). Celles déjà acceptées
+  // reviennent comme prévu ; celles sans réponse sont oubliées au chargement (sauvegarde.js).
 }
 
 // Ce qu'il faudrait pour satisfaire toutes les commandes acceptées, à partir d'un jour donné
@@ -847,7 +845,7 @@ function acheterAuMarche(G, cle, id) {
   const prix = prixMarchand(G, cle, id);
   if (!peutPayer(G, prix)) return { erreur: manqueArgent(G, prix, "Pas assez d'argent ! Passe à la banque pour un prêt.") };
   const materiau = id in MATERIAUX;
-  if (!materiau && stockTotal(G) >= G.capacite) return { erreur: 'Ta réserve est pleine.' };
+  if (!materiau && stockTotal(G) >= G.capacite) return { erreur: `Ta réserve est pleine (${stockTotal(G)}/${G.capacite}) ! Vends ou agrandis-la.` };
   offre.qte--;
   if (materiau) G.materiaux[id] = (G.materiaux[id] || 0) + 1;
   else { G.stock[id]++; if (typeof pieceArme === 'function') pieceArme(G, id); }   // (v1.23 : une arme pour la vitrine)
@@ -873,16 +871,32 @@ function depenserChez(G, cle, montant) {
 // Grippesou finit par le laisser jouer (« C'est le business... mais fais vite, petit. »).
 const AGE_JEUX = 18, INSISTANCE_GRIPPESOU = 3;
 function tropJeunePourParier(G) { return ageJoueur(G) < AGE_JEUX; }
-function coinDesJeuxPermis(G) { return !tropJeunePourParier(G) || !!G.grippesouPermet; }
-// Une tentative de plus au coin des jeux : true quand Grippesou cède (une fois pour toutes)
+// (v1.61) Grippesou ne cède que pour la journée, et chaque fois il faut insister plus longtemps : 3 tentatives, puis 5,
+// puis 7... jusqu'aux 18 ans (avant : une fois qu'il avait cédé, c'était pour toujours)
+function coinDesJeuxPermis(G) { return !tropJeunePourParier(G) || G.grippesouCedeLe === G.jour; }
+function insistanceGrippesou(G) { return INSISTANCE_GRIPPESOU + 2 * (G.cessionsGrippesou || 0); }
+// Une tentative de plus au coin des jeux : true quand Grippesou cède (pour aujourd'hui)
 function insisterAuCoinDesJeux(G) {
   G.insistanceJeux = (G.insistanceJeux || 0) + 1;
-  if (G.insistanceJeux >= INSISTANCE_GRIPPESOU) G.grippesouPermet = true;
-  return !!G.grippesouPermet;
+  if (G.insistanceJeux < insistanceGrippesou(G)) return false;
+  G.grippesouCedeLe = G.jour;
+  G.cessionsGrippesou = (G.cessionsGrippesou || 0) + 1;
+  G.insistanceJeux = 0;
+  return true;
 }
 const REFUS_COIN_DES_JEUX = [
   "Fil-de-Fer cache ses dés dans sa manche : « Pas de mise pour les mioches. Reviens à dix-huit ans. »",
   "Fil-de-Fer soupire : « Encore toi ? La garde me ferme l'étal si je fais jouer un gamin. File ! »",
+  "Fil-de-Fer croise les bras : « Ce qui a marché une fois ne marche pas deux fois, gamin. »",
+  "Fil-de-Fer fait mine de ne pas te voir et range ses gobelets, un par un.",
+  "Fil-de-Fer grogne : « Grippesou a eu des ennuis avec la garde, la dernière fois. Va-t'en. »",
+];
+// (v1.61) ce que dit Grippesou quand il cède : de plus en plus à contrecœur
+const CESSIONS_GRIPPESOU = [
+  "Le vieux Grippesou passe la tête sous l'auvent : « Laisse, cousin... C'est le business. Mais fais vite, petit. »",
+  "Grippesou lève les yeux au ciel : « Bon, bon... Une dernière fois, hein ? Et tu ne dis rien à personne. »",
+  "Grippesou soupire longuement : « Tu as la tête plus dure que mes pièces. Vas-y... mais c'est la dernière ! »",
+  "Grippesou ne dit même plus rien : il lève les bras au ciel, et laisse son cousin sortir les dés.",
 ];
 
 function partiesRestantes(G, jeu) {
@@ -1029,6 +1043,12 @@ function refuserClient(G, voyageur) {
 // --- Relations ---
 
 // La couleur d'un nom de PNJ selon ta relation avec lui (sombre = sur fond sombre).
+// (v1.61) le code couleur des relations, partout où on l'écrit : du rouge (ennemis) au vert vif (frères de sang)
+function couleurRelation(nomNiveau, sombre = false) {
+  const n = NIVEAUX_RELATION.find(x => x.nom === nomNiveau);
+  return n ? (sombre ? n.vive : n.couleur) : sombre ? '#e8dcc0' : '#6b5a40';
+}
+
 function couleurNom(G, nom, sombre = false) {
   const n = niveauRelation(G, nom);
   return sombre ? n.vive : n.couleur;
@@ -1203,7 +1223,7 @@ function estimationFlair(G, t) {
   const verdict = rapport < 0.35 ? { texte: 'Une affaire en or !', couleur: '#2f7a2a' }
     : rapport < 0.5 ? { texte: 'Bon prix', couleur: '#2f6a2a' }
     : rapport < 0.68 ? { texte: 'Prix correct, sans plus', couleur: '#8a6a10' }
-    : { texte: 'Trop cher, à mon avis…', couleur: '#a03030' };
+    : { texte: 'Trop cher, à mon avis...', couleur: '#a03030' };
   return { min, max, verdict, flair };
 }
 
@@ -2276,7 +2296,8 @@ function terminerAventure(G, parti) {
     // La mission est ratée : il revient vivant, mais sans rien.
     G.reputation -= PERTE_ECHEC;
     G.journal.echecs = (G.journal.echecs || 0) + 1;
-    const blessures = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - 1));
+    // (v1.61) le cœur en plus d'une potion offerte ne compte pas comme une blessure : il revient avec 1 cœur sur ses v.pv
+    const blessures = Math.max(0, Math.min(v.pv, v.pv - 1));
     const h = { nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau: v.niveau };
     parti.malus = appliquerMalusEchec(G, parti, h);
     G.habitues.push(h);
@@ -2292,7 +2313,7 @@ function terminerAventure(G, parti) {
     // (v0.60) Revenu, mais blessé : la mission compte moins (un quart de réputation en moins par cœur
     // perdu, jamais moins de la moitié), et il lui faudra du repos s'il n'est pas soigné.
     const derniere0 = r.etapes[r.etapes.length - 1];
-    const blesse = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - derniere0.pvApres));
+    const blesse = Math.max(0, Math.min(v.pv, v.pv - derniere0.pvApres));   // (v1.61) un cœur doré perdu n'est pas une blessure
     const part = part0 * Math.max(0.5, 1 - 0.25 * blesse);
     // (audit v0.54) Au-delà de 12, la réputation monte de moins en moins vite : elle garde un sens
     // en fin de partie (refus, échecs et pièges continuent de coûter quelque chose).
@@ -2335,8 +2356,9 @@ function terminerAventure(G, parti) {
     if (part0 < 1) message = (message ? message + ' ' : '') + `Sa commande n'était remplie qu'à ${Math.round(part0 * 100)} % : ta réputation en profite moins.`;
     if (blesse) message = (message ? message + ' ' : '') + `Revenu${v.feminin ? 'e' : ''} blessé${v.feminin ? 'e' : ''} : la mission compte un peu moins pour ta réputation, et sans soins il lui faudra ${reposCoeur(G) * blesse} jours de repos${typeof confrerieA === 'function' && confrerieA(G, 'hospice') ? " (l'hospice de la Confrérie : deux fois moins)" : ''}.`;
     const derniere = r.etapes[r.etapes.length - 1];
-    // Les cœurs perdus (au-delà des cœurs gagnés grâce aux soins en plus) restent des blessures.
-    const blessures = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - derniere.pvApres));
+    // Les cœurs perdus restent des blessures, sauf les cœurs dorés (potion, escorte, tarte) : (v1.61) avant, un cœur
+    // doré perdu en route comptait aussi, et on soignait un voyageur déjà en pleine santé.
+    const blessures = Math.max(0, Math.min(v.pv, v.pv - derniere.pvApres));
     // Chaque succès le fait progresser : novice, aguerri, vétéran, héros, légende.
     const niveau = meilleurNiveau(v.niveau, succesDe(G, v.nom));
     if (niveau !== v.niveau) message = (message ? message + ' ' : '') + `${prenomDe(v.nom)} devient ${NIVEAUX_AVENTURIER[niveau].nom.toLowerCase()} !`;
@@ -2622,17 +2644,24 @@ function enReparation(G) {
 }
 
 // Qui peut travailler à l'atelier : toi, puis tes employés.
+// (v1.61) le joueur ne répare plus lui-même (24/10) : ce sont ses employés de l'atelier. Une réparation
+// commencée par « toi » dans une vieille partie va quand même à son terme.
 function ouvriers(G) {
-  return ['toi', ...G.employes];
+  return [...G.employes];
 }
 
 // Le premier ouvrier libre, ou null : d'abord un employé spécialiste de l'objet (s'il y en a un),
-// puis les autres employés, et toi en dernier (pour que tu restes disponible).
+// puis les autres employés.
 function ouvrierLibre(G, t = null) {
   const occupes = enReparation(G).map(x => x.reparation.ouvrier);
-  const libres = [...G.employes, 'toi'].filter(o => !occupes.includes(o));
+  const libres = G.employes.filter(o => !occupes.includes(o));
   const expert = t && libres.find(o => EMPLOYES[o] && (EMPLOYES[o].rapide === true || (Array.isArray(EMPLOYES[o].rapide) && EMPLOYES[o].rapide.includes(t.categorie))));
   return expert || libres[0] || null;
+}
+
+function messagePasDOuvrier(G) {
+  return G.employes.length ? "Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois."
+    : `Personne pour réparer : embauche un ouvrier à l'atelier (${EMPLOYES.tobin.nom}, ${EMPLOYES.tobin.salaire} p. par nuit).`;
 }
 
 function nomOuvrier(o) {
@@ -2645,7 +2674,7 @@ function reparerTresor(G, t, cible = t.etat + 1) {
   if (t.etat >= ETATS.length - 1) return `${t.nom} : déjà en parfait état.`;
   cible = Math.min(ETATS.length - 1, Math.max(t.etat + 1, cible));
   const ouvrier = ouvrierLibre(G, t);
-  if (!ouvrier) return "Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois.";
+  if (!ouvrier) return messagePasDOuvrier(G);
   const mat = CATEGORIES[t.categorie].materiau;
   const n = materiauxReparation(t, cible);
   if (mat && (G.materiaux[mat] || 0) < n) return `Il te faut ${n} ${MATERIAUX[mat].nom.toLowerCase()} (tu en as ${G.materiaux[mat] || 0}).`;
@@ -3404,11 +3433,15 @@ function eJ(G = window.GAME) { return G && G.joueur && G.joueur.feminin ? 'e' : 
 // (appliqué à tous les textes affichés : voir pixels.js)
 function accordJoueur(t, G = window.GAME) {
   if (typeof t !== 'string' || !eJ(G)) return t;
-  if (t.includes('marchand')) t = t.replace(/\bau marchand\b(?![es])/g, 'à la marchande').replace(/(, |Ah, |Bienvenue, )marchand\b(?![es])/g, '$1marchande');
+  if (t.includes('marchand')) t = t.replace(/\bau marchand\b(?![es])/g, 'à la marchande').replace(/(, |Ah, |Bienvenue, )marchand\b(?![es])/g, '$1marchande').replace(/, petit marchand\b(?![es])/g, ', petite marchande');
   // (housekeep v1.14) « Pour toi, patron ! », « le patron du comptoir », et le paon : « le petit protégé », « voisin »
   if (t.includes('patron')) t = t.replace(/, patron\b(?![nes])/g, ', patronne').replace(/\ble patron du comptoir\b/g, 'la patronne du comptoir');
   if (t.includes('petit protégé')) t = t.replace(/\b([Ll])e petit protégé(?![e\w])/g, (m, l) => (l === 'L' ? 'La' : 'la') + ' petite protégée');
   if (t.includes('voisin')) t = t.replace(/, voisin([.!])/g, ', voisine$1');
+  // (housekeep v1.61) les mots qu'on lui lance : « gamin », « morveux », « l'ami », « petit » (après une virgule seulement)
+  if (/gamin|morveux|ami|petit/.test(t)) t = t.replace(/, gamin\b/g, ', gamine').replace(/, morveux\b/g, ', morveuse')
+    .replace(/, petit voleur\b/g, ', petite voleuse').replace(/\bmon petit(?=\s?[.!?…»])/g, 'ma petite')
+    .replace(/, l(['’])ami\b/g, ', l$1amie').replace(/, petit(?=\s?[.!?…»])/g, ', petite');   // (« Moi, petit, mais nerveux ! » reste à Grisk)
   return t;
 }
 function accordAdj(id, m, f, mp, fp) { const g = genreDe(id); return g === 'm' ? m : g === 'f' ? f : g === 'mp' ? mp : fp; }
@@ -3449,7 +3482,7 @@ function avisDeRecherche(G) {
 function prenomDe(nom) { const m = nom.split(' '); if (m[1] && /^(Le|La)$/.test(m[0])) return nom; return m[1] && /^(Sire|Sœur|Dame|Maître|Mère|Capitaine|Sergent|Garde|Grand-mère|Aïeule|Seigneur|Lord|Comtesse|Comte|Frère|Père|Le|La)$/.test(m[0]) ? m[1] : m[0]; }
 function texteImposture(t, v, ami = '') {
   return t.replaceAll('{nom}', v.nom).replaceAll('{prenom}', prenomDe(v.nom)).replaceAll('{ami}', ami)
-    .replaceAll('{Il}', v.feminin ? 'Elle' : 'Il').replaceAll('{il}', v.feminin ? 'elle' : 'il').replaceAll('{e}', v.feminin ? 'e' : '').replaceAll('{J}', eJ());
+    .replaceAll('{Il}', v.feminin ? 'Elle' : 'Il').replaceAll('{il}', v.feminin ? 'elle' : 'il').replaceAll('{e}', v.feminin ? 'e' : '').replaceAll('heureux{J}', eJ() ? 'heureuse' : 'heureux').replaceAll('{J}', eJ());
 }
 
 // Parmi les clients imprévus du jour : un imposteur (environ un sur douze, un peu plus quand ta

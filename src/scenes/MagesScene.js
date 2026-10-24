@@ -17,7 +17,7 @@ class MagesScene extends Phaser.Scene {
     this.add.image(70, 505, k).setOrigin(0.5, 1).setScale(4.4 * echelleCorps(k)).setFlipX(true);
     const e = etatPattes(G);
     this.dit = this.add.text(140, 470, '', style(13, '#3b2410', { fontStyle: 'italic', wordWrap: { width: 560 } })).setOrigin(0, 0.5);
-    this.parler(e.vu ? (pattesPosees(G) ? '« Alors, elle marche bien ? N\'oublie pas de lui garder du bois dans le filet. »' : '« Revenu ? Ta maison s\'ennuie toujours, je le vois d\'ici. »')
+    this.parler(e.vu ? (pattesPosees(G) ? '« Alors, elle marche bien ? N\'oublie pas de lui garder du bois dans le filet. »' : `« Revenu${eJ()} ? Ta maison s\'ennuie toujours, je le vois d'ici. »`)
       : '« Ta maison s\'ennuie ? On lui pose des jambes. Chêne, fer ou runes : elle te suivra au bout du monde. »');
     e.vu = true;
     // les onglets

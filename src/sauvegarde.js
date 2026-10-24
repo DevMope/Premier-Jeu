@@ -44,6 +44,7 @@ const Sauvegarde = {
 
   // Sauvegarde un peu plus tard (on regroupe les clics rapprochés).
   planifier(G, lieu) {
+    if (!G) return;   // (v1.61 : rien à sauvegarder)
     clearTimeout(this.minuterie);
     this.minuterie = setTimeout(() => this.maintenant(G, lieu), 1200);
   },
@@ -51,6 +52,7 @@ const Sauvegarde = {
   // Sauvegarde tout de suite.
   maintenant(G, lieu) {
     clearTimeout(this.minuterie);
+    if (!G) return this.ecriture;   // (v1.61 : pas de partie, rien à écrire)
     // (v0.57) au matin, un point de reprise automatique : chaque semaine, et à chaque palier d'étoiles
     if (lieu === 'Marche' && !G.faillite) this.pointDeRepriseSiBesoin(G);
     const p = this.paquet(G, lieu);
@@ -427,6 +429,10 @@ function mettreAJourPartie(G, brut = G) {
     if (t.reparation && !t.reparation.cible) t.reparation.cible = t.etat + 1;
     if (t.etatInitial === undefined) t.etatInitial = t.etat;
   }
+  // (v1.61) les lettres reçues ont quitté le jeu : celles restées sans réponse sont oubliées (les acceptées viendront)
+  G.annonces = (G.annonces || []).filter(a => a.acceptee);
+  if (G.ordreFile === 'lettres') G.ordreFile = 'arrivee';
+  if (G.grippesouPermet) { G.cessionsGrippesou = Math.max(1, G.cessionsGrippesou || 0); G.insistanceJeux = 0; delete G.grippesouPermet; }   // (v1.61 : il ne cède plus pour toujours)
   const voyageurs = [...G.annonces.map(a => a.voyageur), ...G.partis.map(p => p.voyageur)];
   for (const v of voyageurs) {
     if (!v.niveau) v.niveau = 'aguerri';

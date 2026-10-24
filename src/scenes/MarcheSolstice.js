@@ -147,7 +147,7 @@ Object.assign(MarcheScene.prototype, {
       const d = GARDE_ROBE[id], y = 366 + i * 26;
       c.add(this.add.image(42, y, iconeObjet(this, id)).setScale(1.6));
       c.add(this.add.text(60, y, `${d.nom} · ${d.prix} p.`, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
-      if (possede(G, id)) c.add(this.add.text(420, y, porte(G, id) ? 'tu le portes' : 'dans ta malle', style(11, '#4a6a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
+      if (possede(G, id)) c.add(this.add.text(420, y, porte(G, id) ? 'tu la portes' : 'dans ta malle', style(11, '#4a6a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
       else this.bouton(c, 450, y, 70, 'Acheter', () => {
         const erreur = acheterTenue(G, id);
         if (!erreur) Son.jouer('achat');

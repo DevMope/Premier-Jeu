@@ -2,7 +2,7 @@
 // La boutique : plein écran, le marchand derrière son comptoir ; chaque cagette est un gros bouton (clic +1, Maj+clic
 // +5, clic droit −1) ; un onglet par étal pour changer sans marcher ; un seul panier pour toute la place, payé d'un coup
 // (chaque marchand compte ses ventes : la relation monte comme à l'étal). Au clavier : Tab, ← →, Espace, Entrée, Échap.
-// La liste de courses (L) : faite toute seule (les commandes acceptées, moins ce que tu as), rangée par marchand ;
+// La liste de courses (L) : faite toute seule (2 de chaque provision, moins ce que tu as), rangée par marchand ;
 // « Tout acheter », « Mettre au panier », « Refaire mes courses d'hier ».
 
 const ONGLETS_BOUTIQUE = ['gedeon', 'apothicaire', 'forge', 'tailleuse'];
@@ -14,6 +14,7 @@ function ajusterTexte(t, largeur) {
   if (t.width > largeur) t.setScale(largeur / t.width, 1);
   return t;
 }
+const LISTE_BASE = 2;   // (v1.61) la liste de courses vise au moins 2 de chaque provision
 
 Object.assign(MarcheScene.prototype, {
   // Ce que tu as d'un article (les matériaux à part)
@@ -33,7 +34,7 @@ Object.assign(MarcheScene.prototype, {
     this.panier = this.panier || {};
     const k = cle + ':' + id, offre = this.G.etals[cle][id], avant = this.panier[k] || 0;
     const q = Phaser.Math.Clamp(avant + n, 0, offre ? offre.qte : 0);
-    if (q === avant) { if (n > 0) { Son.jouer('refus'); this.messageBoutique(`Plus de ${nomObjet(id).toLowerCase()} chez ${prenomDe(MARCHANDS[cle].nom)} aujourd'hui.`, '#ffb0a0'); } return; }
+    if (q === avant) { if (n > 0) { this.messageBoutique(`Plus de ${nomObjet(id).toLowerCase()} chez ${prenomDe(MARCHANDS[cle].nom)} aujourd'hui.`, '#ffb0a0'); } return; }
     Son.jouer(n > 0 ? 'clic' : 'glisse');
     if (q) this.panier[k] = q; else delete this.panier[k];
   },
@@ -63,7 +64,24 @@ Object.assign(MarcheScene.prototype, {
 
   fermerBoutique() { if (!this.boutiqueC) return; Son.jouer('glisse'); this.boutiqueC.destroy(); this.boutiqueC = null; this.majInfos(); },
 
+  // (v1.61) un refus (réserve pleine, plus d'argent...) s'affiche là où tu viens de cliquer, bien visible, en rouge,
+  // avec un petit sursaut (avant : une ligne discrète loin du clic)
+  refusPresDuClic(texte) {
+    Son.jouer('refus');
+    const p = this.input.activePointer, cam = this.cameras.main, w = cam.getWorldPoint(p.x, p.y);
+    const zx = cam.scrollX, zy = cam.scrollY, lw = cam.width / cam.zoom, lh = cam.height / cam.zoom;
+    if (this.refusClic && this.refusClic.active) this.refusClic.destroy();
+    const t = this.refusClic = this.add.text(0, 0, '✋ ' + texte, style(15, '#fff0e8', { fontStyle: 'bold', stroke: '#3a0a06', strokeThickness: 4, align: 'center', wordWrap: { width: 300 }, backgroundColor: '#8a1e14ee', padding: { x: 12, y: 7 } }))
+      .setOrigin(0.5, 1).setDepth(90).setScrollFactor(1);
+    t.setPosition(Phaser.Math.Clamp(w.x, zx + t.width / 2 + 8, zx + lw - t.width / 2 - 8), Phaser.Math.Clamp(w.y - 18, zy + t.height + 8, zy + lh - 8));
+    t.setScale(0.6);
+    this.tweens.add({ targets: t, scale: 1, duration: 160, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: t, x: t.x + 5, duration: 50, yoyo: true, repeat: 3, delay: 160 });
+    this.tweens.add({ targets: t, alpha: 0, y: t.y - 14, delay: 2600, duration: 450, onComplete: () => t.destroy() });
+  },
+
   messageBoutique(texte, couleur = '#fff4dc') {
+    if (couleur === '#ffb0a0') return this.refusPresDuClic(texte);
     if (!this.boutiqueC) return this.message(texte);
     if (this.texteBoutique && this.texteBoutique.active) this.texteBoutique.destroy();
     const t = this.texteBoutique = this.add.text(306, 262, texte, style(13, couleur, { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 560 }, backgroundColor: '#1a120acc', padding: { x: 10, y: 5 } })).setOrigin(0.5).setDepth(46);
@@ -95,7 +113,7 @@ Object.assign(MarcheScene.prototype, {
     fond.add(this.add.rectangle(305, 420, 616, 240, 0x1a120a, 1));
     const msk = this.make.graphics({ add: false }); msk.fillStyle(0xffffff).fillRect(0, 72, 612, 468); fond.setMask(msk.createGeometryMask());
     const rel = niveauRelation(G, m.nom), remise = remiseMarchand(G, cle);
-    T(470, 124, `Relation : ${rel.nom}${remise ? ` · −${Math.round(remise * 100)} %` : ''}`, 11, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 7, y: 3 } }).setOrigin(0.5);
+    T(470, 124, `Relation : ${rel.nom}${remise ? ` · −${Math.round(remise * 100)} %` : ''}`, 11, rel.couleur, { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 7, y: 3 } }).setOrigin(0.5);
     // les onglets : un clic, on change d'étal sans marcher
     c.add(this.add.rectangle(480, 50, 960, 44, 0x1a120a));
     ONGLETS_BOUTIQUE.forEach((k, i) => {
@@ -233,17 +251,23 @@ Object.assign(MarcheScene.prototype, {
   },
 
   // --- La liste de courses (L) ---
-  // Ce qui manque pour les commandes acceptées, chez le marchand le moins cher qui en a ce matin
+  // Ce qui manque pour les commandes acceptées, chez le marchand le moins cher qui en a ce matin ; (v1.61) et, les
+  // lettres parties, de quoi avoir au moins 2 de chaque provision vendue ce matin, dans la place libre de la réserve
   calculerListe() {
     this.nettoyerPanier();
-    const G = this.G, besoin = totalCommandes(G), lignes = [], auPanier = {};
+    const G = this.G, besoin = { ...totalCommandes(G) }, lignes = [], auPanier = {};
+    const vendus = new Set(Object.keys(MARCHANDS).flatMap(k => Object.keys((G.etals || {})[k] || {}).filter(id => G.etals[k][id].qte > 0)));
+    for (const id of vendus) if (!(id in MATERIAUX) && ITEMS[id] && !ITEMS[id].arme && G.stock[id] !== undefined) besoin[id] = Math.max(besoin[id] || 0, LISTE_BASE);
     for (const [k, q] of Object.entries(this.panier)) { const id = k.split(':')[1]; auPanier[id] = (auPanier[id] || 0) + q; }
+    let place = G.capacite - stockTotal(G) - Object.entries(auPanier).reduce((a, [id, q]) => a + (id in MATERIAUX ? 0 : q), 0);
     for (const id of Object.keys(besoin)) {
       let manque = besoin[id] - this.aDejaMarche(id) - (auPanier[id] || 0);   // (v1.49 : ce qui est déjà au panier est compté)
+      const materiau = id in MATERIAUX;
+      if (!materiau) manque = Math.min(manque, place);
       if (manque <= 0) continue;
       const dispo = k => G.etals[k][id].qte - (this.panier[k + ':' + id] || 0);
       const offres = Object.keys(MARCHANDS).filter(k => G.etals[k] && G.etals[k][id] && dispo(k) > 0).sort((a, b) => prixMarchand(G, a, id) - prixMarchand(G, b, id));
-      for (const k of offres) { const q = Math.min(manque, dispo(k)); lignes.push({ cle: k, id, q, ok: true }); manque -= q; if (!manque) break; }
+      for (const k of offres) { const q = Math.min(manque, dispo(k)); lignes.push({ cle: k, id, q, ok: true }); manque -= q; if (!materiau) place -= q; if (!manque) break; }   // (v1.61 : seule la place de ce qu'on trouve est prise)
       if (manque > 0) lignes.push({ cle: null, id, q: manque, ok: false });
     }
     return lignes;
@@ -257,7 +281,20 @@ Object.assign(MarcheScene.prototype, {
   listeCourses(lignes = null, hier = false) {
     if (this.listeC) { this.listeC.destroy(); this.listeC = null; if (!lignes) return; }
     const G = this.G;
-    this.lignesListe = lignes || this.calculerListe();
+    // (v1.61) la liste s'arrête avant de sortir du parchemin, et seules les lignes affichées comptent (total, Entrée, panier)
+    const tout = lignes || this.calculerListe(), groupes = {};
+    for (const l of tout) (groupes[l.cle || '—'] = groupes[l.cle || '—'] || []).push(l);
+    const ordre = Object.keys(groupes).sort((a, b) => (a === '—') - (b === '—'));   // (l'introuvable en dernier)
+    const vues = [], YMAX = 362;
+    let yv = 104;
+    for (const k of ordre) {
+      if (yv + 22 + 26 > YMAX) break;
+      yv += 22;
+      for (const l of groupes[k]) { if (yv + 26 > YMAX) break; vues.push(l); yv += 26; }
+      yv += 4;
+    }
+    const cachees = tout.length - vues.length;
+    this.lignesListe = vues;
     const c = this.listeC = this.add.container(0, 0).setDepth(50);
     const fermer = () => { if (this.listeC === c) { c.destroy(); this.listeC = null; } };
     const touche = e => { if (this.listeC !== c) return; if (e.key === 'Escape' || e.key === 'l' || e.key === 'L') fermer(); else if (e.key === 'Enter') toutAcheter(); };
@@ -265,23 +302,20 @@ Object.assign(MarcheScene.prototype, {
     const T = (x, y, t, taille = 13, coul = '#3b2410', o = {}) => { const tx = this.add.text(x, y, t, style(taille, coul, { fontStyle: 'bold', ...o })); c.add(tx); return tx; };
     c.add(this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.6).setInteractive());
     T(400, 54, hier ? 'TES COURSES D’HIER' : 'TA LISTE DE COURSES', 19).setOrigin(0.5);
-    T(400, 76, hier ? 'les mêmes, si les étals en ont encore ce matin' : 'faite toute seule : tes commandes acceptées, moins ce que tu as déjà', 11, '#6b4a2a', { fontStyle: 'italic' }).setOrigin(0.5);
+    T(400, 76, hier ? 'les mêmes, si les étals en ont encore ce matin' : 'faite toute seule : 2 de chaque provision, moins ce que tu as déjà', 11, '#6b4a2a', { fontStyle: 'italic' }).setOrigin(0.5);
     const bx = this.add.text(690, 44, '✕', style(18, '#8a3a1a', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', fermer); c.add(bx);
     const L = this.lignesListe;
     let y = 104;
     const total = () => L.filter(l => l.ok && !l.decoche).reduce((t, l) => t + prixMarchand(G, l.cle, l.id) * l.q, 0);
-    if (!L.length) { y = 196; T(400, 150, hier ? 'Tu n’as rien acheté au marché, hier.' : 'Rien ne manque pour tes commandes :\nta réserve suffit. (Garde un peu de marge pour les imprévus !)', 14, '#4a6a2a', { fontStyle: 'italic', align: 'center' }).setOrigin(0.5); }
-    const groupes = {};
-    for (const l of L) (groupes[l.cle || '—'] = groupes[l.cle || '—'] || []).push(l);
-    let affichees = 0;
-    for (const [k, ls] of Object.entries(groupes)) {
-      if (affichees >= 10) break;
+    if (!L.length) { y = 196; T(400, 150, hier ? 'Tu n’as rien acheté au marché, hier.' : 'Rien ne manque : tu as de tout,\nou ta réserve est pleine.', 14, '#4a6a2a', { fontStyle: 'italic', align: 'center' }).setOrigin(0.5); }
+    for (const k of ordre) {
+      const ls = groupes[k].filter(l => vues.includes(l));
+      if (!ls.length) continue;
       T(110, y, k === '—' ? 'Introuvable ce matin' : 'Chez ' + MARCHANDS[k].nom, 13, k === '—' ? '#8a6a4a' : '#8a3a1a'); y += 22;
       for (const l of ls) {
-        if (affichees++ >= 10) break;
         const actif = l.ok && !l.decoche, prix = l.ok ? prixMarchand(G, l.cle, l.id) * l.q : 0;
         const box = this.add.rectangle(130, y + 8, 16, 16, actif ? 0x2f6a2a : 0xe8d8b8).setStrokeStyle(2, 0x3b2410);
-        if (l.ok) box.setInteractive({ useHandCursor: true }).on('pointerdown', () => { l.decoche = !l.decoche; Son.jouer('clic'); this.listeCourses(L, hier); });
+        if (l.ok) box.setInteractive({ useHandCursor: true }).on('pointerdown', () => { l.decoche = !l.decoche; Son.jouer('clic'); this.listeCourses(tout, hier); });
         c.add(box); if (actif) T(130, y + 7, '✓', 13, '#fff4dc').setOrigin(0.5);
         c.add(this.add.image(160, y + 8, iconeObjet(this, l.id)).setScale(2));
         T(180, y, `${l.q} × ${nomObjet(l.id)}`, 13, actif ? '#3b2410' : '#9a8a70');
@@ -291,6 +325,7 @@ Object.assign(MarcheScene.prototype, {
       }
       y += 4;
     }
+    if (cachees > 0) { T(400, y, `… et ${cachees} autre${cachees > 1 ? 's' : ''} ligne${cachees > 1 ? 's' : ''}, pour la prochaine liste`, 11, '#6b4a2a', { fontStyle: 'italic' }).setOrigin(0.5, 0); y += 18; }
     c.add(this.add.line(0, 0, 110, y, 690, y, 0x8a6a3a).setOrigin(0));
     T(110, y + 8, 'Total', 15); T(690, y + 8, total() + ' p.', 16, '#8a3a1a').setOrigin(1, 0);
     const toutAcheter = () => {
@@ -319,7 +354,7 @@ Object.assign(MarcheScene.prototype, {
     });
     for (const b of [b1, b2]) { if (vide) { b.fond.setAlpha(0.5); b.label.setAlpha(0.6); } c.add([b.fond, b.label]); }
     const hierL = this.listeHier();
-    const tH = T(400, y + 98, hier ? '◂ Revenir à la liste de mes commandes' : hierL ? '↺ Refaire mes courses d’hier' : '(pas encore de courses d’hier à refaire)', 12, hierL || hier ? '#2f5a8a' : '#9a8a70', { fontStyle: 'italic' }).setOrigin(0.5);
+    const tH = T(400, y + 98, hier ? '◂ Revenir à ma liste de courses' : hierL ? '↺ Refaire mes courses d’hier' : '(pas encore de courses d’hier à refaire)', 12, hierL || hier ? '#2f5a8a' : '#9a8a70', { fontStyle: 'italic' }).setOrigin(0.5);
     if (hierL || hier) tH.setInteractive({ useHandCursor: true }).on('pointerdown', () => { Son.jouer('page'); this.listeCourses(hier ? this.calculerListe() : hierL, !hier); });
     T(400, y + 120, 'Clique sur une case pour décocher ce que tu ne veux pas · Entrée : tout acheter · Échap : fermer', 10, '#6b4a2a', { fontStyle: 'italic' }).setOrigin(0.5);
     // le parchemin, à la taille de la liste (glissé sous les lignes)

@@ -3,7 +3,7 @@
 // Le carnet des chapeaux les montre en silhouette « ? » avec un indice, jusqu'à ce qu'on les trouve. Chacun se dessine
 // dans la même toile que le chat (mêmes contours), posé sur sa tête : cx, cy est le centre de la tête (le museau à droite).
 // `pourElle` : pour sa compagne ; `refuse` : il ne le portera jamais ; `ou` : comment on le trouve.
-const OU_CHAPEAU = { marcelline: '🧵 Au rayon des chats', porte: '🧑 Porté par quelqu\'un', perdu: '🎩 Perdu, oublié', cache: '🔍 Caché', mission: '🗺 Rapporté de mission', parrain: '🕴 Il se mérite' };
+const OU_CHAPEAU = { marcelline: '🧵 Au rayon des chats', porte: '🧑 Porté par quelqu’un', perdu: '🎩 Perdu, oublié', cache: '🔍 Caché', mission: '🗺 Rapporté de mission', parrain: '🕴 Il se mérite' };
 const CHAPEAUX_CHAT = {
   beret: { nom: 'Le béret', c: [0x1c1c24], ou: 'marcelline', prix: 14, replique: '« Ça me donne un air d’artiste. »' },
   bonnet: { nom: 'Le bonnet à pompon', c: [0xb02a2a, 0xeae0cc, 0xf4ecdc], ou: 'marcelline', prix: 10, replique: '« Il gratte. Mais mes oreilles te disent merci. »', saison: 'hiver' },

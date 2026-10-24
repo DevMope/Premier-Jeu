@@ -89,8 +89,8 @@ Object.assign(MarcheNoirScene.prototype, {
       const d = GARDE_ROBE[id], y = 414 + i * 30;
       this.elements.push(this.add.image(52, y, iconeObjet(this, id)).setScale(1.8).setDepth(6).setScrollFactor(0));
       this.texte(76, y, `${d.nom} · ${d.prix} p.`, 13, '#f3e6c8', { fontStyle: 'bold' }).setOrigin(0, 0.5);
-      if (possede(G, id)) this.texte(420, y, porte(G, id) ? 'tu le portes' : 'dans ta malle', 12, '#9ac080', { fontStyle: 'italic' }).setOrigin(0, 0.5);
-      else this.bouton(470, y, 110, 'Acheter', () => { const e = acheterTenue(G, id); if (!e) Son.jouer('achat'); this.majBourse(); this.pageAtoursAncetres(e || `${d.nom} : tu le portes dès ce soir. Les Bannis hochent la tête.`); }, peutPayer(G, d.prix));
+      if (possede(G, id)) this.texte(420, y, porte(G, id) ? 'tu l\'as sur toi' : 'dans ta malle', 12, '#9ac080', { fontStyle: 'italic' }).setOrigin(0, 0.5);
+      else this.bouton(470, y, 110, 'Acheter', () => { const e = acheterTenue(G, id); if (!e) Son.jouer('achat'); this.majBourse(); this.pageAtoursAncetres(e || `${d.nom} : tu l'arbores dès ce soir. Les Bannis hochent la tête.`); }, peutPayer(G, d.prix));
     });
     this.texte(620, 430, "Portés pendant la fête : les clients de l'ombre t'en aiment un peu plus (+1 de relation).", 11, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 300 } });
     this.bouton(860, 500, 140, '◂ La fête', () => this.pageBrumes());
@@ -173,7 +173,7 @@ Object.assign(MarcheNoirScene.prototype, {
     if (!s.hydromel) {
       this.bouton(200, 456, 300, mineur ? 'Boire la tisane des anciens' : "Boire l'hydromel noir", () => { boireHydromel(G); Son.jouer('glou'); this.vider(); this.bloqueCoins = true; this.cameras.main.fadeOut(1400, 20, 10, 30); this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Vision', { retour: 'MarcheNoir' })); });
       this.bouton(520, 456, 240, 'Refuser poliment', () => { refuserHydromel(G); this.pageGrandFeu("Le vieil orc hausse les épaules et boit ta part. Quelques regards se détournent."); });
-    } else this.texte(40, 420, s.hydromel === 'refuse' ? "Tu as refusé la coupe, ce soir." : (mineur ? 'La tisane des anciens te laisse un goût de fumée et d’étoiles...' : "L'hydromel noir te tourne encore un peu la tête..."), 12, '#c8a890', { fontStyle: 'italic' });
+    } else this.texte(40, 420, s.hydromel === 'refuse' ? "Tu as refusé la coupe, ce soir." : (mineur ? 'La tisane des anciens te laisse un goût de fumée et d\'étoiles...' : "L'hydromel noir te tourne encore un peu la tête..."), 12, '#c8a890', { fontStyle: 'italic' });
     if (!s.pain) this.bouton(200, 500, 300, 'Rompre le pain de cendre', () => { prendrePain(G); Son.jouer('miam'); this.pageGrandFeu("Tu romps le pain « pour les absents ». On t'en glisse un quignon dans la poche : donné à un aventurier qui part en terre d'ombre, il le fera rebrousser chemin au lieu de mourir."); });
     this.bouton(860, 500, 140, '◂ La fête', () => this.pageBrumes());
   },

@@ -117,7 +117,7 @@ function installerCoin(G, lieu) {
 function acheterCoin(G, cle) {
   const coin = coinDesChats(G), e = typeof COIN_CHATS !== 'undefined' ? COIN_CHATS[cle] : null;
   if (!coin || !e) return { erreur: "Il n'y a pas encore de coin des chats." };
-  if (coin.elements.includes(cle)) return { erreur: 'Ils l’ont déjà.' };
+  if (coin.elements.includes(cle)) return { erreur: 'Ils l\'ont déjà.' };
   if (G.argent < e.prix) return { erreur: `Il te manque ${Math.ceil(e.prix - G.argent)} pièces.` };
   if (e.prix) payer(G, e.prix, 'coinChats');
   coin.elements.push(cle);

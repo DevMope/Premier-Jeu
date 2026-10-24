@@ -348,6 +348,8 @@ class RenovationScene extends Cinematique {
       this.actif = null;
       this.bulle.setVisible(false);
       [this.boite, this.entete, this.texte].forEach(o => o.setVisible(true));
+      // (v1.61) la boîte revient en haut : le ruban des pièces passe dessous, pour ne pas cacher le nom de Garrick
+      if (this.rubanPieces) this.rubanPieces.y = this.boite.y < 270 ? 156 : 0;
     });
   }
 
@@ -421,7 +423,7 @@ class RenovationScene extends Cinematique {
     await this.attendreClic();
     if (this.fini) return;
     await this.allerA('chambre', 880);
-    this.garrickDit(this.guide ? "« Et ta chambre. Une bonne nuit, et tu seras en forme demain : plus vif au comptoir. Le soir, c'est ici que la journée se termine. »" : '« Et ta chambre ! Un lit, une fenêtre sur les collines... Tu seras bien, ici. »', { ton: 'content', emotion: '♥' });
+    this.garrickDit(this.guide ? "« Et ta chambre. Une bonne nuit, et tu seras en forme demain : l'esprit vif au comptoir. Le soir, c'est ici que la journée se termine. »" : '« Et ta chambre ! Un lit, une fenêtre sur les collines... Tu seras bien, ici. »', { ton: 'content', emotion: '♥' });
     await this.renover('chambre');
     if (this.fini) return;
     this.garrickDit('« Tout est propre, du toit à la cave ! Viens, on fait le tour du propriétaire. »', { ton: 'rire', emotion: 'joie', geste: 'saut' });

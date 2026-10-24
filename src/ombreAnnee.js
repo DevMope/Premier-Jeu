@@ -20,7 +20,7 @@ const COMBATTANTS_FOSSE = [
 // Ce que le flair laisse deviner d'un combattant (vrai ou trompeur, selon ton expérience)
 const INDICES_FOSSE = {
   faible: ['boite un peu en entrant dans la fosse', 'cache mal un bandage sous son bras', 'a le regard qui fuit', 'respire trop vite avant même le premier coup'],
-  fort: ['fait craquer ses épaules sans quitter l\'autre des yeux', 'a les poings encore rouges du combat d\'hier... qu\'il a gagné', 'sourit, et ce n\'est pas bon signe pour l\'autre', 'n\'a pas une égratignure'],
+  fort: ['fait craquer ses épaules sans quitter l\'autre des yeux', 'a les poings encore rouges du combat d\'hier... gagné haut la main', 'sourit, et ce n\'est pas bon signe pour l\'autre', 'n\'a pas une égratignure'],
 };
 
 // Les contrats de l'ombre : un Banni s'accoude au bar et pose un pli scellé

@@ -193,7 +193,7 @@ class HudScene extends Phaser.Scene {
   infoBuche(montrer) {
     if (this.bulleBuche) { this.bulleBuche.destroy(); this.bulleBuche = null; }
     if (!montrer) return;
-    this.bulleBuche = this.add.text(this.buche.x - 10, 28, "Le foyer est vide : dehors, il gèle. Mets une bûche dans la cheminée avant de dormir (1 planche de bois), sinon tu te réveilleras fatigué.", style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 260 } })).setDepth(102);
+    this.bulleBuche = this.add.text(this.buche.x - 10, 28, "Le foyer est vide : dehors, il gèle. Mets une bûche dans la cheminée avant de dormir (1 planche de bois), sinon la fatigue t'attendra au réveil.", style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 260 } })).setDepth(102);
   }
 
   // (v1.53) Le temps du jour : son nom, ce qu'il change au comptoir, et l'ardoise d'Ysmée si elle s'est trompée
@@ -212,7 +212,7 @@ class HudScene extends Phaser.Scene {
     if (this.bulleNymphe) { this.bulleNymphe.destroy(); this.bulleNymphe = null; }
     const G = window.GAME;
     if (!montrer || !G || !benieJusqua(G)) return;
-    const texte = `Bénie de la nymphe jusqu'au jour ${benieJusqua(G)} :\n+${Math.round(NYMPHE.benediction.bonus * 100)} % aux épreuves de rivière et de marais, et à celles où il faut une gourde.`;
+    const texte = `Bénédiction de la nymphe jusqu'au jour ${benieJusqua(G)} :\n+${Math.round(NYMPHE.benediction.bonus * 100)} % aux épreuves de rivière et de marais, et à celles où il faut une gourde.`;
     this.bulleNymphe = this.add.text(222, 30, texte, style(12, '#e8f6ff', { backgroundColor: '#14283e', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
   }
 
@@ -262,7 +262,7 @@ class HudScene extends Phaser.Scene {
 
   // La scène du jeu qu'on regarde (la plus haute, hors bandeau).
   scenePrincipale() {
-    const actives = this.scene.manager.getScenes(true).filter(s => s.scene.key !== 'Hud');
+    const actives = this.scene.manager.getScenes(true).filter(s => s.scene.key !== 'Hud' && s.scene.key !== 'Volet');   // (v1.61 : les volets ne sont pas une page)
     return actives[actives.length - 1];
   }
 
@@ -284,8 +284,11 @@ class HudScene extends Phaser.Scene {
   }
 
   // (v1.24, planche 50 v3) Une pensée de départ : JeuneGoy en médaillon (la pose « il pense ») et sa bulle
+  // (v1.61) le tableau des retours du jour est ouvert : les petites fiches attendent qu'on le ferme (elles le cachaient)
+  ecranOccupe() { const s = this.scene.manager.getScene('Comptoir'); return !!(s && s.sys.isActive() && s.resumeRetours); }
+
   penseesEnDirect(G) {
-    if (this.penseeAffichee || this.fichePiece || !G.penseesNouvelles || !G.penseesNouvelles.length || typeof bulleDePensee !== 'function') return;
+    if (this.ecranOccupe() || this.penseeAffichee || this.fichePiece || !G.penseesNouvelles || !G.penseesNouvelles.length || typeof bulleDePensee !== 'function') return;
     const p = G.penseesNouvelles.shift();
     const md = medaillonJeuneGoy(this, 884, 132, G, 38, 128);
     const age = this.add.text(884, 186, `${p.age} ans · ${{ reve: 'il rêve', voir: 'il veut voir', savoir: 'il veut savoir', heros: 'il rêve', carte: 'il veut voir' }[p.temps] || ''}`,
@@ -303,7 +306,7 @@ class HudScene extends Phaser.Scene {
 
   // (v1.23, planche 48 v2) Une pièce de collection gagnée : une petite fiche en haut à droite, le temps de la voir
   piecesEnDirect(G) {
-    if (this.fichePiece || this.penseeAffichee || !G.piecesNouvelles || !G.piecesNouvelles.length || typeof dessinerPieceCollection !== 'function') return;
+    if (this.ecranOccupe() || this.fichePiece || this.penseeAffichee || !G.piecesNouvelles || !G.piecesNouvelles.length || typeof dessinerPieceCollection !== 'function') return;
     const p = G.piecesNouvelles.shift(), C = COLLECTIONS[p.serie];
     creerEmblemesHD(this); creerObjetsHD(this); creerIconesHD(this);
     const x = 838, y = 150, c = this.fichePiece = this.add.container(x, y).setDepth(130);
@@ -390,7 +393,7 @@ class HudScene extends Phaser.Scene {
     }
     // Toujours au-dessus des autres pages
     const liste = this.scene.manager.scenes;
-    if (liste[liste.length - 1] !== this) this.scene.bringToTop();
+    if (liste[liste.length - 1] !== this && !this.scene.isActive('Volet')) this.scene.bringToTop();   // (sauf sous les volets)
   }
 
   ouvrirMenu() {

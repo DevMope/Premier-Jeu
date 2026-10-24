@@ -1,7 +1,8 @@
 // (v1.10, lot C-1, planches 38 et 38 v2 validées) Au comptoir : le héraut de la Confrérie apporte la commande
 // scellée du Conseil (la lettre au sceau rouge, puis le panneau punaisé sur l'ardoise), et revient la chercher le
 // jour dit (livrée : la prime ; manquée : le Conseil est mécontent). Le 1er du mois, la lettre de l'impôt.
-const HERAUT_CONSEIL = { nom: 'Le messager du Conseil — Héraut de la Confrérie', buste: { nom: 'Le héraut', race: 'humain', feminin: false, garde: true } };
+// (v1.61) `figurant` : son buste prend les couleurs du héraut en pied (FIGURANTS.heraut)
+const HERAUT_CONSEIL = { nom: 'Le messager du Conseil — Héraut de la Confrérie', buste: { nom: 'Le héraut', race: 'humain', feminin: false, garde: true, figurant: 'heraut' } };
 
 Object.assign(CounterScene.prototype, {
   direHeraut(texte) { this.dire(texte, HERAUT_CONSEIL.nom, HERAUT_CONSEIL.buste.nom); },
@@ -244,7 +245,7 @@ Object.assign(CounterScene.prototype, {
     // (le récit reste à l'écran : c'est le joueur qui le laisse partir)
     this.time.delayedCall(1800, () => {
       if (!this.entree || this.entree.type !== 'heraut') return;
-      this.raconter('Le héraut tourne les talons. Tout le Comté saura que tu as refusé (réputation −1).' + (res.pause ? ' Trois refus de suite : le Conseil ne te proposera plus rien pendant deux mois.' : ''), 'Le messager du Conseil');
+      this.raconter('Le héraut tourne les talons. Toute la Comté saura que tu as refusé (réputation −1).' + (res.pause ? ' Trois refus de suite : le Conseil ne te proposera plus rien pendant deux mois.' : ''), 'Le messager du Conseil');
       this.bouton('Le laisser partir', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
     });
   },
@@ -302,7 +303,7 @@ Object.assign(CounterScene.prototype, {
       const sous = this.add.text(0, -86, `${r.pardonRate ? 'Commande du pardon' : 'Commande scellée'} manquée par le comptoir « ${G.nomShop} »${f >= 2 && !r.pardonRate ? ` · ${f >= 3 ? 'troisième' : 'deuxième'} faute` : ''}`, style(12, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5);
       for (let k = 12; sous.width > 520 && k >= 9; k--) sous.setFontSize(k);
       L.add(sous);
-      const lignes = [[`−${r.reputation} de réputation`, 'tout le Comté le saura'],
+      const lignes = [[`−${r.reputation} de réputation`, 'toute la Comté le saura'],
         [`Impôt du Conseil × ${fois(r.majoration || 1.5)}`, `pendant ${r.mois} mois${r.ombre ? ' (plus dur pour qui penche vers les Bannis)' : ''}`]];
       if (f >= 3) lignes.push([r.avaitSceau === false ? 'Le Conseil te tourne le dos' : 'Le sceau du Conseil quitte ta porte', 'plus de nobles au comptoir, plus de commande pendant deux mois']);
       else lignes.push(['Pas de commande scellée', 'le mois prochain']);

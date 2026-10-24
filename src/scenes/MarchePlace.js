@@ -12,6 +12,19 @@ const LIEUX_PLACE = { forge: [330, 340], apothicaire: [560, 310], encheres: [900
 // La hauteur de l'enseigne au-dessus de la base (les autres : 200)
 const HAUTEUR_ENSEIGNE = { encheres: 150, crieur: 112, tableau: 110, jeux: 170, mendiant: 120, fontaine: 190, carte: 70, arche: 230, moulin: 30, peche: 200 };
 const PETITS_LIEUX = ['crieur', 'tableau', 'mendiant'];
+// (v1.61) Ce que se disent deux passants qui se croisent sur la place
+const CAUSERIES_PLACE = [
+  ['Tu as vu le prix des pommes ?', 'Une honte ! Mais elles sont bonnes.'],
+  ['Il paraît qu’on a vu un dragon au nord.', 'Encore une histoire du crieur...'],
+  ['Ton fils est parti à l’aventure ?', 'Avec un baluchon du Comptoir. Je dors mieux.'],
+  ['Belle journée pour flâner !', 'Belle journée pour dépenser, surtout.'],
+  ['Tu vas chez Thorgal ?', 'Pour un clou. Il va encore me vendre un marteau.'],
+  ['On dit que la fontaine exauce les vœux.', 'Moi, elle m’a surtout mouillé les pieds.'],
+  ['Tu viendras danser au Solstice ?', 'Si mes genoux veulent bien.'],
+  ['Le mendiant a encore nourri son chien avant lui.', 'Brave homme. Je lui ai laissé une pièce.'],
+  ['Marcelline a de nouvelles capes.', 'Trop chères pour moi. Mais si jolies...'],
+  ['Il pleuvra demain, d’après Ysmée.', 'Ysmée se trompe une fois sur cinq. Je prends le risque.'],
+];
 
 Object.assign(MarcheScene.prototype, {
   // Le nom et le métier de chaque lieu, sur son enseigne
@@ -51,7 +64,7 @@ Object.assign(MarcheScene.prototype, {
     this.saisonPlace = saison;
     // le sol : terre battue sous les étals et sur les chemins d'usure, dalles au centre, herbe ailleurs
     place.add(this.add.image(0, 0, solPlaceHD(this, 'solPlace_' + saison, pal, 900, 520, planSolPlace())).setOrigin(0).setScale(2));
-    this.obstacles = []; this.grillePlace = null;   // (la grille des chemins se refait avec les obstacles du jour)
+    this.obstacles = []; this.grillePlace = null;   // (v1.61 : les charrettes du jour de marché changent la grille)
     this.visite = null;
     const ombre = (x, y, l) => { const o = this.add.image(x + l * 0.06, y - 2, ombrePlaceHD(this)).setScale(l / 64, l / 64 * 0.9); o.yTri = y - 0.5; place.add(o); return o; };
     this.ombrePlace = ombre;
@@ -70,7 +83,7 @@ Object.assign(MarcheScene.prototype, {
       g.setPosition(x, y).setScale(0.9).setVisible(true).setAlpha(1);
       place.add(g); g.cle = k;
       // (v1.49 : un second groupe au même endroit, comme le décor de l'étal de l'Union, n'a ni ombre ni obstacle de plus)
-      if (!poses.has(k)) { poses.add(k); ombre(x, y + 4, PETITS_LIEUX.includes(k) ? 90 : 200); if (!PETITS_LIEUX.includes(k)) this.obstacles.push([x - 70, y - 30, x + 70, y + 4]); }
+      if (!poses.has(k)) { poses.add(k); ombre(x, y + 4, PETITS_LIEUX.includes(k) ? 90 : 200); this.obstacles.push(PETITS_LIEUX.includes(k) ? [x - 30, y - 22, x + 30, y + 2] : [x - 70, y - 30, x + 70, y + 4]); }   // (v1.61 : l'estrade du crieur, le tableau, le mendiant bloquent aussi)
       // un clic sur le lieu : JeuneGoy y va à pied, puis ce que le lieu faisait déjà
       const zones = g.list.filter(o => o.input && o.input.enabled && o.type !== 'Text');
       let action = null;
@@ -92,16 +105,16 @@ Object.assign(MarcheScene.prototype, {
     // (v1.62, planche 80, système A) le porche couvert, vers la rue : on ne bute que sur ses deux poteaux
     this.poserPorchePlace();
     this.actionsLieux.arche = () => this.rentrer();
-    ombre(1060, 1002, 60); const carte = panneauCarteMonde(this, 1060, 1000); place.add(carte);
+    ombre(1060, 1002, 60); const carte = panneauCarteMonde(this, 1060, 1000); place.add(carte); this.obstacles.push([1038, 986, 1082, 1002]);
     this.actionsLieux.carte = () => this.message('La carte du monde : tes voyageurs partent de ton comptoir vers toutes ces contrées.');
-    const poteau = this.add.image(1760, 760, barrierePlaceHD(this, 2)).setOrigin(0.5, 1).setScale(2.2); place.add(poteau);
+    const poteau = this.add.image(1760, 760, barrierePlaceHD(this, 2)).setOrigin(0.5, 1).setScale(2.2); place.add(poteau); this.obstacles.push([1744, 748, 1776, 762]);
     this.actionsLieux.moulin = () => this.message('Le sentier mène au Vieux Moulin et à l’étang de Barnabé. On s’y promène le soir, depuis chez toi.');
     // les arbres, les buissons, les barrières : dans l'herbe, jamais sur les chemins
     [[70, 420, 0], [70, 760, 1], [1740, 420, 1], [1720, 1030, 0], [420, 740, 1], [1390, 760, 0], [560, 200, 0], [1250, 200, 1], [40, 1040, 0], [330, 1040, 1]].forEach(([x, y, v]) => {
       ombre(x + 10, y, 120); place.add(this.add.image(x, y, arbrePlaceHD(this, pal, v)).setOrigin(0.5, 1).setScale(2.2)); this.obstacles.push([x - 16, y - 16, x + 16, y + 2]); });
     const marcheDuJour = typeof jourDeMarche === 'function' && jourDeMarche(G);   // (v1.54 : les jours de marché, les charrettes des colporteurs prennent la place de deux buissons)
-    [[250, 760], [1520, 760], [700, 760], [1100, 760], ...(marcheDuJour ? [] : [[460, 470], [1340, 470]])].forEach(([x, y]) => { ombre(x, y, 70); place.add(this.add.image(x, y, buissonPlaceHD(this, pal)).setOrigin(0.5, 1).setScale(2.2)); });
-    [[640, 1020], [1160, 1020]].forEach(([x, y]) => { ombre(x, y, 100); place.add(this.add.image(x, y, barrierePlaceHD(this, 5)).setOrigin(0.5, 1).setScale(2.2)); });
+    [[250, 760], [1520, 760], [700, 760], [1100, 760], ...(marcheDuJour ? [] : [[460, 470], [1340, 470]])].forEach(([x, y]) => { ombre(x, y, 70); place.add(this.add.image(x, y, buissonPlaceHD(this, pal)).setOrigin(0.5, 1).setScale(2.2)); this.obstacles.push([x - 26, y - 14, x + 26, y + 2]); });
+    [[640, 1020], [1160, 1020]].forEach(([x, y]) => { ombre(x, y, 100); place.add(this.add.image(x, y, barrierePlaceHD(this, 5)).setOrigin(0.5, 1).setScale(2.2)); this.obstacles.push([x - 52, y - 12, x + 52, y + 2]); });
     // les jours de fête, des guirlandes au-dessus de la place
     if (this.fete || this.feteHiver) {
       const c = this.add.container(0, 0); c.yTri = 5000;
@@ -144,30 +157,44 @@ Object.assign(MarcheScene.prototype, {
     const b1 = creerBouton(this, 882, 108, 140, 'La place · M', () => this.basculerCartePlace()); b1.label.setFontSize(13);
     const b2 = creerBouton(this, 882, 146, 140, 'Ma liste · L', () => this.listeCourses()); b2.label.setFontSize(13);
     this.boutonsPlace = [b1, b2];
-    this.retour.setTexte && this.retour.setTexte('◀ La place');
+    // (v1.61) pour quitter un lieu : un bouton bien visible sur le coin du cadre, et un clic n'importe où sur la place
+    if (this.retour.setTexte) this.retour.setTexte('✕ Partir · Échap');
+    for (const o of [this.retour.fond, this.retour.label]) if (o) o.setPosition(842, 296).setDepth(7);
     // les commandes au clavier
     const k = this.input.keyboard;
     if (k) {
       this.touches = k.createCursorKeys();
       this.zqsd = k.addKeys('Z,Q,S,D,W,A', false);
       k.on('keydown', e => {
-        if (!this.place || !this.sys.isActive()) return;
+        if (!this.place || !this.sys.isActive() || e.repeat) return;   // (v1.61 : une touche maintenue n'agit qu'une fois)
         if (this.boutiqueC || this.listeC) return;
         if (this.visiteEnCours() && !this.bloquePlace() && this.toucheVisite(e)) return;   // (la visite de Garrick : Espace, Échap)
         if (e.key === 'm' || e.key === 'M') this.basculerCartePlace();
         else if (e.key === 'l' || e.key === 'L') { if (!this.bloquePlace()) this.listeCourses(); }
         else if (e.key === 'Escape') { if (this.carteC) this.basculerCartePlace(); else if (this.panneauOuvert && !this.vitrineOuverte) this.vueEnsemble(); }
-        else if ((e.key === ' ' || e.key === 'Enter') && this.lieuProche && !this.bloquePlace() && !this.visiteEnCours()) this.agirLieu(this.lieuProche);   // (pendant la visite de Garrick, Espace : la suite)
-        else if ((e.key === 'e' || e.key === 'E') && !e.repeat && this.lieuProche && !this.bloquePlace()) this.agirLieu(this.lieuProche);
+        else if ((e.key === 'e' || e.key === 'E' || ((e.key === ' ' || e.key === 'Enter') && !this.visiteEnCours())) && this.lieuProche && !this.bloquePlace()) this.agirLieu(this.lieuProche);   // (v1.61 : E, comme dans les jeux d'aventure ; pendant la visite de Garrick, Espace : la suite)
       });
     }
+    const dansPlace = o => { for (let c = o; c; c = c.parentContainer) if (c === place) return true; return false; };
+    // (v1.61) les coordonnées du monde (960 × 540) : sur un grand écran, p.x et p.y comptent en pixels réels
     this.input.on('pointerdown', (p, sous) => {
-      if (!this.place || sous.length || p.y < 40 || p.y > 476) return;
-      // (un clic sur la place, panneau ouvert au-dessus : on le referme et on repart à pied)
-      if (this.panneauOuvert && !this.vitrineOuverte && !this.boutiqueC && !this.listeC && !this.carteC && !this.jeuLance && p.y < 300) this.vueEnsemble();
-      if (this.bloquePlace()) return;
+      const px = p.worldX, py = p.worldY;
+      if (!this.place || py < 40 || py > 476) return;
+      const surInterface = sous.some(o => !dansPlace(o));
+      // (v1.61) un lieu ouvert : un clic n'importe où sur la place au-dessus du cadre (même sur un passant ou une bulle) le referme
+      if (this.panneauOuvert && !this.vitrineOuverte && !this.boutiqueC && !this.listeC && !this.carteC && !this.jeuLance && py < 300 && !surInterface) { this.vueEnsemble(); return; }
+      if (sous.length || this.bloquePlace()) return;
       this.mainJoueur = this.time.now;   // (le joueur mène : Garrick l'attend, s'il fait la visite)
-      this.partirVers((p.x - place.x) / place.scaleX, (p.y - place.y) / place.scaleY);
+      this.partirVers((px - place.x) / place.scaleX, (py - place.y) / place.scaleY);
+      this.marqueClic((px - place.x) / place.scaleX, (py - place.y) / place.scaleY);
+    });
+    // (v1.61) à la souris : bouton gardé enfoncé, JeuneGoy suit le pointeur (comme avec ZQSD)
+    this.input.on('pointermove', p => {
+      const px = p.worldX, py = p.worldY;
+      if (!this.place || !p.isDown || (!p.wasTouch && !(p.event && p.event.buttons & 1)) || py < 40 || py > 476 || this.bloquePlace() || this.apresMarche) return;
+      if (this.time.now - (this.dernierGlisse || 0) < 120) return;
+      this.dernierGlisse = this.time.now; this.mainJoueur = this.time.now;
+      this.partirVers((px - place.x) / place.scaleX, (py - place.y) / place.scaleY);
     });
     this.cadrerPlace(true);
     // (v1.62) le sol de la vue du mendiant se prépare par petits morceaux, pendant la promenade
@@ -267,22 +294,103 @@ Object.assign(MarcheScene.prototype, {
     this.time.delayedCall(Math.max(2600, texte.length * 55), () => b.active && this.tweens.add({ targets: b, alpha: 0, duration: 300, onComplete: () => b.destroy() }));
   },
 
-  // Un passant qui flâne d'un lieu à l'autre, s'arrête un peu, repart (figurant : 'mentor' pour Garrick)
+  // (v1.61) Là où l'on a cliqué : un petit rond qui s'efface, pour voir où JeuneGoy s'en va
+  marqueClic(x, y) {
+    const r = this.add.ellipse(x, y, 34, 14).setStrokeStyle(2, 0xffe6a0, 0.9); r.yTri = y - 1; this.place.add(r);
+    this.tweens.add({ targets: r, scaleX: 0.4, scaleY: 0.4, alpha: 0, duration: 450, onComplete: () => r.destroy() });
+  },
+
+  // (v1.61) Les passants ont une petite vie : ils vont faire leurs courses à un étal (et s'y arrêtent, face à lui),
+  // s'arrêtent pour bavarder entre eux, flânent, ou quittent la place par l'arche et reviennent plus tard. Ils suivent
+  // de vrais chemins (la même recherche que JeuneGoy) : plus de passant coincé contre un étal ni qui traverse un buisson.
   ajouterPassantPlace(i, race, figurant = null) {
     const quoi = figurant || { nom: 'Flâneur ' + i, race, feminin: i % 2 === 1, niveau: 'novice' };
     const pts = Object.keys(LIEUX_PLACE).filter(k => k !== 'arche').map(k => this.devantLieu(k));
     const [x, y] = pts[(i * 3 + this.G.jour) % pts.length];
     const cle = corpsHD(this, quoi, null, 'face');
     const img = this.add.image(x + 30, y + 10, cle).setOrigin(0.5, 1).setScale(PLACE_MARCHE.echelle * echelleCorps(cle)).setInteractive({ useHandCursor: true });
-    const o = { img, quoi, vue: 'face', cible: null, pause: 600 + i * 900, pas: 0, ombre: this.ombrePlace(x + 30, y + 10, 40), pts };
+    const o = { img, quoi, vue: 'face', cible: null, chemin: [], but: null, pause: 600 + i * 900, pas: 0, ombre: this.ombrePlace(x + 30, y + 10, 40) };
     img.on('pointerdown', () => this.passantPlaceParle(o));
     this.place.add(img);
     this.passantsPlace.push(o);
   },
 
+  // Où aller ensuite
+  envieDePassant(o) {
+    const P = PLACE_MARCHE, r = Math.random();
+    const vers = (x, y, but, librement = false) => {
+      // (v1.61) on ne s'arrête pas sur JeuneGoy : s'il est déjà là, on se pose un peu à côté
+      if (!librement && this.heros && Math.hypot(x - this.heros.x, y - this.heros.y) < 60) x += (x < this.heros.x ? -1 : 1) * 70;
+      const pts = librement ? [[x, y]] : this.itineraire(o.img.x, o.img.y, x, y);
+      o.cible = pts.shift(); o.chemin = pts; o.but = but; o.meilleur = { d: 1e9, t: this.time.now };
+    };
+    if (o.sorti) {   // de retour sur la place, par l'arche
+      o.sorti = false; o.img.setVisible(true); o.ombre.setVisible(true);
+      const [ax, ay] = this.devantLieu('arche'); o.img.setPosition(ax + Phaser.Math.Between(-24, 24), P.H + 60);
+      return vers(o.img.x, ay, { type: 'entree' }, true);
+    }
+    const etals = Object.keys(LIEUX_PLACE).filter(k => this.actionsLieux[k] && !['arche', 'moulin', 'carte', 'mendiant'].includes(k));
+    if (r < 0.5 && etals.length) {
+      const k = Phaser.Utils.Array.GetRandom(etals), [x, y] = this.devantLieu(k);
+      return vers(x + Phaser.Math.Between(-34, 34), y + Phaser.Math.Between(0, 10), { type: 'etal', k });
+    }
+    if (r < 0.7) {   // bavarder avec quelqu'un qui ne fait rien de spécial
+      const libres = this.passantsPlace.filter(q => q !== o && !q.sorti && !q.parle && !q.attend && q.pause > 0 && Math.hypot(q.img.x - o.img.x, q.img.y - o.img.y) < 700);
+      if (libres.length) {
+        const q = Phaser.Utils.Array.GetRandom(libres); q.attend = o; q.pause = 20000;
+        const cote = q.img.x > o.img.x ? -46 : 46;
+        return vers(q.img.x + cote, q.img.y, { type: 'causer', q });
+      }
+    }
+    if (r < 0.9 || o.quoi === 'mentor') {   // flâner (Garrick ne quitte jamais la place)
+      const pts = Object.keys(LIEUX_PLACE).filter(k => !['arche', 'mendiant'].includes(k)).map(k => this.devantLieu(k));   // (on ne flâne pas sous le nez du mendiant)
+      const [x, y] = Phaser.Utils.Array.GetRandom(pts);
+      return vers(x + Phaser.Math.Between(-80, 80), y + Phaser.Math.Between(4, 40), { type: 'flaner' });
+    }
+    const [ax, ay] = this.devantLieu('arche');
+    return vers(ax + Phaser.Math.Between(-20, 20), ay, { type: 'sortir' });
+  },
+
+  // Arrivé là où il voulait
+  arriveePassant(o) {
+    const but = o.but || {}; o.but = null; o.cible = null; o.chemin = [];
+    const tourner = vue => { o.vue = vue; o.img.setTexture(corpsHD(this, o.quoi, null, vue)).setFlipX(false); };
+    if (but.type === 'etal') { tourner('dos'); o.pause = Phaser.Math.Between(3000, 8000); return; }
+    if (but.type === 'causer') {
+      const q = but.q;
+      if (!q || !q.img.active || q.attend !== o || q.sorti) { if (q && q.attend === o) { q.attend = null; q.pause = 800; } tourner('face'); o.pause = 1500; return; }
+      q.attend = null;
+      const gauche = o.img.x < q.img.x;
+      for (const [a, versDroite] of [[o, gauche], [q, !gauche]]) { a.vue = 'profil'; a.img.setTexture(corpsHD(this, a.quoi, null, 'profil')).setFlipX(!versDroite); a.parle = true; a.cible = null; a.chemin = []; }
+      const [l1, l2] = Phaser.Utils.Array.GetRandom(CAUSERIES_PLACE);
+      this.bulleCourte(o, l1);
+      this.time.delayedCall(2300, () => q.img.active && this.bulleCourte(q, l2));
+      this.time.delayedCall(5200, () => { for (const a of [o, q]) { a.parle = false; a.pause = Phaser.Math.Between(600, 2200); } });
+      o.pause = 99999; q.pause = 99999;
+      return;
+    }
+    if (but.type === 'sortir') {   // il passe sous l'arche et quitte la place
+      o.cible = [o.img.x, PLACE_MARCHE.H + 70]; o.chemin = []; o.but = { type: 'dehors' }; o.librement = true;
+      return;
+    }
+    if (but.type === 'dehors') { o.sorti = true; o.librement = false; o.img.setVisible(false); o.ombre.setVisible(false); o.pause = Phaser.Math.Between(5000, 14000); return; }
+    if (but.type === 'entree') o.librement = false;
+    tourner('face'); o.pause = Phaser.Math.Between(1500, 5000);
+  },
+
+  // Une petite bulle qui suit un passant (sans voix : on les entend sans les écouter)
+  bulleCourte(o, texte) {
+    if (o.bulle && o.bulle.active) o.bulle.destroy();
+    const b = o.bulle = this.add.text(o.img.x, o.img.y - o.img.displayHeight - 8, texte, style(11, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 7, y: 4 }, wordWrap: { width: 200 }, align: 'center' })).setOrigin(0.5, 1).setScale(0);
+    b.yTri = 1e6 + 2; this.place.add(b);
+    this.tweens.add({ targets: b, scale: 1 / this.place.scaleX, duration: 160, ease: 'Back.easeOut' });
+    this.time.delayedCall(2600, () => b.active && this.tweens.add({ targets: b, alpha: 0, duration: 250, onComplete: () => b.destroy() }));
+  },
+
   passantPlaceParle(o) {
-    if (o.bulle && o.bulle.active) return;
-    o.pause = 4200; o.cible = null;
+    if ((o.bulle && o.bulle.active) || o.parle || o.sorti) return;
+    if (o.attend) { o.attend = null; }
+    o.pause = 4200; o.cible = null; o.chemin = []; o.but = null;
     const garrick = o.quoi === 'mentor';
     const texte = garrick ? Phaser.Utils.Array.GetRandom(PHRASES_GARRICK_MARCHE) : this.phraseMarche();
     Son.jouer('voix', { personne: garrick ? { nom: 'Garrick', race: 'humain' } : { nom: o.quoi.nom, race: o.quoi.race, feminin: o.quoi.feminin }, ton: Phaser.Utils.Array.GetRandom(['content', 'rire', 'etonne', 'neutre']) });
@@ -303,7 +411,7 @@ Object.assign(MarcheScene.prototype, {
   // (v1.49) Un itinéraire : une recherche sur une grille de 20 px (les étals, la fontaine, les troncs bloquent), puis on
   // lisse le chemin en ne gardant que les tournants nécessaires. Une cible inaccessible : la case libre la plus proche.
   libreEntre(x0, y0, x1, y1) {
-    const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 6);
+    const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 3);   // (v1.61 : tous les 3 px, pour ne plus couper les coins)
     for (let k = 1; k <= n; k++) if (this.bloqueParObstacle(x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n)) return false;
     return true;
   },
@@ -363,7 +471,7 @@ Object.assign(MarcheScene.prototype, {
   allerVersLieu(cle, courir = false) {
     if (!this.place || this.bloquePlace()) return;
     const [x, y] = this.devantLieu(cle);
-    if (Math.hypot(this.heros.x - x, this.heros.y - y) < 40) return this.agirLieu(cle);
+    if (Math.hypot(this.heros.x - x, this.heros.y - y) < 40) return this.time.delayedCall(0, () => this.agirLieu(cle));   // (v1.61 : sinon le clic de la scène refermait aussitôt le panneau)
     this.partirVers(x, y, cle, courir || Math.hypot(this.heros.x - x, this.heros.y - y) > 600);
   },
 
@@ -384,8 +492,9 @@ Object.assign(MarcheScene.prototype, {
   cadrerPlace(instantane = false, cle = null) {
     const P = PLACE_MARCHE, place = this.place;
     let z = P.zoom, fx = this.heros.x, fy = this.heros.y - 40, sy = 270;
-    if (cle) { z = P.zoomPanneau; [fx, fy] = LIEUX_PLACE[cle]; sy = 250; }
-    const x = Phaser.Math.Clamp(480 - fx * z, 960 - P.L * z, 0), y = Phaser.Math.Clamp(sy - fy * z, 478 - P.H * z, 0);
+    if (cle) { z = PETITS_LIEUX.includes(cle) ? P.zoom * 1.2 : P.zoomPanneau; [fx, fy] = LIEUX_PLACE[cle]; sy = PETITS_LIEUX.includes(cle) ? 262 : 250; }
+    // (v1.61) lieu ouvert : le bas de la place peut monter derrière le cadre, pour que le mendiant (tout en bas) reste visible
+    const x = Phaser.Math.Clamp(480 - fx * z, 960 - P.L * z, 0), y = Phaser.Math.Clamp(sy - fy * z, (cle ? 300 : 478) - P.H * z, 0);
     if (instantane) { place.setScale(z).setPosition(x, y); return; }
     if (cle) { this.tweens.killTweensOf(place); this.tweens.add({ targets: place, x, y, scale: z, duration: 450, ease: 'Sine.easeInOut' }); return; }
     // en marchant : on glisse doucement
@@ -495,15 +604,26 @@ Object.assign(MarcheScene.prototype, {
       }
     }
     this.ombreHeros.setPosition(h.x + 2, h.y - 2); this.ombreHeros.yTri = h.y - 0.5;
-    // les passants
+    // les passants (v1.61 : ils suivent leur chemin, pas à pas, et vivent leur petite vie)
     for (const o of this.passantsPlace) {
       if (o.bulle && o.bulle.active) o.bulle.setPosition(o.img.x, o.img.y - o.img.displayHeight - 8);
-      if (o.pause > 0) { o.pause -= dt; if (o.pause <= 0) o.cible = Phaser.Utils.Array.GetRandom(o.pts).map((v, k) => v + (k ? 16 : Phaser.Math.Between(-40, 40))); continue; }
-      if (!o.cible) { o.pause = 1500; continue; }
+      if (o.attend && !(o.attend.but && o.attend.but.q === o)) { o.attend = null; o.pause = Math.min(o.pause, 600); }   // (celui qu'il attendait a changé d'avis : il ne reste pas figé 20 s)
+      if (o.parle || o.attend) continue;
+      if (o.pause > 0) { o.pause -= dt; if (o.pause <= 0) this.envieDePassant(o); continue; }
+      if (!o.cible) { o.pause = 1200; continue; }
       const rx = o.cible[0] - o.img.x, ry = o.cible[1] - o.img.y, d = Math.hypot(rx, ry), v = 0.07 * dt;
-      if (d < v + 1) { o.cible = null; o.pause = Phaser.Math.Between(1500, 5000); o.img.setTexture(corpsHD(this, o.quoi, null, o.vue)); continue; }
-      let nx = o.img.x + rx / d * v, ny = o.img.y + ry / d * v;
-      if (this.bloqueParObstacle(nx, ny)) { ny = o.img.y + 2; nx = o.img.x + Math.sign(rx) * v * 0.5; if (this.bloqueParObstacle(nx, ny)) { o.cible = null; o.pause = 800; continue; } }
+      if (d < v + 1) {
+        o.img.setPosition(o.cible[0], o.cible[1]);
+        if (o.chemin && o.chemin.length) { o.cible = o.chemin.shift(); o.meilleur = { d: 1e9, t: this.time.now }; }
+        else { this.arriveePassant(o); if (!o.cible) o.img.setTexture(corpsHD(this, o.quoi, null, o.vue)); }
+        o.ombre.setPosition(o.img.x + 2, o.img.y - 2); o.ombre.yTri = o.img.y - 0.5;
+        continue;
+      }
+      const nx = o.img.x + rx / d * v, ny = o.img.y + ry / d * v;
+      // (son chemin contourne déjà les étals, la fontaine, les buissons : il le suit sans s'arrêter au moindre coin frôlé)
+      // (et s'il n'avance plus depuis deux secondes, il renonce et fait autre chose)
+      if (!o.meilleur || d < o.meilleur.d - 1) o.meilleur = { d, t: this.time.now };
+      else if (this.time.now - o.meilleur.t > 2000) { o.cible = null; o.chemin = []; if (o.but && o.but.q && o.but.q.attend === o) { o.but.q.attend = null; o.but.q.pause = 600; } o.but = null; o.pause = 900; continue; }
       o.img.setPosition(nx, ny); o.ombre.setPosition(nx + 2, ny - 2); o.ombre.yTri = ny - 0.5;
       const vue = this.vueSelon(rx, ry);
       if (vue !== o.vue) o.vue = vue;
@@ -518,7 +638,7 @@ Object.assign(MarcheScene.prototype, {
     if (this.visite) this.majVisite(dt);
     const montrer = proche && !this.bloquePlace() && !this.visiteEnCours() && !(this.banniereVisite && this.banniereVisite.active);
     this.invitePlace.setVisible(!!montrer);
-    if (montrer) { const [n, m] = this.nomLieuPlace(proche); this.invitePlace.setText(`${n}${m ? ' · ' + m : ''}   —   Espace ou clic : ${MARCHANDS[proche] ? 'faire tes courses' : proche === 'arche' ? 'rentrer' : 'approcher'}`); }
+    if (montrer) { const [n, m] = this.nomLieuPlace(proche); this.invitePlace.setText(`${n}${m ? ' · ' + m : ''}   —   E ou clic : ${MARCHANDS[proche] ? 'faire tes courses' : proche === 'arche' ? 'rentrer' : proche === 'tableau' ? 'lire' : PETITS_LIEUX.includes(proche) ? 'parler' : 'approcher'}`); }
     if (!this.carteC && !this.panneauOuvert) this.cadrerPlace();
     for (const o of this.place.list) o.yTriPlace = o.yTri !== undefined ? o.yTri : o.y;
     this.place.sort('yTriPlace');

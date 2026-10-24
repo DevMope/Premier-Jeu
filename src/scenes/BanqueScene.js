@@ -5,6 +5,7 @@ class BanqueScene extends Phaser.Scene {
   constructor() { super('Banque'); }
 
   create() {
+    lieuVu('banque');   // (v1.61)
     this.fenetre = null;   // (v0.97) la fenêtre d'une visite précédente bloquait les emprunts
     this.time.delayedCall(500, () => conseilGarrick(this, 'banque', true));
     const G = this.G = window.GAME;

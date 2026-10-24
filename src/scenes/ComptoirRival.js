@@ -39,7 +39,7 @@ function lettreDuNotaire(scene, suite) {
   L.add(scene.add.text(0, -118, 'LA BOUTIQUE D’À CÔTÉ EST À VENDRE', style(19, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
   L.add(scene.add.text(0, -94, `Le notaire du Conseil · prix : ${prix} p. (${RIVAL.rachat.parEtoile} p. × ★${et})`, style(12, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5));
   const choix = (x, nom, l1, l2, coul) => { const c = scene.add.container(x, 10); c.add(scene.add.rectangle(0, 0, 250, 170, 0xf3e6c8).setStrokeStyle(3, coul)); c.add(scene.add.text(0, -66, nom, style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5)); c.add(scene.add.text(0, -6, l1, style(12, '#3b2410', { wordWrap: { width: 226 }, align: 'center' })).setOrigin(0.5)); c.add(scene.add.text(0, 56, l2, style(11, '#6b4a2a', { fontStyle: 'italic', wordWrap: { width: 226 }, align: 'center' })).setOrigin(0.5)); L.add(c); };
-  choix(-140, "L'orphelinat", `Tu l'offres aux orphelins du Comté : +${RIVAL.orphelinat.reputation} de réputation, et des petits coursiers.`, 'Ils font tes courses au marché, et courent pour toi au comptoir.', 0x4a8a3a);
+  choix(-140, "L'orphelinat", `Tu l'offres aux orphelins de la Comté : +${RIVAL.orphelinat.reputation} de réputation, et des petits coursiers.`, 'Ils font tes courses au marché, et courent pour toi au comptoir.', 0x4a8a3a);
   choix(140, 'Le petit bar', 'Tu en feras ton petit bar : une salle à faire tourner le soir, ton équipe, tes musiciens.', 'Les installations sont chères, et les paies viennent en plus, chaque soir ouvert.', 0x8a5a2a);
   L.add(scene.add.text(0, 132, peutPayer(G, prix) ? 'Le premier terrain de ton quartier. Rien ne presse : le notaire attend ton offre.' : `Il te manque ${prix - Math.floor(G.argent)} pièces. Rien ne presse : le notaire attend ton offre (le soir, chez toi).`, style(12, peutPayer(G, prix) ? '#2f5a2a' : '#b02020', { fontStyle: 'bold italic', wordWrap: { width: 560 }, align: 'center' })).setOrigin(0.5));
   const objets = [voile, L];
@@ -128,7 +128,7 @@ Object.assign(CounterScene.prototype, {
     const msk = this.make.graphics().fillCircle(mx, my, 42); bu.setMask(msk.createGeometryMask());
     this.tweens.add({ targets: m, scale: 1, duration: 300, ease: 'Back.easeOut' });
     this.tweens.add({ targets: bu, alpha: 1, duration: 300 });
-    this.raconter(`Dans la file, ${v.nom} hésite... puis file chez le voisin : Lucien Belhomme lui fait signe depuis sa vitrine. (Un client de moins aujourd'hui.)`, RIVAL.sous);
+    this.raconter(`Dans la file, ${v.nom} hésite... puis court chez le voisin : Lucien Belhomme lui fait signe depuis sa vitrine. (Un client de moins aujourd'hui.)`, RIVAL.sous);
     const moins = this.add.text(FENETRE.x + FENETRE.w / 2, FENETRE.y + 130, '−1 client', style(16, '#ffdddd', { fontStyle: 'bold', stroke: '#5a0e0e', strokeThickness: 5 })).setOrigin(0.5).setDepth(3.4).setAlpha(0);
     this.tweens.add({ targets: moins, alpha: 1, y: FENETRE.y + 110, duration: 700, delay: 500, yoyo: true, hold: 900 });
     if (premier) {

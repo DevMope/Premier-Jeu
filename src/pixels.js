@@ -480,7 +480,8 @@ function texteMixte(scene, x, y, texte, { taille = 14, largeur = 880, align = 'l
         if (!mot) continue;
         const w = largeurDe(mot, d);
         if (/^\s+$/.test(mot)) { if (xl > 0) { pousser(' ', d); xl += w; } continue; }
-        if (xl > 0 && xl + w > largeur) { const der = ligne[ligne.length - 1]; if (der) der.t = der.t.replace(/\s+$/, ''); ligne = []; lignes.push(ligne); xl = 0; }
+        // (v1.61) une ponctuation fermante (» ! ? …) ne part jamais seule à la ligne : elle déborde de quelques pixels
+        if (xl > 0 && xl + w > largeur && !(/^[»!?;:.,…)]+$/.test(mot) && w < 16)) { const der = ligne[ligne.length - 1]; if (der) der.t = der.t.replace(/\s+$/, ''); ligne = []; lignes.push(ligne); xl = 0; }
         pousser(mot, d); xl += w;
       }
     }
@@ -558,9 +559,9 @@ function creerBouton(scene, x, y, largeur, texte, action) {
   const repos = () => {
     if (!fond.active) return;
     fond.setTexture(survol && actif ? cle + '_clair' : cle);
-    label.setY(y);
+    label.setY(fond.y);   // (v1.61 : la place actuelle du bouton, s'il a été déplacé)
   };
-  const habiller = (forcerUne = false) => { plaque(forcerUne); tenir(); label.setX(x + decal); repos(); };
+  const habiller = (forcerUne = false) => { plaque(forcerUne); tenir(); label.setX(fond.x + decal); repos(); };
   habiller();
   if (rang >= 4) label.setColor('#fff0c8');
   fond.on('pointerover', () => { survol = true; repos(); });
@@ -569,7 +570,7 @@ function creerBouton(scene, x, y, largeur, texte, action) {
     if (!actif) return;
     Son.jouer('clic');
     fond.setTexture(cle + '_enfonce');
-    label.setY(y + 2);
+    label.setY(fond.y + 2);
     scene.time.delayedCall(110, repos);
     if (window.noterJournal) noterJournal(`[${scene.scene.key}] « ${label.text} »`);   // (v0.95 : le journal de bord)
     action();
@@ -712,6 +713,18 @@ function textureJoueur(scene, G, vue = 'face') {
 
 // Crée (ou recrée) les trois textures du joueur, en HD : joueur_petit, joueur_adulte, joueur_ancien.
 // (v0.68) Le joueur assis (sur un banc) : renvoie la clé de la texture ; ses pieds sont à PIEDS_ASSIS[clé]
+// (v1.61) le joueur qui dort : de face, les yeux fermés (avant, il dormait les yeux ouverts)
+function textureJoueurDort(scene, G) {
+  const stade = stadeJoueur(G), tenue = signatureJoueur(G);
+  const cle = `joueur_${stade}_dort`;
+  if (!scene.textures.exists(cle) || scene.textures.get(cle).tenue !== tenue) {
+    if (scene.textures.exists(cle)) scene.textures.remove(cle);
+    dessinerJoueurHD(apparenceDuJour(G), stade, G.joueur.feminin, 0, G.tenue || [], 'face', 'dort').texture(scene, cle);
+    scene.textures.get(cle).tenue = tenue;
+  }
+  return cle;
+}
+
 function textureJoueurAssis(scene, G) {
   const stade = stadeJoueur(G), tenue = signatureJoueur(G);
   const cle = `joueur_${stade}_assis`;
@@ -1045,6 +1058,13 @@ function oublierPortraits(jeu) {
 // (v0.97) Tous les textes affichés passent par l'accord au féminin de « marchand » (voir accordJoueur)
 { const setText = Phaser.GameObjects.Text.prototype.setText;
   Phaser.GameObjects.Text.prototype.setText = function (t) { return setText.call(this, typeof accordJoueur === 'function' ? accordJoueur(t) : t); }; }
+
+// (v1.61) Le retour à la ligne ne sépare plus un « ? », un « ! », un « : », un « ; » ou un « » » du mot d'avant (ni « « » du mot
+// d'après) : l'espace française devient insécable, seulement pour couper les lignes (le texte lui-même ne change pas)
+{ const runWordWrap = Phaser.GameObjects.Text.prototype.runWordWrap;
+  Phaser.GameObjects.Text.prototype.runWordWrap = function (t) {
+    return runWordWrap.call(this, typeof t === 'string' ? t.replace(/ (?=[?!:;»])/g, '\u00a0').replace(/« /g, '«\u00a0') : t);
+  }; }
 
 // (v0.97) Phaser n'arrête pas une animation quand son objet est détruit : les animations sans fin
 // (respiration, scintillement, balancement...) des panneaux refermés tournaient dans le vide jusqu'à

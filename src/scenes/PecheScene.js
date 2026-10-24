@@ -89,7 +89,7 @@ class PecheScene extends Phaser.Scene {
     for (let k = 0; k < max; k++) this.boiteMef.add(this.add.image(780 + k * 26, y + 9, texturePoisson(this, 'gardon')).setScale(0.9).setAlpha(k < max - n ? 1 : 0.25).setTint(k < max - n ? 0xffffff : 0x404040));
     this.boiteNiv.removeAll(true);
     this.boiteNiv.add(this.add.rectangle(150, y, 260, 46, 0x1a120a, 0.86).setStrokeStyle(2, 0x8a6a3a));
-    this.boiteNiv.add(this.add.text(32, y - 16, `Pêcheur · niveau ${pr.niveau}`, style(13, '#f3d98a', { fontStyle: 'bold' })));
+    this.boiteNiv.add(this.add.text(32, y - 16, `${eJ() ? 'Pêcheuse' : 'Pêcheur'} · niveau ${pr.niveau}`, style(13, '#f3d98a', { fontStyle: 'bold' })));
     const g = this.add.graphics(); g.fillStyle(0x3a2a1a).fillRect(32, y + 4, 180, 8);
     if (pr.haut) g.fillStyle(0x6ab0e0).fillRect(32, y + 4, 180 * (pr.xp - pr.bas) / (pr.haut - pr.bas), 8); else g.fillStyle(0xd8a830).fillRect(32, y + 4, 180, 8);
     this.boiteNiv.add(g);
@@ -329,7 +329,7 @@ class PecheScene extends Phaser.Scene {
     let k = 0; const pas = this.time.addEvent({ delay: 110, loop: true, callback: () => c.active && c.setTexture(this.cleChat + '_m' + (++k % 2)) });
     this.tweens.add({ targets: [c], x: this.X0 - 80, duration: 1600, ease: 'Quad.easeIn', onUpdate: () => poisson.setPosition(c.x + dx, c.y + dy) });
     this.tweens.add({ targets: bulle, x: 120, alpha: 0, delay: 700, duration: 900 });
-    this.dire(`${nomChatMaj(this.G)} file avec ta ${POISSONS[this.prise.id].nom.toLowerCase()} dans la gueule !`, `L’expérience, tu la gardes (+${this.bilan.gain}). Le poisson... beaucoup moins.`);
+    this.dire(`${nomChatMaj(this.G)} file avec ${/^(Gardon|Brochet)$/.test(POISSONS[this.prise.id].nom) ? 'ton' : 'ta'} ${POISSONS[this.prise.id].nom.toLowerCase()} dans la gueule !`, `L’expérience, tu la gardes (+${this.bilan.gain}). Le poisson... beaucoup moins.`);
     await new Promise(ok => this.time.delayedCall(1800, ok));
     pas.remove(); poisson.destroy(); bulle.destroy();
     // il revient s'asseoir l'air de rien, en se léchant les babines
@@ -365,7 +365,7 @@ class PecheScene extends Phaser.Scene {
     if (B.nouveau && !leg) ajouter(this.add.text(640, 168, 'NOUVEAU DANS LE CARNET', style(11, '#14100a', { fontStyle: 'bold', backgroundColor: '#e8c060', padding: { x: 6, y: 2 } })).setOrigin(0.5).setAngle(8));
     const pr = progresPeche(G);
     if (leg) {
-      ajouter(this.add.text(480, 254, '« Par tous les goujons du Comté ! Cinquante ans que je la guette...\nTu es un vrai pêcheur, toi. » — Barnabé, accouru sur la berge', style(12, '#3b2410', { align: 'center', fontStyle: 'bold' })).setOrigin(0.5));
+      ajouter(this.add.text(480, 254, `« Par tous les goujons de la Comté ! Cinquante ans que je la guette...\nTu es ${eJ() ? 'une vraie pêcheuse' : 'un vrai pêcheur'}, toi. » — Barnabé, accouru sur la berge`, style(12, '#3b2410', { align: 'center', fontStyle: 'bold' })).setOrigin(0.5));
       ajouter(this.add.text(480, 288, `+${B.gain} expérience de pêcheur · un succès · elle ne se pêche qu’une seule fois`, style(12, '#1f4a7a', { fontStyle: 'bold' })).setOrigin(0.5));
       return this.choixLegende();
     }
@@ -411,7 +411,7 @@ class PecheScene extends Phaser.Scene {
     c.setPosition(x, SOL_PROMENADE + 2).setOrigin(0.5, 1).setScale(2.6);
     const id = legende ? 'legende' : P.id;
     const poisson = this.add.image(x, SOL_PROMENADE - 128, texturePoisson(this, id)).setScale(legende ? 1.2 : 1.6).setDepth(8.71);
-    const bulle = this.add.text(x - this.X0, SOL_PROMENADE - 170, legende ? '« Grand-Mère Écaille... pour moi ?\nOn dînera chez les rois, ce soir ! »' : `« Une ${POISSONS[P.id].nom.toLowerCase()} ? Pour moi ? Oh, toi... »`, style(13, '#2a1608', { fontStyle: 'bold', backgroundColor: '#f4ead2', padding: { x: 7, y: 4 }, align: 'center' })).setOrigin(0.5, 1).setScrollFactor(0).setDepth(30);
+    const bulle = this.add.text(x - this.X0, SOL_PROMENADE - 170, legende ? '« Grand-Mère Écaille... pour moi ?\nOn dînera chez les rois, ce soir ! »' : `« ${/^(Gardon|Brochet)$/.test(POISSONS[P.id].nom) ? 'Un' : 'Une'} ${POISSONS[P.id].nom.toLowerCase()} ? Pour moi ? Oh, toi... »`, style(13, '#2a1608', { fontStyle: 'bold', backgroundColor: '#f4ead2', padding: { x: 7, y: 4 }, align: 'center' })).setOrigin(0.5, 1).setScrollFactor(0).setDepth(30);
     this.dire(`${nomChatMaj(this.G)} se dresse sur ses pattes arrière, lève sa prise au-dessus de sa tête... et danse.`, gain > 0 ? `+${gain} ♥` : 'Il danse quand même (le ♥ du jour, il l’a déjà eu).');
     if (gain > 0) this.gain(`+${gain} ♥`, '#ff8aa0');
     Son.jouer('miaou');
@@ -449,7 +449,7 @@ class PecheScene extends Phaser.Scene {
       [`Vendre à Barnabé · ${L.prix} p.`, () => confirmer(`Vendre Grand-Mère Écaille pour ${L.prix} p. ?`, () => {
         const r = vendrePoisson(G, P); Son.jouer('pieces'); this.gain(`+${r.gain} p.`);
         this.fermerFiche(false);
-        this.barnabeDit("« Je la mettrai à la grande table du bourgmestre, il en pleurera ! Tiens, 750 pièces...\net bravo, petit. Cinquante ans, et c'est toi qui l'as eue. »");
+        this.barnabeDit("« Je la mettrai à la grande table du bourgmastre, il en pleurera ! Tiens, 750 pièces...\net bravo, petit. Cinquante ans, et c'est toi qui l'as eue. »");
       })],
       [`Garder (fumée : ${L.rations} rations)`, () => confirmer(`Fumer Grand-Mère Écaille (${L.rations} rations) ?`, () => {
         const r = garderPoisson(G, P); if (r.erreur) return this.alerte(r.erreur);

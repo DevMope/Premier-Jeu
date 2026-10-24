@@ -233,7 +233,7 @@ class FailliteScene extends Cinematique {
       this.tweens.add({ targets: f, scale: e, duration: 600, ease: 'Back.easeOut' });
     }));
     await this.attendreClic();
-    this.ecrire('', `Tu t'es enfui${eJ(this.G)} par derrière, dans la nuit, sans te retourner. Derrière toi, le comptoir brûlait.`);
+    this.ecrire('', `Tu t'es enfui${eJ(this.G)} par-derrière, dans la nuit, sans te retourner. Derrière toi, le comptoir brûlait.`);
     this.p.setFlipX(true);
     await this.defiler([this.p], [-80], 1600);
     await this.attendreClic();

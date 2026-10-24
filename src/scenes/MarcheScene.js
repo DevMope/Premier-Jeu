@@ -787,6 +787,7 @@ class MarcheScene extends Phaser.Scene {
   }
 
   message(texte, couleur = '#3b2410') {
+    if (couleur === '#a03030' && this.refusPresDuClic) return this.refusPresDuClic(texte);   // (v1.61)
     if (couleur === '#a03030') Son.jouer('refus');
     if (this.texteMessage) this.texteMessage.destroy();
     if (this.contenu && !this.modeVue) {
@@ -804,6 +805,8 @@ class MarcheScene extends Phaser.Scene {
   majBoutonCommandes() {
     const n = this.G.annonces.filter(a => a.acceptee && a.jour >= this.G.jour).length;
     this.boutonCommandes.setText(`Commandes prévues (${n}) ${this.commandesOuvertes ? '▲' : '▼'}`);
+    // (v1.61) les lettres de commande ont quitté le jeu : le bouton ne sert plus qu'aux dernières acceptées
+    this.boutonCommandes.setVisible(n > 0 || !!this.commandesOuvertes);
   }
 
   basculerCommandes() {
@@ -973,6 +976,7 @@ class MarcheScene extends Phaser.Scene {
     });
     bc.label.setFontSize(13);
     c.add([bc.fond, bc.label]);
+    if (!nLettres && !this.commandesOuvertes) { bc.fond.setVisible(false).disableInteractive(); bc.label.setVisible(false); }   // (v1.61 : plus de lettres, plus de bouton vide)
     if (this.panneauCommandes) this.panneauCommandes.setDepth(45);
     c.once('destroy', () => { if (this.panneauCommandes) this.panneauCommandes.setDepth(20); });
     // (v0.68) des flèches pour passer d'un étal à l'autre sans reculer (et ◀ ▶ au clavier)
@@ -1076,7 +1080,7 @@ class MarcheScene extends Phaser.Scene {
     }
     const dispo = G.tresors.filter(t => !t.reparation);
     if (!dispo.length) {
-      c.add(this.add.text(30, 352, "Tu n'as aucun objet à vendre.\nRachète des objets aux aventuriers à la fin de leur récit, et répare-les à l'atelier (le soir).",
+      c.add(this.add.text(30, 352, "Tu n'as aucun objet à vendre.\nRachète des objets aux aventuriers à la fin de leur récit, et fais-les réparer à l'atelier (le soir).",
         style(14, '#3b2410', { lineSpacing: 4 })));
       return;
     }
@@ -1455,7 +1459,7 @@ class MarcheScene extends Phaser.Scene {
     const G = this.G, p = etatPeche(G);
     if (!lieuOuvert(G, 'peche')) return this.message(`${NOMS_LIEUX_MARCHE.peche} ouvre le jour ${OUVERTURE_LIEUX.peche}.`);
     this.montrer('peche');
-    const c = this.panneau('Barnabé Goujon', 'Le pêcheur du Comté · cannes, poissons, et l’étang du Moulin');
+    const c = this.panneau('Barnabé Goujon', 'Le pêcheur de la Comté · cannes, poissons, et l\'étang du Moulin');
     // la première fois : il se présente et explique (le tuto, par lui)
     if (!p.barnabe) {
       const pages = ["« Tiens, un nouveau visage ! Barnabé Goujon, pêcheur depuis que j'ai des pieds poilus. Tu veux apprendre ? Une canne de roseau, vingt pièces, et je te montre. »",
@@ -1484,7 +1488,7 @@ class MarcheScene extends Phaser.Scene {
         ecranNouvelObjet(this, textureCanne(this, id), { nom: k.nom, de: 'achetée à Barnabé Goujon', texte: k.texte + (id === 'roseau' ? "\nL'étang du Moulin t'attend : le matin (l'aube), ou le soir." : ''), ech: id === 'roseau' ? 5 : 4.4, bouton: 'Merci, Barnabé' }).then(() => this.ouvrirPeche());
       }, undefined, 24);
     });
-    c.add(this.add.text(30, 448, `Pêcheur · niveau ${pr.niveau}${pr.haut ? ` (${pr.xp}/${pr.haut})` : ' (le plus haut)'} · vendus aujourd'hui : ${ventesDuJour(G)}/${PECHE.venteParJour}`, style(12, '#1f4a7a', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+    c.add(this.add.text(30, 448, `${eJ() ? 'Pêcheuse' : 'Pêcheur'} · niveau ${pr.niveau}${pr.haut ? ` (${pr.xp}/${pr.haut})` : ' (le plus haut)'} · vendus aujourd'hui : ${ventesDuJour(G)}/${PECHE.venteParJour}`, style(12, '#1f4a7a', { fontStyle: 'bold' })).setOrigin(0, 0.5));
     this.bouton(c, 620, 448, 160, 'Le carnet de pêche', () => carnetDePeche(this), undefined, 24);
     if (aUneCanne(G)) this.bouton(c, 820, 448, 190, "Aller à l'étang (l'aube)", () => {
       if (this.jeuLance || enTransition(this)) return;
@@ -1709,12 +1713,13 @@ class MarcheScene extends Phaser.Scene {
     // (v1.47) pas de mise avant 18 ans... sauf si l'on insiste : le vieux Grippesou finit par céder
     let cede = false;
     if (!coinDesJeuxPermis(G)) {
-      if (!insisterAuCoinDesJeux(G)) return this.message(REFUS_COIN_DES_JEUX[Math.min(G.insistanceJeux, REFUS_COIN_DES_JEUX.length) - 1], '#a03030');
+      const gamine = t => (eJ() ? t.replace(/\bun gamin\b/g, 'une gamine').replace(/\bgamin\b/g, 'gamine') : t);   // (v1.61 : à une joueuse)
+      if (!insisterAuCoinDesJeux(G)) return this.message(gamine(REFUS_COIN_DES_JEUX[G.cessionsGrippesou ? (G.insistanceJeux - 1) % REFUS_COIN_DES_JEUX.length : Math.min(G.insistanceJeux, 2) - 1]), '#a03030');
       cede = true;
     }
     this.montrer('jeux');
     const c = this.panneau('Le coin des jeux', 'Tenu par Fil-de-Fer, cousin du vieux Grippesou');
-    if (cede) this.time.delayedCall(250, () => this.message("Le vieux Grippesou passe la tête sous l'auvent : « Laisse, cousin... C'est le business. Mais fais vite, petit. »", '#5a2a6a'));
+    if (cede) this.time.delayedCall(250, () => this.message(accordJoueur(CESSIONS_GRIPPESOU[Math.min(G.cessionsGrippesou, CESSIONS_GRIPPESOU.length) - 1]).replace(', petit.', `, petit${eJ()}.`), '#5a2a6a'));
     c.add(this.add.rectangle(480, 395, 2, 120, 0x8a6a3a));
     // Les dés
     c.add(this.add.text(40, 340, `Les dés · le plus gros total gagne (${pluriel(partiesRestantes(G, 'des'), 'partie restante', 'parties restantes')})`, style(13, '#3b2410', { fontStyle: 'bold' })));

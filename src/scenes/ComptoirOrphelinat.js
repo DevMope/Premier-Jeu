@@ -82,7 +82,7 @@ function orphelinatDuSoir(scene, suite, page = 'courses') {
       c.add(scene.add.text(0, 88, a.decor, style(10, '#6b4a2a', { fontStyle: 'italic', wordWrap: { width: 180 }, align: 'center' })).setOrigin(0.5));
       if (!bati && !chantier && suivante && suivante.id !== a.id) c.add(scene.add.text(0, -54, `après ${ORPHELINAT.ameliorations[i - 1].nom.toLowerCase()}`, style(10, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
     });
-    let note = 'Tout est bâti : le Comté entier parle de ton orphelinat.';
+    let note = 'Tout est bâti : la Comté entière parle de ton orphelinat.';
     if (o.chantier) note = 'Les ouvriers viennent cette nuit : des coups de marteau au réveil.';
     else if (suivante) note = peutPayer(G, suivante.prix) ? `Chaque amélioration se bâtit en une nuit (+${ORPHELINAT.reputation} de réputation).` : `Il te manque ${suivante.prix - Math.floor(G.argent)} pièces pour ${suivante.nom.toLowerCase()}.`;
     L.add(scene.add.text(0, 128, note, style(12, suivante && !o.chantier && !peutPayer(G, suivante.prix) ? '#b02020' : '#2f5a2a', { fontStyle: 'bold italic', wordWrap: { width: 560 }, align: 'center' })).setOrigin(0.5));

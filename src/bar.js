@@ -284,7 +284,7 @@ function matinDuBar(G) {
   const b = barDe(G);
   if (b.annonce) {
     const i = BAR.installations.find(x => x.id === b.annonce);
-    if (i) lignes.push(`Des coups de marteau toute la nuit, à côté : ${i.nom.charAt(0).toLowerCase() + i.nom.slice(1)} du petit bar est prête. ${i.effet}`);
+    if (i) lignes.push(`Des coups de marteau toute la nuit, à côté : ${i.nom.charAt(0).toLowerCase() + i.nom.slice(1)} du petit bar est en place. ${i.effet}`);
     b.annonce = null;
   }
   if (b.auto) {

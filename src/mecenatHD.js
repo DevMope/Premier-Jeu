@@ -74,7 +74,7 @@ function plaqueDesMecenes(scene) {
   c.add(scene.add.text(480, 114, 'MÉCÈNES DU REMPART', style(18, '#4a4438', { fontStyle: 'bold' })).setOrigin(0.5, 0));
   c.add(scene.add.text(480, 138, 'Par décret du Grand Sage', style(11, '#5a5448', { fontStyle: 'italic' })).setOrigin(0.5, 0));
   const autres = ['Dame Hélis de Hautval', 'Maître Odon Pierrefort', 'La guilde des tisserands', 'Ser Aldric le Vieux'];
-  const titre = palierDuMecenat(G, 'titre') ? ', Bienfaiteur du Rempart' : ', marchand';
+  const titre = palierDuMecenat(G, 'titre') ? (eJ() ? ', Bienfaitrice du Rempart' : ', Bienfaiteur du Rempart') : ', marchand' + eJ();
   [...autres.slice(0, 3), nomJoueur(G) + titre, autres[3]].forEach((n, i) => { const moi = i === 3;
     c.add(scene.add.text(480, 172 + i * 38, n.toUpperCase(), style(moi ? 15 : 14, moi ? '#8a6410' : '#3e3a30', { fontStyle: 'bold' })).setOrigin(0.5, 0)); });
   c.add(scene.add.text(480, 420, `Tu as donné ${(G.mecenat.donne || 0).toLocaleString('fr-FR')} pièces au Rempart.`, style(13, '#e8dcc0', { fontStyle: 'italic' })).setOrigin(0.5, 0));

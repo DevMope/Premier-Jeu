@@ -141,7 +141,8 @@ class DodoScene extends Cinematique {
       this.add.image(246, 144, texturePoisson(this, 'legende')).setScale(1.6).setDepth(1.33);
       this.add.rectangle(246, 172, 60, 8, 0xc9a227).setStrokeStyle(1, 0x5a3a08).setDepth(1.34);
     }
-    if (!(this.G.trophees || []).length) this.add.text(244, 196, 'Trophées des aventuriers', style(10, '#c8a878', { fontStyle: 'italic' })).setOrigin(0.5).setAlpha(0.55).setDepth(1.35);
+    this.etiquetteTrophees = null;
+    if (!(this.G.trophees || []).length) this.etiquetteTrophees = this.add.text(244, 196, 'Trophées des aventuriers', style(10, '#c8a878', { fontStyle: 'italic' })).setOrigin(0.5).setAlpha(0.55).setDepth(1.35);
     this.add.image(480, 60, 'tableauLettres').setOrigin(0, 0).setScale(2).setDepth(1.3);
     const nLettres = Math.min(6, (this.G.courrier || []).length + Math.floor(((this.G.stats || {}).lettresAcceptees || 0) / 3));
     for (let i = 0; i < nLettres; i++) this.add.image(496 + (i % 3) * 26 + (i % 2) * 3, 70 + Math.floor(i / 3) * 34 + (i % 3) * 2, 'lettreEpinglee' + (i % 3)).setOrigin(0, 0).setScale(2).setAngle((i % 2 ? 4 : -5)).setDepth(1.32);
@@ -169,6 +170,7 @@ class DodoScene extends Cinematique {
     this.joueur.setOrigin(0.5, 0.5);
     this.joueur.y -= this.joueur.displayHeight / 2;
     await this.animer({ targets: this.joueur, x: 330, y: SOL_CHAMBRE - 68, angle: -90, duration: 500, ease: 'Sine.easeInOut' });
+    this.joueur.setTexture(textureJoueurDort(this, this.G));   // (v1.61) il ferme les yeux
     this.tweens.add({ targets: this.couverture, alpha: 1, duration: 300 });
     this.ronfler();
     if (this.fini) return;
@@ -192,6 +194,7 @@ class DodoScene extends Cinematique {
     if (this.zzz) this.zzz.remove();
     // Debout !
     this.tweens.add({ targets: this.couverture, alpha: 0, duration: 200 });
+    this.joueur.setTexture(textureJoueur(this, this.G));   // (v1.61) il rouvre les yeux
     await this.animer({ targets: this.joueur, angle: 0, x: 600, y: SOL_CHAMBRE - this.joueur.displayHeight / 2, duration: 450, ease: 'Back.easeOut' });
     this.joueur.setOrigin(0.5, 1).setY(SOL_CHAMBRE);
     this.onomatopee(600, SOL_CHAMBRE - 140, 'Debout !', '#f3d98a');
@@ -560,6 +563,7 @@ class DodoScene extends Cinematique {
       .setOrigin(0.5).setDepth(9).setScale(0);
     this.tweens.add({ targets: t, scale: 1, duration: 400, ease: 'Back.easeOut' });
     const nouvelles = nouvellesDuMatin(G).slice(0, 3);
+    if (this.etiquetteTrophees && this.etiquetteTrophees.active) this.tweens.add({ targets: this.etiquetteTrophees, alpha: 0, duration: 300 });   // (v1.61 : le texte du matin passe par là)
     this.add.text(480, 196, ['Direction le Marché des Mastres !', ...nouvelles].join('\n'),
       style(15, '#fff4dc', { align: 'center', stroke: '#2a1a10', strokeThickness: 4, lineSpacing: 4, wordWrap: { width: 760 } })).setOrigin(0.5, 0).setDepth(9);
     G.banniere = G.jour; // le « Jour N » est déjà annoncé

@@ -6,6 +6,7 @@ class AtelierScene extends Phaser.Scene {
   constructor() { super('Atelier'); }
 
   create() {
+    lieuVu('atelier');   // (v1.61)
     this.time.delayedCall(500, () => conseilGarrick(this, 'atelier', true));
     const G = this.G = window.GAME;
     this.cameras.main.setBackgroundColor('#2a1a10');
@@ -23,9 +24,10 @@ class AtelierScene extends Phaser.Scene {
     this.add.image(740, 112, 'etagerePots').setOrigin(0.5, 1).setScale(2);
     this.add.rectangle(480, 46, 960, 4, 0x1a0e06).setOrigin(0.5, 0);
     this.add.rectangle(480, 226, 960, 4, 0x1a0e06).setOrigin(0.5, 0);
-    this.add.text(236, 22, "L'atelier", style(26, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0, 0.5);
-    this.add.text(360, 23, `Artisanat niv. ${niveauArtisanat(G)} · un objet cassé demande plus de travail · enchères au Marché`,
-      style(12, '#c9b48a', { fontStyle: 'italic' })).setOrigin(0, 0.5);
+    // (v1.61) le titre sort de sous la barre du haut (qui va jusqu'à x ≈ 350) ; l'aide passe sur deux lignes, avant « Fermer »
+    const titre = this.add.text(364, 22, "L'atelier", style(26, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+    this.add.text(titre.x + titre.width + 14, 23, `Artisanat niv. ${niveauArtisanat(G)} · un objet cassé demande plus de travail\nenchères au Marché`,
+      style(11, '#c9b48a', { fontStyle: 'italic', lineSpacing: -2, wordWrap: { width: 816 - titre.x - titre.width - 14 } })).setOrigin(0, 0.5);
     this.texteInfo = this.add.text(480, 438, '', style(13, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5).setDepth(5);
 
     creerBouton(this, 890, 22, 120, 'Fermer', () => this.fermer());
@@ -149,7 +151,7 @@ class AtelierScene extends Phaser.Scene {
       } else {
         const btn = this.add.rectangle(droite - 64, y, 128, 28, 0x8a5a2b).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
         btn.on('pointerdown', () => {
-          if (!ouvrierLibre(G)) return this.texteInfo.setText("Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois.");
+          if (!ouvrierLibre(G)) return this.texteInfo.setText(messagePasDOuvrier(G));
           this.choisirStade(t);
         });
         if (!ouvrierLibre(G)) btn.setAlpha(0.5);
