@@ -989,6 +989,7 @@ class MarcheScene extends Phaser.Scene {
     });
     bc.label.setFontSize(13);
     c.add([bc.fond, bc.label]);
+    if (!nLettres && !this.commandesOuvertes) { bc.fond.setVisible(false).disableInteractive(); bc.label.setVisible(false); }   // (v1.61 : plus de lettres, plus de bouton vide)
     if (this.panneauCommandes) this.panneauCommandes.setDepth(45);
     c.once('destroy', () => { if (this.panneauCommandes) this.panneauCommandes.setDepth(20); });
     // (v0.68) des flèches pour passer d'un étal à l'autre sans reculer (et ◀ ▶ au clavier)
@@ -1092,7 +1093,7 @@ class MarcheScene extends Phaser.Scene {
     }
     const dispo = G.tresors.filter(t => !t.reparation);
     if (!dispo.length) {
-      c.add(this.add.text(30, 352, "Tu n'as aucun objet à vendre.\nRachète des objets aux aventuriers à la fin de leur récit, et répare-les à l'atelier (le soir).",
+      c.add(this.add.text(30, 352, "Tu n'as aucun objet à vendre.\nRachète des objets aux aventuriers à la fin de leur récit, et fais-les réparer à l'atelier (le soir).",
         style(14, '#3b2410', { lineSpacing: 4 })));
       return;
     }

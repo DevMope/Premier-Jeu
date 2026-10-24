@@ -733,7 +733,7 @@ class CounterScene extends Phaser.Scene {
     let yy = y + 58;
     const ligne = (texte, couleur, extra = {}) => { const t = this.add.text(x + 28, yy, texte, style(15, couleur, { fontStyle: 'bold', lineSpacing: 2, wordWrap: { width: L - 56 }, ...extra })); c.add(t); yy += t.height + 12; };
     if (reviennent.length) ligne(`✉  ${prenoms(reviennent)} (${reviennent.length > 1 ? (fem(reviennent) ? 'elles' : 'ils') : reviennent[0].feminin ? 'elle' : 'il'} t'avai${reviennent.length > 1 ? 'en' : ''}t écrit) reviendr${reviennent.length > 1 ? 'ont' : 'a'} demain matin, en tête de file.`, '#2f5a2a');
-    if (repartent.length) ligne(`↩  ${prenoms(repartent)} (venu${fem(repartent) ? 'e' : ''}${repartent.length > 1 ? 's' : ''} sans lettre) repart${repartent.length > 1 ? 'ent' : ''} : ${repartent.length > 1 ? (fem(repartent) ? 'elles' : 'ils') + ' retenteront leur' : (repartent[0].feminin ? 'elle' : 'il') + ' retentera sa'} chance.`, '#7a3a10');
+    if (repartent.length) ligne(`↩  ${prenoms(repartent)} repart${repartent.length > 1 ? 'ent' : ''} : ${repartent.length > 1 ? (fem(repartent) ? 'elles' : 'ils') + ' retenteront leur' : (repartent[0].feminin ? 'elle' : 'il') + ' retentera sa'} chance.`, '#7a3a10');
     if (!reviennent.length && !repartent.length) ligne("Personne n'attendait plus : une journée bien menée.", '#2f5a2a');
     const n = niveauAmelioration(G, 'eclairage');
     if (n < AMELIORATIONS.eclairage.niveaux.length - 1) ligne(`✦  Avec un meilleur éclairage, ton comptoir fermerait plus tard (${formatHeure(heureFermeture(G) + JOURNEE.parEclairage)}).`, '#5a4a2a', { fontStyle: 'italic bold' });

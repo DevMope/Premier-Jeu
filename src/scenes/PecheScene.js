@@ -365,7 +365,7 @@ class PecheScene extends Phaser.Scene {
     if (B.nouveau && !leg) ajouter(this.add.text(640, 168, 'NOUVEAU DANS LE CARNET', style(11, '#14100a', { fontStyle: 'bold', backgroundColor: '#e8c060', padding: { x: 6, y: 2 } })).setOrigin(0.5).setAngle(8));
     const pr = progresPeche(G);
     if (leg) {
-      ajouter(this.add.text(480, 254, '« Par tous les goujons de la Comté ! Cinquante ans que je la guette...\nTu es un vrai pêcheur, toi. » — Barnabé, accouru sur la berge', style(12, '#3b2410', { align: 'center', fontStyle: 'bold' })).setOrigin(0.5));
+      ajouter(this.add.text(480, 254, `« Par tous les goujons de la Comté ! Cinquante ans que je la guette...\nTu es ${eJ() ? 'une vraie pêcheuse' : 'un vrai pêcheur'}, toi. » — Barnabé, accouru sur la berge`, style(12, '#3b2410', { align: 'center', fontStyle: 'bold' })).setOrigin(0.5));
       ajouter(this.add.text(480, 288, `+${B.gain} expérience de pêcheur · un succès · elle ne se pêche qu’une seule fois`, style(12, '#1f4a7a', { fontStyle: 'bold' })).setOrigin(0.5));
       return this.choixLegende();
     }
@@ -449,7 +449,7 @@ class PecheScene extends Phaser.Scene {
       [`Vendre à Barnabé · ${L.prix} p.`, () => confirmer(`Vendre Grand-Mère Écaille pour ${L.prix} p. ?`, () => {
         const r = vendrePoisson(G, P); Son.jouer('pieces'); this.gain(`+${r.gain} p.`);
         this.fermerFiche(false);
-        this.barnabeDit("« Je la mettrai à la grande table du bourgmestre, il en pleurera ! Tiens, 750 pièces...\net bravo, petit. Cinquante ans, et c'est toi qui l'as eue. »");
+        this.barnabeDit("« Je la mettrai à la grande table du bourgmastre, il en pleurera ! Tiens, 750 pièces...\net bravo, petit. Cinquante ans, et c'est toi qui l'as eue. »");
       })],
       [`Garder (fumée : ${L.rations} rations)`, () => confirmer(`Fumer Grand-Mère Écaille (${L.rations} rations) ?`, () => {
         const r = garderPoisson(G, P); if (r.erreur) return this.alerte(r.erreur);

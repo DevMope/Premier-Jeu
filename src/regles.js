@@ -2661,7 +2661,7 @@ function ouvrierLibre(G, t = null) {
 
 function messagePasDOuvrier(G) {
   return G.employes.length ? "Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois."
-    : `Personne pour réparer : embauche un ouvrier à l'atelier (${EMPLOYES.tobin.nom}, ${EMPLOYES.tobin.salaire} p. par jour).`;
+    : `Personne pour réparer : embauche un ouvrier à l'atelier (${EMPLOYES.tobin.nom}, ${EMPLOYES.tobin.salaire} p. par nuit).`;
 }
 
 function nomOuvrier(o) {
@@ -3438,6 +3438,9 @@ function accordJoueur(t, G = window.GAME) {
   if (t.includes('patron')) t = t.replace(/, patron\b(?![nes])/g, ', patronne').replace(/\ble patron du comptoir\b/g, 'la patronne du comptoir');
   if (t.includes('petit protégé')) t = t.replace(/\b([Ll])e petit protégé(?![e\w])/g, (m, l) => (l === 'L' ? 'La' : 'la') + ' petite protégée');
   if (t.includes('voisin')) t = t.replace(/, voisin([.!])/g, ', voisine$1');
+  // (housekeep v1.61) les mots qu'on lui lance : « gamin », « morveux », « l'ami », « petit » (après une virgule seulement)
+  if (/gamin|morveux|ami|petit/.test(t)) t = t.replace(/, gamin\b/g, ', gamine').replace(/, morveux\b/g, ', morveuse')
+    .replace(/, l(['’])ami\b/g, ', l$1amie').replace(/, petit(?=\s?[.!?…»])/g, ', petite');   // (« Moi, petit, mais nerveux ! » reste à Grisk)
   return t;
 }
 function accordAdj(id, m, f, mp, fp) { const g = genreDe(id); return g === 'm' ? m : g === 'f' ? f : g === 'mp' ? mp : fp; }

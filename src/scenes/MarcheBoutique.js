@@ -321,7 +321,7 @@ Object.assign(MarcheScene.prototype, {
     });
     for (const b of [b1, b2]) { if (vide) { b.fond.setAlpha(0.5); b.label.setAlpha(0.6); } c.add([b.fond, b.label]); }
     const hierL = this.listeHier();
-    const tH = T(400, y + 98, hier ? '◂ Revenir à la liste de mes commandes' : hierL ? '↺ Refaire mes courses d’hier' : '(pas encore de courses d’hier à refaire)', 12, hierL || hier ? '#2f5a8a' : '#9a8a70', { fontStyle: 'italic' }).setOrigin(0.5);
+    const tH = T(400, y + 98, hier ? '◂ Revenir à ma liste de courses' : hierL ? '↺ Refaire mes courses d’hier' : '(pas encore de courses d’hier à refaire)', 12, hierL || hier ? '#2f5a8a' : '#9a8a70', { fontStyle: 'italic' }).setOrigin(0.5);
     if (hierL || hier) tH.setInteractive({ useHandCursor: true }).on('pointerdown', () => { Son.jouer('page'); this.listeCourses(hier ? this.calculerListe() : hierL, !hier); });
     T(400, y + 120, 'Clique sur une case pour décocher ce que tu ne veux pas · Entrée : tout acheter · Échap : fermer', 10, '#6b4a2a', { fontStyle: 'italic' }).setOrigin(0.5);
     // le parchemin, à la taille de la liste (glissé sous les lignes)

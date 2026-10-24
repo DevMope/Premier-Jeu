@@ -348,6 +348,8 @@ class RenovationScene extends Cinematique {
       this.actif = null;
       this.bulle.setVisible(false);
       [this.boite, this.entete, this.texte].forEach(o => o.setVisible(true));
+      // (v1.61) la boîte revient en haut : le ruban des pièces passe dessous, pour ne pas cacher le nom de Garrick
+      if (this.rubanPieces) this.rubanPieces.y = this.boite.y < 270 ? 156 : 0;
     });
   }
 

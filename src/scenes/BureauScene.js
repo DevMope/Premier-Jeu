@@ -416,7 +416,7 @@ class BureauScene extends Phaser.Scene {
       ];
       droite = [
         { titre: 'Marchandage', lignes: Object.entries(MARCHANDS).map(([m, d]) => `${d.nom} : ${niveauRelation(G, d.nom).nom}${remiseMarchand(G, m) ? ` (−${Math.round(remiseMarchand(G, m) * 100)} %)` : ''}`) },
-        { titre: "Main-d'œuvre", lignes: [`${ouvriers(G).map(nomOuvrier).join(', ') || 'Personne : embauche un ouvrier à l’atelier'}`, `${pluriel(ouvriers(G).length, "réparation", "réparations")} à la fois`, salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : 'Aucun employé',
+        { titre: "Main-d'œuvre", lignes: [`${ouvriers(G).map(nomOuvrier).join(', ') || "Personne : embauche un ouvrier à l'atelier"}`, `${pluriel(ouvriers(G).length, "réparation", "réparations")} à la fois`, salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : 'Aucun employé',
           // (v0.60) le bilan de chacun : ce qu'il coûte, ce qu'il a fait gagner en valeur à l'atelier
           ...G.employes.map(id => { const b = bilanEmploye(G, id); return `${EMPLOYES[id].nom} : ${b.reparations} réparation${b.reparations > 1 ? 's' : ''}, +${b.valeur} p. de valeur pour ${b.cout} p. de salaire` + (b.cout >= 20 ? (b.solde >= 0 ? ' ✓' : ' (donne-lui du travail !)') : ''); })] },
       ];

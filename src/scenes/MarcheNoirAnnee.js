@@ -155,9 +155,9 @@ Object.assign(MarcheNoirScene.prototype, {
     this.vider();
     const cible = cibles[0];
     const dit = tropJeunePourParier(G) ? "Grisouille ricane : « Parier sur la mort des autres, à ton âge ? Reviens à dix-huit ans, morveux. »" : !cible ? "Grisouille, le preneur de paris : « Personne en route sur qui parier ce soir. Envoie-moi des aventuriers, et reviens. »"
-      : `Grisouille, le preneur de paris : « Tu paries qu'il n'en revient pas ? ${String(coteContre(cible)).replace('.', ',')} contre 1 sur ${prenomDe(cible.voyageur.nom)}. Personne n'en saura rien... »`;
+      : `Grisouille, le preneur de paris : « Tu paries qu'${cible.voyageur.feminin ? 'elle' : 'il'} n'en revient pas ? ${String(coteContre(cible)).replace('.', ',')} contre 1 sur ${prenomDe(cible.voyageur.nom)}. Personne n'en saura rien... »`;
     this.texte(40, 374, message || dit, 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
-    if (cible) this.texte(40, 400, 'La cote suit ses vraies chances : s\'il est bien équipé, elle monte. Ton flair les connaît aussi.', 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    if (cible) this.texte(40, 400, 'La cote suit ses vraies chances : plus son baluchon est complet, plus elle monte. Ton flair les connaît aussi.', 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } });
     if (cibles.length && parisNoirsEnCours(G) < MISE_NOIRE.max && !tropJeunePourParier(G)) {
       const [mn, mx] = MISE_NOIRE.mise;
       this.miseNoire = Phaser.Math.Clamp(this.miseNoire || 30, mn, mx);
