@@ -671,7 +671,7 @@ class BureauScene extends Phaser.Scene {
       if (p) { try { c.add(this.add.image(118, y + 16, textureBusteHD(this, p)).setOrigin(0.5, 1).setScale(0.27)); } catch (err) { /* (pas de buste pour ce visiteur) */ } }
       const v = client ? e.voyageur : null;
       c.add(this.add.text(150, y - 8, (p && p.nom) || NOTES[e.type] || 'Un visiteur', style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
-      const note = client ? (e.reporte ? "T'avait écrit · revient d'hier" : v.prestige ? 'Client prestigieux' : v.prevu ? `Lettre · ${v.quete}` : 'De passage') : (NOTES[e.type] || 'Une visite') + ' · reste à sa place';
+      const note = client ? (e.reporte ? "Revient d'hier, comme convenu" : v.prestige ? 'Client prestigieux' : v.prevu ? `Commande prévue · ${v.quete}` : 'De passage') : (NOTES[e.type] || 'Une visite') + ' · reste à sa place';
       c.add(this.add.text(150, y + 8, raccourcir(note, 60), style(10, '#6a4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
       if (v) {
         const r = Math.max(0, ORDRE_NIVEAUX.indexOf(v.niveau));
