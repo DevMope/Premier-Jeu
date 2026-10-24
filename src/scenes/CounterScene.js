@@ -833,7 +833,9 @@ class CounterScene extends Phaser.Scene {
 
   // Un personnage qui attend dans la file, à la place `i`.
   spriteFile(entree, i) {
-    if (entree.type === 'detresse') { const p = this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'pigeonPose').setVisible(false); p.estPigeon = true; return p; }   // (v1.22 : le pigeon ne fait pas la queue ; v1.31 : et ne s'y montre jamais)
+    if (entree.type === 'detresse') { const p = this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'pigeonPose').setVisible(false); p.estPigeon = true; return p; }
+    // (v1.61) un carnet rapporté : son voyageur n'est plus là pour faire la queue
+    if (entree.type === 'carnet') { const p = this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'pigeonPose').setVisible(false); p.estPigeon = true; return p; }   // (v1.22 : le pigeon ne fait pas la queue ; v1.31 : et ne s'y montre jamais)
     const cle = this.texturePour(entree);
     const sprite = this.add.image(FILE.x - i * FILE.ecart, FILE.y, cle)
       .setOrigin(0.5, 1).setScale(FILE.echelle * echelleCorps(cle)).setTint(0xd8d0c0).setDepth(1);
@@ -951,6 +953,7 @@ class CounterScene extends Phaser.Scene {
     const f = this.G.file[0];
     if (!f) return 'personne';
     if (f.voyageur) return prenomDe(f.voyageur.nom);
+    if (f.type === 'carnet') return 'un carnet';   // (v1.61 : un disparu ne fait pas la queue)
     if (f.parti) return prenomDe(f.parti.voyageur.nom) + ' ↩';
     if (f.type === 'garrick') return 'Garrick';
     return 'une visite';

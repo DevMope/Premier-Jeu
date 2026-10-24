@@ -3,7 +3,7 @@
 // Les palettes : 60 % (la couleur qui domine), 30 % (la seconde), 10 % (l'accent), + les complémentaires.
 // `sol` : comment le sol de la région s'en sert (herbe, terre, pierre, fleurs, feuillage).
 const PALETTES_REGIONS = {
-  comte: { nom: 'Le Comté', lieu: 'le marché, ta rue, le Moulin', p: [[0x7aa84e, 'vert prairie'], [0xc8a06a, 'ocre de terre battue'], [0xc23a2c, 'rouge garance']], compl: [0xf2e4c4, 0x7ab8d8, 0x7a5230, 0xe8c040],
+  comte: { nom: 'La Comté', lieu: 'le marché, ta rue, le Moulin', p: [[0x7aa84e, 'vert prairie'], [0xc8a06a, 'ocre de terre battue'], [0xc23a2c, 'rouge garance']], compl: [0xf2e4c4, 0x7ab8d8, 0x7a5230, 0xe8c040],
     sol: { herbe: 0x7aa84e, terre: 0xc8a06a, pierre: 0xb8ac94, fleur: 0xd84a3a, fleur2: 0xf0d050, feuille: 0x5a8a3a }, humeur: 'chaud, rond, rassurant : le pays où l’on rentre' },
   monts: { nom: 'Les Monts des nains', lieu: 'forges, mines, cols', p: [[0x667086, 'ardoise bleutée'], [0x9a5a32, 'rouille et cuivre'], [0xf0b030, 'or de forge']], compl: [0xe8eef2, 0xe0602a, 0x3a3a44, 0x8a9aa8],
     sol: { herbe: 0x7d8a6e, terre: 0x8c8274, pierre: 0x6e7890, fleur: 0xf0b030, fleur2: 0xe8eef2, feuille: 0x4e6a5a }, humeur: 'froid dehors, braise dedans' },
