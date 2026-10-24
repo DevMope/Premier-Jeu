@@ -78,7 +78,7 @@ Object.assign(StoryScene.prototype, {
   // Un coup de lame (l'arc blanc) depuis le voyageur
   coupDeLame(lame, versDroite = true) {
     const p = this.perso;
-    if (lame) this.tweens.add({ targets: lame, angle: versDroite ? 120 : -120, duration: 130, yoyo: true });
+    if (lame && !this.frapperArme(lame)) this.tweens.add({ targets: lame, angle: versDroite ? 120 : -120, duration: 130, yoyo: true });   // (planche 86 : il frappe)
     const g = this.garder(this.add.graphics().setDepth(7));
     g.lineStyle(6, 0xffffff, 0.9).beginPath().arc(p.x + (versDroite ? 30 : -30), p.y - 70, 60, versDroite ? -1.3 : Math.PI - 0.8, versDroite ? 0.8 : Math.PI + 1.3).strokePath();
     this.tweens.add({ targets: g, alpha: 0, duration: 300, onComplete: () => g.destroy() });
@@ -151,7 +151,7 @@ Object.assign(SCENES_EPREUVES, {
     },
     async utiliser(id, reussie) {
       const M = this.menace, p = this.perso, r = M.reine;
-      const lame = this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
+      const lame = id === 'epee' ? this.tirerArme() : this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
       // elle bondit ; il frappe
       await this.animer({ targets: r, x: r.x + 10, duration: 200 });
       const saut = this.sauter(r, p.x + 80, SOL_RECIT, 60, 380);
@@ -172,7 +172,7 @@ Object.assign(SCENES_EPREUVES, {
         this.onomatopee(p.x, p.y - 170, 'CRAC !', '#fff4dc');
         this.tweens.add({ targets: cocon, alpha: 0, scale: 1.4, duration: 300 });
       }
-      this.tweens.add({ targets: lame, alpha: 0, delay: 300, duration: 300 });
+      this.rengainer(lame, 300);
     },
     async issue(reussie) {
       const M = this.menace, p = this.perso, r = M.reine;
@@ -236,7 +236,7 @@ Object.assign(SCENES_EPREUVES, {
     },
     async utiliser(id, reussie) {
       const M = this.menace, p = this.perso, y = M.yeti;
-      const lame = this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
+      const lame = id === 'epee' ? this.tirerArme() : this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
       // il avance, lève le bras, frappe le sol ; le voyageur saute de côté
       await this.animer({ targets: y, x: p.x + 130, duration: 600, ease: 'Sine.easeIn' });
       await this.animer({ targets: y, angle: -8, duration: 200 });
@@ -256,7 +256,7 @@ Object.assign(SCENES_EPREUVES, {
         this.onomatopee(p.x + 40, p.y - 160, 'TOC...', '#c0c0c0');
         this.emotion(y, 'joie', 900);   // il rigole
       }
-      this.tweens.add({ targets: lame, alpha: 0, delay: 300, duration: 300 });
+      this.rengainer(lame, 300);
     },
     async issue(reussie) {
       const M = this.menace, p = this.perso, y = M.yeti;
@@ -343,7 +343,8 @@ Object.assign(SCENES_EPREUVES, {
     async utiliser(id, reussie) {
       const M = this.menace, p = this.perso, m = M.m;
       if (id === 'bouclier') {
-        const b = this.tenir(iconeObjet(this, 'bouclier'), { echelle: 3.4, dy: -50, dx: 14 });
+        // (retours planche 86) une vraie parade : de face contre les flammes, haute contre la massue qui tombe
+        const b = this.leverBouclier(M.bete ? 'bouclierParade' : 'bouclierHaute');
         if (M.bete) {
           // le torrent de flammes s'écrase sur le bouclier
           this.onomatopee(m.x - 120, m.y - 200, 'FROOOOSH !', '#ffa040');
@@ -356,7 +357,7 @@ Object.assign(SCENES_EPREUVES, {
           this.garder({ destroy: () => flammes.remove() });
           this.cameras.main.shake(1500, 0.004);
           await this.attendre(1600);
-          if (reussie) { b.setTint(0xffa060); this.time.delayedCall(800, () => b.active && b.clearTint()); }
+          if (reussie) { p.setTint(0xffd0a0); this.time.delayedCall(800, () => p.active && p.clearTint()); this.baisserBouclier(900); }
           else { p.setTint(0x5a4038); this.onomatopee(p.x, p.y - 170, 'AÏE AÏE !', '#ff8080'); }
           return;
         }
@@ -368,14 +369,16 @@ Object.assign(SCENES_EPREUVES, {
           this.onomatopee(b.x, b.y - 60, 'BLONG !', '#d8e4f0');
           Son.jouer('bouclier');
           this.cameras.main.shake(180, 0.01);
-          await this.animer({ targets: p, x: p.x - 18, duration: 120, ease: 'Quad.easeOut' });
+          await this.sauter(p, p.x - 18, SOL_RECIT, 6, 140);   // (le choc le fait reculer d'un bond)
           await this.attendre(200);
         }
         m.setAngle(0);
+        if (reussie) this.leverBouclier('bouclierRiposte');   // (la massue est passée : il riposte)
+        this.baisserBouclier(700);
         return;
       }
       // l'épée : il esquive la massue, et trouve la faille
-      const lame = this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
+      const lame = id === 'epee' ? this.tirerArme() : this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
       await this.animer({ targets: m, angle: -10, duration: 300 });
       this.animer({ targets: m, angle: 8, duration: 140 });
       await this.sauter(p, p.x - 40, SOL_RECIT, 50, 300);
@@ -390,7 +393,7 @@ Object.assign(SCENES_EPREUVES, {
         m.setTint(0xff8080); this.time.delayedCall(180, () => m.active && m.clearTint());
         this.coupDeZoom(m.x - 30, m.y - 100, 1.3);
       } else this.onomatopee(p.x + 40, p.y - 160, 'TOC...', '#c0c0c0');
-      this.tweens.add({ targets: lame, alpha: 0, delay: 300, duration: 300 });
+      this.rengainer(lame, 300);
       await this.attendre(300);
     },
     async issue(reussie) {
@@ -573,8 +576,10 @@ Object.assign(SCENES_EPREUVES, {
       M.morts = [];
       for (let i = 0; i < n; i++) {
         const sx = Math.min(X + 110 + i * 80, 900);
-        const s = this.garder(this.add.image(sx, SOL_RECIT + (M.remparts || M.tour ? 0 : 130), 'squeletteHD').setOrigin(0.5, 1).setScale(M.chevalier ? 3.2 : 2.5).setDepth(2.9).setAlpha(M.remparts || M.tour ? 0 : 1));
-        if (M.chevalier) s.setTint(0xd0d8e8);
+        // (retours planche 86) de vrais squelettes, dessinés par le moteur des corps : chacun sa vieille arme, ses postures
+        const s = this.brigand(sx, M.chevalier ? 'chevalierSquelette' : 'squelette', true, M.chevalier ? 'epee' : ['epee', 'hache', 'lance'][i % 3]);
+        s.setDepth(2.9).setY(SOL_RECIT + (M.remparts || M.tour ? 0 : 130)).setAlpha(M.remparts || M.tour ? 0 : 1);
+        if (M.chevalier) s.setTint(0xd0d8e8).setScale(s.scaleX * 1.15);
         M.morts.push(s);
       }
       // la terre retournée devant les tombes (elle cache les morts qui remontent)
@@ -585,19 +590,22 @@ Object.assign(SCENES_EPREUVES, {
     async avant() {
       const M = this.menace, p = this.perso;
       if (M.remparts || M.tour) {
-        for (const [k, s] of M.morts.entries()) { s.setX(s.x + 120); this.tweens.add({ targets: s, alpha: 1, x: s.x - 120, duration: 900, delay: k * 250 }); }
+        // ils arrivent en marchant, l'arme portée, puis se mettent en garde
+        for (const [k, s] of M.morts.entries()) { s.setX(s.x + 120); this.time.delayedCall(k * 250, () => pasDeMarche(this, s, 900, { poussiere: false })); this.tweens.add({ targets: s, alpha: 1, x: s.x - 120, duration: 900, delay: k * 250, onComplete: () => this.posture(s, 'garde') }); }
         await this.attendre(1200);
       } else {
         // une main sort de terre... puis ils se relèvent, en claquant des dents
         for (const [k, s] of M.morts.entries()) {
           this.poussiere(s.x, SOL_RECIT, 8, 0x5a4030);
-          this.tweens.add({ targets: s, y: SOL_RECIT, duration: 900, delay: k * 300, ease: 'Back.easeOut' });
+          this.posture(s, k % 2 ? 'menace' : 'recul');   // (il s'extirpe de la terre, l'arme levée)
+          this.tweens.add({ targets: s, y: SOL_RECIT, duration: 900, delay: k * 300, ease: 'Back.easeOut', onComplete: () => this.posture(s, 'garde') });
         }
         await this.attendre(900 + M.morts.length * 300);
       }
       this.onomatopee(M.morts[0].x, SOL_RECIT - 170, 'CLAC CLAC !', '#e8e0c8');
       Son.jouer('coup', { force: 0.4 });
-      for (const s of M.morts) this.tweens.add({ targets: s, angle: 4, duration: 160, yoyo: true, repeat: -1 });
+      // (ils claquent des os : ils changent de garde sans cesse, par saccades)
+      for (const [k, s] of M.morts.entries()) { this.posture(s, k === 0 ? 'menace' : 'garde'); this.agiter(s, k === 0 ? ['menace', 'garde'] : ['garde', 'basse']); }
       if (M.chevalier) this.parole(M.morts[0], 'En garde, vivant !', 1500);
       this.emotion(p, '!', 900);
       await this.attendre(500);
@@ -605,29 +613,36 @@ Object.assign(SCENES_EPREUVES, {
     async utiliser(id, reussie) {
       const M = this.menace, p = this.perso;
       if (id === 'bouclier') {
-        const b = this.tenir(iconeObjet(this, 'bouclier'), { echelle: 3.2, dy: -50, dx: 12 });
+        const b = this.leverBouclier('bouclierParade');   // (retours planche 86 : une vraie parade, puis la riposte)
         for (const [k, s] of M.morts.entries()) {
-          this.tweens.killTweensOf(s);
-          await this.animer({ targets: s, x: p.x + 70 + k * 20, duration: 350 });
+          this.tweens.killTweensOf(s); this.calmer(s);
+          this.posture(s, 'attaque');
+          await this.sauter(s, p.x + 70 + k * 20, SOL_RECIT, 14, 350);
           this.onomatopee(b.x, b.y - 60 - k * 8, k === M.morts.length - 1 && !reussie ? 'AÏE !' : 'BLONG !', k === M.morts.length - 1 && !reussie ? '#ff8080' : '#d8e4f0');
           Son.jouer('bouclier', { force: 0.7 });
           this.cameras.main.shake(140, 0.008);
-          await this.animer({ targets: s, x: s.x + 60, duration: 200 });
+          this.posture(s, 'recul');
+          await this.sauter(s, s.x + 60, SOL_RECIT, 10, 200);
         }
-        if (reussie) { for (const s of M.morts) this.osEnMorceaux(s.x, s.y); M.morts.forEach(s => s.setVisible(false)); M.brises = true; }
+        if (reussie) { this.leverBouclier('bouclierRiposte'); Son.jouer('coup'); for (const s of M.morts) this.osEnMorceaux(s.x, s.y); M.morts.forEach(s => s.setVisible(false)); M.brises = true; }
+        this.baisserBouclier(reussie ? 600 : 200);
         return;
       }
       if (id !== 'epee') { await this.utiliserObjet(id); return; }
-      const lame = this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
+      const lame = id === 'epee' ? this.tirerArme() : this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
       const cible = M.morts[0];
-      this.tweens.killTweensOf(cible);
+      this.tweens.killTweensOf(cible); this.calmer(cible);
+      this.posture(cible, 'debout'); pasDeMarche(this, cible, 400, { poussiere: false });
       await Promise.all([this.marcherA(cible.x - 90, 3), this.animer({ targets: cible, x: cible.x - 30, duration: 400 })]);
+      this.posture(cible, 'garde');
       const coups = M.chevalier ? 3 : 1;
       for (let k = 0; k < coups; k++) {
         this.coupDeLame(lame);
         this.onomatopee((p.x + cible.x) / 2, SOL_RECIT - 140, k < coups - 1 ? 'TCHING !' : 'TCHAK !', '#fff4dc');
         for (let e = 0; e < 5; e++) { const s = this.garder(this.add.image((p.x + cible.x) / 2, SOL_RECIT - 90, 'eclat').setScale(1.4).setTint(0xfff0a0).setDepth(7)); const a = Math.random() * 6.3; this.tweens.add({ targets: s, x: s.x + Math.cos(a) * 40, y: s.y + Math.sin(a) * 30, alpha: 0, duration: 300 }); }
+        this.posture(cible, 'recul');
         await this.animer({ targets: cible, x: cible.x + 8, duration: 90, yoyo: true });
+        this.posture(cible, k % 2 ? 'garde' : 'attaque');
         await this.attendre(200);
       }
       if (reussie) {
@@ -636,7 +651,7 @@ Object.assign(SCENES_EPREUVES, {
         M.brises = true;
         Son.jouer('coup');
       }
-      this.tweens.add({ targets: lame, alpha: 0, delay: 400, duration: 300 });
+      this.rengainer(lame, 400);
       await this.attendre(500);
     },
     async issue(reussie) {
@@ -649,8 +664,9 @@ Object.assign(SCENES_EPREUVES, {
       }
       // des mains osseuses l'agrippent ; il se débat et s'enfuit en courant
       const s = M.morts[0];
-      this.tweens.killTweensOf(s);
-      await this.animer({ targets: s, x: p.x + 50, duration: 300 });
+      this.tweens.killTweensOf(s); this.calmer(s);
+      this.posture(s, 'saisir');   // (il bondit, les mains osseuses tendues)
+      await this.sauter(s, p.x + 50, SOL_RECIT, 12, 300);
       this.griffures(p.x + 6, p.y - 70);
       this.onomatopee(p.x, p.y - 170, 'AÏE !', '#ff8080');
       this.cameras.main.shake(200, 0.01);
@@ -889,9 +905,8 @@ Object.assign(SCENES_EPREUVES, {
       this.parole(p, 'Bonjour, Monsieur l\'Arbre !', 1500);
       await this.attendre(1300);
       await this.aGenoux();
-      await this.renverse(false);
-      this.yeuxFermes();   // (v1.61)
-      this.onomatopee(p.x, p.y - 80, 'Zzz...', '#c0c0ff');
+      await this.endormir();   // (planche 85 : couché pour de bon, les yeux fermés)
+      { const t = this.tete(); this.onomatopee(t.x + (p.flipX ? -24 : 24), t.y - 44, 'Zzz...', '#c0c0ff'); }
       await this.attendre(900);
       M.trip.remove(); this.voile.setFillStyle(0x05051a, 0); this.planMoyen.setScale(1); p.clearTint();
       M.danseurs.forEach(d => d.setVisible(false));
@@ -953,7 +968,7 @@ Object.assign(SCENES_EPREUVES, {
         const o = this.tenir(iconeObjet(this, 'bandage'), { echelle: 2.2, dy: 30 });
         for (let k = 0; k < 2; k++) await this.animer({ targets: o, dx: 20, angle: 180, duration: 180, yoyo: true });
         o.destroy();
-        if (reussie) { this.blesse = true; p.setTexture(this.cleCorps()); this.emotion(p, 'joie', 900); }
+        if (reussie) { this.blesse = true; this.poserRecit(poseCorps(p)); this.emotion(p, 'joie', 900); }
       }
     },
     async issue(reussie) {

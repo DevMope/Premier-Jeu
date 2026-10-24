@@ -518,8 +518,21 @@ Object.assign(MarcheScene.prototype, {
   },
 
   poserHeros(pas) {
-    const base = textureJoueur(this, this.G, this.vueHeros);
-    const k = pas ? base + '_pas' + pas : base;
+    // (planche 85) quand il descend vers nous, la vraie vue de face ('deFace' : 'face' est, pour le joueur, son image de
+    // trois-quarts) ; et dès qu'elles sont prêtes, les huit images de la marche, 70 ms chacune (45 quand il court). Il
+    // marche quand son compteur de pas a avancé depuis la dernière image (sinon, c'est qu'il vient de s'arrêter).
+    const vue = this.vueHeros === 'face' ? 'deFace' : this.vueHeros;
+    const base = textureJoueur(this, this.G, vue);
+    // (les autres vues se préparent en tâche de fond, une par une : au premier virage, il a déjà ses images)
+    const st = stadeJoueur(this.G);
+    for (const [i, v] of ['deFace', 'profil'].entries()) if (!this.textures.exists(`joueur_${st}_${v}`) && !(this.vuesEnCours || (this.vuesEnCours = {}))[v]) {
+      this.vuesEnCours[v] = true;
+      setTimeout(() => { if (this.vuesEnCours) this.vuesEnCours[v] = false; if (this.sys.isActive() && !this.textures.exists(`joueur_${st}_${v}`)) textureJoueur(this, this.G, v); }, 600 + i * 500);
+    }
+    const enMarche = this.pasHeros > 0 && this.pasVuHeros !== this.pasHeros;
+    this.pasVuHeros = this.pasHeros;
+    let k = pas ? base + '_pas' + pas : base;
+    if (enMarche && marcheJoueurPrete(this, base)) k = base + '_m' + (Math.floor(this.pasHeros / (this.courir ? 45 : MARCHE_HD.duree)) % MARCHE_HD.images);
     this.heros.setTexture(this.textures.exists(k) ? k : base).setFlipX(this.vueHeros === 'profil' && this.versGauche);
   },
 
