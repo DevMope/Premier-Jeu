@@ -50,12 +50,15 @@ function decorSaison(scene, opts = {}) {
   else if (s === 'brumes') for (let k = 0; k < L / 6; k++) g.fillStyle([0xc85a20, 0xe0902a, 0xa04018][k % 3]).fillRect(Math.round(rnd(0, L)), Math.round(rnd(sol - 2, sol + 40)), 5, 3);
   else if (s === 'givre') { g.fillStyle(0xf4f8fc, 0.92).fillRect(0, sol - 3, L, 10); for (let k = 0; k < L / 8; k++) g.fillStyle(0xffffff).fillEllipse(rnd(0, L), sol + rnd(4, 60), rnd(14, 40), rnd(4, 8)); }
   if (s === 'moissons' && opts.meules !== false && !opts.sansSol) {
-    // les meules de foin et une gerbe, au bord de la rue
-    for (const [mx, r] of opts.meules || [[L * 0.17, 26], [L * 0.8, 22]]) {
-      const my = sol + 6;
-      g.fillStyle(0xa87a20).fillEllipse(mx, my - r * 0.4, r * 2.2, r * 1.6).fillStyle(0xd8a838).fillEllipse(mx - 3, my - r * 0.4 - 3, r * 2, r * 1.4);
-      for (let k = 0; k < 10; k++) g.fillStyle(0xf0c850).fillRect(mx - r + k * r * 0.2, my - r * 0.9 + (k % 3) * 4, 6, 2);
-      g.fillStyle(0x8a5a18).fillRect(mx - r, my + r * 0.15, r * 2, 3);
+    // (v1.62) les bottes de paille de l'été, peintes comme le décor (vraie paille, liens, brins qui dépassent, ombre au sol),
+    // et posées seulement là où elles ne cachent rien : à côté des tonneaux de la façade, contre le mur, si la place est
+    // libre jusqu'à l'arbre (jamais devant un tonneau, une porte, une autre maison, ni sur le chemin des clients).
+    // `meules` : [[x], ...] pour les poser soi-même ; [] pour n'en poser aucune.
+    texturesPailleHD(scene);
+    const places = opts.meules || placesBottesFacade(scene, opts, sol, L);
+    for (const [mx] of places) {
+      ajout(fixe(scene.add.ellipse(mx + 4, sol + 3, 92, 12, 0x000000, 0.22).setDepth(prof - 0.45)));
+      ajout(fixe(scene.add.image(mx, sol + 4, 'bottesPailleFacade').setOrigin(0.5, 1).setScale(2).setDepth(prof - 0.4)));
     }
   }
   // La neige sur le toit et les rebords de la façade
@@ -140,4 +143,109 @@ function creerIconesSaison(scene) {
     lignes.forEach((l, y) => [...l].forEach((ch, x) => { if (couleurs[ch]) g.fillStyle(couleurs[ch]).fillRect(ox + x * k, oy + y * k, k, k); }));
     g.generateTexture('iconeSaison_' + s, 16, 16); g.destroy();
   }
+}
+
+// (v1.62) Les bottes de paille de l'été, peintes comme le décor (demi-résolution, affichées ×2) : la paille en fibres,
+// le dessus plus clair, le bout coupé tout piqueté, les deux liens de ficelle, des brins qui dépassent ; une fourche
+// appuyée. Deux tas : vus de côté (devant la façade, à côté des tonneaux), vus par le bout (dans le creux entre deux
+// maisons de la rue). À l'échelle des personnages : une botte fait à peu près la hauteur d'un genou.
+function texturesPailleHD(scene) {
+  if (scene.textures.exists('bottesPailleFacade')) return;
+  const T = (l, h) => { const t = toileDecor(l, h); Object.assign(t.rampes, {
+    paille: [0x4a3410, 0x7a5a1c, 0xa8822e, 0xcca248, 0xe6c46a, 0xf8e4a0], bout: [0x3e2c0e, 0x6e5018, 0x9c7628, 0xc09840, 0xdcb85e, 0xf0d890],
+    ficelle: [0x2a1a0e, 0x4a3018, 0x6a4a28, 0x8a6a40, 0xa88a5a, 0xc8aa78] }); return t; };
+  const borne = k => Math.max(0, Math.min(5, Math.round(k)));
+  // Une botte vue de côté. Les deux ficelles font le tour dans la longueur : on les voit sur le dessus (deux traits
+  // dans la longueur) et sur le bout (deux traits debout) ; le flanc montre la paille couchée, partagée en « tranches »
+  // (le pressage), et des tiges coupées qui hérissent la surface. Le bout, à droite, fuit vers le fond.
+  const deCote = (t, x0, y0, L, H, g) => {
+    const coin = (x, y) => (x === x0 && (y === y0 + 3 || y === y0 + H - 1));   // (les coins un peu ronds)
+    // le dessus (3 rangs, qui fuient vers la droite) et ses deux ficelles dans la longueur
+    for (let r = 0; r < 3; r++) for (let x = x0 + 2 - r; x < x0 + L + 2 - r; x++) {
+      if (r === 0 && (x === x0 + 2 || x === x0 + L + 1)) continue;
+      t.poser(x, y0 + r, 'paille', borne(4 + (hachage(x, r, g) > 0.7 ? 1 : 0) - (hachage(x >> 1, r, g + 1) < 0.18 ? 1 : 0) - (r === 2 ? 1 : 0)));
+    }
+    for (let x = x0 + 3; x < x0 + L - 1; x++) if (hachage(x, 7, g) > 0.25) { t.poser(x + 1, y0, 'ficelle', 3); t.poser(x, y0 + 2, 'ficelle', 2); }
+    // le flanc : la paille couchée (des fibres dans la longueur), les tranches du pressage, les tiges coupées
+    const tranches = []; for (let x = x0 + 3 + Math.floor(hachage(1, 2, g) * 2); x < x0 + L - 2; x += 4 + Math.floor(hachage(x, 3, g) * 3)) tranches.push(x);
+    for (let y = y0 + 3; y < y0 + H; y++) for (let x = x0; x < x0 + L; x++) {
+      if (coin(x, y)) continue;
+      let k = 3 + Math.round((fbm(x * 0.12, y * 0.9, g) - 0.5) * 2.4);
+      if (hachage(x, y, g + 2) > 0.86) k += 1; if (hachage(x, y, g + 5) > 0.93) k -= 2;   // (les tiges coupées : un point clair, un trou sombre)
+      if (tranches.includes(x) && hachage(x, y >> 1, g + 6) > 0.3) k -= 1;
+      if (x === x0) k += 1; if (y === y0 + 3) k += 1;
+      if (y >= y0 + H - 2) k -= y === y0 + H - 1 ? 2 : 1;   // (le bas, dans l'ombre du sol)
+      t.poser(x, y, 'paille', borne(k));
+    }
+    // le bout : la paille repliée du pressage, plus sombre, et les deux ficelles debout
+    for (let e = 0; e < 3; e++) for (let y = y0 + 2 - e; y < y0 + H - 1 - e + (e === 0 ? 1 : 0); y++) {
+      const x = x0 + L + e; if (y < y0) continue;
+      const fil = (y - y0) > 1 && (e === 1);
+      t.poser(x, y, fil && (y % 4 === 1) ? 'ficelle' : 'bout', borne(fil && (y % 4 === 1) ? 2 : 2 + Math.round(fbm(e * 2, y * 0.7, g + 3) * 1.6) - (e === 2 ? 1 : 0) - (y >= y0 + H - 2 - e ? 1 : 0)));
+    }
+  };
+  // Une botte vue par le bout : la face aux deux ficelles debout, piquetée de tiges ; le dessus et le flanc qui fuient
+  const parLeBout = (t, x0, y0, W, H, g) => {
+    for (let r = 0; r < 3; r++) for (let x = x0 + 2 - r; x < x0 + W + 2 - r; x++) {
+      if (r === 0 && (x === x0 + 2 || x === x0 + W + 1)) continue;
+      t.poser(x, y0 + r, 'paille', borne(4 + (hachage(x, r, g) > 0.72 ? 1 : 0) - (r === 2 ? 1 : 0)));
+    }
+    const fils = [x0 + Math.round(W * 0.28), x0 + Math.round(W * 0.72)];
+    for (let y = y0 + 3; y < y0 + H; y++) for (let x = x0; x < x0 + W; x++) {
+      if ((x === x0 || x === x0 + W - 1) && (y === y0 + 3 || y === y0 + H - 1)) continue;
+      let k = 2 + Math.round(fbm(x * 0.35, y * 0.35, g) * 2.2) + (hachage(x, y, g + 1) > 0.7 ? 1 : 0) - (hachage(x, y, g + 2) > 0.9 ? 2 : 0);
+      if (x === x0) k += 1; if (x === x0 + W - 1) k -= 1; if (y === y0 + 3) k += 1; if (y >= y0 + H - 2) k -= 1;
+      t.poser(x, y, 'bout', borne(k));
+    }
+    for (const x of fils) { for (let y = y0 + 3; y < y0 + H - 1; y++) t.poser(x, y, 'ficelle', (y - y0) % 3 ? 2 : 3); for (let r = 0; r < 3; r++) t.poser(x + 2 - r, y0 + r, 'ficelle', 3); }
+    for (let e = 0; e < 2; e++) for (let y = y0 + 2 - e; y < y0 + H - 1 - e; y++) t.poser(x0 + W + e, y, 'paille', borne(2 + Math.round((fbm(e, y * 0.9, g + 4) - 0.5) * 2) - e));
+  };
+  // des brins qui dépassent (posés après le contour : de simples fils de paille, sans cerne)
+  const brins = (t, pts, g) => pts.forEach(([x, y, dx, dy, n], k) => { for (let i = 0; i < n; i++) t.poser(x + dx * i, y + dy * i, 'paille', i === n - 1 ? 4 : 5 - (hachage(k, i, g) > 0.6 ? 1 : 0)); });
+  // la fourche à foin, appuyée contre le tas : un manche de frêne, et trois dents de fer recourbées
+  // (posée après le contour, comme les brins : un trait fin, ses dents bien séparées)
+  const fourche = (t, xb, yb, h) => {
+    for (let k = 0; k < h; k++) { const x = Math.round(xb - k * 0.12); t.poser(x, yb - k, 'chene', 4); t.poser(x + 1, yb - k, 'cheneSombre', 1); }
+    const xt = Math.round(xb - h * 0.12), yt = yb - h;
+    for (let x = xt - 2; x <= xt + 3; x++) t.poser(x, yt, 'fer', x === xt - 2 ? 4 : 2);
+    for (const dx of [-2, 1, 3]) for (let k = 1; k <= 5; k++) t.poser(xt + dx + (k >= 4 ? (dx < 0 ? -1 : dx > 1 ? 1 : 0) : 0), yt - k, 'fer', k > 3 ? 4 : 2);
+  };
+  // devant la façade : deux bottes couchées l'une sur l'autre, de côté, et la fourche
+  { const L = 40, H = 31, t = T(L, H), sol = H - 1;
+    deCote(t, 1, sol - 12, 29, 13, 8301);
+    deCote(t, 5, sol - 24, 26, 12, 8302);
+    t.contour();
+    fourche(t, 36, sol, 22);
+    brins(t, [[8, sol - 25, 1, -1, 2], [14, sol - 25, 0, -1, 2], [21, sol - 25, -1, -1, 3], [28, sol - 25, 1, -1, 2], [4, sol - 19, -1, 0, 2], [0, sol - 6, -1, 1, 1], [3, sol - 13, -1, -1, 2],
+      [25, sol - 13, 0, -1, 2], [17, sol - 13, 1, -1, 2], [31, sol - 7, 1, 0, 1], [33, sol - 19, 1, 0, 1]], 8303);
+    for (const x of [3, 8, 13, 19, 24, 29]) t.poser(x, sol, 'paille', 4 + (x % 2));   // (de la paille tombée au pied)
+    t.texture(scene, 'bottesPailleFacade'); }
+  // dans la rue : trois bottes vues par le bout (deux dessous, une dessus) et la fourche
+  { const L = 34, H = 31, t = T(L, H), sol = H - 1;
+    parLeBout(t, 1, sol - 12, 12, 13, 8311);
+    parLeBout(t, 14, sol - 12, 12, 13, 8312);
+    parLeBout(t, 7, sol - 24, 12, 12, 8313);
+    t.contour();
+    fourche(t, 31, sol, 23);
+    brins(t, [[9, sol - 25, 0, -1, 2], [13, sol - 25, 1, -1, 2], [18, sol - 25, 1, -1, 3], [6, sol - 17, -1, 0, 2], [0, sol - 6, -1, 0, 1], [13, sol - 13, 0, -1, 2], [21, sol - 18, 1, 0, 1], [3, sol - 13, -1, -1, 2]], 8314);
+    for (const x of [4, 11, 18, 24]) t.poser(x, sol, 'paille', 4);
+    t.texture(scene, 'bottesPailleRue'); }
+}
+
+// Où poser les bottes devant la façade : juste à droite des tonneaux, contre le coin de la maison, si rien n'y est déjà
+// (un arbre, la maison voisine, les pattes de la maison...) et si elles tiennent dans l'écran. Sinon, nulle part.
+function placesBottesFacade(scene, opts, sol, L) {
+  const f = opts.facade, tn = f && f.tonneaux;
+  if (!tn || !tn.active || !tn.visible) return [];
+  const w = 84, h = 60, x = tn.x + tn.displayWidth * (1 - tn.originX) + 4 + w / 2;
+  if (x + w / 2 > L - 6) return [];
+  for (const [ax, ech] of opts.arbres || []) if (Math.abs(ax - x) < w / 2 + 9 * ech) return [];   // (le tronc fait 14 × échelle de large : on ne le touche pas)
+  const g = x - w / 2, d = x + w / 2, haut = sol - h, bas = sol - 2;
+  for (const o of scene.children.list) {
+    if (o === tn || !o.visible || !['Image', 'Sprite', 'Container'].includes(o.type) || !o.getBounds) continue;
+    if (o.texture && /^(paves|paysage)/.test(o.texture.key)) continue;   // (le paysage, les pavés : tout le fond)
+    const b = o.getBounds();
+    if (b.right > g && b.left < d && b.bottom > haut && b.top < bas) return [];
+  }
+  return [[x]];
 }
