@@ -2276,7 +2276,8 @@ function terminerAventure(G, parti) {
     // La mission est ratée : il revient vivant, mais sans rien.
     G.reputation -= PERTE_ECHEC;
     G.journal.echecs = (G.journal.echecs || 0) + 1;
-    const blessures = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - 1));
+    // (v1.61) le cœur en plus d'une potion offerte ne compte pas comme une blessure : il revient avec 1 cœur sur ses v.pv
+    const blessures = Math.max(0, Math.min(v.pv, v.pv - 1));
     const h = { nom: v.nom, race: v.race, feminin: v.feminin, inventaire: inventaireApres(parti), blessures, niveau: v.niveau };
     parti.malus = appliquerMalusEchec(G, parti, h);
     G.habitues.push(h);
@@ -2292,7 +2293,7 @@ function terminerAventure(G, parti) {
     // (v0.60) Revenu, mais blessé : la mission compte moins (un quart de réputation en moins par cœur
     // perdu, jamais moins de la moitié), et il lui faudra du repos s'il n'est pas soigné.
     const derniere0 = r.etapes[r.etapes.length - 1];
-    const blesse = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - derniere0.pvApres));
+    const blesse = Math.max(0, Math.min(v.pv, v.pv - derniere0.pvApres));   // (v1.61) un cœur doré perdu n'est pas une blessure
     const part = part0 * Math.max(0.5, 1 - 0.25 * blesse);
     // (audit v0.54) Au-delà de 12, la réputation monte de moins en moins vite : elle garde un sens
     // en fin de partie (refus, échecs et pièges continuent de coûter quelque chose).
@@ -2335,8 +2336,9 @@ function terminerAventure(G, parti) {
     if (part0 < 1) message = (message ? message + ' ' : '') + `Sa commande n'était remplie qu'à ${Math.round(part0 * 100)} % : ta réputation en profite moins.`;
     if (blesse) message = (message ? message + ' ' : '') + `Revenu${v.feminin ? 'e' : ''} blessé${v.feminin ? 'e' : ''} : la mission compte un peu moins pour ta réputation, et sans soins il lui faudra ${reposCoeur(G) * blesse} jours de repos${typeof confrerieA === 'function' && confrerieA(G, 'hospice') ? " (l'hospice de la Confrérie : deux fois moins)" : ''}.`;
     const derniere = r.etapes[r.etapes.length - 1];
-    // Les cœurs perdus (au-delà des cœurs gagnés grâce aux soins en plus) restent des blessures.
-    const blessures = Math.max(0, Math.min(v.pv, (r.pvDepart || v.pv) - derniere.pvApres));
+    // Les cœurs perdus restent des blessures, sauf les cœurs dorés (potion, escorte, tarte) : (v1.61) avant, un cœur
+    // doré perdu en route comptait aussi, et on soignait un voyageur déjà en pleine santé.
+    const blessures = Math.max(0, Math.min(v.pv, v.pv - derniere.pvApres));
     // Chaque succès le fait progresser : novice, aguerri, vétéran, héros, légende.
     const niveau = meilleurNiveau(v.niveau, succesDe(G, v.nom));
     if (niveau !== v.niveau) message = (message ? message + ' ' : '') + `${prenomDe(v.nom)} devient ${NIVEAUX_AVENTURIER[niveau].nom.toLowerCase()} !`;
@@ -3404,7 +3406,7 @@ function eJ(G = window.GAME) { return G && G.joueur && G.joueur.feminin ? 'e' : 
 // (appliqué à tous les textes affichés : voir pixels.js)
 function accordJoueur(t, G = window.GAME) {
   if (typeof t !== 'string' || !eJ(G)) return t;
-  if (t.includes('marchand')) t = t.replace(/\bau marchand\b(?![es])/g, 'à la marchande').replace(/(, |Ah, |Bienvenue, )marchand\b(?![es])/g, '$1marchande');
+  if (t.includes('marchand')) t = t.replace(/\bau marchand\b(?![es])/g, 'à la marchande').replace(/(, |Ah, |Bienvenue, )marchand\b(?![es])/g, '$1marchande').replace(/, petit marchand\b(?![es])/g, ', petite marchande');
   // (housekeep v1.14) « Pour toi, patron ! », « le patron du comptoir », et le paon : « le petit protégé », « voisin »
   if (t.includes('patron')) t = t.replace(/, patron\b(?![nes])/g, ', patronne').replace(/\ble patron du comptoir\b/g, 'la patronne du comptoir');
   if (t.includes('petit protégé')) t = t.replace(/\b([Ll])e petit protégé(?![e\w])/g, (m, l) => (l === 'L' ? 'La' : 'la') + ' petite protégée');

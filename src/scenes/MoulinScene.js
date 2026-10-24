@@ -35,7 +35,7 @@ class MoulinScene extends Phaser.Scene {
     if (typeof Son !== 'undefined') Son.ambiance(aube ? 'recitHeureux' : 'nuit');
     if (aube) this.time.delayedCall(900, () => this.laube());
     else {
-      this.dire(`${nomChatMaj(G)} ne touche plus à sa gamelle. Ce soir, il t'a guidé hors de la ville, par le vieux sentier qui longe l'étang. Les grenouilles se taisent quand tu passes.`, '◀ ▶ pour marcher (ou clique au sol) · clique sur les choses pour les regarder');
+      this.dire(`${nomChatMaj(G)} ne touche plus à sa gamelle. Ce soir, il t'a guidé${eJ()} hors de la ville, par le vieux sentier qui longe l'étang. Les grenouilles se taisent quand tu passes.`, '◀ ▶ pour marcher (ou clique au sol) · clique sur les choses pour les regarder');
       this.curiosites();
       this.guider(P.panneau + 120);
     }

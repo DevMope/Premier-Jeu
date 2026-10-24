@@ -244,7 +244,7 @@ Object.assign(CounterScene.prototype, {
     // (le récit reste à l'écran : c'est le joueur qui le laisse partir)
     this.time.delayedCall(1800, () => {
       if (!this.entree || this.entree.type !== 'heraut') return;
-      this.raconter('Le héraut tourne les talons. Tout le Comté saura que tu as refusé (réputation −1).' + (res.pause ? ' Trois refus de suite : le Conseil ne te proposera plus rien pendant deux mois.' : ''), 'Le messager du Conseil');
+      this.raconter('Le héraut tourne les talons. Toute la Comté saura que tu as refusé (réputation −1).' + (res.pause ? ' Trois refus de suite : le Conseil ne te proposera plus rien pendant deux mois.' : ''), 'Le messager du Conseil');
       this.bouton('Le laisser partir', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
     });
   },
@@ -302,7 +302,7 @@ Object.assign(CounterScene.prototype, {
       const sous = this.add.text(0, -86, `${r.pardonRate ? 'Commande du pardon' : 'Commande scellée'} manquée par le comptoir « ${G.nomShop} »${f >= 2 && !r.pardonRate ? ` · ${f >= 3 ? 'troisième' : 'deuxième'} faute` : ''}`, style(12, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5);
       for (let k = 12; sous.width > 520 && k >= 9; k--) sous.setFontSize(k);
       L.add(sous);
-      const lignes = [[`−${r.reputation} de réputation`, 'tout le Comté le saura'],
+      const lignes = [[`−${r.reputation} de réputation`, 'toute la Comté le saura'],
         [`Impôt du Conseil × ${fois(r.majoration || 1.5)}`, `pendant ${r.mois} mois${r.ombre ? ' (plus dur pour qui penche vers les Bannis)' : ''}`]];
       if (f >= 3) lignes.push([r.avaitSceau === false ? 'Le Conseil te tourne le dos' : 'Le sceau du Conseil quitte ta porte', 'plus de nobles au comptoir, plus de commande pendant deux mois']);
       else lignes.push(['Pas de commande scellée', 'le mois prochain']);

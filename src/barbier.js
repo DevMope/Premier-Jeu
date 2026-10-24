@@ -141,7 +141,7 @@ function remarqueBarbe(G, v) {
   const e = etatPilosite(G); if (!e) return null;
   if (e.negligence >= 2 && (v.prestige || v.costume === 'noble' || v.costume === 'gardien') && Math.random() < 0.6) { changerRelation(G, v.nom, -1); return e.cible === 'barbe' ? 'Hum... Il y a des miettes dans votre barbe. Je ne dis rien, je constate.' : 'Hum... Un coup de peigne ne vous ferait pas de mal.'; }
   if (e.cible === 'barbe' && v.race === 'nain' && e.longueur >= 5 && Math.random() < 0.4) { changerRelation(G, v.nom, 1); return e.negligence >= 2 ? 'Belle barbe ! Un peu sauvage, mais belle.' : 'Par ma barbe, quelle barbe ! On te prendrait pour un des nôtres.'; }
-  if (e.negligence >= 3 && Math.random() < 0.3) return 'Euh... il y a une mouche qui tourne autour de vous. Non, ne bougez pas, elle va partir.';
+  if (e.negligence >= 3 && Math.random() < 0.3) return 'Euh... il y a une mouche qui tourne autour de toi. Non, ne bouge pas, elle va partir.';
   return null;
 }
 

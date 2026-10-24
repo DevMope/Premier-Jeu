@@ -75,7 +75,7 @@ function joursDeRoute(G) { return VOYAGE.jours[(G.pattes && G.pattes.sorte) || '
 function heuresDeRoute(G) { return (joursDeRoute(G) - 1) * PATTES.journee; }   // (le dernier jour, on arrive à l'aube)
 function fixerDepart(G) {
   const v = etatVoyage(G);
-  if (aPontRoyal(G)) return { erreur: 'Tu es déjà installé à Pont-Royal.' };
+  if (aPontRoyal(G)) return { erreur: `Tu es déjà installé${eJ()} à Pont-Royal.` };
   if (!voyagePossible(G)) return { erreur: 'Toutes les conditions ne sont pas encore remplies.' };
   if (v.depart) return { erreur: `Le départ est déjà fixé au jour ${v.depart}.` };
   if (!peutPayer(G, VOYAGE.lot)) return { erreur: `Le lot du pont coûte ${VOYAGE.lot} p. : il te manque ${VOYAGE.lot - Math.floor(G.argent)} pièces (la banque fait des prêts).` };
@@ -136,7 +136,7 @@ const IMPREVUS = {
       { nom: 'Passer en crabe, pattes serrées', fait: G => { if (Math.random() < 0.5) { const p = payerCeQuOnPeut(G, 50); return p ? { texte: `Crac ! Le coin du mur a frotté la rambarde. Il faudra reboucher ça (${p} p.).`, gains: [`−${p} p.`] } : { texte: 'Crac ! Le coin du mur a frotté la rambarde. Faute de pièces, tu bouches le trou avec de la paille.', gains: [] }; } return { texte: 'Elle passe de profil, une patte après l\'autre, sans toucher la rambarde. Les canards applaudissent.', gains: [] }; } },
     ] },
   // (v1.59, planche 79) l'ogre du péage (ce n'est plus un troll : les trolls sont un peuple du jeu ; l'id reste pour les vieilles parties)
-  troll: { nom: 'L’ogre du péage', texte: 'Sous le petit pont, un ogre se lève du ruisseau, une marmite cabossée sur la tête, et lève son gourdin au-dessus du chemin. « Péage ! Ou je mange une patte. »',
+  troll: { nom: 'L\'ogre du péage', texte: 'Sous le petit pont, un ogre surgit du ruisseau, une marmite cabossée sur la tête, et lève son gourdin au-dessus du chemin. « Péage ! Ou je mange une patte. »',
     choix: [
       { nom: 'Payer le péage (40 p.)', fait: G => { const p = payerCeQuOnPeut(G, 40);
         return { texte: p >= 40 ? 'Il mord la pièce, la trouve bonne, et s\'écarte en traînant les pieds dans l\'eau.'
@@ -161,7 +161,7 @@ const IMPREVUS = {
       { nom: 'Payer (10 % de ta bourse, 150 p. au plus)', fait: G => { const p = Math.min(150, Math.round(Math.max(0, G.argent) * 0.1)); payer(G, p, 'voyage'); return { texte: 'Ils filent avec la bourse, sans un regard en arrière. La maison souffle de la fumée noire, de rage.', gains: [`−${p} p.`] }; } },
       { nom: 'Laisser faire le chat', si: G => chatAdopte(G), fait: G => ({ texte: 'Du haut du toit, ton chat se gonfle, feule... et une ombre immense se dresse dans la fumée de la cheminée. Les trois pandas détalent dans les fourrés.', gains: ['le chat ♥'] }) },
       { nom: 'Faire courir la maison (4 h de bois)', fait: G => { const b = brulerBois(G, 4); return { texte: 'Elle prend ses pattes à son cou. Les carreaux tremblent, les renégats mangent la poussière.', gains: [`−${b.manges.length} bois`] }; } },
-      { nom: 'Leur demander pourquoi ils ont déserté (et partager 2 rations)', si: G => (G.stock.ration || 0) >= 2, fait: G => { G.stock.ration -= 2; return { texte: 'Le plus vieux baisse son arc. « Le Conseil nous a jugés pour complots sur le passé. On disait seulement ce qu\'on avait vu, avant que tout le monde oublie. » Ils prennent les rations et s\'effacent dans les fourrés.', gains: ['−2 rations'] }; } },
+      { nom: 'Leur demander pourquoi ils ont déserté (et partager 2 rations)', si: G => (G.stock.ration || 0) >= 2, fait: G => { G.stock.ration -= 2; return { texte: 'Le plus vieux baisse son arc. « Le Conseil nous a jugés pour complot, parce qu\'on parlait du passé. On disait seulement ce qu\'on avait vu, avant que tout le monde oublie. » Ils prennent les rations et s\'effacent dans les fourrés.', gains: ['−2 rations'] }; } },
     ] },
 };
 // Le plan de la route, tiré au départ : pour chaque jour, ses étapes et son imprévu (le dernier jour : l'arrivée)

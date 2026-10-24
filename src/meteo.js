@@ -6,7 +6,7 @@
 
 const METEOS = {
   soleil: { nom: 'Beau temps', ardoise: ['BEAU TEMPS'], clients: 0, coul: '#f0c040',
-    phrase: 'Grand soleil sur le Comté : une belle journée pour partir à l\'aventure.' },
+    phrase: 'Grand soleil sur la Comté : une belle journée pour partir à l\'aventure.' },
   pluie: { nom: 'Pluie', ardoise: ['PLUIE', 'dès midi'], clients: -1, coul: '#8ab0d8',
     phrase: 'Il pleut des cordes : on demandera des capes aujourd\'hui, et la rue sera plus calme.' },
   orage: { nom: 'Orage', ardoise: ['ORAGE', 'à l\'abri !'], clients: -2, coul: '#b8a0e8',

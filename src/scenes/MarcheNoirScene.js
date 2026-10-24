@@ -157,7 +157,7 @@ class MarcheNoirScene extends Phaser.Scene {
     this.majFleches();
     // le garde orc arrête ceux que la Main Noire n'a pas invités
     // (v1.08) sauf si l'on est reparti, ou si un jeu a commencé entre-temps (la mise était perdue)
-    if (coin === 2 && !this.mainNoireOuverte) this.time.delayedCall(900, () => { if (this.coin === 2 && !this.part && !this.bloqueCoins) this.accueil("Un orc énorme te barre le passage : « La table du fond, c'est sur invitation. Reviens quand on parlera de toi, marchand. »"); });
+    if (coin === 2 && !this.mainNoireOuverte) this.time.delayedCall(900, () => { if (this.coin === 2 && !this.part && !this.bloqueCoins) this.accueil(`Un orc énorme te barre le passage : « La table du fond, c'est sur invitation. Reviens quand on parlera de toi, marchand${eJ()}. »`); });
     if (coin === 0 && !this.aine) this.time.delayedCall(900, () => { if (this.coin === 0 && !this.part && !this.bloqueCoins) this.accueil('Le feu crépite. Une vieille gobeline te sourit sans un mot : ce soir, aucun aîné ne raconte.'); });
   }
 
@@ -291,7 +291,7 @@ class MarcheNoirScene extends Phaser.Scene {
         const e = honorerCommande(G, c);
         if (!e) Son.jouer('pieces');
         this.majBourse();
-        this.pageCommandes(e || `${c.banni.nom} glisse ${c.prix} pièces sur le tonneau. « On se reverra, marchand. »`);
+        this.pageCommandes(e || `${c.banni.nom} glisse ${c.prix} pièces sur le tonneau. « On se reverra, marchand${eJ()}. »`);
       }, (G.interdits[c.objet] || 0) > 0);
     });
     this.bouton(860, 503, 140, '◂ Retour', () => this.accueil());

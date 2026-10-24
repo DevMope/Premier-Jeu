@@ -21,7 +21,7 @@ const MECENAT = {
   neutre: [
     { donne: 2000, id: 'saufConduit', texte: 'Les deux camps t’accordent leur sauf-conduit : on te laisse passer partout.' },
     { donne: 6000, id: 'passeur', texte: 'Le Passeur du Carrefour te fait confiance : il te parle comme à un ami.' },
-    { donne: 15000, id: 'table', texte: 'Un soir, un Gardien et un Banni ont bu à ta table sans se battre. On en parle dans tout le Comté.' },
+    { donne: 15000, id: 'table', texte: 'Un soir, un Gardien et un Banni ont bu à ta table sans se battre. On en parle dans toute la Comté.' },
     { donne: 30000, id: 'carrefour', texte: 'Une maison t’attend au Carrefour, là où toutes les routes se croisent, pour tes vieux jours.' },
   ],
 };

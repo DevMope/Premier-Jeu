@@ -66,7 +66,10 @@ class StoryScene extends Cinematique {
     // Ses cœurs, plus ceux gagnés grâce aux soins donnés en plus.
     const pvDepart = (this.parti.resultat && this.parti.resultat.pvDepart) || v.pv;
     for (let i = 0; i < pvDepart; i++) {
-      this.coeurs.push(this.add.image(30 + i * 34, 46, 'hd_coeur').setScale(2));
+      // (v1.61) les cœurs en plus (potion, escorte, tarte) sont dorés : les perdre n'est pas une blessure
+      const c = this.add.image(30 + i * 34, 46, i >= v.pv ? 'hd_coeurOr' : 'hd_coeur').setScale(2);
+      c.bonus = i >= v.pv;
+      this.coeurs.push(c);
     }
     this.titre = this.add.text(480, 26, '', style(20, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5);
 
@@ -754,7 +757,7 @@ class StoryScene extends Cinematique {
       const erreur = soigner(G, v.nom, { gratuit });
       if (erreur) { Son.jouer('refus'); return this.ecrire('Soins', erreur); }
       Son.jouer('coeur');
-      const coeur = this.coeurs.find(c => c.texture.key === 'hd_coeurVide');
+      const coeur = this.coeurs.find(c => c.texture.key === 'hd_coeurVide' && !c.bonus) || this.coeurs.find(c => c.texture.key === 'hd_coeurVide');
       if (coeur) {
         coeur.setTexture('hd_coeur');
         this.tweens.add({ targets: coeur, scale: 3, duration: 150, yoyo: true });

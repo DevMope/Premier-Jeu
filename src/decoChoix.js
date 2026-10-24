@@ -227,7 +227,7 @@ function carnetDeco(s, rafraichir) {
     const d = decoDe(G);
     L.add(s.add.image(0, 0, panneauHD(s, 720, 480)).setScale(2));
     L.add(s.add.text(0, -218, "LE CARNET D'ÉCHANTILLONS", style(19, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    L.add(s.add.text(0, -196, 'Chaque pièce à son style · un style acheté se remet quand tu veux, sans repayer', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    L.add(s.add.text(0, -196, 'Chaque pièce a son style · un style acheté se remet quand tu veux, sans repayer', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
     const X0 = -140, PX = 150, Y0 = -146, PY = 64, g = s.add.graphics(); L.add(g);
     cols.forEach((k, j) => { const S = STYLES_DECO[k]; L.add(s.add.text(X0 + j * PX, Y0 - 22, S.nom + (S.camp === 'lumière' ? ' ☀' : S.camp === 'ombre' ? ' ☾' : ''), style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5)); });
     DECO.pieces.forEach(([id, nom], i) => { const y = Y0 + 14 + i * PY;

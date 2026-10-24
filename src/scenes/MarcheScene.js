@@ -1463,7 +1463,7 @@ class MarcheScene extends Phaser.Scene {
     const G = this.G, p = etatPeche(G);
     if (!lieuOuvert(G, 'peche')) return this.message(`${NOMS_LIEUX_MARCHE.peche} ouvre le jour ${OUVERTURE_LIEUX.peche}.`);
     this.montrer('peche');
-    const c = this.panneau('Barnabé Goujon', 'Le pêcheur du Comté · cannes, poissons, et l’étang du Moulin');
+    const c = this.panneau('Barnabé Goujon', 'Le pêcheur de la Comté · cannes, poissons, et l\'étang du Moulin');
     // la première fois : il se présente et explique (le tuto, par lui)
     if (!p.barnabe) {
       const pages = ["« Tiens, un nouveau visage ! Barnabé Goujon, pêcheur depuis que j'ai des pieds poilus. Tu veux apprendre ? Une canne de roseau, vingt pièces, et je te montre. »",

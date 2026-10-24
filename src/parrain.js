@@ -52,7 +52,7 @@ function choisirParrain(G, choix) {
   if (choix === 'bague') {
     p.statut = 'famille'; p.borsalino = true;
     if (m) { m.engage = true; m.sorti = null; m.impayes = 0; m.represailles = null; }
-    return `Tu baises la bague. ${nom} sourit : « Bienvenue dans la Famille, Consigliere. Plus jamais de pizzo pour toi. Et chaque semaine, ta part. »`;
+    return `Tu embrasses la bague. ${nom} sourit : « Bienvenue dans la Famille, Consigliere. Plus jamais de pizzo pour toi. Et chaque semaine, ta part. »`;
   }
   if (choix === 'reflechir') { p.statut = 'reflexion'; return `${nom} hoche la tête. « Prends ton temps. Pas trop. »`; }
   if (choix === 'pacte') { p.statut = 'pacte'; if (m) { m.impayes = 0; m.represailles = null; } return `Vous vous serrez la patte. « La Main Noire ne touchera plus à ton comptoir. Et mes oreilles traînent partout : je te dirai ce que j'entends. »`; }

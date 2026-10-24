@@ -82,7 +82,7 @@ class BarScene extends Phaser.Scene {
     // les clics : le comptoir, la passe-plat, les clients
     this.zone(640, 300, 300, 70, () => this.allerPrendre('chope'));
     if (this.plats) this.zone(115, 200, 180, 120, () => this.allerPrendre('plat'));
-    this.aide = this.add.text(480, 528, 'Clic sur le comptoir ou la passe-plat : prendre · clic sur un client : servir', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5, 1).setDepth(95);
+    this.aide = this.add.text(480, 528, 'Clic sur le comptoir ou le passe-plat : prendre · clic sur un client : servir', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5, 1).setDepth(95);
     this.t0 = this.time.now;
     this.cameras.main.fadeIn(400);
     Son.jouer('porte');

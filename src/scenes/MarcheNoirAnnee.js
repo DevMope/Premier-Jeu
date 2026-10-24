@@ -56,7 +56,7 @@ Object.assign(MarcheNoirScene.prototype, {
     this.titreCoin.setText('Au Gobelet Fêlé');
     this.vider();
     const mineur = typeof ageJoueur === 'function' && ageJoueur(G) < 18;   // (v1.46 : avant 18 ans, Mère Nok sert un jus de mûre)
-    this.texte(40, 374, message || (mineur ? "Mère Nok te jauge par-dessus son comptoir : « Toi ? Un jus de mûre, et estime-toi heureux. »" : "Mère Nok essuie un verre sans te regarder : « Qu'est-ce que je te sers ? Et ne me dis pas « du lait ». »"), 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    this.texte(40, 374, message || (mineur ? `Mère Nok te jauge par-dessus son comptoir : « Toi ? Un jus de mûre, et estime-toi ${eJ() ? 'heureuse' : 'heureux'}. »` : "Mère Nok essuie un verre sans te regarder : « Qu'est-ce que je te sers ? Et ne me dis pas « du lait ». »"), 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
     if (c && !c.pris) this.texte(40, 420, `${c.banni.nom} s'accoude à côté de toi et pose un pli scellé sur le comptoir.`, 12, '#e8c890', { fontStyle: 'italic' });
     else if (c && c.pris) this.texte(40, 420, 'Le contrat de ce soir est déjà parti, avec ton aventurier.', 12, '#a89080', { fontStyle: 'italic' });
     this.bouton(170, 462, 260, mineur ? `Un jus de mûre (${OMBRE_ANNEE.verre} p.)` : `Un verre (${OMBRE_ANNEE.verre} p.)`, () => {
@@ -157,7 +157,7 @@ Object.assign(MarcheNoirScene.prototype, {
     const dit = tropJeunePourParier(G) ? "Grisouille ricane : « Parier sur la mort des autres, à ton âge ? Reviens à dix-huit ans, morveux. »" : !cible ? "Grisouille, le preneur de paris : « Personne en route sur qui parier ce soir. Envoie-moi des aventuriers, et reviens. »"
       : `Grisouille, le preneur de paris : « Tu paries qu'il n'en revient pas ? ${String(coteContre(cible)).replace('.', ',')} contre 1 sur ${prenomDe(cible.voyageur.nom)}. Personne n'en saura rien... »`;
     this.texte(40, 374, message || dit, 14, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 880 } });
-    if (cible) this.texte(40, 400, 'La cote suit ses vraies chances : bien équipé, elle monte. Ton flair les connaît aussi.', 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } });
+    if (cible) this.texte(40, 400, 'La cote suit ses vraies chances : s\'il est bien équipé, elle monte. Ton flair les connaît aussi.', 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } });
     if (cibles.length && parisNoirsEnCours(G) < MISE_NOIRE.max && !tropJeunePourParier(G)) {
       const [mn, mx] = MISE_NOIRE.mise;
       this.miseNoire = Phaser.Math.Clamp(this.miseNoire || 30, mn, mx);

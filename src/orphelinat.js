@@ -215,7 +215,7 @@ function matinDeLOrphelinat(G) {
   if (o.annonce) {
     const a = ORPHELINAT.ameliorations.find(x => x.nom === o.annonce);
     lignes.push(`Des coups de marteau toute la nuit, à côté : ${o.annonce.charAt(0).toLowerCase() + o.annonce.slice(1)} de l'orphelinat est bâti${a && a.id === 'ecole' ? 'e' : a && a.id === 'salle' ? 'e' : ''} (+${ORPHELINAT.reputation} de réputation). ${a ? a.effet : ''}`);
-    if (!G.annonceRival) G.annonceRival = `À l'orphelinat du Comté, ${o.annonce.charAt(0).toLowerCase() + o.annonce.slice(1)} est terminé${a && a.id !== 'dortoir' ? 'e' : ''}, grâce à « ${G.nomShop} ».`;
+    if (!G.annonceRival) G.annonceRival = `À l'orphelinat de la Comté, ${o.annonce.charAt(0).toLowerCase() + o.annonce.slice(1)} est terminé${a && a.id !== 'dortoir' ? 'e' : ''}, grâce à « ${G.nomShop} ».`;
     o.annonce = null;
   }
   lignes.push(...coursesDuMatin(G));

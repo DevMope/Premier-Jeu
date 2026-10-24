@@ -21,7 +21,7 @@ function presageDuJour(G) { return G.presage && G.presage.jour === G.jour ? G.pr
 // Peut-on tirer une carte ce matin ? null si oui, sinon la raison
 function refusPresage(G) {
   if (!ysmeeArrivee(G)) return "La tente est fermée.";
-  if (presageDuJour(G)) return "« Les cartes ont déjà parlé pour aujourd'hui, petit marchand. Reviens demain. »";
+  if (presageDuJour(G)) return `« Les cartes ont déjà parlé pour aujourd'hui, ${eJ() ? 'petite marchande' : 'petit marchand'}. Reviens demain. »`;
   if (G.fileDuJour === G.jour) return "« Les cartes ne parlent qu'au matin, avant que ta porte s'ouvre. Reviens demain. »";
   return null;
 }

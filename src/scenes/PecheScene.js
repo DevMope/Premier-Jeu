@@ -329,7 +329,7 @@ class PecheScene extends Phaser.Scene {
     let k = 0; const pas = this.time.addEvent({ delay: 110, loop: true, callback: () => c.active && c.setTexture(this.cleChat + '_m' + (++k % 2)) });
     this.tweens.add({ targets: [c], x: this.X0 - 80, duration: 1600, ease: 'Quad.easeIn', onUpdate: () => poisson.setPosition(c.x + dx, c.y + dy) });
     this.tweens.add({ targets: bulle, x: 120, alpha: 0, delay: 700, duration: 900 });
-    this.dire(`${nomChatMaj(this.G)} file avec ta ${POISSONS[this.prise.id].nom.toLowerCase()} dans la gueule !`, `L’expérience, tu la gardes (+${this.bilan.gain}). Le poisson... beaucoup moins.`);
+    this.dire(`${nomChatMaj(this.G)} file avec ${/^(Gardon|Brochet)$/.test(POISSONS[this.prise.id].nom) ? 'ton' : 'ta'} ${POISSONS[this.prise.id].nom.toLowerCase()} dans la gueule !`, `L’expérience, tu la gardes (+${this.bilan.gain}). Le poisson... beaucoup moins.`);
     await new Promise(ok => this.time.delayedCall(1800, ok));
     pas.remove(); poisson.destroy(); bulle.destroy();
     // il revient s'asseoir l'air de rien, en se léchant les babines
@@ -365,7 +365,7 @@ class PecheScene extends Phaser.Scene {
     if (B.nouveau && !leg) ajouter(this.add.text(640, 168, 'NOUVEAU DANS LE CARNET', style(11, '#14100a', { fontStyle: 'bold', backgroundColor: '#e8c060', padding: { x: 6, y: 2 } })).setOrigin(0.5).setAngle(8));
     const pr = progresPeche(G);
     if (leg) {
-      ajouter(this.add.text(480, 254, '« Par tous les goujons du Comté ! Cinquante ans que je la guette...\nTu es un vrai pêcheur, toi. » — Barnabé, accouru sur la berge', style(12, '#3b2410', { align: 'center', fontStyle: 'bold' })).setOrigin(0.5));
+      ajouter(this.add.text(480, 254, '« Par tous les goujons de la Comté ! Cinquante ans que je la guette...\nTu es un vrai pêcheur, toi. » — Barnabé, accouru sur la berge', style(12, '#3b2410', { align: 'center', fontStyle: 'bold' })).setOrigin(0.5));
       ajouter(this.add.text(480, 288, `+${B.gain} expérience de pêcheur · un succès · elle ne se pêche qu’une seule fois`, style(12, '#1f4a7a', { fontStyle: 'bold' })).setOrigin(0.5));
       return this.choixLegende();
     }
@@ -411,7 +411,7 @@ class PecheScene extends Phaser.Scene {
     c.setPosition(x, SOL_PROMENADE + 2).setOrigin(0.5, 1).setScale(2.6);
     const id = legende ? 'legende' : P.id;
     const poisson = this.add.image(x, SOL_PROMENADE - 128, texturePoisson(this, id)).setScale(legende ? 1.2 : 1.6).setDepth(8.71);
-    const bulle = this.add.text(x - this.X0, SOL_PROMENADE - 170, legende ? '« Grand-Mère Écaille... pour moi ?\nOn dînera chez les rois, ce soir ! »' : `« Une ${POISSONS[P.id].nom.toLowerCase()} ? Pour moi ? Oh, toi... »`, style(13, '#2a1608', { fontStyle: 'bold', backgroundColor: '#f4ead2', padding: { x: 7, y: 4 }, align: 'center' })).setOrigin(0.5, 1).setScrollFactor(0).setDepth(30);
+    const bulle = this.add.text(x - this.X0, SOL_PROMENADE - 170, legende ? '« Grand-Mère Écaille... pour moi ?\nOn dînera chez les rois, ce soir ! »' : `« ${/^(Gardon|Brochet)$/.test(POISSONS[P.id].nom) ? 'Un' : 'Une'} ${POISSONS[P.id].nom.toLowerCase()} ? Pour moi ? Oh, toi... »`, style(13, '#2a1608', { fontStyle: 'bold', backgroundColor: '#f4ead2', padding: { x: 7, y: 4 }, align: 'center' })).setOrigin(0.5, 1).setScrollFactor(0).setDepth(30);
     this.dire(`${nomChatMaj(this.G)} se dresse sur ses pattes arrière, lève sa prise au-dessus de sa tête... et danse.`, gain > 0 ? `+${gain} ♥` : 'Il danse quand même (le ♥ du jour, il l’a déjà eu).');
     if (gain > 0) this.gain(`+${gain} ♥`, '#ff8aa0');
     Son.jouer('miaou');

@@ -51,7 +51,7 @@ function jourDeMarche(G, jour = G.jour) {
 function prixJourDeMarche(G) { return jourDeMarche(G) ? JOUR_DE_MARCHE.prix : 1; }
 function clientsJourDeMarche(G, jour) { return jourDeMarche(G, jour) ? JOUR_DE_MARCHE.clients : 0; }
 function nouvelleJourDeMarche(G) {
-  return jourDeMarche(G) ? "C'est jour de marché ! Des colporteurs de passage, les prix baissent d'un dixième, et du monde de passage viendra jusqu'à ton comptoir." : null;
+  return jourDeMarche(G) ? "C'est jour de marché ! Les colporteurs sont là, les prix baissent d'un dixième, et du monde de passage viendra jusqu'à ton comptoir." : null;
 }
 
 // --- L'anniversaire des habitués ---
