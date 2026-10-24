@@ -90,6 +90,7 @@ async function categories(scene) {
     persos.push(sur(() => ({ cle: corpsHD(scene, { nom: 'Aldric Montfort', race: 'humain', niveau }), nom: `Aventurier · ${NIVEAUX_AVENTURIER[niveau].nom}` })));
   }
   persos.push(sur(() => ({ cle: textureJoueur(scene, G), nom: 'Toi (le joueur)' })));
+  persos.push(sur(() => ({ cle: textureJoueurDort(scene, G), nom: 'Toi, endormi (au lit)' })));
   await ajouter('personnages', 'Personnages', 'Les peuples, les figurants du village, Garrick, et les tenues qui changent avec le niveau des aventuriers.', persos);
 
   // Les portraits du comptoir
@@ -195,7 +196,7 @@ async function categories(scene) {
   const maud = { nom: 'Maud Rivecourt', race: 'humain', feminin: true, niveau: 'aguerri' }, poses = [];
   const POSES = { accueil: 'les bras ouverts (accueil)', baluchon: "le baluchon à l'épaule", leves: 'les bras levés', pense: 'pensive, la main au menton', stupeur: 'la stupeur',
     grimpe1: 'elle grimpe (1)', grimpe2: 'elle grimpe (2)', porteur: 'la pose du porteur (un enfant sur les épaules)', epaules: "assise sur les épaules de quelqu'un", empoigne: 'elle empoigne un filou (le videur)',
-    plateau: 'le plateau (au bar)', mange: 'elle mange debout' };
+    plateau: 'le plateau (au bar)', mange: 'elle mange debout', dort: 'elle dort, les yeux fermés' };
   for (const [pose, nom] of Object.entries(POSES)) poses.push(sur(() => ({ cle: corpsHD(scene, maud, pose), nom: `Maud · ${nom}` })));
   const base = sur(() => corpsHD(scene, maud));
   if (base) for (const k of [1, 2]) poses.push({ cle: base + '_pas' + k, nom: `Maud · elle marche (pas ${k})` });
