@@ -191,7 +191,7 @@ class CounterScene extends Phaser.Scene {
     }
     const panneau = this.add.image(0, 0, 'storeHD').setOrigin(0.5, 1).setScale(2);
     const pancarte = this.add.text(0, -h / 2 - 6, 'FERMÉ', style(20, '#f3d98a', { fontStyle: 'bold', backgroundColor: '#5a1a12', padding: { x: 12, y: 4 }, brut: true })).setOrigin(0.5);
-    this.store = this.add.container(x + w / 2, y + h + 6, [panneau, pancarte]).setDepth(2.4);
+    this.store = this.add.container(x + w / 2, y + h + 6, [panneau, pancarte]).setDepth(2.65);   // (v1.61 : devant la pluie et les feuilles du vent)
     this.store.setMask(this.masqueFenetre);
     this.pancarte = pancarte;
   }
