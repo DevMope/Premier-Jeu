@@ -47,6 +47,7 @@ class CounterScene extends Phaser.Scene {
     this.buste = null;
     // (v0.97) les panneaux de la veille (ou d'avant un chargement) n'existent plus
     this.resumeRetours = this.ratelier = this.panneauCadeaux = this.panneauSecret = this.infoRelique = this.afficheEpinglee = null;
+    this.piecesEnVol = 0; this.argentVise = undefined;   // (v1.61) un vol de pièces interrompu (pause, volets) ne fige plus la bourse
     this.panneauRoyal = this.feuilleConseil = this.minuterieGeste = this.tweenGeste = this.pastilleRoyale = null; this.lettreOuverte = false;   // (v1.10)
     this.coursierEnRoute = false; this.fenetreCoursier = null;   // (v1.12)
 

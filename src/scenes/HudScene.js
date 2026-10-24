@@ -262,7 +262,7 @@ class HudScene extends Phaser.Scene {
 
   // La scène du jeu qu'on regarde (la plus haute, hors bandeau).
   scenePrincipale() {
-    const actives = this.scene.manager.getScenes(true).filter(s => s.scene.key !== 'Hud');
+    const actives = this.scene.manager.getScenes(true).filter(s => s.scene.key !== 'Hud' && s.scene.key !== 'Volet');   // (v1.61 : les volets ne sont pas une page)
     return actives[actives.length - 1];
   }
 
@@ -393,7 +393,7 @@ class HudScene extends Phaser.Scene {
     }
     // Toujours au-dessus des autres pages
     const liste = this.scene.manager.scenes;
-    if (liste[liste.length - 1] !== this) this.scene.bringToTop();
+    if (liste[liste.length - 1] !== this && !this.scene.isActive('Volet')) this.scene.bringToTop();   // (sauf sous les volets)
   }
 
   ouvrirMenu() {

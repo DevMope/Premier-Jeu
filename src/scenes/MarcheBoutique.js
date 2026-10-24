@@ -2,10 +2,11 @@
 // La boutique : plein écran, le marchand derrière son comptoir ; chaque cagette est un gros bouton (clic +1, Maj+clic
 // +5, clic droit −1) ; un onglet par étal pour changer sans marcher ; un seul panier pour toute la place, payé d'un coup
 // (chaque marchand compte ses ventes : la relation monte comme à l'étal). Au clavier : Tab, ← →, Espace, Entrée, Échap.
-// La liste de courses (L) : faite toute seule (les commandes acceptées, moins ce que tu as), rangée par marchand ;
+// La liste de courses (L) : faite toute seule (2 de chaque provision, moins ce que tu as), rangée par marchand ;
 // « Tout acheter », « Mettre au panier », « Refaire mes courses d'hier ».
 
 const ONGLETS_BOUTIQUE = ['gedeon', 'apothicaire', 'forge', 'tailleuse'];
+const LISTE_BASE = 2;   // (v1.61) la liste de courses vise au moins 2 de chaque provision
 
 Object.assign(MarcheScene.prototype, {
   // Ce que tu as d'un article (les matériaux à part)
@@ -25,7 +26,7 @@ Object.assign(MarcheScene.prototype, {
     this.panier = this.panier || {};
     const k = cle + ':' + id, offre = this.G.etals[cle][id], avant = this.panier[k] || 0;
     const q = Phaser.Math.Clamp(avant + n, 0, offre ? offre.qte : 0);
-    if (q === avant) { if (n > 0) { Son.jouer('refus'); this.messageBoutique(`Plus de ${nomObjet(id).toLowerCase()} chez ${prenomDe(MARCHANDS[cle].nom)} aujourd'hui.`, '#ffb0a0'); } return; }
+    if (q === avant) { if (n > 0) { this.messageBoutique(`Plus de ${nomObjet(id).toLowerCase()} chez ${prenomDe(MARCHANDS[cle].nom)} aujourd'hui.`, '#ffb0a0'); } return; }
     Son.jouer(n > 0 ? 'clic' : 'glisse');
     if (q) this.panier[k] = q; else delete this.panier[k];
   },
@@ -229,13 +230,18 @@ Object.assign(MarcheScene.prototype, {
   },
 
   // --- La liste de courses (L) ---
-  // Ce qui manque pour les commandes acceptées, chez le marchand le moins cher qui en a ce matin
+  // Ce qui manque pour les commandes acceptées, chez le marchand le moins cher qui en a ce matin ; (v1.61) et, les
+  // lettres parties, de quoi avoir au moins 2 de chaque provision vendue ce matin, dans la place libre de la réserve
   calculerListe() {
     this.nettoyerPanier();
-    const G = this.G, besoin = totalCommandes(G), lignes = [], auPanier = {};
+    const G = this.G, besoin = { ...totalCommandes(G) }, lignes = [], auPanier = {};
+    const vendus = new Set(Object.keys(MARCHANDS).flatMap(k => Object.keys((G.etals || {})[k] || {}).filter(id => G.etals[k][id].qte > 0)));
+    for (const id of vendus) if (!(id in MATERIAUX) && ITEMS[id] && !ITEMS[id].arme && G.stock[id] !== undefined) besoin[id] = Math.max(besoin[id] || 0, LISTE_BASE);
     for (const [k, q] of Object.entries(this.panier)) { const id = k.split(':')[1]; auPanier[id] = (auPanier[id] || 0) + q; }
+    let place = G.capacite - stockTotal(G) - Object.entries(auPanier).reduce((a, [id, q]) => a + (id in MATERIAUX ? 0 : q), 0);
     for (const id of Object.keys(besoin)) {
       let manque = besoin[id] - this.aDejaMarche(id) - (auPanier[id] || 0);   // (v1.49 : ce qui est déjà au panier est compté)
+      if (!(id in MATERIAUX)) { manque = Math.min(manque, place); place -= Math.max(0, manque); }
       if (manque <= 0) continue;
       const dispo = k => G.etals[k][id].qte - (this.panier[k + ':' + id] || 0);
       const offres = Object.keys(MARCHANDS).filter(k => G.etals[k] && G.etals[k][id] && dispo(k) > 0).sort((a, b) => prixMarchand(G, a, id) - prixMarchand(G, b, id));
@@ -261,12 +267,12 @@ Object.assign(MarcheScene.prototype, {
     const T = (x, y, t, taille = 13, coul = '#3b2410', o = {}) => { const tx = this.add.text(x, y, t, style(taille, coul, { fontStyle: 'bold', ...o })); c.add(tx); return tx; };
     c.add(this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.6).setInteractive());
     T(400, 54, hier ? 'TES COURSES D’HIER' : 'TA LISTE DE COURSES', 19).setOrigin(0.5);
-    T(400, 76, hier ? 'les mêmes, si les étals en ont encore ce matin' : 'faite toute seule : tes commandes acceptées, moins ce que tu as déjà', 11, '#6b4a2a', { fontStyle: 'italic' }).setOrigin(0.5);
+    T(400, 76, hier ? 'les mêmes, si les étals en ont encore ce matin' : 'faite toute seule : 2 de chaque provision, moins ce que tu as déjà', 11, '#6b4a2a', { fontStyle: 'italic' }).setOrigin(0.5);
     const bx = this.add.text(690, 44, '✕', style(18, '#8a3a1a', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', fermer); c.add(bx);
     const L = this.lignesListe;
     let y = 104;
     const total = () => L.filter(l => l.ok && !l.decoche).reduce((t, l) => t + prixMarchand(G, l.cle, l.id) * l.q, 0);
-    if (!L.length) { y = 196; T(400, 150, hier ? 'Tu n’as rien acheté au marché, hier.' : 'Rien ne manque pour tes commandes :\nta réserve suffit. (Garde un peu de marge pour les imprévus !)', 14, '#4a6a2a', { fontStyle: 'italic', align: 'center' }).setOrigin(0.5); }
+    if (!L.length) { y = 196; T(400, 150, hier ? 'Tu n’as rien acheté au marché, hier.' : 'Rien ne manque : tu as de tout,\nou ta réserve est pleine.', 14, '#4a6a2a', { fontStyle: 'italic', align: 'center' }).setOrigin(0.5); }
     const groupes = {};
     for (const l of L) (groupes[l.cle || '—'] = groupes[l.cle || '—'] || []).push(l);
     let affichees = 0;

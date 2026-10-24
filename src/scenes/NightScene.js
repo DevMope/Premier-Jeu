@@ -58,7 +58,7 @@ class NightScene extends Phaser.Scene {
     this.parchemin(20, 300, this.matin ? "Aujourd'hui" : 'Ta journée');
     this.parchemin(320, 640, 'Ta réserve');
     this.parchemin(660, 940, 'Les nouvelles');   // (v1.61) plus de lettres de commande : les nouvelles du bourg
-    this.add.text(800, 108, '1 lettre acceptée = 1 client EN PLUS', style(12, '#8a3a1a', { fontStyle: 'bold italic' })).setOrigin(0.5);
+    if (this.G.annonces.length) this.add.text(800, 108, '1 lettre acceptée = 1 client EN PLUS', style(12, '#8a3a1a', { fontStyle: 'bold italic' })).setOrigin(0.5);
     this.creerReserve(320, 640);
     this.creerPrevision(660, 940);
 
@@ -455,7 +455,7 @@ class NightScene extends Phaser.Scene {
     const max = (this.matin ? 4 : 6) - infos.length, toutes = [...G.annonces].sort((a, b) => a.acceptee - b.acceptee);
     if ((this.pageLettres || 0) * max >= toutes.length) this.pageLettres = 0;
     const liste = toutes.slice((this.pageLettres || 0) * max, (this.pageLettres || 0) * max + max);
-    if (!liste.length && !infos.length) c.add(this.add.text(x1 + 16, 127, 'Rien de neuf ce soir.', style(13, '#3b2410', { fontStyle: 'italic' })));
+    if (!liste.length && !infos.length) c.add(this.add.text(x1 + 16, 127, this.matin ? 'Rien de neuf ce matin.' : 'Rien de neuf ce soir.', style(13, '#3b2410', { fontStyle: 'italic' })));
     liste.forEach((a, i) => {
       const y = 124 + (i + infos.length) * 52;
       const v = a.voyageur;

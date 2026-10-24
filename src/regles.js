@@ -896,6 +896,7 @@ const CESSIONS_GRIPPESOU = [
   "Le vieux Grippesou passe la tête sous l'auvent : « Laisse, cousin... C'est le business. Mais fais vite, petit. »",
   "Grippesou lève les yeux au ciel : « Bon, bon... Une dernière fois, hein ? Et tu ne dis rien à personne. »",
   "Grippesou soupire longuement : « Tu as la tête plus dure que mes pièces. Vas-y... mais c'est la dernière ! »",
+  "Grippesou ne dit même plus rien : il lève les bras au ciel, et laisse son cousin sortir les dés.",
 ];
 
 function partiesRestantes(G, jeu) {
@@ -3477,7 +3478,7 @@ function avisDeRecherche(G) {
 function prenomDe(nom) { const m = nom.split(' '); if (m[1] && /^(Le|La)$/.test(m[0])) return nom; return m[1] && /^(Sire|Sœur|Dame|Maître|Mère|Capitaine|Sergent|Garde|Grand-mère|Aïeule|Seigneur|Lord|Comtesse|Comte|Frère|Père|Le|La)$/.test(m[0]) ? m[1] : m[0]; }
 function texteImposture(t, v, ami = '') {
   return t.replaceAll('{nom}', v.nom).replaceAll('{prenom}', prenomDe(v.nom)).replaceAll('{ami}', ami)
-    .replaceAll('{Il}', v.feminin ? 'Elle' : 'Il').replaceAll('{il}', v.feminin ? 'elle' : 'il').replaceAll('{e}', v.feminin ? 'e' : '').replaceAll('{J}', eJ());
+    .replaceAll('{Il}', v.feminin ? 'Elle' : 'Il').replaceAll('{il}', v.feminin ? 'elle' : 'il').replaceAll('{e}', v.feminin ? 'e' : '').replaceAll('heureux{J}', eJ() ? 'heureuse' : 'heureux').replaceAll('{J}', eJ());
 }
 
 // Parmi les clients imprévus du jour : un imposteur (environ un sur douze, un peu plus quand ta

@@ -102,7 +102,7 @@
 
   <div class="carte ligne"><button type="button" class="lire" data-son="mortChoeur" data-duree="7.5">▶ Écouter</button><div class="texte"><h3>A. Le chœur des disparus <span class="duree">≈ 7 s</span></h3><p>Une cloche grave, puis un chœur qui chante quatre accords, et une voix seule qui descend jusqu'au silence.</p></div></div>
   <div class="carte ligne"><button type="button" class="lire" data-son="mortCordes" data-duree="6.5">▶ Écouter</button><div class="texte"><h3>B. Les cordes qui pleurent <span class="duree">≈ 6 s</span></h3><p>Sous les cordes, la basse descend marche après marche (la, sol, fa, mi), une timbale sourde, et le dernier accord reste longtemps.</p></div></div>
-  <div class="carte ligne"><button type="button" class="lire" data-son="mortGlas" data-duree="8">▶ Écouter</button><div class="texte"><h3>C. Le grand glas <span class="duree">≈ 8 s</span></h3><p>Trois coups d'une grande cloche, bien plus riche que l'actuelle (on entend ses harmoniques et son battement), sur un bourdon et un chœur lointain.</p></div></div>
+  <div class="carte ligne"><button type="button" class="lire" data-son="mortGlas" data-duree="8">▶ Écouter</button><div class="texte"><h3>C. Le grand glas <span class="duree">≈ 7 s</span></h3><p>Trois coups d'une grande cloche, bien plus riche que l'actuelle (on entend ses harmoniques et son battement), sur un bourdon et un chœur lointain.</p></div></div>
 
   <!-- ===================== 3. Les bruitages ===================== -->
   <h2>3. Les nouveaux bruitages</h2>
@@ -403,18 +403,18 @@
     gamme: GAMMES.mixolydien, tempo: 92, reverb: 0.5, silence: 0.2,
     accords: [0, 0, 6, 3, 0, 6, 6, 4, 0, 6, 3, 0],
     instruments: { melodie: 'vielle', accompagnement: 'cordes', basse: 'bourdon' },
-    basse: (m) => [[0, 0, 3.9]],
-    accompagnement: (m) => [[0, 0, 3.9, 0.4], [0, 1, 3.9, 0.3], [0, 2, 3.9, 0.3]],
-    percussion: (m) => [[0, 'timbale', m % 4 === 0 ? 0.7 : 0.35], [2, 'tambour', 0.45], [3.5, 'bois', 0.25]],
+    basse: (m) => [[0, 0, 3.9]], forceBasse: 2.5,
+    accompagnement: (m) => [[0, 0, 3.9, 1], [0, 1, 3.9, 0.75], [0, 2, 3.9, 0.75]],
+    percussion: (m) => [[0, 'timbale', m % 4 === 0 ? 0.5 : 0.3], [2, 'tambour', 0.45], [3.5, 'bois', 0.3]],
   });
   // Le marais : en mineur, plus lent, la vielle dans le grave, des cordes pincées, des gouttes
   THEMES.aventureMarais = Object.assign({}, THEMES.aventureForet, {
     gamme: GAMMES.mineur, tempo: 84, octaveMelodie: 0, reverb: 0.6, lie: 1.1, silence: 0.3,
     accords: [0, 0, 6, 3, 0, 6, 3, 4, 0, 6, 3, 0],
     instruments: { melodie: 'vielle', accompagnement: 'pizzicato', basse: 'bourdon' },
-    basse: (m) => [[0, 0, 3.9]],
-    accompagnement: (m) => [[0, 0, 0.8, 0.5], [1, 2, 0.8, 0.35], [2, 1, 0.8, 0.4], [3, 2, 0.8, 0.3]],
-    percussion: (m) => [[0, 'tambour', 0.35], [1.5 + (m % 3) * 0.5, 'goutte', 0.5], [2, 'bois', 0.25]],
+    basse: (m) => [[0, 0, 3.9]], forceBasse: 1.5,
+    accompagnement: (m) => [[0, 0, 0.8, 0.85], [1, 2, 0.8, 0.6], [2, 1, 0.8, 0.7], [3, 2, 0.8, 0.55]],
+    percussion: (m) => [[0, 'tambour', 0.45], [1.5 + (m % 3) * 0.5, 'goutte', 0.6], [2, 'bois', 0.3]],
   });
 
   // « Le danger approche » : mi mineur harmonique (le ré dièse qui inquiète), un ostinato de cordes
@@ -451,8 +451,8 @@
   THEMES.dangerMarais = Object.assign({}, THEMES.dangerForet, {
     gamme: GAMMES.hante, tempo: 80, reverb: 0.7, lie: 1.2, silence: 0.3, octaveMelodie: 0,
     instruments: { melodie: 'violoncelle', accompagnement: 'pizzicato', basse: 'bourdon' },
-    basse: (m) => [[0, 0, 3.9]],
-    accompagnement: (m) => [[0, 0, 0.5, 0.45], [1.5, 1, 0.5, 0.3], [2, 0, 0.5, 0.4], [3.5, 2, 0.5, 0.3]],
+    basse: (m) => [[0, 0, 3.9]], forceBasse: 1.4,
+    accompagnement: (m) => [[0, 0, 0.5, 0.7], [1.5, 1, 0.5, 0.5], [2, 0, 0.5, 0.6], [3.5, 2, 0.5, 0.5]],
     percussion: (m) => [[0, 'coeur', 0.6], [0.4, 'coeur', 0.35], [1.25 + (m % 3) * 0.75, 'goutte', 0.55], ...(m % 2 ? [[3, 'souffle', 0.8]] : [])],
   });
 
@@ -512,7 +512,7 @@
     // battant donne un choc mat. o.freq : la note (la fondamentale), o.force, o.duree (la résonance)
     grandeCloche(t, bus, o = {}) {
       const ctx = this.ctx, f = o.freq || 146.83, duree = o.duree || 5;
-      const g = ctx.createGain(); g.gain.value = o.force || 1; g.connect(bus);
+      const g = ctx.createGain(); g.gain.value = 0.3 * (o.force || 1); g.connect(bus);
       // [multiple, volume, part de la durée, décalage en Hz (le battement)]
       for (const [mult, v, d, dec] of [[0.5, 0.3, 1, 0], [0.5, 0.18, 1, 0.7], [1, 0.36, 0.8, 0], [1, 0.16, 0.8, 1.1], [1.19, 0.24, 0.55, 0], [1.5, 0.14, 0.45, 0], [2, 0.24, 0.38, 0], [2.52, 0.1, 0.25, 0], [2.67, 0.08, 0.2, 0], [3.01, 0.06, 0.16, 0], [4.07, 0.04, 0.1, 0]]) {
         const osc = ctx.createOscillator(); osc.frequency.value = f * mult + dec;
@@ -538,7 +538,7 @@
     // B. Les cordes qui pleurent : le lamento (la basse descend la, sol, fa, mi au violoncelle), les cordes
     //    au-dessus (mi, ré, do, si), une timbale sur l'accord de mi majeur, puis la mineur tenu
     mortCordes(t, bus) {
-      const niv = this.ctx.createGain(); niv.gain.value = 1.25; niv.connect(bus); bus = niv;
+      const niv = this.ctx.createGain(); niv.gain.value = 1; niv.connect(bus); bus = niv;
       const la = d => 55 * Math.pow(2, d / 12), pas = 0.95;   // (en demi-tons depuis le la grave)
       const etapes = [[12, [24, 27, 31], 43], [10, [22, 26, 29], 41], [8, [20, 24, 27], 39], [7, [19, 23, 26], 38]];
       etapes.forEach(([b, acc, haut], i) => {
@@ -547,16 +547,16 @@
         for (const n of acc) this.note('cordes', la(n), ti, pas, 0.6, bus);
         this.note('cordes', la(haut), ti, pas, 0.8, bus);
       });
-      this.percu('timbale', t + 3 * pas, 0.5, bus);
+      this.percu('timbale', t + 3 * pas, 0.4, bus);
       const tf = t + 4 * pas;
-      this.note('violoncelle', la(0), tf, 2.2, 1, bus); this.note('violoncelle', la(12), tf, 2.2, 0.7, bus);
+      this.note('violoncelle', la(0), tf, 2.2, 0.6, bus); this.note('violoncelle', la(12), tf, 2.2, 0.8, bus);
       for (const n of [24, 27, 31]) this.note('cordes', la(n), tf, 2.2, 0.6, bus);
       this.note('cordes', la(36), tf, 2.2, 0.8, bus);
-      this.percu('timbale', tf, 1, bus);
+      this.percu('timbale', tf, 0.45, bus);
     },
     // C. Le grand glas : trois coups d'une grande cloche (ré), un bourdon, un chœur lointain en ré mineur
     mortGlas(t, bus) {
-      const niv = this.ctx.createGain(); niv.gain.value = 1.05; niv.connect(bus); bus = niv;
+      const niv = this.ctx.createGain(); niv.gain.value = 0.95; niv.connect(bus); bus = niv;
       const f = 146.83;
       [0, 2.1, 4.2].forEach((dt, i) => SONS.grandeCloche.call(this, t + dt, bus, { freq: f, force: [1, 0.85, 0.75][i], duree: 5 }));
       this.note('bourdon', f / 2, t + 0.3, 5.5, 0.9, bus);
@@ -567,7 +567,7 @@
     // Des pas dehors, selon le sol : o.sol = 'herbe', 'neige', 'boue' ou 'paves' ; o.n pas (4)
     pasDehors(t, bus, o = {}) {
       const sol = o.sol || 'herbe', n = o.n || 4, cadence = o.cadence || ({ boue: 0.55, neige: 0.48 }[sol] || 0.42);
-      const niv = this.ctx.createGain(); niv.gain.value = { herbe: 0.75, neige: 0.9, boue: 0.8, paves: 0.75 }[sol] || 1; niv.connect(bus); bus = niv;
+      const niv = this.ctx.createGain(); niv.gain.value = { herbe: 1.1, neige: 1.9, boue: 2.3, paves: 1.65 }[sol] || 1; niv.connect(bus); bus = niv;
       for (let i = 0; i < n; i++) {
         const tp = t + i * cadence + (Math.random() - 0.5) * 0.03, cote = i % 2 ? 0.92 : 1.08;   // (le pied gauche, le pied droit)
         if (sol === 'herbe') {
@@ -595,7 +595,7 @@
     // Une lourde porte de bois clouté : le loquet de fer, les gonds qui grincent par à-coups, le battant qui retombe
     porteLourde(t, bus) {
       const ctx = this.ctx;
-      const niv = ctx.createGain(); niv.gain.value = 0.95; niv.connect(bus); bus = niv;
+      const niv = ctx.createGain(); niv.gain.value = 0.65; niv.connect(bus); bus = niv;
       for (const [f, v, d] of [[1250, 0.1, 0.12], [1890, 0.05, 0.08], [2730, 0.03, 0.06]]) this.tonGlisse(t, d, bus, { de: f, a: f * 0.98, volume: v, attaque: 0.002 });
       this.bruit(0.02, t, bus, 0.2, 3000);
       const t1 = t + 0.25, d = 1.1;
@@ -607,14 +607,14 @@
       const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t1); g.gain.exponentialRampToValueAtTime(0.12, t1 + 0.2); g.gain.setValueAtTime(0.12, t1 + d - 0.25); g.gain.exponentialRampToValueAtTime(0.0005, t1 + d);
       o.connect(f); f.connect(hache); hache.connect(g); g.connect(bus); o.start(t1); o.stop(t1 + d + 0.05); lfo.start(t1); lfo.stop(t1 + d + 0.05);
       const t2 = t1 + d + 0.15;
-      this.tonGlisse(t2, 0.35, bus, { de: 75, a: 38, volume: 0.45, attaque: 0.004 });
-      this.bruitGlisse(t2, 0.25, bus, { type: 'lowpass', de: 500, a: 150, volume: 0.4, attaque: 0.003 });
+      this.tonGlisse(t2, 0.35, bus, { de: 75, a: 38, volume: 0.3, attaque: 0.004 });
+      this.bruitGlisse(t2, 0.25, bus, { type: 'lowpass', de: 500, a: 150, volume: 0.25, attaque: 0.003 });
       this.bruitGlisse(t2, 0.06, bus, { de: 1100, a: 800, q: 1.5, volume: 0.12, attaque: 0.002 });
       for (let k = 0; k < 3; k++) this.tonGlisse(t2 + 0.08 + k * 0.07, 0.06, bus, { de: 1500 + k * 120, a: 1400, volume: 0.03 / (k + 1), attaque: 0.002 });
     },
     // L'épée tirée du fourreau : le cuir, la lame qui glisse (un frottement métallique qui monte) et qui chante
     degainer(t, bus) {
-      const niv = this.ctx.createGain(); niv.gain.value = 1.6; niv.connect(bus); bus = niv;
+      const niv = this.ctx.createGain(); niv.gain.value = 2.0; niv.connect(bus); bus = niv;
       this.bruitGlisse(t, 0.06, bus, { type: 'lowpass', de: 900, a: 400, volume: 0.12, attaque: 0.004 });
       this.bruitGlisse(t + 0.04, 0.42, bus, { de: 2200, a: 6500, q: 9, volume: 0.14, attaque: 0.3 });
       this.bruitGlisse(t + 0.04, 0.42, bus, { type: 'highpass', de: 5000, a: 7000, q: 0.7, volume: 0.03, attaque: 0.3 });
@@ -624,7 +624,7 @@
     // La flèche : la corde de l'arc qui claque, la flèche qui file, puis qui se plante dans le bois en vibrant
     fleche(t, bus) {
       const ctx = this.ctx;
-      const niv = ctx.createGain(); niv.gain.value = 0.9; niv.connect(bus); bus = niv;
+      const niv = ctx.createGain(); niv.gain.value = 1.3; niv.connect(bus); bus = niv;
       this.tonGlisse(t, 0.22, bus, { forme: 'triangle', de: 140, a: 95, volume: 0.25, attaque: 0.003, filtre: 900 });
       this.tonGlisse(t, 0.12, bus, { forme: 'sawtooth', de: 280, a: 190, volume: 0.05, attaque: 0.003, filtre: 1200 });
       this.bruit(0.02, t, bus, 0.15, 1500);
@@ -640,7 +640,7 @@
     // Le feu de camp : le souffle grave des flammes qui ondule, les crépitements, une bûche qui craque (o.duree, 4 s)
     feuDeCamp(t, bus, o = {}) {
       const ctx = this.ctx, d = o.duree || 4;
-      const niv = ctx.createGain(); niv.gain.value = 0.85; niv.connect(bus); bus = niv;
+      const niv = ctx.createGain(); niv.gain.value = 1.65; niv.connect(bus); bus = niv;
       const r = this.bruitGlisse(t, d, bus, { type: 'lowpass', de: 380, a: 300, q: 0.7, volume: 0.16, attaque: 0.6, relache: 0.8 });
       const lfo = ctx.createOscillator(); lfo.frequency.value = 0.7; const lg = ctx.createGain(); lg.gain.value = 120; lfo.connect(lg); lg.connect(r.f.frequency); lfo.start(t); lfo.stop(t + d + 0.05);
       this.bruitGlisse(t, d, bus, { type: 'highpass', de: 3500, a: 3000, q: 0.5, volume: 0.012, attaque: 0.6, relache: 0.8 });
@@ -654,7 +654,7 @@
     },
     // FWOUF : la torche qui prend d'un coup (un souffle qui s'ouvre), puis quelques pétillements
     torche(t, bus) {
-      const niv = this.ctx.createGain(); niv.gain.value = 0.9; niv.connect(bus); bus = niv;
+      const niv = this.ctx.createGain(); niv.gain.value = 1.5; niv.connect(bus); bus = niv;
       this.bruitGlisse(t, 0.6, bus, { de: 300, a: 1800, q: 1.2, volume: 0.3, attaque: 0.06 });
       this.bruitGlisse(t, 0.9, bus, { type: 'lowpass', de: 250, a: 600, q: 0.7, volume: 0.25, attaque: 0.08 });
       this.tonGlisse(t, 0.25, bus, { de: 90, a: 55, volume: 0.15, attaque: 0.03 });
@@ -663,14 +663,14 @@
     // Le vent des cols : une bourrasque qui enfle et retombe, et qui siffle dans les rochers (o.duree, 5 s)
     ventMontagne(t, bus, o = {}) {
       const d = o.duree || 5;
-      const niv = this.ctx.createGain(); niv.gain.value = 0.95; niv.connect(bus); bus = niv;
+      const niv = this.ctx.createGain(); niv.gain.value = 1.3; niv.connect(bus); bus = niv;
       this.bruitGlisse(t, d, bus, { type: 'lowpass', de: 300, par: 1100, a: 350, q: 0.9, volume: 0.22, attaque: d * 0.45, relache: d * 0.5 });
       for (const [f0, v] of [[620, 0.16], [930, 0.08]]) this.bruitGlisse(t + 0.3, d - 0.3, bus, { de: f0 * 0.85, par: f0 * 1.25, a: f0 * 0.9, q: 28, volume: v, attaque: d * 0.4, relache: d * 0.5 });
     },
     // Le corbeau : deux « croâ » rauques (une scie nasale à deux formants, hachée vite : le râle)
     corbeau(t, bus) {
       const ctx = this.ctx;
-      const niv = ctx.createGain(); niv.gain.value = 0.7; niv.connect(bus); bus = niv;
+      const niv = ctx.createGain(); niv.gain.value = 1.4; niv.connect(bus); bus = niv;
       for (const [dt, h, d] of [[0, 1, 0.3], [0.45, 0.93, 0.34]]) {
         const t1 = t + dt, o = ctx.createOscillator(); o.type = 'sawtooth';
         o.frequency.setValueAtTime(420 * h, t1); o.frequency.linearRampToValueAtTime(460 * h, t1 + 0.05); o.frequency.exponentialRampToValueAtTime(300 * h, t1 + d);
@@ -684,7 +684,7 @@
     // Les moutons : une brebis qui bêle, l'agneau qui répond, un autre plus loin (une voix nasale qui chevrote)
     moutons(t, bus) {
       const ctx = this.ctx;
-      const niv = ctx.createGain(); niv.gain.value = 0.55; niv.connect(bus); bus = niv;
+      const niv = ctx.createGain(); niv.gain.value = 1.2; niv.connect(bus); bus = niv;
       const belement = (t1, f0, d, vol, chevrote) => {
         const o = ctx.createOscillator(); o.type = 'sawtooth';
         o.frequency.setValueAtTime(f0 * 0.9, t1); o.frequency.linearRampToValueAtTime(f0, t1 + 0.08); o.frequency.linearRampToValueAtTime(f0 * 0.94, t1 + d * 0.8); o.frequency.exponentialRampToValueAtTime(f0 * 0.8, t1 + d);
@@ -701,7 +701,7 @@
     },
     // Les crapauds du marais : deux crapauds qui se répondent (« rrrôa » : des impulsions graves très serrées)
     crapauds(t, bus) {
-      const niv = this.ctx.createGain(); niv.gain.value = 0.8; niv.connect(bus); bus = niv;
+      const niv = this.ctx.createGain(); niv.gain.value = 1.15; niv.connect(bus); bus = niv;
       const coasse = (t1, f0, n, ecart, vol) => { for (let k = 0; k < n; k++) this.tonGlisse(t1 + k * ecart, ecart * 0.8, bus, { forme: 'square', de: f0 * (1 + k / n * 0.15), a: f0 * 0.9, volume: vol * Math.sin((k + 1) / (n + 1) * Math.PI), attaque: 0.003, filtre: 700 }); };
       coasse(t, 150, 10, 0.028, 0.2); coasse(t + 0.7, 150, 10, 0.028, 0.2);
       coasse(t + 1.2, 230, 7, 0.024, 0.14);
@@ -715,7 +715,7 @@
     // La foule du marché : un murmure, des voix proches qui bavardent (des syllabes au hasard), un rire (o.duree, 4 s)
     brouhaha(t, bus, o = {}) {
       const ctx = this.ctx, d = o.duree || 4;
-      const niv = ctx.createGain(); niv.gain.value = 1.1; niv.connect(bus); bus = niv;
+      const niv = ctx.createGain(); niv.gain.value = 3.5; niv.connect(bus); bus = niv;
       this.bruitGlisse(t, d, bus, { de: 600, par: 800, a: 650, q: 0.8, volume: 0.05, attaque: 0.6, relache: 0.8 });
       for (let v = 0; v < 7; v++) {
         const base = 120 + Math.random() * 160;
@@ -732,7 +732,7 @@
     },
     // Le marteau du charpentier : deux petits coups pour planter le clou, un grand pour l'enfoncer (deux fois)
     charpentier(t, bus) {
-      const niv = this.ctx.createGain(); niv.gain.value = 0.85; niv.connect(bus); bus = niv;
+      const niv = this.ctx.createGain(); niv.gain.value = 0.98; niv.connect(bus); bus = niv;
       const coup = (tc, fort) => {
         this.tonGlisse(tc, 0.04, bus, { forme: 'triangle', de: 2600, a: 2400, volume: 0.06 * fort, attaque: 0.001 });
         this.tonGlisse(tc, 0.11, bus, { de: 320 * (fort > 1 ? 0.8 : 1), a: 170, volume: 0.3 * fort, attaque: 0.002 });
@@ -742,7 +742,7 @@
     },
     // L'aiguille et le cuir : l'aiguille qui perce (un petit « tchk »), puis le fil qu'on tire ; trois points
     couture(t, bus) {
-      const niv = this.ctx.createGain(); niv.gain.value = 0.7; niv.connect(bus); bus = niv;
+      const niv = this.ctx.createGain(); niv.gain.value = 3.7; niv.connect(bus); bus = niv;
       for (let i = 0; i < 3; i++) {
         const tp = t + i * 0.62;
         this.bruitGlisse(tp, 0.018, bus, { de: 3200, a: 2600, q: 2, volume: 0.18, attaque: 0.001 });
@@ -753,7 +753,7 @@
     // Les pièces dans la besace : elles tintent, étouffées par le cuir, de plus en plus serrées ; le cordon qu'on serre
     besace(t, bus, o = {}) {
       const ctx = this.ctx, n = Math.min(10, Math.max(3, Math.round((o.montant || 30) / 6)));
-      const niv = ctx.createGain(); niv.gain.value = 0.9; niv.connect(bus); bus = niv;
+      const niv = ctx.createGain(); niv.gain.value = 0.95; niv.connect(bus); bus = niv;
       const cuir = ctx.createBiquadFilter(); cuir.type = 'lowpass'; cuir.frequency.value = 2400; cuir.Q.value = 0.7; cuir.connect(bus);
       this.tonGlisse(t, 0.12, bus, { de: 150, a: 70, volume: 0.25, attaque: 0.004 });
       let tp = t + 0.05;

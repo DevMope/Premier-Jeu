@@ -131,7 +131,7 @@ class DiseuseScene extends Phaser.Scene {
       Son.jouer('page');
     }));
     this.time.delayedCall(4800, () => {
-      this.dire("La tente s'est ouverte toute seule. Une vieille femme au foulard violet lève les yeux de ses cartes : « Entre, ${eJ() ? 'petite marchande' : 'petit marchand'}. Les cartes m'avaient dit que tu viendrais. Je suis Ysmée. »");
+      this.dire("La tente s'est ouverte toute seule. Une vieille femme au foulard violet lève les yeux de ses cartes : « Entre, petit marchand. Les cartes m'avaient dit que tu viendrais. Je suis Ysmée. »");
       this.indice.setText('▶ clique pour continuer');
       this.input.once('pointerdown', () => {
         this.indice.setText('');

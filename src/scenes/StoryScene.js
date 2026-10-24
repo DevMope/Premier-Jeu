@@ -82,7 +82,7 @@ class StoryScene extends Cinematique {
     this.creerBulleDeReve();
     this.ui.add([...this.coeurs, this.titre]);
     // (v1.61) ta bourse, toujours visible en haut : on paie un dédommagement, des soins, une trouvaille
-    this.bourse = bourse(this, 722, 50, this.G.argent, { echelle: 1.4, taille: 15, aDroite: true });
+    this.bourse = bourse(this, 722, 50, this.G.argent, { echelle: 1.4, taille: 15, aDroite: true, conteneur: this.ui });
     this.ui.add(this.bourse);
     this.time.addEvent({ delay: 200, loop: true, callback: () => { if (this.bourse.dernier !== Math.floor(this.G.argent)) this.bourse.maj(Math.floor(this.G.argent)); } });
     // Passer : le récit défile en accéléré jusqu'à la fin (les choix de la fin restent à faire).

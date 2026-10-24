@@ -11,6 +11,7 @@ class VoletScene extends Phaser.Scene {
   create() {
     const N = VOLETS.bandes, h = 540 / N;
     this.bandes = [];
+    this.add.rectangle(480, 270, 960, 540, 0x000000, 0).setInteractive();   // (les clics s'arrêtent là pendant le passage)
     for (let i = 0; i < N; i++) {
       const gauche = i % 2 === 0, y = i * h + h / 2;
       const c = this.add.container(gauche ? -490 : 1450, y);
@@ -33,14 +34,15 @@ class VoletScene extends Phaser.Scene {
     const cible = this.scene.get(this.cle);
     let rouvert = false;
     const rouvrir = () => {
-      if (rouvert) return; rouvert = true;
+      if (rouvert || !this.sys.isActive()) return; rouvert = true;
       this.scene.bringToTop();
       this.time.delayedCall(60, () => this.ouvrir());
     };
     if (cible) cible.events.once('create', rouvrir);
     this.time.delayedCall(1500, rouvrir);   // (au cas où la scène suivante ne dirait rien)
+    // (la scène de départ a pu être mise en pause entre-temps : on l'arrête, et on lance la suivante à côté)
     if (depuis && depuis.sys.isActive()) depuis.scene.start(this.cle, this.donnees);
-    else this.scene.start(this.cle, this.donnees);
+    else { if (depuis && depuis.sys.isPaused()) this.scene.stop(this.depuis); this.scene.launch(this.cle, this.donnees); }
   }
 
   ouvrir() {

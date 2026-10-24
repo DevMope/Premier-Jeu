@@ -19,7 +19,7 @@ function jourZero(G) { return !!G && G.jour === 0; }
 // --- Les lieux qui s'ouvrent petit à petit ---
 const DEBLOCAGES = {
   bureau: { jour: 1, nom: 'Le bureau', quand: 'demain soir', texte: "Le soir, améliore ton comptoir : les ouvriers viennent pendant que tu dors." },
-  atelier: { jour: 5, nom: "L'atelier", quand: 'ta 1re trouvaille', si: G => (G.tresors || []).length > 0, texte: "Les trouvailles que tes clients rapportent : répare-les, et revends-les plus cher aux enchères." },
+  atelier: { jour: 5, nom: "L'atelier", quand: 'ta 1re trouvaille', si: G => (G.tresors || []).length > 0, texte: "Les trouvailles que tes clients rapportent : embauche un ouvrier pour les réparer, et revends-les plus cher aux enchères." },
   banque: { jour: 4, nom: 'La banque', quand: 'au jour 4', texte: "Un prêt pour te dépanner. Mais la banque prélève chaque nuit : ne prends que ce que tu peux rendre." },
 };
 function lieuDebloque(G, cle) {
@@ -50,7 +50,7 @@ const OBJECTIFS = [
     prog: G => [(G.succes && G.succes[2]) || (G.partis || []).some(p => p.voyageur && ZONES[p.voyageur.zone] && ZONES[p.voyageur.zone].danger >= 2) ? 1 : 0, 1], argent: 30,
     aide: "Sur la carte, le matin : les contrées à deux étoiles rapportent plus... pour un aventurier qui a déjà fait ses preuves." },
   { id: 'trouvaille', groupe: 'semaine', des: G => lieuDebloque(G, 'atelier'), texte: 'Revends une trouvaille', prog: G => [Math.min(1, (G.stats && G.stats.ventes) || 0), 1], argent: 30,
-    aide: "Le soir, l'atelier : répare la trouvaille, puis mets-la aux enchères au marché, le matin." },
+    aide: "Le soir, l'atelier : un ouvrier répare la trouvaille, puis mets-la aux enchères au marché, le matin." },
   { id: 'marchandage', groupe: 'semaine', des: G => G.jour >= 3, texte: 'Réussis un marchandage', prog: G => [Math.min(1, G.persuasion || 0), 1], argent: 20,
     aide: "Quand un client discute sa part du butin ou le prix d'une trouvaille : propose, et ne cède pas trop vite." },
   { id: 'clients10', groupe: 'semaine', des: G => G.jour >= 2, texte: 'Sers 10 clients', prog: G => [G.experience || 0, 10], argent: 50,

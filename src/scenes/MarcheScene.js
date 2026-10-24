@@ -1720,7 +1720,8 @@ class MarcheScene extends Phaser.Scene {
     // (v1.47) pas de mise avant 18 ans... sauf si l'on insiste : le vieux Grippesou finit par céder
     let cede = false;
     if (!coinDesJeuxPermis(G)) {
-      if (!insisterAuCoinDesJeux(G)) return this.message(REFUS_COIN_DES_JEUX[G.cessionsGrippesou ? (G.insistanceJeux - 1) % REFUS_COIN_DES_JEUX.length : Math.min(G.insistanceJeux, 2) - 1], '#a03030');
+      const gamine = t => (eJ() ? t.replace(/\bun gamin\b/g, 'une gamine').replace(/\bgamin\b/g, 'gamine') : t);   // (v1.61 : à une joueuse)
+      if (!insisterAuCoinDesJeux(G)) return this.message(gamine(REFUS_COIN_DES_JEUX[G.cessionsGrippesou ? (G.insistanceJeux - 1) % REFUS_COIN_DES_JEUX.length : Math.min(G.insistanceJeux, 2) - 1]), '#a03030');
       cede = true;
     }
     this.montrer('jeux');

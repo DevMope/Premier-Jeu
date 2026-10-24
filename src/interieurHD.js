@@ -1216,7 +1216,7 @@ function creerBoursesHD(scene) {
 }
 
 // Un petit widget : la bourse et le compte en dessous. Renvoie le conteneur, avec `maj(argent)`.
-function bourse(scene, x, y, argent, { echelle = 2, taille = 14, couleur = '#f3d98a', aDroite = false } = {}) {
+function bourse(scene, x, y, argent, { echelle = 2, taille = 14, couleur = '#f3d98a', aDroite = false, conteneur = null } = {}) {
   creerBoursesHD(scene);
   const c = scene.add.container(x, y);
   const img = scene.add.image(0, 0, 'bourseHD0').setOrigin(0.5, 1).setScale(echelle);
@@ -1229,7 +1229,8 @@ function bourse(scene, x, y, argent, { echelle = 2, taille = 14, couleur = '#f3d
     // (v1.17) le gain ou la dépense, en direct au-dessus de la bourse
     if (c.dernier !== undefined && a !== c.dernier && c.visible && scene.sys.isActive()) {
       const d = a - c.dernier, m = c.getWorldTransformMatrix();
-      gainEnDirect(scene, m.tx + (aDroite ? echelle * 13 + 30 : 0), m.ty - echelle * (aDroite ? 24 : 14) - 8, `${d > 0 ? '+' : '−'}${Math.abs(d)} p.`, d > 0, { taille: 14 });
+      const g = gainEnDirect(scene, m.tx + (aDroite ? echelle * 13 + 30 : 0), m.ty - echelle * (aDroite ? 24 : 14) - 8, `${d > 0 ? '+' : '−'}${Math.abs(d)} p.`, d > 0, { taille: 14 });
+      if (conteneur) conteneur.add(g);   // (v1.61 : dans l'interface d'un récit, sous sa caméra fixe)
     }
     c.dernier = a;
     const n = niveauBourse(a);
