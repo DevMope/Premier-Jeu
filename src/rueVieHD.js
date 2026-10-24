@@ -367,21 +367,6 @@ function peindrePlacePorche(t, x0, x1, haut, sol, jour, saison) {
       P(x, y, mur, 2 + (x === hx ? 1 : 0) - (x === hx + hl - 1 ? 1 : 0) + n);
     }
   });
-  // deux arbres de la place, devant les maisons
-  for (const [ax, g] of [[x0 + 20, 8232], [x0 + 95, 8233]]) {
-    for (let y = base - 14; y <= base + 2; y++) { P(ax, y, 'chene', 3 + n); P(ax + 1, y, 'chene', 1 + n); }
-    if (hiver) {   // des branches nues, la neige posée dessus
-      for (const [dx, dy] of [[-7, -9], [7, -10], [-4, -14], [5, -15], [0, -17]]) for (let k = 0; k <= 8; k++) { const x = Math.round(ax + dx * k / 8), y = Math.round(base - 12 + dy * k / 8); P(x, y, 'chene', 2 + n); if (k > 3) P(x, y - 1, 'neige', 5 + n / 2); }
-    } else {
-      for (let y = base - 30; y <= base - 10; y++) for (let x = ax - 11; x <= ax + 11; x++) {
-        const d = Math.hypot((x + 0.5 - ax) / 11, (y + 0.5 - (base - 20)) / 10); if (d > 1) continue;
-        if (S === 'brumes' && hachage(x, y, g) > 0.78) continue;   // (l'automne : les feuilles tombent)
-        P(x, y, 'feuillageP', 2 + (y < base - 22 ? 1 : 0) + (x < ax ? 1 : 0) - (d > 0.85 ? 1 : 0) + (hachage(x >> 1, y >> 1, g) > 0.7 ? 1 : 0) + n);
-        if (S === 'semailles' && hachage(x, y, g + 1) > 0.86) P(x, y, 'fleurP', 4 + n);   // (les fleurs du printemps)
-        if (S === 'brumes' && hachage(x, y, g + 2) > 0.85) P(x, y, 'fanionJ', 3 + n);
-      }
-    }
-  }
   // le sol de la place : pavé, poussière d'été, herbe du printemps, feuilles rousses, ou neige et ses traces
   for (let y = base; y <= sol; y++) for (let x = x0; x < x1; x++) {
     const v = (y - base) / (sol - base), pas = 3 + v * 7, rang = Math.floor(Math.pow(v, 0.7) * 9), joint = ((x - x0) / pas + rang * 0.5) % 1 < 0.14 || (y - base) % Math.max(2, Math.round(pas * 0.5)) === 0;
@@ -390,6 +375,11 @@ function peindrePlacePorche(t, x0, x1, haut, sol, jour, saison) {
     if (S === 'semailles' && hachage(x, y, 8234) > 0.95) P(x, y, 'feuillageP', 3 + n);
     if (S === 'brumes' && hachage(x, y, 8235) > 0.9) P(x, y, hachage(x, y, 8236) > 0.5 ? 'feuillageP' : 'fanionJ', 3 + n);
   }
+  // deux arbres de la place, devant les maisons : de vrais arbres (arbresHD.js), deux espèces, qui suivent la saison
+  [[x0 + 20, 'pommier', 'P1', 1], [x0 + 95, 'bouleau', 'P2', 2]].forEach(([ax, espece, suf, gr]) => {
+    for (const [m, ramp] of Object.entries(rampesArbre(S, espece))) t.rampes[m + suf] = ramp;
+    peindreArbre((x, y, m, i) => P(x, y, m + suf, i + n), { cx: ax, base: base + 3, H: 36, espece, saison: S, graine: gr });
+  });
   // la petite fontaine de la place, au milieu (l'hiver, son eau est gelée et ne coule plus)
   { const fx = x0 + 57, fy = base + 9;
     for (let y = fy - 4; y <= fy + 3; y++) for (let x = fx - 13; x <= fx + 13; x++) { const d = ((x + 0.5 - fx) / 13) ** 2 + ((y + 0.5 - fy) / 3.5) ** 2; if (d <= 1) P(x, y, d < 0.55 && y <= fy ? 'eauP' : 'gresP', (d < 0.55 && y <= fy ? 3 : y > fy ? 2 : 4) + n); }

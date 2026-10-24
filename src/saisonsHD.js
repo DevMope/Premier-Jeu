@@ -56,7 +56,12 @@ function decorSaison(scene, opts = {}) {
     // `meules` : [[x], ...] pour les poser soi-même ; [] pour n'en poser aucune.
     texturesPailleHD(scene);
     const places = opts.meules || placesBottesFacade(scene, opts, sol, L);
-    for (const [mx] of places) {
+    for (const [mx, sorte, my] of places) {
+      if (sorte === 'charrette') {   // (au premier plan, sur les pavés)
+        ajout(fixe(scene.add.ellipse(mx + 6, my - 3, 150, 14, 0x000000, 0.22).setDepth(prof - 0.45)));
+        ajout(fixe(scene.add.image(mx, my, 'charretteFoin').setOrigin(0.5, 1).setScale(2).setDepth(prof - 0.4)));
+        continue;
+      }
       ajout(fixe(scene.add.ellipse(mx + 4, sol + 3, 92, 12, 0x000000, 0.22).setDepth(prof - 0.45)));
       ajout(fixe(scene.add.image(mx, sol + 4, 'bottesPailleFacade').setOrigin(0.5, 1).setScale(2).setDepth(prof - 0.4)));
     }
@@ -78,22 +83,14 @@ function decorSaison(scene, opts = {}) {
     n.setCrop(0, 0, im.width, im.height * part);
   }
 
-  // Les deux arbres du premier plan, au feuillage de saison
-  const feuilles = { semailles: [0x7ac860, 0xa8e080, 0xf8c0d8], moissons: [0x3a8a30, 0x4ea040, 0x2e7228], brumes: [0xd0702a, 0xe8a030, 0xb04a20], givre: null }[s];
-  for (const [x, ech] of opts.arbres || []) {
-    const a = ajout(scene.add.graphics().setDepth(prof)), base = sol + 30 * ech;
-    a.fillStyle(0x4a3220).fillRect(x - 7 * ech, base - 120 * ech, 14 * ech, 120 * ech);
-    a.fillStyle(0x3a2616).fillRect(x - 7 * ech, base - 120 * ech, 4 * ech, 120 * ech);
-    a.lineStyle(5 * ech, 0x4a3220);
-    const branches = [[0, -90, -40, -150], [0, -100, 45, -160], [0, -120, -10, -190], [0, -70, 50, -110]];
-    for (const [dx, dy, ex, ey] of branches) a.lineBetween(x + dx * ech, base + dy * ech, x + ex * ech, base + ey * ech);
-    const touffes = [[-40, -150, 34], [45, -160, 36], [-10, -192, 40], [50, -112, 28], [-34, -112, 28], [8, -150, 36]];
-    if (feuilles) for (const [i, [dx, dy, r]] of touffes.entries()) { a.fillStyle(feuilles[i % 3]).fillCircle(x + dx * ech, base + dy * ech, r * ech); a.fillStyle(feuilles[(i + 1) % 3], 0.8).fillCircle(x + (dx - 8) * ech, base + (dy - 8) * ech, r * 0.55 * ech); }
-    if (s === 'semailles') for (let k = 0; k < 30; k++) a.fillStyle(0xffffff).fillCircle(x + rnd(-70, 80) * ech, base + rnd(-225, -90) * ech, 2.5 * ech);   // les fleurs de pommier
-    if (s === 'brumes') for (let k = 0; k < 18; k++) a.fillStyle(0xd0702a).fillRect(x + rnd(-80, 80) * ech, base - rnd(0, 6), 5, 3);
-    if (s === 'givre') { a.fillStyle(0xf8fbff); for (const [dx, , ex, ey] of branches) a.fillRect(x + Math.min(dx, ex) * ech, base + ey * ech - 4, Math.abs(ex - dx) * ech * 0.6, 4); a.fillRect(x - 8 * ech, base - 124 * ech, 16 * ech, 5); }
-    fixe(a);
-  }
+  // Les arbres du premier plan, peints un par un (arbresHD.js) : une espèce par arbre, jamais la même deux fois côte à côte.
+  // `arbres` : [[x, échelle, espèce?], ...] ; sans espèce, on alterne (chêne, pommier, bouleau, saule) selon la place dans la liste.
+  (opts.arbres || []).forEach(([x, ech], k) => {
+    const esp = especeDuArbre(opts, k), H = Math.round(112 * ech), cle = arbreHD(scene, esp, s, H, 1 + k, x > 480 ? -1 : 1);   // (les branches se retiennent du côté de la maison)
+    const base = sol + 30 * ech;
+    ajout(fixe(scene.add.ellipse(x + 8 * ech, base - 1, 92 * ech, 12 * ech, 0x000000, 0.2).setDepth(prof - 0.01)));   // (son ombre au sol)
+    ajout(fixe(scene.add.image(x, base + PIED_ARBRE * 2, cle).setOrigin(0.5, 1).setScale(2).setDepth(prof)));
+  });
   // Le bonhomme de neige
   if (s === 'givre' && opts.bonhomme !== undefined) {
     const b2 = ajout(scene.add.graphics().setDepth(prof)), bx = opts.bonhomme, by = sol + 50;
@@ -220,6 +217,36 @@ function texturesPailleHD(scene) {
       [25, sol - 13, 0, -1, 2], [17, sol - 13, 1, -1, 2], [31, sol - 7, 1, 0, 1], [33, sol - 19, 1, 0, 1]], 8303);
     for (const x of [3, 8, 13, 19, 24, 29]) t.poser(x, sol, 'paille', 4 + (x % 2));   // (de la paille tombée au pied)
     t.texture(scene, 'bottesPailleFacade'); }
+  // une charrette à foin, vue de côté, garée au bord de la rue (là où les bottes n'ont pas de mur contre lequel s'adosser) :
+  // le plateau de planches, une ridelle basse, la grande roue cerclée de fer, les brancards posés au sol sur leur béquille,
+  // et deux bottes bien calées
+  { const L = 74, H = 46, t = T(L, H), sol = H - 1, wx = 22, wy = sol - 10, wr = 10, plat = sol - 21;
+    // les bottes, derrière la ridelle
+    deCote(t, 6, plat - 12, 26, 12, 8321);
+    deCote(t, 9, plat - 23, 20, 11, 8322);
+    // les brancards : deux longues perches qui descendent jusqu'au sol, et la béquille qui les soutient
+    for (let k = 0; k < 24; k++) { const x = 48 + k, y = plat + 1 + Math.round(k * 0.7); for (let e = 0; e < 2; e++) t.poser(x, y + e, 'chene', e ? 2 : 4); }
+    for (let y = sol - 8; y <= sol; y++) { t.poser(66, y, 'cheneSombre', 2); t.poser(67, y, 'chene', 3); }
+    // le plateau (planches), la poutre dessous et l'essieu
+    planche(t, 4, plat, 46, 4, 'chene', { graine: 8323, noeuds: 1 });
+    for (let x = 4; x < 50; x++) { t.poser(x, plat + 4, 'cheneSombre', 2); t.poser(x, plat + 5, 'cheneSombre', 1); }
+    for (let x = wx - 6; x < wx + 8; x++) t.poser(x, wy, 'fer', 1);
+    // la ridelle : une planche haute de quatre rangs, à claire-voie, devant les bottes
+    for (let x = 4; x < 50; x++) for (let y = plat - 5; y < plat; y++) { const mont = (x - 4) % 9 === 0 || x === 49; if (mont || y === plat - 5 || y === plat - 1) t.poser(x, y, 'chene', mont ? 2 : y === plat - 5 ? 4 : 2); }
+    // la roue : jante de bois cerclée de fer, huit rayons, moyeu
+    for (let y = wy - wr - 1; y <= wy + wr + 1; y++) for (let x = wx - wr - 1; x <= wx + wr + 1; x++) {
+      const d = Math.hypot(x + 0.5 - wx, y + 0.5 - wy);
+      if (d <= wr && d > wr - 1.5) t.poser(x, y, 'fer', (x + 0.5 < wx ? 3 : 1) + (y + 0.5 < wy ? 1 : 0));
+      else if (d <= wr - 1.5 && d > wr - 3.4) t.poser(x, y, 'chene', (x + 0.5 < wx ? 4 : 2));
+      else if (d <= 2.2) t.poser(x, y, 'chene', d < 1.2 ? 1 : 3);
+    }
+    for (let a = 0; a < 8; a++) for (let r = 2.2; r < wr - 3.2; r += 0.5) t.poser(Math.floor(wx + Math.cos(a * Math.PI / 4 + 0.2) * r), Math.floor(wy + Math.sin(a * Math.PI / 4 + 0.2) * r), 'chene', (a % 4 < 2 ? 4 : 2));
+    t.poser(wx, wy, 'fer', 4);
+    t.contour();
+    // des brins de paille qui dépassent des bottes, et de la paille tombée de la charrette
+    brins(t, [[10, plat - 24, 0, -1, 2], [16, plat - 24, 1, -1, 2], [22, plat - 24, 0, -1, 3], [7, plat - 13, -1, -1, 2], [30, plat - 12, 1, 0, 2]], 8324);
+    for (const x of [wx - 12, wx - 4, wx + 6, wx + 14, 34]) { t.poser(x, sol, 'paille', 4); t.poser(x + 1, sol, 'paille', 3); }
+    t.texture(scene, 'charretteFoin'); }
   // dans la rue : trois bottes vues par le bout (deux dessous, une dessus) et la fourche
   { const L = 34, H = 31, t = T(L, H), sol = H - 1;
     parLeBout(t, 1, sol - 12, 12, 13, 8311);
@@ -232,20 +259,43 @@ function texturesPailleHD(scene) {
     t.texture(scene, 'bottesPailleRue'); }
 }
 
-// Où poser les bottes devant la façade : juste à droite des tonneaux, contre le coin de la maison, si rien n'y est déjà
-// (un arbre, la maison voisine, les pattes de la maison...) et si elles tiennent dans l'écran. Sinon, nulle part.
+// L'espèce du k-ième arbre de `opts.arbres` ([x, échelle, espèce?]) : celle qu'on a demandée, sinon on alterne (chêne,
+// pommier, bouleau, saule) selon la place dans la liste ; un arbre seul est un bouleau.
+function especeDuArbre(opts, k) {
+  const liste = opts.arbres || [], demandee = liste[k] && liste[k][2];
+  return demandee || (liste.length === 1 ? 'bouleau' : ESPECES_ARBRE[k % ESPECES_ARBRE.length]);
+}
+
+// Où poser la paille devant la façade. D'abord des bottes à droite des tonneaux, adossées au coin de la maison, si la place
+// est libre (ni arbre, ni maison voisine, ni pattes) ; sinon une charrette à foin garée au bord de la rue, au premier plan,
+// là où il n'y a que des pavés (jamais devant un personnage, un texte ou un autre décor). Sinon, rien.
+// Renvoie [[x, 'botte']] ou [[x, 'charrette', y]].
 function placesBottesFacade(scene, opts, sol, L) {
   const f = opts.facade, tn = f && f.tonneaux;
-  if (!tn || !tn.active || !tn.visible) return [];
-  const w = 84, h = 60, x = tn.x + tn.displayWidth * (1 - tn.originX) + 4 + w / 2;
-  if (x + w / 2 > L - 6) return [];
-  for (const [ax, ech] of opts.arbres || []) if (Math.abs(ax - x) < w / 2 + 9 * ech) return [];   // (le tronc fait 14 × échelle de large : on ne le touche pas)
-  const g = x - w / 2, d = x + w / 2, haut = sol - h, bas = sol - 2;
-  for (const o of scene.children.list) {
-    if (o === tn || !o.visible || !['Image', 'Sprite', 'Container'].includes(o.type) || !o.getBounds) continue;
-    if (o.texture && /^(paves|paysage)/.test(o.texture.key)) continue;   // (le paysage, les pavés : tout le fond)
-    const b = o.getBounds();
-    if (b.right > g && b.left < d && b.bottom > haut && b.top < bas) return [];
+  const libre = (g, d, haut, bas, sauf = []) => {   // (rien d'autre dans ce rectangle ?)
+    for (const o of scene.children.list) {
+      if (sauf.includes(o) || !o.visible || !['Image', 'Sprite', 'Container', 'Text'].includes(o.type) || !o.getBounds) continue;
+      if (o.texture && /^(paves|paysage|arbreHD_)/.test(o.texture.key)) continue;   // (le paysage, les pavés : tout le fond ; les arbres : traités à part)
+      if (o.scrollFactorX === 0 && o.type !== 'Text') continue;                      // (le voile, l'interface)
+      const b = o.getBounds();
+      if (b.right > g && b.left < d && b.bottom > haut && b.top < bas) return false;
+    }
+    return true;
+  };
+  if (tn && tn.active && tn.visible) {
+    const w = 84, h = 60, x = tn.x + tn.displayWidth * (1 - tn.originX) + 4 + w / 2;
+    let ok = x + w / 2 <= L - 6;
+    // (un arbre : on ne recouvre pas son tronc, mais on peut s'adosser à lui)
+    const arbres = opts.arbres || [];
+    for (let k = 0; ok && k < arbres.length; k++) { const [ax, ech] = arbres[k], p = PARAMS_ARBRE[especeDuArbre(opts, k)] || PARAMS_ARBRE.chene;
+      const Ha = Math.round(112 * ech), basA = sol + 30 * ech;
+      if (Math.abs(ax - x) < w / 2 + Ha * p.w0) ok = false;   // (le tronc : les racines courent au ras du sol, plus bas que les bottes)
+      // le feuillage : s'il descend plus bas que le haut des bottes et les recouvre, on ne les pose pas
+      else if (basA - (p.cy - p.ry) * Ha * 2 > sol + 4 - h && Math.abs(ax + p.pen * Ha * 3 - x) < w / 2 + p.rx * Ha * 2 * 0.9) ok = false; }
+    if (ok && libre(x - w / 2, x + w / 2, sol - h, sol - 2, [tn])) return [[x, 'botte']];
   }
-  return [[x]];
+  // la charrette : au bas de l'écran (les pavés), là où personne ne se tient
+  const bas = Math.min(sol + 94, (scene.cameras.main.scrollY || 0) + 540 - 6), haut = bas - 92;
+  if (haut > sol + 1) for (const x of [470, 620, 330, 780, 190]) if (x + 74 < L - 20 && libre(x - 74, x + 74, haut, bas)) return [[x, 'charrette', bas]];
+  return [];
 }
