@@ -725,7 +725,7 @@ Object.assign(MarcheScene.prototype, {
     this.visite.reponse = cible;
     // (pas de place au-dessus de sa tête, sous les étapes de la visite : la bulle se met à côté de lui)
     const b = cible.bulle, z = this.place.scaleX;
-    if (b && this.place.y + cible.y * z - 8 - b.height < 92) {
+    if (b && this.place.y + cible.y * z - 8 - b.height < 100) {
       // à sa droite, sauf si elle passerait sous les boutons de la place ou hors de l'écran : alors à sa gauche
       const xd = this.place.x + (cible.x + 24) * z, yd = this.place.y + (cible.y + 24) * z;
       const aGauche = xd + b.width > 952 || (xd + b.width > 806 && yd - b.height / 2 < 172);
