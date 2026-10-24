@@ -712,6 +712,18 @@ function textureJoueur(scene, G, vue = 'face') {
 
 // Crée (ou recrée) les trois textures du joueur, en HD : joueur_petit, joueur_adulte, joueur_ancien.
 // (v0.68) Le joueur assis (sur un banc) : renvoie la clé de la texture ; ses pieds sont à PIEDS_ASSIS[clé]
+// (v1.61) le joueur qui dort : de face, les yeux fermés (avant, il dormait les yeux ouverts)
+function textureJoueurDort(scene, G) {
+  const stade = stadeJoueur(G), tenue = signatureJoueur(G);
+  const cle = `joueur_${stade}_dort`;
+  if (!scene.textures.exists(cle) || scene.textures.get(cle).tenue !== tenue) {
+    if (scene.textures.exists(cle)) scene.textures.remove(cle);
+    dessinerJoueurHD(apparenceDuJour(G), stade, G.joueur.feminin, 0, G.tenue || [], 'face', 'dort').texture(scene, cle);
+    scene.textures.get(cle).tenue = tenue;
+  }
+  return cle;
+}
+
 function textureJoueurAssis(scene, G) {
   const stade = stadeJoueur(G), tenue = signatureJoueur(G);
   const cle = `joueur_${stade}_assis`;

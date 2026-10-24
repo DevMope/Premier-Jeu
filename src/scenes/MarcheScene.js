@@ -800,6 +800,7 @@ class MarcheScene extends Phaser.Scene {
   }
 
   message(texte, couleur = '#3b2410') {
+    if (couleur === '#a03030' && this.refusPresDuClic) return this.refusPresDuClic(texte);   // (v1.61)
     if (couleur === '#a03030') Son.jouer('refus');
     if (this.texteMessage) this.texteMessage.destroy();
     if (this.contenu && !this.modeVue) {
@@ -817,6 +818,8 @@ class MarcheScene extends Phaser.Scene {
   majBoutonCommandes() {
     const n = this.G.annonces.filter(a => a.acceptee && a.jour >= this.G.jour).length;
     this.boutonCommandes.setText(`Commandes prévues (${n}) ${this.commandesOuvertes ? '▲' : '▼'}`);
+    // (v1.61) les lettres de commande ont quitté le jeu : le bouton ne sert plus qu'aux dernières acceptées
+    this.boutonCommandes.setVisible(n > 0 || !!this.commandesOuvertes);
   }
 
   basculerCommandes() {
@@ -1717,12 +1720,12 @@ class MarcheScene extends Phaser.Scene {
     // (v1.47) pas de mise avant 18 ans... sauf si l'on insiste : le vieux Grippesou finit par céder
     let cede = false;
     if (!coinDesJeuxPermis(G)) {
-      if (!insisterAuCoinDesJeux(G)) return this.message(REFUS_COIN_DES_JEUX[Math.min(G.insistanceJeux, REFUS_COIN_DES_JEUX.length) - 1], '#a03030');
+      if (!insisterAuCoinDesJeux(G)) return this.message(REFUS_COIN_DES_JEUX[G.cessionsGrippesou ? (G.insistanceJeux - 1) % REFUS_COIN_DES_JEUX.length : Math.min(G.insistanceJeux, 2) - 1], '#a03030');
       cede = true;
     }
     this.montrer('jeux');
     const c = this.panneau('Le coin des jeux', 'Tenu par Fil-de-Fer, cousin du vieux Grippesou');
-    if (cede) this.time.delayedCall(250, () => this.message("Le vieux Grippesou passe la tête sous l'auvent : « Laisse, cousin... C'est le business. Mais fais vite, petit. »", '#5a2a6a'));
+    if (cede) this.time.delayedCall(250, () => this.message(accordJoueur(CESSIONS_GRIPPESOU[Math.min(G.cessionsGrippesou, CESSIONS_GRIPPESOU.length) - 1]).replace(', petit.', `, petit${eJ()}.`), '#5a2a6a'));
     c.add(this.add.rectangle(480, 395, 2, 120, 0x8a6a3a));
     // Les dés
     c.add(this.add.text(40, 340, `Les dés · le plus gros total gagne (${pluriel(partiesRestantes(G, 'des'), 'partie restante', 'parties restantes')})`, style(13, '#3b2410', { fontStyle: 'bold' })));

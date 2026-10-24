@@ -1,7 +1,8 @@
 // (v1.10, lot C-1, planches 38 et 38 v2 validées) Au comptoir : le héraut de la Confrérie apporte la commande
 // scellée du Conseil (la lettre au sceau rouge, puis le panneau punaisé sur l'ardoise), et revient la chercher le
 // jour dit (livrée : la prime ; manquée : le Conseil est mécontent). Le 1er du mois, la lettre de l'impôt.
-const HERAUT_CONSEIL = { nom: 'Le messager du Conseil — Héraut de la Confrérie', buste: { nom: 'Le héraut', race: 'humain', feminin: false, garde: true } };
+// (v1.61) `figurant` : son buste prend les couleurs du héraut en pied (FIGURANTS.heraut)
+const HERAUT_CONSEIL = { nom: 'Le messager du Conseil — Héraut de la Confrérie', buste: { nom: 'Le héraut', race: 'humain', feminin: false, garde: true, figurant: 'heraut' } };
 
 Object.assign(CounterScene.prototype, {
   direHeraut(texte) { this.dire(texte, HERAUT_CONSEIL.nom, HERAUT_CONSEIL.buste.nom); },

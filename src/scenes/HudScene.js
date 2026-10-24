@@ -284,8 +284,11 @@ class HudScene extends Phaser.Scene {
   }
 
   // (v1.24, planche 50 v3) Une pensée de départ : JeuneGoy en médaillon (la pose « il pense ») et sa bulle
+  // (v1.61) le tableau des retours du jour est ouvert : les petites fiches attendent qu'on le ferme (elles le cachaient)
+  ecranOccupe() { const s = this.scene.manager.getScene('Comptoir'); return !!(s && s.sys.isActive() && s.resumeRetours); }
+
   penseesEnDirect(G) {
-    if (this.penseeAffichee || this.fichePiece || !G.penseesNouvelles || !G.penseesNouvelles.length || typeof bulleDePensee !== 'function') return;
+    if (this.ecranOccupe() || this.penseeAffichee || this.fichePiece || !G.penseesNouvelles || !G.penseesNouvelles.length || typeof bulleDePensee !== 'function') return;
     const p = G.penseesNouvelles.shift();
     const md = medaillonJeuneGoy(this, 884, 132, G, 38, 128);
     const age = this.add.text(884, 186, `${p.age} ans · ${{ reve: 'il rêve', voir: 'il veut voir', savoir: 'il veut savoir', heros: 'il rêve', carte: 'il veut voir' }[p.temps] || ''}`,
@@ -303,7 +306,7 @@ class HudScene extends Phaser.Scene {
 
   // (v1.23, planche 48 v2) Une pièce de collection gagnée : une petite fiche en haut à droite, le temps de la voir
   piecesEnDirect(G) {
-    if (this.fichePiece || this.penseeAffichee || !G.piecesNouvelles || !G.piecesNouvelles.length || typeof dessinerPieceCollection !== 'function') return;
+    if (this.ecranOccupe() || this.fichePiece || this.penseeAffichee || !G.piecesNouvelles || !G.piecesNouvelles.length || typeof dessinerPieceCollection !== 'function') return;
     const p = G.piecesNouvelles.shift(), C = COLLECTIONS[p.serie];
     creerEmblemesHD(this); creerObjetsHD(this); creerIconesHD(this);
     const x = 838, y = 150, c = this.fichePiece = this.add.container(x, y).setDepth(130);

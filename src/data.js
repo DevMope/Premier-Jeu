@@ -576,7 +576,7 @@ const NIVEAUX_AVENTURIER = {
 };
 const ORDRE_NIVEAUX = Object.keys(NIVEAUX_AVENTURIER);
 // (v0.93, planche 19) Les rangements de la file, choisis sur la feuille du jour (au bureau)
-const ORDRES_FILE = [['arrivee', 'Comme ils viennent'], ['novice', 'Novices d\u2019abord'], ['aguerri', 'Aguerris d\u2019abord'], ['heros', 'Héros d\u2019abord'], ['lettres', 'Lettres d\u2019abord']];
+const ORDRES_FILE = [['arrivee', 'Comme ils viennent'], ['novice', 'Novices d\u2019abord'], ['aguerri', 'Aguerris d\u2019abord'], ['heros', 'Héros d\u2019abord']];   // (v1.61 : « Lettres d’abord » est parti avec les lettres)
 // (v0.84) les rangs, lisibles pour qui ne les connaît pas : leur numéro sur cinq, et ce qu'ils changent
 const EXPLICATION_RANGS = {
   novice: 'débutant : fragile, rapporte un peu moins',

@@ -57,7 +57,7 @@ class NightScene extends Phaser.Scene {
 
     this.parchemin(20, 300, this.matin ? "Aujourd'hui" : 'Ta journée');
     this.parchemin(320, 640, 'Ta réserve');
-    this.parchemin(660, 940, 'Lettres reçues');
+    this.parchemin(660, 940, 'Les nouvelles');   // (v1.61) plus de lettres de commande : les nouvelles du bourg
     this.add.text(800, 108, '1 lettre acceptée = 1 client EN PLUS', style(12, '#8a3a1a', { fontStyle: 'bold italic' })).setOrigin(0.5);
     this.creerReserve(320, 640);
     this.creerPrevision(660, 940);
@@ -110,7 +110,7 @@ class NightScene extends Phaser.Scene {
       if (!k || typeof lieuDebloque !== 'function') continue;
       const d = DEBLOCAGES[k[1]];
       if (!lieuDebloque(G, k[1])) { bt[0] = k[0]; bt[1] = () => { Son.jouer('refus'); this.annoncer(`${d.nom} s'ouvrira ${d.quand === 'ta 1re trouvaille' ? 'avec ta première trouvaille' : d.quand}.`); }; bt[2] = { ferme: d }; }
-      else if (neufs.includes(k[1])) bt[2] = { neuf: true };
+      else if (neufs.includes(k[1])) { bt[2] = { neuf: true }; const agir = bt[1]; bt[1] = () => { lieuVu(k[1]); agir(); }; }
     }
     // (v1.43, planche 70) le matin qui suit les travaux qui font changer de rang : les boutons ont changé avec la maison
     if (this.matin && typeof rangInterface === 'function') {
@@ -125,7 +125,9 @@ class NightScene extends Phaser.Scene {
       else if (avant !== undefined && r > avant) vignette = ['TA MAISON S’EMBELLIT', RANGS[r].nom, TEXTES[r]];
       if (vignette) this.time.delayedCall(1100, () => { if (this.scene.isActive()) vignetteGuide(this, vignette[0], vignette[1], vignette[2], { y: 92, prof: 60, duree: 7000 }); });
     }
-    if (neufs.length) this.time.delayedCall(1000, () => { if (!this.scene.isActive()) return; neufs.forEach((c, i) => { G.nouveautesVues[c] = true; vignetteGuide(this, 'NOUVEAU', DEBLOCAGES[c].nom, DEBLOCAGES[c].texte, { y: 92, prof: 60, duree: 5000 }); }); });
+    G.nouveautesAnnoncees = G.nouveautesAnnoncees || { ...(G.nouveautesVues || {}) };
+    const aAnnoncer = neufs.filter(c => !G.nouveautesAnnoncees[c]);
+    if (aAnnoncer.length) this.time.delayedCall(1000, () => { if (!this.scene.isActive()) return; aAnnoncer.forEach((c, i) => { G.nouveautesAnnoncees[c] = true; vignetteGuide(this, 'NOUVEAU', DEBLOCAGES[c].nom, DEBLOCAGES[c].texte, { y: 92, prof: 60, duree: 5000 }); }); });
     // (v1.43) chaque bouton prend une largeur selon son libellé : les longs (« Ouvrir le comptoir ») ne s'écrivent plus en tout petit
     const poids = boutons.map(([t]) => t.length + 8), somme = poids.reduce((a, b) => a + b, 0);
     let cumul = 20;
@@ -247,7 +249,7 @@ class NightScene extends Phaser.Scene {
     const p = prevision(G, G.jour);
     const lignes = this.matin ? [
       `Clients attendus : ${p.min} à ${p.max}${p.annonces ? ` + ${p.annonces} par lettre` : ''}`,
-      `Commandes par lettre : ${G.annonces.filter(a => a.acceptee && a.jour === G.jour).length}`,
+      ...(G.annonces.some(a => a.acceptee && a.jour === G.jour) ? [`Commandes par lettre : ${G.annonces.filter(a => a.acceptee && a.jour === G.jour).length}`] : []),
       `Argent : ${G.argent} pièces`,
       `Réputation : ${arrondi(G.reputation)}`,
       `Expérience : ${G.experience}`,
@@ -453,7 +455,7 @@ class NightScene extends Phaser.Scene {
     const max = (this.matin ? 4 : 6) - infos.length, toutes = [...G.annonces].sort((a, b) => a.acceptee - b.acceptee);
     if ((this.pageLettres || 0) * max >= toutes.length) this.pageLettres = 0;
     const liste = toutes.slice((this.pageLettres || 0) * max, (this.pageLettres || 0) * max + max);
-    if (!liste.length && !infos.length) c.add(this.add.text(x1 + 16, 127, 'Aucune lettre pour le moment.\nLes lettres sont rares.', style(13, '#3b2410')));
+    if (!liste.length && !infos.length) c.add(this.add.text(x1 + 16, 127, 'Rien de neuf ce soir.', style(13, '#3b2410', { fontStyle: 'italic' })));
     liste.forEach((a, i) => {
       const y = 124 + (i + infos.length) * 52;
       const v = a.voyageur;

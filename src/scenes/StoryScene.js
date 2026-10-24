@@ -81,6 +81,10 @@ class StoryScene extends Cinematique {
     this.entete.setX(176);
     this.creerBulleDeReve();
     this.ui.add([...this.coeurs, this.titre]);
+    // (v1.61) ta bourse, toujours visible en haut : on paie un dédommagement, des soins, une trouvaille
+    this.bourse = bourse(this, 722, 50, this.G.argent, { echelle: 1.4, taille: 15, aDroite: true });
+    this.ui.add(this.bourse);
+    this.time.addEvent({ delay: 200, loop: true, callback: () => { if (this.bourse.dernier !== Math.floor(this.G.argent)) this.bourse.maj(Math.floor(this.G.argent)); } });
     // Passer : le récit défile en accéléré jusqu'à la fin (les choix de la fin restent à faire).
     const passer = this.boutonPasser(() => {
       if (this.rapide) return;
@@ -155,8 +159,26 @@ class StoryScene extends Cinematique {
     }
   }
 
+  // (v1.61) le texte tient toujours dans sa boîte, au-dessus de « clique pour continuer » : la police rétrécit
+  // si besoin (avant, un retour blessé avec une ligne de plus sortait du cadre, en bas)
+  ajusterTexte(texte) {
+    const t = this.texte, bas = 500;
+    let f = 18;
+    t.setFontSize(f).setLineSpacing(6).setText(texte || '');
+    while (t.y + t.height > bas && f > 11) { f--; t.setFontSize(f).setLineSpacing(f >= 15 ? 4 : 1); }
+    t.setText('');
+  }
+  ajouterTexte(suite) {
+    if (this.defile) this.defile.finir();
+    const avant = this.texte.text;
+    this.ajusterTexte((this.texteComplet || '') + suite);
+    this.texte.setText(avant);
+    super.ajouterTexte(suite);
+  }
+
   // Le conteur parle (sa voix) à chaque nouveau texte
   ecrire(entete, texte) {
+    this.ajusterTexte(texte);
     super.ecrire(entete, texte);
     if (this.conteur && this.parti && this.parti.resultat.vivant && !this.rapide) Son.jouer('voix', { personne: this.parti.voyageur, duree: Math.min(1.8, 0.3 + (texte || '').length * 0.012), force: 0.7 });
   }
@@ -428,6 +450,10 @@ class StoryScene extends Cinematique {
     this.tweens.add({ targets: this.voile, fillAlpha: 0, duration: 600 });
 
     const { gain, message } = terminerAventure(this.G, this.parti);
+    // (v1.61) la barre de cœurs montre ce qui reste, même avec la fiche ou « Passer » (avant, elle restait pleine
+    // alors que le texte annonçait des cœurs perdus)
+    const reste = r.vivant && r.etapes.length ? r.etapes[r.etapes.length - 1].pvApres : r.vivant ? this.coeurs.length : 0;
+    this.coeurs.forEach((c, i) => c.setTexture(i < reste ? (c.bonus ? 'hd_coeurOr' : 'hd_coeur') : 'hd_coeurVide'));
     const relation = niveauRelation(this.G, v.nom);
     this.G.recitsVus = (this.G.recitsVus || 0) + 1;
     // (v0.84) la fiche de mission (si on l'a choisie) et la carte de progression façon RPG
@@ -436,13 +462,12 @@ class StoryScene extends Cinematique {
 
     if (r.vivant && r.echec) {
       // Mission ratée : vivant, mais les mains vides.
-      await this.marcherVers(880);
+      await this.allerAuComptoir();
       this.ecrire('Mission ratée', [`« Je suis désolé${this.e}... Je reviens les mains vides. » · Relation : ${relation.nom}`,
         ...(this.parti.malus || []).map(m => '• ' + m)].join('\n'));
-      this.texte.setFontSize(13).setLineSpacing(1);
       this.carteProgression(this.modeFiche ? 494 : 257, 52);
     } else if (r.vivant) {
-      await this.marcherVers(880);
+      await this.allerAuComptoir();
       // (v0.60) la fin de la quête, en une image : ce qu'on n'avait jamais vu
       const finQuete = FINS_QUETES[v.queteId];
       if (finQuete && !v.quetePerso) {
@@ -486,12 +511,20 @@ class StoryScene extends Cinematique {
       this.carte = this.fiche = null;
     }
     this.indice.destroy();
-    const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => allerA(this, 'Comptoir'));
+    const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => allerParVolets(this, 'Comptoir'));
     this.dansUI(retour);
     if (r.vivant) {
       this.proposerSoins();
       this.proposerTrouvailles();
     }
+  }
+
+  // (v1.61) avec la fiche, on ne regarde pas le voyageur marcher jusqu'au comptoir : il y est déjà
+  async allerAuComptoir() {
+    if (!this.modeFiche) return this.marcherVers(880);
+    this.perso.setX(880);
+    this.paysage.x = -88; this.premierPlan.x = -238; this.planMoyen.x = -37;
+    this.cadrer(1000, 250, 1.12, 0);
   }
 
   // --- (v0.84) Le choix du récit, la fiche de mission, la carte de progression ---
@@ -570,8 +603,8 @@ class StoryScene extends Cinematique {
     c.add(this.add.text(bx + bl, by + 16, suivant ? `prochain rang : ${NIVEAUX_AVENTURIER[suivant].nom} (${NIVEAUX_AVENTURIER[suivant].succes} missions réussies)` : 'rang maximum', style(10, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(1, 0.5));
     // relation, pièces, réputation
     const lignes = [];
-    if (pr.apres.relation !== pr.avant.relation) lignes.push([`Relation : ${pr.avant.relation} → ${pr.apres.relation}`, '#1f5aa0']);
-    else lignes.push([`Relation : ${pr.apres.relation}`, '#3b2410']);
+    if (pr.apres.relation !== pr.avant.relation) lignes.push([`Relation : ${pr.avant.relation} → ${pr.apres.relation}`, couleurRelation(pr.apres.relation)]);
+    else lignes.push([`Relation : ${pr.apres.relation}`, couleurRelation(pr.apres.relation)]);
     if (pr.gain) lignes.push([`+ ${pr.gain} pièces (sa part du butin)${pr.dime ? ` · ${pr.dimeNom} −${pr.dime}` : ''}`, '#8a6a10']);   // (v1.32 : le mécénat ou la neutralité, en direct)
     const dr = Math.round((pr.apres.reputation - pr.avant.reputation) * 10) / 10;
     if (dr) lignes.push([`Réputation ${dr > 0 ? '+' : ''}${String(dr).replace('.', ',')}`, dr > 0 ? '#2f6a2a' : '#a03030']);
@@ -581,7 +614,7 @@ class StoryScene extends Cinematique {
     // l'animation : la barre se remplit, puis le rang monte
     if (largeur > 0) this.tweens.add({ targets: gagne, scaleX: 1, duration: 900, delay: 500, ease: 'Sine.easeOut', onComplete: () => {
       if (!monte) return;
-      Son.jouer('fanfare');
+      Son.jouer('niveau');   // (v1.61) plus doux que la fanfare
       rang.setText(`${NIVEAUX_AVENTURIER[pr.avant.niveau].nom} → ${nomRang(pr.apres.niveau)}`).setColor('#b02a10');
       const bravo = this.add.text(x0 + 70, y0 + 34, 'RANG\nSUPÉRIEUR !', style(16, '#fff4dc', { fontStyle: 'bold', stroke: '#8a2a10', strokeThickness: 5, align: 'center' })).setOrigin(0.5).setScale(0.3).setAngle(-8);
       c.add(bravo);
@@ -735,10 +768,10 @@ class StoryScene extends Cinematique {
       const b = creerBouton(this, 200 + i * 280, 345, 250, `${d.nom} : ${montants[cle]} p.`, () => {
         const verse = dedommager(G, this.parti, cle);
         boutons.forEach(x => x.setVisible(false));
-        const rep = d.reputation ? ` Réputation +${d.reputation}.` : '';
+        const rep = d.reputation ? ` Réputation +${String(d.reputation).replace('.', ',')}.` : '';
         this.ecrire('Dédommagement', `Tu as versé ${verse} pièces à la famille ${dePersonne(v.nom)}.${rep}` +
           (G.argent < 0 ? `\nTu es à découvert (${G.argent} pièces). Faillite à ${SEUIL_FAILLITE} !` : ''));
-        const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => allerA(this, 'Comptoir'));
+        const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => allerParVolets(this, 'Comptoir'));
         this.dansUI(retour);
       });
       this.dansUI(b);

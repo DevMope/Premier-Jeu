@@ -27,7 +27,9 @@ function lieuDebloque(G, cle) {
   if (!d || !didacticiel(G)) return true;
   return G.jour >= d.jour || !!(d.si && d.si(G));
 }
-// Ce qui vient de s'ouvrir et n'a pas encore été annoncé (une seule fois chacun)
+// (v1.61) un lieu est « vu » quand on y entre : son « NOUVEAU » disparaît alors (avant : dès le premier soir)
+function lieuVu(cle) { const G = window.GAME; if (G) (G.nouveautesVues = G.nouveautesVues || {})[cle] = true; }
+// Ce qui s'est ouvert et où l'on n'est pas encore entré (annoncé une seule fois chacun : G.nouveautesAnnoncees)
 function nouveautes(G) {
   if (!didacticiel(G)) return [];
   G.nouveautesVues = G.nouveautesVues || {};

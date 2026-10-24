@@ -21,6 +21,7 @@ class BureauScene extends Phaser.Scene {
 
   create() {
     const G = this.G = window.GAME;
+    lieuVu('bureau');   // (v1.61)
     // Le dessus du bureau, et le registre ouvert dessus
     creerInterieurHD(this);
     creerBureauHD(this);
@@ -96,7 +97,8 @@ class BureauScene extends Phaser.Scene {
   // --- Les onglets du registre ---
 
   creerOnglets() {
-    this.ongletsFonds = ONGLETS.map(([cle, nom], i) => {
+    // (v1.61) « À venir » ne montrait que les lettres : l'onglet ne reste que s'il en reste d'acceptées
+    this.ongletsFonds = ONGLETS.filter(([cle]) => cle !== 'avenir' || (this.G.annonces || []).length).map(([cle, nom], i) => {
       const x = 30 + i * 88;
       const fond = this.add.image(x + 43, 38, 'ongletHD').setScale(2).setInteractive({ useHandCursor: true });
       const texte = this.add.text(x + 43, 38, nom, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
@@ -279,7 +281,11 @@ class BureauScene extends Phaser.Scene {
     }
     const detail = f.detail();
     if (detail.length) lignes.push('', ...detail);
-    c.add(this.add.text(304, 160, lignes.join('\n'), style(12, '#3b2410', { lineSpacing: 5, wordWrap: { width: 238 } })));
+    // (v1.61) la relation en tête, à sa couleur (du rouge des ennemis au vert des frères de sang)
+    const titreRel = lignes.shift();
+    const tRel = this.add.text(304, 160, titreRel, style(12, f.nom in G.relations ? niveauRelation(G, f.nom).couleur : '#6b5a40', { fontStyle: 'bold', wordWrap: { width: 238 } }));
+    c.add(tRel);
+    c.add(this.add.text(304, 160 + tRel.height + 5, lignes.join('\n'), style(12, '#3b2410', { lineSpacing: 5, wordWrap: { width: 238 } })));
   }
 
   // --- L'ardoise du chiffre d'affaires ---
@@ -410,7 +416,7 @@ class BureauScene extends Phaser.Scene {
       ];
       droite = [
         { titre: 'Marchandage', lignes: Object.entries(MARCHANDS).map(([m, d]) => `${d.nom} : ${niveauRelation(G, d.nom).nom}${remiseMarchand(G, m) ? ` (−${Math.round(remiseMarchand(G, m) * 100)} %)` : ''}`) },
-        { titre: "Main-d'œuvre", lignes: [`${ouvriers(G).map(nomOuvrier).join(', ')}`, `${pluriel(ouvriers(G).length, "réparation", "réparations")} à la fois`, salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : 'Aucun employé',
+        { titre: "Main-d'œuvre", lignes: [`${ouvriers(G).map(nomOuvrier).join(', ') || 'Personne : embauche un ouvrier à l’atelier'}`, `${pluriel(ouvriers(G).length, "réparation", "réparations")} à la fois`, salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : 'Aucun employé',
           // (v0.60) le bilan de chacun : ce qu'il coûte, ce qu'il a fait gagner en valeur à l'atelier
           ...G.employes.map(id => { const b = bilanEmploye(G, id); return `${EMPLOYES[id].nom} : ${b.reparations} réparation${b.reparations > 1 ? 's' : ''}, +${b.valeur} p. de valeur pour ${b.cout} p. de salaire` + (b.cout >= 20 ? (b.solde >= 0 ? ' ✓' : ' (donne-lui du travail !)') : ''); })] },
       ];
@@ -433,7 +439,7 @@ class BureauScene extends Phaser.Scene {
       const vivants = h.filter(x => x.issue === 'vivant').length;
       gauche = [
         { titre: 'Les missions', lignes: [`Réussies : ${vivants}`, `Ratées : ${h.filter(x => x.issue === 'echec').length}`, `Morts au combat : ${h.filter(x => x.issue === 'valeureux').length}`, `Morts sans gloire : ${h.filter(x => x.issue === 'sans gloire').length}`, `Taux de retour : ${h.length ? Math.round(vivants / h.length * 100) : 0} %`] },
-        { titre: 'Les clients', lignes: [`Servis : ${G.stats.servis ?? G.experience}`, `Refusés : ${G.stats.refus}`, `Lettres acceptées : ${G.stats.lettresAcceptees} · refusées : ${G.stats.lettresRefusees}`] },
+        { titre: 'Les clients', lignes: [`Servis : ${G.stats.servis ?? G.experience}`, `Refusés : ${G.stats.refus}`, ...(G.stats.lettresAcceptees || G.stats.lettresRefusees ? [`Lettres acceptées : ${G.stats.lettresAcceptees} · refusées : ${G.stats.lettresRefusees}`] : [])] },
       ];
       const gains = {};
       h.forEach(x => { if (x.issue === 'vivant') gains[x.nom] = (gains[x.nom] || 0) + x.gain; });
@@ -646,7 +652,7 @@ class BureauScene extends Phaser.Scene {
     const changer = () => { if (this.comptoir && this.comptoir.reconstruireFile) this.comptoir.reconstruireFile(); Son.jouer('plume'); };
     const mode = G.ordreFile || 'arrivee';
     ORDRES_FILE.forEach(([cle, nom], i) => {
-      const x = 152 + i * 164, choisi = cle === mode;
+      const x = 480 + (i - (ORDRES_FILE.length - 1) / 2) * 164, choisi = cle === mode;
       const fond = this.add.rectangle(x, 100, 154, 30, choisi ? 0x6b4a22 : 0xe8d4a8).setStrokeStyle(2, choisi ? 0xffe066 : 0x8a6a3a).setInteractive({ useHandCursor: true });
       fond.on('pointerdown', () => { G.ordreFile = cle; rangerFile(G, cle); changer(); this.ouvrirFeuille(page); });
       c.add([fond, this.add.text(x, 100, nom, style(12, choisi ? '#fff4dc' : '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5)]);

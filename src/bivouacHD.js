@@ -93,7 +93,12 @@ Object.assign(StoryScene.prototype, {
     await this.animer({ targets: p, angle: p.flipX ? 90 : -90, y: SOL_RECIT - p.displayWidth * 0.18, duration: 500, ease: 'Sine.easeInOut' });
     // la couverture : du cou jusqu'aux pieds, en drapé (une forme posée sur lui, qui respire avec lui)
     // (couché, la tête du côté où montait le haut de l'image : la couverture va des pieds aux épaules, la tête dépasse)
-    const L = p.displayHeight * 0.62, sens = p.flipX ? 1 : -1, x0 = p.x - sens * 4, x1 = p.x + sens * L, y = p.y + 8;
+    // (v1.61) la couverture suit le vrai dessin couché (ses pixels pleins) : des pieds jusqu'aux épaules, et sur toute
+    // son épaisseur (avant, le haut du corps, une main et les bottes dépassaient)
+    const sens = p.flipX ? 1 : -1, y = p.y + 8, bo = boiteOpaque(this, p.texture.key), s = p.scaleX, lt = p.width, h = p.height;
+    const xAt = py => p.x - sens * (py - h) * s;
+    const partTete = { hobbit: 0.34, nain: 0.3, magicienne: 0.3, panda: 0.3 }[(this.parti && this.parti.voyageur.race) || ''] || 0.25;
+    const x0 = xAt(bo.y1) - sens * 5, x1 = xAt(bo.y0 + partTete * (bo.y1 - bo.y0)), yTop = p.y - (bo.x1 - lt / 2) * s - 2;
     const g = this.garder(this.add.graphics().setDepth(p.depth + 0.1));
     // (un sac roulé sous la tête, en guise d'oreiller)
     const sac = this.garder(this.add.graphics().setDepth(p.depth - 0.05));
@@ -101,7 +106,9 @@ Object.assign(StoryScene.prototype, {
     const xa = Math.min(x0, x1), w = Math.abs(x1 - x0);
     const dessiner = (souffle) => {
       // la cape posée comme une couverture : bombée sur les épaules et les hanches, retombant en plis jusqu'au sol
-      const haut = xx => { const t = (xx - xa) / w, u = sens < 0 ? 1 - t : t; return y - 6 - souffle * (u > 0.6 ? 1 : 0.4) - Math.sin(u * Math.PI) * 5 - Math.max(0, Math.sin((u - 0.55) / 0.45 * Math.PI)) * 6; };
+      const haut = xx => { const t = (xx - xa) / w, u = sens < 0 ? 1 - t : t, ligne = Phaser.Math.Clamp(Math.round(h - (xx - p.x) / (sens * s)), 0, h - 1);
+        if (bo.profil) return Math.min(y - 6, p.y - (Math.max(bo.profil[ligne], lt / 2 + 6) - lt / 2) * s - 3) - souffle * (u > 0.6 ? 1 : 0.4) - Math.sin(u * Math.PI) * 2;
+        return Math.min(y - 6, yTop) - souffle * (u > 0.6 ? 1 : 0.4) - Math.sin(u * Math.PI) * 5 - Math.max(0, Math.sin((u - 0.55) / 0.45 * Math.PI)) * 6; };
       g.clear();
       for (let xx = xa - 3; xx <= xa + w + 3; xx += 3) g.fillStyle(0x1a1008).fillRect(xx, haut(Phaser.Math.Clamp(xx, xa, xa + w)) - 3, 3, SOL_RECIT - haut(Phaser.Math.Clamp(xx, xa, xa + w)) + 3);
       for (let xx = xa; xx <= xa + w; xx += 3) {
@@ -134,3 +141,30 @@ Object.assign(StoryScene.prototype, {
   // La couleur de sa cape (pour la couverture) : celle de son baluchon s'il en a une, sinon une laine brune
   couleurCape() { const c = this.parti && this.parti.colis && this.parti.colis.cape; return c ? 0x3a5a7a : 0x6a4a2a; },
 });
+
+// (v1.61) le rectangle des pixels pleins d'une texture (en pixels de la texture), gardé en mémoire
+const BOITES_OPAQUES = {};
+function boiteOpaque(scene, cle) {
+  if (BOITES_OPAQUES[cle]) return BOITES_OPAQUES[cle];
+  const src = scene.textures.get(cle).getSourceImage(), W = src.width, H = src.height;
+  let ctx = src.getContext ? src.getContext('2d') : null;
+  if (!ctx) { const c = document.createElement('canvas'); c.width = W; c.height = H; ctx = c.getContext('2d'); ctx.drawImage(src, 0, 0); }
+  const d = ctx.getImageData(0, 0, W, H).data;
+  let x0 = W, x1 = 0, y0 = H, y1 = 0;
+  const droites = [];
+  for (let y = 0; y < H; y++) {
+    let g = -1, dr = -1;
+    for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 20) { if (g < 0) g = x; dr = x; }
+    droites.push(dr);
+    if (dr >= 0) { if (g < x0) x0 = g; if (dr > x1) x1 = dr; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 < x0) return (BOITES_OPAQUES[cle] = { x0: 0, x1: W, y0: 0, y1: H });
+  // le bord du corps, du buste aux chevilles : la médiane des bords de chaque ligne (une arme, une main qui dépasse
+  // n'y comptent pas)
+  const bande = droites.slice(Math.round(y0 + 0.35 * (y1 - y0)), Math.round(y0 + 0.95 * (y1 - y0))).filter(x => x >= 0).sort((a, b) => a - b);
+  const corps = bande.length ? bande[Math.floor(bande.length / 2)] + 1 : x1 + 1;
+  // le profil lissé (le bord le plus haut sur ±5 lignes) : la couverture épouse le corps couché
+  const bord = droites.map((_, y) => { let m = -1; for (let k = Math.max(0, y - 5); k <= Math.min(H - 1, y + 5); k++) m = Math.max(m, droites[k]); return m + 1; });
+  const profil = bord.map((_, y) => { let t = 0, n = 0; for (let k = Math.max(0, y - 12); k <= Math.min(H - 1, y + 12); k++) if (bord[k] > 0) { t += bord[k]; n++; } return n ? t / n + 1 : 0; });   // (en pente douce)
+  return (BOITES_OPAQUES[cle] = { x0, x1: corps, y0, y1: y1 + 1, profil });
+}

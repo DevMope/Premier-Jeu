@@ -55,7 +55,24 @@ Object.assign(MarcheScene.prototype, {
 
   fermerBoutique() { if (!this.boutiqueC) return; Son.jouer('glisse'); this.boutiqueC.destroy(); this.boutiqueC = null; this.majInfos(); },
 
+  // (v1.61) un refus (réserve pleine, plus d'argent...) s'affiche là où tu viens de cliquer, bien visible, en rouge,
+  // avec un petit sursaut (avant : une ligne discrète loin du clic)
+  refusPresDuClic(texte) {
+    Son.jouer('refus');
+    const p = this.input.activePointer, cam = this.cameras.main, w = cam.getWorldPoint(p.x, p.y);
+    const zx = cam.scrollX, zy = cam.scrollY, lw = cam.width / cam.zoom, lh = cam.height / cam.zoom;
+    if (this.refusClic && this.refusClic.active) this.refusClic.destroy();
+    const t = this.refusClic = this.add.text(0, 0, '✋ ' + texte, style(15, '#fff0e8', { fontStyle: 'bold', stroke: '#3a0a06', strokeThickness: 4, align: 'center', wordWrap: { width: 300 }, backgroundColor: '#8a1e14ee', padding: { x: 12, y: 7 } }))
+      .setOrigin(0.5, 1).setDepth(90).setScrollFactor(1);
+    t.setPosition(Phaser.Math.Clamp(w.x, zx + t.width / 2 + 8, zx + lw - t.width / 2 - 8), Phaser.Math.Clamp(w.y - 18, zy + t.height + 8, zy + lh - 8));
+    t.setScale(0.6);
+    this.tweens.add({ targets: t, scale: 1, duration: 160, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: t, x: t.x + 5, duration: 50, yoyo: true, repeat: 3, delay: 160 });
+    this.tweens.add({ targets: t, alpha: 0, y: t.y - 14, delay: 2600, duration: 450, onComplete: () => t.destroy() });
+  },
+
   messageBoutique(texte, couleur = '#fff4dc') {
+    if (couleur === '#ffb0a0') return this.refusPresDuClic(texte);
     if (!this.boutiqueC) return this.message(texte);
     if (this.texteBoutique && this.texteBoutique.active) this.texteBoutique.destroy();
     const t = this.texteBoutique = this.add.text(306, 262, texte, style(13, couleur, { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 560 }, backgroundColor: '#1a120acc', padding: { x: 10, y: 5 } })).setOrigin(0.5).setDepth(46);
@@ -87,7 +104,7 @@ Object.assign(MarcheScene.prototype, {
     fond.add(this.add.rectangle(305, 420, 616, 240, 0x1a120a, 1));
     const msk = this.make.graphics({ add: false }); msk.fillStyle(0xffffff).fillRect(0, 72, 612, 468); fond.setMask(msk.createGeometryMask());
     const rel = niveauRelation(G, m.nom), remise = remiseMarchand(G, cle);
-    T(470, 124, `Relation : ${rel.nom}${remise ? ` · −${Math.round(remise * 100)} %` : ''}`, 11, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 7, y: 3 } }).setOrigin(0.5);
+    T(470, 124, `Relation : ${rel.nom}${remise ? ` · −${Math.round(remise * 100)} %` : ''}`, 11, rel.couleur, { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 7, y: 3 } }).setOrigin(0.5);
     // les onglets : un clic, on change d'étal sans marcher
     c.add(this.add.rectangle(480, 50, 960, 44, 0x1a120a));
     ONGLETS_BOUTIQUE.forEach((k, i) => {

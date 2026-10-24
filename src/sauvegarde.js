@@ -427,6 +427,10 @@ function mettreAJourPartie(G, brut = G) {
     if (t.reparation && !t.reparation.cible) t.reparation.cible = t.etat + 1;
     if (t.etatInitial === undefined) t.etatInitial = t.etat;
   }
+  // (v1.61) les lettres reçues ont quitté le jeu : celles restées sans réponse sont oubliées (les acceptées viendront)
+  G.annonces = (G.annonces || []).filter(a => a.acceptee);
+  if (G.ordreFile === 'lettres') G.ordreFile = 'arrivee';
+  if (G.grippesouPermet) { G.cessionsGrippesou = Math.max(1, G.cessionsGrippesou || 0); delete G.grippesouPermet; }   // (v1.61 : il ne cède plus pour toujours)
   const voyageurs = [...G.annonces.map(a => a.voyageur), ...G.partis.map(p => p.voyageur)];
   for (const v of voyageurs) {
     if (!v.niveau) v.niveau = 'aguerri';

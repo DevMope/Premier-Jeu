@@ -6,6 +6,7 @@ class AtelierScene extends Phaser.Scene {
   constructor() { super('Atelier'); }
 
   create() {
+    lieuVu('atelier');   // (v1.61)
     this.time.delayedCall(500, () => conseilGarrick(this, 'atelier', true));
     const G = this.G = window.GAME;
     this.cameras.main.setBackgroundColor('#2a1a10');
@@ -149,7 +150,7 @@ class AtelierScene extends Phaser.Scene {
       } else {
         const btn = this.add.rectangle(droite - 64, y, 128, 28, 0x8a5a2b).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
         btn.on('pointerdown', () => {
-          if (!ouvrierLibre(G)) return this.texteInfo.setText("Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois.");
+          if (!ouvrierLibre(G)) return this.texteInfo.setText(messagePasDOuvrier(G));
           this.choisirStade(t);
         });
         if (!ouvrierLibre(G)) btn.setAlpha(0.5);

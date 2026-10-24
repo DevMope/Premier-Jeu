@@ -169,6 +169,7 @@ class DodoScene extends Cinematique {
     this.joueur.setOrigin(0.5, 0.5);
     this.joueur.y -= this.joueur.displayHeight / 2;
     await this.animer({ targets: this.joueur, x: 330, y: SOL_CHAMBRE - 68, angle: -90, duration: 500, ease: 'Sine.easeInOut' });
+    this.joueur.setTexture(textureJoueurDort(this, this.G));   // (v1.61) il ferme les yeux
     this.tweens.add({ targets: this.couverture, alpha: 1, duration: 300 });
     this.ronfler();
     if (this.fini) return;
@@ -192,6 +193,7 @@ class DodoScene extends Cinematique {
     if (this.zzz) this.zzz.remove();
     // Debout !
     this.tweens.add({ targets: this.couverture, alpha: 0, duration: 200 });
+    this.joueur.setTexture(textureJoueur(this, this.G));   // (v1.61) il rouvre les yeux
     await this.animer({ targets: this.joueur, angle: 0, x: 600, y: SOL_CHAMBRE - this.joueur.displayHeight / 2, duration: 450, ease: 'Back.easeOut' });
     this.joueur.setOrigin(0.5, 1).setY(SOL_CHAMBRE);
     this.onomatopee(600, SOL_CHAMBRE - 140, 'Debout !', '#f3d98a');

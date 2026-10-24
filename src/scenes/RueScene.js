@@ -30,7 +30,10 @@ class RueScene extends Phaser.Scene {
     const r = construireRue(this, 0, { jour: true, ici });
     if (typeof rueDuMecenat === 'function') rueDuMecenat(this, 0, sol, G);   // (v1.32, planche 58) ce que le monde montre de tes dons
     const toits = this.children.list.filter(o => o.type === 'Image' && o.texture && /^(rueMaisonHD|rueForgeHD|rueImpasseHD|facadeHD)/.test(o.texture.key)).map(o => [o, o.texture.key === 'facadeHD_4' ? 0.26 : /^facadeHD/.test(o.texture.key) ? 0.34 : 0.12]);   // (v1.31 : avec l'étage, le toit ne fait plus qu'un quart de l'image)
-    decorSaison(this, { sol: sol, largeur: LARGEUR_RUE, prof: 8.3, meules: [[LOT_CONFRERIE + (LARGEUR_RUE - LOT_CONFRERIE) * 0.42, 22]], bonhomme: LOT_CONFRERIE + (LARGEUR_RUE - LOT_CONFRERIE) * 0.62, toits });   // (v0.99 : la saison)
+    // (v1.61) la meule de l'été dans le creux entre les Brindeloup et le barbier (avant : devant les tonneaux et
+    // l'entrée de la tente d'Ysmée)
+    const xMeule = (PLACES_RUE.maison1 + 136 + PLACES_RUE.barbier - 124) / 2;
+    decorSaison(this, { sol: sol, largeur: LARGEUR_RUE, prof: 8.3, meules: [[xMeule, 22]], bonhomme: LOT_CONFRERIE + (LARGEUR_RUE - LOT_CONFRERIE) * 0.62, toits });   // (v0.99 : la saison)
     // (v0.99) les bruits de la saison, doucement, sous la musique : oiseaux, cigales, vent
     if (typeof saisonDe === 'function') { Son.nature(true, { saison: saisonDe(G), volume: 0.7, meteo: typeof meteoDu === 'function' ? meteoDu(G) : null }); this.events.once('shutdown', () => Son.nature(false)); this.events.once('sleep', () => Son.nature(false)); }
     this.porteShop = r.porteShop;
