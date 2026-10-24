@@ -1059,6 +1059,13 @@ function oublierPortraits(jeu) {
 { const setText = Phaser.GameObjects.Text.prototype.setText;
   Phaser.GameObjects.Text.prototype.setText = function (t) { return setText.call(this, typeof accordJoueur === 'function' ? accordJoueur(t) : t); }; }
 
+// (v1.61) Le retour à la ligne ne sépare plus un « ? », un « ! », un « : », un « ; » ou un « » » du mot d'avant (ni « « » du mot
+// d'après) : l'espace française devient insécable, seulement pour couper les lignes (le texte lui-même ne change pas)
+{ const runWordWrap = Phaser.GameObjects.Text.prototype.runWordWrap;
+  Phaser.GameObjects.Text.prototype.runWordWrap = function (t) {
+    return runWordWrap.call(this, typeof t === 'string' ? t.replace(/ (?=[?!:;»])/g, '\u00a0').replace(/« /g, '«\u00a0') : t);
+  }; }
+
 // (v0.97) Phaser n'arrête pas une animation quand son objet est détruit : les animations sans fin
 // (respiration, scintillement, balancement...) des panneaux refermés tournaient dans le vide jusqu'à
 // la fin de la scène. On les arrête avec l'objet (seulement celles qui ne visent plus rien de vivant).
