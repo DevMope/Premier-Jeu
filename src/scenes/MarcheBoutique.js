@@ -6,6 +6,14 @@
 // « Tout acheter », « Mettre au panier », « Refaire mes courses d'hier ».
 
 const ONGLETS_BOUTIQUE = ['gedeon', 'apothicaire', 'forge', 'tailleuse'];
+// (v1.62, planche 84) où pose la besace dans la boutique : contre le mur, entre le poteau droit de l'étal et le panier
+const XY_BESACE_BOUTIQUE = [584, 298];
+// (v1.62) un texte trop large pour sa case rapetisse (jusqu'à 8 px), puis se resserre : il ne déborde jamais
+function ajusterTexte(t, largeur) {
+  for (let f = parseInt(t.style.fontSize, 10); t.width > largeur && f > 8; f--) t.setFontSize(f);
+  if (t.width > largeur) t.setScale(largeur / t.width, 1);
+  return t;
+}
 
 Object.assign(MarcheScene.prototype, {
   // Ce que tu as d'un article (les matériaux à part)
@@ -102,11 +110,15 @@ Object.assign(MarcheScene.prototype, {
     c.add(bl); T(632, 42, '☰ Ma liste', 13, '#e8ffd0').setOrigin(0.5); T(632, 57, 'touche L', 9, '#c8e8b0', { fontStyle: 'italic' }).setOrigin(0.5);
     const bx = this.add.rectangle(930, 50, 46, 34, 0x5a2a1a).setStrokeStyle(2, 0xc8a050).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.fermerBoutique());
     c.add(bx); T(930, 50, '✕', 16, '#ffe9a8').setOrigin(0.5);
-    c.add(bourse(this, 770, 50, G.argent, { echelle: 1.3, taille: 15, aDroite: true }));
+    // (v1.62, planche 84, image 3) la besace est posée contre le mur, juste à droite de l'étal (pas sur son bois) ;
+    // la somme au-dessus d'elle, sur le mur
+    const besace = bourse(this, XY_BESACE_BOUTIQUE[0], XY_BESACE_BOUTIQUE[1], G.argent, { echelle: 1.3, taille: 13 });
+    if (besace.texte && besace.image) besace.texte.setOrigin(0.5, 1).setPosition(0, -besace.image.displayHeight - 3);
+    c.add(besace);
     // la marchandise : chaque cagette est un gros bouton
     const ids = this.articlesEtal(cle), prevus = totalCommandes(G), panier = this.panier || {};
     const n = ids.length, cols = n <= 4 ? Math.max(1, n) : 5, rangs = Math.ceil(n / cols), grand = rangs === 1;
-    const lw = Math.min(146, 600 / cols), lh = grand ? 168 : 100, y0 = grand ? 312 : 306;
+    const lw = Math.min(146, 600 / cols), lh = grand ? 168 : 94, y0 = grand ? 312 : 306;   // (v1.62 : deux rangs tiennent au-dessus de l'aide du bas)
     if (!n) T(306, 380, 'Les cagettes sont vides aujourd’hui...\nLes étals changent chaque matin.', 15, '#c9b48a', { fontStyle: 'italic', align: 'center' }).setOrigin(0.5);
     ids.slice(0, 10).forEach((id, i) => {
       const col = i % cols, rang = Math.floor(i / cols);
@@ -118,18 +130,27 @@ Object.assign(MarcheScene.prototype, {
       c.add(carte);
       const ks = typeof prixSaison === 'function' ? prixSaison(G, id) : 1, prixT = `${prix} p.${ks > 1 ? ' ▲' : ks < 1 ? ' ▼' : ''}`, coulP = ks > 1 ? '#ff9a7a' : ks < 1 ? '#9ae07a' : '#f3d98a';
       const coulA = faut > aToi + dans ? '#ff9a80' : faut ? '#9ae07a' : '#e8d4a8', texteA = 'tu as ' + aToi + (faut ? ' · il en faut ' + faut : '');
+      // (v1.62) la marchandise reste dans sa case : les provisions posées dans la cagette, sous le haut de la case, et
+      // aucun texte plus large que la case
+      const interieur = lw - 8 - 12;
       if (grand) {
-        const k = this.add.image(x, y + 50, 'cagetteHD').setOrigin(0.5, 1).setScale(2.4); c.add(k);
-        for (let j = 0; j < Math.min(3, Math.ceil(o.qte / 2)); j++) icone(id, x - 12 + j * 12, y + 38 - j * 5, 3.4).setOrigin(0.5, 1).setAngle((j - 1) * 6);
-        T(x, y + 64, nomObjet(id), 13).setOrigin(0.5);
-        T(x, y + 84, prixT, 18, coulP).setOrigin(0.5);
-        T(x, y + 104, o.qte + ' en vente', 10, '#c9b48a', { fontStyle: 'italic' }).setOrigin(0.5);
-        T(x, y + 122, texteA, 10, coulA).setOrigin(0.5);
+        const k = this.add.image(x, y + 64, 'cagetteHD').setOrigin(0.5, 1).setScale(2.4); c.add(k);
+        const tas = Math.min(3, Math.ceil(o.qte / 2));
+        for (let j = 0; j < tas; j++) {
+          const ic = icone(id, x - 12 + j * 12, y + 56 - j * 3, 3.2).setOrigin(0.5, 1).setAngle((j - 1) * 6);
+          if (ic.displayHeight > ic.y - y - 7) ic.setScale(ic.scaleX * (ic.y - y - 7) / ic.displayHeight);   // (rien ne dépasse le haut de la case)
+        }
+        ajusterTexte(T(x, y + 76, nomObjet(id), 13).setOrigin(0.5), interieur);
+        ajusterTexte(T(x, y + 95, prixT, 18, coulP).setOrigin(0.5), interieur);
+        ajusterTexte(T(x, y + 113, o.qte + ' en vente', 10, '#c9b48a', { fontStyle: 'italic' }).setOrigin(0.5), interieur);
+        ajusterTexte(T(x, y + 129, texteA, 10, coulA).setOrigin(0.5), interieur);
       } else {
-        icone(id, x - lw / 2 + 26, y + 30, 2.6);
-        const nt = T(x - lw / 2 + 46, y + 10, nomObjet(id), 11); for (let f = 11; nt.width > lw - 56 && f > 8; f--) nt.setFontSize(f);
-        T(x - lw / 2 + 46, y + 28, prixT, 14, coulP);
-        T(x, y + 56, `${o.qte} en vente · ${texteA}`, 9, coulA).setOrigin(0.5);
+        const ic = icone(id, x - lw / 2 + 26, y + 28, 2.2);
+        if (ic.displayWidth > 38) ic.setScale(ic.scaleX * 38 / ic.displayWidth);
+        const xt = x - lw / 2 + 48, place = x + lw / 2 - 4 - 6 - xt - (dans ? 30 : 0);
+        ajusterTexte(T(xt, y + 9, nomObjet(id), 11), place);
+        ajusterTexte(T(xt, y + 27, prixT, 14, coulP), place);
+        ajusterTexte(T(x, y + 54, `${o.qte} en vente · ${texteA}`, 9, coulA).setOrigin(0.5), interieur);
       }
       if (dans) { c.add(this.add.circle(x + lw / 2 - 18, y + 12, 14, 0xc23a2c).setStrokeStyle(2, 0xffe9a8)); T(x + lw / 2 - 18, y + 12, '×' + dans, 12).setOrigin(0.5); }
       const yb = y + lh - 18;
@@ -140,7 +161,7 @@ Object.assign(MarcheScene.prototype, {
       }
       T(x, yb, String(dans), 14, dans ? '#ffe066' : '#a89878').setOrigin(0.5);
     });
-    if (n > 10) T(306, 512, `+ ${n - 10} autres articles demain matin, peut-être`, 10, '#c9b48a', { fontStyle: 'italic' }).setOrigin(0.5);
+    if (n > 10) T(306, 506, `+ ${n - 10} autres articles demain matin, peut-être`, 9, '#c9b48a', { fontStyle: 'italic' }).setOrigin(0.5);
     // (v0.82) pour qui a une forge : les lots en gros de Thorgal
     if (cle === 'forge' && typeof forgeConstruite === 'function' && forgeConstruite(G)) {
       ['fer', 'cuir', 'bois'].forEach((mat, i) => {

@@ -171,24 +171,11 @@ class MarcheScene extends Phaser.Scene {
     this.construirePlace();
     // (v1.49) un conseil pour la nouvelle place, une fois (même pour qui connaît déjà le marché)
     if (G.tutoVu && G.tutoVu.marche && !G.tutoVu.place) this.time.delayedCall(900, () => conseilGarrick(this, 'place', true));
-    // (v1.40) avec le didacticiel, Garrick t'a accompagné : il présente le marché, puis reprend la route
+    // (v1.40) avec le didacticiel, Garrick t'a accompagné : (v1.62, planche 88) il te fait visiter la place, étal par
+    // étal, puis reprend la route par le porche
     const garrickIci = typeof didacticiel === 'function' && didacticiel(G) && G.tuto && !(G.tutoVu && G.tutoVu.marche);
-    let garrick = null;
-    if (garrickIci) { garrick = imageCorps(this, this.heros.x - 70, this.heros.y, 'mentor', PLACE_MARCHE.echelle).setOrigin(0.5, 1); this.place.add(garrick); this.tweens.add({ targets: garrick, scaleY: garrick.scaleY * 1.02, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
-    this.time.delayedCall(700, () => conseilGarrick(this, 'marche', false, () => {
-      if (!garrick || !garrick.active || !this.sys.isActive()) return;
-      this.tweens.killTweensOf(garrick);
-      const b = this.add.text(garrick.x, garrick.y - garrick.displayHeight - 8, '« Bonne chance, petit ! Je repasserai te voir. »', style(13, '#2a1a0c', { backgroundColor: '#fff8e8', padding: { x: 8, y: 5 } })).setOrigin(0.5, 1);
-      b.yTri = 1e6 + 3; this.place.add(b);
-      Son.jouer('voix', { personne: { nom: 'Garrick', race: 'humain' }, ton: 'content', duree: 1.2 });
-      this.time.delayedCall(1800, () => {
-        if (!garrick.active) return;
-        garrick.setFlipX(true);
-        pasDeMarche(this, garrick, 0, { poussiere: false });
-        this.tweens.add({ targets: [garrick, b], x: '-=400', duration: 4200, onComplete: () => { garrick.destroy(); b.destroy(); } });
-        this.tweens.add({ targets: b, alpha: 0, delay: 1200, duration: 500 });
-      });
-    }));
+    if (garrickIci) this.time.delayedCall(700, () => { if (this.place && this.heros && this.heros.active) this.visiteGarrick(); });
+    else this.time.delayedCall(700, () => conseilGarrick(this, 'marche'));
     afficherStatutSauvegarde(this, 940, 46, 1);
     // Les commandes prévues, qu'on déroule ou referme
     this.commandesOuvertes = false;
@@ -1183,11 +1170,16 @@ class MarcheScene extends Phaser.Scene {
     if (panneau) panneau.setVisible(false);
     const fermer = () => { Son.jouer('glisse'); c.destroy(); this.vitrineOuverte = null; if (panneau && panneau.active) panneau.setVisible(true); this.ouvrirMendiant(); };
     c.add(this.add.rectangle(480, 270, 960, 540, 0x0e0a06, 0.92).setInteractive());
-    // son coin de la place : le mur, le tonneau, les pavés, un rayon de soleil
-    c.add(this.add.image(480, 270, murRuelleHD(this)).setScale(2));
-    c.add(this.add.rectangle(480, 200, 960, 400, 0x0a0604, 0.2));
-    const rayon = this.add.triangle(0, 0, 300, 0, 420, 0, 640, 540, 0xfff0c0, 0.08).setOrigin(0).setBlendMode(Phaser.BlendModes.ADD); c.add(rayon);
-    c.add(this.add.image(250, 500, 'tonneauxHD').setOrigin(0.5, 1).setScale(3.4).setTint(0xb0a090));
+    // (v1.62, planche 80) son coin de la grand-place, vu d'où tu te tiens : la place elle-même, en perspective (le sol,
+    // les étals, la fontaine, les maisons, à leur vraie distance), son tonneau
+    if (this.place && this.fontainePlace) c.add(decorMendiantHD(this, this.saisonPlace, this.fontainePlace));
+    else {
+      c.add(this.add.image(480, 270, murRuelleHD(this)).setScale(2));
+      c.add(this.add.rectangle(480, 200, 960, 400, 0x0a0604, 0.2));
+      c.add(this.add.triangle(0, 0, 300, 0, 420, 0, 640, 540, 0xfff0c0, 0.08).setOrigin(0).setBlendMode(Phaser.BlendModes.ADD));
+    }
+    const tonneaux = this.add.image(250, 500, 'tonneauxHD').setOrigin(0.5, 1).setScale(3.4); c.add(tonneaux);
+    if (!this.fontainePlace) tonneaux.setTint(0xb0a090);   // (dans la ruelle sombre)
     creerIconesHD(this);
     const personne = { nom: 'Le mendiant', race: 'humain', figurant: 'mendiant', vieux: true };
     // (v0.68) de près, on le voit en entier, debout contre son tonneau et appuyé sur son bâton

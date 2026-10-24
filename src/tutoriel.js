@@ -22,6 +22,26 @@ const CONSEILS = {
   place: "Hé, petit ! La place a changé : on s'y promène, maintenant. Clique sur le sol, ou marche avec les flèches (ZQSD). Devant un étal, Espace ou un clic : la boutique s'ouvre en grand, avec un seul panier pour toute la place. Touche L : ta liste de courses, faite toute seule d'après tes commandes. Touche M : toute la place d'un coup d'œil.",
 };
 
+// (v1.62, planche 88 validée) La visite du marché avec Garrick, le premier matin : il marche d'un étal à l'autre, tu le
+// suis, il présente chaque marchand, puis te ramène à la fontaine et repart par le porche. {J} : « e » pour une joueuse.
+const VISITE_MARCHE = {
+  titre: 'La visite de Garrick :',
+  depart: "Allez, suis-moi, petit{J} ! Je vais te présenter ceux qui rempliront tes étagères. Et colle-moi aux bottes : la place est grande, ha ha !",
+  etapes: [
+    { lieu: 'gedeon', nom: 'Gédéon', texte: "Maître Gédéon, l’épicier. Rations, gourdes, torches, bandages : le pain de tous les jours d’un aventurier. Et chez lui, il n’en manque jamais, ha ha !" },
+    { lieu: 'tailleuse', nom: 'Hilda', texte: "Hilda, la tailleuse. Ses capes ont sauvé plus d’un gars des neiges du Nord. Le froid ne pardonne pas... Hilda, si ! Ha ha !" },
+    { lieu: 'apothicaire', nom: 'Mère Sauge', texte: "Mère Sauge. Potions, antidotes, amulettes... Un client qui revient vivant, c’est souvent grâce à elle. Et ne la contrarie pas : elle connaît les champignons, ha ha !" },
+    { lieu: 'forge', nom: 'Thorgal', texte: "Et voilà Thorgal ! Épées, haches, arcs, et le fer pour tout le reste. Il te vendrait un marteau pour un clou, ha ha ! Mais ses lames tiennent." },
+    { lieu: 'fontaine', nom: 'La fontaine', texte: "Voilà, tu connais la place ! Ta liste de courses : touche L. Toute la place : touche M. Moi, je reprends la route. Bonne chance, petit{J}, ha ha !" },
+  ],
+  // en passant devant les enchères (n : dans combien de jours elles ouvrent)
+  encheresChantier: n => `Les enchères : ça ouvre ${n > 1 ? `dans ${n} jours` : 'demain'}. Garde tes trouvailles !`,
+  encheres: "Les enchères : c’est là que tu revendras tes trouvailles réparées.",
+  appel: "Hé, par ici !",
+  presse: "Pressé{J}, hein ? Ha ha ! Je te laisse faire.",
+  fin: '✓ La visite est finie : la place est à toi.',
+};
+
 // (v1.49) Un conseil est-il à l'écran ?
 function conseilOuvert() { return (window.conseilsOuverts || 0) > 0; }
 
