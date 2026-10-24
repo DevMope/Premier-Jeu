@@ -374,7 +374,7 @@ class StoryScene extends Cinematique {
         : `« Un corbeau noir s'est posé près de moi, a lâché ${nom} à mes pieds, et s'est envolé sans un cri. Je n'ose pas demander qui l'envoie. »`);
     } else {
       // le mercenaire arrive à pied, pose le paquet, et repart
-      const m = this.add.image(x - 420, y, corpsHD(this, { race: 'humain', nom: 'Mercenaire', niveau: 'veteran' })).setOrigin(0.5, 1).setScale(this.perso.scaleX).setDepth(Math.max(4, this.perso.depth));
+      const m = this.add.image(x - 420, y, corpsHD(this, { race: 'humain', nom: 'Mercenaire', niveau: 'veteran' }, null, 'troisQuarts', 'epee')).setOrigin(0.5, 1).setScale(this.perso.scaleX).setDepth(Math.max(4, this.perso.depth));
       pasDeMarche(this, m, 1600);
       await this.animer({ targets: m, x: x - 70, duration: 1600, ease: 'Sine.easeOut' });
       await lacher(m.x + 10, y - 60);
@@ -934,13 +934,17 @@ class StoryScene extends Cinematique {
       this.menace.sprites.push(b);
       return b;
     };
-    const humain = (bx, teinte) => {
-      const h = ajouter(imageCorps(this, 1040, sol, { nom: 'Brigand ' + bx, race: 'humain', niveau: 'aguerri' }, 6).setFlipX(true).setTint(teinte).setDepth(2));
+    // (retours sur la planche 86) Les personnages génériques des épreuves : le moteur des postures et des armes à l'échelle, comme
+    // dans les scènes jouées : ils arrivent en marchant, l'arme portée sur eux, puis se mettent en garde et changent d'appui
+    const humain = (bx, figurant, arme) => {
+      const h = ajouter(this.brigand(1040, figurant, true, arme).setDepth(2));
       this.tweens.add({ targets: h, x: bx, duration: 1100, ease: 'Sine.easeOut' });
       pasDeMarche(this, h, 1100);
+      this.time.delayedCall(1150, () => { if (!h.active) return; const P = posesActeur(arme); this.posture(h, 'garde'); this.agiter(h, ['garde', P.basse === P.garde ? 'garde' : 'basse', 'menace']); });
       h.base = { x: bx, y: sol };
       this.menace.sorte = 'bete';
       this.menace.sprites.push(h);
+      return h;
     };
     // Des particules qui tombent ou volent (neige, sable, lucioles)
     const particules = (cle, teinte, { vx = 0, vy = 1, n = 2, echelle = 1.5, alpha = 0.8, add = false } = {}) => {
@@ -977,9 +981,9 @@ class StoryScene extends Cinematique {
         } else bete('trollHD', x + 170, 3.1);
         break;
       case 'esprits': [0, 60, 120].forEach(dx => bete('espritHD', x + 110 + dx, 2, { flottante: true })); break;
-      case 'mortvivant': [0, 70].forEach(dx => bete('squeletteHD', x + 130 + dx, 2.4)); break;
-      case 'bandits': [0, 60].forEach(dx => humain(x + 120 + dx, 0x6a5a66)); break;
-      case 'pillards': [0, 60, 120].forEach(dx => humain(x + 110 + dx, 0x8a6a50)); break;
+      case 'mortvivant': [0, 70].forEach((dx, i) => humain(x + 130 + dx, 'squelette', ['epee', 'hache'][i])); break;
+      case 'bandits': [['brigand', 'epee', 0], ['brigande', 'dague', 60]].forEach(([f, a, dx]) => humain(x + 120 + dx, f, a)); break;
+      case 'pillards': [['pillard', 'hache', 0], ['pillarde', 'arc', 60], ['pillard', 'lance', 120]].forEach(([f, a, dx]) => humain(x + 110 + dx, f, a)); break;
       case 'feufollet':
         for (let i = 0; i < 6; i++) {
           const l = ajouter(this.add.image(x + 60 + i * 35, 220 + (i % 3) * 30, 'lueurHD').setScale(3).setBlendMode(Phaser.BlendModes.ADD));

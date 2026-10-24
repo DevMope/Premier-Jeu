@@ -155,6 +155,8 @@ const TAILLE_ARMES_PORTEES = 1.3;   // (v1.04 : la taille des armes que portent 
 // dépasse de beaucoup, sa dague reste une dague. Le même tableau sert en main, dans les poses, portée sur soi et posée au sol.
 const ARMES_HD = {
   dague: { L: 15, prise: 2.5 },      // 40 cm
+  epeecourte: { L: 24, prise: 3.4 }, // 65 cm : la lame large en feuille (le glaive)
+  arbalete: { L: 26, prise: 17 },    // 70 cm de fût, l'arc de 65 cm en travers du bout ; la main arrière tient la poignée, l'autre le fût
   khopesh: { L: 22, prise: 2.8 },    // 60 cm, la lame en faucille
   epee: { L: 35, prise: 3.8 },       // 95 cm
   rapiere: { L: 42, prise: 3.4 },    // 1,15 m, la lame fine
@@ -169,7 +171,7 @@ const ARMES_HD = {
   griffes: { L: 8, prise: 0 },       // portées sur la main
 };
 // Le bout qui frappe : A (la tête, la pointe) ou B (la pointe d'une lame)
-const ARMES_FRAPPENT_PAR_A = ['hache', 'marteau', 'massue', 'lance', 'baton', 'bambou'];
+const ARMES_FRAPPENT_PAR_A = ['hache', 'marteau', 'massue', 'lance', 'baton', 'bambou', 'arbalete'];
 function rampesArmesHD(t) {
   t.rampes.lameA = rampeVive(0xdce6f0); t.rampes.boisA = rampeVive(0x7a4a24); t.rampes.ferA = rampeVive(0x6a6e78); t.rampes.cordeA = rampeVive(0xe0d4b0);
   t.rampes.laitonA = rampeVive(0xd8a838); t.rampes.bambouA = rampeVive(0x8aa84a); t.rampes.gemmeA = rampeVive(0x70c8f8);
@@ -209,6 +211,24 @@ function dessinerArmeHD(t, arme, A, B, k = FINESSE, { fourreau = false } = {}) {
     cylindre(t, 'ferA', P(5.2 * kA, -2.6 * kA), P(5.2 * kA, 2.6 * kA), 0.8 * kA, { decalage: 0.5 });   // la garde
     cylindre(t, 'boisA', P(1 * kA), P(5 * kA), 0.8 * kA, { decalage: 0.4 });                        // la poignée
     t.forme('ferA', ellipsoide(...P(0.4 * kA), 1.1 * kA, 1.1 * kA), { decalage: 0.6 });              // le pommeau
+  } else if (arme === 'epeecourte') {
+    // le glaive : une lame large en feuille qui se rétrécit vers la pointe, une petite garde droite, un pommeau rond
+    if (fourreau) lame(4 * kA, 1.5 * kA);
+    else t.forme('lameA', dans((rx, ry) => { const u = (rx - 4 * kA) / (l - 4 * kA); return u >= 0 && u <= 1 && Math.abs(ry) < (1.6 - u * u * 1.35 + (u < 0.35 ? u * 0.5 : 0)) * kA ? [ry / (1.6 * kA) * 0.6, -0.2, 0.85] : null; }), { decalage: 0.3 });
+    cylindre(t, 'ferA', P(3.6 * kA, -2.2 * kA), P(3.6 * kA, 2.2 * kA), 0.7 * kA, { decalage: 0.5 });
+    cylindre(t, 'boisA', P(0.9 * kA), P(3.4 * kA), 0.75 * kA, { decalage: 0.4 });
+    t.forme('ferA', ellipsoide(...P(0.4 * kA), 1 * kA, 1 * kA), { decalage: 0.6 });
+  } else if (arme === 'arbalete') {
+    // A : le bout de l'arbalète (devant) ; B : la crosse. Le fût de bois, l'arc d'acier en travers du bout (vu de biais : un
+    // grand arc de côté), la corde tendue vers la noix, l'étrier de fer, la poignée de cuir, la flèche courte (le carreau)
+    cylindre(t, 'boisA', P(2.5 * kA), B, 1.15 * kA, { decalage: 0.3 });
+    cylindre(t, 'cuir', P(l * 0.62), P(l * 0.82), 1.3 * kA, { decalage: 0.5, ombre: false });          // la poignée
+    const arc0 = P(2.2 * kA, -8 * kA), arc1 = P(2.2 * kA, 8 * kA);
+    let prec = null; for (let i = 0; i <= 12; i++) { const u = i / 12, p = P((2.2 - Math.sin(u * Math.PI) * 3.2) * kA, (-8 + 16 * u) * kA); if (prec) cylindre(t, 'ferA', prec, p, 0.7 * kA, { decalage: 0.5 }); prec = p; }
+    const noix = P(6 * kA); cylindre(t, 'cordeA', arc0, noix, 0.25 * kA, { decalage: 0.3, ombre: false }); cylindre(t, 'cordeA', noix, arc1, 0.25 * kA, { decalage: 0.3, ombre: false });
+    cylindre(t, 'ferA', P(0.5 * kA, -1.7 * kA), P(0.5 * kA, 1.7 * kA), 0.5 * kA, { decalage: 0.6 });         // l'étrier
+    cylindre(t, 'boisA', noix, P(-0.5 * kA), 0.4 * kA, { decalage: 0.6, ombre: false });                    // le carreau
+    t.forme('lameA', ellipsoide(...P(-0.4 * kA), 0.9 * kA, 0.65 * kA), { decalage: 0.7, ombre: false });
   } else if (arme === 'dague') {
     lame(2.8 * kA, 0.85 * kA);
     cylindre(t, 'ferA', P(2.4 * kA, -1.8 * kA), P(2.4 * kA, 1.8 * kA), 0.6 * kA, { decalage: 0.5 });
@@ -269,7 +289,7 @@ function textureArmeHD(scene, arme) {
 // griffes aux mains, la lance et les bâtons à la main (debout), la hache, le marteau et la massue sur l'épaule, l'épée et l'arc
 // en travers du dos (et la lance, les bâtons, la hache dans le dos quand il est assis, les bras levés...)
 function placeArmeHD(arme, libre) {
-  if (['dague', 'rapiere', 'khopesh', 'fronde'].includes(arme)) return 'taille';
+  if (['dague', 'epeecourte', 'rapiere', 'khopesh', 'fronde'].includes(arme)) return 'taille';
   if (arme === 'griffes') return 'mains';
   if (['lance', 'baton', 'bambou'].includes(arme)) return libre ? 'main' : 'dos';
   // la hache, le marteau, la massue : sur l'épaule quand il marche (la main tient le manche), sinon dans le dos (la massue
@@ -313,7 +333,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   // (retours sur la planche 86) l'arme portée sur soi, à sa vraie taille (ARMES_HD) : où elle va, et la place qu'il lui faut
   // (une lance tenue debout dépasse la tête, une rapière à la ceinture part loin en arrière : la toile grandit)
   const arme = options.arme || null;
-  const placeArme = options.armeMain ? 'action' : !arme ? null : placeArmeHD(arme, !pose);
+  const placeArme = options.armeMain ? 'action' : !arme ? null : placeArmeHD(arme, !pose && !options.rig);   // (une pose du rig sans arme en main : l'arme reste rangée sur lui)
   const prof0 = P.ep * 0.55;
   // L'axe de l'arme portée (x : depuis le milieu du corps ; `main` : la main qui la tient, pour la lance et le bâton debout)
   const axeArmePortee = (yT, yB, sol, main = null) => {
@@ -560,7 +580,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // (planches 85 et 86) le bras posé à la main : options.membres.brasP / brasL
     const mb = MEMBRES && MEMBRES[cote === pres ? 'brasP' : 'brasL'];
     if (mb) {
-      const r0 = typeof mb === 'function' ? mb({ k, ep, yT, yB, sol, cy, P, cote, s, c, L, pres, loin, epaule, coude, main }) : mb;
+      const r0 = typeof mb === 'function' ? mb({ k, ep, yT, yB, sol, cy, P, cote, s, c, L, pres, loin, epaule, coude, main, X, cx }) : mb;
       if (r0) { if (r0.epaule) epaule.splice(0, 3, ...r0.epaule); if (r0.coude) coude.splice(0, 3, ...r0.coude); if (r0.main) main.splice(0, 3, ...r0.main); }
     }
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
@@ -1956,7 +1976,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   } else if (options.armeMain && mainDevant) {
     // (planche 86) l'arme en action (posesHD.js), dans la main de devant
     const avant = t.partie; t.partie = 'brasP';
-    options.armeMain({ t, k, kA: k * TAILLE_ARMES_PORTEES, M: mainDevant.M, C: mainDevant.C, matMain: mainDevant.matMain, gm: mainDevant.gm, segBras, dessinerArmeAxe, cx, cy, P, sol, yT, yB, ep, X, s, c, pres, loin, dos, arme });
+    options.armeMain({ t, k, kA: k * TAILLE_ARMES_PORTEES, M: mainDevant.M, C: mainDevant.C, matMain: mainDevant.matMain, matAvant: mainDevant.matAvant, matBras, r: mainDevant.r, gm: mainDevant.gm, segBras, dessinerArmeAxe, cx, cy, P, sol, yT, yB, ep, X, s, c, pres, loin, dos, arme });
     t.partie = avant;
   } else if ((placeArme === 'main' || placeArme === 'mains') && mainDevant) {
     const { M, matMain, gm } = mainDevant;

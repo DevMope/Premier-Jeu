@@ -10,8 +10,20 @@ Object.assign(StoryScene.prototype, {
     return cle;
   },
   // Un objet tenu dans la vraie main de la pose (il la suit d'une pose à l'autre)
-  tenirEnMain(cleImage, { echelle = 2.2, angle = 0, dx = 0, dy = 0 } = {}) {
-    const p = this.perso, o = this.garder(this.add.image(0, 0, cleImage).setScale(echelle).setAngle(angle));
+  tenirEnMain(cleImage, { echelle = 2.2, angle = 0, dx = 0, dy = 0, reel = null } = {}) {
+    const p = this.perso;
+    // (retours planche 86) le vrai dessin de l'objet (ration, gourde), à l'échelle, tenu par la vraie main de la pose
+    const idObjet = typeof cleImage === 'string' && cleImage.startsWith('hd_') ? cleImage.slice(3) : null;
+    if (idObjet && OBJETS_MAIN[idObjet]) {
+      const pos = () => {
+        const m = MAINS_XY[p.texture.key.replace(/_pas[12]$/, '')] || { x: 14, y: 40 }, s = p.flipX ? -1 : 1, bas = p.y + (1 - p.originY) * p.displayHeight;
+        return { x: p.x + m.x * Math.abs(p.scaleX) * s, y: bas - m.y * Math.abs(p.scaleY) };
+      };
+      const r = imageObjetMain(this, idObjet, p, pos, { angle: reel === null ? 0 : reel });
+      const o = this.garder(r.o); this.chaqueImage(r.suivre);
+      return o;
+    }
+    const o = this.garder(this.add.image(0, 0, cleImage).setScale(echelle).setAngle(angle));
     o.dx = dx; o.dy = dy;
     const suivre = () => {
       if (!o.active || !p.active || o.libre) return;
@@ -42,7 +54,7 @@ Object.assign(StoryScene.prototype, {
       this.poserPose('mangeAssis');
       await this.animer({ targets: p, y: p.y + 2, duration: 140, yoyo: true });
       this.onomatopee(p.x + (p.flipX ? -40 : 40), p.y - p.displayHeight * 0.95, i === 2 ? 'Miam !' : 'Crounch', '#f3d98a');
-      r.setScale(1.8 * (1 - (i + 1) * 0.24));
+      if (r.objetMain) r.reduit = 1 - (i + 1) * 0.24; else r.setScale(1.8 * (1 - (i + 1) * 0.24));   // (la ration dessinée rapetisse à chaque bouchée)
       for (let k = 0; k < 4; k++) {
         const m = this.garder(this.add.rectangle(r.x, r.y + 6, 3, 3, 0xc89a50).setDepth(p.depth + 0.1));
         this.tweens.add({ targets: m, x: m.x + Phaser.Math.Between(-12, 12), y: SOL_RECIT - 4, alpha: 0, duration: 520, delay: k * 50, onComplete: () => m.destroy() });
@@ -57,17 +69,18 @@ Object.assign(StoryScene.prototype, {
   // Il boit à sa gourde : le coude se lève, la gourde se renverse sur ses lèvres, trois grandes gorgées
   async bivouacBoire() {
     const p = this.perso;
-    const o = this.tenirEnMain(iconeObjet(this, 'gourde'), { echelle: 1.8, angle: -30, dx: 8, dy: -2 });
+    const sg = p.flipX ? -1 : 1, reel = !!OBJETS_MAIN.gourde;   // (la gourde dessinée : le col en haut ; on la penche vers la bouche)
+    const o = this.tenirEnMain(iconeObjet(this, 'gourde'), { echelle: 1.8, angle: -30, dx: 8, dy: -2, reel: 8 * sg });
     await this.attendre(250);
     this.poserPose('boit');
-    o.setAngle(-125);
+    o.setAngle(reel ? 70 * sg : -125);
     await this.animer({ targets: p, angle: p.flipX ? 4 : -4, duration: 200 });
     this.onomatopee(p.x + (p.flipX ? -30 : 30), p.y - p.displayHeight * 1.05, 'Glou glou !', '#a8d8ff');
-    for (let k = 0; k < 3; k++) await this.animer({ targets: o, angle: -140, duration: 170, yoyo: true });
+    for (let k = 0; k < 3; k++) await this.animer({ targets: o, angle: reel ? 105 * sg : -140, duration: 170, yoyo: true });
     this.gouttes(0x8ac8f0, 2);
     await this.animer({ targets: p, angle: 0, duration: 200 });
     this.poserPose(null);
-    o.setAngle(-30);
+    o.setAngle(reel ? 8 * sg : -30);
     await this.attendre(250);
     this.tweens.add({ targets: o, alpha: 0, duration: 250 });
   },

@@ -1101,9 +1101,15 @@ class CounterScene extends Phaser.Scene {
     });
     this.pagesStock = [this.children.list.slice(avant)];
     // (v0.68) la page 2 : les autres armes, chacune dans sa case (l'épée reste en page 1, dans le râtelier)
-    const avant2 = this.children.list.length;
-    IDS_ARMES.filter(id => id !== 'epee').slice(0, 12).forEach((id, i) => this.creerCase(id, 200 + (i % 5) * 108, 397 + Math.floor(i / 5) * 48, this.casesArmes));
-    this.pagesStock.push(this.children.list.slice(avant2));
+    // (lot 3) 13 cases par page (la troisième rangée n'en a que 3 : le bouton de l'arrière-boutique occupe le reste) ; l'arc, l'arbalète,
+    // l'épée courte... s'ajoutent : les armes en trop passent sur une page de plus
+    const autres = IDS_ARMES.filter(id => id !== 'epee');
+    for (let k = 0; k < autres.length; k += 13) {
+      this.pageCase = 1 + k / 13;
+      const avant2 = this.children.list.length;
+      autres.slice(k, k + 13).forEach((id, i) => this.creerCase(id, 200 + (i % 5) * 108, 397 + Math.floor(i / 5) * 48, this.casesArmes));
+      this.pagesStock.push(this.children.list.slice(avant2));
+    }
     this.creerOngletPages();
     this.montrerPageStock(0);
     this.creerBoutonRetourner();
@@ -1135,7 +1141,7 @@ class CounterScene extends Phaser.Scene {
     const o = this.ongletPages;
     if (!o) return;
     const pref = this.voyageur ? armePour(this.voyageur) : null;
-    const ailleurs = pref && this.casesArmes[pref] && this.pageStock === 0;
+    const ailleurs = pref && this.casesArmes[pref] && this.casesArmes[pref].page !== this.pageStock;
     this.tweens.killTweensOf(o.fleche);
     o.fleche.setScale(1);
     if (ailleurs) this.tweens.add({ targets: o.fleche, scale: 1.35, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -1157,7 +1163,7 @@ class CounterScene extends Phaser.Scene {
       fond.on('pointerover', () => { fond.setFillStyle(0xfff6d8, 0.22); icone.setScale(2.25); });
       fond.on('pointerout', () => { fond.setFillStyle(0xfff6d8, 0.001); icone.setScale(2); });
       fond.on('pointerdown', () => this.donner(id));
-      ou[id] = { fond, qte, pile, icone, page: ou === this.casesArmes ? 1 : 0 };
+      ou[id] = { fond, qte, pile, icone, page: ou === this.casesArmes ? (this.pageCase || 1) : 0 };
       // (v1.54, planche 62) les provisions qui se périment : une petite barre de fraîcheur (la plus vieille), et au survol, combien de jours
       if (typeof FRAICHEUR !== 'undefined' && FRAICHEUR[id] && FRAICHEUR[id].ou === 'stock') {
         const fondB = this.add.rectangle(x - 9, y + 6, 26, 6, 0x3a2410).setOrigin(0, 0.5), barre = this.add.rectangle(x - 8, y + 6, 24, 4, 0x4a9a3a).setOrigin(0, 0.5);

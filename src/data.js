@@ -28,6 +28,9 @@ const ITEMS = {
   bambou:  { nom: 'Bâton de bambou', prix: 7, durable: true, arme: true },
   fronde:  { nom: 'Fronde', prix: 6, durable: true, arme: true },
   dague:   { nom: 'Dague', prix: 8, durable: true, arme: true },
+  // (retours sur la planche 86) deux armes de plus, à leur vraie taille : l'épée courte (60 cm, entre la dague et l'épée) et l'arbalète
+  epeecourte: { nom: 'Épée courte', prix: 11, durable: true, arme: true },
+  arbalete: { nom: 'Arbalète', prix: 16, durable: true, arme: true },
   rapiere: { nom: 'Rapière', prix: 17, durable: true, arme: true, ombre: true },
   khopesh: { nom: 'Khopesh', prix: 12, durable: true, arme: true, ombre: true },
   griffes: { nom: 'Griffes de fer', prix: 14, durable: true, arme: true, ombre: true },
@@ -927,7 +930,7 @@ const MATERIAUX = {
 };
 const MATERIAU_DE = { epee: 'fer', corde: 'cuir', gourde: 'cuir', cape: 'cuir', bouclier: 'fer',
   hache: 'fer', marteau: 'fer', arc: 'bois', lance: 'bois', baton: 'bois', bambou: 'bois', fronde: 'cuir', dague: 'fer',
-  rapiere: 'fer', khopesh: 'fer', griffes: 'fer', massue: 'bois' };
+  rapiere: 'fer', khopesh: 'fer', griffes: 'fer', massue: 'bois', epeecourte: 'fer', arbalete: 'bois' };
 // (v0.65, étape 10c) Le chat de gouttière, premier familier. Certains soirs il rôde devant le shop ;
 // on le nourrit d'une ration ; au bout de trois soirs, il te suit et dort sur le coussin de
 // l'arrière-boutique. Sans lui, des rats grignotent parfois les provisions ; avec lui, plus de rats,
@@ -1006,7 +1009,7 @@ const MARCHANDS = {
   },
   forge: {
     nom: 'Thorgal le Forgeron', metier: 'Forge', race: 'nain', couleur: 0x8a3a2a,
-    objets: ['fleches', 'corde', 'bouclier', 'fer', 'cuir', 'bois', 'epee', 'hache', 'marteau', 'arc', 'lance', 'baton', 'bambou', 'fronde', 'dague', 'rapiere', 'khopesh', 'griffes', 'massue'],
+    objets: ['fleches', 'corde', 'bouclier', 'fer', 'cuir', 'bois', 'epee', 'hache', 'marteau', 'arc', 'lance', 'baton', 'bambou', 'fronde', 'dague', 'epeecourte', 'arbalete', 'rapiere', 'khopesh', 'griffes', 'massue'],
     toujours: ['fer', 'cuir', 'bois', 'epee'],   // (v0.68 : l'épée, la plus demandée, ne manque jamais chez Thorgal)
   },
   apothicaire: {
@@ -1892,7 +1895,7 @@ const GENRE_OBJETS = {
   ration: 'f', gourde: 'f', epee: 'f', fleches: 'fp', potion: 'f', bandage: 'mp', torche: 'f', corde: 'f',
   antidote: 'm', cape: 'f', bouclier: 'm', amulette: 'f', fer: 'm', cuir: 'm', filOr: 'm', bois: 'm',
   hache: 'f', marteau: 'm', arc: 'm', lance: 'f', baton: 'm', bambou: 'm', fronde: 'f', dague: 'f',
-  rapiere: 'f', khopesh: 'm', griffes: 'fp', massue: 'f',
+  rapiere: 'f', khopesh: 'm', griffes: 'fp', massue: 'f', epeecourte: 'f', arbalete: 'f',
 };
 
 const CADEAUX = {
@@ -1944,7 +1947,7 @@ const CHANCE_LETTRE = 0.3;
 // ou le nombre de clients pendant quelques jours. Annoncé par une lettre ou par le crieur.
 const CHANCE_EVENEMENT = 0.18;
 const EVENEMENTS = {
-  penurieFer: { type: 'prix', objets: ['epee', 'bouclier', 'hache', 'marteau', 'dague', 'rapiere', 'khopesh', 'griffes'], mult: 1.6,
+  penurieFer: { type: 'prix', objets: ['epee', 'bouclier', 'hache', 'marteau', 'dague', 'epeecourte', 'rapiere', 'khopesh', 'griffes'], mult: 1.6,
     annonce: 'La mine de fer de Khaz-Durim a été inondée. Les forgerons préviennent : les lames, les haches et les boucliers vont manquer.',
     nouvelle: 'Pénurie de fer : les armes de fer et les boucliers sont hors de prix au marché !' },
   recolte: { type: 'prix', objets: ['ration', 'gourde'], mult: 0.6,
@@ -2306,7 +2309,7 @@ const PAROLES_TROUVAILLE = {
 const RECETTES = {
   epee: { fer: 3, cuir: 1 }, hache: { fer: 2, bois: 2 }, marteau: { fer: 3, bois: 1 }, arc: { bois: 3, cuir: 1 },
   lance: { bois: 3, fer: 1 }, baton: { bois: 3, filOr: 1 }, bambou: { bois: 3 }, fronde: { cuir: 2 },
-  dague: { fer: 1, cuir: 1 }, rapiere: { fer: 2, filOr: 1 }, khopesh: { fer: 2, bois: 1 }, griffes: { fer: 2, cuir: 2 },
+  dague: { fer: 1, cuir: 1 }, epeecourte: { fer: 2, cuir: 1 }, arbalete: { bois: 3, fer: 1, cuir: 1 }, rapiere: { fer: 2, filOr: 1 }, khopesh: { fer: 2, bois: 1 }, griffes: { fer: 2, cuir: 2 },
   massue: { bois: 4, fer: 1 }, bouclier: { bois: 2, fer: 2 },
 };
 // Les armes interdites (côté ombre) : une arme ou du fer, et un objet du marché noir
