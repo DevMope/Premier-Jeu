@@ -53,7 +53,7 @@ class NightScene extends Phaser.Scene {
         fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 10, y: 5 } })).setOrigin(0.5).setAngle(-2).setDepth(5);
       this.tweens.add({ targets: note, angle: 2, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
-    this.bourse = bourse(this, 846, 50, this.G.argent, { echelle: 1.5, taille: 19, aDroite: true });
+    this.bourse = bourse(this, 846, 60, this.G.argent, { echelle: 1.3, taille: 19, aDroite: true });   // (v1.62 : la nouvelle besace, plus haute, ne sort plus du haut de l'écran)
 
     this.parchemin(20, 300, this.matin ? "Aujourd'hui" : 'Ta journée');
     this.parchemin(320, 640, 'Ta réserve');

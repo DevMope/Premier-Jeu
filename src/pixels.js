@@ -947,20 +947,44 @@ function texteQuiDefile(scene, objet, texte, { depuis = 0, vitesse = 24, son = t
 
 // (v0.68) Des pièces qui volent de ta main jusqu'à quelqu'un (la sébile du mendiant, une main
 // tendue...) : chacune décrit un arc en tournant, et tinte en arrivant. `fin` quand la dernière est là.
-function voleePieces(scene, x0, y0, x1, y1, n, { conteneur = null, profondeur = 50, fin = null } = {}) {
+// (v1.62, planche 84) la pièce tourne vraiment (trois dessins : de face, de trois quarts, sur la tranche)
+// au lieu d'être écrasée, et finit par une chute droite dans le col (x1, y1). `besace` : la bourse qui la
+// reçoit (son col s'ouvre, elle se tasse à chaque pièce) ; `montant` : le compte monte pièce après pièce.
+function voleePieces(scene, x0, y0, x1, y1, n, { conteneur = null, profondeur = 50, fin = null, besace = null, montant = 0, echelle = 2.2 } = {}) {
   creerPiecesHD(scene);
+  if (typeof creerPiecesVolHD === 'function') creerPiecesVolHD(scene);
+  const vol = scene.textures.exists('pieceVol2');
   const total = Math.max(1, Math.min(6, n));
+  const depart = besace && besace.texte ? besace.dernier : null;
+  let arrivees = 0;
   for (let k = 0; k < total; k++) {
-    const p = scene.add.image(x0 + (Math.random() - 0.5) * 20, y0, 'pieceFace').setScale(2.4).setDepth(profondeur);
+    const p = scene.add.image(x0 + (Math.random() - 0.5) * 20, y0, vol ? 'pieceVol0' : 'pieceFace').setScale(vol ? echelle : 2.4).setDepth(profondeur);
     if (conteneur) conteneur.add(p);
-    const dx = x1 + (Math.random() - 0.5) * 16, duree = 520 + Math.random() * 120, retard = k * 110;
-    scene.tweens.add({ targets: p, x: dx, duration: duree, delay: retard, ease: 'Linear' });
-    scene.tweens.add({ targets: p, scaleX: { from: 2.4, to: 0.4 }, duration: 120, yoyo: true, repeat: Math.round(duree / 240), delay: retard });   // elle tourne sur elle-même
-    scene.tweens.add({ targets: p, y: Math.min(y0, y1) - 70, duration: duree * 0.45, delay: retard, ease: 'Quad.easeOut', onComplete: () => {
-      scene.tweens.add({ targets: p, y: y1, duration: duree * 0.55, ease: 'Quad.easeIn', onComplete: () => {
+    const dx = x1 + (Math.random() - 0.5) * 4, duree = 520 + Math.random() * 120, retard = k * 110;
+    // elle tourne sur elle-même : face, trois quarts, tranche, trois quarts (retournée), face...
+    let i = 0;
+    const tourne = vol ? scene.time.addEvent({ delay: 70, loop: true, callback: () => { if (!p.active) return tourne.remove(); i = (i + 1) % 4; p.setTexture('pieceVol' + [0, 1, 2, 1][i]).setFlipX(i === 3); } }) : null;
+    if (!vol) scene.tweens.add({ targets: p, scaleX: { from: 2.4, to: 0.4 }, duration: 120, yoyo: true, repeat: Math.round(duree / 240), delay: retard });
+    const xs = p.x, haut = Math.min(y0, y1) - 70, dessus = y1 - 22;
+    const u = { t: 0 };
+    // l'arc, jusqu'au-dessus du col...
+    scene.tweens.add({ targets: u, t: 1, duration: duree, delay: retard, ease: 'Linear', onUpdate: () => {
+      if (!p.active) return;
+      const t = u.t, a = t < 0.45 ? 1 - Math.pow(1 - t / 0.45, 2) : 1 - Math.pow((t - 0.45) / 0.55, 2);
+      p.setPosition(xs + (dx - xs) * t, t < 0.45 ? y0 + (haut - y0) * a : dessus + (haut - dessus) * a);
+    }, onComplete: () => {
+      if (!p.active) return;
+      // ... puis elle tombe tout droit dedans, sur la tranche
+      if (tourne) tourne.remove();
+      if (vol) p.setTexture('pieceVol2').setFlipX(false);
+      if (besace && besace.ouvrirCol) besace.ouvrirCol();
+      scene.tweens.add({ targets: p, y: y1, duration: 110, ease: 'Quad.easeIn', onComplete: () => {
         Son.jouer('piece');
-        scene.tweens.add({ targets: p, alpha: 0, duration: 250, delay: 150, onComplete: () => p.destroy() });
-        if (k === total - 1 && fin) fin();
+        p.destroy();
+        if (besace && besace.recevoirPiece) besace.recevoirPiece();
+        arrivees++;
+        if (depart !== null && montant && besace.texte.active) besace.texte.setText(`${Math.floor(depart + montant * arrivees / total)} p.`);
+        if (arrivees === total && fin) fin();
       } });
     } });
   }

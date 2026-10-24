@@ -1388,7 +1388,9 @@ class CounterScene extends Phaser.Scene {
 
   creerArgent() {
     // Ta bourse, posée sur le comptoir : elle gonfle avec tes pièces.
-    this.bourse = bourse(this, 66, 513, this.G.argent, { echelle: 2.2, taille: 17 });   // (v1.61) plus bas : l’onglet Carte cachait le haut de la besace
+    // (v1.61) plus bas : l’onglet Carte cachait le haut de la besace ; (v1.62, planche 84) la nouvelle besace, ×2,
+    // qui verse vers la fenêtre quand tu paies
+    this.bourse = bourse(this, 66, 515, this.G.argent, { echelle: 2, taille: 17, gain: [0, -34] });   // (le gain s'affiche sur elle : au-dessus, l'onglet Carte)
     // De temps en temps, une pièce scintille quand la bourse est bien pleine.
     this.time.addEvent({ delay: 1400, loop: true, callback: () => {
       if (this.bourse.niveau < 2 || Math.random() < 0.35) return;
@@ -1408,7 +1410,9 @@ class CounterScene extends Phaser.Scene {
     }
     this.piecesEnVol = (this.piecesEnVol || 0) + 1;
     Son.jouer('pieces');
-    voleePieces(this, FENETRE.x + FENETRE.w / 2, SOL_COMPTOIR + 6, this.bourse.x, this.bourse.y - 34, Math.ceil(Math.sqrt(apres - avant)), { profondeur: 60, fin: () => {
+    // (v1.62) elles tournent en volant, et tombent une à une dans le col de la besace
+    const col = this.bourse.col();
+    voleePieces(this, FENETRE.x + FENETRE.w / 2, SOL_COMPTOIR + 6, col.x, col.y, Math.ceil(Math.sqrt(apres - avant)), { profondeur: 60, besace: this.bourse, montant: this.piecesEnVol === 1 ? apres - this.bourse.dernier : 0, fin: () => {
       this.piecesEnVol--;
       if (!this.piecesEnVol) this.bourse.maj(this.G.argent);
     } });
@@ -2047,13 +2051,14 @@ class CounterScene extends Phaser.Scene {
       const v = entree.parti.voyageur;
       this.dire(this.G.faucheuse.visites ? `Le carnet de voyage ${dePersonne(v.nom)} est posé sur ton comptoir. Sa couverture est glacée.`
         : `Un berger a rapporté un carnet trouvé sur la route : celui ${dePersonne(v.nom)}... ${v.feminin ? 'Elle' : 'Il'} n'est jamais revenu${v.feminin ? 'e' : ''}.`, '');
-      // Le carnet, couvert de givre, sur le rebord de la fenêtre.
-      const g = this.carnetPose = this.add.graphics().setDepth(3);
-      const cx = FENETRE.x + FENETRE.w / 2, cy = SOL_COMPTOIR + 2;
-      g.fillStyle(0x3a2a1a).fillRect(cx - 30, cy - 22, 60, 22);
-      g.fillStyle(0x5a3a22).fillRect(cx - 27, cy - 20, 54, 17);
-      g.fillStyle(0xd8e8f0, 0.8).fillRect(cx - 30, cy - 22, 60, 3).fillRect(cx - 30, cy - 22, 4, 22).fillRect(cx + 14, cy - 19, 9, 2);
-      g.fillStyle(0xe8c040).fillRect(cx - 4, cy - 14, 8, 6);
+      // (v1.62, planche 84) Le carnet de voyage, couché sur le rebord de la fenêtre, vu d'un peu au-dessus :
+      // couvert de givre (et d'un halo froid) quand c'est la Faucheuse qui l'a laissé
+      creerCarnetsHD(this);
+      const givre = !!this.G.faucheuse.visites;
+      const cx = FENETRE.x + FENETRE.w / 2, cy = SOL_COMPTOIR + 7;
+      const c = this.carnetPose = this.add.container(0, 0).setDepth(3);
+      if (givre) { creerHalo(this); c.add(this.add.image(cx, cy - 16, 'halo').setScale(1.1, 0.6).setTint(0x9ad0ff).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD)); }
+      c.add(this.add.image(cx, cy, givre ? 'carnetCoucheGivreHD' : 'carnetCoucheHD').setOrigin(0.5, 1).setScale(2));
       this.titreCommande.setFontSize(17).setText('Une mauvaise nouvelle...');
       this.bouton('Lire le carnet', () => this.ouvrirRecit(entree.parti));
     }
