@@ -363,7 +363,6 @@ function moutonVivant(scene, plan, x, y, { agneau = false, mere = null, piquet =
   const brouter = (ms, ensuite) => { let k = 0; const fin = scene.time.now + ms; const b = () => { if (scene.time.now > fin) { poser('debout'); return apres(300, ensuite); } poser(k++ % 2 ? 'broute2' : 'broute1'); apres(300, b); }; b(); };
   const beler = ensuite => {
     poser('bele1'); apres(220, () => poser('bele2')); apres(520, () => poser('bele1')); apres(760, () => { poser('debout'); apres(400, ensuite); });
-    Son.jouer('mouton');   // (s'il existe)
     const t = dansPlan(plan, scene.add.text(m.x + (m.flipX ? 14 : -14), y - m.displayHeight - 4, 'Bêêê !', style(11, '#3b2410', { fontStyle: 'bold italic', backgroundColor: '#fff8e8', padding: { x: 4, y: 1 } })).setOrigin(0.5, 1));
     scene.tweens.add({ targets: t, alpha: 0, delay: 900, duration: 300, onComplete: () => t.destroy() });
   };

@@ -2,6 +2,8 @@
 // et comment chaque objet du colis l'a aidé (ou lui a manqué).
 // (v1.62) de combien le repère des épreuves avance dans le monde, du départ au retour au comptoir
 const BASE_MAX_RECIT = 480;
+// (v1.62) où est posée la besace du récit (à l'écran) : sur le bord bas de la bulle, en bas à gauche
+const BESACE_RECIT = { x: 50, y: 382 };
 
 class StoryScene extends Cinematique {
   // (v0.84) la musique du récit, retenue : elle reste la même quand on revient du menu pause
@@ -82,9 +84,8 @@ class StoryScene extends Cinematique {
     this.creerBulleDeReve();
     this.ui.add([...this.coeurs, this.titre]);
     // (v1.61) ta bourse, toujours visible en haut : on paie un dédommagement, des soins, une trouvaille.
-    // (v1.62, planche 84) elle a sa place : posée sur une petite étagère de chêne, accrochée au bord droit du
-    // cadre, sous « Passer » ; le compte est écrit sur la plaque de laiton de l'étagère
-    this.creerEtagereBourse();
+    // (v1.62, planche 84) elle a sa place : posée sur le bord bas de la bulle, son compte à côté d'elle
+    this.creerBesaceBord();
     this.time.addEvent({ delay: 200, loop: true, callback: () => { if (!this.piecesEnVol && this.bourse.dernier !== Math.floor(this.G.argent)) this.bourse.maj(Math.floor(this.G.argent)); } });
     // Passer : le récit défile en accéléré jusqu'à la fin (les choix de la fin restent à faire).
     const passer = this.boutonPasser(() => {
@@ -119,6 +120,7 @@ class StoryScene extends Cinematique {
     // (le sol, à y = 360, reste à la même hauteur à l'écran : on ne cadre qu'en largeur, et `y`
     // ne fait que pencher un peu le regard vers le haut quand il est petit)
     const sy = Phaser.Math.Clamp(360 - 360 / k - Math.max(0, 200 - y) * 0.1, 0, 360 - 360 / k);
+    this.cadreVise = { sx, sy, k };
     this.tweens.killTweensOf(cam);
     if (duree <= 0) { cam.setZoom(zoom).setScroll(sx, sy); return Promise.resolve(); }
     return this.animer({ targets: cam, zoom, scrollX: sx, scrollY: sy, duration: duree, ease });
@@ -147,8 +149,16 @@ class StoryScene extends Cinematique {
     for (let x = 22; x <= 960; x += 44) { g.fillCircle(x, 8, 16); g.fillCircle(x - 12, 376, 9); }
     // les petites bulles qui mènent au conteur
     for (const [bx, by, r] of [[112, 392, 9], [96, 412, 6], [86, 428, 4]]) { g.fillStyle(teinte, 0.9); g.fillCircle(bx, by, r); }
-    this.ui.add(g);
-    this.bulleCadre = g;
+    // (v1.62) la bulle ne bouge pas : on la fige en une image (ses dizaines de ronds ne se retracent plus à chaque image)
+    const cleBulle = 'bulleReve_' + (vivant ? 'vivant' : 'carnet');
+    if (this.textures.exists(cleBulle)) this.textures.remove(cleBulle);
+    const rt = this.make.renderTexture({ width: 960, height: 440 }, false);
+    rt.draw(g, 0, 0);
+    rt.saveTexture(cleBulle);
+    g.destroy();
+    this.events.once('shutdown', () => rt.destroy());
+    this.bulleCadre = this.add.image(0, 0, cleBulle).setOrigin(0, 0);
+    this.ui.add(this.bulleCadre);
     // le conteur : son buste, dans le coin de la boîte de texte (ou son carnet, s'il n'est plus là)
     if (vivant) {
       this.conteur = this.add.image(92, 538, textureBusteHD(this, v, 'content')).setOrigin(0.5, 1).setScale(1.45);
@@ -179,25 +189,12 @@ class StoryScene extends Cinematique {
     super.ajouterTexte(suite);
   }
 
-  // (v1.62, planche 84) La besace du récit, posée sur une petite étagère de chêne accrochée au bord droit du
-  // cadre (sous « Passer ») ; le compte est écrit sur le chant de l'étagère. Elle verse vers la gauche.
-  creerEtagereBourse() {
-    const X0 = 806, Y = 104;
-    if (!this.textures.exists('etagereBourseHD')) {
-      const t = toileDecor(92, 16);
-      planche(t, 0, 0, 92, 9, 'chene', { graine: 812, noeuds: 1, usure: false });
-      for (let x = 0; x < 92; x++) { t.poser(x, 0, 'chene', 5); t.poser(x, 8, 'chene', 1); }
-      // deux consoles de fer forgé sous la planche, vissées dans le cadre
-      for (const x0 of [14, 58]) for (let k = 0; k < 7; k++) { t.poser(x0 + k, 9 + k, 'fer', 3); t.poser(x0 + k + 1, 9 + k, 'fer', 1); t.poser(x0, 9 + k, 'fer', k % 3 ? 2 : 4); }
-      t.contour();
-      t.texture(this, 'etagereBourseHD');
-    }
-    // (la planche s'enfonce sous les nuages du bord, comme accrochée au cadre)
-    const etagere = this.add.image(X0, Y - 1, 'etagereBourseHD').setOrigin(0, 0).setScale(2);
-    const bord = this.ui.list.indexOf(this.bulleCadre);
-    if (bord >= 0) this.ui.addAt(etagere, bord); else this.ui.add(etagere);
-    this.bourse = bourse(this, X0 + 64, Y, this.G.argent, { echelle: 1.4, taille: 14, conteneur: this.ui, sens: -1, gain: [-92, -26] });
-    this.bourse.texte.setY(1);
+  // (v1.62, planche 84, retour du joueur) La besace du récit est posée sur le bord bas de la bulle, en bas à
+  // gauche, juste au-dessus de la boîte du conteur ; son compte est écrit à côté d'elle, sur le bord. Quand on
+  // paie, elle penche vers la droite et ses pièces roulent sur le bord.
+  creerBesaceBord() {
+    this.bourse = bourse(this, BESACE_RECIT.x, BESACE_RECIT.y, this.G.argent, { echelle: 1.4, taille: 14, conteneur: this.ui, sens: 1, gain: [14, -70] });
+    this.bourse.texte.setOrigin(0, 0.5).setPosition(32, -8);
     this.ui.add(this.bourse);
   }
 
@@ -292,6 +289,7 @@ class StoryScene extends Cinematique {
     const cam = this.cameras.main;
     this.tweens.killTweensOf(cam);
     cam.scrollX -= d;
+    if (this.cadreVise) this.cadreVise.sx -= d;
     for (const [o, f] of this.couches) o.x -= d * f;
     this.perso.x -= d;
     for (const c of this.compagnons || []) c.x -= d;
@@ -568,7 +566,7 @@ class StoryScene extends Cinematique {
       await this.allerAuComptoir();
       this.ecrire('Mission ratée', [`« Je suis désolé${this.e}... Je reviens les mains vides. » · Relation : ${relation.nom}`,
         ...(this.parti.malus || []).map(m => '• ' + m)].join('\n'));
-      this.carteProgression(this.modeFiche ? 494 : 257, this.modeFiche ? 126 : 52);   // (v1.62 : à côté de la fiche, sous l’étagère de la besace)
+      await this.carteApresFiche();
     } else if (r.vivant) {
       await this.allerAuComptoir();
       // (v0.60) la fin de la quête, en une image : ce qu'on n'avait jamais vu
@@ -583,7 +581,7 @@ class StoryScene extends Cinematique {
       this.ecrire('Retour au comptoir',
         `« ${this.remerciement()} Voici ta part du butin ! »\n` +
         `+ ${gain} pièces${ajuste} · Relation : ${relation.nom}${message ? '\n' + message : ''}`);
-      this.carteProgression(this.modeFiche ? 494 : 257, this.modeFiche ? 126 : 52);   // (v1.62 : à côté de la fiche, sous l’étagère de la besace)
+      await this.carteApresFiche();
     } else {
       this.perso.setTint(0x888888);
       Son.jouer('glas');
@@ -614,12 +612,61 @@ class StoryScene extends Cinematique {
       this.carte = this.fiche = null;
     }
     this.indice.destroy();
-    const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => allerParVolets(this, 'Comptoir'));
+    // (v1.62) les boutons se rangent là où ils ne cachent ni la voyageuse ni la besace
+    const soins = r.vivant && blessuresDe(this.G, v.nom) > 0;
+    const places = this.rangerBoutons(soins ? [226, 240, 210] : [210], { trouvailles: r.vivant ? (this.parti.trouvailles || []).length : 0 });
+    const [xr, yr] = places[places.length - 1];
+    const retour = creerBouton(this, xr, yr, 210, 'Retour au comptoir', () => allerParVolets(this, 'Comptoir'));
     this.dansUI(retour);
     if (r.vivant) {
-      this.proposerSoins();
+      this.proposerSoins(places);
       this.proposerTrouvailles();
     }
+  }
+
+  // (v1.62) Avec la fiche : on lit la fin, un clic, puis la carte de progression prend la place de la fiche (à
+  // gauche), pour ne pas cacher la voyageuse arrivée au bout du chemin. Sans la fiche, la carte est au milieu.
+  async carteApresFiche() {
+    if (this.modeFiche && this.fiche && this.parti.progression) {
+      await this.attendreClic();
+      const f = this.fiche; this.fiche = null;
+      this.tweens.add({ targets: f, alpha: 0, duration: 250, onComplete: () => f.destroy() });
+      this.carteProgression(20, 52);
+    } else this.carteProgression(this.modeFiche ? 494 : 257, 52);
+  }
+
+  // (v1.62) Où ranger des boutons (largeurs données) sur la rangée du bas de la bulle (y = 345) sans cacher la
+  // voyageuse (debout ou couchée), la besace posée sur le bord, la fiche ni le panneau des trouvailles ; ce qui
+  // n'y tient pas passe sur une rangée au-dessus (y = 300). Renvoie les centres [x, y].
+  rangerBoutons(largeurs, { trouvailles = 0 } = {}) {
+    const c = this.cadreVise || { sx: this.cameras.main.scrollX, sy: this.cameras.main.scrollY, k: 1 };
+    const zones = [[0, BESACE_RECIT.y - 64, BESACE_RECIT.x + 46, BESACE_RECIT.y]];
+    const p = this.perso;
+    if (p && p.active && p.visible) {
+      // (debout, on ne garde que sa silhouette, pas le vide de son image ; couché, toute l'image)
+      const b = p.getBounds(), debout = Math.abs(p.angle) < 20, demi = debout ? p.displayWidth * 0.28 : (b.right - b.x) / 2, cx = debout ? p.x : (b.x + b.right) / 2;
+      zones.push([(cx - demi - c.sx) * c.k - 10, (b.y - c.sy) * c.k, (cx + demi - c.sx) * c.k + 10, (b.bottom - c.sy) * c.k]);
+    }
+    if (this.fiche && this.fiche.active) { const b = this.fiche.getBounds(); zones.push([b.x, b.y, b.right, b.bottom]); }
+    if (trouvailles) zones.push([20, 70, 560, 70 + 90 + trouvailles * 54]);
+    // une rangée : les boutons à la suite, de gauche à droite, en sautant ce qu'il ne faut pas cacher
+    const rangee = (y, depuis) => {
+      const res = []; let x = 18, i = depuis;
+      while (i < largeurs.length) {
+        const l = largeurs[i];
+        const gene = zones.find(([x0, y0, x1, y1]) => x < x1 + 6 && x + l > x0 - 6 && y - 16 < y1 && y + 16 > y0);
+        if (x + l > 942) break;
+        if (!gene) { res.push([x + l / 2, y]); x += l + 10; i++; continue; }
+        x = gene[2] + 6;
+        if (x + l > 942) break;
+      }
+      return res;
+    };
+    // tous sur la rangée du bas si possible, sinon tous sur celle du haut, sinon le début en haut et la suite en bas
+    for (const y of [345, 300]) { const r = rangee(y, 0); if (r.length === largeurs.length) return r; }
+    const haut = rangee(300, 0), bas = rangee(345, haut.length), places = [...haut, ...bas];
+    while (places.length < largeurs.length) places.push([942 - largeurs[places.length] / 2, 300]);
+    return places;
   }
 
   // (v1.61) avec la fiche, on ne regarde pas le voyageur marcher jusqu'au comptoir : il y est déjà
@@ -870,14 +917,16 @@ class StoryScene extends Cinematique {
     const v = this.parti.voyageur;
     const montants = montantsDedommagement(v);
     this.ajouterTexte(`\nTu dois verser un dédommagement à sa famille. Plus tu es ${eJ(this.G) ? 'généreuse' : 'généreux'}, plus ta réputation remonte... et plus un proche voudra reprendre le flambeau.`);
+    // (v1.62) rangés sans cacher le corps ni la besace
+    const places = this.rangerBoutons(Object.keys(DEDOMMAGEMENTS).map(() => 226));
     const boutons = Object.entries(DEDOMMAGEMENTS).map(([cle, d], i) => {
-      const b = creerBouton(this, 200 + i * 280, 345, 250, `${d.nom} : ${montants[cle]} p.`, () => {
+      const b = creerBouton(this, places[i][0], places[i][1], 226, `${d.nom} : ${montants[cle]} p.`, () => {
         const verse = dedommager(G, this.parti, cle);
         boutons.forEach(x => x.setVisible(false));
         const rep = d.reputation ? ` Réputation +${String(d.reputation).replace('.', ',')}.` : '';
         this.ecrire('Dédommagement', `Tu as versé ${verse} pièces à la famille ${dePersonne(v.nom)}.${rep}` +
           (G.argent < 0 ? `\nTu es à découvert (${G.argent} pièces). Faillite à ${SEUIL_FAILLITE} !` : ''));
-        const retour = creerBouton(this, 820, 345, 240, 'Retour au comptoir', () => allerParVolets(this, 'Comptoir'));
+        const retour = creerBouton(this, places[0][0], places[0][1], 210, 'Retour au comptoir', () => allerParVolets(this, 'Comptoir'));
         this.dansUI(retour);
       });
       this.dansUI(b);
@@ -887,7 +936,7 @@ class StoryScene extends Cinematique {
   }
 
   // L'aventurier est revenu blessé ? On peut le soigner avec une potion, et il paie.
-  proposerSoins() {
+  proposerSoins(places = [[255, 345], [530, 345]]) {
     const G = this.G;
     const v = this.parti.voyageur;
     if (!blessuresDe(G, v.nom)) return;
@@ -908,8 +957,8 @@ class StoryScene extends Cinematique {
         (blessuresDe(G, v.nom) ? `\nEncore ${blessuresDe(G, v.nom)} cœur(s) à soigner.` : `\nComplètement remis${this.e} sur pied !`));
       maj();
     };
-    const bouton = this.dansUI(creerBouton(this, 255, 345, 250, '', () => soin(false)));
-    const offert = this.dansUI(creerBouton(this, 530, 345, 270, '', () => soin(true)));
+    const bouton = this.dansUI(creerBouton(this, places[0][0], places[0][1], 226, '', () => soin(false)));
+    const offert = this.dansUI(creerBouton(this, places[1][0], places[1][1], 240, '', () => soin(true)));
     const maj = () => {
       const reste = blessuresDe(G, v.nom);
       bouton.setVisible(reste > 0); offert.setVisible(reste > 0);
