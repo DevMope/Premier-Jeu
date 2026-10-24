@@ -89,7 +89,7 @@ class PecheScene extends Phaser.Scene {
     for (let k = 0; k < max; k++) this.boiteMef.add(this.add.image(780 + k * 26, y + 9, texturePoisson(this, 'gardon')).setScale(0.9).setAlpha(k < max - n ? 1 : 0.25).setTint(k < max - n ? 0xffffff : 0x404040));
     this.boiteNiv.removeAll(true);
     this.boiteNiv.add(this.add.rectangle(150, y, 260, 46, 0x1a120a, 0.86).setStrokeStyle(2, 0x8a6a3a));
-    this.boiteNiv.add(this.add.text(32, y - 16, `Pêcheur · niveau ${pr.niveau}`, style(13, '#f3d98a', { fontStyle: 'bold' })));
+    this.boiteNiv.add(this.add.text(32, y - 16, `${eJ() ? 'Pêcheuse' : 'Pêcheur'} · niveau ${pr.niveau}`, style(13, '#f3d98a', { fontStyle: 'bold' })));
     const g = this.add.graphics(); g.fillStyle(0x3a2a1a).fillRect(32, y + 4, 180, 8);
     if (pr.haut) g.fillStyle(0x6ab0e0).fillRect(32, y + 4, 180 * (pr.xp - pr.bas) / (pr.haut - pr.bas), 8); else g.fillStyle(0xd8a830).fillRect(32, y + 4, 180, 8);
     this.boiteNiv.add(g);

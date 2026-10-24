@@ -1496,7 +1496,7 @@ class MarcheScene extends Phaser.Scene {
         ecranNouvelObjet(this, textureCanne(this, id), { nom: k.nom, de: 'achetée à Barnabé Goujon', texte: k.texte + (id === 'roseau' ? "\nL'étang du Moulin t'attend : le matin (l'aube), ou le soir." : ''), ech: id === 'roseau' ? 5 : 4.4, bouton: 'Merci, Barnabé' }).then(() => this.ouvrirPeche());
       }, undefined, 24);
     });
-    c.add(this.add.text(30, 448, `Pêcheur · niveau ${pr.niveau}${pr.haut ? ` (${pr.xp}/${pr.haut})` : ' (le plus haut)'} · vendus aujourd'hui : ${ventesDuJour(G)}/${PECHE.venteParJour}`, style(12, '#1f4a7a', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+    c.add(this.add.text(30, 448, `${eJ() ? 'Pêcheuse' : 'Pêcheur'} · niveau ${pr.niveau}${pr.haut ? ` (${pr.xp}/${pr.haut})` : ' (le plus haut)'} · vendus aujourd'hui : ${ventesDuJour(G)}/${PECHE.venteParJour}`, style(12, '#1f4a7a', { fontStyle: 'bold' })).setOrigin(0, 0.5));
     this.bouton(c, 620, 448, 160, 'Le carnet de pêche', () => carnetDePeche(this), undefined, 24);
     if (aUneCanne(G)) this.bouton(c, 820, 448, 190, "Aller à l'étang (l'aube)", () => {
       if (this.jeuLance || enTransition(this)) return;
