@@ -227,7 +227,9 @@ const PEUPLES_HD = {
 function FIGURANTS_BUSTE(p) { const f = p && p.figurant && typeof FIGURANTS !== 'undefined' && FIGURANTS[p.figurant]; return f && f.buste ? f : null; }
 function geneHD(p) {
   const fig = FIGURANTS_BUSTE(p);
-  if (fig) return { ...geneHDBase({ ...p, race: fig.race, feminin: fig.feminin }), peau: BASES_PEAU[fig.peau] ?? BASES_PEAU[1], cheveux: fig.cheveux, habit: fig.habit, coiffure: fig.coiffure || 'court', barbe: fig.barbe || (fig.race === 'nain' && !fig.feminin ? 'nain' : null), armure: false, forgeron: fig.costume === 'forgeron' };
+  // (v1.61) ... et son costume de garde (le crieur, le héraut) : la tenue de la garde, à son tabard à lui
+  if (fig) return { ...geneHDBase({ ...p, race: fig.race, feminin: fig.feminin }), peau: BASES_PEAU[fig.peau] ?? BASES_PEAU[1], cheveux: fig.cheveux, habit: fig.habit, coiffure: fig.coiffure || 'court', barbe: fig.barbe || (fig.race === 'nain' && !fig.feminin ? 'nain' : null), armure: false, forgeron: fig.costume === 'forgeron',
+    ...(fig.costume === 'garde' ? { garde: true, tabard: fig.habit } : {}) };
   return geneHDBase(p);
 }
 function geneHDBase(p) {
@@ -248,7 +250,7 @@ function geneHDBase(p) {
     armure: r() < 0.4,
     taches: r() < 0.25,
     // Les nobles et les collectionneurs (clients prestigieux) : des étoffes riches, et un chapeau à plume
-    noble: !!p.prestige,
+    noble: !!p.prestige || p.costume === 'noble',   // (v1.61 : le collectionneur aussi, en costume de noble, comme en pied)
     garde: !!p.garde,
     mentor: p.figurant === 'mentor',
     vieux: !!p.vieux,
@@ -258,7 +260,6 @@ function geneHDBase(p) {
     foulard: p.costume === 'diseuse',   // (v1.05) le foulard violet de Madame Ysmée
     marques: p.marques || (FIGURANTS_BUSTE(p) || {}).marques || null,   // (v0.75) les signes distinctifs des bandits recherchés
     nom: p.nom,
-    habitNoble: choix([0x6a1a3a, 0x1a2a6a, 0x3a1a5a, 0x7a4a10]),
   };
 }
 
@@ -334,7 +335,7 @@ const MECHES = (x, y) => { const m = (x * 3 + Math.round(Math.sin(y / 3.5) * 1.5
 
 function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = false, pose = null } = {}) {
   const t = new ToileHD(HD_L, HD_H);
-  let g = gene.colporteur ? { ...gene, habit: 0x6a5a40, cheveux: 0x4a3a2a, armure: false, barbe: 'courte', coiffure: 'court' } : gene;
+  let g = gene.colporteur ? { ...gene, habit: 0x6a5a40, cheveux: 0x4a3a2a, cape: 0x4a3a2a, armure: false, barbe: 'courte', coiffure: 'court' } : gene;   // (v1.61 : la cape du figurant, comme en pied)
   // Garrick : sa tignasse grise, sa barbe, sa cape verte
   // Garrick, le rôdeur : cheveux bruns, longs et ondulés, barbe de quelques jours, long manteau de cuir olive (voir torseHD)
   // (v0.58) le mendiant : cheveux et barbe gris en broussaille, vieux manteau rapiécé
@@ -654,7 +655,8 @@ function poseBuste(g, expression) {
 // Les bras partent des épaules (sous les épaulières), les manches sont de la matière du torse.
 function brasBuste(t, g, v, cx, pose) {
   const largeur = LARGEURS_BUSTE[g.race] || 20;
-  const manche = g.forgeron ? 'peau' : g.race === 'nain' ? 'metal' : g.race === 'hobbit' ? 'lin' : g.race === 'humain' && g.armure ? 'cuir' : 'habit';
+  // (v1.61) l'humain en brigandine a les manches de son habit (comme les autres peuples) : tout de cuir, il perdait sa couleur
+  const manche = g.forgeron ? 'peau' : g.race === 'nain' ? 'metal' : g.race === 'hobbit' ? 'lin' : 'habit';
   const ep = g.race === 'nain' || g.race === 'troll' || g.race === 'orc' ? 5.2 : 4.4;
   const sx = largeur + 2, sy = v.torse + 12;
   const epaule = s => [cx + s * sx, sy];
@@ -757,7 +759,7 @@ function torseHD(t, g, v, cx) {
   const corps = corpsRond(cx, v.torse, largeur);
   if (g.garde) {
     // Le garde de la Confrérie : la cotte de mailles, le tabard bleu, le soleil d'or
-    t.rampes.tabard = rampeVive(0x2a4a8a);
+    t.rampes.tabard = rampeVive(g.tabard || 0x2a4a8a);   // (v1.61 : le tabard d'un figurant en garde, le crieur)
     t.forme('metal', corps, { decalage: -0.6, motif: (x, y) => ((x + y) % 2 ? 0.4 : -0.4) });
     t.forme('tabard', (x, y) => (corps(x, y) && y >= v.torse + 4 && Math.abs(x + 0.5 - cx) < 13 ? corps(x, y) : null), { decalage: 0.1 });
     t.forme('or', ellipsoide(cx, v.torse + 18, 4, 4), { decalage: 0.3 });
