@@ -797,7 +797,7 @@ class StoryScene extends Cinematique {
       }
       this.perso.setTint(0x80ff80);
       this.time.delayedCall(300, () => this.perso.clearTint());
-      if (G.soinParHospice) gainEnDirect(this, this.perso.x, this.perso.y - this.perso.displayHeight - 20, 'Soin offert (hospice) : pas de potion', true);   // (v1.28)
+      if (G.soinParHospice) gainEnDirect(this, this.perso.x, this.perso.y - hauteurCorps(this.perso) - 20, 'Soin offert (hospice) : pas de potion', true);   // (v1.28)
       this.ecrire('Soins', (G.soinParHospice ? 'La sœur Aveline est venue de l’hospice avec ses bandes et ses onguents. ' : '') + (gratuit ? `« Tu... tu ne me fais rien payer ? Je ne l'oublierai pas. »` : `« Ah, ça fait du bien ! Tiens, ${PRIX_SOIN} pièces pour la potion. »`) +
         (blessuresDe(G, v.nom) ? `\nEncore ${blessuresDe(G, v.nom)} cœur(s) à soigner.` : `\nComplètement remis${this.e} sur pied !`));
       maj();
@@ -1371,7 +1371,7 @@ class StoryScene extends Cinematique {
   // Le grappin : il le fait tournoyer, le lance en cloche, il s'enroule autour de la branche.
   async lancerGrappin() {
     const R = this.menace.ravin, p = this.perso, br = R.branche;
-    const main = () => ({ x: p.x + 8, y: p.y - p.displayHeight * 0.72 });
+    const main = () => ({ x: p.x + 8, y: p.y - hauteurCorps(p) * 0.72 });
     const corde = this.add.graphics().setDepth(4); this.decor.add(corde);
     const crochet = this.add.triangle(0, 0, 0, 6, 6, 0, 12, 6, 0x9aa0a8).setDepth(4.1); this.decor.add(crochet);
     // il le fait tournoyer au-dessus de sa tête
@@ -1411,9 +1411,9 @@ class StoryScene extends Cinematique {
     const fin = { x: R.X + 238, y: R.haut };
     if (R.corde) {
       // le balancier : les mains décrivent un arc autour de la branche
-      const m0 = { x: p.x + 8, y: p.y - p.displayHeight * 0.72 };
+      const m0 = { x: p.x + 8, y: p.y - hauteurCorps(p) * 0.72 };
       const r = Math.hypot(m0.x - br.x, m0.y - br.y), a0 = Math.atan2(m0.y - br.y, m0.x - br.x);
-      const a1 = Math.PI - a0, ecart = p.displayHeight * 0.72;
+      const a1 = Math.PI - a0, ecart = hauteurCorps(p) * 0.72;
       const balance = { u: 0 };
       this.lignesDeVitesse(p.x, p.y - 60, 1);
       Son.jouer('vol', { force: 1.2 });

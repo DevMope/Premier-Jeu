@@ -2583,7 +2583,7 @@ class CounterScene extends Phaser.Scene {
       const phase = t / 500 * Math.PI * 2;
       const swing = balance ? Math.sin(phase - 0.9) * 9 * Math.min(1, t / 300) : 0;
       if (!b) {   // (sans bâton dessiné : comme avant, posé sur l'épaule)
-        porte.setPosition(this.perso.x - sens * this.perso.displayWidth * 0.15, this.perso.y - this.perso.displayHeight * 0.62).setAngle(swing);
+        porte.setPosition(this.perso.x - sens * this.perso.displayWidth * 0.15, this.perso.y - hauteurCorps(this.perso) * 0.62).setAngle(swing);
         return;
       }
       const src = this.textures.get(cle).getSourceImage();
@@ -2620,7 +2620,7 @@ class CounterScene extends Phaser.Scene {
       this.events.once('shutdown', () => this.events.off('update', placer));
       porte.once('destroy', () => this.events.off('update', placer));
       creerGlyphesHD(this);
-      const salut = this.add.image(this.perso.x + (versDroite ? -30 : 30), this.perso.y - this.perso.displayHeight - 6, 'glyphe_main').setScale(2.6).setOrigin(0.5, 1).setDepth(6);
+      const salut = this.add.image(this.perso.x + (versDroite ? -30 : 30), this.perso.y - hauteurCorps(this.perso) - 6, 'glyphe_main').setScale(2.6).setOrigin(0.5, 1).setDepth(6);
       this.tweens.add({ targets: salut, angle: { from: -25, to: 25 }, duration: 140, yoyo: true, repeat: 3 });
       this.tweens.add({ targets: salut, alpha: 0, y: salut.y - 16, delay: 800, duration: 300, onComplete: () => salut.destroy() });
       this.tweens.add({ targets: this.perso, y: SOL_COMPTOIR - 16, duration: 150, yoyo: true, ease: 'Quad.easeOut', onUpdate: placer, onComplete: () => this.time.delayedCall(450, partir) });

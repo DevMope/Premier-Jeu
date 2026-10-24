@@ -35,60 +35,45 @@ function jambeA(ctx, sp = {}, autre = null) {
   return { genou: g, pied: pd, leve: ctx.sol - 3 * ctx.k - pd[2], bout: sp.bout ?? 1 };
 }
 
-// --- Les armes en action, dans la main de devant (dir : de la main vers le bout qui frappe) ---
-function armeEnMain(dir, long = 15) {
+// --- Les armes en action, dans la main de devant, à leur vraie taille (ARMES_HD, corpsVueHD.js) ---
+// La famille d'une arme : chaque pose dit, pour chacune, dans quel sens part le bout qui frappe (une lame pointe, une hache se
+// lève tête en haut, une lance se tient à l'horizontale, un bâton debout)
+function familleArme(arme) {
+  return ['hache', 'marteau', 'massue'].includes(arme) ? 'masse' : arme === 'lance' ? 'hampe' : arme === 'baton' || arme === 'bambou' ? 'baton' : arme === 'arc' ? 'arc' : 'lame';
+}
+function dirArme(dir, arme) { return Array.isArray(dir) ? dir : dir[familleArme(arme)] || dir.lame; }
+// dir : de la main vers le bout qui frappe (ou, par famille : { lame, masse, hampe, baton })
+function armeEnMain(dir) {
   return (A) => {
-    const { t, k, kA, M, matMain, gm, dessinerArmeAxe, arme } = A, n = Math.hypot(dir[0], dir[1]), d = [dir[0] / n, dir[1] / n], o = [-d[1], d[0]];
-    const Pt = (u, v = 0) => [M[0] + d[0] * u * kA + o[0] * v * kA, M[1] + 1 * k + d[1] * u * kA + o[1] * v * kA];
-    if (arme === 'epee') dessinerArmeAxe(Pt(-3), Pt(long));
-    else if (arme === 'hache' || arme === 'marteau' || arme === 'massue') dessinerArmeAxe(Pt(long * 0.7), Pt(-4));
-    else if (arme === 'lance') dessinerArmeAxe(Pt(long * 0.9), Pt(-long * 0.6));
-    else if (arme === 'baton' || arme === 'bambou') dessinerArmeAxe(Pt(long * 0.35), Pt(-long * 0.65));
-    else if (arme === 'dague') {
-      cylindre(t, 'boisA', Pt(-2.2), Pt(0.6), 0.6 * kA, { decalage: 0.4 });
-      cylindre(t, 'ferA', Pt(1, -1.8), Pt(1, 1.8), 0.6 * kA, { decalage: 0.5 });
-      cylindre(t, 'lameA', Pt(1.6), Pt(7.5), 0.85 * kA, { decalage: 0.4 });
-    } else if (arme === 'rapiere') {
-      cylindre(t, 'boisA', Pt(-2.6), Pt(0.4), 0.55 * kA, { decalage: 0.5 });
-      t.forme('laitonA', ellipsoide(...Pt(1), 1.9 * kA, 1.9 * kA), { decalage: 0.5 });
-      cylindre(t, 'lameA', Pt(2), Pt(long + 2), 0.5 * kA, { decalage: 0.5 });
-    } else if (arme === 'khopesh') {
-      cylindre(t, 'boisA', Pt(-2.5), Pt(1.5), 0.65 * kA, { decalage: 0.5 });
-      let prec = null; for (let i = 0; i <= 10; i++) { const u = i / 10, p = Pt(1.5 + u * 10, -Math.sin(u * 2.6) * 3.2); if (prec) cylindre(t, 'lameA', prec, p, 0.9 * kA, { decalage: 0.4 }); prec = p; }
-    } else if (arme === 'griffes') {
-      t.forme('cuir', ellipsoide(...Pt(0.6), 2.6 * kA, 1.6 * kA), { decalage: 0.7 });
-      for (const v of [-1.1, 0, 1.1]) cylindre(t, 'lameA', Pt(1.8, v), Pt(7, v * 1.3), 0.5 * kA, { decalage: 0.9 });
-    } else if (arme === 'fronde') {
-      // la fronde qu'on fait tourner : la corde et la poche de cuir au bout
-      const bout = Pt(long, 0);
-      cylindre(t, 'cordeA', Pt(0), bout, 0.3 * kA, { decalage: 0.3, ombre: false });
-      t.forme('cuir', ellipsoide(bout[0], bout[1], 1.8 * kA, 1.3 * kA), { decalage: 0.4 });
-    }
+    const { t, k, M, matMain, gm, dessinerArmeAxe, arme } = A;
+    if (arme && ARMES_HD[arme]) { const ax = axeArmeHD(arme, [M[0], M[1] + 1 * k], dirArme(dir, arme), k); dessinerArmeAxe(ax.A, ax.B); }
     t.forme(matMain, ellipsoide(M[0], M[1] + 1 * k * gm, 2.2 * k * gm, 2.3 * k * gm), { decalage: 0.95 });   // la main serrée dessus
   };
 }
-// L'arc : le bois dans la main lointaine, la corde tirée jusqu'à la joue par la main proche (tendu), la flèche
+// L'arc long (1,70 m) : le bois dans la main lointaine, la corde tirée jusqu'à la joue par la main proche (tendu), la flèche
 function arcEnMain(tendu) {
   return (A) => {
-    const { t, k, kA, segBras, matMain, gm } = A, Mb = segBras[0][2], Mc = segBras[1][2], h = 12 * kA;
-    const haut = [Mb[0] - (tendu ? 2.2 : 0.6) * kA, Mb[1] - h], bas = [Mb[0] - (tendu ? 2.2 : 0.6) * kA, Mb[1] + h];
-    let prec = null; for (let i = 0; i <= 16; i++) { const u = i / 16, v = Math.sin(u * Math.PI) * (tendu ? 4.2 : 3.2) * kA, p = [haut[0] + v, haut[1] + (bas[1] - haut[1]) * u]; if (prec) cylindre(t, 'boisA', prec, p, 1 * kA, { decalage: 0.4 }); prec = p; }
+    const { t, k, kA, segBras, matMain, gm } = A, Mb = segBras[0][2], Mc = segBras[1][2], h = ARMES_HD.arc.L / 2 * k, creux = h * (tendu ? 0.2 : 0.14);
+    const haut = [Mb[0] - creux * 0.5, Mb[1] - h], bas = [Mb[0] - creux * 0.5, Mb[1] + h];
+    let prec = null; for (let i = 0; i <= 20; i++) { const u = i / 20, v = Math.sin(u * Math.PI) * creux, p = [haut[0] + v, haut[1] + (bas[1] - haut[1]) * u]; if (prec) cylindre(t, 'boisA', prec, p, (1.05 - Math.abs(u - 0.5) * 0.5) * kA, { decalage: 0.4 }); prec = p; }
     const main = tendu ? [Mc[0] + 0.6 * k, Mc[1] + 0.6 * k] : [haut[0], Mb[1]];
     cylindre(t, 'cordeA', haut, main, 0.3 * kA, { decalage: 0.3, ombre: false }); cylindre(t, 'cordeA', main, bas, 0.3 * kA, { decalage: 0.3, ombre: false });
     if (tendu) {
-      const fin = [Mb[0] + 5 * kA, Mb[1] + 0.3 * k];
+      // la flèche (75 cm), encochée à la corde, la pointe qui dépasse de l'arc
+      const vx = Mb[0] - main[0], vy = Mb[1] + 0.3 * k - main[1], nv = Math.hypot(vx, vy) || 1, fin = [main[0] + vx / nv * 27 * k, main[1] + vy / nv * 27 * k];
       cylindre(t, 'boisA', main, fin, 0.45 * kA, { decalage: 0.6, ombre: false }); t.forme('lameA', ellipsoide(fin[0] + 0.8 * kA, fin[1], 1.4 * kA, 0.9 * kA), { decalage: 0.7, ombre: false });
       for (const dd of [-1, 1]) cylindre(t, 'plume', [main[0] + 0.6 * kA, main[1]], [main[0] + 2.2 * kA, main[1] + dd * 1 * kA], 0.45 * kA, { decalage: 0.5, ombre: false });
     }
+    cylindre(t, 'cuir', [Mb[0] + creux * 0.5, Mb[1] - 2 * k], [Mb[0] + creux * 0.5, Mb[1] + 2 * k], 1.2 * kA, { decalage: 0.6, ombre: false });   // la poignée
     t.forme(matMain, ellipsoide(Mb[0], Mb[1] + 0.6 * k, 1.9 * k * gm, 2 * k * gm), { decalage: 0.9 });
     t.forme(matMain, ellipsoide(Mc[0], Mc[1] + 0.6 * k, 1.9 * k * gm, 2 * k * gm), { decalage: 0.9 });
   };
 }
-// Le bouclier rond (bois cerclé de fer, l'umbo au milieu) au bras lointain, devant le corps ; l'arme levée derrière
-function bouclierEnMain(dirArme) {
+// Le bouclier rond (60 cm : bois cerclé de fer, l'umbo au milieu) au bras lointain, devant le corps ; l'arme dans l'autre main
+function bouclierEnMain(dir) {
   return (A) => {
     const { t, k, kA, segBras } = A, Mb = segBras[0][2], Cb = segBras[0][1];
-    if (!t.rampes.ferA) t.rampes.ferA = rampeVive(0x6a6e78);   // (sans arme, le moteur n'a pas posé les teintes des armes)
+    if (!t.rampes.ferA) rampesArmesHD(t);   // (sans arme, le moteur n'a pas posé les teintes des armes)
     t.rampes.boisB = rampeVive(0x8a5a2a); const cxB = (Mb[0] + Cb[0]) / 2 + 1.5 * k, cyB = (Mb[1] + Cb[1]) / 2, rB = 8.5 * kA;
     const avant = t.partie; t.partie = 'brasL';
     t.forme('ferA', ellipsoide(cxB, cyB, rB * 0.62, rB), { decalage: 0.2 });
@@ -96,7 +81,7 @@ function bouclierEnMain(dirArme) {
     t.forme('ferA', ellipsoide(cxB + 0.4 * kA, cyB, 2 * kA, 2.6 * kA), { decalage: 0.7 });
     t.partie = avant;
     t.bouclierXY = [cxB, cyB];
-    if (A.arme) armeEnMain(dirArme, 13)(A);
+    armeEnMain(dir)(A);
   };
 }
 
@@ -128,34 +113,59 @@ const POSES_HD = {};
   P.gitVentre = { vue: 'profil', extra: { yeuxFermes: true, boucheForcee: 1 }, membres: { jambeP: { p: 0.05, f: 0.05, appui: false }, jambeL: { p: -0.06, f: 0.18, appui: false }, brasP: { p: 2.75, f: 0.35 }, brasL: { p: 0.25, f: 0.25 } },
     rig: (R, k) => ({ tete: { a: -4, px: R.cx, py: R.yT }, global: { a: 90, px: R.cx, py: R.yB } }) };
   // --- Se battre (l'arme réelle passe en option : POSES_COMBAT dit quelle paire de poses prend chaque arme) ---
-  P.coupArme = { armeMain: armeEnMain([-0.55, -0.85], 14), membres: { jambeP: { p: -0.4, f: 0.1 }, jambeL: { p: 0.5, f: 0.55 }, brasP: { p: 2.75, f: 0.95, a: 0.25 }, brasL: { p: 1.15, f: 0.5, a: 0.25 } },
+  P.coupArme = { dirArme: [-0.55, -0.85], armeMain: armeEnMain([-0.55, -0.85]), membres: { jambeP: { p: -0.4, f: 0.1 }, jambeL: { p: 0.5, f: 0.55 }, brasP: { p: 2.75, f: 0.95, a: 0.25 }, brasL: { p: 1.15, f: 0.5, a: 0.25 } },
     extra: { fache: true }, rig: (R, k) => ({ buste: { a: -7, px: R.cx, py: R.yB } }) };
-  P.coupFrappe = { armeMain: armeEnMain([1, 0.42], 15), membres: { jambeP: { p: -0.6, f: 0.1 }, jambeL: { p: 0.75, f: 0.85 }, brasP: { p: 1.35, f: 0.05 }, brasL: { p: -0.55, f: 0.35, a: 0.35 } },
+  P.coupFrappe = { dirArme: [1, 0.42], armeMain: armeEnMain([1, 0.42]), membres: { jambeP: { p: -0.6, f: 0.1 }, jambeL: { p: 0.75, f: 0.85 }, brasP: { p: 1.35, f: 0.05 }, brasL: { p: -0.55, f: 0.35, a: 0.35 } },
     extra: { fache: true }, rig: (R, k) => ({ buste: { a: 13, px: R.cx, py: R.yB }, tete: { a: -6, px: R.cx, py: R.yT } }) };
   // l'estoc (la lance, la rapière) : ramenée à la hanche, puis la pointe part droit devant
-  P.estocArme = { armeMain: armeEnMain([1, -0.18], 16), membres: { jambeP: { p: -0.45, f: 0.1 }, jambeL: { p: 0.55, f: 0.6 }, brasP: { p: 0.6, f: 1.35, a: 0.3 }, brasL: { p: 1.1, f: 0.6, a: 0.2 } },
+  P.estocArme = { dirArme: [1, -0.18], armeMain: armeEnMain([1, -0.18]), membres: { jambeP: { p: -0.45, f: 0.1 }, jambeL: { p: 0.55, f: 0.6 }, brasP: { p: 0.6, f: 1.35, a: 0.3 }, brasL: { p: 1.1, f: 0.6, a: 0.2 } },
     extra: { fache: true }, rig: (R, k) => ({ buste: { a: -6, px: R.cx, py: R.yB } }) };
-  P.estocFrappe = { armeMain: armeEnMain([1, -0.05], 16), membres: { jambeP: { p: -0.7, f: 0.1 }, jambeL: { p: 0.8, f: 0.9 }, brasP: { p: 1.55, f: 0.02 }, brasL: { p: -0.5, f: 0.35, a: 0.35 } },
+  P.estocFrappe = { dirArme: [1, -0.05], armeMain: armeEnMain([1, -0.05]), membres: { jambeP: { p: -0.7, f: 0.1 }, jambeL: { p: 0.8, f: 0.9 }, brasP: { p: 1.55, f: 0.02 }, brasL: { p: -0.5, f: 0.35, a: 0.35 } },
     extra: { fache: true }, rig: (R, k) => ({ buste: { a: 15, px: R.cx, py: R.yB }, tete: { a: -8, px: R.cx, py: R.yT } }) };
-  P.arcBande = { armeMain: arcEnMain(true), membres: { jambeP: { p: -0.25, f: 0.12 }, jambeL: { p: 0.3, f: 0.12 }, brasL: { p: 1.55, f: 0.05, a: 0.05 },
+  P.arcBande = { arc: true, armeMain: arcEnMain(true), membres: { jambeP: { p: -0.25, f: 0.12 }, jambeL: { p: 0.3, f: 0.12 }, brasL: { p: 1.55, f: 0.05, a: 0.05 },
       brasP: { ik: ({ k, ep, yT, cy, P, cote }) => ({ coude: [cote * (ep + 5 * k), -4 * k, yT + 1.5 * k], main: [cote * 1 * k, P.rx * 0.9, cy + P.ry * 0.75] }) } },
     extra: { fache: true }, rig: (R, k) => ({ buste: { a: -3, px: R.cx, py: R.yB } }) };
-  P.arcTire = { armeMain: arcEnMain(false), membres: { jambeP: { p: -0.25, f: 0.12 }, jambeL: { p: 0.3, f: 0.12 }, brasL: { p: 1.55, f: 0.05, a: 0.05 }, brasP: { p: -2.0, f: 2.3, a: 0.35 } },
+  P.arcTire = { arc: true, armeMain: arcEnMain(false), membres: { jambeP: { p: -0.25, f: 0.12 }, jambeL: { p: 0.3, f: 0.12 }, brasL: { p: 1.55, f: 0.05, a: 0.05 }, brasP: { p: -2.0, f: 2.3, a: 0.35 } },
     extra: { fache: true }, rig: (R, k) => ({ buste: { a: -5, px: R.cx, py: R.yB } }) };
-  P.batonLeve = { armeMain: armeEnMain([0.12, -1], 18), membres: { jambeP: { p: -0.3, f: 0.1 }, jambeL: { p: 0.35, f: 0.2 }, brasP: { p: 2.85, f: 0.25, a: 0.2 }, brasL: { p: 1.4, f: 0.45, a: 0.3 } },
+  P.batonLeve = { dirArme: [0.12, -1], armeMain: armeEnMain([0.12, -1]), membres: { jambeP: { p: -0.3, f: 0.1 }, jambeL: { p: 0.35, f: 0.2 }, brasP: { p: 2.85, f: 0.25, a: 0.2 }, brasL: { p: 1.4, f: 0.45, a: 0.3 } },
     extra: { fache: true }, rig: (R, k) => ({ buste: { a: -5, px: R.cx, py: R.yB }, tete: { a: -8, px: R.cx, py: R.yT } }) };
-  P.batonPointe = { armeMain: armeEnMain([1, -0.12], 18), membres: { jambeP: { p: -0.55, f: 0.1 }, jambeL: { p: 0.6, f: 0.7 }, brasP: { p: 1.5, f: 0.05 }, brasL: { p: 1.2, f: 0.3, a: 0.1 } },
+  P.batonPointe = { dirArme: [1, -0.12], armeMain: armeEnMain([1, -0.12]), membres: { jambeP: { p: -0.55, f: 0.1 }, jambeL: { p: 0.6, f: 0.7 }, brasP: { p: 1.5, f: 0.05 }, brasL: { p: 1.2, f: 0.3, a: 0.1 } },
     extra: { fache: true }, rig: (R, k) => ({ buste: { a: 10, px: R.cx, py: R.yB } }) };
   // la fronde : elle tourne au-dessus de la tête, puis le bras se détend vers l'avant
-  P.frondeTourne = { armeMain: armeEnMain([-0.35, -1], 7), membres: { jambeP: { p: -0.35, f: 0.1 }, jambeL: { p: 0.4, f: 0.3 }, brasP: { p: 2.9, f: 0.2, a: 0.15 }, brasL: { p: 0.9, f: 0.5, a: 0.3 } },
+  P.frondeTourne = { dirArme: [-0.35, -1], armeMain: armeEnMain([-0.35, -1]), membres: { jambeP: { p: -0.35, f: 0.1 }, jambeL: { p: 0.4, f: 0.3 }, brasP: { p: 2.9, f: 0.2, a: 0.15 }, brasL: { p: 0.9, f: 0.5, a: 0.3 } },
     extra: { fache: true }, rig: (R, k) => ({ buste: { a: -6, px: R.cx, py: R.yB } }) };
-  P.frondeLache = { armeMain: armeEnMain([1, 0.6], 7), membres: { jambeP: { p: -0.6, f: 0.1 }, jambeL: { p: 0.7, f: 0.8 }, brasP: { p: 1.75, f: 0.1 }, brasL: { p: -0.4, f: 0.3, a: 0.3 } },
+  P.frondeLache = { dirArme: [1, 0.6], armeMain: armeEnMain([1, 0.6]), membres: { jambeP: { p: -0.6, f: 0.1 }, jambeL: { p: 0.7, f: 0.8 }, brasP: { p: 1.75, f: 0.1 }, brasL: { p: -0.4, f: 0.3, a: 0.3 } },
     extra: { fache: true }, rig: (R, k) => ({ buste: { a: 12, px: R.cx, py: R.yB } }) };
   // le bouclier : la parade de face, puis la parade haute (le bouclier levé au-dessus de la tête)
-  P.bouclierParade = { bouclier: true, armeMain: bouclierEnMain([-0.5, -0.86]), membres: { jambeP: { p: -0.5, f: 0.1 }, jambeL: { p: 0.75, f: 1.0 }, brasL: { p: 1.15, f: 1.05, a: 0.1 }, brasP: { p: 2.5, f: 1.25, a: 0.3 } },
+  P.bouclierParade = { bouclier: true, dirArme: { lame: [-0.5, -0.86], masse: [-0.5, -0.86], hampe: [0.35, -1], baton: [0.2, -1] }, armeMain: bouclierEnMain({ lame: [-0.5, -0.86], masse: [-0.5, -0.86], hampe: [0.35, -1], baton: [0.2, -1] }), membres: { jambeP: { p: -0.5, f: 0.1 }, jambeL: { p: 0.75, f: 1.0 }, brasL: { p: 1.15, f: 1.05, a: 0.1 }, brasP: { p: 2.5, f: 1.25, a: 0.3 } },
     extra: { fache: true }, rig: (R, k) => ({ buste: { a: 8, px: R.cx, py: R.yB }, tete: { a: 6, px: R.cx, py: R.yT } }) };
-  P.bouclierHaute = { bouclier: true, armeMain: bouclierEnMain([-0.25, 0.97]), membres: { jambeP: { p: -0.55, f: 0.6 }, jambeL: { p: 0.85, f: 1.25 }, brasL: { p: 2.35, f: 0.75, a: 0.15 }, brasP: { p: -0.35, f: 0.45, a: 0.2 } },
+  P.bouclierHaute = { bouclier: true, dirArme: { lame: [-0.25, 0.97], masse: [0.2, 0.98], hampe: [1, 0.2], baton: [0.3, 0.95] }, armeMain: bouclierEnMain({ lame: [-0.25, 0.97], masse: [0.2, 0.98], hampe: [1, 0.2], baton: [0.3, 0.95] }), membres: { jambeP: { p: -0.55, f: 0.6 }, jambeL: { p: 0.85, f: 1.25 }, brasL: { p: 2.35, f: 0.75, a: 0.15 }, brasP: { p: -0.35, f: 0.45, a: 0.2 } },
     extra: { fache: true }, rig: (R, k) => ({ buste: { a: 4, px: R.cx, py: R.yB }, tete: { a: 10, px: R.cx, py: R.yT } }) };
+  // la riposte : le bouclier en avant, il frappe par-dessous (après une parade de face)
+  const RIPOSTE = { lame: [1, 0.3], masse: [1, 0.55], hampe: [1, -0.04], baton: [1, -0.1] };
+  P.bouclierRiposte = { bouclier: true, dirArme: RIPOSTE, armeMain: bouclierEnMain(RIPOSTE), membres: { jambeP: { p: -0.65, f: 0.1 }, jambeL: { p: 0.8, f: 0.95 }, brasL: { p: 1.25, f: 0.9, a: 0.1 }, brasP: { p: 1.3, f: 0.05, a: 0.05 } },
+    extra: { fache: true }, rig: (R, k) => ({ buste: { a: 14, px: R.cx, py: R.yB }, tete: { a: -6, px: R.cx, py: R.yT } }) };
+  // --- (retours sur la planche 86) Les gens des récits (brigands, pillards, gardes...) : de vraies postures, l'arme tenue
+  // comme une arme. La garde (le poids sur la jambe arrière, la pointe vers l'adversaire), la garde basse (l'air sûr de lui),
+  // la menace (l'arme levée, l'autre main qui désigne), le recul (le buste en arrière, l'arme en travers), et à terre ---
+  const GARDE = { lame: [1, -0.75], masse: [0.45, -1], hampe: [1, -0.14], baton: [0.25, -1] };
+  P.garde = { dirArme: GARDE, armeMain: armeEnMain(GARDE), membres: { jambeP: { p: -0.4, f: 0.35 }, jambeL: { p: 0.5, f: 0.7 }, brasP: { p: 1.15, f: 0.65, a: 0.22 }, brasL: { p: 0.85, f: 0.95, a: 0.35 } },
+    extra: { fache: true }, rig: (R, k) => ({ buste: { a: 6, px: R.cx, py: R.yB }, tete: { a: -3, px: R.cx, py: R.yT } }) };
+  const BASSE = { lame: [1, 0.32], masse: [0.85, 0.5], hampe: [1, 0.12], baton: [0.35, -1] };
+  P.gardeBasse = { dirArme: BASSE, armeMain: armeEnMain(BASSE), membres: { jambeP: { p: -0.22, f: 0.12 }, jambeL: { p: 0.28, f: 0.3 }, brasP: { p: 0.55, f: 0.45, a: 0.18 }, brasL: { p: 0.15, f: 1.6, a: 0.45 } },
+    extra: { fache: true }, rig: (R, k) => ({ buste: { a: -2, px: R.cx, py: R.yB }, tete: { a: -6, px: R.cx, py: R.yT } }) };
+  const MENACE = { lame: [-0.45, -0.9], masse: [-0.3, -1], hampe: [1, -0.42], baton: [0.15, -1] };
+  P.menace = { dirArme: MENACE, armeMain: armeEnMain(MENACE), membres: { jambeP: { p: -0.45, f: 0.2 }, jambeL: { p: 0.45, f: 0.4 }, brasP: { p: 2.6, f: 0.9, a: 0.25 }, brasL: { p: 1.55, f: 0.08, a: 0.12 } },
+    extra: { fache: true, boucheForcee: 2 }, rig: (R, k) => ({ buste: { a: 4, px: R.cx, py: R.yB }, tete: { a: 2, px: R.cx, py: R.yT } }) };
+  const RECUL = { lame: [0.5, -1], masse: [0.25, -1], hampe: [0.85, -0.55], baton: [0.6, -0.8] };
+  P.recul = { dirArme: RECUL, armeMain: armeEnMain(RECUL), membres: { jambeP: { p: -0.6, f: 0.75 }, jambeL: { p: 0.4, f: 0.1 }, brasP: { p: 1.85, f: 0.95, a: 0.3 }, brasL: { p: 1.35, f: 1.25, a: 0.5 } },
+    extra: { boucheForcee: 2 }, rig: (R, k) => ({ buste: { a: -13, px: R.cx, py: R.yB }, tete: { a: 9, px: R.cx, py: R.yT } }) };
+  // saisir (le vampire, le loup-garou) : il se jette en avant, les deux mains tendues, la tête en avant
+  P.saisir = { extra: { fache: true, boucheForcee: 2 }, membres: { jambeP: { p: -0.7, f: 0.3 }, jambeL: { p: 0.75, f: 0.9 }, brasP: { p: 1.5, f: 0.25, a: 0.12 }, brasL: { p: 1.35, f: 0.35, a: 0.28 } },
+    rig: (R, k) => ({ buste: { a: 18, px: R.cx, py: R.yB }, tete: { a: -10, px: R.cx, py: R.yT } }) };
+  // tombé sur les fesses : les jambes devant lui, les mains derrière, au sol ; sonné
+  P.surLesFesses = { pose: 'stupeur', membres: { jambeP: { p: 1.4, f: 0.25, appui: false }, jambeL: { p: 1.15, f: 0.6, appui: false }, brasP: { p: -0.8, f: 0.15, a: 0.25 }, brasL: { p: -0.6, f: 0.2, a: 0.35 } },
+    rig: (R, k) => ({ buste: { a: -16, px: R.cx, py: R.yB }, tete: { a: 10, px: R.cx, py: R.yT } }) };
   // --- Dormir (le bivouac, Pip, le voyageur qui s'endort) : couché sur le dos, relâché ; les genoux un peu fléchis, une
   // jambe plus repliée que l'autre, posée au sol ; une main sur le ventre, l'autre le long du corps ; la tête sur le sac ---
   P.dortBivouac = { extra: { yeuxFermes: true, boucheForcee: 1 },
@@ -170,23 +180,44 @@ const POSES_COMBAT = {
   baton: ['batonLeve', 'batonPointe'], bambou: ['batonLeve', 'batonPointe'], arc: ['arcBande', 'arcTire'], fronde: ['frondeTourne', 'frondeLache'],
 };
 
-const POSES_COMBAT_NOMS = new Set([...Object.values(POSES_COMBAT).flat(), 'bouclierParade', 'bouclierHaute']);
+const POSES_COMBAT_NOMS = new Set([...Object.values(POSES_COMBAT).flat(), 'bouclierParade', 'bouclierHaute', 'bouclierRiposte', 'garde', 'gardeBasse', 'menace', 'recul']);
+// Les postures d'un combattant des récits, selon son arme : garder, menacer, frapper, reculer
+function posesActeur(arme) {
+  const f = familleArme(arme);
+  return { garde: f === 'arc' ? 'arcTire' : 'garde', basse: f === 'arc' ? 'arcTire' : 'gardeBasse', menace: f === 'arc' ? 'arcBande' : 'menace', recul: 'recul',
+    attaque: f === 'arc' ? 'arcTire' : f === 'hampe' ? 'estocFrappe' : f === 'baton' ? 'batonPointe' : 'coupFrappe', armer: f === 'arc' ? 'arcBande' : f === 'hampe' ? 'estocArme' : f === 'baton' ? 'batonLeve' : 'coupArme' };
+}
 // Les poses couchées (pour se relever, on passe d'abord à genoux)
-const POSES_COUCHEES = ['auSol', 'auSolVentre', 'git', 'gitVentre', 'dortBivouac'];
+const POSES_COUCHEES = ['auSol', 'auSolVentre', 'git', 'gitVentre', 'dortBivouac', 'surLesFesses'];
 
 // Où poser chaque texture de pose : { x, y } le point d'appui (sous les hanches, au ras du sol), { l, h } sa taille, tete :
 // le centre de la tête, bouclier : le centre du bouclier (en pixels de la texture, non retournée)
 const APPUI_POSES = {};
 
+// La place qu'il faut autour d'une pose pour son arme (la main peut être un peu devant ou derrière le corps, au-dessus de la
+// tête) : la marge en haut, de chaque côté, et en plus devant lui
+function margesPoseHD(spec, arme, k = FINESSE) {
+  const m = { margeHaut: 26, margeL: 26, margeAvant: 0 };
+  if (!arme || !ARMES_HD[arme]) return m;
+  if (spec.arc || arme === 'arc') { m.margeHaut = Math.max(26, Math.ceil(ARMES_HD.arc.L / 2 * k - 36)); m.margeAvant = 26 * k; return m; }
+  if (!spec.dirArme) return m;
+  const [A, B] = porteeArmeHD(arme, dirArme(spec.dirArme, arme), k), xs = [A[0], B[0]], ys = [A[1], B[1]];
+  m.margeL = Math.max(26, Math.ceil(-Math.min(...xs) + 32 - 26 * k));
+  m.margeAvant = Math.max(0, Math.ceil(Math.max(...xs) + 36 - 26 * k - m.margeL));
+  m.margeHaut = Math.max(26, Math.ceil(-Math.min(...ys) + 4));
+  return m;
+}
 // Dessiner une pose : { t (la toile déformée), x, y (le point d'appui), tete } — quoi : comme pour corpsHD
 function dessinerPoseHD(quoi, nom, { vue = null, arme = undefined } = {}) {
   const spec = POSES_HD[nom], v = spec.vue || vue || 'troisQuarts';
-  const base = specCorps(quoi, null, v), membres = {}, M0 = spec.membres || {};
+  const base = specCorps(quoi, null, v, arme), membres = {}, M0 = spec.membres || {};
   for (const [part, val] of Object.entries(M0)) membres[part] = typeof val === 'function' ? val : part.startsWith('bras') ? (ctx => brasA(ctx, val)) : (ctx => jambeA(ctx, val, M0[part === 'jambeP' ? 'jambeL' : 'jambeP'] || null));
   const armeReelle = arme !== undefined ? arme : base.options.arme;
-  const options = { ...base.options, margeHaut: 26, margeL: 26, ...(spec.extra || {}), membres, rig: true };
+  const options = { ...base.options, ...margesPoseHD(spec, spec.armeMain && armeReelle ? armeReelle : null), ...(spec.extra || {}), membres, rig: true };
+  // (l'arme : en main dans une pose de combat ; sinon portée sur lui, à sa place, sauf si on la lui a fait lâcher : arme null)
   delete options.arme;
-  if (spec.armeMain && (armeReelle || spec.bouclier)) { options.armeMain = spec.armeMain; if (armeReelle) options.arme = armeReelle; }
+  if (spec.armeMain && (armeReelle || spec.bouclier)) options.armeMain = spec.armeMain;
+  if (armeReelle) options.arme = armeReelle;
   const t = dessinerCorpsVue(base.gene, base.tenue, base.costume, 0, spec.pose || null, v, options);
   const R = t.reperes2, t2 = rigDeformer(t, spec.rig ? spec.rig(R, FINESSE) : {});
   let bas = 0; for (let i = 0; i < t2.m.length; i++) if (t2.m[i]) bas = Math.max(bas, Math.floor(i / t2.l));
@@ -198,8 +229,8 @@ function dessinerPoseHD(quoi, nom, { vue = null, arme = undefined } = {}) {
 // La texture d'une pose (créée une fois) : sa clé ; APPUI_POSES[clé] dit où la poser
 function texturePose(scene, quoi, nom, { vue = null, arme = undefined } = {}) {
   const spec = POSES_HD[nom], v = spec.vue || vue || 'troisQuarts';
-  const base = specCorps(quoi, null, v), armeR = arme !== undefined ? arme : base.options.arme;
-  const cle = base.cle + '_pose_' + nom + (spec.armeMain ? '_' + (armeR || 'mainsNues') : '');
+  const base = specCorps(quoi, null, v, arme), armeR = arme !== undefined ? arme : base.options.arme;
+  const cle = base.cle + '_pose_' + nom + (spec.armeMain || arme !== undefined ? '_' + (armeR || 'mainsNues') : '');
   if (!scene.textures.exists(cle) || !APPUI_POSES[cle]) {
     const r = dessinerPoseHD(quoi, nom, { vue: v, arme });
     if (scene.textures.exists(cle)) scene.textures.remove(cle);
@@ -227,3 +258,18 @@ function pointCorps(img, nom) {
 function teteCorps(img) { return pointCorps(img, 'tete'); }
 // Le nom de la pose du rig que montre une image (null : debout, ou une pose du moteur)
 function poseCorps(img) { const m = img && img.texture && /_pose_([A-Za-z]+)/.exec(img.texture.key); return m ? m[1] : null; }
+
+// Préparer des poses en tâche de fond (une à une, entre deux images) : quand la scène en a besoin, elles sont déjà là.
+// liste : [{ quoi, nom, arme, vue }]. Une pose qu'on demande avant reste dessinée sur-le-champ (texturePose).
+const FILE_POSES = [];
+let POSES_EN_COURS = false;
+function prechargerPoses(scene, liste) {
+  for (const j of liste) if (POSES_HD[j.nom]) FILE_POSES.push({ scene, ...j });
+  if (!POSES_EN_COURS && FILE_POSES.length) { POSES_EN_COURS = true; setTimeout(dessinerPosesEnAttente, 20); }
+}
+function dessinerPosesEnAttente() {
+  const j = FILE_POSES.shift();
+  if (!j) { POSES_EN_COURS = false; return; }
+  try { if (j.scene.sys && j.scene.textures) texturePose(j.scene, j.quoi, j.nom, { arme: j.arme, vue: j.vue }); } catch (e) { console.warn('pose en attente', e); }
+  setTimeout(dessinerPosesEnAttente, 16);
+}

@@ -38,12 +38,18 @@ Object.assign(StoryScene.prototype, {
     this.tweens.killTweensOf(p);
     if (p.marche) { p.marche.remove(); p.marche = null; }
     this.cleYeuxOuverts = null;
+    this.lameTiree = false; this.bouclierLeve = null; this.armeLachee = false;
+    // (ses poses à lui se préparent en tâche de fond : se battre avec son arme, tomber, s'agenouiller)
+    const q = this.voyageurRecit(), paire = POSES_COMBAT[this.armeTenue];
+    prechargerPoses(this, [...(paire ? paire.map(nom => ({ quoi: q, nom, arme: this.armeTenue })) : []), ...['aGenoux', 'desequilibre', 'auSol', 'trebuche', 'auSolVentre'].map(nom => ({ quoi: q, nom }))]);
     p.setTexture(this.cleCorps()).setOrigin(0.5, 1).setAngle(0).setAlpha(1).clearTint().setScale(6 * this.fCorps).setFlipX(false).setY(SOL_RECIT).setDepth(3).setVisible(true);
   },
   // La texture du voyageur (avec ses bandages, une fois soigné)
-  cleCorps(pose = null) {
-    const v = this.parti.voyageur;
-    return corpsHD(this, this.blesse ? { ...v, blesse: true } : v, pose);
+  // (retours planche 86) il porte sur lui l'arme qu'il a emportée (celle de ses combats) : rangée à sa place quand il marche
+  cleCorps(pose = null) { return corpsHD(this, this.voyageurRecit(), pose, 'troisQuarts', this.armeLachee ? null : undefined); },
+  voyageurRecit() {
+    const v = this.parti.voyageur, q = this.blesse ? { ...v, blesse: true } : v;
+    return this.armeTenue && ITEMS[this.armeTenue] && ITEMS[this.armeTenue].arme ? { ...q, armeEmportee: this.armeTenue } : q;
   },
   // Où est sa main (celle de devant)
   main(p = this.perso) {
@@ -52,7 +58,7 @@ Object.assign(StoryScene.prototype, {
     const h = (MAINS_CORPS[k] || 26) * p.scaleY;
     return { x: p.x + (p.flipX ? -1 : 1) * p.displayWidth * 0.16, y: p.y - h };
   },
-  tete(p = this.perso) { const pt = pointCorps(p, 'tete'); if (pt) return { x: pt.x, y: pt.y - 6 }; return { x: p.x + (p.flipX ? -1 : 1) * p.displayWidth * 0.05, y: p.y - p.displayHeight * 0.86 }; },
+  tete(p = this.perso) { const pt = pointCorps(p, 'tete'); if (pt) return { x: pt.x, y: pt.y - 6 }; return { x: p.x + (p.flipX ? -1 : 1) * p.displayWidth * 0.05, y: p.y - hauteurCorps(p) * 0.86 }; },
   // Il tient un objet : l'image suit sa main
   tenir(cle, { echelle = 2.6, angle = 0, dx = 0, dy = 0, qui = this.perso, devant = true } = {}) {
     // (v0.63) le voyageur se bat avec l'arme qu'il a vraiment emportée (sa hache, son arc...)
@@ -81,7 +87,7 @@ Object.assign(StoryScene.prototype, {
     const enGarde = POSES_COMBAT_NOMS.has(pose);
     if (enGarde) this.poserRecit(null); else await this.debout(300);
     await this.marcher(sprite, x, vitesse);
-    if (enGarde) this.poseArme(0);
+    if (enGarde && this.lameTiree) this.poseArme(0);   // (l'arme tirée : il se remet en garde ; le bouclier, lui, est baissé)
   },
   // (v1.07) L'aube : trois petits oiseaux traversent le ciel en battant des ailes, et c'est eux qui
   // gazouillent (le « cui cui » s'affichait près du voyageur, comme si c'était lui qui le disait)
@@ -124,7 +130,7 @@ Object.assign(StoryScene.prototype, {
   arreterBete(b, cle) { if (b.anim) { b.anim.remove(); b.anim = null; } if (cle && b.active) b.setTexture(cle); },
   // Une bulle de paroles au-dessus de quelqu'un
   parole(qui, texte, duree = 1800) {
-    const x = Phaser.Math.Clamp(qui.x, 90, 870), y = qui.y - qui.displayHeight - 26;
+    const x = Phaser.Math.Clamp(qui.x, 90, 870), y = qui.y - (qui.texture ? hauteurCorps(qui) : qui.displayHeight) - 26;
     const t = this.add.text(x, y, texte, style(14, '#3b2410', { fontStyle: 'bold', align: 'center', wordWrap: { width: 200 } })).setOrigin(0.5).setDepth(9.1);
     const l = t.width + 22, h = t.height + 12;
     const g = this.add.graphics().setDepth(9);
@@ -169,8 +175,9 @@ Object.assign(StoryScene.prototype, {
   // d'appui ; null : debout. Il garde sa place, sa taille et son sens.
   poserRecit(nom = null, { arme } = {}) {
     const p = this.perso; if (!p || !p.active) return null;
-    const v = this.parti.voyageur, q = this.blesse ? { ...v, blesse: true } : v;
-    const cle = nom && POSES_HD[nom] ? texturePose(this, q, nom, { arme }) : corpsHD(this, q, nom);
+    const q = this.voyageurRecit();
+    const sans = this.armeLachee ? null : undefined;
+    const cle = nom && POSES_HD[nom] ? texturePose(this, q, nom, { arme: arme !== undefined ? arme : sans }) : corpsHD(this, q, nom, 'troisQuarts', sans);
     p.setTexture(cle).setAngle(0);
     origineCorps(p);
     return cle;
@@ -218,10 +225,13 @@ Object.assign(StoryScene.prototype, {
     this.tweens.killTweensOf(p);
     if (p.marche) { p.marche.remove(); p.marche = null; }
     if (this.menace) this.lacherTout();
-    const sol = p.y, alpha = p.alpha, deja = poseCorps(p);
+    const sol = p.y, deja = poseCorps(p);
+    // (retours planche 86) un léger voile gris sur lui, sans le rendre transparent
+    const voile = () => p.setTint(0xc4c6d0).setAlpha(1);
+    voile();
     if (deja && POSES_COUCHEES.includes(deja)) {   // (déjà à terre : il ne se relève plus)
       this.poserRecit(deja === 'auSolVentre' || deja === 'gitVentre' ? 'gitVentre' : 'git');
-      await this.animer({ targets: p, alpha: Math.min(alpha, 0.6), duration: 500 });
+      await this.attendre(500);
       return;
     }
     this.poserRecit('effondre1'); p.setY(sol);
@@ -229,7 +239,8 @@ Object.assign(StoryScene.prototype, {
     this.poserRecit(surLeDos ? 'effondreDos' : 'effondre2'); p.setY(sol);
     await this.attendre(320);
     this.poserRecit(surLeDos ? 'git' : 'gitVentre'); p.setY(sol - 8);
-    await this.animer({ targets: p, y: sol, alpha: Math.min(alpha, 0.6), duration: 300, ease: 'Bounce.easeOut' });
+    await this.animer({ targets: p, y: sol, duration: 300, ease: 'Bounce.easeOut' });
+    voile();
   },
   // (planche 86) Se battre avec l'arme qu'il a emportée : il arme (temps 0), il frappe (temps 1) ; null : il la range
   poseArme(temps) {
@@ -237,11 +248,32 @@ Object.assign(StoryScene.prototype, {
     if (!paire || temps === null) return this.poserRecit(null);
     return this.poserRecit(paire[temps], { arme });
   },
+  // (retours planche 86) Il lève son bouclier : une vraie pose, l'arme dans l'autre main. La parade de face (une charge, des
+  // flammes, des coups portés droit devant), la parade haute (une volée de flèches, un coup qui tombe d'en haut), la riposte
+  // (le bouclier en avant, il frappe par-dessous). Renvoie un repère qui suit le centre du bouclier (les flèches s'y plantent)
+  leverBouclier(nom = 'bouclierParade') {
+    const p = this.perso, arme = ['epee', 'hache', 'marteau', 'massue', 'dague', 'khopesh', 'rapiere', 'lance'].includes(this.armeTenue) ? this.armeTenue : null;
+    const b = this.bouclierLeve && this.bouclierLeve.active ? this.bouclierLeve : (this.bouclierLeve = { x: p.x, y: p.y - 60, alpha: 1, active: true, visible: true, pose: true,
+      setTint() { return this; }, clearTint() { return this; }, setAlpha(a) { this.alpha = a; return this; }, setVisible() { return this; }, destroy() { this.active = false; } });
+    b.nom = nom;
+    this.poserRecit(nom, { arme });
+    b.baisse = false;
+    const suivre = () => { if (!b.active || !p.active) return; const pt = pointCorps(p, 'bouclier'); if (pt) { b.x = pt.x; b.y = pt.y; } b.alpha = b.baisse ? 0 : p.alpha; };
+    suivre();
+    if (!b.suit) { b.suit = true; this.chaqueImage(suivre); this.garder(b); }
+    return b;
+  },
+  baisserBouclier(delai = 300) {
+    const b = this.bouclierLeve; if (!b) return;
+    // (le bouclier baissé, les flèches qui s'y étaient plantées disparaissent avec lui)
+    this.time.delayedCall(delai, () => { const p = this.perso; if (p && p.active && /^bouclier/.test(poseCorps(p) || '')) this.poserRecit(null); b.baisse = true; if (b === this.bouclierLeve) this.bouclierLeve = null; });
+  },
   // Il tire son arme : renvoie la « lame » que suivent frapperArme et rengainer (sans pose pour cette arme : l'icône d'avant)
   tirerArme() {
     const arme = this.armeTenue || 'epee';
     if (!POSES_COMBAT[arme]) return this.tenir(iconeObjet(this, 'epee'), { echelle: 2.6, angle: -30, dy: -8 });
     this.poseArme(0);
+    this.lameTiree = true;
     return { arme, pose: true, active: true };
   },
   // Il frappe (puis revient en garde) ; faux si la lame n'est qu'une icône
@@ -252,7 +284,7 @@ Object.assign(StoryScene.prototype, {
     return true;
   },
   rengainer(lame, delai = 300) {
-    if (lame && lame.pose) { lame.active = false; this.time.delayedCall(delai, () => { const p = this.perso; if (p && p.active && POSES_COMBAT_NOMS.has(poseCorps(p))) this.poserRecit(null); }); }
+    if (lame && lame.pose) { lame.active = false; this.lameTiree = false; this.time.delayedCall(delai, () => { const p = this.perso; if (p && p.active && POSES_COMBAT_NOMS.has(poseCorps(p))) this.poserRecit(null); }); }
     else if (lame) this.tweens.add({ targets: lame, alpha: 0, delay: delai, duration: 300 });
   },
   // Renversé sur le dos (la tête du côté opposé à `depuis`)
@@ -382,10 +414,62 @@ Object.assign(StoryScene.prototype, {
     return f;
   },
   // Un brigand (ou un pillard) en pied
-  brigand(x, figurant, flip = true) {
-    const b = this.garder(imageCorps(this, x, SOL_RECIT, figurant, 6).setFlipX(flip).setDepth(2.8));
-    b.figurant = figurant;
+  // (retours planche 86) il porte son arme (à sa vraie taille, portée sur lui) ; ses postures : voir `posture`
+  brigand(x, figurant, flip = true, arme = null) {
+    const cle = corpsHD(this, figurant, null, 'troisQuarts', arme);
+    const b = this.garder(this.add.image(x, SOL_RECIT, cle).setOrigin(0.5, 1).setScale(6 * echelleCorps(cle)).setFlipX(flip).setDepth(2.8));
+    b.figurant = figurant; b.arme = arme;
+    // (ses postures se dessinent en tâche de fond pendant qu'on lit l'épreuve : pas d'à-coup quand il bouge)
+    const P = arme ? posesActeur(arme) : {};
+    prechargerPoses(this, [...new Set([P.menace, P.garde, P.basse, P.attaque, P.recul, P.armer].filter(Boolean))].map(nom => ({ quoi: figurant, nom, arme }))
+      .concat(['auSol', 'surLesFesses'].map(nom => ({ quoi: figurant, nom, arme: null }))));
     return b;
+  },
+  // Un personnage des récits (brigand, pillard, garde...) dans une posture, l'arme tenue comme une arme : 'garde', 'basse',
+  // 'menace', 'attaque', 'armer', 'recul' (selon son arme, posesActeur) ; 'debout' (l'arme portée sur lui, pour marcher) ;
+  // ou une pose (corpsHD : 'leves', 'assis' ; le rig : 'auSol', 'surLesFesses'...)
+  posture(b, quelle) {
+    if (!b || !b.active) return b;
+    const arme = b.arme || null, P = arme ? posesActeur(arme) : null;
+    const nom = P && P[quelle] ? P[quelle] : quelle === 'debout' ? null : quelle;
+    const cle = nom && POSES_HD[nom] ? texturePose(this, b.figurant, nom, { arme }) : corpsHD(this, b.figurant, nom, 'troisQuarts', arme);
+    b.setTexture(cle).setAngle(0);
+    origineCorps(b);
+    b.posture = quelle;
+    return b;
+  },
+  // Il ne reste pas planté comme un piquet : il change d'appui de temps en temps (deux postures qui alternent)
+  agiter(b, postures) {
+    if (b.agite) b.agite.remove();
+    let i = 0;
+    const suite = () => { if (!b.active || !b.agite) return; i = (i + 1) % postures.length; if (b.posture && postures.includes(b.posture)) this.posture(b, postures[i]); b.agite = this.time.delayedCall(Phaser.Math.Between(700, 1500), suite); };
+    b.agite = this.time.delayedCall(Phaser.Math.Between(300, 900), suite);
+    this.garder({ destroy: () => b.agite && b.agite.remove() });
+  },
+  calmer(b) { if (b && b.agite) { b.agite.remove(); b.agite = null; } },
+  // Il va ramasser son arme tombée (elle était au sol) : il la remet à sa place, sur lui
+  async ramasserArme() {
+    const M = this.menace, o = M && M.armeAuSol, p = this.perso;
+    if (!o || !o.active) { this.armeLachee = false; return; }
+    p.setFlipX(o.x < p.x);
+    await this.marcherA(o.x, 4);
+    await this.aGenoux();
+    o.destroy(); M.armeAuSol = null; this.armeLachee = false;
+    await this.debout(300);
+    p.setFlipX(false);
+  },
+  // Son arme lui échappe : elle vole depuis sa main et retombe au sol, à sa vraie taille (il n'a plus rien en main)
+  async lacherArme(b, vers = 1, { voler = true } = {}) {
+    const arme = b === this.perso ? this.armeTenue : b.arme;
+    if (!arme || !ARMES_HD[arme]) return null;
+    const m = pointCorps(b, 'main') || { x: b.x + (b.flipX ? -14 : 14), y: b.y - 50 };
+    const o = this.garder(this.add.image(m.x, m.y, textureArmeHD(this, arme)).setScale(Math.abs(b.scaleX)).setDepth(b.depth + 0.02).setAngle(voler ? -60 * vers : 0).setFlipX(vers < 0));
+    if (b !== this.perso) { b.arme = null; this.posture(b, b.posture === 'auSol' || b.posture === 'surLesFesses' ? b.posture : 'debout'); }
+    if (voler) await this.sauter(o, m.x + vers * 110, SOL_RECIT - o.displayHeight * 0.5, 80, 600, vers * 420);
+    else await this.animer({ targets: o, y: SOL_RECIT - o.displayHeight * 0.5, duration: 260, ease: 'Quad.easeIn' });
+    o.setAngle(0).setY(SOL_RECIT - o.displayHeight * 0.5 + 2);
+    Son.jouer('poser');
+    return o;
   },
 
   // --- Les scènes elles-mêmes ---
@@ -1017,11 +1101,12 @@ const SCENES_EPREUVES = {
         this.tweens.add({ targets: arc, alpha: 0, duration: 300 });
       } else if (id === 'epee' || id === 'bouclier') {
         // (planche 86) l'arme en garde ; ou le bouclier levé devant lui, l'arme dans l'autre main
-        if (id === 'bouclier') this.poserRecit('bouclierParade', { arme: ['epee', 'hache', 'marteau', 'massue', 'dague', 'khopesh'].includes(this.armeTenue) ? this.armeTenue : null });
+        if (id === 'bouclier') this.leverBouclier('bouclierParade');
         else M.lame = this.tirerArme();
       }
       await charge;
       if (M.lame) this.frapperArme(M.lame, 500);
+      else if (id === 'bouclier' && reussie) this.leverBouclier('bouclierRiposte');   // (il encaisse la charge, et riposte)
       this.arreterBete(b, 'sanglierHD');
       if (reussie) {
         // touché, il fait une embardée... droit dans le chêne
@@ -1040,7 +1125,7 @@ const SCENES_EPREUVES = {
     },
     async issue(reussie) {
       const M = this.menace, p = this.perso, b = M.bete;
-      if (M.lame) this.rengainer(M.lame, 200); else if (POSES_COMBAT_NOMS.has(poseCorps(p))) this.poserRecit(null);   // (planche 86 : il baisse sa garde)
+      if (M.lame) this.rengainer(M.lame, 200); else if (this.bouclierLeve) this.baisserBouclier(200); else if (POSES_COMBAT_NOMS.has(poseCorps(p))) this.poserRecit(null);   // (planche 86 : il baisse sa garde)
       if (reussie && abattu(this)) { await this.assommer(b, 'sanglierHD'); return; }
       if (reussie) {
         b.setFlipX(true).setAngle(0);
@@ -1112,10 +1197,14 @@ const SCENES_EPREUVES = {
         for (let i = 1; i < n; i++) M.cachettes.push(this.garder(this.add.image(base + i * 62 + 20, SOL_RECIT + 4, 'buissonHD').setOrigin(0.5, 1).setScale(2.2).setDepth(2.95).setFlipX(i % 2 === 1)));
       }
       const figurants = pillards ? ['pillard', 'pillarde', 'pillard'] : ['brigand', 'brigande'];
+      // (retours planche 86) chacun son arme : le chef une épée (une hache chez les pillards), l'archer son arc, les autres
+      // une dague, une lance, une massue
+      const archer = pillards || M.besoin === 'bouclier';
+      const armes = pillards ? ['hache', 'arc', 'lance'] : ['epee', archer ? 'arc' : 'dague'];
       M.brigands = figurants.map((f, i) => {
-        const b = this.brigand(base + i * 62, f);
+        const b = this.brigand(base + i * 62, f, true, armes[i]);
         if (M.cachettes.length) b.setY(SOL_RECIT + 70);
-        else if (M.feu) b.setFlipX(i % 2 === 0).setScale(b.scaleX, b.scaleY * 0.86);    // assis autour du feu
+        else if (M.feu) { b.setFlipX(i % 2 === 0); this.posture(b, 'assis'); }    // assis autour du feu
         return b;
       });
       M.chef = M.brigands[0];
@@ -1126,19 +1215,22 @@ const SCENES_EPREUVES = {
         // ils jaillissent des buissons
         for (const [i, b] of M.brigands.entries()) {
           this.poussiere(b.x, SOL_RECIT - 20, 5, 0x5a8a3a);
+          this.posture(b, i === 0 ? 'armer' : 'garde');
           this.sauter(b, b.x - 30, SOL_RECIT, 60, 420).then(() => b.setDepth(3.05));
           await this.attendre(180 + i * 60);
         }
         await this.attendre(400);
       } else {
-        // ils se lèvent et se retournent vers lui
-        for (const b of M.brigands) { b.setFlipX(true).setScale(b.scaleX, Math.abs(b.scaleX)); this.tweens.add({ targets: b, y: SOL_RECIT - 10, duration: 160, yoyo: true }); }
+        // ils se lèvent, se retournent vers lui et tirent leurs armes
+        for (const b of M.brigands) { b.setFlipX(true); this.posture(b, 'garde'); this.tweens.add({ targets: b, y: SOL_RECIT - 6, duration: 140, yoyo: true }); }
         await this.attendre(400);
       }
       this.emotion(p, '!', 900);
-      // armes à la main
-      M.armes = M.brigands.map((b, i) => ((M.pillards || M.besoin === 'bouclier') && i === 1) ? this.tenir('arcHD', { qui: b, echelle: 2.2, dy: -16 }) : this.tenir(iconeObjet(this, 'epee'), { qui: b, echelle: 2.2, angle: -30, dy: -8 }));
-      M.armes.forEach(a => a.setTint(0xb0b0b8));
+      // chacun sa posture : le chef menace, l'archer bande son arc, les autres en garde ; et ils changent d'appui
+      for (const [i, b] of M.brigands.entries()) {
+        this.posture(b, i === 0 ? 'menace' : b.arme === 'arc' ? 'menace' : i % 2 ? 'garde' : 'basse');
+        this.agiter(b, i === 0 ? ['menace', 'garde'] : b.arme === 'arc' ? ['menace'] : i % 2 ? ['garde', 'basse'] : ['basse', 'garde']);
+      }
       Son.jouer('voix', { personne: { nom: 'Brigand', race: 'humain' }, ton: 'fache' });
       this.parole(M.chef, M.pillards ? 'Le convoi est à nous !' : 'La bourse ou la vie !');
       this.onomatopee(M.brigands[M.brigands.length - 1].x, SOL_RECIT - 170, 'HA HA !', '#f0c0a0');
@@ -1148,11 +1240,14 @@ const SCENES_EPREUVES = {
       const M = this.menace, p = this.perso, chef = M.chef;
       if (id === 'bouclier') {
         // une volée de flèches : il lève son bouclier, elles se plantent dedans
-        const bouclier = this.tenir(iconeObjet(this, 'bouclier'), { echelle: 3.2, dy: -50, dx: 12 });
+        const bouclier = this.leverBouclier('bouclierHaute');   // (la volée retombe sur lui : il lève son bouclier au-dessus de sa tête)
         await this.attendre(200);
         const archer = M.brigands[1] || chef;
         const fleches = [];
+        this.calmer(archer); this.posture(archer, 'menace');
         for (let k = 0; k < 4; k++) {
+          this.posture(archer, archer.arme === 'arc' ? 'attaque' : 'menace');   // (il lâche la flèche)
+          this.time.delayedCall(150, () => this.posture(archer, 'menace'));   // (il en encoche une autre)
           const m = this.main(archer);
           const passe = !reussie && k === 3;
           fleches.push(this.tirerFleche(m.x - 10, m.y - 14, passe ? p.x + 6 : bouclier.x + 6, passe ? p.y - 30 : bouclier.y - 8 + k * 6, { haut: 30, plante: !passe, duree: 380 }).then(f => {
@@ -1167,15 +1262,23 @@ const SCENES_EPREUVES = {
         }
         await Promise.all(fleches);
         if (reussie) {
-          // la charge, bouclier en avant
+          // la charge, bouclier en avant (deux grands bonds), puis la riposte
+          this.leverBouclier('bouclierParade');
           this.lignesDeVitesse(p.x + 40, p.y - 60, 1);
-          await this.animer({ targets: p, x: chef.x - 60, duration: 350, ease: 'Quad.easeIn' });
+          const x0 = p.x, x1 = chef.x - 60;
+          await this.sauter(p, x0 + (x1 - x0) * 0.5, SOL_RECIT, 12, 180);
+          await this.sauter(p, x1, SOL_RECIT, 10, 170);
+          this.leverBouclier('bouclierRiposte');
           this.onomatopee(chef.x, chef.y - 170, 'BLONG !', '#d8e4f0');
           Son.jouer('bouclier');
           this.cameras.main.shake(200, 0.01);
-          await this.sauter(chef, chef.x + 70, SOL_RECIT, 30, 350, 70);
+          this.calmer(chef); this.posture(chef, 'recul');
+          await this.sauter(chef, chef.x + 70, SOL_RECIT, 30, 350);
+          this.posture(chef, 'auSol'); this.poussiere(chef.x, SOL_RECIT, 8);   // (renversé, sur le dos, son arme lui a échappé)
+          this.lacherArme(chef, 1, { voler: false });
           M.chefAterre = true;
         }
+        this.baisserBouclier(500);
         return;
       }
       if (id !== 'epee') { await this.utiliserObjet(id); return; }
@@ -1183,32 +1286,40 @@ const SCENES_EPREUVES = {
       const lame = this.tirerArme();   // (planche 86)
       const milieu = (p.x + chef.x) / 2;
       this.cadrer(milieu, 240, 1.3, 400);
+      // (le chef s'avance à pas comptés, l'arme portée, puis se met en garde)
+      this.calmer(chef); this.posture(chef, 'debout'); pasDeMarche(this, chef, 400, { poussiere: false });
       await Promise.all([this.marcherA(milieu - 34, 3), this.animer({ targets: chef, x: milieu + 34, duration: 400 })]);
+      this.posture(chef, 'garde');
       for (let k = 0; k < 3; k++) {
         const qui = k % 2 ? chef : p;
-        await this.animer({ targets: qui, x: qui.x + (qui === p ? 10 : -10), duration: 90, yoyo: true });
+        // une passe d'armes : celui qui attaque se fend, l'autre pare en reculant d'un pas
+        if (qui === chef) this.posture(chef, 'attaque'); else this.posture(chef, 'recul');
+        await this.sauter(qui, qui.x + (qui === p ? 10 : -10), SOL_RECIT, 4, 90);
+        this.sauter(qui, qui.x + (qui === p ? -10 : 10), SOL_RECIT, 3, 90);
         if (lame.pose) { if (k % 2 === 0) this.frapperArme(lame, 200); } else this.tweens.add({ targets: lame, angle: k % 2 ? -60 : 60, duration: 90, yoyo: true });
-        this.tweens.add({ targets: M.armes[0], angle: k % 2 ? 40 : -80, duration: 90, yoyo: true });
+        this.time.delayedCall(220, () => this.posture(chef, 'garde'));
         const ex = milieu, ey = SOL_RECIT - 90 + k * 8;
         for (let e = 0; e < 6; e++) { const s = this.garder(this.add.image(ex, ey, 'eclat').setScale(1.6).setTint(0xfff0a0).setDepth(7)); const a = Math.random() * Math.PI * 2; this.tweens.add({ targets: s, x: ex + Math.cos(a) * 40, y: ey + Math.sin(a) * 30, alpha: 0, duration: 300, onComplete: () => s.destroy() }); }
         this.onomatopee(ex, ey - 60, k === 2 ? 'CLANG !' : 'TCHING !', '#fff4dc');
         Son.jouer('coup', { force: 0.7 });
         await this.attendre(260);
       }
-      // la lame qui vole : celle du chef, ou la sienne
-      // (planche 86 : son arme lui échappe des mains, elle vole ; ou il la range)
-      let perdue = reussie ? M.armes[0] : lame;
-      if (lame.pose) { this.rengainer(lame, 0); if (!reussie) perdue = this.tenir(iconeObjet(this, 'epee'), { echelle: 2.6, angle: -30, dy: -8 }); }
-      perdue.libre = true;   // (lâchée : elle ne suit plus la main)
-      await this.sauter(perdue, perdue.x + (reussie ? 120 : -120), SOL_RECIT - 10, 90, 600, reussie ? 540 : -540);
-      perdue.setAngle(reussie ? 160 : -160);
-      Son.jouer('poser');
+      // l'arme qui vole : celle du chef, ou la sienne (retours planche 86 : à sa vraie taille, et elle reste au sol)
       if (reussie) {
-        // le chef tombe sur les fesses, les autres lèvent les mains
-        await this.animer({ targets: chef, scaleY: chef.scaleY * 0.82, angle: 12, duration: 200 });
-        for (const [i, b] of M.brigands.entries()) if (i > 0) { b.setTexture(corpsHD(this, b.figurant, 'leves')); if (M.armes[i]) M.armes[i].setVisible(false); }
-        this.parole(chef, 'Pitié ! Pitié !', 1400);
+        this.rengainer(lame, 300);
+        await this.lacherArme(chef, 1);
+        // le chef tombe sur les fesses, les autres jettent leurs armes et lèvent les mains
+        this.posture(chef, 'surLesFesses');
+        this.poussiere(chef.x, SOL_RECIT, 6);
+        for (const [i, b] of M.brigands.entries()) if (i > 0) { this.calmer(b); this.lacherArme(b, 1, { voler: false }); this.posture(b, 'leves'); }
         M.chefAterre = true;
+      } else {
+        // c'est la sienne qui vole : il reste les mains vides, le chef le menace
+        this.rengainer(lame, 0);
+        this.armeLachee = true;   // (il n'a plus son arme sur lui, tant qu'il ne l'a pas ramassée)
+        this.time.delayedCall(10, () => { if (p.active) this.poserRecit(null); });
+        this.lacherArme(p, -1).then(o => { M.armeAuSol = o; });
+        this.posture(chef, 'menace');
       }
       this.cadrer(p.x + 120, 250, 1.12, 500);
     },
@@ -1227,8 +1338,7 @@ const SCENES_EPREUVES = {
         // ils prennent leurs jambes à leur cou
         await this.attendre(300);
         for (const [i, b] of M.brigands.entries()) {
-          b.setTexture(corpsHD(this, b.figurant)).setAngle(0).setScale(Math.abs(b.scaleX), Math.abs(b.scaleX)).setFlipX(false);
-          if (M.armes[i]) M.armes[i].setVisible(false);
+          this.calmer(b); this.posture(b, 'debout'); b.setFlipX(false);
           pasDeMarche(this, b, 900);
           this.tweens.add({ targets: b, x: 1120 + i * 40, y: SOL_RECIT, duration: 900, delay: i * 120, ease: 'Quad.easeIn' });
         }
@@ -1238,7 +1348,10 @@ const SCENES_EPREUVES = {
       }
       // un coup de pommeau, et ils filent avec sa bourse
       const chef = M.chef;
-      await this.animer({ targets: chef, x: p.x + 60, duration: 300, ease: 'Quad.easeIn' });
+      for (const b of M.brigands) this.calmer(b);
+      this.posture(chef, 'armer');
+      await this.sauter(chef, p.x + 60, SOL_RECIT, 14, 300);
+      this.posture(chef, 'attaque');
       this.onomatopee(p.x, p.y - 170, 'BAM !', '#ff8080');
       this.cameras.main.shake(220, 0.012);
       if (jete) {
@@ -1246,12 +1359,13 @@ const SCENES_EPREUVES = {
         await this.sauter(p, p.x - 90, SOL_RECIT + 60, 80, 600, -200);
         this.onomatopee(p.x, SOL_RECIT - 60, 'PLOUF !', '#a8d0ff');
         eclaboussure(this, p.x, SOL_RECIT + 8, { taille: 2, profondeur: 4 });   // (v0.70)
-        for (const [i, b] of M.brigands.entries()) { b.setFlipX(false); pasDeMarche(this, b, 1000); this.tweens.add({ targets: b, x: 1120 + i * 40, duration: 1000, delay: 300 + i * 100 }); }
+        for (const [i, b] of M.brigands.entries()) { this.posture(b, 'debout'); b.setFlipX(false); pasDeMarche(this, b, 1000); this.tweens.add({ targets: b, x: 1120 + i * 40, duration: 1000, delay: 300 + i * 100 }); }
         await this.attendre(900);
         p.setAngle(0).setTint(0xa8c8ff);
         await this.sauter(p, p.x + 40, SOL_RECIT, 60, 500);
         await this.animer({ targets: p, angle: 10, duration: 100, yoyo: true, repeat: 3 });   // il s'ébroue
         p.clearTint();
+        await this.ramasserArme();
         return;
       }
       await this.renverse(true);
@@ -1265,12 +1379,13 @@ const SCENES_EPREUVES = {
       this.onomatopee(chef.x, chef.y - 180, 'HA HA !', '#f0c0a0');
       await this.attendre(500);
       for (const [i, b] of M.brigands.entries()) {
-        b.setFlipX(false);
+        this.posture(b, 'debout'); b.setFlipX(false);
         pasDeMarche(this, b, 1000);
         this.tweens.add({ targets: b, x: 1120 + i * 40, duration: 1000, delay: i * 100, ease: 'Quad.easeIn' });
       }
       await this.attendre(600);
       await this.debout(500);
+      await this.ramasserArme();
     },
   },
 
@@ -1359,11 +1474,14 @@ const SCENES_EPREUVES = {
         if (M.sorte === 'vampire') this.parole(qui, 'Juste une petite gorgée...', 1400);
         else this.onomatopee(qui.x, qui.y - 180, 'GRAOU !', '#ff8080');
         await this.attendre(700);
-        await this.animer({ targets: qui, x: p.x + 26, angle: -10, duration: 200 });
+        // (retours planche 86) il bondit, les mains tendues pour le saisir, et mord ; puis il recule d'un bond
+        qui.setTexture(corpsHD(this, M.sorte, 'saisir')); origineCorps(qui);
+        await this.sauter(qui, p.x + 30, SOL_RECIT, 14, 200);
         this.onomatopee(p.x, p.y - 170, M.sorte === 'vampire' ? 'SLURP !' : 'CROC !', '#ff8080');
         this.cameras.main.shake(200, 0.01);
         await this.attendre(400);
-        await this.animer({ targets: qui, x: p.x + 70, angle: 0, duration: 200 });
+        await this.sauter(qui, p.x + 70, SOL_RECIT, 10, 200);
+        qui.setTexture(corpsHD(this, M.sorte)).setOrigin(0.5, 1);
         if (M.sorte === 'vampire') this.emotion(qui, '♥', 900);
         qui.setFlipX(false);
         pasDeMarche(this, qui, 900);
@@ -1438,8 +1556,8 @@ const SCENES_EPREUVES = {
           this.garder(this.add.image(bx, SOL_RECIT + 4, 'paillasseHD').setOrigin(0.5, 1).setScale(2).setDepth(2));
           const nom = ['Aldric', 'Mira', 'Oswin'][i];
           const quoi = n === 1 ? { nom: 'Guérisseuse', race: 'elfe', feminin: true, niveau: 'aguerri', blesse: true } : { nom, race: ['humain', 'nain', 'hobbit'][i], feminin: i === 1, niveau: 'novice', blesse: true };
-          const b = this.garder(imageCorps(this, bx + 55, SOL_RECIT, quoi, 6).setAngle(-88).setDepth(2.2));
-          b.setY(SOL_RECIT - b.displayWidth * 0.22);
+          // (retours planche 86) couché pour de bon sur sa paillasse, bandé, les yeux fermés
+          const b = this.garder(imageCorps(this, bx + 12, SOL_RECIT - 2, quoi, 6, 'dortBivouac').setDepth(2.2));
           b.quoi = quoi;
           M.blesses.push(b);
           this.tweens.add({ targets: b, scaleY: b.scaleY * 1.02, duration: 900 + i * 100, yoyo: true, repeat: -1 });
@@ -1486,7 +1604,11 @@ const SCENES_EPREUVES = {
             for (let k = 0; k < 6; k++) { const e = this.garder(this.add.image(b.x + Phaser.Math.Between(-20, 30), SOL_RECIT - 14, 'lueurHD').setScale(1.4).setTint(id === 'potion' ? 0xff7090 : 0xffffff).setBlendMode(Phaser.BlendModes.ADD).setDepth(7)); this.tweens.add({ targets: e, y: e.y - 50, alpha: 0, duration: 700, delay: k * 60 }); }
             this.tweens.killTweensOf(b);
             await this.debout(250);
-            await this.animer({ targets: b, angle: 0, x: b.x - 20, y: SOL_RECIT, duration: 400, ease: 'Back.easeOut' });
+            // il se redresse, à genoux, puis se relève, guéri
+            b.setTexture(corpsHD(this, b.quoi, 'aGenoux')).setScale(Math.abs(b.scaleX)); origineCorps(b);
+            await this.attendre(250);
+            b.setTexture(corpsHD(this, { ...b.quoi, blesse: false })).setOrigin(0.5, 1);
+            await this.sauter(b, b.x - 20, SOL_RECIT, 8, 300);
             b.setFlipX(true);
             this.emotion(b, '♥', 900);
             Son.jouer('voix', { personne: b.quoi, ton: 'merci' });

@@ -21,6 +21,7 @@ const PROPORTIONS = {
   // Les peuples de l'ombre (tailles données par le joueur : gobelin 11, momie 15, vampire 16,
   // orc 17, loup-garou 20, troll 24) et le panda (21), à 4 pixels HD par unité.
   momie: { H: 60, ep: 8.6, torse: 21, rx: 8.2, ry: 9, membre: 1 },
+  squelette: { H: 63, ep: 8.4, torse: 21, rx: 7.6, ry: 8.6, membre: 0.5 },   // (retours planche 86 : les morts-vivants des récits, des os)
   vampire: { H: 64, ep: 8.2, torse: 23, rx: 7.6, ry: 9.6, membre: 0.9 },
   orc: { H: 68, ep: 12.5, torse: 24, rx: 9.4, ry: 9.2, membre: 1.35 },
   loupgarou: { H: 80, ep: 12, torse: 28, rx: 9.8, ry: 9.4, membre: 1.3 },
@@ -74,6 +75,9 @@ const FIGURANTS = {
   // (v1.05, planche 35) le Père Givrin, qui fait tourner la grande roue des cadeaux du Long Hiver
   givrin: { race: 'nain', nom: 'Le Père Givrin', costume: 'givrin', habit: 0xb0242a, cheveux: 0xf0f0f4, barbe: 'nain', peau: 1, niveau: 2, bouche: 3 },
   barbier: { race: 'nain', nom: "Orvin Tresse-d'Argent", costume: 'barbier', habit: 0x2a4a6e, cheveux: 0xb4b4bc, barbe: 'nain', coiffure: 'court', peau: 1, niveau: 1, bouche: 3 },   // (v1.48, planche 72) le barbier de la rue
+  // (retours planche 86) les morts-vivants des récits : de vrais squelettes, dessinés par le moteur des corps (des poses, une vraie lame)
+  squelette: { race: 'squelette', nom: 'Squelette', costume: 'squelette', habit: 0xd8d0b4, cheveux: 0xd8d0b4, niveau: 0, fache: true },
+  chevalierSquelette: { race: 'squelette', nom: 'Chevalier squelette', costume: 'squelette', habit: 0xd8d0b4, cheveux: 0xd8d0b4, niveau: 0, fache: true, proportions: { H: 70, ep: 10, torse: 24, rx: 8, ry: 9, membre: 0.58 } },
   mendiant: { race: 'humain', nom: 'Le mendiant', costume: 'mendiant', habit: 0x6a6252, cheveux: 0x8a8a80, cape: 0x4a4236, barbe: 'pleine', niveau: 0 },
 };
 
@@ -100,7 +104,8 @@ function tenueDe(niveau) {
 
 // (planches 85 et 86) Ce qu'il faut pour dessiner quelqu'un : son gène, sa tenue, son costume, la clé de sa texture et les
 // options du moteur (corpsHD, et les poses du rig, posesHD.js)
-function specCorps(quoi, pose = null, vue = 'troisQuarts') {
+// armeForcee : l'arme qu'il porte (un brigand, un garde des récits) ; null : aucune ; sinon celle de son inventaire
+function specCorps(quoi, pose = null, vue = 'troisQuarts', armeForcee = undefined) {
   let gene, tenue, costume = null, cle, bouche, atours, proportions;
   if (typeof quoi === 'string' && FIGURANTS[quoi]) {
     const fig = FIGURANTS[quoi];
@@ -127,7 +132,7 @@ function specCorps(quoi, pose = null, vue = 'troisQuarts') {
     if (quoi.figurant === 'mentor') { gene = { ...gene, habit: 0x2e2420, cheveux: 0x3a281a, cape: 0x3e4a2a, barbe: 'rase', coiffure: 'long', peau: 1 }; costume = 'mentor'; tenue = 2; }
   }
   // (v1.04) l'arme qu'il porte sur lui (celle de son inventaire, ou celle qu'il vient d'acheter)
-  const arme = typeof quoi === 'object' ? armePortee(quoi) : null;
+  const arme = armeForcee !== undefined ? armeForcee : typeof quoi === 'object' ? armePortee(quoi) : null;
   if (arme) cle += '_arme_' + arme;
   if (pose) cle += '_' + pose;
   if (vue && vue !== 'troisQuarts') cle += '_' + vue;
@@ -145,12 +150,12 @@ function specCorps(quoi, pose = null, vue = 'troisQuarts') {
 // La clé de la texture en pied : un peuple (couleurs par défaut), un figurant, ou une personne
 // (avec ses couleurs à elle et la tenue de son niveau).
 // `vue` : 'troisQuarts' (par défaut, il regarde vers la droite), 'face', 'profil' ou 'dos'.
-function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
+function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts', armeForcee = undefined) {
   if (quoi === 'faucheuse') return 'perso_faucheuse';
   if (typeof quoi === 'string' && !FIGURANTS[quoi] && !PROPORTIONS[quoi]) return 'perso_' + quoi;   // (le joueur, etc.)
   // (planches 85 et 86) une pose du rig (posesHD.js : à genoux, au sol, il gît, il frappe...) : sa texture à elle
-  if (pose && typeof POSES_HD !== 'undefined' && POSES_HD[pose]) return texturePose(scene, quoi, pose, { vue });
-  const { gene, tenue, costume, cle, options } = specCorps(quoi, pose, vue);
+  if (pose && typeof POSES_HD !== 'undefined' && POSES_HD[pose]) return texturePose(scene, quoi, pose, { vue, arme: armeForcee });
+  const { gene, tenue, costume, cle, options } = specCorps(quoi, pose, vue, armeForcee);
   if (!scene.textures.exists(cle)) {
     const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, options);
     toile.texture(scene, cle);
@@ -159,6 +164,7 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
     if (toile.bout) BOUTS_CORPS[cle] = toile.bout;
     if (toile.piedsAssis) PIEDS_ASSIS[cle] = toile.piedsAssis;
     REPERES_CORPS[cle] = toile.reperes;
+    if (toile.margeArme) MARGES_CORPS[cle] = toile.margeArme;   // (une lance tenue debout : la place au-dessus de la tête)
     dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, options).texture(scene, cle + '_pas1');
     dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, options).texture(scene, cle + '_pas2');
   }
