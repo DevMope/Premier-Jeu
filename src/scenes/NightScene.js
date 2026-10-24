@@ -110,7 +110,7 @@ class NightScene extends Phaser.Scene {
       if (!k || typeof lieuDebloque !== 'function') continue;
       const d = DEBLOCAGES[k[1]];
       if (!lieuDebloque(G, k[1])) { bt[0] = k[0]; bt[1] = () => { Son.jouer('refus'); this.annoncer(`${d.nom} s'ouvrira ${d.quand === 'ta 1re trouvaille' ? 'avec ta première trouvaille' : d.quand}.`); }; bt[2] = { ferme: d }; }
-      else if (neufs.includes(k[1])) { bt[2] = { neuf: true }; const agir = bt[1]; bt[1] = () => { lieuVu(k[1]); agir(); }; }
+      else if (neufs.includes(k[1])) { bt[2] = { neuf: k[1] }; const agir = bt[1]; bt[1] = () => { lieuVu(k[1]); agir(); }; }
     }
     // (v1.43, planche 70) le matin qui suit les travaux qui font changer de rang : les boutons ont changé avec la maison
     if (this.matin && typeof rangInterface === 'function') {
@@ -133,6 +133,7 @@ class NightScene extends Phaser.Scene {
     let cumul = 20;
     const places = poids.map(p => { const l = 920 * p / somme, c = cumul + l / 2; cumul += l; return [c, l]; });
     this.xBoutons = places.map(([c]) => c);
+    this.tagsNeufs = [];
     boutons.forEach(([texte, action, marque], i) => {
       const [cx, l] = places[i], largeur = l + 4;   // (largeur - 16 = la plaque : 12 px entre deux boutons)
       const b = creerBouton(this, cx, 505, largeur - 16, texte, action);
@@ -142,6 +143,7 @@ class NightScene extends Phaser.Scene {
         this.add.text(b.fond.x, b.fond.y - 34, marque.ferme.quand, style(12, '#e8dcc0', { fontStyle: 'bold italic', backgroundColor: '#2a1a10e0', padding: { x: 6, y: 2 } })).setOrigin(0.5);
       } else if (marque && marque.neuf) {
         const tag = this.add.text(b.fond.x, b.fond.y - 34, 'NOUVEAU', style(12, '#14181e', { fontStyle: 'bold', backgroundColor: '#8ab0d0', padding: { x: 8, y: 2 } })).setOrigin(0.5);
+        tag.cleNeuve = marque.neuf; (this.tagsNeufs = this.tagsNeufs || []).push(tag);   // (v1.61 : effacé au retour du lieu)
         this.tweens.add({ targets: tag, y: tag.y - 3, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
       // Le bouton pour avancer (aller dormir le soir, ouvrir le comptoir le matin) se voit bien : il luit (planche 68).
@@ -152,6 +154,8 @@ class NightScene extends Phaser.Scene {
     });
     this.events.off('resume', this.tout, this);
     this.events.on('resume', this.tout, this);
+    this.events.off('resume', this.effacerNeufs, this);
+    this.events.on('resume', this.effacerNeufs, this);
     this.tout();
     afficherStatutSauvegarde(this, 940, 60, 1);
     if (!this.matin) this.time.delayedCall(600, () => conseilGarrick(this, 'soir'));
@@ -481,6 +485,12 @@ class NightScene extends Phaser.Scene {
       suite.on('pointerdown', () => { this.pageLettres = (this.pageLettres || 0) + 1; Son.jouer('page'); this.tout(); });
       c.add(suite);
     }
+  }
+
+  // (v1.61) au retour du bureau, de la banque ou de l'atelier : leur « NOUVEAU » s'en va
+  effacerNeufs() {
+    const vus = this.G.nouveautesVues || {};
+    (this.tagsNeufs || []).forEach(t => { if (t.active && vus[t.cleNeuve]) { this.tweens.killTweensOf(t); t.destroy(); } });
   }
 
   petitBouton(x, y, texte, couleur, action) {
