@@ -245,7 +245,7 @@ function visiteDuMonde(carte) {
   const ETAPES = ['Ta maison', 'Le monde', 'La lumière et l’ombre', 'Le marché', 'Ton premier client'];
   const PAS = [
     { zone: [255, 140, 480, 200], texte: "« Ici, c'est la Comté : chez nous. Chaque matin, des aventuriers cherchent où aller, et c'est toi qui choisis. Les étoiles, c'est le danger... et le butin. Sous les nuages, le reste du monde : il s'ouvrira à mesure que ton nom circulera. »" },
-    { zone: null, texte: "« Le monde aime ranger les gens : la lumière d'un côté, l'ombre de l'autre. Ce que tu vends, à qui tu le vends, et ce que tu fermes les yeux dessus : tout se sait. La jauge, sous ta réputation, te dira de quel côté tu penches. Personne ne choisira pour toi. »", fleche: [120, 54, -90] },
+    { zone: null, texte: "« Le monde aime ranger les gens : la lumière d'un côté, l'ombre de l'autre. Ce que tu vends, à qui tu le vends, et ce sur quoi tu fermes les yeux : tout se sait. La jauge, sous ta réputation, te dira de quel côté tu penches. Personne ne choisira pour toi. »", fleche: [120, 54, -90] },
     { zone: null, texte: "« Demain matin, avant d'ouvrir, je t'emmène au Marché des Mastres : c'est là que tu rachètes de quoi remplir ta réserve. Chaque marchand a ses prix du jour. Ce qui manque sur tes étagères manquera au comptoir. »" },
     { zone: null, texte: "« Assez parlé ! Une cliente t'attend déjà : Pippa, une hobbite qui doit porter une lettre de l'autre côté de la rivière. Une course facile, pour commencer. Je reste à côté de toi. »", bouton: 'Ouvrir le comptoir ▶' },
   ];
@@ -270,9 +270,9 @@ function guideClient(comptoir, etape) {
   for (const k of ['comptoir', 'colis', 'remis', 'refus', 'carte']) G.tutoVu[k] = true;   // (le guide remplace ces conseils-là)
   const et = n => ({ y: 338, liste: ETAPES_CLIENT, enCours: n, titre: 'Ton premier client :' });
   const PAS = {
-    commande: { zone: [683, 16, 262, 236], fleche: [640, 130, 0], texte: "« D'abord, lis sa commande, là, sur le parchemin. Chaque ligne, c'est ce qu'il lui faut pour revenir vivant. »", bouton: 'Compris ▶', suite: 'marchandises', n: 0 },
+    commande: { zone: [683, 16, 262, 236], fleche: [640, 130, 0], texte: "« D'abord, lis sa commande, là, sur le parchemin. Chaque ligne, c'est ce qu'il lui faut pour revenir vivante. »", bouton: 'Compris ▶', suite: 'marchandises', n: 0 },
     marchandises: { zone: [142, 352, 556, 172], fleche: [420, 330, 90], texte: "« Clique sur tes marchandises, en bas, pour les glisser dans son baluchon. Tout ce qui est sur le parchemin. »", n: 1, bulle: { x: 470, y: 200, pointe: null } },
-    flair: { zone: [683, 192, 262, 54], fleche: [640, 219, 0], texte: "« Tout y est ! Sous la commande, la jauge de ton flair : ses chances de revenir vivant. Plus le baluchon est complet, plus elle monte. »", bouton: 'Compris ▶', suite: 'remettre', n: 2 },
+    flair: { zone: [683, 192, 262, 54], fleche: [640, 219, 0], texte: "« Tout y est ! Sous la commande, la jauge de ton flair : ses chances de revenir vivante. Plus le baluchon est complet, plus elle monte. »", bouton: 'Compris ▶', suite: 'remettre', n: 2 },
     remettre: { zone: [732, 476, 216, 40], fleche: [690, 496, 0], texte: "« Il ne reste qu'à lui remettre son baluchon. Clique sur « Remettre le baluchon ». »", n: 3, bulle: { x: 470, y: 420, pointe: null } },
   };
   if (etape === 'fini') {

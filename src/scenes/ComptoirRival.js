@@ -128,7 +128,7 @@ Object.assign(CounterScene.prototype, {
     const msk = this.make.graphics().fillCircle(mx, my, 42); bu.setMask(msk.createGeometryMask());
     this.tweens.add({ targets: m, scale: 1, duration: 300, ease: 'Back.easeOut' });
     this.tweens.add({ targets: bu, alpha: 1, duration: 300 });
-    this.raconter(`Dans la file, ${v.nom} hésite... puis file chez le voisin : Lucien Belhomme lui fait signe depuis sa vitrine. (Un client de moins aujourd'hui.)`, RIVAL.sous);
+    this.raconter(`Dans la file, ${v.nom} hésite... puis court chez le voisin : Lucien Belhomme lui fait signe depuis sa vitrine. (Un client de moins aujourd'hui.)`, RIVAL.sous);
     const moins = this.add.text(FENETRE.x + FENETRE.w / 2, FENETRE.y + 130, '−1 client', style(16, '#ffdddd', { fontStyle: 'bold', stroke: '#5a0e0e', strokeThickness: 5 })).setOrigin(0.5).setDepth(3.4).setAlpha(0);
     this.tweens.add({ targets: moins, alpha: 1, y: FENETRE.y + 110, duration: 700, delay: 500, yoyo: true, hold: 900 });
     if (premier) {

@@ -26,7 +26,7 @@ class NightScene extends Phaser.Scene {
     if (this.matin && typeof miroirAFaire === 'function' && miroirAFaire(G)) {
       // (si un saut de temps a enjambé la veille, la fête est notée comme passée : le miroir vient quand même)
       if (!G.feteFaite) G.feteFaite = G.jour;
-      this.time.delayedCall(700, () => miroirDes18Ans(this, () => this.annoncer && this.annoncer(`Te voilà ${nomJoueur(G)}. Le miroir garde ton nouveau reflet.`)));
+      this.time.delayedCall(700, () => miroirDes18Ans(this, () => this.annoncer && this.annoncer(`Te voilà, ${nomJoueur(G)}. Le miroir garde ton nouveau reflet.`)));
     }
     // (v1.32, planche 56 v2 validée) la veille des 18 ans, le soir : la fête à l'arrière-boutique
     if (!this.matin && typeof feteAFaire === 'function' && feteAFaire(G)) this.time.delayedCall(600, () => feteDes18Ans(this, () => {}));

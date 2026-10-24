@@ -398,7 +398,7 @@ class BureauScene extends Phaser.Scene {
       gauche = [
         { titre: 'Toi', lignes: [`${nomJoueur(G)}, ${ageJoueur(G)} ans`,
           // (v0.93) la bénédiction de la nymphe, et sa fiole
-          benieJusqua(G) ? `Bénie de la nymphe jusqu'au jour ${benieJusqua(G)} (+${Math.round(NYMPHE.benediction.bonus * 100)} % rivières, marais, gourdes)` : '',
+          benieJusqua(G) ? `Bénédiction de la nymphe jusqu'au jour ${benieJusqua(G)} (+${Math.round(NYMPHE.benediction.bonus * 100)} % rivières, marais, gourdes)` : '',
           G.nymphe && G.nymphe.fiole ? 'La fiole de la nymphe : une potion de plus chaque semaine' : ''] },
         { titre: `Flair : ${Math.round(flair * 100)} %`, lignes: [flair < 1 ? `Tes estimations peuvent se tromper de ±${Math.round(35 * (1 - flair))} %.` : 'Tes estimations sont exactes.', flair < 1 ? `Il monte en servant des clients (${G.experience} / ${EXPERIENCE_MAX}).` : ''] },
         { titre: `Artisanat : niveau ${niveauArtisanat(G)}`, lignes: [`Réparations faites : ${G.reparations} (niveau suivant à ${prochainArtisanat})`, `Matériaux par réparation : ${materiauxRequis(G)}`, `${niveauArtisanat(G)} jour(s) de moins à l'atelier`] },

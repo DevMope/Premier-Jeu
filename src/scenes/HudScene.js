@@ -193,7 +193,7 @@ class HudScene extends Phaser.Scene {
   infoBuche(montrer) {
     if (this.bulleBuche) { this.bulleBuche.destroy(); this.bulleBuche = null; }
     if (!montrer) return;
-    this.bulleBuche = this.add.text(this.buche.x - 10, 28, "Le foyer est vide : dehors, il gèle. Mets une bûche dans la cheminée avant de dormir (1 planche de bois), sinon tu te réveilleras fatigué.", style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 260 } })).setDepth(102);
+    this.bulleBuche = this.add.text(this.buche.x - 10, 28, "Le foyer est vide : dehors, il gèle. Mets une bûche dans la cheminée avant de dormir (1 planche de bois), sinon la fatigue t'attendra au réveil.", style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 260 } })).setDepth(102);
   }
 
   // (v1.53) Le temps du jour : son nom, ce qu'il change au comptoir, et l'ardoise d'Ysmée si elle s'est trompée
@@ -212,7 +212,7 @@ class HudScene extends Phaser.Scene {
     if (this.bulleNymphe) { this.bulleNymphe.destroy(); this.bulleNymphe = null; }
     const G = window.GAME;
     if (!montrer || !G || !benieJusqua(G)) return;
-    const texte = `Bénie de la nymphe jusqu'au jour ${benieJusqua(G)} :\n+${Math.round(NYMPHE.benediction.bonus * 100)} % aux épreuves de rivière et de marais, et à celles où il faut une gourde.`;
+    const texte = `Bénédiction de la nymphe jusqu'au jour ${benieJusqua(G)} :\n+${Math.round(NYMPHE.benediction.bonus * 100)} % aux épreuves de rivière et de marais, et à celles où il faut une gourde.`;
     this.bulleNymphe = this.add.text(222, 30, texte, style(12, '#e8f6ff', { backgroundColor: '#14283e', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
   }
 

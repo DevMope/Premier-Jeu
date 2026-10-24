@@ -421,7 +421,7 @@ class RenovationScene extends Cinematique {
     await this.attendreClic();
     if (this.fini) return;
     await this.allerA('chambre', 880);
-    this.garrickDit(this.guide ? "« Et ta chambre. Une bonne nuit, et tu seras en forme demain : plus vif au comptoir. Le soir, c'est ici que la journée se termine. »" : '« Et ta chambre ! Un lit, une fenêtre sur les collines... Tu seras bien, ici. »', { ton: 'content', emotion: '♥' });
+    this.garrickDit(this.guide ? "« Et ta chambre. Une bonne nuit, et tu seras en forme demain : l'esprit vif au comptoir. Le soir, c'est ici que la journée se termine. »" : '« Et ta chambre ! Un lit, une fenêtre sur les collines... Tu seras bien, ici. »', { ton: 'content', emotion: '♥' });
     await this.renover('chambre');
     if (this.fini) return;
     this.garrickDit('« Tout est propre, du toit à la cave ! Viens, on fait le tour du propriétaire. »', { ton: 'rire', emotion: 'joie', geste: 'saut' });

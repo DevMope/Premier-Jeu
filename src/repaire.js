@@ -115,7 +115,7 @@ function matinDuRepaire(G) {
   if (r.annonce) {
     lignes.push({ cave: "Cette nuit, des ouvriers sans nom ont creusé sous l'arrière-boutique : la cave est prête, la trappe cachée sous le tapis.",
       informateurs: 'Fil-de-Fer et deux autres gamins des rues travaillent pour toi désormais. Ils voient tout, ils entendent tout.',
-      garde: (r.enveloppe === G.jour - 1 ? `Minuit. Le capitaine Brisefer a pris la première enveloppe sans un mot (−${REPAIRE.enveloppe} p.).` : 'Minuit. Le capitaine Brisefer est passé : il prendra sa première enveloppe en fin de semaine.') + " La garde fermera les yeux, tant qu'elle arrive chaque semaine." }[r.annonce] + ' ' + (REPAIRE.projets.find(p => p.id === r.annonce) || {}).effet);
+      garde: (r.enveloppe === G.jour - 1 ? `Minuit. Le capitaine Brisefer a pris la première enveloppe sans un mot (−${REPAIRE.enveloppe} p.).` : 'Minuit. Le capitaine Brisefer est passé : il prendra sa première enveloppe en fin de semaine.') + " La garde fermera les yeux, tant qu'elle est payée chaque semaine." }[r.annonce] + ' ' + (REPAIRE.projets.find(p => p.id === r.annonce) || {}).effet);
     r.annonce = null;
   }
   if (r.enveloppe === G.jour - 1 && !premiere) lignes.push(`Minuit : le capitaine Brisefer est passé prendre l'enveloppe de la semaine (−${REPAIRE.enveloppe} p.).`);

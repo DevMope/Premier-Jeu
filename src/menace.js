@@ -165,7 +165,7 @@ function apresMissionMenace(G, parti) {
 
 // La nuit : l'annonce (le 15 du mois), la bataille (la nuit du sixième jour)
 const INDICES_ENGEANCE = [
-  "jure qu'il a vu « des yeux violets dans la brume, plus que d'hommes »",
+  "jure avoir vu « des yeux violets dans la brume, plus que d'hommes »",
   "parle de griffes qui fumaient encore dans la boue",
   "dit qu'une voix lui parlait dans la tête pendant la bataille",
   "raconte que les pillards ne saignaient pas comme des hommes",
@@ -221,7 +221,7 @@ function matinDeLaMenace(G) {
   for (const m of M.actives.filter(x => x.annonce === G.jour)) {
     const z = ZONES[m.zone];
     const qui = z.camp === 'mal' ? 'Un messager des Bannis frappe à ta porte, tout essoufflé :' : 'Sur la place, le crieur du Conseil agite sa cloche :';
-    lignes.push(`${qui} « Des pillards marchent sur ${z.nom.replace(/^L/, 'l')} ! ${z.camp === 'mal' ? 'Nos terres ont besoin' : 'Le Conseil a besoin'} de trois Ouvre-Routes pour les défendre. Bataille dans ${MENACE.delai} jours ! » (Sur la carte : ⚔ ${z.nom}.)`);
+    lignes.push(`${qui} « Des pillards marchent sur ${z.nom.replace(/^L/, 'l')} ! ${z.camp === 'mal' ? 'Nos terres ont besoin' : 'Le Conseil a besoin'} de trois Ouvre-Routes pour défendre la contrée. Bataille dans ${MENACE.delai} jours ! » (Sur la carte : ⚔ ${z.nom}.)`);
     if (!G.annonceMenace) G.annonceMenace = `DES PILLARDS MARCHENT SUR ${z.nom.toUpperCase()} ! ${z.camp === 'mal' ? 'Les Bannis cherchent' : 'Le Conseil cherche'} des défenseurs. Bataille dans ${MENACE.delai} jours.`;
   }
   for (const n of M.nouvelles || []) {

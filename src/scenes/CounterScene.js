@@ -396,7 +396,7 @@ class CounterScene extends Phaser.Scene {
     const avant = v ? chanceDeRetour(v, this.colis) : 0;
     choisirMise(G, v, montant);
     const apres = chanceDeRetour(v, this.colis);
-    this.raconter(`Tu mises ${montant} p. sur ${prenomDe(v.nom)} : la bourse lui sera remise au départ. Il revient vainqueur : ${Math.round(montant * MISE_AVENTURIER.vainqueur)} p.`, 'Ta mise');
+    this.raconter(`Tu mises ${montant} p. sur ${prenomDe(v.nom)} : la bourse lui sera remise au départ. En cas de victoire : ${Math.round(montant * MISE_AVENTURIER.vainqueur)} p.`, 'Ta mise');
     Son.jouer('pieces', { montant });
     gainEnDirect(this, 815, 186, `+${Math.max(1, Math.round((apres - avant) * 100))} % de chances`, true);
     this.restaurerService();
@@ -1552,7 +1552,7 @@ class CounterScene extends Phaser.Scene {
     const motif = palierCamp(G) <= -1 ? "On dit que ton comptoir fait affaire avec les Bannis." : "On a reçu une plainte contre ton comptoir.";
     const saisie = v.saisis.length ? ` Nous saisissons : ${v.saisis.join(', ')}.` : v.fouille ? ' Mes hommes ont fouillé ta réserve : rien d\'interdit... pour cette fois.' : '';
     const fache = v.colere ? " Et tu croyais qu'on oublierait l'enveloppe ?" : '';
-    this.dire(`${motif}${fache} ${v.fouille ? 'Fouille !' : 'Premier avertissement.'}${saisie} L'amende : ${v.amende} pièces${v.caisse ? ', dont une lourde amende pour la contrebande' : ''}${v.colere ? ' (doublée)' : ''}. ${garde.nom} est avec moi.`, cap);
+    this.dire(`${motif}${fache} ${v.fouille ? 'Fouille !' : 'Premier avertissement.'}${saisie} L'amende : ${v.amende} pièces${v.caisse ? ', dont une lourde part pour la contrebande' : ''}${v.colere ? ' (doublée)' : ''}. ${garde.nom} est avec moi.`, cap);
     // (v1.29) la cave du repaire : ce que la fouille n'a pas trouvé sous la trappe
     if (v.cave > 0) this.time.delayedCall(900, () => gainEnDirect(this, FENETRE.x + FENETRE.w / 2, FENETRE.y + 60, `Saisie évitée (la cave) : ${v.cave} objet${v.cave > 1 ? 's' : ''} à l'abri`, true));
     const partir = () => { this.actionB = null; this.majBoutonsService(); this.bouton('...', null); this.time.delayedCall(1800, () => this.partirPar(FENETRE.x - 80)); };
@@ -1959,7 +1959,7 @@ class CounterScene extends Phaser.Scene {
     } else if (entree.type === 'retour') {
       const v = entree.parti.voyageur;
       const ancien = typeof retourDeLAncien === 'function' ? retourDeLAncien(this.G, v, entree.parti.resultat.echec) : null;   // (v1.12) un ancien de l'orphelinat
-      this.dire(ancien || (entree.parti.resultat.echec ? "Me revoilà... Vivant, au moins. Mais ça ne s'est pas passé comme prévu."
+      this.dire(ancien || (entree.parti.resultat.echec ? "Me revoilà... En vie, au moins. Mais ça ne s'est pas passé comme prévu."
         : `Me revoilà, sain${v.feminin ? 'e' : ''} et ${v.feminin ? 'sauve' : 'sauf'} ! Tu ne devineras jamais ce qui m'est arrivé...`), v.nom);
       this.titreCommande.setFontSize(17).setText('Retour de mission');
       // (v0.93, planche 19) plusieurs retours, et l'on connaît déjà les récits : tout résumer d'un coup
@@ -2113,7 +2113,7 @@ class CounterScene extends Phaser.Scene {
     }
     // Ta réputation et tes choix entre le bien et le mal : elle sait tout.
     if (G.mal >= SEUIL_SABOTAGE && G.reputation >= 5) elle("« On t'aime, au village... S'ils savaient ce que tu fais dès qu'ils ont le dos tourné. »");
-    else if (G.mal >= SEUIL_SABOTAGE) elle('« Les gens commencent à chuchoter sur toi. Ils ont bien raison. »');
+    else if (G.mal >= SEUIL_SABOTAGE) elle('« Les gens commencent à chuchoter à ton sujet. Ils ont bien raison. »');
     else if (G.mal >= 1) elle('« Je vois ce que tu fais, tu sais. Je vois tout. Continue... »');
     else if (G.reputation >= 8) elle("« Tout le monde t'aime, marchand. Même moi, je ne t'en veux pas. Mais je finirai par tous les avoir. »");
 
@@ -2381,7 +2381,7 @@ class CounterScene extends Phaser.Scene {
     if (enPlus) {
       if (!commande[id] && !besoinArme && !OBJETS_DE_SOIN.includes(id)) return this.dire("Hum, ça ne me servira à rien là où je vais.");
       if (totalSurplus(v, this.colis) >= tailleSac(v)) return this.dire(`Mon sac est plein ! Je ne peux porter que ${tailleSac(v)} objets en plus de ma commande.`);
-      if (id === 'bandage' && (this.colis.bandage || 0) - (commande.bandage || 0) >= BANDAGES_EN_PLUS_MAX) return this.dire(`${BANDAGES_EN_PLUS_MAX} bandages en plus, ça suffit largement ! Garde les autres pour quelqu'un d'autre.`);
+      if (id === 'bandage' && (this.colis.bandage || 0) - (commande.bandage || 0) >= BANDAGES_EN_PLUS_MAX) return this.dire(`${BANDAGES_EN_PLUS_MAX} bandages en plus, ça suffit largement ! Garde le reste pour quelqu'un d'autre.`);
     }
     if (this.G.stock[id] <= 0) {
       return this.dire("Tu n'en as plus en stock...", '');

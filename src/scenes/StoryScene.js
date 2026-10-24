@@ -448,7 +448,7 @@ class StoryScene extends Cinematique {
         await this.attendreClic();
       }
       this.pleuvoirPieces();
-      const ajuste = (gain !== v.butin ? ` (prévu : ${v.butin}, ajusté selon votre relation et tes décorations)` : '') + (this.parti.dime ? ` · ${this.parti.dimeNom} : −${this.parti.dime}` : '');   // (v1.32)
+      const ajuste = (gain !== v.butin ? ` (prévu : ${v.butin}, ajusté selon ta relation et tes décorations)` : '') + (this.parti.dime ? ` · ${this.parti.dimeNom} : −${this.parti.dime}` : '');   // (v1.32)
       this.ecrire('Retour au comptoir',
         `« ${this.remerciement()} Voici ta part du butin ! »\n` +
         `+ ${gain} pièces${ajuste} · Relation : ${relation.nom}${message ? '\n' + message : ''}`);

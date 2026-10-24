@@ -120,7 +120,7 @@ const GARRICK_VISITES = [
   { jour: 17, texte: "On dit beaucoup de mal des gobelins. Moi j'en ai connu un qui rendait la monnaie juste ! Rare, hein ? Ha ha ! ... Si un jour un Banni frappe à ta porte, sers-le comme un autre. Une pièce, c'est une pièce." },
   { jour: 25, texte: "Le Conseil des Gardiens a encore voté une taxe. Ils ont l'air si sages, dans leurs grandes robes blanches... Bah. Ne m'écoute pas, je radote." },
   { jour: 34, texte: "Ma grand-mère disait qu'il poussait des pommiers, dans les terres d'ombre. Avant. Avant quoi ? Elle ne savait plus. Personne ne sait plus, d'ailleurs. C'est curieux, la mémoire.", cadeau: 30 },
-  { jour: 44, texte: "Le grand Sage du Conseil... Tu savais que personne ne connaît son âge ? Mon père le voyait déjà vieux. Et son père avant lui. Ha ! Il doit avoir un bon apothicaire." },
+  { jour: 44, texte: "Le Grand Sage du Conseil... Tu savais que personne ne connaît son âge ? Mon père le voyait déjà vieux. Et son père avant lui. Ha ! Il doit avoir un bon apothicaire." },
   { jour: 56, texte: "Tu as bien grandi, toi. Un jour, je te raconterai d'où je viens vraiment. Pas aujourd'hui. Aujourd'hui, je t'achète une ration et je repars, ha ha !" },
 ];
 
@@ -642,7 +642,7 @@ const ZONES = {
   },
   antre: {
     nom: "L'Antre de la Bête", danger: 5, reputation: 15, x: 1250, y: 110, royaume: 'sauvages', biome: 'antre',
-    description: "Personne n'en est revenu depuis des années. Mais le trésor qu'on y raconte...",
+    description: "Personne n'en est revenu depuis des années. Mais le trésor qu'on y dit caché...",
     quetes: ['bete'],
   },
   // Les terres de lumière : les quêtes du bien font monter ta réputation.
@@ -1310,7 +1310,7 @@ Object.assign(QUETES, {
       {
         type: 'froid', besoin: 'cape', qte: 1,
         intro: 'Le froid mordait jusqu\'aux os.',
-        complet: "Ta cape chaude m'a gardé{e} au chaud même dans le blizzard.",
+        complet: "Ta cape chaude m'a protégé{e}, même dans le blizzard.",
         partiel: 'Mes doigts gelaient...',
         rien: "J'ai cru que mes oreilles allaient tomber.",
       },
@@ -1486,7 +1486,7 @@ Object.assign(QUETES, {
       { type: 'route', besoin: 'gourde', qte: 1, intro: 'La route du Monastère grimpe sous un soleil de plomb. Les pèlerins avaient soif.',
         complet: 'Ta gourde a désaltéré tout le monde. Un vieux moine panda m\'a béni{e}.', partiel: "On a partagé le peu d'eau qu'on avait...", rien: 'Les plus vieux pèlerins se sont évanouis en chemin.' },
       { type: 'bandits', besoin: 'epee', qte: 1, intro: 'Des brigands nous attendaient au col des bambous !',
-        complet: 'Ton épée les a fait fuir dans les bambous.', partiel: "Je les ai repoussés, mais avec mal.", rien: "Je n'avais rien pour défendre les pèlerins..." },
+        complet: 'Ton épée les a fait fuir dans les bambous.', partiel: "Je les ai repoussés, non sans mal.", rien: "Je n'avais rien pour défendre les pèlerins..." },
       { type: 'riviere', besoin: 'corde', qte: 1, intro: 'Le pont de lianes du Monastère était rompu.',
         complet: 'Avec ta corde, on a fait passer tout le monde, un par un.', partiel: 'La corde était trop courte, il a fallu improviser.', rien: "On a dû traverser à gué, et j'ai failli tout perdre." },
     ],
@@ -1732,7 +1732,7 @@ Object.assign(QUETES, {
       { type: 'pillards', besoin: 'bouclier', qte: 1, intro: 'Des pillards guettaient les convois sous le fort.',
         complet: "Ton bouclier m'a sauvé{e}. Au fort, les soldats m'ont dit que la Muraille n'était pas là pour empêcher les Bannis d'entrer. « Pour les empêcher de revenir. » Puis ils ont ri, trop fort.", partiel: 'Ils ont pris la moitié des vivres.', rien: "Ils m'ont tout pris." },
       { type: 'froid', besoin: 'cape', qte: 1, intro: 'La nuit sur les remparts gèle les os.',
-        complet: 'Ta cape m\'a gardé{e} au chaud pendant la garde.', partiel: 'Je claquais des dents.', rien: "J'ai failli y laisser mes doigts." },
+        complet: 'Ta cape m\'a tenu{e} au chaud pendant la garde.', partiel: 'Je claquais des dents.', rien: "J'ai failli y laisser mes doigts." },
     ],
   },
   remedes: {
@@ -1813,14 +1813,14 @@ const AINES = {
     recit: [
       "« Viens près du feu, petit d'homme. Les loups n'ont pas froid, mais les vieux, si. »",
       "« Les elfes chantent au Lac des Lunes pour ne pas oublier. Ils ne savent plus quoi. Moi, je sais : c'est notre chant. Nous gardions leurs forêts, autrefois, et ils nous l'avaient appris en remerciement. »",
-      "« Puis vint la nuit sans lune. Le grand Sage parla, et le monde s'endormit. Au réveil, les elfes nous chassaient de leurs forêts à coups de flèches d'argent. Ils pleuraient en tirant, sans savoir pourquoi. »",
+      "« Puis vint la nuit sans lune. Le Grand Sage parla, et le monde s'endormit. Au réveil, les elfes nous chassaient de leurs forêts à coups de flèches d'argent. Ils pleuraient en tirant, sans savoir pourquoi. »",
       "« La meute s'est réfugiée au Col. Les plus vieux d'entre nous se souviennent un peu. Alors nous chantons les noms des nôtres tombés cette nuit-là. Tant qu'on les chante, ils ne sont pas tout à fait partis. »",
       "« Un homme vient parfois, la nuit. Une pipe, un manteau vert. Il écoute les noms jusqu'au bout. Il en connaît certains. ... Non, je ne te dirai pas son nom. Tu le connais déjà, je crois. »",
     ],
   },
   vampire: {
     nom: "Sévérin l'Ancien", feminin: false, vignette: 'chateau',
-    phrase: "« J'ai vu le grand Sage, mon enfant. Il y a fort longtemps. Il avait déjà ce visage-là. Exactement celui-là. Curieux, n'est-ce pas ? »",
+    phrase: "« J'ai vu le Grand Sage, mon enfant. Il y a fort longtemps. Il avait déjà ce visage-là. Exactement celui-là. Curieux, n'est-ce pas ? »",
     recit: [
       "« Un verre ? ... Non, ce n'est pas ce que tu crois. Du vin. Je suis vieux, pas grossier. »",
       "« À Nuit-Pourpre, nous tenions les registres. Les naissances, les mariages, les morts, de tous les peuples. Nous vivons longtemps : on nous confiait la mémoire. C'était un honneur. »",
@@ -1979,7 +1979,7 @@ const NOUVELLES = [
   // (des indices sur le Conseil des Gardiens, glissés parmi les nouvelles absurdes)
   "Le Conseil des Gardiens rappelle qu'il est interdit de parler des « Terres d'avant ». Personne ne sait ce que c'est, mais c'est interdit.",
   "Une nouvelle taxe pour la défense contre le dragon de la montagne. Le dragon n'a pas été aperçu cette année. La taxe, si.",
-  "Le grand Sage du Conseil fête son anniversaire. Son âge reste un secret d'État. Les bougies, elles, ont été commandées par charrettes.",
+  "Le Grand Sage du Conseil fête son anniversaire. Son âge reste un secret d'État. Les bougies, elles, ont été commandées par charrettes.",
   "Un vieux moine panda affirme se souvenir d'une chanson « d'avant ». Le Conseil l'a invité à venir la chanter. On ne l'a pas revu.",
   "Des fermiers ont trouvé des fondations de maisons dans le Bourbier. Le Conseil assure qu'il s'agit de très grands terriers de gobelins.",
   "Un gobelin a été enseveli sous une bouse de Groliphant, ces éléphants de dix mètres au garrot. On n'a retrouvé que son chapeau. Il était content du chapeau.",

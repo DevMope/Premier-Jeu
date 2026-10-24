@@ -1203,7 +1203,7 @@ function estimationFlair(G, t) {
   const verdict = rapport < 0.35 ? { texte: 'Une affaire en or !', couleur: '#2f7a2a' }
     : rapport < 0.5 ? { texte: 'Bon prix', couleur: '#2f6a2a' }
     : rapport < 0.68 ? { texte: 'Prix correct, sans plus', couleur: '#8a6a10' }
-    : { texte: 'Trop cher, à mon avis…', couleur: '#a03030' };
+    : { texte: 'Trop cher, à mon avis...', couleur: '#a03030' };
   return { min, max, verdict, flair };
 }
 

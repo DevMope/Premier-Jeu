@@ -124,15 +124,34 @@ class RueScene extends Phaser.Scene {
 
   reposBanc() {
     if (this.surLeBanc && this.surLeBanc.active) {
-      if (Math.random() < 0.4) { const p = this.surLeBanc; this.surLeBanc = null; this.tweens.add({ targets: p, alpha: 0, duration: 500, onComplete: () => p.destroy() }); }
+      // (v1.61) il ne s'efface plus sur place : il se lève et repart à pied, jusqu'au bout de la rue
+      if (!this.surLeBanc.enRoute && Math.random() < 0.4) { const p = this.surLeBanc; this.surLeBanc = null; this.marcherHorsDeVue(p.quoi, p.x, p.flipX ? -1 : 1); p.destroy(); }
       return;
     }
     if (Math.random() < 0.5) return;
     const race = auHasard(['humain', 'humain', 'hobbit', 'nain', 'elfe', 'magicienne']);
     const quoi = { nom: auHasard(NOMS_PASSANTS_RUE) + ' ' + Math.floor(Math.random() * 99), race, niveau: auHasard(['novice', 'aguerri']), feminin: Math.random() < 0.5 };
-    const p = this.surLeBanc = imageCorps(this, this.banc.x + (Math.random() < 0.5 ? -22 : 22), this.banc.sol - 6, quoi, 7.2, 'assis').setDepth(8.44).setFlipX(Math.random() < 0.5).setAlpha(0).setInteractive({ useHandCursor: true });
-    this.tweens.add({ targets: p, alpha: 1, duration: 500 });
+    // (v1.61) il arrive à pied par un bord de l'écran, puis s'assoit (il n'apparaît plus d'un coup sur le banc)
+    const xb = this.banc.x + (Math.random() < 0.5 ? -22 : 22), cam = this.cameras.main.scrollX, deGauche = Math.random() < 0.5;
+    const x0 = deGauche ? cam - 60 : cam + 1020, duree = Math.abs(xb - x0) * 11;
+    const venu = imageCorps(this, x0, SOL_PROMENADE + 6, quoi, 7.2).setFlipX(!deGauche).setDepth(8.45);
+    this.surLeBanc = venu; venu.enRoute = true; venu.quoi = quoi;   // (la place est prise dès qu'il est en route)
+    pasDeMarche(this, venu, duree, { poussiere: false });
+    this.tweens.add({ targets: venu, x: xb, duration: duree, onComplete: () => { if (!venu.active) return; venu.destroy(); this.asseoirSurLeBanc(quoi, xb, deGauche); } });
+  }
+  asseoirSurLeBanc(quoi, xb, deGauche) {
+    const p = this.surLeBanc = imageCorps(this, xb, this.banc.sol - 6, quoi, 7.2, 'assis').setDepth(8.44).setFlipX(!deGauche).setInteractive({ useHandCursor: true });
+    p.quoi = quoi;
     p.on('pointerdown', () => { this.allerVers(p.x + 70); this.dire(`« ${auHasard(['Belle journée, hein ? Je me pose deux minutes, mes pieds n\'en peuvent plus.', 'Je regarde passer les aventuriers. Il en part tous les jours, de chez toi !', 'Chut... j\'écoute les potins du marché.', 'Ce banc est le meilleur du village. Ne le dis à personne.'])} »`); });
+  }
+
+  // (v1.61) Quelqu'un qui s'en va à pied jusqu'au bout de la rue (hors de toute vue), puis seulement disparaît
+  marcherHorsDeVue(quoi, x, sens) {
+    const fin = sens > 0 ? (this.largeur || LARGEUR_RUE) + 140 : -140, duree = Math.abs(fin - x) * 11;
+    const p = imageCorps(this, x, SOL_PROMENADE + 6, quoi, 7.2).setFlipX(sens < 0).setDepth(8.45);
+    pasDeMarche(this, p, duree, { poussiere: false });
+    this.tweens.add({ targets: p, x: fin, duration: duree, onComplete: () => p.destroy() });
+    return p;
   }
 
   passant() {
@@ -141,7 +160,7 @@ class RueScene extends Phaser.Scene {
     const quoi = this.pont && Math.random() < 0.22 ? { race: 'humain', nom: 'Garde du pont ' + Math.floor(Math.random() * 99), costume: 'gardeRoyal', habit: 0x1c1c24, cheveux: 0x1a1612, coiffure: 'long', niveau: 'aguerri', armeEmportee: 'lance', serieux: true }
       : { nom: auHasard(NOMS_PASSANTS_RUE) + ' ' + Math.floor(Math.random() * 99), race, niveau: auHasard(['novice', 'aguerri']) };
     const sens = Math.random() < 0.5 ? 1 : -1, cam = this.cameras.main.scrollX;
-    const x0 = sens > 0 ? cam - 60 : cam + 1020, x1 = sens > 0 ? cam + 1100 : cam - 140;
+    const x0 = sens > 0 ? cam - 60 : cam + 1020, x1 = sens > 0 ? (this.largeur || LARGEUR_RUE) + 140 : -140;   // (v1.61 : jusqu'au bout de la rue, jamais sous les yeux du joueur)
     const p = imageCorps(this, x0, SOL_PROMENADE + 4 + Math.random() * 8, quoi, 7.2).setFlipX(sens < 0).setDepth(8.45);
     // (v1.32) le neutre qui paie les deux camps : parfois, un garde et un Banni font la ronde ensemble
     if (typeof patrouilleMelee === 'function' && patrouilleMelee(this.G)) {
