@@ -991,7 +991,8 @@ class CounterScene extends Phaser.Scene {
       this.lignesCommande.push({ icone, txt, zone, moins, moinsTexte, id: null });
     }
     this.texteSac = this.add.text(700, 184, '', style(11, '#5a3a20'));
-    this.aideCommande = this.add.text(700, 226, '− : retirer · clic sur une ligne : réparer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
+    // (v1.62) réparer l'équipement d'un client : c'est un employé de l'atelier qui s'en charge ; sans employé, l'option n'existe pas
+    this.aideCommande = this.add.text(700, 226, (this.G.employes || []).length ? '− : retirer · clic sur une ligne : faire réparer' : '− : retirer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
     // (v0.95) sous serment de lumière : un paladin de la Confrérie peut escorter une mission par semaine
     this.boutonEscorte = this.add.text(700, 226, '', style(12, '#2a4a8a', { fontStyle: 'bold', backgroundColor: '#e8dcb8', padding: { x: 4, y: 1 } }))
       .setInteractive({ useHandCursor: true }).setVisible(false);
@@ -2488,7 +2489,7 @@ class CounterScene extends Phaser.Scene {
     const ids = Object.keys(commandeDe(v)).flatMap(id => estArme(id) ? IDS_ARMES.filter(w => w in (v.inventaire || {})) : [id]);
     return ids.filter(id => {
       const etat = etatObjet(v, id);
-      return ITEMS[id].durable && etat > 0 && etat < USURE_MAX;
+      return ITEMS[id].durable && etat > 0 && etat < USURE_MAX && !!reparateurComptoir(this.G, id);   // (v1.62 : par un employé)
     });
   }
 
@@ -2498,7 +2499,7 @@ class CounterScene extends Phaser.Scene {
     if (erreur) { Son.jouer('refus'); return this.dire(erreur, ''); }
     Son.jouer('marteau');
     this.dessinerPieces();
-    this.dire(`Merci ! ${monNom(id, ITEMS[id].nom.toLowerCase())[0].toUpperCase() + monNom(id, ITEMS[id].nom.toLowerCase()).slice(1)} ${ITEMS[id].nom.toLowerCase()} ${genreDe(id).includes('p') ? 'sont' : 'est'} comme ${accordAdj(id, 'neuf', 'neuve', 'neufs', 'neuves')}. Voilà ${PRIX_REPARATION} pièces pour ta peine.`);
+    this.dire(`Merci ! ${prenomDe(EMPLOYES[this.G.dernierReparateurComptoir].nom)} a fait vite : ${monNom(id, ITEMS[id].nom.toLowerCase())} ${ITEMS[id].nom.toLowerCase()} ${genreDe(id).includes('p') ? 'sont' : 'est'} comme ${accordAdj(id, 'neuf', 'neuve', 'neufs', 'neuves')}. Voilà ${PRIX_REPARATION} pièces pour l'atelier.`);
   }
 
   // Refuser un client : il repart, et la réputation en prend un coup.
@@ -2936,8 +2937,8 @@ class CounterScene extends Phaser.Scene {
           if (!donne) {
             const etat = etatObjet(v, donnee);
             const cout = `${materiauxRequis(this.G)} ${MATERIAUX[MATERIAU_DE[donnee]].nom.toLowerCase()}`;
-            ligne.txt.setText(etat > 0 ? `${ITEMS[donnee].nom} ${etat}/${USURE_MAX}${etat < USURE_MAX ? ` · réparer : ${cout}` : ' ✓'}` : `${ITEMS[donnee].nom} · ${accordAdj(donnee, 'cassé', 'cassée', 'cassés', 'cassées')}`).setFontSize(12).setColor(etat >= USURE_MAX ? '#2f6a2a' : etat > 0 ? '#b04a00' : '#8a5a10');
-            this.marquerReparation(ligne, etat > 0 && etat < USURE_MAX && this.enService);
+            ligne.txt.setText(etat > 0 ? `${ITEMS[donnee].nom} ${etat}/${USURE_MAX}${etat < USURE_MAX ? (reparateurComptoir(this.G, donnee) ? ` · réparer : ${cout}` : '') : ' ✓'}` : `${ITEMS[donnee].nom} · ${accordAdj(donnee, 'cassé', 'cassée', 'cassés', 'cassées')}`).setFontSize(12).setColor(etat >= USURE_MAX ? '#2f6a2a' : etat > 0 ? '#b04a00' : '#8a5a10');
+            this.marquerReparation(ligne, etat > 0 && etat < USURE_MAX && this.enService && !!reparateurComptoir(this.G, donnee));
           } else {
             this.marquerReparation(ligne, false);
             ligne.txt.setText(`${ITEMS[donnee].nom} (préfère ${ITEMS[id].nom.toLowerCase()}) ${Math.min(donne, n)}/${n} ${donne >= n ? '✓' : ''}`).setFontSize(12).setColor(donne >= n ? '#2f6a2a' : '#3b2410');
@@ -2959,11 +2960,11 @@ class CounterScene extends Phaser.Scene {
       if (!donne && id in v.inventaire) {
         // Le client a déjà le sien : on peut le réparer au lieu d'en donner un neuf.
         const cout = `${materiauxRequis(this.G)} ${MATERIAUX[MATERIAU_DE[id]].nom.toLowerCase()}`;
-        const texte = etat > 0 ? `${ITEMS[id].nom} ${etat}/${USURE_MAX}${etat < USURE_MAX ? ` · réparer : ${cout}` : ' ✓'}`
+        const texte = etat > 0 ? `${ITEMS[id].nom} ${etat}/${USURE_MAX}${etat < USURE_MAX ? (reparateurComptoir(this.G, id) ? ` · réparer : ${cout}` : '') : ' ✓'}`
           : `${ITEMS[id].nom} · ${accordAdj(id, 'le sien est cassé', 'la sienne est cassée', 'les siens sont cassés', 'les siennes sont cassées')}`;
         ligne.txt.setText(texte).setFontSize(12).setColor(etat >= USURE_MAX ? '#2f6a2a' : etat > 0 ? '#b04a00' : '#8a5a10');
         for (let t = 12; ligne.txt.width > 182 && t >= 9; t--) ligne.txt.setFontSize(t);
-        this.marquerReparation(ligne, etat > 0 && etat < USURE_MAX && this.enService);
+        this.marquerReparation(ligne, etat > 0 && etat < USURE_MAX && this.enService && !!reparateurComptoir(this.G, id));
         return;
       }
       if (!commande[id]) {

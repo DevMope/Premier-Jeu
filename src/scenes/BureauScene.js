@@ -416,9 +416,11 @@ class BureauScene extends Phaser.Scene {
       ];
       droite = [
         { titre: 'Marchandage', lignes: Object.entries(MARCHANDS).map(([m, d]) => `${d.nom} : ${niveauRelation(G, d.nom).nom}${remiseMarchand(G, m) ? ` (−${Math.round(remiseMarchand(G, m) * 100)} %)` : ''}`) },
-        { titre: "Main-d'œuvre", lignes: [`${ouvriers(G).map(nomOuvrier).join(', ') || "Personne : embauche un ouvrier à l'atelier"}`, `${pluriel(ouvriers(G).length, "réparation", "réparations")} à la fois`, salaires(G) ? `Salaires : ${salaires(G)} p. par nuit` : 'Aucun employé',
+        { titre: "Main-d'œuvre", lignes: [G.employes.length ? `${pluriel(ouvriers(G).length, "réparation", "réparations")} à la fois · salaires : ${salaires(G)} p. par nuit` : "Personne : embauche un ouvrier à l'atelier",
           // (v0.60) le bilan de chacun : ce qu'il coûte, ce qu'il a fait gagner en valeur à l'atelier
-          ...G.employes.map(id => { const b = bilanEmploye(G, id); return `${EMPLOYES[id].nom} : ${b.reparations} réparation${b.reparations > 1 ? 's' : ''}, +${b.valeur} p. de valeur pour ${b.cout} p. de salaire` + (b.cout >= 20 ? (b.solde >= 0 ? ' ✓' : ' (donne-lui du travail !)') : ''); })] },
+          // (v1.62) avec son niveau, son salaire du moment et sa prochaine hausse (au début du mois)
+          ...G.employes.map(id => { const b = bilanEmploye(G, id), h = prochainesHausses(G, id);
+            return `${prenomDe(EMPLOYES[id].nom)} (niv. ${niveauEmploye(G, id)}) : ${salaireEmploye(G, id)} p. par nuit, +${h.mois.montant} p. dans ${h.mois.jours} j · ${b.reparations} rép., +${b.valeur} p. de valeur pour ${b.cout} p. payés` + (b.cout >= 20 ? (b.solde >= 0 ? ' ✓' : ' (donne-lui du travail !)') : ''); })] },
       ];
     } else if (cle === 'carnet') {
       // (v1.24, planche 50 v3) le carnet de JeuneGoy : chaque pensée de départ, datée (les dix dernières)

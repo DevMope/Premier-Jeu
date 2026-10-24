@@ -1153,24 +1153,31 @@ const CATEGORIES = {
 };
 
 // Les états, du pire au meilleur, et leur effet sur la valeur.
-// Un code couleur pour s'y retrouver d'un coup d'œil : du rouge (cassé) à l'or (parfait).
+// Un code couleur pour s'y retrouver d'un coup d'œil : du rouge (cassé) au jaune (usé), puis le bleu (bon) et le vert (parfait).
+// (v1.62, planche 83 : « parfait » en jaune se confondait avec « usé ») ; `encre` : le texte posé sur la couleur.
 // `reparation` : jours de réparation en plus quand l'objet part de cet état.
 const ETATS = [
-  { nom: 'Cassé', valeur: 0.2, couleur: 0xc0302a, texte: '#c0302a', reparation: 2 },
-  { nom: 'Abîmé', valeur: 0.45, couleur: 0xd8702a, texte: '#c8601a', reparation: 1 },
-  { nom: 'Usé', valeur: 0.7, couleur: 0xd8c030, texte: '#a88a10', reparation: 0 },
-  { nom: 'Bon', valeur: 1, couleur: 0x4a9a3a, texte: '#2f7a2a', reparation: 0 },
-  { nom: 'Parfait', valeur: 1.4, couleur: 0xf0c020, texte: '#b8860b', reparation: 0 },
+  { nom: 'Cassé', valeur: 0.2, couleur: 0xc0302a, texte: '#c0302a', encre: '#fff4dc', reparation: 2 },
+  { nom: 'Abîmé', valeur: 0.45, couleur: 0xd8702a, texte: '#c8601a', encre: '#fff4dc', reparation: 1 },
+  { nom: 'Usé', valeur: 0.7, couleur: 0xd8c030, texte: '#a88a10', encre: '#2a1a10', reparation: 0 },
+  { nom: 'Bon', valeur: 1, couleur: 0x2a62b0, texte: '#1f5aa0', encre: '#fff4dc', reparation: 0 },
+  { nom: 'Parfait', valeur: 1.4, couleur: 0x58b848, texte: '#2a7a22', encre: '#2a1a10', reparation: 0 },
 ];
 
 // Les employés qu'on peut embaucher pour réparer plusieurs objets à la fois.
-// `rapide` : ses réparations prennent un jour de moins. Le salaire est payé chaque nuit.
+// `rapide` : ses réparations prennent un jour de moins. `salaire` : son salaire de départ, payé chaque nuit (voir SALAIRES_ATELIER).
+// (v1.62) `atout` : ce qu'il apporte, en quelques mots (les fiches de l'atelier, la fenêtre « Réparer »).
 const EMPLOYES = {
-  tobin: { nom: "Tobin l'apprenti", race: 'hobbit', salaire: 4, rapide: false, apprenti: 5, description: 'Il apprend vite : après 5 réparations, il travaille un jour plus vite.' },
-  marta: { nom: 'Marta la Rétameuse', race: 'nain', salaire: 9, rapide: true, description: 'Une naine experte : ses réparations prennent un jour de moins.' },
-  pip: { nom: 'Pip le Joaillier', race: 'hobbit', salaire: 7, rapide: ['bijou', 'artefact'], description: 'Doigts de fée : un jour de moins sur les bijoux et les artefacts.' },
-  brann: { nom: 'Brann le Tanneur', race: 'humain', salaire: 6, rapide: ['vetement', 'armure'], description: 'Un jour de moins sur les vêtements et les armures.' },
+  tobin: { nom: "Tobin l'apprenti", race: 'hobbit', salaire: 4, rapide: false, apprenti: 5, description: 'Il apprend vite : après 5 réparations, il travaille un jour plus vite.', atout: 'Un jour de moins après 5 réparations' },
+  marta: { nom: 'Marta la Rétameuse', race: 'nain', feminin: true, salaire: 9, rapide: true, description: 'Une naine experte : ses réparations prennent un jour de moins.', atout: 'Experte : un jour de moins sur tout' },
+  pip: { nom: 'Pip le Joaillier', race: 'hobbit', salaire: 7, rapide: ['bijou', 'artefact'], description: 'Doigts de fée : un jour de moins sur les bijoux et les artefacts.', atout: 'Un jour de moins : bijoux, artefacts' },
+  brann: { nom: 'Brann le Tanneur', race: 'humain', salaire: 6, rapide: ['vetement', 'armure'], description: 'Un jour de moins sur les vêtements et les armures.', atout: 'Un jour de moins : vêtements, armures' },
 };
+// (v1.62, demande du joueur) Le salaire suit le métier. Un employé monte de niveau avec l'expérience (ses réparations
+// finies : 5, 12, 20 puis 30 pour les niveaux 2 à 5) et chaque niveau ajoute 1 p. à son salaire ; en échange, dès le niveau 3,
+// il finit chaque réparation un jour plus tôt (NIVEAU_EMPLOYE_DOUE, regles.js). Il gagne aussi 1 p. de plus par mois passé
+// à ton service (tous les 28 jours, à compter de son embauche ; il garde ses mois s'il revient).
+const SALAIRES_ATELIER = { seuils: [0, 5, 12, 20, 30], parNiveau: 1, parMois: 1 };
 // Le nombre d'employés qu'on peut embaucher : 2, plus un par établi en plus (amélioration « atelier »).
 const EMPLOYES_DE_BASE = 2;
 
