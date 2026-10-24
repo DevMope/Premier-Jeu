@@ -890,6 +890,7 @@ Object.assign(SCENES_EPREUVES, {
       await this.attendre(1300);
       await this.aGenoux();
       await this.renverse(false);
+      this.yeuxFermes();   // (v1.61)
       this.onomatopee(p.x, p.y - 80, 'Zzz...', '#c0c0ff');
       await this.attendre(900);
       M.trip.remove(); this.voile.setFillStyle(0x05051a, 0); this.planMoyen.setScale(1); p.clearTint();

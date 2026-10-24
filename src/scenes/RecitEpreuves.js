@@ -156,7 +156,13 @@ Object.assign(StoryScene.prototype, {
   },
   // Il tombe à genoux (puis se relève avec `debout`)
   aGenoux() { return this.animer({ targets: this.perso, scaleY: 6 * this.fCorps * 0.84, angle: this.perso.flipX ? -6 : 6, duration: 260, ease: 'Quad.easeIn' }); },
-  debout(duree = 400) { return this.animer({ targets: this.perso, scaleY: 6 * this.fCorps, scaleX: 6 * this.fCorps, angle: 0, y: SOL_RECIT, duration: duree, ease: 'Sine.easeOut' }); },
+  debout(duree = 400) { this.yeuxFermes(false); return this.animer({ targets: this.perso, scaleY: 6 * this.fCorps, scaleX: 6 * this.fCorps, angle: 0, y: SOL_RECIT, duration: duree, ease: 'Sine.easeOut' }); },
+  // (v1.61) il s'endort : les yeux fermés (même dessin, même taille) ; il les rouvre en se relevant
+  yeuxFermes(fermes = true) {
+    const p = this.perso;
+    if (fermes && !this.cleYeuxOuverts) { this.cleYeuxOuverts = p.texture.key; p.setTexture(this.cleCorps('dort')); }
+    else if (!fermes && this.cleYeuxOuverts) { if (p.texture.key === this.cleCorps('dort')) p.setTexture(this.cleYeuxOuverts); this.cleYeuxOuverts = null; }
+  },
   // Renversé sur le dos (la tête du côté opposé à `depuis`)
   // Il lâche ce qu'il tenait (l'objet tombe et s'efface)
   lacherTout() {
@@ -1293,6 +1299,7 @@ const SCENES_EPREUVES = {
       // il s'effondre ; le noir ; il se réveille, pâle
       await this.aGenoux();
       await this.renverse(false);
+      this.yeuxFermes();
       await this.ciel(0x000000, 0.75, 600);
       this.onomatopee(p.x, p.y - 100, 'Zzz...', '#c0c0ff');
       await this.attendre(900);
