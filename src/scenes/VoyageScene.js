@@ -306,7 +306,7 @@ class VoyageScene extends Cinematique {
     const barbier = typeof barbierOuvert === 'function' && barbierOuvert(G);
     this.ecrire(`Elle descend la rue au pas, entre les maisons. Aux portes, aux fenêtres, on agite des mouchoirs ; ${barbier ? 'le barbier sort sur son seuil, ' : 'les Brindeloup sortent sur leur seuil, '}la porteuse d'eau en lâche son seau.`);
     for (let k = 0; k < 16 && !this.fini; k++) { await this.marcher(1); this.badauds.forEach(p => { if (p.active && Math.abs(p.x - this.etat.x) < 260 && !p.salue) { p.salue = true; this.emotion(p, k % 2 ? '!' : 'joie', 1200); } }); }
-    this.ecrire('L\'arche du marché, la dernière maison... et la route de la Comté s\'ouvre devant elle. Derrière, la rue n\'est plus qu\'une rangée de toits.');
+    this.ecrire('Le porche du marché, la dernière maison... et la route de la Comté s\'ouvre devant elle. Derrière, la rue n\'est plus qu\'une rangée de toits.');
     for (let k = 0; k < 20 && !this.fini && o + LARGEUR_RUE - this.parcouru > this.etat.x - 360; k++) await this.marcher(1);
     await this.marcher(4);
   }

@@ -19,8 +19,8 @@ function rueDuMecenat(scene, o, sol, G = window.GAME) {
         if (i < n) g.fillStyle(i % 2 ? 0xc9a227 : 0x2a5aa8).fillTriangle(x, y, x + 20, y + 2, x + 9, y + 20);
         pr = [x, y]; }
     }
-    // la plaque des mécènes, scellée près de la fontaine (on la lit de près)
-    const px = o + P.fontaine + 96, py = sol - 34;
+    // la plaque des mécènes, scellée dans la paroi du bassin de la fontaine, à gauche de la coquille (on la lit de près)
+    const px = o + P.fontaine - 56, py = sol + 14;   // (v1.62 : la nouvelle fontaine est plus large, la plaque ne flotte plus sur sa margelle)
     const pl = scene.add.graphics().setDepth(8.35);
     pl.fillStyle(0x3a3a40).fillRect(px - 20, py - 26, 40, 30).fillStyle(0xb8b4a8).fillRect(px - 18, py - 24, 36, 26);
     for (let i = 0; i < 4; i++) pl.fillStyle(0x6a665a).fillRect(px - 13, py - 19 + i * 6, 26, 2);

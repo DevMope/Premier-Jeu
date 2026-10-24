@@ -1,4 +1,4 @@
-// (v0.65, étape 10c) La rue, le jour : au sortir du shop, on la traverse à pied jusqu'à l'arche du
+// (v0.65, étape 10c) La rue, le jour : au sortir du shop, on la traverse à pied jusqu'au porche du
 // Marché des Mastres (ou l'inverse en rentrant). La forge est ouverte, des passants vont et viennent ;
 // on peut entrer à la banque. « Au marché » et « Chez toi » restent des raccourcis.
 class RueScene extends Phaser.Scene {
@@ -29,11 +29,10 @@ class RueScene extends Phaser.Scene {
     if (this.pont) return this.creerRuePont(ici, sol);
     const r = construireRue(this, 0, { jour: true, ici });
     if (typeof rueDuMecenat === 'function') rueDuMecenat(this, 0, sol, G);   // (v1.32, planche 58) ce que le monde montre de tes dons
-    const toits = this.children.list.filter(o => o.type === 'Image' && o.texture && /^(rueMaisonHD|rueForgeHD|rueImpasseHD|facadeHD)/.test(o.texture.key)).map(o => [o, o.texture.key === 'facadeHD_4' ? 0.26 : /^facadeHD/.test(o.texture.key) ? 0.34 : 0.12]);   // (v1.31 : avec l'étage, le toit ne fait plus qu'un quart de l'image)
-    // (v1.61) la meule de l'été dans le creux entre les Brindeloup et le barbier (avant : devant les tonneaux et
-    // l'entrée de la tente d'Ysmée)
-    const xMeule = (PLACES_RUE.maison1 + 136 + PLACES_RUE.barbier - 124) / 2;
-    decorSaison(this, { sol: sol, largeur: LARGEUR_RUE, prof: 8.3, meules: [[xMeule, 22]], bonhomme: LOT_CONFRERIE + (LARGEUR_RUE - LOT_CONFRERIE) * 0.62, toits });   // (v0.99 : la saison)
+    const toits = this.children.list.filter(o => o.type === 'Image' && o.texture && /^(rueMaisonHD|rueForgeHD|rueImpasseHD|facadeHD|porcheRueHD)/.test(o.texture.key)).map(o => [o, o.texture.key === 'facadeHD_4' ? 0.26 : /^facadeHD/.test(o.texture.key) ? 0.34 : /^porcheRueHD/.test(o.texture.key) ? 0.15 : 0.12]);   // (v1.62 : le toit du porche aussi)   // (v1.31 : avec l'étage, le toit ne fait plus qu'un quart de l'image)
+    // (v1.62) plus de meule ronde tirée par la saison : l'été, les bottes de paille sont rangées contre le mur, dans le creux
+    // entre les Brindeloup et le barbier (vieDeLaRue, rueVieHD.js), toujours au même endroit
+    decorSaison(this, { sol: sol, largeur: LARGEUR_RUE, prof: 8.3, meules: [], bonhomme: LOT_CONFRERIE + (LARGEUR_RUE - LOT_CONFRERIE) * 0.62, toits });   // (v0.99 : la saison)
     // (v0.99) les bruits de la saison, doucement, sous la musique : oiseaux, cigales, vent
     if (typeof saisonDe === 'function') { Son.nature(true, { saison: saisonDe(G), volume: 0.7, meteo: typeof meteoDu === 'function' ? meteoDu(G) : null }); this.events.once('shutdown', () => Son.nature(false)); this.events.once('sleep', () => Son.nature(false)); }
     this.porteShop = r.porteShop;
@@ -50,7 +49,7 @@ class RueScene extends Phaser.Scene {
     this.garrick = null;
     if (typeof didacticiel === 'function' && didacticiel(G) && G.tuto && G.jour === 1 && this.depuis !== 'marche') {
       this.garrick = imageCorps(this, x0 - 80, SOL_PROMENADE, 'mentor', 7.5).setOrigin(0.5, 1).setDepth(8.49);
-      this.time.delayedCall(700, () => this.garrickDit("« Allez, en route ! Le marché, c'est au bout de la rue, sous l'arche. Suis-moi, je te présente les marchands. »"));
+      this.time.delayedCall(700, () => this.garrickDit("« Allez, en route ! Le marché, c'est au bout de la rue, sous le porche. Suis-moi, je te présente les marchands. »"));
     }
     this.cameras.main.scrollX = Phaser.Math.Clamp(x0 - 480, 0, LARGEUR_RUE - 960);
     // (v1.48) le jour où il ouvre (et tant qu'on n'est pas entré), Orvin attend sur le pas de sa porte
@@ -64,7 +63,7 @@ class RueScene extends Phaser.Scene {
     // l'interface, fixe à l'écran
     const fixe = o => o.setScrollFactor(0).setDepth(30);
     fixe(this.add.text(480, 22, `La rue du marché · jour ${G.jour}`, style(22, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
-    fixe(this.add.text(480, 48, '◀ ▶ ou clique au sol pour marcher · clique sur les maisons pour les regarder · l\'arche mène au marché', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
+    fixe(this.add.text(480, 48, '◀ ▶ ou clique au sol pour marcher · clique sur les maisons pour les regarder · le porche mène au marché', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
     this.bulle = fixe(this.add.text(480, 78, '', style(14, '#3b2410', { fontStyle: 'italic', backgroundColor: '#ead9b0', padding: { x: 10, y: 6 }, wordWrap: { width: 640 }, align: 'center' })).setOrigin(0.5, 0).setVisible(false));
     for (const [x, l, texte, page] of [[110, 190, '◀ Chez toi', 'Maison'], [850, 200, 'Au marché ▶▶', 'Marche']]) { const b = creerBouton(this, x, 505, l, texte, () => this.passerPar(page)); fixe(b.fond); fixe(b.label); }
 
