@@ -66,12 +66,14 @@ class AtelierScene extends Phaser.Scene {
   occupe(id) { return EMPLOYES[id].feminin ? 'occupée' : 'occupé'; }
 
   // --- La pièce : un poste par réparateur, et les objets qui attendent au râtelier et sur l'étagère ---
-  piece() {
+  piece(dx = 0, dy = 0) {
     const G = this.G;
+    // (v1.62) la promenade du soir réutilise cette fonction avec sa propre scène : elle lui prête les petites fonctions dont elle a besoin
+    for (const m of ['reparationDe', 'avancement', 'etiquette', 'tenir', 'barre']) if (!this[m]) this[m] = AtelierScene.prototype[m];
     if (this.objetsPiece) this.objetsPiece.destroy();
-    for (const g of this.gestes) g.arreter();
+    for (const g of this.gestes || []) g.arreter();
     this.gestes = [];
-    const c = this.objetsPiece = this.add.container(0, 0).setDepth(1);
+    const c = this.objetsPiece = this.add.container(dx, dy).setDepth(1);
     const TEINTES = [0x7a5a4a, 0xa88a78, 0xd8ccbc, 0xffffff, 0xffffff];
     const poser = (t, x, y, echelle, pendu = false) => {
       const img = this.add.image(x, y, iconeObjet(this, 'tr_' + t.categorie)).setOrigin(0.5, pendu ? 0 : 1).setScale(echelle).setTint(TEINTES[t.etat]);

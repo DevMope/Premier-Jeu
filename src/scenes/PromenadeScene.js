@@ -429,7 +429,7 @@ class PromenadeScene extends Cinematique {
     this.add.image(o, 0, 'murAtelierHaut').setOrigin(0).setScale(2);
     this.add.image(o, 360, 'atelierHD').setOrigin(0).setScale(2);
     this.etincelles = [];
-    AtelierScene.prototype.piece.call(this, o, 360 - 46);
+    AtelierScene.prototype.piece.call(this, o, 26);   // (v1.62 : sous la ligne d’aide)
     this.lumieres.push([o + 500, 330, 3]);
     const enCours = enReparation(G).length;
     this.regarder(o + 330, 360, 330, 150, enCours ? `${enCours} objet${enCours > 1 ? 's' : ''} sur l'établi : on y travaille même le soir.` : "L'établi est libre. Rachète des trouvailles aux aventuriers !");
