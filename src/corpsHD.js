@@ -98,12 +98,9 @@ function tenueDe(niveau) {
   return i < 0 ? 1 : i;
 }
 
-// La clé de la texture en pied : un peuple (couleurs par défaut), un figurant, ou une personne
-// (avec ses couleurs à elle et la tenue de son niveau).
-// `vue` : 'troisQuarts' (par défaut, il regarde vers la droite), 'face', 'profil' ou 'dos'.
-function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
-  if (quoi === 'faucheuse') return 'perso_faucheuse';
-  if (typeof quoi === 'string' && !FIGURANTS[quoi] && !PROPORTIONS[quoi]) return 'perso_' + quoi;   // (le joueur, etc.)
+// (planches 85 et 86) Ce qu'il faut pour dessiner quelqu'un : son gène, sa tenue, son costume, la clé de sa texture et les
+// options du moteur (corpsHD, et les poses du rig, posesHD.js)
+function specCorps(quoi, pose = null, vue = 'troisQuarts') {
   let gene, tenue, costume = null, cle, bouche, atours, proportions;
   if (typeof quoi === 'string' && FIGURANTS[quoi]) {
     const fig = FIGURANTS[quoi];
@@ -142,35 +139,55 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
   // (v0.59) blessé : un figurant (Garrick repêché), ou un voyageur bandé dans son récit
   const blesse = typeof quoi === 'string' ? !!(FIGURANTS[quoi] && FIGURANTS[quoi].blesse) : !!quoi.blesse;
   if (blesse && typeof quoi !== 'string') cle += '_blesse';
+  return { gene, tenue, costume, cle, options: { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}), ...(proportions ? { proportions } : {}) } };
+}
+
+// La clé de la texture en pied : un peuple (couleurs par défaut), un figurant, ou une personne
+// (avec ses couleurs à elle et la tenue de son niveau).
+// `vue` : 'troisQuarts' (par défaut, il regarde vers la droite), 'face', 'profil' ou 'dos'.
+function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts') {
+  if (quoi === 'faucheuse') return 'perso_faucheuse';
+  if (typeof quoi === 'string' && !FIGURANTS[quoi] && !PROPORTIONS[quoi]) return 'perso_' + quoi;   // (le joueur, etc.)
+  // (planches 85 et 86) une pose du rig (posesHD.js : à genoux, au sol, il gît, il frappe...) : sa texture à elle
+  if (pose && typeof POSES_HD !== 'undefined' && POSES_HD[pose]) return texturePose(scene, quoi, pose, { vue });
+  const { gene, tenue, costume, cle, options } = specCorps(quoi, pose, vue);
   if (!scene.textures.exists(cle)) {
-    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}), ...(proportions ? { proportions } : {}) });
+    const toile = dessinerCorpsVue(gene, tenue, costume, 0, pose, vue, options);
     toile.texture(scene, cle);
     MAINS_CORPS[cle] = toile.mains;
     if (toile.mainXY) MAINS_XY[cle] = { x: toile.mainXY[0] - toile.l / 2, y: toile.h - toile.mainXY[1] };   // (v1.34)
     if (toile.bout) BOUTS_CORPS[cle] = toile.bout;
     if (toile.piedsAssis) PIEDS_ASSIS[cle] = toile.piedsAssis;
     REPERES_CORPS[cle] = toile.reperes;
-    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}), ...(proportions ? { proportions } : {}) }).texture(scene, cle + '_pas1');
-    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, { fache, blesse, ...(bouche !== undefined ? { bouche } : {}), ...(atours ? { atours } : {}), ...(arme ? { arme } : {}), ...(proportions ? { proportions } : {}) }).texture(scene, cle + '_pas2');
+    dessinerCorpsVue(gene, tenue, costume, -1, pose, vue, options).texture(scene, cle + '_pas1');
+    dessinerCorpsVue(gene, tenue, costume, 1, pose, vue, options).texture(scene, cle + '_pas2');
   }
   return cle;
 }
 
 // Fait marcher un personnage pendant `duree` ms : ses jambes alternent, ses bras se balancent,
 // un peu de poussière se soulève à chaque pas. (Pour toute image qui a ses textures « _pas1/2 ».)
+// (planche 85) Le joueur a huit images de marche (_m0 à _m7, 70 ms chacune) : on s'en sert dès qu'elles sont prêtes.
 function pasDeMarche(scene, sprite, duree, { poussiere = true } = {}) {
-  const base = sprite.texture.key.replace(/_pas[12]$/, '');
-  if (!scene.textures.exists(base + '_pas1')) return;
-  const images = [base, base + '_pas1', base, base + '_pas2'];
-  let k = 0;
+  const base = sprite.texture.key.replace(/_(pas[12]|m\d)$/, '');
+  const huit = typeof marcheJoueurPrete === 'function' && marcheJoueurPrete(scene, base);
+  if (!huit && !scene.textures.exists(base + '_pas1')) return;
+  const images = huit ? Array.from({ length: MARCHE_HD.images }, (_, i) => base + '_m' + i) : [base, base + '_pas1', base, base + '_pas2'];
+  const n = images.length;
+  // (une scène qui relance la marche à chaque pas, comme la rue : le cycle reprend où il en était, les jambes alternent)
+  const ph = sprite.phaseMarche;
+  let k = ph && ph.base === base && ph.n === n && scene.time.now - ph.t < 300 ? ph.k : 0;
   if (sprite.marche) sprite.marche.remove();
   creerHalo(scene);
-  const marche = sprite.marche = scene.time.addEvent({ delay: 125, loop: true, callback: () => {
+  if (huit) sprite.setTexture(images[k]);
+  const marche = sprite.marche = scene.time.addEvent({ delay: huit ? MARCHE_HD.duree : 125, loop: true, callback: () => {
     if (!sprite.active) { marche.remove(); if (sprite.marche === marche) sprite.marche = null; return; }
-    k = (k + 1) % 4;
+    k = (k + 1) % n;
     sprite.setTexture(images[k]);
-    if (poussiere && k % 2 === 1 && sprite.visible && sprite.alpha > 0.5 && !sprite.mask && !sprite.parentContainer) {
-      const p = scene.add.image(sprite.x + (k === 1 ? -6 : 6), sprite.y - 2, 'halo').setScale(0.12).setTint(0xc8b090).setAlpha(0.45).setDepth(sprite.depth - 0.01);
+    sprite.phaseMarche = { base, n, k, t: scene.time.now };
+    const contact = huit ? k % 4 === 0 : k % 2 === 1;   // (le talon qui se pose)
+    if (poussiere && contact && sprite.visible && sprite.alpha > 0.5 && !sprite.mask && !sprite.parentContainer) {
+      const p = scene.add.image(sprite.x + ((huit ? k === 0 : k === 1) ? -6 : 6), sprite.y - 2, 'halo').setScale(0.12).setTint(0xc8b090).setAlpha(0.45).setDepth(sprite.depth - 0.01);
       scene.tweens.add({ targets: p, scale: 0.32, alpha: 0, y: p.y - 8, duration: 420, onComplete: () => p.destroy() });
     }
   } });
@@ -183,7 +200,9 @@ function pasDeMarche(scene, sprite, duree, { poussiere = true } = {}) {
     const avance = sprite.active && scene.tweens.getTweensOf(sprite).some(t => t.isPlaying() && (t.data || []).some(d => d && d.key === 'x'));
     if (avance && sursis-- > 0) { scene.time.delayedCall(60, arreter); return; }
     marche.remove(); sprite.marche = null;
-    if (sprite.active) sprite.setTexture(base);
+    // (planche 85) l'image debout revient un peu plus tard : si la scène relance aussitôt la marche (la rue, à chaque
+    // pas), il ne se fige pas une image entre deux pas
+    scene.time.delayedCall(40, () => { if (sprite.active && !sprite.marche && images.includes(sprite.texture.key)) sprite.setTexture(base); });
   };
   scene.time.delayedCall(duree, arreter);
 }
@@ -199,5 +218,6 @@ function imageCorps(scene, x, y, quoi, echelle, pose = null) {
   const cle = corpsHD(scene, quoi, pose);
   const img = scene.add.image(x, y, cle).setOrigin(0.5, 1).setScale(echelle * echelleCorps(cle));
   if (PIEDS_ASSIS[cle]) img.setOrigin(0.5, (PIEDS_ASSIS[cle] + 1) / img.height);   // (assis : posé par les pieds, devant le banc)
+  if (typeof APPUI_POSES !== 'undefined' && APPUI_POSES[cle]) origineCorps(img);   // (planches 85 et 86 : une pose du rig, posée par son point d'appui)
   return img;
 }

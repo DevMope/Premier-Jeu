@@ -86,85 +86,78 @@ Object.assign(StoryScene.prototype, {
     await this.attendre(600);
   },
   // Il dort près des braises : couché, les yeux fermés, sa cape en couverture ; il respire, les Z montent
+  // (planche 86) il s'allonge pour de bon (la pose dortBivouac du rig : sur le dos, relâché, les genoux un peu fléchis,
+  // une jambe plus repliée, posé au sol) ; la couverture épouse sa silhouette couchée, des pieds jusqu'au cou
   async bivouacDormir(cape = 0x5a3a2a) {
     const p = this.perso;
-    this.poserPose('dort');
-    const debout = { y: p.y };
-    await this.animer({ targets: p, angle: p.flipX ? 90 : -90, y: SOL_RECIT - p.displayWidth * 0.18, duration: 500, ease: 'Sine.easeInOut' });
-    // la couverture : du cou jusqu'aux pieds, en drapé (une forme posée sur lui, qui respire avec lui)
-    // (couché, la tête du côté où montait le haut de l'image : la couverture va des pieds aux épaules, la tête dépasse)
-    // (v1.61) la couverture suit le vrai dessin couché (ses pixels pleins) : des pieds jusqu'aux épaules, et sur toute
-    // son épaisseur (avant, le haut du corps, une main et les bottes dépassaient)
-    const sens = p.flipX ? 1 : -1, y = p.y + 8, bo = boiteOpaque(this, p.texture.key), s = p.scaleX, lt = p.width, h = p.height;
-    const xAt = py => p.x - sens * (py - h) * s;
-    const partTete = { hobbit: 0.34, nain: 0.3, magicienne: 0.3, panda: 0.3 }[(this.parti && this.parti.voyageur.race) || ''] || 0.25;
-    const x0 = xAt(bo.y1) - sens * 5, x1 = xAt(bo.y0 + partTete * (bo.y1 - bo.y0)), yTop = p.y - (bo.x1 - lt / 2) * s - 2;
+    const debout = { y: p.y, flip: p.flipX };
+    if (typeof POSES_HD === 'undefined') return null;
+    // les pieds vers le feu, la tête de l'autre côté (pas dans les braises)
+    const feu = [...(this.decor && this.decor.list || []), ...this.children.list].find(o => o.active && o.texture && o.texture.key === 'feuCampHD');
+    if (feu) p.setFlipX(feu.x < p.x);
+    this.poserRecit('aGenoux');
+    await this.attendre(260);
+    this.poserRecit('dortBivouac');
+    p.setY(SOL_RECIT - 5);
+    await this.animer({ targets: p, y: SOL_RECIT, duration: 240, ease: 'Quad.easeIn' });
+    const a = APPUI_POSES[p.texture.key], sil = silhouetteHaute(this, p.texture.key), sc = p.scaleX, f = p.flipX;
+    // un point de la texture (non retournée) → l'écran
+    const ex = tx => p.x + ((f ? a.l - tx : tx) - p.originX * a.l) * sc, ey = ty => p.y + (ty - p.originY * a.h) * p.scaleY;
+    // les colonnes couvertes : du cou jusqu'au bout des pieds (la tête dépasse, posée sur le sac)
+    let fin = 0; for (let x = 0; x < sil.length; x++) if (sil[x] >= 0) fin = x;
+    const debut = Math.round(a.cou[0]) + 1;
+    // (le haut du corps, lissé : l'étoffe passe d'une bosse à l'autre sans suivre chaque doigt ; elle retombe aux deux bouts)
+    const env = []; for (let x = debut; x <= fin + 3; x++) { let m = 1e9; for (let j = -4; j <= 4; j++) { const v = sil[Math.max(0, Math.min(fin, x + j))]; if (v >= 0) m = Math.min(m, v); } env.push(m < 1e9 ? m : a.y); }
+    const haut = env.map((_, i) => { let t = 0, n = 0; for (let j = -6; j <= 6; j++) { const v = env[Math.max(0, Math.min(env.length - 1, i + j))]; t += v; n++; } const bout = Math.min(i, env.length - 1 - i); return t / n + Math.max(0, 6 - bout) * 0.9; });
     const g = this.garder(this.add.graphics().setDepth(p.depth + 0.1));
     // (un sac roulé sous la tête, en guise d'oreiller)
-    const sac = this.garder(this.add.graphics().setDepth(p.depth - 0.05));
-    sac.fillStyle(0x2a1a0e).fillEllipse(p.x + sens * p.displayHeight * 0.86, y + 2, 34, 18).fillStyle(0x8a6a40).fillEllipse(p.x + sens * p.displayHeight * 0.86, y + 1, 30, 14).fillStyle(0x6a4a2a).fillRect(p.x + sens * p.displayHeight * 0.86 - 2, y - 6, 4, 14);
-    const xa = Math.min(x0, x1), w = Math.abs(x1 - x0);
+    const sac = this.garder(this.add.graphics().setDepth(p.depth - 0.05)), sx = ex(a.tete[0]), sy = SOL_RECIT;
+    const so = sx + (f ? 1 : -1) * 10;   // (il dépasse derrière la tête)
+    sac.fillStyle(0x2a1a0e).fillEllipse(so, sy - 6, 36, 18).fillStyle(0x8a6a40).fillEllipse(so, sy - 7, 32, 14).fillStyle(0x6a4a2a).fillRect(so - 2, sy - 14, 4, 14);
+    const cols = haut.map((h, i) => ({ x: ex(debut + i), y: ey(h) - 2, u: i / Math.max(1, haut.length - 1) }));
     const dessiner = (souffle) => {
-      // la cape posée comme une couverture : bombée sur les épaules et les hanches, retombant en plis jusqu'au sol
-      const haut = xx => { const t = (xx - xa) / w, u = sens < 0 ? 1 - t : t, ligne = Phaser.Math.Clamp(Math.round(h - (xx - p.x) / (sens * s)), 0, h - 1);
-        if (bo.profil) return Math.min(y - 6, p.y - (Math.max(bo.profil[ligne], lt / 2 + 6) - lt / 2) * s - 3) - souffle * (u > 0.6 ? 1 : 0.4) - Math.sin(u * Math.PI) * 2;
-        return Math.min(y - 6, yTop) - souffle * (u > 0.6 ? 1 : 0.4) - Math.sin(u * Math.PI) * 5 - Math.max(0, Math.sin((u - 0.55) / 0.45 * Math.PI)) * 6; };
+      // la cape posée comme une couverture : elle suit le corps (la poitrine qui se soulève), retombe en plis jusqu'au sol
       g.clear();
-      for (let xx = xa - 3; xx <= xa + w + 3; xx += 3) g.fillStyle(0x1a1008).fillRect(xx, haut(Phaser.Math.Clamp(xx, xa, xa + w)) - 3, 3, SOL_RECIT - haut(Phaser.Math.Clamp(xx, xa, xa + w)) + 3);
-      for (let xx = xa; xx <= xa + w; xx += 3) {
-        const hy = haut(xx), pli = Math.floor((xx - xa) / 14) % 2;
-        g.fillStyle(cape).fillRect(xx, hy, 3, SOL_RECIT - hy);
-        g.fillStyle(0x000000, pli ? 0.16 : 0.05).fillRect(xx, hy + 6, 3, SOL_RECIT - hy - 6);
-        g.fillStyle(0xffffff, 0.16).fillRect(xx, hy, 3, 3);
+      for (const c of cols) g.fillStyle(0x1a1008).fillRect(c.x - 2, c.y - souffle * Math.max(0, 1 - c.u * 2.2) - 2, 5, SOL_RECIT - c.y + 4);
+      for (const c of cols) {
+        const hy = c.y - souffle * Math.max(0, 1 - c.u * 2.2), pli = Math.floor(c.u * 7) % 2;
+        g.fillStyle(cape).fillRect(c.x - 1, hy, 3, SOL_RECIT - hy);
+        g.fillStyle(0x000000, pli ? 0.16 : 0.05).fillRect(c.x - 1, hy + 6, 3, Math.max(0, SOL_RECIT - hy - 6));
+        g.fillStyle(0xffffff, 0.16).fillRect(c.x - 1, hy, 3, 2);
       }
-      g.fillStyle(0xc9a227, 0.8).fillRect(xa, SOL_RECIT - 5, w, 2);   // (l'ourlet brodé)
+      const xa = Math.min(cols[0].x, cols[cols.length - 1].x), xb = Math.max(cols[0].x, cols[cols.length - 1].x);
+      g.fillStyle(0xc9a227, 0.8).fillRect(xa, SOL_RECIT - 4, xb - xa, 2);   // (l'ourlet brodé)
     };
     const u = { s: 0 }; dessiner(0);
-    this.tweens.add({ targets: u, s: 3, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', onUpdate: () => dessiner(u.s) });
-    const tete = { x: p.x + sens * p.displayHeight * 0.85, y: y - 40 };
+    this.tweens.add({ targets: u, s: 2.5, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', onUpdate: () => dessiner(u.s) });
+    const tete = { x: ex(a.tete[0]), y: ey(a.tete[1]) - 30 }, sens = f ? 1 : -1;
     const zz = this.zz = this.time.addEvent({ delay: 700, loop: true, callback: () => {
       const z = this.garder(this.add.text(tete.x, tete.y, 'z', style(14 + Math.random() * 8, '#e8e0ff', { fontStyle: 'bold' })).setDepth(8));
-      this.tweens.add({ targets: z, y: z.y - 70, x: z.x + sens * -20, alpha: 0, duration: 2000, onComplete: () => z.destroy() });
+      this.tweens.add({ targets: z, y: z.y - 70, x: z.x + sens * 20, alpha: 0, duration: 2000, onComplete: () => z.destroy() });
     } });
     this.garder({ destroy: () => zz.remove() });
     return { couverture: g, sac, debout };
   },
-  // Il se réveille : la couverture et le sac s'en vont, il se relève
+  // Il se réveille : la couverture et le sac s'en vont, il se relève (à genoux, puis debout)
   async bivouacReveil(etat) {
-    const p = this.perso;
     if (this.zz) { this.zz.remove(); this.zz = null; }
     if (etat && etat.couverture) { this.tweens.killTweensOf(etat.couverture); etat.couverture.destroy(); }
     if (etat && etat.sac) etat.sac.destroy();
-    this.poserPose(null);
-    await this.animer({ targets: p, angle: 0, y: SOL_RECIT, duration: 450, ease: 'Sine.easeOut' });
+    await this.debout(600);
+    if (etat && etat.debout && etat.debout.flip !== undefined) this.perso.setFlipX(etat.debout.flip);
   },
   // La couleur de sa cape (pour la couverture) : celle de son baluchon s'il en a une, sinon une laine brune
   couleurCape() { const c = this.parti && this.parti.colis && this.parti.colis.cape; return c ? 0x3a5a7a : 0x6a4a2a; },
 });
 
-// (v1.61) le rectangle des pixels pleins d'une texture (en pixels de la texture), gardé en mémoire
-const BOITES_OPAQUES = {};
-function boiteOpaque(scene, cle) {
-  if (BOITES_OPAQUES[cle]) return BOITES_OPAQUES[cle];
+// (planche 86) Le haut de la silhouette d'une texture, colonne par colonne (en pixels de la texture ; -1 : rien)
+const SILHOUETTES_HAUTES = {};
+function silhouetteHaute(scene, cle) {
+  if (SILHOUETTES_HAUTES[cle]) return SILHOUETTES_HAUTES[cle];
   const src = scene.textures.get(cle).getSourceImage(), W = src.width, H = src.height;
   let ctx = src.getContext ? src.getContext('2d') : null;
   if (!ctx) { const c = document.createElement('canvas'); c.width = W; c.height = H; ctx = c.getContext('2d'); ctx.drawImage(src, 0, 0); }
-  const d = ctx.getImageData(0, 0, W, H).data;
-  let x0 = W, x1 = 0, y0 = H, y1 = 0;
-  const droites = [];
-  for (let y = 0; y < H; y++) {
-    let g = -1, dr = -1;
-    for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 20) { if (g < 0) g = x; dr = x; }
-    droites.push(dr);
-    if (dr >= 0) { if (g < x0) x0 = g; if (dr > x1) x1 = dr; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-  }
-  if (x1 < x0) return (BOITES_OPAQUES[cle] = { x0: 0, x1: W, y0: 0, y1: H });
-  // le bord du corps, du buste aux chevilles : la médiane des bords de chaque ligne (une arme, une main qui dépasse
-  // n'y comptent pas)
-  const bande = droites.slice(Math.round(y0 + 0.35 * (y1 - y0)), Math.round(y0 + 0.95 * (y1 - y0))).filter(x => x >= 0).sort((a, b) => a - b);
-  const corps = bande.length ? bande[Math.floor(bande.length / 2)] + 1 : x1 + 1;
-  // le profil lissé (le bord le plus haut sur ±5 lignes) : la couverture épouse le corps couché
-  const bord = droites.map((_, y) => { let m = -1; for (let k = Math.max(0, y - 5); k <= Math.min(H - 1, y + 5); k++) m = Math.max(m, droites[k]); return m + 1; });
-  const profil = bord.map((_, y) => { let t = 0, n = 0; for (let k = Math.max(0, y - 12); k <= Math.min(H - 1, y + 12); k++) if (bord[k] > 0) { t += bord[k]; n++; } return n ? t / n + 1 : 0; });   // (en pente douce)
-  return (BOITES_OPAQUES[cle] = { x0, x1: corps, y0, y1: y1 + 1, profil });
+  const d = ctx.getImageData(0, 0, W, H).data, haut = new Array(W).fill(-1);
+  for (let x = 0; x < W; x++) for (let y = 0; y < H; y++) if (d[(y * W + x) * 4 + 3] > 20) { haut[x] = y; break; }
+  return (SILHOUETTES_HAUTES[cle] = haut);
 }

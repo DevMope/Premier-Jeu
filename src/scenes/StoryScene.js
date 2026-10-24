@@ -484,7 +484,7 @@ class StoryScene extends Cinematique {
     } else {
       this.perso.setTint(0x888888);
       Son.jouer('glas');
-      await this.animer({ targets: this.perso, angle: -90, alpha: 0.6, duration: 700, ease: 'Bounce.easeOut' });
+      await this.mourir(!!r.valeureux);   // (planche 86 : il s'effondre, puis il gît ; sur le dos au combat, face contre terre sinon)
       this.ecrire('Fin du carnet', r.valeureux
         ? `${v.nom} est mort${this.e} valeureusement au combat. On chantera son nom dans les tavernes.\nTon investissement est perdu, et ta réputation baisse (−${String(PERTE_MORT.valeureux).replace(".", ",")}).`
         : `${v.nom} est mort${this.e} loin de chez ${v.feminin ? 'elle' : 'lui'}, sans gloire. Il fallait sans doute mieux ${v.feminin ? 'la' : 'le'} préparer...\nTon investissement est perdu, et ta réputation baisse (−${String(PERTE_MORT.sansGloire).replace(".", ",")}).`);

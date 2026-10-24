@@ -78,7 +78,7 @@ Object.assign(StoryScene.prototype, {
   // Un coup de lame (l'arc blanc) depuis le voyageur
   coupDeLame(lame, versDroite = true) {
     const p = this.perso;
-    if (lame) this.tweens.add({ targets: lame, angle: versDroite ? 120 : -120, duration: 130, yoyo: true });
+    if (lame && !this.frapperArme(lame)) this.tweens.add({ targets: lame, angle: versDroite ? 120 : -120, duration: 130, yoyo: true });   // (planche 86 : il frappe)
     const g = this.garder(this.add.graphics().setDepth(7));
     g.lineStyle(6, 0xffffff, 0.9).beginPath().arc(p.x + (versDroite ? 30 : -30), p.y - 70, 60, versDroite ? -1.3 : Math.PI - 0.8, versDroite ? 0.8 : Math.PI + 1.3).strokePath();
     this.tweens.add({ targets: g, alpha: 0, duration: 300, onComplete: () => g.destroy() });
@@ -151,7 +151,7 @@ Object.assign(SCENES_EPREUVES, {
     },
     async utiliser(id, reussie) {
       const M = this.menace, p = this.perso, r = M.reine;
-      const lame = this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
+      const lame = id === 'epee' ? this.tirerArme() : this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
       // elle bondit ; il frappe
       await this.animer({ targets: r, x: r.x + 10, duration: 200 });
       const saut = this.sauter(r, p.x + 80, SOL_RECIT, 60, 380);
@@ -172,7 +172,7 @@ Object.assign(SCENES_EPREUVES, {
         this.onomatopee(p.x, p.y - 170, 'CRAC !', '#fff4dc');
         this.tweens.add({ targets: cocon, alpha: 0, scale: 1.4, duration: 300 });
       }
-      this.tweens.add({ targets: lame, alpha: 0, delay: 300, duration: 300 });
+      this.rengainer(lame, 300);
     },
     async issue(reussie) {
       const M = this.menace, p = this.perso, r = M.reine;
@@ -236,7 +236,7 @@ Object.assign(SCENES_EPREUVES, {
     },
     async utiliser(id, reussie) {
       const M = this.menace, p = this.perso, y = M.yeti;
-      const lame = this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
+      const lame = id === 'epee' ? this.tirerArme() : this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
       // il avance, lève le bras, frappe le sol ; le voyageur saute de côté
       await this.animer({ targets: y, x: p.x + 130, duration: 600, ease: 'Sine.easeIn' });
       await this.animer({ targets: y, angle: -8, duration: 200 });
@@ -256,7 +256,7 @@ Object.assign(SCENES_EPREUVES, {
         this.onomatopee(p.x + 40, p.y - 160, 'TOC...', '#c0c0c0');
         this.emotion(y, 'joie', 900);   // il rigole
       }
-      this.tweens.add({ targets: lame, alpha: 0, delay: 300, duration: 300 });
+      this.rengainer(lame, 300);
     },
     async issue(reussie) {
       const M = this.menace, p = this.perso, y = M.yeti;
@@ -375,7 +375,7 @@ Object.assign(SCENES_EPREUVES, {
         return;
       }
       // l'épée : il esquive la massue, et trouve la faille
-      const lame = this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
+      const lame = id === 'epee' ? this.tirerArme() : this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
       await this.animer({ targets: m, angle: -10, duration: 300 });
       this.animer({ targets: m, angle: 8, duration: 140 });
       await this.sauter(p, p.x - 40, SOL_RECIT, 50, 300);
@@ -390,7 +390,7 @@ Object.assign(SCENES_EPREUVES, {
         m.setTint(0xff8080); this.time.delayedCall(180, () => m.active && m.clearTint());
         this.coupDeZoom(m.x - 30, m.y - 100, 1.3);
       } else this.onomatopee(p.x + 40, p.y - 160, 'TOC...', '#c0c0c0');
-      this.tweens.add({ targets: lame, alpha: 0, delay: 300, duration: 300 });
+      this.rengainer(lame, 300);
       await this.attendre(300);
     },
     async issue(reussie) {
@@ -618,7 +618,7 @@ Object.assign(SCENES_EPREUVES, {
         return;
       }
       if (id !== 'epee') { await this.utiliserObjet(id); return; }
-      const lame = this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
+      const lame = id === 'epee' ? this.tirerArme() : this.tenir(iconeObjet(this, id), { echelle: 2.6, angle: -30, dy: -8 });
       const cible = M.morts[0];
       this.tweens.killTweensOf(cible);
       await Promise.all([this.marcherA(cible.x - 90, 3), this.animer({ targets: cible, x: cible.x - 30, duration: 400 })]);
@@ -636,7 +636,7 @@ Object.assign(SCENES_EPREUVES, {
         M.brises = true;
         Son.jouer('coup');
       }
-      this.tweens.add({ targets: lame, alpha: 0, delay: 400, duration: 300 });
+      this.rengainer(lame, 400);
       await this.attendre(500);
     },
     async issue(reussie) {
@@ -889,9 +889,8 @@ Object.assign(SCENES_EPREUVES, {
       this.parole(p, 'Bonjour, Monsieur l\'Arbre !', 1500);
       await this.attendre(1300);
       await this.aGenoux();
-      await this.renverse(false);
-      this.yeuxFermes();   // (v1.61)
-      this.onomatopee(p.x, p.y - 80, 'Zzz...', '#c0c0ff');
+      await this.endormir();   // (planche 85 : couché pour de bon, les yeux fermés)
+      { const t = this.tete(); this.onomatopee(t.x + (p.flipX ? -24 : 24), t.y - 44, 'Zzz...', '#c0c0ff'); }
       await this.attendre(900);
       M.trip.remove(); this.voile.setFillStyle(0x05051a, 0); this.planMoyen.setScale(1); p.clearTint();
       M.danseurs.forEach(d => d.setVisible(false));
@@ -953,7 +952,7 @@ Object.assign(SCENES_EPREUVES, {
         const o = this.tenir(iconeObjet(this, 'bandage'), { echelle: 2.2, dy: 30 });
         for (let k = 0; k < 2; k++) await this.animer({ targets: o, dx: 20, angle: 180, duration: 180, yoyo: true });
         o.destroy();
-        if (reussie) { this.blesse = true; p.setTexture(this.cleCorps()); this.emotion(p, 'joie', 900); }
+        if (reussie) { this.blesse = true; this.poserRecit(poseCorps(p)); this.emotion(p, 'joie', 900); }
       }
     },
     async issue(reussie) {

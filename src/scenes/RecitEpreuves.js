@@ -47,11 +47,12 @@ Object.assign(StoryScene.prototype, {
   },
   // Où est sa main (celle de devant)
   main(p = this.perso) {
+    const pm = pointCorps(p, 'main'); if (pm) return pm;   // (une pose du rig : sa vraie main)
     const k = p.texture.key.replace(/_pas[12]$/, '');
     const h = (MAINS_CORPS[k] || 26) * p.scaleY;
     return { x: p.x + (p.flipX ? -1 : 1) * p.displayWidth * 0.16, y: p.y - h };
   },
-  tete(p = this.perso) { return { x: p.x + (p.flipX ? -1 : 1) * p.displayWidth * 0.05, y: p.y - p.displayHeight * 0.86 }; },
+  tete(p = this.perso) { const pt = pointCorps(p, 'tete'); if (pt) return { x: pt.x, y: pt.y - 6 }; return { x: p.x + (p.flipX ? -1 : 1) * p.displayWidth * 0.05, y: p.y - p.displayHeight * 0.86 }; },
   // Il tient un objet : l'image suit sa main
   tenir(cle, { echelle = 2.6, angle = 0, dx = 0, dy = 0, qui = this.perso, devant = true } = {}) {
     // (v0.63) le voyageur se bat avec l'arme qu'il a vraiment emportée (sa hache, son arc...)
@@ -70,9 +71,18 @@ Object.assign(StoryScene.prototype, {
   // Il lève les bras (ou les baisse)
   bras(leves, p = this.perso) {
     if (p !== this.perso) return;
-    p.setTexture(this.cleCorps(leves ? 'leves' : null));
+    this.poserRecit(leves ? 'leves' : null);
   },
-  marcherA(x, vitesse = 5, sprite = this.perso) { return this.marcher(sprite, x, vitesse); },
+  // (planche 86) dans une pose du rig, il ne glisse pas : à genoux ou au sol, il se relève d'abord ; l'arme au poing, il la
+  // range le temps de marcher (on n'a pas d'images de pas pour les poses), puis il se remet en garde
+  async marcherA(x, vitesse = 5, sprite = this.perso) {
+    const pose = sprite === this.perso ? poseCorps(sprite) : null;
+    if (!pose) return this.marcher(sprite, x, vitesse);
+    const enGarde = POSES_COMBAT_NOMS.has(pose);
+    if (enGarde) this.poserRecit(null); else await this.debout(300);
+    await this.marcher(sprite, x, vitesse);
+    if (enGarde) this.poseArme(0);
+  },
   // (v1.07) L'aube : trois petits oiseaux traversent le ciel en battant des ailes, et c'est eux qui
   // gazouillent (le « cui cui » s'affichait près du voyageur, comme si c'était lui qui le disait)
   oiseauxDuMatin() {
@@ -155,15 +165,95 @@ Object.assign(StoryScene.prototype, {
       this.tweens.add({ targets: d, y: y - 8 - Math.random() * 10, x: d.x + (k - n / 2) * 4, alpha: 0, scale: 2, duration: 500, onComplete: () => d.destroy() });
     }
   },
-  // Il tombe à genoux (puis se relève avec `debout`)
-  aGenoux() { return this.animer({ targets: this.perso, scaleY: 6 * this.fCorps * 0.84, angle: this.perso.flipX ? -6 : 6, duration: 260, ease: 'Quad.easeIn' }); },
-  debout(duree = 400) { this.yeuxFermes(false); return this.animer({ targets: this.perso, scaleY: 6 * this.fCorps, scaleX: 6 * this.fCorps, angle: 0, y: SOL_RECIT, duration: duree, ease: 'Sine.easeOut' }); },
-  // (v1.61) il s'endort : les yeux fermés (même dessin, même taille) ; il les rouvre en se relevant
-  yeuxFermes(fermes = true) {
+  // (planches 85 et 86) Une pose du voyageur (POSES_HD : à genoux, au sol, il gît, il frappe...), posée par son point
+  // d'appui ; null : debout. Il garde sa place, sa taille et son sens.
+  poserRecit(nom = null, { arme } = {}) {
+    const p = this.perso; if (!p || !p.active) return null;
+    const v = this.parti.voyageur, q = this.blesse ? { ...v, blesse: true } : v;
+    const cle = nom && POSES_HD[nom] ? texturePose(this, q, nom, { arme }) : corpsHD(this, q, nom);
+    p.setTexture(cle).setAngle(0);
+    origineCorps(p);
+    return cle;
+  },
+  // Il tombe à genoux (puis se relève avec `debout`) : les genoux touchent terre
+  async aGenoux() {
     const p = this.perso; if (!p || !p.active) return;
+    this.cleYeuxOuverts = null;
+    const sol = Math.max(p.y, SOL_RECIT);
+    this.poserRecit('aGenoux');
+    p.setScale(6 * this.fCorps).setY(sol - 8);
+    await this.animer({ targets: p, y: sol, duration: 150, ease: 'Quad.easeIn' });
+    this.poussiere(p.x, sol, 5);
+  },
+  // Il se relève : couché, il passe d'abord à genoux ; puis debout (le corps se déplie)
+  async debout(duree = 400) {
+    const p = this.perso; if (!p || !p.active) return;
+    this.yeuxFermes(false);
+    const pose = poseCorps(p);
+    if (pose && POSES_COUCHEES.includes(pose)) { this.poserRecit('aGenoux'); await this.attendre(Math.round(duree * 0.45)); }
+    if (pose) { this.poserRecit(null); p.setScale(6 * this.fCorps, 6 * this.fCorps * 0.9); }
+    return this.animer({ targets: p, scaleY: 6 * this.fCorps, scaleX: 6 * this.fCorps, angle: 0, y: SOL_RECIT, duration: pose ? Math.round(duree * 0.55) : duree, ease: 'Sine.easeOut' });
+  },
+  // (v1.61) il s'endort : les yeux fermés (même dessin, même taille) ; il les rouvre en se relevant
+  // (planches 85 et 86 : une pose du rig a ses yeux à elle ; on n'y touche pas)
+  yeuxFermes(fermes = true) {
+    const p = this.perso; if (!p || !p.active || poseCorps(p)) return;
     const dort = this.cleCorps('dort');
     if (fermes) { if (p.texture.key !== dort) { this.cleYeuxOuverts = p.texture.key; p.setTexture(dort); } }
     else if (p.texture.key === dort) { p.setTexture(this.cleYeuxOuverts || this.cleCorps()); this.cleYeuxOuverts = null; }
+  },
+  // (planche 85) Il s'endort pour de bon (les champignons, le venin) : il s'allonge sur le dos, les yeux fermés
+  async endormir() {
+    const p = this.perso; if (!p || !p.active) return;
+    this.lacherTout();
+    this.poserRecit('dortBivouac');
+    p.setY(SOL_RECIT - 6);
+    await this.animer({ targets: p, y: SOL_RECIT, duration: 220, ease: 'Quad.easeIn' });
+    this.poussiere(p.x, SOL_RECIT, 6);
+  },
+  // (planche 86) Il meurt : les genoux lâchent, il s'affaisse, puis il gît, les yeux fermés. Sur le dos s'il est tombé
+  // face à ce qui l'a frappé (au combat) ; face contre terre s'il a été fauché par-derrière, en fuyant, à bout de forces
+  async mourir(surLeDos = true) {
+    const p = this.perso; if (!p || !p.active) return;
+    this.tweens.killTweensOf(p);
+    if (p.marche) { p.marche.remove(); p.marche = null; }
+    if (this.menace) this.lacherTout();
+    const sol = p.y, alpha = p.alpha, deja = poseCorps(p);
+    if (deja && POSES_COUCHEES.includes(deja)) {   // (déjà à terre : il ne se relève plus)
+      this.poserRecit(deja === 'auSolVentre' || deja === 'gitVentre' ? 'gitVentre' : 'git');
+      await this.animer({ targets: p, alpha: Math.min(alpha, 0.6), duration: 500 });
+      return;
+    }
+    this.poserRecit('effondre1'); p.setY(sol);
+    await this.attendre(280);
+    this.poserRecit(surLeDos ? 'effondreDos' : 'effondre2'); p.setY(sol);
+    await this.attendre(320);
+    this.poserRecit(surLeDos ? 'git' : 'gitVentre'); p.setY(sol - 8);
+    await this.animer({ targets: p, y: sol, alpha: Math.min(alpha, 0.6), duration: 300, ease: 'Bounce.easeOut' });
+  },
+  // (planche 86) Se battre avec l'arme qu'il a emportée : il arme (temps 0), il frappe (temps 1) ; null : il la range
+  poseArme(temps) {
+    const arme = this.armeTenue || 'epee', paire = POSES_COMBAT[arme];
+    if (!paire || temps === null) return this.poserRecit(null);
+    return this.poserRecit(paire[temps], { arme });
+  },
+  // Il tire son arme : renvoie la « lame » que suivent frapperArme et rengainer (sans pose pour cette arme : l'icône d'avant)
+  tirerArme() {
+    const arme = this.armeTenue || 'epee';
+    if (!POSES_COMBAT[arme]) return this.tenir(iconeObjet(this, 'epee'), { echelle: 2.6, angle: -30, dy: -8 });
+    this.poseArme(0);
+    return { arme, pose: true, active: true };
+  },
+  // Il frappe (puis revient en garde) ; faux si la lame n'est qu'une icône
+  frapperArme(lame, garde = 240) {
+    if (!lame || !lame.pose) return false;
+    this.poseArme(1);
+    this.time.delayedCall(garde, () => { if (lame.active && poseCorps(this.perso) === POSES_COMBAT[lame.arme][1]) this.poseArme(0); });
+    return true;
+  },
+  rengainer(lame, delai = 300) {
+    if (lame && lame.pose) { lame.active = false; this.time.delayedCall(delai, () => { const p = this.perso; if (p && p.active && POSES_COMBAT_NOMS.has(poseCorps(p))) this.poserRecit(null); }); }
+    else if (lame) this.tweens.add({ targets: lame, alpha: 0, delay: delai, duration: 300 });
   },
   // Renversé sur le dos (la tête du côté opposé à `depuis`)
   // Il lâche ce qu'il tenait (l'objet tombe et s'efface)
@@ -171,7 +261,20 @@ Object.assign(StoryScene.prototype, {
     for (const o of this.menace.tenus || []) if (o.active && o.visible && o.alpha > 0.05) { o.libre = true; this.tweens.add({ targets: o, y: SOL_RECIT - 6, angle: o.angle + 90, alpha: 0, duration: 400, ease: 'Quad.easeIn' }); }
     this.menace.tenus = [];
   },
-  renverse(depuisDroite = true) { this.lacherTout(); return this.animer({ targets: this.perso, angle: depuisDroite ? -82 : 82, y: SOL_RECIT - this.perso.displayWidth * 0.22, duration: 260, ease: 'Quad.easeIn' }); },
+  // (planche 86) Renversé : il perd l'équilibre, puis il est au sol, sonné. Frappé de face (depuisDroite quand il regarde à
+  // droite), il tombe sur le dos, la tête en arrière ; frappé par-derrière, il trébuche et tombe face contre terre
+  async renverse(depuisDroite = true) {
+    this.lacherTout();
+    const p = this.perso; if (!p || !p.active) return;
+    const deFace = depuisDroite !== p.flipX, recul = depuisDroite ? -1 : 1;
+    this.cleYeuxOuverts = null;
+    this.poserRecit(deFace ? 'desequilibre' : 'trebuche');
+    await this.animer({ targets: p, x: p.x + recul * 6, duration: 150, ease: 'Quad.easeOut' });
+    this.poserRecit(deFace ? 'auSol' : 'auSolVentre');
+    p.setY(SOL_RECIT - 8);
+    await this.animer({ targets: p, x: p.x + recul * 4, y: SOL_RECIT, duration: 130, ease: 'Quad.easeIn' });
+    this.poussiere(p.x, SOL_RECIT, 8);
+  },
 
   // La bête s'effondre, assommée (et reste au sol, des étoiles autour de la tête)
   async assommer(b, cle) {
@@ -810,13 +913,13 @@ const SCENES_EPREUVES = {
       }
       if (id === 'epee') {
         // il tire l'épée ; le loup bondit ; le coup part en plein vol
-        const lame = this.tenir(iconeObjet(this, 'epee'), { echelle: 2.6, angle: -40, dy: -8 });
+        const lame = this.tirerArme();   // (planche 86 : il arme, l'arme qu'il a emportée en main)
         await this.attendre(300);
         l.setTexture('loupHD_bond');
         this.lignesDeVitesse(l.x - 40, l.y - 50, -1);
         const saut = this.sauter(l, p.x + (reussie ? 80 : 40), SOL_RECIT, 70, 380);
         await this.attendre(240);
-        this.tweens.add({ targets: lame, angle: 120, duration: 140 });
+        if (!this.frapperArme(lame, 600)) this.tweens.add({ targets: lame, angle: 120, duration: 140 });
         const arcG = this.garder(this.add.graphics().setDepth(7));
         arcG.lineStyle(6, 0xffffff, 0.9).beginPath().arc(p.x + 30, p.y - 70, 60, -1.3, 0.8).strokePath();
         this.tweens.add({ targets: arcG, alpha: 0, duration: 300 });
@@ -831,7 +934,7 @@ const SCENES_EPREUVES = {
           this.onomatopee(p.x + 50, p.y - 160, 'RATÉ !', '#ff8080');
           l.setTexture('loupHD');
         }
-        this.tweens.add({ targets: lame, alpha: 0, duration: 300, delay: 300 });
+        this.rengainer(lame, 300);
         return;
       }
       await this.utiliserObjet(id);
@@ -913,9 +1016,12 @@ const SCENES_EPREUVES = {
         await this.tirerFleche(m.x + 10, m.y - 16, p.x + 140, b.y - 40, { haut: 4, plante: false, duree: 200 });
         this.tweens.add({ targets: arc, alpha: 0, duration: 300 });
       } else if (id === 'epee' || id === 'bouclier') {
-        this.tenir(iconeObjet(this, id), { echelle: 2.6, dy: -10 });
+        // (planche 86) l'arme en garde ; ou le bouclier levé devant lui, l'arme dans l'autre main
+        if (id === 'bouclier') this.poserRecit('bouclierParade', { arme: ['epee', 'hache', 'marteau', 'massue', 'dague', 'khopesh'].includes(this.armeTenue) ? this.armeTenue : null });
+        else M.lame = this.tirerArme();
       }
       await charge;
+      if (M.lame) this.frapperArme(M.lame, 500);
       this.arreterBete(b, 'sanglierHD');
       if (reussie) {
         // touché, il fait une embardée... droit dans le chêne
@@ -934,6 +1040,7 @@ const SCENES_EPREUVES = {
     },
     async issue(reussie) {
       const M = this.menace, p = this.perso, b = M.bete;
+      if (M.lame) this.rengainer(M.lame, 200); else if (POSES_COMBAT_NOMS.has(poseCorps(p))) this.poserRecit(null);   // (planche 86 : il baisse sa garde)
       if (reussie && abattu(this)) { await this.assommer(b, 'sanglierHD'); return; }
       if (reussie) {
         b.setFlipX(true).setAngle(0);
@@ -1073,14 +1180,14 @@ const SCENES_EPREUVES = {
       }
       if (id !== 'epee') { await this.utiliserObjet(id); return; }
       // le duel : trois passes d'armes
-      const lame = this.tenir(iconeObjet(this, 'epee'), { echelle: 2.6, angle: -30, dy: -8 });
+      const lame = this.tirerArme();   // (planche 86)
       const milieu = (p.x + chef.x) / 2;
       this.cadrer(milieu, 240, 1.3, 400);
       await Promise.all([this.marcherA(milieu - 34, 3), this.animer({ targets: chef, x: milieu + 34, duration: 400 })]);
       for (let k = 0; k < 3; k++) {
         const qui = k % 2 ? chef : p;
         await this.animer({ targets: qui, x: qui.x + (qui === p ? 10 : -10), duration: 90, yoyo: true });
-        this.tweens.add({ targets: lame, angle: k % 2 ? -60 : 60, duration: 90, yoyo: true });
+        if (lame.pose) { if (k % 2 === 0) this.frapperArme(lame, 200); } else this.tweens.add({ targets: lame, angle: k % 2 ? -60 : 60, duration: 90, yoyo: true });
         this.tweens.add({ targets: M.armes[0], angle: k % 2 ? 40 : -80, duration: 90, yoyo: true });
         const ex = milieu, ey = SOL_RECIT - 90 + k * 8;
         for (let e = 0; e < 6; e++) { const s = this.garder(this.add.image(ex, ey, 'eclat').setScale(1.6).setTint(0xfff0a0).setDepth(7)); const a = Math.random() * Math.PI * 2; this.tweens.add({ targets: s, x: ex + Math.cos(a) * 40, y: ey + Math.sin(a) * 30, alpha: 0, duration: 300, onComplete: () => s.destroy() }); }
@@ -1089,7 +1196,9 @@ const SCENES_EPREUVES = {
         await this.attendre(260);
       }
       // la lame qui vole : celle du chef, ou la sienne
-      const perdue = reussie ? M.armes[0] : lame;
+      // (planche 86 : son arme lui échappe des mains, elle vole ; ou il la range)
+      let perdue = reussie ? M.armes[0] : lame;
+      if (lame.pose) { this.rengainer(lame, 0); if (!reussie) perdue = this.tenir(iconeObjet(this, 'epee'), { echelle: 2.6, angle: -30, dy: -8 }); }
       perdue.libre = true;   // (lâchée : elle ne suit plus la main)
       await this.sauter(perdue, perdue.x + (reussie ? 120 : -120), SOL_RECIT - 10, 90, 600, reussie ? 540 : -540);
       perdue.setAngle(reussie ? 160 : -160);
@@ -1291,7 +1400,7 @@ const SCENES_EPREUVES = {
     },
     async issue(reussie) {
       const M = this.menace, p = this.perso;
-      if (M.sorte === 'coffre' && p.scaleY < 6 * this.fCorps * 0.95) await this.debout(400);
+      if (M.sorte === 'coffre' && (poseCorps(p) || p.scaleY < 6 * this.fCorps * 0.95)) await this.debout(400);
       if (reussie) {
         if (M.venin) M.venin.remove(); if (M.vertige) M.vertige.remove();
         this.cameras.main.setRotation(0); p.clearTint();
@@ -1300,10 +1409,9 @@ const SCENES_EPREUVES = {
       }
       // il s'effondre ; le noir ; il se réveille, pâle
       await this.aGenoux();
-      await this.renverse(false);
-      this.yeuxFermes();
+      await this.endormir();   // (planche 85 : couché pour de bon, les yeux fermés)
       await this.ciel(0x000000, 0.75, 600);
-      this.onomatopee(p.x, p.y - 100, 'Zzz...', '#c0c0ff');
+      { const t = this.tete(); this.onomatopee(t.x + (p.flipX ? -24 : 24), t.y - 44, 'Zzz...', '#c0c0ff'); }
       await this.attendre(900);
       if (M.venin) M.venin.remove(); if (M.vertige) M.vertige.remove();
       this.cameras.main.setRotation(0);
@@ -1402,7 +1510,7 @@ const SCENES_EPREUVES = {
       this.onomatopee(p.x, p.y - 150, reussie ? 'Serré !' : 'Hmm...', '#fff4dc');
       if (reussie) {
         this.blesse = true;
-        p.setTexture(this.cleCorps());
+        this.poserRecit(poseCorps(p));   // (à genoux, il le reste : la même pose, bandée)
         this.emotion(p, 'joie', 900);
       }
       await this.attendre(400);

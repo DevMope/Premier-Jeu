@@ -146,8 +146,23 @@ function contourEpais(t, tours = 1) {
 // `options.tenue` : les accessoires portés par le joueur (garde-robe) ; `options.bouche` : sa bouche de création.
 const BARBES_VOLUME = ['sage'];
 const TAILLE_ARMES_PORTEES = 1.3;   // (v1.04 : la taille des armes que portent les voyageurs, par rapport au corps)   // (les barbes qu'on dessine avec leur profondeur : voir le visage)
+// (planches 85 et 86) Des options en plus pour un seul dessin, qu'on ne peut pas passer par l'appelant (le joueur passe par
+// dessinerJoueurHD) : voir avecOptionsCorps (rigHD.js). null le reste du temps.
+let OPTIONS_CORPS_EN_PLUS = null;
 function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vue = 'troisQuarts', options = {}) {
   const k = FINESSE;
+  // --- (planches 85 et 86) Le corps posé : des options, toutes facultatives (sans elles, le dessin ne change pas) ---
+  //   membres : { brasP, brasL, jambeP, jambeL } (P le côté proche, L le lointain) : un objet, ou une fonction(ctx), qui place
+  //     l'épaule, le coude et la main ({ epaule, coude, main }), ou la hanche, le genou et le pied ({ hanche, genou, pied,
+  //     leve, bout (-1 : le pied pointe en arrière, à genoux), semelle (de dos : la semelle du talon qui se lève) }) ;
+  //   bob : le corps qui descend (la marche) ; yeuxFermes ; boucheForcee (0 à 3), souffle, baille : la bouche ;
+  //   armeMain(ctx) : l'arme en action, dessinée dans la main de devant (ctx.segBras pour l'autre main : l'arc, le bouclier) ;
+  //   margeHaut, margeL : la place d'une arme levée ou d'un bras tendu ;
+  //   ordreBras : { P, L } = 'devant' ou 'derriere' : de face ou de dos, le bras qui vient vers nous passe devant le torse ;
+  //   rig : la toile garde ses couches (ToileRig, rigHD.js), pour tourner ensuite le buste, la tête ou tout le corps.
+  if (OPTIONS_CORPS_EN_PLUS) options = { ...options, ...OPTIONS_CORPS_EN_PLUS };
+  const MEMBRES = options.membres || null, BOB = options.bob || 0, MARGE_H = Math.round(options.margeHaut || 0), MARGE_L = Math.round(options.margeL || 0);
+  const ORDRE_BRAS = options.ordreBras || null;
   const atours = options.atours || {};   // (v1.02 : le métal et la coiffe d'un Gardien du Conseil)
   g = { ...g };
   const race = PROPORTIONS[g.race] ? g.race : 'humain';
@@ -156,12 +171,13 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const th = ANGLES_VUE[vue] ?? ANGLES_VUE.troisQuarts;
   const c = Math.cos(th), s = Math.sin(th);
   const dos = vue === 'dos';
-  const L = 52 * k;
+  const L = 52 * k + 2 * MARGE_L;
   // (v0.58) + une marge en haut : sans elle, le sommet du crâne (cheveux, contour) touchait le bord
   // de l'image et paraissait coupé à plat
   const coiffe = (race === 'magicienne' || costume === 'sage' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' || costume === 'pirate' ? 8 : costume === 'garde' ? 2 : costume === 'gardeRoyal' ? 14 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'cambrioleur' ? 4 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : costume === 'joueur' && typeof COIFFURES_HD !== 'undefined' && COIFFURES_HD[g.coiffure] ? (COIFFURES_HD[g.coiffure].marge || 0) : 0) * k + (pose === 'leves' || pose === 'epaules' || pose === 'grimpe1' || pose === 'grimpe2' ? 12 * k : 0) + 3 * k;
-  const H = P.H + coiffe;
-  const t = new ToileHD(L, H);
+  const H = P.H + coiffe + MARGE_H;
+  const t = options.rig && typeof ToileRig !== 'undefined' ? new ToileRig(L, H) : new ToileHD(L, H);
+  t.partie = 'corps';   // (la partie du corps qu'on dessine : le rig la fait tourner autour de son articulation)
   t.relief = true;
   t.cel = true;
   const cx = L / 2;
@@ -258,7 +274,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.rampes.gilet = rampeVive(0x6a4426); t.rampes.argent = rampeVive(0xc8ccd4); t.rampes.emeraude = rampeVive(0x2ec860); t.rampes.fleche = rampeVive(0xe8b020);
   }
 
-  const cy = Math.round(coiffe + 1 + P.ry);   // le centre de la tête (entier : les détails se posent pixel par pixel)
+  const cy = Math.round(coiffe + 1 + P.ry + BOB + MARGE_H);   // le centre de la tête (entier : les détails se posent pixel par pixel)
   const yT = Math.round(cy + P.ry - 1);       // le haut du torse
   const yB = Math.round(yT + P.torse);        // la taille
   const sol = H - 1;
@@ -287,6 +303,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const matBras = (race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && costume !== 'givrin' && !forgeron) || costume === 'gardeRoyal' ? 'metal'
     : race === 'hobbit' && (voyageurBuste || costume === 'garde') ? 'lin' : 'habit';
   const bras = (cote, devant) => {
+    t.partie = cote === pres ? 'brasP' : 'brasL';
     const bal = pas ? (cote === pres ? pas : -pas) : 0;   // les bras se balancent avec la marche
     const epaule = [cote * (ep - 0.8 * k), 0.3 * k, yT + 2 * k];
     // Les bras levés : du coude écarté, les mains montent au-dessus de la tête (pour porter quelque chose)
@@ -345,6 +362,12 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (stupeur) { coude.splice(0, 3, cote * (ep + 4.5 * k), 1.5 * k, yT + P.torse * 0.4); main.splice(0, 3, cote * Math.min(ep + 8 * k, L / 2 - 3 * k), 2.5 * k, yT - 2.5 * k); }
     if (chauffe) { coude.splice(0, 3, cote * ep * 0.95, P.rx * 0.7, yT + P.torse * 0.6); main.splice(0, 3, cote * ep * 0.5, P.rx * 1.35 + 4 * k, yT + P.torse * 0.38); }
     if (pose === 'plateau' && cote === loin) { coude.splice(0, 3, cote * (ep + 5 * k), 1 * k, yT + 5 * k); main.splice(0, 3, cote * Math.min(ep + 9 * k, L / 2 - 4 * k), 1 * k, yT - 2 * k); }
+    // (planches 85 et 86) le bras posé à la main : options.membres.brasP / brasL
+    const mb = MEMBRES && MEMBRES[cote === pres ? 'brasP' : 'brasL'];
+    if (mb) {
+      const r0 = typeof mb === 'function' ? mb({ k, ep, yT, yB, sol, cy, P, cote, s, c, L, pres, loin, epaule, coude, main }) : mb;
+      if (r0) { if (r0.epaule) epaule.splice(0, 3, ...r0.epaule); if (r0.coude) coude.splice(0, 3, ...r0.coude); if (r0.main) main.splice(0, 3, ...r0.main); }
+    }
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
     const r = 2.6 * k * P.membre;
     const dec = devant ? 0 : -0.5;
@@ -356,6 +379,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (tenue >= 2 && aventurier && race !== 'hobbit' && race !== 'elfe') for (let j = 0; j < 2; j++) t.forme('cuir', (x, y) => (Math.abs(y - (C[1] + (M[1] - C[1]) * (0.35 + j * 0.3))) < 0.6 * k && Math.abs(x + 0.5 - (C[0] + (M[0] - C[0]) * (0.35 + j * 0.3))) < r ? [0, 0, 1] : null), { decalage: -0.9, bord: false, ombre: false }); // les lanières
     if (costume === 'sage') for (let j = 1; j < 4; j++) { const px = C[0] + (M[0] - C[0]) * j / 4, py = C[1] + (M[1] - C[1]) * j / 4; t.poser(Math.round(px), Math.round(py), 'cristal', 5); t.poser(Math.round(px) + 1, Math.round(py) + 1, 'cristal', 3); }   // (les runes qui luisent)
     // La main : la paume et un pouce
+    t.partie = cote === pres ? 'mainP' : 'mainL';
     const matMain = T.mains || (costume === 'mainNoire' ? 'metal' : costume === 'givrin' ? 'cuir' : porte('mouflesHiver') ? 'moufle' : 'peau'), gm = T.grandesMains ? 1.55 : 1;
     // (v1.05) le revers de fourrure au poignet : le manteau du Père Givrin, les moufles du Long Hiver
     if (costume === 'givrin' || porte('mouflesHiver')) { const px = C[0] + (M[0] - C[0]) * 0.82, py = C[1] + (M[1] - C[1]) * 0.82; t.forme('fourrure', ellipsoide(px, py, r + 0.5 * k, 1.5 * k), { decalage: dec + 0.2, motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.35 : -0.15) }); }
@@ -363,6 +387,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme(matMain, ellipsoide(M[0] + cote * c * 1.6 * k * gm + s * 1.2 * k, M[1] + 0.6 * k, 0.9 * k * gm, 1.2 * k * gm), { decalage: dec + 0.3, ombre: false });
     if (T.griffes) for (const d of [-1, 0, 1]) for (let j = 0; j < Math.round(0.9 * k * gm); j++) t.poser(Math.round(M[0] + d * 1.1 * k * gm), Math.round(M[1] + 3.2 * k * gm) + j, 'griffe', j ? 2 : 4);
     if (devant) mainDevant = { M, C, r, matMain, matAvant, gm, cote };
+    t.partie = 'corps';
   };
   let mainDevant = null;
   const segBras = [], segJambes = [];   // (v0.64) pour les plis des manches et des jambes
@@ -371,6 +396,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const cuisseX = (y) => { const bal = pas ? pas : 0; const v = Math.min(1, Math.max(0, (y - (yB - 1 * k)) / ((sol - yB) * 0.5))); return X(pres * ep * (0.42 + 0.03 * v), (bal * 2.2 + (bal > 0 ? 1 : 0)) * k * v); };
   const motifCuisse = (x, y) => { const d = Math.abs(x + 0.5 - cuisseX(y)); return d < rCuisse * 0.75 ? 0.35 : d < rCuisse * 0.75 + 0.7 * k ? -0.9 : 0; };
   const jambe = (cote, devant) => {
+    t.partie = cote === pres ? 'jambeP' : 'jambeL';
     const bal = pas ? (cote === pres ? pas : -pas) : 0;   // la jambe qui avance
     const hanche = [cote * ep * 0.42, 0, yB - 1 * k];
     // (v0.68) assis : la cuisse à l'horizontale vers l'avant, le mollet qui descend jusqu'au sol (le
@@ -379,7 +405,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const genou = assis ? [cote * ep * 0.45, (sol - yB) * 0.95, yB + 1 * k] : [cote * ep * 0.45, (bal * 2.2 + (bal > 0 ? 1 : 0)) * k, yB + (sol - yB) * 0.5];
     // Le pas : le pied avant reste posé au sol, c'est le talon arrière qui se décolle (à peine de
     // face, où l'on ne voit pas le pied partir en arrière)
-    const leve = bal < 0 ? (Math.abs(s) < 0.3 ? 0.6 : 1.2) * k : 0;
+    let leve = bal < 0 ? (Math.abs(s) < 0.3 ? 0.6 : 1.2) * k : 0;
     // (v1.00) grimper : le genou du côté de la main basse remonte (le pied cherche une prise), l'autre jambe pousse
     if (grimpe && !assis) {
       const plie = (cote === pres) !== (pose === 'grimpe1');
@@ -389,6 +415,20 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (pose === 'epaules') genou.splice(0, 3, cote * (ep + 2.4 * k), 2 * k, yB + 2 * k);
     const piedGrimpe = grimpe && !assis ? ((cote === pres) !== (pose === 'grimpe1') ? [cote * ep * 0.3, 2 * k, yB + (sol - yB) * 0.55] : [cote * ep * 0.22, 1 * k, sol - 3 * k]) : null;
     const pied = pose === 'epaules' ? [cote * (ep + 2.4 * k), 3 * k, yB + 9 * k] : piedGrimpe || (assis ? [cote * ep * 0.48, (sol - yB) * 1.05, sol - 3 * k] : pose === 'accueil' ? [cote * ep * 0.85, 0.5 * k, sol - 3 * k] : [cote * ep * 0.48, bal * 3.8 * k, sol - 3 * k - leve]);   // (accueil : les jambes un peu écartées, bien campé)
+    // (planches 85 et 86) la jambe posée à la main : options.membres.jambeP / jambeL
+    let boutJ = 1, semelle = 0;
+    const mj = MEMBRES && MEMBRES[cote === pres ? 'jambeP' : 'jambeL'];
+    if (mj) {
+      const r0 = typeof mj === 'function' ? mj({ k, ep, yT, yB, sol, P, cote, s, c, pres, loin, hanche, genou, pied }) : mj;
+      if (r0) {
+        if (r0.hanche) hanche.splice(0, 3, ...r0.hanche);
+        if (r0.genou) genou.splice(0, 3, ...r0.genou);
+        if (r0.leve !== undefined) { leve = r0.leve; pied[2] = sol - 3 * k - leve; }
+        if (r0.pied) pied.splice(0, 3, ...r0.pied);
+        if (r0.bout !== undefined) boutJ = r0.bout;
+        if (r0.semelle) semelle = r0.semelle;
+      }
+    }
     const Hh = [X(hanche[0], hanche[1]), hanche[2]], G = [X(genou[0], genou[1]), genou[2]], Pd = [X(pied[0], pied[1]), pied[2]];
     const dec = devant ? 0 : -0.5;
     const r = 2.9 * k * P.membre;
@@ -404,7 +444,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     } else if (race === 'hobbit' || costume === 'mendiant') {
       cylindre(t, 'bas', G, Pd, r - 0.4 * k, { decalage: dec + 0.2, motif: costume === 'mendiant' ? (x, y) => (hachage(Math.floor(x / k), Math.floor(y / k), 77) > 0.85 ? -1.2 : 0) : null });
       // Les grands pieds nus et poilus
-      t.forme('peau', ellipsoide(X(pied[0], pied[1] + 2 * k), solPied - 1.5 * k, (3.6 + Math.abs(s) * 1.2) * k, 2 * k), { decalage: dec });
+      t.forme('peau', ellipsoide(X(pied[0], pied[1] + 2 * k * boutJ), solPied - 1.5 * k, (3.6 + Math.abs(s) * 1.2) * k, 2 * k), { decalage: dec });
       if (race === 'hobbit') for (let j = 0; j < 4; j++) t.poser(Math.round(X(pied[0], pied[1] + (1 + j * 0.7) * k)), Math.round(solPied - 3 * k - (j % 2)), 'cheveux', 2);
     } else {
       // La botte : la tige jusqu'au genou, le revers, le pied qui pointe vers l'avant. De face, le
@@ -412,7 +452,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       const botte = g.bottes ? 'bottes' : 'cuir';   // (v0.68 : le joueur choisit la couleur de ses bottes)
       if (g.bottes) t.rampes.bottes = rampeVive(g.bottes);
       cylindre(t, botte, G, Pd, r - 0.2 * k, { decalage: dec + 0.1 });
-      const bout = X(pied[0], pied[1] + 3.4 * k);
+      const bout = X(pied[0], pied[1] + 3.4 * k * boutJ);
       const face = Math.max(0, 1 - Math.abs(s) / 0.7);   // (1 de face, 0 dès le trois-quarts)
       t.forme(botte, (x, y) => {
         if (y < solPied - 3 * k || y > solPied) return null;
@@ -422,7 +462,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
         return [(x + 0.5 - Pd[0]) / (4 * k), face ? -0.5 + bas * 0.9 : (y - solPied + 1.5 * k) / (2 * k), 0.8];
       }, { decalage: dec + face * 0.3 });
       t.forme(botte, (x, y) => (y >= G[1] + 1 && y <= G[1] + 1.5 * k && Math.abs(x + 0.5 - G[0]) < r + 0.3 * k ? [0, -0.6, 0.7] : null), { decalage: 0.6, bord: false, ombre: false });
+      // (planche 85) de dos, le talon qui se lève montre sa semelle : le bas de la botte plus sombre
+      if (semelle) for (let y = Math.round(solPied - semelle * k); y <= solPied; y++) for (let x = Math.round(Pd[0] - r - 1.5 * k); x <= Math.round(Pd[0] + r + 1.5 * k); x++) if (t.mat(x, y) === botte) t.poser(x, y, botte, y >= solPied - 0.6 * k ? 0 : 1);
     }
+    t.partie = 'corps';
   };
 
   // Les pans du long manteau ouvert de Garrick, entre deux hauteurs (le haut avec le torse, le bas
@@ -477,7 +520,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   // (v1.04, idée du joueur) l'arme du voyageur, portée sur lui : dans le dos, à la main ou à la taille selon l'arme
   const arme = options.arme || null;
   const enMain = !pose && !leves && !grimpe;   // (avec le baluchon, assis, les bras levés : la lance et le bâton passent dans le dos)
-  const placeArme = !arme ? null : ['dague', 'rapiere', 'khopesh', 'fronde'].includes(arme) ? 'taille' : arme === 'griffes' ? 'mains'
+  const placeArme = options.armeMain ? 'action' : !arme ? null : ['dague', 'rapiere', 'khopesh', 'fronde'].includes(arme) ? 'taille' : arme === 'griffes' ? 'mains'
     : (arme === 'lance' || arme === 'baton' || arme === 'massue') && enMain ? 'main' : arme === 'massue' ? 'taille' : 'dos';
   if (arme) { t.rampes.lameA = rampeVive(0xdce6f0); t.rampes.boisA = rampeVive(0x7a4a24); t.rampes.ferA = rampeVive(0x6a6e78); t.rampes.cordeA = rampeVive(0xe0d4b0); t.rampes.laitonA = rampeVive(0xd8a838); t.rampes.bambouA = rampeVive(0x8aa84a); t.rampes.gemmeA = rampeVive(0x70c8f8); }
   // Une arme le long d'un axe : `A` le bout du haut (la tête, la poignée), `B` le bout du bas
@@ -542,7 +585,13 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme('cheveux', (x, y) => { const cc = X(0, -P.rx * (0.4 + s * 0.25)); return y >= cy - 4 * k && y <= bas && Math.abs(x + 0.5 - cc) < larg - Math.max(0, y - bas + 6 * k) * 0.5 ? [(x + 0.5 - cc) / (P.rx + 2 * k), 0, 0.8] : null; }, { decalage: -0.8, motif: MECHES });
   }
   const deFace = Math.abs(c) > 0.9;   // (de face, les deux côtés sont éclairés pareil)
-  if (!dos) { bras(loin, deFace); if (!longue) { jambe(loin, deFace); jambe(pres, true); } } else { bras(pres, deFace); if (!longue) { jambe(pres, deFace); jambe(loin, true); } }
+  // (planche 85) options.ordreBras : de face ou de dos, un bras qui se balance vers nous passe devant le torse (dessiné avec
+  // le bras de devant), celui qui s'en va passe derrière
+  const brasArriere = dos ? pres : loin, brasAvant = dos ? loin : pres;
+  const placeBras = (cote) => { const o = ORDRE_BRAS && ORDRE_BRAS[cote === pres ? 'P' : 'L']; return o === 'devant' ? 1 : o === 'derriere' ? 0 : cote === brasAvant ? 1 : 0; };
+  const brasTardifs = [brasArriere, brasAvant].filter(cote => placeBras(cote) === 1);
+  for (const cote of [brasArriere, brasAvant]) if (placeBras(cote) === 0) bras(cote, cote === brasAvant ? true : deFace);
+  if (!dos) { if (!longue) { jambe(loin, deFace); jambe(pres, true); } } else { if (!longue) { jambe(pres, deFace); jambe(loin, true); } }
 
   // --- 2. Le torse (un cylindre un peu aplati, les épaules rondes), la ceinture ---
   const torse = (x, y) => {
@@ -877,7 +926,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     else if (arme === 'fronde') { for (let a = 0; a < 6.3; a += 0.15) for (let e = 0; e < k; e++) t.poser(Math.round(hx + Math.cos(a) * 2.2 * kA) + e, Math.round(hy + 3.5 * kA + Math.sin(a) * 3 * kA), 'cordeA', 3); t.forme('cuir', ellipsoide(hx, hy + 6.5 * kA, 1.9 * kA, 1.4 * kA), { decalage: 0.4 }); }
     else if (arme === 'massue') { cylindre(t, 'boisA', [hx, hy - 1 * kA], [hx - pres * 1 * kA, hy + 4 * kA], 0.7 * kA, { decalage: 0.3 }); t.forme('boisA', ellipsoide(hx - pres * 1.8 * kA, hy + 8 * kA, 2.4 * kA, 3.6 * kA), { decalage: 0.4 }); for (const [u, v] of [[-1, 6.5], [1, 8], [-0.6, 10]]) t.forme('ferA', ellipsoide(hx - pres * 1.8 * kA + u * kA, hy + v * kA, 0.6 * kA, 0.6 * kA), { decalage: 0.8, ombre: false }); }
   }
-  if (!dos) bras(pres, true); else bras(loin, true);
+  for (const cote of brasTardifs) bras(cote, cote === brasAvant ? true : deFace);
   // (v1.61) les épaulières du buste, par-dessus le haut du bras de devant (dessous, il les cachait)
   for (const cote of epaulieresBuste) epauliere(cote, 'metal', true, race === 'nain' ? 1.5 : 1.3);
   if (costume === 'gardien') {
@@ -969,6 +1018,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   if (porte('bague') && !dos) { const hx = X(pres * (ep + 0.6 * k), 1 * k); t.poser(Math.round(hx), Math.round(yB + 2.5 * k), 'or', 5); t.poser(Math.round(hx) + 1, Math.round(yB + 2.5 * k), 'or', 3); }
   if (costume === 'mentor' && !dos) pansManteau(yB + 2 * k, sol - 6 * k);
   // La pipe de Garrick, au coin de la bouche (voir après le visage)
+  t.partie = 'tete';
   // --- 4. Le cou, la tête, le visage ---
   t.forme('peau', (x, y) => (y >= yT - 3 * k && y <= yT + 1 * k && Math.abs(x + 0.5 - X(0, 0.5 * k)) < 2.4 * k ? [(x + 0.5 - X(0, 0.5 * k)) / (2.4 * k), 0.2, 0.9] : null), { decalage: -0.6 });
   // La forme de la tête : ronde (hobbit), large et basse avec une mâchoire lourde (nain),
@@ -1070,7 +1120,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   let yeux = [];
   const poserYeux = () => { for (const [ox, large, cote] of yeux) {
     // (v1.34) il dort : les yeux fermés, une paupière en arc
-    if (dort) { const w = large ? 1.3 * k : 0.8 * k; for (let i = -Math.round(w); i <= Math.round(w); i++) t.poser(Math.round(ox + i), Math.round(ey + 0.6 * k * (1 - (i / Math.max(1, w)) ** 2)), 'pupille', 1); continue; }
+    if (dort || options.yeuxFermes) { const w = large ? 1.3 * k : 0.8 * k; for (let i = -Math.round(w); i <= Math.round(w); i++) t.poser(Math.round(ox + i), Math.round(ey + 0.6 * k * (1 - (i / Math.max(1, w)) ** 2)), 'pupille', 1); continue; }
     // Un œil simple et posé : un petit blanc, la pupille sombre, un reflet d'un pixel, la paupière
     const w = (large ? 1.3 * k : 0.8 * k) * (stupeur ? 1.15 : 1), h = (pensif ? 1.75 : stupeur ? 1.95 : 1.4) * k;   // (il pense : les yeux grands ouverts vers le haut)
     // (les yeux de bête : tout l'œil de la couleur de l'iris, une pupille en fente)
@@ -1171,7 +1221,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     const tonFente = sombre ? 0 : 1, tonBas = sombre ? 4 : (race === 'nain' ? 3 : 4), tonHaut = sombre ? 1 : 2;
     const largeur = profil ? 1.2 : race === 'troll' ? 4.6 : race === 'hobbit' ? 2.1 : race === 'nain' ? 3 : race === 'elfe' ? (f ? 1.9 : 2.8) : race === 'magicienne' ? 2.3 : 2.8;
     const lb = Math.max(1, Math.round(largeur * k * (profil ? 1 : Math.abs(c))));
-    const bouche = stupeur ? 2 : options.bouche ?? 0;   // 0 souriante, 1 neutre, 2 étonnée, 3 grognon
+    const bouche = options.boucheForcee ?? (stupeur ? 2 : options.bouche ?? 0);   // 0 souriante, 1 neutre, 2 étonnée, 3 grognon (boucheForcee : une pose)
+    const rond = stupeur || options.baille ? 'grand' : options.souffle ? 'petit' : null;   // (la bouche en O : stupeur, bâillement, souffle)
     const courbe = (g.vieux && race === 'troll' ? -0.4 : T.sourire ? 1.4 : bouche === 1 ? 0 : bouche === 3 ? -0.8 : race === 'hobbit' ? 1.2 : race === 'elfe' ? 0.3 : 0.8) * (profil ? 0.5 : 1);
     const epaisseur = elfeF ? 1 : Math.max(1, Math.round((profil ? 0.9 : 0.65) * k));
     // (v0.73) Grippesou qui t'accueille : le sourire du Grinch, un croissant immense qui remonte
@@ -1194,7 +1245,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       }
     }
     else if (museauLoup) { /* (la gueule est dessinée avec le museau) */ }
-    else if (bouche === 2) t.forme('bouche', ellipsoide(bx, by + (stupeur ? 0.9 : 0.5) * k, (stupeur ? 1.5 : 1.2) * k, (stupeur ? 2.1 : 1.5) * k), { decalage: -0.5, ombre: false });
+    else if (bouche === 2) t.forme('bouche', ellipsoide(bx, by + (rond === 'grand' ? (options.baille ? 1.1 : 0.9) : 0.5) * k, (rond === 'grand' ? 1.5 : rond === 'petit' ? 0.75 : 1.2) * k, (rond === 'grand' ? (options.baille ? 2.3 : 2.1) : rond === 'petit' ? 0.95 : 1.5) * k), { decalage: -0.5, ombre: false });
     else for (let i = -lb; i <= lb; i++) {
       const yy = by + Math.round((1 - (i * i) / (lb * lb)) * courbe * k);
       for (let e = 0; e < epaisseur; e++) t.poser(Math.round(bx + i), yy + e, matLevre, tonFente);               // la fente
@@ -1671,6 +1722,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   }
   // L'écuelle tendue du mendiant
   if (costume === 'mendiant' && !dos) { const mx = X(pres * (ep + 0.6 * k), 2.5 * k); t.forme('metal', ellipsoide(mx, yB + 0.5 * k, 3.2 * k, 1.6 * k), { decalage: -0.2 }); t.poser(Math.round(mx), Math.round(yB - 0.5 * k), 'or', 4); t.poser(Math.round(mx) + 1, Math.round(yB - 0.5 * k), 'or', 5); }
+  t.partie = 'corps';
   // --- 6. De dos : la cape par-dessus tout ---
   if (capee && dos) dessinerCape(true);
   if (placeArme === 'dos' && dos) armeDansLeDos();
@@ -1744,6 +1796,11 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.poser(Math.round(haut[0] - 0.5 * k), Math.round(haut[1] - 4.5 * k), 'blanc', 5);
     t.forme(matMain, ellipsoide(M[0], M[1] + 1 * k * gm, 2.2 * k * gm, 2.3 * k * gm), { decalage: 0.6 });   // la main serrée dessus
     t.bout = null; t.batonSage = [haut[0], haut[1] - 3.5 * k];   // (le cœur du cristal : pour sa lueur)
+  } else if (options.armeMain && mainDevant) {
+    // (planche 86) l'arme en action (posesHD.js), dans la main de devant
+    const avant = t.partie; t.partie = 'brasP';
+    options.armeMain({ t, k, kA: k * TAILLE_ARMES_PORTEES, M: mainDevant.M, C: mainDevant.C, matMain: mainDevant.matMain, gm: mainDevant.gm, segBras, dessinerArmeAxe, cx, cy, P, sol, yT, yB, ep, X, s, c, pres, loin, dos, arme });
+    t.partie = avant;
   } else if ((placeArme === 'main' || placeArme === 'mains') && mainDevant) {
     const { M, matMain, gm } = mainDevant;
     const dehors = M[0] < cx ? -1 : 1, kA = k * TAILLE_ARMES_PORTEES;
@@ -1846,6 +1903,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   }
   t.mainXY = mainDevant ? [mainDevant.M[0], mainDevant.M[1]] : null;   // (v1.34 : où est la main, pour y tenir un objet)
   t.reperes = { cy, yT, yB, H, ...(t.batonSage ? { cristal: t.batonSage } : {}) };   // (v1.01 : pour poser un enfant sur des épaules, etc.)
+  t.reperes2 = { cx, cy, yT, yB, sol, ep, H, L };   // (planches 85 et 86 : les articulations, pour le rig et les poses)
   contourEpais(t, CONTOUR_CORPS.tours);
   // Où sont les mains (depuis le sol), pour y accrocher le baluchon
   t.mains = H - (leves ? cy - P.ry - 7 * k : T.brasLongs ? yB + (sol - yB) * 0.48 + 2 * k : yB + 2.5 * k);
