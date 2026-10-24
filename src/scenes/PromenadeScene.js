@@ -649,7 +649,7 @@ class PromenadeScene extends Cinematique {
     this.cameras.main.fadeOut(400);
     const nuit = this.scene.get('Nuit');
     if (nuit && nuit.lieu) Sauvegarde.planifier(this.G, nuit.lieu);   // (v0.65 : le chat adopté, nourri...)
-    this.cameras.main.once('camerafadeoutcomplete', () => { this.scene.stop(); this.scene.resume('Nuit'); if (nuit && nuit.tout) nuit.tout(); });
+    this.cameras.main.once('camerafadeoutcomplete', () => { this.scene.stop(); this.scene.resume('Nuit'); if (nuit && nuit.G && nuit.tout) nuit.tout(); });
   }
 }
 

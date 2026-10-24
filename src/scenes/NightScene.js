@@ -234,6 +234,7 @@ class NightScene extends Phaser.Scene {
 
   // Tout ce qui change quand on achète, emprunte ou répond à une lettre.
   tout() {
+    if (!this.G || !this.sys.isActive()) return;   // (v1.61 : appelée par une page qui revient alors que le soir n'a pas encore été ouvert)
     Sauvegarde.planifier(this.G, this.lieu);
     this.majArgent();
     this.majJournee(20, 300);

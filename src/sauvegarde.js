@@ -44,6 +44,7 @@ const Sauvegarde = {
 
   // Sauvegarde un peu plus tard (on regroupe les clics rapprochés).
   planifier(G, lieu) {
+    if (!G) return;   // (v1.61 : rien à sauvegarder)
     clearTimeout(this.minuterie);
     this.minuterie = setTimeout(() => this.maintenant(G, lieu), 1200);
   },
