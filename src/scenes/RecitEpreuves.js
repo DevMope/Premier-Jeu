@@ -37,6 +37,7 @@ Object.assign(StoryScene.prototype, {
     const p = this.perso; if (!p || !p.active) return;
     this.tweens.killTweensOf(p);
     if (p.marche) { p.marche.remove(); p.marche = null; }
+    this.cleYeuxOuverts = null;
     p.setTexture(this.cleCorps()).setOrigin(0.5, 1).setAngle(0).setAlpha(1).clearTint().setScale(6 * this.fCorps).setFlipX(false).setY(SOL_RECIT).setDepth(3).setVisible(true);
   },
   // La texture du voyageur (avec ses bandages, une fois soigné)
@@ -159,9 +160,10 @@ Object.assign(StoryScene.prototype, {
   debout(duree = 400) { this.yeuxFermes(false); return this.animer({ targets: this.perso, scaleY: 6 * this.fCorps, scaleX: 6 * this.fCorps, angle: 0, y: SOL_RECIT, duration: duree, ease: 'Sine.easeOut' }); },
   // (v1.61) il s'endort : les yeux fermés (même dessin, même taille) ; il les rouvre en se relevant
   yeuxFermes(fermes = true) {
-    const p = this.perso;
-    if (fermes && !this.cleYeuxOuverts) { this.cleYeuxOuverts = p.texture.key; p.setTexture(this.cleCorps('dort')); }
-    else if (!fermes && this.cleYeuxOuverts) { if (p.texture.key === this.cleCorps('dort')) p.setTexture(this.cleYeuxOuverts); this.cleYeuxOuverts = null; }
+    const p = this.perso; if (!p || !p.active) return;
+    const dort = this.cleCorps('dort');
+    if (fermes) { if (p.texture.key !== dort) { this.cleYeuxOuverts = p.texture.key; p.setTexture(dort); } }
+    else if (p.texture.key === dort) { p.setTexture(this.cleYeuxOuverts || this.cleCorps()); this.cleYeuxOuverts = null; }
   },
   // Renversé sur le dos (la tête du côté opposé à `depuis`)
   // Il lâche ce qu'il tenait (l'objet tombe et s'efface)

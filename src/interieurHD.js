@@ -1229,7 +1229,8 @@ function bourse(scene, x, y, argent, { echelle = 2, taille = 14, couleur = '#f3d
     // (v1.17) le gain ou la dépense, en direct au-dessus de la bourse
     if (c.dernier !== undefined && a !== c.dernier && c.visible && scene.sys.isActive()) {
       const d = a - c.dernier, m = c.getWorldTransformMatrix();
-      const g = gainEnDirect(scene, m.tx + (aDroite ? echelle * 13 + 30 : 0), m.ty - echelle * (aDroite ? 24 : 14) - 8, `${d > 0 ? '+' : '−'}${Math.abs(d)} p.`, d > 0, { taille: 14 });
+      const yHaut = m.ty - echelle * (aDroite ? 24 : 14) - 8;   // (v1.61 : une bourse collée au haut de l'écran affiche son gain dessous)
+      const g = gainEnDirect(scene, m.tx + (aDroite ? echelle * 13 + 30 : 0), yHaut < 30 ? m.ty + 26 : yHaut, `${d > 0 ? '+' : '−'}${Math.abs(d)} p.`, d > 0, { taille: 14 });
       if (conteneur) conteneur.add(g);   // (v1.61 : dans l'interface d'un récit, sous sa caméra fixe)
     }
     c.dernier = a;

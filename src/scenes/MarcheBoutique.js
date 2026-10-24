@@ -241,11 +241,12 @@ Object.assign(MarcheScene.prototype, {
     let place = G.capacite - stockTotal(G) - Object.entries(auPanier).reduce((a, [id, q]) => a + (id in MATERIAUX ? 0 : q), 0);
     for (const id of Object.keys(besoin)) {
       let manque = besoin[id] - this.aDejaMarche(id) - (auPanier[id] || 0);   // (v1.49 : ce qui est déjà au panier est compté)
-      if (!(id in MATERIAUX)) { manque = Math.min(manque, place); place -= Math.max(0, manque); }
+      const materiau = id in MATERIAUX;
+      if (!materiau) manque = Math.min(manque, place);
       if (manque <= 0) continue;
       const dispo = k => G.etals[k][id].qte - (this.panier[k + ':' + id] || 0);
       const offres = Object.keys(MARCHANDS).filter(k => G.etals[k] && G.etals[k][id] && dispo(k) > 0).sort((a, b) => prixMarchand(G, a, id) - prixMarchand(G, b, id));
-      for (const k of offres) { const q = Math.min(manque, dispo(k)); lignes.push({ cle: k, id, q, ok: true }); manque -= q; if (!manque) break; }
+      for (const k of offres) { const q = Math.min(manque, dispo(k)); lignes.push({ cle: k, id, q, ok: true }); manque -= q; if (!materiau) place -= q; if (!manque) break; }   // (v1.61 : seule la place de ce qu'on trouve est prise)
       if (manque > 0) lignes.push({ cle: null, id, q: manque, ok: false });
     }
     return lignes;
@@ -259,7 +260,20 @@ Object.assign(MarcheScene.prototype, {
   listeCourses(lignes = null, hier = false) {
     if (this.listeC) { this.listeC.destroy(); this.listeC = null; if (!lignes) return; }
     const G = this.G;
-    this.lignesListe = lignes || this.calculerListe();
+    // (v1.61) la liste s'arrête avant de sortir du parchemin, et seules les lignes affichées comptent (total, Entrée, panier)
+    const tout = lignes || this.calculerListe(), groupes = {};
+    for (const l of tout) (groupes[l.cle || '—'] = groupes[l.cle || '—'] || []).push(l);
+    const ordre = Object.keys(groupes).sort((a, b) => (a === '—') - (b === '—'));   // (l'introuvable en dernier)
+    const vues = [], YMAX = 362;
+    let yv = 104;
+    for (const k of ordre) {
+      if (yv + 22 + 26 > YMAX) break;
+      yv += 22;
+      for (const l of groupes[k]) { if (yv + 26 > YMAX) break; vues.push(l); yv += 26; }
+      yv += 4;
+    }
+    const cachees = tout.length - vues.length;
+    this.lignesListe = vues;
     const c = this.listeC = this.add.container(0, 0).setDepth(50);
     const fermer = () => { if (this.listeC === c) { c.destroy(); this.listeC = null; } };
     const touche = e => { if (this.listeC !== c) return; if (e.key === 'Escape' || e.key === 'l' || e.key === 'L') fermer(); else if (e.key === 'Enter') toutAcheter(); };
@@ -273,17 +287,14 @@ Object.assign(MarcheScene.prototype, {
     let y = 104;
     const total = () => L.filter(l => l.ok && !l.decoche).reduce((t, l) => t + prixMarchand(G, l.cle, l.id) * l.q, 0);
     if (!L.length) { y = 196; T(400, 150, hier ? 'Tu n’as rien acheté au marché, hier.' : 'Rien ne manque : tu as de tout,\nou ta réserve est pleine.', 14, '#4a6a2a', { fontStyle: 'italic', align: 'center' }).setOrigin(0.5); }
-    const groupes = {};
-    for (const l of L) (groupes[l.cle || '—'] = groupes[l.cle || '—'] || []).push(l);
-    let affichees = 0;
-    for (const [k, ls] of Object.entries(groupes)) {
-      if (affichees >= 10) break;
+    for (const k of ordre) {
+      const ls = groupes[k].filter(l => vues.includes(l));
+      if (!ls.length) continue;
       T(110, y, k === '—' ? 'Introuvable ce matin' : 'Chez ' + MARCHANDS[k].nom, 13, k === '—' ? '#8a6a4a' : '#8a3a1a'); y += 22;
       for (const l of ls) {
-        if (affichees++ >= 10) break;
         const actif = l.ok && !l.decoche, prix = l.ok ? prixMarchand(G, l.cle, l.id) * l.q : 0;
         const box = this.add.rectangle(130, y + 8, 16, 16, actif ? 0x2f6a2a : 0xe8d8b8).setStrokeStyle(2, 0x3b2410);
-        if (l.ok) box.setInteractive({ useHandCursor: true }).on('pointerdown', () => { l.decoche = !l.decoche; Son.jouer('clic'); this.listeCourses(L, hier); });
+        if (l.ok) box.setInteractive({ useHandCursor: true }).on('pointerdown', () => { l.decoche = !l.decoche; Son.jouer('clic'); this.listeCourses(tout, hier); });
         c.add(box); if (actif) T(130, y + 7, '✓', 13, '#fff4dc').setOrigin(0.5);
         c.add(this.add.image(160, y + 8, iconeObjet(this, l.id)).setScale(2));
         T(180, y, `${l.q} × ${nomObjet(l.id)}`, 13, actif ? '#3b2410' : '#9a8a70');
@@ -293,6 +304,7 @@ Object.assign(MarcheScene.prototype, {
       }
       y += 4;
     }
+    if (cachees > 0) { T(400, y, `… et ${cachees} autre${cachees > 1 ? 's' : ''} ligne${cachees > 1 ? 's' : ''}, pour la prochaine liste`, 11, '#6b4a2a', { fontStyle: 'italic' }).setOrigin(0.5, 0); y += 18; }
     c.add(this.add.line(0, 0, 110, y, 690, y, 0x8a6a3a).setOrigin(0));
     T(110, y + 8, 'Total', 15); T(690, y + 8, total() + ' p.', 16, '#8a3a1a').setOrigin(1, 0);
     const toutAcheter = () => {

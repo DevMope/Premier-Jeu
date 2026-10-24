@@ -192,7 +192,7 @@ Object.assign(MarcheScene.prototype, {
     // (v1.61) à la souris : bouton gardé enfoncé, JeuneGoy suit le pointeur (comme avec ZQSD)
     this.input.on('pointermove', p => {
       const px = p.worldX, py = p.worldY;
-      if (!this.place || !p.isDown || !(p.event && p.event.buttons & 1) || py < 40 || py > 476 || this.bloquePlace() || this.apresMarche) return;
+      if (!this.place || !p.isDown || (!p.wasTouch && !(p.event && p.event.buttons & 1)) || py < 40 || py > 476 || this.bloquePlace() || this.apresMarche) return;
       if (this.time.now - (this.dernierGlisse || 0) < 120) return;
       this.dernierGlisse = this.time.now;
       this.partirVers((px - place.x) / place.scaleX, (py - place.y) / place.scaleY);
