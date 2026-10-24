@@ -352,7 +352,11 @@ function afficherStatutSauvegarde(scene, x, y, origineX) {
 function mettreAJourPartie(G, brut = G) {
   for (const id of Object.keys(ITEMS)) if (G.stock[id] === undefined) G.stock[id] = 0;
   G.zonesDecouvertes = G.zonesDecouvertes || [];
-  G.employes = G.employes || [];
+  G.employes = (G.employes || []).filter(id => EMPLOYES[id]);
+  // (v1.62) les salaires montent avec l'ancienneté : une vieille partie compte ses employés à partir d'aujourd'hui
+  // (leur niveau, lui, vient de leurs réparations déjà finies)
+  G.anciennete = brut.anciennete || G.anciennete || {};
+  for (const id of G.employes) if (!(G.anciennete[id] >= 0)) G.anciennete[id] = 0;
   G.materiaux = G.materiaux || {};
   for (const id of Object.keys(MATERIAUX)) if (G.materiaux[id] === undefined) G.materiaux[id] = 0;
   G.mal = G.mal || 0;
@@ -425,9 +429,17 @@ function mettreAJourPartie(G, brut = G) {
   G.pieges = G.pieges || {};
   if (!brut.faucheuse) G.faucheuse = { faveur: 0, morts: G.historique.filter(h => !['vivant', 'echec'].includes(h.issue)).length, visites: 0, cadeau: false, mission: null, sabotages: 0 };
   for (const t of G.tresors) {
-    if (t.reparation && !t.reparation.ouvrier) t.reparation.ouvrier = 'toi';
     if (t.reparation && !t.reparation.cible) t.reparation.cible = t.etat + 1;
     if (t.etatInitial === undefined) t.etatInitial = t.etat;
+    // (v1.62) le joueur ne répare plus lui-même : une réparation qu'il avait commencée (« toi », ou sans ouvrier dans une très
+    // vieille partie), ou celle d'un ouvrier qui n'existe plus, est finie tout de suite, comme s'il y avait passé ses soirées
+    const o = t.reparation && t.reparation.ouvrier;
+    if (t.reparation && !(EMPLOYES[o] && G.employes.includes(o))) {
+      t.etat = Math.min(ETATS.length - 1, Math.max(t.etat + 1, t.reparation.cible));
+      t.reparation = null;
+      G.reparations = (G.reparations || 0) + 1;
+      (G.annoncesAtelier = G.annoncesAtelier || []).push(`Tu as fini ta dernière réparation : ${t.nom} est maintenant « ${ETATS[t.etat].nom} ». Désormais, ce sont tes employés qui réparent.`);
+    }
   }
   // (v1.61) les lettres reçues ont quitté le jeu : celles restées sans réponse sont oubliées (les acceptées viendront)
   G.annonces = (G.annonces || []).filter(a => a.acceptee);

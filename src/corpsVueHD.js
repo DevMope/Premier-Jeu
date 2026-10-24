@@ -188,7 +188,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   // (v1.34, planche 59) les gestes du bivouac : manger (debout ou assis), boire à la gourde, se réchauffer les mains
   // au feu (assis, les deux mains tendues devant lui), dormir (les yeux fermés : la scène le couche)
   const mange = pose === 'mange' || pose === 'mangeAssis', boit = pose === 'boit', chauffe = pose === 'chauffe', dort = pose === 'dort';
-  const assise = pose === 'assis' || pose === 'mangeAssis' || chauffe;
+  const assise = pose === 'assis' || pose === 'mangeAssis' || chauffe || !!(options.bras && options.bras.assis);   // (v1.62, options.bras : voir bras())
   // (v1.35, planche 60 v3) la stupeur : les yeux ronds, la pupille rétrécie, les sourcils tout en haut du front, la
   // bouche en O, les deux mains levées devant lui, paumes en avant (« Quoi ?! »)
   const stupeur = pose === 'stupeur';
@@ -345,6 +345,11 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (stupeur) { coude.splice(0, 3, cote * (ep + 4.5 * k), 1.5 * k, yT + P.torse * 0.4); main.splice(0, 3, cote * Math.min(ep + 8 * k, L / 2 - 3 * k), 2.5 * k, yT - 2.5 * k); }
     if (chauffe) { coude.splice(0, 3, cote * ep * 0.95, P.rx * 0.7, yT + P.torse * 0.6); main.splice(0, 3, cote * ep * 0.5, P.rx * 1.35 + 4 * k, yT + P.torse * 0.38); }
     if (pose === 'plateau' && cote === loin) { coude.splice(0, 3, cote * (ep + 5 * k), 1 * k, yT + 5 * k); main.splice(0, 3, cote * Math.min(ep + 9 * k, L / 2 - 4 * k), 1 * k, yT - 2 * k); }
+    // (v1.62, planche 83) `options.bras` : des bras posés image par image (les gestes des réparateurs de l'atelier,
+    // atelierGestesHD.js). `options.bras.poser(proche, a)` rend [[u, z, y] du coude, [u, z, y] de la main] (u sans signe : il est
+    // multiplié par le côté), ou rien pour garder ce bras ; `a` : { ep, k, yT, yB, P, cy, L, solAssis }. `options.bras.assis` :
+    // assis (les jambes sur le banc). La toile garde alors `t.mainsBras` (où sont les deux mains, pour y mettre les outils).
+    if (options.bras && options.bras.poser) { const b = options.bras.poser(cote === pres, { ep, k, yT, yB, P, cy, L, solAssis }); if (b) { coude.splice(0, 3, cote * b[0][0], b[0][1], b[0][2]); main.splice(0, 3, cote * b[1][0], b[1][1], b[1][2]); } }
     const E = [X(epaule[0], epaule[1]), epaule[2]], C = [X(coude[0], coude[1]), coude[2]], M = [X(main[0], main[1]), main[2]];
     const r = 2.6 * k * P.membre;
     const dec = devant ? 0 : -0.5;
@@ -363,6 +368,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme(matMain, ellipsoide(M[0] + cote * c * 1.6 * k * gm + s * 1.2 * k, M[1] + 0.6 * k, 0.9 * k * gm, 1.2 * k * gm), { decalage: dec + 0.3, ombre: false });
     if (T.griffes) for (const d of [-1, 0, 1]) for (let j = 0; j < Math.round(0.9 * k * gm); j++) t.poser(Math.round(M[0] + d * 1.1 * k * gm), Math.round(M[1] + 3.2 * k * gm) + j, 'griffe', j ? 2 : 4);
     if (devant) mainDevant = { M, C, r, matMain, matAvant, gm, cote };
+    if (options.bras) (t.mainsBras = t.mainsBras || {})[cote === pres ? 'pres' : 'loin'] = { M, C };   // (v1.62, options.bras)
   };
   let mainDevant = null;
   const segBras = [], segJambes = [];   // (v0.64) pour les plis des manches et des jambes

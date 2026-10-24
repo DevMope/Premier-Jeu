@@ -60,6 +60,12 @@ const FIGURANTS = {
   // (v0.82, étape 10b) les forgerons du comptoir
   aldo: { race: 'humain', nom: "Aldo l'apprenti", costume: 'forgeron', habit: 0x8a6a4a, cheveux: 0xa86a2a, coiffure: 'court', peau: 1, niveau: 0, buste: true },
   baba: { race: 'nain', nom: "Baba Marteau-d'Or", feminin: true, costume: 'forgeron', habit: 0x8a2a2a, cheveux: 0x141010, coiffure: 'court', peau: 3, niveau: 1, buste: true, marques: ['khol', 'anneauNez'] },
+  // (v1.62, planche 83) les réparateurs de l'atelier (EMPLOYES) : leur buste porte la même tenue qu'en pied (`buste`).
+  // Marta est une naine forgeronne : sans barbe, le tablier de cuir, les cheveux cuivrés relevés en chignon.
+  tobin: { race: 'hobbit', nom: "Tobin l'apprenti", habit: 0x4f7a34, cheveux: 0x7a4a22, coiffure: 'boucles', peau: 1, niveau: 0, buste: true },
+  marta: { race: 'nain', nom: 'Marta la Rétameuse', feminin: true, costume: 'forgeron', habit: 0x2a5a7e, cheveux: 0xc0602a, coiffure: 'chignon', peau: 0, niveau: 1, buste: true },
+  pip: { race: 'hobbit', nom: 'Pip le Joaillier', habit: 0x6a2a5a, cheveux: 0xd8b060, coiffure: 'boucles', peau: 0, niveau: 1, buste: true },
+  brann: { race: 'humain', nom: 'Brann le Tanneur', costume: 'forgeron', habit: 0x5a6a3a, cheveux: 0x2a1a10, barbe: 'pleine', coiffure: 'court', peau: 3, niveau: 1, buste: true },
   // (v1.02, dessin du joueur) le Grand Sage : il apparaît au deuxième Solstice
   sage: { race: 'humain', nom: 'Le Grand Sage', costume: 'sage', habit: 0x4a2466, cheveux: 0xe8e8ec, cape: 0xa02a22, barbe: 'sage', coiffure: 'long', peau: 1, niveau: 2, vieux: true, bouche: 1 },
   // (v1.02, planche 33) le Conseil des Gardiens, que préside le Grand Sage : un Gardien par royaume, en robe aux

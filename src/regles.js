@@ -612,6 +612,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     personnes: {},     // nom → { race, feminin } de tous ceux qu'on a croisés
     zonesDecouvertes: [], // zones révélées par les récits des aventuriers
     employes: [],      // employés de l'atelier (ids de EMPLOYES)
+    anciennete: {},    // (v1.62) leurs nuits à ton service (id → nuits), pour leur salaire
     stats: { refus: 0, lettresAcceptees: 0, lettresRefusees: 0, objets: {}, ventes: 0 },
     nouvellesAtelier: [],
     encheresJour: 0,   // le jour de la dernière vente aux enchères
@@ -1606,7 +1607,8 @@ function nuit(G) {
   // (v0.93) la fiole de la nymphe se remplit chaque semaine : une potion de plus dans ta réserve
   if (G.nymphe && G.nymphe.fiole && (G.jour + 1 - G.nymphe.fiole) % NYMPHE.fiole.tousLes === 0) { G.stock.potion = (G.stock.potion || 0) + 1; G.fioleRemplie = G.jour + 1; }
   // Les employés sont payés chaque nuit.
-  for (const id of G.employes) { payer(G, EMPLOYES[id].salaire, 'salaires'); G.salairesPar = G.salairesPar || {}; G.salairesPar[id] = (G.salairesPar[id] || 0) + EMPLOYES[id].salaire; }
+  for (const id of G.employes) { const s = salaireEmploye(G, id); payer(G, s, 'salaires'); G.salairesPar = G.salairesPar || {}; G.salairesPar[id] = (G.salairesPar[id] || 0) + s; }   // (v1.62 : son salaire du moment)
+  ancienneteDeLaNuit(G);   // (v1.62) un mois de plus : la petite hausse
   // Le loyer, en fin de semaine
   let loyer = 0;
   if (jourDeLoyer(G)) { loyer = loyerSemaine(G); payer(G, loyer, 'loyer'); }
@@ -2622,8 +2624,11 @@ function dureeEtape(G, t, etat, ouvrier, suite = false) {
 function dureeReparation(G, t, ouvrier = ouvrierLibre(G, t), cible = t.etat + 1) {
   let jours = 0;
   for (let e = t.etat; e < cible; e++) jours += dureeEtape(G, t, e, ouvrier, e > t.etat);
+  // (v1.62) l'expérience paie : dès le niveau 3, un réparateur finit chaque réparation un jour plus tôt (il est aussi mieux payé)
+  if (EMPLOYES[ouvrier] && niveauEmploye(G, ouvrier) >= NIVEAU_EMPLOYE_DOUE) jours = Math.max(1, jours - 1);
   return jours;
 }
+const NIVEAU_EMPLOYE_DOUE = 3;
 
 // Les matériaux pour aller jusqu'à « cible » : un par étape.
 function materiauxReparation(t, cible = t.etat + 1) {
@@ -2643,38 +2648,55 @@ function enReparation(G) {
   return G.tresors.filter(t => t.reparation);
 }
 
-// Qui peut travailler à l'atelier : toi, puis tes employés.
-// (v1.61) le joueur ne répare plus lui-même (24/10) : ce sont ses employés de l'atelier. Une réparation
-// commencée par « toi » dans une vieille partie va quand même à son terme.
+// Qui peut travailler à l'atelier : tes employés.
+// (v1.61) le joueur ne répare plus lui-même (24/10). (v1.62) Une réparation commencée par « toi » dans une
+// vieille partie est finie au chargement (mettreAJourPartie, sauvegarde.js).
 function ouvriers(G) {
   return [...G.employes];
 }
 
-// Le premier ouvrier libre, ou null : d'abord un employé spécialiste de l'objet (s'il y en a un),
-// puis les autres employés.
-function ouvrierLibre(G, t = null) {
+// Les employés libres (embauchés, et sans réparation en cours).
+function ouvriersLibres(G) {
   const occupes = enReparation(G).map(x => x.reparation.ouvrier);
-  const libres = G.employes.filter(o => !occupes.includes(o));
-  const expert = t && libres.find(o => EMPLOYES[o] && (EMPLOYES[o].rapide === true || (Array.isArray(EMPLOYES[o].rapide) && EMPLOYES[o].rapide.includes(t.categorie))));
-  return expert || libres[0] || null;
+  return G.employes.filter(o => EMPLOYES[o] && !occupes.includes(o));
+}
+
+// L'employé libre qui irait le plus vite sur cet objet (à égalité : le moins cher), ou null.
+// (v1.62) Il ne sert plus qu'à présélectionner un réparateur : c'est le joueur qui choisit (reparerTresor).
+function ouvrierLibre(G, t = null, cible = t ? ETATS.length - 1 : 0) {
+  const libres = ouvriersLibres(G);
+  if (!t || libres.length < 2) return libres[0] || null;
+  const cle = o => dureeReparation(G, t, o, cible) * 1000 + salaireEmploye(G, o);
+  return libres.reduce((a, o) => (cle(o) < cle(a) ? o : a));
+}
+
+// Le réparateur peut-il prendre cet objet ? Renvoie une erreur, ou null.
+function ouvrierIndisponible(G, o) {
+  if (!EMPLOYES[o] || !G.employes.includes(o)) return "Choisis un de tes employés de l'atelier.";
+  const t = enReparation(G).find(x => x.reparation.ouvrier === o);
+  if (t) return `${prenomDe(EMPLOYES[o].nom)} est déjà occupé${EMPLOYES[o].feminin ? 'e' : ''} : ${t.nom}, encore ${pluriel(t.reparation.jours, 'jour', 'jours')}.`;
+  return null;
 }
 
 function messagePasDOuvrier(G) {
   return G.employes.length ? "Tout le monde est déjà occupé. Embauche quelqu'un pour réparer plus d'objets à la fois."
-    : `Personne pour réparer : embauche un ouvrier à l'atelier (${EMPLOYES.tobin.nom}, ${EMPLOYES.tobin.salaire} p. par nuit).`;
+    : `Personne pour réparer : embauche un ouvrier à l'atelier (${EMPLOYES.tobin.nom}, ${salaireEmploye(G, 'tobin')} p. par nuit).`;
 }
 
 function nomOuvrier(o) {
-  return o === 'toi' ? 'toi' : EMPLOYES[o].nom;
+  return EMPLOYES[o] ? EMPLOYES[o].nom : "l'atelier";
 }
 
-// Lancer la réparation d'un objet jusqu'à l'état « cible » : un ouvrier libre, et un
-// matériau par étape. Renvoie une erreur, ou null.
-function reparerTresor(G, t, cible = t.etat + 1) {
+// Lancer la réparation d'un objet jusqu'à l'état « cible », par le réparateur choisi (`ouvrier` ; sans lui, le plus
+// rapide des libres) : un matériau par étape, et les fournitures. Renvoie une erreur, ou null.
+function reparerTresor(G, t, cible = t.etat + 1, ouvrier = null) {
   if (t.etat >= ETATS.length - 1) return `${t.nom} : déjà en parfait état.`;
+  if (t.reparation) return `${t.nom} est déjà sur l'établi.`;
   cible = Math.min(ETATS.length - 1, Math.max(t.etat + 1, cible));
-  const ouvrier = ouvrierLibre(G, t);
+  if (!ouvrier) ouvrier = ouvrierLibre(G, t, cible);
   if (!ouvrier) return messagePasDOuvrier(G);
+  const indispo = ouvrierIndisponible(G, ouvrier);
+  if (indispo) return indispo;
   const mat = CATEGORIES[t.categorie].materiau;
   const n = materiauxReparation(t, cible);
   if (mat && (G.materiaux[mat] || 0) < n) return `Il te faut ${n} ${MATERIAUX[mat].nom.toLowerCase()} (tu en as ${G.materiaux[mat] || 0}).`;
@@ -2682,7 +2704,8 @@ function reparerTresor(G, t, cible = t.etat + 1) {
   if (G.argent < prix) return `Les fournitures coûtent ${prix} pièces : tu n'as pas assez.`;
   if (mat) G.materiaux[mat] -= n;
   payer(G, prix, 'atelier');
-  t.reparation = { jours: dureeReparation(G, t, ouvrier, cible), ouvrier, cible };
+  const jours = dureeReparation(G, t, ouvrier, cible);
+  t.reparation = { jours, total: jours, ouvrier, cible };   // (v1.62 : `total`, pour la barre d'avancement)
   return null;
 }
 
@@ -2700,10 +2723,13 @@ function embaucher(G, id) {
   if (G.employes.includes(id)) return 'Déjà embauché.';
   if (G.employes.length >= placesEmployes(G)) return `Pas d'établi libre : améliore l'atelier (bureau → améliorations) pour embaucher plus.`;
   G.employes.push(id);
+  G.anciennete = G.anciennete || {};   // (v1.62 : ses nuits à ton service, pour son salaire ; gardées s'il revient)
+  if (!(G.anciennete[id] >= 0)) G.anciennete[id] = 0;
   return null;
 }
 
 // Renvoyer un employé : la réparation qu'il faisait s'arrête (l'objet reste dans son état).
+// (v1.62) S'il revient un jour, il garde son expérience (son niveau) et son ancienneté.
 function renvoyer(G, id) {
   G.employes = G.employes.filter(e => e !== id);
   // Sa réparation s'arrête ; les matériaux pas encore travaillés te sont rendus.
@@ -2721,21 +2747,70 @@ function bilanEmploye(G, id) {
 }
 
 function salaires(G) {
-  return G.employes.reduce((s, id) => s + EMPLOYES[id].salaire, 0);
+  return G.employes.reduce((s, id) => s + salaireEmploye(G, id), 0);
+}
+
+// --- (v1.62) Les niveaux et les salaires des employés (SALAIRES_ATELIER, data.js) ---
+// Le niveau (1 à 5) : ses réparations finies.
+function niveauEmploye(G, id, reparations = (G.reparationsPar || {})[id] || 0) {
+  let n = 1;
+  SALAIRES_ATELIER.seuils.forEach((s, i) => { if (reparations >= s) n = i + 1; });
+  return n;
+}
+const NIVEAU_EMPLOYE_MAX = SALAIRES_ATELIER.seuils.length;
+// Ce qu'un niveau de plus ajoute à son salaire (1 p.).
+function hausseNiveauEmploye(id) {
+  return SALAIRES_ATELIER.parNiveau;
+}
+// Ses nuits et ses mois (28 nuits) à ton service : il les garde s'il revient après avoir été renvoyé.
+function nuitsDeService(G, id) {
+  return (G.anciennete || {})[id] || 0;
+}
+function moisDeService(G, id) {
+  return Math.floor(nuitsDeService(G, id) / JOURS_PAR_MOIS);
+}
+// Son salaire par nuit : le départ, plus ses niveaux, plus ses mois. (`niveau`, `mois` : pour une prévision.)
+function salaireEmploye(G, id, { niveau = niveauEmploye(G, id), mois = moisDeService(G, id) } = {}) {
+  const e = EMPLOYES[id];
+  if (!e) return 0;
+  return e.salaire + hausseNiveauEmploye(id) * (niveau - 1) + SALAIRES_ATELIER.parMois * mois;
+}
+// Ses deux prochaines hausses : celle du mois (dans combien de jours) et celle du niveau (dans combien de réparations).
+function prochainesHausses(G, id) {
+  const n = niveauEmploye(G, id), faites = (G.reparationsPar || {})[id] || 0;
+  return {
+    mois: { jours: JOURS_PAR_MOIS - (nuitsDeService(G, id) % JOURS_PAR_MOIS), montant: SALAIRES_ATELIER.parMois },
+    niveau: n < NIVEAU_EMPLOYE_MAX ? { niveau: n + 1, reste: SALAIRES_ATELIER.seuils[n] - faites, montant: hausseNiveauEmploye(id) } : null,
+  };
+}
+// Une nuit de plus à ton service, pour chaque employé (après sa paie) ; ceux qui finissent un mois sont augmentés :
+// la nouvelle sera dite au matin (G.annoncesAtelier).
+function ancienneteDeLaNuit(G) {
+  G.anciennete = G.anciennete || {};
+  const augmentes = [];
+  for (const id of G.employes) { G.anciennete[id] = (G.anciennete[id] || 0) + 1; if (G.anciennete[id] % JOURS_PAR_MOIS === 0) augmentes.push(id); }
+  if (!augmentes.length) return;
+  const noms = augmentes.map(id => prenomDe(EMPLOYES[id].nom)), liste = noms.length > 1 ? noms.slice(0, -1).join(', ') + ' et ' + noms[noms.length - 1] : noms[0];
+  (G.annoncesAtelier = G.annoncesAtelier || []).push(`Un mois de plus à ton service : ${liste} ${noms.length > 1 ? 'gagnent' : 'gagne'} ${SALAIRES_ATELIER.parMois} p. de plus par nuit (salaires : ${salaires(G)} p. par nuit).`);
 }
 
 // Chaque nuit, les réparations en cours avancent d'un jour.
 function avancerAtelier(G) {
-  G.nouvellesAtelier = [];
+  G.nouvellesAtelier = (G.annoncesAtelier || []).splice(0);   // (v1.62 : ce que le chargement d'une vieille partie a fini, dit au matin)
   for (const t of enReparation(G)) {
     t.reparation.jours--;
     if (t.reparation.jours > 0) continue;
     const cible = t.reparation.cible || t.etat + 1;
     G.reparationsPar = G.reparationsPar || {};
     const o = t.reparation.ouvrier;
+    const niveauAvant = EMPLOYES[o] ? niveauEmploye(G, o) : 0;
     G.reparationsPar[o] = (G.reparationsPar[o] || 0) + 1;
     if (EMPLOYES[o] && EMPLOYES[o].apprenti && G.reparationsPar[o] === EMPLOYES[o].apprenti) {
       G.nouvellesAtelier.push(`${EMPLOYES[o].nom} a bien appris : ses réparations prennent maintenant un jour de moins !`);
+    }
+    // (v1.62) un niveau de plus : son salaire monte
+    if (EMPLOYES[o] && niveauEmploye(G, o) > niveauAvant) {
+      G.nouvellesAtelier.push(`${prenomDe(EMPLOYES[o].nom)} passe au niveau ${niveauEmploye(G, o)} : son salaire monte à ${salaireEmploye(G, o)} p. par nuit (+${hausseNiveauEmploye(o)} p.)` + (niveauEmploye(G, o) === NIVEAU_EMPLOYE_DOUE ? '. Avec le métier, ses réparations prennent maintenant un jour de moins.' : '.'));
     }
     t.reparation = null;
     // (v0.60) ce que chaque ouvrier a fait gagner en valeur (pour son bilan au bureau)
