@@ -221,6 +221,13 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
   function arbre(x, sol, taille, couleur) {
     const forme = r.arbres;
     const h = Math.round((forme === 'sapins' ? 18 : 12) * taille * (0.8 + hachage(x, 3, graine) * 0.5));
+    // (v1.63) la Comté, de saison en saison : de vrais arbres (chêne, pommier, bouleau), peints par arbresHD.js, à la couleur de la distance
+    if (saison && forme !== 'sapins' && typeof peindreArbre === 'function') {
+      const esp = ['chene', 'chene', 'pommier', 'bouleau'][Math.floor(hachage(Math.round(x), 4, graine) * 4)], brume = taille < 0.7 ? 0.3 : taille < 1 ? 0.15 : 0;
+      const rp = rampesArbre(saison, esp, couleur);
+      peindreArbre((X, Y, m, i) => poser(X, Y, soir(melangeCouleur(rp[m][i], b.horizon, brume))), { cx: x, base: sol, H: Math.max(9, Math.round(h + 4 * taille)), espece: esp, saison, graine: Math.round(x) });
+      return;
+    }
     // Le tronc, éclairé à gauche
     for (let y = 0; y < 4 * taille; y++) { poser(x, Math.floor(sol - y), soir(0x6a4a2a)); poser(x + 1, Math.floor(sol - y), soir(0x3a2414)); }
     if (forme === 'sapins') {
