@@ -3440,6 +3440,7 @@ function accordJoueur(t, G = window.GAME) {
   if (t.includes('voisin')) t = t.replace(/, voisin([.!])/g, ', voisine$1');
   // (housekeep v1.61) les mots qu'on lui lance : « gamin », « morveux », « l'ami », « petit » (après une virgule seulement)
   if (/gamin|morveux|ami|petit/.test(t)) t = t.replace(/, gamin\b/g, ', gamine').replace(/, morveux\b/g, ', morveuse')
+    .replace(/, petit voleur\b/g, ', petite voleuse').replace(/\bmon petit(?=\s?[.!?…»])/g, 'ma petite')
     .replace(/, l(['’])ami\b/g, ', l$1amie').replace(/, petit(?=\s?[.!?…»])/g, ', petite');   // (« Moi, petit, mais nerveux ! » reste à Grisk)
   return t;
 }
