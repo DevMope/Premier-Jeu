@@ -424,9 +424,22 @@ class HudScene extends Phaser.Scene {
       const G = window.GAME;
       const libelle = () => `Didacticiel : ${didacticiel(G) ? 'activé ✓' : 'désactivé'}`;
       const explication = () => didacticiel(G) ? 'Garrick te guide, et les lieux s\'ouvrent petit à petit.' : 'Pas de conseils : tout est ouvert d\'emblée.';
-      const b = creerBouton(this, 480, 408, 300, libelle(), () => { reglerDidacticiel(!didacticiel(G), G); b.label.setText(libelle()); note.setText(explication()); });
+      // (v1.62) à côté : refaire la visite du marché avec Garrick (tout de suite sur la place, sinon au prochain passage)
+      const visite = typeof revoirVisiteMarche === 'function';
+      const b = creerBouton(this, visite ? 362 : 480, 408, visite ? 228 : 300, libelle(), () => { reglerDidacticiel(!didacticiel(G), G); b.label.setText(libelle()); note.setText(explication()); });
       const note = this.add.text(480, 436, explication(), style(12, '#5a3a1a', { fontStyle: 'italic' })).setOrigin(0.5);
       c.add([b.fond, b.label, note]);
+      if (visite) {
+        const v = creerBouton(this, 598, 408, 228, 'Revoir la visite du marché', () => {
+          const quand = revoirVisiteMarche();
+          if (quand === 'maintenant') { const s = this.scenePausee || this.scenePrincipale(); this.fermerMenu(); if (s && s.visiteGarrick) s.time.delayedCall(250, () => s.visiteGarrick({ revoir: true })); }
+          else if (quand === 'plus tard') note.setText('Garrick te fera visiter le marché à ton prochain passage.');
+          else note.setText('Garrick est déjà en train de te faire visiter la place !');
+        });
+        let f = 15;   // (les deux à la même taille, et chacun tient dans son bouton)
+        while (f > 10 && (b.label.setFontSize(f).width > 228 - 24 || v.label.setFontSize(f).width > 228 - 24)) f--;
+        c.add([v.fond, v.label]);
+      }
     }
   }
 

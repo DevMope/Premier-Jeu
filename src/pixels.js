@@ -697,18 +697,51 @@ function textureJoueur(scene, G, vue = 'face') {
   const tenue = signatureJoueur(G);
   if (!scene.textures.exists('joueur_petit') || scene.textures.get('joueur_petit').tenue !== tenue) creerTexturesJoueur(scene, apparenceDuJour(G), G.joueur.feminin, G.tenue || [], tenue);
   const stade = stadeJoueur(G);
-  if (vue === 'face') return 'joueur_' + stade;
+  // ('face' veut dire, pour le joueur, l'image de trois-quarts de toujours ; 'deFace' est la vraie vue de face, quand il
+  // descend vers nous sur la grand-place)
+  const vueDessin = vue === 'deFace' ? 'face' : vue === 'face' ? 'troisQuarts' : vue;
+  if (vue === 'face') { planifierMarcheJoueur(scene, G, 'joueur_' + stade, vueDessin, tenue); return 'joueur_' + stade; }
   // Sous un autre angle (de trois-quarts, il regarde vers la droite : à retourner pour regarder à gauche)
   const cle = `joueur_${stade}_${vue}`;
   if (!scene.textures.exists(cle) || scene.textures.get(cle).tenue !== tenue) {
     // (v1.05) avec ses deux images de pas, pour qu'il marche vraiment sous cet angle aussi
     for (const [pas, k] of [[0, cle], [-1, cle + '_pas1'], [1, cle + '_pas2']]) {
       if (scene.textures.exists(k)) scene.textures.remove(k);
-      dessinerJoueurHD(apparenceDuJour(G), stade, G.joueur.feminin, pas, G.tenue || [], vue).texture(scene, k);
+      dessinerJoueurHD(apparenceDuJour(G), stade, G.joueur.feminin, pas, G.tenue || [], vueDessin).texture(scene, k);
     }
     scene.textures.get(cle).tenue = tenue;
   }
+  planifierMarcheJoueur(scene, G, cle, vueDessin, tenue);
   return cle;
+}
+
+// (planche 85, validée) Les huit images de la marche du joueur (`_m0` à `_m7`, 70 ms chacune), pour chaque vue : un vrai
+// pas (le pied qui passe se lève, le genou plie, les bras balancent, le corps descend au contact). Elles se dessinent une
+// à une, en tâche de fond, après la première image : le chargement n'attend pas ; pasDeMarche s'en sert dès qu'elles
+// sont toutes là (avant, il garde les deux images de pas).
+const FILE_MARCHE_JOUEUR = [];
+let MARCHE_JOUEUR_EN_COURS = false;
+function marcheJoueurPrete(scene, cle) {
+  const t8 = scene.textures.exists(cle + '_m7') && scene.textures.exists(cle) ? scene.textures.get(cle + '_m7') : null;
+  return !!t8 && t8.tenue === scene.textures.get(cle).tenue;
+}
+function planifierMarcheJoueur(scene, G, cle, vue, tenue) {
+  if (typeof optsMarche !== 'function' || marcheJoueurPrete(scene, cle)) return;
+  if (FILE_MARCHE_JOUEUR.some(j => j.cle === cle && j.tenue === tenue)) return;
+  const ap = apparenceDuJour(G), stade = stadeJoueur(G), feminin = G.joueur.feminin, habits = [...(G.tenue || [])], textures = scene.textures;
+  for (let i = 0; i < MARCHE_HD.images; i++) FILE_MARCHE_JOUEUR.push({ cle, tenue, i, dessin: () => {
+    if (!textures.exists(cle) || textures.get(cle).tenue !== tenue) return;   // (il a changé de tenue entre-temps)
+    const t = avecOptionsCorps(optsMarche(i / MARCHE_HD.images, vue), () => dessinerJoueurHD(ap, stade, feminin, 0, habits, vue));
+    t.texture(scene, cle + '_m' + i);
+    textures.get(cle + '_m' + i).tenue = tenue;
+  } });
+  if (!MARCHE_JOUEUR_EN_COURS) { MARCHE_JOUEUR_EN_COURS = true; setTimeout(dessinerMarcheJoueur, 30); }
+}
+function dessinerMarcheJoueur() {
+  const j = FILE_MARCHE_JOUEUR.shift();
+  if (!j) { MARCHE_JOUEUR_EN_COURS = false; return; }
+  try { j.dessin(); } catch (e) { console.warn('marche du joueur', e); }
+  setTimeout(dessinerMarcheJoueur, 16);
 }
 
 // Crée (ou recrée) les trois textures du joueur, en HD : joueur_petit, joueur_adulte, joueur_ancien.

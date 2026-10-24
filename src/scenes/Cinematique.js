@@ -122,7 +122,7 @@ class Cinematique extends Phaser.Scene {
     // (v0.68) la colère, la larme, l'idée, l'étincelle : de petits dessins en pixel art (plus d'émojis)
     const dessin = { colere: 'colere', larme: 'larme', idee: 'idee', merci: 'merci' }[quoi];
     const [g, couleur] = glyphes[quoi] || [quoi, '#3b2410'];
-    const x = sprite.x + (sprite.flipX ? -1 : 1) * sprite.displayWidth * 0.22, y = sprite.y - sprite.displayHeight - 8;
+    const x = sprite.x + (sprite.flipX ? -1 : 1) * sprite.displayWidth * 0.22, y = sprite.y - (typeof hauteurCorps === 'function' ? hauteurCorps(sprite) : sprite.displayHeight) - 8;   // (le haut de la tête, pas la pointe de sa lance)
     const c = this.add.container(x, y).setDepth(9).setScale(0);
     c.add(this.add.circle(0, 0, 15, 0xfff8e8).setStrokeStyle(2.5, 0x3b2410));
     c.add(this.add.triangle(0, 0, -5, 12, 5, 12, 0, 20, 0xfff8e8).setOrigin(0));

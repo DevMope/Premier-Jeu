@@ -1,8 +1,9 @@
 // (v0.65, étape 10c) La rue du shop, le soir : on la parcourt à pied pendant la promenade.
 // De gauche à droite : une maison du voisinage, l'impasse du marché noir (sa lanterne rouge ne
 // brûle que certains soirs), la forge de Thorgal (les braises rougeoient derrière les vantaux),
-// ton shop, une autre maison, la fontaine, la Banque Centrale Goyenne, et l'arche qui ouvre sur
+// ton shop, une autre maison, la fontaine, la Banque Centrale Goyenne, et le porche qui ouvre sur
 // le Marché des Mastres. Chaque façade est peinte comme celle du shop (toile ×2, posée par le bas).
+// (v1.62) La fontaine, ce qui vit dans la rue et le porche du marché sont peints dans rueVieHD.js.
 
 const RAMPES_RUE = {
   tuile: [0x3a140c, 0x5e2214, 0x86341e, 0xa8482a, 0xc8663e, 0xe08a5a],
@@ -310,7 +311,7 @@ const ECART_ARDOISE = 190;
 // (v1.56, planche 64 v5) le lot des Mages-Charpentiers, après la fontaine : la banque et l'arche reculent d'autant
 const LOT_MAGES = 360;
 const LARGEUR_RUE = 3260 + LOT_CONFRERIE + ECART_ARDOISE + LOT_MAGES;   // (v1.48 : +300, le lot du barbier ; v1.53 : +190, l'ardoise ; v1.56 : +360, les Mages)
-const PLACES_RUE = { hospice: 200, chapelle: 545, maison0: 160 + LOT_CONFRERIE, impasse: 405 + LOT_CONFRERIE, forge: 680 + LOT_CONFRERIE, shop: 1320 + LOT_CONFRERIE, maison1: 1820 + LOT_CONFRERIE + ECART_ARDOISE, barbier: 2150 + LOT_CONFRERIE + ECART_ARDOISE, fontaine: 2390 + LOT_CONFRERIE + ECART_ARDOISE, mages: 2700 + LOT_CONFRERIE + ECART_ARDOISE, banque: 2660 + LOT_CONFRERIE + ECART_ARDOISE + LOT_MAGES, arche: 3080 + LOT_CONFRERIE + ECART_ARDOISE + LOT_MAGES, ardoise: 2505 };
+const PLACES_RUE = { hospice: 200, chapelle: 545, maison0: 160 + LOT_CONFRERIE, impasse: 405 + LOT_CONFRERIE, forge: 680 + LOT_CONFRERIE, shop: 1320 + LOT_CONFRERIE, maison1: 1820 + LOT_CONFRERIE + ECART_ARDOISE, barbier: 2150 + LOT_CONFRERIE + ECART_ARDOISE, fontaine: 2410 + LOT_CONFRERIE + ECART_ARDOISE, mages: 2700 + LOT_CONFRERIE + ECART_ARDOISE, banque: 2660 + LOT_CONFRERIE + ECART_ARDOISE + LOT_MAGES, arche: 3080 + LOT_CONFRERIE + ECART_ARDOISE + LOT_MAGES, ardoise: 2505 };
 function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = true }) {
   const G = window.GAME, P = PLACES_RUE, lumieres = [];
   creerRueHD(scene);
@@ -375,26 +376,30 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
       lumieres.push([xb, sol - 60, 1.2]);
     }
   }
-  scene.add.image(o + P.fontaine, sol + 30, 'fontaineHD').setOrigin(0.5, 1).setScale(2.4);
+  // (v1.62, planche 81) la fontaine de la rue, en trois couches, et tout ce qui vit autour (rueVieHD.js)
+  vieDeLaRue(scene, o, { jour, sol });
   // (v1.56, planche 64 v5) le lot des Mages-Charpentiers : d'abord un chantier (les poutres montent seules), puis l'atelier
   if (typeof chantierMages === 'function') {
     const xm = o + P.mages;
     if (atelierMagesOuvert(G)) {
       scene.add.image(xm, sol + 2, atelierMagesHD(scene)).setOrigin(0.5, 1).setScale(2);
-      ecriteauRue(scene, xm - 230, sol - 110, 'Les Mages-\nCharpentiers', { taille: 11 });
-      if (jour) [[MAITRESSE_MAGES, xm - 120, false], [CHARPENTIER_NAIN, xm + 130, true]].forEach(([q, x, fl], i) => {
+      // (v1.62) l'écriteau pend dans la grande ouverture, la nuit (le jour, le nom de la porte le dit) : il ne flotte plus devant la fontaine
+      if (!jour) ecriteauRue(scene, xm + 6, sol - 140, 'Les Mages-Charpentiers', { taille: 11 });
+      // (v1.62) la maîtresse-charpentière se tient sur le seuil, à droite du réverbère (il a reculé pour la fontaine)
+      if (jour) [[MAITRESSE_MAGES, xm - 50, false], [CHARPENTIER_NAIN, xm + 130, true]].forEach(([q, x, fl], i) => {
         const p = imageCorps(scene, x, SOL_PROMENADE, q, 7.2).setFlipX(fl).setDepth(8.44);
         scene.tweens.add({ targets: p, scaleY: p.scaleY * 1.012, duration: 1500 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       });
       lumieres.push([xm, sol - 120, 1.6]);
     } else if (chantierMages(G)) {
       scene.add.image(xm, sol + 2, chantierMagesHD(scene)).setOrigin(0.5, 1).setScale(2);
-      ecriteauRue(scene, xm - 250, sol - 170, 'Ici bientôt :\nles Mages-Charpentiers', { taille: 10 });
+      ecriteauRue(scene, xm - 6, sol - 64, 'Ici bientôt :\nles Mages-Charpentiers', { taille: 10 });   // (v1.62 : cloué au chantier, plus devant la fontaine)
     }
   }
   poser('rueBanqueHD', P.banque);
-  poser(jour ? 'rueArcheHD_jour' : 'rueArcheHD', P.arche);
-  for (const x of [380, 560, 1060, 1640, 2500, 2885].map((x, i) => i ? x + LOT_CONFRERIE + (x >= 1700 ? ECART_ARDOISE : 0) + (x >= 2700 ? LOT_MAGES : 0) : x)) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
+  // (v1.62, planche 80, porche A) le porche couvert du marché, la place au travers
+  poser(porcheRueHD(scene, jour), P.arche);   // (la place, au travers, suit la saison et l'heure)
+  for (const x of [380, 560, 1060, 1640, 2590, 2885].map((x, i) => i ? x + LOT_CONFRERIE + (x >= 1700 ? ECART_ARDOISE : 0) + (x >= 2700 ? LOT_MAGES : 0) : x)) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
   lumieres.push([f.porteX, 400, 2.4], [o + P.forge, sol - 10, 1.8], [o + P.banque, sol - 150, 1.4]);
   // les noms : écriteaux peints, lettres gravées, bannière
   ecriteauRue(scene, o + P.maison0 + 4, sol - 112, 'Les Pommeroy', { taille: 10 });
@@ -403,7 +408,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
   ecriteauRue(scene, o + P.maison1 + 26, sol - 112, 'Les Brindeloup', { taille: 10 });
   ecriteauRue(scene, o + P.banque, sol - 254, 'BANQUE CENTRALE GOYENNE', { taille: 12, grave: true });
   scene.add.image(o + P.banque, sol - 263, creerLogoBanque(scene)).setOrigin(0.5, 1).setScale(1.5).setDepth(8.3);
-  ecriteauRue(scene, o + P.arche, sol - 250, 'Marché des Mastres', { taille: 13, grave: true });
+  ecriteauRue(scene, o + P.arche, sol - 302 + 2 * (PORCHE_RUE.linteau + 13) + 10, 'Marché des Mastres', { taille: 12 });   // (pendu à ses chaînes, sous le linteau du porche)
   // les flammes de la forge, le jour : des étincelles qui jaillissent
   if (jour && etincelles) scene.time.addEvent({ delay: 260, loop: true, callback: () => {
     const e = scene.add.rectangle(o + P.forge - 40 + Math.random() * 30, sol - 30, 2, 2, Math.random() < 0.5 ? 0xffd060 : 0xff8020).setDepth(8.2);
@@ -433,7 +438,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
     else if (jour) ici.porte(o + P.barbier + 52, sol, "Chez Orvin, le barbier", 'Barbier', { large: 80, haut: 100 });
     else ici.regarder(o + P.barbier - 120, 230, 240, 240, "Le Fil d'Argent est fermé pour la nuit. Derrière les volets, Orvin affûte ses rasoirs en chantonnant.");
   }
-  ici.regarder(o + P.fontaine - 80, 360, 160, 110, jour ? 'La fontaine chante. Pour y jeter une pièce, c\'est celle de la place du marché.' : 'La fontaine murmure dans la nuit. Au fond du bassin, des pièces luisent sous la lune.');
+  ici.regarder(o + P.fontaine - 128, 300, 256, 200, jour ? 'La fontaine chante. Pour y jeter une pièce, c\'est celle de la place du marché.' : 'La fontaine murmure dans la nuit. Au fond du bassin, des pièces luisent sous la lune.');
   // (v1.56) les Mages-Charpentiers : le chantier se regarde, l'atelier s'ouvre le jour
   if (typeof chantierMages === 'function') {
     if (atelierMagesOuvert(G)) { if (jour) ici.porte(o + P.mages + 6, sol, 'Les Mages-Charpentiers', 'Mages', { large: 120, haut: 150 }); else ici.regarder(o + P.mages - 160, 180, 320, 290, "L'atelier des Mages-Charpentiers dort. Sur les poutres, les runes luisent encore un peu, bleu pâle."); }
@@ -444,7 +449,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
   // (v0.67, v0.68) après assez de vœux, la nymphe attend ; quand l'arche mène quelque part, toute l'ouverture se clique
   const nymphe = !jour && nympheAttend(G);
   const arche = { large: 200, haut: 300 };
-  if (!jour && !nymphe) ici.regarder(o + P.arche - 150, 120, 300, 350, "L'arche du Marché des Mastres. La place dort ; les étals rouvriront à l'aube.");
+  if (!jour && !nymphe) ici.regarder(o + P.arche - 176, 160, 352, 310, "Le porche du Marché des Mastres. Ses battants restent ouverts, mais la place dort : les étals rouvriront à l'aube.");
   if (nymphe) {
     // la place, au fond, baignée de bleu ; des gouttes de lumière montent par-dessus les toits
     const l = scene.add.rectangle(o + P.arche, sol - 130, 180, 250, 0x3a9ad8, 0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(9.5);

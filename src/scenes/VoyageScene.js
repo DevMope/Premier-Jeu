@@ -306,7 +306,7 @@ class VoyageScene extends Cinematique {
     const barbier = typeof barbierOuvert === 'function' && barbierOuvert(G);
     this.ecrire(`Elle descend la rue au pas, entre les maisons. Aux portes, aux fenêtres, on agite des mouchoirs ; ${barbier ? 'le barbier sort sur son seuil, ' : 'les Brindeloup sortent sur leur seuil, '}la porteuse d'eau en lâche son seau.`);
     for (let k = 0; k < 16 && !this.fini; k++) { await this.marcher(1); this.badauds.forEach(p => { if (p.active && Math.abs(p.x - this.etat.x) < 260 && !p.salue) { p.salue = true; this.emotion(p, k % 2 ? '!' : 'joie', 1200); } }); }
-    this.ecrire('L\'arche du marché, la dernière maison... et la route de la Comté s\'ouvre devant elle. Derrière, la rue n\'est plus qu\'une rangée de toits.');
+    this.ecrire('Le porche du marché, la dernière maison... et la route de la Comté s\'ouvre devant elle. Derrière, la rue n\'est plus qu\'une rangée de toits.');
     for (let k = 0; k < 20 && !this.fini && o + LARGEUR_RUE - this.parcouru > this.etat.x - 360; k++) await this.marcher(1);
     await this.marcher(4);
   }
@@ -461,10 +461,18 @@ class VoyageScene extends Cinematique {
     }
     if (id === 'clandestin') {
       // (couché sur le tas de bûches, dans le filet)
-      const f = this.filet, pip = imageCorps(this, f.x + 6, f.y + f.displayHeight * 0.34, { race: 'gobelin', nom: 'Pip', niveau: 'novice' }, 4.4, 'dort').setOrigin(0.5).setAngle(-84).setDepth(4.31);   // (v1.61 : il dort les yeux fermés)
-      const ronfle = this.time.addEvent({ delay: 1400, loop: true, callback: () => { if (!pip.active || pip.angle > -40) return; const z = this.add.text(pip.x - 14, pip.y - 26, 'z', style(14, '#3b2410', { fontStyle: 'bold italic' })).setDepth(4.9); this.uiCam.ignore(z); this.tweens.add({ targets: z, y: z.y - 26, x: z.x - 10, alpha: 0, duration: 1300, onComplete: () => z.destroy() }); } });
+      // (planche 86) couché pour de bon, sur le dos, les yeux fermés (la pose dortBivouac), posé sur les bûches
+      const PIP = { race: 'gobelin', nom: 'Pip', niveau: 'novice' };
+      const f = this.filet, pip = imageCorps(this, f.x + 6, f.y + f.displayHeight * 0.34 + 12, PIP, 4.4, 'dortBivouac').setDepth(4.31);
+      pip.dort = true;
+      const ronfle = this.time.addEvent({ delay: 1400, loop: true, callback: () => { if (!pip.active || !pip.dort) return; const t = teteCorps(pip) || { x: pip.x - 14, y: pip.y - 10 }; const z = this.add.text(t.x - 4, t.y - 16, 'z', style(14, '#3b2410', { fontStyle: 'bold italic' })).setDepth(4.9); this.uiCam.ignore(z); this.tweens.add({ targets: z, y: z.y - 26, x: z.x - 10, alpha: 0, duration: 1300, onComplete: () => z.destroy() }); } });
       return { apres: async i => {
-        ronfle.remove(); pip.setTexture(corpsHD(this, { race: 'gobelin', nom: 'Pip', niveau: 'novice' })).setAngle(0).setOrigin(0.5, 1).setY(f.y + f.displayHeight * 0.8);   // (il se réveille et se redresse dans le filet)
+        // il se réveille, les yeux ouverts : il se met à genoux sur les bûches, puis se redresse dans le filet
+        ronfle.remove(); pip.dort = false;
+        pip.setTexture(corpsHD(this, PIP, 'aGenoux')).setY(f.y + f.displayHeight * 0.8); origineCorps(pip);
+        await new Promise(ok => this.time.delayedCall(280, ok));
+        if (!pip.active) return;
+        pip.setTexture(corpsHD(this, PIP)).setAngle(0).setOrigin(0.5, 1).setY(f.y + f.displayHeight * 0.8);
         if (i === 0) { this.emotion(pip, 'colere', 1200); await new Promise(ok => this.tweens.add({ targets: pip, x: pip.x - 90, y: sol + 40, duration: 600, ease: 'Quad.easeIn', onComplete: ok })); pip.setDepth(6.9); this.bord(pip); this.allerA(pip, -300, 2400); }
         else { this.emotion(pip, 'joie', 1400); await new Promise(ok => this.tweens.add({ targets: pip, x: this.facade.porteX, y: sol - 10, alpha: 0, duration: 900, onComplete: ok })); pip.destroy(); }
       } };

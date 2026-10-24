@@ -171,24 +171,13 @@ class MarcheScene extends Phaser.Scene {
     this.construirePlace();
     // (v1.49) un conseil pour la nouvelle place, une fois (même pour qui connaît déjà le marché)
     if (G.tutoVu && G.tutoVu.marche && !G.tutoVu.place) this.time.delayedCall(900, () => conseilGarrick(this, 'place', true));
-    // (v1.40) avec le didacticiel, Garrick t'a accompagné : il présente le marché, puis reprend la route
-    const garrickIci = typeof didacticiel === 'function' && didacticiel(G) && G.tuto && !(G.tutoVu && G.tutoVu.marche);
-    let garrick = null;
-    if (garrickIci) { garrick = imageCorps(this, this.heros.x - 70, this.heros.y, 'mentor', PLACE_MARCHE.echelle).setOrigin(0.5, 1); this.place.add(garrick); this.tweens.add({ targets: garrick, scaleY: garrick.scaleY * 1.02, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
-    this.time.delayedCall(700, () => conseilGarrick(this, 'marche', false, () => {
-      if (!garrick || !garrick.active || !this.sys.isActive()) return;
-      this.tweens.killTweensOf(garrick);
-      const b = this.add.text(garrick.x, garrick.y - garrick.displayHeight - 8, '« Bonne chance, petit ! Je repasserai te voir. »', style(13, '#2a1a0c', { backgroundColor: '#fff8e8', padding: { x: 8, y: 5 } })).setOrigin(0.5, 1);
-      b.yTri = 1e6 + 3; this.place.add(b);
-      Son.jouer('voix', { personne: { nom: 'Garrick', race: 'humain' }, ton: 'content', duree: 1.2 });
-      this.time.delayedCall(1800, () => {
-        if (!garrick.active) return;
-        garrick.setFlipX(true);
-        pasDeMarche(this, garrick, 0, { poussiere: false });
-        this.tweens.add({ targets: [garrick, b], x: '-=400', duration: 4200, onComplete: () => { garrick.destroy(); b.destroy(); } });
-        this.tweens.add({ targets: b, alpha: 0, delay: 1200, duration: 500 });
-      });
-    }));
+    // (v1.40) avec le didacticiel, Garrick t'a accompagné : (v1.62, planche 88) il te fait visiter la place, étal par
+    // étal, puis reprend la route par le porche
+    // (v1.62) la visite interrompue (G.visiteMarche) : il propose de la reprendre ; refaite depuis le menu ☰ (G.revoirVisite)
+    const garrickIci = (typeof didacticiel === 'function' && didacticiel(G) && G.tuto && !(G.tutoVu && G.tutoVu.marche)) || !!G.revoirVisite;
+    const reprise = G.visiteMarche && G.visiteMarche.i >= 0 ? G.visiteMarche.i : -1;
+    if (garrickIci) this.time.delayedCall(700, () => { if (this.place && this.heros && this.heros.active) this.visiteGarrick(reprise >= 0 ? { reprendre: reprise } : { revoir: !!G.revoirVisite && !!(G.tutoVu && G.tutoVu.marche) }); });
+    else this.time.delayedCall(700, () => conseilGarrick(this, 'marche'));
     afficherStatutSauvegarde(this, 940, 46, 1);
     // Les commandes prévues, qu'on déroule ou referme
     this.commandesOuvertes = false;
@@ -214,6 +203,7 @@ class MarcheScene extends Phaser.Scene {
       // (v1.07 : sous la barre du haut, pour ne plus cacher le titre, les commandes ni la sauvegarde)
       const t = this.add.text(480, 78, nouvellesDuMatin(G).join('\n'), style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 8, y: 3 }, align: 'center', wordWrap: { width: 600 } })).setOrigin(0.5, 0).setDepth(5);   // (v1.53 : plus étroit, il ne passe plus sous les boutons de la place)
       this.tweens.add({ targets: t, alpha: 0, delay: 6000, duration: 800 });
+      this.nouvellesMatin = t;   // (v1.62 : la visite de Garrick les efface plus tôt, pour qu'elles ne passent pas sous ses bandeaux)
     }
   }
 
@@ -1187,11 +1177,22 @@ class MarcheScene extends Phaser.Scene {
     if (panneau) panneau.setVisible(false);
     const fermer = () => { Son.jouer('glisse'); c.destroy(); this.vitrineOuverte = null; if (panneau && panneau.active) panneau.setVisible(true); this.ouvrirMendiant(); };
     c.add(this.add.rectangle(480, 270, 960, 540, 0x0e0a06, 0.92).setInteractive());
-    // son coin de la place : le mur, le tonneau, les pavés, un rayon de soleil
-    c.add(this.add.image(480, 270, murRuelleHD(this)).setScale(2));
-    c.add(this.add.rectangle(480, 200, 960, 400, 0x0a0604, 0.2));
-    const rayon = this.add.triangle(0, 0, 300, 0, 420, 0, 640, 540, 0xfff0c0, 0.08).setOrigin(0).setBlendMode(Phaser.BlendModes.ADD); c.add(rayon);
-    c.add(this.add.image(250, 500, 'tonneauxHD').setOrigin(0.5, 1).setScale(3.4).setTint(0xb0a090));
+    // (v1.62, planche 80) son coin de la grand-place, vu d'où tu te tiens : la place elle-même, en perspective (le sol,
+    // les étals, la fontaine, les maisons, à leur vraie distance), son tonneau
+    if (this.place && this.fontainePlace) c.add(decorMendiantHD(this, this.saisonPlace, this.fontainePlace));
+    else {
+      c.add(this.add.image(480, 270, murRuelleHD(this)).setScale(2));
+      c.add(this.add.rectangle(480, 200, 960, 400, 0x0a0604, 0.2));
+      c.add(this.add.triangle(0, 0, 300, 0, 420, 0, 640, 540, 0xfff0c0, 0.08).setOrigin(0).setBlendMode(Phaser.BlendModes.ADD));
+    }
+    // (v1.62, retours du joueur) son petit coin à lui : le vieux tapis où il se tient, son baluchon contre les tonneaux,
+    // une bougie dans un pot sur le couvercle (sa flamme danse)
+    const coin = !!this.fontainePlace;
+    if (coin) { const tp = tapisMendiantVueHD(this, CAMERA_MENDIANT, -0.2, 2.62); c.add(this.add.image(tp.x, tp.y, tp.cle).setOrigin(0).setScale(2)); }
+    if (coin) c.add(this.add.image(166, 499, baluchonHD(this, 48)).setOrigin(0.5, 1).setScale(2));
+    const tonneaux = this.add.image(250, 500, 'tonneauxHD').setOrigin(0.5, 1).setScale(3.4); c.add(tonneaux);
+    if (!coin) tonneaux.setTint(0xb0a090);   // (dans la ruelle sombre)
+    if (coin) { const lx = 250 - 18 * 3.4 + 18.5 * 3.4, ly = 500 - 18 * 3.4 + 4, pot = this.add.image(lx, ly, bougiePotHD(this, 12)).setOrigin(0.5, 1).setScale(2); c.add(pot); flammeBougie(this, c, lx, ly - pot.displayHeight + 2, 12); }
     creerIconesHD(this);
     const personne = { nom: 'Le mendiant', race: 'humain', figurant: 'mendiant', vieux: true };
     // (v0.68) de près, on le voit en entier, debout contre son tonneau et appuyé sur son bâton
@@ -1204,9 +1205,11 @@ class MarcheScene extends Phaser.Scene {
     this.tweens.add({ targets: corps, scaleY: echelle * 1.01, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // il respire
     const buste = corps;
     // sa sébile ébréchée, et les quelques pièces dedans
-    c.add(this.add.ellipse(520, 478, 54, 16, 0x5a4a3a).setStrokeStyle(2, 0x2a1a10));
-    for (let k = 0; k < Math.min(6, Math.ceil((G.mendiant || 0) / 5)); k++) c.add(this.add.ellipse(506 + k * 6, 475 - (k % 2) * 2, 8, 4, 0xe8c040));
+    // (v1.62) une seule sébile : celle qu'il tient dans ses mains ; les pièces données y tombent, et s'y voient
+    const SEBILE = [373, 374];
+    for (let k = 0; k < Math.min(4, Math.ceil((G.mendiant || 0) / 8)); k++) c.add(this.add.ellipse(SEBILE[0] - 7 + k * 5, SEBILE[1] - 1 + (k % 2), 5, 3, 0xe8c040).setStrokeStyle(1, 0x8a6a14));
     const chien = this.add.image(660, 486, chienHD(this, 'profil', true)).setOrigin(0.5, 1).setScale(2.2).setFlipX(true); c.add(chien);
+    if (coin) c.add(this.add.image(592, 499, gamelleHD(this, 22, 0.45)).setOrigin(0.5, 1).setScale(2));   // (la gamelle de Brisquet, sous son nez)
     this.tweens.add({ targets: chien, scaleY: 2.24, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     c.add(this.add.text(480, 32, 'Le mendiant et Brisquet', style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
     // ce qu'il raconte : un peu plus de son histoire à mesure que tu l'aides
@@ -1236,7 +1239,7 @@ class MarcheScene extends Phaser.Scene {
         if (!merci) return this.message(manqueArgent(G, n, "Tu n'as pas assez d'argent."), '#a03030');
         this.majInfos();
         // (v0.68) les pièces volent jusqu'à sa sébile, puis il pense à ce qu'il va en faire
-        voleePieces(this, 150 + i * 170, 500, 520, 474, n, { conteneur: c, fin: () => {
+        voleePieces(this, 150 + i * 170, 500, SEBILE[0], SEBILE[1], n, { conteneur: c, fin: () => {
           if (!c.active) return;
           if (merci.medaille) return this.cinematiqueMedaille(c, buste, raconter);
           raconter(merci);
