@@ -597,7 +597,10 @@ function planterVarianteRecit(scene, zone, biome) {
     const neige = ['montagne', 'glace', 'neige'].includes(biome);
     const sombre = ['foret', 'marais', 'repaire', 'tour', 'grotte'].includes(biome);
     const teinte = neige ? 0x6a7a74 : melangeCouleur(b.arbres || b.loin, 0x0a0a10, sombre ? 0.45 : 0.3);
-    const cleArbre = typeof textureArbre === 'function' ? textureArbre(scene, v.arbres) : null;
+    // (retour du joueur) les arbres du premier plan ont le dessin de ceux du paysage (voir arbrePremierPlanHD) ;
+    // les formes qui ne sont pas des arbres (cactus, colonnes, pieux) gardent leur peinture
+    const peint = typeof arbrePremierPlanHD === 'function' && ARBRES_PREMIER_PLAN[v.arbres];
+    const cleArbre = peint ? null : (typeof textureArbre === 'function' ? textureArbre(scene, v.arbres) : null);
     const g = dansPlan(scene.planMoyen, scene.add.graphics());
     scene.arbresRecit = [];
     // (des trouées là où sont posés les décors vivants, pour qu'ils ne se cachent pas derrière un tronc)
@@ -605,7 +608,8 @@ function planterVarianteRecit(scene, zone, biome) {
     for (let x = -60; x < LARGEUR_RECIT + 60; x += 90 + (Math.abs(x) * 3) % 70) {
       if (trous.some(([a, c]) => x > a && x < c)) continue;
       const pied = PRE_RECIT.loin - ((Math.abs(x) * 7) % 5);
-      if (cleArbre) scene.arbresRecit.push(dansPlan(scene.planMoyen, scene.add.image(x, pied, cleArbre).setOrigin(0.5, 1).setScale(0.75 + ((Math.abs(x) * 7) % 40) / 100).setFlipX((Math.abs(x) * 3) % 2 === 0).setTint(sombre ? 0x9a9aa0 : 0xe8e8e0)));
+      if (peint) scene.arbresRecit.push(dansPlan(scene.planMoyen, scene.add.image(x, pied + 3, arbrePremierPlanHD(scene, v.arbres, biome, Math.floor(Math.abs(x) / 90) % 3)).setOrigin(0.5, 1).setScale(0.78 + ((Math.abs(x) * 7) % 34) / 100).setFlipX((Math.abs(x) * 3) % 2 === 0)));
+      else if (cleArbre) scene.arbresRecit.push(dansPlan(scene.planMoyen, scene.add.image(x, pied, cleArbre).setOrigin(0.5, 1).setScale(0.75 + ((Math.abs(x) * 7) % 40) / 100).setFlipX((Math.abs(x) * 3) % 2 === 0).setTint(sombre ? 0x9a9aa0 : 0xe8e8e0)));
       else dessinerArbreVariante(g, v.arbres, x, pied, 60 + (Math.abs(x) * 7) % 70, 22 + (Math.abs(x) * 5) % 18, teinte);
     }
   }
