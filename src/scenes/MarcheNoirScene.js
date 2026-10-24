@@ -221,7 +221,7 @@ class MarcheNoirScene extends Phaser.Scene {
     const t1 = this.texte(40, 370, message || (this.fete ? accueilBrumes(G) : `Le Passeur : « Bienvenue en bas. Ici, personne ne pose de questions. »`), 15, '#f3d9b0', { fontStyle: 'italic', wordWrap: { width: 660 } });
     // (v1.17) un accueil sur deux lignes recouvrait le murmure : celui-ci attend la prochaine fois
     let basLignes = t1.getBounds().bottom + 2;
-    if (basLignes <= 394) basLignes = this.texte(40, basLignes, `${b.nom} murmure : « ${s.murmure} »`, 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 860 } }).getBounds().bottom + 2;
+    if (basLignes <= 394) basLignes = this.texte(40, basLignes, `${b.nom} murmure : « ${s.murmure} »`, 12, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 880 } }).getBounds().bottom + 2;
     const mainNoire = this.mainNoireOuverte;
     const ici = page => () => this.allerCoin(1, page);
     const choix = [['Le Passeur (objets interdits)', ici(() => this.pagePasseur())], ['Les commandes des Bannis', ici(() => this.pageCommandes())], ['Vendre une trouvaille', ici(() => this.pageTrouvailles())]];

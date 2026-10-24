@@ -480,7 +480,8 @@ function texteMixte(scene, x, y, texte, { taille = 14, largeur = 880, align = 'l
         if (!mot) continue;
         const w = largeurDe(mot, d);
         if (/^\s+$/.test(mot)) { if (xl > 0) { pousser(' ', d); xl += w; } continue; }
-        if (xl > 0 && xl + w > largeur) { const der = ligne[ligne.length - 1]; if (der) der.t = der.t.replace(/\s+$/, ''); ligne = []; lignes.push(ligne); xl = 0; }
+        // (v1.61) une ponctuation fermante (» ! ? …) ne part jamais seule à la ligne : elle déborde de quelques pixels
+        if (xl > 0 && xl + w > largeur && !(/^[»!?;:.,…)]+$/.test(mot) && w < 16)) { const der = ligne[ligne.length - 1]; if (der) der.t = der.t.replace(/\s+$/, ''); ligne = []; lignes.push(ligne); xl = 0; }
         pousser(mot, d); xl += w;
       }
     }
