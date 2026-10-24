@@ -3482,3 +3482,39 @@ Rien de tout cela n'est encore dans le jeu : chaque planche attend l'avis du jou
   - Questions : quelle mort garder ? Les musiques par contrée vont-elles ? Quels bruitages brancher ?
 - **Déjà corrigé dans le jeu, trouvé en dessinant ces planches** : le voyageur mort n'attend plus dans la file quand on lit son carnet ; les feuilles de la météo ne passent plus devant le store baissé ; la palette de la place s'appelle « La Comté » ; Pip et le voyageur qui s'effondre (champignons, venin) ferment les yeux en dormant.
 - **Question du housekeep** : au comptoir, le joueur répare encore lui-même l'équipement usé d'un client (contre quelques pièces, sans ouvrier). Ce n'est pas l'atelier : faut-il garder ce service, ou le confier lui aussi aux ouvriers ?
+
+## Retours du joueur sur les planches 80 à 90 (24/10, après le housekeep)
+- **80** : la fontaine de loin validée ; les frontons « bien mieux », mais essayer les noms incrustés directement dans le haut de l'étal → **planche 80 v2** ; le **porche couvert A** validé, des deux côtés (place et rue) ; le mendiant de près validé, en refaisant la perspective de la fontaine (son arrière semblait décoller vers le ciel).
+- **81** : la fontaine de la rue et la rue vivante validées (meules et bottes placées avec un sens, pas au hasard) ; le décor du comptoir plaît, mais il doit être **personnalisable** (floral, champêtre, moderne…), la commande des clients doit garder une vraie place (pas par-dessus l'horloge) et le pot de plante doit être collé au montant droit du comptoir → **planche 81 v2**.
+- **82** : une vraie porte d'intérieur pour le bureau, depuis l'arrière-boutique (un peu élargie) ; de vrais signets entre le registre et ses onglets ; chaque meuble ouvre ce qu'il contient là où il est (les succès sont en haut à droite de la pièce, pas dans un tiroir) → **planche 82 v2**.
+- **83** : l'interface validée ; « bon » en bleu et « parfait » en vert ; les gestes validés (à vérifier en jeu) ; une vraie apparence de femme pour Marta ; plus jamais de réparation par le joueur à l'atelier ; **les salaires montent avec le niveau de l'employé, puis un peu chaque mois**.
+- **84** : la besace et la distribution des pièces validées ; dans la boutique, la besace un peu à droite, sur le mur ; dans le récit, lui trouver une vraie place ; le carnet validé ; bug : les provisions de l'épicerie débordent de leurs encadrés.
+- **85** : la marche validée ; le coucher à refaire : la tête moins près de la bougie, les pieds sous la couverture, une couverture qui tombe naturellement, **des pyjamas au choix** (une armoire dans la chambre avec deux onglets, vêtements et pyjamas) et le joueur qui se change « comme dans les Sims » après « Aller dormir » → **planche 85 v2**.
+- **86** : validée ; au bivouac, les dormeurs ne doivent plus avoir l'air « en gainage » ; à la mort, ils s'effondrent sur le dos ou sur le ventre.
+- **87** : validée (moutons bien derrière les barrières et le premier plan).
+- **88** : validée, à tester en jeu.
+- **89** : les idées validées, mais à refaire proprement → **planche 89 v2** : un plan net et beau ; la rue du comptoir s'appelle **la rue Soucolline**, au zoom de la place, avec de grands bâtiments, un vrai sol, tous ses décors, et des angles et ruelles vers d'autres rues ; « les bords de l'eau » deviennent **la rivière aux Trois Pommes** ; la cabane de Barnabé au bord de l'étang ; le repaire des Bannis s'ouvre comme le mur du Chemin de Traverse (les briques se replient pour laisser passer le joueur).
+- **90** : validée.
+
+### Idées d'événements au comptoir (proposition de Claude, à choisir)
+Le joueur demande plus d'événements, au hasard ou liés à son histoire, pendant la journée au comptoir. Ceux qui existent déjà : Garrick, le héraut, le crieur, le colporteur, le collectionneur, le notable, le percepteur, le collecteur, la garde, la famille d'un disparu, la Faucheuse, le Sage, les aînés, le rival, le Serpent, les messages de détresse, les carnets.
+- **Liés à ton histoire** :
+  - *Les yeux de ta mère* : un vieux voyageur s'arrête net en te voyant ; en trois visites espacées, il raconte qu'il a connu tes parents, puis il disparaît (le fil des parents et du sort d'oubli).
+  - *L'apprenti* : un orphelin de la rue, comme tu l'étais, demande du travail ; si tu l'aides, il devient plus tard un employé de l'atelier.
+  - *Garrick a un souci* : son genou, une vieille dette, une lettre de son passé ; ce qu'il te demande change selon ton camp.
+  - *L'anniversaire du comptoir* : un an après l'ouverture, les habitués viennent fêter ça, avec un cadeau qui dépend de ta réputation.
+  - *La chanson du barde* : un barde compose une chanson sur ton comptoir à partir de tes succès et de tes disparus ; on l'entend ensuite au marché.
+  - *Le revenant des Brumes* : pendant la Nuit des Brumes, un voyageur mort par ta faute (ou sauvé grâce à toi) revient en ombre te parler.
+- **Au hasard** :
+  - *L'enfant perdu* : un petit hobbit cherche sa mère ; tu le gardes au comptoir jusqu'à son retour.
+  - *L'averse* : un passant s'abrite sous ton auvent ; une tisane, et il te confie une rumeur (une contrée, un prix, un danger).
+  - *Le pickpocket* : pendant qu'un client parle, une petite main se tend vers ta besace ; un clic à temps la fait fuir.
+  - *Le troc* : un voyageur sans le sou propose un objet étrange contre son baluchon.
+  - *Le vantard* : il veut un baluchon gratuit « pour la gloire » ; s'il revient vivant, il fait ta publicité (des clients en plus), sinon…
+  - *L'espion du paon* : un client qui ne prend rien et note tes prix ; tu peux le démasquer.
+  - *Le pigeon blessé* : soigné, il revient plus tard avec un petit cadeau.
+  - *Les enfants qui jouent aux aventuriers* : ils veulent un « vrai » baluchon pour jouer ; un geste tendre pour la réputation.
+  - *Les amoureux* : deux voyageurs ensemble ; l'un te demande en secret un cadeau pour l'autre.
+  - *L'inspecteur des poids et mesures* : il vérifie ta réserve (attention aux objets du Passeur).
+  - *Le chat* (si adopté) : il pose une souris, ou un objet trouvé, sur le comptoir devant un client.
+  - *Le coup de vent* : le store claque et les papiers s'envolent ; à toi de tout rattraper.
