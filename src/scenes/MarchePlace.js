@@ -8,7 +8,7 @@ const PLACE_MARCHE = { L: 1800, H: 1040, zoom: 1.25, zoomPanneau: 0.95, vitesse:
 // Où est chaque lieu (sa base, au sol), en pixels de la place
 const LIEUX_PLACE = { forge: [330, 340], apothicaire: [560, 310], encheres: [900, 290], gedeon: [1240, 310], tailleuse: [1470, 340],
   bazar: [170, 610], brocante: [170, 870], garderobe: [1630, 610], peche: [1630, 880], crieur: [660, 560], tableau: [1140, 560], jeux: [560, 920], mendiant: [770, 1000],
-  fontaine: [900, 660], carte: [1060, 1000], arche: [900, 1040], moulin: [1760, 760] };
+  fontaine: [900, 660], carte: [1090, 1000], arche: [900, 1040], moulin: [1760, 760] };
 // La hauteur de l'enseigne au-dessus de la base (les autres : 200)
 const HAUTEUR_ENSEIGNE = { encheres: 150, crieur: 112, tableau: 110, jeux: 170, mendiant: 120, fontaine: 190, carte: 70, arche: 230, moulin: 30, peche: 200 };
 const PETITS_LIEUX = ['crieur', 'tableau', 'mendiant'];
@@ -45,7 +45,7 @@ Object.assign(MarcheScene.prototype, {
   devantLieu(cle) {
     const [x, y] = LIEUX_PLACE[cle];
     if (cle === 'fontaine') return [x, y + 44];
-    if (cle === 'arche') return [x, y - 250];   // (l'arche est haute : on s'arrête devant, côté place)
+    if (cle === 'arche') return [x, y - 40];   // (v1.62 : devant le porche, côté place, entre ses deux poteaux)
     if (cle === 'moulin') return [x - 40, y + 24];
     return [x, Math.min(PLACE_MARCHE.H - 8, y + 34)];
   },
@@ -61,13 +61,11 @@ Object.assign(MarcheScene.prototype, {
     const place = this.place = this.add.container(0, 0).setDepth(-1);
     const saison = typeof saisonDe === 'function' ? saisonDe(G) : 'semailles';
     const pal = this.palettePlace = paletteSaisonComte(saison);
+    this.saisonPlace = saison;
     // le sol : terre battue sous les étals et sur les chemins d'usure, dalles au centre, herbe ailleurs
-    const pads = Object.entries(LIEUX_PLACE).filter(([k]) => !['fontaine', 'arche', 'moulin', 'carte'].includes(k)).map(([k, [x, y]]) => PETITS_LIEUX.includes(k) ? [x / 2, y / 2 - 6, 44, 18] : [x / 2, y / 2 - 12, 104, 34]);
-    pads.push([530, 500, 40, 20]);
-    const chemins = [...pads.map(([x, y]) => [[450, 318], [x, y]]), [[450, 318], [450, 520], 12], [[450, 318], [900, 382], 8], [[0, 92], [900, 92], 11]];
-    const plan = { centre: [450, 318], rTerre: 150, rDalles: 104, pads, chemins, largeur: 8, pas: [[450, 432], [452, 452], [448, 472], [451, 492]] };
-    place.add(this.add.image(0, 0, solPlaceHD(this, 'solPlace_' + saison, pal, 900, 520, plan)).setOrigin(0).setScale(2));
+    place.add(this.add.image(0, 0, solPlaceHD(this, 'solPlace_' + saison, pal, 900, 520, planSolPlace())).setOrigin(0).setScale(2));
     this.obstacles = []; this.grillePlace = null;   // (v1.61 : les charrettes du jour de marché changent la grille)
+    this.visite = null;
     const ombre = (x, y, l) => { const o = this.add.image(x + l * 0.06, y - 2, ombrePlaceHD(this)).setScale(l / 64, l / 64 * 0.9); o.yTri = y - 0.5; place.add(o); return o; };
     this.ombrePlace = ombre;
     // les maisons qui bordent la place, au nord
@@ -100,15 +98,15 @@ Object.assign(MarcheScene.prototype, {
       else if (!this.actionsLieux[k]) this.actionsLieux[k] = () => {};
     }
     // la fontaine, l'arche, la carte, le sentier
-    ombre(900, 662, 200);
-    const fontaine = this.add.image(900, 660, 'fontaineHD').setOrigin(0.5, 1).setScale(4).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.allerVersLieu('fontaine'));
-    place.add(fontaine); this.obstacles.push([790, 600, 1010, 664]);
-    if (benieJusqua(G)) { creerHalo(this); const l = this.add.image(900, 600, 'halo').setScale(2.2, 1.1).setTint(0x60c8ff).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD); l.yTri = 661; place.add(l); this.tweens.add({ targets: l, alpha: 0.15, duration: 1600, yoyo: true, repeat: -1 }); }
+    // (v1.62, planche 80) la fontaine : la même que de près, en petit, son eau qui bouge ; l'obstacle suit le bassin rond
+    const fp = this.poserFontainePlace();
+    if (benieJusqua(G)) { creerHalo(this); const l = this.add.image(900, fp.eau, 'halo').setScale(2.2, 1.1).setTint(0x60c8ff).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD); l.yTri = fp.sol + 0.6; place.add(l); this.tweens.add({ targets: l, alpha: 0.15, duration: 1600, yoyo: true, repeat: -1 }); }
     this.actionsLieux.fontaine = () => this.vueFontaine();
-    const arche = this.add.image(900, 1040, this.textures.exists('rueArcheHD_jour') ? 'rueArcheHD_jour' : 'rueArcheHD').setOrigin(0.5, 1).setScale(1.25).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.allerVersLieu('arche'));
-    arche.yTri = 1040; place.add(arche); this.obstacles.push([800, 800, 1000, 1040]);
+    // (v1.62, planche 80, système A) le porche couvert, vers la rue : on ne bute que sur ses deux poteaux
+    this.poserPorchePlace();
     this.actionsLieux.arche = () => this.rentrer();
-    ombre(1060, 1002, 60); const carte = panneauCarteMonde(this, 1060, 1000); place.add(carte); this.obstacles.push([1038, 986, 1082, 1002]);
+    { const [cx, cy] = LIEUX_PLACE.carte; ombre(cx, cy + 2, 80); this.poserCartePlace(cx, cy); this.obstacles.push([cx - 22, cy - 14, cx + 22, cy + 2]); }   // (v1.62 : un peu à l'écart du porche)
+    this.coinMendiantPlace();
     this.actionsLieux.carte = () => this.message('La carte du monde : tes voyageurs partent de ton comptoir vers toutes ces contrées.');
     const poteau = this.add.image(1760, 760, barrierePlaceHD(this, 2)).setOrigin(0.5, 1).setScale(2.2); place.add(poteau); this.obstacles.push([1744, 748, 1776, 762]);
     this.actionsLieux.moulin = () => this.message('Le sentier mène au Vieux Moulin et à l’étang de Barnabé. On s’y promène le soir, depuis chez toi.');
@@ -130,7 +128,7 @@ Object.assign(MarcheScene.prototype, {
     // les enseignes, lisibles de loin, au-dessus de tout
     this.enseignesPlace = [];
     for (const cle of Object.keys(LIEUX_PLACE)) {
-      if (!this.actionsLieux[cle]) continue;
+      if (!this.actionsLieux[cle] || cle === 'arche' || cle === 'carte') continue;   // (le porche et la carte portent leur propre écriteau)
       const [x, y] = LIEUX_PLACE[cle], [n, m] = this.nomLieuPlace(cle);
       enseigneLieu(this, x, y - (HAUTEUR_ENSEIGNE[cle] || 200), n, m, n === 'En travaux' ? '#c9b48a' : MARCHANDS[cle] ? couleurNom(G, MARCHANDS[cle].nom, true) : '#f3d98a').forEach(o => { o.yTri = 1e6; o.setDepth(0); place.add(o); this.enseignesPlace.push(o); });
     }
@@ -171,10 +169,11 @@ Object.assign(MarcheScene.prototype, {
       k.on('keydown', e => {
         if (!this.place || !this.sys.isActive() || e.repeat) return;   // (v1.61 : une touche maintenue n'agit qu'une fois)
         if (this.boutiqueC || this.listeC) return;
+        if (this.visiteEnCours() && !this.bloquePlace() && this.toucheVisite(e)) return;   // (la visite de Garrick : Espace, Échap)
         if (e.key === 'm' || e.key === 'M') this.basculerCartePlace();
         else if (e.key === 'l' || e.key === 'L') { if (!this.bloquePlace()) this.listeCourses(); }
         else if (e.key === 'Escape') { if (this.carteC) this.basculerCartePlace(); else if (this.panneauOuvert && !this.vitrineOuverte) this.vueEnsemble(); }
-        else if ((e.key === 'e' || e.key === 'E' || e.key === ' ' || e.key === 'Enter') && this.lieuProche && !this.bloquePlace()) this.agirLieu(this.lieuProche);   // (v1.61 : E, comme dans les jeux d'aventure)
+        else if ((e.key === 'e' || e.key === 'E' || ((e.key === ' ' || e.key === 'Enter') && !this.visiteEnCours())) && this.lieuProche && !this.bloquePlace()) this.agirLieu(this.lieuProche);   // (v1.61 : E, comme dans les jeux d'aventure ; pendant la visite de Garrick, Espace : la suite)
       });
     }
     const dansPlace = o => { for (let c = o; c; c = c.parentContainer) if (c === place) return true; return false; };
@@ -186,6 +185,7 @@ Object.assign(MarcheScene.prototype, {
       // (v1.61) un lieu ouvert : un clic n'importe où sur la place au-dessus du cadre (même sur un passant ou une bulle) le referme
       if (this.panneauOuvert && !this.vitrineOuverte && !this.boutiqueC && !this.listeC && !this.carteC && !this.jeuLance && py < 300 && !surInterface) { this.vueEnsemble(); return; }
       if (sous.length || this.bloquePlace()) return;
+      this.mainJoueur = this.time.now;   // (le joueur mène : Garrick l'attend, s'il fait la visite)
       this.partirVers((px - place.x) / place.scaleX, (py - place.y) / place.scaleY);
       this.marqueClic((px - place.x) / place.scaleX, (py - place.y) / place.scaleY);
     });
@@ -194,10 +194,103 @@ Object.assign(MarcheScene.prototype, {
       const px = p.worldX, py = p.worldY;
       if (!this.place || !p.isDown || (!p.wasTouch && !(p.event && p.event.buttons & 1)) || py < 40 || py > 476 || this.bloquePlace() || this.apresMarche) return;
       if (this.time.now - (this.dernierGlisse || 0) < 120) return;
-      this.dernierGlisse = this.time.now;
+      this.dernierGlisse = this.time.now; this.mainJoueur = this.time.now;
       this.partirVers((px - place.x) / place.scaleX, (py - place.y) / place.scaleY);
     });
     this.cadrerPlace(true);
+    // (v1.62) le sol de la vue du mendiant se prépare par petits morceaux, pendant la promenade
+    this.time.delayedCall(2500, () => {
+      const ev = this.time.addEvent({ delay: 50, loop: true, callback: () => { if (!this.place || solMendiantHD(this, saison, 6)) ev.remove(); } });
+    });
+  },
+
+  // (v1.62, planche 80) La fontaine de loin (×2, comme le sol), ses deux pots, et son eau qui bouge comme de près : le
+  // rideau de la vasque, les jets des lions, le petit jet du sommet, en gouttes qui tombent vraiment. Elle passe devant
+  // qui est derrière le milieu du bassin, derrière qui est devant ; on bute sur le bassin rond, pas sur un rectangle.
+  poserFontainePlace(x = 900, y = 662) {
+    const F = FONTAINE_LOIN, E = 2, place = this.place, ox = x - F.cx * E, oy = y - F.H * E, X = v => ox + v * E, Y = v => oy + v * E;
+    const sol = Y(F.sol), rx = F.ext.rx * E, ry = F.ext.ry * E;
+    const ombre = this.add.image(x + 12, sol + 6, ombrePlaceHD(this)).setScale((rx * 2 + 30) / 64, (ry * 2 + 18) / 24); ombre.yTri = sol - 60; place.add(ombre);
+    const im = this.add.image(x, y, fontaineLoinHD(this)).setOrigin(0.5, 1).setScale(E).setInteractive({ useHandCursor: true, pixelPerfect: false }).on('pointerdown', () => this.allerVersLieu('fontaine'));
+    im.yTri = sol; place.add(im);
+    for (const sens of [-1, 1]) {
+      const px = x + sens * 150, p = this.add.image(px, y + 4, potFleursLoinHD(this)).setOrigin(0.5, 1).setScale(E).setFlipX(sens > 0); place.add(p);
+      this.obstacles.push([px - 12, y - 10, px + 12, y + 4]);
+    }
+    // l'obstacle : le pied du bassin, en bandes de 8 px qui suivent l'ellipse
+    for (let yb = sol - ry; yb < sol + ry; yb += 8) {
+      const m = Math.max(Math.abs(yb - sol), Math.abs(yb + 8 - sol)) / ry, demi = (rx - 4) * Math.sqrt(Math.max(0, 1 - Math.min(1, m) ** 2)) + 6;
+      this.obstacles.push([x - demi, yb - 1, x + demi, yb + 9]);   // (les bandes se chevauchent : pas de fente entre elles)
+    }
+    const gouttes = this.add.container(0, 0); gouttes.yTri = sol + 0.5; place.add(gouttes);
+    const surface = Y(F.eauY + 2);
+    const tomber = (gx, y0, y1, d) => { const g = this.add.circle(gx, y0, 1.3, 0xd8f4ff, 0.9); gouttes.add(g);
+      this.tweens.add({ targets: g, y: y1, duration: d, ease: 'Quad.easeIn', onComplete: () => { g.destroy(); if (gouttes.active && Math.random() < 0.25) { const o = this.add.ellipse(gx, y1, 6, 2).setStrokeStyle(1, 0xe8fcff, 0.7); gouttes.add(o); this.tweens.add({ targets: o, scaleX: 2.4, scaleY: 1.8, alpha: 0, duration: 420, onComplete: () => o.destroy() }); } } }); };
+    const ev = this.time.addEvent({ delay: 60, loop: true, callback: () => {
+      if (!im.active) { ev.remove(); return; }
+      if (this.carteC || this.boutiqueC || this.vitrineOuverte) return;   // (personne ne la regarde : elle coule sans qu'on la dessine)
+      const cote = Math.random() < 0.5 ? -1 : 1;
+      tomber(X(F.cx + cote * (F.vasqueRx - 1.5 - Math.random() * 2)), Y(F.vasqueY + 1), surface + (Math.random() - 0.3) * 10, 300 + Math.random() * 60);
+      for (const sens of [-1, 1]) { const g = this.add.circle(X(F.cx + sens * 7.5), Y(F.lionY + 1), 1.3, 0xd8f4ff, 0.95); gouttes.add(g);
+        this.tweens.add({ targets: g, x: g.x + sens * (16 + Math.random() * 4), duration: 300, ease: 'Linear' });
+        this.tweens.add({ targets: g, y: surface - 2, duration: 300, ease: 'Quad.easeIn', onComplete: () => g.destroy() }); }
+      if (Math.random() < 0.5) { const j = this.add.circle(X(F.cx), Y(F.sommetY - 4), 1.1, 0xe8fcff, 0.95); gouttes.add(j);
+        this.tweens.add({ targets: j, x: j.x + (Math.random() - 0.5) * 18, duration: 520, ease: 'Linear' });
+        this.tweens.add({ targets: j, y: Y(F.sommetY - 11), duration: 240, ease: 'Quad.easeOut', yoyo: true, onComplete: () => j.destroy() }); }
+    } });
+    // les reflets qui dansent sur l'eau du bassin
+    for (let k = 0; k < 5; k++) { const r = this.add.ellipse(X(F.cx + (hachage(k, 1, 913) - 0.5) * F.eauRx * 1.3), Y(F.eauY + 2 + (hachage(k, 2, 914) - 0.5) * F.eauRy), 12, 2, 0xffffff, 0.5); gouttes.add(r);
+      this.tweens.add({ targets: r, alpha: 0.05, scaleX: 1.6, duration: 900 + k * 170, yoyo: true, repeat: -1, delay: k * 140 }); }
+    this.fontainePlace = { x, sol, eau: Y(F.eauY) };
+    return this.fontainePlace;
+  },
+
+  // (v1.62, retours du joueur) La carte du monde : un panneau sur deux poteaux, la carte punaisée, et son nom, une seule
+  // fois, sur l'écriteau posé en haut des poteaux. Un clic : la carte s'ouvre, comme avant.
+  poserCartePlace(x, y) {
+    const place = this.place, C = CARTE_PLACE, E = 2;
+    const im = this.add.image(x, y, cartePlaceHD(this)).setOrigin(0.5, 1).setScale(E).setInteractive({ useHandCursor: true }).on('pointerdown', () => ouvrirCarteMonde(this));
+    im.yTri = y; place.add(im);
+    const [bx, by, bl, bh] = C.cadre, haut = y - C.H * E, carte = this.add.image(x - C.L + (bx + bl / 2) * E, haut + (by + bh / 2) * E, texCarteMonde(this)).setScale(E);
+    carte.yTri = y + 0.05; place.add(carte);
+    for (const sens of [-1, 1]) { const p = this.add.circle(carte.x + sens * 22, carte.y - 18, 2, 0xc82a20); p.yTri = y + 0.06; place.add(p); }   // (les punaises)
+    const ec = ecriteauPorche(this, x, 0, [[this.nomLieuPlace('carte')[0], 11, { fontStyle: 'bold' }]]), dy = haut + 2 - ec[0].displayHeight;
+    ec.forEach(o => { o.y += dy; o.yTri = y + 0.1; place.add(o); });
+  },
+
+  // (v1.62, retours du joueur) Le petit coin du mendiant, sur la place : un vieux tapis sous lui et Brisquet, sa sébile
+  // devant lui, la gamelle sous le nez du chien, son baluchon derrière, une bougie dans un pot sur le tonneau
+  coinMendiantPlace() {
+    const place = this.place, g = place.list.find(o => o.cle === 'mendiant'); if (!g) return;
+    const E = 2, enPlace = o => [g.x + o.x * g.scaleX, g.y + o.y * g.scaleY], [x, y] = LIEUX_PLACE.mendiant;
+    const ajout = (o, prof) => { o.yTri = prof; place.add(o); return o; };
+    ajout(this.add.image(x - 12, y + 2, tapisMendiantPlaceHD(this)).setOrigin(0.5, 0.75).setScale(E), 3);   // (à plat sur le sol, sous eux)
+    // (sa sébile, il la tient dans ses mains ; la gamelle est devant le museau de Brisquet, le baluchon derrière lui)
+    const chien = g.list.find(o => o.texture && /^chien/.test(o.texture.key)), [cx] = chien ? enPlace(chien) : [x - 40];
+    const museau = cx + 22;   // (sa tête, tournée vers son maître)
+    ajout(this.add.image(cx - 34, y - 4, baluchonHD(this, 12)).setOrigin(0.5, 1).setScale(E), y - 4);
+    ajout(this.add.image(museau - 6, y + 11, gamelleHD(this, 7, 0.4)).setOrigin(0.5, 1).setScale(E), y + 11);
+    // la bougie, sur le couvercle du tonneau de droite
+    const t = g.list.find(o => o.texture && o.texture.key === 'tonneauxHD');
+    if (t) {
+      const [tx, ty] = enPlace(t), s = t.scaleX * g.scaleX, lx = tx + (18.5 - 18) * s, ly = ty - (22 - 4) * s + 1.5 * s;
+      const pot = ajout(this.add.image(lx, ly, bougiePotHD(this, 4)).setOrigin(0.5, 1).setScale(E), y + 0.3);
+      flammeBougie(this, place, lx, ly - pot.displayHeight + 1, 4, y + 0.31);
+    }
+  },
+
+  // (v1.62, planche 80, système A validé) Le porche couvert, au bas de la place : deux poteaux de chêne, un petit toit de
+  // tuiles, les battants ouverts ; l'écriteau pend sous le linteau. Seuls les poteaux (et les battants rabattus) bloquent.
+  poserPorchePlace(X = 900, Y = 1040) {
+    const place = this.place, Pm = PORCHE_MARCHE, E = 2, gauche = X - Pm.L;
+    const ombre = this.add.image(X, Y + 2, ombrePlaceHD(this)).setScale(250 / 64, 30 / 24).setAlpha(0.8); ombre.yTri = Y - 60; place.add(ombre);
+    const im = this.add.image(X, Y, porcheMarcheHD(this)).setOrigin(0.5, 1).setScale(E).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.allerVersLieu('arche'));
+    im.yTri = Y; place.add(im);
+    const [n, m] = this.nomLieuPlace('arche');
+    ecriteauPorche(this, X, Y - Pm.H * E + 29 * E + 2, [[n, 12, { fontStyle: 'bold' }], [m, 9, { fontStyle: 'italic' }]]).forEach(o => { o.yTri = Y + 0.1; place.add(o); });
+    // les deux poteaux sur leurs socles, et le battant rabattu contre chacun
+    const [p1, p2] = Pm.poteaux.map(c => gauche + c * E);
+    this.obstacles.push([p1 - Pm.socle * E - 2, Y - 40, p1 + 34, Y], [p2 - 34, Y - 40, p2 + Pm.socle * E + 2, Y]);
   },
 
   // (v1.54, planche 62) Le jour de marché : des fanions, deux charrettes de colporteurs de passage, du monde, et Garrick
@@ -433,7 +526,10 @@ Object.assign(MarcheScene.prototype, {
   // Le cadre : la place suit JeuneGoy ; panneau ouvert, on recule un peu pour voir le lieu au-dessus du panneau
   cadrerPlace(instantane = false, cle = null) {
     const P = PLACE_MARCHE, place = this.place;
-    let z = P.zoom, fx = this.heros.x, fy = this.heros.y - 40, sy = 270;
+    // (v1.62) au départ de la visite de Garrick (et pendant la question), on cadre un peu plus bas : l'écriteau du mendiant
+    // passe au-dessus des boutons, et rien d'écrit ne reste à moitié sous le titre
+    const depart = this.visite && !this.visite.fini && this.visite.i < 0;
+    let z = P.zoom, fx = this.heros.x, fy = this.heros.y - (depart ? -12 : 40), sy = 270;
     if (cle) { z = PETITS_LIEUX.includes(cle) ? P.zoom * 1.2 : P.zoomPanneau; [fx, fy] = LIEUX_PLACE[cle]; sy = PETITS_LIEUX.includes(cle) ? 262 : 250; }
     // (v1.61) lieu ouvert : le bas de la place peut monter derrière le cadre, pour que le mendiant (tout en bas) reste visible
     const x = Phaser.Math.Clamp(480 - fx * z, 960 - P.L * z, 0), y = Phaser.Math.Clamp(sy - fy * z, (cle ? 300 : 478) - P.H * z, 0);
@@ -475,7 +571,7 @@ Object.assign(MarcheScene.prototype, {
     c.add(this.add.text(480, 50, 'La grand-place · clique sur un lieu pour y aller · M ou Échap : refermer', style(14, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5));
     for (const cle of Object.keys(LIEUX_PLACE)) {
       if (!this.actionsLieux[cle]) continue;
-      const [x, y] = LIEUX_PLACE[cle], [n] = this.nomLieuPlace(cle), dy = { arche: -150, mendiant: -10, carte: 6, moulin: -60 }[cle] || 0;
+      const [x, y] = LIEUX_PLACE[cle], [n] = this.nomLieuPlace(cle), dy = { arche: -100, mendiant: -10, carte: 6, moulin: -60 }[cle] || 0;
       const t = this.add.text(ox + Math.min(x, 1720) * z, oy + (y + dy) * z + 4, n, style(11, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4, align: 'center', wordWrap: { width: 110 } })).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
       t.on('pointerover', () => t.setColor('#ffe066')).on('pointerout', () => t.setColor('#fff4dc'));
       t.on('pointerdown', () => { this.basculerCartePlace(); this.allerVersLieu(cle, true); });
@@ -500,7 +596,7 @@ Object.assign(MarcheScene.prototype, {
       const gauche = bas(t && t.left) || bas(z && z.Q) || bas(z && z.A), droite = bas(t && t.right) || bas(z && z.D);
       const haut = bas(t && t.up) || bas(z && z.Z) || bas(z && z.W), basT = bas(t && t.down) || bas(z && z.S);
       if (gauche || droite || haut || basT) {
-        this.cible = null; this.chemin = null; this.apresMarche = null; this.courir = false;
+        this.cible = null; this.chemin = null; this.apresMarche = null; this.courir = false; this.mainJoueur = this.time.now;
         dx = (droite ? 1 : 0) - (gauche ? 1 : 0); dy = (basT ? 1 : 0) - (haut ? 1 : 0);
         const n = Math.hypot(dx, dy) || 1; dx *= P.vitesse * dt / n; dy *= P.vitesse * dt / n;
       } else if (this.cible) {
@@ -577,11 +673,307 @@ Object.assign(MarcheScene.prototype, {
     let proche = null, dmin = 56;
     for (const cle of Object.keys(this.actionsLieux)) { const [x, y] = this.devantLieu(cle), d = Math.hypot(h.x - x, h.y - y); if (d < dmin) { dmin = d; proche = cle; } }
     this.lieuProche = proche;
-    const montrer = proche && !this.bloquePlace();
+    if (this.visite) this.majVisite(dt);
+    const montrer = proche && !this.bloquePlace() && !this.visiteEnCours() && !(this.banniereVisite && this.banniereVisite.active);
     this.invitePlace.setVisible(!!montrer);
     if (montrer) { const [n, m] = this.nomLieuPlace(proche); this.invitePlace.setText(`${n}${m ? ' · ' + m : ''}   —   E ou clic : ${MARCHANDS[proche] ? 'faire tes courses' : proche === 'arche' ? 'rentrer' : proche === 'tableau' ? 'lire' : PETITS_LIEUX.includes(proche) ? 'parler' : 'approcher'}`); }
     if (!this.carteC && !this.panneauOuvert) this.cadrerPlace();
     for (const o of this.place.list) o.yTriPlace = o.yTri !== undefined ? o.yTri : o.y;
     this.place.sort('yTriPlace');
+  },
+
+  // --- (v1.62, planche 88 validée) La visite du marché avec Garrick, le premier matin ---
+  // Garrick est un passant qu'on pilote : il marche vraiment (ses images de pas, ses traces), d'étal en étal, par les
+  // chemins de la place ; JeuneGoy le suit à deux pas. Si le joueur reprend la main, Garrick l'attend et l'appelle.
+  // Espace (ou « La suite ») : la réplique suivante ; « Étal suivant ▶ » saute un marchand ; « ◀ Revenir » le ramène à
+  // l'étal d'avant ; « Passer la visite » ou Échap : il s'en va. À la fin, il repart par le porche, à pied.
+  visiteEnCours() { return !!(this.visite && !this.visite.fini); },
+
+  //   opts.reprendre : l'étape où l'on s'était arrêté (Garrick demande s'il faut reprendre) ; opts.revoir : refaite depuis le menu ☰
+  visiteGarrick(opts = {}) {
+    if (!this.place || this.visite) return;
+    const P = PLACE_MARCHE, h = this.heros;
+    // (un jour de marché, Garrick flânait déjà parmi les passants : c'est lui qui fait la visite, il n'y en a qu'un)
+    this.passantsPlace = this.passantsPlace.filter(o => { if (o.quoi !== 'mentor') return true; o.img.destroy(); o.ombre.destroy(); if (o.bulle) o.bulle.destroy(); return false; });
+    const cle = corpsHD(this, 'mentor', null, 'face');
+    const gar = this.add.image(h.x + 70, h.y + 4, cle).setOrigin(0.5, 1).setScale(P.echelle * echelleCorps(cle)).setInteractive({ useHandCursor: true });
+    this.place.add(gar);
+    const v = this.visite = { i: -1, phase: 'parle', gar, ombre: this.ombrePlace(gar.x, gar.y, 40), vue: 'face', versGauche: false, pas: 0, chemin: [], cible: null, but: null,
+      suivre: true, attend: false, appel: 0, debutJambe: this.time.now, bulle: null, barre: null, cleBarre: '', etapes: null, trace: this.add.graphics(), traceT: 0,
+      pasG: [gar.x, gar.y, 0, 1], pasH: [h.x, h.y, 0, 1], fini: false, encheres: false, question: opts.reprendre >= 0 ? opts.reprendre : null };
+    v.trace.yTri = 2; this.place.add(v.trace);
+    gar.on('pointerdown', () => { if (this.visite === v && v.phase === 'parle' && !v.fini && !this.bloquePlace()) this.suiteVisite(); });
+    this.vueHeros = 'profil'; this.versGauche = false; this.poserHeros(0);   // (JeuneGoy se tourne vers lui)
+    if (this.boutonCommandes) this.boutonCommandes.setVisible(false);   // (le temps de la visite, ses étapes prennent le haut de l'écran)
+    if (typeof retenirVignettes === 'function') { retenirVignettes(true, this); this.events.once('shutdown', () => retenirVignettes(false)); }   // (les vignettes attendent la fin de la visite)
+    const nm = this.nouvellesMatin;
+    if (nm && nm.active && nm.alpha > 0) { this.tweens.killTweensOf(nm); this.tweens.add({ targets: nm, alpha: 0, delay: 1200, duration: 400 }); nm.setY(Math.max(nm.y, 88)); }   // (les nouvelles du matin, sous les étapes, puis elles s'effacent)
+    this.etapesVisite(); this.barreVisite(true);
+    if (v.question !== null) this.direVisite(VISITE_MARCHE.question(VISITE_MARCHE.etapes[v.question].nom));
+    else this.direVisite(opts.revoir ? VISITE_MARCHE.revoir : VISITE_MARCHE.depart);
+  },
+  // (v1.62) La visite interrompue : on la reprend là où on en était, ou on l'ignore
+  reprendreVisite() {
+    const v = this.visite; if (!v || v.question === null) return;
+    const i = v.question; v.question = null;
+    this.allerEtapeVisite(i);
+    this.bulleSur(v.gar, `« ${VISITE_MARCHE.reprise(VISITE_MARCHE.etapes[i].nom)} »`, { nom: 'Garrick', race: 'humain' });
+  },
+  ignorerVisite() { const v = this.visite; if (!v || v.question === null) return; v.question = null; this.partirVisite('ignore'); },
+  // Le marchand répond à Garrick, d'une petite bulle au-dessus de sa tête, pendant qu'on repart
+  reponseMarchand(k, texte) {
+    const g = this.place.list.find(o => o.cle === k), m = g && g.list.find(o => o.texture && o.texture.key.startsWith('corps_'));
+    if (!m || !MARCHANDS[k]) return;
+    const nom = MARCHANDS[k].nom, cible = { x: g.x + m.x * g.scaleX, y: g.y + (m.y - m.displayHeight) * g.scaleY + 4, displayHeight: 0 };
+    this.bulleSur(cible, `« ${texte.replaceAll('{J}', eJ(this.G))} »`, { nom, race: MARCHANDS[k].race, feminin: /Mère|Hilda|Rosalie/.test(nom) });
+    this.visite.reponse = cible;
+    // (pas de place au-dessus de sa tête, sous les étapes de la visite : la bulle se met à côté de lui)
+    const b = cible.bulle, z = this.place.scaleX;
+    if (b && this.place.y + cible.y * z - 8 - b.height < 100) {
+      // à sa droite, sauf si elle passerait sous les boutons de la place ou hors de l'écran : alors à sa gauche
+      const xd = this.place.x + (cible.x + 24) * z, yd = this.place.y + (cible.y + 24) * z;
+      const aGauche = xd + b.width > 952 || (xd + b.width > 806 && yd - b.height / 2 < 172);
+      b.setOrigin(aGauche ? 1 : 0, 0.5).setPosition(cible.x + (aGauche ? -24 : 24), cible.y + 24);
+    }
+  },
+  // Les touches de la visite (appelée par la place, avant ses propres touches) : vrai si la touche a servi
+  toucheVisite(e) {
+    if (e.repeat) return false;
+    const v = this.visite;
+    if (v.question !== null) { if (e.key === ' ' || e.key === 'Enter') { this.reprendreVisite(); return true; } if (e.key === 'Escape') { this.ignorerVisite(); return true; } return false; }
+    if (e.key === ' ' || e.key === 'Enter') { if (v.phase === 'parle') this.suiteVisite(); return true; }
+    if (e.key === 'Escape') { this.passerVisite(); return true; }
+    return false;
+  },
+
+  suiteVisite() {
+    const v = this.visite; if (!v || v.fini || v.phase !== 'parle') return;
+    if (v.question !== null) return this.reprendreVisite();
+    const et = VISITE_MARCHE.etapes[v.i];
+    if (et && et.reponse) this.reponseMarchand(et.lieu, et.reponse);   // (le marchand lui répond, et on repart)
+    if (v.i < VISITE_MARCHE.etapes.length - 1) this.allerEtapeVisite(v.i + 1); else this.partirVisite(false);
+  },
+  etalSuivantVisite() { const v = this.visite; if (v && !v.fini && v.question === null && v.i < VISITE_MARCHE.etapes.length - 1) this.allerEtapeVisite(v.i + 1); },
+  revenirVisite() { const v = this.visite; if (v && !v.fini && v.question === null && v.i > 0) this.allerEtapeVisite(v.i - 1); },
+  passerVisite() { if (this.visiteEnCours()) this.partirVisite(true); },
+
+  // Où Garrick se tient pour présenter l'étape j : à côté de l'étal, un peu devant, du côté opposé à celui d'où l'on
+  // arrive (JeuneGoy, qui le suit, s'arrête devant l'étal sans lui passer au travers)
+  placeGarrickVisite(j, depuisX) {
+    const k = VISITE_MARCHE.etapes[j].lieu;
+    if (k === 'fontaine') return [depuisX > 900 ? 810 : 990, 712];
+    const [x, y] = LIEUX_PLACE[k], cote = depuisX > x ? -1 : 1;
+    return [x + cote * 72, Math.min(PLACE_MARCHE.H - 8, y + 44)];
+  },
+  allerEtapeVisite(j) {
+    const v = this.visite, g = v.gar;
+    v.i = Phaser.Math.Clamp(j, 0, VISITE_MARCHE.etapes.length - 1);
+    v.phase = 'marche'; v.attend = false; v.suivre = true; v.debutJambe = this.time.now; v.versSpot = false; v.tourne = false;
+    if (v.bulle) { v.bulle.destroy(); v.bulle = null; }
+    v.but = this.placeGarrickVisite(v.i, g.x);
+    v.chemin = this.itineraire(g.x, g.y, v.but[0], v.but[1]); v.cible = v.chemin.shift() || null;
+    if (!v.cible) v.cible = v.but;
+    // (entre Hilda et Mère Sauge, on passe devant les enchères : il en dit un mot)
+    v.encheres = VISITE_MARCHE.etapes[v.i].lieu === 'apothicaire' && !v.encheresDit;
+    this.G.visiteMarche = { i: v.i };   // (si l'on quitte la place en chemin, Garrick proposera de reprendre ici)
+    this.etapesVisite(); this.barreVisite();
+    this.cheminVisite();
+  },
+
+  // Il arrive : il se tourne vers toi et présente le marchand ; JeuneGoy vient se poser devant l'étal
+  arriveeGarrick() {
+    const v = this.visite, g = v.gar;
+    if (v.phase === 'depart') {
+      if (!v.sortie) { v.sortie = true; v.cible = [g.x, PLACE_MARCHE.H + 56]; return; }   // (il passe sous le porche, et s'en va vers la rue)
+      [g, v.ombre, v.trace].forEach(o => o && o.destroy()); if (g.bulle) g.bulle.destroy();
+      this.visite = null;
+      return;
+    }
+    v.phase = 'parle'; v.vue = 'face'; v.pas = 0; this.poserGarrick(0);
+    v.trace.clear();
+    this.direVisite(VISITE_MARCHE.etapes[v.i].texte);
+    this.barreVisite();
+  },
+
+  // La fin : il repart par le porche, à pied ; la place est au joueur (mode : false, la visite finie ; true, passée ;
+  // 'ignore' : la reprise refusée)
+  partirVisite(mode) {
+    const v = this.visite, G = this.G, g = v.gar, presse = mode === true, ignore = mode === 'ignore';
+    v.fini = true; v.phase = 'depart'; v.attend = false; v.sortie = false;
+    for (const o of [v.bulle, v.barre, v.etapes]) if (o) o.destroy();
+    v.bulle = v.barre = null; v.trace.clear();
+    G.tutoVu = G.tutoVu || {}; G.tutoVu.marche = true; G.tutoVu.place = true; G.tuto = false;   // (une seule fois : la place est expliquée)
+    delete G.visiteMarche; delete G.revoirVisite;
+    if (typeof retenirVignettes === 'function') retenirVignettes(false, this);
+    if (presse || ignore) this.bulleSur(g, `« ${(ignore ? VISITE_MARCHE.ignore : VISITE_MARCHE.presse).replaceAll('{J}', eJ(G))} »`, { nom: 'Garrick', race: 'humain' });
+    const [ax, ay] = this.devantLieu('arche');
+    v.chemin = this.itineraire(g.x, g.y, ax, ay); v.cible = v.chemin.shift() || [ax, ay];
+    v.depuis = this.time.now + (presse || ignore ? 700 : 300);   // (il finit sa phrase, puis se met en route)
+    if (ignore) { if (this.boutonCommandes && this.boutonCommandes.active) this.majBoutonCommandes(); return; }
+    v.etapes = presse ? null : this.etapesVisite(VISITE_MARCHE.etapes.length);   // (la visite finie : toutes les étapes cochées)
+    const o = typeof OBJECTIFS !== 'undefined' && OBJECTIFS.find(x => x.id === 'marche');
+    const b = this.banniereVisite = this.add.text(480, 462, VISITE_MARCHE.fin + (o ? `   Objectif : « ${o.texte} »` : ''), style(13, '#2a1608', { fontStyle: 'bold', backgroundColor: '#f3d98a', padding: { x: 10, y: 5 } })).setOrigin(0.5).setDepth(150).setScrollFactor(0);
+    const et = v.etapes;
+    this.tweens.add({ targets: et ? [b, et] : [b], alpha: 0, delay: 4500, duration: 500, onComplete: () => { b.destroy(); if (et) et.destroy(); if (this.boutonCommandes && this.boutonCommandes.active) this.majBoutonCommandes(); } });   // (il ne revient que s'il y a des commandes)
+  },
+
+  // Garrick avec sa vue et son image de pas ; son ombre le suit
+  poserGarrick(pas) {
+    const v = this.visite, g = v.gar, base = corpsHD(this, 'mentor', null, v.vue), k = pas ? base + '_pas' + pas : base;
+    g.setTexture(this.textures.exists(k) ? k : base).setFlipX(v.vue === 'profil' && v.versGauche);
+    v.ombre.setPosition(g.x + 2, g.y - 2); v.ombre.yTri = g.y - 0.5;
+  },
+  avancerGarrick(dt, vitesse) {
+    const v = this.visite, g = v.gar, [cx, cy] = v.cible, rx = cx - g.x, ry = cy - g.y, d = Math.hypot(rx, ry), pas = vitesse * dt;
+    if (d > 0.5) { v.vue = this.vueSelon(rx, ry); if (Math.abs(rx) > 0.5) v.versGauche = rx < 0; }
+    if (d <= pas + 0.5) { g.setPosition(cx, cy); v.cible = v.chemin.shift() || null; if (!v.cible) return this.arriveeGarrick(); }
+    else g.setPosition(g.x + rx / d * pas, g.y + ry / d * pas);
+    v.pas += dt;
+    const f = Math.floor(v.pas / 140) % 4;
+    this.poserGarrick(f === 1 ? 1 : f === 3 ? 2 : 0);
+  },
+  tournerGarrickVers(x, y) {
+    const v = this.visite, g = v.gar, vue = this.vueSelon(x - g.x, y - g.y);
+    if (vue !== v.vue || v.pas) { v.vue = vue; v.versGauche = x < g.x; v.pas = 0; this.poserGarrick(0); }
+  },
+
+  // Chaque image : il marche, il attend, il appelle ; JeuneGoy le suit ; la bulle suit sa tête
+  majVisite(dt) {
+    const v = this.visite, h = this.heros, g = v.gar;
+    if (!g.active) { this.visite = null; return; }
+    const bloque = this.bloquePlace();
+    for (const o of [v.barre, v.etapes]) if (o && o.active) o.setVisible(!bloque);
+    if (v.bulle) v.bulle.setVisible(!bloque && !v.bulleCachee);
+    if (g.bulle && g.bulle.active) g.bulle.setPosition(g.x, g.y - g.displayHeight - 8);
+    if (bloque) { if (v.pas) { v.pas = 0; this.poserGarrick(0); } return; }   // (une boutique est ouverte : il t'attend)
+    const now = this.time.now, dh = Math.hypot(h.x - g.x, h.y - g.y);
+    this.tracesVisite(v.pasG, g.x, g.y); this.tracesVisite(v.pasH, h.x, h.y);
+    const appeler = () => { if (now - v.appel > 6500) { v.appel = now; this.bulleSur(g, `« ${VISITE_MARCHE.appel} »`, { nom: 'Garrick', race: 'humain' }); } };
+    if (v.phase === 'marche') {
+      if (this.mainJoueur > v.debutJambe) v.suivre = false;   // (le joueur a repris la main : Garrick l'attendra)
+      if (!v.attend && dh > 230) { v.attend = true; v.attendDepuis = now; }
+      else if (v.attend && dh < 140) v.attend = false;
+      if (v.attend) { this.tournerGarrickVers(h.x, h.y); if (now - v.attendDepuis > 1200) appeler(); }
+      else if (v.cible) this.avancerGarrick(dt, 0.2);
+      if (v.phase !== 'marche') return;
+      // les enchères, en passant
+      if (v.encheres && Math.abs(g.x - LIEUX_PLACE.encheres[0]) < 140 && !v.attend) {
+        v.encheres = false; v.encheresDit = true;
+        const G = this.G, ouvertes = typeof lieuOuvert !== 'function' || lieuOuvert(G, 'encheres');
+        this.bulleSur(g, `« ${ouvertes ? VISITE_MARCHE.encheres : VISITE_MARCHE.encheresChantier(OUVERTURE_LIEUX.encheres - G.jour)} »`, { nom: 'Garrick', race: 'humain' });
+      }
+      // JeuneGoy le suit, deux pas derrière lui
+      if (v.suivre && v.cible && now - (v.suiviT || 0) > 250) {
+        v.suiviT = now;
+        const dx = v.cible[0] - g.x, dy = v.cible[1] - g.y, d = Math.hypot(dx, dy) || 1, bx = g.x - dx / d * 50, by = g.y - dy / d * 50;
+        if (Math.hypot(h.x - bx, h.y - by) > 26 && (!this.cible || Math.hypot(this.cible[0] - bx, this.cible[1] - by) > 20 || this.chemin && this.chemin.length)) this.partirVers(bx, by);
+      }
+      if (now - v.traceT > 200) { v.traceT = now; this.cheminVisite(); }
+    } else if (v.phase === 'parle') {
+      if (v.i >= 0 && v.suivre && !v.versSpot) { v.versSpot = true; const [x, y] = this.devantLieu(VISITE_MARCHE.etapes[v.i].lieu); this.partirVers(x, y); }
+      if (v.versSpot && !v.tourne && !this.cible) { v.tourne = true; this.vueHeros = 'dos'; this.poserHeros(0); }
+      // trop loin : la bulle se cache, il t'appelle
+      v.bulleCachee = dh > 280;
+      if (v.bulleCachee) appeler();
+    } else if (v.phase === 'depart' && now > v.depuis && v.cible) this.avancerGarrick(dt, 0.22);
+    if (v.bulle && !v.bulleCachee) this.placerBulleVisite();
+  },
+
+  // Des traces de pas derrière qui marche (elles s'effacent doucement) : p = [x, y, distance, côté]
+  tracesVisite(p, x, y) {
+    const d = Math.hypot(x - p[0], y - p[1]);
+    if (d > 40) { p[0] = x; p[1] = y; p[2] = 0; return; }
+    if (d < 0.01) return;
+    p[2] += d;
+    if (p[2] >= 17) {
+      const ux = (x - p[0]) / d, uy = (y - p[1]) / d, e = this.add.ellipse(x - uy * 4 * p[3], y - 1 + ux * 3 * p[3], 7, 4, 0x3a2410, 0.32);
+      e.yTri = 1.5; this.place.add(e); p[3] = -p[3]; p[2] = 0;
+      this.tweens.add({ targets: e, alpha: 0, delay: 600, duration: 1300, onComplete: () => e.destroy() });
+    }
+    p[0] = x; p[1] = y;
+  },
+  // Son chemin, en pointillés dorés, jusqu'à l'étal où il va (et un rond doré où il s'arrêtera)
+  cheminVisite() {
+    const v = this.visite, g = v.trace;
+    g.clear();
+    if (v.phase !== 'marche' || !v.cible) return;
+    const pts = [[v.gar.x, v.gar.y], v.cible, ...v.chemin];
+    for (let k = 0; k < pts.length - 1; k++) {
+      const [ax, ay] = pts[k], [bx, by] = pts[k + 1], n = Math.max(1, Math.floor(Math.hypot(bx - ax, by - ay) / 16));
+      for (let j = k ? 0 : 1; j < n; j++) { const x = ax + (bx - ax) * j / n, y = ay + (by - ay) * j / n; g.fillStyle(0x1a0e06, 0.5).fillCircle(x, y + 1, 4.2); g.fillStyle(0xffd860, 0.95).fillCircle(x, y, 2.8); }
+    }
+    g.lineStyle(4, 0x1a0e06, 0.5).strokeCircle(v.but[0], v.but[1] + 1, 14); g.lineStyle(3, 0xffd860, 1).strokeCircle(v.but[0], v.but[1], 14);
+  },
+
+  // Garrick parle : sa bulle, au-dessus de sa tête, du côté où tu n'es pas ; elle suit sa tête quand la place glisse
+  direVisite(texte, refaire = false) {
+    const v = this.visite; if (!v) return;
+    if (v.bulle) v.bulle.destroy();
+    v.texte = texte; v.bulleCachee = false;
+    if (!refaire && v.reponse && v.reponse.bulle && v.reponse.bulle.active) v.reponse.bulle.destroy();   // (le marchand a fini de répondre)
+    const L = v.bulleL = 410, t = `« ${texte.replaceAll('{J}', eJ(this.G))} »`, bouton = v.question === null ? 'La suite ▶' : null;
+    if (!refaire) v.bulleCote = v.gar.x >= this.heros.x ? 1 : -1;
+    const essai = this.add.text(0, 0, t, style(14, '#2a1a0c', { wordWrap: { width: L - 24 }, align: 'center' }));
+    v.bulleH = essai.height + 18 + (bouton ? 34 : 0); essai.destroy();
+    const [xc, yc, pointe] = this.cadreBulleVisite();
+    v.bulleP = pointe;
+    v.bulle = bulleGarrick(this, xc, yc, t, { l: L, pointe, bouton, action: () => this.suiteVisite() });
+    if (refaire) { this.tweens.killTweensOf(v.bulle); v.bulle.setAlpha(1); }
+    if (!refaire) Son.jouer('voix', { personne: { nom: 'Garrick', race: 'humain' }, ton: 'content', duree: 1.2 });
+  },
+  cadreBulleVisite() {
+    const v = this.visite, z = this.place.scaleX, g = v.gar, L = v.bulleL, hB = v.bulleH;
+    const tx = this.place.x + g.x * z, ty = this.place.y + (g.y - g.displayHeight) * z;
+    const yc = Math.max(ty - 20 - hB / 2, 87 + 14 + hB / 2);
+    let xc = Phaser.Math.Clamp(tx + v.bulleCote * 120, L / 2 + 8, 952 - L / 2);
+    if (yc - hB / 2 < 172) xc = Math.min(xc, 804 - L / 2);   // (sous les boutons « La place · M » et « Ma liste · L »)
+    if (this._vignette && this._vignette.active && yc - hB / 2 < 160) xc = Math.min(xc, 568 - L / 2);   // (ni sous une vignette « Objectif atteint »)
+    return [Math.round(xc), Math.round(yc), Phaser.Math.Clamp(Math.round(tx - xc), -L / 2 + 22, L / 2 - 22)];
+  },
+  placerBulleVisite() {
+    const v = this.visite, [xc, yc, pointe] = this.cadreBulleVisite();
+    if (Math.abs(pointe - v.bulleP) > 24) return this.direVisite(v.texte, true);
+    v.bulle.setPosition(xc, yc);
+  },
+
+  // En haut, les étapes de la visite (faites, en cours, à venir), entre le bouton des commandes et ceux de la place
+  etapesVisite(enCours = null) {
+    const v = this.visite;
+    if (v.etapes && enCours === null) v.etapes.destroy();
+    const c = etapesGuide(this, 69, VISITE_MARCHE.etapes.map(e => e.nom), enCours === null ? Math.max(0, v.question !== null ? v.question : v.i) : enCours, VISITE_MARCHE.titre);
+    const fond = c.list[0], gauche = 480 - fond.width / 2, droite = 480 + fond.width / 2;
+    if (droite > 804) c.x = Math.max(804 - droite, 8 - gauche);   // (à gauche des boutons de la place)
+    if (enCours === null) v.etapes = c;
+    return c;
+  },
+  // En bas, ce que tu peux faire pendant la visite
+  barreVisite(force = false) {
+    const v = this.visite, E = VISITE_MARCHE.etapes, et = E[v.i];
+    const marchand = v.phase === 'parle' && et && MARCHANDS[et.lieu];
+    const cle = [v.phase, v.i, !!marchand, v.question].join(':');
+    if (!force && cle === v.cleBarre) return;
+    v.cleBarre = cle;
+    if (v.barre) v.barre.destroy();
+    const c = v.barre = this.add.container(0, 0).setDepth(150).setScrollFactor(0);
+    if (v.question !== null) {   // (deux boutons clairs : reprendre là où l'on en était, ou ignorer la visite)
+      const n = v.question + 1, et2 = E[v.question];
+      const b1 = creerBouton(this, 345, 456, 350, `▶ Reprendre la visite (${n} · ${et2.nom}) · Espace`, () => { if (!this.bloquePlace()) this.reprendreVisite(); });
+      const b2 = creerBouton(this, 660, 456, 260, '✕ Ignorer la visite · Échap', () => { if (!this.bloquePlace()) this.ignorerVisite(); });
+      let f = 15;   // (les deux textes à la même taille, et chacun tient dans son bouton)
+      while (f > 10 && (b1.label.setFontSize(f).width > 350 - 28 || b2.label.setFontSize(f).width > 260 - 28)) f--;
+      c.add([b1.fond, b1.label, b2.fond, b2.label]);
+      return;
+    }
+    const aide = this.add.text(0, 462, marchand ? 'Espace : la suite  ·  E : ouvrir l’étal, il t’attend' : 'Espace : la suite  ·  ZQSD : tu marches, il t’attend', style(12, '#f3d98a', { fontStyle: 'bold italic' })).setOrigin(0, 0.5);
+    const bouton = (t, coul, fn, actif = true) => {
+      const b = this.add.text(0, 462, t, style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: coul, padding: { x: 9, y: 4 } })).setOrigin(0, 0.5).setAlpha(actif ? 1 : 0.4);
+      if (actif) b.setInteractive({ useHandCursor: true }).on('pointerdown', (p, lx, ly, ev) => { if (ev && ev.stopPropagation) ev.stopPropagation(); if (this.bloquePlace()) return; Son.jouer('clic'); fn(); });
+      return b;
+    };
+    const morceaux = [aide, bouton('◀ Revenir', '#6a4a24', () => this.revenirVisite(), v.i > 0), bouton('Étal suivant ▶', '#4f7a3a', () => this.etalSuivantVisite(), v.i < E.length - 1), bouton('Passer la visite · Échap', '#7a2a20', () => this.passerVisite())];
+    const Ltot = morceaux.reduce((a, o) => a + o.width, 0) + 3 * 10 + 24;
+    c.add(this.add.rectangle(480, 462, Ltot, 32, 0x140c08, 0.92).setStrokeStyle(2, 0xc9a227));
+    let x = 480 - Ltot / 2 + 12;
+    for (const o of morceaux) { o.setX(Math.round(x)); c.add(o); x += o.width + 10; }
   },
 });

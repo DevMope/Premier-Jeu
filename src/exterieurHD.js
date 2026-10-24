@@ -2231,3 +2231,190 @@ function texturePanneauAffichage(scene) {
   t.contour(); t.texture(scene, 'panneauAffichageHD');
   return 'panneauAffichageHD';
 }
+
+// (v1.62, planche 80 validée) La fontaine de la grand-place vue de loin : la même que de près (fontaineProcheHD), en
+// petit et vue un peu plus d'au-dessus. Le bassin rond de grès doré, son rebord clair, la frise de losanges, les blocs,
+// la mousse, le lierre ; la colonne cannelée et ses deux bagues, les deux têtes de lion de bronze, la vasque haute, la
+// boule ; les deux pots de fleurs. Texture à demi-résolution (132×96), posée ×2 sur la place, comme le sol.
+//   sol : le centre du bassin, au sol (en demi-pixels de la texture), pour l'ordre de profondeur et l'obstacle
+var FONTAINE_LOIN = { L: 132, H: 96, cx: 66, eauY: 56, ext: { rx: 57, ry: 20 }, eauRx: 50, eauRy: 15, paroi: 17,
+  vasqueY: 22, vasqueRx: 21, vasqueRy: 6, sommetY: 11, lionY: 40, bagues: [31, 47], sol: 73 };
+function fontaineLoinHD(scene) {
+  if (scene.textures.exists('fontaineLoinHD')) return 'fontaineLoinHD';
+  const F = FONTAINE_LOIN, t = toileDecor(F.L, F.H), ext = F.ext;
+  t.rampes.pierre = rampe(0xb8a07a); t.rampes.mousse = rampe(0x5a7a3a); t.rampes.bronze = rampe(0x4a8a78); t.rampes.lierre = rampe(0x3a7a2a);
+  t.rampes.eau = rampe(0x4aa0c8); t.rampes.eauFond = [0x0a1a24, 0x10283a, 0x16364c, 0x1e4660, 0x285a78, 0x346e90];
+  const dans = (x, y, cx, cy, rx, ry) => ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1;
+  // 1. la paroi du bassin, en blocs taillés, la frise sous le rebord, la mousse au pied
+  for (let x = F.cx - ext.rx; x <= F.cx + ext.rx; x++) {
+    const nx = (x + 0.5 - F.cx) / ext.rx; if (Math.abs(nx) > 1) continue;
+    const s = Math.sqrt(1 - nx * nx), haut = F.eauY + s * ext.ry, bas = haut + F.paroi, ton = Math.round(3.2 - nx * 1.5 - Math.abs(nx) * 0.9);
+    for (let y = Math.floor(haut); y <= Math.ceil(bas); y++) {
+      if (y + 0.5 < haut || y > bas) continue;
+      const j = y + 0.5 - haut;
+      let k = ton;
+      if (j < 6.5) {   // la frise : deux sillons, des losanges en relief entre eux
+        if (j < 1.6 || (j > 5.2 && j < 6.5)) k = ton - 2;
+        else { const m = ((x - F.cx) % 6 + 6) % 6, d = Math.abs(m - 3); if (Math.abs(j - 3.4) + d * 0.7 < 1.9) k = ton + 1; }
+      } else {
+        const joint = Math.round(x - F.cx) % 13 === 0 || Math.abs(y + 0.5 - (haut + 6.5 + bas) / 2) < 0.6;
+        if (joint) k = ton - 2;
+        if (y > bas - 2.5 && hachage(x, y, 905) > 0.42) { t.poser(x, y, 'mousse', 2 + Math.round(hachage(x, 1, 906) * 2)); continue; }
+      }
+      t.poser(x, y, 'pierre', k);
+    }
+  }
+  // 2. le rebord clair, la paroi intérieure au fond (dans l'ombre), et l'eau
+  for (let y = F.eauY - ext.ry - 1; y <= F.eauY + ext.ry + 1; y++) for (let x = F.cx - ext.rx - 1; x <= F.cx + ext.rx + 1; x++) {
+    if (!dans(x, y, F.cx, F.eauY, ext.rx, ext.ry)) continue;
+    if (dans(x, y, F.cx, F.eauY, F.eauRx, F.eauRy)) {
+      if (!dans(x, y, F.cx, F.eauY + 2.5, F.eauRx - 0.5, F.eauRy - 1.5)) { t.poser(x, y, 'pierre', y < F.eauY ? 1 : 2); continue; }
+      const v = (y + 0.5 - (F.eauY + 2.5 - F.eauRy + 1.5)) / (2 * (F.eauRy - 1.5));
+      let k = v < 0.18 ? 2 : 3;
+      if (dans(x, y, F.cx - F.eauRx * 0.28, F.eauY + 2.5 - F.eauRy * 0.3, F.eauRx * 0.55, F.eauRy * 0.28)) k = 4;   // la bande de lumière
+      t.poser(x, y, 'eau', k);
+      continue;
+    }
+    t.poser(x, y, 'pierre', y > F.eauY ? 4 : 5 - (hachage(x >> 2, y, 907) > 0.8 ? 1 : 0));
+  }
+  // les rides claires, comme de près
+  for (let k = 0; k < 7; k++) { const x0 = Math.round(F.cx + (hachage(k, 1, 913) - 0.5) * F.eauRx * 1.4), y0 = Math.round(F.eauY + 3 + (hachage(k, 2, 914) - 0.5) * F.eauRy * 1.1), l = 3 + Math.round(hachage(k, 5, 916) * 4);
+    for (let x = x0 - l; x <= x0 + l; x++) if (t.mat(x, y0) === 'eau') t.poser(x, y0, 'eau', Math.abs(x - x0) < l - 1 ? 5 : 4); }
+  // quelques pièces des vœux, au fond
+  for (let k = 0; k < 6; k++) { const a = hachage(k, 3, 911) * 6.28, r = Math.sqrt(hachage(k, 4, 912)) * 0.75; const x = Math.round(F.cx + Math.cos(a) * r * F.eauRx * 0.9), y = Math.round(F.eauY + 3 + Math.sin(a) * r * F.eauRy * 0.7); if (t.mat(x, y) === 'eau') t.poser(x, y, 'or', 4); }
+  // 3. la colonne cannelée qui sort de l'eau, ses deux bagues, le rond d'eau à son pied
+  t.forme('eau', ellipsoide(F.cx, F.eauY + 2.5, 8, 2.2), { decalage: 1.4, bord: false });
+  for (let y = F.vasqueY; y < F.eauY + 3; y++) for (let x = F.cx - 4; x <= F.cx + 4; x++) {
+    const n = (x + 0.5 - F.cx) / 4.5;
+    t.poser(x, y, 'pierre', Math.round(3.4 - n * 1.6 - Math.abs(n) * 0.8 + ((x - F.cx + 4) % 3 === 0 ? -1 : 0)));
+  }
+  for (const yb of F.bagues) t.forme('pierre', ellipsoide(F.cx, yb, 5.6, 1.7), { decalage: 0.6 });
+  // 4. les deux têtes de lion de bronze : l'eau sort de leur gueule
+  for (const sens of [-1, 1]) {
+    const lx = F.cx + sens * 5, ly = F.lionY;
+    t.forme('bronze', ellipsoide(lx, ly, 2.6, 2.6), { decalage: 0.4 });
+    t.forme('bronze', ellipsoide(lx + sens * 1.8, ly + 0.9, 1.5, 1.2), { decalage: 0.7 });
+    t.poser(Math.round(lx + sens * 2.4 - (sens < 0 ? 1 : 0)), ly + 1, 'eauFond', 0);
+  }
+  // 5. la vasque haute : le dessous en coupe, le rebord, son eau ; la boule au sommet sur son pied
+  t.forme('pierre', (x, y) => (y >= F.vasqueY && y <= F.vasqueY + 7 && Math.abs(x + 0.5 - F.cx) <= F.vasqueRx - (y - F.vasqueY) * 2.3 ? [(x + 0.5 - F.cx) / F.vasqueRx, 0.5, 0.7] : null), { decalage: -0.3 });
+  t.forme('pierre', ellipsoide(F.cx, F.vasqueY, F.vasqueRx, F.vasqueRy), { decalage: 0.9 });
+  t.forme('eau', ellipsoide(F.cx, F.vasqueY - 0.5, F.vasqueRx - 3, F.vasqueRy - 2.2), { decalage: 0.9, bord: false });
+  for (let y = F.sommetY + 2; y < F.vasqueY - 2; y++) for (let x = F.cx - 1; x <= F.cx + 1; x++) t.poser(x, y, 'pierre', x < F.cx ? 4 : 2);
+  t.forme('pierre', ellipsoide(F.cx, F.sommetY, 3.8, 3.8), { decalage: 0.5 });
+  // 6. le lierre qui grimpe sur la paroi, de chaque côté
+  for (const [x0, sens] of [[F.cx - ext.rx + 4, 1], [F.cx + ext.rx - 4, -1]]) for (let k = 0; k < 12; k++) {
+    const x = x0 + sens * Math.round(Math.sin(k * 0.8) * 2 + k * 0.35), y = F.H - 4 - k * 1.25;
+    t.forme('lierre', ellipsoide(x + (k % 2 ? 1 : -1), y, 1.4, 1), { decalage: 0.3 + (k % 3) * 0.25, bord: false });
+  }
+  t.contour(); t.texture(scene, 'fontaineLoinHD');
+  return 'fontaineLoinHD';
+}
+// Un petit pot de terre cuite fleuri (14×16), le même qu'au pied de la fontaine de près
+function potFleursLoinHD(scene) {
+  if (scene.textures.exists('potFleursLoinHD')) return 'potFleursLoinHD';
+  const t = toileDecor(14, 16);
+  t.rampes.terre = rampe(0xb8603a); t.rampes.feuille = rampe(0x4a8a3a); t.rampes.fleurR = rampe(0xd84050); t.rampes.fleurJ = rampe(0xf0c040);
+  t.forme('terre', (x, y) => (y >= 8 && y <= 15 && Math.abs(x + 0.5 - 7) <= 4.4 - (y - 8) * 0.22 ? [(x + 0.5 - 7) / 5, 0, 0.8] : null));
+  t.forme('terre', ellipsoide(7, 8, 5, 1.3), { decalage: 0.6 });
+  for (const [x, y] of [[4, 6], [6, 5], [9, 5], [10, 7], [7, 7]]) t.forme('feuille', ellipsoide(x, y, 1.6, 1.1), { decalage: 0.3 });
+  for (const [x, y, c] of [[4, 4, 'fleurR'], [7, 2.5, 'fleurJ'], [10, 4, 'fleurR'], [6, 6, 'fleurJ']]) t.forme(c, ellipsoide(x, y, 1.3, 1.2), { decalage: 0.5 });
+  t.contour(); t.texture(scene, 'potFleursLoinHD');
+  return 'potFleursLoinHD';
+}
+
+// (v1.62, planche 80, retouche du joueur) La même fontaine, vue d'à hauteur d'homme (la vue du mendiant) : elle est
+// construite en vrai relief (un bassin rond, sa colonne, sa vasque, sa boule) et chaque pixel est projeté avec la même
+// caméra que le sol de la vue. Le fond du bassin ne remonte donc jamais plus haut que ne le permet l'angle de vue :
+// le rebord du fond reste sous l'horizon, et la vasque, plus haute que les yeux, se voit par en dessous.
+//   cam : { f, y0 (l'horizon, à l'écran), h (les yeux, en m) } ; lat, prof : le centre du bassin (m, à droite, devant)
+// Mesures en mètres, à l'image de la fontaine de près.
+const FONTAINE_RELIEF = { R: 2.85, rebord: 0.28, hR: 0.75, hEau: 0.62, col: 0.22, bagues: [1.15, 1.75], lion: 1.45,
+  vasque: [1.95, 2.25, 0.25, 1.02], levre: 2.33, pied: [0.07, 2.6], boule: [2.72, 0.17] };
+function projeterRelief(cam, lat, prof, X, Y, Z) { const d = prof + Z, k = cam.f / d; return { x: 480 + (lat + X) * k, y: cam.y0 + (cam.h - Y) * k, k }; }
+function fontaineVueBasseHD(scene, cam, lat, prof) {
+  const cle = 'fontaineBasse_' + [cam.f, cam.y0, cam.h, lat, prof].map(v => Math.round(v * 100)).join('_');
+  const F = FONTAINE_RELIEF, P = (X, Y, Z) => projeterRelief(cam, lat, prof, X, Y, Z);
+  // le cadre à l'écran (en demi-pixels) : du sommet de la boule au pied du bassin, d'un bord à l'autre
+  const haut = P(0, F.boule[0] + F.boule[1] + 0.05, 0).y, bas = P(0, 0, -F.R).y, g = P(-F.R - 0.05, 0, -F.R * 0.3).x, d = P(F.R + 0.05, 0, -F.R * 0.3).x;
+  const x0 = Math.floor(g / 2) - 2, y0 = Math.floor(haut / 2) - 2, L = Math.ceil(d / 2) - x0 + 3, H = Math.ceil(bas / 2) - y0 + 3;
+  const info = { cle, x: x0 * 2, y: y0 * 2, projeter: P };
+  if (scene.textures.exists(cle)) return info;
+  const t = toileDecor(L, H);
+  t.rampes.pierre = rampe(0xb8a07a); t.rampes.mousse = rampe(0x5a7a3a); t.rampes.bronze = rampe(0x4a8a78); t.rampes.lierre = rampe(0x3a7a2a);
+  t.rampes.eau = rampe(0x4aa0c8);
+  const Lw = (() => { const v = [-0.5, 0.62, -0.6], n = Math.hypot(...v); return v.map(x => x / n); })();   // (la lumière du jeu : du haut à gauche, de face)
+  const ton = (nx, ny, nz, dec = 0) => Math.round(1.2 + ((nx * Lw[0] + ny * Lw[1] + nz * Lw[2]) + 0.15) * 3.6 + dec);
+  // les intersections d'un rayon (depuis l'œil, direction (a, b, 1) par mètre de profondeur) avec chaque pièce
+  const cyl = (a, b, r, y1, y2, loin = false) => {   // un cylindre vertical, d'axe celui du bassin
+    const A = a * a + 1, B = -2 * (a * lat + prof), C = lat * lat + prof * prof - r * r, D = B * B - 4 * A * C;
+    if (D < 0) return null;
+    const tt = (-B + (loin ? 1 : -1) * Math.sqrt(D)) / (2 * A), Y = cam.h + tt * b;
+    return tt > 0 && Y >= y1 && Y <= y2 ? tt : null;
+  };
+  const plan = (b, Y) => (b === 0 ? null : (Y - cam.h) / b);
+  const sphere = (a, b, cx, cy, cz, r) => {   // une sphère (cx, cy, cz : par rapport au centre du bassin)
+    const ox = -(lat + cx), oy = cam.h - cy, oz = -(prof + cz), A = a * a + b * b + 1, B = 2 * (a * ox + b * oy + oz), C = ox * ox + oy * oy + oz * oz - r * r, D = B * B - 4 * A * C;
+    return D < 0 ? null : (-B - Math.sqrt(D)) / (2 * A);
+  };
+  const cone = (a, b, y1, y2, r1, r2) => {   // le dessous de la vasque : un cône renversé (r1 en y1, r2 en y2)
+    const s = (r2 - r1) / (y2 - y1), p = r1 + (cam.h - y1) * s, q = b * s;
+    const A = a * a + 1 - q * q, B = -2 * (a * lat + prof) - 2 * p * q, C = lat * lat + prof * prof - p * p, D = B * B - 4 * A * C;
+    if (D < 0 || Math.abs(A) < 1e-9) return null;
+    const rs = [(-B - Math.sqrt(D)) / (2 * A), (-B + Math.sqrt(D)) / (2 * A)].sort((u, v) => u - v);
+    for (const tt of rs) { const Y = cam.h + tt * b; if (tt > 0 && Y >= y1 && Y <= y2) return tt; }
+    return null;
+  };
+  const Ri = F.R - F.rebord, [v1, v2, vr1, vr2] = F.vasque;
+  for (let py = 0; py < H; py++) for (let px = 0; px < L; px++) {
+    const sx = (x0 + px + 0.5) * 2, sy = (y0 + py + 0.5) * 2, a = (sx - 480) / cam.f, b = (cam.y0 - sy) / cam.f;
+    let best = null;
+    const ajout = (tt, quoi) => { if (tt !== null && tt > 0 && (!best || tt < best[0])) best = [tt, quoi]; };
+    ajout(cyl(a, b, F.R, 0, F.hR), 'paroi');
+    { const tt = plan(b, F.hR); if (tt > 0) { const r = Math.hypot(tt * a - lat, tt - prof); if (r <= F.R && r >= Ri) ajout(tt, 'rebord'); } }
+    ajout(cyl(a, b, Ri, F.hEau, F.hR, true), 'dedans');
+    { const tt = plan(b, F.hEau); if (tt > 0 && Math.hypot(tt * a - lat, tt - prof) < Ri) ajout(tt, 'eau'); }
+    ajout(cyl(a, b, F.col, F.hEau, v1 + 0.02), 'colonne');
+    for (const yb of F.bagues) ajout(cyl(a, b, F.col + 0.06, yb - 0.045, yb + 0.045), 'bague');
+    for (const sens of [-1, 1]) { ajout(sphere(a, b, sens * (F.col + 0.03), F.lion, 0, 0.13), 'lion'); ajout(sphere(a, b, sens * (F.col + 0.15), F.lion - 0.03, -0.02, 0.065), sens < 0 ? 'museauG' : 'museauD'); }
+    ajout(cone(a, b, v1, v2, vr1, vr2), 'vasque');
+    ajout(cyl(a, b, vr2, v2, F.levre), 'levre');
+    ajout(cyl(a, b, F.pied[0], F.levre, F.pied[1]), 'pied');
+    ajout(sphere(a, b, 0, F.boule[0], 0, F.boule[1]), 'boule');
+    if (!best) continue;
+    const [tt, quoi] = best, X = tt * a - lat, Y = cam.h + tt * b, Z = tt - prof, r = Math.hypot(X, Z) || 1e-6, th = Math.atan2(Z, X);
+    const nx = X / r, nz = Z / r;   // (la normale d'un cylindre)
+    if (quoi === 'paroi') {
+      // les blocs taillés, la frise de losanges sous le rebord, la mousse au pied, le lierre sur les côtés
+      let k = ton(nx, 0, nz);
+      const u = th * F.R, sous = F.hR - Y;
+      if (sous < 0.035 || (sous > 0.15 && sous < 0.185)) k -= 2;
+      else if (sous <= 0.15) { const m = ((u / 0.2) % 1 + 1) % 1; if (Math.abs(sous - 0.092) / 0.055 + Math.abs(m - 0.5) * 2.2 < 1) k += 1; }
+      else if ((((u / 0.62) % 1) + 1) % 1 < 0.07 || Math.abs(Y - (F.hR - 0.185) / 2) < 0.02) k -= 2;
+      const cote = Math.abs(X) / F.R;
+      if (cote > 0.84 && sous > 0.2 && fbm(u * 4, Y * 6, 917) > 0.6 - (cote - 0.84) * 1.2 && hachage(px, py, 919) > 0.25) { t.poser(px, py, 'lierre', 2 + Math.round(fbm(u * 9, Y * 9, 918) * 3)); continue; }   // (le lierre, en touffes)
+      if (Y < 0.08 && hachage(px, py, 905) > 0.4) { t.poser(px, py, 'mousse', 2 + Math.round(hachage(px, 1, 906) * 2)); continue; }
+      t.poser(px, py, 'pierre', k);
+    } else if (quoi === 'rebord') t.poser(px, py, 'pierre', Z < 0 ? 4 : 5 - (hachage(Math.round(th * 30), 1, 907) > 0.8 ? 1 : 0));
+    else if (quoi === 'dedans') t.poser(px, py, 'pierre', F.hR - Y < 0.04 ? 2 : 1);
+    else if (quoi === 'eau') {
+      // l'eau : plus sombre contre la paroi du fond, une bande de lumière, des rides claires, des pièces au fond
+      let k = 3;
+      if (Ri - r < 0.16 && Z > 0) k = 2;
+      if (Math.hypot((X + 0.7) / 1.3, (Z - 0.5) / 0.8) < 1) k = 4;
+      if (hachage(Math.floor((X + 3) * 3), Math.floor((Z + 3) * 9), 913) > 0.94) k = 5;
+      else if (hachage(Math.floor((X + 3) * 12), Math.floor((Z + 3) * 12), 911) > 0.993) { t.poser(px, py, 'or', 4); continue; }
+      t.poser(px, py, 'eau', k);
+    } else if (quoi === 'colonne') t.poser(px, py, 'pierre', ton(nx, 0, nz, 0.2) - ((((th * 12 / Math.PI) % 1) + 1) % 1 < 0.22 ? 1 : 0));   // (les cannelures)
+    else if (quoi === 'bague' || quoi === 'levre' || quoi === 'pied') t.poser(px, py, 'pierre', ton(nx, 0, nz, quoi === 'bague' ? 0.6 : 0.3));
+    else if (quoi === 'vasque') { const s = (vr2 - vr1) / (v2 - v1), n = Math.hypot(1, s); t.poser(px, py, 'pierre', ton(nx / n, -s / n, nz / n, -0.2)); }
+    else if (quoi === 'boule') { const rb = F.boule[1]; t.poser(px, py, 'pierre', ton(X / rb, (Y - F.boule[0]) / rb, Z / rb, 0.5)); }
+    else {   // les têtes de lion et leurs museaux
+      const sens = quoi === 'lion' ? Math.sign(X) : quoi === 'museauG' ? -1 : 1;
+      const [cx, cy, cz, rr] = quoi === 'lion' ? [sens * (F.col + 0.03), F.lion, 0, 0.13] : [sens * (F.col + 0.15), F.lion - 0.03, -0.02, 0.065];
+      t.poser(px, py, 'bronze', ton((X - cx) / rr, (Y - cy) / rr, (Z - cz) / rr, quoi === 'lion' ? 0.4 : 0.7));
+    }
+  }
+  t.contour(); t.texture(scene, cle);
+  return info;
+}
