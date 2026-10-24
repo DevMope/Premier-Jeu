@@ -52,6 +52,7 @@ const Sauvegarde = {
   // Sauvegarde tout de suite.
   maintenant(G, lieu) {
     clearTimeout(this.minuterie);
+    if (!G) return this.ecriture;   // (v1.61 : pas de partie, rien à écrire)
     // (v0.57) au matin, un point de reprise automatique : chaque semaine, et à chaque palier d'étoiles
     if (lieu === 'Marche' && !G.faillite) this.pointDeRepriseSiBesoin(G);
     const p = this.paquet(G, lieu);
