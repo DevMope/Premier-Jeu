@@ -234,7 +234,10 @@ class NightScene extends Phaser.Scene {
 
   // Tout ce qui change quand on achète, emprunte ou répond à une lettre.
   tout() {
-    if (!this.G || !this.sys.isActive()) return;   // (v1.61 : appelée par une page qui revient alors que le soir n'a pas encore été ouvert)
+    // (v1.61 : appelée par une page qui revient alors que le soir n'a pas encore été ouvert, ou déjà fermé ;
+    // pendant create(), la scène n'est pas encore « active » : on regarde donc son état)
+    const etat = this.sys.settings.status;
+    if (!this.G || etat < Phaser.Scenes.CREATING || etat >= Phaser.Scenes.SHUTDOWN) return;
     Sauvegarde.planifier(this.G, this.lieu);
     this.majArgent();
     this.majJournee(20, 300);
@@ -340,10 +343,13 @@ class NightScene extends Phaser.Scene {
     const sep = this.add.graphics(); sep.lineStyle(2, 0x8a6a3a, 0.6).lineBetween(46, 278, 274, 278); c.add(sep);
     c.add(this.add.text(160, 300, 'Demain', style(18, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     const partis = enMission(G);
-    c.add(this.add.text(40, 386, `En mission : ${partis.length ? partis.length + ' (' + partis.slice(0, 2).map(p => prenomDe(p.voyageur.nom)).join(', ') + (partis.length > 2 ? '…' : '') + ')' : 'personne'}`, style(12, '#3b2410', { wordWrap: { width: 240 } })));
     const dette = G.prets.reduce((a, p) => a + p.restant, 0);
-    c.add(this.add.text(40, 404, G.prets.length ? `Prêts : ${G.prets.length} (reste ${dette} p.)` : 'Prêts : aucun', style(12, G.prets.length ? '#8a1a1a' : '#3b2410')));
-    if (G.argent < 0) c.add(this.add.text(40, 420, `À découvert ! Faillite à ${SEUIL_FAILLITE} p.`, style(12, '#a03030', { fontStyle: 'bold' })));
+    // (v1.61) les lignes du bas de la colonne, posées plus bas une fois qu'on sait la place qu'il reste
+    let infos = [
+      { t: `En mission : ${partis.length ? partis.length + ' (' + partis.slice(0, 2).map(p => prenomDe(p.voyageur.nom)).join(', ') + (partis.length > 2 ? '…' : '') + ')' : 'personne'}`, c: '#3b2410', vide: !partis.length, prio: 1 },
+      { t: G.prets.length ? `Prêts : ${G.prets.length} (reste ${dette} p.)` : 'Prêts : aucun', c: G.prets.length ? '#8a1a1a' : '#3b2410', vide: !G.prets.length, prio: 2 },
+    ];
+    if (G.argent < 0) infos.push({ t: `À découvert ! Faillite à ${SEUIL_FAILLITE} p.`, c: '#a03030', gras: true });
     // la ligne du soir (le chat, le foyer, le billet de Fil-de-Fer, la nymphe) et son action
     const foyer = typeof ligneFoyer === 'function' ? ligneFoyer(G) : null;
     const billet = typeof alerteInformateurs === 'function' && alerteInformateurs(G);
@@ -357,9 +363,25 @@ class NightScene extends Phaser.Scene {
       if (foyerVide(G) && (G.materiaux.bois || 0) > 0) action = ['▸ Mettre une bûche (1 planche)', () => { const err = allumerFeu(G); if (err) return this.annoncer(err); Son.jouer('glisse'); this.tout(); }];
     } else if (nympheAttend(G)) ligne = 'Une lueur bleue monte de la place du marché... Sors voir, par la rue !';
     else if (chatCeSoir(G)) ligne = 'Un chat de gouttière rôde devant ta porte ce soir.';
-    if (ligne) {
-      const t = this.add.text(40, G.argent < 0 ? 438 : 424, ligne, style(11, '#5a2a4a', { fontStyle: 'bold italic', wordWrap: { width: 240 } })); c.add(t);
-      if (action) { if (t.y + t.height + 22 > 466) t.y = 466 - 22 - t.height; c.add(this.add.text(40, t.y + t.height + 3, action[0], style(12, '#8a1a1a', { fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 4, y: 2 } })).setInteractive({ useHandCursor: true }).on('pointerdown', action[1])); }
+    // (v1.61) tout doit tenir entre « Demain » et le bas du parchemin (les étiquettes NOUVEAU des boutons sont juste dessous) :
+    // s'il manque de la place, on tait d'abord ce qui ne dit rien (« personne », « aucun »), puis on remonte un peu ;
+    // et s'il en manque encore, les missions puis les prêts (on les retrouve dans « Le détail de la journée »)
+    const BAS = 457, HAUT = 380;
+    const t = ligne ? this.add.text(40, 0, ligne, style(11, '#5a2a4a', { fontStyle: 'bold italic', wordWrap: { width: 240 } })) : null;
+    let reste = (t ? t.height + 4 : 0) + (action ? 22 : 0);
+    const textes = infos.map(l => Object.assign(this.add.text(40, 0, l.t, style(12, l.c, { wordWrap: { width: 240 }, ...(l.gras ? { fontStyle: 'bold' } : {}) })), { vide: l.vide, prio: l.prio }));
+    const haut = l => l.reduce((a, o) => a + o.height + 1, 0);
+    let gardes = textes;
+    if (386 + haut(gardes) + reste > BAS) gardes = gardes.filter(o => !o.vide);
+    for (const p of [1, 2]) if (HAUT + haut(gardes) + reste > BAS) gardes = gardes.filter(o => o.prio !== p);
+    textes.filter(o => !gardes.includes(o)).forEach(o => o.destroy());
+    // (en dernier recours, la ligne du soir garde sa première phrase)
+    if (t && HAUT + haut(gardes) + reste > BAS) { const court = ligne.replace(/^(.*?[.!?])\s.*$/, '$1'); if (court !== ligne) { const h = t.height; t.setText(court); reste -= h - t.height; } }
+    let y = Math.max(HAUT, Math.min(386, BAS - haut(gardes) - reste));
+    for (const o of gardes) { o.setY(y); c.add(o); y += o.height + 1; }
+    if (t) {
+      t.setY(y + 2); c.add(t);
+      if (action) c.add(this.add.text(40, t.y + t.height + 3, action[0], style(12, '#8a1a1a', { fontStyle: 'bold', backgroundColor: '#ecdcb4', padding: { x: 4, y: 2 } })).setInteractive({ useHandCursor: true }).on('pointerdown', action[1]));
     }
   }
 
@@ -530,7 +552,7 @@ class NightScene extends Phaser.Scene {
     }
     const p = prevision(this.G, this.matin ? this.G.jour : this.G.jour + 1);
     const a = attrait(this.G);
-    this.textePrevision.setText(`${p.min === p.max ? p.min : p.min + ' à ' + p.max} clients` +
+    this.textePrevision.setText(`${p.min === p.max ? p.min : p.min + ' à ' + p.max} client${p.max > 1 ? 's' : ''}` +
       (p.annonces ? (this.matin ? ` (+ ${p.annonces} par lettre)` : `\n+ ${p.annonces} par lettre`) : ''));
     if (!this.matin) this.textePrevision.setFontSize(p.annonces ? 18 : 22);
     const signe = n => (n >= 0 ? '+' : '') + n.toFixed(1);

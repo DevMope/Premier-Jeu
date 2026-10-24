@@ -147,10 +147,11 @@ function barrierePlaceHD(scene, n = 5) {
 function enseigneLieu(s, x, y, nom, metier, couleur = '#f3d98a', prof = 0) {
   const o = [];
   const tn = s.add.text(x, y, nom, style(15, couleur, { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5, 1).setDepth(prof + 0.2);
-  const l = Math.max(tn.width, 80) + 22;
+  const tm = metier ? s.add.text(x, y - 2, metier, style(11, '#fff4dc', { stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5, 1).setDepth(prof + 0.2) : null;
+  const l = Math.max(tn.width, tm ? tm.width : 0, 80) + 22;   // (v1.61 : la ligne du métier tient aussi sur la planche)
   o.push(s.add.image(x, y - (metier ? 18 : 10), planchetteHD(s, Math.round(l / 2), metier ? 22 : 14)).setScale(2).setDepth(prof + 0.1));
   o.push(tn);
-  if (metier) { tn.setY(y - 14); o.push(s.add.text(x, y - 2, metier, style(11, '#fff4dc', { stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5, 1).setDepth(prof + 0.2)); }
+  if (tm) { tn.setY(y - 14); o.push(tm); }
   return o;
 }
 
