@@ -23,6 +23,8 @@ class AtelierScene extends Phaser.Scene {
 
     // La pièce : le râtelier, les quatre postes, le foyer de Marta, la lampe de Pip, l'étagère de velours
     this.add.image(0, 46, 'atelierPieceHD').setOrigin(0).setScale(2);
+    creerBraisesForgeHD(this);   // (les braises du foyer de Marta palpitent)
+    animerBraisesForge(this, this.add.image(438, 138, 'braisesForgeHD_0').setOrigin(0).setScale(2));
     this.add.image(784, 70, 'halo').setScale(2.4, 1.6).setTint(0xffd080).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD);
     this.add.image(454, 150, 'halo').setScale(1.4, 1.2).setTint(0xff8030).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
     this.add.rectangle(480, 46, 960, 4, 0x1a0e06).setOrigin(0.5, 0).setDepth(6);
@@ -84,12 +86,15 @@ class AtelierScene extends Phaser.Scene {
       const embauche = G.employes.includes(id), travail = embauche && this.reparationDe(id);
       const img = this.add.image(x, 52, texturePosteAtelier(this, id, embauche ? 'repos' : 'vide')).setOrigin(0);
       c.add(img);
-      if (travail) this.gestes.push(animerPosteAtelier(this, img, id, { forme: niveauEmploye(G, id) >= 2 }));
+      if (travail) this.gestes.push(animerPosteAtelier(this, img, id));
       this.etiquette(c, x + 96, id, embauche, travail);
+      // (v1.62) sa file : les objets qui attendent leur tour, posés par terre au pied de son poste, dans l'ordre
+      objetsEnFile(G, id).forEach(({ t }, k) => { const im = poser(t, x + 136 + k * 17, 223, 1.1); im.setDepth(2); });
     });
     // les objets qui attendent : armes et armures au râtelier (deux barres), le reste sur les deux rayons de velours
-    const auRatelier = G.tresors.filter(t => !t.reparation && ['arme', 'armure'].includes(t.categorie));
-    const surLEtagere = G.tresors.filter(t => !t.reparation && !['arme', 'armure'].includes(t.categorie));
+    const enFile = t => !!enFileDe(G, t);
+    const auRatelier = G.tresors.filter(t => !t.reparation && !enFile(t) && ['arme', 'armure'].includes(t.categorie));
+    const surLEtagere = G.tresors.filter(t => !t.reparation && !enFile(t) && !['arme', 'armure'].includes(t.categorie));
     auRatelier.slice(0, 6).forEach((t, i) => poser(t, 32 + (i % 3) * 38, i < 3 ? 86 : 132, 2, true));
     surLEtagere.slice(0, 6).forEach((t, i) => poser(t, 890 + (i % 3) * 26, i < 3 ? 104 : 148, 1.4));
     const plus = (n, x, y) => { if (n > 0) c.add(this.add.text(x, y, `+${n}`, style(11, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5)); };
@@ -105,7 +110,10 @@ class AtelierScene extends Phaser.Scene {
       const cible = t.reparation.cible || t.etat + 1;
       c.add(this.add.image(x - 70, 66, iconeObjet(this, 'tr_' + t.categorie)).setScale(1.2));
       l1 = raccourcir(t.nom, 21); l2 = `${prenom} → ${ETATS[cible].nom} · ${t.reparation.jours} j`; coul2 = ETATS[cible].texte;
+      const file = objetsEnFile(this.G, id).length;
+      if (file) l2 += ` · file ${file}`;
       c.add(this.barre(x - 58, 84, 116, this.avancement(t), ETATS[cible].couleur));
+    } else if (embauche && objetsEnFile(this.G, id).length) { l1 = `${prenom} attend`; l2 = `file : ${objetsEnFile(this.G, id).length} · il manque de quoi`; coul2 = '#9a3020';
     } else if (embauche) { l1 = `${prenom} est libre`; l2 = { tobin: 'tout ce que tu lui confies', marta: 'tout, un jour plus vite', brann: 'un vêtement ? une armure ?', pip: 'un bijou ? un artefact ?' }[id]; coul2 = '#2f6a2a'; }
     else { l1 = 'Poste à pourvoir'; l2 = `${prenom} : à embaucher en bas`; coul2 = '#7a6a5a'; }
     const largeur = t ? 128 : 150, cx = t ? x + 8 : x;
@@ -137,7 +145,8 @@ class AtelierScene extends Phaser.Scene {
       c.add(this.tenir(this.add.text(tx, y + 12, e.nom, style(11, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0, 0.5), place - 64));
       const ligne = (dy, txt, coul, taille = 10, gras = false) => c.add(this.tenir(this.add.text(tx, y + dy, txt, style(taille, coul, gras ? { fontStyle: 'bold' } : {})).setOrigin(0, 0.5), place));
       if (embauche) {
-        ligne(28, t ? `Répare : ${raccourcir(t.nom, 17)} · ${t.reparation.jours} j` : 'Libre', t ? '#e8c890' : '#9ae07a', 10, true);
+        const file = objetsEnFile(G, id).length;
+        ligne(28, t ? `Répare : ${raccourcir(t.nom, file ? 12 : 17)} · ${t.reparation.jours} j${file ? ` · file ${file}` : ''}` : file ? `Attend (file ${file})` : 'Libre', t ? '#e8c890' : file ? '#e8a080' : '#9ae07a', 10, true);
         // son salaire, et ses deux prochaines hausses : au début du mois, et au prochain niveau
         const n = niveauEmploye(G, id), h = prochainesHausses(G, id);
         ligne(44, `${salaireEmploye(G, id)} p. par nuit · +${h.mois.montant} p. dans ${h.mois.jours} j`, '#f3e6c8');
@@ -154,9 +163,9 @@ class AtelierScene extends Phaser.Scene {
     const G = this.G, e = EMPLOYES[id];
     if (!clicUnique(this, 600) || this.fenetre) return;
     if (G.employes.includes(id)) {
-      const t = this.reparationDe(id);
+      const t = this.reparationDe(id), file = objetsEnFile(G, id).length;
       renvoyer(G, id);
-      this.texteInfo.setText(`${e.nom} est parti${e.feminin ? 'e' : ''}.` + (t ? ` ${t.nom} reste dans son état : les matériaux non travaillés te sont rendus.` : ''));
+      this.texteInfo.setText(`${e.nom} est parti${e.feminin ? 'e' : ''}.` + (t ? ` ${t.nom} reste dans son état : les matériaux non travaillés te sont rendus.` : '') + (file ? ` Sa file (${file}) retourne à l'étagère.` : ''));
     } else {
       const erreur = embaucher(G, id);
       if (erreur) { Son.jouer('refus'); return this.texteInfo.setText(erreur); }
@@ -193,7 +202,6 @@ class AtelierScene extends Phaser.Scene {
     }
     const debut = this.page * OBJETS_PAR_PAGE_ATELIER, visibles = G.tresors.slice(debut, debut + OBJETS_PAR_PAGE_ATELIER);
     if (visibles.length > 4) c.add(this.add.rectangle(480, 346, 2, 150, 0x8a6a3a, 0.6));
-    const libre = ouvrierLibre(G);
     visibles.forEach((t, i) => {
       const x0 = i < 4 ? 28 : 492, y = 287 + (i % 4) * 38;
       c.add(this.add.image(x0 + 12, y, iconeObjet(this, 'tr_' + t.categorie)).setScale(1.5));
@@ -211,16 +219,27 @@ class AtelierScene extends Phaser.Scene {
         c.add(this.tenir(this.add.text(x0 + 336, y - 8, `${EMPLOYES[o] ? prenomDe(EMPLOYES[o].nom) : 'En cours'} → ${ETATS[cible].nom}`, style(11, ETATS[cible].texte, { fontStyle: 'bold' })).setOrigin(0, 0.5), 100));
         c.add(this.barre(x0 + 336, y + 9, 66, this.avancement(t), ETATS[cible].couleur));
         c.add(this.add.text(droite, y + 9, `${t.reparation.jours} j`, style(11, ETATS[cible].texte, { fontStyle: 'bold' })).setOrigin(1, 0.5));
+      } else if (enFileDe(G, t)) {
+        // (v1.62) dans la file d'un réparateur : son buste, sa place, et de quoi le faire passer avant ou le reprendre
+        const o = enFileDe(G, t), f = objetsEnFile(G, o), rang = f.findIndex(e => e.t === t), cible = f[rang].cible;
+        c.add(this.buste(x0 + 316, y + 18, o, 34).setAlpha(0.8));
+        c.add(this.tenir(this.add.text(x0 + 336, y - 8, `File de ${prenomDe(EMPLOYES[o].nom)} · ${rang + 1}${rang ? 'e' : 're'}`, style(11, '#5a3a20', { fontStyle: 'bold' })).setOrigin(0, 0.5), 100));
+        c.add(this.tenir(this.add.text(x0 + 336, y + 9, `dans ${attenteAtelier(G, o, rang)} j`, style(10, ETATS[cible].texte, { fontStyle: 'bold' })).setOrigin(0, 0.5), 62));
+        const petit = (x, txt, actif, quoi, aide) => { const b = this.add.rectangle(x, y + 9, 18, 16, actif ? 0x8a5a2b : 0xb8a888).setStrokeStyle(1, 0x3b2410);
+          c.add([b, this.add.text(x, y + 9, txt, style(10, '#fff4dc', { fontStyle: 'bold', brut: true })).setOrigin(0.5)]);
+          if (actif) b.setInteractive({ useHandCursor: true }).on('pointerdown', () => { if (this.fenetre || !clicUnique(this, 300)) return; Son.jouer('clic'); quoi(); this.texteInfo.setText(aide); this.liste(); }); };
+        petit(droite - 22, '▲', rang > 0, () => avancerDansLaFile(G, t), `${t.nom} passe avant dans la file de ${prenomDe(EMPLOYES[o].nom)}.`);
+        petit(droite - 2, '✕', true, () => retirerDeLaFile(G, t), `${t.nom} sort de la file de ${prenomDe(EMPLOYES[o].nom)} et retourne à l'étagère.`);
       } else if (t.etat >= ETATS.length - 1) {
         c.add(this.add.text(droite, y, estRestaure(t) ? 'Restauré ★' : 'Parfait état', style(13, estRestaure(t) ? '#b8860b' : ETATS[ETATS.length - 1].texte, { fontStyle: 'bold italic' })).setOrigin(1, 0.5));
       } else {
         const btn = this.add.rectangle(droite - 64, y, 128, 28, 0x8a5a2b).setStrokeStyle(2, 0x3b2410).setInteractive({ useHandCursor: true });
         btn.on('pointerdown', () => {
           if (this.fenetre) return;
-          if (!ouvrierLibre(G)) return this.texteInfo.setText(messagePasDOuvrier(G));
+          if (!G.employes.length) return this.texteInfo.setText(messagePasDOuvrier(G));
           this.choisirStade(t);
         });
-        if (!libre) btn.setAlpha(0.5);
+        if (!G.employes.length) btn.setAlpha(0.5);
         c.add([btn, this.add.text(droite - 64, y, 'Réparer…', style(13, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5)]);
       }
     });
@@ -237,7 +256,12 @@ class AtelierScene extends Phaser.Scene {
     const possible = e => (!mat || (G.materiaux[mat] || 0) >= materiauxReparation(t, e)) && G.argent >= prixReparation(t, e);
     const cible = choix.cible ?? ([...stades].reverse().find(possible) ?? stades[stades.length - 1]);
     const libres = ouvriersLibres(G);
-    const ouvrier = choix.ouvrier && libres.includes(choix.ouvrier) ? choix.ouvrier : ouvrierLibre(G, t, cible);
+    // (v1.62) un réparateur occupé peut prendre l'objet dans sa file (s'il y a de la place) : il s'y mettra après
+    const pleine = o => !libres.includes(o) && objetsEnFile(G, o).length >= FILE_MAX_ATELIER;
+    const quand = o => (libres.includes(o) ? 0 : attenteAtelier(G, o)) + dureeReparation(G, t, o, cible);
+    const prets = G.employes.filter(o => EMPLOYES[o] && !pleine(o));
+    const plusTot = prets.length ? prets.reduce((a, o) => (quand(o) < quand(a) ? o : a)) : null;
+    const ouvrier = choix.ouvrier && prets.includes(choix.ouvrier) ? choix.ouvrier : ouvrierLibre(G, t, cible) || plusTot;
     const plusRapide = ouvrierLibre(G, t, cible);
     const c = this.fenetre = this.add.container(0, 0).setDepth(40);
     const W = 900, H = 470, x0 = 480 - W / 2, y0 = 290 - H / 2;
@@ -260,21 +284,24 @@ class AtelierScene extends Phaser.Scene {
       .concat(G.employes.filter(o => EMPLOYES[o] && !libres.includes(o)));
     if (!ordre.length) T(x0 + 391, y0 + 200, "Personne à l'atelier :\nembauche un réparateur\nen bas de l'écran.", 13, '#7a6a5a', { fontStyle: 'italic', align: 'center', lineSpacing: 4 }).setOrigin(0.5);
     ordre.slice(0, 4).forEach((id, i) => {
-      const y = y0 + 80 + i * 76, x = x0 + 216, occupe = !libres.includes(id), sel = id === ouvrier;
-      const fond = this.add.rectangle(x, y, 350, 68, occupe ? 0xd8c8a8 : sel ? 0xfff4dc : 0xf6ead0).setOrigin(0).setStrokeStyle(sel ? 3 : 2, sel ? 0xd4a020 : 0x8a6a3a);
+      const y = y0 + 80 + i * 76, x = x0 + 216, occupe = !libres.includes(id), plein = pleine(id), sel = id === ouvrier;
+      const fond = this.add.rectangle(x, y, 350, 68, plein ? 0xd8c8a8 : sel ? 0xfff4dc : occupe ? 0xeee0c4 : 0xf6ead0).setOrigin(0).setStrokeStyle(sel ? 3 : 2, sel ? 0xd4a020 : 0x8a6a3a);
       c.add(fond);
-      const b = this.buste(x + 32, y + 66, id, 62); c.add(b); if (occupe) b.setAlpha(0.55);
-      this.tenir(T(x + 66, y + 13, EMPLOYES[id].nom, 13, occupe ? '#7a6a5a' : '#3b2410', { fontStyle: 'bold' }).setOrigin(0, 0.5), occupe ? 270 : 190);
-      this.tenir(T(x + 66, y + 32, EMPLOYES[id].atout + ` · niveau ${niveauEmploye(G, id)}${niveauEmploye(G, id) >= NIVEAU_EMPLOYE_DOUE ? ' (−1 jour)' : ''}`, 10, occupe ? '#8a7a6a' : '#5a3a20').setOrigin(0, 0.5), occupe ? 276 : 220);
-      if (occupe) {
-        const r = this.reparationDe(id);
-        this.tenir(T(x + 66, y + 51, `${this.occupe(id)[0].toUpperCase()}${this.occupe(id).slice(1)} : ${r.nom}, encore ${pluriel(r.reparation.jours, 'jour', 'jours')}`, 11, '#9a3020', { fontStyle: 'bold italic' }).setOrigin(0, 0.5), 276);
-        return;
-      }
+      const b = this.buste(x + 32, y + 66, id, 62); c.add(b); if (plein) b.setAlpha(0.55);
+      this.tenir(T(x + 66, y + 13, EMPLOYES[id].nom, 13, plein ? '#7a6a5a' : '#3b2410', { fontStyle: 'bold' }).setOrigin(0, 0.5), 190);
+      this.tenir(T(x + 66, y + 32, EMPLOYES[id].atout + ` · niveau ${niveauEmploye(G, id)}${niveauEmploye(G, id) >= NIVEAU_EMPLOYE_DOUE ? ' (−1 jour)' : ''}`, 10, plein ? '#8a7a6a' : '#5a3a20').setOrigin(0, 0.5), 220);
       const j = dureeReparation(G, t, id, cible);
-      T(x + 66, y + 51, `${salaireEmploye(G, id)} p. par nuit`, 11, '#5a3a20', { fontStyle: 'bold' }).setOrigin(0, 0.5);
-      T(x + 340, y + 38, `${j} j`, 20, sel ? '#2f6a2a' : '#3b2410', { fontStyle: 'bold' }).setOrigin(1, 0.5);
-      if (id === plusRapide && libres.length > 1) T(x + 340, y + 14, 'le plus rapide', 10, '#2f6a2a', { fontStyle: 'bold italic' }).setOrigin(1, 0.5);
+      if (occupe) {
+        const r = this.reparationDe(id), file = objetsEnFile(G, id).length;
+        this.tenir(T(x + 66, y + 51, plein ? `File pleine (${FILE_MAX_ATELIER}) : ${r ? r.nom : ''}…` : `${this.occupe(id)[0].toUpperCase()}${this.occupe(id).slice(1)}${r ? ` : ${r.nom}, encore ${r.reparation.jours} j` : ''}${file ? ` · file ${file}` : ''}`, 11, '#9a3020', { fontStyle: 'bold italic' }).setOrigin(0, 0.5), 210);
+        if (plein) return;
+        T(x + 340, y + 30, `${j} j`, 20, sel ? '#2f6a2a' : '#3b2410', { fontStyle: 'bold' }).setOrigin(1, 0.5);
+        T(x + 340, y + 52, `après ${attenteAtelier(G, id)} j`, 10, '#9a3020', { fontStyle: 'bold italic' }).setOrigin(1, 0.5);
+      } else {
+        T(x + 66, y + 51, `${salaireEmploye(G, id)} p. par nuit`, 11, '#5a3a20', { fontStyle: 'bold' }).setOrigin(0, 0.5);
+        T(x + 340, y + 38, `${j} j`, 20, sel ? '#2f6a2a' : '#3b2410', { fontStyle: 'bold' }).setOrigin(1, 0.5);
+        if (id === plusRapide && libres.length > 1) T(x + 340, y + 14, 'le plus rapide', 10, '#2f6a2a', { fontStyle: 'bold italic' }).setOrigin(1, 0.5);
+      }
       fond.setInteractive({ useHandCursor: true }).on('pointerdown', () => { if (id !== ouvrier) { Son.jouer('clic'); this.choisirStade(t, { ouvrier: id, cible }); } });
     });
     // 3. jusqu'où : un état par ligne, pour le réparateur choisi (jours, matériau, fournitures, valeur à la fin)
@@ -292,15 +319,15 @@ class AtelierScene extends Phaser.Scene {
     });
     // la phrase qui résume, et les deux boutons
     c.add(this.add.rectangle(480, y0 + H - 64, W - 60, 2, 0x8a6a3a, 0.6));
-    const lancer = ouvrier && possible(cible);
+    const lancer = ouvrier && possible(cible), enAttente = ouvrier && !libres.includes(ouvrier);
     const jours = ouvrier ? dureeReparation(G, t, ouvrier, cible) : 0;
-    const resume = !ouvrier ? messagePasDOuvrier(G)
-      : `${prenomDe(EMPLOYES[ouvrier].nom)} répare « ${t.nom} » jusqu'à « ${ETATS[cible].nom} » : ${pluriel(jours, 'jour', 'jours')}` + (mat ? `, ${materiauxReparation(t, cible)} ${MATERIAUX[mat].nom.toLowerCase()}` : '') + `, ${prixReparation(t, cible)} p.`;
+    const resume = !ouvrier ? (G.employes.length ? 'Toutes les files sont pleines : attends qu\'un réparateur se libère.' : messagePasDOuvrier(G))
+      : `${prenomDe(EMPLOYES[ouvrier].nom)} ${enAttente ? `s'y mettra dans ${pluriel(attenteAtelier(G, ouvrier), 'jour', 'jours')}` : 'répare'} « ${t.nom} » jusqu'à « ${ETATS[cible].nom} » : ${pluriel(jours, 'jour', 'jours')}` + (mat ? `, ${materiauxReparation(t, cible)} ${MATERIAUX[mat].nom.toLowerCase()}` : '') + `, ${prixReparation(t, cible)} p.`;
     this.tenir(T(x0 + 30, y0 + H - 42, resume, 13, '#3b2410', { fontStyle: 'bold' }).setOrigin(0, 0.5), 520);
     const restaure = cible === ETATS.length - 1 && t.etatInitial in BONUS_RESTAURE;
-    this.tenir(T(x0 + 30, y0 + H - 22, lancer ? `Une fois fini, il vaudra ~${valeurTresor(t, cible)} p.${restaure ? ' (Restauré ★)' : ''}` : ouvrier ? 'Choisis un état que tu peux te payer.' : '', 12, lancer ? (restaure ? '#b8860b' : ETATS[cible].texte) : '#9a3020', { fontStyle: 'bold' }).setOrigin(0, 0.5), 520);
+    this.tenir(T(x0 + 30, y0 + H - 22, lancer ? (enAttente ? `Payés quand ${EMPLOYES[ouvrier].feminin ? 'elle' : 'il'} commence. ` : '') + `Une fois fini, il vaudra ~${valeurTresor(t, cible)} p.${restaure ? ' (Restauré ★)' : ''}` : ouvrier ? 'Choisis un état que tu peux te payer.' : '', 12, lancer ? (restaure ? '#b8860b' : ETATS[cible].texte) : '#9a3020', { fontStyle: 'bold' }).setOrigin(0, 0.5), 520);
     const b1 = creerBouton(this, x0 + W - 296, y0 + H - 32, 120, 'Annuler', () => this.fermerFenetre());
-    const b2 = creerBouton(this, x0 + W - 118, y0 + H - 32, 216, 'Lancer la réparation', () => { if (lancer) this.lancerReparation(t, cible, ouvrier); });
+    const b2 = creerBouton(this, x0 + W - 118, y0 + H - 32, 216, enAttente ? 'Mettre dans sa file' : 'Lancer la réparation', () => { if (lancer) this.lancerReparation(t, cible, ouvrier); });
     b2.setActif(!!lancer);
     c.add([b1.fond, b1.label, b2.fond, b2.label]);
   }
@@ -309,12 +336,14 @@ class AtelierScene extends Phaser.Scene {
 
   lancerReparation(t, cible, ouvrier) {
     const G = this.G;
-    const jours = dureeReparation(G, t, ouvrier, cible);
+    const jours = dureeReparation(G, t, ouvrier, cible), attente = ouvriersLibres(G).includes(ouvrier) ? 0 : attenteAtelier(G, ouvrier);
     const erreur = reparerTresor(G, t, cible, ouvrier);
     this.fermerFenetre();
     if (erreur) { Son.jouer('refus'); return this.texteInfo.setText(erreur); }
-    Son.jouer('marteau');
-    this.texteInfo.setText(`${prenomDe(EMPLOYES[ouvrier].nom)} se met au travail : ${t.nom} → ${ETATS[cible].nom} en ${pluriel(jours, 'jour', 'jours')}.`);
+    Son.jouer(attente ? 'plume' : 'marteau');
+    const prenom = prenomDe(EMPLOYES[ouvrier].nom);
+    this.texteInfo.setText(attente ? `${t.nom} attend son tour dans la file de ${prenom} (${objetsEnFile(G, ouvrier).length}e) : ${EMPLOYES[ouvrier].feminin ? 'elle' : 'il'} s'y mettra dans ${pluriel(attente, 'jour', 'jours')}.`.replace('(1e)', '(1re)')
+      : `${prenom} se met au travail : ${t.nom} → ${ETATS[cible].nom} en ${pluriel(jours, 'jour', 'jours')}.`);
     this.liste();
   }
 

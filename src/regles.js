@@ -613,6 +613,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     zonesDecouvertes: [], // zones révélées par les récits des aventuriers
     employes: [],      // employés de l'atelier (ids de EMPLOYES)
     anciennete: {},    // (v1.62) leurs nuits à ton service (id → nuits), pour leur salaire
+    filesAtelier: {},  // (v1.62) la file d'attente de chaque réparateur (id → [{ id de l'objet, cible }])
     stats: { refus: 0, lettresAcceptees: 0, lettresRefusees: 0, objets: {}, ventes: 0 },
     nouvellesAtelier: [],
     encheresJour: 0,   // le jour de la dernière vente aux enchères
@@ -1248,15 +1249,33 @@ function materiauxRequis(G) {
   return Math.max(1, MATERIAUX_PAR_REPARATION - niveauArtisanat(G) - enclume);
 }
 
+// (v1.62, demande du joueur) Au comptoir, ce n'est plus toi qui répares l'équipement d'un client : c'est un de tes employés
+// de l'atelier, sur le champ (un petit travail, qui ne retarde pas ses objets de valeur). Sans employé, pas de réparation.
+// Le plus indiqué s'en charge : un libre d'abord, puis le spécialiste du matériau (le fer : Marta ; le cuir : Brann ; le bois : Tobin).
+// Le client paie PRIX_REPARATION ; l'employé en garde sa prime (PRIME_REPARATION_COMPTOIR), le reste va à la caisse.
+const PRIME_REPARATION_COMPTOIR = 2;
+const SPECIALISTES_COMPTOIR = { fer: ['marta', 'brann', 'tobin', 'pip'], cuir: ['brann', 'marta', 'tobin', 'pip'], bois: ['tobin', 'marta', 'brann', 'pip'] };
+function reparateurComptoir(G, id) {
+  const ordre = SPECIALISTES_COMPTOIR[MATERIAU_DE[id]] || REPARATEURS_ATELIER_ORDRE;
+  const libres = ouvriersLibres(G);
+  return ordre.find(o => libres.includes(o)) || ordre.find(o => G.employes.includes(o)) || null;
+}
+const REPARATEURS_ATELIER_ORDRE = ['marta', 'brann', 'tobin', 'pip'];
 // Répare l'objet d'un client : coûte des matériaux, le client paie.
 // Renvoie un message d'erreur, ou null si tout s'est bien passé.
 function reparerObjet(G, voyageur, id) {
+  const o = reparateurComptoir(G, id);
+  if (!o) return "Personne pour réparer : embauche un ouvrier à l'atelier.";
   const mat = MATERIAU_DE[id];
   const besoin = materiauxRequis(G);
   if (G.materiaux[mat] < besoin) return `Il te faut ${besoin} ${MATERIAUX[mat].nom.toLowerCase()} pour réparer ça.`;
   G.materiaux[mat] -= besoin;
   voyageur.inventaire[id] = USURE_MAX;
-  encaisser(G, PRIX_REPARATION, 'reparations');
+  encaisser(G, PRIX_REPARATION - PRIME_REPARATION_COMPTOIR, 'reparations');
+  // (sa prime compte dans son bilan : ce qu'il coûte, ce qu'il rapporte)
+  G.salairesPar = G.salairesPar || {}; G.salairesPar[o] = (G.salairesPar[o] || 0) + PRIME_REPARATION_COMPTOIR;
+  G.valeurPar = G.valeurPar || {}; G.valeurPar[o] = (G.valeurPar[o] || 0) + PRIX_REPARATION;
+  G.dernierReparateurComptoir = o;
   G.reparations++;
   changerRelation(G, voyageur.nom, POINTS_RELATION.reparation);
   return null;
@@ -2625,9 +2644,10 @@ function dureeReparation(G, t, ouvrier = ouvrierLibre(G, t), cible = t.etat + 1)
   let jours = 0;
   for (let e = t.etat; e < cible; e++) jours += dureeEtape(G, t, e, ouvrier, e > t.etat);
   // (v1.62) l'expérience paie : dès le niveau 3, un réparateur finit chaque réparation un jour plus tôt (il est aussi mieux payé)
-  if (EMPLOYES[ouvrier] && niveauEmploye(G, ouvrier) >= NIVEAU_EMPLOYE_DOUE) jours = Math.max(1, jours - 1);
-  return jours;
+  if (EMPLOYES[ouvrier] && niveauEmploye(G, ouvrier) >= NIVEAU_EMPLOYE_DOUE) jours -= 1;
+  return Math.max(DUREE_MIN_REPARATION, jours);   // (v1.62, demande du joueur : jamais moins de 2 jours, même au plus haut niveau)
 }
+const DUREE_MIN_REPARATION = 2;
 const NIVEAU_EMPLOYE_DOUE = 3;
 
 // Les matériaux pour aller jusqu'à « cible » : un par étape.
@@ -2689,14 +2709,21 @@ function nomOuvrier(o) {
 
 // Lancer la réparation d'un objet jusqu'à l'état « cible », par le réparateur choisi (`ouvrier` ; sans lui, le plus
 // rapide des libres) : un matériau par étape, et les fournitures. Renvoie une erreur, ou null.
+// (v1.62, demande du joueur) Un réparateur occupé met l'objet dans sa file : il le prendra après (voir mettreEnFile) ;
+// le matériau et les fournitures ne sont payés qu'au moment où il s'y met.
 function reparerTresor(G, t, cible = t.etat + 1, ouvrier = null) {
   if (t.etat >= ETATS.length - 1) return `${t.nom} : déjà en parfait état.`;
   if (t.reparation) return `${t.nom} est déjà sur l'établi.`;
+  if (enFileDe(G, t)) return `${t.nom} attend déjà dans la file de ${prenomDe(EMPLOYES[enFileDe(G, t)].nom)}.`;
   cible = Math.min(ETATS.length - 1, Math.max(t.etat + 1, cible));
   if (!ouvrier) ouvrier = ouvrierLibre(G, t, cible);
   if (!ouvrier) return messagePasDOuvrier(G);
-  const indispo = ouvrierIndisponible(G, ouvrier);
-  if (indispo) return indispo;
+  if (!EMPLOYES[ouvrier] || !G.employes.includes(ouvrier)) return "Choisis un de tes employés de l'atelier.";
+  if (ouvrierIndisponible(G, ouvrier)) return mettreEnFile(G, t, cible, ouvrier);
+  return commencerReparation(G, t, cible, ouvrier);
+}
+// Le réparateur s'y met : le matériau, les fournitures, et les jours de travail. Renvoie une erreur, ou null.
+function commencerReparation(G, t, cible, ouvrier) {
   const mat = CATEGORIES[t.categorie].materiau;
   const n = materiauxReparation(t, cible);
   if (mat && (G.materiaux[mat] || 0) < n) return `Il te faut ${n} ${MATERIAUX[mat].nom.toLowerCase()} (tu en as ${G.materiaux[mat] || 0}).`;
@@ -2706,6 +2733,54 @@ function reparerTresor(G, t, cible = t.etat + 1, ouvrier = null) {
   payer(G, prix, 'atelier');
   const jours = dureeReparation(G, t, ouvrier, cible);
   t.reparation = { jours, total: jours, ouvrier, cible };   // (v1.62 : `total`, pour la barre d'avancement)
+  return null;
+}
+
+// --- (v1.62) Les files d'attente : chaque réparateur a la sienne (G.filesAtelier[ouvrier] = [{ id, cible }]) ---
+const FILE_MAX_ATELIER = 3;
+function fileAtelier(G, o) {
+  G.filesAtelier = G.filesAtelier || {};
+  // (un objet vendu, ou déjà réparé autrement, quitte la file de lui-même)
+  const f = (G.filesAtelier[o] || []).filter(e => { const t = G.tresors.find(x => x.id === e.id); return t && !t.reparation && t.etat < e.cible; });
+  G.filesAtelier[o] = f;
+  return f;
+}
+// Les objets qui attendent chez ce réparateur, dans l'ordre
+function objetsEnFile(G, o) { return fileAtelier(G, o).map(e => ({ t: G.tresors.find(x => x.id === e.id), cible: e.cible })); }
+// Le réparateur dans la file de qui attend cet objet, ou null
+function enFileDe(G, t) { return Object.keys(G.filesAtelier || {}).find(o => fileAtelier(G, o).some(e => e.id === t.id)) || null; }
+function mettreEnFile(G, t, cible, o) {
+  const f = fileAtelier(G, o);
+  if (f.length >= FILE_MAX_ATELIER) return `La file de ${prenomDe(EMPLOYES[o].nom)} est pleine (${FILE_MAX_ATELIER} objets) : choisis quelqu'un d'autre, ou attends.`;
+  f.push({ id: t.id, cible });
+  return null;
+}
+function retirerDeLaFile(G, t) {
+  const o = enFileDe(G, t);
+  if (o) G.filesAtelier[o] = fileAtelier(G, o).filter(e => e.id !== t.id);
+}
+// Faire passer un objet avant celui qui le précède dans la file
+function avancerDansLaFile(G, t) {
+  const o = enFileDe(G, t); if (!o) return;
+  const f = fileAtelier(G, o), i = f.findIndex(e => e.id === t.id);
+  if (i > 0) [f[i - 1], f[i]] = [f[i], f[i - 1]];
+}
+// Dans combien de jours ce réparateur aura fini ce qui passe avant (sa réparation en cours, puis sa file jusqu'à `avant`)
+function attenteAtelier(G, o, avant = Infinity) {
+  const r = enReparation(G).find(x => x.reparation.ouvrier === o);
+  let j = r ? r.reparation.jours : 0;
+  objetsEnFile(G, o).slice(0, avant).forEach(({ t, cible }) => { j += dureeReparation(G, t, o, cible); });
+  return j;
+}
+// Un réparateur libre prend le premier objet de sa file qu'il peut commencer (matériau, fournitures) ; sinon il attend.
+function prendreSuivant(G, o) {
+  if (!G.employes.includes(o) || ouvrierIndisponible(G, o)) return null;
+  for (const e of fileAtelier(G, o)) {
+    const t = G.tresors.find(x => x.id === e.id);
+    const erreur = commencerReparation(G, t, e.cible, o);
+    if (!erreur) { G.filesAtelier[o] = fileAtelier(G, o).filter(x => x.id !== e.id); if (G.manqueSignale) delete G.manqueSignale[t.id]; return t; }
+    if (!(G.manqueSignale || {})[t.id]) { (G.manqueSignale = G.manqueSignale || {})[t.id] = true; (G.annoncesAtelier = G.annoncesAtelier || []).push(`${prenomDe(EMPLOYES[o].nom)} n'a pas pu commencer ${t.nom} : ${erreur.charAt(0).toLowerCase() + erreur.slice(1)}`); }
+  }
   return null;
 }
 
@@ -2732,6 +2807,7 @@ function embaucher(G, id) {
 // (v1.62) S'il revient un jour, il garde son expérience (son niveau) et son ancienneté.
 function renvoyer(G, id) {
   G.employes = G.employes.filter(e => e !== id);
+  if (G.filesAtelier) delete G.filesAtelier[id];   // (v1.62 : les objets de sa file restent dans leur état)
   // Sa réparation s'arrête ; les matériaux pas encore travaillés te sont rendus.
   for (const t of G.tresors) if (t.reparation && t.reparation.ouvrier === id) {
     const mat = CATEGORIES[t.categorie].materiau;
@@ -2821,6 +2897,9 @@ function avancerAtelier(G) {
     G.reparations++;
     G.nouvellesAtelier.push(`L'atelier a fini : ${t.nom} est maintenant « ${ETATS[t.etat].nom} »${estRestaure(t) ? ' — restauré ★' : ''} (~${valeurTresor(t)} p.).`);
   }
+  // (v1.62) chacun prend la suite de sa file
+  for (const o of G.employes) { const t = prendreSuivant(G, o); if (t) G.nouvellesAtelier.push(`${prenomDe(EMPLOYES[o].nom)} prend la suite de sa file : ${t.nom} → ${ETATS[t.reparation.cible].nom} en ${pluriel(t.reparation.jours, 'jour', 'jours')}.`); }
+  G.nouvellesAtelier.push(...(G.annoncesAtelier || []).splice(0));
 }
 
 // Les enchères : chaque enchérisseur estime le lot selon ses goûts. Un lot de la même

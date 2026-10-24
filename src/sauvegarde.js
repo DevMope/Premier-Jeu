@@ -357,6 +357,7 @@ function mettreAJourPartie(G, brut = G) {
   // (leur niveau, lui, vient de leurs réparations déjà finies)
   G.anciennete = brut.anciennete || G.anciennete || {};
   for (const id of G.employes) if (!(G.anciennete[id] >= 0)) G.anciennete[id] = 0;
+  G.filesAtelier = G.filesAtelier || {};   // (v1.62 : les files d'attente des réparateurs)
   G.materiaux = G.materiaux || {};
   for (const id of Object.keys(MATERIAUX)) if (G.materiaux[id] === undefined) G.materiaux[id] = 0;
   G.mal = G.mal || 0;

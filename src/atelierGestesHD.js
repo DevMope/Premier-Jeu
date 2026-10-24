@@ -41,6 +41,23 @@ function vapeurAtelier(t, x, y, n, graine, r = 6) {
     t.forme('vapeur', ellipsoide(cx, cy, rr, rr * 0.8), { decalage: 0.6 - i * 0.25, bord: false, ombre: false }); }
 }
 
+// des braises qui montent (points incandescents, de plus en plus pâles en s'élevant)
+function braisesAtelier(t, x, y, n, graine, haut = 10, large = 10) {
+  t.rampes.chaud = RAMPE_CHAUD_ATELIER;
+  for (let i = 0; i < n; i++) { const bx = Math.round(x + (hachage(i, 1, graine) - 0.5) * large), by = Math.round(y - hachage(i, 2, graine) * haut);
+    t.poser(bx, by, 'chaud', 5 - Math.round(hachage(i, 3, graine) * 2)); if (hachage(i, 4, graine) > 0.5) t.poser(bx, by + 1, 'chaud', 2); }
+}
+// un éclat de lumière en croix (un reflet sur le métal, une pierre qui brille)
+function eclatAtelier(t, x, y, r, mat = 'eclat') {
+  if (!t.rampes[mat]) t.rampes[mat] = rampe(0xfff0a0);
+  for (let d = -r; d <= r; d++) { t.poser(x + d, y, mat, Math.max(1, 5 - Math.abs(d))); t.poser(x, y + d, mat, Math.max(1, 5 - Math.abs(d))); }
+}
+// des miettes qui tombent (calamine, miettes de cuir, limaille) : de petits traits verticaux
+function miettesAtelier(t, mat, x, y, n, graine, haut = 12, large = 8, niveau = 2) {
+  for (let i = 0; i < n; i++) { const mx = Math.round(x + (hachage(i, 1, graine) - 0.5) * large), my = Math.round(y + hachage(i, 2, graine) * haut);
+    t.poser(mx, my, mat, niveau); if (hachage(i, 3, graine) > 0.6) t.poser(mx, my - 1, mat, niveau + 1); }
+}
+
 // --- Les bras de chaque geste ---
 // Pour chaque bras (proche / loin) : [[u, z, y] du coude, [u, z, y] de la main]. u : en largeurs d'épaule ; z : en pixels
 // de finesse ; y : un entier = k·n sous le haut du torse, sinon une fraction du torse. (Un 4e nombre : la main monte de n px.)
@@ -151,8 +168,16 @@ function posteMarta(etape) {
   avant.contour();
   const fx = toileAtelier(POSTE_L, POSTE_H);
   if (etape === 'frapper') { etincellesAtelier(fx, tete[0] - 1, dessus - 3, 14, 7, 22); for (let a = 0; a < 6.28; a += 0.785) for (let d = 3; d < 7; d++) fx.poser(Math.round(tete[0] - 1 + Math.cos(a) * d * 1.3), Math.round(dessus - 3 + Math.sin(a) * d * 0.6), 'chaud', 5); }
-  if (etape === 'rebond') etincellesAtelier(fx, 116, dessus - 6, 9, 11, 26, 1);
-  if (etape === 'tremper') vapeurAtelier(fx, 154, 132, 4, 5, 7);
+  if (etape === 'rebond') { etincellesAtelier(fx, 116, dessus - 6, 9, 11, 26, 1); braisesAtelier(fx, 124, dessus - 3, 3, 13, 4, 16); }
+  // la lame rouge qui fume un peu, de petites braises qui montent quand le marteau se lève
+  if (etape === 'lever') braisesAtelier(fx, 118, dessus - 4, 5, 17, 12, 24);
+  // un coup sur deux, la calamine (des écailles noires) saute et tombe au pied de l'enclume
+  if (etape === 'frapper') { fx.rampes.calamine = rampe(0x2a2624); miettesAtelier(fx, 'calamine', 140, dessus + 2, 5, 19, 10, 10, 2); }
+  if (etape === 'retourner') { fx.rampes.calamine = rampe(0x2a2624); miettesAtelier(fx, 'calamine', 138, dessus + 4, 6, 23, 16, 8, 1); braisesAtelier(fx, 112, dessus - 3, 2, 29, 5, 12); }
+  // la trempe : la vapeur, l'eau qui bouillonne autour de la lame, et des gouttes qui sautent
+  if (etape === 'tremper') { vapeurAtelier(fx, 154, 132, 4, 5, 7); fx.rampes.eauVive = rampe(0x8ac0e0);
+    for (let i = 0; i < 7; i++) { const bx = Math.round(142 + hachage(i, 1, 31) * 22); fx.poser(bx, 140, 'eauVive', 5); fx.poser(bx + 1, 140, 'eauVive', 3); }
+    for (let i = 0; i < 5; i++) fx.poser(Math.round(144 + hachage(i, 1, 37) * 18), Math.round(132 + hachage(i, 2, 37) * 6), 'eauVive', 4); }
   return fusionAtelier([[fond], [corps, oxC, oyC], [outils], [avant], [fx]]);
 }
 
@@ -206,7 +231,10 @@ function posteTobin(etape) {
   const fx = toileAtelier(POSTE_L, POSTE_H); fx.rampes.limaille = rampe(0xb6c0cc); fx.rampes.goutte = rampe(0x6aa8e0);
   if (etape === 'pousser') for (let i = 0; i < 8; i++) fx.poser(Math.round(100 + hachage(i, 1, 3) * 10), Math.round(104 + hachage(i, 2, 3) * 26), 'limaille', 4 + (i % 2));
   if (etape === 'tirer') for (let i = 0; i < 6; i++) fx.poser(Math.round(86 + hachage(i, 1, 4) * 10), Math.round(110 + hachage(i, 2, 4) * 22), 'limaille', 4);
-  if (etape === 'souffler') vapeurAtelier(fx, 92, 96, 3, 9, 3.5);
+  if (etape === 'pousser') eclatAtelier(fx, 97, 106, 2);   // la lime mord le fil : un éclat
+  if (etape === 'tirer') eclatAtelier(fx, 91, 107, 1);
+  if (etape === 'verifier') { eclatAtelier(fx, 101, 107, 3); eclatAtelier(fx, 88, 108, 1); }   // le fil, net, brille dans la lumière
+  if (etape === 'souffler') { vapeurAtelier(fx, 92, 96, 3, 9, 3.5); miettesAtelier(fx, 'limaille', 96, 100, 5, 41, 8, 14, 4); }
   if (etape === 'front') fx.forme('goutte', ellipsoide(oxC + 36, oyC + corps.reperes.cy - 12, 1.6, 2.4), { decalage: 0.8, ombre: false });
   return fusionAtelier([[corps, oxC, oyC], [meuble], [piece], [outils], [avant], [fx]]);
 }
@@ -258,6 +286,10 @@ function postePip(etape) {
   const fx = toileAtelier(POSTE_L, POSTE_H); fx.rampes.eclat = rampe(0xfff0a0);
   const etoile = (x, y, r) => { for (let d = -r; d <= r; d++) { fx.poser(x + d, y, 'eclat', 5 - Math.abs(d) * 0.6); fx.poser(x, y + d, 'eclat', 5 - Math.abs(d) * 0.6); } };
   if (etape === 'sertir') etoile(anneau[0] + 3, anneau[1] - 6, 2);
+  if (etape === 'sertir2') fx.poser(anneau[0] - 2, anneau[1] - 6, 'eclat', 5);   // la griffe qui se rabat accroche la lumière
+  if (etape === 'saisir') etoile(120, 127, 1);   // la pierre, prise à la pince, brille
+  if (etape === 'poser') { etoile(91, 128, 1); fx.poser(46 * 2 - 2, 55 * 2, 'eclat', 4); }   // posée sur la monture ; le reflet de la loupe
+  if (etape === 'repos') etoile(112, 127, 1);
   if (etape === 'polir') for (const dx of [-7, 6]) { fx.poser(ML[0] + dx, ML[1] + 2, 'eclat', 3); fx.poser(ML[0] + dx + Math.sign(dx), ML[1] + 2, 'eclat', 2); }
   if (etape === 'admirer') { etoile(anneau[0] + 1, anneau[1] - 5, 4); etoile(anneau[0] + 7, anneau[1] - 10, 2); }
   return fusionAtelier([[corps, oxC, oyC], [meuble], [outils], [avant], [fx]]);
@@ -282,10 +314,13 @@ function posteBrann(etape) {
   const cuir = (pt) => { outils.forme('peauT', (x, y) => { const u = x + 0.5 - 95; return x >= 85 && x <= 105 && y >= 92 + Math.round(Math.abs(u) * 0.25) - 2 && y <= 110 ? [u / 12, -0.2, 0.9] : null; }, { decalage: -0.5, motif: (x, y) => (hachage(x, y, 77) > 0.85 ? -0.7 : 0) });
     for (let i = 0; i < pt; i++) outils.poser(88 + i * 3, 95, 'fil', 4); };
   if (etape === 'vide') { outils.contour(); return fusionAtelier([[meuble], [outils]]); }
+  // (le tour `k` : un point de plus sur le cuir à chaque tour, « percer@k », et cinq points à la fin, quand il coupe)
+  const [geste, tour] = etape.split('@'), k = +(tour || 0);
+  etape = geste;
   const corps = corpsReparateur('brann', etape === 'repos' ? null : etape);
   const oxC = 6, oyC = POSTE_SOL - (corps.piedsAssis ?? corps.h - 1) - 1;
   const { ML, MP } = mainsPoste(corps, oxC, oyC);
-  const pt = { percer: 3, passer: 3, tirer: 4, serrer: 4, couper: 5 }[etape] ?? 0;
+  const pt = ({ percer: 2, passer: 2, tirer: 3, serrer: 3 }[etape] ?? 0) + k + (etape === 'couper' ? 5 : 0);
   if (etape !== 'repos') cuir(pt);
   const trou = [88 + pt * 3, 95];
   const fil = (a, b) => { const n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]))); for (let i = 0; i <= n; i++) outils.poser(Math.round(a[0] + (b[0] - a[0]) * i / n), Math.round(a[1] + (b[1] - a[1]) * i / n), 'fil', 4); };
@@ -297,7 +332,12 @@ function posteBrann(etape) {
   const avant = toileAtelier(POSTE_L, POSTE_H);
   if (etape !== 'repos') { poingAtelier(avant, corps, ML, 2.1); poingAtelier(avant, corps, MP, 2.1); }
   avant.contour();
-  return fusionAtelier([[meuble], [corps, oxC, oyC], [outils], [avant]]);
+  const fx = toileAtelier(POSTE_L, POSTE_H); fx.rampes.fil = outils.rampes.fil; fx.rampes.miette = rampe(0x8a5a32); fx.rampes.ombreCuir = rampe(0x3a200e);
+  if (etape === 'percer') miettesAtelier(fx, 'miette', trou[0], trou[1] + 3, 3, 47 + k, 8, 4, 3);   // l'alène traverse : des miettes de cuir
+  if (etape === 'passer' || etape === 'tirer') for (const d of [4, 9]) fx.poser(Math.round(trou[0] + (ML[0] - trou[0]) * d / 14), Math.round(trou[1] + (ML[1] - trou[1]) * d / 14), 'fil', 5);   // le fil ciré brille
+  if (etape === 'serrer') for (const d of [-1, 1]) { fx.poser(trou[0] - 3 + d, 94, 'ombreCuir', 2); fx.poser(trou[0] - 3 + d, 96, 'ombreCuir', 2); }   // le point serré fronce le cuir
+  if (etape === 'couper') for (let i = 0; i < 5; i++) fx.poser(trou[0] + 2 + Math.round(i * 0.4), trou[1] + 6 + i, 'fil', 4);   // le brin coupé qui tombe
+  return fusionAtelier([[meuble], [corps, oxC, oyC], [outils], [avant], [fx]]);
 }
 
 // --- Les gestes : les images clés, leurs durées (ms) et l'ordre où elles se suivent ---
@@ -305,12 +345,13 @@ function posteBrann(etape) {
 const GESTES_ATELIER = {
   marta: { dessin: posteMarta, images: ['lever', 'frapper', 'rebond', 'retourner', 'tremper'], durees: { lever: 180, frapper: 70, rebond: 120, retourner: 300, tremper: 600 },
     boucle: tour => [...Array(3)].flatMap(() => ['lever', 'frapper', 'rebond']).concat(tour % 3 === 2 ? ['retourner', 'tremper'] : ['retourner']) },
+  // (Tobin garde son geste du front, même formé : demande du joueur)
   tobin: { dessin: posteTobin, images: ['pousser', 'tirer', 'souffler', 'verifier', 'front'], durees: { pousser: 220, tirer: 220, souffler: 400, verifier: 500, front: 600 },
-    boucle: (tour, forme) => [...Array(6)].flatMap(() => ['pousser', 'tirer']).concat(['souffler', 'verifier'], !forme && tour % 4 === 3 ? ['front'] : []) },
+    boucle: tour => [...Array(6)].flatMap(() => ['pousser', 'tirer']).concat(['souffler', 'verifier'], tour % 4 === 3 ? ['front'] : []) },
   pip: { dessin: postePip, images: ['saisir', 'poser', 'sertir', 'sertir2', 'polir', 'admirer'], durees: { saisir: 300, poser: 300, sertir: 90, sertir2: 90, polir: 200, admirer: 700 },
     boucle: () => ['saisir', 'poser', 'sertir', 'sertir2', 'sertir', 'sertir2', 'sertir', 'sertir2', 'sertir', 'polir', 'sertir2', 'polir', 'admirer'] },
-  brann: { dessin: posteBrann, images: ['percer', 'passer', 'tirer', 'serrer', 'couper'], durees: { percer: 220, passer: 220, tirer: 260, serrer: 160, couper: 500 },
-    boucle: () => [...Array(3)].flatMap(() => ['percer', 'passer', 'tirer', 'serrer']).concat(['couper']) },
+  brann: { dessin: posteBrann, images: [0, 1, 2].flatMap(k => ['percer', 'passer', 'tirer', 'serrer'].map(e => `${e}@${k}`)).concat(['couper']), durees: { percer: 220, passer: 220, tirer: 260, serrer: 160, couper: 500 },
+    boucle: () => [0, 1, 2].flatMap(k => ['percer', 'passer', 'tirer', 'serrer'].map(e => `${e}@${k}`)).concat(['couper']) },
 };
 const REPARATEURS_ATELIER = ['tobin', 'marta', 'brann', 'pip'];   // l'ordre des postes, de gauche à droite
 
@@ -322,20 +363,36 @@ function texturePosteAtelier(scene, id, etape) {
 }
 
 // Fait travailler un réparateur à son poste : une minuterie qui passe d'une image clé à la suivante.
-// Renvoie un objet { arreter() }. `forme` : pour Tobin, qui ne s'essuie plus le front une fois formé.
+// Renvoie un objet { arreter() }.
 function animerPosteAtelier(scene, img, id, { forme = false } = {}) {
   const g = GESTES_ATELIER[id];
-  for (const e of g.images) texturePosteAtelier(scene, id, e);
+  // (les images se dessinent la première fois qu'on les montre : l'atelier s'ouvre sans attendre)
   let tour = 0, suite = g.boucle(0, forme), i = 0, minuterie = null, fini = false;
   const pas = () => {
     if (fini || !img.active) return;
     if (i >= suite.length) { tour++; suite = g.boucle(tour, forme); i = 0; }
     const e = suite[i++];
-    img.setTexture(`posteHD_${id}_${e}`);
-    minuterie = scene.time.delayedCall(g.durees[e], pas);
+    img.setTexture(texturePosteAtelier(scene, id, e));
+    minuterie = scene.time.delayedCall(g.durees[e.split('@')[0]], pas);
   };
   pas();
   return { arreter() { fini = true; if (minuterie) minuterie.remove(); } };
+}
+
+// Les braises du foyer de Marta, en trois images qui se succèdent (posées par-dessus la pièce, ×2, en 438, 138)
+function creerBraisesForgeHD(scene) {
+  for (let n = 0; n < 3; n++) {
+    const cle = 'braisesForgeHD_' + n; if (scene.textures.exists(cle)) continue;
+    const t = toileDecor(16, 10); t.rampes.braise = RAMPE_CHAUD_ATELIER;
+    for (let y = 0; y < 10; y++) for (let x = 0; x < 16; x++) t.poser(x, y, 'braise', y < 3 ? 1 + Math.round(hachage(x, y, 50 + n) * 1.4) : 2 + Math.round(hachage(x, y + n * 7, 12 + n) * 3));
+    for (let i = 0; i < 3; i++) t.poser(Math.round(2 + hachage(i, n, 61) * 12), Math.round(hachage(i, n, 67) * 3), 'braise', 5);   // une flammèche
+    t.texture(scene, cle);
+  }
+}
+function animerBraisesForge(scene, img) {
+  let n = 0;
+  const pas = () => { if (!img.active) return; n = (n + 1 + (Math.random() < 0.3 ? 1 : 0)) % 3; img.setTexture('braisesForgeHD_' + n); scene.time.delayedCall(160 + Math.random() * 180, pas); };
+  scene.time.delayedCall(200, pas);
 }
 
 // La pièce de l'atelier : le mur, le lambris, le plancher, le râtelier (armes et armures), le panneau d'outils, la hotte du
