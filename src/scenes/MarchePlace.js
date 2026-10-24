@@ -526,7 +526,10 @@ Object.assign(MarcheScene.prototype, {
   // Le cadre : la place suit JeuneGoy ; panneau ouvert, on recule un peu pour voir le lieu au-dessus du panneau
   cadrerPlace(instantane = false, cle = null) {
     const P = PLACE_MARCHE, place = this.place;
-    let z = P.zoom, fx = this.heros.x, fy = this.heros.y - 40, sy = 270;
+    // (v1.62) au départ de la visite de Garrick (et pendant la question), on cadre un peu plus bas : l'écriteau du mendiant
+    // passe au-dessus des boutons, et rien d'écrit ne reste à moitié sous le titre
+    const depart = this.visite && !this.visite.fini && this.visite.i < 0;
+    let z = P.zoom, fx = this.heros.x, fy = this.heros.y - (depart ? -12 : 40), sy = 270;
     if (cle) { z = PETITS_LIEUX.includes(cle) ? P.zoom * 1.2 : P.zoomPanneau; [fx, fy] = LIEUX_PLACE[cle]; sy = PETITS_LIEUX.includes(cle) ? 262 : 250; }
     // (v1.61) lieu ouvert : le bas de la place peut monter derrière le cadre, pour que le mendiant (tout en bas) reste visible
     const x = Phaser.Math.Clamp(480 - fx * z, 960 - P.L * z, 0), y = Phaser.Math.Clamp(sy - fy * z, (cle ? 300 : 478) - P.H * z, 0);
@@ -702,6 +705,7 @@ Object.assign(MarcheScene.prototype, {
     gar.on('pointerdown', () => { if (this.visite === v && v.phase === 'parle' && !v.fini && !this.bloquePlace()) this.suiteVisite(); });
     this.vueHeros = 'profil'; this.versGauche = false; this.poserHeros(0);   // (JeuneGoy se tourne vers lui)
     if (this.boutonCommandes) this.boutonCommandes.setVisible(false);   // (le temps de la visite, ses étapes prennent le haut de l'écran)
+    if (typeof retenirVignettes === 'function') { retenirVignettes(true, this); this.events.once('shutdown', () => retenirVignettes(false)); }   // (les vignettes attendent la fin de la visite)
     const nm = this.nouvellesMatin;
     if (nm && nm.active && nm.alpha > 0) { this.tweens.killTweensOf(nm); this.tweens.add({ targets: nm, alpha: 0, delay: 1200, duration: 400 }); nm.setY(Math.max(nm.y, 88)); }   // (les nouvelles du matin, sous les étapes, puis elles s'effacent)
     this.etapesVisite(); this.barreVisite(true);
@@ -800,6 +804,7 @@ Object.assign(MarcheScene.prototype, {
     v.bulle = v.barre = null; v.trace.clear();
     G.tutoVu = G.tutoVu || {}; G.tutoVu.marche = true; G.tutoVu.place = true; G.tuto = false;   // (une seule fois : la place est expliquée)
     delete G.visiteMarche; delete G.revoirVisite;
+    if (typeof retenirVignettes === 'function') retenirVignettes(false, this);
     if (presse || ignore) this.bulleSur(g, `« ${(ignore ? VISITE_MARCHE.ignore : VISITE_MARCHE.presse).replaceAll('{J}', eJ(G))} »`, { nom: 'Garrick', race: 'humain' });
     const [ax, ay] = this.devantLieu('arche');
     v.chemin = this.itineraire(g.x, g.y, ax, ay); v.cible = v.chemin.shift() || [ax, ay];

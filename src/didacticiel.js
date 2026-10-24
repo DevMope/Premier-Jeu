@@ -170,10 +170,11 @@ function marquerAide(G, cle) { if (!G) return; G.aidesVues = G.aidesVues || {}; 
 // (planche 68 : une seule à la fois ; les suivantes attendent leur tour)
 function vignetteGuide(s, entete, titre, texte, options = {}) {
   s._fileVignettes = s._fileVignettes || [];
-  if (s._vignette && s._vignette.active) { s._fileVignettes.push([entete, titre, texte, options]); return null; }
+  // (v1.62) pendant la visite du marché avec Garrick, les vignettes attendent la fin : elles cacheraient ses étapes et sa bulle
+  if ((s._vignette && s._vignette.active) || window.vignettesEnAttente) { s._fileVignettes.push([entete, titre, texte, options]); return null; }
   const { x = 760, y = 92, prof = 160, duree = 4200 } = options;
   const c = s.add.container(x, y).setDepth(prof).setScrollFactor(0);
-  s._vignette = c;
+  s._vignette = c; c.args = [entete, titre, texte, options];
   c.once('destroy', () => { s._vignette = null; const suite = s._fileVignettes.shift();
     if (!s.sys.isActive()) s._fileVignettes = []; else if (suite) s.time.delayedCall(200, () => vignetteGuide(s, ...suite)); });
   const t1 = s.add.text(-176, -26, entete, style(11, '#8ab0d0', { fontStyle: 'bold' }));
@@ -188,6 +189,18 @@ function vignetteGuide(s, entete, titre, texte, options = {}) {
   zone.on('pointerdown', () => { s.tweens.killTweensOf(c); c.destroy(); });
   c.add(zone);
   return c;
+}
+// (v1.62) Retenir les vignettes (oui), ou les montrer enfin, l'une après l'autre (non), dans le bandeau et dans `scene`
+function retenirVignettes(oui, scene = null) {
+  window.vignettesEnAttente = !!oui;
+  if (oui) {   // (celle qui est déjà à l'écran se range dans la file : on la reverra à la fin)
+    for (const s of [window.jeu && jeu.scene.getScene('Hud'), scene]) if (s && s._vignette && s._vignette.active) { const c = s._vignette; s._fileVignettes.unshift(c.args); s.tweens.killTweensOf(c); c.destroy(); }
+    return;
+  }
+  for (const s of [window.jeu && jeu.scene.getScene('Hud'), scene]) {
+    if (!s || !s.sys || !s.sys.isActive() || !s._fileVignettes || !s._fileVignettes.length || (s._vignette && s._vignette.active)) continue;
+    const suite = s._fileVignettes.shift(); s.time.delayedCall(300, () => vignetteGuide(s, ...suite));
+  }
 }
 // un petit cadenas (glyphe pixel, comme les autres pictos de l'interface)
 function texCadenas(s) {

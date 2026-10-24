@@ -1205,11 +1205,9 @@ class MarcheScene extends Phaser.Scene {
     this.tweens.add({ targets: corps, scaleY: echelle * 1.01, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // il respire
     const buste = corps;
     // sa sébile ébréchée, et les quelques pièces dedans
-    if (coin) c.add(this.add.image(520, 488, sebileHD(this, 24, 0.45, Math.min(6, Math.ceil((G.mendiant || 0) / 5)))).setOrigin(0.5, 1).setScale(2));   // (v1.62 : une vraie sébile de bois, ébréchée)
-    else {
-      c.add(this.add.ellipse(520, 478, 54, 16, 0x5a4a3a).setStrokeStyle(2, 0x2a1a10));
-      for (let k = 0; k < Math.min(6, Math.ceil((G.mendiant || 0) / 5)); k++) c.add(this.add.ellipse(506 + k * 6, 475 - (k % 2) * 2, 8, 4, 0xe8c040));
-    }
+    // (v1.62) une seule sébile : celle qu'il tient dans ses mains ; les pièces données y tombent, et s'y voient
+    const SEBILE = [373, 374];
+    for (let k = 0; k < Math.min(4, Math.ceil((G.mendiant || 0) / 8)); k++) c.add(this.add.ellipse(SEBILE[0] - 7 + k * 5, SEBILE[1] - 1 + (k % 2), 5, 3, 0xe8c040).setStrokeStyle(1, 0x8a6a14));
     const chien = this.add.image(660, 486, chienHD(this, 'profil', true)).setOrigin(0.5, 1).setScale(2.2).setFlipX(true); c.add(chien);
     if (coin) c.add(this.add.image(592, 499, gamelleHD(this, 22, 0.45)).setOrigin(0.5, 1).setScale(2));   // (la gamelle de Brisquet, sous son nez)
     this.tweens.add({ targets: chien, scaleY: 2.24, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -1241,7 +1239,7 @@ class MarcheScene extends Phaser.Scene {
         if (!merci) return this.message(manqueArgent(G, n, "Tu n'as pas assez d'argent."), '#a03030');
         this.majInfos();
         // (v0.68) les pièces volent jusqu'à sa sébile, puis il pense à ce qu'il va en faire
-        voleePieces(this, 150 + i * 170, 500, 520, 474, n, { conteneur: c, fin: () => {
+        voleePieces(this, 150 + i * 170, 500, SEBILE[0], SEBILE[1], n, { conteneur: c, fin: () => {
           if (!c.active) return;
           if (merci.medaille) return this.cinematiqueMedaille(c, buste, raconter);
           raconter(merci);
