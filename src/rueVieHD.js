@@ -3,7 +3,7 @@
 // déborde), et tout ce qui vit autour : chez les Brindeloup, les jardinières, le lierre, les bûches et leur chat qui
 // dort, le panier, le balai, les sabots, le bidon, le romarin, le linge ; des pigeons, un moineau, de l'herbe, des
 // papillons, des abeilles, une libellule, des poissons rouges. Rien ne glisse : chaque bête a ses images. La nuit et
-// en hiver, ni fleurs ni insectes. L'été, des bottes de paille rangées dans le creux entre les Brindeloup et le barbier.
+// en hiver, ni fleurs ni insectes. L'été, des bottes de paille (saisonsHD.js) rangées dans le creux entre les Brindeloup et le barbier.
 // (planche 80, porche A) L'arche du marché devient un porche couvert, vu depuis la rue, la place au travers.
 // Les décors sont peints en demi-résolution (affichés ×2, comme les façades) ; les bêtes à la finesse des personnages.
 
@@ -253,26 +253,6 @@ function objetsRueHD(s) {
       for (const sx of [0, 9]) for (let y = 4; y < 9; y++) t.poser(x0 + sx + dec(y), y0 + y + 1, 'lin', 4);                       // (les cordons qui pendent)
       t.poser(x0 + 3, y0 - 1, 'cheneSombre', 2); t.poser(x0 + 6, y0 - 1, 'cheneSombre', 2); }
     t.contour(); t.texture(s, 'lingeRue_' + f); }
-  // (l'été) deux bottes de paille l'une sur l'autre, bien carrées, liées de deux ficelles, et la fourche appuyée
-  // contre elles ; un peu de paille tombée au pied. Posées sur le sol, dans le creux entre deux maisons.
-  { const L = 34, H = 30, t = T(L, H), sol = H - 1;
-    const botte = (x0, y0, l, h, g) => {
-      for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + l; x++) {
-        const bord = x === x0 || x === x0 + l - 1 || y === y0 + h - 1, dessus = y === y0;
-        const ficelle = x === x0 + Math.round(l * 0.28) || x === x0 + Math.round(l * 0.72);
-        if (ficelle && !dessus) { t.poser(x, y, 'chanvre', 1); continue; }
-        t.poser(x, y, 'paille', dessus ? 5 : bord ? 2 : 3 + (hachage(x, y >> 1, g) > 0.7 ? 1 : 0) - (hachage(x >> 1, y, g + 1) > 0.85 ? 1 : 0) - (y > y0 + h - 3 ? 1 : 0));
-      }
-      for (let k = 0; k < 6; k++) t.poser(x0 + Math.round(hachage(k, 1, g) * (l - 1)), y0 - 1, 'paille', 4);   // (des brins qui dépassent)
-    };
-    botte(1, sol - 11, 26, 12, 8191);
-    botte(4, sol - 22, 22, 11, 8193);
-    // la fourche de bois, appuyée contre les bottes, ses trois dents en haut
-    for (let k = 0; k < 28; k++) { const x = Math.round(31 - k * 0.12), y = sol - k; t.poser(x, y, 'chene', 3); t.poser(x + 1, y, 'chene', 1); }
-    for (const dx of [-2, 0, 2]) for (let k = 0; k < 4; k++) t.poser(Math.round(27.6 + dx), sol - 28 - k, 'chene', 4);
-    for (let x = 25; x <= 30; x++) t.poser(x, sol - 28, 'chene', 2);
-    for (let k = 0; k < 9; k++) { const x = Math.round(hachage(k, 3, 8195) * (L - 2)); t.poser(x, sol, 'paille', 3); t.poser(x + 1, sol, 'paille', 2); }
-    t.contour(); t.texture(s, 'bottesPailleRue'); }
 }
 
 // ---------- les petites bêtes, à la finesse des personnages (×1) ----------
@@ -345,18 +325,128 @@ function betesRueHD(s) {
 // sont ouverts vers la place (ils fuient vers le fond, derrière les poteaux) ; une palissade de part et d'autre. Par
 // l'ouverture, la place : colorée le jour, endormie la nuit. Les chaînes de l'écriteau pendent sous le linteau.
 const PORCHE_RUE = { L: 176, H: 152, poteaux: [26, 150], linteau: 22, chaines: [68, 108] };
-function porcheRueHD(scene) {
-  if (scene.textures.exists('porcheRueHD')) return;
-  const { L, H, poteaux: [pg, pd], linteau } = PORCHE_RUE, sol = H - 1;
-  for (const jour of [false, true]) {
+
+// La place du marché vue par le porche, selon la saison et l'heure : les maisons du fond (neige sur les toits l'hiver,
+// fenêtres allumées la nuit), deux arbres (en fleurs, verts, roux, nus), la petite fontaine de la place (gelée l'hiver),
+// deux étals (bâchés la nuit) et ce qu'on y vend selon la saison, les guirlandes, les passants le jour, une lanterne la
+// nuit. Tout est peint dans l'ouverture [x0, x1[ × [haut, sol] de la toile du porche.
+function peindrePlacePorche(t, x0, x1, haut, sol, jour, saison) {
+  const S = saison || 'moissons', hiver = S === 'givre', n = jour ? 0 : -2;
+  const dans = (x, y) => x >= x0 && x < x1 && y >= haut && y <= sol;
+  const P = (x, y, m, k) => { if (dans(x, y)) t.poser(x, y, m, Math.max(0, Math.min(5, Math.round(k)))); };
+  const ciel = jour ? { semailles: 0x9ad4f0, moissons: 0x8cc4ec, brumes: 0xa8b4c4, givre: 0xbccce0 }[S] : 0x161c30;
+  const feuillage = { semailles: 0x6cc050, moissons: 0x3a8a30, brumes: 0xd06a28, givre: 0x6a5a48 }[S];
+  const tissus = { semailles: [0xe878a8, 0x7ac0e8], moissons: [0xc83a2a, 0x2a5ab8], brumes: [0xc86a20, 0x8a3a1a], givre: [0x2a7a3a, 0xb82a2a] }[S];
+  Object.assign(t.rampes, { cielP: rampe(ciel), neige: [0x8a96a8, 0xaab6c8, 0xc8d2e0, 0xdce4ee, 0xeef2f8, 0xffffff], feuillageP: rampe(feuillage),
+    fleurP: rampeVive(0xf8b0d0), tissuA: rampe(tissus[0]), tissuB: rampe(tissus[1]), fanionR: rampe(0xc83a2a), fanionB: rampe(0x2a5ab8), fanionJ: rampe(0xe0b030),
+    fanionV: rampe(0x3a8a3a), sapin: rampe(0x2a6a30), peauF: rampe(0xd8a070), habitA: rampe(hiver ? 0x3a2a4a : 0x8a3a3a), habitB: rampe(hiver ? 0x2a3a5a : 0x3a6a9a),
+    habitC: rampe(hiver ? 0x4a3a2a : 0x5a8a3a), habitD: rampe(hiver ? 0x5a2a2a : 0x8a6a9a), citrouille: rampeVive(0xe0701a), pomme: rampeVive(0xc8382a),
+    pain: rampe(0xc8904a), ble: rampe(0xd8b048), eauP: rampe(hiver ? 0xc8e0ec : 0x4a9ac8), gresP: rampe(0xb8a07a), braise: RAMPES_RUE.braise, bache: rampe(0x6a5a44) });
+  // le ciel (la nuit, quelques étoiles)
+  for (let y = haut; y <= sol; y++) for (let x = x0; x < x1; x++) P(x, y, 'cielP', jour ? 3 + (y > haut + 30 ? 1 : 0) : 1 - (y < haut + 12 ? 1 : 0));
+  if (!jour) for (let k = 0; k < 9; k++) P(x0 + Math.floor(hachage(k, 1, 8230) * (x1 - x0)), haut + 2 + Math.floor(hachage(k, 2, 8230) * 26), 'vitre', 5);
+  const base = sol - 39;   // (le pied des maisons du fond : la place commence là)
+  // les maisons du fond : un pignon de tuiles ou d'ardoises, des fenêtres, une porte
+  [[x0 - 2, 20, 40, 'platre', 'tuile'], [x0 + 17, 25, 50, 'pierre', 'ardoiseToit'], [x0 + 41, 18, 36, 'platre', 'tuile'], [x0 + 58, 27, 54, 'pierre', 'tuile'],
+   [x0 + 84, 18, 42, 'platre', 'ardoiseToit'], [x0 + 101, 22, 46, 'pierre', 'tuile']].forEach(([hx, hl, hh, mur, toit], i) => {
+    const cx = hx + hl / 2, top = base - hh, rh = 11;
+    for (let y = top; y < base; y++) for (let x = hx; x < hx + hl; x++) {
+      const dy = y - top;
+      if (dy < rh) {   // le pignon
+        const demi = dy * (hl / 2 + 1) / rh; if (Math.abs(x + 0.5 - cx) > demi) continue;
+        const bord = Math.abs(x + 0.5 - cx) > demi - 1.6;
+        if (hiver && (bord || dy < 2)) P(x, y, 'neige', 4 + n / 2);
+        else P(x, y, toit, (bord ? 1 : 2 + ((dy % 3) === 0 ? 1 : 0)) + n);
+        continue;
+      }
+      const fy = (dy - rh - 3) % 11, fx = (x - hx - 3) % 7, fen = fx >= 0 && fx < 3 && fy >= 0 && fy < 4 && y < base - 8 && x < hx + hl - 3;
+      const porte = i % 2 === 0 && Math.abs(x + 0.5 - cx) < 2.5 && y >= base - 7;
+      if (porte) { P(x, y, 'cheneSombre', 2 + n); continue; }
+      if (fen) { const allumee = !jour && hachage(Math.floor((x - hx) / 7), Math.floor((dy - rh) / 11), 8231 + i) > 0.45; P(x, y, allumee ? 'vitre' : 'vitreNoire', allumee ? 4 + (fy === 0 ? 1 : 0) : jour ? 3 - (fy > 1 ? 1 : 0) : 1); continue; }
+      if (hiver && fy === 4 && fx >= -1 && fx < 4 && y < base - 7) { P(x, y, 'neige', 5 + n / 2); continue; }   // (la neige sur les appuis)
+      P(x, y, mur, 2 + (x === hx ? 1 : 0) - (x === hx + hl - 1 ? 1 : 0) + n);
+    }
+  });
+  // deux arbres de la place, devant les maisons
+  for (const [ax, g] of [[x0 + 20, 8232], [x0 + 95, 8233]]) {
+    for (let y = base - 14; y <= base + 2; y++) { P(ax, y, 'chene', 3 + n); P(ax + 1, y, 'chene', 1 + n); }
+    if (hiver) {   // des branches nues, la neige posée dessus
+      for (const [dx, dy] of [[-7, -9], [7, -10], [-4, -14], [5, -15], [0, -17]]) for (let k = 0; k <= 8; k++) { const x = Math.round(ax + dx * k / 8), y = Math.round(base - 12 + dy * k / 8); P(x, y, 'chene', 2 + n); if (k > 3) P(x, y - 1, 'neige', 5 + n / 2); }
+    } else {
+      for (let y = base - 30; y <= base - 10; y++) for (let x = ax - 11; x <= ax + 11; x++) {
+        const d = Math.hypot((x + 0.5 - ax) / 11, (y + 0.5 - (base - 20)) / 10); if (d > 1) continue;
+        if (S === 'brumes' && hachage(x, y, g) > 0.78) continue;   // (l'automne : les feuilles tombent)
+        P(x, y, 'feuillageP', 2 + (y < base - 22 ? 1 : 0) + (x < ax ? 1 : 0) - (d > 0.85 ? 1 : 0) + (hachage(x >> 1, y >> 1, g) > 0.7 ? 1 : 0) + n);
+        if (S === 'semailles' && hachage(x, y, g + 1) > 0.86) P(x, y, 'fleurP', 4 + n);   // (les fleurs du printemps)
+        if (S === 'brumes' && hachage(x, y, g + 2) > 0.85) P(x, y, 'fanionJ', 3 + n);
+      }
+    }
+  }
+  // le sol de la place : pavé, poussière d'été, herbe du printemps, feuilles rousses, ou neige et ses traces
+  for (let y = base; y <= sol; y++) for (let x = x0; x < x1; x++) {
+    const v = (y - base) / (sol - base), pas = 3 + v * 7, rang = Math.floor(Math.pow(v, 0.7) * 9), joint = ((x - x0) / pas + rang * 0.5) % 1 < 0.14 || (y - base) % Math.max(2, Math.round(pas * 0.5)) === 0;
+    if (hiver) { const trace = Math.abs(x - (x0 + 57 + (y - base) * 0.4)) < 2 || Math.abs(x - (x0 + 30 - (y - base) * 0.3)) < 1.5; P(x, y, trace ? 'pierre' : 'neige', (trace ? 2 : 4 - (joint ? 1 : 0)) + n); continue; }
+    P(x, y, 'pierre', (joint ? 1 : 3 + (S === 'moissons' ? 1 : 0)) + n - (v < 0.15 ? 1 : 0));
+    if (S === 'semailles' && hachage(x, y, 8234) > 0.95) P(x, y, 'feuillageP', 3 + n);
+    if (S === 'brumes' && hachage(x, y, 8235) > 0.9) P(x, y, hachage(x, y, 8236) > 0.5 ? 'feuillageP' : 'fanionJ', 3 + n);
+  }
+  // la petite fontaine de la place, au milieu (l'hiver, son eau est gelée et ne coule plus)
+  { const fx = x0 + 57, fy = base + 9;
+    for (let y = fy - 4; y <= fy + 3; y++) for (let x = fx - 13; x <= fx + 13; x++) { const d = ((x + 0.5 - fx) / 13) ** 2 + ((y + 0.5 - fy) / 3.5) ** 2; if (d <= 1) P(x, y, d < 0.55 && y <= fy ? 'eauP' : 'gresP', (d < 0.55 && y <= fy ? 3 : y > fy ? 2 : 4) + n); }
+    for (let y = fy - 14; y < fy - 2; y++) { P(fx, y, 'gresP', 4 + n); P(fx + 1, y, 'gresP', 2 + n); }
+    for (let x = fx - 5; x <= fx + 6; x++) { P(x, fy - 14, 'gresP', 4 + n); P(x, fy - 13, 'gresP', 2 + n); }
+    if (hiver) for (let x = fx - 5; x <= fx + 6; x++) P(x, fy - 15, 'neige', 5 + n / 2);
+    else if (jour) for (const k of [1, 3, 5]) { P(fx - 6, fy - 13 + k, 'eauP', 4); P(fx + 7, fy - 13 + k, 'eauP', 4); } }
+  // deux étals : l'auvent rayé (bâché la nuit, neigeux l'hiver), les montants, la table, la marchandise de la saison
+  for (const [ex, el, i] of [[x0 + 3, 26, 0], [x0 + 84, 27, 1]]) {
+    const ya = base + 2, yt = base + 15;
+    for (let y = ya; y < ya + 6; y++) for (let x = ex - (y - ya) / 2; x < ex + el + (y - ya) / 2; x++) {
+      const xr = Math.round(x), raye = Math.floor((xr - ex) / 3) % 2;
+      if (hiver && y < ya + 2) { P(xr, y, 'neige', 5 + n / 2); continue; }
+      P(xr, y, !jour ? 'bache' : raye ? (i ? 'tissuB' : 'tissuA') : 'parchemin', (jour ? 3 : 2) + (y === ya ? 1 : 0) - (y === ya + 5 ? 1 : 0) + (jour ? 0 : n / 2));
+    }
+    for (const px of [ex, ex + el - 2]) for (let y = ya + 6; y < yt + 9; y++) { P(px, y, 'chene', 2 + n); P(px + 1, y, 'chene', 1 + n); }
+    for (let y = yt; y < yt + 3; y++) for (let x = ex - 1; x < ex + el + 1; x++) P(x, y, jour ? 'chene' : 'bache', (y === yt ? 4 : 2) + n);
+    if (!jour) { for (let y = yt - 5; y < yt; y++) for (let x = ex + 1; x < ex + el - 1; x++) P(x, y, 'bache', 2 + n / 2 + (y === yt - 5 ? 1 : 0)); continue; }   // (la marchandise, sous sa bâche)
+    for (let x = ex + 1; x < ex + el - 1; x += 3) {
+      const m = S === 'semailles' ? ['fleurP', 'feuillageP', 'fanionJ'][(x + i) % 3] : S === 'moissons' ? ['pain', 'ble', 'pomme'][(x + i) % 3] : S === 'brumes' ? ['citrouille', 'pomme', 'pain'][(x + i) % 3] : ['pain', 'sapin'][(x + i) % 2];
+      P(x, yt - 1, m, 4); P(x + 1, yt - 1, m, 3); P(x, yt - 2, m, 3);
+    }
+    if (S === 'moissons' && i === 0) for (const gx of [ex - 4, ex - 2]) { for (let y = yt - 6; y < yt + 9; y++) P(gx, y, 'ble', y < yt - 3 ? 5 : 3); P(gx - 1, yt - 6, 'ble', 4); P(gx + 1, yt - 6, 'ble', 4); P(gx, yt + 2, 'chanvre', 2); }   // (deux gerbes de blé, appuyées contre l'étal)
+    if (S === 'brumes' && i === 1) for (const [cx, cy] of [[ex + el + 3, yt + 7], [ex + el + 6, yt + 8]]) for (let y = cy - 2; y <= cy + 1; y++) for (let x = cx - 2; x <= cx + 2; x++) P(x, y, 'citrouille', 3 + (x < cx ? 1 : 0));   // (des citrouilles au pied de l'étal)
+    if (hiver && i === 1) { for (let x = ex + el + 2; x < ex + el + 7; x++) P(x, yt + 5, 'fer', 2); for (let x = ex + el + 3; x < ex + el + 6; x++) P(x, yt + 4, 'braise', 4); for (let y = yt + 6; y < yt + 9; y++) P(ex + el + 4, y, 'fer', 1); }   // (le brasero du marchand de marrons)
+  }
+  // les guirlandes, d'un côté à l'autre (l'hiver, du sapin et des nœuds rouges)
+  for (const [ya, creux] of [[haut + 14, 7], [haut + 28, 5]]) for (let x = x0; x < x1; x++) {
+    const u = (x - x0) / (x1 - x0), y = Math.round(ya + Math.sin(u * Math.PI) * creux);
+    P(x, y, hiver ? 'sapin' : 'chene', (hiver ? 3 : 1) + n);
+    if (hiver) { if ((x - x0) % 9 === 0) { P(x, y + 1, 'fanionR', 4 + n); P(x, y + 2, 'fanionR', 3 + n); } else P(x, y + 1, 'sapin', 2 + n); continue; }
+    if ((x - x0) % 6 < 4) { const m = (S === 'brumes' ? ['fanionR', 'fanionJ', 'tissuA', 'tissuB'] : ['fanionR', 'fanionB', 'fanionJ', 'fanionV'])[Math.floor((x - x0) / 6) % 4];
+      for (let k = 1; k <= 4 - Math.abs(((x - x0) % 6) - 1.5) * 1.2; k++) P(x, y + k, m, 3 + n); }
+  }
+  // les passants, le jour (l'hiver, en manteau, bonnet et écharpe) ; la nuit, une lanterne veille sur la place endormie
+  if (jour) for (const [fx, m, grand] of [[x0 + 14, 'habitA', 0], [x0 + 33, 'habitB', 2], [x0 + 48, 'habitC', 1], [x0 + 70, 'habitD', 0], [x0 + 79, 'habitA', 2], [x0 + 104, 'habitB', 1]]) {
+    const pied = sol - 3 - (fx % 3), tete = pied - 19 - grand * 2;
+    for (let y = tete + 4; y < pied; y++) for (let x = fx - 3; x <= fx + 3; x++) if (Math.abs(x + 0.5 - fx) < (y < tete + 11 ? 3 : 2.4) && !(y > pied - 5 && Math.abs(x + 0.5 - fx) < 0.8)) P(x, y, m, 2 + (x < fx ? 1 : 0) - (y > pied - 4 ? 1 : 0));
+    for (let y = tete; y < tete + 4; y++) for (let x = fx - 2; x <= fx + 1; x++) P(x, y, 'peauF', 3 + (x < fx ? 1 : 0));
+    if (hiver) { for (let x = fx - 2; x <= fx + 1; x++) P(x, tete, 'neige', 5); for (let x = fx - 3; x <= fx + 3; x++) P(x, tete + 4, 'fanionR', 3); }
+  }
+  else { const lx = x0 + 40; for (let y = base - 6; y < sol - 6; y++) P(lx, y, 'fer', 2); for (let y = base - 12; y < base - 6; y++) for (let x = lx - 2; x <= lx + 2; x++) P(x, y, x === lx - 2 || x === lx + 2 ? 'fer' : 'vitre', x === lx - 2 || x === lx + 2 ? 1 : 5); }
+  // des caisses et un tonneau, devant, de part et d'autre (la neige dessus, l'hiver)
+  for (const [cx, cl, ch] of [[x0 + 2, 8, 7], [x1 - 15, 9, 8], [x1 - 9, 6, 5]]) for (let y = sol - ch; y <= sol; y++) for (let x = cx; x < cx + cl; x++)
+    P(x, y, hiver && y === sol - ch ? 'neige' : 'chene', (hiver && y === sol - ch ? 5 : (x === cx || y === sol - ch ? 4 : 2) + ((x + y) % 4 === 0 ? -1 : 0)) + n);
+}
+
+// Le porche, pour la saison du jour et l'heure (une texture par saison, faite la première fois qu'on en a besoin)
+function porcheRueHD(scene, jour = true) {
+  const saison = (typeof saisonActuelle === 'function' && saisonActuelle()) || 'moissons';
+  const cle = 'porcheRueHD_' + saison + (jour ? '_jour' : '_nuit');
+  if (scene.textures.exists(cle)) return cle;
+  const { L, H, poteaux: [pg, pd], linteau } = PORCHE_RUE, sol = H - 1, hiver = saison === 'givre';
+  {
     const t = toileDecor(L, H); Object.assign(t.rampes, RAMPES_RUE); t.rampes.gres = rampe(0xb8a07a);
-    t.rampes.ciel = rampe(jour ? 0x9ac4e8 : 0x141a2a);
-    // l'ouverture : le ciel au-dessus de la place, puis la place elle-même (en deux morceaux : elle est plus large que l'arche)
     const x0 = pg + 5, x1 = pd - 4, haut = linteau + 7;
-    for (let y = haut; y <= sol; y++) for (let x = x0; x < x1; x++) t.poser(x, y, 'ciel', jour ? 3 + (y < 60 ? 1 : 0) : 1);
-    const coupe = x0 + 90, ouv = (a, b) => (x, y) => x >= a && x < b && y >= haut && y <= sol;
-    peindrePlaceMarche(t, ouv(x0, coupe), x0, coupe, linteau, H, jour);
-    peindrePlaceMarche(t, ouv(coupe, x1), coupe, x1, linteau, H, jour);
+    peindrePlacePorche(t, x0, x1, haut, sol, jour, saison);
     // les deux battants, ouverts vers la place : ils partent du gond et fuient vers le fond (plus courts, plus hauts du bas)
     for (const [xg, sens, g] of [[x0, 1, 8201], [x1 - 1, -1, 8202]]) {
       const dx = 12, hb = 92;
@@ -393,8 +483,14 @@ function porcheRueHD(scene) {
     toitRue(t, 0, L - 1, 6, linteau, 'tuile', 8207);
     // les chaînes de l'écriteau (il pend sous le linteau ; son nom s'écrit par-dessus)
     for (const x of PORCHE_RUE.chaines) for (let y = linteau + 8; y < linteau + 13; y++) t.poser(x, y, 'fer', y % 2 ? 4 : 2);
-    t.contour(); t.texture(scene, 'porcheRueHD' + (jour ? '_jour' : ''));
+    // l'hiver, la neige sur la pointe des pieux, les socles et les traverses (le toit, lui, est blanchi par la saison)
+    if (hiver) { t.rampes.neige = [0x8a96a8, 0xaab6c8, 0xc8d2e0, 0xdce4ee, 0xeef2f8, 0xffffff];
+      for (const [a, b] of [[0, pg - 7], [pd + 8, L]]) for (let x = a; x < b; x++) { const p = (x - a) % 5; if (p > 0 && p < 4) t.poser(x, sol - 41 + Math.round(Math.abs(p - 2) * 1.2), 'neige', 5); }
+      for (const cx of [pg, pd]) for (let x = cx - 7; x <= cx + 7; x++) { t.poser(x, sol - 9, 'neige', 5); t.poser(x, sol - 8, 'neige', 4); }
+      for (const y of [sol - 31, sol - 11]) for (let x = 0; x < L; x++) if (x < pg - 7 || x >= pd + 8) t.poser(x, y, 'neige', 4); }
+    t.contour(); t.texture(scene, cle);
   }
+  return cle;
 }
 
 // Les deux chats de la rue : celui des Brindeloup (qui dort sur les bûches) et celui qui guette les pigeons à la
@@ -438,7 +534,8 @@ function vieDeLaRue(scene, o, { jour = false, sol = 470, prof = jour ? 8.2 : 7.6
   basculer(image(MX(31), MY(143) + 2, chats.dormeur + '_dort0'), [chats.dormeur + '_dort0', chats.dormeur + '_dort1'], 900, 200);
   // (l'été) les bottes de paille, rangées dans le creux entre les Brindeloup et le barbier, contre le mur, sur le sol
   // (toujours au même endroit : jamais au milieu du passage, ni devant une porte ou un tonneau)
-  if (ete) image(o + (P.maison1 + 136 + P.barbier - 124) / 2, sol + 2, 'bottesPailleRue', 0.5, 1, 2);
+  if (ete) { const xb = o + (P.maison1 + 136 + P.barbier - 124) / 2; texturesPailleHD(s);
+    aj(s.add.ellipse(xb + 2, sol + 1, 70, 8, 0x000000, 0.22)); image(xb, sol + 2, 'bottesPailleRue', 0.5, 1, 2); }
   // la corde à linge, de la fenêtre des Brindeloup au mur du barbier : le linge se balance (rentré la nuit et sous la pluie)
   if (jour && !mouille) basculer(image(MX(117), MY(72), 'lingeRue_0', 0, 0, 2), ['lingeRue_0', 'lingeRue_1'], 700, 500);
   // les pigeons
@@ -448,7 +545,7 @@ function vieDeLaRue(scene, o, { jour = false, sol = 470, prof = jour ? 8.2 : 7.6
   else { image(MX(58), MY(4), 'pigeonRue_gonfle'); image(MX(68), MY(4), 'pigeonRue_gonfle').setFlipX(true); }
   // l'herbe (et les pissenlits, à la belle saison) au pied des murs et entre les pavés ; l'hiver, la neige la couvre
   if (!hiver) for (const [x, cle] of [[MX(4), 'pissenlit'], [MX(40), 'pissenlit'], [MX(56), 'touffe'], [MX(134), 'touffe'], [o + 2880, 'pissenlit'], [o + 2896, 'touffe'], [o + 3175, 'touffe'], [o + 3440, 'pissenlit'], [o + 3460, 'touffe']])
-    image(x, sol + 4, (cle === 'pissenlit' && fleurs ? 'pissenlit' : 'touffe') + 'Rue', 0.5, 1, 2);
+    if (!(ete && Math.abs(x - (o + (P.maison1 + 136 + P.barbier - 124) / 2)) < 40)) image(x, sol + 4, (cle === 'pissenlit' && fleurs ? 'pissenlit' : 'touffe') + 'Rue', 0.5, 1, 2);   // (l'été, rien devant les bottes)
 
   // ================= la fontaine, en trois couches : le bassin, l'eau (et ses poissons), la colonne =================
   const F = FONTAINE_RUE, E = 2, X0 = o + P.fontaine, bas = sol + 30, gauche = X0 - F.L, haut = bas - F.H * E;

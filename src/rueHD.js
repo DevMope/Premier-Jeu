@@ -385,7 +385,8 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
       scene.add.image(xm, sol + 2, atelierMagesHD(scene)).setOrigin(0.5, 1).setScale(2);
       // (v1.62) l'écriteau pend dans la grande ouverture, la nuit (le jour, le nom de la porte le dit) : il ne flotte plus devant la fontaine
       if (!jour) ecriteauRue(scene, xm + 6, sol - 140, 'Les Mages-Charpentiers', { taille: 11 });
-      if (jour) [[MAITRESSE_MAGES, xm - 120, false], [CHARPENTIER_NAIN, xm + 130, true]].forEach(([q, x, fl], i) => {
+      // (v1.62) la maîtresse-charpentière se tient sur le seuil, à droite du réverbère (il a reculé pour la fontaine)
+      if (jour) [[MAITRESSE_MAGES, xm - 50, false], [CHARPENTIER_NAIN, xm + 130, true]].forEach(([q, x, fl], i) => {
         const p = imageCorps(scene, x, SOL_PROMENADE, q, 7.2).setFlipX(fl).setDepth(8.44);
         scene.tweens.add({ targets: p, scaleY: p.scaleY * 1.012, duration: 1500 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       });
@@ -397,8 +398,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
   }
   poser('rueBanqueHD', P.banque);
   // (v1.62, planche 80, porche A) le porche couvert du marché, la place au travers
-  porcheRueHD(scene);
-  poser(jour ? 'porcheRueHD_jour' : 'porcheRueHD', P.arche);
+  poser(porcheRueHD(scene, jour), P.arche);   // (la place, au travers, suit la saison et l'heure)
   for (const x of [380, 560, 1060, 1640, 2590, 2885].map((x, i) => i ? x + LOT_CONFRERIE + (x >= 1700 ? ECART_ARDOISE : 0) + (x >= 2700 ? LOT_MAGES : 0) : x)) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
   lumieres.push([f.porteX, 400, 2.4], [o + P.forge, sol - 10, 1.8], [o + P.banque, sol - 150, 1.4]);
   // les noms : écriteaux peints, lettres gravées, bannière
