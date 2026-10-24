@@ -1,5 +1,8 @@
 // La petite cinématique : on voit l'aventure d'un voyageur, épreuve par épreuve,
 // et comment chaque objet du colis l'a aidé (ou lui a manqué).
+// (v1.62) de combien le repère des épreuves avance dans le monde, du départ au retour au comptoir
+const BASE_MAX_RECIT = 480;
+
 class StoryScene extends Cinematique {
   // (v0.84) la musique du récit, retenue : elle reste la même quand on revient du menu pause
   musique(theme) { this.musiqueVoulue = theme; Son.ambiance(theme); }
@@ -37,20 +40,14 @@ class StoryScene extends Cinematique {
     this.events.off('postupdate', this.filtrerCameras, this);
     this.events.off('passer');   // (audit v0.59 : un « Passer » d'un récit interrompu ne doit pas relancer l'ancien)
     this.events.on('postupdate', this.filtrerCameras, this);
-    this.fond = this.add.graphics();
-    // Le paysage de la zone où il est parti.
-    dessinerComte(this.fond, 0, 0, 960, 370, 0, v.zone ? ZONES[v.zone].biome : 'comte');
-    // Le paysage déborde un peu de l'écran : il glisse doucement quand le voyageur avance.
-    this.paysage = this.fond.paysage.setScale(this.fond.paysage.scaleX * 1.1, this.fond.paysage.scaleY * 1.1).setPosition(0, -18).setDepth(-2);
-    this.fond.setDepth(-2);
-    // (audit v0.54) le voile de la nuit couvre aussi le plan moyen, et le plan moyen reste derrière le voyageur
-    this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0).setDepth(-0.4);
-    this.decor = this.add.container(0, 0);
-    // Un premier plan qui glisse plus vite que le paysage (profondeur), et un léger assombrissement
-    // des bords qui concentre le regard sur le voyageur
-    this.planMoyen = this.add.container(0, 0).setDepth(-0.5);
-    this.premierPlan = this.add.container(0, 0).setDepth(6.5);
     this.biome = v.zone ? ZONES[v.zone].biome : 'comte';
+    // (v1.62, planche 87) Le paysage de la zone où il est parti : un monde d'un écran et demi, en plans qui
+    // défilent chacun à leur vitesse quand la caméra suit le voyageur (voir creerMonde)
+    this.creerMonde(this.biome);
+    // (audit v0.54) le voile de la nuit couvre aussi le plan moyen, et le plan moyen reste derrière le voyageur
+    // (v1.62 : fixé à l'écran, il couvre tout ce que filme la caméra, où qu'elle soit)
+    this.voile = this.add.rectangle(480, 185, 960, 370, 0x05051a, 0).setDepth(-0.4).setScrollFactor(0);
+    this.decor = this.add.container(0, 0);
     // (v0.78) chaque destination a sa variante du décor de son royaume : arbres, repère, sol, faune
     this.variante = varianteRecit(v.zone);
     this.planterPlanMoyen(this.biome);
@@ -61,6 +58,9 @@ class StoryScene extends Cinematique {
     this.perso = imageCorps(this, -60, 360, v, 6);
     this.fCorps = echelleCorps(this.perso.texture.key);
     this.creerCompagnons(v);
+    this.figerDessins();
+    this.planMoyen.sort('y');
+    if (this.raisLumiere) this.planMoyen.bringToTop(this.raisLumiere);
 
     this.coeurs = [];
     // Ses cœurs, plus ceux gagnés grâce aux soins donnés en plus.
@@ -81,10 +81,11 @@ class StoryScene extends Cinematique {
     this.entete.setX(176);
     this.creerBulleDeReve();
     this.ui.add([...this.coeurs, this.titre]);
-    // (v1.61) ta bourse, toujours visible en haut : on paie un dédommagement, des soins, une trouvaille
-    this.bourse = bourse(this, 722, 50, this.G.argent, { echelle: 1.4, taille: 15, aDroite: true, conteneur: this.ui });
-    this.ui.add(this.bourse);
-    this.time.addEvent({ delay: 200, loop: true, callback: () => { if (this.bourse.dernier !== Math.floor(this.G.argent)) this.bourse.maj(Math.floor(this.G.argent)); } });
+    // (v1.61) ta bourse, toujours visible en haut : on paie un dédommagement, des soins, une trouvaille.
+    // (v1.62, planche 84) elle a sa place : posée sur une petite étagère de chêne, accrochée au bord droit du
+    // cadre, sous « Passer » ; le compte est écrit sur la plaque de laiton de l'étagère
+    this.creerEtagereBourse();
+    this.time.addEvent({ delay: 200, loop: true, callback: () => { if (!this.piecesEnVol && this.bourse.dernier !== Math.floor(this.G.argent)) this.bourse.maj(Math.floor(this.G.argent)); } });
     // Passer : le récit défile en accéléré jusqu'à la fin (les choix de la fin restent à faire).
     const passer = this.boutonPasser(() => {
       if (this.rapide) return;
@@ -110,10 +111,11 @@ class StoryScene extends Cinematique {
   }
 
   // La caméra du monde cadre un point (x, y) avec un grossissement k (1 = tout l'écran)
-  cadrer(x, y, k = 1, duree = 600, ease = 'Sine.easeInOut') {
+  // (v1.62) `decalage` : on cadre dans le repère de l'étape suivante, qui commence `decalage` plus loin dans le monde
+  cadrer(x, y, k = 1, duree = 600, ease = 'Sine.easeInOut', decalage = 0) {
     const cam = this.cameras.main;
     const zoom = this.zoomBase * k;
-    const sx = Phaser.Math.Clamp(x - 480 / k, 0, Math.max(0, 960 - 960 / k));
+    const sx = decalage + Phaser.Math.Clamp(x - 480 / k, 0, Math.max(0, 960 - 960 / k));
     // (le sol, à y = 360, reste à la même hauteur à l'écran : on ne cadre qu'en largeur, et `y`
     // ne fait que pencher un peu le regard vers le haut quand il est petit)
     const sy = Phaser.Math.Clamp(360 - 360 / k - Math.max(0, 200 - y) * 0.1, 0, 360 - 360 / k);
@@ -146,15 +148,16 @@ class StoryScene extends Cinematique {
     // les petites bulles qui mènent au conteur
     for (const [bx, by, r] of [[112, 392, 9], [96, 412, 6], [86, 428, 4]]) { g.fillStyle(teinte, 0.9); g.fillCircle(bx, by, r); }
     this.ui.add(g);
+    this.bulleCadre = g;
     // le conteur : son buste, dans le coin de la boîte de texte (ou son carnet, s'il n'est plus là)
     if (vivant) {
       this.conteur = this.add.image(92, 538, textureBusteHD(this, v, 'content')).setOrigin(0.5, 1).setScale(1.45);
       this.ui.add(this.conteur);
       this.tweens.add({ targets: this.conteur, y: 541, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     } else {
-      creerObjetsHD(this);
-      if (!this.textures.exists('registreComptoir')) creerDecorComptoir(this);   // (v0.84 : sinon, un carré vide)
-      const carnet = this.add.image(92, 470, 'registreComptoir').setScale(2.2).setAngle(-6);
+      // (v1.62, planche 84) son carnet de voyage, ouvert : l'écriture tremble, la sangle défaite pend
+      creerCarnetsHD(this);
+      const carnet = this.add.image(90, 474, 'carnetOuvertHD').setScale(2).setAngle(-6);
       this.ui.add(carnet);
     }
   }
@@ -176,6 +179,28 @@ class StoryScene extends Cinematique {
     super.ajouterTexte(suite);
   }
 
+  // (v1.62, planche 84) La besace du récit, posée sur une petite étagère de chêne accrochée au bord droit du
+  // cadre (sous « Passer ») ; le compte est écrit sur le chant de l'étagère. Elle verse vers la gauche.
+  creerEtagereBourse() {
+    const X0 = 806, Y = 104;
+    if (!this.textures.exists('etagereBourseHD')) {
+      const t = toileDecor(92, 16);
+      planche(t, 0, 0, 92, 9, 'chene', { graine: 812, noeuds: 1, usure: false });
+      for (let x = 0; x < 92; x++) { t.poser(x, 0, 'chene', 5); t.poser(x, 8, 'chene', 1); }
+      // deux consoles de fer forgé sous la planche, vissées dans le cadre
+      for (const x0 of [14, 58]) for (let k = 0; k < 7; k++) { t.poser(x0 + k, 9 + k, 'fer', 3); t.poser(x0 + k + 1, 9 + k, 'fer', 1); t.poser(x0, 9 + k, 'fer', k % 3 ? 2 : 4); }
+      t.contour();
+      t.texture(this, 'etagereBourseHD');
+    }
+    // (la planche s'enfonce sous les nuages du bord, comme accrochée au cadre)
+    const etagere = this.add.image(X0, Y - 1, 'etagereBourseHD').setOrigin(0, 0).setScale(2);
+    const bord = this.ui.list.indexOf(this.bulleCadre);
+    if (bord >= 0) this.ui.addAt(etagere, bord); else this.ui.add(etagere);
+    this.bourse = bourse(this, X0 + 64, Y, this.G.argent, { echelle: 1.4, taille: 14, conteneur: this.ui, sens: -1, gain: [-92, -26] });
+    this.bourse.texte.setY(1);
+    this.ui.add(this.bourse);
+  }
+
   // Le conteur parle (sa voix) à chaque nouveau texte
   ecrire(entete, texte) {
     this.ajusterTexte(texte);
@@ -188,18 +213,91 @@ class StoryScene extends Cinematique {
     super.onomatopee(x, y, mot, couleur);
   }
 
-  async marcherVers(x) {
-    const duree = Math.max(300, Math.abs(x - this.perso.x) * 5);
+  // Il marche jusqu'à x (dans le repère de l'étape d'après, qui commence `d` plus loin dans le monde) : il
+  // avance vraiment sur le chemin, la caméra le suit, et chaque plan défile à sa vitesse. Rien ne glisse.
+  async marcherVers(x, d = 0) {
+    const cible = x + d;
+    const duree = Math.max(300, Math.abs(cible - this.perso.x) * 5);
+    this.perso.setFlipX(cible < this.perso.x);
     pasDeMarche(this, this.perso, duree);
     const y = this.perso.y;
     this.tweens.add({ targets: this.perso, y: y - 2, duration: 125, yoyo: true, repeat: Math.floor(duree / 250) });
-    this.tweens.add({ targets: this.paysage, x: -Phaser.Math.Clamp(x, 0, 960) / 960 * 96, duration: duree, ease: 'Sine.easeInOut' });
-    this.tweens.add({ targets: this.premierPlan, x: -Phaser.Math.Clamp(x, 0, 960) / 960 * 260, duration: duree, ease: 'Sine.easeInOut' });
-    this.tweens.add({ targets: this.planMoyen, x: -Phaser.Math.Clamp(x, 0, 960) / 960 * 40, duration: duree, ease: 'Sine.easeInOut' });
-    this.cadrer(x + 120, 250, 1.12, duree, 'Sine.easeInOut');
-    await this.animer({ targets: this.perso, x, duration: duree, ease: 'Linear' });
-    this.perso.setScale(6 * this.fCorps).setY(y);
+    this.cadrer(x + 120, 250, 1.12, duree, 'Sine.easeInOut', d);
+    await this.animer({ targets: this.perso, x: cible, duration: duree, ease: 'Linear' });
+    this.perso.setScale(6 * this.fCorps).setY(y).setFlipX(false);
+    this.recaler(d);
   }
+
+  // --- (v1.62, planche 87) Le monde du récit, en plans ---
+
+  // Le ciel (×0,1), les collines lointaines (×0,3), les collines du milieu et le repère (×0,55), le sol, le pré
+  // et la barrière (×1), les herbes du bord (×1,25) : chaque plan suit la caméra à sa vitesse.
+  creerMonde(biome) {
+    this.base = 0;            // où commence, dans le monde, le repère de l'épreuve en cours (voir recaler)
+    this.couches = [];        // [objet, facteur de défilement]
+    this.raisLumiere = null; this.arbresRecit = []; this.lacX = this.lacY = null;
+    const H = 386;            // (le haut du chemin tombe en y = 360, sous les pieds du voyageur)
+    const cle = paysageHD(this, LARGEUR_RECIT + 40, H, biome, 0, { couches: true });
+    const cleCiel = paysageHD(this, 1080, H, biome, 0, { couches: true });
+    const plan = (k, f, prof) => { const im = this.add.image(-40, (this.textures.get(k).haut || 0) * 2, k).setOrigin(0).setScale(2).setScrollFactor(f, 1).setDepth(prof); this.couches.push([im, f]); return im; };
+    const conteneur = (f, prof) => { const c = this.add.container(0, 0).setDepth(prof).setScrollFactor(f, 1); c.facteur = f; this.couches.push([c, f]); return c; };
+    plan(cleCiel + '_ciel', 0.1, -4);
+    this.planCiel = conteneur(0.1, -3.9);                 // ce qui vole, au loin
+    plan(cle + '_loin', 0.3, -3);
+    this.coucheCollines = plan(cle + '_collines', 0.55, -2.6);
+    this.planLoin = conteneur(0.55, -2.5);                // le repère, sur les collines
+    this.coucheSol = plan(cle + '_sol', 1, -2);
+    this.planMoyen = conteneur(1, -1.5);                  // tout ce qui est posé dans le pré, derrière la barrière
+    plan(cle + '_barriere', 1, -1.4);
+    this.premierPlan = conteneur(1.25, 6.5);              // les herbes et les fleurs du bord, devant tout
+    this.cleCouches = cle;
+  }
+  // Les herbes du bord et les silhouettes du pré ne bougent pas : on les fige en une image (un dessin vectoriel
+  // de cette taille se retracerait à chaque image)
+  figerDessins() {
+    this.nFiges = 0;
+    for (const [plan, y0, h] of [[this.premierPlan, 300, 90], [this.planMoyen, 120, 236]]) {
+      for (const g of [...plan.list]) {
+        if (g.type !== 'Graphics' || g === this.raisLumiere) continue;
+        const cle = 'recitFige_' + (this.nFiges = (this.nFiges || 0) + 1);
+        if (this.textures.exists(cle)) this.textures.remove(cle);
+        const rt = this.make.renderTexture({ width: LARGEUR_RECIT + 600, height: h }, false);
+        rt.draw(g, 160, -y0);
+        rt.saveTexture(cle);
+        const im = dansPlan(plan, this.add.image(-160, y0, cle).setOrigin(0, 0));
+        plan.moveTo(im, plan.getIndex(g));
+        g.destroy();
+        this.events.once('shutdown', () => { rt.destroy(); });
+      }
+    }
+  }
+  // La crête des collines du milieu, à l'abscisse x de leur plan (pour y poser le repère, les pieds dans l'herbe)
+  creteCollines(x) {
+    try {
+      const src = this.textures.get(this.cleCouches + '_collines').getSourceImage(), ctx = src.getContext('2d');
+      const tx = Phaser.Math.Clamp(Math.floor((x + 40) / 2), 0, src.width - 1), d = ctx.getImageData(tx, 0, 1, src.height).data;
+      const haut = this.textures.get(this.cleCouches + '_collines').haut || 0;
+      for (let y = 0; y < src.height; y++) if (d[y * 4 + 3]) return (y + haut) * 2;
+    } catch (e) { /* (pas de crête lisible : une hauteur moyenne) */ }
+    return 280;
+  }
+  // L'abscisse, dans le monde (le plan du pré), du bord gauche de ce que filme la caméra
+  xMondeVu() { return this.cameras.main.scrollX + this.base; }
+  // On passe au repère de l'étape suivante, `d` plus loin : tout recule de `d` dans le monde, la caméra
+  // aussi (chaque plan de `d` fois son facteur) ; rien ne bouge à l'écran. Les épreuves gardent ainsi
+  // leurs places d'avant (le voyageur entre 140 et 600, les bêtes qui arrivent de x = 1040...).
+  recaler(d) {
+    if (!d) return;
+    this.base += d;
+    const cam = this.cameras.main;
+    this.tweens.killTweensOf(cam);
+    cam.scrollX -= d;
+    for (const [o, f] of this.couches) o.x -= d * f;
+    this.perso.x -= d;
+    for (const c of this.compagnons || []) c.x -= d;
+  }
+  // Le repère de l'étape i (sur n) : il avance avec l'histoire, jusqu'au bout du monde pour le retour au comptoir
+  baseEtape(i, n) { return Math.round(BASE_MAX_RECIT * Math.min(1, i / Math.max(1, n))); }
 
   // --- Le récit ---
 
@@ -222,8 +320,11 @@ class StoryScene extends Cinematique {
     for (let i = 0; i < r.etapes.length; i++) {
       const { epreuve, niveau, reussie, pvApres, piege, pvAvant, sauvee, repli, saignement, fane } = r.etapes[i];
       const fanee = fane ? '\n(Son trèfle de chance s\'est fané : le cadeau a servi.)' : '';
-      // (v0.59) une scène d'épreuve peut l'avoir fait avancer : on repart d'où il est
-      const x = Phaser.Math.Clamp(Math.max(140 + i * (680 / etapes), this.perso.x), 0, 600);
+      // (v0.59) une scène d'épreuve peut l'avoir fait avancer : on repart d'où il est.
+      // (v1.62) le monde fait un écran et demi : l'étape i est aussi `d` plus loin dans le monde (la caméra suit)
+      let d = Phaser.Math.Clamp(this.baseEtape(i, etapes) - this.base, 0, BASE_MAX_RECIT - this.base);
+      if (this.perso.x - d > 600) d = Math.min(BASE_MAX_RECIT - this.base, this.perso.x - 600);
+      const x = Phaser.Math.Clamp(Math.max(140 + i * (680 / etapes), this.perso.x - d), 0, 600);
 
       if (this.meteo) { this.meteo.remove(); this.meteo = null; }
       this.nettoyerScenario();
@@ -231,7 +332,7 @@ class StoryScene extends Cinematique {
       this.decor.removeAll(true);
       this.titreEtape = r.vivant ? `Épreuve ${i + 1} / ${etapes}` : `Jour ${Math.min(v.duree || etapes, 1 + Math.floor(i * (v.duree || etapes) / etapes))}`;
       this.ecrire(this.titreEtape, '...');
-      await this.marcherVers(x);
+      await this.marcherVers(x, d);
       this.planterDecor(epreuve.type, x + 130, epreuve);
       const scene = this.menace.scenario;
       this.menace.niveau = niveau;
@@ -450,6 +551,8 @@ class StoryScene extends Cinematique {
     this.tweens.add({ targets: this.voile, fillAlpha: 0, duration: 600 });
 
     const { gain, message } = terminerAventure(this.G, this.parti);
+    // (v1.62) le butin n'arrive dans la besace qu'avec ses pièces, quand il les lui tend (voir pleuvoirPieces)
+    this.piecesEnVol = r.vivant && !r.echec && gain > 0;
     // (v1.61) la barre de cœurs montre ce qui reste, même avec la fiche ou « Passer » (avant, elle restait pleine
     // alors que le texte annonçait des cœurs perdus)
     const reste = r.vivant && r.etapes.length ? r.etapes[r.etapes.length - 1].pvApres : r.vivant ? this.coeurs.length : 0;
@@ -465,7 +568,7 @@ class StoryScene extends Cinematique {
       await this.allerAuComptoir();
       this.ecrire('Mission ratée', [`« Je suis désolé${this.e}... Je reviens les mains vides. » · Relation : ${relation.nom}`,
         ...(this.parti.malus || []).map(m => '• ' + m)].join('\n'));
-      this.carteProgression(this.modeFiche ? 494 : 257, 52);
+      this.carteProgression(this.modeFiche ? 494 : 257, this.modeFiche ? 126 : 52);   // (v1.62 : à côté de la fiche, sous l’étagère de la besace)
     } else if (r.vivant) {
       await this.allerAuComptoir();
       // (v0.60) la fin de la quête, en une image : ce qu'on n'avait jamais vu
@@ -475,12 +578,12 @@ class StoryScene extends Cinematique {
         if (this.conteur) this.conteur.setTexture(textureBusteHD(this, v, 'content'));
         await this.attendreClic();
       }
-      this.pleuvoirPieces();
+      this.pleuvoirPieces(gain);
       const ajuste = (gain !== v.butin ? ` (prévu : ${v.butin}, ajusté selon ta relation et tes décorations)` : '') + (this.parti.dime ? ` · ${this.parti.dimeNom} : −${this.parti.dime}` : '');   // (v1.32)
       this.ecrire('Retour au comptoir',
         `« ${this.remerciement()} Voici ta part du butin ! »\n` +
         `+ ${gain} pièces${ajuste} · Relation : ${relation.nom}${message ? '\n' + message : ''}`);
-      this.carteProgression(this.modeFiche ? 494 : 257, 52);
+      this.carteProgression(this.modeFiche ? 494 : 257, this.modeFiche ? 126 : 52);   // (v1.62 : à côté de la fiche, sous l’étagère de la besace)
     } else {
       this.perso.setTint(0x888888);
       Son.jouer('glas');
@@ -521,9 +624,12 @@ class StoryScene extends Cinematique {
 
   // (v1.61) avec la fiche, on ne regarde pas le voyageur marcher jusqu'au comptoir : il y est déjà
   async allerAuComptoir() {
-    if (!this.modeFiche) return this.marcherVers(880);
+    const d = BASE_MAX_RECIT - this.base;
+    if (!this.modeFiche) return this.marcherVers(880, d);
+    // (avec la fiche, il y est déjà : on cadre directement le bout du chemin)
+    this.recaler(d);
     this.perso.setX(880);
-    this.paysage.x = -88; this.premierPlan.x = -238; this.planMoyen.x = -37;
+    for (const c of this.compagnons || []) c.setX(880 - c.ecart);
     this.cadrer(1000, 250, 1.12, 0);
   }
 
@@ -821,11 +927,18 @@ class StoryScene extends Cinematique {
       (G.stock.potion > 0 ? `Une potion par cœur (il te reste ${G.stock.potion} potion${G.stock.potion > 1 ? 's' : ''}).` : `Tu n'as pas de potion pour ${v.feminin ? 'la' : 'le'} soigner.`));
   }
 
-  pleuvoirPieces() {
-    for (let i = 0; i < 18; i++) {
-      const p = this.add.ellipse(Phaser.Math.Between(700, 940), -20, 18, 18, 0xe8c040).setStrokeStyle(2, 0x9a7a10);
-      this.tweens.add({ targets: p, y: 360, duration: Phaser.Math.Between(600, 1100), delay: i * 60, ease: 'Bounce.easeOut' });
-    }
+  // (v1.62, planche 84) Sa part du butin : les pièces partent de sa main, tournent en volant et tombent une à une
+  // dans le col de ta besace, en haut à droite ; le compte monte à l'arrivée de chaque pièce.
+  pleuvoirPieces(gain = 0) {
+    const b = this.bourse;
+    if (!b || !b.active || gain <= 0) { this.piecesEnVol = false; if (b) b.maj(Math.floor(this.G.argent)); return; }
+    const cam = this.cameras.main, k = cam.zoom / this.zoomBase, m = this.main();
+    const ux = (m.x - cam.worldView.x) * k, uy = (m.y - cam.worldView.y) * k, col = b.col();
+    Son.jouer('pieces', { montant: gain });
+    voleePieces(this, ux, uy, col.x, col.y, Math.ceil(Math.sqrt(gain)), { conteneur: this.ui, echelle: 2, besace: b, montant: Math.floor(this.G.argent) - b.dernier, fin: () => {
+      this.piecesEnVol = false;
+      if (b.active) b.maj(Math.floor(this.G.argent));
+    } });
   }
 
   // Le décor de chaque épreuve, dessiné avec des formes simples.
@@ -839,16 +952,16 @@ class StoryScene extends Cinematique {
     const sombre = ['foret', 'marais', 'repaire', 'tour', 'grotte'].includes(biome);
     const neige = ['montagne', 'glace', 'neige'].includes(biome);
     const teinte = neige ? 0xdce8f0 : sombre ? 0x1a3020 : 0x2f5a2a;
-    const g = this.add.graphics();
-    // les touffes d'herbe (ou de neige), en silhouette
-    for (let x = -100; x < 1300; x += 26 + (x * 7) % 19) {
+    const g = dansPlan(this.premierPlan, this.add.graphics());
+    // les touffes d'herbe (ou de neige), en silhouette (v1.62 : sur tout le monde, qu'elles défilent à ×1,25)
+    for (let x = -100; x < 2100; x += 26 + (x * 7) % 19) {
       const h = 10 + (x * 13) % 16;
       g.fillStyle(teinte, 0.95);
       g.fillTriangle(x, sol + 2, x + 6, sol - h, x + 12, sol + 2);
       g.fillTriangle(x + 8, sol + 2, x + 13, sol - h * 0.7, x + 18, sol + 2);
     }
-    this.premierPlan.add(g);
-    if (sombre) for (const [x, e] of [[-40, 1.1], [1180, 1.3]]) this.premierPlan.add(this.add.image(x, sol + 30, 'sapinPremierPlanHD').setOrigin(0.5, 1).setScale(e).setTint(0x101c14).setAlpha(0.9));
+    // (deux grands sapins sombres encadrent le récit : l'un au départ, l'autre au bout du chemin)
+    if (sombre) for (const [x, e] of [[-40, 1.1], [1640, 1.3]]) dansPlan(this.premierPlan, this.add.image(x, sol + 30, 'sapinPremierPlanHD').setOrigin(0.5, 1).setScale(e).setTint(0x101c14).setAlpha(0.9));
   }
 
   // Le plan moyen : des arbres ou des rochers en silhouette, entre le paysage et le voyageur, qui
@@ -856,7 +969,7 @@ class StoryScene extends Cinematique {
   planterPlanMoyen(biome) {
     const sombre = ['foret', 'marais', 'repaire', 'tour', 'grotte'].includes(biome);
     const neige = ['montagne', 'glace', 'neige'].includes(biome);
-    const g = this.add.graphics();
+    const g = dansPlan(this.planMoyen, this.add.graphics());
     // (audit v0.54) la couleur suit le paysage (plus de bosquets verts dans les terres brûlées), et
     // les déserts, terres brûlées et montagnes ont des rochers plutôt que des arbres
     const b = BIOMES[biome] || BIOMES.comte;
@@ -864,14 +977,14 @@ class StoryScene extends Cinematique {
     const teinte = neige ? 0xc8d4e0 : melangeCouleur(b.arbres || b.loin, 0x0a0a10, sombre ? 0.45 : 0.3);
     const va = this.variante;
     if (va && va.arbres) return;   // (ses arbres à elle sont plantés par planterVarianteRecit)
-    for (let x = -60; x < 1100; x += 70 + (x * 3) % 50) {
-      if (va && va.repere && x > 480 && x < 880) continue;   // (on laisse voir le repère au loin)
+    // (v1.62) dans le pré, sur tout le monde du récit, les pieds juste derrière la barrière du chemin
+    const sol = PRE_RECIT.loin;
+    for (let x = -60; x < LARGEUR_RECIT + 60; x += 70 + (x * 3) % 50) {
       const h = 60 + (x * 7) % 70, r = 22 + (x * 5) % 18;
       g.fillStyle(teinte, 0.8);
-      if (rocheux) { g.fillTriangle(x - r * 1.4, 332, x, 332 - h * (neige ? 1 : 0.6), x + r * 1.4, 332); g.fillStyle(melangeCouleur(teinte, 0xffffff, 0.15), 0.8).fillTriangle(x - r * 0.5, 332, x, 332 - h * (neige ? 1 : 0.6), x + r * 0.2, 332); }
-      else { g.fillRect(x - 3, 332 - h * 0.5, 6, h * 0.5); g.fillCircle(x, 332 - h * 0.5 - r * 0.6, r); g.fillCircle(x - r * 0.7, 332 - h * 0.5 - r * 0.2, r * 0.8); g.fillCircle(x + r * 0.7, 332 - h * 0.5 - r * 0.2, r * 0.8); }
+      if (rocheux) { g.fillTriangle(x - r * 1.4, sol, x, sol - h * (neige ? 1 : 0.6), x + r * 1.4, sol); g.fillStyle(melangeCouleur(teinte, 0xffffff, 0.15), 0.8).fillTriangle(x - r * 0.5, sol, x, sol - h * (neige ? 1 : 0.6), x + r * 0.2, sol); }
+      else { g.fillRect(x - 3, sol - h * 0.5, 6, h * 0.5); g.fillCircle(x, sol - h * 0.5 - r * 0.6, r); g.fillCircle(x - r * 0.7, sol - h * 0.5 - r * 0.2, r * 0.8); g.fillCircle(x + r * 0.7, sol - h * 0.5 - r * 0.2, r * 0.8); }
     }
-    this.planMoyen.add(g);
   }
 
   // La météo de la contrée, en continu : pluie des marais, neige des montagnes, feuilles de la
@@ -884,21 +997,21 @@ class StoryScene extends Cinematique {
       if (marais) {
         // des gouttes de pluie en biais
         const x = Phaser.Math.Between(-60, 1000);
-        const r = this.add.rectangle(x, -10, 1.5, 16, 0xcfe4f0, 0.5).setAngle(-12).setDepth(6.8);
+        const r = this.add.rectangle(x, -10, 1.5, 16, 0xcfe4f0, 0.5).setAngle(-12).setDepth(6.8).setScrollFactor(0);
         this.tweens.add({ targets: r, y: 380, x: x - 80, duration: 650 + Math.random() * 200, ease: 'Linear', onComplete: () => r.destroy() });
-        if (Math.random() < 0.08) { const b = this.add.ellipse(Phaser.Math.Between(0, 960), Phaser.Math.Between(200, 330), 180, 40, 0xb8c8c0, 0.08).setDepth(6.7); this.tweens.add({ targets: b, x: b.x + 120, alpha: 0, duration: 4000, onComplete: () => b.destroy() }); }
+        if (Math.random() < 0.08) { const b = this.add.ellipse(Phaser.Math.Between(0, 960), Phaser.Math.Between(200, 330), 180, 40, 0xb8c8c0, 0.08).setDepth(6.7).setScrollFactor(0); this.tweens.add({ targets: b, x: b.x + 120, alpha: 0, duration: 4000, onComplete: () => b.destroy() }); }
       } else if (neige) {
         const x = Phaser.Math.Between(-40, 1000);
-        const f = this.add.circle(x, -8, 1.5 + Math.random() * 2, 0xffffff, 0.85).setDepth(6.8);
+        const f = this.add.circle(x, -8, 1.5 + Math.random() * 2, 0xffffff, 0.85).setDepth(6.8).setScrollFactor(0);
         this.tweens.add({ targets: f, y: 380, x: x + Phaser.Math.Between(-60, 20), duration: 3500 + Math.random() * 2500, ease: 'Linear', onComplete: () => f.destroy() });
       } else if (foret) {
         if (Math.random() < 0.5) return;
         const x = Phaser.Math.Between(0, 1000);
-        const f = this.add.ellipse(x, -6, 6, 3, Phaser.Utils.Array.GetRandom([0xc8a040, 0xa86a28, 0x7a9a30]), 0.9).setDepth(6.8);
+        const f = this.add.ellipse(x, -6, 6, 3, Phaser.Utils.Array.GetRandom([0xc8a040, 0xa86a28, 0x7a9a30]), 0.9).setDepth(6.8).setScrollFactor(0);
         this.tweens.add({ targets: f, y: 375, x: x - 120, angle: 720, duration: 5000 + Math.random() * 2000, ease: 'Sine.easeIn', onComplete: () => f.destroy() });
       } else if (ombre) {
         if (Math.random() < 0.6) return;
-        const b = this.add.ellipse(Phaser.Math.Between(-100, 1000), Phaser.Math.Between(240, 340), 220, 50, 0x3a2a48, 0.12).setDepth(6.7);
+        const b = this.add.ellipse(Phaser.Math.Between(-100, 1000), Phaser.Math.Between(240, 340), 220, 50, 0x3a2a48, 0.12).setDepth(6.7).setScrollFactor(0);
         this.tweens.add({ targets: b, x: b.x + 160, alpha: 0, duration: 5000, onComplete: () => b.destroy() });
       }
     } });
@@ -1252,7 +1365,6 @@ class StoryScene extends Cinematique {
       const x0 = p.x, y0 = p.y, x1 = (this.menace.x || x0) + 130;
       if (reussie) {
         // Un grand saut par-dessus
-        this.tweens.add({ targets: this.paysage, x: this.paysage.x - 20, duration: 600 });
         await Promise.all([
           this.animer({ targets: p, x: x1, duration: 600, ease: 'Linear' }),
           this.animer({ targets: p, y: y0 - 70, duration: 300, yoyo: true, ease: 'Quad.easeOut' }),

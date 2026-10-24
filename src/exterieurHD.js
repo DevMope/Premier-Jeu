@@ -53,20 +53,25 @@ const RELIEFS = {
 // Peint un paysage à la taille demandée (à l'écran). Renvoie la clé de la texture.
 // `nuit` : de 0 (plein jour) à 1 (nuit noire), ou 'aube' pour le lever du soleil.
 // `sansAstre` : sans soleil ni lune (quand on les dessine à part, plus détaillés).
-function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAstre = false } = {}) {
+// (v1.62, planche 87) `couches` : le même paysage, mais peint en cinq calques transparents ailleurs, pour une
+// vraie parallaxe : `<clé>_ciel` (ciel, astre), `<clé>_loin` (montagnes, dunes, collines lointaines),
+// `<clé>_collines` (les collines du milieu, colonnes et tours), `<clé>_sol` (les collines proches et le chemin)
+// et `<clé>_barriere` (la barrière le long du chemin, devant ce qui est posé dans le pré). Renvoie la clé.
+function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAstre = false, couches = false } = {}) {
   const L = Math.round(largeur / 2), H = Math.round(hauteur / 2);
   const aube = nuit === 'aube';
   if (aube) nuit = 0;
   // (v0.99) la Comté change avec la saison : ses couleurs, ses arbres, ses fleurs (voir saisonsHD.js)
   const saison = biome === 'comte' && typeof saisonActuelle === 'function' ? saisonActuelle() : null;
-  const cle = `paysage_${biome}${saison ? '_' + saison : ''}_${L}x${H}_${aube ? 'aube' : Math.round(nuit * 10)}${sansAstre ? '_sans' : ''}`;
-  if (scene.textures.exists(cle)) return cle;
+  const cle = `paysage_${biome}${saison ? '_' + saison : ''}_${L}x${H}_${aube ? 'aube' : Math.round(nuit * 10)}${sansAstre ? '_sans' : ''}${couches ? '_couches' : ''}`;
+  if (scene.textures.exists(couches ? cle + '_barriere' : cle)) return cle;
   const b = (saison && BIOMES_SAISON[saison]) || BIOMES[biome] || BIOMES.comte, r = saison ? { ...(RELIEFS[biome] || {}), ...RELIEFS_SAISON[saison] } : RELIEFS[biome] || {};
   const graine = biome.length * 31;
   // À l'aube, tout prend une lumière rose orangée, rasante ; la nuit, tout bleuit et s'assombrit.
   const soir = aube ? (c => melangeCouleur(c, melangeCouleur(teinte(c, 0.85), 0xff9a60, 0.55), 0.32))
     : (c => melangeCouleur(c, melangeCouleur(teinte(c, 0.45), 0x1a1840, 0.5), nuit));
-  const px = new Uint32Array(L * H);
+  let px = new Uint32Array(L * H);
+  const C = couches ? { ciel: px, loin: new Uint32Array(L * H), collines: new Uint32Array(L * H), sol: new Uint32Array(L * H), barriere: new Uint32Array(L * H) } : null;
   const poser = (x, y, c) => { if (x >= 0 && y >= 0 && x < L && y < H) px[y * L + Math.floor(x)] = c; };
 
   // Le ciel : un dégradé tramé du zénith à l'horizon, puis les nuages
@@ -94,6 +99,7 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
 
   // Une ligne de crête : y(x) = base + bruit
   const crete = (x, base, ampl, freq, g) => H * base + (fbm(x * freq, 0.5, g) - 0.5) * H * ampl;
+  if (C) px = C.loin;
   // Les montagnes, éclairées à gauche, enneigées en haut si besoin
   if (r.pics) {
     // Des sommets de tailles et de largeurs variées ; le versant gauche prend la lumière
@@ -131,6 +137,7 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
     if (r.arbres && hachage(x, 7, graine) < 0.08 * (r.densite || 1)) arbre(x, h0 + 2, 0.55, melangeCouleur(teinte(b.arbres || b.loin, 0.8), b.horizon, 0.3));
     if (r.fleurs && hachage(x, 8, graine) < 0.006) maison(x, h0 + 3);   // des fermes au loin
   }
+  if (C) px = C.collines;
   // Les collines du milieu, avec leurs bosquets
   for (let x = 0; x < L; x++) {
     const h0 = crete(x, 0.68, 0.2, 0.016, graine + 3);
@@ -151,6 +158,7 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
   if (r.tours) for (const k of [0.15, 0.32]) { const x0 = Math.floor(L * k); fond(x0, 14, H * 0.32, 0xc8c0b0); for (let x = x0; x < x0 + 14; x += 4) fond(x, 2, H * 0.29, 0xc8c0b0); }
   if (r.tourNoire) { const x0 = Math.floor(L * 0.3); fond(x0, 18, H * 0.12, 0x2a1a30); for (let y = 0; y < 6; y++) poser(x0 + 9, Math.floor(H * 0.12) + 8 + y, 0xd080ff); }
 
+  if (C) px = C.sol;
   // Les collines proches, herbues, avec des fleurs
   const herbe = b.pres;
   for (let x = 0; x < L; x++) {
@@ -180,7 +188,7 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
   }
   // La brume du marais, du bourbier...
   if (r.brume) for (let y = Math.floor(H * 0.6); y < H; y++) for (let x = 0; x < L; x++) {
-    if (fbm(x * 0.03, y * 0.15, graine + 15) > 0.55 && tramer(x, y, r.brume, 3) > 0) px[y * L + x] = melangeCouleur(px[y * L + x], soir(0xd8e0d0), 0.4);
+    if ((!C || px[y * L + x]) && fbm(x * 0.03, y * 0.15, graine + 15) > 0.55 && tramer(x, y, r.brume, 3) > 0) px[y * L + x] = melangeCouleur(px[y * L + x], soir(0xd8e0d0), 0.4);
   }
   // Le chemin, au premier plan : terre tassée, cailloux, touffes d'herbe au bord
   const chemin = Math.round(H - 13);
@@ -197,6 +205,7 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
     const x = Math.floor(hachage(k, 30, graine) * L), y = chemin + 3 + Math.floor(hachage(k, 31, graine) * 8);
     poser(x, y, soir(teinte(0x9a9080, 1.2))); poser(x + 1, y, soir(teinte(0x9a9080, 1))); poser(x, y + 1, soir(teinte(0x9a9080, 0.75))); poser(x + 1, y + 1, soir(teinte(0x9a9080, 0.6)));
   }
+  if (C) px = C.barriere;
   // Une barrière de bois le long du chemin (dans la Comté et les terres paisibles)
   if (r.fleurs) for (let x = 2; x < L; x += 11) {
     if (hachage(Math.floor(x / 44), 32, graine) < 0.45) continue;
@@ -265,7 +274,19 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
     for (let k = 1; k < 5; k++) { poser(x - k, Math.floor(sol - 10 - k), soir(0x2a2420)); poser(x + k, Math.floor(sol - 13 - k * 0.6), soir(0x2a2420)); }
   }
 
-  // Sur une toile
+  // Sur une toile (ou une par calque : transparente là où le calque n'a rien peint)
+  if (C) {
+    for (const [nom, buf] of Object.entries(C)) {
+      // (chaque calque ne garde que ses lignes peintes : `haut` dit où il commence, en pixels de la toile)
+      let y0 = 0; while (y0 < H - 1 && !buf.subarray(y0 * L, (y0 + 1) * L).some(c => c)) y0++;
+      const h = H - y0, t = scene.textures.createCanvas(cle + '_' + nom, L, h), c2 = t.getContext(), im = c2.createImageData(L, h);
+      for (let k = y0 * L; k < buf.length; k++) { const c = buf[k]; if (!c) continue; const j = (k - y0 * L) * 4; im.data[j] = (c >> 16) & 255; im.data[j + 1] = (c >> 8) & 255; im.data[j + 2] = c & 255; im.data[j + 3] = 255; }
+      c2.putImageData(im, 0, 0);
+      t.refresh();
+      t.haut = y0;
+    }
+    return cle;
+  }
   const tex = scene.textures.createCanvas(cle, L, H);
   const ctx = tex.getContext();
   const img = ctx.createImageData(L, H);

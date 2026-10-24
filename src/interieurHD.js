@@ -1167,84 +1167,330 @@ function creerAtelierHD(scene) {
   t.texture(scene, 'atelierHD');
 }
 
-// --- La bourse ---
+// --- La bourse (v1.62, planche 84 validée : la besace) ---
 
-// Ta bourse de cuir, plus ou moins rebondie selon ce que tu possèdes : plate et rapiécée
-// quand tu es fauché, ventrue et débordante de pièces quand tu es riche.
-const PALIERS_BOURSE = [0, 1, 30, 100, 300];
+// Ta besace de cuir tanné, plus ou moins rebondie selon ce que tu possèdes : à plat et rapiécée quand tu
+// es fauché, ventrue puis débordante d'or quand tu es riche. Six tailles, aux seuils étalés sur toute la
+// partie (avant : cinq tailles, et passé 300 p., vers le 4e jour, elle ne changeait plus).
+const PALIERS_BOURSE = [0, 1, 50, 300, 2000, 10000];
+const NOMS_BESACE = ['Vide', 'Maigre', 'Ronde', 'Pleine', 'Ventrue', 'Débordante'];
+const TAILLES_BESACE = [[11, 4], [6.5, 7.5], [8.5, 9], [10.5, 10.5], [13, 12.5], [15.5, 14]];
 function niveauBourse(argent) {
   let n = 0;
   PALIERS_BOURSE.forEach((p, i) => { if (argent >= p) n = i; });
   return argent <= 0 ? 0 : Math.max(1, n);
 }
+// la toile d'une besace : 60 × 44, le pied au milieu (x = 30), posé en y = 42
+const BESACE = { l: 60, h: 44, cx: 30, bas: 42 };
+// la hauteur du col au-dessus du pied (en pixels de la toile), pour y faire tomber les pièces
+function hauteurColBesace(n) { const [, ry] = TAILLES_BESACE[n]; return n === 0 ? 4 : 2 * ry + 4 + Math.round(n * 0.4); }
 
+function rampesBesace(t) {
+  t.rampes.cuirB = [0x2a1208, 0x4e2412, 0x74381c, 0x9a5228, 0xc0743a, 0xe09a58];
+  t.rampes.cuirF = rampe(0x4a2612); t.rampes.laniere = rampe(0x3a2010); t.rampes.fil = rampe(0xc8a870); t.rampes.pieceOr = rampe(0xe8b830);
+}
+// une pièce : à plat, debout, ou sur la tranche (elle tourne en tombant)
+function pieceBesace(t, x, y, vue = 'plat') {
+  const [rx, ry] = vue === 'plat' ? [2.6, 1.4] : vue === 'debout' ? [1.7, 2.6] : [0.8, 2.6];
+  t.forme('pieceOr', ellipsoide(x, y, rx, ry), { decalage: 0.6, ombre: false });
+  if (vue !== 'tranche') t.poser(Math.round(x - rx * 0.4), Math.round(y - ry * 0.4), 'pieceOr', 5);
+}
+// La besace : n (taille), ouverte (le col bâille), ecrase (+1 tassée sous le poids, −1 étirée), penche
+// (en radians, autour du pied), pieces (l'or qui dépasse du col)
+function dessinerBesace(t, { n = 2, ouverte = 0, ecrase = 0, penche = 0, cx = BESACE.cx, bas = BESACE.bas, pieces = true } = {}) {
+  rampesBesace(t);
+  const ca = Math.cos(penche), sa = Math.sin(penche);
+  const versLocal = (x, y) => { const dx = x + 0.5 - cx, dy = y + 0.5 - bas; return [cx + dx * ca + dy * sa - 0.5, bas - dx * sa + dy * ca - 0.5]; };
+  const versEcran = (lx, ly) => { const dx = lx - cx, dy = ly - bas; return [cx + dx * ca - dy * sa, bas + dx * sa + dy * ca]; };
+  const forme = (mat, f, o = {}) => t.forme(mat, (x, y) => { const [lx, ly] = versLocal(x, y); const nrm = f(lx, ly); if (!nrm) return null; return [nrm[0] * ca - nrm[1] * sa, nrm[0] * sa + nrm[1] * ca, nrm[2]]; }, o);
+  const poserL = (lx, ly, mat, i) => { const [x, y] = versEcran(lx, ly); t.poser(Math.round(x), Math.round(y), mat, i); };
+  let [rx, ry] = TAILLES_BESACE[n];
+  rx *= 1 + ecrase * 0.12; ry *= 1 - ecrase * 0.12;
+  const cy = bas - ry;
+  if (n === 0) {
+    // fauchée : à plat, le col couché sur le côté, une pièce de lin cousue, la lanière défaite
+    forme('cuirB', (x, y) => { const nx = (x + 0.5 - cx) / rx, ny = (y + 0.5 - cy) / ry; const d = nx * nx + ny * ny; return d <= 1 && y <= bas ? [nx, ny, Math.sqrt(1 - d)] : null; }, { motif: (x, y) => (hachage(x, y, 41) - 0.5) * 0.5 });
+    forme('cuirB', (x, y) => (y >= cy - 2 && y <= cy + 2 && x >= cx + 6 && x <= cx + 15 - Math.abs(y - cy) ? [0.3, -0.4, 0.8] : null), { decalage: -0.3 });
+    for (let x = Math.round(cx - 4); x <= cx + 1; x++) for (let y = Math.round(cy - 1); y <= cy + 2; y++) poserL(x, y, 'lin', y === Math.round(cy - 1) ? 4 : 2);
+    for (const x of [cx - 4, cx - 2, cx, cx + 1]) poserL(x, cy - 2, 'fil', 3);
+    for (let k = 0; k < 9; k++) poserL(cx + 14 + k, bas - 1 - Math.round(Math.sin(k * 0.9) * 1.2), 'laniere', 3);
+    poserL(cx + 23, bas - 1, 'laiton', 4);
+    return;
+  }
+  // le ventre (en poire : il se resserre vers le col), un peu aplati au sol
+  const rxY = y => rx * (1 - 0.16 * Math.max(0, Math.min(1, (cy - y) / ry)));
+  forme('cuirB', (x, y) => { const nx = (x + 0.5 - cx) / rxY(y), ny = (y + 0.5 - cy) / ry; const d = nx * nx + ny * ny; return d <= 1 && y <= bas ? [nx, ny, Math.sqrt(1 - d)] : null; },
+    { motif: (x, y) => (hachage(Math.floor(x), Math.floor(y), 40 + n) - 0.5) * 0.5 });
+  // le cul de la bourse : un cuir plus épais et plus sombre, cousu au point sellier
+  const hautCul = cy + ry * 0.42;
+  forme('cuirF', (x, y) => { if (y < hautCul + Math.abs(x + 0.5 - cx) * 0.12) return null; const nx = (x + 0.5 - cx) / rxY(y), ny = (y + 0.5 - cy) / ry; const d = nx * nx + ny * ny; return d <= 1 && y <= bas ? [nx, ny, Math.sqrt(1 - d)] : null; }, { decalage: 0.1 });
+  for (let x = Math.ceil(cx - rx * 0.85); x <= cx + rx * 0.85; x += 2) poserL(x, Math.round(hautCul + Math.abs(x + 0.5 - cx) * 0.12) - 1, 'fil', 4);
+  for (let x = Math.ceil(cx - rx * 0.7); x <= cx + rx * 0.7; x++) poserL(x, bas - 1, 'cuirF', 0);
+  // les coutures sellier sur les deux flancs
+  for (const cote of [-1, 1]) for (let a = -1.15; a <= 0.95; a += 0.32) { const px = cx + cote * Math.cos(a) * rx * 0.8, py = cy + Math.sin(a) * ry * 0.8; if (py < hautCul - 1) poserL(px, py, 'fil', cote < 0 ? 4 : 2); }
+  // le médaillon de laiton du comptoir, repoussé d'une étoile, rivé sur le ventre
+  if (n >= 2) {
+    const px = cx + rx * 0.1, py = cy - ry * 0.08, r = Math.max(2.3, rx * 0.24);
+    forme('laiton', (x, y) => { const d = Math.hypot(x + 0.5 - px, y + 0.5 - py) / r; return d <= 1 ? [(x + 0.5 - px) / r * 0.7, (y + 0.5 - py) / r * 0.7, Math.sqrt(1 - Math.min(1, d * d) * 0.5)] : null; }, { decalage: 0.3 });
+    for (const [dx, dy] of [[0, -1], [-1, 0], [0, 0], [1, 0], [0, 1]]) poserL(px + dx, py + dy, 'laiton', dx + dy < 0 ? 1 : 2);
+    poserL(px - r * 0.55, py - r * 0.55, 'laiton', 5);
+  }
+  // le reflet du cuir, et l'usure
+  for (const [dx, dy] of [[-0.5, -0.45], [-0.42, -0.5], [-0.55, -0.35]]) poserL(cx + rx * dx, cy + ry * dy, 'cuirB', 5);
+  if (n === 1) for (let k = 0; k < 3; k++) poserL(cx - 2 + k * 2, cy + 1 + (k % 2), 'cuirB', 1);   // le cuir qui plisse, mal rempli
+  if (n >= 4) for (const s of [-1, 1]) for (let k = 1; k < 4; k++) poserL(cx + s * (2 + k * 1.2), cy - ry + 1 + k * 1.6, 'cuirB', 5);   // le cuir tendu
+  // le col froncé, la lanière nouée et ses deux perles de laiton
+  const haut = cy - ry, hc = 4 + Math.round(n * 0.4), col = Math.max(2.5, rx * 0.3), colH = ouverte ? col * 1.9 : col * 1.25;
+  forme('cuirB', (x, y) => { if (y < haut - hc || y > haut + 1.5) return null; const v = (haut + 1.5 - y) / (hc + 1.5); const w = col + (colH - col) * Math.max(0, v - 0.45) / 0.55; return Math.abs(x + 0.5 - cx) <= w ? [(x + 0.5 - cx) / (w + 1) * 0.7, -0.4, 0.8] : null; }, { decalage: 0.2 });
+  for (let k = -2; k <= 2; k++) for (let y = haut - hc + 1; y < haut; y++) if ((k + y) % 2 === 0) poserL(cx + k * colH * 0.4, y, 'cuirB', 5);   // les fronces
+  for (let x = Math.ceil(cx - colH); x <= cx + colH; x++) poserL(x, haut - hc, 'cuirB', ouverte ? 3 : 5);
+  if (ouverte) {   // la bouche ouverte : le dedans sombre, et l'or qu'on devine
+    for (let x = Math.ceil(cx - colH + 1); x <= cx + colH - 1; x++) for (let y = haut - hc; y <= haut - hc + 1; y++) poserL(x, y, 'cuirF', 0);
+    if (n >= 2 && pieces) for (let x = Math.ceil(cx - colH + 2); x <= cx + colH - 2; x += 2) poserL(x, haut - hc + 1, 'pieceOr', 4);
+  }
+  const yl = haut - (ouverte ? 0 : 1);
+  for (let x = Math.round(cx - col - 1); x <= cx + col + 1; x++) poserL(x, yl, 'laniere', (x % 2) ? 4 : 2);
+  const nd = [cx + col + 1, yl];
+  for (let k = 1; k <= 5; k++) { poserL(nd[0] + k * 0.5, nd[1] + k, 'laniere', 3); poserL(nd[0] + k * 0.9 + 1, nd[1] + k * 0.8, 'laniere', 2); }
+  poserL(nd[0] + 3, nd[1] + 6, 'laiton', 5); poserL(nd[0] + 5.5, nd[1] + 5, 'laiton', 4);
+  // les pièces : une qui dépasse, puis un dôme qui déborde, et celles tombées au pied
+  if (pieces && !ouverte && n === 3) pieceBesace(t, ...versEcran(cx + 1, haut - hc - 1.5), 'debout');
+  if (pieces && n === 4 && !ouverte) { pieceBesace(t, ...versEcran(cx - 2, haut - hc - 1)); pieceBesace(t, ...versEcran(cx + 2, haut - hc - 2), 'debout'); }
+  if (pieces && n === 5) {
+    for (const [dx, dy, v] of [[-5, -0.5, 'plat'], [-1.5, -1.5, 'plat'], [2.5, -1, 'plat'], [5.5, -0.5, 'plat'], [-3.5, -3, 'plat'], [1, -3.5, 'plat'], [4, -4, 'debout'], [-1, -5.5, 'plat']]) pieceBesace(t, ...versEcran(cx + dx, haut - hc + dy), v);
+    t.rampes.eclat = rampe(0xfff0a0);
+    for (const [ex, ey] of [[cx - 5, haut - hc - 7], [cx + 7, haut - hc - 3]]) for (let d = -1; d <= 1; d++) { t.poser(Math.round(ex + d), Math.round(ey), 'eclat', 5); t.poser(Math.round(ex), Math.round(ey + d), 'eclat', 5); }
+    for (const [x, v] of [[cx - rx - 3, 'plat'], [cx + rx + 2, 'plat'], [cx + rx + 4.5, 'debout']]) pieceBesace(t, x, bas - (v === 'debout' ? 2 : 1), v);
+  }
+}
+
+// Les variantes de chaque taille : posée, le col ouvert, tassée sous le poids d'une pièce, étirée (elle
+// se gonfle), penchée (elle verse). Les clés : bourseHD<n>, bourseHD<n>_ouverte, ... (bourseHD<n> reste
+// l'image posée, comme avant, pour les écrans qui la montrent sans animation).
+const VARIANTES_BESACE = { '': {}, _ouverte: { ouverte: 1 }, _tassee: { ouverte: 1, ecrase: 1 }, _etiree: { ecrase: -1 }, _penchee: { ouverte: 1, penche: 0.5 } };
 function creerBoursesHD(scene) {
-  if (scene.textures.exists('bourseHD4')) return;
-  const tailles = [[9, 3.5], [6, 6], [8, 7.5], [10, 9], [11.5, 10]];
-  tailles.forEach(([rx, ry], n) => {
-    const t = toileObjet(32, 32);
-    t.rampes.bourse = rampe(n === 0 ? 0x7a5a3a : 0x9a5a2a);
-    t.rampes.pieceOr = rampe(0xe8b830);
-    const cx = 16, bas = 30, cy = bas - ry;
-    const piece = (x, y, debout = false) => t.forme('pieceOr', ellipsoide(x, y, debout ? 1.6 : 2.6, debout ? 2.6 : 1.4), { decalage: 0.6 });
-    // Les pièces tombées au pied d'une bourse bien pleine
-    if (n >= 4) { piece(5, 29); piece(27, 29.5); piece(25, 27.5); }
-    // Le ventre de la bourse (un peu aplati en bas, comme posé)
-    t.forme('bourse', ellipsoide(cx, cy, rx, ry, (x, y) => y < bas), { motif: (x, y) => (hachage(x, y, 40 + n) - 0.5) * 0.6 });
-    if (n === 0) {
-      // Fauché : la bourse est vide, à plat, avec une pièce de tissu cousue
-      for (let x = 13; x <= 17; x++) for (let y = 25; y <= 27; y++) t.poser(x, y, 'lin', y === 25 ? 4 : 2);
-      for (const x of [13, 15, 17]) t.poser(x, 24, 'chanvre', 1);
-      t.forme('bourse', (x, y) => (y >= 21 && y <= 24 && x >= 20 && x <= 27 - (24 - y) ? [0.3, -0.5, 0.8] : null), { decalage: -0.3 });
-    } else {
-      // Le col froncé et son cordon de chanvre
-      const haut = cy - ry, col = Math.max(3, rx * 0.45);
-      t.forme('bourse', (x, y) => (y >= haut - 4 && y <= haut + 1 && Math.abs(x + 0.5 - cx) <= col - (haut + 1 - y) * 0.3 ? [(x + 0.5 - cx) / col * 0.6, -0.3, 0.8] : null), { decalage: 0.2 });
-      for (let x = Math.round(cx - col - 1); x <= cx + col; x++) t.poser(x, haut, 'chanvre', (x % 2) ? 4 : 2);
-      trait(t, 'chanvre', cx + col, haut, cx + col + 3, haut + 5, 0.6);
-      for (let k = -1; k <= 1; k++) t.poser(cx + k * 2, haut - 5, 'bourse', 4);   // les fronces
-      // Une couture en arc sur le ventre, et le reflet du cuir
-      for (let a = 0.5; a < 2.65; a += 0.22) t.poser(Math.round(cx + Math.cos(a) * rx * 0.7), Math.round(cy - 1 + Math.sin(a) * ry * 0.55), 'chanvre', 3);
-      t.poser(Math.round(cx - rx * 0.5), Math.round(cy - ry * 0.45), 'bourse', 5); t.poser(Math.round(cx - rx * 0.5) + 1, Math.round(cy - ry * 0.45), 'bourse', 5);
-      // Une pièce qui dépasse, puis un trop-plein de pièces
-      if (n >= 3) piece(cx + 1, haut - 5, true);
-      if (n >= 4) { piece(cx - 3, haut - 6); piece(cx + 4, haut - 7, true); }
-    }
+  if (scene.textures.exists('bourseHD5_penchee')) return;
+  for (let n = 0; n < TAILLES_BESACE.length; n++) for (const [suffixe, o] of Object.entries(VARIANTES_BESACE)) {
+    const cle = 'bourseHD' + n + suffixe;
+    if (scene.textures.exists(cle)) scene.textures.remove(cle);   // (l'ancienne bourse, si elle était déjà là)
+    const t = toileDecor(BESACE.l, BESACE.h);
+    dessinerBesace(t, { n, ...o });
     t.contour();
-    t.texture(scene, 'bourseHD' + n);
+    t.texture(scene, cle);
+  }
+  creerPiecesVolHD(scene);
+}
+// La pièce qui vole, en trois dessins (de face, de trois quarts, sur la tranche) : elle tourne vraiment
+function creerPiecesVolHD(scene) {
+  if (scene.textures.exists('pieceVol2')) return;
+  [[3.4, 3.4], [2, 3.4], [0.9, 3.4]].forEach(([rx, ry], i) => {
+    const t = toileDecor(9, 9);
+    t.rampes.pieceOr = rampe(0xe8b830);
+    t.forme('pieceOr', ellipsoide(4.5, 4.5, rx, ry), { decalage: 0.5, ombre: false });
+    if (i < 2) { t.forme('pieceOr', ellipsoide(4.5, 4.5, rx * 0.62, ry * 0.62), { decalage: -0.7, bord: false, ombre: false }); t.poser(Math.round(4.5 - rx * 0.5), 2, 'pieceOr', 5); }
+    else t.poser(4, 2, 'pieceOr', 5);
+    t.contour();
+    t.texture(scene, 'pieceVol' + i);
   });
 }
 
-// Un petit widget : la bourse et le compte en dessous. Renvoie le conteneur, avec `maj(argent)`.
-function bourse(scene, x, y, argent, { echelle = 2, taille = 14, couleur = '#f3d98a', aDroite = false, conteneur = null } = {}) {
+// Un petit widget : la besace et le compte. Renvoie le conteneur, avec `maj(argent)`, `col()` (où tombent
+// les pièces), `ouvrirCol()` et `recevoirPiece()` (pour `voleePieces`).
+// `sens` : de quel côté elle verse quand on paie (1 : vers la droite, −1 : vers la gauche) ; `gain` : [dx, dy], où
+// s'affiche le gain ou la dépense (par défaut au-dessus d'elle).
+function bourse(scene, x, y, argent, { echelle = 2, taille = 14, couleur = '#f3d98a', aDroite = false, conteneur = null, sens = 1, gain = null } = {}) {
   creerBoursesHD(scene);
   const c = scene.add.container(x, y);
   const img = scene.add.image(0, 0, 'bourseHD0').setOrigin(0.5, 1).setScale(echelle);
-  const texte = (aDroite ? scene.add.text(echelle * 13, -echelle * 9, '', style(taille, couleur, { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 4 })).setOrigin(0, 0.5)
+  const texte = (aDroite ? scene.add.text(echelle * 15, -echelle * 11, '', style(taille, couleur, { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 4 })).setOrigin(0, 0.5)
     : scene.add.text(0, 2, '', style(taille, couleur, { fontStyle: 'bold', stroke: '#1a100a', strokeThickness: 4 })).setOrigin(0.5, 0));
   c.image = img; c.texte = texte;
   c.add([img, texte]);
   c.niveau = -1;
+  // les images clés : une suite de [variante, taille, durée]
+  const cle = (n, v = '') => 'bourseHD' + n + v;
+  const jouer = (etapes) => {
+    const id = c.suite = (c.suite || 0) + 1;
+    let t = 0;
+    for (const [v, n, ms] of etapes) {
+      const poser = () => { if (c.suite === id && img.active) img.setTexture(cle(n, v)).setFlipX(v === '_penchee' && sens < 0); };
+      if (t === 0) poser(); else scene.time.delayedCall(t, poser);
+      t += ms;
+    }
+    return t;
+  };
+  c.col = () => ({ x: c.x, y: c.y - hauteurColBesace(Math.max(0, c.niveau)) * echelle });
+  // une pièce arrive au-dessus du col : il s'ouvre ; elle tombe dedans : la besace se tasse, puis se rouvre
+  c.ouvrirCol = () => { if (c.niveau > 0 && !c.versement) jouer([['_ouverte', c.niveau, 1]]); };
+  c.recevoirPiece = () => {
+    if (c.niveau <= 0 || c.versement) return;
+    jouer([['_tassee', c.niveau, 90], ['_ouverte', c.niveau, 1]]);
+    // (sans nouvelle pièce, elle se referme d'elle-même)
+    if (c.fermer) c.fermer.remove();
+    c.fermer = scene.time.delayedCall(450, () => { c.fermer = null; if (img.active) jouer([['_etiree', c.niveau, 120], ['', c.niveau, 1]]); });
+  };
+  // On paie : elle penche, et les pièces sautent du col, tombent sur la tranche, rebondissent et roulent
+  const verser = (n0, n1, montant) => {
+    c.versement = true;
+    const hc = hauteurColBesace(Math.max(1, n0)) * echelle;
+    const colX = sens * Math.sin(0.5) * hc, colY = -Math.cos(0.5) * hc;
+    const total = Math.max(1, Math.min(4, Math.ceil(Math.sqrt(montant) / 3)));
+    for (let k = 0; k < total; k++) scene.time.delayedCall(100 + k * 90, () => {
+      if (!c.active) return;
+      const p = scene.add.image(colX, colY, 'pieceVol1').setScale(echelle * 0.75);
+      c.add(p);
+      const loin = sens * (12 + k * 5) * echelle, haut = 7 * echelle;
+      const vol = { t: 0 }, x0 = colX, y0 = colY;
+      let i = 0;
+      const tourne = scene.time.addEvent({ delay: 70, loop: true, callback: () => { if (!p.active) return tourne.remove(); i = (i + 1) % 4; p.setTexture('pieceVol' + [0, 1, 2, 1][i]).setFlipX(i === 3); } });
+      scene.tweens.add({ targets: vol, t: 1, duration: 260, ease: 'Linear', onUpdate: () => {
+        if (!p.active) return;
+        p.setPosition(x0 + (loin - x0) * vol.t, y0 + (-echelle - y0) * vol.t * vol.t - Math.sin(vol.t * Math.PI) * haut);
+      }, onComplete: () => {
+        if (!p.active) return;
+        tourne.remove(); p.setTexture('pieceVol2'); Son.jouer('piece');
+        // un rebond, puis elle roule à plat et s'efface
+        scene.tweens.add({ targets: p, y: -echelle * 4, duration: 110, yoyo: true, ease: 'Quad.easeOut', onComplete: () => {
+          if (!p.active) return;
+          p.setTexture('pieceVol0').setScale(echelle * 0.75, echelle * 0.4);
+          scene.tweens.add({ targets: p, x: p.x + sens * 10 * echelle, alpha: 0, duration: 420, ease: 'Sine.easeOut', onComplete: () => p.destroy() });
+        } });
+      } });
+    });
+    const t = jouer([['_penchee', n0, 100 + total * 90 + 200], ['_penchee', n1, 120], ['', n1, 1]]);
+    scene.time.delayedCall(t, () => { c.versement = false; });
+  };
   c.maj = (a) => {
+    a = Math.floor(a);
     // (v1.17) le gain ou la dépense, en direct au-dessus de la bourse
-    if (c.dernier !== undefined && a !== c.dernier && c.visible && scene.sys.isActive()) {
+    const vivant = c.dernier !== undefined && a !== c.dernier && c.visible && scene.sys.isActive();
+    if (vivant) {
       const d = a - c.dernier, m = c.getWorldTransformMatrix();
-      const yHaut = m.ty - echelle * (aDroite ? 24 : 14) - 8;   // (v1.61 : une bourse collée au haut de l'écran affiche son gain dessous)
-      const g = gainEnDirect(scene, m.tx + (aDroite ? echelle * 13 + 30 : 0), yHaut < 30 ? m.ty + 26 : yHaut, `${d > 0 ? '+' : '−'}${Math.abs(d)} p.`, d > 0, { taille: 14 });
+      const yHaut = m.ty - echelle * (aDroite ? 30 : 36) - 8;   // (v1.61 : une bourse collée au haut de l'écran affiche son gain dessous)
+      const g = gainEnDirect(scene, gain ? m.tx + gain[0] : m.tx + (aDroite ? echelle * 15 + 30 : 0), gain ? m.ty + gain[1] : yHaut < 30 ? m.ty + 26 : yHaut, `${d > 0 ? '+' : '−'}${Math.abs(d)} p.`, d > 0, { taille: 14 });
       if (conteneur) conteneur.add(g);   // (v1.61 : dans l'interface d'un récit, sous sa caméra fixe)
     }
+    const avant = c.dernier, n0 = c.niveau;
     c.dernier = a;
     const n = niveauBourse(a);
     texte.setText(`${a} p.`).setColor(a < 0 ? '#f0a8a0' : couleur);
-    if (n !== c.niveau) {
-      // Un petit rebond quand la bourse change de taille
-      if (c.niveau >= 0) scene.tweens.add({ targets: img, scaleY: echelle * 1.15, scaleX: echelle * 0.92, duration: 120, yoyo: true });
-      img.setTexture('bourseHD' + n);
-      c.niveau = n;
-    }
+    c.niveau = n;
+    if (!vivant || n0 < 0) { if (!c.versement) jouer([['', n, 1]]); return; }
+    if (a < avant) verser(n0, n, avant - a);
+    else if (c.fermer) { c.fermer.remove(); c.fermer = null; jouer([['_etiree', n, 120], ['', n, 1]]); }   // (les pièces viennent d'y tomber)
+    else jouer([['_ouverte', Math.max(1, n0), 80], ['_tassee', Math.max(1, n0), 90], ['_etiree', n, 120], ['', n, 1]]);
   };
   c.maj(argent);
   return c;
+}
+
+// --- (v1.62, planche 84 validée) Le carnet de voyage d'un disparu : cuir usé jusqu'au clair aux coins, sangle
+// et boucle de laiton, auréole d'eau, sang séché, coin corné, signet et plume de geai ; givré quand la
+// Faucheuse l'a laissé. Fermé (debout), ouvert (dans le récit), couché (sur le rebord du comptoir).
+function rampesCarnet(t) {
+  t.rampes.couv = rampe(0x5a3a22); t.rampes.couvU = rampe(0x8a6440); t.rampes.sangle = rampe(0x3a2414); t.rampes.tache = rampe(0x4a1a12); t.rampes.eauT = rampe(0x7a5a3a);
+  t.rampes.givre = [0x8aa8c0, 0xa8c4d8, 0xc4dcea, 0xdceaf4, 0xeef6fa, 0xffffff]; t.rampes.papier = RAMPES_DECOR.parchemin; t.rampes.encreB = rampe(0x5a3a24); t.rampes.signet = rampe(0x8a2a2a); t.rampes.plume = rampe(0x6a8a5a);
+}
+function dessinerCarnetFerme(t, { x0 = 4, y0 = 2, l = 26, h = 34, givre = false } = {}) {
+  rampesCarnet(t);
+  // la tranche des pages, à droite, et la couverture de cuir usé
+  for (let y = y0 + 2; y < y0 + h - 1; y++) for (let x = x0 + l - 1; x < x0 + l + 2; x++) t.poser(x, y, 'papier', (y % 2 ? 3 : 4) - (x === x0 + l + 1 ? 1 : 0));
+  t.forme('couv', (x, y) => (x >= x0 && x < x0 + l && y >= y0 && y < y0 + h ? [(x - x0 - l / 2) / l * 0.6, (y - y0 - h / 2) / h * 0.4, 0.9] : null), { motif: (x, y) => (fbm(x * 0.4, y * 0.4, 83) - 0.5) * 1.4 });
+  // les coins et les bords usés jusqu'au cuir clair, un coin corné
+  for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + l; x++) { const bord = Math.min(x - x0, y - y0, x0 + l - 1 - x, y0 + h - 1 - y); if (bord === 0 && hachage(x, y, 85) < 0.55) t.poser(x, y, 'couvU', 3 + (hachage(x, y, 86) < 0.3 ? 1 : 0)); }
+  for (let k = 0; k < 4; k++) for (let j = 0; j <= 3 - k; j++) t.poser(x0 + l - 1 - j, y0 + h - 1 - k, 'papier', j === 3 - k ? 2 : 4);
+  // le dos : une bande plus sombre, deux nerfs
+  for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + 3; x++) t.poser(x, y, 'couv', x === x0 ? 1 : 2);
+  for (const y of [y0 + 6, y0 + h - 7]) for (let x = x0; x < x0 + 3; x++) t.poser(x, y, 'couvU', 4);
+  // les taches : une auréole d'eau (le gué), du sang séché, une éclaboussure de boue
+  for (let a = 0; a < 6.28; a += 0.15) t.poser(Math.round(x0 + l * 0.62 + Math.cos(a) * 5), Math.round(y0 + h * 0.28 + Math.sin(a) * 4), 'eauT', 4);
+  t.forme('tache', (x, y) => { const d = Math.hypot((x + 0.5 - (x0 + l * 0.3)) / 4.5, (y + 0.5 - (y0 + h * 0.7)) / 3.2); return d < 1 - hachage(Math.floor(x), Math.floor(y), 88) * 0.35 ? [0, 0, 1] : null; }, { bord: false, ombre: false, decalage: -0.6 });
+  for (const [dx, dy] of [[0.45, 0.82], [0.5, 0.88], [0.38, 0.9]]) t.poser(Math.round(x0 + l * dx), Math.round(y0 + h * dy), 'tache', 2);
+  // la sangle de cuir qui fait le tour, et sa boucle de laiton
+  const ys = Math.round(y0 + h * 0.5);
+  for (let x = x0 - 1; x < x0 + l + 2; x++) for (let y = ys; y < ys + 3; y++) t.poser(x, y, 'sangle', y === ys ? 4 : y === ys + 2 ? 1 : 3);
+  const bx = Math.round(x0 + l * 0.7);
+  for (let y = ys - 1; y <= ys + 3; y++) { t.poser(bx, y, 'laiton', 4); t.poser(bx + 3, y, 'laiton', 3); }
+  for (let x = bx; x <= bx + 3; x++) { t.poser(x, ys - 1, 'laiton', 5); t.poser(x, ys + 3, 'laiton', 2); }
+  t.poser(bx + 1, ys + 1, 'laiton', 3);
+  for (let k = 1; k <= 4; k++) t.poser(bx + 3 + k, ys + 3 + Math.floor(k / 2), 'sangle', 3);
+  // le signet rouge, et une plume de geai glissée dans les pages
+  for (let y = y0 + h; y < y0 + h + 5; y++) t.poser(x0 + l - 7, y, 'signet', y === y0 + h + 4 ? 2 : 4);
+  for (let k = 0; k < 9; k++) { t.poser(x0 + l + 1 + Math.round(k * 0.5), y0 + 5 - k, 'plume', 3 + (k % 2)); if (k > 2) t.poser(x0 + l + 2 + Math.round(k * 0.5), y0 + 6 - k, 'plume', 2); }
+  if (givre) {
+    for (let x = x0 - 1; x < x0 + l + 3; x++) for (let j = 0; j < 2 + (hachage(x, 1, 91) > 0.6 ? 1 : 0); j++) t.poser(x, y0 + j, 'givre', 5 - j);
+    for (let y = y0; y < y0 + h; y++) if (hachage(1, y, 92) > 0.4) t.poser(x0 - 1 + (hachage(2, y, 93) > 0.5 ? 1 : 0), y, 'givre', 4);
+    for (let k = 0; k < 14; k++) { const x = Math.round(x0 + 3 + hachage(k, 3, 94) * (l - 4)), y = Math.round(y0 + 2 + hachage(k, 4, 94) * (h * 0.35)); t.poser(x, y, 'givre', 5); if (k % 3 === 0) { t.poser(x + 1, y, 'givre', 4); t.poser(x, y + 1, 'givre', 3); } }
+  }
+}
+// ouvert, à plat (vu un peu de haut) : deux pages couvertes d'une écriture qui tremble, la sangle défaite
+function dessinerCarnetOuvert(t, { x0 = 2, y0 = 12, l = 64, h = 36, tremble = 0.45 } = {}) {
+  rampesCarnet(t);
+  const m = x0 + l / 2;
+  t.forme('couv', (x, y) => (x >= x0 && x < x0 + l && y >= y0 + 1 && y < y0 + h + 1 ? [0, 0.3, 0.9] : null), { decalage: -0.4 });
+  // les pages, bombées vers la reliure
+  for (let y = y0; y < y0 + h - 1; y++) for (let x = x0 + 2; x < x0 + l - 2; x++) {
+    const u = Math.abs(x + 0.5 - m) / (l / 2), creux = u < 0.08, yb = y0 + Math.round((1 - u) * 2);
+    if (y < yb) continue;
+    const bordP = Math.min(x - x0 - 2, x0 + l - 3 - x, y - y0, y0 + h - 2 - y);
+    t.poser(x, y, 'papier', creux ? 1 : u < 0.2 ? 3 : 4 - (bordP < 2 ? 1 : 0) - (y > y0 + h - 4 ? 1 : 0) + (hachage(x, y, 95) > 0.93 ? -1 : 0) - (fbm(x * 0.15, y * 0.15, 61) > 0.68 ? 1 : 0));
+  }
+  // l'écriture, ligne par ligne : de plus en plus tremblée vers le bas de la page de droite
+  for (const [a, b, droite] of [[x0 + 5, m - 3, false], [m + 3, x0 + l - 5, true]]) for (let y = y0 + 6, ligne = 0; y < y0 + h - 4; y += 3, ligne++) {
+    let x = a + (hachage(y, a, 96) < 0.3 ? 2 : 0); const fin = droite && ligne >= 6 ? a + (b - a) * 0.35 : b;
+    while (x < fin) {
+      const mot = 2 + Math.floor(hachage(x, y, 97) * 5);
+      for (let k = 0; k < mot && x + k < fin; k++) { const tr = droite ? Math.round((hachage(x + k, y, 98) - 0.5) * 2 * tremble * ligne * 0.5) : 0; t.poser(x + k, y + tr, 'encreB', hachage(x + k, y, 99) < 0.3 ? 3 : 2); }
+      x += mot + 1;
+    }
+  }
+  // un croquis de carte sur la page de gauche : une rivière, une croix
+  for (let k = 0; k < 10; k++) t.poser(x0 + 8 + k, y0 + h - 9 + Math.round(Math.sin(k * 0.8)), 'encreB', 2);
+  for (const [dx, dy] of [[20, -11], [21, -10], [20, -10], [21, -11]]) t.poser(x0 + dx, y0 + h + dy, 'tache', 3);
+  // une tache de sang séché qui a bu la page de droite, une auréole d'eau à gauche
+  t.forme('tache', (x, y) => { const d = Math.hypot((x + 0.5 - (x0 + l * 0.8)) / 5, (y + 0.5 - (y0 + h * 0.72)) / 3.4); return d < 1 - hachage(Math.floor(x), Math.floor(y), 87) * 0.3 ? [0, 0, 1] : null; }, { bord: false, ombre: false, decalage: -0.2 });
+  for (let a = 0; a < 6.28; a += 0.15) t.poser(Math.round(x0 + l * 0.22 + Math.cos(a) * 5), Math.round(y0 + h * 0.3 + Math.sin(a) * 3), 'eauT', 4);
+  // la sangle défaite qui pend, le signet, la plume de geai entre les pages
+  for (let k = 0; k < 12; k++) for (let j = 0; j < 3; j++) t.poser(x0 + l + j, y0 + 12 + k, 'sangle', j === 0 ? 4 : j === 2 ? 1 : 3);
+  for (let y = y0 + 24; y <= y0 + 27; y++) { t.poser(x0 + l - 1, y, 'laiton', 4); t.poser(x0 + l + 3, y, 'laiton', 3); }
+  for (let x = x0 + l - 1; x <= x0 + l + 3; x++) { t.poser(x, y0 + 24, 'laiton', 5); t.poser(x, y0 + 27, 'laiton', 2); }
+  for (let y = y0 + h; y < y0 + h + 6; y++) t.poser(m + 1, y, 'signet', y === y0 + h + 5 ? 2 : 4);
+  for (let k = 0; k < 10; k++) { t.poser(m - 1 + Math.round(k * 0.2), y0 - 1 - k, 'plume', 3 + (k % 2)); if (k > 2) t.poser(m + Math.round(k * 0.2), y0 - k, 'plume', 2); }
+}
+// couché sur le rebord de la fenêtre, vu d'un peu au-dessus : le plat de la couverture, la tranche des pages devant
+function dessinerCarnetCouche(t, { givre = false } = {}) {
+  rampesCarnet(t);
+  const y0 = 2, hc = 8;
+  t.forme('couv', (x, y) => { if (y < y0 || y >= y0 + hc) return null; const r = (y0 + hc - 1 - y) * 0.35; return x >= 2 + r && x <= 31 - r ? [0, -0.8, 0.6] : null; }, { motif: (x, y) => (fbm(x * 0.4, y * 0.5, 83) - 0.5) * 1.2 });
+  for (let x = 3; x <= 30; x++) if (hachage(x, 1, 85) < 0.6) t.poser(x, y0, 'couvU', 4);
+  for (const x of [2, 3, 30, 31]) t.poser(x, y0 + hc - 1, 'couvU', 3);
+  // la tranche des pages, puis le plat du dessous
+  for (let y = y0 + hc; y < y0 + hc + 3; y++) for (let x = 2; x <= 31; x++) t.poser(x, y, 'papier', (y - y0 - hc) % 2 ? 3 : 4 - (x > 28 ? 1 : 0));
+  for (let x = 2; x <= 31; x++) t.poser(x, y0 + hc + 3, 'couv', 1);
+  // l'auréole d'eau et le sang séché sur la couverture
+  for (let a = 0; a < 6.28; a += 0.2) t.poser(Math.round(9 + Math.cos(a) * 4), Math.round(y0 + 4 + Math.sin(a) * 2), 'eauT', 4);
+  t.forme('tache', (x, y) => (Math.hypot((x + 0.5 - 25) / 3.4, (y + 0.5 - (y0 + 5)) / 1.8) < 1 - hachage(x, y, 88) * 0.3 ? [0, 0, 1] : null), { bord: false, ombre: false, decalage: -0.6 });
+  // la sangle qui passe sur la couverture et descend devant les pages, sa boucle de laiton
+  for (let y = y0; y < y0 + hc + 4; y++) for (let x = 17; x <= 19; x++) t.poser(x, y, 'sangle', x === 17 ? 4 : x === 19 ? 1 : 3);
+  for (let x = 16; x <= 20; x++) { t.poser(x, y0 + hc, 'laiton', 5); t.poser(x, y0 + hc + 3, 'laiton', 2); }
+  for (let y = y0 + hc; y <= y0 + hc + 3; y++) { t.poser(16, y, 'laiton', 4); t.poser(20, y, 'laiton', 3); }
+  // le signet rouge qui pend devant, la plume de geai qui dépasse
+  for (let y = y0 + hc + 3; y < y0 + hc + 7; y++) t.poser(26, y, 'signet', y === y0 + hc + 6 ? 2 : 4);
+  for (let k = 0; k < 7; k++) t.poser(31 + Math.round(k * 0.4), y0 + hc + 1 - k, 'plume', 3 + (k % 2));
+  if (givre) {
+    for (let x = 2; x <= 31; x++) for (let j = 0; j < 1 + (hachage(x, 2, 91) > 0.55 ? 1 : 0); j++) t.poser(x, y0 + j + (x < 4 || x > 29 ? 1 : 0), 'givre', 5 - j);
+    for (let k = 0; k < 12; k++) t.poser(Math.round(4 + hachage(k, 3, 94) * 26), Math.round(y0 + 1 + hachage(k, 4, 94) * (hc - 2)), 'givre', 4 + (k % 2));
+    for (const x of [2, 31]) for (let y = y0 + hc; y < y0 + hc + 3; y++) t.poser(x, y, 'givre', 4);
+  }
+}
+function creerCarnetsHD(scene) {
+  if (scene.textures.exists('carnetCoucheGivreHD')) return;
+  const fabriquer = (cle, l, h, dessin) => { const t = toileDecor(l, h); dessin(t); t.contour(); t.texture(scene, cle); };
+  fabriquer('carnetFermeHD', 38, 42, t => dessinerCarnetFerme(t));
+  fabriquer('carnetGivreHD', 38, 42, t => dessinerCarnetFerme(t, { givre: true }));
+  fabriquer('carnetOuvertHD', 72, 58, t => dessinerCarnetOuvert(t));
+  fabriquer('carnetCoucheHD', 36, 18, t => dessinerCarnetCouche(t));
+  fabriquer('carnetCoucheGivreHD', 36, 18, t => dessinerCarnetCouche(t, { givre: true }));
 }
 
 // --- (v0.57) Les souvenirs de la chambre : l'étagère des trophées, le tableau des lettres, le portrait ---
