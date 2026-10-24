@@ -28,10 +28,14 @@ const VISITE_MARCHE = {
   titre: 'La visite de Garrick :',
   depart: "Allez, suis-moi, petit{J} ! Je vais te présenter ceux qui rempliront tes étagères. Et colle-moi aux bottes : la place est grande, ha ha !",
   etapes: [
-    { lieu: 'gedeon', nom: 'Gédéon', texte: "Maître Gédéon, l’épicier. Rations, gourdes, torches, bandages : le pain de tous les jours d’un aventurier. Et chez lui, il n’en manque jamais, ha ha !" },
-    { lieu: 'tailleuse', nom: 'Hilda', texte: "Hilda, la tailleuse. Ses capes ont sauvé plus d’un gars des neiges du Nord. Le froid ne pardonne pas... Hilda, si ! Ha ha !" },
-    { lieu: 'apothicaire', nom: 'Mère Sauge', texte: "Mère Sauge. Potions, antidotes, amulettes... Un client qui revient vivant, c’est souvent grâce à elle. Et ne la contrarie pas : elle connaît les champignons, ha ha !" },
-    { lieu: 'forge', nom: 'Thorgal', texte: "Et voilà Thorgal ! Épées, haches, arcs, et le fer pour tout le reste. Il te vendrait un marteau pour un clou, ha ha ! Mais ses lames tiennent." },
+    { lieu: 'gedeon', nom: 'Gédéon', texte: "Maître Gédéon, l’épicier. Rations, gourdes, torches, bandages : le pain de tous les jours d’un aventurier. Et chez lui, il n’en manque jamais, ha ha !",
+      reponse: "Bienvenue ! Ici, tout est frais et rien n’est cher. Enfin... presque rien." },
+    { lieu: 'tailleuse', nom: 'Hilda', texte: "Hilda, la tailleuse. Ses capes ont sauvé plus d’un gars des neiges du Nord. Le froid ne pardonne pas... Hilda, si ! Ha ha !",
+      reponse: "Toujours le mot pour rire, Garrick ! Reviens me voir avant les premières neiges." },
+    { lieu: 'apothicaire', nom: 'Mère Sauge', texte: "Mère Sauge. Potions, antidotes, amulettes... Un client qui revient vivant, c’est souvent grâce à elle. Et ne la contrarie pas : elle connaît les champignons, ha ha !",
+      reponse: "Je t’ai entendu, Garrick... Bienvenue, mon enfant." },
+    { lieu: 'forge', nom: 'Thorgal', texte: "Et voilà Thorgal ! Épées, haches, arcs, et le fer pour tout le reste. Il te vendrait un marteau pour un clou, ha ha ! Mais ses lames tiennent.",
+      reponse: "Un marteau pour un clou ? C’est un très bon marteau !" },
     { lieu: 'fontaine', nom: 'La fontaine', texte: "Voilà, tu connais la place ! Ta liste de courses : touche L. Toute la place : touche M. Moi, je reprends la route. Bonne chance, petit{J}, ha ha !" },
   ],
   // en passant devant les enchères (n : dans combien de jours elles ouvrent)
@@ -40,7 +44,21 @@ const VISITE_MARCHE = {
   appel: "Hé, par ici !",
   presse: "Pressé{J}, hein ? Ha ha ! Je te laisse faire.",
   fin: '✓ La visite est finie : la place est à toi.',
+  // (v1.62) la visite avait été interrompue (on avait quitté la place) : on la reprend, ou on l'ignore
+  question: n => `Te revoilà, petit{J} ! On s’était arrêtés en chemin. On reprend la visite là où on en était (${n}), ou tu te débrouilles ?`,
+  reprise: n => `Bon, où en étions-nous... Ah oui : ${n} ! Suis-moi.`,
+  ignore: "Comme tu veux ! Si l’envie te prend, demande-moi depuis le menu ☰.",
+  revoir: "Encore un petit tour ? Avec plaisir ! Suis-moi, petit{J}.",
 };
+// (v1.62) Le menu ☰ : refaire la visite du marché. Sur la place, elle commence tout de suite ; ailleurs, au prochain
+// passage au marché. Renvoie 'maintenant', 'plus tard' ou '' (pas de partie, ou une visite déjà en cours).
+function revoirVisiteMarche() {
+  const G = window.GAME; if (!G || !window.jeu) return '';
+  const s = jeu.scene.getScene('Marche');
+  if (s && s.place && s.visite && !s.visite.fini) return '';
+  G.revoirVisite = true;
+  return s && s.place && (s.sys.isActive() || s.sys.isPaused()) && s.heros && s.heros.active ? 'maintenant' : 'plus tard';
+}
 
 // (v1.49) Un conseil est-il à l'écran ?
 function conseilOuvert() { return (window.conseilsOuverts || 0) > 0; }

@@ -8,7 +8,7 @@ const PLACE_MARCHE = { L: 1800, H: 1040, zoom: 1.25, zoomPanneau: 0.95, vitesse:
 // Où est chaque lieu (sa base, au sol), en pixels de la place
 const LIEUX_PLACE = { forge: [330, 340], apothicaire: [560, 310], encheres: [900, 290], gedeon: [1240, 310], tailleuse: [1470, 340],
   bazar: [170, 610], brocante: [170, 870], garderobe: [1630, 610], peche: [1630, 880], crieur: [660, 560], tableau: [1140, 560], jeux: [560, 920], mendiant: [770, 1000],
-  fontaine: [900, 660], carte: [1060, 1000], arche: [900, 1040], moulin: [1760, 760] };
+  fontaine: [900, 660], carte: [1090, 1000], arche: [900, 1040], moulin: [1760, 760] };
 // La hauteur de l'enseigne au-dessus de la base (les autres : 200)
 const HAUTEUR_ENSEIGNE = { encheres: 150, crieur: 112, tableau: 110, jeux: 170, mendiant: 120, fontaine: 190, carte: 70, arche: 230, moulin: 30, peche: 200 };
 const PETITS_LIEUX = ['crieur', 'tableau', 'mendiant'];
@@ -105,7 +105,8 @@ Object.assign(MarcheScene.prototype, {
     // (v1.62, planche 80, système A) le porche couvert, vers la rue : on ne bute que sur ses deux poteaux
     this.poserPorchePlace();
     this.actionsLieux.arche = () => this.rentrer();
-    ombre(1060, 1002, 60); const carte = panneauCarteMonde(this, 1060, 1000); place.add(carte); this.obstacles.push([1038, 986, 1082, 1002]);
+    { const [cx, cy] = LIEUX_PLACE.carte; ombre(cx, cy + 2, 80); this.poserCartePlace(cx, cy); this.obstacles.push([cx - 22, cy - 14, cx + 22, cy + 2]); }   // (v1.62 : un peu à l'écart du porche)
+    this.coinMendiantPlace();
     this.actionsLieux.carte = () => this.message('La carte du monde : tes voyageurs partent de ton comptoir vers toutes ces contrées.');
     const poteau = this.add.image(1760, 760, barrierePlaceHD(this, 2)).setOrigin(0.5, 1).setScale(2.2); place.add(poteau); this.obstacles.push([1744, 748, 1776, 762]);
     this.actionsLieux.moulin = () => this.message('Le sentier mène au Vieux Moulin et à l’étang de Barnabé. On s’y promène le soir, depuis chez toi.');
@@ -127,8 +128,8 @@ Object.assign(MarcheScene.prototype, {
     // les enseignes, lisibles de loin, au-dessus de tout
     this.enseignesPlace = [];
     for (const cle of Object.keys(LIEUX_PLACE)) {
-      if (!this.actionsLieux[cle] || cle === 'arche') continue;   // (le porche porte son propre écriteau)
-      const [x0, y] = LIEUX_PLACE[cle], [n, m] = this.nomLieuPlace(cle), x = x0 + (cle === 'carte' ? 40 : 0);   // (la carte : son nom ne passe plus sur le toit du porche)
+      if (!this.actionsLieux[cle] || cle === 'arche' || cle === 'carte') continue;   // (le porche et la carte portent leur propre écriteau)
+      const [x, y] = LIEUX_PLACE[cle], [n, m] = this.nomLieuPlace(cle);
       enseigneLieu(this, x, y - (HAUTEUR_ENSEIGNE[cle] || 200), n, m, n === 'En travaux' ? '#c9b48a' : MARCHANDS[cle] ? couleurNom(G, MARCHANDS[cle].nom, true) : '#f3d98a').forEach(o => { o.yTri = 1e6; o.setDepth(0); place.add(o); this.enseignesPlace.push(o); });
     }
     // JeuneGoy, à l'arche s'il vient de la rue
@@ -242,6 +243,40 @@ Object.assign(MarcheScene.prototype, {
       this.tweens.add({ targets: r, alpha: 0.05, scaleX: 1.6, duration: 900 + k * 170, yoyo: true, repeat: -1, delay: k * 140 }); }
     this.fontainePlace = { x, sol, eau: Y(F.eauY) };
     return this.fontainePlace;
+  },
+
+  // (v1.62, retours du joueur) La carte du monde : un panneau sur deux poteaux, la carte punaisée, et son nom, une seule
+  // fois, sur l'écriteau posé en haut des poteaux. Un clic : la carte s'ouvre, comme avant.
+  poserCartePlace(x, y) {
+    const place = this.place, C = CARTE_PLACE, E = 2;
+    const im = this.add.image(x, y, cartePlaceHD(this)).setOrigin(0.5, 1).setScale(E).setInteractive({ useHandCursor: true }).on('pointerdown', () => ouvrirCarteMonde(this));
+    im.yTri = y; place.add(im);
+    const [bx, by, bl, bh] = C.cadre, haut = y - C.H * E, carte = this.add.image(x - C.L + (bx + bl / 2) * E, haut + (by + bh / 2) * E, texCarteMonde(this)).setScale(E);
+    carte.yTri = y + 0.05; place.add(carte);
+    for (const sens of [-1, 1]) { const p = this.add.circle(carte.x + sens * 22, carte.y - 18, 2, 0xc82a20); p.yTri = y + 0.06; place.add(p); }   // (les punaises)
+    const ec = ecriteauPorche(this, x, 0, [[this.nomLieuPlace('carte')[0], 11, { fontStyle: 'bold' }]]), dy = haut + 2 - ec[0].displayHeight;
+    ec.forEach(o => { o.y += dy; o.yTri = y + 0.1; place.add(o); });
+  },
+
+  // (v1.62, retours du joueur) Le petit coin du mendiant, sur la place : un vieux tapis sous lui et Brisquet, sa sébile
+  // devant lui, la gamelle sous le nez du chien, son baluchon derrière, une bougie dans un pot sur le tonneau
+  coinMendiantPlace() {
+    const place = this.place, g = place.list.find(o => o.cle === 'mendiant'); if (!g) return;
+    const E = 2, enPlace = o => [g.x + o.x * g.scaleX, g.y + o.y * g.scaleY], [x, y] = LIEUX_PLACE.mendiant;
+    const ajout = (o, prof) => { o.yTri = prof; place.add(o); return o; };
+    ajout(this.add.image(x - 12, y + 2, tapisMendiantPlaceHD(this)).setOrigin(0.5, 0.75).setScale(E), 3);   // (à plat sur le sol, sous eux)
+    // (sa sébile, il la tient dans ses mains ; la gamelle est devant le museau de Brisquet, le baluchon derrière lui)
+    const chien = g.list.find(o => o.texture && /^chien/.test(o.texture.key)), [cx] = chien ? enPlace(chien) : [x - 40];
+    const museau = cx + 22;   // (sa tête, tournée vers son maître)
+    ajout(this.add.image(cx - 34, y - 4, baluchonHD(this, 12)).setOrigin(0.5, 1).setScale(E), y - 4);
+    ajout(this.add.image(museau - 6, y + 11, gamelleHD(this, 7, 0.4)).setOrigin(0.5, 1).setScale(E), y + 11);
+    // la bougie, sur le couvercle du tonneau de droite
+    const t = g.list.find(o => o.texture && o.texture.key === 'tonneauxHD');
+    if (t) {
+      const [tx, ty] = enPlace(t), s = t.scaleX * g.scaleX, lx = tx + (18.5 - 18) * s, ly = ty - (22 - 4) * s + 1.5 * s;
+      const pot = ajout(this.add.image(lx, ly, bougiePotHD(this, 4)).setOrigin(0.5, 1).setScale(E), y + 0.3);
+      flammeBougie(this, place, lx, ly - pot.displayHeight + 1, 4, y + 0.31);
+    }
   },
 
   // (v1.62, planche 80, système A validé) Le porche couvert, au bas de la place : deux poteaux de chêne, un petit toit de
@@ -651,7 +686,8 @@ Object.assign(MarcheScene.prototype, {
   // l'étal d'avant ; « Passer la visite » ou Échap : il s'en va. À la fin, il repart par le porche, à pied.
   visiteEnCours() { return !!(this.visite && !this.visite.fini); },
 
-  visiteGarrick() {
+  //   opts.reprendre : l'étape où l'on s'était arrêté (Garrick demande s'il faut reprendre) ; opts.revoir : refaite depuis le menu ☰
+  visiteGarrick(opts = {}) {
     if (!this.place || this.visite) return;
     const P = PLACE_MARCHE, h = this.heros;
     // (un jour de marché, Garrick flânait déjà parmi les passants : c'est lui qui fait la visite, il n'y en a qu'un)
@@ -661,28 +697,60 @@ Object.assign(MarcheScene.prototype, {
     this.place.add(gar);
     const v = this.visite = { i: -1, phase: 'parle', gar, ombre: this.ombrePlace(gar.x, gar.y, 40), vue: 'face', versGauche: false, pas: 0, chemin: [], cible: null, but: null,
       suivre: true, attend: false, appel: 0, debutJambe: this.time.now, bulle: null, barre: null, cleBarre: '', etapes: null, trace: this.add.graphics(), traceT: 0,
-      pasG: [gar.x, gar.y, 0, 1], pasH: [h.x, h.y, 0, 1], fini: false, encheres: false };
+      pasG: [gar.x, gar.y, 0, 1], pasH: [h.x, h.y, 0, 1], fini: false, encheres: false, question: opts.reprendre >= 0 ? opts.reprendre : null };
     v.trace.yTri = 2; this.place.add(v.trace);
     gar.on('pointerdown', () => { if (this.visite === v && v.phase === 'parle' && !v.fini && !this.bloquePlace()) this.suiteVisite(); });
     this.vueHeros = 'profil'; this.versGauche = false; this.poserHeros(0);   // (JeuneGoy se tourne vers lui)
     if (this.boutonCommandes) this.boutonCommandes.setVisible(false);   // (le temps de la visite, ses étapes prennent le haut de l'écran)
+    const nm = this.nouvellesMatin;
+    if (nm && nm.active && nm.alpha > 0) { this.tweens.killTweensOf(nm); this.tweens.add({ targets: nm, alpha: 0, delay: 1200, duration: 400 }); nm.setY(Math.max(nm.y, 88)); }   // (les nouvelles du matin, sous les étapes, puis elles s'effacent)
     this.etapesVisite(); this.barreVisite(true);
-    this.direVisite(VISITE_MARCHE.depart);
+    if (v.question !== null) this.direVisite(VISITE_MARCHE.question(VISITE_MARCHE.etapes[v.question].nom));
+    else this.direVisite(opts.revoir ? VISITE_MARCHE.revoir : VISITE_MARCHE.depart);
+  },
+  // (v1.62) La visite interrompue : on la reprend là où on en était, ou on l'ignore
+  reprendreVisite() {
+    const v = this.visite; if (!v || v.question === null) return;
+    const i = v.question; v.question = null;
+    this.allerEtapeVisite(i);
+    this.bulleSur(v.gar, `« ${VISITE_MARCHE.reprise(VISITE_MARCHE.etapes[i].nom)} »`, { nom: 'Garrick', race: 'humain' });
+  },
+  ignorerVisite() { const v = this.visite; if (!v || v.question === null) return; v.question = null; this.partirVisite('ignore'); },
+  // Le marchand répond à Garrick, d'une petite bulle au-dessus de sa tête, pendant qu'on repart
+  reponseMarchand(k, texte) {
+    const g = this.place.list.find(o => o.cle === k), m = g && g.list.find(o => o.texture && o.texture.key.startsWith('corps_'));
+    if (!m || !MARCHANDS[k]) return;
+    const nom = MARCHANDS[k].nom, cible = { x: g.x + m.x * g.scaleX, y: g.y + (m.y - m.displayHeight) * g.scaleY + 4, displayHeight: 0 };
+    this.bulleSur(cible, `« ${texte.replaceAll('{J}', eJ(this.G))} »`, { nom, race: MARCHANDS[k].race, feminin: /Mère|Hilda|Rosalie/.test(nom) });
+    this.visite.reponse = cible;
+    // (pas de place au-dessus de sa tête, sous les étapes de la visite : la bulle se met à côté de lui)
+    const b = cible.bulle, z = this.place.scaleX;
+    if (b && this.place.y + cible.y * z - 8 - b.height < 92) {
+      // à sa droite, sauf si elle passerait sous les boutons de la place ou hors de l'écran : alors à sa gauche
+      const xd = this.place.x + (cible.x + 24) * z, yd = this.place.y + (cible.y + 24) * z;
+      const aGauche = xd + b.width > 952 || (xd + b.width > 806 && yd - b.height / 2 < 172);
+      b.setOrigin(aGauche ? 1 : 0, 0.5).setPosition(cible.x + (aGauche ? -24 : 24), cible.y + 24);
+    }
   },
   // Les touches de la visite (appelée par la place, avant ses propres touches) : vrai si la touche a servi
   toucheVisite(e) {
     if (e.repeat) return false;
-    if (e.key === ' ' || e.key === 'Enter') { if (this.visite.phase === 'parle') this.suiteVisite(); return true; }
+    const v = this.visite;
+    if (v.question !== null) { if (e.key === ' ' || e.key === 'Enter') { this.reprendreVisite(); return true; } if (e.key === 'Escape') { this.ignorerVisite(); return true; } return false; }
+    if (e.key === ' ' || e.key === 'Enter') { if (v.phase === 'parle') this.suiteVisite(); return true; }
     if (e.key === 'Escape') { this.passerVisite(); return true; }
     return false;
   },
 
   suiteVisite() {
     const v = this.visite; if (!v || v.fini || v.phase !== 'parle') return;
+    if (v.question !== null) return this.reprendreVisite();
+    const et = VISITE_MARCHE.etapes[v.i];
+    if (et && et.reponse) this.reponseMarchand(et.lieu, et.reponse);   // (le marchand lui répond, et on repart)
     if (v.i < VISITE_MARCHE.etapes.length - 1) this.allerEtapeVisite(v.i + 1); else this.partirVisite(false);
   },
-  etalSuivantVisite() { const v = this.visite; if (v && !v.fini && v.i < VISITE_MARCHE.etapes.length - 1) this.allerEtapeVisite(v.i + 1); },
-  revenirVisite() { const v = this.visite; if (v && !v.fini && v.i > 0) this.allerEtapeVisite(v.i - 1); },
+  etalSuivantVisite() { const v = this.visite; if (v && !v.fini && v.question === null && v.i < VISITE_MARCHE.etapes.length - 1) this.allerEtapeVisite(v.i + 1); },
+  revenirVisite() { const v = this.visite; if (v && !v.fini && v.question === null && v.i > 0) this.allerEtapeVisite(v.i - 1); },
   passerVisite() { if (this.visiteEnCours()) this.partirVisite(true); },
 
   // Où Garrick se tient pour présenter l'étape j : à côté de l'étal, un peu devant, du côté opposé à celui d'où l'on
@@ -703,6 +771,7 @@ Object.assign(MarcheScene.prototype, {
     if (!v.cible) v.cible = v.but;
     // (entre Hilda et Mère Sauge, on passe devant les enchères : il en dit un mot)
     v.encheres = VISITE_MARCHE.etapes[v.i].lieu === 'apothicaire' && !v.encheresDit;
+    this.G.visiteMarche = { i: v.i };   // (si l'on quitte la place en chemin, Garrick proposera de reprendre ici)
     this.etapesVisite(); this.barreVisite();
     this.cheminVisite();
   },
@@ -722,22 +791,25 @@ Object.assign(MarcheScene.prototype, {
     this.barreVisite();
   },
 
-  // La fin : il repart par le porche, à pied ; la place est au joueur (`presse` : il a passé la visite)
-  partirVisite(presse) {
-    const v = this.visite, G = this.G, g = v.gar;
+  // La fin : il repart par le porche, à pied ; la place est au joueur (mode : false, la visite finie ; true, passée ;
+  // 'ignore' : la reprise refusée)
+  partirVisite(mode) {
+    const v = this.visite, G = this.G, g = v.gar, presse = mode === true, ignore = mode === 'ignore';
     v.fini = true; v.phase = 'depart'; v.attend = false; v.sortie = false;
     for (const o of [v.bulle, v.barre, v.etapes]) if (o) o.destroy();
     v.bulle = v.barre = null; v.trace.clear();
     G.tutoVu = G.tutoVu || {}; G.tutoVu.marche = true; G.tutoVu.place = true; G.tuto = false;   // (une seule fois : la place est expliquée)
-    if (presse) this.bulleSur(g, `« ${VISITE_MARCHE.presse.replaceAll('{J}', eJ(G))} »`, { nom: 'Garrick', race: 'humain' });
+    delete G.visiteMarche; delete G.revoirVisite;
+    if (presse || ignore) this.bulleSur(g, `« ${(ignore ? VISITE_MARCHE.ignore : VISITE_MARCHE.presse).replaceAll('{J}', eJ(G))} »`, { nom: 'Garrick', race: 'humain' });
+    const [ax, ay] = this.devantLieu('arche');
+    v.chemin = this.itineraire(g.x, g.y, ax, ay); v.cible = v.chemin.shift() || [ax, ay];
+    v.depuis = this.time.now + (presse || ignore ? 700 : 300);   // (il finit sa phrase, puis se met en route)
+    if (ignore) { if (this.boutonCommandes && this.boutonCommandes.active) this.majBoutonCommandes(); return; }
     v.etapes = presse ? null : this.etapesVisite(VISITE_MARCHE.etapes.length);   // (la visite finie : toutes les étapes cochées)
     const o = typeof OBJECTIFS !== 'undefined' && OBJECTIFS.find(x => x.id === 'marche');
     const b = this.banniereVisite = this.add.text(480, 462, VISITE_MARCHE.fin + (o ? `   Objectif : « ${o.texte} »` : ''), style(13, '#2a1608', { fontStyle: 'bold', backgroundColor: '#f3d98a', padding: { x: 10, y: 5 } })).setOrigin(0.5).setDepth(150).setScrollFactor(0);
     const et = v.etapes;
-    this.tweens.add({ targets: et ? [b, et] : [b], alpha: 0, delay: 4500, duration: 500, onComplete: () => { b.destroy(); if (et) et.destroy(); if (this.boutonCommandes && this.boutonCommandes.active) this.boutonCommandes.setVisible(true); } });
-    const [ax, ay] = this.devantLieu('arche');
-    v.chemin = this.itineraire(g.x, g.y, ax, ay); v.cible = v.chemin.shift() || [ax, ay];
-    v.depuis = this.time.now + (presse ? 700 : 300);   // (il finit sa phrase, puis se met en route)
+    this.tweens.add({ targets: et ? [b, et] : [b], alpha: 0, delay: 4500, duration: 500, onComplete: () => { b.destroy(); if (et) et.destroy(); if (this.boutonCommandes && this.boutonCommandes.active) this.majBoutonCommandes(); } });   // (il ne revient que s'il y a des commandes)
   },
 
   // Garrick avec sa vue et son image de pas ; son ombre le suit
@@ -833,13 +905,14 @@ Object.assign(MarcheScene.prototype, {
     const v = this.visite; if (!v) return;
     if (v.bulle) v.bulle.destroy();
     v.texte = texte; v.bulleCachee = false;
-    const L = v.bulleL = 410, t = `« ${texte.replaceAll('{J}', eJ(this.G))} »`;
+    if (!refaire && v.reponse && v.reponse.bulle && v.reponse.bulle.active) v.reponse.bulle.destroy();   // (le marchand a fini de répondre)
+    const L = v.bulleL = 410, t = `« ${texte.replaceAll('{J}', eJ(this.G))} »`, bouton = v.question === null ? 'La suite ▶' : null;
     if (!refaire) v.bulleCote = v.gar.x >= this.heros.x ? 1 : -1;
     const essai = this.add.text(0, 0, t, style(14, '#2a1a0c', { wordWrap: { width: L - 24 }, align: 'center' }));
-    v.bulleH = essai.height + 18 + 34; essai.destroy();
+    v.bulleH = essai.height + 18 + (bouton ? 34 : 0); essai.destroy();
     const [xc, yc, pointe] = this.cadreBulleVisite();
     v.bulleP = pointe;
-    v.bulle = bulleGarrick(this, xc, yc, t, { l: L, pointe, bouton: 'La suite ▶', action: () => this.suiteVisite() });
+    v.bulle = bulleGarrick(this, xc, yc, t, { l: L, pointe, bouton, action: () => this.suiteVisite() });
     if (refaire) { this.tweens.killTweensOf(v.bulle); v.bulle.setAlpha(1); }
     if (!refaire) Son.jouer('voix', { personne: { nom: 'Garrick', race: 'humain' }, ton: 'content', duree: 1.2 });
   },
@@ -862,7 +935,7 @@ Object.assign(MarcheScene.prototype, {
   etapesVisite(enCours = null) {
     const v = this.visite;
     if (v.etapes && enCours === null) v.etapes.destroy();
-    const c = etapesGuide(this, 69, VISITE_MARCHE.etapes.map(e => e.nom), enCours === null ? Math.max(0, v.i) : enCours, VISITE_MARCHE.titre);
+    const c = etapesGuide(this, 69, VISITE_MARCHE.etapes.map(e => e.nom), enCours === null ? Math.max(0, v.question !== null ? v.question : v.i) : enCours, VISITE_MARCHE.titre);
     const fond = c.list[0], gauche = 480 - fond.width / 2, droite = 480 + fond.width / 2;
     if (droite > 804) c.x = Math.max(804 - droite, 8 - gauche);   // (à gauche des boutons de la place)
     if (enCours === null) v.etapes = c;
@@ -872,11 +945,20 @@ Object.assign(MarcheScene.prototype, {
   barreVisite(force = false) {
     const v = this.visite, E = VISITE_MARCHE.etapes, et = E[v.i];
     const marchand = v.phase === 'parle' && et && MARCHANDS[et.lieu];
-    const cle = [v.phase, v.i, !!marchand].join(':');
+    const cle = [v.phase, v.i, !!marchand, v.question].join(':');
     if (!force && cle === v.cleBarre) return;
     v.cleBarre = cle;
     if (v.barre) v.barre.destroy();
     const c = v.barre = this.add.container(0, 0).setDepth(150).setScrollFactor(0);
+    if (v.question !== null) {   // (deux boutons clairs : reprendre là où l'on en était, ou ignorer la visite)
+      const n = v.question + 1, et2 = E[v.question];
+      const b1 = creerBouton(this, 345, 456, 350, `▶ Reprendre la visite (${n} · ${et2.nom}) · Espace`, () => { if (!this.bloquePlace()) this.reprendreVisite(); });
+      const b2 = creerBouton(this, 660, 456, 260, '✕ Ignorer la visite · Échap', () => { if (!this.bloquePlace()) this.ignorerVisite(); });
+      let f = 15;   // (les deux textes à la même taille, et chacun tient dans son bouton)
+      while (f > 10 && (b1.label.setFontSize(f).width > 350 - 28 || b2.label.setFontSize(f).width > 260 - 28)) f--;
+      c.add([b1.fond, b1.label, b2.fond, b2.label]);
+      return;
+    }
     const aide = this.add.text(0, 462, marchand ? 'Espace : la suite  ·  E : ouvrir l’étal, il t’attend' : 'Espace : la suite  ·  ZQSD : tu marches, il t’attend', style(12, '#f3d98a', { fontStyle: 'bold italic' })).setOrigin(0, 0.5);
     const bouton = (t, coul, fn, actif = true) => {
       const b = this.add.text(0, 462, t, style(13, '#fff4dc', { fontStyle: 'bold', backgroundColor: coul, padding: { x: 9, y: 4 } })).setOrigin(0, 0.5).setAlpha(actif ? 1 : 0.4);

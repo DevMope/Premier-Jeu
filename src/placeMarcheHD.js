@@ -417,6 +417,146 @@ function decorMendiantHD(s, saison, fontaine) {
   return c;
 }
 
+// (v1.62, retours du joueur) Le panneau de la carte du monde, sur la place : deux poteaux de chêne, un tableau de
+// planches où la carte est punaisée ; son nom, un seul, sur l'écriteau posé en haut des poteaux (38×50, ×2)
+const CARTE_PLACE = { L: 38, H: 50, cadre: [1, 8, 36, 28] };
+function cartePlaceHD(scene) {
+  if (scene.textures.exists('cartePlaceHD')) return 'cartePlaceHD';
+  const { L, H, cadre: [bx, by, bl, bh] } = CARTE_PLACE, t = toileDecor(L, H);
+  for (const x0 of [3, 31]) { planche(t, x0, 0, 4, H, 'chene', { horizontale: false, graine: 7730 + x0, noeuds: 1 }); for (let y = 0; y < H; y++) { t.poser(x0, y, 'chene', 4); t.poser(x0 + 3, y, 'chene', 1); } }
+  for (let k = 0; k < 4; k++) planche(t, bx, by + k * 7, bl, 7, 'chene', { graine: 7740 + k, noeuds: 1 });   // le tableau, en planches
+  for (let x = bx; x < bx + bl; x++) { t.poser(x, by, 'cheneSombre', 4); t.poser(x, by + bh - 1, 'cheneSombre', 1); }
+  for (let y = by; y < by + bh; y++) { t.poser(bx, y, 'cheneSombre', 3); t.poser(bx + bl - 1, y, 'cheneSombre', 1); }
+  for (let x = 2; x < L - 2; x++) t.poser(x, 0, 'cheneSombre', 2);   // le haut des poteaux, où pose l'écriteau
+  t.contour(); t.texture(scene, 'cartePlaceHD'); return 'cartePlaceHD';
+}
+
+// --- (v1.62, retours du joueur) Le coin du mendiant : un vieux tapis élimé, sa sébile ébréchée, son baluchon, une bougie
+// dans un pot sur le tonneau, la gamelle cabossée de Brisquet. Les mêmes objets sur la place (petits) et de près (grands).
+// Le tapis, en mètres ; son motif se lit en (u, v) de 0 à 1 (au-delà de u : les franges) : [matière, teinte] ou null (un trou)
+const TAPIS_MENDIANT = { l: 2.2, p: 1.2 };
+function rampesCoinMendiant(t) {
+  Object.assign(t.rampes, { laine: rampe(0x9a3e2c), laineS: rampe(0x5a2018), ocreT: rampe(0xc8963e), bleuT: rampe(0x3a5a7a), pieceT: rampe(0x6a7a4a),
+    sacT: rampe(0x8a7a58), terreC: rampe(0xb8603a), eau: rampe(0x4a90b8) });
+}
+function motifTapis(u, v) {
+  const T = TAPIS_MENDIANT, x = u * T.l, y = v * T.p;
+  if (v < 0 || v > 1) return null;
+  if (u < 0 || u > 1) {   // les franges, aux deux bouts : des brins, certains arrachés
+    const d = u < 0 ? -x : x - T.l, brin = Math.floor(y / 0.035);
+    if (d > 0.04 + hachage(brin, u < 0 ? 3 : 4, 7701) * 0.04 || hachage(brin, u < 0 ? 1 : 2, 7701) < 0.22) return null;
+    return ['toile', brin % 2 ? 2 : 3];
+  }
+  const trou = fbm(x * 3.2, y * 3.2, 7702);
+  if (trou > 0.75) return null;   // usé jusqu'à la corde : un trou
+  const bord = Math.min(x, T.l - x, y, T.p - y);
+  let m = 'laine', k = 3;
+  if (bord < 0.13) {   // la bordure : un galon ocre entre deux filets sombres, des chevrons
+    m = 'ocreT'; k = 3;
+    if (bord < 0.025 || Math.abs(bord - 0.105) < 0.012) { m = 'laineS'; k = 2; }
+    else if ((Math.floor((x + y) * 14) % 3) === 0) k = 4;
+  } else {
+    const l = Math.abs(x - T.l / 2) / 0.52 + Math.abs(y - T.p / 2) / 0.34;   // le médaillon du milieu, en losange
+    if (l < 1) { m = l > 0.82 ? 'ocreT' : 'bleuT'; if (l < 0.28) { m = 'ocreT'; k = 4; } }
+    else if ((Math.floor(x * 9) + Math.floor(y * 9)) % 2 === 0 && fbm(x * 7, y * 7, 7703) > 0.52) k = 2;   // le fond, à petits carreaux
+  }
+  if (fbm(x * 1.4, y * 1.4, 7704) > 0.6 && m !== 'laineS') k += 1;   // pâli là où l'on s'assoit
+  if (fbm(x * 5, y * 5, 7705) < 0.26) k -= 1;                          // des taches
+  if (trou > 0.7) { m = 'toile'; k = 1; }                              // la trame qui se voit au bord des trous
+  if (x > 1.42 && x < 1.74 && y > 0.24 && y < 0.56) {                  // une pièce cousue, d'un autre drap
+    const couture = Math.min(x - 1.42, 1.74 - x, y - 0.24, 0.56 - y) < 0.016;
+    m = couture ? 'laineS' : 'pieceT'; k = couture ? 1 : 3 - (Math.floor(x * 40 + y * 40) % 3 === 0 ? 1 : 0);
+  }
+  return [m, k];
+}
+// Le tapis vu de la place (d'au-dessus, un peu de biais)
+function tapisMendiantPlaceHD(scene) {
+  const cle = 'tapisMendiantPlace'; if (scene.textures.exists(cle)) return cle;
+  const L = 48, H = 9, t = toileDecor(L, H); rampesCoinMendiant(t);
+  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) { const r = motifTapis((x + 0.5 - 2) / 44, (y + 0.5) / H); if (r) t.poser(x, y, r[0], r[1]); }
+  t.contour(); t.texture(scene, cle); return cle;
+}
+// Le tapis vu de près, couché sur le sol de la vue : chaque pixel est ramené au sol avec la caméra de la vue
+//   cam : { f, y0, h } ; lat, prof : le milieu du tapis (m) ; renvoie { cle, x, y } (le coin haut-gauche, à l'écran)
+function tapisMendiantVueHD(scene, cam, lat, prof) {
+  const T = TAPIS_MENDIANT, cle = 'tapisMendiantVue_' + [lat, prof].map(v => Math.round(v * 100)).join('_');
+  const yDe = d => cam.y0 + cam.h * cam.f / d, xDe = (l, d) => 480 + l * cam.f / d;
+  const dl = prof + T.p / 2, dp = prof - T.p / 2, fr = 0.09;
+  const x0 = Math.floor(xDe(lat - T.l / 2 - fr, dp) / 2) - 1, x1 = Math.ceil(xDe(lat + T.l / 2 + fr, dp) / 2) + 1, y0 = Math.floor(yDe(dl) / 2) - 1, y1 = Math.min(270, Math.ceil(yDe(dp) / 2) + 1);
+  const info = { cle, x: x0 * 2, y: y0 * 2 };
+  if (scene.textures.exists(cle)) return info;
+  const t = toileDecor(x1 - x0, y1 - y0); rampesCoinMendiant(t);
+  for (let py = 0; py < y1 - y0; py++) for (let px = 0; px < x1 - x0; px++) {
+    const sx = (x0 + px + 0.5) * 2, sy = (y0 + py + 0.5) * 2; if (sy <= cam.y0) continue;
+    const d = cam.h * cam.f / (sy - cam.y0), l = (sx - 480) * d / cam.f;
+    const r = motifTapis((l - lat + T.l / 2) / T.l, (dl - d) / T.p);
+    if (r) t.poser(px, py, r[0], r[1]);
+  }
+  t.contour(); t.texture(scene, cle); return info;
+}
+// La sébile ébréchée (l : sa largeur en demi-pixels ; ecrase : combien on la voit d'au-dessus ; n : les pièces dedans)
+function sebileHD(scene, l, ecrase, n = 0) {
+  const cle = `sebile_${l}_${Math.round(ecrase * 100)}_${n}`; if (scene.textures.exists(cle)) return cle;
+  const rx = l / 2, ry = Math.max(1.5, rx * ecrase), hb = Math.max(2, l * 0.28), H = Math.ceil(ry * 2 + hb + 2), t = toileDecor(l + 2, H);
+  const cx = rx + 1, cy = ry + 1;
+  t.forme('chene', (x, y) => { const nx = (x + 0.5 - cx) / rx; if (Math.abs(nx) > 1) return null; const bas = cy + Math.sqrt(1 - nx * nx) * (ry + hb); return y + 0.5 >= cy && y + 0.5 <= bas ? [nx, 0.3, 0.8] : null; }, { decalage: -0.4 });   // le ventre de bois
+  t.forme('chene', ellipsoide(cx, cy, rx, ry), { decalage: 0.8 });                                   // le rebord
+  t.forme('cheneSombre', ellipsoide(cx, cy + ry * 0.12, rx * 0.78, ry * 0.7), { decalage: 0.4, bord: false });   // le creux
+  // l'éclat qui manque au rebord, à droite
+  for (let y = 0; y < H; y++) for (let x = 0; x < l + 2; x++) if (Math.hypot((x + 0.5 - (cx + rx * 0.72)) / (rx * 0.22), (y + 0.5 - (cy - ry * 0.5)) / Math.max(1, ry * 0.6)) < 1) t.poser(x, y, 'cheneSombre', 1);
+  for (let k = 0; k < n; k++) { const a = hachage(k, 1, 7711) * 6.28, r = Math.sqrt(hachage(k, 2, 7711)) * 0.6; const x = Math.round(cx + Math.cos(a) * rx * 0.7 * r), y = Math.round(cy + ry * 0.1 + Math.sin(a) * ry * 0.5 * r); t.poser(x, y, 'or', 4); if (l > 12) { t.poser(x + 1, y, 'or', 3); t.poser(x, y + 1, 'or', 2); } }
+  t.contour(); t.texture(scene, cle); return cle;
+}
+// La gamelle cabossée de Brisquet, en fer-blanc, un fond d'eau
+function gamelleHD(scene, l, ecrase) {
+  const cle = `gamelle_${l}_${Math.round(ecrase * 100)}`; if (scene.textures.exists(cle)) return cle;
+  const rx = l / 2, ry = Math.max(1.5, rx * ecrase), hb = Math.max(1.5, l * 0.2), H = Math.ceil(ry * 2 + hb + 2), t = toileDecor(l + 2, H); rampesCoinMendiant(t);
+  const cx = rx + 1, cy = ry + 1;
+  t.forme('fer', (x, y) => { const nx = (x + 0.5 - cx) / rx; if (Math.abs(nx) > 1) return null; const bas = cy + Math.sqrt(1 - nx * nx) * ry + hb; return y + 0.5 >= cy && y + 0.5 <= bas ? [nx, 0.2, 0.8] : null; }, { decalage: 0.6, motif: (x, y) => (Math.hypot(x - cx + rx * 0.4, y - cy - ry * 0.6) < Math.max(1.2, rx * 0.25) ? -1.4 : 0) });   // la bosse
+  t.forme('fer', ellipsoide(cx, cy, rx, ry), { decalage: 1.2 });
+  t.forme('eau', ellipsoide(cx, cy + ry * 0.1, rx * 0.8, ry * 0.68), { decalage: 0.2, bord: false });
+  t.contour(); t.texture(scene, cle); return cle;
+}
+// Le baluchon : un sac de toile rapiécé, noué en haut, une corde autour (l : sa largeur en demi-pixels)
+function baluchonHD(scene, l) {
+  const cle = 'baluchonMendiant_' + l; if (scene.textures.exists(cle)) return cle;
+  const H = Math.round(l * 0.92), t = toileDecor(l + 2, H + 2); rampesCoinMendiant(t);
+  const cx = l / 2 + 1, cy = H * 0.62 + 1, rx = l / 2, ry = H * 0.4;
+  t.forme('sacT', ellipsoide(cx, cy, rx, ry), { motif: (x, y) => (fbm(x * 0.4, y * 0.4, 7721) - 0.5) * 1.4 });   // le sac, et ses plis
+  for (const s of [-1, 1]) t.forme('sacT', ellipsoide(cx + s * rx * 0.28, cy - ry * 1.05, rx * 0.2, ry * 0.42), { decalage: 0.4 });   // les deux oreilles du nœud
+  t.forme('sacT', ellipsoide(cx, cy - ry * 0.85, rx * 0.22, ry * 0.2), { decalage: -0.2 });
+  // une pièce de toile plus sombre, cousue
+  const p0 = [Math.round(cx + rx * 0.05), Math.round(cy - ry * 0.1)], pl = Math.max(2, Math.round(l * 0.26));
+  for (let y = p0[1]; y < p0[1] + pl; y++) for (let x = p0[0]; x < p0[0] + pl; x++) if (t.mat(x, y) === 'sacT') t.poser(x, y, 'pieceT', x === p0[0] || y === p0[1] ? 2 : 3);
+  // la corde qui ceinture le sac
+  for (let x = 0; x < l + 2; x++) { const nx = (x + 0.5 - cx) / rx; if (Math.abs(nx) >= 0.98) continue; const y = Math.round(cy - ry * 0.35 + Math.sqrt(1 - nx * nx) * ry * 0.18); if (t.mat(x, y) === 'sacT') t.poser(x, y, 'chene', x % 3 ? 4 : 2); }
+  t.contour(); t.texture(scene, cle); return cle;
+}
+// La bougie dans son pot de terre cuite (la flamme est à part : elle danse) ; l : la largeur du pot en demi-pixels
+function bougiePotHD(scene, l) {
+  const cle = 'bougiePot_' + l; if (scene.textures.exists(cle)) return cle;
+  const hp = Math.round(l * 0.8), hb = Math.max(2, Math.round(l * 0.5)), H = hp + hb + 2, t = toileDecor(l + 2, H); rampesCoinMendiant(t);
+  const cx = l / 2 + 1, haut = hb + 1;
+  t.forme('terreC', (x, y) => (y >= haut && y <= H - 1 && Math.abs(x + 0.5 - cx) <= l / 2 - (y - haut) * 0.12 ? [(x + 0.5 - cx) / (l / 2), 0, 0.8] : null));   // le pot
+  t.forme('terreC', ellipsoide(cx, haut, l / 2, Math.max(1, l * 0.14)), { decalage: 0.7 });
+  const lb = Math.max(1, Math.round(l * 0.18));
+  for (let y = 1; y <= haut; y++) for (let x = Math.round(cx - lb); x <= Math.round(cx + lb) - (l < 8 ? 1 : 0); x++) t.poser(x, y, 'cire', x < cx ? 4 : 3);   // la bougie
+  if (l >= 8) { t.poser(Math.round(cx + lb), 3, 'cire', 5); t.poser(Math.round(cx + lb), 4, 'cire', 4); }   // une coulure
+  t.poser(Math.round(cx), 0, 'cheneSombre', 0);   // la mèche
+  t.contour(); t.texture(scene, cle); return cle;
+}
+// La flamme qui danse au bout de la mèche, et sa lueur
+function flammeBougie(s, conteneur, x, y, taille, prof) {
+  creerHalo(s);
+  const lueur = s.add.image(x, y, 'halo').setScale(taille * 0.09).setTint(0xffb040).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
+  const f = s.add.ellipse(x, y, taille * 0.5, taille, 0xffc850, 0.95), c = s.add.ellipse(x, y + taille * 0.15, taille * 0.22, taille * 0.45, 0xfff4c0, 1);
+  for (const o of [lueur, f, c]) { if (prof !== undefined) o.yTri = prof; conteneur.add(o); }
+  f.setOrigin(0.5, 0.85); c.setOrigin(0.5, 0.85);
+  const danse = () => { if (!f.active) return; const k = 0.8 + Math.random() * 0.4; s.tweens.add({ targets: [f, c], scaleY: k, scaleX: 1.1 - (k - 0.8) * 0.5, angle: (Math.random() - 0.5) * 14, duration: 90 + Math.random() * 120, onComplete: danse }); s.tweens.add({ targets: lueur, alpha: 0.25 + Math.random() * 0.15, duration: 140 }); };
+  danse();
+  return [lueur, f, c];
+}
+
 // (v1.49) La palette du Comté selon la saison : l'herbe jaunit aux moissons, rougit aux brumes, blanchit au givre
 function paletteSaisonComte(saison) {
   const b = PALETTES_REGIONS.comte, s = { ...b.sol };
