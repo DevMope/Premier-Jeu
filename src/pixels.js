@@ -558,9 +558,9 @@ function creerBouton(scene, x, y, largeur, texte, action) {
   const repos = () => {
     if (!fond.active) return;
     fond.setTexture(survol && actif ? cle + '_clair' : cle);
-    label.setY(y);
+    label.setY(fond.y);   // (v1.61 : la place actuelle du bouton, s'il a été déplacé)
   };
-  const habiller = (forcerUne = false) => { plaque(forcerUne); tenir(); label.setX(x + decal); repos(); };
+  const habiller = (forcerUne = false) => { plaque(forcerUne); tenir(); label.setX(fond.x + decal); repos(); };
   habiller();
   if (rang >= 4) label.setColor('#fff0c8');
   fond.on('pointerover', () => { survol = true; repos(); });
@@ -569,7 +569,7 @@ function creerBouton(scene, x, y, largeur, texte, action) {
     if (!actif) return;
     Son.jouer('clic');
     fond.setTexture(cle + '_enfonce');
-    label.setY(y + 2);
+    label.setY(fond.y + 2);
     scene.time.delayedCall(110, repos);
     if (window.noterJournal) noterJournal(`[${scene.scene.key}] « ${label.text} »`);   // (v0.95 : le journal de bord)
     action();

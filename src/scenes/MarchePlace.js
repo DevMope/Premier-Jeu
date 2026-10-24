@@ -67,7 +67,7 @@ Object.assign(MarcheScene.prototype, {
     const chemins = [...pads.map(([x, y]) => [[450, 318], [x, y]]), [[450, 318], [450, 520], 12], [[450, 318], [900, 382], 8], [[0, 92], [900, 92], 11]];
     const plan = { centre: [450, 318], rTerre: 150, rDalles: 104, pads, chemins, largeur: 8, pas: [[450, 432], [452, 452], [448, 472], [451, 492]] };
     place.add(this.add.image(0, 0, solPlaceHD(this, 'solPlace_' + saison, pal, 900, 520, plan)).setOrigin(0).setScale(2));
-    this.obstacles = [];
+    this.obstacles = []; this.grillePlace = null;   // (v1.61 : les charrettes du jour de marché changent la grille)
     const ombre = (x, y, l) => { const o = this.add.image(x + l * 0.06, y - 2, ombrePlaceHD(this)).setScale(l / 64, l / 64 * 0.9); o.yTri = y - 0.5; place.add(o); return o; };
     this.ombrePlace = ombre;
     // les maisons qui bordent la place, au nord
@@ -169,7 +169,7 @@ Object.assign(MarcheScene.prototype, {
       this.touches = k.createCursorKeys();
       this.zqsd = k.addKeys('Z,Q,S,D,W,A', false);
       k.on('keydown', e => {
-        if (!this.place || !this.sys.isActive()) return;
+        if (!this.place || !this.sys.isActive() || e.repeat) return;   // (v1.61 : une touche maintenue n'agit qu'une fois)
         if (this.boutiqueC || this.listeC) return;
         if (e.key === 'm' || e.key === 'M') this.basculerCartePlace();
         else if (e.key === 'l' || e.key === 'L') { if (!this.bloquePlace()) this.listeCourses(); }
@@ -178,21 +178,24 @@ Object.assign(MarcheScene.prototype, {
       });
     }
     const dansPlace = o => { for (let c = o; c; c = c.parentContainer) if (c === place) return true; return false; };
+    // (v1.61) les coordonnées du monde (960 × 540) : sur un grand écran, p.x et p.y comptent en pixels réels
     this.input.on('pointerdown', (p, sous) => {
-      if (!this.place || p.y < 40 || p.y > 476) return;
+      const px = p.worldX, py = p.worldY;
+      if (!this.place || py < 40 || py > 476) return;
       const surInterface = sous.some(o => !dansPlace(o));
       // (v1.61) un lieu ouvert : un clic n'importe où sur la place au-dessus du cadre (même sur un passant ou une bulle) le referme
-      if (this.panneauOuvert && !this.vitrineOuverte && !this.boutiqueC && !this.listeC && !this.carteC && !this.jeuLance && p.y < 300 && !surInterface) { this.vueEnsemble(); return; }
+      if (this.panneauOuvert && !this.vitrineOuverte && !this.boutiqueC && !this.listeC && !this.carteC && !this.jeuLance && py < 300 && !surInterface) { this.vueEnsemble(); return; }
       if (sous.length || this.bloquePlace()) return;
-      this.partirVers((p.x - place.x) / place.scaleX, (p.y - place.y) / place.scaleY);
-      this.marqueClic((p.x - place.x) / place.scaleX, (p.y - place.y) / place.scaleY);
+      this.partirVers((px - place.x) / place.scaleX, (py - place.y) / place.scaleY);
+      this.marqueClic((px - place.x) / place.scaleX, (py - place.y) / place.scaleY);
     });
     // (v1.61) à la souris : bouton gardé enfoncé, JeuneGoy suit le pointeur (comme avec ZQSD)
     this.input.on('pointermove', p => {
-      if (!this.place || !p.isDown || p.y < 40 || p.y > 476 || this.bloquePlace() || this.apresMarche) return;
+      const px = p.worldX, py = p.worldY;
+      if (!this.place || !p.isDown || !(p.event && p.event.buttons & 1) || py < 40 || py > 476 || this.bloquePlace() || this.apresMarche) return;
       if (this.time.now - (this.dernierGlisse || 0) < 120) return;
       this.dernierGlisse = this.time.now;
-      this.partirVers((p.x - place.x) / place.scaleX, (p.y - place.y) / place.scaleY);
+      this.partirVers((px - place.x) / place.scaleX, (py - place.y) / place.scaleY);
     });
     this.cadrerPlace(true);
   },
@@ -410,7 +413,7 @@ Object.assign(MarcheScene.prototype, {
   allerVersLieu(cle, courir = false) {
     if (!this.place || this.bloquePlace()) return;
     const [x, y] = this.devantLieu(cle);
-    if (Math.hypot(this.heros.x - x, this.heros.y - y) < 40) return this.agirLieu(cle);
+    if (Math.hypot(this.heros.x - x, this.heros.y - y) < 40) return this.time.delayedCall(0, () => this.agirLieu(cle));   // (v1.61 : sinon le clic de la scène refermait aussitôt le panneau)
     this.partirVers(x, y, cle, courir || Math.hypot(this.heros.x - x, this.heros.y - y) > 600);
   },
 
@@ -546,7 +549,7 @@ Object.assign(MarcheScene.prototype, {
     // les passants (v1.61 : ils suivent leur chemin, pas à pas, et vivent leur petite vie)
     for (const o of this.passantsPlace) {
       if (o.bulle && o.bulle.active) o.bulle.setPosition(o.img.x, o.img.y - o.img.displayHeight - 8);
-      if (o.attend && !(o.attend.but && o.attend.but.q === o)) o.attend = null;   // (celui qu'il attendait a changé d'avis)
+      if (o.attend && !(o.attend.but && o.attend.but.q === o)) { o.attend = null; o.pause = Math.min(o.pause, 600); }   // (celui qu'il attendait a changé d'avis : il ne reste pas figé 20 s)
       if (o.parle || o.attend) continue;
       if (o.pause > 0) { o.pause -= dt; if (o.pause <= 0) this.envieDePassant(o); continue; }
       if (!o.cible) { o.pause = 1200; continue; }

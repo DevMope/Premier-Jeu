@@ -136,11 +136,11 @@ class RueScene extends Phaser.Scene {
     const quoi = { nom: auHasard(NOMS_PASSANTS_RUE) + ' ' + Math.floor(Math.random() * 99), race, niveau: auHasard(['novice', 'aguerri']), feminin: Math.random() < 0.5 };
     // (v1.61) il arrive à pied par un bord de l'écran, puis s'assoit (il n'apparaît plus d'un coup sur le banc)
     const xb = this.banc.x + (Math.random() < 0.5 ? -22 : 22), cam = this.cameras.main.scrollX, deGauche = Math.random() < 0.5;
-    const x0 = deGauche ? cam - 60 : cam + 1020, duree = Math.abs(xb - x0) * 11;
-    const venu = imageCorps(this, x0, SOL_PROMENADE + 6, quoi, 7.2).setFlipX(!deGauche).setDepth(8.45);
+    const x0 = deGauche ? cam - 60 : cam + 1020, duree = Math.abs(xb - x0) * 11, versDroite = xb > x0;   // (il regarde là où il va)
+    const venu = imageCorps(this, x0, SOL_PROMENADE + 6, quoi, 7.2).setFlipX(!versDroite).setDepth(8.45);
     this.surLeBanc = venu; venu.enRoute = true; venu.quoi = quoi;   // (la place est prise dès qu'il est en route)
     pasDeMarche(this, venu, duree, { poussiere: false });
-    this.tweens.add({ targets: venu, x: xb, duration: duree, onComplete: () => { if (!venu.active) return; venu.destroy(); this.asseoirSurLeBanc(quoi, xb, deGauche); } });
+    this.tweens.add({ targets: venu, x: xb, duration: duree, onComplete: () => { if (!venu.active) return; venu.destroy(); this.asseoirSurLeBanc(quoi, xb, versDroite); } });
   }
   asseoirSurLeBanc(quoi, xb, deGauche) {
     const p = this.surLeBanc = imageCorps(this, xb, this.banc.sol - 6, quoi, 7.2, 'assis').setDepth(8.44).setFlipX(!deGauche).setInteractive({ useHandCursor: true });
