@@ -1101,13 +1101,13 @@ class CounterScene extends Phaser.Scene {
     });
     this.pagesStock = [this.children.list.slice(avant)];
     // (v0.68) la page 2 : les autres armes, chacune dans sa case (l'épée reste en page 1, dans le râtelier)
-    // (lot 3) 13 cases par page (la troisième rangée n'en a que 3 : le bouton de l'arrière-boutique occupe le reste) ; l'arc, l'arbalète,
+    // (lot 3) 12 cases par page (la troisième rangée n'en a que 2 : le bouton de l'arrière-boutique occupe le reste) ; l'arc, l'arbalète,
     // l'épée courte... s'ajoutent : les armes en trop passent sur une page de plus
     const autres = IDS_ARMES.filter(id => id !== 'epee');
-    for (let k = 0; k < autres.length; k += 13) {
-      this.pageCase = 1 + k / 13;
+    for (let k = 0; k < autres.length; k += 12) {
+      this.pageCase = 1 + k / 12;
       const avant2 = this.children.list.length;
-      autres.slice(k, k + 13).forEach((id, i) => this.creerCase(id, 200 + (i % 5) * 108, 397 + Math.floor(i / 5) * 48, this.casesArmes));
+      autres.slice(k, k + 12).forEach((id, i) => this.creerCase(id, 200 + (i % 5) * 108, 397 + Math.floor(i / 5) * 48, this.casesArmes));
       this.pagesStock.push(this.children.list.slice(avant2));
     }
     this.creerOngletPages();
@@ -1153,17 +1153,26 @@ class CounterScene extends Phaser.Scene {
       const fond = this.add.rectangle(x, y, 100, 40, 0xfff6d8, 0.001).setInteractive({ useHandCursor: true });
       // La marchandise posée sur la toile : jusqu'à trois exemplaires empilés selon le stock
       const cle = iconeObjet(this, id);
-      const pile = [2, 1, 0].map(k => this.add.image(x - 28 - k * 3, y + 3 - k * 4, cle).setScale(2));
+      // (lot 3) une arme par case, seule et nette : un seul dessin (pas de pile qui déborde sur le nom ni sur la case voisine), le nom
+      // sur deux lignes au besoin, la quantité sur son étiquette en bas à droite
+      const armes = ou === this.casesArmes;
+      const pile = armes ? [this.add.image(x - 31, y + 1, cle).setScale(2)].flatMap(i => [i, i, i]) : [2, 1, 0].map(k => this.add.image(x - 28 - k * 3, y + 3 - k * 4, cle).setScale(2));
       const icone = pile[2];
-      const nom = this.add.text(x - 8, y - 18, ITEMS[id].nom, style(10, '#3a2410', { fontStyle: 'bold' }));
-      for (let taille = 12; nom.width > 60 && taille >= 9; taille--) nom.setFontSize(taille); // les noms longs rapetissent un peu
+      let nom;
+      if (armes) {
+        nom = this.add.text(x - 10, y - 16, ITEMS[id].nom.replace(' de guerre', '').replace(' de bambou', ' bambou').replace(' cloutée', ''), style(10, '#3a2410', { fontStyle: 'bold', wordWrap: { width: 56 }, lineSpacing: -2 }));
+        for (let taille = 11; (nom.width > 58 || nom.height > 22) && taille >= 8; taille--) nom.setFontSize(taille);
+      } else {
+        nom = this.add.text(x - 8, y - 18, ITEMS[id].nom, style(10, '#3a2410', { fontStyle: 'bold' }));
+        for (let taille = 12; nom.width > 60 && taille >= 9; taille--) nom.setFontSize(taille); // les noms longs rapetissent un peu
+      }
       // La quantité, sur une petite étiquette de parchemin
       this.add.image(x + 32, y + 12, 'etiquette').setScale(2);
       const qte = this.add.text(x + 33, y + 12, '', style(12, '#3a2410', { fontStyle: 'bold' })).setOrigin(0.5);
       fond.on('pointerover', () => { fond.setFillStyle(0xfff6d8, 0.22); icone.setScale(2.25); });
       fond.on('pointerout', () => { fond.setFillStyle(0xfff6d8, 0.001); icone.setScale(2); });
       fond.on('pointerdown', () => this.donner(id));
-      ou[id] = { fond, qte, pile, icone, page: ou === this.casesArmes ? (this.pageCase || 1) : 0 };
+      ou[id] = { fond, qte, pile, icone, seul: armes, page: ou === this.casesArmes ? (this.pageCase || 1) : 0 };
       // (v1.54, planche 62) les provisions qui se périment : une petite barre de fraîcheur (la plus vieille), et au survol, combien de jours
       if (typeof FRAICHEUR !== 'undefined' && FRAICHEUR[id] && FRAICHEUR[id].ou === 'stock') {
         const fondB = this.add.rectangle(x - 9, y + 6, 26, 6, 0x3a2410).setOrigin(0, 0.5), barre = this.add.rectangle(x - 8, y + 6, 24, 4, 0x4a9a3a).setOrigin(0, 0.5);
@@ -2889,7 +2898,7 @@ class CounterScene extends Phaser.Scene {
       // (v0.91) seulement sur la page affichée : sinon les armes de la page 2 restaient en « fantômes » derrière la page 1
       const surPage = (c.page || 0) === (this.pageStock || 0);
       c.qte.setText('x' + n).setColor(n > 0 ? '#3a2410' : '#a03020');
-      c.pile.forEach((img, k) => img.setVisible(surPage && (k === 2 || n > 2 - k)).setAlpha(n > 0 ? 1 : 0.35));
+      c.pile.forEach((img, k) => img.setVisible(surPage && (k === 2 || (!c.seul && n > 2 - k))).setAlpha(n > 0 ? 1 : 0.35));
       if (c.fraiche) {   // (v1.54) la fraîcheur de la plus vieille
         const reste = n > 0 ? fraicheurRestante(this.G, id) : null, total = dureeFraicheur(this.G, id), vis = surPage && reste !== null;
         c.fraiche.fondB.setVisible(vis); c.fraiche.barre.setVisible(vis).setFillStyle(couleurFraicheur(reste || 0, total)); c.fraiche.barre.width = 24 * Math.max(0.08, Math.min(1, (reste || 0) / total));

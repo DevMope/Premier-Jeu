@@ -82,13 +82,13 @@ const STYLES_ARMES = {
     attaque: { d: [1, -0.1], j: [[-0.55, 0.1], [0.65, 0.7]], b: [[1.5, 0.1, 0.1], null], dx: 15, r: [11, -4] },
     recul: { d: [0.5, -0.9], j: [[-0.6, 0.7], [0.4, 0.1]], b: [[1.3, 0.9, 0.3], null], dx: 13, r: [-12, 7] },
   },
-  arbalete: {   // l'arbalète : la crosse à l'épaule, la main arrière à la poignée, l'autre sous le fût ; on la tient au creux de la hanche d'abord
-    garde: { d: [1, -0.12], j: [[-0.35, 0.3], [0.45, 0.55]], b: [[0.8, 0.95, 0.15], null], dx: 9, r: [4, -2] },
-    basse: { d: [1, 0.5], j: [[-0.25, 0.15], [0.3, 0.3]], b: [[0.55, 0.8, 0.15], null], dx: 9, r: [1, -4] },
-    menace: { d: [1, -0.03], j: [[-0.5, 0.25], [0.6, 0.6]], b: [[1.4, 0.75, 0.1], null], dx: 9, r: [7, -4], x: { boucheForcee: 2 } },
-    armer: { d: [0.45, 0.9], j: [[-0.4, 0.2], [0.5, 0.5]], b: [[0.5, 1.0, 0.15], null], dx: 9, r: [10, -4] },
-    attaque: { d: [1, -0.05], j: [[-0.55, 0.25], [0.7, 0.7]], b: [[1.45, 0.7, 0.1], null], dx: 9, r: [5, -4] },
-    recul: { d: [0.55, -0.7], j: [[-0.6, 0.7], [0.4, 0.1]], b: [[1.0, 1.1, 0.2], null], dx: 9, r: [-11, 6] },
+  arbalete: {   // l'arbalète : la crosse contre l'épaule, la joue sur le fût, la main arrière à la poignée (le coude plié), l'autre loin devant sous le fût
+    garde: { d: [1, -0.2], j: [[-0.35, 0.3], [0.45, 0.55]], b: [[0.85, 1.25, 0.12], null], dx: 12, r: [4, -2] },
+    basse: { d: [1, 0.55], j: [[-0.25, 0.15], [0.3, 0.3]], b: [[0.5, 0.95, 0.12], null], dx: 12, r: [1, -4] },
+    menace: { d: [1, -0.04], j: [[-0.5, 0.25], [0.6, 0.6]], b: [[1.2, 1.4, 0.08], null], dx: 12, r: [8, -5], x: { boucheForcee: 2 } },
+    armer: { d: [0.5, 0.9], j: [[-0.4, 0.2], [0.5, 0.5]], b: [[0.45, 1.05, 0.12], null], dx: 12, r: [10, -4] },
+    attaque: { d: [1, -0.03], j: [[-0.55, 0.25], [0.7, 0.7]], b: [[1.3, 1.5, 0.06], null], dx: 12, r: [8, -6] },
+    recul: { d: [0.6, -0.7], j: [[-0.6, 0.7], [0.4, 0.1]], b: [[0.95, 1.2, 0.15], null], dx: 12, r: [-11, 6] },
   },
   // --- Les autres ---
   fronde: {   // la fronde : elle pend, elle tourne au-dessus de la tête, puis le bras se détend

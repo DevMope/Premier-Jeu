@@ -184,15 +184,21 @@ const DESSINS_OBJETS = {
     trait(t, 'cuir', 1.6, 14.4, 4.4, 11.6, 0.9);
     t.forme('metal', ellipsoide(1.2, 14.8, 1.1, 1.1), { decalage: 0.3 });
   },
-  // L'arbalète : un fût de bois, l'arc d'acier en travers du bout, la corde, un carreau encoché
+  // L'arbalète bandée, de profil : le fût de bois à l'horizontale (la crosse à gauche), l'arc d'acier en travers du bout dont les
+  // extrémités reviennent vers l'arrière, la corde tendue jusqu'à la noix, le carreau posé sur le fût, l'étrier devant
   arbalete(t) {
-    trait(t, 'chene', 3, 13, 14, 4, 1.3);
-    t.forme('metal', (x, y) => { const u = (x + 0.5 - 12.4) * 0.74 + (y + 0.5 - 5.6) * 0.67, v = -(x + 0.5 - 12.4) * 0.67 + (y + 0.5 - 5.6) * 0.74; return Math.abs(v) < 6.6 && Math.abs(u + Math.cos(v / 6.6 * 1.4) * 1.6 - 1.6) < 0.8 ? [u * 0.3, v / 7, 0.8] : null; }, { decalage: 0.25 });
-    trait(t, 'lin', 8.3, 1.6, 8.8, 8.2, 0.25, { decalage: 0.3, bord: false });
-    trait(t, 'lin', 8.8, 8.2, 15, 11.6, 0.25, { decalage: 0.3, bord: false });
-    trait(t, 'cuir', 2, 13.6, 4.4, 11.2, 1.4);
-    trait(t, 'chene', 6.5, 9.4, 14.2, 4.2, 0.45, { decalage: 0.5, bord: false });
-    t.forme('metal', ellipsoide(14.4, 4, 1, 0.9), { decalage: 0.6 });
+    trait(t, 'chene', 1.5, 9.5, 13, 9.5, 1.2);
+    t.forme('chene', ellipsoide(3, 10, 2.6, 2), { decalage: 0.1 });                       // la crosse
+    trait(t, 'cuir', 5.5, 10.2, 8.5, 10.2, 1.2, { decalage: 0.3 });                       // la poignée
+    trait(t, 'metal', 7, 11.6, 9.4, 13, 0.4, { decalage: 0.4, bord: false });             // le pontet
+    let prec = null;
+    for (let i = -5; i <= 5; i++) { const w = i / 5, p = [13.2 - w * w * 3.4, 8.5 + w * 7.2]; if (prec) trait(t, 'metal', prec[0], prec[1], p[0], p[1], 0.85, { decalage: 0.3 }); prec = p; }
+    trait(t, 'lin', 9.8, 1.3, 5.2, 9, 0.3, { decalage: 0.3, bord: false });                // la corde, du bout haut à la noix
+    trait(t, 'lin', 5.2, 9, 9.8, 15.7, 0.3, { decalage: 0.3, bord: false });
+    t.forme('metal', ellipsoide(5.2, 9, 1, 1), { decalage: 0.6 });                        // la noix
+    trait(t, 'lin', 5.4, 8, 14.2, 8, 0.45, { decalage: 0.5, bord: false });               // le carreau
+    t.forme('metal', ellipsoide(14.8, 8, 1.1, 0.9), { decalage: 0.7 });
+    trait(t, 'metal', 14.6, 10.8, 14.6, 6.2, 0.35, { decalage: 0.4, bord: false });       // l'étrier
   },
   // La rapière des vampires : lame fine et longue, coquille d'argent, rubis
   rapiere(t) {

@@ -156,7 +156,7 @@ const TAILLE_ARMES_PORTEES = 1.3;   // (v1.04 : la taille des armes que portent 
 const ARMES_HD = {
   dague: { L: 15, prise: 2.5 },      // 40 cm
   epeecourte: { L: 24, prise: 3.4 }, // 65 cm : la lame large en feuille (le glaive)
-  arbalete: { L: 26, prise: 17 },    // 70 cm de fût, l'arc de 65 cm en travers du bout ; la main arrière tient la poignée, l'autre le fût
+  arbalete: { L: 30, prise: 20 },    // 80 cm de fût, l'arc de 65 cm en travers du bout ; la main arrière tient la poignée, l'autre le fût
   khopesh: { L: 22, prise: 2.8 },    // 60 cm, la lame en faucille
   epee: { L: 35, prise: 3.8 },       // 95 cm
   rapiere: { L: 42, prise: 3.4 },    // 1,15 m, la lame fine
@@ -175,6 +175,7 @@ const ARMES_FRAPPENT_PAR_A = ['hache', 'marteau', 'massue', 'lance', 'baton', 'b
 function rampesArmesHD(t) {
   t.rampes.lameA = rampeVive(0xdce6f0); t.rampes.boisA = rampeVive(0x7a4a24); t.rampes.ferA = rampeVive(0x6a6e78); t.rampes.cordeA = rampeVive(0xe0d4b0);
   t.rampes.laitonA = rampeVive(0xd8a838); t.rampes.bambouA = rampeVive(0x8aa84a); t.rampes.gemmeA = rampeVive(0x70c8f8);
+  t.rampes.bronzeA = [0x4a3010, 0x7a5420, 0xa8782e, 0xd0a048, 0xe8c470, 0xfaeaa8];   // le bronze doré du khopesh (comme son icône)
   if (!t.rampes.cuir) t.rampes.cuir = rampeVive(0x6a3f22);
 }
 // L'axe d'une arme tenue en main : M la main (à l'écran), dir le sens du bout qui frappe → { A, B }
@@ -219,16 +220,28 @@ function dessinerArmeHD(t, arme, A, B, k = FINESSE, { fourreau = false } = {}) {
     cylindre(t, 'boisA', P(0.9 * kA), P(3.4 * kA), 0.75 * kA, { decalage: 0.4 });
     t.forme('ferA', ellipsoide(...P(0.4 * kA), 1 * kA, 1 * kA), { decalage: 0.6 });
   } else if (arme === 'arbalete') {
-    // A : le bout de l'arbalète (devant) ; B : la crosse. Le fût de bois, l'arc d'acier en travers du bout (vu de biais : un
-    // grand arc de côté), la corde tendue vers la noix, l'étrier de fer, la poignée de cuir, la flèche courte (le carreau)
-    cylindre(t, 'boisA', P(2.5 * kA), B, 1.15 * kA, { decalage: 0.3 });
-    cylindre(t, 'cuir', P(l * 0.62), P(l * 0.82), 1.3 * kA, { decalage: 0.5, ombre: false });          // la poignée
-    const arc0 = P(2.2 * kA, -8 * kA), arc1 = P(2.2 * kA, 8 * kA);
-    let prec = null; for (let i = 0; i <= 12; i++) { const u = i / 12, p = P((2.2 - Math.sin(u * Math.PI) * 3.2) * kA, (-8 + 16 * u) * kA); if (prec) cylindre(t, 'ferA', prec, p, 0.7 * kA, { decalage: 0.5 }); prec = p; }
-    const noix = P(6 * kA); cylindre(t, 'cordeA', arc0, noix, 0.25 * kA, { decalage: 0.3, ombre: false }); cylindre(t, 'cordeA', noix, arc1, 0.25 * kA, { decalage: 0.3, ombre: false });
-    cylindre(t, 'ferA', P(0.5 * kA, -1.7 * kA), P(0.5 * kA, 1.7 * kA), 0.5 * kA, { decalage: 0.6 });         // l'étrier
-    cylindre(t, 'boisA', noix, P(-0.5 * kA), 0.4 * kA, { decalage: 0.6, ombre: false });                    // le carreau
-    t.forme('lameA', ellipsoide(...P(-0.4 * kA), 0.9 * kA, 0.65 * kA), { decalage: 0.7, ombre: false });
+    // Une arbalète bandée : A le devant, B la crosse. Le fût de bois (la crosse plus épaisse, la poignée de cuir, le pontet), l'arc
+    // d'acier en travers du devant, ses bouts RENVERSÉS vers l'arrière (la corde tirée), la corde de chaque bout à la noix, le
+    // carreau posé sur le fût (sa pointe claire dépasse), l'étrier de fer devant
+    const u0 = 3.2 * kA, noixU = 12 * kA;
+    cylindre(t, 'boisA', P(1.2 * kA), B, 1.25 * kA, { decalage: 0.3 });                                  // le fût
+    cylindre(t, 'boisA', P(l - 5 * kA), B, 1.85 * kA, { decalage: 0.35, ombre: false });                 // la crosse
+    cylindre(t, 'cuir', P(l * 0.6), P(l * 0.78), 1.5 * kA, { decalage: 0.5, ombre: false });             // la poignée
+    cylindre(t, 'ferA', P(l * 0.56, 1.4 * kA), P(l * 0.56, 3.4 * kA), 0.4 * kA, { decalage: 0.6, ombre: false });   // le pontet
+    cylindre(t, 'ferA', P(l * 0.56, 3.4 * kA), P(l * 0.72, 3.4 * kA), 0.4 * kA, { decalage: 0.6, ombre: false });
+    const bout = (sens) => P(u0 + 5.4 * kA, sens * 9.4 * kA);
+    let prec = null;
+    for (let i = -10; i <= 10; i++) { const w = i / 10, p = P(u0 + w * w * 5.4 * kA, w * 9.4 * kA); if (prec) cylindre(t, 'ferA', prec, p, (1.15 - Math.abs(w) * 0.5) * kA, { decalage: 0.5 }); prec = p; }
+    cylindre(t, 'laitonA', P(u0 - 0.2 * kA, -1.4 * kA), P(u0 - 0.2 * kA, 1.4 * kA), 1.35 * kA, { decalage: 0.6, ombre: false });   // la ligature au milieu de l'arc
+    for (const sens of [-1, 1]) t.forme('laitonA', ellipsoide(...bout(sens), 0.8 * kA, 0.8 * kA), { decalage: 0.6, ombre: false });   // les noix des bouts
+    const noix = P(noixU);
+    cylindre(t, 'cordeA', bout(-1), noix, 0.3 * kA, { decalage: 0.35, ombre: false }); cylindre(t, 'cordeA', noix, bout(1), 0.3 * kA, { decalage: 0.35, ombre: false });
+    t.forme('ferA', ellipsoide(...noix, 0.95 * kA, 0.95 * kA), { decalage: 0.7 });                      // la noix
+    cylindre(t, 'cordeA', P(noixU - 0.5 * kA), P(-0.4 * kA), 0.5 * kA, { decalage: 0.75, ombre: false });   // le carreau
+    t.forme('lameA', ellipsoide(...P(-0.6 * kA), 1.5 * kA, 0.95 * kA), { decalage: 0.85, ombre: false });  // sa pointe
+    cylindre(t, 'cuir', P(noixU - 0.4 * kA), P(noixU + 1.4 * kA), 0.6 * kA, { decalage: 0.8, ombre: false });  // ses plumes
+    const etrier = [[u0 + 0.8 * kA, -2.7 * kA], [-1.9 * kA, -2.7 * kA], [-1.9 * kA, 2.7 * kA], [u0 + 0.8 * kA, 2.7 * kA]];
+    for (let i = 0; i < 3; i++) cylindre(t, 'ferA', P(...etrier[i]), P(...etrier[i + 1]), 0.5 * kA, { decalage: 0.65, ombre: false });
   } else if (arme === 'dague') {
     lame(2.8 * kA, 0.85 * kA);
     cylindre(t, 'ferA', P(2.4 * kA, -1.8 * kA), P(2.4 * kA, 1.8 * kA), 0.6 * kA, { decalage: 0.5 });
@@ -241,13 +254,38 @@ function dessinerArmeHD(t, arme, A, B, k = FINESSE, { fourreau = false } = {}) {
     cylindre(t, 'boisA', P(0.4 * kA), P(2.4 * kA), 0.55 * kA, { decalage: 0.5 });
     t.forme('laitonA', ellipsoide(...P(0.3 * kA), 0.8 * kA, 0.8 * kA), { decalage: 0.6 });
   } else if (arme === 'khopesh') {
-    cylindre(t, 'boisA', P(0.3 * kA), P(2.8 * kA), 0.65 * kA, { decalage: 0.5 });
-    if (fourreau) cylindre(t, 'cuir', P(2.8 * kA), B, 1.2 * kA, { decalage: 0.1 });
-    else { let prec = null; for (let i = 0; i <= 12; i++) { const u = i / 12, p = P(2.8 * kA + u * (l - 2.8 * kA), -Math.sin(u * 2.7) * 3.2 * kA); if (prec) cylindre(t, 'lameA', prec, p, (0.95 - u * 0.25) * kA, { decalage: 0.4 }); prec = p; } }
-  } else if (arme === 'hache' || arme === 'marteau' || arme === 'massue') {
+    // l'épée-faucille : une poignée droite dorée, un col droit, puis une large lame de bronze qui se recourbe en croc
+    cylindre(t, 'boisA', P(0.5 * kA), P(3.6 * kA), 0.75 * kA, { decalage: 0.5 });
+    for (const u of [1.2, 2.4]) cylindre(t, 'laitonA', P(u * kA, -0.8 * kA), P(u * kA, 0.8 * kA), 0.35 * kA, { decalage: 0.65, ombre: false });
+    t.forme('laitonA', ellipsoide(...P(0.3 * kA), 1.1 * kA, 1.1 * kA), { decalage: 0.6 });
+    if (fourreau) cylindre(t, 'cuir', P(3.6 * kA), B, 1.5 * kA, { decalage: 0.1 });
+    else {
+      // le col droit, puis la lame : une courbe lisse (pas des tronçons) qui s'élargit au ventre et s'effile en croc
+      const u1 = 6.8 * kA, pts = [];
+      for (let i = 0; i <= 28; i++) { const q = i / 28; pts.push({ p: P(u1 + (l - u1) * (0.12 * q + 0.88 * Math.sin(q * Math.PI * 0.5)), -Math.sin(q * 2.45) * 5.6 * kA), r: (1.2 + 1.05 * Math.sin(Math.min(1, q * 1.5) * Math.PI * 0.5) - 1.9 * Math.pow(q, 2.4)) * kA }); }
+      cylindre(t, 'bronzeA', P(3.6 * kA), pts[0].p, 1.15 * kA, { decalage: 0.35 });
+      const xs = pts.map(o => o.p[0]), ys = pts.map(o => o.p[1]), rm = 2 * kA, x0 = Math.min(...xs) - rm, x1 = Math.max(...xs) + rm, y0 = Math.min(...ys) - rm, y1 = Math.max(...ys) + rm;
+      t.forme('bronzeA', (x, y) => {
+        if (x < x0 || x > x1 || y < y0 || y > y1) return null;
+        let mejor = 1e9, bx = 0, by = 0, br = 1;
+        for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1], vx = b.p[0] - a.p[0], vy = b.p[1] - a.p[1], w = Math.max(1e-6, vx * vx + vy * vy);
+          let u = ((x + 0.5 - a.p[0]) * vx + (y + 0.5 - a.p[1]) * vy) / w; u = Math.max(0, Math.min(1, u));
+          const qx = a.p[0] + vx * u, qy = a.p[1] + vy * u, d = Math.hypot(x + 0.5 - qx, y + 0.5 - qy), r = a.r + (b.r - a.r) * u;
+          if (d - r < mejor) { mejor = d - r; bx = x + 0.5 - qx; by = y + 0.5 - qy; br = Math.max(0.5, r); } }
+        return mejor <= 0 ? [bx / br * 0.95, by / br * 0.95, 0.3] : null; }, { decalage: 0.55 });
+    }
+  } else if (arme === 'hache') {
+    // la hache de guerre : un large fer en éventail, le fil en arc, une bague de fer sur le manche, un petit dos pointu
+    cylindre(t, 'boisA', P(1.5 * kA), B, 0.85 * kA, { decalage: 0.3 });
+    const tete = (rx, ry, marge) => { const u = rx / kA, v = ry / kA; return v > 0.1 && Math.abs(u - 4.2) < 1.5 + (v - 0.1) * 0.46 && v < 6.2 - 1.3 * Math.pow((u - 4.2) / 4.2, 2) - marge ? [(u - 4.2) / 4 * 0.6, (v - 3) / 6 * 0.5, 0.8] : null; };
+    t.forme('lameA', dans((rx, ry) => tete(rx, ry, 0)), { decalage: 0.5 });
+    t.forme('lameA', dans((rx, ry) => (tete(rx, ry, 0) && !tete(rx, ry, 0.75) ? [0, 0.2, 0.95] : null)), { decalage: 0.95, ombre: false, bord: false });   // le fil, plus clair
+    t.forme('ferA', dans((rx, ry) => { const u = rx / kA, v = ry / kA; return v < 0.3 && v > -1.7 && Math.abs(u - 3.6) < 1.5 * (1 + v / 1.7) ? [0, -0.3, 0.8] : null; }), { decalage: 0.6 });   // le dos
+    cylindre(t, 'ferA', P(0.8 * kA), P(4.4 * kA), 1.15 * kA, { decalage: 0.55, ombre: false });   // la douille
+    cylindre(t, 'cuir', P(l - 3.5 * kA), P(l - 0.6 * kA), 0.95 * kA, { decalage: 0.4, ombre: false });
+  } else if (arme === 'marteau' || arme === 'massue') {
     cylindre(t, 'boisA', P(2 * kA), B, 0.8 * kA, { decalage: 0.3 });
-    if (arme === 'hache') t.forme('lameA', dans((rx, ry) => (rx > 0.5 * kA && rx < 7 * kA && ry > 0 && ry < 4.5 * kA - Math.abs(rx - 3.8 * kA) * 0.35 ? [0.3, -0.3, 0.8] : null)), { decalage: 0.5 });
-    else if (arme === 'marteau') t.forme('ferA', dans((rx, ry) => (rx > 0.5 * kA && rx < 4.5 * kA && Math.abs(ry) < 3.4 * kA ? [ry / (3.4 * kA) * 0.6, -0.2, 0.8] : null)), { decalage: 0.5 });
+    if (arme === 'marteau') t.forme('ferA', dans((rx, ry) => (rx > 0.5 * kA && rx < 4.5 * kA && Math.abs(ry) < 3.4 * kA ? [ry / (3.4 * kA) * 0.6, -0.2, 0.8] : null)), { decalage: 0.5 });
     else { t.forme('boisA', dans((rx, ry) => (rx > 0 && rx < 8 * kA && Math.abs(ry) < 1.2 * kA + (8 * kA - rx) * 0.22 ? [ry / (3 * kA), 0, 0.8] : null)), { decalage: 0.5 }); for (const [u, v] of [[2, -1.6], [4, 1.4], [5.5, -1], [1.5, 1.2]]) t.forme('ferA', ellipsoide(...P(u * kA, v * kA), 0.6 * kA, 0.6 * kA), { decalage: 0.8, ombre: false }); }
     cylindre(t, 'cuir', P(l - 3.5 * kA), P(l - 0.6 * kA), 0.95 * kA, { decalage: 0.4, ombre: false });   // le manche gainé de cuir, sous la main
   } else if (arme === 'arc') {
@@ -275,10 +313,13 @@ function dessinerArmeHD(t, arme, A, B, k = FINESSE, { fourreau = false } = {}) {
 function textureArmeHD(scene, arme) {
   const cle = 'armeSol_' + arme;
   if (scene.textures.exists(cle)) return cle;
-  const k = FINESSE, a = ARMES_HD[arme] || ARMES_HD.epee, W = Math.ceil(a.L * k + 14 * k), H = Math.ceil(16 * k);
+  // (de combien l'arme dépasse de son axe, en haut et en bas, en unités de corps : de quoi laisser la place à la tête de la hache,
+  // à la courbe du khopesh, à l'arc de l'arbalète)
+  const LAT = { hache: [3.5, 7.5], khopesh: [6.5, 3], marteau: [4.5, 4.5], massue: [4.5, 4.5], arbalete: [10.5, 10.5], arc: [0, 6.5] };
+  const k = FINESSE, a = ARMES_HD[arme] || ARMES_HD.epee, [haut, bas] = LAT[arme] || [3.6, 3.6], kA = k * TAILLE_ARMES_PORTEES;
+  const W = Math.ceil(a.L * k + 14 * k), H = Math.ceil((haut + bas) * kA + 4 * k), y = Math.ceil(haut * kA + 2 * k);
   const t = new ToileHD(W, H); t.relief = true; t.cel = true; rampesArmesHD(t);
-  const y = H - 4 * k;
-  if (arme === 'arc') dessinerArmeHD(t, arme, [7 * k + a.L * k, H - 3 * k], [7 * k, H - 3 * k], k);   // (posé sur le dos, le bois en l'air)
+  if (arme === 'arc') dessinerArmeHD(t, arme, [7 * k + a.L * k, y], [7 * k, y], k);   // (posé sur le dos, le bois en l'air)
   else dessinerArmeHD(t, arme, [7 * k, y], [7 * k + a.L * k, y], k);
   contourEpais(t, CONTOUR_CORPS.tours);
   t.texture(scene, cle);
@@ -374,7 +415,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
     const garde = (a.prise + 2.5) * k, cosA = Math.min(0.94, (sol - 3 * k - hy) / Math.max(1, Lk - garde)), sinA = Math.sqrt(1 - cosA * cosA);
     const d = [arriere * sinA, cosA], A = [hx - d[0] * garde, hy - d[1] * garde];
-    return { A, B: [A[0] + d[0] * Lk, A[1] + d[1] * Lk], fourreau: true };
+    return { A, B: [A[0] + d[0] * Lk, A[1] + d[1] * Lk], fourreau: arme !== 'khopesh' };   // (le khopesh pend, sa lame courbe à nu)
   };
   let margeArmeH = 0, margeArmeL = 0;
   {

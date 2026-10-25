@@ -803,7 +803,11 @@ function etalsDuJour(G) {
     // une fois les Bannis venus au comptoir
     const ombreOuverte = G.visiteMarcheNoir !== undefined || (G.zonesConnues || []).some(z => ZONES[z] && ZONES[z].camp === 'mal') || PEUPLES_OMBRE.some(r => peupleAccueilli(G, r));
     const armesDispo = m.objets.filter(id => estArme(id) && !m.toujours.includes(id) && (!ITEMS[id].ombre || ombreOuverte));
-    const armesDuJour = Phaser.Utils.Array.Shuffle(armesDispo.slice()).slice(0, ARMES_PAR_ETAL);
+    // (lot 3) l'épée courte et l'arbalète, les deux nouvelles : l'une des deux a sa place réservée à l'étal de Thorgal chaque matin
+    // (l'épée courte les jours pairs, l'arbalète les impairs) ; les autres armes du jour restent tirées au sort
+    const reservee = cle === 'forge' ? (G.jour % 2 ? 'arbalete' : 'epeecourte') : null, aPart = reservee && armesDispo.includes(reservee);
+    const armesDuJour = Phaser.Utils.Array.Shuffle(armesDispo.filter(id => id !== (aPart ? reservee : null))).slice(0, ARMES_PAR_ETAL - (aPart ? 1 : 0));
+    if (aPart) armesDuJour.unshift(reservee);
     // (celle qu'un client attendu commande est souvent là)
     const attendue = Object.keys(totalCommandes(G)).find(id => estArme(id) && armesDispo.includes(id) && !armesDuJour.includes(id));
     if (attendue && Math.random() < 0.7) armesDuJour[armesDuJour.length - 1] = attendue;
