@@ -218,6 +218,8 @@ const policePrete = document.fonts && document.fonts.load
   ? Promise.all(['500 16px', '800 16px', 'italic 500 16px', 'italic 800 16px', 'bold 16px'].map(f => document.fonts.load(f + ' "Alegreya"')))
   : Promise.resolve();
 Promise.race([policePrete, new Promise(r => setTimeout(r, 2500))]).catch(() => {}).then(lancerJeu);
+// (v1.63) les polices des noms des étals (Uncial Antiqua, MedievalSharp, Pirata One) se chargent en tâche de fond : elles seront là quand on arrive au marché
+if (document.fonts && document.fonts.load) ['Uncial Antiqua', 'MedievalSharp', 'Pirata One'].forEach(f => document.fonts.load('16px "' + f + '"').catch(() => {}));
 
 // (v0.62) Garde-fou : certaines scènes ne vivent jamais ensemble (la nuit d'un côté ; la carte et le
 // comptoir de l'autre ; le dodo seul). Si l'une démarre alors qu'une autre est restée coincée

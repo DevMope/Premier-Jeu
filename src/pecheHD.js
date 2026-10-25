@@ -289,6 +289,17 @@ function cabanePecheurHD(scene) {
   for (let y = 76; y < 86; y++) for (let x = 0; x < 14; x++) if ((x + y) % 4 === 0 || (x - y + 100) % 4 === 0) t.poser(x, y, 'filet', 3);   // (le filet descend jusqu'à l'assise)
   t.contour(); t.texture(scene, cle); return cle;
 }
+// (v1.63, planche 80 v3) La planche de rive de la cabane : une planche de bois clair, liée de corde aux deux bouts,
+// clouée sous le bord du toit ; le nom de la cabane y est gravé (le lettrage : poserLettrage, placeMarcheHD.js)
+function plancheRiveHD(scene, l, h, graine = 7450) {
+  const cle = 'plancheRive_' + l + 'x' + h; if (scene.textures.exists(cle)) return cle;
+  const t = toileDecor(l, h); t.rampes.pin = rampe(BOIS_CLAIR_NOM);
+  planche(t, 0, 0, l, h, 'pin', { graine, noeuds: 1 });
+  for (let x = 0; x < l; x++) { t.poser(x, 0, 'pin', 5); t.poser(x, h - 1, 'chene', 1); }
+  for (const x of [1, l - 2]) for (let y = 0; y < h; y++) t.poser(x, y, 'cheneSombre', 2);   // la corde qui la lie, aux deux bouts
+  for (const [x, y] of [[4, 2], [l - 5, h - 3]]) t.poser(x, y, 'fer', 4);
+  t.contour(); t.texture(scene, cle); return cle;
+}
 // La cabane posée au bout de la rue du marché, avec Barnabé Goujon derrière son comptoir (renvoie les objets créés)
 const PECHEUR_COMTE = { race: 'hobbit', nom: 'Barnabé Goujon', niveau: 'aguerri', costume: 'colporteur', vieux: true };
 function poserCabanePecheur(s, X) {
