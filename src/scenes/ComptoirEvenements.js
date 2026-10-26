@@ -4,6 +4,8 @@
 // file reprend (evtSur).
 
 const SILL_EVT = SOL_COMPTOIR + 7;
+// (le rebord a sa tisane et son pot au coin droit : les objets des événements se posent à gauche, ou juste à droite du client)
+const SILL_GAUCHE_EVT = FENETRE.x + 72, SILL_DROITE_EVT = FENETRE.x + FENETRE.w / 2 + 80;
 // « la broche », « le pot de miel » : les cadeaux du Bazar, avec leur article
 const ARTICLES_CADEAUX_EVT = { miel: 'le pot de miel', tabac: 'le tabac à pipe', broche: 'la broche ciselée', livre: 'le livre ancien', ferACheval: 'le fer à cheval', vin: 'le vin de la Comté', gateau: 'le gâteau aux mûres' };
 const leCadeauEvt = id => ARTICLES_CADEAUX_EVT[id] || 'le cadeau';   // le rebord de la fenêtre, où l'on pose les objets (comme le carnet)
@@ -156,7 +158,7 @@ Object.assign(CounterScene.prototype, {
       this.evtDire(`Ils ne t'ont pas abandonné${J}. Ils se sont battus contre le Grand Sage, et ils ont perdu. Leur dernier mot, c'était ton nom.`, 'parents');
       this.bouton('...', () => {
         evtParents(G, e);
-        this.evtPoser('evt_berceuse', FENETRE.x + FENETRE.w / 2 + 110);
+        this.evtPoser('evt_berceuse', SILL_GAUCHE_EVT);
         this.exprimer('neutre');
         this.evtDire("(Il pose sur le comptoir une vieille page pliée en quatre.) Ta mère la chantait le soir. Je l'ai gardée toute ma vie sans savoir pourquoi. Maintenant, je sais.", 'parents');
         this.bouton('Prendre la berceuse', () => {
@@ -209,7 +211,7 @@ Object.assign(CounterScene.prototype, {
       return;
     }
     // la lettre de son passé
-    const lettre = this.evtPoser('evt_lettreGarrick', FENETRE.x + FENETRE.w / 2 + 112);
+    const lettre = this.evtPoser('evt_lettreGarrick', SILL_GAUCHE_EVT);
     const lire = suite => this.lettreEvt("G., ceux du lac comptent toujours sur toi. Ne laisse pas oublier. Ne les laisse pas tout effacer, même nos noms. Garde l'enfant loin de tout ça, tant qu'il le faudra. — A.", suite);
     if (camp === 'bien') {
       this.evtDire("Une lettre de mon passé m'a retrouvé. Si la garde la trouve chez moi... Brûle-la pour moi. Sans la lire.", P);
@@ -272,7 +274,7 @@ Object.assign(CounterScene.prototype, {
       this.tweens.add({ targets: f, angle: { from: -6, to: 6 }, duration: 900 + (k % 3) * 200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: k * 70 });
     }
     (e.invites || []).slice(0, 3).forEach((p, i) => this.evtCompagnon(p, [x + 52, x + w - 50, x + 96][i], { regarde: i === 1 ? -1 : 1 }));
-    const gateau = this.evtPoser('evt_gateau', x + w / 2 + 116, { echelle: 2, decor: true });
+    const gateau = this.evtPoser('evt_gateau', SILL_GAUCHE_EVT + 8, { echelle: 2, decor: true });
     const flamme = this.evtGarder(this.add.image(gateau.x + 1, SILL_EVT - 56, 'evt_flamme').setOrigin(0.5, 1).setScale(2).setDepth(3.25), true);
     this.tweens.add({ targets: flamme, scaleX: { from: 1.7, to: 2.3 }, scaleY: { from: 2.2, to: 1.8 }, duration: 260, yoyo: true, repeat: -1 });
     Son.jouer('fanfare');
@@ -282,7 +284,7 @@ Object.assign(CounterScene.prototype, {
       const r = evtAnniversaire(G);
       this.dessinerPieces();
       const objet = { plaque: 'evt_plaque', enseigne: 'evt_enseigne', panier: 'evt_panier', bouquet: 'evt_bouquet' }[r.id];
-      this.evtPoser(objet, x + w / 2 - 118);
+      this.evtPoser(objet, SILL_DROITE_EVT - 20);
       const t = { plaque: 'De la part de tout le quartier : une plaque d\'argent, gravée à ton nom. Et une bourse, pour l\'année qui vient.',
         enseigne: 'Une enseigne sculptée par le menuisier de la rue Haute, et une petite bourse pour fêter ça.',
         panier: 'Un panier du marché, avec tout ce qu\'il faut pour une fête... et quelques pièces au fond.',
@@ -517,7 +519,7 @@ Object.assign(CounterScene.prototype, {
       this.evtDire('Brrr ! Quel temps de chien. Vous permettez que je m\'abrite un instant ? Je ne dérangerai pas, promis.', 'averse');
       this.choix(['Lui offrir une tisane', () => {
         const r = evtAverse(G, e, 'tisane');
-        const tasse = this.evtPoser('evt_tasse', FENETRE.x + FENETRE.w / 2 + 92, { echelle: 2.2 });
+        const tasse = this.evtPoser('evt_tasse', SILL_GAUCHE_EVT, { echelle: 2.2 });
         this.vapeurEvt(tasse);
         this.exprimer('content');
         this.evtDire(`(Il serre la tasse entre ses mains gelées.) Merci. Tenez, pour la peine, un bruit qui court : ${r.rumeur.texte.charAt(0).toLowerCase() + r.rumeur.texte.slice(1)}`, 'averse');
@@ -597,7 +599,7 @@ Object.assign(CounterScene.prototype, {
     const G = this.G, o = objetDuTroc(G, e);
     this.evtParchemin('Un voyageur fauché', 'il propose un troc');
     this.evtDire("Je n'ai pas un sou, je vous le dis tout de suite. Mais j'ai ceci. (Il pose un objet sur le comptoir.)", 'troc');
-    const objet = this.evtPoser('evt_troc' + (e.objet % OBJETS_TROC.length), FENETRE.x + FENETRE.w / 2 + 104, { echelle: 2.4 });
+    const objet = this.evtPoser('evt_troc' + (e.objet % OBJETS_TROC.length), SILL_GAUCHE_EVT, { echelle: 2.4 });
     this.bouton(`« Qu'est-ce que c'est ? »`, () => {
       this.evtDire(`${o.nom}. ${o.dit} Contre un baluchon de route, ça vous va ? Deux rations, une gourde, une torche.`, 'troc');
       const ok = peutTroquer(G), plein = G.tresors.length >= placesAtelier(G);
@@ -706,7 +708,7 @@ Object.assign(CounterScene.prototype, {
     const G = this.G;
     this.evtParchemin('Une visite à plumes');
     creerOiseauxMessagers(this); creerObjetsEvtHD(this);
-    const rebord = { x: FENETRE.x + FENETRE.w / 2 + 70, y: SILL_EVT };
+    const rebord = { x: FENETRE.x + FENETRE.w / 2 + 56, y: SILL_EVT };
     const pg = this.evtGarder(this.add.sprite(FENETRE.x + FENETRE.w + 60, FENETRE.y + 40, 'pigeonVolH').setScale(2.6).setOrigin(0.5, 1).setDepth(12).play('volPigeon'));
     Son.jouer('oiseaux');
     this.tweens.add({ targets: pg, x: rebord.x, y: rebord.y, duration: 1300, ease: 'Sine.easeOut', onComplete: () => {
@@ -781,7 +783,7 @@ Object.assign(CounterScene.prototype, {
   evt_inspecteur(e) {
     const G = this.G, C = EVT_COMPTOIR.inspecteur, caches = interditsEnReserve(G);
     this.evtParchemin('Un inspecteur', 'des poids et mesures');
-    const balance = this.evtPoser('evt_balance', FENETRE.x + FENETRE.w / 2 + 108);
+    const balance = this.evtPoser('evt_balance', SILL_GAUCHE_EVT + 10);
     const peser = () => this.tweens.add({ targets: balance, angle: { from: -4, to: 4 }, duration: 260, yoyo: true, repeat: 3, onComplete: () => balance.setAngle(0) });
     this.evtDire('Maître Ambroise Trébuchet, inspecteur des poids et mesures du bourg. Contrôle de routine : vos balances, vos poids, et votre réserve.', 'inspecteur');
     const fin = (t, expr = 'neutre') => { this.exprimer(expr); this.evtDire(t, 'inspecteur'); this.bouton('« Au revoir, Maître. »', () => this.evtFin()); };
@@ -812,10 +814,10 @@ Object.assign(CounterScene.prototype, {
   inc_chat(entree) {
     const G = this.G, v = entree.voyageur, inc = entree.incident, c = chatDe(G), nomChat = c.nom || 'Ton chat';
     creerObjetsEvtHD(this);
-    const pref = creerChatHD(this, c.look || { pelage: 'gris', yeux: 'vert', collier: 'aucun' });
+    const pref = creerChatHD(this, typeof lookChat === 'function' ? lookChat(G) : (c.look || { pelage: 'gris', yeux: 'vert', collier: 'aucun' }));
     if (inc.trouvaille === 'souris') creerChatRueHD(this);
     this.bouton('...', null);
-    const xArret = FENETRE.x + FENETRE.w / 2 + 70, y = SILL_EVT;
+    const xArret = FENETRE.x + FENETRE.w / 2 + 52, y = SILL_EVT;
     const chat = this.evtGarder(this.add.image(FENETRE.x - 30, y, pref + '_m0').setOrigin(0.5, 1).setScale(2.2).setDepth(3.3));
     let k = 0;
     const pas = this.time.addEvent({ delay: 110, loop: true, callback: () => chat.active && chat.setTexture(pref + '_m' + (++k % 4)) });
