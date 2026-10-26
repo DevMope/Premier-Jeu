@@ -48,6 +48,8 @@ function elargirArriere(s) {
     f.setScrollFactor(0).setDepth(30);
     for (const t of s.children.list) if (t.type === 'Text' && Math.abs(t.x - f.x) < 0.5 && Math.abs(t.y - f.y) < 0.5) t.setScrollFactor(0).setDepth(30.1);
   }
+  // les étiquettes posées à hauteur d'homme (le vieux buffet, le panier, le chat...) passent devant le joueur : il ne les cache jamais
+  for (const t of s.children.list) if (t.type === 'Text' && t.scrollFactorX !== 0 && t.y > 360 && t.depth < 4) t.setDepth(4);
   // le joueur, debout devant le vieux buffet
   textureJoueur(s, G); textureJoueur(s, G, 'deFace'); textureJoueur(s, G, 'dos');
   s.heros = s.add.image(560, SOL_HEROS_ARRIERE, 'joueur_' + stadeJoueur(G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(3.6);
@@ -165,6 +167,9 @@ async function revenirParLaPorte(s, h, p, { profHeros = 3.6, sol = SOL_ARRIERE, 
   const portesAvant = PromenadeScene.prototype.portes;
   PromenadeScene.prototype.portes = function () {
     portesAvant.call(this);
+    // (comme dans la journée : les étiquettes de l'arrière-boutique, à hauteur d'homme, passent devant le joueur)
+    const piece = PIECES_PROMENADE[P_ARRIERE];
+    for (const t of this.children.list) if (t.type === 'Text' && t.scrollFactorX !== 0 && t.x > piece.x && t.x < piece.x + piece.largeur && t.y > 360 && t.depth < 8.6) t.setDepth(8.6);
     if (this.scene.key !== 'Promenade' || !this.porteBureau) return;   // (la nuit du cambrioleur réutilise le décor, sans y marcher)
     const p = this.porteBureau;
     this.add.zone(p.x, SOL_ARRIERE - 90, 100, 180).setDepth(8.6).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.allerAuBureau());

@@ -14,7 +14,7 @@ const ONGLETS = [
 const FICHES_PAR_PAGE = 6;   // (v1.64 : le grand registre, trois lignes par fiche)
 const TIROIRS = [['ameliorations', 'Améliorer le comptoir'], ['competences', 'Tes compétences'], ['aventuriers', 'Chiffres des missions'], ['commerce', 'Le commerce'], ['reputation', 'Réputation et relations'], ['camps', 'Lumière et ombre'], ['etrange', 'Choses étranges']];
 // Où sont les choses, dans la pièce (à l'écran)
-const PIECE_BUREAU = { sol: 452, table: { x: 350, bas: 498 }, chaise: { x: 480, pieds: 474 }, porte: { x: 892 }, debout: 482, echelle: 16 };
+const PIECE_BUREAU = { sol: 452, table: { x: 350, bas: 498 }, chaise: { x: 480, pieds: 474 }, porte: { x: 892 }, debout: 482, echelle: 13.4 };   // (la même proportion que dans l'arrière-boutique : debout, il fait les trois cinquièmes de la porte)
 
 class BureauScene extends Phaser.Scene {
   constructor() { super('Bureau'); }
