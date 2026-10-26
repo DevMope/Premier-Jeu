@@ -35,6 +35,17 @@ function toileRepere(l, h) {
   return t;
 }
 
+// (v1.63) Un arbre peint par arbresHD.js dans la toile d'un repère (les rampes de l'essence, suffixées : plusieurs
+// essences et saisons peuvent cohabiter dans une même toile)
+function arbreDansRepere(t, suffixe, { espece = 'chene', saison = 'moissons', couleur = null, assombrir = 0, feuilles = null, ...o }) {
+  const R = rampesArbre(saison, espece, couleur);
+  if (feuilles) [R.arbFeuA, R.arbFeuB, R.arbFeuC] = feuilles.map(c => rampe(c));   // (des feuilles de la couleur du repère)
+  for (const k in R) t.rampes[k + suffixe] = assombrir ? R[k].map(c => melangeCouleur(c, 0x0c0a14, assombrir)) : R[k];   // (assombrir : sous la lune)
+  peindreArbre((x, y, m, i) => { if (x >= 0 && y >= 0 && x < t.l && y < t.h) t.poser(x, y, m + suffixe, i); }, { espece, saison, ...o });
+}
+// la saison des arbres des repères (celle de l'année ; la contrée décide s'il neige)
+function saisonRepere() { return typeof saisonActuelle === 'function' ? saisonActuelle() : 'moissons'; }
+
 // Remplir une zone, pixel par pixel, avec un ton choisi par une fonction
 function remplir(t, mat, dedans, ton) {
   for (let y = 0; y < t.h; y++) for (let x = 0; x < t.l; x++) if (dedans(x, y)) t.poser(x, y, mat, ton(x, y));
@@ -116,7 +127,13 @@ const REPERES_HD = {
     ligne(t, 'fer', 3, 196, 0, 196, 6); ligne(t, 'fer', 3, 193, 2, 199, 2);   // la croix
   } },
   // Le grand chêne millénaire, creux, et la cabane de rondins du bûcheron
-  vieuxChene: { l: 220, h: 170, dessin(t) {
+  vieuxChene: { l: 220, h: 170, saison: true, dessin(t) {
+    // le chêne : un tronc énorme, noueux, creux, et sa couronne
+    // (v1.63 : peint comme tous les arbres, arbresHD.js, et de la saison ; le tronc énorme et son creux par-dessus)
+    const sa = saisonRepere();
+    arbreDansRepere(t, '_vc', { espece: 'chene', saison: sa, cx: 62, base: 168, H: 138, graine: 7, ecartG: 0.75, ecartD: 0.7, mousse: true });
+    t.forme('rondin', (x, y) => { const w = 12 + Math.max(0, y - 140) * 0.9 + Math.sin(y * 0.3) * 2; return y >= 112 && y < 170 && Math.abs(x + 0.5 - 60) < w ? [(x - 60) / (w + 2), 0, 0.8] : null; }, { motif: (x, y) => ((x * 3 + Math.floor(y / 3)) % 6 === 0 ? -0.6 : 0) });
+    t.forme('rochesombre', ellipsoide(58, 146, 6, 10), { decalage: -0.6 });   // le creux
     // la cabane
     remplir(t, 'rondin', (x, y) => x >= 130 && x < 210 && y >= 120 && y < 170, (x, y) => ((y - 120) % 7 === 0 ? 1 : (y - 120) % 7 === 1 ? 4 : 3));
     for (let y = 120; y < 170; y += 7) { t.forme('rondin', ellipsoide(130, y + 3.5, 3, 3.5), { decalage: 0.5 }); t.forme('rondin', ellipsoide(209, y + 3.5, 3, 3.5), { decalage: 0.2 }); }
@@ -125,10 +142,6 @@ const REPERES_HD = {
     // la souche et sa hache plantée
     t.forme('rondin', boite(112, 154, 128, 170, 3), { decalage: 0.1 }); for (let a = 0; a < 6.28; a += 0.4) t.poser(Math.round(120 + Math.cos(a) * 4), Math.round(156 + Math.sin(a) * 1.5), 'chene', 4);
     ligne(t, 'chene', 4, 120, 154, 130, 140, 2); t.forme('fer', ellipsoide(131, 139, 4, 3), { decalage: 0.4 });
-    // le chêne : un tronc énorme, noueux, creux, et sa couronne
-    t.forme('rondin', (x, y) => { const w = 18 + Math.max(0, y - 140) * 0.9 + Math.sin(y * 0.3) * 2; return y >= 60 && y < 170 && Math.abs(x + 0.5 - 60) < w ? [(x - 60) / (w + 2), 0, 0.8] : null; }, { motif: (x, y) => ((x * 3 + Math.floor(y / 3)) % 6 === 0 ? -0.6 : 0) });
-    t.forme('rochesombre', ellipsoide(58, 128, 7, 12), { decalage: -0.6 });   // le creux
-    for (const [cx, cy, r] of [[60, 40, 34], [24, 58, 24], [96, 56, 26], [40, 24, 20], [82, 22, 22]]) t.forme('vert', ellipsoide(cx, cy, r, r * 0.8), { motif: (x, y) => ((x * 5 + y * 7) % 11 === 0 ? 0.7 : (x * 3 + y) % 7 === 0 ? -0.6 : 0) });
   } },
   // Le pont des trolls : un pont de moellons à trois arches, de la mousse, le panneau du péage, des os
   pont: { l: 300, h: 110, dessin(t) {
@@ -369,9 +382,9 @@ const REPERES_HD = {
 
 // La texture d'un repère (créée une fois)
 function textureRepere(scene, quoi) {
-  const cle = 'repereHD_' + quoi;
-  if (scene.textures.exists(cle)) return cle;
   const r = REPERES_HD[quoi];
+  const cle = 'repereHD_' + quoi + (r && r.saison ? '_' + saisonRepere() : '');
+  if (scene.textures.exists(cle)) return cle;
   if (!r) return null;
   const t = toileRepere(r.l, r.h);
   r.dessin(t);
@@ -425,10 +438,8 @@ Object.assign(REPERES_HD, {
   // lanternes, d'autres mallorns, et des lueurs bleues qui flottent
   lothlorien: { l: 400, h: 300, dessin(t) {
     // les mallorns du fond, de chaque côté
-    for (const [cx, h, r] of [[40, 210, 44], [360, 230, 48], [100, 170, 32]]) {
-      remplir(t, 'argent', (x, y) => y >= 300 - h && Math.abs(x + 0.5 - cx) < 5 + Math.max(0, y - 280) * 0.5, (x) => (x < cx ? 4 : 2));
-      etageFeuilles(t, 'feuilleOr', cx, 300 - h, r, r * 0.6, cx, 12);
-    }
+    // (v1.63 : peints comme ceux des collines, arbresHD.js)
+    [[36, 200], [366, 214], [98, 150]].forEach(([cx, h], i) => arbreDansRepere(t, '_ml', { espece: 'mallorn', saison: 'moissons', cx, base: 298, H: h, graine: 11 + i, ecartX: 0.55, feuilles: [0xd0a024, 0xe8c040, 0xa87a16] }));
     // le grand tronc d'argent, épais, cannelé, ses racines qui s'étalent
     remplir(t, 'argent', (x, y) => { const w = 20 + Math.max(0, y - 240) ** 1.4 * 0.16; return y >= 60 && Math.abs(x + 0.5 - 200) < w; },
       (x, y) => (x < 190 ? 5 : x > 210 ? 2 : 3) + ((x - 200) % 7 === 0 ? -1 : 0) + ((y * 3 + x) % 23 === 0 ? -1 : 0));
@@ -456,7 +467,8 @@ Object.assign(REPERES_HD, {
     const bordG = y => 70 + Math.sin(y * 0.05) * 18 + Math.sin(y * 0.19) * 7 - Math.max(0, 60 - y) * 0.9, bordD = y => 340 - Math.sin(y * 0.045) * 16 - Math.sin(y * 0.23) * 6 + Math.max(0, 40 - y) * 1.2;
     const extG = y => Math.max(0, 46 - y * 0.16 + Math.sin(y * 0.11) * 8 + Math.sin(y * 0.31) * 4), extD = y => Math.min(419, 374 + y * 0.16 - Math.sin(y * 0.1) * 8 - Math.sin(y * 0.27) * 4);
     remplir(t, 'roche', (x, y) => (x < bordG(y) && x > extG(y)) || (x > bordD(y) && x < extD(y)), (x, y) => { const strate = Math.floor((y + Math.sin(x * 0.1) * 4) / 9) % 3; return 2 + strate + (Math.abs(x - bordG(y)) < 4 || Math.abs(x - bordD(y)) < 4 || Math.abs(x - extG(y)) < 3 || Math.abs(x - extD(y)) < 3 ? 1 : 0) - (hachage(x >> 2, y >> 2, 2) > 0.8 ? 1 : 0); });
-    for (let k = 0; k < 10; k++) { const g = k < 5, y = 60 + ((k * 53) % 200), x = g ? extG(y) + 8 + (k * 7) % 20 : extD(y) - 8 - (k * 7) % 20; remplir(t, 'sapin', (px, py) => py >= y && py < y + 22 && Math.abs(px + 0.5 - x) < (py - y) * 0.4, (px) => (px < x ? 4 : 2)); }   // des sapins accrochés aux parois
+    const sa = 'brumes';   // (le joueur : la vallée garde son automne toute l'année ; les sapins restent verts, sans neige)
+    for (let k = 0; k < 10; k++) { const g = k < 5, y = 60 + ((k * 53) % 200), x = g ? extG(y) + 8 + (k * 7) % 20 : extD(y) - 8 - (k * 7) % 20; arbreDansRepere(t, '_fs', { espece: 'sapin', saison: sa, cx: x, base: y + 22, H: 24, graine: 20 + k, neige: sa === 'givre' }); }   // des sapins accrochés aux parois (v1.63 : peints)
     for (let k = 0; k < 40; k++) { const x = hachage(k, 1, 4) < 0.5 ? hachage(k, 2, 4) * 90 : 330 + hachage(k, 2, 4) * 90, y = 30 + hachage(k, 3, 4) * 250; t.forme('mousse', ellipsoide(x, y, 5, 3), { decalage: 0.2, bord: false }); }
     // les cascades
     for (const [x0, l] of [[70, 8], [300, 10], [348, 6]]) remplir(t, 'lueurBleue', (x, y) => x >= x0 && x < x0 + l && y > 40, (x, y) => ((y + x * 3) % 7 < 3 ? 5 : 4));
@@ -472,7 +484,8 @@ Object.assign(REPERES_HD, {
     remplir(t, 'marbre', (x, y) => { if (y < 236 || y >= 250 || x < 220 || x >= 340) return false; return true; }, (x, y) => (y === 236 ? 5 : 3));
     for (const cx of [250, 290, 330]) remplir(t, 'marbre', (x, y) => y >= 250 && y < 290 && Math.abs(x + 0.5 - cx) < 20 && !((x + 0.5 - cx) ** 2 + (y - 290) ** 2 < 300), (x) => (x < cx ? 4 : 2));
     // les arbres d'automne, et des lanternes
-    for (const [cx, cy, r] of [[112, 248, 24], [172, 262, 20], [372, 236, 22]]) { remplir(t, 'rondin', (x, y) => y >= cy && y < 290 && Math.abs(x + 0.5 - cx) < 3, (x) => (x < cx ? 4 : 2)); etageFeuilles(t, 'automne', cx, cy - 4, r, r * 0.75, cx, 9); }
+    // (v1.63 : peints comme tous les arbres ; un automne permanent, la vallée flamboie)
+    [[112, 66, 'chene'], [172, 50, 'bouleau'], [372, 72, 'chene']].forEach(([cx, H, espece], i) => arbreDansRepere(t, '_fa' + i, { espece, saison: sa, cx, base: 288, H, graine: 30 + i, neige: sa === 'givre' }));
     for (let k = 0; k < 10; k++) halo(t, 'lumiere', 110 + hachage(k, 1, 6) * 220, 120 + hachage(k, 2, 6) * 150, 2.5);
   } },
   // La Cité d'Opale : un rempart de cristal et sa porte, une forêt de flèches et de coupoles, la
@@ -560,7 +573,8 @@ Object.assign(REPERES_HD, {
     remplir(t, 'nuit', (x, y) => y >= 150 && y < 290 && Math.abs(x + 0.5 - 220) < 22 + (y - 150) * 0.55, (x, y) => (x < 214 ? 4 : 2) + ((x + y) % 11 === 0 ? -1 : 0));
     // (les loups qui hurlent sont posés par-dessus : les vrais loups des récits, en silhouette)
     // des arbres morts tordus
-    for (const [x0, h] of [[60, 120], [370, 100]]) { let x = x0, y = 290; for (let k = 0; k < h; k++) { x += Math.sin(k * 0.12) * 0.6; t.poser(Math.round(x), y - k, 'nuit', 1); t.poser(Math.round(x) + 1, y - k, 'nuit', 1); if (k > h * 0.4 && k % 18 === 0) ligne(t, 'nuit', 1, x, y - k, x + (k % 36 ? 22 : -22), y - k - 16, 1); } }
+    // (v1.63 : peints comme tous les arbres morts, arbresHD.js ; sous la lune, presque noirs, un peu de neige)
+    [[60, 120], [370, 100]].forEach(([cx, H], i) => arbreDansRepere(t, '_cm', { espece: 'mort', saison: 'givre', cx, base: 288, H, graine: 40 + i, neige: true, assombrir: 0.55 }));
     // des crânes sur des pieux, une bannière déchirée
     for (const x of [130, 160, 290, 320]) { ligne(t, 'rondin', 1, x, 240, x, 290, 2); t.forme('os', ellipsoide(x, 236, 5, 5), { decalage: 0.2 }); t.poser(x - 2, 236, 'rochesombre', 0); t.poser(x + 2, 236, 'rochesombre', 0); }
     ligne(t, 'rondin', 2, 100, 170, 100, 290, 2);
@@ -638,7 +652,8 @@ Object.assign(RAMPES_REPERES, {
   sapin: [0x08180e, 0x102818, 0x1a3c22, 0x26522e, 0x386c3c, 0x52884e],
   cactus: [0x0e2a14, 0x1a4420, 0x2a602e, 0x3e7c3c, 0x58984e, 0x80b46a],
 });
-function textureArbre(scene, forme) {
+function textureArbre(scene, forme, variante = 0, biome = 'comte') {
+  if (typeof arbrePremierPlanHD === 'function' && ARBRES_PREMIER_PLAN[forme]) return arbrePremierPlanHD(scene, forme, biome, variante);   // (v1.63)
   const cle = 'arbreHD_' + forme;
   if (scene.textures.exists(cle)) return cle;
   if (!ARBRES_HD[forme]) return null;

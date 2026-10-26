@@ -114,9 +114,9 @@ Object.assign(MarcheScene.prototype, {
     this.actionsLieux.moulin = () => this.message('Le sentier mène au Vieux Moulin et à l’étang de Barnabé. On s’y promène le soir, depuis chez toi.');
     // les arbres, les buissons, les barrières : dans l'herbe, jamais sur les chemins
     [[70, 420, 0], [70, 760, 1], [1740, 420, 1], [1720, 1030, 0], [420, 740, 1], [1390, 760, 0], [560, 200, 0], [1250, 200, 1], [40, 1040, 0], [330, 1040, 1]].forEach(([x, y, v]) => {
-      ombre(x + 10, y, 120); place.add(this.add.image(x, y, arbrePlaceHD(this, pal, v)).setOrigin(0.5, 1).setScale(2.2)); this.obstacles.push([x - 16, y - 16, x + 16, y + 2]); });
+      ombre(x + 10, y, 120); { const cle = arbrePlaceHD(this, pal, v, x, y); place.add(this.add.image(x, y, cle).setOrigin(0.5, origineArbre(this, cle)).setScale(2.2)); } this.obstacles.push([x - 16, y - 16, x + 16, y + 2]); });
     const marcheDuJour = typeof jourDeMarche === 'function' && jourDeMarche(G);   // (v1.54 : les jours de marché, les charrettes des colporteurs prennent la place de deux buissons)
-    [[250, 760], [1520, 760], [700, 760], [1100, 760], ...(marcheDuJour ? [] : [[460, 470], [1340, 470]])].forEach(([x, y]) => { ombre(x, y, 70); place.add(this.add.image(x, y, buissonPlaceHD(this, pal)).setOrigin(0.5, 1).setScale(2.2)); this.obstacles.push([x - 26, y - 14, x + 26, y + 2]); });
+    [[250, 760], [1520, 760], [700, 760], [1100, 760], ...(marcheDuJour ? [] : [[460, 470], [1340, 470]])].forEach(([x, y]) => { ombre(x, y, 70); { const cle = buissonPlaceHD(this, pal, x, y); place.add(this.add.image(x, y, cle).setOrigin(0.5, origineArbre(this, cle)).setScale(2.2)); } this.obstacles.push([x - 26, y - 14, x + 26, y + 2]); });
     [[640, 1020], [1160, 1020]].forEach(([x, y]) => { ombre(x, y, 100); place.add(this.add.image(x, y, barrierePlaceHD(this, 5)).setOrigin(0.5, 1).setScale(2.2)); this.obstacles.push([x - 52, y - 12, x + 52, y + 2]); });
     // les jours de fête, des guirlandes au-dessus de la place
     if (this.fete || this.feteHiver) {

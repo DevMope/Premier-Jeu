@@ -314,12 +314,13 @@ class VoyageScene extends Cinematique {
   // voyageuse marche à côté de la maison et achète par la fenêtre
   verger() {
     const sol = this.sol, saison = typeof saisonActuelle === 'function' ? saisonActuelle() : null;
-    const cle = saison === 'hiver' ? arbreRiveHD(this, 'hiver', 'aulne', 4) : textureArbre(this, 'pommiers');
-    const poser = (x, y, e, prof) => { const a = this.add.image(x, y, cle).setOrigin(0.5, 1).setScale(e).setDepth(prof); this.uiCam.ignore(a); return this.bord(a, x); };
+    // (v1.63) de vrais pommiers (arbresHD.js), de leur saison : en fleurs, chargés de pommes, roux, nus ; quatre variantes en quinconce
+    const sa = saison || 'moissons', cle = v => arbreHD(this, 'pommier', sa, 104, 50 + v);
+    const poser = (x, y, e, prof, v) => { const c = cle(v), a = this.add.image(x, y, c).setOrigin(0.5, origineArbre(this, c)).setScale(e * 1.1).setDepth(prof); this.uiCam.ignore(a); return this.bord(a, x); };
     for (let k = 0; k < 18; k++) {
       const x = 1180 + k * 170;
-      poser(x + (k % 2) * 40, sol - 74, 0.9, 0.31); poser(x + 85, sol - 46, 1.2, 0.33);   // (deux rangées au fond, en quinconce)
-      poser(x + 40, sol - 8, 1.75, 0.36);   // (la rangée du bord de la route)
+      poser(x + (k % 2) * 40, sol - 74, 0.9, 0.31, k % 4); poser(x + 85, sol - 46, 1.2, 0.33, (k + 1) % 4);   // (deux rangées au fond, en quinconce)
+      poser(x + 40, sol - 8, 1.75, 0.36, (k + 2) % 4);   // (la rangée du bord de la route)
       if (k % 4 === 1) { const p = this.add.image(x + 70, sol - 2, vergerHD(this, 'panier')).setOrigin(0.5, 1).setScale(2).setDepth(0.37); this.uiCam.ignore(p); this.bord(p, x + 70); }
       if (k % 5 === 2) { const e = this.add.image(x + 22, sol - 6, vergerHD(this, 'echelle')).setOrigin(0.5, 1).setScale(2).setDepth(0.365); this.uiCam.ignore(e); this.bord(e, x + 22); }
     }

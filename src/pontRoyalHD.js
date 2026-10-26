@@ -200,7 +200,8 @@ function poserBarge(s, x, y, sc = 2, flip = false) {
 // maison s'accroupit (derrière : le parapet, le fleuve, l'autre rive et la citadelle), à droite une maison haute et
 // la Halle des Bateliers avec sa poutre de levage et une caisse au bout de la corde.
 function rueDuPontHD(scene, { nu = false } = {}) {
-  const cle = 'rueDuPontHD' + (nu ? '_nu' : ''); if (scene.textures.exists(cle)) return cle;   // (nu : le pont sans ses maisons, juste après la tour de tête de pont)
+  const saA = typeof saisonActuelle === 'function' ? saisonActuelle() : 'moissons';   // (v1.63 : les petits arbres de l'autre rive suivent la saison)
+  const cle = 'rueDuPontHD' + (nu ? '_nu' : '') + '_' + saA; if (scene.textures.exists(cle)) return cle;   // (nu : le pont sans ses maisons, juste après la tour de tête de pont)
   const L = 480, H = 235, t = toileDecor(L, H); rampesVille(t);
   const sol = H, eauY = 158;
   // au loin : l'autre rive, ses toits, la citadelle sur son rocher (petite), puis le fleuve
@@ -213,7 +214,14 @@ function rueDuPontHD(scene, { nu = false } = {}) {
       const x0 = Math.round(k * pas + hachage(k, loin ? 1 : 2, 13) * pas * 0.3), w = Math.round((loin ? 12 : 16) + hachage(k, 3, loin ? 5 : 6) * (loin ? 4 : 6));
       if (x0 + w > 186 && x0 < 270) continue;   // (le rocher de la citadelle)
       maisonLointaine(t, x0, loin ? 143 : 151, w, loin ? 2 : 2 + (hachage(k, 4, 9) > 0.6 ? 1 : 0), { loin, graine: k * 7 + (loin ? 3 : 1) });
-      if (!loin && hachage(k, 10, 4) > 0.55) { const ax = x0 - 4; for (let y = 141; y < 150; y++) t.poser(ax, y, 'cheneSombre', 1); disqueHD(t, ax, 139, 4, 'vert', 2); disqueHD(t, ax - 1, 137, 2.5, 'vert', 3); }
+      if (!loin && hachage(k, 10, 4) > 0.55) {
+        const ax = x0 - 4;
+        if (typeof peindreArbre === 'function') {   // (v1.63) de vrais petits arbres, peints par arbresHD.js, de la saison
+          const esp = ['chene', 'bouleau', 'aulne'][k % 3], R = rampesArbre(saA, esp);
+          for (const m in R) t.rampes[m + '_pr' + k] = R[m].map(c => melangeCouleur(c, 0xb8c8d0, 0.2));   // (un peu de distance)
+          peindreArbre((x, y, m, i) => t.poser(x, y, m + '_pr' + k, i), { cx: ax, base: 150, H: 15, espece: esp, saison: saA, graine: k + 3 });
+        } else { for (let y = 141; y < 150; y++) t.poser(ax, y, 'cheneSombre', 1); disqueHD(t, ax, 139, 4, 'vert', 2); disqueHD(t, ax - 1, 137, 2.5, 'vert', 3); }
+      }
     }
   }
   // le rocher de la citadelle : des strates, des failles, de la mousse sur les replats

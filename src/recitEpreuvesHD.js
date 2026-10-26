@@ -148,13 +148,9 @@ function creerRecitEpreuvesHD(scene) {
     for (const x of [4, 56]) traitHD(t, 'chanvre', [[x, 38], [x + (x < 30 ? -3 : 3), 39]], 0.6);
     t.contour(); t.texture(scene, 'tenteHD');
   }
-  // Un buisson épais (où se cachent les yeux, les brigands...)
-  {
-    const t = toileDecor(48, 28);
-    t.rampes.feuille = rampe(0x3f6a2e);
-    for (const [x, y, r] of [[10, 18, 9], [22, 13, 12], [36, 16, 10], [28, 20, 9], [16, 21, 8], [42, 21, 6]]) t.forme('feuille', ellipsoide(x, y, r, r * 0.85), { motif: (xx, yy) => (fbm(xx * 0.35, yy * 0.35, 970) > 0.6 ? -1 : (xx * 5 + yy * 3) % 11 === 0 ? 0.8 : 0) });
-    t.contour(); t.texture(scene, 'buissonHD');
-  }
+  // Un buisson épais (où se cachent les yeux, les brigands...) : (v1.63) peint par arbresHD.js ; les épreuves prennent
+  // celui de la saison et de la contrée (arbreRecitHD), celui-ci reste pour la bibliothèque des dessins
+  toileArbreHD(scene, 'buissonHD', 'buisson', 'moissons', 26, 60, { L: 48, Ht: 30, ecartX: 1.45 });
   // Le tronc abattu en travers du chemin
   {
     const t = toileDecor(100, 22);
@@ -202,31 +198,10 @@ function creerRecitEpreuvesHD(scene) {
     for (let x = 2; x < 58; x += 3) t.poser(x, 2, 'chanvre', 4);
     t.contour(); t.texture(scene, 'paillasseHD');
   }
-  // Un palmier (l'oasis) et un mirage
-  {
-    const t = toileDecor(50, 70);
-    t.rampes.palme = rampe(0x4a8a3a); t.rampes.stipe = rampe(0x8a6a40);
-    traitHD(t, 'stipe', [[22, 70], [24, 40], [27, 14]], 2.6, 0.1);
-    for (let y = 18; y < 68; y += 4) t.poser(Math.round(22 + (70 - y) * 0.08), y, 'stipe', 1);
-    for (const [ax, ay] of [[4, 22], [10, 8], [27, 2], [44, 8], [48, 22], [16, 26], [38, 26]]) traitHD(t, 'palme', [[27, 14], [(27 + ax) / 2, Math.min(14, ay) - 4], [ax, ay]], 1.8, 0.1);
-    t.contour(); t.texture(scene, 'palmierHD');
-  }
-  // Un arbre feuillu (et sa version morte, aux branches tordues)
-  for (const [cle, mort] of [['arbreRecitHD', false], ['arbreMortHD', true]]) {
-    const t = toileDecor(80, 110);
-    t.rampes.ecorce = rampe(mort ? 0x4a3c34 : 0x5a4028); t.rampes.feuille = rampe(0x356a2e);
-    traitHD(t, 'ecorce', [[40, 110], [41, 80], [38, 50]], 4.2, -0.1);
-    for (const br of [[[39, 62], [22, 44], [10, 36]], [[40, 56], [58, 40], [70, 34]], [[38, 50], [36, 30], [42, 14]], [[24, 46], [20, 30]], [[57, 41], [62, 26]]]) traitHD(t, 'ecorce', br, mort ? 1.4 : 2, 0.1);
-    for (let y = 70; y < 108; y += 5) t.poser(40 + (y % 3) - 1, y, 'ecorce', 1);
-    if (!mort) {
-      for (const [x, y, r] of [[40, 28, 22], [20, 40, 17], [62, 38, 18], [30, 18, 15], [52, 16, 16], [12, 30, 11], [70, 28, 11], [41, 46, 14]]) {
-        t.forme('feuille', ellipsoide(x, y, r, r * 0.82), { motif: (xx, yy) => (fbm(xx * 0.3, yy * 0.3, 980) > 0.62 ? -1 : (xx * 7 + yy * 3) % 13 === 0 ? 0.9 : 0) });
-      }
-    } else {
-      for (const br of [[[10, 36], [4, 30], [2, 22]], [[70, 34], [76, 26]], [[42, 14], [46, 4]], [[20, 30], [14, 20]]]) traitHD(t, 'ecorce', br, 0.9, 0.2);
-    }
-    t.contour(); t.texture(scene, cle);
-  }
+  // Un palmier (l'oasis), un arbre feuillu et un arbre mort : (v1.63) peints par arbresHD.js (voir arbreRecitHD)
+  toileArbreHD(scene, 'palmierHD', 'palmier', 'moissons', 66, 61, { neige: false, L: 64, Ht: 72 });
+  toileArbreHD(scene, 'arbreRecitHD', 'chene', 'moissons', 100, 62);
+  toileArbreHD(scene, 'arbreMortHD', 'mort', 'moissons', 100, 62);
   // La lumière (pour percer l'obscurité) : pleine au centre, qui s'éteint doucement au bord
   if (!scene.textures.exists('lumiereHD')) {
     const c = scene.textures.createCanvas('lumiereHD', 128, 128);

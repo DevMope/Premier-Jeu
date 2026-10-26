@@ -99,32 +99,21 @@ function solPlaceHD(scene, cle, pal, L, H, plan) {
   t.texture(scene, cle); return cle;
 }
 
-// Un arbre (vu un peu de face, comme chez Stardew) : un tronc, une couronne en grappes éclairée d'en haut à gauche
-function arbrePlaceHD(scene, pal, variante = 0) {
-  const cle = 'arbrePlace_' + pal.nom + '_' + variante; if (scene.textures.exists(cle)) return cle;
-  const L = 64, H = 84, t = toileDecor(L, H), R = t.rampes;
-  R.feuilleP = rampe(pal.sol.feuille); R.ecorce = rampe(0x6a4a2e); R.fleurP = rampe(pal.sol.fleur);
-  for (let y = 54; y < 82; y++) { const w = 4 + (y > 74 ? (y - 74) * 0.8 : 0); for (let x = Math.round(32 - w); x < Math.round(32 + w); x++) t.poser(x, y, 'ecorce', x < 30 ? 4 : x > 34 ? 1 : 2 + (hachage(x, y >> 2, 77) > 0.7 ? 1 : 0)); }
-  const grappes = [[32, 30, 24], [18, 38, 14], [46, 38, 14], [24, 20, 13], [40, 20, 13], [32, 46, 15]];
-  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
-    let dedans = null;
-    for (const [gx, gy, r] of grappes) { const d = Math.hypot(x + 0.5 - gx, (y + 0.5 - gy) * 1.05) / r; if (d < 1 && (!dedans || d < dedans[0])) dedans = [d, gx, gy, r]; }
-    if (!dedans) continue;
-    const [d, gx, gy] = dedans, lum = ((gx - x) + (gy - y)) / 20 + (32 - x) / 50 + (30 - y) / 40;
-    let k = 3 + Math.round(lum * 1.1) - (d > 0.86 ? 1 : 0);
-    if (hachage(x >> 1, y >> 1, 78 + variante) > 0.88) k += 1;
-    t.poser(x, y, 'feuilleP', k);
-  }
-  if (variante === 1) for (let n = 0; n < 14; n++) { const x = 12 + Math.floor(hachage(n, 1, 79) * 40), y = 12 + Math.floor(hachage(n, 2, 79) * 36); if (t.mat(x, y) === 'feuilleP') { t.poser(x, y, 'fleurP', 4); t.poser(x + 1, y, 'fleurP', 3); } }
-  t.contour(); t.texture(scene, cle); return cle;
+// (v1.63) Un arbre de la place, peint comme ceux de la rue (arbresHD.js) : une essence par endroit (chêne, pommier,
+// bouleau, aulne, saule), toujours la même au même endroit (sur la place comme dans la vue du mendiant), et la saison
+// de la place (fleurs, vert, roux, nu et neigeux). `variante` change l'arbre (deux voisins ne se ressemblent pas).
+const ESSENCES_PLACE = ['chene', 'pommier', 'bouleau', 'aulne', 'chene', 'saule', 'pommier', 'bouleau', 'chene', 'aulne'];
+function arbrePlaceHD(scene, pal, variante = 0, x = 0, y = 0) {
+  const saison = pal.saison || 'semailles', k = (Math.round(x / 10) * 7 + Math.round(y / 10) * 3 + variante) % ESSENCES_PLACE.length;
+  const esp = ESSENCES_PLACE[k];
+  return arbreHD(scene, esp, saison, esp === 'bouleau' ? 84 : 76, 20 + k, 0, { neige: saison === 'givre' });
 }
-// Un buisson rond
-function buissonPlaceHD(scene, pal) {
-  const cle = 'buissonPlace_' + pal.nom; if (scene.textures.exists(cle)) return cle;
-  const L = 34, H = 22, t = toileDecor(L, H); t.rampes.feuilleP = rampe(pal.sol.feuille); t.rampes.fleurP = rampe(pal.sol.fleur);
-  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) { let best = 9; for (const [gx, gy, r] of [[11, 12, 10], [23, 12, 10], [17, 8, 9]]) best = Math.min(best, Math.hypot(x + 0.5 - gx, y + 0.5 - gy) / r); if (best < 1) t.poser(x, y, 'feuilleP', 3 + Math.round((17 - x) / 14 + (8 - y) / 8) - (best > 0.85 ? 1 : 0) + (hachage(x, y, 81) > 0.9 ? 1 : 0)); }
-  for (const [x, y] of [[9, 7], [22, 9], [15, 13], [27, 14]]) { t.poser(x, y, 'fleurP', 4); t.poser(x + 1, y, 'fleurP', 3); }
-  t.contour(); t.texture(scene, cle); return cle;
+// Un buisson (peint comme les arbres : ses touffes, ses fleurs au printemps, roux à l'automne ; l'hiver, un buis
+// toujours vert sous la neige, comme ceux des récits)
+function buissonPlaceHD(scene, pal, x = 0, y = 0) {
+  const saison = pal.saison || 'semailles', v = 30 + (Math.round(x / 10) + Math.round(y / 10)) % 3;
+  if (saison === 'givre') return toileArbreHD(scene, `buisPlace_${v}`, 'buisson', 'moissons', 26, v, { neige: true, couleur: 0x2e5232 });
+  return arbreHD(scene, 'buisson', saison, 26, v, 0, { neige: false });
 }
 // Une ombre portée (ellipse douce), sous tout ce qui est debout
 function ombrePlaceHD(scene) {
@@ -522,9 +511,9 @@ function decorMendiantHD(s, saison, fontaine) {
   const objets = [];
   const poser = (cle, X, Y, echellePlace, { oy = 1, ombre = 0, flip = false } = {}) => { const P = projeterMendiant(X, Y); if (P) objets.push({ d: P.d, P, cle, echellePlace, oy, ombre, flip }); };
   [['rueForgeHD', 110], ['rueImpasseHD', 300], ['rueBanqueHD', 470], ['rueBanqueHD', 1330], ['rueImpasseHD', 1500], ['rueForgeHD', 1690]].forEach(([k, x]) => { if (s.textures.exists(k)) poser(k, x, 160, 1.3); });
-  [[70, 420, 0], [70, 760, 1], [1740, 420, 1], [420, 740, 1], [1390, 760, 0], [560, 200, 0], [1250, 200, 1]].forEach(([x, y, v]) => poser(arbrePlaceHD(s, pal, v), x, y, 2.2, { ombre: 120 }));
+  [[70, 420, 0], [70, 760, 1], [1740, 420, 1], [420, 740, 1], [1390, 760, 0], [560, 200, 0], [1250, 200, 1]].forEach(([x, y, v]) => { const cle = arbrePlaceHD(s, pal, v, x, y); poser(cle, x, y, 2.2, { ombre: 120, oy: origineArbre(s, cle) }); });
   const marcheDuJour = typeof jourDeMarche === 'function' && jourDeMarche(G);
-  [[250, 760], [1520, 760], [700, 760], [1100, 760], ...(marcheDuJour ? [] : [[460, 470], [1340, 470]])].forEach(([x, y]) => poser(buissonPlaceHD(s, pal), x, y, 2.2, { ombre: 70 }));
+  [[250, 760], [1520, 760], [700, 760], [1100, 760], ...(marcheDuJour ? [] : [[460, 470], [1340, 470]])].forEach(([x, y]) => { const cle = buissonPlaceHD(s, pal, x, y); poser(cle, x, y, 2.2, { ombre: 70, oy: origineArbre(s, cle) }); });
   if (marcheDuJour) [[450, 486, false], [1350, 486, true]].forEach(([x, y, miroir]) => poser(charretteColporteurHD(s), x, y, 2.2, { ombre: 230, flip: miroir }));
   // les étals et les lieux, photographiés sur la place même, avec leurs marchands
   const faits = new Set();
@@ -710,5 +699,5 @@ function paletteSaisonComte(saison) {
   if (saison === 'moissons') Object.assign(s, { herbe: 0x94a84a, feuille: 0x6a8a32, fleur: 0xe8b030, fleur2: 0xf0e070 });
   else if (saison === 'brumes') Object.assign(s, { herbe: 0x8a9a52, feuille: 0xc06a2a, fleur: 0xd85a2a, fleur2: 0xe0a040, terre: 0xb89262 });
   else if (saison === 'givre') Object.assign(s, { herbe: 0xdce6ec, feuille: 0x9ab0a8, fleur: 0xffffff, fleur2: 0xc8d8e8, terre: 0xa89880, pierre: 0xb0aaa0 });
-  return { ...b, nom: b.nom + ' ' + (saison || ''), sol: s };
+  return { ...b, nom: b.nom + ' ' + (saison || ''), sol: s, saison };
 }

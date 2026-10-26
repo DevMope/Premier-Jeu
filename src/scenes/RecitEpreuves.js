@@ -13,6 +13,9 @@ Object.assign(StoryScene.prototype, {
 
   // --- Les outils de mise en scène ---
 
+  // (v1.63) Un arbre des épreuves, peint par arbresHD.js (de la saison, de la contrée), le pied posé en (x, y)
+  imageArbre(x, y, sorte, v = 0) { const cle = arbreRecitHD(this, sorte, this.biome, v); return this.add.image(x, y, cle).setOrigin(0.5, origineArbre(this, cle)); },
+
   garder(o) {
     if (!this.menace) return o;   // (entre deux épreuves, rien à ranger)
     const liste = (this.menace.objets = this.menace.objets || []);
@@ -577,9 +580,7 @@ const SCENES_EPREUVES = {
         for (let k = 0; k < 4; k++) this.garder(this.add.image(X + 40, SOL_RECIT + 4 - k * 14, 'rocherHD').setOrigin(0.5, 1).setScale(1.3 - k * 0.22).setDepth(2 + k * 0.01));   // un cairn
       } else if (['desert', 'oasis'].includes(b)) this.garder(this.add.image(X + 40, SOL_RECIT + 4, 'cactusHD').setOrigin(0.5, 1).setScale(2.2).setDepth(2));
       else if (['comte', 'vergers', 'vallon', 'monastere'].includes(b) && Math.random() < 0.5) {
-        this.garder(this.add.image(X + 40, SOL_RECIT + 4, 'arbreRecitHD').setOrigin(0.5, 1).setScale(1.8).setDepth(2));
-        const pommes = this.garder(this.add.graphics().setDepth(2.01));
-        for (let k = 0; k < 7; k++) pommes.fillStyle(0xc0301a).fillCircle(X + 40 - 50 + hachage(k, 3, 9) * 100, SOL_RECIT - 130 - hachage(k, 4, 9) * 60, 3.5);
+        this.garder(this.imageArbre(X + 40, SOL_RECIT + 4, 'pommier').setScale(1.8).setDepth(2));   // (v1.63 : un vrai pommier, de la saison)
       } else this.garder(this.add.image(X + 40, SOL_RECIT + 4, 'panneauRouteHD').setOrigin(0.5, 1).setScale(2.4).setDepth(2));
       M.borne = this.garder(this.add.image(X + 190, SOL_RECIT + 3, 'borneHD').setOrigin(0.5, 1).setScale(2.4).setDepth(2));
       // le soleil, qui va traverser le ciel
@@ -662,7 +663,7 @@ const SCENES_EPREUVES = {
         const mx = Math.min(880, p.x + 220);
         const g = this.garder(this.add.graphics().setDepth(1.5).setAlpha(0));
         g.fillStyle(0x6ab0e0, 0.8).fillEllipse(mx, SOL_RECIT - 14, 120, 14);
-        const palme = this.garder(this.add.image(mx + 30, SOL_RECIT - 14, 'palmierHD').setOrigin(0.5, 1).setScale(1.6).setAlpha(0).setDepth(1.5));
+        const palme = this.garder(this.imageArbre(mx + 30, SOL_RECIT - 14, 'palmier').setScale(1.6).setAlpha(0).setDepth(1.5));
         this.tweens.add({ targets: [g, palme], alpha: 0.55, duration: 600 });
         this.tweens.add({ targets: [g, palme], x: '+=4', duration: 120, yoyo: true, repeat: 12 });
         this.emotion(p, '!', 900);
@@ -704,12 +705,11 @@ const SCENES_EPREUVES = {
       } else {
         // des arbres sombres (morts, ou des pommiers), la tente, les buissons
         for (const [i, [ax, e]] of [[X - 230, 2.2], [X + 300, 2.5], [X + 70, 1.9], [X - 70, 1.7]].entries()) {
-          const arbre = this.garder(this.add.image(ax, SOL_RECIT + 4, M.morte ? 'arbreMortHD' : 'arbreRecitHD').setOrigin(0.5, 1).setScale(e).setFlipX(i % 2 === 1).setDepth(1 + i * 0.01));
-          if (M.pommiers) { const a = this.garder(this.add.graphics().setDepth(1.05)); for (let k = 0; k < 8; k++) a.fillStyle(0xb02a1a).fillCircle(ax - 50 * e / 2 + hachage(k, ax, 5) * 50 * e, SOL_RECIT - arbre.displayHeight * (0.62 + hachage(ax, k, 6) * 0.25), 3.5); }
+          this.garder(this.imageArbre(ax, SOL_RECIT + 4, M.morte ? 'mort' : M.pommiers ? 'pommier' : 'feuillu', i).setScale(e).setFlipX(i % 2 === 1).setDepth(1 + i * 0.01));   // (v1.63 : peints, de la saison)
         }
         this.garder(this.add.image(p.x - 80, SOL_RECIT + 2, 'tenteHD').setOrigin(0.5, 1).setScale(2.4).setDepth(2.5));
       }
-      M.buissons = [X + 130, X + 240].map(bx => this.garder(this.add.image(Math.min(900, bx), SOL_RECIT + 4, 'buissonHD').setOrigin(0.5, 1).setScale(2.4).setDepth(2.9)));
+      M.buissons = [X + 130, X + 240].map((bx, i) => this.garder(this.imageArbre(Math.min(900, bx), SOL_RECIT + 4, 'buisson', i).setScale(2.4).setDepth(2.9)));
       this.obscurite(0.62);
       this.cielDeNuit(texteDit(this, /lune rouge/) ? 0xe04030 : 0xf3ecc8);
       M.camp = this.feuDeCamp(p.x + 46, { lumiere: 170 });
@@ -1120,10 +1120,7 @@ const SCENES_EPREUVES = {
       g.fillStyle(0x5a4028, 0.9).fillEllipse(X + 120, SOL_RECIT + 2, 160, 14);
       g.fillStyle(0x7a5a38, 0.6).fillEllipse(X + 100, SOL_RECIT, 60, 4);
       for (const fx of [X - 40, X + 30, X + 200]) for (let k = 0; k < 5; k++) g.lineStyle(3, 0x3f7a34).lineBetween(fx, SOL_RECIT, fx - 16 + k * 8, SOL_RECIT - 22 - (k % 2) * 8);
-      g.fillStyle(0x4a3420).fillRect(M.arbreX - 14, SOL_RECIT - 190, 28, 192);
-      g.fillStyle(0x5a4028).fillRect(M.arbreX - 14, SOL_RECIT - 190, 8, 192);
-      g.fillStyle(0x2f5a2a).fillCircle(M.arbreX, SOL_RECIT - 210, 60).fillCircle(M.arbreX - 50, SOL_RECIT - 180, 40).fillCircle(M.arbreX + 50, SOL_RECIT - 185, 42);
-      g.fillStyle(0x3f7a34).fillCircle(M.arbreX - 14, SOL_RECIT - 226, 40);
+      this.garder(this.imageArbre(M.arbreX, SOL_RECIT + 4, 'chene', 7).setScale(2.5).setDepth(1.6));   // (v1.63 : le gros chêne, peint, de la saison)
       M.bete = this.garder(this.add.image(1040, SOL_RECIT, 'sanglierHD').setOrigin(0.5, 1).setScale(2.4).setDepth(2.9));
     },
     async avant() {
@@ -1168,7 +1165,7 @@ const SCENES_EPREUVES = {
         this.onomatopee(M.arbreX, SOL_RECIT - 150, 'BONK !', '#fff4dc');
         Son.jouer('coup');
         this.cameras.main.shake(200, 0.01);
-        for (let k = 0; k < 4; k++) { const f = this.garder(this.add.ellipse(M.arbreX + Phaser.Math.Between(-50, 50), SOL_RECIT - 220, 8, 5, 0x3f7a34).setDepth(3.5)); this.tweens.add({ targets: f, y: SOL_RECIT, x: f.x + Phaser.Math.Between(-30, 30), angle: 360, duration: 1200, delay: k * 100 }); }
+        for (let k = 0; k < 4; k++) { const f = this.garder(this.add.ellipse(M.arbreX + Phaser.Math.Between(-50, 50), SOL_RECIT - 220, 8, 5, couleurFeuillesRecit(this.biome)).setDepth(3.5)); this.tweens.add({ targets: f, y: SOL_RECIT, x: f.x + Phaser.Math.Between(-30, 30), angle: 360, duration: 1200, delay: k * 100 }); }
         await this.animer({ targets: b, angle: -12, duration: 160, yoyo: true });
         this.sonne(b, 1400);
         await this.attendre(500);
@@ -1231,8 +1228,8 @@ const SCENES_EPREUVES = {
       } else if (M.oasis) {
         const g = this.garder(this.add.graphics().setDepth(1.4));
         g.fillStyle(0x4a90c0, 0.9).fillEllipse(base + 60, SOL_RECIT + 2, 220, 16);
-        this.garder(this.add.image(base + 160, SOL_RECIT + 4, 'palmierHD').setOrigin(0.5, 1).setScale(2.4).setDepth(1.5));
-        this.garder(this.add.image(base - 50, SOL_RECIT + 4, 'palmierHD').setOrigin(0.5, 1).setScale(2).setFlipX(true).setDepth(1.5));
+        this.garder(this.imageArbre(base + 160, SOL_RECIT + 4, 'palmier', 0).setScale(2.4).setDepth(1.5));
+        this.garder(this.imageArbre(base - 50, SOL_RECIT + 4, 'palmier', 1).setScale(2).setFlipX(true).setDepth(1.5));
       } else if (M.convoi) {
         this.garder(dessinerCaravane(this, base + 150, SOL_RECIT).setDepth(1.4));
       } else if (M.fort) {
@@ -1245,7 +1242,7 @@ const SCENES_EPREUVES = {
       if (!M.quai && !M.feu && !M.oasis) {
         // (le chef derrière le tronc abattu, les autres dans les buissons)
         M.cachettes.push(this.garder(this.add.image(base + 20, SOL_RECIT + 6, 'troncHD').setOrigin(0.5, 1).setScale(2).setDepth(2.95)));
-        for (let i = 1; i < n; i++) M.cachettes.push(this.garder(this.add.image(base + i * 62 + 20, SOL_RECIT + 4, 'buissonHD').setOrigin(0.5, 1).setScale(2.2).setDepth(2.95).setFlipX(i % 2 === 1)));
+        for (let i = 1; i < n; i++) M.cachettes.push(this.garder(this.imageArbre(base + i * 62 + 20, SOL_RECIT + 4, 'buisson', i % 3).setScale(2.2).setDepth(2.95).setFlipX(i % 2 === 1)));
       }
       const figurants = pillards ? ['pillard', 'pillarde', 'pillard'] : ['brigand', 'brigande'];
       // (retours planche 86) chacun son arme : le chef une épée (une hache chez les pillards), l'archer son arc, les autres
@@ -1455,7 +1452,7 @@ const SCENES_EPREUVES = {
         this.obscurite(0.6);
         this.ombreNuit.ajouter({ x: p.x + 70, y: SOL_RECIT - 40, r: 220 });
       } else if (M.sorte === 'araignee') {
-        this.garder(this.add.image(p.x - 40, SOL_RECIT + 4, 'buissonHD').setOrigin(0.5, 1).setScale(2.4).setDepth(2));
+        this.garder(this.imageArbre(p.x - 40, SOL_RECIT + 4, 'buisson', 0).setScale(2.4).setDepth(2));
         const t = this.garder(this.add.graphics().setDepth(1.5));
         t.lineStyle(1, 0xe8e8e8, 0.4);
         for (let k = 0; k < 8; k++) t.lineBetween(p.x + 60, 40, p.x + 60 + Math.cos(k * 0.8) * 120, 40 + Math.sin(k * 0.8) * 90);
@@ -1466,7 +1463,7 @@ const SCENES_EPREUVES = {
         for (let x = p.x + 30; x < p.x + 260; x += 7) g.lineStyle(3, 0x4a7a2a).lineBetween(x, SOL_RECIT + 2, x + (x % 3) - 1, SOL_RECIT - 18 - (x * 7) % 16);
         M.serpent = this.garder(this.add.image(p.x + 200, SOL_RECIT + 2, 'serpentHD0').setOrigin(0.5, 1).setScale(2.2).setDepth(3.1).setAlpha(0));
       } else {
-        if (M.sorte === 'loupgarou') this.garder(this.add.image(Math.min(p.x + 220, 900), SOL_RECIT + 4, 'buissonHD').setOrigin(0.5, 1).setScale(2.4).setDepth(2.95));
+        if (M.sorte === 'loupgarou') this.garder(this.imageArbre(Math.min(p.x + 220, 900), SOL_RECIT + 4, 'buisson', 1).setScale(2.4).setDepth(2.95));
         if (M.sorte === 'vampire') {
           // le bal : des lustres, des rideaux de velours, un parquet ciré
           const g = this.garder(this.add.graphics().setDepth(1));

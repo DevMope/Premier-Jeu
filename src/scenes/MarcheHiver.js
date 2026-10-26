@@ -49,23 +49,17 @@ function iconeLotRoue(scene, id) {
 // Le grand sapin de la place, peint en gros pixels : ses étages enneigés, la guirlande rouge, les boules,
 // les bougies et l'étoile d'or. Renvoie { g, etoile, lueurs } (la nuit, les bougies et l'étoile brillent).
 function grandSapin(scene, x, ySol, h, { nuit = false, u = 2 } = {}) {
-  const g = scene.add.graphics();
+  const cont = scene.add.container(0, 0), g = scene.add.graphics();   // (le conteneur prend sa place tout de suite : l'étoile, créée après, passe devant)
   const px = (xx, yy, w, hh, col, a = 1) => g.fillStyle(col, a).fillRect(Math.round(xx / u) * u, Math.round(yy / u) * u, Math.max(u, Math.round(w / u) * u), Math.max(u, Math.round(hh / u) * u));
   const hTronc = h * 0.08, haut = ySol - h, bas = ySol - hTronc;
   // le bac de bois cerclé de fer et son ruban
   px(x - h * 0.11, ySol - hTronc * 1.4, h * 0.22, hTronc * 1.4, 0x6a4020); px(x - h * 0.11, ySol - hTronc * 1.4, h * 0.22, u, 0x3a2410);
   px(x - h * 0.11, ySol - hTronc * 0.8, h * 0.22, u * 2, 0x4a4a52); px(x - u, ySol - hTronc * 1.4, u * 2, hTronc * 1.4, 0xc02a2a);
-  // les étages : de plus en plus larges vers le bas, des bords en dents de scie
-  const etages = 5, couleurs = [0x1e5232, 0x2a6e3e, 0x3a8a4a];
-  const demi = yy => { const v = (yy - haut) / (bas - haut); const e = Math.min(etages - 1, Math.floor(v * etages)); const dans = v * etages - e; return (0.1 + (e + 1) / etages * 0.32 * (0.45 + dans * 0.55)) * h; };
-  for (let yy = haut + h * 0.04; yy < bas; yy += u) {
-    const w = demi(yy), dent = (Math.floor(yy / u) % 3) * u;
-    px(x - w + dent, yy, (w - dent) * 2, u, couleurs[1]);
-    px(x - w + dent, yy, Math.max(u, w * 0.35), u, couleurs[0]);              // (l'ombre à gauche)
-    px(x + w * 0.35, yy, Math.max(u, w * 0.4 - dent), u, couleurs[2]);        // (la lumière à droite)
-  }
-  // la neige sur le haut de chaque étage
-  for (let e = 0; e < etages; e++) { const yy = haut + h * 0.04 + e / etages * (bas - haut - h * 0.04) + u; const w = demi(yy + u * 2); for (let k = -w * 0.8; k < w * 0.8; k += u * 3) px(x + k, yy + Math.abs(k) * 0.12, u * 3, u * (1 + (Math.abs(Math.round(k)) % 2)), 0xf4f8fc); }
+  // (v1.63) le sapin lui-même : peint comme tous les sapins (arbresHD.js), ses étages et la neige posée dessus ; la
+  // toile à demi-résolution, affichée ×2 ; les décorations (graphics) par-dessus, dans le cône de ses branches
+  const H = Math.round(h / 2), cle = toileArbreHD(scene, `grandSapinHD_${H}`, 'sapin', 'givre', H, 3, { neige: true, etroit: 1.45, L: Math.round(H * 1.1) + 8 });
+  const img = scene.add.image(x, ySol, cle).setOrigin(0.5, origineArbre(scene, cle)).setScale(2);
+  const etages = 5, demi = yy => Math.max(0, (yy - haut) / (ySol - 0.1 * h - haut)) * 0.36 * h;   // (la demi-largeur pleine des branches à cette hauteur)
   // la guirlande rouge qui descend en festons
   for (let e = 1; e < etages; e++) { const y0 = haut + e / etages * (bas - haut) - u * 3; const w = demi(y0) * 0.9; for (let k = -w; k <= w; k += u) px(x + k, y0 + Math.sin((k / w + 1) * Math.PI) * h * 0.025 + (k / w) * h * 0.03, u, u, 0xd0302c); }
   // les boules (or, rouge, bleu)
@@ -89,7 +83,8 @@ function grandSapin(scene, x, ySol, h, { nuit = false, u = 2 } = {}) {
   const pts = []; for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.45 : r; pts.push({ x: Math.cos(a) * rr, y: Math.sin(a) * rr }); }
   etoile.fillStyle(0x6a4a10).fillPoints(pts.map(p => ({ x: p.x * 1.25, y: p.y * 1.25 })), true).fillStyle(0xf8d040).fillPoints(pts, true).fillStyle(0xfff4b0).fillCircle(-r * 0.15, -r * 0.2, r * 0.25);
   etoile.setPosition(x, haut + r * 0.2);
-  return { g, etoile, lueurs, haut };
+  cont.add([img, g]);
+  return { g: cont, etoile, lueurs, haut };
 }
 
 // Une guirlande de sapin entre x0 et x1, qui pend en creux, avec des nœuds rouges et des boules d'or
