@@ -29,8 +29,8 @@ const VARIANTES_RECIT = {
   // (planche 91, validée) la forêt de Sérambre : la nef d'arches au loin, puis l'Arbre-Mère en arrivant (plus grand : il
   // domine les ambrennes) ; le val d'Ardévanne : le pont de racines au loin, puis l'île de la rotonde en arrivant.
   // `repere2` : le second repère, qu'on découvre à la fin du chemin ; `trouee` : les arbres du pré s'écartent devant eux.
-  sanctuaire: { arbres: 'ambrennes', repere: 'serambreNef', repere2: { quoi: 'arbreMere', x: 1000, echelle: 0.6 }, xRepere: 520, trouee: true, sol: { fleurs: [0xffffff, 0xf8e080], luisantes: true }, faune: ['lucioles'] },
-  lac: { arbres: 'automne', repere: 'ardevannePont', repere2: { quoi: 'ardevanneIle', x: 1000, echelle: 0.5 }, xRepere: 520, trouee: true, sol: { roseaux: true, fleurs: [0xffffff, 0xf0a040] }, faune: ['lucioles', 'poissons'] },
+  sanctuaire: { arbres: 'ambrennes', repere: 'serambreNef', repere2: { quoi: 'arbreMere', x: 1000, echelle: 0.6 }, xRepere: 520, trouee: true, fondu: true, voute: 0.42, sol: { fleurs: [0xffffff, 0xf8e080], luisantes: true }, faune: ['lucioles'] },
+  lac: { arbres: 'automne', repere: 'ardevannePont', repere2: { quoi: 'ardevanneIle', x: 1000, echelle: 0.5 }, xRepere: 520, trouee: true, fondu: true, sol: { roseaux: true, fleurs: [0xffffff, 0xf0a040] }, faune: ['lucioles', 'poissons'] },
   // --- Les mages ---
   opale: { arbres: null, repere: 'opaleCite', sol: { cristaux: true }, faune: ['etincelles'] },
   bibliotheque: { arbres: null, repere: 'bibliothequeHD', sol: { pages: true }, faune: ['livres'] },
@@ -572,6 +572,122 @@ function planterVivant(scene, quoi) {
 
 // Pose toute la variante d'une destination dans le récit : repère, arbres (à la place des arbres
 // génériques), sol, faune, décor vivant.
+// --- (planche 91, retour du joueur) Un repère qui appartient au paysage : pas un autocollant posé sur le pré ---
+// La grande toile du repère est réduite à la taille où on la voit (un pixel de la toile pour un pixel de l'écran, sans les
+// pixels sautés d'une image réduite), voilée par l'air du lointain (plus pâle, plus bleutée), et sa base se fond dans
+// l'herbe des collines : la couleur de la colline monte dans le bas de l'image, des brins d'herbe, une ombre au contact,
+// et les bords du bas et des côtés se défont en pixels épars, sans aucune ligne droite.
+function brumeDeContree(biome) {
+  const b = BIOMES[biome] || BIOMES.comte;
+  return melangeCouleur(b.horizon || b.ciel, b.ciel, 0.45);
+}
+// la couleur des collines du milieu sous un point du monde (l'herbe où le repère pose ses pieds)
+function couleurCollines(scene, x, dy = 8) {
+  try {
+    const tex = scene.textures.get(scene.cleCouches + '_collines'), src = tex.getSourceImage(), ctx = src.getContext('2d');
+    const tx = Phaser.Math.Clamp(Math.floor((x + 40) / 2), 0, src.width - 1), haut = tex.haut || 0;
+    const y0 = (scene.creteCollines ? scene.creteCollines(x) : 280) + dy, ty = Phaser.Math.Clamp(Math.floor(y0 / 2 - haut), 0, src.height - 1);
+    const d = ctx.getImageData(tx, ty, 1, 1).data;
+    if (d[3]) return (d[0] << 16) | (d[1] << 8) | d[2];
+  } catch (e) { /* (pas de colline lisible) */ }
+  return 0x8a9a5a;
+}
+const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
+function canvasDe(scene, cle) { const s = scene.textures.get(cle).getSourceImage(); return s.getContext ? s : null; }
+// une copie réduite (moyenne des pixels couverts, alpha prémultiplié) d'une texture-toile
+function reduireToile(src, k) {
+  const W = Math.max(1, Math.round(src.width * k)), H = Math.max(1, Math.round(src.height * k));
+  const d = src.getContext('2d').getImageData(0, 0, src.width, src.height).data, out = new Float32Array(W * H * 4);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const x0 = x / k, x1 = (x + 1) / k, y0 = y / k, y1 = (y + 1) / k; let r = 0, g = 0, b = 0, a = 0, n = 0;
+    for (let sy = Math.floor(y0); sy < Math.ceil(y1); sy++) for (let sx = Math.floor(x0); sx < Math.ceil(x1); sx++) {
+      if (sx >= src.width || sy >= src.height) continue;
+      const i = (sy * src.width + sx) * 4, al = d[i + 3] / 255; r += d[i] * al; g += d[i + 1] * al; b += d[i + 2] * al; a += al; n++;
+    }
+    const o = (y * W + x) * 4; out[o + 3] = n ? a / n : 0; if (a) { out[o] = r / a; out[o + 1] = g / a; out[o + 2] = b / a; }
+  }
+  return { W, H, px: out };
+}
+// Le repère fondu dans sa contrée. o : { echelle, brume (0..1), sol (couleur de l'herbe), graine, cotes (largeur du
+// fondu des côtés, en pixels), bas (hauteur du pied qui se fond) }
+function repereFondu(scene, quoi, o) {
+  const cle0 = textureRepere(scene, quoi);
+  if (!cle0) return null;
+  const { echelle = 0.42, brume = 0.26, ciel = 0xc8d8e8, sol = 0x8a9a5a, graine = 1, cotes = 26, bas = 22, voute = 0 } = o;
+  const cle = `${cle0}_fondu_${Math.round(echelle * 100)}_${Math.round(brume * 100)}_${Math.round(voute * 100)}_${ciel.toString(16)}_${sol.toString(16)}`;
+  if (scene.textures.exists(cle)) return cle;
+  const src = canvasDe(scene, cle0);
+  if (!src) return cle0;
+  const { W, H, px } = reduireToile(src, echelle);
+  const rv = c => [(c >> 16) & 255, (c >> 8) & 255, c & 255], C = rv(ciel), S = rv(sol), Sc = S.map(v => v * 1.12), So = S.map(v => v * 0.72);
+  // le pied : la première rangée vraiment pleine, en partant du bas (là où l'image touche le sol)
+  const plein = y => { let n = 0; for (let x = 0; x < W; x++) if (px[(y * W + x) * 4 + 3] > 0.5) n++; return n / W; };
+  let pied = H - 1; while (pied > H * 0.6 && plein(pied) < 0.55) pied--;
+  const tex = scene.textures.createCanvas(cle, W, H), ctx = tex.getContext(), img = ctx.createImageData(W, H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = (y * W + x) * 4; let a = px[i + 3];
+    if (a < 0.04) continue;
+    let r = px[i], g = px[i + 1], b = px[i + 2];
+    // le bas se fond dans l'herbe de la colline (sa couleur monte peu à peu), avec une ombre au contact
+    const u = (y - (pied - bas)) / bas;
+    if (u > 0) { const m = Math.min(1, Math.pow(u, 1.4)) * 0.9; r += (S[0] - r) * m; g += (S[1] - g) * m; b += (S[2] - b) * m; }
+    if (Math.abs(y - (pied - bas * 0.35)) < 1.5 && hachage(x >> 1, 3, graine) > 0.25) { r += (So[0] - r) * 0.35; g += (So[1] - g) * 0.35; b += (So[2] - b) * 0.35; }
+    // l'air du lointain : tout pâlit et bleuit un peu (plus haut, un peu plus encore)
+    const k = brume * (1 + 0.25 * (1 - y / H));
+    r += (C[0] - r) * k; g += (C[1] - g) * k; b += (C[2] - b) * k;
+    // les bords se défont : en bas, sur les côtés, en pixels épars (tramés), jamais en ligne droite
+    const nb = hachage(x >> 2, 7, graine) * 0.6 + hachage(x, 9, graine) * 0.25, ns = hachage(y >> 2, 11, graine) * 0.6 + hachage(y, 13, graine) * 0.25;
+    const fBas = Phaser.Math.Clamp((pied + 3 - y) / 9 + nb - 0.35, 0, 1);
+    const dx = Math.min(x, W - 1 - x), fCote = Phaser.Math.Clamp(dx / cotes + ns - 0.3 + Math.max(0, (pied - bas - y) / H) * 0.6, 0, 1);
+    // (voute) une cime en dôme : plus basse vers les côtés, au bord touffu (une futaie, pas un bloc taillé droit)
+    let fHaut = 1;
+    if (voute) { const q = (2 * x / (W - 1) - 1), yMin = H * voute * q * q + (hachage(x >> 3, 31, graine) - 0.5) * 10 + (hachage(x >> 1, 33, graine) - 0.5) * 4; fHaut = Phaser.Math.Clamp((y - yMin) / 7, 0, 1); }
+    const garde = a * fBas * fCote * fHaut;
+    if (garde < BAYER4[(y % 4) * 4 + (x % 4)] * 0.35 + hachage(x, y, graine + 17) * 0.65) continue;   // (une trame mêlée de hasard : pas de damier)
+    img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b; img.data[i + 3] = 255;
+  }
+  // des brins d'herbe qui montent devant le pied
+  for (let x = 1; x < W - 1; x++) {
+    if (hachage(x, 21, graine) < 0.45) continue;
+    const dx = Math.min(x, W - 1 - x); if (dx < cotes * 0.5 * hachage(x, 23, graine)) continue;
+    const h = 1 + Math.floor(hachage(x, 25, graine) * 3), y0 = pied - 2 + Math.floor(hachage(x, 27, graine) * 4);
+    for (let j = 0; j < h; j++) { const y = y0 - j; if (y < 0 || y >= H) continue; const i = (y * W + x) * 4, c = j === h - 1 ? Sc : S, k = brume;
+      img.data[i] = c[0] + (C[0] - c[0]) * k; img.data[i + 1] = c[1] + (C[1] - c[1]) * k; img.data[i + 2] = c[2] + (C[2] - c[2]) * k; img.data[i + 3] = 255; }
+  }
+  ctx.putImageData(img, 0, 0); tex.refresh();
+  tex.pied = pied;
+  return cle;
+}
+// Un arbre du paysage voilé par la même brume (pour la lisière qui relie le repère aux arbres voisins)
+function arbreVoile(scene, cleArbre, ciel, brume) {
+  const cle = `${cleArbre}_voile_${Math.round(brume * 100)}_${ciel.toString(16)}`;
+  if (scene.textures.exists(cle)) return cle;
+  const src = canvasDe(scene, cleArbre);
+  if (!src) return cleArbre;
+  const tex = scene.textures.createCanvas(cle, src.width, src.height), ctx = tex.getContext();
+  ctx.drawImage(src, 0, 0);
+  const img = ctx.getImageData(0, 0, src.width, src.height), d = img.data, C = [(ciel >> 16) & 255, (ciel >> 8) & 255, ciel & 255];
+  for (let i = 0; i < d.length; i += 4) if (d[i + 3]) { d[i] += (C[0] - d[i]) * brume; d[i + 1] += (C[1] - d[i + 1]) * brume; d[i + 2] += (C[2] - d[i + 2]) * brume; }
+  ctx.putImageData(img, 0, 0); tex.refresh();
+  return cle;
+}
+// La lisière : quelques arbres de l'essence de la contrée, sur la crête des collines, de part et d'autre du repère (les
+// plus éloignés derrière lui, ceux de ses bords devant), plus petits que ceux du pré et voilés comme lui
+function lisiereRepere(scene, plan, v, biome, xR, largeur, devant, { brume, ciel, graine = 1, n = 4 }) {
+  const forme = v.arbres;
+  if (!forme || typeof arbrePremierPlanHD !== 'function' || !ARBRES_PREMIER_PLAN[forme]) return;
+  for (const s of [-1, 1]) for (let k = 0; k < n; k++) {
+    const pres = k < 2;                                           // (les deux premiers chevauchent le bord du repère)
+    if (pres !== devant) continue;
+    const x = xR + s * (largeur / 2 + (pres ? 12 + k * 18 : 26 + (k - 2) * 24) + hachage(k, s + 3, graine) * 8);
+    const cle = arbrePremierPlanHD(scene, forme, biome, (k + (s > 0 ? 1 : 0) + graine) % 3);
+    if (!cle) continue;
+    const pied = Math.min(330, (scene.creteCollines ? scene.creteCollines(x) : 290) + 16);
+    const e = (pres ? 0.42 : 0.34) * (0.9 + hachage(k, s + 7, graine) * 0.2);
+    dansPlan(plan, scene.add.image(x, pied, arbreVoile(scene, cle, ciel, brume * (pres ? 1 : 1.15))).setOrigin(0.5, 1).setScale(e).setFlipX((k + s) % 2 === 0));
+  }
+}
+
 function planterVarianteRecit(scene, zone, biome) {
   const v = varianteRecit(zone);
   if (!v) return false;
@@ -586,14 +702,24 @@ function planterVarianteRecit(scene, zone, biome) {
     const pied = Math.min(326, (scene.creteCollines ? scene.creteCollines(xR) : 290) + 14);
     if (cle) {
       const lac = v.repere === 'lac';
-      const img = dansPlan(planLoin, scene.add.image(xR, pied + (lac ? 8 : 3), cle).setOrigin(0.5, 1).setScale(e).setTint(0xf0eeea));
+      // (planche 91) fondu dans la contrée : voilé par l'air, le pied dans l'herbe des collines, une lisière autour
+      const fondre = (quoi, x, py, ech, brume, graine, voute = 0) => {
+        const ciel = brumeDeContree(biome), larg = scene.textures.get(textureRepere(scene, quoi)).getSourceImage().width * ech;
+        lisiereRepere(scene, planLoin, v, biome, x, larg, false, { brume: brume * 1.1, ciel, graine });
+        const cleF = repereFondu(scene, quoi, { echelle: ech, brume, ciel, sol: couleurCollines(scene, x, 12), graine, voute });
+        const tex = scene.textures.get(cleF), H = tex.getSourceImage().height;
+        const im = dansPlan(planLoin, scene.add.image(x, py + (H - (tex.pied || H)) + 2, cleF).setOrigin(0.5, 1));
+        lisiereRepere(scene, planLoin, v, biome, x, larg, true, { brume, ciel, graine });
+        return im;
+      };
+      const img = v.fondu ? fondre(v.repere, xR, pied, e, 0.2, 3, v.voute || 0) : dansPlan(planLoin, scene.add.image(xR, pied + (lac ? 8 : 3), cle).setOrigin(0.5, 1).setScale(e).setTint(0xf0eeea));
       scene.lacX = xR; scene.lacY = pied - 4;
       scene.reperesRecit = [{ img, x: xR, l: img.displayWidth, vu: 0 }];
       // (planche 91) le second repère, plus près : on le découvre au bout du chemin (le monde a défilé de BASE_MAX_RECIT)
       const r2 = v.repere2, cle2 = r2 && textureRepere(scene, r2.quoi);
       if (cle2) {
         const pied2 = Math.min(326, (scene.creteCollines ? scene.creteCollines(r2.x) : 290) + 14);
-        const img2 = dansPlan(planLoin, scene.add.image(r2.x, pied2 + 3, cle2).setOrigin(0.5, 1).setScale(r2.echelle || e).setTint(0xf0eeea));
+        const img2 = v.fondu ? fondre(r2.quoi, r2.x, pied2, r2.echelle || e, 0.12, 5) : dansPlan(planLoin, scene.add.image(r2.x, pied2 + 3, cle2).setOrigin(0.5, 1).setScale(r2.echelle || e).setTint(0xf0eeea));
         scene.reperesRecit.push({ img: img2, x: r2.x, l: img2.displayWidth, vu: typeof BASE_MAX_RECIT === 'number' ? BASE_MAX_RECIT : 480 });
       }
       // (v0.81) au Col des Hurlements, deux loups noirs hurlent à la lune sur l'éperon

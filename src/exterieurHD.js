@@ -39,7 +39,7 @@ const RELIEFS = {
   ruines: { colonnes: true, brume: 0.15 },
   antre: { pics: 0.65, lave: true },
   monastere: { arbres: 'ronds', temple: true, fleurs: 0xf8f0f8 },
-  sanctuaire: { arbres: 'ronds', colonnes: true, fleurs: 0xffffff, brume: 0.2 },
+  sanctuaire: { arbres: 'ronds', fleurs: 0xffffff, brume: 0.2 },   // (planche 91 : plus de colonnes blanches dans la forêt d'or)
   val: { arbres: 'ronds', fleurs: 0xf0a040, brume: 0.18, roseaux: true },   // (planche 91) le val d'Ardévanne : roux toute l'année, le lac
   citadelle: { pics: 0.4, neige: true, tours: true },
   bourbier: { roseaux: true, brume: 0.5, arbresMorts: true },

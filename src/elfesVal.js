@@ -101,6 +101,43 @@ function texturesElfes(scene) {
     torsade(put, u => [8 + Math.sin(u * 7) * 0.8, 69 - u * 60], { largeur: u => 2.2 - u * 0.6, nb: 2, tours: 2, g: 7, ecart: 0.35 });
     t.contour(); t.texture(scene, 'elfes_canne');
   }
+  // (l'entrée du seigneur) l'arche de racines tressées dans l'encadrement de la fenêtre : deux faisceaux montent des coins
+  // du bas le long des montants, se courbent en ogive et se nouent au milieu du linteau ; des radicelles pendent dessous
+  {
+    const W = FENETRE.w / 2, H = FENETRE.h / 2, t = new ToileHD(W, H);
+    Object.assign(t.rampes, { arbEcorce: [0x1a0e08, 0x2e1a0e, 0x462816, 0x603a20, 0x7c502c, 0x9a6a3c], arbVert: [0x1e2a14, 0x2e3c1c, 0x445424, 0x5a6a2c, 0x76843a, 0x94a04c] });
+    const put = (x, y, m, i) => { x = Math.round(x); y = Math.round(y); if (t.dans(x, y)) t.poser(x, y, m, Math.max(0, Math.min(5, Math.round(i)))); };
+    const u0 = 0.38, cote = (s, u) => {
+      let x, y;
+      if (u < u0) { const v = u / u0; x = 5 + Math.sin(v * 6) * 1.5; y = H - 1 - v * (H - 1 - 52); }
+      else { const v = (u - u0) / (1 - u0), a = Math.PI - v * Math.PI / 2; x = W / 2 + (W / 2 - 5) * Math.cos(a); y = 52 - 43 * Math.sin(a); }
+      return [s < 0 ? x : W - 1 - x, y];
+    };
+    for (const s of [-1, 1]) {
+      torsade(put, u => cote(s, u), { largeur: u => 3.8 - u * 1.9, nb: 3, tours: 5, g: 61 + s, ecart: 0.5 });
+      torsade(put, u => { const [x, y] = cote(s, u * 0.92); return [x - s * 3 * Math.sin(u * Math.PI), y + 2.5 * Math.sin(u * Math.PI)]; }, { largeur: u => 1.6 - u * 0.6, nb: 2, tours: 3, g: 71 + s, ecart: 0.35 });
+      // les radicelles qui pendent sous l'arche, et sur les montants les petits rejets qui s'accrochent au bois
+      for (const u of [0.48, 0.6, 0.72, 0.84, 0.94]) { const [x, y] = cote(s, u); traitArbre(put, x, y + 1, x + s * -1.5, y + 5 + (u * 37 % 5), 0.9, 0.4, 'arbEcorce', 80 + u * 10); }
+      for (const u of [0.12, 0.24, 0.33]) { const [x, y] = cote(s, u); traitArbre(put, x, y, x - s * 5, y - 4, 1.1, 0.5, 'arbEcorce', 90 + u * 10); }
+    }
+    // le nœud au milieu du linteau, et un peu de mousse dans les creux
+    t.forme('arbEcorce', ellipsoide(W / 2, 9, 4.2, 3.2), { decalage: 0.5 });
+    for (const [x, y] of [[8, 40], [W - 9, 46], [20, 22], [W - 22, 20], [W / 2 - 5, 10], [6, 80], [W - 7, 70]]) t.forme('arbVert', ellipsoide(x, y, 1.8, 1.1), { decalage: 0.4, ombre: false });
+    t.contour(); t.texture(scene, 'elfes_arche');
+  }
+  // une latte du plancher du comptoir (planche de chêne, deux clous) ; une vrille de racine qui se retire sous la main
+  {
+    const t = new ToileHD(28, 6); t.rampes.l = [0x2a160a, 0x4a2a14, 0x6a4020, 0x8a5a30, 0xa87444, 0xc49058];
+    for (let x = 0; x < 28; x++) for (let y = 0; y < 5; y++) t.poser(x, y, 'l', y === 0 ? 4 : y === 4 ? 1 : (x * 7 + y * 13) % 11 === 0 ? 2 : 3);
+    for (const x of [2, 25]) t.poser(x, 2, 'l', 0);
+    t.contour(); t.texture(scene, 'elfes_latte');
+  }
+  {
+    const t = new ToileHD(22, 10); t.rampes.arbEcorce = [0x1a0e08, 0x2e1a0e, 0x462816, 0x603a20, 0x7c502c, 0x9a6a3c];
+    const put = (x, y, m, i) => { x = Math.round(x); y = Math.round(y); if (t.dans(x, y)) t.poser(x, y, m, Math.max(0, Math.min(5, Math.round(i)))); };
+    traitArbre(put, 0, 4, 14, 3, 1.8, 1, 'arbEcorce', 101); traitArbre(put, 14, 3, 18, 6, 1, 0.6, 'arbEcorce', 102); traitArbre(put, 18, 6, 15, 8, 0.6, 0.4, 'arbEcorce', 103);
+    t.contour(); t.texture(scene, 'elfes_vrille');
+  }
 }
 
 // Un petit délai qui suit l'horloge de la scène
@@ -154,8 +191,10 @@ if (typeof CounterScene !== 'undefined') Object.assign(CounterScene.prototype, {
     this.aideCommande.setVisible(false); this.boutonEscorte.setVisible(false);
   },
 
-  // --- L'entrée du seigneur Évrandel : ses apprentis d'abord, puis le bruit des racines, la canne qui bourgeonne, et
-  // lui, déjà là, immobile comme un arbre ---
+  // --- L'entrée du seigneur Évrandel, le bâtisseur : lente et terrienne. Ses apprentis s'avancent et se rangent ; le
+  // plancher du comptoir craque, deux lattes se soulèvent ; des racines en sortent, montent le long de l'encadrement et
+  // s'y tressent en arche ; il passe dessous, sans se presser, la main sur une racine qui se retire ; ses apprentis
+  // s'inclinent. (Rien de la Dame : ni lanternes, ni temps figé, ni feuilles en l'air.) ---
   async entreeEvrandel(entree) {
     texturesElfes(this); creerHalo(this);
     this.nettoyerElfes();
@@ -165,48 +204,69 @@ if (typeof CounterScene !== 'undefined') Object.assign(CounterScene.prototype, {
     this.raconter('Deux jeunes elfes en tablier de cuir s’avancent ensemble, sans un mot.');
     const premier = this.fileSprites[0], depart = premier ? premier.x : FILE.x;
     this.avancerFileElfes();
-    const ech = FILE.echelle * 1.18, cx = FENETRE.x + FENETRE.w / 2;
-    const marcheur = (qui, x0, x1, flipFin) => {
+    const ech = FILE.echelle * 1.18, cx = FENETRE.x + FENETRE.w / 2, bas = FENETRE.y + FENETRE.h;
+    const marcheur = (qui, x0, x1, flipFin, duree = 1500) => {
       const cle = corpsHD(this, qui), s = this.objetElfes(this.add.image(x0, FILE.y + 2, cle).setOrigin(0.5, 1).setScale(ech * echelleCorps(cle)).setDepth(1.6).setFlipX(x1 < x0));
-      s.setMask(this.masqueFenetre); pasDeMarche(this, s, 1500);
-      this.tweens.add({ targets: s, x: x1, duration: 1500, ease: 'Sine.easeInOut', onComplete: () => { s.setFlipX(flipFin); this.tweens.add({ targets: s, scaleY: s.scaleY * 0.96, duration: 300, yoyo: true, delay: 200 }); } });
+      s.setMask(this.masqueFenetre); pasDeMarche(this, s, duree);
+      this.tweens.add({ targets: s, x: x1, duration: duree, ease: 'Sine.easeInOut', onComplete: () => s.setFlipX(flipFin) });
       return s;
     };
-    marcheur('ruvel', depart, cx - 118, false);
+    const ruvel = marcheur('ruvel', depart, cx - 132, false);
     await attendreElfes(this, 500);
-    marcheur('velanne', FENETRE.x - 40, cx + 118, true);
+    const velanne = marcheur('velanne', FENETRE.x - 40, cx + 132, true);
     await attendreElfes(this, 2100);
-    this.raconter('Ils s’écartent de chaque côté de la fenêtre et baissent la tête. Sous le comptoir, le bois se met à craquer.');
-    // les racines : un craquement sourd, le comptoir qui tremble, et elles montent le long de la fenêtre
-    Son.jouer('racines');
-    this.cameras.main.shake(900, 0.0025);
-    const racines = this.objetElfes(this.add.image(FENETRE.x, FENETRE.y + FENETRE.h, 'elfes_racines').setOrigin(0, 1).setScale(2).setDepth(2.4));
-    const voile = this.objetElfes(this.make.graphics({ add: false })); const masque = voile.createGeometryMask(); racines.setMask(masque);
-    const pousse = { h: 0 };
-    this.tweens.add({ targets: pousse, h: FENETRE.h, duration: 2600, ease: 'Sine.easeOut', onUpdate: () => { voile.clear(); voile.fillStyle(0xffffff); voile.fillRect(FENETRE.x - 4, FENETRE.y + FENETRE.h - pousse.h, FENETRE.w + 8, pousse.h + 4); } });
-    await attendreElfes(this, 1900);
-    // la canne, plantée d'un coup au milieu du rebord ; elle bourgeonne
-    const canne = this.objetElfes(this.add.image(cx + 40, SOL_COMPTOIR + 12, 'elfes_canne').setOrigin(0.5, 1).setScale(2).setDepth(2.5).setAlpha(0));
-    this.tweens.add({ targets: canne, alpha: 1, y: SOL_COMPTOIR + 6, duration: 260, ease: 'Back.easeOut' });
-    Son.jouer('pas');
-    await attendreElfes(this, 700);
-    const haut = canne.y - canne.displayHeight;
-    const bourgeons = [];
-    for (const [dx, dy, cle, d] of [[-7, 2, 'elfes_feuilleR', 0], [7, 4, 'elfes_feuilleR', 380], [0, -4, 'elfes_feuilleO', 760]]) {
-      const f = this.objetElfes(this.add.image(cx + 40 + dx, haut + dy, cle).setScale(0).setDepth(2.6).setAngle(dx * 4)); bourgeons.push(f);
-      this.tweens.add({ targets: f, scale: 1.4, duration: 420, delay: d, ease: 'Back.easeOut', onStart: () => Son.jouer('feuille') });
+    // le plancher craque : deux lattes du rebord tremblent, puis se soulèvent sur des trous noirs
+    this.raconter('Ils se rangent de chaque côté de la fenêtre. Sous le comptoir, le plancher se met à craquer, lentement.');
+    Son.jouer('craquement');
+    const lattes = [-1, 1].map(s => {
+      const x = s < 0 ? FENETRE.x + 34 : FENETRE.x + FENETRE.w - 34;
+      const trou = this.objetElfes(this.add.rectangle(x, bas - 3, 52, 6, 0x120a04, 0).setDepth(2.42));
+      const l = this.objetElfes(this.add.image(x, bas - 3, 'elfes_latte').setScale(2).setDepth(2.46));
+      l.trou = trou; l.x0 = x; l.cote = s;
+      this.tweens.add({ targets: l, x: x + 1, duration: 60, yoyo: true, repeat: 9, delay: s < 0 ? 0 : 500 });
+      return l;
+    });
+    await attendreElfes(this, 1700);
+    Son.jouer('craquement', { fort: true });
+    this.cameras.main.shake(500, 0.0012);
+    for (const l of lattes) {
+      this.tweens.add({ targets: l, angle: l.cote * -24, y: l.y - 9, x: l.x0 + l.cote * -6, duration: 420, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: l.trou, fillAlpha: 0.9, duration: 200 });
+      for (let k = 0; k < 4; k++) {   // (la poussière du plancher)
+        const p = this.objetElfes(this.add.image(l.x0 - 18 + k * 12, bas - 6, 'halo').setScale(0.12).setTint(0xb09070).setAlpha(0.5).setDepth(2.47));
+        this.tweens.add({ targets: p, y: p.y - 14 - k * 3, scale: 0.34, alpha: 0, duration: 900 + k * 120 });
+      }
     }
-    await attendreElfes(this, 1500);
-    // et lui : il était déjà là, à la fenêtre — il sort du bois, comme on sort de l'ombre
+    await attendreElfes(this, 900);
+    // les racines sortent des trous, montent le long des montants, et se tressent en arche (on les voit pousser du bas)
+    this.raconter('Des racines sortent de sous les lattes. Elles montent le long de l’encadrement et s’y tressent, en arche, au-dessus de la fenêtre.');
+    Son.jouer('racines');
+    this.time.delayedCall(2100, () => Son.jouer('racines'));
+    const arche = this.objetElfes(this.add.image(FENETRE.x, bas, 'elfes_arche').setOrigin(0, 1).setScale(2).setDepth(2.4));
+    const voile = this.objetElfes(this.make.graphics({ add: false })); arche.setMask(voile.createGeometryMask()); arche.voile = voile;
+    const pousse = arche.pousse = { h: 0 };
+    const tracer = () => { voile.clear(); voile.fillStyle(0xffffff); voile.fillRect(FENETRE.x - 6, bas - pousse.h, FENETRE.w + 12, pousse.h + 4); };
+    arche.tracer = tracer; tracer();
+    this.tweens.add({ targets: pousse, h: FENETRE.h + 4, duration: 4600, ease: 'Sine.easeInOut', onUpdate: tracer });
+    await attendreElfes(this, 4900);
+    // lui : il passe sous l'arche, lentement ; sa main se pose sur une vrille, qui se retire
+    this.raconter('Quelqu’un passe sous l’arche, sans se presser. Il pose la main sur une racine ; elle se retire sous ses doigts. Ses apprentis s’inclinent.');
     Son.ambiance('terrasses');
+    const vrille = this.objetElfes(this.add.image(FENETRE.x + 12, bas - 92, 'elfes_vrille').setOrigin(0, 0.5).setScale(2).setDepth(2.41));
+    const lui = marcheur('evrandel', FENETRE.x - 30, cx, false, 3600);
+    this.time.delayedCall(900, () => { Son.jouer('feuille'); this.tweens.add({ targets: vrille, scaleX: 0, duration: 900, ease: 'Sine.easeIn' }); });
+    const incliner = (s, d) => this.time.delayedCall(d, () => { if (!s.active) return; this.tweens.add({ targets: s, angle: s.flipX ? -6 : 6, scaleY: s.scaleY * 0.9, duration: 900, ease: 'Sine.easeInOut' }); });   // (la tête baissée, le dos un peu rond)
+    incliner(ruvel, 1700); incliner(velanne, 3300);
+    await attendreElfes(this, 3700);
+    // il est arrivé : son buste monte, comme celui de chacun (devant l'arche, qui l'encadre)
     this.montrerBuste(PERSONNES_ELFES.evrandel, 'neutre');
     this.buste.pose = 'croises'; this.majVisage();
-    this.perso.setAlpha(0).setTint(0x3a2414).setDepth(2);
-    const teinte = { t: 0 };
-    this.tweens.add({ targets: this.perso, alpha: 1, duration: 1800, ease: 'Sine.easeInOut' });
-    this.tweens.add({ targets: teinte, t: 1, duration: 2400, ease: 'Sine.easeInOut', onUpdate: () => { const c = Phaser.Display.Color.Interpolate.ColorWithColor({ r: 0x3a, g: 0x24, b: 0x14 }, { r: 255, g: 255, b: 255 }, 100, teinte.t * 100); this.perso.setTint(Phaser.Display.Color.GetColor(c.r, c.g, c.b)); }, onComplete: () => this.perso.clearTint() });
-    this.tweens.add({ targets: [canne, ...bourgeons], alpha: 0, duration: 1600, delay: 600 });
-    await attendreElfes(this, 2300);
+    const yBuste = this.perso.y;
+    this.perso.setAlpha(0).setDepth(2.5).setY(yBuste + 26);
+    this.tweens.add({ targets: lui, alpha: 0, duration: 500, delay: 100 });
+    this.tweens.add({ targets: this.perso, alpha: 1, y: yBuste, duration: 900, ease: 'Sine.easeOut' });
+    this.time.delayedCall(500, () => { if (this.buste) Son.jouer('voix', { personne: PERSONNES_ELFES.evrandel, ton: 'bonjour' }); });
+    await attendreElfes(this, 1100);
     this.arrivee(entree);
   },
   visiteEvrandel(entree) {
@@ -217,7 +277,7 @@ if (typeof CounterScene !== 'undefined') Object.assign(CounterScene.prototype, {
     const nom = 'Le seigneur Évrandel — maître des Terrasses';
     const prime = PRIME_EVRANDEL;
     this.derouler([
-      ['', 'Il était là, à la fenêtre, aussi immobile qu’un arbre. Tu ne l’as pas vu arriver.'],
+      ['', 'Il s’arrête sous l’arche et te regarde longtemps, comme on regarde un arbre avant de le tailler.'],
       ['E', '« Ruvel et Vélanne me parlent de toi depuis des saisons. Les cordes que tu leur as vendues tiennent encore. Une corde qui tient, c’est une parole tenue. »'],
       ['E', '« Je suis Évrandel. Je taille les terrasses d’Ardévanne. Un pont de racines, cela prend trois cents ans. On ne le bâtit pas : on le persuade. »'],
       ['E', '« Dis à tes aventuriers de passer sur mes ponts pieds nus. Les racines aiment savoir qui les traverse. »'],
@@ -231,66 +291,134 @@ if (typeof CounterScene !== 'undefined') Object.assign(CounterScene.prototype, {
   },
   async departEvrandel() {
     this.bouton('...', null);
-    this.dire('Il s’efface dans le bois de la fenêtre. Les racines redescendent sous le comptoir ; ses apprentis le suivent.', '');
-    const teinte = { t: 0 };
-    this.tweens.add({ targets: teinte, t: 1, duration: 1400, onUpdate: () => { const c = Phaser.Display.Color.Interpolate.ColorWithColor({ r: 255, g: 255, b: 255 }, { r: 0x3a, g: 0x24, b: 0x14 }, 100, teinte.t * 100); this.perso.setTint(Phaser.Display.Color.GetColor(c.r, c.g, c.b)); } });
-    this.tweens.add({ targets: this.perso, alpha: 0, duration: 1600, delay: 300 });
-    Son.jouer('racines');
+    this.dire('Il repasse sous l’arche, du même pas. Les racines se dénouent et redescendent sous les lattes, qui retombent à leur place. Ses apprentis le suivent.', '');
+    const ech = FILE.echelle * 1.18, cx = FENETRE.x + FENETRE.w / 2;
+    // il se retourne et s'en va à pied, lentement ; le buste s'efface
+    const cle = corpsHD(this, 'evrandel');
+    const lui = this.objetElfes(this.add.image(cx, FILE.y + 2, cle).setOrigin(0.5, 1).setScale(ech * echelleCorps(cle)).setDepth(1.6).setFlipX(true).setAlpha(0));
+    lui.setMask(this.masqueFenetre);
+    this.tweens.add({ targets: this.perso, alpha: 0, duration: 700, ease: 'Sine.easeIn' });
+    this.tweens.add({ targets: lui, alpha: 1, duration: 500, delay: 300 });
+    this.time.delayedCall(500, () => { pasDeMarche(this, lui, 3200); this.tweens.add({ targets: lui, x: FENETRE.x - 60, duration: 3200, ease: 'Sine.easeIn' }); });
     const [ruvel, velanne] = (this.objetsElfes || []).filter(o => o.texture && /corps_(ruvel|velanne)/.test(o.texture.key));
-    for (const [s, x] of [[ruvel, FENETRE.x - 50], [velanne, FENETRE.x - 90]]) if (s) { s.setFlipX(true); pasDeMarche(this, s, 1800); this.tweens.add({ targets: s, x, duration: 1800, delay: 600, ease: 'Sine.easeIn' }); }
-    for (const o of this.objetsElfes || []) if (o.texture && /elfes_(racines|feuille)/.test(o.texture.key)) this.tweens.add({ targets: o, alpha: 0, duration: 1500, delay: 400 });
-    await attendreElfes(this, 2600);
-    this.perso.setVisible(false).setAlpha(1).clearTint();
+    for (const [s, x, d] of [[ruvel, FENETRE.x - 50, 1400], [velanne, FENETRE.x - 90, 1900]]) if (s) this.time.delayedCall(d, () => { s.setFlipX(true); this.tweens.add({ targets: s, angle: 0, scaleY: s.scaleY / 0.9, duration: 300 }); pasDeMarche(this, s, 2000); this.tweens.add({ targets: s, x, duration: 2000, ease: 'Sine.easeIn' }); });
+    // l'arche se dénoue du haut vers le bas, et rentre sous le plancher
+    const arche = (this.objetsElfes || []).find(o => o.texture && o.texture.key === 'elfes_arche');
+    this.time.delayedCall(2200, () => { Son.jouer('racines'); if (arche && arche.pousse) this.tweens.add({ targets: arche.pousse, h: 0, duration: 2600, ease: 'Sine.easeIn', onUpdate: arche.tracer }); });
+    await attendreElfes(this, 4900);
+    // les lattes retombent, le plancher se tait
+    Son.jouer('pas');
+    for (const l of (this.objetsElfes || []).filter(o => o.texture && o.texture.key === 'elfes_latte')) {
+      this.tweens.add({ targets: l, angle: 0, y: FENETRE.y + FENETRE.h - 3, x: l.x0, duration: 260, ease: 'Bounce.easeOut' });
+      if (l.trou) this.tweens.add({ targets: l.trou, fillAlpha: 0, duration: 200 });
+    }
+    await attendreElfes(this, 700);
+    this.perso.setVisible(false).setAlpha(1).clearTint().setDepth(2);
     this.nettoyerElfes();
     if (this.titreCommande) this.titreCommande.setText('');
     Son.ambiance('comptoir');
     this.voyageurSuivant();
   },
 
-  // --- L'entrée de Dame Ardéline : le temps qui se fige en automne, les feuilles suspendues en l'air, une feuille
-  // d'érable qui ne fane pas entre et se pose sur le comptoir, les lanternes qui s'allument une à une, et elle ---
+  // --- L'entrée de Dame Ardéline : le vent se lève, les feuilles de la rue montent vers la fenêtre et s'y enroulent en
+  // une colonne de feuilles d'érable qui tourne de plus en plus vite ; quand le tourbillon retombe, elle est là. Alors le
+  // temps s'arrête dans l'automne : les feuilles qui tombaient encore restent en l'air, une feuille d'or, qui ne fanera
+  // pas, se pose sur le comptoir, et les lanternes s'allument une à une autour d'elle ---
   async entreeArdeline(entree) {
     texturesElfes(this); creerHalo(this);
     this.nettoyerElfes();
     this.perso.setVisible(false);
     this.buste = null;
     this.avancerFileElfes();
-    const retour = !!entree.retour, cx = FENETRE.x + FENETRE.w / 2;
-    Son.jouer('vent', { duree: 2.2 });
-    this.raconter(retour ? 'Dehors, le vent tombe d’un coup. Tu reconnais ce silence.' : 'Le vent tombe d’un coup. Dehors, plus rien ne bouge.');
-    // le temps se fige : une lumière d'automne sur la fenêtre, la file arrêtée, prise dans l'ambre
+    const retour = !!entree.retour, cx = FENETRE.x + FENETRE.w / 2, bas = SOL_COMPTOIR + 4, H = FENETRE.h - 34;
+    const T = retour ? 4400 : 6400;   // (la montée du tourbillon)
+    Son.jouer('vent', { duree: T / 1000 + 1.5 });
+    this.raconter(retour ? 'Dehors, le vent se lève d’un coup. Tu reconnais ce bruit de feuilles.' : 'Dehors, le vent se lève d’un coup. Les feuilles de la rue montent vers ta fenêtre.');
+    // les feuilles : chacune a sa hauteur dans la colonne, son angle, sa vitesse ; elles arrivent de la rue, à gauche
+    const N = retour ? 52 : 72, feuilles = [];
+    for (let k = 0; k < N; k++) {
+      const f = this.objetElfes(this.add.image(FENETRE.x - 30 - Math.random() * 160, bas - Math.random() * 70, k === 0 ? 'elfes_feuilleD' : Phaser.Utils.Array.GetRandom(['elfes_feuilleR', 'elfes_feuilleR', 'elfes_feuilleO', 'elfes_feuilleJ'])).setAngle(Math.random() * 360));
+      f.setMask(this.masqueFenetre);
+      Object.assign(f, { hc: k === 0 ? 0.55 : Math.random(), th: Math.random() * Math.PI * 2, v: 0.85 + Math.random() * 0.4, x0: f.x, y0: f.y, e: k === 0 ? 1.9 : 1.05 + Math.random() * 0.6, rot: (Math.random() < 0.5 ? -1 : 1) * (120 + Math.random() * 200), retard: Math.random() * 0.22 });
+      feuilles.push(f);
+    }
+    const etat = { u: 0 };
+    let th = 0, avant = this.time.now;
+    const tourner = () => {
+      const now = this.time.now, dt = Math.min(0.05, (now - avant) / 1000); avant = now;
+      const u = etat.u, omega = 1.2 + 13 * u * u;   // (de plus en plus vite)
+      th += omega * dt;
+      const R = 74 - 30 * u;                        // (et de plus en plus serrée)
+      for (const f of feuilles) {
+        if (!f.active) continue;
+        const arrive = Phaser.Math.Clamp((u - f.retard) / 0.28, 0, 1), lisse = arrive * arrive * (3 - 2 * arrive);
+        const a = f.th + th * f.v, h = f.hc * (0.35 + 0.65 * Math.min(1, u * 1.7)), r = R * (0.4 + 0.8 * h);   // (en entonnoir)
+        const s = Math.sin(a), xc = cx + Math.cos(a) * r + Math.sin(now / 260 + f.hc * 9) * 3, yc = bas - 4 - h * H + s * 5;
+        f.setPosition(f.x0 + (xc - f.x0) * lisse, f.y0 + (yc - f.y0) * lisse);
+        f.setScale(f.e * (1 + 0.3 * s * lisse)).setDepth(s > 0 ? 2.65 : 1.9).setTint(s > 0 ? 0xffffff : 0xc89870);
+        f.angle += (f.rot + omega * 40) * dt;
+      }
+    };
+    this.events.on('update', tourner);
+    const finTourner = () => this.events.off('update', tourner);
+    this.events.once('shutdown', finTourner);
+    this.tweens.add({ targets: etat, u: 1, duration: T, ease: 'Sine.easeIn' });
+    const froissements = this.time.addEvent({ delay: 420, loop: true, callback: () => { Son.jouer('feuille'); froissements.delay = Math.max(140, froissements.delay - 30); } });
+    await attendreElfes(this, T * 0.42);
+    if (!retour) this.raconter('Elles s’enroulent sur elles-mêmes, de plus en plus vite : une colonne de feuilles d’érable, rousse, haute comme la fenêtre.');
+    await attendreElfes(this, T * 0.36);
+    // au cœur de la colonne, une lueur ; elle y est déjà, derrière les feuilles qui tournent
+    const eclat = this.objetElfes(this.add.image(cx, bas - H * 0.5, 'halo').setTint(0xffc870).setAlpha(0).setScale(0.4).setBlendMode(Phaser.BlendModes.ADD).setDepth(1.95));
+    this.tweens.add({ targets: eclat, alpha: 0.8, scale: 1.3, duration: T * 0.22, ease: 'Sine.easeIn' });
+    this.montrerBuste(PERSONNES_ELFES.ardeline, 'neutre');
+    this.buste.pose = 'coeur'; this.majVisage();
+    this.perso.setAlpha(0).setDepth(2);
+    this.tweens.add({ targets: this.perso, alpha: 1, duration: T * 0.22, ease: 'Sine.easeIn' });
+    await attendreElfes(this, T * 0.22);
+    // le tourbillon retombe d'un coup : les feuilles s'écartent et tombent
+    finTourner(); froissements.remove();
+    Son.jouer('vent', { duree: 1.2 }); Son.jouer('feuille');
+    this.raconter(retour ? 'Le tourbillon retombe. Elle est là.' : 'Le tourbillon retombe d’un coup. Elle est là, au milieu des feuilles.');
+    this.tweens.add({ targets: eclat, alpha: 0.25, scale: 1.6, duration: 900, ease: 'Sine.easeOut' });
+    const tombe = new Map();
+    for (const f of feuilles) {
+      if (!f.active) continue;
+      const dx = f.x - cx, duree = 1500 + Math.random() * 1100;
+      // (elles s'écartent vite, et tombent de plus en plus vite)
+      const ecart = this.tweens.add({ targets: f, x: f.x + Math.sign(dx || 1) * (50 + Math.random() * 70) + dx * 0.6, duration: duree * 0.8, ease: 'Sine.easeOut' });
+      const chute = this.tweens.add({ targets: f, y: bas + 6 - Math.random() * 10, angle: f.angle + (Math.random() - 0.5) * 500, duration: duree, ease: 'Quad.easeIn' });
+      tombe.set(f, { stop: () => { ecart.stop(); chute.stop(); } });
+    }
+    // ... et le temps s'arrête : celles qui sont encore en l'air y restent, prises dans l'ambre
+    await attendreElfes(this, 420);
+    Son.jouer('lanterne', { i: 0 });
     const ambre = this.objetElfes(this.add.rectangle(cx, FENETRE.y + FENETRE.h / 2, FENETRE.w, FENETRE.h, 0xd87a28, 0).setDepth(1.7));
     ambre.setMask(this.masqueFenetre);
-    this.tweens.add({ targets: ambre, fillAlpha: 0.28, duration: 1800, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: ambre, fillAlpha: 0.24, duration: 900, ease: 'Sine.easeOut' });
+    const figees = [], visage = f => Math.abs(f.x - cx) < 78;   // (rien devant elle)
+    const candidates = [...tombe.keys()].filter(f => f.active && f.texture.key !== 'elfes_feuilleD' && f.y < bas - 16 && !visage(f)).sort((a, b) => Math.abs(b.x - cx) - Math.abs(a.x - cx));
+    for (const f of candidates.slice(0, 20)) { tombe.get(f).stop(); f.setTint(0xf0b878).setDepth(2.65); figees.push(f); }
+    // (celles qui lui passeraient devant le visage tombent quand même : on la voit, entourée de feuilles immobiles)
+    for (const [f] of tombe) if (f.active && !figees.includes(f) && f.texture.key !== 'elfes_feuilleD') this.tweens.add({ targets: f, alpha: 0, duration: 1200, delay: 500 });
+    this.feuillesFigees = figees;
     this.fileFigee = this.fileSprites.filter(s => s.visible);
     this.fileFigee.forEach(s => { this.tweens.killTweensOf(s); if (s.marche) { s.marche.remove(); s.marche = null; } s.setTint(0xd89a5a); });
-    // des feuilles qui tombent... puis s'arrêtent en l'air
-    const feuilles = [];
-    for (let k = 0; k < (retour ? 8 : 14); k++) {
-      const x = FENETRE.x + 20 + Math.random() * (FENETRE.w - 40), yFin = FENETRE.y + 30 + Math.random() * (FENETRE.h - 90);
-      const f = this.objetElfes(this.add.image(x, FENETRE.y - 10, Phaser.Utils.Array.GetRandom(['elfes_feuilleR', 'elfes_feuilleO', 'elfes_feuilleJ'])).setScale(1 + Math.random() * 0.5).setDepth(1.75).setAngle(Math.random() * 360));
-      f.setMask(this.masqueFenetre); feuilles.push(f);
-      this.tweens.add({ targets: f, y: yFin, x: x - 30 + Math.random() * 60, angle: f.angle + 200, duration: 1500 + Math.random() * 900, delay: k * 120, ease: 'Cubic.easeOut' });
+    // la feuille d'or, seule, continue de tomber, et se pose sur le comptoir
+    const dore = feuilles[0];
+    if (dore && dore.active) {
+      if (tombe.get(dore)) tombe.get(dore).stop();
+      const halo = this.objetElfes(this.add.image(dore.x, dore.y, 'halo').setTint(0xffc860).setAlpha(0.5).setScale(0.35).setBlendMode(Phaser.BlendModes.ADD).setDepth(2.55));
+      dore.setDepth(2.66).clearMask();
+      this.tweens.add({ targets: [dore, halo], x: cx - 70, y: SOL_COMPTOIR + 6, duration: retour ? 1100 : 1800, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: dore, angle: 360 * 2, scale: 1.8, duration: retour ? 1100 : 1800, ease: 'Sine.easeOut', onComplete: () => { dore.setAngle(-12); this.tweens.add({ targets: halo, scale: 0.5, alpha: 0.35, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); } });
     }
-    this.feuillesFigees = feuilles;
-    await attendreElfes(this, retour ? 1400 : 2600);
-    if (!retour) this.raconter('Les feuilles restent suspendues dans l’air, rousses, immobiles. Une seule continue de voler, et entre par la fenêtre.');
-    // la feuille qui ne fane pas : elle entre de la gauche, tournoie, et se pose sur le comptoir, toute dorée
-    const halo = this.objetElfes(this.add.image(FENETRE.x - 20, FENETRE.y + 60, 'halo').setTint(0xffc860).setAlpha(0.5).setScale(0.35).setBlendMode(Phaser.BlendModes.ADD).setDepth(2.55));
-    const feuille = this.objetElfes(this.add.image(FENETRE.x - 20, FENETRE.y + 60, 'elfes_feuilleD').setScale(2).setDepth(2.6));
-    const vol = { u: 0 };
-    Son.jouer('feuille');
-    this.tweens.add({ targets: vol, u: 1, duration: retour ? 1600 : 2600, ease: 'Sine.easeInOut', onUpdate: () => {
-      const u = vol.u, x = FENETRE.x - 20 + u * (cx - 60 - FENETRE.x + 20), y = FENETRE.y + 60 + Math.sin(u * Math.PI * 2.2) * 24 + u * (SOL_COMPTOIR + 4 - FENETRE.y - 60);
-      feuille.setPosition(x, y).setAngle(Math.sin(u * 9) * 40 + u * 180); halo.setPosition(x, y);
-    } });
-    await attendreElfes(this, retour ? 1700 : 2700);
-    this.tweens.add({ targets: halo, scale: 0.5, alpha: 0.35, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    // les lanternes-feuilles, pendues au linteau, s'allument une à une
-    if (!retour) this.raconter('Au-dessus de la fenêtre, des lanternes que tu n’avais jamais vues s’allument, une à une.');
+    await attendreElfes(this, retour ? 900 : 1500);
+    // les lanternes-feuilles, pendues au linteau, s'allument une à une autour d'elle
+    if (!retour) this.raconter('Plus rien ne bouge. Autour de la fenêtre, des lanternes que tu n’avais jamais vues s’allument, une à une.');
+    Son.ambiance('lanternes');
     // (trois de chaque côté, qui l'encadrent sans lui passer devant le visage ; elles s'allument du bord vers le milieu,
     // une à gauche, une à droite ; sous les plaques de l'heure et de la file, chacune pend à son fil depuis le linteau)
-    const n = 6;
+    const n = 6, pas = retour ? 240 : 420;
     for (let i = 0; i < n; i++) {
       const cote = i % 2 ? 1 : -1, rang = Math.floor(i / 2);
       const x = cx + cote * (FENETRE.w / 2 - 26 - rang * 40), y = FENETRE.y + 44 + [10, 2, 8][rang];
@@ -298,22 +426,11 @@ if (typeof CounterScene !== 'undefined') Object.assign(CounterScene.prototype, {
       const l = this.objetElfes(this.add.image(x, y, 'elfes_lanterneEteinte').setOrigin(0.5, 0).setScale(2.4).setDepth(2.6));
       l.fil = fil;
       const h = this.objetElfes(this.add.image(x, y + 32, 'halo').setTint(0xffb040).setAlpha(0).setScale(0.2).setBlendMode(Phaser.BlendModes.ADD).setDepth(2.58));
-      this.tweens.add({ targets: l, angle: { from: -3, to: 3 }, duration: 1800 + i * 200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-      this.time.delayedCall((retour ? 260 : 650) * i, () => { if (!l.active) return; l.setTexture('elfes_lanterne'); Son.jouer('lanterne', { i }); this.tweens.add({ targets: h, alpha: 0.55, scale: 0.42, duration: 500, ease: 'Sine.easeOut' }); });
+      this.time.delayedCall(pas * i, () => { if (!l.active) return; l.setTexture('elfes_lanterne'); Son.jouer('lanterne', { i: i + 1 }); this.tweens.add({ targets: h, alpha: 0.55, scale: 0.42, duration: 500, ease: 'Sine.easeOut' }); });
       l.halo = h;
     }
-    await attendreElfes(this, (retour ? 260 : 650) * n + 500);
-    // elle : la lumière des lanternes se rassemble au milieu de la fenêtre, et elle y est
-    Son.ambiance('lanternes');
-    const eclat = this.objetElfes(this.add.image(cx, FENETRE.y + FENETRE.h * 0.55, 'halo').setTint(0xffd890).setAlpha(0).setScale(0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(2.7));
-    this.tweens.add({ targets: eclat, alpha: 0.9, scale: 1.4, duration: 900, yoyo: true, ease: 'Sine.easeInOut' });
-    await attendreElfes(this, 800);
-    this.montrerBuste(PERSONNES_ELFES.ardeline, 'neutre');
-    this.buste.pose = 'coeur'; this.majVisage();
-    this.perso.setAlpha(0).setDepth(2);
-    this.tweens.add({ targets: this.perso, alpha: 1, duration: 1400, ease: 'Sine.easeOut' });
-    this.time.delayedCall(500, () => { if (this.buste) Son.jouer('voix', { personne: PERSONNES_ELFES.ardeline, ton: 'bonjour' }); });
-    await attendreElfes(this, 1500);
+    await attendreElfes(this, pas * n + 400);
+    this.time.delayedCall(100, () => { if (this.buste) Son.jouer('voix', { personne: PERSONNES_ELFES.ardeline, ton: 'bonjour' }); });
     this.arrivee(entree);
   },
   visiteArdeline(entree) {
@@ -419,6 +536,14 @@ if (typeof SONS !== 'undefined') Object.assign(SONS, {
     const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(58, t); osc.frequency.linearRampToValueAtTime(41, t + 1.6);
     const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 180; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.3); g.gain.exponentialRampToValueAtTime(0.0005, t + 1.7);
     osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 1.8);
+  },
+  // le plancher du comptoir qui craque : des grincements de bois secs, puis (fort) une latte qui saute
+  craquement(t, bus, o) {
+    const fort = o && o.fort;
+    for (let i = 0; i < (fort ? 4 : 6); i++) this.bruit(0.05 + Math.random() * 0.07, t + i * (fort ? 0.05 : 0.28) + Math.random() * 0.06, bus, fort ? 0.4 : 0.22, 500 + Math.random() * 700, 'bandpass');
+    const osc = this.ctx.createOscillator(); osc.type = 'triangle'; osc.frequency.setValueAtTime(fort ? 140 : 210, t); osc.frequency.linearRampToValueAtTime(fort ? 70 : 160, t + (fort ? 0.25 : 1.4));
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(fort ? 0.2 : 0.07, t + 0.05); g.gain.exponentialRampToValueAtTime(0.0005, t + (fort ? 0.35 : 1.5));
+    osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 1.6);
   },
   // la découverte d'un lieu : un arpège de harpe qui monte, un accord de chœur tenu, des étincelles de célesta
   decouverte(t, bus) {
