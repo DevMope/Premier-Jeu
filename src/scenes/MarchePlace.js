@@ -655,8 +655,9 @@ Object.assign(MarcheScene.prototype, {
   // Le cadre : la place suit JeuneGoy ; panneau ouvert, on recule un peu pour voir le lieu au-dessus du panneau
   cadrerPlace(instantane = false, cle = null) {
     const P = PLACE_MARCHE, place = this.place;
-    // (v1.62) au départ de la visite de Garrick (et pendant la question), on cadre un peu plus bas : l'écriteau du mendiant
-    // passe au-dessus des boutons, et rien d'écrit ne reste à moitié sous le titre
+    // (v1.62) au départ de la visite de Garrick (et pendant la question), on cadre un peu plus bas : rien d'écrit ne reste à
+    // moitié sous le titre, ni sous la barre de la visite (v1.63 : le mendiant n'a plus d'écriteau, mais la planche de la carte
+    // du monde et le crieur passeraient dessous avec le cadre ordinaire)
     const depart = this.visite && !this.visite.fini && this.visite.i < 0;
     let z = P.zoom, fx = this.heros.x, fy = this.heros.y - (depart ? -12 : 40), sy = 270;
     if (cle) { z = PETITS_LIEUX.includes(cle) ? P.zoom * 1.2 : P.zoomPanneau; [fx, fy] = LIEUX_PLACE[cle]; sy = PETITS_LIEUX.includes(cle) ? 262 : 250; }
