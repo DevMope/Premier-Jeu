@@ -474,7 +474,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const dos = vue === 'dos';
   // (v0.58) + une marge en haut : sans elle, le sommet du crâne (cheveux, contour) touchait le bord
   // de l'image et paraissait coupé à plat
-  const coiffe = (race === 'magicienne' || costume === 'sage' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' || costume === 'pirate' ? 8 : costume === 'garde' ? 2 : costume === 'gardeRoyal' ? 14 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'cambrioleur' ? 4 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : costume === 'joueur' && typeof COIFFURES_HD !== 'undefined' && COIFFURES_HD[g.coiffure] ? (COIFFURES_HD[g.coiffure].marge || 0) : 0) * k + (pose === 'leves' || pose === 'epaules' || pose === 'grimpe1' || pose === 'grimpe2' ? 12 * k : 0) + 3 * k;
+  const coiffe = (costume === 'dameLanternes' || costume === 'maitreTerrasses' ? 6 : race === 'magicienne' || costume === 'sage' ? 14 : race === 'nain' ? 4 : costume === 'banquier' ? 10 : costume === 'noble' || costume === 'colporteur' || costume === 'pirate' ? 8 : costume === 'garde' ? 2 : costume === 'gardeRoyal' ? 14 : costume === 'mainNoire' ? 10 : costume === 'serpent' ? 3 : costume === 'cambrioleur' ? 4 : costume === 'joueur' && (options.tenue || []).includes('chapeau') ? 7 : costume === 'joueur' && typeof COIFFURES_HD !== 'undefined' && COIFFURES_HD[g.coiffure] ? (COIFFURES_HD[g.coiffure].marge || 0) : 0) * k + (pose === 'leves' || pose === 'epaules' || pose === 'grimpe1' || pose === 'grimpe2' ? 12 * k : 0) + 3 * k;
   // (retours sur la planche 86) l'arme portée sur soi, à sa vraie taille (ARMES_HD) : où elle va, et la place qu'il lui faut
   // (une lance tenue debout dépasse la tête, une rapière à la ceinture part loin en arrière : la toile grandit)
   const arme = options.arme || null;
@@ -629,6 +629,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.rampes.gilet = rampeVive(0x6a4426); t.rampes.argent = rampeVive(0xc8ccd4); t.rampes.emeraude = rampeVive(0x2ec860); t.rampes.fleche = rampeVive(0xe8b020);
   }
 
+  if (typeof rampesCostumeElfe === 'function') rampesCostumeElfe(t, costume, g);   // (planche 91 : les couleurs de la Dame et du seigneur)
   const cy = Math.round(coiffe + 1 + P.ry + BOB + MARGE_H + margeArmeH);   // le centre de la tête (entier : les détails se posent pixel par pixel)
   const yT = Math.round(cy + P.ry - 1);       // le haut du torse
   const yB = Math.round(yT + P.torse);        // la taille
@@ -636,9 +637,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const solDebout = sol, solAssis = Math.round(yB + (sol - yB) * 0.52);   // (v0.68 : la hauteur du banc, pour la pose assise)
   const ep = P.ep;                         // la demi-largeur d'épaules
   const prof = ep * 0.55;                  // la demi-épaisseur du torse
-  const longue = race === 'magicienne' || costume === 'mainNoire' || costume === 'sage' || costume === 'gardien' || costume === 'duc';    // la robe descend jusqu'aux pieds
+  const longue = race === 'magicienne' || costume === 'mainNoire' || costume === 'sage' || costume === 'gardien' || costume === 'duc' || costume === 'dameLanternes' || costume === 'maitreTerrasses';   // (planche 91 : la Dame aux Lanternes, le maître des Terrasses)    // la robe descend jusqu'aux pieds
   const manteau = race === 'elfe' || costume === 'colporteur' || costume === 'mentor' || costume === 'pirate' || costume === 'givrin';   // la tunique descend à mi-cuisse
-  const capee = (tenue >= 3 && !joueur) || ['mentor', 'colporteur', 'mendiant', 'noble', 'passeur', 'renegat', 'mainNoire', 'pirate', 'sage', 'gardien'].includes(costume) || porte('cape') || porte('capeUnion') || !!T.cape
+  const capee = (tenue >= 3 && !joueur) || ['mentor', 'colporteur', 'mendiant', 'noble', 'passeur', 'renegat', 'mainNoire', 'pirate', 'sage', 'gardien', 'dameLanternes', 'maitreTerrasses'].includes(costume) || porte('cape') || porte('capeUnion') || !!T.cape
     || (race === 'elfe' && voyageurBuste);   // (v1.61) l'elfe a toujours sa cape drapée, comme en buste
   const aventurier = !costume || ['colporteur', 'mentor', 'mendiant', 'champion'].includes(costume);
   if (joueur) tenue = 1;   // (le joueur a sa tenue à lui : manches simples, pas d'épaulières)
@@ -674,7 +675,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
     // (v0.68) Le baluchon sur l'épaule : le bras proche se plie, la main tient le bâton devant la
     // poitrine (elle ne se balance plus avec la marche) ; l'autre bras, lui, continue de balancer
-    if (costume === 'sage' && devant && !leves && !pose) {
+    if ((costume === 'sage' || ((costume === 'dameLanternes' || costume === 'maitreTerrasses') && cote === pres && !dos)) && devant && !leves && !pose) {   // (planche 91 : le bâton à crosse, la canne de racine)
       // (de profil, le bâton est tenu devant lui : il ne passe plus devant son visage)
       const avant = Math.abs(s) > 0.9 ? P.rx + 4 * k : 0;
       coude.splice(0, 3, cote * (ep + 4.5 * k), 1 * k + avant * 0.5, yT + P.torse * 0.5); main.splice(0, 3, cote * (ep + 7 * k), 2 * k + avant, yT + 3 * k);
@@ -2031,7 +2032,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     // Rien sur la tête : Garrick a ses cheveux bruns, longs et ondulés
   }
   // (v1.02) les coiffes des Gardiens : le cercle d'argent, la petite couronne des nains, le diadème de feuilles
-  if (costume === 'gardien' && ['cercle', 'couronne', 'feuilles'].includes(atours.coiffe)) {
+  if ((costume === 'gardien' || costume === 'dameLanternes') && ['cercle', 'couronne', 'feuilles'].includes(atours.coiffe)) {
     const metal = atours.metal || 'or', yc = cy - P.ry + 2.5 * k, haut = atours.coiffe === 'couronne' ? 2.4 : atours.coiffe === 'feuilles' ? 2 : 0;
     t.forme(metal, (x, y) => { const d = Math.abs(x + 0.5 - X(0, -0.5 * k)); if (d > P.rx + 0.6 * k) return null; const pointe = Math.abs(((x + 0.5 - cx) % (2.6 * k) + 2.6 * k) % (2.6 * k) - 1.3 * k); return y >= yc - 0.8 * k - Math.max(0, 1.3 * k - pointe) * haut * 0.8 && y <= yc + 0.6 * k ? [(x + 0.5 - cx) / (P.rx + 1 * k), -0.2, 0.8] : null; }, { decalage: 0.3 });
     if (Z(0, P.rx * 0.8) > 0) t.forme(atours.coiffe === 'couronne' ? 'ecaille' : 'cristal', ellipsoide(X(0, P.rx * 0.8), yc - 0.1 * k, 0.8 * k, 0.8 * k), { decalage: 0.6, ombre: false });
@@ -2107,7 +2108,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme(matMain, ellipsoide(M[0], M[1] + 0.4 * k * gm, 2.3 * k * gm, 2 * k * gm), { decalage: 0.6 });
     for (const d of [-1, 0, 1]) t.poser(Math.round(M[0] + d * 0.9 * k), Math.round(M[1] - 1 * k), matMain, 1);   // (les doigts repliés)
   }
-  if (costume === 'sage' && mainDevant && !leves && !pose) {
+  if ((costume === 'dameLanternes' || costume === 'maitreTerrasses') && mainDevant && !leves && !pose && typeof batonCostumeElfe === 'function') {
+    batonCostumeElfe({ t, k, M: mainDevant.M, matMain: mainDevant.matMain, gm: mainDevant.gm, cx, cy, P, sol, costume, X, Z, s, c, dos });
+  } else if (costume === 'sage' && mainDevant && !leves && !pose) {
     const { M, matMain, gm } = mainDevant;
     const dehors = M[0] < cx ? -1 : 1;
     const bas = [M[0] + dehors * 1.5 * k, sol], haut = [M[0] + dehors * 0.4 * k, cy - P.ry - 8 * k];
@@ -2253,6 +2256,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   t.mainXY = mainDevant ? [mainDevant.M[0], mainDevant.M[1]] : null;   // (v1.34 : où est la main, pour y tenir un objet)
   t.reperes = { cy, yT, yB, H, ...(t.batonSage ? { cristal: t.batonSage } : {}) };   // (v1.01 : pour poser un enfant sur des épaules, etc.)
   t.reperes2 = { cx, cy, yT, yB, sol, ep, H, L };
+  if (typeof detailsCostumeElfe === 'function') detailsCostumeElfe(t, { costume, g, vue, dos, X, Z, cx, cy, yT, yB, sol, ep, prof, P, k, c, s, pres, loin, atours });   // (planche 91)
   t.margeArme = margeArmeH;   // (la place au-dessus de la tête, pour une lance tenue debout)   // (planches 85 et 86 : les articulations, pour le rig et les poses)
   contourEpais(t, CONTOUR_CORPS.tours);
   // Où sont les mains (depuis le sol), pour y accrocher le baluchon

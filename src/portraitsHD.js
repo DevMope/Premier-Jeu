@@ -228,7 +228,7 @@ function FIGURANTS_BUSTE(p) { const f = p && p.figurant && typeof FIGURANTS !== 
 function geneHD(p) {
   const fig = FIGURANTS_BUSTE(p);
   // (v1.61) ... et son costume de garde (le crieur, le héraut) : la tenue de la garde, à son tabard à lui
-  if (fig) return { ...geneHDBase({ ...p, race: fig.race, feminin: fig.feminin }), peau: BASES_PEAU[fig.peau] ?? BASES_PEAU[1], cheveux: fig.cheveux, habit: fig.habit, coiffure: fig.coiffure || 'court', barbe: fig.barbe || (fig.race === 'nain' && !fig.feminin ? 'nain' : null), armure: false, forgeron: fig.costume === 'forgeron',
+  if (fig) return { ...geneHDBase({ ...p, race: fig.race, feminin: fig.feminin }), peau: BASES_PEAU[fig.peau] ?? BASES_PEAU[1], cheveux: fig.cheveux, habit: fig.habit, coiffure: fig.coiffure || 'court', barbe: fig.barbe || (fig.race === 'nain' && !fig.feminin ? 'nain' : null), armure: false, forgeron: fig.costume === 'forgeron', costumeFig: fig.costume, ...(fig.costume === 'dameLanternes' || fig.costume === 'maitreTerrasses' ? { cape: fig.cape } : {}),
     ...(fig.costume === 'garde' ? { garde: true, tabard: fig.habit } : {}) };
   return geneHDBase(p);
 }
@@ -626,6 +626,7 @@ function dessinerBusteHD(gene, expression = 'neutre', { cligne = false, parle = 
   if (g.vieux && TR.bandelettes) moisirBandelettes(t);
   // (v0.75) Les signes distinctifs des bandits recherchés : on les reconnaît au premier coup d'œil
   for (const m of g.marques || []) marqueVisage(t, m, { fx, ey, cx, v, T });
+  if (typeof detailsBusteElfe === 'function') detailsBusteElfe(t, g, v, cx, { fx, ey, T });   // (planche 91 : la Dame aux Lanternes, le maître des Terrasses)
 
   t.contour();
   // (la vieille momie : une toile d'araignée tendue entre la tête et l'épaule)

@@ -613,6 +613,7 @@ function nouvellePartie({ feminin = false, apparence = null, nomShop = NOM_SHOP_
     historique: [],    // aventures terminées : { nom, race, quete, depart, retour, issue, gain, chance }
     personnes: {},     // nom → { race, feminin } de tous ceux qu'on a croisés
     zonesDecouvertes: [], // zones révélées par les récits des aventuriers
+    elfes: { apprentis: 0, commandes: 0, prochainApprenti: 0, evrandel: 0, ardeline: 0, saisonDame: null, decouvertes: {} },   // (planche 91 : les gens du val d'Ardévanne)
     employes: [],      // employés de l'atelier (ids de EMPLOYES)
     anciennete: {},    // (v1.62) leurs nuits à ton service (id → nuits), pour leur salaire
     filesAtelier: {},  // (v1.62) la file d'attente de chaque réparateur (id → [{ id de l'objet, cible }])
@@ -1960,6 +1961,7 @@ function formerFileDuJour(G) {
   if (typeof visitesDuConseil === 'function') visites.unshift(...visitesDuConseil(G));   // (v1.10) le héraut et sa commande scellée
   if (typeof visitesDuRival === 'function') visites.push(...visitesDuRival(G));
   if (typeof visitesDuMecenat === 'function') visites.push(...visitesDuMecenat(G));   // (v1.32, planche 58) le Grand Sage, les percepteurs   // (v1.11) Lucien Belhomme vient se présenter, se pavaner, se moquer
+  if (typeof visitesDuVal === 'function') visites.push(...visitesDuVal(G));   // (planche 91) les apprentis des Terrasses, le seigneur Évrandel, Dame Ardéline
   // (v0.56) Très rarement, à partir du milieu du jeu, un aîné des Bannis passe et laisse une phrase
   const aine = aineDuJour(G, 'comptoir');
   if (aine) { G.ainesVus = [...(G.ainesVus || []), aine]; file.splice(hasard(0, file.length), 0, { type: 'aine', race: aine }); }

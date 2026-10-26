@@ -503,10 +503,10 @@ async function categories(scene) {
 
   // Les repères au loin et les arbres de chaque destination
   const reperes = [], ARBRES_NOMS = { ronds: 'Les arbres ronds', pommiers: 'Les pommiers', saules: 'Les saules', cypres: 'Les cyprès', chenes: 'Les chênes', sapins: 'Les sapins', sapinsNeige: 'Les sapins enneigés',
-    mallorns: 'Les mallorns', automne: "Les arbres d'automne", cactus: 'Les cactus', colonnes: 'Les colonnes brisées', pieux: 'Les pieux' };
-  for (const [z, v] of Object.entries(VARIANTES_RECIT)) if (v.repere) reperes.push(sur(() => ({ cle: textureRepere(scene, v.repere), nom: `Repère · ${ZONES[z] ? ZONES[z].nom : joli(z)}` })));
+    ambrennes: 'Les ambrennes', automne: "Les arbres d'automne", cactus: 'Les cactus', colonnes: 'Les colonnes brisées', pieux: 'Les pieux' };
+  for (const [z, v] of Object.entries(VARIANTES_RECIT)) for (const q of [v.repere, v.repere2 && v.repere2.quoi].filter(Boolean)) reperes.push(sur(() => ({ cle: textureRepere(scene, q), nom: `Repère · ${ZONES[z] ? ZONES[z].nom : joli(z)}` })));
   for (const [f, nom] of Object.entries(ARBRES_NOMS)) reperes.push(sur(() => ({ cle: textureArbre(scene, f), nom })));
-  await ajouter('reperes', 'Les repères et les arbres', 'Ce qu’on voit au loin dans les récits, peint en pixel art (moulin, clocher, porte naine, Lothlórien, Fondcombe, Opale, la Bibliothèque, la pyramide...), et les arbres de chaque destination.', reperes, true);
+  await ajouter('reperes', 'Les repères et les arbres', 'Ce qu’on voit au loin dans les récits, peint en pixel art (moulin, clocher, porte naine, le val d’Ardévanne, la forêt de Sérambre, Opale, la Bibliothèque, la pyramide...), et les arbres de chaque destination.', reperes, true);
 
   // Les variantes : chaque destination a son décor (comme le pose le récit : le paysage du royaume, puis la variante)
   const variantes = [];

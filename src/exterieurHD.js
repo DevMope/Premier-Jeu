@@ -40,6 +40,7 @@ const RELIEFS = {
   antre: { pics: 0.65, lave: true },
   monastere: { arbres: 'ronds', temple: true, fleurs: 0xf8f0f8 },
   sanctuaire: { arbres: 'ronds', colonnes: true, fleurs: 0xffffff, brume: 0.2 },
+  val: { arbres: 'ronds', fleurs: 0xf0a040, brume: 0.18, roseaux: true },   // (planche 91) le val d'Ardévanne : roux toute l'année, le lac
   citadelle: { pics: 0.4, neige: true, tours: true },
   bourbier: { roseaux: true, brume: 0.5, arbresMorts: true },
   repaire: { arbres: 'sapins', densite: 2, arbresMorts: true },
@@ -325,29 +326,29 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
 // paysage peint (boules de feuillage éclairées en haut à gauche, quatre tons, tronc clair à gauche, mêmes
 // couleurs du royaume, même traitement de la lumière), mais plus grands, au grain plus fin et plus détaillés.
 // Dans le paysage, ceux du second plan sont plus petits, plus pâles et un peu brumeux.
-// forme : ronds, pommiers, saules, chenes, automne, mallorns, cypres, sapins, sapinsNeige ; renvoie la clé de la
+// forme : ronds, pommiers, saules, chenes, automne, ambrennes, cypres, sapins, sapinsNeige ; renvoie la clé de la
 // texture (ou null pour une forme qui n'est pas un arbre : cactus, colonnes, pieux).
 const ARBRES_PREMIER_PLAN = {
   //            [largeur, hauteur de la toile, pied du tronc]
-  ronds: [120, 150], pommiers: [120, 150], saules: [130, 150], chenes: [140, 160], automne: [120, 150], mallorns: [130, 170],
+  ronds: [120, 150], pommiers: [120, 150], saules: [130, 150], chenes: [140, 160], automne: [120, 150], ambrennes: [140, 170],
   cypres: [60, 160], sapins: [96, 170], sapinsNeige: [96, 170], morts: [120, 150],
 };
 // (v1.63) Les essences de chaque forme (la variante `graine` choisit dans la liste : deux voisins ne se ressemblent pas)
 const ESSENCES_FORME = { ronds: ['chene', 'bouleau', 'chene'], pommiers: ['pommier'], saules: ['saule', 'saule', 'aulne'], chenes: ['chene', 'chene', 'aulne'], automne: ['chene', 'bouleau', 'chene'],
-  mallorns: ['mallorn'], cypres: ['cypres'], sapins: ['sapin'], sapinsNeige: ['sapin'], morts: ['mort'] };
+  ambrennes: ['ambrenne'], cypres: ['cypres'], sapins: ['sapin'], sapinsNeige: ['sapin'], morts: ['mort'] };
 function arbrePremierPlanHD(scene, forme, biome = 'comte', graine = 0) {
   const dim = ARBRES_PREMIER_PLAN[forme];
   if (!dim) return null;
   // (v1.63) peints par arbresHD.js, comme ceux des collines : mêmes essences, même couleur de la contrée, même saison
   const saisonComte = biome === 'comte' && typeof saisonActuelle === 'function' ? saisonActuelle() : null;
-  const sa = forme === 'automne' ? 'brumes' : saisonComte || saisonArbresContree(biome);   // (« automne » : la vallée de Fondcombe, rousse toute l'année)
+  const sa = forme === 'automne' ? 'brumes' : saisonComte || saisonArbresContree(biome);   // (« automne » : le val d'Ardévanne, roux toute l'année)
   const neige = forme === 'sapinsNeige' || neigeArbresContree(biome, sa);
   const liste = ESSENCES_FORME[forme] || ['chene'], esp = liste[graine % liste.length];
   const cle = `arbrePP_${forme}_${biome}_${sa}${neige ? '_n' : ''}_${graine}`;
   if (scene.textures.exists(cle)) return cle;
   const b = (saisonComte && BIOMES_SAISON[saisonComte]) || BIOMES[biome] || BIOMES.comte;
   // la couleur du feuillage : celle des arbres du paysage de la contrée (même formule : teinte(..., 0.78)) ; l'automne,
-  // les mallorns, les cyprès et les sapins gardent leurs couleurs à eux
+  // les ambrennes, les cyprès et les sapins gardent leurs couleurs à eux
   let couleur = null;
   if (['ronds', 'pommiers', 'saules', 'chenes'].includes(forme)) {
     let base = b.arbres || b.pres;
@@ -1116,7 +1117,7 @@ function creerCarteHD(scene) {
     dune: (x, y) => { for (let k = -5; k <= 5; k++) encre(x + k, y - Math.round(Math.cos(k / 3) * 2)); },
   };
   const parBiome = { comte: ['colline', 'arbre'], foret: ['sapin', 'sapin', 'arbre'], marais: ['roseau'], mines: ['montagne'], desert: ['dune'], neige: ['montagne'],
-    ruines: ['colonne', 'colline'], antre: ['montagne'], monastere: ['colline', 'arbre'], sanctuaire: ['colonne', 'arbre'], citadelle: ['montagne', 'colonne'],
+    ruines: ['colonne', 'colline'], antre: ['montagne'], monastere: ['colline', 'arbre'], sanctuaire: ['colonne', 'arbre'], val: ['colline', 'arbre'], citadelle: ['montagne', 'colonne'],
     bourbier: ['roseau'], repaire: ['sapin'], tour: ['colonne', 'montagne'], cote: ['colline'], opale: ['colonne', 'colline'], badlands: ['montagne', 'dune'], nuitPourpre: ['sapin', 'colonne'] };
   for (const [cle, z] of Object.entries(ZONES)) {
     const zx = z.x / 2, zy = z.y / 2, formes = parBiome[z.biome] || ['colline'];
@@ -1493,8 +1494,8 @@ function peindreVignetteZone(scene, cle, biome, motif = biome) {
       rect(23, 12, 7, 2, 'vMur', 3); P(26, 7, 'vOr', 5);
       for (const bx of [6, 9, 44, 47]) for (let k = 0; k < 14; k++) P(bx, 31 - k, 'vFeuille', k % 4 === 0 ? 1 : 4);
       break;
-    case 'sanctuaire': // de grands arbres argentés, un temple blanc et des lucioles
-      for (const [x0, h] of [[8, 16], [44, 18]]) { for (let k = 0; k < h; k++) P(x0, H - 4 - k, 'vMur', 2); forme('vFeuille', ellipsoide(x0, H - 6 - h, 7, 6), { decalage: 0.8 }); }
+    case 'sanctuaire': // (planche 91) les ambrennes de Sérambre, au tronc cuivré et au feuillage d'or, un temple blanc et des lucioles
+      for (const [x0, h] of [[8, 16], [44, 18]]) { for (let k = 0; k < h; k++) P(x0, H - 4 - k, 'vTronc', k % 3 ? 2 : 3); forme('vOr', ellipsoide(x0, H - 6 - h, 7, 6), { decalage: 0.8 }); }
       colonne(20, 28, 11, 'vMur'); colonne(32, 28, 11, 'vMur');
       for (let k = 0; k < 7; k++) rect(18 + k, 16 - (k < 4 ? k : 6 - k), 1, 1, 'vMur', 5); rect(18, 16, 17, 1, 'vMur', 4);
       for (let k = 0; k < 9; k++) P(hachage(k, 3, 41) * L, 8 + hachage(k, 4, 41) * 18, 'vSoleil', 5);
@@ -1562,11 +1563,11 @@ function peindreVignetteZone(scene, cle, biome, motif = biome) {
       for (const sx of [15, 37]) { rect(sx, 20, 3, 12, 'vRoche', 4); rect(sx - 1, 18, 5, 2, 'vRoche', 5); P(sx + 1, 17, 'vOr', 4); }
       for (let k = 0; k < 4; k++) P(26 + Math.sin(k) * 2, 8 - k * 1.5, 'vRoche', 4);
       break;
-    case 'lac': // un lac d'argent sous deux lunes, des arbres d'argent et des lucioles
+    case 'lac': // le lac du val d'Ardévanne sous deux lunes, ses érables roux et des lucioles
       lune(16, 6, 3, 'vSoleil'); lune(36, 8, 2, 'vSoleil');
       for (let y = 21; y < H; y++) for (let x = 0; x < L; x++) P(x, y, 'vEau', 3 + (((x * 3 + y * 7) % 11) === 0 ? 2 : 0));
       for (let k = -2; k <= 2; k++) { P(16 + k, 25, 'vSoleil', 4); P(36 + k * 0.6, 27, 'vSoleil', 4); }
-      for (const [x0, h] of [[6, 13], [46, 15]]) { for (let k = 0; k < h; k++) P(x0, 22 - k, 'vMur', 3); forme('vFeuille', ellipsoide(x0, 22 - h, 6, 5), { decalage: 0.8 }); }
+      for (const [x0, h] of [[6, 13], [46, 15]]) { for (let k = 0; k < h; k++) P(x0, 22 - k, 'vTronc', 3); forme('vFeuille', ellipsoide(x0, 22 - h, 6, 5), { decalage: 0.8 }); }
       colline(26, 21, 16, 4, 'vLoin');
       for (let k = 0; k < 8; k++) P(hachage(k, 5, 43) * L, 10 + hachage(k, 6, 43) * 20, 'vSoleil', 5);
       break;

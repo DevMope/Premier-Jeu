@@ -26,8 +26,11 @@ const VARIANTES_RECIT = {
   mines: { arbres: null, repere: 'chevalement', sol: { pierres: true }, faune: ['chauvesSouris'] },
   forge: { arbres: null, repere: 'porteNaine', sol: { pierres: true }, faune: ['braises'] },
   // --- Les elfes ---
-  sanctuaire: { arbres: 'mallorns', repere: 'lothlorien', sol: { fleurs: [0xffffff, 0xd8f0ff], luisantes: true }, faune: ['lucioles'] },
-  lac: { arbres: 'automne', repere: 'fondcombe', sol: { roseaux: true, fleurs: [0xffffff] }, faune: ['lucioles', 'poissons'] },
+  // (planche 91, validée) la forêt de Sérambre : la nef d'arches au loin, puis l'Arbre-Mère en arrivant (plus grand : il
+  // domine les ambrennes) ; le val d'Ardévanne : le pont de racines au loin, puis l'île de la rotonde en arrivant.
+  // `repere2` : le second repère, qu'on découvre à la fin du chemin ; `trouee` : les arbres du pré s'écartent devant eux.
+  sanctuaire: { arbres: 'ambrennes', repere: 'serambreNef', repere2: { quoi: 'arbreMere', x: 1000, echelle: 0.6 }, xRepere: 520, trouee: true, sol: { fleurs: [0xffffff, 0xf8e080], luisantes: true }, faune: ['lucioles'] },
+  lac: { arbres: 'automne', repere: 'ardevannePont', repere2: { quoi: 'ardevanneIle', x: 1000, echelle: 0.5 }, xRepere: 520, trouee: true, sol: { roseaux: true, fleurs: [0xffffff, 0xf0a040] }, faune: ['lucioles', 'poissons'] },
   // --- Les mages ---
   opale: { arbres: null, repere: 'opaleCite', sol: { cristaux: true }, faune: ['etincelles'] },
   bibliotheque: { arbres: null, repere: 'bibliothequeHD', sol: { pages: true }, faune: ['livres'] },
@@ -579,12 +582,20 @@ function planterVarianteRecit(scene, zone, biome) {
     // (v0.80) le repère peint en pixel art, s'il existe ; sinon l'ancienne silhouette. (v1.62) Il est au loin,
     // sur les collines du milieu (elles défilent à ×0,55) : plus petit, les pieds dans l'herbe des collines.
     const cle = typeof textureRepere === 'function' ? textureRepere(scene, v.repere) : null;
-    const xR = 700, e = cle ? (scene.textures.get(cle).getSourceImage().width > 330 ? 0.42 : 0.48) : 0.46;
+    const xR = v.xRepere || 700, e = cle ? (scene.textures.get(cle).getSourceImage().width > 330 ? 0.42 : 0.48) : 0.46;
     const pied = Math.min(326, (scene.creteCollines ? scene.creteCollines(xR) : 290) + 14);
     if (cle) {
       const lac = v.repere === 'lac';
       const img = dansPlan(planLoin, scene.add.image(xR, pied + (lac ? 8 : 3), cle).setOrigin(0.5, 1).setScale(e).setTint(0xf0eeea));
       scene.lacX = xR; scene.lacY = pied - 4;
+      scene.reperesRecit = [{ img, x: xR, l: img.displayWidth, vu: 0 }];
+      // (planche 91) le second repère, plus près : on le découvre au bout du chemin (le monde a défilé de BASE_MAX_RECIT)
+      const r2 = v.repere2, cle2 = r2 && textureRepere(scene, r2.quoi);
+      if (cle2) {
+        const pied2 = Math.min(326, (scene.creteCollines ? scene.creteCollines(r2.x) : 290) + 14);
+        const img2 = dansPlan(planLoin, scene.add.image(r2.x, pied2 + 3, cle2).setOrigin(0.5, 1).setScale(r2.echelle || e).setTint(0xf0eeea));
+        scene.reperesRecit.push({ img: img2, x: r2.x, l: img2.displayWidth, vu: typeof BASE_MAX_RECIT === 'number' ? BASE_MAX_RECIT : 480 });
+      }
       // (v0.81) au Col des Hurlements, deux loups noirs hurlent à la lune sur l'éperon
       if (v.repere === 'colHurlements' && typeof creerRecitEpreuvesHD === 'function') {
         creerRecitEpreuvesHD(scene);
@@ -610,6 +621,8 @@ function planterVarianteRecit(scene, zone, biome) {
     const trous = v.vivant === 'moisson' ? [[350, 860], [1380, 1600]] : v.vivant === 'verger' ? [[370, 600]] : v.vivant === 'foret' ? [[930, 1040]] : [];
     for (let x = -60; x < LARGEUR_RECIT + 60; x += 90 + (Math.abs(x) * 3) % 70) {
       if (trous.some(([a, c]) => x > a && x < c)) continue;
+      // (planche 91) la trouée devant chaque repère, là où on le voit (l'arbre du pré défile à ×1, le repère à ×0,55)
+      if (v.trouee && (scene.reperesRecit || []).some(r => Math.abs(x - (r.x + r.vu * 0.45)) < r.l / 2 + 12)) continue;
       const pied = PRE_RECIT.loin - ((Math.abs(x) * 7) % 5);
       if (peint) scene.arbresRecit.push(dansPlan(scene.planMoyen, scene.add.image(x, pied + 3, arbrePremierPlanHD(scene, v.arbres, biome, Math.floor(Math.abs(x) / 90) % 3)).setOrigin(0.5, 1).setScale(0.86 * (0.78 + ((Math.abs(x) * 7) % 34) / 100)).setFlipX((Math.abs(x) * 3) % 2 === 0)));   // (v1.63 : ×0,86, la hauteur des anciens : ils ne cachent pas plus le repère)
       else if (cleArbre) scene.arbresRecit.push(dansPlan(scene.planMoyen, scene.add.image(x, pied, cleArbre).setOrigin(0.5, 1).setScale(0.75 + ((Math.abs(x) * 7) % 40) / 100).setFlipX((Math.abs(x) * 3) % 2 === 0).setTint(sombre ? 0x9a9aa0 : 0xe8e8e0)));

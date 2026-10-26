@@ -650,7 +650,8 @@ const BIOMES = {
   antre: { ciel: 0x5a2a2a, horizon: 0xc06030, loin: 0x4a2a20, pres: 0x3a1a18, chemin: 0x5a3a30, soleil: 0xff9040, pics: 0x2a1410 },
   // Les terres de lumière...
   monastere: { ciel: 0xa8d8e8, horizon: 0xf8f0c0, loin: 0x8ab868, pres: 0x6a9a48, chemin: 0xd8c08a, soleil: 0xfff2b0, arbres: 0x4a7a2a },
-  sanctuaire: { ciel: 0xc0e0f0, horizon: 0xf8f8e0, loin: 0x9ac8a8, pres: 0x7ab08a, chemin: 0xe0d8b0, soleil: 0xffffe0, arbres: 0xb8c8c8 },
+  sanctuaire: { ciel: 0xc0e0f0, horizon: 0xf8f8e0, loin: 0xb8b884, pres: 0x8aa462, chemin: 0xe0d8b0, soleil: 0xffffe0, arbres: 0xd8a830 },   // (planche 91 : la forêt d'or de Sérambre)
+  val: { ciel: 0xb8d4e8, horizon: 0xf8e8c8, loin: 0xc8946a, pres: 0x9a9450, chemin: 0xd8c098, soleil: 0xfff0d0, arbres: 0xc8682a },   // (planche 91 : le val d'Ardévanne, roux en toute saison)
   citadelle: { ciel: 0x9ac0e0, horizon: 0xf0e8d0, loin: 0xa0a8b0, pres: 0x8a9098, chemin: 0xc8c0b0, soleil: 0xfff8d0, colonnes: 0xe8e4d8 },
   // ... et les terres d'ombre.
   bourbier: { ciel: 0x6a6a4a, horizon: 0x9a9a60, loin: 0x4a4a28, pres: 0x3a3a1e, chemin: 0x5a4a2a, soleil: 0xc8c870, roseaux: 0x5a5a2a },

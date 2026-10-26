@@ -433,61 +433,6 @@ function etageFeuilles(t, mat, cx, cy, rx, ry, graine, n = 26) {
 }
 
 Object.assign(REPERES_HD, {
-  // Lothlórien : un mallorn géant au tronc d'argent, ses étages de feuilles d'or, un talan (plateforme)
-  // et sa maison elfique aux fenêtres de lumière, l'escalier qui tourne autour du tronc et ses
-  // lanternes, d'autres mallorns, et des lueurs bleues qui flottent
-  lothlorien: { l: 400, h: 300, dessin(t) {
-    // les mallorns du fond, de chaque côté
-    // (v1.63 : peints comme ceux des collines, arbresHD.js)
-    [[36, 200], [366, 214], [98, 150]].forEach(([cx, h], i) => arbreDansRepere(t, '_ml', { espece: 'mallorn', saison: 'moissons', cx, base: 298, H: h, graine: 11 + i, ecartX: 0.55, feuilles: [0xd0a024, 0xe8c040, 0xa87a16] }));
-    // le grand tronc d'argent, épais, cannelé, ses racines qui s'étalent
-    remplir(t, 'argent', (x, y) => { const w = 20 + Math.max(0, y - 240) ** 1.4 * 0.16; return y >= 60 && Math.abs(x + 0.5 - 200) < w; },
-      (x, y) => (x < 190 ? 5 : x > 210 ? 2 : 3) + ((x - 200) % 7 === 0 ? -1 : 0) + ((y * 3 + x) % 23 === 0 ? -1 : 0));
-    for (const [x1, y1] of [[100, 186], [300, 186], [120, 100], [280, 100], [170, 46], [230, 46]]) ligne(t, 'argent', 4, 200, y1 + 26, x1, y1, 4);   // les grandes branches qui montent
-    // les étages de feuilles d'or, en touffes
-    etageFeuilles(t, 'feuilleOr', 200, 196, 120, 30, 21, 30);
-    etageFeuilles(t, 'feuilleOr', 200, 100, 140, 46, 22, 40);
-    etageFeuilles(t, 'feuilleOr', 200, 44, 86, 30, 23, 22);
-    // le talan : une plateforme blanche, la maison elfique, ses fenêtres en arc et son toit doré
-    remplir(t, 'marbre', (x, y) => y >= 140 && y < 146 && Math.abs(x + 0.5 - 200) < 74, (x, y) => (y === 140 ? 5 : 3));
-    remplir(t, 'marbre', (x, y) => y >= 114 && y < 140 && Math.abs(x + 0.5 - 200) < 42, (x) => (x < 190 ? 4 : 3));
-    remplir(t, 'feuilleOr', (x, y) => y >= 98 && y < 116 && Math.abs(x + 0.5 - 200) < (y - 94) * 2.6, (x) => (x < 200 ? 5 : 3));
-    for (const x of [172, 188, 212, 228]) t.forme('lumiere', (px, py) => { const dx = px + 0.5 - x, dy = py + 0.5 - 126; return Math.abs(dx) < 4 && dy < 12 && (dy > 0 || dx * dx + dy * dy < 16) ? [0, 0, 1] : null; }, { decalage: 1 });
-    for (let x = 128; x <= 272; x += 7) ligne(t, 'marbre', 4, x, 140, x, 134, 1);
-    // l'escalier blanc qui tourne autour du tronc, et ses lanternes
-    for (let k = 0; k < 9; k++) { const y = 288 - k * 16, x = 200 + (k % 2 ? 30 : -30); ligne(t, 'marbre', 5, 200, y + 8, x, y, 2); if (k % 2 === 0) halo(t, 'lumiere', x, y - 4, 4.5); }
-    // les lueurs bleues qui flottent
-    for (let k = 0; k < 18; k++) halo(t, 'lueurBleue', 20 + hachage(k, 1, 9) * 360, 30 + hachage(k, 2, 9) * 250, 2.5 + hachage(k, 3, 9) * 2.5);
-  } },
-  // Fondcombe : la vallée cachée, les falaises et leurs cascades, la maison d'Elrond en pierre
-  // claire, ses tours fines, ses arches et ses fenêtres dorées, le pont sur les chutes, les arbres d'automne
-  fondcombe: { l: 420, h: 290, dessin(t) {
-    // les falaises et la mousse
-    // (des falaises aux bords déchiquetés, des strates claires et des ombres)
-    const bordG = y => 70 + Math.sin(y * 0.05) * 18 + Math.sin(y * 0.19) * 7 - Math.max(0, 60 - y) * 0.9, bordD = y => 340 - Math.sin(y * 0.045) * 16 - Math.sin(y * 0.23) * 6 + Math.max(0, 40 - y) * 1.2;
-    const extG = y => Math.max(0, 46 - y * 0.16 + Math.sin(y * 0.11) * 8 + Math.sin(y * 0.31) * 4), extD = y => Math.min(419, 374 + y * 0.16 - Math.sin(y * 0.1) * 8 - Math.sin(y * 0.27) * 4);
-    remplir(t, 'roche', (x, y) => (x < bordG(y) && x > extG(y)) || (x > bordD(y) && x < extD(y)), (x, y) => { const strate = Math.floor((y + Math.sin(x * 0.1) * 4) / 9) % 3; return 2 + strate + (Math.abs(x - bordG(y)) < 4 || Math.abs(x - bordD(y)) < 4 || Math.abs(x - extG(y)) < 3 || Math.abs(x - extD(y)) < 3 ? 1 : 0) - (hachage(x >> 2, y >> 2, 2) > 0.8 ? 1 : 0); });
-    const sa = 'brumes';   // (le joueur : la vallée garde son automne toute l'année ; les sapins restent verts, sans neige)
-    for (let k = 0; k < 10; k++) { const g = k < 5, y = 60 + ((k * 53) % 200), x = g ? extG(y) + 8 + (k * 7) % 20 : extD(y) - 8 - (k * 7) % 20; arbreDansRepere(t, '_fs', { espece: 'sapin', saison: sa, cx: x, base: y + 22, H: 24, graine: 20 + k, neige: sa === 'givre' }); }   // des sapins accrochés aux parois (v1.63 : peints)
-    for (let k = 0; k < 40; k++) { const x = hachage(k, 1, 4) < 0.5 ? hachage(k, 2, 4) * 90 : 330 + hachage(k, 2, 4) * 90, y = 30 + hachage(k, 3, 4) * 250; t.forme('mousse', ellipsoide(x, y, 5, 3), { decalage: 0.2, bord: false }); }
-    // les cascades
-    for (const [x0, l] of [[70, 8], [300, 10], [348, 6]]) remplir(t, 'lueurBleue', (x, y) => x >= x0 && x < x0 + l && y > 40, (x, y) => ((y + x * 3) % 7 < 3 ? 5 : 4));
-    // la maison principale : des terrasses de pierre claire
-    for (const [x0, x1, y0, h] of [[110, 230, 150, 70], [200, 320, 180, 60], [130, 200, 110, 50]]) {
-      remplir(t, 'marbre', (x, y) => x >= x0 && x < x1 && y >= y0 && y < y0 + h, (x, y) => tonBlocs(x, y, 14, 9, 3, (x) => (x < x0 + 10 ? 1 : 0)));
-      remplir(t, 'rondin', (x, y) => y >= y0 - 22 && y < y0 && Math.abs(x + 0.5 - (x0 + x1) / 2) < (x1 - x0) / 2 + 6 - (y0 - y) * ((x1 - x0) / 2 + 6) / 24, (x) => (x < (x0 + x1) / 2 ? 4 : 2));
-      for (let x = x0 + 8; x < x1 - 8; x += 14) { t.forme('lumiere', (px, py) => { const dx = px + 0.5 - x, dy = py + 0.5 - (y0 + 14); return Math.abs(dx) < 4 && dy < 14 && (dy > 0 || dx * dx + dy * dy < 16) ? [0, 0, 1] : null; }, { decalage: 0.8 }); }
-    }
-    // deux tours fines au toit pointu
-    for (const [cx, haut] of [[150, 40], [290, 70]]) { remplir(t, 'marbre', (x, y) => y >= haut && y < 200 && Math.abs(x + 0.5 - cx) < 9, (x) => (x < cx ? 5 : 3)); remplir(t, 'rondin', (x, y) => y >= haut - 34 && y < haut && Math.abs(x + 0.5 - cx) < (y - haut + 34) * 0.32, (x) => (x < cx ? 4 : 2)); t.forme('lumiere', boite(cx - 3, haut + 10, cx + 3, haut + 22, 3), { decalage: 1 }); }
-    // le pont en arches sur les chutes
-    remplir(t, 'marbre', (x, y) => { if (y < 236 || y >= 250 || x < 220 || x >= 340) return false; return true; }, (x, y) => (y === 236 ? 5 : 3));
-    for (const cx of [250, 290, 330]) remplir(t, 'marbre', (x, y) => y >= 250 && y < 290 && Math.abs(x + 0.5 - cx) < 20 && !((x + 0.5 - cx) ** 2 + (y - 290) ** 2 < 300), (x) => (x < cx ? 4 : 2));
-    // les arbres d'automne, et des lanternes
-    // (v1.63 : peints comme tous les arbres ; un automne permanent, la vallée flamboie)
-    [[112, 66, 'chene'], [172, 50, 'bouleau'], [372, 72, 'chene']].forEach(([cx, H, espece], i) => arbreDansRepere(t, '_fa' + i, { espece, saison: sa, cx, base: 288, H, graine: 30 + i, neige: sa === 'givre' }));
-    for (let k = 0; k < 10; k++) halo(t, 'lumiere', 110 + hachage(k, 1, 6) * 220, 120 + hachage(k, 2, 6) * 150, 2.5);
-  } },
   // La Cité d'Opale : un rempart de cristal et sa porte, une forêt de flèches et de coupoles, la
   // grande tour et son anneau qui flotte, des éclats de cristal en suspension, des ponts de lumière
   opaleCite: { l: 400, h: 300, dessin(t) {
@@ -633,7 +578,7 @@ const ARBRES_HD = {
     for (let k = 0; k < 5; k++) remplir(t, 'sapin', (x, y) => { const y0 = 14 + k * 18, h = 30; return y >= y0 && y < y0 + h && Math.abs(x + 0.5 - 40) < (y - y0) * (0.55 + k * 0.08); }, (x, y) => (x < 40 ? 4 : 2) + ((x + y) % 5 === 0 ? -1 : 0));
   },
   sapinsNeige(t) { ARBRES_HD.sapins(t); for (let y = 0; y < t.h; y++) for (let x = 0; x < 40; x++) if (t.mat(x, y) === 'sapin' && t.mat(x, y - 1) !== 'sapin') { t.poser(x, y, 'neige', 5); t.poser(x, y + 1, 'neige', 4); } },
-  mallorns(t) { remplir(t, 'argent', (x, y) => y >= 30 && Math.abs(x + 0.5 - 40) < 4 + Math.max(0, y - 108) * 0.6, (x) => (x < 40 ? 5 : 3)); ligne(t, 'argent', 4, 40, 70, 20, 58, 2); ligne(t, 'argent', 4, 40, 70, 60, 58, 2); etageFeuilles(t, 'feuilleOr', 40, 66, 30, 12, 7, 9); etageFeuilles(t, 'feuilleOr', 40, 32, 32, 18, 8, 12); },
+  ambrennes(t) { Object.assign(t.rampes, rampesAmbrenne('moissons')); peindreAmbrenne((x, y, m, k) => t.poser(x, y, m, k), { cx: 40, base: 117, H: 100, graine: 3 }); },   // (planche 91 : l'ambrenne de Sérambre)
   automne(t) { tronc(t, 40, 120, 70, 4); feuillage(t, 'automne', 40, 50, 28, 26, 9); feuillage(t, 'feuilleOr', 52, 40, 12, 10, 10); },
   cactus(t) {
     const bras = (x0, y0, x1, y1, w) => remplir(t, 'cactus', (x, y) => x >= Math.min(x0, x1) - w && x <= Math.max(x0, x1) + w && y >= Math.min(y0, y1) && y <= Math.max(y0, y1), (x) => (x % 3 === 0 ? 2 : 3) + (x < 40 ? 1 : 0));
@@ -663,3 +608,393 @@ function textureArbre(scene, forme, variante = 0, biome = 'comte') {
   t.texture(scene, cle);
   return cle;
 }
+
+// --- (planche 91, validée) Les repères des elfes : le val d'Ardévanne (le pont de racines, l'île de la rotonde) et la forêt
+// de Sérambre (la nef d'arches, l'Arbre-Mère). Peints comme les autres repères, avec l'ambrenne et la torsade (arbresHD.js).
+
+Object.assign(RAMPES_REPERES, {
+  pierreRousse: [0x34160c, 0x5a2a16, 0x844020, 0xaa5a2e, 0xc87a44, 0xe4a068],
+  pierreRousseC: [0x4a2414, 0x74401e, 0x9e5c2e, 0xc27c42, 0xdc9c5e, 0xf0c088],
+  erableR: [0x3a0a06, 0x681408, 0x9c220e, 0xc83a16, 0xe8602a, 0xff9450],
+  erableO: [0x4a1a04, 0x7c3008, 0xb04e10, 0xd8721c, 0xf09a34, 0xffc664],
+  erableJ: [0x4a3004, 0x7a5208, 0xb07c10, 0xd8a41c, 0xf0c838, 0xfff07c],
+  erableLoinR: [0x6a3a30, 0x8a5040, 0xa86a54, 0xc0846a, 0xd4a084, 0xe6bea2],
+  erableLoinO: [0x6a5034, 0x8a6a44, 0xa88458, 0xc0a06e, 0xd4b88a, 0xe6d0a8],
+  sousBois: [0x2a1008, 0x441c0c, 0x5e2a12, 0x78381a, 0x944a24, 0xb05e30],
+  herbeRousse: [0x2a2410, 0x46381a, 0x665024, 0x846a30, 0xa48840, 0xc4a85a],
+  racine: [0x1a0e08, 0x2e1a0e, 0x462816, 0x603a20, 0x7c502c, 0x9a6a3c],
+  tuileFeuille: [0x3a0e08, 0x641a0e, 0x902a14, 0xb8401c, 0xd8602a, 0xf08a44],
+  eauLac: [0x1a2a3a, 0x284256, 0x3a5c72, 0x5a7e90, 0x86a6b2, 0xb8d0d4],
+  lanterneF: [0x7a3a08, 0xb06010, 0xe0901c, 0xf8b838, 0xffd870, 0xfff4c0],
+  dalleOr: [0x5a4a30, 0x84704c, 0xa8946a, 0xc8b48a, 0xe0d0aa, 0xf4ead0],
+  lueurOr: [0x8a6010, 0xc09028, 0xe8c048, 0xf8e07c, 0xfff2b4, 0xfffbe8],
+  ombreOr: [0x1e0e04, 0x2e1a08, 0x42280c, 0x5a3a12, 0x74501c, 0x906828],
+  pierreElfe: [0x4a4840, 0x6e6a5e, 0x928c7c, 0xb4ae9c, 0xd2ccba, 0xece8da],
+  preOr: [0x3a4a28, 0x56683a, 0x70864c, 0x8aa462, 0xa4bc7a, 0xbed29a],
+  prePres: [0x4a4a22, 0x66643a, 0x82804a, 0x9a9450, 0xb0aa66, 0xc6c084],
+  roseau: [0x2a2a10, 0x44401a, 0x645a24, 0x847830, 0xa49840, 0xc4b860],
+});
+
+// --- Petits outils ---
+// les couleurs d'une essence sous un suffixe, voilées par la distance (vers `brume`)
+function rampesVoilees(t, suffixe, espece, saison, voile = 0, brume = 0xe8dcc0, feuilles = null) {
+  const R = rampesArbre(saison, espece, null);
+  if (feuilles) [R.arbFeuA, R.arbFeuB, R.arbFeuC] = feuilles.map(c => Array.isArray(c) ? c : rampe(c));
+  for (const k in R) t.rampes[k + suffixe] = voile ? R[k].map(c => melangeCouleur(c, brume, voile)) : R[k];
+}
+const putS = (t, suffixe) => (x, y, m, i) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < t.l && y < t.h) t.poser(x, y, m + suffixe, Math.max(0, Math.min(5, Math.round(i)))); };
+// Une boule de feuillage, peinte dans sa boîte (bien plus vite qu'une forme sur toute la toile) : éclairée en haut à
+// gauche, le bord découpé en touffes, quelques reflets
+function bouleFeuillage(t, mat, cx, cy, rx, ry, g = 1, ombreBas = true) {
+  for (let y = Math.floor(cy - ry - 1); y <= cy + ry + 1; y++) for (let x = Math.floor(cx - rx - 1); x <= cx + rx + 1; x++) {
+    const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry, d = dx * dx + dy * dy;
+    if (d > 1 - 0.16 * hachage(x >> 1, y >> 1, g)) continue;
+    const z = Math.sqrt(Math.max(0, 1 - d)), lum = dx * LUMIERE[0] + dy * LUMIERE[1] + z * LUMIERE[2];
+    let i = Math.floor(1.4 + (lum + 0.15) * 3.4 + (hachage(x, y, g + 3) > 0.88 ? 0.8 : hachage(x, y, g + 7) > 0.9 ? -0.8 : 0));
+    if (ombreBas && d > 0.7 && dy > 0.2) i = Math.min(i, 1);
+    t.poser(x, y, mat, i);
+  }
+}
+// Un coteau : la pente (sa ligne de crête `bord(x)`), couverte de couronnes d'automne serrées, plus pâles au loin
+function coteau(t, bord, { x0 = 0, x1 = t.l, bas = () => t.h, graine = 1, loin = false, r = 5, mats = null }) {
+  const M = mats || (loin ? ['erableLoinR', 'erableLoinO', 'erableLoinR'] : ['erableR', 'erableO', 'erableJ', 'erableO']);
+  remplir(t, loin ? 'erableLoinR' : 'sousBois', (x, y) => x >= x0 && x < x1 && y >= bord(x) + 2 && y < bas(x), (x, y) => 2 + (hachage(x >> 2, y >> 2, graine) > 0.6 ? 1 : 0));
+  const pts = [];
+  for (let x = x0; x < x1; x += r * 0.9) for (let k = 0; k < 40; k++) {
+    const y = bord(Math.round(x)) + r * 0.4 + k * r * 0.95; if (y > bas(Math.round(x)) - 1) break;
+    pts.push([x + (hachage(Math.round(x), k, graine) - 0.5) * r, y, Math.round(x) * 41 + k]);
+  }
+  pts.sort((a, b) => a[1] - b[1]);
+  for (const [x, y, k] of pts) { const rr = r * (0.75 + hachage(k, 3, graine) * 0.55); bouleFeuillage(t, M[Math.floor(hachage(k, 4, graine) * M.length)], x, y, rr, rr * 0.82, graine + k); }
+}
+// une petite lanterne-feuille qui luit (une feuille pliée en deux), pendue à son fil
+function lanterneFeuille(t, x, y, taille = 1) {
+  const h = Math.round(4 * taille), w = Math.max(1, Math.round(1.5 * taille));
+  for (let j = 0; j < h; j++) { const demi = Math.round(w * Math.sin((j + 0.5) / h * Math.PI)); for (let i = -demi; i <= demi; i++) t.poser(x + i, y + j, 'lanterneF', i < 0 ? 5 : j === h - 1 ? 3 : 4); }
+  if (taille >= 1.4) for (let j = 1; j < h - 1; j++) t.poser(x, y + j, 'lanterneF', 2);
+  t.poser(x, y - 1, 'racine', 2);
+}
+function guirlandeLanternes(t, x0, y0, x1, y1, fleche, n, taille = 1) {
+  const pt = u => [x0 + (x1 - x0) * u, y0 + (y1 - y0) * u + Math.sin(u * Math.PI) * fleche];
+  for (let i = 0; i <= 80; i++) { const [x, y] = pt(i / 80); t.poser(Math.round(x), Math.round(y), 'racine', 3); }
+  for (let k = 1; k <= n; k++) { const [x, y] = pt(k / (n + 1)); lanterneFeuille(t, Math.round(x), Math.round(y) + 2, taille); }
+}
+// une porte en arc, la lumière dedans, son encadrement de pierre claire
+function arcLumineux(t, x, yb, w, h, mat = 'pierreRousseC') {
+  const r = w / 2, haut = yb - h;
+  const dedans = (px, py, m) => { const dx = px + 0.5 - x, dy = py + 0.5 - (haut + r); return py < yb && Math.abs(dx) < r + m && (py >= haut + r || dx * dx + dy * dy < (r + m) * (r + m)); };
+  for (let py = haut - 3; py < yb; py++) for (let px = Math.floor(x - r - 2); px <= x + r + 2; px++) {
+    if (dedans(px, py, 0)) t.poser(px, py, 'lumiere', py < haut + r ? 5 : py > yb - 3 ? 3 : 4);
+    else if (dedans(px, py, 1.2)) t.poser(px, py, mat, px < x ? 5 : 3);
+  }
+}
+// les tuiles en forme de feuille, en rangées décalées : le bord de chaque feuille, sa pointe claire
+function tonEcailleToit(x, y, l = 5, h = 4) {
+  const r = Math.floor(y / h), dec = (r % 2) * Math.floor(l / 2), u = (((x + dec) % l) + l) % l, v = y % h;
+  return v === h - 1 || (v === h - 2 && (u === 0 || u === l - 1)) ? 1 : v === 0 && u > 0 && u < l - 1 ? 4 : 3;
+}
+// Une maison basse des terrasses : un mur de pierre rousse claire, une porte en arc qui luit, une petite fenêtre
+// ronde, un toit en feuille (deux pans courbes qui se relèvent au bout, une nervure au faîte)
+function maisonFeuille(t, cx, yb, w, { h = 9, sens = 1 } = {}) {
+  remplir(t, 'pierreRousseC', (x, y) => y >= yb - h && y < yb && Math.abs(x + 0.5 - cx) < w, (x, y) => tonBlocs(x, y, 6, 3, 3, (xx) => (xx < cx - w + 2 ? 1 : xx > cx + w - 3 ? -1 : 0)));
+  arcLumineux(t, cx - sens * Math.round(w * 0.3), yb, 4, Math.min(7, h - 1));
+  if (w >= 7) { t.poser(cx + sens * Math.round(w * 0.45), yb - h + 3, 'lumiere', 5); t.poser(cx + sens * Math.round(w * 0.45) + 1, yb - h + 3, 'lumiere', 4); }
+  const ht = Math.round(w * 0.95) + 3, y0 = yb - h;
+  remplir(t, 'tuileFeuille', (x, y) => { const v = (y0 - y) / ht; if (v < 0 || v > 1) return false; const demi = (w + 3) * (1 - Math.pow(v, 0.75)) + (v < 0.18 ? (0.18 - v) * 12 : 0); return Math.abs(x + 0.5 - cx) < demi; },
+    (x, y) => tonEcailleToit(x, y) + (x < cx ? 1 : -1) + (y === y0 ? -2 : 0));
+  for (let y = y0 - ht; y < y0; y++) t.poser(cx, y, 'or', 3);   // (la nervure de la feuille, au faîte)
+}
+// Une terrasse sur une pente : un mur de pierre rousse (le haut suit `haut(x)`), l'herbe rousse dessus, du lierre
+function murTerrasse(t, x0, x1, haut, h, { graine = 1, crete = null } = {}) {
+  for (let x = Math.round(x0); x < x1; x++) {
+    const yh = Math.round(haut(x));
+    if (crete && yh < crete(x) + 6) continue;   // (le mur s'arrête où le coteau s'arrête)
+    for (let y = yh; y < yh + h; y++) t.poser(x, y, 'pierreRousse', tonBlocs(x, y - yh + 40, 8, 4, 3, () => (x < x0 + 4 ? 1 : x > x1 - 4 ? -1 : 0)));
+    t.poser(x, yh, 'pierreRousseC', 5); t.poser(x, yh - 1, 'herbeRousse', 3 + (hachage(x, 1, graine) > 0.7 ? 1 : 0));
+    if (hachage(x, 2, graine) > 0.55) t.poser(x, yh - 2, 'herbeRousse', 2);
+    if (hachage(x >> 1, 7, graine) > 0.86) for (let j = 0; j < 2 + (x % 3); j++) t.poser(x, yh + 1 + j, 'mousse', 3);
+  }
+}
+// Le lac miroir : sous la rive `rive(x)`, le reflet de ce qui est au-dessus (renversé autour de la rive, un ton plus
+// sombre, des rides qui le décalent), le ciel reflété là où il n'y a rien ; jusqu'à `fin(x)`
+function refletDe(t, m) { const k = 'R_' + m; if (!t.rampes[k]) t.rampes[k] = t.rampes[m].map(c => melangeCouleur(c, 0x3a5c72, 0.36)); return k; }
+function rideEau(t, x, y, g) { return hachage(y, 1, g) > 0.55 && fbm(x * 0.07, y * 0.9, g) > 0.6; }
+function lacMiroir(t, rive, fin, { graine = 1 } = {}) {
+  for (let x = 0; x < t.l; x++) {
+    const yr = Math.round(rive(x)), yf = Math.round(fin(x));
+    for (let y = yr; y < yf && y < t.h; y++) {
+      const p = (y - yr) / 60, ride = Math.round(Math.sin(y * 1.1 + graine + x * 0.02) * (0.4 + p * 1.4));
+      const sx = Math.max(0, Math.min(t.l - 1, x + ride)), sy = 2 * yr - y - 1;
+      const m = sy >= 0 ? t.mat(sx, sy) : null;
+      if (m && m !== 'eauLac' && !m.startsWith('R_')) t.poser(x, y, refletDe(t, m), t.teinte(sx, sy) - 1);
+      else t.poser(x, y, 'eauLac', 4 - Math.min(2, Math.floor(p * 2.2)));
+      if (y > yr + 1 && rideEau(t, x, y, graine)) t.poser(x, y, 'eauLac', 4 + (hachage(x, y, graine) > 0.7 ? 1 : 0));   // (les rides, en traits couchés)
+    }
+  }
+}
+// un calque : une toile de la même taille, puis posée sur la toile (avec son reflet autour de `axe`, sur l'eau)
+function calqueRepere(t) { const c = toileRepere(t.l, t.h); c.rampes = t.rampes; return c; }
+function poserCalque(t, c, { axe = null, eau = null } = {}) {
+  for (let y = 0; y < t.h; y++) for (let x = 0; x < t.l; x++) { const m = c.mat(x, y); if (m) t.poser(x, y, m, c.teinte(x, y)); }
+  if (axe !== null) for (let y = axe; y < t.h; y++) for (let x = 0; x < t.l; x++) {
+    if (eau && t.mat(x, y) !== 'eauLac' && !(eau(x, y))) continue;
+    const ride = Math.round(Math.sin(y * 1.1 + x * 0.02) * (0.4 + (y - axe) / 50)), sy = 2 * axe - y - 1, sx = Math.max(0, Math.min(t.l - 1, x + ride));
+    const m = sy >= 0 ? c.mat(sx, sy) : null;
+    if (m && !rideEau(t, x, y, 5)) t.poser(x, y, refletDe(t, m), c.teinte(sx, sy) - 1);
+  }
+}
+// Un pont de racines : des racines tressées en arche d'une rive à l'autre, le tablier usé par les pas, la main
+// courante, les lanternes pendues dessous
+function pontRacines(t, x0, y0, x1, y1, fleche, { ep = 3.2, graine = 1, lanternes = 4, brins = 4 } = {}) {
+  const pt = u => [x0 + (x1 - x0) * u, y0 + (y1 - y0) * u - Math.sin(u * Math.PI) * fleche];
+  const put = (x, y, m, i) => { x = Math.round(x); y = Math.round(y); if (t.dans(x, y)) t.poser(x, y, m === 'arbEcorce' ? 'racine' : 'mousse', Math.max(0, Math.min(5, Math.round(i) + 1))); };
+  torsade(put, u => { const [x, y] = pt(u); return [x, y + ep * 0.7]; }, { largeur: u => ep * (1 + Math.pow(Math.abs(u - 0.5) * 2, 2) * 0.8), nb: brins, tours: Math.max(2, Math.abs(x1 - x0) / 30), g: graine, ecart: 0.55 });
+  for (let i = 0; i <= 300; i++) { const [x, y] = pt(i / 300); t.poser(Math.round(x), Math.round(y - ep * 0.3), 'racine', 5); }
+  const rampeY = u => pt(u)[1] - ep * 0.3 - 5;
+  for (let i = 0; i <= 300; i++) { const u = i / 300, [x] = pt(u); t.poser(Math.round(x), Math.round(rampeY(u)), 'racine', 4); }
+  const nP = Math.max(4, Math.round(Math.abs(x1 - x0) / 12));
+  for (let k = 1; k < nP; k++) { const u = k / nP, [x, y] = pt(u); for (let j = Math.round(rampeY(u)) + 1; j < y - ep * 0.3; j++) t.poser(Math.round(x), j, 'racine', 2); }
+  for (let k = 0; k < lanternes; k++) { const u = (k + 0.5) / lanternes, [x, y] = pt(u); const yl = Math.round(y + ep * 1.5); t.poser(Math.round(x), yl, 'racine', 2); t.poser(Math.round(x), yl + 1, 'racine', 2); lanterneFeuille(t, Math.round(x), yl + 3, 1); }
+}
+// Des colonnes de lumière qui tombent en biais : elles éclaircissent ce qu'elles traversent
+function colonnesLumiere(t, rayons, { graine = 1, pente = 0.45, sauf = null } = {}) {
+  for (const [xh, w, y0, y1] of rayons) for (let y = y0; y < y1; y++) {
+    const xc = xh + (y - y0) * pente;
+    for (let x = Math.floor(xc - w); x <= xc + w; x++) {
+      if (!t.dans(x, y)) continue;
+      const bord = Math.abs(x + 0.5 - xc) > w * 0.55;
+      if (bord && (x + y) % 2) continue;   // (le bord du rayon, tramé)
+      const m = t.mat(x, y);
+      if (m && m !== 'lueurOr' && !(sauf && sauf(m))) t.poser(x, y, m, t.teinte(x, y) + (m === 'ombreOr' || m.endsWith('_fb') || m === 'feuillesSol' ? 2 : 1));
+      if (m && !bord && hachage(x, y, graine + 9) > 0.985) t.poser(x, y, 'lueurOr', 4);   // (un grain de lumière dans le rayon)
+    }
+  }
+}
+function grainsOr(t, n, x0, y0, x1, y1, graine = 1) { for (let k = 0; k < n; k++) { const x = Math.round(x0 + hachage(k, 1, graine) * (x1 - x0)), y = Math.round(y0 + hachage(k, 2, graine) * (y1 - y0)); t.poser(x, y, 'lueurOr', 5); if (k % 4 === 0) { t.poser(x + 1, y, 'lueurOr', 3); t.poser(x, y + 1, 'lueurOr', 3); } } }
+// Une arche vivante : deux ambrennes qui se penchent l'un vers l'autre et se tressent en ogive (s : le suffixe)
+function archeVivante(t, xa, xb, yb, yA, s, { ep = 4, graine = 1, feuilles = true, n = 14, r = 9 } = {}) {
+  const put = putS(t, s), xc = (xa + xb) / 2, demi = (xb - xa) / 2;
+  const cote = sens => u => { const xp = sens < 0 ? xa : xb, h = yb - yA, th = 1.12; return [xp - sens * demi * (1 - Math.cos(u * th)) / (1 - Math.cos(th)), yb - h * Math.sin(u * th) / Math.sin(th)]; };
+  const zb = new Map();
+  for (const sens of [-1, 1]) torsade(put, cote(sens), { largeur: u => ep * (1.2 - u * 0.5) * (1 + Math.max(0, 0.1 - u) * 4), nb: 3, tours: 1.4, phase: sens > 0 ? 1.3 : 0, g: graine + sens, zb, ecart: 0.5 });
+  for (const sens of [-1, 1]) for (let r2 = 0; r2 < 2; r2++) traitArbre(put, (sens < 0 ? xa : xb), yb - ep, (sens < 0 ? xa : xb) + sens * (ep * (1.6 + r2 * 1.2)) * (r2 ? 1 : -0.6), yb + 1, ep * 0.9, 1, 'arbEcorce', graine + 30 + r2 + sens);
+  if (feuilles) couronneOr(put, { ccx: xc, ccy: yA + (yb - yA) * 0.08, rxc: demi * 1.15, ryc: Math.max(8, (yb - yA) * 0.2), n, r, g: graine + 5, ecaille: Math.max(1.6, r * 0.26), filtre: (x, y) => { const dx = (x - xc) / demi; return y < yA + (yb - yA) * (0.06 + dx * dx * 0.55); } });
+}
+
+
+// La rive de devant, mince (de l'herbe rousse et des roseaux, là où il y a de l'eau) : dessous, rien, c'est le pré du
+// récit qui fait la rive proche
+function riveDevant(t, rive, devant, g = 12) {
+  for (let x = 0; x < t.l; x++) { const y0 = Math.round(devant(x)); if (y0 <= rive(x) + 1) continue;
+    for (let y = y0; y < y0 + 3 && y < t.h; y++) t.poser(x, y, 'herbeRousse', 3 - (y - y0) + (hachage(x, y, g) > 0.7 ? 1 : 0));
+    if (hachage(x, 1, g) > 0.5 && x % 2 === 0) { const h = 3 + Math.round(hachage(x, 2, g) * 6); for (let j = 0; j < h; j++) t.poser(x + (j > h - 3 ? 1 : 0), y0 + 1 - j, 'roseau', 2 + (j > h - 3 ? 2 : 0)); } }
+}
+
+// Le pré, tout en bas : le même vert que les collines du récit (la contrée de la vallée), pour que le repère ait les
+// pieds dans l'herbe ; il commence sous la rive de devant, ou sous le bas des coteaux
+function preDuBas(t, depuis, g = 3, mat = 'prePres') {
+  for (let x = 0; x < t.l; x++) for (let y = Math.round(depuis(x)); y < t.h; y++) t.poser(x, y, mat, 3 + (hachage(x >> 1, y, g) > 0.75 ? 1 : 0) - (hachage(x, y, g + 1) > 0.85 ? 1 : 0));
+}
+
+Object.assign(RAMPES_REPERES, {
+  montLoin: [0x4e4258, 0x62546c, 0x786a80, 0x908296, 0xaa9cae, 0xc6bac8],
+  feuillesSol: [0x3a1c06, 0x5e3410, 0x84501a, 0xa86e26, 0xc89034, 0xe4b450],
+});
+// des monts lointains, bleutés par la distance : le versant à l'ombre, le versant au soleil, une brume au pied
+function montsLoin(t, bord, bas, x0 = 0, x1 = t.l) {
+  for (let x = x0; x < x1; x++) { const y0 = Math.round(bord(x)), pente = bord(x + 1) - bord(x - 1);
+    for (let y = y0; y < bas; y++) t.poser(x, y, 'montLoin', (pente > 0 ? 3 : 2) + (y < y0 + 2 ? 1 : 0) + (y > bas - 8 ? 1 : 0) + (hachage(x >> 2, y >> 2, 4) > 0.82 ? 1 : 0)); }
+}
+// Le sol de la forêt d'or : un tapis de feuilles d'or tombées, plus sombre au pied des arbres, le bord en dentelle
+function solFeuilles(t, sol, epais, x0 = 2, x1 = t.l - 2, g = 1) {
+  for (let x = x0; x < x1; x++) { const y0 = Math.round(sol(x)) - 3, y1 = Math.round(sol(x) + epais - Math.pow((x - (x0 + x1) / 2) / ((x1 - x0) / 2), 6) * epais);
+    for (let y = y0; y < y1; y++) { if (y === y1 - 1 && hachage(x, 3, g) > 0.5) continue; t.poser(x, y, 'feuillesSol', 3 + (y === y0 ? 1 : 0) - (y > y0 + 4 ? 1 : 0) + (hachage(x, y, g) > 0.8 ? 1 : hachage(x, y, g + 1) > 0.85 ? -1 : 0)); } }
+}
+// Un îlot de rochers de pierre rousse, arrondis, l'herbe rousse et des feuilles dessus
+function ilotRoux(t, cx, yHaut, yEau, demi, g = 1) {
+  const blocs = [];
+  for (let k = 0; k < 14; k++) { const u = (k + 0.5) / 14 * 2 - 1, x = cx + u * demi * 0.92, h = (yEau - yHaut) * (1 - u * u * 0.55); blocs.push([x, yEau - h * (0.45 + hachage(k, 1, g) * 0.2), 7 + hachage(k, 2, g) * 6, h * 0.62]); }
+  blocs.sort((a, b) => a[1] - b[1]).forEach(([x, y, rx, ry], k) => {
+    for (let py = Math.floor(y - ry); py < yEau; py++) for (let px = Math.floor(x - rx); px <= x + rx; px++) {
+      const dx = (px + 0.5 - x) / rx, dy = (py + 0.5 - y) / ry; if (dx * dx + Math.min(0, dy) ** 2 * 1 > 1) continue;
+      const lum = -dx * 0.6 - Math.min(0, dy) * 0.5; t.poser(px, py, 'pierreRousse', Math.round(2.4 + lum * 2 + (hachage(px >> 1, py >> 1, g + k) > 0.8 ? 1 : 0) - (py > yEau - 4 ? 1 : 0)));
+    }
+  });
+  for (let x = Math.round(cx - demi * 0.86); x <= cx + demi * 0.86; x++) { let y = 0; while (y < t.h && t.mat(x, y) !== 'pierreRousse') y++; for (let j = -2; j < 1; j++) t.poser(x, y + j, 'herbeRousse', 3 + j + (hachage(x, j, g) > 0.6 ? 1 : 0)); }
+}
+// Un pavillon rond à colonnes (une rotonde ouverte, la lumière entre les colonnes) et son toit en feuille : un cône
+// bas aux bords festonnés comme une feuille d'érable, les nervures dorées, une flèche fine et sa lanterne
+function rotonde(t, px, pb, r, hm, ht, { nc = 9 } = {}) {
+  const yh = pb - hm;
+  remplir(t, 'pierreRousse', (x, y) => y >= pb - 4 && y < pb + 1 && Math.abs(x + 0.5 - px) < r + 3 - (y - pb + 4) * -0.3, (x, y) => (y === pb - 4 ? 5 : 3) - (x > px + r * 0.5 ? 1 : 0));
+  remplir(t, 'lumiere', (x, y) => y >= yh + 1 && y < pb - 4 && Math.abs(x + 0.5 - px) < r - 1, (x, y) => (y < yh + 6 ? 5 : 4));
+  for (let k = 0; k <= nc; k++) { const a = Math.PI * k / nc, x = px - Math.cos(a) * (r - 2), w = 0.7 + Math.sin(a) * 1.7; remplir(t, 'pierreRousseC', (qx, qy) => qy >= yh && qy < pb - 4 && Math.abs(qx + 0.5 - x) < w, (qx) => (qx < x ? 5 : 3)); }
+  remplir(t, 'pierreRousse', (x, y) => y >= yh - 3 && y < yh + 1 && Math.abs(x + 0.5 - px) < r + 1, (x, y) => (y === yh - 3 ? 5 : 3) - (x > px + r * 0.5 ? 1 : 0));
+  // le toit : à chaque hauteur sa demi-largeur, et le bord bas festonné de lobes pointus (les pointes d'une feuille)
+  const R = r + 6, lobes = 7, y0 = yh - 3;
+  const demi = y => { const v = (y0 - y) / ht; return v < 0 || v > 1 ? -1 : R * Math.pow(1 - v, 1.35); };
+  for (let y = y0 - ht; y <= y0 + 5; y++) for (let x = Math.floor(px - R - 1); x <= px + R + 1; x++) {
+    const dx = x + 0.5 - px;
+    let dedans = false;
+    if (y <= y0) dedans = Math.abs(dx) < demi(y);
+    else { const u = (dx / R + 1) / 2 * lobes, f = u - Math.floor(u), pointe = 5 * (1 - Math.abs(f - 0.5) * 2); dedans = Math.abs(dx) < R && y - y0 < pointe * Math.sqrt(Math.max(0, 1 - (dx / R) ** 2)) + 0.5; }
+    if (!dedans) continue;
+    const w = Math.max(1, demi(Math.min(y, y0))), u = dx / w;
+    t.poser(x, y, 'tuileFeuille', (y > y0 ? 2 : tonEcailleToit(x, y, 6, 4)) + (u < -0.35 ? 1 : u > 0.45 ? -1 : 0));
+  }
+  for (let k = 0; k < lobes; k++) { const dx = ((k + 0.5) / lobes * 2 - 1) * R; for (let y = y0 - ht; y <= y0 + 3; y++) { const w = demi(Math.min(y, y0)); if (w <= 0) continue; const x = Math.round(px + dx * Math.min(1, w / R)); if (Math.abs(x - px) < w || y > y0) t.poser(x, y, 'or', dx < 0 ? 4 : 3); } }
+  for (let y = y0 - ht - 9; y < y0 - ht + 1; y++) t.poser(px, y, 'or', 4);
+  lanterneFeuille(t, px, y0 - ht - 7, 1.4);
+}
+
+Object.assign(REPERES_HD, {
+  // ---------------------------------------------------------------------------------------------
+  // Le val d'Ardévanne, vu de loin : le pont de racines. Deux coteaux en flammes descendent jusqu'au lac ; leurs
+  // terrasses de pierre rousse portent des maisons basses aux toits en feuille ; deux vieux érables, un sur chaque
+  // rive, ont tressé leurs racines par-dessus l'eau : un pont en arche et ses lanternes-feuilles ; le lac miroir
+  // renvoie tout, et l'arche avec son reflet dessine un œil.
+  ardevannePont: { l: 420, h: 264, dessin(t) {
+    const rive = x => (x < 60 ? 186.8 + Math.pow(Math.max(0, 60 - x) / 40, 1.5) * 59 : x < 176 ? 152 + (176 - x) * 0.3 : x > 360 ? 183.9 + Math.pow(Math.max(0, x - 360) / 40, 1.5) * 62 : x > 246 ? 152 + (x - 246) * 0.28 : 152) + Math.sin(x * 0.11) * 0.8;
+    const devant = x => 245 + Math.sin(x * 0.045) * 1.5;
+    montsLoin(t, x => 104 + Math.sin(x * 0.045 + 1) * 6 + Math.sin(x * 0.11) * 2 + Math.pow((x - 212) / 120, 2) * 24, 154, 80, 344);
+    coteau(t, x => 132 + Math.sin(x * 0.07) * 3, { x0: 140, x1: 284, bas: () => 154, graine: 3, loin: true, r: 3 });
+    const crG = x => (x < 84 ? 54 + Math.pow((84 - x) / 84, 1.15) * 182 : 54 + Math.pow((x - 84) / 100, 1.5) * 98) + Math.sin(x * 0.09) * 2;
+    const crD = x => (x > 338 ? 52 + Math.pow((x - 338) / 82, 1.15) * 184 : 52 + Math.pow((338 - x) / 96, 1.5) * 100) + Math.sin(x * 0.08) * 2;
+    const cr = x => (x < 210 ? crG(x) : crD(x)), sous = f => x => f(x) > cr(x) + 12 && x > 58 && x < 362;
+    const basC = x => Math.min(rive(x), 247) + 1;
+    coteau(t, crG, { x0: 0, x1: 190, bas: basC, graine: 5, r: 5.5 });
+    coteau(t, crD, { x0: 232, x1: 420, bas: basC, graine: 7, r: 5.5 });
+    const tG = i => x => rive(x) - 12 - i * 16 + Math.sin(x * 0.05 + i) * 1.5, tD = i => x => rive(x) - 12 - i * 16 + Math.sin(x * 0.05 + i * 2) * 1.5;
+    for (let i = 2; i >= 0; i--) { murTerrasse(t, 62 + i * 12, 166 - i * 28, tG(i), 6, { graine: 20 + i, crete: cr }); murTerrasse(t, 256 + i * 28, 358 - i * 12, tD(i), 6, { graine: 30 + i, crete: cr }); }
+    [[40, tG(2), 7, 1], [96, tG(2), 6, -1], [26, tG(1), 8, 1], [80, tG(1), 8, 1], [124, tG(1), 6, -1], [54, tG(0), 9, 1], [108, tG(0), 8, -1], [146, tG(0), 6, -1],
+     [302, tD(2), 6, 1], [358, tD(2), 7, -1], [316, tD(1), 7, 1], [386, tD(1), 8, -1], [284, tD(0), 6, 1], [336, tD(0), 9, -1], [396, tD(0), 7, -1]].filter(([x, f]) => sous(f)(x)).forEach(([x, f, w, s2]) => maisonFeuille(t, x, Math.round(f(x)) - 1, w, { h: Math.round(w * 1.1) + 1, sens: s2 }));
+    [[12, tG(2)], [66, tG(2)], [52, tG(1)], [104, tG(1)], [82, tG(0)], [130, tG(0)], [266, tD(0)], [312, tD(0)], [330, tD(2)], [346, tD(1)], [372, tD(0)], [410, tD(1)]].filter(([x, f]) => sous(f)(x)).forEach(([x, f], k) =>
+      arbreDansRepere(t, '_pa' + k, { espece: 'chene', saison: 'moissons', cx: x, base: Math.round(f(x)) - 1, H: 18 + (k * 7) % 9, graine: 50 + k, feuilles: [[0xc83a16, 0xe8602a, 0x8c200c], [0xd8721c, 0xf09a34, 0xa84a10], [0xd8a41c, 0xf0c838, 0xa87810]][k % 3] }));
+    // les deux vieux érables des rives (en feuilles pleines : ici l'automne ne les dénude jamais), et leur pont de racines
+    arbreDansRepere(t, '_va', { espece: 'chene', saison: 'moissons', cx: 154, base: 152, H: 94, graine: 61, ecartX: 1.05, ecartD: 0.55, feuilles: [0xc83a16, 0xe8602a, 0x8c200c] });
+    arbreDansRepere(t, '_vb', { espece: 'chene', saison: 'moissons', cx: 268, base: 152, H: 88, graine: 64, ecartX: 1.05, ecartG: 0.55, feuilles: [0xd8721c, 0xf09a34, 0xa84a10] });
+    pontRacines(t, 158, 148, 264, 148, 36, { ep: 3.8, graine: 4, lanternes: 5, brins: 5 });
+    guirlandeLanternes(t, 22, tG(2)(22) - 15, 64, tG(2)(64) - 15, 4, 3); guirlandeLanternes(t, 332, tD(2)(332) - 14, 372, tD(2)(372) - 14, 4, 3);
+    guirlandeLanternes(t, 84, tG(0)(84) - 14, 128, tG(0)(128) - 14, 4, 3); guirlandeLanternes(t, 314, tD(0)(314) - 14, 370, tD(0)(370) - 14, 5, 4);
+    lacMiroir(t, rive, devant, { graine: 2 });
+    // la rive de devant, mince ; la barque-feuille amarrée ; des lanternes posées sur l'eau
+    riveDevant(t, rive, devant, 12);
+    preDuBas(t, x => 248 + Math.sin(x * 0.07) * 1.2, 3);
+    remplir(t, 'racine', (x, y) => { const dx = (x + 0.5 - 292) / 15, dy = (y + 0.5 - 226) / 3; return dx * dx + dy * dy <= 1 && y >= 225; }, (x) => (x < 292 ? 4 : 3));
+    for (let x = 279; x < 306; x++) t.poser(x, 225, 'erableO', 4);
+    for (const [x, y] of [[96, 206], [134, 222], [190, 204], [236, 226], [176, 236], [340, 208]]) { if (y > devant(x) - 5) continue; lanterneFeuille(t, x, y, 1); t.poser(x - 2, y + 4, 'eauLac', 5); t.poser(x + 2, y + 4, 'eauLac', 5); }
+  } },
+
+  // ---------------------------------------------------------------------------------------------
+  // Le val d'Ardévanne, en arrivant : l'île de la rotonde. Au milieu du lac, un îlot de rochers roux, la rotonde de
+  // la Dame (une colonnade qui luit sous un toit en feuille d'érable, festonné, aux nervures d'or), un érable immense
+  // derrière ; deux ponts de racines le relient aux rives et à leurs terrasses ; des lanternes posées sur l'eau.
+  ardevanneIle: { l: 420, h: 264, dessin(t) {
+    const rive = x => (x < 50 ? 163 + Math.pow(Math.max(0, 50 - x) / 36, 1.5) * 83 : x < 120 ? 142 + (120 - x) * 0.3 : x > 370 ? 164.4 + Math.pow(Math.max(0, x - 370) / 36, 1.5) * 82 : x > 300 ? 142 + (x - 300) * 0.32 : 142) + Math.sin(x * 0.1) * 0.8;
+    const devant = x => 245 + Math.sin(x * 0.05 + 1) * 1.5;
+    montsLoin(t, x => 96 + Math.sin(x * 0.04 + 2) * 8 + Math.sin(x * 0.12) * 2 + Math.pow((x - 210) / 150, 2) * 26, 144, 50, 370);
+    coteau(t, x => 116 + Math.sin(x * 0.06) * 4, { x0: 70, x1: 350, bas: () => 144, graine: 13, loin: true, r: 3.5 });
+    const crG = x => (x < 74 ? 62 + Math.pow((74 - x) / 74, 1.15) * 174 : 62 + Math.pow((x - 74) / 60, 1.5) * 70) + Math.sin(x * 0.09) * 2;
+    const crD = x => (x > 350 ? 60 + Math.pow((x - 350) / 70, 1.15) * 176 : 60 + Math.pow((350 - x) / 64, 1.5) * 72) + Math.sin(x * 0.08) * 2;
+    const cr = x => (x < 210 ? crG(x) : crD(x)), sous = f => x => f(x) > cr(x) + 12 && x > 58 && x < 362;
+    const basC = x => Math.min(rive(x), 247) + 1;
+    coteau(t, crG, { x0: 0, x1: 134, bas: basC, graine: 15, r: 5.5 });
+    coteau(t, crD, { x0: 286, x1: 420, bas: basC, graine: 17, r: 5.5 });
+    const tG = i => x => rive(x) - 11 - i * 15, tD = i => x => rive(x) - 11 - i * 15;
+    for (let i = 1; i >= 0; i--) { murTerrasse(t, 52 + i * 10, 120 - i * 26, tG(i), 6, { graine: 40 + i, crete: cr }); murTerrasse(t, 300 + i * 26, 368 - i * 10, tD(i), 6, { graine: 44 + i, crete: cr }); }
+    [[30, tG(1), 7, 1], [72, tG(1), 6, -1], [18, tG(0), 8, 1], [58, tG(0), 7, 1], [100, tG(0), 6, -1], [348, tD(1), 7, 1], [392, tD(1), 6, -1], [322, tD(0), 6, 1], [366, tD(0), 8, -1], [404, tD(0), 6, -1]].filter(([x, f]) => sous(f)(x)).forEach(([x, f, w, s2]) => maisonFeuille(t, x, Math.round(f(x)) - 1, w, { h: Math.round(w * 1.1) + 1, sens: s2 }));
+    [[46, tG(1)], [84, tG(0)], [112, tG(0)], [308, tD(0)], [372, tD(1)], [388, tD(0)]].filter(([x, f]) => sous(f)(x)).forEach(([x, f], k) => arbreDansRepere(t, '_pb' + k, { espece: 'chene', saison: 'moissons', cx: x, base: Math.round(f(x)) - 1, H: 18 + (k * 5) % 8, graine: 70 + k, feuilles: [[0xc83a16, 0xe8602a, 0x8c200c], [0xd8721c, 0xf09a34, 0xa84a10], [0xd8a41c, 0xf0c838, 0xa87810]][k % 3] }));
+    lacMiroir(t, rive, devant, { graine: 5 });
+    // l'îlot, sur son calque : il a sa propre ligne d'eau, plus près que la rive du fond
+    const c = calqueRepere(t), yI = 196;
+    arbreDansRepere(c, '_ei', { espece: 'chene', saison: 'moissons', cx: 214, base: 172, H: 124, graine: 71, ecartX: 1.2, feuilles: [0xc83a16, 0xe8602a, 0x8c200c] });
+    ilotRoux(c, 210, 170, yI, 58, 3);
+    rotonde(c, 210, 176, 26, 22, 26);
+    // les escaliers de l'îlot jusqu'à l'eau, et les deux ponts de racines vers les rives
+    for (let k = 0; k < 4; k++) for (let x = 204 - k * 2; x <= 216 + k * 2; x++) { c.poser(x, 178 + k * 4, 'pierreRousseC', 5); c.poser(x, 179 + k * 4, 'pierreRousseC', 3); c.poser(x, 180 + k * 4, 'pierreRousse', 2); }
+    pontRacines(c, 100, 170, 162, 182, 13, { ep: 2.8, graine: 6, lanternes: 3 });
+    pontRacines(c, 258, 182, 320, 170, 13, { ep: 2.8, graine: 7, lanternes: 3 });
+    poserCalque(t, c, { axe: yI, eau: (x, y) => y < devant(x) });
+    for (let k = 0; k < 14; k++) { const x = Math.round(20 + hachage(k, 1, 31) * 380), y = Math.round(200 + hachage(k, 2, 31) * 40); if (Math.abs(x - 210) < 64 || y > devant(x) - 6) continue; lanterneFeuille(t, x, y, 1); t.poser(x - 2, y + 4, 'eauLac', 5); t.poser(x + 2, y + 4, 'eauLac', 5); }
+    remplir(t, 'racine', (x, y) => { const dx = (x + 0.5 - 302) / 15, dy = (y + 0.5 - 214) / 3; return dx * dx + dy * dy <= 1 && y >= 213; }, (x) => (x < 302 ? 4 : 3));
+    for (let x = 289; x < 316; x++) t.poser(x, 213, 'erableO', 4);
+    riveDevant(t, rive, devant, 14);
+    preDuBas(t, x => 248 + Math.sin(x * 0.07 + 2) * 1.2, 4);
+  } },
+
+  // ---------------------------------------------------------------------------------------------
+  // La forêt de Sérambre, vue de loin : la nef. Une futaie d'ambrennes sous un seul dôme d'écailles d'or ; au milieu, deux
+  // arbres se penchent l'un vers l'autre et se tressent en ogive : l'entrée d'une nef d'arches vivantes qui s'enfonce
+  // sous les arbres, le chemin de dalles pâles, et tout au bout la lueur de l'Arbre-Mère ; la lumière tombe en
+  // colonnes entre les troncs.
+  serambreNef: { l: 420, h: 264, dessin(t) {
+    const sol = x => 246 + Math.sin(x * 0.04) * 2 + Math.pow((x - 210) / 210, 2) * 6;
+    // le sous-bois, sombre et chaud, puis la futaie du fond (des troncs pâles, voilés)
+    for (let x = 20; x < 400; x++) { const haut = 150 + Math.abs(x - 210) * 0.08 + Math.sin(x * 0.07) * 4, bordX = Math.min(x - 20, 400 - x);
+      for (let y = Math.round(haut); y < sol(x); y++) { if (bordX < 14 && hachage(x, y, 4) * 14 > bordX) continue; t.poser(x, y, 'ombreOr', 1 + Math.round((y - haut) / 45) + (hachage(x >> 2, y >> 2, 3) > 0.75 ? 1 : 0)); } }
+    rampesVoilees(t, '_fb', 'ambrenne', 'moissons', 0.5, 0x6a4a20);
+    for (let k = 0; k < 11; k++) { const x = 34 + k * 35 + (hachage(k, 1, 7) - 0.5) * 14; if (Math.abs(x - 210) < 50) continue; torsade(putS(t, '_fb'), u => [x + Math.sin(u * 3 + k) * 2, 238 - u * 110], { largeur: u => (2.6 + hachage(k, 2, 7) * 1.4) * (1 + Math.max(0, 0.12 - u) * 4), nb: 3, tours: 1.2, g: 70 + k }); }
+    couronneOr(putS(t, '_fb'), { ccx: 210, ccy: 146, rxc: 200, ryc: 14, n: 46, r: 12, g: 27, ecaille: 2.4 });
+    halo(t, 'lueurOr', 210, 190, 20);
+    // le dôme du fond
+    rampesVoilees(t, '_f0', 'ambrenne', 'moissons', 0.28);
+    couronneOr(putS(t, '_f0'), { ccx: 210, ccy: 86, rxc: 214, ryc: 62, n: 64, r: 18, g: 3, ecaille: 3 });
+    solFeuilles(t, sol, 14, 4, 416, 3);
+    // la nef : ses arches, de la plus loin à la plus proche, le chemin de dalles, l'Arbre-Mère tout au bout
+    rampesVoilees(t, '_fm', 'ambrenne', 'moissons', 0.5, 0xfff0c0);
+    torsade(putS(t, '_fm'), u => [210, 206 - u * 30], { largeur: () => 2.6, nb: 3, tours: 1, g: 9 });
+    remplir(t, 'dalleOr', (x, y) => y >= 206 && y < 262 && Math.abs(x + 0.5 - 210) < 4 + (y - 206) * 0.78, (x, y) => { const d = y - 200, rang = Math.floor(Math.log(d) * 9); return Math.floor(Math.log(d + 1) * 9) !== rang || (((Math.floor((x - 210) / (2 + d * 0.16)) + rang) % 3 === 0) && hachage(x, rang, 5) > 0.4) ? 2 : 3 + (hachage(rang, x >> 2, 6) > 0.6 ? 1 : 0); });
+    const nef = [[194, 226, 208, 150, 0.45, 1.5, 6, 4], [184, 236, 216, 132, 0.3, 2.1, 8, 5], [172, 248, 228, 112, 0.15, 3, 10, 6.5], [156, 264, 248, 84, 0, 4.8, 12, 8.5]];
+    nef.forEach(([xa, xb, yb, yA, voile, ep, n, r], i) => { const s = '_fn' + i; rampesVoilees(t, s, 'ambrenne', 'moissons', voile); archeVivante(t, xa, xb, yb, yA, s, { ep, graine: 10 + i * 3, n, r }); });
+    // les grands troncs torsadés de la futaie, droits jusque dans la couronne, leurs racines
+    rampesVoilees(t, '_ft1', 'ambrenne', 'moissons', 0.16); rampesVoilees(t, '_ft0', 'ambrenne', 'moissons', 0);
+    [[120, 240, 5, '_ft1'], [300, 240, 5, '_ft1'], [14, 252, 7.4, '_ft0'], [70, 248, 8.4, '_ft0'], [352, 248, 8.4, '_ft0'], [406, 252, 7.4, '_ft0']].forEach(([x, b, w, s], i) => {
+      const put = putS(t, s);
+      const pen = (x < 210 ? -1 : 1) * (6 + i * 2);
+      torsade(put, u => [x + pen * u * u + Math.sin(u * 2.6 + i) * 3, b - u * (b - 104)], { largeur: u => w * (1 + Math.max(0, 0.2 - u) * 4) * (1 - u * 0.35), nb: 3, tours: 1.5, g: 20 + i, ecart: 0.52 });
+      for (const sens of [-1, 1]) for (let r2 = 0; r2 < 2; r2++) traitArbre(put, x, b - w * 1.2, x + sens * w * (2 + r2 * 1.3), b + 1, w * (0.85 - r2 * 0.2), 1.2, 'arbEcorce', 40 + i + sens + r2 * 5);
+      couronneOr(put, { ccx: x + pen, ccy: 100, rxc: 34 + w * 2, ryc: 22, n: 12, r: 15, g: 90 + i, ecaille: 3 });
+    });
+    // le dôme de devant, qui retombe en lobes sur les côtés et cache le haut des troncs
+    couronneOr(putS(t, '_ft0'), { ccx: 210, ccy: 70, rxc: 216, ryc: 58, n: 54, r: 18, g: 17, ecaille: 3, filtre: (x, y) => y < 58 + Math.pow((x - 210) / 200, 2) * 90 });
+    colonnesLumiere(t, [[30, 7, 40, 252], [104, 5, 60, 246], [262, 6, 40, 252], [326, 8, 30, 252]], { graine: 2, pente: 0.36 });
+    for (let k = 0; k < 60; k++) { const y = 212 + hachage(k, 2, 8) * 48, x = 210 + (hachage(k, 1, 8) - 0.5) * (8 + (y - 206) * 1.6); t.poser(Math.round(x), Math.round(y), 'arbFeuB_ft0', 3 + (k % 3)); }
+    grainsOr(t, 46, 20, 110, 400, 240, 7);
+  } },
+
+  // ---------------------------------------------------------------------------------------------
+  // La forêt de Sérambre, au cœur : l'Arbre-Mère. Une ambrenne immense, son tronc de cinq brins de cuivre tressés ; ses
+  // racines s'ouvrent en une haute porte en ogive où luit la Graine d'argent ; un cloître d'arches vivantes
+  // l'entoure ; la lumière tombe en colonnes à travers la couronne.
+  arbreMere: { l: 420, h: 264, dessin(t) {
+    const base = 248, cx = 210, sol = x => base + Math.sin(x * 0.05) * 2 + Math.pow((x - 210) / 210, 2) * 6;
+    rampesVoilees(t, '_fh', 'ambrenne', 'moissons', 0.4);
+    couronneOr(putS(t, '_fh'), { ccx: 210, ccy: 116, rxc: 206, ryc: 18, n: 56, r: 14, g: 23, ecaille: 2.6 });
+    preDuBas(t, x => 247 + Math.sin(x * 0.06) * 1.2, 5, 'preOr');
+    for (let k = 0; k < 140; k++) { const x = Math.round(130 + hachage(k, 1, 51) * 160), y = Math.round(247 + hachage(k, 2, 51) * 12); t.poser(x, y, 'feuillesSol', 3 + (k % 3)); }   // (des feuilles d'or tombées au pied)
+    rampesVoilees(t, '_c0', 'ambrenne', 'moissons', 0.34);
+    archeVivante(t, 8, 74, 238, 128, '_c0', { ep: 3.2, graine: 3, n: 18, r: 9 });
+    archeVivante(t, 346, 412, 238, 132, '_c0', { ep: 3.2, graine: 5, n: 18, r: 9 });
+    rampesVoilees(t, '_c1', 'ambrenne', 'moissons', 0.14);
+    archeVivante(t, 64, 136, 246, 140, '_c1', { ep: 3.8, graine: 7, n: 18, r: 10 });
+    archeVivante(t, 284, 356, 246, 144, '_c1', { ep: 3.8, graine: 9, n: 18, r: 10 });
+    rampesVoilees(t, '_am', 'ambrenne', 'moissons', 0);
+    const put = putS(t, '_am');
+    couronneOr(put, { ccx: cx, ccy: 62, rxc: 178, ryc: 54, n: 48, r: 19, g: 11, ecaille: 3.2 });
+    const zb = new Map();
+    // les maîtresses branches (elles restent sous la couronne), le tronc de cinq brins, les deux jambes de racines
+    for (const [a, L] of [[-2.6, 78], [-2.15, 62], [-1.57, 34], [-1.0, 62], [-0.55, 78]]) torsade(put, u => [cx + Math.cos(a) * L * u, base - 182 + Math.sin(a) * L * u * 0.7 + Math.sin(u * Math.PI) * 5], { largeur: u => 7.5 - u * 4.5, nb: 2, tours: 1, g: 20 + L, ecart: 0.4 });
+    torsade(put, u => [cx + Math.sin(u * 2.4) * 3, base - 50 - u * 136], { largeur: u => 22 - u * 6, nb: 5, tours: 1.2, g: 13, zb, ecart: 0.6 });
+    for (const sens of [-1, 1]) torsade(put, u => [cx + sens * (11 + Math.sqrt(Math.sin(u * Math.PI / 2)) * 30 + Math.max(0, u - 0.8) * 70), base - 56 + u * 58], { largeur: u => 12 - u * 4, nb: 3, tours: 0.9, g: 40 + sens, zb, ecart: 0.5 });
+    for (const [x1, k] of [[90, 1], [130, 2], [290, 3], [330, 4]]) traitArbre(put, cx + (x1 < cx ? -52 : 52), base - 6, x1, base + 1, 6.5, 1.5, 'arbEcorce', 60 + k);
+    // la porte de lumière entre les racines, la Graine d'argent qui luit dans un creux de racine
+    remplir(t, 'lumiere', (x, y) => { const dx = Math.abs(x + 0.5 - cx), h = base + 1 - y, m = t.mat(x, y); if (h < 0 || h > 58 || dx > 80) return false; if (m && !m.endsWith('_fh') && !m.startsWith('feuillesSol')) return false; const u = (56 - h) / 58, bord = 11 + Math.sqrt(Math.max(0, Math.sin(Math.max(0, u) * Math.PI / 2))) * 30 + Math.max(0, u - 0.8) * 70 - (12 - 4 * u) * 0.5; return u >= 0 && dx < bord; }, (x, y) => { const d = (Math.abs(x + 0.5 - cx) / 64) ** 2 + ((base - y) / 60) ** 2; return d < 0.3 ? 5 : d < 0.7 ? 4 : 3; });
+    traitArbre(put, cx - 9, base - 3, cx + 9, base - 3, 4, 4, 'arbEcorce', 77);   // (le creux de racine où elle repose)
+    halo(t, 'lueurOr', cx, base - 11, 11);
+    t.forme('argent', ellipsoide(cx, base - 10, 3, 3.8), { decalage: 0.9 });
+    couronneOr(put, { ccx: cx, ccy: 74, rxc: 190, ryc: 44, n: 34, r: 18, g: 17, ecaille: 3.2, filtre: (x, y) => y > 40 && (Math.abs(x - cx) > 26 || y < 92) });
+    couronneOr(put, { ccx: cx, ccy: 74, rxc: 44, ryc: 14, n: 9, r: 15, g: 29, ecaille: 3.2 });
+    colonnesLumiere(t, [[88, 7, 80, 250], [146, 5, 100, 250], [262, 6, 90, 250], [320, 8, 70, 250]], { graine: 4, pente: 0.3 });
+    grainsOr(t, 50, 20, 100, 400, 240, 9);
+  } },
+});
