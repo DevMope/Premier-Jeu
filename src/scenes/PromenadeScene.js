@@ -24,6 +24,7 @@ class PromenadeScene extends Cinematique {
     this.armoireOuverte = false;   // (planche 85 v2)
     this.enConversation = false; this.panneauCoin = null; this.carnetFormes = null;   // (v1.38 : une soirée quittée par le menu les laissait posés)
     this.assis = null;   // (v0.97) on n'est plus assis sur le banc d'hier soir
+    this.berceuseOuverte = false;   // (v1.63) la page de la berceuse, dépliée devant le portrait
     this.cameras.main.fadeIn(500);
     creerInterieurHD(this); creerDecorComptoir(this); creerObjetsHD(this); creerHalo(this);
     creerAtelierHD(this); creerFenetreHD(this); creerDouilletHD(this);
@@ -322,14 +323,20 @@ class PromenadeScene extends Cinematique {
     // (v0.91) le portrait de famille : une pensée pour tes parents, une autre à chaque fois
     const zp = this.add.rectangle(64, 96, 70, 80, 0xffffff, 0).setDepth(8.4).setInteractive({ useHandCursor: true });
     zp.on('pointerdown', () => {
-      if (this.transition) return;
+      if (this.transition || this.berceuseOuverte) return;
       this.allerVers(120);
-      G.penseeParents = ((G.penseeParents ?? -1) + 1) % PENSEES_PARENTS.length;
-      // (v0.93) depuis la médaille, une pensée sur deux est pour elle
-      if (G.medailleParents && G.penseeParents % 2) return this.dire(`La médaille de tes parents, rendue par le vieux mendiant. « Ils ne t'ont pas abandonné${eJ(G)} », a-t-il dit. Tu voudrais tant le croire.`);
-      // (v1.63) la berceuse que t'a laissée le vieux voyageur, glissée derrière le cadre
-      if (G.evtComptoir && G.evtComptoir.berceuse && G.penseeParents % 3 === 0) return this.dire("La berceuse du vieux voyageur, glissée derrière le cadre. Tu ne sais pas lire la musique, et pourtant tu en fredonnes l'air, comme si tu l'avais toujours su.");
-      this.dire(PENSEES_PARENTS[G.penseeParents].replaceAll('{J}', eJ(G)));
+      const penser = () => {
+        G.penseeParents = ((G.penseeParents ?? -1) + 1) % PENSEES_PARENTS.length;
+        // (v0.93) depuis la médaille, une pensée sur deux est pour elle
+        if (G.medailleParents && G.penseeParents % 2) return this.dire(`La médaille de tes parents, rendue par le vieux mendiant. « Ils ne t'ont pas abandonné${eJ(G)} », a-t-il dit. Tu voudrais tant le croire.`);
+        this.dire(PENSEES_PARENTS[G.penseeParents].replaceAll('{J}', eJ(G)));
+      };
+      // (v1.63) la berceuse que t'a laissée le vieux voyageur, glissée derrière le cadre : on peut la déplier, et en jouer l'air
+      if (typeof berceuseConnue === 'function' && berceuseConnue(G)) {
+        this.dire("Derrière le cadre, la page du vieux voyageur, pliée en quatre. Tu ne sais pas lire la musique, et pourtant l'air te revient.");
+        return this.choixChat(['Déplier la berceuse', () => { this.berceuseOuverte = true; this.bulle.setVisible(false); ouvrirBerceuse(this, () => { this.berceuseOuverte = false; }); }], ['Penser à eux', penser]);
+      }
+      penser();
     });
     if (G.medailleParents) this.add.image(64, 146, texMedailleParents(this)).setScale(1.3).setDepth(8.3);
     const armes = G.armesLegendaires || [];
