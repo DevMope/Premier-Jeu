@@ -32,7 +32,7 @@ function tramer(x, y, v, paliers) {
 const RELIEFS = {
   comte: { arbres: 'ronds', fleurs: 0xf0d060 },
   foret: { arbres: 'sapins', densite: 2 },
-  marais: { roseaux: true, brume: 0.35 },
+  marais: { roseaux: true, brume: 0.35, arbresMorts: true },   // (v1.63 : les arbres morts, tordus, des Brumes)
   mines: { pics: 0.55, neige: false, rochers: true },
   desert: { dunes: true },
   neige: { pics: 0.6, neige: true },
@@ -63,7 +63,9 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
   if (aube) nuit = 0;
   // (v0.99) la Comté change avec la saison : ses couleurs, ses arbres, ses fleurs (voir saisonsHD.js)
   const saison = biome === 'comte' && typeof saisonActuelle === 'function' ? saisonActuelle() : null;
-  const cle = `paysage_${biome}${saison ? '_' + saison : ''}_${L}x${H}_${aube ? 'aube' : Math.round(nuit * 10)}${sansAstre ? '_sans' : ''}${couches ? '_couches' : ''}`;
+  // (v1.63) ailleurs, les arbres suivent aussi l'année (nus l'hiver, roux l'automne...) : la saison des arbres entre dans la clé
+  const rel0 = RELIEFS[biome] || {}, saisonArbres = !saison && (rel0.arbres || rel0.arbresMorts || !rel0.dunes) && typeof saisonArbresContree === 'function' ? saisonArbresContree(biome) : null;
+  const cle = `paysage_${biome}${saison ? '_' + saison : ''}${saisonArbres ? '_a' + saisonArbres : ''}_${L}x${H}_${aube ? 'aube' : Math.round(nuit * 10)}${sansAstre ? '_sans' : ''}${couches ? '_couches' : ''}`;
   if (scene.textures.exists(couches ? cle + '_barriere' : cle)) return cle;
   const b = (saison && BIOMES_SAISON[saison]) || BIOMES[biome] || BIOMES.comte, r = saison ? { ...(RELIEFS[biome] || {}), ...RELIEFS_SAISON[saison] } : RELIEFS[biome] || {};
   const graine = biome.length * 31;
@@ -230,11 +232,12 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
   function arbre(x, sol, taille, couleur) {
     const forme = r.arbres;
     const h = Math.round((forme === 'sapins' ? 18 : 12) * taille * (0.8 + hachage(x, 3, graine) * 0.5));
-    // (v1.63) la Comté, de saison en saison : de vrais arbres (chêne, pommier, bouleau), peints par arbresHD.js, à la couleur de la distance
-    if (saison && forme !== 'sapins' && typeof peindreArbre === 'function') {
-      const esp = ['chene', 'chene', 'pommier', 'bouleau'][Math.floor(hachage(Math.round(x), 4, graine) * 4)], brume = taille < 0.7 ? 0.3 : taille < 1 ? 0.15 : 0;
-      const rp = rampesArbre(saison, esp, couleur);
-      peindreArbre((X, Y, m, i) => poser(X, Y, soir(melangeCouleur(rp[m][i], b.horizon, brume))), { cx: x, base: sol, H: Math.max(9, Math.round(h + 4 * taille)), espece: esp, saison, graine: Math.round(x) });
+    // (v1.63) de vrais arbres, peints par arbresHD.js (les essences de la contrée, leur saison), à la couleur de la distance
+    if (typeof peindreArbre === 'function') {
+      const sa = saison || saisonArbres || 'moissons', neigeA = neigeArbresContree(biome, sa) || !!r.neige;
+      const esp = forme === 'sapins' && !['foret', 'repaire'].includes(biome) ? 'sapin' : essenceContree(biome, Math.floor(hachage(Math.round(x), 4, graine) * 60));
+      const brume = taille < 0.7 ? 0.3 : taille < 1 ? 0.15 : 0, rp = rampesArbre(sa, esp, esp === 'mort' ? null : couleur);
+      peindreArbre((X, Y, m, i) => poser(X, Y, soir(melangeCouleur(rp[m][i], b.horizon, brume))), { cx: x, base: sol, H: Math.max(9, Math.round((esp === 'sapin' ? h * 1.05 : h) + 4 * taille)), espece: esp, saison: sa, graine: Math.round(x), neige: neigeA, mousse: biome === 'marais' || biome === 'bourbier' });
       return;
     }
     // Le tronc, éclairé à gauche
@@ -260,8 +263,14 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
     boule(x, cy - R * 0.2, R * 0.85, R * 0.75, couleur);
   }
   function buisson(x, sol, taille, couleur) {
-    boule(x - taille * 0.6, sol - taille * 0.6, taille, taille * 0.75, teinte(couleur, 0.95));
-    boule(x + taille * 0.5, sol - taille * 0.7, taille * 0.9, taille * 0.7, couleur);
+    if (typeof peindreArbre === 'function') {
+      // (v1.63) un vrai buisson, peint par arbresHD.js, de la saison (nu l'hiver, roux l'automne)
+      const sa = saison || saisonArbres || 'moissons', rp = rampesArbre(sa, 'buisson', couleur);
+      peindreArbre((X, Y, m, i) => poser(X, Y, soir(rp[m][i])), { cx: Math.round(x), base: Math.round(sol), H: Math.round(taille * 2.2) + 4, espece: 'buisson', saison: sa, graine: Math.round(x) + 7, neige: neigeArbresContree(biome, sa) || !!r.neige, ecartX: 1.3 });
+    } else {
+      boule(x - taille * 0.6, sol - taille * 0.6, taille, taille * 0.75, teinte(couleur, 0.95));
+      boule(x + taille * 0.5, sol - taille * 0.7, taille * 0.9, taille * 0.7, couleur);
+    }
     if (r.fleurs && hachage(x, 50, graine) < 0.5) for (let k = 0; k < 3; k++) poser(Math.round(x - taille + hachage(x, 51 + k, graine) * taille * 2), Math.round(sol - taille * (0.4 + hachage(x, 54 + k, graine))), r.fleurs);
   }
   function touffe(x, y) {
@@ -277,6 +286,11 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
     poser(x + 3, Math.floor(sol - 1), soir(0x3a2a20));
   }
   function arbreMort(x, sol) {
+    if (typeof peindreArbre === 'function') {   // (v1.63) l'arbre mort, tordu, peint comme les autres (sa mousse grise dans les marais)
+      const sa = saison || saisonArbres || 'moissons', rp = rampesArbre(sa, 'mort');
+      peindreArbre((X, Y, m, i) => poser(X, Y, soir(melangeCouleur(rp[m][i], b.horizon, 0.12))), { cx: x, base: sol, H: 16 + Math.round(hachage(x, 12, graine) * 8), espece: 'mort', saison: sa, graine: Math.round(x) + 5, neige: neigeArbresContree(biome, sa) || !!r.neige, mousse: biome === 'marais' || biome === 'bourbier' });
+      return;
+    }
     for (let y = 0; y < 16; y++) poser(x, Math.floor(sol - y), soir(0x2a2420));
     for (let k = 1; k < 5; k++) { poser(x - k, Math.floor(sol - 10 - k), soir(0x2a2420)); poser(x + k, Math.floor(sol - 13 - k * 0.6), soir(0x2a2420)); }
   }
@@ -316,126 +330,34 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
 const ARBRES_PREMIER_PLAN = {
   //            [largeur, hauteur de la toile, pied du tronc]
   ronds: [120, 150], pommiers: [120, 150], saules: [130, 150], chenes: [140, 160], automne: [120, 150], mallorns: [130, 170],
-  cypres: [60, 160], sapins: [96, 170], sapinsNeige: [96, 170],
+  cypres: [60, 160], sapins: [96, 170], sapinsNeige: [96, 170], morts: [120, 150],
 };
+// (v1.63) Les essences de chaque forme (la variante `graine` choisit dans la liste : deux voisins ne se ressemblent pas)
+const ESSENCES_FORME = { ronds: ['chene', 'bouleau', 'chene'], pommiers: ['pommier'], saules: ['saule', 'saule', 'aulne'], chenes: ['chene', 'chene', 'aulne'], automne: ['chene', 'bouleau', 'chene'],
+  mallorns: ['mallorn'], cypres: ['cypres'], sapins: ['sapin'], sapinsNeige: ['sapin'], morts: ['mort'] };
 function arbrePremierPlanHD(scene, forme, biome = 'comte', graine = 0) {
   const dim = ARBRES_PREMIER_PLAN[forme];
   if (!dim) return null;
-  const saison = biome === 'comte' && typeof saisonActuelle === 'function' ? saisonActuelle() : null;
-  const cle = `arbrePP_${forme}_${biome}${saison ? '_' + saison : ''}_${graine}`;
+  // (v1.63) peints par arbresHD.js, comme ceux des collines : mêmes essences, même couleur de la contrée, même saison
+  const saisonComte = biome === 'comte' && typeof saisonActuelle === 'function' ? saisonActuelle() : null;
+  const sa = saisonComte || saisonArbresContree(biome);   // (v1.63 : « automne » aussi suit les saisons, comme les arbres de Fondcombe)
+  const neige = forme === 'sapinsNeige' || neigeArbresContree(biome, sa);
+  const liste = ESSENCES_FORME[forme] || ['chene'], esp = liste[graine % liste.length];
+  const cle = `arbrePP_${forme}_${biome}_${sa}${neige ? '_n' : ''}_${graine}`;
   if (scene.textures.exists(cle)) return cle;
-  const b = (saison && BIOMES_SAISON[saison]) || BIOMES[biome] || BIOMES.comte;
-  const [L, H] = dim, G = 90 + graine * 17 + forme.length * 7;
-  const px = new Uint32Array(L * H);
-  const poser = (x, y, c) => { x = Math.floor(x); y = Math.floor(y); if (x >= 0 && y >= 0 && x < L && y < H) px[y * L + x] = c; };
-  const cx = L / 2, pied = H - 3;
-  // la couleur du feuillage : celle des arbres du paysage de la contrée (même formule : teinte(..., 0.78))
-  const defaut = { ronds: b.pres, pommiers: b.pres, saules: melangeCouleur(b.pres, 0x8ab868, 0.3), chenes: 0x3f6a2a, automne: 0xb87438, mallorns: 0xd8b030, cypres: 0x2a5a30, sapins: 0x2a5a3a, sapinsNeige: 0x2a5a3a };
-  let base = b.arbres || defaut[forme];
-  if (forme === 'chenes' && b.arbres) base = melangeCouleur(b.arbres, 0x5a8a3a, 0.45);
-  if (['sapins', 'sapinsNeige', 'cypres'].includes(forme) && (b.arbres === undefined || b.pres > 0xe0e0e0)) base = defaut[forme];
-  if (['automne', 'mallorns'].includes(forme)) base = defaut[forme];
-  if (forme === 'ronds' || forme === 'pommiers') base = saison ? b.arbres || b.pres : (b.arbres ? b.arbres : melangeCouleur(b.pres, 0x3a7a30, 0.35));
-  const couleur = teinte(base, 0.78);
-  // le tronc, éclairé à gauche (les ocres du paysage), avec son écorce
-  const tronc = (x0, haut, bas, w, argent = false) => {
-    for (let y = Math.floor(haut); y <= bas; y++) {
-      const evase = Math.max(0, y - (bas - 9)) * 0.45;   // les racines
-      const ww = w + evase + (y < haut + 6 ? -0.5 : 0);
-      for (let x = Math.floor(x0 - ww); x <= x0 + ww; x++) {
-        const u = (x - (x0 - ww)) / (2 * ww + 1);
-        let f = u < 0.3 ? 1.08 : u < 0.62 ? 0.92 : 0.7;
-        if (hachage(x, y >> 1, G + 5) < 0.12) f -= 0.18;
-        if (hachage(x >> 1, y, G + 6) < 0.06) f += 0.14;
-        poser(x, y, argent ? teinte(0xb8bcc8, f) : teinte(0x6a4a2a, f));
-      }
-    }
-  };
-  // une boule de feuillage éclairée en haut à gauche (le dessin d'`arbre` du paysage), plus fine ; la lumière
-  // baisse aussi vers le bas de la couronne (cy0..cy1)
-  const boule = (bx, by, rx, ry, coul, cy0, cy1, { ronge = 0.2 } = {}) => {
-    for (let y = Math.floor(by - ry); y <= by + ry; y++) for (let x = Math.floor(bx - rx); x <= bx + rx; x++) {
-      const nx = (x + 0.5 - bx) / rx, ny = (y + 0.5 - by) / ry;
-      const d = nx * nx + ny * ny + (hachage(x, y, G + 40) - 0.5) * 0.3;
-      if (d > 1) continue;
-      if (d > 0.82 && hachage(x, y, G + 43) < ronge) continue;   // le bord déchiqueté
-      const bas = Math.max(0, Math.min(1, (y - cy0) / Math.max(1, cy1 - cy0)));
-      const lum = 1 - (nx * 0.45 + ny * 0.6) * 0.45 - d * 0.12 - bas * 0.14;
-      let f = lum > 1.1 ? 1.28 : lum > 0.98 ? 1.08 : lum > 0.84 ? 0.9 : 0.72;
-      const h = hachage(x, y, G + 41);
-      if (h < 0.09) f += 0.14; else if (h > 0.94) f -= 0.16;   // des feuilles claires, des creux
-      poser(x, y, teinte(coul, f));
-    }
-  };
-  // les couronnes rondes : un amas de boules, du bas à droite vers le haut à gauche
-  const couronne = (ccx, ccy, R, n, coul, aplati = 0.85) => {
-    const bs = [];
-    for (let k = 0; k < n; k++) {
-      const a = (k / n) * Math.PI * 2 + hachage(k, 3, G) * 0.8, e = k === 0 ? 0 : 0.45 + hachage(k, 4, G) * 0.4;
-      bs.push([ccx + Math.cos(a) * R * e * 1.05, ccy + Math.sin(a) * R * e * aplati, R * (0.45 + hachage(k, 5, G) * 0.2)]);
-    }
-    bs.sort((p, q) => (q[1] + q[0] * 0.5) - (p[1] + p[0] * 0.5));
-    for (const [bx, by, r] of bs) boule(bx, by, r, r * aplati, coul, ccy - R, ccy + R);
-  };
-  if (['ronds', 'pommiers', 'chenes', 'automne', 'mallorns', 'saules'].includes(forme)) {
-    const gros = forme === 'chenes' || forme === 'mallorns';
-    const R = gros ? 42 : forme === 'saules' ? 40 : 36, ccy = forme === 'mallorns' ? 58 : 56;
-    tronc(cx, ccy + R * 0.1, pied, gros ? 6.5 : 5, forme === 'mallorns');
-    // les branches qui montent dans la couronne
-    for (const [dx, dy] of [[-16, -26], [14, -30], [-4, -40]]) for (let t = 0; t <= 1; t += 0.05) poser(cx + dx * t + (dx < 0 ? -1 : 0), ccy + R * 0.7 + dy * t * 1.2 + 6, teinte(0x6a4a2a, dx < 0 ? 1.0 : 0.72));
-    couronne(cx, ccy, R, gros ? 11 : 9, forme === 'mallorns' ? teinte(couleur, 1.1) : couleur, forme === 'saules' ? 0.55 : 0.85);
-    if (forme === 'saules') {
-      // les branches qui pleurent : des rideaux, plus clairs à gauche
-      for (let x = cx - R * 0.95; x < cx + R * 0.95; x += 3) {
-        const l = 26 + hachage(x, 1, G) * 34 - Math.abs(x - cx) * 0.3;
-        for (let y = ccy + 4; y < ccy + 4 + l; y++) poser(x + Math.sin(y * 0.2 + x) * 1.2, y, teinte(couleur, x < cx ? (hachage(x, y, G + 7) < 0.15 ? 1.28 : 1.08) : (hachage(x, y, G + 8) < 0.15 ? 0.9 : 0.72)));
-      }
-    }
-    if (forme === 'pommiers') {
-      for (let k = 0; k < 14; k++) {
-        const a = hachage(k, 6, G) * 6.28, e = Math.sqrt(hachage(k, 7, G)) * R * 0.82, ax = cx + Math.cos(a) * e, ay = ccy + Math.sin(a) * e * 0.8;
-        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx * dx + dy * dy <= 2) poser(ax + dx, ay + dy, dx < 0 && dy < 0 ? 0xf08060 : dx > 0 || dy > 0 ? 0x8a1c18 : 0xc83226);
-      }
-    }
-    if (forme === 'mallorns') for (let k = 0; k < 20; k++) { const a = hachage(k, 8, G) * 6.28, e = Math.sqrt(hachage(k, 9, G)) * R; poser(cx + Math.cos(a) * e, ccy + Math.sin(a) * e * 0.85, 0xfff4b0); }
-  } else if (forme === 'cypres') {
-    tronc(cx, pied - 14, pied, 2.5);
-    for (let y = 8; y < pied - 8; y++) {
-      const t = (y - 8) / (pied - 16), w = Math.sin(Math.min(1, t * 1.05) * Math.PI * 0.95) * 17 + 2;
-      for (let x = Math.floor(cx - w); x <= cx + w; x++) {
-        const u = (x - (cx - w)) / (2 * w + 1);
-        if (Math.abs(x - cx) > w - 2 && hachage(x, y, G + 43) < 0.35) continue;
-        let f = u < 0.3 ? 1.22 : u < 0.55 ? 1.0 : u < 0.8 ? 0.86 : 0.7;
-        const h = hachage(x, y, G + 41); if (h < 0.1) f += 0.14; else if (h > 0.93) f -= 0.16;
-        poser(x, y, teinte(couleur, f - t * 0.1));
-      }
-    }
-  } else {
-    // les sapins : des étages de branches, le côté gauche éclairé, la neige en haut de chaque étage
-    const neige = forme === 'sapinsNeige', n = 5;
-    tronc(cx, pied - 22, pied, 4);
-    for (let e = 0; e < n; e++) {
-      const hh = 40 - e * 3, bas = pied - 12 - e * 24, larg = 0.58 + e * 0.05, hautE = bas - hh;
-      for (let y = 0; y < hh; y++) {
-        const w = (y / hh) * hh * larg + (Math.sin(y * 0.9 + e) > 0.6 ? 1 : 0);
-        for (let k = -Math.ceil(w); k <= Math.ceil(w); k++) {
-          if (Math.abs(k) > w - 1.5 && hachage(k, y + e * 9, G + 43) < 0.3) continue;
-          const pied2 = y > hh - 3;
-          let f = pied2 ? 0.62 : (k < 0 ? 1.08 : 0.8) + (hachage(k, y + e * 9, G) < 0.12 ? 0.15 : 0);
-          if (!pied2 && k < -w * 0.35) f += 0.1;
-          let c = teinte(couleur, f);
-          if (neige && y < 3 + (e === 0 ? 8 : 0) + (k < 0 ? 2 : 0) && Math.abs(k) < w - 0.5) c = teinte(0xf4f8ff, k < 0 ? 1.0 : 0.82);
-          if (neige && pied2 && hachage(k, e, G + 3) < 0.5) c = teinte(0xf4f8ff, 0.78);
-          poser(cx + k, hautE + y, c);
-        }
-      }
-    }
+  const b = (saisonComte && BIOMES_SAISON[saisonComte]) || BIOMES[biome] || BIOMES.comte;
+  // la couleur du feuillage : celle des arbres du paysage de la contrée (même formule : teinte(..., 0.78)) ; l'automne,
+  // les mallorns, les cyprès et les sapins gardent leurs couleurs à eux
+  let couleur = null;
+  if (['ronds', 'pommiers', 'saules', 'chenes'].includes(forme)) {
+    let base = b.arbres || b.pres;
+    if (forme === 'chenes' && b.arbres) base = melangeCouleur(b.arbres, 0x5a8a3a, 0.45);
+    if (forme === 'saules') base = melangeCouleur(b.arbres || b.pres, 0x8ab868, 0.3);
+    if (forme === 'ronds' || forme === 'pommiers') base = saisonComte ? b.arbres || b.pres : (b.arbres ? b.arbres : melangeCouleur(b.pres, 0x3a7a30, 0.35));
+    couleur = teinte(base, 0.78);
   }
-  const tex = scene.textures.createCanvas(cle, L, H), ctx = tex.getContext(), img = ctx.createImageData(L, H);
-  for (let k = 0; k < px.length; k++) { const c = px[k]; if (!c) continue; img.data[k * 4] = (c >> 16) & 255; img.data[k * 4 + 1] = (c >> 8) & 255; img.data[k * 4 + 2] = c & 255; img.data[k * 4 + 3] = 255; }
-  ctx.putImageData(img, 0, 0);
-  tex.refresh();
-  return cle;
+  const [L, Ht] = dim, H = Math.round(Ht * 0.9);
+  return toileArbreHD(scene, cle, esp, sa, H, 3 + graine * 7 + forme.length, { neige, couleur, L: Math.max(L, largeurArbre(esp, H)), Ht, mousse: forme === 'morts' });
 }
 
 // --- La façade du shop ---
@@ -1798,8 +1720,11 @@ function placeMarcheHD(scene) {
 // façon Terraria, quelques silhouettes en couches suffisent à faire sentir la forêt.
 function creerForetPremierPlanHD(scene) {
   if (scene.textures.exists('sapinPremierPlanHD')) return;
-  // Un sapin (56×190) : tronc épais, branches en étages qui retombent, un peu de mousse
-  {
+  // (v1.63) Un sapin tout près de l'œil (64×190), peint comme ceux des collines (arbresHD.js) : étages de branches qui
+  // retombent, aiguilles, lumière à gauche ; sombre, puisqu'on est sous les arbres
+  if (typeof toileArbreHD === 'function') toileArbreHD(scene, 'sapinPremierPlanHD', 'sapin', 'moissons', 182, 11, { L: 64, Ht: 190, couleur: 0x1e4a2a, etroit: 0.55, neige: false });
+  // (l'ancien sapin, si arbresHD.js manque)
+  else {
     const t = toileDecor(56, 190);
     t.rampes.sombre = rampe(0x14301a); t.rampes.tronc = rampe(0x2a1a10); t.rampes.mousse = rampe(0x3a6a2a);
     for (let y = 60; y < 190; y++) for (let x = 23; x < 33; x++) t.poser(x, y, 'tronc', x < 25 ? 3 : x > 30 ? 0 : 1 + (hachage(x, y, 91) > 0.7 ? 1 : 0));

@@ -1041,12 +1041,18 @@ class StoryScene extends Cinematique {
     if (va && va.arbres) return;   // (ses arbres à elle sont plantés par planterVarianteRecit)
     // (v1.62) dans le pré, sur tout le monde du récit, les pieds juste derrière la barrière du chemin
     const sol = PRE_RECIT.loin;
-    for (let x = -60; x < LARGEUR_RECIT + 60; x += 70 + (x * 3) % 50) {
+    // (v1.63) les arbres : peints comme tous les arbres (arbresHD.js, voir arbrePremierPlanHD), l'essence de la contrée
+    const forme = neige || biome === 'citadelle' ? 'sapinsNeige' : ['marais', 'bourbier'].includes(biome) ? 'morts' : biome === 'sanctuaire' ? 'mallorns' : ['foret', 'repaire', 'tour', 'grotte'].includes(biome) ? 'sapins' : biome === 'comte' ? 'ronds' : 'chenes';
+    const arbre = (x, k) => { const cle = arbrePremierPlanHD(this, forme, biome, k % 3); if (cle) this.arbresRecit = (this.arbresRecit || []).concat(dansPlan(this.planMoyen, this.add.image(x, sol + 3, cle).setOrigin(0.5, 1).setScale(0.62 + ((Math.abs(x) * 7) % 30) / 100).setFlipX((Math.abs(x) * 3) % 2 === 0).setTint(sombre ? 0xb0b0b8 : 0xf0f0ea))); };
+    let k = 0;
+    for (let x = -60; x < LARGEUR_RECIT + 60; x += 70 + (x * 3) % 50, k++) {
       const h = 60 + (x * 7) % 70, r = 22 + (x * 5) % 18;
       g.fillStyle(teinte, 0.8);
+      if (neige && k % 3 === 1) { arbre(x, k); continue; }   // (des sapins entre les rochers)
+      if (!rocheux) { if (k % 4 !== 3) arbre(x, k); continue; }   // (des trouées, pour que les arbres ne fassent pas un mur)
       if (rocheux) { g.fillTriangle(x - r * 1.4, sol, x, sol - h * (neige ? 1 : 0.6), x + r * 1.4, sol); g.fillStyle(melangeCouleur(teinte, 0xffffff, 0.15), 0.8).fillTriangle(x - r * 0.5, sol, x, sol - h * (neige ? 1 : 0.6), x + r * 0.2, sol); }
-      else { g.fillRect(x - 3, sol - h * 0.5, 6, h * 0.5); g.fillCircle(x, sol - h * 0.5 - r * 0.6, r); g.fillCircle(x - r * 0.7, sol - h * 0.5 - r * 0.2, r * 0.8); g.fillCircle(x + r * 0.7, sol - h * 0.5 - r * 0.2, r * 0.8); }
     }
+    this.planMoyen.sort('y');
   }
 
   // La météo de la contrée, en continu : pluie des marais, neige des montagnes, feuilles de la
@@ -1517,12 +1523,16 @@ class StoryScene extends Cinematique {
     for (const [a, b, y] of [[X - 36, X + 16, haut], [X + 206, X + 292, haut]]) for (let k = a + 3; k < b; k += 7) herbe.fillStyle(0x4a7a30, 0.9).fillRect(k, y + 2, 3, 4 + (k % 5) * 2);
     // le vieil arbre penché sur l'autre rive, et sa grosse branche au-dessus du vide
     const br = R.ravin.branche;
-    const arbre = ajouter(this.add.graphics().setDepth(1.3));
-    arbre.lineStyle(14, 0x4a3420).beginPath().moveTo(X + 262, haut).lineTo(X + 252, haut - 80).lineTo(X + 236, haut - 150).strokePath();
-    arbre.lineStyle(8, 0x5a4028).beginPath().moveTo(X + 246, haut - 104).lineTo(X + 180, haut - 112).lineTo(br.x, br.y).strokePath();
-    for (const [lx, ly, r] of [[X + 236, haut - 165, 34], [X + 266, haut - 150, 26], [X + 206, haut - 150, 24], [X + 150, haut - 126, 18], [X + 112, haut - 124, 14], [X + 250, haut - 190, 24]]) {
-      arbre.fillStyle(0x2f5a2a).fillCircle(lx, ly, r); arbre.fillStyle(0x3f7a34).fillCircle(lx - r * 0.25, ly - r * 0.25, r * 0.7);
-    }
+    // (v1.63 : peint comme tous les arbres, arbresHD.js, de la saison ; la toile à demi-résolution, affichée ×2, son
+    // coin en (X + 90, haut - 220) : la branche finit juste au point d'accroche du grappin)
+    const froid = NEIGES_RECIT.includes(this.biome), sa = froid ? 'givre' : saisonArbresContree(this.biome), nv = froid || neigeArbresContree(this.biome, sa);
+    const cleR = arbreSurMesureHD(this, `arbreRavin_${sa}${nv ? '_n' : ''}`, 110, 113, { saison: sa, neige: nv, graine: 9,
+      // le tronc qui se tord un peu en montant, ses racines agrippées au bord ; la grosse branche (un peu ployée) ; les branches de la couronne
+      traits: [[86, 110, 84, 92, 7.4, 6.6], [84, 92, 80, 72, 6.6, 5.8], [80, 72, 77, 52, 5.8, 4.8], [77, 52, 73, 35, 4.8, 3.9], [73, 35, 75, 20, 3.9, 2.5], [75, 20, 79, 9, 2.5, 1.3],
+        [86, 109, 76, 111, 3.4, 1.2], [86, 109, 97, 111, 3.6, 1.2], [79, 64, 62, 59, 4.6, 3.7], [62, 59, 45, 56, 3.7, 3], [45, 56, (br.x - X - 90) / 2, (br.y - haut + 220) / 2, 3, 2.2],
+        [62, 59, 55, 48, 1.9, 1], [45, 56, 36, 46, 1.7, 0.9], [75, 37, 92, 28, 2.5, 1.3], [74, 28, 62, 17, 2.1, 1.1], [77, 47, 95, 41, 2.1, 1.2], [76, 22, 88, 15, 1.6, 0.9]],
+      touffes: [[77, 11, 11], [66, 18, 10], [88, 21, 10], [75, 26, 13], [61, 30, 10], [94, 33, 9], [85, 37, 10], [52, 43, 8], [37, 43, 8], [23, 47, 8], [11, 47, 7], [57, 50, 7]] });
+    ajouter(this.add.image(X + 90, haut - 220, cleR).setOrigin(0, 0).setScale(2).setDepth(1.3));
   }
 
   // Il grimpe sur la falaise de gauche, de gradin en gradin, jusqu'au bord du vide.

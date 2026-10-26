@@ -97,32 +97,12 @@ function textureGueHD(scene, sol, cleFond, g = GUE) {
   return cle;
 }
 
-// Les arbres des rives : des aulnes au feuillage en plusieurs touffes, aux couleurs des arbres du paysage (roux à
-// l'automne, verts l'été, nus l'hiver) ; `buisson` : une touffe basse, pour le fond où la rivière disparaît
+// Les arbres des rives : des aulnes (v1.63 : peints comme tous les arbres, arbresHD.js), aux couleurs de la saison
+// (fleuris, verts, roux, nus et neigeux) ; `buisson` : une touffe basse, pour le fond où la rivière disparaît
+const SAISONS_ANCIENNES = { printemps: 'semailles', ete: 'moissons', automne: 'brumes', hiver: 'givre' };
 function arbreRiveHD(scene, saison, sorte = 'aulne', graine = 1) {
-  const cle = `arbreRive_${sorte}_${saison || 'x'}_${graine}`; if (scene.textures.exists(cle)) return cle;
-  const t = toileRepere(80, 120), nu = saison === 'hiver', vert = saison === 'printemps' || saison === 'ete';
-  t.rampes.feuille = rampe(vert ? 0x4a7030 : 0x84401f);
-  const h = (k, j) => hachage(k, j, 990 + graine);
-  // (la couronne : plusieurs touffes fondues en une seule masse, éclairée d'en haut à gauche comme un tout ; des creux
-  // plus sombres entre les touffes, quelques feuilles claires qui accrochent la lumière)
-  const couronne = (touffes, cx, cy, rx, ry) => t.forme('feuille', (x, y) => {
-    let dedans = false, creux = 1;
-    for (const [bx, by, r] of touffes) { const d = ((x + 0.5 - bx) / r) ** 2 + ((y + 0.5 - by) / (r * 0.85)) ** 2; if (d <= 1 - 0.18 * hachage(x >> 2, y >> 2, graine)) { dedans = true; creux = Math.min(creux, d); } }
-    if (!dedans) return null;
-    const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry;
-    return [dx, dy, Math.sqrt(Math.max(0.05, 1 - Math.min(1, dx * dx + dy * dy))) - (creux > 0.7 ? 0.25 : 0)];
-  }, { tramage: true, motif: (x, y) => (hachage(x, y, graine + 3) > 0.9 ? 0.7 : hachage(x, y, graine + 7) > 0.9 ? -0.6 : 0) });
-  if (sorte === 'buisson') {
-    const tf = []; for (let k = 0; k < 6; k++) tf.push([14 + k * 10 + h(k, 1) * 6, 104 - h(k, 2) * 8, 10 + h(k, 3) * 5]);
-    couronne(tf, 40, 98, 34, 16);
-  } else {
-    tronc(t, 40, 120, 64, 4);
-    ligne(t, 'rondin', 2, 40, 78, 22 + h(1, 1) * 6, 60, 2); ligne(t, 'rondin', 2, 40, 72, 58 - h(1, 2) * 6, 54, 2);
-    if (nu) { for (let k = 0; k < 6; k++) ligne(t, 'rondin', 1, 40 + (k - 2.5) * 6, 62 - k * 3, 40 + (k - 2.5) * 13, 30 + h(k, 5) * 12, 1); }
-    else couronne([[40, 40, 20], [22, 54, 14], [58, 52, 15], [30, 28, 13], [52, 30, 13], [40, 58, 12], [14, 64, 8], [66, 62, 8]].map(([x, y, r], k) => [x + (h(k, 6) - 0.5) * 6, y + (h(k, 7) - 0.5) * 4, r]), 40, 46, 30, 26);
-  }
-  t.contour(); t.texture(scene, cle); return cle;
+  const sa = SAISONS_ANCIENNES[saison] || saison || 'moissons';
+  return sorte === 'buisson' ? arbreHD(scene, 'buisson', sa, 40, 40 + graine) : arbreHD(scene, 'aulne', sa, 110, 40 + graine);
 }
 
 // Le gué posé dans le monde : un conteneur (qui défile avec la route) avec la texture, le courant (des rides qui
@@ -134,7 +114,7 @@ function poserGueHD(scene, sol, cleFond, g = GUE) {
   const c = scene.add.container(0, 0), devant = scene.add.container(0, 0);
   c.add(scene.add.image(X0, y0, textureGueHD(scene, sol, cleFond, g)).setOrigin(0).setScale(2));
   const saison = typeof saisonActuelle === 'function' ? saisonActuelle() : null;
-  const vert = saison === 'printemps' || saison === 'ete', teinteArbre = 0xffffff, teinteRoseau = vert ? 0xffffff : saison === 'hiver' ? 0xb0a890 : 0xe0c88a;
+  const vert = saison === 'semailles' || saison === 'moissons', teinteArbre = 0xffffff, teinteRoseau = vert ? 0xffffff : saison === 'givre' ? 0xb0a890 : 0xe0c88a;   // (v1.63 : les vrais noms des saisons)
   // les arbres du fond : la rivière sort de sous leurs branches (on ne voit pas d'où elle vient : elle vient de loin)
   for (const [X, dy, e, s2] of [[-40, 4, 0.5, 'aulne'], [26, 0, 0.56, 'aulne'], [-6, 8, 0.6, 'buisson'], [70, 6, 0.42, 'aulne'], [-92, 8, 0.4, 'buisson'], [44, 10, 0.5, 'buisson']]) c.add(scene.add.image(meandreGue(sol - g.loin, sol, g) + X, sol - g.loin + dy, arbreRiveHD(scene, saison, s2, Math.abs(X) % 5)).setOrigin(0.5, 1).setScale(e * 1.15).setTint(teinteArbre));
   // un saule (ou un aulne) sur chaque rive, au bord de la route : la rivière a ses arbres

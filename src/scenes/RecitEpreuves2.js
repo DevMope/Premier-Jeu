@@ -123,7 +123,7 @@ Object.assign(SCENES_EPREUVES, {
       const M = this.menace;
       M.cx = Math.min(X + 170, 840); M.cy = 150;
       // deux arbres morts, et la grande toile tendue entre eux
-      for (const [dx, f] of [[-150, false], [150, true]]) this.garder(this.add.image(M.cx + dx, SOL_RECIT + 4, 'arbreMortHD').setOrigin(0.5, 1).setScale(2.6).setFlipX(f).setDepth(1.2));
+      for (const [k, [dx, f]] of [[-150, false], [150, true]].entries()) this.garder(this.imageArbre(M.cx + dx, SOL_RECIT + 4, 'mort', k).setScale(2.6).setFlipX(f).setDepth(1.2));
       const t = M.toile = this.garder(this.add.graphics().setDepth(1.3));
       t.lineStyle(1.5, 0xf0f0f0, 0.7);
       for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; t.lineBetween(M.cx, M.cy, M.cx + Math.cos(a) * 150, M.cy + Math.sin(a) * 120); }
@@ -465,7 +465,7 @@ Object.assign(SCENES_EPREUVES, {
       } else {
         if (M.lac) this.plan_eau(Math.min(X + 220, 760), 420, 30, 0x8090c0);
         for (const [i, [ax, e]] of [[X - 200, 2.2], [X + 320, 2.4], [X + 40, 1.8]].entries()) {
-          const a = this.garder(this.add.image(ax, SOL_RECIT + 4, 'arbreRecitHD').setOrigin(0.5, 1).setScale(e).setDepth(1 + i * 0.01));
+          const a = this.garder(this.imageArbre(ax, SOL_RECIT + 4, 'feuillu', i).setScale(e).setDepth(1 + i * 0.01));
           if (M.argent) a.setTint(0xd8e4f0);
         }
         for (const [px, e] of [[X + 120, 2], [X + 200, 2.4]]) this.garder(this.add.image(px, SOL_RECIT + 4, 'pierreLeveeHD').setOrigin(0.5, 1).setScale(e).setDepth(1.2));
@@ -562,7 +562,7 @@ Object.assign(SCENES_EPREUVES, {
         if (M.tour) for (const x of [200, 600]) { g.fillStyle(0x3a2a50).fillRect(x, 60, 60, 120); g.fillStyle(0x8a60c0, 0.5).fillRect(x + 8, 68, 44, 104); }
       } else {
         // le cimetière : des tombes de travers, une grille, un arbre mort
-        this.garder(this.add.image(X - 160, SOL_RECIT + 4, 'arbreMortHD').setOrigin(0.5, 1).setScale(2.4).setDepth(1.05));
+        this.garder(this.imageArbre(X - 160, SOL_RECIT + 4, 'mort', 0).setScale(2.4).setDepth(1.05));
         const grille = this.garder(this.add.graphics().setDepth(1.1));
         for (let x = 0; x < 960; x += 16) { grille.fillStyle(0x1a1a20).fillRect(x, SOL_RECIT - 70, 3, 70); grille.fillTriangle(x - 2, SOL_RECIT - 70, x + 5, SOL_RECIT - 70, x + 1.5, SOL_RECIT - 78); }
         grille.fillStyle(0x1a1a20).fillRect(0, SOL_RECIT - 60, 960, 3).fillRect(0, SOL_RECIT - 20, 960, 3);
@@ -703,7 +703,7 @@ Object.assign(SCENES_EPREUVES, {
         g.fillStyle(0x3a3040).fillRect(-50, -50, 1060, 415);
         for (let y = 30; y < 360; y += 22) for (let x = (y / 22) % 2 ? 0 : 26; x < 960; x += 52) g.fillStyle(0x4a4050).fillRect(x, y, 50, 20);
       } else {
-        for (const [ax, e] of [[X - 160, 2.2], [X + 330, 2.4]]) this.garder(this.add.image(ax, SOL_RECIT + 4, 'arbreRecitHD').setOrigin(0.5, 1).setScale(e).setDepth(1.05).setTint(0xb0c8d8));
+        for (const [k, [ax, e]] of [[X - 160, 2.2], [X + 330, 2.4]].entries()) this.garder(this.imageArbre(ax, SOL_RECIT + 4, 'feuillu', k).setScale(e).setDepth(1.05).setTint(0xb0c8d8));
       }
       // l'autel et ce qui est maudit dessus
       M.ax = Math.min(p.x + 170, 860);
@@ -791,7 +791,7 @@ Object.assign(SCENES_EPREUVES, {
       this.plan_eau(M.ex + 60, 380, 34, 0x6a8aa0);
       const g = this.garder(this.add.graphics().setDepth(1.6));
       for (const rx of [M.ex - 140, M.ex - 120, M.ex + 260]) for (let k = 0; k < 5; k++) g.lineStyle(2, 0x4a6a3a).lineBetween(rx + k * 4, SOL_RECIT + 2, rx + k * 5 - 6, SOL_RECIT - 30 - (k % 2) * 12);
-      for (const [ax, e] of [[X - 180, 2], [M.ex + 300, 2.2]]) this.garder(this.add.image(ax, SOL_RECIT + 4, 'arbreMortHD').setOrigin(0.5, 1).setScale(e).setDepth(1.05));
+      for (const [k, [ax, e]] of [[X - 180, 2], [M.ex + 300, 2.2]].entries()) this.garder(this.imageArbre(ax, SOL_RECIT + 4, 'mort', k).setScale(e).setDepth(1.05));
       this.brume(0x90a8b8, 0.25, 320, 2.5);
       this.obscurite(0.6, 0x020810);
       this.cielDeNuit();
@@ -854,7 +854,7 @@ Object.assign(SCENES_EPREUVES, {
         const c = this.garder(this.add.image(Math.min(cx, 940), SOL_RECIT + 3, 'champignonsHD').setOrigin(0.5, 1).setScale(e).setDepth(cx < X ? 2 : 2.6));
         M.champis.push(c);
       }
-      for (const [ax, e] of [[X - 200, 2.2], [X + 360, 2.4]]) this.garder(this.add.image(ax, SOL_RECIT + 4, 'arbreRecitHD').setOrigin(0.5, 1).setScale(e).setDepth(1.05));
+      for (const [k, [ax, e]] of [[X - 200, 2.2], [X + 360, 2.4]].entries()) this.garder(this.imageArbre(ax, SOL_RECIT + 4, 'feuillu', k).setScale(e).setDepth(1.05));
       this.vent(0xd0ff60, { vx: 0.1, vy: -0.5, n: 1, echelle: 0.9, alpha: 0.6, duree: 2400 });
     },
     async avant() {
@@ -1101,7 +1101,7 @@ Object.assign(SCENES_EPREUVES, {
       }
       g.fillStyle(0xf0f6fa).fillRect(-50, SOL_RECIT - 4, 1060, 30);
       for (let x = -40; x < 1000; x += 30) g.fillStyle(0xffffff).fillEllipse(x, SOL_RECIT - 4, 50, 10);
-      for (const [ax, e] of [[X - 180, 2.2], [X + 300, 2.4]]) this.garder(this.add.image(ax, SOL_RECIT + 4, 'arbreMortHD').setOrigin(0.5, 1).setScale(e).setTint(0xd8e8f8).setDepth(1.05));
+      for (const [k, [ax, e]] of [[X - 180, 2.2], [X + 300, 2.4]].entries()) this.garder(this.imageArbre(ax, SOL_RECIT + 4, 'mort', k).setScale(e).setTint(0xd8e8f8).setDepth(1.05));
       this.ciel(0x8aa8d0, 0.35, 600);
       if (M.brumeux) this.brume(0xe0e8f0, 0.35, 290, 6.7);
       M.neige = this.vent(0xffffff, { vx: -1.6, vy: 0.6, n: 5, echelle: 1.1, duree: 1200 });

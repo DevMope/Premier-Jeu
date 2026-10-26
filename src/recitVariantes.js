@@ -508,8 +508,9 @@ function planterVivant(scene, quoi) {
     }
     poser(panierPommesHD(scene), 395, 355);
     const pommiers = (scene.arbresRecit || []).filter(a => a.active);
+    const saV = saisonArbresContree(scene.biome);   // (v1.63 : les pommes ne tombent qu'à la saison des pommes)
     const chute = () => {
-      const arbre = pommiers.length ? Phaser.Utils.Array.GetRandom(pommiers) : null;
+      const arbre = pommiers.length && saV === 'moissons' ? Phaser.Utils.Array.GetRandom(pommiers) : null;
       if (!arbre || !arbre.active) return;
       const x = arbre.x + Phaser.Math.Between(-18, 18), y0 = arbre.y - arbre.displayHeight * 0.62, sol = PRE_RECIT.pres - 2;
       const p = dansPlan(plan, scene.add.image(x, y0, pommeHD(scene)).setOrigin(0.5, 1).setScale(2));
@@ -534,10 +535,12 @@ function planterVivant(scene, quoi) {
     apres(2500, relever);
     for (const [x, y] of [[330, 350], [342, 352], [470, 351], [1300, 350]]) poser(champignonHD(scene), x, y);
     const arbres = (scene.arbresRecit || []).filter(a => a.active);
-    scene.time.addEvent({ delay: 900, loop: true, callback: () => {
-      const a = arbres.length ? Phaser.Utils.Array.GetRandom(arbres) : null;
+    // (v1.63) les feuilles qui tombent sont celles de la saison (aucune l'hiver : les arbres sont nus)
+    const saF = saisonArbresContree(scene.biome), teintesF = { semailles: [0x8aba4a, 0x7aaa3a], moissons: [0x8aaa3a, 0xb8a040, 0x6a9a34], brumes: [0xd08a2a, 0xa86a28, 0xc85a20] }[saF];
+    scene.time.addEvent({ delay: saF === 'brumes' ? 600 : 1500, loop: true, callback: () => {
+      const a = arbres.length && teintesF ? Phaser.Utils.Array.GetRandom(arbres) : null;
       if (!a || !a.active) return;
-      const f = dansPlan(plan, scene.add.image(a.x + Phaser.Math.Between(-30, 30), a.y - a.displayHeight * 0.7, feuilleHD(scene, Phaser.Utils.Array.GetRandom([0xd08a2a, 0xa86a28, 0x8aaa3a]))).setScale(2));
+      const f = dansPlan(plan, scene.add.image(a.x + Phaser.Math.Between(-30, 30), a.y - a.displayHeight * 0.7, feuilleHD(scene, Phaser.Utils.Array.GetRandom(teintesF))).setScale(2));
       // elle tombe en se balançant et en tournant, et se pose
       const x0 = f.x, u = { t: 0 };
       scene.tweens.add({ targets: u, t: 1, duration: 3600, ease: 'Linear', onUpdate: () => { if (f.active) f.setPosition(x0 + Math.sin(u.t * 9) * 14 - u.t * 30, f.y + (PRE_RECIT.pres - 4 - f.y) * 0.012).setAngle(Math.sin(u.t * 9) * 40); },
@@ -608,7 +611,7 @@ function planterVarianteRecit(scene, zone, biome) {
     for (let x = -60; x < LARGEUR_RECIT + 60; x += 90 + (Math.abs(x) * 3) % 70) {
       if (trous.some(([a, c]) => x > a && x < c)) continue;
       const pied = PRE_RECIT.loin - ((Math.abs(x) * 7) % 5);
-      if (peint) scene.arbresRecit.push(dansPlan(scene.planMoyen, scene.add.image(x, pied + 3, arbrePremierPlanHD(scene, v.arbres, biome, Math.floor(Math.abs(x) / 90) % 3)).setOrigin(0.5, 1).setScale(0.78 + ((Math.abs(x) * 7) % 34) / 100).setFlipX((Math.abs(x) * 3) % 2 === 0)));
+      if (peint) scene.arbresRecit.push(dansPlan(scene.planMoyen, scene.add.image(x, pied + 3, arbrePremierPlanHD(scene, v.arbres, biome, Math.floor(Math.abs(x) / 90) % 3)).setOrigin(0.5, 1).setScale(0.86 * (0.78 + ((Math.abs(x) * 7) % 34) / 100)).setFlipX((Math.abs(x) * 3) % 2 === 0)));   // (v1.63 : ×0,86, la hauteur des anciens : ils ne cachent pas plus le repère)
       else if (cleArbre) scene.arbresRecit.push(dansPlan(scene.planMoyen, scene.add.image(x, pied, cleArbre).setOrigin(0.5, 1).setScale(0.75 + ((Math.abs(x) * 7) % 40) / 100).setFlipX((Math.abs(x) * 3) % 2 === 0).setTint(sombre ? 0x9a9aa0 : 0xe8e8e0)));
       else dessinerArbreVariante(g, v.arbres, x, pied, 60 + (Math.abs(x) * 7) % 70, 22 + (Math.abs(x) * 5) % 18, teinte);
     }
