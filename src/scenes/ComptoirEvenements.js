@@ -145,6 +145,7 @@ Object.assign(CounterScene.prototype, {
         const r = evtParents(G, e);
         this.choix([r.mendiantLaDit ? '« Le mendiant aussi... »' : '« Quelle chanson ? »', () => {
           this.evtDire(`${r.mendiantLaDit ? "« Un mendiant ? » (Il sourit sans comprendre.) " : ''}Il fredonne trois notes, s'arrête, secoue la tête. « Envolée. Elle reviendra peut-être. »`, 'parents');
+          this.evtFredon(3);
           this.bouton('Le laisser partir', () => this.evtFin());
         }], ['Le laisser partir', () => this.evtFin()]);
       });
@@ -152,7 +153,8 @@ Object.assign(CounterScene.prototype, {
     }
     if (e.etape === 2) {
       this.exprimer('neutre');
-      this.evtDire("Encore moi. J'ai rêvé d'un lac, cette nuit. De la brume sur l'eau, et de quelqu'un qui chantait en reprisant. (Il te regarde.) Pourquoi je te raconte ça ?", 'parents');
+      this.evtDire("Encore moi. J'ai rêvé d'un lac, cette nuit. De la brume sur l'eau, et de quelqu'un qui chantait en reprisant. (Il fredonne un peu.) Pourquoi je te raconte ça ?", 'parents');
+      this.evtPlus(700, () => this.evtFredon(7));
       const fin = t => { evtParents(G, e); this.evtDire(t, 'parents'); this.bouton('« À bientôt, monsieur. »', () => this.evtFin()); };
       this.choix(['« Qui chantait ? »', () => { this.exprimer('inquiet'); fin("Je ne sais plus. La chanson s'arrêtait toujours au même endroit, je crois... (Il se frotte le front.) Pardonne un vieux fou."); }],
         ['« Je dois servir. »', () => fin("Bien sûr, bien sûr. (Il s'écarte de la fenêtre, sans cesser de fredonner.)")]);
@@ -164,7 +166,8 @@ Object.assign(CounterScene.prototype, {
       this.bouton('« Qui ? »', () => {
         evtParents(G, e);
         this.exprimer('neutre');
-        this.evtDire("Les visages, je les ai perdus. (Il fixe tes mains, longtemps.) Le paquet était si léger. Je me demande ce qu'il est devenu.", 'parents');
+        this.evtDire("Les visages, je les ai perdus. (Il fixe tes mains, puis fredonne, très bas, un air que tu crois connaître.) Le paquet était si léger. Je me demande ce qu'il est devenu.", 'parents');
+        this.evtPlus(600, () => this.evtFredon(14));
         this.bouton('...', () => this.evtFin());
       });
       return;
@@ -177,6 +180,7 @@ Object.assign(CounterScene.prototype, {
       this.evtPoser('evt_berceuse', SILL_GAUCHE_EVT);
       this.evtDire("(Il pose sur le comptoir une vieille page pliée en quatre.) Je l'ai gardée toute ma vie sans savoir pourquoi. Elle est à toi, je crois.", 'parents');
       this.bouton('Prendre la page', () => {
+        this.evtFredon(BERCEUSE.melodie.length);   // (il s'en va en la fredonnant tout entière, pour la première fois)
         for (const o of this.evtObjets) if (o.texture && o.texture.key === 'evt_berceuse') this.tweens.add({ targets: o, y: o.y + 30, alpha: 0, duration: 400 });
         this.raconter("Une berceuse, d'une écriture fine. Quand tu relèves les yeux, le vieil homme s'éloigne déjà... et la rue semble l'effacer à chaque pas.");
         this.bouton('...', null);
@@ -349,16 +353,27 @@ Object.assign(CounterScene.prototype, {
           const r = evtBarde(G, e, 'payer'); this.bourse.maj(G.argent);
           this.exprimer(r.paye ? 'content' : 'neutre');
           this.evtDire(r.paye ? 'Merci ! Je la chanterai de tout mon cœur, et le marché entier la fredonnera !' : 'Comme vous voudrez... (Elle accorde son luth en souriant.) Il faudra bien que je change un couplet ou deux.', 'barde');
-          this.bouton('« Bonne route ! »', () => this.evtFin());
+          this.finBarde();
         }], ['« Elle est très bien ainsi. »', () => {
           evtBarde(G, e, 'refuser');
           this.exprimer('neutre');
           this.evtDire('Comme vous voudrez... (Elle accorde son luth en souriant.) Il faudra bien que je change un couplet ou deux.', 'barde');
-          this.bouton('« Bonne route ! »', () => this.evtFin());
+          this.finBarde();
         }]);
       });
     });
   },
+  // (la berceuse du lac) si tu as la page, tu peux lui en parler : elle ne la connaît pas
+  finBarde() {
+    if (typeof berceuseConnue !== 'function' || !berceuseConnue(this.G)) return this.bouton('« Bonne route ! »', () => this.evtFin());
+    this.choix(['« Et la berceuse du lac ? »', () => {
+      this.exprimer('inquiet');
+      this.evtDire("La berceuse du lac ? (Elle pince quelques cordes, cherche, puis secoue la tête.) Je connais toutes les chansons de la Comté... pas celle-là. Qui vous l'a apprise ?", 'barde');
+      this.bouton('« Personne, vraiment. »', () => this.evtFin());
+    }], ['« Bonne route ! »', () => this.evtFin()]);
+  },
+  // Le vieux voyageur fredonne un fragment de la berceuse (un peu plus à chaque visite)
+  evtFredon(n) { if (typeof BERCEUSE !== 'undefined') Son.jouer('berceuse', { instrument: 'fredon', octave: -1, notes: n }); },
   // Les quatre vers, un par un, sur un parchemin ; les notes qui s'envolent du luth
   chansonEvt(vers, luth, suite) {
     // (le parchemin des paroles se pose sur la réserve : la barde reste visible dans la fenêtre)
