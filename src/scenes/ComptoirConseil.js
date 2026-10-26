@@ -105,7 +105,7 @@ Object.assign(CounterScene.prototype, {
     if (this.feuilleConseil) { this.feuilleConseil.destroy(); this.feuilleConseil = null; }
     const G = this.G, c = info.c || G.commandeRoyale;
     if (!c) return;
-    const F = this.feuilleConseil = this.add.container(815, 135).setDepth(2.5);
+    const F = this.feuilleConseil = this.add.container(793, 150).setScale(0.88).setDepth(2.5);
     if (etat === 'scellee') {
       const L = this.add.container(0, 0).setAngle(-6);
       L.add(this.add.image(0, 0, panneauHD(this, 200, 140)).setScale(2));
