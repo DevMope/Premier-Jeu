@@ -178,13 +178,15 @@ class RenovationScene extends Cinematique {
     });
     const fenetre = this.add.image(o + FENETRE.x - 16, FENETRE.y - 16, 'cadreFenetre').setOrigin(0).setScale(2);
     const ardoise = this.add.image(o + 20, 20, 'ardoiseComptoir').setOrigin(0).setScale(2);
-    const parchemin = this.add.image(o + 685, 20, 'parcheminComptoir').setOrigin(0).setScale(2);
+    // (v1.63, planche 81 v2) l'étagère, le tableau de la commande et l'horloge du coin
+    const decor = poserDecorMatin(this, 'champetre', { ox: o, heure: 10, jour: 1 });
+    decor.calendrier.setText('1');
     const plateau = this.add.image(o, 340, plateauComptoir(this, 0)).setOrigin(0).setScale(2);
     const registre = this.add.image(o + 75, 368, 'registreComptoir').setScale(2);
     this.endroit('comptoir', 'Les murs', morceaux, [o, 254, 960, 84], { toiles: 2 });
     this.endroit('comptoir', 'La fenêtre', [fenetre], [o + FENETRE.x, FENETRE.y, FENETRE.w, FENETRE.h], { planches: true, toiles: 2 });
     this.endroit('comptoir', "L'ardoise", [ardoise], [o + 20, 20, 250, 230], { toiles: 1 });
-    this.endroit('comptoir', 'Le tableau des commandes', [parchemin], [o + 685, 20, 260, 230], { toiles: 1 });
+    this.endroit('comptoir', 'Le tableau des commandes', [decor.etagere, decor.tableau, decor.horloge], [o + 682, 6, 274, 246], { toiles: 1 });
     this.endroit('comptoir', 'Le comptoir', [plateau], [o + 140, 350, 560, 190], { toiles: 2 });
     this.endroit('comptoir', 'Le registre', [registre], [o + 17, 340, 120, 60], { toiles: 0 });
   }

@@ -35,7 +35,7 @@ Object.assign(CounterScene.prototype, {
     this.dire(`« ${m.donne.toLocaleString('fr-FR')} pièces, mon enfant. Autant de pièces pour les nôtres. Le Rempart tient debout grâce à des cœurs comme le tien. Je voulais te le dire en face. »`, 'Le Grand Sage — Gardien du Rempart', 'Le Grand Sage');
     // le tableau des paliers, sans aucun gain d'argent
     if (this.feuilleConseil) { this.feuilleConseil.destroy(); this.feuilleConseil = null; }
-    const F = this.feuilleConseil = this.add.container(815, 135).setDepth(2.5);
+    const F = this.feuilleConseil = this.add.container(793, 150).setScale(0.88).setDepth(2.5);
     F.add(this.add.image(0, 0, panneauHD(this, 236, 214)).setScale(2));
     F.add(this.add.text(0, -86, 'Ton mécénat', style(15, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
     F.add(this.add.text(0, -66, 'rien en argent : un honneur', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
