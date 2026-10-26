@@ -238,7 +238,7 @@ class StoryScene extends Cinematique {
     this.couches = [];        // [objet, facteur de défilement]
     this.raisLumiere = null; this.arbresRecit = []; this.reperesRecit = []; this.lacX = this.lacY = null;
     const H = 386;            // (le haut du chemin tombe en y = 360, sous les pieds du voyageur)
-    const cle = paysageHD(this, LARGEUR_RECIT + 40, H, biome, 0, { couches: true });
+    const cle = paysageHD(this, LARGEUR_RECIT + 40, H, biome, 0, { couches: true, reserves: typeof emprisesRepere === 'function' ? emprisesRepere(varianteRecit(this.parti.voyageur.zone)) : null });   // (planche 91 : la place des repères fondus)
     const cleCiel = paysageHD(this, 1080, H, biome, 0, { couches: true });
     const plan = (k, f, prof) => { const im = this.add.image(-40, (this.textures.get(k).haut || 0) * 2, k).setOrigin(0).setScale(2).setScrollFactor(f, 1).setDepth(prof); this.couches.push([im, f]); return im; };
     const conteneur = (f, prof) => { const c = this.add.container(0, 0).setDepth(prof).setScrollFactor(f, 1); c.facteur = f; this.couches.push([c, f]); return c; };
