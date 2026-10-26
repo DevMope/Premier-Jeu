@@ -1627,9 +1627,21 @@ class CounterScene extends Phaser.Scene {
 
   // --- Déroulement ---
 
+  // (v1.63) D'une personne à l'autre, le personnage de la fenêtre repart de zéro. Avant, la marche de celui qui
+  // s'en allait continuait sur l'image suivante : son corps en pied revenait, à l'échelle du buste, sur le nouveau venu
+  // (« le géant coupé en haut », avec presque tous les personnages).
+  remettrePerso() {
+    const p = this.perso;
+    if (p.marche) { p.marche.remove(); p.marche = null; }
+    p.phaseMarche = null;
+    this.tweens.killTweensOf(p);
+    p.setCrop().setAngle(0).setFlipX(false).setAlpha(1).clearTint().setOrigin(0.5, 1);
+  }
+
   voyageurSuivant() {
     if (this.nettoyerEvenement) this.nettoyerEvenement();   // (v1.63) ce que le dernier événement avait posé
     this.buste = null;
+    this.remettrePerso();
     this.entree = null;
     this.voyageur = null;
     this.enService = false;
@@ -2120,6 +2132,7 @@ class CounterScene extends Phaser.Scene {
 
   montrerBuste(personne, expression = 'neutre') {
     this.buste = { personne, expression };
+    if (this.perso.marche) { this.perso.marche.remove(); this.perso.marche = null; }   // (un buste ne marche pas : voir remettrePerso)
     this.perso.setTexture(textureBusteHD(this, personne, expression)).setOrigin(0.5, 1).setFlipX(false).setAngle(0)
       .setPosition(FENETRE.x + FENETRE.w / 2, FENETRE.y + FENETRE.h + tailleBuste(personne).bas)
       .setScale(BUSTE.echelle * tailleBuste(personne).echelle).setVisible(true);
