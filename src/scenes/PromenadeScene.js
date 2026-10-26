@@ -5,13 +5,13 @@
 // et on regarde la rue par la fenêtre. Tout est tel que tu l'as amélioré, à la lueur des bougies.
 const PIECES_PROMENADE = [
   { nom: 'Ta chambre', x: 0 },
-  { nom: "L'arrière-boutique", x: 960 },
-  { nom: 'Le comptoir, la nuit', x: 1920, marche: false },
-  { nom: "L'atelier", x: 2880 },
-  { nom: 'Dehors, sous les étoiles', x: 3840, largeur: LARGEUR_RUE },   // (v0.65 : toute la rue, la caméra suit)
+  { nom: "L'arrière-boutique", x: 960, largeur: LARGEUR_ARRIERE },   // (v1.64 : un peu plus large, pour la porte du bureau ; la caméra suit)
+  { nom: 'Le comptoir, la nuit', x: 1920 + ELARGI_ARRIERE, marche: false },
+  { nom: "L'atelier", x: 2880 + ELARGI_ARRIERE },
+  { nom: 'Dehors, sous les étoiles', x: 3840 + ELARGI_ARRIERE, largeur: LARGEUR_RUE },   // (v0.65 : toute la rue, la caméra suit)
 ];
 const P_CHAMBRE = 0, P_ARRIERE = 1, P_COMPTOIR = 2, P_ATELIER = 3, P_DEHORS = 4;
-const LARGEUR_PROMENADE = 3840 + LARGEUR_RUE;
+const LARGEUR_PROMENADE = 3840 + ELARGI_ARRIERE + LARGEUR_RUE;
 const SOL_PROMENADE = 505;
 
 class PromenadeScene extends Cinematique {
@@ -94,9 +94,9 @@ class PromenadeScene extends Cinematique {
     // La chambre : une porte vers l'arrière-boutique
     porte(900, { piece: P_ARRIERE, x: o[P_ARRIERE].x + 640 }, "L'arrière-boutique", { sol: SOL_PROMENADE - 10 });
     // L'arrière-boutique : la porte de la chambre (déjà dessinée), et le passage vers le comptoir
-    porte(o[P_ARRIERE].x + 688, { piece: P_CHAMBRE, x: 840 }, 'Ta chambre', { dessiner: false, sol: SOL_ARRIERE });
+    porte(o[P_ARRIERE].x + PORTES_ARRIERE.chambre, { piece: P_CHAMBRE, x: 840 }, '', { dessiner: false, sol: SOL_ARRIERE });   // (v1.64 : sa plaque de laiton dit « La chambre »)
     // (v0.84) la porte de derrière : on sort dans la rue sans repasser par le comptoir
-    porte(o[P_ARRIERE].x + 898, { piece: P_DEHORS, x: this.porteShop.x + 60 }, 'La rue', { dessiner: false, sol: SOL_ARRIERE, large: 108, haut: 180, ecriteauY: SOL_ARRIERE - 198 });
+    porte(o[P_ARRIERE].x + 898 + ELARGI_ARRIERE, { piece: P_DEHORS, x: this.porteShop.x + 60 }, 'La rue', { dessiner: false, sol: SOL_ARRIERE, large: 108, haut: 180, ecriteauY: SOL_ARRIERE - 198 });
     porte(o[P_ARRIERE].x + 22, { piece: P_COMPTOIR, x: 0 }, '◀ Le comptoir', { dessiner: false, sol: SOL_ARRIERE + 30, ecriteauX: 58, ecriteauY: SOL_ARRIERE + 18 });   // (v0.57 : un simple passage au bord, sans porte devant l'étagère)
     // Le comptoir : on n'y marche pas ; comme dans la journée, on se retourne vers
     // l'arrière-boutique ou l'atelier d'un bouton, et la fenêtre donne sur la rue
@@ -334,11 +334,13 @@ class PromenadeScene extends Cinematique {
       ArriereScene.prototype.dessinerBuffet.call(this);
       ArriereScene.prototype.dessinerPorte.call(this);
       ArriereScene.prototype.dessinerPorteRue.call(this);
+      ArriereScene.prototype.dessinerPorteBureau.call(this);   // (v1.64, planche 82 v2)
       ArriereScene.prototype.dessinerDecos.call(this);
     });
+    for (const porte of [this.porteChambre, this.porteBureau]) if (porte) porte.decaler(960);
     this.lumieres.push([960 + 640, 90, 3], [960 + 514, SOL_ARRIERE - 30, 1.6]);
     this.armoire(etagere);
-    this.regarder(960 + 680, 300, 160, 140, `Ta fortune : ${G.argent} pièces.` + (G.prets.length ? ` Et ${G.prets.reduce((a, p) => a + p.restant, 0)} p. de dette...` : ''));
+    this.regarder(960 + 680 + ELARGI_ARRIERE, 300, 160, 140, `Ta fortune : ${G.argent} pièces.` + (G.prets.length ? ` Et ${G.prets.reduce((a, p) => a + p.restant, 0)} p. de dette...` : ''));
     // (v0.82, étape 10b) le passage vers la forge, au fond de l'arrière-boutique
     if (forgeProposee(G)) {
       const t = this.add.text(960 + 300, 150, forgeConstruite(G) ? '⚒ La forge ▸' : '⚒ Le coin de la forge ▸', style(14, '#f3d98a', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 10, y: 5 } })).setOrigin(0.5).setDepth(8.6).setInteractive({ useHandCursor: true });
@@ -388,7 +390,7 @@ class PromenadeScene extends Cinematique {
   }
 
   pieceComptoir() {
-    const G = this.G, o = 1920, { x, y, w, h } = FENETRE;
+    const G = this.G, o = PIECES_PROMENADE[P_COMPTOIR].x, { x, y, w, h } = FENETRE;
     const cle = paysageHD(this, w, h, 'comte', 0.9);
     const tex = this.textures.get(cle).getSourceImage();
     this.add.image(o + x, y, cle).setOrigin(0).setScale(w / tex.width, h / tex.height);
@@ -417,7 +419,7 @@ class PromenadeScene extends Cinematique {
   }
 
   pieceAtelier() {
-    const G = this.G, o = 2880;
+    const G = this.G, o = PIECES_PROMENADE[P_ATELIER].x;
     // Le haut du mur crépi, avec ses poutres, au-dessus de la pièce de l'atelier
     if (!this.textures.exists('murAtelierHaut')) {
       const t = toileDecor(480, 180);
@@ -438,7 +440,7 @@ class PromenadeScene extends Cinematique {
 
   // (v0.65, étape 10c) Toute la rue, de l'impasse du marché noir jusqu'à l'arche du marché.
   pieceDehors() {
-    const o = 3840;
+    const o = PIECES_PROMENADE[P_DEHORS].x;
     const ici = {
       regarder: (x, y, l, h, texte) => this.regarder(x, y, l, h, texte),
       porte: (x, sol, etiquette, page, { large = 80, haut = 110 } = {}) => {
