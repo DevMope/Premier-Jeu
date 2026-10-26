@@ -236,9 +236,9 @@ class StoryScene extends Cinematique {
   creerMonde(biome) {
     this.base = 0;            // où commence, dans le monde, le repère de l'épreuve en cours (voir recaler)
     this.couches = [];        // [objet, facteur de défilement]
-    this.raisLumiere = null; this.arbresRecit = []; this.lacX = this.lacY = null;
+    this.raisLumiere = null; this.arbresRecit = []; this.reperesRecit = []; this.lacX = this.lacY = null;
     const H = 386;            // (le haut du chemin tombe en y = 360, sous les pieds du voyageur)
-    const cle = paysageHD(this, LARGEUR_RECIT + 40, H, biome, 0, { couches: true });
+    const cle = paysageHD(this, LARGEUR_RECIT + 40, H, biome, 0, { couches: true, reserves: typeof emprisesRepere === 'function' ? emprisesRepere(varianteRecit(this.parti.voyageur.zone)) : null });   // (planche 91 : la place des repères fondus)
     const cleCiel = paysageHD(this, 1080, H, biome, 0, { couches: true });
     const plan = (k, f, prof) => { const im = this.add.image(-40, (this.textures.get(k).haut || 0) * 2, k).setOrigin(0).setScale(2).setScrollFactor(f, 1).setDepth(prof); this.couches.push([im, f]); return im; };
     const conteneur = (f, prof) => { const c = this.add.container(0, 0).setDepth(prof).setScrollFactor(f, 1); c.facteur = f; this.couches.push([c, f]); return c; };
@@ -318,6 +318,7 @@ class StoryScene extends Cinematique {
       this.modeFiche = await this.choisirRecitOuFiche();
       if (this.modeFiche) return this.conclure();
     } else await this.attendreClic();
+    if (typeof decouverteDuLieu === 'function') await decouverteDuLieu(this, 'depart');   // (planche 91 : la première fois au val d'Ardévanne, à Sérambre)
 
     for (let i = 0; i < r.etapes.length; i++) {
       const { epreuve, niveau, reussie, pvApres, piege, pvAvant, sauvee, repli, saignement, fane } = r.etapes[i];
@@ -408,6 +409,7 @@ class StoryScene extends Cinematique {
       await this.attendreClic();
     }
 
+    if (typeof decouverteDuLieu === 'function') await decouverteDuLieu(this, 'arrivee');   // (planche 91 : l'île de la rotonde, l'Arbre-Mère)
     await this.conclure();
   }
 
@@ -832,7 +834,8 @@ class StoryScene extends Cinematique {
     if (b === 'neige') return `de la neige plein ${this.parti.voyageur.race === 'nain' ? 'la barbe' : 'les cheveux'}`;
     if (['desert', 'badlands'].includes(b)) return 'du sable plein les bottes';
     if (b === 'antre') return `noirci${e} de suie`;
-    if (b === 'sanctuaire') return "une feuille d'argent prise dans les cheveux";
+    if (b === 'sanctuaire') return "une feuille d'or prise dans les cheveux";
+    if (b === 'val') return 'une feuille rousse prise dans les cheveux';
     if (['foret', 'repaire'].includes(b)) return 'des aiguilles de pin dans le col';
     if (['cote', 'port'].includes(b)) return 'les cheveux raides de sel';
     if (['mines', 'opale'].includes(b)) return `couvert${e} de poussière de roche`;
@@ -1042,7 +1045,7 @@ class StoryScene extends Cinematique {
     // (v1.62) dans le pré, sur tout le monde du récit, les pieds juste derrière la barrière du chemin
     const sol = PRE_RECIT.loin;
     // (v1.63) les arbres : peints comme tous les arbres (arbresHD.js, voir arbrePremierPlanHD), l'essence de la contrée
-    const forme = neige || biome === 'citadelle' ? 'sapinsNeige' : ['marais', 'bourbier'].includes(biome) ? 'morts' : biome === 'sanctuaire' ? 'mallorns' : ['foret', 'repaire', 'tour', 'grotte'].includes(biome) ? 'sapins' : biome === 'comte' ? 'ronds' : 'chenes';
+    const forme = neige || biome === 'citadelle' ? 'sapinsNeige' : ['marais', 'bourbier'].includes(biome) ? 'morts' : biome === 'sanctuaire' ? 'ambrennes' : biome === 'val' ? 'automne' : ['foret', 'repaire', 'tour', 'grotte'].includes(biome) ? 'sapins' : biome === 'comte' ? 'ronds' : 'chenes';
     const arbre = (x, k) => { const cle = arbrePremierPlanHD(this, forme, biome, k % 3); if (cle) this.arbresRecit = (this.arbresRecit || []).concat(dansPlan(this.planMoyen, this.add.image(x, sol + 3, cle).setOrigin(0.5, 1).setScale(0.62 + ((Math.abs(x) * 7) % 30) / 100).setFlipX((Math.abs(x) * 3) % 2 === 0).setTint(sombre ? 0xb0b0b8 : 0xf0f0ea))); };
     let k = 0;
     for (let x = -60; x < LARGEUR_RECIT + 60; x += 70 + (x * 3) % 50, k++) {
@@ -1059,7 +1062,7 @@ class StoryScene extends Cinematique {
   // forêt, brume... (en plus des effets propres à chaque épreuve)
   meteoBiome(biome) {
     if (this.ambiance) this.ambiance.remove();
-    const marais = biome === 'marais', neige = ['montagne', 'glace', 'neige'].includes(biome), foret = ['foret', 'sanctuaire'].includes(biome), ombre = ['repaire', 'tour', 'bourbier'].includes(biome);
+    const marais = biome === 'marais', neige = ['montagne', 'glace', 'neige'].includes(biome), foret = ['foret', 'sanctuaire', 'val'].includes(biome), ombre = ['repaire', 'tour', 'bourbier'].includes(biome);
     if (!marais && !neige && !foret && !ombre) return;
     this.ambiance = this.time.addEvent({ delay: marais ? 40 : 160, loop: true, callback: () => {
       if (marais) {
@@ -1075,7 +1078,7 @@ class StoryScene extends Cinematique {
       } else if (foret) {
         if (Math.random() < 0.5) return;
         const x = Phaser.Math.Between(0, 1000);
-        const f = this.add.ellipse(x, -6, 6, 3, Phaser.Utils.Array.GetRandom([0xc8a040, 0xa86a28, 0x7a9a30]), 0.9).setDepth(6.8).setScrollFactor(0);
+        const f = this.add.ellipse(x, -6, 6, 3, Phaser.Utils.Array.GetRandom(biome === 'sanctuaire' ? [0xe8b828, 0xd89a20, 0xf0d060] : biome === 'val' ? [0xc83a16, 0xe8702a, 0xd8a41c] : [0xc8a040, 0xa86a28, 0x7a9a30]), 0.9).setDepth(6.8).setScrollFactor(0);
         this.tweens.add({ targets: f, y: 375, x: x - 120, angle: 720, duration: 5000 + Math.random() * 2000, ease: 'Sine.easeIn', onComplete: () => f.destroy() });
       } else if (ombre) {
         if (Math.random() < 0.6) return;

@@ -7,7 +7,7 @@ const PALETTES_REGIONS = {
     sol: { herbe: 0x7aa84e, terre: 0xc8a06a, pierre: 0xb8ac94, fleur: 0xd84a3a, fleur2: 0xf0d050, feuille: 0x5a8a3a }, humeur: 'chaud, rond, rassurant : le pays où l’on rentre' },
   monts: { nom: 'Les Monts des nains', lieu: 'forges, mines, cols', p: [[0x667086, 'ardoise bleutée'], [0x9a5a32, 'rouille et cuivre'], [0xf0b030, 'or de forge']], compl: [0xe8eef2, 0xe0602a, 0x3a3a44, 0x8a9aa8],
     sol: { herbe: 0x7d8a6e, terre: 0x8c8274, pierre: 0x6e7890, fleur: 0xf0b030, fleur2: 0xe8eef2, feuille: 0x4e6a5a }, humeur: 'froid dehors, braise dedans' },
-  foret: { nom: 'Les Forêts des elfes', lieu: 'Lothlórien, Fondcombe', p: [[0x3e6e4a, 'vert profond'], [0x9ab8c8, 'argent bleuté'], [0xe8d890, 'or pâle']], compl: [0x7a6a9a, 0xf4f4ec, 0x2a4a3a, 0xb8d8a0],
+  foret: { nom: 'Les Forêts des elfes', lieu: 'Sérambre, Ardévanne', p: [[0x3e6e4a, 'vert profond'], [0x9ab8c8, 'argent bleuté'], [0xe8d890, 'or pâle']], compl: [0x7a6a9a, 0xf4f4ec, 0x2a4a3a, 0xb8d8a0],
     sol: { herbe: 0x4a7e50, terre: 0x7a6a4a, pierre: 0xa8b8b8, fleur: 0xe8d890, fleur2: 0xc8b8e8, feuille: 0x2e5a3c }, humeur: 'calme, ancien, lumière qui filtre' },
   cite: { nom: 'La Cité des hommes', lieu: 'Hautval, le Conseil', p: [[0xd8ccb0, 'pierre crème'], [0x2e4a8a, 'bleu royal'], [0xb02a2a, 'rouge des bannières']], compl: [0xd0a040, 0x6e9a4a, 0x4a4038, 0xf4ecd8],
     sol: { herbe: 0x6e9a4a, terre: 0xbcae92, pierre: 0xd4c8ac, fleur: 0xb02a2a, fleur2: 0x2e4a8a, feuille: 0x4a7a3a }, humeur: 'ordre, pouvoir, cérémonie' },

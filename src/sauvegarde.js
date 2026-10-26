@@ -352,6 +352,7 @@ function afficherStatutSauvegarde(scene, x, y, origineX) {
 function mettreAJourPartie(G, brut = G) {
   for (const id of Object.keys(ITEMS)) if (G.stock[id] === undefined) G.stock[id] = 0;
   G.zonesDecouvertes = G.zonesDecouvertes || [];
+  G.elfes = G.elfes || { apprentis: 0, commandes: 0, prochainApprenti: 0, evrandel: 0, ardeline: 0, saisonDame: null, decouvertes: {} };   // (planche 91)
   G.employes = (G.employes || []).filter(id => EMPLOYES[id]);
   // (v1.62) les salaires montent avec l'ancienneté : une vieille partie compte ses employés à partir d'aujourd'hui
   // (leur niveau, lui, vient de leurs réparations déjà finies)

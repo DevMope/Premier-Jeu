@@ -973,7 +973,7 @@ class CounterScene extends Phaser.Scene {
   spriteFile(entree, i) {
     if (entree.type === 'detresse') { const p = this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'pigeonPose').setVisible(false); p.estPigeon = true; return p; }
     // (v1.61) un carnet rapporté : son voyageur n'est plus là pour faire la queue
-    if (entree.type === 'carnet') { const p = this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'pigeonPose').setVisible(false); p.estPigeon = true; return p; }   // (v1.22 : le pigeon ne fait pas la queue ; v1.31 : et ne s'y montre jamais)
+    if (entree.type === 'carnet' || entree.invisible) { const p = this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'pigeonPose').setVisible(false); p.estPigeon = true; return p; }   // (v1.22 : le pigeon ne fait pas la queue ; v1.31 : et ne s'y montre jamais ; planche 91 : la Dame aux Lanternes n'attend pas dans la file)
     const cle = this.texturePour(entree);
     const sprite = this.add.image(FILE.x - i * FILE.ecart, FILE.y, cle)
       .setOrigin(0.5, 1).setScale(FILE.echelle * echelleCorps(cle)).setTint(0xd8d0c0).setDepth(1);
@@ -1023,6 +1023,7 @@ class CounterScene extends Phaser.Scene {
   }
 
   texturePour(entree, pose = null) {
+    if (this.textureSpeciale) { const c = this.textureSpeciale(entree, pose); if (c) return c; }   // (planche 91 : les elfes du val, elfesVal.js)
     if (entree.type === 'faucheuse') return 'perso_faucheuse';
     if (entree.type === 'sage' || entree.type === 'percepteur') return corpsHD(this, entree.type === 'sage' ? 'sage' : personneDuPercepteur(entree), pose);   // (v1.32, planche 58)
     if (entree.type === 'famille') return corpsHD(this, entree.visite.parent, pose);
@@ -1682,6 +1683,7 @@ class CounterScene extends Phaser.Scene {
       this.perso.setVisible(false);
       return this.arrivee(entree);
     }
+    if (this.entreeEnScene && this.entreeEnScene(entree)) return;   // (planche 91 : l'entrée en scène du seigneur Évrandel, de Dame Ardéline)
     const faucheuse = entree.type === 'faucheuse';
     Son.jouer(faucheuse ? 'froid' : 'clochette');
     if (faucheuse) Son.ambiance('faucheuse');
@@ -2081,6 +2083,7 @@ class CounterScene extends Phaser.Scene {
   // --- Le client en buste : expressions, clignements, paroles ---
 
   personneDe(entree) {
+    if (this.personneSpeciale) { const p = this.personneSpeciale(entree); if (p) return p; }   // (planche 91)
     if (entree.type === 'client') return entree.voyageur.apparence || entree.voyageur;   // (v0.86 : un recherché a l'allure de son affiche)
     if (entree.type === 'gardeRecherche') return GARDE.capitaine;
     if (entree.type === 'famille') return entree.visite.parent;
@@ -2108,6 +2111,7 @@ class CounterScene extends Phaser.Scene {
 
   // Son humeur en arrivant au comptoir.
   expressionArrivee(entree) {
+    if (this.personneSpeciale && this.personneSpeciale(entree)) return 'content';   // (planche 91)
     if (entree.type === 'retour') return entree.parti.resultat.echec ? 'inquiet' : 'content';
     if (entree.type === 'notable' || entree.type === 'colporteur' || entree.type === 'garrick') return 'content';
     if (entree.type === 'aine') return 'neutre';
@@ -2263,6 +2267,8 @@ class CounterScene extends Phaser.Scene {
       this.visiteCrieur(entree);   // (v1.11) le mois des comptoirs
     } else if (entree.type === 'collectionneur') {
       this.visiteCollectionneur(entree);   // (v1.23) il veut une pièce de ta vitrine
+    } else if (this.visitesSpeciales && this.visitesSpeciales[entree.type]) {
+      this.visitesSpeciales[entree.type].call(this, entree);   // (planche 91 : les visites des elfes, elfesVal.js)
     } else if (entree.type === 'faucheuse') {
       this.visiteFaucheuse(entree);
     } else {

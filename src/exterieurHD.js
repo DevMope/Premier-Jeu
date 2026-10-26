@@ -39,7 +39,8 @@ const RELIEFS = {
   ruines: { colonnes: true, brume: 0.15 },
   antre: { pics: 0.65, lave: true },
   monastere: { arbres: 'ronds', temple: true, fleurs: 0xf8f0f8 },
-  sanctuaire: { arbres: 'ronds', colonnes: true, fleurs: 0xffffff, brume: 0.2 },
+  sanctuaire: { arbres: 'ronds', fleurs: 0xffffff, brume: 0.2 },   // (planche 91 : plus de colonnes blanches dans la forêt d'or)
+  val: { arbres: 'ronds', fleurs: 0xf0a040, brume: 0.18, roseaux: true },   // (planche 91) le val d'Ardévanne : roux toute l'année, le lac
   citadelle: { pics: 0.4, neige: true, tours: true },
   bourbier: { roseaux: true, brume: 0.5, arbresMorts: true },
   repaire: { arbres: 'sapins', densite: 2, arbresMorts: true },
@@ -57,7 +58,7 @@ const RELIEFS = {
 // vraie parallaxe : `<clé>_ciel` (ciel, astre), `<clé>_loin` (montagnes, dunes, collines lointaines),
 // `<clé>_collines` (les collines du milieu, colonnes et tours), `<clé>_sol` (les collines proches et le chemin)
 // et `<clé>_barriere` (la barrière le long du chemin, devant ce qui est posé dans le pré). Renvoie la clé.
-function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAstre = false, couches = false } = {}) {
+function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAstre = false, couches = false, reserves = null } = {}) {
   const L = Math.round(largeur / 2), H = Math.round(hauteur / 2);
   const aube = nuit === 'aube';
   if (aube) nuit = 0;
@@ -65,7 +66,7 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
   const saison = biome === 'comte' && typeof saisonActuelle === 'function' ? saisonActuelle() : null;
   // (v1.63) ailleurs, les arbres suivent aussi l'année (nus l'hiver, roux l'automne...) : la saison des arbres entre dans la clé
   const rel0 = RELIEFS[biome] || {}, saisonArbres = !saison && (rel0.arbres || rel0.arbresMorts || !rel0.dunes) && typeof saisonArbresContree === 'function' ? saisonArbresContree(biome) : null;
-  const cle = `paysage_${biome}${saison ? '_' + saison : ''}${saisonArbres ? '_a' + saisonArbres : ''}_${L}x${H}_${aube ? 'aube' : Math.round(nuit * 10)}${sansAstre ? '_sans' : ''}${couches ? '_couches' : ''}`;
+  const cle = `paysage_${biome}${saison ? '_' + saison : ''}${saisonArbres ? '_a' + saisonArbres : ''}_${L}x${H}_${aube ? 'aube' : Math.round(nuit * 10)}${sansAstre ? '_sans' : ''}${couches ? '_couches' : ''}${reserves && reserves.length ? '_r' + reserves.map(e => [e.c, e.cs, e.demi, e.demiS].map(Math.round).join('-')).join('_') : ''}`;
   if (scene.textures.exists(couches ? cle + '_barriere' : cle)) return cle;
   const b = (saison && BIOMES_SAISON[saison]) || BIOMES[biome] || BIOMES.comte, r = saison ? { ...(RELIEFS[biome] || {}), ...RELIEFS_SAISON[saison] } : RELIEFS[biome] || {};
   const graine = biome.length * 31;
@@ -73,6 +74,9 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
   const soir = aube ? (c => melangeCouleur(c, melangeCouleur(teinte(c, 0.85), 0xff9a60, 0.55), 0.32))
     : (c => melangeCouleur(c, melangeCouleur(teinte(c, 0.45), 0x1a1840, 0.5), nuit));
   let px = new Uint32Array(L * H);
+  // (planche 91) les emprises des repères des récits : là, ni les bosquets des collines (au plan du repère : c), ni les
+  // arbres et les buissons du pré (au plan du pré : cs, là où on le voit) ; c'est le récit qui y compose la lisière
+  const reserve = (x, cle, marge) => !!reserves && reserves.some(e => Math.abs(-40 + 2 * x - e[cle]) < (cle === 'cs' ? e.demiS : e.demi) + marge);
   const C = couches ? { ciel: px, loin: new Uint32Array(L * H), collines: new Uint32Array(L * H), sol: new Uint32Array(L * H), barriere: new Uint32Array(L * H) } : null;
   const poser = (x, y, c) => { if (x >= 0 && y >= 0 && x < L && y < H) px[y * L + Math.floor(x)] = c; };
 
@@ -147,7 +151,7 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
       const v = tramer(x, y, (y - h0) / (H * 0.2), 4) / 3;
       poser(x, y, soir(melangeCouleur(teinte(b.pres, 1.08 - v * 0.22), b.loin, 0.35)));
     }
-    if (y0Herbe(x, h0) && r.arbres && hachage(x, 17, graine) < 0.05 * (r.densite || 1)) arbre(x, h0 + 2, 0.8, melangeCouleur(teinte(b.arbres || b.pres, 0.78), C ? b.horizon : b.loin, C ? 0.24 : 0.15));
+    if (y0Herbe(x, h0) && r.arbres && hachage(x, 17, graine) < 0.05 * (r.densite || 1) && !reserve(x, 'c', 40)) arbre(x, h0 + 2, 0.8, melangeCouleur(teinte(b.arbres || b.pres, 0.78), C ? b.horizon : b.loin, C ? 0.24 : 0.15));
   }
   // Les colonnes, les temples et les tours
   const fond = (x0, larg, haut, c) => { for (let y = Math.floor(haut); y < H * 0.78; y++) for (let x = x0; x < x0 + larg; x++) poser(x, y, soir(teinte(c, x < x0 + larg / 2 ? 1.05 : 0.8))); };
@@ -172,8 +176,9 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
       if (r.fleurs && hachage(x, y, graine + 8) < 0.012) c = r.fleurs;
       poser(x, y, soir(c));
     }
-    if (r.arbres && hachage(x, 9, graine) < 0.03 * (r.densite || 1)) arbre(x, h0 + 3, 1.15, teinte(b.arbres || herbe, 0.7));
-    if (!r.dunes && hachage(x, 19, graine) < 0.035) buisson(x, h0 + 4 + hachage(x, 20, graine) * 10, 2.5 + hachage(x, 21, graine) * 2.5, teinte(b.arbres || herbe, 0.82));
+    const libre = !reserve(x, 'cs', 40);
+    if (libre && r.arbres && hachage(x, 9, graine) < 0.03 * (r.densite || 1)) arbre(x, h0 + 3, 1.15, teinte(b.arbres || herbe, 0.7));
+    if (libre && !r.dunes && hachage(x, 19, graine) < 0.035) buisson(x, h0 + 4 + hachage(x, 20, graine) * 10, 2.5 + hachage(x, 21, graine) * 2.5, teinte(b.arbres || herbe, 0.82));
     if (!r.dunes && hachage(x, 22, graine) < 0.25) touffe(x, Math.floor(h0 + 3 + hachage(x, 23, graine) * (H - h0 - 16)));
     if (r.arbresMorts && hachage(x, 11, graine) < 0.02) arbreMort(x, h0 + 2);
     if (r.roseaux && hachage(x, 12, graine) < 0.35) for (let y = 0; y < 5 + hachage(x, 13, graine) * 8; y++) poser(x, Math.floor(h0 + H * 0.06 - y), soir(teinte(b.roseaux || herbe, 0.8 + y * 0.03)));
@@ -265,7 +270,7 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
   function buisson(x, sol, taille, couleur) {
     if (typeof peindreArbre === 'function') {
       // (v1.63) un vrai buisson, peint par arbresHD.js, de la saison (nu l'hiver, roux l'automne)
-      const sa = saison || saisonArbres || 'moissons', rp = rampesArbre(sa, 'buisson', couleur);
+      const sa = saison || saisonArbres || 'moissons', rp = biome === 'sanctuaire' ? rampesArbre(sa, 'ambrenne') : rampesArbre(sa, 'buisson', couleur);   // (planche 91 : à Sérambre, des fourrés d'or, pas des buissons roux)
       peindreArbre((X, Y, m, i) => poser(X, Y, soir(rp[m][i])), { cx: Math.round(x), base: Math.round(sol), H: Math.round(taille * 2.2) + 4, espece: 'buisson', saison: sa, graine: Math.round(x) + 7, neige: neigeArbresContree(biome, sa) || !!r.neige, ecartX: 1.3 });
     } else {
       boule(x - taille * 0.6, sol - taille * 0.6, taille, taille * 0.75, teinte(couleur, 0.95));
@@ -325,29 +330,29 @@ function paysageHD(scene, largeur, hauteur, biome = 'comte', nuit = 0, { sansAst
 // paysage peint (boules de feuillage éclairées en haut à gauche, quatre tons, tronc clair à gauche, mêmes
 // couleurs du royaume, même traitement de la lumière), mais plus grands, au grain plus fin et plus détaillés.
 // Dans le paysage, ceux du second plan sont plus petits, plus pâles et un peu brumeux.
-// forme : ronds, pommiers, saules, chenes, automne, mallorns, cypres, sapins, sapinsNeige ; renvoie la clé de la
+// forme : ronds, pommiers, saules, chenes, automne, ambrennes, cypres, sapins, sapinsNeige ; renvoie la clé de la
 // texture (ou null pour une forme qui n'est pas un arbre : cactus, colonnes, pieux).
 const ARBRES_PREMIER_PLAN = {
   //            [largeur, hauteur de la toile, pied du tronc]
-  ronds: [120, 150], pommiers: [120, 150], saules: [130, 150], chenes: [140, 160], automne: [120, 150], mallorns: [130, 170],
+  ronds: [120, 150], pommiers: [120, 150], saules: [130, 150], chenes: [140, 160], automne: [120, 150], ambrennes: [140, 170],
   cypres: [60, 160], sapins: [96, 170], sapinsNeige: [96, 170], morts: [120, 150],
 };
 // (v1.63) Les essences de chaque forme (la variante `graine` choisit dans la liste : deux voisins ne se ressemblent pas)
 const ESSENCES_FORME = { ronds: ['chene', 'bouleau', 'chene'], pommiers: ['pommier'], saules: ['saule', 'saule', 'aulne'], chenes: ['chene', 'chene', 'aulne'], automne: ['chene', 'bouleau', 'chene'],
-  mallorns: ['mallorn'], cypres: ['cypres'], sapins: ['sapin'], sapinsNeige: ['sapin'], morts: ['mort'] };
+  ambrennes: ['ambrenne'], cypres: ['cypres'], sapins: ['sapin'], sapinsNeige: ['sapin'], morts: ['mort'] };
 function arbrePremierPlanHD(scene, forme, biome = 'comte', graine = 0) {
   const dim = ARBRES_PREMIER_PLAN[forme];
   if (!dim) return null;
   // (v1.63) peints par arbresHD.js, comme ceux des collines : mêmes essences, même couleur de la contrée, même saison
   const saisonComte = biome === 'comte' && typeof saisonActuelle === 'function' ? saisonActuelle() : null;
-  const sa = forme === 'automne' ? 'brumes' : saisonComte || saisonArbresContree(biome);   // (« automne » : la vallée de Fondcombe, rousse toute l'année)
+  const sa = forme === 'automne' ? 'brumes' : saisonComte || saisonArbresContree(biome);   // (« automne » : le val d'Ardévanne, roux toute l'année)
   const neige = forme === 'sapinsNeige' || neigeArbresContree(biome, sa);
   const liste = ESSENCES_FORME[forme] || ['chene'], esp = liste[graine % liste.length];
   const cle = `arbrePP_${forme}_${biome}_${sa}${neige ? '_n' : ''}_${graine}`;
   if (scene.textures.exists(cle)) return cle;
   const b = (saisonComte && BIOMES_SAISON[saisonComte]) || BIOMES[biome] || BIOMES.comte;
   // la couleur du feuillage : celle des arbres du paysage de la contrée (même formule : teinte(..., 0.78)) ; l'automne,
-  // les mallorns, les cyprès et les sapins gardent leurs couleurs à eux
+  // les ambrennes, les cyprès et les sapins gardent leurs couleurs à eux
   let couleur = null;
   if (['ronds', 'pommiers', 'saules', 'chenes'].includes(forme)) {
     let base = b.arbres || b.pres;
@@ -1116,7 +1121,7 @@ function creerCarteHD(scene) {
     dune: (x, y) => { for (let k = -5; k <= 5; k++) encre(x + k, y - Math.round(Math.cos(k / 3) * 2)); },
   };
   const parBiome = { comte: ['colline', 'arbre'], foret: ['sapin', 'sapin', 'arbre'], marais: ['roseau'], mines: ['montagne'], desert: ['dune'], neige: ['montagne'],
-    ruines: ['colonne', 'colline'], antre: ['montagne'], monastere: ['colline', 'arbre'], sanctuaire: ['colonne', 'arbre'], citadelle: ['montagne', 'colonne'],
+    ruines: ['colonne', 'colline'], antre: ['montagne'], monastere: ['colline', 'arbre'], sanctuaire: ['colonne', 'arbre'], val: ['colline', 'arbre'], citadelle: ['montagne', 'colonne'],
     bourbier: ['roseau'], repaire: ['sapin'], tour: ['colonne', 'montagne'], cote: ['colline'], opale: ['colonne', 'colline'], badlands: ['montagne', 'dune'], nuitPourpre: ['sapin', 'colonne'] };
   for (const [cle, z] of Object.entries(ZONES)) {
     const zx = z.x / 2, zy = z.y / 2, formes = parBiome[z.biome] || ['colline'];
@@ -1493,8 +1498,8 @@ function peindreVignetteZone(scene, cle, biome, motif = biome) {
       rect(23, 12, 7, 2, 'vMur', 3); P(26, 7, 'vOr', 5);
       for (const bx of [6, 9, 44, 47]) for (let k = 0; k < 14; k++) P(bx, 31 - k, 'vFeuille', k % 4 === 0 ? 1 : 4);
       break;
-    case 'sanctuaire': // de grands arbres argentés, un temple blanc et des lucioles
-      for (const [x0, h] of [[8, 16], [44, 18]]) { for (let k = 0; k < h; k++) P(x0, H - 4 - k, 'vMur', 2); forme('vFeuille', ellipsoide(x0, H - 6 - h, 7, 6), { decalage: 0.8 }); }
+    case 'sanctuaire': // (planche 91) les ambrennes de Sérambre, au tronc cuivré et au feuillage d'or, un temple blanc et des lucioles
+      for (const [x0, h] of [[8, 16], [44, 18]]) { for (let k = 0; k < h; k++) P(x0, H - 4 - k, 'vTronc', k % 3 ? 2 : 3); forme('vOr', ellipsoide(x0, H - 6 - h, 7, 6), { decalage: 0.8 }); }
       colonne(20, 28, 11, 'vMur'); colonne(32, 28, 11, 'vMur');
       for (let k = 0; k < 7; k++) rect(18 + k, 16 - (k < 4 ? k : 6 - k), 1, 1, 'vMur', 5); rect(18, 16, 17, 1, 'vMur', 4);
       for (let k = 0; k < 9; k++) P(hachage(k, 3, 41) * L, 8 + hachage(k, 4, 41) * 18, 'vSoleil', 5);
@@ -1562,11 +1567,11 @@ function peindreVignetteZone(scene, cle, biome, motif = biome) {
       for (const sx of [15, 37]) { rect(sx, 20, 3, 12, 'vRoche', 4); rect(sx - 1, 18, 5, 2, 'vRoche', 5); P(sx + 1, 17, 'vOr', 4); }
       for (let k = 0; k < 4; k++) P(26 + Math.sin(k) * 2, 8 - k * 1.5, 'vRoche', 4);
       break;
-    case 'lac': // un lac d'argent sous deux lunes, des arbres d'argent et des lucioles
+    case 'lac': // le lac du val d'Ardévanne sous deux lunes, ses érables roux et des lucioles
       lune(16, 6, 3, 'vSoleil'); lune(36, 8, 2, 'vSoleil');
       for (let y = 21; y < H; y++) for (let x = 0; x < L; x++) P(x, y, 'vEau', 3 + (((x * 3 + y * 7) % 11) === 0 ? 2 : 0));
       for (let k = -2; k <= 2; k++) { P(16 + k, 25, 'vSoleil', 4); P(36 + k * 0.6, 27, 'vSoleil', 4); }
-      for (const [x0, h] of [[6, 13], [46, 15]]) { for (let k = 0; k < h; k++) P(x0, 22 - k, 'vMur', 3); forme('vFeuille', ellipsoide(x0, 22 - h, 6, 5), { decalage: 0.8 }); }
+      for (const [x0, h] of [[6, 13], [46, 15]]) { for (let k = 0; k < h; k++) P(x0, 22 - k, 'vTronc', 3); forme('vFeuille', ellipsoide(x0, 22 - h, 6, 5), { decalage: 0.8 }); }
       colline(26, 21, 16, 4, 'vLoin');
       for (let k = 0; k < 8; k++) P(hachage(k, 5, 43) * L, 10 + hachage(k, 6, 43) * 20, 'vSoleil', 5);
       break;

@@ -656,7 +656,7 @@ const ZONES = {
   },
   sanctuaire: {
     nom: 'Le Sanctuaire des Elfes', danger: 4, reputation: 8, x: 450, y: 135, royaume: 'elfes', biome: 'sanctuaire', camp: 'bien',
-    description: "Une forêt d'argent où les elfes veillent sur l'Arbre-Mère. Il faut le défendre.",
+    description: "La forêt d'or de Sérambre, où les elfes veillent sur l'Arbre-Mère. Il faut le défendre.",
     quetes: ['graine'],
   },
   citadelle: {
@@ -698,8 +698,8 @@ const ZONES = {
     quetes: ['convoi'],
   },
   lac: {
-    nom: 'Le Lac des Lunes', danger: 4, reputation: 8, x: 645, y: 235, royaume: 'elfes', biome: 'sanctuaire', vignette: 'lac', camp: 'bien',
-    description: "Un lac d'argent où les elfes chantent chaque nuit. Des esprits froids rôdent sur ses rives.",
+    nom: 'Le Lac des Lunes', danger: 4, reputation: 8, x: 645, y: 235, royaume: 'elfes', biome: 'val', vignette: 'lac', camp: 'bien',
+    description: "Au val d'Ardévanne, roux en toute saison, un lac où les elfes chantent. Des esprits froids rôdent.",
     quetes: ['lunes'],
   },
   opale: {
@@ -1506,7 +1506,7 @@ Object.assign(QUETES, {
     accueil: "Le Sanctuaire des Elfes ? On a volé une graine de l'Arbre-Mère. Les elfes paient pour qu'on la leur rapporte... et pour la gloire.",
     pv: 3, duree: [3, 4], butin: [45, 65],
     epreuves: [
-      { type: 'esprits', besoin: 'torche', qte: 1, intro: "Dans la forêt d'argent, des esprits jaloux voulaient garder la graine.",
+      { type: 'esprits', besoin: 'torche', qte: 1, intro: "Sous les ambrennes de Sérambre, des esprits jaloux voulaient garder la graine.",
         complet: 'Ta torche les a tenus à distance.', partiel: 'Ma torche faiblissait...', rien: 'Ils m\'ont égaré{e} pendant une journée entière.' },
       { type: 'araignee', besoin: 'epee', qte: 1, intro: 'La graine était dans une toile d\'araignée géante.',
         complet: 'Un coup d\'épée, et la toile a cédé !', partiel: 'Je me suis battu{e} longtemps avant de la récupérer.', rien: "J'ai dû arracher la toile à mains nues." },

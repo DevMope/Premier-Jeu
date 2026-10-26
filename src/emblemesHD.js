@@ -141,11 +141,12 @@ function peindreEmbleme(scene, cle) {
       t.poser(19, 19, 'gaine', 4); t.poser(20, 19, 'gaine', 5); t.poser(19, 20, 'gaine', 3); t.poser(20, 20, 'gaine', 4);
       break;
     }
-    case 'elfes': { // l'Arbre-Mère d'argent, ses racines et sa grande couronne
-      F('argent', poly([[17.5, 38], [22.5, 38], [21.2, 25], [18.8, 25]]));
-      trait('argent', 19, 37, 13, 40, 1); trait('argent', 21, 37, 27, 40, 1);
-      trait('argent', 19.5, 28, 14, 22, 0.9); trait('argent', 20.5, 28, 26, 22, 0.9);
-      R.feuillage = rampe(0xa8d8c0);
+    case 'elfes': { // (planche 91) l'Arbre-Mère de Sérambre : son tronc de cuivre, ses racines et sa grande couronne d'or
+      R.cuivreE = rampe(0xc0743a);
+      F('cuivreE', poly([[17.5, 38], [22.5, 38], [21.2, 25], [18.8, 25]]));
+      trait('cuivreE', 19, 37, 13, 40, 1); trait('cuivreE', 21, 37, 27, 40, 1);
+      trait('cuivreE', 19.5, 28, 14, 22, 0.9); trait('cuivreE', 20.5, 28, 26, 22, 0.9);
+      R.feuillage = rampe(0xe0b444);
       for (const [x0, y0, r] of [[cx, 15, 7], [12.5, 20, 4.5], [27.5, 20, 4.5]]) F('feuillage', disque(x0, y0, r), { decalage: -0.2, motif: (x, y) => (hachage(Math.floor(x / 2), Math.floor(y / 2), 17) - 0.5) * 2.2 });
       for (const [px, py] of [[16, 12], [23, 14], [19, 18], [13, 19], [27, 21], [21, 10]]) t.poser(px, py, 'argent', 5);
       break;
