@@ -2432,8 +2432,10 @@ class CounterScene extends Phaser.Scene {
 
   donner(id) {
     if (!this.enService || this.enConfirmation) return;
-    this.time.delayedCall(400, () => conseilGarrick(this, 'colis'));
     const v = this.voyageur;
+    // (retour du joueur) le bâton de mage : seules les magiciennes le prennent
+    if (estArme(id) && !armeAutorisee(v, id)) { Son.jouer('refus'); return this.dire("Un bâton de mage ? Seules les magiciennes savent s'en servir. Donne-moi plutôt une vraie arme.", v.nom); }
+    this.time.delayedCall(400, () => conseilGarrick(this, 'colis'));
     const commande = commandeDe(v);
     // Au-delà de la commande, c'est du suréquipement : seulement ce qui peut servir (soins,
     // ou un objet qu'une épreuve demande), et pas plus que ce que son sac peut porter.

@@ -102,9 +102,16 @@ function bouclierEnMain(dir) {
     if (!t.rampes.ferA) rampesArmesHD(t);   // (sans arme, le moteur n'a pas posé les teintes des armes)
     t.rampes.boisB = rampeVive(0x8a5a2a); const cxB = (Mb[0] + Cb[0]) / 2 + 1.5 * k, cyB = (Mb[1] + Cb[1]) / 2, rB = 8.5 * kA;
     const avant = t.partie; t.partie = 'brasL';
-    t.forme('ferA', ellipsoide(cxB, cyB, rB * 0.62, rB), { decalage: 0.2 });
-    t.forme('boisB', ellipsoide(cxB, cyB, rB * 0.62 - 1.2 * kA, rB - 1.2 * kA), { decalage: 0.1, motif: (x, y) => (Math.floor((y - cyB) / (2.2 * kA)) % 2 ? -0.35 : 0.1) });
-    t.forme('ferA', ellipsoide(cxB + 0.4 * kA, cyB, 2 * kA, 2.6 * kA), { decalage: 0.7 });
+    // (retours du joueur : le même soin que les armes) le cercle de fer et ses rivets, les planches de bois (leurs joints, le fil du
+    // bois), une bande peinte en travers, l'umbo de fer bombé et son reflet
+    t.forme('ferA', ellipsoide(cxB, cyB, rB * 0.62, rB), { decalage: 0.25 });
+    const rx0 = rB * 0.62 - 1.1 * kA, ry0 = rB - 1.1 * kA, planche = 2.3 * kA;
+    t.forme('boisB', ellipsoide(cxB, cyB, rx0, ry0), { decalage: 0.1, motif: (x, y) => { const f = ((y + 0.5 - cyB) / planche + 20) % 1; return f < 0.14 ? -0.9 : Math.abs(Math.sin((x + 0.5) * 0.9 + y * 0.15)) > 0.94 ? -0.35 : 0.1; } });
+    if (!t.rampes.peinture) t.rampes.peinture = rampeVive(0x8a2a22);
+    t.forme('peinture', (x, y) => { const px = (x + 0.5 - cxB) / rx0, py = (y + 0.5 - cyB) / ry0; return px * px + py * py <= 1 && Math.abs(py + px * 0.35) < 0.16 ? [px * 0.3, py * 0.3, 0.9] : null; }, { decalage: 0.1, motif: (x, y) => (((y + 0.5 - cyB) / planche + 20) % 1 < 0.14 ? -0.9 : 0) });
+    for (let a = 0.3; a < 6.28; a += 0.785) { const x = cxB + Math.cos(a) * (rB * 0.62 - 0.55 * kA), y = cyB + Math.sin(a) * (rB - 0.55 * kA); t.forme('lameA', ellipsoide(x, y, 0.42 * kA, 0.42 * kA), { decalage: 0.6, ombre: false }); }
+    t.forme('ferA', ellipsoide(cxB + 0.4 * kA, cyB, 2.1 * kA, 2.7 * kA), { decalage: 0.65 });
+    t.forme('lameA', ellipsoide(cxB - 0.3 * kA, cyB - 0.9 * kA, 0.7 * kA, 0.8 * kA), { decalage: 1.2, ombre: false, bord: false });
     t.partie = avant;
     t.bouclierXY = [cxB, cyB];
     armeEnMain(dir)(A);

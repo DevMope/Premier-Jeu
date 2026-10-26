@@ -4,13 +4,17 @@
 // agrandi (×1,3, comme les armes) pour qu'on les voie ; `prise` : le pixel de la toile que la main tient ; `pose` : la pose du
 // rig où le bras tend l'objet (tient : devant la poitrine ; tientHaut : levé, pour la torche).
 
-// Un dessin posé pixel par pixel : chaque lettre est un ton d'une matière (a-f : toile écrue, g-l : chanvre, m-r : tissu rouge,
-// s-x : métal) ; '.' laisse le fond. Les bandes de corde, la spirale du bandage et ses plis sont dessinés un à un.
+// Un dessin posé pixel par pixel : chaque lettre est un ton d'une matière (a-f : toile écrue, g-l : chanvre, m-r : vert des herbes,
+// s-x : terre cuite, A-F : cuir de la gourde, G-L : liège) ; '.' laisse le fond. Les bandes de corde, la spirale du bandage et ses plis sont dessinés un à un.
 const LETTRES_PIXELS = {};
-[['ecru', 'abcdef'], ['torons', 'ghijkl'], ['tissuRouge', 'mnopqr'], ['metal', 'stuvwx']].forEach(([mat, lettres]) => [...lettres].forEach((c, ton) => { LETTRES_PIXELS[c] = [mat, ton]; }));
+[['ecru', 'abcdef'], ['torons', 'ghijkl'], ['vertSoin', 'mnopqr'], ['terreCuite', 'stuvwx'], ['cuirGourde', 'ABCDEF'], ['liege', 'GHIJKL']].forEach(([mat, lettres]) => [...lettres].forEach((c, ton) => { LETTRES_PIXELS[c] = [mat, ton]; }));
 function poserPixels(t, lignes, dx = 1, dy = 1) {
   t.rampes.ecru = [0x4a3a28, 0x7a6644, 0xa89466, 0xcdbb8a, 0xe6d8ae, 0xf8efd0];
   t.rampes.torons = [0x2a1a08, 0x5a4220, 0x846a38, 0xb0904e, 0xd8bc78, 0xf4e4a8];
+  t.rampes.vertSoin = [0x14301a, 0x22502a, 0x347434, 0x4e9640, 0x78b85a, 0xaee08a];
+  t.rampes.terreCuite = [0x3a1a0c, 0x6a2e16, 0x9a4a24, 0xc06a36, 0xdc9252, 0xf2c088];
+  t.rampes.cuirGourde = [0x2e180a, 0x5a3218, 0x8a5428, 0xb07a3e, 0xd0a05c, 0xecc888];
+  t.rampes.liege = [0x3a2810, 0x6a4c24, 0x9a7438, 0xc09a52, 0xdcbc74, 0xf2dc9c];
   lignes.forEach((ligne, y) => [...ligne].forEach((c, x) => { const d = LETTRES_PIXELS[c]; if (d) t.poser(x + dx, y + dy, d[0], d[1]); }));
 }
 
@@ -22,24 +26,32 @@ const OBJETS_MAIN = {
     t.forme('lin', (x, y) => (Math.abs(x + 0.5 - 8) < 2.4 && y >= 2 && y <= 10 ? [0, -0.2, 0.9] : null), { decalage: 0.2 });
     t.forme('lin', ellipsoide(8, 2.2, 2.4, 1.5), { decalage: 0.4 }); t.poser(6, 1, 'lin', 4); t.poser(10, 1, 'lin', 3);
   } },
-  gourde: { l: 19, h: 28, prise: [8, 20], pose: 'tient', dessin(t) {
-    // une gourde de voyage en cuir : une panse ronde de peau claire au pourtour cousu, un goulot court, un bouchon de liège, et la
-    // lanière de corde claire qui passe sous le col et forme une boucle de portage
-    t.rampes.peau = [0x3a1e0c, 0x6a3c1c, 0x9c6430, 0xc08a4a, 0xdcaa68, 0xf2cc92];
-    t.rampes.liege = [0x4a3418, 0x7a5a2c, 0xa88040, 0xc89c58, 0xe0b874, 0xf4d498];
-    const cx = 8, cy = 20, rx = 7, ry = 7.4;
-    t.forme('peau', (x, y) => { const px = (x + 0.5 - cx) / rx, py = (y + 0.5 - cy) / ry, d = Math.hypot(px, py); if (d > 1) return null;
-      const clair = -(px * 0.7 + py * 0.7); return [px * 0.8, py * 0.8, 0.45 + clair * 0.25]; }, { decalage: 0.35 });
-    t.forme('peau', ellipsoide(cx - 1.4, cy - 1.8, 3.2, 3.6), { decalage: 0.9, ombre: false, bord: false });                  // la lumière sur la panse
-    for (let a = 0.2; a < 6.28; a += 0.5) t.poser(Math.round(cx + Math.cos(a) * 5.7 - 0.5), Math.round(cy + Math.sin(a) * 6.1 - 0.5), 'peau', 1);   // la couture, des points sombres
-    t.forme('peau', (x, y) => (y >= 9.5 && y <= 14 && Math.abs(x + 0.5 - 8) < 2.3 ? [(x + 0.5 - 8) / 2.3, 0, 0.9] : null), { decalage: 0.5 });   // le goulot
-    t.forme('liege', (x, y) => (y >= 5 && y <= 9.5 && Math.abs(x + 0.5 - 8) < 2.1 ? [(x + 0.5 - 8) / 2.1, 0, 0.9] : null), { decalage: 0.5 });   // le bouchon
-    for (let y = 6; y <= 8; y++) t.poser(7, y, 'liege', 5);
-    for (let x = 5; x <= 10; x++) { t.poser(x, 12, 'peau', 1); t.poser(x, 13, 'peau', 2); }                                    // le collier de cuir serré
-    // la lanière : un cordon clair noué au col (ses deux bouts pendent), et une grande boucle de sangle qui sort du côté de la panse
-    for (let x = 5; x <= 10; x++) t.poser(x, 11, 'chanvre', x < 8 ? 4 : 3);
-    for (const [x, y, ton] of [[5, 12, 4], [4, 13, 3], [4, 14, 2], [10, 12, 4], [11, 13, 3], [11, 14, 2]]) t.poser(x, y, 'chanvre', ton);
-    for (let k = 0; k <= 16; k++) { const u = k / 16, a = -Math.PI / 2 + Math.PI * u, x = 14 + Math.cos(a) * 2.9, y = 20 + Math.sin(a) * 6; t.poser(Math.round(x), Math.round(y), 'chanvre', 4); t.poser(Math.round(x) - 1, Math.round(y), 'chanvre', 2); }
+  gourde: { l: 16, h: 24, prise: [8, 16], pose: 'tient', dessin(t) {
+    // une gourde de voyage : une panse ronde et plate de cuir cousu (le bourrelet et ses points de couture), un col court et
+    // sa bague, un bouchon de liège, le cordon noué au col qui fait une boucle de portage au-dessus
+    poserPixels(t, [
+    '.....ikiki....',
+    '...ki.....ik..',
+    '..ki.......ik.',
+    '..i..KLKJJ..i.',
+    '..k..KLKJJ..k.',
+    '..i..KLKJJ..i.',
+    '...i.EEDDC.i..',
+    '...kiDDCCCCk..',
+    '....BBBBBBB...',
+    '..LDFFFEEECL..',
+    '.DDFFFEEEEDCC.',
+    '.DFFEEEEEDDDC.',
+    'LFFEEEEEDDDDDL',
+    'DFEEEEEDDDDDCC',
+    'DEEEEDDDDDDCCC',
+    'DEEEDDDDDDCCCC',
+    'DEEDDDDDDCCCCC',
+    'LEDDDDDCCCCBBL',
+    '.CDDDDCCCCBBC.',
+    '.CCDDCCCCBBCC.',
+    '..LCCCCCBBCL..',
+    '....CCCLCC....']);
   } },
   potion: { l: 11, h: 16, prise: [5.5, 11], pose: 'tient', dessin(t) {
     // une fiole ronde de verre, du liquide rouge, un bouchon
@@ -57,36 +69,67 @@ const OBJETS_MAIN = {
     t.forme('flamme', (x, y) => { const d = Math.abs(x + 0.5 - 6) / (3.4 - (11 - y) * 0.22); return y >= 0 && y <= 11 && d < 1 ? [(x + 0.5 - 6) / 3, 0, 0.9] : null; }, { decalage: 0.6, ombre: false });
     t.forme('flamme', ellipsoide(6, 7.5, 1.4, 2.8), { decalage: 1.4, ombre: false, bord: false });
   } },
-  bandage: { l: 21, h: 27, prise: [8.5, 8.5], pose: 'tient', dessin(t) {
-    // une bande de toile écrue enroulée en spirale serrée (la face montre le tour qui s'enroule, son flanc fait l'épaisseur), son bout libre
-    // qui se déroule en vague vers le bas (la bande se retourne : face claire à trame, dos plus sombre, un pli à chaque retournement,
-    // l'ombre du rouleau dessus), un croisillon rouge cousu et une épingle de nourrice qui le tient
+  bandageA: { l: 25, h: 18, prise: [8, 8], pose: 'tient', dessin(t) {
+    // A : une bande de lin pliée en accordéon, posée en biais, nouée d'une ficelle ; un petit pot d'onguent en terre à côté
+    // (son couvercle de toile, l'onguent vert)
     poserPixels(t, [
-    '.......c...........',
-    '....cccfccc........',
-    '...cffccccfcc......',
-    '..ceccffefcccc.....',
-    '.cfccffffefcccc....',
-    '.cfcfeccccefccc....',
-    '.cfcfcefffceebc....',
-    'cfecfcfabfceebbc...',
-    '.cfcffcbefceebcc...',
-    '.cfceffffecebbcc...',
-    '.cffccffcceebbc....',
-    '..cfffcceeebbdd....',
-    '...cffeeeebbdd.....',
-    '....ccbbbbbddced...',
-    '......dbddddeeefc..',
-    '..........w.cddcdc.',
-    '..........vwwwwwwux',
-    '.........ccddcc..uv',
-    '.......cdcddc......',
-    '......cdcdqc.......',
-    '......efffqd.......',
-    '.......eqqrpp......',
-    '..........peed.....',
-    '..........p.eefd...',
-    '..............eed..']);
+    '.......k.k.............',
+    '......k...k............',
+    'ffe....iji.............',
+    'fee....ih..............',
+    'ffecdcjki.j............',
+    'ffdcdifih..i...........',
+    'ffecdcekicdcfee........',
+    'ffecdcfihcdcffe........',
+    'efecdcfeecdcffd...ffee.',
+    'ffecdcfkicdcffe..eeeddd',
+    'eddbcbfihcdcffe..jffeei',
+    'bbbbbbfkicdcefe..wwvvuu',
+    '......eihbcbffe..wxvvqu',
+    '......bkibbbfee..wvvvpu',
+    '............eed..vvvuut',
+    '............bbb...vuut.']);
+  } },
+  bandageB: { l: 17, h: 13, prise: [8, 5], pose: 'tient', dessin(t) {
+    // B : une compresse de lin pliée en carré (trois épaisseurs sur la tranche), un cataplasme de feuilles vertes dessus, une
+    // ficelle nouée en croix
+    poserPixels(t, [
+    'fefffffiefeeed.',
+    'ffffqqfkeeeeddc',
+    'ffqqqppiqqpeedc',
+    'fqqpppkkkpppedc',
+    'ffqrrkriqkrqedc',
+    'deeeooijioooedc',
+    'kikikikikikikik',
+    'dddddjdkdjddddc',
+    '.dddiddiddidddc',
+    '.cccccckccccccb',
+    '.ddddddiddddddb']);
+  } },
+  bandageC: { l: 19, h: 22, prise: [8, 6], pose: 'tient', dessin(t) {
+    // C : une bande pliée en zigzag (quatre épaisseurs, les plis arrondis), le bout libre qui pend en vague, un brin d'herbe
+    // glissé dans le pli
+    poserPixels(t, [
+    '.fffffeffffff..pq',
+    'eeedeeeeeedeed.r.',
+    '.dddddddddddd.qpp',
+    '.fffeffffffef.p..',
+    'ddeeeeeedeeeee...',
+    '.dddddddddddd....',
+    '.feffffffefff....',
+    'eeeeeedeeeeeed...',
+    '.dddddddddddd....',
+    '.ffffffefffff....',
+    'deeedeeeeeedee...',
+    '.dddddddddddd....',
+    '.cccccccffedc....',
+    '........fffe.....',
+    '.........ffed....',
+    '.........eedc....',
+    '........ffed.....',
+    '.......fffe......',
+    '......fffe.......',
+    '......eeed.......']);
   } },
   amulette: { l: 11, h: 16, prise: [5.5, 1.5], pose: 'tient', dessin(t) {
     // un pendentif d'or serti d'une gemme, au bout de sa chaîne que les doigts pincent
@@ -129,6 +172,9 @@ const OBJETS_MAIN = {
     '.....hgjghg..........j.']);
   } },
 };
+// (retours du joueur) le bandage : trois propositions ; celle que le joueur choisira devient le bandage du jeu
+const VARIANTE_BANDAGE = 'A';
+OBJETS_MAIN.bandage = OBJETS_MAIN['bandage' + VARIANTE_BANDAGE];
 OBJETS_MAIN.antidote = { ...OBJETS_MAIN.potion, dessin(t) {
   t.forme('verre', ellipsoide(5.5, 11, 4.4, 4.8), { decalage: 0.3 });
   t.forme('verreVert', ellipsoide(5.5, 12, 3.6, 3.6), { decalage: 0.2, ombre: false, bord: false });

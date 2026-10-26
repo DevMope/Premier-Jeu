@@ -24,6 +24,8 @@ function commandeDe(voyageur) {
 // --- (v0.63, étape 10a) Les armes ---
 function estArme(id) { return !!(ITEMS[id] && ITEMS[id].arme); }
 const IDS_ARMES = Object.keys(ITEMS).filter(estArme);
+// (retour du joueur) le bâton de mage est réservé aux magiciennes : personne d'autre ne le porte ni ne le reçoit
+function armeAutorisee(v, id) { return id !== 'baton' || !!(v && v.race === 'magicienne'); }
 // L'arme de son peuple (les nains vétérans et plus préfèrent le marteau)
 function armePour(v) {
   if (v.race === 'nain' && ['veteran', 'heros', 'legende'].includes(v.niveau)) return 'marteau';
@@ -40,9 +42,9 @@ function etatArme(v) { return Math.max(0, ...IDS_ARMES.map(id => etatObjet(v, id
 function armeEmportee(v, colis) {
   const pref = armePour(v);
   if ((colis[pref] || 0) > 0) return pref;
-  const autre = IDS_ARMES.find(id => (colis[id] || 0) > 0);
+  const autre = IDS_ARMES.find(id => (colis[id] || 0) > 0 && armeAutorisee(v, id));
   if (autre) return autre;
-  const surLui = IDS_ARMES.filter(id => etatObjet(v, id) > 0).sort((a, b) => etatObjet(v, b) - etatObjet(v, a))[0];
+  const surLui = IDS_ARMES.filter(id => etatObjet(v, id) > 0 && armeAutorisee(v, id)).sort((a, b) => etatObjet(v, b) - etatObjet(v, a))[0];
   return surLui || pref;
 }
 

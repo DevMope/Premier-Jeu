@@ -544,7 +544,7 @@ class VoyageScene extends Cinematique {
     }
     if (id === 'brigands') {
       // (v1.59, planche 79) les pandas renégats, déserteurs de la Confrérie
-      const bandits = [[{ ...FIGURANTS.renegatWen, serieux: true, armeEmportee: 'arc' }, 780], [{ ...FIGURANTS.renegateLin, serieux: true, armeEmportee: 'dague' }, 850], [{ ...FIGURANTS.renegatHao, serieux: true, armeEmportee: 'baton' }, 925]].map(([q, x]) => this.posePerso(q, x + 300, sol + 40, 6.4));
+      const bandits = [[{ ...FIGURANTS.renegatWen, serieux: true, armeEmportee: 'arc' }, 780], [{ ...FIGURANTS.renegateLin, serieux: true, armeEmportee: 'dague' }, 850], [{ ...FIGURANTS.renegatHao, serieux: true, armeEmportee: 'bambou' }, 925]].map(([q, x]) => this.posePerso(q, x + 300, sol + 40, 6.4));
       await Promise.all(bandits.map((p, k) => this.allerA(p, 760 + k * 72, 1100 + k * 150)));
       bandits.forEach(p => this.emotion(p, 'colere', 1400));
       return { apres: async i => {
