@@ -227,8 +227,9 @@ Object.assign(DodoScene.prototype, {
     await this.geste('tireRetour', E.tireRetour, { de: P, chaque: (u, info) => tenir(info) });
     if (this.fini) return;
     // (le pyjama sur l'épaule pour marcher)
-    const epaule = () => pli.setPosition(this.joueur.x + 2, this.joueur.y - this.joueur.displayHeight * 0.74);
+    const epaule = () => pli.setPosition(this.joueur.x + (this.joueur.flipX ? 5 : -5), this.joueur.y - this.joueur.displayHeight * 0.67);   // (posé sur l'épaule, pas devant le visage)
     this.events.on('update', epaule);
+    this.events.once('shutdown', () => this.events.off('update', epaule));   // (« Passer » pendant qu'il marche)
     const xP = CHAMBRE_PYJ.paravent - 50;
     await this.marcherNuit(xP, 5);
     this.events.off('update', epaule);
