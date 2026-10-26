@@ -37,6 +37,25 @@ function cellierHD(scene, n = 1) {
 function couleurFraicheur(reste, total) { const f = total ? reste / total : 0; return f > 0.5 ? 0x4a9a3a : f > 0.25 ? 0xe0a030 : 0xc84a2a; }
 
 // Le jour de marché : une guirlande de fanions de toile tendue au-dessus de la place (ils se balancent un peu au vent)
+// (v1.63) Une guirlande de fanions nouée entre deux points (a, b : [x, y]), qui pend d'un vrai arrondi de corde (creux : de
+// combien elle descend au milieu) ; un nœud à chaque bout, des petits fanions qui bougent au vent
+function guirlandeEntre(scene, c, a, b, creux = 10, pas = 20, echelle = 0.75) {
+  const [xa, ya] = a, [xb, yb] = b, fil = t => [xa + (xb - xa) * t, ya + (yb - ya) * t + creux * 4 * t * (1 - t)];
+  const g = scene.add.graphics(); g.lineStyle(1.4, 0x3b2410, 0.95);
+  g.beginPath(); g.moveTo(xa, ya); for (let k = 1; k <= 24; k++) { const [x, y] = fil(k / 24); g.lineTo(x, y); } g.strokePath();
+  g.fillStyle(0x3b2410).fillCircle(xa, ya, 2).fillCircle(xb, yb, 2);   // (les nœuds, aux coins des auvents)
+  c.add(g);
+  const couleurs = [0xc8443a, 0xe8c050, 0x3a7ab0, 0x5a9a4a, 0xe8e0c8], n = Math.max(1, Math.floor(Math.hypot(xb - xa, yb - ya) / pas));
+  for (let k = 0; k < n; k++) {
+    const [x, y] = fil((k + 0.5) / n), coul = couleurs[k % couleurs.length], l = 9 * echelle, h = 16 * echelle;
+    const f = scene.add.graphics({ x, y });
+    f.fillStyle(0x2a1a0c).fillTriangle(-l - 1, -1, l + 1, -1, 0, h + 2);
+    f.fillStyle(coul).fillTriangle(-l, 0, l, 0, 0, h);
+    f.fillStyle(0xffffff, 0.25).fillTriangle(-l, 0, -l + 4 * echelle, 0, 0, h);
+    c.add(f);
+    scene.tweens.add({ targets: f, angle: { from: -5, to: 5 }, duration: 1300 + (k % 4) * 260, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+}
 function guirlandeFanions(scene, c, x0, x1, y, creux, pas = 40, echelle = 1) {
   const g = scene.add.graphics(); g.lineStyle(1.4, 0x3b2410, 0.9);
   const fil = x => y + Math.sin((x - x0) / (x1 - x0) * Math.PI) * creux;

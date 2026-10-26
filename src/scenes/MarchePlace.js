@@ -232,7 +232,8 @@ Object.assign(MarcheScene.prototype, {
         // la bande du haut passe devant le marchand (le chapeau de Mère Sauge reste derrière le lambrequin)
         g.add(this.add.image(etals[0].x, etals[0].y, E.cle).setOrigin(0.5, 1).setScale(2).setCrop(0, 0, 88, E.rangs));
         const haut = etals[0].y - (82 + E.ext) * 2, yc = haut + (m.modele === 'poutre' ? E.toit : E.toit + 1) * 2 + E.hb + (m.modele === 'poutre' ? 0 : 0.5);
-        g.bandeNom = [-88, haut, 88, haut + E.rangs * 2];   // (la bande du nom, dans le groupe : la bulle de Garrick la laisse libre)
+        g.bandeNom = [-88, haut, 88, haut + E.rangs * 2];
+        g.attachesGuirlande = [[-86, haut + 6], [86, haut + 6]];   // (les coins de l'auvent, où l'on noue les guirlandes du jour de marché)   // (la bande du nom, dans le groupe : la bulle de Garrick la laisse libre)
         const im = poserLettrage(this, g, 0, yc, nom, { ...o, hauteur: E.hb * 2 - 3, lignesMax: lignes, coupe: deux });
         if (MARCHANDS[k]) this.nomsRelation.push({ im, k, couleur: coul });
         if (met) poserEnseignePendue(this, g, g.x < 900 || k === 'peche', met, haut + E.rangs * 2);
@@ -242,6 +243,7 @@ Object.assign(MarcheScene.prototype, {
         faits.add(k);
         g.list.filter(o => o.type === 'Text' && /ENCHÈRES/.test(o.text)).forEach(o => o.destroy());
         g.add(this.add.image(0, -138, banniereEncheresHD(this)).setOrigin(0.5, 0).setScale(2));
+        g.attachesGuirlande = [[-56, -140], [56, -140]];   // (le haut des deux montants du portique)
         poserLettrage(this, g, 0, -126, nom, { police: 'Alegreya', graisse: 900, taille: 15, couleur: '#f0c850', fond: 0x7e2a20, genre: 'dore', largeur: 94, hauteur: 20, lignesMax: 1, ...contrasteLettrage('#f0c850', 0x7e2a20) });
         if (met) poserEnseignePendue(this, g, g.x < 900, met, -110, 64);
       } else if (k === 'jeux') {   // le coin des jeux : le nom peint, en or, sur le lambrequin violet de l'auvent
@@ -403,9 +405,16 @@ Object.assign(MarcheScene.prototype, {
   // (v1.54, planche 62) Le jour de marché : des fanions, deux charrettes de colporteurs de passage, du monde, et Garrick
   // qui flâne entre les étals (un clic : ce qu'il en dit)
   jourDeMarchePlace() {
-    const c = this.add.container(0, 0); c.yTri = 5000;
-    for (const [x0, x1, y] of [[40, 900, 236], [900, 1760, 236]]) guirlandeFanions(this, c, x0, x1, y, 30, 44, 1.2);
-    this.place.add(c);
+    // (v1.63, retours du joueur) les fanions sont tendus d'un étal à l'autre, au-dessus des enseignes : chaque corde est nouée
+    // aux coins des auvents (au haut des montants, pour les enchères) et pend entre deux étals, sans passer devant aucun
+    // nom, aucun marchand, aucune marchandise
+    const rang = this.place.list.filter(g => g.attachesGuirlande && LIEUX_PLACE[g.cle] && LIEUX_PLACE[g.cle][1] < 400).sort((a, b) => a.x - b.x);
+    for (let k = 0; k + 1 < rang.length; k++) {
+      const A = rang[k], B = rang[k + 1], a = A.attachesGuirlande[1], b = B.attachesGuirlande[0];
+      const c = this.add.container(0, 0); c.yTri = Math.min(A.y, B.y) - 1;   // (derrière qui passe devant les étals)
+      guirlandeEntre(this, c, [A.x + a[0] * A.scaleX, A.y + a[1] * A.scaleY], [B.x + b[0] * B.scaleX, B.y + b[1] * B.scaleY], 10);
+      this.place.add(c);
+    }
     const lignes = [
       "Jour de marché ! Je viens de loin, alors je vends moins cher qu'eux : tout est un dixième en dessous, sur toute la place.",
       "Des colporteurs, il en passe un jour par semaine. Le reste du temps, on est sur les routes, avec l'âne.",
