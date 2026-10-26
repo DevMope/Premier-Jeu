@@ -8,7 +8,8 @@
 
 // Où va chaque chose, selon la pièce (le coussin brodé : sur le rebord de ta fenêtre, ou sur la cabane)
 const COIN_LIEUX = {
-  chambre: { x: 0, sol: 503, places: { arbre: 650, panier: 290, gamelles: 380, cabane: 790, pelote: 210, coussin: [744, -272] } },
+  // (planche 85 v2, retouche : la chambre réagencée ; l'arbre et la cabane, plus bas, ne cachent plus aucun meuble)
+  chambre: { x: 0, sol: 503, places: { arbre: 478, panier: 300, gamelles: 392, cabane: 676, pelote: 214, coussin: [744, -272], echelle: { arbre: 1.1, cabane: 1.6 } } },
   arriere: { x: 130, sol: SOL_ARRIERE + 68, places: { arbre: 420, panier: 130, gamelles: -70, cabane: 300, pelote: 52, coussin: [300, -100] } },   // (l'arbre devant le buffet : à gauche, il cachait l'étagère)
 };
 // Le coin, ses chats (endormis dans le panier ; le tien te suit en promenade), et son panneau d'aménagement au clic

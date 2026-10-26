@@ -102,15 +102,15 @@ class DodoScene extends Cinematique {
     this.meublesDeNuit();
 
     // La table de chevet, la bougie et sa lumière.
-    this.chevet = this.add.image(635, SOL_CHAMBRE, chevetHD(this, luxe)).setOrigin(0.5, 1).setScale(2).setDepth(2);
-    const b = bougie(this, 628, SOL_CHAMBRE - 62, { rayon: 230, profondeur: 2 });
+    this.chevet = this.add.image(CHAMBRE_PYJ.chevet, SOL_CHAMBRE, chevetHD(this, luxe)).setOrigin(0.5, 1).setScale(2).setDepth(2);
+    const b = bougie(this, CHAMBRE_PYJ.bougie[0], SOL_CHAMBRE - 62, { rayon: 230, profondeur: 2 });
     this.flamme = b.flamme;
     this.lumiere = b.halo.setDepth(5);
 
     // Un tapis tressé, un coffre, et la vieille épée de Garrick accrochée au mur.
     this.tapis = this.add.image(440, SOL_CHAMBRE + 42, tapisHD(this, luxe)).setScale(2).setDepth(1.4);
-    // (v0.66) le coffre, au pied du lit ; à sa place, contre le mur de gauche, la cheminée
-    this.add.image(548, SOL_CHAMBRE + 44, coffreHD(this, niveauAmelioration(this.G, 'coffre'))).setOrigin(0.5, 1).setScale(2.4).setDepth(4.5);
+    // (v0.66) le coffre ; (planche 85 v2, retouche) contre le mur, entre la cheminée et la tête du lit : il ne cache plus rien
+    this.coffreChambre = this.add.image(CHAMBRE_PYJ.coffre, SOL_CHAMBRE + 2, coffreHD(this, niveauAmelioration(this.G, 'coffre'))).setOrigin(0.5, 1).setScale(1.6).setDepth(2);
     creerChemineeHD(this);
     this.add.image(112, SOL_CHAMBRE + 6, 'chemineeHD').setOrigin(0.5, 1).setScale(2).setDepth(1.6);
     this.add.image(112, SOL_CHAMBRE - 2, 'buchesHD').setOrigin(0.5, 1).setScale(2).setDepth(1.65);
@@ -319,9 +319,9 @@ class DodoScene extends Cinematique {
     // les anciennes parties qui ont déjà des pièces l'ont, bien sûr)
     if (!this.G.mannequin && !possedees.length) return;
     const cote = this.coteAffiche || coteArmure(this.G);
-    this.mannequin = dessinerMannequin(this, 790, SOL_CHAMBRE, possedees, 4, cote).setDepth(2);
+    this.mannequin = dessinerMannequin(this, CHAMBRE_PYJ.mannequin, SOL_CHAMBRE, possedees, 4, cote).setDepth(2);
     if (possedees.length) {
-      this.texteArmure = this.add.text(790, SOL_CHAMBRE + 14, `${NOMS_ARMURE[cote]} · ${possedees.length} / ${ARMURE.length}`,
+      this.texteArmure = this.add.text(CHAMBRE_PYJ.mannequin, SOL_CHAMBRE + 14, `${NOMS_ARMURE[cote]} · ${possedees.length} / ${ARMURE.length}`,
         style(11, '#f3d98a', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5, 0).setDepth(2);
     }
   }
@@ -421,7 +421,7 @@ class DodoScene extends Cinematique {
     this.tweens.killTweensOf(icone);
     this.tweens.add({ targets: [voile], fillAlpha: 0, duration: 500 });
     this.tweens.add({ targets: [halo, rayons, titre, sous], alpha: 0, duration: 400, onComplete: () => { halo.destroy(); rayons.destroy(); titre.destroy(); sous.destroy(); } });
-    await this.animer({ targets: icone, x: 790, y: SOL_CHAMBRE - 100, scale: 3, duration: 700, ease: 'Sine.easeInOut' });
+    await this.animer({ targets: icone, x: CHAMBRE_PYJ.mannequin, y: SOL_CHAMBRE - 100, scale: 3, duration: 700, ease: 'Sine.easeInOut' });
     icone.destroy();
     voile.destroy();
     this.dessinerArmure(this.G.armure.slice(0, this.G.armure.indexOf(piece) + 1));
@@ -499,7 +499,7 @@ class DodoScene extends Cinematique {
     this.events.off('update', suivre);
     // il pose le mannequin à sa place, près de la fenêtre
     Son.jouer('poser');
-    await this.animer({ targets: porte, x: 790, y: SOL_CHAMBRE, angle: 0, duration: 500, ease: 'Quad.easeOut' });
+    await this.animer({ targets: porte, x: CHAMBRE_PYJ.mannequin, y: SOL_CHAMBRE, angle: 0, duration: 500, ease: 'Quad.easeOut' });
     this.cameras.main.shake(120, 0.003);
     this.regarderVers(g, this.joueur); this.regarderVers(this.joueur, g);
     const parler = async (texte, ton, emotion, image = null) => {
@@ -541,7 +541,7 @@ class DodoScene extends Cinematique {
     if (!avant || !possedees.length) return this.dessinerArmure(possedees);
     this.cameras.main.flash(500, cote === 'sombre' ? 80 : 255, 0, cote === 'sombre' ? 40 : 200);
     this.dessinerArmure(possedees);
-    const t = this.add.text(790, SOL_CHAMBRE - 190, cote === 'sombre' ? "L'armure s'assombrit..." : "L'armure se purifie...",
+    const t = this.add.text(CHAMBRE_PYJ.mannequin, SOL_CHAMBRE - 190, cote === 'sombre' ? "L'armure s'assombrit..." : "L'armure se purifie...",
       style(16, cote === 'sombre' ? '#ff6080' : '#fff4dc', { fontStyle: 'bold italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5).setDepth(8);
     this.tweens.add({ targets: t, alpha: 0, y: t.y - 30, delay: 1500, duration: 800, onComplete: () => t.destroy() });
     await this.attendre(1200);

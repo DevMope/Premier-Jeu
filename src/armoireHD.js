@@ -1,8 +1,9 @@
 // (planche 85 v2, validée) Les meubles et les étoffes du coucher, dans la chambre (DodoScene, et la promenade du soir) :
 //  - l'armoire, contre le mur entre le pied du lit et la fenêtre (la porte de l'arrière-boutique a repris sa place, à
-//    droite, voir porteChambreHD.js) : fermée, ses deux battants qui pivotent (quatre images), ouverte
+//    droite, voir porteChambreHD.js ; le coffre, contre le mur entre la cheminée et le lit) : fermée, ses deux battants qui pivotent (quatre images), ouverte
 //    (l'étagère des pyjamas pliés, la tringle des habits du jour, les bottes) ;
-//  - le paravent : replié contre le mur, à demi ouvert, déplié en zigzag ; les habits jetés par-dessus ;
+//  - le paravent : replié contre le flanc de l'armoire (ses trois feuilles pliées en accordéon), à demi ouvert, déplié en
+//    zigzag sous la fenêtre ; les habits jetés par-dessus ;
 //  - le tourbillon « comme dans les Sims » : des rubans aux couleurs des deux tenues, des étincelles ;
 //  - le lit raccourci à la taille du joueur (le même dessin, sans le grand bout de matelas vide) ;
 //  - la couverture refaite : dessinée à partir du corps couché (elle tombe sur la poitrine, les hanches, les genoux et la
@@ -10,15 +11,17 @@
 //    tête, le revers du drap ; le lit ouvert : la couverture rabattue vers le pied, en un gros pli roulé.
 
 // --- Où sont les choses, dans la chambre (en pixels du jeu) ---
-// (l'armoire entre le lit et la fenêtre ; le paravent, plié sous la fenêtre, à gauche de la porte : on le déplie depuis
-// devantParavent, entre lui et la porte)
-const CHAMBRE_PYJ = { armoire: 527, paravent: 846, devantArmoire: 458, devantParavent: 858, bougie: [628, 331], porte: 905 };
+// (retouche validée : chaque meuble à sa place, aucun n'en cache un autre) de gauche à droite : la cheminée ; le coffre,
+// contre le mur ; le lit ; l'armoire, et devant elle la place pour l'ouvrir (au pied du lit) ; le paravent, plié contre son
+// flanc droit, qui se déplie vers la droite, sous la fenêtre (paravent : son bord fixe ; on le déplie depuis devantParavent,
+// au bout de sa course) ; la table de chevet et la bougie ; le mannequin de l'armure ; la porte de l'arrière-boutique.
+const CHAMBRE_PYJ = { coffre: 232, armoire: 560, devantArmoire: 491, paravent: 624, devantParavent: 728, chevet: 752, bougie: [745, 331], mannequin: 822, porte: 905 };
 
 // --- Le lit raccourci ---
 // (la tête de lit et l'oreiller à gauche, le pied à droite : on retire un morceau du milieu, là où le dessin se répète)
 function litChambre(G) {
   const n = typeof niveauAmelioration === 'function' ? niveauAmelioration(G, 'chambre') : 0, petit = stadeJoueur(G) === 'petit';
-  const coupe = petit ? 70 : 60, L = 172 - coupe, x0 = 250, x1 = x0 + 2 * L;
+  const coupe = petit ? 70 : 60, L = 172 - coupe, x0 = 270, x1 = x0 + 2 * L;   // (x0 : la tête du lit, à droite du coffre)
   return { n, coupe, L, x0, x1, haut: n === 0 ? 362 : 366, bas: n === 0 ? 383 : 387, pied: x1 - (n === 0 ? 14 : 18), oreiller: [x0 + 52, n === 0 ? 358 : 360] };
 }
 function litCourtHD(scene, n, coupe) {
@@ -124,19 +127,20 @@ function paraventHD(scene, pli = 2) {
   t.rampes.toileP = rampeVive(0xb8a070); t.rampes.motifP = rampeVive(0x6a3a4a); t.rampes.feuilleP = rampeVive(0x5a7a3a);
   // la largeur vue de chaque feuille (16 de face), son inclinaison ; le zigzag : au milieu de face, les deux autres de biais
   // (la feuille de droite reste contre l'armoire : le paravent se déplie vers la gauche, le bord droit ne bouge pas)
-  const ouv = [0.12, 0.55, 1][pli], larg = 16 * Math.max(0.24, Math.cos((1 - ouv) * 1.32)), cote = 16 * Math.max(0.12, Math.cos(1.32 - ouv * 0.6)) * (pli ? 1 : 0.5);
+  // (plié : les trois feuilles en accordéon, assez ouvertes pour qu'on en voie les cadres et les fleurs, pas une planche)
+  const ouv = [0.3, 0.6, 1][pli], larg = 16 * Math.max(0.24, Math.cos((1 - ouv) * 1.32)), cote = 16 * Math.max(0.12, Math.cos(1.32 - ouv * 0.6)) * (pli ? 1 : 0.8);
   const droite = L - 2, feuilles = [[droite - 2 * cote - larg, droite - cote - larg, -1], [droite - cote - larg, droite - cote, 0], [droite - cote, droite, 1]];
   for (const [a0, b0, sens] of feuilles) {
     const a = Math.round(a0), b = Math.round(b0); if (b - a < 1) continue;
     for (let x = a; x < b; x++) {
-      const u = (x - a + 0.5) / (b - a), recul = sens ? (sens < 0 ? 1 - u : u) * 2.2 * (pli ? 1 : 0.4) : 0;   // (les feuilles de biais s'éloignent : plus basses)
+      const u = (x - a + 0.5) / (b - a), recul = sens ? (sens < 0 ? 1 - u : u) * 2.2 * (pli ? 1 : 0.8) : 0;   // (les feuilles de biais s'éloignent : plus basses)
       for (let y = Math.round(2 + recul); y < Math.round(H - 2 - recul * 0.35); y++) {
         const bord = x === a || x === b - 1 || y < 4 + recul || y > H - 6;
         const ton = bord ? (x === a ? 4 : 2) : (sens < 0 ? 4 : sens > 0 ? 2 : 3) + ((x * 3 + y * 5) % 13 === 0 ? 1 : 0);
         t.poser(x, y, bord ? 'chene' : 'toileP', ton);
       }
       // les fleurs peintes et leurs feuilles, sur la toile
-      if (b - a >= 5) for (let i = 0; i < 4; i++) { const fx = Math.round(a + (b - a) * (i % 2 ? 0.7 : 0.3)), fy = Math.round(10 + i * 8 + recul); if (x !== fx) continue; t.poser(fx, fy, 'motifP', 3); t.poser(fx + 1, fy, 'motifP', 4); t.poser(fx, fy + 1, 'motifP', 2); t.poser(fx - 1, fy + 2, 'feuilleP', 3); }
+      if (b - a >= 4) for (let i = 0; i < 4; i++) { const fx = Math.round(a + (b - a) * (i % 2 ? 0.7 : 0.3)), fy = Math.round(10 + i * 8 + recul); if (x !== fx) continue; t.poser(fx, fy, 'motifP', 3); t.poser(fx + 1, fy, 'motifP', 4); t.poser(fx, fy + 1, 'motifP', 2); t.poser(fx - 1, fy + 2, 'feuilleP', 3); }
     }
     // les petits pieds de bois
     for (let x = a + 1; x < Math.min(b, a + 3); x++) for (let y = H - 2; y < H; y++) t.poser(x, y, 'cheneSombre', 2);

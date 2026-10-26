@@ -24,7 +24,8 @@ Object.assign(DodoScene.prototype, {
     this.habitsJour = couleursHabits(G);
     this.armoireImg = this.add.image(CHAMBRE_PYJ.armoire, SOL_CHAMBRE + 2, '__DEFAULT').setScale(2).setDepth(2.2);
     this.peindreArmoire(0);
-    this.paravent = this.add.image(CHAMBRE_PYJ.paravent, SOL_CHAMBRE + 8, paraventHD(this, 0)).setOrigin(1, 1).setScale(2).setDepth(2.3);
+    // (le bord fixe du paravent contre le flanc droit de l'armoire : il se déplie vers la droite, sous la fenêtre)
+    this.paravent = this.add.image(CHAMBRE_PYJ.paravent, SOL_CHAMBRE + 8, paraventHD(this, 0)).setOrigin(0, 1).setFlipX(true).setScale(2).setDepth(2.3);
     // (la vraie porte de l'arrière-boutique, du modèle de toutes les portes intérieures, avec sa plaque)
     this.porteChambre = poserPorteChambre(this, CHAMBRE_PYJ.porte, SOL_CHAMBRE, { prof: 2.5, ecriteau: "L'arrière-boutique" });
     this.habitsJetes = [];
@@ -280,7 +281,7 @@ Object.assign(DodoScene.prototype, {
     await this.geste('tireRetour', E.tireRetour, { de: P2, chaque: (u, info) => tenir(info) });
     if (this.fini) return;
     this.events.on('update', epaule);
-    const xP = CHAMBRE_PYJ.paravent - 50;
+    const xP = CHAMBRE_PYJ.paravent + 44;   // (derrière le paravent déplié, en son milieu)
     await this.marcherNuit(xP, 5);
     this.events.off('update', epaule);
     if (this.fini) return;
@@ -298,7 +299,7 @@ Object.assign(DodoScene.prototype, {
     Son.jouer('glisse'); this.paravent.setTexture(paraventHD(this, 2)).setDepth(3.5);
     await this.geste('tireRetour', E.tireRetour, { de: P2 });
     if (this.fini) return;
-    await this.marcherNuit(CHAMBRE_PYJ.paravent - 50, 4.5);
+    await this.marcherNuit(CHAMBRE_PYJ.paravent + 44, 4.5);
     if (this.fini) return;
     await this.jeterHabits(null);
   },
@@ -389,8 +390,9 @@ Object.assign(DodoScene.prototype, {
 
   // Derrière le paravent : la tunique, le tablier, le pantalon jetés par-dessus, un à un ; il enfile son pyjama
   async jeterHabits(pli) {
-    const j = this.joueur, x = this.paravent.x, haut = this.paravent.y - PARAVENT_HD.H * 2 + 6;
-    const c = this.habitsJour, cibles = [['haut', c.haut, x - 92], ['tablier', 0xe8dcc0, x - 58], ['bas', c.bas, x - 24]];
+    // (x : le bord fixe du paravent ; sens : le côté où il se déplie)
+    const j = this.joueur, x = this.paravent.x, sens = this.paravent.flipX ? 1 : -1, haut = this.paravent.y - PARAVENT_HD.H * 2 + 6;
+    const c = this.habitsJour, cibles = [['haut', c.haut, x + 24 * sens], ['tablier', 0xe8dcc0, x + 50 * sens], ['bas', c.bas, x + 78 * sens]];
     const k = this.court ? 0.55 : 1;   // (la version courte : les mêmes gestes, plus vifs, et les trois habits à la suite)
     if (this.court) return this.jeterHabitsVite(cibles, haut);
     await this.attendre(200 * k);

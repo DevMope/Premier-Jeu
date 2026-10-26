@@ -281,11 +281,11 @@ class PromenadeScene extends Cinematique {
     DodoScene.prototype.dessinerChambre.call(this);
     // La nuit, à la fenêtre ; le soleil reste couché
     this.soleil.setVisible(false);
-    this.lumieres.push([628, SOL_CHAMBRE - 80, 2.4]);
+    this.lumieres.push([CHAMBRE_PYJ.bougie[0], SOL_CHAMBRE - 80, 2.4]);
     const luxe = niveauAmelioration(G, 'chambre');
     this.regarder(this.litGeom.x0, SOL_CHAMBRE - 130, this.litGeom.x1 - this.litGeom.x0, 130, `Ton lit : ${AMELIORATIONS.chambre.niveaux[luxe]}. Il t'attend...`);
-    if (G.mannequin || G.armure.length) this.regarder(740, SOL_CHAMBRE - 200, 110, 200, G.armure.length ? `${NOMS_ARMURE[coteArmure(G)]} : ${G.armure.length} / ${ARMURE.length} pièces.` : "Le mannequin de Garrick attend sa première pièce d'armure.");
-    // (planche 85 v2) l'armoire, à droite de la fenêtre, remplace la malle : les habits du jour, leurs couleurs, les
+    if (G.mannequin || G.armure.length) this.regarder(CHAMBRE_PYJ.mannequin - 40, SOL_CHAMBRE - 200, 80, 200, G.armure.length ? `${NOMS_ARMURE[coteArmure(G)]} : ${G.armure.length} / ${ARMURE.length} pièces.` : "Le mannequin de Garrick attend sa première pièce d'armure.");
+    // (planche 85 v2) l'armoire, entre le pied du lit et la fenêtre, remplace la malle : les habits du jour, leurs couleurs, les
     // accessoires, et le pyjama de cette nuit ; ce qu'on change se met d'un tourbillon
     const armoire = this.add.rectangle(CHAMBRE_PYJ.armoire - 3, SOL_CHAMBRE - 80, 70, 160, 0xffffff, 0).setDepth(8.4).setInteractive({ useHandCursor: true });
     armoire.on('pointerdown', async () => {
