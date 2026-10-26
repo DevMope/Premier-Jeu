@@ -1538,7 +1538,8 @@ function prevision(G, jour = G.jour + 1) {
   const forme = G.reveil && G.reveil.jour === jour && G.reveil.forme === 'client' ? 1 : 0;
   const pelerins = (sermentDe(G) === 'bien' ? AVANTAGES_SERMENT.clients : 0) + (typeof bonusClientsCollection === 'function' ? bonusClientsCollection(G) : 0);   // (v0.95 : la Confrérie envoie du monde ; v1.23 : on vient voir les trophées)
   const hiver = (saisonDe(G, jour) === 'givre' ? SAISON_REGLES.clientsHiver : 0) + (typeof clientsFroid === 'function' ? clientsFroid(G, jour) : 0)
-    + (typeof clientsMeteo === 'function' ? clientsMeteo(G, jour) : 0) + (typeof clientsJourDeMarche === 'function' ? clientsJourDeMarche(G, jour) : 0);   // (v1.54 : le jour de marché, du monde de passage)   // (v1.53) la pluie, l'orage, la neige gardent les gens chez eux ; la canicule les fait venir tôt   // (v0.99 : le froid garde les gens chez eux ; v1.05 : une nuit sans feu)
+    + (typeof clientsMeteo === 'function' ? clientsMeteo(G, jour) : 0) + (typeof clientsJourDeMarche === 'function' ? clientsJourDeMarche(G, jour) : 0)
+    + (typeof clientsEvenementsComptoir === 'function' ? clientsEvenementsComptoir(G, jour) : 0);   // (v1.63) la publicité du vantard   // (v1.54 : le jour de marché, du monde de passage)   // (v1.53) la pluie, l'orage, la neige gardent les gens chez eux ; la canicule les fait venir tôt   // (v0.99 : le froid garde les gens chez eux ; v1.05 : une nuit sans feu)
   min = Math.max(1, min + bonus + forme + pelerins + hiver);
   max = Math.max(min, max + bonus + forme + pelerins + hiver);
   // (v0.60) les premiers jours : pas trop de monde, mais au moins deux clients (le rythme des débuts)
@@ -1757,6 +1758,7 @@ function nuit(G) {
   sansPlanter('matinDeLaMenace', () => typeof matinDeLaMenace === 'function' && G.reveil.lignes.push(...matinDeLaMenace(G)));   // (v1.33) le crieur, la bataille
   sansPlanter('matinDuMoulin', () => typeof matinDuMoulin === 'function' && G.reveil.lignes.push(...matinDuMoulin(G)));   // (v1.35) le retour du Moulin
   sansPlanter('matinDuLien', () => typeof matinDuLien === 'function' && G.reveil.lignes.push(...matinDuLien(G)));
+  sansPlanter('matinEvenementsComptoir', () => typeof matinEvenementsComptoir === 'function' && G.reveil.lignes.push(...matinEvenementsComptoir(G)));   // (v1.63) les suites des événements du comptoir
   sansPlanter('matinPilosite', () => typeof matinPilosite === 'function' && G.reveil.lignes.push(...matinPilosite(G)));   // (v1.48) le barbier ouvre, la barbe pousse   // (v1.35) la complicité, les rations des deux chats
   sansPlanter('matinDuParrain', () => typeof matinDuParrain === 'function' && G.reveil.lignes.push(...matinDuParrain(G)));   // (v1.39) la part de la Famille
   sansPlanter('matinDesRiches', () => typeof matinDesRiches === 'function' && G.reveil.lignes.push(...matinDesRiches(G)));   // (v1.32) le mécénat, la neutralité
@@ -1976,6 +1978,7 @@ function formerFileDuJour(G) {
   // (v1.11) le crieur annonce le mois des comptoirs tout au bout de la file (avant la Faucheuse)
   G.file = faucheuseAuBout([...retours, ...reportes, ...notables, ...visites, ...file, ...(typeof crieurDuJour === 'function' ? crieurDuJour(G) : [])]);
   rangerFile(G);   // (v0.93) le rangement choisi sur la feuille du jour
+  if (typeof evenementDuJour === 'function') sansPlanter('evenementDuJour', () => evenementDuJour(G, G.file));   // (v1.63) un petit événement du comptoir (evenementsComptoir.js)
 }
 
 // (v0.93, planche 19) Ranger la file : seuls les clients changent de place entre eux (les retours,

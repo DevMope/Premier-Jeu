@@ -513,7 +513,7 @@ Object.assign(MarcheScene.prototype, {
       q.attend = null;
       const gauche = o.img.x < q.img.x;
       for (const [a, versDroite] of [[o, gauche], [q, !gauche]]) { a.vue = 'profil'; a.img.setTexture(corpsHD(this, a.quoi, null, 'profil')).setFlipX(!versDroite); a.parle = true; a.cible = null; a.chemin = []; }
-      const [l1, l2] = Phaser.Utils.Array.GetRandom(CAUSERIES_PLACE);
+      const [l1, l2] = (typeof causerieChanson === 'function' && causerieChanson(this.G)) || Phaser.Utils.Array.GetRandom(CAUSERIES_PLACE);   // (v1.63) la chanson de la barde, fredonnée au marché
       this.bulleCourte(o, l1);
       this.time.delayedCall(2300, () => q.img.active && this.bulleCourte(q, l2));
       this.time.delayedCall(5200, () => { for (const a of [o, q]) { a.parle = false; a.pause = Phaser.Math.Between(600, 2200); } });

@@ -13,7 +13,7 @@ const BUSTE = { echelle: 2.3 };
 // (plus proches), dépassent davantage vers le haut.
 const TAILLE_BUSTE = { hobbit: { bas: 34 }, nain: { bas: 24 }, elfe: { echelle: 1.05 }, magicienne: { echelle: 1.09 },
   gobelin: { bas: 44 }, momie: { bas: 10 }, vampire: {}, orc: { echelle: 1.04 }, loupgarou: { echelle: 1.08 }, panda: { echelle: 1.1 }, troll: { echelle: 1.12 } };
-const tailleBuste = personne => ({ bas: 0, echelle: 1, ...((personne && TAILLE_BUSTE[personne.race]) || {}) });
+const tailleBuste = personne => ({ bas: 0, echelle: 1, ...((personne && TAILLE_BUSTE[personne.race]) || {}), ...((personne && personne.tailleBuste) || {}) });   // (v1.63 : un enfant, plus petit et plus bas)
 const FILE = { x: FENETRE.x + 110, ecart: 55, y: SOL_COMPTOIR - 14, echelle: 5 };
 
 class CounterScene extends Phaser.Scene {
@@ -50,6 +50,7 @@ class CounterScene extends Phaser.Scene {
     this.piecesEnVol = 0; this.argentVise = undefined;   // (v1.61) un vol de pièces interrompu (pause, volets) ne fige plus la bourse
     this.panneauRoyal = this.feuilleConseil = this.minuterieGeste = this.tweenGeste = this.pastilleRoyale = null; this.lettreOuverte = false;   // (v1.10)
     this.coursierEnRoute = false; this.fenetreCoursier = null;   // (v1.12)
+    if (this.preparerEvenements) this.preparerEvenements();   // (v1.63) les événements du comptoir (ComptoirEvenements.js)
 
     this.dessinerPiece();
     this.creerFenetre();
@@ -833,7 +834,7 @@ class CounterScene extends Phaser.Scene {
 
   // Un personnage qui attend dans la file, à la place `i`.
   spriteFile(entree, i) {
-    if (entree.type === 'detresse') { const p = this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'pigeonPose').setVisible(false); p.estPigeon = true; return p; }
+    if (entree.type === 'detresse' || (typeof evenementSansFile === 'function' && evenementSansFile(entree))) { const p = this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'pigeonPose').setVisible(false); p.estPigeon = true; return p; }   // (v1.63 : ni le pigeon blessé, ni le vent)
     // (v1.61) un carnet rapporté : son voyageur n'est plus là pour faire la queue
     if (entree.type === 'carnet') { const p = this.add.image(FILE.x - i * FILE.ecart, FILE.y, 'pigeonPose').setVisible(false); p.estPigeon = true; return p; }   // (v1.22 : le pigeon ne fait pas la queue ; v1.31 : et ne s'y montre jamais)
     const cle = this.texturePour(entree);
@@ -886,6 +887,7 @@ class CounterScene extends Phaser.Scene {
 
   texturePour(entree, pose = null) {
     if (entree.type === 'faucheuse') return 'perso_faucheuse';
+    if (entree.type === 'evenement') return corpsHD(this, typeof corpsEvenement === 'function' ? corpsEvenement(entree, this.G) : 'humain', pose);   // (v1.63)
     if (entree.type === 'sage' || entree.type === 'percepteur') return corpsHD(this, entree.type === 'sage' ? 'sage' : personneDuPercepteur(entree), pose);   // (v1.32, planche 58)
     if (entree.type === 'famille') return corpsHD(this, entree.visite.parent, pose);
     if (entree.type === 'notable') { const p = this.personneDe(entree); return corpsHD(this, p.figurant || p, pose); }
@@ -1430,6 +1432,7 @@ class CounterScene extends Phaser.Scene {
   // --- Déroulement ---
 
   voyageurSuivant() {
+    if (this.nettoyerEvenement) this.nettoyerEvenement();   // (v1.63) ce que le dernier événement avait posé
     this.buste = null;
     this.entree = null;
     this.voyageur = null;
@@ -1457,6 +1460,7 @@ class CounterScene extends Phaser.Scene {
     this.pieges = entree.pieges || {};
     this.bouton('...', null);
     this.majCommande();
+    if (entree.type === 'evenement' && this.debutEvenement && this.debutEvenement(entree)) return;   // (v1.63) un pigeon, le vent, une ombre : personne ne s'avance
     // (v1.22) un pigeon se pose sur le rebord : personne ne s'avance
     if (entree.type === 'detresse') {
       this.perso.setVisible(false);
@@ -1873,6 +1877,7 @@ class CounterScene extends Phaser.Scene {
   // --- Le client en buste : expressions, clignements, paroles ---
 
   personneDe(entree) {
+    if (entree.type === 'evenement') return typeof personneEvenement === 'function' ? personneEvenement(entree, this.G) : null;   // (v1.63)
     if (entree.type === 'client') return entree.voyageur.apparence || entree.voyageur;   // (v0.86 : un recherché a l'allure de son affiche)
     if (entree.type === 'gardeRecherche') return GARDE.capitaine;
     if (entree.type === 'famille') return entree.visite.parent;
@@ -1900,6 +1905,7 @@ class CounterScene extends Phaser.Scene {
 
   // Son humeur en arrivant au comptoir.
   expressionArrivee(entree) {
+    if (entree.type === 'evenement') return typeof expressionEvenement === 'function' ? expressionEvenement(entree) : 'neutre';   // (v1.63)
     if (entree.type === 'retour') return entree.parti.resultat.echec ? 'inquiet' : 'content';
     if (entree.type === 'notable' || entree.type === 'colporteur' || entree.type === 'garrick') return 'content';
     if (entree.type === 'aine') return 'neutre';
@@ -1962,6 +1968,7 @@ class CounterScene extends Phaser.Scene {
   }
 
   arrivee(entree) {
+    if (this.arriveeEvenement && this.arriveeEvenement(entree)) return;   // (v1.63) un événement, ou un incident pendant la visite d'un client
     Son.jouer('pas');
     // (v0.86) une visite prend un quart d'heure (les clients, eux, comptent au service)
     if (['famille', 'notable', 'colporteur', 'garde', 'gardeRecherche', 'garrick', 'collecteur', 'serpent', 'aine', 'heraut', 'rival', 'crieur', 'collectionneur', 'sage', 'percepteur'].includes(entree.type)) this.avancer(JOURNEE.visite);

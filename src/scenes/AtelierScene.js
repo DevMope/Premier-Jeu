@@ -99,6 +99,7 @@ class AtelierScene extends Phaser.Scene {
     const surLEtagere = G.tresors.filter(t => !t.reparation && !enFile(t) && !['arme', 'armure'].includes(t.categorie));
     auRatelier.slice(0, 6).forEach((t, i) => poser(t, 32 + (i % 3) * 38, i < 3 ? 86 : 132, 2, true));
     surLEtagere.slice(0, 6).forEach((t, i) => poser(t, 890 + (i % 3) * 26, i < 3 ? 104 : 148, 1.4));
+    if (typeof posteCelestinAtelier === 'function') posteCelestinAtelier(this, c, G);   // (v1.63) Célestin, l'apprenti venu de la rue, au pied du râtelier
     const plus = (n, x, y) => { if (n > 0) c.add(this.add.text(x, y, `+${n}`, style(11, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5)); };
     plus(auRatelier.length - 6, 70, 196); plus(surLEtagere.length - 6, 916, 196);
   }
@@ -131,8 +132,11 @@ class AtelierScene extends Phaser.Scene {
     const places = placesEmployes(G);
     c.add(this.tenir(this.add.text(24, 453, `Tes réparateurs · ${G.employes.length} / ${places} poste${places > 1 ? 's' : ''}` + (salaires(G) ? ` · salaires : ${salaires(G)} p. par nuit` : '') +
       (places < EMPLOYES_DE_BASE + 2 ? ' · un établi de plus (améliorations) = une place de plus' : ''), style(12, '#f3e6c8', { fontStyle: 'bold' })).setOrigin(0, 0.5), 912));
-    REPARATEURS_ATELIER.forEach((id, i) => {
-      const e = EMPLOYES[id], x = 12 + i * 236, y = 463, L = 228;
+    // (v1.63) Célestin, l'enfant perdu devenu apprenti, se présente une fois revenu : cinq fiches, plus serrées
+    const liste = REPARATEURS_ATELIER.concat(typeof employeDisponible === 'function' && EMPLOYES.celestin && employeDisponible(G, 'celestin') ? ['celestin'] : []);
+    const serre = liste.length > 4, pas = serre ? 188 : 236;
+    liste.forEach((id, i) => {
+      const e = EMPLOYES[id], x = 12 + i * pas, y = 463, L = pas - 8;
       const embauche = G.employes.includes(id), t = embauche && this.reparationDe(id);
       const possible = embauche || G.employes.length < places;
       c.add(this.add.rectangle(x, y, L, 74, 0x3a2614).setOrigin(0).setStrokeStyle(2, embauche ? (t ? 0x8a6a3a : 0x6ab04a) : 0x5a4a3a));
@@ -144,19 +148,19 @@ class AtelierScene extends Phaser.Scene {
       const txtBtn = this.tenir(this.add.text(x + L - 33, y + 12, embauche ? 'Renvoyer' : possible ? 'Embaucher' : 'Fermé', style(9, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5), 54, 8);
       c.add([btn, txtBtn]);
       if (possible) btn.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.embaucherOuRenvoyer(id));
-      c.add(this.tenir(this.add.text(tx, y + 12, e.nom, style(11, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0, 0.5), place - 64));
+      c.add(this.tenir(this.add.text(tx, y + 12, serre ? prenomDe(e.nom) : e.nom, style(11, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0, 0.5), place - 64));
       const ligne = (dy, txt, coul, taille = 10, gras = false) => c.add(this.tenir(this.add.text(tx, y + dy, txt, style(taille, coul, gras ? { fontStyle: 'bold' } : {})).setOrigin(0, 0.5), place));
       if (embauche) {
         const file = objetsEnFile(G, id).length;
         ligne(28, t ? `Répare : ${raccourcir(t.nom, file ? 12 : 17)} · ${t.reparation.jours} j${file ? ` · file ${file}` : ''}` : file ? `Attend (file ${file})` : 'Libre', t ? '#e8c890' : file ? '#e8a080' : '#9ae07a', 10, true);
         // son salaire, et ses deux prochaines hausses : au début du mois, et au prochain niveau
         const n = niveauEmploye(G, id), h = prochainesHausses(G, id);
-        ligne(44, `${salaireEmploye(G, id)} p. par nuit · +${h.mois.montant} p. dans ${h.mois.jours} j`, '#f3e6c8');
-        ligne(60, h.niveau ? `Niveau ${n} · niv. ${h.niveau.niveau} dans ${h.niveau.reste} rép. (+${h.niveau.montant} p.${h.niveau.niveau === NIVEAU_EMPLOYE_DOUE ? ', −1 j' : ''})` : `Niveau ${n}, le plus haut`, '#c9b48a');
+        ligne(44, serre ? `${salaireEmploye(G, id)} p./nuit · +${h.mois.montant} p. dans ${h.mois.jours} j` : `${salaireEmploye(G, id)} p. par nuit · +${h.mois.montant} p. dans ${h.mois.jours} j`, '#f3e6c8');
+        ligne(60, h.niveau ? (serre ? `Niv. ${n} · niv. ${h.niveau.niveau} : ${h.niveau.reste} rép.` : `Niveau ${n} · niv. ${h.niveau.niveau} dans ${h.niveau.reste} rép. (+${h.niveau.montant} p.${h.niveau.niveau === NIVEAU_EMPLOYE_DOUE ? ', −1 j' : ''})`) : `Niveau ${n}, le plus haut`, '#c9b48a');
       } else {
-        ligne(28, `${salaireEmploye(G, id)} p. par nuit pour commencer`, '#e8c890', 10, true);
+        ligne(28, serre ? `${salaireEmploye(G, id)} p./nuit au début` : `${salaireEmploye(G, id)} p. par nuit pour commencer`, '#e8c890', 10, true);
         ligne(44, e.atout, '#c9b48a');
-        ligne(60, possible ? 'Plus payé à chaque niveau et chaque mois' : "Pas d'établi libre (améliorations)", '#9a8a6a');
+        ligne(60, possible ? (serre ? 'Plus payé avec le temps' : 'Plus payé à chaque niveau et chaque mois') : (serre ? "Pas d'établi libre" : "Pas d'établi libre (améliorations)"), '#9a8a6a');
       }
     });
   }
