@@ -67,8 +67,10 @@ const PLACES_COIN = { arbre: 0, panier: 130, gamelles: 228, cabane: 300, pelote:
 function dessinerCoinChats(scene, x, sol, { elements = ['panier', 'gamelles'], noms = ['', ''], profondeur = 2, places = PLACES_COIN, pleines = [true, true] } = {}) {
   creerCoinChatsHD(scene);
   const o = {}, P = { ...PLACES_COIN, ...places };
-  if (elements.includes('arbre')) o.arbre = scene.add.image(x + P.arbre, sol, 'arbreChatHD').setOrigin(0.5, 1).setScale(2.4).setDepth(profondeur);
-  if (elements.includes('cabane')) o.cabane = scene.add.image(x + P.cabane, sol, 'cabaneChatHD').setOrigin(0.5, 1).setScale(2.4).setDepth(profondeur);
+  // (P.echelle : une pièce plus petite peut les vouloir moins hauts, pour ne cacher aucun meuble derrière eux)
+  const ech = k => (P.echelle && P.echelle[k]) || 2.4;
+  if (elements.includes('arbre')) o.arbre = scene.add.image(x + P.arbre, sol, 'arbreChatHD').setOrigin(0.5, 1).setScale(ech('arbre')).setDepth(profondeur);
+  if (elements.includes('cabane')) o.cabane = scene.add.image(x + P.cabane, sol, 'cabaneChatHD').setOrigin(0.5, 1).setScale(ech('cabane')).setDepth(profondeur);
   if (elements.includes('panier')) o.panier = scene.add.image(x + P.panier, sol + 6, 'panierDoubleHD').setOrigin(0.5, 1).setScale(2.4).setDepth(profondeur + 0.01);
   if (elements.includes('coussin')) o.coussin = scene.add.image(x + P.coussin[0], sol + P.coussin[1], 'coussinBrodeHD').setOrigin(0.5, 1).setScale(2.2).setDepth(profondeur + 0.02);
   if (elements.includes('pelote')) o.pelote = scene.add.image(x + P.pelote, sol + 12, 'peloteHD').setOrigin(0.5, 1).setScale(2.2).setDepth(profondeur + 0.03);

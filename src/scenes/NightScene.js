@@ -214,7 +214,7 @@ class NightScene extends Phaser.Scene {
     c.add(this.add.text(480, 206, 'Le foyer est vide', style(22, '#a02020', { fontStyle: 'bold' })).setOrigin(0.5));
     const b = this.add.graphics(); b.fillStyle(0x6a3a1a).fillRoundedRect(-16, -6, 32, 12, 5).fillStyle(0xc8501e).fillEllipse(13, 0, 7, 11).fillStyle(0xa02020).fillRect(-18, -1, 36, 3);
     b.setPosition(480, 240).setAngle(-28); c.add(b);
-    c.add(this.add.text(480, 296, `Dehors, il gèle. Sans une bûche dans la cheminée, tu te réveilleras fatigué${eJ(G)} (un client de moins demain). Deux nuits de suite : tu tomberas malade, et le comptoir n'ouvrira qu'à midi.`, style(14, '#3b2410', { align: 'center', wordWrap: { width: 470 }, lineSpacing: 3 })).setOrigin(0.5));
+    c.add(this.add.text(480, 296, `Dehors, il gèle. Sans une bûche dans la cheminée, tu te réveilleras fatigué${eJ(G)} (un client de moins demain). ${typeof pyjamaChaud === 'function' && pyjamaChaud(G) ? 'Trois nuits de suite (ton pyjama chaud aide un peu)' : 'Deux nuits de suite'} : tu tomberas malade, et le comptoir n'ouvrira qu'à midi.`, style(14, '#3b2410', { align: 'center', wordWrap: { width: 470 }, lineSpacing: 3 })).setOrigin(0.5));
     const fermer = () => { c.destroy(); this.fenetreFoyer = null; };
     const b1 = creerBouton(this, 360, 372, 230, bois > 0 ? 'Mettre une bûche (1 planche)' : 'Plus une planche de bois', () => {
       const err = allumerFeu(G);

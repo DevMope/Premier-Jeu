@@ -141,13 +141,13 @@ Object.assign(MarcheScene.prototype, {
   ouvrirAtours() {
     const G = this.G;
     this.montrer('garderobe');
-    const c = this.panneau("L'étal de l'Union", 'Le temps de la fête · tes atours se rangent ensuite dans ta malle');
+    const c = this.panneau("L'étal de l'Union", 'Le temps de la fête · tes atours se rangent ensuite dans ton armoire');
     c.add(this.add.text(30, 336, "Marcelline : « Pour le Solstice, tout le village s'habille aux couleurs de l'Union ! »", style(11, '#6b4a2a', { fontStyle: 'italic' })));
     ATOURS_UNION.forEach((id, i) => {
       const d = GARDE_ROBE[id], y = 366 + i * 26;
       c.add(this.add.image(42, y, iconeObjet(this, id)).setScale(1.6));
       c.add(this.add.text(60, y, `${d.nom} · ${d.prix} p.`, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
-      if (possede(G, id)) c.add(this.add.text(420, y, porte(G, id) ? 'tu la portes' : 'dans ta malle', style(11, '#4a6a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
+      if (possede(G, id)) c.add(this.add.text(420, y, porte(G, id) ? 'tu la portes' : 'dans ton armoire', style(11, '#4a6a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5));
       else this.bouton(c, 450, y, 70, 'Acheter', () => {
         const erreur = acheterTenue(G, id);
         if (!erreur) Son.jouer('achat');

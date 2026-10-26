@@ -100,7 +100,7 @@ Object.assign(MarcheScene.prototype, {
     c.removeAll(true);
     const T = (x, y, t, taille = 13, coul = '#fff4dc', o = {}) => { const tx = this.add.text(x, y, t, style(taille, coul, { fontStyle: 'bold', ...o })); c.add(tx); return tx; };
     const icone = (id, x, y, e) => { const i = this.add.image(x, y, iconeObjet(this, id)).setScale(e); c.add(i); return i; };
-    c.add(this.add.rectangle(480, 270, 960, 540, 0x120a04, 0.96).setInteractive());
+    c.add(this.add.rectangle(480, 270, 960, 540, 0x120a04, 1).setInteractive());   // (opaque : le titre de la place ne transparaît plus entre les onglets)
     // l'étal en grand, à gauche
     propsVitrineHD(this); decorsEtalsHD(this); creerDecorPlaceHD(this); creerHalo(this);
     const fond = this.add.container(0, 0); c.add(fond);

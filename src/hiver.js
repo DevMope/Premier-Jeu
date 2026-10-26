@@ -77,7 +77,7 @@ function donnerLotRoue(G, id) {
     const h = restants[Math.floor(Math.random() * restants.length)];
     G.garderobe = [...(G.garderobe || G.tenue || []), h];
     G.tenue = [...(G.tenue || []), h];
-    const textes = { bonnetHiver: 'Le bonnet à pompon ! Tu le mets aussitôt (il ira ensuite dans ta malle).', mouflesHiver: 'Les moufles fourrées ! Tu les enfiles aussitôt (elles iront ensuite dans ta malle).', echarpeHiver: "L'écharpe du Long Hiver ! Tu la noues aussitôt (elle ira ensuite dans ta malle)." };
+    const textes = { bonnetHiver: 'Le bonnet à pompon ! Tu le mets aussitôt (il ira ensuite dans ton armoire).', mouflesHiver: 'Les moufles fourrées ! Tu les enfiles aussitôt (elles iront ensuite dans ton armoire).', echarpeHiver: "L'écharpe du Long Hiver ! Tu la noues aussitôt (elle ira ensuite dans ton armoire)." };
     return { texte: textes[h], objet: h };
   }
   if (id === 'arme') {

@@ -29,6 +29,7 @@ class DodoScene extends Cinematique {
       return;
     }
     this.cameras.main.fadeIn(500);
+    this.time.timeScale = 1; this.tweens.timeScale = 1; this.accel = null;   // (planche 85 v2 : un coucher accéléré hier soir)
     this.dessinerChambre();
     this.joueur = this.add.image(1000, SOL_CHAMBRE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(3);
     this.boutonPasser(() => this.passer());
@@ -92,21 +93,24 @@ class DodoScene extends Cinematique {
     this.clairDeLune = this.add.image(fx + fw / 2, fy + fh / 2 + 40, 'halo').setScale(3.4, 2.6).setTint(0x6a8ad8).setAlpha(0.18)
       .setBlendMode(Phaser.BlendModes.ADD).setDepth(1.6);
 
-    // Le lit, et la couverture en patchwork posée par-dessus le dormeur (elle ne se voit qu'une fois couché).
+    // Le lit (planche 85 v2 : raccourci à la taille du joueur) ; la couverture refaite, l'armoire et le paravent : meublesDeNuit
     const luxe = niveauAmelioration(this.G, 'chambre');
-    this.lit = this.add.image(250, SOL_CHAMBRE, litHD(this, luxe)).setOrigin(0, 1).setScale(2).setDepth(2);
-    this.couverture = this.add.image(316, SOL_CHAMBRE - 100, couvertureHD(this, luxe)).setOrigin(0).setScale(2, 2.35).setDepth(4).setAlpha(0);
+    this.litGeom = litChambre(this.G);
+    this.lit = this.add.image(this.litGeom.x0, SOL_CHAMBRE, litCourtHD(this, luxe, this.litGeom.coupe)).setOrigin(0, 1).setScale(2).setDepth(2);
+    if (!this.meublesDeNuit) for (const m of DODO_MEUBLES) this[m] = DodoScene.prototype[m];   // (la promenade et la nuit du cambrioleur empruntent la chambre)
+    this.repLit = null; this.profJambes = null;
+    this.meublesDeNuit();
 
     // La table de chevet, la bougie et sa lumière.
-    this.chevet = this.add.image(635, SOL_CHAMBRE, chevetHD(this, luxe)).setOrigin(0.5, 1).setScale(2).setDepth(2);
-    const b = bougie(this, 628, SOL_CHAMBRE - 62, { rayon: 230, profondeur: 2 });
+    this.chevet = this.add.image(CHAMBRE_PYJ.chevet, SOL_CHAMBRE, chevetHD(this, luxe)).setOrigin(0.5, 1).setScale(2).setDepth(2);
+    const b = bougie(this, CHAMBRE_PYJ.bougie[0], SOL_CHAMBRE - 62, { rayon: 230, profondeur: 2 });
     this.flamme = b.flamme;
     this.lumiere = b.halo.setDepth(5);
 
     // Un tapis tressé, un coffre, et la vieille épée de Garrick accrochée au mur.
     this.tapis = this.add.image(440, SOL_CHAMBRE + 42, tapisHD(this, luxe)).setScale(2).setDepth(1.4);
-    // (v0.66) le coffre, au pied du lit ; à sa place, contre le mur de gauche, la cheminée
-    this.add.image(548, SOL_CHAMBRE + 44, coffreHD(this, niveauAmelioration(this.G, 'coffre'))).setOrigin(0.5, 1).setScale(2.4).setDepth(4.5);
+    // (v0.66) le coffre ; (planche 85 v2, retouche) contre le mur, entre la cheminée et la tête du lit : il ne cache plus rien
+    this.coffreChambre = this.add.image(CHAMBRE_PYJ.coffre, SOL_CHAMBRE + 2, coffreHD(this, niveauAmelioration(this.G, 'coffre'))).setOrigin(0.5, 1).setScale(1.6).setDepth(2);
     creerChemineeHD(this);
     this.add.image(112, SOL_CHAMBRE + 6, 'chemineeHD').setOrigin(0.5, 1).setScale(2).setDepth(1.6);
     this.add.image(112, SOL_CHAMBRE - 2, 'buchesHD').setOrigin(0.5, 1).setScale(2).setDepth(1.65);
@@ -155,25 +159,10 @@ class DodoScene extends Cinematique {
 
   async derouler() {
     const b = this.bilan;
-    await this.marcher(this.joueur, 600, 4);
-    this.onomatopee(600, SOL_CHAMBRE - 130, 'Aaaah...', '#f3d98a');
-    await this.animer({ targets: this.joueur, scaleY: echelleJoueur(8), duration: 260, yoyo: true });
-    await this.attendre(300);
-    // Il souffle la bougie...
-    this.onomatopee(650, SOL_CHAMBRE - 140, 'Fffff !');
-    Son.jouer('glisse'); this.time.delayedCall(900, () => Son.jouer('hibou'));
-    this.tweens.killTweensOf([this.flamme, this.lumiere]);
-    this.tweens.add({ targets: [this.flamme, this.lumiere], alpha: 0, duration: 400 });
-    this.tweens.add({ targets: this.noir, fillAlpha: 0.45, duration: 700 });
-    await this.attendre(500);
-    // ... et se glisse sous la couverture.
-    this.joueur.setOrigin(0.5, 0.5);
-    this.joueur.y -= this.joueur.displayHeight / 2;
-    await this.animer({ targets: this.joueur, x: 330, y: SOL_CHAMBRE - 68, angle: -90, duration: 500, ease: 'Sine.easeInOut' });
-    this.joueur.setTexture(textureJoueurDort(this, this.G));   // (v1.61) il ferme les yeux
-    this.tweens.add({ targets: this.couverture, alpha: 1, duration: 300 });
-    this.ronfler();
+    // (planche 85 v2) il se change à l'armoire et derrière le paravent, souffle la bougie, se couche (DodoCoucher.js)
+    await this.coucherEnPyjama();
     if (this.fini) return;
+    this.ronfler();
 
     // Le bilan de la journée, sur un parchemin.
     this.afficherBilan(b);
@@ -192,12 +181,9 @@ class DodoScene extends Cinematique {
     this.tweens.add({ targets: this.soleil, y: this.soleil.y - 110, duration: 2200, ease: 'Sine.easeOut' });
     await this.animer({ targets: this.noir, fillAlpha: 0, duration: 2000 });
     if (this.zzz) this.zzz.remove();
-    // Debout !
-    this.tweens.add({ targets: this.couverture, alpha: 0, duration: 200 });
-    this.joueur.setTexture(textureJoueur(this, this.G));   // (v1.61) il rouvre les yeux
-    await this.animer({ targets: this.joueur, angle: 0, x: 600, y: SOL_CHAMBRE - this.joueur.displayHeight / 2, duration: 450, ease: 'Back.easeOut' });
-    this.joueur.setOrigin(0.5, 1).setY(SOL_CHAMBRE);
-    this.onomatopee(600, SOL_CHAMBRE - 140, 'Debout !', '#f3d98a');
+    // Debout ! (planche 85 v2 : il se lève, va à l'armoire, et le tourbillon lui rend ses habits du jour)
+    await this.leverEnPyjama();
+    if (this.fini) return;
     await this.travauxDeLaNuit();
     // L'armure a pu changer de côté pendant la nuit.
     if (!(this.G.nouvellesPieces || []).length && this.G.armure.length) await this.changerCote(coteArmure(this.G));
@@ -210,9 +196,9 @@ class DodoScene extends Cinematique {
     this.annoncerMatin();
     await this.attendre(800);
     if (this.fini) return;
-    await this.attendreSuite('▶ Clique pour sortir dans la rue');
+    await this.attendreSortie();   // (planche 85 v2 : en attendant, on peut ouvrir l'armoire et changer de couleurs)
     if (this.fini) return;
-    await this.marcher(this.joueur, 1020, 3);
+    await this.sortirParPorte(this.joueur, 3);   // (planche 85 v2 : par la porte de l'arrière-boutique)
     this.partir('Rue');   // (v0.65 : on sort dans la rue, l'arche mène au marché)
   }
 
@@ -291,11 +277,15 @@ class DodoScene extends Cinematique {
     await this.attendre(500);
     if (finis.includes('chambre')) {
       const n = niveauAmelioration(this.G, 'chambre');
-      for (const [image, cle] of [[this.lit, litHD(this, n)], [this.couverture, couvertureHD(this, n)], [this.chevet, chevetHD(this, n)], [this.tapis, tapisHD(this, n)]]) {
+      // (planche 85 v2 : le lit raccourci, et la couverture repeinte au nouveau niveau, telle qu'il l'a laissée)
+      this.litGeom = litChambre(this.G);
+      const couv = () => this.couvrir({ ...this.etatCouv, profil: {} });
+      for (const [image, cle] of [[this.lit, litCourtHD(this, n, this.litGeom.coupe)], [this.couverture, couv], [this.chevet, chevetHD(this, n)], [this.tapis, tapisHD(this, n)]]) {
         const poussiere = this.add.image(image.x + image.displayWidth / 2 * (image.originX === 0 ? 1 : 0), image.y - image.displayHeight / 2, 'halo')
           .setTint(0xfff0c0).setScale(3).setAlpha(0).setDepth(7).setBlendMode(Phaser.BlendModes.ADD);
-        this.tweens.add({ targets: poussiere, alpha: 0.8, duration: 250, yoyo: true, onYoyo: () => image.setTexture(cle), onComplete: () => poussiere.destroy() });
+        this.tweens.add({ targets: poussiere, alpha: 0.8, duration: 250, yoyo: true, onYoyo: () => (typeof cle === 'function' ? cle() : image.setTexture(cle)), onComplete: () => poussiere.destroy() });
       }
+      this.peindreArmoire(this.etatArmoire || 0);
       await this.attendre(600);
     }
     const noms = finis.map(c => `${AMELIORATIONS[c].nom.toLowerCase()} (${AMELIORATIONS[c].niveaux[niveauAmelioration(this.G, c)]})`);
@@ -329,9 +319,9 @@ class DodoScene extends Cinematique {
     // les anciennes parties qui ont déjà des pièces l'ont, bien sûr)
     if (!this.G.mannequin && !possedees.length) return;
     const cote = this.coteAffiche || coteArmure(this.G);
-    this.mannequin = dessinerMannequin(this, 790, SOL_CHAMBRE, possedees, 4, cote).setDepth(2);
+    this.mannequin = dessinerMannequin(this, CHAMBRE_PYJ.mannequin, SOL_CHAMBRE, possedees, 4, cote).setDepth(2);
     if (possedees.length) {
-      this.texteArmure = this.add.text(790, SOL_CHAMBRE + 14, `${NOMS_ARMURE[cote]} · ${possedees.length} / ${ARMURE.length}`,
+      this.texteArmure = this.add.text(CHAMBRE_PYJ.mannequin, SOL_CHAMBRE + 14, `${NOMS_ARMURE[cote]} · ${possedees.length} / ${ARMURE.length}`,
         style(11, '#f3d98a', { fontStyle: 'italic', stroke: '#2a1a10', strokeThickness: 3 })).setOrigin(0.5, 0).setDepth(2);
     }
   }
@@ -351,7 +341,7 @@ class DodoScene extends Cinematique {
     await this.changerCote(cote);
     this.onomatopee(900, SOL_CHAMBRE - 160, sombre ? 'Tok... tok...' : 'Toc toc !', sombre ? '#ff6080' : '#fff4dc');
     const m = imageCorps(this, 1010, SOL_CHAMBRE, 'colporteur', 6).setTint(sombre ? 0x3a1a24 : 0x7a7aa8).setDepth(3);
-    await this.marcher(m, 905, 4);
+    await this.entrerParPorte(m, 860, 4);   // (planche 85 v2 : par la vraie porte)
     const c = this.add.container(0, 0).setDepth(9);
     const hPanneau = premiere ? 290 : 220;
     const panneau = this.add.image(480, 210, panneauHD(this, 640, hPanneau)).setScale(2);
@@ -431,7 +421,7 @@ class DodoScene extends Cinematique {
     this.tweens.killTweensOf(icone);
     this.tweens.add({ targets: [voile], fillAlpha: 0, duration: 500 });
     this.tweens.add({ targets: [halo, rayons, titre, sous], alpha: 0, duration: 400, onComplete: () => { halo.destroy(); rayons.destroy(); titre.destroy(); sous.destroy(); } });
-    await this.animer({ targets: icone, x: 790, y: SOL_CHAMBRE - 100, scale: 3, duration: 700, ease: 'Sine.easeInOut' });
+    await this.animer({ targets: icone, x: CHAMBRE_PYJ.mannequin, y: SOL_CHAMBRE - 100, scale: 3, duration: 700, ease: 'Sine.easeInOut' });
     icone.destroy();
     voile.destroy();
     this.dessinerArmure(this.G.armure.slice(0, this.G.armure.indexOf(piece) + 1));
@@ -439,7 +429,7 @@ class DodoScene extends Cinematique {
     else this.cameras.main.flash(250, 255, 230, 150);
     if (arme && !this.fini) await this.livrerArme(arme, royaume, sombre, m);
     if (this.fini) return;
-    await this.marcher(m, 1020, 3);
+    await this.sortirParPorte(m, 3);
     m.destroy();
   }
 
@@ -451,7 +441,7 @@ class DodoScene extends Cinematique {
     if (!m) {
       this.onomatopee(900, SOL_CHAMBRE - 160, 'Toc toc !', '#fff4dc');
       m = imageCorps(this, 1010, SOL_CHAMBRE, 'colporteur', 6).setTint(sombre ? 0x3a1a24 : 0x7a7aa8).setDepth(3);
-      await this.marcher(m, 905, 4);
+      await this.entrerParPorte(m, 860, 4);   // (planche 85 v2 : par la vraie porte)
     }
     creerHalo(this);
     const voile = this.add.rectangle(480, 270, 960, 540, 0x0a0614, 0).setDepth(7.5);
@@ -479,7 +469,7 @@ class DodoScene extends Cinematique {
     icone.destroy(); voile.destroy();
     this.dessinerArmes(this.G.armesLegendaires.slice(0, n + 1));
     this.cameras.main.flash(200, 255, 230, 150);
-    if (!messager) { await this.marcher(m, 1020, 3); m.destroy(); }
+    if (!messager) { await this.sortirParPorte(m, 3); m.destroy(); }
   }
 
   // La panoplie : les armes légendaires accrochées au mur, au-dessus du coffre et du tapis
@@ -505,11 +495,11 @@ class DodoScene extends Cinematique {
     this.events.on('update', suivre);
     this.events.once('shutdown', () => this.events.off('update', suivre));   // (audit v0.59 : si on passe pendant qu'il marche)
     Son.jouer('voix', { personne: voix, ton: 'bonjour' });
-    await this.marcher(g, 880, 4);
+    await this.entrerParPorte(g, 880, 4);
     this.events.off('update', suivre);
     // il pose le mannequin à sa place, près de la fenêtre
     Son.jouer('poser');
-    await this.animer({ targets: porte, x: 790, y: SOL_CHAMBRE, angle: 0, duration: 500, ease: 'Quad.easeOut' });
+    await this.animer({ targets: porte, x: CHAMBRE_PYJ.mannequin, y: SOL_CHAMBRE, angle: 0, duration: 500, ease: 'Quad.easeOut' });
     this.cameras.main.shake(120, 0.003);
     this.regarderVers(g, this.joueur); this.regarderVers(this.joueur, g);
     const parler = async (texte, ton, emotion, image = null) => {
@@ -537,7 +527,7 @@ class DodoScene extends Cinematique {
     this.dessinerArmure([]);
     await parler("Tiens, justement : on frappe. Ce doit être la première pièce ! Je file, prends-en soin.", 'rire', 'joie');
     this.geste(this.joueur, 'salut');
-    await this.marcher(g, 1040, 3);
+    await this.sortirParPorte(g, 3);
     g.destroy();
   }
 
@@ -551,7 +541,7 @@ class DodoScene extends Cinematique {
     if (!avant || !possedees.length) return this.dessinerArmure(possedees);
     this.cameras.main.flash(500, cote === 'sombre' ? 80 : 255, 0, cote === 'sombre' ? 40 : 200);
     this.dessinerArmure(possedees);
-    const t = this.add.text(790, SOL_CHAMBRE - 190, cote === 'sombre' ? "L'armure s'assombrit..." : "L'armure se purifie...",
+    const t = this.add.text(CHAMBRE_PYJ.mannequin, SOL_CHAMBRE - 190, cote === 'sombre' ? "L'armure s'assombrit..." : "L'armure se purifie...",
       style(16, cote === 'sombre' ? '#ff6080' : '#fff4dc', { fontStyle: 'bold italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5).setDepth(8);
     this.tweens.add({ targets: t, alpha: 0, y: t.y - 30, delay: 1500, duration: 800, onComplete: () => t.destroy() });
     await this.attendre(1200);
@@ -592,3 +582,5 @@ class DodoScene extends Cinematique {
 }
 
 const SOL_CHAMBRE = 430;
+// (planche 85 v2) ce que les autres scènes qui dessinent la chambre empruntent à DodoScene (voir DodoCoucher.js)
+const DODO_MEUBLES = ['meublesDeNuit', 'peindreArmoire', 'battants', 'pilePyjama', 'couvrir', 'tourbillon', 'debout', 'poserJoueur'];

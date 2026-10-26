@@ -8,7 +8,8 @@
 
 // Où va chaque chose, selon la pièce (le coussin brodé : sur le rebord de ta fenêtre, ou sur la cabane)
 const COIN_LIEUX = {
-  chambre: { x: 0, sol: 503, places: { arbre: 650, panier: 290, gamelles: 380, cabane: 790, pelote: 210, coussin: [744, -272] } },
+  // (planche 85 v2, retouche : la chambre réagencée ; l'arbre et la cabane, plus bas, ne cachent plus aucun meuble)
+  chambre: { x: 0, sol: 503, places: { arbre: 478, panier: 300, gamelles: 392, cabane: 676, pelote: 214, coussin: [744, -272], echelle: { arbre: 1.1, cabane: 1.6 } } },
   arriere: { x: 130, sol: SOL_ARRIERE + 68, places: { arbre: 420, panier: 130, gamelles: -70, cabane: 300, pelote: 52, coussin: [300, -100] } },   // (l'arbre devant le buffet : à gauche, il cachait l'étagère)
 };
 // Le coin, ses chats (endormis dans le panier ; le tien te suit en promenade), et son panneau d'aménagement au clic
@@ -186,7 +187,7 @@ async function conversationDuChat(scene) {
   const elle = scene.add.image(330, SOL_PROMENADE, kE + '_dort0').setOrigin(0.5, 1).setScale(2.2).setDepth(8.55);
   let souffle = 0; scene.time.addEvent({ delay: 1200, loop: true, callback: () => { if (elle.active) elle.setTexture(kE + '_dort' + (++souffle % 2)); } });
   const avant = scene.heros.texture.key.replace(/_pas[12]$/, '');
-  asseoirJoueurSur(scene, scene.heros, G, 520, SOL_CHAMBRE - 46).setFlipX(true);   // (v1.44) assis sur le bord de son lit (et non dans le vide devant)
+  asseoirJoueurSur(scene, scene.heros, G, (typeof litChambre === 'function' ? litChambre(G).x1 - 50 : 520), SOL_CHAMBRE - 46).setFlipX(true);   // (v1.44) assis sur le bord de son lit (et non dans le vide devant)
   // le bandeau (narration en italique, consigne en gras) et les choix
   const fond = fixe(scene.add.rectangle(480, 12, 920, 40, 0x2a1a10, 0.94).setStrokeStyle(2, 0xc9a227).setOrigin(0.5, 0));
   const narr = fixe(scene.add.text(40, 22, '', style(13, '#c9b48a', { fontStyle: 'italic', wordWrap: { width: 880 } })));

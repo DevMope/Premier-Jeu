@@ -1762,6 +1762,7 @@ function nuit(G) {
   sansPlanter('matinDesRiches', () => typeof matinDesRiches === 'function' && G.reveil.lignes.push(...matinDesRiches(G)));   // (v1.32) le mécénat, la neutralité
   sansPlanter('matinDuVoyage', () => typeof matinDuVoyage === 'function' && G.reveil.lignes.push(...matinDuVoyage(G), ...matinDuDuc(G)));   // (v1.57) le départ, le percepteur du duc
   sansPlanter('voeuDeSaison', () => { const l = typeof voeuDeSaison === 'function' && voeuDeSaison(G); if (l) G.reveil.lignes.push(l); });   // (v1.23) les souvenirs de la nymphe au complet
+  sansPlanter('matinPyjamaGivrin', () => typeof matinPyjamaGivrin === 'function' && G.reveil.lignes.push(...matinPyjamaGivrin(G)));   // (planche 85 v2) le pyjama étoilé du Père Givrin, au Long Hiver
   // On oublie les aventures terminées depuis un moment (la sauvegarde reste légère) :
   // le registre (historique) en garde le résumé.
   G.partis = G.partis.filter(p => !p.termine || p.retour >= G.jour - 2);

@@ -463,6 +463,8 @@ function mettreAJourPartie(G, brut = G) {
   G.decos = G.decos || [];
   G.garderobe = G.garderobe || [...(G.tenue || [])];   // (v0.69 : ce qu'on possède ; G.tenue = ce qu'on porte)
   G.tenue = G.tenue || [];
+  G.pyjamas = Array.isArray(G.pyjamas) ? G.pyjamas : [];   // (planche 85 v2 : les pyjamas achetés ; G.pyjama, celui de la nuit, se vérifie à l'usage)
+  G.pyjamasDormis = Array.isArray(G.pyjamasDormis) ? G.pyjamasDormis : [];   // (ceux dans lesquels on a déjà dormi : ensuite, le coucher court)
   G.zonesDecouvertes = [...new Set(G.zonesDecouvertes)];
   if (!brut.zonesConnues) {
     // Les zones déjà ouvertes avant l'armure : leurs pièces sont déjà sur le mannequin.

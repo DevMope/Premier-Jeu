@@ -62,7 +62,8 @@ class ToileRig extends ToileHD {
 
 // Les chaînes d'articulations : chaque partie suit les rotations de celles dont elle dépend
 const CHAINES_RIG = { jambeP: ['global', 'jambeP'], jambeL: ['global', 'jambeL'], corps: ['global', 'buste'], brasP: ['global', 'buste', 'brasP'], brasL: ['global', 'buste', 'brasL'],
-  mainP: ['global', 'buste', 'brasP'], mainL: ['global', 'buste', 'brasL'], tete: ['global', 'buste', 'tete'] };
+  mainP: ['global', 'buste', 'brasP'], mainL: ['global', 'buste', 'brasL'], tete: ['global', 'buste', 'tete'],
+  avantP: ['global', 'buste', 'brasP'], avantL: ['global', 'buste', 'brasL'] };   // (planche 85 v2 : l'avant-bras à part, voir options.avantBras)
 
 // Déformer une toile « rig » : poses = { global, buste, tete, brasP, brasL, jambeP, jambeL } : { a (degrés), px, py (le
 // pivot, dans la toile), tx, ty }. `parties` : ne rendre que ces parties ; `ordre` : { partie: décalage d'ordre de dessin }.

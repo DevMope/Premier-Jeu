@@ -89,7 +89,7 @@ Object.assign(MarcheNoirScene.prototype, {
       const d = GARDE_ROBE[id], y = 414 + i * 30;
       this.elements.push(this.add.image(52, y, iconeObjet(this, id)).setScale(1.8).setDepth(6).setScrollFactor(0));
       this.texte(76, y, `${d.nom} · ${d.prix} p.`, 13, '#f3e6c8', { fontStyle: 'bold' }).setOrigin(0, 0.5);
-      if (possede(G, id)) this.texte(420, y, porte(G, id) ? 'tu l\'as sur toi' : 'dans ta malle', 12, '#9ac080', { fontStyle: 'italic' }).setOrigin(0, 0.5);
+      if (possede(G, id)) this.texte(420, y, porte(G, id) ? 'tu l\'as sur toi' : 'dans ton armoire', 12, '#9ac080', { fontStyle: 'italic' }).setOrigin(0, 0.5);
       else this.bouton(470, y, 110, 'Acheter', () => { const e = acheterTenue(G, id); if (!e) Son.jouer('achat'); this.majBourse(); this.pageAtoursAncetres(e || `${d.nom} : tu l'arbores dès ce soir. Les Bannis hochent la tête.`); }, peutPayer(G, d.prix));
     });
     this.texte(620, 430, "Portés pendant la fête : les clients de l'ombre t'en aiment un peu plus (+1 de relation).", 11, '#c8a890', { fontStyle: 'italic', wordWrap: { width: 300 } });
