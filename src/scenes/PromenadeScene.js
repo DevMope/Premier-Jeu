@@ -399,10 +399,14 @@ class PromenadeScene extends Cinematique {
       const e = this.add.image(o + x + 10 + Math.random() * (w - 20), y + 10 + Math.random() * h * 0.4, 'eclat').setScale(0.7);
       this.tweens.add({ targets: e, alpha: 0.2, duration: 600 + Math.random() * 900, yoyo: true, repeat: -1 });
     }
-    for (const r of [[0, 0, 480, 10], [0, 125, 480, 45], [0, 10, 150, 115], [330, 10, 150, 115]]) this.add.image(o, 0, 'murComptoir').setOrigin(0).setScale(2).setCrop(...r);
-    this.add.image(o + x - 16, y - 16, 'cadreFenetre').setOrigin(0).setScale(2);
-    this.add.image(o + 20, 20, 'ardoiseComptoir').setOrigin(0).setScale(2);
-    this.add.image(o + 685, 20, 'parcheminComptoir').setOrigin(0).setScale(2);
+    // (v1.63, planche 81 v2) le comptoir dans le style choisi : son mur, sa fenêtre, l'étagère, le tableau, l'horloge
+    const st = typeof styleComptoir === 'function' ? styleComptoir(G) : 'champetre';
+    for (const r of [[0, 0, 480, 10], [0, 125, 480, 45], [0, 10, 150, 115], [330, 10, 150, 115]]) this.add.image(o, 0, murComptoirStyle(this, st)).setOrigin(0).setScale(2).setCrop(...r);
+    this.add.image(o + x - 16, y - 16, cadreFenetreStyle(this, st)).setOrigin(0).setScale(2);
+    this.add.image(o + 20, 20, ardoiseStyle(this, st)).setOrigin(0).setScale(2);
+    const decor = poserDecorMatin(this, st, { ox: o, heure: 19, jour: typeof dateDuJour === 'function' ? dateDuJour(G).jourDuMois : G.jour });
+    this.tweens.add({ targets: decor.balancier, angle: { from: -6, to: 6 }, duration: 1000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    poserObjetsFenetre(this, st, { ox: o, profondeur: 0 });
     this.add.image(o, 340, plateauComptoir(this, niveauAmelioration(G, 'comptoir'))).setOrigin(0).setScale(2);
     this.add.image(o + 75, 368, 'registreComptoir').setScale(2);
     bourse(this, o + 66, 500, G.argent, { echelle: 2.2, taille: 15 });

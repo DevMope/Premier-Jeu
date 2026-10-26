@@ -50,6 +50,7 @@ class CounterScene extends Phaser.Scene {
     this.piecesEnVol = 0; this.argentVise = undefined;   // (v1.61) un vol de pièces interrompu (pause, volets) ne fige plus la bourse
     this.panneauRoyal = this.feuilleConseil = this.minuterieGeste = this.tweenGeste = this.pastilleRoyale = null; this.lettreOuverte = false;   // (v1.10)
     this.coursierEnRoute = false; this.fenetreCoursier = null;   // (v1.12)
+    this.chatSoleil = null; this.storeEnAttente = false; this.decorMatin = null; this.objetsFenetre = null;   // (v1.63, planche 81 v2)
 
     this.dessinerPiece();
     this.creerFenetre();
@@ -127,6 +128,7 @@ class CounterScene extends Phaser.Scene {
       this.attendreStore();
     } else {
       this.store.setVisible(false);
+      this.montrerCommande(true);
       this.voyageurSuivant();
     }
     if (this.G.banniere !== this.G.jour) this.afficherBanniere();
@@ -176,32 +178,89 @@ class CounterScene extends Phaser.Scene {
     } });
   }
 
-  // Le store de bois qui ferme la fenêtre du comptoir (et sa pancarte).
+  // (v1.63, planche 81 v2) Le store à lames qui ferme la fenêtre : le jour passe par cinq fentes, coupées par
+  // l'ombre de ceux qui attendent dehors ; l'écriteau FERMÉ pend à sa chaîne et se balance ; un cadenas tient la barre.
   creerStore() {
-    const { x, y, w, h } = FENETRE;
-    if (!this.textures.exists('storeHD')) {
-      const t = toileDecor(w / 2, h / 2 + 6);
-      for (let yy = 0; yy < h / 2 + 6; yy += 6) {
-        planche(t, 0, yy, w / 2, 5, 'chene', { graine: 980 + yy, noeuds: 1 });
-        for (let xx = 0; xx < w / 2; xx++) { t.poser(xx, yy + 5, 'cheneSombre', 0); t.poser(xx, yy, 'chene', 4); }
-      }
-      for (let xx = 0; xx < w / 2; xx++) for (let k = 0; k < 4; k++) t.poser(xx, h / 2 + 2 + k, 'fer', 3 - (k === 3 ? 2 : 0)); // la barre du bas
-      for (const xx of [w / 4 - 8, w / 4 + 8]) for (let k = 0; k < 3; k++) t.poser(xx, h / 2 - 1 + k, 'laiton', 4);       // la poignée
-      t.texture(this, 'storeHD');
-    }
-    const panneau = this.add.image(0, 0, 'storeHD').setOrigin(0.5, 1).setScale(2);
-    const pancarte = this.add.text(0, -h / 2 - 6, 'FERMÉ', style(20, '#f3d98a', { fontStyle: 'bold', backgroundColor: '#5a1a12', padding: { x: 12, y: 4 }, brut: true })).setOrigin(0.5);
-    this.store = this.add.container(x + w / 2, y + h + 6, [panneau, pancarte]).setDepth(2.65);   // (v1.61 : devant la pluie et les feuilles du vent)
+    const { x, y, w, h } = FENETRE, st = this.styleDecor;
+    const panneau = this.add.image(0, 0, storeStyle(this, st)).setOrigin(0.5, 1).setScale(2);
+    const haut = -panneau.displayHeight;
+    this.lueursStore = this.add.graphics();
+    this.ombresFile = []; this.decalOmbres = [];
+    // l'écriteau, pendu à un clou par sa chaîne : il pivote autour du clou
+    const pendu = this.add.container(0, haut + 58);
+    const chaine = this.add.graphics();
+    chaine.lineStyle(2, 0x2a2420, 1).lineBetween(0, 0, -38, 26).lineBetween(0, 0, 38, 26);
+    chaine.fillStyle(0x9aa2ae).fillCircle(0, 0, 2.5);
+    for (let k = 1; k < 6; k++) chaine.fillStyle(0x50545e).fillCircle(-38 * k / 6, 26 * k / 6, 1.2).fillCircle(38 * k / 6, 26 * k / 6, 1.2);
+    const plaque = this.add.image(0, 44, ecriteauStyle(this, st, false)).setScale(2);
+    const mot = this.add.text(0, 44, 'FERMÉ', style(19, '#f8e8c0', { fontStyle: 'bold', stroke: '#3a0e08', strokeThickness: 3, brut: true })).setOrigin(0.5);
+    pendu.add([chaine, plaque, mot]);
+    cadenasHD(this);
+    this.cadenas = this.add.image(0, -5, 'cadenas_0').setOrigin(0.5, 0).setScale(2);
+    this.store = this.add.container(x + w / 2, y + h + 6, [panneau, this.lueursStore, pendu, this.cadenas]).setDepth(2.65);   // (v1.61 : devant la pluie et les feuilles du vent)
     this.store.setMask(this.masqueFenetre);
-    this.pancarte = pancarte;
+    this.storeHaut = haut;
+    this.pancarte = mot; this.ecriteau = { pendu, plaque, mot };
+    this.balancerEcriteau(2.5);
+    this.dessinerLueursStore();
+    // de temps en temps, quelqu'un dehors se dandine : son ombre bouge d'un cran (image par image)
+    this.time.addEvent({ delay: 900, loop: true, callback: () => { if (this.store.visible && this.store.y > FENETRE.y + 100 && Math.random() < 0.5) this.dessinerLueursStore(true); } });
   }
 
-  // Le store attend qu'on clique dessus : il luit doucement, une main invite à tirer.
+  // L'écriteau se balance doucement sur son clou (plus fort quand le store bouge)
+  balancerEcriteau(amplitude) {
+    const p = this.ecriteau.pendu;
+    this.tweens.killTweensOf(p);
+    p.setAngle(amplitude);
+    this.tweens.add({ targets: p, angle: -amplitude, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+
+  // Les fentes du store : la lumière du dehors, coupée là où quelqu'un attend devant la fenêtre
+  dessinerLueursStore(bouger = false) {
+    const g = this.lueursStore, { x, w } = FENETRE, cx = x + w / 2;
+    if (!g) return;
+    g.clear();
+    const h = heureDuComptoir(this.G), f = heureFermeture(this.G);
+    const jour = Phaser.Math.Clamp(1 - (h - (f - 1.5)) / 2.5, 0.15, 1);   // (le soir, les fentes s'assombrissent)
+    const coul = h >= f - 1 ? 0xffb070 : ['floral', 'lumiere'].includes(this.styleDecor) ? 0xffcc58 : 0xfff0b8;
+    // les ombres : ceux de la file, tels qu'ils se tiennent derrière le store (l'un d'eux se dandine parfois d'un cran)
+    const gens = (this.fileSprites || []).filter(sp => sp.active && !sp.estPigeon);
+    this.decalOmbres = this.decalOmbres || [];
+    if (bouger && gens.length) { const i = Phaser.Math.Between(0, gens.length - 1); this.decalOmbres[i] = Phaser.Math.Clamp((this.decalOmbres[i] || 0) + Phaser.Math.RND.pick([-2, 2]), -4, 4); }
+    this.ombresFile = gens.map((sp, i) => ({ x: sp.x - cx + (this.decalOmbres[i] || 0), bas: sp.y, hauteur: sp.displayHeight * 0.92, large: Math.min(36, sp.displayWidth * 0.5) }));
+    for (const fy of FENTES_STORE) {
+      const yEcran = this.storeHaut + fy * 2, yMonde = (this.store ? this.store.y : FENETRE.y + FENETRE.h + 6) + yEcran;
+      // les morceaux coupés par une ombre : la tête, étroite ; le corps ; les deux jambes
+      const coupes = [];
+      for (const o of this.ombresFile) {
+        const r = (o.bas - yMonde) / o.hauteur;
+        if (r < 0 || r > 1) continue;
+        if (r > 0.82) coupes.push([o.x - o.large * 0.3, o.x + o.large * 0.3]);
+        else if (r > 0.3) coupes.push([o.x - o.large / 2, o.x + o.large / 2]);
+        else { coupes.push([o.x - o.large * 0.42, o.x - o.large * 0.08]); coupes.push([o.x + o.large * 0.08, o.x + o.large * 0.42]); }
+      }
+      coupes.sort((a, b) => a[0] - b[0]);
+      let x0 = -w / 2;
+      const trait = (a, b) => { if (b - a < 1) return; g.fillStyle(coul, jour).fillRect(a, yEcran, b - a, 2); g.fillStyle(coul, 0.35 * jour).fillRect(a, yEcran - 1, b - a, 1).fillRect(a, yEcran + 2, b - a, 2); };
+      for (const [a, b] of coupes) {
+        trait(x0, a - 3); if (a - 3 > x0) g.fillStyle(coul, 0.4 * jour).fillRect(a - 3, yEcran, 3, 2);   // (le bord de l'ombre, flou)
+        if (b + 3 > x0) g.fillStyle(coul, 0.4 * jour).fillRect(Math.max(x0, b), yEcran, 3, 2);
+        x0 = Math.max(x0, b + 3);
+      }
+      trait(x0, w / 2);
+    }
+  }
+
+  // Le store attend qu'on clique dessus : une main invite à tirer.
   attendreStore() {
     const { x, y, w, h } = FENETRE;
     this.store.setVisible(true).setY(y + h + 6);
+    this.cadenas.setTexture('cadenas_0').setVisible(true);
+    this.pancarte.setText('FERMÉ'); this.ecriteau.plaque.setTexture(ecriteauStyle(this, this.styleDecor, false));
+    this.montrerCommande(false);
+    this.poserChatAuSoleil();
     const zone = this.add.rectangle(x + w / 2, y + h / 2, w, h, 0xffffff, 0).setDepth(2.6).setInteractive({ useHandCursor: true });
-    const invite = this.add.text(x + w / 2, y + h - 30, '▲ Ouvrir le store ▲', style(18, '#ffe9a0', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }))
+    const invite = this.add.text(x + w / 2, y + h - 52, '▲ Ouvrir le store ▲', style(18, '#ffe9a0', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 }))
       .setOrigin(0.5).setDepth(2.7);
     this.tweens.add({ targets: invite, y: invite.y - 8, alpha: 0.6, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     this.storeEnAttente = true;
@@ -213,22 +272,88 @@ class CounterScene extends Phaser.Scene {
   }
 
   leverStore(suite) {
-    const { y, h } = FENETRE;
+    const { y, h } = FENETRE, E = this.ecriteau;
     this.store.setVisible(true).setY(y + h + 6);
-    this.pancarte.setText('OUVERT !').setBackgroundColor('#2a5a1a');
-    this.tweens.add({ targets: this.pancarte, scale: { from: 1.4, to: 1 }, duration: 250, ease: 'Back.easeOut' });
-    this.time.delayedCall(500, () => {
+    // le cadenas s'ouvre ; l'écriteau se retourne sur sa chaîne : OUVERT
+    this.cadenas.setTexture('cadenas_1'); Son.jouer('clic');
+    this.tweens.add({ targets: [E.plaque, E.mot], scaleX: 0, duration: 140, ease: 'Quad.easeIn', onComplete: () => {
+      E.plaque.setTexture(ecriteauStyle(this, this.styleDecor, true)); E.mot.setText('OUVERT');
+      this.tweens.add({ targets: E.plaque, scaleX: 2, duration: 160, ease: 'Quad.easeOut' });
+      this.tweens.add({ targets: E.mot, scaleX: 1, duration: 160, ease: 'Quad.easeOut' });
+    } });
+    this.reveillerChat();
+    this.sonnerClochette();
+    this.montrerCommande(true, true);
+    this.time.delayedCall(560, () => {
       this.cameras.main.shake(120, 0.003);
+      this.balancerEcriteau(9);
       this.tweens.add({ targets: this.store, y: y - 10, duration: 1300, ease: 'Quad.easeIn', onComplete: () => { this.store.setVisible(false); if (suite) suite(); } });
       this.tweens.add({ targets: this.store, x: this.store.x + 2, duration: 60, yoyo: true, repeat: 10 });
     });
   }
 
   baisserStore(suite) {
-    const { y, h } = FENETRE;
-    this.pancarte.setText('FERMÉ').setBackgroundColor('#5a1a12');
+    const { y, h } = FENETRE, E = this.ecriteau;
+    this.pancarte.setText('FERMÉ'); E.plaque.setTexture(ecriteauStyle(this, this.styleDecor, false));
+    this.cadenas.setTexture('cadenas_1');
+    this.dessinerLueursStore();
     this.store.setVisible(true).setY(y - 10);
-    this.tweens.add({ targets: this.store, y: y + h + 6, duration: 900, ease: 'Bounce.easeOut', onComplete: () => this.time.delayedCall(500, suite) });
+    this.balancerEcriteau(7);
+    this.tweens.add({ targets: this.store, y: y + h + 6, duration: 900, ease: 'Bounce.easeOut', onComplete: () => {
+      this.balancerEcriteau(2.5); this.cadenas.setTexture('cadenas_0'); Son.jouer('clic');
+      this.time.delayedCall(500, suite);
+    } });
+  }
+
+  // La clochette du comptoir tinte : elle oscille sur sa potence
+  sonnerClochette() {
+    const c = this.objetsFenetre && this.objetsFenetre.clochette;
+    if (!c || this.tweens.isTweening(c)) return;
+    Son.jouer('clochette');
+    c.setAngle(0);
+    this.tweens.add({ targets: c, angle: { from: 16, to: -16 }, duration: 150, yoyo: true, repeat: 2, ease: 'Sine.easeInOut', onComplete: () =>
+      this.tweens.add({ targets: c, angle: { from: 6, to: -6 }, duration: 180, yoyo: true, repeat: 1, onComplete: () => c.setAngle(0) }) });
+  }
+
+  // (v1.63) Le chat au soleil : s'il est adopté (et qu'il n'est ni parti ni fâché), il dort en boule sur l'appui,
+  // dans la lumière des fentes ; il respire. Quand le store se lève, il s'éveille, s'assied et saute de l'appui.
+  poserChatAuSoleil() {
+    const G = this.G;
+    if (this.chatSoleil) { this.chatSoleil.destroy(); this.chatSoleil = null; }
+    if (!(typeof chatAdopte === 'function' && chatAdopte(G)) || (typeof chatParti === 'function' && chatParti(G)) || (typeof chatBoude === 'function' && chatBoude(G))) return;
+    const k = creerChatHD(this, lookChat(G)), { x, y, h } = FENETRE;
+    creerHalo(this);
+    const soleil = this.add.image(x + 58, y + h - 16, 'halo').setScale(0.9, 0.42).setTint(0xffd890).setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(2.88);
+    const chat = this.add.image(x + 58, y + h, k + '_dort0').setOrigin(0.5, 1).setScale(2.4).setDepth(2.9);
+    this.chatSoleil = this.add.container(0, 0, [soleil, chat]).setDepth(2.9);
+    this.chatSoleil.chat = chat; this.chatSoleil.cle = k;
+    // il respire, image par image
+    this.chatSoleil.souffle = this.time.addEvent({ delay: 950, loop: true, callback: () => { if (chat.active && chat.texture.key.includes('_dort')) chat.setTexture(k + (chat.texture.key.endsWith('0') ? '_dort1' : '_dort0')); } });
+    chat.setInteractive({ useHandCursor: true }).on('pointerdown', () => { if (!this.storeEnAttente) return; Son.jouer('miaou'); this.raconter(`${nomChatMaj(G)} dort au soleil, sur l'appui de la fenêtre. Il entrouvre un œil… et se rendort.`, nomChatMaj(G)); });
+  }
+
+  reveillerChat() {
+    const C = this.chatSoleil;
+    if (!C) return;
+    const chat = C.chat, k = C.cle, { x, y, h } = FENETRE;
+    C.souffle.remove();
+    chat.disableInteractive();
+    // il s'éveille, s'assied, la queue bat deux fois…
+    chat.setTexture(k + '_assis0');
+    this.time.delayedCall(260, () => chat.active && chat.setTexture(k + '_assis1'));
+    this.time.delayedCall(520, () => chat.active && chat.setTexture(k + '_assis0'));
+    // … se tapit, et saute de l'appui (vers la gauche, dans la pièce)
+    this.time.delayedCall(800, () => { if (!chat.active) return; chat.setTexture(k + '_tapi').setFlipX(true); });
+    this.time.delayedCall(1050, () => {
+      if (!chat.active) return;
+      chat.setTexture(k + '_bond');
+      const forme = this.make.graphics({ add: false }); forme.fillStyle(0xffffff).fillRect(0, 0, 960, y + h + 4);
+      chat.setMask(forme.createGeometryMask());
+      this.tweens.add({ targets: chat, x: x - 10, duration: 520, ease: 'Linear' });
+      this.tweens.add({ targets: chat, y: y + h - 26, duration: 200, ease: 'Quad.easeOut', onComplete: () =>
+        this.tweens.add({ targets: chat, y: y + h + 80, duration: 320, ease: 'Quad.easeIn', onComplete: () => { if (this.chatSoleil === C) { C.destroy(); this.chatSoleil = null; } } }) });
+      this.tweens.add({ targets: C.list[0], alpha: 0, duration: 400 });
+    });
   }
 
   // « Jour 3 » en grand au réveil.
@@ -677,6 +802,8 @@ class CounterScene extends Phaser.Scene {
     g.fillStyle(alerte ? 0xff7a40 : 0xffe060).fillCircle(tx + tl * t, cy, 4);
     // (v0.91) le ciel suit l'heure, pas le dernier client
     this.ciel(h);
+    // (v1.63) et l'horloge régulateur du coin aussi
+    if (this.decorMatin) this.decorMatin.dessinerAiguilles(h);
   }
 
   // (v0.93, planche 18) Le ciel de la fenêtre heure par heure : l'aube pâle et dorée, le plein jour,
@@ -752,7 +879,9 @@ class CounterScene extends Phaser.Scene {
     this.dessinerReliques();
     creerObjetsHD(this);
     creerOiseauxMessagers(this);   // (v1.22) le pigeon des messages de détresse
-    this.add.image(0, 0, 'murComptoir').setOrigin(0).setScale(2);
+    // (v1.63, planche 81 v2) le décor du comptoir suit le style choisi dans le carnet de la tapissière
+    this.styleDecor = typeof styleComptoir === 'function' ? styleComptoir(this.G) : 'champetre';
+    this.add.image(0, 0, typeof murComptoirStyle === 'function' ? murComptoirStyle(this, this.styleDecor) : 'murComptoir').setOrigin(0).setScale(2);
     this.add.image(0, 340, plateauComptoir(this, niveauAmelioration(this.G, 'comptoir'))).setOrigin(0).setScale(2);
   }
 
@@ -816,7 +945,16 @@ class CounterScene extends Phaser.Scene {
     this.creerFileAttente();
 
     // L'ébrasement, le cadre de chêne et l'appui de pierre de la fenêtre
-    this.add.image(x - 16, y - 16, 'cadreFenetre').setOrigin(0).setScale(2).setDepth(3);
+    this.add.image(x - 16, y - 16, typeof cadreFenetreStyle === 'function' ? cadreFenetreStyle(this, this.styleDecor) : 'cadreFenetre').setOrigin(0).setScale(2).setDepth(3);
+    // (v1.63) le pot collé au montant droit, la tisane, le bouquet du montant gauche, les clés, la clochette
+    this.objetsFenetre = typeof poserObjetsFenetre === 'function' ? poserObjetsFenetre(this, this.styleDecor) : null;
+    if (this.objetsFenetre) {
+      const o = this.objetsFenetre;
+      this.tweens.add({ targets: o.montant, angle: { from: -1.5, to: 1.5 }, duration: 2600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      this.vapeurTisane = vapeur(this, o.tisane.x - o.tisane.displayWidth / 2, o.tisane.y - o.tisane.displayHeight - 1, 2.95);
+      o.clochette.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.sonnerClochette());
+      if (this.styleDecor === 'artisan') { creerHalo(this); const lu = this.add.image(o.montant.x, o.montant.y + 24, 'halo').setScale(0.35).setTint(0xffc060).setAlpha(0.4).setBlendMode(Phaser.BlendModes.ADD).setDepth(3.15); this.tweens.add({ targets: lu, alpha: 0.25, duration: 160, yoyo: true, repeat: -1, repeatDelay: 900, ease: 'Stepped' }); }
+    }
     // (v1.53, planche 62) le temps qu'il fait, derrière la vitre
     if (typeof meteoFenetre === 'function') meteoFenetre(this, FENETRE, masque);
   }
@@ -913,7 +1051,7 @@ class CounterScene extends Phaser.Scene {
   // À gauche : qui est en mission, et les lettres reçues (cliquables).
   // (v1.42, planche 68) l'ardoise en trois lignes ; un clic sur une ligne ouvre le détail, « ◂ » revient
   creerPanneauGauche() {
-    this.add.image(20, 20, 'ardoiseComptoir').setOrigin(0).setScale(2); // l'ardoise dans son cadre
+    this.add.image(20, 20, typeof ardoiseStyle === 'function' ? ardoiseStyle(this, this.styleDecor) : 'ardoiseComptoir').setOrigin(0).setScale(2); // l'ardoise dans son cadre
     this.texteJour = this.add.text(30, 28, '', style(22, '#f3d98a', { fontStyle: 'bold' }));
     this.texteJoueur = this.add.text(262, 36, '', style(13, '#c9b48a', { fontStyle: 'italic' })).setOrigin(1, 0);
     creerGlyphesHD(this);
@@ -970,55 +1108,113 @@ class CounterScene extends Phaser.Scene {
   }
 
   creerCommande() {
-    // Parchemin de la commande
-    this.add.image(685, 20, 'parcheminComptoir').setOrigin(0).setScale(2); // le parchemin punaisé
+    // (v1.63, planche 81 v2) le mur de droite : l'étagère suspendue (le calendrier du jour), le tableau où s'épingle
+    // la commande, l'horloge régulateur dans le coin. La commande a sa place : jamais par-dessus l'horloge.
+    const D = DECOR_MATIN;
+    this.decorMatin = poserDecorMatin(this, this.styleDecor, { heure: heureDuComptoir(this.G), jour: typeof dateDuJour === 'function' ? dateDuJour(this.G).jourDuMois : this.G.jour });
+    this.tweens.add({ targets: this.decorMatin.balancier, angle: { from: -6, to: 6 }, duration: 1000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    for (const f of this.decorMatin.flammes) {
+      creerHalo(this);
+      this.add.image(f.x, f.y - 4, 'halo').setScale(0.16).setTint(0xffc060).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD);
+      this.time.addEvent({ delay: 180 + Math.random() * 160, loop: true, callback: () => f.setTexture(f.texture.key.endsWith('0') && Math.random() < 0.7 ? 'flammeBougie_1' : 'flammeBougie_0') });
+    }
+    // la carte « Ce matin, dehors » (le store baissé) et le parchemin de la commande (le store levé)
+    this.carteDehors = this.add.container(D.tableau.x + D.tableau.l, D.tableau.y + 82);
+    this.carteDehors.add(this.add.image(0, 0, carteDehorsHD(this)).setScale(2));
+    this.carteDehors.add(this.add.text(0, -12, 'Ce matin, dehors :', style(12, '#5a3a1c', { fontStyle: 'italic' })).setOrigin(0.5));
+    this.texteDehors = this.add.text(0, 10, '', style(16, '#2a1608', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.carteDehors.add(this.texteDehors).setVisible(false);
+    this.parcheminCommande = this.add.image(D.parchemin.x, D.parchemin.y, parcheminTableauHD(this)).setOrigin(0).setScale(2);
+    const X = D.parchemin.x + 12, LARGE = D.parchemin.l * 2 - 24;   // (le texte tient dans le parchemin : 178 px)
+    this.largeurCommande = LARGE;
     // Le nom du client sur une ligne (la police rétrécit si besoin), sa destination en dessous.
-    this.titreCommande = this.add.text(700, 26, '', style(17, '#3b2410', { fontStyle: 'bold' }));
-    this.sousTitre = this.add.text(700, 49, '', style(12, '#6b4a2a', { fontStyle: 'italic' }));
+    this.titreCommande = this.add.text(X, 64, '', style(17, '#3b2410', { fontStyle: 'bold' }));
+    this.sousTitre = this.add.text(X, 86, '', style(12, '#6b4a2a', { fontStyle: 'italic' }));
+    this.texteSac = this.add.text(X, 202, '', style(11, '#5a3a20'));
+    // (ce qui s'écrit sur le parchemin n'en sort jamais : trop long, la police rapetisse)
+    for (const [t, min] of [[this.titreCommande, 11], [this.sousTitre, 9], [this.texteSac, 8]]) {
+      const ecrireT = t.setText.bind(t), tailleT = t.setFontSize.bind(t);
+      let base = parseInt(t.style.fontSize, 10);
+      const tenir = () => {
+        let k = base; tailleT(k);
+        while (t.text && t.width > LARGE && k > min) tailleT(--k);
+        if (t.width > LARGE) { let v = t.text; while (v.length > 2 && t.width > LARGE) { v = v.slice(0, -2) + '…'; ecrireT(v); } }   // (au pire, coupé net)
+      };
+      t.setFontSize = k => { base = parseInt(k, 10) || base; tenir(); return t; };
+      t.setText = v => { ecrireT(v); tenir(); return t; };
+    }
     this.lignesCommande = [];
     for (let i = 0; i < 5; i++) {
-      const y = 76 + i * 22;
-      const icone = this.add.image(712, y, 'ration').setScale(2.5).setVisible(false);
-      const txt = this.add.text(732, y, '', style(14, '#3b2410')).setOrigin(0, 0.5);
-      const zone = this.add.rectangle(800, y, 210, 22, 0x000000, 0).setInteractive({ useHandCursor: true });
+      const y = 109 + i * 19;
+      const icone = this.add.image(X + 8, y, 'ration').setScale(2.2).setVisible(false);
+      const txt = this.add.text(X + 24, y, '', style(14, '#3b2410')).setOrigin(0, 0.5);
+      const zone = this.add.rectangle(X + LARGE / 2, y, LARGE, 19, 0x000000, 0).setInteractive({ useHandCursor: true });
       zone.on('pointerdown', () => this.clicLigne(i));
       // Le petit « − » : retirer un objet du colis (il retourne dans ta réserve).
-      const moins = this.add.circle(925, y, 9, 0x8a3a2a).setStrokeStyle(1, 0x3b2410).setInteractive({ useHandCursor: true }).setVisible(false);
-      const moinsTexte = this.add.text(925, y - 1, '−', style(14, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5).setVisible(false);
+      const moins = this.add.circle(X + LARGE - 6, y, 8, 0x8a3a2a).setStrokeStyle(1, 0x3b2410).setInteractive({ useHandCursor: true }).setVisible(false);
+      const moinsTexte = this.add.text(X + LARGE - 6, y - 1, '−', style(13, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5).setVisible(false);
       moins.on('pointerover', () => moins.setFillStyle(0xb04a3a));
       moins.on('pointerout', () => moins.setFillStyle(0x8a3a2a));
       moins.on('pointerdown', () => this.retirer(i));
       this.lignesCommande.push({ icone, txt, zone, moins, moinsTexte, id: null });
     }
-    this.texteSac = this.add.text(700, 184, '', style(11, '#5a3a20'));
     // (v1.62) réparer l'équipement d'un client : c'est un employé de l'atelier qui s'en charge ; sans employé, l'option n'existe pas
-    this.aideCommande = this.add.text(700, 226, (this.G.employes || []).length ? '− : retirer · clic sur une ligne : faire réparer' : '− : retirer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
+    this.aideCommande = this.add.text(X, 226, (this.G.employes || []).length ? '− : retirer · clic : faire réparer' : '− : retirer', style(11, '#7a5a3a', { fontStyle: 'italic' }));
     // (v0.95) sous serment de lumière : un paladin de la Confrérie peut escorter une mission par semaine
-    this.boutonEscorte = this.add.text(700, 226, '', style(12, '#2a4a8a', { fontStyle: 'bold', backgroundColor: '#e8dcb8', padding: { x: 4, y: 1 } }))
+    this.boutonEscorte = this.add.text(X, 226, '', style(12, '#2a4a8a', { fontStyle: 'bold', backgroundColor: '#e8dcb8', padding: { x: 4, y: 1 } }))
       .setInteractive({ useHandCursor: true }).setVisible(false);
     this.boutonEscorte.on('pointerdown', () => { this.escorteChoisie = !this.escorteChoisie; Son.jouer('clic'); this.majCommande(); });
+    {
+      const e = this.boutonEscorte, ecrireE = e.setText.bind(e);
+      e.setText = v => { ecrireE(v); e.setFontSize(12); for (let k = 11; e.width > LARGE && k >= 9; k--) e.setFontSize(k); return e; };
+    }
     // (v1.42, planche 68) les chances dans un encart : un libellé, une jauge de couleur, le chiffre en grand.
     // (les comptoirs à part — rival, Conseil, Sage — vident texteChance : l'encart disparaît avec lui)
     this.boiteFlair = this.add.graphics();
-    this.boiteFlair.fillStyle(0x3b2410, 0.16).fillRoundedRect(700, 199, 232, 40, 8);
-    this.libelleFlair = this.add.text(712, 209, '', style(12, '#5a3a1a', { fontStyle: 'bold' })).setOrigin(0, 0.5);
+    this.boiteFlair.fillStyle(0x3b2410, 0.16).fillRoundedRect(X - 4, 213, LARGE + 8, 29, 7);
+    this.libelleFlair = this.add.text(X + 4, 221, '', style(12, '#5a3a1a', { fontStyle: 'bold' })).setOrigin(0, 0.5);
     this.jaugeFlair = this.add.graphics();
-    this.texteChance = this.add.text(922, 219, '', style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(1, 0.5);
+    this.texteChance = this.add.text(X + LARGE, 228, '', style(17, '#3b2410', { fontStyle: 'bold' })).setOrigin(1, 0.5);
     const ecrire = this.texteChance.setText.bind(this.texteChance);
     this.texteChance.setText = t => { ecrire(t); if (!t) { this.boiteFlair.setVisible(false); this.libelleFlair.setText(''); this.jaugeFlair.clear(); } return this.texteChance; };
     this.texteChance.setText('');
+    this.objetsCommande = [this.parcheminCommande, this.titreCommande, this.sousTitre, this.texteSac, this.aideCommande, this.boutonEscorte, this.boiteFlair, this.libelleFlair, this.jaugeFlair, this.texteChance];
+  }
+
+  // (v1.63) le store baissé : le tableau ne porte que la carte « Ce matin, dehors » ; levé, on y épingle la commande
+  montrerCommande(oui, anime = false) {
+    const D = DECOR_MATIN, lignes = this.lignesCommande.flatMap(l => [l.icone, l.txt, l.moins, l.moinsTexte]);
+    if (!oui) {
+      for (const o of [...this.objetsCommande, ...lignes]) o.setAlpha(0);
+      const n = this.G.file.filter(e => !['detresse', 'carnet'].includes(e.type)).length;
+      this.texteDehors.setText(n ? `${n} personne${n > 1 ? 's' : ''}` : 'personne');
+      this.carteDehors.setVisible(true).setAngle(-2).setAlpha(1).setY(D.tableau.y + 82);
+      return;
+    }
+    if (!anime || !this.carteDehors.visible) { this.carteDehors.setVisible(false); for (const o of [...this.objetsCommande, ...lignes]) o.setAlpha(1); return; }
+    // la carte se décroche (elle bascule autour de son épingle, puis tombe) ; le parchemin est épinglé à sa place
+    const c = this.carteDehors;
+    this.tweens.add({ targets: c, angle: 16, duration: 240, ease: 'Quad.easeIn', onComplete: () =>
+      this.tweens.add({ targets: c, y: c.y + 160, angle: 38, alpha: 0, duration: 460, ease: 'Quad.easeIn', onComplete: () => c.setVisible(false) }) });
+    this.parcheminCommande.setY(D.parchemin.y - 10).setAngle(-3);
+    this.tweens.add({ targets: this.parcheminCommande, y: D.parchemin.y, angle: 0, alpha: 1, delay: 420, duration: 280, ease: 'Back.easeOut', onComplete: () => {
+      Son.jouer('poser');
+      this.tweens.add({ targets: [...this.objetsCommande.filter(o => o !== this.parcheminCommande), ...lignes], alpha: 1, duration: 220 });
+    } });
   }
 
   // l'encart des chances : libellé, jauge (part remplie, couleur), chiffre
   majFlair(libelle, chiffre, part, couleur) {
     this.boiteFlair.setVisible(true);
-    this.libelleFlair.setText(libelle);
+    this.libelleFlair.setText(libelle).setFontSize(12);
     this.texteChance.setText(chiffre).setColor(couleur);
+    for (let k = 11; this.libelleFlair.width > this.largeurCommande - this.texteChance.width - 14 && k >= 9; k--) this.libelleFlair.setFontSize(k);   // (v1.63 : le libellé ne touche pas le chiffre)
     this.jaugeFlair.clear();
     if (part === null) return;
     const c = Phaser.Display.Color.HexStringToColor(couleur).color;
-    this.jaugeFlair.fillStyle(0x2a1a10).fillRoundedRect(712, 223, 140, 9, 4);
-    if (part > 0) this.jaugeFlair.fillStyle(c).fillRoundedRect(713, 224, Math.max(6, 138 * Math.min(1, part)), 7, 3);
+    const x0 = this.libelleFlair.x;   // (v1.63 : la jauge tient dans le parchemin du tableau)
+    this.jaugeFlair.fillStyle(0x2a1a10).fillRoundedRect(x0, 231, 112, 8, 4);
+    if (part > 0) this.jaugeFlair.fillStyle(c).fillRoundedRect(x0 + 1, 232, Math.max(6, 110 * Math.min(1, part)), 6, 3);
   }
 
   creerDialogue() {
@@ -1045,7 +1241,7 @@ class CounterScene extends Phaser.Scene {
   creerZones() {
     if (!(typeof didacticiel === 'function' && didacticiel(this.G) && this.G.jour <= 1)) return;
     const g = this.add.graphics();
-    const zones = [[22, 22, 246, 226, 0x6a9ac9, 145, 248, 'TOI', '#8ab0d0'], [687, 22, 256, 226, 0xd8a838, 815, 248, 'LE CLIENT', '#e8c060'],
+    const zones = [[22, 22, 246, 226, 0x6a9ac9, 145, 248, 'TOI', '#8ab0d0'], [684, 50, 218, 200, 0xd8a838, 793, 250, 'LE CLIENT', '#e8c060'],
       [142, 348, 560, 180, 0x6a9a4a, 422, 346, 'TA RÉSERVE', '#9ac87a'], [732, 344, 216, 182, 0xc04a3a, 840, 342, 'TES ACTIONS', '#e88a7a']];
     for (const [x, y, l, h, coul, ex, ey, texte, fond] of zones) {
       g.lineStyle(3, coul, 0.8).strokeRoundedRect(x, y, l, h, 8);
@@ -1058,8 +1254,8 @@ class CounterScene extends Phaser.Scene {
     const rang = typeof rangInterface === 'function' ? rangInterface(this) : 1;
     if (rang < 2) return;
     for (const [x, y] of [[29, 29], [259, 29], [29, 239], [259, 239]]) coinPierre(this, x, y, 'saphir', rang, 0);
-    for (const [x, y] of [[694, 29], [936, 29], [694, 239], [936, 239]]) coinPierre(this, x, y, 'topaze', rang, 0);
-    if (rang >= 4) for (const [x, y] of [[255, 25], [932, 25]]) etincelle(this, x, y, 0.5);
+    for (const [x, y] of [[691, 57], [895, 57], [691, 243], [895, 243]]) coinPierre(this, x, y, 'topaze', rang, 0);   // (v1.63 : les coins du tableau de la commande)
+    if (rang >= 4) for (const [x, y] of [[255, 25], [891, 53]]) etincelle(this, x, y, 0.5);
   }
 
   creerStock() {
@@ -1741,7 +1937,7 @@ class CounterScene extends Phaser.Scene {
     }
     const C = COLLECTIONS[v.serie], n = nbPieces(G, v.serie), total = totalSerie(v.serie);
     creerEmblemesHD(this);
-    const f = this.ficheCollection = this.add.container(814, 135).setDepth(20);
+    const f = this.ficheCollection = this.add.container(793, 150).setScale(0.88).setDepth(20);
     f.add(this.add.image(0, 0, panneauHD(this, 236, 214)).setScale(2));
     f.add(this.add.text(0, -84, 'Il veut ta pièce', style(16, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
     const o = dessinerPieceCollection(this, v.serie, v.piece, 0, 0, 1.5, true); o.setPosition(0, -40); f.add(o);
@@ -2470,7 +2666,7 @@ class CounterScene extends Phaser.Scene {
   // (v0.84) un objet du client à réparer : un marteau qui bat à côté de la ligne, pour ne pas le rater
   marquerReparation(ligne, oui) {
     if (!ligne.marteau) {
-      ligne.marteau = this.add.text(922, ligne.icone.y, '⚒', style(16, '#ff8a20', { fontStyle: 'bold', stroke: '#2a1206', strokeThickness: 4, brut: true })).setOrigin(0.5).setDepth(ligne.txt.depth + 1);
+      ligne.marteau = this.add.text(this.lignesCommande[0].moins.x, ligne.icone.y, '⚒', style(16, '#ff8a20', { fontStyle: 'bold', stroke: '#2a1206', strokeThickness: 4, brut: true })).setOrigin(0.5).setDepth(ligne.txt.depth + 1);
       this.tweens.add({ targets: ligne.marteau, angle: { from: -25, to: 15 }, scale: { from: 1, to: 1.25 }, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
     ligne.marteau.setVisible(!!oui);
@@ -2931,8 +3127,8 @@ class CounterScene extends Phaser.Scene {
     // La commande, puis les soins donnés en plus.
     const ids = [...Object.keys(commande), ...Object.keys(plus).filter(id => !commande[id])];
     // (v1.42) l'aide et l'escorte se rangent juste sous la dernière ligne ; l'aide s'efface une fois servie
-    const nL = Math.min(ids.length, 5), sousLignes = 76 + nL * 22 - 6;
-    this.boutonEscorte.setY(nL >= 5 ? 184 : sousLignes);
+    const nL = Math.min(ids.length, 5), sousLignes = 109 + nL * 19 - 8;   // (v1.63 : les lignes du parchemin du tableau)
+    this.boutonEscorte.setY(nL >= 5 ? 199 : sousLignes);
     this.texteSac.setVisible(!(escorte && nL >= 5));
     this.aideCommande.setY(sousLignes).setVisible(!escorte && !!v && this.enService && nL < 5 && !aideVue(this.G, 'commande'));
     const cible = v && estCible(this.G, v) ? '(ta cible) ' : '';
@@ -2965,7 +3161,7 @@ class CounterScene extends Phaser.Scene {
             this.marquerReparation(ligne, false);
             ligne.txt.setText(`${ITEMS[donnee].nom} (préfère ${ITEMS[id].nom.toLowerCase()}) ${Math.min(donne, n)}/${n} ${donne >= n ? '✓' : ''}`).setFontSize(12).setColor(donne >= n ? '#2f6a2a' : '#3b2410');
           }
-          for (let t = 12; ligne.txt.width > (ligne.marteau && ligne.marteau.visible ? 182 : 205) && t >= 9; t--) ligne.txt.setFontSize(t);
+          for (let t = 12; ligne.txt.width > this.largeurCommande - 44 && t >= 9; t--) ligne.txt.setFontSize(t);
           return;
         }
       }
@@ -2985,12 +3181,13 @@ class CounterScene extends Phaser.Scene {
         const texte = etat > 0 ? `${ITEMS[id].nom} ${etat}/${USURE_MAX}${etat < USURE_MAX ? (reparateurComptoir(this.G, id) ? ` · réparer : ${cout}` : '') : ' ✓'}`
           : `${ITEMS[id].nom} · ${accordAdj(id, 'le sien est cassé', 'la sienne est cassée', 'les siens sont cassés', 'les siennes sont cassées')}`;
         ligne.txt.setText(texte).setFontSize(12).setColor(etat >= USURE_MAX ? '#2f6a2a' : etat > 0 ? '#b04a00' : '#8a5a10');
-        for (let t = 12; ligne.txt.width > 182 && t >= 9; t--) ligne.txt.setFontSize(t);
+        for (let t = 12; ligne.txt.width > this.largeurCommande - 44 && t >= 9; t--) ligne.txt.setFontSize(t);
         this.marquerReparation(ligne, etat > 0 && etat < USURE_MAX && this.enService && !!reparateurComptoir(this.G, id));
         return;
       }
       if (!commande[id]) {
         ligne.txt.setText(`${ITEMS[id].nom}  +${plus[id] || donne} (en plus)`).setFontSize(13).setColor('#1f5aa0');
+        for (let t = 12; ligne.txt.width > this.largeurCommande - 44 && t >= 9; t--) ligne.txt.setFontSize(t);
         return;
       }
       const ok = donne >= commande[id];
@@ -2999,7 +3196,7 @@ class CounterScene extends Phaser.Scene {
       const ouAutre = estArme(id) && !ok && !armesDonnees(this.colis) ? ' (ou une autre arme)' : '';
       ligne.txt.setText(`${ITEMS[id].nom}  ${Math.min(donne, commande[id])} / ${commande[id]}  ${ok ? '✓' : ''}${plus[id] ? ` +${plus[id]}` : ''}${piege}${ouAutre}`)
         .setFontSize(14).setColor(piege ? '#7a1a4a' : ok ? '#2f6a2a' : '#3b2410');
-      for (let t = 14; ligne.txt.width > 205 && t >= 10; t--) ligne.txt.setFontSize(t);
+      for (let t = 14; ligne.txt.width > this.largeurCommande - (ligne.moins.visible ? 44 : 26) && t >= 9; t--) ligne.txt.setFontSize(t);
     });
     // Son visage suit son colis : content s'il est bien équipé, inquiet s'il manque des choses.
     if (v && this.enService && v.queteId && this.buste && this.buste.personne === v) {

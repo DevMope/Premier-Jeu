@@ -95,7 +95,7 @@ Object.assign(CounterScene.prototype, {
     this.dire(texteDuCrieur(G), 'Le crieur — Le mois des comptoirs', 'Le crieur');
     if (b) {
       if (this.feuilleConseil) { this.feuilleConseil.destroy(); this.feuilleConseil = null; }
-      const F = this.feuilleConseil = this.add.container(815, 135).setDepth(2.5);
+      const F = this.feuilleConseil = this.add.container(793, 150).setScale(0.88).setDepth(2.5);
       F.add(this.add.image(0, 0, panneauHD(this, 236, 214)).setScale(2));
       F.add(this.add.text(0, -86, 'Le mois des comptoirs', style(15, '#5a0e0e', { fontStyle: 'bold' })).setOrigin(0.5));
       F.add(this.add.text(0, -66, 'aventuriers revenus vainqueurs', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));

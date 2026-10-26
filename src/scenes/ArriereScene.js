@@ -34,11 +34,20 @@ class ArriereScene extends Phaser.Scene {
     // (v0.82, étape 10b) le coin de la forge, à partir du saut d'un an
     const forge = forgeProposee(G) && creerBouton(this, 600, 505, 220, forgeConstruite(G) ? '⚒ La forge' : '⚒ Le coin de la forge', () => { this.scene.pause(); this.scene.launch('Forge', { appelant: 'Arriere' }); });
     // (v1.32, planche 55) la tapissière et son carnet, quand toutes les améliorations sont faites
-    if (typeof decoProposee === 'function' && decoProposee(G)) {
-      const ouvrir = () => decoDe(G) ? carnetDeco(this, () => this.appliquerDeco()) : visiteTapissiere(this, ok => { if (ok) { this.boutonDeco.label.setText('🎨 Le carnet'); this.appliquerDeco(); carnetDeco(this, () => this.appliquerDeco()); } });
-      this.boutonDeco = creerBouton(this, 370, 505, 200, decoDe(G) ? '🎨 Le carnet' : '🎨 La tapissière', ouvrir);
+    // (v1.63, planche 81 v2) ... et dès le comptoir en chêne verni, pour la page « Le comptoir » de son carnet
+    const pieces = typeof decoProposee === 'function' && decoProposee(G), comptoir = typeof tapissiereComptoir === 'function' && tapissiereComptoir(G);
+    if (pieces || comptoir) {
+      const rafraichir = () => { this.appliquerDeco(); if (this.boutonDeco) this.boutonDeco.setTexte('🎨 Le carnet'); };
+      const ouvrir = () => {
+        if (pieces && !decoDe(G) && !G.decoVue) return visiteTapissiere(this, ok => { G.tapissiereVue = G.tapissiereVue || G.jour; rafraichir(); if (ok) carnetDeco(this, rafraichir); });
+        if (comptoir && !G.tapissiereVue) return visiteTapissiereComptoir(this, rafraichir);
+        if (decoDe(G)) return carnetDeco(this, rafraichir);
+        carnetComptoir(this, rafraichir);
+      };
+      const vue = decoDe(G) || G.tapissiereVue;
+      this.boutonDeco = creerBouton(this, 370, 505, 200, vue ? '🎨 Le carnet' : '🎨 La tapissière', ouvrir);
       this.boutonDeco.fond.setDepth(2); this.boutonDeco.label.setDepth(2.01);   // (au-dessus du coin des chats)
-      if (!G.decoVue) this.time.delayedCall(700, ouvrir);
+      if ((pieces && !G.decoVue) || (comptoir && !G.tapissiereVue)) this.time.delayedCall(700, ouvrir);
     }
     // (v1.38) le coin des chats est posé au sol, devant l'étagère : les étiquettes et les boutons restent par-dessus
     if (typeof coinDesChats === 'function' && (coinDesChats(G) || {}).lieu === 'arriere') {
