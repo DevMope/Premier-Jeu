@@ -152,9 +152,7 @@ Object.assign(MarcheScene.prototype, {
     // l'interface de la place : l'invite devant un lieu, la carte (M), la liste de courses (L)
     this.add.rectangle(480, 22, 960, 40, 0x1a120a, 0.45).setDepth(4);
     this.invitePlace = this.add.text(480, 462, '', style(14, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#1a120add', padding: { x: 12, y: 5 } })).setOrigin(0.5).setDepth(6).setVisible(false);
-    const b1 = creerBouton(this, 882, 108, 140, 'La place · M', () => this.basculerCartePlace()); b1.label.setFontSize(13);
-    const b2 = creerBouton(this, 882, 146, 140, 'Ma liste · L', () => this.listeCourses()); b2.label.setFontSize(13);
-    this.boutonsPlace = [b1, b2];
+    this.boutonsPlace = null; this.placeBoutons = null; this.creerBoutonsPlace();   // (MarcheBoutons.js : ils s'écartent des noms des étals)
     // (v1.61) pour quitter un lieu : un bouton bien visible sur le coin du cadre, et un clic n'importe où sur la place
     if (this.retour.setTexte) this.retour.setTexte('✕ Partir · Échap');
     for (const o of [this.retour.fond, this.retour.label]) if (o) o.setPosition(842, 296).setDepth(7);
@@ -663,6 +661,7 @@ Object.assign(MarcheScene.prototype, {
     if (cle) { z = PETITS_LIEUX.includes(cle) ? P.zoom * 1.2 : P.zoomPanneau; [fx, fy] = LIEUX_PLACE[cle]; sy = PETITS_LIEUX.includes(cle) ? 262 : 250; }
     // (v1.61) lieu ouvert : le bas de la place peut monter derrière le cadre, pour que le mendiant (tout en bas) reste visible
     const x = Phaser.Math.Clamp(480 - fx * z, 960 - P.L * z, 0), y = Phaser.Math.Clamp(sy - fy * z, (cle ? 300 : 478) - P.H * z, 0);
+    if (cle) this.placerBoutonsPlace(x, y, z);   // (les boutons « La place » et « Ma liste » laissent libre le nom du lieu)
     if (instantane) { place.setScale(z).setPosition(x, y); return; }
     if (cle) { this.tweens.killTweensOf(place); this.tweens.add({ targets: place, x, y, scale: z, duration: 450, ease: 'Sine.easeInOut' }); return; }
     // en marchant : on glisse doucement
@@ -686,6 +685,7 @@ Object.assign(MarcheScene.prototype, {
     if (this.contenu) this.contenu.setVisible(false);
     for (const o of [this.fondPanneau, this.retour && this.retour.fond, this.retour && this.retour.label]) if (o) o.setVisible(false);
     if (this.place) this.tweens.killTweensOf(this.place);
+    if (this.placerBoutonsPlace) this.placerBoutonsPlace();
   },
 
   // --- La carte de la place (M) : tout d'un coup d'œil ; un clic sur un nom, et JeuneGoy y court ---
@@ -1055,13 +1055,15 @@ Object.assign(MarcheScene.prototype, {
     const tx = this.place.x + g.x * z, ty = this.place.y + (g.y - g.displayHeight) * z;
     const yc = Math.max(ty - 20 - hB / 2, 87 + 14 + hB / 2);
     let xc = Phaser.Math.Clamp(tx + v.bulleCote * 120, L / 2 + 8, 952 - L / 2);
-    if (yc - hB / 2 < 172) xc = Math.min(xc, 804 - L / 2);   // (sous les boutons « La place · M » et « Ma liste · L »)
+    const zb = this.zoneBoutonsPlace();   // (sous les boutons « La place · M » et « Ma liste · L », où qu'ils soient)
+    if (yc - hB / 2 < zb[3] && yc + hB / 2 > zb[1]) xc = zb[0] > 480 ? Math.min(xc, zb[0] - 4 - L / 2) : Math.max(xc, zb[2] + 4 + L / 2);
     if (this._vignette && this._vignette.active && yc - hB / 2 < 160) xc = Math.min(xc, 568 - L / 2);   // (ni sous une vignette « Objectif atteint »)
     // (v1.63) ni sur le nom de l'étal qu'il présente : la bulle passe à côté de la bande, du côté de Garrick si elle y tient
     const bande = this.bandeNomVisite();
     if (bande && yc - hB / 2 < bande[3] && yc + hB / 2 > bande[1] && xc + L / 2 > bande[0] && xc - L / 2 < bande[2]) {
-      const droiteMax = yc - hB / 2 < 172 ? 804 : 952, gauche = bande[0] - 8 - L / 2, droite = bande[2] + 8 + L / 2;
-      const tient = x => x - L / 2 >= 8 && x + L / 2 <= droiteMax;
+      const zb = this.zoneBoutonsPlace(), haut = yc - hB / 2 < zb[3] && yc + hB / 2 > zb[1];
+      const droiteMax = haut && zb[0] > 480 ? zb[0] - 4 : 952, gaucheMin = haut && zb[0] < 480 ? zb[2] + 4 : 8, gauche = bande[0] - 8 - L / 2, droite = bande[2] + 8 + L / 2;
+      const tient = x => x - L / 2 >= gaucheMin && x + L / 2 <= droiteMax;
       const choix = (v.bulleCote > 0 ? [droite, gauche] : [gauche, droite]).find(tient);
       if (choix !== undefined) xc = choix;
     }
