@@ -9,8 +9,6 @@ const PLACE_MARCHE = { L: 1800, H: 1040, zoom: 1.25, zoomPanneau: 0.95, vitesse:
 const LIEUX_PLACE = { forge: [330, 340], apothicaire: [560, 310], encheres: [900, 290], gedeon: [1240, 310], tailleuse: [1470, 340],
   bazar: [170, 610], brocante: [170, 870], garderobe: [1630, 610], peche: [1630, 880], crieur: [660, 560], tableau: [1140, 560], jeux: [560, 920], mendiant: [770, 1000],
   fontaine: [900, 660], carte: [1090, 1000], arche: [900, 1040], moulin: [1760, 760] };
-// La hauteur de l'enseigne au-dessus de la base (les autres : 200)
-const HAUTEUR_ENSEIGNE = { encheres: 150, crieur: 112, tableau: 110, jeux: 170, mendiant: 120, fontaine: 190, carte: 70, arche: 230, moulin: 30, peche: 200 };
 const PETITS_LIEUX = ['crieur', 'tableau', 'mendiant'];
 // (v1.61) Ce que se disent deux passants qui se croisent sur la place
 const CAUSERIES_PLACE = [
@@ -27,7 +25,7 @@ const CAUSERIES_PLACE = [
 ];
 
 Object.assign(MarcheScene.prototype, {
-  // Le nom et le métier de chaque lieu, sur son enseigne
+  // Le nom et le métier de chaque lieu (le nom est écrit dans le lieu lui-même : poserNomsPlace ; le métier sur une petite enseigne)
   nomLieuPlace(cle) {
     const G = this.G;
     if (MARCHANDS[cle]) return [MARCHANDS[cle].nom, MARCHANDS[cle].metier];
@@ -66,6 +64,7 @@ Object.assign(MarcheScene.prototype, {
     place.add(this.add.image(0, 0, solPlaceHD(this, 'solPlace_' + saison, pal, 900, 520, planSolPlace())).setOrigin(0).setScale(2));
     this.obstacles = []; this.grillePlace = null;   // (v1.61 : les charrettes du jour de marché changent la grille)
     this.visite = null;
+    this.nomsRelation = [];   // (les noms qui prennent la couleur de la relation : majNomsPlace les redessine si elle change)
     const ombre = (x, y, l) => { const o = this.add.image(x + l * 0.06, y - 2, ombrePlaceHD(this)).setScale(l / 64, l / 64 * 0.9); o.yTri = y - 0.5; place.add(o); return o; };
     this.ombrePlace = ombre;
     // les maisons qui bordent la place, au nord
@@ -108,7 +107,10 @@ Object.assign(MarcheScene.prototype, {
     { const [cx, cy] = LIEUX_PLACE.carte; ombre(cx, cy + 2, 80); this.poserCartePlace(cx, cy); this.obstacles.push([cx - 22, cy - 14, cx + 22, cy + 2]); }   // (v1.62 : un peu à l'écart du porche)
     this.coinMendiantPlace();
     this.actionsLieux.carte = () => this.message('La carte du monde : tes voyageurs partent de ton comptoir vers toutes ces contrées.');
-    const poteau = this.add.image(1760, 760, barrierePlaceHD(this, 2)).setOrigin(0.5, 1).setScale(2.2); place.add(poteau); this.obstacles.push([1744, 748, 1776, 762]);
+    // (v1.63, planche 80 v3) le poteau indicateur du sentier : un bras en flèche de bois clair, le nom gravé dessus
+    { const [px, py] = [1778, 760], im = this.add.image(px, py, poteauSentierHD(this)).setOrigin(0.85, 1).setScale(2); im.yTri = py; place.add(im);
+      poserLettrage(this, place, px - 0.85 * 132 + 58, py - 68 + 20, this.nomLieuPlace('moulin')[0], { police: 'Alegreya', graisse: 900, taille: 13, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: 112, hauteur: 18, lignesMax: 1, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) }).yTri = py + 0.1;
+      this.obstacles.push([1744, 748, 1776, 762]); }
     this.actionsLieux.moulin = () => this.message('Le sentier mène au Vieux Moulin et à l’étang de Barnabé. On s’y promène le soir, depuis chez toi.');
     // les arbres, les buissons, les barrières : dans l'herbe, jamais sur les chemins
     [[70, 420, 0], [70, 760, 1], [1740, 420, 1], [1720, 1030, 0], [420, 740, 1], [1390, 760, 0], [560, 200, 0], [1250, 200, 1], [40, 1040, 0], [330, 1040, 1]].forEach(([x, y, v]) => {
@@ -125,13 +127,8 @@ Object.assign(MarcheScene.prototype, {
       if (this.fete) { this.banniereConfrerie(c, 50, 600, 230, 0.9); this.banniereConfrerie(c, 1750, 600, 230, 0.9); }
       place.add(c);
     }
-    // les enseignes, lisibles de loin, au-dessus de tout
-    this.enseignesPlace = [];
-    for (const cle of Object.keys(LIEUX_PLACE)) {
-      if (!this.actionsLieux[cle] || cle === 'arche' || cle === 'carte') continue;   // (le porche et la carte portent leur propre écriteau)
-      const [x, y] = LIEUX_PLACE[cle], [n, m] = this.nomLieuPlace(cle);
-      enseigneLieu(this, x, y - (HAUTEUR_ENSEIGNE[cle] || 200), n, m, n === 'En travaux' ? '#c9b48a' : MARCHANDS[cle] ? couleurNom(G, MARCHANDS[cle].nom, true) : '#f3d98a').forEach(o => { o.yTri = 1e6; o.setDepth(0); place.add(o); this.enseignesPlace.push(o); });
-    }
+    // (v1.63, planche 80 v3) les noms : dans les étals eux-mêmes, plus de panneau qui flotte au-dessus
+    this.poserNomsPlace();
     // JeuneGoy, à l'arche s'il vient de la rue
     textureJoueur(this, G, 'dos');
     this.heros = this.add.image(840, 760, textureJoueur(this, G, 'dos')).setOrigin(0.5, 1).setScale(echelleJoueur(P.echelle));
@@ -204,6 +201,117 @@ Object.assign(MarcheScene.prototype, {
     });
   },
 
+  // (v1.63, planche 80 v3) Les noms des lieux sont dans les lieux : peints sur le lambrequin d'un auvent, gravés dans une
+  // poutre, brodés, cloués en lettres de bois, selon le style de chaque étal (ETALS_NOMS). Le nom prend la couleur de la
+  // relation avec le marchand (couleurNom), liseré et ombre pour se détacher de sa bande ; le métier pend à une petite
+  // enseigne, au poteau du côté du centre de la place. Le mendiant, la fontaine : l'invite du bas les nomme, rien d'écrit.
+  poserNomsPlace() {
+    const G = this.G, faits = new Set();
+    const nomRelation = (k, sombre) => MARCHANDS[k] ? couleurNom(G, MARCHANDS[k].nom, sombre) : null;
+    for (const g of this.place.list) {
+      const k = g.cle; if (!k || faits.has(k)) continue;
+      const [nom, metier] = this.nomLieuPlace(k);
+      if (nom === 'En travaux') { faits.add(k); continue; }   // (le chantier a son propre écriteau : « En travaux, ouverture le jour… »)
+      const style = k === 'jeux' ? (this.fete ? 'tir' : this.feteHiver ? 'roue' : 'jeux') : k;
+      const etals = g.list.filter(o => o.texture && /^etalHD_/.test(o.texture.key));
+      const met = METIERS_NOMS[k] || metier;
+      if (ETALS_NOMS[style]) {
+        if (!etals.length) continue;   // (un second groupe au même endroit, comme le décor de l'étal de l'Union : le nom est sur le premier)
+        faits.add(k);
+        const m = ETALS_NOMS[style], couleur = parseInt(etals[0].texture.key.split('_')[1], 16);
+        const coul = m.couleurFixe || nomRelation(k, true) || '#f3d98a';
+        const fond = m.modele === 'poutre' ? (m.bois === 'peinte' ? couleur : m.bois === 'vieille' ? 0x8a5a2b : 0x3a2414) : (m.ton ? melangeCouleurs(couleur, '#000000', 0.2) : couleur);
+        const o = { police: m.police, graisse: m.graisse || 900, italique: m.italique, taille: m.taille || 16, couleur: coul, genre: m.genre, inclinaison: m.inclinaison || 0,
+          fond, largeur: 152, ...contrasteLettrage(coul, fond) };
+        // une ligne ou deux ? (mesuré sur une ligne ; les noms longs, ou ceux qui le demandent, passent sur deux)
+        const essai = lettrageHD(this, nom, { ...o, hauteur: 21, lignesMax: 1 });
+        const deux = (m.deuxLignes && nom.length > 20) || essai.mise.deborde;
+        const lignes = deux ? 2 : 1, E = etalNomHD(this, couleur, style, lignes);
+        etals[0].setTexture(E.cle); if (etals[1]) etals[1].setTexture(E.cle).setCrop(0, 82 + E.ext - E.comptoir, 88, E.comptoir);   // (le comptoir, devant le marchand ; le tir à l'arc et la grande roue n'ont qu'une image)
+        this.asseoirEtal(g, etals, E);
+        // la bande du haut passe devant le marchand (le chapeau de Mère Sauge reste derrière le lambrequin)
+        g.add(this.add.image(etals[0].x, etals[0].y, E.cle).setOrigin(0.5, 1).setScale(2).setCrop(0, 0, 88, E.rangs));
+        const haut = etals[0].y - (82 + E.ext) * 2, yc = haut + (m.modele === 'poutre' ? E.toit : E.toit + 1) * 2 + E.hb + (m.modele === 'poutre' ? 0 : 0.5);
+        g.bandeNom = [-88, haut, 88, haut + E.rangs * 2];
+        g.attachesGuirlande = [[-86, haut + 6], [86, haut + 6]];   // (les coins de l'auvent, où l'on noue les guirlandes du jour de marché)   // (la bande du nom, dans le groupe : la bulle de Garrick la laisse libre)
+        const im = poserLettrage(this, g, 0, yc, nom, { ...o, hauteur: E.hb * 2 - 3, lignesMax: lignes, coupe: deux });
+        if (MARCHANDS[k]) this.nomsRelation.push({ im, k, couleur: coul });
+        if (met) poserEnseignePendue(this, g, g.x < 900 || k === 'peche', met, haut + E.rangs * 2);
+        continue;
+      }
+      if (k === 'encheres') {   // brodé d'or sur la bannière de velours du portique
+        faits.add(k);
+        g.list.filter(o => o.type === 'Text' && /ENCHÈRES/.test(o.text)).forEach(o => o.destroy());
+        g.add(this.add.image(0, -138, banniereEncheresHD(this)).setOrigin(0.5, 0).setScale(2));
+        g.attachesGuirlande = [[-56, -140], [56, -140]];   // (le haut des deux montants du portique)
+        poserLettrage(this, g, 0, -126, nom, { police: 'Alegreya', graisse: 900, taille: 15, couleur: '#f0c850', fond: 0x7e2a20, genre: 'dore', largeur: 94, hauteur: 20, lignesMax: 1, ...contrasteLettrage('#f0c850', 0x7e2a20) });
+        if (met) poserEnseignePendue(this, g, g.x < 900, met, -110, 64);
+      } else if (k === 'jeux') {   // le coin des jeux : le nom peint, en or, sur le lambrequin violet de l'auvent
+        const a = g.list.find(o => o.texture && o.texture.key === 'auventJeux'); if (!a) continue;
+        faits.add(k);
+        a.setTexture(auventJeuxNomHD(this));
+        g.list.filter(o => o.type === 'Text' && /JEUX/.test(o.text)).forEach(o => o.destroy());
+        poserLettrage(this, g, 0, a.y - 192 + (7 + 6.5) * 2, nom, { police: 'Pirata One', graisse: 400, taille: 19, couleur: '#f0c850', fond: 0x5a3a8a, genre: 'dore', largeur: 168, hauteur: 24, lignesMax: 1, ...contrasteLettrage('#f0c850', 0x5a3a8a) });
+        if (met) poserEnseignePendue(this, g, g.x < 900, met, a.y - 192 + 24 * 2, 92);
+      } else if (k === 'tableau') {   // le tableau d'affichage : le nom gravé sur la planche de bois clair, sous le toit
+        const a = g.list.find(o => o.texture && o.texture.key === 'panneauAffichageHD'); if (!a) continue;
+        faits.add(k);
+        a.setTexture(tableauNomHD(this));
+        if (this.exclamTableau) {   // (la pastille des nouvelles monte avec le toit, plus haut de 18 rangs)
+          this.tweens.killTweensOf(this.exclamTableau); this.exclamTableau.y = -130 - 36;   // (-130 : où le groupe l'avait posé)
+          this.tweens.add({ targets: this.exclamTableau, y: '-=10', duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        }
+        poserLettrage(this, g, 0, a.y - 152 + (13 + 8.5) * 2, nom, { police: 'Alegreya', graisse: 900, taille: 15, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: 84, hauteur: 32, lignesMax: 2, coupe: true, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) });
+      } else if (k === 'peche') {   // la cabane de Barnabé : le nom gravé sur la planche de rive, clouée au bord du toit
+        const c = g.list.find(o => o.texture && o.texture.key === 'cabanePecheurHD'); if (!c) continue;
+        faits.add(k);
+        const yr = c.y - 192 + 23 * 2;
+        g.add(this.add.image(0, yr, plancheRiveHD(this, 88, 12)).setOrigin(0.5, 0).setScale(2));
+        poserLettrage(this, g, 0, yr + 12, nom, { police: 'Alegreya', graisse: 900, taille: 16, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: 164, hauteur: 21, lignesMax: 1, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) });
+        if (met) poserEnseignePendue(this, g, true, met, yr + 26, 96);
+      } else if (k === 'crieur') {   // « Nouvelles du jour » : peint sur le devant de l'estrade
+        faits.add(k);
+        g.list.filter(o => o.type === 'Text' && /NOUVELLES/.test(o.text)).forEach(o => o.destroy());
+        poserLettrage(this, g, 4, -20, 'NOUVELLES\nDU JOUR', { police: 'Alegreya', graisse: 900, taille: 12, couleur: '#f6e2a0', fond: 0x3a2414, genre: 'peint', largeur: 84, hauteur: 28, lignesMax: 2, ...contrasteLettrage('#f6e2a0', 0x3a2414) });
+      }
+    }
+    // (le tir à l'arc et la grande roue : leurs textes de la rue, devenus inutiles, sont détruits aussi)
+    for (const g of this.place.list) if (g.cle === 'jeux') g.list.filter(o => o.type === 'Text' && /TIR À L'ARC|LA GRANDE ROUE/.test(o.text)).forEach(o => o.destroy());
+  },
+
+  // (v1.63, retours du joueur : « le comptoir lévite ») Ce qui est posé sur l'étal touche ce qui le porte : le comptoir pose
+  // son ombre sur le sol, chaque cagette la sienne sur le plateau, les sacs, paniers et tonneaux devant l'étal la leur sur
+  // le sol ; le tapis passe sous le comptoir et s'étale devant lui (avant, il recouvrait le bas du comptoir).
+  asseoirEtal(g, etals, E) {
+    const pied = etals[0].y, ombre = (x, y, l, h, a) => this.add.image(x, y, ombrePlaceHD(this)).setScale(l / 64, h / 24).setAlpha(a);
+    const tapis = g.list.find(o => o.texture && /^tapisEtalHD_/.test(o.texture.key));
+    if (tapis) { tapis.setY(pied + tapis.displayHeight - 4); g.sendToBack(tapis); }
+    const sol = [ombre(10, pied + 1, 196, 16, 0.95)];                                       // l'ombre du comptoir, portée vers le bas à droite
+    const posees = g.list.filter(o => o.texture && o.originY === 1 && Math.abs(o.y - (pied + 8)) < 3 && /HD$/.test(o.texture.key) && !/^etal|^tapis|^corps/.test(o.texture.key));
+    for (const o of posees) { o.setY(pied + 12); sol.push(ombre(o.x + 3, o.y - 1, o.displayWidth * 0.95, 9, 0.85)); }   // (sur le tapis, chacun avec son ombre)
+    sol.forEach((o, i) => g.addAt(o, (tapis ? 1 : 0) + i));
+    // le tir à l'arc et la grande roue n'ont qu'une image : le comptoir (plus bas) passe devant le sergent ou le Père Givrin
+    if (!etals[1]) {
+      const qui = g.list.filter(o => o.texture && /^corps/.test(o.texture.key)).pop(), H = 82 + E.ext;
+      if (qui) g.addAt(this.add.image(etals[0].x, etals[0].y, E.cle).setOrigin(0.5, 1).setScale(2).setCrop(0, H - E.comptoir, 88, E.comptoir), g.getIndex(qui) + 1);
+    }
+    // les cagettes, sur le plateau : leur ombre, sous elles et sous ce qu'elles portent
+    if (etals[1]) {
+      const i0 = g.getIndex(etals[1]) + 1;
+      g.list.filter(o => o.texture && o.texture.key === 'cagetteHD' && o.y < pied - 20).forEach((c, k) => g.addAt(ombre(c.x + 3, c.y - 1, c.displayWidth * 1.05, 6, 0.9), i0 + k));
+    }
+  },
+
+  // La relation avec un marchand a changé (un achat, un cadeau, un refus) : son nom prend la nouvelle couleur
+  majNomsPlace() {
+    if (!this.place || !this.nomsRelation) return;
+    for (const e of this.nomsRelation) {
+      if (!e.im.active) continue;
+      const c = couleurNom(this.G, MARCHANDS[e.k].nom, true);
+      if (c !== e.couleur) { e.couleur = c; relettrer(this, e.im, { couleur: c }); }
+    }
+  },
+
   // (v1.62, planche 80) La fontaine de loin (×2, comme le sol), ses deux pots, et son eau qui bouge comme de près : le
   // rideau de la vasque, les jets des lions, le petit jet du sommet, en gouttes qui tombent vraiment. Elle passe devant
   // qui est derrière le milieu du bassin, derrière qui est devant ; on bute sur le bassin rond, pas sur un rectangle.
@@ -254,8 +362,9 @@ Object.assign(MarcheScene.prototype, {
     const [bx, by, bl, bh] = C.cadre, haut = y - C.H * E, carte = this.add.image(x - C.L + (bx + bl / 2) * E, haut + (by + bh / 2) * E, texCarteMonde(this)).setScale(E);
     carte.yTri = y + 0.05; place.add(carte);
     for (const sens of [-1, 1]) { const p = this.add.circle(carte.x + sens * 22, carte.y - 18, 2, 0xc82a20); p.yTri = y + 0.06; place.add(p); }   // (les punaises)
-    const ec = ecriteauPorche(this, x, 0, [[this.nomLieuPlace('carte')[0], 11, { fontStyle: 'bold' }]]), dy = haut + 2 - ec[0].displayHeight;
-    ec.forEach(o => { o.y += dy; o.yTri = y + 0.1; place.add(o); });
+    // (v1.63, planche 80 v3) le nom, une seule fois : gravé sur une planche de bois clair posée sur le haut des poteaux
+    const pl = this.add.image(x, haut + 2, plancheNomCarteHD(this)).setOrigin(0.5, 1).setScale(E); pl.yTri = y + 0.1; place.add(pl);
+    poserLettrage(this, place, x, haut + 2 - 20 * E + 17, this.nomLieuPlace('carte')[0], { police: 'Alegreya', graisse: 900, taille: 14, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: 66, hauteur: 30, lignesMax: 2, coupe: true, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) }).yTri = y + 0.2;
   },
 
   // (v1.62, retours du joueur) Le petit coin du mendiant, sur la place : un vieux tapis sous lui et Brisquet, sa sébile
@@ -280,14 +389,14 @@ Object.assign(MarcheScene.prototype, {
   },
 
   // (v1.62, planche 80, système A validé) Le porche couvert, au bas de la place : deux poteaux de chêne, un petit toit de
-  // tuiles, les battants ouverts ; l'écriteau pend sous le linteau. Seuls les poteaux (et les battants rabattus) bloquent.
+  // tuiles, les battants ouverts ; le nom est sur le linteau. Seuls les poteaux (et les battants rabattus) bloquent.
   poserPorchePlace(X = 900, Y = 1040) {
     const place = this.place, Pm = PORCHE_MARCHE, E = 2, gauche = X - Pm.L;
     const ombre = this.add.image(X, Y + 2, ombrePlaceHD(this)).setScale(250 / 64, 30 / 24).setAlpha(0.8); ombre.yTri = Y - 60; place.add(ombre);
     const im = this.add.image(X, Y, porcheMarcheHD(this)).setOrigin(0.5, 1).setScale(E).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.allerVersLieu('arche'));
     im.yTri = Y; place.add(im);
-    const [n, m] = this.nomLieuPlace('arche');
-    ecriteauPorche(this, X, Y - Pm.H * E + 29 * E + 2, [[n, 12, { fontStyle: 'bold' }], [m, 9, { fontStyle: 'italic' }]]).forEach(o => { o.yTri = Y + 0.1; place.add(o); });
+    // (v1.63, planche 80 v3) « Vers la rue », doré, sur le linteau (plus d'écriteau pendu dessous)
+    poserLettrage(this, place, X, Y - Pm.H * E + (Pm.linteau + Pm.hLinteau / 2) * E + 1, this.nomLieuPlace('arche')[0], { police: 'Alegreya', graisse: 900, taille: 16, couleur: '#f0c850', fond: 0x8a5a2b, genre: 'dore', largeur: 180, hauteur: 21, lignesMax: 1, ...contrasteLettrage('#f0c850', 0x8a5a2b) }).yTri = Y + 0.1;
     // les deux poteaux sur leurs socles, et le battant rabattu contre chacun
     const [p1, p2] = Pm.poteaux.map(c => gauche + c * E);
     this.obstacles.push([p1 - Pm.socle * E - 2, Y - 40, p1 + 34, Y], [p2 - 34, Y - 40, p2 + Pm.socle * E + 2, Y]);
@@ -296,9 +405,16 @@ Object.assign(MarcheScene.prototype, {
   // (v1.54, planche 62) Le jour de marché : des fanions, deux charrettes de colporteurs de passage, du monde, et Garrick
   // qui flâne entre les étals (un clic : ce qu'il en dit)
   jourDeMarchePlace() {
-    const c = this.add.container(0, 0); c.yTri = 5000;
-    for (const [x0, x1, y] of [[40, 900, 236], [900, 1760, 236]]) guirlandeFanions(this, c, x0, x1, y, 30, 44, 1.2);
-    this.place.add(c);
+    // (v1.63, retours du joueur) les fanions sont tendus d'un étal à l'autre, au-dessus des enseignes : chaque corde est nouée
+    // aux coins des auvents (au haut des montants, pour les enchères) et pend entre deux étals, sans passer devant aucun
+    // nom, aucun marchand, aucune marchandise
+    const rang = this.place.list.filter(g => g.attachesGuirlande && LIEUX_PLACE[g.cle] && LIEUX_PLACE[g.cle][1] < 400).sort((a, b) => a.x - b.x);
+    for (let k = 0; k + 1 < rang.length; k++) {
+      const A = rang[k], B = rang[k + 1], a = A.attachesGuirlande[1], b = B.attachesGuirlande[0];
+      const c = this.add.container(0, 0); c.yTri = Math.min(A.y, B.y) - 1;   // (derrière qui passe devant les étals)
+      guirlandeEntre(this, c, [A.x + a[0] * A.scaleX, A.y + a[1] * A.scaleY], [B.x + b[0] * B.scaleX, B.y + b[1] * B.scaleY], 10);
+      this.place.add(c);
+    }
     const lignes = [
       "Jour de marché ! Je viens de loin, alors je vends moins cher qu'eux : tout est un dixième en dessous, sur toute la place.",
       "Des colporteurs, il en passe un jour par semaine. Le reste du temps, on est sur les routes, avec l'âne.",
@@ -539,8 +655,9 @@ Object.assign(MarcheScene.prototype, {
   // Le cadre : la place suit JeuneGoy ; panneau ouvert, on recule un peu pour voir le lieu au-dessus du panneau
   cadrerPlace(instantane = false, cle = null) {
     const P = PLACE_MARCHE, place = this.place;
-    // (v1.62) au départ de la visite de Garrick (et pendant la question), on cadre un peu plus bas : l'écriteau du mendiant
-    // passe au-dessus des boutons, et rien d'écrit ne reste à moitié sous le titre
+    // (v1.62) au départ de la visite de Garrick (et pendant la question), on cadre un peu plus bas : rien d'écrit ne reste à
+    // moitié sous le titre, ni sous la barre de la visite (v1.63 : le mendiant n'a plus d'écriteau, mais la planche de la carte
+    // du monde et le crieur passeraient dessous avec le cadre ordinaire)
     const depart = this.visite && !this.visite.fini && this.visite.i < 0;
     let z = P.zoom, fx = this.heros.x, fy = this.heros.y - (depart ? -12 : 40), sy = 270;
     if (cle) { z = PETITS_LIEUX.includes(cle) ? P.zoom * 1.2 : P.zoomPanneau; [fx, fy] = LIEUX_PLACE[cle]; sy = PETITS_LIEUX.includes(cle) ? 262 : 250; }
@@ -592,9 +709,7 @@ Object.assign(MarcheScene.prototype, {
     }
     const moi = this.add.text(ox + this.heros.x * z, oy + this.heros.y * z + 2, 'Toi', style(12, '#ffe066', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5, 0);
     c.add(moi); this.tweens.add({ targets: moi, alpha: 0.4, duration: 500, yoyo: true, repeat: -1 });
-    // les enseignes se cachent (les noms de la carte les remplacent)
-    this.enseignesPlace.forEach(o => o.setVisible(false));
-    c.once('destroy', () => { this.enseignesPlace.forEach(o => o.active && o.setVisible(true)); this.cadrerPlace(true); });
+    c.once('destroy', () => this.cadrerPlace(true));
   },
 
   // --- Chaque image : JeuneGoy qui marche, les passants qui flânent, le cadre qui suit, l'ordre de profondeur ---
@@ -687,6 +802,7 @@ Object.assign(MarcheScene.prototype, {
     for (const cle of Object.keys(this.actionsLieux)) { const [x, y] = this.devantLieu(cle), d = Math.hypot(h.x - x, h.y - y); if (d < dmin) { dmin = d; proche = cle; } }
     this.lieuProche = proche;
     if (this.visite) this.majVisite(dt);
+    if (temps - (this.derniereMajNoms || 0) > 500) { this.derniereMajNoms = temps; this.majNomsPlace(); }   // (une relation qui change change la couleur du nom)
     const montrer = proche && !this.bloquePlace() && !this.visiteEnCours() && !(this.banniereVisite && this.banniereVisite.active);
     this.invitePlace.setVisible(!!montrer);
     if (montrer) { const [n, m] = this.nomLieuPlace(proche); this.invitePlace.setText(`${n}${m ? ' · ' + m : ''}   —   E ou clic : ${MARCHANDS[proche] ? 'faire tes courses' : proche === 'arche' ? 'rentrer' : proche === 'tableau' ? 'lire' : PETITS_LIEUX.includes(proche) ? 'parler' : 'approcher'}`); }
@@ -924,7 +1040,7 @@ Object.assign(MarcheScene.prototype, {
     if (v.bulle) v.bulle.destroy();
     v.texte = texte; v.bulleCachee = false;
     if (!refaire && v.reponse && v.reponse.bulle && v.reponse.bulle.active) v.reponse.bulle.destroy();   // (le marchand a fini de répondre)
-    const L = v.bulleL = 410, t = `« ${texte.replaceAll('{J}', eJ(this.G))} »`, bouton = v.question === null ? 'La suite ▶' : null;
+    const L = v.bulleL = this.bandeNomVisite() ? 352 : 410, t = `« ${texte.replaceAll('{J}', eJ(this.G))} »`, bouton = v.question === null ? 'La suite ▶' : null;
     if (!refaire) v.bulleCote = v.gar.x >= this.heros.x ? 1 : -1;
     const essai = this.add.text(0, 0, t, style(14, '#2a1a0c', { wordWrap: { width: L - 24 }, align: 'center' }));
     v.bulleH = essai.height + 18 + (bouton ? 34 : 0); essai.destroy();
@@ -941,7 +1057,22 @@ Object.assign(MarcheScene.prototype, {
     let xc = Phaser.Math.Clamp(tx + v.bulleCote * 120, L / 2 + 8, 952 - L / 2);
     if (yc - hB / 2 < 172) xc = Math.min(xc, 804 - L / 2);   // (sous les boutons « La place · M » et « Ma liste · L »)
     if (this._vignette && this._vignette.active && yc - hB / 2 < 160) xc = Math.min(xc, 568 - L / 2);   // (ni sous une vignette « Objectif atteint »)
+    // (v1.63) ni sur le nom de l'étal qu'il présente : la bulle passe à côté de la bande, du côté de Garrick si elle y tient
+    const bande = this.bandeNomVisite();
+    if (bande && yc - hB / 2 < bande[3] && yc + hB / 2 > bande[1] && xc + L / 2 > bande[0] && xc - L / 2 < bande[2]) {
+      const droiteMax = yc - hB / 2 < 172 ? 804 : 952, gauche = bande[0] - 8 - L / 2, droite = bande[2] + 8 + L / 2;
+      const tient = x => x - L / 2 >= 8 && x + L / 2 <= droiteMax;
+      const choix = (v.bulleCote > 0 ? [droite, gauche] : [gauche, droite]).find(tient);
+      if (choix !== undefined) xc = choix;
+    }
     return [Math.round(xc), Math.round(yc), Phaser.Math.Clamp(Math.round(tx - xc), -L / 2 + 22, L / 2 - 22)];
+  },
+  // (v1.63) la bande du nom de l'étal de l'étape en cours, à l'écran : [x0, y0, x1, y1] (ou null : la fontaine, le départ)
+  bandeNomVisite() {
+    const v = this.visite, e = v && !v.fini && v.i >= 0 ? VISITE_MARCHE.etapes[v.i] : null; if (!e || !this.place) return null;
+    const g = this.place.list.find(o => o.cle === e.lieu && o.bandeNom); if (!g) return null;
+    const z = this.place.scaleX, f = g.scaleX * z, [a, b, c, d] = g.bandeNom, ox = this.place.x + g.x * z, oy = this.place.y + g.y * z;
+    return [ox + a * f - 6, oy + b * f - 4, ox + c * f + 6, oy + d * f + 4];
   },
   placerBulleVisite() {
     const v = this.visite, [xc, yc, pointe] = this.cadreBulleVisite();

@@ -143,26 +143,189 @@ function barrierePlaceHD(scene, n = 5) {
   t.contour(); t.texture(scene, cle); return cle;
 }
 
-// Un grand panneau de nom, pendu à une potence : on le lit de loin
-function enseigneLieu(s, x, y, nom, metier, couleur = '#f3d98a', prof = 0) {
-  const o = [];
-  const tn = s.add.text(x, y, nom, style(15, couleur, { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5, 1).setDepth(prof + 0.2);
-  const tm = metier ? s.add.text(x, y - 2, metier, style(11, '#fff4dc', { stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5, 1).setDepth(prof + 0.2) : null;
-  const l = Math.max(tn.width, tm ? tm.width : 0, 80) + 22;   // (v1.61 : la ligne du métier tient aussi sur la planche)
-  o.push(s.add.image(x, y - (metier ? 18 : 10), planchetteHD(s, Math.round(l / 2), metier ? 22 : 14)).setScale(2).setDepth(prof + 0.1));
-  o.push(tn);
-  if (tm) { tn.setY(y - 14); o.push(tm); }
-  return o;
+// --- (v1.63, planche 80 v3) Les noms des lieux : peints, brodés, gravés ou cloués dans l'étal lui-même ---
+// Plus de panneau qui flotte au-dessus : le nom fait partie de l'étal (la bande haute de son auvent, la poutre de sa
+// façade, l'estrade, le tableau...), comme le montre la planche 80 v3. La table ETALS_NOMS dit le style de chaque lieu ;
+// etalNomHD (exterieurHD.js) dessine la bande, poserLettrage y écrit le nom, à la résolution des textes du jeu.
+const BOIS_CLAIR_NOM = 0xc09860;   // le bois clair des planches gravées : le creux sombre des lettres s'y lit de loin
+// modele : 'toile' (lambrequin sous une tringle) ou 'poutre' (poutre de façade) ; genre : peint, brode, grave, decoupe, dore ;
+// comptoir : coffre, ferre, peint, caisse ou nappe:or|lin|dentelle (comptoirEtalHD, exterieurHD.js)
+const ETALS_NOMS = {
+  gedeon: { modele: 'toile', comptoir: 'coffre', ton: -1, bord: 'laiton', bas: 'festons', ble: true, genre: 'brode', police: 'Alegreya' },
+  forge: { modele: 'poutre', comptoir: 'ferre', bois: 'cheneSombre', fer: true, genre: 'grave', police: 'Alegreya' },
+  apothicaire: { modele: 'toile', comptoir: 'nappe:or', bord: 'laiton', bas: 'pointes', etoiles: true, genre: 'peint', police: 'Uncial Antiqua', graisse: 400, taille: 16 },
+  tailleuse: { modele: 'toile', comptoir: 'nappe:lin', bord: 'piqure', bas: 'festons', genre: 'brode', police: 'Alegreya', italique: true },
+  bazar: { modele: 'poutre', comptoir: 'peint', bois: 'peinte', noeud: true, genre: 'decoupe', police: 'Alegreya', couleurFixe: '#fbecb8' },
+  brocante: { modele: 'poutre', comptoir: 'caisse', bois: 'vieille', genre: 'peint', police: 'MedievalSharp', graisse: 400, taille: 16, couleurFixe: '#fff4dc', inclinaison: 1.2 },
+  garderobe: { modele: 'toile', comptoir: 'nappe:dentelle', bord: 'laiton', bas: 'dentelle', tringle: 'laiton', genre: 'brode', police: 'Alegreya', italique: true, couleurFixe: '#f6e2a0', deuxLignes: true },
+  tir: { modele: 'toile', comptoir: 'nappe:or:18', bord: 'laiton', bas: 'pointes', genre: 'dore', police: 'Alegreya', couleurFixe: '#f0c850' },    // le tir à l'arc du Solstice
+  roue: { modele: 'toile', comptoir: 'nappe:lin:18', bord: 'laiton', bas: 'festons', genre: 'brode', police: 'Alegreya', italique: true, couleurFixe: '#fbecb8' },   // la grande roue du Long Hiver
+};
+// La hauteur de la bande (en rangs de texture) : une ligne, deux ou trois
+function bandeEtalNom(lignes) { return [12, 18, 22][Math.min(3, lignes) - 1]; }
+// Le métier de chaque lieu, sur sa petite enseigne pendue (le nom de la planche 80 v3 : « Pêcheur » plutôt que « Pêche »)
+const METIERS_NOMS = { peche: 'Pêcheur' };
+
+const COULEUR_CSS = c => typeof c === 'number' ? '#' + c.toString(16).padStart(6, '0') : c;
+function melangeCouleurs(a, b, k) {
+  const A = parseInt(COULEUR_CSS(a).slice(1), 16), B = parseInt(COULEUR_CSS(b).slice(1), 16);
+  const f = s => Math.round(((A >> s) & 255) + ((((B >> s) & 255) - ((A >> s) & 255)) * k));
+  return '#' + ((f(16) << 16) | (f(8) << 8) | f(0)).toString(16).padStart(6, '0');
+}
+function luminanceCouleur(c) { const n = parseInt(COULEUR_CSS(c).slice(1), 16); return (0.2126 * (n >> 16) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255; }
+// Ce qui détache le nom de sa bande : une lettre claire (la couleur vive de la relation sur une bande sombre) prend un
+// liseré sombre épais et une ombre portée ; une lettre sombre (sur du bois clair) un halo clair
+function contrasteLettrage(couleur, fond) {
+  if (luminanceCouleur(couleur) > 0.42) return { lisere: { c: melangeCouleurs(fond, '#000000', 0.75), w: 2.6 }, ombre: [0.7, 1.5, 0.55] };
+  return { lisere: { c: melangeCouleurs(fond, '#fffaf0', 0.65), w: 2.2 }, ombre: null };
+}
+// Un nom, dessiné dans une texture. Le texte est tracé à la résolution des textes du jeu (style() : ZOOM_ECRAN + 1), puis
+// affiché à 1/R : il reste net sur un écran fin. Il tient dans (largeur × hauteur) : une ligne, au besoin les lettres un
+// peu serrées, puis un point plus petite, sinon deux lignes coupées au mot le plus proche du milieu.
+// genre : 'peint' (à plat), 'grave' (creusé : le haut du creux dans l'ombre, la lèvre du bas éclairée), 'decoupe' (lettres
+// de bois en relief, clouées), 'brode' (fil, point lancé), 'dore' (feuille d'or). Renvoie { cle, l, h, R, mise }.
+function lettrageHD(scene, texte, o) {
+  const R = typeof ZOOM_ECRAN === 'number' ? Math.max(2, ZOOM_ECRAN + 1) : 3;
+  const { police = 'Alegreya', graisse = 900, italique = false, taille = 16, couleur = '#3a2410', fond = 0x8a5a2b, genre = 'peint',
+    largeur = 150, hauteur = 40, lignesMax = 2, serrage = 0, inclinaison = 0, coupe = false, lisere = null, ombre = null } = o;
+  const g = document.createElement('canvas').getContext('2d');
+  const fonte = t => `${italique ? 'italic ' : ''}${graisse} ${t * R}px "${police}", Georgia, serif`;
+  const mesurer = (l, t, e) => { g.font = fonte(t); g.letterSpacing = (e * R) + 'px'; const m = g.measureText(l); return { l: m.width / R, a: m.actualBoundingBoxAscent / R, d: m.actualBoundingBoxDescent / R }; };
+  const coupes = () => { const mots = texte.split(' '); let best = null; for (let k = 1; k < mots.length; k++) { const a = mots.slice(0, k).join(' '), b = mots.slice(k).join(' '), e = Math.abs(a.length - b.length); if (!best || e < best[0]) best = [e, [a, b]]; } return best ? best[1] : [texte]; };
+  let mise = null;
+  const essais = [];
+  if (!coupe) for (const [t, e] of [[taille, serrage], [taille, serrage - 0.4], [taille - 1, serrage - 0.4]]) essais.push([texte.split('\n'), t, e]);
+  if (lignesMax > 1 && !texte.includes('\n')) for (const [t, e] of [[taille - 1, serrage], [taille - 1, serrage - 0.4], [taille - 2, serrage - 0.4], [taille - 3, serrage - 0.5]]) essais.push([coupes(), t, e]);
+  for (const [lignes, t, e] of essais) {
+    const ms = lignes.map(l => mesurer(l, t, e)), lh = t * 1.02, haut = ms[0].a + (lignes.length - 1) * lh + ms[ms.length - 1].d;
+    if (Math.max(...ms.map(m => m.l)) <= largeur && haut <= hauteur) { mise = { lignes, t, e, ms, lh, haut }; break; }
+  }
+  if (!mise) { const lignes = coupes(), t = taille - 3, e = serrage - 0.5, ms = lignes.map(l => mesurer(l, t, e)); mise = { lignes, t, e, ms, lh: t * 1.02, haut: ms[0].a + (lignes.length - 1) * t * 1.02 + ms[ms.length - 1].d, deborde: true }; }
+  const marge = 3 + (lisere ? lisere.w : 0) + (ombre ? 1.5 : 0), W = Math.ceil(Math.max(...mise.ms.map(m => m.l)) + marge * 2), H = Math.ceil(mise.haut + marge * 2);
+  // (la police arrive du réseau : un nom dessiné avec la police de secours n'est pas gardé comme s'il était fini)
+  const prete = !document.fonts || document.fonts.check(`${italique ? 'italic ' : ''}${graisse} 20px "${police}"`);
+  const cle = 'lettrage_' + [mise.lignes.join('/'), police, graisse, italique, mise.t, mise.e, COULEUR_CSS(couleur), COULEUR_CSS(fond), genre, inclinaison, R, lisere ? lisere.c + lisere.w : '', ombre ? ombre.join(',') : '', prete ? 1 : 0].join('|');
+  if (!scene.textures.exists(cle)) {
+    const tex = scene.textures.createCanvas(cle, W * R, H * R), c = tex.getContext();
+    // une couche : le texte, d'une couleur, décalé de (dx, dy) unités
+    const calque = (coul, dx = 0, dy = 0, trait = 0) => {
+      const k = document.createElement('canvas'); k.width = W * R; k.height = H * R; const q = k.getContext('2d');
+      q.font = fonte(mise.t); q.letterSpacing = (mise.e * R) + 'px'; q.textAlign = 'center'; q.textBaseline = 'alphabetic'; q.lineJoin = 'round';
+      mise.lignes.forEach((l, i) => {
+        const x = (W / 2 + dx) * R, y = (marge + mise.ms[0].a + i * mise.lh + dy) * R;
+        q.save(); if (inclinaison) { q.translate(x, y); q.rotate((i % 2 ? -1 : 1) * inclinaison * Math.PI / 180); q.translate(-x, -y); }
+        if (trait) { q.strokeStyle = coul; q.lineWidth = trait * R; q.strokeText(l, x, y); }
+        q.fillStyle = coul; q.fillText(l, x, y); q.restore();
+      });
+      return { k, q };
+    };
+    const sur = (a, b, op) => { a.q.globalCompositeOperation = op; a.q.drawImage(b.k, 0, 0); a.q.globalCompositeOperation = 'source-over'; return a; };
+    const sombre = melangeCouleurs(fond, '#000000', 0.55), clair = melangeCouleurs(fond, '#fff4dc', 0.45);
+    if (ombre) { c.globalAlpha = ombre[2]; c.drawImage(calque('#000000', ombre[0], ombre[1], lisere ? lisere.w : 0).k, 0, 0); c.globalAlpha = 1; }
+    if (lisere) c.drawImage(calque(lisere.c, 0, 0, lisere.w).k, 0, 0);
+    if (genre === 'peint') {
+      c.globalAlpha = 0.35; c.drawImage(calque(melangeCouleurs(fond, '#000000', 0.5), 0, 0.5).k, 0, 0); c.globalAlpha = 1;   // la peinture a un peu bu
+      c.drawImage(calque(couleur).k, 0, 0);
+    } else if (genre === 'grave') {
+      if (!lisere) c.drawImage(calque(clair, 0, 0.7).k, 0, 0);                                    // la lèvre du bas, qui prend la lumière
+      const creux = calque(melangeCouleurs(couleur, '#000000', 0.6));                              // le fond du creux, dans l'ombre en haut
+      c.drawImage(sur(creux, calque(couleur, 0, 0.5), 'source-atop').k, 0, 0);
+    } else if (genre === 'decoupe') {
+      c.globalAlpha = 0.5; c.drawImage(calque('#000000', 1.4, 2).k, 0, 0); c.globalAlpha = 1;      // l'ombre portée sur la poutre
+      c.drawImage(calque(melangeCouleurs(couleur, '#000000', 0.5), 0.6, 0.9).k, 0, 0);             // la tranche
+      const face = calque(melangeCouleurs(couleur, '#ffffff', 0.4));                               // le bord du haut, éclairé
+      c.drawImage(sur(face, calque(couleur, 0.5, 0.5), 'source-atop').k, 0, 0);
+    } else if (genre === 'brode') {
+      c.drawImage(calque(sombre, 0, 0.5, 1.4).k, 0, 0);
+      const fil = calque(couleur);
+      fil.q.globalCompositeOperation = 'source-atop'; fil.q.strokeStyle = melangeCouleurs(couleur, '#ffffff', 0.35); fil.q.lineWidth = 0.45 * R;
+      for (let x = -H; x < W + H; x += 1.6) { fil.q.beginPath(); fil.q.moveTo(x * R, 0); fil.q.lineTo((x + H * 0.7) * R, H * R); fil.q.stroke(); }   // le point lancé
+      c.drawImage(fil.k, 0, 0);
+    } else if (genre === 'dore') {
+      c.drawImage(calque('#2a1006', 0, 0.6, 1.8).k, 0, 0);
+      const or = calque('#ffffff'); or.q.globalCompositeOperation = 'source-atop';
+      mise.lignes.forEach((l, i) => { const y0 = (marge + i * mise.lh) * R, y1 = y0 + (mise.ms[0].a + mise.ms[0].d) * R, gr = or.q.createLinearGradient(0, y0, 0, y1);
+        gr.addColorStop(0, '#fff4b0'); gr.addColorStop(0.45, COULEUR_CSS(couleur)); gr.addColorStop(1, melangeCouleurs(couleur, '#5a3008', 0.55)); or.q.fillStyle = gr; or.q.fillRect(0, y0, W * R, y1 - y0 + R); });
+      c.drawImage(or.k, 0, 0);
+    }
+    tex.refresh();
+  }
+  return { cle, l: W, h: H, R, mise };
+}
+// Le nom posé dans un conteneur (un groupe de la place), centré en (x, y). Il se redessine tout seul quand la police
+// arrive du réseau (comme poserEnseigne), et sur demande (relettrer : la relation avec le marchand a changé de couleur).
+function poserLettrage(s, g, x, y, texte, o) {
+  const im = s.add.image(x, y, lettrageHD(s, texte, o).cle); im.lettre = { texte, o };
+  relettrer(s, im, {});
+  g.add(im);
+  const sonde = `${o.italique ? 'italic ' : ''}${o.graisse || 900} 20px "${o.police || 'Alegreya'}"`;
+  if (document.fonts && !document.fonts.check(sonde)) document.fonts.load(sonde).then(() => { if (im.active) relettrer(s, im, {}); }).catch(() => {});
+  return im;
+}
+// Redessine le nom d'une image faite par poserLettrage ; `changements` : de nouvelles options (la couleur : le liseré suit)
+function relettrer(s, im, changements) {
+  const o = im.lettre.o; Object.assign(o, changements);
+  if (changements.couleur) Object.assign(o, contrasteLettrage(changements.couleur, o.fond));
+  const L = lettrageHD(s, im.lettre.texte, o);
+  im.setTexture(L.cle).setScale(1 / L.R); im.lettrage = L;
 }
 
-// Une planchette de bois clouée (le fond des grands panneaux de noms)
-function planchetteHD(scene, l, h) {
-  const cle = 'planchette_' + l + 'x' + h; if (scene.textures.exists(cle)) return cle;
-  const t = toileDecor(l, h);
-  planche(t, 0, 0, l, h, 'chene', { graine: 7420 + l, noeuds: 1 });
-  for (let x = 0; x < l; x++) { t.poser(x, 0, 'cheneSombre', 4); t.poser(x, h - 1, 'cheneSombre', 1); }
-  for (const [x, y] of [[2, 2], [l - 3, 2], [2, h - 3], [l - 3, h - 3]]) t.poser(x, y, 'fer', 4);
+// La planche du nom de la carte du monde, posée sur le haut des deux poteaux (38 × 20) : bois clair, le nom gravé dessus
+function plancheNomCarteHD(scene) {
+  const cle = 'plancheNomCarte'; if (scene.textures.exists(cle)) return cle;
+  const L = 38, H = 20, t = toileDecor(L, H); t.rampes.pin = rampe(BOIS_CLAIR_NOM);
+  for (const x of [3, 31]) for (let y = 17; y < H; y++) { t.poser(x, y, 'cheneSombre', 3); t.poser(x + 1, y, 'cheneSombre', 1); }
+  planche(t, 0, 0, L, 17, 'pin', { graine: 7490, noeuds: 1 });
+  for (let x = 0; x < L; x++) { t.poser(x, 0, 'pin', 5); t.poser(x, 16, 'chene', 1); }
+  for (const [x, y] of [[2, 2], [L - 3, 2], [2, 14], [L - 3, 14]]) t.poser(x, y, 'fer', 4);
   t.contour(); t.texture(scene, cle); return cle;
+}
+// La bannière de velours du portique des enchères, élargie entre ses deux montants (50 × 15), frangée d'or
+function banniereEncheresHD(scene) {
+  const cle = 'banniereEncheres'; if (scene.textures.exists(cle)) return cle;
+  const L = 50, H = 15, t = toileDecor(L, H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
+    if (y >= 12 && Math.abs((x % 10) - 4.5) > (15 - y) * 1.6) continue;
+    t.poser(x, y, 'cuirRouge', 3 + (x < 2 ? 1 : 0) - (x > L - 3 ? 1 : 0) + (y === 1 ? 1 : 0) - (y > 10 ? 1 : 0) + (fbm(x * 0.1, y * 0.4, 7480) > 0.68 ? -1 : 0));
+  }
+  for (let x = 0; x < L; x++) { t.poser(x, 0, 'laiton', 4); t.poser(x, 11, 'laiton', 3); }
+  t.contour(); t.texture(scene, cle); return cle;
+}
+// Le poteau indicateur du sentier du Moulin : un bras en flèche, de bois clair, où le nom est gravé (66 × 34)
+function poteauSentierHD(scene) {
+  const cle = 'poteauSentier'; if (scene.textures.exists(cle)) return cle;
+  const L = 66, H = 34, t = toileDecor(L, H); t.rampes.pin = rampe(BOIS_CLAIR_NOM);
+  planche(t, L - 9, 2, 4, H - 2, 'cheneSombre', { horizontale: false, graine: 7460 });
+  t.forme('pin', (x, y) => { if (y < 4 || y > 15) return null; const pointe = L - 1 - Math.abs(y - 9.5) * 0.9; return x <= pointe ? [0, (y - 9.5) / 6, 0.8] : null; }, { decalage: 0.3 });
+  for (let x = 1; x < L - 2; x++) t.poser(x, 4, 'pin', 5);
+  t.poser(L - 7, 6, 'fer', 5); t.poser(L - 7, 13, 'fer', 5);
+  t.contour(); t.texture(scene, cle); return cle;
+}
+// La petite enseigne du métier, pendue à une potence de fer scellée au poteau de l'étal (l × h en rangs de texture)
+function enseignePendueHD(scene, l, h) {
+  const cle = 'enseignePendue_' + l + 'x' + h; if (scene.textures.exists(cle)) return cle;
+  const bras = l + 4, H = h + 6, t = toileDecor(bras, H); t.rampes.pin = rampe(BOIS_CLAIR_NOM);
+  for (let x = 0; x < bras; x++) t.poser(x, 0, 'fer', x === bras - 1 ? 4 : 3);
+  for (let k = 0; k < 4; k++) t.poser(k, 1 + k, 'fer', 2);   // la jambe de force
+  for (const x of [4, l + 1]) for (let y = 1; y < 6; y++) t.poser(x, y, 'fer', y % 2 ? 4 : 2);
+  planche(t, 2, 6, l, h, 'pin', { graine: 7470 + l, noeuds: 0 });
+  for (let x = 2; x < l + 2; x++) { t.poser(x, 6, 'pin', 5); t.poser(x, 5 + h, 'chene', 1); }
+  for (let y = 6; y < 6 + h; y++) { t.poser(2, y, 'chene', 2); t.poser(l + 1, y, 'chene', 1); }
+  t.contour(); t.texture(scene, cle); return cle;
+}
+// Le métier sur sa petite enseigne : pendue du côté du centre de la place (versDroite), dans le conteneur g, à la hauteur y
+// (demi : de l'axe du lieu à la potence) ; renvoie l'image du texte
+function poserEnseignePendue(s, g, versDroite, metier, y, demi = 84) {
+  const mots = metier;   // (un métier long passe sur deux lignes, coupé au mot le plus proche du milieu)
+  const o = { police: 'Alegreya', graisse: 900, taille: 12, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'peint', largeur: 84, hauteur: 30, lignesMax: 2, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) };
+  const essai = lettrageHD(s, mots, { ...o, lignesMax: 1 });
+  if (essai.mise.deborde || essai.mise.t < o.taille || essai.mise.e < 0) o.coupe = true;   // (trop long pour une ligne à la taille voulue : deux lignes, pas des lettres serrées)
+  const L = lettrageHD(s, mots, o);
+  const l = Math.max(24, Math.ceil(L.l / 2)), h = Math.max(9, Math.ceil(L.h / 2));
+  const e = s.add.image(versDroite ? demi : -demi, y, enseignePendueHD(s, l, h)).setOrigin(versDroite ? 0 : 1, 0).setScale(2).setFlipX(!versDroite);
+  g.add(e);
+  const cx = versDroite ? demi + (2 + l / 2) * 2 : -demi - (2 + l / 2) * 2;
+  return [e, poserLettrage(s, g, cx, y + 12 + h, mots, o)];
 }
 
 // (v1.62) Le plan du sol de la grand-place (terre battue sous les étals et sur les chemins d'usure, dalles au centre,
@@ -185,7 +348,7 @@ function estTerrePlace(plan, x, y) {
 
 // --- (v1.62, planche 80, système A validé) Le porche couvert, à l'entrée de la place côté rue ---
 // Deux poteaux de chêne sur leurs socles de grès, un linteau, un petit toit de tuiles, les deux battants ouverts vers
-// la place ; l'écriteau pend sous le linteau. L'ouverture est vide : on voit le chemin, et qui passe.
+// la place ; le nom est peint sur le linteau. L'ouverture est vide : on voit le chemin, et qui passe.
 function toilePorche(l, h) { const t = toileDecor(l, h); Object.assign(t.rampes, RAMPES_RUE); t.rampes.gres = rampe(0xb8a07a); return t; }
 // Un battant ouvert vers la place, vu de biais : il part du gond (xh, bas) et file vers l'intérieur (sens) et vers le
 // fond (il monte à l'écran) ; des planches et deux pentures
@@ -202,7 +365,7 @@ function battantOuvert(t, xh, bas, sens, { dx = 11, dy = 14, haut = 46, graine =
   }
 }
 // Le porche (120×84, demi-résolution, ×2 sur la place) ; PORCHE_MARCHE : où sont ses poteaux et ses battants
-const PORCHE_MARCHE = { L: 120, H: 84, poteaux: [25, 94], socle: 6, chaines: [46, 73], linteau: 18 };
+const PORCHE_MARCHE = { L: 120, H: 84, poteaux: [25, 94], socle: 6, linteau: 18, hLinteau: 11 };   // (le linteau, haut de 11 rangs, porte « Vers la rue » : poserPorchePlace)
 function porcheMarcheHD(scene) {
   if (scene.textures.exists('porcheMarcheHD')) return 'porcheMarcheHD';
   const L = PORCHE_MARCHE.L, H = PORCHE_MARCHE.H, sol = H - 1, t = toilePorche(L, H);
@@ -213,30 +376,14 @@ function porcheMarcheHD(scene) {
     planche(t, cx - 3, 22, 7, sol - 29, 'chene', { horizontale: false, graine: 7404 + cx, noeuds: 1 });  // le poteau
     for (let y = 22; y < sol - 7; y++) { t.poser(cx - 3, y, 'chene', 5); t.poser(cx + 3, y, 'chene', 1); }
   }
-  for (const [x0, sens] of [[28, 1], [91, -1]]) for (let k = 0; k < 13; k++) for (let e = 0; e < 3; e++) t.poser(x0 + sens * k, 36 - k + e, 'chene', e === 0 ? 4 : 2);   // les aisseliers
-  planche(t, 10, 18, 100, 6, 'chene', { graine: 7405, noeuds: 2 });                                   // le linteau
-  for (let x = 10; x < 110; x++) t.poser(x, 24, 'cheneSombre', 1);
+  for (const [x0, sens] of [[28, 1], [91, -1]]) for (let k = 0; k < 11; k++) for (let e = 0; e < 3; e++) t.poser(x0 + sens * k, 40 - k + e, 'chene', e === 0 ? 4 : 2);   // les aisseliers
+  const { linteau, hLinteau } = PORCHE_MARCHE;
+  planche(t, 8, linteau, 104, hLinteau, 'chene', { graine: 7405, noeuds: 2 });                        // le linteau, où le nom est peint
+  for (let x = 8; x < 112; x++) { t.poser(x, linteau, 'chene', 5); t.poser(x, linteau + hLinteau - 1, 'cheneSombre', 1); }
+  for (const x of [11, 108]) for (const y of [linteau + 3, linteau + 8]) t.poser(x, y, 'fer', 5);     // ses chevilles
   toitRue(t, 2, 117, 4, 18, 'tuile', 7406);                                                           // le petit toit de tuiles
-  for (const x of PORCHE_MARCHE.chaines) for (let y = 25; y < 29; y++) t.poser(x, y, 'fer', y % 2 ? 4 : 2);   // les chaînes de l'écriteau
   t.contour(); t.texture(scene, 'porcheMarcheHD'); return 'porcheMarcheHD';
 }
-// Un écriteau peint (fond crème, cadre de chêne), à la taille du texte mesuré : rien ne déborde
-function pancarteMarcheHD(scene, l, h) {
-  const cle = 'pancarteMarche_' + l + 'x' + h; if (scene.textures.exists(cle)) return cle;
-  const t = toileDecor(l, h);
-  for (let y = 0; y < h; y++) for (let x = 0; x < l; x++) { const cadre = x < 1 || y < 1 || x >= l - 1 || y >= h - 1; t.poser(x, y, cadre ? 'cheneSombre' : 'parchemin', cadre ? (x < 1 || y < 1 ? 4 : 1) : 4 + (fbm(x * 0.1, y * 0.3, 7430) > 0.62 ? 1 : 0) - (y === 1 ? 1 : 0)); }
-  t.contour(); t.texture(scene, cle); return cle;
-}
-// L'écriteau qui pend sous le linteau (son haut en yHaut) ; lignes : [[texte, taille, style en plus], ...]
-function ecriteauPorche(s, x, yHaut, lignes) {
-  const tt = lignes.map(([txt, taille, extra], i) => s.add.text(x, 0, txt, style(taille, i ? '#5a3a1e' : '#3a2410', extra)).setOrigin(0.5, 0));
-  const W = Math.max(...tt.map(o => o.width)) + 18, Hh = tt.reduce((a, o) => a + o.height - 2, 0) + 10;
-  const l = Math.ceil(W / 2), h = Math.ceil(Hh / 2);
-  const im = s.add.image(x, yHaut, pancarteMarcheHD(s, l, h)).setOrigin(0.5, 0).setScale(2);
-  let y = yHaut + 5; for (const o of tt) { o.setY(y); y += o.height - 2; }
-  return [im, ...tt];
-}
-
 // --- (v1.62, planche 80 validée) Le mendiant vu de près, dans son vrai coin de la grand-place ---
 // On le regarde depuis là où se tient JeuneGoy (juste au sud de lui) : derrière lui, c'est la place elle-même, en
 // perspective. Le sol est celui de la place (même plan, même grain), les étals, les maisons, les arbres et la fontaine
@@ -317,7 +464,7 @@ function* peindreSolMendiant(s, pal, src) {
 // Un groupe de la place (un étal avec son marchand, le crieur...) photographié tel qu'il est ce matin, pour le poser au
 // loin (la même texture est repeinte à chaque visite : les étals changent d'un jour à l'autre)
 function instantanePlace(s, g, cle) {
-  const W = 300, H = 300, ox = 150, oy = 280, [x, y, sc] = [g.x, g.y, g.scaleX];
+  const W = 420, H = 300, ox = 210, oy = 280, [x, y, sc] = [g.x, g.y, g.scaleX];   // (large : l'enseigne pendue du métier dépasse de l'étal)
   const dt = s.textures.exists(cle) ? s.textures.get(cle) : s.textures.addDynamicTexture(cle, W, H);
   dt.clear();
   g.setPosition(ox, oy).setScale(1); dt.draw(g); g.setPosition(x, y).setScale(sc);
@@ -418,7 +565,7 @@ function decorMendiantHD(s, saison, fontaine) {
 }
 
 // (v1.62, retours du joueur) Le panneau de la carte du monde, sur la place : deux poteaux de chêne, un tableau de
-// planches où la carte est punaisée ; son nom, un seul, sur l'écriteau posé en haut des poteaux (38×50, ×2)
+// planches où la carte est punaisée ; son nom, un seul, sur la planche posée en haut des poteaux (plancheNomCarteHD ; 38×50, ×2)
 const CARTE_PLACE = { L: 38, H: 50, cadre: [1, 8, 36, 28] };
 function cartePlaceHD(scene) {
   if (scene.textures.exists('cartePlaceHD')) return 'cartePlaceHD';
@@ -427,7 +574,7 @@ function cartePlaceHD(scene) {
   for (let k = 0; k < 4; k++) planche(t, bx, by + k * 7, bl, 7, 'chene', { graine: 7740 + k, noeuds: 1 });   // le tableau, en planches
   for (let x = bx; x < bx + bl; x++) { t.poser(x, by, 'cheneSombre', 4); t.poser(x, by + bh - 1, 'cheneSombre', 1); }
   for (let y = by; y < by + bh; y++) { t.poser(bx, y, 'cheneSombre', 3); t.poser(bx + bl - 1, y, 'cheneSombre', 1); }
-  for (let x = 2; x < L - 2; x++) t.poser(x, 0, 'cheneSombre', 2);   // le haut des poteaux, où pose l'écriteau
+  for (let x = 2; x < L - 2; x++) t.poser(x, 0, 'cheneSombre', 2);   // le haut des poteaux, où pose la planche du nom
   t.contour(); t.texture(scene, 'cartePlaceHD'); return 'cartePlaceHD';
 }
 
