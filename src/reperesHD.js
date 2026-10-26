@@ -717,7 +717,7 @@ function murTerrasse(t, x0, x1, haut, h, { graine = 1, crete = null } = {}) {
 }
 // Le lac miroir : sous la rive `rive(x)`, le reflet de ce qui est au-dessus (renversé autour de la rive, un ton plus
 // sombre, des rides qui le décalent), le ciel reflété là où il n'y a rien ; jusqu'à `fin(x)`
-function refletDe(t, m) { const k = 'R_' + m; if (!t.rampes[k]) t.rampes[k] = t.rampes[m].map(c => melangeCouleur(c, 0x3a5c72, 0.36)); return k; }
+function refletDe(t, m) { const k = 'R_' + m; if (!t.rampes[k]) t.rampes[k] = t.rampes[m].map(c => melangeCouleur(c, 0x2e5068, 0.58)); return k; }
 function rideEau(t, x, y, g) { return hachage(y, 1, g) > 0.55 && fbm(x * 0.07, y * 0.9, g) > 0.6; }
 function lacMiroir(t, rive, fin, { graine = 1 } = {}) {
   for (let x = 0; x < t.l; x++) {
@@ -929,10 +929,10 @@ Object.assign(REPERES_HD, {
   // colonnes entre les troncs.
   serambreNef: { l: 420, h: 264, dessin(t) {
     const sol = x => 246 + Math.sin(x * 0.04) * 2 + Math.pow((x - 210) / 210, 2) * 6;
-    // le sous-bois, sombre et chaud, puis la futaie du fond (des troncs pâles, voilés) ; il s'éclaircit peu à peu vers les
-    // côtés (planche 91, retour du joueur : pas de bord droit)
+    // le sous-bois, sombre et chaud, puis la futaie du fond (des troncs pâles, voilés) ; son bord est déchiqueté, plein
+    // (planche 91, retour du joueur : ni bord droit, ni trous qui laisseraient voir derrière)
     for (let x = 20; x < 400; x++) { const haut = 150 + Math.abs(x - 210) * 0.08 + Math.sin(x * 0.07) * 4, bordX = Math.min(x - 20, 400 - x);
-      for (let y = Math.round(haut); y < sol(x); y++) { if (bordX < 70 && Math.pow(hachage(x, y, 4), 0.7) * 70 > bordX) continue; t.poser(x, y, 'ombreOr', 1 + Math.round((y - haut) / 45) + (hachage(x >> 2, y >> 2, 3) > 0.75 ? 1 : 0)); } }
+      for (let y = Math.round(haut); y < sol(x); y++) { if (bordX < 12 + 52 * hachage(x < 210 ? 1 : 2, Math.floor(y / 5), 9)) continue; t.poser(x, y, 'ombreOr', 1 + Math.round((y - haut) / 45) + (hachage(x >> 2, y >> 2, 3) > 0.75 ? 1 : 0)); } }
     rampesVoilees(t, '_fb', 'ambrenne', 'moissons', 0.5, 0x6a4a20);
     for (let k = 0; k < 11; k++) { const x = 34 + k * 35 + (hachage(k, 1, 7) - 0.5) * 14; if (Math.abs(x - 210) < 50) continue; torsade(putS(t, '_fb'), u => [x + Math.sin(u * 3 + k) * 2, 238 - u * 110], { largeur: u => (2.6 + hachage(k, 2, 7) * 1.4) * (1 + Math.max(0, 0.12 - u) * 4), nb: 3, tours: 1.2, g: 70 + k }); }
     couronneOr(putS(t, '_fb'), { ccx: 210, ccy: 146, rxc: 200, ryc: 14, n: 46, r: 12, g: 27, ecaille: 2.4 });

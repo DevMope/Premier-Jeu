@@ -579,7 +579,7 @@ function planterVivant(scene, quoi) {
 // et les bords du bas et des côtés se défont en pixels épars, sans aucune ligne droite.
 function brumeDeContree(biome) {
   const b = BIOMES[biome] || BIOMES.comte;
-  return melangeCouleur(b.horizon || b.ciel, b.ciel, 0.45);
+  return b.horizon || b.ciel;   // (la couleur vers laquelle les bosquets des collines du même plan sont voilés)
 }
 // la couleur des collines du milieu sous un point du monde (l'herbe où le repère pose ses pieds)
 function couleurCollines(scene, x, dy = 8) {
@@ -614,7 +614,7 @@ function repereFondu(scene, quoi, o) {
   const cle0 = textureRepere(scene, quoi);
   if (!cle0) return null;
   const { echelle = 0.42, brume = 0.26, ciel = 0xc8d8e8, sol = 0x8a9a5a, graine = 1, cotes = 26, bas = 22, voute = 0, fondreCotes = false } = o;
-  const cle = `${cle0}_fondu_${Math.round(echelle * 100)}_${Math.round(brume * 100)}_${Math.round(voute * 100)}_${cotes}${fondreCotes ? 'f' : ''}_${ciel.toString(16)}_${sol.toString(16)}`;
+  const cle = `${cle0}_opaque3_${Math.round(echelle * 100)}_${Math.round(brume * 100)}_${Math.round(voute * 100)}_${cotes}${fondreCotes ? 'f' : ''}_${ciel.toString(16)}_${sol.toString(16)}`;
   if (scene.textures.exists(cle)) return cle;
   const src = canvasDe(scene, cle0);
   if (!src) return cle0;
@@ -624,37 +624,54 @@ function repereFondu(scene, quoi, o) {
   const plein = y => { let n = 0; for (let x = 0; x < W; x++) if (px[(y * W + x) * 4 + 3] > 0.5) n++; return n / W; };
   let pied = H - 1; while (pied > H * 0.6 && plein(pied) < 0.55) pied--;
   const tex = scene.textures.createCanvas(cle, W, H), ctx = tex.getContext(), img = ctx.createImageData(W, H);
+  // (retour du joueur) Un objet lointain est OPAQUE : chaque pixel gardé est plein. La brume est une teinte mêlée à
+  // sa couleur (vers l'horizon, un peu plus en haut), jamais une transparence ; le pied se fond dans le pré par un
+  // tramage de pixels d'herbe opaques, de plus en plus serrés vers le bas, et des brins dessinés par-dessus ; les
+  // contours (le bas, le pied des côtés, la cime en dôme) sont des silhouettes nettes et irrégulières.
+  // (les petits trous laissés par la réduction ou par un bord déchiqueté, de quelques pixels, sont bouchés de la
+  // couleur de leurs voisins : on ne voit pas le paysage à travers ; les vraies trouées, entre des troncs, restent)
+  for (let passe = 0; passe < 2; passe++) for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+    const i = (y * W + x) * 4; if (px[i + 3] >= 0.5) continue;
+    let g = -1, d = -1;
+    for (let k = 1; k <= 6 && g < 0; k++) if (x - k >= 0 && px[(y * W + x - k) * 4 + 3] >= 0.5) g = x - k;
+    for (let k = 1; k <= 6 && d < 0; k++) if (x + k < W && px[(y * W + x + k) * 4 + 3] >= 0.5) d = x + k;
+    const haut = y - 1 >= 0 && px[((y - 1) * W + x) * 4 + 3] >= 0.5, bas2 = [1, 2, 3, 4].some(k => y + k < H && px[((y + k) * W + x) * 4 + 3] >= 0.5);
+    if (g < 0 || d < 0 || !haut || !bas2) continue;
+    const ig = (y * W + g) * 4, id = (y * W + d) * 4;
+    for (let c = 0; c < 3; c++) px[i + c] = (px[ig + c] + px[id + c]) / 2 * 0.92;
+    px[i + 3] = 1;
+  }
+  const monte = dx => fondreCotes && dx < cotes * 2.2 ? Math.pow(1 - dx / (cotes * 2.2), 1.3) * pied * 0.5 : 0;
+  const ligneHerbe = x => Math.round(pied - bas * 0.45 - monte(Math.min(x, W - 1 - x)) + (hachage(x >> 1, 51, graine) - 0.5) * 4 + (hachage(x >> 3, 53, graine) - 0.5) * 6);
+  const herbeEn = (x, y) => { const v = hachage(x, y, graine + 41); return v < 0.22 ? So.map(c => c * 1.18) : v > 0.86 ? Sc : S; };
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const i = (y * W + x) * 4; let a = px[i + 3];
-    if (a < 0.04) continue;
+    const i = (y * W + x) * 4;
+    if (px[i + 3] < 0.5) continue;                                   // (hors de la silhouette)
+    const dx = Math.min(x, W - 1 - x);
+    // les contours : le bas finit en une ligne d'herbe déchiquetée ; le pied des côtés s'arrondit, irrégulier ; la cime
+    // en dôme (voute) a un bord touffu
+    if (y > pied + Math.floor(hachage(x >> 1, 7, graine) * 4) - 1) continue;
+    const basCote = Phaser.Math.Clamp((y - (pied - H * 0.4)) / (H * 0.4), 0, 1);
+    if (dx < cotes * 0.6 * basCote * basCote * (0.5 + hachage(y >> 2, 11, graine) * 0.7)) continue;
+    if (voute) { const q = (2 * x / (W - 1) - 1), yMin = H * voute * q * q + (hachage(x >> 3, 31, graine) - 0.5) * 10 + (hachage(x >> 1, 33, graine) - 0.5) * 4; if (y < yMin) continue; }
     let r = px[i], g = px[i + 1], b = px[i + 2];
-    // le bas se fond dans l'herbe de la colline (sa couleur monte peu à peu), avec une ombre au contact
-    const u = (y - (pied - bas)) / bas;
-    if (u > 0) { const m = Math.min(1, Math.pow(u, 1.4)) * 0.9; r += (S[0] - r) * m; g += (S[1] - g) * m; b += (S[2] - b) * m; }
-    // (fondreCotes) vers les côtés, le bas de l'image devient la colline elle-même : les coteaux descendent en douceur
-    if (fondreCotes) { const dxc = Math.min(x, W - 1 - x) / (cotes * 2.2), hy = (y - pied * 0.35) / (pied * 0.65); if (dxc < 1 && hy > 0) { const m = Math.pow(1 - dxc, 1.3) * Math.min(1, hy) * 0.8; r += (S[0] - r) * m; g += (S[1] - g) * m; b += (S[2] - b) * m; } }
-    if (Math.abs(y - (pied - bas * 0.35)) < 1.5 && hachage(x >> 1, 3, graine) > 0.25) { r += (So[0] - r) * 0.35; g += (So[1] - g) * 0.35; b += (So[2] - b) * 0.35; }
-    // l'air du lointain : tout pâlit et bleuit un peu (plus haut, un peu plus encore)
-    const k = brume * (1 + 0.25 * (1 - y / H));
+    // le pied : sous une ligne d'herbe irrégulière (qui remonte vers les côtés au val), tout est l'herbe du lointain,
+    // opaque ; juste à la ligne, l'herbe plus sombre du contact ; des brins la dépassent (voir plus bas)
+    const yl = ligneHerbe(x);
+    if (y >= yl) { const c = y < yl + 1.5 ? So.map(v => v * 1.15) : herbeEn(x, y); img.data[i] = c[0]; img.data[i + 1] = c[1]; img.data[i + 2] = c[2]; img.data[i + 3] = 255; continue; }
+    // l'ombre au contact, sous ce qui est bâti ou planté
+    if (Math.abs(y - (pied - bas * 0.4)) < 1.5 && hachage(x >> 1, 3, graine) > 0.25) { r += (So[0] - r) * 0.35; g += (So[1] - g) * 0.35; b += (So[2] - b) * 0.35; }
+    // l'air du lointain : une teinte, plus forte en haut
+    const k = brume * (1 + 0.3 * (1 - y / H));
     r += (C[0] - r) * k; g += (C[1] - g) * k; b += (C[2] - b) * k;
-    // les bords se défont : en bas, sur les côtés, en pixels épars (tramés), jamais en ligne droite
-    const nb = hachage(x >> 2, 7, graine) * 0.6 + hachage(x, 9, graine) * 0.25, ns = hachage(y >> 2, 11, graine) * 0.6 + hachage(y, 13, graine) * 0.25;
-    const fBas = Phaser.Math.Clamp((pied + 3 - y) / 9 + nb - 0.35, 0, 1);
-    const dx = Math.min(x, W - 1 - x), fCote = Phaser.Math.Clamp(dx / cotes + ns - 0.3 + Math.max(0, (pied - bas - y) / H) * 2.2, 0, 1);   // (la cime garde sa silhouette ; c'est le pied qui se défait)
-    // (voute) une cime en dôme : plus basse vers les côtés, au bord touffu (une futaie, pas un bloc taillé droit)
-    let fHaut = 1;
-    if (voute) { const q = (2 * x / (W - 1) - 1), yMin = H * voute * q * q + (hachage(x >> 3, 31, graine) - 0.5) * 10 + (hachage(x >> 1, 33, graine) - 0.5) * 4; fHaut = Phaser.Math.Clamp((y - yMin) / 7, 0, 1); }
-    const garde = a * fBas * fCote * fHaut;
-    if (garde < BAYER4[(y % 4) * 4 + (x % 4)] * 0.35 + hachage(x, y, graine + 17) * 0.65) continue;   // (une trame mêlée de hasard : pas de damier)
     img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b; img.data[i + 3] = 255;
   }
-  // des brins d'herbe qui montent devant le pied
+  // des brins d'herbe dessinés par-dessus la ligne (de l'herbe du lointain, opaque), par touffes
   for (let x = 1; x < W - 1; x++) {
-    if (hachage(x, 21, graine) < 0.45) continue;
-    const dx = Math.min(x, W - 1 - x); if (dx < cotes * 0.5 * hachage(x, 23, graine)) continue;
-    const h = 1 + Math.floor(hachage(x, 25, graine) * 3), y0 = pied - 2 + Math.floor(hachage(x, 27, graine) * 4);
-    for (let j = 0; j < h; j++) { const y = y0 - j; if (y < 0 || y >= H) continue; const i = (y * W + x) * 4, c = j === h - 1 ? Sc : S, k = brume;
-      img.data[i] = c[0] + (C[0] - c[0]) * k; img.data[i + 1] = c[1] + (C[1] - c[1]) * k; img.data[i + 2] = c[2] + (C[2] - c[2]) * k; img.data[i + 3] = 255; }
+    if (hachage(x >> 1, 21, graine) < 0.35 || hachage(x, 22, graine) < 0.3) continue;
+    const h = 1 + Math.floor(hachage(x, 25, graine) * 3), y0 = ligneHerbe(x) - 1;
+    for (let j = 0; j < h; j++) { const y = y0 - j, i = (y * W + x) * 4; if (y < 0 || y >= H || !img.data[i + 3]) continue; const c = j === h - 1 ? Sc : S;
+      img.data[i] = c[0]; img.data[i + 1] = c[1]; img.data[i + 2] = c[2]; }
   }
   ctx.putImageData(img, 0, 0); tex.refresh();
   tex.pied = pied;
@@ -752,14 +769,14 @@ function planterVarianteRecit(scene, zone, biome) {
         lisiereRepere(scene, planLoin, v, biome, x, larg, { brume, ciel, sol, graine, essences: v.essencesLisiere || ['chene'], longueur: v.lisiere || 150 });
         return im;
       };
-      const img = v.fondu ? fondre(v.repere, xR, pied, e, 0.2, 3, v.voute || 0) : dansPlan(planLoin, scene.add.image(xR, pied + (lac ? 8 : 3), cle).setOrigin(0.5, 1).setScale(e).setTint(0xf0eeea));
+      const img = v.fondu ? fondre(v.repere, xR, pied, e, 0.24, 3, v.voute || 0) : dansPlan(planLoin, scene.add.image(xR, pied + (lac ? 8 : 3), cle).setOrigin(0.5, 1).setScale(e).setTint(0xf0eeea));
       scene.lacX = xR; scene.lacY = pied - 4;
       scene.reperesRecit = [{ img, x: xR, l: img.displayWidth, vu: 0 }];
       // (planche 91) le second repère, plus près : on le découvre au bout du chemin (le monde a défilé de BASE_MAX_RECIT)
       const r2 = v.repere2, cle2 = r2 && textureRepere(scene, r2.quoi);
       if (cle2) {
         const pied2 = Math.min(326, (scene.creteCollines ? scene.creteCollines(r2.x) : 290) + 14);
-        const img2 = v.fondu ? fondre(r2.quoi, r2.x, pied2, r2.echelle || e, 0.12, 5) : dansPlan(planLoin, scene.add.image(r2.x, pied2 + 3, cle2).setOrigin(0.5, 1).setScale(r2.echelle || e).setTint(0xf0eeea));
+        const img2 = v.fondu ? fondre(r2.quoi, r2.x, pied2, r2.echelle || e, 0.24, 5) : dansPlan(planLoin, scene.add.image(r2.x, pied2 + 3, cle2).setOrigin(0.5, 1).setScale(r2.echelle || e).setTint(0xf0eeea));
         scene.reperesRecit.push({ img: img2, x: r2.x, l: img2.displayWidth, vu: typeof BASE_MAX_RECIT === 'number' ? BASE_MAX_RECIT : 480 });
       }
       // (v0.81) au Col des Hurlements, deux loups noirs hurlent à la lune sur l'éperon
