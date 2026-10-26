@@ -108,7 +108,9 @@ class ArriereScene extends Phaser.Scene {
     this.appliquerDeco();
     // (v1.37) le coin des chats, s'il a été installé ici (dans la promenade, il est posé à part, avec son décalage)
     if (typeof coinDesChats === 'function' && (coinDesChats(this.G) || {}).lieu === 'arriere') {
-      if (this.scene.key !== 'Promenade') poserCoinChats(this, 'arriere', { profondeur: 0.5 });
+      // (v1.65 : s'il dort ailleurs aujourd'hui, le grand panier n'a que sa compagne ; voir chatsSommeil.js)
+      const ailleurs = typeof chatAilleursQueSonCoussin === 'function' && chatAilleursQueSonCoussin(this.G);
+      if (this.scene.key !== 'Promenade') { poserCoinChats(this, 'arriere', { profondeur: 0.5, chatDort: !ailleurs }); if (ailleurs) poserChatArriere(this, { saufCoussin: true }); }
       return;
     }
     const avantCoin = this.children.list.length;
@@ -132,11 +134,15 @@ class ArriereScene extends Phaser.Scene {
       this.time.addEvent({ delay: 700, loop: true, callback: () => { if (chat.active) chat.setTexture(k + (chat.texture.key.endsWith('0') ? '_assis1' : '_assis0')); } });
       chat.on('pointerdown', () => { Son.jouer('grogne'); this.message(`${nomChatMaj(this.G)} te tourne le dos. « Rrrr. » (Il boude : sa gamelle est vide depuis trois jours.)`); });
       this.add.text(200, SOL_ARRIERE + 2, nomChat(this.G), style(11, '#f3e6c8', { fontStyle: 'bold italic', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5, 0);
+    } else if (chatAdopte(this.G) && this.scene.key !== 'Promenade' && typeof chatAilleursQueSonCoussin === 'function' && chatAilleursQueSonCoussin(this.G)) {
+      // (v1.65) les chats dorment où ils veulent : aujourd'hui, ailleurs (le buffet, les sacs, le panier, ou le bureau)
+      poserChatArriere(this, { saufCoussin: true });
     } else if (chatAdopte(this.G) && this.scene.key !== 'Promenade') {   // (en promenade, il te suit)
-      const k = creerChatHD(this, lookChat(this.G));
-      const chat = this.add.image(200, SOL_ARRIERE + 76, k + '_dort0').setOrigin(0.5, 1).setScale(2.4).setInteractive({ useHandCursor: true });
+      const d = typeof sommeilDuChat === 'function' && sommeilDuChat(this.G), im = d && d.pose === 'surDos' ? '_surDos' : '_dort';   // (en boule, ou sur le dos)
+      const k = im === '_dort' ? creerChatHD(this, lookChat(this.G)) : texturesSommeilChat(this, lookChat(this.G));
+      const chat = this.add.image(200, SOL_ARRIERE + 76, k + im + '0').setOrigin(0.5, 1).setScale(2.4).setInteractive({ useHandCursor: true });
       let souffle = 0;
-      this.time.addEvent({ delay: 1100, loop: true, callback: () => { if (chat.active) chat.setTexture(creerChatHD(this, lookChat(this.G)) + '_dort' + (++souffle % 2)); } });
+      this.time.addEvent({ delay: 1100, loop: true, callback: () => { if (chat.active) chat.setTexture((im === '_dort' ? creerChatHD(this, lookChat(this.G)) : texturesSommeilChat(this, lookChat(this.G))) + im + (++souffle % 2)); } });
       chat.on('pointerdown', () => { Son.jouer('miaou'); ouvrirPanneauChat(this); });
       this.add.text(200, SOL_ARRIERE + 30, nomChat(this.G), style(11, '#f3e6c8', { fontStyle: 'bold italic', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5, 0);
     }
@@ -251,7 +257,8 @@ class ArriereScene extends Phaser.Scene {
   dessinerPanier() {
     const G = this.G;
     // (v0.66) posé sur le vieux buffet, contre le mur
-    const x = 562, y = SOL_ARRIERE - 62;
+    // (v1.65 : posé par terre, à côté, les jours où le chat dort sur le buffet)
+    const [x, y] = typeof placePanierCadeaux === 'function' ? placePanierCadeaux(this) : [562, SOL_ARRIERE - 62];
     const n = Object.values(G.cadeaux || {}).reduce((a, b) => a + b, 0);
     Object.keys(G.cadeaux || {}).filter(id => G.cadeaux[id] > 0).slice(0, 4).forEach((id, i) => this.add.image(x - 20 + i * 13, y - 28 - (i % 2) * 4, iconeObjet(this, id)).setScale(1.5).setDepth(1.2));
     this.add.image(x, y + 4, 'panierHD').setOrigin(0.5, 1).setScale(1.4).setDepth(1.3);

@@ -336,40 +336,54 @@ const TIROIRS_BUREAU = [['reputation', 'Réputation'], ['camps', 'Lumière et om
 function texturesBureau(s) {
   if (s.textures.exists('bureauTable')) return;
   creerInterieurHD(s); creerBureauHD(s);
-  // ---------- la table de travail, vue du côté du visiteur : le plateau, la ceinture et son tiroir, deux caissons à
-  // tiroirs, le panneau de fond entre eux (il cache les jambes de celui qui écrit), la plinthe et ses pieds en boule ----------
+  // ---------- (v1.65) la table de travail, vue par son dos : il s'assoit de l'autre côté, face à nous. De notre côté, le
+  // plateau, la ceinture moulurée et un panneau de fond plein (le panneau de modestie) : trois cadres sculptés, une
+  // rosace au milieu ; ni tiroir ni poignée. Les tiroirs sont de son côté : on n'en voit que la tranche, aux deux bouts.
   { const L = 130, H = 58, t = toileBureau(L, H);
     planche(t, 0, 0, L, 10, 'chene', { graine: 9301, noeuds: 3 });
     for (let x = 0; x < L; x++) { t.poser(x, 0, 'chene', 2); t.poser(x, 1, 'chene', 4); t.poser(x, 9, 'chene', 5); t.poser(x, 10, 'chene', 3); t.poser(x, 11, 'cheneSombre', 1); }
+    // la ceinture, sous le plateau : une planche pleine, une baguette en haut et en bas
     planche(t, 2, 12, L - 4, 11, 'chene', { graine: 9302, noeuds: 1 });
-    // le tiroir de ceinture, au milieu
-    for (const [x0, x1] of [[44, 86]]) { for (let y = 13; y < 22; y++) { t.poser(x0, y, 'cheneSombre', 1); t.poser(x1, y, 'chene', 4); } for (let x = x0; x <= x1; x++) { t.poser(x, 13, 'cheneSombre', 1); t.poser(x, 21, 'chene', 4); }
-      t.forme('laiton', ellipsoide((x0 + x1) / 2, 17.5, 3.2, 1.6), { decalage: 0.6 }); }
+    for (let x = 3; x < L - 3; x++) { t.poser(x, 13, 'chene', 5); t.poser(x, 14, 'cheneSombre', 2); t.poser(x, 20, 'chene', 4); t.poser(x, 21, 'cheneSombre', 1); }
     for (let x = 2; x < L - 2; x++) t.poser(x, 22, 'cheneSombre', 0);
-    // les deux caissons et leurs tiroirs ; le panneau de fond, en retrait
-    for (let y = 23; y < 52; y++) for (let x = 40; x < 90; x++) t.poser(x, y, 'cheneSombre', y < 25 ? 0 : 2 + Math.round((fbm(x * 0.1, y * 0.1, 9303) - 0.5) * 1.2));
-    for (let y = 27; y < 49; y++) { t.poser(45, y, 'cheneSombre', 1); t.poser(84, y, 'cheneSombre', 4); } for (let x = 45; x <= 84; x++) { t.poser(x, 27, 'cheneSombre', 1); t.poser(x, 48, 'cheneSombre', 4); }
-    for (const x0 of [2, 90]) {
-      planche(t, x0, 23, 38, 29, 'chene', { horizontale: false, graine: 9304 + x0, noeuds: 1 });
-      for (let y = 23; y < 52; y++) { t.poser(x0, y, 'chene', 4); t.poser(x0 + 37, y, 'cheneSombre', 1); }
-      for (const [y0, y1] of [[25, 37], [39, 50]]) {
-        for (let x = x0 + 3; x < x0 + 35; x++) { t.poser(x, y0, 'cheneSombre', 1); t.poser(x, y1, 'chene', 5); }
-        for (let y = y0; y <= y1; y++) { t.poser(x0 + 3, y, 'cheneSombre', 1); t.poser(x0 + 34, y, 'chene', 4); }
-        moulure(t, x0 + 5, y0 + 2, 28, 0);
-        t.forme('laiton', ellipsoide(x0 + 19, (y0 + y1) / 2 + 1, 2.6, 1.5), { decalage: 0.6 });
+    // le bâti du panneau de fond : les montants et les traverses
+    for (let y = 23; y < 52; y++) for (let x = 3; x < L - 3; x++) t.poser(x, y, 'chene', 3 + Math.round((fbm(x * 0.12, y * 0.3, 9303) - 0.5) * 1.4));
+    // trois cadres : chacun sa moulure qui descend vers le champ, un champ bombé au milieu
+    for (const [x0, x1] of [[7, 40], [45, 84], [89, 122]]) {
+      const y0 = 26, y1 = 48;
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+        const b = Math.min(x - x0, y - y0, x1 - x, y1 - y);
+        let ton;
+        if (b === 0) ton = (x === x0 || y === y0) ? 0 : 5;                      // la gorge, dans l'ombre en haut à gauche
+        else if (b < 3) ton = (x - x0 < 3 || y - y0 < 3) && !(x1 - x < 3 || y1 - y < 3) ? 4 : (x1 - x < 3 || y1 - y < 3) && !(x - x0 < 3 || y - y0 < 3) ? 1 : 3;   // le biseau
+        else ton = 3 + (b === 3 && (x - x0 === 3 || y - y0 === 3) ? 1 : 0) + Math.round((fbm(x * 0.09, y * 0.2, 9310 + x0) - 0.5) * 1.2);
+        t.poser(x, y, 'chene', Math.max(0, Math.min(5, ton)));
       }
+    }
+    // la rosace sculptée du cadre du milieu, et deux losanges sur les cadres des bouts
+    t.forme('chene', ellipsoide(64.5, 37, 6.5, 6.2), { decalage: 0.5 });
+    for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; t.forme('chene', ellipsoide(64.5 + Math.cos(a) * 4.2, 37 + Math.sin(a) * 4, 1.6, 1.6), { decalage: 0.9 }); }
+    t.forme('cheneSombre', ellipsoide(64.5, 37, 1.4, 1.4), { decalage: 0.3 });
+    for (const cx of [23.5, 105.5]) t.forme('chene', (x, y) => { const u = Math.abs(x + 0.5 - cx) / 6 + Math.abs(y + 0.5 - 37) / 5.5; return u <= 1 ? [(x + 0.5 - cx) / 6, (y + 0.5 - 37) / 5.5, 1 - u] : null; }, { decalage: 0.5 });
+    // la tranche, aux deux bouts : les façades des tiroirs, de son côté, débordent à peine (leurs joints, en creux)
+    for (const x of [0, 1, 2, L - 3, L - 2, L - 1]) for (let y = 23; y < 52; y++) {
+      const joint = [24, 36, 37, 49].includes(y), bout = x === 0 || x === L - 1;
+      t.poser(x, y, 'cheneSombre', joint ? 0 : bout ? 1 : x === 2 || x === L - 3 ? 3 : 2);
     }
     for (let x = 0; x < L; x++) for (let y = 52; y < 55; y++) t.poser(x, y, 'cheneSombre', y === 52 ? 4 : 2);
     for (const cx of [6, 34, 96, 124]) t.forme('cheneSombre', ellipsoide(cx, 56, 3.4, 2.2), { decalage: 0.5 });
     t.contour(); textureEtClair(t, s, 'bureauTable'); }
-  // ---------- la chaise à barreaux, vue de face (derrière la table) : deux montants et leurs pommeaux, trois barreaux ----------
-  { const L = 46, H = 64, t = toileBureau(L, H);
-    for (const x of [4, 38]) { for (let y = 3; y < H; y++) { t.poser(x, y, 'chene', 4); t.poser(x + 1, y, 'chene', 3); t.poser(x + 2, y, 'chene', 2); t.poser(x + 3, y, 'cheneSombre', 2); }
+  // ---------- la chaise à barreaux, vue de face : il s'y assoit face à nous ; deux hauts montants et leurs pommeaux,
+  // trois barreaux cintrés (le dossier dépasse au-dessus de ses épaules), l'assise paillée, quatre pieds ----------
+  { const L = 58, H = 76, t = toileBureau(L, H), A = 52;   // (A : la hauteur de l'assise)
+    for (const x of [4, 50]) { for (let y = 3; y < H; y++) { t.poser(x, y, 'chene', 4); t.poser(x + 1, y, 'chene', 3); t.poser(x + 2, y, 'chene', 2); t.poser(x + 3, y, 'cheneSombre', 2); }
       t.forme('chene', ellipsoide(x + 1.5, 2.2, 2.4, 2.2), { decalage: 0.6 }); }
-    for (const [y, h] of [[6, 5], [17, 3], [27, 3]]) for (let x = 8; x < 38; x++) { const c = Math.round(Math.sin((x - 8) / 30 * Math.PI) * 1.4);
+    for (const [y, h] of [[6, 5], [19, 3], [32, 3]]) for (let x = 8; x < 50; x++) { const c = Math.round(Math.sin((x - 8) / 42 * Math.PI) * 1.6);
       for (let k = 0; k < h; k++) t.poser(x, y + k + c, 'chene', k === 0 ? 5 : k === h - 1 ? 1 : 3); }
-    for (let x = 2; x < 44; x++) for (let y = 40; y < 45; y++) t.poser(x, y, 'paille', y === 40 ? 5 : (x + y) % 3 === 0 ? 2 : 3);   // (l'assise paillée)
-    t.contour(); t.texture(s, 'bureauChaise'); }
+    for (let x = 2; x < 56; x++) for (let y = A; y < A + 5; y++) t.poser(x, y, 'paille', y === A ? 5 : (x + y) % 3 === 0 ? 2 : 3);   // (l'assise paillée)
+    for (const x of [10, 46]) for (let y = A + 5; y < H; y++) { t.poser(x, y, 'chene', 3); t.poser(x + 1, y, 'cheneSombre', 2); }   // (les pieds de devant)
+    for (let x = 6; x < 52; x++) t.poser(x, H - 9, 'chene', 2);   // (l'entretoise)
+    t.contour(); textureEtClair(t, s, 'bureauChaise'); }
   // ---------- le registre ouvert sur la table : les pages, et ses cinq signets qui pendent par-dessus le bord ----------
   { const L = 54, H = 30, t = toileBureau(L, H), dos = 27;
     for (let x = 1; x < L - 1; x++) for (let y = 13; y < 16; y++) t.poser(x, y, 'cuirRouge', y === 15 ? 1 : 3);
@@ -593,6 +607,7 @@ function texturesZoomBureau(s) {
 // droite. Les gestes : 'repos' (les deux mains à plat), 'ecrit0' à 'ecrit2' (la plume avance sur la page). La texture
 // garde sa taille (`tailleAssis` : la hauteur de la taille, à poser sur l'assise de la chaise).
 // ===================================================================================================================
+const HAUSSE_BRAS_BUREAU = 0.26;
 const GESTES_BUREAU = {
   repos:  { pres: [[1.12, 4, 0.66], [0.5, 14, 0.62]], loin: [[1.12, 4, 0.66], [0.5, 14, 0.62]] },
   ecrit0: { pres: [[1.1, 5, 0.64], [0.34, 15, 0.6]], loin: [[1.12, 4, 0.66], [0.55, 13, 0.62]] },
@@ -603,7 +618,8 @@ function textureJoueurBureau(scene, G, geste = 'repos') {
   const stade = stadeJoueur(G), tenue = signatureJoueur(G), cle = `joueur_${stade}_bureau_${geste}`;
   if (scene.textures.exists(cle) && scene.textures.get(cle).tenue === tenue) return cle;
   const b = GESTES_BUREAU[geste] || GESTES_BUREAU.repos;
-  const yP = (a, v) => (Number.isInteger(v) ? a.yT + v * a.k : a.yT + a.P.torse * v);
+  // (v1.65) les avant-bras posés plus haut sur le buste : assis, il est plus bas que debout, la table lui arrive à la poitrine
+  const yP = (a, v) => (Number.isInteger(v) ? a.yT + v * a.k : a.yT + a.P.torse * (v - HAUSSE_BRAS_BUREAU));
   const poser = (proche, a) => { const p = b[proche ? 'pres' : 'loin']; return [[a.ep * p[0][0], p[0][1] * a.k, yP(a, p[0][2])], [a.ep * p[1][0], p[1][1] * a.k, yP(a, p[1][2])]]; };
   const t = avecOptionsCorps({ bras: { assis: true, poser } }, () => dessinerJoueurHD(apparenceDuJour(G), stade, G.joueur.feminin, 0, G.tenue || [], 'face', null));
   // la plume d'oie dans la main droite (à gauche à l'écran, de face), penchée vers l'épaule
@@ -656,11 +672,19 @@ function marcherJusqua(scene, heros, x, y, { vue = 'face', vitesse = 0.3, echell
   const d = Math.hypot(x - heros.x, y - heros.y), duree = Math.max(180, d / vitesse);
   return new Promise(ok => {
     if (d < 1) return ok();
-    pasDeMarche(scene, heros, duree, { poussiere: false });
+    // (v1.65) ses pas durent tant qu'il avance, pas un temps fixé d'avance : quand l'horloge prend de l'avance sur le
+    // déplacement (une image lente), il ne finit plus le trajet en glissant, les jambes immobiles
+    pasDeMarche(scene, heros, 0, { poussiere: false });
+    const pas = heros.marche;
     // (à l'arrivée, il s'arrête net : plus d'image de pas qui viendrait écraser la pose suivante)
     const props = { targets: heros, x, y, duration: duree, ease: 'Linear', onComplete: () => { if (heros.marche) { heros.marche.remove(); heros.marche = null; } if (heros.active) heros.setTexture(cle); ok(); } };
     if (echelle) { props.scaleX = echelle; props.scaleY = echelle; }
-    scene.tweens.add(props);
+    const tw = scene.tweens.add(props);
+    // (si son trajet est interrompu en route, ses pas s'arrêtent avec lui)
+    const veille = scene.time.addEvent({ delay: 150, loop: true, callback: () => {
+      if (tw.isPlaying() || (tw.isPaused && tw.isPaused())) return;
+      veille.remove(); if (pas && heros.marche === pas) { pas.remove(); heros.marche = null; }
+    } });
   });
 }
 // Il se tourne (sans bouger) : la même image debout, sous un autre angle
@@ -669,3 +693,16 @@ function tournerJoueur(scene, heros, vue, versGauche = false) {
   heros.setCrop().setTexture(textureJoueur(scene, window.GAME, vue)).setOrigin(0.5, 1).setFlipX(vue === 'face' && versGauche);
 }
 function pauseBureau(scene, ms) { return new Promise(ok => scene.time.delayedCall(ms, ok)); }
+// (v1.65) La première ligne opaque d'une texture (le haut de sa tête) : qu'il ne grandisse pas d'un coup en s'asseyant
+const LIGNES_DU_HAUT = {};
+function ligneDuHaut(scene, cle) {
+  const tex = scene.textures.get(cle), m = LIGNES_DU_HAUT[cle];
+  if (m && m.tenue === tex.tenue && m.source === tex.getSourceImage()) return m.y;
+  const img = tex.getSourceImage(), c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+  const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+  const d = ctx.getImageData(0, 0, img.width, img.height).data;
+  let y = 0;
+  trouve: for (; y < img.height; y++) for (let x = 0; x < img.width; x++) if (d[(y * img.width + x) * 4 + 3] > 128) break trouve;
+  LIGNES_DU_HAUT[cle] = { y, tenue: tex.tenue, source: img };
+  return y;
+}

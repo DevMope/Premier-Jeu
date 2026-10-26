@@ -14,7 +14,15 @@ const ONGLETS = [
 const FICHES_PAR_PAGE = 6;   // (v1.64 : le grand registre, trois lignes par fiche)
 const TIROIRS = [['ameliorations', 'Améliorer le comptoir'], ['competences', 'Tes compétences'], ['aventuriers', 'Chiffres des missions'], ['commerce', 'Le commerce'], ['reputation', 'Réputation et relations'], ['camps', 'Lumière et ombre'], ['etrange', 'Choses étranges']];
 // Où sont les choses, dans la pièce (à l'écran)
-const PIECE_BUREAU = { sol: 452, table: { x: 350, bas: 498 }, chaise: { x: 480, pieds: 474 }, porte: { x: 892 }, debout: 482, echelle: 13.4 };   // (la même proportion que dans l'arrière-boutique : debout, il fait les trois cinquièmes de la porte)
+// (v1.65) la table est vue par son dos : il s'assoit de l'autre côté, face à nous. `chaise` : sa place au milieu de la
+// table, et `repos` : là où elle attend, tirée au bout gauche de la table, quand il n'est pas là ; `derriere` : où il
+// marche, entre la table et le mur (le plateau lui cache les jambes)
+const PIECE_BUREAU = { sol: 452, table: { x: 350, bas: 498 }, chaise: { x: 480, pieds: 480, repos: 306 }, porte: { x: 892 }, debout: 486, derriere: 486, echelle: 13.4 };   // (la même proportion que dans l'arrière-boutique : debout, il fait les trois cinquièmes de la porte)
+// Où le chat peut dormir, dans le bureau (voir chatsSommeil.js) : aucun de ces endroits ne cache un meuble ni son nom
+const CHAT_BUREAU = {
+  tapis: { x: 618, bas: 534, prof: 2.4 }, meuble: { x: 116, bas: 143, prof: 1.05 }, fenetre: { x: 486, bas: 239, prof: 1.02 },
+  livres: { x: 672, bas: 389, prof: 1.25 }, chaise: { x: PIECE_BUREAU.chaise.repos, bas: PIECE_BUREAU.chaise.pieds - 46, prof: 1.32 },
+};
 
 class BureauScene extends Phaser.Scene {
   constructor() { super('Bureau'); }
@@ -34,7 +42,7 @@ class BureauScene extends Phaser.Scene {
     this.pages = null; this.ficheDroite = null; this.meubleChoisi = undefined; this.sortieEnCours = false; this.assis = false; this.etiquette = null;
     this.objets = []; this.ficheChoisie = null; this.tiroirOuvert = null; this.carnetOuvert = null; this.decalPages = null; this.tiroirAnime = false;
     this.objetEnseigne = null; this.enseigneSalle = null; this.entreeEnCours = false; this.pageQuiTourne = null; this.minuteurEcrit = null;
-    this.vueRegistre = null; this.vueFeuille = null; this.yAssis = null; this.mainsHeros = null;
+    this.vueRegistre = null; this.vueFeuille = null; this.yAssis = null; this.mainsHeros = null; this.chat = null; this.chaise = null;
     lieuVu('bureau');   // (v1.61)
     this.cameras.main.fadeIn(300);
     creerInterieurHD(this); creerBureauHD(this); texturesBureau(this); texturesZoomBureau(this); creerHalo(this);
@@ -71,19 +79,16 @@ class BureauScene extends Phaser.Scene {
     this.add.image(392, 80, cle).setOrigin(0).setScale(176 / tex.width, 144 / tex.height).setDepth(-2);
     this.add.image(0, 0, murInterieur(this, 'murBureau', { l: 480, h: 226, poteaux: [118, 352], graine: 8301, fenetre: { x: 196, y: 40, l: 88, h: 72 } })).setOrigin(0).setScale(2).setTint(0xd8bc98).setDepth(-1);
     this.add.image(0, PIECE_BUREAU.sol, plancher(this, 'plancherBureau', { l: 480, h: 44, graine: 8320 })).setOrigin(0).setScale(2).setTint(0xc8a888).setDepth(-1);
-    // le tapis sous la table ; le chat qui dort dessus (s'il est à la maison)
+    // le tapis devant la table
     this.add.image(480, 512, tapisHD(this, Math.max(1, niveauAmelioration(G, 'chambre')))).setScale(2.4, 2).setDepth(0.2);
-    // (le soir seulement : le jour, il dort sur son coussin de l'arrière-boutique ; en promenade, il te suit)
-    if (this.retour === 'Nuit' && chatAdopte(G) && !(typeof chatParti === 'function' && chatParti(G))) {
-      const cc = creerChatHD(this, lookChat(G)), chat = this.add.image(616, 534, cc + '_dort0').setOrigin(0.5, 1).setScale(2.4).setDepth(2.4);
-      let souffle = 0;
-      this.time.addEvent({ delay: 1100, loop: true, callback: () => { if (chat.active) chat.setTexture(cc + '_dort' + (++souffle % 2)); } });
-      chat.setInteractive({ useHandCursor: true }).on('pointerdown', () => { if (!this.zoom && typeof Son !== 'undefined') Son.jouer('miaou'); });
-    }
-    // les meubles qui ne s'ouvrent pas : la chaise, le tabouret et ses vieux registres, la corbeille, l'encrier, la bougie
-    P(PIECE_BUREAU.chaise.x - 46, PIECE_BUREAU.chaise.pieds - 128, 'bureauChaise', 1.3);
-    P(232, 414, 'bureauTabouret', 1.2);
-    P(618, 462, 'bureauCorbeille', 2.3);
+    // les meubles qui ne s'ouvrent pas : la chaise (au milieu de la table s'il y est assis, sinon tirée au bout), le
+    // tabouret et sa pile de vieux registres, la corbeille, l'encrier, la bougie
+    this.chaise = this.add.image(this.parLaPorte ? PIECE_BUREAU.chaise.repos : PIECE_BUREAU.chaise.x, PIECE_BUREAU.chaise.pieds, 'bureauChaise').setOrigin(0.5, 1).setScale(2).setDepth(1.3);
+    P(640, 386, 'bureauTabouret', 1.2);
+    P(212, 462, 'bureauCorbeille', 2.3);
+    // (v1.65) le chat, s'il dort ici aujourd'hui : là où il veut (et sur la chaise seulement quand tu n'y es pas)
+    const dort = typeof chatDortIci === 'function' && this.retour !== 'Promenade' ? chatDortIci(G, 'bureau', { chaiseLibre: this.parLaPorte }) : null;   // (en promenade, il te suit dehors)
+    if (dort) this.chat = poserChatEndormi(this, dort, CHAT_BUREAU[dort.place], { clic: () => { if (!this.zoom && typeof Son !== 'undefined') Son.jouer('miaou'); } });
     P(392, 352, 'bureauEncrier', 2.15);
     this.bougieTable = bougie(this, 372, 400, { rayon: 130, profondeur: 2.2 });
     // la lumière : par la fenêtre le jour (et la poussière qui y danse) ; le soir et la nuit, seules les bougies
@@ -224,6 +229,13 @@ class BureauScene extends Phaser.Scene {
     this.mainsHeros.setTexture(cle + '_mains').setOrigin(h.originX, h.originY).setScale(h.scaleX).setVisible(true);
     this.suivreMains();
   }
+  // Où poser la pose assise pour que le haut de sa tête soit là où il est quand il se tient debout derrière la table
+  yDebout() {
+    const h = this.heros, G = this.G, debout = textureJoueur(this, G, 'deFace'), srcD = this.textures.get(debout).getSourceImage();
+    const tete = PIECE_BUREAU.debout - (srcD.height - ligneDuHaut(this, debout)) * this.E;
+    const src = h.texture.getSourceImage(), haut = ligneDuHaut(this, h.texture.key);
+    return Math.min(this.yAssis, tete + (h.originY * src.height - haut) * h.scaleY);
+  }
   suivreMains() { if (this.mainsHeros && this.mainsHeros.active) this.mainsHeros.setPosition(this.heros.x, this.heros.y); }
   cacherMains() { if (this.mainsHeros && this.mainsHeros.active) this.mainsHeros.setVisible(false); }
   asseoir(direct = false) {
@@ -231,7 +243,8 @@ class BureauScene extends Phaser.Scene {
     this.poseAssise('repos');
     if (direct) { h.y = this.yAssis; this.suivreMains(); this.assis = true; this.ecrire(); return Promise.resolve(); }
     // il se laisse descendre sur la chaise (ses jambes, derrière la table, plient), et pose les avant-bras sur le plateau
-    h.y = this.yAssis - 60; this.suivreMains();
+    // (il part de sa hauteur debout : sa tête ne remonte pas d'un coup quand il prend la pose assise)
+    h.y = this.yDebout(); this.suivreMains();
     return new Promise(ok => this.tweens.add({ targets: h, y: this.yAssis, duration: 380, ease: 'Sine.easeInOut', onUpdate: () => this.suivreMains(),
       onComplete: () => { this.suivreMains(); this.assis = true; this.ecrire(); ok(); } }));
   }
@@ -253,12 +266,13 @@ class BureauScene extends Phaser.Scene {
     if (!this.assis) return Promise.resolve();
     this.assis = false;
     this.poseAssise('repos'); h.y = this.yAssis; this.suivreMains();
-    return new Promise(ok => this.tweens.add({ targets: h, y: this.yAssis - 60, duration: 320, ease: 'Sine.easeInOut', onUpdate: () => this.suivreMains(), onComplete: () => {
+    return new Promise(ok => this.tweens.add({ targets: h, y: this.yDebout(), duration: 320, ease: 'Sine.easeInOut', onUpdate: () => this.suivreMains(), onComplete: () => {
       this.cacherMains(); tournerJoueur(this, h, 'deFace'); h.setY(PIECE_BUREAU.debout).setDepth(1.5); ok(); } }));
   }
-  // Il entre : la porte s'ouvre vers nous (il la pousse de l'autre côté), il passe, la tire derrière lui, va à sa table
+  // Il entre : la porte s'ouvre vers nous (il la pousse de l'autre côté), il passe, la tire derrière lui ; il longe le
+  // mur, passe derrière la table par son bout droit, va jusqu'à la chaise, la tire au milieu de la table et s'assoit
   async entrer() {
-    const h = this.heros, p = this.porte, x = PIECE_BUREAU.porte.x + 22;
+    const h = this.heros, p = this.porte, x = PIECE_BUREAU.porte.x + 22, C = PIECE_BUREAU.chaise;
     this.entreeEnCours = true;   // (les meubles s'ouvrent déjà ; la porte attend qu'il soit assis)
     tournerJoueur(this, h, 'deFace'); h.setPosition(x, PIECE_BUREAU.sol - 6).setScale(this.E * 0.94).setDepth(p.prof - 0.02).setVisible(false);
     await pauseBureau(this, 250);
@@ -270,7 +284,23 @@ class BureauScene extends Phaser.Scene {
     if (!h.active) return;
     p.fermer();   // (il la tire derrière lui)
     await pauseBureau(this, 260);
-    await marcherJusqua(this, h, PIECE_BUREAU.chaise.x, PIECE_BUREAU.debout, { vue: 'face' });
+    // derrière la table, jusqu'au dossier de la chaise (sa main droite le prendra)
+    const prise = this.prendreChaise();
+    await marcherJusqua(this, h, prise.x, PIECE_BUREAU.derriere, { vue: 'face' });
+    if (!h.active) return;
+    // le chat dormait sur la chaise : il lui laisse la place, et va se recoucher sur le tapis
+    if (this.chat && this.chat.place === 'chaise') {
+      tournerJoueur(this, h, 'face', true);
+      await chatVaDormirAilleurs(this, this.chat, { x: C.repos - 58, bas: 522, prof: 2.4 }, { ...CHAT_BUREAU.tapis });
+      if (!h.active) return;
+    }
+    // il prend le dossier et tire la chaise au milieu de la table, à reculons
+    await this.deplacerChaise(C.x, prise);
+    if (!h.active) return;
+    // il la lâche, se glisse entre la chaise et la table, se tourne vers nous et s'assoit
+    tournerJoueur(this, h, 'face', true);
+    await pauseBureau(this, 140);
+    await marcherJusqua(this, h, C.x, PIECE_BUREAU.derriere, { vue: 'face' });
     if (!h.active) return;
     tournerJoueur(this, h, 'deFace');
     await pauseBureau(this, 180);
@@ -278,8 +308,33 @@ class BureauScene extends Phaser.Scene {
     this.entreeEnCours = false;
     if (!this.zoom) conseilGarrick(this, 'bureau');
   }
-  // Il ressort : il se lève, va à la porte, la tire vers lui (il se tient à droite, la porte s'ouvre de l'autre côté),
-  // et passe dans l'arrière-boutique
+  // Où il se tient pour tenir la chaise par le montant droit de son dossier (la main tendue vers la gauche)
+  prendreChaise() {
+    const k = textureJoueurPose(this, this.G, 'troisQuarts', 'empoigne'), m = mainTendue(this, k);
+    const ecart = m.dx * this.E + 45;   // (de ses pieds au milieu de la chaise : le bras tendu, puis jusqu'au montant)
+    return { cle: k, ecart, x: this.chaise.x + ecart };
+  }
+  // Il tient le dossier et fait glisser la chaise jusqu'en `versX` : à petits pas (tirée vers lui, il recule ;
+  // repoussée, il avance), les pieds de la chaise qui accrochent le plancher
+  async deplacerChaise(versX, prise = this.prendreChaise()) {
+    const h = this.heros, ch = this.chaise, Y = PIECE_BUREAU.derriere;
+    h.setTexture(prise.cle).setFlipX(true).setOrigin(0.5, 1).setPosition(ch.x + prise.ecart, Y);
+    await pauseBureau(this, 240);
+    const n = 3, pas = (versX - ch.x) / n;
+    for (let i = 0; i < n; i++) {
+      if (!h.active) return;
+      if (typeof Son !== 'undefined' && i !== 1) Son.jouer('glisse');
+      await new Promise(ok => {
+        this.tweens.add({ targets: [ch, h], x: '+=' + pas, duration: 420, ease: 'Sine.easeInOut', onComplete: ok });
+        this.tweens.add({ targets: h, y: Y - 3, duration: 210, yoyo: true, ease: 'Sine.easeOut' });                       // (son pas)
+        this.tweens.add({ targets: ch, angle: pas > 0 ? 1.6 : -1.6, duration: 210, yoyo: true, ease: 'Sine.easeOut' });   // (elle accroche le plancher)
+      });
+      await pauseBureau(this, 90);
+    }
+    if (h.active) { ch.setAngle(0).setX(versX); h.setPosition(versX + prise.ecart, Y); }
+  }
+  // Il ressort : il se lève, sort de sa place, repousse la chaise au bout de la table, longe la table et le mur jusqu'à
+  // la porte, la tire vers lui (il se tient à droite, la porte s'ouvre de l'autre côté), et passe dans l'arrière-boutique
   async sortir() {
     if (this.sortieEnCours || this.entreeEnCours) return;
     this.sortieEnCours = true;
@@ -290,6 +345,15 @@ class BureauScene extends Phaser.Scene {
     const h = this.heros, p = this.porte, x = PIECE_BUREAU.porte.x + 22;
     this.tweens.killTweensOf(h);
     await this.seLever();
+    if (!h.active) return;
+    // il sort de sa place par la droite, se retourne, prend le dossier et repousse la chaise au bout de la table
+    const prise = this.prendreChaise();
+    await marcherJusqua(this, h, prise.x, PIECE_BUREAU.derriere, { vue: 'face' });
+    if (!h.active) return;
+    await this.deplacerChaise(PIECE_BUREAU.chaise.repos, prise);
+    if (!h.active) return;
+    tournerJoueur(this, h, 'face');
+    await pauseBureau(this, 160);
     await marcherJusqua(this, h, x, PIECE_BUREAU.sol + 22, { vue: 'face' });
     if (!h.active) return;
     tournerJoueur(this, h, 'dos');
