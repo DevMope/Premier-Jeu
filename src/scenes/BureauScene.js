@@ -600,6 +600,14 @@ class BureauScene extends Phaser.Scene {
       return lab.y + lab.height / 2;
     };
     const bas = apercu(n, 196);
+    // (v1.63, planche 81 v2) sur les plans du comptoir, le carnet de la tapissière : le décor au choix
+    if (choisi === 'comptoir' && typeof tapissiereComptoir === 'function' && tapissiereComptoir(G) && (G.tapissiereVue || decoDe(G))) {
+      const lien = this.add.text(423, 394, `🎨 Le décor : ${STYLES_COMPTOIR[styleComptoir(G)].nom} · le carnet ▸`, style(13, '#6a2a5a', { fontStyle: 'bold' })).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      for (let k = 12; lien.width > 240 && k >= 10; k--) lien.setFontSize(k);
+      lien.on('pointerover', () => lien.setColor('#9a3a8a')).on('pointerout', () => lien.setColor('#6a2a5a'));
+      lien.on('pointerdown', () => { Son.jouer('page'); carnetComptoir(this, () => { const p = this.vider(); this.afficherAmeliorations(p, 'comptoir'); }); });
+      c.add(lien);
+    }
     if (!suivant) {
       c.add(this.add.text(423, 330, 'Le plus beau qui soit !', style(14, '#8a6a10', { fontStyle: 'bold italic' })).setOrigin(0.5));
       return;

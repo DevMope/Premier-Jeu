@@ -227,8 +227,9 @@ function carnetDeco(s, rafraichir) {
     const d = decoDe(G);
     L.add(s.add.image(0, 0, panneauHD(s, 720, 480)).setScale(2));
     L.add(s.add.text(0, -218, "LE CARNET D'ÉCHANTILLONS", style(19, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    L.add(s.add.text(0, -196, 'Chaque pièce a son style · un style acheté se remet quand tu veux, sans repayer', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
-    const X0 = -140, PX = 150, Y0 = -146, PY = 64, g = s.add.graphics(); L.add(g);
+    // (v1.63, planche 81 v2) deux onglets : les pièces de la maison, et le comptoir
+    if (typeof ongletsCarnet === 'function') ongletsCarnet(s, L, 'pieces', id => { if (id !== 'comptoir') return; vider(); L.destroy(); voile.destroy(); carnetComptoir(s, rafraichir); });
+    const X0 = -140, PX = 150, Y0 = -136, PY = 62, g = s.add.graphics(); L.add(g);
     cols.forEach((k, j) => { const S = STYLES_DECO[k]; L.add(s.add.text(X0 + j * PX, Y0 - 22, S.nom + (S.camp === 'lumière' ? ' ☀' : S.camp === 'ombre' ? ' ☾' : ''), style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5)); });
     DECO.pieces.forEach(([id, nom], i) => { const y = Y0 + 14 + i * PY;
       L.add(s.add.text(-330, y, nom, style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5));
@@ -252,7 +253,8 @@ function carnetDeco(s, rafraichir) {
           dessiner([id, k, nom, prix]);
         });
       }); });
-    L.add(s.add.text(0, 186, `La 4e colonne suit ton camp. Ta fortune : ${G.argent.toLocaleString('fr-FR')} p.`, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    L.add(s.add.text(0, 180, 'Chaque pièce a son style · un style acheté se remet quand tu veux, sans repayer', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    L.add(s.add.text(0, 197, `La 4e colonne suit ton camp. Ta fortune : ${G.argent.toLocaleString('fr-FR')} p.`, style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
     if (question) {
       const [id, k, nom, prix] = question;
       const q = s.add.container(480, 262).setDepth(95), gq = s.add.graphics(); objets.push(q);
