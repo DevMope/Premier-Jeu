@@ -14,7 +14,7 @@ class AtelierScene extends Phaser.Scene {
     this.time.delayedCall(500, () => conseilGarrick(this, 'atelier', true));
     const G = this.G = window.GAME;
     // (Phaser reprend la même scène d'une visite à l'autre : tout l'état se remet à zéro ici)
-    this.fenetre = null; this.contenu = null; this.zoneEmployes = null; this.objetsPiece = null; this.gestes = []; this.page = 0;
+    this.fenetre = null; this.contenu = null; this.zoneEmployes = null; this.objetsPiece = null; this.gestes = []; this.page = 0; this.debutEmployes = 0;
     this.cameras.main.setBackgroundColor('#2a1a10');
     creerInterieurHD(this);
     creerPieceAtelierHD(this);
@@ -125,44 +125,69 @@ class AtelierScene extends Phaser.Scene {
   }
 
   // --- Le bandeau des réparateurs : qui est libre, qui travaille à quoi, son salaire et sa prochaine hausse ---
-  employes() {
+  employes(sens = 0) {
     const G = this.G;
     if (this.zoneEmployes) this.zoneEmployes.destroy();
     const c = this.zoneEmployes = this.add.container(0, 0);
     const places = placesEmployes(G);
-    c.add(this.tenir(this.add.text(24, 453, `Tes réparateurs · ${G.employes.length} / ${places} poste${places > 1 ? 's' : ''}` + (salaires(G) ? ` · salaires : ${salaires(G)} p. par nuit` : '') +
-      (places < EMPLOYES_DE_BASE + 2 ? ' · un établi de plus (améliorations) = une place de plus' : ''), style(12, '#f3e6c8', { fontStyle: 'bold' })).setOrigin(0, 0.5), 912));
-    // (v1.63) Célestin, l'enfant perdu devenu apprenti, se présente une fois revenu : cinq fiches, plus serrées
+    // (v1.63) Célestin, l'enfant perdu devenu apprenti, se présente une fois revenu : les fiches gardent leur taille
+    // (quatre à la fois, comme avant) et deux onglets fléchés font défiler la rangée jusqu'à la cinquième
     const liste = REPARATEURS_ATELIER.concat(typeof employeDisponible === 'function' && EMPLOYES.celestin && employeDisponible(G, 'celestin') ? ['celestin'] : []);
-    const serre = liste.length > 4, pas = serre ? 188 : 236;
-    liste.forEach((id, i) => {
-      const e = EMPLOYES[id], x = 12 + i * pas, y = 463, L = pas - 8;
+    const VISIBLES = 4, defile = liste.length > VISIBLES, maxDebut = Math.max(0, liste.length - VISIBLES);
+    const debut = this.debutEmployes = Phaser.Math.Clamp(this.debutEmployes || 0, 0, maxDebut);
+    c.add(this.tenir(this.add.text(24, 453, `Tes réparateurs · ${G.employes.length} / ${places} poste${places > 1 ? 's' : ''}` + (salaires(G) ? ` · salaires : ${salaires(G)} p. par nuit` : '') +
+      (places < EMPLOYES_DE_BASE + 2 ? ' · un établi de plus (améliorations) = une place de plus' : ''), style(12, '#f3e6c8', { fontStyle: 'bold' })).setOrigin(0, 0.5), defile ? 830 : 912));
+    if (defile) this.ongletsEmployes(c, debut, maxDebut, liste.slice(VISIBLES).some(id => !G.employes.includes(id)));
+    const fiches = this.add.container(0, 0); c.add(fiches);
+    liste.slice(debut, debut + VISIBLES).forEach((id, i) => {
+      const e = EMPLOYES[id], x = 12 + i * 236, y = 463, L = 228;
       const embauche = G.employes.includes(id), t = embauche && this.reparationDe(id);
       const possible = embauche || G.employes.length < places;
-      c.add(this.add.rectangle(x, y, L, 74, 0x3a2614).setOrigin(0).setStrokeStyle(2, embauche ? (t ? 0x8a6a3a : 0x6ab04a) : 0x5a4a3a));
-      const b = this.buste(x + 28, y + 73, id, 64, embauche ? 'content' : 'neutre'); c.add(b);
+      fiches.add(this.add.rectangle(x, y, L, 74, 0x3a2614).setOrigin(0).setStrokeStyle(2, embauche ? (t ? 0x8a6a3a : 0x6ab04a) : 0x5a4a3a));
+      const b = this.buste(x + 28, y + 73, id, 64, embauche ? 'content' : 'neutre'); fiches.add(b);
       if (!embauche) b.setAlpha(0.7);
       const tx = x + 58, place = L - 62;
       // le bouton : renvoyer, embaucher, ou rien (plus d'établi libre)
       const btn = this.add.rectangle(x + L - 33, y + 12, 58, 18, embauche ? 0x8a3a2a : possible ? 0x4f7a3a : 0x5a4a3a).setStrokeStyle(2, 0x2a1a10);
       const txtBtn = this.tenir(this.add.text(x + L - 33, y + 12, embauche ? 'Renvoyer' : possible ? 'Embaucher' : 'Fermé', style(9, '#fff4dc', { fontStyle: 'bold' })).setOrigin(0.5), 54, 8);
-      c.add([btn, txtBtn]);
+      fiches.add([btn, txtBtn]);
       if (possible) btn.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.embaucherOuRenvoyer(id));
-      c.add(this.tenir(this.add.text(tx, y + 12, serre ? prenomDe(e.nom) : e.nom, style(11, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0, 0.5), place - 64));
-      const ligne = (dy, txt, coul, taille = 10, gras = false) => c.add(this.tenir(this.add.text(tx, y + dy, txt, style(taille, coul, gras ? { fontStyle: 'bold' } : {})).setOrigin(0, 0.5), place));
+      fiches.add(this.tenir(this.add.text(tx, y + 12, e.nom, style(11, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0, 0.5), place - 64));
+      const ligne = (dy, txt, coul, taille = 10, gras = false) => fiches.add(this.tenir(this.add.text(tx, y + dy, txt, style(taille, coul, gras ? { fontStyle: 'bold' } : {})).setOrigin(0, 0.5), place));
       if (embauche) {
         const file = objetsEnFile(G, id).length;
         ligne(28, t ? `Répare : ${raccourcir(t.nom, file ? 12 : 17)} · ${t.reparation.jours} j${file ? ` · file ${file}` : ''}` : file ? `Attend (file ${file})` : 'Libre', t ? '#e8c890' : file ? '#e8a080' : '#9ae07a', 10, true);
         // son salaire, et ses deux prochaines hausses : au début du mois, et au prochain niveau
         const n = niveauEmploye(G, id), h = prochainesHausses(G, id);
-        ligne(44, serre ? `${salaireEmploye(G, id)} p./nuit · +${h.mois.montant} p. dans ${h.mois.jours} j` : `${salaireEmploye(G, id)} p. par nuit · +${h.mois.montant} p. dans ${h.mois.jours} j`, '#f3e6c8');
-        ligne(60, h.niveau ? (serre ? `Niv. ${n} · niv. ${h.niveau.niveau} : ${h.niveau.reste} rép.` : `Niveau ${n} · niv. ${h.niveau.niveau} dans ${h.niveau.reste} rép. (+${h.niveau.montant} p.${h.niveau.niveau === NIVEAU_EMPLOYE_DOUE ? ', −1 j' : ''})`) : `Niveau ${n}, le plus haut`, '#c9b48a');
+        ligne(44, `${salaireEmploye(G, id)} p. par nuit · +${h.mois.montant} p. dans ${h.mois.jours} j`, '#f3e6c8');
+        ligne(60, h.niveau ? `Niveau ${n} · niv. ${h.niveau.niveau} dans ${h.niveau.reste} rép. (+${h.niveau.montant} p.${h.niveau.niveau === NIVEAU_EMPLOYE_DOUE ? ', −1 j' : ''})` : `Niveau ${n}, le plus haut`, '#c9b48a');
       } else {
-        ligne(28, serre ? `${salaireEmploye(G, id)} p./nuit au début` : `${salaireEmploye(G, id)} p. par nuit pour commencer`, '#e8c890', 10, true);
+        ligne(28, `${salaireEmploye(G, id)} p. par nuit pour commencer`, '#e8c890', 10, true);
         ligne(44, e.atout, '#c9b48a');
-        ligne(60, possible ? (serre ? 'Plus payé avec le temps' : 'Plus payé à chaque niveau et chaque mois') : (serre ? "Pas d'établi libre" : "Pas d'établi libre (améliorations)"), '#9a8a6a');
+        ligne(60, possible ? 'Plus payé à chaque niveau et chaque mois' : "Pas d'établi libre (améliorations)", '#9a8a6a');
       }
     });
+    // la rangée glisse d'une fiche, dans le sens de la flèche
+    if (sens) { fiches.x = sens * 60; fiches.alpha = 0.2; this.tweens.add({ targets: fiches, x: 0, alpha: 1, duration: 220, ease: 'Quad.easeOut' }); }
+  }
+  // Les deux onglets fléchés, au bout du titre de la rangée (la flèche vers une fiche pas encore embauchée luit doucement)
+  ongletsEmployes(c, debut, maxDebut, nouveau) {
+    const onglet = (x, fleche, actif, sens) => {
+      const fond = this.add.rectangle(x, 453, 26, 16, actif ? 0x5a3a1e : 0x3a2614).setStrokeStyle(2, actif ? 0x8a6a3a : 0x4a3a2a);
+      const t = this.add.text(x, 453, fleche, style(10, actif ? '#f3d98a' : '#6a5a4a', { fontStyle: 'bold' })).setOrigin(0.5);
+      c.add([fond, t]);
+      if (!actif) return fond;
+      fond.setInteractive({ useHandCursor: true }).on('pointerdown', () => { Son.jouer('page'); this.debutEmployes = debut + sens; this.employes(sens); });
+      fond.on('pointerover', () => fond.setFillStyle(0x7a5228)).on('pointerout', () => fond.setFillStyle(0x5a3a1e));
+      return fond;
+    };
+    onglet(878, '◀', debut > 0, -1);
+    const droite = onglet(934, '▶', debut < maxDebut, 1);
+    c.add(this.add.text(906, 453, `${debut + 1}–${debut + 4}`, style(9, '#c9b48a')).setOrigin(0.5));
+    if (nouveau && debut < maxDebut) {
+      this.tweens.add({ targets: droite, alpha: { from: 1, to: 0.55 }, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      droite.once('destroy', () => this.tweens.killTweensOf(droite));
+    }
   }
 
   embaucherOuRenvoyer(id) {

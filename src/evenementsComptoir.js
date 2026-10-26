@@ -18,22 +18,29 @@ const EVT_COMPTOIR = {
   repos: 45,             // un événement au hasard ne revient pas avant 45 jours
   ecartHistoire: 10,     // deux événements de l'histoire sont toujours séparés d'au moins 10 jours
   chanceHistoire: 0.5,   // (même quand elle peut avancer, l'histoire ne vient pas à jour fixe)
-  parents: { jourMin: 22, ecart: 16 },
-  garrick: { jourMin: 60, ecart: 20, pret: 30, rembourse: 36, delai: 7, paquet: 25 },
-  anniversaire: { jourMin: 8, reputation: 0.5,
-    cadeaux: [{ rep: 25, id: 'plaque', pieces: 60 }, { rep: 12, id: 'enseigne', pieces: 35 }, { rep: 5, id: 'panier', pieces: 20 }, { rep: -99, id: 'bouquet', pieces: 10 }] },
-  barde: { jourMin: 28, repos: 60, prix: 8, reputation: 0.4, moquerie: 0.2, auMarche: 21 },
-  revenant: { piece: 12 },
-  enfant: { jourMin: 12, retour: [21, 30] },
-  pickpocket: { jourMin: 12, perte: [6, 12], delai: 2800 },
-  troc: { valeur: [14, 70] },
-  vantard: { retour: [6, 10], vivant: 0.65, jours: 4, clients: 1, perte: 0.4 },
-  pigeon: { retour: [8, 14], pieces: [10, 16] },
-  enfants: { reputation: 0.3 },
-  amoureux: { reputation: 0.2, majoration: 1.25 },
-  inspecteur: { jourMin: 15, certifie: 0.3, amende: 20, amendeCachee: 30, pot: 15, reussite: 0.55, recalcitrant: 0.2 },
-  chat: { trouvaille: 4 },
-  vent: { papiers: 7, parPapier: 2, duree: 9000, bravo: 0.1 },
+  // (retours du joueur, 26/10 au soir : des visites plus tardives, liées à l'avancée de l'histoire, et plus vagues ; quatre)
+  parents: { jourMin: 40, ecart: [20, 22, 25] },
+  // (le prêt ne revient pas toujours en entier, ni tout de suite ; le paquet des Bannis peut être trouvé par la garde)
+  garrick: { jourMin: 60, ecart: 20, pret: 30, delai: 7, paquet: 20, garde: 0.35, amendePaquet: 35, perteGarde: 0.5, soinDuree: 0.5,
+    retours: [{ p: 0.45, montant: 36 }, { p: 0.3, montant: 18 }, { p: 0.25, montant: 0, tard: 30, chanceTard: 0.5 }] },
+  // (40 p. au plus ; la fête prend une heure de la journée)
+  anniversaire: { jourMin: 8, reputation: 0.5, duree: 1,
+    cadeaux: [{ rep: 25, id: 'plaque', pieces: 40 }, { rep: 12, id: 'enseigne', pieces: 28 }, { rep: 5, id: 'panier', pieces: 18 }, { rep: -99, id: 'bouquet', pieces: 10 }] },
+  barde: { jourMin: 28, repos: 60, prix: 12, reputation: 0.3, moquerie: 0.4, auMarche: 21 },
+  // (mort par ta faute : rien à gagner ; un client effrayé s'en va, puis une nuit blanche ou des murmures)
+  revenant: { piece: 12, retard: 1, murmures: 0.6 },
+  enfant: { jourMin: 12, retour: [21, 30], duree: 0.25 },
+  averse: { duree: 0.5, fausse: 0.3 },
+  pickpocket: { jourMin: 12, perte: [8, 16], delai: 2300, objet: 0.4 },
+  troc: { valeur: [14, 70], vole: 0.25, perteVole: 0.3, casse: 0.25 },
+  vantard: { retour: [6, 10], vivant: 0.5, jours: 4, clients: 1, perte: 0.5 },
+  espion: { scandale: 0.4, perteScandale: 0.3 },
+  pigeon: { retour: [8, 14], pieces: [8, 14], revient: 0.7, duree: 0.25 },
+  enfants: { reputation: 0.3, plainte: 0.25, pertePlainte: 0.4 },
+  amoureux: { reputation: 0.2, credit: 1.3, envole: 0.4 },
+  inspecteur: { jourMin: 15, certifie: 0.3, erreur: 0.25, amendeErreur: 10, amende: 20, amendeCachee: 30, pot: 15, reussite: 0.55, recalcitrant: 0.3 },
+  chat: { trouvaille: 4, casse: 0.3 },
+  vent: { papiers: 7, parPapier: 3, duree: 9000, bravo: 0.1, commandePerdue: 3 },
 };
 
 // L'état sauvegardé : chaque champ a sa valeur par défaut (une vieille partie se complète toute seule)
@@ -43,7 +50,7 @@ function etatEvt(G) {
     garrick: 0, garrickJour: 0, garrickPret: null, garrickPaquet: null,
     anniversaire: false, revenant: false, barde: null,
     enfant: null, apprenti: false,
-    vantard: null, publicite: null, pigeon: null, rumeur: null };
+    vantard: null, publicite: null, pigeon: null, rumeur: null, nuitBlanche: 0, plainte: null, credit: null, trocVole: null, bilan: { objets: 0 } };
   if (!G.evtComptoir || typeof G.evtComptoir !== 'object') G.evtComptoir = {};
   const E = G.evtComptoir;
   for (const [k, v] of Object.entries(d)) if (E[k] === undefined) E[k] = v && typeof v === 'object' ? JSON.parse(JSON.stringify(v)) : v;
@@ -52,7 +59,14 @@ function etatEvt(G) {
 if (typeof POSTES !== 'undefined') POSTES.evenements = 'Les petits événements du comptoir';
 const majEvt = t => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
 const accordEvt = (G, m, f) => (eJ(G) ? f : m);
-function retirerDuStock(G, id, n = 1) { const k = Math.min(n, G.stock[id] || 0); if (k > 0) G.stock[id] -= k; return k; }
+// (ce qu'on donne de sa réserve compte dans le bilan des événements : la simulation le vérifie)
+// (le bilan des objets : positif = ce que les événements t'ont coûté en objets ; négatif = ce qu'ils t'ont rapporté)
+function noterBilanEvt(G, v) { const E = etatEvt(G); E.bilan.objets = (E.bilan.objets || 0) + (v || 0); }
+function retirerDuStock(G, id, n = 1) {
+  const k = Math.min(n, G.stock[id] || 0);
+  if (k > 0) { G.stock[id] -= k; const E = etatEvt(G); E.bilan.objets = (E.bilan.objets || 0) + k * ((ITEMS[id] && ITEMS[id].prix) || 0); }
+  return k;
+}
 // Le calendrier : un an (JOURS_PAR_AN jours de calendrier, sauts de temps compris) depuis l'ouverture ?
 function joursDepuisOuverture(G) { return Math.max(0, G.jour - 1) + (G.decalageJours || 0); }
 
@@ -114,7 +128,7 @@ function evenementSecret(e) { return !!(e && (e.type === 'evenement' || e.incide
 // à lui) ; `suite` : la suite d'un événement d'avant (elle passe avant le hasard, le jour venu).
 const EVENEMENTS_COMPTOIR = {
   // 1. Les yeux de ta mère : trois visites espacées
-  parents: { histoire: true, eligible: G => { const E = etatEvt(G); return !E.parentsFini && E.parents < 3 && G.jour >= EVT_COMPTOIR.parents.jourMin && G.jour - (E.parentsJour || -99) >= EVT_COMPTOIR.parents.ecart; },
+  parents: { histoire: true, eligible: G => parentsPossible(G),
     creer: G => ({ etape: etatEvt(G).parents + 1 }) },
   // 2. Garrick a un souci : son genou, une vieille dette, une lettre de son passé (selon ton camp)
   garrick: { histoire: true, eligible: G => { const E = etatEvt(G); return E.garrick < 3 && G.jour >= EVT_COMPTOIR.garrick.jourMin && G.jour - (E.garrickJour || -99) >= EVT_COMPTOIR.garrick.ecart && !E.garrickPret; },
@@ -213,10 +227,22 @@ function placerEvenement(G, id, file) {
 }
 
 // --- 1. Les yeux de ta mère ---
+// Quatre visites, de plus en plus tard, chacune quand l'histoire a avancé : (1) le milieu de partie (une pièce de l'armure,
+// ou le jour 60) ; (2) deux pièces, ou une vision des Brumes ; (3) la moitié de l'armure, ou la médaille du mendiant ;
+// (4) tard : l'armure presque complète, ou ton camp scellé. Des fragments, jamais une explication.
+function parentsPossible(G) {
+  const E = etatEvt(G), C = EVT_COMPTOIR.parents, n = E.parents, a = (G.armure || []).length;
+  if (E.parentsFini || n >= 4 || G.jour < C.jourMin) return false;
+  if (n > 0 && G.jour - (E.parentsJour || -99) < C.ecart[Math.min(n - 1, C.ecart.length - 1)]) return false;
+  if (n === 0) return a >= 1 || G.jour >= 60;
+  if (n === 1) return a >= 2 || (G.visions || 0) >= 1 || G.jour >= 95;
+  if (n === 2) return a >= 4 || !!G.medailleParents || G.jour >= 130;
+  return a >= (typeof ARMURE !== 'undefined' ? ARMURE.length - 2 : 6) || !!G.camp || G.jour >= 170;
+}
 function evtParents(G, e) {
   const E = etatEvt(G);
   E.parents = Math.max(E.parents, e.etape || 1); E.parentsJour = G.jour;
-  if (E.parents >= 3) { E.parentsFini = G.jour; E.berceuse = true; }   // (la berceuse de ta mère, qu'il te laisse)
+  if (E.parents >= 4) { E.parentsFini = G.jour; E.berceuse = true; }   // (la berceuse qu'il te laisse, la dernière fois)
   return { etape: E.parents, mendiantLaDit: (G.mendiant || 0) >= (typeof MENDIANT_PALIERS !== 'undefined' ? MENDIANT_PALIERS.yeux : 60), medaille: !!G.medailleParents };
 }
 
@@ -232,12 +258,16 @@ function choixGarrick(G, e) {
 function evtGarrick(G, e, choix) {
   const E = etatEvt(G), C = EVT_COMPTOIR.garrick, r = { choix };
   E.garrick = Math.max(E.garrick, e.etape); E.garrickJour = G.jour;
-  if (choix === 'soigner') r.soin = retirerDuStock(G, 'bandage') ? 'bandage' : retirerDuStock(G, 'potion') ? 'potion' : 'compresse';
+  if (choix === 'soigner') { r.soin = retirerDuStock(G, 'bandage') ? 'bandage' : retirerDuStock(G, 'potion') ? 'potion' : 'compresse'; avancerHeure(G, C.soinDuree); r.duree = C.soinDuree; }
   if (choix === 'preter') {
     if (!peutPayer(G, C.pret)) { r.pasAssez = true; return r; }
-    payer(G, C.pret, 'evenements'); E.garrickPret = { jour: G.jour + C.delai, montant: C.rembourse };
+    payer(G, C.pret, 'evenements');
+    // ce qu'il rendra vraiment : tout, avec les intérêts ; la moitié ; ou rien pour l'instant (et peut-être plus tard)
+    let u = Math.random(), retour = C.retours[C.retours.length - 1];
+    for (const x of C.retours) { if (u < x.p) { retour = x; break; } u -= x.p; }
+    E.garrickPret = { jour: G.jour + C.delai, montant: retour.montant, tard: retour.tard ? (Math.random() < retour.chanceTard ? G.jour + retour.tard : -1) : 0 };
   }
-  if (choix === 'paquet') { E.garrickPaquet = { jour: G.jour + 1, montant: C.paquet }; pencher(G, 'commande', { qui: 'Garrick Cœur-de-Chêne' }); }
+  if (choix === 'paquet') { E.garrickPaquet = { jour: G.jour + 1, montant: C.paquet, garde: Math.random() < C.garde }; pencher(G, 'commande', { qui: 'Garrick Cœur-de-Chêne' }); }
   return r;
 }
 
@@ -262,6 +292,7 @@ function evtAnniversaire(G) {
   E.anniversaire = G.jour;
   encaisser(G, c.pieces, 'evenements');
   G.reputation += EVT_COMPTOIR.anniversaire.reputation;
+  avancerHeure(G, EVT_COMPTOIR.anniversaire.duree);
   return { ...c };
 }
 
@@ -305,19 +336,40 @@ function revenantPossible(G) {
   if (!x) return null;
   return { defunt: { nom: x.nom, race: x.race, feminin: !!x.feminin }, reproche: !!faute, vivant: !faute && !brave, voulu: !!(faute && faute.voulu), zone: x.zone };
 }
+// Mort par ta faute : rien à gagner. L'ombre fait fuir un client de la file (revenantEffraie, avant le choix) ; puis
+// demander pardon coûte une nuit blanche (le comptoir ouvre une heure plus tard demain), se taire laisse courir les
+// murmures (de la réputation). Mort bien équipé, ou voyageur sauvé : la pièce de givre, la pièce porte-bonheur.
+function revenantEffraie(G) { return fuirUnClient(G); }
 function evtRevenant(G, e, choix) {
-  const E = etatEvt(G);
+  const E = etatEvt(G), C = EVT_COMPTOIR.revenant;
   E.revenant = G.jour;
   const r = { choix };
-  if (choix === 'pardon') { G.reputation += 0.2; r.apaise = true; }
-  if (choix === 'merci' && !e.reproche) { encaisser(G, EVT_COMPTOIR.revenant.piece, 'evenements'); r.piece = EVT_COMPTOIR.revenant.piece; }
+  if (e.reproche) {
+    if (choix === 'pardon') { E.nuitBlanche = G.jour + 1; r.nuitBlanche = true; }
+    else { G.reputation = Math.max(0, G.reputation - C.murmures); r.murmures = C.murmures; }
+    return r;
+  }
+  if (choix === 'merci') { encaisser(G, C.piece, 'evenements'); r.piece = C.piece; }
   return r;
+}
+function retardEvenements(G, jour = G.jour) { return G.evtComptoir && G.evtComptoir.nuitBlanche === jour ? EVT_COMPTOIR.revenant.retard : 0; }
+// Un client de la file prend peur (ou se lasse) et s'en va : il ne sera pas servi. Le dernier venu, jamais une lettre.
+// (Son entrée devient « fui » : la simulation, qui parcourt une copie de la file, le saute aussi.)
+function cibleDeLaFaucheuse(G, v) { const m = G.faucheuse && G.faucheuse.mission; return !!(m && m.cible && v && m.cible.id === v.id); }
+function fuirUnClient(G, file = G.file) {
+  for (let i = file.length - 1; i >= 0; i--) {
+    const e = file[i];
+    if (e.type !== 'client' || !e.voyageur || e.voyageur.prevu || e.voyageur.recherche || e.planifie || e.incident || e.attentes || cibleDeLaFaucheuse(G, e.voyageur)) continue;
+    e.type = 'fui'; file.splice(i, 1);
+    return { index: i, voyageur: e.voyageur };
+  }
+  return null;
 }
 
 // --- 6. L'enfant perdu, puis l'apprenti ---
 function evtEnfant(G, e, choix) {
   const E = etatEvt(G);
-  if (choix === 'garder') E.enfant = { jour: G.jour, etat: 'garde' };
+  if (choix === 'garder') { E.enfant = { jour: G.jour, etat: 'garde' }; avancerHeure(G, EVT_COMPTOIR.enfant.duree); }
   else E.enfant = { jour: G.jour, etat: 'garde_confie' };   // (confié à la garde : on ne le reverra pas)
   return { choix };
 }
@@ -343,7 +395,7 @@ function evtEnfantGrand(G) {
 Object.assign(EMPLOYES, {
   celestin: { nom: 'Célestin Petit-Pont', race: 'hobbit', salaire: 3, rapide: ['vetement'], evenement: true,
     description: "Un ancien gamin des rues : il a appris à repriser ses propres guenilles sous le pont. Un jour de moins sur les vêtements.",
-    atout: 'Un jour de moins : vêtements · le moins cher' },
+    atout: 'Un jour de moins : les vêtements' },
 });
 function employeDisponible(G, id) { return !EMPLOYES[id] || !EMPLOYES[id].evenement || (G.employes || []).includes(id) || !!(G.evtComptoir && G.evtComptoir.apprenti); }
 
@@ -364,13 +416,24 @@ function rumeurAverse(G) {
 }
 function evtAverse(G, e, choix) {
   if (choix !== 'tisane') return {};
-  return { rumeur: rumeurAverse(G) };
+  const C = EVT_COMPTOIR.averse;
+  avancerHeure(G, C.duree);
+  const rumeur = rumeurAverse(G);
+  // (il se trompe parfois : le prix ne baissera pas)
+  if (rumeur.genre === 'prix' && Math.random() < C.fausse && G.evtComptoir.rumeur) G.evtComptoir.rumeur.fausse = true;
+  return { rumeur, duree: C.duree };
 }
 
 // --- 8. Le pickpocket ---
+// ce qu'une petite main peut attraper sous le comptoir (avec son article, pour le récit)
+const LARCINS_EVT = { potion: 'une potion', antidote: 'un antidote', bandage: 'un bandage', amulette: 'une amulette', gourde: 'une gourde', torche: 'une torche' };
 function evtPickpocket(G, attrape) {
   if (attrape) return { perte: 0 };
-  const C = EVT_COMPTOIR.pickpocket, perte = Math.min(Math.floor(G.argent), hasard(C.perte[0], C.perte[1]));
+  const C = EVT_COMPTOIR.pickpocket;
+  // (souvent, il file avec un objet de la réserve plutôt qu'avec des pièces)
+  const objets = Object.keys(LARCINS_EVT).filter(id => (G.stock[id] || 0) > 0 && ITEMS[id]);
+  if (objets.length && Math.random() < C.objet) { const id = auHasard(objets); retirerDuStock(G, id); return { perte: 0, objet: id }; }
+  const perte = Math.min(Math.floor(G.argent), hasard(C.perte[0], C.perte[1]));
   if (perte > 0) payer(G, perte, 'evenements');
   return { perte };
 }
@@ -393,9 +456,13 @@ function evtTroc(G, e, choix) {
   const donnes = {};
   for (const id of BALUCHON_TROC) if (retirerDuStock(G, id)) donnes[id] = (donnes[id] || 0) + 1;
   const o = objetDuTroc(G, e), C = EVT_COMPTOIR.troc;
-  const t = { id: G.prochainId++, nom: o.nom, categorie: o.categorie, valeurBase: Math.max(C.valeur[0], Math.min(C.valeur[1], Math.round(o.valeur * (0.85 + Math.random() * 0.3)))), etat: e.etat || 1, etatInitial: e.etat || 1, reparation: null, prixAchat: 0, jourAchat: G.jour, troc: true };
+  const casse = Math.random() < C.casse, etat = casse ? 0 : e.etat || 1;
+  const t = { id: G.prochainId++, nom: o.nom, categorie: o.categorie, valeurBase: Math.max(C.valeur[0], Math.min(C.valeur[1], Math.round(o.valeur * (0.85 + Math.random() * 0.3)))), etat, etatInitial: etat, reparation: null, prixAchat: 0, jourAchat: G.jour, troc: true };
   G.tresors.push(t);
-  return { donnes, tresor: t };
+  noterBilanEvt(G, -valeurTresor(t));   // (ce qu'il vaut tel quel, avant réparation : un gain pour le bilan)
+  // (l'objet était peut-être volé : son propriétaire le reconnaîtra demain, avec la garde)
+  if (Math.random() < C.vole) etatEvt(G).trocVole = { jour: G.jour + 1, id: t.id, nom: t.nom };
+  return { donnes, tresor: t, casse };
 }
 
 // --- 10. Le vantard : un baluchon gratuit « pour la gloire » ---
@@ -418,7 +485,11 @@ function clientsEvenementsComptoir(G, jour = G.jour) {
 function evtEspion(G, e, choix) {
   const r = typeof rivalDe === 'function' ? rivalDe(G) : null;
   if (!r) return {};
-  if (choix === 'demasquer') { r.vols = (r.vols || 0) - 1; return { demasque: true }; }
+  if (choix === 'demasquer') {
+    // (il crie au scandale dans la rue : « on accuse les honnêtes gens, chez toi ! »)
+    if (Math.random() < EVT_COMPTOIR.espion.scandale) { G.reputation = Math.max(0, G.reputation - EVT_COMPTOIR.espion.perteScandale); return { demasque: true, scandale: true }; }
+    r.vols = (r.vols || 0) - 1; return { demasque: true };
+  }
   r.vols = (r.vols || 0) + 1;
   return {};
 }
@@ -428,7 +499,9 @@ function evtPigeon(G, e, choix) {
   const E = etatEvt(G), C = EVT_COMPTOIR.pigeon;
   if (choix !== 'soigner') { E.pigeon = { jour: G.jour, soigne: false, revenu: true }; return {}; }
   const soin = retirerDuStock(G, 'bandage') ? 'bandage' : 'chiffon';
-  E.pigeon = { jour: G.jour, soigne: true, soin, retour: G.jour + hasard(C.retour[0], C.retour[1]), revenu: false };
+  avancerHeure(G, C.duree);
+  const revient = Math.random() < C.revient;
+  E.pigeon = { jour: G.jour, soigne: true, soin, retour: G.jour + hasard(C.retour[0], C.retour[1]), revenu: !revient, perdu: !revient };
   return { soin };
 }
 function evtPigeonRetour(G) {
@@ -446,18 +519,21 @@ function evtEnfants(G, e, choix) {
   if (choix !== 'donner') return {};
   const ration = retirerDuStock(G, 'ration') > 0;
   G.reputation += EVT_COMPTOIR.enfants.reputation;
+  if (Math.random() < EVT_COMPTOIR.enfants.plainte) etatEvt(G).plainte = { jour: G.jour + 1 };
   return { ration };
 }
 
 // --- 14. Les amoureux : un cadeau en secret pour l'autre ---
+function prixCreditAmoureux(id) { return Math.round(CADEAUX[id].prix * EVT_COMPTOIR.amoureux.credit); }
 function cadeauPourAmoureux(G) { return Object.keys(G.cadeaux || {}).find(id => G.cadeaux[id] > 0 && CADEAUX[id] && !CADEAUX[id].lot) || null; }
 function evtAmoureux(G, e, choix) {
   if (choix === 'cadeau') {
+    // elle n'a pas de quoi payer aujourd'hui : « je repasse demain, promis », et un peu plus que le prix
     const id = cadeauPourAmoureux(G);
     if (!id) return { impossible: true };
-    G.cadeaux[id]--;
-    const prix = Math.round(CADEAUX[id].prix * EVT_COMPTOIR.amoureux.majoration);
-    encaisser(G, prix, 'evenements');
+    G.cadeaux[id]--; noterBilanEvt(G, CADEAUX[id].prix);
+    const C = EVT_COMPTOIR.amoureux, prix = prixCreditAmoureux(id);
+    etatEvt(G).credit = { jour: G.jour + 1, prix, cadeau: id, envole: Math.random() < C.envole };
     return { cadeau: id, prix };
   }
   if (choix === 'fleur') { G.reputation += EVT_COMPTOIR.amoureux.reputation; return { fleur: true }; }
@@ -471,7 +547,11 @@ function confisquer(G) { const id = interditsEnReserve(G)[0]; if (id) G.interdit
 function evtInspecteur(G, e, choix) {
   const C = EVT_COMPTOIR.inspecteur, caches = interditsEnReserve(G).length > 0;
   if (!caches) {
-    if (choix === 'ouvrir') { G.reputation += C.certifie; return { certifie: true }; }
+    if (choix === 'ouvrir') {
+      // (même honnête, ta vieille balance peut pencher d'un grain)
+      if (Math.random() < C.erreur) { const a = Math.min(Math.floor(G.argent), C.amendeErreur); if (a > 0) payer(G, a, 'evenements'); return { erreur: true, amende: a }; }
+      G.reputation += C.certifie; return { certifie: true };
+    }
     G.reputation = Math.max(0, G.reputation - C.recalcitrant); return { recalcitrant: true };
   }
   if (choix === 'soudoyer') {
@@ -485,7 +565,7 @@ function evtInspecteur(G, e, choix) {
 }
 
 // --- 16. Le chat pose quelque chose devant un client ---
-EVENEMENTS_COMPTOIR.chat.creer = () => ({ trouvaille: Math.random() < 0.35 ? 'bouton' : Math.random() < 0.5 ? 'plume' : 'souris' });
+EVENEMENTS_COMPTOIR.chat.creer = () => ({ trouvaille: Math.random() < 0.3 ? 'bouton' : Math.random() < 0.5 ? 'plume' : 'souris', casse: Math.random() < EVT_COMPTOIR.chat.casse });
 // Ce qu'en pense le client (selon son peuple) : il rit, il est touché, ou ça le dégoûte
 function reactionAuChat(v, trouvaille) {
   const race = v ? v.race : 'humain';
@@ -497,6 +577,10 @@ function evtChat(G, inc, choix, v) {
   if (typeof changerLien === 'function') changerLien(G, choix === 'feliciter' ? 1 : -1);
   if (v && v.nom && G.relations && r.reaction !== 'degoute' && choix === 'feliciter') r.message = changerRelation(G, v.nom, 1);
   if (inc.trouvaille === 'bouton') { encaisser(G, EVT_COMPTOIR.chat.trouvaille, 'evenements'); r.pieces = EVT_COMPTOIR.chat.trouvaille; }
+  // (en sautant sur le comptoir, il a renversé une fiole)
+  if (inc.casse) { const id = ['potion', 'antidote', 'gourde'].find(x => (G.stock[x] || 0) > 0); if (id) { retirerDuStock(G, id); r.casse = id; } }
+  // féliciter le chat devant un client dégoûté : il s'en va, fâché, sans être servi
+  if (r.reaction === 'degoute' && choix === 'feliciter' && !cibleDeLaFaucheuse(G, v)) { r.part = true; if (v && v.nom && G.relations) changerRelation(G, v.nom, -2); }
   return r;
 }
 
@@ -505,22 +589,48 @@ function evtVent(G, rates) {
   const C = EVT_COMPTOIR.vent, perte = Math.min(Math.floor(G.argent), Math.max(0, rates) * C.parPapier);
   if (perte > 0) payer(G, perte, 'evenements');
   if (rates === 0) G.reputation += C.bravo;
-  return { perte };
+  // beaucoup de papiers perdus : une lettre de commande était parmi eux ; son voyageur n'aura jamais de réponse
+  let lettre = null;
+  if (rates >= C.commandePerdue) { const a = (G.annonces || []).find(x => x.jour > G.jour && !x.acceptee); if (a) { lettre = a.voyageur.nom; G.annonces = G.annonces.filter(x => x !== a); G.reputation = Math.max(0, G.reputation - REFUS_LETTRE); changerRelation(G, a.voyageur.nom, POINTS_RELATION.refusLettre); } }
+  return { perte, lettre };
 }
 
 // --- Le matin : ce que les événements d'hier ont laissé (appelé depuis nuit(), regles.js) ---
 function matinEvenementsComptoir(G) {
   const E = etatEvt(G), lignes = [];
-  if (E.garrickPret && G.jour >= E.garrickPret.jour) {
-    encaisser(G, E.garrickPret.montant, 'evenements');
-    lignes.push(`Une bourse glissée sous la porte, et un mot : « Avec les intérêts, ha ha ! Merci, petit${eJ(G)}. — G. » (+${E.garrickPret.montant} p.)`);
-    E.garrickPret = null;
+  const P = E.garrickPret;
+  if (P && P.jour > 0 && G.jour >= P.jour) {
+    if (P.enRetard) { encaisser(G, P.montant, 'evenements'); lignes.push(`Enfin, une bourse sous la porte : tes ${P.montant} pièces, et un mot griffonné : « Pardon pour le retard. — G. »`); E.garrickPret = null; }
+    else if (P.montant >= EVT_COMPTOIR.garrick.pret) { encaisser(G, P.montant, 'evenements'); lignes.push(`Une bourse glissée sous la porte, et un mot : « Avec les intérêts, ha ha ! Merci, petit${eJ(G)}. — G. » (+${P.montant} p.)`); E.garrickPret = null; }
+    else if (P.montant > 0) { encaisser(G, P.montant, 'evenements'); lignes.push(`Une petite bourse sous la porte : ${P.montant} pièces, pas plus, et un mot : « Je n'ai pas tout. Pardonne-moi, petit${eJ(G)}. — G. »`); E.garrickPret = null; }
+    else if (P.tard > 0) { lignes.push(`Pas de nouvelles de Garrick, ni de tes ${EVT_COMPTOIR.garrick.pret} pièces. Il a dû avoir un empêchement... ou il a honte.`); E.garrickPret = { jour: P.tard, montant: EVT_COMPTOIR.garrick.pret, tard: 0, enRetard: true }; }
+    else { lignes.push(`Pas de nouvelles de Garrick, ni de tes ${EVT_COMPTOIR.garrick.pret} pièces. Tu n'oses pas lui en reparler.`); E.garrickPret = null; }
   }
   if (E.garrickPaquet && G.jour >= E.garrickPaquet.jour) {
-    encaisser(G, E.garrickPaquet.montant, 'evenements');
-    lignes.push(`Le paquet de Garrick a disparu de sous ton comptoir, sans un bruit. À sa place : ${E.garrickPaquet.montant} pièces et une feuille de chêne.`);
+    const K = E.garrickPaquet, C = EVT_COMPTOIR.garrick;
+    if (K.garde) {
+      const a = Math.min(Math.floor(G.argent), C.amendePaquet); if (a > 0) payer(G, a, 'evenements');
+      G.reputation = Math.max(0, G.reputation - C.perteGarde);
+      lignes.push(`À l'aube, la garde de la Confrérie a fouillé sous ton comptoir et trouvé le paquet de Garrick. Amende : ${a} p., et la rue a tout vu.`);
+    } else { encaisser(G, K.montant, 'evenements'); lignes.push(`Le paquet de Garrick a disparu de sous ton comptoir, sans un bruit. À sa place : ${K.montant} pièces et une feuille de chêne.`); }
     E.garrickPaquet = null;
   }
+  if (E.nuitBlanche === G.jour) lignes.push("Tu n'as pas fermé l'œil de la nuit : l'ombre de la fenêtre revenait sans cesse. Le comptoir ouvrira une heure plus tard.");
+  if (E.plainte && G.jour >= E.plainte.jour) {
+    E.plainte = null; G.reputation = Math.max(0, G.reputation - EVT_COMPTOIR.enfants.pertePlainte);
+    lignes.push("La mère Tisserand est venue crier sous ta fenêtre : son chat a été « terrassé » à coups de bâton, et c'était ton baluchon qui armait la troupe. On en parle dans la rue.");
+  }
+  if (E.credit && G.jour >= E.credit.jour) {
+    const K = E.credit; E.credit = null;
+    if (K.envole) lignes.push("Brunhilde n'est jamais repassée payer son cadeau. Au marché, on dit qu'elle est partie avec son elfe, de l'autre côté des montagnes.");
+    else { encaisser(G, K.prix, 'evenements'); lignes.push(`Brunhilde est repassée à l'aube, rouge jusqu'aux oreilles, avec ${K.prix} pièces : « Il a pleuré de joie ! »`); }
+  }
+  if (E.trocVole && G.jour >= E.trocVole.jour) {
+    const K = E.trocVole; E.trocVole = null;
+    const i = G.tresors.findIndex(t => t.id === K.id);
+    if (i >= 0) { noterBilanEvt(G, valeurTresor(G.tresors[i])); G.tresors.splice(i, 1); G.reputation = Math.max(0, G.reputation - EVT_COMPTOIR.troc.perteVole); lignes.push(`Un marchand de passage est venu avec la garde réclamer « ${K.nom} » : un objet qu'on lui avait volé. Tu as dû le rendre, et on te regarde de travers.`); }
+  }
+  if (E.pigeon && E.pigeon.perdu && E.pigeon.jour === G.jour - 1) lignes.push("La caisse du pigeon est vide ce matin. Il est parti dans la nuit, et tu ne le reverras sans doute pas.");
   const v = E.vantard;
   if (v && v.donne && !v.fini && G.jour >= v.retour) {
     v.fini = true;
@@ -535,12 +645,13 @@ function matinEvenementsComptoir(G) {
   if (E.rumeur && E.rumeur.jour === G.jour) {
     const r = E.rumeur, offre = G.etals && G.etals[r.cle] && G.etals[r.cle][r.id];
     E.rumeur = null;
-    if (offre) { offre.prix = Math.max(1, Math.round(offre.prix * 0.65)); offre.qte += 2; lignes.push(`Le passant de l'averse avait raison : ${MARCHANDS[r.cle].nom} brade des ${typeof nomRoyal === 'function' ? nomRoyal(r.id, 2) : nomObjet(r.id).toLowerCase() + 's'} ce matin.`); }
+    if (r.fausse) lignes.push(`Le passant de l'averse s'était trompé : ${MARCHANDS[r.cle].nom} ne brade rien du tout ce matin.`);
+    else if (offre) { offre.prix = Math.max(1, Math.round(offre.prix * 0.65)); offre.qte += 2; lignes.push(`Le passant de l'averse avait raison : ${MARCHANDS[r.cle].nom} brade des ${typeof nomRoyal === 'function' ? nomRoyal(r.id, 2) : nomObjet(r.id).toLowerCase() + 's'} ce matin.`); }
   }
   // (l'enfant gardé au comptoir, et la journée interrompue avant le soir : il a dormi dans l'arrière-boutique)
   if (E.enfant && E.enfant.etat === 'garde' && G.jour > E.enfant.jour) { E.enfant = { ...E.enfant, etat: 'recueilli', retour: E.enfant.jour + EVT_COMPTOIR.enfant.retour[0] }; }
   if (E.parentsFini && E.parentsFini === G.jour - 1) lignes.push("Tu as demandé dans la rue si quelqu'un avait revu le vieux voyageur. Personne ne se souvient de lui. Personne. Comme s'il n'était jamais venu.");
-  if (E.pigeon && E.pigeon.soigne && E.pigeon.jour === G.jour - 1) lignes.push("Le pigeon blessé a passé la nuit dans sa caisse, près du poêle. Au matin, il s'est envolé par la fenêtre entrouverte, en tournant deux fois au-dessus de la rue.");
+  if (E.pigeon && E.pigeon.soigne && !E.pigeon.perdu && E.pigeon.jour === G.jour - 1) lignes.push("Le pigeon blessé a passé la nuit dans sa caisse, près du poêle. Au matin, il s'est envolé par la fenêtre entrouverte, en tournant deux fois au-dessus de la rue.");
   if (E.enfant && E.enfant.etat === 'recueilli' && E.enfant.jour === G.jour - 1) lignes.push(E.enfant.orphelinat ? "Célestin a dormi à l'orphelinat, avec les autres petits. Ce matin, il t'a fait un signe de la main, de l'autre côté de la rue." : "Célestin a dormi dans l'arrière-boutique, roulé dans une couverture. Au matin, il était parti, mais la vaisselle était faite.");
   return lignes;
 }
@@ -570,7 +681,7 @@ function resoudreEvenementSim(G, e) {
     case 'garrick': return evtGarrick(G, e, c);
     case 'anniversaire': return evtAnniversaire(G);
     case 'barde': return evtBarde(G, e, c);
-    case 'revenant': return evtRevenant(G, e, c);
+    case 'revenant': if (e.reproche) revenantEffraie(G); return evtRevenant(G, e, c);
     case 'enfant': { const r = evtEnfant(G, e, c); if (c === 'garder') evtEnfantSoir(G, e, Math.random() < 0.8 ? 'recueillir' : 'laisser'); return r; }
     case 'enfantGrand': return evtEnfantGrand(G);
     case 'averse': return evtAverse(G, e, c);
@@ -582,7 +693,7 @@ function resoudreEvenementSim(G, e) {
     case 'enfants': return evtEnfants(G, e, c);
     case 'amoureux': return evtAmoureux(G, e, c);
     case 'inspecteur': return evtInspecteur(G, e, c);
-    case 'vent': return evtVent(G, Math.floor(Math.random() * 4));
+    case 'vent': return evtVent(G, Math.floor(Math.random() * 5));
     default: return {};
   }
 }
@@ -590,7 +701,7 @@ function resoudreIncidentSim(G, entree) {
   const inc = entree.incident; if (!inc || inc.vu) return {};
   inc.vu = true;
   if (inc.id === 'pickpocket') return evtPickpocket(G, Math.random() < 0.6);
-  if (inc.id === 'chat') return evtChat(G, inc, Math.random() < 0.7 ? 'feliciter' : 'gronder', entree.voyageur);
+  if (inc.id === 'chat') { const r = evtChat(G, inc, Math.random() < 0.6 ? 'feliciter' : 'gronder', entree.voyageur); if (r.part) entree.type = 'fui'; return r; }
   return {};
 }
 

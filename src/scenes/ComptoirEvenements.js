@@ -8,6 +8,7 @@ const SILL_EVT = SOL_COMPTOIR + 7;
 const SILL_GAUCHE_EVT = FENETRE.x + 72, SILL_DROITE_EVT = FENETRE.x + FENETRE.w / 2 + 80;
 // « la broche », « le pot de miel » : les cadeaux du Bazar, avec leur article
 const ARTICLES_CADEAUX_EVT = { miel: 'le pot de miel', tabac: 'le tabac à pipe', broche: 'la broche ciselée', livre: 'le livre ancien', ferACheval: 'le fer à cheval', vin: 'le vin de la Comté', gateau: 'le gâteau aux mûres' };
+const CADEAUX_COURTS_EVT = { miel: 'le miel', tabac: 'le tabac', broche: 'la broche', livre: 'le livre', ferACheval: 'le fer à cheval', vin: 'le vin', gateau: 'le gâteau' };   // (sur un bouton)
 const leCadeauEvt = id => ARTICLES_CADEAUX_EVT[id] || 'le cadeau';   // le rebord de la fenêtre, où l'on pose les objets (comme le carnet)
 
 Object.assign(CounterScene.prototype, {
@@ -74,6 +75,19 @@ Object.assign(CounterScene.prototype, {
     this.tweens.add({ targets: s, x, duration: duree, ease: 'Sine.easeIn', onComplete: () => s.destroy() });
   },
   evtPrenom(nom) { return prenomDe(nom); },
+  // Les règles ont déjà avancé l'heure : on la remet, et l'horloge avance à l'écran (« +½ h »)
+  evtTemps(d, texte = '') { if (!d) return; this.G.heure = heureDuComptoir(this.G) - d; this.avancer(d, texte); },
+  // Un client de la file s'en va (fuirUnClient l'a retiré de G.file) : il fait demi-tour, et les autres resserrent les rangs
+  evtFuite(fuite, duree = 1000) {
+    if (!fuite) return;
+    const [s] = this.fileSprites.splice(fuite.index, 1);
+    if (s && s.active) { this.tweens.killTweensOf(s); s.setVisible(!s.estPigeon); this.evtSortir(s, FENETRE.x - 90, duree); }
+    this.fileSprites.forEach((sprite, i) => {
+      if (i < fuite.index) return;
+      this.tweens.add({ targets: sprite, x: FILE.x - i * FILE.ecart, duration: 900, delay: 500 + (i - fuite.index) * 150, ease: 'Sine.easeInOut', onStart: () => sprite.estPigeon || pasDeMarche(this, sprite, 900) });
+    });
+    this.majFileAttente();
+  },
 
   // --- L'arrivée : un événement à part entière, ou un incident pendant la visite d'un client ---
   arriveeEvenement(entree) {
@@ -121,54 +135,54 @@ Object.assign(CounterScene.prototype, {
 
   // --- 1. Les yeux de ta mère ---
   evt_parents(e) {
-    const G = this.G, J = accordEvt(G, '', 'e');
-    this.evtParchemin('Un vieux voyageur', e.etape === 3 ? 'la troisième visite' : e.etape === 2 ? 'il est revenu' : '');
+    const G = this.G;
+    this.evtParchemin('Un vieux voyageur', ['', '', 'il est revenu', 'encore lui', 'la dernière visite'][e.etape] || '');
     if (e.etape === 1) {
       this.raconter("Un vieil homme s'arrête net devant ta fenêtre. Il te dévisage longtemps, appuyé sur sa canne, sans un mot.");
       this.bouton('« Monsieur ? »', () => {
         this.exprimer('inquiet');
-        this.evtDire("Pardon... Tu as... tu as les yeux de ta mère. (Il recule d'un pas.) Non. Je me trompe sûrement. C'était il y a si longtemps.", 'parents');
+        this.evtDire("Pardon. Tu me rappelles... quelqu'un. (Il fronce les sourcils.) Une chanson, peut-être. Non... ça m'échappe.", 'parents');
         const r = evtParents(G, e);
-        this.choix([r.mendiantLaDit ? '« Le mendiant aussi... »' : '« Ma mère ? »', () => {
-          this.evtDire(`${r.mendiantLaDit ? "« Un mendiant ? Alors je ne suis pas fou. » " : ''}Il ouvre la bouche, puis la referme. « C'était juste là, sur le bout de ma langue... Je reviendrai. Quand ça me reviendra. »`, 'parents');
+        this.choix([r.mendiantLaDit ? '« Le mendiant aussi... »' : '« Quelle chanson ? »', () => {
+          this.evtDire(`${r.mendiantLaDit ? "« Un mendiant ? » (Il sourit sans comprendre.) " : ''}Il fredonne trois notes, s'arrête, secoue la tête. « Envolée. Elle reviendra peut-être. »`, 'parents');
           this.bouton('Le laisser partir', () => this.evtFin());
         }], ['Le laisser partir', () => this.evtFin()]);
       });
       return;
     }
     if (e.etape === 2) {
-      this.exprimer('content');
-      this.evtDire("Me revoilà. Ça m'est revenu en marchant, d'un coup, comme une odeur. Ta mère chantait en reprisant les capes. Ton père, lui, riait trop fort.", 'parents');
-      this.bouton('« Parlez-moi d\'eux ! »', () => {
+      this.exprimer('neutre');
+      this.evtDire("Encore moi. J'ai rêvé d'un lac, cette nuit. De la brume sur l'eau, et de quelqu'un qui chantait en reprisant. (Il te regarde.) Pourquoi je te raconte ça ?", 'parents');
+      const fin = t => { evtParents(G, e); this.evtDire(t, 'parents'); this.bouton('« À bientôt, monsieur. »', () => this.evtFin()); };
+      this.choix(['« Qui chantait ? »', () => { this.exprimer('inquiet'); fin("Je ne sais plus. La chanson s'arrêtait toujours au même endroit, je crois... (Il se frotte le front.) Pardonne un vieux fou."); }],
+        ['« Je dois servir. »', () => fin("Bien sûr, bien sûr. (Il s'écarte de la fenêtre, sans cesser de fredonner.)")]);
+      return;
+    }
+    if (e.etape === 3) {
+      this.exprimer('inquiet');
+      this.evtDire("Le ciel était orange, cette nuit-là. Ça m'est revenu. Quelqu'un m'a tendu un paquet de langes, tout chaud... et puis plus rien.", 'parents');
+      this.bouton('« Qui ? »', () => {
+        evtParents(G, e);
         this.exprimer('neutre');
-        this.evtDire("Ils étaient de ceux qui refusaient d'oublier. Il y avait un village, au bord d'un lac... Aucune carte ne le montre plus. (Il se frotte le front.)", 'parents');
-        this.bouton(`« Pourquoi m'ont-ils laissé${J} ? »`, () => {
-          evtParents(G, e);
-          this.exprimer('inquiet');
-          this.evtDire(`Laissé${J} ? Non... Ils t'ont caché${J}, la nuit où le ciel est devenu orange. Mais chaque fois que je quitte cette rue, j'oublie un peu plus. Retiens-le pour moi.`, 'parents');
-          this.bouton('« Je m\'en souviendrai. »', () => this.evtFin());
-        });
+        this.evtDire("Les visages, je les ai perdus. (Il fixe tes mains, longtemps.) Le paquet était si léger. Je me demande ce qu'il est devenu.", 'parents');
+        this.bouton('...', () => this.evtFin());
       });
       return;
     }
-    // la troisième visite : la vérité, la berceuse, et il s'efface
-    this.evtDire("Cette fois, je suis venu avant d'oublier. J'ai écrit sur ma main, tu vois ? Écoute-moi bien, et ne m'interromps pas.", 'parents');
-    this.bouton('« Je vous écoute. »', () => {
-      this.exprimer('inquiet');
-      this.evtDire(`Ils ne t'ont pas abandonné${J}. Ils se sont battus contre le Grand Sage, et ils ont perdu. Leur dernier mot, c'était ton nom.`, 'parents');
-      this.bouton('...', () => {
-        evtParents(G, e);
-        this.evtPoser('evt_berceuse', SILL_GAUCHE_EVT);
-        this.exprimer('neutre');
-        this.evtDire("(Il pose sur le comptoir une vieille page pliée en quatre.) Ta mère la chantait le soir. Je l'ai gardée toute ma vie sans savoir pourquoi. Maintenant, je sais.", 'parents');
-        this.bouton('Prendre la berceuse', () => {
-          for (const o of this.evtObjets) if (o.texture && o.texture.key === 'evt_berceuse') this.tweens.add({ targets: o, y: o.y + 30, alpha: 0, duration: 400 });
-          this.raconter("Tu glisses la berceuse contre ton cœur. Quand tu relèves les yeux, le vieil homme s'éloigne déjà... et la rue semble l'effacer à chaque pas.");
-          this.bouton('...', null);
-          this.time.delayedCall(900, () => {
-            this.partirPar(FENETRE.x - 80);
-            this.time.delayedCall(700, () => this.tweens.add({ targets: this.perso, alpha: 0, duration: 1100 }));
-          });
+    // la quatrième visite : il ne reviendra plus ; il laisse la berceuse, et la rue l'efface
+    this.exprimer('neutre');
+    this.evtDire("Je ne reviendrai plus. Chaque fois que je quitte cette rue, j'en oublie un peu plus. Bientôt, j'oublierai le chemin.", 'parents');
+    this.bouton('« Ne dites pas ça. »', () => {
+      evtParents(G, e);
+      this.evtPoser('evt_berceuse', SILL_GAUCHE_EVT);
+      this.evtDire("(Il pose sur le comptoir une vieille page pliée en quatre.) Je l'ai gardée toute ma vie sans savoir pourquoi. Elle est à toi, je crois.", 'parents');
+      this.bouton('Prendre la page', () => {
+        for (const o of this.evtObjets) if (o.texture && o.texture.key === 'evt_berceuse') this.tweens.add({ targets: o, y: o.y + 30, alpha: 0, duration: 400 });
+        this.raconter("Une berceuse, d'une écriture fine. Quand tu relèves les yeux, le vieil homme s'éloigne déjà... et la rue semble l'effacer à chaque pas.");
+        this.bouton('...', null);
+        this.time.delayedCall(900, () => {
+          this.partirPar(FENETRE.x - 80);
+          this.time.delayedCall(700, () => this.tweens.add({ targets: this.perso, alpha: 0, duration: 1100 }));
         });
       });
     });
@@ -187,16 +201,16 @@ Object.assign(CounterScene.prototype, {
         this.evtDire(suite, P);
         const quoi = (G.stock.bandage || 0) > 0 ? 'un bandage' : (G.stock.potion || 0) > 0 ? 'une potion' : 'une compresse';
         this.choix([`Le soigner (${quoi})`, () => {
-          const r = evtGarrick(G, e, 'soigner'); this.majStock();
+          const r = evtGarrick(G, e, 'soigner'); this.majStock(); this.evtTemps(r.duree, 'Garrick');
           this.exprimer('content');
-          finir(`(${r.soin === 'compresse' ? 'Une compresse d\'eau froide, bien serrée.' : r.soin === 'potion' ? 'Une gorgée de potion, et le genou se dénoue.' : 'Tu serres le bandage autour de son genou.'}) Ha ! Tu as de meilleures mains que tous les rebouteux de la Comté.`);
-        }], ['« Va voir l\'apothicaire. »', () => { evtGarrick(G, e, 'apothicaire'); this.exprimer('neutre'); finir("L'apothicaire... Oui, oui. (Il repart en boitant, vexé comme un vieux chat.)"); }]);
+          finir(`(${r.soin === 'compresse' ? 'Une compresse d\'eau froide, bien serrée.' : r.soin === 'potion' ? 'Une gorgée de potion, et le genou se dénoue.' : 'Tu serres le bandage autour de son genou.'}) Ha ! De meilleures mains que tous les rebouteux. Pardon pour l'attente, vous autres !`);
+        }, EVT_COMPTOIR.garrick.soinDuree], ['« Va voir l\'apothicaire. »', () => { evtGarrick(G, e, 'apothicaire'); this.exprimer('neutre'); finir("L'apothicaire... Oui, oui. (Il repart en boitant, vexé comme un vieux chat.)"); }]);
       });
       return;
     }
     if (e.etape === 2) {
       if (camp === 'mal') {
-        this.evtDire("J'ai une dette envers les Bannis : un service. Garde ce paquet sous ton comptoir cette nuit. Ne l'ouvre pas, et ne pose pas de questions.", P);
+        this.evtDire("J'ai une dette envers les Bannis : un service. Garde ce paquet sous ton comptoir cette nuit. Ne l'ouvre pas. Et si la garde passe... non, elle ne passera pas.", P);
         this.choix(['Garder le paquet', () => { evtGarrick(G, e, 'paquet'); this.exprimer('content'); finir("(Il glisse sous ton comptoir un paquet ficelé, lourd comme une pierre.) Tu es quelqu'un de bien. Même si les tabards bleus diraient le contraire."); }, null, 'mal'],
           ['Refuser', () => { evtGarrick(G, e, 'refuser'); finir("Bien. Tu as raison de te méfier. Même de moi, ha ha."); }]);
         return;
@@ -212,7 +226,7 @@ Object.assign(CounterScene.prototype, {
     }
     // la lettre de son passé
     const lettre = this.evtPoser('evt_lettreGarrick', SILL_GAUCHE_EVT);
-    const lire = suite => this.lettreEvt("G., ceux du lac comptent toujours sur toi. Ne laisse pas oublier. Ne les laisse pas tout effacer, même nos noms. Garde l'enfant loin de tout ça, tant qu'il le faudra. — A.", suite);
+    const lire = suite => this.lettreEvt("G., la chanson du lac ne doit pas s'éteindre. Garde-la, même si tout le monde l'oublie. — A.", suite);
     if (camp === 'bien') {
       this.evtDire("Une lettre de mon passé m'a retrouvé. Si la garde la trouve chez moi... Brûle-la pour moi. Sans la lire.", P);
       this.choix(['La brûler sans la lire', () => {
@@ -220,11 +234,11 @@ Object.assign(CounterScene.prototype, {
         this.bruler(lettre);
         this.exprimer('content');
         finir("(Le papier se tord dans la flamme de la bougie. Garrick ferme les yeux.) Merci. Un jour, je te dirai ce qu'il y avait dedans.");
-      }], ['La lire', () => lire(() => { evtGarrick(G, e, 'lire'); this.exprimer('inquiet'); finir("Tu l'as lue. (Un long silence.) Alors tu sais qu'il y avait des gens, avant. Garde ça pour toi, petit. Promis ?"); })]);
+      }], ['La lire', () => lire(() => { evtGarrick(G, e, 'lire'); this.exprimer('inquiet'); finir("Tu l'as lue. (Un long silence.) Ce ne sont que les mots d'un vieil ami. Oublie-les, tu veux bien ?"); })]);
       return;
     }
     this.evtDire("Une lettre d'un vieil ami, mort depuis longtemps. Mes yeux ne sont plus ce qu'ils étaient... Tu veux bien me la lire ?", P);
-    this.choix(['La lire à voix haute', () => lire(() => { evtGarrick(G, e, 'lire'); this.exprimer('neutre'); finir("« Ne laisse pas oublier... » Il disait toujours ça. (Garrick replie la lettre et la range contre son cœur.)"); })],
+    this.choix(['La lire à voix haute', () => lire(() => { evtGarrick(G, e, 'lire'); this.exprimer('neutre'); finir("« La chanson du lac... » Il la fredonnait toujours, et toujours faux. (Garrick replie la lettre et la range contre son cœur.)"); })],
       ['« Garde-la pour toi. »', () => { evtGarrick(G, e, 'garder'); finir("Tu as raison. Certaines choses se lisent seul. (Il reprend la lettre, doucement.)"); }]);
   },
   // Une lettre ouverte en grand, sur un parchemin ; un clic la referme
@@ -298,7 +312,8 @@ Object.assign(CounterScene.prototype, {
         const fumee = this.evtGarder(this.add.image(flamme.x, flamme.y - 8, 'halo').setScale(0.15).setTint(0xb0a89a).setAlpha(0.6).setDepth(3.3));
         this.tweens.add({ targets: fumee, y: fumee.y - 40, scale: 0.5, alpha: 0, duration: 1400 });
         this.evtConfettis();
-        this.dire('Bon anniversaire au comptoir ! Et à l\'année prochaine !', hote, this.buste ? this.buste.personne.nom : null);
+        this.evtTemps(EVT_COMPTOIR.anniversaire.duree, 'la fête');
+        this.dire('Bon anniversaire au comptoir ! On t\'a pris une heure, mais ça valait le coup, non ?', hote, this.buste ? this.buste.personne.nom : null);
         this.bouton('« Merci à tous ! »', () => {
           for (const s of this.evtObjets.filter(o => o.texture && o.texture.key.startsWith('corps_'))) this.evtSortir(s, s.x < 480 ? FENETRE.x - 60 : FENETRE.x + FENETRE.w + 60, 1700);
           this.evtFin();
@@ -391,7 +406,11 @@ Object.assign(CounterScene.prototype, {
         this.tweens.add({ targets: lueur, alpha: 0.6, duration: 1400 });
         this.tweens.add({ targets: lueur, scaleX: 2.8, scaleY: 2.35, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 1400 });
       }
-      this.raconter(fantome ? `Les bougies vacillent. Dans la brume, une silhouette pâle comme la lune se dessine derrière la vitre : ${prenom}.`
+      // (mort par ta faute : un client de la file prend peur et s'enfuit, avant même qu'elle parle)
+      const fuite = e.reproche ? revenantEffraie(G) : null;
+      if (fuite) this.evtPlus(700, () => this.evtFuite(fuite, 900));
+      this.raconter(fuite ? `Les bougies vacillent. Une silhouette pâle se dessine derrière la vitre : ${prenom}. Dans la file, ${prenomDe(fuite.voyageur.nom)} pousse un cri et s'enfuit.`
+        : fantome ? `Les bougies vacillent. Dans la brume, une silhouette pâle comme la lune se dessine derrière la vitre : ${prenom}.`
         : `Une silhouette sort de la brume, et ton cœur s'arrête... Mais ce n'est pas un fantôme : c'est ${prenom}, enveloppé${J} de brouillard.`);
       const nom = `${d.nom} — ${fantome ? 'une ombre' : 'sorti' + J + ' de la brume'}`;
       const parle = t => this.dire(t, nom, d.nom);
@@ -400,8 +419,8 @@ Object.assign(CounterScene.prototype, {
           parle(e.voulu ? `Tu savais, n'est-ce pas ? Ce que tu avais glissé dans mon baluchon. Je ne l'ai compris que là-bas, trop tard.`
             : `Mon baluchon était si léger... Il me manquait tant de choses, là-bas. Pourquoi m'as-tu laissé${J} partir comme ça ?`);
           const fin = t => { this.raconter(t); this.bouton('...', () => this.departOmbre(true)); };
-          this.choix(['Demander pardon', () => { evtRevenant(G, e, 'pardon'); this.exprimer('neutre'); fin("L'ombre te regarde longtemps. « Allume une lanterne pour moi, cette nuit. Peut-être que ça suffira. » Puis elle se défait dans la brume."); }],
-            ['Se taire', () => { evtRevenant(G, e, 'silence'); fin("« Le silence, encore. » L'ombre se détourne, et la brume l'emporte."); }]);
+          this.choix(['Demander pardon', () => { evtRevenant(G, e, 'pardon'); this.exprimer('neutre'); fin("« Allume une lanterne pour moi, et veille-la jusqu'à l'aube. » Tu le feras. (Demain, le comptoir ouvrira une heure plus tard.)"); }],
+            ['Se taire', () => { const r = evtRevenant(G, e, 'silence'); fin(`« Le silence, encore. » L'ombre se détourne. Dans la rue, on a tout vu, et l'on murmure déjà. (Réputation −${String(r.murmures).replace('.', ',')})`); }]);
           return;
         }
         parle(fantome ? "N'aie pas cette tête-là. Tu m'avais bien équipé. Ce qui m'est arrivé là-bas, personne n'y pouvait rien. Je voulais te le dire, une fois."
@@ -434,7 +453,7 @@ Object.assign(CounterScene.prototype, {
     this.bouton('« Bonjour, toi. »', () => {
       this.evtDire("Vous avez pas vu ma maman ? Elle m'a dit d'attendre près de la fontaine, et puis... et puis je sais plus où elle est.", 'enfant');
       this.choix(['Le garder au comptoir', () => {
-        evtEnfant(G, e, 'garder');
+        evtEnfant(G, e, 'garder'); this.evtTemps(EVT_COMPTOIR.enfant.duree, 'Célestin');
         this.raconter("Tu lui fais une place sur le petit tonneau, à côté de ta fenêtre. « Attends-la ici. Elle passera forcément. » Il hoche la tête, très sérieux.");
         // il descend du rebord, et va s'asseoir sur le tonneau ; il y restera jusqu'au soir
         this.bouton('...', null);
@@ -448,7 +467,7 @@ Object.assign(CounterScene.prototype, {
           this.majFileAttente();
           this.time.delayedCall(900, () => this.voyageurSuivant());
         } });
-      }], ['Appeler la garde', () => {
+      }, EVT_COMPTOIR.enfant.duree], ['Appeler la garde', () => {
         evtEnfant(G, e, 'garde');
         this.exprimer('inquiet');
         this.evtDire("La garde ? (Il renifle, puis hoche la tête.) D'accord... (Un garde le prend par la main et l'emmène vers la fontaine.)", 'enfant');
@@ -518,13 +537,13 @@ Object.assign(CounterScene.prototype, {
       this.exprimer('inquiet');
       this.evtDire('Brrr ! Quel temps de chien. Vous permettez que je m\'abrite un instant ? Je ne dérangerai pas, promis.', 'averse');
       this.choix(['Lui offrir une tisane', () => {
-        const r = evtAverse(G, e, 'tisane');
+        const r = evtAverse(G, e, 'tisane'); this.evtTemps(r.duree, 'la tisane');
         const tasse = this.evtPoser('evt_tasse', SILL_GAUCHE_EVT, { echelle: 2.2 });
         this.vapeurEvt(tasse);
         this.exprimer('content');
         this.evtDire(`(Il serre la tasse entre ses mains gelées.) Merci. Tenez, pour la peine, un bruit qui court : ${r.rumeur.texte.charAt(0).toLowerCase() + r.rumeur.texte.slice(1)}`, 'averse');
         this.bouton('« Merci du conseil. »', () => this.evtFin());
-      }], ['Le laisser s\'abriter', () => {
+      }, EVT_COMPTOIR.averse.duree], ['Le laisser s\'abriter', () => {
         evtAverse(G, e, 'rien');
         this.raconter("Il attend sans un mot que la pluie se calme, puis repart en courant, la capuche sur les yeux.");
         this.bouton('...', () => this.evtFin());
@@ -581,16 +600,18 @@ Object.assign(CounterScene.prototype, {
       main.disableInteractive();
       const r = evtPickpocket(G, false);
       main.setTexture('evt_main1');
-      Son.jouer('pieces');
+      Son.jouer(r.objet ? 'glisse' : 'pieces');
+      if (r.objet) this.majStock();
       for (let k = 0; k < Math.min(5, Math.ceil(r.perte / 3)); k++) {
         const pc = this.add.image(col.x + (Math.random() - 0.5) * 10, col.y, 'pieceFace').setScale(1.6).setDepth(59);
         this.tweens.add({ targets: pc, x: xb + 4, y: yb - 40, duration: 300, delay: k * 60, onComplete: () => pc.destroy() });
       }
       this.bourse.maj(G.argent);
       this.tweens.add({ targets: main, y: yb + 80, duration: 400, delay: 350, ease: 'Quad.easeIn' });
-      this.raconter(r.perte ? `Une petite main a filé sous le comptoir... avec ${r.perte} pièces de ta besace ! Le temps de crier, le gamin a disparu au coin de la rue.` : 'Une petite main a fouillé ta besace... vide. Le gamin repart bredouille.');
+      this.raconter(r.objet ? `Une petite main a filé sous le comptoir... et ${LARCINS_EVT[r.objet] || 'un objet'} a disparu de ta réserve ! Le temps de crier, le gamin a tourné au coin de la rue.`
+        : r.perte ? `Une petite main a filé sous le comptoir... avec ${r.perte} pièces de ta besace ! Le temps de crier, le gamin a disparu au coin de la rue.` : 'Une petite main a fouillé ta besace... vide. Le gamin repart bredouille.');
       this.exprimer('inquiet');
-      suite(r.perte ? '« Au voleur !... »' : undefined);
+      suite(r.perte || r.objet ? '« Au voleur !... »' : undefined);
     });
   },
 
@@ -598,7 +619,7 @@ Object.assign(CounterScene.prototype, {
   evt_troc(e) {
     const G = this.G, o = objetDuTroc(G, e);
     this.evtParchemin('Un voyageur fauché', 'il propose un troc');
-    this.evtDire("Je n'ai pas un sou, je vous le dis tout de suite. Mais j'ai ceci. (Il pose un objet sur le comptoir.)", 'troc');
+    this.evtDire("Je n'ai pas un sou, je vous le dis tout de suite. Mais j'ai ceci. (Il pose un objet sur le comptoir, et jette un coup d'œil derrière lui.)", 'troc');
     const objet = this.evtPoser('evt_troc' + (e.objet % OBJETS_TROC.length), SILL_GAUCHE_EVT, { echelle: 2.4 });
     this.bouton(`« Qu'est-ce que c'est ? »`, () => {
       this.evtDire(`${o.nom}. ${o.dit} Contre un baluchon de route, ça vous va ? Deux rations, une gourde, une torche.`, 'troc');
@@ -608,7 +629,8 @@ Object.assign(CounterScene.prototype, {
         this.tweens.add({ targets: objet, y: objet.y + 30, alpha: 0, duration: 400 });
         const liste = Object.entries(r.donnes || {}).map(([id, n]) => `${n} ${nomObjet(id).toLowerCase()}${n > 1 ? 's' : ''}`).join(', ');
         this.exprimer('content');
-        this.raconter(`Tu lui prépares un baluchon (${liste}). L'objet rejoint ton atelier : « ${o.nom} », environ ${valeurTresor(r.tresor, ETATS.length - 1)} p. une fois remis à neuf.`);
+        this.raconter(r.casse ? `Tu lui prépares un baluchon (${liste}). En rangeant l'objet, un craquement : « ${o.nom} » était bien plus abîmé qu'il n'y paraissait.`
+          : `Tu lui prépares un baluchon (${liste}). L'objet rejoint ton atelier : « ${o.nom} », environ ${valeurTresor(r.tresor, ETATS.length - 1)} p. une fois remis à neuf.`);
         this.bouton('« Bonne route ! »', () => this.evtFin());
       } : null], ['« Non merci. »', () => {
         evtTroc(G, e, 'refuser');
@@ -652,12 +674,14 @@ Object.assign(CounterScene.prototype, {
     this.bouton('...', () => {
       this.evtDire('Hm ? Oh, je regarde seulement. Continuez, continuez. (Il tourne une page.)', 'espion');
       this.choix(['« Qu\'écrivez-vous là ? »', () => {
-        evtEspion(G, e, 'demasquer');
+        const r = evtEspion(G, e, 'demasquer');
         this.tweens.killTweensOf(carnet);
         this.exprimer('inquiet');
         this.raconter("Tu tends la main vers le carnet. Il pâlit : sur la couverture, l'œil d'un paon, le sceau du Comptoir Agréé. Tous tes prix y sont notés.");
         this.bouton('« Démasqué ! »', () => {
-          this.dire('Je... Monsieur Belhomme voulait juste... (Il ramasse son carnet et file sans demander son reste.) Le voisin attirera un client de moins.', NOMS_EVT.espionDemasque, this.buste ? this.buste.personne.nom : null);
+          if (r.scandale) this.exprimer('fache');
+          this.dire(r.scandale ? `Moi, un espion ? (Il crie, pour que toute la rue l'entende.) On accuse les honnêtes clients, dans cette boutique ! (Réputation −${String(EVT_COMPTOIR.espion.perteScandale).replace('.', ',')})`
+            : 'Je... Monsieur Belhomme voulait juste... (Il ramasse son carnet et file sans demander son reste.) Le voisin attirera un client de moins.', NOMS_EVT.espionDemasque, this.buste ? this.buste.personne.nom : null);
           this.tweens.add({ targets: carnet, x: carnet.x - 60, alpha: 0, duration: 400 });
           this.bouton('...', () => this.evtFin());
         });
@@ -687,7 +711,7 @@ Object.assign(CounterScene.prototype, {
       this.tweens.add({ targets: pg, scaleX: { from: 2.6, to: 2.5 }, duration: 120, yoyo: true, repeat: -1, delay: 500 });
       this.raconter('Un pigeon s\'abat sur le rebord de ta fenêtre, une aile pendante. Il tremble de tout son corps et ne peut plus repartir.');
       this.choix(['Le soigner', () => {
-        const r = evtPigeon(G, e, 'soigner'); this.majStock();
+        const r = evtPigeon(G, e, 'soigner'); this.majStock(); this.evtTemps(EVT_COMPTOIR.pigeon.duree, 'le pigeon');
         this.tweens.killTweensOf(pg);
         const caisse = this.evtGarder(this.add.image(rebord.x, SILL_EVT, 'evt_caisse').setOrigin(0.5, 1).setScale(2.2).setDepth(12.1).setAlpha(0), true);
         this.tweens.add({ targets: caisse, alpha: 1, duration: 300 });
@@ -695,7 +719,7 @@ Object.assign(CounterScene.prototype, {
         this.tweens.add({ targets: pg, angle: { from: -2, to: 2 }, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         this.raconter(`Tu lui bandes l'aile avec ${r.soin === 'bandage' ? 'un bandage de ta réserve' : 'un bout de chiffon propre'}, et tu l'installes dans une caisse garnie de paille, au chaud.`);
         this.bouton('...', () => { this.bouton('...', null); this.voyageurSuivant(); });
-      }], ['Le laisser repartir', () => {
+      }, EVT_COMPTOIR.pigeon.duree], ['Le laisser repartir', () => {
         evtPigeon(G, e, 'laisser');
         this.tweens.killTweensOf(pg);
         this.raconter('Le pigeon finit par se relever. Il repart en voletant de travers, au ras des toits.');
@@ -770,11 +794,10 @@ Object.assign(CounterScene.prototype, {
       finir("(Tu cueilles une fleur au pot de la fenêtre.) Oh... Elle est parfaite. Il va adorer. (Elle la cache dans sa manche, toute rouge.)");
     };
     if (id) {
-      const prix = Math.round(CADEAUX[id].prix * EVT_COMPTOIR.amoureux.majoration);
-      this.choix([`Lui vendre ${leCadeauEvt(id)} (${prix} p.)`, () => {
-        const r = evtAmoureux(G, e, 'cadeau'); this.dessinerPieces();
+      this.choix([`À crédit : ${CADEAUX_COURTS_EVT[id] || leCadeauEvt(id)}`, () => {
+        const r = evtAmoureux(G, e, 'cadeau');
         this.exprimer('content');
-        finir(`(Elle cache ${leCadeauEvt(r.cadeau)} sous sa cape et te glisse ${r.prix} pièces.) Merci, merci ! Il ne se doutera de rien.`);
+        finir(`(Elle cache ${leCadeauEvt(r.cadeau)} sous sa cape.) Je n'ai pas un sou sur moi... Je repasse demain avec ${r.prix} pièces, promis !`);
       }], ['Lui offrir une fleur', fleur]);
     } else this.choix(['Lui offrir une fleur', fleur], ['« Je n\'ai rien, désolé. »', () => { evtAmoureux(G, e, 'rien'); finir('Tant pis. Je lui chanterai une chanson naine. Il déteste ça, mais ça le fait rire.'); }]);
   },
@@ -788,7 +811,11 @@ Object.assign(CounterScene.prototype, {
     this.evtDire('Maître Ambroise Trébuchet, inspecteur des poids et mesures du bourg. Contrôle de routine : vos balances, vos poids, et votre réserve.', 'inspecteur');
     const fin = (t, expr = 'neutre') => { this.exprimer(expr); this.evtDire(t, 'inspecteur'); this.bouton('« Au revoir, Maître. »', () => this.evtFin()); };
     if (!caches.length) {
-      this.choix(['Ouvrir la réserve', () => { evtInspecteur(G, e, 'ouvrir'); peser(); fin(`(Il pèse, compte, soupèse.) Tout est juste. (Il appose son cachet sur ton comptoir : « Poids certifiés », réputation +${String(C.certifie).replace('.', ',')}.)`, 'content'); }],
+      this.choix(['Ouvrir la réserve', () => {
+        const r = evtInspecteur(G, e, 'ouvrir'); peser();
+        if (r.erreur) { this.bourse.maj(G.argent); return fin(`(Il pèse, compte, soupèse... et fronce les sourcils.) Votre balance penche d'un grain. C'est la règle : ${r.amende} p. d'amende.`, 'fache'); }
+        fin(`(Il pèse, compte, soupèse.) Tout est juste. (Il appose son cachet sur ton comptoir : « Poids certifiés », réputation +${String(C.certifie).replace('.', ',')}.)`, 'content');
+      }],
         ['« Revenez demain. »', () => { evtInspecteur(G, e, 'refuser'); fin(`Revenez demain ? (Il note quelque chose dans son registre.) « Récalcitrant. » (Réputation −${String(C.recalcitrant).replace('.', ',')}.)`, 'fache'); }]);
       return;
     }
@@ -839,15 +866,23 @@ Object.assign(CounterScene.prototype, {
           rit: inc.trouvaille === 'souris' ? 'Ha ha ! Un vrai chasseur ! Il a bon goût, ton chat.' : 'Ha ha ! C\'est pour moi ? Quel drôle de petit marchand !',
           touche: 'Oh ! C\'est pour moi ? Comme c\'est gentil... Merci, mon beau.' }[reaction], this.nomAvecRelation(v.nom), v.nom);
         const suite = choix => {
-          const r = evtChat(G, inc, choix, v); this.dessinerPieces();
-          this.raconter(choix === 'feliciter' ? `${nomChat} ronronne, très fier de ${c.femelle ? 'elle' : 'lui'}.${r.pieces ? ` Le bouton d'argent finit dans ta besace (+${r.pieces} p.).` : ''}` : `${nomChat} te lance un regard vexé et saute par terre${inc.trouvaille === 'souris' ? ', sa souris dans la gueule' : ''}.`);
+          const r = evtChat(G, inc, choix, v); this.dessinerPieces(); if (r.casse) this.majStock();
+          const casse = r.casse ? ` En sautant, ${c.femelle ? 'elle' : 'il'} a fait tomber ${{ potion: 'une potion', antidote: 'un antidote', gourde: 'une gourde' }[r.casse]} de ta réserve : perdue.` : '';
+          this.raconter((choix === 'feliciter' ? `${nomChat} ronronne, très fier${c.femelle ? 'e' : ''}.${r.pieces ? ` Le bouton d'argent finit dans ta besace (+${r.pieces} p.).` : ''}` : `${nomChat} te lance un regard vexé et saute par terre${inc.trouvaille === 'souris' ? ', sa souris dans la gueule' : ''}.`) + casse);
+          if (r.casse) Son.jouer('coup');
           queue.remove();
           this.tweens.add({ targets: objet, alpha: 0, duration: 300 });
           chat.setFlipX(true);
           const pas2 = this.time.addEvent({ delay: 110, loop: true, callback: () => chat.active && chat.setTexture(pref + '_m' + (++k % 4)) });
           this.evtMinuteries.push(pas2);
           this.tweens.add({ targets: chat, x: FENETRE.x - 40, duration: 1700, onComplete: () => { pas2.remove(); chat.destroy(); } });
-          this.bouton('Revenir au client', () => this.evtSur(() => this.arrivee(entree)));
+          this.bouton('Revenir au client', () => {
+            if (!r.part) return this.evtSur(() => this.arrivee(entree));
+            // féliciter le chat devant un client dégoûté : il s'en va, sans son baluchon
+            this.exprimer('fache');
+            this.dire("Féliciter cette bête ?! Merci bien. Je trouverai mon baluchon ailleurs, dans une boutique sans souris.", this.nomAvecRelation(v.nom), v.nom);
+            this.bouton('...', () => this.evtFin());
+          });
         };
         this.choix([`Féliciter ${nomChat}`, () => suite('feliciter')], [`Gronder ${nomChat}`, () => suite('gronder')]);
       });
@@ -906,7 +941,8 @@ Object.assign(CounterScene.prototype, {
       const r = evtVent(G, rates); this.bourse.maj(G.argent);
       bloque.destroy();
       bandeau.setText(`${attrapes} / ${n}`).setColor(rates ? '#8a2a1a' : '#2f6a2a'); this.sousTitre.setText(rates ? 'papiers rattrapés' : 'tout est rattrapé !');
-      this.raconter(rates ? `${rates} papier${rates > 1 ? 's se sont envolés' : " s'est envolé"} par la fenêtre : il faudra racheter du papier et de l'encre (−${r.perte} p.).`
+      this.raconter(r.lettre ? `${rates} papiers se sont envolés par la fenêtre (−${r.perte} p.). Et parmi eux, la lettre de ${prenomDe(r.lettre)} : elle restera sans réponse.`
+        : rates ? `${rates} papier${rates > 1 ? 's se sont envolés' : " s'est envolé"} par la fenêtre : il faudra racheter du papier et de l'encre (−${r.perte} p.).`
         : `Tu as tout rattrapé ! Dans la rue, un passant qui a tout vu applaudit. (Réputation +${String(C.bravo).replace('.', ',')})`);
       this.bouton('Remettre de l\'ordre', () => { this.bouton('...', null); this.voyageurSuivant(); });
     };
