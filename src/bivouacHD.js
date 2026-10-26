@@ -108,6 +108,7 @@ Object.assign(StoryScene.prototype, {
     // les pieds vers le feu, la tête de l'autre côté (pas dans les braises)
     const feu = [...(this.decor && this.decor.list || []), ...this.children.list].find(o => o.active && o.texture && o.texture.key === 'feuCampHD');
     if (feu) p.setFlipX(feu.x < p.x);
+    if (feu && !this.rapide) Son.jouer('feuDeCamp', { duree: 4 });   // (v1.64 : les braises crépitent pendant qu'il s'endort)
     this.poserRecit('aGenoux');
     await this.attendre(260);
     this.poserRecit('dortBivouac');

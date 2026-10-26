@@ -365,6 +365,8 @@ function moutonVivant(scene, plan, x, y, { agneau = false, mere = null, piquet =
   };
   const brouter = (ms, ensuite) => { let k = 0; const fin = scene.time.now + ms; const b = () => { if (scene.time.now > fin) { poser('debout'); return apres(300, ensuite); } poser(k++ % 2 ? 'broute2' : 'broute1'); apres(300, b); }; b(); };
   const beler = ensuite => {
+    // (v1.64) on l'entend : la brebis ou l'agneau (pas plus d'un bêlement toutes les 4 s pour tout le pré, et rien pendant « Passer »)
+    if (typeof Son !== 'undefined' && Son.jouerParfois && !scene.rapide && !scene.finRecit) Son.jouerParfois('moutons', 4000, { un: agneau ? 'agneau' : 'brebis', parfois: 'moutons' });
     poser('bele1'); apres(220, () => poser('bele2')); apres(520, () => poser('bele1')); apres(760, () => { poser('debout'); apres(400, ensuite); });
     const t = dansPlan(plan, scene.add.text(m.x + (m.flipX ? 14 : -14), y - m.displayHeight - 4, 'Bêêê !', style(11, '#3b2410', { fontStyle: 'bold italic', backgroundColor: '#fff8e8', padding: { x: 4, y: 1 } })).setOrigin(0.5, 1));
     scene.tweens.add({ targets: t, alpha: 0, delay: 900, duration: 300, onComplete: () => t.destroy() });

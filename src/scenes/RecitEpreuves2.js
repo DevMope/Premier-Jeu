@@ -510,8 +510,7 @@ Object.assign(SCENES_EPREUVES, {
       this.ombreNuit.ajouter(bout);
       this.lueur(bout, 0, 0xffb040, 0.45);
       M.torche = { o, bout };
-      this.onomatopee(o.x, o.y - 80, 'FWOUF !', '#ffc060');
-      Son.jouer('feu');
+      this.onomatopee(o.x, o.y - 80, 'FWOUF !', '#ffc060');   // (v1.64 : le mot joue la torche qui prend)
       await this.animer({ targets: bout, r: reussie ? 300 : 170, duration: 600, ease: 'Back.easeOut' });
       await this.attendre(300);
     },

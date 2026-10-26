@@ -181,6 +181,7 @@ function lancerJeu() {
     // Un petit son de passage quand on change de lieu (façon Pokémon) : une porte qui s'ouvre
     // à l'intérieur, l'air du dehors quand on sort
     const DEHORS = new Set(['Marche', 'Facade', 'Carte', 'Rue', 'Nymphe']);
+    const PORTE_LOURDE = new Set(['Banque', 'Forge', 'Mages']);
     const SANS_PASSAGE = new Set(['Titre', 'Intro', 'IntroHistoire', 'Recit', 'Faillite', 'Renovation', 'Hud']);
     // (v0.95) le journal de bord : chaque page ouverte, mise en pause, reprise, fermée
     for (const s of window.jeu.scene.scenes) {
@@ -192,7 +193,12 @@ function lancerJeu() {
     }
     for (const s of window.jeu.scene.scenes) {
       if (SANS_PASSAGE.has(s.scene.key)) continue;
-      s.events.on('create', () => Son.jouer(DEHORS.has(s.scene.key) ? 'passageDehors' : 'passage'));
+      // (v1.64) la banque de Thorgrim, la forge et l'atelier des Mages s'ouvrent par une lourde porte (la forge vue
+      // du bureau n'est qu'un carnet : le petit son de passage)
+      s.events.on('create', () => {
+        const lourde = PORTE_LOURDE.has(s.scene.key) && !(s.scene.key === 'Forge' && s.sys.settings.data && s.sys.settings.data.appelant === 'Bureau');
+        Son.jouer(lourde && SONS.porteLourde ? 'porteLourde' : DEHORS.has(s.scene.key) ? 'passageDehors' : 'passage');
+      });
     }
     const reveil = () => { Son.demarrer(); Son.reprendre(); };
     // (Safari sur iPad n'accepte de lancer le son que sur la fin d'un toucher ou un clic, pas sur

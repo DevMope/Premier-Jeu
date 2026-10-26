@@ -12,6 +12,10 @@ const RANGEE_RECIT = 349;
 class StoryScene extends Cinematique {
   // (v0.84) la musique du récit, retenue : elle reste la même quand on revient du menu pause
   musique(theme) { this.musiqueVoulue = theme; Son.ambiance(theme); }
+  // (v1.64) la musique de la contrée selon le moment : 'route', 'danger', 'victoire' (voir musiqueRecit, src/sonsRecits.js)
+  musiqueContree(moment, sinon) { return typeof musiqueRecit === 'function' ? musiqueRecit(this.biome, moment) : sinon; }
+  // (v1.64) le sol sous ses pieds, pour le bruit de ses pas
+  solRecit() { return typeof solDuBiome === 'function' ? solDuBiome(this.biome) : null; }
 
   constructor() { super('Recit'); }
 
@@ -60,6 +64,9 @@ class StoryScene extends Cinematique {
     this.planterPremierPlan(this.biome);
     planterVarianteRecit(this, v.zone, this.biome);
     this.meteoBiome(this.biome);
+    // (v1.64) les bruits de fond de la contrée (le vent des cols, les crapauds du marais), et les sons préparés d'avance
+    this.conclu = false; this.finRecit = false;
+    if (typeof ambianceSonoreRecit === 'function') ambianceSonoreRecit(this, v.zone, this.biome);
 
     this.perso = imageCorps(this, -60, 360, v, 6);
     this.fCorps = echelleCorps(this.perso.texture.key);
@@ -220,7 +227,7 @@ class StoryScene extends Cinematique {
     const cible = x + d;
     const duree = Math.max(300, Math.abs(cible - this.perso.x) * 5);
     this.perso.setFlipX(cible < this.perso.x);
-    pasDeMarche(this, this.perso, duree);
+    pasDeMarche(this, this.perso, duree, { sol: this.solRecit() });
     const y = this.perso.y;
     this.tweens.add({ targets: this.perso, y: y - 2, duration: 125, yoyo: true, repeat: Math.floor(duree / 250) });
     this.cadrer(x + 120, 250, 1.12, duree, 'Sine.easeInOut', d);
@@ -309,7 +316,8 @@ class StoryScene extends Cinematique {
     const etapes = v.epreuves.length;
 
     this.titre.setText(r.vivant ? 'Le récit ' + dePersonne(v.nom) : 'Le carnet ' + dePersonne(v.nom)).setColor(couleurNom(this.G, v.nom, true));
-    this.musique(r.vivant ? 'recitEtonne' : 'recitTriste');   // (la musique suit le récit : étonnement, peur, joie, tristesse)
+    // (la musique suit le récit : v1.64, la marche de sa contrée, son danger, sa victoire ; la tristesse pour un carnet)
+    this.musique(r.vivant ? this.musiqueContree('route', 'recitEtonne') : 'recitTriste');
     this.ecrire(v.quete, r.vivant
       ? `${v.nom} est revenu${this.e} au comptoir, ${this.etatAuRetour()}. Assis${this.e} sur le rebord de la fenêtre, ${v.feminin ? 'elle' : 'il'} te raconte son aventure...`
       : `${v.nom} n'est jamais revenu${this.e}... ${this.G.faucheuse && this.G.faucheuse.visites ? 'La Faucheuse a laissé son carnet de voyage sur ton comptoir' : 'Un berger a rapporté son carnet de voyage'}. Tu l'ouvres en tremblant.`);
@@ -433,6 +441,7 @@ class StoryScene extends Cinematique {
   async montrerObjet(id) {
     creerObjetsHD(this);
     if (id === 'epee' && this.armeTenue) id = this.armeTenue;   // (v0.63 : son arme à lui)
+    if (['epee', 'dague', 'epeecourte', 'rapiere', 'khopesh'].includes(id)) Son.jouer('degainer');   // (v1.64 : la lame sort du fourreau, avant le « TCHAK ! »)
     const cle = iconeObjet(this, id);
     const icone = this.add.image(this.perso.x, this.perso.y - 88, cle).setScale(0).setDepth(5);
     await this.animer({ targets: icone, scale: cle.startsWith('hd_') ? 3 : 5, y: icone.y - 30, duration: 350, ease: 'Back.easeOut' });
@@ -470,7 +479,7 @@ class StoryScene extends Cinematique {
       const aigle = d.choix === 'aigle';
       const oiseau = this.add.sprite(x - 460, y - 280, aigle ? 'aigleVolM' : 'corbeauVolH').setScale(aigle ? 3.2 : 3).setDepth(7)
         .setFlipX(!aigle).play(aigle ? 'volAigle' : 'volCorbeau');
-      Son.jouer('glisse');
+      Son.jouer(aigle ? 'glisse' : 'corbeau');
       await this.animer({ targets: oiseau, x: x + 10, y: y - 210, duration: 1500, ease: 'Sine.easeOut' });
       await lacher(oiseau.x + 6, oiseau.y + (aigle ? 40 : 20));
       this.tweens.add({ targets: oiseau, x: x + 620, y: y - 420, duration: 1800, ease: 'Sine.easeIn', onComplete: () => oiseau.destroy() });
@@ -539,11 +548,21 @@ class StoryScene extends Cinematique {
     }
   }
 
+  // (v1.64) La mort d'un voyageur : la musique se tait, et selon l'endroit où il est tombé, le chœur des disparus,
+  // les cordes qui pleurent ou le grand glas (voir mortDuLieu) ; puis la musique triste revient doucement.
+  sonDeLaMort() {
+    if (typeof mortDuLieu !== 'function') return Son.jouer('glas');
+    const nom = mortDuLieu(this.parti.voyageur.zone);
+    this.musiqueVoulue = 'recitTriste';
+    Son.jouerSeul(nom, {}, 'recitTriste', DUREE_MORT[nom] || 7);
+  }
+
   async conclure() {
     // La fin du récit se lit à vitesse normale.
+    this.finRecit = true;   // (v1.64 : les bruits de fond de la contrée se taisent)
     this.rapide = false;
     this.cadrer(480, 185, 1, 800);
-    this.musique(this.parti.resultat.vivant && !this.parti.resultat.echec ? 'recitHeureux' : 'recitTriste');
+    this.musique(this.parti.resultat.vivant && !this.parti.resultat.echec ? this.musiqueContree('victoire', 'recitHeureux') : 'recitTriste');
     this.tweens.timeScale = 1;
     this.time.timeScale = 1;
     const v = this.parti.voyageur;
@@ -594,12 +613,12 @@ class StoryScene extends Cinematique {
       if (this.perso.x < 690 && this.perso.active) {
         const dx = 690 - this.perso.x, dur = Math.max(300, dx * 5), y = this.perso.y;
         this.perso.setFlipX(false);
-        pasDeMarche(this, this.perso, dur);
+        pasDeMarche(this, this.perso, dur, { sol: this.solRecit() });
         await this.animer({ targets: this.perso, x: 690, duration: dur, ease: 'Linear' });
         this.perso.setScale(6 * this.fCorps).setY(y);
       }
       this.perso.setTint(0x888888);
-      Son.jouer('glas');
+      this.sonDeLaMort();
       await this.mourir(!!r.valeureux);   // (planche 86 : il s'effondre, puis il gît ; sur le dos au combat, face contre terre sinon)
       this.ecrire('Fin du carnet', r.valeureux
         ? `${v.nom} est mort${this.e} valeureusement au combat. On chantera son nom dans les tavernes.\nTon investissement est perdu, et ta réputation baisse (−${String(PERTE_MORT.valeureux).replace(".", ",")}).`
@@ -999,7 +1018,8 @@ class StoryScene extends Cinematique {
     if (!b || !b.active || gain <= 0) { this.piecesEnVol = false; if (b) b.maj(Math.floor(this.G.argent)); return; }
     const cam = this.cameras.main, k = cam.zoom / this.zoomBase, m = this.main();
     const ux = (m.x - cam.worldView.x) * k, uy = (m.y - cam.worldView.y) * k, col = b.col();
-    Son.jouer('pieces', { montant: gain });
+    // (v1.64) les pièces qui tombent dans la besace de cuir, et le cordon qu'on serre (quand les premières arrivent)
+    this.time.delayedCall(520, () => Son.jouer('besace', { montant: gain }));
     voleePieces(this, ux, uy, col.x, col.y, Math.ceil(Math.sqrt(gain)), { conteneur: this.ui, echelle: 2, besace: b, montant: Math.floor(this.G.argent) - b.dernier, fin: () => {
       this.piecesEnVol = false;
       if (b.active) b.maj(Math.floor(this.G.argent));
@@ -1097,7 +1117,9 @@ class StoryScene extends Cinematique {
     if (this.meteo) { this.meteo.remove(); this.meteo = null; }
     this.menace = { sorte: 'ambiance', sprites: [], type };
     const sombre = ['nuit', 'grotte', 'feufollet', 'esprits', 'malediction', 'mortvivant'].includes(type);
-    if (this.parti.resultat.vivant) this.musique(sombre ? 'recitPeur' : 'recitEtonne');
+    // (v1.64) une bête, des brigands : la musique du danger de la contrée ; le noir, les maléfices : la peur ; sinon la marche
+    const danger = typeof EPREUVES_DANGER !== 'undefined' && EPREUVES_DANGER.has(type);
+    if (this.parti.resultat.vivant) this.musique(danger ? this.musiqueContree('danger', 'recitPeur') : sombre ? 'recitPeur' : this.musiqueContree('route', 'recitEtonne'));
     this.voile.setFillStyle(type === 'tempete' ? 0x8a6a3a : 0x05051a, this.voile.fillAlpha);
     this.tweens.add({ targets: this.voile, fillAlpha: sombre ? 0.55 : type === 'tempete' ? 0.3 : 0, duration: 600 });
     const ajouter = o => { this.decor.add(o); return o; };
@@ -1210,6 +1232,7 @@ class StoryScene extends Cinematique {
       case 'nuit': {
         ajouter(this.add.circle(820, 70, 24, 0xf3ecc8).setDepth(0.5));
         const feu = ajouter(this.add.image(x - 40, sol + 2, 'feuCampHD').setOrigin(0.5, 1).setScale(2.5).setDepth(2));
+        Son.jouer('feuDeCamp', { duree: 4 });   // (v1.64)
         const flamme = ajouter(this.add.sprite(feu.x, sol - 14, 'flammeBougie0').setOrigin(0.5, 1).setScale(5).setDepth(2.1).play('flammeBougie'));
         const lueur = ajouter(this.add.image(feu.x, sol - 30, 'halo').setScale(3).setTint(0xffa040).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD).setDepth(8));
         this.tweens.add({ targets: lueur, alpha: 0.3, scale: 2.7, duration: 300, yoyo: true, repeat: -1 });
@@ -1305,6 +1328,7 @@ class StoryScene extends Cinematique {
         const o = icone('torche').setPosition(p.x + 26, sol - 90);
         const lumiere = this.add.image(p.x + 20, sol - 90, 'halo').setScale(0.5).setTint(0xffc060).setAlpha(0.7).setBlendMode(Phaser.BlendModes.ADD).setDepth(8);
         this.decor.add([o, lumiere]);
+        Son.jouer('torche');   // (v1.64 : « FWOUF ! », la flamme qui prend)
         this.tweens.add({ targets: lumiere, scale: 4.5, duration: 600, ease: 'Sine.easeOut' });
         this.tweens.add({ targets: this.voile, fillAlpha: Math.min(this.voile.fillAlpha, 0.35), duration: 600 });
         this.tweens.add({ targets: lumiere, alpha: 0.5, duration: 200, yoyo: true, repeat: -1, delay: 600 });
@@ -1349,7 +1373,7 @@ class StoryScene extends Cinematique {
           const flamme = this.add.sprite(feu.x, sol - 14, 'flammeBougie0').setOrigin(0.5, 1).setScale(0).setDepth(2.1).play('flammeBougie');
           const lueur = this.add.image(feu.x, sol - 30, 'halo').setScale(0).setTint(0xffa040).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD).setDepth(8);
           this.decor.add([feu, flamme, lueur]);
-          Son.jouer('feu');
+          Son.jouer('feuDeCamp', { duree: 4 });   // (v1.64 : le feu de camp qui crépite)
           this.tweens.add({ targets: feu, scale: 2.5, duration: 300, ease: 'Back.easeOut' });
           this.tweens.add({ targets: flamme, scale: 5, duration: 400, delay: 200, ease: 'Back.easeOut' });
           this.tweens.add({ targets: lueur, scale: 3, duration: 500, delay: 200 });

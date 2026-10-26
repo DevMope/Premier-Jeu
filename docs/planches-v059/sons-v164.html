@@ -1,0 +1,2156 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sons v1.64</title>
+<style>
+  :root {
+    --bois: #2a1a0e; --bois-clair: #3a2614; --parchemin: #f0dfb8; --parchemin-fonce: #e6d0a0; --encre: #3b2410; --encre-douce: #6b4a2a;
+    --or: #c9a227; --titre: #f3d98a; --clair: #e8d0a8; --bouton: #5a3a1e; --bouton-actif: #8a5a1a; --bordure: #6a4422;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bois); color: var(--encre); font-family: "Alegreya", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif; }
+  main { max-width: 900px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { color: var(--titre); text-align: center; margin: 8px 0 4px; font-size: 30px; }
+  p.intro { color: var(--clair); text-align: center; font-style: italic; margin: 0 auto 16px; max-width: 640px; }
+  h2 { color: var(--titre); font-size: 23px; margin: 30px 0 4px; border-bottom: 2px solid var(--or); padding-bottom: 4px; }
+  p.chapo { color: var(--clair); margin: 6px 0 10px; font-size: 15px; }
+  .reglages { position: sticky; top: 0; z-index: 2; background: var(--bois-clair); border: 2px solid var(--or); border-radius: 6px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: center; color: var(--clair); }
+  .reglages label { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .reglages input[type=range] { width: 200px; max-width: 46vw; accent-color: var(--or); }
+  .reglages output { min-width: 44px; font-variant-numeric: tabular-nums; }
+  .carte { background: var(--parchemin); border: 3px solid var(--bordure); outline: 2px solid var(--or); outline-offset: -7px; border-radius: 4px; padding: 14px 18px; margin: 12px 0; }
+  .carte h3 { margin: 0 0 4px; font-size: 20px; }
+  .carte p { margin: 0; font-size: 15px; line-height: 1.35; }
+  .ligne { display: flex; gap: 14px; align-items: center; }
+  .ligne .texte { flex: 1; min-width: 0; }
+  .ou { color: var(--encre-douce); font-size: 13.5px !important; margin-top: 5px !important; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; background: var(--parchemin-fonce); padding: 0 4px; border-radius: 3px; overflow-wrap: anywhere; }
+  .variantes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
+  .variante { background: var(--parchemin-fonce); border-radius: 4px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .variante p { font-size: 14px; }
+  .duree { color: var(--encre-douce); font-style: italic; white-space: nowrap; }
+  .grille { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 14px; }
+  .grille .carte { margin: 8px 0; }
+  button { font: 700 16px "Alegreya", "Palatino Linotype", Palatino, Georgia, serif; color: #fff0d0; background: var(--bouton); border: 2px solid var(--or); border-radius: 6px; padding: 9px 14px; min-width: 112px; cursor: pointer; touch-action: manipulation; }
+  button:hover { background: #6e4824; }
+  button.joue { background: var(--bouton-actif); }
+  button:focus-visible { outline: 3px solid var(--titre); outline-offset: 2px; }
+  .reference { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; color: var(--clair); font-size: 14px; margin: 4px 0 8px; }
+  .reference button { min-width: 0; font-size: 14px; padding: 6px 10px; background: #3f2a16; }
+  #arreter { background: #6a2a1a; }
+  @media (max-width: 720px) {
+    .variantes, .grille { grid-template-columns: 1fr; }
+    .ligne { align-items: flex-start; }
+    button { min-width: 96px; }
+  }
+  .variantes.deux { grid-template-columns: repeat(2, 1fr); }
+  .variante h4 { margin: 0; font-size: 17px; }
+  .boutons { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ancien { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; color: var(--encre-douce); font-size: 14px; margin-top: 10px; font-style: italic; }
+  .ancien button { min-width: 0; font-size: 14px; padding: 6px 10px; background: #6b5a44; font-style: normal; }
+  @media (max-width: 720px) { .variantes.deux { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Les sons v1.64</h1>
+  <p class="intro">Les trois sons refaits, en deux variantes chacun (à choisir), puis tous les sons que tu as gardés et qui sont maintenant branchés dans le jeu, avec l'endroit où on les entend. Tout est fabriqué par le code même du jeu (rien d'enregistré).</p>
+
+  <div class="reglages">
+    <label for="volume">🔊 Volume général <input id="volume" type="range" min="0" max="100" value="90"> <output id="volumeValeur" for="volume">90 %</output></label>
+    <button id="arreter" type="button">■ Tout arrêter</button>
+  </div>
+
+  <!-- ===================== 1. Les sons refaits ===================== -->
+  <h2>1. Les trois sons refaits (à choisir)</h2>
+  <p class="chapo">Pas encore branchés : le jeu attend ton choix (A ou B pour chacun). Ils sont fabriqués comme de vrais sons : des résonances qui s'éteignent chacune à son rythme, des chocs, des voix, la réverbération du lieu. Pour comparer, la proposition refusée de la v1.61 est sous chaque carte.</p>
+
+  <section class="carte">
+    <h3>Le marteau</h3>
+    <p>L'attaque du fer sur le bois ou sur le métal, la résonance, et le rythme de vrais coups (jamais au métronome, plus ou moins forts, des pauses pour souffler). Chaque variante existe pour le charpentier et pour la forge.</p>
+    <p class="ou">Où : les ouvriers derrière les planches du marché, les charpentiers de l'étage, Baba à l'enclume, les commandes d'armes à la forge, les réparations de fer et de bois (au comptoir et à l'atelier).</p>
+    <div class="variantes deux">
+      <div class="variante"><h4>A. Coups francs</h4><p>Le charpentier pose le clou (deux petits coups) puis l'enfonce en trois ou quatre coups ; le clou chante de plus en plus aigu. Le forgeron frappe des séries sur le fer chaud (un choc mat, l'enclume qui sonne court).</p>
+        <div class="boutons"><button type="button" class="lire" data-son="marteauA" data-options='{"matiere":"bois","duree":6}' data-duree="6.5">▶ Charpentier</button><button type="button" class="lire" data-son="marteauA" data-options='{"matiere":"metal","duree":6}' data-duree="8">▶ Forge</button></div></div>
+      <div class="variante"><h4>B. Le rythme de l'artisan</h4><p>Une enclume plus lourde, dans une forge de pierre : après chaque frappe, le marteau rebondit sur la table nue (« ting-ting »), comme chez les vrais forgerons. Le charpentier cloue dans une poutre, plus grave ; son marteau rebondit.</p>
+        <div class="boutons"><button type="button" class="lire" data-son="marteauB" data-options='{"matiere":"bois","duree":6}' data-duree="6.5">▶ Charpentier</button><button type="button" class="lire" data-son="marteauB" data-options='{"matiere":"metal","duree":6}' data-duree="8.5">▶ Forge</button></div></div>
+    </div>
+    <div class="ancien">Refusé (v1.61) : <button type="button" class="lire" data-son="ancienCharpentier" data-duree="2">▶ L'ancien charpentier</button> <button type="button" class="lire" data-son="marteau" data-duree="1">▶ L'enclume actuelle</button></div>
+  </section>
+
+  <section class="carte">
+    <h3>La foule du marché</h3>
+    <p>Un brouhaha de voix lointaines (de vraies voix : des syllabes, l'intonation d'une phrase, des respirations), quelques éclats tout près, et pas de boucle qu'on entende : au jeu, trois fonds différents s'enchaînent en fondu, chacun repris à un endroit tiré au sort, et les éclats tombent au hasard.</p>
+    <p class="ou">Où : sur la grand-place, en fond, tant qu'on s'y promène (elle s'éteint en fondu quand on part).</p>
+    <div class="variantes deux">
+      <div class="variante"><h4>A. Le marché en plein air</h4><p>Une vingtaine de voix au loin, chacune à son rythme ; tout près, un marchand qui appelle, un rire, un enfant, des pièces qu'on compte.</p>
+        <div class="boutons"><button type="button" class="lire" data-son="fouleA" data-options='{"duree":20}' data-duree="20">▶ 20 secondes</button><button type="button" class="lire" data-fond="A">▶ En fond, comme au jeu</button></div></div>
+      <div class="variante"><h4>B. La place pleine, jour de foire</h4><p>Trente voix, plus proches, renvoyées par les façades ; deux voisins qui causent près de toi, des rires, un marchand.</p>
+        <div class="boutons"><button type="button" class="lire" data-son="fouleB" data-options='{"duree":20}' data-duree="20">▶ 20 secondes</button><button type="button" class="lire" data-fond="B">▶ En fond, comme au jeu</button></div></div>
+    </div>
+    <div class="ancien">Refusé (v1.61) : <button type="button" class="lire" data-son="ancienBrouhaha" data-duree="4">▶ L'ancien brouhaha</button></div>
+  </section>
+
+  <section class="carte">
+    <h3>La cloche du marché</h3>
+    <p>Une cloche de bronze : sa fondamentale, et autour d'elle des partiels qui ne sont pas harmoniques (le bourdon à l'octave du dessous, la tierce mineure, la quinte, la nominale, des aigus serrés) ; chacun s'éteint à son rythme, et chacun est double (une cloche n'est jamais tout à fait ronde) : ils battent.</p>
+    <p class="ou">Où : à l'arrivée au marché le matin, juste après le coq.</p>
+    <div class="variantes deux">
+      <div class="variante"><h4>A. Le beffroi</h4><p>La grande cloche de la place (sol grave), lancée en volée : trois coups lents et inégaux, puis plus de dix secondes de résonance sur la place.</p>
+        <div class="boutons"><button type="button" class="lire" data-son="clocheA" data-duree="15">▶ Écouter</button></div></div>
+      <div class="variante"><h4>B. La cloche de la halle</h4><p>Plus petite (sol aigu), tintée à la corde : six coups, fort, faible, fort..., un battement plus rapide, elle se tait en six secondes.</p>
+        <div class="boutons"><button type="button" class="lire" data-son="clocheB" data-duree="11">▶ Écouter</button></div></div>
+    </div>
+    <div class="ancien">Refusé (v1.61) : <button type="button" class="lire" data-son="ancienClocheMarche" data-duree="4.5">▶ L'ancienne cloche du marché</button></div>
+  </section>
+
+  <!-- ===================== 2. Les musiques ===================== -->
+  <h2>2. Les musiques des récits (branchées)</h2>
+  <p class="chapo">Elles se jouent selon la contrée du voyageur et le moment du récit, jamais deux à la fois. La forêt : la Comté, les forêts, les terres elfiques, la côte, les bambous. La montagne : les pics, les mines, les terres désolées et brûlées, la citadelle, la cité d'Opale. Le marais : les marais, le bourbier, les ruines, l'antre, la tour, le château de Nuit-Pourpre, le repaire des loups-garous.</p>
+  <div id="musiques"></div>
+
+  <!-- ===================== 3. Les morts ===================== -->
+  <h2>3. La mort d'un voyageur (branchée)</h2>
+  <p class="chapo">À la place de l'ancienne cloche, selon l'endroit où il est tombé. La musique se tait, la mort joue seule, puis la musique triste revient doucement.</p>
+  <div id="morts"></div>
+
+  <!-- ===================== 4. Les bruitages ===================== -->
+  <h2>4. Les bruitages (branchés)</h2>
+  <p class="chapo">Chacun dit où on l'entend maintenant dans le jeu. Ils sont fabriqués une fois, puis rejoués depuis le cache (quelques variantes pour les pas, pour ne pas lasser l'oreille).</p>
+  <div class="grille" id="bruitages"></div>
+</main>
+
+<script>
+// ====== Le code du jeu, recopié tel quel (src/audio.js, src/sonsRecits.js, src/sonsRefaits.js) ======
+const ZONES = {"collines":{"nom":"Les Collines de la Comté","biome":"comte"},"foret":{"nom":"La Forêt des Murmures","biome":"foret"},"marais":{"nom":"Les Marécages de Brume-Noire","biome":"marais"},"mines":{"nom":"Les Mines abandonnées","biome":"mines"},"desert":{"nom":"Les Terres Désolées","biome":"desert"},"pics":{"nom":"Les Pics Gelés","biome":"neige"},"ruinesRoi":{"nom":"Les Ruines du Roi-Sorcier","biome":"ruines"},"antre":{"nom":"L'Antre de la Bête","biome":"antre"},"monastere":{"nom":"Le Monastère des Pandas","biome":"monastere"},"sanctuaire":{"nom":"Le Sanctuaire des Elfes","biome":"sanctuaire"},"citadelle":{"nom":"La Citadelle des Paladins","biome":"citadelle"},"bourbier":{"nom":"Le Bourbier des Gobelins","biome":"bourbier"},"repaire":{"nom":"Le Repaire des Loups-garous","biome":"repaire"},"tour":{"nom":"La Tour du Nécromancien","biome":"tour"},"vergers":{"nom":"Les Vergers de Bourg-Joyeux","biome":"comte","vignette":"vergers"},"port":{"nom":"Port-Brisant","biome":"cote"},"forge":{"nom":"Les Portes de Khaz-Durim","biome":"mines","vignette":"forge"},"lac":{"nom":"Le Lac des Lunes","biome":"val","vignette":"lac"},"opale":{"nom":"La Cité d'Opale","biome":"opale"},"bibliotheque":{"nom":"La Bibliothèque Interdite","biome":"opale","vignette":"bibliotheque"},"pont":{"nom":"Le Pont des Trolls","biome":"foret","vignette":"pont"},"fort":{"nom":"Le Fort des Orcs","biome":"badlands"},"tombeaux":{"nom":"Les Tombeaux des Sables","biome":"desert","vignette":"tombeaux"},"chateau":{"nom":"Le Château de Nuit-Pourpre","biome":"nuitPourpre"},"vallon":{"nom":"Le Vallon des Guérisseuses","biome":"comte","vignette":"vallon"},"abbaye":{"nom":"L'Abbaye de Clairval","biome":"comte","vignette":"abbaye"},"hautgarde":{"nom":"Le Fort de Hautgarde","biome":"mines","vignette":"hautgarde"},"chamans":{"nom":"La Clairière des Chamans","biome":"foret","vignette":"chamans"},"minesRouges":{"nom":"Les Mines Rouges","biome":"badlands","vignette":"minesRouges"},"col":{"nom":"Le Col des Hurlements","biome":"neige","vignette":"col"}};
+</script>
+<script>
+// La musique et les sons du jeu, tout synthétisés dans le navigateur (Web Audio) : aucun
+// fichier à charger. Les musiques sont des boucles génératives : chaque moment du jeu a sa
+// tonalité, son tempo, ses instruments et un motif qui revient (pour qu'on le retienne), le
+// reste varie d'une mesure à l'autre pour ne pas lasser.
+//
+// Inspirations : la Comté du Hobbit (flûte et luth, gigues en 6/8), Stardew Valley et Travellers
+// Rest (marchés chaleureux, nuits douces), Harry Potter (boîte à musique et célesta, valses
+// mystérieuses), The Witcher 3 (bourdons, vielle et cordes pour les contrées sauvages), Tavern
+// Master (auberge cosy), Terraria et Dave the Diver (petites mélodies claires), Papers, Please
+// (le comptoir, grave et posé).
+
+const Son = {
+  ctx: null, pret: false,
+  // (v0.57) cinq volumes : le général, puis la musique, les bruitages, les voix et l'interface (clics, pages)
+  volumes: { general: 0.9, musique: 0.55, sons: 0.8, voix: 0.8, interface: 0.7 },
+  coupe: { general: false, musique: false, sons: false, voix: false, interface: false },
+  theme: null, boucle: null, horloge: 0, mesure: 0, graine: 1,
+  courant: null,   // le bus de la musique en cours (pour le fondu)
+
+  // --- Démarrage : au premier geste du joueur (les navigateurs l'exigent) ---
+  demarrer() {
+    if (this.pret) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try {
+      const p = JSON.parse(localStorage.getItem('passage_audio') || 'null');
+      if (p) { this.volumes = { ...this.volumes, ...(p.volumes || {}) }; this.coupe = { ...this.coupe, ...(p.coupe || {}) }; }
+    } catch (e) { /* (pas de réglages gardés) */ }
+    // Sur iPhone et iPad, le son du web est coupé par le bouton silencieux (ou le mode silence) :
+    // on se déclare comme un lecteur de musique, qui joue même en silencieux, comme un jeu.
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* (ancien Safari) */ }
+    this.ctx = new AC();
+    this.debloquer();
+    this.maitre = this.ctx.createGain(); this.maitre.gain.value = 0.9; this.maitre.connect(this.ctx.destination);
+    // Une réverbération d'auberge : une réponse impulsionnelle de bruit qui s'éteint en 1,8 s
+    const duree = 1.8, n = Math.floor(this.ctx.sampleRate * duree), imp = this.ctx.createBuffer(2, n, this.ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = imp.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6) * 0.5; }
+    this.reverb = this.ctx.createConvolver(); this.reverb.buffer = imp;
+    this.reverbGain = this.ctx.createGain(); this.reverbGain.gain.value = 0.35;
+    this.reverb.connect(this.reverbGain); this.reverbGain.connect(this.maitre);
+    this.busSons = this.ctx.createGain(); this.busSons.connect(this.maitre); this.busSons.connect(this.reverb);
+    this.busMusique = this.ctx.createGain(); this.busMusique.connect(this.maitre); this.busMusique.connect(this.reverb);
+    this.busVoix = this.ctx.createGain(); this.busVoix.connect(this.maitre); this.busVoix.connect(this.reverb);
+    this.busInterface = this.ctx.createGain(); this.busInterface.connect(this.maitre);
+    this.pret = true;
+    this.appliquerVolumes();   // (v0.94 : après « prêt », sinon les volumes gardés étaient ignorés au rechargement)
+    if (this.themeVoulu) this.ambiance(this.themeVoulu);
+    if (this.natureVoulue) this.nature(true);
+  },
+
+  // --- (v0.93) La nature autour de l'écran titre, selon l'heure de l'appareil : les oiseaux le
+  // matin, les cigales l'après-midi, les grillons et la chouette le soir (sous la musique) ---
+  // (v0.99) dehors, dans la rue et devant le comptoir : la nature de la saison (opts.saison), plus bas
+  nature(allumer, opts = {}) {
+    this.natureVoulue = allumer;
+    if (allumer) this.natureOpts = opts;
+    opts = this.natureOpts || {};
+    if (!this.pret) return;
+    if (!allumer) {
+      (this.natureMinuteries || []).forEach(clearTimeout); this.natureMinuteries = [];
+      if (this.natureBus) { const b = this.natureBus, t = this.ctx.currentTime; b.gain.cancelScheduledValues(t); b.gain.setValueAtTime(b.gain.value, t); b.gain.linearRampToValueAtTime(0, t + 1);
+        const n = this.natureNoeuds || []; setTimeout(() => { n.forEach(x => { try { x.stop(); } catch (e) { /* (déjà arrêté) */ } }); b.disconnect(); }, 1200); }
+      this.natureBus = null; this.natureNoeuds = [];
+      return;
+    }
+    if (this.natureBus) return;
+    const ctx = this.ctx, sortie = this.natureBus = ctx.createGain(), noeuds = this.natureNoeuds = [], minuteries = this.natureMinuteries = [];
+    sortie.gain.setValueAtTime(0, ctx.currentTime); sortie.gain.linearRampToValueAtTime(opts.volume || 1.3, ctx.currentTime + 2);
+    sortie.connect(this.busMusique);
+    const bruit = (duree = 2) => { const b = ctx.createBuffer(1, ctx.sampleRate * duree, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; };
+    const boucleBruit = (filtre, freq, q, gain) => { const src = ctx.createBufferSource(); src.buffer = bruit(3); src.loop = true; const f = ctx.createBiquadFilter(); f.type = filtre; f.frequency.value = freq; f.Q.value = q; const g = ctx.createGain(); g.gain.value = gain; src.connect(f).connect(g).connect(sortie); src.start(); noeuds.push(src); return { f, g }; };
+    // (v0.97) une minuterie qui a sonné quitte la liste (elle grossissait sans fin) ; son coupé
+    // (onglet en veille), on attend au lieu d'empiler des sons qui partiraient tous d'un coup au retour
+    const plus = (ms, f) => { const id = setTimeout(() => { const i = minuteries.indexOf(id); if (i >= 0) minuteries.splice(i, 1); if (this.natureBus !== sortie) return; if (ctx.state === 'running') f(); else plus(1000, f); }, ms); minuteries.push(id); };
+    const chaque = (min, max, f) => { const tour = () => { f(); plus(min + Math.random() * (max - min), tour); }; plus(Math.random() * min, tour); };
+    const gazouillis = (base = 3200, vol = 0.05) => {
+      const t0 = ctx.currentTime, n = 2 + Math.floor(Math.random() * 5);
+      for (let k = 0; k < n; k++) {
+        const t = t0 + k * (0.08 + Math.random() * 0.06), o = ctx.createOscillator(), m = ctx.createOscillator(), mg = ctx.createGain(), g = ctx.createGain(), f = base * (0.8 + Math.random() * 0.5);
+        o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * (Math.random() < 0.5 ? 1.4 : 0.7), t + 0.07);
+        m.frequency.value = 40 + Math.random() * 60; mg.gain.value = f * 0.08; m.connect(mg).connect(o.frequency);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+        o.connect(g).connect(sortie); o.start(t); m.start(t); o.stop(t + 0.1); m.stop(t + 0.1);
+      }
+    };
+    const merle = () => { const t0 = ctx.currentTime;
+      [1, 1.25, 0.9].forEach((r, k) => { const t = t0 + k * 0.22, o = ctx.createOscillator(), g = ctx.createGain(), f = 1700 * r * (0.95 + Math.random() * 0.1); o.type = 'sine';
+        o.frequency.setValueAtTime(f, t); o.frequency.linearRampToValueAtTime(f * 1.08, t + 0.15);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.045, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2); o.connect(g).connect(sortie); o.start(t); o.stop(t + 0.22); }); };
+    const tourterelle = () => { const t0 = ctx.currentTime;
+      [[520, 0.35], [440, 0.5]].forEach(([f, d], k) => { const t = t0 + k * 0.45, o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = f;
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.025, t + 0.08); g.gain.linearRampToValueAtTime(0, t + d); o.connect(g).connect(sortie); o.start(t); o.stop(t + d); }); };
+    const chouette = () => { const t0 = ctx.currentTime;
+      [[0, 0.5], [0.9, 0.18], [1.15, 0.6]].forEach(([dt, d]) => { const t = t0 + dt, o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(390, t); o.frequency.linearRampToValueAtTime(360, t + d);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.04, t + 0.06); g.gain.linearRampToValueAtTime(0, t + d); o.connect(g).connect(sortie); o.start(t); o.stop(t + d); }); };
+    const vent = (vol = 0.05, freq = 500) => { const v = boucleBruit('lowpass', freq, 0.7, vol * 0.4);
+      const souffle = () => { const t = ctx.currentTime, d = 4 + Math.random() * 4; v.g.gain.linearRampToValueAtTime(vol * (0.5 + Math.random() * 0.8), t + d / 2); v.g.gain.linearRampToValueAtTime(vol * 0.25, t + d); v.f.frequency.linearRampToValueAtTime(freq * (0.7 + Math.random() * 0.8), t + d); };
+      souffle(); chaque(5000, 8000, souffle); };
+    const cigales = (vol = 0.06) => { const c = boucleBruit('bandpass', 4600, 8, 0), lfo = ctx.createOscillator(), lg = ctx.createGain();
+      lfo.frequency.value = 38; lg.gain.value = vol * 0.6; lfo.connect(lg).connect(c.g.gain); lfo.start(); noeuds.push(lfo);
+      const vague = () => { const t = ctx.currentTime; c.g.gain.cancelScheduledValues(t); c.g.gain.setValueAtTime(c.g.gain.value, t); c.g.gain.linearRampToValueAtTime(vol * (0.4 + Math.random() * 0.6), t + 2.5); c.g.gain.linearRampToValueAtTime(vol * 0.08, t + 6 + Math.random() * 3); };
+      vague(); chaque(7000, 11000, vague); };
+    const grillons = () => { for (const [f, ecart] of [[4200, 0], [4600, 340]]) chaque(700, 900, () => plus(ecart, () => { const t = ctx.currentTime;
+      for (let k = 0; k < 3; k++) { const o = ctx.createOscillator(), g = ctx.createGain(), tt = t + k * 0.05; o.frequency.value = f;
+        g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(0.018, tt + 0.008); g.gain.linearRampToValueAtTime(0, tt + 0.035); o.connect(g).connect(sortie); o.start(tt); o.stop(tt + 0.04); } })); };
+    const h = new Date().getHours();
+    // (v1.53) le temps du jour passe avant la saison : la pluie qui crépite, le grand vent, la neige qui étouffe tout
+    const pluie = (vol = 0.06) => { boucleBruit('highpass', 1400, 0.5, vol); boucleBruit('lowpass', 600, 0.7, vol * 0.6);
+      chaque(60, 160, () => { const t = ctx.currentTime, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); src.buffer = bruit(0.05); f.type = 'bandpass'; f.frequency.value = 2500 + Math.random() * 3500; f.Q.value = 6;
+        g.gain.setValueAtTime(vol * 0.5 * Math.random(), t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04); src.connect(f).connect(g).connect(sortie); src.start(t); src.stop(t + 0.05); }); };
+    const m = opts.meteo;
+    if (m === 'pluie' || m === 'orage') { pluie(m === 'orage' ? 0.08 : 0.05); if (m === 'orage') vent(0.04, 420); }
+    else if (m === 'vent') { vent(0.1, 720); chaque(9000, 15000, () => gazouillis(2400, 0.015)); }
+    else if (m === 'neige') { vent(0.02, 220); }
+    else if (m === 'canicule') { cigales(0.09); vent(0.008, 300); }
+    else if (opts.saison === 'semailles') { vent(0.01, 400); chaque(700, 2000, () => gazouillis(3000 + Math.random() * 1500)); chaque(3000, 6000, merle); chaque(8000, 14000, tourterelle); }
+    else if (opts.saison === 'moissons') { cigales(0.05); vent(0.012, 350); chaque(6000, 10000, () => gazouillis(3600, 0.025)); }
+    else if (opts.saison === 'brumes') { vent(0.05, 520); chaque(9000, 16000, () => gazouillis(2600, 0.02)); }
+    else if (opts.saison === 'givre') { vent(0.03, 260); }
+    else if (h >= 6 && h < 12) { vent(0.012, 400); chaque(900, 2600, () => gazouillis(3000 + Math.random() * 1500)); chaque(3500, 7000, merle); chaque(9000, 16000, tourterelle); }
+    else if (h >= 12 && h < 19) { cigales(); vent(0.015, 350); chaque(5000, 9000, () => gazouillis(3600, 0.03)); }
+    else { grillons(); vent(0.018, 300); chaque(9000, 15000, chouette); }
+  },
+  // Safari ne laisse sortir le son qu'après une vraie action du joueur : on reprend le contexte et
+  // on joue un échantillon muet pendant ce geste, ce qui « déverrouille » la sortie audio.
+  // (Il peut aussi être « interrompu » : un appel, l'iPad mis en veille, l'app en arrière-plan.)
+  reprendre() {
+    if (!this.ctx || (window.OfflineAudioContext && this.ctx instanceof OfflineAudioContext)) return;
+    if (this.ctx.state !== 'running') { try { this.ctx.resume(); } catch (e) { /* (rien) */ } }
+    this.debloquer();
+  },
+  debloquer() {
+    if (this.debloque && this.ctx.state === 'running') return;
+    try {
+      const muet = this.ctx.createBuffer(1, 1, 22050), src = this.ctx.createBufferSource();
+      src.buffer = muet; src.connect(this.ctx.destination); src.start(0);
+      this.debloque = true;
+    } catch (e) { /* (rien) */ }
+  },
+  appliquerVolumes() {
+    if (!this.pret) return;
+    const v = quoi => (this.coupe[quoi] ? 0 : this.volumes[quoi]);
+    this.maitre.gain.value = v('general');
+    this.busSons.gain.value = v('sons');
+    this.busMusique.gain.value = v('musique');
+    this.busVoix.gain.value = v('voix');
+    this.busInterface.gain.value = v('interface');
+  },
+  regler(quoi, valeur) {
+    this.volumes[quoi] = Math.max(0, Math.min(1, valeur));
+    this.appliquerVolumes(); this.sauver();
+  },
+  basculer(quoi) { this.coupe[quoi] = !this.coupe[quoi]; this.appliquerVolumes(); this.sauver(); },
+  sauver() { try { localStorage.setItem('passage_audio', JSON.stringify({ volumes: this.volumes, coupe: this.coupe })); } catch (e) { /* tant pis */ } },
+
+  // --- Les instruments : une note = oscillateurs + enveloppe (+ filtre), dans un bus ---
+  note(instrument, freq, t, duree, force = 1, bus = null) {
+    const ctx = this.ctx; bus = bus || this.busMusique;
+    const I = INSTRUMENTS[instrument]; if (!I) return;
+    const g = ctx.createGain(); g.gain.value = 0;
+    let sortie = g;
+    if (I.filtre) { const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = I.filtre * (freq > 440 ? 1.6 : 1); f.Q.value = 0.7; g.connect(f); sortie = f; }
+    sortie.connect(bus);
+    const a = I.attaque, d = I.decroissance, s = I.tenue, r = I.relache;
+    const v = I.volume * force;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(v, t + a);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0005, v * s), t + a + d);
+    const fin = t + Math.max(a + d, duree);
+    // La fin de la note : un petit decrescendo, jamais une coupure sèche
+    g.gain.linearRampToValueAtTime(Math.max(0.0005, v * s), fin);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0005, v * s * 0.35), fin + r * 0.5);
+    g.gain.exponentialRampToValueAtTime(0.0005, fin + r);
+    for (const [type, mult, vol, detune] of I.voix) {
+      const o = ctx.createOscillator(); o.type = type; o.frequency.value = Math.min(18000, freq * mult); o.detune.value = detune || 0;
+      const og = ctx.createGain(); og.gain.value = vol; o.connect(og); og.connect(g);
+      if (I.vibrato) { const lfo = ctx.createOscillator(); lfo.frequency.value = 5.2; const lg = ctx.createGain(); lg.gain.value = freq * I.vibrato; lfo.connect(lg); lg.connect(o.frequency); lfo.start(t + a); lfo.stop(fin + r + 0.1); }
+      if (I.glisse) { o.frequency.setValueAtTime(Math.min(18000, freq * mult * I.glisse), t); o.frequency.exponentialRampToValueAtTime(Math.min(18000, freq * mult), t + a + 0.02); }
+      o.start(t); o.stop(fin + r + 0.1);
+    }
+    if (I.bruit) {
+      // Un souffle au début de la note (flûte) ou un claquement (percussions)
+      const b = this.bruit(I.bruit.duree, t, bus, I.bruit.volume * force, I.bruit.filtre);
+    }
+  },
+  // (v1.53) le tonnerre : un grondement grave qui roule, plus ou moins loin (dans `retard` secondes)
+  tonnerre(retard = 0, force = 1) {
+    if (!this.pret || !this.ctx) return;
+    const ctx = this.ctx, t = ctx.currentTime + retard, d = 2.5 + Math.random() * 1.5, b = ctx.createBuffer(1, ctx.sampleRate * d, ctx.sampleRate), x = b.getChannelData(0);
+    for (let i = 0, v = 0; i < x.length; i++) { v = v * 0.97 + (Math.random() * 2 - 1) * 0.03; x[i] = v * 6; }
+    const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); src.buffer = b; f.type = 'lowpass'; f.frequency.value = 180 + Math.random() * 120;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.5 * force, t + 0.08); g.gain.setValueAtTime(0.35 * force, t + 0.6); g.gain.exponentialRampToValueAtTime(0.001, t + d);
+    src.connect(f).connect(g).connect(this.busMusique); src.start(t); src.stop(t + d);
+  },
+
+  bruit(duree, t, bus, volume = 0.3, filtre = 2000, type = 'bandpass') {
+    const ctx = this.ctx; const n = Math.floor(ctx.sampleRate * duree); const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = filtre; f.Q.value = 1.2;
+    const g = ctx.createGain(); g.gain.setValueAtTime(volume, t); g.gain.exponentialRampToValueAtTime(0.0005, t + duree);
+    src.connect(f); f.connect(g); g.connect(bus); src.start(t); src.stop(t + duree + 0.05);
+    return src;
+  },
+
+  // --- La musique : un thème par moment, en fondu enchaîné ---
+  ambiance(theme) {
+    // Le comptoir a plusieurs musiques (c'est là qu'on passe le plus de temps) : une par jour, en alternance
+    if (theme === 'comptoir') { const v = ['comptoir', 'comptoir2', 'comptoir3']; theme = v[((window.GAME && GAME.jour) || 1) % v.length]; }
+    this.themeVoulu = theme;
+    if (!this.pret) return;
+    if (theme === this.theme) return;
+    this.arreter();
+    this.theme = theme;
+    if (!theme || !THEMES[theme]) return;
+    const T = THEMES[theme];
+    const bus = this.ctx.createGain(); bus.gain.setValueAtTime(0.0005, this.ctx.currentTime); bus.gain.exponentialRampToValueAtTime(1, this.ctx.currentTime + 1.5);
+    bus.connect(this.busMusique);
+    if (T.reverb) { const r = this.ctx.createGain(); r.gain.value = T.reverb; bus.connect(r); r.connect(this.reverb); bus.resonance = r; } // (plus de résonance pour ce thème)
+    this.courant = bus;
+    this.mesure = 0; this.graine = 7; this.derniereNote = null;
+    this.horloge = this.ctx.currentTime + 0.1;
+    const avance = () => {
+      if (this.courant !== bus) return;
+      // (après une mise en veille, l'horloge du son a filé sans nous : on ne rattrape pas les
+      // mesures manquées, sinon des milliers de notes partiraient d'un coup)
+      if (this.horloge < this.ctx.currentTime) this.horloge = this.ctx.currentTime + 0.05;
+      while (this.horloge < this.ctx.currentTime + 0.6) { this.jouerMesure(T, this.horloge, bus); this.horloge += T.temps * 60 / T.tempo; this.mesure++; }
+    };
+    avance();
+    this.boucle = setInterval(avance, 150);
+  },
+  arreter() {
+    if (this.boucle) { clearInterval(this.boucle); this.boucle = null; }
+    if (this.courant && this.ctx) { const b = this.courant, t = this.ctx.currentTime; b.gain.cancelScheduledValues(t); b.gain.setValueAtTime(b.gain.value || 1, t); b.gain.exponentialRampToValueAtTime(0.0005, t + 1.2); setTimeout(() => { b.disconnect(); if (b.resonance) b.resonance.disconnect(); }, 1500); }
+    this.courant = null; this.theme = null;
+  },
+  // Un tirage déterministe par thème (la même partie de la musique revient, mais pas à l'identique)
+  hasard() { this.graine = (this.graine * 1103515245 + 12345) & 0x7fffffff; return this.graine / 0x7fffffff; },
+
+  // Une mesure : l'accord du moment, la basse, l'accompagnement, la mélodie, la percussion
+  jouerMesure(T, t0, bus) {
+    const temps = 60 / T.tempo, m = this.mesure;
+    const accord = T.accords[m % T.accords.length];                 // degré de la gamme (0 = tonique)
+    const gamme = T.gamme;
+    const freq = (deg, oct = 0) => T.base * Math.pow(2, (gamme[((deg % 7) + 7) % 7] + Math.floor(deg / 7) * 12 + oct * 12) / 12);
+    const tons = [accord, accord + 2, accord + 4];                   // les notes de l'accord
+    // La basse : la fondamentale, parfois la quinte, sur les temps forts
+    if (T.basse) for (const [pos, deg, dur] of T.basse(m, accord)) this.note(T.instruments.basse, freq(deg, -1), t0 + pos * temps, dur * temps, 0.9 * (T.forceBasse || 1), bus);
+    // L'accompagnement : un arpège ou des accords plaqués
+    if (T.accompagnement) for (const [pos, i, dur, force] of T.accompagnement(m)) this.note(T.instruments.accompagnement, freq(tons[i % 3] + Math.floor(i / 3) * 7), t0 + pos * temps, dur * temps, force ?? 0.6, bus);
+    // La mélodie : le motif du thème sur certaines mesures, une broderie dans la gamme sinon
+    const phrase = m % T.phrase;
+    let notes;
+    if (T.motif[phrase]) { notes = T.motif[phrase]; this.derniereNote = notes[notes.length - 1][1]; }
+    else {
+      // La broderie repart de la dernière note jouée (pas de saut après une pause), se pose sur
+      // une note de l'accord après un silence ou sur une longue, et la phrase se termine sur la
+      // tonique, tenue (pour que l'oreille retombe sur ses pieds)
+      notes = []; let deg = this.derniereNote ?? (tons[0] + 7), pos = 0, apresSilence = false;
+      const rythme = T.rythmes[Math.floor(this.hasard() * T.rythmes.length)];
+      const dernier = phrase === T.phrase - 1;
+      for (let i = 0; i < rythme.length; i++) {
+        const dur = rythme[i];
+        if (dernier && i === rythme.length - 1) { notes.push([pos, accord === 0 ? 7 : 7, T.temps - pos]); break; }
+        if (this.hasard() < T.silence && i > 0 && !dernier) { pos += dur; apresSilence = true; continue; }
+        const saut = this.hasard() < 0.7 ? (this.hasard() < 0.5 ? -1 : 1) : (this.hasard() < 0.5 ? -2 : 2);
+        deg = Math.max(accord + 4, Math.min(accord + 13, deg + saut));
+        if ((dur >= 1 || apresSilence) && !tons.some(x => ((deg - x) % 7 + 7) % 7 === 0)) deg += (this.hasard() < 0.5 ? -1 : 1);
+        if (!tons.some(x => ((deg - x) % 7 + 7) % 7 === 0) && (dur >= 1 || apresSilence)) deg += 1;
+        apresSilence = false;
+        notes.push([pos, deg, dur * (T.lie || 0.95)]); pos += dur;
+      }
+      if (notes.length) this.derniereNote = notes[notes.length - 1][1];
+    }
+    for (const [pos, deg, dur] of notes) this.note(T.instruments.melodie, freq(deg + (T.octaveMelodie || 0) * 7), t0 + pos * temps, dur * temps, 0.8 + this.hasard() * 0.2, bus);
+    // La percussion
+    if (T.percussion && !this.coupe.musique) for (const [pos, quoi, force] of T.percussion(m)) this.percu(quoi, t0 + pos * temps, force ?? 1, bus);
+  },
+  percu(quoi, t, force, bus) {
+    if (quoi === 'tambour') { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12); g.gain.setValueAtTime(0.5 * force, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.25); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.3); }
+    else if (quoi === 'tambourin') this.bruit(0.08, t, bus, 0.16 * force, 6000, 'highpass');
+    else if (quoi === 'bois') this.bruit(0.03, t, bus, 0.25 * force, 2400);
+    else if (quoi === 'pieces') { const g = this.ctx.createGain(); g.gain.value = force; g.connect(bus); SONS.piece.call(this, t, g, {}); if (force > 0.45) SONS.piece.call(this, t + 0.06, g, {}); }
+    else if (quoi === 'timbale') { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(95, t); o.frequency.exponentialRampToValueAtTime(58, t + 0.25); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.55 * force, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.9); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 1); this.bruit(0.05, t, bus, 0.12 * force, 300); }
+    else if (quoi === 'goutte') { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(700, t + 0.08); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.09 * force, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.18); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.2); }
+    else if (quoi === 'souffle') this.bruit(0.16, t, bus, 0.05 * force, 900);
+    else if (quoi === 'coeur') { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.frequency.value = 50; g.gain.setValueAtTime(0.6 * force, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.35); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.4); }
+  },
+
+  // Rendre un thème (ou un son) hors ligne, en WAV : pour l'écouter sans jouer, et pour les tests.
+  async rendre(theme, secondes = 20, son = null) {
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const sauve = { ctx: this.ctx, maitre: this.maitre, reverb: this.reverb, reverbGain: this.reverbGain, busSons: this.busSons, busMusique: this.busMusique, pret: this.pret, theme: this.theme, courant: this.courant, boucle: this.boucle, mesure: this.mesure, graine: this.graine };
+    this.ctx = new OAC(2, 44100 * secondes, 44100);
+    this.maitre = this.ctx.createGain(); this.maitre.gain.value = 0.9; this.maitre.connect(this.ctx.destination);
+    const duree = 1.8, n = Math.floor(44100 * duree), imp = this.ctx.createBuffer(2, n, 44100);
+    for (let c = 0; c < 2; c++) { const d = imp.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6) * 0.5; }
+    this.reverb = this.ctx.createConvolver(); this.reverb.buffer = imp; this.reverbGain = this.ctx.createGain(); this.reverbGain.gain.value = 0.35; this.reverb.connect(this.reverbGain); this.reverbGain.connect(this.maitre);
+    this.busSons = this.ctx.createGain(); this.busSons.connect(this.maitre); this.busSons.connect(this.reverb);
+    this.busMusique = this.ctx.createGain(); this.busMusique.gain.value = 0.7; this.busMusique.connect(this.maitre); this.busMusique.connect(this.reverb);
+    this.pret = true; this.boucle = null; this.courant = null; this.theme = null;
+    if (Array.isArray(son)) for (const [nom, t] of son) SONS[nom].call(this, t, this.busCorrige(nom, this.busSons), {});
+    else if (son) SONS[son].call(this, 0.2, this.busCorrige(son, this.busSons), {});
+    else {
+      const T = THEMES[theme]; this.mesure = 0; this.graine = 7; this.derniereNote = null;
+      for (let t = 0.1; t < secondes; t += T.temps * 60 / T.tempo) { this.jouerMesure(T, t, this.busMusique); this.mesure++; }
+    }
+    const buffer = await this.ctx.startRendering();
+    Object.assign(this, sauve);
+    return buffer;
+  },
+  // Un AudioBuffer → un fichier WAV (16 bits)
+  wav(buffer) {
+    const n = buffer.length, canaux = buffer.numberOfChannels, taux = buffer.sampleRate;
+    const out = new ArrayBuffer(44 + n * canaux * 2), v = new DataView(out);
+    const ecrire = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    ecrire(0, 'RIFF'); v.setUint32(4, 36 + n * canaux * 2, true); ecrire(8, 'WAVE'); ecrire(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, canaux, true); v.setUint32(24, taux, true); v.setUint32(28, taux * canaux * 2, true); v.setUint16(32, canaux * 2, true); v.setUint16(34, 16, true); ecrire(36, 'data'); v.setUint32(40, n * canaux * 2, true);
+    let o = 44;
+    for (let i = 0; i < n; i++) for (let c = 0; c < canaux; c++) { const x = Math.max(-1, Math.min(1, buffer.getChannelData(c)[i])); v.setInt16(o, x < 0 ? x * 32768 : x * 32767, true); o += 2; }
+    return out;
+  },
+
+  // --- Les sons du jeu ---
+  jouer(nom, options = {}) {
+    if (!this.pret) return;
+    this.reprendre();
+    const S = SONS[nom]; if (!S) return;
+    // (chaque famille de sons passe par son propre volume)
+    let bus = nom === 'voix' ? this.busVoix : SONS_INTERFACE.has(nom) ? this.busInterface : this.busSons;
+    bus = this.busCorrige(nom, bus);
+    // (v1.64) un bruitage fabriqué une fois, puis rejoué depuis son tampon (voir src/sonsRecits.js)
+    if (S.cache && this.jouerCache) return this.jouerCache(nom, bus, options);
+    if (this.surJoue) this.surJoue(nom, options);
+    S.call(this, this.ctx.currentTime + 0.01, bus, options);
+  },
+  // Un petit gain propre au son, le temps qu'il se joue (voir VOLUME_SONS)
+  busCorrige(nom, bus) {
+    const k = VOLUME_SONS[nom];
+    if (!k) return bus;
+    const g = this.ctx.createGain(); g.gain.value = k; g.connect(bus);
+    setTimeout(() => g.disconnect(), 6000);
+    return g;
+  },
+};
+
+// Les instruments : [forme d'onde, multiple de la fréquence, volume, désaccord en cents]
+const INSTRUMENTS = {
+  clarinette: { voix: [['square', 1, 0.35], ['sine', 1, 0.5], ['sine', 3, 0.12], ['square', 2, 0.05]], attaque: 0.04, decroissance: 0.15, tenue: 0.85, relache: 0.18, volume: 0.17, vibrato: 0.007, filtre: 2600, glisse: 1.012 },
+  accordeon: { voix: [['sawtooth', 1, 0.25, -7], ['sawtooth', 1, 0.25, 7], ['square', 2, 0.08], ['sine', 1, 0.3]], attaque: 0.03, decroissance: 0.1, tenue: 0.8, relache: 0.12, volume: 0.1, filtre: 1500 },
+  guitare: { voix: [['triangle', 1, 0.7], ['sine', 1, 0.3], ['sine', 2, 0.12], ['sawtooth', 1, 0.06]], attaque: 0.008, decroissance: 0.9, tenue: 0.1, relache: 0.35, volume: 0.22, filtre: 2200, glisse: 1.008 },
+  clochette: { voix: [['sine', 1, 0.6], ['sine', 2.0, 0.2], ['sine', 3.01, 0.12], ['sine', 4.2, 0.05]], attaque: 0.004, decroissance: 2.2, tenue: 0.05, relache: 1.5, volume: 0.16 },
+  carillon: { voix: [['sine', 1, 0.7], ['sine', 2.76, 0.18], ['sine', 5.4, 0.07], ['sine', 0.5, 0.15]], attaque: 0.012, decroissance: 1.3, tenue: 0.08, relache: 0.9, volume: 0.17 },
+  glas: { voix: [['sine', 1, 0.7], ['sine', 2.4, 0.25], ['sine', 3.9, 0.1], ['triangle', 0.5, 0.2]], attaque: 0.005, decroissance: 2.6, tenue: 0.08, relache: 1.8, volume: 0.24 },
+  fluteDouce: { voix: [['sine', 1, 0.85], ['triangle', 1, 0.08], ['sine', 2, 0.03]], attaque: 0.09, decroissance: 0.15, tenue: 0.8, relache: 0.35, volume: 0.24, vibrato: 0.004, filtre: 1800 },
+  choeur: { voix: [['sawtooth', 1, 0.2, -8], ['sawtooth', 1, 0.2, 8], ['sine', 1, 0.4], ['sine', 2, 0.1, 4]], attaque: 0.6, decroissance: 0.4, tenue: 0.9, relache: 0.9, volume: 0.1, filtre: 900, vibrato: 0.004 },
+  flute: { voix: [['sine', 1, 0.7], ['triangle', 1, 0.25], ['sine', 2, 0.08]], attaque: 0.06, decroissance: 0.1, tenue: 0.8, relache: 0.15, volume: 0.22, vibrato: 0.006, bruit: { duree: 0.08, volume: 0.04, filtre: 3000 } },
+  luth: { voix: [['triangle', 1, 0.8], ['sawtooth', 1, 0.15], ['sine', 2, 0.15]], attaque: 0.006, decroissance: 0.5, tenue: 0.12, relache: 0.45, volume: 0.22, filtre: 2600, glisse: 1.01 },
+  harpe: { voix: [['sine', 1, 0.85], ['triangle', 1, 0.15], ['sine', 2, 0.04]], attaque: 0.012, decroissance: 1.0, tenue: 0.1, relache: 0.6, volume: 0.2, filtre: 2400 },
+  celesta: { voix: [['sine', 1, 0.8], ['sine', 4, 0.12], ['sine', 2.4, 0.05]], attaque: 0.012, decroissance: 1.2, tenue: 0.05, relache: 0.6, volume: 0.22 },
+  boiteAMusique: { voix: [['sine', 1, 0.7], ['sine', 3, 0.1], ['sine', 5.2, 0.03]], attaque: 0.01, decroissance: 0.8, tenue: 0.04, relache: 0.5, volume: 0.18 },
+  cordes: { voix: [['sawtooth', 1, 0.3, -6], ['sawtooth', 1, 0.3, 6], ['sawtooth', 1.005, 0.2, 0]], attaque: 0.35, decroissance: 0.3, tenue: 0.85, relache: 0.5, volume: 0.1, filtre: 1500, vibrato: 0.003 },
+  vielle: { voix: [['sawtooth', 1, 0.5], ['square', 1, 0.1, 4], ['sawtooth', 2, 0.12]], attaque: 0.08, decroissance: 0.2, tenue: 0.8, relache: 0.5, volume: 0.12, filtre: 1800, vibrato: 0.008 },
+  basse: { voix: [['triangle', 1, 0.8], ['sine', 1, 0.5], ['sawtooth', 1, 0.08]], attaque: 0.01, decroissance: 0.4, tenue: 0.3, relache: 0.2, volume: 0.28, filtre: 500 },
+  orgue: { voix: [['sine', 1, 0.6], ['sine', 2, 0.35], ['sine', 3, 0.12], ['sine', 0.5, 0.25]], attaque: 0.25, decroissance: 0.2, tenue: 0.9, relache: 0.6, volume: 0.1 },
+  bourdon: { voix: [['sawtooth', 1, 0.3], ['sawtooth', 1, 0.3, 9], ['sine', 0.5, 0.5]], attaque: 1.2, decroissance: 0.5, tenue: 0.9, relache: 1.5, volume: 0.1, filtre: 600 },
+  // (v0.57) L'ocarina, façon Zelda : rond, doux, un souffle au début ; il remplace le célesta, trop strident dans l'aigu
+  // (v0.58 : plus rond encore — presque une sinusoïde pure, l'attaque plus douce, filtré plus bas,
+  // un léger souffle grave ; un peu plus fort, car le grave paraît moins fort à l'oreille)
+  ocarina: { voix: [['sine', 1, 0.95], ['sine', 2, 0.05], ['triangle', 0.5, 0.04]], attaque: 0.08, decroissance: 0.15, tenue: 0.88, relache: 0.32, volume: 0.28, vibrato: 0.004, filtre: 1100, bruit: { duree: 0.08, volume: 0.02, filtre: 900 } },
+  // Les graves du marché noir : un violoncelle qui chante bas, une contrebasse pincée
+  violoncelle: { voix: [['sawtooth', 1, 0.45], ['sawtooth', 1, 0.25, 7], ['sine', 0.5, 0.25]], attaque: 0.18, decroissance: 0.3, tenue: 0.85, relache: 0.5, volume: 0.15, filtre: 900, vibrato: 0.005 },
+  pizzicato: { voix: [['triangle', 1, 0.8], ['sine', 1, 0.4], ['sine', 2, 0.08]], attaque: 0.005, decroissance: 0.5, tenue: 0.05, relache: 0.3, volume: 0.28, filtre: 700 },
+  // Le drame (la faillite) : des cuivres sombres, des cordes en trémolo
+  cuivres: { voix: [['sawtooth', 1, 0.4], ['sawtooth', 1, 0.3, -5], ['square', 0.5, 0.1]], attaque: 0.12, decroissance: 0.3, tenue: 0.8, relache: 0.45, volume: 0.14, filtre: 1100, vibrato: 0.003 },
+  cordesTremolo: { voix: [['sawtooth', 1, 0.3, -6], ['sawtooth', 1, 0.3, 6]], attaque: 0.02, decroissance: 0.05, tenue: 0.8, relache: 0.08, volume: 0.07, filtre: 1600 },
+  piano: { voix: [['triangle', 1, 0.7], ['sine', 2, 0.2], ['sawtooth', 1, 0.08]], attaque: 0.01, decroissance: 1.4, tenue: 0.08, relache: 0.8, volume: 0.2, filtre: 2200 },
+};
+
+// Les gammes, en demi-tons depuis la tonique
+const GAMMES = {
+  harmonique: [0, 2, 3, 5, 7, 8, 11],
+  hante: [0, 2, 3, 6, 7, 8, 11], freygish: [0, 1, 4, 5, 7, 8, 10], majeur: [0, 2, 4, 5, 7, 9, 11], mineur: [0, 2, 3, 5, 7, 8, 10], dorien: [0, 2, 3, 5, 7, 9, 10], mixolydien: [0, 2, 4, 5, 7, 9, 10], lydien: [0, 2, 4, 6, 7, 9, 11],
+};
+const NOTE = { C: 261.63, D: 293.66, E: 329.63, F: 349.23, G: 392.0, A: 440.0, B: 493.88 };
+
+// Les thèmes. `motif` : les mesures de la phrase qui ont une mélodie écrite ([position, degré, durée]) ;
+// les autres sont brodées. `accords` : un degré par mesure. Les positions sont en temps.
+const THEMES = {
+  // L'écran titre : une valse de boîte à musique, mystérieuse et douce (façon Harry Potter),
+  // sur un tapis de cordes
+  titre: {
+    base: NOTE.E / 2, gamme: GAMMES.mineur, tempo: 150, temps: 3, phrase: 8,
+    accords: [0, 0, 5, 5, 3, 3, 4, 4], octaveMelodie: 2,
+    instruments: { melodie: 'carillon', accompagnement: 'cordes', basse: 'basse' }, reverb: 0.3, lie: 1.1,
+    motif: { 0: [[0, 7, 1.1], [1, 9, 1.1], [2, 11, 1.1]], 1: [[0, 14, 2.1], [2, 11, 1.1]], 2: [[0, 12, 1.1], [1, 11, 1.1], [2, 9, 1.1]], 3: [[0, 10, 3]], 4: [[0, 7, 1.1], [1, 9, 1.1], [2, 11, 1.1]], 5: [[0, 13, 2.1], [2, 14, 1.1]], 6: [[0, 12, 1.6], [1.5, 11, 0.6], [2, 9, 1.1]], 7: [[0, 7, 3]] },
+    rythmes: [[1, 1, 1], [2, 1], [1, 2]], silence: 0,
+    basse: (m, a) => [[0, a, 2.8]],
+    accompagnement: (m) => [[0, 0, 3, 0.5], [0, 1, 3, 0.4], [0, 2, 3, 0.4]],
+  },
+  // Le marché : une gigue en 6/8, flûte et luth, tambourin (la Comté, Stardew)
+  marche: {
+    base: NOTE.G / 2, gamme: GAMMES.majeur, tempo: 170, temps: 6, phrase: 8,
+    accords: [0, 0, 3, 4, 0, 5, 3, 4], octaveMelodie: 1,
+    instruments: { melodie: 'fluteDouce', accompagnement: 'luth', basse: 'basse' },
+    motif: { 0: [[0, 7, 1], [1, 9, 1], [2, 11, 1], [3, 14, 2], [5, 11, 1]], 1: [[0, 12, 1], [1, 11, 1], [2, 9, 1], [3, 7, 3]], 4: [[0, 11, 1], [1, 12, 1], [2, 14, 1], [3, 16, 2], [5, 14, 1]], 5: [[0, 13, 1], [1, 12, 1], [2, 11, 1], [3, 9, 3]] },
+    rythmes: [[1, 1, 1, 1, 1, 1], [2, 1, 2, 1], [1, 1, 1, 3], [3, 1, 1, 1]], silence: 0.12,
+    basse: (m, a) => [[0, a, 1.4], [3, a + 4, 1.4]],
+    accompagnement: (m) => [[0, 0, 0.9, 0.7], [1, 1, 0.9, 0.4], [2, 2, 0.9, 0.4], [3, 3, 0.9, 0.6], [4, 1, 0.9, 0.4], [5, 2, 0.9, 0.4]],
+    percussion: (m) => [[0, 'tambour', 1], [3, 'tambour', 0.6], [1, 'tambourin', 0.5], [2, 'tambourin', 0.4], [4, 'tambourin', 0.5], [5, 'tambourin', 0.4]],
+  },
+  // Le comptoir : posé et chaleureux, arpèges de luth et flûte discrète (Tavern Master, Papers Please en plus doux)
+  comptoir: {
+    base: NOTE.C / 2, gamme: GAMMES.majeur, tempo: 76, temps: 4, phrase: 8,
+    accords: [0, 5, 3, 4, 0, 2, 3, 4], octaveMelodie: 2,
+    instruments: { melodie: 'flute', accompagnement: 'luth', basse: 'basse' },
+    motif: { 0: [[0, 9, 1.5], [1.5, 11, 0.5], [2, 12, 2]], 1: [[0, 11, 1], [1, 9, 1], [2, 7, 2]], 4: [[0, 12, 1.5], [1.5, 14, 0.5], [2, 11, 2]], 5: [[0, 9, 1], [1, 11, 1], [2, 7, 2]] },
+    rythmes: [[2, 2], [1, 1, 2], [4], [1.5, 0.5, 2]], silence: 0.35,
+    basse: (m, a) => [[0, a, 2], [2, a + 4, 2]],
+    accompagnement: (m) => [[0, 0, 1, 0.5], [0.5, 1, 1, 0.35], [1, 2, 1, 0.4], [1.5, 3, 1, 0.35], [2, 2, 1, 0.4], [2.5, 1, 1, 0.35], [3, 0, 1, 0.4], [3.5, 1, 1, 0.3]],
+  },
+  // Le comptoir, deuxième air : une valse légère de harpe et de célesta (l'auberge un après-midi calme)
+  comptoir2: {
+    base: NOTE.D / 2, gamme: GAMMES.majeur, tempo: 104, temps: 3, phrase: 8,
+    accords: [0, 0, 3, 3, 5, 5, 4, 4], octaveMelodie: 1,
+    instruments: { melodie: 'harpe', accompagnement: 'orgue', basse: 'basse' }, reverb: 0.25,
+    motif: { 0: [[0, 9, 1], [1, 11, 1], [2, 12, 1]], 1: [[0, 14, 2], [2, 12, 1]], 2: [[0, 11, 1], [1, 9, 1], [2, 7, 1]], 3: [[0, 9, 3]], 4: [[0, 9, 1], [1, 11, 1], [2, 14, 1]], 5: [[0, 16, 2], [2, 14, 1]], 6: [[0, 12, 1], [1, 11, 1], [2, 9, 1]], 7: [[0, 7, 3]] },
+    rythmes: [[1, 1, 1], [2, 1]], silence: 0.2,
+    basse: (m, a) => [[0, a, 2.8]],
+    accompagnement: (m) => [[0, 0, 2.9, 0.35], [0, 1, 2.9, 0.28], [0, 2, 2.9, 0.28]],
+  },
+  // Le comptoir, troisième air : un barde qui gratte son luth au coin du feu, lent et chaud
+  comptoir3: {
+    base: NOTE.G / 2, gamme: GAMMES.mixolydien, tempo: 68, temps: 4, phrase: 8,
+    accords: [0, 6, 3, 0, 4, 6, 3, 4], octaveMelodie: 1,
+    instruments: { melodie: 'vielle', accompagnement: 'luth', basse: 'basse' },
+    motif: { 0: [[0, 11, 1.5], [1.5, 9, 0.5], [2, 7, 2]], 1: [[0, 9, 1], [1, 10, 1], [2, 11, 2]], 4: [[0, 14, 1.5], [1.5, 12, 0.5], [2, 11, 2]], 5: [[0, 9, 1], [1, 7, 1], [2, 6, 2]] },
+    rythmes: [[2, 2], [1, 1, 2], [1.5, 0.5, 2]], silence: 0.08, lie: 1.05,
+    basse: (m, a) => [[0, a, 1.9], [2, a + 4, 1.9]],
+    accompagnement: (m) => [[0, 0, 0.8, 0.5], [0, 1, 0.8, 0.4], [0, 2, 0.8, 0.4], [1.5, 1, 0.5, 0.3], [2, 0, 0.8, 0.45], [2, 2, 0.8, 0.35], [3.5, 1, 0.5, 0.3]],
+    percussion: (m) => [[1, 'bois', 0.3], [3, 'bois', 0.3]],
+  },
+  // La nuit : boîte à musique très douce sur un orgue lointain, beaucoup de silence (les nuits de Stardew, la Comté endormie)
+  nuit: {
+    base: NOTE.A / 2, gamme: GAMMES.mineur, tempo: 58, temps: 4, phrase: 8,
+    accords: [0, 5, 2, 6, 0, 5, 3, 4], octaveMelodie: 2,
+    instruments: { melodie: 'boiteAMusique', accompagnement: 'orgue', basse: 'basse' },
+    motif: { 0: [[0, 7, 2], [2, 9, 1], [3, 11, 1]], 1: [[0, 12, 3]], 4: [[0, 11, 2], [2, 9, 1], [3, 7, 1]], 5: [[0, 8, 3]] },
+    rythmes: [[2, 2], [4], [1, 3]], silence: 0.45,
+    basse: (m, a) => [[0, a, 3.8]],
+    accompagnement: (m) => [[0, 0, 3.9, 0.3], [0, 1, 3.9, 0.25], [0, 2, 3.9, 0.25]],
+  },
+  // La carte des contrées : cordes et vielle, un souffle d'aventure (Witcher, le Hobbit en route)
+  carte: {
+    base: NOTE.D / 2, gamme: GAMMES.dorien, tempo: 96, temps: 4, phrase: 8,
+    accords: [0, 0, 6, 6, 3, 3, 4, 4], octaveMelodie: 2,
+    instruments: { melodie: 'vielle', accompagnement: 'cordes', basse: 'basse' },
+    motif: { 0: [[0, 7, 1], [1, 10, 1], [2, 11, 2]], 1: [[0, 12, 1.5], [1.5, 11, 0.5], [2, 10, 2]], 4: [[0, 7, 1], [1, 10, 1], [2, 14, 2]], 5: [[0, 13, 1.5], [1.5, 12, 0.5], [2, 10, 2]] },
+    rythmes: [[2, 2], [1, 1, 2], [1, 1, 1, 1]], silence: 0.25,
+    basse: (m, a) => [[0, a, 2], [2, a, 2]],
+    accompagnement: (m) => [[0, 0, 3.9, 0.35], [0, 1, 3.9, 0.3], [0, 2, 3.9, 0.3]],
+    percussion: (m) => (m % 2 === 1 ? [[0, 'tambour', 0.8], [2.5, 'tambour', 0.5]] : [[0, 'tambour', 0.8]]),
+  },
+  // Les récits de voyage : bourdon et vielle, comme un barde (Witcher)
+  recit: {
+    base: NOTE.E / 2, gamme: GAMMES.mineur, tempo: 88, temps: 4, phrase: 8,
+    accords: [0, 0, 5, 5, 6, 6, 4, 4], octaveMelodie: 2,
+    instruments: { melodie: 'vielle', accompagnement: 'bourdon', basse: 'basse' },
+    motif: { 0: [[0, 7, 1], [1, 8, 1], [2, 10, 2]], 1: [[0, 11, 2], [2, 10, 1], [3, 8, 1]], 4: [[0, 7, 1], [1, 8, 1], [2, 10, 1], [3, 12, 1]], 5: [[0, 11, 3], [3, 7, 1]] },
+    rythmes: [[1, 1, 2], [2, 1, 1], [1, 1, 1, 1]], silence: 0.25,
+    basse: (m, a) => [[0, a, 3.8]],
+    accompagnement: (m) => (m % 2 === 0 ? [[0, 0, 7.8, 0.6], [0, 2, 7.8, 0.4]] : []),
+    percussion: (m) => [[0, 'tambour', 0.9], [1.5, 'bois', 0.5], [2, 'tambour', 0.6], [3.5, 'bois', 0.4]],
+  },
+  // Les récits, selon ce qu'il s'y passe : la joie (flûte et luth, en marche), la tristesse (piano
+  // et cordes, lent), la peur (bourdon, chœur grave, cœur qui bat, dissonances), l'étonnement
+  // (célesta et harpe en lydien, comme une découverte)
+  recitHeureux: {
+    base: NOTE.G / 2, gamme: GAMMES.majeur, tempo: 108, temps: 4, phrase: 8,
+    accords: [0, 3, 4, 0, 5, 3, 4, 0], octaveMelodie: 1,
+    instruments: { melodie: 'fluteDouce', accompagnement: 'luth', basse: 'basse' },
+    motif: { 0: [[0, 7, 1], [1, 9, 1], [2, 11, 1], [3, 12, 1]], 1: [[0, 14, 2], [2, 12, 1], [3, 11, 1]], 4: [[0, 11, 1], [1, 12, 1], [2, 14, 1], [3, 16, 1]], 5: [[0, 14, 3], [3, 11, 1]] },
+    rythmes: [[1, 1, 2], [1, 1, 1, 1], [2, 1, 1]], silence: 0.15,
+    basse: (m, a) => [[0, a, 1.9], [2, a + 4, 1.9]],
+    accompagnement: (m) => [[0, 0, 0.9, 0.6], [1, 1, 0.9, 0.4], [2, 2, 0.9, 0.5], [3, 1, 0.9, 0.4]],
+    percussion: (m) => [[0, 'tambour', 0.7], [2, 'tambour', 0.5], [1, 'tambourin', 0.3], [3, 'tambourin', 0.3]],
+  },
+  recitTriste: {
+    base: NOTE.A / 2, gamme: GAMMES.mineur, tempo: 58, temps: 4, phrase: 8,
+    accords: [0, 5, 3, 4, 0, 5, 6, 4], octaveMelodie: 2,
+    instruments: { melodie: 'piano', accompagnement: 'cordes', basse: 'basse' }, reverb: 0.3, forceBasse: 1.5,
+    motif: { 0: [[0, 11, 2], [2, 10, 1], [3, 9, 1]], 1: [[0, 7, 3.5]], 2: [[0, 9, 2], [2, 10, 2]], 3: [[0, 11, 4]], 4: [[0, 12, 2], [2, 11, 1], [3, 9, 1]], 5: [[0, 8, 4]], 6: [[0, 9, 1], [1, 10, 1], [2, 11, 2]], 7: [[0, 7, 4]] },
+    rythmes: [[2, 2], [4], [1, 3]], silence: 0.1, lie: 1.1,
+    basse: (m, a) => [[0, a, 3.8], [2, a, 1.8]],
+    accompagnement: (m) => [[0, 0, 3.9, 0.45], [0, 1, 3.9, 0.3], [0, 2, 3.9, 0.3], [0, -3, 3.9, 0.35]],
+  },
+  recitPeur: {
+    // Une tour hantée : clochettes lointaines sur une gamme étrange (demi-tons, triton), un
+    // orgue grave qui tient deux notes qui frottent, un cœur qui bat de loin en loin
+    base: NOTE.E / 2, gamme: GAMMES.hante, tempo: 62, temps: 4, phrase: 8,
+    accords: [0, 0, 3, 3, 0, 0, 5, 3], octaveMelodie: 2,
+    instruments: { melodie: 'clochette', accompagnement: 'orgue', basse: 'bourdon' }, reverb: 0.75, lie: 1.4,
+    motif: { 0: [[0, 7, 1], [1, 8, 1], [2, 7, 1], [3, 12, 1]], 1: [[0, 11, 2], [2, 10, 2]], 2: [[0, 7, 1], [1, 8, 1], [2, 7, 1], [3, 5, 1]], 3: [[0, 6, 4]], 4: [[0, 12, 1], [1, 13, 1], [2, 12, 1], [3, 8, 1]], 5: [[0, 7, 2], [2, 6, 2]], 6: [[0, 9, 1], [1, 8, 1], [3, 7, 1]], 7: [[0, 7, 4]] },
+    rythmes: [[1, 1, 2], [2, 2]], silence: 0.3,
+    basse: (m, a) => [[0, a, 3.9]],
+    accompagnement: (m) => [[0, 0, 7.8, 0.4], [0, 1, 7.8, 0.3]],
+    percussion: (m) => (m % 2 === 0 ? [[0, 'coeur', 0.7], [0.5, 'coeur', 0.4]] : []),
+  },
+  recitEtonne: {
+    base: NOTE.C / 2, gamme: GAMMES.lydien, tempo: 84, temps: 4, phrase: 8,
+    accords: [0, 1, 0, 4, 0, 1, 3, 4], octaveMelodie: 1,
+    instruments: { melodie: 'ocarina', accompagnement: 'harpe', basse: 'basse' }, reverb: 0.35,
+    motif: { 0: [[0, 7, 1], [1, 10, 1], [2, 14, 2]], 1: [[0, 13, 1], [1, 10, 1], [2, 11, 2]], 4: [[0, 7, 1], [1, 11, 1], [2, 14, 1], [3, 17, 1]], 5: [[0, 16, 2], [2, 14, 2]] },
+    rythmes: [[1, 1, 2], [2, 2], [0.5, 0.5, 1, 2]], silence: 0.15, lie: 1.15,
+    basse: (m, a) => [[0, a, 3.8]],
+    accompagnement: (m) => [[0, 0, 0.9, 0.4], [0.5, 1, 0.9, 0.3], [1, 2, 0.9, 0.3], [1.5, 3, 0.9, 0.3], [2, 4, 0.9, 0.3], [2.5, 3, 0.9, 0.25], [3, 2, 0.9, 0.3], [3.5, 1, 0.9, 0.25]],
+  },
+  // La Faucheuse : un glas, un chœur grave, le cœur qui bat (son thème sombre, le temps de sa visite)
+  faucheuse: {
+    base: NOTE.E / 4, gamme: GAMMES.mineur, tempo: 48, temps: 4, phrase: 4,
+    accords: [0, 0, 5, 0], octaveMelodie: 1,
+    instruments: { melodie: 'glas', accompagnement: 'choeur', basse: 'bourdon' }, reverb: 0.7,
+    motif: { 0: [[0, 7, 4]], 1: [[0, 6, 2], [2, 7, 2]], 2: [[0, 5, 4]], 3: [[0, 6, 2], [2, 4, 2]] },
+    rythmes: [[4]], silence: 0,
+    basse: (m, a) => [[0, a, 3.9]],
+    accompagnement: (m) => [[0, 0, 3.9, 0.5], [0, 1, 3.9, 0.3]],
+    percussion: (m) => [[0, 'coeur', 1], [0.45, 'coeur', 0.6], [2, 'coeur', 1], [2.45, 'coeur', 0.6]],
+  },
+  // Le marché noir (v0.57) : sombre et mystérieux, rien que des graves. Un bourdon, une contrebasse
+  // pincée, un violoncelle qui chante bas, de longs silences, des gouttes qui tombent dans la cave,
+  // un cœur sourd et de temps en temps des pièces qui tintent
+  marcheNoir: {
+    base: NOTE.D / 2, gamme: GAMMES.hante, tempo: 58, temps: 4, phrase: 8,
+    accords: [0, 0, 5, 4, 0, 3, 1, 4], octaveMelodie: -1, lie: 1.3,
+    instruments: { melodie: 'violoncelle', accompagnement: 'pizzicato', basse: 'bourdon' }, reverb: 0.7,
+    motif: { 0: [[0, 7, 1], [1, 9, 1], [2, 10, 2]], 3: [[0, 11, 1.5], [1.5, 10, 0.5], [2, 7, 2]], 4: [[1, 7, 1], [2, 6, 2]], 7: [[0, 4, 1], [1, 6, 1], [2, 7, 2]] },
+    rythmes: [[2, 2], [1, 1, 2], [3, 1], [4]], silence: 0.45,
+    basse: (m, a) => [[0, a, 3.95]],
+    accompagnement: (m) => (m % 2 ? [[0, 0, 0.9, 0.5], [1, 1, 0.9, 0.4], [2, 2, 0.9, 0.4], [3, 1, 0.9, 0.35]] : [[0, 0, 1.5, 0.5], [2, 2, 1.5, 0.4]]),
+    percussion: (m) => [[1.5 + (m % 3) * 0.7, 'goutte', 0.6], ...(m % 8 === 6 ? [[3, 'pieces', 0.2]] : []), ...(m % 4 === 0 ? [[0, 'coeur', 0.45]] : [])],
+  },
+  // Grippesou et les jeux : sautillant, un peu louche (luth et bois)
+  jeux: {
+    base: NOTE.E / 2, gamme: GAMMES.mineur, tempo: 128, temps: 4, phrase: 4,
+    accords: [0, 0, 3, 4], octaveMelodie: 2,
+    instruments: { melodie: 'luth', accompagnement: 'luth', basse: 'basse' },
+    motif: { 0: [[0, 7, 0.5], [0.5, 7, 0.5], [1, 10, 0.5], [1.5, 9, 0.5], [2, 7, 1], [3, 11, 1]], 1: [[0, 10, 0.5], [0.5, 9, 0.5], [1, 7, 1], [2, 6, 2]] },
+    rythmes: [[0.5, 0.5, 1, 1, 1], [1, 0.5, 0.5, 2]], silence: 0.2,
+    basse: (m, a) => [[0, a, 0.9], [1, a, 0.9], [2, a + 4, 0.9], [3, a, 0.9]],
+    accompagnement: (m) => [[0.5, 0, 0.4, 0.5], [0.5, 1, 0.4, 0.4], [1.5, 2, 0.4, 0.5], [2.5, 0, 0.4, 0.5], [3.5, 1, 0.4, 0.4]],
+    percussion: (m) => [[0, 'bois', 0.8], [1, 'bois', 0.5], [2, 'bois', 0.8], [3, 'bois', 0.5]],
+  },
+  // La banque : un peu solennel, harpe et orgue
+  // La banque : une danse klezmer (gamme freygish), clarinette qui ornemente sur l'oum-pah de
+  // l'accordéon et de la basse, et des pièces qui tintent au fond (le coffre de Thorgrim)
+  banque: {
+    base: NOTE.D / 2, gamme: GAMMES.freygish, tempo: 132, temps: 2, phrase: 8,
+    accords: [0, 0, 3, 0, 5, 3, 4, 0], octaveMelodie: 2, lie: 1.05,
+    instruments: { melodie: 'clarinette', accompagnement: 'accordeon', basse: 'basse' },
+    motif: { 0: [[0, 7, 0.5], [0.5, 8, 0.5], [1, 11, 1]], 1: [[0, 12, 0.5], [0.5, 11, 0.5], [1, 8, 0.5], [1.5, 7, 0.5]], 2: [[0, 10, 0.5], [0.5, 8, 0.5], [1, 7, 1]], 3: [[0, 8, 0.75], [0.75, 7, 0.25], [1, 6, 1]], 7: [[0, 7, 2]] },
+    rythmes: [[0.5, 0.5, 1], [0.5, 0.5, 0.5, 0.5], [1, 0.5, 0.5], [0.25, 0.25, 0.5, 1]], silence: 0.1,
+    basse: (m, a) => [[0, a, 0.45], [1, a + 4, 0.45]],
+    accompagnement: (m) => [[0.5, 0, 0.35, 0.4], [0.5, 1, 0.35, 0.35], [1.5, 0, 0.35, 0.4], [1.5, 2, 0.35, 0.35]],
+    percussion: (m) => (m % 2 === 0 ? [[0, 'pieces', 0.5], [1.5, 'pieces', 0.35]] : [[1, 'pieces', 0.4]]),
+    reverb: 0.2,
+  },
+  // Les cinématiques : cordes et célesta, mystère et émerveillement (Harry Potter, le Hobbit)
+  cinematique: {
+    base: NOTE.D / 2, gamme: GAMMES.lydien, tempo: 72, temps: 4, phrase: 8,
+    accords: [0, 0, 1, 1, 4, 4, 3, 3], octaveMelodie: 0,   // (v0.58 : deux octaves plus bas, l'ocarina dans son registre chaud)
+    instruments: { melodie: 'ocarina', accompagnement: 'cordes', basse: 'basse' },
+    motif: { 0: [[0, 7, 1], [1, 11, 1], [2, 14, 1], [3, 13, 1]], 1: [[0, 11, 2], [2, 9, 2]], 4: [[0, 7, 1], [1, 11, 1], [2, 14, 1], [3, 17, 1]], 5: [[0, 16, 2], [2, 14, 2]] },
+    rythmes: [[2, 2], [1, 1, 2], [4]], silence: 0.3,
+    basse: (m, a) => [[0, a, 3.8]],
+    accompagnement: (m) => [[0, 0, 3.9, 0.35], [0, 1, 3.9, 0.3], [0, 2, 3.9, 0.3]],
+  },
+  // La faillite : lent, piano et cordes, en mineur
+  // La faillite (v0.57) : le drame. Cuivres sombres en mineur harmonique, cordes en trémolo,
+  // un orgue grave, des timbales qui roulent et frappent à chaque fin de phrase
+  faillite: {
+    base: NOTE.D / 2, gamme: GAMMES.harmonique, tempo: 54, temps: 4, phrase: 4,
+    accords: [0, 5, 3, 4], octaveMelodie: 1, lie: 1.1,
+    instruments: { melodie: 'cuivres', accompagnement: 'cordesTremolo', basse: 'orgue' }, reverb: 0.6,
+    motif: { 0: [[0, 7, 1.5], [1.5, 8, 0.5], [2, 7, 2]], 1: [[0, 12, 2], [2, 11, 1], [3, 10, 1]], 2: [[0, 10, 3], [3, 9, 1]], 3: [[0, 8, 2], [2, 6, 2]] },
+    rythmes: [[2, 2], [4]], silence: 0.1,
+    basse: (m, a) => [[0, a, 3.9]],
+    accompagnement: (m) => Array.from({ length: 16 }, (_, i) => [i * 0.25, i % 2 ? 1 : 0, 0.22, 0.3 + (i / 16) * 0.2]),
+    percussion: (m) => [[0, 'timbale', m % 4 === 0 ? 1 : 0.6], ...(m % 4 === 3 ? Array.from({ length: 16 }, (_, j) => [2 + j * 0.125, 'timbale', 0.15 + j * 0.04]) : [])],
+  },
+  // La Faucheuse : un bourdon grave et un cœur qui bat
+  danger: {
+    base: NOTE.E / 4, gamme: GAMMES.mineur, tempo: 60, temps: 4, phrase: 4,
+    accords: [0, 0, 0, 0], octaveMelodie: 1,
+    instruments: { melodie: 'orgue', accompagnement: 'bourdon', basse: 'basse' },
+    motif: { 0: [[0, 7, 4]], 1: [[0, 8, 4]], 2: [[0, 7, 4]], 3: [[0, 6, 4]] },
+    rythmes: [[4]], silence: 0,
+    basse: (m, a) => [[0, a, 3.8]],
+    accompagnement: (m) => [[0, 0, 3.9, 0.5]],
+    percussion: (m) => [[0, 'coeur', 1], [0.35, 'coeur', 0.6], [2, 'coeur', 1], [2.35, 'coeur', 0.6]],
+  },
+};
+
+// Les sons. Chaque fonction reçoit le moment, le bus et les options.
+// Les sons de l'interface (réglés à part des bruitages du monde)
+// (v0.58) Le volume de chaque bruitage, mesuré puis corrigé : chacun est ramené au niveau de sa
+// famille — l'interface discrète (-30 dB), l'ambiance et les bêtes (-27 dB), les gestes du jeu
+// (-23 dB), les grands moments (-20 dB). Sans ça, une plume était 28 dB plus faible qu'un succès.
+const VOLUME_SONS = { poser: 0.6, plume: 3.05, clic: 2.57, feu: 3.02, balai: 2.88, glisse: 4, des: 3.47, page: 1.24, sabots: 1.7, vent: 1.57, porte: 2.37, glou: 1.48, plouf: 1.48, aie: 1.29, coq: 1.23, passageDehors: 0.84, saut: 1.16, refus: 0.65, maillet: 1.4, pas: 1.36, fanfare: 1.7, siffle: 1.16, hibou: 0.67, echec: 1.46, grogne: 0.59, loup: 0.56, pieces: 0.73, achat: 0.73, sanglier: 0.46, caisse: 0.65, marteau: 0.65, bouclier: 0.56, clochette: 0.65, coeur: 0.64, cloche: 0.6, trefle: 0.55, succes: 0.38, nymphe: 0.7 };
+const SONS_INTERFACE = new Set(['lettre', 'clic', 'page', 'plume', 'passage', 'passageDehors', 'refus']);
+
+const SONS = {
+  // Une pièce qui tinte : deux partiels aigus, très courts
+  piece(t, bus, o) { const f = 2200 + Math.random() * 600; for (const [mult, v] of [[1, 0.25], [1.5, 0.12], [2.7, 0.06]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = f * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.18); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.2); } this.bruit(0.02, t, bus, 0.15, 5000, 'highpass'); },
+  // Plusieurs pièces qui tombent
+  pieces(t, bus, o) { const n = Math.min(6, Math.max(2, Math.round((o.montant || 10) / 8))); for (let i = 0; i < n; i++) SONS.piece.call(this, t + i * 0.055 + Math.random() * 0.02, bus, o); },
+  // La clochette de la porte
+  clochette(t, bus) { for (const [mult, v, d] of [[1, 0.3, 0.9], [2.4, 0.12, 0.6], [4.1, 0.05, 0.4]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 1760 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.1); } SONS.clochette2.call(this, t + 0.13, bus); },
+  clochette2(t, bus) { for (const [mult, v, d] of [[1.19, 0.22, 0.8], [2.6, 0.08, 0.5]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 1760 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.1); } },
+  // La porte qui s'ouvre puis se referme (un grincement, puis un claquement de bois)
+  porte(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, t); osc.frequency.linearRampToValueAtTime(260, t + 0.3); const f = this.ctx.createBiquadFilter(); f.frequency.value = 900; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.08); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.35); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.4); this.bruit(0.06, t + 0.42, bus, 0.8, 500); this.bruit(0.03, t + 0.46, bus, 0.4, 1200); },
+  // (v0.68) Le texte qui défile, façon Pokémon : un petit « bip » doux, à peine audible, un peu
+  // différent à chaque lettre
+  lettre(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'square'; osc.frequency.value = 880 + Math.random() * 120; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.025, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.035); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.04); },
+  // Un clic de bouton : un petit « toc » de bois
+  clic(t, bus) { this.bruit(0.025, t, bus, 0.22, 1800); const osc = this.ctx.createOscillator(); osc.frequency.value = 700; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.05); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.06); },
+  // Une page qu'on tourne, un parchemin
+  page(t, bus) { this.bruit(0.18, t, bus, 0.12, 3500, 'highpass'); this.bruit(0.08, t + 0.12, bus, 0.08, 2000); },
+  // Les dés qui roulent sur la table
+  des(t, bus) { for (let i = 0; i < 6; i++) this.bruit(0.03, t + i * 0.07 + Math.random() * 0.03, bus, 0.6 - i * 0.07, 2200 + Math.random() * 800); },
+  // La plume qui gratte
+  plume(t, bus) { for (let i = 0; i < 4; i++) this.bruit(0.1, t + i * 0.12, bus, 0.06, 4500, 'highpass'); },
+  // Un marteau sur l'enclume (l'atelier)
+  marteau(t, bus) { for (const [mult, v] of [[1, 0.25], [2.3, 0.1], [3.7, 0.05]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 820 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.5); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.6); } this.bruit(0.02, t, bus, 0.3, 3000); },
+  // Un petit arpège de réussite
+  // (v0.58) Un objet posé dans le baluchon : un petit choc mat sur le tissu, et le froissement
+  poser(t, bus) {
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(75, t + 0.1);
+    g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.16);
+    o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.2);
+    this.bruit(0.09, t, bus, 0.16, 1400, 'lowpass');
+    this.bruit(0.12, t + 0.05, bus, 0.06, 3200);
+  },
+  // (v0.67) L'éveil de la nymphe : une harpe qui monte, et des clochettes d'eau par-dessus
+  nymphe(t, bus) {
+    [0, 4, 7, 11, 14, 18, 21, 26].forEach((d, i) => this.note('harpe', 293.66 * Math.pow(2, d / 12), t + i * 0.13, 1.4, 0.7, bus));
+    [31, 28, 33].forEach((d, i) => this.note('celesta', 293.66 * Math.pow(2, d / 12), t + 1.1 + i * 0.22, 1.2, 0.5, bus));
+  },
+  succes(t, bus) { [0, 4, 7, 12].forEach((d, i) => this.note('ocarina', 523.25 * Math.pow(2, d / 12), t + i * 0.09, 0.3, 0.8, bus)); },
+  // Un accord qui tombe (échec)
+  echec(t, bus) { [7, 3, 0].forEach((d, i) => this.note('piano', 261.63 * Math.pow(2, d / 12), t + i * 0.16, 0.6, 0.7, bus)); },
+  // Des pas sur le plancher
+  pas(t, bus) { for (let i = 0; i < 4; i++) { this.bruit(0.05, t + i * 0.26, bus, 0.5, 320 + (i % 2) * 120); const o = this.ctx.createOscillator(); o.frequency.setValueAtTime(120, t + i * 0.26); o.frequency.exponentialRampToValueAtTime(60, t + i * 0.26 + 0.08); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.25, t + i * 0.26); g.gain.exponentialRampToValueAtTime(0.0005, t + i * 0.26 + 0.12); o.connect(g); g.connect(bus); o.start(t + i * 0.26); o.stop(t + i * 0.26 + 0.15); } },
+  // (v1.07) Les oiseaux de l'aube : des gazouillis vifs et aigus, en petites rafales
+  oiseaux(t, bus) {
+    for (let r = 0; r < 3; r++) {
+      const t1 = t + r * 0.45 + Math.random() * 0.1, n = 3 + Math.floor(Math.random() * 3), base = 2800 + Math.random() * 1400;
+      for (let k = 0; k < n; k++) {
+        const tk = t1 + k * (0.07 + Math.random() * 0.04), f0 = base * (0.85 + Math.random() * 0.4), osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+        osc.frequency.setValueAtTime(f0, tk); osc.frequency.exponentialRampToValueAtTime(f0 * (Math.random() < 0.5 ? 1.35 : 0.75), tk + 0.06);
+        g.gain.setValueAtTime(0.0005, tk); g.gain.exponentialRampToValueAtTime(0.09, tk + 0.01); g.gain.exponentialRampToValueAtTime(0.0005, tk + 0.08);
+        osc.connect(g); g.connect(bus); osc.start(tk); osc.stop(tk + 0.09);
+      }
+    }
+  },
+  // Le hibou de la nuit
+  hibou(t, bus) { for (const dt of [0, 0.32]) { const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(420, t + dt); osc.frequency.exponentialRampToValueAtTime(360, t + dt + 0.25); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + dt); g.gain.exponentialRampToValueAtTime(0.22, t + dt + 0.05); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.28); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.3); } },
+  // La cloche du crieur
+  cloche(t, bus) { for (const [mult, v, d] of [[1, 0.3, 1.4], [2.0, 0.12, 0.9], [3.01, 0.06, 0.6], [4.2, 0.03, 0.4]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 660 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.1); } },
+  // Un tampon qui s'abat (la Faucheuse, le registre)
+  tampon(t, bus) { this.bruit(0.05, t, bus, 0.35, 400); const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(140, t); osc.frequency.exponentialRampToValueAtTime(60, t + 0.1); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.3, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.2); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.25); },
+  // Un tiroir ou un panneau qui glisse
+  glisse(t, bus) { this.bruit(0.2, t, bus, 0.35, 900); this.bruit(0.04, t + 0.2, bus, 0.3, 500); },
+  // Le froid de la Faucheuse : un souffle grave
+  froid(t, bus) { this.bruit(1.2, t, bus, 0.12, 250); const osc = this.ctx.createOscillator(); osc.frequency.value = 55; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.2, t + 0.4); g.gain.exponentialRampToValueAtTime(0.0005, t + 1.4); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 1.5); },
+  // Le feu qui crépite (une bûche)
+  feu(t, bus) { for (let i = 0; i < 6; i++) this.bruit(0.025, t + Math.random() * 0.5, bus, 0.3, 2500 + Math.random() * 2000); },
+
+  // --- Les passages d'un lieu à l'autre (façon Pokémon : deux notes vives, un petit souffle) ---
+  passage(t, bus) { for (const [dt, f] of [[0, 660], [0.07, 990]]) { const osc = this.ctx.createOscillator(); osc.type = 'square'; osc.frequency.value = f; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.09, t + dt); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.09); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.1); } this.bruit(0.12, t + 0.04, bus, 0.14, 2200); },
+  // Dehors : les deux notes descendent, et l'air du dehors (un souffle plus clair, un oiseau)
+  passageDehors(t, bus) { for (const [dt, f] of [[0, 990], [0.07, 740]]) { const osc = this.ctx.createOscillator(); osc.type = 'square'; osc.frequency.value = f; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.09, t + dt); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.09); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.1); } this.bruit(0.25, t + 0.04, bus, 0.1, 3500, 'highpass'); const o = this.ctx.createOscillator(); o.frequency.setValueAtTime(2400, t + 0.3); o.frequency.exponentialRampToValueAtTime(3200, t + 0.38); o.frequency.exponentialRampToValueAtTime(2600, t + 0.46); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + 0.3); g.gain.exponentialRampToValueAtTime(0.05, t + 0.33); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.48); o.connect(g); g.connect(bus); o.start(t + 0.3); o.stop(t + 0.5); },
+
+  // --- Le commerce ---
+  // Un achat : deux pièces sur le comptoir, puis un petit « ding » de satisfaction
+  achat(t, bus, o) { SONS.piece.call(this, t, bus, o); SONS.piece.call(this, t + 0.07, bus, o); SONS.ting.call(this, t + 0.16, bus, 1.3); },
+  ting(t, bus, o = {}) { const hauteur = typeof o === 'number' ? o : (o.hauteur || 1); for (const [mult, v, d] of [[1, 0.18, 0.5], [2.5, 0.05, 0.3]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 2093 * hauteur * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.05); } },
+  // La caisse : une vente conclue au comptoir (clochette claire et poignée de pièces)
+  caisse(t, bus, o) { SONS.ting.call(this, t, bus, 1); SONS.ting.call(this, t + 0.09, bus, 1.5); SONS.pieces.call(this, t + 0.12, bus, { montant: 30 }); },
+  // Un refus, une erreur : un petit « bonk » sourd qui descend
+  refus(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'triangle'; osc.frequency.setValueAtTime(220, t); osc.frequency.exponentialRampToValueAtTime(140, t + 0.18); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.22, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.22); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.25); this.bruit(0.03, t, bus, 0.2, 600); },
+  // Le maillet du commissaire-priseur : deux coups de bois secs
+  maillet(t, bus) { for (const dt of [0, 0.22]) { this.bruit(0.03, t + dt, bus, 0.5, 1400); const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(420, t + dt); osc.frequency.exponentialRampToValueAtTime(180, t + dt + 0.08); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.25, t + dt); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.12); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.15); } },
+  // Le coup de chiffon, le balai : trois « swish » de plus en plus vifs
+  balai(t, bus) { for (let i = 0; i < 3; i++) this.bruit(0.16, t + i * 0.2, bus, 0.18 + i * 0.04, 1200 + i * 400, 'bandpass'); },
+  // Une fanfare : un nouveau palier de réputation (quatre notes de trompette, la dernière tenue)
+  // (v1.61) un rang qui monte : doux mais qui fait plaisir (façon WoW) — un arpège de harpe qui s'élève, un accord
+  // tenu de flûtes, et des étincelles de carillon tout en haut (avant : la fanfare de trompettes, trop forte)
+  niveau(t, bus) {
+    [0, 4, 7, 12, 16].forEach((d, i) => this.note('harpe', 392 * Math.pow(2, d / 12), t + i * 0.075, 0.9, 0.55, bus));
+    [0, 4, 7].forEach(d => this.note('fluteDouce', 523.25 * Math.pow(2, d / 12), t + 0.32, 1.3, 0.32, bus));
+    [24, 28, 31].forEach((d, i) => this.note('carillon', 392 * Math.pow(2, d / 12), t + 0.42 + i * 0.11, 0.8, 0.35, bus));
+  },
+  fanfare(t, bus) { const trompette = [392, 523.25, 659.25, 783.99]; trompette.forEach((f, i) => this.note('vielle', f, t + i * 0.16, i === 3 ? 0.9 : 0.14, 1.6, bus)); this.note('vielle', 523.25, t + 0.48, 0.9, 0.9, bus); },
+  // Le glas : un aventurier qui ne reviendra pas
+  glas(t, bus) { this.note('glas', 110, t, 2, 1, bus); this.note('glas', 110, t + 1.4, 2, 0.8, bus); },
+
+  // --- L'aventure (les onomatopées du carnet) ---
+  // TCHAK : un coup d'épée, un choc métallique clair
+  coup(t, bus) { this.bruit(0.03, t, bus, 0.5, 4000, 'highpass'); for (const [f, v] of [[1900, 0.18], [3100, 0.08]]) { const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(f, t); osc.frequency.exponentialRampToValueAtTime(f * 0.7, t + 0.25); const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.3); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.35); } },
+  // BLONG : le bouclier qui encaisse, un métal plus grave qui résonne
+  bouclier(t, bus) { this.bruit(0.04, t, bus, 0.4, 900); for (const [mult, v, d] of [[1, 0.28, 0.7], [1.5, 0.1, 0.5], [2.9, 0.06, 0.3]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 330 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.05); } },
+  // FIOUU : une flèche, un sifflement qui file
+  siffle(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(2200, t); osc.frequency.exponentialRampToValueAtTime(500, t + 0.35); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.38); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.4); this.bruit(0.3, t, bus, 0.1, 5000, 'highpass'); },
+  // HOP : un bond, une petite note qui monte
+  saut(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'triangle'; osc.frequency.setValueAtTime(300, t); osc.frequency.exponentialRampToValueAtTime(720, t + 0.14); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.2); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.22); },
+  // AÏE : une plainte courte qui tombe
+  aie(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(520, t); osc.frequency.exponentialRampToValueAtTime(240, t + 0.25); const f = this.ctx.createBiquadFilter(); f.frequency.value = 1200; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.28); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.3); },
+  // MIAM : deux bouchées gourmandes
+  miam(t, bus) { for (const dt of [0, 0.2]) { const osc = this.ctx.createOscillator(); osc.type = 'triangle'; osc.frequency.setValueAtTime(180, t + dt); osc.frequency.exponentialRampToValueAtTime(120, t + dt + 0.12); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.22, t + dt); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.15); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.18); this.bruit(0.04, t + dt, bus, 0.2, 800); } },
+  // GLOU GLOU : des bulles qui montent (une potion qu'on boit)
+  glou(t, bus) { for (let i = 0; i < 4; i++) { const dt = i * 0.13; const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(300 + i * 60, t + dt); osc.frequency.exponentialRampToValueAtTime(900 + i * 120, t + dt + 0.09); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.16, t + dt); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.1); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.12); } },
+  // PLOUF : une chute dans l'eau, puis des bulles
+  plouf(t, bus) { this.bruit(0.08, t, bus, 0.7, 400, 'lowpass'); this.bruit(0.4, t + 0.05, bus, 0.3, 1800); SONS.glou.call(this, t + 0.3, bus); },
+  // OUSTE : un grognement de bête qui fuit
+  grogne(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(70, t); osc.frequency.linearRampToValueAtTime(48, t + 0.4); const f = this.ctx.createBiquadFilter(); f.frequency.value = 300; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.06); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.45); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.5); this.bruit(0.4, t, bus, 0.12, 300); },
+  // Le trèfle qui brille : un petit scintillement qui monte
+  trefle(t, bus) { [0, 4, 7, 12, 16].forEach((d, i) => this.note('ocarina', 523.25 * Math.pow(2, d / 12), t + i * 0.06, 0.25, 0.5, bus)); },
+  // Un cœur qui revient (les soins) : deux notes chaudes
+  coeur(t, bus) { this.note('fluteDouce', 523.25, t, 0.25, 1, bus); this.note('fluteDouce', 783.99, t + 0.22, 0.5, 1, bus); },
+
+  // --- Les bêtes ---
+  // Le sanglier : des grognements graves et courts, le groin dans la terre
+  sanglier(t, bus) { for (const [dt, d] of [[0, 0.16], [0.22, 0.12], [0.4, 0.26]]) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(62, t + dt); osc.frequency.linearRampToValueAtTime(44, t + dt + d); const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 260; f.Q.value = 2; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + dt); g.gain.exponentialRampToValueAtTime(0.5, t + dt + 0.03); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + d); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + d + 0.02); this.bruit(d, t + dt, bus, 0.18, 180, 'lowpass'); } },
+  // Le loup : un hurlement qui monte, se tient, puis retombe
+  loup(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(260, t); osc.frequency.exponentialRampToValueAtTime(520, t + 0.5); osc.frequency.setValueAtTime(520, t + 0.9); osc.frequency.exponentialRampToValueAtTime(330, t + 1.5); const f = this.ctx.createBiquadFilter(); f.frequency.value = 1100; f.Q.value = 1.5; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.3); g.gain.setValueAtTime(0.16, t + 0.9); g.gain.exponentialRampToValueAtTime(0.0005, t + 1.6); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 1.65); },
+  // Brisquet le chien : deux aboiements
+  chien(t, bus) { for (const dt of [0, 0.26]) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(240, t + dt); osc.frequency.exponentialRampToValueAtTime(150, t + dt + 0.1); const f = this.ctx.createBiquadFilter(); f.frequency.value = 900; f.Q.value = 2; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + dt); g.gain.exponentialRampToValueAtTime(0.3, t + dt + 0.02); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.13); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.15); this.bruit(0.05, t + dt, bus, 0.25, 700); } },
+  // Le chat de la maison : un miaulement
+  miaou(t, bus) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(620, t); osc.frequency.linearRampToValueAtTime(820, t + 0.15); osc.frequency.exponentialRampToValueAtTime(480, t + 0.5); const f = this.ctx.createBiquadFilter(); f.frequency.value = 1500; f.Q.value = 3; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.14, t + 0.08); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.55); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.6); },
+  // Le coq du matin, au marché
+  coq(t, bus) { const notes = [[520, 0.18], [680, 0.18], [860, 0.32], [640, 0.5]]; let dt = 0; for (const [f0, d] of notes) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(f0, t + dt); osc.frequency.linearRampToValueAtTime(f0 * 0.92, t + dt + d); const f = this.ctx.createBiquadFilter(); f.frequency.value = 1800; f.Q.value = 2.5; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + dt); g.gain.exponentialRampToValueAtTime(0.12, t + dt + 0.03); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + d); osc.connect(f); f.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + d + 0.02); dt += d; } },
+  // Le vol de la caméra à travers la forêt : un souffle qui passe tout près (un arbre qu'on frôle)
+  vol(t, bus, o) {
+    const ctx = this.ctx, duree = 0.45, n = Math.floor(ctx.sampleRate * duree), buf = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.4;
+    f.frequency.setValueAtTime(400, t); f.frequency.exponentialRampToValueAtTime(2600, t + 0.16); f.frequency.exponentialRampToValueAtTime(300, t + duree);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.45 * ((o && o.force) || 1), t + 0.14); g.gain.exponentialRampToValueAtTime(0.0005, t + duree);
+    src.connect(f); f.connect(g); g.connect(bus); src.start(t); src.stop(t + duree + 0.05);
+    // (quelques feuilles qui claquent au passage)
+    for (let i = 0; i < 3; i++) this.bruit(0.02, t + 0.1 + i * 0.05, bus, 0.2, 5000, 'highpass');
+  },
+  // Le vent du vol : un long souffle grave qui enfle puis s'apaise
+  vent(t, bus, o) {
+    const ctx = this.ctx, duree = (o && o.duree) || 4, n = Math.floor(ctx.sampleRate * duree), buf = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 0.8;
+    f.frequency.setValueAtTime(300, t); f.frequency.linearRampToValueAtTime(900, t + duree * 0.6); f.frequency.linearRampToValueAtTime(250, t + duree);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.22, t + duree * 0.5); g.gain.exponentialRampToValueAtTime(0.0005, t + duree);
+    src.connect(f); f.connect(g); g.connect(bus); src.start(t); src.stop(t + duree + 0.05);
+  },
+  // (v0.98) La foule de la fosse qui rugit : un grand souffle de voix qui enfle et retombe
+  foule(t, bus, o) {
+    const duree = (o && o.duree) || 1.6, fort = (o && o.fort) || 1;
+    for (const [freq, v] of [[420, 0.22], [900, 0.16], [1700, 0.08]]) this.bruit(duree, t, bus, v * fort, freq);
+    for (let i = 0; i < 5; i++) { const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; const f0 = 140 + Math.random() * 160; osc.frequency.setValueAtTime(f0, t + i * 0.05); osc.frequency.linearRampToValueAtTime(f0 * 1.25, t + duree * 0.4); const fl = this.ctx.createBiquadFilter(); fl.frequency.value = 700; const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.03 * fort, t + duree * 0.3); g.gain.exponentialRampToValueAtTime(0.0005, t + duree); osc.connect(fl); fl.connect(g); g.connect(bus); osc.start(t); osc.stop(t + duree + 0.05); }
+  },
+  // (v0.98) BAM : un coup de poing qui porte, sourd et lourd
+  impact(t, bus) { this.bruit(0.08, t, bus, 0.6, 500, 'lowpass'); const osc = this.ctx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(140, t); osc.frequency.exponentialRampToValueAtTime(45, t + 0.18); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.22); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.25); this.bruit(0.02, t, bus, 0.3, 3000, 'highpass'); },
+  // L'âne de Barnabé, les sabots sur les pavés
+  sabots(t, bus) { for (let i = 0; i < 6; i++) { const dt = i * 0.17 + (i % 2) * 0.04; this.bruit(0.03, t + dt, bus, 0.45, 1600 + (i % 2) * 500); const osc = this.ctx.createOscillator(); osc.frequency.setValueAtTime(260, t + dt); osc.frequency.exponentialRampToValueAtTime(120, t + dt + 0.05); const g = this.ctx.createGain(); g.gain.setValueAtTime(0.14, t + dt); g.gain.exponentialRampToValueAtTime(0.0005, t + dt + 0.07); osc.connect(g); g.connect(bus); osc.start(t + dt); osc.stop(t + dt + 0.08); } },
+};
+
+// Les voix « 2 bits » : chaque peuple a son timbre et sa hauteur, chaque personnage sa petite
+// mélodie (tirée de son nom), et on baragouine le temps de la phrase (façon Animal Crossing)
+const VOIX = {
+  humain: { forme: 'triangle', base: 200, ecart: 60, note: 0.085 },
+  hobbit: { forme: 'triangle', base: 300, ecart: 70, note: 0.07 },
+  nain: { forme: 'square', base: 105, ecart: 30, note: 0.11 },
+  elfe: { forme: 'sine', base: 330, ecart: 90, note: 0.1 },
+  magicienne: { forme: 'sine', base: 280, ecart: 80, note: 0.09 },
+  gobelin: { forme: 'sawtooth', base: 380, ecart: 120, note: 0.06 },
+  orc: { forme: 'square', base: 95, ecart: 30, note: 0.12 },
+  loupgarou: { forme: 'sawtooth', base: 130, ecart: 45, note: 0.1 },
+  vampire: { forme: 'sine', base: 170, ecart: 40, note: 0.13 },
+  momie: { forme: 'triangle', base: 125, ecart: 25, note: 0.16 },
+  troll: { forme: 'square', base: 70, ecart: 20, note: 0.17 },
+  panda: { forme: 'triangle', base: 150, ecart: 40, note: 0.11 },
+  faucheuse: { forme: 'sawtooth', base: 70, ecart: 15, note: 0.16 },
+};
+// Les intonations : la même voix, mais la phrase monte, descend, s'emballe ou traîne selon
+// l'humeur. `pente` : de combien la hauteur glisse sur la phrase (en proportion) ; `vitesse` :
+// le débit ; `duree` : la longueur de la phrase ; `forme` : un timbre forcé (le grognement)
+const TONS = {
+  neutre: { duree: 1, vitesse: 1, pente: 0, force: 1 },
+  bonjour: { duree: 0.55, vitesse: 1, pente: 0.35, force: 1.1, courbe: [0, 0.3, 1] },           // « Bonjour ! » : ça monte
+  auRevoir: { duree: 0.6, vitesse: 0.9, pente: -0.3, force: 1, courbe: [0.6, 1, 0.2] },         // « Au revoir… » : ça retombe
+  merci: { duree: 0.4, vitesse: 1.2, pente: 0.25, force: 1, courbe: [0.2, 1, 0.7] },
+  content: { duree: 0.7, vitesse: 1.3, pente: 0.2, force: 1.1, courbe: [0.2, 1, 0.5, 1] },       // guilleret, ça sautille
+  fache: { duree: 0.8, vitesse: 1.7, pente: -0.15, force: 1.5, hauteur: 0.8, forme: 'sawtooth', courbe: [1, 1, 0.9, 1] },   // vite, bas, râpeux
+  decu: { duree: 0.9, vitesse: 0.65, pente: -0.35, force: 0.8, courbe: [0.8, 0.5, 0] },         // lent, qui s'affaisse
+  triste: { duree: 1.1, vitesse: 0.55, pente: -0.25, force: 0.7, hauteur: 0.9, courbe: [0.5, 0.3, 0] },
+  etonne: { duree: 0.45, vitesse: 1.1, pente: 0.6, force: 1.2, courbe: [0, 0.2, 1] },           // un bond vers l'aigu
+  inquiet: { duree: 0.7, vitesse: 1.2, pente: 0.15, force: 0.9, courbe: [0.3, 0.6, 0.4, 0.8] },  // ça tremblote
+  peur: { duree: 0.5, vitesse: 1.6, pente: 0.5, force: 1.2, hauteur: 1.2, courbe: [0.2, 1, 1] },
+  rire: { duree: 0.8, vitesse: 1.6, pente: -0.1, force: 1.1, courbe: [1, 0.6, 1, 0.6, 1, 0.6] },
+  grogne: { duree: 0.6, vitesse: 0.8, pente: -0.2, force: 1.2, hauteur: 0.7, forme: 'sawtooth', courbe: [1, 0.8, 0.6] },
+};
+SONS.voix = function (t, bus, o) {
+  const p = o.personne || {};
+  const V = VOIX[o.race || p.race] || VOIX.humain;
+  const T = TONS[o.ton] || TONS.neutre;
+  const base = V.base * (p.feminin ? 1.35 : 1) * (o.hauteur || 1) * (T.hauteur || 1);
+  let graine = 0; for (const c of (p.nom || o.nom || 'x')) graine = (graine * 31 + c.charCodeAt(0)) & 0xffff;
+  const alea = () => { graine = (graine * 1103515245 + 12345) & 0x7fffffff; return graine / 0x7fffffff; };
+  // Les aînés : une voix fatiguée, plus basse, lente, étouffée, qui chevrote, avec des souffles
+  const vieux = !!(p.vieux || o.vieux);
+  const duree = Math.min(vieux ? 2.6 : 2.2, o.duree || T.duree);
+  const forme = T.forme || V.forme;
+  const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = (forme === 'sine' ? 3000 : forme === 'sawtooth' ? 1200 : 1600) * (vieux ? 0.4 : 1); f.connect(bus);
+  const courbe = T.courbe || [0.5, 0.5];
+  const note = V.note / T.vitesse * (vieux ? 1.45 : 1);
+  const souffle = vieux ? 0.3 : 0;
+  for (let tt = 0; tt < duree; tt += note * (1 + alea() * 0.6)) {
+    if (alea() < (o.ton && o.ton !== 'neutre' ? 0.08 : 0.18) + souffle) {   // (une respiration ; chez les aînés, un souffle qu'on entend)
+      if (vieux) this.percu('souffle', t + tt, 0.5, f);
+      continue;
+    }
+    const u = tt / duree;                                                  // où l'on en est dans la phrase
+    const pos = u * (courbe.length - 1), i = Math.min(courbe.length - 2, Math.floor(pos)), c = courbe[i] + (courbe[i + 1] - courbe[i]) * (pos - i);
+    const freq = base * (1 + T.pente * u + (c - 0.5) * 0.3) + (alea() - 0.5) * 2 * V.ecart * 0.6;
+    const fr = vieux ? freq * 0.85 : freq;
+    const osc = this.ctx.createOscillator(); osc.type = forme; osc.frequency.setValueAtTime(fr, t + tt); osc.frequency.exponentialRampToValueAtTime(fr * (vieux ? 0.88 : 0.9 + alea() * 0.2), t + tt + note);
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t + tt); g.gain.exponentialRampToValueAtTime(0.1 * (o.force || 1) * T.force * (vieux ? 0.8 : 1), t + tt + (vieux ? 0.04 : 0.01)); g.gain.exponentialRampToValueAtTime(0.0005, t + tt + note);
+    osc.connect(g); g.connect(f); osc.start(t + tt); osc.stop(t + tt + note + 0.02);
+    if (vieux) {   // le chevrotement : la hauteur tremble vite
+      const lfo = this.ctx.createOscillator(), amp = this.ctx.createGain();
+      lfo.frequency.value = 6.5 + alea() * 2; amp.gain.value = 45; lfo.connect(amp); amp.connect(osc.detune);
+      lfo.start(t + tt); lfo.stop(t + tt + note + 0.02);
+    }
+  }
+};
+
+// Les onomatopées du carnet de voyage : le son qui va avec chaque mot
+const SON_DES_MOTS = [['TCHAK', 'coup'], ['BLONG', 'bouclier'], ['FIOUU', 'fleche'], ['FWOUF', 'torche'], ['HOP', 'saut'], ['Miam', 'miam'], ['Glou', 'glou'], ['AÏE', 'aie'], ['OUILLE', 'aie'], ['CRAC', 'aie'], ['Atchoum', 'aie'], ['PLOUF', 'plouf'], ['Frrrt', 'page'], ['Frotte', 'balai'], ['Pfff', 'balai'], ['Tchac', 'balai'], ['Hop', 'saut']];
+function sonDuMot(mot) { const trouve = SON_DES_MOTS.find(([m]) => mot.startsWith(m)); return trouve ? trouve[1] : null; }
+
+// La création du personnage : le thème du titre, en plus doux (boîte à musique et harpe, sans
+// les cordes), pour rester dans la même ambiance avant que l'histoire commence
+THEMES.personnage = Object.assign({}, THEMES.titre, {
+  tempo: 118, reverb: 0.4, lie: 1.2,
+  instruments: { melodie: 'boiteAMusique', accompagnement: 'harpe', basse: 'basse' },
+  basse: (m, a) => [[0, a, 2.8, 0.6]],
+  accompagnement: (m) => [[0, 0, 1, 0.5], [1, 1, 1, 0.4], [2, 2, 1, 0.4]],
+});
+
+// Le thème de chaque scène du jeu
+const THEME_PAR_SCENE = {
+  Titre: 'titre', Peche: 'recitHeureux', Intro: 'personnage', IntroHistoire: 'cinematique', Comptoir: 'comptoir', Nuit: 'nuit', Dodo: 'nuit', Recit: 'recitEtonne', Faillite: 'faillite',
+  MarcheNoir: 'marcheNoir', Express: 'jeux', Banque: 'banque', Marche: 'marche', Atelier: 'comptoir', Bureau: 'comptoir', Carte: 'carte', Facade: 'marche', Arriere: 'comptoir', Renovation: 'cinematique', Promenade: 'nuit', Rue: 'marche', Nymphe: 'cinematique', Carrefour: 'cinematique', DiscoursSage: 'cinematique', Roue: 'marche', Banquet: 'cinematique', Diseuse: 'cinematique', Barbier: 'marche',
+};
+
+</script>
+<script>
+// (v1.64) Les sons des récits, validés par le joueur sur la page d'écoute (docs/planches-v059/sons-recits-v161.html) :
+// les neuf musiques d'aventure (« En route », « Le danger approche », « Victoire ! » pour la forêt, la montagne et le
+// marais), les trois morts d'un voyageur (selon l'endroit où il est tombé) et les bruitages gardés (les pas selon le
+// sol, la lourde porte, l'épée tirée, la flèche, le feu de camp, la torche, le vent des cols, le corbeau, les moutons,
+// les crapauds, l'aiguille et le cuir, la besace). Le marteau, la foule et la cloche du marché sont refaits à part
+// (src/sonsRefaits.js), en attente du choix du joueur.
+//
+// Sobre en charge : un bruitage n'est fabriqué qu'une fois (rendu hors ligne dans un tampon, quelques variantes au
+// plus), puis rejoué depuis le cache. Tout passe par les bus du jeu : les réglages de volume sont respectés.
+
+// --- Deux petits outils pour les bruitages (à côté de Son.bruit) ---
+Object.assign(Son, {
+  // Un bruit filtré dont le filtre glisse de `de` à `a` Hz (ou passe par `par` à mi-chemin), avec une attaque et, si
+  // on veut, une tenue (`relache` : la durée de la fin) : un frottement, un pas, le vent
+  bruitGlisse(t, duree, bus, { type = 'bandpass', de = 1000, a = de, par = 0, q = 1, volume = 0.2, attaque = 0.005, relache = 0 } = {}) {
+    const ctx = this.ctx, n = Math.max(1, Math.floor(ctx.sampleRate * duree)), buf = ctx.createBuffer(1, n, ctx.sampleRate), x = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) x[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = type; f.Q.value = q; f.frequency.setValueAtTime(de, t);
+    if (par) { f.frequency.linearRampToValueAtTime(par, t + duree / 2); f.frequency.linearRampToValueAtTime(a, t + duree); }
+    else if (a !== de) f.frequency.exponentialRampToValueAtTime(a, t + duree);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(volume, t + attaque);
+    if (relache) g.gain.setValueAtTime(volume, t + Math.max(attaque, duree - relache));
+    g.gain.exponentialRampToValueAtTime(0.0005, t + duree);
+    src.connect(f); f.connect(g); g.connect(bus); src.start(t); src.stop(t + duree + 0.05);
+    return { src, f, g };
+  },
+  // Une note qui glisse de `de` à `a` Hz (un choc, une corde, un cri de bête), avec une attaque
+  tonGlisse(t, duree, bus, { forme = 'sine', de = 440, a = de, volume = 0.2, attaque = 0.005, filtre = 0 } = {}) {
+    const ctx = this.ctx, o = ctx.createOscillator(); o.type = forme;
+    o.frequency.setValueAtTime(de, t); if (a !== de) o.frequency.exponentialRampToValueAtTime(a, t + duree);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(volume, t + attaque); g.gain.exponentialRampToValueAtTime(0.0005, t + duree);
+    if (filtre) { const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = filtre; f.Q.value = 0.7; o.connect(f); f.connect(g); } else o.connect(g);
+    g.connect(bus); o.start(t); o.stop(t + duree + 0.05);
+    return { o, g };
+  },
+
+  // --- Le cache des bruitages : un son marqué `cache` (voir SONS_EN_CACHE) est rendu une fois hors ligne, puis
+  // rejoué depuis son tampon. Une clé par réglage (le sol des pas, la durée du vent...), et quelques variantes tirées
+  // au sort pour les sons qui doivent varier (les pas). Sans rendu hors ligne possible, le son se joue en direct.
+  caches: {},
+  // Le tampon prêt de ce son, joué dans `bus` (la première fois, le son se joue en direct pendant qu'on le fabrique). `o.volume` : un gain en plus (les pas du héros en ville)
+  jouerCache(nom, bus, o = {}) {
+    const S = SONS[nom], spec = S.cache, cle = nom + (spec.cle ? '|' + spec.cle(o) : '');
+    const c = this.caches[cle] || (this.caches[cle] = { prets: [], enCours: 0, dernier: -1 });
+    const ctx = this.ctx;
+    const lire = buf => {
+      if (this.ctx !== ctx) return;
+      const src = ctx.createBufferSource(); src.buffer = buf;
+      let sortie = bus;
+      if (o.volume != null && o.volume !== 1) { sortie = ctx.createGain(); sortie.gain.value = Math.max(0, o.volume); sortie.connect(bus); }
+      src.connect(sortie); src.start(ctx.currentTime + 0.005);
+      src.onended = () => { try { src.disconnect(); if (sortie !== bus) sortie.disconnect(); } catch (e) { /* (déjà débranché) */ } };
+      if (this.surJoue) this.surJoue(nom, o);
+    };
+    if (c.prets.length) {
+      let i = Math.floor(Math.random() * c.prets.length);
+      if (c.prets.length > 1 && i === c.dernier) i = (i + 1) % c.prets.length;   // (jamais deux fois de suite la même variante)
+      c.dernier = i; lire(c.prets[i]);
+      if (c.prets.length + c.enCours < (spec.variantes || 1)) this.rendreCache(nom, cle, o);
+      return;
+    }
+    // pas encore de tampon : cette fois, le son se joue en direct (sans attendre), et on le fabrique pour les suivantes
+    if (!c.enCours && !c.echec) this.rendreCache(nom, cle, o);
+    let direct = bus;
+    if (o.volume != null && o.volume !== 1) { direct = ctx.createGain(); direct.gain.value = Math.max(0, o.volume); direct.connect(bus); setTimeout(() => { try { direct.disconnect(); } catch (e) { /* (rien) */ } }, 12000); }
+    S.call(this, ctx.currentTime + 0.01, direct, o);
+    if (this.surJoue) this.surJoue(nom, o);
+  },
+  // Fabriquer une variante de plus de ce son (hors ligne, sur le fil du son) ; renvoie le tampon, ou null
+  rendreCache(nom, cle, o = {}) {
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const c = this.caches[cle] || (this.caches[cle] = { prets: [], enCours: 0, dernier: -1 });
+    if (!OAC || !this.ctx || c.echec) return Promise.resolve(null);
+    const spec = SONS[nom].cache, duree = typeof spec.duree === 'function' ? spec.duree(o) : spec.duree, taux = this.ctx.sampleRate;
+    let hors;
+    c.enCours++;
+    try {
+      hors = new OAC(1, Math.ceil(taux * duree), taux);
+      const vrai = this.ctx;
+      this.ctx = hors;
+      try { const sortie = hors.createGain(); sortie.connect(hors.destination); SONS[nom].call(this, 0.02, sortie, o); }   // (0,02 s : les pas tirent leur instant au hasard autour du leur)
+      finally { this.ctx = vrai; }
+    } catch (e) { c.enCours--; c.echec = true; c.erreur = String(e && e.message || e); return Promise.resolve(null); }
+    return new Promise(fini => {
+      let fait = false;
+      const finir = buf => { if (!fait) { fait = true; fini(buf); } };
+      hors.oncomplete = e => finir(e.renderedBuffer);
+      try { const p = hors.startRendering(); if (p && p.then) p.then(finir, e => { c.erreur = String(e && e.message || e); finir(null); }); } catch (e) { c.erreur = String(e && e.message || e); finir(null); }
+    }).then(buf => {
+      c.enCours--;
+      if (!buf) { c.echec = true; return null; }
+      // (on coupe le silence de la fin : moins de mémoire)
+      const x = buf.getChannelData(0); let n = x.length;
+      while (n > 1 && Math.abs(x[n - 1]) < 0.0002) n--;
+      let garde = buf;
+      if (n < x.length - taux * 0.05 && this.ctx) { garde = this.ctx.createBuffer(1, n + 64, taux); garde.getChannelData(0).set(x.subarray(0, n)); }
+      c.prets.push(garde);
+      return garde;
+    });
+  },
+  // Préparer d'avance les sons d'un moment (le récit d'une contrée) : un par un, sans à-coup
+  prechauffer(liste) {
+    if (!this.pret || !this.ctx) return;
+    let k = 0;
+    const suivant = () => {
+      if (k >= liste.length || !this.pret) return;
+      const [nom, o = {}] = liste[k++], S = SONS[nom];
+      if (!S || !S.cache) return suivant();
+      const cle = nom + (S.cache.cle ? '|' + S.cache.cle(o) : ''), c = this.caches[cle];
+      if (c && (c.prets.length || c.enCours || c.echec)) return suivant();
+      this.rendreCache(nom, cle, o).then(() => setTimeout(suivant, 30));
+    };
+    setTimeout(suivant, 60);
+  },
+  // Un son « de temps en temps » : pas plus d'une fois tous les `ecart` ms (les moutons qui bêlent, les crapauds)
+  jouerParfois(nom, ecart, o = {}) {
+    const t = Date.now(), cle = o.parfois || nom;
+    this.derniersParfois = this.derniersParfois || {};
+    if (t - (this.derniersParfois[cle] || 0) < ecart) return false;
+    this.derniersParfois[cle] = t;
+    this.jouer(nom, o);
+    return true;
+  },
+  // (v1.64) Un son qui joue seul : la musique s'arrête (en fondu), le son passe, puis la musique `reprise` revient
+  // doucement si personne n'en a changé entre-temps. Renvoie la durée du silence (ms).
+  jouerSeul(nom, o = {}, reprise = null, duree = 7) {
+    if (!this.pret) return 0;
+    this.arreter();
+    this.jouer(nom, o);
+    clearTimeout(this.repriseSeul);
+    if (reprise) this.repriseSeul = setTimeout(() => { if (!this.theme && this.themeVoulu === reprise) { this.themeVoulu = null; this.ambiance(reprise); } }, duree * 1000);
+    return duree * 1000;
+  },
+});
+
+// ======================================================================================
+// Les musiques d'aventure (au format de THEMES)
+// ======================================================================================
+// « En route » : une marche en ré dorien (la sixte majeure du dorien, un peu celtique), 12 mesures.
+// Le motif revient à chaque tour (mesures 0-7, 10-11), les mesures 8 et 9 sont brodées.
+THEMES.aventureForet = {
+  base: NOTE.D / 2, gamme: GAMMES.dorien, tempo: 104, temps: 4, phrase: 12,
+  accords: [0, 0, 6, 3, 0, 2, 6, 4, 0, 6, 3, 0], octaveMelodie: 1,
+  instruments: { melodie: 'flute', accompagnement: 'luth', basse: 'basse' }, reverb: 0.25,
+  motif: {
+    0: [[0, 7, 1], [1, 9, 0.5], [1.5, 10, 0.5], [2, 11, 1.5], [3.5, 10, 0.5]],
+    1: [[0, 11, 1], [1, 12, 1], [2, 11, 1], [3, 9, 1]],
+    2: [[0, 10, 1.5], [1.5, 9, 0.5], [2, 8, 1], [3, 10, 1]],
+    3: [[0, 7, 3], [3, 8, 1]],
+    4: [[0, 7, 1], [1, 9, 0.5], [1.5, 10, 0.5], [2, 11, 1], [3, 14, 1]],
+    5: [[0, 13, 1.5], [1.5, 12, 0.5], [2, 11, 2]],
+    6: [[0, 13, 1], [1, 11, 1], [2, 10, 1], [3, 9, 1]],
+    7: [[0, 11, 4]],
+    10: [[0, 12, 1], [1, 11, 1], [2, 10, 2]],
+    11: [[0, 8, 1], [1, 9, 1], [2, 7, 2]],
+  },
+  rythmes: [[1, 1, 2], [1.5, 0.5, 1, 1], [1, 1, 1, 1], [2, 1, 1]], silence: 0.15,
+  basse: (m, a) => [[0, a, 1.8], [2, a + 4, 1.8]],
+  accompagnement: (m) => [[0, 0, 0.9, 0.5], [0.5, 2, 0.5, 0.28], [1, 1, 0.9, 0.38], [1.5, 2, 0.5, 0.28], [2, 0, 0.9, 0.45], [2.5, 2, 0.5, 0.28], [3, 1, 0.9, 0.38], [3.5, 3, 0.5, 0.25]],
+  percussion: (m) => [[0, 'tambour', 0.55], [1, 'bois', 0.35], [2, 'tambour', 0.4], [3, 'bois', 0.35], [3.5, 'bois', 0.2]],
+};
+// La montagne : la même marche en mixolydien (plus clair, plus vaste), la vielle sur un bourdon
+// qui tient toujours la tonique, de grandes cordes, une timbale toutes les quatre mesures
+THEMES.aventureMontagne = Object.assign({}, THEMES.aventureForet, {
+  gamme: GAMMES.mixolydien, tempo: 92, reverb: 0.5, silence: 0.2,
+  accords: [0, 0, 6, 3, 0, 6, 6, 4, 0, 6, 3, 0],
+  instruments: { melodie: 'vielle', accompagnement: 'cordes', basse: 'bourdon' },
+  basse: (m) => [[0, 0, 3.9]], forceBasse: 2.5,
+  accompagnement: (m) => [[0, 0, 3.9, 1], [0, 1, 3.9, 0.75], [0, 2, 3.9, 0.75]],
+  percussion: (m) => [[0, 'timbale', m % 4 === 0 ? 0.5 : 0.3], [2, 'tambour', 0.45], [3.5, 'bois', 0.3]],
+});
+// Le marais : en mineur, plus lent, la vielle dans le grave, des cordes pincées, des gouttes
+THEMES.aventureMarais = Object.assign({}, THEMES.aventureForet, {
+  gamme: GAMMES.mineur, tempo: 84, octaveMelodie: 0, reverb: 0.6, lie: 1.1, silence: 0.3,
+  accords: [0, 0, 6, 3, 0, 6, 3, 4, 0, 6, 3, 0],
+  instruments: { melodie: 'vielle', accompagnement: 'pizzicato', basse: 'bourdon' },
+  basse: (m) => [[0, 0, 3.9]], forceBasse: 1.5,
+  accompagnement: (m) => [[0, 0, 0.8, 0.85], [1, 2, 0.8, 0.6], [2, 1, 0.8, 0.7], [3, 2, 0.8, 0.55]],
+  percussion: (m) => [[0, 'tambour', 0.45], [1.5 + (m % 3) * 0.5, 'goutte', 0.6], [2, 'bois', 0.3]],
+});
+
+// « Le danger approche » : mi mineur harmonique (le ré dièse qui inquiète), un ostinato de cordes
+// pincées et un tambour au galop ; la phrase finit sur l'accord de si majeur, qui relance la boucle
+THEMES.dangerForet = {
+  base: NOTE.E / 2, gamme: GAMMES.harmonique, tempo: 116, temps: 4, phrase: 12,
+  accords: [0, 0, 5, 5, 0, 0, 3, 4, 5, 3, 4, 4], octaveMelodie: 1,
+  instruments: { melodie: 'vielle', accompagnement: 'pizzicato', basse: 'basse' }, reverb: 0.3,
+  motif: {
+    0: [[0, 7, 0.5], [0.5, 8, 0.5], [1, 7, 1], [2, 11, 1.5], [3.5, 10, 0.5]],
+    1: [[0, 9, 1], [1, 8, 0.5], [1.5, 7, 0.5], [2, 6, 2]],
+    2: [[0, 12, 0.5], [0.5, 11, 0.5], [1, 12, 1], [2, 14, 1.5], [3.5, 12, 0.5]],
+    3: [[0, 11, 2], [2, 9, 1], [3, 8, 1]],
+    4: [[0, 7, 0.5], [0.5, 8, 0.5], [1, 7, 1], [2, 11, 1.5], [3.5, 12, 0.5]],
+    5: [[0, 11, 1], [1, 10, 1], [2, 9, 1], [3, 8, 1]],
+    6: [[0, 10, 1.5], [1.5, 12, 0.5], [2, 14, 2]],
+    7: [[0, 13, 2], [2, 11, 2]],
+    10: [[0, 11, 0.5], [0.5, 13, 0.5], [1, 15, 1], [2, 13, 1], [3, 11, 1]],
+    11: [[0, 11, 1], [1, 12, 1], [2, 13, 2]],
+  },
+  rythmes: [[0.5, 0.5, 1, 1, 1], [1, 1, 1, 1], [0.5, 0.5, 0.5, 0.5, 2]], silence: 0.12,
+  basse: (m, a) => [[0, a, 0.7], [0.75, a, 0.25], [1, a, 0.9], [2, a, 0.7], [2.75, a, 0.25], [3, a + 4, 0.9]],
+  accompagnement: (m) => Array.from({ length: 8 }, (_, i) => [i * 0.5, i % 4 === 0 ? 0 : (i % 2 ? 2 : 1), 0.4, i % 2 ? 0.28 : 0.4]),
+  percussion: (m) => [[0, 'tambour', 0.9], [0.75, 'tambour', 0.35], [1, 'tambour', 0.55], [2, 'tambour', 0.85], [2.75, 'tambour', 0.35], [3, 'tambour', 0.55], [1.5, 'bois', 0.3], [3.5, 'bois', 0.3], ...(m % 4 === 3 ? [[3.5, 'timbale', 0.6]] : [])],
+};
+// La montagne : des cuivres sombres, des cordes en trémolo, les timbales qui roulent en fin de phrase
+THEMES.dangerMontagne = Object.assign({}, THEMES.dangerForet, {
+  tempo: 100, reverb: 0.55, octaveMelodie: 0,
+  instruments: { melodie: 'cuivres', accompagnement: 'cordesTremolo', basse: 'basse' },
+  accompagnement: (m) => Array.from({ length: 16 }, (_, i) => [i * 0.25, i % 2 ? 1 : 0, 0.22, 0.22 + (i / 16) * 0.15]),
+  percussion: (m) => [[0, 'timbale', 0.9], [2, 'timbale', 0.6], [3, 'tambour', 0.4], ...(m % 4 === 3 ? Array.from({ length: 8 }, (_, j) => [2 + j * 0.25, 'timbale', 0.15 + j * 0.06]) : [])],
+});
+// Le marais : la gamme hantée (celle de la tour), le violoncelle, un bourdon, le cœur, des gouttes
+THEMES.dangerMarais = Object.assign({}, THEMES.dangerForet, {
+  gamme: GAMMES.hante, tempo: 80, reverb: 0.7, lie: 1.2, silence: 0.3, octaveMelodie: 0,
+  instruments: { melodie: 'violoncelle', accompagnement: 'pizzicato', basse: 'bourdon' },
+  basse: (m) => [[0, 0, 3.9]], forceBasse: 1.4,
+  accompagnement: (m) => [[0, 0, 0.5, 0.7], [1.5, 1, 0.5, 0.5], [2, 0, 0.5, 0.6], [3.5, 2, 0.5, 0.5]],
+  percussion: (m) => [[0, 'coeur', 0.6], [0.4, 'coeur', 0.35], [1.25 + (m % 3) * 0.75, 'goutte', 0.55], ...(m % 2 ? [[3, 'souffle', 0.8]] : [])],
+});
+
+// « Victoire ! » : sol majeur, un motif de fanfare (sol-sol-si-ré-sol), le luth qui gratte, le tambourin
+THEMES.triompheForet = {
+  base: NOTE.G / 2, gamme: GAMMES.majeur, tempo: 112, temps: 4, phrase: 12,
+  accords: [0, 0, 3, 4, 0, 5, 3, 4, 3, 4, 0, 0], octaveMelodie: 1,
+  instruments: { melodie: 'fluteDouce', accompagnement: 'luth', basse: 'basse' }, reverb: 0.3,
+  motif: {
+    0: [[0, 7, 0.5], [0.5, 7, 0.5], [1, 9, 0.5], [1.5, 11, 0.5], [2, 14, 2]],
+    1: [[0, 13, 1], [1, 12, 0.5], [1.5, 11, 0.5], [2, 12, 1], [3, 9, 1]],
+    2: [[0, 10, 1.5], [1.5, 12, 0.5], [2, 14, 1], [3, 12, 1]],
+    3: [[0, 11, 3], [3, 8, 1]],
+    4: [[0, 7, 0.5], [0.5, 7, 0.5], [1, 9, 0.5], [1.5, 11, 0.5], [2, 14, 1.5], [3.5, 16, 0.5]],
+    5: [[0, 16, 1], [1, 14, 1], [2, 12, 2]],
+    6: [[0, 14, 1], [1, 12, 1], [2, 10, 1], [3, 12, 1]],
+    7: [[0, 11, 2], [2, 13, 2]],
+    10: [[0, 14, 1], [1, 13, 0.5], [1.5, 12, 0.5], [2, 11, 1], [3, 13, 1]],
+    11: [[0, 14, 4]],
+  },
+  rythmes: [[1, 1, 2], [0.5, 0.5, 1, 2], [1, 0.5, 0.5, 1, 1]], silence: 0.1,
+  basse: (m, a) => [[0, a, 0.9], [1, a + 4, 0.9], [2, a, 0.9], [3, a + 4, 0.9]],
+  accompagnement: (m) => [[0, 0, 0.4, 0.5], [0, 1, 0.4, 0.36], [0, 2, 0.4, 0.36], [1, 0, 0.4, 0.36], [1, 2, 0.4, 0.3], [2, 0, 0.4, 0.45], [2, 1, 0.4, 0.36], [2, 2, 0.4, 0.36], [3, 1, 0.4, 0.3], [3.5, 2, 0.4, 0.26]],
+  percussion: (m) => [[0, 'tambour', 0.75], [2, 'tambour', 0.55], [1, 'tambourin', 0.4], [3, 'tambourin', 0.4], [1.5, 'tambourin', 0.2], [3.5, 'tambourin', 0.2], ...(m % 12 === 11 ? [[0, 'timbale', 0.8]] : [])],
+};
+// La montagne : le cor (les cuivres), de grandes cordes tenues, les timbales
+THEMES.triompheMontagne = Object.assign({}, THEMES.triompheForet, {
+  tempo: 100, reverb: 0.5, octaveMelodie: 0,
+  instruments: { melodie: 'cuivres', accompagnement: 'cordes', basse: 'basse' },
+  accompagnement: (m) => [[0, 0, 3.9, 0.4], [0, 1, 3.9, 0.32], [0, 2, 3.9, 0.32], [0, 3, 3.9, 0.25]],
+  percussion: (m) => [[0, 'timbale', 0.8], [2, 'timbale', 0.5], [1, 'tambour', 0.35], [3, 'tambour', 0.35], [3.5, 'tambour', 0.25]],
+});
+// Le marais : l'ocarina et la harpe en lydien (le soleil qui perce la brume) ; le IIe degré (la
+// majeur) remplace le IVe, comme dans recitEtonne
+THEMES.triompheMarais = Object.assign({}, THEMES.triompheForet, {
+  gamme: GAMMES.lydien, tempo: 96, reverb: 0.45, lie: 1.1,
+  accords: [0, 0, 1, 4, 0, 5, 1, 4, 1, 4, 0, 0],
+  instruments: { melodie: 'ocarina', accompagnement: 'harpe', basse: 'basse' },
+  accompagnement: (m) => [[0, 0, 0.9, 0.4], [0.5, 1, 0.9, 0.3], [1, 2, 0.9, 0.3], [1.5, 3, 0.9, 0.3], [2, 4, 0.9, 0.3], [2.5, 3, 0.9, 0.25], [3, 2, 0.9, 0.3], [3.5, 1, 0.9, 0.25]],
+  percussion: (m) => [[0, 'tambour', 0.45], [2, 'bois', 0.3], [3, 'bois', 0.25]],
+});
+
+// ======================================================================================
+// Les sons des récits (au format de SONS : fonction(t, bus, options), appelée avec this = Son). Leurs niveaux sont
+// réglés dans la fonction (mesurés comme les autres) : pas d'entrée dans VOLUME_SONS.
+// ======================================================================================
+const SONS_RECITS = {
+  // Une grande cloche, plus riche que l'instrument « glas » : chaque partiel s'éteint à son rythme (les
+  // graves durent, les aigus meurent vite), le bourdon et la fondamentale « battent » doucement, et le
+  // battant donne un choc mat. o.freq : la note (la fondamentale), o.force, o.duree (la résonance)
+  grandeCloche(t, bus, o = {}) {
+    const ctx = this.ctx, f = o.freq || 146.83, duree = o.duree || 5;
+    const g = ctx.createGain(); g.gain.value = 0.3 * (o.force || 1); g.connect(bus);
+    // [multiple, volume, part de la durée, décalage en Hz (le battement)]
+    for (const [mult, v, d, dec] of [[0.5, 0.3, 1, 0], [0.5, 0.18, 1, 0.7], [1, 0.36, 0.8, 0], [1, 0.16, 0.8, 1.1], [1.19, 0.24, 0.55, 0], [1.5, 0.14, 0.45, 0], [2, 0.24, 0.38, 0], [2.52, 0.1, 0.25, 0], [2.67, 0.08, 0.2, 0], [3.01, 0.06, 0.16, 0], [4.07, 0.04, 0.1, 0]]) {
+      const osc = ctx.createOscillator(); osc.frequency.value = f * mult + dec;
+      const gg = ctx.createGain(); gg.gain.setValueAtTime(0.0005, t); gg.gain.exponentialRampToValueAtTime(v, t + 0.006); gg.gain.exponentialRampToValueAtTime(0.0005, t + duree * d);
+      osc.connect(gg); gg.connect(g); osc.start(t); osc.stop(t + duree * d + 0.05);
+    }
+    this.bruit(0.04, t, g, 0.2, 1200);
+  },
+
+  // --- La mort d'un voyageur (4 à 8 s), à la place de « glas » ---
+  // A. Le chœur des disparus : une cloche grave, un chœur (mi mineur, la mineur, si majeur, mi mineur)
+  //    sur un bourdon, et une voix seule au-dessus qui descend (sol, la, fa dièse, mi)
+  mortChoeur(t, bus) {
+    const niv = this.ctx.createGain(); niv.gain.value = 1.2; niv.connect(bus); bus = niv;
+    const mi = d => 82.41 * Math.pow(2, d / 12);   // (en demi-tons depuis le mi grave)
+    SONS.grandeCloche.call(this, t, bus, { freq: mi(12), force: 0.55, duree: 5 });
+    this.note('bourdon', mi(0), t, 6.2, 1, bus);
+    const accords = [[0, 2, [12, 19, 24]], [1.9, 1.6, [8, 17, 24]], [3.4, 1.3, [7, 14, 23]], [4.6, 2.4, [12, 15, 19]]];
+    for (const [dt, d, notes] of accords) for (const n of notes) this.note('choeur', mi(n), t + dt, d, 0.6, bus);
+    for (const [dt, d, n] of [[0.4, 1.5, 27], [1.9, 1.5, 29], [3.4, 1.2, 26], [4.6, 2.4, 24]]) this.note('choeur', mi(n), t + dt, d, 0.75, bus);
+    this.percu('timbale', t + 4.6, 0.45, bus);
+  },
+  // B. Les cordes qui pleurent : le lamento (la basse descend la, sol, fa, mi au violoncelle), les cordes
+  //    au-dessus (mi, ré, do, si), une timbale sur l'accord de mi majeur, puis la mineur tenu
+  mortCordes(t, bus) {
+    const niv = this.ctx.createGain(); niv.gain.value = 1; niv.connect(bus); bus = niv;
+    const la = d => 55 * Math.pow(2, d / 12), pas = 0.95;   // (en demi-tons depuis le la grave)
+    const etapes = [[12, [24, 27, 31], 43], [10, [22, 26, 29], 41], [8, [20, 24, 27], 39], [7, [19, 23, 26], 38]];
+    etapes.forEach(([b, acc, haut], i) => {
+      const ti = t + i * pas;
+      this.note('violoncelle', la(b), ti, pas, 1, bus);
+      for (const n of acc) this.note('cordes', la(n), ti, pas, 0.6, bus);
+      this.note('cordes', la(haut), ti, pas, 0.8, bus);
+    });
+    this.percu('timbale', t + 3 * pas, 0.4, bus);
+    const tf = t + 4 * pas;
+    this.note('violoncelle', la(0), tf, 2.2, 0.6, bus); this.note('violoncelle', la(12), tf, 2.2, 0.8, bus);
+    for (const n of [24, 27, 31]) this.note('cordes', la(n), tf, 2.2, 0.6, bus);
+    this.note('cordes', la(36), tf, 2.2, 0.8, bus);
+    this.percu('timbale', tf, 0.45, bus);
+  },
+  // C. Le grand glas : trois coups d'une grande cloche (ré), un bourdon, un chœur lointain en ré mineur
+  mortGlas(t, bus) {
+    const niv = this.ctx.createGain(); niv.gain.value = 0.95; niv.connect(bus); bus = niv;
+    const f = 146.83;
+    [0, 2.1, 4.2].forEach((dt, i) => SONS.grandeCloche.call(this, t + dt, bus, { freq: f, force: [1, 0.85, 0.75][i], duree: 5 }));
+    this.note('bourdon', f / 2, t + 0.3, 5.5, 0.9, bus);
+    for (const d of [0, 3, 7]) this.note('choeur', f * Math.pow(2, d / 12), t + 1.8, 4, 0.5, bus);
+  },
+
+  // --- Les bruitages ---
+  // Des pas dehors, selon le sol : o.sol = 'herbe', 'neige', 'boue' ou 'paves' ; o.n pas (4)
+  pasDehors(t, bus, o = {}) {
+    const sol = o.sol || 'herbe', n = o.n || 4, cadence = o.cadence || ({ boue: 0.55, neige: 0.48 }[sol] || 0.42);
+    const niv = this.ctx.createGain(); niv.gain.value = { herbe: 1.1, neige: 1.9, boue: 2.3, paves: 1.65 }[sol] || 1; niv.connect(bus); bus = niv;
+    for (let i = 0; i < n; i++) {
+      const tp = t + i * cadence + (Math.random() - 0.5) * 0.03, cote = i % 2 ? 0.92 : 1.08;   // (le pied gauche, le pied droit)
+      if (sol === 'herbe') {
+        this.tonGlisse(tp, 0.09, bus, { de: 95 * cote, a: 50, volume: 0.22, attaque: 0.006 });
+        this.bruitGlisse(tp, 0.16, bus, { de: 2600 * cote, a: 1500, q: 0.8, volume: 0.07, attaque: 0.02 });
+        this.bruitGlisse(tp + 0.05, 0.12, bus, { type: 'highpass', de: 4000, a: 3000, q: 0.5, volume: 0.03, attaque: 0.02 });
+      } else if (sol === 'neige') {
+        this.tonGlisse(tp, 0.08, bus, { de: 80, a: 45, volume: 0.15 });
+        for (let k = 0; k < 9; k++) this.bruitGlisse(tp + 0.01 + k * 0.022 + Math.random() * 0.01, 0.018, bus, { de: (1800 + Math.random() * 1800) * cote, q: 3, volume: 0.01 + 0.09 * Math.sin((k + 1) / 10 * Math.PI), attaque: 0.002 });
+      } else if (sol === 'boue') {
+        this.bruitGlisse(tp, 0.12, bus, { type: 'lowpass', de: 400, a: 200, volume: 0.22, attaque: 0.01 });
+        this.tonGlisse(tp + 0.02, 0.12, bus, { de: 210 * cote, a: 90, volume: 0.08, attaque: 0.01, filtre: 600 });
+        // le pied qui se dégage : une succion qui remonte
+        this.tonGlisse(tp + 0.24, 0.1, bus, { forme: 'triangle', de: 140 * cote, a: 420, volume: 0.05, attaque: 0.03, filtre: 900 });
+        this.bruitGlisse(tp + 0.24, 0.1, bus, { de: 700, a: 1400, q: 4, volume: 0.05, attaque: 0.03 });
+      } else {
+        // le talon qui claque sur la pierre, puis la pointe
+        this.bruitGlisse(tp, 0.035, bus, { de: 2400 * cote, a: 1800, q: 2.5, volume: 0.16, attaque: 0.002 });
+        this.tonGlisse(tp, 0.05, bus, { forme: 'triangle', de: 650 * cote, a: 320, volume: 0.08, attaque: 0.002 });
+        this.tonGlisse(tp, 0.07, bus, { de: 150, a: 80, volume: 0.15, attaque: 0.003 });
+        this.bruitGlisse(tp + 0.07, 0.025, bus, { de: 3000 * cote, a: 2500, q: 2, volume: 0.06, attaque: 0.002 });
+      }
+    }
+  },
+  // Une lourde porte de bois clouté : le loquet de fer, les gonds qui grincent par à-coups, le battant qui retombe
+  porteLourde(t, bus) {
+    const ctx = this.ctx;
+    const niv = ctx.createGain(); niv.gain.value = 0.65; niv.connect(bus); bus = niv;
+    for (const [f, v, d] of [[1250, 0.1, 0.12], [1890, 0.05, 0.08], [2730, 0.03, 0.06]]) this.tonGlisse(t, d, bus, { de: f, a: f * 0.98, volume: v, attaque: 0.002 });
+    this.bruit(0.02, t, bus, 0.2, 3000);
+    const t1 = t + 0.25, d = 1.1;
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(95, t1); o.frequency.linearRampToValueAtTime(150, t1 + d * 0.6); o.frequency.linearRampToValueAtTime(118, t1 + d);
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 4;
+    const hache = ctx.createGain(); hache.gain.value = 0.5;
+    const lfo = ctx.createOscillator(); lfo.type = 'square'; lfo.frequency.setValueAtTime(18, t1); lfo.frequency.linearRampToValueAtTime(30, t1 + d);
+    const lg = ctx.createGain(); lg.gain.value = 0.5; lfo.connect(lg); lg.connect(hache.gain);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t1); g.gain.exponentialRampToValueAtTime(0.12, t1 + 0.2); g.gain.setValueAtTime(0.12, t1 + d - 0.25); g.gain.exponentialRampToValueAtTime(0.0005, t1 + d);
+    o.connect(f); f.connect(hache); hache.connect(g); g.connect(bus); o.start(t1); o.stop(t1 + d + 0.05); lfo.start(t1); lfo.stop(t1 + d + 0.05);
+    const t2 = t1 + d + 0.15;
+    this.tonGlisse(t2, 0.35, bus, { de: 75, a: 38, volume: 0.3, attaque: 0.004 });
+    this.bruitGlisse(t2, 0.25, bus, { type: 'lowpass', de: 500, a: 150, volume: 0.25, attaque: 0.003 });
+    this.bruitGlisse(t2, 0.06, bus, { de: 1100, a: 800, q: 1.5, volume: 0.12, attaque: 0.002 });
+    for (let k = 0; k < 3; k++) this.tonGlisse(t2 + 0.08 + k * 0.07, 0.06, bus, { de: 1500 + k * 120, a: 1400, volume: 0.03 / (k + 1), attaque: 0.002 });
+  },
+  // L'épée tirée du fourreau : le cuir, la lame qui glisse (un frottement métallique qui monte) et qui chante
+  degainer(t, bus) {
+    const niv = this.ctx.createGain(); niv.gain.value = 2.0; niv.connect(bus); bus = niv;
+    this.bruitGlisse(t, 0.06, bus, { type: 'lowpass', de: 900, a: 400, volume: 0.12, attaque: 0.004 });
+    this.bruitGlisse(t + 0.04, 0.42, bus, { de: 2200, a: 6500, q: 9, volume: 0.14, attaque: 0.3 });
+    this.bruitGlisse(t + 0.04, 0.42, bus, { type: 'highpass', de: 5000, a: 7000, q: 0.7, volume: 0.03, attaque: 0.3 });
+    const t1 = t + 0.44;
+    for (const [f, v, d] of [[2960, 0.06, 1.1], [2975, 0.04, 1.0], [4420, 0.035, 0.8], [6230, 0.02, 0.5]]) this.tonGlisse(t1, d, bus, { de: f, a: f * 0.997, volume: v, attaque: 0.004 });
+  },
+  // La flèche : la corde de l'arc qui claque, la flèche qui file, puis qui se plante dans le bois en vibrant
+  fleche(t, bus) {
+    const ctx = this.ctx;
+    const niv = ctx.createGain(); niv.gain.value = 1.3; niv.connect(bus); bus = niv;
+    this.tonGlisse(t, 0.22, bus, { forme: 'triangle', de: 140, a: 95, volume: 0.25, attaque: 0.003, filtre: 900 });
+    this.tonGlisse(t, 0.12, bus, { forme: 'sawtooth', de: 280, a: 190, volume: 0.05, attaque: 0.003, filtre: 1200 });
+    this.bruit(0.02, t, bus, 0.15, 1500);
+    this.bruitGlisse(t + 0.05, 0.38, bus, { de: 3200, a: 900, q: 2.5, volume: 0.09, attaque: 0.06 });
+    const t1 = t + 0.45;
+    this.tonGlisse(t1, 0.07, bus, { de: 480, a: 200, volume: 0.25, attaque: 0.002 });
+    this.bruit(0.03, t1, bus, 0.25, 1300);
+    const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = 190;
+    const am = ctx.createGain(); am.gain.value = 0.5; const lfo = ctx.createOscillator(); lfo.frequency.value = 28; const lg = ctx.createGain(); lg.gain.value = 0.5; lfo.connect(lg); lg.connect(am.gain);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t1); g.gain.exponentialRampToValueAtTime(0.07, t1 + 0.01); g.gain.exponentialRampToValueAtTime(0.0005, t1 + 0.4);
+    o.connect(am); am.connect(g); g.connect(bus); o.start(t1); o.stop(t1 + 0.42); lfo.start(t1); lfo.stop(t1 + 0.42);
+  },
+  // Le feu de camp : le souffle grave des flammes qui ondule, les crépitements, une bûche qui craque (o.duree, 4 s)
+  feuDeCamp(t, bus, o = {}) {
+    const ctx = this.ctx, d = o.duree || 4;
+    const niv = ctx.createGain(); niv.gain.value = 1.65; niv.connect(bus); bus = niv;
+    const r = this.bruitGlisse(t, d, bus, { type: 'lowpass', de: 380, a: 300, q: 0.7, volume: 0.16, attaque: 0.6, relache: 0.8 });
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.7; const lg = ctx.createGain(); lg.gain.value = 120; lfo.connect(lg); lg.connect(r.f.frequency); lfo.start(t); lfo.stop(t + d + 0.05);
+    this.bruitGlisse(t, d, bus, { type: 'highpass', de: 3500, a: 3000, q: 0.5, volume: 0.012, attaque: 0.6, relache: 0.8 });
+    for (let i = 0; i < d * 14; i++) {
+      const tc = t + 0.2 + Math.random() * (d - 0.4), fort = Math.random() < 0.15;
+      this.bruitGlisse(tc, fort ? 0.02 : 0.008, bus, { de: 1500 + Math.random() * 3500, q: 2, volume: 0.02 + (fort ? 0.25 : 0.08) * Math.random(), attaque: 0.001 });
+    }
+    const tb = t + d * (0.4 + Math.random() * 0.3);
+    this.tonGlisse(tb, 0.08, bus, { de: 160, a: 70, volume: 0.15, attaque: 0.003 });
+    this.bruitGlisse(tb, 0.05, bus, { de: 2000, a: 900, q: 1.5, volume: 0.3, attaque: 0.002 });
+  },
+  // FWOUF : la torche qui prend d'un coup (un souffle qui s'ouvre), puis quelques pétillements
+  torche(t, bus) {
+    const niv = this.ctx.createGain(); niv.gain.value = 1.5; niv.connect(bus); bus = niv;
+    this.bruitGlisse(t, 0.6, bus, { de: 300, a: 1800, q: 1.2, volume: 0.3, attaque: 0.06 });
+    this.bruitGlisse(t, 0.9, bus, { type: 'lowpass', de: 250, a: 600, q: 0.7, volume: 0.25, attaque: 0.08 });
+    this.tonGlisse(t, 0.25, bus, { de: 90, a: 55, volume: 0.15, attaque: 0.03 });
+    for (let i = 0; i < 9; i++) this.bruitGlisse(t + 0.3 + Math.random() * 0.8, 0.01, bus, { de: 2000 + Math.random() * 3000, q: 2, volume: 0.06 + Math.random() * 0.1, attaque: 0.001 });
+  },
+  // Le vent des cols : une bourrasque qui enfle et retombe, et qui siffle dans les rochers (o.duree, 5 s)
+  ventMontagne(t, bus, o = {}) {
+    const d = o.duree || 5;
+    const niv = this.ctx.createGain(); niv.gain.value = 1.3; niv.connect(bus); bus = niv;
+    this.bruitGlisse(t, d, bus, { type: 'lowpass', de: 300, par: 1100, a: 350, q: 0.9, volume: 0.22, attaque: d * 0.45, relache: d * 0.5 });
+    for (const [f0, v] of [[620, 0.16], [930, 0.08]]) this.bruitGlisse(t + 0.3, d - 0.3, bus, { de: f0 * 0.85, par: f0 * 1.25, a: f0 * 0.9, q: 28, volume: v, attaque: d * 0.4, relache: d * 0.5 });
+  },
+  // Le corbeau : deux « croâ » rauques (une scie nasale à deux formants, hachée vite : le râle)
+  corbeau(t, bus) {
+    const ctx = this.ctx;
+    const niv = ctx.createGain(); niv.gain.value = 1.4; niv.connect(bus); bus = niv;
+    for (const [dt, h, d] of [[0, 1, 0.3], [0.45, 0.93, 0.34]]) {
+      const t1 = t + dt, o = ctx.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(420 * h, t1); o.frequency.linearRampToValueAtTime(460 * h, t1 + 0.05); o.frequency.exponentialRampToValueAtTime(300 * h, t1 + d);
+      const rale = ctx.createGain(); rale.gain.value = 0.6; const lfo = ctx.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 62; const lg = ctx.createGain(); lg.gain.value = 0.4; lfo.connect(lg); lg.connect(rale.gain);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t1); g.gain.exponentialRampToValueAtTime(0.25, t1 + 0.03); g.gain.setValueAtTime(0.22, t1 + d * 0.6); g.gain.exponentialRampToValueAtTime(0.0005, t1 + d);
+      o.connect(rale);
+      for (const [ff, q, v] of [[1000, 3, 1], [1700, 4, 0.6]]) { const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = ff * h; f.Q.value = q; const fg = ctx.createGain(); fg.gain.value = v; rale.connect(f); f.connect(fg); fg.connect(g); }
+      g.connect(bus); o.start(t1); o.stop(t1 + d + 0.02); lfo.start(t1); lfo.stop(t1 + d + 0.02);
+    }
+  },
+  // Les moutons : une brebis qui bêle, l'agneau qui répond, un autre plus loin (une voix nasale qui chevrote)
+  // (v1.64) o.un : un seul bêlement, celui de la brebis ('brebis') ou de l'agneau ('agneau'), quand un mouton du pré bêle
+  moutons(t, bus, o = {}) {
+    const ctx = this.ctx;
+    const niv = ctx.createGain(); niv.gain.value = 1.2; niv.connect(bus); bus = niv;
+    const belement = (t1, f0, d, vol, chevrote) => {
+      const o = ctx.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f0 * 0.9, t1); o.frequency.linearRampToValueAtTime(f0, t1 + 0.08); o.frequency.linearRampToValueAtTime(f0 * 0.94, t1 + d * 0.8); o.frequency.exponentialRampToValueAtTime(f0 * 0.8, t1 + d);
+      const vib = ctx.createGain(); vib.gain.value = 0.55; const lfo = ctx.createOscillator(); lfo.frequency.value = chevrote; const lg = ctx.createGain(); lg.gain.value = 0.45; lfo.connect(lg); lg.connect(vib.gain);
+      const fm = ctx.createGain(); fm.gain.value = f0 * 0.03; lfo.connect(fm); fm.connect(o.frequency);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t1); g.gain.exponentialRampToValueAtTime(vol, t1 + 0.06); g.gain.setValueAtTime(vol, t1 + d * 0.7); g.gain.exponentialRampToValueAtTime(0.0005, t1 + d);
+      o.connect(vib);
+      for (const [ff, q, v] of [[750, 3, 1], [1350, 4, 0.7], [2500, 5, 0.25]]) { const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = ff; f.Q.value = q; const fg = ctx.createGain(); fg.gain.value = v; vib.connect(f); f.connect(fg); fg.connect(g); }
+      g.connect(bus); o.start(t1); o.stop(t1 + d + 0.02); lfo.start(t1); lfo.stop(t1 + d + 0.02);
+    };
+    if (o.un === 'brebis') return belement(t, 260, 0.75, 0.3, 7);
+    if (o.un === 'agneau') return belement(t, 470, 0.5, 0.22, 10);
+    belement(t, 260, 0.75, 0.3, 7);
+    belement(t + 0.95, 470, 0.5, 0.22, 10);
+    belement(t + 1.9, 230, 0.6, 0.12, 6.5);
+  },
+  // Les crapauds du marais : deux crapauds qui se répondent (« rrrôa » : des impulsions graves très serrées)
+  crapauds(t, bus) {
+    const niv = this.ctx.createGain(); niv.gain.value = 1.15; niv.connect(bus); bus = niv;
+    const coasse = (t1, f0, n, ecart, vol) => { for (let k = 0; k < n; k++) this.tonGlisse(t1 + k * ecart, ecart * 0.8, bus, { forme: 'square', de: f0 * (1 + k / n * 0.15), a: f0 * 0.9, volume: vol * Math.sin((k + 1) / (n + 1) * Math.PI), attaque: 0.003, filtre: 700 }); };
+    coasse(t, 150, 10, 0.028, 0.2); coasse(t + 0.7, 150, 10, 0.028, 0.2);
+    coasse(t + 1.2, 230, 7, 0.024, 0.14);
+    coasse(t + 1.9, 150, 12, 0.028, 0.2);
+    this.percu('goutte', t + 2.4, 0.8, bus);
+  },
+  // La cloche du marché : le beffroi qui sonne trois coups (mi), le dernier qui résonne
+  couture(t, bus) {
+    const niv = this.ctx.createGain(); niv.gain.value = 3.7; niv.connect(bus); bus = niv;
+    for (let i = 0; i < 3; i++) {
+      const tp = t + i * 0.62;
+      this.bruitGlisse(tp, 0.018, bus, { de: 3200, a: 2600, q: 2, volume: 0.18, attaque: 0.001 });
+      this.tonGlisse(tp + 0.005, 0.04, bus, { de: 240, a: 160, volume: 0.1, attaque: 0.002 });
+      this.bruitGlisse(tp + 0.12, 0.32, bus, { de: 1800, a: 4200, q: 5, volume: 0.06, attaque: 0.12 });
+    }
+  },
+  // Les pièces dans la besace : elles tintent, étouffées par le cuir, de plus en plus serrées ; le cordon qu'on serre
+  besace(t, bus, o = {}) {
+    const ctx = this.ctx, n = Math.min(10, Math.max(3, Math.round((o.montant || 30) / 6)));
+    const niv = ctx.createGain(); niv.gain.value = 0.95; niv.connect(bus); bus = niv;
+    const cuir = ctx.createBiquadFilter(); cuir.type = 'lowpass'; cuir.frequency.value = 2400; cuir.Q.value = 0.7; cuir.connect(bus);
+    this.tonGlisse(t, 0.12, bus, { de: 150, a: 70, volume: 0.25, attaque: 0.004 });
+    let tp = t + 0.05;
+    for (let i = 0; i < n; i++) { SONS.piece.call(this, tp, cuir, o); this.bruitGlisse(tp, 0.04, bus, { type: 'lowpass', de: 700, a: 300, volume: 0.06, attaque: 0.003 }); tp += 0.11 * Math.pow(0.86, i) + Math.random() * 0.02; }
+    this.bruitGlisse(tp + 0.15, 0.2, bus, { de: 1800, a: 3200, q: 3, volume: 0.07, attaque: 0.05 });
+  },
+};
+Object.assign(SONS, SONS_RECITS);
+
+// Les sons fabriqués une fois puis rejoués depuis le cache : leur durée de rendu (s), la clé de leurs réglages et
+// le nombre de variantes gardées (les sons tirés au hasard : quelques versions, pour ne pas lasser l'oreille)
+const SONS_EN_CACHE = {
+  mortChoeur: { duree: 8.5 }, mortCordes: { duree: 7.8 }, mortGlas: { duree: 10 },
+  pasDehors: { duree: o => 0.6 + (o.n || 4) * 0.56, cle: o => (o.sol || 'herbe') + (o.n || 4), variantes: 4 },
+  porteLourde: { duree: 2.4 }, degainer: { duree: 1.8 }, fleche: { duree: 1.1, variantes: 2 },
+  feuDeCamp: { duree: o => (o.duree || 4) + 0.4, cle: o => o.duree || 4, variantes: 2 }, torche: { duree: 1.5, variantes: 2 },
+  ventMontagne: { duree: o => (o.duree || 5) + 0.3, cle: o => o.duree || 5, variantes: 2 }, corbeau: { duree: 1.1 },
+  moutons: { duree: 3, cle: o => o.un || 'trois' }, crapauds: { duree: 3, variantes: 2 }, couture: { duree: 2.1 },
+  besace: { duree: 2, cle: o => Math.min(10, Math.max(3, Math.round((o.montant || 30) / 6))), variantes: 2 },
+};
+for (const [nom, spec] of Object.entries(SONS_EN_CACHE)) SONS[nom].cache = spec;
+
+// --- Où jouer quoi ---
+// Les trois contrées musicales des récits : la forêt (et la Comté, les terres elfiques, la côte, les bambous), la
+// montagne (les pics, les mines, les terres désolées et brûlées, les cités de pierre et de cristal), le marais (et les
+// ruines, l'antre, les terres maudites des Bannis)
+const CONTREE_MUSICALE = {
+  comte: 'Foret', foret: 'Foret', sanctuaire: 'Foret', val: 'Foret', cote: 'Foret', monastere: 'Foret',
+  mines: 'Montagne', neige: 'Montagne', desert: 'Montagne', badlands: 'Montagne', citadelle: 'Montagne', opale: 'Montagne',
+  marais: 'Marais', bourbier: 'Marais', ruines: 'Marais', antre: 'Marais', tour: 'Marais', nuitPourpre: 'Marais', repaire: 'Marais',
+};
+function contreeMusicale(biome) { return CONTREE_MUSICALE[biome] || 'Foret'; }
+// La musique d'un récit selon la contrée et le moment : 'route' (il marche), 'danger' (une bête, des brigands),
+// 'victoire' (il revient avec le butin)
+function musiqueRecit(biome, moment = 'route') {
+  return ({ route: 'aventure', danger: 'danger', victoire: 'triomphe' }[moment] || 'aventure') + contreeMusicale(biome);
+}
+// Les épreuves où quelque chose l'attaque : la musique du danger de la contrée
+const EPREUVES_DANGER = new Set(['loup', 'bandits', 'pillards', 'araignee', 'sanglier', 'yeti', 'monstre', 'mortvivant', 'esprits', 'morsure', 'sangsues', 'avalanche', 'danger']);
+
+// La mort d'un voyageur, selon l'endroit où il est tombé :
+//  - le chœur des disparus dans les forêts et les lieux elfiques ou sacrés (on chante pour lui) ;
+//  - les cordes qui pleurent dans les plaines, les villages et sur la côte (les siens le pleurent) ;
+//  - le grand glas dans les montagnes, les mines, les déserts, les marais, les ruines et les terres maudites (la cloche
+//    lointaine d'un lieu où personne ne viendra le chercher).
+const MORT_PAR_BIOME = {
+  foret: 'mortChoeur', sanctuaire: 'mortChoeur', val: 'mortChoeur', opale: 'mortChoeur', monastere: 'mortChoeur', citadelle: 'mortChoeur',
+  comte: 'mortCordes', cote: 'mortCordes',
+};
+const MORT_PAR_LIEU = { abbaye: 'mortChoeur', chamans: 'mortGlas', pont: 'mortGlas' };   // (l'abbaye est un lieu saint ; la clairière des chamans et le pont des trolls sont des terres d'ombre)
+const DUREE_MORT = { mortChoeur: 7.5, mortCordes: 6.5, mortGlas: 8.2 };
+function mortDuLieu(zone) {
+  const z = ZONES[zone] || {};
+  return MORT_PAR_LIEU[z.vignette] || MORT_PAR_BIOME[z.biome] || 'mortGlas';
+}
+// Le sol sous ses pieds : la neige, la vase, la pierre (les cités, les ruines, les châteaux), l'herbe et la terre sinon
+function solDuBiome(biome) {
+  if (biome === 'neige') return 'neige';
+  if (biome === 'marais' || biome === 'bourbier') return 'boue';
+  if (['opale', 'ruines', 'nuitPourpre', 'citadelle'].includes(biome)) return 'paves';
+  return 'herbe';
+}
+// Un pas (le talon qui se pose) sur ce sol ; `volume` : plus bas pour le héros en ville, où l'on marche longtemps
+function jouerPas(sol, volume = 1) {
+  if (typeof Son === 'undefined' || !Son.pret || !sol) return;
+  Son.jouer('pasDehors', { sol, n: 1, volume });
+}
+
+// Les bruits de fond d'un récit, de temps en temps : le vent des cols, les crapauds du marais (les moutons des
+// collines bêlent eux-mêmes, voir moutonVivant). Ils s'arrêtent avec la scène, et se taisent pendant « Passer ».
+function ambianceSonoreRecit(scene, zone, biome) {
+  const sons = [];
+  if (biome === 'neige') sons.push(['ventMontagne', 9000, 16000, { duree: 5 }]);
+  if (biome === 'marais' || biome === 'bourbier') sons.push(['crapauds', 8000, 16000, {}]);
+  for (const [nom, min, max, o] of sons) {
+    const tour = () => scene.time.delayedCall(min + Math.random() * (max - min), () => {
+      if (!scene.sys.isActive()) return;
+      if (!scene.rapide && !scene.finRecit) Son.jouer(nom, o);
+      tour();
+    });
+    scene.time.delayedCall(1500 + Math.random() * 2500, () => { if (scene.sys.isActive() && !scene.rapide && !scene.finRecit) Son.jouer(nom, o); tour(); });
+  }
+  // (on prépare d'avance ce qui servira : les pas sur ce sol, la mort de ce lieu, les bruits de fond)
+  const v = scene.parti && scene.parti.voyageur, r = scene.parti && scene.parti.resultat;
+  Son.prechauffer([['pasDehors', { sol: solDuBiome(biome), n: 1 }], ['pasDehors', { sol: solDuBiome(biome), n: 1 }], ...sons.map(([nom, , , o]) => [nom, o]),
+    ...(r && !r.vivant ? [[mortDuLieu(zone)]] : []), ['degainer'], ['fleche'], ['torche'], ['feuDeCamp', {}], ['besace', { montant: (v && v.butin) || 30 }]]);
+}
+
+</script>
+<script>
+// (v1.64) Les trois sons refusés par le joueur sur la page d'écoute v1.61, refaits pour être réalistes : le marteau
+// (du charpentier et de la forge), la foule du marché et la cloche du marché. Deux variantes de chacun, à écouter sur
+// docs/planches-v059/sons-v164.html.
+//
+// EN ATTENTE DU CHOIX DU JOUEUR : tant que SONS_A_CHOISIR.actif est faux, le jeu garde ses anciens sons (l'enclume
+// pour le marteau, le silence pour la foule et la cloche). Les points d'accroche sont en place (voir sonAChoisir) ;
+// pour brancher, il suffit de passer `actif` à vrai et de noter la variante choisie (A ou B).
+//
+// Ici, rien n'est un graphe Web Audio : chaque son est calculé échantillon par échantillon (des modes qui résonnent,
+// des bruits filtrés, une réverbération), une seule fois, puis rejoué depuis son tampon. Le même code fabrique les
+// fichiers .wav de la page d'écoute (sous Node, voir module.exports en bas).
+const SONS_A_CHOISIR = { actif: false, marteau: 'A', foule: 'A', cloche: 'A' };
+
+const FabriqueSons = (() => {
+  // Les niveaux visés (mesurés sur les sons du jeu : l'enclume 0,056, le marteau de la v1.61 0,072, sa cloche 0,051,
+  // son brouhaha 0,037) : un geste du jeu, un grand moment, un fond qui ne couvre pas les voix
+  const NIVEAUX = { marteau: 0.066, cloche: 0.052, foule: 0.034, fondFoule: 0.024, eclatFoule: 0.05 };
+  // --- Les outils ---
+  // Un tirage au sort qui se rejoue à l'identique (une graine = une variante)
+  const alea = graine => { let s = ((graine | 0) * 2654435761) >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; };
+  const entre = (r, a, b) => a + (b - a) * r();
+  // Un mode qui résonne : une sinusoïde qui s'éteint de 60 dB en `t60` secondes (une cloche, une enclume, une planche)
+  function mode(x, sr, t0, f, amp, t60, attaque = 0.0012) {
+    const n0 = Math.floor(t0 * sr);
+    if (f <= 20 || f >= sr * 0.48 || n0 >= x.length || amp <= 0) return;
+    const len = Math.min(x.length - Math.max(0, n0), Math.ceil(t60 * sr * 1.1));
+    const w = 2 * Math.PI * f / sr, cw = Math.cos(w), sw = Math.sin(w), r = Math.pow(0.001, 1 / (t60 * sr)), na = Math.max(1, Math.floor(attaque * sr));
+    let c = 1, s = 0, e = amp;
+    for (let i = 0; i < len; i++) {
+      const j = n0 + i; if (j >= 0) x[j] += e * (i < na ? i / na : 1) * s;
+      const c2 = c * cw - s * sw; s = s * cw + c * sw; c = c2; e *= r;
+      if ((i & 1023) === 1023) { const m = Math.hypot(c, s); c /= m; s /= m; }   // (pas de dérive)
+    }
+  }
+  // Les coefficients d'un filtre du second ordre (RBJ) : passe-bas, passe-haut, passe-bande (crête à 0 dB)
+  function coefs(type, f, q, sr) {
+    const w = 2 * Math.PI * Math.min(f, sr * 0.45) / sr, cw = Math.cos(w), al = Math.sin(w) / (2 * q), a0 = 1 + al;
+    let b0, b1, b2;
+    if (type === 'lowpass') { b0 = (1 - cw) / 2; b1 = 1 - cw; b2 = b0; }
+    else if (type === 'highpass') { b0 = (1 + cw) / 2; b1 = -(1 + cw); b2 = b0; }
+    else { b0 = al; b1 = 0; b2 = -al; }
+    return [b0 / a0, b1 / a0, b2 / a0, -2 * cw / a0, (1 - al) / a0];
+  }
+  function filtrer(x, type, f, q, sr) {
+    const [b0, b1, b2, a1, a2] = coefs(type, f, q, sr);
+    let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    for (let i = 0; i < x.length; i++) { const v = x[i], y = b0 * v + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2; x2 = x1; x1 = v; y2 = y1; y1 = y; x[i] = y; }
+    return x;
+  }
+  // Un bruit filtré qui s'éteint (un choc, un frottement, un souffle), ajouté dans x à t0
+  function choc(x, sr, t0, duree, amp, r, { type = 'bandpass', f = 2000, q = 1, attaque = 0.0008, pente = 5 } = {}) {
+    const n = Math.max(2, Math.floor(duree * sr)), b = new Float32Array(n);
+    for (let i = 0; i < n; i++) b[i] = r() * 2 - 1;
+    filtrer(b, type, f, q, sr);
+    const n0 = Math.floor(t0 * sr), na = Math.max(1, Math.floor(attaque * sr));
+    for (let i = 0; i < n && n0 + i < x.length; i++) if (n0 + i >= 0) x[n0 + i] += amp * b[i] * (i < na ? i / na : 1) * Math.exp(-pente * i / n);
+  }
+  // La réverbération (huit filtres en peigne et quatre passe-tout, d'après Freeverb) : la pièce, la place, la halle
+  function reverbe(x, sr, { taille = 0.6, amorti = 0.35, mix = 0.25, predelai = 0.012 } = {}) {
+    const k = sr / 44100, longueurs = [1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617].map(n => Math.max(8, Math.round(n * k * (0.55 + 0.6 * taille))));
+    const passes = [556, 441, 341, 225].map(n => Math.max(4, Math.round(n * k))), fb = 0.72 + 0.26 * taille, pre = Math.round(predelai * sr);
+    const combs = longueurs.map(n => ({ b: new Float32Array(n), i: 0, z: 0 })), aps = passes.map(n => ({ b: new Float32Array(n), i: 0 }));
+    const out = new Float32Array(x.length);
+    for (let n = 0; n < x.length; n++) {
+      const entree = (n >= pre ? x[n - pre] : 0) * 0.015;
+      let s = 0;
+      for (const c of combs) { const y = c.b[c.i]; c.z = y * (1 - amorti) + c.z * amorti; c.b[c.i] = entree + c.z * fb; c.i = (c.i + 1) % c.b.length; s += y; }
+      for (const a of aps) { const y = a.b[a.i]; const o = -s + y; a.b[a.i] = s + y * 0.5; a.i = (a.i + 1) % a.b.length; s = o; }
+      out[n] = x[n] * (1 - mix * 0.5) + s * 3 * mix;
+    }
+    return out;
+  }
+  // Ramener un son à un niveau (la moyenne de ses passages forts, comme on a mesuré les autres sons du jeu) : chacun à
+  // la hauteur de sa famille
+  function niveler(x, rmsVoulu, cretMax = 0.92) {
+    const fen = 1024, rms = [];
+    for (let i = 0; i + fen <= x.length; i += fen) { let s = 0; for (let j = i; j < i + fen; j++) s += x[j] * x[j]; rms.push(Math.sqrt(s / fen)); }
+    rms.sort((a, b) => b - a);
+    const actives = rms.filter(v => v > 1e-4).length, haut = rms.slice(0, Math.max(1, Math.ceil(actives * 0.25))), moy = haut.reduce((a, b) => a + b, 0) / haut.length || 1e-9;
+    let g = rmsVoulu / moy, crete = 0;
+    for (let i = 0; i < x.length; i++) crete = Math.max(crete, Math.abs(x[i]));
+    if (crete * g > cretMax) g = cretMax / crete;
+    for (let i = 0; i < x.length; i++) x[i] *= g;
+    return x;
+  }
+  // Repasser un son rendu à basse fréquence (le brouhaha lointain) à la fréquence du jeu : `k` fois plus de notes
+  function surechantillonner(y, k) {
+    const x = new Float32Array(y.length * k);
+    for (let i = 0; i < x.length; i++) { const p = i / k, j = Math.floor(p), f = p - j; x[i] = (y[j] || 0) * (1 - f) + (y[j + 1] || 0) * f; }
+    return x;
+  }
+  // Un fondu au début et à la fin (jamais de clic)
+  function fondus(x, sr, debut = 0.004, fin = 0.05) {
+    const a = Math.floor(debut * sr), b = Math.floor(fin * sr);
+    for (let i = 0; i < a && i < x.length; i++) x[i] *= i / a;
+    for (let i = 0; i < b && i < x.length; i++) x[x.length - 1 - i] *= i / b;
+    return x;
+  }
+
+  // ======================================================================================
+  // Le marteau. o.matiere : 'bois' (le charpentier qui cloue) ou 'metal' (le forgeron sur l'enclume) ;
+  // o.duree : la longueur de la série de coups (2,4 s au jeu, plus longue sur la page d'écoute)
+  // ======================================================================================
+  // Un coup sur le bois : le choc du fer sur la tête du clou, la planche qui sonne (sourde et brève), le clou qui
+  // chante un peu (plus aigu à mesure qu'il s'enfonce : il reste moins de clou libre), la tête du marteau
+  function coupBois(x, sr, t, force, r, { enfonce = 0, poutre = false, rebond = false, pose = false } = {}) {
+    choc(x, sr, t, 0.006, 0.9 * force, r, { type: 'bandpass', f: entre(r, 2200, 3200), q: 0.8, pente: 4 });
+    choc(x, sr, t, 0.05, 0.5 * force, r, { type: 'lowpass', f: poutre ? 700 : 1100, q: 0.7, pente: 7 });
+    const bas = poutre ? entre(r, 105, 140) : entre(r, 170, 240);
+    for (const [m, a, t60] of [[1, 0.55, poutre ? 0.32 : 0.12], [2.31, 0.3, poutre ? 0.16 : 0.07], [3.9, 0.16, 0.05], [6.2, 0.07, 0.03]]) mode(x, sr, t, bas * m * entre(r, 0.97, 1.03), a * force, t60, 0.0008);
+    if (!pose) {   // (le clou : il chante, de plus en plus aigu)
+      const fc = 2300 * (1 + 0.55 * enfonce) * entre(r, 0.97, 1.03);
+      mode(x, sr, t, fc, 0.12 * force * (1 - 0.7 * enfonce), 0.16 - 0.08 * enfonce, 0.0005);
+      mode(x, sr, t, fc * 2.76, 0.04 * force * (1 - enfonce), 0.06, 0.0005);
+    }
+    mode(x, sr, t, entre(r, 3900, 4400), 0.05 * force, 0.05, 0.0005);   // (la tête du marteau)
+    if (rebond) choc(x, sr, t + entre(r, 0.045, 0.07), 0.004, 0.18 * force, r, { type: 'bandpass', f: 2600, q: 1 });
+  }
+  // Un coup sur l'enclume. Sur le fer chaud (`surFer`), le métal mou étouffe la table : un choc plus mat, une
+  // résonance courte ; à vide, la table chante longtemps (le « ting » du forgeron entre deux frappes)
+  function coupEnclume(x, sr, t, force, r, { surFer = true, base = 880, grave = false } = {}) {
+    const etouffe = surFer ? 0.32 : 1;
+    choc(x, sr, t, 0.004, (surFer ? 0.6 : 0.9) * force, r, { type: 'highpass', f: 2500, q: 0.7, pente: 3 });
+    if (surFer) choc(x, sr, t, 0.06, 0.55 * force, r, { type: 'lowpass', f: 900, q: 0.7, pente: 6 });
+    const f = base * entre(r, 0.985, 1.015);
+    for (const [m, a, t60] of [[1, 0.5, 2.2], [1.53, 0.32, 1.6], [2.31, 0.3, 1.3], [2.89, 0.2, 1.0], [3.71, 0.16, 0.8], [4.62, 0.1, 0.55], [5.4, 0.06, 0.4], [6.95, 0.04, 0.25]])
+      mode(x, sr, t, f * m, a * force * (surFer ? 0.55 : 1), t60 * etouffe * (grave ? 1.25 : 1), 0.0005);
+    mode(x, sr, t, entre(r, 3150, 3400), 0.08 * force, 0.12, 0.0004);   // (la tête du marteau)
+    mode(x, sr, t, grave ? 95 : 130, 0.25 * force, 0.07, 0.002);   // (le billot qui encaisse)
+  }
+  // Le rythme des vrais coups : jamais au métronome (± 8 %), plus ou moins forts, des pauses pour souffler
+  // A. « Coups francs » : le charpentier pose le clou (deux petits coups), puis l'enfonce en trois ou quatre coups
+  //    qui accélèrent un peu ; le forgeron frappe des séries de 3 à 5 coups sur le fer, puis le retourne.
+  function marteauA(sr, o = {}) {
+    const r = alea(o.graine || 11), duree = o.duree || 2.4, metal = o.matiere === 'metal';
+    const x = new Float32Array(Math.ceil((duree + (metal ? 2.2 : 0.6)) * sr));
+    let t = 0.03;
+    while (t < duree - 0.25) {
+      if (metal) {
+        const n = 3 + Math.floor(r() * 3), ecart = entre(r, 0.36, 0.46);
+        for (let k = 0; k < n && t < duree; k++) { coupEnclume(x, sr, t, entre(r, 0.75, 1) * (k === 0 ? 0.85 : 1), r, { surFer: true }); t += ecart * entre(r, 0.92, 1.08); }
+        if (t < duree - 0.5) { coupEnclume(x, sr, t - ecart * 0.45, 0.35, r, { surFer: false }); }   // (il retourne la pièce : le marteau effleure la table)
+        t += entre(r, 0.55, 0.9);
+      } else {
+        coupBois(x, sr, t, 0.38, r, { enfonce: 0 }); t += entre(r, 0.24, 0.3);
+        coupBois(x, sr, t, 0.42, r, { enfonce: 0.05 }); t += entre(r, 0.38, 0.48);
+        const n = 3 + Math.floor(r() * 2);
+        for (let k = 0; k < n && t < duree + 0.2; k++) { const fin = k === n - 1; coupBois(x, sr, t, entre(r, 0.85, 1), r, { enfonce: (k + 1) / n, pose: fin }); t += entre(r, 0.36, 0.44) * (1 - k * 0.04); }
+        t += entre(r, 0.5, 0.8);
+      }
+    }
+    return niveler(fondus(reverbe(x, sr, metal ? { taille: 0.5, amorti: 0.45, mix: 0.18 } : { taille: 0.35, amorti: 0.5, mix: 0.12 }), sr), NIVEAUX.marteau);
+  }
+  // B. « Le rythme de l'artisan » : le forgeron frappe le fer, et entre deux frappes laisse rebondir son marteau sur la
+  //    table de l'enclume (« ting-ting ») pour garder la cadence ; une enclume plus lourde, une forge de pierre qui résonne.
+  //    Le charpentier cloue dans une poutre (plus grave, qui vibre plus longtemps), son marteau rebondit après chaque coup.
+  function marteauB(sr, o = {}) {
+    const r = alea(o.graine || 23), duree = o.duree || 2.4, metal = o.matiere === 'metal';
+    const x = new Float32Array(Math.ceil((duree + (metal ? 2.6 : 0.8)) * sr));
+    let t = 0.03;
+    if (metal) {
+      while (t < duree - 0.2) {
+        coupEnclume(x, sr, t, entre(r, 0.85, 1), r, { surFer: true, base: 690, grave: true });
+        const tings = r() < 0.6 ? 2 : 1;
+        for (let k = 0; k < tings; k++) coupEnclume(x, sr, t + 0.2 + k * 0.15 + entre(r, -0.015, 0.015), entre(r, 0.18, 0.28) / (k + 1), r, { surFer: false, base: 690, grave: true });
+        t += entre(r, 0.62, 0.78);
+        if (r() < 0.18) t += entre(r, 0.4, 0.7);   // (il regarde la pièce)
+      }
+    } else {
+      while (t < duree - 0.2) {
+        coupBois(x, sr, t, 0.35, r, { enfonce: 0, poutre: true, rebond: true }); t += entre(r, 0.32, 0.4);
+        const n = 2 + Math.floor(r() * 3);
+        for (let k = 0; k < n && t < duree + 0.2; k++) { coupBois(x, sr, t, entre(r, 0.8, 1), r, { enfonce: (k + 1) / n, poutre: true, rebond: true, pose: k === n - 1 }); t += entre(r, 0.5, 0.62); }
+        t += entre(r, 0.6, 1.1);
+      }
+    }
+    return niveler(fondus(reverbe(x, sr, metal ? { taille: 0.75, amorti: 0.3, mix: 0.3 } : { taille: 0.45, amorti: 0.45, mix: 0.16 }), sr), NIVEAUX.marteau);
+  }
+
+  // ======================================================================================
+  // La cloche du marché : une cloche de bronze. Ses partiels ne sont pas harmoniques (le bourdon à l'octave du
+  // dessous, la fondamentale, la tierce mineure, la quinte, la nominale à l'octave, puis des aigus serrés) ; chacun
+  // s'éteint à son rythme (les graves durent, les aigus meurent vite) ; et chacun est double (la cloche n'est jamais
+  // tout à fait ronde) : deux fréquences voisines qui battent, le « wouang-wouang » qui reste dans l'air.
+  // ======================================================================================
+  const PARTIELS_CLOCHE = [   // [rapport à la fondamentale, volume, durée de vie (rapportée à celle du bourdon)]
+    [0.5, 0.55, 1], [1, 0.62, 0.62], [1.183, 0.5, 0.52], [1.506, 0.24, 0.32], [2, 0.78, 0.36], [2.514, 0.32, 0.22],
+    [2.662, 0.28, 0.2], [3.011, 0.24, 0.16], [4.166, 0.16, 0.1], [5.433, 0.11, 0.07], [6.796, 0.07, 0.05], [8.215, 0.04, 0.035],
+  ];
+  function coupCloche(x, sr, t, f, force, r, { vie = 12, battement = 1, ecarts = null } = {}) {
+    PARTIELS_CLOCHE.forEach(([m, a, v], i) => {
+      const fi = f * m * (1 + (ecarts ? ecarts[i] : 0)), d = (ecarts ? ecarts[i + 20] : 0.8) * battement;   // (le battement : 0,3 à 2,5 Hz)
+      const t60 = vie * v * (1 + (a > 0.3 ? 0.1 : 0));
+      mode(x, sr, t, fi, a * force * 0.6, t60, 0.0015);
+      mode(x, sr, t, fi + d, a * force * 0.4, t60 * 0.92, 0.0015);
+    });
+    // le battant qui frappe la pince : un « tonk » de fer, bref
+    choc(x, sr, t, 0.012, 0.5 * force, r, { type: 'bandpass', f: entre(r, 1800, 2600), q: 0.9, pente: 6 });
+    choc(x, sr, t, 0.03, 0.25 * force, r, { type: 'lowpass', f: 600, q: 0.7, pente: 6 });
+  }
+  // (les petits défauts de la cloche, toujours les mêmes pour une même cloche)
+  function defautsCloche(graine, battement) { const r = alea(graine), e = []; for (let i = 0; i < 20; i++) e.push((r() - 0.5) * 0.008); for (let i = 0; i < 20; i++) e.push(0.3 + r() * 2.2 * battement); return e; }
+  // A. « Le beffroi » : la grande cloche de la place (sol grave), lancée en volée : trois coups lents et inégaux
+  //    (la cloche balance, le battant ne frappe pas au métronome), et la longue résonance qui s'éteint sur la place.
+  function clocheA(sr, o = {}) {
+    const r = alea(o.graine || 5), f = 196 * (o.hauteur || 1), coups = o.coups || 3, ecarts = defautsCloche(91, 1);
+    const instants = []; let t = 0.05;
+    for (let k = 0; k < coups; k++) { instants.push(t); t += entre(r, 1.85, 2.25); }
+    const x = new Float32Array(Math.ceil((instants[instants.length - 1] + 11) * sr));
+    instants.forEach((ti, k) => coupCloche(x, sr, ti, f, [1, 0.9, 0.82, 0.76, 0.7][k % 5] * entre(r, 0.94, 1.04), r, { vie: 13, battement: 1, ecarts }));
+    return niveler(fondus(reverbe(x, sr, { taille: 0.85, amorti: 0.25, mix: 0.24, predelai: 0.03 }), sr, 0.002, 0.4), NIVEAUX.cloche);
+  }
+  // B. « La cloche de la halle » : une cloche plus petite (sol aigu), plus ronde de son mais moins parfaite (elle bat
+  //    plus vite), tintée à la corde : le battant frappe un bord puis l'autre, fort, faible, fort... six coups, puis elle se tait.
+  function clocheB(sr, o = {}) {
+    const r = alea(o.graine || 7), f = 392 * (o.hauteur || 1), coups = o.coups || 6, ecarts = defautsCloche(47, 1.6);
+    const instants = []; let t = 0.05;
+    for (let k = 0; k < coups; k++) { instants.push(t); t += entre(r, 0.68, 0.82); }
+    const x = new Float32Array(Math.ceil((instants[instants.length - 1] + 7) * sr));
+    instants.forEach((ti, k) => coupCloche(x, sr, ti, f, (k % 2 ? 0.62 : 1) * (1 - k * 0.04) * entre(r, 0.94, 1.04), r, { vie: 7.5, battement: 1.6, ecarts }));
+    return niveler(fondus(reverbe(x, sr, { taille: 0.65, amorti: 0.3, mix: 0.2, predelai: 0.02 }), sr, 0.002, 0.4), NIVEAUX.cloche);
+  }
+
+  // ======================================================================================
+  // La foule du marché. Des voix, vraiment : une source (les cordes vocales, un peu de souffle) passée dans trois
+  // résonances (les formants) qui glissent d'une voyelle à l'autre, syllabe après syllabe, avec l'intonation d'une
+  // phrase (elle monte, puis retombe) ; des consonnes (un souffle, un petit choc) ; des pauses pour respirer.
+  // Au loin, une vingtaine de voix mêlées, étouffées par la distance et renvoyées par les façades : le brouhaha.
+  // Tout près, de temps en temps, un éclat : un rire, un marchand qui appelle, un enfant, deux voisins qui causent.
+  // ======================================================================================
+  const VOYELLES = [[800, 1250, 2600], [420, 2050, 2650], [560, 1750, 2500], [290, 2250, 2950], [460, 820, 2500], [320, 760, 2300], [300, 1750, 2150], [420, 1450, 2350], [650, 1100, 2500]];
+  // Une voix qui parle (ou rit, ou appelle) de t0 à t0 + duree. o : f0 (la hauteur), k (les formants : 1 un homme,
+  // 1,15 une femme, 1,3 un enfant), debit (syllabes par seconde), souffle, niveau, rire, appel
+  function voix(x, sr, t0, duree, r, o = {}) {
+    const f0 = o.f0 || 120, k = o.k || 1, debit = o.debit || 5, souffle = o.souffle || 0.08, niveau = o.niveau || 0.1;
+    // les syllabes : [début, durée, voyelle, consonne, accent, fin de phrase ?]
+    const syl = []; let t = 0;
+    while (t < duree - 0.15) {
+      const mots = o.rire ? 1 : 1 + Math.floor(r() * 4), monte = r() < 0.22;
+      const phrase = [];
+      for (let m = 0; m < mots; m++) {
+        const n = o.rire ? 4 + Math.floor(r() * 4) : 1 + Math.floor(r() * 3);
+        for (let s = 0; s < n && t < duree - 0.12; s++) {
+          const d = o.rire ? entre(r, 0.13, 0.17) : (1 / debit) * entre(r, 0.7, 1.35);
+          phrase.push({ t, d, v: o.rire ? 0 : Math.floor(r() * VOYELLES.length), c: o.rire ? 'h' : ['p', 's', 'm', 'l', '', '', 't', 'f'][Math.floor(r() * 8)], accent: r() < 0.3 ? entre(r, 0.06, 0.16) : 0 });
+          t += d;
+        }
+        t += o.rire ? 0 : entre(r, 0.02, 0.1);
+      }
+      if (o.appel && phrase.length) { const der = phrase[phrase.length - 1]; der.d *= 3.2; der.v = 4; t = der.t + der.d; }   // (le marchand tient la dernière voyelle : « ... frais ! » « Oh-éééé ! »)
+      phrase.forEach((s, i) => { s.u = i / Math.max(1, phrase.length - 1); s.monte = monte; s.debutPhrase = phrase[0].t; s.finPhrase = t; });
+      syl.push(...phrase);
+      t += o.rire ? duree : entre(r, 0.25, 1.1);   // (il reprend son souffle, écoute l'autre)
+    }
+    if (!syl.length) return;
+    const n0 = Math.floor(t0 * sr), n = Math.min(x.length - n0, Math.ceil(duree * sr));
+    if (n <= 0) return;
+    let phase = 0, si = 0, F = VOYELLES[syl[0].v].map(v => v * k);
+    const res = [0, 0, 0].map(() => ({ y1: 0, y2: 0, a1: 0, a2: 0, b: 0 })), largeurs = [90, 110, 160], poids = [1, 0.55, 0.28];
+    let lp = 0, bruitLp = 0, grain = 1;
+    for (let i = 0; i < n; i++) {
+      const tt = i / sr;
+      while (si < syl.length - 1 && tt >= syl[si].t + syl[si].d) si++;
+      const s = syl[si], dans = tt - s.t;
+      if (dans < 0 || dans > s.d) { // (entre deux syllabes : le silence, les résonances s'éteignent)
+        for (const q of res) { const y = -q.a1 * q.y1 - q.a2 * q.y2; q.y2 = q.y1; q.y1 = y; }
+        continue;
+      }
+      // l'enveloppe de la syllabe : la consonne, puis la voyelle qui s'ouvre et se referme
+      const u = dans / s.d, cons = s.c, tc = cons === 's' || cons === 'f' || cons === 'h' ? 0.28 : cons === 'p' || cons === 't' ? 0.12 : 0;
+      let voise = u < tc ? (cons === 'm' || cons === 'l' ? 0.5 : 0) : Math.min(1, (u - tc) / 0.12) * Math.min(1, (1 - u) / 0.22);
+      if (cons === 'm' && u < 0.2) voise *= 0.6;
+      // l'intonation : la phrase part haut et descend (ou remonte à la fin : une question), l'accent sur certaines syllabes
+      const up = (s.t + dans - s.debutPhrase) / Math.max(0.2, s.finPhrase - s.debutPhrase);
+      let hauteur = f0 * (1.14 - 0.26 * up + s.accent * Math.sin(Math.PI * u));
+      if (s.monte && up > 0.75) hauteur *= 1 + (up - 0.75) * 1.2;
+      if (o.rire) hauteur = f0 * (1.55 - 0.45 * (s.t / duree)) * (1 + 0.08 * Math.sin(Math.PI * u));
+      if (o.appel && s === syl[syl.length - 1]) hauteur = f0 * (1.25 + 0.25 * Math.sin(Math.PI * Math.min(1, u * 1.4)));
+      if ((i & 31) === 0) grain = 1 + (r() - 0.5) * 0.012;
+      hauteur *= grain;   // (le grain de la voix)
+      phase += hauteur / sr; if (phase >= 1) phase -= 1;
+      const source = (2 * phase - 1) * 0.6 + (r() * 2 - 1) * souffle * (o.rire ? 4 : 1);
+      lp += (source - lp) * 0.35;   // (une source un peu ronde)
+      // les formants glissent vers ceux de la voyelle (toutes les 32 notes)
+      if ((i & 31) === 0) {
+        const cible = VOYELLES[s.v];
+        for (let j = 0; j < 3; j++) {
+          F[j] += (cible[j] * k - F[j]) * 0.18;
+          const w = 2 * Math.PI * Math.min(F[j], sr * 0.45) / sr, rr = Math.exp(-Math.PI * largeurs[j] / sr);
+          res[j].a1 = -2 * rr * Math.cos(w); res[j].a2 = rr * rr; res[j].b = (1 - rr * rr) * poids[j];
+        }
+      }
+      let y = 0;
+      for (const q of res) { const v = q.b * lp * voise - q.a1 * q.y1 - q.a2 * q.y2; q.y2 = q.y1; q.y1 = v; y += v; }
+      // la consonne : un souffle (s, f, h) ou un petit choc (p, t)
+      let c = 0;
+      if (u < tc) {
+        bruitLp += ((r() * 2 - 1) - bruitLp) * (cons === 's' ? 0.9 : 0.5);
+        const e = cons === 'p' || cons === 't' ? (u < tc * 0.25 ? 1 : 0.15) : Math.sin(Math.PI * u / tc);
+        c = (cons === 's' ? (r() * 2 - 1) - bruitLp : bruitLp) * e * (cons === 'h' ? 0.5 : 0.25);
+      }
+      x[n0 + i] += (y * 3.2 + c) * niveau;
+    }
+  }
+  // Le brouhaha lointain : `nVoix` voix qui parlent chacune à son rythme, étouffées par la distance (un passe-bas),
+  // un fond de rumeur, et la réverbération des façades. Rendu au quart de la fréquence du jeu (au loin, il n'y a plus
+  // d'aigus : quatre fois moins de calcul).
+  function fondFoule(sr, o = {}) {
+    const r = alea(o.graine || 3), duree = o.duree || 8, nVoix = o.nVoix || 20, x = new Float32Array(Math.ceil(duree * sr));
+    for (let v = 0; v < nVoix; v++) {
+      const type = r(), femme = type < 0.42, enfant = type > 0.92;
+      const t0 = entre(r, -1.5, 0.5), d = duree - t0 + 1;
+      const y = new Float32Array(x.length);
+      voix(y, sr, Math.max(0, t0), d, r, { f0: enfant ? entre(r, 260, 330) : femme ? entre(r, 180, 240) : entre(r, 95, 140), k: enfant ? 1.3 : femme ? 1.15 : 1, debit: entre(r, 4.2, 6), souffle: 0.1, niveau: entre(r, 0.4, 1) * (o.proche ? 0.11 : 0.08) });
+      filtrer(y, 'lowpass', entre(r, 1300, o.proche ? 2600 : 2000), 0.7, sr);
+      for (let i = 0; i < x.length; i++) x[i] += y[i];
+    }
+    // la rumeur : un bruit grave qui ondule doucement (les pas, les étoffes, les voix trop loin pour être des voix)
+    const b = new Float32Array(x.length); let ph = r() * 6;
+    for (let i = 0; i < b.length; i++) b[i] = r() * 2 - 1;
+    filtrer(b, 'bandpass', 420, 0.6, sr); filtrer(b, 'lowpass', 900, 0.7, sr);
+    for (let i = 0; i < x.length; i++) { ph += 2 * Math.PI * 0.13 / sr; x[i] += b[i] * 0.05 * (0.8 + 0.2 * Math.sin(ph)); }
+    return reverbe(x, sr, { taille: o.halle ? 0.8 : 0.6, amorti: 0.5, mix: o.halle ? 0.45 : 0.32, predelai: 0.02 });
+  }
+  // Un éclat tout près : 'rire', 'appel' (un marchand), 'enfant', 'causerie' (deux voisins), 'pieces' (une bourse)
+  function eclatFoule(sr, quoi, o = {}) {
+    const r = alea(o.graine || 9), x = new Float32Array(Math.ceil((quoi === 'causerie' ? 3.6 : 1.9) * sr)), homme = r() < 0.55;
+    if (quoi === 'rire') voix(x, sr, 0.05, entre(r, 0.8, 1.2), r, { f0: homme ? entre(r, 115, 145) : entre(r, 210, 250), k: homme ? 1 : 1.15, rire: true, souffle: 0.12, niveau: 0.32 });
+    else if (quoi === 'appel') voix(x, sr, 0.05, entre(r, 1.1, 1.5), r, { f0: entre(r, 130, 160), k: 1, debit: 4.2, appel: true, souffle: 0.06, niveau: 0.36 });
+    else if (quoi === 'enfant') voix(x, sr, 0.05, entre(r, 0.6, 0.9), r, { f0: entre(r, 290, 340), k: 1.3, debit: 6.5, souffle: 0.1, niveau: 0.26 });
+    else if (quoi === 'causerie') {
+      voix(x, sr, 0.05, 1.5, r, { f0: entre(r, 105, 130), k: 1, debit: 5.2, niveau: 0.22 });
+      voix(x, sr, 1.7, 1.7, r, { f0: entre(r, 195, 230), k: 1.15, debit: 5.6, niveau: 0.2 });
+    } else {   // (une poignée de pièces qu'on compte)
+      for (let k = 0, t = 0.05; k < 5; k++, t += entre(r, 0.07, 0.16)) { const f = entre(r, 2300, 3100); mode(x, sr, t, f, 0.16, 0.25); mode(x, sr, t, f * 1.52, 0.07, 0.15); mode(x, sr, t, f * 2.7, 0.04, 0.1); }
+    }
+    filtrer(x, 'highpass', 90, 0.7, sr);
+    return fondus(reverbe(x, sr, { taille: 0.5, amorti: 0.45, mix: 0.2 }), sr, 0.005, 0.15);
+  }
+  // Les éclats de chaque variante, et leur fréquence (en secondes entre deux)
+  const ECLATS_FOULE = {
+    A: { quoi: ['rire', 'appel', 'appel', 'enfant', 'pieces', 'rire', 'appel', 'causerie'], ecart: [2.2, 4.5], nVoix: 18, proche: false, halle: false, niveauFond: 1, niveauEclats: 0.75 },
+    B: { quoi: ['causerie', 'rire', 'causerie', 'appel', 'pieces', 'rire', 'enfant', 'causerie'], ecart: [1.6, 3.4], nVoix: 30, proche: true, halle: true, niveauFond: 1.15, niveauEclats: 0.65 },
+  };
+  // La foule entière, d'un seul tenant (pour la page d'écoute) : le fond, des éclats au hasard par-dessus
+  function foule(variante, sr, o = {}) {
+    const V = ECLATS_FOULE[variante], r = alea(o.graine || 17), duree = o.duree || 16;
+    const fond = surechantillonner(fondFoule(sr / 4, { duree, nVoix: V.nVoix, proche: V.proche, halle: V.halle, graine: (o.graine || 17) + 1 }), 4);
+    const x = new Float32Array(Math.ceil(duree * sr));
+    for (let i = 0; i < x.length; i++) x[i] = (fond[i] || 0) * V.niveauFond;
+    let t = entre(r, 0.6, 1.6), k = Math.floor(r() * V.quoi.length);
+    while (t < duree - 2) {
+      const e = eclatFoule(sr, V.quoi[k++ % V.quoi.length], { graine: Math.floor(r() * 1e6) }), g = V.niveauEclats * entre(r, 0.55, 1), n0 = Math.floor(t * sr);
+      for (let i = 0; i < e.length && n0 + i < x.length; i++) x[n0 + i] += e[i] * g;
+      t += entre(r, V.ecart[0], V.ecart[1]);
+    }
+    return niveler(fondus(x, sr, 0.8, 1), NIVEAUX.foule);
+  }
+
+  return { NIVEAUX, alea, mode, coefs, filtrer, choc, reverbe, niveler, surechantillonner, fondus, voix, marteauA, marteauB, clocheA, clocheB, fondFoule, eclatFoule, foule, ECLATS_FOULE };
+})();
+
+// --- Dans le jeu : les tampons, faits une fois, et les points d'accroche ---
+if (typeof Son !== 'undefined') Object.assign(Son, {
+  tamponsRefaits: {},
+  // Le tampon de ce son refait (fabriqué à la première demande, puis gardé)
+  tamponRefait(cle, fabriquer) {
+    if (this.tamponsRefaits[cle]) return this.tamponsRefaits[cle];
+    const sr = this.ctx.sampleRate, x = fabriquer(sr), b = this.ctx.createBuffer(1, x.length, sr);
+    b.getChannelData(0).set(x);
+    return (this.tamponsRefaits[cle] = b);
+  },
+  lireTampon(buf, t, bus, volume = 1) {
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const g = this.ctx.createGain(); g.gain.value = volume;
+    src.connect(g); g.connect(bus); src.start(t);
+    src.onended = () => { try { src.disconnect(); g.disconnect(); } catch (e) { /* (déjà débranché) */ } };
+    return { src, g };
+  },
+  // (en attente du choix du joueur) La foule du marché en fond, sans boucle qu'on entende : trois fonds de 8 s,
+  // fabriqués une fois, qui s'enchaînent en fondu, chacun repris à un endroit tiré au sort, et des éclats proches
+  // (un rire, un marchand, un enfant...) lâchés au hasard par-dessus. allumer = false : elle s'éteint en fondu.
+  fouleMarche(allumer, variante = SONS_A_CHOISIR.foule) {
+    if (!this.pret) return;
+    if (!allumer) {
+      clearTimeout(this.fouleMinuterie); clearTimeout(this.fouleEclats);
+      if (this.fouleBus) { const b = this.fouleBus, t = this.ctx.currentTime; b.gain.cancelScheduledValues(t); b.gain.setValueAtTime(b.gain.value, t); b.gain.linearRampToValueAtTime(0, t + 1.2); setTimeout(() => b.disconnect(), 1500); }
+      this.fouleBus = null;
+      return;
+    }
+    if (this.fouleBus) return;
+    const V = FabriqueSons.ECLATS_FOULE[variante] || FabriqueSons.ECLATS_FOULE.A, ctx = this.ctx, bus = this.fouleBus = ctx.createGain();
+    bus.gain.setValueAtTime(0, ctx.currentTime); bus.gain.linearRampToValueAtTime(1, ctx.currentTime + 2.5); bus.connect(this.busSons);
+    const fond = i => this.tamponRefait(`foule${variante}fond${i}`, sr => {
+      const y = FabriqueSons.fondFoule(sr / 4, { duree: 8, nVoix: V.nVoix, proche: V.proche, halle: V.halle, graine: 101 + i * 13 });
+      return FabriqueSons.surechantillonner(FabriqueSons.niveler(y, FabriqueSons.NIVEAUX.fondFoule), 4);
+    });
+    let dernier = -1;
+    const enchainer = () => {
+      if (this.fouleBus !== bus) return;
+      let i = Math.floor(Math.random() * 3); if (i === dernier) i = (i + 1) % 3; dernier = i;
+      const buf = fond(i), debut = Math.random() * (buf.duration - 5), d = Math.min(buf.duration - debut, 4 + Math.random() * 2.5), t = ctx.currentTime + 0.05;
+      const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = 0.97 + Math.random() * 0.06;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(V.niveauFond, t + 1.5); g.gain.setValueAtTime(V.niveauFond, t + d - 1.5); g.gain.linearRampToValueAtTime(0, t + d);
+      src.connect(g); g.connect(bus); src.start(t, debut, d + 0.1); src.onended = () => { try { src.disconnect(); g.disconnect(); } catch (e) { /* (rien) */ } };
+      this.fouleMinuterie = setTimeout(enchainer, (d - 1.5) * 1000);   // (le suivant entre pendant que celui-ci s'éteint)
+    };
+    const eclat = () => {
+      if (this.fouleBus !== bus) return;
+      if (ctx.state === 'running') {
+        const k = Math.floor(Math.random() * 8), quoi = V.quoi[k];
+        const buf = this.tamponRefait(`foule${variante}eclat${k}`, sr => FabriqueSons.niveler(FabriqueSons.eclatFoule(sr, quoi, { graine: 500 + k * 7 }), FabriqueSons.NIVEAUX.eclatFoule));
+        this.lireTampon(buf, ctx.currentTime + 0.02, bus, V.niveauEclats * (0.5 + Math.random() * 0.5));
+      }
+      this.fouleEclats = setTimeout(eclat, (V.ecart[0] + Math.random() * (V.ecart[1] - V.ecart[0])) * 1000);
+    };
+    enchainer();
+    this.fouleEclats = setTimeout(eclat, 1500 + Math.random() * 2000);
+  },
+});
+
+// Les six sons, au format de SONS (pour Son.jouer). o.matiere pour le marteau ('bois' ou 'metal')
+if (typeof SONS !== 'undefined') {
+  for (const v of ['A', 'B']) {
+    SONS['marteau' + v] = function (t, bus, o = {}) { const m = o.matiere === 'metal' ? 'metal' : 'bois', d = o.duree || 2.4; this.lireTampon(this.tamponRefait(`marteau${v}${m}${d}`, sr => FabriqueSons['marteau' + v](sr, { matiere: m, duree: d })), t, bus); };
+    SONS['cloche' + v] = function (t, bus, o = {}) { this.lireTampon(this.tamponRefait('cloche' + v + (o.coups || ''), sr => FabriqueSons['cloche' + v](sr, { coups: o.coups })), t, bus); };
+    SONS['foule' + v] = function (t, bus, o = {}) { const d = o.duree || 6; this.lireTampon(this.tamponRefait('foule' + v + d, sr => FabriqueSons.foule(v, sr, { duree: d })), t, bus); };
+  }
+}
+
+// Le point d'accroche des trois sons refaits : renvoie vrai si le nouveau son a joué (le joueur a choisi et le
+// drapeau est levé), faux sinon (on garde alors l'ancien son). quoi : 'marteau' (o.matiere), 'cloche', 'foule'
+// (o.scene : la foule de fond de cette scène, éteinte quand elle s'arrête ou passe en pause)
+function sonAChoisir(quoi, o = {}) {
+  if (!SONS_A_CHOISIR.actif || typeof Son === 'undefined' || !Son.pret) return false;
+  const v = SONS_A_CHOISIR[quoi] === 'B' ? 'B' : 'A';
+  if (quoi === 'foule' && o.scene) {
+    Son.fouleMarche(true, v);
+    const eteindre = () => Son.fouleMarche(false);
+    o.scene.events.once('shutdown', eteindre); o.scene.events.once('pause', eteindre); o.scene.events.once('sleep', eteindre);
+    o.scene.events.once('resume', () => sonAChoisir('foule', o));
+    return true;
+  }
+  Son.jouer(quoi + v, o);
+  return true;
+}
+
+if (typeof module !== 'undefined' && module.exports) module.exports = { FabriqueSons, SONS_A_CHOISIR };
+
+</script>
+<script>
+(function () {
+  'use strict';
+  // (les propositions refusées de la v1.61, pour comparer : elles ne sont plus dans le jeu)
+  const ANCIENS = {
+    clocheMarche(t, bus) {
+      [0, 0.9, 1.8].forEach((dt, i) => SONS.grandeCloche.call(this, t + dt, bus, { freq: 329.63, force: i === 2 ? 0.7 : 0.55, duree: i === 2 ? 3.5 : 2.2 }));
+    },
+    // La foule du marché : un murmure, des voix proches qui bavardent (des syllabes au hasard), un rire (o.duree, 4 s)
+    brouhaha(t, bus, o = {}) {
+      const ctx = this.ctx, d = o.duree || 4;
+      const niv = ctx.createGain(); niv.gain.value = 3.5; niv.connect(bus); bus = niv;
+      this.bruitGlisse(t, d, bus, { de: 600, par: 800, a: 650, q: 0.8, volume: 0.05, attaque: 0.6, relache: 0.8 });
+      for (let v = 0; v < 7; v++) {
+        const base = 120 + Math.random() * 160;
+        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 600 + Math.random() * 700; f.Q.value = 1.5; f.connect(bus);
+        let tt = t + Math.random() * 0.5;
+        while (tt < t + d - 0.3) {
+          const syl = 0.07 + Math.random() * 0.14;
+          this.tonGlisse(tt, syl, f, { forme: 'sawtooth', de: base * (0.9 + Math.random() * 0.25), a: base * (0.85 + Math.random() * 0.2), volume: 0.035 * Math.min(1, (tt - t) / 0.5 + 0.2, (t + d - tt) / 0.6), attaque: 0.015 });
+          tt += syl + (Math.random() < 0.15 ? 0.3 + Math.random() * 0.4 : 0.02 + Math.random() * 0.08);
+        }
+      }
+      const tr = t + d * 0.45;
+      for (let k = 0; k < 4; k++) this.tonGlisse(tr + k * 0.13, 0.09, bus, { forme: 'triangle', de: 330 - k * 15, a: 300 - k * 15, volume: 0.05, attaque: 0.01, filtre: 1600 });
+    },
+    // Le marteau du charpentier : deux petits coups pour planter le clou, un grand pour l'enfoncer (deux fois)
+    charpentier(t, bus) {
+      const niv = this.ctx.createGain(); niv.gain.value = 0.98; niv.connect(bus); bus = niv;
+      const coup = (tc, fort) => {
+        this.tonGlisse(tc, 0.04, bus, { forme: 'triangle', de: 2600, a: 2400, volume: 0.06 * fort, attaque: 0.001 });
+        this.tonGlisse(tc, 0.11, bus, { de: 320 * (fort > 1 ? 0.8 : 1), a: 170, volume: 0.3 * fort, attaque: 0.002 });
+        this.bruitGlisse(tc, 0.05, bus, { de: 1100, a: 700, q: 2.5, volume: 0.2 * fort, attaque: 0.001 });
+      };
+      for (const [dt, f] of [[0, 0.6], [0.3, 0.6], [0.62, 1.2], [1.25, 0.6], [1.55, 1.3]]) coup(t + dt, f);
+    },
+    // L'aiguille et le cuir : l'aiguille qui perce (un petit « tchk »), puis le fil qu'on tire ; trois points
+  };
+  SONS.ancienCharpentier = ANCIENS.charpentier; SONS.ancienBrouhaha = ANCIENS.brouhaha; SONS.ancienClocheMarche = ANCIENS.clocheMarche;
+
+  const echapper = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/'/g, '&#39;');
+  const bouton = (attrs, texte) => `<button type="button" class="lire" ${attrs}>${texte}</button>`;
+  const boucle = nom => { const T = THEMES[nom]; return `(boucle de ${Math.round(T.phrase * T.temps * 60 / T.tempo)} s)`; };
+
+  // --- Les musiques ---
+  const CONTREES = [['Foret', 'Forêt'], ['Montagne', 'Montagne'], ['Marais', 'Marais']];
+  const MOMENTS = [
+    ['aventure', '« En route »', 'Il marche d\'une épreuve à l\'autre : dès qu\'il raconte, puis entre deux épreuves calmes (la rivière, le froid, la route...).'],
+    ['danger', '« Le danger approche »', 'Une bête ou des brigands : le loup, les bandits, les pillards, l\'araignée, le sanglier, le yéti, le monstre, le mort-vivant, les esprits, l\'avalanche... (le noir, la grotte et les maléfices gardent la musique de la peur).'],
+    ['triomphe', '« Victoire ! »', 'Il revient au comptoir avec le butin, et la pluie de pièces tombe dans ta besace.'],
+  ];
+  document.getElementById('musiques').innerHTML = MOMENTS.map(([cle, titre, ou]) => `<section class="carte"><h3>${titre}</h3><p class="ou">Où : ${ou}</p><div class="variantes">${CONTREES.map(([c, nom]) => `<div class="variante">${bouton(`data-musique="${cle + c}"`, '▶ ' + nom)}<p><span class="duree">${boucle(cle + c)}</span></p></div>`).join('')}</div></section>`).join('');
+
+  // --- Les morts ---
+  const nomsZones = (filtre) => Object.keys(ZONES).filter(z => mortDuLieu(z) === filtre).map(z => ZONES[z].nom).join(', ');
+  const MORTS = [
+    ['mortChoeur', 'A. Le chœur des disparus', 'Une cloche grave, puis un chœur qui chante quatre accords, et une voix seule qui descend jusqu\'au silence.', 'Dans les forêts et les lieux elfiques ou sacrés : on chante pour lui.'],
+    ['mortCordes', 'B. Les cordes qui pleurent', 'Sous les cordes, la basse descend marche après marche (la, sol, fa, mi), une timbale sourde, et le dernier accord reste longtemps.', 'Dans les plaines, les villages et sur la côte : les siens le pleurent.'],
+    ['mortGlas', 'C. Le grand glas', 'Trois coups d\'une grande cloche (ses harmoniques, son battement), sur un bourdon et un chœur lointain.', 'Dans les montagnes, les mines, les déserts, les marais, les ruines et les terres maudites : une cloche lointaine, là où personne ne viendra le chercher.'],
+  ];
+  document.getElementById('morts').innerHTML = MORTS.map(([nom, titre, quoi, ou]) => `<div class="carte ligne">${bouton(`data-son="${nom}" data-duree="${DUREE_MORT[nom] + 0.5}"`, '▶ Écouter')}<div class="texte"><h3>${titre}</h3><p>${quoi}</p><p class="ou">${ou} (${echapper(nomsZones(nom))})</p></div></div>`).join('');
+
+  // --- Les bruitages ---
+  const BRUITAGES = [
+    ['pasDehors', { sol: 'herbe' }, 2, 'Pas dans l\'herbe', 'Les pas du voyageur dans les récits (la Comté, les forêts, les plaines, les terres désolées), et ceux de JeuneGoy sur la grand-place.'],
+    ['pasDehors', { sol: 'neige' }, 2.2, 'Pas dans la neige', 'Dans les Pics Gelés et au Col des Hurlements ; sur la grand-place et dans la rue au Mois du Givre.'],
+    ['pasDehors', { sol: 'boue' }, 2.5, 'Pas dans la vase', 'Dans les Marécages de Brume-Noire et le Bourbier des Gobelins.'],
+    ['pasDehors', { sol: 'paves' }, 2, 'Pas sur les pavés', 'Quand JeuneGoy marche dans la rue ; dans les récits des cités, des ruines et des châteaux.'],
+    ['porteLourde', {}, 2.4, 'La lourde porte', 'En entrant à la banque de Thorgrim, à la forge et chez les Mages-Charpentiers.'],
+    ['degainer', {}, 1.8, 'L\'épée tirée du fourreau', 'Dans les récits, quand le voyageur sort sa lame (épée, dague, rapière, khopesh), juste avant le « TCHAK ! ».'],
+    ['fleche', {}, 1.1, 'La flèche', 'Le « FIOUU ! » des flèches dans les récits, et chaque tir au tir à l\'arc du Solstice.'],
+    ['feuDeCamp', { duree: 4 }, 4.4, 'Le feu de camp', 'Le bivouac des récits : le feu qui s\'allume pour la ration, la nuit au coin du feu, et quand il s\'endort près des braises.'],
+    ['torche', {}, 1.5, 'La torche qui s\'allume', 'Le « FWOUF ! » de la torche, dans la nuit et dans les grottes.'],
+    ['ventMontagne', { duree: 5 }, 5.3, 'Le vent des cols', 'De temps en temps, dans les récits des Pics Gelés et du Col des Hurlements, pendant que la neige tombe.'],
+    ['corbeau', {}, 1.1, 'Le corbeau', 'Le corbeau de la Main Noire : quand il part du comptoir avec le paquet, et quand il le lâche aux pieds du voyageur.'],
+    ['moutons', {}, 2.8, 'Les moutons', 'Dans les récits des Collines de la Comté : quand un mouton du pré bêle (la brebis ou l\'agneau, un seul à la fois).'],
+    ['crapauds', {}, 3, 'Les crapauds du marais', 'De temps en temps, dans les récits du marais et du bourbier, sous la pluie.'],
+    ['couture', {}, 2.1, 'L\'aiguille et le cuir', 'Quand on répare un objet de cuir au comptoir (cape, corde, gourde, fronde) et un vêtement à l\'atelier.'],
+    ['besace', { montant: 40 }, 2, 'Les pièces dans la besace', 'La pluie de pièces du butin, au retour d\'un voyageur, quand elles tombent dans ta besace.'],
+  ];
+  document.getElementById('bruitages').innerHTML = BRUITAGES.map(([nom, o, d, titre, ou]) => `<div class="carte ligne">${bouton(`data-son="${nom}" data-options='${JSON.stringify(o)}' data-duree="${d}"`, '▶ Écouter')}<div class="texte"><h3>${titre}</h3><p class="ou">${ou} <code>${nom}${Object.keys(o).length ? ' ' + echapper(JSON.stringify(o)) : ''}</code></p></div></div>`).join('');
+
+  // --- Les boutons ---
+  const boutons = [...document.querySelectorAll('button.lire')];
+  const etiquettes = new Map(boutons.map(b => [b, b.textContent]));
+  const minuteurs = new Map();
+  const remettre = b => { b.classList.remove('joue'); b.textContent = etiquettes.get(b); };
+  const remettreMusiques = () => boutons.filter(b => b.dataset.musique || b.dataset.fond).forEach(remettre);
+  const demarrer = () => { Son.demarrer(); Son.reprendre(); appliquerVolume(); return Son.pret; };
+
+  boutons.forEach(b => b.addEventListener('click', () => {
+    if (!demarrer()) { b.textContent = 'Pas de son ici'; return; }
+    if (b.dataset.musique) {
+      const nom = b.dataset.musique, etait = Son.theme === nom;
+      remettreMusiques(); Son.fouleMarche(false);
+      if (etait) { Son.arreter(); return; }
+      Son.ambiance(nom);
+      b.classList.add('joue'); b.textContent = '■ Arrêter';
+    } else if (b.dataset.fond) {
+      const etait = b.classList.contains('joue');
+      remettreMusiques(); Son.arreter(); Son.fouleMarche(false);
+      if (etait) return;
+      setTimeout(() => { Son.fouleMarche(true, b.dataset.fond); b.classList.add('joue'); b.textContent = '■ Arrêter'; }, Son.fouleBus ? 1300 : 0);
+      b.textContent = '♪ …';
+    } else {
+      // (la mort du voyageur joue seule : on coupe la musique, comme dans le jeu)
+      if (/^mort/.test(b.dataset.son)) { Son.arreter(); Son.fouleMarche(false); remettreMusiques(); }
+      let options = {};
+      try { options = JSON.parse(b.dataset.options || '{}'); } catch (e) { /* (pas d'options) */ }
+      b.textContent = '♪ …'; b.classList.add('joue');
+      // (laisser le bouton se redessiner : un son refait se fabrique la première fois)
+      setTimeout(() => Son.jouer(b.dataset.son, options), 30);
+      clearTimeout(minuteurs.get(b));
+      minuteurs.set(b, setTimeout(() => remettre(b), (+b.dataset.duree || 2) * 1000 + 300));
+    }
+  }));
+
+  const curseur = document.getElementById('volume'), affichage = document.getElementById('volumeValeur');
+  function appliquerVolume() { Son.volumes.general = curseur.value / 100; Son.volumes.musique = 0.55; Son.volumes.sons = 0.8; Son.coupe = { general: false, musique: false, sons: false, voix: false, interface: false }; if (Son.pret) Son.appliquerVolumes(); }
+  curseur.addEventListener('input', () => { affichage.textContent = `${curseur.value} %`; appliquerVolume(); });
+
+  // Tout arrêter : on ferme le son et on en rouvre un neuf au prochain clic (les sons déjà fabriqués restent prêts)
+  document.getElementById('arreter').addEventListener('click', () => {
+    if (!Son.pret) return;
+    Son.fouleMarche(false); Son.arreter();
+    const ctx = Son.ctx; Son.pret = false; Son.ctx = null; Son.debloque = false; Son.themeVoulu = null; Son.natureVoulue = false;
+    try { ctx.close(); } catch (e) { /* (rien) */ }
+    boutons.forEach(b => { clearTimeout(minuteurs.get(b)); remettre(b); });
+  });
+
+  // (pour les tests)
+  window.Ecoute = { Son, THEMES, SONS, FabriqueSons, SONS_A_CHOISIR };
+})();
+
+</script>
+</body>
+</html>

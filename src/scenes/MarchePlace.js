@@ -50,6 +50,8 @@ Object.assign(MarcheScene.prototype, {
 
   construirePlace() {
     const G = this.G, P = PLACE_MARCHE;
+    // (v1.64) le brouhaha de la place, en fond (en attente du choix du joueur : voir sonAChoisir, src/sonsRefaits.js)
+    if (typeof sonAChoisir === 'function') sonAChoisir('foule', { scene: this });
     // l'ancienne vue (la rue en demi-cercle) s'efface : tout se passe sur la place
     for (const o of [this.fondVue, this.fondVue && this.fondVue.paysage, this.solVue, this.monde, this.vue]) if (o && o.setVisible) o.setVisible(false);
     if (this.bulleCrieur) { this.bulleCrieur.destroy(); this.bulleCrieur = null; }
@@ -748,6 +750,9 @@ Object.assign(MarcheScene.prototype, {
       if (vue !== this.vueHeros) this.vueHeros = vue;
       this.pasHeros += dt;
       const f = Math.floor(this.pasHeros / (this.courir ? 90 : 125)) % 4;
+      // (v1.64) ses pas sur la place : l'herbe et la terre battue, la neige au Givre (un pas à chaque talon posé)
+      if ((f === 1 || f === 3) && f !== this.dernierPasHeros && typeof jouerPas === 'function') jouerPas(typeof saisonDe === 'function' && saisonDe(this.G) === 'givre' ? 'neige' : 'herbe', 0.5);
+      this.dernierPasHeros = f;
       this.poserHeros(f === 1 ? 1 : f === 3 ? 2 : 0);
       // (v1.49) il n'avance plus vers son but depuis une demi-seconde : il s'arrête (jamais de marche sur place)
       if (this.cible) {

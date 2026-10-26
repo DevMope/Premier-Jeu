@@ -105,7 +105,7 @@ class ForgeScene extends Phaser.Scene {
       // elle frappe : le corps se tasse à chaque coup, des étincelles jaillissent de l'enclume
       this.time.addEvent({ delay: 900, loop: true, callback: () => {
         this.tweens.add({ targets: baba, scaleY: baba.scaleY * 0.96, duration: 90, yoyo: true });
-        Son.jouer('marteau');
+        if (!(typeof sonAChoisir === 'function' && sonAChoisir('marteau', { matiere: 'metal', duree: 0.5 }))) Son.jouer('marteau');   // (v1.64 : point d'accroche du marteau refait)
         for (let k = 0; k < 6; k++) { const e = this.add.circle(322, 432, 2, 0xffc060).setBlendMode(Phaser.BlendModes.ADD); this.tweens.add({ targets: e, x: 322 + Phaser.Math.Between(-50, 50), y: 432 - Phaser.Math.Between(10, 60), alpha: 0, duration: 400, onComplete: () => e.destroy() }); }
       } });
     }
@@ -180,7 +180,7 @@ class ForgeScene extends Phaser.Scene {
       c.add(this.add.text(x + 22, yy + 12, rec, style(9, peut ? '#6b4a2a' : '#a89a7a')));
       const zone = this.add.rectangle(x + 80, yy + 11, 164, 24, 0xffffff, 0).setInteractive({ useHandCursor: true });
       zone.on('pointerover', () => zone.setFillStyle(0xffffff, 0.25)); zone.on('pointerout', () => zone.setFillStyle(0xffffff, 0));
-      zone.on('pointerdown', () => { const e = commanderArme(G, id); if (e) return this.message(e, '#a03030'); Son.jouer('marteau'); this.panneau(); });
+      zone.on('pointerdown', () => { const e = commanderArme(G, id); if (e) return this.message(e, '#a03030'); if (!(typeof sonAChoisir === 'function' && sonAChoisir('marteau', { matiere: 'metal' }))) Son.jouer('marteau'); this.panneau(); });
       c.add(zone);
     });
     texte(`Fer ${G.materiaux.fer || 0} · cuir ${G.materiaux.cuir || 0} · bois ${G.materiaux.bois || 0} · fil d'or ${G.materiaux.filOr || 0}\n(lots en gros chez Thorgal)`, X0, y0 + Math.ceil(ids.length / 2) * 25 + 2, 10, '#6b4a2a');
