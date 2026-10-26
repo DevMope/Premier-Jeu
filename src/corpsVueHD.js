@@ -545,7 +545,9 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const gobelin = costume === 'gobelin' || race === 'gobelin';
   const leves = pose === 'leves' || pose === 'epaules', grimpe = pose === 'grimpe1' || pose === 'grimpe2';
   const joueur = costume === 'joueur';
-  const porte = id => joueur && (options.tenue || []).includes(id);
+  // (planche 85 v2) le joueur en pyjama : options.pyjama = PYJAMAS[id] (pyjamasHD.js) ; ni tablier, ni ceinture, ni bottes
+  const pyj = joueur && options.pyjama && typeof pyjamaApres === 'function' ? options.pyjama : null;
+  const porte = id => joueur && !pyj && (options.tenue || []).includes(id);
   // (v1.61) Un voyageur (ou un noble) porte en pied la tenue de son buste (torseHD, portraitsHD.js) : les mêmes pièces,
   // tirées de son gène ; le niveau n'y ajoute que des accessoires (sacoche, brassards, épaulières, cape, épée, dorures)
   const voyageurBuste = !costume || costume === 'noble';
@@ -630,6 +632,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   }
 
   const cy = Math.round(coiffe + 1 + P.ry + BOB + MARGE_H + margeArmeH);   // le centre de la tête (entier : les détails se posent pixel par pixel)
+  if (pyj) pyjamaRampes(t, pyj);   // (planche 85 v2 : les étoffes du pyjama)
   const yT = Math.round(cy + P.ry - 1);       // le haut du torse
   const yB = Math.round(yT + P.torse);        // la taille
   const sol = H - 1;
@@ -637,7 +640,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const ep = P.ep;                         // la demi-largeur d'épaules
   const prof = ep * 0.55;                  // la demi-épaisseur du torse
   const longue = race === 'magicienne' || costume === 'mainNoire' || costume === 'sage' || costume === 'gardien' || costume === 'duc';    // la robe descend jusqu'aux pieds
-  const manteau = race === 'elfe' || costume === 'colporteur' || costume === 'mentor' || costume === 'pirate' || costume === 'givrin';   // la tunique descend à mi-cuisse
+  const manteau = !pyj && race === 'elfe' || costume === 'colporteur' || costume === 'mentor' || costume === 'pirate' || costume === 'givrin';   // la tunique descend à mi-cuisse
   const capee = (tenue >= 3 && !joueur) || ['mentor', 'colporteur', 'mendiant', 'noble', 'passeur', 'renegat', 'mainNoire', 'pirate', 'sage', 'gardien'].includes(costume) || porte('cape') || porte('capeUnion') || !!T.cape
     || (race === 'elfe' && voyageurBuste);   // (v1.61) l'elfe a toujours sa cape drapée, comme en buste
   const aventurier = !costume || ['colporteur', 'mentor', 'mendiant', 'champion'].includes(costume);
@@ -655,7 +658,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   // --- Les membres ---
   const forgeron = costume === 'forgeron' || costume === 'barbier';   // (v0.82) Aldo et Baba : tablier de cuir, manches retroussées (v1.48 : le barbier, tablier de lin blanc)
   // (v1.61) les manches du buste (brasBuste) : de mailles pour le nain, de lin pour le hobbit (sa chemise), d'étoffe pour le garde
-  const matBras = T.os ? 'peau' : (race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && costume !== 'givrin' && !forgeron) || costume === 'gardeRoyal' ? 'metal'
+  const matBras = pyj ? 'habit' : T.os ? 'peau' : (race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && costume !== 'givrin' && !forgeron) || costume === 'gardeRoyal' ? 'metal'
     : race === 'hobbit' && (voyageurBuste || costume === 'garde') ? 'lin' : 'habit';
   const bras = (cote, devant) => {
     t.partie = cote === pres ? 'brasP' : 'brasL';
@@ -735,6 +738,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     cylindre(t, matBras, E, C, r, { decalage: dec });
     // L'avant-bras : manche retroussée (novice), manche plus claire (aguerri), brassard de cuir (vétéran et plus)
     const matAvant = costume === 'sage' ? 'argent' : forgeron ? 'peau' : costume === 'serpent' ? 'gilet' : matBras === 'metal' ? 'metal' : tenue >= 2 && aventurier && race !== 'hobbit' && race !== 'elfe' ? 'cuir' : (tenue === 0 || race === 'hobbit') && aventurier ? 'peau' : matBras;
+    if (options.avantBras) t.partie = cote === pres ? 'avantP' : 'avantL';   // (planche 85 v2 : l'avant-bras à part, posé sur la couverture)
     cylindre(t, matAvant, C, M, r - 0.3 * k, { decalage: dec + (matAvant === matBras ? 0.4 : 0.15) });
     if (tenue >= 2 && aventurier && race !== 'hobbit' && race !== 'elfe') for (let j = 0; j < 2; j++) t.forme('cuir', (x, y) => (Math.abs(y - (C[1] + (M[1] - C[1]) * (0.35 + j * 0.3))) < 0.6 * k && Math.abs(x + 0.5 - (C[0] + (M[0] - C[0]) * (0.35 + j * 0.3))) < r ? [0, 0, 1] : null), { decalage: -0.9, bord: false, ombre: false }); // les lanières
     if (costume === 'sage') for (let j = 1; j < 4; j++) { const px = C[0] + (M[0] - C[0]) * j / 4, py = C[1] + (M[1] - C[1]) * j / 4; t.poser(Math.round(px), Math.round(py), 'cristal', 5); t.poser(Math.round(px) + 1, Math.round(py) + 1, 'cristal', 3); }   // (les runes qui luisent)
@@ -747,6 +751,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     t.forme(matMain, ellipsoide(M[0] + cote * c * 1.6 * k * gm + s * 1.2 * k, M[1] + 0.6 * k, 0.9 * k * gm, 1.2 * k * gm), { decalage: dec + 0.3, ombre: false });
     if (T.griffes) for (const d of [-1, 0, 1]) for (let j = 0; j < Math.round(0.9 * k * gm); j++) t.poser(Math.round(M[0] + d * 1.1 * k * gm), Math.round(M[1] + 3.2 * k * gm) + j, 'griffe', j ? 2 : 4);
     if (devant) mainDevant = { M, C, r, matMain, matAvant, gm, cote };
+    (t.mainsCote = t.mainsCote || {})[cote === pres ? 'P' : 'L'] = M;   // (planche 85 v2 : où est chaque main, pour y tenir un pyjama plié)
     if (options.bras) (t.mainsBras = t.mainsBras || {})[cote === pres ? 'pres' : 'loin'] = { M, C };   // (v1.62, options.bras)
     t.partie = 'corps';
   };
@@ -802,6 +807,8 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
       cylindre(t, matJambe, G, Pd, r - 0.2 * k, { decalage: dec + 0.2 });
       t.forme(T.pattes, ellipsoide(X(pied[0], pied[1] + 2 * k), solPied - 1.6 * k, (3.8 + Math.abs(s) * 1.6) * k * (T.grandesMains ? 1.2 : 1), 2.1 * k), { decalage: dec });
       if (T.griffes) for (const d of (Math.abs(s) > 0.5 ? [0, 1, 2] : [-1, 0, 1])) for (let e = 0; e < Math.max(1, Math.round(0.6 * k)); e++) t.poser(Math.round(X(pied[0] + (Math.abs(s) > 0.5 ? 0 : d * 1.3 * k), pied[1] + (Math.abs(s) > 0.5 ? (3.5 + d * 0.8) * k : 4 * k))) + e, Math.round(solPied - 1), 'griffe', 3);
+    } else if (pyj) {
+      pyjamaPied({ t, k, G, Pd, r, dec, pied, solPied, s, c, X, race, boutJ, pyj });   // (planche 85 v2 : chevilles, pieds nus ou chaussons)
     } else if (race === 'hobbit' || costume === 'mendiant') {
       cylindre(t, 'bas', G, Pd, r - 0.4 * k, { decalage: dec + 0.2, motif: costume === 'mendiant' ? (x, y) => (hachage(Math.floor(x / k), Math.floor(y / k), 77) > 0.85 ? -1.2 : 0) : null });
       // Les grands pieds nus et poilus
@@ -920,10 +927,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
 
   // --- 2. Le torse (un cylindre un peu aplati, les épaules rondes), la ceinture ---
   const torse = (x, y) => {
-    const bas = longue ? sol : manteau ? yB + Math.round((sol - yB) * 0.55) : yB + 2 * k;
+    const bas = pyj && pyj.robe ? yB + Math.round((sol - yB) * pyj.robe) : longue ? sol : manteau ? yB + Math.round((sol - yB) * 0.55) : yB + 2 * k;
     if (y < yT || y > bas) return null;
     let ru = y < yT + 4 * k ? ep - 4 * k + (y - yT) * 1.1 : ep + 0.2 * k - Math.max(0, y - yB + 6 * k) * 0.12;
-    if (y > yB) ru = ep - 1 * k + (y - yB) * (longue ? 0.28 : 0.18);
+    if (y > yB) ru = ep - 1 * k + (y - yB) * (longue ? 0.28 : pyj && pyj.robe ? 0.21 : 0.18);
     if (race === 'nain' || race === 'hobbit') ru += Math.sin(Math.min(1, (y - yT) / P.torse) * Math.PI) * 1.4 * k;
     const rz = prof + (race === 'nain' || race === 'hobbit' ? 1 * k : 0) + (y > yB ? (y - yB) * 0.15 : 0);
     const w = section(ru, rz);
@@ -931,9 +938,10 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     if (Math.abs(nx) > 1) return null;
     return [nx * 0.85, -0.15, Math.sqrt(1 - nx * nx * 0.72)];
   };
-  t.forme(race === 'hobbit' ? 'lin' : 'habit', torse, { decalage: -0.1, motif: (x, y) => (!dos && Math.abs(x + 0.5 - X(0, prof)) < 0.6 * k && y > yT + 3 * k ? -0.6 : race === 'magicienne' && (Math.floor(x / k) * 7 + Math.floor(y / k) * 3) % 23 === 0 ? 0.9 : 0) });
-  if (race === 'hobbit') t.forme('habit', (x, y) => { const n = torse(x, y); return n && y >= yT + 2 * k && Math.abs(x + 0.5 - X(0, prof * 0.9)) > 2 * k + Math.max(0, 6 * k - (y - yT)) * 0.5 ? n : null; }, { decalage: -0.2 });
-  if ((race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && costume !== 'givrin' && !forgeron) || costume === 'garde' || costume === 'gardeRoyal') t.forme('metal', (x, y) => { const n = torse(x, y); return n && y >= yT + 1 * k && y <= yB - 2 * k ? n : null; }, { motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.3 : -0.3) });
+  t.forme(race === 'hobbit' && !pyj ? 'lin' : 'habit', torse, { decalage: -0.1, motif: (x, y) => (!dos && Math.abs(x + 0.5 - X(0, prof)) < 0.6 * k && y > yT + 3 * k ? -0.6 : race === 'magicienne' && (Math.floor(x / k) * 7 + Math.floor(y / k) * 3) % 23 === 0 ? 0.9 : 0) });
+  if (pyj && pyj.robe) pyjamaJupeAuxJambes(t, yB + 1 * k);   // (le bas de la chemise suit les cuisses quand il s'assoit dans son lit)
+  if (race === 'hobbit' && !pyj) t.forme('habit', (x, y) => { const n = torse(x, y); return n && y >= yT + 2 * k && Math.abs(x + 0.5 - X(0, prof * 0.9)) > 2 * k + Math.max(0, 6 * k - (y - yT)) * 0.5 ? n : null; }, { decalage: -0.2 });
+  if (!pyj && ((race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && costume !== 'givrin' && !forgeron) || costume === 'garde' || costume === 'gardeRoyal')) t.forme('metal', (x, y) => { const n = torse(x, y); return n && y >= yT + 1 * k && y <= yB - 2 * k ? n : null; }, { motif: (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.3 : -0.3) });
   // (v1.61) Les pièces du buste. La brigandine (le voyageur en armure) : du cuir riveté en quinconce sur la tunique, qui
   // dépasse un peu sous l'ourlet, et le col de mailles
   const maille = (x, y) => ((Math.floor(x / k) + Math.floor(y / k)) % 2 ? 0.5 : -0.5);
@@ -1001,7 +1009,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     for (const cote of [-1, 1]) for (let y = yB - 3 * k; y <= yB + 1 * k; y++) for (let x = Math.round(X(cote * 5 * k, prof)) - 2 * k; x <= Math.round(X(cote * 5 * k, prof)) + 1 * k; x++) if (t.mat(x, y) === 'habit') t.poser(x, y, 'cuir', y < yB - 3 * k + k ? 4 : 2 + ((Math.floor(x / k) + Math.floor(y / k)) % 2));
   }
   // Le tablier de marchand du joueur : la bavette, la poche et son crayon, les bretelles, le cordon noué
-  if ((joueur || forgeron) && !dos) {
+  if ((joueur || forgeron) && !dos && !pyj) {
     const matTab = costume === 'forgeron' ? 'cuir' : 'lin';   // (le tablier de cuir épais du forgeron)
     const tab = (x, y) => { if (y < yT + 7 * k || y > yB + 6 * k) return null; const cxx = X(0, prof * 0.7); const demi = section((6.5 + (y - yT - 7 * k) / k * 0.12) * k, prof * 0.95) * 0.95; const nx = (x + 0.5 - cxx) / demi; return Math.abs(nx) > 1 || !torse(x, y) && y <= yB + 2 * k ? null : [nx * 0.7, 0, 0.9]; };
     t.forme(matTab, tab, { decalage: -0.1, motif: (x, y) => (y === yT + 7 * k || y === yB + 5 * k ? -0.8 : 0) });
@@ -1192,15 +1200,15 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
     }
   }
   // La grosse boucle de ceinture du nain, les bretelles du hobbit
-  if (race === 'nain' && !dos && Z(0, prof) > 0) t.forme('or', (x, y) => (y >= yB - 3 * k && y <= yB && Math.abs(x + 0.5 - X(0, prof)) < 2.4 * k ? [(x + 0.5 - X(0, prof)) / (2.4 * k), 0, 0.9] : null), { decalage: 0.3, ombre: false });
+  if (race === 'nain' && !pyj && !dos && Z(0, prof) > 0) t.forme('or', (x, y) => (y >= yB - 3 * k && y <= yB && Math.abs(x + 0.5 - X(0, prof)) < 2.4 * k ? [(x + 0.5 - X(0, prof)) / (2.4 * k), 0, 0.9] : null), { decalage: 0.3, ombre: false });
   if (race === 'hobbit' && !dos) for (const d of [-1, 1]) for (let y = yT + 1 * k; y < yB - 2 * k; y++) for (let e = 0; e < k; e++) { const x = Math.round(X(d * (3 + (y - yT) / P.torse * 1.5) * k, prof)) + e; if (t.mat(x, y) === 'lin') t.poser(x, y, 'cuir', 3); }
   // Les pièces cousues des novices
   if (tenue === 0 && !longue && aventurier) for (const [du, dy] of [[-3, 6], [2, 11]]) for (let i = 0; i < 3 * k; i++) for (let j = 0; j < 3 * k; j++) { const x = Math.round(X(du * k, prof * 0.8)) + i, y = yT + dy * k + j; if (t.mat(x, y) === 'habit') t.poser(x, y, 'habit', (i === 0 || j === 0 || i === 3 * k - 1 || j === 3 * k - 1) ? 1 : 2); }
   // La ceinture, la boucle
   // (v1.02 : les Gardiens n'ont qu'une fine cordelière de métal sur leur robe, pas de ceinture de cuir)
   if (costume === 'gardien') t.forme(atours.metal || 'or', (x, y) => (y >= yB - 1.5 * k && y <= yB - 0.5 * k && torse(x, y) ? [0, 0, 0.9] : null), { ombre: false });
-  else t.forme(tenue === 0 ? 'lin' : 'cuir', (x, y) => (y >= yB - 2 * k && y <= yB - 1 && torse(x, y) ? [0, y < yB - 1 * k ? -0.6 : 0.4, 0.8] : null), { ombre: false });
-  if (tenue >= 1 && !dos && Z(0, prof) > 0) t.forme(tenue >= 4 ? 'or' : 'metal', ellipsoide(X(0, prof), yB - 1.5 * k, 1.6 * k, 1.3 * k), { decalage: 0.4, ombre: false });
+  else if (!pyj) t.forme(tenue === 0 ? 'lin' : 'cuir', (x, y) => (y >= yB - 2 * k && y <= yB - 1 && torse(x, y) ? [0, y < yB - 1 * k ? -0.6 : 0.4, 0.8] : null), { ombre: false });
+  if (tenue >= 1 && !dos && !pyj && Z(0, prof) > 0) t.forme(tenue >= 4 ? 'or' : 'metal', ellipsoide(X(0, prof), yB - 1.5 * k, 1.6 * k, 1.3 * k), { decalage: 0.4, ombre: false });
   // La bandoulière et la sacoche (aguerri et plus)
   // (v1.61) la bandoulière du buste dès le novice (le gambeson, le nain) ; la brigandine, l'elfe et le hobbit n'en ont pas
   // en buste : leur sacoche pend alors à la ceinture
@@ -2253,6 +2261,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   t.mainXY = mainDevant ? [mainDevant.M[0], mainDevant.M[1]] : null;   // (v1.34 : où est la main, pour y tenir un objet)
   t.reperes = { cy, yT, yB, H, ...(t.batonSage ? { cristal: t.batonSage } : {}) };   // (v1.01 : pour poser un enfant sur des épaules, etc.)
   t.reperes2 = { cx, cy, yT, yB, sol, ep, H, L };
+  if (pyj) pyjamaApres({ t, k, g, race, f, cx, cy, yT, yB, sol, ep, prof, P, X, Z, s, c, pres, loin, dos, segBras, segJambes, L, H, torse, assise, pyj, section });   // (planche 85 v2 : motif, col, ourlet, bonnet)
   t.margeArme = margeArmeH;   // (la place au-dessus de la tête, pour une lance tenue debout)   // (planches 85 et 86 : les articulations, pour le rig et les poses)
   contourEpais(t, CONTOUR_CORPS.tours);
   // Où sont les mains (depuis le sol), pour y accrocher le baluchon

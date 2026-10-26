@@ -21,6 +21,7 @@ class PromenadeScene extends Cinematique {
     const G = this.G = window.GAME;
     this.fini = false;
     this.transition = false;   // (audit v0.59)
+    this.armoireOuverte = false;   // (planche 85 v2)
     this.enConversation = false; this.panneauCoin = null; this.carnetFormes = null;   // (v1.38 : une soirée quittée par le menu les laissait posés)
     this.assis = null;   // (v0.97) on n'est plus assis sur le banc d'hier soir
     this.cameras.main.fadeIn(500);
@@ -92,7 +93,8 @@ class PromenadeScene extends Cinematique {
     };
     const o = PIECES_PROMENADE;
     // La chambre : une porte vers l'arrière-boutique
-    porte(900, { piece: P_ARRIERE, x: o[P_ARRIERE].x + 640 }, "L'arrière-boutique", { sol: SOL_PROMENADE - 10 });
+    // (planche 85 v2 : l'armoire est contre le mur de droite ; on passe dans l'arrière-boutique par le bord, sans porte devant elle)
+    porte(950, { piece: P_ARRIERE, x: o[P_ARRIERE].x + 640 }, "L'arrière-boutique ▶", { dessiner: false, large: 20, haut: 230, sol: SOL_PROMENADE + 20, ecriteauX: -62, ecriteauY: SOL_CHAMBRE - 182 });
     // L'arrière-boutique : la porte de la chambre (déjà dessinée), et le passage vers le comptoir
     porte(o[P_ARRIERE].x + 688, { piece: P_CHAMBRE, x: 840 }, 'Ta chambre', { dessiner: false, sol: SOL_ARRIERE });
     // (v0.84) la porte de derrière : on sort dans la rue sans repasser par le comptoir
@@ -280,11 +282,25 @@ class PromenadeScene extends Cinematique {
     this.soleil.setVisible(false);
     this.lumieres.push([628, SOL_CHAMBRE - 80, 2.4]);
     const luxe = niveauAmelioration(G, 'chambre');
-    this.regarder(250, SOL_CHAMBRE - 130, 340, 130, `Ton lit : ${AMELIORATIONS.chambre.niveaux[luxe]}. Il t'attend...`);
+    this.regarder(this.litGeom.x0, SOL_CHAMBRE - 130, this.litGeom.x1 - this.litGeom.x0, 130, `Ton lit : ${AMELIORATIONS.chambre.niveaux[luxe]}. Il t'attend...`);
     if (G.mannequin || G.armure.length) this.regarder(740, SOL_CHAMBRE - 200, 110, 200, G.armure.length ? `${NOMS_ARMURE[coteArmure(G)]} : ${G.armure.length} / ${ARMURE.length} pièces.` : "Le mannequin de Garrick attend sa première pièce d'armure.");
-    // (v0.69) la malle au pied du lit : tes vêtements ; un clic pour choisir ce que tu portes
-    const malle = this.add.rectangle(550, SOL_CHAMBRE + 5, 100, 70, 0xffffff, 0).setDepth(8.4).setInteractive({ useHandCursor: true });
-    malle.on('pointerdown', () => { if (this.transition) return; this.allerVers(550); ouvrirMalle(this); });
+    // (planche 85 v2) l'armoire, à droite de la fenêtre, remplace la malle : les habits du jour, leurs couleurs, les
+    // accessoires, et le pyjama de cette nuit ; ce qu'on change se met d'un tourbillon
+    const armoire = this.add.rectangle(CHAMBRE_PYJ.armoire - 3, SOL_CHAMBRE - 80, 70, 160, 0xffffff, 0).setDepth(8.4).setInteractive({ useHandCursor: true });
+    armoire.on('pointerdown', async () => {
+      if (this.transition || this.armoireOuverte) return;
+      this.armoireOuverte = true;
+      this.allerVers(CHAMBRE_PYJ.devantArmoire - 10); await this.attendreArrivee();
+      if (this.fini) return;
+      this.heros.setFlipX(false);
+      await this.battants(1);
+      ouvrirArmoireEcran(this, { quandFini: async ({ habits, avant }) => {
+        if (habits) await tourbillonTenue(this, this.heros, avant, () => { rafraichirJoueur(this, G); this.heros.setTexture('joueur_' + stadeJoueur(G)); });
+        this.habitsJour = couleursHabits(G); this.pyj = pyjamaDeCetteNuit(G);
+        await this.battants(-1);
+        this.armoireOuverte = false;
+      } });
+    });
     // (v0.66) la cheminée : une planche de bois, et le feu brûle toute la nuit
     const zf = this.add.rectangle(112, SOL_CHAMBRE - 90, 160, 180, 0xffffff, 0).setDepth(8.6).setInteractive({ useHandCursor: true });
     zf.on('pointerdown', () => {

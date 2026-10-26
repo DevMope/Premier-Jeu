@@ -29,6 +29,7 @@ class DodoScene extends Cinematique {
       return;
     }
     this.cameras.main.fadeIn(500);
+    this.time.timeScale = 1; this.tweens.timeScale = 1; this.accel = null;   // (planche 85 v2 : un coucher accéléré hier soir)
     this.dessinerChambre();
     this.joueur = this.add.image(1000, SOL_CHAMBRE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(3);
     this.boutonPasser(() => this.passer());
@@ -92,10 +93,13 @@ class DodoScene extends Cinematique {
     this.clairDeLune = this.add.image(fx + fw / 2, fy + fh / 2 + 40, 'halo').setScale(3.4, 2.6).setTint(0x6a8ad8).setAlpha(0.18)
       .setBlendMode(Phaser.BlendModes.ADD).setDepth(1.6);
 
-    // Le lit, et la couverture en patchwork posée par-dessus le dormeur (elle ne se voit qu'une fois couché).
+    // Le lit (planche 85 v2 : raccourci à la taille du joueur) ; la couverture refaite, l'armoire et le paravent : meublesDeNuit
     const luxe = niveauAmelioration(this.G, 'chambre');
-    this.lit = this.add.image(250, SOL_CHAMBRE, litHD(this, luxe)).setOrigin(0, 1).setScale(2).setDepth(2);
-    this.couverture = this.add.image(316, SOL_CHAMBRE - 100, couvertureHD(this, luxe)).setOrigin(0).setScale(2, 2.35).setDepth(4).setAlpha(0);
+    this.litGeom = litChambre(this.G);
+    this.lit = this.add.image(this.litGeom.x0, SOL_CHAMBRE, litCourtHD(this, luxe, this.litGeom.coupe)).setOrigin(0, 1).setScale(2).setDepth(2);
+    if (!this.meublesDeNuit) for (const m of DODO_MEUBLES) this[m] = DodoScene.prototype[m];   // (la promenade et la nuit du cambrioleur empruntent la chambre)
+    this.repLit = null; this.profJambes = null;
+    this.meublesDeNuit();
 
     // La table de chevet, la bougie et sa lumière.
     this.chevet = this.add.image(635, SOL_CHAMBRE, chevetHD(this, luxe)).setOrigin(0.5, 1).setScale(2).setDepth(2);
@@ -155,25 +159,10 @@ class DodoScene extends Cinematique {
 
   async derouler() {
     const b = this.bilan;
-    await this.marcher(this.joueur, 600, 4);
-    this.onomatopee(600, SOL_CHAMBRE - 130, 'Aaaah...', '#f3d98a');
-    await this.animer({ targets: this.joueur, scaleY: echelleJoueur(8), duration: 260, yoyo: true });
-    await this.attendre(300);
-    // Il souffle la bougie...
-    this.onomatopee(650, SOL_CHAMBRE - 140, 'Fffff !');
-    Son.jouer('glisse'); this.time.delayedCall(900, () => Son.jouer('hibou'));
-    this.tweens.killTweensOf([this.flamme, this.lumiere]);
-    this.tweens.add({ targets: [this.flamme, this.lumiere], alpha: 0, duration: 400 });
-    this.tweens.add({ targets: this.noir, fillAlpha: 0.45, duration: 700 });
-    await this.attendre(500);
-    // ... et se glisse sous la couverture.
-    this.joueur.setOrigin(0.5, 0.5);
-    this.joueur.y -= this.joueur.displayHeight / 2;
-    await this.animer({ targets: this.joueur, x: 330, y: SOL_CHAMBRE - 68, angle: -90, duration: 500, ease: 'Sine.easeInOut' });
-    this.joueur.setTexture(textureJoueurDort(this, this.G));   // (v1.61) il ferme les yeux
-    this.tweens.add({ targets: this.couverture, alpha: 1, duration: 300 });
-    this.ronfler();
+    // (planche 85 v2) il se change à l'armoire et derrière le paravent, souffle la bougie, se couche (DodoCoucher.js)
+    await this.coucherEnPyjama();
     if (this.fini) return;
+    this.ronfler();
 
     // Le bilan de la journée, sur un parchemin.
     this.afficherBilan(b);
@@ -192,12 +181,9 @@ class DodoScene extends Cinematique {
     this.tweens.add({ targets: this.soleil, y: this.soleil.y - 110, duration: 2200, ease: 'Sine.easeOut' });
     await this.animer({ targets: this.noir, fillAlpha: 0, duration: 2000 });
     if (this.zzz) this.zzz.remove();
-    // Debout !
-    this.tweens.add({ targets: this.couverture, alpha: 0, duration: 200 });
-    this.joueur.setTexture(textureJoueur(this, this.G));   // (v1.61) il rouvre les yeux
-    await this.animer({ targets: this.joueur, angle: 0, x: 600, y: SOL_CHAMBRE - this.joueur.displayHeight / 2, duration: 450, ease: 'Back.easeOut' });
-    this.joueur.setOrigin(0.5, 1).setY(SOL_CHAMBRE);
-    this.onomatopee(600, SOL_CHAMBRE - 140, 'Debout !', '#f3d98a');
+    // Debout ! (planche 85 v2 : il se lève, va à l'armoire, et le tourbillon lui rend ses habits du jour)
+    await this.leverEnPyjama();
+    if (this.fini) return;
     await this.travauxDeLaNuit();
     // L'armure a pu changer de côté pendant la nuit.
     if (!(this.G.nouvellesPieces || []).length && this.G.armure.length) await this.changerCote(coteArmure(this.G));
@@ -210,7 +196,7 @@ class DodoScene extends Cinematique {
     this.annoncerMatin();
     await this.attendre(800);
     if (this.fini) return;
-    await this.attendreSuite('▶ Clique pour sortir dans la rue');
+    await this.attendreSortie();   // (planche 85 v2 : en attendant, on peut ouvrir l'armoire et changer de couleurs)
     if (this.fini) return;
     await this.marcher(this.joueur, 1020, 3);
     this.partir('Rue');   // (v0.65 : on sort dans la rue, l'arche mène au marché)
@@ -291,11 +277,15 @@ class DodoScene extends Cinematique {
     await this.attendre(500);
     if (finis.includes('chambre')) {
       const n = niveauAmelioration(this.G, 'chambre');
-      for (const [image, cle] of [[this.lit, litHD(this, n)], [this.couverture, couvertureHD(this, n)], [this.chevet, chevetHD(this, n)], [this.tapis, tapisHD(this, n)]]) {
+      // (planche 85 v2 : le lit raccourci, et la couverture repeinte au nouveau niveau, telle qu'il l'a laissée)
+      this.litGeom = litChambre(this.G);
+      const couv = () => this.couvrir({ ...this.etatCouv, profil: {} });
+      for (const [image, cle] of [[this.lit, litCourtHD(this, n, this.litGeom.coupe)], [this.couverture, couv], [this.chevet, chevetHD(this, n)], [this.tapis, tapisHD(this, n)]]) {
         const poussiere = this.add.image(image.x + image.displayWidth / 2 * (image.originX === 0 ? 1 : 0), image.y - image.displayHeight / 2, 'halo')
           .setTint(0xfff0c0).setScale(3).setAlpha(0).setDepth(7).setBlendMode(Phaser.BlendModes.ADD);
-        this.tweens.add({ targets: poussiere, alpha: 0.8, duration: 250, yoyo: true, onYoyo: () => image.setTexture(cle), onComplete: () => poussiere.destroy() });
+        this.tweens.add({ targets: poussiere, alpha: 0.8, duration: 250, yoyo: true, onYoyo: () => (typeof cle === 'function' ? cle() : image.setTexture(cle)), onComplete: () => poussiere.destroy() });
       }
+      this.peindreArmoire(this.etatArmoire || 0);
       await this.attendre(600);
     }
     const noms = finis.map(c => `${AMELIORATIONS[c].nom.toLowerCase()} (${AMELIORATIONS[c].niveaux[niveauAmelioration(this.G, c)]})`);
@@ -592,3 +582,5 @@ class DodoScene extends Cinematique {
 }
 
 const SOL_CHAMBRE = 430;
+// (planche 85 v2) ce que les autres scènes qui dessinent la chambre empruntent à DodoScene (voir DodoCoucher.js)
+const DODO_MEUBLES = ['meublesDeNuit', 'peindreArmoire', 'battants', 'pilePyjama', 'couvrir', 'tourbillon', 'debout', 'poserJoueur'];

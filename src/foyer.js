@@ -10,6 +10,8 @@
 const FOYER = { gamelle: 3, boude: 3, part: 4, mefiance: 7, ratsMefiant: 0.5, ouvertureMalade: 12 };
 
 // --- L'hiver sans bois ---
+// (planche 85 v2) les nuits froides qu'il faut pour s'enrhumer : deux, trois dans un pyjama de laine ou de flanelle
+function seuilRhume(G) { return typeof nuitsAvantRhume === 'function' ? nuitsAvantRhume(G) : 2; }
 function foyerVide(G) { return typeof saisonDe === 'function' && saisonDe(G) === 'givre' && !feuAllume(G); }
 function soirDuJour(G) { return G.lettresDuJour === G.jour; }
 function froidDuJour(G, jour = G.jour) { return G.froid && G.froid.jour === jour ? G.froid.etat : null; }
@@ -17,7 +19,7 @@ function froidDuJour(G, jour = G.jour) { return G.froid && G.froid.jour === jour
 function nuitFroideCeSoir(G) { return saisonDe(G) === 'givre' && G.feu !== G.jour && G.banquetHiver !== G.jour + 1 && !(typeof banquetDu === 'function' && banquetDu(G)); }
 function froidPrevu(G, jour = G.jour) {
   if (jour !== G.jour + 1) return froidDuJour(G, jour);
-  return nuitFroideCeSoir(G) ? ((G.nuitsFroides || 0) + 1 >= 2 ? 'malade' : 'fatigue') : null;
+  return nuitFroideCeSoir(G) ? ((G.nuitsFroides || 0) + 1 >= seuilRhume(G) ? 'malade' : 'fatigue') : null;
 }
 function clientsFroid(G, jour = G.jour) { return froidPrevu(G, jour) ? -1 : 0; }
 function retardFroid(G, jour = G.jour) { return froidPrevu(G, jour) === 'malade' ? Math.max(0, FOYER.ouvertureMalade - JOURNEE.ouverture) : 0; }   // (malade : on n'ouvre qu'à midi)
@@ -53,10 +55,10 @@ function reveilDuFoyer(G, r) {
   if (n) {
     // (pas de « pleine forme » après une nuit glacée)
     r.forme = null; r.lignes = r.lignes.filter(l => !l.includes('en pleine forme'));
-    if (n === 1) { G.froid = { jour: G.jour, etat: 'fatigue' }; r.lignes.push(`Brr... Il a gelé cette nuit, et la cheminée est restée froide. Tu te réveilles fatigué${eJ(G)}, les doigts gourds : tu serviras un client de moins aujourd'hui.`); }
+    if (n < seuilRhume(G)) { G.froid = { jour: G.jour, etat: 'fatigue' }; r.lignes.push(`Brr... Il a gelé cette nuit, et la cheminée est restée froide. Tu te réveilles fatigué${eJ(G)}, les doigts gourds : tu serviras un client de moins aujourd'hui.` + (n > 1 ? ` Ton pyjama chaud t'a évité le rhume, cette fois.` : '')); }
     else {
       G.froid = { jour: G.jour, etat: 'malade' };
-      r.lignes.push(`Deux nuits sans feu : tu as attrapé un mauvais rhume. Le comptoir n'ouvrira qu'à midi, et tu serviras un client de moins.`);
+      r.lignes.push(`${n === 2 ? 'Deux' : 'Trois'} nuits sans feu${n > 2 ? ', même dans ton pyjama chaud' : ''} : tu as attrapé un mauvais rhume. Le comptoir n'ouvrira qu'à midi, et tu serviras un client de moins.`);
       if (c && c.adopte && c.parti !== G.jour) { c.rechauffe = G.jour; r.lignes.push(`${nomChatMaj(G)} est parti se réchauffer chez les voisins. Il reviendra ce soir.`); }
     }
   }

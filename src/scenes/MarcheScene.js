@@ -1427,7 +1427,8 @@ class MarcheScene extends Phaser.Scene {
     const G = this.G;
     if (!lieuOuvert(G, 'garderobe')) return this.message(`${NOMS_LIEUX_MARCHE.garderobe} ouvre le jour ${OUVERTURE_LIEUX.garderobe}.`);
     this.montrer('garderobe');
-    const c = this.panneau(MARCELLINE.nom, 'Ce que tu achètes, tu le portes ; ta malle, au pied du lit, garde le reste');
+    const c = this.panneau(MARCELLINE.nom, 'Ce que tu achètes, tu le portes ; ton armoire garde le reste');
+    if (this.ongletsMarcelline) this.ongletsMarcelline(c, 'vetements');   // (planche 85 v2 : et ses pyjamas)
     c.add(this.add.text(30, 334, "« Un commerce bien tenu commence par une tenue soignée. Laisse-moi t'arranger ça... »",
       style(11, '#6b4a2a', { fontStyle: 'italic' })));
     // Toi, dans ta tenue du moment
