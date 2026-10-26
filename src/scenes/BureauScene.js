@@ -163,7 +163,7 @@ class BureauScene extends Phaser.Scene {
     if (typeof SUCCES !== 'undefined') {
       const ids = this.ordreSucces(), gagnes = ids.filter(id => aLeSucces(G, id));
       const tab = P(584, 80, texTableauSucces(this, ids, gagnes), 1);
-      this.add.text(640, 179, `${gagnes.length} / ${ids.length}`, style(9, '#3b2410', { fontStyle: 'bold', brut: true })).setOrigin(0.5).setDepth(1.1);
+      this.add.text(640, 186, `${gagnes.length} / ${ids.length}`, style(9, '#3b2410', { fontStyle: 'bold', brut: true })).setOrigin(0.5).setDepth(1.1);
       if (G.succesNonVus) this.badgeSucces = this.add.text(690, 84, `${G.succesNonVus}`, style(10, '#1a0e06', { fontStyle: 'bold', backgroundColor: '#e8b830', padding: { x: 4, y: 0 } })).setOrigin(0.5).setDepth(1.2);
       this.objet({ nom: 'Le tableau des succès', ouvre: 'tes médailles', images: [tab], zone: [584, 80, 112, 124], agir: o => this.ouvrirSucces(o.zone) });
     }
@@ -186,7 +186,7 @@ class BureauScene extends Phaser.Scene {
   poserEnseigneSalle() {
     const G = this.G;
     if (this.enseigneSalle) this.enseigneSalle.destroy();
-    const e = this.enseigneSalle = poserEnseigne(this, 774, 326, niveauFacade(G), G.nomShop).setScale(0.66).setAngle(-4).setDepth(1.4);
+    const e = this.enseigneSalle = poserEnseigne(this, 774, 326, niveauFacade(G), G.nomShop).setScale(0.66).setDepth(1.4);   // (pendue au mur, à ses deux clous)
     if (!this.objetEnseigne) this.objetEnseigne = this.objet({ nom: 'L’enseigne', ouvre: 'le nom du comptoir', images: [], zone: [730, 326, 96, 110], agir: o => { this.ouvrirEnseigne(); this.approcher(this.pageEnseigne, o.zone); } });
     return e;
   }
