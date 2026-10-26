@@ -327,6 +327,8 @@ class PromenadeScene extends Cinematique {
       G.penseeParents = ((G.penseeParents ?? -1) + 1) % PENSEES_PARENTS.length;
       // (v0.93) depuis la médaille, une pensée sur deux est pour elle
       if (G.medailleParents && G.penseeParents % 2) return this.dire(`La médaille de tes parents, rendue par le vieux mendiant. « Ils ne t'ont pas abandonné${eJ(G)} », a-t-il dit. Tu voudrais tant le croire.`);
+      // (v1.63) la berceuse que t'a laissée le vieux voyageur, glissée derrière le cadre
+      if (G.evtComptoir && G.evtComptoir.berceuse && G.penseeParents % 3 === 0) return this.dire("La berceuse du vieux voyageur, glissée derrière le cadre. Tu ne sais pas lire la musique, et pourtant tu en fredonnes l'air, comme si tu l'avais toujours su.");
       this.dire(PENSEES_PARENTS[G.penseeParents].replaceAll('{J}', eJ(G)));
     });
     if (G.medailleParents) this.add.image(64, 146, texMedailleParents(this)).setScale(1.3).setDepth(8.3);

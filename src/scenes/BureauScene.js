@@ -142,7 +142,7 @@ class BureauScene extends Phaser.Scene {
             const p = e.visite.parent;
             return { nom: p.nom, race: p.race, ligne: `Visite : ${p.lien} ${dePersonne(e.visite.defunt.nom)}`, detail: () => [`Vient au sujet ${dePersonne(e.visite.defunt.nom)}.`] };
           }
-          if (e.type === 'faucheuse') return null;   // (v0.93) elle reste une surprise
+          if (e.type === 'faucheuse' || e.type === 'evenement') return null;   // (v0.93) elle reste une surprise (v1.63 : les événements du comptoir aussi)
           // (audit v0.61) les visites sans voyageur (garde, Garrick, collecteur, Serpent, colporteur,
           // notable, aîné...) faisaient planter le registre
           if (!e.parti) {
@@ -669,7 +669,7 @@ class BureauScene extends Phaser.Scene {
     });
     const NOTES = { retour: 'Retour de mission', famille: 'Une famille en deuil', garde: 'La garde', gardeRecherche: 'La garde', garrick: 'Garrick', collecteur: 'Le collecteur', serpent: 'Le Serpent à deux têtes',
       colporteur: 'Le colporteur', notable: 'Un visiteur de marque', aine: 'Un aîné des Bannis', carnet: 'Un carnet rapporté', heraut: 'Le messager du Conseil', rival: 'Le voisin', crieur: 'Le crieur', detresse: 'Un pigeon : appel à l\'aide', collectionneur: 'Le collectionneur' };
-    const lignes = G.file.filter(e => e.type !== 'faucheuse');
+    const lignes = G.file.filter(e => e.type !== 'faucheuse' && e.type !== 'evenement');   // (v1.63 : les événements du comptoir restent une surprise)
     const PAR = 8, pages = Math.max(1, Math.ceil(lignes.length / PAR));
     page = Math.min(page, pages - 1);
     const COULEURS = [0x7a9a5a, 0x4a7aa0, 0x8a5aa0, 0xc89a30, 0xc04a30];
