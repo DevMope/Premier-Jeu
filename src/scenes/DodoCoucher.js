@@ -18,7 +18,7 @@ Object.assign(DodoScene.prototype, {
     this.pyjEnCours = null;   // (ce qu'il porte : null, ses habits du jour ; sinon l'id du pyjama)
     this.pyjSorti = false;    // (le pyjama n'est plus plié sur l'étagère)
     this.habitsJour = couleursHabits(G);
-    this.armoire = this.add.image(CHAMBRE_PYJ.armoire, SOL_CHAMBRE + 2, '__DEFAULT').setScale(2).setDepth(2.2);
+    this.armoireImg = this.add.image(CHAMBRE_PYJ.armoire, SOL_CHAMBRE + 2, '__DEFAULT').setScale(2).setDepth(2.2);
     this.peindreArmoire(0);
     this.paravent = this.add.image(CHAMBRE_PYJ.paravent, SOL_CHAMBRE + 8, paraventHD(this, 0)).setOrigin(1, 1).setScale(2).setDepth(2.3);
     this.habitsJetes = [];
@@ -32,7 +32,7 @@ Object.assign(DodoScene.prototype, {
     this.etatArmoire = ouverture;
     const pile = pyjamasDe(this.G).filter(id => !(this.pyjSorti && id === this.pyj));
     const cle = armoireHD(this, { n: niveauAmelioration(this.G, 'chambre'), ouverture, habits: this.habitsJour, pyjamas: pile });
-    this.armoire.setTexture(cle).setOrigin((ARMOIRE_HD.ox + 18.5) / ARMOIRE_HD.L, 1);
+    this.armoireImg.setTexture(cle).setOrigin((ARMOIRE_HD.ox + 18.5) / ARMOIRE_HD.L, 1);
   },
   async battants(sens) {
     Son.jouer('porte');
@@ -40,8 +40,8 @@ Object.assign(DodoScene.prototype, {
   },
   // Où est, à l'écran, la pile de ce pyjama sur l'étagère
   pilePyjama(id) {
-    const pile = pyjamasDe(this.G), i = Math.max(0, pile.indexOf(id)), x0 = this.armoire.x - (ARMOIRE_HD.ox + 18.5) * 2;
-    return [x0 + (ARMOIRE_HD.ox + 1 + 2 + i * 7 + 3) * 2, this.armoire.y - (ARMOIRE_HD.H - 7 - 10.5) * 2];
+    const pile = pyjamasDe(this.G), i = Math.max(0, pile.indexOf(id)), x0 = this.armoireImg.x - (ARMOIRE_HD.ox + 18.5) * 2;
+    return [x0 + (ARMOIRE_HD.ox + 1 + 2 + i * 7 + 3) * 2, this.armoireImg.y - (ARMOIRE_HD.H - 7 - 10.5) * 2];
   },
   // La couverture (repeinte à chaque image : deux textures qui alternent, l'une affichée pendant qu'on peint l'autre)
   couvrir({ xa, replie = 0, profil = {} }) {
@@ -264,7 +264,8 @@ Object.assign(DodoScene.prototype, {
     this.joueur.setDepth(4.2);
     await this.geste('assied', E.assied, { repere: 'hanche', de: R.debout, a: R.bord });
     if (this.fini) return;
-    const xa0 = this.etatCouv.xa, D = Math.round(Math.max(30, R.pieds - R.bord[0] - 6) * 0.55);
+    // (la couverture se rabat jusque vers ses pieds : les jambes passent sur le drap, puis dessous)
+    const xa0 = this.etatCouv.xa, D = Math.round(Math.max(30, Math.min(this.litGeom.pied - 34, R.pieds - 4) - xa0));
     await this.geste('ouvre', E.ouvre, { repere: 'hanche', de: R.bord });
     for (let i = 1; i <= 5 && !this.fini; i++) { const d = D * i / 5; this.couvrir({ xa: xa0 + d, replie: Math.max(4, d * 0.85) }); if (i === 2) Son.jouer('glisse'); await this.attendre(DUREE_POSE); }
     await this.geste('ouvreRetour', E.ouvreRetour, { repere: 'hanche', de: R.bord });
@@ -390,7 +391,7 @@ Object.assign(DodoScene.prototype, {
     await this.geste('etireRetour', E.etireRetour, { repere: 'hanche', de: R.couche, lit: true });
     if (this.fini) return;
     // il rejette la couverture vers le pied du lit
-    const D = Math.round(Math.max(30, R.pieds - R.bord[0] - 6) * 0.55), pj2 = this.profilJambesLit();
+    const D = Math.round(Math.max(30, Math.min(this.litGeom.pied - 34, R.pieds - 4) - xaJ) / 1.2), pj2 = this.profilJambesLit();
     await this.geste('rejette', E.rejette, { repere: 'hanche', de: R.couche, lit: true });
     for (let i = 1; i <= 5 && !this.fini; i++) { const d = D * i / 5; this.couvrir({ xa: xaJ + d * 1.2, replie: Math.max(4, d * 0.85), profil: pj2 }); if (i === 2) Son.jouer('glisse'); await this.attendre(DUREE_POSE); }
     await this.geste('rejetteRetour', E.rejetteRetour, { repere: 'hanche', de: R.couche, lit: true });
@@ -478,7 +479,7 @@ Object.assign(DodoScene.prototype, {
           if (this.paravent.texture.key !== paraventHD(this, 0)) { this.paravent.setTexture(paraventHD(this, 1)); this.time.delayedCall(140, () => this.paravent.setTexture(paraventHD(this, 0)).setDepth(2.3)); }
         } else {
           const vole = this.add.image(x, sol - 50, habitHD(this, 'haut', (avant || cj).haut, 'plie')).setScale(1.2).setDepth(4.9);
-          const [ax, ay] = [this.armoire.x - 10, this.armoire.y - 100];
+          const [ax, ay] = [this.armoireImg.x - 10, this.armoireImg.y - 100];
           this.tweens.add({ targets: vole, x: ax, y: ay, duration: 360, ease: 'Sine.easeInOut', onComplete: () => vole.destroy() });
         }
         this.debout();

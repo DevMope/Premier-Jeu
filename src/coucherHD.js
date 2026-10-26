@@ -11,7 +11,7 @@
 // --- Les poses ---
 const R_COUCHE = (R, a = -90) => ({ buste: { a, px: R.cx, py: R.yB }, jambeP: { a: -90, px: R.cx, py: R.yB }, jambeL: { a: -90, px: R.cx, py: R.yB } });
 // au lit : une main posée sur la poitrine (ou le ventre), à plat (le coude replié contre le flanc)
-const mainSurCorps = (h, dz = 2) => ({ ik: ({ k, ep, yT, yB, cote }) => ({ coude: [cote * (ep + 1.2 * k), 0.4 * k, yT + (yB - yT) * 0.62], main: [cote * 1.2 * k, ep * 0.55 + dz * k, yT + (yB - yT) * h] }) });
+const mainSurCorps = (h, dz = 0.6) => ({ ik: ({ k, ep, yT, yB, cote }) => ({ coude: [cote * ep * (cote > 0 ? 0.55 : 0.92), ep * 0.5, yT + (yB - yT) * 0.66], main: [cote * 1.4 * k, ep * 0.55 + dz * k, yT + (yB - yT) * h] }) });   // (l'avant-bras à plat sur le ventre, la main sur la poitrine : couché, ils reposent sur la couverture)
 const BRAS_REPOS = { ik: ({ k, ep, yT, yB, cote, P }) => ({ coude: [cote * (ep + 1.2 * k), -0.8 * k, yT + P.torse * 0.5], main: [cote * (ep + 0.6 * k), 1 * k, yB + 1.5 * k] }) };
 const JAMBES_LIT = { jambeP: { p: 0.06, f: 0.12, appui: false }, jambeL: { p: 0.02, f: 0.08, appui: false } };
 const JAMBES_BORD = { jambeP: { p: 1.45, f: 1.5, appui: false }, jambeL: { p: 1.32, f: 1.38, appui: false } };
@@ -19,7 +19,7 @@ const POSES_COUCHER = {
   // debout : exactement la pose du moteur (les bras le long du corps), pour passer sans à-coup de l'image debout aux poses
   debout: { membres: { brasP: BRAS_REPOS, brasL: BRAS_REPOS, jambeP: { p: 0, f: 0 }, jambeL: { p: 0, f: 0 } } },
   // à l'armoire : le bras levé vers l'étagère, puis le pyjama plié tenu contre la poitrine
-  attrape: { membres: { brasL: { p: 2.4, f: 0.2, a: 0.15 }, brasP: { p: 0.12, f: 0.25 }, jambeP: { p: 0, f: 0 }, jambeL: { p: 0, f: 0 } }, rig: R => ({ tete: { a: -7, px: R.cx, py: R.yT } }) },
+  attrape: { membres: { brasL: { p: 2.75, f: 0.06, a: 0.12 }, brasP: { p: 0.12, f: 0.25 }, jambeP: { p: 0, f: 0 }, jambeL: { p: 0, f: 0 } }, rig: R => ({ tete: { a: -7, px: R.cx, py: R.yT } }) },
   tientPli: { membres: { brasP: { p: 0.95, f: 1.15, a: 0.02 }, brasL: { p: 0.85, f: 1.25, a: 0.04 }, jambeP: { p: 0, f: 0 }, jambeL: { p: 0, f: 0 } } },
   // il tire sur la feuille du paravent pour le déplier
   tire: { membres: { brasL: { p: 1.35, f: 0.2, a: 0.25 }, brasP: { p: 0.9, f: 0.4, a: 0.02 }, jambeP: { p: -0.12, f: 0.05 }, jambeL: { p: 0.22, f: 0.25 } }, rig: R => ({ buste: { a: 6, px: R.cx, py: R.yB } }) },
@@ -95,7 +95,8 @@ function coucheDePose({ t, R, rp }, liste = null) {
     main: t.mainXY ? t2.vers(t.mainXY[0], t.mainXY[1], 'mainP') : null, mainL: t.mainsCote && t.mainsCote.L ? t2.vers(t.mainsCote.L[0], t.mainsCote.L[1], 'mainL') : null };
 }
 // Les parties du corps sous la couverture, et ce qui se pose dessus (les avant-bras, les mains)
-const PARTIES_LIT = { corps: ['corps', 'tete', 'jambeP', 'jambeL', 'brasP', 'brasL'], dessus: ['avantP', 'avantL', 'mainP', 'mainL'] };
+// (l'avant-bras lointain passe de l'autre côté du corps : on ne voit que sa main, posée sur la poitrine)
+const PARTIES_LIT = { corps: ['corps', 'tete', 'jambeP', 'jambeL', 'brasP', 'brasL', 'avantL'], dessus: ['avantP', 'mainP', 'mainL'] };
 
 // La texture d'une pose (créée une fois, gardée d'un soir à l'autre) : ses repères dans REPERES_COUCHER[clé]
 const REPERES_COUCHER = {};

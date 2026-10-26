@@ -113,7 +113,7 @@ function couleursHabits(G) {
 // --- Le paravent : trois feuilles de bois tendues de toile peinte ---
 // pli : 0 replié (les trois feuilles l'une contre l'autre), 1 à demi ouvert, 2 déplié en zigzag. Même taille pour les trois
 // images, posées par le coin bas droit (setOrigin(1, 1)).
-const PARAVENT_HD = { L: 56, H: 48 };
+const PARAVENT_HD = { L: 56, H: 42 };   // (à peine plus haut que son épaule : on voit sa tête dépasser)
 function paraventHD(scene, pli = 2) {
   const cle = 'paraventHD_' + pli;
   if (scene.textures.exists(cle)) return cle;
@@ -222,6 +222,7 @@ function couvertureV2(scene, lit, { profil = {}, xa = 330, replie = 0, cle = 'co
   const W = Math.max(12, x1 - xA + 4), Y0 = 290, H = lit.bas + 8 - Y0;
   const t = toileLuxe(W, H, Math.min(3, n));
   t.rampes.lin = rampe(0xeee6d4);
+  t.rampes.chanvre = rampe(0x93714c);   // (la couverture de laine brune de la paillasse : elle ne se confond plus avec la paille)
   // la hauteur que donne le corps : la couverture se tend d'une bosse à l'autre (une tente, puis lissée)
   const E = [];
   for (let i = 0; i < W; i++) {
