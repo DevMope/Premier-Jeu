@@ -43,7 +43,7 @@ const OBJECTIFS = [
   { id: 'marche', groupe: 'jour', des: G => G.jour >= 1, texte: 'Achète des provisions au Marché des Mastres', prog: G => [Object.values(G.depenses || {}).some(x => x > 0) ? 1 : 0, 1], argent: 15,
     aide: "Le matin, avant d'ouvrir : « Le marché ». Approche-toi d'un étal et achète ce qui manque à ta réserve." },
   { id: 'bureau', groupe: 'jour', des: G => lieuDebloque(G, 'bureau') && G.jour >= 1, texte: 'Améliore une chose au bureau', prog: G => [(G.travaux || []).length + Object.values(G.ameliorations || {}).reduce((a, b) => a + b, 0) > 0 ? 1 : 0, 1], argent: 25,
-    aide: "Le soir, « Le bureau », la tuile « Améliorer le comptoir » : les ouvriers viennent pendant la nuit." },
+    aide: "Le soir, « Le bureau » : les plans de la maison, au mur. Les ouvriers viennent pendant la nuit." },
   { id: 'vivants3', groupe: 'semaine', texte: 'Fais revenir 3 aventuriers vivants', prog: G => [Object.values(G.succes || {}).reduce((a, b) => a + b, 0), 3], argent: 40,
     aide: "Un baluchon complet, une contrée à leur mesure : regarde ce que dit ton flair avant de les laisser partir." },
   { id: 'deuxEtoiles', groupe: 'semaine', des: G => G.jour >= (typeof JOUR_DEUX_ETOILES === 'number' ? JOUR_DEUX_ETOILES : 2), texte: 'Envoie quelqu’un dans une contrée à 2 étoiles',

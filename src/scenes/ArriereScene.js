@@ -28,9 +28,10 @@ class ArriereScene extends Phaser.Scene {
     this.dessinerBuffet();
     this.dessinerPorte();
     this.dessinerPorteRue();
+    this.dessinerPorteBureau();   // (v1.64, planche 82 v2) la porte du bureau, entre la chambre et le coffre
     this.dessinerDecos();
     const retour = creerBouton(this, 840, 505, 220, this.comptoir ? '↻ Retour au comptoir' : '◀ Retour', () => this.fermer());
-    boutonCarteMonde(this, 884, 112);   // (v0.93) la carte du monde
+    boutonCarteMonde(this, 884 + ELARGI_ARRIERE, 112);   // (v0.93) la carte du monde
     // (v0.82, étape 10b) le coin de la forge, à partir du saut d'un an
     const forge = forgeProposee(G) && creerBouton(this, 600, 505, 220, forgeConstruite(G) ? '⚒ La forge' : '⚒ Le coin de la forge', () => { this.scene.pause(); this.scene.launch('Forge', { appelant: 'Arriere' }); });
     // (v1.32, planche 55) la tapissière et son carnet, quand toutes les améliorations sont faites
@@ -55,15 +56,17 @@ class ArriereScene extends Phaser.Scene {
       for (const bt of [retour, forge]) if (bt) { bt.fond.setDepth(2); bt.label.setDepth(2.01); }
     }
     this.time.delayedCall(400, () => conseilGarrick(this, 'arriere'));
+    elargirArriere(this);   // (v1.64) la pièce plus large, la caméra qui suit le joueur, les portes où il va à pied (arriereBureau.js)
   }
 
   // --- Le décor ---
 
   dessinerPiece() {
     creerInterieurHD(this);
-    this.imMur = this.add.image(0, 0, murInterieur(this, 'murArriere', { poteaux: [272, 412], graine: 310 })).setOrigin(0).setScale(2).setTint(0xc8a47c);
-    this.imSol = this.add.image(0, SOL_ARRIERE, plancher(this, 'plancherArriere', { graine: 410 })).setOrigin(0).setScale(2).setTint(0xd8bc98);
-    vignette(this, 0.75, 0); // (sous les objets : seuls les murs et le sol s'assombrissent)
+    // (v1.64) 180 px de plus à droite, pour la porte du bureau
+    this.imMur = this.add.image(0, 0, murInterieur(this, 'murArriereLarge', { l: LARGEUR_ARRIERE / 2, poteaux: [272, 502], graine: 310 })).setOrigin(0).setScale(2).setTint(0xc8a47c);
+    this.imSol = this.add.image(0, SOL_ARRIERE, plancher(this, 'plancherArriereLarge', { l: LARGEUR_ARRIERE / 2, graine: 410 })).setOrigin(0).setScale(2).setTint(0xd8bc98);
+    vignette(this, 0.75, 0).setScale(4 * LARGEUR_ARRIERE / 960, 4).setX(LARGEUR_ARRIERE / 2); // (sous les objets : seuls les murs et le sol s'assombrissent)
     // La lanterne qui pend de la poutre, et sa lumière chaude
     poserLuminaire(this, 640, 18, niveauAmelioration(this.G, 'eclairage'));
     this.dessinerCoinDouillet();
@@ -73,8 +76,8 @@ class ArriereScene extends Phaser.Scene {
   appliquerDeco() {
     const T = typeof texturesDeco === 'function' ? texturesDeco(this, this.G) : null;
     if (!T || !this.imMur || !this.imSol) return;
-    this.imMur.setTexture(T.mur || 'murArriere').setTint(T.mur ? T.teinteMur : 0xc8a47c);
-    this.imSol.setTexture(T.sol || 'plancherArriere').setTint(T.sol ? T.teinteSol : 0xd8bc98);
+    this.imMur.setTexture(T.mur || 'murArriereLarge').setTint(T.mur ? T.teinteMur : 0xc8a47c);
+    this.imSol.setTexture(T.sol || 'plancherArriereLarge').setTint(T.sol ? T.teinteSol : 0xd8bc98);
     if (this.imTapis) this.imTapis.setTexture(T.tapis || tapisHD(this, niveauAmelioration(this.G, 'chambre'))).setScale(T.tapis ? 2.4 : 2.2);
     if (this.imTableau) { this.imTableau.destroy(); this.imTableau = null; }
     if (T.tableau) { creerEmblemesHD(this); this.imTableau = tableauDeco(this, 690, 168, STYLES_DECO[T.tableau], 3); }
@@ -84,7 +87,7 @@ class ArriereScene extends Phaser.Scene {
   // des livres et une plante, un tapis, et le chat de la maison qui dort sur son coussin.
   dessinerCoinDouillet() {
     creerDouilletHD(this);
-    for (const [x, a] of [[566, -3], [596, 4], [800, -2]]) {
+    for (const [x, a] of [[566, -3], [596, 4], [800 + ELARGI_ARRIERE, -2]]) {
       const h = this.add.image(x, 0, 'herbesHD').setOrigin(0.5, 0).setScale(2.4).setAngle(a);
       this.tweens.add({ targets: h, angle: a + 2, duration: 2400 + x, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
@@ -92,11 +95,12 @@ class ArriereScene extends Phaser.Scene {
     const g = this.add.graphics();
     // (v0.84) un peu plus haut : la porte de la rue passe dessous
     const ye = 236;
-    g.fillStyle(0x5a3a22).fillRect(590, ye, 200, 8).fillStyle(0x7a5232).fillRect(590, ye, 200, 3);
-    g.fillStyle(0x4a2e1a).fillTriangle(600, ye + 8, 616, ye + 8, 600, ye + 24).fillTriangle(780, ye + 8, 764, ye + 8, 780, ye + 24);
+    // (v1.64 : un peu plus courte, elle s'arrête avant la porte du bureau)
+    g.fillStyle(0x5a3a22).fillRect(590, ye, 166, 8).fillStyle(0x7a5232).fillRect(590, ye, 166, 3);
+    g.fillStyle(0x4a2e1a).fillTriangle(600, ye + 8, 616, ye + 8, 600, ye + 24).fillTriangle(746, ye + 8, 730, ye + 8, 746, ye + 24);
     this.add.image(640, ye + 1, 'livresHD').setOrigin(0.5, 1).setScale(2);
-    this.add.image(730, ye + 1, 'planteHD').setOrigin(0.5, 1).setScale(2);
-    bougie(this, 768, ye, { rayon: 70 });
+    this.add.image(700, ye + 1, 'planteHD').setOrigin(0.5, 1).setScale(2);
+    bougie(this, 736, ye, { rayon: 70 });
     // Le tapis, et le chat
     // (v1.29) avec la cave du repaire, le tapis est roulé de côté : la trappe s'ouvre dans le plancher
     if (typeof repaireA === 'function' && repaireA(this.G, 'cave')) this.dessinerTrappe();
@@ -104,7 +108,9 @@ class ArriereScene extends Phaser.Scene {
     this.appliquerDeco();
     // (v1.37) le coin des chats, s'il a été installé ici (dans la promenade, il est posé à part, avec son décalage)
     if (typeof coinDesChats === 'function' && (coinDesChats(this.G) || {}).lieu === 'arriere') {
-      if (this.scene.key !== 'Promenade') poserCoinChats(this, 'arriere', { profondeur: 0.5 });
+      // (v1.65 : s'il dort ailleurs aujourd'hui, le grand panier n'a que sa compagne ; voir chatsSommeil.js)
+      const ailleurs = typeof chatAilleursQueSonCoussin === 'function' && chatAilleursQueSonCoussin(this.G);
+      if (this.scene.key !== 'Promenade') { poserCoinChats(this, 'arriere', { profondeur: 0.5, chatDort: !ailleurs }); if (ailleurs) poserChatArriere(this, { saufCoussin: true }); }
       return;
     }
     const avantCoin = this.children.list.length;
@@ -128,11 +134,15 @@ class ArriereScene extends Phaser.Scene {
       this.time.addEvent({ delay: 700, loop: true, callback: () => { if (chat.active) chat.setTexture(k + (chat.texture.key.endsWith('0') ? '_assis1' : '_assis0')); } });
       chat.on('pointerdown', () => { Son.jouer('grogne'); this.message(`${nomChatMaj(this.G)} te tourne le dos. « Rrrr. » (Il boude : sa gamelle est vide depuis trois jours.)`); });
       this.add.text(200, SOL_ARRIERE + 2, nomChat(this.G), style(11, '#f3e6c8', { fontStyle: 'bold italic', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5, 0);
+    } else if (chatAdopte(this.G) && this.scene.key !== 'Promenade' && typeof chatAilleursQueSonCoussin === 'function' && chatAilleursQueSonCoussin(this.G)) {
+      // (v1.65) les chats dorment où ils veulent : aujourd'hui, ailleurs (le buffet, les sacs, le panier, ou le bureau)
+      poserChatArriere(this, { saufCoussin: true });
     } else if (chatAdopte(this.G) && this.scene.key !== 'Promenade') {   // (en promenade, il te suit)
-      const k = creerChatHD(this, lookChat(this.G));
-      const chat = this.add.image(200, SOL_ARRIERE + 76, k + '_dort0').setOrigin(0.5, 1).setScale(2.4).setInteractive({ useHandCursor: true });
+      const d = typeof sommeilDuChat === 'function' && sommeilDuChat(this.G), im = d && d.pose === 'surDos' ? '_surDos' : '_dort';   // (en boule, ou sur le dos)
+      const k = im === '_dort' ? creerChatHD(this, lookChat(this.G)) : texturesSommeilChat(this, lookChat(this.G));
+      const chat = this.add.image(200, SOL_ARRIERE + 76, k + im + '0').setOrigin(0.5, 1).setScale(2.4).setInteractive({ useHandCursor: true });
       let souffle = 0;
-      this.time.addEvent({ delay: 1100, loop: true, callback: () => { if (chat.active) chat.setTexture(creerChatHD(this, lookChat(this.G)) + '_dort' + (++souffle % 2)); } });
+      this.time.addEvent({ delay: 1100, loop: true, callback: () => { if (chat.active) chat.setTexture((im === '_dort' ? creerChatHD(this, lookChat(this.G)) : texturesSommeilChat(this, lookChat(this.G))) + im + (++souffle % 2)); } });
       chat.on('pointerdown', () => { Son.jouer('miaou'); ouvrirPanneauChat(this); });
       this.add.text(200, SOL_ARRIERE + 30, nomChat(this.G), style(11, '#f3e6c8', { fontStyle: 'bold italic', stroke: '#140c06', strokeThickness: 3 })).setOrigin(0.5, 0);
     }
@@ -172,7 +182,7 @@ class ArriereScene extends Phaser.Scene {
   // des lingots quand on l'est vraiment. Et des reconnaissances de dettes quand ça va mal.
   dessinerFortune() {
     const G = this.G;
-    const cx = 790;   // (v0.66 : le coffre-fort contre le mur, entre le buffet et la porte de la chambre ; v0.84 : un peu à droite, pour la porte de la rue)
+    const cx = 790 + ELARGI_ARRIERE;   // (v0.66 : le coffre-fort contre le mur, entre le buffet et la porte de la chambre ; v0.84 : un peu à droite, pour la porte de la rue ; v1.64 : après la porte du bureau)
     const argent = Math.max(0, G.argent);
     // Des lingots, au-delà de 500 pièces
     const lingots = Math.min(6, Math.floor(argent / 500));
@@ -218,7 +228,7 @@ class ArriereScene extends Phaser.Scene {
   // Les décorations achetées à la brocante, accrochées aux murs. Clic : leur effet.
   dessinerDecos() {
     const G = this.G;
-    const places = [[640, 66], [692, 66], [744, 66], [556, 206], [812, 196], [556, 338], [812, 300], [588, 66], [796, 66], [812, 248]];
+    const E = ELARGI_ARRIERE, places = [[640, 66], [692, 66], [744, 66], [556, 206], [812 + E, 196], [556, 338], [812 + E, 300], [588, 66], [796 + E, 66], [812 + E, 248]];
     (G.decos || []).filter(id => id !== 'sapinCristal').slice(0, places.length).forEach((id, i) => {
       const [x, y] = places[i];
       this.add.rectangle(x, y - 24, 3, 3, 0x2a1a10); // le clou
@@ -247,7 +257,8 @@ class ArriereScene extends Phaser.Scene {
   dessinerPanier() {
     const G = this.G;
     // (v0.66) posé sur le vieux buffet, contre le mur
-    const x = 562, y = SOL_ARRIERE - 62;
+    // (v1.65 : posé par terre, à côté, les jours où le chat dort sur le buffet)
+    const [x, y] = typeof placePanierCadeaux === 'function' ? placePanierCadeaux(this) : [562, SOL_ARRIERE - 62];
     const n = Object.values(G.cadeaux || {}).reduce((a, b) => a + b, 0);
     Object.keys(G.cadeaux || {}).filter(id => G.cadeaux[id] > 0).slice(0, 4).forEach((id, i) => this.add.image(x - 20 + i * 13, y - 28 - (i % 2) * 4, iconeObjet(this, id)).setScale(1.5).setDepth(1.2));
     this.add.image(x, y + 4, 'panierHD').setOrigin(0.5, 1).setScale(1.4).setDepth(1.3);
@@ -274,24 +285,22 @@ class ArriereScene extends Phaser.Scene {
     zone.on('pointerdown', () => n ? this.ouvrirListe('pieges') : this.message("Des torchons, de la ficelle, un vieux bouton. Rien d'intéressant."));
   }
 
-  // La porte de la chambre
+  // La porte de la chambre (v1.64 : une porte d'intérieur, du même modèle que celle du bureau, sa plaque de laiton)
   dessinerPorte() {
-    const x = 688;   // (v0.84 : la porte de la rue a pris sa place au bord, plus grande)
-    this.add.image(x, SOL_ARRIERE, 'porteHD').setOrigin(0.5, 1).setScale(2);
-    // Une bougie sur le petit appui à côté de la porte
-    this.add.text(x, SOL_ARRIERE - 182, 'La chambre', style(12, '#3a2410', { fontStyle: 'bold italic' })).setOrigin(0.5);
-    const zone = this.add.rectangle(x, SOL_ARRIERE - 84, 92, 168, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    zone.on('pointerdown', () => this.porte());
+    const x = PORTES_ARRIERE.chambre;   // (v0.84 : la porte de la rue a pris sa place au bord, plus grande)
+    this.porteChambre = poserPorteInterieure(this, x, SOL_ARRIERE, { ecriteau: 'La chambre', dedans: 'chambre' });
+    const zone = this.add.rectangle(x, SOL_ARRIERE - 90, 100, 180, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    zone.on('pointerdown', () => (this.allerALaPorte ? this.allerALaPorte('chambre') : this.porte()));
   }
 
   // (v0.84) la porte de derrière, qui donne sur la ruelle et la rue (demandée par les testeurs)
   dessinerPorteRue() {
-    const x = 898;
+    const x = 898 + ELARGI_ARRIERE;
     this.add.image(x, SOL_ARRIERE + 4, 'porteRueHD_' + niveauFacade(this.G)).setOrigin(0.5, 1).setScale(1.9);
     // l'écriteau peint au-dessus
     this.add.text(x, SOL_ARRIERE - 198, 'La rue', style(13, '#f3e6c8', { fontStyle: 'bold italic', stroke: '#2a1408', strokeThickness: 4 })).setOrigin(0.5);
     const zone = this.add.rectangle(x, SOL_ARRIERE - 90, 108, 180, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    zone.on('pointerdown', () => { if (this.porteRue) this.porteRue(); });
+    zone.on('pointerdown', () => { if (this.allerALaPorte) this.allerALaPorte('rue'); else if (this.porteRue) this.porteRue(); });
   }
 
   porteRue() {

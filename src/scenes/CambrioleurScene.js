@@ -86,11 +86,13 @@ class CambrioleurScene extends PromenadeScene {
 
   // I. Minuit : il entre par la porte de la rue, sa lanterne sourde à la main
   minuit() {
-    this.cadrerNuit(960);
+    // (v1.64 : l'arrière-boutique s'est élargie ; la porte de la rue a reculé d'autant, la caméra aussi)
+    const E = ELARGI_ARRIERE;
+    this.cadrerNuit(960 + E);
     this.voileNuit(0.62);
     this.lueurNuit(1840 - 960, 390, 1.6, 0x8ab0ff, 0.25, 8.1);
-    const v = this.figVoleur(1720, 'profil', null, true);
-    this.tweens.add({ targets: v, x: 1600, duration: 2200, ease: 'Sine.easeOut' });
+    const v = this.figVoleur(1720 + E, 'profil', null, true);
+    this.tweens.add({ targets: v, x: 1600 + E, duration: 2200, ease: 'Sine.easeOut' });
     const l = this.lueurNuit(1680 - 960, 400, 1.1, 0xffc060, 0.55, 8.6);
     this.tweens.add({ targets: l, x: 1560 - 960, duration: 2200, ease: 'Sine.easeOut' });
     this.tweens.add({ targets: l, alpha: 0.4, duration: 300, yoyo: true, repeat: -1 });
@@ -154,7 +156,7 @@ class CambrioleurScene extends PromenadeScene {
 
   // III. La fuite : dans la rue, il détale en hurlant et sème son butin
   fuite() {
-    const x0 = 3840 + 1650; this.cadrerNuit(x0);
+    const x0 = PIECES_PROMENADE[P_DEHORS].x + 1650; this.cadrerNuit(x0);
     const x = x0 + 560;
     const v = this.figVoleur(x - 160, 'profil', 'leves', false, 9.6);
     this.tweens.add({ targets: v, x: x + 520, delay: 900, duration: 5200, ease: 'Quad.easeIn' });
