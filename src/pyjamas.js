@@ -14,7 +14,7 @@ const PYJAMAS = {
   nuit: { nom: 'Chemise de nuit et bonnet', f: true, prix: 12, effet: 'Le bonnet à pompon garde la tête au chaud.' },
   laine: { nom: 'Robe de chambre de laine', f: true, prix: 30, chaud: true, effet: "Chaude : l'hiver, sans feu, une nuit de plus avant le rhume." },
   flanelle: { nom: 'Pyjama de flanelle à carreaux', prix: 20, chaud: true, effet: "Chaud : l'hiver, sans feu, une nuit de plus avant le rhume." },
-  etoile: { nom: 'Pyjama étoilé du Long Hiver', prix: 24, effet: "Brodé d'étoiles d'or, avec son bonnet à pompon." },
+  etoile: { nom: 'Pyjama étoilé', prix: 24, effet: "Brodé d'étoiles d'or, avec son bonnet à pompon." },
 };
 const PYJAMAS_DEPART = ['lin', 'raye'];
 const PYJAMA_PAR_DEFAUT = 'raye';
