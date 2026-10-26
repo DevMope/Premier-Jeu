@@ -285,9 +285,9 @@ function guideClient(comptoir, etape) {
   for (const k of ['comptoir', 'colis', 'remis', 'refus', 'carte']) G.tutoVu[k] = true;   // (le guide remplace ces conseils-là)
   const et = n => ({ y: 338, liste: ETAPES_CLIENT, enCours: n, titre: 'Ton premier client :' });
   const PAS = {
-    commande: { zone: [683, 16, 262, 236], fleche: [640, 130, 0], texte: "« D'abord, lis sa commande, là, sur le parchemin. Chaque ligne, c'est ce qu'il lui faut pour revenir vivante. »", bouton: 'Compris ▶', suite: 'marchandises', n: 0 },
+    commande: { zone: [680, 46, 226, 208], fleche: [640, 140, 0], texte: "« D'abord, lis sa commande, là, sur le parchemin. Chaque ligne, c'est ce qu'il lui faut pour revenir vivante. »", bouton: 'Compris ▶', suite: 'marchandises', n: 0 },
     marchandises: { zone: [142, 352, 556, 172], fleche: [420, 330, 90], texte: "« Clique sur tes marchandises, en bas, pour les glisser dans son baluchon. Tout ce qui est sur le parchemin. »", n: 1, bulle: { x: 470, y: 200, pointe: null } },
-    flair: { zone: [683, 192, 262, 54], fleche: [640, 219, 0], texte: "« Tout y est ! Sous la commande, la jauge de ton flair : ses chances de revenir vivante. Plus le baluchon est complet, plus elle monte. »", bouton: 'Compris ▶', suite: 'remettre', n: 2 },
+    flair: { zone: [688, 208, 210, 40], fleche: [640, 228, 0], texte: "« Tout y est ! Sous la commande, la jauge de ton flair : ses chances de revenir vivante. Plus le baluchon est complet, plus elle monte. »", bouton: 'Compris ▶', suite: 'remettre', n: 2 },
     remettre: { zone: [732, 476, 216, 40], fleche: [690, 496, 0], texte: "« Il ne reste qu'à lui remettre son baluchon. Clique sur « Remettre le baluchon ». »", n: 3, bulle: { x: 470, y: 420, pointe: null } },
   };
   if (etape === 'fini') {
