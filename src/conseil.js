@@ -62,7 +62,7 @@ const NOMS_ROYAUX = {
   fleches: ['carquois de flèches', 'carquois de flèches', false], corde: ['corde', 'cordes', true], amulette: ['amulette', 'amulettes', true],
   hache: ['hache de guerre', 'haches de guerre', true], marteau: ['marteau de guerre', 'marteaux de guerre', false], arc: ['arc long', 'arcs longs', false],
   lance: ['lance', 'lances', true], baton: ['bâton de mage', 'bâtons de mage', false], bambou: ['bâton de bambou', 'bâtons de bambou', false],
-  fronde: ['fronde', 'frondes', true], dague: ['dague', 'dagues', true], rapiere: ['rapière', 'rapières', true], khopesh: ['khopesh', 'khopeshs', false],
+  fronde: ['fronde', 'frondes', true], dague: ['dague', 'dagues', true], epeecourte: ['épée courte', 'épées courtes', true], arbalete: ['arbalète', 'arbalètes', true], rapiere: ['rapière', 'rapières', true], khopesh: ['khopesh', 'khopeshs', false],
   griffes: ['paire de griffes de fer', 'paires de griffes de fer', true], massue: ['massue', 'massues', true],
 };
 const EN_LETTRES = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf', 'vingt'];

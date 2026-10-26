@@ -64,7 +64,7 @@ function prixDetresse(p, choix) {
 function objetDetresse(G, p) {
   const d = p.detresse;
   if (!d.arme || (G.stock[d.id] || 0) >= d.qte) return d.id;
-  return IDS_ARMES.find(id => (G.stock[id] || 0) >= d.qte) || d.id;
+  return IDS_ARMES.find(id => (G.stock[id] || 0) >= d.qte && armeAutorisee(p.voyageur, id)) || d.id;   // (le bâton : aux magiciennes seulement)
 }
 // Peut-on répondre ainsi ? { ok, raison }
 function peutSecourir(G, p, choix) {

@@ -99,7 +99,7 @@ const REPERES_CORPS = {};   // (v1.01) le centre de la tête, le haut du torse, 
 function armePortee(p) {
   if (!p || typeof ITEMS === 'undefined') return null;
   if (p.armeEmportee && ITEMS[p.armeEmportee]) return p.armeEmportee;
-  return Object.keys(p.inventaire || {}).find(id => ITEMS[id] && ITEMS[id].arme) || null;
+  return Object.keys(p.inventaire || {}).find(id => ITEMS[id] && ITEMS[id].arme && (id !== 'baton' || p.race === 'magicienne')) || null;   // (le bâton : aux magiciennes seulement)
 }
 
 // L'ordre des tenues : novice 0 … légende 4.

@@ -38,7 +38,7 @@ Object.assign(StoryScene.prototype, {
     this.tweens.killTweensOf(p);
     if (p.marche) { p.marche.remove(); p.marche = null; }
     this.cleYeuxOuverts = null;
-    this.lameTiree = false; this.bouclierLeve = null; this.armeLachee = false;
+    this.lameTiree = false; this.bouclierLeve = null; this.armeLachee = false; this.armeAuSol = null; this.enRamassage = false;
     // (ses poses à lui se préparent en tâche de fond : se battre avec son arme, tomber, s'agenouiller)
     const q = this.voyageurRecit(), paire = POSES_COMBAT[this.armeTenue];
     prechargerPoses(this, [...(paire ? paire.map(nom => ({ quoi: q, nom, arme: this.armeTenue })) : []), ...['aGenoux', 'desequilibre', 'auSol', 'trebuche', 'auSolVentre'].map(nom => ({ quoi: q, nom }))]);
@@ -61,6 +61,10 @@ Object.assign(StoryScene.prototype, {
   tete(p = this.perso) { const pt = pointCorps(p, 'tete'); if (pt) return { x: pt.x, y: pt.y - 6 }; return { x: p.x + (p.flipX ? -1 : 1) * p.displayWidth * 0.05, y: p.y - hauteurCorps(p) * 0.86 }; },
   // Il tient un objet : l'image suit sa main
   tenir(cle, { echelle = 2.6, angle = 0, dx = 0, dy = 0, qui = this.perso, devant = true } = {}) {
+    // (retours planche 86) un objet qu'on a dessiné pour la main (ration, gourde, fiole, torche, bandage...) : le vrai dessin, à
+    // l'échelle, tenu dans la vraie main (le bras se plie devant lui)
+    const idObjet = typeof cle === 'string' && cle.startsWith('hd_') ? cle.slice(3) : null;
+    if (qui === this.perso && idObjet && OBJETS_MAIN[idObjet]) return this.tenirObjet(idObjet, { angle, dx, dy });
     // (v0.63) le voyageur se bat avec l'arme qu'il a vraiment emportée (sa hache, son arc...)
     if (qui === this.perso && cle === iconeObjet(this, 'epee') && this.armeTenue && this.armeTenue !== 'epee') cle = iconeObjet(this, this.armeTenue);
     const o = this.garder(this.add.image(0, 0, cle).setScale(echelle).setAngle(angle).setDepth(qui.depth + (devant ? 0.05 : -0.05)));
@@ -72,6 +76,21 @@ Object.assign(StoryScene.prototype, {
       o.setPosition(m.x + o.dx * s, m.y + o.dy).setFlipX(qui.flipX).setDepth(qui.depth + (devant ? 0.05 : -0.05));
     };
     suivre(); this.chaqueImage(suivre);
+    return o;
+  },
+  // Un objet dessiné pour la main (OBJETS_MAIN) dans la main du voyageur ; s'il est debout les bras le long du corps, il tend le bras
+  // (pose tient / tientHaut), puis le baisse quand l'objet s'efface ; dans une pose du rig (à genoux...), il garde sa main
+  tenirObjet(id, { angle = 0, dx = 0, dy = 0 } = {}) {
+    const p = this.perso, def = OBJETS_MAIN[id];
+    const change = !poseCorps(p) && !this.armeLachee && !/_(assis|mangeAssis|boit|mange|chauffe|dort|leves)$/.test(p.texture.key);
+    if (change) this.poserRecit(def.pose);
+    const r = imageObjetMain(this, id, p, () => this.main(p), { dx, dy, angle });
+    const o = this.garder(r.o);
+    (this.menace.tenus = this.menace.tenus || []).push(o);
+    let rendu = false;
+    const rendre = () => { if (rendu || !change) return; rendu = true; if (p.active && poseCorps(p) === def.pose) this.poserRecit(null); };
+    o.once('destroy', rendre);
+    this.chaqueImage(() => { r.suivre(); if (o.alpha < 0.05 || o.libre || !o.visible) rendre(); });
     return o;
   },
   // Il lève les bras (ou les baisse)
@@ -185,6 +204,7 @@ Object.assign(StoryScene.prototype, {
   // Il tombe à genoux (puis se relève avec `debout`) : les genoux touchent terre
   async aGenoux() {
     const p = this.perso; if (!p || !p.active) return;
+    await this.lacherSiEnMain();
     this.cleYeuxOuverts = null;
     const sol = Math.max(p.y, SOL_RECIT);
     this.poserRecit('aGenoux');
@@ -199,7 +219,8 @@ Object.assign(StoryScene.prototype, {
     const pose = poseCorps(p);
     if (pose && POSES_COUCHEES.includes(pose)) { this.poserRecit('aGenoux'); await this.attendre(Math.round(duree * 0.45)); }
     if (pose) { this.poserRecit(null); p.setScale(6 * this.fCorps, 6 * this.fCorps * 0.9); }
-    return this.animer({ targets: p, scaleY: 6 * this.fCorps, scaleX: 6 * this.fCorps, angle: 0, y: SOL_RECIT, duration: pose ? Math.round(duree * 0.55) : duree, ease: 'Sine.easeOut' });
+    await this.animer({ targets: p, scaleY: 6 * this.fCorps, scaleX: 6 * this.fCorps, angle: 0, y: SOL_RECIT, duration: pose ? Math.round(duree * 0.55) : duree, ease: 'Sine.easeOut' });
+    if (this.armeLachee && this.armeAuSol && !this.enRamassage) { this.enRamassage = true; try { await this.ramasserArme(); } finally { this.enRamassage = false; } }   // (il reprend son arme)
   },
   // (v1.61) il s'endort : les yeux fermés (même dessin, même taille) ; il les rouvre en se relevant
   // (planches 85 et 86 : une pose du rig a ses yeux à elle ; on n'y touche pas)
@@ -225,6 +246,7 @@ Object.assign(StoryScene.prototype, {
     this.tweens.killTweensOf(p);
     if (p.marche) { p.marche.remove(); p.marche = null; }
     if (this.menace) this.lacherTout();
+    await this.lacherSiEnMain();   // (son arme lui échappe, s'il l'avait en main ; rangée sur lui, elle reste accrochée)
     const sol = p.y, deja = poseCorps(p);
     // (retours planche 86) un léger voile gris sur lui, sans le rendre transparent
     const voile = () => p.setTint(0xc4c6d0).setAlpha(1);
@@ -252,7 +274,7 @@ Object.assign(StoryScene.prototype, {
   // flammes, des coups portés droit devant), la parade haute (une volée de flèches, un coup qui tombe d'en haut), la riposte
   // (le bouclier en avant, il frappe par-dessous). Renvoie un repère qui suit le centre du bouclier (les flèches s'y plantent)
   leverBouclier(nom = 'bouclierParade') {
-    const p = this.perso, arme = ['epee', 'hache', 'marteau', 'massue', 'dague', 'khopesh', 'rapiere', 'lance'].includes(this.armeTenue) ? this.armeTenue : null;
+    const p = this.perso, arme = ['epee', 'epeecourte', 'hache', 'marteau', 'massue', 'dague', 'khopesh', 'rapiere', 'lance'].includes(this.armeTenue) ? this.armeTenue : null;
     const b = this.bouclierLeve && this.bouclierLeve.active ? this.bouclierLeve : (this.bouclierLeve = { x: p.x, y: p.y - 60, alpha: 1, active: true, visible: true, pose: true,
       setTint() { return this; }, clearTint() { return this; }, setAlpha(a) { this.alpha = a; return this; }, setVisible() { return this; }, destroy() { this.active = false; } });
     b.nom = nom;
@@ -268,6 +290,13 @@ Object.assign(StoryScene.prototype, {
     // (le bouclier baissé, les flèches qui s'y étaient plantées disparaissent avec lui)
     this.time.delayedCall(delai, () => { const p = this.perso; if (p && p.active && /^bouclier/.test(poseCorps(p) || '')) this.poserRecit(null); b.baisse = true; if (b === this.bouclierLeve) this.bouclierLeve = null; });
   },
+  // Il tire à l'arc : le vrai arc long, bandé (poseArc(false) : la corde a claqué) ; renvoie un repère que rengainer sait ranger
+  tirerArc() {
+    this.poserRecit('arcBande', { arme: 'arc' });
+    this.lameTiree = true;
+    return { arme: 'arc', pose: true, active: true };
+  },
+  poseArc(tendu) { this.poserRecit(tendu ? 'arcBande' : 'arcTire', { arme: 'arc' }); },
   // Il tire son arme : renvoie la « lame » que suivent frapperArme et rengainer (sans pose pour cette arme : l'icône d'avant)
   tirerArme() {
     const arme = this.armeTenue || 'epee';
@@ -298,6 +327,7 @@ Object.assign(StoryScene.prototype, {
   async renverse(depuisDroite = true) {
     this.lacherTout();
     const p = this.perso; if (!p || !p.active) return;
+    await this.lacherSiEnMain();   // (son arme lui échappe, s'il l'avait en main)
     const deFace = depuisDroite !== p.flipX, recul = depuisDroite ? -1 : 1;
     this.cleYeuxOuverts = null;
     this.poserRecit(deFace ? 'desequilibre' : 'trebuche');
@@ -449,27 +479,47 @@ Object.assign(StoryScene.prototype, {
   calmer(b) { if (b && b.agite) { b.agite.remove(); b.agite = null; } },
   // Il va ramasser son arme tombée (elle était au sol) : il la remet à sa place, sur lui
   async ramasserArme() {
-    const M = this.menace, o = M && M.armeAuSol, p = this.perso;
-    if (!o || !o.active) { this.armeLachee = false; return; }
+    const o = this.armeAuSol, p = this.perso;
+    if (!o || !o.active) { this.armeLachee = false; this.armeAuSol = null; return; }
+    this.armeLachee = false; this.armeAuSol = null;
     p.setFlipX(o.x < p.x);
     await this.marcherA(o.x, 4);
     await this.aGenoux();
-    o.destroy(); M.armeAuSol = null; this.armeLachee = false;
+    o.destroy();
+    this.poserRecit(null);
     await this.debout(300);
     p.setFlipX(false);
   },
-  // Son arme lui échappe : elle vole depuis sa main et retombe au sol, à sa vraie taille (il n'a plus rien en main)
-  async lacherArme(b, vers = 1, { voler = true } = {}) {
-    const arme = b === this.perso ? this.armeTenue : b.arme;
+  // Son arme lui échappe : elle tombe de sa main, rebondit un peu et reste au sol, à sa vraie taille (il n'a plus rien en main).
+  // voler : elle est arrachée d'un coup (un grand arc avant de retomber) ; sinon elle glisse simplement de ses doigts.
+  async lacherArme(b, vers = 1, { voler = true, arme = b === this.perso ? this.armeTenue : b.arme } = {}) {
     if (!arme || !ARMES_HD[arme]) return null;
     const m = pointCorps(b, 'main') || { x: b.x + (b.flipX ? -14 : 14), y: b.y - 50 };
-    const o = this.garder(this.add.image(m.x, m.y, textureArmeHD(this, arme)).setScale(Math.abs(b.scaleX)).setDepth(b.depth + 0.02).setAngle(voler ? -60 * vers : 0).setFlipX(vers < 0));
+    const o = this.garder(this.add.image(m.x, m.y, textureArmeHD(this, arme)).setScale(Math.abs(b.scaleX)).setDepth(b.depth + 0.02).setAngle(voler ? -60 * vers : -20 * vers).setFlipX(vers < 0));
     if (b !== this.perso) { b.arme = null; this.posture(b, b.posture === 'auSol' || b.posture === 'surLesFesses' ? b.posture : 'debout'); }
-    if (voler) await this.sauter(o, m.x + vers * 110, SOL_RECIT - o.displayHeight * 0.5, 80, 600, vers * 420);
-    else await this.animer({ targets: o, y: SOL_RECIT - o.displayHeight * 0.5, duration: 260, ease: 'Quad.easeIn' });
-    o.setAngle(0).setY(SOL_RECIT - o.displayHeight * 0.5 + 2);
+    const sol = SOL_RECIT - o.displayHeight * 0.5 + 2;
+    if (voler) await this.sauter(o, m.x + vers * 110, sol, 80, 600, vers * 420);
+    else {
+      // elle tombe, touche le sol, rebondit deux fois en s'allongeant, puis ne bouge plus
+      this.tweens.add({ targets: o, x: m.x + vers * Phaser.Math.Between(26, 44), duration: 620, ease: 'Quad.easeOut' });
+      this.tweens.add({ targets: o, angle: vers * 8, duration: 620, ease: 'Quad.easeOut' });
+      await this.animer({ targets: o, y: sol, duration: 620, ease: 'Bounce.easeOut' });
+    }
+    o.setAngle(0).setY(sol);
     Son.jouer('poser');
     return o;
+  },
+  // Elle est en main (une pose de combat) : quand il tombe ou qu'il meurt, elle lui échappe. Rangée sur lui (dans le dos, sur
+  // l'épaule, au fourreau), elle reste accrochée.
+  async lacherSiEnMain() {
+    const p = this.perso, pose = poseCorps(p);
+    if (!p || !p.active || this.armeLachee || !pose || !POSES_HD[pose] || !POSES_HD[pose].armeMain) return;
+    const m = /_pose_[A-Za-z]+_([a-z]+)$/.exec(p.texture.key), arme = m && m[1];   // (l'arme que la pose met dans sa main)
+    if (!arme || !ARMES_HD[arme]) return;
+    this.lameTiree = false;
+    this.poserRecit(pose, { arme: null });   // (la même pose, la main vide)
+    this.armeLachee = true;
+    this.armeAuSol = await this.lacherArme(p, p.flipX ? -1 : 1, { voler: false, arme });
   },
 
   // --- Les scènes elles-mêmes ---
@@ -966,17 +1016,18 @@ const SCENES_EPREUVES = {
       const M = this.menace, p = this.perso, l = M.loup;
       if (id === 'fleches') {
         // il bande son arc, vise... deux flèches
-        const arc = this.tenir('arcHD', { echelle: 2.4, dy: -16 });
+        const arc = this.tirerArc();   // (retours planche 86 : le vrai arc long, bandé)
         this.cadrer(p.x + 80, 250, 1.35, 400);
-        await this.animer({ targets: arc, scaleX: 2.1, duration: 400 });
-        arc.setScale(2.4);
+        await this.attendre(400);
         const m = this.main();
         const f1 = await this.tirerFleche(m.x + 10, m.y - 16, l.x - 40, SOL_RECIT - 2, { haut: 16 });
         f1.setRotation(0.5);
+        this.poseArc(false);   // (la corde a claqué)
         this.onomatopee(l.x - 40, SOL_RECIT - 70, 'TOC !', '#fff4dc');
         await this.animer({ targets: l, x: l.x + 14, duration: 140, ease: 'Quad.easeOut' });   // il recule d'un bond
-        await this.animer({ targets: arc, scaleX: 2.1, duration: 300 });
-        arc.setScale(2.4);
+        await this.attendre(300);
+        this.poseArc(true);   // (il encoche la deuxième et bande de nouveau)
+        await this.attendre(250);
         if (reussie) {
           const f2 = await this.tirerFleche(m.x + 10, m.y - 16, l.x - 10, l.y - l.displayHeight * 0.6, { haut: 10, plante: false });
           void f2;
@@ -991,7 +1042,7 @@ const SCENES_EPREUVES = {
           l.setTexture('loupHD');
           await fl;
         }
-        this.tweens.add({ targets: arc, alpha: 0, duration: 300 });
+        this.rengainer(arc, 300);
         this.cadrer(p.x + 120, 250, 1.12, 400);
         return;
       }
@@ -1018,7 +1069,7 @@ const SCENES_EPREUVES = {
           this.onomatopee(p.x + 50, p.y - 160, 'RATÉ !', '#ff8080');
           l.setTexture('loupHD');
         }
-        this.rengainer(lame, 300);
+        if (reussie) this.rengainer(lame, 300);   // (raté, il garde l'arme en main : quand le loup le renverse, elle lui échappe)
         return;
       }
       await this.utiliserObjet(id);
@@ -1094,11 +1145,11 @@ const SCENES_EPREUVES = {
       this.lignesDeVitesse(b.x - 30, b.y - 40, -1);
       const charge = this.animer({ targets: b, x: p.x + 120, angle: 0, duration: 700, ease: 'Quad.easeIn' });
       if (id === 'fleches') {
-        const arc = this.tenir('arcHD', { echelle: 2.4, dy: -16 });
+        const arc = this.tirerArc();   // (retours planche 86 : le vrai arc long, bandé)
         await this.attendre(250);
         const m = this.main();
         await this.tirerFleche(m.x + 10, m.y - 16, p.x + 140, b.y - 40, { haut: 4, plante: false, duree: 200 });
-        this.tweens.add({ targets: arc, alpha: 0, duration: 300 });
+        this.rengainer(arc, 300);
       } else if (id === 'epee' || id === 'bouclier') {
         // (planche 86) l'arme en garde ; ou le bouclier levé devant lui, l'arme dans l'autre main
         if (id === 'bouclier') this.leverBouclier('bouclierParade');
@@ -1125,7 +1176,7 @@ const SCENES_EPREUVES = {
     },
     async issue(reussie) {
       const M = this.menace, p = this.perso, b = M.bete;
-      if (M.lame) this.rengainer(M.lame, 200); else if (this.bouclierLeve) this.baisserBouclier(200); else if (POSES_COMBAT_NOMS.has(poseCorps(p))) this.poserRecit(null);   // (planche 86 : il baisse sa garde)
+      if (reussie) { if (M.lame) this.rengainer(M.lame, 200); else if (this.bouclierLeve) this.baisserBouclier(200); else if (POSES_COMBAT_NOMS.has(poseCorps(p))) this.poserRecit(null); }   // (il baisse sa garde ; raté, l'arme lui échappe quand la bête le renverse)
       if (reussie && abattu(this)) { await this.assommer(b, 'sanglierHD'); return; }
       if (reussie) {
         b.setFlipX(true).setAngle(0);
@@ -1318,7 +1369,7 @@ const SCENES_EPREUVES = {
         this.rengainer(lame, 0);
         this.armeLachee = true;   // (il n'a plus son arme sur lui, tant qu'il ne l'a pas ramassée)
         this.time.delayedCall(10, () => { if (p.active) this.poserRecit(null); });
-        this.lacherArme(p, -1).then(o => { M.armeAuSol = o; });
+        this.lacherArme(p, -1).then(o => { this.armeAuSol = o; });
         this.posture(chef, 'menace');
       }
       this.cadrer(p.x + 120, 250, 1.12, 500);
