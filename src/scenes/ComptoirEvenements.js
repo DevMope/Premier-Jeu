@@ -180,9 +180,11 @@ Object.assign(CounterScene.prototype, {
         for (const o of this.evtObjets) if (o.texture && o.texture.key === 'evt_berceuse') this.tweens.add({ targets: o, y: o.y + 30, alpha: 0, duration: 400 });
         this.raconter("Une berceuse, d'une écriture fine. Quand tu relèves les yeux, le vieil homme s'éloigne déjà... et la rue semble l'effacer à chaque pas.");
         this.bouton('...', null);
+        // (il s'efface en marchant ; jamais sur le suivant : remettrePerso arrête ce fondu, et on vérifie que c'est encore lui)
+        const lui = this.entree;
         this.time.delayedCall(900, () => {
           this.partirPar(FENETRE.x - 80);
-          this.time.delayedCall(700, () => this.tweens.add({ targets: this.perso, alpha: 0, duration: 1100 }));
+          this.time.delayedCall(700, () => { if (this.entree === lui) this.tweens.add({ targets: this.perso, alpha: 0, duration: 1100 }); });
         });
       });
     });
