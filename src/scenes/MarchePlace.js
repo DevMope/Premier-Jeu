@@ -227,7 +227,8 @@ Object.assign(MarcheScene.prototype, {
         const essai = lettrageHD(this, nom, { ...o, hauteur: 21, lignesMax: 1 });
         const deux = (m.deuxLignes && nom.length > 20) || essai.mise.deborde;
         const lignes = deux ? 2 : 1, E = etalNomHD(this, couleur, style, lignes);
-        etals[0].setTexture(E.cle); if (etals[1]) etals[1].setTexture(E.cle).setCrop(0, 56 + E.ext, 88, 26);   // (le tir à l'arc et la grande roue n'ont qu'une image)
+        etals[0].setTexture(E.cle); if (etals[1]) etals[1].setTexture(E.cle).setCrop(0, 82 + E.ext - E.comptoir, 88, E.comptoir);   // (le comptoir, devant le marchand ; le tir à l'arc et la grande roue n'ont qu'une image)
+        this.asseoirEtal(g, etals, E);
         // la bande du haut passe devant le marchand (le chapeau de Mère Sauge reste derrière le lambrequin)
         g.add(this.add.image(etals[0].x, etals[0].y, E.cle).setOrigin(0.5, 1).setScale(2).setCrop(0, 0, 88, E.rangs));
         const haut = etals[0].y - (82 + E.ext) * 2, yc = haut + (m.modele === 'poutre' ? E.toit : E.toit + 1) * 2 + E.hb + (m.modele === 'poutre' ? 0 : 0.5);
@@ -274,6 +275,29 @@ Object.assign(MarcheScene.prototype, {
     }
     // (le tir à l'arc et la grande roue : leurs textes de la rue, devenus inutiles, sont détruits aussi)
     for (const g of this.place.list) if (g.cle === 'jeux') g.list.filter(o => o.type === 'Text' && /TIR À L'ARC|LA GRANDE ROUE/.test(o.text)).forEach(o => o.destroy());
+  },
+
+  // (v1.63, retours du joueur : « le comptoir lévite ») Ce qui est posé sur l'étal touche ce qui le porte : le comptoir pose
+  // son ombre sur le sol, chaque cagette la sienne sur le plateau, les sacs, paniers et tonneaux devant l'étal la leur sur
+  // le sol ; le tapis passe sous le comptoir et s'étale devant lui (avant, il recouvrait le bas du comptoir).
+  asseoirEtal(g, etals, E) {
+    const pied = etals[0].y, ombre = (x, y, l, h, a) => this.add.image(x, y, ombrePlaceHD(this)).setScale(l / 64, h / 24).setAlpha(a);
+    const tapis = g.list.find(o => o.texture && /^tapisEtalHD_/.test(o.texture.key));
+    if (tapis) { tapis.setY(pied + tapis.displayHeight - 4); g.sendToBack(tapis); }
+    const sol = [ombre(10, pied + 1, 196, 16, 0.95)];                                       // l'ombre du comptoir, portée vers le bas à droite
+    const posees = g.list.filter(o => o.texture && o.originY === 1 && Math.abs(o.y - (pied + 8)) < 3 && /HD$/.test(o.texture.key) && !/^etal|^tapis|^corps/.test(o.texture.key));
+    for (const o of posees) { o.setY(pied + 12); sol.push(ombre(o.x + 3, o.y - 1, o.displayWidth * 0.95, 9, 0.85)); }   // (sur le tapis, chacun avec son ombre)
+    sol.forEach((o, i) => g.addAt(o, (tapis ? 1 : 0) + i));
+    // le tir à l'arc et la grande roue n'ont qu'une image : le comptoir (plus bas) passe devant le sergent ou le Père Givrin
+    if (!etals[1]) {
+      const qui = g.list.filter(o => o.texture && /^corps/.test(o.texture.key)).pop(), H = 82 + E.ext;
+      if (qui) g.addAt(this.add.image(etals[0].x, etals[0].y, E.cle).setOrigin(0.5, 1).setScale(2).setCrop(0, H - E.comptoir, 88, E.comptoir), g.getIndex(qui) + 1);
+    }
+    // les cagettes, sur le plateau : leur ombre, sous elles et sous ce qu'elles portent
+    if (etals[1]) {
+      const i0 = g.getIndex(etals[1]) + 1;
+      g.list.filter(o => o.texture && o.texture.key === 'cagetteHD' && o.y < pied - 20).forEach((c, k) => g.addAt(ombre(c.x + 3, c.y - 1, c.displayWidth * 1.05, 6, 0.9), i0 + k));
+    }
   },
 
   // La relation avec un marchand a changé (un achat, un cadeau, un refus) : son nom prend la nouvelle couleur

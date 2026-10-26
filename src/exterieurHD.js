@@ -753,8 +753,8 @@ function etalHD(scene, couleur) {
 // lambrequin de toile, ou une poutre de façade) est le champ où le nom est peint, brodé, gravé ou cloué (le lettrage :
 // poserLettrage, dans placeMarcheHD.js). etalHD, lui, ne change pas : c'est le même étal, avec sa bande en plus.
 // cleStyle : une entrée de ETALS_NOMS ; lignes : 1, 2 ou 3 (la bande grandit avec) ; renvoie où est la bande dans la texture.
-// La texture est plus haute que celle de etalHD de `ext` rangs : on la pose au même endroit (origine en bas) et la table
-// se recadre à (0, 56 + ext, 88, 26).
+// La texture est plus haute que celle de etalHD de `ext` rangs : on la pose au même endroit (origine en bas) ; le comptoir
+// (les COMPTOIR_ETAL.haut derniers rangs) se recadre pour passer devant le marchand.
 function etalNomHD(scene, couleur, cleStyle, lignes) {
   const m = ETALS_NOMS[cleStyle], hb = bandeEtalNom(lignes);
   const toit = 5, rangs = m.modele === 'poutre' ? toit + hb + 2 : toit + 1 + hb + 3, ext = Math.max(0, rangs - 18);
@@ -817,8 +817,64 @@ function etalNomHD(scene, couleur, cleStyle, lignes) {
     y0 += hb;
     for (let k = 0; k < 2; k++) for (let x = 0; x < L; x++) if (Math.abs((x % 11) - 5) <= (2 - k) * 2) t.poser(x, y0 + k, x % 22 < 11 ? 'auvent' : 'lin', 2 - k);   // le bord de toile qui dépasse
   }
+  comptoirEtalHD(t, couleur, m.comptoir || 'coffre', L, H);   // (les cagettes du marché ont leur base sur le bord du plateau)
   t.contour(); t.texture(scene, cle);
-  return { cle, ext, rangs, toit, hb };
+  return { cle, ext, rangs, toit, hb, comptoir: hauteurComptoir(m.comptoir) };
+}
+// (v1.63, retours du joueur sur la planche 80 v3 : « le comptoir lévite ») Le comptoir d'un étal de la place : un plateau
+// épais, vu un peu d'en haut (son dessus, puis la tranche de sa planche), qui repose au sol sur un coffre de planches ou
+// sous une nappe qui tombe jusqu'aux pieds des tréteaux. Il occupe les COMPTOIR_ETAL.haut derniers rangs de la texture ;
+// les cagettes posées dessus ont leur base sur le bord du plateau (dessus : rangs H-31 à H-26 ; tranche : H-25 à H-23).
+// modele : 'coffre' (planches de chêne clair), 'ferre' (chêne sombre et ferrures), 'peint' (planches peintes, aux couleurs
+// de l'étal), 'caisse' (vieilles planches de récupération), 'nappe' (drap aux couleurs de l'étal ; bord d'or, de lin ou de dentelle)
+// (« nappe:or:18 » : un comptoir plus bas, de 18 rangs, pour le tir à l'arc et la grande roue, où l'on se tient devant)
+const COMPTOIR_ETAL = { haut: 31, dessus: 6, tranche: 3 };
+function hauteurComptoir(modele) { return Number(String(modele || '').split(':')[2]) || COMPTOIR_ETAL.haut; }
+function comptoirEtalHD(t, couleur, modele, L, H) {
+  const C = COMPTOIR_ETAL, y0 = H - hauteurComptoir(modele), yT = y0 + C.dessus, yB = yT + C.tranche;   // le dessus, la tranche, puis le bas
+  const [genre, bord] = String(modele).split(':');
+  t.rampes.peinture = rampe(couleur); t.rampes.nappe = rampe(couleur); t.rampes.lin = RAMPES_OBJETS.lin;
+  for (let y = y0; y < H; y++) for (let x = 0; x < L; x++) t.c[y * L + x] = null;   // (rien de l'étal ne reste sous le comptoir)
+  // le dessus du plateau : des planches dans la longueur, éclairées, leurs joints, l'usure au milieu (là où l'on pose)
+  const bois = genre === 'ferre' ? 'cheneSombre' : 'chene', ton = genre === 'ferre' ? 1 : 0;
+  for (let y = y0; y < yT; y++) for (let x = 0; x < L; x++) {
+    const joint = (y - y0) % 3 === 2, i = 4 + ton - (joint ? 1 : 0) - (y === y0 ? 0 : 0) + (fbm(x * 0.08, y * 0.6, 7801) > 0.66 ? 1 : 0) - (x < 2 || x > L - 3 ? 1 : 0);
+    t.poser(x, y, bois, i);
+  }
+  for (let x = 0; x < L; x++) t.poser(x, y0, bois, 5);                                  // le bord arrière, qui prend la lumière
+  // la tranche, épaisse : une arête claire, puis l'ombre dessous
+  for (let k = 0; k < C.tranche; k++) for (let x = 0; x < L; x++) t.poser(x, yT + k, bois, [4, 3, 1][k] + ton - (x === 0 || x === L - 1 ? 1 : 0));
+  // le bas : coffre de planches debout, ou nappe
+  if (genre === 'nappe') {
+    for (let y = yB; y < H - 2; y++) for (let x = 1; x < L - 1; x++) {
+      const pli = (x % 9), i = 3 + (pli === 0 ? -1 : pli === 1 ? 1 : 0) - (y < yB + 2 ? 1 : 0) - (x < 3 || x > L - 4 ? 1 : 0);
+      t.poser(x, y, 'nappe', i);   // les plis, et l'ombre sous la tranche
+    }
+    const mBord = bord === 'or' ? 'laiton' : 'lin';
+    for (let x = 1; x < L - 1; x++) {
+      if (bord === 'dentelle') { t.poser(x, H - 4, 'lin', 4); if (x % 2) t.poser(x, H - 3, 'lin', 5); }
+      else { t.poser(x, H - 4, mBord, 4); t.poser(x, H - 3, mBord, x % 3 ? 3 : 2); }   // l'ourlet, et ses franges
+    }
+    for (const x0 of [5, L - 9]) for (let y = H - 2; y < H; y++) for (let x = x0; x < x0 + 4; x++) t.poser(x, y, 'cheneSombre', y === H - 1 ? 1 : 3);   // les pieds des tréteaux
+  } else {
+    const mat = genre === 'peint' ? 'peinture' : genre === 'ferre' ? 'cheneSombre' : 'chene';
+    for (let y = yB; y < H; y++) for (let x = 1; x < L - 1; x++) {
+      const p = Math.floor((x - 1) / 8), joint = (x - 1) % 8 === 0, plinthe = y >= H - 3;
+      let i = 3 + (p % 2 ? -1 : 0) + (joint ? -2 : 0) + (y < yB + 2 ? -1 : 0) + (plinthe ? -1 : 0) + Math.round((fbm(x * 0.3, y * 0.07, 7810 + p) - 0.5) * 1.4);
+      if (genre === 'caisse' && p === 6 && y > yB + 6 && y < H - 6) { t.poser(x, y, 'cheneSombre', 0); continue; }   // une planche qui manque : le dedans sombre
+      if (genre === 'caisse' && p === 3) i -= 1;
+      t.poser(x, y, mat, i + (genre === 'ferre' ? 1 : 0));
+    }
+    for (let x = 1; x < L - 1; x++) { t.poser(x, H - 4, mat, genre === 'ferre' ? 4 : 3); t.poser(x, H - 1, mat, 0); }   // la plinthe, posée au sol
+    if (genre === 'peint') for (let x = 1; x < L - 1; x++) { t.poser(x, yB + 1, 'lin', 4); t.poser(x, H - 5, 'lin', 3); }   // deux filets clairs
+    if (genre === 'ferre') for (const x0 of [1, L - 7]) for (let y = yB; y < H; y++) for (let x = x0; x < x0 + 6; x++) {   // les coins ferrés, rivetés
+      const riv = (x === x0 + 2 || x === x0 + 3) && (y - yB) % 6 === 3;
+      t.poser(x, y, 'fer', riv ? 5 : x === x0 ? 4 : 2);
+    }
+    if (genre === 'caisse') for (const [x, y] of [[4, yB + 3], [44, yB + 3], [76, H - 7], [20, H - 7]]) t.poser(x, y, 'fer', 4);   // les clous
+    if (genre === 'coffre') for (let x = 1; x < L - 1; x++) t.poser(x, yB + Math.floor((H - yB) / 2), 'chene', 2);   // la traverse
+  }
+  for (let x = 0; x < L; x++) if (t.c[(H - 1) * L + x] !== null) t.poser(x, H - 1, t.mat(x, H - 1), 0);   // le pied du comptoir, sur le sol
 }
 // L'auvent du coin des jeux, avec un lambrequin violet bordé d'or où le nom est peint (mêmes poteaux et lanterne que auventJeux)
 function auventJeuxNomHD(scene) {

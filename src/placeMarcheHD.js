@@ -148,17 +148,18 @@ function barrierePlaceHD(scene, n = 5) {
 // façade, l'estrade, le tableau...), comme le montre la planche 80 v3. La table ETALS_NOMS dit le style de chaque lieu ;
 // etalNomHD (exterieurHD.js) dessine la bande, poserLettrage y écrit le nom, à la résolution des textes du jeu.
 const BOIS_CLAIR_NOM = 0xc09860;   // le bois clair des planches gravées : le creux sombre des lettres s'y lit de loin
-// modele : 'toile' (lambrequin sous une tringle) ou 'poutre' (poutre de façade) ; genre : peint, brode, grave, decoupe, dore
+// modele : 'toile' (lambrequin sous une tringle) ou 'poutre' (poutre de façade) ; genre : peint, brode, grave, decoupe, dore ;
+// comptoir : coffre, ferre, peint, caisse ou nappe:or|lin|dentelle (comptoirEtalHD, exterieurHD.js)
 const ETALS_NOMS = {
-  gedeon: { modele: 'toile', ton: -1, bord: 'laiton', bas: 'festons', ble: true, genre: 'brode', police: 'Alegreya' },
-  forge: { modele: 'poutre', bois: 'cheneSombre', fer: true, genre: 'grave', police: 'Alegreya' },
-  apothicaire: { modele: 'toile', bord: 'laiton', bas: 'pointes', etoiles: true, genre: 'peint', police: 'Uncial Antiqua', graisse: 400, taille: 16 },
-  tailleuse: { modele: 'toile', bord: 'piqure', bas: 'festons', genre: 'brode', police: 'Alegreya', italique: true },
-  bazar: { modele: 'poutre', bois: 'peinte', noeud: true, genre: 'decoupe', police: 'Alegreya', couleurFixe: '#fbecb8' },
-  brocante: { modele: 'poutre', bois: 'vieille', genre: 'peint', police: 'MedievalSharp', graisse: 400, taille: 16, couleurFixe: '#fff4dc', inclinaison: 1.2 },
-  garderobe: { modele: 'toile', bord: 'laiton', bas: 'dentelle', tringle: 'laiton', genre: 'brode', police: 'Alegreya', italique: true, couleurFixe: '#f6e2a0', deuxLignes: true },
-  tir: { modele: 'toile', bord: 'laiton', bas: 'pointes', genre: 'dore', police: 'Alegreya', couleurFixe: '#f0c850' },    // le tir à l'arc du Solstice
-  roue: { modele: 'toile', bord: 'laiton', bas: 'festons', genre: 'brode', police: 'Alegreya', italique: true, couleurFixe: '#fbecb8' },   // la grande roue du Long Hiver
+  gedeon: { modele: 'toile', comptoir: 'coffre', ton: -1, bord: 'laiton', bas: 'festons', ble: true, genre: 'brode', police: 'Alegreya' },
+  forge: { modele: 'poutre', comptoir: 'ferre', bois: 'cheneSombre', fer: true, genre: 'grave', police: 'Alegreya' },
+  apothicaire: { modele: 'toile', comptoir: 'nappe:or', bord: 'laiton', bas: 'pointes', etoiles: true, genre: 'peint', police: 'Uncial Antiqua', graisse: 400, taille: 16 },
+  tailleuse: { modele: 'toile', comptoir: 'nappe:lin', bord: 'piqure', bas: 'festons', genre: 'brode', police: 'Alegreya', italique: true },
+  bazar: { modele: 'poutre', comptoir: 'peint', bois: 'peinte', noeud: true, genre: 'decoupe', police: 'Alegreya', couleurFixe: '#fbecb8' },
+  brocante: { modele: 'poutre', comptoir: 'caisse', bois: 'vieille', genre: 'peint', police: 'MedievalSharp', graisse: 400, taille: 16, couleurFixe: '#fff4dc', inclinaison: 1.2 },
+  garderobe: { modele: 'toile', comptoir: 'nappe:dentelle', bord: 'laiton', bas: 'dentelle', tringle: 'laiton', genre: 'brode', police: 'Alegreya', italique: true, couleurFixe: '#f6e2a0', deuxLignes: true },
+  tir: { modele: 'toile', comptoir: 'nappe:or:18', bord: 'laiton', bas: 'pointes', genre: 'dore', police: 'Alegreya', couleurFixe: '#f0c850' },    // le tir à l'arc du Solstice
+  roue: { modele: 'toile', comptoir: 'nappe:lin:18', bord: 'laiton', bas: 'festons', genre: 'brode', police: 'Alegreya', italique: true, couleurFixe: '#fbecb8' },   // la grande roue du Long Hiver
 };
 // La hauteur de la bande (en rangs de texture) : une ligne, deux ou trois
 function bandeEtalNom(lignes) { return [12, 18, 22][Math.min(3, lignes) - 1]; }
