@@ -461,13 +461,13 @@ Object.assign(REPERES_HD, {
   } },
   // Fondcombe : la vallée cachée, les falaises et leurs cascades, la maison d'Elrond en pierre
   // claire, ses tours fines, ses arches et ses fenêtres dorées, le pont sur les chutes, les arbres d'automne
-  fondcombe: { l: 420, h: 290, saison: true, dessin(t) {
+  fondcombe: { l: 420, h: 290, dessin(t) {
     // les falaises et la mousse
     // (des falaises aux bords déchiquetés, des strates claires et des ombres)
     const bordG = y => 70 + Math.sin(y * 0.05) * 18 + Math.sin(y * 0.19) * 7 - Math.max(0, 60 - y) * 0.9, bordD = y => 340 - Math.sin(y * 0.045) * 16 - Math.sin(y * 0.23) * 6 + Math.max(0, 40 - y) * 1.2;
     const extG = y => Math.max(0, 46 - y * 0.16 + Math.sin(y * 0.11) * 8 + Math.sin(y * 0.31) * 4), extD = y => Math.min(419, 374 + y * 0.16 - Math.sin(y * 0.1) * 8 - Math.sin(y * 0.27) * 4);
     remplir(t, 'roche', (x, y) => (x < bordG(y) && x > extG(y)) || (x > bordD(y) && x < extD(y)), (x, y) => { const strate = Math.floor((y + Math.sin(x * 0.1) * 4) / 9) % 3; return 2 + strate + (Math.abs(x - bordG(y)) < 4 || Math.abs(x - bordD(y)) < 4 || Math.abs(x - extG(y)) < 3 || Math.abs(x - extD(y)) < 3 ? 1 : 0) - (hachage(x >> 2, y >> 2, 2) > 0.8 ? 1 : 0); });
-    const sa = saisonRepere();
+    const sa = 'brumes';   // (le joueur : la vallée garde son automne toute l'année ; les sapins restent verts, sans neige)
     for (let k = 0; k < 10; k++) { const g = k < 5, y = 60 + ((k * 53) % 200), x = g ? extG(y) + 8 + (k * 7) % 20 : extD(y) - 8 - (k * 7) % 20; arbreDansRepere(t, '_fs', { espece: 'sapin', saison: sa, cx: x, base: y + 22, H: 24, graine: 20 + k, neige: sa === 'givre' }); }   // des sapins accrochés aux parois (v1.63 : peints)
     for (let k = 0; k < 40; k++) { const x = hachage(k, 1, 4) < 0.5 ? hachage(k, 2, 4) * 90 : 330 + hachage(k, 2, 4) * 90, y = 30 + hachage(k, 3, 4) * 250; t.forme('mousse', ellipsoide(x, y, 5, 3), { decalage: 0.2, bord: false }); }
     // les cascades
@@ -484,7 +484,7 @@ Object.assign(REPERES_HD, {
     remplir(t, 'marbre', (x, y) => { if (y < 236 || y >= 250 || x < 220 || x >= 340) return false; return true; }, (x, y) => (y === 236 ? 5 : 3));
     for (const cx of [250, 290, 330]) remplir(t, 'marbre', (x, y) => y >= 250 && y < 290 && Math.abs(x + 0.5 - cx) < 20 && !((x + 0.5 - cx) ** 2 + (y - 290) ** 2 < 300), (x) => (x < cx ? 4 : 2));
     // les arbres d'automne, et des lanternes
-    // (v1.63 : peints comme tous les arbres, de la saison ; l'automne, la vallée flamboie)
+    // (v1.63 : peints comme tous les arbres ; un automne permanent, la vallée flamboie)
     [[112, 66, 'chene'], [172, 50, 'bouleau'], [372, 72, 'chene']].forEach(([cx, H, espece], i) => arbreDansRepere(t, '_fa' + i, { espece, saison: sa, cx, base: 288, H, graine: 30 + i, neige: sa === 'givre' }));
     for (let k = 0; k < 10; k++) halo(t, 'lumiere', 110 + hachage(k, 1, 6) * 220, 120 + hachage(k, 2, 6) * 150, 2.5);
   } },

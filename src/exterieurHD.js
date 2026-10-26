@@ -340,7 +340,7 @@ function arbrePremierPlanHD(scene, forme, biome = 'comte', graine = 0) {
   if (!dim) return null;
   // (v1.63) peints par arbresHD.js, comme ceux des collines : mêmes essences, même couleur de la contrée, même saison
   const saisonComte = biome === 'comte' && typeof saisonActuelle === 'function' ? saisonActuelle() : null;
-  const sa = saisonComte || saisonArbresContree(biome);   // (v1.63 : « automne » aussi suit les saisons, comme les arbres de Fondcombe)
+  const sa = forme === 'automne' ? 'brumes' : saisonComte || saisonArbresContree(biome);   // (« automne » : la vallée de Fondcombe, rousse toute l'année)
   const neige = forme === 'sapinsNeige' || neigeArbresContree(biome, sa);
   const liste = ESSENCES_FORME[forme] || ['chene'], esp = liste[graine % liste.length];
   const cle = `arbrePP_${forme}_${biome}_${sa}${neige ? '_n' : ''}_${graine}`;
