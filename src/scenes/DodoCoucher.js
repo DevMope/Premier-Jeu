@@ -7,6 +7,10 @@
 //  le matin : il ouvre les yeux, s'assoit et s'étire en bâillant, rejette la couverture, pose les pieds par terre, se
 //  frotte les yeux, se lève, va à l'armoire, et le tourbillon lui rend ses habits du jour : « Debout ! ».
 // Chaque geste est une suite de vraies images (coucherHD.js) ; un clic pendant le coucher le fait passer trois fois plus vite.
+// (retouche validée) La séquence complète joue la première nuit dans un pyjama donné (G.pyjamasDormis) ; ensuite, dans ce
+// même pyjama, une version courte (6 à 8 secondes) : le paravent, la bougie et la couverture, avec moins d'images
+// intermédiaires (le soir, pas de détour par l'armoire ; le matin, les mêmes gestes, plus vifs).
+// Le soir, il entre par la porte de l'arrière-boutique ; le matin, il ressort par elle.
 
 const DUREE_POSE = 85;   // (ms par image)
 
@@ -21,11 +25,34 @@ Object.assign(DodoScene.prototype, {
     this.armoireImg = this.add.image(CHAMBRE_PYJ.armoire, SOL_CHAMBRE + 2, '__DEFAULT').setScale(2).setDepth(2.2);
     this.peindreArmoire(0);
     this.paravent = this.add.image(CHAMBRE_PYJ.paravent, SOL_CHAMBRE + 8, paraventHD(this, 0)).setOrigin(1, 1).setScale(2).setDepth(2.3);
+    // (la vraie porte de l'arrière-boutique, du modèle de toutes les portes intérieures, avec sa plaque)
+    this.porteChambre = poserPorteChambre(this, CHAMBRE_PYJ.porte, SOL_CHAMBRE, { prof: 2.5, ecriteau: "L'arrière-boutique" });
     this.habitsJetes = [];
     this.nCouv = 0;
     this.couverture = this.add.image(0, 0, '__DEFAULT').setOrigin(0).setDepth(4);
     this.couvrir({ xa: this.litGeom.oreiller[0] + 24 });
     this.dessus = this.add.image(0, 0, '__DEFAULT').setDepth(4.05).setVisible(false);   // (les avant-bras et les mains, sur la couverture)
+  },
+
+  // Les visiteurs du matin (le messager, Garrick) entrent par la porte de l'arrière-boutique, et ressortent par elle
+  async entrerParPorte(m, x, vitesse = 4) {
+    const p = this.porteChambre;
+    if (!p) return this.marcher(m, x, vitesse);
+    m.setX(p.x).setAlpha(0);
+    await p.ouvrir();
+    if (this.fini) return;
+    this.tweens.add({ targets: m, alpha: 1, duration: 260 });
+    await this.marcher(m, x, vitesse);
+    p.fermer();
+  },
+  async sortirParPorte(m, vitesse = 3) {
+    const p = this.porteChambre;
+    if (!p) return this.marcher(m, 1020, vitesse);
+    await p.ouvrir();
+    if (this.fini) return;
+    await this.marcher(m, p.x, vitesse);
+    await this.animer({ targets: m, alpha: 0, duration: 240 });
+    await p.fermer();
   },
 
   peindreArmoire(ouverture) {
@@ -132,8 +159,14 @@ Object.assign(DodoScene.prototype, {
   },
 
   // --- Les images à préparer d'avance ---
+  // (la version courte : au plus une image intermédiaire entre deux poses)
+  etapesCourtes(E) {
+    const r = {};
+    for (const [nom, etapes] of Object.entries(E)) r[nom] = etapes.map((e, i) => (i ? { ...e, n: Math.min(e.n || 3, 2) } : e));
+    return r;
+  },
   etapesCoucher() {
-    return {
+    const E = {
       attrape: [{ pose: 'debout' }, { pose: 'attrape', n: 3 }],
       prend: [{ pose: 'attrape' }, { pose: 'tientPli', n: 3 }],
       tire: [{ pose: 'tientPli' }, { pose: 'tire', n: 3 }],
@@ -150,9 +183,14 @@ Object.assign(DodoScene.prototype, {
       remonte: [{ pose: 'litBras' }, { pose: 'litMains', n: 3 }],
       dort: [{ pose: 'litMains' }, { pose: 'litDort', n: 2 }],
     };
+    if (!this.court) return E;
+    // (sans le pyjama plié dans les mains : il déplie le paravent les mains libres)
+    // (et la couverture ouverte, il glisse les jambes dessous sans reposer la main)
+    return this.etapesCourtes({ ...E, tire: [{ pose: 'debout' }, { pose: 'tire', n: 2 }], tireRetour: [{ pose: 'tire' }, { pose: 'debout', n: 2 }],
+      jambes: [{ pose: 'ouvre' }, { pose: 'assisLit', n: 2 }] });
   },
   etapesLever() {
-    return {
+    const E = {
       reveil: [{ pose: 'litDort' }, { pose: 'litReveil', n: 2 }],
       assoit: [{ pose: 'litReveil' }, { pose: 'assisLit', n: 4 }],
       etire: [{ pose: 'assisLit' }, { pose: 'etire', n: 3 }],
@@ -164,13 +202,16 @@ Object.assign(DodoScene.prototype, {
       frotteRetour: [{ pose: 'frotte' }, { pose: 'assisBord', n: 3 }],
       leve: [{ pose: 'assisBord' }, { pose: 'releve', n: 3 }, { pose: 'debout', n: 3 }],
     };
+    return this.court ? this.etapesCourtes(E) : E;
   },
   LIT_GESTES: ['jambes', 'tireCouv', 'tireCouvRetour', 'allonge', 'remonte', 'dort', 'reveil', 'assoit', 'etire', 'etireRetour', 'rejette', 'rejetteRetour', 'sort'],
   // Les poses qui se font en habits du jour (avant le paravent) ; toutes les autres, en pyjama
   GESTES_JOUR: ['attrape', 'prend', 'tire', 'tireRetour'],
+  GESTES_LONGS: ['attrape', 'prend', 'ouvreRetour', 'tireCouv', 'tireCouvRetour'],   // (que la version courte saute)
   prevoirTout(lever = false) {
     const E = lever ? this.etapesLever() : this.etapesCoucher();
     for (const [nom, etapes] of Object.entries(E)) {
+      if (this.court && this.GESTES_LONGS.includes(nom)) continue;
       this.prevoirGeste(etapes, this.GESTES_JOUR.includes(nom) ? null : this.pyj, this.LIT_GESTES.includes(nom));
     }
     // (et la marche en pyjama, de face et de trois-quarts)
@@ -186,19 +227,24 @@ Object.assign(DodoScene.prototype, {
 
   // --- Le soir ---
   async coucherEnPyjama() {
-    const G = this.G, E = this.etapesCoucher(), e = this.joueur.scaleX;
+    const G = this.G;
+    this.court = (G.pyjamasDormis || []).includes(this.pyj);   // (déjà dormi dans ce pyjama : la version courte)
     this.prevoirTout(false);
     this.accelerer(true);
+    await this.entrerParPorte(this.joueur, CHAMBRE_PYJ.porte - 40, 4);
+    if (this.fini) return;
     await this.coucherHabits();
     if (this.fini) return;
     await this.coucherBougie();
     if (this.fini) return;
     await this.coucherLit();
+    if (!this.fini && !this.court) G.pyjamasDormis = [...(G.pyjamasDormis || []), this.pyj];
     this.accelerer(false);
     this.prevoirTout(true);   // (les images du réveil, pendant le bilan)
   },
   async coucherHabits() {
-    const G = this.G, E = this.etapesCoucher(), e = this.joueur.scaleX;
+    const G = this.G, E = this.etapesCoucher(), e = this.joueur.scaleX, court = this.court;
+    if (court) return this.paraventCourt(E);
     // 1. à l'armoire : il l'ouvre, prend son pyjama plié sur l'étagère, la referme
     const xA = CHAMBRE_PYJ.devantArmoire + 18;
     await this.marcherNuit(xA, 4);
@@ -217,25 +263,44 @@ Object.assign(DodoScene.prototype, {
     await this.geste('prend', E.prend, { de: P, chaque: (u, info) => dans(u, info) });
     if (this.fini) return;
     await this.battants(-1);
-    // 2. le paravent : il le déplie de sa main libre, passe derrière, jette ses habits par-dessus, ressort en pyjama
-    await this.seTourner(false);
-    if (this.fini) return;
-    const tenir = info => { if (!info.main) return; const [mx, my] = this.pointPose(info, 'main', 'pied', P[0], P[1]); pli.setPosition(mx - 2, my - 2); };
-    await this.geste('tire', E.tire, { de: P, chaque: (u, info) => { tenir(info); if (u > 0.5) this.paravent.setTexture(paraventHD(this, 1)); } });
-    if (this.fini) return;
-    Son.jouer('glisse'); this.paravent.setTexture(paraventHD(this, 2)).setDepth(3.5);
-    await this.geste('tireRetour', E.tireRetour, { de: P, chaque: (u, info) => tenir(info) });
-    if (this.fini) return;
-    // (le pyjama sur l'épaule pour marcher)
-    const epaule = () => pli.setPosition(this.joueur.x + (this.joueur.flipX ? 5 : -5), this.joueur.y - this.joueur.displayHeight * 0.67);   // (posé sur l'épaule, pas devant le visage)
+    // 2. le paravent, plié sous la fenêtre : il y va, le pyjama sur l'épaule (pas devant le visage), le déplie de sa main
+    // libre, passe derrière, jette ses habits par-dessus, ressort en pyjama
+    const epaule = () => pli.active && pli.setPosition(this.joueur.x + (this.joueur.flipX ? 5 : -5), this.joueur.y - this.joueur.displayHeight * 0.67);
     this.events.on('update', epaule);
     this.events.once('shutdown', () => this.events.off('update', epaule));   // (« Passer » pendant qu'il marche)
+    await this.marcherNuit(CHAMBRE_PYJ.devantParavent, 4.5);
+    this.events.off('update', epaule);
+    await this.seTourner(false);
+    if (this.fini) return;
+    const P2 = [this.joueur.x, SOL_CHAMBRE];
+    const tenir = info => { if (!info.main) return; const [mx, my] = this.pointPose(info, 'main', 'pied', P2[0], P2[1]); pli.setPosition(mx - 2, my - 2); };
+    await this.geste('tire', E.tire, { de: P2, chaque: (u, info) => { tenir(info); if (u > 0.5) this.paravent.setTexture(paraventHD(this, 1)); } });
+    if (this.fini) return;
+    Son.jouer('glisse'); this.paravent.setTexture(paraventHD(this, 2)).setDepth(3.5);
+    await this.geste('tireRetour', E.tireRetour, { de: P2, chaque: (u, info) => tenir(info) });
+    if (this.fini) return;
+    this.events.on('update', epaule);
     const xP = CHAMBRE_PYJ.paravent - 50;
     await this.marcherNuit(xP, 5);
     this.events.off('update', epaule);
     if (this.fini) return;
     await this.jeterHabits(pli);
     if (this.fini) return;
+  },
+  // La version courte du paravent : il y va tout droit, le déplie, passe derrière, jette ses habits, ressort en pyjama
+  async paraventCourt(E) {
+    await this.marcherNuit(CHAMBRE_PYJ.devantParavent, 4);
+    await this.seTourner(false);
+    if (this.fini) return;
+    const P2 = [this.joueur.x, SOL_CHAMBRE];
+    await this.geste('tire', E.tire, { de: P2, chaque: u => { if (u >= 0.5) this.paravent.setTexture(paraventHD(this, 1)); } });
+    if (this.fini) return;
+    Son.jouer('glisse'); this.paravent.setTexture(paraventHD(this, 2)).setDepth(3.5);
+    await this.geste('tireRetour', E.tireRetour, { de: P2 });
+    if (this.fini) return;
+    await this.marcherNuit(CHAMBRE_PYJ.paravent - 50, 4.5);
+    if (this.fini) return;
+    await this.jeterHabits(null);
   },
   async coucherBougie() {
     const G = this.G, E = this.etapesCoucher(), e = this.joueur.scaleX;
@@ -252,14 +317,15 @@ Object.assign(DodoScene.prototype, {
     await this.soufflerBougie();
     await this.geste('souffleRetour', E.souffleRetour, { de: B });
     if (this.fini) return;
-    await this.attendre(350);
+    await this.attendre(this.court ? 100 : 350);
   },
   async coucherLit() {
     const G = this.G, E = this.etapesCoucher(), e = this.joueur.scaleX;
     // 4. au lit, à pied, dans le noir : il s'assoit au bord, ouvre la couverture, glisse les jambes dessous
     const R = this.reperesLit();
     this.joueur.setDepth(4.2);   // (devant le lit : devant la couverture qui pend sur le côté)
-    await this.marcherNuit(R.debout[0], 5);
+    const court = this.court, pas = court ? 2 : 5;
+    await this.marcherNuit(R.debout[0], court ? 3.2 : 5);
     await this.seTourner(true);
     if (this.fini) return;
     this.joueur.setDepth(4.2);
@@ -268,25 +334,33 @@ Object.assign(DodoScene.prototype, {
     // (la couverture se rabat jusque vers ses pieds : les jambes passent sur le drap, puis dessous)
     const xa0 = this.etatCouv.xa, D = Math.round(Math.max(30, Math.min(this.litGeom.pied - 34, R.pieds - 4) - xa0));
     await this.geste('ouvre', E.ouvre, { repere: 'hanche', de: R.bord });
-    for (let i = 1; i <= 5 && !this.fini; i++) { const d = D * i / 5; this.couvrir({ xa: xa0 + d, replie: Math.max(4, d * 0.85) }); if (i === 2) Son.jouer('glisse'); await this.attendre(DUREE_POSE); }
-    await this.geste('ouvreRetour', E.ouvreRetour, { repere: 'hanche', de: R.bord });
+    for (let i = 1; i <= pas && !this.fini; i++) { const d = D * i / pas; this.couvrir({ xa: xa0 + d, replie: Math.max(4, d * 0.85) }); if (i === Math.min(2, pas)) Son.jouer('glisse'); await this.attendre(DUREE_POSE); }
+    if (!court) await this.geste('ouvreRetour', E.ouvreRetour, { repere: 'hanche', de: R.bord });
     if (this.fini) return;
     await this.geste('jambes', E.jambes, { repere: 'hanche', de: R.bord, a: R.couche, lit: true, chaque: u => { if (u > 0.6) this.joueur.setDepth(3.9); } });
     if (this.fini) return;
     // 5. il remonte la couverture sur ses jambes, s'allonge, la remonte jusqu'aux épaules, les mains posées dessus
-    await this.geste('tireCouv', E.tireCouv, { repere: 'hanche', de: R.couche, lit: true });
-    const xaJ = R.couche[0] - 4, pj = this.profilJambesLit();
-    for (let i = 1; i <= 5 && !this.fini; i++) { const u = i / 5, d = D * (1 - u); this.couvrir({ xa: xaJ + (xa0 + D - xaJ) * (1 - u), replie: d > 4 ? d * 0.85 : 0, profil: pj }); if (i === 2) Son.jouer('glisse'); await this.attendre(DUREE_POSE); }
-    await this.geste('tireCouvRetour', E.tireCouvRetour, { repere: 'hanche', de: R.couche, lit: true });
-    if (this.fini) return;
+    // (en court : il s'allonge, et la remonte d'un coup jusqu'aux épaules)
+    const xaJ = R.couche[0] - 4;
+    if (!court) {
+      await this.geste('tireCouv', E.tireCouv, { repere: 'hanche', de: R.couche, lit: true });
+      const pj = this.profilJambesLit();
+      for (let i = 1; i <= 5 && !this.fini; i++) { const u = i / 5, d = D * (1 - u); this.couvrir({ xa: xaJ + (xa0 + D - xaJ) * (1 - u), replie: d > 4 ? d * 0.85 : 0, profil: pj }); if (i === 2) Son.jouer('glisse'); await this.attendre(DUREE_POSE); }
+      await this.geste('tireCouvRetour', E.tireCouvRetour, { repere: 'hanche', de: R.couche, lit: true });
+      if (this.fini) return;
+    } else {
+      // (en court, sans le geste : la couverture revient sur ses jambes en deux temps)
+      const pj = this.profilJambesLit();
+      for (let i = 1; i <= 2 && !this.fini; i++) { const u = i / 2, d = D * (1 - u); this.couvrir({ xa: xaJ + (xa0 + D - xaJ) * (1 - u), replie: d > 4 ? d * 0.85 : 0, profil: pj }); if (i === 1) Son.jouer('glisse'); await this.attendre(DUREE_POSE); }
+    }
     await this.geste('allonge', E.allonge, { repere: 'hanche', de: R.couche, lit: true, duree: DUREE_POSE + 15 });
     if (this.fini) return;
     const xaE = R.tete + 15;
     await this.geste('remonte', E.remonte, { repere: 'hanche', de: R.couche, lit: true, chaque: u => this.couvrir({ xa: xaJ + (xaE - xaJ) * u, profil: this.profilJoueur() }) });
     if (this.fini) return;
     Son.jouer('glisse');
-    await this.attendre(300);
-    await this.geste('dort', E.dort, { repere: 'hanche', de: R.couche, lit: true, duree: 160 });
+    await this.attendre(court ? 120 : 300);
+    await this.geste('dort', E.dort, { repere: 'hanche', de: R.couche, lit: true, duree: court ? 100 : 160 });
   },
 
   // Le profil du joueur couché (pour que la couverture épouse son corps), d'après sa texture actuelle ; jambesSeules : ce
@@ -317,33 +391,60 @@ Object.assign(DodoScene.prototype, {
   async jeterHabits(pli) {
     const j = this.joueur, x = this.paravent.x, haut = this.paravent.y - PARAVENT_HD.H * 2 + 6;
     const c = this.habitsJour, cibles = [['haut', c.haut, x - 92], ['tablier', 0xe8dcc0, x - 58], ['bas', c.bas, x - 24]];
-    await this.attendre(200);
+    const k = this.court ? 0.55 : 1;   // (la version courte : les mêmes gestes, plus vifs, et les trois habits à la suite)
+    if (this.court) return this.jeterHabitsVite(cibles, haut);
+    await this.attendre(200 * k);
     for (const [quoi, coul, cx] of cibles) {
       if (this.fini) return;
       // il lève l'habit au-dessus de sa tête (la tête qui s'incline), puis le lance
-      await this.animer({ targets: j, y: j.y - 3, duration: 120, yoyo: true });
-      if (pli.active && quoi === 'haut') pli.setVisible(false);
+      await this.animer({ targets: j, y: j.y - 3, duration: 120 * k, yoyo: true });
+      if (pli && pli.active && quoi === 'haut') pli.setVisible(false);
       const h = this.add.image(j.x, j.y - j.displayHeight * 0.9, habitHD(this, quoi, coul, 'roule')).setScale(2).setDepth(3.6);
       Son.jouer('glisse');
       const x0 = h.x, y0 = h.y, montee = 26;
-      await new Promise(ok => this.tweens.addCounter({ from: 0, to: 1, duration: 380, ease: 'Sine.easeOut', onUpdate: tw => {
+      await new Promise(ok => this.tweens.addCounter({ from: 0, to: 1, duration: 380 * k, ease: 'Sine.easeOut', onUpdate: tw => {
         const u = tw.getValue(); h.setPosition(x0 + (cx - x0) * u, y0 + (haut - y0) * u - Math.sin(u * Math.PI) * montee).setAngle(u * 200 * (cx < x0 ? -1 : 1));
       }, onComplete: ok }));
       // il retombe sur l'arête et pend des deux côtés
       h.setTexture(habitHD(this, quoi, coul, 'drape')).setAngle(0).setOrigin(0.5, 0.12).setPosition(cx, haut).setScale(2, 1.7);
       this.tweens.add({ targets: h, scaleY: 2, duration: 160, ease: 'Back.easeOut' });
       this.habitsJetes.push(h);
-      await this.attendre(160);
+      await this.attendre(160 * k);
     }
     if (this.fini) return;
     // il se baisse pour enfiler le bas du pyjama, se relève en pyjama
-    await this.animer({ targets: j, y: j.y + 12, duration: 160, ease: 'Sine.easeIn' });
+    await this.animer({ targets: j, y: j.y + 12, duration: 160 * k, ease: 'Sine.easeIn' });
     this.pyjEnCours = this.pyj;
     this.debout();
-    if (pli.active) pli.destroy();
+    if (pli && pli.active) pli.destroy();
     this.pli = null;
-    await this.animer({ targets: j, y: SOL_CHAMBRE, duration: 200, ease: 'Sine.easeOut' });
-    await this.attendre(160);
+    await this.animer({ targets: j, y: SOL_CHAMBRE, duration: 200 * k, ease: 'Sine.easeOut' });
+    await this.attendre(160 * k);
+  },
+
+  // (la version courte : il lève les bras une fois, les trois habits volent l'un derrière l'autre et retombent sur l'arête)
+  async jeterHabitsVite(cibles, haut) {
+    const j = this.joueur;
+    await this.animer({ targets: j, y: j.y - 3, duration: 90, yoyo: true });
+    const vols = cibles.map(([quoi, coul, cx], i) => new Promise(ok => this.time.delayedCall(i * 110, () => {
+      if (this.fini) return ok();
+      const h = this.add.image(j.x, j.y - j.displayHeight * 0.9, habitHD(this, quoi, coul, 'roule')).setScale(2).setDepth(3.6);
+      if (!i) Son.jouer('glisse');
+      const x0 = h.x, y0 = h.y;
+      this.tweens.addCounter({ from: 0, to: 1, duration: 230, ease: 'Sine.easeOut', onUpdate: tw => {
+        const u = tw.getValue(); h.setPosition(x0 + (cx - x0) * u, y0 + (haut - y0) * u - Math.sin(u * Math.PI) * 22).setAngle(u * 200 * (cx < x0 ? -1 : 1));
+      }, onComplete: () => {
+        h.setTexture(habitHD(this, quoi, coul, 'drape')).setAngle(0).setOrigin(0.5, 0.12).setPosition(cx, haut).setScale(2, 1.7);
+        this.tweens.add({ targets: h, scaleY: 2, duration: 120, ease: 'Back.easeOut' });
+        this.habitsJetes.push(h); ok();
+      } });
+    })));
+    await Promise.all(vols);
+    if (this.fini) return;
+    await this.animer({ targets: j, y: j.y + 10, duration: 90, ease: 'Sine.easeIn' });
+    this.pyjEnCours = this.pyj;
+    this.debout();
+    await this.animer({ targets: j, y: SOL_CHAMBRE, duration: 110, ease: 'Sine.easeOut' });
   },
 
   // Il souffle : « Fffff ! », la flamme se couche et s'éteint, la mèche fume
@@ -362,7 +463,7 @@ Object.assign(DodoScene.prototype, {
     this.tweens.add({ targets: [this.flamme, this.lumiere], alpha: 0, duration: 260 });
     this.tweens.add({ targets: this.noir, fillAlpha: 0.45, duration: 700 });
     this.tweens.add({ targets: this.clairDeLune, alpha: 0.26, duration: 900 });
-    await this.attendre(260);
+    await this.attendre(this.court ? 160 : 260);
     // la mèche fume : un filet qui monte en ondulant et se dissipe
     const fumee = this.add.graphics().setDepth(5.6);
     const n0 = this.time.now;
@@ -371,30 +472,31 @@ Object.assign(DodoScene.prototype, {
       for (let i = 0; i < 26; i++) { const y = fy + 2 - i * 1.7, x = fx + Math.sin(i / 3.2 - t * 3) * (1 + i * 0.13), a = Math.max(0, (0.5 - i * 0.018) * (1 - t / 2.6)); fumee.fillStyle(0xb8b8c8, a).fillRect(x, y, 1.5, 1.7); }
       if (t > 2.6) { ev.remove(); fumee.destroy(); }
     } });
-    await this.attendre(500);
+    await this.attendre(this.court ? 200 : 500);
   },
 
   // --- Le matin ---
   async leverEnPyjama() {
     const E = this.etapesLever(), R = this.reperesLit(), e = this.joueur.scaleX;
     this.pyjEnCours = this.pyj;
-    await this.geste('reveil', E.reveil, { repere: 'hanche', de: R.couche, lit: true, duree: 140 });
+    const court = this.court, pas = court ? 2 : 5;
+    await this.geste('reveil', E.reveil, { repere: 'hanche', de: R.couche, lit: true, duree: court ? 110 : 140 });
     if (this.fini) return;
     this.onomatopee(R.tete - 2, R.couche[1] - 40, '!', '#f3d98a');
-    await this.attendre(600);
+    await this.attendre(court ? 350 : 600);
     // il s'assoit : la couverture glisse jusqu'à sa taille
     const xaJ = R.couche[0] - 4, xaE = this.etatCouv.xa, pj = this.profilJambesLit();
     await this.geste('assoit', E.assoit, { repere: 'hanche', de: R.couche, lit: true, duree: DUREE_POSE + 20, chaque: u => this.couvrir({ xa: xaE + (xaJ - xaE) * u, profil: u > 0.5 ? this.profilJambesLit() : this.profilJoueur() }) });
     if (this.fini) return;
     await this.geste('etire', E.etire, { repere: 'hanche', de: R.couche, lit: true });
     this.onomatopee(R.couche[0] + 30, R.couche[1] - 80, 'Aaaah...', '#f3d98a');
-    await this.attendre(700);
+    await this.attendre(court ? 420 : 700);
     await this.geste('etireRetour', E.etireRetour, { repere: 'hanche', de: R.couche, lit: true });
     if (this.fini) return;
     // il rejette la couverture vers le pied du lit
     const D = Math.round(Math.max(30, Math.min(this.litGeom.pied - 34, R.pieds - 4) - xaJ) / 1.2), pj2 = this.profilJambesLit();
     await this.geste('rejette', E.rejette, { repere: 'hanche', de: R.couche, lit: true });
-    for (let i = 1; i <= 5 && !this.fini; i++) { const d = D * i / 5; this.couvrir({ xa: xaJ + d * 1.2, replie: Math.max(4, d * 0.85), profil: pj2 }); if (i === 2) Son.jouer('glisse'); await this.attendre(DUREE_POSE); }
+    for (let i = 1; i <= pas && !this.fini; i++) { const d = D * i / pas; this.couvrir({ xa: xaJ + d * 1.2, replie: Math.max(4, d * 0.85), profil: pj2 }); if (i === Math.min(2, pas)) Son.jouer('glisse'); await this.attendre(DUREE_POSE); }
     await this.geste('rejetteRetour', E.rejetteRetour, { repere: 'hanche', de: R.couche, lit: true });
     if (this.fini) return;
     // les pieds par terre (au bord du lit), il se frotte les yeux, puis il se lève
@@ -404,13 +506,13 @@ Object.assign(DodoScene.prototype, {
     if (this.fini) return;
     await this.geste('frotte', E.frotte, { repere: 'hanche', de: R.bord });
     this.onomatopee(R.bord[0] + 60, R.bord[1] - 70, 'Hmmm...', '#f3d98a');
-    await this.attendre(650);
+    await this.attendre(court ? 320 : 650);
     await this.geste('frotteRetour', E.frotteRetour, { repere: 'hanche', de: R.bord });
     if (this.fini) return;
     await this.geste('leve', E.leve, { repere: 'hanche', de: R.bord, a: R.debout });
     if (this.fini) return;
     // à l'armoire : le tourbillon lui rend ses habits du jour
-    await this.marcherNuit(CHAMBRE_PYJ.devantArmoire + 18, 4);
+    await this.marcherNuit(CHAMBRE_PYJ.devantArmoire + 18, court ? 3.6 : 4);
     this.joueur.setDepth(3);
     await this.seTourner(true);
     if (this.fini) return;

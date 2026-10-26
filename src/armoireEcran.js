@@ -117,7 +117,8 @@ function ouvrirArmoireEcran(scene, { onglet = 'vetements', quandFini = null } = 
       if (!scene.textures.exists(cle)) dessinerJoueurNuit(G, id).texture(scene, cle);
       const h = scene.textures.get(cle).getSourceImage().height;
       C(scene.add.image(cx + lc / 2, cy + hc - 24, cle).setOrigin(0.5, 1).setScale(Math.min(0.7, 76 / h)).setAlpha(a ? 1 : 0.55));
-      const bas = sel ? '✓ cette nuit' : a ? 'Choisir' : `Marcelline · ${p.prix} p.`;
+      const v = ventePyjama(G, id);
+      const bas = sel ? '✓ cette nuit' : a ? 'Choisir' : v.enVente ? `Marcelline · ${p.prix} p.` : p.cadeau && v.quand !== 'revient au Givre' ? 'Cadeau du Long Hiver' : v.quand.replace(/^r/, 'R');
       tenir(CT(cx + lc / 2, cy + hc - 12, bas, 11, sel ? '#5a2a0a' : a ? '#2f6a2a' : '#7a6a58', { fontStyle: a ? 'bold' : 'italic' }).setOrigin(0.5), lc - 10);
       if (p.chaud) tenir(CT(cx + 8, cy + hc - 40, 'chaud', 10, '#8a3a1a', { fontStyle: 'bold italic' }), 50);
       if (a && !sel) {

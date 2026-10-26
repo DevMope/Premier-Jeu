@@ -1,6 +1,6 @@
 // (planche 85 v2, validée) Les pyjamas de Marcelline : un second onglet dans sa garde-robe. Le joueur a déjà la chemise de
-// lin et le pyjama rayé ; elle vend les quatre autres. Au survol, on se voit dedans ; acheté, il est dans l'armoire et on le
-// met dès ce soir.
+// lin et le pyjama rayé ; elle vend les quatre autres, chacun en sa saison (VENTE_PYJAMAS ; hors saison, il est grisé).
+// Au survol, on se voit dedans ; acheté, il est dans l'armoire et on le met dès ce soir.
 
 Object.assign(MarcheScene.prototype, {
   // Les deux onglets, sous le titre du panneau (c : le panneau de la garde-robe)
@@ -35,18 +35,24 @@ Object.assign(MarcheScene.prototype, {
     const verrou = () => { if (this.verrouGR > this.time.now) return true; this.verrouGR = this.time.now + 400; return false; };
     ids.forEach((id, i) => {
       const p = PYJAMAS[id], x = 40 + (i % 2) * 400, y = 370 + Math.floor(i / 2) * 34, cp = couleursPyjama(id), a = aPyjama(G, id);
+      const v = ventePyjama(G, id), gris = !a && !v.enVente;   // (hors saison : grisé, « revient aux Brumes », « revient au Givre »)
       const ic = this.add.image(x, y, habitHD(this, 'haut', cp.fond, 'plie', [cp.motif, cp.motifNom])).setScale(1.4);
       c.add(ic);
       const titre = this.add.text(x + 18, y - 7, `${p.nom}${p.prix && !PYJAMAS_DEPART.includes(id) ? ` · ${p.prix} p.` : ''}`, style(12, '#3b2410', { fontStyle: 'bold' })).setOrigin(0, 0.5);
       if (titre.width > 300) titre.setScale(300 / titre.width, 1);
-      const effet = this.add.text(x + 18, y + 8, p.effet, style(10, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5);
-      if (effet.width > 290) { let t = p.effet; while (t.length > 4 && effet.setText(t + '…').width > 290) t = t.slice(0, -1); }
+      const dit = gris && p.cadeau ? p.cadeau : p.effet;
+      const effet = this.add.text(x + 18, y + 8, dit, style(10, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0, 0.5);
+      if (effet.width > 290) { let t = dit; while (t.length > 4 && effet.setText(t + '…').width > 290) t = t.slice(0, -1); }
       c.add([titre, effet]);
+      if (gris) for (const o of [ic, titre, effet]) o.setAlpha(0.45);
       // (au survol : on se voit dedans)
       for (const o of [ic, titre, effet]) { o.setInteractive(); o.on('pointerover', () => essayer(id)); o.on('pointerout', () => essayer(pyjamaDeCetteNuit(G))); }
       if (a) {
         const dit = PYJAMAS_DEPART.includes(id) ? 'tu l’as déjà' : 'dans ton armoire';
         const etat = this.add.text(x + 340, y, dit + (id === pyjamaDeCetteNuit(G) ? ' · ce soir' : ''), style(10, '#2f6a2a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 96 } })).setOrigin(0.5);
+        c.add(etat);
+      } else if (gris) {
+        const etat = this.add.text(x + 340, y, v.quand, style(10, '#7a6a58', { fontStyle: 'italic', align: 'center', wordWrap: { width: 96 } })).setOrigin(0.5);
         c.add(etat);
       } else this.bouton(c, x + 340, y, 70, 'Acheter', () => {
         if (verrou()) return;

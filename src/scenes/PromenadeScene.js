@@ -77,24 +77,25 @@ class PromenadeScene extends Cinematique {
 
   portes() {
     // Une porte dessinée (ou une zone sur une porte qui existe déjà), avec son écriteau
-    const porte = (x, vers, ecriteau, { dessiner = true, large = 92, haut = 168, sol = SOL_PROMENADE, ecriteauX = 0, ecriteauY = null } = {}) => {
+    // (ouvrante : une porte qui s'ouvre vraiment, image par image, avant qu'on passe ; elle a sa plaque, sans écriteau en plus)
+    const porte = (x, vers, ecriteau, { dessiner = true, large = 92, haut = 168, sol = SOL_PROMENADE, ecriteauX = 0, ecriteauY = null, ouvrante = null } = {}) => {
       if (dessiner) this.add.image(x, sol, 'porteHD').setOrigin(0.5, 1).setScale(2).setDepth(7.5);
-      this.add.text(x + ecriteauX, ecriteauY ?? sol - haut - 14, ecriteau, style(12, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(8.6);
+      if (ecriteau) this.add.text(x + ecriteauX, ecriteauY ?? sol - haut - 14, ecriteau, style(12, '#f3d98a', { fontStyle: 'bold italic', stroke: '#1a0e06', strokeThickness: 4 })).setOrigin(0.5).setDepth(8.6);
       const zone = this.add.rectangle(x, sol - haut / 2, large, haut, 0xffffff, 0).setDepth(8.6).setInteractive({ useHandCursor: true });
       zone.on('pointerdown', async () => {
         if (this.transition) return;
         this.transition = true;
         if (PIECES_PROMENADE[this.piece].marche !== false) { this.allerVers(x); await this.attendreArrivee(); }
         if (this.fini) { this.transition = false; return; }
-        Son.jouer('porte');
+        if (ouvrante) { await ouvrante.ouvrir(); if (this.fini) { this.transition = false; return; } } else Son.jouer('porte');
         this.entrer(vers.piece, vers.x);
+        if (ouvrante) ouvrante.montrer(0);   // (refermée derrière lui)
         this.transition = false;
       });
     };
     const o = PIECES_PROMENADE;
-    // La chambre : une porte vers l'arrière-boutique
-    // (planche 85 v2 : l'armoire est contre le mur de droite ; on passe dans l'arrière-boutique par le bord, sans porte devant elle)
-    porte(950, { piece: P_ARRIERE, x: o[P_ARRIERE].x + 640 }, "L'arrière-boutique ▶", { dessiner: false, large: 20, haut: 230, sol: SOL_PROMENADE + 20, ecriteauX: -62, ecriteauY: SOL_CHAMBRE - 182 });
+    // La chambre : la vraie porte vers l'arrière-boutique (porteChambreHD.js, posée avec la chambre), avec sa plaque
+    porte(CHAMBRE_PYJ.porte, { piece: P_ARRIERE, x: o[P_ARRIERE].x + 640 }, '', { dessiner: false, large: 100, haut: 180, sol: SOL_CHAMBRE, ouvrante: this.porteChambre });
     // L'arrière-boutique : la porte de la chambre (déjà dessinée), et le passage vers le comptoir
     porte(o[P_ARRIERE].x + 688, { piece: P_CHAMBRE, x: 840 }, 'Ta chambre', { dessiner: false, sol: SOL_ARRIERE });
     // (v0.84) la porte de derrière : on sort dans la rue sans repasser par le comptoir

@@ -1,5 +1,6 @@
 // (planche 85 v2, validée) Les meubles et les étoffes du coucher, dans la chambre (DodoScene, et la promenade du soir) :
-//  - l'armoire, contre le mur à droite de la fenêtre : fermée, ses deux battants qui pivotent (quatre images), ouverte
+//  - l'armoire, contre le mur entre le pied du lit et la fenêtre (la porte de l'arrière-boutique a repris sa place, à
+//    droite, voir porteChambreHD.js) : fermée, ses deux battants qui pivotent (quatre images), ouverte
 //    (l'étagère des pyjamas pliés, la tringle des habits du jour, les bottes) ;
 //  - le paravent : replié contre le mur, à demi ouvert, déplié en zigzag ; les habits jetés par-dessus ;
 //  - le tourbillon « comme dans les Sims » : des rubans aux couleurs des deux tenues, des étincelles ;
@@ -9,7 +10,9 @@
 //    tête, le revers du drap ; le lit ouvert : la couverture rabattue vers le pied, en un gros pli roulé.
 
 // --- Où sont les choses, dans la chambre (en pixels du jeu) ---
-const CHAMBRE_PYJ = { armoire: 905, paravent: 846, devantArmoire: 836, bougie: [628, 331] };
+// (l'armoire entre le lit et la fenêtre ; le paravent, plié sous la fenêtre, à gauche de la porte : on le déplie depuis
+// devantParavent, entre lui et la porte)
+const CHAMBRE_PYJ = { armoire: 527, paravent: 846, devantArmoire: 458, devantParavent: 858, bougie: [628, 331], porte: 905 };
 
 // --- Le lit raccourci ---
 // (la tête de lit et l'oreiller à gauche, le pied à droite : on retire un morceau du milieu, là où le dessin se répète)

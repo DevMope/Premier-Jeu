@@ -198,7 +198,7 @@ class DodoScene extends Cinematique {
     if (this.fini) return;
     await this.attendreSortie();   // (planche 85 v2 : en attendant, on peut ouvrir l'armoire et changer de couleurs)
     if (this.fini) return;
-    await this.marcher(this.joueur, 1020, 3);
+    await this.sortirParPorte(this.joueur, 3);   // (planche 85 v2 : par la porte de l'arrière-boutique)
     this.partir('Rue');   // (v0.65 : on sort dans la rue, l'arche mène au marché)
   }
 
@@ -341,7 +341,7 @@ class DodoScene extends Cinematique {
     await this.changerCote(cote);
     this.onomatopee(900, SOL_CHAMBRE - 160, sombre ? 'Tok... tok...' : 'Toc toc !', sombre ? '#ff6080' : '#fff4dc');
     const m = imageCorps(this, 1010, SOL_CHAMBRE, 'colporteur', 6).setTint(sombre ? 0x3a1a24 : 0x7a7aa8).setDepth(3);
-    await this.marcher(m, 905, 4);
+    await this.entrerParPorte(m, 860, 4);   // (planche 85 v2 : par la vraie porte)
     const c = this.add.container(0, 0).setDepth(9);
     const hPanneau = premiere ? 290 : 220;
     const panneau = this.add.image(480, 210, panneauHD(this, 640, hPanneau)).setScale(2);
@@ -429,7 +429,7 @@ class DodoScene extends Cinematique {
     else this.cameras.main.flash(250, 255, 230, 150);
     if (arme && !this.fini) await this.livrerArme(arme, royaume, sombre, m);
     if (this.fini) return;
-    await this.marcher(m, 1020, 3);
+    await this.sortirParPorte(m, 3);
     m.destroy();
   }
 
@@ -441,7 +441,7 @@ class DodoScene extends Cinematique {
     if (!m) {
       this.onomatopee(900, SOL_CHAMBRE - 160, 'Toc toc !', '#fff4dc');
       m = imageCorps(this, 1010, SOL_CHAMBRE, 'colporteur', 6).setTint(sombre ? 0x3a1a24 : 0x7a7aa8).setDepth(3);
-      await this.marcher(m, 905, 4);
+      await this.entrerParPorte(m, 860, 4);   // (planche 85 v2 : par la vraie porte)
     }
     creerHalo(this);
     const voile = this.add.rectangle(480, 270, 960, 540, 0x0a0614, 0).setDepth(7.5);
@@ -469,7 +469,7 @@ class DodoScene extends Cinematique {
     icone.destroy(); voile.destroy();
     this.dessinerArmes(this.G.armesLegendaires.slice(0, n + 1));
     this.cameras.main.flash(200, 255, 230, 150);
-    if (!messager) { await this.marcher(m, 1020, 3); m.destroy(); }
+    if (!messager) { await this.sortirParPorte(m, 3); m.destroy(); }
   }
 
   // La panoplie : les armes légendaires accrochées au mur, au-dessus du coffre et du tapis
@@ -495,7 +495,7 @@ class DodoScene extends Cinematique {
     this.events.on('update', suivre);
     this.events.once('shutdown', () => this.events.off('update', suivre));   // (audit v0.59 : si on passe pendant qu'il marche)
     Son.jouer('voix', { personne: voix, ton: 'bonjour' });
-    await this.marcher(g, 880, 4);
+    await this.entrerParPorte(g, 880, 4);
     this.events.off('update', suivre);
     // il pose le mannequin à sa place, près de la fenêtre
     Son.jouer('poser');
@@ -527,7 +527,7 @@ class DodoScene extends Cinematique {
     this.dessinerArmure([]);
     await parler("Tiens, justement : on frappe. Ce doit être la première pièce ! Je file, prends-en soin.", 'rire', 'joie');
     this.geste(this.joueur, 'salut');
-    await this.marcher(g, 1040, 3);
+    await this.sortirParPorte(g, 3);
     g.destroy();
   }
 
