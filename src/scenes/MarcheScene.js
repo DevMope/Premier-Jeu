@@ -12,6 +12,7 @@ class MarcheScene extends Phaser.Scene {
 
   create() {
     const G = this.G = window.GAME;
+    if (this.oublierBoutonsPlace) this.oublierBoutonsPlace();   // (v1.64 : les boutons de la place d'hier, jamais deux paires)
     // (v1.02) au deuxième Solstice, le grand jour : le Grand Sage parle sur la place (une fois)
     if (typeof discoursSageDu === 'function' && discoursSageDu(G)) {
       G.discoursSageVu = true;

@@ -154,7 +154,7 @@ Object.assign(MarcheScene.prototype, {
     // l'interface de la place : l'invite devant un lieu, la carte (M), la liste de courses (L)
     this.add.rectangle(480, 22, 960, 40, 0x1a120a, 0.45).setDepth(4);
     this.invitePlace = this.add.text(480, 462, '', style(14, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#1a120add', padding: { x: 12, y: 5 } })).setOrigin(0.5).setDepth(6).setVisible(false);
-    this.boutonsPlace = null; this.placeBoutons = null; this.creerBoutonsPlace();   // (MarcheBoutons.js : ils s'écartent des noms des étals)
+    this.oublierBoutonsPlace(); this.creerBoutonsPlace();   // (MarcheBoutons.js : ils s'écartent des noms des étals)
     // (v1.61) pour quitter un lieu : un bouton bien visible sur le coin du cadre, et un clic n'importe où sur la place
     if (this.retour.setTexte) this.retour.setTexte('✕ Partir · Échap');
     for (const o of [this.retour.fond, this.retour.label]) if (o) o.setPosition(842, 296).setDepth(7);
