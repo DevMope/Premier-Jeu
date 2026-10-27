@@ -175,7 +175,7 @@ class MatScene extends Phaser.Scene {
     const suite = () => {
       const reste = partiesMatRestantes(this.G);
       if (reste > 0) bouton(370, 352, 200, `Réessayer (${SOLSTICE.mat.prix} p.)`, () => { const e = commencerMat(this.G); if (e) return corps.setText(e); Son.jouer('pieces'); this.scene.restart({ retour: this.retour }); });
-      bouton(reste > 0 ? 590 : 480, 352, 200, 'Retour au marché', () => this.partir());
+      bouton(reste > 0 ? 590 : 480, 352, 200, 'Retour à la place', () => this.partir());
     };
     if (enHaut) {
       bouton(355, 290, 210, 'Le jambon fumé', () => { vider(); aide.destroy(); corps.setText(decrocherLot(this.G, 'jambon')); Son.jouer('miam'); suite(); });

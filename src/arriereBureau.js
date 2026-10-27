@@ -75,7 +75,7 @@ ArriereScene.prototype.update = function (temps, delta) {
       if (h.texture.key.indexOf('_dos') > 0 || h.texture.key.indexOf('_deFace') > 0 || /_pose_|empoigne/.test(h.texture.key)) h.setTexture(textureJoueur(this, this.G)).setOrigin(0.5, 1);
       h.x = Phaser.Math.Clamp(h.x + dx, this.bornesHeros[0], this.bornesHeros[1]);
       h.setFlipX(dx < 0);
-      if (!h.marche) pasDeMarche(this, h, 260, { poussiere: false });
+      if (!h.marche) pasDeMarche(this, h, 260, { poussiere: false, sol: 'parquet', volumePas: 0.55 });   // (v1.64 : le parquet de l'arrière-boutique)
     }
   }
   // la caméra : elle ne bouge que quand il approche du bord de l'écran

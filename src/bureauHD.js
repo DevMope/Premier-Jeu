@@ -674,7 +674,7 @@ function marcherJusqua(scene, heros, x, y, { vue = 'face', vitesse = 0.3, echell
     if (d < 1) return ok();
     // (v1.65) ses pas durent tant qu'il avance, pas un temps fixé d'avance : quand l'horloge prend de l'avance sur le
     // déplacement (une image lente), il ne finit plus le trajet en glissant, les jambes immobiles
-    pasDeMarche(scene, heros, 0, { poussiere: false });
+    pasDeMarche(scene, heros, 0, { poussiere: false, sol: 'parquet', volumePas: 0.55 });   // (v1.64 : le parquet du bureau)
     const pas = heros.marche;
     // (à l'arrivée, il s'arrête net : plus d'image de pas qui viendrait écraser la pose suivante)
     const props = { targets: heros, x, y, duration: duree, ease: 'Linear', onComplete: () => { if (heros.marche) { heros.marche.remove(); heros.marche = null; } if (heros.active) heros.setTexture(cle); ok(); } };

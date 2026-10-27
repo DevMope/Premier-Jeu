@@ -35,7 +35,7 @@ function etageDuSoir(scene, suite) {
   if (suivant && !e.chantier) bouton(480, 492, 330, `Bâtir ${suivant.nom.toLowerCase()} (${suivant.prix.toLocaleString('fr-FR')} p.)`, () => {
     const res = batirEtage(G);
     if (!res.ok) { Son.jouer('refus'); return; }
-    Son.jouer('pieces'); Son.jouer('marteau'); scene.cameras.main.flash(250, 255, 240, 160);
+    Son.jouer('pieces'); if (!(typeof sonAChoisir === 'function' && sonAChoisir('marteau', { lieu: 'charpentier', matiere: 'bois' }))) Son.jouer('marteau');   // (v1.64 : les charpentiers) scene.cameras.main.flash(250, 255, 240, 160);
     gainEnDirect(scene, 480, 300, `−${res.projet.prix.toLocaleString('fr-FR')} p. (l'étage)`, false, { profondeur: 130 });
     if (typeof noterJournal === 'function') noterJournal(`étage : ${res.projet.id}`);
     scene.time.delayedCall(700, () => fermer(true));

@@ -86,7 +86,7 @@ class MoulinScene extends Phaser.Scene {
     else if (this.cible !== null) { const reste = this.cible - this.heros.x; dx = Math.sign(reste) * Math.min(Math.abs(reste), 0.3 * delta); if (Math.abs(reste) < 1) this.cible = null; }
     if (dx) {
       const x = Phaser.Math.Clamp(this.heros.x + dx, this.limite.min, this.limite.max);
-      if (x !== this.heros.x) { this.heros.x = x; this.heros.setFlipX(dx < 0); this.pas += delta; if (!this.heros.marche) pasDeMarche(this, this.heros, 260); }
+      if (x !== this.heros.x) { this.heros.x = x; this.heros.setFlipX(dx < 0); this.pas += delta; if (!this.heros.marche) pasDeMarche(this, this.heros, 260, { sol: 'terre', volumePas: 0.55 }); }   // (v1.64 : le sentier de terre)
       this.heros.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
     } else if (!this.enSaut) this.heros.y = SOL_PROMENADE;   // (v1.38 : sinon l'arc du saut était effacé à chaque image)
     if (!this.cameraLibre) this.cameras.main.scrollX = Phaser.Math.Clamp(this.heros.x - 420, 0, LARGEUR_MOULIN - 960);
@@ -96,7 +96,7 @@ class MoulinScene extends Phaser.Scene {
   marcherVers(x, vitesse = 0.22) {
     return new Promise(ok => {
       const d = Math.abs(x - this.heros.x); if (d < 2) return ok();
-      this.heros.setFlipX(x < this.heros.x); pasDeMarche(this, this.heros, d / vitesse);
+      this.heros.setFlipX(x < this.heros.x); pasDeMarche(this, this.heros, d / vitesse, { sol: 'terre', volumePas: 0.55 });
       this.tweens.add({ targets: this.heros, x, duration: d / vitesse, onComplete: ok });
     });
   }
@@ -172,7 +172,7 @@ class MoulinScene extends Phaser.Scene {
     const P = PLACES_MOULIN, G = this.G, X = P.roue;
     this.libre = false; this.cible = null;
     for (const o of this.curieux || []) if (o.active) o.destroy();   // (plus le temps de regarder les choses)
-    if (typeof Son !== 'undefined') Son.ambiance('recitPeur');
+    if (typeof Son !== 'undefined') Son.ambiance(THEMES.peurRenard ? 'peurRenard' : 'recitPeur');   // (v1.64 : la course du renard a sa musique)
     // la planche qui dérive sur le bief, la chatte cramponnée dessus
     const yP = SOL_MOULIN - 24;
     const planche = this.add.container(X - 270, yP).setDepth(1.65);

@@ -3,8 +3,8 @@
 // parcoure exactement comme la place :
 //   - la marche : on marche partout, au clic (bouton gardé enfoncé : il suit le pointeur), aux flèches ou ZQSD, avec la
 //     même vitesse, les mêmes images de pas et le même chemin qui contourne les obstacles (une grille de 20 px, lissée) ;
-//     les pas changent de bruit selon le sol (pavés, dalles, marches, terre, herbe, neige), et sur les marches le corps se
-//     soulève à chaque pas ;
+//     les pas sonnent comme le sol dans la banque de pas du jeu (pavés, pierre, terre, herbe, boue ; la neige l'hiver), et
+//     sur les marches le corps se soulève à chaque pas ;
 //   - la caméra : la vue de trois quarts de la place, ×1,25, qui suit JeuneGoy avec la même douceur et s'arrête aux
 //     bornes du quartier ;
 //   - les enseignes : le nom du quartier à l'entrée (un ruban qui se déroule), le nom de la rue ou de la placette où l'on
@@ -353,10 +353,12 @@ class QuartierScene extends Phaser.Scene {
     const f = Math.floor(this.pasHeros / (this.courir ? 90 : 125)) % 4;
     this.poserHeros(f === 1 ? 1 : f === 3 ? 2 : 0);
     const sol = this.ici.solCle ? solSous(this, this.ici.solCle, h.x, h.y, ...this.ici.solO) : 'paves';
-    if ((f === 1 || f === 3) && f !== this.dernierPas) Son.jouer('pasSol', { sol: this.saison === 'givre' && sol !== 'marches' ? (sol === 'herbe' ? 'neige' : sol) : sol, gauche: f === 1, fort: sol === 'marches' });
+    // (le pas, dans la banque de pas du jeu, au même volume que sur la place ; l'hiver, on marche dans la neige, comme sur la place)
+    if ((f === 1 || f === 3) && f !== this.dernierPas && typeof jouerPas === 'function') jouerPas(this.saison === 'givre' ? 'neige' : sol, 0.5);
     this.dernierPas = f;
     // sur les marches, chaque pas soulève le corps (le pied monte sur la marche suivante, ou descend)
-    const lev = sol === 'marches' ? Math.abs(Math.sin(this.pasHeros / (this.courir ? 90 : 125) * Math.PI / 2)) * 3 : 0;
+    const marches = this.ici.solCle && solCode(this, this.ici.solCle, h.x, h.y, ...this.ici.solO) === SOL_VILLE.MARCHES;
+    const lev = marches ? Math.abs(Math.sin(this.pasHeros / (this.courir ? 90 : 125) * Math.PI / 2)) * 3 : 0;
     h.setOrigin(0.5, 1 + lev / Math.max(1, h.displayHeight));
   }
   arreterPas() { if (this.pasHeros) { this.pasHeros = 0; this.dernierPas = -1; this.heros.setOrigin(0.5, 1); this.poserHeros(0); } }

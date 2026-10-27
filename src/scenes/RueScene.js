@@ -1,6 +1,6 @@
 // (v0.65, étape 10c) La rue, le jour : au sortir du shop, on la traverse à pied jusqu'au porche du
-// Marché des Mastres (ou l'inverse en rentrant). La forge est ouverte, des passants vont et viennent ;
-// on peut entrer à la banque. « Au marché » et « Chez toi » restent des raccourcis.
+// place des Mastres (ou l'inverse en rentrant). La forge est ouverte, des passants vont et viennent ;
+// on peut entrer à la banque. « À la place » et « Chez toi » restent des raccourcis.
 class RueScene extends Phaser.Scene {
   constructor() { super('Rue'); }
 
@@ -49,7 +49,7 @@ class RueScene extends Phaser.Scene {
     this.garrick = null;
     if (typeof didacticiel === 'function' && didacticiel(G) && G.tuto && G.jour === 1 && this.depuis !== 'marche') {
       this.garrick = imageCorps(this, x0 - 80, SOL_PROMENADE, 'mentor', 7.5).setOrigin(0.5, 1).setDepth(8.49);
-      this.time.delayedCall(700, () => this.garrickDit("« Allez, en route ! Le marché, c'est au bout de la rue, sous le porche. Suis-moi, je te présente les marchands. »"));
+      this.time.delayedCall(700, () => this.garrickDit("« Allez, en route ! La place des Mastres, c'est au bout de la rue, sous le porche. Suis-moi, je te présente les marchands. »"));
     }
     this.cameras.main.scrollX = Phaser.Math.Clamp(x0 - 480, 0, LARGEUR_RUE - 960);
     // (v1.48) le jour où il ouvre (et tant qu'on n'est pas entré), Orvin attend sur le pas de sa porte
@@ -62,10 +62,11 @@ class RueScene extends Phaser.Scene {
 
     // l'interface, fixe à l'écran
     const fixe = o => o.setScrollFactor(0).setDepth(30);
-    fixe(this.add.text(480, 22, `La rue du marché · jour ${G.jour}`, style(22, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
-    fixe(this.add.text(480, 48, '◀ ▶ ou clique au sol pour marcher · clique sur les maisons pour les regarder · le porche mène au marché', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
+    // (v1.64, planche 89 : la rue a son nom, le même que sur le porche de la place)
+    fixe(this.add.text(480, 22, `La rue Soucolline · jour ${G.jour}`, style(22, '#fff4dc', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
+    fixe(this.add.text(480, 48, '◀ ▶ ou clique au sol pour marcher · clique sur les maisons pour les regarder · le porche mène à la place', style(12, '#fff4dc', { fontStyle: 'italic', stroke: '#1a0e06', strokeThickness: 3 })).setOrigin(0.5));
     this.bulle = fixe(this.add.text(480, 78, '', style(14, '#3b2410', { fontStyle: 'italic', backgroundColor: '#ead9b0', padding: { x: 10, y: 6 }, wordWrap: { width: 640 }, align: 'center' })).setOrigin(0.5, 0).setVisible(false));
-    for (const [x, l, texte, page] of [[110, 190, '◀ Chez toi', 'Maison'], [850, 200, 'Au marché ▶▶', 'Marche']]) { const b = creerBouton(this, x, 505, l, texte, () => this.passerPar(page)); fixe(b.fond); fixe(b.label); }
+    for (const [x, l, texte, page] of [[110, 190, '◀ Chez toi', 'Maison'], [850, 200, 'À la place ▶▶', 'Marche']]) { const b = creerBouton(this, x, 505, l, texte, () => this.passerPar(page)); fixe(b.fond); fixe(b.label); }
 
     this.input.on('pointerdown', (pointeur, sous) => { if (!sous.length) this.allerVers(pointeur.worldX); });
     this.touches = this.input.keyboard ? this.input.keyboard.createCursorKeys() : null;
@@ -226,7 +227,7 @@ class RueScene extends Phaser.Scene {
     if (page === 'Banque' && typeof lieuDebloque === 'function' && !lieuDebloque(window.GAME, 'banque')) return this.dire('La porte de la banque est close pour toi. Elle s\'ouvrira au jour 4.');   // (v1.40)
     this.transition = true;
     const aller = () => {
-      Son.jouer('porte');
+      if (page !== 'Banque' && page !== 'Mages') Son.jouer('porte');   // (v1.64 : la banque et les Mages ont leur lourde porte, en ouvrant la page)
       if (page === 'Banque') { this.transition = false; this.scene.pause(); this.scene.launch('Banque', { retour: 'Rue' }); return; }
       if (page === 'Barbier') { this.transition = false; this.scene.pause(); this.scene.launch('Barbier', { retour: 'Rue' }); return; }   // (v1.48) chez Orvin
       if (page === 'Mages') { this.transition = false; this.scene.pause(); this.scene.launch('Mages', { retour: 'Rue' }); return; }   // (v1.56) chez les Mages-Charpentiers
@@ -259,7 +260,8 @@ class RueScene extends Phaser.Scene {
       this.heros.x = Phaser.Math.Clamp(this.heros.x + dx, 40, this.largeur - 40);
       this.heros.setFlipX(dx < 0);
       this.pas += delta;
-      if (!this.heros.marche) pasDeMarche(this, this.heros, 260);
+      // (v1.64) ses pas sur les pavés de la rue (dans la neige au Givre)
+      if (!this.heros.marche) pasDeMarche(this, this.heros, 260, { sol: typeof saisonDe === 'function' && saisonDe(this.G) === 'givre' ? 'neige' : 'paves', volumePas: 0.55 });
       this.heros.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
     } else this.heros.y = SOL_PROMENADE;
     if (this.orvin && !this.orvinSalue && Math.abs(this.heros.x - this.orvin.x) < 420) { this.orvinSalue = true; this.dire(etatBarbier(this.G).anniversaire === false ? "Orvin : « Bienvenue au Fil d'Argent ! Je viens de m'installer : le premier rasage est pour moi. Entre, l'ami ! »" : "Orvin : « Dix-huit ans ! J'attendais ce jour pour ouvrir : le premier rasage est pour moi. Entre, l'ami ! »"); }

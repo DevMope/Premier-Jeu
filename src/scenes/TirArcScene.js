@@ -165,7 +165,7 @@ class TirArcScene extends Phaser.Scene {
     const ecart = Math.hypot(ix - this.cx, iy - this.cy) / this.R;
     const pts = pointsFleche(ecart);
     this.flecheEncochee.setVisible(false);
-    Son.jouer('siffle');
+    Son.jouer(SONS.fleche ? 'fleche' : 'siffle');   // (v1.64 : la corde qui claque, la flèche qui file et se plante)
     const f = this.add.container(268, 330).setDepth(7);
     const fg = this.add.graphics(); fg.lineStyle(3, 0x8a6a40).lineBetween(0, 0, -20, 30); fg.fillStyle(0xc8ccd4).fillTriangle(-6, -4, 8, -12, 4, 4); fg.fillStyle(0xf4f0e8).fillTriangle(-24, 34, -16, 22, -30, 26);
     f.add(fg);

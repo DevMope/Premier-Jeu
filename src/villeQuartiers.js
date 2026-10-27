@@ -13,7 +13,7 @@
 // Les six quartiers (planche 89 v7, dans l'ordre des chantiers). scene : la scène qui le montre ; pret : on peut y aller ;
 // etiquette : où poser son nom sur le plan [x, y] et le point qu'il désigne [x, y] (en pixels du plan)
 const QUARTIERS_VILLE = {
-  place: { nom: 'La place des Mastres', sous: 'le marché du matin', scene: 'Marche', pret: true, chantier: 1, etiquette: [394, 100], point: [327, 108] },
+  place: { nom: 'La place des Mastres', sous: 'le marché du matin', scene: 'Marche', pret: true, chantier: 1, etiquette: [404, 73], point: [330, 100] },
   soucolline: { nom: 'La rue Soucolline', sous: 'le quartier du Comptoir', scene: 'Quartier', pret: true, chantier: 3, pierre: 'soucolline', etiquette: [306, 186], point: [290, 177] },
   basQuartier: { nom: 'Le bas-quartier', sous: 'le quai et le lavoir', scene: 'Quartier', pret: false, chantier: 4, pierre: 'basQuartier', etiquette: [364, 205], point: [318, 210] },
   coteaux: { nom: 'Les Coteaux', sous: 'les portes rondes', scene: 'Quartier', pret: false, chantier: 5, pierre: 'coteaux', etiquette: [236, 21], point: [222, 30] },
@@ -28,7 +28,9 @@ const PASSAGES_VILLE = [
   { n: 4, nom: 'le chemin creux', entre: ['place', 'coteaux'], type: 'chemin', plan: [312, 78] },
   { n: 5, nom: 'la Grand-Porte', entre: ['soucolline', 'rempart'], type: 'porche', plan: [72, 171] },
   { n: 6, nom: 'le pont du Sud', entre: ['basQuartier', 'riviere'], type: 'pont', plan: [212, 236] },
-  { n: 7, nom: 'le sentier du Vieux Moulin', entre: ['place', 'riviere'], type: 'chemin', plan: [424, 113] },
+  // (chantier 1) la route du Vieux Moulin : de la place, elle passe la rivière au moulin, et mène à l'étang de Barnabé et à sa
+  // cabane, au bord de l'eau (EtangScene) ; elle est faite, même si le reste du quartier de la rivière ne l'est pas encore
+  { n: 7, nom: 'la route du Vieux Moulin', entre: ['place', 'riviere'], vers: 'l’étang de Barnabé', ouvert: true, type: 'chemin', plan: [384, 113] },
 ];
 function quartierPret(id) { const q = QUARTIERS_VILLE[id]; return !!(q && q.pret && (q.scene !== 'Quartier' || (typeof DECORS_QUARTIERS !== 'undefined' && DECORS_QUARTIERS[id]))); }
 // Des coordonnées des rues (la rue Soucolline et la rue Haute, planche 89 v7) à celles du plan
@@ -44,20 +46,22 @@ function ouEsTuSurLePlan(scene) {
   const k = scene && scene.scene && scene.scene.key, h = scene && scene.heros;
   if (k === 'Quartier' && scene.def && scene.def.surLePlan && h) return scene.def.surLePlan(h.x, h.y);
   if (k === 'Marche' && h && scene.place && typeof PLACE_MARCHE !== 'undefined') return [307 + (h.x / PLACE_MARCHE.L - 0.5) * 90, 104 + (h.y / PLACE_MARCHE.H - 0.5) * 56];
+  if (k === 'Etang') return [392, 150];   // (au bord de l'étang, devant la cabane de Barnabé)
   if (k === 'Rue' && h && typeof PLACES_RUE !== 'undefined') { const P = PLACES_RUE, X = h.x < P.shop ? 1324 - (P.shop - h.x) * 0.5 : 1324 + (h.x - P.shop) / (P.arche - P.shop) * (3640 - 1324); return [MX_PLAN(X), MY_PLAN(1640)]; }
   return [MX_PLAN(1324), MY_PLAN(1600)];
 }
 // Le quartier où l'on est (pour le plan)
 function quartierDeLaScene(scene) {
   const k = scene && scene.scene && scene.scene.key;
-  return k === 'Quartier' ? scene.idQuartier : k === 'Marche' ? 'place' : k === 'Rue' ? 'soucolline' : null;
+  return k === 'Quartier' ? scene.idQuartier : k === 'Marche' ? 'place' : k === 'Rue' ? 'soucolline' : k === 'Etang' ? 'etang' : null;
 }
 
 // Le quartier sous un point du plan (pour griser ceux qui ne sont pas prêts, et pour le clic)
 function quartierSurLePlan(x, y) {
   const I = typeof PLAN_VILLE_INFO !== 'undefined' ? PLAN_VILLE_INFO : {}, dr = I.distRiv && (x > 400 || y > 200) ? I.distRiv(x, y) : 99;   // (la rivière ne passe qu'à l'est et au sud)
   const dansE = (cx, cy, rx, ry) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 < 1;
-  if (dansE(307, 104, 60, 40) || dansE(394, 156, 30, 16) || (x > 372 && x < 430 && y > 112 && y < 150)) return 'place';
+  if (dansE(394, 156, 31, 17) || (x > 364 && x < 432 && y > 116 && y < 150) || (x > 427 && x < 466 && y > 78 && y < 112)) return 'etang';   // (l'étang de Barnabé, sa cabane, le Vieux Moulin : faits au chantier 1)
+  if (dansE(307, 104, 60, 40)) return 'place';
   if (dr < 5 || (x > 428 && x < 468 && y > 76 && y < 114) || (x > 392 && x < 426 && y > 162 && y < 202) || (x > 186 && x < 214 && y > 224 && y < 250)) return 'riviere';
   if (x < 74 || (x < 118 && y >= 96 && y < 140) || (x >= 72 && x < 100 && y >= 202 && y < 218)) return 'rempart';
   if (y < 137 && x < 438) return 'coteaux';
@@ -106,7 +110,7 @@ function ouvrirPlanVille(scene, { surFermer = null, commeCarte = false, profonde
   const nom = (x, y, txt, ax = 0.5) => { const t = scene.add.text(X(x), Y(y), txt, style(10, '#2a1a0c', { fontStyle: 'italic bold', brut: true, stroke: '#f4ecd4', strokeThickness: 3 })).setOrigin(ax, 0.5); c.add(t); return t; };
   [[94, 111, 'la chapelle', 0], [113, 133, 'la Confrérie', 0], [86, 220.5, 'l’hospice', 0.5], [56, 194, 'la Grand-Porte', 1], [318, 157.5, 'l’arche des Mastres', 0.5], [MX_PLAN(2780) + 4, 152, 'la rue Haute', 0],
     [MX_PLAN(1615) + 4, 162.5, 'la ruelle du Pommier', 0], [MX_PLAN(1510) - 3, 193.5, 'la descente des Marches', 1], [203, 193.5, 'l’impasse du Corbeau', 0], [341, 221.5, 'le lavoir', 0], [454, 74, 'le Vieux Moulin', 0.5],
-    [394, 172, 'l’étang', 0.5], [391, 124, 'la cabane de Barnabé', 0.5], [303, 24, 'le chemin creux', 0], [192, 247, 'le pont du Sud', 1], [MX_PLAN(594) - 2, 163.5, 'la montée du Four', 1]].forEach(([x, y, t, a]) => nom(x, y, t, a));
+    [394, 172, 'l’étang de Barnabé', 0.5], [391, 124, 'la cabane de Barnabé', 0.5], [398, 99.5, 'la route du Vieux Moulin', 0.5], [303, 24, 'le chemin creux', 0], [192, 247, 'le pont du Sud', 1], [MX_PLAN(594) - 2, 163.5, 'la montée du Four', 1]].forEach(([x, y, t, a]) => nom(x, y, t, a));
   { const P3 = (typeof PLAN_VILLE_INFO !== 'undefined' && PLAN_VILLE_INFO.pommiers) || []; if (P3.length) nom(Math.min(...P3.map(p => p[0])) - 6, 184, 'les trois pommiers', 1); }
   // les quartiers : une étiquette de parchemin et un fil qui pointe leur cœur ; grisée, avec « bientôt », s'il n'est pas prêt
   const g = scene.add.graphics(); c.add(g);
@@ -136,12 +140,12 @@ function ouvrirPlanVille(scene, { surFermer = null, commeCarte = false, profonde
   }
   // les passages : des médaillons d'or numérotés ; ceux qui mènent à un quartier pas prêt sont ternis
   for (const p of PASSAGES_VILLE) {
-    const [px, py] = p.plan, x = X(px), y = Y(py), ouvert = p.entre.every(quartierPret);
+    const [px, py] = p.plan, x = X(px), y = Y(py), ouvert = p.ouvert || p.entre.every(quartierPret);
     const m = scene.add.graphics();
     m.fillStyle(0x1a0e06).fillCircle(x, y, 8.5).fillStyle(ouvert ? 0xb8862a : 0x8a8478).fillCircle(x, y, 7.2).fillStyle(ouvert ? 0xf0cf5a : 0xc4beb2).fillCircle(x - 0.8, y - 0.8, 5.4).fillStyle(ouvert ? 0xfff0b0 : 0xe0dcd4).fillCircle(x - 2.4, y - 2.6, 1.6);
     const n = scene.add.text(x, y + 0.5, String(p.n), style(10, ouvert ? '#3a1e06' : '#4a463e', { fontStyle: 'bold', brut: true })).setOrigin(0.5);
     const z = scene.add.circle(x, y, 10, 0xffffff, 0.001).setInteractive();
-    const [a, b] = p.entre.map(id => QUARTIERS_VILLE[id].nom);
+    const [a, b] = [QUARTIERS_VILLE[p.entre[0]].nom, p.vers || QUARTIERS_VILLE[p.entre[1]].nom];
     z.on('pointerover', () => info(`${p.n} · ${p.nom[0].toUpperCase() + p.nom.slice(1)} : ${a} ⇄ ${b}${ouvert ? '' : ' (bientôt)'}`));
     z.on('pointerout', () => info(null));
     c.add([m, n, z]);
@@ -163,6 +167,10 @@ function ouvrirPlanVille(scene, { surFermer = null, commeCarte = false, profonde
   im.setInteractive().on('pointerdown', (p) => { const q = quartierSurLePlan((p.worldX - E.ox) / E.k, (p.worldY - E.oy) / E.k); if (q) choisir(q); });
   const fermer = () => { if (!c.active) return; scene.tweens.add({ targets: c, alpha: 0, duration: 180, onComplete: () => c.destroy() }); };
   function choisir(id) {
+    if (id === 'etang') {   // l'étang de Barnabé, au bout de la route du Vieux Moulin (EtangScene)
+      if (ici === 'etang') return info('Tu es déjà au bord de l’étang de Barnabé.');
+      Son.jouer('clic'); c.destroy(); allerDansLaVille(scene, { scene: 'Etang', donnees: { depuis: 'place' } }); return;
+    }
     const q = QUARTIERS_VILLE[id];
     if (!quartierPret(id)) { Son.jouer('refus'); info(`${q.nom} : bientôt. On y travaille (chantier ${q.chantier} de la ville).`); return; }
     if (id === ici) { info(`Tu es déjà ${id === 'place' ? 'sur la place des Mastres' : 'dans ' + q.nom[0].toLowerCase() + q.nom.slice(1)}.`); return; }

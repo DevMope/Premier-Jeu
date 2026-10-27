@@ -783,7 +783,7 @@ function totalCommandes(G, depuis = G.jour, jusqua = Infinity) {
   return total;
 }
 
-// --- Le Marché des Mastres ---
+// --- La place des Mastres ---
 
 function prixDeBase(id) {
   return (ITEMS[id] || MATERIAUX[id]).prix;

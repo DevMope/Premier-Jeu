@@ -370,7 +370,7 @@ class PromenadeScene extends Cinematique {
     // (v0.82, étape 10b) le passage vers la forge, au fond de l'arrière-boutique
     if (forgeProposee(G)) {
       const t = this.add.text(960 + 300, 150, forgeConstruite(G) ? '⚒ La forge ▸' : '⚒ Le coin de la forge ▸', style(14, '#f3d98a', { fontStyle: 'bold', backgroundColor: '#3b2410', padding: { x: 10, y: 5 } })).setOrigin(0.5).setDepth(8.6).setInteractive({ useHandCursor: true });
-      t.on('pointerdown', () => { if (this.transition) return; Son.jouer('porte'); this.scene.pause(); this.scene.launch('Forge', { appelant: 'Promenade' }); });
+      t.on('pointerdown', () => { if (this.transition) return; this.scene.pause(); this.scene.launch('Forge', { appelant: 'Promenade' }); });   // (v1.64 : la lourde porte de la forge sonne à l'ouverture)
     }
   }
 
@@ -495,7 +495,7 @@ class PromenadeScene extends Cinematique {
     this.transition = true;
     this.allerVers(x); await this.attendreArrivee();
     if (this.fini) { this.transition = false; return; }   // (v0.97) « Retour » cliqué pendant la marche
-    Son.jouer('porte');
+    if (page !== 'Banque') Son.jouer('porte');   // (v1.64 : la banque a sa lourde porte, en ouvrant la page)
     // (v0.68) la banque s'ouvre par-dessus la rue : en sortant, on se retrouve devant sa porte
     // (v0.91) ... et la nymphe aussi : après elle, on se retrouve dans la rue, devant l'arche (on était renvoyé chez soi)
     if (page === 'Banque' && typeof lieuDebloque === 'function' && !lieuDebloque(this.G || window.GAME, 'banque')) { this.transition = false; this.cible = null; return this.dire('La porte de la banque est close pour toi. Elle s\'ouvrira au jour 4.'); }   // (v1.40)
@@ -566,7 +566,8 @@ class PromenadeScene extends Cinematique {
       this.heros.x = Phaser.Math.Clamp(this.heros.x + dx, piece.x + 40, piece.x + (piece.largeur || 960) - 40);
       this.heros.setFlipX(dx < 0);
       this.pas += delta;
-      if (!this.heros.marche) pasDeMarche(this, this.heros, 260);
+      // (v1.64) ses pas : le parquet de la maison, les pavés de la rue (la neige au Givre)
+      if (!this.heros.marche) pasDeMarche(this, this.heros, 260, { sol: this.piece !== P_DEHORS ? 'parquet' : typeof saisonDe === 'function' && saisonDe(this.G) === 'givre' ? 'neige' : 'paves', volumePas: 0.55 });
       this.heros.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
     } else this.heros.y = SOL_PROMENADE;
     // (v0.65) dans la rue, la caméra suit tes pas

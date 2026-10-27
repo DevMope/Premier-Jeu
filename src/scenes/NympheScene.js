@@ -102,7 +102,7 @@ class NympheScene extends Cinematique {
     const r = this.rencontre, voix = { personne: { race: 'magicienne' }, ton: 'neutre' };
     const parle = t => this.replique('Ondine, la nymphe de la fontaine', t, voix);
     this.boiteEnHaut(true);
-    await this.replique('La grand-place', "La place du marché dort. Les étals sont bâchés, les pigeons aussi... Seule la fontaine luit d'une drôle de lumière bleue.");
+    await this.replique('La place des Mastres', "La place des Mastres dort. Les étals sont bâchés, les pigeons aussi... Seule la fontaine luit d'une drôle de lumière bleue.");
     this.boiteEnHaut(false);
     this.montrerBoite(false);
     Son.jouer('nymphe');
@@ -156,7 +156,7 @@ class NympheScene extends Cinematique {
     this.tweens.add({ targets: this.fontaine, tint: 0x8a94c0, duration: 1200 });
     this.tweens.add({ targets: this.halo, alpha: 0, duration: 1200 });
     this.montrerBoite(true);
-    await this.replique('La grand-place', "La fontaine murmure de nouveau, comme si de rien n'était. Tu rentres chez toi, le cœur battant.");
+    await this.replique('La place des Mastres', "La fontaine murmure de nouveau, comme si de rien n'était. Tu rentres chez toi, le cœur battant.");
     this.finir();
   }
 

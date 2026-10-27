@@ -15,7 +15,7 @@
 // Le plan du sol est une fonction code(x, y) → un code de SOL_VILLE, lue à la résolution de la texture (un pixel de
 // texture = deux unités du monde). La texture est peinte une seule fois par quartier et par saison, puis gardée
 // (les quartiers la retrouvent d'une visite à l'autre) ; ses codes restent attachés à la texture : solSous() dit sur quoi
-// l'on marche (les pas changent de bruit selon le sol).
+// l'on marche, et le pas sonne comme ce sol dans la banque de pas du jeu (jouerPas).
 
 // Les codes du plan (les mêmes que sur la planche 89 v7)
 const SOL_VILLE = {
@@ -44,8 +44,9 @@ const PIERRES_QUARTIERS = {
   rempart: { nom: 'le granit gris', pave: 0x8e8e8a, dalle: 0xa8a8a2 },
   riviere: { nom: 'la pierre de rivière', pave: 0x9a9284, dalle: 0xb2aa98 },
 };
-// Ce qu'on entend sous ses pas, selon le code du sol
-const SOL_PAS = { 1: 'paves', 16: 'paves', 17: 'paves', 19: 'paves', 11: 'paves', 4: 'dalles', 5: 'dalles', 20: 'dalles', 21: 'dalles', 22: 'dalles', 23: 'dalles', 12: 'dalles', 6: 'dalles', 7: 'marches', 8: 'herbe', 9: 'terre', 14: 'boue', 13: 'eau' };
+// Ce qu'on entend sous ses pas, selon le code du sol : un des dix sols de la banque de pas (sonsRecits.js, jouerPas) —
+// les pavés de la chaussée, la pierre de taille des dalles, des bordures et des marches, la terre, l'herbe, la boue
+const SOL_PAS = { 1: 'paves', 16: 'paves', 17: 'paves', 19: 'paves', 11: 'paves', 4: 'pierre', 5: 'pierre', 20: 'pierre', 21: 'pierre', 22: 'pierre', 23: 'pierre', 12: 'pierre', 6: 'pierre', 7: 'pierre', 8: 'herbe', 9: 'terre', 14: 'boue', 13: 'boue' };
 
 // Le sol d'un quartier : une texture de L × H pixels (×2 dans le monde). Options :
 //   pierre (une entrée de PIERRES_QUARTIERS, ou ses couleurs), saison, graine, flaques [[x, y, rx, ry]] (en pixels de
@@ -274,29 +275,16 @@ function prechaufferSolQuartier(s, cle, L, H, code, o = {}, { budget = 6, delai 
   return ev;
 }
 
-// Sur quoi marche-t-on, au point (x, y) du monde (le sol posé en (ox, oy), ×2) ? 'paves', 'dalles', 'marches', 'herbe'...
+// Sur quoi marche-t-on, au point (x, y) du monde (le sol posé en (ox, oy), ×2) ? 'paves', 'pierre', 'terre', 'herbe', 'boue'
 function solSous(s, cle, x, y, ox = 0, oy = 0) {
   const tex = s.textures.exists(cle) && s.textures.get(cle); if (!tex || !tex.codes) return 'paves';
   const px = Math.floor((x - ox) / 2), py = Math.floor((y - oy) / 2);
   if (px < 0 || py < 0 || px >= tex.solL || py >= tex.solH) return 'paves';
   return SOL_PAS[tex.codes[py * tex.solL + px]] || 'paves';
 }
-
-// (v1.65) Un pas, selon le sol : un claquement sec et clair sur les pavés, plus mat et plus grave sur les dalles, un
-// frottement sourd sur la terre, un froissement sur l'herbe, un crissement sur la neige, un choc creux sur le bois d'un
-// pont ; sur les marches, le talon qui tombe un peu plus fort. Un seul pas par appel (o.sol, o.fort, o.gauche).
-if (typeof SONS !== 'undefined' && typeof VOLUME_SONS !== 'undefined') {
-  VOLUME_SONS.pasSol = 0.9;
-  SONS.pasSol = function (t, bus, o = {}) {
-    const sol = o.sol || 'paves', f = o.fort ? 1.35 : 1, cote = o.gauche ? 0.94 : 1.06;
-    const choc = (freq, fin, duree, vol) => { const osc = this.ctx.createOscillator(), g = this.ctx.createGain(); osc.frequency.setValueAtTime(freq * cote, t); osc.frequency.exponentialRampToValueAtTime(fin * cote, t + duree * 0.8);
-      g.gain.setValueAtTime(vol * f, t); g.gain.exponentialRampToValueAtTime(0.0005, t + duree); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + duree + 0.02); };
-    if (sol === 'paves') { this.bruit(0.03, t, bus, 0.32 * f, 2400 * cote, 'highpass'); choc(240, 120, 0.06, 0.12); }
-    else if (sol === 'dalles' || sol === 'marches') { this.bruit(0.035, t, bus, 0.26 * f, 1500 * cote); choc(170, 80, 0.08, 0.16 * (sol === 'marches' ? 1.3 : 1)); }
-    else if (sol === 'terre') { this.bruit(0.07, t, bus, 0.22 * f, 600 * cote); choc(90, 50, 0.09, 0.1); }
-    else if (sol === 'herbe') { this.bruit(0.09, t, bus, 0.16 * f, 3200 * cote, 'highpass'); this.bruit(0.05, t + 0.02, bus, 0.08, 900); }
-    else if (sol === 'neige') { for (let k = 0; k < 4; k++) this.bruit(0.025, t + k * 0.022, bus, 0.12 * f, 1800 + k * 500, 'highpass'); }
-    else if (sol === 'bois') { this.bruit(0.03, t, bus, 0.2 * f, 900 * cote); choc(150, 110, 0.14, 0.2); }
-    else if (sol === 'boue' || sol === 'eau') { this.bruit(0.12, t, bus, 0.2 * f, 500 * cote); }
-  };
+// Le code du plan (SOL_VILLE) au point (x, y) du monde
+function solCode(s, cle, x, y, ox = 0, oy = 0) {
+  const tex = s.textures.exists(cle) && s.textures.get(cle); if (!tex || !tex.codes) return 0;
+  const px = Math.floor((x - ox) / 2), py = Math.floor((y - oy) / 2);
+  return px < 0 || py < 0 || px >= tex.solL || py >= tex.solH ? 0 : tex.codes[py * tex.solL + px];
 }

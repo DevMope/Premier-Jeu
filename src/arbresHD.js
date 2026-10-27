@@ -316,6 +316,32 @@ function toileArbreHD(scene, cle, espece, saison, H, graine = 1, { cote = 0, nei
   const h = Ht || Math.round(H * 1.08) + 5, base = h - PIED_ARBRE;   // (un peu de ciel au-dessus : la couronne déborde parfois de H)
   const t = toileDecor(l, h); Object.assign(t.rampes, rampesArbre(saison, espece, couleur));
   peindreArbre((x, y, m, i) => t.poser(x, y, m, i), { cx: Math.floor(l / 2), base, H, espece, saison, graine, ecartG: cote < 0 ? 0.5 : 1, ecartD: cote > 0 ? 0.55 : 1, neige, mousse, etroit, ecartX });
+  // (v1.64, retours du joueur : « pourquoi l'hiver les arbres ne sont pas remplis de neige ? ») l'hiver, là où il neige, les
+  // arbres nus gardent la neige sur toutes leurs branches, jusqu'aux rameaux : sur le dessus de chaque branche, un ou deux
+  // rangs de neige (plus épais à gauche, côté soleil, moins sous les branches qui la couvrent) ; le tronc n'en a pas
+  if (neige && saison === 'givre' && !TOUJOURS_VERTS.includes(espece)) {
+    const yTronc = base - Math.round(0.3 * H), bois = m => m === 'arbEcorce' || m === 'arbEcorceB';
+    // 1. le dessus de chaque branche se couvre : la neige s'y pose en bourrelet, et recouvre l'écorce de ses premiers rangs ;
+    //    dans la couronne, elle s'accroche aussi aux branches de dessous (plus grise : à l'ombre des branches du dessus)
+    const avant = t.m.slice();   // (on lit l'arbre tel qu'il était peint : la neige posée ne change pas la suite)
+    const bv = (x, y) => x >= 0 && y >= 0 && x < l && y < h && bois(avant[y * l + x]);
+    for (let y = 1; y < yTronc; y++) for (let x = 0; x < l; x++) {
+      if (!bv(x, y)) continue;
+      const d = !bv(x, y - 1) ? 0 : !bv(x, y - 2) ? 1 : 2, q = hachage(x, y, graine * 31 + 10);
+      const gauche = x < l / 2 + (hachage(x >> 2, y >> 2, graine * 31 + 9) - 0.5) * 6;
+      if (d === 0) { if (avant[(y - 1) * l + x] === null && q > 0.05) t.poser(x, y - 1, 'arbNeige', gauche ? 5 : 4); t.poser(x, y, 'arbNeige', gauche ? 4 : 3); }
+      else if (d === 1 && q > 0.35) t.poser(x, y, 'arbNeige', gauche ? 3 : 2);
+      else if (q > 0.82) t.poser(x, y, 'arbNeige', 2);
+    }
+    // 2. là où les rameaux sont serrés, la neige comble les creux : des paquets accrochés dans la couronne
+    const ajouts = [];
+    for (let y = 1; y < yTronc - 2; y++) for (let x = 1; x < l - 1; x++) {
+      if (t.mat(x, y) !== null) continue;
+      let n = 0; for (const [a, c] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) { const m = t.mat(x + a, y + c); if (m === 'arbNeige' || bois(m)) n++; }
+      if (n >= 4 && hachage(x, y, graine * 31 + 11) > 0.25) ajouts.push([x, y]);
+    }
+    for (const [x, y] of ajouts) t.poser(x, y, 'arbNeige', x < l / 2 ? 5 : 4);
+  }
   t.contour(); t.texture(scene, cle);
   return cle;
 }

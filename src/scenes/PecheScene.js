@@ -508,6 +508,7 @@ class PecheScene extends Phaser.Scene {
     this.cameras.main.fadeOut(500);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       if (this.retour === 'Marche') this.scene.start('Marche');
+      else if (this.retour === 'Etang') this.scene.start('Etang', { depuis: 'peche' });   // (v1.64 : au bord de l'étang, devant la cabane de Barnabé)
       else this.scene.start('Nuit', { matin: this.retour === 'NuitMatin' });
     });
   }
