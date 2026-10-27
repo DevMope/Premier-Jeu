@@ -143,7 +143,7 @@ function lancerJeu() {
   fps: { min: 1, smoothStep: false },
   backgroundColor: '#1a120a',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [TitleScene, IntroScene, IntroHistoireScene, CounterScene, NightScene, StoryScene, FailliteScene, ExpressScene, BanqueScene, MarcheScene, AtelierScene, BureauScene, CarteScene, DodoScene, FacadeScene, ArriereScene, RenovationScene, PromenadeScene, CambrioleurScene, MagesScene, EssaiScene, VoyageScene, MarcheNoirScene, RueScene, NympheScene, ForgeScene, CarrefourScene, SaisonScene, TirArcScene, MatScene, RoueScene, BanquetScene, DiseuseScene, LanternesScene, VisionScene, SageScene, BarScene, VitrineScene, MoulinScene, ParrainScene, PecheScene, BarbierScene, HudScene, VoletScene],
+  scene: [TitleScene, IntroScene, IntroHistoireScene, CounterScene, NightScene, StoryScene, FailliteScene, ExpressScene, BanqueScene, MarcheScene, AtelierScene, BureauScene, CarteScene, DodoScene, FacadeScene, ArriereScene, RenovationScene, PromenadeScene, CambrioleurScene, MagesScene, EssaiScene, VoyageScene, MarcheNoirScene, RueScene, NympheScene, ForgeScene, CarrefourScene, SaisonScene, TirArcScene, MatScene, RoueScene, BanquetScene, DiseuseScene, LanternesScene, VisionScene, SageScene, BarScene, VitrineScene, MoulinScene, ParrainScene, PecheScene, EtangScene, BarbierScene, HudScene, VoletScene],
 });
   // La musique et les sons : le son démarre au premier clic (les navigateurs l'exigent), et
   // chaque scène qui s'ouvre lance son ambiance.
@@ -180,7 +180,7 @@ function lancerJeu() {
     }
     // Un petit son de passage quand on change de lieu (façon Pokémon) : une porte qui s'ouvre
     // à l'intérieur, l'air du dehors quand on sort
-    const DEHORS = new Set(['Marche', 'Facade', 'Carte', 'Rue', 'Nymphe']);
+    const DEHORS = new Set(['Marche', 'Facade', 'Carte', 'Rue', 'Nymphe', 'Etang']);
     const SANS_PASSAGE = new Set(['Titre', 'Intro', 'IntroHistoire', 'Recit', 'Faillite', 'Renovation', 'Hud']);
     // (v0.95) le journal de bord : chaque page ouverte, mise en pause, reprise, fermée
     for (const s of window.jeu.scene.scenes) {
