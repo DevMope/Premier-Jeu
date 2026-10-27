@@ -81,7 +81,7 @@ class NightScene extends Phaser.Scene {
       ...(!this.matin && typeof repaireOuvert === 'function' && repaireOuvert(G) ? [['Le repaire', () => { if (enFondu()) return; repaireDuSoir(this, () => this.tout()); }]] : []),   // (v1.29) le livre noir
       ...(!this.matin && typeof etageOuvert === 'function' && etageOuvert(G) ? [["L'étage", () => { if (enFondu()) return; etageDuSoir(this, () => this.tout()); }]] : []),   // (v1.30) le grenier, le salon, l'appartement
       ...(this.matin
-        ? [["L'arrière-boutique", () => ouvrirPage('Arriere', { retour: 'Nuit' })], ['Le marché', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
+        ? [["L'arrière-boutique", () => ouvrirPage('Arriere', { retour: 'Nuit' })], ['La place', () => this.allerA('Marche')], ['Ouvrir le comptoir', () => this.ouvrirComptoir()]]
         : [['Aller dormir', () => this.dormir()]]),
     ];
     // (v1.45, la pêche) l'étang du Moulin, dès qu'on a une canne : l'aube le matin ; le soir, le jour (comptoir fermé tôt) ou la nuit
@@ -224,7 +224,7 @@ class NightScene extends Phaser.Scene {
     if (!bois) { b1.fond.setAlpha(0.5); b1.label.setAlpha(0.6); }
     const b2 = creerBouton(this, 600, 372, 210, 'Dormir quand même', () => { this.froidAccepte = G.jour; fermer(); this.dormir(); });
     c.add([b1.fond, b1.label, b2.fond, b2.label]);
-    if (!bois) c.add(this.add.text(480, 410, "Thorgal vend du bois à la forge (au marché, demain matin).", style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
+    if (!bois) c.add(this.add.text(480, 410, "Thorgal vend du bois à la forge (sur la place, demain matin).", style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
   }
 
   parchemin(x1, x2, titre) {
@@ -300,7 +300,7 @@ class NightScene extends Phaser.Scene {
       } else if (foyer) {
         ligne = foyer;
         if (foyerVide(G) && (G.materiaux.bois || 0) > 0) action = ['▸ Mettre une bûche (1 planche)', () => { const err = allumerFeu(G); if (err) return this.annoncer(err); Son.jouer('glisse'); this.tout(); }];
-      } else if (nympheAttend(G)) ligne = 'Une lueur bleue monte de la place du marché... Sors voir, par la rue !';
+      } else if (nympheAttend(G)) ligne = 'Une lueur bleue monte de la place des Mastres... Sors voir, par la rue !';
       else if (chatCeSoir(G)) ligne = 'Un chat de gouttière rôde devant ta porte ce soir.';
       const yLigne = Math.max(410, texteMissions.y + texteMissions.height + 8);
       let yAction = 455;
@@ -361,7 +361,7 @@ class NightScene extends Phaser.Scene {
     } else if (foyer) {
       ligne = foyer;
       if (foyerVide(G) && (G.materiaux.bois || 0) > 0) action = ['▸ Mettre une bûche (1 planche)', () => { const err = allumerFeu(G); if (err) return this.annoncer(err); Son.jouer('glisse'); this.tout(); }];
-    } else if (nympheAttend(G)) ligne = 'Une lueur bleue monte de la place du marché... Sors voir, par la rue !';
+    } else if (nympheAttend(G)) ligne = 'Une lueur bleue monte de la place des Mastres... Sors voir, par la rue !';
     else if (chatCeSoir(G)) ligne = 'Un chat de gouttière rôde devant ta porte ce soir.';
     // (v1.61) tout doit tenir entre « Demain » et le bas du parchemin (les étiquettes NOUVEAU des boutons sont juste dessous) :
     // s'il manque de la place, on tait d'abord ce qui ne dit rien (« personne », « aucun »), puis on remonte un peu ;
@@ -412,7 +412,7 @@ class NightScene extends Phaser.Scene {
   // --- Ta réserve (on achète le matin, sur la place des Mastres) ---
 
   creerReserve(x1, x2) {
-    this.add.text((x1 + x2) / 2, 110, this.matin ? 'Tu peux encore retourner au marché' : 'Demain matin : la place des Mastres', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
+    this.add.text((x1 + x2) / 2, 110, this.matin ? 'Tu peux encore retourner sur la place' : 'Demain matin : la place des Mastres', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.lignesStock = {};
     // (v0.64) toutes les armes sur une seule ligne, comme au râtelier (sinon la liste sortait de l'écran)
     const ids = [...Object.keys(ITEMS).filter(id => !estArme(id)), 'armes', ...Object.keys(MATERIAUX)];

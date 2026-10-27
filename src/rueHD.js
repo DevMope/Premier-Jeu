@@ -436,7 +436,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
   // ce qu'on regarde
   ici.regarder(o + P.maison0 - 150, 160, 300, 310, jour ? 'Madame Pommeroy bat ses tapis à la fenêtre. Elle te salue d\'un hochement de tête.' : Phaser.Utils.Array.GetRandom(['La maison des Pommeroy. Leur chien ronfle derrière la porte.', 'Une bougie veille chez la vieille Berthe Pommeroy. Elle tricote, comme chaque soir.']));
   ici.regarder(o + P.impasse - 90, 240, 180, 230, ouvert ? "Une lanterne rouge brûle au fond de l'impasse du Corbeau. La porte dérobée est ouverte ce soir..." : jour ? "L'impasse du Corbeau. Même en plein jour, le fond reste dans l'ombre." : G.visiteMarcheNoir !== undefined ? "L'impasse est noire. La lanterne rouge est éteinte ce soir." : "Une impasse si sombre qu'on n'en voit pas le fond. On dit qu'une porte basse s'y ouvre, certains soirs.");
-  ici.regarder(o + P.forge - 180, 160, 360, 310, jour ? 'Le marteau de Thorgal sonne sur l\'enclume. Pour lui acheter quelque chose, c\'est à son étal, au marché.' : "La forge de Thorgal. Les braises rougeoient encore derrière les vantaux ; on l'entend ronfler à l'étage.");
+  ici.regarder(o + P.forge - 180, 160, 360, 310, jour ? 'Le marteau de Thorgal sonne sur l\'enclume. Pour lui acheter quelque chose, c\'est à son étal, sur la place.' : "La forge de Thorgal. Les braises rougeoient encore derrière les vantaux ; on l'entend ronfler à l'étage.");
   ici.regarder(o + P.shop - 220, 200, 440, 270, `${G.nomShop}, ton comptoir. ${['Une humble chaumière', 'Une jolie maison', 'Une belle maison', 'La plus belle maison du village'][niveauFacade(G)]}.`);
   ici.regarder(o + P.maison1 - 130, 160, 260, 310, jour ? 'Le petit Brindeloup te regarde passer : il rêve de partir à l\'aventure.' : Phaser.Utils.Array.GetRandom(["Chez les Brindeloup. On s'y dispute à voix basse : l'aîné veut partir à l'aventure.", 'Les volets sont clos chez les Brindeloup. Tout le monde dort.']));
   if (typeof barbierOuvert === 'function') {
@@ -444,7 +444,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
     else if (jour) ici.porte(o + P.barbier + 52, sol, "Chez Orvin, le barbier", 'Barbier', { large: 80, haut: 100 });
     else ici.regarder(o + P.barbier - 120, 230, 240, 240, "Le Fil d'Argent est fermé pour la nuit. Derrière les volets, Orvin affûte ses rasoirs en chantonnant.");
   }
-  ici.regarder(o + P.fontaine - 128, 300, 256, 200, jour ? 'La fontaine chante. Pour y jeter une pièce, c\'est celle de la place du marché.' : 'La fontaine murmure dans la nuit. Au fond du bassin, des pièces luisent sous la lune.');
+  ici.regarder(o + P.fontaine - 128, 300, 256, 200, jour ? 'La fontaine chante. Pour y jeter une pièce, c\'est celle de la place des Mastres.' : 'La fontaine murmure dans la nuit. Au fond du bassin, des pièces luisent sous la lune.');
   // (v1.56) les Mages-Charpentiers : le chantier se regarde, l'atelier s'ouvre le jour
   if (typeof chantierMages === 'function') {
     if (atelierMagesOuvert(G)) { if (jour) ici.porte(o + P.mages + 6, sol, 'Les Mages-Charpentiers', 'Mages', { large: 120, haut: 150 }); else ici.regarder(o + P.mages - 160, 180, 320, 290, "L'atelier des Mages-Charpentiers dort. Sur les poutres, les runes luisent encore un peu, bleu pâle."); }
