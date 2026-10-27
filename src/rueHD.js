@@ -2,7 +2,7 @@
 // De gauche à droite : une maison du voisinage, l'impasse du marché noir (sa lanterne rouge ne
 // brûle que certains soirs), la forge de Thorgal (les braises rougeoient derrière les vantaux),
 // ton shop, une autre maison, la fontaine, la Banque Centrale Goyenne, et le porche qui ouvre sur
-// le Marché des Mastres. Chaque façade est peinte comme celle du shop (toile ×2, posée par le bas).
+// la place des Mastres. Chaque façade est peinte comme celle du shop (toile ×2, posée par le bas).
 // (v1.62) La fontaine, ce qui vit dans la rue et le porche du marché sont peints dans rueVieHD.js.
 
 const RAMPES_RUE = {
@@ -244,7 +244,7 @@ function creerRueHD(scene) {
     t.contour(); t.texture(scene, 'rueBanqueHD');
   }
 
-  // --- L'arche du Marché des Mastres : deux piliers coiffés de pierre, un arc au faîte arrondi, une
+  // --- L'arche de la place des Mastres : deux piliers coiffés de pierre, un arc au faîte arrondi, une
   // bannière sous la clé ; la place se devine derrière (endormie la nuit, colorée le jour)
   for (const jour of [false, true]) {
     const L = 150, H = 176, t = toile(L, H);
@@ -398,7 +398,13 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
   }
   poser('rueBanqueHD', P.banque);
   // (v1.62, planche 80, porche A) le porche couvert du marché, la place au travers
-  poser(porcheRueHD(scene, jour), P.arche);   // (la place, au travers, suit la saison et l'heure)
+  // (la place, au travers, suit la saison et l'heure ; v1.64 : le ciel de la rue au-dessus d'elle, ses passants entre la place
+  // et le porche)
+  { const k = porcheRueHD(scene, jour), saison = k.split('_')[1];
+    poser('placePorche_' + saison + (jour ? '_jour' : '_nuit'), P.arche);
+    const foule = scene.add.container(0, 0);
+    poser(k, P.arche);
+    if (jour) passantsPorche(scene, foule, o + P.arche, sol, { hiver: saison === 'givre' }); }
   for (const x of [380, 560, 1060, 1640, 2590, 2885].map((x, i) => i ? x + LOT_CONFRERIE + (x >= 1700 ? ECART_ARDOISE : 0) + (x >= 2700 ? LOT_MAGES : 0) : x)) { scene.add.image(o + x, sol + 6, 'reverbereHD').setOrigin(0.5, 1).setScale(2); lumieres.push([o + x, sol - 166, 1.6]); }
   lumieres.push([f.porteX, 400, 2.4], [o + P.forge, sol - 10, 1.8], [o + P.banque, sol - 150, 1.4]);
   // les noms : écriteaux peints, lettres gravées, bannière
@@ -408,7 +414,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
   ecriteauRue(scene, o + P.maison1 + 26, sol - 112, 'Les Brindeloup', { taille: 10 });
   ecriteauRue(scene, o + P.banque, sol - 254, 'BANQUE CENTRALE GOYENNE', { taille: 12, grave: true });
   scene.add.image(o + P.banque, sol - 263, creerLogoBanque(scene)).setOrigin(0.5, 1).setScale(1.5).setDepth(8.3);
-  ecriteauRue(scene, o + P.arche, sol - 302 + 2 * (PORCHE_RUE.linteau + 13) + 10, 'Marché des Mastres', { taille: 12 });   // (pendu à ses chaînes, sous le linteau du porche)
+  ecriteauRue(scene, o + P.arche, sol - 302 + 2 * (PORCHE_RUE.linteau + 13) + 10, 'Place des Mastres', { taille: 12 });   // (pendu à ses chaînes, sous le linteau du porche)
   // les flammes de la forge, le jour : des étincelles qui jaillissent
   if (jour && etincelles) scene.time.addEvent({ delay: 260, loop: true, callback: () => {
     const e = scene.add.rectangle(o + P.forge - 40 + Math.random() * 30, sol - 30, 2, 2, Math.random() < 0.5 ? 0xffd060 : 0xff8020).setDepth(8.2);
@@ -430,7 +436,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
   // ce qu'on regarde
   ici.regarder(o + P.maison0 - 150, 160, 300, 310, jour ? 'Madame Pommeroy bat ses tapis à la fenêtre. Elle te salue d\'un hochement de tête.' : Phaser.Utils.Array.GetRandom(['La maison des Pommeroy. Leur chien ronfle derrière la porte.', 'Une bougie veille chez la vieille Berthe Pommeroy. Elle tricote, comme chaque soir.']));
   ici.regarder(o + P.impasse - 90, 240, 180, 230, ouvert ? "Une lanterne rouge brûle au fond de l'impasse du Corbeau. La porte dérobée est ouverte ce soir..." : jour ? "L'impasse du Corbeau. Même en plein jour, le fond reste dans l'ombre." : G.visiteMarcheNoir !== undefined ? "L'impasse est noire. La lanterne rouge est éteinte ce soir." : "Une impasse si sombre qu'on n'en voit pas le fond. On dit qu'une porte basse s'y ouvre, certains soirs.");
-  ici.regarder(o + P.forge - 180, 160, 360, 310, jour ? 'Le marteau de Thorgal sonne sur l\'enclume. Pour lui acheter quelque chose, c\'est à son étal, au marché.' : "La forge de Thorgal. Les braises rougeoient encore derrière les vantaux ; on l'entend ronfler à l'étage.");
+  ici.regarder(o + P.forge - 180, 160, 360, 310, jour ? 'Le marteau de Thorgal sonne sur l\'enclume. Pour lui acheter quelque chose, c\'est à son étal, sur la place.' : "La forge de Thorgal. Les braises rougeoient encore derrière les vantaux ; on l'entend ronfler à l'étage.");
   ici.regarder(o + P.shop - 220, 200, 440, 270, `${G.nomShop}, ton comptoir. ${['Une humble chaumière', 'Une jolie maison', 'Une belle maison', 'La plus belle maison du village'][niveauFacade(G)]}.`);
   ici.regarder(o + P.maison1 - 130, 160, 260, 310, jour ? 'Le petit Brindeloup te regarde passer : il rêve de partir à l\'aventure.' : Phaser.Utils.Array.GetRandom(["Chez les Brindeloup. On s'y dispute à voix basse : l'aîné veut partir à l'aventure.", 'Les volets sont clos chez les Brindeloup. Tout le monde dort.']));
   if (typeof barbierOuvert === 'function') {
@@ -438,7 +444,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
     else if (jour) ici.porte(o + P.barbier + 52, sol, "Chez Orvin, le barbier", 'Barbier', { large: 80, haut: 100 });
     else ici.regarder(o + P.barbier - 120, 230, 240, 240, "Le Fil d'Argent est fermé pour la nuit. Derrière les volets, Orvin affûte ses rasoirs en chantonnant.");
   }
-  ici.regarder(o + P.fontaine - 128, 300, 256, 200, jour ? 'La fontaine chante. Pour y jeter une pièce, c\'est celle de la place du marché.' : 'La fontaine murmure dans la nuit. Au fond du bassin, des pièces luisent sous la lune.');
+  ici.regarder(o + P.fontaine - 128, 300, 256, 200, jour ? 'La fontaine chante. Pour y jeter une pièce, c\'est celle de la place des Mastres.' : 'La fontaine murmure dans la nuit. Au fond du bassin, des pièces luisent sous la lune.');
   // (v1.56) les Mages-Charpentiers : le chantier se regarde, l'atelier s'ouvre le jour
   if (typeof chantierMages === 'function') {
     if (atelierMagesOuvert(G)) { if (jour) ici.porte(o + P.mages + 6, sol, 'Les Mages-Charpentiers', 'Mages', { large: 120, haut: 150 }); else ici.regarder(o + P.mages - 160, 180, 320, 290, "L'atelier des Mages-Charpentiers dort. Sur les poutres, les runes luisent encore un peu, bleu pâle."); }
@@ -449,7 +455,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
   // (v0.67, v0.68) après assez de vœux, la nymphe attend ; quand l'arche mène quelque part, toute l'ouverture se clique
   const nymphe = !jour && nympheAttend(G);
   const arche = { large: 200, haut: 300 };
-  if (!jour && !nymphe) ici.regarder(o + P.arche - 176, 160, 352, 310, "Le porche du Marché des Mastres. Ses battants restent ouverts, mais la place dort : les étals rouvriront à l'aube.");
+  if (!jour && !nymphe) ici.regarder(o + P.arche - 176, 160, 352, 310, "Le porche de la place des Mastres. Ses battants restent ouverts, mais la place dort : les étals rouvriront à l'aube.");
   if (nymphe) {
     // la place, au fond, baignée de bleu ; des gouttes de lumière montent par-dessus les toits
     const l = scene.add.rectangle(o + P.arche, sol - 130, 180, 250, 0x3a9ad8, 0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(9.5);
@@ -460,7 +466,7 @@ function construireRue(scene, o, { jour = false, sol = 470, ici, etincelles = tr
     } });
     ici.porte(o + P.arche, sol, 'La lueur de la fontaine', 'Nymphe', arche);
   }
-  if (jour) ici.porte(o + P.arche, sol, 'Le marché ▶', 'Marche', arche);
+  if (jour) ici.porte(o + P.arche, sol, 'La place ▶', 'Marche', arche);
   return { porteShop: { x: f.porteX, y: f.porteY }, lumieres, banc: { x: o + P.shop - 330, sol: sol + 30 } };   // (v0.68 : le banc, où l'on peut s'asseoir)
 }
 

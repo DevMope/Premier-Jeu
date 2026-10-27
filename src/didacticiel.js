@@ -40,7 +40,7 @@ function nouveautes(G) {
 const OBJECTIFS = [
   { id: 'premierClient', groupe: 'jour', texte: 'Équipe ton premier client', prog: G => [G.experience || 0, 1], argent: 20,
     aide: "Au comptoir : lis sa commande, glisse les marchandises dans son baluchon, puis remets-le-lui." },
-  { id: 'marche', groupe: 'jour', des: G => G.jour >= 1, texte: 'Achète des provisions au Marché des Mastres', prog: G => [Object.values(G.depenses || {}).some(x => x > 0) ? 1 : 0, 1], argent: 15,
+  { id: 'marche', groupe: 'jour', des: G => G.jour >= 1, texte: 'Achète des provisions sur la place des Mastres', prog: G => [Object.values(G.depenses || {}).some(x => x > 0) ? 1 : 0, 1], argent: 15,
     aide: "Le matin, avant d'ouvrir : « Le marché ». Approche-toi d'un étal et achète ce qui manque à ta réserve." },
   { id: 'bureau', groupe: 'jour', des: G => lieuDebloque(G, 'bureau') && G.jour >= 1, texte: 'Améliore une chose au bureau', prog: G => [(G.travaux || []).length + Object.values(G.ameliorations || {}).reduce((a, b) => a + b, 0) > 0 ? 1 : 0, 1], argent: 25,
     aide: "Le soir, « Le bureau » : les plans de la maison, au mur. Les ouvriers viennent pendant la nuit." },
@@ -261,7 +261,7 @@ function visiteDuMonde(carte) {
   const PAS = [
     { zone: [255, 140, 480, 200], texte: "« Ici, c'est la Comté : chez nous. Chaque matin, des aventuriers cherchent où aller, et c'est toi qui choisis. Les étoiles, c'est le danger... et le butin. Sous les nuages, le reste du monde : il s'ouvrira à mesure que ton nom circulera. »" },
     { zone: null, texte: "« Le monde aime ranger les gens : la lumière d'un côté, l'ombre de l'autre. Ce que tu vends, à qui tu le vends, et ce sur quoi tu fermes les yeux : tout se sait. La jauge, sous ta réputation, te dira de quel côté tu penches. Personne ne choisira pour toi. »", fleche: [120, 54, -90] },
-    { zone: null, texte: "« Demain matin, avant d'ouvrir, je t'emmène au Marché des Mastres : c'est là que tu rachètes de quoi remplir ta réserve. Chaque marchand a ses prix du jour. Ce qui manque sur tes étagères manquera au comptoir. »" },
+    { zone: null, texte: "« Demain matin, avant d'ouvrir, je t'emmène sur la place des Mastres : c'est là que tu rachètes de quoi remplir ta réserve. Chaque marchand a ses prix du jour. Ce qui manque sur tes étagères manquera au comptoir. »" },
     { zone: null, texte: "« Assez parlé ! Une cliente t'attend déjà : Pippa, une hobbite qui doit porter une lettre de l'autre côté de la rivière. Une course facile, pour commencer. Je reste à côté de toi. »", bouton: 'Ouvrir le comptoir ▶' },
   ];
   let k = 0, pas = null;

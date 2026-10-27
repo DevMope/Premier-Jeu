@@ -55,6 +55,8 @@ function solPlaceHD(scene, cle, pal, L, H, plan) {
   }
   // 2. on peint, avec le relief
   const T = (x, y) => (x < 0 || y < 0 || x >= L || y >= H ? 0 : type[y * L + x]);
+  // (v1.64) la bordure de pierres : l'herbe qui touche la terre de la route, sur un pixel et demi, là où le plan le dit
+  const bordure = (x, y) => (plan.bordures || []).some(([a, b, w]) => { const d = distSeg(x, y, a, b); return d >= w - 1 && d < w + 2.2; }) && [[0, 1], [0, -1], [1, 0], [-1, 0], [0, 2], [0, -2]].some(([u, v]) => T(x + u, y + v) === 1);
   for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
     const i = y * L + x, ty = type[i];
     if (ty === 0) {
@@ -64,6 +66,8 @@ function solPlaceHD(scene, cle, pal, L, H, plan) {
       if (p > 0.56 && p <= 0.6 && (x + y) % 2 === 0) k = 4;   // (un tramage doux entre les deux tons)
       if (q > 0.97) k += 1; else if (q < 0.025) k -= 1;
       if (T(x, y + 1) && T(x, y + 1) !== 0) k = 5; else if (T(x, y + 2) && T(x, y + 2) !== 0) k = 4;
+      // (v1.64) la bordure de la route du Moulin : de petites pierres rondes, serrées, dans l'herbe au bord de la terre
+      if (bordure(x, y)) { const b = hachage(x >> 2, y >> 1, G0 + 30); t.poser(x, y, 'pierreP', (x + y) % 4 === 0 ? 1 : b > 0.6 ? 4 : 3 - (T(x, y + 1) ? 1 : 0)); continue; }
       t.poser(x, y, 'herbeP', k);
     } else if (ty === 1) {
       // la terre battue : douce, quelques cailloux ; à l'ombre de l'herbe qui la surplombe, plus sombre
@@ -319,11 +323,14 @@ function poserEnseignePendue(s, g, versDroite, metier, y, demi = 84) {
 
 // (v1.62) Le plan du sol de la grand-place (terre battue sous les étals et sur les chemins d'usure, dalles au centre,
 // herbe ailleurs) : la place le peint vu d'au-dessus, la vue du mendiant le reprend en perspective.
+// (v1.64, planche 89) La cabane de Barnabé n'est plus un étal de la place (elle est au bord de l'étang, au bout de la route
+// du Moulin), ni les portes rondes des Coteaux ; la route du Moulin, plus large au bout, est bordée de pierres.
 function planSolPlace() {
-  const pads = Object.entries(LIEUX_PLACE).filter(([k]) => !['fontaine', 'arche', 'moulin', 'carte'].includes(k)).map(([k, [x, y]]) => PETITS_LIEUX.includes(k) ? [x / 2, y / 2 - 6, 44, 18] : [x / 2, y / 2 - 12, 104, 34]);
+  const pads = Object.entries(LIEUX_PLACE).filter(([k]) => !['fontaine', 'arche', 'moulin', 'carte', 'peche', 'coteaux'].includes(k) && !/^porte/.test(k)).map(([k, [x, y]]) => PETITS_LIEUX.includes(k) ? [x / 2, y / 2 - 6, 44, 18] : [x / 2, y / 2 - 12, 104, 34]);
   pads.push([530, 500, 40, 20]);
-  const chemins = [...pads.map(([x, y]) => [[450, 318], [x, y]]), [[450, 318], [450, 520], 12], [[450, 318], [900, 382], 8], [[0, 92], [900, 92], 11]];
-  return { centre: [450, 318], rTerre: 150, rDalles: 104, pads, chemins, largeur: 8, pas: [[450, 432], [452, 452], [448, 472], [451, 492]] };
+  const chemins = [...pads.map(([x, y]) => [[450, 318], [x, y]]), [[450, 318], [450, 520], 12], [[450, 318], [900, 382], 8], [[740, 359], [900, 382], 10], [[0, 92], [900, 92], 11]];
+  return { centre: [450, 318], rTerre: 150, rDalles: 104, pads, chemins, largeur: 8, pas: [[450, 432], [452, 452], [448, 472], [451, 492]],
+    bordures: [[[748, 360], [900, 382], 10]] };
 }
 // Un point du plan (en demi-pixels de la place, continus) est-il de terre battue ? (le même calcul que solPlaceHD)
 function estTerrePlace(plan, x, y) {
@@ -510,7 +517,10 @@ function decorMendiantHD(s, saison, fontaine) {
   if (sol) c.add(s.add.image(0, s.textures.get(sol).r0 * 2, sol).setOrigin(0).setScale(2));
   const objets = [];
   const poser = (cle, X, Y, echellePlace, { oy = 1, ombre = 0, flip = false } = {}) => { const P = projeterMendiant(X, Y); if (P) objets.push({ d: P.d, P, cle, echellePlace, oy, ombre, flip }); };
-  [['rueForgeHD', 110], ['rueImpasseHD', 300], ['rueBanqueHD', 470], ['rueBanqueHD', 1330], ['rueImpasseHD', 1500], ['rueForgeHD', 1690]].forEach(([k, x]) => { if (s.textures.exists(k)) poser(k, x, 160, 1.3); });
+  // (v1.64, planche 89) au fond, le pied des Coteaux et ses portes rondes (plus de façades de la rue recopiées là)
+  if (typeof trouCoteauxPlace === 'function') { const C = COTEAUX_PLACE, oy = 6 * C.echelle;
+    for (const b of C.hauts) poser(trouCoteauxPlace(s, pal, b, true), b[0], C.terrasse + oy, C.echelle);
+    for (const b of C.bas) poser(trouCoteauxPlace(s, pal, b), b[0], C.levre + oy, C.echelle); }
   [[70, 420, 0], [70, 760, 1], [1740, 420, 1], [420, 740, 1], [1390, 760, 0], [560, 200, 0], [1250, 200, 1]].forEach(([x, y, v]) => { const cle = arbrePlaceHD(s, pal, v, x, y); poser(cle, x, y, 2.2, { ombre: 120, oy: origineArbre(s, cle) }); });
   const marcheDuJour = typeof jourDeMarche === 'function' && jourDeMarche(G);
   [[250, 760], [1520, 760], [700, 760], [1100, 760], ...(marcheDuJour ? [] : [[460, 470], [1340, 470]])].forEach(([x, y]) => { const cle = buissonPlaceHD(s, pal, x, y); poser(cle, x, y, 2.2, { ombre: 70, oy: origineArbre(s, cle) }); });

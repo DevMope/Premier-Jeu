@@ -279,8 +279,8 @@ async function categories(scene) {
   // La rue du shop
   sur(() => { creerRueHD(scene); creerLogoBanque(scene); });
   const rue = liste({ rueMaisonHD_0: 'La maison des Pommeroy', rueImpasseHD: "L'impasse du marché noir", rueForgeHD: 'La forge de Thorgal, le soir', rueForgeHD_jour: 'La forge de Thorgal, de jour',
-    rueMaisonHD_1: 'La maison des Brindeloup', rueBanqueHD: 'La Banque Centrale Goyenne', logoBanque: 'Le logo de la Banque', rueArcheHD: "L'arche du Marché des Mastres, la nuit",
-    rueArcheHD_jour: "L'arche du Marché des Mastres, de jour", reverbereHD: 'Le réverbère' });
+    rueMaisonHD_1: 'La maison des Brindeloup', rueBanqueHD: 'La Banque Centrale Goyenne', logoBanque: 'Le logo de la Banque', rueArcheHD: "L'arche de la place des Mastres, la nuit",
+    rueArcheHD_jour: "L'arche de la place des Mastres, de jour", reverbereHD: 'Le réverbère' });
   rue.push(sur(() => ({ cle: photo(scene, 'photoRue', LARGEUR_RUE, 540, p => construireRue(p, 0, { jour: true, ici }), { zoom: 0.5, bande: 960 }), nom: 'La rue entière, de jour (de la Confrérie à l\'arche du marché)' })));
   await ajouter('rue', 'La rue', "La rue du shop qu'on parcourt à pied : les voisins, l'impasse, la forge, la banque, l'arche du marché, et la rue entière.", rue, true);
 

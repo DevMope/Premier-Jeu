@@ -1,5 +1,5 @@
 // L'extérieur en HD : les paysages peints de chaque contrée (ciel tramé, nuages, montagnes,
-// collines, arbres, chemin), la façade du shop, les étals du Marché des Mastres et les pavés.
+// collines, arbres, chemin), la façade du shop, les étals de la place des Mastres et les pavés.
 // Peint à demi-résolution et affiché en ×2, comme le reste.
 
 // --- Les couleurs ---
@@ -646,7 +646,7 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   };
 }
 
-// --- Le Marché des Mastres ---
+// --- La place des Mastres ---
 
 // Un étal : deux poteaux, un auvent rayé à festons (de la couleur du marchand), une table.
 function etalHD(scene, couleur) {

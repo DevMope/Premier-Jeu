@@ -1,4 +1,4 @@
-// Le Marché des Mastres, chaque matin avant d'ouvrir le comptoir :
+// La place des Mastres, chaque matin avant d'ouvrir le comptoir :
 // quatre étals (épicerie, forge, apothicaire, tailleuse), le Bazar de Rosalie (les cadeaux), les enchères,
 // le coin des jeux, le mendiant, et le crieur qui annonce les nouvelles du jour.
 // La rue est plus large que l'écran : on la parcourt avec les flèches ◀ ▶.
@@ -52,7 +52,7 @@ class MarcheScene extends Phaser.Scene {
     // (v1.64) après le coq, la cloche du marché qui ouvre la journée (en attente du choix du joueur : voir sonAChoisir)
     this.time.delayedCall(2300, () => { if (this.sys.isActive() && typeof sonAChoisir === 'function') sonAChoisir('cloche'); });
     decorSaison(this, { fixe: true, sansSol: true, prof: 4, sol: 540 });   // (v0.99 : ce qui tombe du ciel selon la saison)
-    this.add.text(480, 22, `Le Marché des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setDepth(5);
+    this.add.text(480, 22, `La place des Mastres · matin du jour ${G.jour}`, style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setDepth(5);
 
     this.fete = solsticeActif(G);   // (v1.00) la Fête du Solstice
     if (this.fete) this.decorFeteRue();
