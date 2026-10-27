@@ -566,7 +566,8 @@ class PromenadeScene extends Cinematique {
       this.heros.x = Phaser.Math.Clamp(this.heros.x + dx, piece.x + 40, piece.x + (piece.largeur || 960) - 40);
       this.heros.setFlipX(dx < 0);
       this.pas += delta;
-      if (!this.heros.marche) pasDeMarche(this, this.heros, 260);
+      // (v1.64) ses pas : le parquet de la maison, les pavés de la rue (la neige au Givre)
+      if (!this.heros.marche) pasDeMarche(this, this.heros, 260, { sol: this.piece !== P_DEHORS ? 'parquet' : typeof saisonDe === 'function' && saisonDe(this.G) === 'givre' ? 'neige' : 'paves', volumePas: 0.55 });
       this.heros.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
     } else this.heros.y = SOL_PROMENADE;
     // (v0.65) dans la rue, la caméra suit tes pas

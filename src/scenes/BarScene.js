@@ -233,7 +233,7 @@ class BarScene extends Phaser.Scene {
     this.occupe = true;
     const d = Math.hypot(x - this.joueur.x, y - this.joueur.y), duree = Math.max(150, d / SOIREE_BAR.pas * 1000);
     if (x !== this.joueur.x) this.joueur.setFlipX(x < this.joueur.x);
-    pasDeMarche(this, this.joueur, duree);
+    pasDeMarche(this, this.joueur, duree, { sol: 'parquet', volumePas: 0.55 });   // (v1.64 : le plancher du bar)
     this.tweens.add({ targets: this.joueur, x, y, duration: duree, ease: 'Sine.easeInOut', onComplete: () => { this.occupe = false; if (suite) suite(); } });
   }
   allerPrendre(quoi) {

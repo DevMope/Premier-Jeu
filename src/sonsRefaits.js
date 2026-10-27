@@ -1,15 +1,17 @@
 // (v1.64) Les trois sons refusés par le joueur sur la page d'écoute v1.61, refaits pour être réalistes : le marteau
-// (du charpentier et de la forge), la foule du marché et la cloche du marché. Deux variantes de chacun, à écouter sur
-// docs/planches-v059/sons-v164.html.
+// (du charpentier et de la forge), la foule du marché et la cloche du marché. Deux variantes de chacun (et deux nouvelles
+// pour la foule, C et D, après le refus de A et B), à écouter sur docs/planches-v059/sons-v164.html.
 //
-// EN ATTENTE DU CHOIX DU JOUEUR : tant que SONS_A_CHOISIR.actif est faux, le jeu garde ses anciens sons (l'enclume
-// pour le marteau, le silence pour la foule et la cloche). Les points d'accroche sont en place (voir sonAChoisir) ;
-// pour brancher, il suffit de passer `actif` à vrai et de noter la variante choisie (A ou B).
+// Les points d'accroche sont en place (voir sonAChoisir) : chaque son joue la variante notée dans SONS_A_CHOISIR, ou,
+// sans variante notée (ou le drapeau `actif` baissé), le jeu garde l'ancien son (l'enclume) ou le silence.
 //
 // Ici, rien n'est un graphe Web Audio : chaque son est calculé échantillon par échantillon (des modes qui résonnent,
 // des bruits filtrés, une réverbération), une seule fois, puis rejoué depuis son tampon. Le même code fabrique les
 // fichiers .wav de la page d'écoute (sous Node, voir module.exports en bas).
-const SONS_A_CHOISIR = { actif: false, marteau: 'A', foule: 'A', cloche: 'A' };
+// (27/10) Le joueur a choisi : le marteau B pour l'atelier et les charpentiers (les planches du marché, l'étage, les
+// réparations), le marteau A pour la forge, la cloche A (chaque matin après le coq). Les foules A et B sont refusées ;
+// C et D attendent son choix : tant que `foule` est vide, la place reste sans foule.
+const SONS_A_CHOISIR = { actif: true, marteau: { forge: 'A', atelier: 'B' }, cloche: 'A', foule: null };
 
 const FabriqueSons = (() => {
   // Les niveaux visés (mesurés sur les sons du jeu : l'enclume 0,056, le marteau de la v1.61 0,072, sa cloche 0,051,
@@ -222,134 +224,149 @@ const FabriqueSons = (() => {
   }
 
   // ======================================================================================
-  // La foule du marché. Des voix, vraiment : une source (les cordes vocales, un peu de souffle) passée dans trois
-  // résonances (les formants) qui glissent d'une voyelle à l'autre, syllabe après syllabe, avec l'intonation d'une
-  // phrase (elle monte, puis retombe) ; des consonnes (un souffle, un petit choc) ; des pauses pour respirer.
-  // Au loin, une vingtaine de voix mêlées, étouffées par la distance et renvoyées par les façades : le brouhaha.
-  // Tout près, de temps en temps, un éclat : un rire, un marchand qui appelle, un enfant, deux voisins qui causent.
+  // La foule du marché (v1.64, deuxième essai : les variantes A et B, trop graves, faisaient « fond d'horreur »).
+  // Un marché animé, le matin : des voix claires, qui parlent vite et gaiement (l'intonation monte et descend, s'exclame,
+  // ne s'effondre jamais vers le grave), dans l'air libre (peu de réverbération, pas de rumeur sourde) ; et tout près,
+  // souvent, des éclats : des rires, des marchands qui hèlent, des enfants qui rient et s'écrient.
+  // Chaque voix est vraiment une voix : une source (les cordes vocales, un peu de souffle) passée dans trois résonances
+  // (les formants) qui glissent d'une voyelle à l'autre, syllabe après syllabe ; des consonnes ; des respirations.
   // ======================================================================================
   const VOYELLES = [[800, 1250, 2600], [420, 2050, 2650], [560, 1750, 2500], [290, 2250, 2950], [460, 820, 2500], [320, 760, 2300], [300, 1750, 2150], [420, 1450, 2350], [650, 1100, 2500]];
-  // Une voix qui parle (ou rit, ou appelle) de t0 à t0 + duree. o : f0 (la hauteur), k (les formants : 1 un homme,
-  // 1,15 une femme, 1,3 un enfant), debit (syllabes par seconde), souffle, niveau, rire, appel
+  const A_ = 0, E_ = 1, I_ = 3, O_ = 4;   // (les voyelles des rires et des appels : a, é, i, o)
+  // Une voix de t0 à t0 + duree. o : f0 (la hauteur), k (les formants : 1 un homme, 1,15 une femme, 1,3 un enfant),
+  // debit (syllabes par seconde), souffle, niveau ; rire ('ha', ou 'hi' pour un rire aigu d'enfant), heler (un marchand
+  // qui appelle : « Ohé ! ... des pommes, des belles ! »), cri (un enfant qui s'écrie, « Ouiii ! »)
   function voix(x, sr, t0, duree, r, o = {}) {
-    const f0 = o.f0 || 120, k = o.k || 1, debit = o.debit || 5, souffle = o.souffle || 0.08, niveau = o.niveau || 0.1;
-    // les syllabes : [début, durée, voyelle, consonne, accent, fin de phrase ?]
+    const f0 = o.f0 || 140, k = o.k || 1, debit = o.debit || 7, souffle = o.souffle || 0.06, niveau = o.niveau || 0.1, rire = o.rire;
     const syl = []; let t = 0;
-    while (t < duree - 0.15) {
-      const mots = o.rire ? 1 : 1 + Math.floor(r() * 4), monte = r() < 0.22;
+    while (t < duree - 0.12) {
+      const mots = rire ? 1 : 1 + Math.floor(r() * 4), exclame = r() < 0.45;
       const phrase = [];
       for (let m = 0; m < mots; m++) {
-        const n = o.rire ? 4 + Math.floor(r() * 4) : 1 + Math.floor(r() * 3);
-        for (let s = 0; s < n && t < duree - 0.12; s++) {
-          const d = o.rire ? entre(r, 0.13, 0.17) : (1 / debit) * entre(r, 0.7, 1.35);
-          phrase.push({ t, d, v: o.rire ? 0 : Math.floor(r() * VOYELLES.length), c: o.rire ? 'h' : ['p', 's', 'm', 'l', '', '', 't', 'f'][Math.floor(r() * 8)], accent: r() < 0.3 ? entre(r, 0.06, 0.16) : 0 });
+        const n = rire ? 4 + Math.floor(r() * 5) : 1 + Math.floor(r() * 3);
+        for (let s = 0; s < n && t < duree - 0.1; s++) {
+          const d = rire ? entre(r, 0.1, 0.14) : (1 / debit) * entre(r, 0.7, 1.3);
+          phrase.push({ t, d, v: rire ? (rire === 'hi' ? I_ : r() < 0.7 ? A_ : E_) : Math.floor(r() * VOYELLES.length), c: rire ? 'h' : ['p', 's', 'm', 'l', '', 't', 'k', 'b'][Math.floor(r() * 8)], accent: r() < 0.45 ? entre(r, 0.08, 0.22) : 0 });
           t += d;
         }
-        t += o.rire ? 0 : entre(r, 0.02, 0.1);
+        t += rire ? 0 : entre(r, 0.015, 0.07);
       }
-      if (o.appel && phrase.length) { const der = phrase[phrase.length - 1]; der.d *= 3.2; der.v = 4; t = der.t + der.d; }   // (le marchand tient la dernière voyelle : « ... frais ! » « Oh-éééé ! »)
-      phrase.forEach((s, i) => { s.u = i / Math.max(1, phrase.length - 1); s.monte = monte; s.debutPhrase = phrase[0].t; s.finPhrase = t; });
+      // le marchand : deux syllabes lancées haut (« Oh-é ! »), puis la dernière voyelle tenue et qui monte
+      if (o.heler && phrase.length) { const der = phrase[phrase.length - 1]; der.d *= 3; der.v = r() < 0.5 ? O_ : E_; der.tenue = true; t = der.t + der.d; }
+      if (o.cri && phrase.length) { const der = phrase[phrase.length - 1]; der.d *= 3.5; der.v = I_; der.tenue = true; t = der.t + der.d; }
+      phrase.forEach(s => { s.exclame = exclame; s.debutPhrase = phrase[0].t; s.finPhrase = t; });
       syl.push(...phrase);
-      t += o.rire ? duree : entre(r, 0.25, 1.1);   // (il reprend son souffle, écoute l'autre)
+      t += rire ? duree : entre(r, 0.12, 0.6);   // (une respiration, l'autre répond)
     }
     if (!syl.length) return;
     const n0 = Math.floor(t0 * sr), n = Math.min(x.length - n0, Math.ceil(duree * sr));
     if (n <= 0) return;
     let phase = 0, si = 0, F = VOYELLES[syl[0].v].map(v => v * k);
-    const res = [0, 0, 0].map(() => ({ y1: 0, y2: 0, a1: 0, a2: 0, b: 0 })), largeurs = [90, 110, 160], poids = [1, 0.55, 0.28];
+    const res = [0, 0, 0].map(() => ({ y1: 0, y2: 0, a1: 0, a2: 0, b: 0 })), largeurs = [80, 100, 140], poids = [1, 1.5, 1.4];
     let lp = 0, bruitLp = 0, grain = 1;
     for (let i = 0; i < n; i++) {
       const tt = i / sr;
       while (si < syl.length - 1 && tt >= syl[si].t + syl[si].d) si++;
       const s = syl[si], dans = tt - s.t;
-      if (dans < 0 || dans > s.d) { // (entre deux syllabes : le silence, les résonances s'éteignent)
-        for (const q of res) { const y = -q.a1 * q.y1 - q.a2 * q.y2; q.y2 = q.y1; q.y1 = y; }
-        continue;
-      }
-      // l'enveloppe de la syllabe : la consonne, puis la voyelle qui s'ouvre et se referme
-      const u = dans / s.d, cons = s.c, tc = cons === 's' || cons === 'f' || cons === 'h' ? 0.28 : cons === 'p' || cons === 't' ? 0.12 : 0;
-      let voise = u < tc ? (cons === 'm' || cons === 'l' ? 0.5 : 0) : Math.min(1, (u - tc) / 0.12) * Math.min(1, (1 - u) / 0.22);
-      if (cons === 'm' && u < 0.2) voise *= 0.6;
-      // l'intonation : la phrase part haut et descend (ou remonte à la fin : une question), l'accent sur certaines syllabes
+      if (dans < 0 || dans > s.d) { for (const q of res) { const y = -q.a1 * q.y1 - q.a2 * q.y2; q.y2 = q.y1; q.y1 = y; } continue; }
+      const u = dans / s.d, cons = s.c;
+      const tc = cons === 's' || cons === 'h' ? (rire ? 0.35 : 0.24) : cons === 'p' || cons === 't' || cons === 'k' || cons === 'b' ? 0.1 : 0;
+      let voise = u < tc ? (cons === 'm' || cons === 'l' || cons === 'b' ? 0.5 : 0) : Math.min(1, (u - tc) / 0.1) * Math.min(1, (1 - u) / (s.tenue ? 0.12 : 0.2));
+      // l'intonation, gaie : la phrase ondule autour de sa hauteur (jamais une descente vers le grave), les syllabes
+      // accentuées sautent vers l'aigu, et une phrase sur deux finit en s'exclamant (elle monte)
       const up = (s.t + dans - s.debutPhrase) / Math.max(0.2, s.finPhrase - s.debutPhrase);
-      let hauteur = f0 * (1.14 - 0.26 * up + s.accent * Math.sin(Math.PI * u));
-      if (s.monte && up > 0.75) hauteur *= 1 + (up - 0.75) * 1.2;
-      if (o.rire) hauteur = f0 * (1.55 - 0.45 * (s.t / duree)) * (1 + 0.08 * Math.sin(Math.PI * u));
-      if (o.appel && s === syl[syl.length - 1]) hauteur = f0 * (1.25 + 0.25 * Math.sin(Math.PI * Math.min(1, u * 1.4)));
-      if ((i & 31) === 0) grain = 1 + (r() - 0.5) * 0.012;
-      hauteur *= grain;   // (le grain de la voix)
+      let hauteur = f0 * (1.04 + 0.06 * Math.sin(2 * Math.PI * up) + s.accent * Math.sin(Math.PI * u));
+      if (s.exclame && up > 0.7) hauteur *= 1 + (up - 0.7) * 0.9;
+      if (rire) hauteur = f0 * (1.5 - 0.22 * (s.t / duree)) * (1 + 0.1 * Math.sin(Math.PI * u));   // (un rire qui pétille, à peine descendant)
+      if (o.heler) hauteur = s.tenue ? f0 * (1.3 + 0.3 * Math.min(1, u * 1.6) - 0.1 * Math.max(0, u - 0.75) * 4) : f0 * (1.35 + s.accent);
+      if (o.cri && s.tenue) hauteur = f0 * (1.4 + 0.35 * Math.sin(Math.PI * Math.min(1, u * 1.2)));
+      if ((i & 31) === 0) grain = 1 + (r() - 0.5) * 0.01;
+      hauteur *= grain;
       phase += hauteur / sr; if (phase >= 1) phase -= 1;
-      const source = (2 * phase - 1) * 0.6 + (r() * 2 - 1) * souffle * (o.rire ? 4 : 1);
-      lp += (source - lp) * 0.35;   // (une source un peu ronde)
-      // les formants glissent vers ceux de la voyelle (toutes les 32 notes)
+      const source = (2 * phase - 1) * 0.6 + (r() * 2 - 1) * souffle * (rire ? 3 : 1);
+      lp += (source - lp) * 0.85;   // (une source claire)
       if ((i & 31) === 0) {
         const cible = VOYELLES[s.v];
         for (let j = 0; j < 3; j++) {
-          F[j] += (cible[j] * k - F[j]) * 0.18;
+          F[j] += (cible[j] * k - F[j]) * 0.22;
           const w = 2 * Math.PI * Math.min(F[j], sr * 0.45) / sr, rr = Math.exp(-Math.PI * largeurs[j] / sr);
           res[j].a1 = -2 * rr * Math.cos(w); res[j].a2 = rr * rr; res[j].b = (1 - rr * rr) * poids[j];
         }
       }
       let y = 0;
       for (const q of res) { const v = q.b * lp * voise - q.a1 * q.y1 - q.a2 * q.y2; q.y2 = q.y1; q.y1 = v; y += v; }
-      // la consonne : un souffle (s, f, h) ou un petit choc (p, t)
       let c = 0;
       if (u < tc) {
         bruitLp += ((r() * 2 - 1) - bruitLp) * (cons === 's' ? 0.9 : 0.5);
-        const e = cons === 'p' || cons === 't' ? (u < tc * 0.25 ? 1 : 0.15) : Math.sin(Math.PI * u / tc);
-        c = (cons === 's' ? (r() * 2 - 1) - bruitLp : bruitLp) * e * (cons === 'h' ? 0.5 : 0.25);
+        const e = cons === 'h' || cons === 's' ? Math.sin(Math.PI * u / tc) : (u < tc * 0.25 ? 1 : 0.15);
+        c = (cons === 's' ? (r() * 2 - 1) - bruitLp : bruitLp) * e * (cons === 'h' ? 0.45 : 0.25);
       }
       x[n0 + i] += (y * 3.2 + c) * niveau;
     }
   }
-  // Le brouhaha lointain : `nVoix` voix qui parlent chacune à son rythme, étouffées par la distance (un passe-bas),
-  // un fond de rumeur, et la réverbération des façades. Rendu au quart de la fréquence du jeu (au loin, il n'y a plus
-  // d'aigus : quatre fois moins de calcul).
+  // De la clarté : on ajoute au son sa part au-dessus de 1 500 Hz (la « présence » des voix : les consonnes, le timbre)
+  function eclaircir(x, sr, part) {
+    const h = Float32Array.from(x); filtrer(h, 'highpass', 1200, 0.7, sr);
+    for (let i = 0; i < x.length; i++) x[i] += h[i] * part;
+  }
+  // Le fond : `nVoix` voix qui bavardent chacune à son rythme, un peu adoucies par la distance (mais claires), en plein
+  // air (peu de réverbération), et un léger souffle d'air. Rendu à la moitié de la fréquence du jeu.
   function fondFoule(sr, o = {}) {
-    const r = alea(o.graine || 3), duree = o.duree || 8, nVoix = o.nVoix || 20, x = new Float32Array(Math.ceil(duree * sr));
+    const r = alea(o.graine || 3), duree = o.duree || 8, nVoix = o.nVoix || 14, x = new Float32Array(Math.ceil(duree * sr)), y = new Float32Array(x.length);
     for (let v = 0; v < nVoix; v++) {
-      const type = r(), femme = type < 0.42, enfant = type > 0.92;
-      const t0 = entre(r, -1.5, 0.5), d = duree - t0 + 1;
-      const y = new Float32Array(x.length);
-      voix(y, sr, Math.max(0, t0), d, r, { f0: enfant ? entre(r, 260, 330) : femme ? entre(r, 180, 240) : entre(r, 95, 140), k: enfant ? 1.3 : femme ? 1.15 : 1, debit: entre(r, 4.2, 6), souffle: 0.1, niveau: entre(r, 0.4, 1) * (o.proche ? 0.11 : 0.08) });
-      filtrer(y, 'lowpass', entre(r, 1300, o.proche ? 2600 : 2000), 0.7, sr);
+      const type = r(), femme = type < 0.45, enfant = type > 0.86;
+      const t0 = entre(r, -1, 0.4);
+      y.fill(0);
+      voix(y, sr, Math.max(0, t0), duree - t0 + 1, r, { f0: enfant ? entre(r, 290, 370) : femme ? entre(r, 205, 270) : entre(r, 125, 165), k: enfant ? 1.3 : femme ? 1.15 : 1, debit: entre(r, 6.2, 8.2), souffle: 0.06, niveau: entre(r, 0.45, 1) * (o.proche ? 0.1 : 0.08) });
+      filtrer(y, 'lowpass', entre(r, 2800, o.proche ? 5000 : 4000), 0.7, sr);
+      filtrer(y, 'highpass', 230, 0.7, sr);
       for (let i = 0; i < x.length; i++) x[i] += y[i];
     }
-    // la rumeur : un bruit grave qui ondule doucement (les pas, les étoffes, les voix trop loin pour être des voix)
-    const b = new Float32Array(x.length); let ph = r() * 6;
-    for (let i = 0; i < b.length; i++) b[i] = r() * 2 - 1;
-    filtrer(b, 'bandpass', 420, 0.6, sr); filtrer(b, 'lowpass', 900, 0.7, sr);
-    for (let i = 0; i < x.length; i++) { ph += 2 * Math.PI * 0.13 / sr; x[i] += b[i] * 0.05 * (0.8 + 0.2 * Math.sin(ph)); }
-    return reverbe(x, sr, { taille: o.halle ? 0.8 : 0.6, amorti: 0.5, mix: o.halle ? 0.45 : 0.32, predelai: 0.02 });
+    // l'air du matin : un souffle très léger, clair (pas de rumeur grave)
+    const b = new Float32Array(x.length); for (let i = 0; i < b.length; i++) b[i] = r() * 2 - 1;
+    filtrer(b, 'bandpass', 2200, 0.5, sr);
+    for (let i = 0; i < x.length; i++) x[i] += b[i] * 0.006;
+    eclaircir(x, sr, 2.2);
+    return reverbe(x, sr, { taille: o.place ? 0.5 : 0.35, amorti: 0.6, mix: o.place ? 0.2 : 0.13, predelai: 0.015 });
   }
-  // Un éclat tout près : 'rire', 'appel' (un marchand), 'enfant', 'causerie' (deux voisins), 'pieces' (une bourse)
+  // Un éclat tout près : 'rire', 'rires' (deux ou trois qui rient ensemble), 'heler' (un marchand), 'enfantRit',
+  // 'enfantCrie', 'causerie' (deux voisins), 'pieces' (une poignée qu'on compte), 'moineaux' (dans l'arbre de la place)
   function eclatFoule(sr, quoi, o = {}) {
-    const r = alea(o.graine || 9), x = new Float32Array(Math.ceil((quoi === 'causerie' ? 3.6 : 1.9) * sr)), homme = r() < 0.55;
-    if (quoi === 'rire') voix(x, sr, 0.05, entre(r, 0.8, 1.2), r, { f0: homme ? entre(r, 115, 145) : entre(r, 210, 250), k: homme ? 1 : 1.15, rire: true, souffle: 0.12, niveau: 0.32 });
-    else if (quoi === 'appel') voix(x, sr, 0.05, entre(r, 1.1, 1.5), r, { f0: entre(r, 130, 160), k: 1, debit: 4.2, appel: true, souffle: 0.06, niveau: 0.36 });
-    else if (quoi === 'enfant') voix(x, sr, 0.05, entre(r, 0.6, 0.9), r, { f0: entre(r, 290, 340), k: 1.3, debit: 6.5, souffle: 0.1, niveau: 0.26 });
+    const r = alea(o.graine || 9), x = new Float32Array(Math.ceil((quoi === 'causerie' ? 3.2 : 2.2) * sr)), homme = r() < 0.5;
+    const rire = (t, h) => voix(x, sr, t, entre(r, 0.7, 1.1), r, h ? { f0: entre(r, 135, 165), k: 1, rire: 'ha', souffle: 0.1, niveau: 0.3 } : { f0: entre(r, 225, 270), k: 1.15, rire: 'ha', souffle: 0.1, niveau: 0.28 });
+    if (quoi === 'rire') rire(0.05, homme);
+    else if (quoi === 'rires') { rire(0.05, homme); rire(entre(r, 0.15, 0.3), !homme); if (r() < 0.6) rire(entre(r, 0.3, 0.5), r() < 0.5); }
+    else if (quoi === 'heler') voix(x, sr, 0.05, entre(r, 1.2, 1.6), r, { f0: homme ? entre(r, 140, 170) : entre(r, 230, 270), k: homme ? 1 : 1.15, debit: 6, heler: true, souffle: 0.05, niveau: 0.36 });
+    else if (quoi === 'enfantRit') voix(x, sr, 0.05, entre(r, 0.6, 0.9), r, { f0: entre(r, 300, 360), k: 1.3, rire: 'hi', souffle: 0.1, niveau: 0.26 });
+    else if (quoi === 'enfantCrie') voix(x, sr, 0.05, entre(r, 0.7, 1), r, { f0: entre(r, 310, 370), k: 1.3, debit: 8, cri: true, souffle: 0.06, niveau: 0.27 });
     else if (quoi === 'causerie') {
-      voix(x, sr, 0.05, 1.5, r, { f0: entre(r, 105, 130), k: 1, debit: 5.2, niveau: 0.22 });
-      voix(x, sr, 1.7, 1.7, r, { f0: entre(r, 195, 230), k: 1.15, debit: 5.6, niveau: 0.2 });
-    } else {   // (une poignée de pièces qu'on compte)
+      voix(x, sr, 0.05, 1.3, r, { f0: entre(r, 130, 160), k: 1, debit: 7.2, niveau: 0.22 });
+      voix(x, sr, 1.45, 1.4, r, { f0: entre(r, 215, 255), k: 1.15, debit: 7.6, niveau: 0.2 });
+      if (r() < 0.6) rire(2.55, homme);
+    } else if (quoi === 'moineaux') {
+      for (let k = 0, t = 0.05; k < 7; k++, t += entre(r, 0.08, 0.2)) { const f = entre(r, 3800, 5200), d = entre(r, 0.03, 0.06); const n1 = Math.floor(t * sr), n2 = Math.floor(d * sr); let ph = 0; for (let i = 0; i < n2 && n1 + i < x.length; i++) { const u = i / n2; ph += 2 * Math.PI * f * (1 + 0.25 * Math.sin(Math.PI * u) - 0.15 * u) / sr; x[n1 + i] += Math.sin(ph) * 0.05 * Math.sin(Math.PI * u); } }
+    } else {
       for (let k = 0, t = 0.05; k < 5; k++, t += entre(r, 0.07, 0.16)) { const f = entre(r, 2300, 3100); mode(x, sr, t, f, 0.16, 0.25); mode(x, sr, t, f * 1.52, 0.07, 0.15); mode(x, sr, t, f * 2.7, 0.04, 0.1); }
     }
-    filtrer(x, 'highpass', 90, 0.7, sr);
-    return fondus(reverbe(x, sr, { taille: 0.5, amorti: 0.45, mix: 0.2 }), sr, 0.005, 0.15);
+    filtrer(x, 'highpass', 170, 0.7, sr);
+    if (quoi !== 'moineaux' && quoi !== 'pieces') eclaircir(x, sr, 1.8);
+    return fondus(reverbe(x, sr, { taille: 0.35, amorti: 0.55, mix: 0.12 }), sr, 0.005, 0.15);
   }
-  // Les éclats de chaque variante, et leur fréquence (en secondes entre deux)
+  // Les deux variantes : les éclats, leur fréquence (en secondes entre deux), le nombre de voix du fond
   const ECLATS_FOULE = {
-    A: { quoi: ['rire', 'appel', 'appel', 'enfant', 'pieces', 'rire', 'appel', 'causerie'], ecart: [2.2, 4.5], nVoix: 18, proche: false, halle: false, niveauFond: 1, niveauEclats: 0.75 },
-    B: { quoi: ['causerie', 'rire', 'causerie', 'appel', 'pieces', 'rire', 'enfant', 'causerie'], ecart: [1.6, 3.4], nVoix: 30, proche: true, halle: true, niveauFond: 1.15, niveauEclats: 0.65 },
+    // C. Le marché du matin : quatorze voix qui bavardent, les marchands qui hèlent, des rires, un enfant, les moineaux
+    C: { quoi: ['heler', 'rire', 'heler', 'enfantRit', 'pieces', 'rires', 'heler', 'causerie', 'moineaux', 'enfantCrie'], ecart: [0.9, 2.2], nVoix: 14, proche: false, place: false, niveauFond: 1, niveauEclats: 0.8 },
+    // D. Jour de grand marché : vingt voix plus proches, renvoyées par les façades, des rires en groupe, des enfants qui jouent
+    D: { quoi: ['rires', 'enfantCrie', 'heler', 'rire', 'enfantRit', 'causerie', 'heler', 'rires', 'enfantRit', 'pieces'], ecart: [0.7, 1.8], nVoix: 20, proche: true, place: true, niveauFond: 1.1, niveauEclats: 0.72 },
   };
   // La foule entière, d'un seul tenant (pour la page d'écoute) : le fond, des éclats au hasard par-dessus
   function foule(variante, sr, o = {}) {
     const V = ECLATS_FOULE[variante], r = alea(o.graine || 17), duree = o.duree || 16;
-    const fond = surechantillonner(fondFoule(sr / 4, { duree, nVoix: V.nVoix, proche: V.proche, halle: V.halle, graine: (o.graine || 17) + 1 }), 4);
+    const fond = surechantillonner(fondFoule(sr / 2, { duree, nVoix: V.nVoix, proche: V.proche, place: V.place, graine: (o.graine || 17) + 1 }), 2);
     const x = new Float32Array(Math.ceil(duree * sr));
     for (let i = 0; i < x.length; i++) x[i] = (fond[i] || 0) * V.niveauFond;
-    let t = entre(r, 0.6, 1.6), k = Math.floor(r() * V.quoi.length);
-    while (t < duree - 2) {
+    let t = entre(r, 0.4, 1.2), k = Math.floor(r() * V.quoi.length);
+    while (t < duree - 1.5) {
       const e = eclatFoule(sr, V.quoi[k++ % V.quoi.length], { graine: Math.floor(r() * 1e6) }), g = V.niveauEclats * entre(r, 0.55, 1), n0 = Math.floor(t * sr);
       for (let i = 0; i < e.length && n0 + i < x.length; i++) x[n0 + i] += e[i] * g;
       t += entre(r, V.ecart[0], V.ecart[1]);
@@ -389,11 +406,11 @@ if (typeof Son !== 'undefined') Object.assign(Son, {
       return;
     }
     if (this.fouleBus) return;
-    const V = FabriqueSons.ECLATS_FOULE[variante] || FabriqueSons.ECLATS_FOULE.A, ctx = this.ctx, bus = this.fouleBus = ctx.createGain();
+    const V = FabriqueSons.ECLATS_FOULE[variante] || FabriqueSons.ECLATS_FOULE.C, ctx = this.ctx, bus = this.fouleBus = ctx.createGain();
     bus.gain.setValueAtTime(0, ctx.currentTime); bus.gain.linearRampToValueAtTime(1, ctx.currentTime + 2.5); bus.connect(this.busSons);
     const fond = i => this.tamponRefait(`foule${variante}fond${i}`, sr => {
-      const y = FabriqueSons.fondFoule(sr / 4, { duree: 8, nVoix: V.nVoix, proche: V.proche, halle: V.halle, graine: 101 + i * 13 });
-      return FabriqueSons.surechantillonner(FabriqueSons.niveler(y, FabriqueSons.NIVEAUX.fondFoule), 4);
+      const y = FabriqueSons.fondFoule(sr / 2, { duree: 8, nVoix: V.nVoix, proche: V.proche, place: V.place, graine: 101 + i * 13 });
+      return FabriqueSons.surechantillonner(FabriqueSons.niveler(y, FabriqueSons.NIVEAUX.fondFoule), 2);
     });
     let dernier = -1;
     const enchainer = () => {
@@ -408,7 +425,7 @@ if (typeof Son !== 'undefined') Object.assign(Son, {
     const eclat = () => {
       if (this.fouleBus !== bus) return;
       if (ctx.state === 'running') {
-        const k = Math.floor(Math.random() * 8), quoi = V.quoi[k];
+        const k = Math.floor(Math.random() * V.quoi.length), quoi = V.quoi[k];
         const buf = this.tamponRefait(`foule${variante}eclat${k}`, sr => FabriqueSons.niveler(FabriqueSons.eclatFoule(sr, quoi, { graine: 500 + k * 7 }), FabriqueSons.NIVEAUX.eclatFoule));
         this.lireTampon(buf, ctx.currentTime + 0.02, bus, V.niveauEclats * (0.5 + Math.random() * 0.5));
       }
@@ -421,19 +438,22 @@ if (typeof Son !== 'undefined') Object.assign(Son, {
 
 // Les six sons, au format de SONS (pour Son.jouer). o.matiere pour le marteau ('bois' ou 'metal')
 if (typeof SONS !== 'undefined') {
+  for (const v of ['C', 'D']) SONS['foule' + v] = function (t, bus, o = {}) { const d = o.duree || 6; this.lireTampon(this.tamponRefait('foule' + v + d, sr => FabriqueSons.foule(v, sr, { duree: d })), t, bus); };
   for (const v of ['A', 'B']) {
-    SONS['marteau' + v] = function (t, bus, o = {}) { const m = o.matiere === 'metal' ? 'metal' : 'bois', d = o.duree || 2.4; this.lireTampon(this.tamponRefait(`marteau${v}${m}${d}`, sr => FabriqueSons['marteau' + v](sr, { matiere: m, duree: d })), t, bus); };
+    SONS['marteau' + v] = function (t, bus, o = {}) { const m = o.matiere === 'metal' ? 'metal' : 'bois', d = o.duree || 2.4, g = o.graine || 0; this.lireTampon(this.tamponRefait(`marteau${v}${m}${d}g${g}`, sr => FabriqueSons['marteau' + v](sr, { matiere: m, duree: d, graine: g || undefined })), t, bus); };
     SONS['cloche' + v] = function (t, bus, o = {}) { this.lireTampon(this.tamponRefait('cloche' + v + (o.coups || ''), sr => FabriqueSons['cloche' + v](sr, { coups: o.coups })), t, bus); };
-    SONS['foule' + v] = function (t, bus, o = {}) { const d = o.duree || 6; this.lireTampon(this.tamponRefait('foule' + v + d, sr => FabriqueSons.foule(v, sr, { duree: d })), t, bus); };
   }
 }
 
 // Le point d'accroche des trois sons refaits : renvoie vrai si le nouveau son a joué (le joueur a choisi et le
-// drapeau est levé), faux sinon (on garde alors l'ancien son). quoi : 'marteau' (o.matiere), 'cloche', 'foule'
+// drapeau est levé), faux sinon (on garde alors l'ancien son). quoi : 'marteau' (o.matiere : 'bois' ou 'metal' ; o.lieu :
+// 'forge' pour la forge), 'cloche', 'foule'
 // (o.scene : la foule de fond de cette scène, éteinte quand elle s'arrête ou passe en pause)
 function sonAChoisir(quoi, o = {}) {
   if (!SONS_A_CHOISIR.actif || typeof Son === 'undefined' || !Son.pret) return false;
-  const v = SONS_A_CHOISIR[quoi] === 'B' ? 'B' : 'A';
+  let v = SONS_A_CHOISIR[quoi];
+  if (v && typeof v === 'object') v = v[o.lieu === 'forge' ? 'forge' : 'atelier'];   // (le marteau : une variante pour la forge, une pour l'atelier)
+  if (!v || (quoi !== 'foule' && !SONS[quoi + v])) return false;   // (pas encore choisi : l'ancien son, ou rien)
   if (quoi === 'foule' && o.scene) {
     Son.fouleMarche(true, v);
     const eteindre = () => Son.fouleMarche(false);

@@ -134,6 +134,46 @@ Object.assign(Son, {
   },
 });
 
+// --- (v1.64, retour du joueur) Les sons du second plan : les moutons du pré. Lointains (plus bas, sans leurs aigus,
+// un peu plus de réverbération), jamais par-dessus le premier plan : dès qu'un autre son ou une réplique joue, ils se
+// baissent encore, et ils se taisent tout à fait si le premier plan vient de parler.
+const SONS_SECOND_PLAN = new Set(['moutons']);
+const SECOND_PLAN = { volume: 0.3, baisse: 0.08, filtre: 1500, reverb: 0.5, silence: 1.2, remonte: 1.6 };
+Object.assign(Son, {
+  busLointain() {
+    if (this.lointain && this.lointain.ctx === this.ctx) return this.lointain.g;
+    const ctx = this.ctx, g = ctx.createGain(), f = ctx.createBiquadFilter(), r = ctx.createGain();
+    g.gain.value = SECOND_PLAN.volume; f.type = 'lowpass'; f.frequency.value = SECOND_PLAN.filtre; f.Q.value = 0.7; r.gain.value = SECOND_PLAN.reverb;
+    g.connect(f); f.connect(this.busSons); f.connect(r); r.connect(this.reverb);
+    this.lointain = { ctx, g };
+    return g;
+  },
+  // un son du premier plan : le second plan se baisse, puis remonte doucement
+  baisserLointain() {
+    this.dernierPremierPlan = Date.now();
+    const L = this.lointain; if (!L || L.ctx !== this.ctx) return;
+    const t = this.ctx.currentTime, p = L.g.gain;
+    p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(SECOND_PLAN.baisse, t + 0.05);
+    p.setValueAtTime(SECOND_PLAN.baisse, t + SECOND_PLAN.remonte); p.linearRampToValueAtTime(SECOND_PLAN.volume, t + SECOND_PLAN.remonte + 1);
+  },
+  jouerLointain(nom, o = {}) {
+    if (Date.now() - (this.dernierPremierPlan || 0) < SECOND_PLAN.silence * 1000) return;   // (le premier plan vient de parler : on se tait)
+    this.reprendre();
+    const S = SONS[nom], bus = this.busLointain();
+    if (S.cache) return this.jouerCache(nom, bus, o);
+    S.call(this, this.ctx.currentTime + 0.01, bus, o);
+  },
+});
+{
+  const jouerDuJeu = Son.jouer;
+  Son.jouer = function (nom, options = {}) {
+    if (!this.pret) return;
+    if (SONS_SECOND_PLAN.has(nom)) return this.jouerLointain(nom, options);
+    this.baisserLointain();
+    return jouerDuJeu.call(this, nom, options);
+  };
+}
+
 // ======================================================================================
 // Les musiques d'aventure (au format de THEMES)
 // ======================================================================================
@@ -259,6 +299,150 @@ THEMES.triompheMarais = Object.assign({}, THEMES.triompheForet, {
 });
 
 // ======================================================================================
+// (v1.64, demande du joueur) Une musique pour chaque situation inquiétante, à la place de l'unique « récit qui fait
+// peur » : la nuit dehors, la grotte, le feu follet, la malédiction, et le renard de l'Engeance au Vieux Moulin.
+// Chacune a sa gamme, son tempo, ses instruments, son motif qui revient et ses petits bruits à elle.
+// ======================================================================================
+GAMMES.phrygien = [0, 1, 3, 5, 7, 8, 10];
+GAMMES.locrien = [0, 1, 3, 5, 6, 8, 10];
+
+// Les petits bruits de ces musiques, en plus des percussions du moteur (même format : moment, force, bus)
+const PERCUS_PEUR = {
+  // trois stridulations d'un grillon dans l'herbe
+  grillon(t, force, bus) {
+    for (let k = 0; k < 3; k++) { const o = this.ctx.createOscillator(), g = this.ctx.createGain(), tt = t + k * 0.05; o.frequency.value = 4300 + Math.random() * 300; g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(0.05 * force, tt + 0.006); g.gain.linearRampToValueAtTime(0, tt + 0.03); o.connect(g); g.connect(bus); o.start(tt); o.stop(tt + 0.04); }
+  },
+  // la chouette, au loin : « hou... hou-hou »
+  chouette(t, force, bus) {
+    for (const [dt, d] of [[0, 0.45], [0.75, 0.16], [0.97, 0.55]]) { const o = this.ctx.createOscillator(), g = this.ctx.createGain(), tt = t + dt; o.frequency.setValueAtTime(400, tt); o.frequency.linearRampToValueAtTime(365, tt + d); g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(0.1 * force, tt + 0.06); g.gain.linearRampToValueAtTime(0, tt + d); o.connect(g); g.connect(bus); o.start(tt); o.stop(tt + d + 0.02); }
+  },
+  // une goutte qui tombe dans une flaque de la grotte, et son écho contre la roche
+  echoGoutte(t, force, bus) { for (const [dt, v] of [[0, 1], [0.23, 0.45], [0.46, 0.2]]) this.percu('goutte', t + dt, force * v, bus); },
+  // le feu follet : un tintement de verre, très aigu et doux, qui flotte
+  tintement(t, force, bus) {
+    const f = [2349, 2637, 3136, 3520][Math.floor(Math.random() * 4)];
+    for (const [m, v, d] of [[1, 0.05, 0.9], [2.01, 0.015, 0.5], [3.02, 0.008, 0.3]]) { const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.frequency.value = f * m; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * force, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0005, t + d); o.connect(g); g.connect(bus); o.start(t); o.stop(t + d + 0.05); }
+  },
+  // la malédiction : des chuchotements (trois syllabes de souffle, sans voix)
+  chuchote(t, force, bus) {
+    for (let k = 0; k < 3; k++) this.bruitGlisse(t + k * (0.13 + Math.random() * 0.06), 0.12 + Math.random() * 0.08, bus, { de: 2200 + Math.random() * 1500, a: 1600 + Math.random() * 900, q: 3, volume: 0.035 * force, attaque: 0.03 });
+  },
+  // une branche qui craque dans le noir
+  craque(t, force, bus) { this.bruit(0.02, t, bus, 0.18 * force, 1800); this.bruit(0.015, t + 0.04 + Math.random() * 0.03, bus, 0.1 * force, 2600); },
+};
+{
+  const percuDuJeu = Son.percu;
+  Son.percu = function (quoi, t, force, bus) { const P = PERCUS_PEUR[quoi]; if (P) return P.call(this, t, force, bus); return percuDuJeu.call(this, quoi, t, force, bus); };
+}
+
+// La nuit dehors : la harpe égrène lentement, une flûte douce chante bas et long, les grillons, une chouette au loin,
+// une branche qui craque. Ré mineur, une phrase de 12 mesures qui descend vers la sensible et remonte, sans se poser.
+THEMES.peurNuit = {
+  base: NOTE.D / 2, gamme: GAMMES.mineur, tempo: 66, temps: 4, phrase: 12,
+  accords: [0, 0, 5, 5, 3, 3, 4, 4, 0, 5, 6, 4], octaveMelodie: 1,
+  instruments: { melodie: 'fluteDouce', accompagnement: 'harpe', basse: 'bourdon' }, reverb: 0.6, lie: 1.15,
+  motif: {
+    0: [[0, 7, 2], [2, 8, 1], [3, 9, 1]],
+    1: [[0, 10, 3], [3, 9, 1]],
+    2: [[0, 8, 2], [2, 7, 2]],
+    3: [[0, 5, 3], [3, 6, 1]],
+    4: [[0, 7, 1], [1, 10, 1], [2, 12, 2]],
+    5: [[0, 11, 2], [2, 10, 1], [3, 8, 1]],
+    6: [[0, 9, 2], [2, 6, 2]],
+    7: [[0, 7, 4]],
+    10: [[0, 9, 2], [2, 8, 1], [3, 7, 1]],
+    11: [[0, 6, 4]],
+  },
+  rythmes: [[2, 2], [1, 1, 2], [3, 1]], silence: 0.35,
+  basse: (m, a) => [[0, a, 3.9]],
+  accompagnement: (m) => [[0, 0, 1.2, 0.34], [0.5, 1, 1.2, 0.26], [1, 2, 1.2, 0.28], [1.5, 4, 1.2, 0.24], [2.5, 2, 1.2, 0.22], [3, 1, 1.2, 0.2]],
+  percussion: (m) => [[0.25 + (m % 3) * 0.5, 'grillon', 0.8], [2.6 - (m % 2) * 0.4, 'grillon', 0.6], ...(m % 6 === 5 ? [[1, 'chouette', 0.9]] : []), ...(m % 7 === 3 ? [[3.3, 'craque', 0.8]] : [])],
+};
+// La grotte : tout résonne. Une clarinette grave, sur le mode phrygien (le demi-ton qui étouffe), un bourdon qui ne
+// bouge pas, des cordes pincées rares comme des pas qui reviennent en écho, et l'eau qui goutte contre la roche.
+THEMES.peurGrotte = {
+  base: NOTE.E / 2, gamme: GAMMES.phrygien, tempo: 54, temps: 4, phrase: 8,
+  accords: [0, 0, 1, 0, 5, 1, 6, 0], octaveMelodie: 0,
+  instruments: { melodie: 'clarinette', accompagnement: 'pizzicato', basse: 'bourdon' }, reverb: 0.95, lie: 1.2,
+  motif: {
+    0: [[0, 7, 3], [3, 8, 1]],
+    1: [[0, 7, 2], [2, 5, 2]],
+    2: [[1, 10, 1], [2, 8, 2]],
+    3: [[0, 7, 4]],
+    5: [[0, 11, 2], [2, 10, 1], [3, 8, 1]],
+    7: [[0, 8, 2], [2, 7, 2]],
+  },
+  rythmes: [[3, 1], [2, 2], [4]], silence: 0.45,
+  basse: (m) => [[0, 0, 3.95]],
+  accompagnement: (m) => [[0, 0, 0.6, 0.8], [1.5, 2, 0.6, 0.5], ...(m % 2 ? [[3, 1, 0.6, 0.45]] : [])], forceBasse: 1.5,
+  percussion: (m) => [[0.7 + (m % 4) * 0.6, 'echoGoutte', 0.8], ...(m % 3 === 2 ? [[2.4, 'goutte', 0.5]] : []), ...(m % 4 === 3 ? [[3.2, 'souffle', 1]] : [])],
+};
+// Le feu follet : une valse qui attire, à trois temps. L'ocarina chante une mélodie qui tourne sur elle-même, la
+// harpe arpège, des tintements de verre flottent ; la gamme orientale (la seconde augmentée) qui envoûte et inquiète.
+THEMES.peurFeuFollet = {
+  base: NOTE.A / 2, gamme: GAMMES.freygish, tempo: 92, temps: 3, phrase: 12,
+  accords: [0, 0, 3, 0, 6, 6, 0, 4, 3, 3, 4, 0], octaveMelodie: 1,
+  instruments: { melodie: 'ocarina', accompagnement: 'harpe', basse: 'basse' }, reverb: 0.7, lie: 1.05,
+  motif: {
+    0: [[0, 7, 1], [1, 8, 1], [2, 9, 1]],
+    1: [[0, 11, 2], [2, 9, 1]],
+    2: [[0, 10, 1], [1, 9, 1], [2, 8, 1]],
+    3: [[0, 7, 3]],
+    4: [[0, 13, 1], [1, 12, 1], [2, 11, 1]],
+    5: [[0, 10, 2], [2, 8, 1]],
+    6: [[0, 9, 1], [1, 11, 1], [2, 14, 1]],
+    7: [[0, 11, 3]],
+    11: [[0, 8, 1], [1, 8, 1], [2, 7, 1]],
+  },
+  rythmes: [[1, 1, 1], [2, 1], [1, 2], [0.5, 0.5, 1, 1]], silence: 0.2,
+  basse: (m, a) => [[0, a, 2.8]],
+  accompagnement: (m) => [[0, 0, 0.9, 0.35], [1, 1, 0.9, 0.25], [1.5, 2, 0.9, 0.22], [2, 4, 0.9, 0.25], [2.5, 2, 0.9, 0.2]],
+  percussion: (m) => [[0.5 + (m % 3) * 0.75, 'tintement', 0.8], ...(m % 2 ? [[2.25, 'tintement', 0.45]] : [])],
+};
+// La malédiction : un chœur qui tient des accords qui ne se résolvent jamais (le mode locrien, sans vraie quinte), la
+// vielle qui chante comme une vieille complainte, des chuchotements, et la timbale qui roule à la fin de chaque phrase.
+THEMES.peurMalediction = {
+  base: NOTE.C / 2, gamme: GAMMES.locrien, tempo: 56, temps: 4, phrase: 8,
+  accords: [0, 0, 1, 1, 0, 5, 4, 0], octaveMelodie: 1,
+  instruments: { melodie: 'vielle', accompagnement: 'choeur', basse: 'bourdon' }, reverb: 0.8, lie: 1.3,
+  motif: {
+    0: [[0, 7, 2], [2, 8, 2]],
+    1: [[0, 9, 1], [1, 8, 1], [2, 7, 2]],
+    2: [[0, 11, 3], [3, 10, 1]],
+    3: [[0, 8, 4]],
+    4: [[0, 7, 1], [1, 6, 1], [2, 7, 2]],
+    5: [[0, 12, 2], [2, 11, 2]],
+    6: [[0, 10, 2], [2, 8, 2]],
+    7: [[0, 7, 4]],
+  },
+  rythmes: [[2, 2], [4], [1, 1, 2]], silence: 0.25,
+  basse: (m) => [[0, 0, 3.9]],
+  accompagnement: (m) => [[0, 0, 3.8, 1.1], [0, 1, 3.8, 0.9], [0, 2, 3.8, 0.8]], forceBasse: 1.8,
+  percussion: (m) => [[1.5, 'chuchote', 0.9], ...(m % 2 ? [[3.1, 'chuchote', 0.6]] : []), ...(m % 4 === 0 ? [[0, 'timbale', 0.35]] : []), ...(m % 4 === 3 ? Array.from({ length: 6 }, (_, j) => [2.5 + j * 0.25, 'timbale', 0.08 + j * 0.04]) : [])],
+};
+// Le renard de l'Engeance (au Vieux Moulin) : une course. La clarinette file en croches, les cordes pincées battent
+// comme un cœur pressé, le tambour et le bois au galop ; ré mineur harmonique, et une timbale à chaque fin de phrase.
+THEMES.peurRenard = {
+  base: NOTE.D / 2, gamme: GAMMES.harmonique, tempo: 132, temps: 4, phrase: 8,
+  accords: [0, 0, 5, 4, 0, 3, 4, 4], octaveMelodie: 1,
+  instruments: { melodie: 'clarinette', accompagnement: 'pizzicato', basse: 'basse' }, reverb: 0.3,
+  motif: {
+    0: [[0, 7, 0.5], [0.5, 9, 0.5], [1, 10, 1], [2, 9, 0.5], [2.5, 7, 0.5], [3, 6, 1]],
+    1: [[0, 7, 1.5], [1.5, 4, 0.5], [2, 6, 2]],
+    4: [[0, 10, 0.5], [0.5, 11, 0.5], [1, 12, 1], [2, 11, 0.5], [2.5, 10, 0.5], [3, 9, 1]],
+    5: [[0, 10, 1], [1, 8, 1], [2, 7, 2]],
+    7: [[0, 6, 1], [1, 7, 0.5], [1.5, 8, 0.5], [2, 6, 2]],
+  },
+  rythmes: [[0.5, 0.5, 1, 1, 1], [1, 0.5, 0.5, 2], [0.5, 0.5, 0.5, 0.5, 1, 1]], silence: 0.1,
+  basse: (m, a) => [[0, a, 0.45], [1, a + 4, 0.45], [2, a, 0.45], [3, a + 4, 0.45]],
+  accompagnement: (m) => Array.from({ length: 8 }, (_, i) => [i * 0.5, [0, 2, 1, 2][i % 4], 0.3, i % 2 ? 0.3 : 0.45]),
+  percussion: (m) => [[0, 'tambour', 0.6], [1.5, 'bois', 0.35], [2, 'tambour', 0.45], [3.5, 'bois', 0.35], ...(m % 8 === 7 ? [[3, 'timbale', 0.6]] : []), ...(m % 2 ? [[2.75, 'bois', 0.25]] : [])],
+};
+// La musique de chaque situation inquiétante d'un récit (les autres gardent l'ancienne, recitPeur)
+const MUSIQUE_PEUR = { nuit: 'peurNuit', grotte: 'peurGrotte', feufollet: 'peurFeuFollet', malediction: 'peurMalediction' };
+function musiquePeur(type) { return MUSIQUE_PEUR[type] || 'recitPeur'; }
+
+// ======================================================================================
 // Les sons des récits (au format de SONS : fonction(t, bus, options), appelée avec this = Son). Leurs niveaux sont
 // réglés dans la fonction (mesurés comme les autres) : pas d'entrée dans VOLUME_SONS.
 // ======================================================================================
@@ -321,9 +505,12 @@ const SONS_RECITS = {
 
   // --- Les bruitages ---
   // Des pas dehors, selon le sol : o.sol = 'herbe', 'neige', 'boue' ou 'paves' ; o.n pas (4)
+  // (v1.64, la banque de pas) aussi : 'terre', 'parquet', 'feuilles' (les feuilles mortes), 'sable', 'pierre' (la
+  // pierre de taille, qui résonne), 'gravier'. Chaque rendu tire ses petites différences : 4 variantes par sol en cache.
   pasDehors(t, bus, o = {}) {
-    const sol = o.sol || 'herbe', n = o.n || 4, cadence = o.cadence || ({ boue: 0.55, neige: 0.48 }[sol] || 0.42);
-    const niv = this.ctx.createGain(); niv.gain.value = { herbe: 1.1, neige: 1.9, boue: 2.3, paves: 1.65 }[sol] || 1; niv.connect(bus); bus = niv;
+    const sol = o.sol || 'herbe', n = o.n || 4, cadence = o.cadence || ({ boue: 0.55, neige: 0.48, sable: 0.5, feuilles: 0.45 }[sol] || 0.42);
+    const niv = this.ctx.createGain(); niv.gain.value = NIVEAU_PAS[sol] || 1; niv.connect(bus); bus = niv;
+    const h = () => 0.9 + Math.random() * 0.2;   // (chaque pas un peu différent)
     for (let i = 0; i < n; i++) {
       const tp = t + i * cadence + (Math.random() - 0.5) * 0.03, cote = i % 2 ? 0.92 : 1.08;   // (le pied gauche, le pied droit)
       if (sol === 'herbe') {
@@ -339,6 +526,40 @@ const SONS_RECITS = {
         // le pied qui se dégage : une succion qui remonte
         this.tonGlisse(tp + 0.24, 0.1, bus, { forme: 'triangle', de: 140 * cote, a: 420, volume: 0.05, attaque: 0.03, filtre: 900 });
         this.bruitGlisse(tp + 0.24, 0.1, bus, { de: 700, a: 1400, q: 4, volume: 0.05, attaque: 0.03 });
+      } else if (sol === 'terre') {
+        // la terre battue : un choc sourd, un peu de poussière qui crisse sous la semelle
+        this.tonGlisse(tp, 0.1, bus, { de: 105 * cote * h(), a: 55, volume: 0.24, attaque: 0.005 });
+        this.bruitGlisse(tp, 0.07, bus, { type: 'lowpass', de: 900, a: 400, volume: 0.1, attaque: 0.003 });
+        this.bruitGlisse(tp + 0.03, 0.09, bus, { de: 1300 * h(), a: 900, q: 1.2, volume: 0.035, attaque: 0.015 });
+      } else if (sol === 'parquet') {
+        // le parquet : le talon sur la planche (un « toc » de bois qui sonne creux), la pointe, parfois la latte qui grince
+        this.tonGlisse(tp, 0.08, bus, { de: 130 * cote * h(), a: 75, volume: 0.2, attaque: 0.003 });
+        this.bruitGlisse(tp, 0.05, bus, { de: 520 * cote * h(), a: 430, q: 5, volume: 0.22, attaque: 0.002 });
+        this.bruitGlisse(tp, 0.025, bus, { de: 1900 * h(), a: 1500, q: 1.5, volume: 0.07, attaque: 0.001 });
+        this.bruitGlisse(tp + 0.075, 0.03, bus, { de: 850 * h(), a: 700, q: 4, volume: 0.07, attaque: 0.002 });
+        if (Math.random() < 0.3) this.tonGlisse(tp + 0.09, 0.16, bus, { forme: 'sawtooth', de: 320 * h(), a: 290, volume: 0.012, attaque: 0.04, filtre: 1400 });
+      } else if (sol === 'feuilles') {
+        // les feuilles mortes : un froissement sec qui craque en petits morceaux, sur un pas mou
+        this.tonGlisse(tp, 0.09, bus, { de: 90 * cote, a: 50, volume: 0.14, attaque: 0.006 });
+        this.bruitGlisse(tp, 0.2, bus, { de: 3200 * h(), a: 2200, q: 0.9, volume: 0.035, attaque: 0.02 });
+        for (let k = 0; k < 11; k++) this.bruitGlisse(tp + 0.005 + Math.random() * 0.17, 0.012, bus, { de: 2000 + Math.random() * 4000, q: 2.5, volume: 0.03 + Math.random() * 0.07, attaque: 0.001 });
+      } else if (sol === 'sable') {
+        // le sable : le pied s'enfonce un peu, un « chhh » doux qui glisse, presque pas de choc
+        this.tonGlisse(tp, 0.1, bus, { de: 70 * cote, a: 45, volume: 0.1, attaque: 0.015 });
+        this.bruitGlisse(tp, 0.2, bus, { de: 1700 * h(), a: 2600, q: 0.9, volume: 0.07, attaque: 0.04 });
+        for (let k = 0; k < 5; k++) this.bruitGlisse(tp + 0.03 + k * 0.03 + Math.random() * 0.01, 0.015, bus, { de: 3000 + Math.random() * 2000, q: 2, volume: 0.015 + Math.random() * 0.02, attaque: 0.002 });
+      } else if (sol === 'gravier') {
+        // le gravier : les cailloux qui roulent et crissent sous la semelle, un choc sourd dessous
+        this.tonGlisse(tp, 0.08, bus, { de: 95 * cote, a: 55, volume: 0.16, attaque: 0.004 });
+        for (let k = 0; k < 16; k++) { const u = k / 16; this.bruitGlisse(tp + 0.004 + u * 0.13 + Math.random() * 0.01, 0.014, bus, { de: 1400 + Math.random() * 2600, q: 3, volume: (0.02 + Math.random() * 0.06) * Math.sin((u * 0.9 + 0.1) * Math.PI), attaque: 0.001 }); }
+        this.bruitGlisse(tp, 0.12, bus, { type: 'lowpass', de: 1200, a: 600, volume: 0.04, attaque: 0.01 });
+      } else if (sol === 'pierre') {
+        // la pierre de taille : un talon net et clair sur une grande dalle, qui résonne un peu dans la salle
+        this.bruitGlisse(tp, 0.03, bus, { de: 3200 * cote * h(), a: 2600, q: 3, volume: 0.14, attaque: 0.001 });
+        this.tonGlisse(tp, 0.12, bus, { forme: 'triangle', de: 900 * cote * h(), a: 600, volume: 0.05, attaque: 0.001 });
+        this.tonGlisse(tp, 0.06, bus, { de: 170, a: 90, volume: 0.13, attaque: 0.002 });
+        this.bruitGlisse(tp + 0.002, 0.25, bus, { type: 'highpass', de: 2500, a: 2000, q: 0.6, volume: 0.012, attaque: 0.005 });
+        this.bruitGlisse(tp + 0.08, 0.022, bus, { de: 3600 * cote, a: 3000, q: 2.5, volume: 0.05, attaque: 0.001 });
       } else {
         // le talon qui claque sur la pierre, puis la pointe
         this.bruitGlisse(tp, 0.035, bus, { de: 2400 * cote, a: 1800, q: 2.5, volume: 0.16, attaque: 0.002 });
@@ -488,6 +709,9 @@ const SONS_RECITS = {
     this.bruitGlisse(tp + 0.15, 0.2, bus, { de: 1800, a: 3200, q: 3, volume: 0.07, attaque: 0.05 });
   },
 };
+// Le volume de chaque sol (mesurés comme les pas de la v1.61 : le même niveau pour tous)
+const NIVEAU_PAS = { herbe: 1.1, neige: 1.9, boue: 2.3, paves: 1.65, terre: 0.93, parquet: 1.39, feuilles: 1.73, sable: 1.9, gravier: 1.35, pierre: 2.3 };
+const SOLS_PAS = Object.keys(NIVEAU_PAS);
 Object.assign(SONS, SONS_RECITS);
 
 // Les sons fabriqués une fois puis rejoués depuis le cache : leur durée de rendu (s), la clé de leurs réglages et
@@ -536,11 +760,20 @@ function mortDuLieu(zone) {
   const z = ZONES[zone] || {};
   return MORT_PAR_LIEU[z.vignette] || MORT_PAR_BIOME[z.biome] || 'mortGlas';
 }
-// Le sol sous ses pieds : la neige, la vase, la pierre (les cités, les ruines, les châteaux), l'herbe et la terre sinon
-function solDuBiome(biome) {
+// Le sol sous ses pieds dans un récit, selon la contrée et la saison : la neige des pics (et partout dehors au
+// Givre), la vase des marais, le sable du désert et de la côte, le gravier des mines et des terres brûlées, la pierre de
+// taille des cités et des châteaux, les vieux pavés des ruines, les feuilles mortes du val et des forêts aux Brumes, la
+// terre sèche des sentiers aux Moissons et au monastère, l'herbe sinon
+function solDuBiome(biome, saison = null) {
   if (biome === 'neige') return 'neige';
+  if (saison === 'givre' && ['comte', 'foret', 'val', 'sanctuaire', 'repaire', 'monastere', 'citadelle'].includes(biome)) return 'neige';
   if (biome === 'marais' || biome === 'bourbier') return 'boue';
-  if (['opale', 'ruines', 'nuitPourpre', 'citadelle'].includes(biome)) return 'paves';
+  if (biome === 'desert' || biome === 'cote') return 'sable';
+  if (['mines', 'badlands', 'antre'].includes(biome)) return 'gravier';
+  if (['opale', 'citadelle', 'nuitPourpre'].includes(biome)) return 'pierre';
+  if (biome === 'ruines' || biome === 'tour') return 'paves';
+  if (biome === 'val' || (saison === 'brumes' && ['foret', 'sanctuaire', 'repaire', 'comte'].includes(biome))) return 'feuilles';
+  if (biome === 'monastere' || (saison === 'moissons' && biome === 'comte')) return 'terre';
   return 'herbe';
 }
 // Un pas (le talon qui se pose) sur ce sol ; `volume` : plus bas pour le héros en ville, où l'on marche longtemps
@@ -565,6 +798,7 @@ function ambianceSonoreRecit(scene, zone, biome) {
   }
   // (on prépare d'avance ce qui servira : les pas sur ce sol, la mort de ce lieu, les bruits de fond)
   const v = scene.parti && scene.parti.voyageur, r = scene.parti && scene.parti.resultat;
-  Son.prechauffer([['pasDehors', { sol: solDuBiome(biome), n: 1 }], ['pasDehors', { sol: solDuBiome(biome), n: 1 }], ...sons.map(([nom, , , o]) => [nom, o]),
+  const sol = scene.solRecit ? scene.solRecit() : solDuBiome(biome);
+  Son.prechauffer([['pasDehors', { sol, n: 1 }], ['pasDehors', { sol, n: 1 }], ['pasDehors', { sol, n: 1 }], ...sons.map(([nom, , , o]) => [nom, o]),
     ...(r && !r.vivant ? [[mortDuLieu(zone)]] : []), ['degainer'], ['fleche'], ['torche'], ['feuDeCamp', {}], ['besace', { montant: (v && v.butin) || 30 }]]);
 }

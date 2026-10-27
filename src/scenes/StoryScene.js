@@ -14,8 +14,8 @@ class StoryScene extends Cinematique {
   musique(theme) { this.musiqueVoulue = theme; Son.ambiance(theme); }
   // (v1.64) la musique de la contrée selon le moment : 'route', 'danger', 'victoire' (voir musiqueRecit, src/sonsRecits.js)
   musiqueContree(moment, sinon) { return typeof musiqueRecit === 'function' ? musiqueRecit(this.biome, moment) : sinon; }
-  // (v1.64) le sol sous ses pieds, pour le bruit de ses pas
-  solRecit() { return typeof solDuBiome === 'function' ? solDuBiome(this.biome) : null; }
+  // (v1.64) le sol sous ses pieds (selon la contrée et la saison), pour le bruit de ses pas
+  solRecit() { return typeof solDuBiome === 'function' ? solDuBiome(this.biome, typeof saisonDe === 'function' ? saisonDe(this.G) : null) : null; }
 
   constructor() { super('Recit'); }
 
@@ -554,7 +554,9 @@ class StoryScene extends Cinematique {
     if (typeof mortDuLieu !== 'function') return Son.jouer('glas');
     const nom = mortDuLieu(this.parti.voyageur.zone);
     this.musiqueVoulue = 'recitTriste';
-    Son.jouerSeul(nom, {}, 'recitTriste', DUREE_MORT[nom] || 7);
+    const ms = Son.jouerSeul(nom, {}, 'recitTriste', DUREE_MORT[nom] || 7);
+    // (filet de sécurité : si la reprise n'a pas eu lieu, la page la fait, tant qu'elle est ouverte et toujours muette)
+    if (ms) this.time.delayedCall(ms + 800, () => { if (this.sys.isActive() && !Son.theme && this.musiqueVoulue === 'recitTriste') Son.ambiance('recitTriste'); });
   }
 
   async conclure() {
@@ -1117,9 +1119,11 @@ class StoryScene extends Cinematique {
     if (this.meteo) { this.meteo.remove(); this.meteo = null; }
     this.menace = { sorte: 'ambiance', sprites: [], type };
     const sombre = ['nuit', 'grotte', 'feufollet', 'esprits', 'malediction', 'mortvivant'].includes(type);
-    // (v1.64) une bête, des brigands : la musique du danger de la contrée ; le noir, les maléfices : la peur ; sinon la marche
+    // (v1.64) une bête, des brigands : la musique du danger de la contrée ; la nuit, la grotte, le feu follet, la
+    // malédiction : chacune sa musique (voir musiquePeur) ; sinon la marche
     const danger = typeof EPREUVES_DANGER !== 'undefined' && EPREUVES_DANGER.has(type);
-    if (this.parti.resultat.vivant) this.musique(danger ? this.musiqueContree('danger', 'recitPeur') : sombre ? 'recitPeur' : this.musiqueContree('route', 'recitEtonne'));
+    const peur = typeof musiquePeur === 'function' ? musiquePeur(type) : 'recitPeur';
+    if (this.parti.resultat.vivant) this.musique(danger ? this.musiqueContree('danger', 'recitPeur') : sombre ? peur : this.musiqueContree('route', 'recitEtonne'));
     this.voile.setFillStyle(type === 'tempete' ? 0x8a6a3a : 0x05051a, this.voile.fillAlpha);
     this.tweens.add({ targets: this.voile, fillAlpha: sombre ? 0.55 : type === 'tempete' ? 0.3 : 0, duration: 600 });
     const ajouter = o => { this.decor.add(o); return o; };
