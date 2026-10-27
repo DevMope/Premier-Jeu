@@ -821,8 +821,12 @@ Object.assign(MarcheScene.prototype, {
     const c = this.carteC = this.add.container(0, 0).setDepth(30);
     c.add(this.add.rectangle(480, 34, 960, 68, 0x1a120a, 0.92));
     c.add(this.add.text(480, 50, 'La place des Mastres · clique sur un lieu pour y aller · M ou Échap : refermer', style(14, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5));
-    // (v1.65, la ville en quartiers) le plan de toute la ville, à la place de la carte de la place (villeQuartiers.js)
-    if (typeof basculerVersPlanVille === 'function') { const b = creerBouton(this, 880, 50, 150, 'Le plan de la ville', () => basculerVersPlanVille(this)); b.label.setFontSize(13); c.add([b.fond, b.label]); }
+    // (v1.65, la ville en quartiers) le plan de toute la ville, à la place de la carte de la place (villeQuartiers.js) :
+    // un troisième bouton sous « La place · M » et « Ma liste · L » (en colonne), loin de « Partie sauvegardée »
+    if (typeof basculerVersPlanVille === 'function') {
+      const [bx, by, sens] = this.placeBoutons || [882, 108, 'col'], [px, py] = sens === 'col' ? [bx, by + 76] : [882, 184];
+      const b = creerBouton(this, px, py, 140, 'Le plan de la ville', () => basculerVersPlanVille(this)); b.label.setFontSize(13); c.add([b.fond, b.label]);
+    }
     for (const cle of Object.keys(LIEUX_PLACE)) {
       if (!this.actionsLieux[cle] || /^porte\d/.test(cle)) continue;   // (les portes rondes n'ont pas de nom sur la carte)
       const [x, y] = LIEUX_PLACE[cle], [n] = this.nomLieuPlace(cle), dy = { arche: -100, mendiant: -10, carte: 6, moulin: 34, coteaux: -150 }[cle] || 0;
