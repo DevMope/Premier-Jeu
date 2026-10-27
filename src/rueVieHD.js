@@ -346,27 +346,34 @@ function peindrePlacePorche(t, x0, x1, haut, sol, jour, saison) {
   for (let y = haut; y <= sol; y++) for (let x = x0; x < x1; x++) P(x, y, 'cielP', jour ? 3 + (y > haut + 30 ? 1 : 0) : 1 - (y < haut + 12 ? 1 : 0));
   if (!jour) for (let k = 0; k < 9; k++) P(x0 + Math.floor(hachage(k, 1, 8230) * (x1 - x0)), haut + 2 + Math.floor(hachage(k, 2, 8230) * 26), 'vitre', 5);
   const base = sol - 39;   // (le pied des maisons du fond : la place commence là)
-  // les maisons du fond : un pignon de tuiles ou d'ardoises, des fenêtres, une porte
-  [[x0 - 2, 20, 40, 'platre', 'tuile'], [x0 + 17, 25, 50, 'pierre', 'ardoiseToit'], [x0 + 41, 18, 36, 'platre', 'tuile'], [x0 + 58, 27, 54, 'pierre', 'tuile'],
-   [x0 + 84, 18, 42, 'platre', 'ardoiseToit'], [x0 + 101, 22, 46, 'pierre', 'tuile']].forEach(([hx, hl, hh, mur, toit], i) => {
-    const cx = hx + hl / 2, top = base - hh, rh = 11;
-    for (let y = top; y < base; y++) for (let x = hx; x < hx + hl; x++) {
-      const dy = y - top;
-      if (dy < rh) {   // le pignon
-        const demi = dy * (hl / 2 + 1) / rh; if (Math.abs(x + 0.5 - cx) > demi) continue;
-        const bord = Math.abs(x + 0.5 - cx) > demi - 1.6;
-        if (hiver && (bord || dy < 2)) P(x, y, 'neige', 4 + n / 2);
-        else P(x, y, toit, (bord ? 1 : 2 + ((dy % 3) === 0 ? 1 : 0)) + n);
-        continue;
-      }
-      const fy = (dy - rh - 3) % 11, fx = (x - hx - 3) % 7, fen = fx >= 0 && fx < 3 && fy >= 0 && fy < 4 && y < base - 8 && x < hx + hl - 3;
-      const porte = i % 2 === 0 && Math.abs(x + 0.5 - cx) < 2.5 && y >= base - 7;
-      if (porte) { P(x, y, 'cheneSombre', 2 + n); continue; }
-      if (fen) { const allumee = !jour && hachage(Math.floor((x - hx) / 7), Math.floor((dy - rh) / 11), 8231 + i) > 0.45; P(x, y, allumee ? 'vitre' : 'vitreNoire', allumee ? 4 + (fy === 0 ? 1 : 0) : jour ? 3 - (fy > 1 ? 1 : 0) : 1); continue; }
-      if (hiver && fy === 4 && fx >= -1 && fx < 4 && y < base - 7) { P(x, y, 'neige', 5 + n / 2); continue; }   // (la neige sur les appuis)
-      P(x, y, mur, 2 + (x === hx ? 1 : 0) - (x === hx + hl - 1 ? 1 : 0) + n);
+  // (v1.64, planche 89 v4 b, chantier 1) au fond de la place, plus de maisons : le pied des Coteaux, comme sur la place
+  // elle-même. La pente d'herbe ondule sous le ciel ; deux buttes, leurs portes rondes dans leur cercle de pierre, une fenêtre
+  // ronde (allumée la nuit), une cheminée qui sort de l'herbe.
+  t.rampes.penteP = rampe({ semailles: 0x7aa84e, moissons: 0x94a84a, brumes: 0x8a9a52, givre: 0xdce6ec }[S]);
+  Object.assign(t.rampes, { porteRP: rampe(0x9a3226), porteVP: rampe(0x2e6e3a), porteJP: rampe(0xc89a2e) });
+  for (let x = x0; x < x1; x++) {
+    const crete = base - 24 - Math.round(Math.sin((x - x0) / 19) * 4 + Math.sin((x - x0) / 7) * 1.2);
+    for (let y = crete; y < base; y++) P(x, y, 'penteP', (y === crete ? 4 : y > base - 4 ? 2 : 3) + n);
+  }
+  for (const [bx, rx, porte, fen] of [[x0 + 26, 17, 'porteRP', 1], [x0 + 86, 19, 'porteVP', -1]]) {
+    const ry = rx * 0.78;
+    for (let y = Math.floor(base - ry); y < base; y++) for (let x = bx - rx; x <= bx + rx; x++) {
+      const u = (x + 0.5 - bx) / rx, v = (base - y - 0.5) / ry; if (u * u + v * v > 1) continue;
+      P(x, y, 'penteP', (v > 0.92 ? 4 : 3 - (u > 0.45 ? 1 : 0) + (u < -0.3 && v > 0.4 ? 1 : 0)) + n);
     }
-  });
+    const pr = 4.2, py = base - pr - 0.5;   // la porte ronde, son cercle de pierre, le bouton de laiton au milieu
+    for (let y = Math.floor(py - pr - 2); y < base; y++) for (let x = Math.floor(bx - pr - 2); x <= bx + pr + 2; x++) {
+      const d = Math.hypot(x + 0.5 - bx, y + 0.5 - py); if (d > pr + 1.6 && !(y >= py && Math.abs(x + 0.5 - bx) <= pr + 1.6)) continue;
+      P(x, y, d <= pr || (y >= py && Math.abs(x + 0.5 - bx) <= pr) ? porte : 'gresP', (d <= pr || (y >= py && Math.abs(x + 0.5 - bx) <= pr) ? 3 - (x > bx ? 1 : 0) : 4) + n);
+    }
+    P(bx, Math.round(py), 'or', 5 + n);
+    const fx = bx + fen * 10, fy = base - 6;   // la fenêtre ronde
+    for (let y = fy - 2; y <= fy + 2; y++) for (let x = fx - 2; x <= fx + 2; x++) { const d = Math.hypot(x - fx, y - fy); if (d > 2.3) continue; P(x, y, d > 1.4 ? porte : jour ? 'vitreNoire' : 'vitre', d > 1.4 ? 4 + n : jour ? 3 : 4); }
+    const cx = bx - fen * 8, cy = Math.round(base - ry * Math.sqrt(1 - (8 / rx) ** 2)) - 3;   // la cheminée
+    for (let y = cy; y < cy + 5; y++) for (let x = cx; x < cx + 3; x++) P(x, y, 'pierre', (y === cy ? 4 : x === cx ? 3 : 2) + n);
+    if (hiver) for (let x = cx; x < cx + 3; x++) P(x, cy - 1, 'neige', 5 + n / 2);
+    else for (let k = 0; k < 5; k++) P(cx + 1 + Math.round(Math.sin(k * 1.3) * 1.2) + Math.floor(k / 2), cy - 2 - k * 2, 'neige', (jour ? 3 : 1) + (k < 2 ? 1 : 0));   // (un filet de fumée)
+  }
   // le sol de la place : pavé, poussière d'été, herbe du printemps, feuilles rousses, ou neige et ses traces
   for (let y = base; y <= sol; y++) for (let x = x0; x < x1; x++) {
     const v = (y - base) / (sol - base), pas = 3 + v * 7, rang = Math.floor(Math.pow(v, 0.7) * 9), joint = ((x - x0) / pas + rang * 0.5) % 1 < 0.14 || (y - base) % Math.max(2, Math.round(pas * 0.5)) === 0;

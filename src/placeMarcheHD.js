@@ -26,6 +26,10 @@ function solPlaceHD(scene, cle, pal, L, H, plan) {
   const t = toileDecor(L, H), R = t.rampes, s = pal.sol;
   R.herbeP = rampe(s.herbe); R.terreP = rampe(s.terre); R.pierreP = rampe(s.pierre); R.fleurP = rampe(s.fleur); R.fleur2P = rampe(s.fleur2); R.feuilleP = rampe(s.feuille);
   R.jointP = rampe(((s.terre >> 1) & 0x7f7f7f));
+  // (v1.64, planche 89) l'eau de l'étang (gelé l'hiver), et la vase de sa rive
+  const glace = pal.saison === 'givre';
+  R.eauP = glace ? [0x6a8496, 0x8aa2b2, 0xa8bccb, 0xc2d4e0, 0xdae6ee, 0xf2f8fb] : pal.saison === 'brumes' ? rampe(0x3e6e82) : rampe(0x3a7896);
+  R.vaseP = rampe(melangeCouleurs(s.terre, '#3a2a18', 0.35));
   const [cx, cy] = plan.centre, G0 = plan.graine || 7600;
   const distSeg = (x, y, [ax, ay], [bx, by]) => { const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy || 1; const u = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l2)); return Math.hypot(ax + u * dx - x, ay + u * dy - y); };
   // 1. qui est quoi : 0 herbe, 1 terre, 2 dalle
@@ -33,6 +37,7 @@ function solPlaceHD(scene, cle, pal, L, H, plan) {
   const C = 12;   // la taille moyenne d'une dalle
   for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) {
     const n = (fbm(x * 0.06, y * 0.06, G0) - 0.5) * 14, i = y * L + x;
+    if (plan.eau && plan.eau(x + 0.5, y + 0.5)) { type[i] = 4; continue; }
     const dr = Math.hypot(x - cx, (y - cy) * 1.55);
     let terre = dr < plan.rTerre + n;
     if (!terre) for (const [px, py, pl, ph] of plan.pads) { const ex = Math.max(0, Math.abs(x - px) - pl / 2), ey = Math.max(0, Math.abs(y - py) - ph / 2); if (Math.hypot(ex, ey * 1.4) < 8 + n * 0.6) { terre = true; break; } }
@@ -64,7 +69,28 @@ function solPlaceHD(scene, cle, pal, L, H, plan) {
       if (p > 0.56 && p <= 0.6 && (x + y) % 2 === 0) k = 4;   // (un tramage doux entre les deux tons)
       if (q > 0.97) k += 1; else if (q < 0.025) k -= 1;
       if (T(x, y + 1) && T(x, y + 1) !== 0) k = 5; else if (T(x, y + 2) && T(x, y + 2) !== 0) k = 4;
+      // (v1.64) au bord de l'eau : un fil de vase (sous la neige, l'hiver, rien que la neige)
+      if (!glace && (T(x, y + 1) === 4 || T(x - 1, y) === 4 || T(x + 1, y) === 4 || T(x, y - 1) === 4)) { t.poser(x, y, 'vaseP', T(x, y - 1) === 4 ? 3 : 2); continue; }
       t.poser(x, y, 'herbeP', k);
+    } else if (ty === 4) {
+      // (v1.64) l'eau : plus claire sur le haut-fond, plus sombre au large ; le reflet sombre de la rive d'en haut, des
+      // rides claires ; l'hiver, la glace, ses fêlures et des plaques de neige
+      let pres = 9; for (let r = 1; r <= 8 && pres === 9; r++) if (T(x - r, y) !== 4 || T(x + r, y) !== 4 || T(x, y - r) !== 4 || T(x, y + r) !== 4) pres = r;
+      const hautRive = T(x, y - 1) !== 4 || T(x, y - 2) !== 4;
+      if (glace) {
+        const f = Math.abs(fbm(x * 0.07, y * 0.12, G0 + 20) - 0.5), nv = fbm(x * 0.05, y * 0.08, G0 + 21);
+        let k = pres <= 2 ? 4 : 3;
+        if (nv > 0.64) k = 5; else if (f < 0.012) k = 1; else if (f < 0.03) k = 2;
+        if (hautRive) k = 2;
+        t.poser(x, y, 'eauP', k);
+      } else {
+        const ride = fbm(x * 0.05, y * 0.45, G0 + 22), q = hachage(x, y, G0 + 23);
+        let k = pres <= 2 ? 4 : pres <= 5 ? 3 : 2;
+        if (ride > 0.66) k += 1; else if (ride < 0.28) k -= 1;
+        if (hautRive) k = 1;
+        if (q > 0.996 && T(x + 1, y) === 4) { t.poser(x, y, 'eauP', 5); t.poser(x + 1, y, 'eauP', 5); continue; }
+        t.poser(x, y, 'eauP', k);
+      }
     } else if (ty === 1) {
       // la terre battue : douce, quelques cailloux ; à l'ombre de l'herbe qui la surplombe, plus sombre
       const p = fbm(x * 0.05, y * 0.05, G0 + 6);
@@ -95,6 +121,16 @@ function solPlaceHD(scene, cle, pal, L, H, plan) {
     const x = Math.floor(hachage(n, 4, G0 + 12) * L), y = Math.floor(hachage(n, 5, G0 + 12) * H);
     if (T(x, y) !== 1 || T(x + 1, y + 1) !== 1) continue;
     t.poser(x, y, 'pierreP', 4); t.poser(x + 1, y, 'pierreP', 3); t.poser(x, y + 1, 'terreP', 1); t.poser(x + 1, y + 1, 'terreP', 1);
+  }
+  // (v1.64) les nénuphars de l'étang (pas l'hiver) : des feuilles rondes fendues, une fleur l'été ; à l'automne, des feuilles mortes
+  if (!glace) for (const [nx, ny, r, fleur] of plan.nenuphars || []) {
+    for (let y = Math.floor(ny - r); y <= ny + r; y++) for (let x = Math.floor(nx - r * 1.6); x <= nx + r * 1.6; x++) {
+      if (T(x, y) !== 4) continue;
+      const u = (x + 0.5 - nx) / (r * 1.6), v = (y + 0.5 - ny) / r, d = u * u + v * v;
+      if (d > 1 || (u > 0.05 && Math.abs(v) < 0.18)) continue;   // (la fente)
+      t.poser(x, y, 'feuilleP', d > 0.6 ? (v > 0 ? 1 : 3) : u + v < -0.4 ? 4 : 3);
+    }
+    if (fleur && pal.saison !== 'brumes') { t.poser(Math.round(nx - 1), Math.round(ny - 1), 'fleurP', 5); t.poser(Math.round(nx), Math.round(ny - 1), 'fleurP', 4); t.poser(Math.round(nx - 1), Math.round(ny), 'fleurP', 3); }
   }
   t.texture(scene, cle); return cle;
 }
@@ -319,11 +355,16 @@ function poserEnseignePendue(s, g, versDroite, metier, y, demi = 84) {
 
 // (v1.62) Le plan du sol de la grand-place (terre battue sous les étals et sur les chemins d'usure, dalles au centre,
 // herbe ailleurs) : la place le peint vu d'au-dessus, la vue du mendiant le reprend en perspective.
+// (v1.64, planche 89) La place s'étend à l'est jusqu'au coin de l'étang : la cabane de Barnabé n'est plus un étal de la
+// place (elle est sur ses pilotis), ni les portes rondes des Coteaux ; le sentier du Moulin longe l'étang, un petit chemin
+// descend à la passerelle, et le chemin du haut file jusqu'au bout.
 function planSolPlace() {
-  const pads = Object.entries(LIEUX_PLACE).filter(([k]) => !['fontaine', 'arche', 'moulin', 'carte'].includes(k)).map(([k, [x, y]]) => PETITS_LIEUX.includes(k) ? [x / 2, y / 2 - 6, 44, 18] : [x / 2, y / 2 - 12, 104, 34]);
+  const pads = Object.entries(LIEUX_PLACE).filter(([k]) => !['fontaine', 'arche', 'moulin', 'carte', 'peche', 'coteaux'].includes(k) && !/^porte/.test(k)).map(([k, [x, y]]) => PETITS_LIEUX.includes(k) ? [x / 2, y / 2 - 6, 44, 18] : [x / 2, y / 2 - 12, 104, 34]);
   pads.push([530, 500, 40, 20]);
-  const chemins = [...pads.map(([x, y]) => [[450, 318], [x, y]]), [[450, 318], [450, 520], 12], [[450, 318], [900, 382], 8], [[0, 92], [900, 92], 11]];
-  return { centre: [450, 318], rTerre: 150, rDalles: 104, pads, chemins, largeur: 8, pas: [[450, 432], [452, 452], [448, 472], [451, 492]] };
+  const chemins = [...pads.map(([x, y]) => [[450, 318], [x, y]]), [[450, 318], [450, 520], 12], [[450, 318], [900, 382], 8], [[900, 382], [968, 356], 8], [[968, 356], [1100, 344], 8],
+    [[926, 372], [916, 468], 6], [[0, 92], [1100, 92], 11]];
+  return { centre: [450, 318], rTerre: 150, rDalles: 104, pads, chemins, largeur: 8, pas: [[450, 432], [452, 452], [448, 472], [451, 492]],
+    eau: dansEtangPlace, nenuphars: [[1060, 512, 3.2, true], [1068, 517, 2.4, false], [1052, 518, 2.6, false], [1088, 420, 3, true], [1096, 426, 2.2, false], [1030, 530, 2.8, false], [1100, 506, 2.6, true]] };
 }
 // Un point du plan (en demi-pixels de la place, continus) est-il de terre battue ? (le même calcul que solPlaceHD)
 function estTerrePlace(plan, x, y) {
@@ -510,7 +551,10 @@ function decorMendiantHD(s, saison, fontaine) {
   if (sol) c.add(s.add.image(0, s.textures.get(sol).r0 * 2, sol).setOrigin(0).setScale(2));
   const objets = [];
   const poser = (cle, X, Y, echellePlace, { oy = 1, ombre = 0, flip = false } = {}) => { const P = projeterMendiant(X, Y); if (P) objets.push({ d: P.d, P, cle, echellePlace, oy, ombre, flip }); };
-  [['rueForgeHD', 110], ['rueImpasseHD', 300], ['rueBanqueHD', 470], ['rueBanqueHD', 1330], ['rueImpasseHD', 1500], ['rueForgeHD', 1690]].forEach(([k, x]) => { if (s.textures.exists(k)) poser(k, x, 160, 1.3); });
+  // (v1.64, planche 89) au fond, le pied des Coteaux et ses portes rondes (plus de façades de la rue recopiées là)
+  if (typeof trouCoteauxPlace === 'function') { const C = COTEAUX_PLACE, oy = 6 * C.echelle;
+    for (const b of C.hauts) poser(trouCoteauxPlace(s, pal, b, true), b[0], C.terrasse + oy, C.echelle);
+    for (const b of C.bas) poser(trouCoteauxPlace(s, pal, b), b[0], C.levre + oy, C.echelle); }
   [[70, 420, 0], [70, 760, 1], [1740, 420, 1], [420, 740, 1], [1390, 760, 0], [560, 200, 0], [1250, 200, 1]].forEach(([x, y, v]) => { const cle = arbrePlaceHD(s, pal, v, x, y); poser(cle, x, y, 2.2, { ombre: 120, oy: origineArbre(s, cle) }); });
   const marcheDuJour = typeof jourDeMarche === 'function' && jourDeMarche(G);
   [[250, 760], [1520, 760], [700, 760], [1100, 760], ...(marcheDuJour ? [] : [[460, 470], [1340, 470]])].forEach(([x, y]) => { const cle = buissonPlaceHD(s, pal, x, y); poser(cle, x, y, 2.2, { ombre: 70, oy: origineArbre(s, cle) }); });
