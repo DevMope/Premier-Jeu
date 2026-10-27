@@ -14,12 +14,22 @@ const BOUTONS_PLACE = {
 };
 
 Object.assign(MarcheScene.prototype, {
+  // (v1.64) Les deux boutons oubliés : détruits s'ils existent encore, et plus aucune référence. Phaser réutilise la scène
+  // d'un jour à l'autre : sans cela, une relance de la scène pendant qu'un lieu était ouvert laissait la vue d'ensemble du
+  // début de create() recréer une paire (les anciens boutons étaient ailleurs qu'en haut à droite), que la place
+  // oubliait ensuite sans la détruire : deux paires à l'écran.
+  oublierBoutonsPlace() {
+    for (const b of this.boutonsPlace || []) for (const o of [b.fond, b.label]) if (o && o.active) o.destroy();
+    this.boutonsPlace = null; this.placeBoutons = null;
+  },
+
   // Les deux boutons, (re)créés à la place p : refaits plutôt que déplacés, pour que la pierre et son scintillement suivent
   creerBoutonsPlace(p = BOUTONS_PLACE.places[0]) {
     const [x, y, sens] = p, B = BOUTONS_PLACE, L = B.largeur[sens], [dx, dy] = B.ecart[sens];
     // (les nouveaux reprennent le rang des anciens dans la liste d'affichage : ce qui passait devant eux y passe encore)
     const rangs = (this.boutonsPlace || []).flatMap(b => [b.fond, b.label]).map(o => this.children.getIndex(o));
-    for (const b of this.boutonsPlace || []) { if (b.fond.active) b.fond.destroy(); if (b.label.active) b.label.destroy(); }
+    this.oublierBoutonsPlace();
+    if (!this.boutonsPlaceSurveilles) { this.boutonsPlaceSurveilles = true; this.events.on('shutdown', () => this.oublierBoutonsPlace()); }   // (une seule fois par scène : l'écoute survit aux relances)
     const b1 = creerBouton(this, x, y, L, 'La place · M', () => this.basculerCartePlace()); b1.label.setFontSize(13);
     const b2 = creerBouton(this, x + dx, y + dy, L, 'Ma liste · L', () => this.listeCourses()); b2.label.setFontSize(13);
     if (rangs.length === 4 && rangs.every(i => i >= 0)) [b1.fond, b1.label, b2.fond, b2.label].forEach((o, k) => this.children.moveTo(o, Math.min(rangs[k], this.children.length - 1)));
@@ -59,7 +69,7 @@ Object.assign(MarcheScene.prototype, {
   // Lieu ouvert (cadrage px, py, z) : les boutons vont à la première place où ils ne cachent aucun écrit ; lieu refermé
   // (sans cadrage) : en haut à droite
   placerBoutonsPlace(px = null, py = null, z = null) {
-    if (!this.boutonsPlace) return;
+    if (!this.boutonsPlace || !this.boutonsPlace.every(b => b.fond.active && b.label.active)) return;   // (v1.64 : pas de boutons, ou ceux d'une visite passée)
     const P = BOUTONS_PLACE.places;
     let choix = P[0];
     if (px !== null && this.place) {
