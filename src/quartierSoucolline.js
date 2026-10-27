@@ -32,7 +32,9 @@ function planSolSoucolline() {
     if (X >= VE.x0 - 16 && X < VE.x1 + 16 && Y >= PL.y1 && Y < Q.YA) return Y < PL.y1 + 36 ? 20 : 7;   // le palier, puis les marches
     if (Y >= Q.YA) return 11;   // la ruelle du bas-quartier, au pied des maisons
     if (Y >= 1745) return 9;
-    if (Y >= YH && Y < 1196 && X >= FO.x0 && X < 2780) { if (Y < 1090) return 4; if (Y < 1096) return 5; return 16; }   // la rue Haute
+    if (Y >= YH && Y < 1196 && X >= FO.x0 && X < 2810) {   // la rue Haute ; au bout, à l'est, ses pierres se perdent dans l'herbe et le chemin de terre
+      if (X > 2690 && fbm(X * 0.02, Y * 0.03, 8913) > (2810 - X) / 120) return Math.abs(Y - (1176 - (X - 2780) * 0.25)) < 26 + n * 0.2 ? 9 : 8;
+      if (Y < 1090) return 4; if (Y < 1096) return 5; return 16; }
     if (X >= RU.x0 && X < RU.x1 && Y >= 1196 && Y < YN) { if (Y >= 1400 && Y < 1450) return 7; if (Y >= 1360 && Y < 1400) return 4; if (Y >= 1196 && Y < 1250) return 7; return 17; }   // la ruelle du Pommier
     if (X >= RH.x0 && X < RH.x1 && Y >= 930 && Y < YH) return 7;   // l'escalier des Coteaux
     if (X >= RH.x0 - 20 && X < RH.x1 + 20 && Y >= 900 && Y < 930) return 4;
@@ -55,8 +57,7 @@ function planSolSoucolline() {
   } };
 }
 DECORS_QUARTIERS.soucolline = {
-  sousTitre: 'la placette de la Fontaine · le quartier du Comptoir',
-  sy: 360,             // (la caméra un peu plus basse que sur la place : on voit les façades, comme sur la planche 89 v7)
+  sy: 320,             // (la caméra un peu plus basse que sur la place : on voit les façades, comme sur la planche 89 v7)
   passants: 4,
   entrees: { place: 'arche', rue: 'ouest', defaut: 'arche' },   // (par le plan : on arrive par le passage qui mène d'où l'on vient)
   surLePlan: (x, y) => [MX_PLAN(x), MY_PLAN(y)],
@@ -95,7 +96,9 @@ DECORS_QUARTIERS.soucolline = {
       for (let y = yb; y < yb + h - 6; y += 12) for (let x = x0 + ((y - yb) / 12 % 2) * 16; x < x1; x += 32) { g.fillStyle(0x625a50).fillRect(x + 1, y + 1, 30, 10); g.fillStyle(0x746a5e).fillRect(x + 1, y + 1, 30, 2); }
       ici.C.add(g);
     };
-    const ligneParapet = (x0, x1, yb) => { x0 = Math.max(x0, B.x0 - 40); x1 = Math.min(x1, B.x1 + 40); if (x1 <= x0) return; soutien(x0, x1, yb, 30); for (let x = x0; x < x1; x += 200 * E) { const l = Math.min(200 * E, x1 - x); poser(s.add.image(x, yb, parapet).setOrigin(0, 1).setScale(E).setCrop(0, 0, l / E, 28), yb); } };
+    // (piliers : un pilier de grès à boule à chaque bout du parapet qui s'arrête, à une ouverture ou au bout de la rue)
+    const ligneParapet = (x0, x1, yb, piliers = false) => { const p0 = x0 >= B.x0 - 40, p1 = x1 <= B.x1 + 40; x0 = Math.max(x0, B.x0 - 40); x1 = Math.min(x1, B.x1 + 40); if (x1 <= x0) return; soutien(x0, x1, yb, 30); for (let x = x0; x < x1; x += 200 * E) { const l = Math.min(200 * E, x1 - x); poser(s.add.image(x, yb, parapet).setOrigin(0, 1).setScale(E).setCrop(0, 0, l / E, 28), yb); }
+      if (piliers) for (const [x, ok] of [[x0 + 8, p0], [x1 - 8, p1]]) if (ok) { img(x, yb + 10, pilier6(s), E, yb + 10); ici.obstacles.push([x - 12, yb - 4, x + 12, yb + 12]); } };
     ligneParapet(330, PL.x0, 1748); ligneParapet(PL.x1, Q.W, 1748);
     ligneParapet(PL.x0, VE.x0 - 16, PL.y1 + 4); ligneParapet(VE.x1 + 16, PL.x1, PL.y1 + 4);
     for (const [x, y0, y1] of [[PL.x0 - 12, 1700, PL.y1 + 4], [PL.x1, 1700, PL.y1 + 4]]) img(x, y0, murLong89(s, 'murLong89_' + (y1 - y0), Math.ceil((y1 - y0) / E)), E, y1, 0, 0);
@@ -120,12 +123,13 @@ DECORS_QUARTIERS.soucolline = {
     img(2390, YN - 110, haie89(s, 'haieYsmee89', 150), E, YN - 110);
     ici.arbre(2470, YN - 80, 0);
     ombre(2370, YN + 4, 230); img(2370, YN + 6, tenteYsmee89(s), E); ici.obstacles.push([2370 - 110, YN - 10, 2370 + 110, YN + 8]);
-    lot(2480, YN, () => { if (typeof ardoiseMeteo === 'function' && G) ardoiseMeteo(s, 0, 8, G); }, YN + 8);
+    { const ard = lot(2480, YN, () => { if (typeof ardoiseMeteo === 'function' && G) ardoiseMeteo(s, 0, 8, G); }, YN + 8);
+      for (const t of ard.list) if (t.type === 'Text') { let f = 10; while (t.width > 70 && f > 7) t.setFontSize(--f); } }   // (le mot du temps tient sur l'ardoise, quelle que soit la police)
     const barbier = lot(2615, YN, () => { s.add.image(0, 2, boutiqueBarbierHD(s)).setOrigin(0.5, 1).setScale(2); s.add.image(-112, 2 - 2 * 76, poteauBarbierHD(s, 0)).setScale(2); s.add.image(40, 2 - 2 * 92, enseigneBarbierHD(s)).setScale(2); });
     maison(2819, YN, 'mvC89', { L: 124, etages: [52], toitMat: 'chaume', crepi: 'enduitR', vitrine: { x: 0.36, l: 52 }, porte: { x: 0.78, l: 22, h: 48 }, fenetres: [[0.3, 0.75]], lucarne: 0.55, store: 'storeV', volet: 'voletJ', lierre: true, graine: 9 });
     // les plaques de la rue, clouées à l'angle des maisons
-    ici.plaqueSur(comptoir, 'gauche', 132, 'Rue Soucolline', { retrait: 10 }); ici.plaqueSur(barbier, 'droite', 128, 'Rue Soucolline', { retrait: 14 });
-    ici.plaqueSur(rival, 'droite', 136, 'Placette de la Fontaine', { retrait: 12 });
+    ici.plaqueSur(comptoir, 'gauche', 116, 'Rue Soucolline', { retrait: 10 }); ici.plaqueSur(barbier, 'droite', 112, 'Rue Soucolline', { retrait: 14 });
+    ici.plaqueSur(rival, 'droite', 120, 'Placette de la Fontaine', { retrait: 12 });
 
     // ===================== 4. la rue Haute : les maisons du côté nord, la cour du Puits, le jardin du Pommier =====================
     maison(1086, YH, 'mvH89', { L: 136, etages: [46, 44], toit: 46, toitMat: 'tuile', crepi: 'enduitC', fenetres: [[0.25, 0.75], [0.25, 0.75]], porte: { x: 0.5, l: 24, h: 50, peinte: 'porteVerte' }, fenetresRdc: [0.2, 0.8], graine: 23, volet: 'voletB', fleur: 'fleurP2' });
@@ -138,8 +142,10 @@ DECORS_QUARTIERS.soucolline = {
     img(1330, YH + 4, 'panier81', E); img(1394, YH + 4, 'balai81', E).setAngle(-7); img(1350, YH + 8, 'sabots81', E); img(1420, YH + 10, 'bidon81', E); img(1300, YH + 8, 'romarin81', E);
     ici.obstacles.push([1290, YH, 1500, YH + 14]);
     for (const x of [RH.x0 - 10, RH.x1]) img(x, 930, murLong89(s, 'murEsc3', Math.ceil((YH - 930) / E)), E, YH, 0, 0);
+    // (les Coteaux ne sont pas encore faits : comme au chemin creux de la place, une barrière ferme le bas des deux escaliers, qu'on refait)
+    for (const [a, b] of [[RH.x0, RH.x1], [RE.x0, RE.x1]]) img((a + b) / 2, YH + 2, barrierePlaceHD(s, Math.round((b - a) / 16)), 1.6, YH + 2);
     img(RH.x0 - 22, YH + 6, bacFleurs89(s, 'bacFleurs89e', 'fleurR2'), E * 0.7); img(RH.x1 + 22, YH + 6, bacFleurs89(s, 'bacFleurs89f', 'fleurB2'), E * 0.7);
-    for (const [a, b] of [[FO.x1, RU.x0], [RU.x1, 2120], [2186, 2780]]) ligneParapet(a, b, 1200);
+    for (const [a, b] of [[FO.x1, RU.x0], [RU.x1, 2120], [2186, 2730]]) ligneParapet(a, b, 1200, true);
     const mE = maison(1812, YH, 'mvE89', { L: 120, etages: [50], toitMat: 'chaume', crepi: 'enduitC', porte: { x: 0.3, l: 22, h: 48, peinte: 'porteRouge' }, fenetres: [[0.3, 0.74]], fenetresRdc: [0.72], volet: 'voletV', graine: 33, lierre: true });
     { const yl = YH - 150; img(1524, yl, 'linge81_0', E, YH + 0.5, 0, 0); img(1524 + 62 * E, yl, 'linge81_1', E, YH + 0.5, 0, 0); }
     img(2016, 890, haie89(s, 'haiePommier89', 130), E, 890);
@@ -212,8 +218,7 @@ DECORS_QUARTIERS.soucolline = {
       (entre(x, PC.x0 + 6, PC.x1 - 6) && entre(y, 1190, YN + 10)) ||                                        // le passage couvert
       (entre(y, YH + 10, 1194) && entre(x, FO.x0, 2790)) ||                                                 // la rue Haute
       (x >= 2700 && Math.abs(y - (1176 - (x - 2780) * 0.25)) < 22) ||                                       // le chemin de derrière
-      (entre(x, RH.x0 + 6, RH.x1 - 6) && entre(y, 905, YH + 12)) ||                                         // l'escalier des Coteaux
-      (entre(x, RE.x0 + 6, RE.x1 - 6) && entre(y, 905, YH + 12));                                           // l'escalier du bout de la rue Haute
+      false;   // (les escaliers des Coteaux : fermés par leur barrière, tant que les Coteaux ne sont pas faits)
     ici.zones.push(
       { nom: 'La placette de la Fontaine', dedans: (x, y) => entre(x, PL.x0, PL.x1) && entre(y, 1590, PL.y1 + 40) },
       { nom: 'Le carrefour du Puits', dedans: (x, y) => entre(x, 1500, 1990) && entre(y, YH, 1200) },
@@ -227,10 +232,10 @@ DECORS_QUARTIERS.soucolline = {
       { id: 'comptoir', nom: G ? G.nomShop : 'Ton comptoir', sous: 'ta porte', verbe: 'rentrer chez toi', type: 'porte', devant: [1354, YN + 22], dehors: [1354, YN - 4], zone: [1300, YN, 1410, YN + 60], pousser: [0, -1], vers: { scene: 'Nuit', donnees: { matin: true } } },
       { id: 'marches', nom: 'Le bas-quartier ▼', sous: 'la descente des Marches', type: 'escalier', devant: [1510, PL.y1 + 24], dehors: [1510, PL.y1 + 70], zone: [VE.x0 - 10, PL.y1 - 10, VE.x1 + 10, PL.y1 + 44], pousser: [0, 1],
         bientot: 'La descente des Marches mène au bas-quartier : une barrière en ferme le haut, on refait les marches. On y descendra bientôt.' },
-      { id: 'coteaux', nom: 'Les Coteaux ▲', sous: 'l’escalier des Coteaux', type: 'escalier', devant: [1615, 920], dehors: [1615, 870], zone: [RH.x0, 900, RH.x1, 970], pousser: [0, -1],
-        bientot: 'L’escalier monte aux Coteaux et à leurs portes rondes. Le quartier n’est pas encore fait : on y montera bientôt.' },
-      { id: 'escalierHaut', nom: 'Les Coteaux ▲', sous: 'l’escalier du bout de la rue Haute', type: 'escalier', devant: [2685, 920], dehors: [2685, 870], zone: [RE.x0, 900, RE.x1, 970], pousser: [0, -1],
-        bientot: 'Cet escalier monte aussi aux Coteaux. On y montera bientôt.' },
+      { id: 'coteaux', nom: 'Les Coteaux ▲', sous: 'l’escalier des Coteaux', type: 'escalier', devant: [1615, YH + 22], dehors: [1615, YH - 60], zone: [RH.x0 - 10, YH, RH.x1 + 10, YH + 60], pousser: [0, -1],
+        bientot: 'L’escalier monte aux Coteaux et à leurs portes rondes. Une barrière en ferme le bas : on refait les marches, on y montera bientôt.' },
+      { id: 'escalierHaut', nom: 'Les Coteaux ▲', sous: 'l’escalier du bout de la rue Haute', type: 'escalier', devant: [2685, YH + 22], dehors: [2685, YH - 60], zone: [RE.x0 - 10, YH, RE.x1 + 10, YH + 60], pousser: [0, -1],
+        bientot: 'Cet escalier monte aussi aux Coteaux : sa barrière est fermée, on y montera bientôt.' },
       { id: 'chemin', nom: 'Le chemin de derrière ▶', sous: 'vers la place des Mastres', type: 'bord', devant: [2826, 1164], dehors: [2930, 1140], zone: [2780, 1090, B.x1, 1200], pousser: [1, 0],
         bientot: 'Le chemin de derrière longe les jardins jusqu’à la place des Mastres. Il viendra avec le quartier complet ; pour la place, prends la rue.' },
     );

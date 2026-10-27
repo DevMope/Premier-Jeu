@@ -142,8 +142,8 @@ class QuartierScene extends Phaser.Scene {
   // --- L'interface : celle de la place (le bandeau du titre, le bouton du plan, l'invite, la barre du bas) ---
   creerInterface() {
     const G = this.G, D = 40;
-    this.add.rectangle(480, 22, 960, 40, 0x1a120a, 0.45).setDepth(D);
-    this.titreQ = this.add.text(480, 22, '', style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0.5).setDepth(D + 1);
+    this.bandeQ = this.add.rectangle(480, 22, 960, 40, 0x1a120a, 0.45).setDepth(D);
+    this.titreQ = this.add.text(480, 22, '', style(24, '#fff4dc', { fontStyle: 'bold', stroke: '#2a1a10', strokeThickness: 5 })).setOrigin(0, 0.5).setDepth(D + 1);
     this.majTitre(true);
     this.boutonPlan = null; this.placeBoutonPlan = null; this.placerBoutonPlan(0);
     this.invite = this.add.text(480, 462, '', style(14, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#1a120add', padding: { x: 12, y: 5 } })).setOrigin(0.5).setDepth(D + 2).setVisible(false)
@@ -178,10 +178,17 @@ class QuartierScene extends Phaser.Scene {
   majBoutonPlan() {
     const droite = this.ecritsSous(806, 86, 958, 130), gauche = this.ecritsSous(2, 86, 154, 130);
     this.placerBoutonPlan(droite && !gauche ? 1 : !droite ? 0 : this.placeBoutonPlan);
+    { const h = this.scene.get('Hud'), p = h && h.pastilleObjectifs, g = p && p.active && p.visible ? p.getBounds().right + 12 : 250; if (g !== this.gaucheTitre && !this.tweens.isTweening(this.titreQ)) this.poserTitre(this.titreQ.text); }   // (la pastille des objectifs a changé)
+    // (une plaque de rue passe sous le bandeau du titre : il se fonce, pour que deux noms ne se lisent jamais l'un sur l'autre)
+    const a = this.ecritsSous(0, 0, 960, 44) ? 1 : 0.45;
+    if (this.bandeQ && this.bandeQ.cible !== a) { this.bandeQ.cible = a; this.tweens.killTweensOf(this.bandeQ); this.tweens.add({ targets: this.bandeQ, fillAlpha: a, duration: 250 }); }
   }
   dire(texte) {
     if (!this.bulleQ) return;
     this.bulleQ.setText(texte).setVisible(true).setAlpha(0);
+    // (elle se pose là où elle ne couvre aucun nom du décor : sous le bandeau, sinon un peu plus bas)
+    const w = this.bulleQ.width, h = this.bulleQ.height, y = [78, 130, 190, 250].find(y => !this.ecritsSous(480 - w / 2, y, 480 + w / 2, y + h)) || 78;
+    this.bulleQ.setY(y);
     this.tweens.killTweensOf(this.bulleQ);
     this.tweens.add({ targets: this.bulleQ, alpha: 1, duration: 180 });
     this.tweens.add({ targets: this.bulleQ, alpha: 0, delay: Math.max(3200, texte.length * 55), duration: 600 });
@@ -193,9 +200,17 @@ class QuartierScene extends Phaser.Scene {
     if (!tout && z === this.zoneCourante) return;
     this.zoneCourante = z;
     const texte = `${z ? z.nom : this.Q.nom} · matin du jour ${this.G ? this.G.jour : 1}`;
-    if (tout) { this.titreQ.setText(texte); return; }
+    if (tout) { this.poserTitre(texte); return; }
     this.tweens.killTweensOf(this.titreQ);
-    this.tweens.add({ targets: this.titreQ, alpha: 0, duration: 180, onComplete: () => { this.titreQ.setText(texte); this.tweens.add({ targets: this.titreQ, alpha: 1, duration: 260 }); } });
+    this.tweens.add({ targets: this.titreQ, alpha: 0, duration: 180, onComplete: () => { this.poserTitre(texte); this.tweens.add({ targets: this.titreQ, alpha: 1, duration: 260 }); } });
+  }
+  // Le titre, centré, mais jamais sous la pastille des objectifs du haut de l'écran (ni hors de l'écran)
+  poserTitre(texte) {
+    const t = this.titreQ.setText(texte), h = this.scene.get('Hud'), p = h && h.pastilleObjectifs;
+    const gauche = this.gaucheTitre = p && p.active && p.visible ? p.getBounds().right + 12 : 250;
+    let f = 24; t.setFontSize(f);
+    while (t.width > 950 - gauche && f > 16) t.setFontSize(--f);
+    t.setX(Math.max(gauche, 480 - t.width / 2));
   }
 
   creerCommandes() {

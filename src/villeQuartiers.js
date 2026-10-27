@@ -232,7 +232,7 @@ const ARRIVEES_VILLE = {
   Rue(s, arrivee) {
     if (!s.heros || s.pont) return;
     const P = PLACES_RUE;
-    const [x, vers] = arrivee === 'ouest' ? [P.shop + 120, P.shop - 60] : arrivee === 'placette' ? [P.fontaine + 120, P.fontaine + 40] : [s.heros.x, null];
+    const [x, vers] = arrivee === 'ouest' ? [P.shop - 220, P.shop - 400] : arrivee === 'placette' ? [P.fontaine + 120, P.fontaine + 40] : [s.heros.x, null];
     s.heros.x = x; s.heros.setFlipX(vers !== null && vers < x);
     s.cameras.main.scrollX = Phaser.Math.Clamp(x - 480, 0, (s.largeur || LARGEUR_RUE) - 960);
     if (vers !== null) s.cible = vers;
@@ -241,28 +241,31 @@ const ARRIVEES_VILLE = {
 
 // --- (dans la rue d'avant) le chemin de la placette : une pancarte près de la fontaine ---
 // Le tronçon de démonstration du socle (la placette de la Fontaine, dessinée avec le moteur des quartiers) : on y entre
-// depuis la rue en passant derrière la fontaine. JeuneGoy va jusqu'à la pancarte, se tourne vers la placette, fondu.
+// depuis la rue par la pancarte clouée au réverbère d'à côté de la fontaine. JeuneGoy y va, se tourne vers la placette, fondu.
 function brancherQuartiersRue(rue) {
+  rue.pancartePlacette = null;
   if (rue.pont || !quartierPret('soucolline')) return;
-  const P = PLACES_RUE, x = P.fontaine + 120;
+  const P = PLACES_RUE, x = P.fontaine + 180;   // (le réverbère d'à côté de la fontaine)
   if (typeof prechaufferQuartier === 'function') prechaufferQuartier(rue, 'soucolline');   // (son sol se prépare en tâche de fond, pendant qu'on est dans la rue)
   if (typeof prechaufferPlanVille === 'function') prechaufferPlanVille(rue, 7000);
-  const t = ecriteauRue(rue, x, 404, '▲ La placette de la Fontaine', { taille: 12, profondeur: 8.62 }).setInteractive({ useHandCursor: true });
-  const poteau = rue.add.rectangle(x, 440, 5, 62, 0x5a3a20).setDepth(8.61).setStrokeStyle(1, 0x2a1a0c);
+  // une planche clouée au réverbère, le nom gravé (comme les plaques des rues)
+  const c = rue.add.container(0, 0).setDepth(8.62);
+  const [t] = poserPlaqueRue(rue, c, x, 398, '▲ La placette de la Fontaine', { matiere: 'bois', taille: 14 });
+  t.setInteractive({ useHandCursor: true }); rue.pancartePlacette = t;
   t.on('pointerdown', () => {
     if (rue.transition || rue.fini) return;
     rue.transition = true; rue.allerVers(x);
     const attendre = () => {
       if (!rue.sys.isActive()) return;
       if (rue.cible !== null) return rue.time.delayedCall(60, attendre);
-      // il se tourne vers la placette (de dos : il entre dans la profondeur), fait deux pas, et la vue change en fondu
+      // il se tourne vers la placette (de dos : il entre dans la profondeur), et la vue change en fondu
       rue.fini = true;
-      if (rue.heros && rue.heros.active) { rue.heros.setTexture(textureJoueur(rue, rue.G, 'dos')).setFlipX(false); rue.tweens.add({ targets: rue.heros, y: rue.heros.y - 6, scale: rue.heros.scale * 0.97, duration: 450 }); }
+      if (rue.heros && rue.heros.active) rue.heros.setTexture(textureJoueur(rue, rue.G, 'dos')).setFlipX(false);
       allerDansLaVille(rue, { quartier: 'soucolline', arrivee: 'rue', depuis: 'rue' });
     };
     attendre();
   });
-  return { t, poteau };
+  return { t, c };
 }
 
 // --- Les enseignes ---
@@ -271,7 +274,7 @@ function brancherQuartiersRue(rue) {
 // toujours dans la plaque : elle s'allonge pour lui, au besoin les lettres se serrent (lettrageHD).
 function plaqueRueHD(s, l, h, matiere = 'gres') {
   const cle = `plaqueRue_${matiere}_${l}x${h}`; if (s.textures.exists(cle)) return cle;
-  const t = toileDecor(l, h), base = { gres: 0xd2c4a4, bois: 0xa87a48, email: 0x2e4e86 }[matiere] || 0xd2c4a4;
+  const t = toileDecor(l, h), base = { gres: 0xd2c4a4, bois: 0xc09860, email: 0x2e4e86 }[matiere] || 0xd2c4a4;
   t.rampes.plaque = rampe(base); t.rampes.clou = rampe(0x6a6a70);
   for (let y = 0; y < h; y++) for (let x = 0; x < l; x++) {
     let k = 3;
@@ -288,7 +291,7 @@ function plaqueRueHD(s, l, h, matiere = 'gres') {
 // La plaque posée dans un conteneur du monde, son bas en (x, y) ; yTri : sa profondeur. Renvoie [la plaque, le nom].
 //   entre : [xa, xb], le mur où elle est clouée (elle y tient en entier, à 8 du bord) ; cote : 'gauche' ou 'droite' (contre ce bord)
 function poserPlaqueRue(s, conteneur, x, y, texte, { matiere = 'gres', taille = 11, yTri = y, echelle = 2, entre = null, cote = null } = {}) {
-  const couleur = matiere === 'email' ? '#f4f0e4' : '#2a1608', fond = { gres: 0xd2c4a4, bois: 0xa87a48, email: 0x2e4e86 }[matiere] || 0xd2c4a4;
+  const couleur = matiere === 'email' ? '#f4f0e4' : '#2a1608', fond = { gres: 0xd2c4a4, bois: 0xc09860, email: 0x2e4e86 }[matiere] || 0xd2c4a4;
   const L = lettrageHD(s, texte, { police: 'Alegreya', graisse: 900, taille, couleur, fond, genre: matiere === 'email' ? 'peint' : 'grave', largeur: 400, hauteur: 18, lignesMax: 1 });
   const l = Math.ceil((L.l + 12) / echelle), h = Math.ceil((L.h + 6) / echelle);
   if (entre) { const [xa, xb] = entre, m = l * echelle / 2 + 8; x = cote === 'gauche' ? xa + m : cote === 'droite' ? xb - m : Phaser.Math.Clamp(x, xa + m, xb - m); }
