@@ -96,7 +96,7 @@ function* planVilleEtapes(s, cle = 'planVilleHD') {
   courbe([[401, 148], [410, 142], [419, 137], [426, 124], [430, 109]], 0.8, 'terreK', 3);   // (v6) le sentier de la cabane : le long de l'étang, jusqu'au moulin
   chemin([[200, 222], [200, 248], [204, 268]], 1.6, 'terreK', 3);
   chemin([[60, 178], [MX(3900), 178]], 2.4, 'paveK', 3); chemin([[MX(548), 152], [MX(2780), 152]], 1.6, 'paveK', 3);
-  chemin([[MX(1615), 152], [MX(1615), 178]], 1.6, 'paveK', 3); chemin([[MX(594), 152], [MX(594), 178]], 1.2, 'paveK', 3); chemin([[MX(2152), 152], [MX(2152), 178]], 1, 'paveK', 2);
+  chemin([[MX(1615), 152], [MX(1615), 178]], 1.6, 'paveK', 3); chemin([[MX(594), 152], [MX(594), 178]], 1.2, 'paveK', 3);   // (plus de passage sous la maison haute : retiré à la demande du joueur)
   chemin([[MX(3640), 134], [MX(3640), 178]], 1.6, 'paveK', 3); chemin([[MX(2700), 152], [MX(2700), 128], [254, 112]], 0.8, 'terreK', 3);
   for (let y = 178; y < 190; y++) for (let x = Math.round(MX(1420)); x < Math.round(MX(2010)); x++) t.poser(x, y, 'paveK', 3 + ((x + y) % 4 === 0 ? 1 : 0));
   t.forme('murK', ellipsoide(MX(1860), 184, 2.6, 1.8), { decalage: 0.6 }); P(MX(1860), 183, 'eauK', 5);
@@ -189,7 +189,7 @@ function* planVilleEtapes(s, cle = 'planVilleHD') {
     [x, l] = LOT(1324, 320); toitMini(x, 176, l, 'toitC', { ht: 7, chem: true, fumee: true });                // ton comptoir, au chaume
     for (let a = 0; a < Math.round(l); a++) if (a === 0 || a === Math.round(l) - 1) P(x + a, 176 - 9, 'toitC', 2);
     [x, l] = LOT(1876, 320); toitMini(x, 176, l, 'voletB', { mur: 'murC' }); P(x + Math.round(l / 2) + 3, 174, 'or', 5);   // la maison du paon : murs blancs, toit bleu, l'enseigne d'or
-    [x, l] = LOT(2152, 224); toitMini(x, 176, l, 'toitA', { ht: 7, hm: 4, porte: false }); P(x + Math.floor(l / 2), 176, 'boisS', 0); P(x + Math.floor(l / 2), 175, 'boisS', 0); P(x + Math.floor(l / 2), 174, 'boisS', 1);   // la maison haute et son passage
+    [x, l] = LOT(2152, 224); toitMini(x, 176, l, 'toitA', { ht: 7, hm: 4 });                              // la maison haute (une façade comme les autres : pas de passage)
     [x, l] = LOT(2615, 198); toitMini(x, 176, l, 'toitR', { pignon: true }); P(x, 175, 'voletR', 5); P(x, 174, 'murH', 5); P(x, 173, 'voletR', 5);   // le barbier et son poteau
     [x, l] = LOT(2819, 198); toitMini(x, 176, l, 'toitC', { chem: true });
     [x, l] = LOT(3049, 250); toitMini(x, 176, l, 'voletB', { mur: 'murH' }); P(x + 3, 170, 'eauK', 5); P(x + l - 4, 170, 'eauK', 5);   // les Mages : les runes qui luisent
@@ -211,7 +211,7 @@ function* planVilleEtapes(s, cle = 'planVilleHD') {
   P(MX(1745), 152, 'murK', 4); P(MX(1745) + 1, 152, 'murK', 2); P(MX(1745), 151, 'toitR', 4); P(MX(1745) + 1, 151, 'toitR', 3); P(MX(1745), 153, 'eauK', 2);   // le puits
   for (let a = 0; a < 12; a++) { P(MX(1930) + a, 150, 'murK', 4); P(MX(1930) + a, 151, 'murK', 2); }   // le muret du jardin
   arbre(MX(2030), 145, 3.4, 'foretK2'); for (const [a, b] of [[-1, -1], [1, 0], [2, -2], [-2, 1]]) P(MX(2030) + a, 145 + b, 'pomme', 5);
-  for (let n = 0; n < 24; n++) { const x = 80 + hachage(n, 1, 9114) * 240, y = 157 + hachage(n, 2, 9114) * 6; if (Math.abs(x - MX(1615)) < 4 || Math.abs(x - MX(594)) < 3 || Math.abs(x - MX(2152)) < 3) continue; t.forme(n % 3 ? 'herbeK2' : 'foretK', ellipsoide(x, y, 2.2, 1.6), { decalage: 0.3, ombre: false }); }
+  for (let n = 0; n < 24; n++) { const x = 80 + hachage(n, 1, 9114) * 240, y = 157 + hachage(n, 2, 9114) * 6; if (Math.abs(x - MX(1615)) < 4 || Math.abs(x - MX(594)) < 3) continue; t.forme(n % 3 ? 'herbeK2' : 'foretK', ellipsoide(x, y, 2.2, 1.6), { decalage: 0.3, ombre: false }); }
   boite(76, 139, 334, 182, 'ville');
   // (v6) le bas-quartier, dessiné comme le reste de la ville : une rangée de petites maisons adossées au mur de soutènement,
   // leurs façades et leurs portes sur la ruelle de vieux pavés ; la descente des Marches ; l'impasse du Corbeau entre deux

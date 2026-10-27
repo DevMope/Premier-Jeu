@@ -315,6 +315,8 @@ function maison5(s, cle, o = {}) {
   if (enseigne) enseigne5(t, Math.round(L * enseigne.x), yR + 6, enseigne.dessin || 'cle');
   t.contour(); t.texture(s, cle);
   const tex = s.textures.get(cle); tex.cheminee = t.cheminee || null; tex.info89 = { L, H, yR, yT, bas };
+  // (le toit, pour la neige du Givre : neigeToitHD) son faîte, son égout, la cheminée et la lucarne qui ne se couvrent pas
+  tex.toit89 = { haut: M + 5, bas: yT + 2, chem: cheminee !== null ? { cx: Math.round(L * cheminee), haut: M + 7, h: Math.round((yT - M) * 0.4) } : null, lucarne: lucarne !== null ? { lx: Math.round(L * lucarne) - 12, ly: M + Math.round((yT - M) * 0.34) + 6, bas: yT - 3 } : null };
   return cle;
 }
 // ---- la vieille maison du bas-quartier : moellons bruts, étage de planches qui penche, toit rapiécé ----
@@ -343,7 +345,9 @@ function vieilleMaison5(s, cle, o = {}) {
   const cx = Math.round(L * 0.74); cheminee5(t, cx, M + 7, 20, graine + 11, true); t.cheminee = [cx, M - 4];
   if (linge) { const y0 = yE + 22; for (let x = L - 30; x < L - 4; x++) { const y = y0 + Math.round(Math.sin((x - L + 30) / 26 * Math.PI) * 3); t.poser(x, y, 'chanvre', 2); if ((x - L + 30) % 9 < 6 && x < L - 8) for (let k = 1; k < 9; k++) t.poser(x, y + k, ['linB', 'linR', 'linBl'][Math.floor((x - L + 30) / 9) % 3], 3 - (k === 8 ? 1 : 0)); } }
   if (pots) { for (let n = 0; n < 3; n++) { const x = 6 + n * 7; for (let y = bas - 14; y < bas - 8; y++) for (let k = 0; k < 5; k++) t.poser(x + k, y, 'terreCuite', k === 0 ? 4 : k === 4 ? 1 : 3); t.poser(x + 2, bas - 15, 'feuilleV2', 4); t.poser(x + 1, bas - 16, 'fleurR2', 4); t.poser(x + 3, bas - 16, 'fleurJ2', 4); } }
-  t.contour(); t.texture(s, cle); s.textures.get(cle).cheminee = t.cheminee; return cle;
+  t.contour(); t.texture(s, cle); const tex = s.textures.get(cle); tex.cheminee = t.cheminee;
+  tex.toit89 = { haut: M + 5, bas: yE + 1, chem: { cx, haut: M + 7, h: 20 }, lucarne: null };   // (pour la neige du Givre)
+  return cle;
 }
 // ---- un banc public, à l'échelle d'une personne : 40 pixels de large (64 unités), assise à 11 de haut, dossier à 21 ----
 // Vu de trois quarts d'en haut : le dossier (deux lames, contre le mur), le dessus de l'assise (clair, deux lames), la tranche
@@ -813,5 +817,92 @@ function grenouille3(s) {
   for (let x = 26; x < 32; x++) t.poser(x, 15, 'fer', 1);   // la bouche
   for (const [x, y] of [[14, 14], [17, 13], [21, 17], [11, 18]]) t.poser(x, y, 'bronze', 5);   // les reflets, le vert-de-gris
   for (const [x, y] of [[16, 20], [19, 21], [27, 12]]) t.poser(x, y, 'mousse3', 4);
+  t.contour(); t.texture(s, cle); return cle;
+}
+
+// ---- (retours du joueur sur le socle) la neige sur les toits, au Givre ----
+// Une couche de neige posée sur le toit d'un bâtiment : une texture de plus, posée par-dessus l'image, à l'identique.
+//  - les maisons du quartier (maison5, vieilleMaison5) : tout le toit, du faîte à l'égout, d'après sa géométrie (toit89) ;
+//    la cheminée et la face de la lucarne restent nues (leur couronnement a son chapeau de neige), quelques tuiles percent
+//    la neige vers le bas, et de petits glaçons pendent sous l'égout ;
+//  - les autres façades (ton comptoir, la boutique du paon, la forge, le barbier) : la bande de leur toit (TOITS_NEIGE :
+//    ses rangées, et ce qui n'est pas du toit, comme le fronton du paon, dont seule l'arête prend la neige).
+// Le trait sombre du contour est gardé (bleui) : la neige épouse la forme du toit, sans coupure nette.
+const TOITS_NEIGE = { facadeHD_0: [40, 112], facadeHD_1: [40, 112], facadeHD: [0, 58], rueForgeHD: [4, 43], facadeRivalHD: [12, 52, (x, y) => Math.abs(x - 100) < (y - 2) * 0.95 - 2], boutiqueBarbierHD: [3, 26] };
+function neigeToitHD(s, cle) {
+  if (/_neige$/.test(cle) || !s.textures.exists(cle)) return null;
+  const k = cle + '_neige'; if (s.textures.exists(k)) return k;
+  const tex = s.textures.get(cle), T = tex.toit89, base = Object.keys(TOITS_NEIGE).find(b => cle.startsWith(b));
+  if (!T && !base) return null;
+  const src = tex.getSourceImage(), L = src.width, H = src.height;
+  if (!L || !H) return null;
+  const lu = document.createElement('canvas'); lu.width = L; lu.height = H;
+  const cl = lu.getContext('2d'); cl.drawImage(src, 0, 0);
+  const d = cl.getImageData(0, 0, L, H).data;
+  const C = T ? T.chem : null, Lu = T ? T.lucarne : null;
+  const [haut, bas, nu] = T ? [T.haut - 4, T.bas, (x, y) => (C && x >= C.cx - 7 && x < C.cx + 7 && y >= C.haut && y < C.haut + C.h) || (C && y < C.haut - 3 && Math.abs(x - C.cx) < 9) || (Lu && x >= Lu.lx && x < Lu.lx + 24 && y >= Lu.ly && y < Lu.bas)] : TOITS_NEIGE[base];
+  const out = s.textures.createCanvas(k, L, H), o = out.getContext(), img = o.createImageData(L, H), q = img.data;
+  const vide = (x, y) => x < 0 || y < 0 || x >= L || y >= H || d[(y * L + x) * 4 + 3] < 128;
+  const mettre = (x, y, c) => { const i = (y * L + x) * 4; q[i] = c >> 16; q[i + 1] = (c >> 8) & 255; q[i + 2] = c & 255; q[i + 3] = 255; };
+  for (let x = 0; x < L; x++) {
+    const bord = bas + (hachage(x >> 1, 7, 9411) > 0.7 ? 1 : 0), glacon = hachage(x, 5, 9413) > 0.8 ? 1 + Math.floor(hachage(x, 3, 9412) * 3) : 0;
+    for (let y = Math.max(0, haut); y <= Math.min(H - 1, bord + glacon); y++) {
+      const i = (y * L + x) * 4; if (d[i + 3] < 128 || (nu && nu(x, y))) continue;
+      const lum = 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2];
+      if (y > bord) { mettre(x, y, y === bord + glacon ? 0xb8cadc : 0xdfe9f4); continue; }   // un glaçon sous l'égout
+      if (lum < 48 && (vide(x - 1, y) || vide(x + 1, y) || vide(x, y - 1) || vide(x, y + 1))) { mettre(x, y, 0x3c4658); continue; }   // le contour
+      const v = (y - haut) / Math.max(1, bas - haut);
+      if (v > 0.7 && fbm(x * 0.15, y * 0.3, 9414) > 0.6 - (v - 0.7) * 0.4) continue;   // une tuile qui perce la neige, vers le bas
+      const ombre = x > L / 2 + L * 0.22, h = hachage(x, y, 9415);
+      mettre(x, y, y >= bord - 1 ? (ombre ? 0xc8d4e4 : 0xe4ecf6) : ombre ? (h > 0.9 ? 0xccd8e6 : 0xd9e3ef) : h > 0.92 ? 0xe6edf5 : h < 0.04 ? 0xffffff : 0xf4f8fc);
+    }
+  }
+  o.putImageData(img, 0, 0); out.refresh();
+  return k;
+}
+// Toute la neige des toits d'un quartier (les images du monde, et celles des groupes posés « à l'ancienne »)
+function neigeToitsQuartier(s, monde) {
+  const poser = (im, parent) => {
+    const k = neigeToitHD(s, im.texture.key); if (!k) return;
+    const n = s.add.image(im.x, im.y, k).setOrigin(im.originX, im.originY).setScale(im.scaleX, im.scaleY).setFlipX(im.flipX).setAlpha(im.alpha);
+    if (parent === monde) { n.yTri = (im.yTri !== undefined ? im.yTri : im.y) + 0.01; monde.add(n); }
+    else parent.addAt(n, parent.getIndex(im) + 1);
+  };
+  const voir = c => { for (const o of [...c.list]) { if (o.type === 'Container') voir(o); else if (o.type === 'Image' && o.texture && o.visible) poser(o, c); } };
+  voir(monde);
+}
+
+// ---- (retours du joueur sur le socle) une grille d'égout, à l'échelle des pavés ----
+// Petite (14 × 6 pixels, la largeur de deux pavés), posée à plat dans le caniveau et vue de trois quarts (le haut écrasé) :
+// un cadre de fonte (éclairé en haut, sombre en bas), six barreaux fins sur le noir de l'égout, un peu de mousse dans les
+// coins, et son ombre portée sur la pierre. Posée par ici.grille (QuartierScene.js), qui choisit sa place.
+function grilleEgoutHD(s) {
+  const cle = 'grilleEgout89'; if (s.textures.exists(cle)) return cle;
+  const L = 14, H = 7, t = s.textures.createCanvas(cle, L, H), c = t.getContext();
+  const px = (x, y, coul, a = 1) => { c.fillStyle = `rgba(${coul >> 16},${(coul >> 8) & 255},${coul & 255},${a})`; c.fillRect(x, y, 1, 1); };
+  for (let y = 0; y < 6; y++) for (let x = 0; x < L; x++) {
+    const bord = x === 0 || x === L - 1 || y === 0 || y === 5, anneau = x === 1 || x === L - 2 || y === 1 || y === 4;
+    if (bord) px(x, y, y === 0 ? 0x80808a : y === 5 ? 0x1c1c22 : x === 0 ? 0x4a4a54 : 0x2a2a32);   // le cadre de fonte
+    else if (anneau) px(x, y, y === 1 ? 0x4e4e58 : 0x34343c);
+    else px(x, y, x % 2 === 0 ? (y === 2 ? 0x9a9aa4 : 0x7a7a84) : 0x060608);   // les barreaux (éclairés en haut), le noir de l'égout entre eux
+  }
+  for (const [x, y, k] of [[0, 4, 0x4a6a32], [0, 5, 0x5a7a3a], [1, 5, 0x4a6a32], [13, 0, 0x5a7a3a], [12, 5, 0x4a6a32]]) px(x, y, k);   // la mousse
+  for (let x = 1; x < L; x++) px(x, 6, 0x000000, 0.32);   // l'ombre sur la pierre
+  t.refresh();
+  return cle;
+}
+
+// ---- (retours du joueur) un panneau de rue : une planche étroite taillée en flèche, clouée sur un poteau ----
+// Le bois clair des planches gravées (le creux sombre des lettres s'y lit de loin), le fil du bois, deux colliers de fer
+// qui la tiennent au poteau (à gauche), la pointe à droite. l × h : la planche, en pixels de la toile (×2 à l'écran).
+function panneauFlecheHD(s, l = 32, h = 15) {
+  const cle = `panneauFleche_${l}x${h}`; if (s.textures.exists(cle)) return cle;
+  const t = toileDecor(l, h), pointe = Math.round(h * 0.36), corps = l - pointe, mi = (h - 1) / 2;
+  t.rampes.pin = rampe(BOIS_CLAIR_NOM);
+  planche(t, 0, 1, corps, h - 2, 'pin', { graine: 7461, noeuds: 1 });
+  for (let x = corps; x < l; x++) { const demi = (l - x) / pointe * (mi - 1); for (let y = Math.round(mi - demi); y <= Math.round(mi + demi); y++) t.poser(x, y, 'pin', y === Math.round(mi - demi) ? 5 : y === Math.round(mi + demi) ? 1 : 3); }   // la pointe
+  for (let x = 0; x < corps; x++) { t.poser(x, 1, 'pin', 5); t.poser(x, h - 2, 'chene', 1); }   // l'arête éclairée, le dessous dans l'ombre
+  for (const y of [3, h - 4]) for (let x = 0; x < 5; x++) t.poser(x, y, 'fer', x === 0 ? 1 : 3);   // les colliers de fer, autour du poteau
+  for (const y of [3, h - 4]) t.poser(3, y, 'fer', 5);   // leurs rivets
   t.contour(); t.texture(s, cle); return cle;
 }

@@ -2,8 +2,8 @@
 // quartier de la rue Soucolline, tel que la planche 89 v7 l'a validé, dessiné avec le moteur des quartiers. On y va depuis
 // la rue d'avant (la pancarte près de la fontaine) ; le quartier complet viendra au chantier 3.
 //   Au milieu, la placette de la Fontaine (sa fontaine à la grenouille), au bord de la rue Soucolline ; au nord, la ruelle
-//   du Pommier monte en marches à la rue Haute et au carrefour du Puits, puis l'escalier des Coteaux ; le passage couvert,
-//   sous la maison haute, relie aussi les deux rues ; au sud, la placette se prolonge en palier, puis la descente des
+//   du Pommier monte en marches à la rue Haute et au carrefour du Puits, puis l'escalier des Coteaux (c'est le seul chemin
+//   entre les deux rues : la maison haute est une façade comme les autres, sans passage) ; au sud, la placette se prolonge en palier, puis la descente des
 //   Marches tombe au bas-quartier, dont on voit les toits en contrebas.
 //   Un seul grès pour tout le quartier (pavés pour les chaussées, dalles pour les trottoirs, la placette, les bordures
 //   et les marches), et les jonctions de la planche 89 v7 entre les deux tailles.
@@ -15,11 +15,11 @@
 const SOUCO = { W: 3900, H: 2080, YN: 1500, YH: 1060, YA: 2012, E: 1.6, F: 0.8 };
 const TRONCON_SOUCO = { x0: 1000, y0: 880, x1: 2860, y1: 2080 };
 // la placette, la ruelle du Pommier, l'escalier des Coteaux, la venelle (la descente des Marches), la montée du Four,
-// l'escalier du bout de la rue Haute, le passage couvert
-const RUES_SOUCO = { PL: { x0: 1420, x1: 2010, y1: 1820 }, RU: { x0: 1524, x1: 1706 }, RH: { x0: 1560, x1: 1670 }, VE: { x0: 1460, x1: 1560 }, FO: { x0: 548, x1: 640 }, RE: { x0: 2640, x1: 2730 }, PC: { x0: 2120, x1: 2186 } };
+// l'escalier du bout de la rue Haute
+const RUES_SOUCO = { PL: { x0: 1420, x1: 2010, y1: 1820 }, RU: { x0: 1524, x1: 1706 }, RH: { x0: 1560, x1: 1670 }, VE: { x0: 1460, x1: 1560 }, FO: { x0: 548, x1: 640 }, RE: { x0: 2640, x1: 2730 } };
 // Le plan du sol de la rue Soucolline (planche 89 v7) : un code de SOL_VILLE en chaque point du monde
 function planSolSoucolline() {
-  const Q = SOUCO, YN = Q.YN, YH = Q.YH, { PL, RU, RH, VE, FO, RE, PC } = RUES_SOUCO;
+  const Q = SOUCO, YN = Q.YN, YH = Q.YH, { PL, RU, RH, VE, FO, RE } = RUES_SOUCO;
   const code = (X, Y) => {
     const n = (fbm(X * 0.01, Y * 0.01, 8911) - 0.5) * 40;
     if (X >= VE.x0 - 2 && X < VE.x1 + 2 && Y >= PL.y1 - 6 && Y < PL.y1 + 8) return 23;   // le seuil, entre la placette et le palier
@@ -38,7 +38,6 @@ function planSolSoucolline() {
     if (X >= RU.x0 && X < RU.x1 && Y >= 1196 && Y < YN) { if (Y >= 1400 && Y < 1450) return 7; if (Y >= 1360 && Y < 1400) return 4; if (Y >= 1196 && Y < 1250) return 7; return 17; }   // la ruelle du Pommier
     if (X >= RH.x0 && X < RH.x1 && Y >= 930 && Y < YH) return 7;   // l'escalier des Coteaux
     if (X >= RH.x0 - 20 && X < RH.x1 + 20 && Y >= 900 && Y < 930) return 4;
-    if (X >= PC.x0 && X < PC.x1 && Y >= 1196 && Y < YN) return 17;   // le passage couvert
     if (Math.abs(Y - (1176 - (X - 2780) * 0.25)) < 26 + n * 0.2 && X >= 2700 && X < 3900) return 9;   // le chemin de derrière
     if (X >= RE.x0 && X < RE.x1 && Y >= 900 && Y < YH) return 7;   // l'escalier du bout de la rue Haute
     const chemin = Math.abs(X - (1615 + Math.sin(Y / 90) * 26)) < 40 + n * 0.3 && Y < 940;
@@ -58,6 +57,16 @@ function planSolSoucolline() {
 }
 DECORS_QUARTIERS.soucolline = {
   sy: 320,             // (la caméra un peu plus basse que sur la place : on voit les façades, comme sur la planche 89 v7)
+  // (retours du joueur) la hauteur de la caméra selon où l'on est : où se tient JeuneGoy à l'écran (ses pieds, moins 50).
+  // Contre les façades du nord d'une rue, il est bas à l'écran : on voit le haut des maisons ; en descendant vers le sud (le
+  // milieu de la chaussée, la placette, le palier), il remonte à l'écran : la vue descend, plus près du sol. Entre deux
+  // repères, on glisse d'une hauteur à l'autre (la caméra, elle, suit en douceur : jamais d'à-coup).
+  cameraY(y) {
+    const R = [[1060, 378], [1200, 318], [1330, 340], [1505, 378], [1600, 352], [1700, 312], [1790, 282], [1860, 268]];
+    if (y <= R[0][0]) return R[0][1];
+    for (let i = 1; i < R.length; i++) if (y <= R[i][0]) { const [y0, a] = R[i - 1], [y1, b] = R[i], u = (y - y0) / (y1 - y0), w = u * u * (3 - 2 * u); return a + (b - a) * w; }
+    return R[R.length - 1][1];
+  },
   passants: 4,
   entrees: { place: 'arche', rue: 'ouest', defaut: 'arche' },   // (par le plan : on arrive par le passage qui mène d'où l'on vient)
   surLePlan: (x, y) => [MX_PLAN(x), MY_PLAN(y)],
@@ -69,7 +78,7 @@ DECORS_QUARTIERS.soucolline = {
     const { img, poser, ombre, lot, maison } = ici, dans = (x, marge = 300) => x > B.x0 - marge && x < B.x1 + marge;
     creerRueHD(s); creerDecorPlaceHD(s); creerChatRueHD(s); fontaineRue81(s); objetsRue81(s); betes81(s);
     const roux = creerChatHD(s, { pelage: 'roux', yeux: 'vert', collier: 'aucun' }, 'chatRoux81');
-    const { PL, RU, RH, VE, FO, RE, PC } = RUES_SOUCO;
+    const { PL, RU, RH, VE, FO, RE } = RUES_SOUCO;
 
     // ===================== 1. le sol : le plan, peint par le moteur de pavage =====================
     ici.sol(this.planSol());
@@ -115,11 +124,16 @@ DECORS_QUARTIERS.soucolline = {
     // ===================== 3. la rue Soucolline : les façades du côté nord =====================
     lot(1016, YN, () => { s.add.image(0, 2, 'rueForgeHD_jour').setOrigin(0.5, 1).setScale(2); });
     ici.cheminees.push([1016 + 60, YN - 270]);
-    const comptoir = lot(1324, YN, () => { dessinerFacade(s, 0, 0, G ? G.nomShop : undefined, undefined, { fumee: false }); });
+    let facade = null;
+    const comptoir = lot(1324, YN, () => { facade = dessinerFacade(s, 0, 0, G ? G.nomShop : undefined, undefined, { fumee: false }); });
+    // (le battant de ta porte, dans le monde : il s'ouvre quand tu rentres, QuartierScene.animerPorte)
+    const porteComptoir = (() => { const [x, y, l, h] = facade.zones.porte, im = facade.image, x0 = im.x - im.displayWidth * im.originX, y0 = im.y - im.displayHeight * im.originY;
+      return { x: 1324 + x * F, y: YN + (y + 2) * F, l: l * F, h: (h - 2) * F, cx: 1324 + (x + l / 2) * F, yTri: YN + 0.5,
+        src: { cle: im.texture.key, x: (x - x0) / im.scaleX, y: (y + 2 - y0) / im.scaleY, l: l / im.scaleX, h: (h - 2) / im.scaleY } }; })();
     ici.cheminees.push([1324 + 92, YN - 330]);
     img(1180, YN + 34, banc5(s), E); ici.obstacles.push([1180 - 52, YN + 14, 1180 + 52, YN + 36]);
     const rival = lot(1876, YN, () => { dessinerFacadeRival(s, 0, 0, 1); });
-    maison(2152, YN, 'mvB89', { L: 140, etages: [48, 46], toit: 50, toitMat: 'ardoiseToit', crepi: 'enduitO', porche: { x: 0.5, l: 34 }, porte: null, fenetres: [[0.2, 0.8], [0.2, 0.5, 0.8]], volet: 'voletR', fleur: 'fleurP2', graine: 5 });
+    maison(2152, YN, 'mvB89', { L: 140, etages: [48, 46], toit: 50, toitMat: 'ardoiseToit', crepi: 'enduitO', porte: { x: 0.5, l: 24, h: 50, peinte: 'porteVerte' }, fenetresRdc: [0.2, 0.8], fenetres: [[0.2, 0.8], [0.2, 0.5, 0.8]], volet: 'voletR', fleur: 'fleurP2', graine: 5 });
     img(2390, YN - 110, haie89(s, 'haieYsmee89', 150), E, YN - 110);
     ici.arbre(2470, YN - 80, 0);
     ombre(2370, YN + 4, 230); img(2370, YN + 6, tenteYsmee89(s), E); ici.obstacles.push([2370 - 110, YN - 10, 2370 + 110, YN + 8]);
@@ -145,7 +159,7 @@ DECORS_QUARTIERS.soucolline = {
     // (les Coteaux ne sont pas encore faits : comme au chemin creux de la place, une barrière ferme le bas des deux escaliers, qu'on refait)
     for (const [a, b] of [[RH.x0, RH.x1], [RE.x0, RE.x1]]) img((a + b) / 2, YH + 2, barrierePlaceHD(s, Math.round((b - a) / 16)), 1.6, YH + 2);
     img(RH.x0 - 22, YH + 6, bacFleurs89(s, 'bacFleurs89e', 'fleurR2'), E * 0.7); img(RH.x1 + 22, YH + 6, bacFleurs89(s, 'bacFleurs89f', 'fleurB2'), E * 0.7);
-    for (const [a, b] of [[FO.x1, RU.x0], [RU.x1, 2120], [2186, 2730]]) ligneParapet(a, b, 1200, true);
+    for (const [a, b] of [[FO.x1, RU.x0], [RU.x1, 2730]]) ligneParapet(a, b, 1200, true);
     const mE = maison(1812, YH, 'mvE89', { L: 120, etages: [50], toitMat: 'chaume', crepi: 'enduitC', porte: { x: 0.3, l: 22, h: 48, peinte: 'porteRouge' }, fenetres: [[0.3, 0.74]], fenetresRdc: [0.72], volet: 'voletV', graine: 33, lierre: true });
     { const yl = YH - 150; img(1524, yl, 'linge81_0', E, YH + 0.5, 0, 0); img(1524 + 62 * E, yl, 'linge81_1', E, YH + 0.5, 0, 0); }
     img(2016, 890, haie89(s, 'haiePommier89', 130), E, 890);
@@ -188,8 +202,6 @@ DECORS_QUARTIERS.soucolline = {
       }, fy);
       ici.obstacles.push({ ellipse: [fx, fy - 12, 112, 22] }, [fx + 96, fy - 6, fx + 120, fy + 10], [fx - 150, fy - 6, fx - 120, fy + 10]);
     }
-    // les grilles d'égout, là où le caniveau s'arrête au bord de la placette
-    for (const gx of [PL.x0 - 34, PL.x1 + 4]) { const gg = s.add.graphics(); gg.yTri = 1617; gg.fillStyle(0x1a1818).fillRect(gx, 1614, 30, 16).fillStyle(0x4a4a50).fillRect(gx + 1, 1615, 28, 14); for (let k = 0; k < 6; k++) gg.fillStyle(0x0c0c10).fillRect(gx + 3 + k * 4.4, 1617, 2.4, 10); gg.fillStyle(0x7a7a84).fillRect(gx + 1, 1615, 28, 1.5); ici.C.add(gg); }
     img(1700, 1790, 'pigeon81_picore', F); img(1722, 1796, 'pigeon81_debout', F).setFlipX(true); img(1560, 1560, bacFleurs89(s, 'bacFleurs89d', 'fleurJ2'), E * 0.8);
     for (const x of [1436, 1994]) { img(x, PL.y1 - 10, 'reverbereHD', E); ici.obstacles.push([x - 10, PL.y1 - 18, x + 10, PL.y1 - 4]); }
     img(1700, PL.y1 - 2, bacFleurs89(s, 'bacFleurs89c', 'fleurR2'), E * 0.8);
@@ -215,7 +227,6 @@ DECORS_QUARTIERS.soucolline = {
       (entre(x, PL.x0 + 10, PL.x1 - 10) && entre(y, 1540, PL.y1 - 4)) ||                                    // la placette
       (entre(x, VE.x0, VE.x1) && entre(y, PL.y1 - 4, PL.y1 + 38)) ||                                        // le palier (jusqu'à la barrière)
       (entre(x, RU.x0 + 8, RU.x1 - 8) && entre(y, 1190, YN + 10)) ||                                        // la ruelle du Pommier
-      (entre(x, PC.x0 + 6, PC.x1 - 6) && entre(y, 1190, YN + 10)) ||                                        // le passage couvert
       (entre(y, YH + 10, 1194) && entre(x, FO.x0, 2790)) ||                                                 // la rue Haute
       (x >= 2700 && Math.abs(y - (1176 - (x - 2780) * 0.25)) < 22) ||                                       // le chemin de derrière
       false;   // (les escaliers des Coteaux : fermés par leur barrière, tant que les Coteaux ne sont pas faits)
@@ -229,7 +240,8 @@ DECORS_QUARTIERS.soucolline = {
     ici.passages.push(
       { id: 'arche', nom: 'La place des Mastres ▶', sous: 'par l’arche des Mastres', type: 'bord', devant: [2826, 1640], dehors: [2930, 1640], zone: [2770, YN, B.x1, 1748], pousser: [1, 0], vers: { quartier: 'place', arrivee: 'arche' } },
       { id: 'ouest', nom: '◀ La rue Soucolline', sous: 'vers la forge et le Rempart', type: 'bord', devant: [1034, 1640], dehors: [930, 1640], zone: [B.x0, YN, 1090, 1748], pousser: [-1, 0], vers: { scene: 'Rue', arrivee: 'ouest' } },
-      { id: 'comptoir', nom: G ? G.nomShop : 'Ton comptoir', sous: 'ta porte', verbe: 'rentrer chez toi', type: 'porte', devant: [1354, YN + 22], dehors: [1354, YN - 4], zone: [1300, YN, 1410, YN + 60], pousser: [0, -1], vers: { scene: 'Nuit', donnees: { matin: true } } },
+      { id: 'comptoir', nom: G ? G.nomShop : 'Ton comptoir', sous: 'ta porte', verbe: 'rentrer chez toi', type: 'porte', devant: [porteComptoir.cx, YN + 22], dehors: [porteComptoir.cx, YN - 4], porte: porteComptoir,
+        zone: [porteComptoir.cx - 55, YN, porteComptoir.cx + 55, YN + 60], pousser: [0, -1], vers: { scene: 'Nuit', donnees: { matin: true } } },
       { id: 'marches', nom: 'Le bas-quartier ▼', sous: 'la descente des Marches', type: 'escalier', devant: [1510, PL.y1 + 24], dehors: [1510, PL.y1 + 70], zone: [VE.x0 - 10, PL.y1 - 10, VE.x1 + 10, PL.y1 + 44], pousser: [0, 1],
         bientot: 'La descente des Marches mène au bas-quartier : une barrière en ferme le haut, on refait les marches. On y descendra bientôt.' },
       { id: 'coteaux', nom: 'Les Coteaux ▲', sous: 'l’escalier des Coteaux', type: 'escalier', devant: [1615, YH + 22], dehors: [1615, YH - 60], zone: [RH.x0 - 10, YH, RH.x1 + 10, YH + 60], pousser: [0, -1],
@@ -240,8 +252,11 @@ DECORS_QUARTIERS.soucolline = {
         bientot: 'Le chemin de derrière longe les jardins jusqu’à la place des Mastres. Il viendra avec le quartier complet ; pour la place, prends la rue.' },
     );
     // d'où l'on arrive quand on vient de la rue d'avant (par la pancarte de la fontaine) : devant la placette
-    ici.arrivees.rue = { x: 1880, y: 1600, vers: [1880, 1660], vue: 'face' };
+    ici.arrivees.rue = { x: 1880, y: 1600, vers: [1880, 1600 + PAS_ARRIVEE], vue: 'face' };
     ici.arrivees.defaut = { x: 1700, y: 1650, vue: 'face' };
     ici.pointsPassants = [[1200, 1640], [1500, 1660], [1760, 1600], [2000, 1680], [2400, 1640], [2700, 1660], [1615, 1300], [1615, 1150], [1300, 1140], [2000, 1150], [2400, 1140], [1700, 1780], [1520, 1700]];
+    // les grilles d'égout : dans le caniveau, un peu avant qu'il ne s'arrête au bord de la placette (ici.grille vérifie leur
+    // place : tout le cadre sur le caniveau, loin des arbres, des piliers, des réverbères et des marches)
+    for (const gx of [PL.x0 - 34 - 44, PL.x1 + 34 + 44]) ici.grille(gx, 1622);
   },
 };

@@ -1,4 +1,4 @@
-// (planche 85 v2, retouche) Les deux boutons de la place, « La place · M » et « Ma liste · L », ne recouvrent plus jamais le
+// (planche 85 v2, retouche) Les deux boutons de la place, « La place (M) » et « Ma liste (L) », ne recouvrent plus jamais le
 // nom d'un étal. Lieu ouvert, la place se cadre sur lui (cadrerPlace) ; contre le bord droit de la place (la garde-robe
 // de Marcelline, la cabane de Barnabé), son enseigne tombait juste sous les boutons, en haut à droite. Désormais, à chaque
 // cadrage sur un lieu, on regarde où tombent tous les écrits (bandes des étals, lettrages, enseignes pendues, textes de
@@ -30,8 +30,8 @@ Object.assign(MarcheScene.prototype, {
     const rangs = (this.boutonsPlace || []).flatMap(b => [b.fond, b.label]).map(o => this.children.getIndex(o));
     this.oublierBoutonsPlace();
     if (!this.boutonsPlaceSurveilles) { this.boutonsPlaceSurveilles = true; this.events.on('shutdown', () => this.oublierBoutonsPlace()); }   // (une seule fois par scène : l'écoute survit aux relances)
-    const b1 = creerBouton(this, x, y, L, 'La place · M', () => this.basculerCartePlace()); b1.label.setFontSize(13);
-    const b2 = creerBouton(this, x + dx, y + dy, L, 'Ma liste · L', () => this.listeCourses()); b2.label.setFontSize(13);
+    const b1 = creerBouton(this, x, y, L, 'La place (M)', () => this.basculerCartePlace()); b1.label.setFontSize(13);
+    const b2 = creerBouton(this, x + dx, y + dy, L, 'Ma liste (L)', () => this.listeCourses()); b2.label.setFontSize(13);
     if (rangs.length === 4 && rangs.every(i => i >= 0)) [b1.fond, b1.label, b2.fond, b2.label].forEach((o, k) => this.children.moveTo(o, Math.min(rangs[k], this.children.length - 1)));
     this.boutonsPlace = [b1, b2]; this.placeBoutons = p;
   },

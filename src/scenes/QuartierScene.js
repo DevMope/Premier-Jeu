@@ -32,7 +32,7 @@ function reglesQuartier() {
 // ici.zones, ici.passages, ici.arrivees, ici.pointsPassants, ici.cheminees.
 function outilsQuartier(s, C, saison) {
   const pal = paletteSaisonComte(saison);
-  const ici = { C, pal, saison, bornes: { x0: 0, y0: 0, x1: 960, y1: 540 }, marchable: () => true, obstacles: [], zones: [], passages: [], arrivees: {}, pointsPassants: [], cheminees: [], plaques: [] };
+  const ici = { C, pal, saison, bornes: { x0: 0, y0: 0, x1: 960, y1: 540 }, marchable: () => true, obstacles: [], zones: [], passages: [], arrivees: {}, pointsPassants: [], cheminees: [], plaques: [], arbres: [] };
   const poser = ici.poser = (o, yTri) => { o.yTri = yTri === undefined ? o.y : yTri; C.add(o); return o; };
   ici.img = (x, y, k, sc = 1.6, yTri, ox = 0.5, oy = 1) => poser(s.add.image(x, y, k).setOrigin(ox, oy).setScale(sc), yTri === undefined ? y : yTri);
   ici.ombre = (x, y, l) => { const o = s.add.image(x + l * 0.06, y - 2, ombrePlaceHD(s)).setScale(l / 64, l / 64 * 0.9); o.yTri = y - 0.5; C.add(o); return o; };
@@ -44,14 +44,35 @@ function outilsQuartier(s, C, saison) {
   // une plaque clouée au mur d'un bâtiment (une image ou un groupe déjà posé), contre son bord gauche ou droit, à la hauteur h
   ici.plaqueSur = (bat, cote, h, texte, o = {}) => { const b = bat.getBounds(), y0 = bat.yTri !== undefined ? bat.yTri : bat.y;
     return ici.plaque(0, y0 - h, texte, { entre: [b.left + (o.retrait || 0), b.right - (o.retrait || 0)], cote, yTri: y0 + 0.5, ...o }); };
-  ici.arbre = (x, y, v = 0, sc = 2.2) => { const cle = arbrePlaceHD(s, pal, v, x, y); ici.ombre(x + 10, y, 55 * sc); return poser(s.add.image(x, y, cle).setOrigin(0.5, origineArbre(s, cle)).setScale(sc), y); };
+  ici.arbre = (x, y, v = 0, sc = 2.2) => { ici.arbres.push([x, y, sc]); const cle = arbrePlaceHD(s, pal, v, x, y); ici.ombre(x + 10, y, 55 * sc); return poser(s.add.image(x, y, cle).setOrigin(0.5, origineArbre(s, cle)).setScale(sc), y); };
   ici.buisson = (x, y, sc = 2.2) => { const cle = buissonPlaceHD(s, pal, x, y); ici.ombre(x, y, 60); return poser(s.add.image(x, y, cle).setOrigin(0.5, origineArbre(s, cle)).setScale(sc), y); };
   ici.plaque = (x, y, texte, o = {}) => { const r = poserPlaqueRue(s, C, x, y, texte, o); ici.plaques.push(...r); return r; };
+  // (retours du joueur) une grille d'égout : petite (la largeur de deux pavés), posée à plat DANS le caniveau, vue de trois
+  // quarts. Sa place est vérifiée : tout son cadre sur le caniveau (le code du sol, ici.codeSol), à bonne distance de tout
+  // obstacle (arbre, pilier, réverbère, banc, mur) et d'aucune marche ; sinon, on la décale le long du caniveau, vers le
+  // point voulu, jusqu'à une place libre (ou on n'en pose pas). Notée dans ici.grilles (pour les essais).
+  ici.grilles = [];
+  ici.grille = (x, y, { dans = [SOL_VILLE.CANIVEAU], marge = 14 } = {}) => {
+    const k = grilleEgoutHD(s), tx = s.textures.get(k).getSourceImage(), l = tx.width * 2, h = (tx.height - 1) * 2;   // (sans son ombre)
+    const libre = (cx, cy) => {
+      for (let u = -l / 2; u <= l / 2; u += 2) for (const v of [-h / 2 + 0.5, 0, h / 2 - 1.5]) if (!ici.codeSol || !dans.includes(ici.codeSol(cx + u, cy + v))) return false;
+      for (const o of ici.obstacles) {
+        if (o.length === 4) { if (cx + l / 2 + marge > o[0] && cx - l / 2 - marge < o[2] && cy + h / 2 + marge > o[1] && cy - h / 2 - marge < o[3]) return false; }
+        else if (o.ellipse) { const [ex, ey, rx, ry] = o.ellipse; if (((cx - ex) / (rx + l / 2 + marge)) ** 2 + ((cy - ey) / (ry + h / 2 + marge)) ** 2 < 1) return false; }
+      }
+      for (const [ax, ay, sc] of ici.arbres) if (Math.abs(cx - ax) < 30 * sc + l / 2 && cy > ay - 95 * sc && cy < ay + 20) return false;   // (ni sous un arbre, ni sous son feuillage)
+      if (ici.codeSol) for (let u = -l / 2 - marge; u <= l / 2 + marge; u += 4) for (const v of [-h / 2 - marge, h / 2 + marge]) if (ici.codeSol(cx + u, cy + v) === SOL_VILLE.MARCHES) return false;   // (loin des marches)
+      return true;
+    };
+    for (let d = 0; d < 400; d += 4) for (const sx of d ? [-1, 1] : [1]) { const cx = x + sx * d; if (libre(cx, y)) {
+      const im = ici.img(cx, y + h / 2 + 2, k, 2, y - 6); ici.grilles.push({ x: cx, y, l, h, im }); return im; } }
+    return null;
+  };
   // le sol du quartier : le moteur de pavage, sur les bornes, à la résolution ×2 ; code(X, Y) reçoit des coordonnées du monde
   ici.sol = (plan) => {
     const B = ici.bornes, [cle, L, H, code, o] = argumentsSolQuartier(plan, B, saison);
     solQuartierHD(s, cle, L, H, code, o);
-    ici.solCle = cle; ici.solO = [B.x0, B.y0];
+    ici.solCle = cle; ici.solO = [B.x0, B.y0]; ici.codeSol = plan.code;
     poser(s.add.image(B.x0, B.y0, cle).setOrigin(0).setScale(2), -1e6);
     return cle;
   };
@@ -90,14 +111,13 @@ class QuartierScene extends Phaser.Scene {
     const Q = this.Q = QUARTIERS_VILLE[id] || { nom: id, sous: '' }, def = this.def = DECORS_QUARTIERS[id];
     this.saison = d.saison || (typeof saisonDe === 'function' && G ? saisonDe(G) : 'semailles');
     this.cameras.main.setBackgroundColor(0x1a120a);
-    this.cameras.main.fadeIn(450);
-    // (la première image peut arriver tard, après les dessins faits à l'arrivée : le fondu repart de zéro à ce moment-là,
-    // pour qu'on le voie en entier au lieu d'un saut)
-    this.events.once('postupdate', () => { const f = this.cameras.main.fadeEffect; if (f && f.isRunning) { f._elapsed = 0; f.progress = 0; f.alpha = 1; } });
+    // (la vue se rouvre aussi vite qu'elle s'est fermée, façon Pokémon : villeQuartiers.js)
+    ouvrirDuNoir(this, 450);
     // le monde : tout le quartier, dans un conteneur que la caméra déplace et agrandit (comme la place)
     const monde = this.monde = this.add.container(0, 0).setDepth(0);
     const ici = this.ici = outilsQuartier(this, monde, this.saison);
     def.construire(this, ici);
+    if (this.saison === 'givre' && typeof neigeToitsQuartier === 'function') neigeToitsQuartier(this, monde);   // (la neige sur les toits : villeDecorHD.js)
     this.obstacles = ici.obstacles; this.passages = ici.passages;
     for (const p of this.passages) p.zone = p.zone || [p.devant[0] - R.proche, p.devant[1] - R.proche, p.devant[0] + R.proche, p.devant[1] + R.proche];
     // JeuneGoy : là où il arrive (par un passage, ou au point de départ du quartier)
@@ -108,6 +128,8 @@ class QuartierScene extends Phaser.Scene {
     monde.add(this.heros);
     this.vueHeros = arr.vue || 'dos'; this.versGauche = !!arr.gauche; this.poserHeros(0);
     if (arr.vers) this.arrivant = { pts: [arr.vers] };
+    // (arrivé par une porte : elle est encore ouverte derrière lui, et se referme en deux images pendant qu'il fait son pas)
+    if (arr.passage && arr.passage.type === 'porte' && arr.passage.porte) this.animerPorte(arr.passage, 'fermer');
     // les passants
     const peuples = ['humain', 'hobbit', 'nain', 'elfe', 'hobbit', 'magicienne'];
     if (ici.pointsPassants.length > 2) for (let i = 0; i < (def.passants || 4); i++) this.ajouterPassant(i, peuples[(((G && G.jour) || 0) + i * 5) % peuples.length]);
@@ -130,11 +152,12 @@ class QuartierScene extends Phaser.Scene {
     this.events.once('shutdown', () => { if (this.planVille) this.planVille.destroy(); this.planVille = null; });
   }
 
-  // Où arrive JeuneGoy : le passage d'où il vient (il entre en marchant, du dehors jusque devant), un point nommé, ou le départ
+  // Où arrive JeuneGoy : le passage d'où il vient (façon Pokémon : déjà posé devant, tourné vers le quartier, il fait un pas
+  // pour s'en dégager), un point nommé, ou le départ
   pointArrivee(cle) {
     const ici = this.ici, p = this.passages.find(q => q.id === cle);
-    if (p) { const [dx, dy] = p.devant, [ox, oy] = p.dehors || p.devant, v = this.vueSelon(dx - ox, dy - oy);
-      return { x: ox, y: oy, vers: [dx, dy], vue: v, gauche: dx < ox }; }
+    if (p) { const [dx, dy] = p.devant, [ox, oy] = p.dehors || [dx, dy + 1], n = Math.hypot(dx - ox, dy - oy) || 1, ux = (dx - ox) / n, uy = (dy - oy) / n;
+      return { x: dx, y: dy, vers: [dx + ux * PAS_ARRIVEE, dy + uy * PAS_ARRIVEE], vue: this.vueSelon(ux, uy), gauche: ux < 0, passage: p }; }
     const a = ici.arrivees[cle] || ici.arrivees.defaut || { x: (ici.bornes.x0 + ici.bornes.x1) / 2, y: (ici.bornes.y0 + ici.bornes.y1) / 2 };
     return { x: a.x, y: a.y, vers: a.vers || null, vue: a.vue || 'dos', gauche: a.gauche };
   }
@@ -162,7 +185,7 @@ class QuartierScene extends Phaser.Scene {
     const P = [[882, 108], [78, 108]];
     if (this.placeBoutonPlan === i && this.boutonPlan) return;
     if (this.boutonPlan) for (const o of [this.boutonPlan.fond, this.boutonPlan.label]) if (o && o.active) o.destroy();
-    const [x, y] = P[i], b = this.boutonPlan = creerBouton(this, x, y, 140, 'Le plan · M', () => this.basculerPlan());
+    const [x, y] = P[i], b = this.boutonPlan = creerBouton(this, x, y, 140, 'Le plan (M)', () => this.basculerPlan());
     b.label.setFontSize(13); b.fond.setDepth(41); b.label.setDepth(42);
     this.placeBoutonPlan = i;
   }
@@ -252,7 +275,7 @@ class QuartierScene extends Phaser.Scene {
     this.cible = null; this.chemin = null;
     ouvrirPlanVille(this);
   }
-  rentrer() { if (this.bloque()) return; Son.jouer('porte'); allerDansLaVille(this, { scene: 'Nuit', donnees: { matin: true } }); }
+  rentrer() { if (this.bloque()) return; allerDansLaVille(this, { scene: 'Nuit', donnees: { matin: true }, genre: 'porte' }); }
   ouvrirComptoir() { if (this.bloque() || this.allerEnCours) return; this.fini = true; Sauvegarde.maintenant(this.G, 'Marche'); commencerJournee(this); }
 
   marqueClic(x, y) {
@@ -364,8 +387,11 @@ class QuartierScene extends Phaser.Scene {
   arreterPas() { if (this.pasHeros) { this.pasHeros = 0; this.dernierPas = -1; this.heros.setOrigin(0.5, 1); this.poserHeros(0); } }
 
   // --- La caméra : celle de la place (×1,25, elle suit JeuneGoy et glisse doucement), arrêtée aux bornes du quartier ---
+  // (retours du joueur) sa hauteur suit celle de JeuneGoy dans la rue : contre les façades, au nord, elle monte pour montrer
+  // le haut des maisons (lui plus bas à l'écran) ; vers le sud (la placette, le palier), elle descend, plus près du sol. Le
+  // décor donne cette hauteur (def.cameraY : où se tient JeuneGoy à l'écran, selon son y), sans à-coup : elle glisse.
   cadrer(instantane = false) {
-    const R = this.R, B = this.ici.bornes, m = this.monde, z = R.zoom, sy = this.def.sy || 270;
+    const R = this.R, B = this.ici.bornes, m = this.monde, z = R.zoom, sy = this.def.cameraY ? this.def.cameraY(this.heros.y) : this.def.sy || 270;
     const fx = this.heros.x, fy = this.heros.y - 40;
     const x = Phaser.Math.Clamp(480 - fx * z, 960 - B.x1 * z, -B.x0 * z), y = Phaser.Math.Clamp(sy - fy * z, 478 - B.y1 * z, -B.y0 * z);
     if (instantane) { m.setScale(z).setPosition(x, y); return; }
@@ -374,9 +400,14 @@ class QuartierScene extends Phaser.Scene {
     m.setPosition(m.x + (x - m.x) * k, m.y + (y - m.y) * k);
   }
 
-  // --- Les passages ---
-  // Franchir un passage : JeuneGoy va jusque devant, puis marche vers le dehors (le bord de la rue, l'ombre du porche, la
-  // porte, le bas des marches) ; la vue se ferme en fondu pendant qu'il marche, et la scène suivante s'ouvre
+  // --- Les passages, façon Pokémon (villeQuartiers.js : fermerEnNoir) ---
+  // Franchir un passage, selon son genre :
+  //   - une porte : JeuneGoy va jusque sur le seuil et s'y arrête net, tourné vers elle ; la porte s'ouvre en trois images,
+  //     puis il entre (il s'assombrit dans l'embrasure) pendant que l'écran tombe au noir, vite (250 ms) ;
+  //   - le bord d'une rue, une arche, un porche, un pont : il continue de marcher vers le dehors, et l'écran tombe au noir
+  //     (250 ms) juste avant qu'il n'y arrive ;
+  //   - un escalier : il s'engage dans l'escalier (ses premiers pas sur les marches), puis le noir, un peu plus long.
+  // La scène suivante s'ouvre aussitôt (son décor préparé pendant qu'il marchait : prechaufferArrivee).
   franchir(p) {
     if (this.enPassage || this.fini || this.arrivant) return;
     if (p.bientot) {
@@ -384,34 +415,73 @@ class QuartierScene extends Phaser.Scene {
       this.dejaDit = p.id; this.cible = null; this.chemin = null; this.apresMarche = null;
       return;
     }
-    const h = this.heros, pts = [];
-    if (Math.hypot(h.x - p.devant[0], h.y - p.devant[1]) > 6 && this.libreEntre(h.x, h.y, p.devant[0], p.devant[1])) pts.push(p.devant);
-    else if (Math.hypot(h.x - p.devant[0], h.y - p.devant[1]) > 6) { this.partirVers(p.devant[0], p.devant[1], p); return; }
-    pts.push(p.dehors || p.devant);
+    const h = this.heros, genre = genreTransition(p.type), loin = Math.hypot(h.x - p.devant[0], h.y - p.devant[1]) > 6;
+    prechaufferArrivee(this, p.vers);
+    // (une porte : il s'arrête d'abord sur le seuil ; ailleurs, il file d'une traite si rien ne gêne)
+    if (loin && (genre === 'porte' || !this.libreEntre(h.x, h.y, p.devant[0], p.devant[1]))) { this.partirVers(p.devant[0], p.devant[1], p); return; }
+    const pts = loin ? [p.devant] : [];
+    if (genre !== 'porte') pts.push(p.dehors || p.devant);
     this.cible = null; this.chemin = null; this.apresMarche = null; this.courir = false;
-    this.enPassage = { p, pts, fondu: false, t: 0 };
-    if (p.type === 'porte' || p.type === 'porche') Son.jouer('porte');
+    this.enPassage = { p, genre, pts, fondu: false, t: 0, surMarches: 0 };
+    if (genre === 'porte') {   // arrêté net sur le seuil, tourné vers la porte, qui s'ouvre
+      const [ox, oy] = p.dehors || p.devant; this.arreterPas();
+      this.vueHeros = this.vueSelon(ox - h.x, oy - h.y); if (ox !== h.x) this.versGauche = ox < h.x; this.poserHeros(0);
+      if (p.porte) this.animerPorte(p, 'ouvrir');
+    }
     if (this.invite) this.invite.setVisible(false);
   }
   majPassage(dt) {
-    const E = this.enPassage, h = this.heros, v = this.R.vitesse * dt;
+    const E = this.enPassage, h = this.heros, v = this.R.vitesse * dt, p = E.p;
     E.t += dt;
+    // (la porte s'ouvre en trois images, 210 ms ; puis il entre dans l'embrasure)
+    if (E.genre === 'porte' && !E.entre && E.t >= (p.porte ? 210 : 60)) { E.entre = true; E.pts.push(p.dehors || p.devant); }
     const c = E.pts[0];
     if (c) {
       const rx = c[0] - h.x, ry = c[1] - h.y, d = Math.hypot(rx, ry);
       const mx = d <= v ? rx : rx / d * v, my = d <= v ? ry : ry / d * v;
       h.setPosition(h.x + mx, h.y + my); this.animerPas(mx, my, dt);
       if (d <= v) E.pts.shift();
-      // dans l'ombre d'un porche ou d'une porte, il s'assombrit à mesure qu'il y entre
-      if ((E.p.type === 'porte' || E.p.type === 'porche') && E.pts.length <= 1) { const [ox, oy] = E.p.dehors || E.p.devant, rest = Math.hypot(ox - h.x, oy - h.y), tot = Math.max(1, Math.hypot(ox - E.p.devant[0], oy - E.p.devant[1])), u = Phaser.Math.Clamp(1 - rest / tot, 0, 1), g = Math.round(255 - u * 170); h.setTint((g << 16) | (g << 8) | g); }
-    } else this.arreterPas();
-    // le fondu commence quand il ne reste plus qu'un peu de chemin (ou au plus tard 1,6 s après le départ)
+      if (E.pts.length <= 1) E.surMarches += dt;   // (passé le devant du passage : sur les marches, sous le porche…)
+      // dans l'embrasure d'une porte ou l'ombre d'un porche, il s'assombrit à mesure qu'il y entre
+      if ((p.type === 'porte' || p.type === 'porche') && E.pts.length <= 1) { const [ox, oy] = p.dehors || p.devant, rest = Math.hypot(ox - h.x, oy - h.y), tot = Math.max(1, Math.hypot(ox - p.devant[0], oy - p.devant[1])), u = Phaser.Math.Clamp(1 - rest / tot, 0, 1), g = Math.round(255 - u * 170); h.setTint((g << 16) | (g << 8) | g); }
+    } else if (E.genre !== 'porte' || E.entre) this.arreterPas();
+    // quand l'écran tombe au noir : une porte, dès qu'il y entre ; un bord, dès qu'il a passé le devant du passage (il
+    // continue vers le dehors, encore visible) ; un escalier, après ses premiers pas sur les marches (au plus tard 1,6 s
+    // après le départ)
     const reste = E.pts.length ? E.pts.reduce((s, q, i) => s + Math.hypot(q[0] - (i ? E.pts[i - 1][0] : h.x), q[1] - (i ? E.pts[i - 1][1] : h.y)), 0) : 0;
-    if (!E.fondu && (reste < this.R.vitesse * 420 || E.t > 1600)) {
+    const T = TRANSITIONS_VILLE[E.genre];
+    const top = E.genre === 'porte' ? E.entre : E.genre === 'escalier' ? E.surMarches > 140 || reste < this.R.vitesse * T.noir : E.pts.length <= 1 || reste < this.R.vitesse * T.noir || Math.hypot(h.x - p.devant[0], h.y - p.devant[1]) < 45;   // (encore bien visible)
+    if (!E.fondu && (top || E.t > 1600)) {
       E.fondu = true;
-      for (const cam of this.cameras.cameras) cam.fadeOut(450, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => { this.fini = true; allerDansLaVille(this, { ...E.p.vers, depuis: this.idQuartier, fonduFait: true }); });
+      allerDansLaVille(this, { ...p.vers, depuis: this.idQuartier, genre: p.type });
     }
+  }
+  // La porte d'un passage qui s'ouvre (trois images : entrouverte, à moitié, grande ouverte) ou se referme (deux images),
+  // dessinée par-dessus le battant peint (p.porte : son rectangle dans le monde, gonds à gauche). Le battant tourne vers
+  // l'intérieur : on le voit de plus en plus de chant, et l'ombre de la maison s'ouvre derrière lui.
+  animerPorte(p, sens) {
+    const P = p.porte, { x, y, l, h } = P, c = this.add.container(x, y); c.yTri = P.yTri !== undefined ? P.yTri : y + h + 0.5; this.monde.add(c);
+    const g = this.add.graphics(); c.add(g);
+    // le battant : le vrai battant peint de la façade (P.src : son rectangle dans la texture), découpé une fois
+    let battant = null;
+    if (P.src && this.textures.exists(P.src.cle)) {
+      const S = P.src, k = `battant_${S.cle}_${Math.round(S.x)}_${Math.round(S.y)}`;
+      if (!this.textures.exists(k)) { const src = this.textures.get(S.cle).getSourceImage(), t = this.textures.createCanvas(k, Math.round(S.l), Math.round(S.h)); t.getContext().drawImage(src, Math.round(S.x), Math.round(S.y), Math.round(S.l), Math.round(S.h), 0, 0, Math.round(S.l), Math.round(S.h)); t.refresh(); }
+      battant = this.add.image(0, 0, k).setOrigin(0, 0).setVisible(false); c.add(battant);
+    }
+    const image = ouv => {   // ouv : de 0 (fermée) à 1 (grande ouverte)
+      g.clear(); if (battant) battant.setVisible(ouv > 0); if (ouv <= 0) return;
+      const lb = Math.max(2, Math.round(l * Math.cos(ouv * Math.PI / 2 * 0.94)));
+      g.fillStyle(0x120804).fillRect(0, 0, l, h);                                  // le noir de la maison
+      g.fillStyle(0x3a2410, 0.7).fillRect(lb, h * 0.55, l - lb, h * 0.45);         // un peu de lumière chaude, au sol, au fond
+      g.fillStyle(0x24140a).fillRect(lb, 0, 3, h);                                 // la tranche du battant, et son ombre
+      if (battant) { const v = Math.round(255 - ouv * 95); battant.setDisplaySize(lb, h).setTint((v << 16) | (v << 8) | v); }   // (de plus en plus de chant, et dans l'ombre)
+      else g.fillStyle(Phaser.Display.Color.GetColor(Math.round(110 - ouv * 46), Math.round(70 - ouv * 30), Math.round(40 - ouv * 18))).fillRect(0, 0, lb, h);
+    };
+    const etapes = sens === 'ouvrir' ? [0.34, 0.66, 1] : [1, 0.5, 0];
+    etapes.forEach((u, i) => this.time.delayedCall(i * 70, () => { if (c.active) image(u); }));
+    if (sens === 'fermer') this.time.delayedCall(2 * 70 + 10, () => c.destroy());
+    return c;
   }
 
   // --- Chaque image ---

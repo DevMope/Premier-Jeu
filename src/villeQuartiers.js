@@ -192,10 +192,64 @@ function basculerVersPlanVille(scene) {
   return ouvrirPlanVille(scene, { commeCarte: scene.scene.key === 'Marche', surFermer: () => { if (scene.cadrerPlace && scene.place) scene.cadrerPlace(true); } });
 }
 
-// --- Aller d'un lieu à un autre ---
+// --- Aller d'un lieu à un autre, façon Pokémon (retours du joueur sur le socle) ---
+// Comme dans les Pokémon d'avant la Switch : l'écran tombe vite au noir, puis le nouveau lieu se rouvre aussi vite, le
+// personnage déjà posé à l'entrée, tourné dans le bon sens, qui fait un pas pour s'en dégager. Trois genres de passage :
+//   - porte : il s'arrête net sur le seuil, la porte s'ouvre en trois images, il entre ; le noir en 250 ms, un « ploc » ;
+//   - bord (le bord d'une rue ou d'une route, une arche, un porche, un pont) : il continue de marcher, le noir en 250 ms,
+//     sans flou ni zoom, un léger souffle ;
+//   - escalier : il entre dans l'escalier (quelques pas sur les marches) avant le noir, un peu plus long (380 ms), et
+//     le bruit de ses pas qui descendent.
+// Jamais plus d'une demi-seconde dans le noir : le lieu d'arrivée est construit AVANT le fondu (allerDansLaVille : la
+// scène suivante est lancée cachée et en pause pendant que la vue est encore ouverte, puis on ferme, et elle se montre
+// aussitôt le noir atteint).
+const TRANSITIONS_VILLE = {
+  porte: { noir: 250, ouverture: 250, son: 'passagePorte' },
+  bord: { noir: 250, ouverture: 250, son: 'passageSouffle' },
+  escalier: { noir: 380, ouverture: 330, son: 'passageEscalier' },
+};
+function genreTransition(type) { return type === 'porte' ? 'porte' : type === 'escalier' ? 'escalier' : 'bord'; }
+const maintenantVille = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+// Le passage en cours (window.transitionVille) : son genre, ses instants (t : décidé ; noir : noir complet ; vu : première
+// image du lieu suivant). Noté dès le départ : le petit son de passage du jeu (main.js) se tait, celui-ci le remplace.
+function noterPassageVille(genre) { return (window.transitionVille = { genre: genreTransition(genre), t: maintenantVille() }); }
+// La vue se ferme au noir (toutes les caméras de la scène), le son du passage, puis suite()
+function fermerEnNoir(scene, type, suite, tv = null) {
+  const genre = genreTransition(type), T = TRANSITIONS_VILLE[genre];
+  tv = tv || noterPassageVille(genre);
+  if (typeof Son !== 'undefined' && Son.pret && SONS[T.son]) Son.jouer(T.son);
+  let fait = false;
+  const fin = () => { if (fait) return; fait = true; tv.noir = maintenantVille(); suite(); };
+  for (const cam of scene.cameras.cameras) cam.fadeOut(T.noir, 0, 0, 0);
+  scene.cameras.main.once('camerafadeoutcomplete', fin);
+  return genre;
+}
+// À l'arrivée (dans create) : la vue se rouvre, aussi vite qu'elle s'est fermée si l'on vient d'un passage de la ville
+// (sinon en `defaut` ms, comme avant). Renvoie le genre du passage d'où l'on vient, ou null.
+function ouvrirDuNoir(scene, defaut = 450) {
+  const tv = window.transitionVille, recent = !!(tv && !tv.ouvert && maintenantVille() - tv.t < 8000);
+  if (recent) tv.ouvert = maintenantVille();
+  const cam = scene.cameras.main;
+  cam.fadeIn(recent ? TRANSITIONS_VILLE[tv.genre].ouverture : defaut, 0, 0, 0);
+  // (la première image peut arriver tard, après les dessins faits à l'arrivée, ou après une attente en pause : le fondu
+  // repart de zéro à ce moment-là, pour qu'on le voie en entier au lieu d'un saut ; on note l'instant où le lieu se montre)
+  scene.events.once('postupdate', () => { const f = cam.fadeEffect; if (f && f.isRunning) { f._elapsed = 0; f.progress = 0; f.alpha = 1; } if (recent) tv.vu = maintenantVille(); });
+  return recent ? tv.genre : null;
+}
+// Préparer d'avance ce que le lieu d'arrivée dessine à l'ouverture, pendant que le joueur marche vers le passage (le sol
+// d'un quartier : le plus long à peindre)
+function prechaufferArrivee(scene, cible) {
+  const id = cible && (cible.quartier || (cible.scene === 'Quartier' && cible.donnees && cible.donnees.quartier));
+  if (id && QUARTIERS_VILLE[id] && QUARTIERS_VILLE[id].scene === 'Quartier' && typeof prechaufferQuartier === 'function') prechaufferQuartier(scene, id, undefined, 0);
+}
+// Les lieux qu'on construit avant de fermer la vue (les plus longs à dessiner, et qui ne ferment aucune autre scène en
+// s'ouvrant : l'étang, lui, arrête la place en s'ouvrant, et se construit vite ; la maison aussi)
+const LIEUX_PREPARES = new Set(['Marche', 'Quartier', 'Rue']);
+
 // cible : { quartier, arrivee, depuis } (un quartier de QUARTIERS_VILLE : sa scène, et l'endroit où l'on arrive) ou
-// { scene, arrivee, donnees } (une scène). Fondu au noir (toutes les caméras), sauvegarde comme les autres lieux, puis
-// la scène suivante, où ARRIVEES_VILLE pose JeuneGoy qui entre en marchant.
+// { scene, arrivee, donnees } (une scène) ; genre : 'porte', 'bord' ou 'escalier' (le genre du passage) ; sauvegarde : le
+// lieu noté dans la sauvegarde ('Marche' par défaut). Le lieu suivant est construit (caché, en pause), puis la vue se ferme
+// au noir, et il se montre : ARRIVEES_VILLE y a posé JeuneGoy à l'entrée.
 function allerDansLaVille(scene, cible) {
   const G = window.GAME;
   let cle = cible.scene, arrivee = cible.arrivee, donnees = cible.donnees || {};
@@ -206,15 +260,35 @@ function allerDansLaVille(scene, cible) {
   }
   if (!cle || scene.allerEnCours) return;
   scene.allerEnCours = true;
-  if (G && typeof Sauvegarde !== 'undefined') Sauvegarde.maintenant(G, cle === 'Nuit' ? 'Maison' : 'Marche');
-  const suite = () => {
-    const s = scene.scene.get(cle);
-    if (ARRIVEES_VILLE[cle] && arrivee && s) s.events.once('create', () => { try { ARRIVEES_VILLE[cle](s, arrivee); } catch (e) { console.warn('arrivée', e); } });
-    scene.scene.start(cle, donnees);
-  };
-  if (cible.fonduFait) return suite();
-  for (const cam of scene.cameras.cameras) cam.fadeOut(450, 0, 0, 0);
-  scene.cameras.main.once('camerafadeoutcomplete', suite);
+  scene.events.once('shutdown', () => { scene.allerEnCours = false; });   // (Phaser réutilise la scène : la prochaine fois, on repart)
+  if (G && typeof Sauvegarde !== 'undefined') Sauvegarde.maintenant(G, cible.sauvegarde || (cle === 'Nuit' ? 'Maison' : 'Marche'));
+  const genre = genreTransition(cible.genre || (cle === 'Nuit' ? 'porte' : 'bord')), tv = noterPassageVille(genre);
+  const s = scene.scene.get(cle);
+  const poser = () => { if (ARRIVEES_VILLE[cle] && arrivee && s) s.events.once('create', () => { try { ARRIVEES_VILLE[cle](s, arrivee); } catch (e) { console.warn('arrivée', e); } }); };
+  const libre = s && cle !== scene.scene.key && !s.sys.isActive() && !s.sys.isPaused() && !s.sys.isSleeping();
+  const discours = cle === 'Marche' && typeof discoursSageDu === 'function' && G && discoursSageDu(G);   // (ce jour-là, la place s'ouvre sur le Grand Sage)
+  if (LIEUX_PREPARES.has(cle) && libre && !discours) {
+    // le lieu suivant se construit maintenant, caché et en pause (la vue est encore ouverte : jamais de long noir)
+    poser();
+    // (en pause, rangée juste sous la scène de départ : elle se dessine déjà, dans le noir de son ouverture, derrière la vue
+    // qui se ferme ; ses images sont ainsi prêtes à la première image)
+    s.events.once('create', () => {
+      s.scene.pause(); tv.pret = maintenantVille();
+      if (!scene.sys.isActive()) { s.scene.resume(); return; }   // (la scène de départ s'est arrêtée entre-temps)
+      scene.game.scene.moveBelow(scene.scene.key, cle);
+      // (si la scène de départ s'arrête d'elle-même avant la fin du fondu, une autre page s'ouvrant : le lieu préparé, resté
+      // en pause dessous, s'arrête aussi, jamais oublié)
+      let passe = false;
+      scene.events.once('shutdown', () => { if (!passe && s.sys.isPaused()) s.scene.stop(); });
+      // (le fondu part deux images plus tard : l'image qui suit une longue construction arrive avec un très grand écart de
+      // temps, qui fermerait la vue d'un coup au lieu d'un fondu)
+      const fermer = n => (n ? scene.events.once('postupdate', () => fermer(n - 1)) : fermerEnNoir(scene, genre, () => { passe = true; scene.scene.stop(); s.scene.resume(); }, tv));
+      fermer(2);
+    });
+    scene.scene.launch(cle, donnees);
+    return;
+  }
+  fermerEnNoir(scene, genre, () => { poser(); scene.scene.start(cle, donnees); }, tv);
 }
 // L'arrivée dans un quartier qu'on rejoint par le plan, selon le quartier d'où l'on vient (par le passage qui les relie)
 function entreeVers(quartier, depuis) {
@@ -223,24 +297,28 @@ function entreeVers(quartier, depuis) {
   if (def && def.entrees) return def.entrees[depuis] || def.entrees.defaut;
   return null;
 }
-// Ce qui place JeuneGoy dans la scène d'arrivée : il entre par le passage, à pied (jamais posé d'un coup au milieu)
+// Ce qui place JeuneGoy dans la scène d'arrivée : déjà posé à l'entrée du passage, tourné vers le lieu, il fait un pas pour
+// s'en dégager (comme dans les Pokémon : jamais posé d'un coup au milieu, ni de longue marche dans le noir)
+const PAS_ARRIVEE = 48;
 const ARRIVEES_VILLE = {
-  // la place des Mastres : sous l'arche, il monte vers la fontaine
+  // la place des Mastres : à la sortie du porche de l'arche (juste au-delà de son toit, pour qu'on le voie), tourné vers la
+  // place, il fait un pas vers la fontaine
   Marche(s, arrivee) {
     if (!s.place || !s.heros || !s.heros.active) return;
     if (arrivee === 'arche') {
-      const [x, y] = LIEUX_PLACE.arche;
-      s.heros.setPosition(x, y - 10); s.vueHeros = 'dos'; s.poserHeros(0);
-      if (s.ombreHeros) s.ombreHeros.setPosition(x + 2, y - 12);
+      const [x, y] = LIEUX_PLACE.arche, y0 = y - 280 + PAS_ARRIVEE;
+      s.heros.setPosition(x, y0); s.vueHeros = 'dos'; s.poserHeros(0);
+      if (s.ombreHeros) s.ombreHeros.setPosition(x + 2, y0 - 2);
       s.cadrerPlace(true);
-      s.time.delayedCall(60, () => { if (s.heros && s.heros.active && !s.bloquePlace()) s.partirVers(x, y - 280); });   // (jusqu'au-delà du toit du porche : on le voit sortir de dessous)
+      // (un pas tout droit : pas besoin de chercher un chemin, la grille de la place se calculera plus tard)
+      s.cible = [x, y - 280]; s.chemin = null; s.apresMarche = null; s.courir = false; s.meilleur = { d: 1e9, t: s.time.now };
     }
   },
-  // la rue (de côté, d'avant les quartiers) : il y revient par où il est parti, et fait quelques pas
+  // la rue (de côté, d'avant les quartiers) : il y revient par où il est parti, et fait un pas
   Rue(s, arrivee) {
     if (!s.heros || s.pont) return;
     const P = PLACES_RUE;
-    const [x, vers] = arrivee === 'ouest' ? [P.shop - 220, P.shop - 400] : arrivee === 'placette' ? [P.fontaine + 120, P.fontaine + 40] : [s.heros.x, null];
+    const [x, vers] = arrivee === 'ouest' ? [P.shop - 220, P.shop - 220 - PAS_ARRIVEE] : arrivee === 'placette' ? [P.fontaine + 180, P.fontaine + 180 - PAS_ARRIVEE] : [s.heros.x, null];
     s.heros.x = x; s.heros.setFlipX(vers !== null && vers < x);
     s.cameras.main.scrollX = Phaser.Math.Clamp(x - 480, 0, (s.largeur || LARGEUR_RUE) - 960);
     if (vers !== null) s.cible = vers;
@@ -256,11 +334,18 @@ function brancherQuartiersRue(rue) {
   const P = PLACES_RUE, x = P.fontaine + 180;   // (le réverbère d'à côté de la fontaine)
   if (typeof prechaufferQuartier === 'function') prechaufferQuartier(rue, 'soucolline');   // (son sol se prépare en tâche de fond, pendant qu'on est dans la rue)
   if (typeof prechaufferPlanVille === 'function') prechaufferPlanVille(rue, 7000);
-  // une planche clouée au réverbère, le nom gravé (comme les plaques des rues)
-  const c = rue.add.container(0, 0).setDepth(8.62);
-  const [t] = poserPlaqueRue(rue, c, x, 398, '▲ La placette de la Fontaine', { matiere: 'bois', taille: 14 });
-  t.setInteractive({ useHandCursor: true }); rue.pancartePlacette = t;
-  t.on('pointerdown', () => {
+  // (retours du joueur) un vrai petit panneau de rue : une planche étroite taillée en flèche, tenue au poteau du réverbère
+  // par deux colliers de fer, à hauteur d'yeux, à peine plus large que le buste de JeuneGoy ; le nom gravé sur deux lignes
+  // (le lettrage des plaques et des étals), son ombre sur le poteau. La pointe part vers la droite : elle ne couvre ni la
+  // fontaine (à gauche du réverbère) ni la banque.
+  const L = 38, H = 19, c = rue.add.container(0, 0).setDepth(8.62), k = panneauFlecheHD(rue, L, H), y = 362, x0 = x - 7;
+  c.add(rue.add.image(x0 + 3, y + 3, k).setOrigin(0, 0.5).setScale(2).setTintFill(0x000000).setAlpha(0.28));   // son ombre
+  const planche = rue.add.image(x0, y, k).setOrigin(0, 0.5).setScale(2); c.add(planche);
+  const corps = (L - Math.round(H * 0.36)) * 2, t = poserLettrage(rue, c, x0 + 10 + (corps - 12) / 2, y + 1, 'La placette\nde la\nFontaine',
+    { police: 'Alegreya', graisse: 900, taille: 10, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: corps - 12, hauteur: 32, lignesMax: 3, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) });
+  planche.setInteractive({ useHandCursor: true }); rue.pancartePlacette = planche;
+  t.setInteractive({ useHandCursor: true }).on('pointerdown', () => planche.emit('pointerdown'));
+  planche.on('pointerdown', () => {
     if (rue.transition || rue.fini) return;
     rue.transition = true; rue.allerVers(x);
     const attendre = () => {
@@ -273,7 +358,7 @@ function brancherQuartiersRue(rue) {
     };
     attendre();
   });
-  return { t, c };
+  return { t: planche, c };
 }
 
 // --- Les enseignes ---

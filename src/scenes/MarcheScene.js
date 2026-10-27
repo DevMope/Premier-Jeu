@@ -31,7 +31,8 @@ class MarcheScene extends Phaser.Scene {
     // Les étals du jour (s'ils n'ont pas été garnis cette nuit, par exemple avec une vieille sauvegarde)
     const vides = !G.etals || !Object.values(G.etals).some(e => Object.keys(e || {}).length);
     if (vides || (G.etalsJour !== undefined && G.etalsJour !== G.jour)) { G.etals = etalsDuJour(G); G.etalsJour = G.jour; }
-    this.cameras.main.fadeIn(500);
+    // (v1.65, façon Pokémon : de la rue ou de l'étang, la vue se rouvre aussi vite qu'elle s'est fermée, villeQuartiers.js)
+    if (typeof ouvrirDuNoir === 'function') ouvrirDuNoir(this, 500); else this.cameras.main.fadeIn(500);
 
     // Le fond de la vue d'ensemble : le ciel, les collines, et la grand-place pavée
     const fondVue = this.fondVue = this.add.graphics();
@@ -1881,9 +1882,13 @@ class MarcheScene extends Phaser.Scene {
 
   rentrer() {
     if (this.jeuLance || enTransition(this)) return;
-    Sauvegarde.maintenant(this.G, 'Maison');
-    this.cameras.main.fadeOut(300);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Rue', { depuis: 'marche' }));   // (v0.65 : on rentre à pied, par la rue)
+    if (typeof allerDansLaVille !== 'function') { Sauvegarde.maintenant(this.G, 'Maison'); this.cameras.main.fadeOut(300); this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Rue', { depuis: 'marche' })); return; }   // (v0.65 : on rentre à pied, par la rue)
+    // (v1.65, façon Pokémon) devant le porche de l'arche, il continue de marcher dessous pendant que l'écran tombe au noir
+    if (this.heros && this.heros.active && this.place && typeof LIEUX_PLACE !== 'undefined') {
+      const [ax, ay] = LIEUX_PLACE.arche;
+      if (Math.hypot(this.heros.x - ax, this.heros.y - (ay - 40)) < 90) { this.cible = [ax, PLACE_MARCHE.H - 6]; this.chemin = null; this.apresMarche = null; this.courir = false; this.meilleur = { d: 1e9, t: this.time.now }; }
+    }
+    allerDansLaVille(this, { scene: 'Rue', donnees: { depuis: 'marche' }, genre: 'bord', sauvegarde: 'Maison' });
   }
 
   ouvrir() {

@@ -196,6 +196,8 @@ function lancerJeu() {
       // (v1.64) la banque de Thorgrim, la forge et l'atelier des Mages s'ouvrent par une lourde porte (la forge vue
       // du bureau n'est qu'un carnet : le petit son de passage)
       s.events.on('create', () => {
+        // (v1.65) un passage de la ville, façon Pokémon, a déjà joué son propre son (villeQuartiers.js : fermerEnNoir)
+        if (window.transitionVille && performance.now() - window.transitionVille.t < 3000) return;
         const lourde = PORTE_LOURDE.has(s.scene.key) && !(s.scene.key === 'Forge' && s.sys.settings.data && s.sys.settings.data.appelant === 'Bureau');
         Son.jouer(lourde && SONS.porteLourde ? 'porteLourde' : DEHORS.has(s.scene.key) ? 'passageDehors' : 'passage');
       });
