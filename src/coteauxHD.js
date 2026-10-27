@@ -1,12 +1,13 @@
-// (v1.64, planche 89 v4 b, chantier 1 de la ville en quartiers : la grand-place remise d'aplomb) Les dessins du nord et
-// de l'est de la grand-place.
+// (v1.64, planche 89 v4 b, chantier 1 de la ville en quartiers : la place remise d'aplomb) Les dessins du nord et
+// de l'est de la place des Mastres.
 //   Au nord, à la place des six façades de la rue qui y étaient recopiées (coupées par le bord, deux fois chacune) : le pied
 //   des Coteaux. Une pente d'herbe en deux terrasses, les buttes et leurs portes rondes (dessinées comme sur la planche
 //   89 v2 : encadrement de pierres en éventail, panneaux peints, bouton de laiton au milieu, fenêtre ronde et sa jardinière,
 //   lanterne, boîte aux lettres), leurs cheminées qui fument, et le chemin creux qui monte aux Coteaux entre deux murets de
 //   pierre sèche.
-//   À l'est, au bout du sentier : le coin de l'étang du Moulin (ses rives irrégulières, ses roseaux, ses nénuphars, gelé
-//   l'hiver), et la cabane de Barnabé, qui a quitté la place pour ses pilotis, avec son ponton, sa passerelle et sa barque.
+//   À l'est : le poteau à deux bras de la route du Vieux Moulin (la cabane de Barnabé est au bout, au bord de l'étang).
+//   Pendant tout le Givre : les décorations du Long Hiver (guirlandes de sapin et rubans rouges sur les auvents, boules,
+//   étoiles de paille, lanternes, bougies, couronnes sur les portes rondes).
 // Tout suit la saison de la place (paletteSaisonComte) ; chaque texture est peinte une fois et gardée.
 
 const COTEAUX_PLACE = {
@@ -16,23 +17,9 @@ const COTEAUX_PLACE = {
   escalier: [1034, 1106], // le chemin creux (entre ses deux murets)
   echelle: 1.8,           // les buttes, à l'échelle des étals
   // [x, couleur de la porte, graine, fleurs] : en bas, au bord de la place ; en haut, sur la terrasse
-  bas: [[115, 'porteVerte', 71, 'fleurR2'], [730, 'porteRouge', 72, 'fleurJ2'], [1670, 'porteJaune', 73, 'fleurP2'], [2060, 'porteBleue', 74, 'fleurB2']],
-  hauts: [[400, 'porteBleue', 75, 'fleurJ2'], [1330, 'porteVerte', 76, 'fleurR2'], [1900, 'porteRouge', 77, 'fleurB2']],
+  bas: [[115, 'porteVerte', 71, 'fleurR2'], [730, 'porteRouge', 72, 'fleurJ2'], [1670, 'porteJaune', 73, 'fleurP2']],
+  hauts: [[400, 'porteBleue', 75, 'fleurJ2'], [1330, 'porteVerte', 76, 'fleurR2'], [1600, 'porteRouge', 77, 'fleurB2']],
 };
-// L'étang, en demi-pixels de la place (comme le plan du sol) ; le ponton, la passerelle et la cabane en pixels de la place
-const ETANG_PLACE = { cx: 1068, cy: 478, rx: 150, ry: 92, ponton: [1872, 880, 2104, 962], passerelle: [1826, 918, 1874, 950], cabane: [1985, 905] };
-function dansEtangPlace(x, y) {
-  const E = ETANG_PLACE, dx = (x - E.cx) / E.rx, dy = (y - E.cy) / E.ry;
-  if (Math.abs(dx) > 1.3 || Math.abs(dy) > 1.3) return false;
-  return dx * dx + dy * dy < 1 + (fbm(x * 0.05, y * 0.05, 7711) - 0.5) * 0.24;   // (une rive qui ondule, comme celle d'une rivière)
-}
-// Un point de la place (en pixels) est-il dans l'eau ? (le ponton et la passerelle portent)
-function eauPlace(X, Y) {
-  const E = ETANG_PLACE, dans = ([x0, y0, x1, y1]) => X >= x0 && X <= x1 && Y >= y0 && Y <= y1;
-  if (X < 1780 || dans(E.ponton) || dans(E.passerelle)) return false;
-  return dansEtangPlace(X / 2, Y / 2);
-}
-
 const RAMPES_COTEAUX = {
   enduitC: rampe(0xe4d4b0), voletR: rampe(0x8a3a2a), pierreS: rampe(0xa89a80), mousseC: rampe(0x5e7a36),
   feuilleV2: rampe(0x3e7a30), feuilleC2: rampe(0x5a9a3a), fleurR2: rampeVive(0xd8323e), fleurP2: rampeVive(0xe86a9a), fleurJ2: rampeVive(0xf0c020), fleurB2: rampeVive(0x7a8ae8),
@@ -150,7 +137,7 @@ function trouCoteauxPlace(s, pal, [x, couleur, graine, fleurs], enHaut = false) 
 function penteCoteauxHD(s, pal) {
   const saison = pal.saison || 'semailles', cle = 'penteCoteaux_' + saison;
   if (s.textures.exists(cle)) return cle;
-  const C = COTEAUX_PLACE, L = 1100, H = Math.ceil((C.levre + C.haut) / 2) + 4, t = toileCoteaux(L, H, pal), G0 = 7800;
+  const C = COTEAUX_PLACE, L = Math.round(PLACE_MARCHE.L / 2), H = Math.ceil((C.levre + C.haut) / 2) + 4, t = toileCoteaux(L, H, pal), G0 = 7800;
   t.rampes.murS = rampe(0x8a8270);   // (la pierre sèche des murets, plus grise que les marches)
   const rang = wy => Math.round((wy + C.haut) / 2);
   const levre = x => rang(C.levre) + Math.round((fbm(x * 0.06, 2, G0) - 0.5) * 3);
@@ -239,109 +226,82 @@ function portiqueCoteauxHD(s, saison) {
   t.contour(); t.texture(s, cle); return cle;
 }
 
-// Des roseaux au bord de l'eau : des tiges, des feuilles en lame, des massettes brunes (dorés à l'automne, secs et
-// poudrés de neige l'hiver). Posés par le pied, ils se balancent un peu au vent.
-function roseauxPlaceHD(s, saison, k) {
-  const cle = 'roseauxPlace_' + k + '_' + saison; if (s.textures.exists(cle)) return cle;
-  const L = 26, H = 40, t = toileDecor(L, H), n = 6 + (k % 3);
-  t.rampes.tige = rampe({ brumes: 0xa88a3a, givre: 0x9a8e6e }[saison] || 0x5a8a32);
-  t.rampes.lame = rampe({ brumes: 0xc0a050, givre: 0xb0a488 }[saison] || 0x6a9a3a);
-  t.rampes.massette = rampe(0x6a3e1e); t.rampes.neigeC = RAMPES_COTEAUX.neigeC;
-  for (let i = 0; i < n; i++) {
-    const x0 = 3 + hachage(i, k, 7861) * (L - 6), h = 20 + hachage(i, 2, 7862 + k) * 18, pench = (hachage(i, 3, 7863 + k) - 0.5) * 8;
-    traitHD(t, i % 3 === 1 ? 'lame' : 'tige', [[x0, H - 1], [x0 + pench * 0.5, H - h * 0.6], [x0 + pench, H - h]], i % 3 === 1 ? 0.9 : 0.6, 0.2 * (i % 2));
-    if (i % 2 === 0) { t.forme('massette', ellipsoide(x0 + pench, H - h + 4, 1.5, 3.6), { decalage: 0.3 }); if (saison === 'givre') { t.poser(Math.round(x0 + pench), Math.round(H - h), 'neigeC', 5); t.poser(Math.round(x0 + pench) - 1, Math.round(H - h + 1), 'neigeC', 4); } }
+// Le poteau de la route du Vieux Moulin : un poteau de chêne, deux bras en flèche de bois clair (le nom gravé sur chacun).
+//   POTEAU_DEUX_BRAS : [largeur, hauteur, bras du haut, bras du bas] ; un bras : [centre x, centre y, longueur] (en rangs)
+const POTEAU_DEUX_BRAS = [66, 46, [30, 9.5, 54], [34, 25, 46]];
+function poteauDeuxBrasHD(scene, saison) {
+  const cle = 'poteauDeuxBras' + (saison === 'givre' ? '_givre' : ''); if (scene.textures.exists(cle)) return cle;
+  const [L, H] = POTEAU_DEUX_BRAS, t = toileDecor(L, H); t.rampes.pin = rampe(BOIS_CLAIR_NOM); t.rampes.neigeC = RAMPES_COTEAUX.neigeC;
+  planche(t, L - 9, 1, 4, H - 1, 'cheneSombre', { horizontale: false, graine: 7461 });
+  for (const [y0, y1, x0] of [[4, 15, 1], [20, 30, 9]]) {
+    const m = (y0 + y1) / 2, demi = (y1 - y0) / 2;
+    t.forme('pin', (x, y) => { if (y < y0 || y > y1 || x < x0) return null; const pointe = L - 1 - Math.abs(y - m) * 0.9; return x <= pointe ? [0, (y - m) / (demi + 1), 0.8] : null; }, { decalage: 0.3 });
+    for (let x = x0; x < L - 2; x++) t.poser(x, y0, 'pin', 5);
+    t.poser(L - 7, y0 + 2, 'fer', 5); t.poser(L - 7, y1 - 2, 'fer', 5);
+    if (saison === 'givre') for (let x = x0 + 1; x < L - 4; x++) if (hachage(x, y0, 7462) > 0.25) t.poser(x, y0 - 1, 'neigeC', 5);
   }
-  t.contour(); t.texture(s, cle); return cle;
-}
-
-// La cabane de Barnabé, posée sur son ponton : la même que sur la place (planches délavées, bardeaux, auvent rayé, filet,
-// séchoir, enseigne au poisson), mais ses murs descendent jusqu'aux planches du ponton, sans l'assise de pierre (96 × 96,
-// comme l'ancienne : ce qui s'y accroche reste à sa place). L'hiver, la neige sur le toit.
-function cabanePilotisHD(scene, saison) {
-  const cle = 'cabanePilotisHD' + (saison === 'givre' ? '_givre' : ''); if (scene.textures.exists(cle)) return cle;
-  const L = 96, H = 96, t = toilePeche(L, H); Object.assign(t.rampes, RAMPES_DECOR); t.rampes.neigeC = RAMPES_COTEAUX.neigeC;
-  for (let x = 6; x < L - 6; x += 6) planche(t, x, 30, 6, 62, 'chene', { horizontale: false, graine: 900 + x, noeuds: 1 });
-  for (let x = 5; x < L - 5; x++) { t.poser(x, 92, 'cheneSombre', 2); t.poser(x, 93, 'cheneSombre', 1); t.poser(x, 94, 'cheneSombre', 2); t.poser(x, 95, 'cheneSombre', 1); }   // la sablière, posée sur le ponton
-  for (let y = 8; y < 32; y++) for (let x = 0; x < L; x++) {
-    const bord = Math.abs(x - L / 2) < (y - 6) * 2.4 + 6; if (!bord) continue;
-    const rang = Math.floor((y - 8) / 4), dec = (rang % 2) * 4, b = Math.floor((x + dec) / 8);
-    t.poser(x, y, 'cheneSombre', (y - 8) % 4 === 3 ? 0 : 2 + Math.round(hachage(b, rang, 901) * 2) - ((x + dec) % 8 === 0 ? 1 : 0));
-  }
-  if (saison === 'givre') for (let y = 8; y < 30; y++) for (let x = 0; x < L; x++) { const bord = Math.abs(x - L / 2) < (y - 6) * 2.4 + 6; if (bord && ((y - 8) % 4 !== 3) && fbm(x * 0.15, y * 0.3, 7870) > 0.42 - (y < 14 ? 0.3 : 0)) t.poser(x, y, 'neigeC', y < 12 ? 5 : 4); }
-  for (let y = 40; y < 62; y++) for (let x = 16; x < L - 16; x++) t.poser(x, y, 'cheneSombre', y < 44 ? 0 : 1);
-  t.rampes.auventP = rampe(0x3a6a9a); t.rampes.lin = RAMPES_OBJETS.lin;
-  for (let y = 34; y < 42; y++) for (let x = 12; x < L - 12; x++) { const bande = Math.floor(x / 8) % 2; if (y >= 40 && Math.abs((x % 8) - 4) > (42 - y) * 2) continue; t.poser(x, y, bande ? 'lin' : 'auventP', y < 36 ? 4 : 3); }
-  planche(t, 10, 60, L - 20, 5, 'chene', { graine: 902, noeuds: 2 }); for (let x = 10; x < L - 10; x++) t.poser(x, 60, 'chene', 5);
-  for (let y = 30; y < 90; y++) for (let x = 0; x < 14; x++) if ((x + y) % 4 === 0 || (x - y + 100) % 4 === 0) t.poser(x, y, 'filet', 3 + ((x + y) % 8 === 0 ? 1 : 0));
-  for (const [x, y] of [[3, 34], [9, 46], [4, 58], [10, 70], [5, 82]]) { t.poser(x, y, 'liege', 4); t.poser(x + 1, y, 'liege', 3); t.poser(x, y + 1, 'liege', 2); t.poser(x + 1, y + 1, 'liege', 2); }
-  for (let x = L - 14; x < L; x++) t.poser(x, 44, 'cheneSombre', 3);
-  planche(t, 30, 0, 36, 10, 'chene', { graine: 903, noeuds: 0 }); for (const [x, y] of [[36, 2], [36, 8]]) t.poser(x, y, 'cheneSombre', 0);
+  if (saison === 'givre') for (let x = L - 9; x < L - 5; x++) t.poser(x, 0, 'neigeC', 5);
   t.contour(); t.texture(scene, cle); return cle;
 }
 
-// Le ponton de la cabane et sa passerelle jusqu'à la rive (demi-résolution, ×2, posé par son coin haut gauche en
-// (passerelle.x0, ponton.y0)) : des planches couchées d'est en ouest sur le ponton, en travers sur la passerelle ; la
-// lisse du bord, et les pilotis qui plongent dans l'eau, plus sombres là où ils sont mouillés.
-function pontonPlaceHD(s, saison) {
-  const cle = 'pontonPlace' + (saison === 'givre' ? '_givre' : ''); if (s.textures.exists(cle)) return cle;
-  const E = ETANG_PLACE, [px0, py0, px1, py1] = E.ponton, [qx0, qy0, qx1, qy1] = E.passerelle;
-  const L = Math.round((px1 - qx0) / 2), H = Math.round((py1 - py0) / 2) + 10, t = toileDecor(L, H), G0 = 7880;
-  t.rampes.neigeC = RAMPES_COTEAUX.neigeC;
-  const dx = Math.round((px0 - qx0) / 2), dyH = Math.round((py1 - py0) / 2);
-  const qa = Math.round((qy0 - py0) / 2), qb = Math.round((qy1 - py0) / 2), qr = Math.round((qx1 - qx0) / 2);
-  // le ponton : des planches de 3 rangs, leurs aboutages décalés
-  for (let y = 0; y < dyH; y++) for (let x = dx; x < L; x++) {
-    const pl = Math.floor(y / 3), joint = y % 3 === 2 || (x + pl * 11) % 23 === 0;
-    let k = joint ? 1 : 3 + (fbm(x * 0.2, pl * 1.3, G0) > 0.58 ? 1 : 0) - (hachage(Math.floor((x + pl * 11) / 23), pl, G0 + 1) > 0.8 ? 1 : 0);
-    if (x === dx || x === L - 1) k = Math.min(k, 2);
-    t.poser(x, y, 'chene', k);
+// --- (v1.64) Les décorations du Givre, sur la place, pendant tout le Long Hiver ---
+const RAMPES_GIVRE = { sapinG: rampe(0x2e6a3a), rubanR: rampeVive(0xc8282a), paille: rampe(0xd8b050), boulOr: rampeVive(0xe0b030), boulR: rampeVive(0xc02a2a), cireG: rampe(0xf2ead8), flammeG: rampeVive(0xffb030) };
+// Une guirlande de branches de sapin, posée sur le haut d'un auvent (l rangs de long, ×2 dans l'étal) : les rameaux en touffes,
+// un ruban rouge qui s'y enroule, quelques boules et deux étoiles de paille qui pendent ; un nœud rouge à chaque bout
+function guirlandeAuventHD(s, l) {
+  const cle = 'guirlandeAuvent_' + l; if (s.textures.exists(cle)) return cle;
+  const H = 16, t = toileDecor(l + 8, H), x0 = 4, yC = 4; Object.assign(t.rampes, RAMPES_GIVRE, { neigeC: RAMPES_COTEAUX.neigeC });
+  const fil = x => yC + Math.sin((x - x0) / l * Math.PI) * 1.6;
+  for (let x = x0; x < x0 + l; x++) for (let dy = -2; dy <= 2; dy++) {
+    const y = Math.round(fil(x) + dy), n = hachage(x, dy + 3, 7950);
+    if (Math.abs(dy) === 2 && n < 0.45) continue;
+    t.poser(x, y, 'sapinG', dy < 0 ? 4 - (n > 0.7 ? 1 : 0) : dy > 0 ? 1 + (n > 0.6 ? 1 : 0) : 2 + (n > 0.5 ? 1 : 0));
   }
-  // la passerelle : les mêmes planches, plus étroite, de la rive au ponton ; son bout repose sur la vase de la rive
-  for (let y = qa; y < qb; y++) for (let x = 0; x < Math.max(qr, dx); x++) {
-    const pl = Math.floor((y - qa) / 3), joint = (y - qa) % 3 === 2 || (x + pl * 7) % 17 === 0;
-    t.poser(x, y, 'chene', joint ? 1 : 3 + (fbm(x * 0.2, pl * 1.3, G0 + 2) > 0.58 ? 1 : 0) - (x < 3 ? 1 : 0));
-  }
-  // la lisse du bord (face à nous), sous le ponton et sous la passerelle
-  for (let x = dx; x < L; x++) { t.poser(x, dyH, 'cheneSombre', 4); t.poser(x, dyH + 1, 'cheneSombre', 2); }
-  for (let x = 4; x < dx; x++) { t.poser(x, qb, 'cheneSombre', 4); t.poser(x, qb + 1, 'cheneSombre', 2); }
-  // les pilotis
-  const pieu = (x0, y0, h) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + 3; x++) t.poser(x, y, 'cheneSombre', y > y0 + h - 4 ? 0 : x === x0 ? 3 : 2); };
-  for (let x = dx + 3; x < L - 2; x += 26) pieu(x, dyH + 2, 8);
-  pieu(L - 4, dyH + 2, 8);
-  for (const x of [8, dx - 6]) pieu(x, qb + 2, 7);
-  if (saison === 'givre') for (let x = dx; x < L; x++) for (let y = 0; y < dyH; y++) if (fbm(x * 0.12, y * 0.25, G0 + 3) > (x - dx < 6 || L - x < 6 || dyH - y < 4 ? 0.4 : 0.62)) t.poser(x, y, 'neigeC', 4 + (hachage(x, y, G0 + 4) > 0.5 ? 1 : 0));
+  for (let x = x0; x < x0 + l; x += 2) if (hachage(x, 9, 7951) > 0.6) t.poser(x, Math.round(fil(x)) - 3, 'sapinG', 3);   // (les aiguilles qui dépassent)
+  for (let x = x0; x < x0 + l; x++) if (((x - x0) % 9) < 2) t.poser(x, Math.round(fil(x) + ((x - x0) % 9) - 0.5), 'rubanR', 4 - ((x - x0) % 9));   // (le ruban, enroulé)
+  for (let x = x0 + 3; x < x0 + l; x += 7) if (hachage(x, 2, 7952) > 0.55) t.poser(x, Math.round(fil(x)) - 2, 'neigeC', 5);   // (un peu de givre)
+  // les boules, accrochées à un fil aux deux bouts, et les étoiles de paille piquées dans les rameaux (rien ne pend au milieu :
+  // le nom de l'étal est dessous)
+  const pend = (x, h, quoi) => { const y0 = Math.round(fil(x)) + 2; for (let y = y0; y < y0 + h; y++) t.poser(x, y, 'paille', 2);
+    const y = y0 + h; if (quoi === 'etoile') { for (const [a, b, k] of [[0, -2, 4], [0, -1, 4], [0, 1, 3], [0, 2, 2], [-2, 0, 4], [-1, 0, 5], [1, 0, 3], [2, 0, 2], [0, 0, 5], [-1, -1, 4], [1, 1, 2], [1, -1, 3], [-1, 1, 3]]) t.poser(x + a, y + b, 'paille', k); }
+    else { const m = quoi === 'or' ? 'boulOr' : 'boulR'; for (const [a, b, k] of [[0, -1, 4], [-1, 0, 4], [0, 0, 3], [1, 0, 2], [0, 1, 2], [-1, -1, 5], [1, -1, 3], [-1, 1, 3], [1, 1, 1]]) t.poser(x + a, y + b, m, k); } };
+  pend(x0 + 4, 3, 'rouge'); pend(x0 + l - 5, 3, 'or');
+  for (const xe of [x0 + 13, x0 + Math.round(l / 2), x0 + l - 14]) { const y = Math.round(fil(xe)) - 1; for (const [a, b, k] of [[0, -2, 4], [0, -1, 5], [0, 1, 3], [0, 2, 2], [-2, 0, 4], [-1, 0, 5], [1, 0, 3], [2, 0, 2], [0, 0, 5], [-1, -1, 4], [1, 1, 2], [1, -1, 3], [-1, 1, 3]]) t.poser(xe + a, y + b, 'paille', k); }
+  // les nœuds rouges aux deux bouts, leurs pans qui tombent
+  for (const xb of [x0 + 1, x0 + l - 2]) { const y = Math.round(fil(xb));
+    for (const [a, b, k] of [[-3, -1, 4], [-2, -1, 5], [-2, 0, 4], [-1, 0, 3], [0, 0, 4], [1, 0, 3], [2, 0, 4], [2, -1, 5], [3, -1, 4], [0, 1, 2], [-1, 2, 3], [-1, 3, 2], [-2, 4, 3], [1, 2, 3], [1, 3, 2], [2, 4, 3]]) t.poser(xb + a, y + b, 'rubanR', k); }
   t.contour(); t.texture(s, cle); return cle;
 }
-// Une bitte d'amarrage : un pieu qui dépasse au coin du ponton, sa corde enroulée (5 × 14)
-function bittePontonHD(s) {
-  const cle = 'bittePonton'; if (s.textures.exists(cle)) return cle;
-  const t = toileDecor(6, 14); t.rampes.corde = rampe(0xc8a870);
-  for (let y = 0; y < 14; y++) for (let x = 1; x < 5; x++) t.poser(x, y, 'cheneSombre', y === 0 ? 5 : x === 1 ? 4 : 2);
-  for (const y of [6, 8]) for (let x = 0; x < 6; x++) t.poser(x, y, 'corde', x < 2 ? 4 : 2);
+// Une lanterne de fer à quatre vitres, qui pend à sa chaînette (7 × 14) ; une bougie dans un petit pot (3 × 7) ; une couronne de
+// sapin et son nœud rouge, pour une porte ronde (17 × 19)
+function lanterneGivreHD(s) {
+  const cle = 'lanterneGivre'; if (s.textures.exists(cle)) return cle;
+  const t = toileDecor(7, 14); Object.assign(t.rampes, RAMPES_RUE);
+  for (let y = 0; y < 4; y++) t.poser(3, y, 'fer', 3);
+  for (let x = 1; x < 6; x++) { t.poser(x, 4, 'fer', 4); t.poser(x, 13, 'fer', 2); } for (let x = 2; x < 5; x++) t.poser(x, 3, 'fer', 3);
+  for (let y = 5; y < 13; y++) for (let x = 0; x < 7; x++) { const cadre = x === 0 || x === 6 || x === 3; t.poser(x, y, cadre ? 'fer' : 'vitre', cadre ? 2 : y < 8 ? 5 : 4); }
   t.contour(); t.texture(s, cle); return cle;
 }
-// La barque, vue de trois quarts (50 × 20) : on voit dedans (le fond dans l'ombre, deux bancs, une rame couchée), le
-// plat-bord clair tout autour, et le bordé à clins du côté qui nous fait face ; l'arrière arrondi à gauche, la proue
-// effilée à droite
-function barquePlaceHD(s, saison) {
-  const cle = 'barquePlace' + (saison === 'givre' ? '_givre' : ''); if (s.textures.exists(cle)) return cle;
-  const L = 50, H = 20, t = toileDecor(L, H), yc = 7; t.rampes.neigeC = RAMPES_COTEAUX.neigeC;
-  const larg = x => { const u = (x + 0.5) / L; if (u < 0.12) return 6.2 * Math.sqrt(Math.max(0, u / 0.12)) * 0.5 + 3.1; if (u < 0.55) return 6.2; return 6.2 * Math.max(0, 1 - Math.pow((u - 0.55) / 0.45, 1.5)); };
-  for (let x = 0; x < L; x++) {
-    const w = larg(x); if (w < 0.6) continue;
-    const yLoin = Math.round(yc - w * 0.62), yPres = Math.round(yc + w * 0.62), yQuille = Math.round(yPres + 1 + w * 0.75);
-    for (let y = yLoin; y <= yQuille; y++) {
-      if (y === yLoin || y === yPres) { t.poser(x, y, 'chene', y === yPres ? 5 : 4); continue; }   // le plat-bord
-      if (y < yPres) {   // l'intérieur : le fond à l'ombre du bord d'en face, les bancs
-        const banc = (Math.abs(x - 15) <= 1 || Math.abs(x - 29) <= 1) && w > 3;
-        t.poser(x, y, banc ? 'chene' : 'cheneSombre', banc ? (y === yLoin + 1 ? 2 : 4) : y <= yLoin + 1 ? 2 : 3); continue;
-      }
-      t.poser(x, y, 'chene', y === yQuille ? 1 : (y - yPres) % 2 ? 3 : 2);   // le bordé, à clins
-    }
+function bougieGivreHD(s) {
+  const cle = 'bougieGivre'; if (s.textures.exists(cle)) return cle;
+  const t = toileDecor(5, 9); Object.assign(t.rampes, RAMPES_GIVRE);
+  for (let y = 2; y < 7; y++) for (let x = 1; x < 4; x++) t.poser(x, y, 'cireG', x === 1 ? 5 : 3);
+  t.poser(2, 1, 'cheneSombre', 1); for (let x = 0; x < 5; x++) { t.poser(x, 7, 'rubanR', 3); t.poser(x, 8, 'rubanR', 1); }
+  t.contour(); t.texture(s, cle); return cle;
+}
+function couronneGivreHD(s) {
+  const cle = 'couronneGivre'; if (s.textures.exists(cle)) return cle;
+  const t = toileDecor(17, 19); Object.assign(t.rampes, RAMPES_GIVRE, { neigeC: RAMPES_COTEAUX.neigeC });
+  for (let y = 0; y < 17; y++) for (let x = 0; x < 17; x++) {
+    const d = Math.hypot(x + 0.5 - 8.5, y + 0.5 - 8.5); if (d > 8.2 || d < 4.2) continue;
+    const n = hachage(x, y, 7960), lum = (x + y < 15 ? 1 : x + y > 19 ? -1 : 0);
+    if (d > 7.4 && n < 0.35) continue;   // (le bord ébouriffé)
+    t.poser(x, y, 'sapinG', 2 + lum + (n > 0.7 ? 1 : 0));
   }
-  for (let x = 8; x < 36; x++) { const y = Math.round(yc - 1 + (x - 8) * 0.08); t.poser(x, y, 'chene', 5); }   // la rame
-  for (let x = 34; x < 38; x++) t.poser(x, yc + 1, 'chene', 4);   // sa pale
-  if (saison === 'givre') for (let x = 2; x < 40; x++) if (hachage(x, 1, 7890) > 0.3) t.poser(x, Math.round(yc - larg(x) * 0.62) - 0, 'neigeC', 5);
+  for (const [x, y] of [[4, 4], [12, 3], [14, 10], [3, 11], [8, 1]]) { t.poser(x, y, 'boulR', 4); t.poser(x + 1, y, 'boulR', 2); }   // (les baies)
+  for (const [x, y] of [[5, 2], [9, 1], [3, 6]]) t.poser(x, y, 'neigeC', 5);
+  for (const [a, b, k] of [[-3, 0, 4], [-2, -1, 5], [-2, 0, 4], [-1, 0, 3], [0, 0, 5], [1, 0, 3], [2, 0, 4], [2, -1, 5], [3, 0, 4], [-1, 1, 3], [-1, 2, 2], [-2, 3, 3], [1, 1, 3], [1, 2, 2], [2, 3, 3]]) t.poser(8 + a, 15 + b, 'rubanR', k);
   t.contour(); t.texture(s, cle); return cle;
 }
+// Où, dans une butte (trouCoteauxHD, 150 × 96), sont la porte ronde et la jardinière : pour y accrocher la couronne et poser la bougie
+function reperesTrouCoteaux(fenetre = 1) { const L = 150, H = 96, r = 17, base = H - 6, cx = Math.round(L * (fenetre ? 0.42 : 0.5)), cy = base - r - 2; return { L, H, porte: [cx, cy - 6], jardiniere: fenetre ? [cx + r + 18, cy - 2 + 7 + 5] : null }; }

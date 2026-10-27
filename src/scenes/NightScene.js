@@ -192,7 +192,7 @@ class NightScene extends Phaser.Scene {
   }
 
   // Dormir : la fin de la journée. Ton personnage va se coucher (une petite scène, avec le
-  // bilan du jour), la nuit passe, et au matin, direction le Marché des Mastres.
+  // bilan du jour), la nuit passe, et au matin, direction la place des Mastres.
   dormir() {
     if (this.carrefourEnAttente()) return;   // (v0.97) avant le verrou de transition, qui le faisait sauter
     const G = this.G;
@@ -409,10 +409,10 @@ class NightScene extends Phaser.Scene {
     voile.on('pointerdown', () => c.destroy());
   }
 
-  // --- Ta réserve (on achète le matin, au Marché des Mastres) ---
+  // --- Ta réserve (on achète le matin, sur la place des Mastres) ---
 
   creerReserve(x1, x2) {
-    this.add.text((x1 + x2) / 2, 110, this.matin ? 'Tu peux encore retourner au marché' : 'Demain matin : le Marché des Mastres', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
+    this.add.text((x1 + x2) / 2, 110, this.matin ? 'Tu peux encore retourner au marché' : 'Demain matin : la place des Mastres', style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
     this.lignesStock = {};
     // (v0.64) toutes les armes sur une seule ligne, comme au râtelier (sinon la liste sortait de l'écran)
     const ids = [...Object.keys(ITEMS).filter(id => !estArme(id)), 'armes', ...Object.keys(MATERIAUX)];

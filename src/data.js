@@ -986,7 +986,7 @@ const MATERIAUX_DEPART = { fer: 2, cuir: 2, bois: 2, filOr: 1 };
 // Au début il faut 3 matériaux par réparation ; l'artisanat en fait baisser le nombre.
 const MATERIAUX_PAR_REPARATION = 3;
 
-// --- Le Marché des Mastres (le matin) ---
+// --- La place des Mastres (le matin) ---
 
 // Les trois étals. `toujours` : objets disponibles tous les jours ; les autres apparaissent au hasard.
 // Les lieux du marché qui ouvrent un par un, les premiers jours (le jour d'ouverture). Les étals
@@ -1044,7 +1044,7 @@ const DECORATIONS = {
   lanterne: { nom: 'Lanterne enchantée', effet: 'Porte chance : +10 % sur les parts de butin.' },
   enclume: { nom: 'Enclume naine', effet: 'Réparations plus faciles : 1 matériau de moins.' },
   trefle: { nom: 'Trèfle du mendiant', effet: 'Porte-bonheur : tu gagnes les égalités aux dés, et le bonneteau va moins vite.' },
-  blason: { nom: 'Blason du bourg', effet: 'Les marchands du Marché des Mastres te font 5 % de remise.' },
+  blason: { nom: 'Blason du bourg', effet: 'Les marchands de la place des Mastres te font 5 % de remise.' },
   sceau: { nom: 'Sceau de la Confrérie', effet: 'Les aventuriers te font confiance : +1 de chance (trèfle) pour tous.' },
 };
 
@@ -1224,7 +1224,7 @@ const JOURNEE = {
 // Les bonus d'attrait (stock varié, trophée, éclairage) peuvent dépasser le plafond du palier de réputation.
 const BONUS_CLIENTS_MAX = 2;
 
-// Les enchérisseurs du Marché des Mastres, et ce qu'ils aiment.
+// Les enchérisseurs de la place des Mastres, et ce qu'ils aiment.
 const ENCHERISSEURS = [
   { nom: 'Lord Pommeroy', race: 'humain', aime: ['arme', 'armure'] },
   { nom: 'Dame Ysaline', race: 'elfe', aime: ['bijou', 'vetement'] },

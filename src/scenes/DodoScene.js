@@ -554,7 +554,7 @@ class DodoScene extends Cinematique {
     this.tweens.add({ targets: t, scale: 1, duration: 400, ease: 'Back.easeOut' });
     const nouvelles = nouvellesDuMatin(G).slice(0, 3);
     if (this.etiquetteTrophees && this.etiquetteTrophees.active) this.tweens.add({ targets: this.etiquetteTrophees, alpha: 0, duration: 300 });   // (v1.61 : le texte du matin passe par là)
-    this.add.text(480, 196, ['Direction le Marché des Mastres !', ...nouvelles].join('\n'),
+    this.add.text(480, 196, ['Direction la place des Mastres !', ...nouvelles].join('\n'),
       style(15, '#fff4dc', { align: 'center', stroke: '#2a1a10', strokeThickness: 4, lineSpacing: 4, wordWrap: { width: 760 } })).setOrigin(0.5, 0).setDepth(9);
     G.banniere = G.jour; // le « Jour N » est déjà annoncé
   }

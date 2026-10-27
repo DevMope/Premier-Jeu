@@ -1,5 +1,5 @@
 // (v0.65, étape 10c) La rue, le jour : au sortir du shop, on la traverse à pied jusqu'au porche du
-// Marché des Mastres (ou l'inverse en rentrant). La forge est ouverte, des passants vont et viennent ;
+// place des Mastres (ou l'inverse en rentrant). La forge est ouverte, des passants vont et viennent ;
 // on peut entrer à la banque. « Au marché » et « Chez toi » restent des raccourcis.
 class RueScene extends Phaser.Scene {
   constructor() { super('Rue'); }
