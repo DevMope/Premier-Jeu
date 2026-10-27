@@ -828,7 +828,7 @@ function grenouille3(s) {
 //  - les autres façades (ton comptoir, la boutique du paon, la forge, le barbier) : la bande de leur toit (TOITS_NEIGE :
 //    ses rangées, et ce qui n'est pas du toit, comme le fronton du paon, dont seule l'arête prend la neige).
 // Le trait sombre du contour est gardé (bleui) : la neige épouse la forme du toit, sans coupure nette.
-const TOITS_NEIGE = { facadeHD_0: [40, 112], facadeHD_1: [40, 112], facadeHD: [0, 58], rueForgeHD: [4, 43], facadeRivalHD: [12, 52, (x, y) => Math.abs(x - 100) < (y - 2) * 0.95 - 2], boutiqueBarbierHD: [3, 26] };
+const TOITS_NEIGE = { facadeHD_0: [40, 112, (x, y) => x >= 149 && x < 163 && y >= 37 && y < 61], facadeHD_1: [40, 112, (x, y) => x >= 149 && x < 163 && y >= 37 && y < 61], facadeHD: [0, 58, (x, y) => x >= 149 && x < 165 && y >= 3 && y < 35], rueForgeHD: [4, 43], facadeRivalHD: [12, 52, (x, y) => Math.abs(x - 100) < (y - 2) * 0.95 - 2], boutiqueBarbierHD: [3, 26] };
 function neigeToitHD(s, cle) {
   if (/_neige$/.test(cle) || !s.textures.exists(cle)) return null;
   const k = cle + '_neige'; if (s.textures.exists(k)) return k;
