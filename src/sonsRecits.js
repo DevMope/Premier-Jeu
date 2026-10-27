@@ -512,14 +512,17 @@ const SONS_RECITS = {
     const niv = this.ctx.createGain(); niv.gain.value = NIVEAU_PAS[sol] || 1; niv.connect(bus); bus = niv;
     const h = () => 0.9 + Math.random() * 0.2;   // (chaque pas un peu différent)
     for (let i = 0; i < n; i++) {
-      const tp = t + i * cadence + (Math.random() - 0.5) * 0.03, cote = i % 2 ? 0.92 : 1.08;   // (le pied gauche, le pied droit)
+      const tp = t + i * cadence + (Math.random() - 0.5) * (sol === 'neige' || sol === 'feuilles' ? 0.012 : 0.03), cote = i % 2 ? 0.92 : 1.08;   // (le pied gauche, le pied droit ; bien en rythme dans la neige et les feuilles)
       if (sol === 'herbe') {
         this.tonGlisse(tp, 0.09, bus, { de: 95 * cote, a: 50, volume: 0.22, attaque: 0.006 });
         this.bruitGlisse(tp, 0.16, bus, { de: 2600 * cote, a: 1500, q: 0.8, volume: 0.07, attaque: 0.02 });
         this.bruitGlisse(tp + 0.05, 0.12, bus, { type: 'highpass', de: 4000, a: 3000, q: 0.5, volume: 0.03, attaque: 0.02 });
-      } else if (sol === 'neige') {
-        this.tonGlisse(tp, 0.08, bus, { de: 80, a: 45, volume: 0.15 });
-        for (let k = 0; k < 9; k++) this.bruitGlisse(tp + 0.01 + k * 0.022 + Math.random() * 0.01, 0.018, bus, { de: (1800 + Math.random() * 1800) * cote, q: 3, volume: 0.01 + 0.09 * Math.sin((k + 1) / 10 * Math.PI), attaque: 0.002 });
+      } else if (sol === 'neige' || sol === 'feuilles') {
+        // (27/10) la neige et les feuilles mortes, refaites : un pas net et croquant, calculé note par note (voir pasCroquant)
+        const x = pasCroquant(this.ctx.sampleRate, sol), b = this.ctx.createBuffer(1, x.length, this.ctx.sampleRate);
+        b.getChannelData(0).set(x);
+        const src = this.ctx.createBufferSource(); src.buffer = b; src.playbackRate.value = cote > 1 ? 1.02 : 0.98;
+        src.connect(bus); src.start(Math.max(0, tp));
       } else if (sol === 'boue') {
         this.bruitGlisse(tp, 0.12, bus, { type: 'lowpass', de: 400, a: 200, volume: 0.22, attaque: 0.01 });
         this.tonGlisse(tp + 0.02, 0.12, bus, { de: 210 * cote, a: 90, volume: 0.08, attaque: 0.01, filtre: 600 });
@@ -538,11 +541,6 @@ const SONS_RECITS = {
         this.bruitGlisse(tp, 0.025, bus, { de: 1900 * h(), a: 1500, q: 1.5, volume: 0.07, attaque: 0.001 });
         this.bruitGlisse(tp + 0.075, 0.03, bus, { de: 850 * h(), a: 700, q: 4, volume: 0.07, attaque: 0.002 });
         if (Math.random() < 0.3) this.tonGlisse(tp + 0.09, 0.16, bus, { forme: 'sawtooth', de: 320 * h(), a: 290, volume: 0.012, attaque: 0.04, filtre: 1400 });
-      } else if (sol === 'feuilles') {
-        // les feuilles mortes : un froissement sec qui craque en petits morceaux, sur un pas mou
-        this.tonGlisse(tp, 0.09, bus, { de: 90 * cote, a: 50, volume: 0.14, attaque: 0.006 });
-        this.bruitGlisse(tp, 0.2, bus, { de: 3200 * h(), a: 2200, q: 0.9, volume: 0.035, attaque: 0.02 });
-        for (let k = 0; k < 11; k++) this.bruitGlisse(tp + 0.005 + Math.random() * 0.17, 0.012, bus, { de: 2000 + Math.random() * 4000, q: 2.5, volume: 0.03 + Math.random() * 0.07, attaque: 0.001 });
       } else if (sol === 'sable') {
         // le sable : le pied s'enfonce un peu, un « chhh » doux qui glisse, presque pas de choc
         this.tonGlisse(tp, 0.1, bus, { de: 70 * cote, a: 45, volume: 0.1, attaque: 0.015 });
@@ -709,8 +707,46 @@ const SONS_RECITS = {
     this.bruitGlisse(tp + 0.15, 0.2, bus, { de: 1800, a: 3200, q: 3, volume: 0.07, attaque: 0.05 });
   },
 };
+// (27/10, retour du joueur : « un son net, croquant, franc et satisfaisant ») Un pas dans la neige ou dans les feuilles
+// mortes, calculé note par note : une attaque franche (le talon), un amas de petits craquements serrés au début et qui
+// s'espacent (la neige qui se tasse en « crunch » compact, les feuilles sèches qui se brisent), un corps de bruit filtré
+// qui s'éteint vite, un petit choc sourd dessous, et une légère saturation pour le mordant. Chaque appel tire ses
+// craquements au hasard : les quatre variantes du cache ne se ressemblent jamais tout à fait.
+function pasCroquant(sr, sol) {
+  const neige = sol === 'neige', duree = neige ? 0.17 : 0.13, n = Math.ceil(duree * sr), x = new Float32Array(n), r = Math.random;
+  // un filtre du second ordre (passe-bande ou passe-haut), appliqué sur place
+  const filtre = (y, type, f, q) => {
+    const w = 2 * Math.PI * f / sr, cw = Math.cos(w), al = Math.sin(w) / (2 * q), a0 = 1 + al;
+    const [b0, b1, b2] = type === 'highpass' ? [(1 + cw) / 2, -(1 + cw), (1 + cw) / 2] : [al, 0, -al];
+    let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    for (let i = 0; i < y.length; i++) { const v = y[i], o = (b0 * v + b1 * x1 + b2 * x2 - (-2 * cw) * y1 - (1 - al) * y2) / a0; x2 = x1; x1 = v; y2 = y1; y1 = o; y[i] = o; }
+    return y;
+  };
+  // le corps : un bruit filtré, attaque de 2 ms, qui s'éteint vite
+  const corps = new Float32Array(n); for (let i = 0; i < n; i++) corps[i] = r() * 2 - 1;
+  filtre(corps, 'bandpass', neige ? 1300 + r() * 300 : 3000 + r() * 600, neige ? 0.8 : 0.9);
+  const tau = (neige ? 0.04 : 0.026) * (0.9 + r() * 0.2), att = Math.floor(0.002 * sr);
+  for (let i = 0; i < n; i++) x[i] += corps[i] * (neige ? 0.9 : 0.75) * (i < att ? i / att : Math.exp(-(i - att) / (tau * sr)));
+  // les craquements : serrés au début, de plus en plus rares (et, pour la neige, un second petit amas : la pointe du pied)
+  const grains = new Float32Array(n), amas = [[0, neige ? 34 : 30, neige ? 0.09 : 0.08, 1]];
+  if (neige) amas.push([0.055 + r() * 0.015, 12, 0.05, 0.55]);
+  for (const [debut, nb, etendue, force] of amas) for (let k = 0; k < nb; k++) {
+    const t = debut + etendue * Math.pow(r(), 1.8), i0 = Math.floor(t * sr), d = Math.floor((neige ? 0.0004 + r() * 0.0012 : 0.0006 + r() * 0.0012) * sr), a = force * (0.35 + r() * 0.65) * (1 - t / duree);
+    for (let i = 0; i < d * 4 && i0 + i < n; i++) grains[i0 + i] += (r() * 2 - 1) * a * Math.exp(-i / d);
+  }
+  filtre(grains, 'bandpass', neige ? 3800 : 3300, neige ? 0.7 : 0.6);
+  for (let i = 0; i < n; i++) x[i] += grains[i] * (neige ? 1.6 : 1.9);
+  // le choc sourd du talon
+  const f0 = neige ? 95 : 115;
+  for (let i = 0, ph = 0; i < Math.min(n, 0.05 * sr); i++) { const u = i / sr; ph += 2 * Math.PI * f0 * (1 - u * 6) / sr; x[i] += Math.sin(ph) * (neige ? 0.35 : 0.25) * Math.exp(-u / 0.012); }
+  // du mordant : une saturation douce, puis un fondu de fin
+  let m = 0; for (let i = 0; i < n; i++) m = Math.max(m, Math.abs(x[i]));
+  for (let i = 0; i < n; i++) x[i] = Math.tanh(x[i] / m * 1.8) * 0.5 * Math.min(1, (n - i) / (0.01 * sr));
+  return x;
+}
+
 // Le volume de chaque sol (mesurés comme les pas de la v1.61 : le même niveau pour tous)
-const NIVEAU_PAS = { herbe: 1.1, neige: 1.9, boue: 2.3, paves: 1.65, terre: 0.93, parquet: 1.39, feuilles: 1.73, sable: 1.9, gravier: 1.35, pierre: 2.3 };
+const NIVEAU_PAS = { herbe: 1.1, neige: 0.55, boue: 2.3, paves: 1.65, terre: 0.93, parquet: 1.39, feuilles: 0.6, sable: 1.9, gravier: 1.35, pierre: 2.3 };
 const SOLS_PAS = Object.keys(NIVEAU_PAS);
 Object.assign(SONS, SONS_RECITS);
 

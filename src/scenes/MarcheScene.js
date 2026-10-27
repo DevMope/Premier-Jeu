@@ -726,7 +726,7 @@ class MarcheScene extends Phaser.Scene {
     this.add.text(x, 184, `Ouverture le jour ${jour}`, style(10, '#e8d4a8', { align: 'center' })).setOrigin(0.5).setAngle(-4);
     this.etiquettesRue.push(this.add.text(x, 262, 'En travaux', style(13, '#c9b48a', { fontStyle: 'bold italic', stroke: '#2a1a10', strokeThickness: 4 })).setOrigin(0.5));
     const zone = this.add.rectangle(x, 170, 160, 160, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    zone.on('pointerdown', () => { if (!(typeof sonAChoisir === 'function' && sonAChoisir('marteau', { matiere: 'bois' }))) Son.jouer('marteau'); this.message(`Des ouvriers s'activent derrière les planches. Qu'est-ce qui ouvrira ici ? Personne ne le sait vraiment... Ouverture le jour ${jour}. ${jour - this.G.jour === 1 ? "C'est pour demain !" : `Encore ${jour - this.G.jour} jours de patience.`}`); });
+    zone.on('pointerdown', () => { if (!(typeof sonAChoisir === 'function' && sonAChoisir('marteau', { lieu: 'charpentier', matiere: 'bois' }))) Son.jouer('marteau'); this.message(`Des ouvriers s'activent derrière les planches. Qu'est-ce qui ouvrira ici ? Personne ne le sait vraiment... Ouverture le jour ${jour}. ${jour - this.G.jour === 1 ? "C'est pour demain !" : `Encore ${jour - this.G.jour} jours de patience.`}`); });
     this.grouper(avant, x);
   }
 

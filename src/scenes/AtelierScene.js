@@ -371,11 +371,10 @@ class AtelierScene extends Phaser.Scene {
     const erreur = reparerTresor(G, t, cible, ouvrier);
     this.fermerFenetre();
     if (erreur) { Son.jouer('refus'); return this.texteInfo.setText(erreur); }
-    // (v1.64) l'aiguille et le cuir pour un vêtement ; le marteau sinon (le marteau refait attend le choix du joueur)
-    const cuir = CATEGORIES[t.categorie] && CATEGORIES[t.categorie].materiau === 'cuir';
+    // (27/10) le marteau de l'atelier selon la matière (le fer et les fils d'or sur la petite enclume, le cuir au maillet,
+    // puis l'aiguille) ; une variante tirée au hasard (voir SONS.marteauAtelier)
     if (attente) Son.jouer('plume');
-    else if (cuir && SONS.couture) Son.jouer('couture');
-    else if (!(typeof sonAChoisir === 'function' && sonAChoisir('marteau', { matiere: 'metal' }))) Son.jouer('marteau');
+    else if (typeof jouerReparation === 'function') jouerReparation(CATEGORIES[t.categorie] && CATEGORIES[t.categorie].materiau); else Son.jouer('marteau');
     const prenom = prenomDe(EMPLOYES[ouvrier].nom);
     this.texteInfo.setText(attente ? `${t.nom} attend son tour dans la file de ${prenom} (${objetsEnFile(G, ouvrier).length}e) : ${EMPLOYES[ouvrier].feminin ? 'elle' : 'il'} s'y mettra dans ${pluriel(attente, 'jour', 'jours')}.`.replace('(1e)', '(1re)')
       : `${prenom} se met au travail : ${t.nom} → ${ETATS[cible].nom} en ${pluriel(jours, 'jour', 'jours')}.`);

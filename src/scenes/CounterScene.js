@@ -2741,9 +2741,8 @@ class CounterScene extends Phaser.Scene {
   reparer(id) {
     const erreur = reparerObjet(this.G, this.voyageur, id);
     if (erreur) { Son.jouer('refus'); return this.dire(erreur, ''); }
-    // (v1.64) le cuir se coud (l'aiguille et le fil) ; le fer et le bois se reprennent au marteau (le marteau refait attend le choix du joueur)
-    if (MATERIAU_DE[id] === 'cuir' && SONS.couture) Son.jouer('couture');
-    else if (!(typeof sonAChoisir === 'function' && sonAChoisir('marteau', { matiere: MATERIAU_DE[id] === 'bois' ? 'bois' : 'metal' }))) Son.jouer('marteau');
+    // (27/10) l'ouvrier de l'atelier répare : son marteau selon la matière (le bois, le fer, le cuir puis l'aiguille)
+    if (typeof jouerReparation === 'function') jouerReparation(MATERIAU_DE[id]); else Son.jouer('marteau');
     this.dessinerPieces();
     this.dire(`Merci ! ${prenomDe(EMPLOYES[this.G.dernierReparateurComptoir].nom)} a fait vite : ${monNom(id, ITEMS[id].nom.toLowerCase())} ${ITEMS[id].nom.toLowerCase()} ${genreDe(id).includes('p') ? 'sont' : 'est'} comme ${accordAdj(id, 'neuf', 'neuve', 'neufs', 'neuves')}. Voilà ${PRIX_REPARATION} pièces pour l'atelier.`);
   }

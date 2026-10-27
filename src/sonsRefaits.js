@@ -8,12 +8,14 @@
 // Ici, rien n'est un graphe Web Audio : chaque son est calculé échantillon par échantillon (des modes qui résonnent,
 // des bruits filtrés, une réverbération), une seule fois, puis rejoué depuis son tampon. Le même code fabrique les
 // fichiers .wav de la page d'écoute (sous Node, voir module.exports en bas).
-// (27/10) Le joueur a choisi : le marteau B pour l'atelier et les charpentiers (les planches du marché, l'étage, les
-// réparations), le marteau A pour la forge, la cloche A (chaque matin après le coq). Les foules A et B sont refusées ;
-// C et D attendent son choix : tant que `foule` est vide, la place reste sans foule.
-const SONS_A_CHOISIR = { actif: true, marteau: { forge: 'A', atelier: 'B' }, cloche: 'A', foule: null };
+// (27/10) Le joueur a choisi : le marteau A pour la forge ; le marteau B pour les charpentiers (les planches du marché,
+// l'étage) ; à l'atelier (et pour les réparations du comptoir, faites par ses ouvriers), un marteau selon la matière de
+// l'objet (le bois, la petite enclume pour le fer, le maillet de cuir), en variantes tirées au hasard ; la cloche A
+// (chaque matin après le coq) ; la foule D, « Jour de grand marché » (les foules A et B, puis C, sont écartées).
+const SONS_A_CHOISIR = { actif: true, marteau: { forge: 'A', charpentier: 'B', atelier: 'Atelier' }, cloche: 'A', foule: 'D' };
 
-const FabriqueSons = (() => {
+// (la fabrique est une fonction nommée : on peut aussi la recopier dans un Worker, pour préparer la foule hors du fil du jeu)
+function fabriqueDesSons() {
   // Les niveaux visés (mesurés sur les sons du jeu : l'enclume 0,056, le marteau de la v1.61 0,072, sa cloche 0,051,
   // son brouhaha 0,037) : un geste du jeu, un grand moment, un fond qui ne couvre pas les voix
   const NIVEAUX = { marteau: 0.066, cloche: 0.052, foule: 0.034, fondFoule: 0.024, eclatFoule: 0.05 };
@@ -178,6 +180,40 @@ const FabriqueSons = (() => {
     }
     return niveler(fondus(reverbe(x, sr, metal ? { taille: 0.75, amorti: 0.3, mix: 0.3 } : { taille: 0.45, amorti: 0.45, mix: 0.16 }), sr), NIVEAUX.marteau);
   }
+  // Le maillet de cuir sur le cuir posé sur l'établi : un coup mat, sans résonance de métal ; le bois de l'établi sous lui
+  function coupCuir(x, sr, t, force, r) {
+    choc(x, sr, t, 0.05, 0.75 * force, r, { type: 'lowpass', f: entre(r, 380, 520), q: 0.7, pente: 7 });
+    choc(x, sr, t, 0.012, 0.25 * force, r, { type: 'bandpass', f: entre(r, 900, 1300), q: 0.9, pente: 6 });
+    mode(x, sr, t, entre(r, 140, 190), 0.45 * force, 0.07, 0.002);   // (l'établi)
+    mode(x, sr, t, entre(r, 330, 420), 0.16 * force, 0.04, 0.002);
+  }
+  // (27/10) Le marteau de l'atelier, selon ce qu'on répare : le bois (des clous plantés, ou le maillet de bois qui
+  // ajuste un manche), le fer (la petite enclume de l'atelier, à la façon de la variante B, plus aiguë et plus légère),
+  // le cuir (le maillet de cuir, des coups mats). Une courte série (1 à 1,5 s) ; o.graine (1 à 4) : la variante.
+  function marteauAtelier(sr, o = {}) {
+    const g = o.graine || 1, r = alea(97 + g * 31 + ({ bois: 0, fer: 7, cuir: 13 }[o.matiere] || 0)), matiere = o.matiere || 'bois';
+    const x = new Float32Array(Math.ceil((matiere === 'fer' ? 3 : 1.9) * sr));
+    let t = 0.03;
+    if (matiere === 'fer') {
+      const n = 2 + (g % 3);
+      for (let k = 0; k < n; k++) {
+        coupEnclume(x, sr, t, entre(r, 0.75, 1), r, { surFer: true, base: entre(r, 1080, 1240) });
+        if (r() < 0.55) coupEnclume(x, sr, t + 0.17 + entre(r, -0.015, 0.015), entre(r, 0.15, 0.24), r, { surFer: false, base: 1150 });
+        t += entre(r, 0.36, 0.5);
+      }
+    } else if (matiere === 'cuir') {
+      const n = 3 + (g % 3);
+      for (let k = 0; k < n; k++) { coupCuir(x, sr, t, entre(r, 0.7, 1) * (k === 0 ? 0.8 : 1), r); t += entre(r, 0.2, 0.32); }
+    } else if (g % 2) {   // des clous : un petit coup pour poser, deux ou trois pour enfoncer
+      coupBois(x, sr, t, 0.4, r, { enfonce: 0 }); t += entre(r, 0.22, 0.28);
+      const n = 2 + (g % 2);
+      for (let k = 0; k < n; k++) { coupBois(x, sr, t, entre(r, 0.8, 1), r, { enfonce: (k + 1) / n, pose: k === n - 1 }); t += entre(r, 0.3, 0.38); }
+    } else {   // le maillet de bois : des coups plus sourds, sans clou
+      const n = 3 + (g % 3 === 1 ? 1 : 0);
+      for (let k = 0; k < n; k++) { coupBois(x, sr, t, entre(r, 0.7, 0.95), r, { pose: true, poutre: r() < 0.4 }); t += entre(r, 0.26, 0.36); }
+    }
+    return niveler(fondus(reverbe(x, sr, { taille: 0.4, amorti: 0.5, mix: 0.14 }), sr), NIVEAUX.marteau);
+  }
 
   // ======================================================================================
   // La cloche du marché : une cloche de bronze. Ses partiels ne sont pas harmoniques (le bourdon à l'octave du
@@ -311,9 +347,12 @@ const FabriqueSons = (() => {
   }
   // Le fond : `nVoix` voix qui bavardent chacune à son rythme, un peu adoucies par la distance (mais claires), en plein
   // air (peu de réverbération), et un léger souffle d'air. Rendu à la moitié de la fréquence du jeu.
-  function fondFoule(sr, o = {}) {
+  // (fondFouleMorceaux : la même chose par petits morceaux, une voix à la fois, pour la préparer en tâche de fond)
+  function fondFoule(sr, o = {}) { const g = fondFouleMorceaux(sr, o); let e = g.next(); while (!e.done) e = g.next(); return e.value; }
+  function* fondFouleMorceaux(sr, o = {}) {
     const r = alea(o.graine || 3), duree = o.duree || 8, nVoix = o.nVoix || 14, x = new Float32Array(Math.ceil(duree * sr)), y = new Float32Array(x.length);
     for (let v = 0; v < nVoix; v++) {
+      if (v) yield v;
       const type = r(), femme = type < 0.45, enfant = type > 0.86;
       const t0 = entre(r, -1, 0.4);
       y.fill(0);
@@ -326,7 +365,9 @@ const FabriqueSons = (() => {
     const b = new Float32Array(x.length); for (let i = 0; i < b.length; i++) b[i] = r() * 2 - 1;
     filtrer(b, 'bandpass', 2200, 0.5, sr);
     for (let i = 0; i < x.length; i++) x[i] += b[i] * 0.006;
+    yield nVoix;
     eclaircir(x, sr, 2.2);
+    yield nVoix + 1;
     return reverbe(x, sr, { taille: o.place ? 0.5 : 0.35, amorti: 0.6, mix: o.place ? 0.2 : 0.13, predelai: 0.015 });
   }
   // Un éclat tout près : 'rire', 'rires' (deux ou trois qui rient ensemble), 'heler' (un marchand), 'enfantRit',
@@ -374,8 +415,9 @@ const FabriqueSons = (() => {
     return niveler(fondus(x, sr, 0.8, 1), NIVEAUX.foule);
   }
 
-  return { NIVEAUX, alea, mode, coefs, filtrer, choc, reverbe, niveler, surechantillonner, fondus, voix, marteauA, marteauB, clocheA, clocheB, fondFoule, eclatFoule, foule, ECLATS_FOULE };
-})();
+  return { NIVEAUX, alea, mode, coefs, filtrer, choc, reverbe, niveler, surechantillonner, fondus, voix, fondFouleMorceaux, marteauA, marteauB, marteauAtelier, clocheA, clocheB, fondFoule, eclatFoule, foule, ECLATS_FOULE };
+}
+const FabriqueSons = fabriqueDesSons();
 
 // --- Dans le jeu : les tampons, faits une fois, et les points d'accroche ---
 if (typeof Son !== 'undefined') Object.assign(Son, {
@@ -394,18 +436,85 @@ if (typeof Son !== 'undefined') Object.assign(Son, {
     src.onended = () => { try { src.disconnect(); g.disconnect(); } catch (e) { /* (déjà débranché) */ } };
     return { src, g };
   },
-  // (en attente du choix du joueur) La foule du marché en fond, sans boucle qu'on entende : trois fonds de 8 s,
+  // (27/10) La foule se prépare en tâche de fond, par petits morceaux (une voix, une réverbération, un éclat à la fois,
+  // quelques dizaines de millisecondes chacun, entre deux images), dès que le son démarre : quand on arrive sur la place
+  // des Mastres, elle est prête, sans à-coup. `fini` est appelé quand tout est prêt.
+  preparerFoule(variante = SONS_A_CHOISIR.foule, fini = null) {
+    const V = FabriqueSons.ECLATS_FOULE[variante];
+    if (!V || !this.pret) return;
+    const P = (this.foulesPretes = this.foulesPretes || {})[variante] || (this.foulesPretes[variante] = { prete: false, enCours: false, attente: [] });
+    if (fini) { if (P.prete) return fini(); P.attente.push(fini); }
+    if (P.prete || P.enCours) return;
+    P.enCours = true;
+    const ctx = this.ctx, sr = ctx.sampleRate, travaux = [];
+    const finir = () => { P.prete = true; P.enCours = false; P.attente.splice(0).forEach(f => { try { f(); } catch (e) { /* (rien) */ } }); };
+    const ranger = (cle, x) => { const b = ctx.createBuffer(1, x.length, sr); b.getChannelData(0).set(x); this.tamponsRefaits[cle] = b; };
+    // d'abord dans un Worker : tout le calcul hors du fil du jeu (aucune image perdue) ; sinon, par petits morceaux
+    if (this.preparerFouleAilleurs(variante, sr, ranger, finir)) return;
+    for (let i = 0; i < 3; i++) {
+      let g = null;
+      travaux.push(() => {   // (une voix de plus du fond n° i ; vrai quand le fond est fini)
+        if (!g) g = FabriqueSons.fondFouleMorceaux(sr / 2, { duree: 8, nVoix: V.nVoix, proche: V.proche, place: V.place, graine: 101 + i * 13 });
+        const e = g.next();
+        if (!e.done) return false;
+        const x = FabriqueSons.surechantillonner(FabriqueSons.niveler(e.value, FabriqueSons.NIVEAUX.fondFoule), 2), b = ctx.createBuffer(1, x.length, sr);
+        b.getChannelData(0).set(x); this.tamponsRefaits[`foule${variante}fond${i}`] = b;
+        return true;
+      });
+    }
+    V.quoi.forEach((quoi, k) => travaux.push(() => { this.tamponRefait(`foule${variante}eclat${k}`, s => FabriqueSons.niveler(FabriqueSons.eclatFoule(s, quoi, { graine: 500 + k * 7 }), FabriqueSons.NIVEAUX.eclatFoule)); return true; }));
+    let k = 0;
+    const plusTard = f => (window.requestIdleCallback ? window.requestIdleCallback(f, { timeout: 400 }) : setTimeout(f, 16));
+    const morceau = () => {
+      if (this.ctx !== ctx) { P.enCours = false; return; }
+      const t0 = Date.now();
+      while (k < travaux.length && Date.now() - t0 < 12) { if (travaux[k]()) k++; }   // (pas plus d'un morceau par image, ou deux s'ils sont petits)
+      if (k < travaux.length) return plusTard(morceau);
+      finir();
+    };
+    plusTard(morceau);
+  },
+  // La foule fabriquée dans un Worker (le code de la fabrique y est recopié) ; renvoie faux s'il n'y a pas de Worker
+  preparerFouleAilleurs(variante, sr, ranger, finir) {
+    if (typeof Worker === 'undefined' || typeof Blob === 'undefined' || !window.URL || this.pasDeWorker) return false;
+    let w;
+    try {
+      const code = `const FabriqueSons = (${fabriqueDesSons.toString()})();
+onmessage = e => {
+  const { variante, sr } = e.data, F = FabriqueSons, V = F.ECLATS_FOULE[variante];
+  for (let i = 0; i < 3; i++) { const y = F.fondFoule(sr / 2, { duree: 8, nVoix: V.nVoix, proche: V.proche, place: V.place, graine: 101 + i * 13 }); const x = F.surechantillonner(F.niveler(y, F.NIVEAUX.fondFoule), 2); postMessage({ cle: 'foule' + variante + 'fond' + i, x }, [x.buffer]); }
+  V.quoi.forEach((quoi, k) => { const x = F.niveler(F.eclatFoule(sr, quoi, { graine: 500 + k * 7 }), F.NIVEAUX.eclatFoule); postMessage({ cle: 'foule' + variante + 'eclat' + k, x }, [x.buffer]); });
+  postMessage({ fini: true });
+};`;
+      const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+      w = new Worker(url);
+      URL.revokeObjectURL(url);
+    } catch (e) { this.pasDeWorker = true; return false; }
+    w.onmessage = e => { if (e.data.fini) { w.terminate(); finir(); } else ranger(e.data.cle, e.data.x); };
+    w.onerror = () => { w.terminate(); this.pasDeWorker = true; const P = this.foulesPretes[variante]; P.enCours = false; this.preparerFoule(variante); };
+    w.postMessage({ variante, sr });
+    return true;
+  },
+  // La foule du marché en fond, sans boucle qu'on entende : trois fonds de 8 s,
   // fabriqués une fois, qui s'enchaînent en fondu, chacun repris à un endroit tiré au sort, et des éclats proches
   // (un rire, un marchand, un enfant...) lâchés au hasard par-dessus. allumer = false : elle s'éteint en fondu.
   fouleMarche(allumer, variante = SONS_A_CHOISIR.foule) {
     if (!this.pret) return;
     if (!allumer) {
+      this.fouleVoulue = null;
       clearTimeout(this.fouleMinuterie); clearTimeout(this.fouleEclats);
       if (this.fouleBus) { const b = this.fouleBus, t = this.ctx.currentTime; b.gain.cancelScheduledValues(t); b.gain.setValueAtTime(b.gain.value, t); b.gain.linearRampToValueAtTime(0, t + 1.2); setTimeout(() => b.disconnect(), 1500); }
       this.fouleBus = null;
       return;
     }
     if (this.fouleBus) return;
+    // (pas encore prête : on la finit en tâche de fond, et elle entre dès qu'elle est là, si l'on est toujours sur la place)
+    const P = this.foulesPretes && this.foulesPretes[variante];
+    if (FabriqueSons.ECLATS_FOULE[variante] && !(P && P.prete)) {
+      this.fouleVoulue = variante;
+      return this.preparerFoule(variante, () => { if (this.fouleVoulue === variante && !this.fouleBus) this.fouleMarche(true, variante); });
+    }
+    this.fouleVoulue = null;
     const V = FabriqueSons.ECLATS_FOULE[variante] || FabriqueSons.ECLATS_FOULE.C, ctx = this.ctx, bus = this.fouleBus = ctx.createGain();
     bus.gain.setValueAtTime(0, ctx.currentTime); bus.gain.linearRampToValueAtTime(1, ctx.currentTime + 2.5); bus.connect(this.busSons);
     const fond = i => this.tamponRefait(`foule${variante}fond${i}`, sr => {
@@ -436,9 +545,26 @@ if (typeof Son !== 'undefined') Object.assign(Son, {
   },
 });
 
+// (27/10) Dès que le son démarre (au premier geste du joueur), la foule choisie se prépare en tâche de fond
+if (typeof Son !== 'undefined') {
+  const demarrerDuJeu = Son.demarrer;
+  Son.demarrer = function () {
+    const avant = this.pret;
+    const r = demarrerDuJeu.apply(this, arguments);
+    if (!avant && this.pret && SONS_A_CHOISIR.actif && SONS_A_CHOISIR.foule && typeof window !== 'undefined' && !window.__pasDePreparation) setTimeout(() => this.preparerFoule(SONS_A_CHOISIR.foule), 2500);
+    return r;
+  };
+}
+
 // Les six sons, au format de SONS (pour Son.jouer). o.matiere pour le marteau ('bois' ou 'metal')
 if (typeof SONS !== 'undefined') {
   for (const v of ['C', 'D']) SONS['foule' + v] = function (t, bus, o = {}) { const d = o.duree || 6; this.lireTampon(this.tamponRefait('foule' + v + d, sr => FabriqueSons.foule(v, sr, { duree: d })), t, bus); };
+  SONS.marteauAtelier = function (t, bus, o = {}) {
+    const m = ['bois', 'fer', 'cuir'].includes(o.matiere) ? o.matiere : o.matiere === 'metal' ? 'fer' : 'bois';
+    const dern = (this.derniersMarteaux = this.derniersMarteaux || {});
+    let g = 1 + Math.floor(Math.random() * 4); if (g === dern[m]) g = g % 4 + 1; dern[m] = g;
+    this.lireTampon(this.tamponRefait(`marteauAtelier${m}${g}`, sr => FabriqueSons.marteauAtelier(sr, { matiere: m, graine: g })), t, bus);
+  };
   for (const v of ['A', 'B']) {
     SONS['marteau' + v] = function (t, bus, o = {}) { const m = o.matiere === 'metal' ? 'metal' : 'bois', d = o.duree || 2.4, g = o.graine || 0; this.lireTampon(this.tamponRefait(`marteau${v}${m}${d}g${g}`, sr => FabriqueSons['marteau' + v](sr, { matiere: m, duree: d, graine: g || undefined })), t, bus); };
     SONS['cloche' + v] = function (t, bus, o = {}) { this.lireTampon(this.tamponRefait('cloche' + v + (o.coups || ''), sr => FabriqueSons['cloche' + v](sr, { coups: o.coups })), t, bus); };
@@ -446,13 +572,13 @@ if (typeof SONS !== 'undefined') {
 }
 
 // Le point d'accroche des trois sons refaits : renvoie vrai si le nouveau son a joué (le joueur a choisi et le
-// drapeau est levé), faux sinon (on garde alors l'ancien son). quoi : 'marteau' (o.matiere : 'bois' ou 'metal' ; o.lieu :
-// 'forge' pour la forge), 'cloche', 'foule'
+// drapeau est levé), faux sinon (on garde alors l'ancien son). quoi : 'marteau' (o.lieu : 'forge', 'charpentier' ou
+// l'atelier par défaut ; o.matiere : 'bois', 'fer' (ou 'metal') ou 'cuir'), 'cloche', 'foule'
 // (o.scene : la foule de fond de cette scène, éteinte quand elle s'arrête ou passe en pause)
 function sonAChoisir(quoi, o = {}) {
   if (!SONS_A_CHOISIR.actif || typeof Son === 'undefined' || !Son.pret) return false;
   let v = SONS_A_CHOISIR[quoi];
-  if (v && typeof v === 'object') v = v[o.lieu === 'forge' ? 'forge' : 'atelier'];   // (le marteau : une variante pour la forge, une pour l'atelier)
+  if (v && typeof v === 'object') v = v[o.lieu === 'forge' || o.lieu === 'charpentier' ? o.lieu : 'atelier'];   // (le marteau : la forge, les charpentiers, l'atelier)
   if (!v || (quoi !== 'foule' && !SONS[quoi + v])) return false;   // (pas encore choisi : l'ancien son, ou rien)
   if (quoi === 'foule' && o.scene) {
     Son.fouleMarche(true, v);
@@ -463,6 +589,15 @@ function sonAChoisir(quoi, o = {}) {
   }
   Son.jouer(quoi + v, o);
   return true;
+}
+
+// (27/10) Le son d'une réparation par les ouvriers de l'atelier, selon la matière de l'objet (MATERIAU_DE, CATEGORIES) :
+// le bois, le fer (et le fil d'or des bijoux : la petite enclume), le cuir (le maillet, puis l'aiguille et le fil)
+function jouerReparation(materiau) {
+  if (typeof Son === 'undefined') return;
+  const m = materiau === 'cuir' ? 'cuir' : materiau === 'bois' ? 'bois' : 'fer';
+  if (!sonAChoisir('marteau', { matiere: m })) return Son.jouer(m === 'cuir' && SONS.couture ? 'couture' : 'marteau');
+  if (m === 'cuir' && SONS.couture) setTimeout(() => Son.jouer('couture'), 1100);
 }
 
 if (typeof module !== 'undefined' && module.exports) module.exports = { FabriqueSons, SONS_A_CHOISIR };
