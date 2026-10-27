@@ -66,6 +66,8 @@ Object.assign(MarcheScene.prototype, {
 
   construirePlace() {
     const G = this.G, P = PLACE_MARCHE;
+    // (v1.64) le brouhaha de la place, en fond (en attente du choix du joueur : voir sonAChoisir, src/sonsRefaits.js)
+    if (typeof sonAChoisir === 'function') sonAChoisir('foule', { scene: this });
     // l'ancienne vue (la rue en demi-cercle) s'efface : tout se passe sur la place
     for (const o of [this.fondVue, this.fondVue && this.fondVue.paysage, this.solVue, this.monde, this.vue]) if (o && o.setVisible) o.setVisible(false);
     if (this.bulleCrieur) { this.bulleCrieur.destroy(); this.bulleCrieur = null; }
@@ -666,6 +668,15 @@ Object.assign(MarcheScene.prototype, {
   // Rien ne bouge quand une boutique, une vue de près ou la carte est ouverte
   bloquePlace() { return !!(this.panneauOuvert || this.vitrineOuverte || this.boutiqueC || this.listeC || this.carteC || this.jeuLance || conseilOuvert()); },
 
+  // (v1.64) Le sol de la place à cet endroit : les dalles du centre (la pierre), la terre battue sous les étals et sur
+  // les chemins d'usure, l'herbe ailleurs ; la neige au Givre
+  solSousLesPieds(x, y) {
+    if (typeof saisonDe === 'function' && saisonDe(this.G) === 'givre') return 'neige';
+    if (typeof planSolPlace !== 'function') return 'herbe';
+    const plan = this.planSolSons || (this.planSolSons = planSolPlace()), px = x / 2, py = y / 2, [cx, cy] = plan.centre;
+    if (Math.hypot(px - cx, (py - cy) * 1.55) < plan.rDalles - 12) return 'pierre';
+    return typeof estTerrePlace === 'function' && estTerrePlace(plan, px, py) ? 'terre' : 'herbe';
+  },
   bloqueParObstacle(x, y) { return this.obstacles.some(([x0, y0, x1, y1]) => x > x0 && x < x1 && y > y0 && y < y1); },
 
   // (v1.49) Un itinéraire : une recherche sur une grille de 20 px (les étals, la fontaine, les troncs bloquent), puis on
@@ -871,6 +882,9 @@ Object.assign(MarcheScene.prototype, {
       if (vue !== this.vueHeros) this.vueHeros = vue;
       this.pasHeros += dt;
       const f = Math.floor(this.pasHeros / (this.courir ? 90 : 125)) % 4;
+      // (v1.64) ses pas sur la place, selon le sol sous ses pieds (un pas à chaque talon posé)
+      if ((f === 1 || f === 3) && f !== this.dernierPasHeros && typeof jouerPas === 'function') jouerPas(this.solSousLesPieds(h.x, h.y), 0.5);
+      this.dernierPasHeros = f;
       this.poserHeros(f === 1 ? 1 : f === 3 ? 2 : 0);
       // (v1.49) il n'avance plus vers son but depuis une demi-seconde : il s'arrête (jamais de marche sur place)
       if (this.cible) {

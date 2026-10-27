@@ -226,7 +226,7 @@ class RueScene extends Phaser.Scene {
     if (page === 'Banque' && typeof lieuDebloque === 'function' && !lieuDebloque(window.GAME, 'banque')) return this.dire('La porte de la banque est close pour toi. Elle s\'ouvrira au jour 4.');   // (v1.40)
     this.transition = true;
     const aller = () => {
-      Son.jouer('porte');
+      if (page !== 'Banque' && page !== 'Mages') Son.jouer('porte');   // (v1.64 : la banque et les Mages ont leur lourde porte, en ouvrant la page)
       if (page === 'Banque') { this.transition = false; this.scene.pause(); this.scene.launch('Banque', { retour: 'Rue' }); return; }
       if (page === 'Barbier') { this.transition = false; this.scene.pause(); this.scene.launch('Barbier', { retour: 'Rue' }); return; }   // (v1.48) chez Orvin
       if (page === 'Mages') { this.transition = false; this.scene.pause(); this.scene.launch('Mages', { retour: 'Rue' }); return; }   // (v1.56) chez les Mages-Charpentiers
@@ -259,7 +259,8 @@ class RueScene extends Phaser.Scene {
       this.heros.x = Phaser.Math.Clamp(this.heros.x + dx, 40, this.largeur - 40);
       this.heros.setFlipX(dx < 0);
       this.pas += delta;
-      if (!this.heros.marche) pasDeMarche(this, this.heros, 260);
+      // (v1.64) ses pas sur les pavés de la rue (dans la neige au Givre)
+      if (!this.heros.marche) pasDeMarche(this, this.heros, 260, { sol: typeof saisonDe === 'function' && saisonDe(this.G) === 'givre' ? 'neige' : 'paves', volumePas: 0.55 });
       this.heros.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
     } else this.heros.y = SOL_PROMENADE;
     if (this.orvin && !this.orvinSalue && Math.abs(this.heros.x - this.orvin.x) < 420) { this.orvinSalue = true; this.dire(etatBarbier(this.G).anniversaire === false ? "Orvin : « Bienvenue au Fil d'Argent ! Je viens de m'installer : le premier rasage est pour moi. Entre, l'ami ! »" : "Orvin : « Dix-huit ans ! J'attendais ce jour pour ouvrir : le premier rasage est pour moi. Entre, l'ami ! »"); }

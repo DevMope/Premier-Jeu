@@ -2065,7 +2065,7 @@ class CounterScene extends Phaser.Scene {
     }
     if (choix === 'corbeau') pencher(G, 'piege');
     this.raconter(texte, choix === 'rien' ? 'Pas de réponse' : 'Le secours part');
-    Son.jouer(choix === 'rien' ? 'froid' : 'glisse');
+    Son.jouer(choix === 'rien' ? 'froid' : choix === 'corbeau' && SONS.corbeau ? 'corbeau' : 'glisse');   // (v1.64 : le corbeau croasse en partant)
     // l'oiseau qui part : l'aigle traverse le ciel de gauche à droite, le corbeau s'en va, le pigeon repart
     if (choix === 'aigle' || choix === 'corbeau') {
       const ai = this.add.sprite(FENETRE.x - 60, FENETRE.y + 70, choix === 'aigle' ? 'aigleVolM' : 'corbeauVolH').setScale(choix === 'aigle' ? 2.2 : 2.6).setDepth(1.4)
@@ -2741,7 +2741,8 @@ class CounterScene extends Phaser.Scene {
   reparer(id) {
     const erreur = reparerObjet(this.G, this.voyageur, id);
     if (erreur) { Son.jouer('refus'); return this.dire(erreur, ''); }
-    Son.jouer('marteau');
+    // (27/10) l'ouvrier de l'atelier répare : son marteau selon la matière (le bois, le fer, le cuir puis l'aiguille)
+    if (typeof jouerReparation === 'function') jouerReparation(MATERIAU_DE[id]); else Son.jouer('marteau');
     this.dessinerPieces();
     this.dire(`Merci ! ${prenomDe(EMPLOYES[this.G.dernierReparateurComptoir].nom)} a fait vite : ${monNom(id, ITEMS[id].nom.toLowerCase())} ${ITEMS[id].nom.toLowerCase()} ${genreDe(id).includes('p') ? 'sont' : 'est'} comme ${accordAdj(id, 'neuf', 'neuve', 'neufs', 'neuves')}. Voilà ${PRIX_REPARATION} pièces pour l'atelier.`);
   }

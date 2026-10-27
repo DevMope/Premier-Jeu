@@ -180,7 +180,8 @@ function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts', armeForcee = und
 // Fait marcher un personnage pendant `duree` ms : ses jambes alternent, ses bras se balancent,
 // un peu de poussière se soulève à chaque pas. (Pour toute image qui a ses textures « _pas1/2 ».)
 // (planche 85) Le joueur a huit images de marche (_m0 à _m7, 70 ms chacune) : on s'en sert dès qu'elles sont prêtes.
-function pasDeMarche(scene, sprite, duree, { poussiere = true } = {}) {
+// (v1.64) `sol` ('herbe', 'neige', 'boue', 'paves') : on entend chaque pas sur ce sol ; `volumePas` : son volume
+function pasDeMarche(scene, sprite, duree, { poussiere = true, sol = null, volumePas = 1 } = {}) {
   const base = sprite.texture.key.replace(/_(pas[12]|m\d)$/, '');
   const huit = typeof marcheJoueurPrete === 'function' && marcheJoueurPrete(scene, base);
   if (!huit && !scene.textures.exists(base + '_pas1')) return;
@@ -198,6 +199,7 @@ function pasDeMarche(scene, sprite, duree, { poussiere = true } = {}) {
     sprite.setTexture(images[k]);
     sprite.phaseMarche = { base, n, k, t: scene.time.now };
     const contact = huit ? k % 4 === 0 : k % 2 === 1;   // (le talon qui se pose)
+    if (sol && contact && sprite.visible && typeof jouerPas === 'function' && !(scene.time.timeScale > 1.5)) jouerPas(sol, volumePas);
     if (poussiere && contact && sprite.visible && sprite.alpha > 0.5 && !sprite.mask && !sprite.parentContainer) {
       const p = scene.add.image(sprite.x + ((huit ? k === 0 : k === 1) ? -6 : 6), sprite.y - 2, 'halo').setScale(0.12).setTint(0xc8b090).setAlpha(0.45).setDepth(sprite.depth - 0.01);
       scene.tweens.add({ targets: p, scale: 0.32, alpha: 0, y: p.y - 8, duration: 420, onComplete: () => p.destroy() });

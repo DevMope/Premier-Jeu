@@ -172,7 +172,7 @@ class EtangScene extends Phaser.Scene {
       h.x = Phaser.Math.Clamp(h.x + dx, min, E.est);
       h.setFlipX(dx < 0);
       this.pas += delta;
-      if (!h.marche) pasDeMarche(this, h, 260);
+      if (!h.marche) pasDeMarche(this, h, 260, { sol: typeof saisonDe === 'function' && saisonDe(window.GAME) === 'givre' ? 'neige' : 'terre', volumePas: 0.55 });   // (v1.64 : le chemin de terre de l'étang)
       h.y = SOL_PROMENADE - Math.abs(Math.sin(this.pas / 120)) * 2;
       // (tout à l'ouest, à pied : c'est la route de la place)
       if (!this.sortie && !this.fini && !this.entree && dx < 0 && h.x <= E.ouest - 28) this.repartir();

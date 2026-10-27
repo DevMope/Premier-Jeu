@@ -329,6 +329,9 @@ const Son = {
     // (chaque famille de sons passe par son propre volume)
     let bus = nom === 'voix' ? this.busVoix : SONS_INTERFACE.has(nom) ? this.busInterface : this.busSons;
     bus = this.busCorrige(nom, bus);
+    // (v1.64) un bruitage fabriqué une fois, puis rejoué depuis son tampon (voir src/sonsRecits.js)
+    if (S.cache && this.jouerCache) return this.jouerCache(nom, bus, options);
+    if (this.surJoue) this.surJoue(nom, options);
     S.call(this, this.ctx.currentTime + 0.01, bus, options);
   },
   // Un petit gain propre au son, le temps qu'il se joue (voir VOLUME_SONS)
@@ -842,7 +845,7 @@ SONS.voix = function (t, bus, o) {
 };
 
 // Les onomatopées du carnet de voyage : le son qui va avec chaque mot
-const SON_DES_MOTS = [['TCHAK', 'coup'], ['BLONG', 'bouclier'], ['FIOUU', 'siffle'], ['HOP', 'saut'], ['Miam', 'miam'], ['Glou', 'glou'], ['AÏE', 'aie'], ['OUILLE', 'aie'], ['CRAC', 'aie'], ['Atchoum', 'aie'], ['PLOUF', 'plouf'], ['Frrrt', 'page'], ['Frotte', 'balai'], ['Pfff', 'balai'], ['Tchac', 'balai'], ['Hop', 'saut']];
+const SON_DES_MOTS = [['TCHAK', 'coup'], ['BLONG', 'bouclier'], ['FIOUU', 'fleche'], ['FWOUF', 'torche'], ['HOP', 'saut'], ['Miam', 'miam'], ['Glou', 'glou'], ['AÏE', 'aie'], ['OUILLE', 'aie'], ['CRAC', 'aie'], ['Atchoum', 'aie'], ['PLOUF', 'plouf'], ['Frrrt', 'page'], ['Frotte', 'balai'], ['Pfff', 'balai'], ['Tchac', 'balai'], ['Hop', 'saut']];
 function sonDuMot(mot) { const trouve = SON_DES_MOTS.find(([m]) => mot.startsWith(m)); return trouve ? trouve[1] : null; }
 
 // La création du personnage : le thème du titre, en plus doux (boîte à musique et harpe, sans

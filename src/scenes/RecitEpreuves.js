@@ -398,6 +398,7 @@ Object.assign(StoryScene.prototype, {
   },
   // Le feu de camp (bûches, flamme, braises) ; renvoie { feu, flamme, lumiere }
   feuDeCamp(x, { lumiere = 150 } = {}) {
+    if (!this.rapide) Son.jouer('feuDeCamp', { duree: 4 });   // (v1.64 : le souffle des flammes, les crépitements)
     const feu = this.garder(this.add.image(x, SOL_RECIT + 2, 'feuCampHD').setOrigin(0.5, 1).setScale(2.5).setDepth(2.6));
     const flamme = this.garder(this.add.sprite(x, SOL_RECIT - 10, 'flammeBougie0').setOrigin(0.5, 1).setScale(5).setDepth(2.7).setTint(0xff9a30).play('flammeBougie'));
     // trois langues de flamme (orange, puis jaune au cœur), qui dansent chacune à son rythme
@@ -762,8 +763,7 @@ const SCENES_EPREUVES = {
       this.ombreNuit.ajouter(bout);
       const lueur = this.lueur(bout, 0, 0xffb040, 0.45);
       M.torche = { o, bout, lueur };
-      this.onomatopee(o.x, o.y - 80, 'FWOUF !', '#ffc060');
-      Son.jouer('feu');
+      this.onomatopee(o.x, o.y - 80, 'FWOUF !', '#ffc060');   // (v1.64 : le mot joue la torche qui prend)
       await this.animer({ targets: bout, r: reussie ? 260 : 160, duration: 500, ease: 'Back.easeOut' });
       if (!M.lesYeux) return;
       // les loups, pris dans la lumière
@@ -899,8 +899,7 @@ const SCENES_EPREUVES = {
       this.ombreNuit.ajouter(bout);
       this.lueur(bout, 0, 0xffb040, 0.4);
       M.torche = { o, bout };
-      this.onomatopee(o.x, o.y - 80, 'FWOUF !', '#ffc060');
-      Son.jouer('feu');
+      this.onomatopee(o.x, o.y - 80, 'FWOUF !', '#ffc060');   // (v1.64 : le mot joue la torche qui prend)
       await this.animer({ targets: bout, r: reussie ? 280 : 170, duration: 600, ease: 'Back.easeOut' });
       // la lumière réveille les chauves-souris : elles s'envolent en piaillant
       this.onomatopee(480, 90, 'KIII !', '#e0c0ff');
