@@ -455,18 +455,20 @@ function puits89(s, cle = 'puits89') {
   t.contour(); t.texture(s, cle); return cle;
 }
 // le muret d'un jardin, vu de face, et sa petite grille de fer au milieu
-function murJardin89(s, cle, L) {
+// (retours du joueur) sans portillon par défaut : sa petite grille de fer, juste devant le tronc du pommier, se lisait comme
+// une bouche d'égout posée de travers sur l'arbre. Un muret continu, sa couvertine, le lierre et les roses.
+function murJardin89(s, cle, L, { portail = false } = {}) {
   if (s.textures.exists(cle)) return cle;
-  const H = 26, t = toileV2(L, H), gx = Math.round(L / 2) - 10;
+  const H = 26, t = toileV2(L, H), gx = portail ? Math.round(L / 2) - 10 : -1000;
   for (let y = 6; y < H; y++) for (let x = 0; x < L; x++) {
     if (x >= gx && x < gx + 20) continue;
     if (y < 10) { t.poser(x, y, 'taille', y === 6 ? 5 : y === 9 ? 1 : 3); continue; }
     const row = Math.floor((y - 10) / 5), bx = (x + (row % 2) * 6) % 12; t.poser(x, y, 'pierre', bx === 0 || (y - 10) % 5 === 0 ? 1 : 3 + (hachage(Math.floor((x + (row % 2) * 6) / 12), row, 69) > 0.7 ? 1 : 0) - (y > H - 3 ? 1 : 0));
   }
-  for (const px of [gx - 3, gx + 20]) for (let y = 2; y < H; y++) for (let x = px; x < px + 3; x++) t.poser(x, y, 'taille', y === 2 ? 5 : x === px ? 4 : 2);
-  for (let x = gx; x < gx + 20; x += 3) for (let y = 4; y < H - 1; y++) t.poser(x, y, 'fer', 2 + (y === 4 ? 2 : 0));
-  for (const yy of [6, 14, H - 3]) for (let x = gx; x < gx + 20; x++) t.poser(x, yy, 'fer', 3);
-  for (let x = gx; x < gx + 20; x++) { const y = 3 + Math.round(Math.abs(x - gx - 10) * 0.15); t.poser(x, y, 'fer', 4); }
+  if (portail) for (const px of [gx - 3, gx + 20]) for (let y = 2; y < H; y++) for (let x = px; x < px + 3; x++) t.poser(x, y, 'taille', y === 2 ? 5 : x === px ? 4 : 2);
+  if (portail) for (let x = gx; x < gx + 20; x += 3) for (let y = 4; y < H - 1; y++) t.poser(x, y, 'fer', 2 + (y === 4 ? 2 : 0));
+  if (portail) for (const yy of [6, 14, H - 3]) for (let x = gx; x < gx + 20; x++) t.poser(x, yy, 'fer', 3);
+  if (portail) for (let x = gx; x < gx + 20; x++) { const y = 3 + Math.round(Math.abs(x - gx - 10) * 0.15); t.poser(x, y, 'fer', 4); }
   // le lierre et les roses qui débordent du muret
   for (let n = 0; n < L / 4; n++) { const x = Math.floor(hachage(n, 1, 70) * L); if (x >= gx - 4 && x < gx + 24) continue; t.forme(n % 2 ? 'feuilleV2' : 'feuilleC2', ellipsoide(x, 5 + hachage(n, 2, 70) * 4, 2.6, 2), { ombre: false }); if (n % 3 === 0) { t.poser(x, 4, 'fleurP2', 4); t.poser(x + 1, 4, 'fleurP2', 3); } }
   t.contour(); t.texture(s, cle); return cle;
