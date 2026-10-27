@@ -82,6 +82,7 @@ class RueScene extends Phaser.Scene {
     this.banc = r.banc; this.surLeBanc = null;
     this.time.addEvent({ delay: 9000, startAt: 8000, loop: true, callback: () => this.reposBanc() });
     if (Math.random() < 0.6) this.reposBanc();
+    if (typeof brancherQuartiersRue === 'function') brancherQuartiersRue(this);   // (v1.65, la ville en quartiers : la pancarte de la placette)
   }
 
   // (v1.57, planche 75 v2) La rue sur le pont de Pont-Royal : à gauche le tonnelier, ta maison sur son lot, la maison rose
