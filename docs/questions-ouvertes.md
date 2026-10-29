@@ -7,10 +7,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ### Le tableau des fins (`docs/histoire/fins.md`)
 
-- **Q107** — En Lumière retournée victorieuse (L2a), JeuneGoy apprend-il la vérité sur ses parents, ou cette révélation reste-t-elle réservée à l'Ombre (★ 28/10) ?
-- **Q108** — Quand le Sage tombe (O1, L2a), le scellement de la Porte tient-il sans lui, ou commence-t-il à céder, ce qui ouvre une menace pour l'après-fin ?
-- **Q109** — Dans Lumière cruelle (L4), JeuneGoy meurt-il pour de bon, ou le sursis de la Faucheuse peut-il en faire le champion brisé du Sage (L4b) ?
-- **Q110** — Après la mort de JeuneGoy (L4), le jeu propose-t-il une après-fin avec celui à qui l'on a confié le comptoir, ou seulement le générique ?
 - **Q111** — En neutre, à quel Banni peut-on donner l'armure : à Garrick seulement, à un chef choisi dans une liste, ou à celui avec qui la relation est la plus haute ?
 - **Q112** — Les fins neutres se répartissent-elles comme je le propose (N1 : la vague et la guerre ; N2 : la révolte ; N3 : le dragon et son père libres), ou ces conséquences se mélangent-elles selon l'état du monde ?
 - **Q113** — Peut-on attaquer le Sage pendant sa transformation dans d'autres voies que l'Ombre et la Lumière retournée ?
@@ -18,6 +14,13 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q115** — En Ombre, Garrick peut-il mourir (O2), ou sa survie est-elle garantie dans cette voie ?
 - **Q116** — Que reçoit précisément le joueur à la fin VieuxGoy : une cinématique seule, un succès, un objet pour la partie suivante (comme le sceau neutre) ?
 - **Q117** — Le « témoin » qui permet de prévenir les Bannis est-il un personnage précis (le mendiant, Célestin, un panda renégat), ou un indice matériel ?
+
+### Nouvelles questions (29/10)
+
+- **Q131** — Le champion brisé du Sage (Lumière cruelle sauvée par la Faucheuse) : le joueur continue-t-il à jouer JeuneGoy au service du Sage, dans une après-fin sombre ? Ou est-ce une fin fermée, avec une cinématique ?
+- **Q132** — La porte de Vorhal'Düm qui cède après la chute du Sage : est-ce le dernier acte de la fin (une ultime épreuve juste après la victoire), ou une menace qui monte pendant l'après-fin ?
+- **Q133** — Les batailles de la guerre : les toutes petites batailles d'essai ont-elles lieu avant la grande guerre (pendant les derniers actes, comme des escarmouches), ou toutes pendant la guerre finale ?
+- **Q134** — Garrick apprend que le Sage est son père : est-ce aussi le cas en Ombre et en neutre, ou seulement dans certaines voies ?
 
 ### La chronologie (`docs/histoire/chronologie.md`)
 
@@ -45,6 +48,10 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q107~~ La vérité sur les parents reste bloquée en Lumière retournée ; JeuneGoy peut apprendre que Garrick est son frère (29/10).
+- ~~Q108~~ La porte cède de plus en plus vite : renvoyer Vorhal'Düm, l'inviter, ou le combattre (29/10).
+- ~~Q109~~ Oui, le champion brisé du Sage (29/10).
+- ~~Q110~~ On peut continuer, mais les récits sont bloqués : la mort est punie sévèrement (29/10).
 - ~~Q106 — Les trois armures de la planche 93 ?~~ Toutes les pièces conviennent (29/10).
 - ~~Q102 — Combien de pièces d'armure ?~~ 8, plus les armes à part (29/10).
 - ~~Q103 — L'opportuniste aigri et naïf, Lucien ou le duc ?~~ Le duc (29/10).
