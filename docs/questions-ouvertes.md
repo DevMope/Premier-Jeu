@@ -5,22 +5,16 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 ## En attente
 
 
-### Le tableau des fins (`docs/histoire/fins.md`)
-
-- **Q111** — En neutre, à quel Banni peut-on donner l'armure : à Garrick seulement, à un chef choisi dans une liste, ou à celui avec qui la relation est la plus haute ?
-- **Q112** — Les fins neutres se répartissent-elles comme je le propose (N1 : la vague et la guerre ; N2 : la révolte ; N3 : le dragon et son père libres), ou ces conséquences se mélangent-elles selon l'état du monde ?
-- **Q113** — Peut-on attaquer le Sage pendant sa transformation dans d'autres voies que l'Ombre et la Lumière retournée ?
-- **Q114** — La frontière entre la Rage (R) et l'Engeance (E) se joue-t-elle sur le moment de l'attaque (moitié dragon ou pleine forme), ou sur autre chose ?
-- **Q115** — En Ombre, Garrick peut-il mourir (O2), ou sa survie est-elle garantie dans cette voie ?
-- **Q116** — Que reçoit précisément le joueur à la fin VieuxGoy : une cinématique seule, un succès, un objet pour la partie suivante (comme le sceau neutre) ?
-- **Q117** — Le « témoin » qui permet de prévenir les Bannis est-il un personnage précis (le mendiant, Célestin, un panda renégat), ou un indice matériel ?
-
 ### Nouvelles questions (29/10)
 
 - **Q131** — Le champion brisé du Sage (Lumière cruelle sauvée par la Faucheuse) : le joueur continue-t-il à jouer JeuneGoy au service du Sage, dans une après-fin sombre ? Ou est-ce une fin fermée, avec une cinématique ?
 - **Q132** — La porte de Vorhal'Düm qui cède après la chute du Sage : est-ce le dernier acte de la fin (une ultime épreuve juste après la victoire), ou une menace qui monte pendant l'après-fin ?
 - **Q133** — Les batailles de la guerre : les toutes petites batailles d'essai ont-elles lieu avant la grande guerre (pendant les derniers actes, comme des escarmouches), ou toutes pendant la guerre finale ?
 - **Q134** — Garrick apprend que le Sage est son père : est-ce aussi le cas en Ombre et en neutre, ou seulement dans certaines voies ?
+- **Q135** — Le messager pour prévenir les Bannis (Lumière) : Claude propose qu'il découle des choix passés, avec des messagers plus ou moins sûrs (le pigeon blessé que tu as soigné, Célestin, un panda renégat, un infiltré). D'accord ?
+- **Q136** — La mort de Garrick en Ombre : une seule mort, liée à un très mauvais choix du joueur, ou aussi une mort « choisie » par Garrick (le prix de la vérité), même si le joueur a bien joué ?
+- **Q137** — La carte à collectionner de VieuxGoy : les cartes s'accumulent-elles d'une partie à l'autre, comme un album, pour pousser à rejouer ?
+- **Q138** — Les degrés d'Ombre et de Lumière : combien de degrés (Claude propose cinq de chaque côté, en plus du neutre), et faut-il les montrer au joueur ou les garder cachés ?
 
 ### La chronologie (`docs/histoire/chronologie.md`)
 
@@ -48,6 +42,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q111 à Q117~~ Réponses du 29/10 dans `docs/game-design.md`.
 - ~~Q107~~ La vérité sur les parents reste bloquée en Lumière retournée ; JeuneGoy peut apprendre que Garrick est son frère (29/10).
 - ~~Q108~~ La porte cède de plus en plus vite : renvoyer Vorhal'Düm, l'inviter, ou le combattre (29/10).
 - ~~Q109~~ Oui, le champion brisé du Sage (29/10).
