@@ -166,6 +166,8 @@ Object.assign(MarcheScene.prototype, {
     this.ombreHeros = ombre(hx, hy, 40);
     place.add(this.heros);
     this.vueHeros = 'dos'; this.pasHeros = 0; this.cible = null; this.apresMarche = null;
+    // (v1.65, façon Pokémon : revenu de l'étang, il est tourné vers la place, et fait un pas sur la route pour se dégager)
+    if (this.depuisPlace === 'etang' && typeof PAS_ARRIVEE !== 'undefined') { this.vueHeros = 'profil'; this.versGauche = true; this.poserHeros(0); this.cible = [hx - PAS_ARRIVEE, hy]; this.chemin = null; this.meilleur = { d: 1e9, t: 0 }; }
     // le crieur annonce la première nouvelle du jour
     if (G.gazette && G.gazette.jour === G.jour && G.gazette.lignes.length) {
       const [x, y] = LIEUX_PLACE.crieur;
@@ -185,7 +187,7 @@ Object.assign(MarcheScene.prototype, {
     this.invitePlace = this.add.text(480, 462, '', style(14, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#1a120add', padding: { x: 12, y: 5 } })).setOrigin(0.5).setDepth(6).setVisible(false);
     this.oublierBoutonsPlace(); this.creerBoutonsPlace();   // (MarcheBoutons.js : ils s'écartent des noms des étals)
     // (v1.61) pour quitter un lieu : un bouton bien visible sur le coin du cadre, et un clic n'importe où sur la place
-    if (this.retour.setTexte) this.retour.setTexte('✕ Partir · Échap');
+    if (this.retour.setTexte) this.retour.setTexte('Partir (Échap)');
     for (const o of [this.retour.fond, this.retour.label]) if (o) o.setPosition(842, 296).setDepth(7);
     // les commandes au clavier
     const k = this.input.keyboard;
@@ -821,6 +823,12 @@ Object.assign(MarcheScene.prototype, {
     const c = this.carteC = this.add.container(0, 0).setDepth(30);
     c.add(this.add.rectangle(480, 34, 960, 68, 0x1a120a, 0.92));
     c.add(this.add.text(480, 50, 'La place des Mastres · clique sur un lieu pour y aller · M ou Échap : refermer', style(14, '#f3d98a', { fontStyle: 'bold' })).setOrigin(0.5));
+    // (v1.65, la ville en quartiers) le plan de toute la ville, à la place de la carte de la place (villeQuartiers.js) :
+    // un troisième bouton sous « La place (M) » et « Ma liste (L) » (en colonne), loin de « Partie sauvegardée »
+    if (typeof basculerVersPlanVille === 'function') {
+      const [bx, by, sens] = this.placeBoutons || [882, 108, 'col'], [px, py] = sens === 'col' ? [bx, by + 76] : [882, 184];
+      const b = creerBouton(this, px, py, 140, 'Le plan de la ville', () => basculerVersPlanVille(this)); b.label.setFontSize(13); c.add([b.fond, b.label]);
+    }
     for (const cle of Object.keys(LIEUX_PLACE)) {
       if (!this.actionsLieux[cle] || /^porte\d/.test(cle)) continue;   // (les portes rondes n'ont pas de nom sur la carte)
       const [x, y] = LIEUX_PLACE[cle], [n] = this.nomLieuPlace(cle), dy = { arche: -100, mendiant: -10, carte: 6, moulin: 34, coteaux: -150 }[cle] || 0;
@@ -847,7 +855,11 @@ Object.assign(MarcheScene.prototype, {
       this.vueHeros = 'profil'; this.versGauche = false; this.pasHeros += dt;
       const f = Math.floor(this.pasHeros / 125) % 4; this.poserHeros(f === 1 ? 1 : f === 3 ? 2 : 0);
       this.ombreHeros.setPosition(h.x + 2, h.y - 2); this.ombreHeros.yTri = h.y - 0.5;
-      if (h.x > P.L - 20 && !v.fondu) { v.fondu = true; Sauvegarde.maintenant(this.G, 'Marche'); this.cameras.main.fadeOut(450); this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Etang', { depuis: 'place' })); }
+      // (v1.65, façon Pokémon : l'écran tombe vite au noir, villeQuartiers.js, pendant qu'il fait ses derniers pas sur la route)
+      const finRoute = P.L - 20 - (typeof fermerEnNoir === 'function' ? P.vitesse * TRANSITIONS_VILLE.bord.noir : 0);
+      if (h.x > finRoute && !v.fondu) { v.fondu = true;
+        if (typeof allerDansLaVille === 'function') allerDansLaVille(this, { scene: 'Etang', donnees: { depuis: 'place' }, genre: 'bord' });
+        else { Sauvegarde.maintenant(this.G, 'Marche'); this.cameras.main.fadeOut(450); this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Etang', { depuis: 'place' })); } }
       for (const o of this.place.list) o.yTriPlace = o.yTri !== undefined ? o.yTri : o.y;
       this.place.sort('yTriPlace'); this.invitePlace.setVisible(false);
       return;
@@ -1193,7 +1205,7 @@ Object.assign(MarcheScene.prototype, {
     const tx = this.place.x + g.x * z, ty = this.place.y + (g.y - g.displayHeight) * z;
     const yc = Math.max(ty - 20 - hB / 2, 87 + 14 + hB / 2);
     let xc = Phaser.Math.Clamp(tx + v.bulleCote * 120, L / 2 + 8, 952 - L / 2);
-    const zb = this.zoneBoutonsPlace();   // (sous les boutons « La place · M » et « Ma liste · L », où qu'ils soient)
+    const zb = this.zoneBoutonsPlace();   // (sous les boutons « La place (M) » et « Ma liste (L) », où qu'ils soient)
     if (yc - hB / 2 < zb[3] && yc + hB / 2 > zb[1]) xc = zb[0] > 480 ? Math.min(xc, zb[0] - 4 - L / 2) : Math.max(xc, zb[2] + 4 + L / 2);
     if (this._vignette && this._vignette.active && yc - hB / 2 < 160) xc = Math.min(xc, 568 - L / 2);   // (ni sous une vignette « Objectif atteint »)
     // (v1.63) ni sur le nom de l'étal qu'il présente : la bulle passe à côté de la bande, du côté de Garrick si elle y tient
@@ -1241,8 +1253,8 @@ Object.assign(MarcheScene.prototype, {
     const c = v.barre = this.add.container(0, 0).setDepth(150).setScrollFactor(0);
     if (v.question !== null) {   // (deux boutons clairs : reprendre là où l'on en était, ou ignorer la visite)
       const n = v.question + 1, et2 = E[v.question];
-      const b1 = creerBouton(this, 345, 456, 350, `▶ Reprendre la visite (${n} · ${et2.nom}) · Espace`, () => { if (!this.bloquePlace()) this.reprendreVisite(); });
-      const b2 = creerBouton(this, 660, 456, 260, '✕ Ignorer la visite · Échap', () => { if (!this.bloquePlace()) this.ignorerVisite(); });
+      const b1 = creerBouton(this, 345, 456, 350, `▶ Reprendre la visite : ${n} · ${et2.nom} (Espace)`, () => { if (!this.bloquePlace()) this.reprendreVisite(); });
+      const b2 = creerBouton(this, 660, 456, 260, 'Ignorer la visite (Échap)', () => { if (!this.bloquePlace()) this.ignorerVisite(); });
       let f = 15;   // (les deux textes à la même taille, et chacun tient dans son bouton)
       while (f > 10 && (b1.label.setFontSize(f).width > 350 - 28 || b2.label.setFontSize(f).width > 260 - 28)) f--;
       c.add([b1.fond, b1.label, b2.fond, b2.label]);
@@ -1254,7 +1266,7 @@ Object.assign(MarcheScene.prototype, {
       if (actif) b.setInteractive({ useHandCursor: true }).on('pointerdown', (p, lx, ly, ev) => { if (ev && ev.stopPropagation) ev.stopPropagation(); if (this.bloquePlace()) return; Son.jouer('clic'); fn(); });
       return b;
     };
-    const morceaux = [aide, bouton('◀ Revenir', '#6a4a24', () => this.revenirVisite(), v.i > 0), bouton('Étal suivant ▶', '#4f7a3a', () => this.etalSuivantVisite(), v.i < E.length - 1), bouton('Passer la visite · Échap', '#7a2a20', () => this.passerVisite())];
+    const morceaux = [aide, bouton('◀ Revenir', '#6a4a24', () => this.revenirVisite(), v.i > 0), bouton('Étal suivant ▶', '#4f7a3a', () => this.etalSuivantVisite(), v.i < E.length - 1), bouton('Passer la visite (Échap)', '#7a2a20', () => this.passerVisite())];
     const Ltot = morceaux.reduce((a, o) => a + o.width, 0) + 3 * 10 + 24;
     c.add(this.add.rectangle(480, 462, Ltot, 32, 0x140c08, 0.92).setStrokeStyle(2, 0xc9a227));
     let x = 480 - Ltot / 2 + 12;

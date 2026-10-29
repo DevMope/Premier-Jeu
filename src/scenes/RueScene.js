@@ -9,7 +9,8 @@ class RueScene extends Phaser.Scene {
   create() {
     const G = this.G = window.GAME;
     this.fini = false; this.transition = false;
-    this.cameras.main.fadeIn(400);
+    // (v1.65, façon Pokémon : de la place ou d'un quartier, la vue se rouvre aussi vite qu'elle s'est fermée, villeQuartiers.js)
+    if (typeof ouvrirDuNoir === 'function') ouvrirDuNoir(this, 400); else this.cameras.main.fadeIn(400);
     const sol = 470;
     this.portes = [];
     const ici = {
@@ -45,6 +46,8 @@ class RueScene extends Phaser.Scene {
     const x0 = this.depuis === 'marche' ? PLACES_RUE.arche - 60 : this.depuis === 'mages' ? PLACES_RUE.mages - 40 : this.depuis === 'essai' ? this.porteShop.x + 260 : this.porteShop.x + 40;   // (v1.56 : en sortant des Mages, ou après la marche d'essai)
     this.heros = this.add.image(x0, SOL_PROMENADE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(8.5).setFlipX(this.depuis === 'marche');
     this.cible = null; this.pas = 0;
+    // (v1.65, façon Pokémon : sorti du porche de la place, tourné vers la rue, il fait un pas pour s'en dégager)
+    if (this.depuis === 'marche' && typeof PAS_ARRIVEE !== 'undefined') this.cible = x0 - PAS_ARRIVEE;
     // (v1.40) le matin du jour 1, avec le didacticiel : Garrick t'accompagne jusqu'au marché
     this.garrick = null;
     if (typeof didacticiel === 'function' && didacticiel(G) && G.tuto && G.jour === 1 && this.depuis !== 'marche') {
@@ -83,6 +86,7 @@ class RueScene extends Phaser.Scene {
     this.banc = r.banc; this.surLeBanc = null;
     this.time.addEvent({ delay: 9000, startAt: 8000, loop: true, callback: () => this.reposBanc() });
     if (Math.random() < 0.6) this.reposBanc();
+    if (typeof brancherQuartiersRue === 'function') brancherQuartiersRue(this);   // (v1.65, la ville en quartiers : la pancarte de la placette)
   }
 
   // (v1.57, planche 75 v2) La rue sur le pont de Pont-Royal : à gauche le tonnelier, ta maison sur son lot, la maison rose
@@ -226,7 +230,7 @@ class RueScene extends Phaser.Scene {
     if (page === 'Banque' && typeof lieuDebloque === 'function' && !lieuDebloque(window.GAME, 'banque')) return this.dire('La porte de la banque est close pour toi. Elle s\'ouvrira au jour 4.');   // (v1.40)
     this.transition = true;
     const aller = () => {
-      if (page !== 'Banque' && page !== 'Mages') Son.jouer('porte');   // (v1.64 : la banque et les Mages ont leur lourde porte, en ouvrant la page)
+      if (page !== 'Banque' && page !== 'Mages' && page !== 'Marche') Son.jouer('porte');   // (v1.64 : la banque et les Mages ont leur lourde porte, en ouvrant la page ; v1.65 : l'arche, son souffle)
       if (page === 'Banque') { this.transition = false; this.scene.pause(); this.scene.launch('Banque', { retour: 'Rue' }); return; }
       if (page === 'Barbier') { this.transition = false; this.scene.pause(); this.scene.launch('Barbier', { retour: 'Rue' }); return; }   // (v1.48) chez Orvin
       if (page === 'Mages') { this.transition = false; this.scene.pause(); this.scene.launch('Mages', { retour: 'Rue' }); return; }   // (v1.56) chez les Mages-Charpentiers
@@ -234,6 +238,9 @@ class RueScene extends Phaser.Scene {
       if (page === 'VilleBasse') { this.transition = false; menuVilleBasse(this); return; }
       if (page === 'Diseuse') { this.transition = false; this.scene.pause(); this.scene.launch('Diseuse', { retour: 'Rue' }); return; }   // (v1.05) sous la tente de Madame Ysmée
       this.fini = true;
+      // (v1.65, façon Pokémon : sous le porche de l'arche, l'écran tombe vite au noir et il arrive à la sortie du porche, côté
+      // place, villeQuartiers.js)
+      if (page === 'Marche' && typeof allerDansLaVille === 'function') return allerDansLaVille(this, { quartier: 'place', depuis: 'rue', genre: 'bord' });
       Sauvegarde.maintenant(this.G, page === 'Maison' ? 'Maison' : 'Marche');
       this.cameras.main.fadeOut(300);
       this.cameras.main.once('camerafadeoutcomplete', () => (page === 'Maison' ? this.scene.start('Nuit', { matin: true }) : this.scene.start('Marche')));

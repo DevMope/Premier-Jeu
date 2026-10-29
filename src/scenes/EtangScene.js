@@ -20,12 +20,15 @@ class EtangScene extends Phaser.Scene {
     exclureScenes(this, 'Marche', 'Peche');
     creerHalo(this); creerMoulinHD(this); creerFumeeHD(this);
     this.r = construireMoulin(this, { jour: true });
-    this.cameras.main.setBounds(E.bord, 0, LARGEUR_MOULIN - E.bord, 540).fadeIn(500);
+    this.cameras.main.setBounds(E.bord, 0, LARGEUR_MOULIN - E.bord, 540);
+    // (v1.65, façon Pokémon : la vue se rouvre aussi vite qu'elle s'est fermée, villeQuartiers.js)
+    if (typeof ouvrirDuNoir === 'function') ouvrirDuNoir(this, 500); else this.cameras.main.fadeIn(500);
     // la cabane de Barnabé, sur son assise de pierre, au bord de l'étang (le dessin de la planche 71 v2), à l'échelle du chemin
     this.creerCabane();
     // JeuneGoy : il arrive par la route de la place (ou revient du ponton)
     textureJoueur(this, G);
-    const x0 = this.depuis === 'peche' ? PLACES_MOULIN.ponton + 120 : E.bord - 40;
+    // (v1.65, façon Pokémon : déjà posé au bout de la route, après le pont, tourné vers l'étang, il fait un pas)
+    const x0 = this.depuis === 'peche' ? PLACES_MOULIN.ponton + 120 : E.arrivee - (typeof PAS_ARRIVEE !== 'undefined' ? PAS_ARRIVEE : 48);
     this.heros = this.add.image(x0, SOL_PROMENADE, textureJoueur(this, G)).setOrigin(0.5, 1).setScale(echelleJoueur(7.5)).setDepth(8.5).setFlipX(this.depuis === 'peche');
     if (this.depuis !== 'peche') { this.entree = true; this.cible = E.arrivee; }
     this.cameras.main.scrollX = Phaser.Math.Clamp(x0 - 480, E.bord, LARGEUR_MOULIN - 960);
@@ -77,17 +80,19 @@ class EtangScene extends Phaser.Scene {
 
   allerVers(x, apres = null) { this.cible = Phaser.Math.Clamp(x, ETANG.ouest - 30, ETANG.est); this.apres = apres; }
 
-  // Repartir vers la place : à pied jusqu'au bout du chemin, à l'ouest, puis le fondu
+  // Repartir vers la place : à pied jusqu'au bord de la vue, à l'ouest ; l'écran tombe au noir (vite, façon Pokémon :
+  // villeQuartiers.js) pendant qu'il continue de marcher sur la route
   repartir() {
     if (this.fini || this.sortie) return;
     if (this.panneauC) this.fermerPanneau();
     this.sortie = true; this.entree = null;
-    this.cible = ETANG.bord - 60;
+    this.cible = Math.min(this.heros.x - 1, ETANG.bord + 20);   // (le bord de la vue)
     this.apres = () => {
       if (this.fini) return; this.fini = true;
+      this.cible = ETANG.bord - 60;
+      if (typeof allerDansLaVille === 'function') return allerDansLaVille(this, { scene: 'Marche', donnees: { depuis: 'etang' }, genre: 'bord' });
       Sauvegarde.maintenant(this.G, 'Marche');
-      this.cameras.main.fadeOut(400);
-      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Marche', { depuis: 'etang' }));
+      this.cameras.main.fadeOut(400); this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Marche', { depuis: 'etang' }));
     };
   }
 
@@ -99,7 +104,7 @@ class EtangScene extends Phaser.Scene {
     c.add(this.add.image(480, 388, panneauHD(this, 936, 200)).setScale(2));
     c.add(this.add.text(30, 300, titre, style(17, '#3b2410', { fontStyle: 'bold' })));
     c.add(this.add.text(930, 302, sousTitre, style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(1, 0));
-    this.boutonPanneau(842, 280, 150, '✕ Partir · Échap', () => this.fermerPanneau());
+    this.boutonPanneau(842, 280, 150, 'Partir (Échap)', () => this.fermerPanneau());
     return c;
   }
   boutonPanneau(x, y, l, texte, fn) {

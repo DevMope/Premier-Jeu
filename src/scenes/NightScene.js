@@ -32,7 +32,8 @@ class NightScene extends Phaser.Scene {
     if (!this.matin && typeof feteAFaire === 'function' && feteAFaire(G)) this.time.delayedCall(600, () => feteDes18Ans(this, () => {}));
 
     this.cameras.main.setBackgroundColor(this.matin ? '#2a1e12' : '#1e140c');
-    this.cameras.main.fadeIn(500);
+    // (v1.65 : rentré par la porte du comptoir, dans la rue Soucolline, la vue se rouvre aussi vite qu'elle s'est fermée)
+    if (typeof ouvrirDuNoir === 'function') ouvrirDuNoir(this, 500); else this.cameras.main.fadeIn(500);
     // Le décor : l'arrière-boutique, à la lueur du luminaire (plus sombre le soir)
     creerInterieurHD(this);
     const murN = this.add.image(0, 0, murInterieur(this, 'murArriere', { poteaux: [272, 412], graine: 310 })).setOrigin(0).setScale(2).setTint(this.matin ? 0xb8946c : 0x7a5c44);
