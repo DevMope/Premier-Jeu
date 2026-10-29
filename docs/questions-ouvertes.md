@@ -4,10 +4,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
-- **Q102 — Combien de pièces d'armure : 8 ou 9 ?** Le document de conception en compte 9 (une par contrée, Aube-Lame comprise). Le jeu en compte 8 (une par royaume libéré, et Aube-Lame est l'arme des Hommes, à part). Recommandation de Claude : garder 8, plus les armes à part.
-- **Q103 — L'opportuniste aigri et naïf** (« un pion qui se croit au-dessus de tout ») : est-ce Lucien Belhomme, le rival du comptoir d'à côté (c'est ainsi que Claude l'a noté), ou le duc de Pont-Royal ?
-- **Q104 — Le duc de Pont-Royal : garde-t-on une quête pour le faire tomber ?** Par exemple, révéler qu'il détourne les taxes « contre le dragon », ou l'humilier publiquement.
-- **Q105 — Le nom de l'orphelinat** où JeuneGoy a grandi, le pire de tous les royaumes, fermé à ses 8 ans.
+(aucune pour l'instant)
+
 
 ## À venir de la part de Claude (pas des questions)
 
@@ -20,6 +18,10 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q102 — Combien de pièces d'armure ?~~ 8, plus les armes à part (29/10).
+- ~~Q103 — L'opportuniste aigri et naïf, Lucien ou le duc ?~~ Le duc (29/10).
+- ~~Q104 — La chute du duc ?~~ Oui, très difficile, et remplacé par pire sur ordre du Sage (29/10).
+- ~~Q105 — Le nom de l'orphelinat ?~~ La Fleur du Pommier (29/10).
 - ~~Q101 — Le chantier 2 de la ville (le socle des quartiers) est-il validé ?~~ Oui (29/10), fusionné.
 
 Les questions posées avant le 29/10 (listes numérotées 1 à 59, puis la liste reformulée de 1 à 38) sont résolues ; leurs réponses sont dans `docs/game-design.md`, aux sections « L'histoire : réponses du joueur ».
