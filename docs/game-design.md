@@ -3715,3 +3715,4 @@ Le joueur demande plus d'événements, au hasard ou liés à son histoire, penda
   - **La scène de l'armure en neutre**, où le Sage vient lui-même la chercher au comptoir : oui.
   - **Le chat** : on peut utiliser le fait qu'il parle aux animaux pour recruter des animaux et des créatures aptes au combat ; la mémoire des bêtes est validée. **La Faucheuse** comme Ryuk, avec son sursis : validé.
   - **À préparer par Claude** : une page visuelle des fins (l'organisation la plus claire possible) avec l'ordre des révélations par voie ; des titres du jeu en français et en anglais ; la fiche musicale.
+- **29/10** : le chantier 2 de la ville, le socle des quartiers, est validé et fusionné. Le sort d'oubli renouvelé par vagues est validé : un grand sort originel lancé lors de la conquête, puis relancé régulièrement, la dernière vague il y a 13 ans, juste après le drame d'Eliodas et Wëanen (l'amnésie de Garrick) ; le nouveau sort de la fin Lumière est la vague suivante.
