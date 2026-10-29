@@ -4,7 +4,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
-- **Q106** — Les trois armures de la planche 93 (la lumineuse, la noircie, l'acier du forgeron) te conviennent-elles ? Quelles pièces faut-il reprendre ?
 
 ### Le tableau des fins (`docs/histoire/fins.md`)
 
@@ -46,6 +45,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q106 — Les trois armures de la planche 93 ?~~ Toutes les pièces conviennent (29/10).
 - ~~Q102 — Combien de pièces d'armure ?~~ 8, plus les armes à part (29/10).
 - ~~Q103 — L'opportuniste aigri et naïf, Lucien ou le duc ?~~ Le duc (29/10).
 - ~~Q104 — La chute du duc ?~~ Oui, très difficile, et remplacé par pire sur ordre du Sage (29/10).
