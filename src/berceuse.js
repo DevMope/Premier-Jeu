@@ -7,7 +7,7 @@ const BERCEUSE = {
   titre: 'La berceuse du lac',
   // Trois couplets de quatre heptasyllabes, rimes croisées (lus à voix haute : 7 pieds, l'accent sur la dernière)
   couplets: [
-    ['Dors, la brume est sur le lac,', 'Les roseaux ferment les yeux ;', 'La lanterne, au bout du bac,', 'Fait un petit soleil bleu.'],
+    ['Dors, la brume est sur le lac,', 'Les roseaux ferment les yeux ;', 'La lanterne de la barque,', 'Fait un petit soleil bleu.'],
     ["L'automne a jauni la rive,", "Les feuilles s'en vont dormir ;", 'La barque, au fil qui dérive,', 'Sait le chemin pour venir.'],
     ['Et si tu cherches nos voix,', 'Fredonne-la doucement :', "L'eau répondra, cette fois,", "Comme elle a fait si souvent."],
   ],

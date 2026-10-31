@@ -64,7 +64,7 @@ Vers 4 :  mi  ré  do │ si  do  si │ la —
 
 > Dors, la brume est sur le lac,
 > Les roseaux ferment les yeux ;
-> La lanterne, au bout du bac,
+> La lanterne de la barque,
 > Fait un petit soleil bleu.
 >
 > L'automne a jauni la rive,

@@ -4,7 +4,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
-- **Q149** — (reformulée le 31/10) Remplacer l'événement de la lettre de « A. » : un doyen des Bannis remet à Garrick un fragment recopié de la berceuse de Wëanen (le vers « La lanterne, au bout du bac » vient des paroles déjà validées : le bac est la barque passeuse du lac), et Garrick, troublé : « Je connais cet air. Je ne l'ai jamais appris. » D'accord ?
 
 
 ## À venir de la part de Claude (pas des questions)
@@ -12,6 +11,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q149~~ Validé le 31/10 : le fragment recopié par un doyen ; « bac » remplacé par « la barque » dans les paroles.
 - ~~Q146 à Q148, Q150~~ Validés le 31/10 : cohérence fusionnée, mendiant corrigé, légende de l'armure gardée, gestes muets lancés.
 - ~~Q141~~ Le titre officiel du moment : « Waybreakers: The Sage's Peace » (31/10).
 - ~~Q144~~ Le tableau des âges validé ; mages et semi-races font varier (31/10).

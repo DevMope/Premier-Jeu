@@ -109,7 +109,7 @@ Vers 4 :  mi  ré  do │ si  do  si │ la —      (E  D  C  │ B  C  B  │ 
 - **Les paroles** ★ (trois couplets de quatre vers de sept pieds, aux rimes croisées) :
   > Dors, la brume est sur le lac,
   > Les roseaux ferment les yeux ;
-  > La lanterne, au bout du bac,
+  > La lanterne de la barque,
   > Fait un petit soleil bleu.
   >
   > L'automne a jauni la rive,
