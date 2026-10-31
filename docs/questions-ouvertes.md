@@ -10,7 +10,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q161** — La maison du paon avant son arrivée : vide, vitrines éteintes, sans enseigne. D'accord ?
 - **Q162** — Le poteau « Le Rempart » au bord du chemin, à l'ouest : le texte et la place te vont ?
 - **Q163** — La nuit : un voile bleu nuit sur tout le quartier, JeuneGoy compris. Plus sombre ? Des fenêtres allumées sur toutes les maisons ?
-- **Q164** — En été, les bottes de paille sont au pied de la maison haute ; en hiver, le bonhomme de neige est sur la placette. D'accord ?
+- **Q164** — En été, les bottes de paille sont maintenant contre la palissade du porche (elles cachaient une enseigne au pied de la maison haute) ; en hiver, le bonhomme de neige est sur la placette. D'accord ?
 - **Q165** — Les pigeons et les papillons de la placette sont immobiles, comme dans le tronçon validé. On les anime (envol, battements d'ailes) ?
 - **Q166** — Le soir, le plan (M) s'ouvre mais ne permet pas de traverser la ville. D'accord ?
 
