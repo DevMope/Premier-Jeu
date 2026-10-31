@@ -613,6 +613,26 @@ const SONS = {
   piece(t, bus, o) { const f = 2200 + Math.random() * 600; for (const [mult, v] of [[1, 0.25], [1.5, 0.12], [2.7, 0.06]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = f * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.18); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + 0.2); } this.bruit(0.02, t, bus, 0.15, 5000, 'highpass'); },
   // Plusieurs pièces qui tombent
   pieces(t, bus, o) { const n = Math.min(6, Math.max(2, Math.round((o.montant || 10) / 8))); for (let i = 0; i < n; i++) SONS.piece.call(this, t + i * 0.055 + Math.random() * 0.02, bus, o); },
+  // (v1.66) une pièce qui entre dans la besace : un tintement clair (elle touche l'or déjà dedans), un peu étouffé par le
+  // cuir, et le petit choc sourd du cuir ; `force` (les pièces d'un flot tintent plus bas), `hauteur` (chacune la sienne)
+  pieceBesace(t, bus, o = {}) {
+    const v = o.force ?? 1, f = (o.hauteur || 1) * (2250 + Math.random() * 650);
+    for (const [mult, a, d] of [[1, 0.2, 0.17], [1.49, 0.1, 0.12], [2.71, 0.05, 0.08], [4.1, 0.02, 0.05]]) {
+      const osc = this.ctx.createOscillator(); osc.frequency.value = f * mult;
+      const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(a * v, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0005, t + d);
+      osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.02);
+    }
+    this.bruit(0.025, t, bus, 0.1 * v, 5200, 'highpass');   // l'arête de la pièce
+    this.bruit(0.05, t + 0.004, bus, 0.12 * v, 420, 'lowpass');   // le cuir
+  },
+  // (v1.66) la besace se tasse sous les pièces (ou se gonfle) : un « flop » de cuir, et l'or qui se range dedans
+  besaceTasse(t, bus, o = {}) {
+    const v = o.force ?? 1;
+    this.bruit(0.12, t, bus, 0.3 * v, 230, 'lowpass');
+    this.bruit(0.06, t + 0.015, bus, 0.07 * v, 1500);
+    const doux = this.ctx.createGain(); doux.gain.value = 0.35 * v; doux.connect(bus);
+    for (let i = 0; i < 3; i++) SONS.piece.call(this, t + 0.05 + i * 0.045 + Math.random() * 0.02, doux, o);
+  },
   // La clochette de la porte
   clochette(t, bus) { for (const [mult, v, d] of [[1, 0.3, 0.9], [2.4, 0.12, 0.6], [4.1, 0.05, 0.4]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 1760 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.1); } SONS.clochette2.call(this, t + 0.13, bus); },
   clochette2(t, bus) { for (const [mult, v, d] of [[1.19, 0.22, 0.8], [2.6, 0.08, 0.5]]) { const osc = this.ctx.createOscillator(); osc.frequency.value = 1760 * mult; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0005, t + d); osc.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.1); } },

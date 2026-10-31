@@ -334,6 +334,91 @@ class IntroHistoireScene extends Cinematique {
     await this.attendre(1000);
   }
 
+  // --- (v1.66) Les gestes muets de l'intro : JeuneGoy ne parle jamais, alors on VOIT ce que dit le texte ---
+
+  // Poser une image clé d'un geste (texture du rig) sur un sprite, par son point d'appui
+  poserGeste(sprite, cle) {
+    sprite.setTexture(cle);
+    origineCorps(sprite);
+  }
+  // Où sont les mains d'une image clé, à l'écran, depuis les pieds : le milieu des deux mains (dx : vers où il
+  // regarde ; dy : vers le haut). De trois-quarts, la main lointaine paraît plus avancée : le nœud des quatre mains
+  // se forme au milieu.
+  decalageMain(cle, sprite) {
+    const a = APPUI_POSES[cle];
+    if (!a || !a.main) return null;
+    const mx = a.mainL ? (a.main[0] + a.mainL[0]) / 2 : a.main[0], my = a.mainL ? (a.main[1] + a.mainL[1]) / 2 : a.main[1];
+    return { dx: (mx - a.x) * Math.abs(sprite.scaleX), dy: (a.y - my) * Math.abs(sprite.scaleY) };
+  }
+
+  // « Tu as serré ses mains très fort » : JeuneGoy s'approche, tend les deux bras, prend les mains de Garrick
+  // (qui se penche et les offre), serre, et Garrick pose sa main par-dessus. Chaque temps est une image clé du rig.
+  async serrerLesMains() {
+    const G = window.GAME, h = this.heros, g = this.mentor;
+    const fH = [0, 1, 2].map(i => textureGesteJoueur(this, G, 'serre', i));
+    const fG = [0, 1].map(i => textureGestePerso(this, 'mentor', 'offreMains', i));
+    const fG2 = textureGestePerso(this, 'mentor', 'mainDessus', 0);
+    // il vient se poster là où leurs mains se rejoignent (celle de Garrick offerte, la sienne tendue)
+    const oH = this.decalageMain(fH[2], h), oG = this.decalageMain(fG[1], g);
+    const cible = oH && oG ? g.x - oG.dx - oH.dx - 12 : g.x - 64;   // (-12 : les bras restent tendus, les visages à distance)
+    await this.aller(cible);
+    if (this.fini) return;
+    this.regarderVers(h, g); this.regarderVers(g, h);
+    const avantH = h.texture.key, avantG = g.texture.key;
+    // Garrick se penche et offre ses mains ; JeuneGoy lève les siennes
+    this.poserGeste(g, fG[0]); this.poserGeste(h, fH[0]);
+    await this.attendre(200);
+    this.poserGeste(g, fG[1]); this.poserGeste(h, fH[1]);
+    await this.attendre(200);
+    // il les serre, très fort (les sourcils froncés), et ses mains tremblent un peu de le serrer si fort
+    this.poserGeste(h, fH[2]);
+    this.tweens.add({ targets: h, x: h.x + 1, duration: 70, yoyo: true, repeat: 5 });
+    await this.attendre(420);
+    if (this.fini) return;
+    this.poserGeste(g, fG2);   // Garrick pose sa main libre par-dessus
+    await this.attendre(1100);
+    // on relâche, doucement
+    this.poserGeste(g, fG[1]); this.poserGeste(h, fH[1]);
+    await this.attendre(180);
+    this.poserGeste(g, fG[0]); this.poserGeste(h, fH[0]);
+    await this.attendre(160);
+    h.setTexture(avantH).setOrigin(0.5, 1);
+    g.setTexture(avantG).setOrigin(0.5, 1);
+  }
+
+  // « Tu regardes le coffre, puis tes mains » : sa tête se tourne vers le coffre, puis son regard descend sur ses
+  // paumes ouvertes ; Garrick suit son regard. (On rend leurs postures après le clic : rendreRegards.)
+  async regarderCoffreEtMains() {
+    const G = window.GAME, h = this.heros, g = this.mentor;
+    this._avantRegards = { h: h.texture.key, g: g.texture.key };
+    const rb = [0, 1].map(i => textureGesteJoueur(this, G, 'regardeBas', i));
+    const mo = [0, 1].map(i => textureGesteJoueur(this, G, 'mainsOuvertes', i));
+    const gb = [0, 1].map(i => textureGestePerso(this, 'mentor', 'regardeBas', i));
+    this.regarderVers(h, g);
+    // la tête se tourne vers le coffre, posé à ses pieds
+    this.poserGeste(h, rb[0]); await this.attendre(260);
+    if (this.fini) return;
+    this.poserGeste(h, rb[1]); await this.attendre(900);
+    if (this.fini) return;
+    // puis le regard descend vers ses mains, paumes ouvertes vers le ciel
+    this.poserGeste(h, mo[0]); await this.attendre(260);
+    if (this.fini) return;
+    this.poserGeste(h, mo[1]);
+    // Garrick suit son regard, et sourit
+    await this.attendre(350);
+    if (this.fini) return;
+    this.poserGeste(g, gb[0]); await this.attendre(240);
+    if (this.fini) return;
+    this.poserGeste(g, gb[1]);
+  }
+  rendreRegards() {
+    const a = this._avantRegards;
+    if (!a) return;
+    this._avantRegards = null;
+    if (this.heros.active && this.textures.exists(a.h)) this.heros.setTexture(a.h).setOrigin(0.5, 1);
+    if (this.mentor.active && this.textures.exists(a.g)) this.mentor.setTexture(a.g).setOrigin(0.5, 1);
+  }
+
   async raconter() {
     const e = this.e;
     const petit = this.f ? 'petite' : 'petit';
@@ -411,6 +496,7 @@ class IntroHistoireScene extends Cinematique {
     }
     this.ecrire('', 'Il mangeait comme quatre. Peut-être même comme cinq.');
     this.emotion(this.heros, '?');
+    jouerGeste(this, this.heros, 'penche');   // (v1.66) la tête penchée, la main ouverte : « comment fait-il ? »
     Son.jouer('voix', { personne: this.voixHeros, ton: 'etonne', duree: 0.5 });
     await this.attendreClic();
 
@@ -428,9 +514,11 @@ class IntroHistoireScene extends Cinematique {
       { sprite: this.mentor, vers: this.heros, personne: this.voixGarrick, ton: 'content' });
     this.fermerPensee(reve);
     // (JeuneGoy ne parle jamais : il se fait comprendre, et Garrick parle pour deux)
+    // (v1.66) ... et on le VOIT : il s'approche, prend les mains de Garrick et les serre très fort
     this.emotion(this.heros, '♥');
     Son.jouer('voix', { personne: this.voixHeros, ton: 'inquiet', duree: 0.4 });
     this.ecrire('', 'Tu n\'as rien dit. Tu as serré ses mains très fort, les sourcils froncés, et il a compris.');
+    await this.serrerLesMains();
     await this.attendreClic();
     await this.replique('Garrick Cœur-de-Chêne', '« Et promis : je reviens vivant. Surtout. »', { sprite: this.mentor, vers: this.heros, personne: this.voixGarrick, ton: 'content', geste: 'hoche' });
     // Il s'en va de l'autre côté du chemin ; tu le salues jusqu'à ce qu'il disparaisse
@@ -478,7 +566,9 @@ class IntroHistoireScene extends Cinematique {
     const souvenir = this.pensee(this.heros, iconeObjet(this, 'bandage'), { echelle: 2.6 });
     Son.jouer('voix', { personne: this.voixHeros, ton: 'inquiet', duree: 0.4 });
     this.ecrire('', 'Tu regardes le coffre, puis tes mains. Soigner, nourrir, préparer pour la route... c\'est ça que tu as aimé. Garrick suit ton regard, et sourit.');
+    await this.regarderCoffreEtMains();   // (v1.66) la tête qui se tourne vers le coffre, puis les paumes ouvertes
     await this.attendreClic();
+    this.rendreRegards();
     this.fermerPensee(souvenir);
     creerComptoirCarteHD(this);
     const idee = this.pensee(this.mentor, 'comptoirCarteHD', { echelle: 1.4 });   // (il rêve déjà de ton shop)

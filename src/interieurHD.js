@@ -1320,10 +1320,31 @@ function bourse(scene, x, y, argent, { echelle = 2, taille = 14, couleur = '#f3d
     return t;
   };
   c.col = () => ({ x: c.x, y: c.y - hauteurColBesace(Math.max(0, c.niveau)) * echelle });
-  // une pièce arrive au-dessus du col : il s'ouvre ; elle tombe dedans : la besace se tasse, puis se rouvre
+  // (v1.66) la bouche ouverte : son milieu, sa demi-largeur, et la lèvre de devant (où une pièce qui tombe disparaît) ; la
+  // lèvre suit la besace quand elle rebondit
+  c.echelle = echelle;
+  c.bouche = () => { const n = Math.max(1, c.niveau), [rx] = TAILLES_BESACE[n]; return { x: c.x, y: c.y - hauteurColBesace(n) * img.scaleY, demi: Math.max(2.5, rx * 0.3) * 1.9 * echelle, echelle }; };
+  // vide, elle est couchée à plat : les premières pièces la redressent (elle se gonfle un peu, le col ouvert)
+  c.preparerReception = () => { if (c.niveau === 0 && !c.versement) { c.niveau = 1; jouer([['_etiree', 1, 110], ['_ouverte', 1, 1]]); rebond(0.12, 280); } };
+  // un petit rebond : elle s'écrase (le pied reste posé) et revient en dépassant un peu
+  const rebond = (amp, duree = 230, ressort = 2.6) => {
+    if (!img.active) return;
+    scene.tweens.killTweensOf(img);
+    img.setScale(echelle * (1 + amp * 0.7), echelle * (1 - amp));
+    scene.tweens.add({ targets: img, scaleX: echelle, scaleY: echelle, duration: duree, ease: 'Back.easeOut', easeParams: [ressort] });
+  };
+  // à la fin : elle se gonfle (elle a changé de taille) ou se tasse sous le poids, d'autant plus que la somme est grosse
+  c.finReception = (n0, n, d) => {
+    const amp = Math.min(0.16, 0.05 + 0.03 * Math.log2(1 + Math.max(0, d) / 8));
+    if (n > n0) { jouer([['_tassee', Math.max(1, n0), 90], ['_etiree', n, 220], ['', n, 1]]); rebond(amp, 460, 3.4); }
+    else { jouer([['_tassee', n, 150], ['_etiree', n, 110], ['', n, 1]]); rebond(amp * 0.8, 320, 2.2); }
+    Son.jouer('besaceTasse', { force: Math.min(1, 0.45 + amp * 3) });
+  };
+  // une pièce arrive au-dessus du col : il s'ouvre ; elle tombe dedans : la besace se tasse (un petit rebond), puis se rouvre
   c.ouvrirCol = () => { if (c.niveau > 0 && !c.versement) jouer([['_ouverte', c.niveau, 1]]); };
-  c.recevoirPiece = () => {
+  c.recevoirPiece = (flot = false) => {
     if (c.niveau <= 0 || c.versement) return;
+    rebond(flot ? 0.05 : 0.08, flot ? 170 : 230);
     jouer([['_tassee', c.niveau, 90], ['_ouverte', c.niveau, 1]]);
     // (sans nouvelle pièce, elle se referme d'elle-même)
     if (c.fermer) c.fermer.remove();
@@ -1360,10 +1381,30 @@ function bourse(scene, x, y, argent, { echelle = 2, taille = 14, couleur = '#f3d
     const t = jouer([['_penchee', n0, 100 + total * 90 + 200], ['_penchee', n1, 120], ['', n1, 1]]);
     scene.time.delayedCall(t, () => { c.versement = false; });
   };
+  // (v1.66) de l'argent qui entre sans pièces déjà en route (une vente, une récompense, un gain) : ses pièces viennent de la
+  // scène (`c.source()` : d'où, sinon du côté du milieu de l'écran) et entrent une à une ; le compte monte à leur arrivée
+  c.pleuvoir = (de, a, texte = true) => {
+    const d = a - de;
+    let src = c.source ? c.source() : null;
+    if (!src) { const m = c.getWorldTransformMatrix(), versMilieu = m.tx < 480 ? 1 : -1; src = [c.x + versMilieu * 170, c.y < 200 ? c.y + 130 : c.y - 150]; }
+    voleePieces(scene, src[0], src[1], c.x, c.y, d, { conteneur: c.parentContainer || null, profondeur: (c.depth || 0) + 0.01, besace: c, montant: texte ? d : 0, echelle: echelle * 1.08, vise: a,
+      fin: () => { if (c.active && !c.enVol) c.maj(c.demande ?? a); } });
+  };
   c.maj = (a) => {
     a = Math.floor(a);
+    c.demande = a;   // (le dernier compte demandé par la scène : celui qu'elle affichera quand les pièces seront arrivées)
+    // (v1.66) des pièces en vol vers elle : elle attend la dernière (le compte monte à chaque arrivée) ; de l'argent en plus
+    // pendant ce temps : ses pièces partent à leur tour
+    if (c.enVol > 0 && c.dernier !== undefined && a >= c.dernier) {
+      const deja = c.vise ?? c.dernier;
+      if (a > deja && c.visible && scene.sys.isActive() && typeof voleePieces === 'function') c.pleuvoir(deja, a, false);
+      c.vise = Math.max(deja, a);
+      return;
+    }
     // (v1.17) le gain ou la dépense, en direct au-dessus de la bourse
     const vivant = c.dernier !== undefined && a !== c.dernier && c.visible && scene.sys.isActive();
+    if (vivant && a > c.dernier && !c.fermer && !c.versement && c.pluie !== false && typeof voleePieces === 'function') { c.vise = a; return c.pleuvoir(c.dernier, a); }
+    c.vise = undefined;
     if (vivant) {
       const d = a - c.dernier, m = c.getWorldTransformMatrix();
       const yHaut = m.ty - echelle * (aDroite ? 30 : 36) - 8;   // (v1.61 : une bourse collée au haut de l'écran affiche son gain dessous)
@@ -1377,7 +1418,7 @@ function bourse(scene, x, y, argent, { echelle = 2, taille = 14, couleur = '#f3d
     c.niveau = n;
     if (!vivant || n0 < 0) { if (!c.versement) jouer([['', n, 1]]); return; }
     if (a < avant) verser(n0, n, avant - a);
-    else if (c.fermer) { c.fermer.remove(); c.fermer = null; jouer([['_etiree', n, 120], ['', n, 1]]); }   // (les pièces viennent d'y tomber)
+    else if (c.fermer) { c.fermer.remove(); c.fermer = null; c.finReception(n0, n, a - avant); }   // (les pièces viennent d'y tomber)
     else jouer([['_ouverte', Math.max(1, n0), 80], ['_tassee', Math.max(1, n0), 90], ['_etiree', n, 120], ['', n, 1]]);
   };
   c.maj(argent);

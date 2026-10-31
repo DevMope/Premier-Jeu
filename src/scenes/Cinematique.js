@@ -136,9 +136,21 @@ class Cinematique extends Phaser.Scene {
 
   // Un geste : 'hoche' (oui de la tête), 'saut' (de joie), 'penche' (vers l'autre), 'tremble',
   // 'recule', 'bras' (les bras levés : il faut `quoi`, ce que corpsHD sait dessiner), 'salut'.
+  // (v1.66) Le vrai geste du rig quand le moteur sait le dessiner (le joueur, ou un figurant de corpsHD) :
+  // la tête hoche vraiment, le bras se lève vraiment ; sinon, rien (l'appelant garde son ancien geste)
+  gesteRig(sprite, nom) {
+    if (typeof jouerGeste !== 'function' || !sprite.texture) return null;
+    const cle = sprite.texture.key;
+    if (/_pose_|_geste_/.test(cle)) return null;   // (déjà dans une pose : on ne la casse pas)
+    if (/^joueur_/.test(cle)) return jouerGeste(this, sprite, nom);
+    const m = /^corps_([A-Za-z]+)/.exec(cle);
+    if (m && typeof FIGURANTS !== 'undefined' && FIGURANTS[m[1]] && !FIGURANTS[m[1]].blesse) return jouerGeste(this, sprite, nom, null, { quoi: m[1] });
+    return null;
+  }
+
   async geste(sprite, quel, quoi = null) {
     const y = sprite.sol ?? sprite.y, x = sprite.x;
-    if (quel === 'hoche') return this.animer({ targets: sprite, y: y + 3, duration: 120, yoyo: true, repeat: 1 });
+    if (quel === 'hoche') return this.gesteRig(sprite, 'oui') || this.animer({ targets: sprite, y: y + 3, duration: 120, yoyo: true, repeat: 1 });
     if (quel === 'saut') return this.animer({ targets: sprite, y: y - 26, duration: 180, yoyo: true, repeat: 1, ease: 'Quad.easeOut' });
     if (quel === 'penche') { await this.animer({ targets: sprite, angle: sprite.flipX ? -6 : 6, duration: 200 }); await this.attendre(300); return this.animer({ targets: sprite, angle: 0, duration: 250 }); }
     if (quel === 'tremble') return this.animer({ targets: sprite, x: x + 3, duration: 50, yoyo: true, repeat: 5 });
@@ -152,6 +164,8 @@ class Cinematique extends Phaser.Scene {
       return;
     }
     if (quel === 'salut') {
+      const vrai = this.gesteRig(sprite, 'salut');   // (v1.66) le bras qui se lève et salue, pour de vrai
+      if (vrai) return vrai;
       creerGlyphesHD(this);
       const main = this.add.image(sprite.x + (sprite.flipX ? -1 : 1) * sprite.displayWidth * 0.35, sprite.y - sprite.displayHeight * 0.75, 'glyphe_main').setScale(2.4).setOrigin(0.5, 1).setDepth(9);
       await this.animer({ targets: main, angle: { from: -25, to: 25 }, duration: 140, yoyo: true, repeat: 2 });

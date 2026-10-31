@@ -951,43 +951,70 @@ function texteQuiDefile(scene, objet, texte, { depuis = 0, vitesse = 24, son = t
 // (v1.62, planche 84) la pièce tourne vraiment (trois dessins : de face, de trois quarts, sur la tranche)
 // au lieu d'être écrasée, et finit par une chute droite dans le col (x1, y1). `besace` : la bourse qui la
 // reçoit (son col s'ouvre, elle se tasse à chaque pièce) ; `montant` : le compte monte pièce après pièce.
-function voleePieces(scene, x0, y0, x1, y1, n, { conteneur = null, profondeur = 50, fin = null, besace = null, montant = 0, echelle = 2.2 } = {}) {
+// (v1.66, retours du joueur : « sympa et satisfaisant ») n : le nombre de pièces payées, et CHACUNE vole : en arc jusqu'au-
+// dessus de la bouche de la besace, puis elle tombe sur la tranche dans la fente et disparaît derrière la lèvre de cuir
+// (elle est rognée à la lèvre : elle entre vraiment, elle ne passe pas à côté) ; la besace rebondit, une pièce tinte à
+// chaque entrée (les tintements se chevauchent). Au-delà d'une vingtaine, elles partent en un flot serré (chaque pièce vue
+// en vaut plusieurs) qui ne dure pas plus de 1,2 s : le comptoir n'attend pas. `vise` : le total qu'aura la besace.
+const FLOT_PIECES = { max: 28, flot: 1200, ecartMin: 40, ecartMax: 110 };
+function voleePieces(scene, x0, y0, x1, y1, n, { conteneur = null, profondeur = 50, fin = null, besace = null, montant = 0, echelle = 2.2, vise = null } = {}) {
   creerPiecesHD(scene);
   if (typeof creerPiecesVolHD === 'function') creerPiecesVolHD(scene);
   const vol = scene.textures.exists('pieceVol2');
-  const total = Math.max(1, Math.min(6, n));
+  const pieces = Math.max(1, Math.round(n || 1)), total = Math.min(FLOT_PIECES.max, pieces), flot = pieces > 20;
+  const ecart = total > 1 ? Math.max(FLOT_PIECES.ecartMin, Math.min(FLOT_PIECES.ecartMax, FLOT_PIECES.flot / (total - 1))) : 0;
+  // la besace : sa bouche (où viser, sa largeur), la lèvre où la pièce disparaît
+  if (besace && besace.preparerReception) besace.preparerReception();
+  const bouche = () => (besace && besace.bouche && besace.active ? besace.bouche() : null);
+  const b0 = bouche(), eB = b0 ? b0.echelle : 2;
+  const cible = b0 ? b0.x : x1, large = b0 ? Math.max(0, b0.demi - 2.6 * eB) : 2, levre0 = b0 ? b0.y : y1;
   const depart = besace && besace.texte ? besace.dernier : null;
+  if (besace) { besace.enVol = (besace.enVol || 0) + 1; if (vise !== null) besace.vise = Math.max(besace.vise ?? -Infinity, Math.floor(vise)); }
+  const sf = !conteneur && besace && besace.scrollFactorX !== undefined ? besace.scrollFactorX : null;
   let arrivees = 0;
+  const arrivee = () => {
+    arrivees++;
+    if (depart !== null && montant && besace.texte && besace.texte.active) besace.texte.setText(`${Math.floor(depart + montant * arrivees / total)} p.`);
+    if (arrivees === total) { if (besace) besace.enVol = Math.max(0, (besace.enVol || 1) - 1); if (fin) fin(); }
+  };
   for (let k = 0; k < total; k++) {
-    const p = scene.add.image(x0 + (Math.random() - 0.5) * 20, y0, vol ? 'pieceVol0' : 'pieceFace').setScale(vol ? echelle : 2.4).setDepth(profondeur);
-    if (conteneur) conteneur.add(p);
-    const dx = x1 + (Math.random() - 0.5) * 4, duree = 520 + Math.random() * 120, retard = k * 110;
-    // elle tourne sur elle-même : face, trois quarts, tranche, trois quarts (retournée), face...
-    let i = 0;
-    const tourne = vol ? scene.time.addEvent({ delay: 70, loop: true, callback: () => { if (!p.active) return tourne.remove(); i = (i + 1) % 4; p.setTexture('pieceVol' + [0, 1, 2, 1][i]).setFlipX(i === 3); } }) : null;
-    if (!vol) scene.tweens.add({ targets: p, scaleX: { from: 2.4, to: 0.4 }, duration: 120, yoyo: true, repeat: Math.round(duree / 240), delay: retard });
-    const xs = p.x, haut = Math.min(y0, y1) - 70, dessus = y1 - 22;
+    const p = scene.add.image(x0 + (Math.random() - 0.5) * (flot ? 28 : 18), y0 + (Math.random() - 0.5) * (flot ? 12 : 4), vol ? 'pieceVol0' : 'pieceFace').setScale(vol ? echelle : 2.4).setDepth(profondeur).setVisible(false);
+    if (conteneur) conteneur.add(p); else if (sf !== null) p.setScrollFactor(sf);
+    const duree = (flot ? 430 : 500) + Math.random() * 110, retard = k * ecart;
+    const xs = p.x, ys = p.y, dx = cible + (Math.random() - 0.5) * 2 * large;
+    const haut = Math.min(ys, levre0) - (flot ? 50 : 66) - Math.random() * 26, dessus = levre0 - (b0 ? 9 * eB : 22);
     const u = { t: 0 };
-    // l'arc, jusqu'au-dessus du col...
-    scene.tweens.add({ targets: u, t: 1, duration: duree, delay: retard, ease: 'Linear', onUpdate: () => {
-      if (!p.active) return;
-      const t = u.t, a = t < 0.45 ? 1 - Math.pow(1 - t / 0.45, 2) : 1 - Math.pow((t - 0.45) / 0.55, 2);
-      p.setPosition(xs + (dx - xs) * t, t < 0.45 ? y0 + (haut - y0) * a : dessus + (haut - dessus) * a);
-    }, onComplete: () => {
-      if (!p.active) return;
-      // ... puis elle tombe tout droit dedans, sur la tranche
-      if (tourne) tourne.remove();
-      if (vol) p.setTexture('pieceVol2').setFlipX(false);
-      if (besace && besace.ouvrirCol) besace.ouvrirCol();
-      scene.tweens.add({ targets: p, y: y1, duration: 110, ease: 'Quad.easeIn', onComplete: () => {
-        Son.jouer('piece');
-        p.destroy();
-        if (besace && besace.recevoirPiece) besace.recevoirPiece();
-        arrivees++;
-        if (depart !== null && montant && besace.texte.active) besace.texte.setText(`${Math.floor(depart + montant * arrivees / total)} p.`);
-        if (arrivees === total && fin) fin();
+    // l'arc, jusqu'au-dessus de la bouche ; elle tourne sur elle-même : face, trois quarts, tranche, trois quarts (retournée)...
+    scene.tweens.add({ targets: u, t: 1, duration: duree, delay: retard, ease: 'Linear',
+      onStart: () => { if (p.active) p.setVisible(true); },
+      onUpdate: () => {
+        if (!p.active) return;
+        const t = u.t, a = t < 0.45 ? 1 - Math.pow(1 - t / 0.45, 2) : 1 - Math.pow((t - 0.45) / 0.55, 2);
+        p.setPosition(xs + (dx - xs) * t, t < 0.45 ? ys + (haut - ys) * a : dessus + (haut - dessus) * a);
+        if (vol) { const f = Math.floor(t * duree / 65) % 4; p.setTexture('pieceVol' + [0, 1, 2, 1][f]).setFlipX(f === 3); }
+        else p.setScale(2.4 * Math.max(0.2, Math.abs(Math.cos(t * duree / 80))), 2.4);
+      },
+      onComplete: () => {
+        if (!p.active) return;
+        // ... puis elle tombe tout droit dans la fente, sur la tranche, et passe derrière la lèvre de cuir
+        if (vol) p.setTexture('pieceVol2').setFlipX(false); else p.setScale(0.6, 2.4);
+        if (besace && besace.ouvrirCol) besace.ouvrirCol();
+        const fh = p.frame.height, fw = p.frame.width, sc = p.scaleY;
+        const b = bouche(), levre = b ? b.y : y1;
+        scene.tweens.add({ targets: p, y: b ? levre + fh * sc / 2 + 1 : y1, duration: b ? 150 : 110, ease: 'Quad.easeIn',
+          onUpdate: () => {
+            if (!b || !p.active) return;
+            const l = (bouche() || b).y, rangs = (l - (p.y - fh * sc / 2)) / sc;   // (la lèvre suit le rebond de la besace)
+            if (rangs < fh) p.setCrop(0, 0, fw, Math.max(0, rangs)); else p.setCrop();
+          },
+          onComplete: () => {
+            if (b) Son.jouer('pieceBesace', { force: flot ? 0.45 + Math.random() * 0.25 : 0.85 + Math.random() * 0.15, hauteur: 0.9 + Math.random() * 0.2 });
+            else Son.jouer('piece');
+            p.destroy();
+            if (besace && besace.recevoirPiece) besace.recevoirPiece(flot);
+            arrivee();
+          } });
       } });
-    } });
   }
 }
 
