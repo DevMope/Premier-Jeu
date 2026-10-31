@@ -4,20 +4,18 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
-- **Q139** — Le passage des peuples de la Lumière d'un monde à l'autre : Claude propose une piste (voir le message du 31/10). D'accord ?
-- **Q140** — Le lien Ortie–Wëanen–fleur de pommier : Claude propose qu'Ortie ait été la nourrice ou la gouvernante de Wëanen dans la vallée des Pommiers, puis la protectrice de Garrick. D'accord ?
-- **Q141** — Les titres en deux parties proposés le 31/10 : lequel garder, ou quelles pistes creuser ?
-- **Q142** — Le joueur de l'Ombre qui a beaucoup tué apprend qu'il n'y a jamais eu de camps : conséquences proposées par Claude (voir le message du 31/10). D'accord ?
-- **Q143** — Les âges des peuples (elfes presque immortels, nains jusqu'à 300 ans, pandas un peu plus que les humains, momies au secret) : Claude dresse le tableau des âges à valider ?
+- **Q141** — Le titre : *Waybreakers: What the Lake Remembers* tient la corde ; une variante avec le Sage est à l'étude (« The Sage's Peace », « The Great Sage »…). Lequel retient-on ?
+- **Q144** — Le tableau des âges des peuples (proposé le 31/10) : valider ou corriger chaque ligne.
+- **Q145** — Le nom du Conseil des Bannis : le Drômmath, le Kharvanon ou le Grauvek (propositions du 31/10) ?
 
 ## À venir de la part de Claude (pas des questions)
 
-- Des propositions de noms pour le Conseil des Bannis.
 - La fiche musicale réécrite pour un compositeur humain, avec toutes les musiques existantes du jeu.
 - La chasse aux incohérences de dialogue créées par la nouvelle histoire.
 
 ## Résolues
 
+- ~~Q139, Q140, Q142~~ Validés le 31/10 (voir `docs/game-design.md`). ~~Q143~~ Tableau des âges livré (Q144).
 - ~~Q118 à Q138~~ Réponses du 31/10 dans `docs/game-design.md`.
 - ~~Q111 à Q117~~ Réponses du 29/10 dans `docs/game-design.md`.
 - ~~Q107~~ La vérité sur les parents reste bloquée en Lumière retournée ; JeuneGoy peut apprendre que Garrick est son frère (29/10).
