@@ -138,10 +138,11 @@ class VisionScene extends Phaser.Scene {
       for (const [x, y] of [[180, 230], [250, 210], [320, 236]]) { g.fillStyle(0x6a8a3a).fillCircle(x, y, 7); g.lineStyle(2, 0x5a3018).lineBetween(x, y - 7, x, y - 30); }   // des herbes qui sèchent
       for (let k = 0; k < 22; k++) { const f = this.o(this.add.rectangle(380 + Math.random() * 180, 230 + Math.random() * 100, 2, 2, 0xffffff, 0.85)); this.tweens.add({ targets: f, y: f.y - 40, alpha: 0, duration: 1600 + Math.random() * 1200, repeat: -1 }); }   // la farine qui vole
       this.parent(470, 470, true, 11, true);
-      const e = this.o(this.add.image(250, 470, this.enfant).setOrigin(0.5, 1).setScale(echelleJoueur(8)));
+      // (JeuneGoy avait deux ans au drame : un tout-petit, bien plus bas que la table)
+      const e = this.o(this.add.image(250, 470, this.enfant).setOrigin(0.5, 1).setScale(echelleJoueur(5)));
       pasDeMarche(this, e, 0, { poussiere: false });   // (ses petites jambes trottinent)
-      this.tweens.add({ targets: e, x: 222, duration: 520, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // il chipe un gâteau et recule
-      this.dire("Une cuisine qui sent la cannelle. Une femme aux mains pleines de farine éclate de rire :\n« Doucement, petit voleur, ce sont les gâteaux du Solstice ! »");
+      this.tweens.add({ targets: e, x: 222, duration: 520, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // il tend les bras vers la table et recule
+      this.dire("Une cuisine qui sent la cannelle. Tu trottines à peine, les bras tendus vers la table. Une femme aux mains pleines de farine éclate de rire :\n« Doucement, petit voleur, ce sont les gâteaux du Solstice ! »");
     } else if (this.etape === 2) {
       // sur les épaules de son père, les lanternes au-dessus des toits
       g.fillStyle(0x141a3a).fillRect(0, 0, 960, 540);
@@ -226,7 +227,7 @@ class VisionScene extends Phaser.Scene {
     const S = pere.scaleX, R = REPERES_CORPS[pere.cle] || { yT: pere.height * 0.28 };
     const k = FINESSE, ep = PROPORTIONS.humain.ep * k;
     const nuque = y - (pere.height - R.yT) * S;
-    const Se = S * 0.62;   // (un petit enfant : comme dans la cuisine, un peu plus de la moitié de la taille d'un adulte)
+    const Se = S * 0.45;   // (un tout-petit de deux ans : même pas la moitié de la taille d'un adulte)
     const tex = this.textures.get(this.enfantEpaules).getSourceImage();
     const enfant = this.o(this.add.image(x, nuque + 2 * k * S + (tex.height - this.assiseEnfant) * Se, this.enfantEpaules).setOrigin(0.5, 1).setScale(Se));
     pere.tete.setVisible(false);   // (de dos, sa tête est cachée par l'enfant)
