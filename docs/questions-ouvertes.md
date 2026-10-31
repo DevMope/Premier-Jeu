@@ -4,9 +4,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
-- **Q141** — Le titre : *Waybreakers: What the Lake Remembers* tient la corde ; une variante avec le Sage est à l'étude (« The Sage's Peace », « The Great Sage »…). Lequel retient-on ?
-- **Q144** — Le tableau des âges des peuples (proposé le 31/10) : valider ou corriger chaque ligne.
-- **Q145** — Le nom du Conseil des Bannis : le Drômmath, le Kharvanon ou le Grauvek (propositions du 31/10) ?
+(aucune pour l'instant)
+
 
 ## À venir de la part de Claude (pas des questions)
 
@@ -15,6 +14,9 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q141~~ Le titre officiel du moment : « Waybreakers: The Sage's Peace » (31/10).
+- ~~Q144~~ Le tableau des âges validé ; mages et semi-races font varier (31/10).
+- ~~Q145~~ Le Conseil des Bannis : le Drômmath (31/10).
 - ~~Q139, Q140, Q142~~ Validés le 31/10 (voir `docs/game-design.md`). ~~Q143~~ Tableau des âges livré (Q144).
 - ~~Q118 à Q138~~ Réponses du 31/10 dans `docs/game-design.md`.
 - ~~Q111 à Q117~~ Réponses du 29/10 dans `docs/game-design.md`.
