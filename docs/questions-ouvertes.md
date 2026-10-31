@@ -4,13 +4,15 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
-(aucune pour l'instant)
+- **Q146** — La mise en cohérence des textes (lot A, corrigé en attente de fusion) : valides-tu les 8 corrections (Garrick jours 34 et 44, l'intro muette, l'orphelinat nommé, la vision à deux ans, le vieux voyageur) ?
+- **Q147** — Le mendiant : « Le jour de la dernière bataille, ils m'ont dit de rester en arrière » contredit le drame intime. Proposition : « La dernière fois que je les ai vus, ils m'ont dit de rester en arrière. De veiller sur le petit, si… J'aurais dû désobéir. » D'accord ?
+- **Q148** — La légende de l'armure « Rassemble l'armure pour le héros qui viendra » : on la garde telle quelle (recommandé), ou « pour celui que la prophétie désignera » ?
+- **Q149** — La lettre de « A. » à Garrick devient un fragment de la berceuse recopié par un doyen : « …la lanterne, au bout du bac, fait un petit soleil bleu. » et Garrick : « Je connais cet air. Je ne l'ai jamais appris. » D'accord pour ce texte ?
+- **Q150** — Les boutons de choix où JeuneGoy « parle » (« Merci, Garrick ! », « Qui chantait ? »…) : on les garde comme choix à la Zelda/Pokémon (recommandé), ou on les reformule tous en actions (« Hocher la tête ») ?
 
 
 ## À venir de la part de Claude (pas des questions)
 
-- La fiche musicale réécrite pour un compositeur humain, avec toutes les musiques existantes du jeu.
-- La chasse aux incohérences de dialogue créées par la nouvelle histoire.
 
 ## Résolues
 
