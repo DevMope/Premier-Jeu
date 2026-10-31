@@ -4,9 +4,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
-- **Q155** — Les gestes muets v2 et les pièces dans la besace (planche du 31/10) : validé pour fusion ?
-- **Q156** — Les grosses sommes : le flot de pièces s'arrête à 28 pièces visibles (environ 1,2 s). Plus dense, ou ça suffit ?
-- **Q157** — Le petit « flop » de cuir quand la besace se tasse à la fin de chaque paiement : on le garde, ou il deviendrait répétitif avec tous les clients d'une journée ?
+(aucune pour l'instant)
+
 
 
 
@@ -16,6 +15,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q155 à Q157~~ Gestes et besace validés et fusionnés ; flot et « flop » à peaufiner plus tard (31/10).
 - ~~Q151 à Q154~~ Gestes seulement en cinématique et à la troisième personne, pas de hochement de caméra, salut au marché à refaire, autres lieux plus tard (31/10).
 - ~~Q149~~ Validé le 31/10 : le fragment recopié par un doyen ; « bac » remplacé par « la barque » dans les paroles.
 - ~~Q146 à Q148, Q150~~ Validés le 31/10 : cohérence fusionnée, mendiant corrigé, légende de l'armure gardée, gestes muets lancés.
