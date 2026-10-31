@@ -1217,7 +1217,7 @@ class MarcheScene extends Phaser.Scene {
     this.tweens.add({ targets: chien, scaleY: 2.24, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     c.add(this.add.text(480, 32, 'Le mendiant et Brisquet', style(22, '#f3d98a', { fontStyle: 'bold', stroke: '#1a0e06', strokeThickness: 5 })).setOrigin(0.5));
     // ce qu'il raconte : un peu plus de son histoire à mesure que tu l'aides
-    const paroles = G.medailleParents ? ["Ta mère riait comme toi. Ton père, lui, ne riait qu'avec elle.", "Le jour de la dernière bataille, ils m'ont dit de rester en arrière. J'aurais dû désobéir.", "Tu la gardes près d'eux, la médaille ? C'est bien."]
+    const paroles = G.medailleParents ? ["Ta mère riait comme toi. Ton père, lui, ne riait qu'avec elle.", "La dernière fois que je les ai vus, ils m'ont dit de rester en arrière. De veiller sur le petit, si... J'aurais dû désobéir.", "Tu la gardes près d'eux, la médaille ? C'est bien."]
       : G.mendiant >= MENDIANT_PALIERS.yeux ? ["Il y a des visages qu'on n'oublie pas, même quand on a tout oublié.", "Parfois je rêve d'une tour blanche, et d'un vieil homme qui sourit trop. Je me réveille en sueur."]
       : G.mendiant >= 40 ? ["J'ai été aventurier, tu sais. Comme ceux que tu équipes. Un jour, je suis rentré... sans mes amis.", "Brisquet m'a tiré d'un torrent, cette fois-là. Depuis, on ne se quitte plus."]
       : G.mendiant >= 10 ? ["Tu reviens souvent, toi. C'est rare, les gens qui reviennent.", "Le crieur raconte n'importe quoi, mais il crie bien. Ça me tient compagnie."]
