@@ -4,6 +4,11 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
+- **Q151** — Les gestes muets (planche envoyée le 31/10) : le lot est-il validé pour fusion ?
+- **Q152** — Au comptoir (vue à la première personne), le « hochement de tête » est un petit mouvement doux de la caméra : assez lisible, ou plus marqué ?
+- **Q153** — Le « oui » et le « non » quand JeuneGoy est de dos sur la place : il pivote de trois quarts le temps du geste. D'accord, ou faut-il des images de dos dédiées ?
+- **Q154** — On branche ensuite la même table choix → geste dans les autres lieux (le bar, la banque, la diseuse, le marché noir) ?
+
 
 
 ## À venir de la part de Claude (pas des questions)
