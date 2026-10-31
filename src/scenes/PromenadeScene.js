@@ -55,7 +55,7 @@ class PromenadeScene extends Cinematique {
     // (v0.65) ton chat te suit de pièce en pièce ; le chat de gouttière, lui, attend dehors
     this.compagnon = null;
     if (chatAdopte(G) && !(typeof chatParti === 'function' && chatParti(G))) this.creerCompagnon();   // (v1.05 : parti, il ne te suit pas)
-    if (chatCeSoir(G)) this.chatDeGouttiere();
+    if (chatCeSoir(G) && !this.quartierLeSoir()) this.chatDeGouttiere();   // (chantier 3 : il attend dans la rue Soucolline, devant ta porte)
 
     // L'interface, fixe à l'écran
     const fixe = o => o.setScrollFactor(0).setDepth(30);
@@ -89,6 +89,7 @@ class PromenadeScene extends Cinematique {
         if (PIECES_PROMENADE[this.piece].marche !== false) { this.allerVers(x); await this.attendreArrivee(); }
         if (this.fini) { this.transition = false; return; }
         if (ouvrante) { await ouvrante.ouvrir(); if (this.fini) { this.transition = false; return; } } else Son.jouer('porte');
+        if (vers.piece === P_DEHORS && this.quartierLeSoir()) { this.transition = false; return this.sortirDansLaRue(); }   // (chantier 3 : la rue, à pied)
         this.entrer(vers.piece, vers.x);
         if (ouvrante) ouvrante.montrer(0);   // (refermée derrière lui)
         this.transition = false;
@@ -108,7 +109,7 @@ class PromenadeScene extends Cinematique {
       creerBouton(this, 150, 505, 250, '↻ Arrière-boutique', () => { if (!this.transition) { Son.jouer('porte'); this.entrer(P_ARRIERE, o[P_ARRIERE].x + 120); } }),
       creerBouton(this, 400, 505, 200, "L'atelier", () => { if (!this.transition) { Son.jouer('porte'); this.entrer(P_ATELIER, o[P_ATELIER].x + 120); } }),
       // (v0.58 : on sort par la porte d'entrée du shop, pas par la fenêtre)
-      creerBouton(this, 630, 505, 230, 'Sortir dans la rue', () => { if (!this.transition) { Son.jouer('porte'); this.dire('Tu pousses la porte du comptoir ; la clochette tinte dans la nuit...'); this.time.delayedCall(500, () => this.entrer(P_DEHORS, this.porteShop.x + 60)); } }),
+      creerBouton(this, 630, 505, 230, 'Sortir dans la rue', () => { if (!this.transition) { Son.jouer('porte'); this.dire('Tu pousses la porte du comptoir ; la clochette tinte dans la nuit...'); this.time.delayedCall(500, () => (this.quartierLeSoir() ? this.sortirDansLaRue() : this.entrer(P_DEHORS, this.porteShop.x + 60))); } }),
     ];
     for (const b of this.boutonsComptoir) { b.fond.setScrollFactor(0).setDepth(30); b.label.setScrollFactor(0).setDepth(30); }
     const { x, y, w, h } = FENETRE;
@@ -118,6 +119,30 @@ class PromenadeScene extends Cinematique {
     porte(o[P_ATELIER].x + 60, { piece: P_COMPTOIR, x: 0 }, 'Le comptoir', { sol: 360 + 150 });
     // Dehors : la porte du shop ramène au comptoir
     porte(this.porteShop.x, { piece: P_COMPTOIR, x: 0 }, 'Rentrer', { dessiner: false, sol: this.porteShop.y, haut: 120, large: 70 });
+  }
+
+  // (v1.65, chantier 3) Dehors, le soir : la rue Soucolline, à pied, au zoom des quartiers (RueScene, la nuit), plutôt que la
+  // rue d'avant vue de côté (gardée ici pour la nuit du cambrioleur, et à Pont-Royal). La promenade attend, en pause, qu'on
+  // rentre par sa porte (revenirDeLaRue).
+  quartierLeSoir() {
+    return this.scene.key === 'Promenade' && typeof RueScene !== 'undefined' && typeof quartierPret === 'function' && quartierPret('soucolline') && !(typeof aPontRoyal === 'function' && aPontRoyal(this.G));
+  }
+  sortirDansLaRue() {
+    if (this.fini) return;
+    this.transition = true; this.cible = null;
+    if (typeof noterPassageVille === 'function') noterPassageVille('porte');
+    this.cameras.main.fadeOut(250, 0, 0, 0);
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      this.transition = false;
+      this.scene.pause(); this.scene.launch('Rue', { nuit: true, arrivee: 'comptoir', retour: this.scene.key });
+      this.scene.moveAbove(this.scene.key, 'Rue');   // (la rue par-dessus la promenade en pause : jamais dessous, quel que soit l'ordre laissé par les passages de la ville)
+    });
+  }
+  revenirDeLaRue() {
+    this.transition = false; this.fini = false;
+    if (chatAdopte(this.G) && !this.compagnon && !(typeof chatParti === 'function' && chatParti(this.G))) this.creerCompagnon();   // (adopté ce soir, dans la rue)
+    this.entrer(P_COMPTOIR, 0, true);
+    this.cameras.main.resetFX(); this.cameras.main.fadeIn(250, 0, 0, 0);
   }
 
   attendreArrivee() { return new Promise(r => { const v = () => { if (this.cible === null) r(); else this.time.delayedCall(60, v); }; v(); }); }

@@ -87,10 +87,10 @@ function ouvrirArchitecte(scene) {
       if (r.erreur) { Son.jouer('refus'); gainEnDirect(scene, 480 + x, 300, r.erreur, false, { taille: 12, duree: 2800 }); return; }
       Son.jouer('pieces'); f.fermer();
       if (!a) gainEnDirect(scene, 480, 300, `−${s.prix} p. · ${s.nom}`, false, { taille: 16, duree: 3000 });
-      if (scene.scene && scene.scene.key === 'Rue') { scene.scene.restart({ depuis: 'architecte' }); }
+      if (scene.scene && (scene.scene.key === 'Rue' || scene.scene.key === 'RuePont')) { scene.scene.restart({ depuis: 'architecte' }); }
     });
   });
-  if (P.style) f.bouton(0, 236, 300, 'Remettre la chaumière', () => { remettreStyleComte(G); f.fermer(); if (scene.scene.key === 'Rue') scene.scene.restart({ depuis: 'architecte' }); });
+  if (P.style) f.bouton(0, 236, 300, 'Remettre la chaumière', () => { remettreStyleComte(G); f.fermer(); if (scene.scene.key === 'Rue' || scene.scene.key === 'RuePont') scene.scene.restart({ depuis: 'architecte' }); });
 }
 
 // --- La Halle des Bateliers : la barge de la semaine (des caisses à prix de gros, et une curiosité d'ailleurs) ---

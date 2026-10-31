@@ -830,7 +830,13 @@ function grenouille3(s) {
 //  - les autres façades (ton comptoir, la boutique du paon, la forge, le barbier) : la bande de leur toit (TOITS_NEIGE :
 //    ses rangées, et ce qui n'est pas du toit, comme le fronton du paon, dont seule l'arête prend la neige).
 // Le trait sombre du contour est gardé (bleui) : la neige épouse la forme du toit, sans coupure nette.
-const TOITS_NEIGE = { facadeHD_0: [40, 112, (x, y) => x >= 149 && x < 163 && y >= 37 && y < 61], facadeHD_1: [40, 112, (x, y) => x >= 149 && x < 163 && y >= 37 && y < 61], facadeHD: [0, 58, (x, y) => x >= 149 && x < 165 && y >= 3 && y < 35], rueForgeHD: [4, 43], facadeRivalHD: [12, 52, (x, y) => Math.abs(x - 100) < (y - 2) * 0.95 - 2], boutiqueBarbierHD: [3, 26] };
+const TOITS_NEIGE = { facadeHD_0: [40, 112, (x, y) => x >= 149 && x < 163 && y >= 37 && y < 61], facadeHD_1: [40, 112, (x, y) => x >= 149 && x < 163 && y >= 37 && y < 61], facadeHD: [0, 58, (x, y) => x >= 149 && x < 165 && y >= 3 && y < 35], rueForgeHD: [4, 43], facadeRivalHD: [12, 52, (x, y) => Math.abs(x - 100) < (y - 2) * 0.95 - 2], boutiqueBarbierHD: [3, 26],
+  // (chantier 3) les bâtiments de la rue d'avant, posés dans la rue Soucolline : les Pommeroy, l'impasse (la poutre et le haut
+  // des murs), la banque (son fronton), le porche (son petit toit), l'hospice et l'atelier des Mages (leur cheminée reste nue),
+  // la chapelle (les deux pentes de son toit et son clocheton, pas son pignon)
+  rueMaisonHD: [2, 50], rueImpasseHD: [0, 8], rueBanqueHD: [18, 44], porcheRueHD: [0, 22],
+  rueHospiceHD: [2, 50, (x, y) => x >= 146 && x < 170 && y < 26], atelierMagesHD: [8, 56, (x, y) => x >= 106 && x < 128 && y < 32],
+  rueChapelleHD: [0, 108, (x, y) => (y > 22 && y < 56 && Math.abs(x - 75) < 16) || (y >= 56 && Math.abs(x - 75) < 9 + (y - 56) * 1.05)] };
 function neigeToitHD(s, cle) {
   if (/_neige$/.test(cle) || !s.textures.exists(cle)) return null;
   const k = cle + '_neige'; if (s.textures.exists(k)) return k;

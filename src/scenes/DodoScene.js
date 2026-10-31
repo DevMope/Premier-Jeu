@@ -16,6 +16,7 @@ class DodoScene extends Cinematique {
   create() {
     exclureScenes(this, 'Nuit', 'Carte', 'Comptoir');   // (v0.62)
     const G = this.G = window.GAME;
+    if (typeof prechaufferQuartier === 'function') prechaufferQuartier(this, 'soucolline');   // (v1.65, chantier 3 : le sol de la rue Soucolline se peint en tâche de fond, pour le matin ou la promenade)
     // (v1.00) le dernier soir du Solstice, avant d'aller dormir : les lanternes célestes, une fois par an
     if (typeof lanternesCelestesDues === 'function' && lanternesCelestesDues(G)) {
       G.lanternesVues = dateDuJour(G).an;
