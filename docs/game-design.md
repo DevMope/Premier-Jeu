@@ -3767,3 +3767,25 @@ Le joueur demande plus d'événements, au hasard ou liés à son histoire, penda
   - **Le titre du jeu** est officiellement, pour le moment, **« Waybreakers: The Sage's Peace »** ; *What the Lake Remembers* est gardé de côté.
   - **Les âges des peuples** : le tableau des légendes est validé (humains 80-90, hobbits 100-110, pandas 120-130, mages 150-200, nains jusqu'à 300, elfes quasi immortels, orcs 60-70, gobelins 50-60, loups-garous ~100, vampires sans âge connu, trolls 300-400, momies au secret). Il peut y avoir un peu de tout : un mage gobelin vit bien plus longtemps qu'un gobelin ordinaire. Penser aussi aux **semi-races** : quels bénéfices tirent-elles de chaque parent ? C'est une matière intéressante pour les facettes et les possibilités des histoires.
   - **Le Conseil des Bannis s'appelle le Drômmath**, l'Assemblée de la Nuit (*drôm-*, la nuit ; *-math*, tenir conseil) : il siège à la tombée du jour, seule heure où tous les peuples bannis peuvent venir.
+- **Réponses du 31/10, cohérence (Q146 à Q150)** :
+  - **La fiche musicale** est validée. Règle permanente : la mettre à jour chaque fois qu'un nouvel événement appelle naturellement une nouvelle musique.
+  - **Q146, validé et fusionné.** Et règle redite : ne jamais attendre pour créer les nouvelles animations et les nouveaux designs qui font corréler le visuel au texte (par exemple les mains serrées de l'intro). Chantier des gestes muets lancé.
+  - **Q147, validé** : la réplique du mendiant est corrigée (« La dernière fois que je les ai vus… De veiller sur le petit, si… »).
+  - **Q148** : la légende de l'armure reste telle quelle, dans l'esprit d'origine : que le joueur ignore que l'armure peut lui servir fera peut-être plus de joueurs neutres, et garde le suspense et le mystère.
+  - **Q150, validé** : les boutons gardent leurs libellés de choix (à la Zelda), et JeuneGoy répond par des gestes visibles : hochements de tête, mouvements de bras, etc.
+
+## La feuille de route (31/10) : ce qui reste à faire, dans l'ordre
+L'histoire étant maintenant écrite, voici les chantiers restants, réorganisés. Un ou deux à la fois, captures avant fusion, rien sur Cloudflare sans accord.
+1. **Gestes muets de JeuneGoy** (lancé) : les animations de l'intro (les mains serrées, le regard vers le coffre), un système de gestes (oui, non, merci, question…) branché sur les choix de dialogue.
+2. **La ville en quartiers, chantiers 3 à 6** : la rue Soucolline complète ; le bas-quartier et l'entrée du marché noir ; les Coteaux ; le Rempart et la rivière aux Trois Pommes (l'étang en vue de trois quarts à trancher là).
+3. **Les trois armures dans le jeu** (planche 93 validée) : les pièces portées remplacent les anciennes, la version selon le camp, l'armure neutre au sceau.
+4. **Les degrés cachés d'Ombre et de Lumière** : la jauge affinée en degrés invisibles qui pèsent sur les choix offerts.
+5. **L'histoire dans le jeu, acte par acte** (docs/histoire/revelations.md) : prolonger les visites de Garrick après le jour 56, les rumeurs et hypothèses sur les absences du Sage, les fissures de la Lumière, la berceuse-événement (Q149 en attente), les paliers liés aux étoiles et aux pièces d'armure.
+6. **Le Drômmath** : le Conseil des Bannis en scène (lieu, membres, séances).
+7. **Cendrebourg** : la ville de l'Ombre et le déménagement du joueur trop sombre.
+8. **Le Sage** : la planche de ses trois formes (humaine, mi-dragon, dragon serpentin) et ses entrées en scène ; puis ses apparitions par voie.
+9. **La préparation de guerre** (façon *Yes, Your Grace*) et les escarmouches.
+10. **La grande bataille** (récit à grands choix, multi-fronts) et la porte de Vorhal'Düm en dernière épreuve.
+11. **Les fins** : les cinématiques, les après-fins, la famille, VieuxGoy et ses cartes.
+12. **La cinématique d'ouverture** : d'abord le nouveau déroulé écrit (avec toute l'histoire validée), validation, puis production.
+En continu : la fiche musicale à maintenir ; les musiques composées à l'extérieur et branchées quand elles arrivent ; les renommages différés (hobbit, la Comté, le titre dans le code) ; le housekeeping régulier.
