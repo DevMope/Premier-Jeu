@@ -1157,7 +1157,6 @@ class MarcheScene extends Phaser.Scene {
     [1, 5, 10].forEach((n, i) => this.bouton(c, 120 + i * 150, 400, 130, `Donner ${n} pièce${n > 1 ? 's' : ''}`, () => {
       const merci = donnerAuMendiant(G, n);
       if (!merci) return this.message(manqueArgent(G, n, "Tu n'as pas assez d'argent."), '#a03030');
-      if (typeof jouerGestePremierePersonne === 'function') jouerGestePremierePersonne(this, 'tendreMain');   // (v1.66) sa main qui donne
       Son.jouer('pieces', { montant: n });
       this.ouvrirMendiant();
       this.message(texteMendiant(merci));
@@ -1242,8 +1241,6 @@ class MarcheScene extends Phaser.Scene {
       const b = creerBouton(this, 150 + i * 170, 516, 150, `Donner ${n} p.`, () => {
         const merci = donnerAuMendiant(G, n);
         if (!merci) return this.message(manqueArgent(G, n, "Tu n'as pas assez d'argent."), '#a03030');
-        // (v1.66) de près, on voit par ses yeux : sa main entre dans le champ et tend les pièces
-        if (typeof jouerGestePremierePersonne === 'function') jouerGestePremierePersonne(this, 'tendreMain');
         this.majInfos();
         // (v0.68) les pièces volent jusqu'à sa sébile, puis il pense à ce qu'il va en faire
         voleePieces(this, 150 + i * 170, 500, SEBILE[0], SEBILE[1], n, { conteneur: c, fin: () => {

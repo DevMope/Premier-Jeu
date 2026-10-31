@@ -4,9 +4,10 @@
 // mises en cache comme les autres poses (une fois par tenue) ; rien n'est sauvegardé.
 //  - jouerGeste(scene, img, 'oui', apres) : le personnage visible (JeuneGoy sur la place, dans l'intro ; ou un PNJ
 //    avec opts.quoi, un figurant de corpsHD) hoche la tête, s'incline, tend la main...
-//  - jouerGestePremierePersonne(scene, 'coeur', apres) : au comptoir (et devant le mendiant), on voit par les yeux de
-//    JeuneGoy : sa tête bouge (la caméra), sa main entre dans le champ (sa manche, sa peau).
-//  - gesteDuChoix(texte) : le geste que veut dire un bouton de dialogue (« Merci ! » → la main sur le cœur).
+//  - gesteDuChoix(texte) : le geste que veut dire un choix de dialogue (« Merci ! » → la main sur le cœur).
+// (retours du joueur, Q152) Les gestes ne servent que dans les cinématiques et les scènes vues de l'extérieur (la place,
+// l'intro) : rien à la première personne (au comptoir, des dizaines de conversations par jour : la vue qui bouge
+// donnerait mal à la tête).
 
 // --- Les images clés de chaque geste ---
 // membres : les bras/jambes par angles (comme POSES_HD) ; rig(R, k) : les rotations (buste, tête) ; extra : options du
@@ -39,11 +40,13 @@ const GESTES_HD = {
     { membres: { brasP: { p: 0.8, f: 0.2, a: 0.05 } } },
     { membres: { brasP: { p: 1.48, f: 0, a: 0.03 } }, rig: (R) => ({ buste: { a: 2, px: R.cx, py: R.yB }, tete: { a: -3, px: R.cx, py: R.yT } }) },
   ] },
-  // saluer de la main : le bras se lève bien au-dessus de la tête, la main balaie d'un côté à l'autre
-  salut: { duree: 140, suite: [0, 1, 2, 1, 2, 1, 0], images: [
-    { membres: { brasP: { p: 1.7, f: 0.5, a: 0.35 } } },
-    { membres: { brasP: { p: 2.95, f: 0.15, a: 0.42, a2: -0.55 } }, extra: { margeHaut: 44 } },
-    { membres: { brasP: { p: 2.95, f: 0.15, a: 0.42, a2: 0.3 } }, extra: { margeHaut: 44 } },
+  // saluer de la main (retours du joueur : le bras sur le côté, nettement à l'écart de la tête, lisible de face, de trois
+  // quarts et de dos) : le bras s'écarte du corps (abduction : p = 0, a > π/2), le coude à hauteur d'épaule, l'avant-bras
+  // dressé ; la main balaie de l'extérieur vers l'intérieur sans jamais revenir devant la tête
+  salut: { duree: 130, suite: [0, 1, 2, 1, 2, 1, 2, 1, 0], vues: ['face', 'troisQuarts', 'dos'], images: [
+    { membres: { brasP: { p: 0, f: 0, a: 1.25, a2: 2.15 } }, extra: { margeL: 36 } },
+    { membres: { brasP: { p: 0, f: 0, a: 2.0, a2: 2.6 } }, extra: { margeL: 40, margeHaut: 34 } },
+    { membres: { brasP: { p: 0, f: 0, a: 2.0, a2: 3.08 } }, extra: { margeL: 40, margeHaut: 34 } },
   ] },
   // s'incliner légèrement : le buste plonge, les bras suivent, en arrière
   incliner: { duree: 190, tenir: 420, suite: [0, 1, 1, 0], images: [
@@ -168,7 +171,9 @@ function jouerGeste(scene, img, nom, apres = null, opts = {}) {
   const dernierHaut = ordre.lastIndexOf(Math.max(...ordre));
   const avant = { cle: img.texture.key, ox: img.originX, oy: img.originY, flip: img.flipX };
   img.gesteEnCours = true;
-  if (opts.vers !== undefined && Math.abs(opts.vers - img.x) > 2) img.setFlipX(opts.vers < img.x);
+  // (de trois quarts, il se tourne vers celui qu'il salue ; de face et de dos, l'image n'est jamais retournée)
+  if (vue === 'face' || vue === 'dos') img.setFlipX(false);
+  else if (opts.vers !== undefined && Math.abs(opts.vers - img.x) > 2) img.setFlipX(opts.vers < img.x);
   return new Promise(res => {
     let k = 0, fini = false;
     const fin = () => {
@@ -194,83 +199,8 @@ function jouerGeste(scene, img, nom, apres = null, opts = {}) {
   });
 }
 
-// --- Les gestes à la première personne (le comptoir, le mendiant de près) ---
-// On voit par les yeux de JeuneGoy : hocher la tête fait bouger la vue (la caméra plonge et remonte, doucement),
-// et sa main entre dans le champ (sa vraie manche, sa vraie peau) pour saluer, donner, la poser sur son cœur.
-
-// La main de JeuneGoy vue de dos (la sienne : sa peau, la manche de son haut), dessinée une fois par tenue
-function textureMainJoueurPP(scene, G) {
-  const tenue = signatureJoueur(G), cle = 'joueur_mainPP';
-  if (scene.textures.exists(cle) && scene.textures.get(cle).tenue === tenue) return cle;
-  if (scene.textures.exists(cle)) scene.textures.remove(cle);
-  const ap = apparenceDuJour(G);
-  const t = new ToileHD(120, 190);
-  t.relief = true; t.cel = true;
-  t.rampes.peau = PEAUX_VIVES[PEAU_DE_CREATION[ap.peau] ?? 1] || PEAUX_VIVES[1];
-  t.rampes.manche = rampeVive(APPARENCE.haut[ap.haut] ? APPARENCE.haut[ap.haut][1] : 0x4f7a3a);
-  // l'avant-bras et sa manche, qui montent du bas du champ
-  cylindre(t, 'manche', [60, 196], [60, 102], 21, { decalage: 0.1 });
-  t.forme('manche', ellipsoide(60, 102, 22, 8), { decalage: -0.4 });   // l'ourlet de la manche
-  // le poignet, le dos de la main
-  cylindre(t, 'peau', [60, 106], [60, 82], 12, { decalage: 0.2 });
-  t.forme('peau', ellipsoide(60, 60, 19, 26), { decalage: 0.25 });
-  // quatre doigts (le majeur plus long), et le pouce sur le côté
-  const doigts = [[44, 40, 24], [55, 36, 28], [66, 37, 27], [76, 43, 22]];
-  for (const [x, y, lg] of doigts) cylindre(t, 'peau', [x, y + 10], [x, y - lg + 10], 4.6, { decalage: 0.3 });
-  cylindre(t, 'peau', [43, 74], [30, 52], 5.4, { decalage: 0.35 });
-  // les plis des phalanges
-  for (const [x, y] of [[44, 38], [55, 33], [66, 34], [76, 40]]) t.poser(x, y, 'peau', 1);
-  contourEpais(t, CONTOUR_CORPS.tours);
-  t.texture(scene, cle);
-  scene.textures.get(cle).tenue = tenue;
-  return cle;
-}
-
-// La caméra qui « hoche la tête » : un petit mouvement doux, puis tout revient exactement en place
-function mouvementTetePP(scene, points, duree, apres) {
-  const cam = scene.cameras.main, sx = cam.scrollX, sy = cam.scrollY, rot = cam.rotation;
-  const o = { u: 0 };
-  scene.tweens.add({ targets: o, u: 1, duration: duree, ease: 'Sine.easeInOut',
-    onUpdate: () => {
-      const f = o.u * (points.length - 1), i = Math.min(points.length - 2, Math.floor(f)), v = f - i;
-      const li = (a, b) => a + (b - a) * (0.5 - Math.cos(Math.PI * v) / 2);
-      const [ax, ay, ar = 0] = points[i], [bx, by, br = 0] = points[i + 1];
-      cam.setScroll(sx + li(ax, bx), sy + li(ay, by));
-      cam.setRotation(rot + li(ar, br));
-    },
-    onComplete: () => { cam.setScroll(sx, sy); cam.setRotation(rot); if (apres) apres(); } });
-}
-// La main qui entre dans le champ : x à l'écran, hauteur de montée, balancement (vague), tenue, angle au repos
-function mainDansLeChamp(scene, G, { x = 650, monte = 128, vague = 0, tenir = 420, angle = 0, duree = 260, echelle = 1.45 }, apres) {
-  const cle = textureMainJoueurPP(scene, G);
-  const y0 = 560 + Math.ceil(190 * echelle);
-  const img = scene.add.image(x, y0, cle).setOrigin(0.5, 1).setScale(echelle).setDepth(400).setScrollFactor(0).setAngle(angle);
-  const sortir = () => scene.tweens.add({ targets: img, y: y0, angle, duration: duree, ease: 'Sine.easeIn', onComplete: () => { img.destroy(); if (apres) apres(); } });
-  scene.tweens.add({ targets: img, y: y0 - monte, duration: duree, ease: 'Sine.easeOut', onComplete: () => {
-    if (!vague) { scene.time.delayedCall(tenir, sortir); return; }
-    scene.tweens.add({ targets: img, angle: { from: angle - 16, to: angle + 16 }, duration: 150, yoyo: true, repeat: vague, ease: 'Sine.easeInOut',
-      onComplete: () => scene.time.delayedCall(Math.max(0, tenir - vague * 300), sortir) });
-  } });
-  return img;
-}
-function jouerGestePremierePersonne(scene, nom, apres = null) {
-  const G = typeof GAME !== 'undefined' ? GAME : window.GAME;
-  if (!G || !scene.sys.isActive() || scene._gestePP) { if (apres) apres(); return; }
-  scene._gestePP = true;
-  const fin = () => { scene._gestePP = false; if (apres) apres(); };
-  try {
-    if (nom === 'oui') return mouvementTetePP(scene, [[0, 0], [0, 6], [0, -1], [0, 5], [0, 0]], 560, fin);
-    if (nom === 'non') return mouvementTetePP(scene, [[0, 0], [-7, 0], [7, 0], [-5, 0], [0, 0]], 620, fin);
-    if (nom === 'incliner') return mouvementTetePP(scene, [[0, 0], [0, 11], [0, 11], [0, 0]], 900, fin);
-    if (nom === 'penche') return mouvementTetePP(scene, [[0, 0], [0, 2, 0.05], [0, 2, 0.05], [0, 0]], 950, fin);
-    if (nom === 'salut') return void mainDansLeChamp(scene, G, { x: 690, monte: 230, vague: 3, tenir: 950, angle: -4 }, fin);
-    if (nom === 'tendreMain') return void mainDansLeChamp(scene, G, { x: 580, monte: 185, tenir: 520, angle: -8, echelle: 1.35 }, fin);
-    if (nom === 'coeur') { mouvementTetePP(scene, [[0, 0], [0, 8], [0, 8], [0, 0]], 820, null); return void mainDansLeChamp(scene, G, { x: 480, monte: 130, tenir: 620, angle: 16, echelle: 1.4 }, fin); }
-  } catch (e) { console.warn('geste PP', nom, e); return fin(); }
-  fin();
-}
-
-// --- La table choix de dialogue → geste (extensible) : ce que « répond » JeuneGoy quand on clique un bouton ---
+// --- La table choix de dialogue → geste (extensible) : ce que « répond » JeuneGoy quand on clique un choix, dans une
+// scène où on le voit ---
 const GESTES_CHOIX = [
   [/merci/i, 'coeur'],
   [/au revoir|à bientôt|a bientot|adieu|bonne route|bon voyage/i, 'salut'],
@@ -284,9 +214,4 @@ const GESTES_CHOIX = [
 function gesteDuChoix(texte) {
   for (const [re, g] of GESTES_CHOIX) if (re.test(texte || '')) return g;
   return null;
-}
-// Au comptoir (ou devant le mendiant) : le geste que veut dire ce bouton, à la première personne
-function gesteChoixComptoir(scene, texte) {
-  const g = gesteDuChoix(texte);
-  if (g) jouerGestePremierePersonne(scene, g);
 }

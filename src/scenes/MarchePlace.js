@@ -657,7 +657,7 @@ Object.assign(MarcheScene.prototype, {
     o.pause = 4200; o.cible = null; o.chemin = []; o.but = null;
     const garrick = o.quoi === 'mentor';
     // (v1.66) JeuneGoy salue Garrick de la main (il ne parle jamais : son bras dit bonjour pour lui)
-    if (garrick && typeof jouerGeste === 'function') jouerGeste(this, this.heros, 'salut', null, { vers: o.img.x });
+    if (garrick) this.gesteHeros('salut', o.img.x);
     const texte = garrick ? Phaser.Utils.Array.GetRandom(PHRASES_GARRICK_MARCHE) : this.phraseMarche();
     Son.jouer('voix', { personne: garrick ? { nom: 'Garrick', race: 'humain' } : { nom: o.quoi.nom, race: o.quoi.race, feminin: o.quoi.feminin }, ton: Phaser.Utils.Array.GetRandom(['content', 'rire', 'etonne', 'neutre']) });
     const b = o.bulle = this.add.text(o.img.x, o.img.y - o.img.displayHeight - 8, texte, style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 240 }, align: 'center' })).setOrigin(0.5, 1).setScale(0);
@@ -755,6 +755,14 @@ Object.assign(MarcheScene.prototype, {
     this.vueHeros = cle === 'arche' ? 'face' : 'dos'; this.poserHeros(0);
     const a = this.actionsLieux[cle];
     if (a) { Son.jouer('clic'); a(); }
+  },
+
+  // (v1.66) Un geste muet de JeuneGoy (gestesHD.js) : le salut se fait dans la vue où il est (de face, de dos ; de profil,
+  // il se tourne de trois quarts vers celui qu'il salue) ; les autres gestes, de trois quarts, tournés vers lui
+  gesteHeros(nom, versX) {
+    if (typeof jouerGeste !== 'function' || !this.heros || !this.heros.active) return;
+    const vues = GESTES_HD[nom] && GESTES_HD[nom].vues, vue = vues && vues.includes(this.vueHeros) ? this.vueHeros : 'troisQuarts';
+    jouerGeste(this, this.heros, nom, null, { vers: versX, vue });
   },
 
   poserHeros(pas) {
@@ -1002,13 +1010,13 @@ Object.assign(MarcheScene.prototype, {
   reprendreVisite() {
     const v = this.visite; if (!v || v.question === null) return;
     const i = v.question; v.question = null;
-    if (typeof jouerGeste === 'function') jouerGeste(this, this.heros, 'oui', null, { vers: v.gar.x });   // (v1.66) il hoche la tête : oui
+    this.gesteHeros('oui', v.gar.x);   // (v1.66) il hoche la tête : oui
     this.allerEtapeVisite(i);
     this.bulleSur(v.gar, `« ${VISITE_MARCHE.reprise(VISITE_MARCHE.etapes[i].nom)} »`, { nom: 'Garrick', race: 'humain' });
   },
   ignorerVisite() {
     const v = this.visite; if (!v || v.question === null) return; v.question = null;
-    if (typeof jouerGeste === 'function') jouerGeste(this, this.heros, 'non', null, { vers: v.gar.x });   // (v1.66) il secoue la tête : non
+    this.gesteHeros('non', v.gar.x);   // (v1.66) il secoue la tête : non
     this.partirVisite('ignore');
   },
   // Le marchand répond à Garrick, d'une petite bulle au-dessus de sa tête, pendant qu'on repart
@@ -1040,7 +1048,7 @@ Object.assign(MarcheScene.prototype, {
   suiteVisite() {
     const v = this.visite; if (!v || v.fini || v.phase !== 'parle') return;
     if (v.question !== null) return this.reprendreVisite();
-    if (typeof jouerGeste === 'function' && v.i >= 0) jouerGeste(this, this.heros, 'oui', null, { vers: v.gar.x });   // (v1.66) il acquiesce, et on repart
+    if (v.i >= 0) this.gesteHeros('oui', v.gar.x);   // (v1.66) il acquiesce, et on repart
     const et = VISITE_MARCHE.etapes[v.i];
     if (et && et.reponse) this.reponseMarchand(et.lieu, et.reponse);   // (le marchand lui répond, et on repart)
     if (v.i < VISITE_MARCHE.etapes.length - 1) this.allerEtapeVisite(v.i + 1); else this.partirVisite(false);
@@ -1049,7 +1057,7 @@ Object.assign(MarcheScene.prototype, {
   revenirVisite() { const v = this.visite; if (v && !v.fini && v.question === null && v.i > 0) this.allerEtapeVisite(v.i - 1); },
   passerVisite() {
     if (!this.visiteEnCours()) return;
-    if (typeof jouerGeste === 'function') jouerGeste(this, this.heros, 'nuque', null, { vers: this.visite.gar.x });   // (v1.66) gêné, il se frotte la nuque : « pas maintenant... »
+    this.gesteHeros('nuque', this.visite.gar.x);   // (v1.66) gêné, il se frotte la nuque : « pas maintenant... »
     this.partirVisite(true);
   },
 
@@ -1109,7 +1117,7 @@ Object.assign(MarcheScene.prototype, {
     v.etapes = presse ? null : this.etapesVisite(VISITE_MARCHE.etapes.length);   // (la visite finie : toutes les étapes cochées)
     // (v1.66) la visite finie : JeuneGoy salue Garrick de la main pendant qu'il s'en va vers le porche
     if (!presse && !ignore && typeof jouerGeste === 'function') this.time.delayedCall(900, () => {
-      if (this.heros.active && !this.heros.gesteEnCours && g.active) jouerGeste(this, this.heros, 'salut', null, { vers: g.x });
+      if (this.heros.active && !this.heros.gesteEnCours && g.active) this.gesteHeros('salut', g.x);
     });
     const o = typeof OBJECTIFS !== 'undefined' && OBJECTIFS.find(x => x.id === 'marche');
     const b = this.banniereVisite = this.add.text(480, 462, VISITE_MARCHE.fin + (o ? `   Objectif : « ${o.texte} »` : ''), style(13, '#2a1608', { fontStyle: 'bold', backgroundColor: '#f3d98a', padding: { x: 10, y: 5 } })).setOrigin(0.5).setDepth(150).setScrollFactor(0);
