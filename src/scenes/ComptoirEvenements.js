@@ -162,11 +162,11 @@ Object.assign(CounterScene.prototype, {
     }
     if (e.etape === 3) {
       this.exprimer('inquiet');
-      this.evtDire("Le ciel était orange, cette nuit-là. Ça m'est revenu. Quelqu'un m'a tendu un paquet de langes, tout chaud... et puis plus rien.", 'parents');
+      this.evtDire("Le ciel était orange, cette nuit-là. Ça m'est revenu. Quelqu'un m'a mis dans les bras un petit, à moitié endormi, roulé dans une couverture... et puis plus rien.", 'parents');
       this.bouton('« Qui ? »', () => {
         evtParents(G, e);
         this.exprimer('neutre');
-        this.evtDire("Les visages, je les ai perdus. (Il fixe tes mains, puis fredonne, très bas, un air que tu crois connaître.) Le paquet était si léger. Je me demande ce qu'il est devenu.", 'parents');
+        this.evtDire("Les visages, je les ai perdus. (Il fixe tes mains, puis fredonne, très bas, un air que tu crois connaître.) Il pesait si peu, ce petit. Je me demande ce qu'il est devenu.", 'parents');
         this.evtPlus(600, () => this.evtFredon(14));
         this.bouton('...', () => this.evtFin());
       });

@@ -338,7 +338,7 @@ class IntroHistoireScene extends Cinematique {
     const e = this.e;
     const petit = this.f ? 'petite' : 'petit';
 
-    this.ecrire('Il y a bien longtemps...', `Dans la Comté vivait un${e} jeune orphelin${e}. Pas de famille, pas de maison... juste la rivière, et beaucoup d'imagination.`);
+    this.ecrire('Il y a bien longtemps...', `Dans la Comté vivait un${e} jeune orphelin${e}. L'orphelinat de la Fleur du Pommier avait fermé depuis longtemps : pas de famille, pas de maison... juste la rivière, et beaucoup d'imagination.`);
     await this.attendreClic();
 
     // (v1.08, planche 37 C validée) L'aventurier arrive en se débattant dans le courant : il tente
@@ -427,7 +427,12 @@ class IntroHistoireScene extends Cinematique {
     await this.replique('Garrick Cœur-de-Chêne', '« Si je survis à ma quête, je reviendrai te récompenser. Avec un trésor, foi de Cœur-de-Chêne ! Promis. »',
       { sprite: this.mentor, vers: this.heros, personne: this.voixGarrick, ton: 'content' });
     this.fermerPensee(reve);
-    await this.replique(nomJoueur(window.GAME, 'petit'), '« Revenez vivant, surtout ! »', { sprite: this.heros, vers: this.mentor, personne: this.voixHeros, ton: 'inquiet', emotion: '♥' });
+    // (JeuneGoy ne parle jamais : il se fait comprendre, et Garrick parle pour deux)
+    this.emotion(this.heros, '♥');
+    Son.jouer('voix', { personne: this.voixHeros, ton: 'inquiet', duree: 0.4 });
+    this.ecrire('', 'Tu n\'as rien dit. Tu as serré ses mains très fort, les sourcils froncés, et il a compris.');
+    await this.attendreClic();
+    await this.replique('Garrick Cœur-de-Chêne', '« Et promis : je reviens vivant. Surtout. »', { sprite: this.mentor, vers: this.heros, personne: this.voixGarrick, ton: 'content', geste: 'hoche' });
     // Il s'en va de l'autre côté du chemin ; tu le salues jusqu'à ce qu'il disparaisse
     const depart = this.marcher(this.mentor, 1020, 4);
     this.time.delayedCall(500, () => { this.geste(this.heros, 'salut'); this.emotion(this.mentor, 'joie', 900); });
@@ -469,9 +474,11 @@ class IntroHistoireScene extends Cinematique {
     }
     await this.replique('Garrick Cœur-de-Chêne', `« Tu croyais que je t'avais oublié${e} ? Voici ta part du trésor ! Alors, que veux-tu en faire ? »`,
       { sprite: this.mentor, vers: this.heros, personne: this.voixGarrick, ton: 'rire', emotion: 'joie', geste: 'bras', quoi: 'mentor' });
+    // (JeuneGoy ne parle pas : sa pensée fait la réponse, et Garrick lit en lui comme dans un livre)
     const souvenir = this.pensee(this.heros, iconeObjet(this, 'bandage'), { echelle: 2.6 });
-    await this.replique(nomJoueur(window.GAME, 'petit'), "« Je ne sais pas... J'ai bien aimé m'occuper de vous. Vous soigner, vous nourrir, vous préparer pour la route. »",
-      { sprite: this.heros, vers: this.mentor, personne: this.voixHeros, ton: 'inquiet' });
+    Son.jouer('voix', { personne: this.voixHeros, ton: 'inquiet', duree: 0.4 });
+    this.ecrire('', 'Tu regardes le coffre, puis tes mains. Soigner, nourrir, préparer pour la route... c\'est ça que tu as aimé. Garrick suit ton regard, et sourit.');
+    await this.attendreClic();
     this.fermerPensee(souvenir);
     creerComptoirCarteHD(this);
     const idee = this.pensee(this.mentor, 'comptoirCarteHD', { echelle: 1.4 });   // (il rêve déjà de ton shop)

@@ -116,14 +116,16 @@ const MURMURES = [
 
 // --- Étape 9d : Garrick repasse prendre des nouvelles ---
 // Toujours bienveillant, il plaisante, et laisse tomber des choses à la légère. (Le joueur ne sait
-// pas encore que Garrick est le chef des Bannis, ni ce que le Conseil des Gardiens a fait.)
+// pas encore que Garrick siège au Drômmath, le Conseil des Bannis, ni ce que le Conseil des Gardiens a fait.)
+// (Garrick ne se souvient de rien d'avant ses 13 ans : sa « grand-mère », c'est Grand-mère Ortie,
+// la doyenne gobeline qui l'a recueilli ; il ne connaît ni son père ni sa mère.)
 const GARRICK_VISITES = [
   { jour: 4, texte: "Alors, ce comptoir ? Tu as l'air de t'en sortir ! Tiens, pour les débuts difficiles. ... Et ne crois pas tout ce qu'on raconte au marché. Les gens répètent ce qu'on leur a appris à répéter, ha ha !", cadeau: 20 },
   { jour: 10, texte: "Un dragon sous la montagne, hein ? Ça fait cent ans que j'entends ça. Personne ne l'a jamais vu, mais tout le monde le craint. Drôle de bête, tu ne trouves pas ?" },
   { jour: 17, texte: "On dit beaucoup de mal des gobelins. Moi j'en ai connu un qui rendait la monnaie juste ! Rare, hein ? Ha ha ! ... Si un jour un Banni frappe à ta porte, sers-le comme un autre. Une pièce, c'est une pièce." },
   { jour: 25, texte: "Le Conseil des Gardiens a encore voté une taxe. Ils ont l'air si sages, dans leurs grandes robes blanches... Bah. Ne m'écoute pas, je radote." },
-  { jour: 34, texte: "Ma grand-mère disait qu'il poussait des pommiers, dans les terres d'ombre. Avant. Avant quoi ? Elle ne savait plus. Personne ne sait plus, d'ailleurs. C'est curieux, la mémoire.", cadeau: 30 },
-  { jour: 44, texte: "Le Grand Sage du Conseil... Tu savais que personne ne connaît son âge ? Mon père le voyait déjà vieux. Et son père avant lui. Ha ! Il doit avoir un bon apothicaire." },
+  { jour: 34, texte: "Ma grand-mère... enfin, celle qui m'a recueilli, là d'où je viens. Elle dit qu'il poussait des pommiers, dans les terres d'ombre. Avant. Avant quoi ? Elle ne sait plus. Personne ne sait plus, d'ailleurs. C'est curieux, la mémoire.", cadeau: 30 },
+  { jour: 44, texte: "Le Grand Sage du Conseil... Tu savais que personne ne connaît son âge ? Les plus vieux que je connais le voyaient déjà vieux quand ils étaient petits. Et leurs anciens avant eux. Ha ! Il doit avoir un bon apothicaire." },
   { jour: 56, texte: "Tu as bien grandi, toi. Un jour, je te raconterai d'où je viens vraiment. Pas aujourd'hui. Aujourd'hui, je t'achète une ration et je repars, ha ha !" },
 ];
 
