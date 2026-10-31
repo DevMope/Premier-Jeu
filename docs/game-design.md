@@ -3775,6 +3775,7 @@ Le joueur demande plus d'événements, au hasard ou liés à son histoire, penda
   - **Q150, validé** : les boutons gardent leurs libellés de choix (à la Zelda), et JeuneGoy répond par des gestes visibles : hochements de tête, mouvements de bras, etc.
 
 ## La feuille de route (31/10) : ce qui reste à faire, dans l'ordre
+**Ordre validé par le joueur le 31/10.**
 L'histoire étant maintenant écrite, voici les chantiers restants, réorganisés. Un ou deux à la fois, captures avant fusion, rien sur Cloudflare sans accord.
 1. **Gestes muets de JeuneGoy** (lancé) : les animations de l'intro (les mains serrées, le regard vers le coffre), un système de gestes (oui, non, merci, question…) branché sur les choix de dialogue.
 2. **La ville en quartiers, chantiers 3 à 6** : la rue Soucolline complète ; le bas-quartier et l'entrée du marché noir ; les Coteaux ; le Rempart et la rivière aux Trois Pommes (l'étang en vue de trois quarts à trancher là).
