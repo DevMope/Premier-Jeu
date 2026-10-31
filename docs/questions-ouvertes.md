@@ -4,7 +4,9 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
-(aucune pour l'instant)
+- **Q155** — Les gestes muets v2 et les pièces dans la besace (planche du 31/10) : validé pour fusion ?
+- **Q156** — Les grosses sommes : le flot de pièces s'arrête à 28 pièces visibles (environ 1,2 s). Plus dense, ou ça suffit ?
+- **Q157** — Le petit « flop » de cuir quand la besace se tasse à la fin de chaque paiement : on le garde, ou il deviendrait répétitif avec tous les clients d'une journée ?
 
 
 
