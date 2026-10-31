@@ -235,7 +235,10 @@ class QuartierScene extends Phaser.Scene {
   }
   majBoutonPlan() {
     const droite = this.ecritsSous(806, 86, 958, 130), gauche = this.ecritsSous(2, 86, 154, 130);
-    this.placerBoutonPlan(droite && !gauche ? 1 : !droite ? 0 : this.placeBoutonPlan);
+    // (chantier 3) une pensée de JeuneGoy (son médaillon et sa bulle, en haut à droite, HudScene.penseesEnDirect) : le bouton
+    // passe à gauche le temps qu'elle s'affiche, puis revient
+    const hud = this.scene.get('Hud'), pensee = !!(hud && hud.penseeAffichee && hud.penseeAffichee.some(o => o.active && o.alpha > 0.05));
+    this.placerBoutonPlan(pensee ? 1 : droite && !gauche ? 1 : !droite ? 0 : this.placeBoutonPlan);
     { const h = this.scene.get('Hud'), p = h && h.pastilleObjectifs, g = p && p.active && p.visible ? p.getBounds().right + 12 : 250; if (g !== this.gaucheTitre && !this.tweens.isTweening(this.titreQ)) this.poserTitre(this.titreQ.text); }   // (la pastille des objectifs a changé)
     // (une plaque de rue passe sous le bandeau du titre : il se fonce, pour que deux noms ne se lisent jamais l'un sur l'autre)
     const a = this.ecritsSous(0, 0, 960, 44) ? 1 : 0.45;

@@ -349,9 +349,9 @@ DECORS_QUARTIERS.soucolline = {
     ici.plaqueSur(paon, 'droite', 120, 'Placette de la Fontaine', { retrait: 12 });
     ici.plaqueSur(pommeroy, 'droite', 100, 'Montée du Four', { retrait: 8 });
     ici.plaqueSur(banque, 'droite', 122, 'Rue Soucolline', { retrait: 12 });
-    // (l'été) les bottes de paille, rangées contre le mur, toujours au même endroit : au pied de la maison haute, à gauche de
-    // sa porte, sur le trottoir (jamais au milieu du passage, ni devant une porte ou un tonneau)
-    if (saison === 'moissons' && typeof texturesPailleHD === 'function') { const bx = L.maisonHaute - 50; texturesPailleHD(s); ombre(bx, YN + 14, 70); img(bx, YN + 16, 'bottesPailleRue', E * 0.8, YN + 16); ici.obstacles.push([bx - 34, YN + 2, bx + 34, YN + 18]); }
+    // (l'été) les bottes de paille, rangées contre la palissade du porche, du côté est, toujours au même endroit (jamais au
+    // milieu du passage, ni devant une porte, une enseigne ou un réverbère)
+    if (saison === 'moissons' && typeof texturesPailleHD === 'function') { const bx = L.arche + 190; texturesPailleHD(s); ombre(bx, YN + 14, 70); img(bx, YN + 16, 'bottesPailleRue', E * 0.8, YN + 16); ici.obstacles.push([bx - 34, YN + 2, bx + 34, YN + 18]); }
 
     // ===================== 4. la rue Haute : les maisons du côté nord, la cour du Puits, le jardin du Pommier =====================
     maison(660, YH, 'mvL3', { L: 120, etages: [50], toitMat: 'ardoiseToit', crepi: 'enduitC', fenetres: [[0.3, 0.72]], porte: { x: 0.68, l: 22, h: 48, peinte: 'porteRouge' }, fenetresRdc: [0.28], volet: 'voletB', lucarne: null, graine: 51, fleur: 'fleurR2' });
@@ -436,10 +436,12 @@ DECORS_QUARTIERS.soucolline = {
     ici.obstacles.push([1540 - 30, 1380, 1540 + 30, 1396], [1690 - 30, 1380, 1690 + 30, 1396], [1560 - 28, 1548, 1560 + 28, 1564], [1700 - 28, PL.y1 - 14, 1700 + 28, PL.y1 + 2]);
 
     // ===================== 6. les réverbères, les bancs, les bêtes, l'herbe au pied des murs =====================
-    for (const x of [660, 1104, 2044, 2512, 3186]) { lampe(x, YN + 26); ici.obstacles.push([x - 10, YN + 16, x + 10, YN + 30]); }
+    // (aucun réverbère devant une enseigne, un écriteau, une plaque, le poteau du barbier ou l'ardoise : celui du paon est
+    // passé à droite de son enseigne, celui de la tente à droite du barbier)
+    for (const x of [660, 1104, 2075, 2735, 3186]) { lampe(x, YN + 26); ici.obstacles.push([x - 10, YN + 16, x + 10, YN + 30]); }
     for (const x of [400, 1180, 2160, 2760, 3300]) { lampe(x, 1742); ici.obstacles.push([x - 10, 1730, x + 10, 1748]); }
     lampe(RH.x1 + 8, YH + 4); lampe(FO.x0 - 14, YH + 4);
-    if (jour) img(2512 + 4, YN + 26 - 172 * 0.8, 'moineau81_pose', F, YN + 27);
+    if (jour) img(2735 + 4, YN + 26 - 172 * 0.8, 'moineau81_pose', F, YN + 27);
     if (jour) for (const [x, y, k, fl] of [[2300, 1662, 'pigeon81_picore', false], [2322, 1672, 'pigeon81_debout', true], [1180, 1130, 'pigeon81_picore', true], [700, 1680, 'pigeon81_picore', false], [3460, 1660, 'pigeon81_debout', true]]) img(x, y, k, F).setFlipX(fl);
     img(2240, YN + 34, banc5(s), E); ici.obstacles.push([2240 - 52, YN + 14, 2240 + 52, YN + 36]);
     if (saison !== 'givre') {
