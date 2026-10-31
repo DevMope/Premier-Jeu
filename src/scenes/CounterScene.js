@@ -1764,11 +1764,12 @@ class CounterScene extends Phaser.Scene {
     this.dire(bonjour, qui);
     this.exprimer('content');
     this.bouton('« Merci ! »', () => {
+      gesteChoixComptoir(this, '« Merci ! »');   // (v1.66) JeuneGoy ne parle pas : sa main se pose sur son cœur
       const apporte = recompensePalier(G, entree.palier);
       this.dire(apporte ? `En l'honneur de ton nouveau palier, voici ${apporte}. Continue comme ça !` : 'Continue comme ça !', qui);
       this.cameras.main.flash(250, 255, 240, 160);
       this.majStock(); this.dessinerPieces();
-      this.bouton('Au revoir !', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+      this.bouton('Au revoir !', () => { gesteChoixComptoir(this, 'Au revoir !'); this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
     });
   }
 
@@ -1780,9 +1781,10 @@ class CounterScene extends Phaser.Scene {
     this.titreCommande.setFontSize(17).setText('Une visite');
     this.dire(visite.texte, 'Garrick Cœur-de-Chêne');
     this.bouton('« Merci, Garrick ! »', () => {
+      gesteChoixComptoir(this, '« Merci, Garrick ! »');   // (v1.66) la main sur le cœur : Garrick lit en lui
       if (visite.cadeau) { encaisser(G, visite.cadeau, 'cadeau'); this.dessinerPieces(); }
       this.dire(visite.cadeau ? `Garrick glisse ${visite.cadeau} pièces sur le comptoir. « Ne dis rien, ha ha ! Allez, au travail, petit${eJ()}. »` : `« Allez, au travail, petit${eJ()}. Je repasserai ! »`, 'Garrick Cœur-de-Chêne');
-      this.bouton('Au revoir !', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+      this.bouton('Au revoir !', () => { gesteChoixComptoir(this, 'Au revoir !'); this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
     });
   }
 
@@ -1795,10 +1797,11 @@ class CounterScene extends Phaser.Scene {
     const lettres = ['Zéro', 'Une', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf', 'Dix'], rang = ['', 'première', 'deuxième', 'troisième', 'quatrième', 'cinquième', 'sixième', 'septième', 'huitième', 'neuvième', 'dixième'];
     this.dire(`${lettres[n] || n} pièces de l'armure, déjà... Écoute-moi bien : à la ${rang[total] || total + 'e'}, ton camp sera scellé, pour de bon. La lumière, l'ombre... ou rien du tout. Réfléchis avant de la recevoir.`, 'Garrick Cœur-de-Chêne');
     this.bouton('« Rien du tout ? »', () => {
+      gesteChoixComptoir(this, '« Rien du tout ? »');   // (v1.66) la tête qui se penche : la question muette
       this.dire(serment ? `« Tu as juré ${serment === 'bien' ? 'à la Confrérie' : 'aux Bannis'}. Un serment, ça se garde... ou ça se paie. Mais réfléchis bien à qui tu as donné ta parole. »`
         : Math.abs(j) < PALIERS_JAUGE[0] ? "« Si tu restes entre les deux, sans avoir juré à personne, l'armure ira à quelqu'un d'autre. Je ne sais pas si ce serait une bonne chose... ni pour toi, ni pour le monde. »"
           : `« Aujourd'hui, ta balance penche ${j > 0 ? 'vers la lumière' : "vers l'ombre"}. Ce n'est pas encore gravé dans le métal. Après la dernière pièce, ça le sera. »`, 'Garrick Cœur-de-Chêne');
-      this.bouton('« Merci, Garrick. »', () => { this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
+      this.bouton('« Merci, Garrick. »', () => { gesteChoixComptoir(this, '« Merci, Garrick. »'); this.bouton('...', null); this.partirPar(FENETRE.x - 80); });
     });
   }
 
@@ -1808,6 +1811,7 @@ class CounterScene extends Phaser.Scene {
     this.titreCommande.setFontSize(17).setText('Un vieux voyageur');
     this.dire(a.phrase, a.nom);
     this.bouton('« ... »', () => {
+      gesteChoixComptoir(this, '« ... »');   // (v1.66) la tête qui se penche : il n'a pas compris
       this.dire(`${a.nom} repart à petits pas, appuyé${a.feminin ? 'e' : ''} sur sa canne. Dans la rue, quelqu'un rit : « Encore ${a.feminin ? 'une vieille' : 'un vieux'} qui radote. »`);
       this.bouton('...', null);
       this.time.delayedCall(2200, () => this.partirPar(FENETRE.x - 80));
