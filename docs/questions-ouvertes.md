@@ -4,10 +4,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
-- **Q151** — Les gestes muets (planche envoyée le 31/10) : le lot est-il validé pour fusion ?
-- **Q152** — Au comptoir (vue à la première personne), le « hochement de tête » est un petit mouvement doux de la caméra : assez lisible, ou plus marqué ?
-- **Q153** — Le « oui » et le « non » quand JeuneGoy est de dos sur la place : il pivote de trois quarts le temps du geste. D'accord, ou faut-il des images de dos dédiées ?
-- **Q154** — On branche ensuite la même table choix → geste dans les autres lieux (le bar, la banque, la diseuse, le marché noir) ?
+(aucune pour l'instant)
+
 
 
 
@@ -16,6 +14,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q151 à Q154~~ Gestes seulement en cinématique et à la troisième personne, pas de hochement de caméra, salut au marché à refaire, autres lieux plus tard (31/10).
 - ~~Q149~~ Validé le 31/10 : le fragment recopié par un doyen ; « bac » remplacé par « la barque » dans les paroles.
 - ~~Q146 à Q148, Q150~~ Validés le 31/10 : cohérence fusionnée, mendiant corrigé, légende de l'armure gardée, gestes muets lancés.
 - ~~Q141~~ Le titre officiel du moment : « Waybreakers: The Sage's Peace » (31/10).
