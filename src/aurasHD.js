@@ -27,8 +27,9 @@ const AURAS_COULEURS = {
   rougeOr: { nom: 'rouge et or', sens: 'un guerrier noble, la force au service d’un rang', ext: 0xc02018, int: 0xffd060 },
   violetNoir: { nom: 'violet et noir', sens: 'une domination sans retour, la magie interdite', ext: 0x0a0612, int: 0x9a40e0 },
   argentBleu: { nom: 'argent et bleu', sens: 'un don ancien et maîtrisé (une magie spéciale)', ext: 0x8a92a8, int: 0x70c0ff },
-  noirOr: { nom: 'noir et or', sens: 'la pègre, la ruse au service d’un rang (le chat)', ext: 0x0c0a10, int: 0xe8b830 },
-  blancNoir: { nom: 'blanc et noir', sens: 'la mort qui apaise, le passage (la Faucheuse)', ext: 0x0a0812, int: 0xe8e8ff },
+  vertMarron: { nom: 'vert sombre et marron foncé', sens: 'la ruse des bas-fonds, l’instinct de l’animal (le chat)', ext: 0x2a1a10, int: 0x2e6a2a },
+  noirBlanc: { nom: 'noir et blanc, enroulés', sens: 'la mort, et le passage qu’elle ouvre (la Faucheuse) : le noir domine', ext: 0x1a1426, int: 0xe8e8ff, yinYang: true },
+  rougeNoirViolet: { nom: 'rouge, noir et violet', sens: 'l’Affamé : la faim, le néant et la domination (Vorhal’Düm)', ext: 0x0a0410, int: 0xe02020, tiers: 0x8a30e0 },
 };
 // Les cinq paliers : la portée du voile (en pixels de la texture du personnage, qui fait 160 de haut environ), sa densité,
 // ce qui s'y ajoute. Chaque personnage a sa propre texture : la portée se mesure par rapport à sa hauteur.
@@ -58,9 +59,9 @@ const auraRgb = c => [(c >> 16) & 255, (c >> 8) & 255, c & 255];
 const auraMix = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
 // Le voile et ses couches, pour une silhouette donnée : rend { arriere, devant, R } (deux clés de textures, la marge R)
 // montee : de 0 à 1, l'aura qui apparaît (sa portée et sa densité montent)
-function auraVoileHD(scene, cle, couleur, palier, { graine = 3, montee = 1 } = {}) {
+function auraVoileHD(scene, cle, couleur, palier, { graine = 3, montee = 1, echelle = 1 } = {}) {
   const C = AURAS_COULEURS[couleur], P = AURAS_PALIERS[palier], S = auraPixels(scene, cle);
-  const R = Math.max(2, Math.round(S.h * P.portee * (0.35 + 0.65 * montee))), dense = P.dense * (0.4 + 0.6 * montee);
+  const R = Math.max(2, Math.round(S.h * P.portee * echelle * (0.35 + 0.65 * montee))), dense = P.dense * (0.4 + 0.6 * montee);
   const W = S.w + 2 * R, H = S.h + 2 * R, N = W * H;
   // la silhouette, et la distance au corps (une propagation : monter coûte moins que descendre, le voile s'élève)
   const corps = new Uint8Array(N), d = new Float32Array(N).fill(1e9), file = [];
@@ -79,7 +80,9 @@ function auraVoileHD(scene, cle, couleur, palier, { graine = 3, montee = 1 } = {
     if (corps[i]) I = Math.min(1, I + 0.15);
     const perce = C.perce && hachage(Math.floor(x / 4), Math.floor(y / 6), graine + 2) > 0.78;
     const sombre = (ext[0] + ext[1] + ext[2]) < 150;   // (un extérieur sombre : le cœur clair reste large, sinon on ne verrait rien)
-    let col = perce ? int : auraMix(int, ext, Math.min(1, u * (sombre ? 0.9 : 1.6))); if (u < 0.08 && !corps[i]) col = auraMix(col, blanc, 0.35);
+    let col = perce ? int : auraMix(int, ext, Math.min(1, u * (sombre ? 0.9 : 1.6)));
+    if (C.yinYang) { const ang = Math.atan2(y - H * 0.5, x - W * 0.5), r0 = Math.hypot(x - W * 0.5, (y - H * 0.5) * 0.8); const spir = Math.sin(ang * 2 + r0 * 0.09 - graine) + (vol - 0.5) * 1.2; col = spir > 0.72 ? auraMix(int, ext, 0.1) : spir > 0.55 ? auraMix(ext, int, 0.45) : auraMix(ext, int, 0.1 + u * 0.15); }   // (le noir domine, le blanc s'enroule en un ruban)
+    if (C.tiers) { const bande = Math.sin((x + y * 0.6) * 0.07 + vol * 6 + graine); const t3 = auraRgb(C.tiers); col = bande > 0 ? auraMix(col, t3, bande * 0.75) : auraMix(col, ext, -bande * 0.6); }   // (les trois couleurs se fondent en volutes) if (u < 0.08 && !corps[i]) col = auraMix(col, blanc, 0.35);
     // la transparence en quatre crans, tramée : un voile doux qui reste du pixel art
     const a = Math.max(0, Math.min(1, I)), cran = Math.floor(a * 4 + (AURA_BAYER[y % 4][x % 4] + 0.5) / 16) / 4;
     if (cran <= 0) continue;
@@ -116,13 +119,13 @@ function auraVoileHD(scene, cle, couleur, palier, { graine = 3, montee = 1 } = {
   if (P.debris) for (let k = 0; k < P.debris; k++) { const cx = hachage(k, 41, graine) * W, cy = R * 0.3 + hachage(k, 42, graine) * (H - R), r = 1 + hachage(k, 43, graine) * 2.5;
     for (let y = Math.floor(cy - r); y <= cy + r; y++) for (let x = Math.floor(cx - r * 1.3); x <= cx + r * 1.3; x++) { if (x < 0 || y < 0 || x >= W || y >= H) continue; const dx = (x - cx) / (r * 1.3), dy = (y - cy) / r; if (dx * dx + dy * dy > 1) continue;
       const t = dy < -0.3 ? 70 : dy > 0.4 ? 28 : 46; arriere[y * W + x] = [t, t - 6, t + 8, 255]; } }
-  const base = 'aura_' + cle + '_' + couleur + '_' + palier + '_' + graine + '_' + Math.round(montee * 100);
+  const base = 'aura_' + cle + '_' + couleur + '_' + palier + '_' + graine + '_' + Math.round(montee * 100) + '_' + Math.round(echelle * 100);
   return { arriere: auraTexture(scene, base + '_a', W, H, arriere), devant: auraTexture(scene, base + '_d', W, H, devant), R, W, H };
 }
 // Pose l'aura autour d'une image de personnage posée par les pieds (origine 0.5, 1) : le voile derrière, la teinte et les
 // bords fondus devant, un halo additif et, au dernier palier, le sol qui luit
-function auraHD(s, img, couleur, palier, { graine = 3, montee = 1 } = {}) {
-  const C = AURAS_COULEURS[couleur], P = AURAS_PALIERS[palier], V = auraVoileHD(s, img.texture.key, couleur, palier, { graine, montee });
+function auraHD(s, img, couleur, palier, { graine = 3, montee = 1, echelle = 1 } = {}) {   // (echelle : Vorhal'Düm a la plus grande aura de toutes)
+  const C = AURAS_COULEURS[couleur], P = AURAS_PALIERS[palier], V = auraVoileHD(s, img.texture.key, couleur, palier, { graine, montee, echelle });
   const sc = img.scaleX, objets = [], p0 = img.depth;
   const pose = (cle, prof, alpha, blend) => { const o = s.add.image(img.x, img.y + V.R * sc, cle).setOrigin(0.5, 1).setScale(sc).setFlipX(img.flipX).setDepth(prof).setAlpha(alpha); if (blend) o.setBlendMode(blend); objets.push(o); return o; };
   const h = img.displayHeight;

@@ -27,6 +27,7 @@ Ce sont les motifs qui reviennent d'un morceau à l'autre. Les notes sont donné
 | **M5** | Garrick | l'enquêteur, le frère | mi · do · la │ si · do · ré · mi (E C A │ B C D E), en mi dorien. Ses trois premières notes sont celles de la berceuse, à l'envers : la chanson de sa mère, retournée | un violoncelle seul, un violon populaire |
 | **M6** | L'Affamé | Vorhal'Düm et l'Engeance | six pulsations très graves (pour ses six yeux), sur un agrégat de notes autour de si♭, sans tonalité | des sons graves synthétiques, des cordes jouées sur le chevalet |
 | **M7** | Le Rempart | l'armure et le héros de la prophétie | ré · la · ré′ (D A D′), une fanfare de quinte et d'octave | les cors. En Lumière, en majeur, avec harpe et cloches ; en Ombre, le même motif en mode phrygien, avec des cuivres sourds ; en neutre, à l'unisson nu, sans harmonie |
+| **M8** | L'Aura (à valider) | l'aura d'un personnage doué, quand il s'apprête à combattre | une montée d'une octave sur une pédale grave (la → la′), qui s'arrête net sur un coup sec ; puis une tenue sur la pédale | une sous-basse qui gonfle, un coup de grosse caisse et un éclat de cymbale, puis un bourdon tenu |
 
 **Une règle cachée** ☆ : M5 (Garrick) et M3 (le Sage) partagent un triton, qu'on n'entend pas avant la révélation « à la Dark Vador ». Dans ce morceau-là, le thème de Garrick finit pour la première fois sur la note du Sage.
 
@@ -294,3 +295,10 @@ Vers 4 :  mi  ré  do │ si  do  si │ la —      (E  D  C  │ B  C  B  │ 
 | La préparation de guerre | 3:00 en boucle | ré mineur | 100 | M7, M5 |
 | La guerre | 6 à 8 min | ré mineur → ré majeur | 138 / 70 | tous |
 | Les fins | 1:30 à 3:00 | voir chaque fin | — | voir chaque fin |
+
+## 5. Les sons des auras (planche des auras, à valider)
+
+Deux sons synthétiques, dans `src/audio.js` (`SONS.auraMontee`, `SONS.auraTenue`, `Son.eteindreAura()`), pas encore branchés :
+- **« auraMontee »**, l'apparition : elle doit se sentir comme une explosion d'énergie. Une montée grave qui gonfle (une sous-basse en dents de scie qui glisse de 55 à 110 Hz, un filtre qui s'ouvre avec elle, un souffle grave qui enfle, environ 0,9 s), puis un claquement d'énergie (un coup sec et grave, un éclat clair, aigu, un bref sifflement), et un souffle qui retombe sur une seconde. C'est M8 joué brut.
+- **« auraTenue »**, l'aura allumée : un bourdonnement doux en boucle (deux sous-basses légèrement désaccordées à 55 Hz, un harmonique à l'octave, un halo de souffle filtré qui respire toutes les quatre secondes), qui reste tant que dure le combat, jusqu'à l'épuisement ; `Son.eteindreAura(fondu)` l'efface en fondu.
+- Règle validée : l'aura (et ses sons) n'apparaît que quand un personnage doué s'apprête à se battre ou à se défendre, jamais en temps normal.
