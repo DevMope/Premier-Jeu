@@ -7,8 +7,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q219** — Les auras v5 (morceau 01_auras-v5) : le chat vert sombre et marron foncé ; la Faucheuse noir et blanc enroulés, noir dominant ; Vorhal'Düm rouge, noir et violet, la plus grande de toutes. Tu valides ?
-- **Q220** — La Faucheuse n'a que son vieux sprite 16 px : on lui fait un dessin HD (planche à part) avant de juger son aura pour de bon ?
+- **Q219/Q220** — (en suspens) les auras du chat, de la Faucheuse et de Vorhal'Düm seront jugées une fois le dessin HD de la Faucheuse fait (planche en cours).
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
