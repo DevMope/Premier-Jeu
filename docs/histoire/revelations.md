@@ -124,12 +124,12 @@ Personne n'appelle l'événement « le Grand Oubli » (c'est un nom de dossier).
 |---|---|---|---|
 | Les Bannis (gobelins du Bourbier, le murmure de la cave) | **le long sommeil** | On s'est réveillé dans la boue sans savoir pourquoi on pleurait (Ortie) ; « les momies dormaient pendant le long sommeil » (la cave) | ★ dans le code |
 | Les loups-garous | **la nuit sans lune** | « Puis vint la nuit sans lune. Le Grand Sage chanta, et le monde s'endormit. » (Lunegrise) | ★ dans le code (« chanta » depuis le 01/11) |
-| Les momies | **le recouvrement** (« le sable ») | « Il n'efface rien. Il recouvre. Comme le sable recouvre une ville. » (Ankhar) | ☆ |
-| Les vampires | **la nuit des registres** | Les registres brûlés dans la cour, le père de Sévérin pendu au pont-levis | ☆ |
-| Les orcs | **la pierre muette** | Le pacte gravé à l'entrée, que plus personne ne sait lire (Gromak) | ☆ |
-| Les elfes | **le chant perdu** | Ils chantent au Lac des Lunes sans plus savoir quoi (Lunegrise) | ☆ |
-| Les nains | **l'éboulement** | Une galerie de mémoire qui s'est effondrée ; on creuse autour sans la retrouver | ☆ |
-| Les hobbits | **la mauvaise saison** | Une année sans récolte dont on ne parle pas à table | ☆ |
+| Les momies | ☆ **la Grande Marée** (« quand la marée est passée ») | Pour un peuple du sable, l'oubli est une marée qui monte, recouvre, et se retire en laissant tout lisse ; les momies qui dormaient ne l'ont pas vue passer (Ankhar : « il n'efface rien, il recouvre »). Autre : « le Sable Haut » | ☆ (v2, 01/11) |
+| Les vampires | ☆ **l'An Sans Nom** | Un peuple de registres, de lignées et de dates : la seule année qui manque dans leurs livres, celle où les registres ont brûlé. Dire « avant l'An Sans Nom » est leur seule façon de dater. Autre : « la Page Arrachée » | ☆ (v2) |
+| Les orcs | ☆ **le Serment Muet** | Un peuple de pactes et de serments gravés : le pacte à l'entrée des galeries que plus personne ne sait lire ; « on a juré quelque chose, on ne sait plus quoi » (Gromak). Autre : « la Dette » | ☆ (v2) |
+| Les elfes | **le chant perdu** | Ils chantent au Lac des Lunes sans plus savoir quoi (Lunegrise) | ★ validé le 01/11 |
+| Les nains | ☆ **la Veine Perdue** | Un peuple de mineurs : un filon de mémoire qu'ils savent avoir creusé et qu'ils ne retrouvent plus ; on frappe les murs pour l'entendre sonner. Autre : « la Galerie Murée » | ☆ (v2) |
+| Les hobbits | ☆ **l'Hiver Sans Fête** | Un peuple de fêtes, de repas et d'almanachs : la seule saison qui n'a pas eu sa fête, la page vide de l'almanach dont on ne parle pas à table. Autre : « l'Année Sans Pommes » | ☆ (v2) |
 | Les humains de la Comté | aucun nom | Ils ne savent pas qu'il y a eu quelque chose : c'est le but du sort | ★ |
 
 Les noms ☆ ne sont pas encore écrits dans le jeu : aucun texte existant de ces peuples ne nomme l'événement. Ils serviront quand un texte le nommera.
