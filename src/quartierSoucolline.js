@@ -79,6 +79,9 @@ function planSolSoucolline() {
   return { id: 'soucolline3' + ch + rg[0], code, options: {
     pierre: PIERRES_QUARTIERS.soucolline, chaussee: ch, rigole: ch === 'grille' ? 'plate' : 'pierre',
     sauf: (X, Y) => X >= VE.x0 - 50 && X < VE.x1 + 50 && Y >= PL.y1 - 10,
+    // (phase 3, Q198-2) les trottoirs comme un plan : la bordure du nord jette une marche d'ombre sur la chaussée, le pied de
+    // celle du sud est dans l'ombre (sur le tronçon d'essai)
+    ombreSol: (X, Y) => (typeof cameraHauteActive !== 'function' || !cameraHauteActive() || X < TRONCON_ESSAI.x0 || X >= TRONCON_ESSAI.x1 || (X >= PL.x0 && X < PL.x1)) ? 0 : Y >= 1546 && Y < 1550 ? -2 : Y >= 1550 && Y < 1553 ? -1 : Y >= 1697 && Y < 1700 ? -1 : 0,
     herbeJoints: (X, Y) => (Y < 1520 || (Y > 1700 && Y < 1745) || (Y > 1140 && Y < 1176)) ? 0.22 : ((X > RU.x0 && X < RU.x1) || (X > FO.x0 && X < FO.x1)) && Y < 1500 ? 0.3 : 0,
     passage: (X, Y) => Math.max(bande(Y, 1650, 34), Y > 1100 && Y < 1196 ? bande(Y, 1146, 24) : 0, Y > 1196 && Y < 1820 && X > RU.x0 && X < RU.x1 ? bande(X, 1615, 30) : 0, Y > 1196 && Y < 1500 && X > FO.x0 && X < FO.x1 ? bande(X, 594, 22) : 0, X > PL.x0 && X < PL.x1 && Y > 1546 && Y < 1800 ? bande(X - (Y - 1546) * 0.4, 1600, 40) * 0.8 : 0),
   } };
@@ -107,10 +110,14 @@ DECORS_QUARTIERS.soucolline = {
   // repères, on glisse d'une hauteur à l'autre (la caméra, elle, suit en douceur : jamais d'à-coup).
   cameraY(y) {
     const R = [[1060, 378], [1200, 318], [1330, 340], [1505, 378], [1600, 352], [1700, 312], [1790, 282], [1860, 268]];
-    if (y <= R[0][0]) return R[0][1];
-    for (let i = 1; i < R.length; i++) if (y <= R[i][0]) { const [y0, a] = R[i - 1], [y1, b] = R[i], u = (y - y0) / (y1 - y0), w = u * u * (3 - 2 * u); return a + (b - a) * w; }
-    return R[R.length - 1][1];
+    // (phase 3, la caméra plus haute) JeuneGoy se tient 40 px plus bas à l'écran : on voit les toits par le dessus
+    const d = typeof cameraHauteActive === 'function' && cameraHauteActive() ? 40 : 0;
+    if (y <= R[0][0]) return R[0][1] + d;
+    for (let i = 1; i < R.length; i++) if (y <= R[i][0]) { const [y0, a] = R[i - 1], [y1, b] = R[i], u = (y - y0) / (y1 - y0), w = u * u * (3 - 2 * u); return a + (b - a) * w + d; }
+    return R[R.length - 1][1] + d;
   },
+  // (phase 3) la caméra recule : zoom 1,1 au lieu de 1,25 (les toits et la chaussée tiennent à l'écran)
+  get zoom() { return typeof cameraHauteActive === 'function' && cameraHauteActive() ? 1.1 : undefined; },
   passants: 5,
   // (par le plan : on arrive par le passage qui mène d'où l'on vient ; de chez soi, par sa porte)
   entrees: { place: 'arche', etang: 'arche', maison: 'comptoir', defaut: 'arche' },
@@ -275,8 +282,9 @@ DECORS_QUARTIERS.soucolline = {
     // (phase 2) vueHaut : l'essai « vu de haut » façon Stardew (reliefHD.js) : le toit par le dessus, la façade un peu plus
     // courte (étages 44 et 42 au lieu de 48 et 46, rez-de-chaussée 62 au lieu de 68), le pan avant un peu plus haut, l'ombre
     // portée sur le trottoir
-    const relief = typeof reliefActif === 'function' && reliefActif(), vueHaut = typeof vueHautActive === 'function' && vueHautActive();
-    maison(L.maisonHaute, YN, vueHaut ? 'mvB89h' : relief ? 'mvB89r' : 'mvB89', { L: 140, etages: vueHaut ? [44, 42] : [48, 46], rdc: vueHaut ? 62 : 68, toit: vueHaut ? 54 : 50, toitMat: 'ardoiseToit', crepi: 'enduitO', porte: { x: 0.5, l: 24, h: 50, peinte: 'porteVerte' }, fenetresRdc: [0.2, 0.8], fenetres: [[0.2, 0.8], [0.2, 0.5, 0.8]], volet: 'voletR', fleur: 'fleurP2', graine: 5, relief, cote: 14, vueHaut });
+    const relief = typeof reliefActif === 'function' && reliefActif(), vueHaut = typeof vueHautActive === 'function' && vueHautActive(), camHaute = typeof cameraHauteActive === 'function' && cameraHauteActive();
+    // (phase 3) la caméra plus haute : le pan avant de 84 rangs (autant que la façade), le pan arrière de 20
+    maison(L.maisonHaute, YN, camHaute ? 'mvB89c' : vueHaut ? 'mvB89h' : relief ? 'mvB89r' : 'mvB89', { L: 140, etages: vueHaut ? [44, 42] : [48, 46], rdc: vueHaut ? 62 : 68, toit: camHaute ? 84 : vueHaut ? 54 : 50, toitMat: 'ardoiseToit', crepi: 'enduitO', porte: { x: 0.5, l: 24, h: 50, peinte: 'porteVerte' }, fenetresRdc: [0.2, 0.8], fenetres: [[0.2, 0.8], [0.2, 0.5, 0.8]], volet: 'voletR', fleur: 'fleurP2', graine: 5, relief, cote: 14, vueHaut });
     if (vueHaut) ici.ombrePortee(L.maisonHaute - 112, L.maisonHaute + 112, YN);
     else if (relief) ici.ombrePied(L.maisonHaute - 112, L.maisonHaute + 112, YN, 22);
     img(2390, YN - 110, haie89(s, 'haieYsmee89', 150), E, YN - 110);
@@ -284,7 +292,8 @@ DECORS_QUARTIERS.soucolline = {
     // --- la tente violette de Madame Ysmée, dès le jour 10 (on y entre le matin), et son ardoise du temps ---
     const ysmee = G && typeof ysmeeArrivee === 'function' && ysmeeArrivee(G);
     if (ysmee) {
-      ombre(L.tente, YN + 4, 230); img(L.tente, YN + 6, tenteYsmee89(s), E); ici.obstacles.push([L.tente - 110, YN - 10, L.tente + 110, YN + 8]);
+      // (phase 3) vue de plus haut, la tente est un cône qu'on voit davantage : sa toile un peu plus haute (×1,18), son ombre plus large
+      ombre(L.tente, YN + 4, camHaute ? 260 : 230); const tente = img(L.tente, YN + 6, tenteYsmee89(s), E); if (camHaute) tente.setScale(E, E * 1.18); ici.obstacles.push([L.tente - 110, YN - 10, L.tente + 110, YN + 8]);
       const ard = lot(L.ardoise, YN, () => { if (typeof ardoiseMeteo === 'function') ardoiseMeteo(s, 0, 8, G); }, YN + 8);
       for (const t of ard.list) if (t.type === 'Text') { let f = 10; while (t.width > 70 && f > 7) t.setFontSize(--f); }   // (le mot du temps tient sur l'ardoise, quelle que soit la police)
       ici.obstacles.push([L.ardoise - 34, YN - 4, L.ardoise + 34, YN + 12]);
@@ -294,6 +303,10 @@ DECORS_QUARTIERS.soucolline = {
     const barbierOuv = G && typeof barbierOuvert === 'function' && barbierOuvert(G);
     const barbier = lot(L.barbier, YN, () => {
       s.add.image(0, 2, vueHaut ? barbierVueHautHD(s) : relief ? barbierReliefHD(s) : boutiqueBarbierHD(s)).setOrigin(0.5, 1).setScale(2);   // (les essais : vu de haut, ou en relief)
+      if (camHaute) {   // (phase 3, Q198-3) un pigeon posé sur le faîte, qui se tourne et se gonfle de temps en temps
+        const B = reglagesBarbier(), yF = 26 + B.oy - 70, pg = s.add.image((40 - B.L / 2) * 2, 2 - (B.H - yF + 1) * 2, 'pigeon81_debout').setOrigin(0.5, 1).setScale(1);
+        s.time.addEvent({ delay: 900, loop: true, callback: () => { if (!pg.active) return; const r = Math.random(); if (r < 0.3) pg.setFlipX(!pg.flipX); else if (r < 0.5) { pg.setTexture('pigeon81_gonfle'); s.time.delayedCall(600, () => pg.active && pg.setTexture('pigeon81_debout')); } } });
+      }
       if (!barbierOuv || nuit) s.add.image(0, 2, boutiqueFermeeHD(s)).setOrigin(0.5, 1).setScale(2);
       if (!barbierOuv) s.add.text(52, 2 - 2 * 66, 'Ouvrira bientôt', style(11, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
       else {
@@ -306,6 +319,7 @@ DECORS_QUARTIERS.soucolline = {
     });
     if (barbierOuv) ici.lumiere(L.barbier, YN - 48, 62);
     if (vueHaut) ici.ombrePortee(L.barbier - 100, L.barbier + 100, YN); else if (relief) ici.ombrePied(L.barbier - 100, L.barbier + 100, YN);
+    if (camHaute) { const B = reglagesBarbier(); ici.cheminees.push([L.barbier + (B.chem[0] - B.L / 2) * 1.6, YN + 2 - (B.H - B.chem[1]) * 1.6]); }   // (Q198-3) la fumée de sa cheminée
     if (!barbierOuv) ici.regarder(L.barbier - 100, YN - 180, L.barbier + 100, YN + 4, "Les volets sont cloués. Sur l'écriteau : « Le Fil d'Argent, barbier. Ouvrira bientôt. » On entend parfois quelqu'un siffler dedans, derrière les planches.", [L.barbier, YN + 36]);
     else if (nuit) ici.regarder(L.barbier - 100, YN - 180, L.barbier + 100, YN + 4, "Le Fil d'Argent est fermé pour la nuit. Derrière les volets, Orvin affûte ses rasoirs en chantonnant.", [L.barbier, YN + 36]);
     maison(L.maisonC, YN, 'mvC89', { L: 124, etages: [52], toitMat: 'chaume', crepi: 'enduitR', vitrine: { x: 0.36, l: 52 }, porte: { x: 0.78, l: 22, h: 48 }, fenetres: [[0.3, 0.75]], lucarne: 0.55, store: 'storeV', volet: 'voletJ', lierre: true, graine: 9 });
@@ -329,6 +343,11 @@ DECORS_QUARTIERS.soucolline = {
     // --- la Banque Centrale Goyenne ---
     const banque = lot(L.banque, YN, () => {
       if (vueHaut) s.add.image(0, 2, banqueVueHautHD(s)).setOrigin(0.5, 1).setScale(2);   // (l'essai vu de haut : le toit derrière le fronton)
+      if (camHaute) {   // (phase 3, Q198-3) la girouette de la banque, à la pointe du fronton : elle tourne avec le vent
+        const B = reglagesBanque(), gi = s.add.image(0, 2 - (B.H - 18 - B.oy) * 2 + 2, girouetteHD(s)).setOrigin(0.5, 1).setScale(2);
+        const tourner = () => { if (!gi.active) return; s.tweens.add({ targets: gi, scaleX: gi.scaleX > 0 ? -2 : 2, duration: 700 + Math.random() * 900, ease: 'Sine.easeInOut', onComplete: () => s.time.delayedCall(1500 + Math.random() * 4000, tourner) }); };
+        s.time.delayedCall(2000, tourner);
+      }
       else if (relief) s.add.image(0, 2, banqueReliefHD(s)).setOrigin(100 / RELIEF_BANQUE.L, 1).setScale(2);   // (l'essai du relief : la façade reste à sa place, le mur de côté à droite)
       else s.add.image(0, 2, 'rueBanqueHD').setOrigin(0.5, 1).setScale(2);
       ecriteauRue(s, 0, -254, 'BANQUE CENTRALE GOYENNE', { taille: 12, grave: true });
@@ -473,6 +492,8 @@ DECORS_QUARTIERS.soucolline = {
     // passé à droite de son enseigne, celui de la tente à droite du barbier)
     for (const x of [660, 1104, 2075, 2735, 3186]) { lampe(x, YN + 26); ici.obstacles.push([x - 10, YN + 16, x + 10, YN + 30]); }
     for (const x of [400, 1180, 2160, 2760, 3300]) { lampe(x, 1742); ici.obstacles.push([x - 10, 1730, x + 10, 1748]); }
+    // (phase 3) sur le tronçon d'essai, tout ce qui est posé au sol a son ombre en ellipse : les réverbères, le banc
+    if (camHaute) { for (const [x, y] of [[2075, YN + 26], [2735, YN + 26], [3186, YN + 26], [2160, 1742], [2760, 1742], [3300, 1742]]) ombre(x, y, 36); ombre(2240, YN + 34, 130); }
     lampe(RH.x1 + 8, YH + 4); lampe(FO.x0 - 14, YH + 4);
     if (jour) betes.push({ sorte: 'moineau', img: img(2735 + 4, YN + 26 - 172 * 0.8, 'moineau81_pose', F, YN + 27) });
     if (jour) for (const [x, y, fl] of [[2300, 1662, false], [2322, 1672, true], [1180, 1130, true], [700, 1680, false], [3460, 1660, true]]) betes.push({ sorte: 'pigeon', x, y, flip: fl });
@@ -480,7 +501,7 @@ DECORS_QUARTIERS.soucolline = {
     if (jour && !mouille) for (const [x, y, fl] of [[L.banc - 26, 1562, false], [L.banc + 12, 1574, true], [L.banc + 40, 1558, false]]) betes.push({ sorte: 'pigeon', espece: 'moineau', x, y, flip: fl });
     // (Q172) la vie du sol : le filet d'eau du caniveau qui scintille (et les feuilles qui y flottent, à l'automne), les
     // flaques entre les pavés les jours de pluie (le soir, elles reflètent les réverbères)
-    vieDuSolSoucolline(s, ici, { rg: rigoleSoucolline(), saison, mouille, nuit, PL });
+    vieDuSolSoucolline(s, ici, { rg: rigoleSoucolline(), saison, mouille, nuit, PL, hierMouille: !!(G && typeof meteoDu === 'function' && ['pluie', 'orage'].includes(meteoDu(G, G.jour - 1))) });
     img(2240, YN + 34, banc5(s), E); ici.obstacles.push([2240 - 52, YN + 14, 2240 + 52, YN + 36]);
     if (saison !== 'givre') {
       for (const [x, k] of [[1166, 'touffe81'], [1712, 'touffe81'], [2514, 'pissenlit81'], [2716, 'touffe81'], [1528, 'touffe81'], [1702, 'pissenlit81'], [306, 'touffe81'], [652, 'pissenlit81'], [2922, 'touffe81'], [3176, 'pissenlit81']]) img(x, YN + 4, k, F);
@@ -549,11 +570,11 @@ DECORS_QUARTIERS.soucolline = {
     // tente d'Ysmée (le jour, dès le jour 10)
     const battant = (X, cle, tx, ty, tl, th, tL, tH) => { const x0 = X - tL * 2 * F, y0 = YN + 2 * F - tH * 2 * F;   // (un battant peint dans une texture ×2, dans un lot)
       return { x: x0 + tx * 2 * F, y: y0 + ty * 2 * F, l: tl * 2 * F, h: th * 2 * F, yTri: YN + 0.5, src: { cle, x: tx, y: ty, l: tl, h: th } }; };
-    { const P = vueHaut ? battant(L.banque, banqueVueHautHD(s), 82, 120 + VUE_HAUT_BANQUE.oy, 36, 46, 100, VUE_HAUT_BANQUE.H) : relief ? battant(L.banque, banqueReliefHD(s), 82, 120 + RELIEF_BANQUE.oy, 36, 46, 100, RELIEF_BANQUE.H) : battant(L.banque, 'rueBanqueHD', 82, 120, 36, 46, 100, 176);
+    { const P = vueHaut ? battant(L.banque, banqueVueHautHD(s), 82, 120 + reglagesBanque().oy, 36, 46, 100, reglagesBanque().H) : relief ? battant(L.banque, banqueReliefHD(s), 82, 120 + RELIEF_BANQUE.oy, 36, 46, 100, RELIEF_BANQUE.H) : battant(L.banque, 'rueBanqueHD', 82, 120, 36, 46, 100, 176);
       ici.passages.push({ id: 'banque', nom: 'La Banque Centrale Goyenne', sous: 'la banque', verbe: 'entrer', type: 'porte', devant: [L.banque, YN + 22], dehors: [L.banque, YN - 6], porte: P, page: 'Banque',
         cadre: [P.x, P.y - 10, P.x + P.l, YN], zone: [L.banque - 55, YN, L.banque + 55, YN + 60], pousser: [0, -1],
         ferme: () => (typeof lieuDebloque === 'function' && G && !lieuDebloque(G, 'banque') ? 'La porte de la banque est close pour toi. Elle s\'ouvrira au jour 4.' : null) }); }
-    if (barbierOuv && jour) { const RB = vueHaut ? VUE_HAUT_BARBIER : RELIEF_BARBIER, P = vueHaut || relief ? battant(L.barbier, vueHaut ? barbierVueHautHD(s) : barbierReliefHD(s), 74 + RB.ox, 66 + RB.oy, 28, 32, RB.L / 2, RB.H) : battant(L.barbier, boutiqueBarbierHD(s), 74, 66, 28, 32, 62, 112), cx = P.x + P.l / 2;
+    if (barbierOuv && jour) { const RB = vueHaut ? reglagesBarbier() : RELIEF_BARBIER, P = vueHaut || relief ? battant(L.barbier, vueHaut ? barbierVueHautHD(s) : barbierReliefHD(s), 74 + RB.ox, 66 + RB.oy, 28, 32, RB.L / 2, RB.H) : battant(L.barbier, boutiqueBarbierHD(s), 74, 66, 28, 32, 62, 112), cx = P.x + P.l / 2;
       ici.passages.push({ id: 'barbier', nom: "Le Fil d'Argent", sous: 'chez Orvin, le barbier', verbe: 'entrer', type: 'porte', devant: [cx, YN + 22], dehors: [cx, YN - 6], porte: P, page: 'Barbier',
         cadre: [P.x - 4, P.y - 14, P.x + P.l + 4, YN], zone: [cx - 50, YN, cx + 50, YN + 60], pousser: [0, -1] }); }
     if (magesOuv && jour) ici.passages.push({ id: 'mages', nom: 'Les Mages-Charpentiers', sous: 'l’atelier', verbe: 'entrer', type: 'porte', devant: [L.mages + 6, YN + 22], dehors: [L.mages + 6, YN - 8], page: 'Mages',
@@ -601,8 +622,11 @@ function vieDesBetesSoucolline(s, ici, betes) {
   for (const b of betes) {
     if (b.sorte === 'pigeon') {
       // (Q172) espece 'moineau' : les mêmes manières, avec les images du moineau (posé, picore ; en vol, il bat des deux)
-      const P = b.espece === 'moineau' ? { pre: 'moineau81_', debout: 'pose', picore: 'picore', gonfle: 'pose', boit: 'pose', ailes: 'picore', vol2: 'pose' } : { pre: 'pigeon81_', debout: 'debout', picore: 'picore', gonfle: 'gonfle', boit: 'boit', ailes: 'ailes', vol2: 'gonfle' };
-      const im = poser(s.add.image(b.x, b.y, P.pre + P[b.pose || 'debout']).setOrigin(0.5, 1).setScale(F).setFlipX(!!b.flip), b.y); im.mobile = true;   // (il s'envole : jamais rangé avec le décor immobile)
+      // (phase 3, retour du joueur : « on ne voit même pas qu'il y a quelque chose ») les moineaux plus grands (1,2 au lieu de
+      // 0,8), plus vifs (ils sautillent deux fois plus souvent), avec leur petite ombre
+      const P = b.espece === 'moineau' ? { pre: 'moineau81_', debout: 'pose', picore: 'picore', gonfle: 'pose', boit: 'pose', ailes: 'picore', vol2: 'pose', echelle: 1.2, vif: 0.5 } : { pre: 'pigeon81_', debout: 'debout', picore: 'picore', gonfle: 'gonfle', boit: 'boit', ailes: 'ailes', vol2: 'gonfle', echelle: F, vif: 1 };
+      const im = poser(s.add.image(b.x, b.y, P.pre + P[b.pose || 'debout']).setOrigin(0.5, 1).setScale(P.echelle).setFlipX(!!b.flip), b.y); im.mobile = true;   // (il s'envole : jamais rangé avec le décor immobile)
+      if (b.espece === 'moineau') { const o = ici.ombre(b.x, b.y, 14); o.mobile = true; im.ombre = o; }
       pigeons.push({ img: im, P, boit: !!b.boit, vol: false, prochain: s.time.now + A(300, 1500) });
     } else if (b.sorte === 'chat') { const im = poser(s.add.image(b.x, b.y, 'chatRue_assis0').setOrigin(0.5, 1).setScale(F), b.y); im.mobile = true; vieDuChatAssis(s, im, 'chatRue', () => true, { bouge: b.bouge }); }
     else if (b.sorte === 'dort') basculer(b.img, [b.cle + '_dort0', b.cle + '_dort1'], 900, 200);
@@ -622,12 +646,12 @@ function vieDesBetesSoucolline(s, ici, betes) {
     const im = p.img; let x = im.x, y = im.y;
     for (let k = 0; k < 30; k++) { const a = Math.random() * 6.28, d = al(180, 420), nx = im.x + Math.cos(a) * d, ny = im.y + Math.sin(a) * d * 0.45; if (posePossible(nx, ny, h)) { x = nx; y = ny; break; } }
     if (x === im.x && y === im.y) return;
-    p.vol = true; p.boit = false; im.setFlipX(x < im.x);
+    p.vol = true; p.boit = false; im.setFlipX(x < im.x); if (im.ombre) im.ombre.setAlpha(0);
     const x0 = im.x, y0 = im.y, d = Math.hypot(x - x0, y - y0), duree = Math.max(700, d * 2.4), haut = 40 + d * 0.18;
     let k = 0; const ailes = s.time.addEvent({ delay: 70, loop: true, callback: () => { if (im.active) im.setTexture(p.P.pre + (++k % 2 ? p.P.ailes : p.P.vol2)); } });
     im.yTri = 1e5;   // (en l'air : au-dessus de la rue)
     s.tweens.addCounter({ from: 0, to: 1, duration: duree, ease: 'Sine.easeInOut', onUpdate: tw => { if (!im.active) return; const u = tw.getValue(); im.setPosition(x0 + (x - x0) * u, y0 + (y - y0) * u - Math.sin(u * Math.PI) * haut); },
-      onComplete: () => { ailes.remove(); if (!im.active) return; im.setTexture(p.P.pre + p.P.debout); im.yTri = im.y; p.vol = false; p.prochain = s.time.now + A(600, 1400); } });
+      onComplete: () => { ailes.remove(); if (!im.active) return; im.setTexture(p.P.pre + p.P.debout); im.yTri = im.y; p.vol = false; p.prochain = s.time.now + A(600, 1400); if (im.ombre) im.ombre.setPosition(im.x + 1, im.y - 2).setAlpha(1); } });
   };
   s.time.addEvent({ delay: 110, loop: true, callback: () => {
     const h = s.heros; if (!h || !h.active || s.planVille) return;
@@ -645,8 +669,8 @@ function vieDesBetesSoucolline(s, ici, betes) {
         const sens = im.flipX ? -1 : 1, nx = im.x + sens * A(8, 18), ny = im.y + A(-3, 3);
         if (s.bloqueEn && s.bloqueEn(nx, ny)) { im.setFlipX(!im.flipX); p.prochain = s.time.now + 400; continue; }
         let k = 0; const pas = s.time.addEvent({ delay: 90, repeat: 3, callback: () => { if (im.active && !p.vol) im.setTexture(T.pre + (++k % 2 ? T.picore : T.debout)); } });
-        s.tweens.add({ targets: im, x: nx, y: ny, duration: 360, onUpdate: () => { im.yTri = im.y; }, onComplete: () => { pas.remove(); if (im.active && !p.vol) im.setTexture(T.pre + T.debout); } });
-        p.prochain = s.time.now + A(700, 1500);
+        s.tweens.add({ targets: im, x: nx, y: ny, duration: 360, onUpdate: () => { im.yTri = im.y; if (im.ombre) im.ombre.setPosition(im.x + 1, im.y - 2); }, onComplete: () => { pas.remove(); if (im.active && !p.vol) im.setTexture(T.pre + T.debout); } });
+        p.prochain = s.time.now + A(700, 1500) * T.vif;
       }
     }
   } });
@@ -701,7 +725,8 @@ function vieDuChatAssis(s, im, pref, libre = () => true, { bouge = null } = {}) 
 //     quelques feuilles mortes y flottent, en tournant un peu ;
 //   - les jours de pluie, des flaques entre les pavés, sur la chaussée ; le soir, celles qui sont près d'un réverbère en
 //     reflètent la lumière (un halo chaud qui tremble).
-function vieDuSolSoucolline(s, ici, { rg, saison, mouille, nuit, PL }) {
+// hierMouille (Q198-4) : le lendemain d'un jour de pluie, le matin, les flaques sèchent (plus petites, plus pâles) ; le soir, sèches.
+function vieDuSolSoucolline(s, ici, { rg, saison, mouille, nuit, PL, hierMouille = false }) {
   const C = ici.C, A = Phaser.Math.Between, al = (a, b) => a + Math.random() * (b - a);
   const poserSol = (o, d = 1) => { o.yTri = -1e6 + d; o.mobile = true; C.add(o); return o; };
   if (!s.textures.exists('eclatCaniveau')) { const t = s.textures.createCanvas('eclatCaniveau', 10, 2), c = t.getContext(); for (let x = 0; x < 10; x++) { const a = 1 - Math.abs(x - 4.5) / 5; c.fillStyle = `rgba(235,245,255,${(a * 0.9).toFixed(2)})`; c.fillRect(x, 0, 1, 1); c.fillStyle = `rgba(180,210,240,${(a * 0.5).toFixed(2)})`; c.fillRect(x, 1, 1, 1); } t.refresh(); }
@@ -722,7 +747,8 @@ function vieDuSolSoucolline(s, ici, { rg, saison, mouille, nuit, PL }) {
       s.time.delayedCall(A(0, 1500), deriver);
     }
   }
-  if (!mouille) return;
+  if (!mouille && !(hierMouille && !nuit)) return;
+  const seche = !mouille;
   if (!s.textures.exists('flaqueRue')) { const t = s.textures.createCanvas('flaqueRue', 48, 16), c = t.getContext();
     for (let y = 0; y < 16; y++) for (let x = 0; x < 48; x++) { const u = (x - 24) / 23, v = (y - 8) / 7, d = u * u + v * v + (hachage(x >> 2, y >> 1, 9731) - 0.5) * 0.3; if (d > 1) continue;
       const bord = d > 0.8, haut = y < 7 && u < 0.2; c.fillStyle = bord ? 'rgba(40,46,60,0.5)' : haut ? 'rgba(150,170,196,0.5)' : 'rgba(90,104,128,0.55)'; c.fillRect(x, y, 1, 1); } t.refresh(); }
@@ -730,9 +756,9 @@ function vieDuSolSoucolline(s, ici, { rg, saison, mouille, nuit, PL }) {
   for (let i = 0; i < 11; i++) {
     const x = 460 + i * 310 + hachage(i, 1, 9732) * 140, y = 1556 + hachage(i, 2, 9733) * 130;
     if ((x > PL.x0 - 40 && x < PL.x1 + 40) || Math.abs(x - 3640) < 100 || (y > rg[0] - 12 && y < rg[1] + 4)) continue;
-    const f = poserSol(s.add.image(x, y, 'flaqueRue').setScale(1.4 + hachage(i, 3, 9734) * 0.8, 1.4).setAlpha(0.85), 1.5);
+    const f = poserSol(s.add.image(x, y, 'flaqueRue').setScale((1.4 + hachage(i, 3, 9734) * 0.8) * (seche ? 0.5 : 1), seche ? 0.7 : 1.4).setAlpha(seche ? 0.5 : 0.85), 1.5);
     const lampe = lampes.find(lx => Math.abs(lx - x) < 150);
-    if (nuit && lampe !== undefined && s.textures.exists('halo')) { const h = poserSol(s.add.image(x + (lampe - x) * 0.15, y, 'halo').setScale(f.displayWidth / 64 * 0.7, 0.2).setTint(0xffc878).setAlpha(0.32).setBlendMode(Phaser.BlendModes.ADD), 1.6);
+    if (nuit && !seche && lampe !== undefined && s.textures.exists('halo')) { const h = poserSol(s.add.image(x + (lampe - x) * 0.15, y, 'halo').setScale(f.displayWidth / 64 * 0.7, 0.2).setTint(0xffc878).setAlpha(0.32).setBlendMode(Phaser.BlendModes.ADD), 1.6);
       s.tweens.add({ targets: h, alpha: 0.46, duration: 900 + A(0, 600), yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
   }
 }

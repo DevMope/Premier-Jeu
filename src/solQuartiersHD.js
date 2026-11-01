@@ -55,7 +55,7 @@ const SOL_PAS = { 1: 'paves', 16: 'paves', 17: 'paves', 19: 'paves', 11: 'paves'
 //   manquent), sauf(x, y) (là où le bord reste net : une marche, un seuil), passage(x, y) → vrai là où l'on marche le
 //   plus (l'hiver, la neige y est tassée et repoussée sur les côtés).
 function* solQuartierEtapes(s, cle, L, H, code, { flaques = [], graine = 8900, saison = 'semailles', herbeJoints = null, marcheP = 7,
-  pierre = PIERRES_QUARTIERS.soucolline, module = [8, 5], dalleM = [16, 8], naturel = 3, manque = 0.22, sauf = null, passage = null, chaussee = 'grille', rigole = 'plate' } = {}) {
+  pierre = PIERRES_QUARTIERS.soucolline, module = [8, 5], dalleM = [16, 8], naturel = 3, manque = 0.22, sauf = null, passage = null, chaussee = 'grille', rigole = 'plate', ombreSol = null } = {}) {
   if (s.textures.exists(cle)) return cle;
   const t0 = performance.now();
   const pal = paletteSaisonComte(saison), t = toileDecor(L, H), R = t.rampes, hiver = saison === 'givre';
@@ -229,6 +229,7 @@ function* solQuartierEtapes(s, cle, L, H, code, { flaques = [], graine = 8900, s
     else if (c === 9) { const p = bruitTerre(x, y); let k = p > 0.6 ? 4 : p < 0.24 ? 2 : 3; if (T(x, y - 1) === 8) k = 1; else if (T(x, y - 2) === 8) k = Math.min(k, 2); if (DUR(T(x, y - 1))) k = Math.min(k, 2); r = ['terreS', k]; }
     else { const p = bruitHerbe(x, y), q = hachage(x, y, graine + 22); let k = p > 0.6 ? 4 : 3; if (q > 0.97) k += 1; else if (q < 0.025) k -= 1;
       const b1 = T(x, y + 1), b2 = T(x, y + 2); if (b1 !== 8 && b1) k = 5; else if (b2 !== 8 && b2) k = 4; if (DUR(T(x, y - 1))) k = 2; r = ['herbeS', k]; }
+    if (ombreSol) { const d = ombreSol(x, y); if (d) r = [r[0], Math.max(0, Math.min(5, r[1] + d))]; }   // (phase 3 : la marche d'ombre des trottoirs)
     t.poser(x, y, r[0], r[1]);
   } }
   // 5. l'herbe mord sur la pierre : des brins qui débordent, des touffes dans les angles ; des pierres détachées dans l'herbe

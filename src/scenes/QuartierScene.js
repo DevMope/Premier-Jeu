@@ -97,7 +97,7 @@ function outilsQuartier(s, C, saison) {
 function argumentsSolQuartier(plan, B, saison) {
   const o = plan.options || {}, W = f => f ? (x, y) => f(B.x0 + x * 2 + 1, B.y0 + y * 2 + 1) : null;
   return [`solQ_${plan.id}_${saison}`, Math.ceil((B.x1 - B.x0) / 2), Math.ceil((B.y1 - B.y0) / 2), W(plan.code),
-    { saison, ...o, sauf: W(o.sauf), herbeJoints: W(o.herbeJoints), passage: W(o.passage) }];
+    { saison, ...o, sauf: W(o.sauf), herbeJoints: W(o.herbeJoints), passage: W(o.passage), ombreSol: W(o.ombreSol) }];
 }
 // (v1.65) Préparer le sol d'un quartier en tâche de fond, depuis une autre scène (la rue, la place) : quand on y entre,
 // il est prêt. Les autres dessins du quartier (plus petits) se font à l'arrivée, pendant le fondu.
@@ -450,7 +450,7 @@ class QuartierScene extends Phaser.Scene {
   // le haut des maisons (lui plus bas à l'écran) ; vers le sud (la placette, le palier), elle descend, plus près du sol. Le
   // décor donne cette hauteur (def.cameraY : où se tient JeuneGoy à l'écran, selon son y), sans à-coup : elle glisse.
   cadrer(instantane = false) {
-    const R = this.R, B = this.ici.bornes, m = this.monde, z = R.zoom, sy = this.def.cameraY ? this.def.cameraY(this.heros.y) : this.def.sy || 270;
+    const R = this.R, B = this.ici.bornes, m = this.monde, z = this.def.zoom || R.zoom, sy = this.def.cameraY ? this.def.cameraY(this.heros.y) : this.def.sy || 270;
     const fx = this.heros.x, fy = this.heros.y - 40;
     const x = Phaser.Math.Clamp(480 - fx * z, 960 - B.x1 * z, -B.x0 * z), y = Phaser.Math.Clamp(sy - fy * z, 478 - B.y1 * z, -B.y0 * z);
     if (instantane) { m.setScale(z).setPosition(x, y); return; }

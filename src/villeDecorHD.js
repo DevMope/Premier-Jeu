@@ -849,7 +849,18 @@ const TOITS_NEIGE = { facadeHD_0: [40, 112, (x, y) => x >= 149 && x < 163 && y >
   // (l'essai du relief, reliefHD.js) le barbier et la banque redessinés plus grands : leur toit est plus bas dans l'image
   boutiqueBarbierHD_relief: [11, 35], rueBanqueHD_relief: [21, 56],
   // (phase 2, l'essai vu de haut) le barbier : du haut du pan arrière à l'égout ; la banque : son toit derrière le fronton, pas le fronton
-  boutiqueBarbierHD_haut: [2, 56], rueBanqueHD_haut: [24, 86, (x, y) => y >= 54 && Math.abs(x - 100) <= (y - 54) * 3 + 2] };
+  boutiqueBarbierHD_haut: [2, 56], rueBanqueHD_haut: [24, 86, (x, y) => y >= 54 && Math.abs(x - 100) <= (y - 54) * 3 + 2],
+  boutiqueBarbierHD_haut3: [2, 90], rueBanqueHD_haut3: [24, 120, (x, y) => y >= 88 && Math.abs(x - 100) <= (y - 88) * 3 + 2] };
+// (phase 3, Q198-3) la girouette de la banque : un mât de fer, sa flèche, son petit coq
+function girouetteHD(s) {
+  const cle = 'girouetteHD'; if (s.textures.exists(cle)) return cle;
+  const t = toileDecor(16, 18); t.rampes.fer = t.rampes.fer || rampe(0x4a4a52); t.rampes.or = t.rampes.or || rampe(0xd8a830);
+  for (let y = 6; y < 18; y++) t.poser(8, y, 'fer', y === 6 ? 4 : 2);
+  for (let x = 2; x < 14; x++) t.poser(x, 8, 'fer', 3); for (const [x, y] of [[2, 7], [2, 9], [1, 8], [13, 7], [13, 9]]) t.poser(x, y, 'fer', 3);
+  for (const [x, y, k] of [[8, 5, 4], [9, 5, 4], [10, 5, 3], [8, 4, 5], [9, 4, 4], [7, 4, 3], [9, 3, 4], [7, 3, 2], [8, 6, 2]]) t.poser(x, y, 'or', k);
+  t.poser(8, 2, 'or', 5); t.poser(11, 6, 'or', 3);
+  t.contour(); t.texture(s, cle); return cle;
+}
 function neigeToitHD(s, cle) {
   if (/_neige$/.test(cle) || !s.textures.exists(cle)) return null;
   const k = cle + '_neige'; if (s.textures.exists(k)) return k;

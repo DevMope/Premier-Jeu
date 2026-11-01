@@ -18,6 +18,20 @@ const RELIEF_ESSAI = false;
 function reliefActif() { return (typeof window !== 'undefined' && window.RELIEF_ESSAI !== undefined) ? !!window.RELIEF_ESSAI : RELIEF_ESSAI; }
 const VUE_HAUT_ESSAI = true;
 function vueHautActive() { return (typeof window !== 'undefined' && window.VUE_HAUT_ESSAI !== undefined) ? !!window.VUE_HAUT_ESSAI : VUE_HAUT_ESSAI; }
+// (Réponses du 01/11, après-midi, Q194/Q195 : phase 3) LA CAMÉRA PLUS HAUTE. La projection choisie, en chiffres, d'après les
+// références Stardew (angle d'environ 45° par le dessus) :
+//   - les façades (verticales) : 1 pixel pour 1 pixel, inchangées ;
+//   - les toits et le sol (horizontaux) : 1 pixel vertical à l'écran pour 1 pixel de profondeur ; un toit occupe donc à peu
+//     près autant de hauteur que sa façade (le barbier : 70 de pan avant + 16 de pan arrière pour 86 de mur) ; les rangs de
+//     tuiles se resserrent vers le faîte (ils s'éloignent) ; le pan arrière rentre vers le fond ;
+//   - les personnages gardés tels quels, avec leur ombre au sol en ellipse ; les bancs, réverbères, bacs et la tente aussi ;
+//   - les trottoirs comme un plan : la bordure jette une marche d'ombre sur la chaussée (Q198-2) ;
+//   - la caméra recule (zoom 1,1 au lieu de 1,25) et JeuneGoy se tient plus bas à l'écran (+40), pour que toits et chaussée
+//     tiennent à l'écran.
+// CAMERA_HAUTE_ESSAI (ou window.CAMERA_HAUTE_ESSAI = false pour revoir la phase 2) ; appliqué au tronçon d'essai seulement.
+const CAMERA_HAUTE_ESSAI = true;
+function cameraHauteActive() { return vueHautActive() && ((typeof window !== 'undefined' && window.CAMERA_HAUTE_ESSAI !== undefined) ? !!window.CAMERA_HAUTE_ESSAI : CAMERA_HAUTE_ESSAI); }
+const TRONCON_ESSAI = { x0: 2000, x1: 3560 };   // (le barbier, la maison haute, la banque, la tente, et leur bout de rue)
 
 // --- les outils, sur une toile (une matière et un ton de 0 à 5 par pixel) ---
 function teinterR(t, x, y, d) { const m = t.mat(x, y); if (!m) return; t.poser(x, y, m, Math.max(0, Math.min(5, t.teinte(x, y) + d))); }
@@ -178,12 +192,17 @@ function reliefMaison5(t, g) {
 const clampR = k => Math.max(0, Math.min(5, k));
 // Un toit à deux pans vu de haut, le faîte parallèle à la rue : le pan avant (de l'égout yEgout, exclu, jusqu'au faîte), le
 // faîtage, le pan arrière dans l'ombre (hDos rangs, serrés : il s'éloigne), les rives qui débordent. pas × rang : une tuile.
-function toitVuDeHaut(t, { x0, x1, yEgout, hAvant, hDos, mat = 'ardoiseToit', g = 1, pas = 8, rang = 4 }) {
-  const yF = yEgout - hAvant, yH = yF - 2 - hDos;
-  for (let y = yF; y < yEgout; y++) { const r = Math.floor((y - yF) / rang), ty = (y - yF) % rang, dec = (r % 2) * (pas >> 1), v = (y - yF) / hAvant;
+// perspective : les rangs se resserrent vers le faîte (phase 3) ; rangAu(y) : le rang et la position dans le rang, en (0..1)
+function rangsPerspective(yEgout, hAvant, rang) {
+  const n = Math.max(2, Math.round(hAvant / (rang * 0.72)));
+  return y => { const u = Math.min(1, (yEgout - y) / hAvant), s = n * (2 * u - u * u); return [Math.floor(s), s - Math.floor(s)]; };
+}
+function toitVuDeHaut(t, { x0, x1, yEgout, hAvant, hDos, mat = 'ardoiseToit', g = 1, pas = 8, rang = 4, perspective = false }) {
+  const yF = yEgout - hAvant, yH = yF - 2 - hDos, rangAu = perspective ? rangsPerspective(yEgout, hAvant, rang) : y => [Math.floor((yEgout - 1 - y) / rang), ((yEgout - 1 - y) % rang) / rang];
+  for (let y = yF; y < yEgout; y++) { const [r, f] = rangAu(y), dec = (r % 2) * (pas >> 1), v = (y - yF) / hAvant;
     for (let x = x0; x <= x1; x++) { const tx = ((x + dec) % pas + pas) % pas, h = hachage(Math.floor((x + dec) / pas), r, g);
       let k = 3 + (h > 0.84 ? 1 : h < 0.12 ? -1 : 0) + (v < 0.28 ? 1 : 0);   // vers le faîte, le pan prend plus de lumière
-      if (ty === 0) k += 1; else if (ty === rang - 1) k -= 2;              // le haut de la tuile éclairé, son bas dans l'ombre du recouvrement
+      if (f >= 1 - 1 / rang - 1e-6) k += 1; else if (f < 1 / rang) k -= 2;   // le haut de la tuile éclairé, son bas dans l'ombre du recouvrement
       if (tx === pas - 1) k -= 1;                                           // le joint
       if (x < x0 + 2) k += 1; else if (x > x1 - 2) k -= 1;
       t.poser(x, y, mat, clampR(k)); } }
@@ -213,13 +232,16 @@ function ombrePorteeHD(s, larg, h = 10) {
 // --- 1. le barbier vu de haut : le même dessin, dans un cadre plus haut (oy rangs de plus pour le toit) ; son toit d'ardoise
 //     à deux pans, une petite cheminée de brique sur le pan avant, les mêmes retouches de volume sur la façade ---
 const VUE_HAUT_BARBIER = { ox: 4, oy: 30, L: 132, H: 142 };
+// (phase 3, la caméra plus haute) le même barbier, avec un toit de 70 + 16 rangs : oy 64, H 176 ; la cheminée en (104, 46)
+const CAMERA_HAUTE_BARBIER = { ox: 4, oy: 64, L: 132, H: 176, chem: [104, 44] };
+function reglagesBarbier() { return cameraHauteActive() ? CAMERA_HAUTE_BARBIER : VUE_HAUT_BARBIER; }
 function barbierVueHautHD(s) {
-  const cle = 'boutiqueBarbierHD_haut'; if (s.textures.exists(cle)) return cle;
-  const src = peindreBoutiqueBarbier(), { ox, oy, L, H } = VUE_HAUT_BARBIER, t = toileDecor(L, H); rampesBarbier(t);
+  const haut = cameraHauteActive(), cle = haut ? 'boutiqueBarbierHD_haut3' : 'boutiqueBarbierHD_haut'; if (s.textures.exists(cle)) return cle;
+  const src = peindreBoutiqueBarbier(), { ox, oy, L, H } = reglagesBarbier(), t = toileDecor(L, H); rampesBarbier(t);
   for (const [m, c] of [['brique2', 0x9a4a34], ['terreCuite', 0xb86a48], ['suieX', 0x2a2420], ['taille', 0x9a9488]]) if (!t.rampes[m]) t.rampes[m] = rampe(c);
   for (let y = 0; y < src.h; y++) for (let x = 0; x < src.l; x++) { const m = src.mat(x, y); if (m && !(y < 26 && m === 'ardoise')) t.poser(x + ox, y + oy, m, src.teinte(x, y)); }
-  const yE = 26 + oy, { yF } = toitVuDeHaut(t, { x0: ox, x1: L - ox - 1, yEgout: yE, hAvant: 40, hDos: 12, mat: 'ardoise', g: 7331 });
-  chemineeVueHaut(t, 100 + ox, yF + 8, 12, 7332);
+  const yE = 26 + oy, { yF } = toitVuDeHaut(t, { x0: ox, x1: L - ox - 1, yEgout: yE, hAvant: haut ? 70 : 40, hDos: haut ? 16 : 12, mat: 'ardoise', g: 7331, perspective: haut });
+  chemineeVueHaut(t, 100 + ox, yF + (haut ? 10 : 8), haut ? 14 : 12, 7332);
   const mur = m => m === 'platre', bois = m => m === 'cheneSombre' || m === 'chene';
   ombreDebordR(t, ox, L - ox - 1, yE + 3, 7, mur);
   aretesR(t, ox, yE + 3, L - ox - 1, H - 1, (m, x, y) => bois(m) && y < 98 + oy, mur);
@@ -234,12 +256,15 @@ function barbierVueHautHD(s) {
 // --- 2. la banque vue de haut : derrière le fronton, le toit d'ardoise à deux pans dont le faîte s'éloigne de la rue (le pan
 //     gauche au soleil, le droit dans l'ombre), qui rentre un peu vers le fond ; les fenêtres et la porte en retrait ---
 const VUE_HAUT_BANQUE = { ox: 0, oy: 36, L: 200, H: 212 };
+// (phase 3) la banque avec 64 rangs de toit au-dessus du fronton (la profondeur du bâtiment) : oy 70, H 246
+const CAMERA_HAUTE_BANQUE = { ox: 0, oy: 70, L: 200, H: 246 };
+function reglagesBanque() { return cameraHauteActive() ? CAMERA_HAUTE_BANQUE : VUE_HAUT_BANQUE; }
 function banqueVueHautHD(s) {
-  const cle = 'rueBanqueHD_haut'; if (s.textures.exists(cle)) return cle;
-  const src = peindreBanqueRue(), { oy, L, H } = VUE_HAUT_BANQUE, t = toileDecor(L, H); Object.assign(t.rampes, RAMPES_RUE);
-  const yC = 50 + oy, yTop = 18 + oy - 30, mat = 'ardoiseToit';
-  for (let y = yTop; y <= yC; y++) { const demi = 94 - (yC - y) * 0.14, xa = Math.round(100 - demi), xb = Math.round(100 + demi);
-    for (let x = xa; x <= xb; x++) { const d = Math.abs(x - 100), c = Math.floor(d / 4), tc = d % 4, dec = (c % 2) * 4, ty = ((y + dec) % 8 + 8) % 8, h = hachage(c, Math.floor((y + dec) / 8), 7341);
+  const haut = cameraHauteActive(), cle = haut ? 'rueBanqueHD_haut3' : 'rueBanqueHD_haut'; if (s.textures.exists(cle)) return cle;
+  const src = peindreBanqueRue(), { oy, L, H } = reglagesBanque(), t = toileDecor(L, H); Object.assign(t.rampes, RAMPES_RUE);
+  const yC = 50 + oy, yTop = 18 + oy - (haut ? 64 : 30), mat = 'ardoiseToit', rangAu = rangsPerspective(yC + 1, yC + 1 - yTop, 8);
+  for (let y = yTop; y <= yC; y++) { const demi = 94 - (yC - y) * (haut ? 0.2 : 0.14), xa = Math.round(100 - demi), xb = Math.round(100 + demi), [rp, fp] = rangAu(y);
+    for (let x = xa; x <= xb; x++) { const d = Math.abs(x - 100), c = Math.floor(d / 4), tc = d % 4, dec = (c % 2) * 4, ty = haut ? ((rp + (dec ? 1 : 0)) % 2 ? (fp < 0.14 ? 7 : 0) : (fp > 0.86 ? 7 : 0)) : ((y + dec) % 8 + 8) % 8, h = hachage(c, haut ? rp + (dec ? 1 : 0) : Math.floor((y + dec) / 8), 7341);
       let k = (x < 100 ? 3 : 1) + (h > 0.84 ? 1 : h < 0.12 ? -1 : 0) + (tc === 0 ? 1 : tc === 3 ? -1 : 0) - (ty === 7 ? 1 : 0);
       if (x === 100 || x === 99) k = 5; else if (x === 101) k = 4;              // le faîte
       if (y === yTop || y === yTop + 1) k = y === yTop ? 0 : 2;                 // le bord du fond
@@ -260,7 +285,13 @@ function banqueVueHautHD(s) {
 // Le toit d'ardoise de maison5 est déjà un pan avant ; on ajoute le pan arrière au-dessus de sa crête (sans recouvrir la
 // cheminée, qui le domine), l'ombre du débord sur l'étage, les ouvertures en retrait, les poutres qui accrochent la lumière.
 function vueHautMaison5(t, g) {
-  const { L, yR, yT, bas, x0, x1, trous, porte, cheminee, M } = g, hDos = 14;
+  const { L, yR, yT, bas, x0, x1, trous, porte, cheminee, M } = g, haut = cameraHauteActive(), hDos = haut ? 20 : 14;
+  // (phase 3) le pan avant repeint en perspective : ses rangs se resserrent vers le faîte (la cheminée et la lucarne restent)
+  if (haut) { const yE = yT + 2, rangAu = rangsPerspective(yE + 1, yE + 1 - (M + 5), 4);
+    for (let y = M + 5; y <= yE; y++) { const [r, f] = rangAu(y), dec = (r % 2) * 4, v = (y - M - 5) / (yE - M - 5);
+      for (let x = -3; x < L + 3; x++) { const m = t.mat(x, y); if (!/ardoise|tuile/.test(m || '')) continue; const tx = ((x + dec) % 8 + 8) % 8, h = hachage(Math.floor((x + dec) / 8), r, 7352);
+        let k = 3 + (h > 0.84 ? 1 : h < 0.12 ? -1 : 0) + (v < 0.28 ? 1 : 0); if (f >= 0.74) k += 1; else if (f < 0.26) k -= 2; if (tx === 7) k -= 1; if (x < 0) k += 1; else if (x > L - 1) k -= 1;
+        t.poser(x, y, m, clampR(k)); } } }
   let xa = L, xb = -1; for (let x = -3; x < L + 3; x++) if (/ardoise|tuile|chaume/.test(t.mat(x, M + 5) || '')) { xa = Math.min(xa, x); xb = Math.max(xb, x); }
   const mat = t.mat(Math.round(L / 2), M + 5) || 'ardoiseToit', yH = M + 1 - hDos;
   for (let y = yH; y <= M + 1; y++) { const r = Math.floor((y - yH) / 3), ty = (y - yH) % 3, dec = (r % 2) * 4, ret = Math.floor((M + 1 - y) / 5);
