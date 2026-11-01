@@ -39,8 +39,10 @@ function outilsQuartier(s, C, saison) {
   // un groupe dessiné « à l'ancienne » (à la position (0, 0) de la scène) puis rangé dans le monde, en (X, Y), à l'échelle F
   ici.lot = (X, Y, fn, yTri, F = 0.8) => { const avant = new Set(s.children.list); fn(); const nouv = s.children.list.filter(o => !avant.has(o)); const sub = s.add.container(X, Y).setScale(F); nouv.forEach(o => sub.add(o)); sub.yTri = yTri === undefined ? Y : yTri; C.add(sub); return sub; };
   // la cheminée d'une maison (son point noté dans la texture) : la fumée y monte en bouffées
-  ici.chem = (cle, X, Y, sc = 1.6) => { const tx = s.textures.get(cle), c = tx.cheminee, src = tx.getSourceImage(); if (c) ici.cheminees.push([X + (c[0] - src.width / 2) * sc, Y - (src.height - c[1]) * sc]); };
-  ici.maison = (x, y, cle, o, sc = 1.6) => { const k = maison5(s, cle, o), im = ici.img(x, y + 2, k, sc); ici.chem(k, x, y + 2, sc); return im; };
+  ici.chem = (cle, X, Y, sc = 1.6) => { const tx = s.textures.get(cle), c = tx.cheminee, src = tx.getSourceImage(); if (c) ici.cheminees.push([X + (c[0] - src.width * (tx.origineX || 0.5)) * sc, Y - (src.height - c[1]) * sc]); };
+  ici.maison = (x, y, cle, o, sc = 1.6) => { const k = maison5(s, cle, o), im = ici.img(x, y + 2, k, sc), ox = s.textures.get(k).origineX; if (ox && ox !== 0.5) im.setOrigin(ox, 1); ici.chem(k, x, y + 2, sc); return im; };
+  // (l'essai du relief, reliefHD.js) l'ombre de contact au pied d'une façade (x0 à x1), sur le pavé ; cote : l'ombre portée du mur de côté
+  ici.ombrePied = (x0, x1, y, cote = 0) => { const k = ombrePiedHD(s, Math.round((x1 - x0) / 2), Math.round(cote / 2)); return poser(s.add.image(x0, y - 1, k).setOrigin(0, 0).setScale(2), y - 0.6); };
   // une plaque clouée au mur d'un bâtiment (une image ou un groupe déjà posé), contre son bord gauche ou droit, à la hauteur h
   // (chantier 3 : le mur, c'est l'image du bâtiment ; dans un groupe, sa plus grande image, pas les bannières ni les écriteaux)
   ici.murDe = (bat) => { if (bat.type !== 'Container') return bat.getBounds(); let best = null;
@@ -133,7 +135,7 @@ class QuartierScene extends Phaser.Scene {
     // (chantier 3) le décor immobile (tout ce qui est posé jusqu'ici) : son cadre dans le monde, pour ne dessiner que ce que la
     // caméra voit (une rue entière, c'est quatre fois l'écran : sans cela, chaque image redessinait tout le quartier)
     this.decorFixe = [];
-    for (const o of monde.list) { if (o.yTri >= 9e5 || o.yTri <= -1e6 || !o.getBounds) continue; const b = this.cadreDe(o); o.cadreVu = [b.x, b.y, b.right, b.bottom]; this.decorFixe.push(o); }
+    for (const o of monde.list) { if (o.yTri >= 9e5 || o.yTri <= -1e6 || !o.getBounds || o.mobile) continue; const b = this.cadreDe(o); o.cadreVu = [b.x, b.y, b.right, b.bottom]; this.decorFixe.push(o); }
     this.obstacles = ici.obstacles; this.passages = ici.passages; this.regards = ici.regards;
     for (const p of this.passages) p.zone = p.zone || [p.devant[0] - R.proche, p.devant[1] - R.proche, p.devant[0] + R.proche, p.devant[1] + R.proche];
     // JeuneGoy : là où il arrive (par un passage, ou au point de départ du quartier)
@@ -671,6 +673,8 @@ class QuartierScene extends Phaser.Scene {
     const cle = corpsHD(this, quoi, null, 'face');
     const img = this.add.image(x, y, cle).setOrigin(0.5, 1).setScale(this.R.echelle * echelleCorps(cle)).setInteractive({ useHandCursor: true });
     img.passant = true;
+    // (Q165) même arrêté, il respire
+    this.tweens.add({ targets: img, scaleY: img.scaleY * 1.012, duration: 1400 + i * 170, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     const o = { img, quoi, vue: 'face', cible: null, chemin: [], pause: 800 + i * 1300, pas: 0, ombre: this.ici.ombre(x, y, 40) };
     img.on('pointerdown', () => this.passantParle(o));
     this.monde.add(img); this.passants.push(o);

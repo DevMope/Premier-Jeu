@@ -43,6 +43,7 @@ class RueScene extends QuartierScene {
       if (pb && typeof etatBarbier === 'function' && !etatBarbier(G).vu) {
         const o = this.orvin = imageCorps(this, pb.devant[0] + 40, YN + 30, FIGURANT_BARBIER, this.R.echelle, 'accueil').setFlipX(true);
         o.yTri = YN + 30; o.passant = true; this.monde.add(o); this.ici.ombre(o.x, o.y, 40);
+        this.tweens.add({ targets: o, scaleY: o.scaleY * 1.012, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // (Q165 : il respire)
         this.ici.obstacles.push([o.x - 14, YN + 18, o.x + 14, YN + 36]); this.grilleQ = null;
         o.setInteractive({ useHandCursor: true }).on('pointerdown', () => { if (!this.bloque()) this.partirVers(pb.devant[0], pb.devant[1], pb); });
       }
@@ -132,6 +133,7 @@ class RueScene extends QuartierScene {
     const o = this.add.image(x, y, cle).setOrigin(0.5, 1).setScale(this.R.echelle * echelleCorps(cle));
     o.quoi = quoi; o.vue = 'face'; o.pas = 0; o.ombre = this.ici.ombre(x, y, 40); o.passant = true; o.yTri = y;
     this.monde.add(o);
+    this.tweens.add({ targets: o, scaleY: o.scaleY * 1.012, duration: 1450, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // (Q165 : arrêté, il respire)
     return o;
   }
   // Un pas de marcheur vers (tx, ty) à la vitesse v : sa vue, ses images de pas, son ombre ; rend vrai s'il a bougé
@@ -199,6 +201,7 @@ class RueScene extends QuartierScene {
         const a = imageCorps(this, b.x + (Math.random() < 0.5 ? -20 : 20), b.y - 2, o.quoi, this.R.echelle, 'assis');
         a.quoi = o.quoi; a.etat = 'assis'; a.attente = o.attente; a.passant = true; a.yTri = b.y + 1; a.pas = 0; a.ombre = o.ombre; this.monde.add(a);
         a.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.visiteurParle());
+        this.tweens.add({ targets: a, scaleY: a.scaleY * 1.012, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // (Q165 : assis, il respire)
         if (a.ombre) a.ombre.setVisible(false);
         o.destroy(); this.visiteurBanc = a;
       } else { if (o.ombre) o.ombre.destroy(); if (o.bulle) o.bulle.destroy(); o.destroy(); this.visiteurBanc = null; }
@@ -262,8 +265,7 @@ class RueScene extends QuartierScene {
     const c = this.gouttiere = this.add.image(x, y, 'chatRue_assis0').setOrigin(0.5, 1).setScale(1.4).setFlipX(true);
     c.yTri = y; c.passant = true; c.ombre = this.ici.ombre(x, y, 26); this.monde.add(c);
     this.ici.obstacles.push([x - 14, y - 10, x + 14, y + 4]); this.grilleQ = null;
-    let q = 0;
-    c.queue = this.time.addEvent({ delay: 420, loop: true, callback: () => { if (c.active && !c.occupe) c.setTexture('chatRue_assis' + (++q % 2)); } });
+    vieDuChatAssis(this, c, 'chatRue', () => !c.occupe);   // (Q165) la queue bat, il cligne des yeux, fait sa toilette
     const coeurs = () => '♥'.repeat(chatDe(G).soirs.length) + '♡'.repeat(CHAT.soirsPourAdopter - chatDe(G).soirs.length);
     c.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
       if (this.bloque() || c.occupe) return;
