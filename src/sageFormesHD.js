@@ -139,7 +139,7 @@ function sfColler(a, b, ox = 0, oy = 0, garder = null) {
 //    rage : les bras jetés en l'air, la gueule ouverte, sans bâton
 // =====================================================================================================================
 function sageTransformeHD(f = 1, vue = 'face', { exil = true, rage = false, baton = true, garderTaille = false, couverture = null } = {}) {
-  const modeleBaton = typeof baton === 'string' ? baton : null;
+  const modeleBaton = baton === 'auto' ? (f < 0.6 ? 'serres' : 'bois') : typeof baton === 'string' ? baton : null;
   const k = FINESSE;
   const sp = specCorps('sage', null, vue);
   const fe = sfLisse(f);
@@ -269,7 +269,7 @@ function sageTransformeHD(f = 1, vue = 'face', { exil = true, rage = false, bato
   };
   const cg = [X(couronne.x0) + 1 * k, Y(couronne.y1) - 0.5 * k], cd = [X(couronne.x1) - 1 * k, Y(couronne.y1) - 0.5 * k];
   if (tcorne > 0) {
-    if (dir) { corne(arriere, -1, [X(fcx) - 2.5 * k, cg[1] - 1.5 * k], 0.8, 0.3, 0.35); corne(avant, 1, [cd[0] - 1 * k, cd[1]], 1, 0.5, 0.4); }
+    if (dir) { corne(avant, -1, [X(tete.x0) + 2 * k, cg[1] - 0.5 * k], 1.05, 0.95, 0); corne(arriere, 1, [X(couronne.x1) - 3 * k, cg[1] - 3 * k], 0.8, 0.6, -0.1); }   // (v3 : la tempe proche à gauche, la tempe éloignée derrière la tête)
     else { corne(avant, -1, cg, 1); corne(avant, 1, cd, 1); }
   }
   // --- la grande cape de fourrure de l'exil : elle tombe des épaules jusqu'au sol, plus large que lui, et s'évase ---
@@ -435,7 +435,7 @@ function sfTeteDragon3q(t, x0, y0, e, { dir = 1, gueule = 0.4 } = {}) {
   t.forme('criniere', E(-22, 6, 24, 22), { decalage: -1.2, motif: (x, y) => sfMotifFourrure(x, y, 41) * 0.8 });
   for (let m = 0; m < 14; m++) { const v = m / 13, bx = -12 - Math.sin(v * Math.PI) * 10, by = -20 + v * 46, dy = -0.7 + v * 1.6, l = 56 + ((m * 7) % 5) * 9, r = 6.5 - ((m * 3) % 4) * 0.6;
     sfLoche(t, ...P(bx, by), -dir, dy, l * e, r * e, { decalage: ((m * 5) % 3) * 0.3 - 0.35, chute: 0.3, onde: 0.1 + (m % 3) * 0.04 }); }
-  sfCorne(t, sfBezier(P(-12, -14), P(-14, -30), P(-20, -42), P(-30, -50), 20), 4.6 * e, [[0.45, -1 * dir * e, -14 * e], [0.78, -4 * dir * e, -10 * e]], { decalage: -0.45 });   // (v2 : la corne du fond, tournée avec la tête)
+  sfCorne(t, sfBezier(P(-20, -8), P(-26, -22), P(-34, -34), P(-44, -44), 20), 4.2 * e, [[0.45, -1 * dir * e, -14 * e], [0.78, -4 * dir * e, -10 * e]], { decalage: -0.45 });   // (v2 : la corne du fond, tournée avec la tête)
   sfNageoire(t, ...P(-15, -6), e, dir, 0.3, -0.5);
   // la mâchoire du bas, qui s'ouvre en tournant
   const aj = 0.1 + 0.26 * g;
@@ -738,19 +738,20 @@ function sfFlammesHD(W, H, cx, sol, largeur, hauteur, graine = 2) {
 }
 // Les fissures du sol : elles partent toutes de (cx, cy), rayonnent et se ramifient, bleu électrique
 SF_RAMPES.fissure = [0x0a3a4a, 0x1a8aa0, 0x30c8e0, 0x70e8f8, 0xb8f8ff, 0xffffff];
-function sfFissuresHD(W, H, cx, cy, { n = 11, longueur = 260, aplat = 0.42, graine = 4 } = {}) {
-  const t = sfToile(W, H, { relief: false });
+function sfFissuresHD(W, H, cx, cy, { n = 6, longueur = 420, aplat = 0.4, graine = 4, solHaut = null } = {}) {
+  const t = sfToile(W, H, { relief: false }), yMin = solHaut ?? cy - 4;
   const trace = (x, y, a, l, ep, prof) => {
     for (let pas = 0; pas < l; pas++) {
-      x += Math.cos(a) * 2.2; y += Math.sin(a) * 2.2 * aplat; a += (hachage(Math.round(x), Math.round(y), graine + prof) - 0.5) * 0.7;
-      if (y < cy - 2 || y > H - 1 || x < 0 || x > W) return;
-      const f = pas / l, e = Math.max(1, Math.round(ep * (1 - f * 0.8)));
-      for (let d = 0; d < e; d++) { t.poser(Math.round(x), Math.round(y) + d, 'fissure', d === 0 ? (f < 0.5 ? 5 : 4) : 2); }
-      if (f > 0.3) t.poser(Math.round(x), Math.round(y) + e, 'fissure', 0);
-      if (prof < 2 && pas > 10 && hachage(pas, prof, graine + Math.round(a * 100)) > 0.965) trace(x, y, a + (hachage(pas, 9, graine) > 0.5 ? 0.7 : -0.7) * (0.6 + hachage(pas, 3, graine) * 0.5), l * 0.45, ep * 0.7, prof + 1);
+      x += Math.cos(a) * 2; y += Math.sin(a) * 2 * aplat; a += (hachage(Math.round(x / 3), Math.round(y / 3), graine + prof) - 0.5) * 0.3;
+      if (x < 1 || x > W - 2) return; if (y > H - 1) return;
+      if (y < yMin) { y = yMin; a = Math.cos(a) > 0 ? 0.05 : Math.PI - 0.05; }   // (au fond de la salle, elle court le long du mur)
+      const f = pas / l, e = Math.max(1, Math.round(ep * (1 - f)));
+      for (let d = 0; d < e; d++) t.poser(Math.round(x), Math.round(y) + d, 'fissure', d === 0 ? (f < 0.4 ? 5 : 4) : 2);
+      t.poser(Math.round(x), Math.round(y) + e, 'fissure', 0);
+      if (prof < 2 && (pas === Math.round(l * 0.3) || pas === Math.round(l * 0.62))) trace(x, y, a + (hachage(pas, prof, graine) > 0.5 ? 0.8 : -0.8), l * 0.45, ep * 0.6, prof + 1);
     }
   };
-  for (let i = 0; i < n; i++) { const a = Math.PI * (0.03 + 0.94 * (i + 0.5 * hachage(i, 1, graine)) / n); trace(cx, cy, a, longueur * (0.55 + 0.6 * hachage(i, 2, graine)) / 2.2, 2, 0); }
+  for (let i = 0; i < n; i++) { const a = Math.PI * 2 * (i + 0.35 + 0.3 * hachage(i, 1, graine)) / n; trace(cx, cy, a, longueur * (0.6 + 0.6 * hachage(i, 2, graine)) / 2, 3.5, 0); }
   return t;
 }
 // Le bâton de mage (v2) : deux modèles, bien plus imposants, qui gardent le cristal bleu. x : son axe ; yBas : le sol ;
