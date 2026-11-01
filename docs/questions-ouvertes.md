@@ -14,6 +14,11 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q203** — Les auras : visibles en permanence sur les personnages, ou seulement dans les récits, les cinématiques et les combats ?
 - **Q204** — La table des 16 couleurs d'aura et leur sens (morceau 4) : tu valides la logique telle quelle ?
 
+- **Q205** — La caméra plus haute (rue, phase 3, morceaux 1 à 3) : l'angle à 45° (le toit aussi haut que la façade) te convient, ou faut-il monter encore (toit 1,3 fois la façade, comme Stardew par endroits) ?
+- **Q206** — Le zoom : à 1,1 le haut du toit de la banque passe encore sous la barre du HUD quand JeuneGoy est à son pied (on le voit entier dès qu'on recule d'un pas). On descend à 1,0, ou on laisse ?
+- **Q207** — Les personnages sont gardés tels quels. Proposition 1 du morceau 6 : une image de plus pour JeuneGoy et les passants, un peu plus vus de dessus (tête et épaules un peu plus larges, jambes plus courtes), pour les accorder à la caméra haute ? Et les propositions 2 (la fumée des cheminées qui dérive avec le vent) et 3 (un chat sur un toit l'après-midi au soleil) ?
+- **Q208** — Si la caméra haute est validée, je généralise la projection à toute la rue (tous les bâtiments), puis j'y déplace l'église et la Confrérie (Q167 A) et l'impasse du Corbeau (Q168, 1). D'accord ?
+
 ## À venir de la part de Claude (pas des questions)
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
 
