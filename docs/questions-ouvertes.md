@@ -14,6 +14,12 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q232** — La plume : grise, pendue à la chaîne à gauche, ou plantée à la capuche ?
 - **Q233** — Tout en HD : ce qui reste en 16 px, dans l'ordre conseillé : 1, la Faucheuse (en cours) ; 2, l'aperçu du héros à la création du personnage (intro) ; 3, les colis, le coffre et le sac (icônes) ; 4, retirer les vieux replis du code ; 5, les petits décors tracés à la main (la rivière de l'intro, le solstice, la carte) ; 6, auditer l'ancien moteur de portraits. Cet ordre te va ? On le lance dès la Faucheuse validée ?
 
+- **Q234** — Vue de haut, étape 2 : la maison haute (morceau 1), la banque (morceau 2) et la tente d'Ysmée (morceau 3) dans la projection validée. Lesquels valides-tu ?
+- **Q235** — La tente : vue honnêtement par le dessus, son pied en ellipse la fait monter de 54 rangs, elle domine le barbier. On garde, ou on triche un peu (un cône vu légèrement moins d'en haut) ?
+- **Q236** — La maison haute : son toit fait 0,57 × la façade (trois niveaux) : assez, ou plus haut (0,63) ?
+- **Q237** — La banque : le fronton reste plat devant un toit en croupe. Tu préfères un vrai pignon (le fronton comme face avant d'un toit à deux pans) ?
+- **Q238** — Si validés : je passe la maison à l'auvent et toutes les maisons génériques de la rue, puis je branche le tout dans la rue (avec sa vraie nuit) : d'accord ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
