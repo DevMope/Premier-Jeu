@@ -9,7 +9,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q243** — (le joueur trouve « les deux nouveaux noms top » ; à préciser) : lesquels des quatre ? Je comprends l'Absolution (forme humaine) et la Dévoreuse de Noms (forme transformée), les premiers de chaque paire. Et l'arme que récupère le joueur à la fin : Aube-Lame, ou une autre à nommer ?
+- **Q244** — L'arme que récupère le joueur à la fin : Aube-Lame (l'arme des Hommes, déjà nommée), ou une autre à nommer ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -18,6 +18,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q243~~ L'Absolution (bâton du Sage) et le Dévoreur de Noms (bâton transformé) (02/11).
 - ~~Q239 à Q242~~ Réponses du 02/11 : la Larme de Lune, Fleur de Diamant ; Faucheuse v3 superbe (capuche, cape et manche à reprendre) ; la faux ne luit que dévoilée.
 - ~~Q230 à Q238~~ Réponses du 02/11 dans `docs/game-design.md` (Faucheuse : crâne opaque, faux-lune avec son aura ; tout en HD validé ; banque et tente à reprendre ; généralisation lancée).
 - ~~Q219 à Q229~~ Réponses du 01/11 tard dans `docs/game-design.md` (vue de haut validée sur le barbier ; Faucheuse à refaire : crâne, lame en croissant, manche en os ; auras du chat et de la Faucheuse validées).
