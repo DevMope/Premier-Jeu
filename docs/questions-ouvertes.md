@@ -24,6 +24,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q181** — Les églises de la Confrérie et le pouvoir d'oubli (ton idée du 01/11). A : chaque église est un relais du chant du rituel à trois : plus elle est grande, plus elle amplifie. Cela explique que l'oubli couvre le monde entier, et cela donne des missions dans chaque ville, pour l'Ombre (saboter, détourner) comme pour la Lumière (protéger) (conseillé) ; B : seulement le grand temple de la capitale, une seule cible ; C : non, la vague reste le seul rituel à trois, avec Séraphine et Ilyriel.
 
 ## À venir de la part de Claude (pas des questions)
+- Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
 
 
 ## Résolues
