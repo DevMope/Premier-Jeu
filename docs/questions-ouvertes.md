@@ -9,7 +9,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q243** — Les noms des deux bâtons du Sage, à nouveau. Forme humaine (les serres d'or, la bonté de façade) : « l'Absolution » (le pardon qui tombe d'en haut, et qu'on ne refuse pas) ou « la Grâce Souveraine ». Forme transformée (les bois d'argent, l'oubli) : « la Dévoreuse de Noms » ou « le Silence Couronné ». Lesquels ? Et l'arme que récupère le joueur à la fin : Aube-Lame, ou une autre à nommer ?
+- **Q243** — (le joueur trouve « les deux nouveaux noms top » ; à préciser) : lesquels des quatre ? Je comprends l'Absolution (forme humaine) et la Dévoreuse de Noms (forme transformée), les premiers de chaque paire. Et l'arme que récupère le joueur à la fin : Aube-Lame, ou une autre à nommer ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
