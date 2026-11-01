@@ -10,6 +10,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q191** — Le bleu royal des écailles (morceaux 1 et 4) : ce ton, ou encore plus foncé ?
 - **Q192** — Les flammes de la rage : on garde les langues qui passent devant ses pieds, ou tout derrière lui ?
 
+- **Q193** — Les noms du Grand Oubli chez les autres peuples (table dans `docs/histoire/revelations.md`, section F), proposés et pas dans le jeu : momies « le recouvrement », vampires « la nuit des registres », orcs « la pierre muette », elfes « le chant perdu », nains « l'éboulement », hobbits « la mauvaise saison ». Tu valides, tu changes ?
+
 ## À venir de la part de Claude (pas des questions)
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
 
