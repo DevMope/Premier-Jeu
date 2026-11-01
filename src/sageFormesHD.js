@@ -13,7 +13,7 @@
 //   (le ventre), le rouge de la cape (les nageoires et la crête), l'argent aux runes des avant-bras (les bracelets d'écailles).
 
 const SF_RAMPES = {
-  ecaille: [0x120e2c, 0x262462, 0x37408e, 0x4c5cb6, 0x6e86d2, 0xa4baee],
+  ecaille: [0x0c0a2e, 0x1a1a62, 0x242c8c, 0x2f44ae, 0x4a66c8, 0x7e98e0],   // (v2 : un bleu plus royal, plus foncé)
   ventre: [0x4a3a2a, 0x8a7458, 0xb8a27e, 0xd8c8a2, 0xece0c2, 0xfaf4e2],
   criniere: [0x34344c, 0x62627e, 0x9696ae, 0xc6c6d6, 0xe8e8f0, 0xffffff],
   corne: [0x221a2a, 0x4e4250, 0x82746e, 0xb4a48c, 0xdacdb0, 0xf4ecd6],
@@ -139,6 +139,7 @@ function sfColler(a, b, ox = 0, oy = 0, garder = null) {
 //    rage : les bras jetés en l'air, la gueule ouverte, sans bâton
 // =====================================================================================================================
 function sageTransformeHD(f = 1, vue = 'face', { exil = true, rage = false, baton = true, garderTaille = false, couverture = null } = {}) {
+  const modeleBaton = typeof baton === 'string' ? baton : null;
   const k = FINESSE;
   const sp = specCorps('sage', null, vue);
   const fe = sfLisse(f);
@@ -151,7 +152,7 @@ function sageTransformeHD(f = 1, vue = 'face', { exil = true, rage = false, bato
     ...(f > 0.4 ? { griffes: true } : {}), ...(f > 0.72 ? { grandesMains: true } : {}), ...(f > 0.5 ? { sourcil: 1.5 } : {}) };
   const gene = { ...sp.gene, race };
   const margeL = Math.round(sfLerp(0, 15, fe) * k) + (rage ? 14 * k : 0);
-  const opts = { ...sp.options, rig: true, margeL, fache: f > 0.45 || rage };
+  const opts = { ...sp.options, rig: true, margeL, fache: f > 0.45 || rage, ...(modeleBaton && !rage ? { margeHaut: 30 * k } : {}) };
   if (f > 0.6 && !rage) opts.boucheForcee = 3;
   if (rage) {
     opts.baille = true;
@@ -161,7 +162,9 @@ function sageTransformeHD(f = 1, vue = 'face', { exil = true, rage = false, bato
   const b = dessinerCorpsVue(gene, sp.tenue, 'sage', 0, rage ? 'stupeur' : null, vue, opts);
   // la partie du corps de chaque pixel (le haut de la pile du rig)
   const partie = i => { const p = b.rig && b.rig.px[i]; return p && p.length ? p[p.length - 1].part : null; };
-  if (!baton || rage) sfEffacer(b, (x, y, i, mat) => ['batonS', 'canne'].includes(mat || b.m[i]) || ((mat || b.m[i]) === 'cristal' && y < b.reperes.yT - 4 * k));
+  // (v2) où est le bâton du jeu, avant de l'effacer : le nouveau prend sa place
+  const bb0 = { x0: 1e9, x1: -1e9, y1: -1e9 }; for (let i = 0; i < b.c.length; i++) if (b.m[i] === 'batonS') { const x = i % b.l, y = Math.floor(i / b.l); bb0.x0 = Math.min(bb0.x0, x); bb0.x1 = Math.max(bb0.x1, x); bb0.y1 = Math.max(bb0.y1, y); }
+  if (!baton || rage || modeleBaton) sfEffacer(b, (x, y, i, mat) => ['batonS', 'canne'].includes(mat || b.m[i]) || ((mat || b.m[i]) === 'cristal' && y < b.reperes.yT - 4 * k));
   const rep = b.reperes, cy = rep.cy, yT = rep.yT, yB = rep.yB;
   let sol = 0; for (let i = 0; i < b.c.length; i++) if (b.c[i] !== null) sol = Math.floor(i / b.l);
   // les repères tirés du dessin : le visage, la couronne, les yeux, la bouche
@@ -255,17 +258,18 @@ function sageTransformeHD(f = 1, vue = 'face', { exil = true, rage = false, bato
   }
   // --- les cornes : deux bois qui percent à côté de la couronne, montent, s'écartent et se recourbent ---
   const tcorne = sfEntre(f, 0.28, 1);
-  const corne = (toile, cote, base, ech) => {
-    const [bx, by] = base, l = tcorne * 22 * k * ech;
+  const corne = (toile, cote, base, ech, ecart = 1, avance = 0) => {   // (v2 : ecart < 1 et avance : la corne vue de trois-quarts, tournée avec la tête)
+    const [bx, by] = base, l = tcorne * 22 * k * ech, cx0 = cote;
+    cote = cote * ecart;
     if (l < 1.5 * k) { fins.forme('corne', ellipsoide(bx, by - 0.3 * k, 1.1 * k, 0.9 * k), { decalage: 0.6 }); return; }
-    const pts = sfBezier([bx, by], [bx + cote * l * 0.35, by - l * 0.25], [bx + cote * l * 0.75, by - l * 0.55], [bx + cote * l * 0.6, by - l * 1.05], 18);
+    const pts = sfBezier([bx, by], [bx + cote * l * 0.35 + avance * l * 0.15, by - l * 0.25], [bx + cote * l * 0.75 + avance * l * 0.5, by - l * 0.55], [bx + cote * l * 0.6 + avance * l * 0.8, by - l * 1.05], 18);
     const tb = sfTubeForme(toile, 'corne', pts, u => (2.6 * k * ech) * (1 - u * 0.75) + 0.4, { decalage: 0.25, motif: i => (i && (i.s / (2.2 * k)) % 1 < 0.22 && i.u < 0.7 ? -0.8 : 0) });
     if (tcorne > 0.6) { const [qx, qy] = pts[8]; sfTubeForme(toile, 'corne', sfBezier([qx, qy], [qx + cote * 3 * k, qy - 1 * k], [qx + cote * 6 * k, qy - 3 * k], [qx + cote * 7 * k * ech, qy - 7 * k * ech], 10), u => 1.5 * k * ech * (1 - u * 0.7) + 0.4, { decalage: 0.35 }); }
     return tb;
   };
   const cg = [X(couronne.x0) + 1 * k, Y(couronne.y1) - 0.5 * k], cd = [X(couronne.x1) - 1 * k, Y(couronne.y1) - 0.5 * k];
   if (tcorne > 0) {
-    if (dir) { corne(arriere, -1, [cg[0] + 1 * k, cg[1] - 1 * k], 0.85); corne(avant, 1, cd, 1); }
+    if (dir) { corne(arriere, -1, [X(fcx) - 2.5 * k, cg[1] - 1.5 * k], 0.8, 0.3, 0.35); corne(avant, 1, [cd[0] - 1 * k, cd[1]], 1, 0.5, 0.4); }
     else { corne(avant, -1, cg, 1); corne(avant, 1, cd, 1); }
   }
   // --- la grande cape de fourrure de l'exil : elle tombe des épaules jusqu'au sol, plus large que lui, et s'évase ---
@@ -296,16 +300,21 @@ function sageTransformeHD(f = 1, vue = 'face', { exil = true, rage = false, bato
     for (const g of [-1, 0, 1]) { const gx = px + g * lp * 0.62 + (dir ? lp * 0.4 : 0), gy = py + 0.5 * k;
       sfTubeForme(milieu, 'corne', sfBezier([gx, gy - 1.5 * k], [gx + g * 1 * k + (dir ? 1.5 * k : 0), gy - 0.5 * k], [gx + g * 1.5 * k + (dir ? 2.5 * k : 0), gy + 0.5 * k], [gx + g * 2 * k + (dir ? 3.5 * k : 0), gy + 1 * k], 6), u => 1.1 * k * (1 - u * 0.6) + 0.3, { decalage: 0.5 }); }
   }
+  // (v2) de face, le bas du visage s'arrondit : des bajoues et une mâchoire d'écailles par-dessus les coins carrés
+  if (!dir && f > 0.6) {
+    const jy = Y(oeilY) + 3.2 * k, rx = 2.6 * k * sfEntre(f, 0.6, 1);
+    for (const cote of [-1, 1]) avant.forme('ecaille', ellipsoide(X(cote < 0 ? visage.x0 : visage.x1) + cote * 0.9 * k, jy, rx, 3.4 * k), { decalage: cote < 0 ? 0.1 : -0.3, motif: (x, y) => ((y % 2 === 1) && (Math.abs(((x + (Math.floor(y / 2) % 2) * 1.5) / 3) % 1 - 0.5) < 0.34) ? -1 : 0) });
+  }
   // --- devant : les barbillons (la moustache qui s'allonge), la fêlure de la couronne ---
   const tb2 = sfEntre(f, 0.42, 1);
   if (tb2 > 0) for (const cote of [-1, 1]) {
     if (dir && cote < 0) continue;
-    const bx = (dir ? X(visage.x1) - 1 * k : X(fcx) + cote * 2.6 * k), by = Y(moustacheY), l = tb2 * 30 * k;
+    const bx = (dir ? X(visage.x1) - 1 * k : X(cote < 0 ? visage.x0 : visage.x1) + cote * 1.5 * k), by = Y(moustacheY) + (dir ? 0 : 1 * k), l = tb2 * 30 * k;
     const c2 = dir ? 1 : cote;
     // (le barbillon part du coin de la moustache, file loin vers l'extérieur en remontant un peu, puis retombe en ondulant)
     const chemin = rage ? [[[bx + c2 * l * 0.3, by - 1 * k], [bx + c2 * l * 0.55, by - l * 0.15], [bx + c2 * l * 0.6, by - l * 0.4]], [[bx + c2 * l * 0.65, by - l * 0.6], [bx + c2 * l * 0.9, by - l * 0.55], [bx + c2 * l * 1.0, by - l * 0.8]]]
       : dir ? [[[bx + c2 * l * 0.35, by - 3 * k], [bx + c2 * l * 0.7, by - 3 * k], [bx + c2 * l * 0.85, by + l * 0.18]], [[bx + c2 * l * 0.95, by + l * 0.35], [bx + c2 * l * 0.8, by + l * 0.5], [bx + c2 * l * 0.95, by + l * 0.72]]]
-      : [[[bx + c2 * l * 0.22, by + 1 * k], [bx + c2 * l * 0.42, by + l * 0.08], [bx + c2 * l * 0.48, by + l * 0.3]], [[bx + c2 * l * 0.54, by + l * 0.52], [bx + c2 * l * 0.4, by + l * 0.68], [bx + c2 * l * 0.52, by + l * 0.92]]];
+      : [[[bx + c2 * l * 0.2, by - 2 * k], [bx + c2 * l * 0.36, by + l * 0.04], [bx + c2 * l * 0.34, by + l * 0.3]], [[bx + c2 * l * 0.32, by + l * 0.52], [bx + c2 * l * 0.44, by + l * 0.66], [bx + c2 * l * 0.34, by + l * 0.95]]];   // (v2 : le long de la barbe, pas devant la bouche)
     sfTubeForme(fins, 'criniere', sfChemin([bx, by], chemin, 16), u => 0.8 * k * (1 - u * 0.65) + 0.25, { decalage: 0.6, ombre: false });
     if (dir) sfTubeForme(fins, 'criniere', sfChemin([bx - 3 * k, by + 1 * k], [[[bx + l * 0.05, by + l * 0.1], [bx + l * 0.25, by + l * 0.18], [bx + l * 0.3, by + l * 0.4]], [[bx + l * 0.34, by + l * 0.6], [bx + l * 0.5, by + l * 0.7], [bx + l * 0.48, by + l * 0.9]]], 16), u => 0.7 * k * (1 - u * 0.65) + 0.25, { decalage: 0.2, ombre: false });
   }
@@ -342,8 +351,15 @@ function sageTransformeHD(f = 1, vue = 'face', { exil = true, rage = false, bato
     for (let y = Y(couronne.y0); y <= Y(couronne.y1); y++) { const j = y * W + Math.round(x); if (T.c[j] !== null) T.c[j] = 0x2a1808; x += (y % 2 ? 0.8 : -0.6); } }
   sfColler(T, avant);
   sfColler(T, fins);
+  if (modeleBaton && !rage && bb0.x1 >= 0) {
+    const bt = sfToile(W, H, { cel: true });
+    const xb = X((bb0.x0 + bb0.x1) / 2) + 0.5, yb = Y(bb0.y1) + 0.5, yh = Y(tete.y0) - (modeleBaton === 'serres' ? 22 : 24) * k;
+    T.reperes = T.reperes || {}; T.cristalBaton = sfBatonMage(bt, xb, yb, yh, k * (0.8 + 0.5 * fe), modeleBaton);
+    sfContour(bt, 2); sfColler(T, bt);
+    sfColler(T, b, ox, oy, (x, y, i) => { const p = partie(i); return (p === 'mainP' || p === 'mainL') && b.m[i] !== 'batonS'; });
+  }
   let haut = 0; while (haut < H && T.c.slice(haut * W, haut * W + W).every(c => c === null)) haut++;
-  T.reperes = { haut, sol: solF, cx: cxB, yeux: yeux.map(e => [X(e.x), Y(e.y)]), cristal: rep.cristal ? [X(rep.cristal[0]), Y(rep.cristal[1])] : null, tete: [hcx, hcy], H };
+  T.reperes = { haut, sol: solF, cx: cxB, yeux: yeux.map(e => [X(e.x), Y(e.y)]), cristal: T.cristalBaton || (rep.cristal && !modeleBaton ? [X(rep.cristal[0]), Y(rep.cristal[1])] : null), tete: [hcx, hcy], H };
   return T;
 }
 function sageTransformeTexture(scene, cle, f, vue, opts = {}) {
@@ -419,7 +435,7 @@ function sfTeteDragon3q(t, x0, y0, e, { dir = 1, gueule = 0.4 } = {}) {
   t.forme('criniere', E(-22, 6, 24, 22), { decalage: -1.2, motif: (x, y) => sfMotifFourrure(x, y, 41) * 0.8 });
   for (let m = 0; m < 14; m++) { const v = m / 13, bx = -12 - Math.sin(v * Math.PI) * 10, by = -20 + v * 46, dy = -0.7 + v * 1.6, l = 56 + ((m * 7) % 5) * 9, r = 6.5 - ((m * 3) % 4) * 0.6;
     sfLoche(t, ...P(bx, by), -dir, dy, l * e, r * e, { decalage: ((m * 5) % 3) * 0.3 - 0.35, chute: 0.3, onde: 0.1 + (m % 3) * 0.04 }); }
-  sfCorne(t, sfBezier(P(-6, -16), P(-12, -34), P(-24, -48), P(-42, -54), 20), 5 * e, [[0.45, -2 * dir * e, -16 * e], [0.78, -6 * dir * e, -12 * e]], { decalage: -0.35 });
+  sfCorne(t, sfBezier(P(-12, -14), P(-14, -30), P(-20, -42), P(-30, -50), 20), 4.6 * e, [[0.45, -1 * dir * e, -14 * e], [0.78, -4 * dir * e, -10 * e]], { decalage: -0.45 });   // (v2 : la corne du fond, tournée avec la tête)
   sfNageoire(t, ...P(-15, -6), e, dir, 0.3, -0.5);
   // la mâchoire du bas, qui s'ouvre en tournant
   const aj = 0.1 + 0.26 * g;
@@ -694,14 +710,78 @@ function sfMontagnesHD(W, H, { grotte = [760, 470] } = {}) {
   return t;
 }
 
-// Les flammes de sa rage (l'essence du dragon) : des langues violettes qui montent, un cœur bleu pâle
-SF_RAMPES.flamme = [0x1a0830, 0x3a1060, 0x6a20a0, 0x9a40d8, 0xc880f0, 0xf0d8ff];
+// Les flammes de sa rage (l'essence du dragon) : des langues violettes à plusieurs tons (violet profond au bord, cœur
+// bleu pâle, pointes blanches), qui lèchent et se tordent, et des braises qui montent
+SF_RAMPES.flamme = [0x2a0a4e, 0x5614a0, 0x8a30e0, 0xb070ff, 0xc8d4ff, 0xffffff];
 function sfFlammesHD(W, H, cx, sol, largeur, hauteur, graine = 2) {
-  const t = sfToile(W, H, { relief: false });
-  for (let i = 0; i < 17; i++) {
-    const u = i / 16 - 0.5, x0 = cx + u * largeur * 2, h = hauteur * (0.45 + 0.55 * Math.cos(u * 2.6)) * (0.7 + 0.5 * hachage(i, 1, graine)), w = largeur * (0.1 + 0.05 * hachage(i, 2, graine));
-    t.forme('flamme', (x, y) => { const v = (sol - y) / h; if (v < 0 || v > 1) return null; const xc = x0 + Math.sin(v * 5 + i) * w * 0.6 * v + u * v * 30, ww = w * (1 - v) * (0.6 + 0.6 * Math.sin(v * 3.14)) + 0.5, dx = (x + 0.5 - xc) / ww; return Math.abs(dx) < 1 ? [dx * 0.6, 0, 0.8] : null; },
-      { decalage: 0.4 - (i % 3) * 0.3, tramage: true, bord: false, ombre: false, motif: (x, y) => (sol - y) / h * -1.6 + 0.4 });
+  const t = sfToile(W, H, { relief: false }), langues = [];
+  for (let i = 0; i < 23; i++) {
+    const u = i / 22 - 0.5, x0 = cx + u * largeur * 2 + (hachage(i, 7, graine) - 0.5) * 14;
+    const h = hauteur * (0.35 + 0.65 * Math.cos(u * 2.4)) * (0.55 + 0.6 * hachage(i, 1, graine)), w = largeur * (0.09 + 0.07 * hachage(i, 2, graine));
+    langues.push({ x0, h, w, ph: hachage(i, 3, graine) * 6.3, tors: 0.25 + hachage(i, 4, graine) * 0.6, pench: u * 0.5 });
   }
+  for (let y = sol; y > sol - hauteur * 1.15; y--) for (let x = cx - largeur * 1.4; x < cx + largeur * 1.4; x++) {
+    let best = null;
+    for (const L of langues) { const v = (sol - y) / L.h; if (v < 0 || v > 1) continue;
+      const xc = L.x0 + Math.sin(v * 6 + L.ph) * L.w * L.tors * v * 2.5 + L.pench * v * 40, ww = L.w * (1 - v * v) * (0.7 + 0.5 * Math.sin(v * 3.14 + L.ph)) + 0.6;
+      const r = Math.abs(x + 0.5 - xc) / ww; if (r < 1 && (!best || r + v * 0.6 < best.r + best.v * 0.6)) best = { r, v }; }
+    if (!best) continue;
+    const { r, v } = best, pointe = v > 0.82 && r < 0.5;
+    let ton = 4.2 - r * 3.4 - v * 1.4 + (pointe ? 2.5 : 0) + (hachage(x, y, graine) - 0.5) * 0.7;
+    t.poser(Math.round(x), y, 'flamme', Math.max(0, Math.min(5, Math.round(ton))));
+  }
+  // les braises : de petits points vifs qui montent en zigzag, plus pâles en haut
+  for (let i = 0; i < 70; i++) { const bx = cx + (hachage(i, 11, graine) - 0.5) * largeur * 2.6, m = hachage(i, 12, graine), by = sol - m * hauteur * 1.5 - 4;
+    const x = Math.round(bx + Math.sin(m * 9 + i) * 8), y = Math.round(by); if (y < 0) continue;
+    t.poser(x, y, 'flamme', m > 0.6 ? 5 : 4); if (m < 0.5) { t.poser(x + 1, y, 'flamme', 3); t.poser(x, y + 1, 'flamme', 3); } }
   return t;
+}
+// Les fissures du sol : elles partent toutes de (cx, cy), rayonnent et se ramifient, bleu électrique
+SF_RAMPES.fissure = [0x0a3a4a, 0x1a8aa0, 0x30c8e0, 0x70e8f8, 0xb8f8ff, 0xffffff];
+function sfFissuresHD(W, H, cx, cy, { n = 11, longueur = 260, aplat = 0.42, graine = 4 } = {}) {
+  const t = sfToile(W, H, { relief: false });
+  const trace = (x, y, a, l, ep, prof) => {
+    for (let pas = 0; pas < l; pas++) {
+      x += Math.cos(a) * 2.2; y += Math.sin(a) * 2.2 * aplat; a += (hachage(Math.round(x), Math.round(y), graine + prof) - 0.5) * 0.7;
+      if (y < cy - 2 || y > H - 1 || x < 0 || x > W) return;
+      const f = pas / l, e = Math.max(1, Math.round(ep * (1 - f * 0.8)));
+      for (let d = 0; d < e; d++) { t.poser(Math.round(x), Math.round(y) + d, 'fissure', d === 0 ? (f < 0.5 ? 5 : 4) : 2); }
+      if (f > 0.3) t.poser(Math.round(x), Math.round(y) + e, 'fissure', 0);
+      if (prof < 2 && pas > 10 && hachage(pas, prof, graine + Math.round(a * 100)) > 0.965) trace(x, y, a + (hachage(pas, 9, graine) > 0.5 ? 0.7 : -0.7) * (0.6 + hachage(pas, 3, graine) * 0.5), l * 0.45, ep * 0.7, prof + 1);
+    }
+  };
+  for (let i = 0; i < n; i++) { const a = Math.PI * (0.03 + 0.94 * (i + 0.5 * hachage(i, 1, graine)) / n); trace(cx, cy, a, longueur * (0.55 + 0.6 * hachage(i, 2, graine)) / 2.2, 2, 0); }
+  return t;
+}
+// Le bâton de mage (v2) : deux modèles, bien plus imposants, qui gardent le cristal bleu. x : son axe ; yBas : le sol ;
+// yHaut : le sommet du cristal ; k : la finesse (l'échelle du personnage). Rend le cœur du cristal (pour sa lueur).
+// 'serres' : un bois sombre cerclé d'or, trois serres d'or qui enserrent un grand cristal ;
+// 'bois'   : un bois torsadé, des runes qui luisent, deux bois d'argent (comme ses cornes) autour du cristal
+function sfBatonMage(t, x, yBas, yHaut, k, modele = 'bois') {
+  t.rampes.boisS = rampeVive(0x4a2a18); t.rampes.boisT = rampeVive(0x6a4626);
+  const yCr = yHaut + 7 * k, yTige = yCr + 3.5 * k;
+  if (modele === 'serres') {
+    cylindre(t, 'boisS', [x, yTige], [x, yBas], 1.9 * k, { decalage: 0.3, motif: (px, py) => (((py * 0.8 + px * 1.9) / k) % 7 < 1.4 ? -0.9 : (fbm(px * 0.3, py * 0.06, 3) - 0.5) * 0.8) });   // (le bois, une veine en spirale)
+    for (const yy of [yBas - 3 * k, yTige + 12 * k, yTige + 26 * k]) { cylindre(t, 'orD', [x, yy - 1.4 * k], [x, yy + 1.4 * k], 2.4 * k, { decalage: 0.5 }); t.forme('pierre', ellipsoide(x, yy, 0.9 * k, 0.9 * k), { decalage: 0.8, ombre: false, bord: false }); }   // (les cercles d'or et leur pierre)
+    cylindre(t, 'orD', [x, yTige - 1 * k], [x, yTige + 3 * k], 2.8 * k, { decalage: 0.4 });   // (le collet d'or)
+    // les trois serres d'or qui montent autour du cristal et se referment sur sa pointe
+    for (const [c, dec] of [[-1, 0.3], [1, 0.1], [0, -0.2]]) { const bx = x + c * 2.6 * k, ex = x + c * 0.9 * k;
+      sfTubeForme(t, 'orD', sfBezier([bx, yTige], [bx + c * 2.8 * k, yTige - 4 * k], [ex + c * 3.6 * k, yHaut + 3 * k], [ex, yHaut - 0.5 * k], 14), u => 1.2 * k * (1 - u * 0.5) + 0.4, { decalage: dec + 0.2 }); }
+    t.forme('oeilD', (px, py) => { const dx = (px + 0.5 - x) / (2.6 * k), dy = (py + 0.5 - yCr) / (6.5 * k); return Math.abs(dx) + Math.abs(dy) * 0.9 <= 1 ? [dx, dy * 0.5, 0.8] : null; }, { decalage: 0.9, ombre: false });   // (le grand cristal, un losange)
+    t.forme('oeilD', ellipsoide(x - 0.8 * k, yCr - 2 * k, 0.6 * k, 1.8 * k), { decalage: 1.6, ombre: false, bord: false });   // (le reflet)
+    for (const c of [-1, 1]) t.forme('orD', ellipsoide(x + c * 3.2 * k, yCr + 4.5 * k, 0.9 * k, 0.9 * k), { decalage: 0.6, ombre: false });   // (deux petites pierres d'or)
+  } else {
+    cylindre(t, 'boisT', [x, yTige], [x, yBas], 1.8 * k, { decalage: 0.4, motif: (px, py) => (((py + px * 1.6) / k) % 5 < 1.1 ? -0.9 : 0) });   // (le bois torsadé, plus épais)
+    cylindre(t, 'argentD', [x, yBas - 4 * k], [x, yBas], 2.1 * k, { decalage: 0.4 });   // (la férule d'argent)
+    for (let j = 0; j < 9; j++) { const yy = yTige + 8 * k + j * 6 * k; if (yy > yBas - 8 * k) break; const c = j % 2 ? 1 : -1;   // (les runes d'argent qui luisent, en spirale)
+      t.poser(Math.round(x + c * 0.9 * k), Math.round(yy), 'oeilD', 5); t.poser(Math.round(x + c * 0.9 * k) + 1, Math.round(yy) + 1, 'oeilD', 3); t.poser(Math.round(x + c * 0.9 * k) - 1, Math.round(yy) - 1, 'oeilD', 3); }
+    cylindre(t, 'argentD', [x, yTige - 1.5 * k], [x, yTige + 3 * k], 2.7 * k, { decalage: 0.4, motif: (px, py) => (Math.round(py / k) % 3 === 0 ? -0.6 : 0.2) });   // (le collet d'argent)
+    // deux bois d'argent qui s'écartent autour du cristal, comme ses cornes
+    for (const c of [-1, 1]) { const bx = x + c * 2 * k;
+      const tb = sfTubeForme(t, 'argentD', sfBezier([bx, yTige], [bx + c * 3 * k, yTige - 5 * k], [bx + c * 5.5 * k, yHaut + 6 * k], [bx + c * 3.5 * k, yHaut - 1 * k], 16), u => 1.4 * k * (1 - u * 0.6) + 0.4, { decalage: c < 0 ? 0.5 : 0.1 });
+      const q = tb.pts[7]; sfTubeForme(t, 'argentD', sfBezier(q, [q[0] + c * 1.5 * k, q[1] - 1 * k], [q[0] + c * 3 * k, q[1] - 2.5 * k], [q[0] + c * 3.6 * k, q[1] - 5 * k], 8), u => 0.9 * k * (1 - u * 0.6) + 0.4, { decalage: 0.4 }); }
+    t.forme('oeilD', (px, py) => { const dx = (px + 0.5 - x) / (2.3 * k), dy = (py + 0.5 - yCr) / (6 * k); return dx * dx + dy * dy * 0.9 <= 1 && Math.abs(dy) * 0.8 + Math.abs(dx) * 0.5 <= 1 ? [dx, dy * 0.5, 0.8] : null; }, { decalage: 0.9, ombre: false });   // (le grand cristal, taillé)
+    t.poser(Math.round(x - 0.7 * k), Math.round(yCr - 2.5 * k), 'oeilD', 5); t.poser(Math.round(x - 0.7 * k), Math.round(yCr - 2.5 * k) + 1, 'oeilD', 5);
+  }
+  return [x, yCr];
 }
