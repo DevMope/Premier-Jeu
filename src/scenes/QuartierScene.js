@@ -43,6 +43,8 @@ function outilsQuartier(s, C, saison) {
   ici.maison = (x, y, cle, o, sc = 1.6) => { const k = maison5(s, cle, o), im = ici.img(x, y + 2, k, sc), ox = s.textures.get(k).origineX; if (ox && ox !== 0.5) im.setOrigin(ox, 1); ici.chem(k, x, y + 2, sc); return im; };
   // (l'essai du relief, reliefHD.js) l'ombre de contact au pied d'une façade (x0 à x1), sur le pavé ; cote : l'ombre portée du mur de côté
   ici.ombrePied = (x0, x1, y, cote = 0) => { const k = ombrePiedHD(s, Math.round((x1 - x0) / 2), Math.round(cote / 2)); return poser(s.add.image(x0, y - 1, k).setOrigin(0, 0).setScale(2), y - 0.6); };
+  // (phase 2, l'essai vu de haut) l'ombre que le bâtiment jette sur le trottoir, vers la droite et le bas (ombrePorteeHD)
+  ici.ombrePortee = (x0, x1, y, h = 10) => { const k = ombrePorteeHD(s, Math.round((x1 - x0) / 2), h); return poser(s.add.image(x0, y - 1, k).setOrigin(0, 0).setScale(2), y - 0.6); };
   // une plaque clouée au mur d'un bâtiment (une image ou un groupe déjà posé), contre son bord gauche ou droit, à la hauteur h
   // (chantier 3 : le mur, c'est l'image du bâtiment ; dans un groupe, sa plus grande image, pas les bannières ni les écriteaux)
   ici.murDe = (bat) => { if (bat.type !== 'Container') return bat.getBounds(); let best = null;

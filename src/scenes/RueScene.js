@@ -155,7 +155,12 @@ class RueScene extends QuartierScene {
     const c = t.length && Math.hypot(h.x - o.x, h.y - o.y) > ecart * 0.8 ? t[Math.max(0, i)] : null;
     if (c && this.pasVers(o, c[0], c[1], v, 16)) return;
     o.pas = 0;
-    if (o.chat) { o.temps = (o.temps || 0) + 16; if (o.temps > 420) { o.temps = 0; o.etape = ((o.etape || 0) + 1) % 2; o.setTexture(o.chat + '_assis' + o.etape).setFlipX(h.x < o.x); } }
+    if (o.chat) { o.temps = (o.temps || 0) + 16; if (o.temps > 420) { o.temps = 0; o.etape = ((o.etape || 0) + 1) % 2;
+      // (Q172, proposition 5) assis, il bat de la queue, cligne des yeux, fait parfois sa toilette (gestesChatAssis)
+      if (typeof gestesChatAssis === 'function') gestesChatAssis(this, o.chat);
+      const g = this.textures.exists(o.chat + '_leche') ? (o.toilette > 0 ? (o.toilette-- % 2 ? '_leche' : '_cligne') : Math.random() < 0.08 ? '_cligne' : '_assis' + o.etape) : '_assis' + o.etape;
+      if (!o.toilette && Math.random() < 0.035) o.toilette = 8;
+      o.setTexture(o.chat + g).setFlipX(h.x < o.x); } }
     else if (o.vue !== 'face') { o.vue = 'face'; o.setTexture(corpsHD(this, o.quoi, null, 'face')).setFlipX(false); }
   }
   // Une bulle de parole au-dessus d'un personnage du monde (Garrick...), qui le suit

@@ -222,8 +222,7 @@ class PromenadeScene extends Cinematique {
           if (!c.active) return fin();
           await sauter(banc.x, banc.siege, 'chatRue_tapi');
           c.setTexture('chatRue_assis0').setFlipX(Math.random() < 0.5);
-          let q = 0;
-          const queue = this.time.addEvent({ delay: 380, loop: true, callback: () => { if (c.active) c.setTexture('chatRue_assis' + (++q % 2)); } });
+          const queue = vieDuChatAssis(this, c, 'chatRue');   // (Q172, proposition 5) la queue bat, il cligne, fait sa toilette
           this.rue.push(queue);
           if (Math.random() < 0.6) this.time.delayedCall(1500, () => { if (c.active) Son.jouer('miaou'); });
           await pause(5000 + Math.random() * 4000);
@@ -638,8 +637,7 @@ class PromenadeScene extends Cinematique {
     const G = this.G, x = this.porteShop.x - 130;
     creerChatRueHD(this);
     const c = this.gouttiere = this.add.image(x, SOL_PROMENADE, 'chatRue_assis0').setOrigin(0.5, 1).setScale(2.4).setDepth(8.45).setFlipX(true).setInteractive({ useHandCursor: true });
-    let q = 0;
-    const queue = this.time.addEvent({ delay: 420, loop: true, callback: () => { if (c.active && !c.occupe) c.setTexture('chatRue_assis' + (++q % 2)); } });
+    const queue = vieDuChatAssis(this, c, 'chatRue', () => !c.occupe);   // (Q172, proposition 5) la queue bat, il cligne, fait sa toilette
     const coeurs = () => '♥'.repeat(chatDe(G).soirs.length) + '♡'.repeat(CHAT.soirsPourAdopter - chatDe(G).soirs.length);
     c.on('pointerdown', () => {
       if (this.transition || c.occupe) return;
