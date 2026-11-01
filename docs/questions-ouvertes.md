@@ -5,6 +5,11 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 ## En attente
 
 
+- **Q189** — Le bâton du Sage (planche du Sage v2, morceau 2) : A « les serres d'or » (bois sombre en spirale, cercles d'or, trois serres d'or autour d'un grand cristal) ou B « les bois d'argent » (le bâton actuel plus épais, runes d'argent, deux bois d'argent autour du cristal ; conseillé : il garde la mémoire du bâton validé, et ses deux bois rappellent la couronne entre les cornes) ? Et sa hauteur (il dépasse la tête d'une coudée) : ça va, ou plus haut ?
+- **Q190** — Les fissures de la rage (morceau 3, bas) : au pied du Sage elles forment un lacis serré. On garde ce foyer dense, ou on les espace (moins de départs, plus longues) ?
+- **Q191** — Le bleu royal des écailles (morceaux 1 et 4) : ce ton, ou encore plus foncé ?
+- **Q192** — Les flammes de la rage : on garde les langues qui passent devant ses pieds, ou tout derrière lui ?
+
 ## À venir de la part de Claude (pas des questions)
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
 
