@@ -178,7 +178,7 @@ Object.assign(CounterScene.prototype, {
     this.bouton('« Ne dites pas ça. »', () => {
       evtParents(G, e);
       this.evtPoser('evt_berceuse', SILL_GAUCHE_EVT);
-      this.evtDire("(Il pose sur le comptoir une vieille page pliée en quatre.) Je l'ai gardée toute ma vie sans savoir pourquoi. Elle est à toi, je crois.", 'parents');
+      this.evtDire("(Il pose sur le comptoir une vieille page pliée en quatre.) Je l'ai gardée des années sans savoir pourquoi. Elle est à toi, je crois.", 'parents');
       this.bouton('Prendre la page', () => {
         this.evtFredon(BERCEUSE.melodie.length);   // (il s'en va en la fredonnant tout entière, pour la première fois)
         for (const o of this.evtObjets) if (o.texture && o.texture.key === 'evt_berceuse') this.tweens.add({ targets: o, y: o.y + 30, alpha: 0, duration: 400 });
