@@ -8,17 +8,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q221** — La planche de concept « ville vue de haut » (le barbier, morceaux 2 et 3) : cette fois le toit et la façade forment un seul volume (toit en croupe, dessus des appuis, auvent, marche, ombre de l'avant-toit, ombre de contact), à la projection de Stardew (verticales 1:1, profondeurs × 0,75, sans point de fuite). C'est la bonne direction ?
-- **Q222** — Le toit en croupe (deux petits pans de côté, comme la ferme de Stardew) ou un toit à deux pans (pan avant rectangulaire, rives de bois aux bords) ?
-- **Q223** — Le toit fait 0,74 × la façade : on garde, ou plus haut (jusqu'à 1,0) ? Et l'ombre de l'avant-toit sur le mur (8 rangs) : bonne épaisseur ?
-- **Q224** — Les personnages (morceau 4) : JeuneGoy est déjà compatible avec cette caméra (Stardew dessine aussi ses personnages quasi de face) ; on ne touche pas au dessin, on lui donne seulement une ombre en ellipse plus franche. D'accord ?
-- **Q225** — Si la projection est validée : on la passe d'abord à la maison haute et à la banque (le tronçon d'essai), ou directement à toute la rue ?
-
-- **Q226** — La Faucheuse en HD (planche, morceau 1) : le visage A (un crâne fin et pâle sous la capuche, orbites rouges) ou B (l'ombre pure, seulement les yeux et le bout des doigts givré) ?
-- **Q227** — Sa faux (morceau 2) : la longueur et la lame (fil de givre bleu, rune) conviennent, tenue devant elle à deux mains ?
-- **Q228** — Les souvenirs portés sur elle : le pétale noir à la broche, le sablier à la chaîne ; oui ? et la plume ?
-- **Q229** — En buste au comptoir, faut-il qu'elle « parle » (la mâchoire qui s'ouvre, comme les voyageurs) ?
-- **Q219/Q220** — (reprises) avec le nouveau dessin : son aura v5 (noir et blanc enroulés, noir dominant, palier 4, morceau 3), et les auras du chat (vert sombre et marron) et de Vorhal'Düm (rouge, noir, violet) : tu valides ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -27,6 +16,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q219 à Q229~~ Réponses du 01/11 tard dans `docs/game-design.md` (vue de haut validée sur le barbier ; Faucheuse à refaire : crâne, lame en croissant, manche en os ; auras du chat et de la Faucheuse validées).
 - ~~Q210 à Q217~~ Réponses du 01/11 nuit dans `docs/game-design.md` (auras validées sauf couleurs du chat et de la Faucheuse ; bâtiments et personnages refusés, à refaire).
 - ~~Q208, Q209~~ Oui (01/11) : fumée et chat sur un toit ; généralisation à toute la rue une fois la vue de rue complètement validée.
 - ~~Q199 à Q207~~ Réponses du 01/11 soir dans `docs/game-design.md` (auras à refaire en voile, caméra : angle et raccord toit-façade, règle de la montée en gamme).
