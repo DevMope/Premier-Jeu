@@ -4,16 +4,18 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
-(aucune pour l'instant)
-
-
-
 
 ## À venir de la part de Claude (pas des questions)
+- Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
 
 
 ## Résolues
 
+- ~~Q169 à Q188~~ Réponses du 01/11 dans `docs/game-design.md` (relief façon Stardew Valley, pavés à unifier, récit Q173 à Q181, le Sage à retoucher).
+- ~~Q167~~ A : l'église et la Confrérie sur la pente verte derrière la rue Soucolline, entre la rue Haute et la place des Mastres (01/11).
+- ~~Q168~~ 1 : l'impasse du Corbeau au bout ouest, contre le Rempart, à la place de l'hospice et de la chapelle (01/11).
+- ~~Q158 à Q166~~ Rue Soucolline : pas encore validée ; pavés et bâtiments à refaire, paon à vendre, panneaux, animations, nature, plan du soir (01/11, voir `docs/game-design.md`).
+- ~~Q155 à Q157~~ Gestes et besace validés et fusionnés ; flot et « flop » à peaufiner plus tard (31/10).
 - ~~Q151 à Q154~~ Gestes seulement en cinématique et à la troisième personne, pas de hochement de caméra, salut au marché à refaire, autres lieux plus tard (31/10).
 - ~~Q149~~ Validé le 31/10 : le fragment recopié par un doyen ; « bac » remplacé par « la barque » dans les paroles.
 - ~~Q146 à Q148, Q150~~ Validés le 31/10 : cohérence fusionnée, mendiant corrigé, légende de l'armure gardée, gestes muets lancés.

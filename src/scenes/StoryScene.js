@@ -207,6 +207,7 @@ class StoryScene extends Cinematique {
     this.bourse = bourse(this, BESACE_RECIT.x, BESACE_RECIT.y, this.G.argent, { echelle: 1.4, taille: 14, conteneur: this.ui, sens: 1, gain: [-6, -76] });
     this.bourse.texte.setOrigin(1, 0.5).setPosition(-26, -9);
     this.ui.add(this.bourse);
+    this.bourse.source = () => { try { return this.sourcePieces(); } catch (e) { return null; } };   // (v1.66) un soin payé, une récompense : depuis sa main aussi
   }
 
   // Le conteur parle (sa voix) à chaque nouveau texte
@@ -1015,14 +1016,17 @@ class StoryScene extends Cinematique {
 
   // (v1.62, planche 84) Sa part du butin : les pièces partent de sa main, tournent en volant et tombent une à une
   // dans le col de ta besace, en haut à droite ; le compte monte à l'arrivée de chaque pièce.
+  // (v1.66) d'où partent les pièces : la main du voyageur, à l'écran de l'interface
+  sourcePieces() {
+    const cam = this.cameras.main, k = cam.zoom / this.zoomBase, m = this.main();
+    return [(m.x - cam.worldView.x) * k, (m.y - cam.worldView.y) * k];
+  }
   pleuvoirPieces(gain = 0) {
     const b = this.bourse;
     if (!b || !b.active || gain <= 0) { this.piecesEnVol = false; if (b) b.maj(Math.floor(this.G.argent)); return; }
-    const cam = this.cameras.main, k = cam.zoom / this.zoomBase, m = this.main();
-    const ux = (m.x - cam.worldView.x) * k, uy = (m.y - cam.worldView.y) * k, col = b.col();
-    // (v1.64) les pièces qui tombent dans la besace de cuir, et le cordon qu'on serre (quand les premières arrivent)
-    this.time.delayedCall(520, () => Son.jouer('besace', { montant: gain }));
-    voleePieces(this, ux, uy, col.x, col.y, Math.ceil(Math.sqrt(gain)), { conteneur: this.ui, echelle: 2, besace: b, montant: Math.floor(this.G.argent) - b.dernier, fin: () => {
+    const [ux, uy] = this.sourcePieces(), col = b.col();
+    // (v1.66) chaque pièce tinte en entrant dans la besace (les tintements se chevauchent), et le cuir se tasse à la fin
+    voleePieces(this, ux, uy, col.x, col.y, gain, { conteneur: this.ui, echelle: 2, besace: b, vise: Math.floor(this.G.argent), montant: Math.floor(this.G.argent) - b.dernier, fin: () => {
       this.piecesEnVol = false;
       if (b.active) b.maj(Math.floor(this.G.argent));
     } });

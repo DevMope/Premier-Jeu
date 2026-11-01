@@ -1599,6 +1599,7 @@ class CounterScene extends Phaser.Scene {
     // (v1.61) plus bas : l’onglet Carte cachait le haut de la besace ; (v1.62, planche 84) la nouvelle besace, ×2,
     // qui verse vers la fenêtre quand tu paies
     this.bourse = bourse(this, 66, 515, this.G.argent, { echelle: 2, taille: 17, gain: [0, -34] });   // (le gain s'affiche sur elle : au-dessus, l'onglet Carte)
+    this.bourse.source = () => [FENETRE.x + FENETRE.w / 2, SOL_COMPTOIR + 6];   // (v1.66) l'argent d'un événement arrive aussi par la fenêtre
     // De temps en temps, une pièce scintille quand la bourse est bien pleine.
     this.time.addEvent({ delay: 1400, loop: true, callback: () => {
       if (this.bourse.niveau < 2 || Math.random() < 0.35) return;
@@ -1620,7 +1621,8 @@ class CounterScene extends Phaser.Scene {
     Son.jouer('pieces');
     // (v1.62) elles tournent en volant, et tombent une à une dans le col de la besace
     const col = this.bourse.col();
-    voleePieces(this, FENETRE.x + FENETRE.w / 2, SOL_COMPTOIR + 6, col.x, col.y, Math.ceil(Math.sqrt(apres - avant)), { profondeur: 60, besace: this.bourse, montant: this.piecesEnVol === 1 ? apres - this.bourse.dernier : 0, fin: () => {
+    // (v1.66) chaque pièce payée vole jusqu'à la besace et y entre (au-delà d'une vingtaine, en un flot rapide)
+    voleePieces(this, FENETRE.x + FENETRE.w / 2, SOL_COMPTOIR + 6, col.x, col.y, apres - avant, { profondeur: 60, besace: this.bourse, vise: apres, montant: this.piecesEnVol === 1 ? apres - this.bourse.dernier : 0, fin: () => {
       this.piecesEnVol--;
       if (!this.piecesEnVol) this.bourse.maj(this.G.argent);
     } });

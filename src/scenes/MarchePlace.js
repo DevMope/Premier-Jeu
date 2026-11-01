@@ -477,6 +477,7 @@ Object.assign(MarcheScene.prototype, {
     for (const sens of [-1, 1]) { const p = this.add.circle(carte.x + sens * 22, carte.y - 18, 2, 0xc82a20); p.yTri = y + 0.06; place.add(p); }   // (les punaises)
     // (v1.63, planche 80 v3) le nom, une seule fois : gravé sur une planche de bois clair posée sur le haut des poteaux
     const pl = this.add.image(x, haut + 2, plancheNomCarteHD(this)).setOrigin(0.5, 1).setScale(E); pl.yTri = y + 0.1; place.add(pl);
+    this.plancheCarteY = [haut + 2 - 20 * E, haut + 2];   // (house keep) le haut et le bas de la planche du nom : voir cadrerPlace
     poserLettrage(this, place, x, haut + 2 - 20 * E + 17, this.nomLieuPlace('carte')[0], { police: 'Alegreya', graisse: 900, taille: 14, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: 66, hauteur: 30, lignesMax: 2, coupe: true, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) }).yTri = y + 0.2;
   },
 
@@ -553,7 +554,7 @@ Object.assign(MarcheScene.prototype, {
     if (img.bulle && img.bulle.active) return;
     Son.jouer('voix', { personne, ton: 'content' });
     const b = img.bulle = this.add.text(img.x, img.y - img.displayHeight - 8, texte, style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 260 }, align: 'center' })).setOrigin(0.5, 1).setScale(0);
-    b.yTri = 1e6 + 2; this.place.add(b);
+    b.yTri = 1e6 + 2; this.place.add(b); this.garderBulleDansEcran(b);
     this.tweens.add({ targets: b, scale: 1 / this.place.scaleX, duration: 180, ease: 'Back.easeOut' });
     this.time.delayedCall(Math.max(2600, texte.length * 55), () => b.active && this.tweens.add({ targets: b, alpha: 0, duration: 300, onComplete: () => b.destroy() }));
   },
@@ -646,7 +647,7 @@ Object.assign(MarcheScene.prototype, {
   bulleCourte(o, texte) {
     if (o.bulle && o.bulle.active) o.bulle.destroy();
     const b = o.bulle = this.add.text(o.img.x, o.img.y - o.img.displayHeight - 8, texte, style(11, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 7, y: 4 }, wordWrap: { width: 200 }, align: 'center' })).setOrigin(0.5, 1).setScale(0);
-    b.yTri = 1e6 + 2; this.place.add(b);
+    b.yTri = 1e6 + 2; this.place.add(b); this.garderBulleDansEcran(b);
     this.tweens.add({ targets: b, scale: 1 / this.place.scaleX, duration: 160, ease: 'Back.easeOut' });
     this.time.delayedCall(2600, () => b.active && this.tweens.add({ targets: b, alpha: 0, duration: 250, onComplete: () => b.destroy() }));
   },
@@ -656,12 +657,22 @@ Object.assign(MarcheScene.prototype, {
     if (o.attend) { o.attend = null; }
     o.pause = 4200; o.cible = null; o.chemin = []; o.but = null;
     const garrick = o.quoi === 'mentor';
+    // (v1.66) JeuneGoy salue Garrick de la main (il ne parle jamais : son bras dit bonjour pour lui)
+    if (garrick) this.gesteHeros('salut', o.img.x);
     const texte = garrick ? Phaser.Utils.Array.GetRandom(PHRASES_GARRICK_MARCHE) : this.phraseMarche();
     Son.jouer('voix', { personne: garrick ? { nom: 'Garrick', race: 'humain' } : { nom: o.quoi.nom, race: o.quoi.race, feminin: o.quoi.feminin }, ton: Phaser.Utils.Array.GetRandom(['content', 'rire', 'etonne', 'neutre']) });
     const b = o.bulle = this.add.text(o.img.x, o.img.y - o.img.displayHeight - 8, texte, style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 240 }, align: 'center' })).setOrigin(0.5, 1).setScale(0);
-    b.yTri = 1e6 + 2; this.place.add(b);
+    b.yTri = 1e6 + 2; this.place.add(b); this.garderBulleDansEcran(b);
     this.tweens.add({ targets: b, scale: 1 / this.place.scaleX, duration: 180, ease: 'Back.easeOut' });
     this.time.delayedCall(Math.max(2600, texte.length * 55), () => this.tweens.add({ targets: b, alpha: 0, duration: 300, onComplete: () => b.destroy() }));
+  },
+
+  // (house keep) Une bulle de la place reste dans l'écran : près d'un bord, elle se décale vers l'intérieur
+  // (à l'écran, elle mesure b.width : son échelle compense celle de la place)
+  garderBulleDansEcran(b) {
+    const s = this.place.scaleX || 1, demi = b.width / 2 + 6;
+    const xe = Phaser.Math.Clamp(this.place.x + b.x * s, demi, 960 - demi);
+    b.x = (xe - this.place.x) / s;
   },
 
   // Une vue du joueur ou d'un passant, selon le sens de la marche
@@ -755,7 +766,20 @@ Object.assign(MarcheScene.prototype, {
     if (a) { Son.jouer('clic'); a(); }
   },
 
+  // (v1.66) Un geste muet de JeuneGoy (gestesHD.js) : le salut se fait dans la vue où il est (de face, de dos ; de profil,
+  // il se tourne de trois quarts vers celui qu'il salue) ; les autres gestes, de trois quarts, tournés vers lui
+  gesteHeros(nom, versX) {
+    if (typeof jouerGeste !== 'function' || !this.heros || !this.heros.active) return;
+    const vues = GESTES_HD[nom] && GESTES_HD[nom].vues, vue = vues && vues.includes(this.vueHeros) ? this.vueHeros : 'troisQuarts';
+    jouerGeste(this, this.heros, nom, null, { vers: versX, vue });
+  },
+
   poserHeros(pas) {
+    // (v1.66) un geste muet en cours : debout, le geste garde la main ; dès qu'il marche, le geste s'arrête
+    if (this.heros.gesteEnCours) {
+      if (!pas && !(this.pasHeros > 0 && this.pasVuHeros !== this.pasHeros)) return;
+      if (this.heros.gesteFin) this.heros.gesteFin();
+    }
     // (planche 85) quand il descend vers nous, la vraie vue de face ('deFace' : 'face' est, pour le joueur, son image de
     // trois-quarts) ; et dès qu'elles sont prêtes, les huit images de la marche, 70 ms chacune (45 quand il court). Il
     // marche quand son compteur de pas a avancé depuis la dernière image (sinon, c'est qu'il vient de s'arrêter).
@@ -784,7 +808,14 @@ Object.assign(MarcheScene.prototype, {
     let z = P.zoom, fx = this.heros.x, fy = this.heros.y - (depart ? -12 : 40), sy = 270;
     if (cle) { z = PETITS_LIEUX.includes(cle) ? P.zoom * 1.2 : P.zoomPanneau; [fx, fy] = LIEUX_PLACE[cle]; sy = PETITS_LIEUX.includes(cle) ? 262 : 250; }
     // (v1.61) lieu ouvert : le bas de la place peut monter derrière le cadre, pour que le mendiant (tout en bas) reste visible
-    const x = Phaser.Math.Clamp(480 - fx * z, 960 - P.L * z, 0), y = Phaser.Math.Clamp(sy - fy * z, (cle ? 300 : 478) - P.H * z, (P.haut || 0) * z);   // (v1.64 : en haut de la place, on voit monter les Coteaux)
+    const x = Phaser.Math.Clamp(480 - fx * z, 960 - P.L * z, 0), yMin = (cle ? 300 : 478) - P.H * z, yMax = (P.haut || 0) * z;
+    let y = Phaser.Math.Clamp(sy - fy * z, yMin, yMax);   // (v1.64 : en haut de la place, on voit monter les Coteaux)
+    // (house keep) la planche « La carte du monde » ne reste jamais à moitié sous la barre du bas : on cadre un peu plus
+    // haut (elle se lit en entier) ou un peu plus bas (elle passe tout entière dessous), au plus court
+    if (!cle && this.plancheCarteY) {
+      const BARRE = 478, haut = y + this.plancheCarteY[0] * z, bas = y + this.plancheCarteY[1] * z;
+      if (haut < BARRE && bas > BARRE - 2) { const monter = bas - (BARRE - 4), descendre = BARRE + 2 - haut; y = Phaser.Math.Clamp(monter <= descendre ? y - monter : y + descendre, yMin, yMax); }
+    }
     if (cle) this.placerBoutonsPlace(x, y, z);   // (les boutons « La place » et « Ma liste » laissent libre le nom du lieu)
     if (instantane) { place.setScale(z).setPosition(x, y); return; }
     if (cle) { this.tweens.killTweensOf(place); this.tweens.add({ targets: place, x, y, scale: z, duration: 450, ease: 'Sine.easeInOut' }); return; }
@@ -843,7 +874,20 @@ Object.assign(MarcheScene.prototype, {
   },
 
   // --- Chaque image : JeuneGoy qui marche, les passants qui flânent, le cadre qui suit, l'ordre de profondeur ---
+  // (house keep) Le titre de la place : centré, mais jamais sous la pastille des objectifs du HUD (ni hors de l'écran)
+  poserTitrePlace() {
+    const t = this.titrePlace; if (!t || !t.active) return;
+    const h = this.scene.get('Hud'), p = h && h.pastilleObjectifs;
+    const gauche = p && p.active && p.visible ? p.getBounds().right + 12 : 250;
+    if (gauche === this.gaucheTitrePlace) return;
+    this.gaucheTitrePlace = gauche;
+    let f = 24; t.setFontSize(f);
+    while (t.width > 950 - gauche && f > 16) t.setFontSize(--f);
+    t.setX(Math.max(gauche, 480 - t.width / 2));
+  },
+
   update(temps, dt) {
+    this.poserTitrePlace();
     if (!this.place || !this.heros || !this.heros.active) return;
     dt = Math.min(dt, 50);
     const P = PLACE_MARCHE, h = this.heros;
@@ -921,7 +965,7 @@ Object.assign(MarcheScene.prototype, {
     this.ombreHeros.setPosition(h.x + 2, h.y - 2); this.ombreHeros.yTri = h.y - 0.5;
     // les passants (v1.61 : ils suivent leur chemin, pas à pas, et vivent leur petite vie)
     for (const o of this.passantsPlace) {
-      if (o.bulle && o.bulle.active) o.bulle.setPosition(o.img.x, o.img.y - o.img.displayHeight - 8);
+      if (o.bulle && o.bulle.active) { o.bulle.setPosition(o.img.x, o.img.y - o.img.displayHeight - 8); this.garderBulleDansEcran(o.bulle); }
       if (o.attend && !(o.attend.but && o.attend.but.q === o)) { o.attend = null; o.pause = Math.min(o.pause, 600); }   // (celui qu'il attendait a changé d'avis : il ne reste pas figé 20 s)
       if (o.parle || o.attend) continue;
       if (o.pause > 0) { o.pause -= dt; if (o.pause <= 0) this.envieDePassant(o); continue; }
@@ -995,10 +1039,15 @@ Object.assign(MarcheScene.prototype, {
   reprendreVisite() {
     const v = this.visite; if (!v || v.question === null) return;
     const i = v.question; v.question = null;
+    this.gesteHeros('oui', v.gar.x);   // (v1.66) il hoche la tête : oui
     this.allerEtapeVisite(i);
     this.bulleSur(v.gar, `« ${VISITE_MARCHE.reprise(VISITE_MARCHE.etapes[i].nom)} »`, { nom: 'Garrick', race: 'humain' });
   },
-  ignorerVisite() { const v = this.visite; if (!v || v.question === null) return; v.question = null; this.partirVisite('ignore'); },
+  ignorerVisite() {
+    const v = this.visite; if (!v || v.question === null) return; v.question = null;
+    this.gesteHeros('non', v.gar.x);   // (v1.66) il secoue la tête : non
+    this.partirVisite('ignore');
+  },
   // Le marchand répond à Garrick, d'une petite bulle au-dessus de sa tête, pendant qu'on repart
   reponseMarchand(k, texte) {
     const g = this.place.list.find(o => o.cle === k), m = g && g.list.find(o => o.texture && o.texture.key.startsWith('corps_'));
@@ -1028,13 +1077,18 @@ Object.assign(MarcheScene.prototype, {
   suiteVisite() {
     const v = this.visite; if (!v || v.fini || v.phase !== 'parle') return;
     if (v.question !== null) return this.reprendreVisite();
+    if (v.i >= 0) this.gesteHeros('oui', v.gar.x);   // (v1.66) il acquiesce, et on repart
     const et = VISITE_MARCHE.etapes[v.i];
     if (et && et.reponse) this.reponseMarchand(et.lieu, et.reponse);   // (le marchand lui répond, et on repart)
     if (v.i < VISITE_MARCHE.etapes.length - 1) this.allerEtapeVisite(v.i + 1); else this.partirVisite(false);
   },
   etalSuivantVisite() { const v = this.visite; if (v && !v.fini && v.question === null && v.i < VISITE_MARCHE.etapes.length - 1) this.allerEtapeVisite(v.i + 1); },
   revenirVisite() { const v = this.visite; if (v && !v.fini && v.question === null && v.i > 0) this.allerEtapeVisite(v.i - 1); },
-  passerVisite() { if (this.visiteEnCours()) this.partirVisite(true); },
+  passerVisite() {
+    if (!this.visiteEnCours()) return;
+    this.gesteHeros('nuque', this.visite.gar.x);   // (v1.66) gêné, il se frotte la nuque : « pas maintenant... »
+    this.partirVisite(true);
+  },
 
   // Où Garrick se tient pour présenter l'étape j : à côté de l'étal, un peu devant, du côté opposé à celui d'où l'on
   // arrive (JeuneGoy, qui le suit, s'arrête devant l'étal sans lui passer au travers)
@@ -1090,6 +1144,10 @@ Object.assign(MarcheScene.prototype, {
     v.depuis = this.time.now + (presse || ignore ? 700 : 300);   // (il finit sa phrase, puis se met en route)
     if (ignore) { if (this.boutonCommandes && this.boutonCommandes.active) this.majBoutonCommandes(); return; }
     v.etapes = presse ? null : this.etapesVisite(VISITE_MARCHE.etapes.length);   // (la visite finie : toutes les étapes cochées)
+    // (v1.66) la visite finie : JeuneGoy salue Garrick de la main pendant qu'il s'en va vers le porche
+    if (!presse && !ignore && typeof jouerGeste === 'function') this.time.delayedCall(900, () => {
+      if (this.heros.active && !this.heros.gesteEnCours && g.active) this.gesteHeros('salut', g.x);
+    });
     const o = typeof OBJECTIFS !== 'undefined' && OBJECTIFS.find(x => x.id === 'marche');
     const b = this.banniereVisite = this.add.text(480, 462, VISITE_MARCHE.fin + (o ? `   Objectif : « ${o.texte} »` : ''), style(13, '#2a1608', { fontStyle: 'bold', backgroundColor: '#f3d98a', padding: { x: 10, y: 5 } })).setOrigin(0.5).setDepth(150).setScrollFactor(0);
     const et = v.etapes;
@@ -1123,7 +1181,7 @@ Object.assign(MarcheScene.prototype, {
     const bloque = this.bloquePlace();
     for (const o of [v.barre, v.etapes]) if (o && o.active) o.setVisible(!bloque);
     if (v.bulle) v.bulle.setVisible(!bloque && !v.bulleCachee);
-    if (g.bulle && g.bulle.active) g.bulle.setPosition(g.x, g.y - g.displayHeight - 8);
+    if (g.bulle && g.bulle.active) { g.bulle.setPosition(g.x, g.y - g.displayHeight - 8); this.garderBulleDansEcran(g.bulle); }
     if (bloque) { if (v.pas) { v.pas = 0; this.poserGarrick(0); } return; }   // (une boutique est ouverte : il t'attend)
     const now = this.time.now, dh = Math.hypot(h.x - g.x, h.y - g.y);
     this.tracesVisite(v.pasG, g.x, g.y); this.tracesVisite(v.pasH, h.x, h.y);

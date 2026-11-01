@@ -844,7 +844,7 @@ const PENSEES_PARENTS = [
   "Le peintre a laissé leurs visages dans l'ombre. Comme s'il ne fallait pas les montrer.",
   "Tu as grandi sans eux. Tu te répètes que ça t'est bien égal. Ce n'est pas vrai.",
   "Un jour, tu leur demanderas pourquoi. Si tu les retrouves. S'ils veulent bien te répondre.",
-  "Garrick change toujours de sujet quand tu parles d'eux. Il sait quelque chose ?",
+  "Garrick change toujours de sujet quand il est question d'eux. Il sait quelque chose ?",
   "Les soirs comme celui-ci, tu aurais aimé que quelqu'un t'attende à la maison.",
 ];
 // (v0.92) Grippesou qui pêche les vœux dans la fontaine : une chance, quand on la regarde de près (une fois par jour au plus)

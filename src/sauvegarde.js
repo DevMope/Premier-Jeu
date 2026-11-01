@@ -562,7 +562,10 @@ function demanderTexte(titre, valeur, max, surValider) {
     rangee.appendChild(b);
     return b;
   };
-  const fermer = texte => { fond.remove(); surValider(texte); };
+  // (house keep) Échap fait comme « Annuler » (écouté sur tout le document, même si le champ a perdu le focus ;
+  // le jeu derrière ne reçoit pas la touche)
+  const surTouche = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fermer(null); } };
+  const fermer = texte => { document.removeEventListener('keydown', surTouche, true); fond.remove(); surValider(texte); };
   bouton('Annuler', 'button').addEventListener('click', () => fermer(null));
   bouton('Valider', 'submit');
   boite.addEventListener('submit', e => {
@@ -573,6 +576,7 @@ function demanderTexte(titre, valeur, max, surValider) {
   boite.append(etiquette, champ, rangee);
   fond.appendChild(boite);
   document.body.appendChild(fond);
+  document.addEventListener('keydown', surTouche, true);
   champ.focus();
   champ.select();
 }
