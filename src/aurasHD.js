@@ -28,7 +28,7 @@ const AURAS_COULEURS = {
   violetNoir: { nom: 'violet et noir', sens: 'une domination sans retour, la magie interdite', ext: 0x0a0612, int: 0x9a40e0 },
   argentBleu: { nom: 'argent et bleu', sens: 'un don ancien et maîtrisé (une magie spéciale)', ext: 0x8a92a8, int: 0x70c0ff },
   vertMarron: { nom: 'vert sombre et marron foncé', sens: 'la ruse des bas-fonds, l’instinct de l’animal (le chat)', ext: 0x2a1a10, int: 0x2e6a2a },
-  noirBlanc: { nom: 'noir et blanc, enroulés', sens: 'la mort, et le passage qu’elle ouvre (la Faucheuse) : le noir domine', ext: 0x1a1426, int: 0xe8e8ff, yinYang: true },
+  noirBlanc: { nom: 'noir et blanc, enroulés', sens: 'la mort, et le passage qu’elle ouvre (la Faucheuse) : le noir domine', ext: 0x050308, int: 0xe8e8ff, yinYang: true, densite: 1.45 },
   rougeNoirViolet: { nom: 'rouge, noir et violet', sens: 'l’Affamé : la faim, le néant et la domination (Vorhal’Düm)', ext: 0x0a0410, int: 0xe02020, tiers: 0x8a30e0 },
 };
 // Les cinq paliers : la portée du voile (en pixels de la texture du personnage, qui fait 160 de haut environ), sa densité,
@@ -76,13 +76,13 @@ function auraVoileHD(scene, cle, couleur, palier, { graine = 3, montee = 1, eche
     const u = d[i] / R;   // 0 contre le corps, 1 au bord du voile
     // les volutes : une fumée lente, qui monte (le bruit est étiré en hauteur et décalé par la graine)
     const vol = fbm(x * 0.045, y * 0.025 - graine * 3, graine, 3), vol2 = fbm(x * 0.11, y * 0.07 + graine, graine + 7, 2);
-    let I = Math.pow(1 - u, 1.05) * (0.78 + 0.5 * vol) * (0.88 + 0.25 * vol2) * dense;
+    let I = Math.pow(1 - u, 1.05) * (0.78 + 0.5 * vol) * (0.88 + 0.25 * vol2) * dense * (C.densite || 1);
     if (corps[i]) I = Math.min(1, I + 0.15);
     const perce = C.perce && hachage(Math.floor(x / 4), Math.floor(y / 6), graine + 2) > 0.78;
     const sombre = (ext[0] + ext[1] + ext[2]) < 150;   // (un extérieur sombre : le cœur clair reste large, sinon on ne verrait rien)
     let col = perce ? int : auraMix(int, ext, Math.min(1, u * (sombre ? 0.9 : 1.6)));
     if (C.yinYang) { const ang = Math.atan2(y - H * 0.5, x - W * 0.5), r0 = Math.hypot(x - W * 0.5, (y - H * 0.5) * 0.8); const spir = Math.sin(ang * 2 + r0 * 0.09 - graine) + (vol - 0.5) * 1.2; const ray = Math.sin(ang * 7 + r0 * 0.02 + (vol - 0.5) * 2.5 + graine) * (0.6 + 0.4 * Math.min(1, r0 / (R * 0.8)));   // (v2 : des traits qui partent de son centre et rayonnent, blancs)
-      col = ray > 0.72 ? auraMix(int, ext, 0.1) : ray > 0.58 ? auraMix(ext, int, 0.4) : auraMix(ext, int, 0.1 + u * 0.15); if (corps[i] || u < 0.22) col = auraMix(ext, int, 0.12); }   // (le noir domine ; rien de blanc ne passe sur elle)
+      col = ray > 0.9 ? auraMix(int, ext, 0.15) : ray > 0.84 ? auraMix(ext, int, 0.35) : auraMix(ext, int, 0.04 + u * 0.06); /* (v5 : des rubans blancs fins ; le reste d un noir dense) */ if (corps[i] || u < 0.22) col = auraMix(ext, int, 0.12); }   // (le noir domine ; rien de blanc ne passe sur elle)
     if (C.tiers) { const bande = Math.sin((x + y * 0.6) * 0.07 + vol * 6 + graine); const t3 = auraRgb(C.tiers); col = bande > 0 ? auraMix(col, t3, bande * 0.75) : auraMix(col, ext, -bande * 0.6); }   // (les trois couleurs se fondent en volutes) if (u < 0.08 && !corps[i]) col = auraMix(col, blanc, 0.35);
     // la transparence en quatre crans, tramée : un voile doux qui reste du pixel art
     const a = Math.max(0, Math.min(1, I)), cran = Math.floor(a * 4 + (AURA_BAYER[y % 4][x % 4] + 0.5) / 16) / 4;
