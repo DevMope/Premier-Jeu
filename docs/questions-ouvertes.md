@@ -9,7 +9,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q239** — Les noms des armes légendaires. Il en existe déjà huit, une par royaume (Pique-Bourdon, Aube-Lame, Brise-Montagne, Chant-de-Lune, le Bâton des Sept Étoiles, Souffle-de-Bambou, Croc-de-Wyverne, la Lame sans Nom). Propositions pour les nouvelles : la faux de la Faucheuse, « la Dernière Lune » (ou « Moisson-de-Lune ») ; le bâton du Sage en forme humaine (les serres d'or), « Clémence » (sa bonté de façade) ; son bâton une fois transformé (les bois d'argent), « la Ramure d'Oubli » ; l'épée de Garrick, « Fleur-de-Fer » (le pommier des Bannis). Tu valides, tu changes ? Et l'arme que récupère le joueur à la fin, c'est Aube-Lame, ou une autre à nommer ?
+- **Q254** — Les noms : 1) Aube-Lame, l'arme légendaire des Hommes, paraît plat ; propositions : « Serment d'Aurore », « l'Aube Jurée », « Premier-Soleil ». 2) L'arme forgée par le joueur : son nom légendaire ne serait pas choisi d'avance, mais donné par le monde quand ses exploits deviennent connus de tous, selon ce qu'il a fait (par exemple « la Promesse » ou « l'Espérance » pour des exploits de Lumière, « la Rancune » ou « le Glas » pour l'Ombre, « la Sans-Maître » pour le neutre), avec la possibilité de la renommer. Ce principe te va ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -18,6 +18,9 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q244 à Q253~~ Réponses du 02/11 dans `docs/game-design.md` (forge du joueur, Faucheuse : manche, noirceur, traînée de fumée ; banque, plaque, maisons basses ; ordre des bâtiments choisi par Claude).
+- ~~Q243~~ L'Absolution (bâton du Sage) et le Dévoreur de Noms (bâton transformé) (02/11).
+- ~~Q239 à Q242~~ Réponses du 02/11 : la Larme de Lune, Fleur de Diamant ; Faucheuse v3 superbe (capuche, cape et manche à reprendre) ; la faux ne luit que dévoilée.
 - ~~Q230 à Q238~~ Réponses du 02/11 dans `docs/game-design.md` (Faucheuse : crâne opaque, faux-lune avec son aura ; tout en HD validé ; banque et tente à reprendre ; généralisation lancée).
 - ~~Q219 à Q229~~ Réponses du 01/11 tard dans `docs/game-design.md` (vue de haut validée sur le barbier ; Faucheuse à refaire : crâne, lame en croissant, manche en os ; auras du chat et de la Faucheuse validées).
 - ~~Q210 à Q217~~ Réponses du 01/11 nuit dans `docs/game-design.md` (auras validées sauf couleurs du chat et de la Faucheuse ; bâtiments et personnages refusés, à refaire).
