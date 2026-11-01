@@ -81,7 +81,8 @@ function auraVoileHD(scene, cle, couleur, palier, { graine = 3, montee = 1, eche
     const perce = C.perce && hachage(Math.floor(x / 4), Math.floor(y / 6), graine + 2) > 0.78;
     const sombre = (ext[0] + ext[1] + ext[2]) < 150;   // (un extérieur sombre : le cœur clair reste large, sinon on ne verrait rien)
     let col = perce ? int : auraMix(int, ext, Math.min(1, u * (sombre ? 0.9 : 1.6)));
-    if (C.yinYang) { const ang = Math.atan2(y - H * 0.5, x - W * 0.5), r0 = Math.hypot(x - W * 0.5, (y - H * 0.5) * 0.8); const spir = Math.sin(ang * 2 + r0 * 0.09 - graine) + (vol - 0.5) * 1.2; col = spir > 0.72 ? auraMix(int, ext, 0.1) : spir > 0.55 ? auraMix(ext, int, 0.45) : auraMix(ext, int, 0.1 + u * 0.15); }   // (le noir domine, le blanc s'enroule en un ruban)
+    if (C.yinYang) { const ang = Math.atan2(y - H * 0.5, x - W * 0.5), r0 = Math.hypot(x - W * 0.5, (y - H * 0.5) * 0.8); const spir = Math.sin(ang * 2 + r0 * 0.09 - graine) + (vol - 0.5) * 1.2; const ray = Math.sin(ang * 7 + r0 * 0.02 + (vol - 0.5) * 2.5 + graine) * (0.6 + 0.4 * Math.min(1, r0 / (R * 0.8)));   // (v2 : des traits qui partent de son centre et rayonnent, blancs)
+      col = ray > 0.72 ? auraMix(int, ext, 0.1) : ray > 0.58 ? auraMix(ext, int, 0.4) : auraMix(ext, int, 0.1 + u * 0.15); if (corps[i] || u < 0.22) col = auraMix(ext, int, 0.12); }   // (le noir domine ; rien de blanc ne passe sur elle)
     if (C.tiers) { const bande = Math.sin((x + y * 0.6) * 0.07 + vol * 6 + graine); const t3 = auraRgb(C.tiers); col = bande > 0 ? auraMix(col, t3, bande * 0.75) : auraMix(col, ext, -bande * 0.6); }   // (les trois couleurs se fondent en volutes) if (u < 0.08 && !corps[i]) col = auraMix(col, blanc, 0.35);
     // la transparence en quatre crans, tramée : un voile doux qui reste du pixel art
     const a = Math.max(0, Math.min(1, I)), cran = Math.floor(a * 4 + (AURA_BAYER[y % 4][x % 4] + 0.5) / 16) / 4;

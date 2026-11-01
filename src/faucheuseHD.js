@@ -12,7 +12,9 @@
 const FH_RAMPES = {
   robe: [0x050408, 0x0c0a12, 0x14121e, 0x1c1a2a, 0x2a2840, 0x3e3c58],
   robeC: [0x08060c, 0x100e18, 0x1a1826, 0x262436, 0x363450, 0x4c4a6a],   // (la capuche, un peu plus claire : elle se détache de la robe)
-  os: [0x6a6878, 0x8e8c9c, 0xb4b2be, 0xd4d2da, 0xe8e6ec, 0xf8f6fa],
+  os: [0x16141e, 0x26242e, 0x3a3844, 0x52505e, 0x6c6a78, 0x8a8896],   // (v2 : un os dans la pénombre de la capuche, jamais plus clair que l'ambiance)
+  osR: [0x2a1418, 0x3e1c20, 0x56262a, 0x6e3236, 0x864044, 0x9e5050],   // (l'os éclairé par les orbites)
+  osMain: [0x3a3844, 0x52505e, 0x6c6a78, 0x8a8896, 0xa4a2ae, 0xbcbac4],
   orbite: [0x1a0608, 0x3a0a0c, 0x6a0e10, 0x9a1414, 0xd01c18, 0xff3a2a],
   oeilR: [0x4a0a0a, 0x8a1010, 0xc81c14, 0xff3a2a, 0xff7a60, 0xffd0c0],
   givre: [0x2a4a6a, 0x4a7aa0, 0x78aacc, 0xa8d4ec, 0xd4ecf8, 0xf4fcff],
@@ -31,30 +33,32 @@ function fhCristal(t, x, y, h, decalage = 0.6) {
 }
 // La faux : A le bout du manche (en bas), B le haut (la jointure) ; la lame part de B vers `cote` et se courbe vers le bas
 function fhFaux(t, A, B, k, cote = 1, { lame = true } = {}) {
-  const r = 1.1 * k;
-  sfTubeForme(t, 'manche', [A, B], u => r, { decalage: 0.3, motif: i => (i && (i.s / (7 * k)) % 1 < 0.08 ? 0.9 : i && Math.abs(i.o) > 0.6 ? -0.5 : 0) });
-  for (const u of [0.08, 0.5, 0.94]) { const x = A[0] + (B[0] - A[0]) * u, y = A[1] + (B[1] - A[1]) * u; sfTubeForme(t, 'argentF', [[x, y - 1 * k], [x, y + 1 * k]], v => r + 0.5 * k, { decalage: 0.4 }); }   // (les cercles d'argent)
+  // le manche : une colonne d'os emboîtés (des vertèbres), un fil sombre au milieu, des cercles d'argent
+  const n = Math.max(6, Math.round(Math.hypot(B[0] - A[0], B[1] - A[1]) / (3.2 * k)));
+  sfTubeForme(t, 'manche', [A, B], u => 0.8 * k, { decalage: -0.4, ombre: false });
+  for (let i = 0; i <= n; i++) { const u = i / n, x = A[0] + (B[0] - A[0]) * u, y = A[1] + (B[1] - A[1]) * u;
+    t.forme('osMain', sfEll(x, y, 1.35 * k, 1.5 * k), { decalage: 0.1, motif: (px, py) => (py + 0.5 > y + 0.6 * k ? -0.9 : px + 0.5 < x - 0.5 * k ? 0.3 : 0) });
+    for (const c of [-1, 1]) t.poser(Math.round(x + c * 1.4 * k), Math.round(y - 0.4 * k), 'osMain', 1); }   // (les apophyses)
+  for (const u of [0.06, 0.52, 0.96]) { const x = A[0] + (B[0] - A[0]) * u, y = A[1] + (B[1] - A[1]) * u; sfTubeForme(t, 'argentF', [[x, y - 1 * k], [x, y + 1 * k]], v => 1.9 * k, { decalage: 0.4 }); }
   if (!lame) return;
   // la jointure : un croissant d'argent qui tient la lame
-  t.forme('argentF', sfEll(B[0], B[1], 2.4 * k, 1.6 * k), { decalage: 0.5 });
-  t.forme('robe', sfEll(B[0] + cote * 0.4 * k, B[1], 1.1 * k, 0.9 * k), { decalage: 0.2, ombre: false, bord: false });
-  // la lame : longue, mince, qui part vers le côté, s'incurve et descend en pointe ; le dos épais, le fil clair de givre
-  const L = 26 * k, pts = sfBezier([B[0] - cote * 2 * k, B[1] - 0.5 * k], [B[0] + cote * L * 0.4, B[1] - 3.5 * k], [B[0] + cote * L * 0.85, B[1] - 0.5 * k], [B[0] + cote * L * 1.0, B[1] + 8 * k], 24);
-  const tb = sfTube(pts, u => (2.6 * k) * (1 - u * 0.92) + 0.4);
-  sfForme(t, 'lame', (x, y) => tb.info(x, y), { garder: i => i.dedans, decalage: 0.35, motif: i => (i ? (i.o * cote < -0.55 ? -1.1 : i.o * cote > 0.45 ? 0.5 : 0) : 0) });   // (le dos sombre, le plat qui prend la lumière)
-  sfForme(t, 'givre', (x, y) => tb.info(x, y), { garder: i => i.dedans && i.o * cote > 0.72, decalage: 0.9, ombre: false, bord: false });   // (le fil de givre)
-  // la rune gravée sur le plat : trois traits
-  const q = tb.pts[7]; for (const [dx, dy] of [[0, -1], [0, 0], [0, 1], [1, 0], [-1, 0]]) t.poser(Math.round(q[0] + dx * k * 0.8), Math.round(q[1] + dy * k * 0.8 - 0.3 * k), 'robe', 2);
+  t.forme('argentF', sfEll(B[0], B[1], 2.6 * k, 1.7 * k), { decalage: 0.5 });
+  // la lame : un croissant de lune, long et mince, fin aux deux bouts, large au milieu ; le dos sombre, le fil de givre
+  const L = 40 * k, pts = sfBezier([B[0] - cote * 3 * k, B[1] + 1 * k], [B[0] + cote * L * 0.3, B[1] - 9 * k], [B[0] + cote * L * 0.85, B[1] - 7 * k], [B[0] + cote * L * 1.0, B[1] + 10 * k], 28);
+  const tb = sfTube(pts, u => (3.4 * k) * Math.pow(Math.sin(Math.PI * Math.min(1, u * 1.05)), 0.75) + 0.4);
+  sfForme(t, 'lame', (x, y) => tb.info(x, y), { garder: i => i.dedans, decalage: 0.35, motif: i => (i ? (i.o * cote < -0.5 ? -1.1 : i.o * cote > 0.4 ? 0.5 : 0) : 0) });
+  sfForme(t, 'givre', (x, y) => tb.info(x, y), { garder: i => i.dedans && i.o * cote > 0.7, decalage: 0.9, ombre: false, bord: false });
+  const q = tb.pts[9]; for (const [dx, dy] of [[0, -1], [0, 0], [0, 1], [1, 0], [-1, 0]]) t.poser(Math.round(q[0] + dx * k * 0.8), Math.round(q[1] + dy * k * 0.8 - 0.3 * k), 'robe', 2);   // (la rune)
 }
 // La Faucheuse en pied : vue 'face' ou 'troisQuarts' (elle regarde à droite) ; visage 'crane' ou 'ombre' ;
 // dissolution de 0 (entière) à 1 (dissoute dans l'ombre) ; faux : la tient-elle
-function faucheuseCorpsHD(vue = 'face', { visage = 'crane', dissolution = 0, faux = true } = {}) {
-  const k = 2, L = 150, H = 232, sol = 220, dir = vue === 'troisQuarts' ? 1 : 0, s = dir ? 0.55 : 0;   // (s : le décalage du visage vers où elle regarde)
+function faucheuseCorpsHD(vue = 'face', { visage = 'crane', dissolution = 0, faux = true, souvenirs = ['petale', 'sablier', 'plume'] } = {}) {   // (souvenirs : ceux qu'elle porte encore, pas encore donnés)
+  const k = 2, L = 150, H = 232, sol = 220, dir = vue === 'troisQuarts' ? 1 : 0, s = dir ? 1.4 : 0;   // (s : le décalage du visage vers où elle regarde)
   const t = fhToile(L, H), fond = fhToile(L, H), dev = fhToile(L, H);
   const cx = 66 + (dir ? 2 : 0), cy = 76;   // (la tête : haute, elle est grande)
   // --- derrière : la pointe de la capuche qui retombe dans le dos, la faux (de trois-quarts, la lame devant) ---
-  const ptX = cx - (dir ? 14 : 0) * k;
-  sfTubeForme(fond, 'robeC', sfBezier([cx, cy - 10 * k], [cx - 6 * k, cy - 2 * k], [ptX - 4 * k, cy + 12 * k], [ptX - 2 * k, cy + 24 * k], 14), u => 3.2 * k * (1 - u * 0.85) + 0.5, { decalage: -0.2 });
+  const ptX = cx - (dir ? 18 : 0) * k;
+  sfTubeForme(fond, 'robeC', sfBezier([cx - (dir ? 6 : 0) * k, cy - 10 * k], [cx - 8 * k, cy - 2 * k], [ptX - 4 * k, cy + 12 * k], [ptX - 2 * k, cy + 26 * k], 14), u => (dir ? 4.2 : 3.2) * k * (1 - u * 0.85) + 0.5, { decalage: -0.2 });
   const fauxA = [cx + (dir ? 11 : 15) * k, sol - 1], fauxB = [cx + (dir ? 9 : 13) * k, cy - 22 * k];
   if (faux) fhFaux(dev, fauxA, fauxB, k, 1);   // (la faux devant elle : elle la tient à deux mains)
   // --- la robe : large aux épaules, étroite à la taille, qui s'évase jusqu'au sol et s'effiloche en brume ---
@@ -66,35 +70,43 @@ function faucheuseCorpsHD(vue = 'face', { visage = 'crane', dissolution = 0, fau
   t.forme('robe', robe, { decalage: -0.25, motif: (x, y) => { const pli = Math.sin((x - cx) * 0.22 + y * 0.015) + (fbm(x * 0.05, y * 0.05, 4, 2) - 0.5) * 1.6; return y > cy + 30 * k ? (pli > 0.75 ? 0.55 : pli < -0.75 ? -0.7 : 0) : 0; } });
   // la chaîne d'argent à la taille, le petit sablier qui pend
   const yT = cy + 34 * k; for (let x = cx - 8 * k; x <= cx + 8 * k; x += 2) { const y = yT + Math.abs(x - cx) * 0.18; t.poser(Math.round(x + s * k), Math.round(y), 'argentF', (x / 2) % 2 ? 4 : 2); }
-  const sx = cx + 5 * k + s * k, sy = yT + 2 * k; sfTubeForme(t, 'argentF', [[sx, sy], [sx, sy + 3 * k]], u => 0.5 * k, { decalage: 0.3 });
+  const sx = cx + 5 * k + s * k, sy = yT + 2 * k;
+  if (souvenirs.includes('plume')) { const px = cx - 6 * k + s * k; sfTubeForme(t, 'argentF', [[px, yT + 1 * k], [px, yT + 3 * k]], u => 0.4 * k, { decalage: 0.3 });   // (la plume grise, pendue à la chaîne)
+    const pl = sfBezier([px, yT + 3 * k], [px - 1 * k, yT + 7 * k], [px - 1.5 * k, yT + 11 * k], [px - 3 * k, yT + 15 * k], 12); sfTubeForme(t, 'osMain', pl, u => (0.4 + 1.6 * Math.sin(Math.PI * Math.min(1, u * 1.1))) * k, { decalage: 0.2, ombre: false, motif: i => (i && Math.abs(i.o) < 0.12 ? -0.9 : i && (i.s / (1.4 * k)) % 1 < 0.3 ? -0.4 : 0.2) }); }
+  if (souvenirs.includes('sablier')) { sfTubeForme(t, 'argentF', [[sx, sy], [sx, sy + 3 * k]], u => 0.5 * k, { decalage: 0.3 });
   t.forme('argentF', sfPoly([[sx - 1.6 * k, sy + 3 * k], [sx + 1.6 * k, sy + 3 * k], [sx + 0.3 * k, sy + 5.2 * k], [sx + 1.6 * k, sy + 7.4 * k], [sx - 1.6 * k, sy + 7.4 * k], [sx - 0.3 * k, sy + 5.2 * k]], [0, -0.3, 0.9]), { decalage: 0.4 });
-  t.forme('sable', sfPoly([[sx - 0.9 * k, sy + 5.9 * k], [sx + 0.9 * k, sy + 5.9 * k], [sx + 1.1 * k, sy + 7 * k], [sx - 1.1 * k, sy + 7 * k]], [0, 0, 1]), { decalage: 0.5, ombre: false, bord: false });
+  t.forme('sable', sfPoly([[sx - 0.9 * k, sy + 5.9 * k], [sx + 0.9 * k, sy + 5.9 * k], [sx + 1.1 * k, sy + 7 * k], [sx - 1.1 * k, sy + 7 * k]], [0, 0, 1]), { decalage: 0.5, ombre: false, bord: false }); }
   // --- les manches larges et les mains fines, posées sur la faux (ou croisées) ---
   for (const cote of [-1, 1]) {
     const ex = cx + cote * 11 * k + s * k * 1.5, ey = cy + 12 * k, mx = faux ? cx + (dir ? 9 : 13) * k + (cote < 0 ? -1.5 * k : 1.5 * k) : cx + cote * 4 * k, my = faux ? cy + 20 * k + (cote < 0 ? 6 * k : 0) : cy + 30 * k;
     const pts = sfBezier([ex, ey], [ex + cote * 5 * k, ey + 6 * k], [mx + cote * 2 * k, my - 4 * k], [mx, my], 10);
     sfTubeForme(t, 'robe', pts, u => (4.2 + u * 1.6) * k, { decalage: -0.1 + (cote > 0 ? 0.15 : -0.1), motif: i => (i && Math.abs(i.o) > 0.7 ? -0.6 : 0) });
     // la main : une paume étroite et pâle, quatre doigts longs qui se referment sur le manche
-    const mat = visage === 'ombre' ? 'robeC' : 'os';
+    const mat = visage === 'ombre' ? 'robeC' : 'osMain';
     t.forme(mat, sfEll(mx, my + 1 * k, 1.6 * k, 2.2 * k), { decalage: 0.3 });
     for (let d = 0; d < 4; d++) sfTubeForme(t, mat, [[mx - 1.2 * k + d * 0.8 * k, my + 1.5 * k], [mx - 1.4 * k + d * 0.9 * k, my + 4.6 * k]], u => 0.42 * k, { decalage: 0.2 - d * 0.1, ombre: false });
     if (visage === 'ombre') for (let d = 0; d < 4; d++) t.poser(Math.round(mx - 1.4 * k + d * 0.9 * k), Math.round(my + 4.6 * k), 'givre', 4);   // (l'ombre : le bout des doigts givré)
   }
   // --- la capuche : profonde, pointue vers l'arrière, bordée d'un liseré de givre ; l'intérieur noir, le visage ---
-  const hx = cx + s * k * 2, hy = cy;
-  t.forme('robeC', (x, y) => { const dx = (x + 0.5 - hx) / (13 * k), dy = (y + 0.5 - hy) / (15 * k); const d = dx * dx + dy * dy; if (d > 1 || y > hy + 12 * k) return null; return [dx * 0.9, dy * 0.6, Math.sqrt(Math.max(0.05, 1 - d))]; }, { decalage: 0, motif: (x, y) => (fbm(x * 0.08, y * 0.08, 9, 2) - 0.5) * 0.8 });
+  const hx = cx + (dir ? -1 : 0) * k, hy = cy;
+  t.forme('robeC', (x, y) => { const dx = (x + 0.5 - hx + (dir && x + 0.5 < hx ? (hx - x - 0.5) * 0.2 : 0)) / (13 * k), dy = (y + 0.5 - hy) / (15 * k); const d = dx * dx + dy * dy; if (d > 1 || y > hy + 12 * k) return null; return [dx * 0.9, dy * 0.6, Math.sqrt(Math.max(0.05, 1 - d))]; }, { decalage: 0, motif: (x, y) => (fbm(x * 0.08, y * 0.08, 9, 2) - 0.5) * 0.8 });
   t.forme('robeC', sfPoly([[hx - 13 * k, hy + 6 * k], [hx + 13 * k, hy + 6 * k], [hx + 15 * k, hy + 18 * k], [hx - 15 * k, hy + 18 * k]], [0, -0.3, 0.9]), { decalage: -0.3, motif: (x, y) => ((x - hx) % (5 * k) < 1 ? -0.7 : 0) });   // (les pans de la capuche sur les épaules)
   // l'ouverture : un creux noir profond ; de trois-quarts, décalé vers où elle regarde
-  const ox = hx + s * k * 3, oy = hy + 1 * k, orx = (dir ? 8.5 : 9.5) * k, ory = 11 * k;
+  const ox = hx + s * k * 4.5, oy = hy + 1 * k, orx = (dir ? 6.5 : 9.5) * k, ory = 11 * k;
   t.forme('ombreP', sfEll(ox, oy, orx, ory), { decalage: -2, ombre: false, bord: false, motif: (x, y) => -Math.pow(1 - Math.hypot((x - ox) / orx, (y - oy) / ory), 1) * 2 });
   if (visage === 'crane') {
-    // un crâne fin et pâle : le front haut, les pommettes, la mâchoire fermée ; dans l'ombre vers le bas
-    const sx2 = ox + s * k * 0.5, sy2 = oy + 0.5 * k;
-    t.forme('os', (x, y) => { const dx = (x + 0.5 - sx2) / (5.6 * k), dy = (y + 0.5 - sy2 + 1.5 * k) / (6.2 * k); if (dx * dx + dy * dy > 1) return null; return [dx * 0.9, dy * 0.6, Math.sqrt(1 - dx * dx * 0.81 - dy * dy * 0.36)]; }, { decalage: -0.2, motif: (x, y) => (y > sy2 + 2 * k ? -(y - sy2 - 2 * k) / (4 * k) * 1.4 : 0) });
-    t.forme('os', sfPoly([[sx2 - 3.6 * k, sy2 + 3 * k], [sx2 + 3.6 * k, sy2 + 3 * k], [sx2 + 2.4 * k, sy2 + 8.5 * k], [sx2 - 2.4 * k, sy2 + 8.5 * k]], [0, 0.2, 0.95]), { decalage: -0.9, motif: (x, y) => (y > sy2 + 6.5 * k && (Math.floor(x / k) % 2) ? -0.8 : 0) });   // (la mâchoire, les dents suggérées)
-    for (const cote of [-1, 1]) { const ex = sx2 + cote * 2.4 * k + s * k * 0.3, ey = sy2 - 0.5 * k;
-      t.forme('orbite', sfEll(ex, ey, 1.7 * k, 1.5 * k), { decalage: -1.2, ombre: false }); t.forme('oeilR', sfEll(ex, ey, 0.9 * k, 0.8 * k), { decalage: 1.2, ombre: false, bord: false }); t.poser(Math.round(ex - 0.3 * k), Math.round(ey - 0.3 * k), 'oeilR', 5); }
+    // (v2) un crâne qui appartient à la capuche : dans sa pénombre (plus sombre vers le haut et le bas), le front à peine
+    // plus clair, les orbites rouges qui rougissent l'os autour d'elles, la mâchoire dans l'ombre ; de trois-quarts, le
+    // crâne est plus étroit et l'orbite du fond plus petite
+    const sx2 = ox + s * k * 0.4, sy2 = oy + 0.5 * k, rx = (dir ? 4.6 : 5.6) * k;
+    t.forme('os', (x, y) => { const dx = (x + 0.5 - sx2) / rx, dy = (y + 0.5 - sy2 + 1.5 * k) / (6.2 * k); if (dx * dx + dy * dy > 1) return null; return [dx * 0.9, dy * 0.6, Math.sqrt(1 - dx * dx * 0.81 - dy * dy * 0.36)]; },
+      { decalage: -0.3, motif: (x, y) => { const dy = (y + 0.5 - sy2 + 1.5 * k) / (6.2 * k); return (dy < -0.55 ? -1.2 : dy > 0.5 ? -1 : 0) + (dir && x + 0.5 < sx2 - rx * 0.5 ? -0.8 : 0); } });
+    t.forme('os', sfPoly([[sx2 - rx * 0.62, sy2 + 3 * k], [sx2 + rx * 0.62, sy2 + 3 * k], [sx2 + rx * 0.42, sy2 + 8.5 * k], [sx2 - rx * 0.42, sy2 + 8.5 * k]], [0, 0.2, 0.95]), { decalage: -1.6, motif: (x, y) => (y > sy2 + 6.5 * k && (Math.floor(x / k) % 2) ? -0.8 : 0) });   // (la mâchoire, dans l'ombre)
+    for (const cote of [-1, 1]) { const ex = sx2 + cote * rx * 0.43 + s * k * 0.3, ey = sy2 - 0.5 * k, petit = dir && cote < 0 ? 0.7 : 1;
+      t.forme('osR', sfEll(ex, ey, 2.8 * k * petit, 2.4 * k * petit), { decalage: 0.2, ombre: false, bord: false, motif: (x, y) => -Math.hypot(x - ex, y - ey) / (2.2 * k) });   // (l'os rougi par l'orbite)
+      t.forme('orbite', sfEll(ex, ey, 1.7 * k * petit, 1.5 * k * petit), { decalage: -1.2, ombre: false }); t.forme('oeilR', sfEll(ex, ey, 0.9 * k * petit, 0.8 * k * petit), { decalage: 1.2, ombre: false, bord: false }); t.poser(Math.round(ex - 0.3 * k), Math.round(ey - 0.3 * k), 'oeilR', 5); }
     t.forme('ombreP', sfPoly([[sx2 - 0.8 * k, sy2 + 1.5 * k], [sx2 + 0.8 * k, sy2 + 1.5 * k], [sx2, sy2 + 3.4 * k]], [0, 0, 1]), { decalage: -1.5, ombre: false, bord: false });   // (le nez : un creux)
+    for (let i = -2; i <= 2; i++) { const x = Math.round(sx2 + i * rx * 0.3), y = Math.round(sy2 - 7.2 * k + Math.abs(i) * 0.8 * k); t.poser(x, y, 'givre', 3); if (i % 2 === 0) t.poser(x, y + 1, 'givre', 2); }   // (le givre du liseré descend sur le front)
   } else {
     for (const cote of [-1, 1]) { const ex = ox + cote * 2.4 * k + s * k * 0.3, ey = oy - 0.5 * k;
       t.forme('oeilR', sfEll(ex, ey, 1.3 * k, 0.9 * k), { decalage: 0.6, ombre: false, bord: false }); t.poser(Math.round(ex), Math.round(ey), 'oeilR', 5); }
@@ -102,7 +114,7 @@ function faucheuseCorpsHD(vue = 'face', { visage = 'crane', dissolution = 0, fau
   // le liseré de givre tout autour de l'ouverture, la broche d'argent au pétale noir sous le menton
   for (let a = -2.2; a < 2.2; a += 0.08) { const x = Math.round(ox + Math.cos(a - 1.57) * (orx + 0.8 * k)), y = Math.round(oy + Math.sin(a - 1.57) * (ory + 0.8 * k)); t.poser(x, y, 'givre', 4); if (Math.round(a * 10) % 3 === 0) t.poser(x, y - 1, 'givre', 5); }
   const bx = ox, by = oy + 13 * k; t.forme('argentF', sfEll(bx, by, 1.4 * k, 1.4 * k), { decalage: 0.5 });
-  t.forme('petale', sfPoly([[bx, by - 0.5 * k], [bx + 2.4 * k, by + 1 * k], [bx + 1.2 * k, by + 4 * k], [bx - 1 * k, by + 3 * k]], [0.2, -0.3, 0.9]), { decalage: 0.4 });
+  if (souvenirs.includes('petale')) t.forme('petale', sfPoly([[bx, by - 0.5 * k], [bx + 2.4 * k, by + 1 * k], [bx + 1.2 * k, by + 4 * k], [bx - 1 * k, by + 3 * k]], [0.2, -0.3, 0.9]), { decalage: 0.4 });
   // --- le givre à ses pieds, les cristaux sur l'ourlet ---
   for (let i = 0; i < 7; i++) { const x = cx - 18 * k + i * 6 * k + hachage(i, 1, 3) * 3 * k, h = (2 + hachage(i, 2, 3) * 3) * k; fhCristal(dev, x, sol - 2 - hachage(i, 4, 3) * 6 * k, h, 0.5); }
   // --- elle se dissout dans l'ombre : le bas s'efface en rubans, des lambeaux montent ---
@@ -134,10 +146,12 @@ function faucheuseBusteHD({ visage = 'crane', parle = false } = {}) {
   t.forme('ombreP', sfEll(ox, oy, orx, ory), { decalage: -2, ombre: false, bord: false, motif: (x, y) => -Math.pow(1 - Math.hypot((x - ox) / orx, (y - oy) / ory), 1) * 2 });
   if (visage === 'crane') {
     const sx2 = ox, sy2 = oy + 1 * k;
-    t.forme('os', (x, y) => { const dx = (x + 0.5 - sx2) / (7.4 * k), dy = (y + 0.5 - sy2 + 2 * k) / (8 * k); if (dx * dx + dy * dy > 1) return null; return [dx * 0.9, dy * 0.6, Math.sqrt(1 - dx * dx * 0.81 - dy * dy * 0.36)]; }, { decalage: -0.2, motif: (x, y) => (y > sy2 + 2 * k ? -(y - sy2 - 2 * k) / (5 * k) * 1.4 : 0) });
-    t.forme('os', sfPoly([[sx2 - 4.8 * k, sy2 + 4 * k], [sx2 + 4.8 * k, sy2 + 4 * k], [sx2 + 3.2 * k, sy2 + (parle ? 12 : 11) * k], [sx2 - 3.2 * k, sy2 + (parle ? 12 : 11) * k]], [0, 0.2, 0.95]), { decalage: -0.9, motif: (x, y) => (y > sy2 + 8.5 * k && (Math.floor(x / k) % 2) ? -0.8 : 0) });
+    t.forme('os', (x, y) => { const dx = (x + 0.5 - sx2) / (7.4 * k), dy = (y + 0.5 - sy2 + 2 * k) / (8 * k); if (dx * dx + dy * dy > 1) return null; return [dx * 0.9, dy * 0.6, Math.sqrt(1 - dx * dx * 0.81 - dy * dy * 0.36)]; }, { decalage: -0.3, motif: (x, y) => { const dy = (y + 0.5 - sy2 + 2 * k) / (8 * k); return dy < -0.55 ? -1.2 : dy > 0.5 ? -1 : 0; } });
+    t.forme('os', sfPoly([[sx2 - 4.8 * k, sy2 + 4 * k], [sx2 + 4.8 * k, sy2 + 4 * k], [sx2 + 3.2 * k, sy2 + (parle ? 12 : 11) * k], [sx2 - 3.2 * k, sy2 + (parle ? 12 : 11) * k]], [0, 0.2, 0.95]), { decalage: -1.6, motif: (x, y) => (y > sy2 + 8.5 * k && (Math.floor(x / k) % 2) ? -0.8 : 0) });
     if (parle) t.forme('ombreP', sfPoly([[sx2 - 2.6 * k, sy2 + 8.6 * k], [sx2 + 2.6 * k, sy2 + 8.6 * k], [sx2 + 2.2 * k, sy2 + 10.2 * k], [sx2 - 2.2 * k, sy2 + 10.2 * k]], [0, 0, 1]), { decalage: -1.5, ombre: false, bord: false });
+    for (let i = -2; i <= 2; i++) { const x = Math.round(sx2 + i * 2.2 * k), y = Math.round(sy2 - 9.4 * k + Math.abs(i) * 1 * k); t.poser(x, y, 'givre', 3); t.poser(x, y + 1, 'givre', 2); }
     for (const cote of [-1, 1]) { const ex = sx2 + cote * 3.2 * k, ey = sy2 - 0.8 * k;
+      t.forme('osR', sfEll(ex, ey, 3.8 * k, 3.2 * k), { decalage: 0.2, ombre: false, bord: false, motif: (x, y) => -Math.hypot(x - ex, y - ey) / (3 * k) });
       t.forme('orbite', sfEll(ex, ey, 2.3 * k, 2 * k), { decalage: -1.2, ombre: false }); t.forme('oeilR', sfEll(ex, ey, 1.2 * k, 1.05 * k), { decalage: 1.2, ombre: false, bord: false }); t.poser(Math.round(ex - 0.4 * k), Math.round(ey - 0.4 * k), 'oeilR', 5); }
     t.forme('ombreP', sfPoly([[sx2 - 1 * k, sy2 + 2 * k], [sx2 + 1 * k, sy2 + 2 * k], [sx2, sy2 + 4.4 * k]], [0, 0, 1]), { decalage: -1.5, ombre: false, bord: false });
   } else {
@@ -147,7 +161,7 @@ function faucheuseBusteHD({ visage = 'crane', parle = false } = {}) {
   const bx = ox, by = oy + 17 * k; t.forme('argentF', sfEll(bx, by, 1.8 * k, 1.8 * k), { decalage: 0.5 });
   t.forme('petale', sfPoly([[bx, by - 0.6 * k], [bx + 3.2 * k, by + 1.4 * k], [bx + 1.6 * k, by + 5.2 * k], [bx - 1.4 * k, by + 4 * k]], [0.2, -0.3, 0.9]), { decalage: 0.4 });
   // la main pâle sur le manche, devant
-  const mx = cx + 13 * k, my = cy + 10 * k, mat = visage === 'ombre' ? 'robeC' : 'os';
+  const mx = cx + 13 * k, my = cy + 10 * k, mat = visage === 'ombre' ? 'robeC' : 'osMain';
   t.forme(mat, sfEll(mx, my, 2.2 * k, 2.8 * k), { decalage: 0.3 }); for (let d = 0; d < 4; d++) sfTubeForme(t, mat, [[mx - 1.6 * k + d * 1.1 * k, my + 1 * k], [mx - 1.9 * k + d * 1.2 * k, my + 5.5 * k]], u => 0.55 * k, { decalage: 0.2 - d * 0.1, ombre: false });
   sfContour(fond, 1); sfContour(t, 2);
   const T = fhToile(L, H); sfColler(T, fond); sfColler(T, t); sfColler(T, dev); return T;
