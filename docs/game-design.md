@@ -3849,6 +3849,12 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q214** : Vorhal'Düm a la plus grande aura de toutes ; rouge, noir et violet.
   - **Q215 à Q217 — la refonte des bâtiments : rien n'est validé, le joueur est déçu, « tu ne pars pas dans la bonne direction ».** Le problème : la base de la maison (la façade) est dessinée de face, sans hauteur de caméra, et le toit comme si on était complètement au-dessus : les deux ne vont pas ensemble, ce n'est pas naturel. Il faut refaire les façades (en gardant le même design) pour qu'on ait l'impression de les voir d'en haut, afin que façade et toit aillent ensemble. La banque a les mêmes problèmes.
   - **Q216** : les personnages « vus de dessus » (tête élargie, jambes raccourcies) sont « horribles », « recroquevillés, compactés » : refusés. Règle : si l'on ne sait pas faire mieux, ne rien toucher ; l'objectif est une grande amélioration graphique, jamais une version moins bonne.
+- **Réponses du 01/11, tard (Q221 à Q229, Q219/Q220)** :
+  - **Q221 à Q223 — la ville vue de haut : « la parfaite direction »**, le toit du barbier (en croupe, projection de Stardew : verticales 1:1, profondeurs × 0,75, sans point de fuite) est validé, « beaucoup mieux, bravo ». **Q224** : les personnages ne sont pas touchés, l'ombre plus franche validée pour l'instant. **Q225** : seule la maison du barbier (morceau 2) est validée ; tout autre bâtiment doit être fait et validé un par un dans cette projection.
+  - **Q226 — la Faucheuse** : le joueur préfère voir son crâne en HD, mais pas ce dessin du crâne, trop détaché du reste : à refaire avec un meilleur crâne. **Rêve du joueur : tous les personnages en HD, partout, peu importe où ils sont.**
+  - **Q227** : une lame plus longue, en croissant de lune ; et le manche en squelette (en os) plutôt qu'en bois.
+  - **Q228** : les souvenirs portés sur elle sont ceux qu'elle compte encore nous donner ; une fois donnés, ils n'apparaissent plus sur elle.
+  - **Q219/Q220** : les auras du chat et de la Faucheuse validées, le design est « superbe » ; mais les traits de l'aura de la Faucheuse doivent partir d'elle, de son centre, plutôt que de passer sur elle.
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).

@@ -7,7 +7,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q219/Q220** — (en suspens) les auras du chat, de la Faucheuse et de Vorhal'Düm seront jugées une fois le dessin HD de la Faucheuse fait (planche en cours).
+
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -16,6 +16,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q219 à Q229~~ Réponses du 01/11 tard dans `docs/game-design.md` (vue de haut validée sur le barbier ; Faucheuse à refaire : crâne, lame en croissant, manche en os ; auras du chat et de la Faucheuse validées).
 - ~~Q210 à Q217~~ Réponses du 01/11 nuit dans `docs/game-design.md` (auras validées sauf couleurs du chat et de la Faucheuse ; bâtiments et personnages refusés, à refaire).
 - ~~Q208, Q209~~ Oui (01/11) : fumée et chat sur un toit ; généralisation à toute la rue une fois la vue de rue complètement validée.
 - ~~Q199 à Q207~~ Réponses du 01/11 soir dans `docs/game-design.md` (auras à refaire en voile, caméra : angle et raccord toit-façade, règle de la montée en gamme).
