@@ -477,6 +477,7 @@ Object.assign(MarcheScene.prototype, {
     for (const sens of [-1, 1]) { const p = this.add.circle(carte.x + sens * 22, carte.y - 18, 2, 0xc82a20); p.yTri = y + 0.06; place.add(p); }   // (les punaises)
     // (v1.63, planche 80 v3) le nom, une seule fois : gravé sur une planche de bois clair posée sur le haut des poteaux
     const pl = this.add.image(x, haut + 2, plancheNomCarteHD(this)).setOrigin(0.5, 1).setScale(E); pl.yTri = y + 0.1; place.add(pl);
+    this.plancheCarteY = [haut + 2 - 20 * E, haut + 2];   // (house keep) le haut et le bas de la planche du nom : voir cadrerPlace
     poserLettrage(this, place, x, haut + 2 - 20 * E + 17, this.nomLieuPlace('carte')[0], { police: 'Alegreya', graisse: 900, taille: 14, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: 66, hauteur: 30, lignesMax: 2, coupe: true, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) }).yTri = y + 0.2;
   },
 
@@ -807,7 +808,14 @@ Object.assign(MarcheScene.prototype, {
     let z = P.zoom, fx = this.heros.x, fy = this.heros.y - (depart ? -12 : 40), sy = 270;
     if (cle) { z = PETITS_LIEUX.includes(cle) ? P.zoom * 1.2 : P.zoomPanneau; [fx, fy] = LIEUX_PLACE[cle]; sy = PETITS_LIEUX.includes(cle) ? 262 : 250; }
     // (v1.61) lieu ouvert : le bas de la place peut monter derrière le cadre, pour que le mendiant (tout en bas) reste visible
-    const x = Phaser.Math.Clamp(480 - fx * z, 960 - P.L * z, 0), y = Phaser.Math.Clamp(sy - fy * z, (cle ? 300 : 478) - P.H * z, (P.haut || 0) * z);   // (v1.64 : en haut de la place, on voit monter les Coteaux)
+    const x = Phaser.Math.Clamp(480 - fx * z, 960 - P.L * z, 0), yMin = (cle ? 300 : 478) - P.H * z, yMax = (P.haut || 0) * z;
+    let y = Phaser.Math.Clamp(sy - fy * z, yMin, yMax);   // (v1.64 : en haut de la place, on voit monter les Coteaux)
+    // (house keep) la planche « La carte du monde » ne reste jamais à moitié sous la barre du bas : on cadre un peu plus
+    // haut (elle se lit en entier) ou un peu plus bas (elle passe tout entière dessous), au plus court
+    if (!cle && this.plancheCarteY) {
+      const BARRE = 478, haut = y + this.plancheCarteY[0] * z, bas = y + this.plancheCarteY[1] * z;
+      if (haut < BARRE && bas > BARRE - 2) { const monter = bas - (BARRE - 4), descendre = BARRE + 2 - haut; y = Phaser.Math.Clamp(monter <= descendre ? y - monter : y + descendre, yMin, yMax); }
+    }
     if (cle) this.placerBoutonsPlace(x, y, z);   // (les boutons « La place » et « Ma liste » laissent libre le nom du lieu)
     if (instantane) { place.setScale(z).setPosition(x, y); return; }
     if (cle) { this.tweens.killTweensOf(place); this.tweens.add({ targets: place, x, y, scale: z, duration: 450, ease: 'Sine.easeInOut' }); return; }
@@ -866,7 +874,20 @@ Object.assign(MarcheScene.prototype, {
   },
 
   // --- Chaque image : JeuneGoy qui marche, les passants qui flânent, le cadre qui suit, l'ordre de profondeur ---
+  // (house keep) Le titre de la place : centré, mais jamais sous la pastille des objectifs du HUD (ni hors de l'écran)
+  poserTitrePlace() {
+    const t = this.titrePlace; if (!t || !t.active) return;
+    const h = this.scene.get('Hud'), p = h && h.pastilleObjectifs;
+    const gauche = p && p.active && p.visible ? p.getBounds().right + 12 : 250;
+    if (gauche === this.gaucheTitrePlace) return;
+    this.gaucheTitrePlace = gauche;
+    let f = 24; t.setFontSize(f);
+    while (t.width > 950 - gauche && f > 16) t.setFontSize(--f);
+    t.setX(Math.max(gauche, 480 - t.width / 2));
+  },
+
   update(temps, dt) {
+    this.poserTitrePlace();
     if (!this.place || !this.heros || !this.heros.active) return;
     dt = Math.min(dt, 50);
     const P = PLACE_MARCHE, h = this.heros;
