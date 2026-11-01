@@ -23,6 +23,14 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q180** — Le nom du Grand Oubli dans le jeu : le code ne le nomme jamais ; un murmure de la cave parle du « long sommeil », et Lunegrise dit « Le Sage parla, et le monde s'endormit », alors que le sort est un chant. A : « le Grand Oubli » partout ; B : un nom par peuple (le long sommeil chez les Bannis, la nuit sans lune chez les loups-garous…), et Lunegrise dit « chanta » (conseillé) ; C : on n'en parle qu'à demi-mot.
 - **Q181** — Les églises de la Confrérie et le pouvoir d'oubli (ton idée du 01/11). A : chaque église est un relais du chant du rituel à trois : plus elle est grande, plus elle amplifie. Cela explique que l'oubli couvre le monde entier, et cela donne des missions dans chaque ville, pour l'Ombre (saboter, détourner) comme pour la Lumière (protéger) (conseillé) ; B : seulement le grand temple de la capitale, une seule cible ; C : non, la vague reste le seul rituel à trois, avec Séraphine et Ilyriel.
 
+- **Q182** — Le Sage mi-dragon (planche du Sage, morceaux 1 et 2) : la cape de fourrure est rouge sombre, et il la porte dès l'arrivée à la grotte, comme une cape d'exil. On garde ça, ou elle pousse pendant la transformation, ou elle prend une autre couleur (noire, blanche) ?
+- **Q183** — Les cornes : des bois de cerf à andouillers, les mêmes sur les deux formes de dragon, ou des cornes massives et recourbées ?
+- **Q184** — La couronne reste sur sa tête dans les trois formes (fêlée sur le mi-dragon, coincée entre les cornes du dragon serpentin). On la garde, ou elle tombe et se brise ?
+- **Q185** — La couleur de ses flammes : violettes au cœur bleu pâle, ou rouge-orange ? Ce choix vaut aussi pour le souvenir des parents de JeuneGoy, dévoré par les flammes (proposition 2 du morceau 4).
+- **Q186** — Le dragon serpentin « à la même échelle » que JeuneGoy (morceau 1, images 3 et 4) : seuls sa tête, son cou et ses pattes tiennent dans le cadre. Ça te va, ou faut-il une version entière réduite à côté de JeuneGoy ?
+- **Q187** — Le bâton : le mi-dragon le tient encore debout (le côté « mi-mage ») et le brise dans sa rage. Ça te va ?
+- **Q188** — Les propositions du morceau 4 : 1, à son retour d'exil, les premiers jours, ses yeux gardent la couleur du cristal, avec des pupilles en fente et quelques écailles sur les mains et les pommettes (un indice, jamais une preuve) ; 3, sa cape d'écailles rouges serait faite des écailles de Vhaldrak, alors que les siennes sont bleu-violet ; 4, dans la fin « Survivre par le sang », les écailles qui restent à Garrick seraient les mêmes, bleu-violet ; 5, la transformation animée dans le jeu, étape par étape. Lesquelles gardes-tu ?
+
 ## À venir de la part de Claude (pas des questions)
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
 
