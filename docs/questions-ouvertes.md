@@ -6,18 +6,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q199** — Les noms du Grand Oubli par peuple, v2 (« le chant perdu » des elfes validé) : momies « la Grande Marée » (l'oubli monte, recouvre, se retire en laissant tout lisse) ; vampires « l'An Sans Nom » (la seule année qui manque dans leurs registres) ; orcs « le Serment Muet » (le pacte gravé que plus personne ne sait lire) ; nains « la Veine Perdue » (le filon de mémoire qu'ils ne retrouvent plus) ; hobbits « l'Hiver Sans Fête » (la page vide de l'almanach). Pour chacun, un second choix est dans `docs/histoire/revelations.md`, section F. Lesquels valides-tu ?
-
-- **Q200** — Les cornes de trois quarts, v3 (planche du Sage v3, morceau 1, avec le schéma vu de dessus) : c'est bon cette fois ? Faut-il que le bois éloigné soit encore plus caché par la tête ?
-- **Q201** — La rage v3 (morceau 3) : sept fissures, espacées, jusqu'aux murs ; ça convient, ou une ou deux de plus vers JeuneGoy ?
-- **Q202** — Les auras, les personnages (morceau 5, propositions) : le Sage humain or + violet qui perce (palier 4) ; le Sage mi-dragon violet (5) ; Vorhal'Düm noir et rouge (5) ; Garrick argent et bleu (2) ; Séraphine violet et noir (3) ; Ilyriel vert (3) ; JeuneGoy rien, puis un halo bleu et blanc (1). Tu valides, tu changes ? Ilyriel : vert pur ou vert et noir ? JeuneGoy plus tard : bleu et blanc, ou le violet du dragon qu'il porte ?
-- **Q203** — Les auras : visibles en permanence sur les personnages, ou seulement dans les récits, les cinématiques et les combats ?
-- **Q204** — La table des 16 couleurs d'aura et leur sens (morceau 4) : tu valides la logique telle quelle ?
-
-- **Q205** — La caméra plus haute (rue, phase 3, morceaux 1 à 3) : l'angle à 45° (le toit aussi haut que la façade) te convient, ou faut-il monter encore (toit 1,3 fois la façade, comme Stardew par endroits) ?
-- **Q206** — Le zoom : à 1,1 le haut du toit de la banque passe encore sous la barre du HUD quand JeuneGoy est à son pied (on le voit entier dès qu'on recule d'un pas). On descend à 1,0, ou on laisse ?
-- **Q207** — Les personnages sont gardés tels quels. Proposition 1 du morceau 6 : une image de plus pour JeuneGoy et les passants, un peu plus vus de dessus (tête et épaules un peu plus larges, jambes plus courtes), pour les accorder à la caméra haute ? Et les propositions 2 (la fumée des cheminées qui dérive avec le vent) et 3 (un chat sur un toit l'après-midi au soleil) ?
-- **Q208** — Si la caméra haute est validée, je généralise la projection à toute la rue (tous les bâtiments), puis j'y déplace l'église et la Confrérie (Q167 A) et l'impasse du Corbeau (Q168, 1). D'accord ?
+- **Q209** — Les propositions 2 et 3 de la rue phase 3 (la fumée des cheminées qui dérive avec le vent ; un chat sur un toit l'après-midi au soleil) : oui ou non ?
+- **Q208** — (toujours ouverte) une fois la caméra et le raccord toit-façade validés, généraliser à toute la rue puis déplacer l'église, la Confrérie et l'impasse : d'accord ?
 
 ## À venir de la part de Claude (pas des questions)
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
@@ -25,6 +15,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q199 à Q207~~ Réponses du 01/11 soir dans `docs/game-design.md` (auras à refaire en voile, caméra : angle et raccord toit-façade, règle de la montée en gamme).
 - ~~Q189 à Q198~~ Réponses du 01/11 après-midi dans `docs/game-design.md` (Q193 : seul « le chant perdu » validé, à reprendre).
 - ~~Q169 à Q188~~ Réponses du 01/11 dans `docs/game-design.md` (relief façon Stardew Valley, pavés à unifier, récit Q173 à Q181, le Sage à retoucher).
 - ~~Q167~~ A : l'église et la Confrérie sur la pente verte derrière la rue Soucolline, entre la rue Haute et la place des Mastres (01/11).
