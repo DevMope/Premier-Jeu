@@ -3863,6 +3863,11 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q232/Q233 — tout en HD** : l'ordre du passage est validé. Question du joueur : pourquoi deux versions de chaque personnage ? Réponse : ce n'est pas voulu ; ce sont les restes de l'ancien moteur 16 px, remplacé peu à peu par le moteur HD ; on ne garde que la version HD (étape 4 de l'inventaire : supprimer les replis).
   - **Q234 à Q237 — vue de haut, étape 2** : la maison haute est « pas mal » et son toit est « top comme il est » (validé). La banque : ses côtés sont trop dénudés par rapport à l'envergure du nouveau toit (capture du joueur : le toit en croupe déborde largement d'une façade étroite, avec du vide de chaque côté) ; remettre les écriteaux et le logo (« Banque centrale goyenne », le médaillon) là où il faut. La tente paraît énorme, massive : la réduire ; le design est pas mal.
   - **Q238** : lancer en parallèle la maison à l'auvent et les maisons génériques de la rue, en tenant compte des avancées des autres bâtiments, puis le branchement dans la rue.
+- **Réponses du 02/11 (Q239 à Q242)** :
+  - **Q239 — les noms des armes** : la faux de la Faucheuse s'appelle **« la Larme de Lune »** (validé). L'épée de Garrick : **« Fleur de Diamant »** (validé). Le bâton du Sage en forme humaine : le concept de « Clémence » (sa bonté de façade) plaît, mais le nom n'est pas assez recherché pour une arme si puissante. Le bâton transformé : « la Ramure d'Oubli » est trop gentil, mais le concept est bon. À reproposer (Q243). L'arme que récupère le joueur : pas encore tranché.
+  - **Q240** : la Faucheuse v3 est « superbe » ; sa capuche et sa cape pourraient être mieux détaillées.
+  - **Q241** : la lame de la faux est parfaite ; il faut adapter le manche à la nouvelle taille de la lame.
+  - **Q242** : la faux ne luit que quand la Faucheuse se dévoile. **Son super pouvoir** : agrandir sa faux au point de pouvoir faucher un village entier d'un seul coup.
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
