@@ -303,7 +303,7 @@ Object.assign(MarcheScene.prototype, {
       } else if (k === 'crieur') {   // « Nouvelles du jour » : peint sur le devant de l'estrade
         faits.add(k);
         g.list.filter(o => o.type === 'Text' && /NOUVELLES/.test(o.text)).forEach(o => o.destroy());
-        poserLettrage(this, g, 4, -20, 'NOUVELLES\nDU JOUR', { police: 'Alegreya', graisse: 900, taille: 12, couleur: '#f6e2a0', fond: 0x3a2414, genre: 'peint', largeur: 84, hauteur: 28, lignesMax: 2, ...contrasteLettrage('#f6e2a0', 0x3a2414) });
+        this.lettrageCrieur = poserLettrage(this, g, 4, -20, 'NOUVELLES\nDU JOUR', { police: 'Alegreya', graisse: 900, taille: 12, couleur: '#f6e2a0', fond: 0x3a2414, genre: 'peint', largeur: 84, hauteur: 28, lignesMax: 2, ...contrasteLettrage('#f6e2a0', 0x3a2414) });
       }
     }
     // (le tir à l'arc et la grande roue : leurs textes de la rue, devenus inutiles, sont détruits aussi)
@@ -815,6 +815,12 @@ Object.assign(MarcheScene.prototype, {
     if (!cle && this.plancheCarteY) {
       const BARRE = 478, haut = y + this.plancheCarteY[0] * z, bas = y + this.plancheCarteY[1] * z;
       if (haut < BARRE && bas > BARRE - 2) { const monter = bas - (BARRE - 4), descendre = BARRE + 2 - haut; y = Phaser.Math.Clamp(monter <= descendre ? y - monter : y + descendre, yMin, yMax); }
+    }
+    // (registre du 01/11) le panneau « Nouvelles du jour » du crieur, en haut de la place, ne reste jamais à moitié sous la
+    // barre du haut : on cadre un peu plus bas (il se lit en entier) ou un peu plus haut (il passe tout entier dessous)
+    if (!cle && this.lettrageCrieur && this.lettrageCrieur.active) {
+      const HUD = 24, b = this.lettrageCrieur.getBounds(), hautP = (b.y - place.y) / place.scaleY, basP = (b.bottom - place.y) / place.scaleY, haut = y + hautP * z, bas = y + basP * z;
+      if (haut < HUD && bas > HUD - 2) { const monter = bas - (HUD - 4), descendre = HUD + 2 - haut; y = Phaser.Math.Clamp(descendre <= monter * 2 ? y + descendre : y - monter, yMin, yMax); }   // (de préférence, on le montre)
     }
     if (cle) this.placerBoutonsPlace(x, y, z);   // (les boutons « La place » et « Ma liste » laissent libre le nom du lieu)
     if (instantane) { place.setScale(z).setPosition(x, y); return; }

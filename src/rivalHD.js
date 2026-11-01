@@ -15,6 +15,7 @@ function creerFacadeRivalHD(scene, n = 1, v = null) {
   t.rampes.rouge = [0x3a0608, 0x5e0c10, 0x861418, 0xa8201e, 0xc83a30, 0xe06050];
   t.rampes.vitreBleue = [0x2a2010, 0x5a4220, 0x9a7638, 0xd8b060, 0xf0d890, 0xfff6d8];
   if (v && v.rampes) Object.assign(t.rampes, v.rampes);
+  const vide = !!(v && v.vide);   // (Q161) la maison avant l'arrivée du voisin : vitrines vides et éteintes, pas de tapis
   const P = (x, y, m, i) => { if (x >= 0 && y >= 0 && x < L && y < H) t.poser(x, y, m, Math.max(0, Math.min(5, i))); };
   // pierre de taille : de grands blocs réguliers, joints fins, lumière en haut à gauche
   const taille = (x0, y0, l, h, bl = 22, bh = 10, g = 1) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + l; x++) {
@@ -51,7 +52,10 @@ function creerFacadeRivalHD(scene, n = 1, v = null) {
   for (let y = py - 6; y < py; y++) for (let x = px - 2; x < px + pl + 2; x++) { const d = Math.hypot(x - (px + pl / 2), y - py); if (d < pl / 2 + 2) P(x, y, 'vitreBleue', 4); }   // l'imposte vitrée
   for (const dx of [-3, 3]) for (let k = 0; k < 3; k++) P(px + (pl >> 1) + dx, py + 28 + k, 'or', 5 - k);
   // les deux vitrines cintrées, illuminées, pleines d'objets qui brillent
-  const vitrine = (x0) => { const y0 = 122, l = 40, h = 40; for (let y = y0 - 2; y < y0 + h; y++) for (let x = x0 - 2; x < x0 + l + 2; x++) { const top = y < y0 + 8 ? Math.hypot((x - x0 - l / 2) / (l / 2 + 2), (y - y0 - 8) / 10) : 0; if (top > 1) continue; const cadre = x < x0 || x >= x0 + l || (y < y0 + 8 && top > 0.86); P(x, y, cadre ? 'or' : 'vitreBleue', cadre ? 3 : 3 + (y > y0 + h - 12 ? -1 : 1) + (hachage(x, y, 813) < 0.04 ? 2 : 0)); }
+  const vitrine = (x0) => { const y0 = 122, l = 40, h = 40; for (let y = y0 - 2; y < y0 + h; y++) for (let x = x0 - 2; x < x0 + l + 2; x++) { const top = y < y0 + 8 ? Math.hypot((x - x0 - l / 2) / (l / 2 + 2), (y - y0 - 8) / 10) : 0; if (top > 1) continue; const cadre = x < x0 || x >= x0 + l || (y < y0 + 8 && top > 0.86);
+      if (vide && !cadre) { const reflet = (x - x0 + y0 - y + 60) % 17; P(x, y, 'vitreBleue', 1 + (reflet < 2 ? 2 : reflet < 3 ? 1 : 0) - (y > y0 + h - 6 ? 1 : 0)); continue; }   // (vide : la vitre sombre, deux reflets)
+      P(x, y, cadre ? 'or' : 'vitreBleue', cadre ? 3 : 3 + (y > y0 + h - 12 ? -1 : 1) + (hachage(x, y, 813) < 0.04 ? 2 : 0)); }
+    if (vide) return;
     // deux étagères de bois sombre, chargées de coupes d'or, de fioles bleues et d'épées d'apparat
     for (const ey of [y0 + 20, y0 + h - 8]) { for (let x = x0 + 2; x < x0 + l - 2; x++) { P(x, ey, 'cheneSombre', 2); P(x, ey + 1, 'cheneSombre', 0); }
       for (let k = 0; k < 5; k++) { const ox = x0 + 5 + k * 7, sorte = (k + ey) % 3;
@@ -62,7 +66,7 @@ function creerFacadeRivalHD(scene, n = 1, v = null) {
   // les auvents rayés bleu et blanc, à festons
   for (const x0 of [20, 132]) for (let y = 112; y < 121; y++) for (let x = x0; x < x0 + 48; x++) { if (y === 120 && (x - x0) % 6 > 3) continue; P(x, y, Math.floor((x - x0) / 6) % 2 ? 'blanche' : 'bleu', y === 112 ? 5 : 3 + (y > 117 ? -1 : 0)); }
   // le tapis rouge, devant la porte, et ses deux marches
-  for (let y = 171; y < 176; y++) for (let x = px - 6; x < px + pl + 6; x++) P(x, y, y === 171 ? 'blanche' : 'rouge', y === 171 ? 5 : 3 + (x % 5 === 0 ? 1 : 0));
+  if (!vide) for (let y = 171; y < 176; y++) for (let x = px - 6; x < px + pl + 6; x++) P(x, y, y === 171 ? 'blanche' : 'rouge', y === 171 ? 5 : 3 + (x % 5 === 0 ? 1 : 0));
   // (plus tard, quand il s'enrichit) : des dorures en plus, sans rien emprunter à la maison du joueur
   if (n >= 2) { for (let x = 14; x < L - 14; x++) { P(x, 110, 'or', 4); P(x, 109, 'or', 2); } for (const cx of [80, 120]) for (let x = cx - 7; x < cx + 7; x++) P(x, 113, 'or', 5); }
   t.texture(scene, cle);

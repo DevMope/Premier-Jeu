@@ -17,6 +17,7 @@ class NightScene extends Phaser.Scene {
   create() {
     exclureScenes(this, 'Carte', 'Comptoir', 'Dodo');   // (v0.62)
     const G = this.G = window.GAME;
+    if (typeof prechaufferQuartier === 'function') prechaufferQuartier(this, 'soucolline');   // (v1.65, chantier 3 : le sol de la rue Soucolline se peint en tâche de fond, pour le matin ou la promenade)
     // (v1.57) une partie rechargée en plein grand voyage : on reprend la route
     if (typeof enRoute === 'function' && enRoute(G)) { this.time.delayedCall(0, () => this.scene.start('Voyage')); return; }
     if (!this.matin) { preparerSoir(G); tirerGardeDuLendemain(G); }

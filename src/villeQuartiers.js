@@ -14,7 +14,7 @@
 // etiquette : où poser son nom sur le plan [x, y] et le point qu'il désigne [x, y] (en pixels du plan)
 const QUARTIERS_VILLE = {
   place: { nom: 'La place des Mastres', sous: 'le marché du matin', scene: 'Marche', pret: true, chantier: 1, etiquette: [404, 73], point: [330, 100] },
-  soucolline: { nom: 'La rue Soucolline', sous: 'le quartier du Comptoir', scene: 'Quartier', pret: true, chantier: 3, pierre: 'soucolline', etiquette: [306, 186], point: [290, 177] },
+  soucolline: { nom: 'La rue Soucolline', sous: 'le quartier du Comptoir', scene: 'Rue', pret: true, chantier: 3, pierre: 'soucolline', etiquette: [306, 186], point: [290, 177] },
   basQuartier: { nom: 'Le bas-quartier', sous: 'le quai et le lavoir', scene: 'Quartier', pret: false, chantier: 4, pierre: 'basQuartier', etiquette: [364, 205], point: [318, 210] },
   coteaux: { nom: 'Les Coteaux', sous: 'les portes rondes', scene: 'Quartier', pret: false, chantier: 5, pierre: 'coteaux', etiquette: [236, 21], point: [222, 30] },
   rempart: { nom: 'Le Rempart', sous: 'la Grand-Porte, la chapelle', scene: 'Quartier', pret: false, chantier: 6, pierre: 'rempart', etiquette: [30, 90], point: [61, 104] },
@@ -32,7 +32,9 @@ const PASSAGES_VILLE = [
   // cabane, au bord de l'eau (EtangScene) ; elle est faite, même si le reste du quartier de la rivière ne l'est pas encore
   { n: 7, nom: 'la route du Vieux Moulin', entre: ['place', 'riviere'], vers: 'l’étang de Barnabé', ouvert: true, type: 'chemin', plan: [384, 113] },
 ];
-function quartierPret(id) { const q = QUARTIERS_VILLE[id]; return !!(q && q.pret && (q.scene !== 'Quartier' || (typeof DECORS_QUARTIERS !== 'undefined' && DECORS_QUARTIERS[id]))); }
+function quartierPret(id) { const q = QUARTIERS_VILLE[id]; return !!(q && q.pret && (!sceneDeQuartier(q.scene) || (typeof DECORS_QUARTIERS !== 'undefined' && DECORS_QUARTIERS[id]))); }
+// (chantier 3) les scènes qui montrent un quartier du socle : « Quartier », et « Rue » (la rue Soucolline, RueScene.js)
+function sceneDeQuartier(cle) { return cle === 'Quartier' || cle === 'Rue'; }
 // Des coordonnées des rues (la rue Soucolline et la rue Haute, planche 89 v7) à celles du plan
 function MX_PLAN(X) { return 70 + X * 0.065; }
 function MY_PLAN(Y) { return 152 + (Y - 1130) * 0.057; }
@@ -44,16 +46,15 @@ if (typeof THEME_PAR_SCENE !== 'undefined' && !THEME_PAR_SCENE.Quartier) THEME_P
 // Où est-on sur le plan ? [x, y] en pixels du plan, d'après la scène et la position de JeuneGoy
 function ouEsTuSurLePlan(scene) {
   const k = scene && scene.scene && scene.scene.key, h = scene && scene.heros;
-  if (k === 'Quartier' && scene.def && scene.def.surLePlan && h) return scene.def.surLePlan(h.x, h.y);
+  if (sceneDeQuartier(k) && scene.def && scene.def.surLePlan && h) return scene.def.surLePlan(h.x, h.y);
   if (k === 'Marche' && h && scene.place && typeof PLACE_MARCHE !== 'undefined') return [307 + (h.x / PLACE_MARCHE.L - 0.5) * 90, 104 + (h.y / PLACE_MARCHE.H - 0.5) * 56];
   if (k === 'Etang') return [392, 150];   // (au bord de l'étang, devant la cabane de Barnabé)
-  if (k === 'Rue' && h && typeof PLACES_RUE !== 'undefined') { const P = PLACES_RUE, X = h.x < P.shop ? 1324 - (P.shop - h.x) * 0.5 : 1324 + (h.x - P.shop) / (P.arche - P.shop) * (3640 - 1324); return [MX_PLAN(X), MY_PLAN(1640)]; }
   return [MX_PLAN(1324), MY_PLAN(1600)];
 }
 // Le quartier où l'on est (pour le plan)
 function quartierDeLaScene(scene) {
   const k = scene && scene.scene && scene.scene.key;
-  return k === 'Quartier' ? scene.idQuartier : k === 'Marche' ? 'place' : k === 'Rue' ? 'soucolline' : k === 'Etang' ? 'etang' : null;
+  return sceneDeQuartier(k) ? scene.idQuartier || 'soucolline' : k === 'Marche' ? 'place' : k === 'RuePont' ? 'soucolline' : k === 'Etang' ? 'etang' : null;
 }
 
 // Le quartier sous un point du plan (pour griser ceux qui ne sont pas prêts, et pour le clic)
@@ -174,6 +175,7 @@ function ouvrirPlanVille(scene, { surFermer = null, commeCarte = false, profonde
     const q = QUARTIERS_VILLE[id];
     if (!quartierPret(id)) { Son.jouer('refus'); info(`${q.nom} : bientôt. On y travaille (chantier ${q.chantier} de la ville).`); return; }
     if (id === ici) { info(`Tu es déjà ${id === 'place' ? 'sur la place des Mastres' : 'dans ' + q.nom[0].toLowerCase() + q.nom.slice(1)}.`); return; }
+    if (scene.nuit) { Son.jouer('refus'); info('Le soir, la ville dort : on se promène dans la rue, et l’on rentre par sa porte.'); return; }   // (chantier 3 : la promenade du soir)
     Son.jouer('clic');
     c.destroy();
     allerDansLaVille(scene, { quartier: id, depuis: ici });
@@ -240,7 +242,7 @@ function ouvrirDuNoir(scene, defaut = 450) {
 // d'un quartier : le plus long à peindre)
 function prechaufferArrivee(scene, cible) {
   const id = cible && (cible.quartier || (cible.scene === 'Quartier' && cible.donnees && cible.donnees.quartier));
-  if (id && QUARTIERS_VILLE[id] && QUARTIERS_VILLE[id].scene === 'Quartier' && typeof prechaufferQuartier === 'function') prechaufferQuartier(scene, id, undefined, 0);
+  if (id && QUARTIERS_VILLE[id] && sceneDeQuartier(QUARTIERS_VILLE[id].scene) && typeof prechaufferQuartier === 'function') prechaufferQuartier(scene, id, undefined, 0);
 }
 // Les lieux qu'on construit avant de fermer la vue (les plus longs à dessiner, et qui ne ferment aucune autre scène en
 // s'ouvrant : l'étang, lui, arrête la place en s'ouvrant, et se construit vite ; la maison aussi)
@@ -256,8 +258,10 @@ function allerDansLaVille(scene, cible) {
   if (cible.quartier) {
     const q = QUARTIERS_VILLE[cible.quartier]; cle = q.scene;
     if (!arrivee) arrivee = entreeVers(cible.quartier, cible.depuis);
-    if (cle === 'Quartier') donnees = { ...donnees, quartier: cible.quartier, arrivee };
+    if (sceneDeQuartier(cle)) donnees = { ...donnees, quartier: cible.quartier, arrivee };
   }
+  // (v1.57) à Pont-Royal, la rue est celle du pont (RuePontScene)
+  if (cle === 'Rue' && G && typeof aPontRoyal === 'function' && aPontRoyal(G)) cle = 'RuePont';
   if (!cle || scene.allerEnCours) return;
   scene.allerEnCours = true;
   scene.events.once('shutdown', () => { scene.allerEnCours = false; });   // (Phaser réutilise la scène : la prochaine fois, on repart)
@@ -314,52 +318,8 @@ const ARRIVEES_VILLE = {
       s.cible = [x, y - 280]; s.chemin = null; s.apresMarche = null; s.courir = false; s.meilleur = { d: 1e9, t: s.time.now };
     }
   },
-  // la rue (de côté, d'avant les quartiers) : il y revient par où il est parti, et fait un pas
-  Rue(s, arrivee) {
-    if (!s.heros || s.pont) return;
-    const P = PLACES_RUE;
-    const [x, vers] = arrivee === 'ouest' ? [P.shop - 220, P.shop - 220 - PAS_ARRIVEE] : arrivee === 'placette' ? [P.fontaine + 180, P.fontaine + 180 - PAS_ARRIVEE] : [s.heros.x, null];
-    s.heros.x = x; s.heros.setFlipX(vers !== null && vers < x);
-    s.cameras.main.scrollX = Phaser.Math.Clamp(x - 480, 0, (s.largeur || LARGEUR_RUE) - 960);
-    if (vers !== null) s.cible = vers;
-  },
+  // (chantier 3) la rue Soucolline (RueScene) : elle place JeuneGoy elle-même, au passage d'arrivée (QuartierScene.pointArrivee)
 };
-
-// --- (dans la rue d'avant) le chemin de la placette : une pancarte près de la fontaine ---
-// Le tronçon de démonstration du socle (la placette de la Fontaine, dessinée avec le moteur des quartiers) : on y entre
-// depuis la rue par la pancarte clouée au réverbère d'à côté de la fontaine. JeuneGoy y va, se tourne vers la placette, fondu.
-function brancherQuartiersRue(rue) {
-  rue.pancartePlacette = null;
-  if (rue.pont || !quartierPret('soucolline')) return;
-  const P = PLACES_RUE, x = P.fontaine + 180;   // (le réverbère d'à côté de la fontaine)
-  if (typeof prechaufferQuartier === 'function') prechaufferQuartier(rue, 'soucolline');   // (son sol se prépare en tâche de fond, pendant qu'on est dans la rue)
-  if (typeof prechaufferPlanVille === 'function') prechaufferPlanVille(rue, 7000);
-  // (retours du joueur) un vrai petit panneau de rue : une planche étroite taillée en flèche, tenue au poteau du réverbère
-  // par deux colliers de fer, à hauteur d'yeux, à peine plus large que le buste de JeuneGoy ; le nom gravé sur deux lignes
-  // (le lettrage des plaques et des étals), son ombre sur le poteau. La pointe part vers la droite : elle ne couvre ni la
-  // fontaine (à gauche du réverbère) ni la banque.
-  const L = 38, H = 19, c = rue.add.container(0, 0).setDepth(8.62), k = panneauFlecheHD(rue, L, H), y = 362, x0 = x - 7;
-  c.add(rue.add.image(x0 + 3, y + 3, k).setOrigin(0, 0.5).setScale(2).setTintFill(0x000000).setAlpha(0.28));   // son ombre
-  const planche = rue.add.image(x0, y, k).setOrigin(0, 0.5).setScale(2); c.add(planche);
-  const corps = (L - Math.round(H * 0.36)) * 2, t = poserLettrage(rue, c, x0 + 10 + (corps - 12) / 2, y + 1, 'La placette\nde la\nFontaine',
-    { police: 'Alegreya', graisse: 900, taille: 10, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: corps - 12, hauteur: 32, lignesMax: 3, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) });
-  planche.setInteractive({ useHandCursor: true }); rue.pancartePlacette = planche;
-  t.setInteractive({ useHandCursor: true }).on('pointerdown', () => planche.emit('pointerdown'));
-  planche.on('pointerdown', () => {
-    if (rue.transition || rue.fini) return;
-    rue.transition = true; rue.allerVers(x);
-    const attendre = () => {
-      if (!rue.sys.isActive()) return;
-      if (rue.cible !== null) return rue.time.delayedCall(60, attendre);
-      // il se tourne vers la placette (de dos : il entre dans la profondeur), et la vue change en fondu
-      rue.fini = true;
-      if (rue.heros && rue.heros.active) rue.heros.setTexture(textureJoueur(rue, rue.G, 'dos')).setFlipX(false);
-      allerDansLaVille(rue, { quartier: 'soucolline', arrivee: 'rue', depuis: 'rue' });
-    };
-    attendre();
-  });
-  return { t: planche, c };
-}
 
 // --- Les enseignes ---
 // Une plaque de rue, clouée à l'angle d'une maison : une pierre de grès taillée (ou une planche, ou de l'émail bleu), son

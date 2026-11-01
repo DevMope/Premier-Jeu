@@ -8,9 +8,10 @@ function rampesBarbier(t) {
 // La boutique : assise de pierre, colombages, grande vitrine (on voit le fauteuil et le miroir), porte, enseigne, enseigne-poteau
 function boutiqueBarbierHD(scene) {
   const cle = 'boutiqueBarbierHD'; if (scene.textures.exists(cle)) return cle;
-  const t = peindreBoutiqueBarbier(); t.contour(); t.texture(scene, cle); return cle;
+  const t = peindreBoutiqueBarbier();
+  t.contour(); t.texture(scene, cle); return cle;
 }
-// (planche de concept « ville vue de haut ») la toile de la façade, sans contour : maisonVolumeHD.js la reprend sous son toit en volume
+// (chantier 3) le dessin de la boutique, sur sa toile (124 × 112) : la façade, que maisonVolumeHD.js reprend sous son toit en volume
 function peindreBoutiqueBarbier() {
   const L = 124, H = 112, t = toileDecor(L, H); rampesBarbier(t);
   // le toit d'ardoise

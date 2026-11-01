@@ -256,8 +256,19 @@ function jardiniere5(t, x0, y0, l, fleur = 'fleurR2', g = 1) {
 // ---- la maison de ville (rez-de-chaussée en pierre de taille, étages à colombages, vrai toit) ----
 function maison5(s, cle, o = {}) {
   if (s.textures.exists(cle)) return cle;
+  // (vue de haut, validée sur le barbier et la maison haute) volume : la même façade, en un seul volume sous un toit en croupe
+  if (o.volume && typeof maisonVolume5 === 'function') return maisonVolume5(s, cle, o);
+  const R = peindreMaison5(o), { t, L, H, yR, yT, bas, M, cheminee, lucarne } = R;
+  t.contour(); t.texture(s, cle);
+  const tex = s.textures.get(cle); tex.cheminee = t.cheminee || null; tex.info89 = { L, H, yR, yT, bas };
+  // (le toit, pour la neige du Givre : neigeToitHD) son faîte, son égout, la cheminée et la lucarne qui ne se couvrent pas
+  tex.toit89 = { haut: M + 5, bas: yT + 2, chem: cheminee !== null ? { cx: Math.round(L * cheminee), haut: M + 7, h: Math.round((yT - M) * 0.4) } : null, lucarne: lucarne !== null ? { lx: Math.round(L * lucarne) - 12, ly: M + Math.round((yT - M) * 0.34) + 6, bas: yT - 3 } : null };
+  return cle;
+}
+// La façade de la maison de ville sur sa toile (sans contour) ; o.sansToit : sans toit, sans cheminée ni lucarne (le volume les redessine)
+function peindreMaison5(o = {}) {
   const { L = 136, rdc = 68, etages = [54], toit = 56, toitMat = 'tuile', crepi = 'enduitC', bois = 'cheneSombre', volet = 'voletV', enc = 4, lucarne = null, cheminee = 0.72,
-    porte = { x: 0.62, l: 24, h: 50 }, vitrine = null, porche = null, fenetresRdc = [], fenetres = null, jardinieres = true, fleur = 'fleurR2', graine = 1, lierre = false, store = 'storeR', enseigne = null, lanterne = false, gouttiere = true, descente = 'g' } = o;
+    porte = { x: 0.62, l: 24, h: 50 }, vitrine = null, porche = null, fenetresRdc = [], fenetres = null, jardinieres = true, fleur = 'fleurR2', graine = 1, lierre = false, store = 'storeR', enseigne = null, lanterne = false, gouttiere = true, descente = 'g', sansToit = false } = o;
   const M = 18, H = toit + etages.reduce((a, b) => a + b, 0) + rdc + 14 + M, t = toileM5(L, H), bas = H - 5, yR = bas - rdc, x0 = enc, x1 = L - enc;
   // 1. le rez-de-chaussée : pierre de taille appareillée, chaînes d'angle, soubassement
   murPierre5(t, x0, yR, x1 - x0, rdc, { g: graine + 1 });
@@ -295,12 +306,12 @@ function maison5(s, cle, o = {}) {
   });
   // 3. le toit
   const yT = y;
-  if (toitMat === 'chaume') toitChaume5(t, -2, L + 1, M + 5, yT + 2, graine + 31);
+  if (sansToit) {} else if (toitMat === 'chaume') toitChaume5(t, -2, L + 1, M + 5, yT + 2, graine + 31);
   else if (toitMat === 'ardoiseToit') toitArdoises5(t, -2, L + 1, M + 5, yT + 2, graine + 31);
   else toitTuiles5(t, -2, L + 1, M + 5, yT + 2, toitMat, graine + 31);
   for (let x = -2; x < L + 2; x++) { t.poser(x, yT + 4, 'cheneSombre', 2); t.poser(x, yT + 5, 'cheneSombre', 0); }   // la sablière
   if (gouttiere && toitMat !== 'chaume') gouttiere5(t, -1, L + 1, yT + 6, descente === 'g' ? 3 : L - 6, bas);
-  if (lucarne !== null) {
+  if (lucarne !== null && !sansToit) {
     const lx = Math.round(L * lucarne) - 12, ly = M + Math.round((yT - M) * 0.34) + 6;
     for (let yy = ly; yy < yT - 3; yy++) for (let x = lx; x < lx + 24; x++) { const joint = (yy - ly) % 6 === 5; t.poser(x, yy, 'platre', 3 + (x < lx + 3 ? 1 : 0) - (x > lx + 20 ? 1 : 0) - (joint ? 1 : 0)); }
     for (let yy = ly; yy < yT - 3; yy += 1) { t.poser(lx, yy, bois, 3); t.poser(lx + 23, yy, bois, 2); }
@@ -309,15 +320,11 @@ function maison5(s, cle, o = {}) {
     for (let yy = ly - 11; yy < ly + 1; yy++) { const v = (yy - ly + 11) / 11; for (let x = Math.round(lx + 12 - v * 15); x <= Math.round(lx + 12 + v * 15); x++) { const row = Math.floor((yy - ly + 11) / 3), tx = (x + (row % 2) * 3) % 6; t.poser(x, yy, ctoit, 2 + Math.round((1 - v) * 2) - (tx === 5 ? 1 : 0) + ((yy - ly + 11) % 3 === 0 ? 1 : 0)); } }
     for (let x = lx + 8; x < lx + 17; x++) t.poser(x, ly - 12, ctoit, 5);
   }
-  if (cheminee !== null) { const cx = Math.round(L * cheminee); cheminee5(t, cx, M + 7, Math.round((yT - M) * 0.4), graine + 7); t.cheminee = [cx, M - 4]; }
+  if (cheminee !== null && !sansToit) { const cx = Math.round(L * cheminee); cheminee5(t, cx, M + 7, Math.round((yT - M) * 0.4), graine + 7); t.cheminee = [cx, M - 4]; }
   // 4. les accessoires : le lierre, l'enseigne en potence
   if (lierre) lierre5(t, 0, yT + 8, bas - 2, 18, graine + 40);
   if (enseigne) enseigne5(t, Math.round(L * enseigne.x), yR + 6, enseigne.dessin || 'cle');
-  t.contour(); t.texture(s, cle);
-  const tex = s.textures.get(cle); tex.cheminee = t.cheminee || null; tex.info89 = { L, H, yR, yT, bas };
-  // (le toit, pour la neige du Givre : neigeToitHD) son faîte, son égout, la cheminée et la lucarne qui ne se couvrent pas
-  tex.toit89 = { haut: M + 5, bas: yT + 2, chem: cheminee !== null ? { cx: Math.round(L * cheminee), haut: M + 7, h: Math.round((yT - M) * 0.4) } : null, lucarne: lucarne !== null ? { lx: Math.round(L * lucarne) - 12, ly: M + Math.round((yT - M) * 0.34) + 6, bas: yT - 3 } : null };
-  return cle;
+  return { t, L, H, yR, yT, bas, M, cheminee, lucarne, x0, x1 };
 }
 // ---- la vieille maison du bas-quartier : moellons bruts, étage de planches qui penche, toit rapiécé ----
 function vieilleMaison5(s, cle, o = {}) {
@@ -830,11 +837,27 @@ function grenouille3(s) {
 //  - les autres façades (ton comptoir, la boutique du paon, la forge, le barbier) : la bande de leur toit (TOITS_NEIGE :
 //    ses rangées, et ce qui n'est pas du toit, comme le fronton du paon, dont seule l'arête prend la neige).
 // Le trait sombre du contour est gardé (bleui) : la neige épouse la forme du toit, sans coupure nette.
-const TOITS_NEIGE = { facadeHD_0: [40, 112, (x, y) => x >= 149 && x < 163 && y >= 37 && y < 61], facadeHD_1: [40, 112, (x, y) => x >= 149 && x < 163 && y >= 37 && y < 61], facadeHD: [0, 58, (x, y) => x >= 149 && x < 165 && y >= 3 && y < 35], rueForgeHD: [4, 43], facadeRivalHD: [12, 52, (x, y) => Math.abs(x - 100) < (y - 2) * 0.95 - 2], boutiqueBarbierHD: [3, 26] };
+const TOITS_NEIGE = { facadeHD_0: [40, 112, (x, y) => x >= 149 && x < 163 && y >= 37 && y < 61], facadeHD_1: [40, 112, (x, y) => x >= 149 && x < 163 && y >= 37 && y < 61], facadeHD: [0, 58, (x, y) => x >= 149 && x < 165 && y >= 3 && y < 35], rueForgeHD: [4, 43], facadeRivalHD: [12, 52, (x, y) => Math.abs(x - 100) < (y - 2) * 0.95 - 2], boutiqueBarbierHD: [3, 26],
+  // (chantier 3) les bâtiments de la rue d'avant, posés dans la rue Soucolline : les Pommeroy, l'impasse (la poutre et le haut
+  // des murs), la banque (son fronton), le porche (son petit toit), l'hospice et l'atelier des Mages (leur cheminée reste nue),
+  // la chapelle (les deux pentes de son toit et son clocheton, pas son pignon)
+  rueMaisonHD: [2, 50], rueImpasseHD: [0, 8], rueBanqueHD: [18, 44], porcheRueHD: [0, 22],
+  rueHospiceHD: [2, 50, (x, y) => x >= 146 && x < 170 && y < 26], atelierMagesHD: [8, 56, (x, y) => x >= 106 && x < 128 && y < 32],
+  rueChapelleHD: [0, 108, (x, y) => (y > 22 && y < 56 && Math.abs(x - 75) < 16) || (y >= 56 && Math.abs(x - 75) < 9 + (y - 56) * 1.05)] };
+// (Q198-3) la girouette de la banque : un mât de fer, sa flèche, son petit coq
+function girouetteHD(s) {
+  const cle = 'girouetteHD'; if (s.textures.exists(cle)) return cle;
+  const t = toileDecor(16, 18); t.rampes.fer = t.rampes.fer || rampe(0x4a4a52); t.rampes.or = t.rampes.or || rampe(0xd8a830);
+  for (let y = 6; y < 18; y++) t.poser(8, y, 'fer', y === 6 ? 4 : 2);
+  for (let x = 2; x < 14; x++) t.poser(x, 8, 'fer', 3); for (const [x, y] of [[2, 7], [2, 9], [1, 8], [13, 7], [13, 9]]) t.poser(x, y, 'fer', 3);
+  for (const [x, y, k] of [[8, 5, 4], [9, 5, 4], [10, 5, 3], [8, 4, 5], [9, 4, 4], [7, 4, 3], [9, 3, 4], [7, 3, 2], [8, 6, 2]]) t.poser(x, y, 'or', k);
+  t.poser(8, 2, 'or', 5); t.poser(11, 6, 'or', 3);
+  t.contour(); t.texture(s, cle); return cle;
+}
 function neigeToitHD(s, cle) {
   if (/_neige$/.test(cle) || !s.textures.exists(cle)) return null;
   const k = cle + '_neige'; if (s.textures.exists(k)) return k;
-  const tex = s.textures.get(cle), T = tex.toit89, base = Object.keys(TOITS_NEIGE).find(b => cle.startsWith(b));
+  const tex = s.textures.get(cle), T = tex.toit89, base = Object.keys(TOITS_NEIGE).filter(b => cle.startsWith(b)).sort((a, b) => b.length - a.length)[0];   // (le nom le plus long d'abord)
   if (!T && !base) return null;
   const src = tex.getSourceImage(), L = src.width, H = src.height;
   if (!L || !H) return null;
@@ -842,7 +865,7 @@ function neigeToitHD(s, cle) {
   const cl = lu.getContext('2d'); cl.drawImage(src, 0, 0);
   const d = cl.getImageData(0, 0, L, H).data;
   const C = T ? T.chem : null, Lu = T ? T.lucarne : null;
-  const [haut, bas, nu] = T ? [T.haut - 4, T.bas, (x, y) => (C && x >= C.cx - 7 && x < C.cx + 7 && y >= C.haut && y < C.haut + C.h) || (C && y < C.haut - 3 && Math.abs(x - C.cx) < 9) || (Lu && x >= Lu.lx && x < Lu.lx + 24 && y >= Lu.ly && y < Lu.bas)] : TOITS_NEIGE[base];
+  const [haut, bas, nu] = T ? [T.haut - 4, T.bas, (x, y) => (C && x >= C.cx - 7 && x < C.cx + 7 && y >= C.haut && y < C.haut + C.h) || (C && y < C.haut - 3 && Math.abs(x - C.cx) < 9) || (Lu && x >= Lu.lx && x < Lu.lx + 24 && y >= Lu.ly && y < Lu.bas) || (T.nu && T.nu(x, y))] : TOITS_NEIGE[base];
   const out = s.textures.createCanvas(k, L, H), o = out.getContext(), img = o.createImageData(L, H), q = img.data;
   const vide = (x, y) => x < 0 || y < 0 || x >= L || y >= H || d[(y * L + x) * 4 + 3] < 128;
   const mettre = (x, y, c) => { const i = (y * L + x) * 4; q[i] = c >> 16; q[i + 1] = (c >> 8) & 255; q[i + 2] = c & 255; q[i + 3] = 255; };
