@@ -7,6 +7,12 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q210** — Les auras en voile (Sage v4, morceaux 2 et 3) : cette représentation te va cette fois ? La densité et la portée à chaque palier (le 5 remplit le cadre du personnage, pas tout l'écran) ?
+- **Q211** — Le chat (le Parrain) : noir et or, palier 2 ? La Faucheuse : blanc et noir, palier 4 (elle garde pour l'instant son vieux sprite 16 px ; il lui faudra un dessin HD) ?
+- **Q212** — Les cheveux, barbes et capes soulevés sont des mèches qui s'étirent depuis la silhouette : suffisant, ou redessiner la coiffure au vent ?
+- **Q213** — L'apparition de l'aura (morceau 4) : une demi-seconde ou une seconde ? Avec un son ?
+- **Q214** — Vorhal'Düm n'est pas dans ta liste confirmée : on lui propose noir et rouge, palier 5 ?
+
 ## À venir de la part de Claude (pas des questions)
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
 
