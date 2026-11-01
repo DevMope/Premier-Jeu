@@ -12,6 +12,12 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q193** — Les noms du Grand Oubli chez les autres peuples (table dans `docs/histoire/revelations.md`, section F), proposés et pas dans le jeu : momies « le recouvrement », vampires « la nuit des registres », orcs « la pierre muette », elfes « le chant perdu », nains « l'éboulement », hobbits « la mauvaise saison ». Tu valides, tu changes ?
 
+- **Q194** — La vue de haut (rue, phase 2, morceaux 1 à 3) : l'essai sur le barbier, la maison haute et la banque va dans ton sens ? Les proportions (toit à peu près aussi haut que la façade, comme Stardew) te vont ? Pour le barbier et la banque, veut-on aussi des façades raccourcies (à redessiner) ?
+- **Q195** — Pour généraliser, reculer un peu la caméra de la rue (zoom 1,1 au lieu de 1,25) pour que les toits entiers tiennent à l'écran au pied des façades ? (proposition 1 du morceau 9)
+- **Q196** — Q170, le caniveau (morceau 5) : collé en bas (conseillé) ou en haut ?
+- **Q197** — Q169, la jonction au porche (morceau 6) : le seuil de grandes dalles sous l'arche suffit, ou les pierres de la place passent elles aussi dans la famille grise des pavés ?
+- **Q198** — Les propositions 2 à 4 du morceau 9 : 2, les trottoirs aussi comme un plan, avec une petite marche d'ombre vers la chaussée ; 3, de la vie sur les toits (pigeon sur un faîte, girouette sur la banque, fumée des cheminées) ; 4, les flaques qui sèchent peu à peu le lendemain d'un jour de pluie. Lesquelles ?
+
 ## À venir de la part de Claude (pas des questions)
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
 
