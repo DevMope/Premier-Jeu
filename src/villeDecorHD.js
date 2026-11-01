@@ -262,7 +262,7 @@ function maison5(s, cle, o = {}) {
   // visible à droite (la toile s'élargit d'autant, la façade reste à sa place : tex.origineX)
   // (phase 2) vueHaut : le toit vu de haut (reliefHD.js, vueHautMaison5) : 16 rangs de plus en haut pour le pan arrière
   const coteR = relief ? cote : 0, trousR = [];
-  const M = vueHaut ? 34 : 18, H = toit + etages.reduce((a, b) => a + b, 0) + rdc + 14 + M, t = toileM5(L + coteR, H), bas = H - 5, yR = bas - rdc, x0 = enc, x1 = L - enc;
+  const M = vueHaut ? (typeof volumeActif === 'function' && volumeActif() ? 36 : 34) : 18, H = toit + etages.reduce((a, b) => a + b, 0) + rdc + 14 + M, t = toileM5(L + coteR, H), bas = H - 5, yR = bas - rdc, x0 = enc, x1 = L - enc;
   // 1. le rez-de-chaussée : pierre de taille appareillée, chaînes d'angle, soubassement
   murPierre5(t, x0, yR, x1 - x0, rdc, { g: graine + 1 });
   for (let x = x0; x < x1; x++) { for (let k = 0; k < 4; k++) t.poser(x, bas - k, 'taille3', k === 0 ? 1 : k === 1 ? 2 : 3 + (hachage(x >> 3, 1, graine) > 0.6 ? 1 : 0)); }   // le soubassement, plus sombre
@@ -850,7 +850,8 @@ const TOITS_NEIGE = { facadeHD_0: [40, 112, (x, y) => x >= 149 && x < 163 && y >
   boutiqueBarbierHD_relief: [11, 35], rueBanqueHD_relief: [21, 56],
   // (phase 2, l'essai vu de haut) le barbier : du haut du pan arrière à l'égout ; la banque : son toit derrière le fronton, pas le fronton
   boutiqueBarbierHD_haut: [2, 56], rueBanqueHD_haut: [24, 86, (x, y) => y >= 54 && Math.abs(x - 100) <= (y - 54) * 3 + 2],
-  boutiqueBarbierHD_haut3: [2, 90], rueBanqueHD_haut3: [24, 120, (x, y) => y >= 88 && Math.abs(x - 100) <= (y - 88) * 3 + 2] };
+  boutiqueBarbierHD_haut3: [2, 90], rueBanqueHD_haut3: [24, 120, (x, y) => y >= 88 && Math.abs(x - 100) <= (y - 88) * 3 + 2],
+  boutiqueBarbierHD_haut4: [2, 122], rueBanqueHD_haut4: [24, 146, (x, y) => y >= 114 && Math.abs(x - 100) <= (y - 114) * 3 + 2] };
 // (phase 3, Q198-3) la girouette de la banque : un mât de fer, sa flèche, son petit coq
 function girouetteHD(s) {
   const cle = 'girouetteHD'; if (s.textures.exists(cle)) return cle;

@@ -32,6 +32,51 @@ function vueHautActive() { return (typeof window !== 'undefined' && window.VUE_H
 const CAMERA_HAUTE_ESSAI = true;
 function cameraHauteActive() { return vueHautActive() && ((typeof window !== 'undefined' && window.CAMERA_HAUTE_ESSAI !== undefined) ? !!window.CAMERA_HAUTE_ESSAI : CAMERA_HAUTE_ESSAI); }
 const TRONCON_ESSAI = { x0: 2000, x1: 3560 };   // (le barbier, la maison haute, la banque, la tente, et leur bout de rue)
+// (Réponses du 01/11, soir, Q199 à Q208 : phase 4) LE RACCORD TOIT-FAÇADE, et l'angle un peu plus incliné. D'après Stardew :
+// le toit n'est pas un rectangle posé sur la façade, c'est un volume : sa rive avant, épaisse, déborde devant la façade et y
+// jette son ombre ; ses rives de côté descendent en biais (le toit converge vers le faîte : 14 px de chaque côté) ; le faîte a
+// sa ligne claire et ses faîtières ; le pan arrière s'échappe vers le fond, plus étroit encore ; sous la rive, la façade a sa
+// sablière en léger renflement ; ses deux bords portent une bande fine et sombre (les murs latéraux, deux à trois pixels).
+// Les chiffres : toit (pan avant) = 1,2 × la hauteur de la façade ; pan arrière 14 à 16 rangs ; zoom 1,0.
+// Les personnages (Q207) : une variante de projection (corpsVuDeHaut) : la tête et les épaules 10 % plus larges, les jambes
+// 20 % plus courtes, à partir des mêmes images (corpsHD n'est pas refait). VOLUME_ESSAI (window.VOLUME_ESSAI = false : la phase 3).
+const VOLUME_ESSAI = true;
+function volumeActif() { return cameraHauteActive() && ((typeof window !== 'undefined' && window.VOLUME_ESSAI !== undefined) ? !!window.VOLUME_ESSAI : VOLUME_ESSAI); }
+// Un toit en volume, le faîte parallèle à la rue : un trapèze (large à l'égout, qui converge de conv vers le faîte), ses
+// rangs en perspective, ses rives de côté en biais (bois : la gauche éclairée, la droite dans l'ombre), le faîte, le pan
+// arrière qui s'échappe, la rive avant épaisse (D de débord de chaque côté). xa..xb : la façade.
+function toitVolume(t, { xa, xb, yEgout, hAvant, hDos, mat = 'ardoiseToit', g = 1, D = 6, conv = 14, pas = 8, rang = 4, bois = 'cheneSombre' }) {
+  const yF = yEgout - hAvant, yH = yF - 2 - hDos, rangAu = rangsPerspective(yEgout, hAvant, rang), nCols = Math.max(4, Math.round((xb - xa + 2 * D) / pas));
+  const bord = v => [xa - D + v * (conv + D), xb + D - v * (conv + D)];
+  const tuile = (x, y, xl, xr, r, k0, dk) => { const w = xr - xl, u = (x - xl) / w, cp = u * nCols + (r % 2) * 0.5, frac = cp - Math.floor(cp), joint = frac * (w / nCols) < 1, h = hachage(Math.floor(cp), r, g);
+    return clampR(k0 + (h > 0.84 ? 1 : h < 0.12 ? -1 : 0) + dk - (joint ? 1 : 0)); };
+  for (let y = yF; y < yEgout; y++) { const v = (yEgout - y) / hAvant, [xl, xr] = bord(v), [r, f] = rangAu(y);
+    for (let x = Math.round(xl); x <= Math.round(xr); x++) t.poser(x, y, mat, tuile(x, y, xl, xr, r, 3 + (v > 0.72 ? 1 : 0), f >= 1 - 1 / rang - 1e-6 ? 1 : f < 1 / rang ? -2 : 0));
+    for (let d = 0; d < 2; d++) { t.poser(Math.round(xl) + d, y, bois, d ? 3 : 4); t.poser(Math.round(xr) - d, y, bois, d ? 1 : 0); } }   // les rives de côté, en biais
+  { const [xl, xr] = bord(1); for (let x = Math.round(xl) - 1; x <= Math.round(xr) + 1; x++) { t.poser(x, yF - 1, mat, 5); t.poser(x, yF - 2, mat, x % 6 === 5 ? 2 : 4); } }   // le faîte
+  for (let y = yH; y < yF - 2; y++) { const v = 1 + (yF - 2 - y) / hAvant * 1.8, [xl, xr] = bord(v), r = Math.floor((y - yH) / 3), ty = (y - yH) % 3;
+    for (let x = Math.round(xl); x <= Math.round(xr); x++) if (!t.mat(x, y)) t.poser(x, y, mat, y === yH ? 0 : tuile(x, y, xl, xr, r, 1, ty === 0 ? 1 : 0)); }   // le pan arrière
+  for (let x = xa - D; x <= xb + D; x++) { t.poser(x, yEgout, bois, 4); t.poser(x, yEgout + 1, bois, 2); t.poser(x, yEgout + 2, bois, 0); }   // la rive avant : chant éclairé, sous-face
+  return { yF, yH };
+}
+// La façade sous son toit : la sablière en léger renflement, l'ombre de la rive, et les murs latéraux en bande fine sombre
+function facadeVolume(t, xa, xb, yHaut, yBas, mur) {
+  for (let x = xa; x <= xb; x++) for (const [dy, d] of [[0, 1], [1, 1], [2, -1]]) if (mur(t.mat(x, yHaut + dy))) teinterR(t, x, yHaut + dy, d);
+  ombreDebordR(t, xa, xb, yHaut + 3, 8, mur);
+  for (let y = yHaut; y <= yBas; y++) for (const [x, d] of [[xa, -2], [xa + 1, -1], [xb, -3], [xb - 1, -2], [xb - 2, -1]]) if (mur(t.mat(x, y))) teinterR(t, x, y, d);
+}
+// (Q207) Un personnage un peu plus vu de dessus : à partir de son image, la tête et les épaules (60 % du haut) 10 % plus
+// larges, les jambes (40 % du bas) 20 % plus courtes. La même clé, suivie de _vh ; rien d'autre ne change.
+function corpsVuDeHaut(s, cle) {
+  if (!volumeActif() || !s.textures.exists(cle) || /_vh$/.test(cle)) return cle;
+  const k = cle + '_vh'; if (s.textures.exists(k)) return k;
+  const src = s.textures.get(cle).getSourceImage(), w = src.width, h = src.height; if (!w || !h) return cle;
+  const yc = Math.round(h * 0.6), w2 = Math.round(w * 1.1), W = w2 + (w2 - w) % 2, H2 = yc + Math.round((h - yc) * 0.8);
+  const tex = s.textures.createCanvas(k, W, H2), c = tex.getContext(); c.imageSmoothingEnabled = false;
+  c.drawImage(src, 0, 0, w, yc, (W - w2) / 2, 0, w2, yc);
+  c.drawImage(src, 0, yc, w, h - yc, (W - w) / 2, yc, w, H2 - yc);
+  tex.refresh(); return k;
+}
 
 // --- les outils, sur une toile (une matière et un ton de 0 à 5 par pixel) ---
 function teinterR(t, x, y, d) { const m = t.mat(x, y); if (!m) return; t.poser(x, y, m, Math.max(0, Math.min(5, t.teinte(x, y) + d))); }
@@ -234,16 +279,19 @@ function ombrePorteeHD(s, larg, h = 10) {
 const VUE_HAUT_BARBIER = { ox: 4, oy: 30, L: 132, H: 142 };
 // (phase 3, la caméra plus haute) le même barbier, avec un toit de 70 + 16 rangs : oy 64, H 176 ; la cheminée en (104, 46)
 const CAMERA_HAUTE_BARBIER = { ox: 4, oy: 64, L: 132, H: 176, chem: [104, 44] };
-function reglagesBarbier() { return cameraHauteActive() ? CAMERA_HAUTE_BARBIER : VUE_HAUT_BARBIER; }
+// (phase 4, le volume) le pan avant fait 1,2 × le mur (104 pour 86), le pan arrière 14 : oy 96, H 208 ; 6 de débord de chaque côté
+const VOLUME_BARBIER = { ox: 6, oy: 96, L: 136, H: 208, chem: [106, 76] };
+function reglagesBarbier() { return volumeActif() ? VOLUME_BARBIER : cameraHauteActive() ? CAMERA_HAUTE_BARBIER : VUE_HAUT_BARBIER; }
 function barbierVueHautHD(s) {
-  const haut = cameraHauteActive(), cle = haut ? 'boutiqueBarbierHD_haut3' : 'boutiqueBarbierHD_haut'; if (s.textures.exists(cle)) return cle;
+  const haut = cameraHauteActive(), vol = volumeActif(), cle = vol ? 'boutiqueBarbierHD_haut4' : haut ? 'boutiqueBarbierHD_haut3' : 'boutiqueBarbierHD_haut'; if (s.textures.exists(cle)) return cle;
   const src = peindreBoutiqueBarbier(), { ox, oy, L, H } = reglagesBarbier(), t = toileDecor(L, H); rampesBarbier(t);
   for (const [m, c] of [['brique2', 0x9a4a34], ['terreCuite', 0xb86a48], ['suieX', 0x2a2420], ['taille', 0x9a9488]]) if (!t.rampes[m]) t.rampes[m] = rampe(c);
   for (let y = 0; y < src.h; y++) for (let x = 0; x < src.l; x++) { const m = src.mat(x, y); if (m && !(y < 26 && m === 'ardoise')) t.poser(x + ox, y + oy, m, src.teinte(x, y)); }
-  const yE = 26 + oy, { yF } = toitVuDeHaut(t, { x0: ox, x1: L - ox - 1, yEgout: yE, hAvant: haut ? 70 : 40, hDos: haut ? 16 : 12, mat: 'ardoise', g: 7331, perspective: haut });
-  chemineeVueHaut(t, 100 + ox, yF + (haut ? 10 : 8), haut ? 14 : 12, 7332);
-  const mur = m => m === 'platre', bois = m => m === 'cheneSombre' || m === 'chene';
-  ombreDebordR(t, ox, L - ox - 1, yE + 3, 7, mur);
+  const yE = 26 + oy, mur = m => m === 'platre', bois = m => m === 'cheneSombre' || m === 'chene';
+  const { yF } = vol ? toitVolume(t, { xa: 2 + ox, xb: L - ox - 3, yEgout: yE, hAvant: 104, hDos: 14, mat: 'ardoise', g: 7331, D: 6, conv: 14 })
+    : toitVuDeHaut(t, { x0: ox, x1: L - ox - 1, yEgout: yE, hAvant: haut ? 70 : 40, hDos: haut ? 16 : 12, mat: 'ardoise', g: 7331, perspective: haut });
+  chemineeVueHaut(t, 100 + ox, yF + (vol ? 12 : haut ? 10 : 8), vol ? 16 : haut ? 14 : 12, 7332);
+  if (vol) facadeVolume(t, 2 + ox, L - ox - 3, yE + 3, H - 3, m => mur(m) || bois(m)); else ombreDebordR(t, ox, L - ox - 1, yE + 3, 7, mur);
   aretesR(t, ox, yE + 3, L - ox - 1, H - 1, (m, x, y) => bois(m) && y < 98 + oy, mur);
   for (let x = 12 + ox; x < 58 + ox; x++) { teinterR(t, x, 62 + oy, -2); teinterR(t, x, 63 + oy, -1); }
   embrasureR(t, 14 + ox, 63 + oy, 55 + ox, 88 + oy, (x, y) => x >= 14 + ox && x <= 55 + ox && y >= 63 + oy && y <= 88 + oy && t.mat(x, y) !== 'chene', { appui: [90 + oy, 12 + ox, 57 + ox, 'pierre'] });
@@ -258,12 +306,15 @@ function barbierVueHautHD(s) {
 const VUE_HAUT_BANQUE = { ox: 0, oy: 36, L: 200, H: 212 };
 // (phase 3) la banque avec 64 rangs de toit au-dessus du fronton (la profondeur du bâtiment) : oy 70, H 246
 const CAMERA_HAUTE_BANQUE = { ox: 0, oy: 70, L: 200, H: 246 };
-function reglagesBanque() { return cameraHauteActive() ? CAMERA_HAUTE_BANQUE : VUE_HAUT_BANQUE; }
+// (phase 4) 90 rangs de toit au-dessus du fronton, qui convergent plus fort (0,3 par rang), les rives de bois en biais
+const VOLUME_BANQUE = { ox: 0, oy: 96, L: 200, H: 272 };
+function reglagesBanque() { return volumeActif() ? VOLUME_BANQUE : cameraHauteActive() ? CAMERA_HAUTE_BANQUE : VUE_HAUT_BANQUE; }
 function banqueVueHautHD(s) {
-  const haut = cameraHauteActive(), cle = haut ? 'rueBanqueHD_haut3' : 'rueBanqueHD_haut'; if (s.textures.exists(cle)) return cle;
+  const haut = cameraHauteActive(), vol = volumeActif(), cle = vol ? 'rueBanqueHD_haut4' : haut ? 'rueBanqueHD_haut3' : 'rueBanqueHD_haut'; if (s.textures.exists(cle)) return cle;
   const src = peindreBanqueRue(), { oy, L, H } = reglagesBanque(), t = toileDecor(L, H); Object.assign(t.rampes, RAMPES_RUE);
-  const yC = 50 + oy, yTop = 18 + oy - (haut ? 64 : 30), mat = 'ardoiseToit', rangAu = rangsPerspective(yC + 1, yC + 1 - yTop, 8);
-  for (let y = yTop; y <= yC; y++) { const demi = 94 - (yC - y) * (haut ? 0.2 : 0.14), xa = Math.round(100 - demi), xb = Math.round(100 + demi), [rp, fp] = rangAu(y);
+  const yC = 50 + oy, yTop = 18 + oy - (vol ? 90 : haut ? 64 : 30), mat = 'ardoiseToit', rangAu = rangsPerspective(yC + 1, yC + 1 - yTop, 8);
+  for (let y = yTop; y <= yC; y++) { const demi = 94 - (yC - y) * (vol ? 0.3 : haut ? 0.2 : 0.14), xa = Math.round(100 - demi), xb = Math.round(100 + demi), [rp, fp] = rangAu(y);
+    if (vol && y > yTop + 1) { for (let d = 0; d < 2; d++) { t.poser(xa + d, y, 'cheneSombre', d ? 3 : 4); t.poser(xb - d, y, 'cheneSombre', d ? 1 : 0); } }   // (phase 4) les rives de bois en biais
     for (let x = xa; x <= xb; x++) { const d = Math.abs(x - 100), c = Math.floor(d / 4), tc = d % 4, dec = (c % 2) * 4, ty = haut ? ((rp + (dec ? 1 : 0)) % 2 ? (fp < 0.14 ? 7 : 0) : (fp > 0.86 ? 7 : 0)) : ((y + dec) % 8 + 8) % 8, h = hachage(c, haut ? rp + (dec ? 1 : 0) : Math.floor((y + dec) / 8), 7341);
       let k = (x < 100 ? 3 : 1) + (h > 0.84 ? 1 : h < 0.12 ? -1 : 0) + (tc === 0 ? 1 : tc === 3 ? -1 : 0) - (ty === 7 ? 1 : 0);
       if (x === 100 || x === 99) k = 5; else if (x === 101) k = 4;              // le faîte
@@ -273,6 +324,7 @@ function banqueVueHautHD(s) {
   for (let y = 0; y < src.h; y++) for (let x = 0; x < src.l; x++) { const m = src.mat(x, y); if (m) t.poser(x, y + oy, m, src.teinte(x, y)); }
   const pierre = m => m === 'taille';
   ombreDebordR(t, 4, 196, yC + 3, 6, pierre);
+  if (vol) for (let y = yC + 3; y < H - 2; y++) for (const [x, d] of [[10, -2], [11, -1], [189, -3], [188, -2], [187, -1]]) if (pierre(t.mat(x, y))) teinterR(t, x, y, d);   // (phase 4) les murs latéraux en bande fine
   for (let y = 18 + oy; y < yC; y++) { const v = (y - 18 - oy) / 32, xa = Math.round(100 - v * 96), xb = Math.round(100 + v * 96); teinterR(t, xa, y, 1); teinterR(t, xa + 1, y, 1); teinterR(t, xb, y, -2); teinterR(t, xb - 1, y, -1);
     for (let x = xa + 3; x < xb - 2; x++) if (y < 18 + oy + 4 + (x < 100 ? (100 - x) * 0.33 : (x - 100) * 0.33)) teinterR(t, x, y + 2, -1); }
   for (const fx of [20, 162]) embrasureR(t, fx, 70 + oy, fx + 17, 115 + oy, (x, y) => x >= fx && x <= fx + 17 && y >= 70 + oy && y <= 115 + oy, { appui: [116 + oy, fx - 2, fx + 19, 'taille'] });
@@ -285,7 +337,18 @@ function banqueVueHautHD(s) {
 // Le toit d'ardoise de maison5 est déjà un pan avant ; on ajoute le pan arrière au-dessus de sa crête (sans recouvrir la
 // cheminée, qui le domine), l'ombre du débord sur l'étage, les ouvertures en retrait, les poutres qui accrochent la lumière.
 function vueHautMaison5(t, g) {
-  const { L, yR, yT, bas, x0, x1, trous, porte, cheminee, M } = g, haut = cameraHauteActive(), hDos = haut ? 20 : 14;
+  const { L, yR, yT, bas, x0, x1, trous, porte, cheminee, M } = g, haut = cameraHauteActive(), vol = volumeActif(), hDos = haut ? 20 : 14;
+  // (phase 4, le volume) le toit est effacé et redessiné en trapèze (toitVolume), la cheminée reposée dessus, la façade
+  // reçoit sa sablière et ses bandes de côté
+  if (vol) { for (let y = 0; y <= yT + 5; y++) for (let x = 0; x < L; x++) t.effacer(x, y);
+    const yE = yT + 2, hA = yE - (M + 6), hD = Math.min(16, M + 6 - 2 - 2), { yF } = toitVolume(t, { xa: 0, xb: L - 1, yEgout: yE, hAvant: hA, hDos: hD, mat: 'ardoiseToit', g: 7353, D: 0, conv: 14 });
+    if (cheminee) { chemineeVueHaut(t, cheminee[0], yF + 14, 16, 7354); t.cheminee = [cheminee[0], yF + 4]; }
+    const mur = m => m === 'platre' || /^enduit/.test(m || '') || m === 'taille' || m === 'taille3', bois = m => m === 'cheneSombre' || m === 'chene';
+    facadeVolume(t, 0, L - 1, yE + 3, bas - 5, m => mur(m) || bois(m));
+    aretesR(t, 0, yE + 6, L - 1, yR - 1, bois, mur); aretesR(t, x0, yR, x1 - 1, bas - 4, m => m === 'taille', () => false);
+    for (const [fx, fy, fl, fh] of trous) embrasureR(t, fx + 2, fy + 2, fx + fl - 3, fy + fh - 3, (x, y) => x >= fx + 2 && x <= fx + fl - 3 && y >= fy + 2 && y <= fy + fh - 3);
+    if (porte) { const [px, py, pl, ph] = porte; embrasureR(t, px + 3, py + 3, px + pl - 4, py + ph - 2, (x, y) => x >= px + 3 && x <= px + pl - 4 && y >= py + 3 && y <= py + ph - 2, { prof: 3 }); }
+    return yF - 2 - hD; }
   // (phase 3) le pan avant repeint en perspective : ses rangs se resserrent vers le faîte (la cheminée et la lucarne restent)
   if (haut) { const yE = yT + 2, rangAu = rangsPerspective(yE + 1, yE + 1 - (M + 5), 4);
     for (let y = M + 5; y <= yE; y++) { const [r, f] = rangAu(y), dec = (r % 2) * 4, v = (y - M - 5) / (yE - M - 5);

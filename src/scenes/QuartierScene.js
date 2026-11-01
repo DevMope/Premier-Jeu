@@ -143,7 +143,9 @@ class QuartierScene extends Phaser.Scene {
     // JeuneGoy : là où il arrive (par un passage, ou au point de départ du quartier)
     const arr = this.pointArrivee(d.arrivee);
     textureJoueur(this, G, 'dos');
-    this.heros = this.add.image(arr.x, arr.y, textureJoueur(this, G, arr.vue || 'dos')).setOrigin(0.5, 1).setScale(echelleJoueur(R.echelle));
+    // (phase 4, Q207) la variante de projection des personnages, vus un peu plus de dessus (corpsVuDeHaut, reliefHD.js)
+    this.texVH = k => (typeof corpsVuDeHaut === 'function' ? corpsVuDeHaut(this, k) : k);
+    this.heros = this.add.image(arr.x, arr.y, this.texVH(textureJoueur(this, G, arr.vue || 'dos'))).setOrigin(0.5, 1).setScale(echelleJoueur(R.echelle));
     this.ombreHeros = ici.ombre(arr.x, arr.y, 40);
     monde.add(this.heros);
     this.vueHeros = arr.vue || 'dos'; this.versGauche = !!arr.gauche; this.poserHeros(0);
@@ -154,10 +156,12 @@ class QuartierScene extends Phaser.Scene {
     const peuples = ['humain', 'hobbit', 'nain', 'elfe', 'hobbit', 'magicienne'];
     if (ici.pointsPassants.length > 2) for (let i = 0; i < (this.nuit ? def.passantsNuit || 0 : def.passants || 4); i++) this.ajouterPassant(i, peuples[(((G && G.jour) || 0) + i * 5) % peuples.length]);
     // la fumée des cheminées : des bouffées qui montent, s'élargissent, dérivent et s'effacent
+    // (Q209) la fumée dérive avec le vent du jour : couchée les jours de grand vent, poussée par la pluie, droite au calme
+    const temps = G && typeof meteoDu === 'function' ? meteoDu(G) : 'soleil', souffle = temps === 'vent' ? { monte: 44, vent: 110 } : temps === 'pluie' || temps === 'orage' ? { monte: 60, vent: 60 } : { monte: 80, vent: 26 };
     if (ici.cheminees.length) this.time.addEvent({ delay: 260, loop: true, callback: () => {
       if (this.planVille || this.fini) return;
       const [x, y] = Phaser.Utils.Array.GetRandom(ici.cheminees);
-      const f = bouffeeFumee(this, x + (Math.random() - 0.5) * 3, y, { echelle: 1.5, monte: 80, vent: 26, duree: 3800, alpha: 0.78, conteneur: monde, teinte: 0xe4e2e8 }); f.yTri = 2e5;
+      const f = bouffeeFumee(this, x + (Math.random() - 0.5) * 3, y, { echelle: 1.5, monte: souffle.monte, vent: souffle.vent + (Math.random() - 0.5) * 10, duree: 3800, alpha: 0.78, conteneur: monde, teinte: 0xe4e2e8 }); f.yTri = 2e5;
     } });
     // le temps qu'il fait, ce qui tombe du ciel selon la saison
     if (typeof ambianceMeteo === 'function') ambianceMeteo(this, { ciel: false, prof: 1 });
@@ -424,7 +428,7 @@ class QuartierScene extends Phaser.Scene {
     this.pasVuHeros = this.pasHeros;
     let k = pas ? base + '_pas' + pas : base;
     if (enMarche && marcheJoueurPrete(this, base)) k = base + '_m' + (Math.floor(this.pasHeros / (this.courir ? 45 : MARCHE_HD.duree)) % MARCHE_HD.images);
-    this.heros.setTexture(this.textures.exists(k) ? k : base).setFlipX(this.vueHeros === 'profil' && this.versGauche);
+    this.heros.setTexture(this.texVH(this.textures.exists(k) ? k : base)).setFlipX(this.vueHeros === 'profil' && this.versGauche);
   }
   // Un pas de plus (dx, dy déjà mesurés) : la vue, les images, le bruit du pas selon le sol, le corps qui se soulève sur les marches
   animerPas(dx, dy, dt) {
@@ -673,7 +677,7 @@ class QuartierScene extends Phaser.Scene {
     const pts = this.ici.pointsPassants, [x, y] = pts[(i * 3 + ((this.G && this.G.jour) || 0)) % pts.length];
     const quoi = { nom: 'Flâneur du quartier ' + i, race, feminin: i % 2 === 1, niveau: 'novice' };
     const cle = corpsHD(this, quoi, null, 'face');
-    const img = this.add.image(x, y, cle).setOrigin(0.5, 1).setScale(this.R.echelle * echelleCorps(cle)).setInteractive({ useHandCursor: true });
+    const img = this.add.image(x, y, this.texVH(cle)).setOrigin(0.5, 1).setScale(this.R.echelle * echelleCorps(cle)).setInteractive({ useHandCursor: true });
     img.passant = true;
     // (Q165) même arrêté, il respire
     this.tweens.add({ targets: img, scaleY: img.scaleY * 1.012, duration: 1400 + i * 170, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -684,7 +688,7 @@ class QuartierScene extends Phaser.Scene {
   passantParle(o) {
     if ((o.bulle && o.bulle.active) || this.bloque()) return;
     o.pause = 4200; o.cible = null; o.chemin = [];
-    if (o.vue !== 'face') { o.vue = 'face'; o.img.setTexture(corpsHD(this, o.quoi, null, 'face')).setFlipX(false); }
+    if (o.vue !== 'face') { o.vue = 'face'; o.img.setTexture(this.texVH(corpsHD(this, o.quoi, null, 'face'))).setFlipX(false); }
     const texte = typeof phrasePassant === 'function' ? phrasePassant(this.G) : 'Belle journée, hein ?';
     Son.jouer('voix', { personne: { nom: o.quoi.nom, race: o.quoi.race, feminin: o.quoi.feminin }, ton: Phaser.Utils.Array.GetRandom(['content', 'rire', 'etonne', 'neutre']) });
     const b = o.bulle = this.add.text(o.img.x, o.img.y - o.img.displayHeight - 8, texte, style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 240 }, align: 'center' })).setOrigin(0.5, 1).setScale(0);
@@ -715,7 +719,7 @@ class QuartierScene extends Phaser.Scene {
       o.img.setPosition(nx, ny); o.ombre.setPosition(nx + 2, ny - 2); o.ombre.yTri = ny - 0.5;
       o.vue = this.vueSelon(rx, ry); o.pas += dt;
       const base = corpsHD(this, o.quoi, null, o.vue), f = Math.floor(o.pas / 150) % 4, k = f === 1 ? base + '_pas1' : f === 3 ? base + '_pas2' : base;
-      o.img.setTexture(this.textures.exists(k) ? k : base).setFlipX(o.vue === 'profil' && rx < 0);
+      o.img.setTexture(this.texVH(this.textures.exists(k) ? k : base)).setFlipX(o.vue === 'profil' && rx < 0);
     }
   }
 }

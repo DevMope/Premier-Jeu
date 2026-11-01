@@ -117,7 +117,7 @@ DECORS_QUARTIERS.soucolline = {
     return R[R.length - 1][1] + d;
   },
   // (phase 3) la caméra recule : zoom 1,1 au lieu de 1,25 (les toits et la chaussée tiennent à l'écran)
-  get zoom() { return typeof cameraHauteActive === 'function' && cameraHauteActive() ? 1.1 : undefined; },
+  get zoom() { return typeof volumeActif === 'function' && volumeActif() ? 1.0 : typeof cameraHauteActive === 'function' && cameraHauteActive() ? 1.1 : undefined; },   // (phase 4 : 1,0, les toits plus hauts tiennent)
   passants: 5,
   // (par le plan : on arrive par le passage qui mène d'où l'on vient ; de chez soi, par sa porte)
   entrees: { place: 'arche', etang: 'arche', maison: 'comptoir', defaut: 'arche' },
@@ -284,10 +284,12 @@ DECORS_QUARTIERS.soucolline = {
     // portée sur le trottoir
     const relief = typeof reliefActif === 'function' && reliefActif(), vueHaut = typeof vueHautActive === 'function' && vueHautActive(), camHaute = typeof cameraHauteActive === 'function' && cameraHauteActive();
     // (phase 3) la caméra plus haute : le pan avant de 84 rangs (autant que la façade), le pan arrière de 20
-    maison(L.maisonHaute, YN, camHaute ? 'mvB89c' : vueHaut ? 'mvB89h' : relief ? 'mvB89r' : 'mvB89', { L: 140, etages: vueHaut ? [44, 42] : [48, 46], rdc: vueHaut ? 62 : 68, toit: camHaute ? 84 : vueHaut ? 54 : 50, toitMat: 'ardoiseToit', crepi: 'enduitO', porte: { x: 0.5, l: 24, h: 50, peinte: 'porteVerte' }, fenetresRdc: [0.2, 0.8], fenetres: [[0.2, 0.8], [0.2, 0.5, 0.8]], volet: 'voletR', fleur: 'fleurP2', graine: 5, relief, cote: 14, vueHaut });
+    const volume = typeof volumeActif === 'function' && volumeActif();   // (phase 4 : le toit en volume, 1,2 × la façade de 104 : 125)
+    maison(L.maisonHaute, YN, volume ? 'mvB89v' : camHaute ? 'mvB89c' : vueHaut ? 'mvB89h' : relief ? 'mvB89r' : 'mvB89', { L: 140, etages: vueHaut ? [44, 42] : [48, 46], rdc: vueHaut ? 62 : 68, toit: volume ? 125 : camHaute ? 84 : vueHaut ? 54 : 50, toitMat: 'ardoiseToit', crepi: 'enduitO', porte: { x: 0.5, l: 24, h: 50, peinte: 'porteVerte' }, fenetresRdc: [0.2, 0.8], fenetres: [[0.2, 0.8], [0.2, 0.5, 0.8]], volet: 'voletR', fleur: 'fleurP2', graine: 5, relief, cote: 14, vueHaut });
     if (vueHaut) ici.ombrePortee(L.maisonHaute - 112, L.maisonHaute + 112, YN);
     else if (relief) ici.ombrePied(L.maisonHaute - 112, L.maisonHaute + 112, YN, 22);
-    img(2390, YN - 110, haie89(s, 'haieYsmee89', 150), E, YN - 110);
+    if (camHaute) ombre(2390 + 75 * E, YN - 108, 240);   // (phase 3-4) l'ombre de la haie au sol
+    { const h = img(2390, YN - 110, haie89(s, 'haieYsmee89', 150), E, YN - 110); if (volume) h.setScale(E, E * 1.12); }   // (phase 4 : vue de plus haut, on voit son dessus)
     ici.arbre(2470, YN - 80, 0);
     // --- la tente violette de Madame Ysmée, dès le jour 10 (on y entre le matin), et son ardoise du temps ---
     const ysmee = G && typeof ysmeeArrivee === 'function' && ysmeeArrivee(G);
@@ -303,8 +305,15 @@ DECORS_QUARTIERS.soucolline = {
     const barbierOuv = G && typeof barbierOuvert === 'function' && barbierOuvert(G);
     const barbier = lot(L.barbier, YN, () => {
       s.add.image(0, 2, vueHaut ? barbierVueHautHD(s) : relief ? barbierReliefHD(s) : boutiqueBarbierHD(s)).setOrigin(0.5, 1).setScale(2);   // (les essais : vu de haut, ou en relief)
+      if (camHaute && volume && jour && temps === 'soleil') {   // (Q209) un chat sur le toit, au soleil : il dort, bat de la queue, se lève, se recouche
+        const B = reglagesBarbier(), yF = 26 + B.oy - 104, ch = s.add.image((78 - B.L / 2) * 2, 2 - (B.H - yF - 34) * 2, 'chatRue_dort0').setOrigin(0.5, 1).setScale(1.5).setFlipX(true);
+        let k = 0; const dormir = () => { if (!ch.active) return; ch.setTexture('chatRue_dort' + (++k % 2)); s.time.delayedCall(900, k % 6 === 5 && Math.random() < 0.5 ? reveil : dormir); };
+        const reveil = () => { if (!ch.active) return; ch.setTexture('chatRue_assis0'); let q = 0; const queue = s.time.addEvent({ delay: 400, repeat: 7, callback: () => ch.active && ch.setTexture('chatRue_assis' + (++q % 2)) });
+          s.time.delayedCall(3400, () => { if (!ch.active) return; ch.setTexture('chatRue_m0'); s.time.delayedCall(700, () => { if (!ch.active) return; ch.setFlipX(!ch.flipX).setTexture('chatRue_tapi'); s.time.delayedCall(600, dormir); }); }); };
+        s.time.delayedCall(1500, dormir);
+      }
       if (camHaute) {   // (phase 3, Q198-3) un pigeon posé sur le faîte, qui se tourne et se gonfle de temps en temps
-        const B = reglagesBarbier(), yF = 26 + B.oy - 70, pg = s.add.image((40 - B.L / 2) * 2, 2 - (B.H - yF + 1) * 2, 'pigeon81_debout').setOrigin(0.5, 1).setScale(1);
+        const B = reglagesBarbier(), yF = 26 + B.oy - (volume ? 104 : 70), pg = s.add.image((46 - B.L / 2) * 2, 2 - (B.H - yF + 1) * 2, 'pigeon81_debout').setOrigin(0.5, 1).setScale(1);
         s.time.addEvent({ delay: 900, loop: true, callback: () => { if (!pg.active) return; const r = Math.random(); if (r < 0.3) pg.setFlipX(!pg.flipX); else if (r < 0.5) { pg.setTexture('pigeon81_gonfle'); s.time.delayedCall(600, () => pg.active && pg.setTexture('pigeon81_debout')); } } });
       }
       if (!barbierOuv || nuit) s.add.image(0, 2, boutiqueFermeeHD(s)).setOrigin(0.5, 1).setScale(2);
