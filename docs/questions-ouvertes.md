@@ -6,6 +6,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q199** — Les noms du Grand Oubli par peuple, v2 (« le chant perdu » des elfes validé) : momies « la Grande Marée » (l'oubli monte, recouvre, se retire en laissant tout lisse) ; vampires « l'An Sans Nom » (la seule année qui manque dans leurs registres) ; orcs « le Serment Muet » (le pacte gravé que plus personne ne sait lire) ; nains « la Veine Perdue » (le filon de mémoire qu'ils ne retrouvent plus) ; hobbits « l'Hiver Sans Fête » (la page vide de l'almanach). Pour chacun, un second choix est dans `docs/histoire/revelations.md`, section F. Lesquels valides-tu ?
+
 ## À venir de la part de Claude (pas des questions)
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
 
