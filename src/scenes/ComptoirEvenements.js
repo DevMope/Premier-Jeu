@@ -197,7 +197,7 @@ Object.assign(CounterScene.prototype, {
   // --- 2. Garrick a un souci ---
   evt_garrick(e) {
     const G = this.G, camp = e.camp, P = 'garrick';
-    this.evtParchemin('Garrick a un souci', ['', 'son genou', 'une vieille dette', 'une lettre'][e.etape] || '');
+    this.evtParchemin('Garrick a un souci', ['', 'son genou', 'une vieille dette', 'une vieille page'][e.etape] || '');
     const finir = t => { this.evtDire(t, P); this.bouton('« À bientôt, Garrick. »', () => this.evtFin()); };
     if (e.etape === 1) {
       this.evtDire("Aïe... ne fais pas attention. C'est ce satané genou : la vieille blessure de la rivière, tu te souviens ? Il me rappelle à l'ordre quand le temps tourne.", P);
@@ -230,30 +230,30 @@ Object.assign(CounterScene.prototype, {
       } : null], ['« Je ne peux pas. »', () => { evtGarrick(G, e, 'refuser'); this.exprimer('neutre'); finir("Je comprends. Je trouverai autrement. (Il sourit, mais ses yeux ne sourient pas.)"); }]);
       return;
     }
-    // la lettre de son passé
-    const lettre = this.evtPoser('evt_lettreGarrick', SILL_GAUCHE_EVT);
-    const lire = suite => this.lettreEvt("G., la chanson du lac ne doit pas s'éteindre. Garde-la, même si tout le monde l'oublie. — A.", suite);
+    // (Q173) le fragment de la berceuse, recopié par un doyen « pour que l'air ne meure pas seul »
+    const page = this.evtPoser('evt_berceuse', SILL_GAUCHE_EVT);
+    const lire = suite => this.lettreEvt(BERCEUSE.couplets[0].join('\n') + "\n\n— Recopié de mémoire, pour que l'air ne meure pas seul.", suite, 'Une vieille page, d’une écriture qui tremble');
     if (camp === 'bien') {
-      this.evtDire("Une lettre de mon passé m'a retrouvé. Si la garde la trouve chez moi... Brûle-la pour moi. Sans la lire.", P);
+      this.evtDire("Un doyen des Bannis m'a glissé cette page dans la main. Un air recopié de mémoire. Si la garde la trouve chez moi... Brûle-la pour moi. Sans la lire.", P);
       this.choix(['La brûler sans la lire', () => {
         evtGarrick(G, e, 'bruler');
-        this.bruler(lettre);
+        this.bruler(page);
         this.exprimer('content');
-        finir("(Le papier se tord dans la flamme de la bougie. Garrick ferme les yeux.) Merci. Un jour, je te dirai ce qu'il y avait dedans.");
-      }], ['La lire', () => lire(() => { evtGarrick(G, e, 'lire'); this.exprimer('inquiet'); finir("Tu l'as lue. (Un long silence.) Ce ne sont que les mots d'un vieil ami. Oublie-les, tu veux bien ?"); })]);
+        finir("(Le papier se tord dans la flamme de la bougie. Garrick ferme les yeux.) Merci. Je connais cet air. Je ne l'ai jamais appris.");
+      }], ['La lire', () => lire(() => { evtGarrick(G, e, 'lire'); this.exprimer('inquiet'); finir("Tu l'as lue. (Un long silence.) Je connais cet air. Je ne l'ai jamais appris. Oublie-la, tu veux bien ?"); })]);
       return;
     }
-    this.evtDire("Une lettre d'un vieil ami, mort depuis longtemps. Mes yeux ne sont plus ce qu'ils étaient... Tu veux bien me la lire ?", P);
-    this.choix(['La lire à voix haute', () => lire(() => { evtGarrick(G, e, 'lire'); this.exprimer('neutre'); finir("« La chanson du lac... » Il la fredonnait toujours, et toujours faux. (Garrick replie la lettre et la range contre son cœur.)"); })],
-      ['« Garde-la pour toi. »', () => { evtGarrick(G, e, 'garder'); finir("Tu as raison. Certaines choses se lisent seul. (Il reprend la lettre, doucement.)"); }]);
+    this.evtDire("Un doyen m'a donné cette page. Il l'a recopiée de mémoire, « pour que l'air ne meure pas seul ». Je n'ose pas la lire seul... Tu la regardes avec moi ?", P);
+    this.choix(['La lire avec lui', () => lire(() => { evtGarrick(G, e, 'lire'); this.exprimer('neutre'); finir("Je connais cet air. Je ne l'ai jamais appris. (Garrick replie la page et la range contre son cœur.)"); })],
+      ['« Garde-la pour toi. »', () => { evtGarrick(G, e, 'garder'); finir("Tu as raison. Certaines choses se lisent seul. (Il reprend la page, doucement.)"); }]);
   },
-  // Une lettre ouverte en grand, sur un parchemin ; un clic la referme
-  lettreEvt(texte, suite) {
+  // Une lettre (ou une page) ouverte en grand, sur un parchemin ; un clic la referme
+  lettreEvt(texte, suite, titre = 'Une lettre jaunie, à l’encre pâlie') {
     this.bouton('...', null);
     const voile = this.add.rectangle(480, 270, 960, 540, 0x0a0604, 0.55).setDepth(40).setInteractive();
     const L = this.add.container(480, 250).setDepth(41);
     L.add(this.add.image(0, 0, panneauHD(this, 560, 250)).setScale(2));
-    L.add(this.add.text(0, -96, 'Une lettre jaunie, à l’encre pâlie', style(13, '#6b4a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
+    L.add(this.add.text(0, -96, titre, style(13, '#6b4a2a', { fontStyle: 'bold italic' })).setOrigin(0.5));
     const t = this.add.text(0, -4, texte, style(17, '#3b2410', { fontStyle: 'italic', align: 'center', wordWrap: { width: 470 }, lineSpacing: 4 })).setOrigin(0.5);
     for (let k = 16; t.height > 180 && k >= 12; k--) t.setFontSize(k);
     L.add(t);

@@ -249,7 +249,7 @@ function evtParents(G, e) {
 // --- 2. Garrick a un souci ---
 // étape 1, le genou : soigner (un bandage, ou une potion, ou une compresse) ou l'envoyer chez l'apothicaire
 // étape 2, la dette : (lumière, entre-deux) lui prêter de quoi payer l'usurier ; (ombre) garder un paquet des Bannis
-// étape 3, la lettre : (lumière) la brûler sans la lire, ou la lire ; (ombre, entre-deux) la lire avec lui
+// étape 3, la page (Q173 : le fragment de la berceuse recopié par un doyen) : (lumière) la brûler sans la lire, ou la lire ; (ombre, entre-deux) la lire avec lui
 function choixGarrick(G, e) {
   if (e.etape === 1) return ['soigner', 'apothicaire'];
   if (e.etape === 2) return e.camp === 'mal' ? ['paquet', 'refuser'] : ['preter', 'refuser'];

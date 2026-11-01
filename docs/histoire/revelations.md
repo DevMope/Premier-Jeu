@@ -5,6 +5,7 @@ Les moments sont donnés en **pourcentage de l'épopée** (de la première ouver
 
 Principes ★ :
 - Comme dans *Until Dawn*, les plus petits choix peuvent ouvrir la porte à un indice. Il faut des indices de toutes tailles (petits, moyens, gros, énormes) et de fausses pistes.
+- ★ (Q177, 01/11) L'histoire contient des fausses pistes, mais des fausses pistes qui font sens : chacune doit tenir debout, avoir une explication vraie une fois la vérité connue (le mendiant qui dit « Tes parents, eux, ne se cachaient jamais » parle vrai, et laisse croire à autre chose).
 - Plus le jeu avance, plus l'atmosphère est pesante et sérieuse.
 - Il ne faut jamais dire au joueur, avant la fin, qu'il rassemble l'armure pour lui-même.
 - Comme dans *Silo* : certains savent et sont du complot ; d'autres ont des doutes justifiés, d'autres de la jugeote ; il y a des complotistes à côté de la plaque, et des naïfs.
@@ -37,7 +38,7 @@ Principes ★ :
 |---|---|---|---|
 | O1 | Garrick siège au Conseil des Bannis | 38 à 42 %, juste après le serment ★ (il ne l'apprend pas tout de suite) | Garrick lui-même, la nuit où il l'emmène devant le Conseil |
 | O2 | Le dragon est un bouc émissaire : premier indice | 30 à 40 % (les doyens arrivent au milieu du jeu ★) | Grand-mère Ortie : « Ils disaient qu'un dragon allait venir. Personne n'avait jamais vu de dragon. » ★ (dans le code) |
-| O3 | Le fragment de la berceuse, recopié par un doyen, bouleverse Garrick | 42 à 48 %, ★3 | Un doyen le donne à Garrick, qui le montre à JeuneGoy ★. Il remplace la lettre de « A. » ★ |
+| O3 | Le fragment de la berceuse, recopié par un doyen, bouleverse Garrick | 42 à 48 %, ★3 | Un doyen le donne à Garrick, qui le montre à JeuneGoy ★. Il remplace la lettre de « A. » ★ (Q173, dans le code le 01/11 : la page recopiée « pour que l'air ne meure pas seul », et Garrick : « Je connais cet air. Je ne l'ai jamais appris. ») |
 | O4 | Le dragon est un bouc émissaire : la preuve | 48 à 55 %, la 4e pièce | ☆ La broche d'écaille rouge que portent tous les Gardiens (déjà dessinée), et à Ossemont, le squelette de la mère de Vhaldrak ★, puis les squelettes réveillés par le combat entre le dragon et le Sage ★ |
 | O5 | Les pandas renégats ont vu ce qu'ils n'auraient jamais dû voir, et le Conseil les a fait passer pour des traîtres | 50 à 55 %, l'escale des Monts de Bambou | Les pandas renégats ★, qui ont fini par se décourager ; il faut regagner leur confiance |
 | O6 | La culpabilité du Conseil : l'argent du mécénat finance l'armement, les frontières, et un projet souterrain secret, garder le dragon en vie | 55 à 65 %, ★4 | ☆ Les comptes du trésor (Maître Bertolin Pommeval, naïf, montre sans comprendre une dépense « d'entretien » aussi lourde qu'une armée ★), recoupés par les archives de la Main Noire ou le chat |
@@ -114,6 +115,31 @@ Les pièces sont numérotées dans l'ordre où l'on libère les royaumes, quel q
 | **IV. Le Sceau** | 58 à 80 % | ★4 → ★5, 18 ans (HommeGoy) | 6, 7, 8 (le sceau) | les Mages, les Terres sauvages, les Terres des Bannis (en Ombre) | les Gardiens du complot, les fissures, la transformation, le camp scellé, le Sage qui découvre son fils | pesante |
 | **V. La Dernière Bataille** | 80 à 97 % | ★5 | l'armure portée (ou rendue) | — | le comptoir confié, la préparation (en Ombre) ou la vague en préparation (en Lumière), la prophétie, le pacte, la bataille, Dark Vador | grave, épique |
 | **VI. Ce qui reste** | 97 à 100 % | — | — | — | la fin et ses micro-variantes, puis l'après-fin | selon la fin |
+
+## F. Le nom du Grand Oubli, peuple par peuple (Q180 ★, 01/11)
+
+Personne n'appelle l'événement « le Grand Oubli » (c'est un nom de dossier). Chaque peuple l'a vécu, et interprété, à sa façon, et lui a donné son nom. Quand un texte du jeu nomme l'événement, il le fait avec le nom du peuple qui parle.
+
+| Peuple | Le nom | D'où il vient | Statut |
+|---|---|---|---|
+| Les Bannis (gobelins du Bourbier, le murmure de la cave) | **le long sommeil** | On s'est réveillé dans la boue sans savoir pourquoi on pleurait (Ortie) ; « les momies dormaient pendant le long sommeil » (la cave) | ★ dans le code |
+| Les loups-garous | **la nuit sans lune** | « Puis vint la nuit sans lune. Le Grand Sage chanta, et le monde s'endormit. » (Lunegrise) | ★ dans le code (« chanta » depuis le 01/11) |
+| Les momies | ☆ **la Grande Marée** (« quand la marée est passée ») | Pour un peuple du sable, l'oubli est une marée qui monte, recouvre, et se retire en laissant tout lisse ; les momies qui dormaient ne l'ont pas vue passer (Ankhar : « il n'efface rien, il recouvre »). Autre : « le Sable Haut » | ☆ (v2, 01/11) |
+| Les vampires | ☆ **l'An Sans Nom** | Un peuple de registres, de lignées et de dates : la seule année qui manque dans leurs livres, celle où les registres ont brûlé. Dire « avant l'An Sans Nom » est leur seule façon de dater. Autre : « la Page Arrachée » | ☆ (v2) |
+| Les orcs | ☆ **le Serment Muet** | Un peuple de pactes et de serments gravés : le pacte à l'entrée des galeries que plus personne ne sait lire ; « on a juré quelque chose, on ne sait plus quoi » (Gromak). Autre : « la Dette » | ☆ (v2) |
+| Les elfes | **le chant perdu** | Ils chantent au Lac des Lunes sans plus savoir quoi (Lunegrise) | ★ validé le 01/11 |
+| Les nains | ☆ **la Veine Perdue** | Un peuple de mineurs : un filon de mémoire qu'ils savent avoir creusé et qu'ils ne retrouvent plus ; on frappe les murs pour l'entendre sonner. Autre : « la Galerie Murée » | ☆ (v2) |
+| Les hobbits | ☆ **l'Hiver Sans Fête** | Un peuple de fêtes, de repas et d'almanachs : la seule saison qui n'a pas eu sa fête, la page vide de l'almanach dont on ne parle pas à table. Autre : « l'Année Sans Pommes » | ☆ (v2) |
+| Les humains de la Comté | aucun nom | Ils ne savent pas qu'il y a eu quelque chose : c'est le but du sort | ★ |
+
+Les noms ☆ ne sont pas encore écrits dans le jeu : aucun texte existant de ces peuples ne nomme l'événement. Ils serviront quand un texte le nommera.
+
+## G. Le rituel à trois et les églises de la Confrérie (Q181 ★, 01/11)
+
+- Chaque église de la Confrérie est un **relais du chant du rituel à trois** (le Sage et les deux Gardiens du complot). Le chant part du centre et chaque église le reprend, le porte, le renvoie : c'est ainsi que la vague couvre tout le pays.
+- **Plus l'église est grande, plus elle amplifie.** Les grandes églises des capitales portent loin ; une chapelle de village ne fait que relayer.
+- D'où des **missions de guerre dans chaque ville** à l'approche de la vague : en **Ombre**, saboter ou détourner un relais (une église muette fait un trou dans la vague ; une église détournée renvoie autre chose que le chant) ; en **Lumière**, protéger les relais contre les Bannis qui tentent de les faire taire.
+- Rien de tout cela n'est encore dans le code.
 
 **Quelques règles de rythme**
 - ☆ Une révélation « moyenne » à chaque pièce d'armure, une « grosse » à chaque étoile, une « énorme » par acte (T4, T11, O6 ou L9, O16, O17).
