@@ -4,32 +4,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
-- **Q169** — Les pavés (morceaux 1 et 2 de la phase 1) : la variante « en rangs » (pavés ronds gris, joints sombres, mousse, caniveau de pierre avec son filet d'eau) te va ?
-- **Q170** — Le relief (morceaux 3 à 6) : l'essai sur le barbier, la maison haute et la banque va dans le bon sens ? L'effet est encore discret : faut-il aller nettement plus loin (murs de côté plus larges, toits plus épais, ombres plus marquées) avant de l'étendre à toute la ville ?
-- **Q171** — La maison du paon vide (morceau 7) : le tapis rouge est retiré (il appartient au paon) ; et le panneau dit « À VENDRE — chez le notaire du Conseil ». D'accord pour les deux ?
-- **Q172** — Les propositions du morceau 10 : 1, le filet d'eau du caniveau qui scintille, avec des feuilles qui y flottent à l'automne ; 2, des flaques entre les pavés les jours de pluie, qui reflètent les réverbères le soir ; 4, des moineaux qui picorent devant le banc et s'envolent avec les pigeons. Lesquelles gardes-tu ? (Les propositions 3 et 5, le chat qui s'étire et va se rasseoir plus loin, et les mêmes gestes pour les chats du soir et ton chat, suivent ta règle « tout ce qui est vivant s'anime » : elles se feront en phase 2.)
-
-
-
-
-
-- **Q173** — La lettre de « A. » (le souci de Garrick, étape 3, dans `ComptoirEvenements.js`) est encore dans le jeu ; Q149 la remplace par le fragment recopié par un doyen. A : on le fait dans l'événement existant, pour les trois voies, et on retire au passage les répliques de vieil homme de Garrick (« Mes yeux ne sont plus ce qu'ils étaient »), qui a 26 ans (conseillé) ; B : seulement en Ombre ★3, comme la fin O3, avec un autre souci pour la Lumière et le neutre ; C : on retire l'étape 3 en attendant le chantier 5.
-- **Q174** — La médaille : dans la vision des Brumes, la mère la passe au cou de JeuneGoy ; pourtant le mendiant dit l'avoir « gardée tout ce temps ». A : le soir du drame, l'enfant l'a perdue et le mendiant l'a ramassée (conseillé) ; B : dans la vision, la mère la confie à une silhouette (le mendiant) ; C : la vision est en partie fausse, brouillée par le sort.
-- **Q175** — Ce que JeuneGoy croit de ses parents : les pensées du portrait disent « Pourquoi sont-ils partis sans toi ? », « Si tu les retrouves », alors qu'ils sont morts il y a 13 ans. A : il se croit abandonné ; le « Ils ne t'ont pas abandonné » du mendiant est la première fissure, et l'on placera le moment où il apprend leur mort (conseillé) ; B : il sait qu'ils sont morts, pas comment (on réécrit 3 pensées) ; C : il ne sait pas s'ils sont morts ou disparus.
-- **Q176** — Les pensées de JeuneGoy écrites entre guillemets, à la première personne (environ 25, dans les bulles et le carnet, `src/envie.js`), face à la règle « JeuneGoy ne parle jamais ». A : on les garde, une pensée n'est pas une parole ; B : des images dans la bulle à la place ; C : une narration à la deuxième personne, sans guillemets (« Tu te dis que… ») (conseillé).
-- **Q177** — Le mendiant au marché noir dit « Tes parents ne descendaient jamais… L'ombre est confortable, c'est bien ça le problème », alors que Wëanen a été élevée en partie chez les Bannis, par Ortie. A : on garde, il est trompé par le sort (une fausse piste) ; B : une phrase neutre sur les camps, « Tes parents, eux, ne se cachaient jamais. » (conseillé) ; C : on retire ces deux répliques.
-- **Q178** — Les âges des doyens : Ortie, gobeline, aurait environ 98 ans (les gobelins vivent 50 à 60 ans) ; Gromak, orc, a creusé les galeries pendant l'exode, il a donc plus de 100 ans (les orcs vivent 60 à 70 ans). Q144 dit que les mages font varier. A : tous deux sont des mages ; B : règle générale, une magie forte allonge la vie, et c'est aussi pour cela qu'ils se souviennent (conseillé) ; C : Gromak tient l'histoire de son grand-père.
-- **Q179** — La nymphe dit : « Un sort d'oubli pèse sur vos têtes, à vous autres de la Comté. Il ne tient pas sur l'eau. » Cela laisse croire à un sort local et à une protection de l'eau qui n'est écrite nulle part. A : on garde, et l'eau devient une règle ; B : « à vous autres, d'ici et d'ailleurs », en gardant l'eau ; C : on l'aligne sur la règle de la magie, « ma magie est vieille comme les sources » (conseillé).
-- **Q180** — Le nom du Grand Oubli dans le jeu : le code ne le nomme jamais ; un murmure de la cave parle du « long sommeil », et Lunegrise dit « Le Sage parla, et le monde s'endormit », alors que le sort est un chant. A : « le Grand Oubli » partout ; B : un nom par peuple (le long sommeil chez les Bannis, la nuit sans lune chez les loups-garous…), et Lunegrise dit « chanta » (conseillé) ; C : on n'en parle qu'à demi-mot.
-- **Q181** — Les églises de la Confrérie et le pouvoir d'oubli (ton idée du 01/11). A : chaque église est un relais du chant du rituel à trois : plus elle est grande, plus elle amplifie. Cela explique que l'oubli couvre le monde entier, et cela donne des missions dans chaque ville, pour l'Ombre (saboter, détourner) comme pour la Lumière (protéger) (conseillé) ; B : seulement le grand temple de la capitale, une seule cible ; C : non, la vague reste le seul rituel à trois, avec Séraphine et Ilyriel.
-
-- **Q182** — Le Sage mi-dragon (planche du Sage, morceaux 1 et 2) : la cape de fourrure est rouge sombre, et il la porte dès l'arrivée à la grotte, comme une cape d'exil. On garde ça, ou elle pousse pendant la transformation, ou elle prend une autre couleur (noire, blanche) ?
-- **Q183** — Les cornes : des bois de cerf à andouillers, les mêmes sur les deux formes de dragon, ou des cornes massives et recourbées ?
-- **Q184** — La couronne reste sur sa tête dans les trois formes (fêlée sur le mi-dragon, coincée entre les cornes du dragon serpentin). On la garde, ou elle tombe et se brise ?
-- **Q185** — La couleur de ses flammes : violettes au cœur bleu pâle, ou rouge-orange ? Ce choix vaut aussi pour le souvenir des parents de JeuneGoy, dévoré par les flammes (proposition 2 du morceau 4).
-- **Q186** — Le dragon serpentin « à la même échelle » que JeuneGoy (morceau 1, images 3 et 4) : seuls sa tête, son cou et ses pattes tiennent dans le cadre. Ça te va, ou faut-il une version entière réduite à côté de JeuneGoy ?
-- **Q187** — Le bâton : le mi-dragon le tient encore debout (le côté « mi-mage ») et le brise dans sa rage. Ça te va ?
-- **Q188** — Les propositions du morceau 4 : 1, à son retour d'exil, les premiers jours, ses yeux gardent la couleur du cristal, avec des pupilles en fente et quelques écailles sur les mains et les pommettes (un indice, jamais une preuve) ; 3, sa cape d'écailles rouges serait faite des écailles de Vhaldrak, alors que les siennes sont bleu-violet ; 4, dans la fin « Survivre par le sang », les écailles qui restent à Garrick seraient les mêmes, bleu-violet ; 5, la transformation animée dans le jeu, étape par étape. Lesquelles gardes-tu ?
 
 ## À venir de la part de Claude (pas des questions)
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
@@ -37,6 +11,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q169 à Q188~~ Réponses du 01/11 dans `docs/game-design.md` (relief façon Stardew Valley, pavés à unifier, récit Q173 à Q181, le Sage à retoucher).
 - ~~Q167~~ A : l'église et la Confrérie sur la pente verte derrière la rue Soucolline, entre la rue Haute et la place des Mastres (01/11).
 - ~~Q168~~ 1 : l'impasse du Corbeau au bout ouest, contre le Rempart, à la place de l'hospice et de la chapelle (01/11).
 - ~~Q158 à Q166~~ Rue Soucolline : pas encore validée ; pavés et bâtiments à refaire, paon à vendre, panneaux, animations, nature, plan du soir (01/11, voir `docs/game-design.md`).
