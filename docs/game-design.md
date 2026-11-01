@@ -3806,6 +3806,7 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q164** : les bottes de paille contre la palissade du porche et le bonhomme de neige sur la placette, c'est parfait. Et, maintenant que la ville s'agrandit, ajouter encore plus d'éléments naturels.
   - **Q165, règle** : tout ce qui est vivant a ses animations (pigeons, papillons, chats, oiseaux…). On rend la ville plus que magnifique avant de passer à une autre ville.
   - **Q166** : le joueur demande pourquoi le plan ne permet pas de traverser la ville le soir. Le plan s'ouvrait le soir, mais un clic sur un quartier était refusé (« la ville dort »). Réponse : on le rend utilisable le soir, avec les quartiers dans leur version du soir.
+  - **Q167 (A) et Q168 (1), 01/11** : l'église et la Confrérie vont sur la pente verte derrière la rue Soucolline, entre la rue Haute et la place des Mastres, au centre du plan ; leur clocher se voit depuis la rue et depuis la place. L'impasse du Corbeau va au bout ouest, contre le Rempart, à leur ancienne place : une ruelle qu'on voit du bout de la rue mais où personne ne va, près de la Grand-Porte par où les marchandises entrent en douce.
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).

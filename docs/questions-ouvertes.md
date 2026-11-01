@@ -4,8 +4,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
-- **Q167** — L'église et la Confrérie au milieu de la ville : A, sur la pente verte derrière la rue Soucolline, entre la rue Haute et la place des Mastres (conseillé), ou B, face à la place des Mastres, sur son côté ouest ? (image : Q167_plan.png et Q167_A_depuis_la_rue.png)
-- **Q168** — L'impasse du Corbeau : 1, au bout ouest, contre le Rempart, à la place de l'hospice et de la chapelle (conseillé) ; 2, derrière la tente d'Ysmée ; ou 3, une porte de cave sous les marches de la ruelle du Pommier ? (image : Q168_impasse.png)
 
 
 
@@ -16,6 +14,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q167~~ A : l'église et la Confrérie sur la pente verte derrière la rue Soucolline, entre la rue Haute et la place des Mastres (01/11).
+- ~~Q168~~ 1 : l'impasse du Corbeau au bout ouest, contre le Rempart, à la place de l'hospice et de la chapelle (01/11).
 - ~~Q158 à Q166~~ Rue Soucolline : pas encore validée ; pavés et bâtiments à refaire, paon à vendre, panneaux, animations, nature, plan du soir (01/11, voir `docs/game-design.md`).
 - ~~Q155 à Q157~~ Gestes et besace validés et fusionnés ; flot et « flop » à peaufiner plus tard (31/10).
 - ~~Q151 à Q154~~ Gestes seulement en cinématique et à la troisième personne, pas de hochement de caméra, salut au marché à refaire, autres lieux plus tard (31/10).
