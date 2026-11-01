@@ -9,6 +9,11 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q230** — La Faucheuse v2 (morceau 1) : ce crâne-là, dans la pénombre de la capuche, convient ? Ou plus sombre encore ?
+- **Q231** — La lame en croissant de lune (morceau 2) : cette longueur (elle dépasse sa tête) ? Le manche en vertèbres cerclées d'argent ?
+- **Q232** — La plume : grise, pendue à la chaîne à gauche, ou plantée à la capuche ?
+- **Q233** — Tout en HD : ce qui reste en 16 px, dans l'ordre conseillé : 1, la Faucheuse (en cours) ; 2, l'aperçu du héros à la création du personnage (intro) ; 3, les colis, le coffre et le sac (icônes) ; 4, retirer les vieux replis du code ; 5, les petits décors tracés à la main (la rivière de l'intro, le solstice, la carte) ; 6, auditer l'ancien moteur de portraits. Cet ordre te va ? On le lance dès la Faucheuse validée ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).

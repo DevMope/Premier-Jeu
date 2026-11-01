@@ -3855,6 +3855,7 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q227** : une lame plus longue, en croissant de lune ; et le manche en squelette (en os) plutôt qu'en bois.
   - **Q228** : les souvenirs portés sur elle sont ceux qu'elle compte encore nous donner ; une fois donnés, ils n'apparaissent plus sur elle.
   - **Q219/Q220** : les auras du chat et de la Faucheuse validées, le design est « superbe » ; mais les traits de l'aura de la Faucheuse doivent partir d'elle, de son centre, plutôt que de passer sur elle.
+- **Inventaire « tout en HD » (01/11)** : déjà HD : tous les voyageurs et figurants en pied, le joueur, les bustes, les baluchons et objets en main, les icônes de marchandises, de décor, de trésors et d'armure. Encore en 16 px (ancien moteur de `src/pixels.js`) : la Faucheuse (file et fenêtre du comptoir, bureau, son arrivée) ; l'aperçu du héros à la création (IntroScene) ; la texture provisoire `perso_hobbit` du comptoir (jamais vue) ; quelques icônes sans équivalent HD (colis, colis ouvert, coffre, sac, araignée, loup, lame…) ; des décors tracés au trait (rondin et tonneau de la rivière de l'intro, solstice, carte) ; l'ancien moteur de portraits à auditer. Ordre conseillé : Faucheuse, aperçu de l'intro, colis/coffre/sac, suppression des replis, petits décors, portraits.
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
