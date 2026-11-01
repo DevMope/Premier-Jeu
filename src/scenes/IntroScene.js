@@ -441,7 +441,7 @@ class IntroHistoireScene extends Cinematique {
     this.ecrire('', 'Tu as tiré. Et tiré. Et tiré encore...');
     Son.jouer('voix', { personne: this.voixHeros, ton: 'fache', duree: 0.6 });
     await this.animer({ targets: this.heros, x: 410, duration: 250, yoyo: true, repeat: 2 });
-    this.onomatopee(400, 250, 'HNNNG !');
+    this.onomatopee(420, 210, 'HNNNG !');   // (plus haut : le « BOUM ! » qui suit ne le chevauche plus)
     await this.animer({ targets: this.heros, x: 360, angle: -80, duration: 300, ease: 'Quad.easeOut' });
     this.onomatopee(360, 280, 'BOUM !', '#f3d98a');
     this.cameras.main.shake(200, 0.008);
@@ -491,7 +491,7 @@ class IntroHistoireScene extends Cinematique {
     for (let i = 0; i < 4; i++) {
       const r = this.add.image(380, 300, iconeObjet(this, i === 2 ? 'gourde' : 'ration')).setScale(2.6).setDepth(5);
       this.animer({ targets: r, x: 470, y: 310, duration: 300 }).then(() => r.destroy());
-      this.onomatopee(500 + (i % 2) * 50, 250 - (i % 2) * 20, bruits[i]);
+      this.onomatopee(480 + (i % 2) * 110, 255 - i * 22, bruits[i]);   // (deux colonnes, en escalier : ils ne s'empilent plus)
       await this.attendre(520);
     }
     this.ecrire('', 'Il mangeait comme quatre. Peut-être même comme cinq.');

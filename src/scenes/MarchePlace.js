@@ -553,7 +553,7 @@ Object.assign(MarcheScene.prototype, {
     if (img.bulle && img.bulle.active) return;
     Son.jouer('voix', { personne, ton: 'content' });
     const b = img.bulle = this.add.text(img.x, img.y - img.displayHeight - 8, texte, style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 260 }, align: 'center' })).setOrigin(0.5, 1).setScale(0);
-    b.yTri = 1e6 + 2; this.place.add(b);
+    b.yTri = 1e6 + 2; this.place.add(b); this.garderBulleDansEcran(b);
     this.tweens.add({ targets: b, scale: 1 / this.place.scaleX, duration: 180, ease: 'Back.easeOut' });
     this.time.delayedCall(Math.max(2600, texte.length * 55), () => b.active && this.tweens.add({ targets: b, alpha: 0, duration: 300, onComplete: () => b.destroy() }));
   },
@@ -646,7 +646,7 @@ Object.assign(MarcheScene.prototype, {
   bulleCourte(o, texte) {
     if (o.bulle && o.bulle.active) o.bulle.destroy();
     const b = o.bulle = this.add.text(o.img.x, o.img.y - o.img.displayHeight - 8, texte, style(11, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 7, y: 4 }, wordWrap: { width: 200 }, align: 'center' })).setOrigin(0.5, 1).setScale(0);
-    b.yTri = 1e6 + 2; this.place.add(b);
+    b.yTri = 1e6 + 2; this.place.add(b); this.garderBulleDansEcran(b);
     this.tweens.add({ targets: b, scale: 1 / this.place.scaleX, duration: 160, ease: 'Back.easeOut' });
     this.time.delayedCall(2600, () => b.active && this.tweens.add({ targets: b, alpha: 0, duration: 250, onComplete: () => b.destroy() }));
   },
@@ -661,9 +661,17 @@ Object.assign(MarcheScene.prototype, {
     const texte = garrick ? Phaser.Utils.Array.GetRandom(PHRASES_GARRICK_MARCHE) : this.phraseMarche();
     Son.jouer('voix', { personne: garrick ? { nom: 'Garrick', race: 'humain' } : { nom: o.quoi.nom, race: o.quoi.race, feminin: o.quoi.feminin }, ton: Phaser.Utils.Array.GetRandom(['content', 'rire', 'etonne', 'neutre']) });
     const b = o.bulle = this.add.text(o.img.x, o.img.y - o.img.displayHeight - 8, texte, style(12, '#3b2410', { fontStyle: 'italic', backgroundColor: '#f3e6c8', padding: { x: 8, y: 5 }, wordWrap: { width: 240 }, align: 'center' })).setOrigin(0.5, 1).setScale(0);
-    b.yTri = 1e6 + 2; this.place.add(b);
+    b.yTri = 1e6 + 2; this.place.add(b); this.garderBulleDansEcran(b);
     this.tweens.add({ targets: b, scale: 1 / this.place.scaleX, duration: 180, ease: 'Back.easeOut' });
     this.time.delayedCall(Math.max(2600, texte.length * 55), () => this.tweens.add({ targets: b, alpha: 0, duration: 300, onComplete: () => b.destroy() }));
+  },
+
+  // (house keep) Une bulle de la place reste dans l'écran : près d'un bord, elle se décale vers l'intérieur
+  // (à l'écran, elle mesure b.width : son échelle compense celle de la place)
+  garderBulleDansEcran(b) {
+    const s = this.place.scaleX || 1, demi = b.width / 2 + 6;
+    const xe = Phaser.Math.Clamp(this.place.x + b.x * s, demi, 960 - demi);
+    b.x = (xe - this.place.x) / s;
   },
 
   // Une vue du joueur ou d'un passant, selon le sens de la marche
@@ -936,7 +944,7 @@ Object.assign(MarcheScene.prototype, {
     this.ombreHeros.setPosition(h.x + 2, h.y - 2); this.ombreHeros.yTri = h.y - 0.5;
     // les passants (v1.61 : ils suivent leur chemin, pas à pas, et vivent leur petite vie)
     for (const o of this.passantsPlace) {
-      if (o.bulle && o.bulle.active) o.bulle.setPosition(o.img.x, o.img.y - o.img.displayHeight - 8);
+      if (o.bulle && o.bulle.active) { o.bulle.setPosition(o.img.x, o.img.y - o.img.displayHeight - 8); this.garderBulleDansEcran(o.bulle); }
       if (o.attend && !(o.attend.but && o.attend.but.q === o)) { o.attend = null; o.pause = Math.min(o.pause, 600); }   // (celui qu'il attendait a changé d'avis : il ne reste pas figé 20 s)
       if (o.parle || o.attend) continue;
       if (o.pause > 0) { o.pause -= dt; if (o.pause <= 0) this.envieDePassant(o); continue; }
@@ -1152,7 +1160,7 @@ Object.assign(MarcheScene.prototype, {
     const bloque = this.bloquePlace();
     for (const o of [v.barre, v.etapes]) if (o && o.active) o.setVisible(!bloque);
     if (v.bulle) v.bulle.setVisible(!bloque && !v.bulleCachee);
-    if (g.bulle && g.bulle.active) g.bulle.setPosition(g.x, g.y - g.displayHeight - 8);
+    if (g.bulle && g.bulle.active) { g.bulle.setPosition(g.x, g.y - g.displayHeight - 8); this.garderBulleDansEcran(g.bulle); }
     if (bloque) { if (v.pas) { v.pas = 0; this.poserGarrick(0); } return; }   // (une boutique est ouverte : il t'attend)
     const now = this.time.now, dh = Math.hypot(h.x - g.x, h.y - g.y);
     this.tracesVisite(v.pasG, g.x, g.y); this.tracesVisite(v.pasH, h.x, h.y);
