@@ -8,6 +8,12 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q199** — Les noms du Grand Oubli par peuple, v2 (« le chant perdu » des elfes validé) : momies « la Grande Marée » (l'oubli monte, recouvre, se retire en laissant tout lisse) ; vampires « l'An Sans Nom » (la seule année qui manque dans leurs registres) ; orcs « le Serment Muet » (le pacte gravé que plus personne ne sait lire) ; nains « la Veine Perdue » (le filon de mémoire qu'ils ne retrouvent plus) ; hobbits « l'Hiver Sans Fête » (la page vide de l'almanach). Pour chacun, un second choix est dans `docs/histoire/revelations.md`, section F. Lesquels valides-tu ?
 
+- **Q200** — Les cornes de trois quarts, v3 (planche du Sage v3, morceau 1, avec le schéma vu de dessus) : c'est bon cette fois ? Faut-il que le bois éloigné soit encore plus caché par la tête ?
+- **Q201** — La rage v3 (morceau 3) : sept fissures, espacées, jusqu'aux murs ; ça convient, ou une ou deux de plus vers JeuneGoy ?
+- **Q202** — Les auras, les personnages (morceau 5, propositions) : le Sage humain or + violet qui perce (palier 4) ; le Sage mi-dragon violet (5) ; Vorhal'Düm noir et rouge (5) ; Garrick argent et bleu (2) ; Séraphine violet et noir (3) ; Ilyriel vert (3) ; JeuneGoy rien, puis un halo bleu et blanc (1). Tu valides, tu changes ? Ilyriel : vert pur ou vert et noir ? JeuneGoy plus tard : bleu et blanc, ou le violet du dragon qu'il porte ?
+- **Q203** — Les auras : visibles en permanence sur les personnages, ou seulement dans les récits, les cinématiques et les combats ?
+- **Q204** — La table des 16 couleurs d'aura et leur sens (morceau 4) : tu valides la logique telle quelle ?
+
 ## À venir de la part de Claude (pas des questions)
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
 
