@@ -11,6 +11,10 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q239** — Les noms des armes légendaires. Il en existe déjà huit, une par royaume (Pique-Bourdon, Aube-Lame, Brise-Montagne, Chant-de-Lune, le Bâton des Sept Étoiles, Souffle-de-Bambou, Croc-de-Wyverne, la Lame sans Nom). Propositions pour les nouvelles : la faux de la Faucheuse, « la Dernière Lune » (ou « Moisson-de-Lune ») ; le bâton du Sage en forme humaine (les serres d'or), « Clémence » (sa bonté de façade) ; son bâton une fois transformé (les bois d'argent), « la Ramure d'Oubli » ; l'épée de Garrick, « Fleur-de-Fer » (le pommier des Bannis). Tu valides, tu changes ? Et l'arme que récupère le joueur à la fin, c'est Aube-Lame, ou une autre à nommer ?
 
+- **Q240** — La Faucheuse v3 (morceau 1) : le crâne, presque opaque sous la capuche, est assez effacé ? Ou jusqu'à ne voir que les yeux ?
+- **Q241** — La faux-lune (morceau 2) : cette taille, ou plus grande encore ? La lame d'un blanc nacré, ou plus bleutée (une lune d'hiver) ?
+- **Q242** — La faux luit toujours (son halo lunaire qui pulse), ou seulement quand la Faucheuse se dévoile ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
