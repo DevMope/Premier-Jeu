@@ -9,6 +9,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q239** — Les noms des armes légendaires. Il en existe déjà huit, une par royaume (Pique-Bourdon, Aube-Lame, Brise-Montagne, Chant-de-Lune, le Bâton des Sept Étoiles, Souffle-de-Bambou, Croc-de-Wyverne, la Lame sans Nom). Propositions pour les nouvelles : la faux de la Faucheuse, « la Dernière Lune » (ou « Moisson-de-Lune ») ; le bâton du Sage en forme humaine (les serres d'or), « Clémence » (sa bonté de façade) ; son bâton une fois transformé (les bois d'argent), « la Ramure d'Oubli » ; l'épée de Garrick, « Fleur-de-Fer » (le pommier des Bannis). Tu valides, tu changes ? Et l'arme que récupère le joueur à la fin, c'est Aube-Lame, ou une autre à nommer ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
@@ -16,6 +18,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q230 à Q238~~ Réponses du 02/11 dans `docs/game-design.md` (Faucheuse : crâne opaque, faux-lune avec son aura ; tout en HD validé ; banque et tente à reprendre ; généralisation lancée).
 - ~~Q219 à Q229~~ Réponses du 01/11 tard dans `docs/game-design.md` (vue de haut validée sur le barbier ; Faucheuse à refaire : crâne, lame en croissant, manche en os ; auras du chat et de la Faucheuse validées).
 - ~~Q210 à Q217~~ Réponses du 01/11 nuit dans `docs/game-design.md` (auras validées sauf couleurs du chat et de la Faucheuse ; bâtiments et personnages refusés, à refaire).
 - ~~Q208, Q209~~ Oui (01/11) : fumée et chat sur un toit ; généralisation à toute la rue une fois la vue de rue complètement validée.
