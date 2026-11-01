@@ -9,16 +9,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q230** — La Faucheuse v2 (morceau 1) : ce crâne-là, dans la pénombre de la capuche, convient ? Ou plus sombre encore ?
-- **Q231** — La lame en croissant de lune (morceau 2) : cette longueur (elle dépasse sa tête) ? Le manche en vertèbres cerclées d'argent ?
-- **Q232** — La plume : grise, pendue à la chaîne à gauche, ou plantée à la capuche ?
-- **Q233** — Tout en HD : ce qui reste en 16 px, dans l'ordre conseillé : 1, la Faucheuse (en cours) ; 2, l'aperçu du héros à la création du personnage (intro) ; 3, les colis, le coffre et le sac (icônes) ; 4, retirer les vieux replis du code ; 5, les petits décors tracés à la main (la rivière de l'intro, le solstice, la carte) ; 6, auditer l'ancien moteur de portraits. Cet ordre te va ? On le lance dès la Faucheuse validée ?
-
-- **Q234** — Vue de haut, étape 2 : la maison haute (morceau 1), la banque (morceau 2) et la tente d'Ysmée (morceau 3) dans la projection validée. Lesquels valides-tu ?
-- **Q235** — La tente : vue honnêtement par le dessus, son pied en ellipse la fait monter de 54 rangs, elle domine le barbier. On garde, ou on triche un peu (un cône vu légèrement moins d'en haut) ?
-- **Q236** — La maison haute : son toit fait 0,57 × la façade (trois niveaux) : assez, ou plus haut (0,63) ?
-- **Q237** — La banque : le fronton reste plat devant un toit en croupe. Tu préfères un vrai pignon (le fronton comme face avant d'un toit à deux pans) ?
-- **Q238** — Si validés : je passe la maison à l'auvent et toutes les maisons génériques de la rue, puis je branche le tout dans la rue (avec sa vraie nuit) : d'accord ?
+- **Q239** — Les noms des armes légendaires. Il en existe déjà huit, une par royaume (Pique-Bourdon, Aube-Lame, Brise-Montagne, Chant-de-Lune, le Bâton des Sept Étoiles, Souffle-de-Bambou, Croc-de-Wyverne, la Lame sans Nom). Propositions pour les nouvelles : la faux de la Faucheuse, « la Dernière Lune » (ou « Moisson-de-Lune ») ; le bâton du Sage en forme humaine (les serres d'or), « Clémence » (sa bonté de façade) ; son bâton une fois transformé (les bois d'argent), « la Ramure d'Oubli » ; l'épée de Garrick, « Fleur-de-Fer » (le pommier des Bannis). Tu valides, tu changes ? Et l'arme que récupère le joueur à la fin, c'est Aube-Lame, ou une autre à nommer ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -27,6 +18,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q230 à Q238~~ Réponses du 02/11 dans `docs/game-design.md` (Faucheuse : crâne opaque, faux-lune avec son aura ; tout en HD validé ; banque et tente à reprendre ; généralisation lancée).
 - ~~Q219 à Q229~~ Réponses du 01/11 tard dans `docs/game-design.md` (vue de haut validée sur le barbier ; Faucheuse à refaire : crâne, lame en croissant, manche en os ; auras du chat et de la Faucheuse validées).
 - ~~Q210 à Q217~~ Réponses du 01/11 nuit dans `docs/game-design.md` (auras validées sauf couleurs du chat et de la Faucheuse ; bâtiments et personnages refusés, à refaire).
 - ~~Q208, Q209~~ Oui (01/11) : fumée et chat sur un toit ; généralisation à toute la rue une fois la vue de rue complètement validée.
