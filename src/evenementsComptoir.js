@@ -650,7 +650,7 @@ function matinEvenementsComptoir(G) {
   }
   // (l'enfant gardé au comptoir, et la journée interrompue avant le soir : il a dormi dans l'arrière-boutique)
   if (E.enfant && E.enfant.etat === 'garde' && G.jour > E.enfant.jour) { E.enfant = { ...E.enfant, etat: 'recueilli', retour: E.enfant.jour + EVT_COMPTOIR.enfant.retour[0] }; }
-  if (E.parentsFini && E.parentsFini === G.jour - 1) lignes.push("Tu as demandé dans la rue si quelqu'un avait revu le vieux voyageur. Personne ne se souvient de lui. Personne. Comme s'il n'était jamais venu.");
+  if (E.parentsFini && E.parentsFini === G.jour - 1) lignes.push("Tu as cherché le vieux voyageur dans toute la rue. Personne ne se souvient de lui. Personne. Comme s'il n'était jamais venu.");
   if (E.pigeon && E.pigeon.soigne && !E.pigeon.perdu && E.pigeon.jour === G.jour - 1) lignes.push("Le pigeon blessé a passé la nuit dans sa caisse, près du poêle. Au matin, il s'est envolé par la fenêtre entrouverte, en tournant deux fois au-dessus de la rue.");
   if (E.enfant && E.enfant.etat === 'recueilli' && E.enfant.jour === G.jour - 1) lignes.push(E.enfant.orphelinat ? "Célestin a dormi à l'orphelinat, avec les autres petits. Ce matin, il t'a fait un signe de la main, de l'autre côté de la rue." : "Célestin a dormi dans l'arrière-boutique, roulé dans une couverture. Au matin, il était parti, mais la vaisselle était faite.");
   return lignes;

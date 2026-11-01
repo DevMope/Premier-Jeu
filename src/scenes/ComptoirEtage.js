@@ -14,7 +14,7 @@ function etageDuSoir(scene, suite) {
     if (relancer) etageDuSoir(scene, suite); else if (suite) suite();
   };
   const bouton = (x, y, l, texte, action, actif = true) => { const b = creerBouton(scene, x, y, l, texte, action); b.fond.setDepth(82); b.label.setDepth(82.1); if (!actif) b.setActif(false); objets.push(b); return b; };
-  L.add(scene.add.text(0, -200, "L'ÉTAGE AU-DESSUS DU SHOP", style(19, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+  L.add(scene.add.text(0, -200, "L'ÉTAGE AU-DESSUS DE LA BOUTIQUE", style(19, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
   L.add(scene.add.text(0, -178, "Trois chantiers, l'un après l'autre · pour tous, lumière, ombre ou neutre", style(12, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5));
   const suivant = projetEtage(G);
   ETAGE.projets.forEach((p, i) => {
