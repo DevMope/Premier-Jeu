@@ -11,6 +11,10 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q244** — L'arme que récupère le joueur à la fin : Aube-Lame (l'arme des Hommes, déjà nommée), ou une autre à nommer ?
 
+- **Q245** — La Faucheuse v4 (morceau 1) : les plis de la cape et de la capuche, la doublure sombre, le bas en lambeaux dans la brume te conviennent ?
+- **Q246** — Le manche de la Larme de Lune : assez imposant ? Et la poignée de cuir pour la main du bas : on la garde, ou l'os nu ?
+- **Q247** — Son pouvoir (morceau 3) : faut-il une image de plus, le coup porté (l'arc de lumière, le village fauché) ? Et le palier 5 de son aura : son maximum habituel, ou réservé à ce seul pouvoir (palier 4 sinon) ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
