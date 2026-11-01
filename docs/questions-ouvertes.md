@@ -13,6 +13,11 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q213** — L'apparition de l'aura (morceau 4) : une demi-seconde ou une seconde ? Avec un son ?
 - **Q214** — Vorhal'Düm n'est pas dans ta liste confirmée : on lui propose noir et rouge, palier 5 ?
 
+- **Q215** — Le raccord toit-façade (rue, phase 4, morceaux 1 à 4) : le toit en trapèze qui converge vers le faîte, les rives en biais, la rive avant qui déborde avec son ombre, la sablière, les bandes de murs latéraux : c'est ce que tu voulais ? L'angle (toit 1,2 × la façade, convergence de 14 px) te va, ou plus incliné encore (1,3 ×, 20 px) ?
+- **Q216** — Les personnages vus un peu plus de dessus (morceau 5 : tête et épaules +10 %, jambes −20 %) : ça suffit, ou plus marqué (+15 % / −30 %) ?
+- **Q217** — La banque, la plus haute : au pied de sa façade, son toit dépasse encore de l'écran. On la laisse ainsi, ou on réduit un peu son échelle (2 → 1,8) ?
+- **Q218** — Les bacs à fleurs et le saule ne sont pas retouchés (hors du tronçon ; le saule n'a pas de « dessus » sans être redessiné) : on les redessine avec la généralisation ?
+
 ## À venir de la part de Claude (pas des questions)
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
 
