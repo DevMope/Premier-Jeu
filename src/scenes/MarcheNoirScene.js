@@ -108,7 +108,7 @@ class MarcheNoirScene extends Phaser.Scene {
       const m = imageCorps(this, 1390, 370, 'mendiant', 5.6).setTint(0xd8c0b0).setFlipX(true).setInteractive({ useHandCursor: true });
       this.add.image(1440, 372, chienHD(this, 'profil', true)).setOrigin(0.5, 1).setScale(0.85).setTint(0xc0a898);
       // (v0.93) s'il te voit pencher vers l'ombre, il a l'air triste, et te le dit à sa façon
-      const triste = palierCamp(G) <= -1 ? ["Toi aussi, tu descends de plus en plus souvent... Tes parents ne descendaient jamais.", "L'ombre est confortable, je sais. C'est bien ça, le problème."] : [];
+      const triste = palierCamp(G) <= -1 ? ["Toi aussi, tu descends de plus en plus souvent... Tes parents, eux, ne se cachaient jamais.", "L'ombre est confortable, je sais. C'est bien ça, le problème."] : [];
       const paroles = [...triste, ...triste, "Chut... Ici, personne ne me fait l'aumône. Ici, on m'écoute.", "Le Passeur me garde une écuelle de soupe. On se connaît depuis... avant.", "Brisquet sent les gardes à trois rues. Bien pratique, par ici.", "Là-haut, je suis le vieux fou du marché. En bas, je suis celui qui se souvient."];
       m.on('pointerdown', () => {
         if (this.bulleMendiant && this.bulleMendiant.active) this.bulleMendiant.destroy();

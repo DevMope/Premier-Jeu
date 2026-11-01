@@ -2,7 +2,8 @@
 // Trois temps : il rêve (15 ans, le soir à la fenêtre), il veut voir (18 ans et plus, dehors sous les
 // étoiles), il veut savoir (côté ombre, chaque secret découvert la rend plus forte). Elle vient aussi
 // après le récit d'un héros revenu de loin. Chaque pensée s'écrit, datée, dans le carnet de JeuneGoy (au
-// bureau). Le départ, lui, viendra plus tard.
+// bureau). Le départ, lui, viendra plus tard. (Q176 : les pensées sont à la deuxième personne, sans guillemets,
+// comme si le narrateur disait ce que l'on pense : JeuneGoy ne parle jamais.)
 const ENVIE = {
   ecart: 6,                // au moins quelques jours entre deux pensées (sauf la carte ancienne)
   chances: { fenetre: 0.12, dehors: 0.15, heros: 0.5, secret: 0.25, marcheNoir: 0.1, carte: 1 },
@@ -11,33 +12,33 @@ const ENVIE = {
 };
 const PENSEES = {
   reve: [
-    "« Derrière les collines, il paraît qu'il y a des montagnes qui touchent le ciel... Un jour, j'irai voir. »",
-    "« Les étoiles filantes tombent toutes vers l'ouest. Je me demande ce qu'il y a, là-bas. »",
-    "« Garrick a vu la mer. Moi, je n'ai vu que la rue du marché. Pour l'instant. »",
-    "« Chaque baluchon que je ferme part plus loin que moi... »",
-    "« Un jour, ce sera moi qui pousserai la porte avec un baluchon à l'épaule. »",
+    "Derrière les collines, il paraît qu'il y a des montagnes qui touchent le ciel... Un jour, tu iras voir.",
+    "Les étoiles filantes tombent toutes vers l'ouest. Tu te demandes ce qu'il y a, là-bas.",
+    "Garrick a vu la mer. Toi, tu n'as vu que la rue du marché. Pour l'instant.",
+    "Chaque baluchon que tu fermes part plus loin que toi...",
+    "Un jour, ce sera toi qui pousseras la porte avec un baluchon à l'épaule.",
   ],
   voir: [
-    "« Les Pics Gelés, Khaz-Durim, la mer d'Opale... Je ne veux plus seulement les entendre raconter. Je veux les voir. »",
-    "« J'ai l'âge de partir, maintenant. Qu'est-ce qui me retient ? Le comptoir... et c'est tout. »",
-    "« Les routes sentent la pluie et la poussière. J'aimerais les sentir sous mes pieds. »",
-    "« Je connais chaque contrée par cœur, sur la carte. Aucune pour de vrai. »",
-    "« Un jour, je fermerai le comptoir pour une saison. Juste une. »",
+    "Les Pics Gelés, Khaz-Durim, la mer d'Opale... Tu ne veux plus seulement les entendre raconter. Tu veux les voir.",
+    "Tu as l'âge de partir, maintenant. Qu'est-ce qui te retient ? Le comptoir... et c'est tout.",
+    "Les routes sentent la pluie et la poussière. Tu aimerais les sentir sous tes pieds.",
+    "Tu connais chaque contrée par cœur, sur la carte. Aucune pour de vrai.",
+    "Un jour, tu fermeras le comptoir pour une saison. Juste une.",
   ],
   savoir: [
-    "« Elle se souvient de ce que tout le monde a oublié... Moi aussi, je veux savoir. La vérité, je la trouverai. »",
-    "« Le sceau du Conseil sur des caisses cachées... Qu'est-ce qu'on ne nous dit pas ? »",
-    "« Les Bannis n'ont pas toujours été des Bannis. Qui a décidé ça ? Et pourquoi ? »",
-    "« Les histoires des aventuriers ne collent pas avec celles du Conseil. Quelqu'un ment. »",
-    "« Il y a un morceau du monde que personne ne montre. Je veux le voir de mes yeux. »",
+    "Elle se souvient de ce que tout le monde a oublié... Toi aussi, tu veux savoir. La vérité, tu la trouveras.",
+    "Le sceau du Conseil sur des caisses cachées... Qu'est-ce qu'on ne te dit pas ?",
+    "Les Bannis n'ont pas toujours été des Bannis. Qui a décidé ça ? Et pourquoi ?",
+    "Les histoires des aventuriers ne collent pas avec celles du Conseil. Quelqu'un ment.",
+    "Il y a un morceau du monde que personne ne montre. Tu veux le voir de tes yeux.",
   ],
   heros: [
-    "« Un jour, c'est moi qui raconterai ce que j'ai vu. »",
-    "« {zone}... Rien que le nom donne envie de partir. »",
-    "« Il est revenu avec des étoiles plein les yeux. Je veux les mêmes. »",
+    "Un jour, c'est toi qui raconteras ce que tu as vu.",
+    "{zone}... Rien que le nom te donne envie de partir.",
+    "Il est revenu avec des étoiles plein les yeux. Tu veux les mêmes.",
   ],
   carte: [
-    "« Ce chemin à l'ouest de la Muraille... Personne n'en parle jamais. Un jour, j'irai voir où il mène. »",
+    "Ce chemin à l'ouest de la Muraille... Personne n'en parle jamais. Un jour, tu iras voir où il mène.",
   ],
 };
 

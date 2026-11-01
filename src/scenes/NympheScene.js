@@ -10,8 +10,8 @@ const PAROLES_NYMPHE = [
     "L'eau m'a raconté des choses, depuis. Des villages entiers vidés en une nuit, puis effacés des cartes.",
     "Et ceux qui gardent ce pays jurent qu'il n'y a jamais rien eu là-bas. Étrange, non ?"],
   ["Tu reviens toujours. Alors écoute bien.",
-    "Un sort d'oubli pèse sur vos têtes, à vous autres de la Comté. Il ne tient pas sur l'eau : c'est pour ça que moi, je me souviens.",
-    "Je ne peux pas le briser. Mais quelqu'un qui saurait où chercher... peut-être."],
+    "Vous avez tous la même brume dans les yeux, là-haut. Pas moi. Ma magie est vieille comme les sources, et l'eau garde ce qu'on lui confie.",
+    "Cette brume, je ne peux pas la dissiper. Mais quelqu'un qui saurait où chercher... peut-être."],
   ["Les Bannis n'ont pas toujours été bannis, tu sais.",
     "Demande aux plus vieux d'entre eux ce qu'était leur terre, avant. Écoute ce qu'ils ne disent pas."],
 ];
