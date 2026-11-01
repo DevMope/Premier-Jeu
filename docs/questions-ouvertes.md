@@ -9,18 +9,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q244** — L'arme que récupère le joueur à la fin : Aube-Lame (l'arme des Hommes, déjà nommée), ou une autre à nommer ?
-
-- **Q245** — La Faucheuse v4 (morceau 1) : les plis de la cape et de la capuche, la doublure sombre, le bas en lambeaux dans la brume te conviennent ?
-- **Q246** — Le manche de la Larme de Lune : assez imposant ? Et la poignée de cuir pour la main du bas : on la garde, ou l'os nu ?
-- **Q247** — Son pouvoir (morceau 3) : faut-il une image de plus, le coup porté (l'arc de lumière, le village fauché) ? Et le palier 5 de son aura : son maximum habituel, ou réservé à ce seul pouvoir (palier 4 sinon) ?
-
-- **Q248** — Vue de haut, étape 3 (morceaux 1 à 3) : la banque élargie (pilastres d'angle, toit qui ne déborde plus que de peu), la tente réduite, la maison à l'auvent : validés ?
-- **Q249** — Les maisons de ville passées dans la projection (morceaux 4 et 5 : les 8 de la rue Haute, les maisons basses du palier, toits de tuiles, d'ardoises ou de chaume) : validées ? Les maisons basses sans étage ont un toit plus haut que leur mur, comme les chaumières de Stardew : on garde, ou un peu plus bas ?
-- **Q250** — Les bâtiments faits à la main gardent encore leur ancien toit : les Pommeroy, l'impasse, la forge, ton comptoir, la maison du paon, l'atelier des Mages, l'hospice, la chapelle et le porche. Je les passe dans la projection un par un, à valider chacun : lesquels d'abord ?
-- **Q251** — La maison haute (validée) cache un bout de la rue Haute vue d'en haut : on garde, ou on baisse un peu son toit, là seulement ?
-- **Q252** — La plaque « Rue Soucolline » de la banque recouvre la fenêtre de droite (comme dans la rue actuelle) : je la descends sous la fenêtre (elle mordrait un peu sur la colonne), ou je la mets ailleurs ?
-- **Q253** — Les vieilles maisons du bas-quartier, en contrebas, se feront avec le chantier 4 (le bas-quartier) : d'accord ?
+- **Q254** — Les noms : 1) Aube-Lame, l'arme légendaire des Hommes, paraît plat ; propositions : « Serment d'Aurore », « l'Aube Jurée », « Premier-Soleil ». 2) L'arme forgée par le joueur : son nom légendaire ne serait pas choisi d'avance, mais donné par le monde quand ses exploits deviennent connus de tous, selon ce qu'il a fait (par exemple « la Promesse » ou « l'Espérance » pour des exploits de Lumière, « la Rancune » ou « le Glas » pour l'Ombre, « la Sans-Maître » pour le neutre), avec la possibilité de la renommer. Ce principe te va ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -29,6 +18,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q244 à Q253~~ Réponses du 02/11 dans `docs/game-design.md` (forge du joueur, Faucheuse : manche, noirceur, traînée de fumée ; banque, plaque, maisons basses ; ordre des bâtiments choisi par Claude).
 - ~~Q243~~ L'Absolution (bâton du Sage) et le Dévoreur de Noms (bâton transformé) (02/11).
 - ~~Q239 à Q242~~ Réponses du 02/11 : la Larme de Lune, Fleur de Diamant ; Faucheuse v3 superbe (capuche, cape et manche à reprendre) ; la faux ne luit que dévoilée.
 - ~~Q230 à Q238~~ Réponses du 02/11 dans `docs/game-design.md` (Faucheuse : crâne opaque, faux-lune avec son aura ; tout en HD validé ; banque et tente à reprendre ; généralisation lancée).
