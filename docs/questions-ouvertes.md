@@ -9,6 +9,12 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q219/Q220** — (en suspens) les auras du chat, de la Faucheuse et de Vorhal'Düm seront jugées une fois le dessin HD de la Faucheuse fait (planche en cours).
 
+- **Q221** — La planche de concept « ville vue de haut » (le barbier, morceaux 2 et 3) : cette fois le toit et la façade forment un seul volume (toit en croupe, dessus des appuis, auvent, marche, ombre de l'avant-toit, ombre de contact), à la projection de Stardew (verticales 1:1, profondeurs × 0,75, sans point de fuite). C'est la bonne direction ?
+- **Q222** — Le toit en croupe (deux petits pans de côté, comme la ferme de Stardew) ou un toit à deux pans (pan avant rectangulaire, rives de bois aux bords) ?
+- **Q223** — Le toit fait 0,74 × la façade : on garde, ou plus haut (jusqu'à 1,0) ? Et l'ombre de l'avant-toit sur le mur (8 rangs) : bonne épaisseur ?
+- **Q224** — Les personnages (morceau 4) : JeuneGoy est déjà compatible avec cette caméra (Stardew dessine aussi ses personnages quasi de face) ; on ne touche pas au dessin, on lui donne seulement une ombre en ellipse plus franche. D'accord ?
+- **Q225** — Si la projection est validée : on la passe d'abord à la maison haute et à la banque (le tronçon d'essai), ou directement à toute la rue ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
