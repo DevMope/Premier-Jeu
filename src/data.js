@@ -1801,7 +1801,7 @@ const AINES = {
     nom: 'Grand-mère Ortie', feminin: true, vignette: 'vergers',
     phrase: "« Tes pommes... Elles viennent d'où ? Hm. Nous aussi, on avait des pommiers. Des milliers. Personne ne me croit. Garrick, lui, il me croit. »",
     recit: [
-      "« Approche, approche. Mes yeux sont vieux, mais ma tête, elle, se souvient. »",
+      "« Approche, approche. Mes yeux sont vieux, mais ma tête, elle, se souvient. Ce qui m'a fait durer si longtemps m'a gardé la mémoire aussi. »",
       "« Avant, nous vivions dans une vallée pleine de pommiers. Les fleurs, au printemps, on aurait dit de la neige rose. On chantait en cueillant. Les enfants dormaient sous les arbres. »",
       "« Un printemps, des hommes en bleu sont venus. Un soleil d'or sur la poitrine. Ils disaient qu'un dragon allait venir, qu'il fallait partir pour notre bien. Personne n'avait jamais vu de dragon. »",
       "« Après... je ne sais plus. Il y a un trou, là, dans ma mémoire. Comme une page arrachée. Je me suis réveillée dans la boue, avec les autres. La vallée s'appelait le Bourbier. On ne savait plus pourquoi on pleurait. »",
@@ -1825,7 +1825,7 @@ const AINES = {
     recit: [
       "« Viens près du feu, petit d'homme. Les loups n'ont pas froid, mais les vieux, si. »",
       "« Les elfes chantent au Lac des Lunes pour ne pas oublier. Ils ne savent plus quoi. Moi, je sais : c'est notre chant. Nous gardions leurs forêts, autrefois, et ils nous l'avaient appris en remerciement. »",
-      "« Puis vint la nuit sans lune. Le Grand Sage parla, et le monde s'endormit. Au réveil, les elfes nous chassaient de leurs forêts à coups de flèches d'argent. Ils pleuraient en tirant, sans savoir pourquoi. »",
+      "« Puis vint la nuit sans lune. Le Grand Sage chanta, et le monde s'endormit. Au réveil, les elfes nous chassaient de leurs forêts à coups de flèches d'argent. Ils pleuraient en tirant, sans savoir pourquoi. »",
       "« La meute s'est réfugiée au Col. Les plus vieux d'entre nous se souviennent un peu. Alors nous chantons les noms des nôtres tombés cette nuit-là. Tant qu'on les chante, ils ne sont pas tout à fait partis. »",
       "« Un homme vient parfois, la nuit. Une pipe, un manteau vert. Il écoute les noms jusqu'au bout. Il en connaît certains. ... Non, je ne te dirai pas son nom. Tu le connais déjà, je crois. »",
     ],

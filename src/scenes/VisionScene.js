@@ -199,7 +199,7 @@ class VisionScene extends Phaser.Scene {
         for (let k = 0; k < 40; k++) { const f = this.o(this.add.image(Math.random() * 960, 560, 'halo').setScale(1 + Math.random() * 2).setTint(Phaser.Utils.Array.GetRandom([0xff4010, 0xff8a20, 0xffc040])).setAlpha(0.8).setBlendMode(Phaser.BlendModes.ADD).setDepth(7)); this.tweens.add({ targets: f, y: -80 - Math.random() * 200, duration: 1400 + Math.random() * 900, delay: Math.random() * 600, repeat: 1 }); }
         this.time.delayedCall(1500, () => this.bruler(4800, () => { this.occupe = false; this.indice.setText('▶ clique pour continuer'); }));
       });
-      this.dire("Le ciel devient orange. Une ombre immense passe sur le village...\net le feu du dragon dévore la cuisine, les rires, les visages.");
+      this.dire("Le ciel devient orange. Une ombre immense passe sur le village, le ruban se rompt à ton cou...\net le feu du dragon dévore la cuisine, les rires, les visages.");
     } else if (this.etape === 5) {
       // il rouvre les yeux, près du grand feu : le voile du souvenir se dissipe
       this.fermerVoile();

@@ -74,6 +74,9 @@ Ce fichier propose les dates ☆ et la logique qui les relie à tout ce qui est 
 | la fin | La 4e vague (la fin Lumière ★), ou la chute du sort (Ombre, Lumière retournée, Engeance) | — |
 
 **Quelques âges, pour vérifier** ☆
+
+**Règle (Q178, ★ 01/11)** : une magie forte allonge la vie ; c'est aussi pour cela que les doyens se souviennent. Les deux vont ensemble : plus la magie d'un être est puissante, plus il dure, et plus la mémoire remonte vite en lui (voir le point 3 de la logique). Cohérent avec « certaines espèces vivent longtemps » (Q144). Dans le jeu, Grand-mère Ortie le dit en une phrase : « Ce qui m'a fait durer si longtemps m'a gardé la mémoire aussi. »
+
 - Grand-mère Ortie : née vers −98, elle a environ 98 ans. Elle avait 6 ou 7 ans à la conquête.
 - Le grand-père du Passeur : né vers −115, il était adulte au Grand Oubli, et a raconté l'histoire au Passeur enfant, vers −40.
 - Le parent d'Eliodas, issu du septième peuple : né vers −75, pendant la traque, et caché toute sa vie.
