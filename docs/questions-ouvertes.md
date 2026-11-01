@@ -4,6 +4,10 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## En attente
 
+- **Q169** — Les pavés (morceaux 1 et 2 de la phase 1) : la variante « en rangs » (pavés ronds gris, joints sombres, mousse, caniveau de pierre avec son filet d'eau) te va ?
+- **Q170** — Le relief (morceaux 3 à 6) : l'essai sur le barbier, la maison haute et la banque va dans le bon sens ? L'effet est encore discret : faut-il aller nettement plus loin (murs de côté plus larges, toits plus épais, ombres plus marquées) avant de l'étendre à toute la ville ?
+- **Q171** — La maison du paon vide (morceau 7) : le tapis rouge est retiré (il appartient au paon) ; et le panneau dit « À VENDRE — chez le notaire du Conseil ». D'accord pour les deux ?
+- **Q172** — Les propositions du morceau 10 : 1, le filet d'eau du caniveau qui scintille, avec des feuilles qui y flottent à l'automne ; 2, des flaques entre les pavés les jours de pluie, qui reflètent les réverbères le soir ; 4, des moineaux qui picorent devant le banc et s'envolent avec les pigeons. Lesquelles gardes-tu ? (Les propositions 3 et 5, le chat qui s'étire et va se rasseoir plus loin, et les mêmes gestes pour les chats du soir et ton chat, suivent ta règle « tout ce qui est vivant s'anime » : elles se feront en phase 2.)
 
 
 
