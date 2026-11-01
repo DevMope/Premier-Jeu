@@ -1,11 +1,15 @@
-// Planche à valider : les auras (idée du joueur, 01/11). Une aura entoure un personnage et dit au joueur quel « type »
-// de pouvoir il a (sa couleur) et à quel point il est puissant (sa taille, en cinq paliers), comme dans Hunter x Hunter,
-// One Piece ou Dragon Ball.
-// CE FICHIER N'EST PAS CHARGÉ PAR LE JEU (ni index.html ni web/jeu.html). Il s'appuie sur sageFormesHD.js (sfToile,
-// hachage, rampeVive, halo) : à charger avant lui.
+// Planche à valider : les auras (idée du joueur, 01/11 ; v2 « en voile », retours du soir). Une aura enveloppe un
+// personnage et dit au joueur quel type de pouvoir il a (sa couleur) et à quel point il est puissant (sa taille, en
+// cinq paliers), comme dans Hunter x Hunter, One Piece ou Dragon Ball.
+// Règle validée : l'aura n'apparaît que quand le personnage s'apprête à se battre ou à se défendre, jamais en temps
+// normal ; seulement les personnages doués ; chaque personnage à aura passe par la validation du joueur.
+// CE FICHIER N'EST PAS CHARGÉ PAR LE JEU (ni index.html ni web/jeu.html). Il s'appuie sur decorHD.js (fbm, hachage) et
+// portraitsHD.js (rampeVive) du jeu.
 //
-// Les couleurs, dans la logique de ces animés : chacune a un sens, les mélanges se lisent par leurs deux couleurs
-// (l'extérieur des langues = la première, le cœur = la seconde ; « perce » : la seconde ne se voit qu'au cœur, par éclats).
+// Le voile : une nappe lumineuse continue qui épouse la silhouette (un contour épais et doux qui suit le corps, dense
+// près de lui, qui se dilue vers l'extérieur et monte plus qu'elle ne descend), des volutes lentes comme une fumée, et le
+// personnage lui-même teinté et éclairé par sa couleur, ses bords fondus dans le voile, ses cheveux et sa cape soulevés.
+// Les éclairs, fins, seulement aux grands paliers ; au dernier, le sol luit et des débris lévitent.
 const AURAS_COULEURS = {
   noirRouge: { nom: 'noir et rouge', sens: 'agressif, malsain, un pouvoir qui dévore', ext: 0x1a0a12, int: 0xd82020 },
   or: { nom: 'or', sens: 'noblesse et puissance, le pouvoir légitime', ext: 0xd8a020, int: 0xfff0a0 },
@@ -23,77 +27,110 @@ const AURAS_COULEURS = {
   rougeOr: { nom: 'rouge et or', sens: 'un guerrier noble, la force au service d’un rang', ext: 0xc02018, int: 0xffd060 },
   violetNoir: { nom: 'violet et noir', sens: 'une domination sans retour, la magie interdite', ext: 0x0a0612, int: 0x9a40e0 },
   argentBleu: { nom: 'argent et bleu', sens: 'un don ancien et maîtrisé (une magie spéciale)', ext: 0x8a92a8, int: 0x70c0ff },
+  noirOr: { nom: 'noir et or', sens: 'la pègre, la ruse au service d’un rang (le chat)', ext: 0x0c0a10, int: 0xe8b830 },
+  blancNoir: { nom: 'blanc et noir', sens: 'la mort qui apaise, le passage (la Faucheuse)', ext: 0x0a0812, int: 0xe8e8ff },
 };
-// Les cinq paliers de puissance : la taille de l'aura, ce qui s'y ajoute
+// Les cinq paliers : la portée du voile (en pixels de la texture du personnage, qui fait 160 de haut environ), sa densité,
+// ce qui s'y ajoute. Chaque personnage a sa propre texture : la portée se mesure par rapport à sa hauteur.
 const AURAS_PALIERS = [
   null,
-  { nom: '1. le halo', desc: 'un halo discret autour du corps', h: 0, l: 0, halo: 0.75 },
-  { nom: '2. la lueur', desc: 'des langues courtes qui montent le long du corps', h: 0.45, l: 0.6, halo: 0.9 },
-  { nom: '3. l’aura', desc: 'des flammes qui l’enveloppent, plus hautes que lui', h: 0.95, l: 0.85, halo: 1.3 },
-  { nom: '4. la tempête', desc: 'l’aura double, des éclairs, des étincelles', h: 1.35, l: 1.15, halo: 1.9, eclairs: 4, etincelles: 40 },
-  { nom: '5. le déchaînement', desc: 'elle remplit l’écran, la foudre, les débris qui lévitent', h: 1.9, l: 1.7, halo: 2.8, eclairs: 8, etincelles: 90, debris: 14, sol: true },
+  { nom: '1. le halo', desc: 'un halo discret qui suit le corps', portee: 0.07, dense: 0.7, teinte: 0.1 },
+  { nom: '2. la lueur', desc: 'le voile monte le long du corps, les cheveux se soulèvent', portee: 0.16, dense: 0.85, teinte: 0.18, cheveux: 0.6 },
+  { nom: '3. l’aura', desc: 'un voile bien présent qui l’enveloppe, des volutes', portee: 0.28, dense: 1, teinte: 0.26, cheveux: 1 },
+  { nom: '4. la tempête', desc: 'le voile double, des volutes qui montent haut, de fins éclairs', portee: 0.45, dense: 1.1, teinte: 0.34, cheveux: 1.4, eclairs: 3 },
+  { nom: '5. le déchaînement', desc: 'il remplit l’écran, la foudre, le sol luit, des débris lévitent', portee: 0.7, dense: 1.2, teinte: 0.42, cheveux: 1.8, eclairs: 6, debris: 12, sol: true },
 ];
-// Les langues d'une aura : comme les flammes du Sage, mais à deux couleurs (extérieur, cœur) et autour de tout le corps :
-// elles partent des pieds et des flancs. (W, H) la toile ; (cx, sol) les pieds ; (lc, hc) la largeur et la hauteur du corps
-function auraLanguesHD(t, cx, sol, lc, hc, couleur, palier, graine = 3) {
-  const C = AURAS_COULEURS[couleur], P = AURAS_PALIERS[palier];
-  const ext = rampeVive(C.ext), int = rampeVive(C.int);
-  t.rampes.auraE = ext; t.rampes.auraI = int; t.rampes.auraB = [0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff];
-  const largeur = lc * P.l, hauteur = hc * P.h, langues = [];
-  const n = 7 + palier * 3;
-  for (let i = 0; i < n; i++) {
-    const u = i / (n - 1) - 0.5, x0 = cx + u * largeur * 1.3 + (hachage(i, 7, graine) - 0.5) * 10;
-    const flanc = Math.abs(u) > 0.3;   // (sur les flancs, les langues partent plus haut, le long du corps)
-    const base = flanc ? sol - hc * (0.15 + hachage(i, 8, graine) * 0.55) : sol;
-    const h = hauteur * (0.45 + 0.55 * Math.cos(u * 2.2)) * (0.6 + 0.6 * hachage(i, 1, graine)) * (flanc ? 0.7 : 1), w = largeur * (0.075 + 0.05 * hachage(i, 2, graine)) * (palier <= 3 ? 1.3 : 1);
-    langues.push({ x0, h, w, base, ph: hachage(i, 3, graine) * 6.3, tors: 0.2 + hachage(i, 4, graine) * 0.6, pench: u * 0.35 });
-  }
-  const y0 = Math.max(0, Math.floor(sol - hauteur * 1.2)), x0 = Math.max(0, Math.floor(cx - largeur)), x1 = Math.min(t.l - 1, Math.ceil(cx + largeur));
-  for (let y = Math.min(t.h - 1, sol + 2); y > y0; y--) for (let x = x0; x <= x1; x++) {
-    let best = null;
-    for (const L of langues) { const v = (L.base - y) / L.h; if (v < 0 || v > 1) continue;
-      const xc = L.x0 + Math.sin(v * 6 + L.ph) * L.w * L.tors * v * 2.5 + L.pench * v * 50, ww = L.w * (1 - v * v) * (0.7 + 0.5 * Math.sin(v * 3.14 + L.ph)) + 0.6;
-      const r = Math.abs(x + 0.5 - xc) / ww; if (r < 1 && (!best || r + v * 0.6 < best.r + best.v * 0.6)) best = { r, v }; }
-    if (!best) continue;
-    const { r, v } = best, bruit = (hachage(x, y, graine) - 0.5) * 0.7, pointe = v > 0.82 && r < 0.45;
-    if (pointe && palier >= 3) { t.poser(x, y, 'auraB', 5); continue; }
-    if (C.perce) { const perce = hachage(Math.floor(x / 3), Math.floor(y / 5), graine + 2) > 0.8 && r < 0.4; t.poser(x, y, perce ? 'auraI' : 'auraE', Math.max(0, Math.min(5, Math.round(4.6 - r * 3 - v * 1.4 + bruit)))); continue; }
-    if (r < 0.42 - v * 0.2) t.poser(x, y, 'auraI', Math.max(0, Math.min(5, Math.round(4.5 - r * 4 - v * 1.2 + bruit))));
-    else t.poser(x, y, 'auraE', Math.max(0, Math.min(5, Math.round(4.3 - r * 3 - v * 1.4 + bruit))));
-  }
-  // les étincelles qui montent, les éclairs, les débris qui lévitent
-  if (P.etincelles) for (let i = 0; i < P.etincelles; i++) { const m = hachage(i, 12, graine), bx = cx + (hachage(i, 11, graine) - 0.5) * largeur * 2.6, by = sol - m * hauteur * 1.4 - 4;
-    const x = Math.round(bx + Math.sin(m * 9 + i) * 10), y = Math.round(by); if (y < 0 || x < 0 || x >= t.l) continue; t.poser(x, y, m > 0.5 ? 'auraB' : 'auraI', 5); if (m < 0.4) t.poser(x + 1, y, 'auraI', 3); }
-  if (P.eclairs) for (let e = 0; e < P.eclairs; e++) {
-    let x = cx + (hachage(e, 21, graine) - 0.5) * largeur * 1.6, y = sol - hc * (0.1 + hachage(e, 22, graine) * 0.9);
-    const a0 = (hachage(e, 23, graine) - 0.5) * 2.2 - Math.PI / 2, pas = 8 + Math.round(hachage(e, 24, graine) * 8);
-    for (let j = 0; j < pas; j++) { const a = a0 + (hachage(e, j + 30, graine) - 0.5) * 1.8, l = 10 + hachage(e, j + 50, graine) * 18, nx = x + Math.cos(a) * l, ny = y + Math.sin(a) * l;
-      for (let s = 0; s <= l; s++) { const px = Math.round(x + (nx - x) * s / l), py = Math.round(y + (ny - y) * s / l); t.poser(px, py, 'auraB', 5); t.poser(px + 1, py, 'auraB', 5); t.poser(px - 1, py, 'auraI', 4); t.poser(px, py + 1, 'auraI', 4); t.poser(px, py - 1, 'auraI', 3); }
-      x = nx; y = ny; }
-  }
-  if (P.debris) { t.rampes.debris = rampeVive(0x3a3240);
-    for (let d = 0; d < P.debris; d++) { const a = hachage(d, 41, graine) * 6.28, dist = largeur * (0.5 + hachage(d, 42, graine) * 0.9), rx = 2 + hachage(d, 43, graine) * 6;
-      const x = cx + Math.cos(a) * dist, y = sol - 10 - Math.abs(Math.sin(a)) * hauteur * 0.5 - hachage(d, 44, graine) * hc * 0.6;
-      t.forme('debris', ellipsoide(x, y, rx, rx * 0.7), { decalage: 0.2 }); } }
-  return t;
+const AURA_BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+// Les pixels d'une texture (la silhouette du personnage) : { w, h, data (rgba) }
+function auraPixels(scene, cle) {
+  const src = scene.textures.get(cle).getSourceImage(), w = src.width, h = src.height;
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const ctx = c.getContext('2d'); ctx.drawImage(src, 0, 0);
+  return { w, h, data: ctx.getImageData(0, 0, w, h).data };
 }
-// Pose une aura autour d'une image de personnage posée par les pieds (img : origine 0.5, 1), dans une scène
-function auraHD(s, img, couleur, palier, { graine = 3, prof = null, cle = null } = {}) {
-  const C = AURAS_COULEURS[couleur], P = AURAS_PALIERS[palier], p0 = prof ?? img.depth;
-  const lc = img.displayWidth * 0.75, hc = img.displayHeight, cx = img.x, sol = img.y;
-  const objets = [];
-  const halo = (x, y, sx, sy, teinte, alpha, prof) => objets.push(s.add.image(x, y, 'halo').setScale(sx, sy).setTint(teinte).setAlpha(alpha).setBlendMode(Phaser.BlendModes.ADD).setDepth(prof));
-  halo(cx, sol - hc * 0.5, hc / 130 * P.halo * 1.2, hc / 130 * P.halo * 1.5, C.ext, 0.6, p0 - 0.3);
-  halo(cx, sol - hc * 0.45, hc / 130 * P.halo * 0.6, hc / 130 * P.halo * 0.9, C.int, 0.5, p0 - 0.25);
-  if (P.sol) halo(cx, sol + 2, hc / 130 * P.halo * 1.6, hc / 130 * 0.5, C.int, 0.45, p0 - 0.2);
-  if (palier >= 2) {
-    const W = Math.ceil(lc * P.l * 3.6 + 80), H = Math.ceil(hc * P.h * 1.5 + hc + 20), t = sfToile(W, H, { relief: false });
-    auraLanguesHD(t, W / 2, H - 12, lc, hc, couleur, palier, graine);
-    const k = cle || ('aura_' + couleur + '_' + palier + '_' + graine + '_' + Math.round(hc)); t.texture(s, k);
-    objets.push(s.add.image(cx, sol + 12, k).setOrigin(0.5, 1).setDepth(p0 - 0.1).setAlpha(0.92));
-    // quelques langues devant lui, au bas du corps
-    if (palier >= 3) { const t2 = sfToile(W, 80, { relief: false }); auraLanguesHD(t2, W / 2, 70, lc * 0.8, hc * 0.25, couleur, 2, graine + 9); t2.texture(s, k + '_av'); objets.push(s.add.image(cx, sol + 10, k + '_av').setOrigin(0.5, 1).setDepth(p0 + 0.1).setAlpha(0.8)); }
-    halo(cx, sol - hc * 0.4, hc / 130 * P.halo * 0.5, hc / 130 * P.halo * 0.7, C.int, 0.22, p0 + 0.05);   // (la lumière sur lui)
+// Une texture avec de la transparence, écrite pixel par pixel ({ r, g, b, a } par pixel, ou null)
+function auraTexture(scene, cle, W, H, px) {
+  if (scene.textures.exists(cle)) scene.textures.remove(cle);
+  const tex = scene.textures.createCanvas(cle, W, H), ctx = tex.getContext(), img = ctx.createImageData(W, H);
+  for (let i = 0; i < W * H; i++) { const p = px[i]; if (!p) continue; img.data[i * 4] = p[0]; img.data[i * 4 + 1] = p[1]; img.data[i * 4 + 2] = p[2]; img.data[i * 4 + 3] = p[3]; }
+  ctx.putImageData(img, 0, 0); tex.refresh(); return cle;
+}
+const auraRgb = c => [(c >> 16) & 255, (c >> 8) & 255, c & 255];
+const auraMix = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+// Le voile et ses couches, pour une silhouette donnée : rend { arriere, devant, R } (deux clés de textures, la marge R)
+// montee : de 0 à 1, l'aura qui apparaît (sa portée et sa densité montent)
+function auraVoileHD(scene, cle, couleur, palier, { graine = 3, montee = 1 } = {}) {
+  const C = AURAS_COULEURS[couleur], P = AURAS_PALIERS[palier], S = auraPixels(scene, cle);
+  const R = Math.max(2, Math.round(S.h * P.portee * (0.35 + 0.65 * montee))), dense = P.dense * (0.4 + 0.6 * montee);
+  const W = S.w + 2 * R, H = S.h + 2 * R, N = W * H;
+  // la silhouette, et la distance au corps (une propagation : monter coûte moins que descendre, le voile s'élève)
+  const corps = new Uint8Array(N), d = new Float32Array(N).fill(1e9), file = [];
+  for (let y = 0; y < S.h; y++) for (let x = 0; x < S.w; x++) if (S.data[(y * S.w + x) * 4 + 3] > 40) { const i = (y + R) * W + x + R; corps[i] = 1; d[i] = 0; file.push(i); }
+  const couts = [[1, 0, 1], [-1, 0, 1], [0, -1, 0.72], [0, 1, 1.5], [1, -1, 1.25], [-1, -1, 1.25], [1, 1, 1.8], [-1, 1, 1.8]];
+  for (let k = 0; k < file.length; k++) { const i = file[k], x = i % W, y = (i - x) / W;
+    for (const [dx, dy, c] of couts) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const j = ny * W + nx, nd = d[i] + c; if (nd < d[j] && nd <= R + 1) { d[j] = nd; file.push(j); } } }
+  const ext = auraRgb(C.ext), int = auraRgb(C.int), blanc = [255, 255, 255];
+  const arriere = new Array(N).fill(null), devant = new Array(N).fill(null);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x; if (d[i] > R) continue;
+    const u = d[i] / R;   // 0 contre le corps, 1 au bord du voile
+    // les volutes : une fumée lente, qui monte (le bruit est étiré en hauteur et décalé par la graine)
+    const vol = fbm(x * 0.045, y * 0.025 - graine * 3, graine, 3), vol2 = fbm(x * 0.11, y * 0.07 + graine, graine + 7, 2);
+    let I = Math.pow(1 - u, 1.05) * (0.78 + 0.5 * vol) * (0.88 + 0.25 * vol2) * dense;
+    if (corps[i]) I = Math.min(1, I + 0.15);
+    const perce = C.perce && hachage(Math.floor(x / 4), Math.floor(y / 6), graine + 2) > 0.78;
+    const sombre = (ext[0] + ext[1] + ext[2]) < 150;   // (un extérieur sombre : le cœur clair reste large, sinon on ne verrait rien)
+    let col = perce ? int : auraMix(int, ext, Math.min(1, u * (sombre ? 0.9 : 1.6))); if (u < 0.08 && !corps[i]) col = auraMix(col, blanc, 0.35);
+    // la transparence en quatre crans, tramée : un voile doux qui reste du pixel art
+    const a = Math.max(0, Math.min(1, I)), cran = Math.floor(a * 4 + (AURA_BAYER[y % 4][x % 4] + 0.5) / 16) / 4;
+    if (cran <= 0) continue;
+    const A = Math.round(Math.min(1, cran) * 235);
+    if (corps[i]) { if (!perce) devant[i] = [col[0], col[1], col[2], Math.round(A * P.teinte * 0.9)]; continue; }   // (sur le corps : la teinte, douce)
+    arriere[i] = [col[0], col[1], col[2], A];
+    if (u < 0.22) devant[i] = [col[0], col[1], col[2], Math.round(A * 0.55)];   // (le bord du corps se fond dans le voile)
   }
+  // les cheveux, la barbe et la cape soulevés : depuis le haut de la silhouette (et les côtés bas), des mèches de la couleur
+  // du pixel qui s'étirent vers le haut en ondulant, et se fondent dans le voile
+  if (P.cheveux) { const lg = P.cheveux * S.h * 0.11 * montee;
+    for (let x = R; x < W - R; x += 1 + (hachage(x, 1, graine) > 0.5 ? 1 : 0)) {
+      let top = -1; for (let y = R; y < H - R; y++) if (corps[y * W + x]) { top = y; break; } if (top < 0) continue;
+      const s = S.data[((top - R) * S.w + (x - R)) * 4], g = S.data[((top - R) * S.w + (x - R)) * 4 + 1], b = S.data[((top - R) * S.w + (x - R)) * 4 + 2];
+      const l = lg * (0.4 + hachage(x, 2, graine) * 0.9), ond = (hachage(x, 3, graine) - 0.5) * 2;
+      for (let k = 1; k <= l; k++) { const f = k / l, xx = Math.round(x + Math.sin(f * 3 + x * 0.3) * ond * 2 * f), yy = top - k; if (xx < 0 || xx >= W || yy < 0) break;
+        const mel = auraMix([s, g, b], int, f * 0.8), al = Math.round(220 * (1 - f * f)); devant[yy * W + xx] = [mel[0] | 0, mel[1] | 0, mel[2] | 0, al]; }
+    }
+    // la cape et la robe, au bas des côtés : les bords s'écartent en lambeaux soulevés
+    for (let y = Math.round(H * 0.45); y < H - R; y += 2) { for (const cote of [-1, 1]) { let bord = -1;
+      for (let x = cote < 0 ? R : W - R - 1; x >= R && x < W - R; x += cote) if (corps[y * W + x]) { bord = x; break; } if (bord < 0) continue;
+      const i0 = ((y - R) * S.w + (bord - R)) * 4, l = lg * 0.6 * (0.3 + hachage(y, 5, graine));
+      for (let k = 1; k <= l; k++) { const f = k / l, xx = bord + cote * k, yy = Math.round(y - k * 0.6 - Math.sin(y * 0.4) * 1.5); if (xx < 0 || xx >= W || yy < 0) break;
+        const mel = auraMix([S.data[i0], S.data[i0 + 1], S.data[i0 + 2]], int, f * 0.7); devant[yy * W + xx] = [mel[0] | 0, mel[1] | 0, mel[2] | 0, Math.round(200 * (1 - f))]; } } }
+  }
+  // les éclairs fins, dans le voile, aux grands paliers
+  if (P.eclairs) for (let e = 0; e < P.eclairs * montee; e++) {
+    let x = R + hachage(e, 21, graine) * S.w, y = R + S.h * (0.05 + hachage(e, 22, graine) * 0.8), a = (hachage(e, 23, graine) - 0.5) * 2.4 - Math.PI / 2;
+    for (let j = 0; j < 5 + hachage(e, 24, graine) * 4; j++) { const aa = a + (hachage(e, j + 30, graine) - 0.5) * 2, l = R * (0.12 + hachage(e, j + 50, graine) * 0.25);
+      for (let s = 0; s < l; s++) { const px = Math.round(x + Math.cos(aa) * s), py = Math.round(y + Math.sin(aa) * s); if (px < 0 || py < 0 || px >= W || py >= H || corps[py * W + px]) continue; arriere[py * W + px] = [255, 255, 255, 230]; if (px + 1 < W) arriere[py * W + px + 1] = [int[0], int[1], int[2], 160]; }
+      x += Math.cos(aa) * l; y += Math.sin(aa) * l; }
+  }
+  // les débris qui lévitent (de petites pierres, dans le voile)
+  if (P.debris) for (let k = 0; k < P.debris; k++) { const cx = hachage(k, 41, graine) * W, cy = R * 0.3 + hachage(k, 42, graine) * (H - R), r = 1 + hachage(k, 43, graine) * 2.5;
+    for (let y = Math.floor(cy - r); y <= cy + r; y++) for (let x = Math.floor(cx - r * 1.3); x <= cx + r * 1.3; x++) { if (x < 0 || y < 0 || x >= W || y >= H) continue; const dx = (x - cx) / (r * 1.3), dy = (y - cy) / r; if (dx * dx + dy * dy > 1) continue;
+      const t = dy < -0.3 ? 70 : dy > 0.4 ? 28 : 46; arriere[y * W + x] = [t, t - 6, t + 8, 255]; } }
+  const base = 'aura_' + cle + '_' + couleur + '_' + palier + '_' + graine + '_' + Math.round(montee * 100);
+  return { arriere: auraTexture(scene, base + '_a', W, H, arriere), devant: auraTexture(scene, base + '_d', W, H, devant), R, W, H };
+}
+// Pose l'aura autour d'une image de personnage posée par les pieds (origine 0.5, 1) : le voile derrière, la teinte et les
+// bords fondus devant, un halo additif et, au dernier palier, le sol qui luit
+function auraHD(s, img, couleur, palier, { graine = 3, montee = 1 } = {}) {
+  const C = AURAS_COULEURS[couleur], P = AURAS_PALIERS[palier], V = auraVoileHD(s, img.texture.key, couleur, palier, { graine, montee });
+  const sc = img.scaleX, objets = [], p0 = img.depth;
+  const pose = (cle, prof, alpha, blend) => { const o = s.add.image(img.x, img.y + V.R * sc, cle).setOrigin(0.5, 1).setScale(sc).setFlipX(img.flipX).setDepth(prof).setAlpha(alpha); if (blend) o.setBlendMode(blend); objets.push(o); return o; };
+  const h = img.displayHeight;
+  objets.push(s.add.image(img.x, img.y - h * 0.5, 'halo').setScale(h / 130 * (0.6 + P.portee * 4) * montee, h / 130 * (0.9 + P.portee * 4) * montee).setTint(C.ext).setAlpha(0.3 * montee).setBlendMode(Phaser.BlendModes.ADD).setDepth(p0 - 0.4));
+  pose(V.arriere, p0 - 0.3, 0.95, null);
+  pose(V.arriere, p0 - 0.29, 0.35 * montee, Phaser.BlendModes.ADD);   // (la lueur du voile)
+  pose(V.devant, p0 + 0.1, 0.95, null);
+  objets.push(s.add.image(img.x, img.y - h * 0.45, 'halo').setScale(h / 130 * 0.5, h / 130 * 0.8).setTint(C.int).setAlpha(P.teinte * 0.7 * montee).setBlendMode(Phaser.BlendModes.ADD).setDepth(p0 + 0.12));   // (il est éclairé par sa couleur)
+  if (P.sol && montee > 0.6) objets.push(s.add.image(img.x, img.y + 2, 'halo').setScale(h / 130 * 1.8, h / 130 * 0.35).setTint(C.int).setAlpha(0.5).setBlendMode(Phaser.BlendModes.ADD).setDepth(p0 - 0.2));
   return objets;
 }

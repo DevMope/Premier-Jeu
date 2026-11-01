@@ -435,7 +435,7 @@ function sfTeteDragon3q(t, x0, y0, e, { dir = 1, gueule = 0.4 } = {}) {
   t.forme('criniere', E(-22, 6, 24, 22), { decalage: -1.2, motif: (x, y) => sfMotifFourrure(x, y, 41) * 0.8 });
   for (let m = 0; m < 14; m++) { const v = m / 13, bx = -12 - Math.sin(v * Math.PI) * 10, by = -20 + v * 46, dy = -0.7 + v * 1.6, l = 56 + ((m * 7) % 5) * 9, r = 6.5 - ((m * 3) % 4) * 0.6;
     sfLoche(t, ...P(bx, by), -dir, dy, l * e, r * e, { decalage: ((m * 5) % 3) * 0.3 - 0.35, chute: 0.3, onde: 0.1 + (m % 3) * 0.04 }); }
-  sfCorne(t, sfBezier(P(-20, -8), P(-26, -22), P(-34, -34), P(-44, -44), 20), 4.2 * e, [[0.45, -1 * dir * e, -14 * e], [0.78, -4 * dir * e, -10 * e]], { decalage: -0.45 });   // (v2 : la corne du fond, tournée avec la tête)
+  sfCorne(t, sfBezier(P(-12, -14), P(-14, -30), P(-20, -42), P(-30, -50), 20), 4.6 * e, [[0.45, -1 * dir * e, -14 * e], [0.78, -4 * dir * e, -10 * e]], { decalage: -0.45 });   // (v2 : la corne du fond, tournée avec la tête)
   sfNageoire(t, ...P(-15, -6), e, dir, 0.3, -0.5);
   // la mâchoire du bas, qui s'ouvre en tournant
   const aj = 0.1 + 0.26 * g;
