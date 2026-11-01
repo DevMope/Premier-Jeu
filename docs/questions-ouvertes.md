@@ -6,8 +6,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q209** — Les propositions 2 et 3 de la rue phase 3 (la fumée des cheminées qui dérive avec le vent ; un chat sur un toit l'après-midi au soleil) : oui ou non ?
-- **Q208** — (toujours ouverte) une fois la caméra et le raccord toit-façade validés, généraliser à toute la rue puis déplacer l'église, la Confrérie et l'impasse : d'accord ?
 
 ## À venir de la part de Claude (pas des questions)
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
@@ -15,6 +13,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q208, Q209~~ Oui (01/11) : fumée et chat sur un toit ; généralisation à toute la rue une fois la vue de rue complètement validée.
 - ~~Q199 à Q207~~ Réponses du 01/11 soir dans `docs/game-design.md` (auras à refaire en voile, caméra : angle et raccord toit-façade, règle de la montée en gamme).
 - ~~Q189 à Q198~~ Réponses du 01/11 après-midi dans `docs/game-design.md` (Q193 : seul « le chant perdu » validé, à reprendre).
 - ~~Q169 à Q188~~ Réponses du 01/11 dans `docs/game-design.md` (relief façon Stardew Valley, pavés à unifier, récit Q173 à Q181, le Sage à retoucher).
