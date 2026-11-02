@@ -637,4 +637,8 @@ function paonVolumeHD(s, src) {
 // Dans un lot déjà posé (la maison du paon de la rue), chaque façade du paon prend son volume (même place, même pied)
 function paonVolumeDansLot(s, lot) {
   for (const o of lot.list || []) if (o.type === 'Image' && /^facadeRivalHD_/.test(o.texture.key) && !/_vol$/.test(o.texture.key)) o.setTexture(paonVolumeHD(s, o.texture.key));
+  // (la brasserie) sa guirlande de lampions, que FacadeScene pend au bord de l'ancien toit (haut + 20) : sous la corniche
+  // blanche (son rang 57), et non plus sur le pan du toit en croupe
+  const haut = 442 - FACADE_RIVAL.H * 2;
+  for (const o of lot.list || []) if (o.type === 'Arc' && o.radius === 4 && o.fillColor === 0xffe08a && o.y > haut + 8 && o.y < haut + 32) o.y += 94;
 }
