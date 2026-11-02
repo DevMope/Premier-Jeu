@@ -126,6 +126,27 @@ function fhLueurFaux(s, pts, x0, y0, e, { prof = 4, pulse = true, poussieres = 2
     s.tweens.add({ targets: p, x: p.x + dx * e * 0.4, y: p.y + dy * e * 0.4, alpha: 0.15, duration: 2200 + hachage(i, 7, 41) * 1800, repeat: -1, delay: hachage(i, 8, 41) * 2000 }); }
   return objets;
 }
+// (v9, le joueur au comptoir) la capuche avance et descend sur le front : son bord tombe en arc jusqu'au-dessus des
+// orbites, il jette une ombre épaisse sur l'os (le crâne recule dans le noir : seules les orbites rouges et un soupçon
+// de mâchoire restent lisibles) ; le liseré de givre suit ce nouveau bord, puis les côtés de l'ouverture.
+function fhCapucheAvancee(t, ox, oy, orx, ory, k, { pas = 0.08, marge = 0.8 * k } = {}) {
+  // la nouvelle ouverture : même largeur et même bas, mais sa moitié haute s'écrase : son haut descend sur le front (un arc
+  // rond, sans pointes)
+  const oy2 = oy, ory2 = 0.45 * ory, haut = x => { const dx = (x + 0.5 - ox) / orx; return Math.abs(dx) >= 1 ? oy : oy2 - ory2 * Math.sqrt(1 - dx * dx); };
+  const dans = (x, y, rx, ry, cy) => { const dx = (x + 0.5 - ox) / rx, dy = (y + 0.5 - cy) / ry; return dx * dx + dy * dy <= 1; };
+  // le tissu du front, qui avance au-dessus du visage (le dessous du bord dans l'ombre, l'arête qui prend un peu de jour)
+  t.forme('robeC', (x, y) => (dans(x, y, orx + 1.6 * k, ory + 1.6 * k, oy) && !dans(x, y, orx, ory2, oy2) && y + 0.5 < oy ? [(x + 0.5 - ox) / (orx * 2), -0.4, 0.85] : null),
+    { decalage: -0.2, ombre: false, bord: false, motif: (x, y) => { const h = haut(x) - (y + 0.5); return h < 1 ? -1.4 : h < 2 ? 0.5 : (fbm(x * 0.08, y * 0.08, 9, 2) - 0.5) * 0.5; } });
+  // l'ombre qu'il jette sur l'os : tout l'os s'assombrit, et nettement sous le bord (les orbites et les yeux restent)
+  for (let y = 0; y < t.h; y++) for (let x = 0; x < t.l; x++) { const i = y * t.l + x, m = t.m[i];
+    if ((m !== 'os' && m !== 'osR') || !dans(x, y, orx, ory, oy)) continue;
+    const sous = y + 0.5 - haut(x), n = sous < 3.2 * k ? 3 : sous < 5 * k ? 2 : sous < 9 * k ? 1 : 0;   // (la mâchoire, plus bas, reste à peine lisible)
+    t.poser(x, y, sous < 3.2 * k && m === 'osR' ? 'os' : m, t.k[i] - n); }
+  // le liseré de givre tout autour de la nouvelle ouverture (le bas reste celui d'avant)
+  for (let a = -2.5; a < 2.5; a += pas) { const c = Math.cos(a - 1.57), sn = Math.sin(a - 1.57), x = Math.round(ox + c * (orx + marge)), y = Math.round(sn < 0 ? oy2 + sn * (ory2 + marge) : oy + sn * (ory + marge));
+    t.poser(x, y, 'givre', hachage(x, y, 41) > 0.85 ? 2 : 4); if (Math.round(a * 10) % 3 === 0) t.poser(x, y - 1, 'givre', 5); }
+}
+
 // La Faucheuse en pied : vue 'face' ou 'troisQuarts' (elle regarde à droite) ; visage 'crane' ou 'ombre' ;
 // dissolution de 0 (entière) à 1 (dissoute dans l'ombre) ; faux : la tient-elle
 // fumee : { longueur, dissip } la traînée de fumée noire (elle se déplace vers la droite, la fumée s'étire derrière elle) ;
@@ -205,7 +226,7 @@ function faucheuseCorpsHD(vue = 'face', { visage = 'crane', dissolution = 0, fau
       t.forme('oeilR', sfEll(ex, ey, 1.3 * k, 0.9 * k), { decalage: 0.6, ombre: false, bord: false }); t.poser(Math.round(ex), Math.round(ey), 'oeilR', 5); }
   }
   // le liseré de givre tout autour de l'ouverture, la broche d'argent au pétale noir sous le menton
-  for (let a = -2.2; a < 2.2; a += 0.08) { const x = Math.round(ox + Math.cos(a - 1.57) * (orx + 0.8 * k)), y = Math.round(oy + Math.sin(a - 1.57) * (ory + 0.8 * k)); t.poser(x, y, 'givre', 4); if (Math.round(a * 10) % 3 === 0) t.poser(x, y - 1, 'givre', 5); }
+  fhCapucheAvancee(t, ox, oy, orx, ory, k, { pas: 0.08, marge: 0.8 * k });
   const bx = ox, by = oy + 13 * k; t.forme('argentF', sfEll(bx, by, 1.4 * k, 1.4 * k), { decalage: 0.5 });
   if (souvenirs.includes('petale')) t.forme('petale', sfPoly([[bx, by - 0.5 * k], [bx + 2.4 * k, by + 1 * k], [bx + 1.2 * k, by + 4 * k], [bx - 1 * k, by + 3 * k]], [0.2, -0.3, 0.9]), { decalage: 0.4 });
   // --- le givre à ses pieds, les cristaux sur l'ourlet ---
@@ -263,18 +284,18 @@ function faucheuseBusteHD({ visage = 'crane', parle = false, devoilee = false, s
   t.forme('ombreP', sfEll(ox, oy, orx - 0.6 * k, ory - 0.6 * k), { decalage: -2, ombre: false, bord: false, motif: (x, y) => -Math.pow(1 - Math.hypot((x - ox) / orx, (y - oy) / ory), 1) * 2 });
   if (visage === 'crane') {
     const sx2 = ox, sy2 = oy + 1 * k;
-    t.forme('os', (x, y) => { const dx = (x + 0.5 - sx2) / (7.4 * k), dy = (y + 0.5 - sy2 + 2 * k) / (8 * k); if (dx * dx + dy * dy > 1) return null; return [dx * 0.9, dy * 0.6, Math.sqrt(1 - dx * dx * 0.81 - dy * dy * 0.36)]; }, { decalage: -0.3, motif: (x, y) => { const dy = (y + 0.5 - sy2 + 2 * k) / (8 * k); return dy < -0.55 ? -1.2 : dy > 0.5 ? -1 : 0; } });
-    t.forme('os', sfPoly([[sx2 - 4.8 * k, sy2 + 4 * k], [sx2 + 4.8 * k, sy2 + 4 * k], [sx2 + 3.2 * k, sy2 + (parle ? 12 : 11) * k], [sx2 - 3.2 * k, sy2 + (parle ? 12 : 11) * k]], [0, 0.2, 0.95]), { decalage: -1.6, motif: (x, y) => (y > sy2 + 8.5 * k && (Math.floor(x / k) % 2) ? -0.8 : 0) });
+    t.forme('os', (x, y) => { const dx = (x + 0.5 - sx2) / (6.4 * k), dy = (y + 0.5 - sy2 + 2 * k) / (7.4 * k); if (dx * dx + dy * dy > 1) return null; return [dx * 0.9, dy * 0.6, Math.sqrt(1 - dx * dx * 0.81 - dy * dy * 0.36)]; }, { decalage: -0.3, motif: (x, y) => { const dy = (y + 0.5 - sy2 + 2 * k) / (7.4 * k); return dy < -0.55 ? -1.2 : dy > 0.5 ? -1 : 0; } });
+    t.forme('os', sfPoly([[sx2 - 4.2 * k, sy2 + 4 * k], [sx2 + 4.2 * k, sy2 + 4 * k], [sx2 + 2.8 * k, sy2 + (parle ? 11 : 10) * k], [sx2 - 2.8 * k, sy2 + (parle ? 11 : 10) * k]], [0, 0.2, 0.95]), { decalage: -1.6, motif: (x, y) => (y > sy2 + 8.5 * k && (Math.floor(x / k) % 2) ? -0.8 : 0) });
     if (parle) t.forme('ombreP', sfPoly([[sx2 - 2.6 * k, sy2 + 8.6 * k], [sx2 + 2.6 * k, sy2 + 8.6 * k], [sx2 + 2.2 * k, sy2 + 10.2 * k], [sx2 - 2.2 * k, sy2 + 10.2 * k]], [0, 0, 1]), { decalage: -1.5, ombre: false, bord: false });
     for (let i = -2; i <= 2; i += 2) { const x = Math.round(sx2 + i * 2.2 * k), y = Math.round(sy2 - 9.4 * k + Math.abs(i) * 1 * k); t.poser(x, y, 'givre', 1); }
     for (const cote of [-1, 1]) { const ex = sx2 + cote * 3.2 * k, ey = sy2 - 0.8 * k;
-      t.forme('osR', sfEll(ex, ey, 3.8 * k, 3.2 * k), { decalage: 0.2, ombre: false, bord: false, motif: (x, y) => -Math.hypot(x - ex, y - ey) / (3 * k) });
+      t.forme('osR', sfEll(ex, ey, 3 * k, 2.6 * k), { decalage: -0.4, ombre: false, bord: false, motif: (x, y) => -Math.hypot(x - ex, y - ey) / (2.2 * k) });
       t.forme('orbite', sfEll(ex, ey, 2.3 * k, 2 * k), { decalage: -1.2, ombre: false }); t.forme('oeilR', sfEll(ex, ey, 1.2 * k, 1.05 * k), { decalage: 1.2, ombre: false, bord: false }); t.poser(Math.round(ex - 0.4 * k), Math.round(ey - 0.4 * k), 'oeilR', 5); }
     t.forme('ombreP', sfPoly([[sx2 - 1 * k, sy2 + 2 * k], [sx2 + 1 * k, sy2 + 2 * k], [sx2, sy2 + 4.4 * k]], [0, 0, 1]), { decalage: -1.5, ombre: false, bord: false });
   } else {
     for (const cote of [-1, 1]) { const ex = ox + cote * 3.2 * k, ey = oy - 0.8 * k; t.forme('oeilR', sfEll(ex, ey, 1.8 * k, 1.2 * k), { decalage: 0.6, ombre: false, bord: false }); t.poser(Math.round(ex), Math.round(ey), 'oeilR', 5); }
   }
-  for (let a = -2.2; a < 2.2; a += 0.06) { const x = Math.round(ox + Math.cos(a - 1.57) * (orx + 1 * k)), y = Math.round(oy + Math.sin(a - 1.57) * (ory + 1 * k)); t.poser(x, y, 'givre', 4); if (Math.round(a * 10) % 3 === 0) t.poser(x, y - 1, 'givre', 5); }
+  fhCapucheAvancee(t, ox, oy, orx, ory, k, { pas: 0.06, marge: 1 * k });
   const bx = ox, by = oy + 17 * k; t.forme('argentF', sfEll(bx, by, 1.8 * k, 1.8 * k), { decalage: 0.5 });
   if (souvenirs.includes('petale')) t.forme('petale', sfPoly([[bx, by - 0.6 * k], [bx + 3.2 * k, by + 1.4 * k], [bx + 1.6 * k, by + 5.2 * k], [bx - 1.4 * k, by + 4 * k]], [0.2, -0.3, 0.9]), { decalage: 0.4 });
   // la main pâle sur le manche, devant
