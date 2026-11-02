@@ -15,6 +15,12 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q256** — Son aura (morceau 2) est assez noire maintenant ?
 - **Q257** — La traînée de fumée (morceau 2) : ce noir opaque, ou une fumée plus légère et plus transparente ? Et sa longueur (jusqu'à une fois et demie sa taille) ?
 
+- **Q258** — Vue de haut, étape 4 (morceaux 4 à 7) : ton comptoir (ses 4 niveaux et l'appartement), la forge de Thorgal et les Pommeroy dans la projection : validés ?
+- **Q259** — La banque (morceaux 1 et 2) : les ornements (denticules sur le fronton, rinceaux d'or autour du médaillon, cartouche mouluré sous l'écriture) sont le bon niveau de décor ? On ajoute un acrotère d'or aux deux coins du fronton ? Et la plaque « Rue Soucolline » : sur un petit poteau à l'angle est (B, conseillé, branché) ou pendue au réverbère à l'ouest (A) ?
+- **Q260** — La maison basse sans étage, toit plus bas (morceau 3) : ça va ?
+- **Q261** — La suite, dans cet ordre : la maison du paon (dans tous ses états), le porche, l'atelier des Mages (son enseigne peinte sur le toit remise sur le pan avant), l'impasse ; puis les styles de maison achetés à Pont-Royal pour ton comptoir. D'accord ?
+- **Q262** — Sur la chaumière du début, la plaque « Rue Soucolline » de ton comptoir est clouée sur le toit de chaume (comme dans la rue actuelle) : je la descends sur le mur, à côté de la porte ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
