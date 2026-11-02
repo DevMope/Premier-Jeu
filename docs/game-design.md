@@ -3902,6 +3902,15 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q283 — règle** : chaque bâtiment a une fonction bien claire. La petite voisine de la banque est trop petite pour une maison : en faire autre chose (ou une haie, ou une façade libre à toit). Chercher les bâtiments d'une ville médiévale qui manquent encore à la ville.
   - **Q284** : l'atelier des Mages et ses gens, « parfait ».
 - **Q285 (02/11)** : la petite construction voisine de la banque, à l'entrée de la place, devient **le poids public** : la grande balance où les marchands pèsent leurs marchandises et paient le droit de marché, avec son préposé. **Idées gardées pour d'autres bâtiments de la ville** : le corps de garde (près de la banque et du marché), l'échoppe de l'écrivain public, un cordonnier, une boulangerie.
+- **Réponses du 02/11 sur les degrés cachés (Q296 à Q306)** :
+  - **Q296** : la jauge visible est adoucie : moins le joueur sait où il en est, mieux c'est.
+  - **Q297** : les degrés plaisent, sauf le mot « tiède ».
+  - **Q298 — à refaire entièrement** : le système de gain de points de Lumière et d'Ombre, et la voie neutre. Le jeu doit pousser le joueur à choisir la Lumière, mais par les dialogues, les récits et les faits, pas par un système de points qui rapporte simplement plus de Lumière. On a maintenant beaucoup plus d'éléments pour un système plus complet. **Q299, Q300 et Q305** : réponses après la refonte de la 298.
+  - **Q301, idée du joueur** : quand un extrême est atteint dans un camp, plus de retour en arrière possible, sauf par les récits (par exemple le joueur de Lumière qui a l'occasion d'essayer de prévenir les Bannis). L'extrême de l'Ombre ferme les villes de la Lumière ; à réfléchir : le joueur de l'Ombre peut-il encore y faire du commerce de contrebande, etc. ; et l'inverse pour le joueur de Lumière, qui ne peut pas entrer dans les villes des Bannis.
+  - **Q302 et Q303 — règle de présentation** : décrire directement les fins et les choix dans les questions, jamais par leur code (L4, D7…) ni en renvoyant à un document : les sommaires et le registre sont pour le suivi, pas pour le joueur.
+  - **Q304** : oui, la carte et le résumé de VieuxGoy peuvent nommer le chemin suivi, à ce moment-là.
+  - **Q305** : il faudra une autre voie vers la 8e pièce, ou une autre mise en scène, en gardant la même ville des Bannis ; à réfléchir après la 298.
+  - **Q306 — règle** : les propositions ne se présentent pas en fichier brouillon (.md) au joueur : sous une forme claire et lisible par un humain (images, planches, ou une page soignée).
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).

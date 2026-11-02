@@ -32,17 +32,10 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q294** — Depuis le bout de la rue, on ne voit encore aucun étal (le coin des jeux, le plus proche, est caché par la banque). On décale le coin des jeux vers l'est dans la place pour qu'il se voie, ou on garde la place telle quelle ?
 - **Q295** — Le poids public (morceau 4 : loge de pierre et de chêne, balance à fléau, poids de fonte, ardoise des tarifs, registre, sacs à peser) : validé ? Le préposé y est environ deux jours sur trois : ça te va ?
 
-- **Q296** (D1 dans `docs/histoire/degres-ombre-lumiere.md`, branche du chantier des degrés) — La jauge visible (ce que le monde pense de toi) reste telle quelle avec son chiffre, ou on l'adoucit pour que le joueur ne devine pas ses degrés cachés ?
-- **Q297** (D2) — Sept degrés cachés : Lumière ardente, Lumière, Lumière tiède, Neutre, Ombre tiède, Ombre, Ombre profonde ; le dernier de chaque côté seulement avec le serment ou au moins 4 actes graves (dénoncer ou cacher un recherché, livrer la Main Noire…). D'accord ?
-- **Q298** (D3) — Un joueur neutre verrouillé (il a dépassé le point de non-retour du neutre) dont la jauge visible sort quand même de la zone neutre parce que le monde le pousse vers la Lumière : a) on retient sa jauge dans la zone ; b) le neutre verrouillé l'emporte au sceau, comme le serment (conseillé) ; c) une fin à part ?
-- **Q299** (D3 bis) — Le verrou du neutre arrive tard (à 6 pièces d'armure) : on le lie plutôt à une étoile du comptoir ou à une durée de jeu ?
-- **Q300** (D4) — Revenir d'un extrême demande environ 26 gestes contraires, et après trois semaines au dernier degré, on ne redevient plus jamais neutre : trop dur, ou juste ?
-- **Q301** (D5) — L'Ombre profonde ferme-t-elle les villes de la Lumière dès qu'on l'atteint, ou seulement au sceau (la 8e pièce) ?
-- **Q302** (D6) — La fin L4 seulement depuis la Lumière ardente, et L2 impossible depuis l'ardente : d'accord ?
-- **Q303** (D7) — Le neutre qui penche d'un côté garde-t-il les trois réponses possibles face au Sage ?
-- **Q304** (D8) — La carte et le résumé de VieuxGoy nomment-ils le chemin suivi (par un mot), ou les degrés ne se montrent-ils jamais ?
-- **Q305** (D9) — Problème trouvé : la 8e pièce (le sceau) demande de libérer les Terres des Bannis, et chaque mission là-bas compte pour l'Ombre ; dans les simulations, le sceau n'arrive jamais. Pour un joueur juré à la Confrérie, ces missions doivent-elles compter pour la Lumière ? (Ou faut-il une autre voie vers la 8e pièce ?)
-- **Q306** (D10) — Les poids des gestes (missions et mendiant : peu ; dénoncer ou cacher un recherché : 5 ; livrer la Main Noire : 8 ; le serment ±10 ; la bague du Parrain −10…) te vont ? (Détail dans le document, section 3.)
+- **Q302** — (reformulée, en attente)
+- **Q303** — (reformulée, en attente)
+- **Q306** — (à représenter sous une forme lisible, avec la refonte de la 298)
+- **Q299, Q300, Q305** — (après la refonte de la 298)
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -52,6 +45,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q296 à Q301, Q304~~ Jauge adoucie ; pas de « tiède » ; refonte complète du système de points (298) ; extrêmes sans retour sauf par les récits (02/11).
 - ~~Q285~~ Le poids public à l'entrée de la place ; corps de garde, écrivain public, cordonnier, boulangerie gardés pour d'autres bâtiments (02/11).
 - ~~Q282 à Q284~~ Bout de rue refusé (problème d'échelle du marché) ; chaque bâtiment a une fonction claire ; atelier des Mages parfait (02/11).
 - ~~Q281~~ Les Pommeroy en A+B+C, validés (02/11).
