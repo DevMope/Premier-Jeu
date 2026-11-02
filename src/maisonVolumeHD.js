@@ -402,13 +402,14 @@ function revolumeHD(s, src, cle, o) {
   if (s.textures.exists(cle)) return cle;
   if (!s.textures.exists(src)) return src;
   const img = s.textures.get(src).getSourceImage(), Wd = img.width, Hs = img.height;
-  const { coupe, xa, xb, montee, prof, mat = 'tuile', motif = 'tuile', g = 1, bois = 'chene', cheminee = null, lucarne = null, ops = [], mur = [0, Wd - 1], rampes = {}, marches = [], garder = null } = o;
+  const { coupe, xa, xb, montee, prof, mat = 'tuile', motif = 'tuile', g = 1, bois = 'chene', cheminee = null, lucarne = null, ops = [], mur = [0, Wd - 1], rampes = {}, marches = [], garder = null, dessiner = null } = o;
   const egout = coupe - 3, P = montee + Math.round(prof * VOLUME_HD.prof), oy = Math.max(0, P + (cheminee ? 44 : 10) - egout), H = Hs + oy;
   const t = toileDecor(Wd, H); Object.assign(t.rampes, RAMPES_RUE, typeof RAMPES_V2 !== 'undefined' ? RAMPES_V2 : {}, rampes);
   const toit = toitCroupeHD(t, { xa, xb, yEgout: egout + oy, montee, prof, mat, motif, g, bois });
   const ch = cheminee ? chemineeVolumeHD(t, toit, cheminee.x, cheminee.l || 14, cheminee.d || Math.round(prof * 0.45), cheminee.h || 30, cheminee.mat || 'brique2') : null;
   const lu = lucarne ? lucarneVolumeHD(t, toit, lucarne.x, lucarne.d || Math.round(prof * 0.3), motif, mat, g + 41) : null;
   for (const [x0, x1, y, p, c, m] of marches) marcheHD(t, x0, x1, y + oy, p, c, m || 'taille');
+  if (dessiner) dessiner(t, oy);   // (des pierres dessinées à la main, posées sur la façade : des chaînes d'angle, un filet)
   t.contour();
   const cv = document.createElement('canvas'); cv.width = Wd; cv.height = H; const ctx = cv.getContext('2d');
   ctx.drawImage(img, 0, coupe, Wd, Hs - coupe, 0, coupe + oy, Wd, Hs - coupe);
@@ -463,12 +464,24 @@ function forgeVolumeHD(s, jour) {
 // (la poutre éclairée par le dessus, sa sous-face très sombre, l'ombre portée sur le haut de la pierre) ; la pierre à la
 // Stardew ; le soubassement qui avance, son dessus éclairé et son chant ; la fenêtre du bas profonde, le dessus de son appui ;
 // la porte profonde, le dessus de sa marche ; une ombre de contact plus marquée au pied du mur. (étape 7) Le rez-de-chaussée à
-// sa juste largeur : 3 pixels en retrait de l'étage de chaque côté (l'étage avance), le soubassement ne dépasse que de 2
+// sa juste largeur : 3 pixels en retrait de l'étage de chaque côté (l'étage avance), le soubassement ne dépasse que de 2 ;
+// aux deux coins, une humble chaîne d'angle (des pierres plus grandes et plus claires, alternées en harpe, leur dessus éclairé,
+// leur côté dans l'ombre) ; sous l'étage, un léger filet de pierre (son dessus clair, son ombre dessous)
+function anglesPommeroy(t, oy) {
+  const P = (x, y, k) => t.poser(x, y + oy, 'pierre', Math.max(0, Math.min(5, k)));
+  for (let x = 12; x <= 137; x++) { P(x, 97, 5); P(x, 98, 3); }   // le filet
+  for (let r = 0; r * 7 + 99 <= 151; r++) { const y0 = 99 + r * 7, y1 = Math.min(151, y0 + 5), long = r % 2 ? 7 : 11;
+    for (const [xa, sens] of [[12, 1], [137, -1]]) for (let k = 0; k < long; k++) { const x = xa + sens * k;
+      for (let y = y0; y <= y1; y++) { let v = y === y0 ? 5 : y === y1 ? 2 : 4; if (k === long - 1) v = sens > 0 ? 2 : 3; if (sens < 0 && k === 0) v = Math.min(v, 2); P(x, y, v); }
+      P(x, y1 + 1, 0); }   // le joint sous la pierre
+  }
+}
 function pommeroyVolumeHD(s) {
   return revolumeHD(s, 'rueMaisonHD_0', 'pommeroyVolumeHD', { coupe: 53, xa: 2, xb: 147, prof: 28, montee: 54, mat: 'tuile', motif: 'tuile', g: 815, mur: [9, 140],
+    dessiner: anglesPommeroy,
     marches: [[10, 139, 152, 2, 4, 'pierre'], [42, 76, 156, 2, 2, 'pierre'], [105, 128, 132, 1, 2, 'pierre']],
-    ops: [{ efface: [0, 97, 11, 151] }, { efface: [138, 97, 149, 151] }, { trait: [11, 97, 151] }, { trait: [138, 97, 151] }, { pierre: [12, 99, 137, 151, 8], sauf: [[104, 111, 128, 136], [45, 112, 73, 160]] }, { r: [25, 61, 40, 77] }, { r: [107, 61, 122, 77] }, { d: [22, 43, 79], n: 1 }, { d: [104, 125, 79], n: 1 },
-      { d: [6, 143, 91], n: 2 }, { m: [12, 96, 137, 98, 0.5] }, { m: [12, 99, 137, 101, 0.72] }, { m: [12, 97, 12, 151, 0.86] }, { m: [136, 97, 137, 151, 0.8] },
+    ops: [{ efface: [0, 97, 11, 151] }, { efface: [138, 97, 149, 151] }, { trait: [11, 97, 151] }, { trait: [138, 97, 151] }, { pierre: [12, 99, 137, 151, 8], sauf: [[104, 111, 128, 136], [45, 112, 73, 160], [12, 97, 22, 151], [127, 97, 137, 151]] }, { r: [25, 61, 40, 77] }, { r: [107, 61, 122, 77] }, { d: [22, 43, 79], n: 1 }, { d: [104, 125, 79], n: 1 },
+      { d: [6, 143, 91], n: 2 }, { m: [12, 96, 137, 96, 0.5] }, { m: [23, 99, 126, 101, 0.72] },
       { r: [109, 115, 124, 131], k: 6 }, { r: [48, 116, 70, 155], interieur: true, k: 7 }, { m: [0, 158, 149, 159, 0.7] }] });
 }
 // (Q252) La potence de fer d'où pend une plaque de rue, fixée au poteau d'un réverbère (vers la gauche), et le petit poteau
