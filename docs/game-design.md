@@ -3891,6 +3891,11 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q274** : l'enseigne de l'atelier des Mages ne doit pas disparaître le jour (aucune raison logique ; c'était un reste de l'ancien code, pas un choix). L'intérieur de l'atelier est à refaire, il ne plaît absolument pas. **Règle** : ne plus jamais passer par une telle simplicité pour n'importe quel intérieur visible de l'extérieur.
   - **Q275** : l'impasse va côté Rempart (Q168) : ne pas faire son design maintenant ; elle sera faite avec le chantier du Rempart. En attendant, elle garde son ancien dessin.
   - **Q276** : les Pommeroy : maintenant la partie en pierre est un peu trop large par rapport au haut, ce qui donne encore un effet bizarre. Précision du joueur : ce n'était pas tant la largeur que l'absence de démarcation nette aux coins de la partie en pierre : de très légers et humbles piliers d'angle. La banque en hiver est validée.
+- **Réponses du 02/11 (Q277 à Q280)** :
+  - **Q277** : les Pommeroy : essayer les trois remèdes, seuls et combinés ; le joueur ne trouve pas lui-même ce qui ne va pas avec cette partie basse.
+  - **Q278/Q279** : le porche A est préféré, mais ne pas voir le marché déborder derrière le porche fait bizarre, comme s'il fallait passer un portail pour aller au marché. Chercher un accès visuellement et logiquement plus naturel, en accord avec le monde. La place vue au travers convient.
+  - **Q280** : certains jours, on voit des apprentis ou des maîtres travailler dans l'atelier des Mages.
+  - **Idée pour plus tard** : les PNJ qui se baladent s'arrêtent devant les devantures, s'assoient (comme c'est déjà le cas), parlent entre eux : une petite vie pour rendre la ville plus vivante.
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).

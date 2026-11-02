@@ -14,11 +14,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q277** — Les Pommeroy, ce qui garde l'effet « de face » (diagnostic de Claude sur l'image du 02/11) : 1) le rez-de-chaussée en pierre est aussi haut que l'étage et beaucoup plus sombre : il se lit comme une dalle plate ; 2) rien ne dépasse du mur vers le sol : la porte et la fenêtre sont à fleur, sans marche ni appui vus par le dessus ; 3) le pied de la maison ne touche pas la rue (un muret gris la coupe du sol). Remèdes proposés, à cumuler : A, un rez-de-chaussée un peu plus bas et d'une pierre plus chaude et plus claire, comme les autres maisons ; B, devant la porte, un perron de deux marches et un petit auvent de bois au-dessus, vus par le dessus, avec leur ombre ; C, une jardinière sous la fenêtre et un pied de mur posé directement sur les pavés, avec l'ombre de contact. Lesquels ?
 
-- **Q278** — Le porche refait (étape 7b, morceaux 1 à 4) : piste A, l'arche des Mastres (piliers de pierre, linteau de chêne, toit de tuiles, lanternes, bacs de fleurs ; conseillée, la place reste ouverte) ou piste B, la halle des Mastres (trois travées sous un grand toit, plus monumentale, mais elle cache une bonne part de la place) ? Il est maintenant à peu près de la hauteur de la banque : ça te va pour l'entrée de la place ?
-- **Q279** — La place vue à travers le porche suit maintenant la projection (pavés ronds jusqu'au talus des Coteaux, étals et fontaine vus d'en haut, passants à la taille réelle) : c'est cohérent pour toi ?
-- **Q280** — L'atelier des Mages (morceaux 5 et 6) : le nom « Les Mages-Charpentiers » sur la façade au-dessus des portes, jour et nuit ; l'intérieur refait (plancher semé de copeaux, plans cloués, râtelier d'outils, une patte géante sur tréteaux, l'établi avec la maquette d'une maison sur pattes, un ciseau enchanté qui luit, le chat roulé en boule, une lanterne). Validé ? Faut-il y ajouter un apprenti ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -27,6 +23,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q277 à Q280~~ Pommeroy : essayer les trois remèdes ; un accès au marché plus naturel que le porche ; apprentis aux Mages certains jours ; idée : la petite vie des PNJ (02/11).
 - ~~Q273 à Q276~~ Porche à refaire ; neige sur le fronton de la banque ; enseigne des Mages visible le jour et intérieur à refaire ; impasse reportée au Rempart ; Pommeroy : pierre trop large (02/11).
 - ~~Q270 à Q272~~ Faucheuse validée ; pierre validée sauf les Pommeroy ; enseigne du comptoir et maison du paon validées (02/11).
 - ~~Q266 à Q269~~ Zoom 1,0, forge A, pierre poussée, plaque du comptoir retirée, enseigne remodelée ; finir la ville des hobbits avant Pont-Royal (02/11).
