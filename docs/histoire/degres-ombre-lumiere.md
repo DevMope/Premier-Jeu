@@ -4,6 +4,8 @@ Feuille de route, point 4 ★ (31/10) : « la jauge affinée en degrés invisibl
 
 ★ = dit ou validé par le joueur · ☆ = proposition de Claude, à valider. Les questions ouvertes sont à la fin (D1 à D10).
 
+> **Mise à jour du 02/11 (Q296 à Q306)** : la façon de gagner des points (sections 3, 5 et 6) et la voie neutre sont refaites dans `ombre-lumiere-refonte.md` (trois mesures : l'allégeance, le cœur, le regard du monde ; le dernier appel du neutre ; les extrêmes sans retour sauf par les récits). Le mot « tiède » est abandonné (Q297). Les sept degrés, l'inertie, la simulation et le prototype restent valables. Les questions D1 à D10 ci-dessous sont remplacées par celles de la refonte.
+
 Ce qui est validé, et que la proposition respecte :
 - ★ Q113 (29/10) : il faut des degrés d'Ombre et de Lumière pour mesurer à quel point le joueur a choisi son camp, et ils pèsent sur les choix proposés. Le joueur neutre ne peut plus agir une fois arrivé à un point de non-retour ; il peut agir légèrement, mais jamais influencer lui-même le cours de l'histoire.
 - ★ Q138 (31/10) : les degrés restent cachés au joueur, pour plus de surprise.
