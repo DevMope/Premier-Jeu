@@ -102,6 +102,9 @@ function texteDeLaRue(quoi, G, nuit) {
   }
 }
 
+// (Q252) où pend la plaque « Rue Soucolline » de la banque : 'poteau' (conseillé : à l'angle est, devant la palissade du porche, elle ne couvre rien) ou 'reverbere'
+const PLAQUE_BANQUE = 'poteau';
+function plaqueBanque() { return (typeof window !== 'undefined' && window.PLAQUE_BANQUE) || PLAQUE_BANQUE; }
 DECORS_QUARTIERS.soucolline = {
   sy: 320,             // (la caméra un peu plus basse que sur la place : on voit les façades, comme sur la planche 89 v7)
   // (retours du joueur) la hauteur de la caméra selon où l'on est : où se tient JeuneGoy à l'écran (ses pieds, moins 50).
@@ -217,7 +220,8 @@ DECORS_QUARTIERS.soucolline = {
       s.lieuxRue.confrerie = cf;
     }
     // --- les Pommeroy ---
-    const pommeroy = lot(L.pommeroy, YN, () => { s.add.image(0, 2, 'rueMaisonHD_0').setOrigin(0.5, 1).setScale(2); ecriteauRue(s, 4, -112, 'Les Pommeroy', { taille: 10 }); });
+    const pommeroy = lot(L.pommeroy, YN, () => { s.add.image(0, 2, pommeroyVolumeHD(s)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, 4, -112, 'Les Pommeroy', { taille: 10 }); });
+    contact(L.pommeroy, 132);
     regarder('pommeroy', [L.pommeroy - 120, YN - 256, L.pommeroy + 120, YN + 4], [L.pommeroy, YN + 36]);
     // --- l'impasse du Corbeau : sa porte dérobée, au fond, s'ouvre certains soirs (le marché noir) ---
     const ouvertCeSoir = nuit && typeof marcheNoirCeSoir === 'function' && marcheNoirCeSoir(G);
@@ -229,8 +233,8 @@ DECORS_QUARTIERS.soucolline = {
     if (ouvertCeSoir) { ici.lumiere(L.impasse, YN - 53, 64, 0xff3020); ici.lumiere(L.impasse, YN - 53, 40, 0xff3020); }
     regarder('impasse', [L.impasse - 76, YN - 180, L.impasse + 76, YN + 4], [L.impasse, YN + 36]);
     // --- la forge de Thorgal : ouverte le jour (des étincelles jaillissent), ses braises la nuit ---
-    lot(L.forge, YN, () => { s.add.image(0, 2, jour ? 'rueForgeHD_jour' : 'rueForgeHD').setOrigin(0.5, 1).setScale(2); ecriteauRue(s, -128, -186, 'Forge de Thorgal', { taille: 10 }); });
-    ici.cheminees.push([L.forge + 60, YN - 270]);
+    lot(L.forge, YN, () => { s.add.image(0, 2, forgeVolumeHD(s, jour)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, -128, -186, 'Forge de Thorgal', { taille: 10 }); });
+    ici.chem(forgeVolumeHD(s, jour), L.forge, YN + 2); contact(L.forge, 166);
     if (jour) s.time.addEvent({ delay: 260, loop: true, callback: () => {
       if (!ici.C.active || s.planVille) return;
       const e = s.add.rectangle(L.forge + (-40 + Math.random() * 30) * F, YN - 30 * F, 2, 2, Math.random() < 0.5 ? 0xffd060 : 0xff8020); e.yTri = YN + 1; ici.C.add(e);
@@ -241,7 +245,7 @@ DECORS_QUARTIERS.soucolline = {
     // --- ton comptoir : sa façade (son niveau, son étage, son style), ses pattes repliées, ce que le mécénat y accroche ---
     let facade = null;
     const comptoir = lot(L.comptoir, YN, () => {
-      facade = dessinerFacade(s, 0, 0, G ? G.nomShop : undefined, undefined, { fumee: false });
+      facade = dessinerFacade(s, 0, 0, G ? G.nomShop : undefined, undefined, { fumee: false, volume: true });
       if (typeof pattesPosees === 'function' && G && pattesPosees(G)) pattesRepliees(s, facade, { sorte: etatPattes(G).sorte, sol: 0 });   // (v1.56) ses pattes, repliées au coin des murs
       if (typeof palierDuMecenat === 'function' && G && palierDuMecenat(G, 'saufConduit')) { if (!s.textures.exists('embleme_conseil')) creerEmblemesHD(s); for (const [dx, cle] of [[-58, 'embleme_conseil'], [58, 'embleme_bannis']]) s.add.image(dx, -128, cle).setScale(0.42); }
       if (typeof palierDuMecenat === 'function' && G && palierDuMecenat(G, 'visite')) for (const dx of [-150, 150]) banniereRempart(s, dx, -300);
@@ -252,12 +256,11 @@ DECORS_QUARTIERS.soucolline = {
         src: { cle: im.texture.key, x: (x - x0) / im.scaleX, y: (y + 2 - y0) / im.scaleY, l: l / im.scaleX, h: (h - 2) / im.scaleY } }; })();
     // (la fumée de ta cheminée, seulement si le feu brûle : la rue d'avant)
     if (G && typeof feuAllume === 'function' && feuAllume(G, jour) && !(typeof styleDeMaison === 'function' && styleDeMaison(G))) {
-      const n = niveauFacade(G), [chx, chy0, chl] = chemineeFacade(n), monte = n === 3 && facadeAvecEtage(G) ? FACADE.etage[3] * 2 : 0;
-      ici.cheminees.push([L.comptoir + (-FACADE.L + (chx + chl / 2) * 2) * F, YN + (2 - FACADE.H * 2 + chy0 * 2 - monte) * F]);
+      ici.chem(facade.image.texture.key, L.comptoir, YN + 2);   // (vue de haut : la cheminée debout sur le pan du toit en croupe)
     }
     ici.lumiere(porteComptoir.cx, YN - 70, 120);
     ici.regarder(L.comptoir - 160, YN - 300, L.comptoir + 160, YN - 4, () => texteDeLaRue('comptoir', G, nuit), [porteComptoir.cx + 60, YN + 30]);
-    s.lieuxRue.comptoir = comptoir; s.lieuxRue.facade = facade;
+    s.lieuxRue.comptoir = comptoir; s.lieuxRue.facade = facade; contact(L.comptoir, 180);
     // --- le banc de la rue (on s'y assoit le soir ; le jour, quelqu'un s'y repose parfois) ---
     img(L.banc, YN + 34, banc5(s), E); ici.obstacles.push([L.banc - 52, YN + 14, L.banc + 52, YN + 36]);
     s.bancRue = { x: L.banc, y: YN + 34 };
@@ -393,7 +396,13 @@ DECORS_QUARTIERS.soucolline = {
     ici.plaqueSur(comptoir, 'gauche', 116, 'Rue Soucolline', { retrait: 10 }); ici.plaqueSur(barbier, barbierOuv && jour ? 'droite' : 'gauche', 112, 'Rue Soucolline', { retrait: 14 });   // (close, ou la nuit : son écriteau « Fermé » est à droite)
     ici.plaqueSur(paon, 'droite', 120, 'Placette de la Fontaine', { retrait: 12 });
     ici.plaqueSur(pommeroy, 'droite', 100, 'Montée du Four', { retrait: 8 });
-    ici.plaqueSur(banque, 'droite', 122, 'Rue Soucolline', { retrait: 12 });
+    // (Q252) la plaque « Rue Soucolline » de la banque, à une place plus fluide : sur une potence de fer au réverbère qui garde
+    // l'angle ouest de la banque, ou (conseillé) sur un petit poteau à l'angle est, devant la palissade du porche (PLAQUE_BANQUE)
+    if (plaqueBanque() === 'poteau') {
+      const px = L.banque + 132, py = YN + 24; img(px, py, poteauPlaqueHD(s), E, py); ici.obstacles.push([px - 8, py - 6, px + 8, py + 2]); ici.plaque(px, py - 76, 'Rue Soucolline', { yTri: py + 0.5 });
+    } else {
+      const px = 3186, py = YN + 26; img(px - 4, py - 104, potencePlaqueHD(s), E, py + 0.3, 1, 0); ici.plaque(px - 50, py - 52, 'Rue Soucolline', { yTri: py + 0.5 });
+    }
     // (l'été) les bottes de paille, rangées contre la palissade du porche, du côté est, toujours au même endroit (jamais au
     // milieu du passage, ni devant une porte, une enseigne ou un réverbère)
     if (saison === 'moissons' && typeof texturesPailleHD === 'function') { const bx = L.arche + 190; texturesPailleHD(s); ombre(bx, YN + 14, 70); img(bx, YN + 16, 'bottesPailleRue', E * 0.8, YN + 16); ici.obstacles.push([bx - 34, YN + 2, bx + 34, YN + 18]); }

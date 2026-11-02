@@ -230,6 +230,7 @@ function banqueVolumeHD(s) {
     for (let k = 1; k <= 3; k++) teinterV(t, fb + k + ox, y + oy, -2); }
   for (let x = 0; x < L; x++) { t.poser(x + ox, 49 + oy, 'taille', 4); t.poser(x + ox, 50 + oy, 'taille', 5); t.poser(x + ox, 51 + oy, 'taille', 2); t.poser(x + ox, 52 + oy, 'taille', 1); }
   ombreRiveHD(t, xm0, xm1, yC, m => m === 'taille');
+  ornementsBanqueHD(t, ox, oy);
   // les pilastres d'angle : plats (pas de cannelures), 11 de large, leur chapiteau et leur base vus par le dessus
   for (const [p0, sol] of [[xm0, true], [xm1 - 10, false]]) {
     for (let y = 56 + oy; y < T - 12; y++) for (let x = p0; x <= p0 + 10; x++) t.poser(x, y, 'taille', x === p0 ? (sol ? 5 : 3) : x === p0 + 10 ? (sol ? 2 : 1) : sol ? 4 : 3);
@@ -258,6 +259,25 @@ function banqueVolumeHD(s) {
   t.contour(); t.texture(s, cle);
   noterVolumeHD(s, cle, toit, yC, ch, (x, y) => y >= 18 + oy && Math.abs(x - 100 - ox) <= (y - 18 - oy) * 3 + 2);   // (la neige : le toit, pas le fronton)
   return cle;
+}
+
+// (étape 4, Q248) les ornements qui encadrent l'écriture et le médaillon : des denticules le long des rampants du fronton ;
+// de part et d'autre du médaillon (le logo, posé par la rue en 85..115 × 20..44), deux rinceaux d'or, une tige qui s'enroule
+// en volute et ses feuilles ; sous lui, un cartouche de pierre moulurée (la moulure claire en haut, sombre en bas, un filet
+// d'or au-dedans, deux oreilles enroulées aux bouts), où se lit « BANQUE CENTRALE GOYENNE » (posée par la rue, rangs 45 à 52)
+function ornementsBanqueHD(t, ox, oy) {
+  const P = (x, y, m, k) => t.poser(Math.round(x) + ox, Math.round(y) + oy, m, k);
+  for (let y = 22; y < 48; y += 3) { const v = (y - 18) / 32, fa = Math.round(100 - v * 96), fb = Math.round(100 + v * 96); P(fa + 4, y, 'taille', 1); P(fa + 4, y + 1, 'taille', 5); P(fb - 4, y, 'taille', 1); P(fb - 4, y + 1, 'taille', 4); }   // les denticules
+  for (const sg of [-1, 1]) {   // les rinceaux, en miroir
+    const tige = []; for (let k = 0; k <= 40; k++) { const u = k / 40; tige.push([100 + sg * (17 + 30 * u), 42 - 5 * Math.sin(Math.PI * u) - 2 * u]); }
+    for (let k = 0; k <= 60; k++) { const a = k / 60 * Math.PI * 3.2, r = 5.5 * (1 - k / 72); tige.push([100 + sg * (47 + 1 - Math.cos(a) * r), 36 - Math.sin(a) * r * 0.9]); }   // la volute
+    for (const [x, y] of tige) { P(x, y, 'or', 4); P(x, y + 1, 'or', 2); }
+    for (let k = 4; k < 36; k += 7) { const [x, y] = tige[k]; for (const [dx, dy, kk] of [[0, -1, 5], [sg, -2, 4], [-sg, -2, 3], [0, -3, 4], [sg * 2, 2, 3], [sg * 3, 2, 2]]) P(x + dx, y + dy, 'or', kk); }   // les feuilles
+  }
+  const x0 = 50, x1 = 150, y0 = 44, y1 = 53;   // le cartouche
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const bord = y === y0 || y === y1 || x === x0 || x === x1, filet = (y === y0 + 2 || y === y1 - 2) && x > x0 + 2 && x < x1 - 2 || (x === x0 + 2 || x === x1 - 2) && y > y0 + 1 && y < y1 - 1;
+    P(x, y, filet ? 'or' : 'taille', bord ? (y === y0 || x === x0 ? 5 : 1) : filet ? 4 : 2); }
+  for (const sg of [-1, 1]) { const cx = sg < 0 ? x0 - 3 : x1 + 3; for (let a = 0; a < 40; a++) { const th = a / 40 * Math.PI * 2.6, r = 3.6 * (1 - a / 52); P(cx - sg * Math.cos(th) * r, 48.5 + Math.sin(th) * r, 'or', 4 - (a % 5 === 0 ? 1 : 0)); } P(cx, 48, 'or', 5); }   // les oreilles
 }
 
 // --- 3. La tente de Madame Ysmée : le cône vu de trois quarts par le dessus. (étape 3, « énorme, massive ») plus petite :
@@ -294,7 +314,7 @@ function tenteYsmeeVolumeHD(s) {
 
 // --- 4. (étape 3) Les maisons de ville (maison5, villeDecorHD.js) en un seul volume : la même façade (peindreMaison5, sans son
 //     toit), posée sous un toit en croupe de tuiles, d'ardoises ou de chaume (le pan : prof ≈ 0,21 × la largeur, montée 2,3 ×
-//     la profondeur, 1,8 sans étage) ; la cheminée debout sur le pan ; la lucarne debout sur le pan, son petit toit ; les
+//     la profondeur, 1,5 sans étage : Q249) ; la cheminée debout sur le pan ; la lucarne debout sur le pan, son petit toit ; les
 //     appuis des fenêtres vus par le dessus, les linteaux en retrait, la terre des jardinières, l'ombre sous le store de la
 //     vitrine, la porte en retrait et ses marches vues par le dessus ; l'ombre de la rive, les bords du mur, le pied du mur.
 //     (maison5(…, { volume: true }) l'appelle) ---
@@ -315,7 +335,7 @@ function lucarneVolumeHD(t, toit, lx, d, motif, mat, g) {
 function maisonVolume5(s, cle, o) {
   const R = peindreMaison5({ ...o, sansToit: true }), src = R.t, { L, yR, yT, bas } = R;
   const { etages = [54], toitMat = 'tuile', porte = { x: 0.62, l: 24, h: 50 }, vitrine = null, fenetresRdc = [], fenetres = null, jardinieres = true, cheminee = 0.72, lucarne = null, graine = 1, bois = 'cheneSombre', rdc = 68 } = o;
-  const prof = o.prof || Math.round(L * 0.21), montee = o.montee || Math.round(prof * (etages.length ? 2.3 : 1.8)), P = montee + Math.round(prof * VOLUME_HD.prof);
+  const prof = o.prof || Math.round(L * 0.21), montee = o.montee || Math.round(prof * (etages.length ? 2.3 : 1.5)), P = montee + Math.round(prof * VOLUME_HD.prof);
   const ox = 8, D = 8, M = P + (cheminee !== null ? 44 : 10), oy = M - yT, W = L + 2 * ox, H = src.h + oy, t = toileM5(W, H);
   Object.assign(t.rampes, src.rampes);   // (l'enduit de cette maison : enduit5 a changé sa rampe « platre »)
   for (let y = yT + 3; y < src.h; y++) for (let x = 0; x < src.l; x++) { const m = src.mat(x, y); if (m) t.poser(x + ox, y + oy, m, src.teinte(x, y)); }
@@ -350,4 +370,89 @@ function maisonVolume5(s, cle, o) {
   noterVolumeHD(s, cle, toit, yE, ch, lu ? (x, y) => x >= lu.lx && x < lu.lx + lu.l && y >= lu.ly && y < lu.bas : null);
   s.textures.get(cle).info89 = { L: W, H, yR: yR + oy, yT: yE, bas: basV };
   return cle;
+}
+
+// --- 5. (étape 4, Q250) Les bâtiments faits à la main de la rue d'avant (ton comptoir, la forge, les Pommeroy…) dans la
+//     même projection, sans redessiner leur façade validée : on garde leur texture sous la rangée `coupe` (le haut du mur,
+//     sous l'égout de leur ancien toit), et on pose dessus le toit en croupe (de la même couverture), la cheminée et la
+//     lucarne debout sur le pan, les marches vues par le dessus ; puis, sur les pixels de la façade : l'ombre de la rive (8
+//     rangs), les ouvertures en retrait (r : l'ombre du linteau dans les 3 premiers rangs de l'ouverture, le jambage gauche ;
+//     interieur : l'ombre suit le haut de ce qui est sombre, pour un arc), les dessus éclairés (d : un appui, une sablière,
+//     une tablette ; et leur ombre dessous), les bords du mur, le pied du mur. Les coordonnées : celles de la texture d'origine.
+function revolumeHD(s, src, cle, o) {
+  if (s.textures.exists(cle)) return cle;
+  if (!s.textures.exists(src)) return src;
+  const img = s.textures.get(src).getSourceImage(), Wd = img.width, Hs = img.height;
+  const { coupe, xa, xb, montee, prof, mat = 'tuile', motif = 'tuile', g = 1, bois = 'chene', cheminee = null, lucarne = null, ops = [], mur = [0, Wd - 1], rampes = {}, marches = [] } = o;
+  const egout = coupe - 3, P = montee + Math.round(prof * VOLUME_HD.prof), oy = Math.max(0, P + (cheminee ? 44 : 10) - egout), H = Hs + oy;
+  const t = toileDecor(Wd, H); Object.assign(t.rampes, RAMPES_RUE, typeof RAMPES_V2 !== 'undefined' ? RAMPES_V2 : {}, rampes);
+  const toit = toitCroupeHD(t, { xa, xb, yEgout: egout + oy, montee, prof, mat, motif, g, bois });
+  const ch = cheminee ? chemineeVolumeHD(t, toit, cheminee.x, cheminee.l || 14, cheminee.d || Math.round(prof * 0.45), cheminee.h || 30, cheminee.mat || 'brique2') : null;
+  const lu = lucarne ? lucarneVolumeHD(t, toit, lucarne.x, lucarne.d || Math.round(prof * 0.3), motif, mat, g + 41) : null;
+  for (const [x0, x1, y, p, c] of marches) marcheHD(t, x0, x1, y + oy, p, c);
+  t.contour();
+  const cv = document.createElement('canvas'); cv.width = Wd; cv.height = H; const ctx = cv.getContext('2d');
+  ctx.drawImage(img, 0, coupe, Wd, Hs - coupe, 0, coupe + oy, Wd, Hs - coupe);
+  const D = ctx.getImageData(0, 0, Wd, H), d = D.data;
+  for (let i = 0; i < t.c.length; i++) { const c = t.c[i]; if (c === null) continue; d[i * 4] = c >> 16; d[i * 4 + 1] = (c >> 8) & 255; d[i * 4 + 2] = c & 255; d[i * 4 + 3] = 255; }
+  const ok = (x, y) => x >= 0 && y >= 0 && x < Wd && y < H && d[(y * Wd + x) * 4 + 3] >= 128;
+  const lum = (x, y) => { const i = (y * Wd + x) * 4; return 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]; };
+  const mul = (x, y, f) => { if (!ok(x, y)) return; const i = (y * Wd + x) * 4; d[i] *= f; d[i + 1] *= f; d[i + 2] *= f; };
+  const eclaire = (x, y, f) => { if (!ok(x, y)) return; const i = (y * Wd + x) * 4; for (let c = 0; c < 3; c++) d[i + c] += (255 - d[i + c]) * f; };
+  const Y = coupe + oy;
+  for (const op of ops) {
+    if (op.r) { const [x0, y0, x1, y1] = op.r, k = op.k || 3;
+      for (let x = x0; x <= x1; x++) { let yt = y0 + oy; if (op.interieur) while (yt <= y1 + oy && lum(x, yt) > 70) yt++; if (yt > y1 + oy) continue; for (let j = 0; j < k; j++) mul(x, yt + j, 0.66); mul(x, yt + k, 0.84); }
+      for (let y = y0; y <= y1; y++) for (const [x, f] of [[x0, 0.84], [x0 + 1, 0.9]]) if (!op.interieur || lum(x, y + oy) < 90) mul(x, y + oy, f); }
+    if (op.d) { const [x0, x1, y] = op.d, n = op.n || 2; for (let x = x0; x <= x1; x++) { for (let j = 0; j < n; j++) eclaire(x, y + oy + j, j ? 0.14 : 0.28); mul(x, y + oy + n, 0.74); } }
+  }
+  for (let k = 0; k < 8; k++) for (let x = xa; x <= xb; x++) mul(x, Y + k, k < 5 ? 0.66 : 0.82);   // l'ombre de la rive
+  for (let y = Y; y < H; y++) { mul(mur[0], y, 0.86); mul(mur[1], y, 0.8); mul(mur[1] - 1, y, 0.9); }   // les bords du mur
+  for (let x = 0; x < Wd; x++) { mul(x, H - 1, 0.72); mul(x, H - 2, 0.86); }   // le pied du mur
+  ctx.putImageData(D, 0, 0);
+  s.textures.addCanvas(cle, cv);
+  noterVolumeHD(s, cle, toit, egout + oy, ch, lu ? (x, y) => x >= lu.lx && x < lu.lx + lu.l && y >= lu.ly && y < lu.bas : null);
+  s.textures.get(cle).volume89 = { oy, coupe };
+  return cle;
+}
+// Ton comptoir, à son niveau n (0 : la chaumière … 3 : la belle maison ; etage : l'appartement) : la même façade (exterieurHD.js)
+const BARDEAU_COMPTOIR = [0x2a1a0e, 0x4a3018, 0x6a4626, 0x8a6036, 0xa87a4a, 0xc49a68], BRIQUE_COMPTOIR = [0x3a1410, 0x5e2018, 0x823024, 0xa04030, 0xbc5844, 0xd8806a];
+function comptoirVolumeHD(s, n = 3, etage = false) {
+  if (etage) creerEtageHD(s); else creerFacadeHD(s, n);
+  const src = etage ? 'facadeHD_4' : 'facadeHD_' + n, dy = etage ? 50 : 0, haut = n >= 2;
+  const ops = [{ r: [31, 123 + dy, 88, 157 + dy] }, { d: [22, 97, 158 + dy], n: 2 }, { r: [124, 116 + dy, 157, 171 + dy], interieur: true }];
+  if (haut) { for (const fy0 of etage ? [70, 120] : [70]) for (const fx0 of [47, 105, 163]) ops.push({ r: [fx0 + 1, fy0 + 1, fx0 + 16, fy0 + 22] }, { d: [fx0 - 2, fx0 + 19, fy0 + 24], n: 1 }); ops.push({ d: [8, 191, 102 + dy], n: 1 }); }
+  return revolumeHD(s, src, 'comptoirVolumeHD_' + (etage ? 4 : n), { coupe: haut ? 58 : n === 0 ? 116 : 113, xa: haut ? 4 : 10, xb: haut ? 195 : 189, prof: haut ? 32 : 28, montee: haut ? 62 : 42,
+    mat: n === 0 ? 'chaumeA' : n === 1 ? 'ardoiseToit' : n === 2 ? 'bardeau' : 'tuile', motif: n === 0 ? 'chaume' : n === 1 ? 'ardoise' : 'tuile', g: 707 + n, rampes: { bardeau: BARDEAU_COMPTOIR, brique: BRIQUE_COMPTOIR },
+    cheminee: { x: 148, l: n === 3 ? 14 : 12, mat: n === 3 ? 'brique' : 'pierre' }, lucarne: n === 3 ? { x: 88 } : null, ops, mur: haut ? [12, 187] : [18, 181], marches: [[118, 163, 172 + dy, 2, 2]] });
+}
+// La forge de Thorgal (le jour, la nuit) : son toit d'ardoises, sa cheminée de pierre ; la grande arche en retrait, la fenêtre
+function forgeVolumeHD(s, jour) {
+  return revolumeHD(s, jour ? 'rueForgeHD_jour' : 'rueForgeHD', 'forgeVolumeHD' + (jour ? '_jour' : ''), { coupe: 43, xa: 2, xb: 177, prof: 30, montee: 56, mat: 'ardoiseToit', motif: 'ardoise', g: 844,
+    cheminee: { x: 128, l: 20, mat: 'pierre', h: 34 }, mur: [8, 168],
+    ops: [{ r: [30, 100, 110, 168], interieur: true, k: 4 }, { r: [130, 112, 142, 129] }, { d: [8, 168, 69], n: 1 }] });
+}
+// Les Pommeroy : leur toit de tuiles ; les fenêtres de l'étage et du rez-de-chaussée en retrait, leurs appuis, la porte
+function pommeroyVolumeHD(s) {
+  return revolumeHD(s, 'rueMaisonHD_0', 'pommeroyVolumeHD', { coupe: 53, xa: 2, xb: 147, prof: 28, montee: 54, mat: 'tuile', motif: 'tuile', g: 815, mur: [9, 140],
+    ops: [{ r: [25, 61, 40, 77] }, { r: [107, 61, 122, 77] }, { d: [22, 43, 79], n: 1 }, { d: [104, 125, 79], n: 1 }, { r: [109, 115, 124, 131] }, { d: [106, 127, 133], n: 1 }, { r: [48, 116, 70, 159], interieur: true }] });
+}
+// (Q252) La potence de fer d'où pend une plaque de rue, fixée au poteau d'un réverbère (vers la gauche), et le petit poteau
+// de bois (son chapeau, son pied de pierre vu par le dessus) qui porte une plaque devant un perron
+function potencePlaqueHD(s) {
+  const cle = 'potencePlaqueHD'; if (s.textures.exists(cle)) return cle;
+  const t = toileDecor(46, 18);
+  for (let x = 0; x < 46; x++) { t.poser(x, 2, 'fer', x === 45 ? 2 : 4); t.poser(x, 3, 'fer', 2); }
+  for (let k = 0; k < 13; k++) t.poser(44 - k, 3 + k, 'fer', 3);   // la jambe de force
+  for (const x of [8, 28]) for (let y = 4; y < 18; y++) t.poser(x, y, 'fer', y % 2 ? 2 : 4);   // les deux chaînettes
+  for (let y = 0; y < 6; y++) { t.poser(44, y, 'fer', 3); t.poser(45, y, 'fer', 1); }   // le collier
+  t.contour(); t.texture(s, cle); return cle;
+}
+function poteauPlaqueHD(s) {
+  const cle = 'poteauPlaqueHD'; if (s.textures.exists(cle)) return cle;
+  const t = toileDecor(12, 52);
+  for (let y = 4; y < 46; y++) for (let x = 3; x < 9; x++) t.poser(x, y, 'chene', x === 3 ? 4 : x === 8 ? 1 : 3);
+  for (let x = 2; x < 10; x++) { t.poser(x, 2, 'chene', 5); t.poser(x, 3, 'chene', 2); }   // le chapeau
+  for (let y = 44; y < 52; y++) for (let x = 0; x < 12; x++) t.poser(x, y, 'pierre', y < 47 ? 4 : y === 51 ? 1 : 2);   // le pied de pierre (son dessus, son chant)
+  t.contour(); t.texture(s, cle); return cle;
 }
