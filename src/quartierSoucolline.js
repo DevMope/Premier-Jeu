@@ -225,7 +225,8 @@ DECORS_QUARTIERS.soucolline = {
     }
     // --- les Pommeroy ---
     const pommeroy = lot(L.pommeroy, YN, () => { s.add.image(0, 2, pommeroyVolumeHD(s)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, 4, -112, 'Les Pommeroy', { taille: 10 }); });
-    contact(L.pommeroy, 132);
+    contact(L.pommeroy, 132); contactA(L.pommeroy, YN + 1, 132);   // (étape 6 : une ombre de contact plus marquée)
+    { const bx = L.pommeroy + 26, by = YN + 14; ombre(bx, by, 80); img(bx, by, bancPierreHD(s), E, by); ici.obstacles.push([bx - 36, by - 10, bx + 36, by + 2]); }   // un banc de pierre contre le mur, entre la porte et la fenêtre
     regarder('pommeroy', [L.pommeroy - 120, YN - 256, L.pommeroy + 120, YN + 4], [L.pommeroy, YN + 36]);
     // --- l'impasse du Corbeau : sa porte dérobée, au fond, s'ouvre certains soirs (le marché noir) ---
     const ouvertCeSoir = nuit && typeof marcheNoirCeSoir === 'function' && marcheNoirCeSoir(G);

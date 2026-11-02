@@ -398,7 +398,7 @@ function revolumeHD(s, src, cle, o) {
   const toit = toitCroupeHD(t, { xa, xb, yEgout: egout + oy, montee, prof, mat, motif, g, bois });
   const ch = cheminee ? chemineeVolumeHD(t, toit, cheminee.x, cheminee.l || 14, cheminee.d || Math.round(prof * 0.45), cheminee.h || 30, cheminee.mat || 'brique2') : null;
   const lu = lucarne ? lucarneVolumeHD(t, toit, lucarne.x, lucarne.d || Math.round(prof * 0.3), motif, mat, g + 41) : null;
-  for (const [x0, x1, y, p, c] of marches) marcheHD(t, x0, x1, y + oy, p, c);
+  for (const [x0, x1, y, p, c, m] of marches) marcheHD(t, x0, x1, y + oy, p, c, m || 'taille');
   t.contour();
   const cv = document.createElement('canvas'); cv.width = Wd; cv.height = H; const ctx = cv.getContext('2d');
   ctx.drawImage(img, 0, coupe, Wd, Hs - coupe, 0, coupe + oy, Wd, Hs - coupe);
@@ -417,6 +417,7 @@ function revolumeHD(s, src, cle, o) {
       for (let x = x0; x <= x1; x++) { let yt = y0 + oy; if (op.interieur) while (yt <= y1 + oy && lum(x, yt) > 70) yt++; if (yt > y1 + oy) continue; for (let j = 0; j < k; j++) mul(x, yt + j, 0.66); mul(x, yt + k, 0.84); }
       for (let y = y0; y <= y1; y++) for (const [x, f] of [[x0, 0.84], [x0 + 1, 0.9]]) if (!op.interieur || lum(x, y + oy) < 90) mul(x, y + oy, f); }
     if (op.d) { const [x0, x1, y] = op.d, n = op.n || 2; for (let x = x0; x <= x1; x++) { for (let j = 0; j < n; j++) eclaire(x, y + oy + j, j ? 0.14 : 0.28); mul(x, y + oy + n, 0.74); } }
+    if (op.m) { const [x0, y0, x1, y1, f] = op.m; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) mul(x, y + oy, f); }
   }
   pierresRondesDonnees(d, Wd, H, ops.filter(op => op.pierre).map(op => ({ r: [op.pierre[0], op.pierre[1] + oy, op.pierre[2], op.pierre[3] + oy], sousFace: op.pierre[4] || 0, graine: g, sauf: (op.sauf || []).map(([a, b, c, e]) => [a, b + oy, c, e + oy]) })));   // (Q268) la pierre à la Stardew
   for (let k = 0; k < 8; k++) for (let x = xa; x <= xb; x++) mul(x, Y + k, k < 5 ? 0.66 : 0.82);   // l'ombre de la rive
@@ -445,10 +446,17 @@ function forgeVolumeHD(s, jour) {
     cheminee: { x: 128, l: 20, mat: 'pierre', h: 34 }, mur: [8, 168],
     ops: [{ r: [30, 100, 110, 168], interieur: true, k: 4 }, { r: [130, 112, 142, 129] }, { d: [8, 168, 69], n: 1 }] });
 }
-// Les Pommeroy : leur toit de tuiles ; les fenêtres de l'étage et du rez-de-chaussée en retrait, leurs appuis, la porte
+// Les Pommeroy : leur toit de tuiles ; les fenêtres de l'étage et du rez-de-chaussée en retrait, leurs appuis, la porte.
+// (étape 6, le bas repris : il paraissait encore « de face ») comme les maisons validées : l'étage qui avance a son épaisseur
+// (la poutre éclairée par le dessus, sa sous-face très sombre, l'ombre portée sur le haut de la pierre) ; la pierre à la
+// Stardew ; le soubassement qui avance, son dessus éclairé et son chant ; la fenêtre du bas profonde, le dessus de son appui ;
+// la porte profonde, le dessus de sa marche ; une ombre de contact plus marquée au pied du mur
 function pommeroyVolumeHD(s) {
   return revolumeHD(s, 'rueMaisonHD_0', 'pommeroyVolumeHD', { coupe: 53, xa: 2, xb: 147, prof: 28, montee: 54, mat: 'tuile', motif: 'tuile', g: 815, mur: [9, 140],
-    ops: [{ pierre: [9, 97, 140, 158, 6], sauf: [[104, 111, 128, 136], [45, 112, 73, 160]] }, { r: [25, 61, 40, 77] }, { r: [107, 61, 122, 77] }, { d: [22, 43, 79], n: 1 }, { d: [104, 125, 79], n: 1 }, { r: [109, 115, 124, 131], k: 5 }, { d: [106, 127, 133], n: 1 }, { r: [48, 116, 70, 159], interieur: true, k: 5 }] });
+    marches: [[7, 142, 152, 2, 4, 'pierre'], [42, 76, 156, 2, 2, 'pierre'], [105, 128, 132, 1, 2, 'pierre']],
+    ops: [{ pierre: [9, 99, 140, 151, 8], sauf: [[104, 111, 128, 136], [45, 112, 73, 160]] }, { r: [25, 61, 40, 77] }, { r: [107, 61, 122, 77] }, { d: [22, 43, 79], n: 1 }, { d: [104, 125, 79], n: 1 },
+      { d: [6, 143, 91], n: 2 }, { m: [9, 96, 140, 98, 0.5] }, { m: [9, 99, 140, 101, 0.72] },
+      { r: [109, 115, 124, 131], k: 6 }, { r: [48, 116, 70, 155], interieur: true, k: 7 }, { m: [0, 158, 149, 159, 0.7] }] });
 }
 // (Q252) La potence de fer d'où pend une plaque de rue, fixée au poteau d'un réverbère (vers la gauche), et le petit poteau
 // de bois (son chapeau, son pied de pierre vu par le dessus) qui porte une plaque devant un perron
@@ -641,4 +649,15 @@ function paonVolumeDansLot(s, lot) {
   // blanche (son rang 57), et non plus sur le pan du toit en croupe
   const haut = 442 - FACADE_RIVAL.H * 2;
   for (const o of lot.list || []) if (o.type === 'Arc' && o.radius === 4 && o.fillColor === 0xffe08a && o.y > haut + 8 && o.y < haut + 32) o.y += 94;
+}
+
+// (étape 6) un banc de pierre devant les Pommeroy, vu par le dessus : son assise (le dessus clair, son bord), sa face, deux pieds
+function bancPierreHD(s) {
+  const cle = 'bancPierreHD'; if (s.textures.exists(cle)) return cle;
+  const t = toileDecor(44, 16); 
+  for (let y = 0; y < 6; y++) for (let x = 0; x < 44; x++) t.poser(x, y, 'pierre', y === 0 ? 5 : y === 5 ? 2 : 4 - (x > 40 ? 1 : 0) + (hachage(x >> 2, y, 931) > 0.85 ? 1 : 0));
+  for (let x = 0; x < 44; x++) { t.poser(x, 6, 'pierre', 3); t.poser(x, 7, 'pierre', 1); }
+  for (const x0 of [3, 33]) for (let y = 8; y < 16; y++) for (let x = x0; x < x0 + 8; x++) t.poser(x, y, 'pierre', x === x0 ? 4 : x === x0 + 7 ? 1 : 2 + (y === 15 ? -1 : 0));
+  for (let y = 8; y < 16; y++) for (let x = 11; x < 33; x++) t.poser(x, y, 'pierre', 0);   // l'ombre sous l'assise
+  t.contour(); t.texture(s, cle); return cle;
 }
