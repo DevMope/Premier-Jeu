@@ -2086,7 +2086,8 @@ class CounterScene extends Phaser.Scene {
       const ecart = Math.round((apres - avant) * 100);
       if (ecart) gainEnDirect(this, FENETRE.x + FENETRE.w / 2, FENETRE.y + 120, `${ecart > 0 ? '+' : '−'}${Math.abs(ecart)} % de chances de retour`, ecart > 0);
     }
-    if (choix === 'corbeau') pencher(G, 'piege');
+    if (choix === 'corbeau') pencher(G, 'corbeau');   // (02/11 : le corbeau de la Main Noire ; l'aigle du Conseil, son jumeau)
+    if (choix === 'aigle') pencher(G, 'aigle');
     this.raconter(texte, choix === 'rien' ? 'Pas de réponse' : 'Le secours part');
     Son.jouer(choix === 'rien' ? 'froid' : choix === 'corbeau' && SONS.corbeau ? 'corbeau' : 'glisse');   // (v1.64 : le corbeau croasse en partant)
     // l'oiseau qui part : l'aigle traverse le ciel de gauche à droite, le corbeau s'en va, le pigeon repart

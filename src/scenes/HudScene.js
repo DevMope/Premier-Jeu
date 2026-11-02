@@ -164,26 +164,28 @@ class HudScene extends Phaser.Scene {
     this.bulleReput = this.add.text(116, 30, texte, style(12, '#fff4dc', { backgroundColor: '#1e130a', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
   }
 
-  // (v0.90) la petite jauge du bandeau : la balance en dégradé, l'ombre à gauche, la lumière à droite
+  // (v0.90) la petite jauge du bandeau : la balance en dégradé, l'ombre à gauche, la lumière à droite.
+  // (02/11, Q296 : adoucie) plus de curseur net : une lueur floue, qui ne bouge qu'une fois par jour, par grands pas
+  // (jaugeFloue, degres.js) : on devine de quel côté le monde te voit, sans jamais savoir où l'on en est.
   dessinerCamp(j) {
     const g = this.jaugeCampG, x0 = -6, l = 222, y0 = 18, h = 6;
     g.clear();
     g.fillStyle(0x0a0604, 1).fillRect(x0 - 1, y0 - 1, l + 2, h + 2);
     const X = peindreJauge(g, x0, y0, l, h, { pas: 2, paliers: false });
     const pos = Math.round(X(Math.max(-100, Math.min(100, j))));
-    g.fillStyle(0x1e130a, 1).fillRect(pos - 2, y0 - 3, 5, h + 6);
-    g.fillStyle(0xfff4dc, 1).fillRect(pos - 1, y0 - 2, 3, h + 4);
+    for (const [w, a] of [[26, 0.16], [16, 0.24], [8, 0.34]]) g.fillStyle(0xfff4dc, a).fillRect(pos - w / 2, y0 - 1, w, h + 2);
   }
 
   infoCamp(montrer) {
     if (this.bulleCamp) { this.bulleCamp.destroy(); this.bulleCamp = null; }
     const G = window.GAME;
     if (!montrer || !G) return;
-    const j = jaugeCamp(G), p = palierCamp(G);
     const serment = sermentDe(G);
-    const texte = `Ombre ⟷ Lumière : ${NOMS_PALIERS_JAUGE[p]} (${j > 0 ? '+' : ''}${j})` + (Math.abs(j) < PALIERS_JAUGE[0] ? ' · zone neutre' : '') + '\n' +
+    // (02/11, Q296) plus de chiffre ni de nom de palier : ce que disent les gens
+    const r = typeof regardDe === 'function' ? regardDe(G) : null;
+    const texte = 'Ce qu’on dit de toi :' + (r ? `\n· ${r.phraseConfrerie}\n· ${r.phraseBannis}` : '') + '\n' +
       (serment ? `Tu as prêté serment ${serment === 'bien' ? 'à la Confrérie du Dernier Rempart' : 'aux Bannis'}.\n` : '') +
-      'Le détail (ce qui fait pencher la balance, tes derniers gestes) : au bureau, « Lumière et ombre ».' +
+      'Le livre des deux voies, au bureau, en dit un peu plus.' +
       (G.camp ? `\nTon camp est scellé : ${G.camp === 'bien' ? 'la lumière' : 'l\'ombre'}.` : '');
     this.bulleCamp = this.add.text(4, 30, texte, style(12, '#fff4dc', { backgroundColor: '#1e130a', padding: { x: 8, y: 6 }, lineSpacing: 3 })).setDepth(105);
   }
@@ -378,9 +380,9 @@ class HudScene extends Phaser.Scene {
       sansPlanter('piecesEnDirect', () => this.piecesEnDirect(G));
       sansPlanter('penseesEnDirect', () => this.penseesEnDirect(G));
       // (v0.84) la lumière et l'ombre
-      const j = jaugeCamp(G), pal = palierCamp(G);
+      // (02/11, Q296) la jauge floue : plus de « +3 ☀ » ni d'annonce de palier (gainCamp n'est plus appelée)
+      const j = typeof jaugeFloue === 'function' ? jaugeFloue(G) : jaugeCamp(G), pal = palierCamp(G);
       if (j !== this.campAffiche) {
-        if (this.campAffiche !== null && this.joueurCamp === G) this.gainCamp(j - this.campAffiche, pal, this.palierAffiche);
         this.campAffiche = j; this.palierAffiche = pal; this.joueurCamp = G;
         this.dessinerCamp(j);
       }

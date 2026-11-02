@@ -3515,6 +3515,9 @@ function texteGeste(e) {
     decoClaire: 'une décoration de lumière', missionL: q ? `${q}, retour de mission` : 'une mission de lumière', denoncer: q ? `${e.qui} dénoncé` : 'un recherché dénoncé',
     denoncerMafia: 'la Main Noire livrée à la Confrérie', ame: q ? `l'âme ${dePersonne(e.qui)}, offerte` : 'une âme offerte', piege: q ? `un piège glissé à ${q}` : 'un service de la Main Noire',
     commande: q ? `une commande pour ${q}` : 'une commande des Bannis', decoSombre: "une décoration d'ombre", missionO: q ? `${q}, mission pour les Bannis` : 'une mission pour les Bannis', cacher: q ? `${e.qui} caché` : 'un recherché caché',
+    serviceMafia: 'un service rendu à la Main Noire', corbeau: 'le corbeau de la Main Noire, envoyé en secours', aigle: 'l’aigle du Conseil, envoyé en secours', soudoyer: 'l’inspecteur, soudoyé',
+    parrainTaire: 'le secret du Parrain, gardé', parrainDenoncer: 'le Parrain, dénoncé', parrainBague: 'la bague du Parrain, baisée', miseNoire: 'un pari contre un aventurier',
+    routeAider: 'quelqu’un aidé sur la route', routeSergent: 'le sergent de la Porte, soudoyé', routeRancon: 'un blessé qui a dû payer ses soins',
   }[e.cle] || e.cle;
   return t;
 }
@@ -3842,6 +3845,7 @@ function denoncerRecherche(G, v) {
     return { juste: true, prime: part };
   }
   G.reputation -= RECHERCHE.erreur;
+  if (typeof noterFait === 'function') noterFait(G, 'denoncerInnocent');   // (le cœur : livrer un innocent est une cruauté)
   G.personnes[v.nom] = { ...(G.personnes[v.nom] || {}), banni: true };
   changerRelation(G, v.nom, -5);
   return { juste: false };

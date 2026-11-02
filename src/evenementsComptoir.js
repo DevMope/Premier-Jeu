@@ -556,7 +556,7 @@ function evtInspecteur(G, e, choix) {
   }
   if (choix === 'soudoyer') {
     if (!peutPayer(G, C.pot)) return evtInspecteur(G, e, 'ouvrir');
-    payer(G, C.pot, 'evenements'); pencher(G, 'piege'); return { soudoye: true };
+    payer(G, C.pot, 'evenements'); pencher(G, 'soudoyer'); return { soudoye: true };
   }
   if (choix === 'cacher' && Math.random() < C.reussite) return { cache: true };
   const amende = Math.min(Math.floor(G.argent), choix === 'cacher' ? C.amendeCachee : C.amende);

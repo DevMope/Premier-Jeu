@@ -221,3 +221,19 @@ Validé le 02/11 ★ (Q317 à Q325) : le dernier appel le soir de la 7e pièce ;
 - Jusqu'au jour de l'armure, il passe toujours, blagueur. Puis, selon le choix de l'armure : un Banni → il vient la chercher et devient le champion de la Grande Muraille (la gazette le traite de traître) ; Sire Valdric → il devient le chef de la résistance, et la nouvelle vague fait oublier Garrick à JeuneGoy (une pipe inconnue sur le comptoir) ; la garder → « Tu l'avais. Tu l'avais, et tu l'as rangée. », il part affronter ce qui sort de la Porte.
 - Ce que les choix du joueur ont fait de lui : aidé (le paquet, le prêt, la lettre, le remède du chat, le fragment de la berceuse) → fort et libre ; dénoncé par Lucien sans aide → en prison, le neutre l'apprend par son procès.
 - Ensuite : les crieurs, les réfugiés, la Faucheuse (« Ton ami ? Pas encore. »), le chat ; l'après-fin (une lettre, une visite, ou une tombe).
+
+---
+
+## 13. La mise en œuvre (validée le 02/11, Q326 à Q335)
+
+Le plan en dix étapes : `scratchpad/lot3/a_valider/ombre-lumiere/plan/le-plan.png` (le socle ; le monde lit le regard ; les faits qui manquent ; la Clairvoyance complète ; les Bannis au comptoir ; l'armure de l'Ombre ; le neutre ; les extrêmes ; les dépenses par camp ; les choix et les fins).
+
+### Étape 1, le socle (faite, à valider)
+- `src/degres.js` : l'allégeance (7 degrés, « naissante », avec « effleuré » et « penchant » pour les textes ; les faits validés de la fiche 4, de même poids des deux côtés ; le dernier degré verrouillé, `recitDeRetour` pour les récits à venir ; les actes graves ; le spectateur le soir de la 7e pièce) ; le cœur (`G.coeur`) ; le regard du monde (`G.regard`, Confrérie et Bannis, de −50 à 100, sept niveaux de phrases) ; la Clairvoyance (`G.clairvoyance` : une lueur par imposteur démasqué, par baluchon donné à un menteur dont on apprend le sort, par récit de doyen, pour la berceuse lue, pour un faux présage trahi ; au plus deux par nuit ; les ☀ ☾ à 8 lueurs ; la bougie de chevet plus grande et un halo pâle) ; `jaugeFloue` (la jauge d'avant, sans chiffre, une fois par jour, par pas de 20).
+- Le barème distingue enfin ce qui était mêlé sous « piège » : `serviceMafia` (mafia.js), `corbeau` et `aigle` (CounterScene, message de détresse), `soudoyer` (l'inspecteur, evenementsComptoir.js) ; `denoncerInnocent` (le cœur) dans `denoncerRecherche`.
+- Le Parrain : `choisirParrain` (parrain.js) appelait `pencherCamp`, qui n'écrivait que dans `G.reussites` : se taire, le dénoncer et baiser la bague passent maintenant par `pencher` (`parrainTaire`, `parrainDenoncer`, `parrainBague`) ; « le changer » par `noterFait`.
+- L'écran : le HUD (une lueur floue au lieu du curseur, plus de « +N ☀ » ni d'annonce de palier ; la bulle dit « Ce qu'on dit de toi ») ; le livre des deux voies (BureauScene, `afficherCamps` : le blason de la Confrérie et ses rayons, la fleur de pommier des Bannis et ses pétales, les phrases, « Ce qu'on raconte », sans chiffre) ; le bilan du soir (« On dit de toi » et la jauge floue).
+- Les ☀ ☾ des boutons suivent la Clairvoyance sans toucher à pixels.js : `brancherClairvoyance` enveloppe `marquerCamp` une fois la page chargée ; la première fois, c'est la Clairvoyance qui s'explique.
+- La migration (sauvegarde.js) : l'allégeance d'après la jauge et le serment ; le cœur d'après les dons au mendiant et les âmes offertes ; le regard d'après la jauge ; la Clairvoyance à 8 lueurs pour qui voyait déjà les ☀ ☾ avec son flair.
+- Les effets du monde (taxes, banque, garde, Carrefour, sceau…) lisent encore la jauge : c'est l'étape 2.
+- Vérifié : smoke2, fuzz7 (graines 33, 230, 401), t_file, recit (succès, échec, mort), sim_coh (8 parties × 120 jours, aucun problème), t_formes (vieilles parties v1.20, v1.40, v1.60), 23 essais des règles (`test_degres.js`). En parties simulées, les ☀ ☾ apparaissent vers le jour 36 à 69 (avant : vers le jour 5, avec le flair).

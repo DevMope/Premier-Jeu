@@ -459,10 +459,11 @@ Object.assign(DodoScene.prototype, {
     const bx = this.joueur.x - 18, by = SOL_CHAMBRE - this.joueur.displayHeight * 0.78;
     this.tweens.addCounter({ from: 0, to: 1, duration: 380, onUpdate: tw => { const u = tw.getValue(); g.clear(); g.lineStyle(1.5, 0xf4f0ff, 0.6 * (1 - u));
       for (const [dy, l] of [[-3, 9], [1, 13], [5, 8]]) g.lineBetween(bx - u * 10, by + dy, bx - u * 10 - l, by + dy - 2 - dy * 0.3); }, onComplete: () => g.destroy() });
-    this.tweens.killTweensOf([this.flamme, this.lumiere]);
+    const lueurs = [this.flamme, this.lumiere, ...(this.lueurChevet ? [this.lueurChevet] : [])];   // (02/11 : et le halo de la Clairvoyance)
+    this.tweens.killTweensOf(lueurs);
     this.flamme.setOrigin(0.5, 1);
     await this.animer({ targets: this.flamme, angle: -38, scaleY: this.flamme.scaleY * 0.7, duration: 180 });
-    this.tweens.add({ targets: [this.flamme, this.lumiere], alpha: 0, duration: 260 });
+    this.tweens.add({ targets: lueurs, alpha: 0, duration: 260 });
     this.tweens.add({ targets: this.noir, fillAlpha: 0.45, duration: 700 });
     this.tweens.add({ targets: this.clairDeLune, alpha: 0.26, duration: 900 });
     await this.attendre(this.court ? 160 : 260);

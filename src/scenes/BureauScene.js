@@ -990,62 +990,63 @@ class BureauScene extends Phaser.Scene {
 
   // --- La jauge lumière ⟷ ombre (étape 9a) : le carnet « Lumière et ombre » ---
 
-  // (v0.90) Le livre des deux voies. Page de gauche : la balance, et le prochain palier de chaque côté. Page de droite :
-  // ce qui fait pencher la balance, et tes derniers gestes.
+  // (v0.90) Le livre des deux voies. (02/11, refonte Q296 à Q335) Plus aucun chiffre : page de gauche, ce que les
+  // deux camps croient de toi (le blason de la Confrérie qui brille ou se ternit, la fleur de pommier des Bannis qui
+  // s'ouvre ou se ferme, et ce qu'on dit) ; page de droite, ce qu'on raconte en ville, et ton chemin.
   afficherCamps(c) {
-    const G = this.G, j = jaugeCamp(G), lo = etatLO(G), serment = sermentDe(G);
+    const G = this.G, lo = etatLO(G), serment = sermentDe(G);
+    const r = typeof regardDe === 'function' ? regardDe(G) : { niveauConfrerie: 0, niveauBannis: 0, phraseConfrerie: '', phraseBannis: '' };
     this.time.delayedCall(300, () => conseilGarrick(this, 'jauge', true));
     creerGlyphesHD(this); creerEmblemesHD(this);
     c.add(this.add.text(161, 70, 'Le livre des deux voies', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    c.add(this.add.text(161, 90, 'De quel côté le monde te voit', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5, 0));
-    c.add(this.add.image(50, 128, 'embleme_bannis').setScale(0.5));
-    c.add(this.add.image(272, 128, 'embleme_confrerie').setScale(0.5));
-    c.add(barreJauge(this, 161, 132, 196, j, { h: 14 }));
-    c.add(this.add.text(161, 160, nomPalierCamp(G), style(15, j > 0 ? '#9a7a10' : j < 0 ? '#5a3a8a' : '#5a3a20', { fontStyle: 'bold' })).setOrigin(0.5, 0));
-    const etat = G.camp ? `ton camp est scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}`
-      : G.sceauNeutre ? "ni la lumière, ni l'ombre : l'armure attend quelqu'un d'autre"
-        : serment ? `serment prêté ${serment === 'bien' ? 'à la Confrérie' : 'aux Bannis'}` : Math.abs(j) < PALIERS_JAUGE[0] ? 'tu es dans la zone neutre' : `tu penches ${j > 0 ? 'vers la lumière' : "vers l'ombre"}`;
-    c.add(this.add.text(161, 180, `Balance : ${j > 0 ? '+' : ''}${j} · ${etat}`, style(11, '#5a3a20', { wordWrap: { width: 240 }, align: 'center' })).setOrigin(0.5, 0));
-    const pp = prochainsPaliers(G);
-    let y = 210;
-    for (const camp of ['bien', 'mal']) {
-      const p = pp[camp];
-      c.add(this.add.rectangle(161, y + 42, 236, 88, 0xe8d6b0).setStrokeStyle(2, 0x8a6a40));
-      c.add(this.add.image(56, y + 13, 'glyphe_' + (camp === 'bien' ? 'soleil' : 'lune')).setScale(2));
-      const titre = p ? `${NOMS_PALIERS_JAUGE[p.palier]} (${p.seuil > 0 ? '+' : '−'}${Math.abs(p.seuil)})` : `${NOMS_PALIERS_JAUGE[camp === 'bien' ? 3 : -3]} : atteint`;
-      c.add(this.add.text(70, y + 4, titre + (p && Math.abs(p.palier) === 2 ? ' · le Carrefour' : ''), style(13, camp === 'bien' ? '#8a6a10' : '#5a3a8a', { fontStyle: 'bold' })));
-      let texte = p ? OFFRES_PALIERS[p.palier] : `Tu es allé${eJ(G)} au bout de ce chemin.`;
-      const o = lo.offres[camp];
-      if (p && Math.abs(p.palier) === 2 && o) texte = o === 'juree' ? 'Tu as déjà prêté serment de ce côté.' : o === 'parjure' ? 'Tu as rompu ton serment : ce camp ne te le proposera plus.' : 'Tu as choisi de rester libre. Le camp refusé reviendra une dernière fois au 3e palier.';
-      c.add(this.add.text(52, y + 26, texte, style(11, '#3b2410', { wordWrap: { width: 214 }, lineSpacing: 1 })));
-      y += 98;
+    c.add(this.add.text(161, 90, 'Ce que les deux camps croient de toi', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5, 0));
+    const blocs = [
+      { cle: 'confrerie', nom: 'La Confrérie', niveau: r.niveauConfrerie, phrase: r.phraseConfrerie, couleur: '#8a6a10', y: 112 },
+      { cle: 'bannis', nom: 'Les Bannis', niveau: r.niveauBannis, phrase: r.phraseBannis, couleur: '#5a3a8a', y: 222 },
+    ];
+    for (const b of blocs) {
+      c.add(this.add.rectangle(161, b.y + 48, 236, 100, 0xe8d6b0).setStrokeStyle(2, 0x8a6a40));
+      const ex = 84, ey = b.y + 48, n = b.niveau;
+      // les rayons du blason (la Confrérie) ou les pétales de la fleur (les Bannis) : deux de plus par degré de confiance
+      const g = this.add.graphics();
+      for (let k = 0; k < 8; k++) {
+        const visible = k < Math.max(0, n) * 2, a = -Math.PI / 2 + k * Math.PI / 4;
+        if (b.cle === 'confrerie') {
+          g.lineStyle(3, 0xe0b030, visible ? 0.9 : 0.12);
+          g.lineBetween(ex + Math.cos(a) * 33, ey + Math.sin(a) * 33, ex + Math.cos(a) * 45, ey + Math.sin(a) * 45);
+        } else {
+          g.fillStyle(0xf0c8d8, visible ? 0.9 : 0.12);
+          g.fillEllipse(ex + Math.cos(a) * 38, ey + Math.sin(a) * 38, 14, 10);
+        }
+      }
+      c.add(g);
+      const em = this.add.image(ex, ey, 'embleme_' + b.cle).setScale(0.85).setAlpha(n < 0 ? 0.45 : 0.6 + 0.1 * n);
+      if (n < 0) em.setTint(0x8a8078);
+      c.add(em);
+      c.add(this.add.text(132, b.y + 14, b.nom, style(14, b.couleur, { fontStyle: 'bold' })));
+      c.add(this.add.text(132, b.y + 36, b.phrase, style(11, '#3b2410', { fontStyle: 'italic', wordWrap: { width: 140 }, lineSpacing: 1 })));
     }
+    const etat = G.camp ? `Ton camp est scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}.`
+      : G.sceauNeutre ? "Ni la lumière, ni l'ombre : l'armure attend quelqu'un d'autre."
+        : serment ? `Tu as prêté serment ${serment === 'bien' ? 'à la Confrérie' : 'aux Bannis'}.` : "Tu n'as juré à personne.";
+    c.add(this.add.text(161, 332, etat, style(11, '#5a3a20', { fontStyle: 'italic', wordWrap: { width: 236 }, align: 'center' })).setOrigin(0.5, 0));
+    // la page de droite : ce qu'on raconte (les gestes qui se voient ou se savent), puis ton chemin
+    c.add(this.add.text(425, 70, 'Ce qu’on raconte', style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
+    const vus = new Set(), rumeurs = lo.journal.filter(e => typeof FAITS !== 'undefined' && FAITS[e.cle] && (FAITS[e.cle].conf || FAITS[e.cle].ban))
+      .filter(e => { const t = texteGeste(e); if (vus.has(t)) return false; vus.add(t); return true; }).slice(0, 5);   // (une même rumeur ne se répète pas)
+    if (!rumeurs.length) c.add(this.add.text(425, 100, 'Rien encore : on ne parle pas de toi.', style(11, '#6b4a2a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 230 } })).setOrigin(0.5, 0));
+    let y = 94;
+    for (const e of rumeurs) {
+      const ou = FAITS[e.cle].conf ? 'En ville, on raconte : ' : 'À la cave, on murmure : ';
+      const t = this.add.text(316, y, ou + texteGeste(e) + '.', style(11, '#3b2410', { wordWrap: { width: 222 }, lineSpacing: 1 }));
+      c.add(t); y += t.height + 8;
+      if (y > 270) { t.destroy(); break; }
+    }
+    const carrefour = Object.entries(lo.offres || {}).map(([camp, o]) => o === 'juree' ? '' : o === 'parjure' ? `Tu as rompu ton serment ${camp === 'bien' ? 'à la Confrérie' : 'aux Bannis'}.` : `Tu as refusé le serment ${camp === 'bien' ? 'de la Confrérie' : 'des Bannis'}.`).filter(Boolean).join(' ');
     const armure = `Le sceau : ${(G.armure || []).length} / ${ARMURE.length} pièces d'armure.`;
-    c.add(this.add.text(161, y + 2, mafia(G).engage && !mafia(G).sorti ? `${armure}\n${NomBande(G)} : ${nomRangMafia(rangMafia(G), G)}` : `${armure}\nLes paliers d'après ? Le livre ne les montre pas encore...`,
-      style(10, '#7a5a3a', { fontStyle: 'italic', wordWrap: { width: 236 }, align: 'center' })).setOrigin(0.5, 0));
-    c.add(this.add.text(425, 70, 'Ce qui fait pencher la balance', style(14, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
-    const bareme = Object.values(BAREME_CAMP).sort((a, b) => (a.camp === b.camp ? a.n - b.n : a.camp === 'bien' ? -1 : 1));
-    bareme.forEach((b, i) => {
-      const yy = 88 + i * 17;
-      c.add(this.add.image(316, yy + 7, 'glyphe_' + (b.camp === 'bien' ? 'soleil' : 'lune')).setScale(1.2));
-      c.add(this.add.text(328, yy, `+${b.n}`, style(11, b.camp === 'bien' ? '#8a6a10' : '#5a3a8a', { fontStyle: 'bold' })));
-      const tb = this.add.text(350, yy + 1, b.texte, style(10, '#3b2410'));
-      if (tb.width > 194) tb.setScale(194 / tb.width, 1);   // (v1.64 : les plus longs se serrent, sans sortir de la page)
-      c.add(tb);
-    });
-    const yj = 88 + bareme.length * 17 + 6;
-    c.add(this.add.rectangle(425, yj, 236, 2, 0x8a6a40));
-    c.add(this.add.text(425, yj + 6, 'Ces derniers jours', style(13, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5, 0));
-    const journal = lo.journal.slice(0, 4);
-    if (!journal.length) c.add(this.add.text(425, yj + 30, "Rien encore : la balance attend tes premiers gestes.", style(11, '#6b4a2a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 230 } })).setOrigin(0.5, 0));
-    journal.forEach((e, i) => {
-      const yy = yj + 28 + i * 19, b = BAREME_CAMP[e.cle] || { camp: 'bien' };
-      c.add(this.add.image(316, yy + 7, 'glyphe_' + (b.camp === 'bien' ? 'soleil' : 'lune')).setScale(1.2));
-      const tj = this.add.text(328, yy, raccourcir(`Jour ${e.jour} · +${e.n} · ${texteGeste(e)}`, 40), style(11, '#3b2410'));
-      if (tj.width > 216) tj.setScale(216 / tj.width, 1);
-      c.add(tj);
-    });
-    c.add(this.add.text(425, yj + 108, `Au sceau (${ARMURE.length}e pièce d'armure), sans serment et dans la zone neutre : une autre fin...`, style(10, '#7a5a3a', { fontStyle: 'italic', align: 'center', wordWrap: { width: 230 } })).setOrigin(0.5, 0));
+    const bande = mafia(G).engage && !mafia(G).sorti ? `\n${NomBande(G)} : ${nomRangMafia(rangMafia(G), G)}` : '';
+    c.add(this.add.rectangle(425, 286, 236, 2, 0x8a6a40));
+    c.add(this.add.text(425, 294, armure + bande + (carrefour ? '\n' + carrefour : ''), style(10, '#7a5a3a', { fontStyle: 'italic', wordWrap: { width: 236 }, align: 'center' })).setOrigin(0.5, 0));
   }
 
   // --- 7. Les plans de la maison : améliorer le comptoir ---
