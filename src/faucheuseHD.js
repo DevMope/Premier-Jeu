@@ -342,8 +342,20 @@ function fhCendres(fond, dev, cx, cy, sol, k, { phase = 0, longueur = 0, densite
 // moment-là, puis monte, tournoie et se dissout là où elle est née (elle ne la suit pas). source(f) : où est son corps à
 // l'image f ({ x, haut, bas, demi } en pixels de la toile du monde) ; f : l'image à dessiner ; parImage : combien de cendres
 // se détachent à chaque image
-function fhCendresMonde(t, source, f, { parImage = 9, vie = 22, graine = 5, e = 1 } = {}) {
-  t.rampes.cendre = FH_RAMPES.cendre;
+function fhCendresMonde(t, source, f, { parImage = 9, vie = 22, graine = 5, e = 1, fines = 0 } = {}) {   // (fines : les poussières de suie et braises éteintes du sillage, par image)
+  t.rampes.cendre = FH_RAMPES.cendre; t.rampes.braiseE = [0x1a1622, 0x2a2434, 0x3c3448, 0x524862, 0x6a5e7e, 0x857a98];
+  // (v8) le sillage : de fines poussières de suie et quelques braises éteintes, d'un gris violet, qui tourbillonnent derrière
+  // elle puis retombent ou se dissolvent (seulement quand elle avance)
+  if (fines) for (let f0 = Math.max(1, f - 30); f0 <= f; f0++) { const S = source(f0), S0 = source(f0 - 1); if (!S || !S0) continue;
+    const vx = S.x - S0.x; if (Math.abs(vx) < 0.5) continue;
+    for (let j = 0; j < fines; j++) { const id = f0 * 53 + j, h = n => hachage(id, n, graine + 3), a = (f - f0 + h(1)) / 30; if (a > 1) continue;
+      const x0 = S.x - Math.sign(vx) * (S.demi * (0.4 + h(2) * 0.9)), y0 = S.haut + h(3) * (S.bas - S.haut) * 1.05;
+      const tourne = (h(4) - 0.5) * 26 * e, retombe = h(5) > 0.45;
+      const x = x0 - vx * 0.35 * a * 6 + Math.sin(a * 9 + id) * tourne * a, y = y0 + (retombe ? a * a * 40 * e : -a * (20 + h(6) * 30) * e) + Math.cos(a * 9 + id) * tourne * 0.4 * a;
+      if (h(7) < a * 0.9) continue;   // (elles se dissolvent en route)
+      const braise = h(8) > 0.82, m = braise ? 'braiseE' : 'cendre', taille = braise ? (h(9) > 0.5 ? 2 : 1) : 1;
+      for (let dy = 0; dy < taille; dy++) for (let dx = 0; dx < taille; dx++) t.poser(Math.round(x) + dx, Math.round(y) + dy, m, braise ? 3 + Math.round((1 - a) * 2) : 2 + (h(10) > 0.6 ? 1 : 0));
+    } }
   for (let f0 = Math.max(0, f - vie); f0 <= f; f0++) { const S = source(f0); if (!S) continue;
     for (let j = 0; j < parImage; j++) { const id = f0 * 31 + j, h = n => hachage(id, n, graine), a = (f - f0 + h(1)) / vie; if (a > 1) continue;
       const zone = h(2), bord = h(3) - 0.5;
