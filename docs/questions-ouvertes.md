@@ -9,8 +9,13 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q263** — « La Promesse de l'Aube » en un seul mot, dans une autre langue : **Morgunheit** (vieux norrois : *morgun*, le matin, et *heit*, le serment, la promesse), **Dægbéot** (vieil anglais : le jour qui se lève, le vœu), **Auroravotum** (latin : le vœu de l'aurore), ou **Akatsuki** (japonais : l'aube). Lequel ?
-- **Q257** — (reportée) à redemander après la Faucheuse v6.
+
+
+
+
+
+
+
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -19,6 +24,13 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q281~~ Les Pommeroy en A+B+C, validés (02/11).
+- ~~Q277 à Q280~~ Pommeroy : essayer les trois remèdes ; un accès au marché plus naturel que le porche ; apprentis aux Mages certains jours ; idée : la petite vie des PNJ (02/11).
+- ~~Q273 à Q276~~ Porche à refaire ; neige sur le fronton de la banque ; enseigne des Mages visible le jour et intérieur à refaire ; impasse reportée au Rempart ; Pommeroy : pierre trop large (02/11).
+- ~~Q270 à Q272~~ Faucheuse validée ; pierre validée sauf les Pommeroy ; enseigne du comptoir et maison du paon validées (02/11).
+- ~~Q266 à Q269~~ Zoom 1,0, forge A, pierre poussée, plaque du comptoir retirée, enseigne remodelée ; finir la ville des hobbits avant Pont-Royal (02/11).
+- ~~Q257, Q264, Q265~~ La Faucheuse v6 validée : jonction parfaite, cendres et traînée top ; un GIF demandé (02/11).
+- ~~Q263~~ Morgunheit, la Promesse de l'Aube (02/11).
 - ~~Q254 à Q262~~ Réponses du 02/11 dans `docs/game-design.md` (la Promesse de l'Aube ; Faucheuse : jonction, cendres noires ; rue : dézoomer, rez-de-chaussée trop de face, forge à refaire).
 - ~~Q244 à Q253~~ Réponses du 02/11 dans `docs/game-design.md` (forge du joueur, Faucheuse : manche, noirceur, traînée de fumée ; banque, plaque, maisons basses ; ordre des bâtiments choisi par Claude).
 - ~~Q243~~ L'Absolution (bâton du Sage) et le Dévoreur de Noms (bâton transformé) (02/11).
