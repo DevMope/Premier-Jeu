@@ -14,6 +14,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q277** — Les Pommeroy, ce qui garde l'effet « de face » (diagnostic de Claude sur l'image du 02/11) : 1) le rez-de-chaussée en pierre est aussi haut que l'étage et beaucoup plus sombre : il se lit comme une dalle plate ; 2) rien ne dépasse du mur vers le sol : la porte et la fenêtre sont à fleur, sans marche ni appui vus par le dessus ; 3) le pied de la maison ne touche pas la rue (un muret gris la coupe du sol). Remèdes proposés, à cumuler : A, un rez-de-chaussée un peu plus bas et d'une pierre plus chaude et plus claire, comme les autres maisons ; B, devant la porte, un perron de deux marches et un petit auvent de bois au-dessus, vus par le dessus, avec leur ombre ; C, une jardinière sous la fenêtre et un pied de mur posé directement sur les pavés, avec l'ombre de contact. Lesquels ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
