@@ -199,7 +199,15 @@ function* planVilleEtapes(s, cle = 'planVilleHD') {
   }
   for (let b = 0; b < 9; b++) for (let a = -b * 0.55; a <= b * 0.55; a++) P(MX(2370) + a, 168 + b, 'violet', 3 + (a < 0 ? 1 : 0) - (b % 3 === 2 ? 1 : 0));   // la tente d'Ysmée, et son fanion d'or
   P(MX(2370), 166, 'boisS', 2); P(MX(2370), 167, 'boisS', 2); P(MX(2370) + 1, 166, 'or', 5); P(MX(2370) + 2, 166, 'or', 4); P(MX(2370), 176, 'boisS', 0); P(MX(2370), 175, 'boisS', 0);
-  { const ax = Math.round(MX(3520)) - 2;   // l'arche des Mastres : deux tours à créneaux, un chemin de ronde, la baie en plein cintre, une bannière rouge
+  const PPV = typeof porchePiste === 'function' ? porchePiste() : null, ouvertV = PPV && PPV.ouvert && !PPV.recul;
+  if (PPV && PPV.ouvert) { const [x, l] = LOT(3836, 128); toitMini(x, 176, l, 'toitR', { chem: true }); }   // (étape 8b) la voisine de la banque
+  if (ouvertV) { const ax = Math.round(MX(3640));   // (étape 8b) la rue débouche librement sur la place : ses pavés, un étal, les fanions (ou les deux piliers fleuris)
+    for (let a = -8; a <= 8; a++) for (let b = 0; b < 4; b++) P(ax + a, 174 + b, 'paveK', 4 - ((a + b) % 3 === 0 ? 1 : 0));
+    for (let a = -7; a <= 7; a += 2) P(ax + a, 166 + Math.round(Math.sin((a + 7) / 14 * Math.PI) * 2), ['voletR', 'or', 'voletB'][((a + 7) / 2) % 3], 4);
+    if (PPV.piste === '2') for (const dx of [-8, 8]) { for (let b = 0; b < 4; b++) P(ax + dx, 177 - b, 'murK', b === 3 ? 5 : 3); P(ax + dx, 172, 'or', 5); }
+    else { for (let a = 4; a < 8; a++) P(ax + a, 172, 'voletR', 4); P(ax + 4, 173, 'bois', 2); P(ax + 7, 173, 'bois', 2); }
+  }
+  if (!ouvertV) { const ax = Math.round(MX(3520)) - 2;   // l'arche des Mastres : deux tours à créneaux, un chemin de ronde, la baie en plein cintre, une bannière rouge
     for (const dx of [0, 13]) { for (let b = 0; b < 12; b++) for (let a = 0; a < 5; a++) P(ax + dx + a, 177 - b, 'murK', b === 11 ? 5 : a === 0 ? 4 : a === 4 ? 2 : 3 - (b % 4 === 3 ? 1 : 0)); for (const a of [0, 2, 4]) P(ax + dx + a, 165 - 1, 'murK', 5); P(ax + dx + 2, 172, 'fer', 1); P(ax + dx + 2, 171, 'fer', 1); }
     for (let a = 5; a < 13; a++) for (let b = 0; b < 8; b++) P(ax + a, 177 - b, b === 7 ? 'toitA' : 'murK', b === 7 ? 4 : 3 - (a > 10 ? 1 : 0));
     for (let b = 0; b < 6; b++) for (let a = 6; a < 12; a++) { const dx = a - 8.5, dy = b - 3; if (b > 2 || Math.hypot(dx, dy) < 3) P(ax + a, 177 - b, 'boisS', 0); }
