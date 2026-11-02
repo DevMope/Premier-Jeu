@@ -16,6 +16,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q281** — Les Pommeroy, les trois remèdes (étape 8) : seuls et combinés, côte à côte. Claude conseille A+B+C (rez-de-chaussée plus bas et plus clair, auvent au-dessus de la porte, jardinière sous la fenêtre). Lequel préfères-tu ? L'effet « de face » a-t-il enfin disparu ? (Avec A, l'écriteau « Les Pommeroy » tombe sur la poutre de l'étage.)
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
