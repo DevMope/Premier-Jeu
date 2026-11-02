@@ -612,7 +612,7 @@ function creerAccessoiresFacade(scene) {
 // (v1.31) l'appartement bâti : la façade est plus haute de tout un étage (les scènes en plan serré reculent la vue d'autant)
 function facadeAvecEtage(G) { return !!G && niveauFacade(G) === 3 && typeof etageA === 'function' && etageA(G, 'appartement') && !(typeof styleDeMaison === 'function' && styleDeMaison(G)); }
 const RECUL_ETAGE = 56;
-function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3, { fumee = true, etage: avecEtage = true, vent = 40, volume = false } = {}) {
+function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3, { fumee = true, etage: avecEtage = true, vent = 40, volume = false, enseigneSurFacade = false } = {}) {
   creerFacadeHD(scene, n);
   // (v1.30, planche 54) l'appartement : la belle maison gagne un étage et un balcon (le toit et la cheminée montent d'autant)
   // (v1.57) un style de maison acheté chez l'architecte de Pont-Royal remplace la façade (la porte, la vitrine et l'enseigne restent à leur place)
@@ -629,8 +629,11 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   const tonneaux = scene.add.image(gauche + FACADE.L * 2 - 26, sol + 4, 'tonneauxHD').setOrigin(0, 1).setScale(2);
   // L'enseigne pend à son support, et se balance un peu
   // (v0.93) elle s'améliore avec la maison entière ; l'écriture et la couleur du fond se choisissent au bureau
-  const ex = gauche + (FACADE.enseigne[0] + 6) * 2, ey = haut + FACADE.enseigne[1] * 2;
-  const enseigne = poserEnseigne(scene, ex, ey - (n === 3 ? 8 : 0), n, nomShop);
+  // (Q269, la rue Soucolline) enseigneSurFacade : plus compacte (0,72), pendue sous l'égout au-dessus de la fenêtre-comptoir,
+  // toute sur la façade (elle ne déborde plus sur la maison voisine), à tous les niveaux
+  const surF = enseigneSurFacade && !stylePR, ex = surF ? gauche + 60 * 2 : gauche + (FACADE.enseigne[0] + 6) * 2, ey = surF ? haut + (n >= 2 ? 108 : n === 0 ? 116 : 113) * 2 - 2 : haut + FACADE.enseigne[1] * 2;
+  const enseigne = poserEnseigne(scene, ex, ey - (n === 3 && !surF ? 8 : 0), n, nomShop);
+  if (surF) enseigne.setScale(0.72);
   scene.tweens.add({ targets: enseigne, angle: { from: -2.5, to: 2.5 }, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   // Un filet de fumée qui monte de la cheminée
   creerHalo(scene);

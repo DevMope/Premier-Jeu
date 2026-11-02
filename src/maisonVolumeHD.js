@@ -126,7 +126,7 @@ function barbierVolumeHD(scene) {
   // 8. les bords du mur tournent (une bande fine), et le pied du mur touche le trottoir
   for (let y = yE + 3; y < H; y++) { teinterV(t, 4 + ox, y, -1); teinterV(t, src.l - 5 + ox, y, -1); teinterV(t, src.l - 6 + ox, y, -1); }
   for (let x = 0; x < L; x++) { teinterV(t, x, H - 1, -2); teinterV(t, x, H - 2, -1); }
-  t.contour(); t.texture(scene, cle); reliefPierreTexture(scene, cle, [[4 + ox, 100 + oy, 119 + ox, H - 3, 0]]); noterVolumeHD(scene, cle, toit, yE, ch); return cle;
+  t.contour(); t.texture(scene, cle); pierresRondesTexture(scene, cle, [{ r: [4 + ox, 100 + oy, 119 + ox, H - 3], regulier: true, graine: 7203, sauf: [[69 + ox, 95 + oy, 107 + ox, H]] }]); noterVolumeHD(scene, cle, toit, yE, ch); return cle;
 }
 // L'ombre de contact d'une maison sur le trottoir : une bande qui s'estompe en descendant (à poser au pied, en (x, yBase))
 function ombreContactMaisonHD(scene, larg, h = 7) {
@@ -204,7 +204,7 @@ function maisonHauteVolumeHD(s) {
   bordsMurHD(t, ox, L + ox - 1, yT + 3, H - 1);
   for (let x = 0; x < W; x++) { teinterV(t, x, H - 1, -2); teinterV(t, x, H - 2, -1); }
   t.contour(); t.texture(s, cle);
-  reliefPierreTexture(s, cle, [[x0, yR, x1 - 1, bas - 5, 7]]);   // (Q258) la pierre du bas, vue d'en haut
+  pierresRondesTexture(s, cle, [{ r: [x0 + 9, yR, x1 - 10, bas - 4], sousFace: 7, graine: 582, sauf: [...[0.2, 0.8].map(fx => { const wx = Math.round(L * fx - 8) + ox, wy = yR + 18; return [wx - 5, wy - 6, wx + 20, wy + 27]; }), [px - 6, py - 7, px + pl + 5, bas + 4]] }]);   // (Q268) la pierre du bas, à la Stardew
   noterVolumeHD(s, cle, toit, yT, ch); s.textures.get(cle).info89 = { L: W, H, yR, yT, bas };
   return cle;
 }
@@ -258,7 +258,7 @@ function banqueVolumeHD(s) {
   bordsMurHD(t, xm0, xm1, yC + 3, T - 1);
   for (let x = 0; x < W; x++) { teinterV(t, x, T - 1, -2); teinterV(t, x, T - 2, -1); }
   t.contour(); t.texture(s, cle);
-  reliefPierreTexture(s, cle, [[xm0, yC + 12, xm1, T - 17, 0]]);   // (Q258) la pierre, vue d'en haut
+  pierresRondesTexture(s, cle, [{ r: [xm0 + 12, yC + 7, xm1 - 12, T - 17], regulier: true, graine: 853, sauf: [...[52 + ox, 148 + ox].map(cx => [cx - 11, yC, cx + 11, T]), ...[20 + ox, 162 + ox].map(fx => [fx - 3, 68 + oy, fx + 20, 121 + oy]), [80 + ox - 2, T - 66, 80 + ox + 41, T]] }]);   // (Q268) la pierre de taille
   noterVolumeHD(s, cle, toit, yC, ch, (x, y) => y >= 18 + oy && Math.abs(x - 100 - ox) <= (y - 18 - oy) * 3 + 2);   // (la neige : le toit, pas le fronton)
   return cle;
 }
@@ -370,7 +370,12 @@ function maisonVolume5(s, cle, o) {
   bordsMurHD(t, ox, L + ox - 1, yE + 3, H - 1);
   for (let x = 0; x < W; x++) { teinterV(t, x, H - 1, -2); teinterV(t, x, H - 2, -1); }
   t.contour(); t.texture(s, cle);
-  reliefPierreTexture(s, cle, [[4 + ox, yR + oy, L - 5 + ox, basV - 5, etages.length ? 7 : 0]]);   // (Q258) la pierre du bas, vue d'en haut
+  {   // (Q268) la pierre du bas, à la Stardew (hors des encadrements, des chaînes d'angle et du soubassement)
+    const sauf = fenetresRdc.map(fx => { const wx = Math.round(L * fx - 8) + ox, wy = yR + 18 + oy; return [wx - 5, wy - 6, wx + 20, wy + 27]; });
+    if (porte) { const px = Math.round(L * porte.x - porte.l / 2) + ox; sauf.push([px - 6, basV - porte.h - 7, px + porte.l + 5, basV + 4]); }
+    if (vitrine) { const vx = Math.round(L * vitrine.x - vitrine.l / 2) + ox, vy = yR + 18 + oy; sauf.push([vx - 9, vy - 16, vx + vitrine.l + 8, vy + rdc - 24]); }
+    if (o.porche) { const px = Math.round(L * o.porche.x - o.porche.l / 2) + ox; sauf.push([px - 7, yR + oy, px + o.porche.l + 6, basV + 4]); }
+    pierresRondesTexture(s, cle, [{ r: [13 + ox, yR + oy, L - 14 + ox, basV - 4], sauf, sousFace: etages.length ? 7 : 0, graine: graine + 77 }]); }
   noterVolumeHD(s, cle, toit, yE, ch, lu ? (x, y) => x >= lu.lx && x < lu.lx + lu.l && y >= lu.ly && y < lu.bas : null);
   s.textures.get(cle).info89 = { L: W, H, yR: yR + oy, yT: yE, bas: basV };
   return cle;
@@ -410,7 +415,7 @@ function revolumeHD(s, src, cle, o) {
       for (let y = y0; y <= y1; y++) for (const [x, f] of [[x0, 0.84], [x0 + 1, 0.9]]) if (!op.interieur || lum(x, y + oy) < 90) mul(x, y + oy, f); }
     if (op.d) { const [x0, x1, y] = op.d, n = op.n || 2; for (let x = x0; x <= x1; x++) { for (let j = 0; j < n; j++) eclaire(x, y + oy + j, j ? 0.14 : 0.28); mul(x, y + oy + n, 0.74); } }
   }
-  reliefPierreDonnees(d, Wd, H, ops.filter(op => op.pierre).map(op => [op.pierre[0], op.pierre[1] + oy, op.pierre[2], op.pierre[3] + oy, op.pierre[4] || 0]));   // (Q258) la pierre vue d'en haut
+  pierresRondesDonnees(d, Wd, H, ops.filter(op => op.pierre).map(op => ({ r: [op.pierre[0], op.pierre[1] + oy, op.pierre[2], op.pierre[3] + oy], sousFace: op.pierre[4] || 0, graine: g, sauf: (op.sauf || []).map(([a, b, c, e]) => [a, b + oy, c, e + oy]) })));   // (Q268) la pierre à la Stardew
   for (let k = 0; k < 8; k++) for (let x = xa; x <= xb; x++) mul(x, Y + k, k < 5 ? 0.66 : 0.82);   // l'ombre de la rive
   for (let y = Y; y < H; y++) { mul(mur[0], y, 0.86); mul(mur[1], y, 0.8); mul(mur[1] - 1, y, 0.9); }   // les bords du mur
   for (let x = 0; x < Wd; x++) { mul(x, H - 1, 0.72); mul(x, H - 2, 0.86); }   // le pied du mur
@@ -425,7 +430,7 @@ const BARDEAU_COMPTOIR = [0x2a1a0e, 0x4a3018, 0x6a4626, 0x8a6036, 0xa87a4a, 0xc4
 function comptoirVolumeHD(s, n = 3, etage = false) {
   if (etage) creerEtageHD(s); else creerFacadeHD(s, n);
   const src = etage ? 'facadeHD_4' : 'facadeHD_' + n, dy = etage ? 50 : 0, haut = n >= 2;
-  const ops = [{ pierre: [12, (haut ? 108 : n === 0 ? 116 : 113) + dy, 187, 175 + dy, haut ? 7 : 0] }, { r: [31, 123 + dy, 88, 157 + dy], k: 5 }, { d: [22, 97, 158 + dy], n: 2 }, { r: [124, 116 + dy, 157, 171 + dy], interieur: true, k: 5 }];
+  const ops = [{ pierre: [22, (haut ? 108 : n === 0 ? 116 : 113) + dy, 177, 174 + dy, haut ? 7 : 0], sauf: [[24, 110 + dy, 96, 166 + dy], [117, 110 + dy, 165, 176 + dy]] }, { r: [31, 123 + dy, 88, 157 + dy], k: 5 }, { d: [22, 97, 158 + dy], n: 2 }, { r: [124, 116 + dy, 157, 171 + dy], interieur: true, k: 5 }];
   if (haut) { for (const fy0 of etage ? [70, 120] : [70]) for (const fx0 of [47, 105, 163]) ops.push({ r: [fx0 + 1, fy0 + 1, fx0 + 16, fy0 + 22] }, { d: [fx0 - 2, fx0 + 19, fy0 + 24], n: 1 }); ops.push({ d: [8, 191, 102 + dy], n: 1 }); }
   return revolumeHD(s, src, 'comptoirVolumeHD_' + (etage ? 4 : n), { coupe: haut ? 58 : n === 0 ? 116 : 113, xa: haut ? 4 : 10, xb: haut ? 195 : 189, prof: haut ? 32 : 28, montee: haut ? 62 : 42,
     mat: n === 0 ? 'chaumeA' : n === 1 ? 'ardoiseToit' : n === 2 ? 'bardeau' : 'tuile', motif: n === 0 ? 'chaume' : n === 1 ? 'ardoise' : 'tuile', g: 707 + n, rampes: { bardeau: BARDEAU_COMPTOIR, brique: BRIQUE_COMPTOIR },
@@ -440,7 +445,7 @@ function forgeVolumeHD(s, jour) {
 // Les Pommeroy : leur toit de tuiles ; les fenêtres de l'étage et du rez-de-chaussée en retrait, leurs appuis, la porte
 function pommeroyVolumeHD(s) {
   return revolumeHD(s, 'rueMaisonHD_0', 'pommeroyVolumeHD', { coupe: 53, xa: 2, xb: 147, prof: 28, montee: 54, mat: 'tuile', motif: 'tuile', g: 815, mur: [9, 140],
-    ops: [{ pierre: [9, 97, 140, 159, 6] }, { r: [25, 61, 40, 77] }, { r: [107, 61, 122, 77] }, { d: [22, 43, 79], n: 1 }, { d: [104, 125, 79], n: 1 }, { r: [109, 115, 124, 131], k: 5 }, { d: [106, 127, 133], n: 1 }, { r: [48, 116, 70, 159], interieur: true, k: 5 }] });
+    ops: [{ pierre: [9, 97, 140, 158, 6], sauf: [[104, 111, 128, 136], [45, 112, 73, 160]] }, { r: [25, 61, 40, 77] }, { r: [107, 61, 122, 77] }, { d: [22, 43, 79], n: 1 }, { d: [104, 125, 79], n: 1 }, { r: [109, 115, 124, 131], k: 5 }, { d: [106, 127, 133], n: 1 }, { r: [48, 116, 70, 159], interieur: true, k: 5 }] });
 }
 // (Q252) La potence de fer d'où pend une plaque de rue, fixée au poteau d'un réverbère (vers la gauche), et le petit poteau
 // de bois (son chapeau, son pied de pierre vu par le dessus) qui porte une plaque devant un perron
@@ -462,53 +467,19 @@ function poteauPlaqueHD(s) {
   t.contour(); t.texture(s, cle); return cle;
 }
 
-// ======================= ÉTAPE 5 (Q258) : les rez-de-chaussée vus d'en haut =======================
-// Le défaut général : les bas de maisons, en pierre, paraissaient vus de face, à côté de toits vus d'en haut. Comme Stardew
-// (ses murs de pierre et de rondins de 136 et 137) : chaque assise montre son dessus éclairé (une ligne claire en haut de
-// chaque pierre, une plus douce en dessous) et son pied sombre (la ligne au-dessus du joint du bas), le côté droit de la
-// pierre un peu dans l'ombre ; le mur s'assombrit vers le sol (un dégradé vertical, jusqu'à l'ombre de contact) ; sous
-// l'avancée d'un étage en encorbellement, la sous-face jette une bande d'ombre sur le haut de la pierre. Sur les pixels
-// (pour toutes les textures : celles du moteur comme celles faites à la main) : zones [x0, y0, x1, y1, sousFace].
-function reliefPierreDonnees(d, W, H, zones) {
-  const L = (x, y) => { const i = (y * W + x) * 4; return 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]; };
-  const pierre = (x, y) => { if (x < 0 || y < 0 || x >= W || y >= H) return false; const i = (y * W + x) * 4; if (d[i + 3] < 128) return false; const r = d[i], g = d[i + 1], b = d[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b); return mx > 30 && (mx - mn) / mx < 0.3; };
-  for (const [x0, y0, x1, y1, sf = 0] of zones) {
-    let somme = 0, n = 0; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (pierre(x, y)) { somme += L(x, y); n++; }
-    if (!n) continue;
-    const moy = somme / n, joint = (x, y) => !pierre(x, y) || L(x, y) < moy * 0.72;
-    const f = new Float32Array((x1 - x0 + 1) * (y1 - y0 + 1)).fill(1), e = new Float32Array(f.length), at = (x, y) => (y - y0) * (x1 - x0 + 1) + (x - x0);
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-      const i = (y * W + x) * 4; if (d[i + 3] < 128) continue; const k = at(x, y), v = (y - y0) / Math.max(1, y1 - y0);
-      f[k] *= 1 - 0.24 * Math.pow(v, 1.4);                                   // le dégradé vers le sol
-      if (sf && y - y0 < sf) f[k] *= y - y0 < sf * 0.6 ? 0.66 : 0.82;           // la sous-face de l'encorbellement
-      if (!pierre(x, y) || joint(x, y)) continue;
-      if (joint(x, y - 1)) e[k] = 0.3; else if (joint(x, y - 2)) e[k] = 0.12;   // le dessus de la pierre, au soleil
-      if (joint(x, y + 1)) f[k] *= 0.78;                                         // son pied, dans l'ombre
-      if (joint(x + 1, y) && !joint(x, y - 1)) f[k] *= 0.9;                       // son côté droit
-    }
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const i = (y * W + x) * 4; if (d[i + 3] < 128) continue; const k = at(x, y);
-      for (let c = 0; c < 3; c++) { let v = d[i + c]; v += (255 - v) * e[k]; d[i + c] = Math.max(0, Math.min(255, v * f[k])); } }
-  }
-}
-function reliefPierreTexture(s, cle, zones) {
-  const tex = s.textures.get(cle), c = tex.getSourceImage(), ctx = c.getContext('2d'), D = ctx.getImageData(0, 0, c.width, c.height);
-  reliefPierreDonnees(D.data, c.width, c.height, zones); ctx.putImageData(D, 0, 0); if (tex.refresh) tex.refresh();
-}
-
 // ======================= ÉTAPE 5 (Q258) : la forge de Thorgal, refaite entièrement =======================
 // Ce n'est pas une maison : une halle de forge ouverte sur la rue, qu'on voit d'en haut. Le sol de terre battue, vu par le
 // dessus, s'enfonce jusqu'au mur du fond, de pierre ; contre lui, le foyer (un bloc de pierre, son dessus où rougeoient les
 // braises) sous sa grande hotte, qui monte en cheminée massive à travers le toit ; à côté, le soufflet de cuir ; au mur, le
 // râtelier des outils (pinces, marteaux, un fer à cheval) ; devant, l'enclume sur sa souche, le bac de trempe (son eau vue
-// par le dessus, une pince dedans), le tas de charbon ; au fond à droite, les bûches empilées. Deux pistes pour le toit :
-//   A (forgeAppentisHD) : un grand appentis de bardeaux, d'un seul pan qui monte vers le mur du fond, sur trois poteaux ;
-//   B (forgePignonHD) : un toit de tôle à deux pans, pignon sur rue (le pignon de planches, son oculus, l'emblème).
+// par le dessus, une pince dedans), le tas de charbon ; au fond à droite, les bûches empilées. Le toit (Q267, la piste A
+// validée) : un grand appentis de bardeaux, d'un seul pan qui monte vers le mur du fond, sur trois poteaux.
 // Les dimensions : 184 × 196 ; le sol de la rue au rang 195 ; l'égout (le bord avant du toit) à 80 au-dessus du sol ; la
 // halle profonde de 44 (le sol vu : 33 rangs) ; le foyer à (42, 151).
 const FORGE_VOLUME = { L: 184, H: 196, feu: [42, 151], ecriteau: [130, 120] };
 function rampesForge(t) {
   Object.assign(t.rampes, RAMPES_RUE, typeof RAMPES_V2 !== 'undefined' ? RAMPES_V2 : {});
-  Object.assign(t.rampes, { sol: rampe(0x7a6650), charbon: rampe(0x3a3634), eau: rampe(0x3e6e8e), bardeau: BARDEAU_COMPTOIR, tole: rampe(0x8a9096), rouille: rampe(0xa0582a), cuirF: rampe(0x8a4a2a) });
+  Object.assign(t.rampes, { sol: rampe(0x7a6650), charbon: rampe(0x3a3634), eau: rampe(0x3e6e8e), bardeau: BARDEAU_COMPTOIR, cuirF: rampe(0x8a4a2a) });
 }
 function interieurForgeHD(t, g = 861) {
   const Hb = 195, fond = Hb - 33, P = (x, y, m, k) => t.poser(Math.round(x), Math.round(y), m, Math.max(0, Math.min(5, k)));
@@ -600,29 +571,52 @@ function forgeAppentisHD(s) {
   tex.toit89 = { haut: yT - 2, bas: yE + 2, chem: { cx: 42, haut: 16, h: yT + 13 - 16 }, lucarne: null, nu: null };
   return cle;
 }
-function forgePignonHD(s) {
-  const cle = 'forgePignonHD'; if (s.textures.exists(cle)) return cle;
-  const { L, H } = FORGE_VOLUME, Hb = H - 1, t = toileDecor(L, H); rampesForge(t);
-  interieurForgeHD(t);
-  const yE = 115, cx = 92, xa = 3, xb = 180, hP = 40, D = 33, yA = yE - hP;
-  const rake = x => x <= cx ? yE - (x - xa) / (cx - xa) * hP : yA + (x - cx) / (xb - cx) * hP;
-  for (let x = xa; x <= xb; x++) { const yr = rake(x), gauche = x <= cx;   // les deux pans de tôle, qui s'enfoncent vers le fond
-    for (let y = Math.round(yr - D); y < Math.round(yr); y++) { const o = Math.round(yr) - y, cote = o % 5, rouille = fbm(x * 0.08, y * 0.1, 863) > 0.66;
-      let k = (gauche ? 4 : 2) + (cote === 0 ? 1 : cote === 1 ? -1 : 0) - (o > D - 3 ? 1 : 0); t.poser(x, y, rouille ? 'rouille' : 'tole', k - (rouille ? 1 : 0)); } }
-  for (let y = yA - D; y <= yA; y++) { t.poser(cx, y, 'tole', 5); t.poser(cx + 1, y, 'tole', 1); }   // le faîtage, qui file vers le fond
-  for (let y = yE - D; y <= yE; y++) { t.poser(xa, y, 'fer', 2); t.poser(xb, y, 'fer', 1); }   // les égouts de côté
-  for (let x = xa + 2; x <= xb - 2; x++) { const yr = Math.round(rake(x)); for (let y = yr + 2; y < yE + 3; y++) { const pl = (x - xa) % 6 === 0; t.poser(x, y, 'chene', pl ? 1 : 3 + (x < cx ? 0 : -1) - (y < yr + 4 ? 1 : 0)); } }   // le pignon de planches
-  for (let x = xa; x <= xb; x++) { const yr = Math.round(rake(x)); t.poser(x, yr, 'chene', x <= cx ? 5 : 2); t.poser(x, yr + 1, 'chene', x <= cx ? 4 : 1); }   // les planches de rive, en V
-  for (let y = 84; y < 100; y++) for (let x = 84; x < 101; x++) { const q = Math.hypot(x + 0.5 - 92.5, y + 0.5 - 92); if (q < 6.5) t.poser(x, y, 'charbon', 0); else if (q < 8.5) t.poser(x, y, 'laiton', q < 7.5 ? 4 : 2); }   // l'oculus, son anneau de runes
-  for (let a = 0; a < 8; a++) { const th = a / 8 * Math.PI * 2; t.poser(Math.round(92.5 + Math.cos(th) * 7.5), Math.round(92 + Math.sin(th) * 7.5), 'or', 5); }
-  for (let x = 56; x <= 72; x++) { t.poser(x, 104, 'fer', 4); t.poser(x, 105, 'fer', 2); } for (let x = 60; x <= 68; x++) { t.poser(x, 106, 'fer', 3); t.poser(x, 107, 'fer', 2); } for (let x = 58; x <= 70; x++) t.poser(x, 108, 'fer', 3);   // l'emblème cloué : l'enclume
-  chemineeForgeHD(t, 28, 56, Math.round(rake(42) - 18), 18);
-  ombreSousToitForge(t, yE + 9, yE + 30);
-  poutreForgeHD(t, 1, 182, yE + 3); poteauxForgeHD(t, [4, 88, 172], yE + 9, Hb);
-  t.contour(); t.texture(s, cle); const tex = s.textures.get(cle); tex.cheminee = [42, 18]; tex.forge = FORGE_VOLUME;
-  tex.toit89 = { haut: yA - D - 2, bas: yE + 2, chem: { cx: 42, haut: 18, h: Math.round(rake(42) - 18) - 18 + 4 }, lucarne: null, nu: (x, y) => y > rake(x) + 1 };
-  return cle;
+// (Q267) la piste A, validée : l'appentis de bardeaux
+function forgeHalleHD(s) { return forgeAppentisHD(s); }
+
+// ======================= ÉTAPE 6 (Q268) : la pierre à la façon de Stardew =======================
+// On repeint la maçonnerie des rez-de-chaussée, dans sa couleur (la moyenne de ses pierres, gardée) : des assises de
+// hauteurs variées (5 à 8), des pierres de tailles variées (7 à 18), aux coins arrondis, aux joints irréguliers (une pierre
+// sur trois monte ou descend d'un rang) ; chaque pierre modelée : son dessus au soleil (deux rangs clairs), son corps, son
+// pied dans l'ombre, son côté droit plus sombre, une teinte à elle ; le mortier sombre entre elles. Puis le dégradé vers le
+// sol et, sous un étage qui avance, la bande d'ombre de sa sous-face. Ne sont repeints que les pixels de pierre de la zone
+// (ni les vitres, ni les portes, ni les volets), hors des rectangles « sauf » (les encadrements de pierre des ouvertures,
+// les chaînes d'angle, le soubassement, les colonnes). zones : { r: [x0, y0, x1, y1], sauf: [[x0, y0, x1, y1], …], sousFace, graine,
+// regulier } (regulier : la pierre de taille de la banque et du barbier, des assises égales de 7, des blocs de 12 à 20)
+function pierresRondesDonnees(d, W, H, zones) {
+  const lum = i => 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2];
+  const pierre = (x, y) => { if (x < 0 || y < 0 || x >= W || y >= H) return false; const i = (y * W + x) * 4; if (d[i + 3] < 128) return false; const r = d[i], g = d[i + 1], b = d[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b); return mx > 34 && (mx - mn) / mx < 0.3; };
+  for (const z of zones) {
+    const [x0, y0, x1, y1] = z.r, sauf = z.sauf || [], g = z.graine || 1, sf = z.sousFace || 0;
+    const hors = (x, y) => sauf.some(([a, b, c, e]) => x >= a && x <= c && y >= b && y <= e);
+    let sr = 0, sg = 0, sb = 0, n = 0; const masque = new Uint8Array((x1 - x0 + 1) * (y1 - y0 + 1)), at = (x, y) => (y - y0) * (x1 - x0 + 1) + (x - x0);
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (pierre(x, y) && !hors(x, y)) { masque[at(x, y)] = 1; const i = (y * W + x) * 4; if (lum(i) > 60) { sr += d[i]; sg += d[i + 1]; sb += d[i + 2]; n++; } }
+    if (!n) continue;
+    const moy = [sr / n, sg / n, sb / n], TONS = [0.4, 0.56, 0.74, 0.9, 1.06, 1.22];
+    const poser = (x, y, k, t) => { if (x < x0 || x > x1 || y < y0 || y > y1 || !masque[at(x, y)]) return; const i = (y * W + x) * 4, f = TONS[Math.max(0, Math.min(5, k))] * t; for (let c = 0; c < 3; c++) d[i + c] = Math.max(0, Math.min(255, moy[c] * f)); masque[at(x, y)] = 2; };
+    // le mortier, partout d'abord
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) poser(x, y, 0, 1), masque[at(x, y)] = masque[at(x, y)] ? 1 : 0;
+    let y = y0 - Math.floor(hachage(1, 2, g) * 3), r = 0;
+    while (y <= y1) {
+      const h = z.regulier ? 7 : 5 + Math.floor(hachage(r, 7, g) * 4); let x = x0 - Math.floor(hachage(r, 3, g) * 12), c = 0;
+      while (x <= x1) {
+        const w = z.regulier ? 12 + Math.floor(hachage(c, r, g + 1) * 9) : 7 + Math.floor(hachage(c, r, g + 1) * 12), saut = z.regulier ? 0.5 : hachage(c, r, g + 2), ya = y + (saut < 0.17 ? 1 : saut > 0.83 ? -1 : 0), yb = y + h - 2 - (hachage(c, r, g + 3) < 0.25 ? 1 : 0), t = 0.92 + hachage(c, r, g + 4) * 0.16, rad = z.regulier ? 1 : w > 12 && yb - ya > 4 ? 2 : 1;
+        for (let yy = ya; yy <= yb; yy++) for (let xx = x; xx <= x + w - 2; xx++) {
+          const u = xx - x, v = yy - ya, du = Math.min(u, x + w - 2 - xx), dv = Math.min(v, yb - yy); if (du + dv < rad) continue;   // les coins arrondis
+          let k = 3 + (hachage(xx, yy, g + 5) > 0.88 ? 1 : hachage(xx, yy, g + 5) < 0.08 ? -1 : 0);
+          if (v === 0) k = 5; else if (v === 1) k = 4; else if (yy === yb) k = 1; else if (yy === yb - 1) k = 2;
+          if (u === 0 && v > 1) k = Math.min(5, k + 1); else if (xx === x + w - 2 && v > 0) k = Math.max(1, k - 1);
+          poser(xx, yy, k, t); }
+        x += w; c++;
+      }
+      y += h; r++;
+    }
+    // le dégradé vers le sol, la sous-face de l'étage qui avance
+    for (let yy = y0; yy <= y1; yy++) { const v = (yy - y0) / Math.max(1, y1 - y0), f = (1 - 0.24 * Math.pow(v, 1.4)) * (sf && yy - y0 < sf ? (yy - y0 < sf * 0.6 ? 0.66 : 0.82) : 1);
+      for (let x = x0; x <= x1; x++) { const i = (yy * W + x) * 4; if (d[i + 3] < 128) continue; d[i] *= f; d[i + 1] *= f; d[i + 2] *= f; } }
+  }
 }
-// (Q258) la piste conseillée, branchée dans la rue (window.FORGE_PISTE = 'A' ou 'B')
-const FORGE_PISTE = 'A';
-function forgeHalleHD(s) { return ((typeof window !== 'undefined' && window.FORGE_PISTE) || FORGE_PISTE) === 'B' ? forgePignonHD(s) : forgeAppentisHD(s); }
+function pierresRondesTexture(s, cle, zones) {
+  const tex = s.textures.get(cle), c = tex.getSourceImage(), ctx = c.getContext('2d'), D = ctx.getImageData(0, 0, c.width, c.height);
+  pierresRondesDonnees(D.data, c.width, c.height, zones); ctx.putImageData(D, 0, 0); if (tex.refresh) tex.refresh();
+}

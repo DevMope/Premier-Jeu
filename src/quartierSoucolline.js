@@ -251,7 +251,7 @@ DECORS_QUARTIERS.soucolline = {
     // --- ton comptoir : sa façade (son niveau, son étage, son style), ses pattes repliées, ce que le mécénat y accroche ---
     let facade = null;
     const comptoir = lot(L.comptoir, YN, () => {
-      facade = dessinerFacade(s, 0, 0, G ? G.nomShop : undefined, undefined, { fumee: false, volume: true });
+      facade = dessinerFacade(s, 0, 0, G ? G.nomShop : undefined, undefined, { fumee: false, volume: true, enseigneSurFacade: true });
       if (typeof pattesPosees === 'function' && G && pattesPosees(G)) pattesRepliees(s, facade, { sorte: etatPattes(G).sorte, sol: 0 });   // (v1.56) ses pattes, repliées au coin des murs
       if (typeof palierDuMecenat === 'function' && G && palierDuMecenat(G, 'saufConduit')) { if (!s.textures.exists('embleme_conseil')) creerEmblemesHD(s); for (const [dx, cle] of [[-58, 'embleme_conseil'], [58, 'embleme_bannis']]) s.add.image(dx, -128, cle).setScale(0.42); }
       if (typeof palierDuMecenat === 'function' && G && palierDuMecenat(G, 'visite')) for (const dx of [-150, 150]) banniereRempart(s, dx, -300);
@@ -399,9 +399,8 @@ DECORS_QUARTIERS.soucolline = {
       }
     }
     // les plaques de la rue, clouées à l'angle des maisons
-    // (Q262) la chaumière et la maison d'ardoise : la plaque quitte le toit, sur le mur à droite de la porte (plus bas)
-    if (G && niveauFacade(G) < 2 && !(typeof styleDeMaison === 'function' && styleDeMaison(G))) ici.plaqueSur(comptoir, 'droite', 66, 'Rue Soucolline', { retrait: 58 });
-    else ici.plaqueSur(comptoir, 'gauche', 116, 'Rue Soucolline', { retrait: 10 }); ici.plaqueSur(barbier, barbierOuv && jour ? 'droite' : 'gauche', 112, 'Rue Soucolline', { retrait: 14 });   // (close, ou la nuit : son écriteau « Fermé » est à droite)
+    // (Q269) ton comptoir n'a plus de plaque « Rue Soucolline » (le barbier et la banque la portent)
+    ici.plaqueSur(barbier, barbierOuv && jour ? 'droite' : 'gauche', 112, 'Rue Soucolline', { retrait: 14 });   // (close, ou la nuit : son écriteau « Fermé » est à droite)
     ici.plaqueSur(paon, 'droite', 120, 'Placette de la Fontaine', { retrait: 12 });
     ici.plaqueSur(pommeroy, 'droite', 100, 'Montée du Four', { retrait: 8 });
     // (Q252) la plaque « Rue Soucolline » de la banque, à une place plus fluide : sur une potence de fer au réverbère qui garde
