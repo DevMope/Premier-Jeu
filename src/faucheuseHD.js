@@ -16,6 +16,8 @@ const FH_RAMPES = {
   osR: [0x0c0507, 0x12070a, 0x1a090c, 0x240c0f, 0x301012, 0x3e1416],   // (v3 : la lueur des yeux effleure l'os)
   doublure: [0x020104, 0x06030c, 0x0c0616, 0x140a22, 0x1c0e2e, 0x26143c],   // (v4 : la doublure, plus sombre, un peu violette)
   cuirF: [0x0a0606, 0x160c0c, 0x221414, 0x301c1a, 0x3e2622, 0x50322c],   // (la poignée)
+  tendon: [0x010102, 0x08080c, 0x141418, 0x24242e, 0x3e3e4c, 0x6a6a7e],   // (v6 : les tendons noirs, luisants)
+  cendre: [0x000000, 0x020104, 0x050309, 0x0a0710, 0x120d1c, 0x1e1630],   // (les cendres, un noir de suie au reflet violet)
   lune: [0x3e4460, 0x6a7290, 0x98a0bc, 0xc0c8da, 0xdee2ee, 0xf4f6fc],   // (la lame : un morceau de lune, blanc nacré)
   luneN: [0x7a6c90, 0xa898c0, 0xd0c4e0, 0xeae0f4, 0xf6f0fc, 0xffffff],   // (les reflets nacrés, rosés)   // (l'os éclairé par les orbites)
   osMain: [0x3a3844, 0x52505e, 0x6c6a78, 0x8a8896, 0xa4a2ae, 0xbcbac4],
@@ -77,9 +79,7 @@ function fhFaux(t, A, B, k, cote = 1, { lame = true, eteinte = false } = {}) {  
   // lame ; un vide sombre entre l'os et l'argent, pour bien les séparer
   const ux = (B[0] - A[0]), uy = (B[1] - A[1]), ul = Math.hypot(ux, uy), dx = ux / ul, dy = uy / ul;
   const J = [B[0] + dx * 2.2 * k, B[1] + dy * 2.2 * k];
-  sfTubeForme(t, 'manche', [B, J], u => 0.7 * k, { decalage: -1, ombre: false });
-  sfTubeForme(t, 'argentF', [[J[0] - dx * 0.8 * k, J[1] - dy * 0.8 * k], [J[0] + dx * 1.6 * k, J[1] + dy * 1.6 * k]], u => 2.3 * k, { decalage: 0.5 });
-  t.forme('argentF', sfPoly([[J[0] - 2.4 * k, J[1]], [J[0] + 2.4 * k, J[1]], [J[0] + cote * 4.5 * k, J[1] - 4 * k], [J[0] - cote * 1 * k, J[1] - 3.2 * k]], [0, -0.4, 0.9]), { decalage: 0.1 });   // (la douille)
+  sfTubeForme(t, 'manche', [B, J], u => 1.3 * k, { decalage: -0.8, ombre: false });
   // la lame : un grand croissant de lune, plus long que son porteur n'est large ; le dos épais, le fil qui s'affine
   const L = 66 * k, P0 = [J[0] + cote * 1.5 * k, J[1] - 3.5 * k];
   const pts = sfBezier(P0, [P0[0] + cote * L * 0.25, P0[1] - 22 * k], [P0[0] + cote * L * 0.85, P0[1] - 20 * k], [P0[0] + cote * L * 1.0, P0[1] + 12 * k], 36);
@@ -92,6 +92,23 @@ function fhFaux(t, A, B, k, cote = 1, { lame = true, eteinte = false } = {}) {  
   if (!eteinte) sfForme(t, 'luneN', (x, y) => tb.info(x, y), { garder: (i, x, y) => i.dedans && fbm(x * 0.05, y * 0.09, 33, 2) > 0.62, decalage: -0.6, tramage: true, ombre: false, bord: false, motif: motifLune });   // (la nacre)
   sfForme(t, 'givre', (x, y) => tb.info(x, y), { garder: i => i.dedans && i.o * cote > 0.78, decalage: eteinte ? 0.2 : 1.3, ombre: false, bord: false });
   const q = tb.pts[10]; for (const [ddx, ddy] of [[0, -1], [0, 0], [0, 1], [1, 0], [-1, 0]]) t.poser(Math.round(q[0] + ddx * k * 0.8), Math.round(q[1] + ddy * k * 0.8 + 1 * k), 'givre', 1);   // (la rune, gravée, bleutée)
+  // (v6) la jonction, massive : une large douille d'argent épaisse qui enserre le talon de la lame, ciselée de filets, la
+  // petite tête d'os enchâssée sur sa face ; des tendons noirs et épais qui s'enroulent autour, débordent sur le dos de la
+  // lame et sur le haut du manche, et retombent en lanières
+  const nx = -dy, ny = dx, Cx = (J[0] + P0[0]) / 2 + cote * 1 * k, Cy = (J[1] + P0[1]) / 2 - 1 * k;
+  const D = (a, b) => [Cx + dx * a * k + nx * b * k * cote, Cy + dy * a * k + ny * b * k * cote];   // (a : le long du manche, b : vers la lame)
+  t.forme('argentF', sfPoly([D(-6, -6.5), D(-6, 8), D(1.5, 11.5), D(6.5, 9), D(7, -5), D(1, -8)], (px, py) => [((px - Cx) * nx + (py - Cy) * ny) / (9 * k) * cote * 0.7, -0.35, 0.85]),
+    { decalage: 0.15, motif: (px, py) => { const a = ((px - Cx) * dx + (py - Cy) * dy) / k, b = ((px - Cx) * nx + (py - Cy) * ny) / k * cote; return (Math.abs(a + 3.4) < 0.5 || Math.abs(a - 3.6) < 0.5 ? -0.9 : 0) + (Math.abs(a) < 2.6 && Math.abs(b - 1) < 6 && (Math.floor((a + b) * 1.3) % 3 === 0) ? -0.4 : 0); } });
+  for (const a of [-3.4, 3.6]) for (let b = -4; b <= 7; b += 2.2) t.poser(Math.round(D(a, b)[0]), Math.round(D(a, b)[1]), 'argentF', 5);   // (les rivets)
+  { const [sx, sy] = D(0, 1.2); t.forme('osMain', sfEll(sx, sy, 2.3 * k, 2.6 * k), { decalage: 0.25 }); t.forme('osMain', sfEll(sx + dx * 2 * k, sy + dy * 2 * k, 1.4 * k, 1.5 * k), { decalage: -0.1 });
+    for (const c of [-1, 1]) { const ex = sx - dx * 0.5 * k + nx * c * 1 * k, ey = sy - dy * 0.5 * k + ny * c * 1 * k; t.forme('ombreP', sfEll(ex, ey, 0.75 * k, 0.75 * k), { decalage: -1, ombre: false, bord: false }); t.poser(Math.round(ex), Math.round(ey), 'givre', 4); } }
+  // les tendons : chacun part du dos de la lame, fait le tour de la douille, s'enroule sur le haut du manche ; d'autres retombent
+  const dos = i => pts[Math.min(pts.length - 1, 3 + i)];
+  for (let i = 0; i < 4; i++) { const q = dos(2 + i * 3), r = (1.6 + (i % 2) * 0.6) * k;   // (ils passent en travers de la douille, font le tour du manche, et repassent devant)
+    const chemin = sfChemin(q, [[[q[0] - ny * cote * 4 * k, q[1] + nx * cote * 4 * k], D(3 - i, 9 - i * 2), D(1 - i, 2 - i * 2)], [D(-1 - i, -6), D(-4 - i, -9), D(-7 - i, -3)], [D(-9 - i, 4), D(-12 - i, 3), D(-14 - i * 1.5, -5)], [D(-16 - i * 1.5, -8), D(-19 - i * 1.5, -2), D(-21 - i * 2, 1)]], 12);
+    sfTubeForme(t, 'tendon', chemin, u => r * (1 - u * 0.45) + 0.3, { decalage: 0.4, motif: i2 => (i2 && i2.o < -0.45 ? 1.2 : i2 && (i2.s / (1.8 * k)) % 1 < 0.18 ? -0.7 : 0) }); }
+  for (let i = 0; i < 6; i++) { const [x0, y0] = D(-1 + i * 1.4, 10 - (i % 3)), l = (10 + hachage(i, 1, 61) * 16) * k, o = (hachage(i, 2, 61) - 0.5) * 5 * k;   // (les lanières qui débordent du côté de la lame et retombent)
+    sfTubeForme(t, 'tendon', sfBezier([x0, y0], [x0 + o * 0.4, y0 + l * 0.35], [x0 - o * 0.6, y0 + l * 0.7], [x0 + o, y0 + l], 10), u => (1.3 - u * 0.95) * k + 0.3, { decalage: 0.2, motif: i2 => (i2 && i2.o < -0.5 ? 0.9 : 0) }); }
   t.lameFaux = pts;   // (pour sa lueur : le halo lunaire qui pulse, les poussières de lumière)
   return pts;
 }
@@ -113,8 +130,10 @@ function fhLueurFaux(s, pts, x0, y0, e, { prof = 4, pulse = true, poussieres = 2
 // dissolution de 0 (entière) à 1 (dissoute dans l'ombre) ; faux : la tient-elle
 // fumee : { longueur, dissip } la traînée de fumée noire (elle se déplace vers la droite, la fumée s'étire derrière elle) ;
 // { immobile: true } la fumée qui monte doucement du bas de sa cape ; null : rien
-function faucheuseCorpsHD(vue = 'face', { visage = 'crane', dissolution = 0, faux = true, souvenirs = ['petale', 'sablier', 'plume'], devoilee = false, fumee = null } = {}) {
-  const MARGE = !fumee ? 0 : fumee.immobile ? 40 : Math.round(fumee.longueur * 1.2 + 60);   // (la place de la traînée, à gauche)   // (souvenirs : ceux qu'elle porte encore, pas encore donnés)
+// cendres : { phase (0 à 1, l'image de l'animation), longueur (0 : immobile ; sinon la traînée, elle avance vers la droite), densite } :
+// les cendres noires qui se détachent d'elle en continu (fumee : l'ancienne option, gardée pour mémoire)
+function faucheuseCorpsHD(vue = 'face', { visage = 'crane', dissolution = 0, faux = true, souvenirs = ['petale', 'sablier', 'plume'], devoilee = false, fumee = null, cendres = null } = {}) {
+  const MARGE = cendres ? Math.round((cendres.longueur || 0) * 1.1 + 50) : !fumee ? 0 : fumee.immobile ? 40 : Math.round(fumee.longueur * 1.2 + 60);   // (la place de la traînée, à gauche)   // (souvenirs : ceux qu'elle porte encore, pas encore donnés)
   const k = 2, L = 250 + MARGE, H = 302, sol = 290, dir = vue === 'troisQuarts' ? 1 : 0, s = dir ? 1.4 : 0;   // (s : le décalage du visage vers où elle regarde)
   const t = fhToile(L, H), fond = fhToile(L, H), dev = fhToile(L, H);
   const cx = 66 + MARGE + (dir ? 2 : 0), cy = 146;   // (la tête : haute, elle est grande)
@@ -198,6 +217,7 @@ function faucheuseCorpsHD(vue = 'face', { visage = 'crane', dissolution = 0, fau
       sfTubeForme(dev, m % 3 ? 'robe' : 'robeC', sfBezier([x, y0], [x + Math.sin(m) * 6 * k, y0 - l * 0.4], [x - Math.sin(m * 2) * 6 * k, y0 - l * 0.75], [x + Math.sin(m) * 3 * k, y0 - l], 10), u => (1.6 - u * 1.3) * k + 0.3, { decalage: 0.1, ombre: false }); }
   }
   if (fumee) fhFumee(fond, cx, cy, sol, k, fumee);
+  if (cendres) fhCendres(fond, dev, cx, cy, sol, k, cendres);
   sfContour(fond, 1); sfContour(t, 2); dev.contour();
   const T = fhToile(L, H); sfColler(T, fond); sfColler(T, t); sfColler(T, dev);
   T.reperes = { sol, cx, tete: [hx, hy], yeux: [[ox - 2.4 * k, oy], [ox + 2.4 * k, oy]], lame: dev.lameFaux || null };
@@ -268,5 +288,31 @@ function fhFumee(t, cx, cy, sol, k, { longueur = 200, dissip = 0, immobile = fal
     const cran = Math.min(1, d * 1.6) * 3 + (B[y % 4][x % 4] + 0.5) / 16; if (cran < 0.9) continue;   // (tramée : de plus en plus de trous en se dissipant)
     if (t.c[y * t.l + x] !== null) continue;
     t.poser(x, y, 'fumee', Math.max(0, Math.min(5, Math.round(d * 3 + (fbm(x * 0.12, y * 0.12, graine + 3, 2) - 0.5) * 3))));
+  }
+}
+
+// (v6) Les cendres : toute la noirceur qu'elle renferme s'évapore d'elle, sans fin. Des flocons et des gouttes noires, de
+// tailles variées, se détachent de sa capuche, de ses épaules et de sa cape, montent en tournoyant et se dissolvent.
+// phase : l'image de l'animation (0 à 1, en boucle) ; longueur : quand elle avance (vers la droite), elles restent derrière
+// elle et font la traînée ; densite : plus ou moins dense
+function fhCendres(fond, dev, cx, cy, sol, k, { phase = 0, longueur = 0, densite = 1, graine = 9 } = {}) {
+  for (const t of [fond, dev]) t.rampes.cendre = FH_RAMPES.cendre;
+  const n = Math.round((longueur ? 260 : 150) * densite);
+  for (let i = 0; i < n; i++) {
+    const h = hachage(i, 1, graine), a = (h + phase) % 1;   // (l'âge de la cendre : 0 elle se détache, 1 elle s'est dissoute)
+    // d'où elle part : la capuche, les épaules, ou la cape (plus nombreuses), sur le bord de la silhouette
+    const z = hachage(i, 2, graine), bord = hachage(i, 3, graine) - 0.5;
+    const [x0, y0] = z < 0.25 ? [cx + bord * 26 * k, cy - 12 * k + Math.abs(bord) * 18 * k] : z < 0.5 ? [cx + bord * 34 * k, cy + 10 * k] : [cx + bord * (30 + hachage(i, 4, graine) * 40) * k, cy + 20 * k + hachage(i, 5, graine) * (sol - cy - 24 * k)];
+    const monte = (26 + hachage(i, 6, graine) * 46) * k * (longueur ? 0.55 : 1), tour = (hachage(i, 7, graine) - 0.5) * 10 * k;
+    let x = x0 + Math.sin(a * 7 + i) * tour * a + bord * 8 * k * a, y = y0 - a * monte - a * a * 6 * k;
+    if (longueur) x -= a * longueur * (0.7 + 0.5 * hachage(i, 8, graine));   // (elle avance : la cendre reste derrière)
+    const taille = (0.6 + hachage(i, 9, graine) * 2.4) * k * Math.pow(1 - a, 0.8); if (taille < 0.55) continue;
+    const goutte = hachage(i, 10, graine) > 0.55, rot = a * 6 + i;
+    const t = hachage(i, 11, graine) > 0.7 ? dev : fond;   // (certaines passent devant elle)
+    if (goutte) {   // une goutte : ronde, avec une queue qui pend vers le bas (elle vient de se détacher)
+      t.forme('cendre', sfEll(x, y, taille * 0.8, taille * 0.9), { decalage: -0.2, ombre: false, bord: false });
+      sfTubeForme(t, 'cendre', [[x, y + taille * 0.5], [x + Math.sin(rot) * 0.6 * k, y + taille * 2.2]], u => taille * 0.45 * (1 - u * 0.8) + 0.3, { decalage: -0.6, ombre: false, bord: false });
+    } else t.forme('cendre', sfEll(x, y, taille, taille * (0.4 + 0.4 * Math.abs(Math.sin(rot))), rot), { decalage: -0.3, ombre: false, bord: false });   // un flocon qui tournoie
+    if (taille > 1.4 * k) t.poser(Math.round(x - taille * 0.3), Math.round(y - taille * 0.3), 'cendre', 5);   // (un reflet violet, comme une suie mouillée)
   }
 }
