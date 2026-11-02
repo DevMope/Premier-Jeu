@@ -105,7 +105,7 @@ class BanquetScene extends Phaser.Scene {
       // Garrick arrive dans la neige, par la gauche, et s'arrête au bout de la table
       this.garrick = this.add.image(-60, 474, corpsHD(this, 'mentor')).setOrigin(0.5, 1).setScale(8 * echelleCorps(corpsHD(this, 'mentor'))).setDepth(4);
       pasDeMarche(this, this.garrick, 1900, { poussiere: false });
-      this.tweens.add({ targets: this.garrick, x: 52, duration: 1900, onComplete: () => this.dire("Une silhouette sort de la neige, le manteau blanc de flocons : Garrick. « Il reste une place pour un vieux rôdeur ? » On lui tend une chope.") });
+      this.tweens.add({ targets: this.garrick, x: 52, duration: 1900, onComplete: () => this.dire("Une silhouette sort de la neige, le manteau blanc de flocons : Garrick. « Il reste une place pour un rôdeur ? » On lui tend une chope.") });
     } else if (this.etape === 3) {
       this.trinquer(); Son.jouer('fanfare');
       this.garrick.setTexture(corpsHD(this, 'mentor', 'leves'));

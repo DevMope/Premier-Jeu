@@ -122,7 +122,7 @@ function texteEffetCadeau(avis, anniversaire = false) {
 // Ce que dit Garrick, croisé sur la place un jour de marché
 const PHRASES_GARRICK_MARCHE = [
   "Ah, gamin ! Jour de marché : les colporteurs cassent les prix, alors tout le monde en profite. Remplis ta réserve, ce soir tu me remercieras.",
-  "Moi ? Je fais mes courses, comme tout le monde. Un vieux rôdeur, ça mange aussi.",
+  "Moi ? Je fais mes courses, comme tout le monde. Un rôdeur, ça mange aussi.",
   "Regarde-moi ce monde... Du monde de passage, ça veut dire du monde à ton comptoir. Ne traîne pas trop ici.",
   "Les rations, prends-les fraîches, et pas plus qu'il n'en faut : au bout de dix jours, ça tourne.",
 ];

@@ -2043,7 +2043,7 @@ const ARMURE = [
 // font jaser la ville : chacune attire un peu plus de curieux au comptoir.
 const ARMES_LEGENDAIRES = {
   comte: { id: 'piqueBourdon', nom: 'Pique-Bourdon', texte: "Une dague de hobbit, pas plus longue qu'un avant-bras. Elle bourdonne quand un voleur approche." },
-  humains: { id: 'aubeLame', nom: 'Aube-Lame', texte: "L'épée du champion. Sa lame s'éclaire quand les ténèbres approchent." },
+  humains: { id: 'aubeLame', nom: "La Promesse de l'Aube", texte: "L'épée du champion. Sa lame s'éclaire quand les ténèbres approchent." },
   nains: { id: 'briseMontagne', nom: 'Brise-Montagne', texte: "Le marteau du premier roi nain. Il a ouvert Khaz-Durim d'un seul coup, dit-on." },
   elfes: { id: 'chantDeLune', nom: 'Chant-de-Lune', texte: "Un arc d'argent pâle. La flèche part d'elle-même quand on retient son souffle." },
   mages: { id: 'septEtoiles', nom: 'Le Bâton des Sept Étoiles', texte: 'Sept pierres serties, une par archimage. Six brillent encore.' },

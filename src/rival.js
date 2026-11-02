@@ -16,7 +16,7 @@ POSTES.rachat = "Rachat de la boutique d'à côté";
 // Ses répliques (planches 40 et 41) : vaniteux et moqueur, avec le fond du va-t-en-guerre
 const REPLIQUES_RIVAL = {
   ouverture: [
-    "« Oh ! Le petit protégé du vieux Garrick. Il te raconte encore ses histoires de doyens ? Lucien Belhomme, fournisseur agréé par le Conseil. J'ouvre juste à côté : dix pour cent de moins qu'ici. Sans rancune ! »",
+    "« Oh ! Le petit protégé de Garrick. Il te raconte encore ses histoires de doyens ? Lucien Belhomme, fournisseur agréé par le Conseil. J'ouvre juste à côté : dix pour cent de moins qu'ici. Sans rancune ! »",
     "« Chez moi, c'est agréé par le Conseil. Chez toi... c'est agréé par qui, au juste ? Enfin. Bonne chance, voisin. Tu vas en avoir besoin. »",
   ],
   pavane: [
