@@ -132,7 +132,10 @@ function fhLueurFaux(s, pts, x0, y0, e, { prof = 4, pulse = true, poussieres = 2
 // { immobile: true } la fumée qui monte doucement du bas de sa cape ; null : rien
 // cendres : { phase (0 à 1, l'image de l'animation), longueur (0 : immobile ; sinon la traînée, elle avance vers la droite), densite } :
 // les cendres noires qui se détachent d'elle en continu (fumee : l'ancienne option, gardée pour mémoire)
-function faucheuseCorpsHD(vue = 'face', { visage = 'crane', dissolution = 0, faux = true, souvenirs = ['petale', 'sablier', 'plume'], devoilee = false, fumee = null, cendres = null } = {}) {
+// levitation : { hauteur, phase } elle flotte au-dessus du sol (un vide sombre sous ses lambeaux, son ombre plus petite et
+// floue au sol), et ondule doucement (phase de 0 à 1, en boucle) ; vent : de 0 à 1, elle glisse vers la droite : le bas de sa
+// cape et ses lambeaux traînent en arrière, la faux suit avec un petit retard
+function faucheuseCorpsHD(vue = 'face', { visage = 'crane', dissolution = 0, faux = true, souvenirs = ['petale', 'sablier', 'plume'], devoilee = false, fumee = null, cendres = null, levitation = null, vent = 0 } = {}) {
   const MARGE = cendres ? Math.round((cendres.longueur || 0) * 1.1 + 50) : !fumee ? 0 : fumee.immobile ? 40 : Math.round(fumee.longueur * 1.2 + 60);   // (la place de la traînée, à gauche)   // (souvenirs : ceux qu'elle porte encore, pas encore donnés)
   const k = 2, L = 250 + MARGE, H = 302, sol = 290, dir = vue === 'troisQuarts' ? 1 : 0, s = dir ? 1.4 : 0;   // (s : le décalage du visage vers où elle regarde)
   const t = fhToile(L, H), fond = fhToile(L, H), dev = fhToile(L, H);
@@ -218,10 +221,28 @@ function faucheuseCorpsHD(vue = 'face', { visage = 'crane', dissolution = 0, fau
   }
   if (fumee) fhFumee(fond, cx, cy, sol, k, fumee);
   if (cendres) fhCendres(fond, dev, cx, cy, sol, k, cendres);
+  if (vent) {   // (le bas de la cape traîne en arrière : chaque rangée glisse d'autant plus qu'elle est basse ; la faux suit en retard)
+    const glisse = (toile, y) => -Math.round(vent * 12 * k * Math.pow(Math.max(0, (y - cy) / (sol - cy)), 1.5));
+    for (const toile of [t, fond]) for (let y = cy; y < H; y++) { const d = glisse(toile, y); if (!d) continue; const ligne = [], mats = [], ks = [];
+      for (let x = 0; x < L; x++) { const i = y * L + x; ligne.push(toile.c[i]); mats.push(toile.m[i]); ks.push(toile.k[i]); }
+      for (let x = 0; x < L; x++) { const sx = x - d, i = y * L + x, ok = sx >= 0 && sx < L; toile.c[i] = ok ? ligne[sx] : null; toile.m[i] = ok ? mats[sx] : null; toile.k[i] = ok ? ks[sx] : 0; } }
+    const r = Math.round(vent * 3 * k); if (r) { const c = dev.c.slice(), m = dev.m.slice(), kk = dev.k.slice(); for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) { const i = y * L + x, sx = x + r, ok = sx < L; dev.c[i] = ok ? c[i + r] : null; dev.m[i] = ok ? m[i + r] : null; dev.k[i] = ok ? kk[i + r] : 0; } }
+    if (dev.lameFaux) dev.lameFaux = dev.lameFaux.map(([x, y]) => [x - r, y]);
+  }
   sfContour(fond, 1); sfContour(t, 2); dev.contour();
   const T = fhToile(L, H); sfColler(T, fond); sfColler(T, t); sfColler(T, dev);
   T.reperes = { sol, cx, tete: [hx, hy], yeux: [[ox - 2.4 * k, oy], [ox + 2.4 * k, oy]], lame: dev.lameFaux || null };
-  return T;
+  if (!levitation) return T;
+  // la lévitation : la toile s'allonge vers le bas (le vide sous ses lambeaux) ; elle monte et descend doucement ; son ombre au
+  // sol, plus petite et floue (tramée), d'autant plus petite qu'elle est haute
+  const haut = Math.round(levitation.hauteur || 24 * k), amp = levitation.amplitude ?? 3 * k, ond = Math.round(Math.sin((levitation.phase || 0) * Math.PI * 2) * amp);
+  const H2 = H + haut + amp + 8, T2 = fhToile(L, H2), dy = amp - ond;
+  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) { const i = y * L + x; if (T.c[i] === null) continue; const j = (y + dy) * L + x; T2.c[j] = T.c[i]; T2.m[j] = T.m[i]; T2.k[j] = T.k[i]; }
+  const B = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]], syO = H2 - 5, rx = (26 - (haut + dy) / k * 0.25) * k, ry = 3 * k;
+  for (let y = syO - ry; y <= syO + ry; y++) for (let x = Math.round(cx - rx); x <= cx + rx; x++) { const dd = Math.pow((x - cx) / rx, 2) + Math.pow((y - syO) / ry, 2); if (dd > 1) continue;
+    if ((1 - dd) * 1.3 * 16 > B[y % 4][(x % 4 + 4) % 4] + 2) T2.poser(x, y, 'ombreP', 1); }
+  T2.reperes = { ...T.reperes, yeux: T.reperes.yeux.map(([x, y]) => [x, y + dy]), lame: T.reperes.lame ? T.reperes.lame.map(([x, y]) => [x, y + dy]) : null, sol: H2 - 5, corps: dy };
+  return T2;
 }
 // Le buste, à la taille des bustes du comptoir (80 × 100, affiché ×2,3 ; elle dépasse en haut comme les grands)
 function faucheuseBusteHD({ visage = 'crane', parle = false, devoilee = false } = {}) {
@@ -315,4 +336,24 @@ function fhCendres(fond, dev, cx, cy, sol, k, { phase = 0, longueur = 0, densite
     } else t.forme('cendre', sfEll(x, y, taille, taille * (0.4 + 0.4 * Math.abs(Math.sin(rot))), rot), { decalage: -0.3, ombre: false, bord: false });   // un flocon qui tournoie
     if (taille > 1.4 * k) t.poser(Math.round(x - taille * 0.3), Math.round(y - taille * 0.3), 'cendre', 5);   // (un reflet violet, comme une suie mouillée)
   }
+}
+
+// (v7) Les cendres laissées en place, dans le monde : chaque cendre se détache d'elle à une image donnée, là où elle est à ce
+// moment-là, puis monte, tournoie et se dissout là où elle est née (elle ne la suit pas). source(f) : où est son corps à
+// l'image f ({ x, haut, bas, demi } en pixels de la toile du monde) ; f : l'image à dessiner ; parImage : combien de cendres
+// se détachent à chaque image
+function fhCendresMonde(t, source, f, { parImage = 9, vie = 22, graine = 5, e = 1 } = {}) {
+  t.rampes.cendre = FH_RAMPES.cendre;
+  for (let f0 = Math.max(0, f - vie); f0 <= f; f0++) { const S = source(f0); if (!S) continue;
+    for (let j = 0; j < parImage; j++) { const id = f0 * 31 + j, h = n => hachage(id, n, graine), a = (f - f0 + h(1)) / vie; if (a > 1) continue;
+      const zone = h(2), bord = h(3) - 0.5;
+      const x0 = S.x + bord * S.demi * (zone < 0.3 ? 0.6 : 1), y0 = zone < 0.3 ? S.haut + Math.abs(bord) * (S.bas - S.haut) * 0.25 : S.haut + (0.2 + h(4) * 0.8) * (S.bas - S.haut);
+      const monte = (30 + h(5) * 60) * e, tour = (h(6) - 0.5) * 18 * e;
+      const x = x0 + Math.sin(a * 6 + id) * tour * a, y = y0 - a * monte - a * a * 10 * e;
+      const taille = (0.8 + h(7) * 3) * e * Math.pow(1 - a, 0.8); if (taille < 0.6) continue;
+      if (h(8) > 0.55) { t.forme('cendre', sfEll(x, y, taille * 0.8, taille * 0.9), { decalage: -0.2, ombre: false, bord: false });
+        sfTubeForme(t, 'cendre', [[x, y + taille * 0.5], [x + Math.sin(a * 5 + id) * 1.2 * e, y + taille * 2.2]], u => taille * 0.45 * (1 - u * 0.8) + 0.3, { decalage: -0.6, ombre: false, bord: false }); }
+      else t.forme('cendre', sfEll(x, y, taille, taille * (0.4 + 0.4 * Math.abs(Math.sin(a * 6 + id))), a * 6 + id), { decalage: -0.3, ombre: false, bord: false });
+      if (taille > 2.2 * e) t.poser(Math.round(x - taille * 0.3), Math.round(y - taille * 0.3), 'cendre', 5);
+    } }
 }
