@@ -3919,6 +3919,14 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q310** : des avantages différents de chaque côté, mais les différences sont trop simples : à enrichir ; l'Ombre doit toujours gagner moins que les deux autres côtés.
   - **Q311** : le « dernier appel » du neutre une semaine avant la moyenne du moment du sceau sur toutes les parties (calcul à faire valider). Toutes les propositions de la question validées. **La partie « spectateur » du neutre est à travailler.**
   - **Q314** : les récits de retour, validés pour l'instant. **Q315** : toutes les possibilités des villes fermées gardées, à peaufiner en jeu. **Q316** : la 8e pièce par un seul grand voyage à Cendrebourg (B).
+- **Réponses du 02/11 (Q317 à Q325)** :
+  - **Q317** : le dernier appel du neutre arrive, dans chaque partie, le soir où arrive la 7e pièce, quand on prépare le voyage à Cendrebourg (B).
+  - **Q318** : la vie du spectateur, validée comme base. Mais Garrick arrête forcément de venir voir le joueur neutre quand la guerre éclate : selon les choix du joueur, c'est lui qui devient le héros à la place de JeuneGoy (sa situation à ce moment-là compte). **Principe** : chaque ajout ou vieille idée remise en place oblige à tenir compte de tout le reste.
+  - **Q319** : toutes les aides secrètes gardées. **Principe** : plus on avance, plus il faut mettre à jour les mécanismes et les idées les plus anciennes.
+  - **Q320** : oui. En temps de guerre, ce ne sont pas les camps qui s'enrichissent, mais ceux qui vendent les armes et alimentent la guerre : idée de grosses commandes d'armes, forgeables seulement avec le futur système de forge et ses forgerons, pour le joueur neutre (à peaufiner).
+  - **Q321** : la faculté s'appelle **la Clairvoyance**. **Q322** : son fonctionnement est validé. **Q323** : les trois façons de tenir un comptoir et toutes les cases de la fiche 6 sont gardées.
+  - **Q324** : si l'Ombre gagne autant (80 %), il faut revoir tout ce qui s'achète et en ajouter : le système de dépenses personnalisé par camp, de toute façon à refaire vu tout ce qui a été ajouté.
+  - **Q325** : l'armure peut aussi venir des royaumes de l'Ombre (B ; le joueur croyait que c'était déjà le cas). Et revoir le système d'apparition des Bannis au comptoir.
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
