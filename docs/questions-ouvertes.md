@@ -32,10 +32,17 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q294** — Depuis le bout de la rue, on ne voit encore aucun étal (le coin des jeux, le plus proche, est caché par la banque). On décale le coin des jeux vers l'est dans la place pour qu'il se voie, ou on garde la place telle quelle ?
 - **Q295** — Le poids public (morceau 4 : loge de pierre et de chêne, balance à fléau, poids de fonte, ardoise des tarifs, registre, sacs à peser) : validé ? Le préposé y est environ deux jours sur trois : ça te va ?
 
-- **Q302** — (reformulée, en attente)
-- **Q303** — (reformulée, en attente)
-- **Q306** — (à représenter sous une forme lisible, avec la refonte de la 298)
-- **Q299, Q300, Q305** — (après la refonte de la 298)
+- **Q307** — (fiches Ombre/Lumière, refonte de la Q298) Trois mesures au lieu d'une jauge : ce que tu sers vraiment (caché, les 7 degrés), ta bonté ou ta cruauté (caché, « le cœur »), et ce que chaque camp croit de toi (visible, sans chiffre). La bonté (le mendiant, les soins offerts, les dédommagements) ne compte plus comme de la Lumière. D'accord ? Et la phrase de la fiche 1, « à la fin, le joueur comprend qu'il n'y a jamais eu de camps, seulement des gens », est une proposition de Claude, pas validée : tu la gardes ?
+- **Q308** — À la place de « tiède » : « naissante » (Lumière naissante), « effleuré » (effleuré par l'Ombre) ou « penchant » (un penchant pour la Lumière) ?
+- **Q309** — Plus aucun chiffre à l'écran (au bureau, le blason de la Confrérie et la fleur de pommier des Bannis changent, avec une phrase entendue). Les petits ☀ et ☾ sur les boutons des choix (visibles avec assez de flair) : on les garde ou on les enlève ?
+- **Q310** — Les avantages de chaque côté (plus de réputation dans les contrées de la Confrérie, plus de butin chez les Bannis) : on les garde ?
+- **Q311** — Le « dernier appel » du neutre : la même semaine, Garrick puis un Gardien de la Confrérie viennent chacun le convaincre ; s'il ne répond à aucun, il devient spectateur pour de bon. Quand : vers la 5e pièce d'armure, ou à la 7e (quand Garrick annonce que le camp va être scellé) ? Et le spectateur reste neutre au sceau même si le monde le croit d'un camp : d'accord ?
+- **Q312** — La fin de mort (le duel où Garrick te laisse pour mort) seulement pour un joueur au dernier degré de la Lumière et très cruel ; et ce joueur ne peut plus essayer de prévenir les Bannis tant qu'un récit du doute ne l'a pas fait redescendre : d'accord ?
+- **Q313** — Le neutre qui penche un peu d'un côté : quand le Sage vient chercher l'armure au comptoir, garde-t-il les trois choix (la donner à Sire Valdric, la donner à un Banni, la garder pour personne), ou seulement celui de son côté et « la garder » ?
+- **Q314** — Les récits de retour (le doute en Lumière, la retenue en Ombre) : chacun ne sert qu'une fois et fait redescendre d'un cran sans changer de camp : d'accord ?
+- **Q315** — Les villes fermées : pour l'Ombre extrême face aux villes de la Lumière : la contrebande, le prête-nom, le déguisement, les missions de nuit, les lettres ; pour la Lumière extrême face aux villes des Bannis : le Passeur, la foire des pandas, l'espionnage, les échanges de prisonniers, le pigeon. Lesquelles garder ?
+- **Q316** — La 8e pièce : A, on te la remet à Cendrebourg ; B, un seul grand voyage à Cendrebourg au lieu de toute une conquête (conseillé) ; C, elle arrive au comptoir, une nuit ?
+- **Q299, Q300** — (anciennes, à revoir à la lumière des fiches : le verrou du neutre et la difficulté du retour sont remplacés par le « dernier appel » et les récits de retour)
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
