@@ -193,3 +193,31 @@ Validé le 02/11 ★ (Q302 à Q316) : les trois mesures ; « naissante » / « e
 
 ### 11.5 Correction
 - La fiche des villes fermées précise que la foire des pandas est **hors** des terres des Bannis : aux Monts de Bambou, terrain neutre, où un joueur de Lumière peut encore croiser des marchands bannis.
+
+---
+
+## 12. Troisième série (Q324, Q325, les Bannis au comptoir, Garrick et le neutre) ☆
+
+Validé le 02/11 ★ (Q317 à Q325) : le dernier appel le soir de la 7e pièce ; la vie du spectateur comme base, mais Garrick cesse forcément de venir quand la guerre éclate (il devient le héros à la place de JeuneGoy) ; toutes les aides secrètes ; le neutre s'enrichit avec la guerre (grosses commandes d'armes, avec le futur système de forge) ; **la Clairvoyance** ; les trois façons de tenir un comptoir ; l'Ombre à 80 %. Principe ★ : chaque ajout oblige à mettre à jour les mécanismes plus anciens. Fiches : `scratchpad/lot3/a_valider/ombre-lumiere/fiches3/` (10 fiches, `fiches3.js`, `rendre3.js`).
+
+### 12.1 Les dépenses par camp (Q324)
+- Inventaire (fiche 1) : le quotidien (marché, Thorgal, Grippesou, colporteur, salaires, loyer, dédommagements, soins, secours) ; le comptoir et la maison (8 améliorations de 80 à 3 500 p., les styles de décor, l'étage 8 000 à 18 000 p., le coin des chats) ; les chantiers (orphelinat, bar, pattes, forge) ; soi-même (garde-robe, barbier, fêtes, jeux, diseuse, pêche, mendiant, fontaine) ; seulement la Lumière (chantiers de la Confrérie 6 000 à 20 000 p., mécénat, décor) ; seulement l'Ombre (repaire 3 000 à 12 000 p., marché noir, caisse, fosse, enveloppe du capitaine) ; le neutre (prix de la neutralité) ; les prélèvements (taxe de la Confrérie 12/16/22 %, pizzo, amendes, pots-de-vin, taxes du duc).
+- Comptes simulés (`lancer4.sh`, `compta.js`, 6 parties de 150 jours, joueur qui dépense) : recettes par jour Lumière 4 993, neutre 3 561, Ombre 2 800 (56 %) ; la taxe de la Confrérie mange 31 % des recettes de la Lumière et 39 % de celles de l'Ombre ; les chantiers actuels ne coûtent que quelques jours de recettes au milieu de la partie.
+- Proposé (fiches 2 à 4) : Lumière (cierges du départ, offrande de la semaine, armurerie consacrée 20 000, loge des Gardiens 40 000, réquisitions de guerre) ; Ombre (nourrir ceux qu'on cache, tunnel du Passeur 10 000, atelier du faussaire 8 000, trésor de guerre du Drômmath par paliers de 10 000 qui fait monter la préparation de la guerre, rançon d'un prisonnier 3 000 à 8 000, maison à Cendrebourg) ; neutre (sauf-conduit 200 par saison, part du Passeur 10 %, grande forge de guerre 12 000 / 20 000 / 30 000, grenier de guerre 6 000, pigeonnier 4 000, les deux réquisitions).
+- Équilibre (fiche 5) : avec la règle (recettes 100 / 95 / 80) et les dépenses simulées, il reste chaque jour ≈ 2 100 (Lumière), 2 700 (neutre), 1 800 (Ombre) ; le grand but coûte 60 000, 72 000, 48 000 : environ 27 à 29 jours d'économies pour chacun.
+
+### 12.2 L'armure par les royaumes de l'Ombre (Q325 B)
+- Les terres des Bannis deviennent cinq royaumes : le Marais des Gobelins (Bourbier, Pont des Trolls), les Terres des Orcs (Fort, Mines Rouges, Clairière des Chamans), les Hauts des Loups (Repaire, Col des Hurlements), la Nuit-Pourpre (Château, Tour du Nécromancien), les Sables (Tombeaux). 12 royaumes en tout ; chacun des 7 premiers libérés, quels qu'ils soient, donne une pièce ; la 8e reste au grand voyage à Cendrebourg (avec la Lame sans Nom). L'Ombre « libère », la Lumière « conquiert ».
+- Armes proposées : la Massue des Ponts, la Hache du Serment Muet, les Griffes de la Nuit sans Lune, le Calice de l'An Sans Nom, le Sceptre de la Grande Marée.
+- Dans le code (après validation) : `ROYAUMES` et `ZONES[…].royaume` (data.js), `ARMES_LEGENDAIRES`, et ce qui lit `'bannis'` comme royaume (la carte : exterieurHD.js, CarteScene.js ; les emblèmes : emblemesHD.js).
+- Simulation (`OMBRE_ROY=1`, 12 parties par stratégie) : 7e pièce de l'Ombre du jour 259 au jour 153 (Lumière 127 → 134) ; neutre inchangé (il ne descend pas au marché noir) ; la Main Noire paraît plus lente (196 → 261, très dispersé, de 74 à 413) ; toutes stratégies 169 → 174.
+
+### 12.3 Les Bannis au comptoir
+- Aujourd'hui : `peupleAccueilli` (regles.js) ; les Bannis seulement si `coteCamp === 'mal'`, les pandas seulement si `'bien'` ; les terres des Bannis cachées avant le marché noir.
+- Proposé : on en parle → à la cave → la nuit par la porte de derrière (un Banni croisé à la cave) → au crépuscule déguisés (le regard des Bannis monte) → à visage découvert ; peuple par peuple, quand sa terre est libérée ou qu'un des siens doit la vie au joueur ; un risque de rumeur si un client de la Lumière est là ; la Clairvoyance reconnaît le Banni sous le manteau.
+- L'inverse : les clients de la Lumière quittent le joueur très sombre dans l'ordre (paladins et pèlerins, nobles, humains), certains reviennent la nuit ; hobbits et pandas chez tout le monde sauf aux extrêmes.
+
+### 12.4 Garrick et le neutre pendant la guerre
+- Jusqu'au jour de l'armure, il passe toujours, blagueur. Puis, selon le choix de l'armure : un Banni → il vient la chercher et devient le champion de la Grande Muraille (la gazette le traite de traître) ; Sire Valdric → il devient le chef de la résistance, et la nouvelle vague fait oublier Garrick à JeuneGoy (une pipe inconnue sur le comptoir) ; la garder → « Tu l'avais. Tu l'avais, et tu l'as rangée. », il part affronter ce qui sort de la Porte.
+- Ce que les choix du joueur ont fait de lui : aidé (le paquet, le prêt, la lettre, le remède du chat, le fragment de la berceuse) → fort et libre ; dénoncé par Lucien sans aide → en prison, le neutre l'apprend par son procès.
+- Ensuite : les crieurs, les réfugiés, la Faucheuse (« Ton ami ? Pas encore. »), le chat ; l'après-fin (une lettre, une visite, ou une tombe).
