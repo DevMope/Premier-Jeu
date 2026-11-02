@@ -2,9 +2,10 @@
 // verticales 1:1, tout ce qui est horizontal vu par le dessus et écrasé × 0,75, sans point de fuite ; toit en croupe ; l'ombre
 // de la rive sur le haut du mur ; le dessus éclairé des appuis, des marches, des poutres ; les ouvertures en retrait ; la
 // pierre modelée ; l'ombre de contact au pied). Une fonction par bâtiment, le même design, les mêmes couleurs :
-//   - le porche de la place des Mastres (porcheVolumeHD) : l'arche de chêne, sa palissade, la place au travers ;
+//   - le porche de la place des Mastres (porcheVolumeHD, étape 7b : deux pistes, l'arche A et la halle B) ;
 //   - l'atelier des Mages-Charpentiers (atelierMagesVolumeHD) et son chantier (chantierMagesVolumeHD) ;
-//   - l'impasse du Corbeau (impasseVolumeHD) et sa lanterne rouge (lanterneCorbeauHD).
+//   - l'impasse du Corbeau (impasseVolumeHD) et sa lanterne rouge (lanterneCorbeauHD) : (Q275) PAS BRANCHÉE, elle ira au bout ouest,
+//     contre le Rempart (Q168), avec le chantier du Rempart ; la rue garde l'ancienne impasse en attendant.
 // Chacun prépare aussi sa couche de neige du Givre (« cle_neige ») : la neige se pose sur tous les dessus (le toit, le haut
 // des murs, des poutres, des socles, des pieux, le sol de la ruelle), pas seulement sur le toit.
 
@@ -50,92 +51,260 @@ function toileCanvas6b(t) {
   return { cv, ctx, I, d, mul, fin: (s, cle) => { ctx.putImageData(I, 0, 0); s.textures.addCanvas(cle, cv); } };
 }
 
-// ======================= 1. LE PORCHE DE LA PLACE DES MASTRES =======================
-// Le design de la planche 80 (porche A, rueVieHD.js : porcheRueHD) : deux poteaux de chêne sur leurs socles de grès, les
-// aisseliers, le linteau, un petit toit de tuiles, les deux battants ouverts vers la place, la palissade de pieux de part et
-// d'autre, les chaînes de l'écriteau ; par l'ouverture, la place (peindrePlacePorche : la même, ses fanions, ses étals).
-// Dans la projection : le petit toit devient un toit en croupe (8 de montée, 12 de profondeur) ; le linteau dépasse du toit
-// de chaque côté et l'on voit le dessus de ses abouts ; l'ombre de la rive sur le linteau ; les battants, ouverts vers le fond,
-// ne rapetissent plus : ils montent en parallélogramme (0,75 × leur profondeur), leur chant du haut vu par le dessus ; les
-// socles de grès montrent leur dessus (et l'ombre du poteau dessus) ; les pieux, leur pointe éclairée à gauche ; les deux
-// traverses, leur dessus. L'ombre de l'arche (ombrePorcheVolumeHD) : sous le toit, sur le seuil couvert ; devant, la bande
-// d'ombre du débord du toit sur le seuil de dalles, l'ombre des socles et du pied de la palissade.
-const PORCHE_VOLUME = { L: 176, H: 154, oy: 2, poteaux: [26, 150], linteau: 24, toit: { xa: 6, xb: 169, montee: 8, prof: 12 }, seuil: 14 };
-function porcheVolumeHD(scene, jour = true) {
-  const saison = (typeof saisonActuelle === 'function' && saisonActuelle()) || 'moissons';
-  const suf = saison + (jour ? '_jour' : '_nuit'), cle = 'porcheVolumeHD_' + suf;
-  if (scene.textures.exists(cle)) return cle;
-  const { L, H, poteaux: [pg, pd], linteau, toit: R } = PORCHE_VOLUME, sol = H - 1, haut = linteau + 7, x0 = pg + 5, x1 = pd - 4;
-  // la place, au travers (une toile à part, posée derrière ; les passants vont et viennent entre les deux)
-  const f = toileDecor(L, H); Object.assign(f.rampes, RAMPES_RUE); f.rampes.gres = rampe(0xb8a07a);
-  peindrePlacePorche(f, x0, x1, haut, sol, jour, saison);
-  f.texture(scene, 'placePorcheV_' + suf);
-  const t = toileDecor(L, H); Object.assign(t.rampes, RAMPES_RUE); t.rampes.gres = rampe(0xb8a07a);
-  const { D, enDessus } = dessus6b(t);
-  // 1. les deux battants, ouverts vers la place : ils partent du gond et s'enfoncent (14 de large à l'écran, 54 de profondeur :
-  //    40 rangs plus haut au bout), sans rapetisser ; le gauche tourne sa face vers la droite (dans l'ombre), le droit au soleil
-  for (const [xg, sens, g, base] of [[x0, 1, 8201, 2], [x1 - 1, -1, 8202, 3]]) {
-    const dx = 14, monte = 40, hb = 92;
-    for (let u = 0; u <= dx; u++) {
-      const x = xg + sens * u, yb = sol - 2 - Math.round(u / dx * monte), yt = yb - hb, joint = u > 0 && u % 3 === 0;
-      for (let y = yt + 1; y <= yb; y++) {
-        const e = yb - y; if (e === Math.round(hb * 0.18) || e === Math.round(hb * 0.8)) { t.poser(x, y, 'fer', 3); continue; }   // (les pentures)
-        if (e === Math.round(hb * 0.18) - 1 || e === Math.round(hb * 0.8) - 1) { t.poser(x, y, 'fer', 1); continue; }
-        t.poser(x, y, 'chene', joint ? 1 : u === dx ? 0 : base + (hachage(Math.floor(u / 3), Math.floor(y / 9), g) > 0.6 ? 1 : 0) - (u > dx * 0.6 ? 1 : 0));
-      }
-      enDessus(() => t.poser(x, yt, 'chene', 5));   // le chant du haut du battant, vu par le dessus
-    }
-  }
-  // 2. les aisseliers, entre les poteaux et le linteau (leur arête du haut au soleil)
-  for (const [xp, sens] of [[pg + 4, 1], [pd - 5, -1]]) for (let k = 0; k < 18; k++) for (let e = 0; e < 3; e++) t.poser(xp + sens * k, haut + 17 - k + e, 'chene', e === 0 ? 4 : 2);
-  // 3. les poteaux, debout sur leurs socles de grès ; le socle : sa face de moellons, son dessus (3 rangs) et l'ombre du poteau
-  for (const cx of [pg, pd]) {
-    planche(t, cx - 4, haut, 9, sol - 8 - haut, 'chene', { horizontale: false, graine: 8203 + cx, noeuds: 1 });
-    for (let y = haut; y < sol - 8; y++) { t.poser(cx - 4, y, 'chene', 5); t.poser(cx + 4, y, 'chene', 1); }
-    moellons(t, cx - 7, sol - 6, 15, 7, 8204 + cx, 'gres', 7);
-    enDessus(() => { for (let x = cx - 7; x <= cx + 7; x++) for (const [y, k] of [[sol - 9, 4], [sol - 8, 4], [sol - 7, 5]]) {
-      if (x >= cx - 4 && x <= cx + 4 && y < sol - 8) continue;   // (le poteau est debout dessus)
-      t.poser(x, y, 'gres', x > cx + 4 && x <= cx + 6 ? k - 2 : x === cx - 7 ? 5 : k); } });
-  }
-  // 4. la palissade, de part et d'autre : les pieux taillés en pointe (la facette gauche au soleil), les deux traverses (leur dessus)
-  for (const [a, b] of [[0, pg - 7], [pd + 8, L]]) {
-    for (let x = a; x < b; x++) {
-      const p = (x - a) % 5, top = sol - 40 + Math.round(Math.abs(p - 2) * 1.2);
-      for (let y = top + 2; y <= sol; y++) t.poser(x, y, 'chene', p === 4 ? 0 : p === 0 ? 4 : 2 + (hachage(Math.floor((x - a) / 5), y >> 3, 8205) > 0.7 ? 1 : 0));
-      enDessus(() => { t.poser(x, top, 'chene', p <= 2 ? 5 : 3); t.poser(x, top + 1, 'chene', p <= 2 ? 4 : 2); });
-    }
-    for (const y of [sol - 30, sol - 10]) for (let x = a; x < b; x++) {
-      enDessus(() => t.poser(x, y - 1, 'cheneSombre', 5)); t.poser(x, y, 'cheneSombre', 3); t.poser(x, y + 1, 'cheneSombre', 1); teinterV(t, x, y + 2, -1); }
-  }
-  // 5. le linteau ; ses abouts dépassent du toit : on en voit le dessus
-  planche(t, 0, linteau, L, 7, 'chene', { graine: 8206, noeuds: 2 });
-  for (let x = 0; x < L; x++) t.poser(x, linteau + 7, 'cheneSombre', 1);
-  for (const [a, b] of [[0, R.xa - 1], [R.xb + 1, L - 1]]) enDessus(() => { for (let x = a; x <= b; x++) { t.poser(x, linteau - 3, 'chene', 4); t.poser(x, linteau - 2, 'chene', 4); t.poser(x, linteau - 1, 'chene', 5); } });
-  // 6. le petit toit en croupe, de tuiles ; l'ombre de sa rive sur le linteau
-  let toit; enDessus(() => { toit = toitCroupeHD(t, { xa: R.xa, xb: R.xb, yEgout: linteau - 3, montee: R.montee, prof: R.prof, mat: 'tuile', motif: 'tuile', g: 8207, bois: 'chene' }); });
-  for (let x = R.xa; x <= R.xb; x++) for (let k = 0; k < 4; k++) if (t.mat(x, linteau + k) === 'chene') teinterV(t, x, linteau + k, k < 2 ? -2 : -1);
-  // 7. les chaînes de l'écriteau (il pend sous le linteau ; son nom s'écrit par-dessus)
-  for (const x of [68, 108]) for (let y = linteau + 8; y < linteau + 13; y++) t.poser(x, y, 'fer', y % 2 ? 4 : 2);
-  t.contour(); t.texture(scene, cle);
-  scene.textures.get(cle).toit89 = { haut: toit.yF - 2, bas: linteau - 1, chem: null, lucarne: null, nu: null };
-  if (saison === 'givre') neigeDessus6b(scene, cle, t, D);
-  return cle;
+// ======================= 1. LE PORCHE DE LA PLACE DES MASTRES (étape 7b, Q273 : refait, deux pistes) =======================
+// L'entrée de la place des Mastres, le cœur de la ville : il doit s'accorder avec les bâtiments validés (le barbier, la maison
+// haute, la banque, les maisons de ville) : leur pierre modelée, leurs toits en croupe, leurs ombres. Deux pistes :
+//   A. l'arche des Mastres : deux piliers de pierre modelée (leur soubassement, leur chapiteau), un linteau de chêne massif
+//      (le dessus de ses abouts), ses aisseliers, un vrai toit en croupe de tuiles ; deux lanternes de fer pendues aux piliers,
+//      deux bacs de fleurs à leur pied, des murets de part et d'autre ; les fanions tendus sous le linteau ;
+//   B. la halle des Mastres : une halle couverte de trois travées sur quatre poteaux de chêne (leurs socles de pierre), un
+//      grand toit en croupe ; on voit dessous le sol de dalles de la halle s'enfoncer dans l'ombre jusqu'aux poteaux du fond,
+//      et la place au-delà, au soleil ; dans les travées de côté, un muret de pierre et ses bacs de fleurs ; deux lanternes
+//      pendues à la sablière de la travée du milieu.
+// Ce qu'on voit de la place, au travers (peindrePlaceVueHaute6b), est dans la même projection : son sol de dalles s'enfonce
+// sans rapetisser (les rangs écrasés × 0,75), et ce qui s'y tient (les étals, la fontaine, les arbres, les passants) est à
+// l'échelle de la rue.
+const PORCHE_PISTES = {
+  A: { piste: 'A', L: 176, H: 187, sol: 186, piliers: [[12, 37], [138, 163]], yI: 56, toit: { xa: 8, xb: 167, montee: 20, prof: 20 }, couvert: 30, seuil: 12,
+    lanternes: [[46, 100], [129, 100]], chaines: [68, 108], ecriteau: 68, passants: [22, 40], ouverture: [38, 138] },
+  B: { piste: 'B', L: 176, H: 187, sol: 186, poteaux: [10, 58, 118, 166], yB: 56, toit: { xa: 1, xb: 174, montee: 26, prof: 30 }, fond: 45, seuil: 14,
+    lanternes: [[74, 78], [102, 78]], chaines: [68, 108], ecriteau: 72, passants: [47, 52], ouverture: [0, 176] },
+};
+const PORCHE_PISTE = 'A';   // (conseillée ; window.PORCHE_PISTE pour comparer sur les captures)
+function porchePiste() { return PORCHE_PISTES[(typeof window !== 'undefined' && window.PORCHE_PISTE) || PORCHE_PISTE] || PORCHE_PISTES.A; }
+// Les couleurs du porche et de la place, selon la saison
+function rampesPorche6b(t, saison) {
+  const S = saison, hiver = S === 'givre';
+  Object.assign(t.rampes, RAMPES_RUE, { gres: rampe(0xb8a07a), gresP: rampe(0xb8a07a), terre: rampe(0x5e3e26), neige: [0x8a96a8, 0xaab6c8, 0xc8d2e0, 0xdce4ee, 0xeef2f8, 0xffffff],
+    fanionR: rampe(0xc83a2a), fanionB: rampe(0x2a5ab8), fanionJ: rampe(0xe0b030), fanionV: rampe(0x3a8a3a), sapin: rampe(0x2a6a30), feuille: rampe(hiver ? 0x3a5a3a : 0x4a8a34),
+    fleurA: rampeVive({ semailles: 0xf080b0, moissons: 0xe83a2a, brumes: 0xe07a20, givre: 0xc82a2a }[S] || 0xe83a2a), fleurB: rampeVive({ semailles: 0xf0d040, moissons: 0xf0a020, brumes: 0x9a4ab0, givre: 0xe8e8f0 }[S] || 0xf0a020),
+    eauP: rampe(hiver ? 0xc8e0ec : 0x4a9ac8), bache: rampe(0x6a5a44), pierreP: rampe(0x9a948a) });
 }
-// L'ombre de l'arche : sous le toit, le seuil couvert (au fond de l'ouverture) ; devant, sur le seuil de dalles de la rue, la
-// bande d'ombre du débord du toit (un peu décalée à droite : la lumière vient d'en haut à gauche), l'ombre des socles et le
-// pied de la palissade. Une texture à poser par-dessus la place et ses passants, sous le porche (son rang sol = H - 1).
-function ombrePorcheVolumeHD(scene) {
-  const cle = 'ombrePorcheVolumeHD'; if (scene.textures.exists(cle)) return cle;
-  const { L, H, poteaux: [pg, pd], toit: R, seuil } = PORCHE_VOLUME, sol = H - 1, Hs = H + seuil;
-  const tex = scene.textures.createCanvas(cle, L, Hs), c = tex.getContext(), img = c.createImageData(L, Hs), q = img.data;
+// Un bac de fleurs vu d'en haut : sa face de planches, son dessus (la terre), les fleurs de la saison (l'hiver, du sapin)
+function bacFleurs6b(t, x0, x1, yBas, saison, g, enDessus) {
+  const hiver = saison === 'givre';
+  for (let y = yBas - 9; y <= yBas; y++) for (let x = x0; x <= x1; x++) t.poser(x, y, 'chene', y === yBas ? 1 : (x - x0) % 7 === 0 ? 2 : y === yBas - 9 ? 5 : y === yBas - 5 ? 2 : 3 + (x === x0 ? 1 : 0) - (x === x1 ? 1 : 0));
+  enDessus(() => { for (let y = yBas - 13; y < yBas - 9; y++) for (let x = x0 + 1; x < x1; x++) t.poser(x, y, 'terre', y === yBas - 13 ? 2 : 3); });
+  for (let k = 0; k < Math.floor((x1 - x0) / 4); k++) {   // les touffes : leurs feuilles, leurs fleurs (au soleil en haut à gauche)
+    const cx = x0 + 3 + k * 4 + Math.round(hachage(k, 1, g) * 2), h = 5 + Math.floor(hachage(k, 2, g) * 5), base = yBas - 11 - Math.floor(hachage(k, 3, g) * 2);
+    for (let j = 0; j < h; j++) for (let e = -1; e <= 1; e++) if (Math.abs(e) + j * 0.15 < 1.6) t.poser(cx + e, base - j, hiver ? 'sapin' : 'feuille', 3 + (e < 0 ? 1 : e > 0 ? -1 : 0) - (j < 2 ? 1 : 0));
+    if (hiver) continue;
+    const m = k % 2 ? 'fleurA' : 'fleurB', fy = base - h;
+    for (const [dx, dy, i] of [[0, 0, 5], [-1, 0, 4], [1, 0, 3], [0, -1, 4], [0, 1, 2]]) t.poser(cx + dx, fy + dy, m, i);
+  }
+}
+// Une lanterne de fer pendue à une potence : son chapeau vu par le dessus, son verre (allumé la nuit)
+function lanterne6b(t, cx, yHaut, nuit, enDessus) {
+  enDessus(() => { for (let x = cx - 3; x <= cx + 3; x++) t.poser(x, yHaut, 'fer', 4); });
+  for (let x = cx - 3; x <= cx + 3; x++) t.poser(x, yHaut + 1, 'fer', 2);
+  for (let y = yHaut + 2; y < yHaut + 9; y++) for (let x = cx - 2; x <= cx + 2; x++) { const bord = x === cx - 2 || x === cx + 2; t.poser(x, y, bord ? 'fer' : 'vitre', bord ? 2 : nuit ? (x === cx && y > yHaut + 3 ? 5 : 4) : (x === cx - 1 ? 3 : 1)); }
+  for (let x = cx - 2; x <= cx + 2; x++) t.poser(x, yHaut + 9, 'fer', 2); t.poser(cx, yHaut + 10, 'fer', 1);
+}
+// Les fanions, tendus d'un côté à l'autre (l'hiver, une guirlande de sapin et ses nœuds rouges)
+function fanions6b(t, x0, x1, ya, creux, saison) {
+  const hiver = saison === 'givre';
+  for (let x = x0; x <= x1; x++) {
+    const u = (x - x0) / (x1 - x0), y = Math.round(ya + Math.sin(u * Math.PI) * creux);
+    t.poser(x, y, hiver ? 'sapin' : 'cheneSombre', hiver ? 3 : 2);
+    if (hiver) { if ((x - x0) % 9 === 0) { t.poser(x, y + 1, 'fanionR', 4); t.poser(x, y + 2, 'fanionR', 3); } else t.poser(x, y + 1, 'sapin', 2); continue; }
+    if ((x - x0) % 7 < 5) { const m = (saison === 'brumes' ? ['fanionR', 'fanionJ', 'fleurA', 'fleurB'] : ['fanionR', 'fanionB', 'fanionJ', 'fanionV'])[Math.floor((x - x0) / 7) % 4];
+      for (let k = 1; k <= 5 - Math.abs(((x - x0) % 7) - 2) * 1.6; k++) t.poser(x, y + k, m, k === 1 ? 4 : 3); }
+  }
+}
+// La place des Mastres vue au travers du porche, dans la projection. x0..x1 : l'ouverture ; yH : son haut ; sol : le pied du
+// porche (le rang de la rue). Une rangée à la profondeur d (en pixels de plan) est au rang sol − 0,75·d. La place a 92 de
+// profondeur : au fond, le talus des Coteaux (ses portes rondes, ses arbres), et le ciel de la rue au-dessus.
+function peindrePlaceVueHaute6b(t, x0, x1, yH, sol, jour, saison) {
+  const S = saison, hiver = S === 'givre', n = jour ? 0 : -2, Y = d => sol - Math.round(d * VOLUME_HD.prof);
+  const P = (x, y, m, k) => { if (x >= x0 && x < x1 && y >= yH && y <= sol) t.poser(Math.round(x), Math.round(y), m, Math.max(0, Math.min(5, Math.round(k)))); };
+  const mx = (x0 + x1) / 2, yE = Y(92);   // (la place a 92 de profondeur ; au fond, le talus des Coteaux)
+  Object.assign(t.rampes, { pain: rampe(0xc8904a), ble: rampe(0xd8b048), pomme: rampeVive(0xc8382a), citrouille: rampeVive(0xe0701a), penteP: rampe({ semailles: 0x7aa84e, moissons: 0x94a84a, brumes: 0x8a9a52, givre: 0xdce6ec }[S] || 0x94a84a),
+    porteRP: rampe(0x9a3226), porteVP: rampe(0x2e6e3a) });
+  // 1. au fond, le pied des Coteaux : un talus d'herbe (sa crête ondule), deux portes rondes dans leur cercle de pierre, une
+  //    fenêtre ronde (allumée la nuit), une cheminée qui sort de l'herbe ; deux arbres sur la crête ; au-dessus, le ciel de la rue
+  const crete = x => yE - 30 - Math.round(Math.sin((x - x0) / 17) * 3 + Math.sin((x - x0) / 6) * 1);
+  [[x0 + 14, 'pommier', 'P1', 1], [x1 - 14, 'bouleau', 'P2', 2]].forEach(([ax, espece, suf, gr]) => {
+    for (const [m, ramp] of Object.entries(rampesArbre(S, espece))) t.rampes[m + suf] = ramp;
+    peindreArbre((x, y, m, i) => P(x, y, m + suf, i + n), { cx: ax, base: crete(ax) + 3, H: 64, espece, saison: S, graine: gr });
+  });
+  for (let x = x0; x < x1; x++) for (let y = crete(x); y < yE; y++) P(x, y, 'penteP', (y === crete(x) ? 4 : y > yE - 4 ? 2 : 3 + (hachage(x >> 1, y >> 1, 7820) > 0.85 ? 1 : 0)) + n);
+  for (const [bx, porte, fen] of [[x0 + 24, 'porteRP', 1], [x1 - 26, 'porteVP', -1]]) {
+    const pr = 9, py = yE - pr - 1;
+    for (let y = py - pr - 3; y <= yE; y++) for (let x = bx - pr - 3; x <= bx + pr + 3; x++) {
+      const d = Math.hypot(x + 0.5 - bx, y + 0.5 - py), bas = y >= py && Math.abs(x + 0.5 - bx) <= pr + 2.5;
+      if (d > pr + 2.5 && !bas) continue; const dedans = d <= pr || (y >= py && Math.abs(x + 0.5 - bx) <= pr);
+      P(x, y, dedans ? porte : 'pierreP', dedans ? 3 - (x > bx + 2 ? 1 : 0) + ((x - bx + 20) % 4 === 0 ? -1 : 0) + n : (y < py - pr ? 5 : x < bx ? 4 : 2) + n); }
+    P(bx, py + 1, 'or', 5 + n); P(bx + 1, py + 1, 'or', 3 + n);
+    const fx = bx + fen * 18, fy = yE - 14;
+    for (let y = fy - 4; y <= fy + 4; y++) for (let x = fx - 4; x <= fx + 4; x++) { const d = Math.hypot(x - fx, y - fy); if (d > 4.3) continue; P(x, y, d > 3 ? 'pierreP' : jour ? 'vitreNoire' : 'vitre', d > 3 ? 4 + n : jour ? 3 : 5); }
+    const cx = bx - fen * 14, cy = crete(cx) - 6;
+    for (let y = cy; y < cy + 8; y++) for (let x = cx; x < cx + 5; x++) P(x, y, 'pierreP', (y === cy ? 5 : x === cx ? 4 : 2) + n);
+    if (hiver) for (let x = cx; x < cx + 5; x++) P(x, cy - 1, 'neige', 5 + n / 2);
+  }
+  // 2. le sol de la place : des pavés ronds, en rangs décalés (comme la chaussée de la rue), chacun son dessus au soleil, son
+  //    pied sombre, la terre entre eux ; 5 rangs d'écran pour un pavé ; la saison (l'herbe, les feuilles, la neige et son chemin)
+  for (let y = yE; y <= sol; y++) { const r = Math.floor((sol - y) / 5), ty = (sol - y) % 5, dec = (r % 2) * 4;
+    for (let x = x0; x < x1; x++) { const tx = ((x - x0 + dec) % 8 + 8) % 8, h = hachage(Math.floor((x - x0 + dec) / 8), r, 7811), gap = tx === 0 || ty === 4 || ((tx === 1 || tx === 7) && (ty === 0 || ty === 3));
+      if (hiver) { const trace = Math.abs(x - mx - Math.sin((sol - y) * 0.05) * 6) < 5; P(x, y, trace ? 'pierreP' : 'neige', trace ? (gap ? 1 : 3) + n : (gap ? 3 : 4 + (h > 0.8 ? 1 : 0)) + n / 2); continue; }
+      P(x, y, gap ? 'terre' : 'pierreP', gap ? 2 + n : (ty === 3 ? 4 : ty === 0 ? 2 : 3) + (h > 0.78 ? 1 : h < 0.15 ? -1 : 0) - (tx === 6 ? 1 : 0) + n);
+      if (S === 'semailles' && gap && hachage(x, y, 7812) > 0.7) P(x, y, 'feuille', 3 + n);
+      if (S === 'brumes' && hachage(x >> 1, y >> 1, 7813) > 0.94) P(x, y, hachage(x, y, 7814) > 0.5 ? 'fleurA' : 'fanionJ', 3 + n); } }
+  for (let x = x0; x < x1; x++) for (let k = 0; k < 2; k++) P(x, yE + k, 'terre', 1 + k + n);   // (le pied du talus)
+  // 3. deux étals contre le talus : la table (sa face, son dessus et ce qu'on y vend, vus d'en haut), l'auvent rayé vu par le
+  //    dessus (bâché la nuit, neigeux l'hiver) sur ses deux montants
+  const tissus = { semailles: ['fleurA', 'fanionB'], moissons: ['fanionR', 'fanionB'], brumes: ['fleurB', 'fanionR'], givre: ['fanionV', 'fanionR'] }[S] || ['fanionR', 'fanionB'];
+  for (const [ex, el, d, i] of [[x0 + 2, 32, 80, 0], [x1 - 34, 32, 84, 1]]) {
+    const yb = Y(d), yt = yb - 13, ya = yb - 36;
+    for (const px of [ex + 1, ex + el - 2]) for (let y = ya; y <= yb; y++) { P(px, y, 'chene', 3 + n); P(px + 1, y, 'chene', 1 + n); }
+    for (let y = yt; y <= yb - 4; y++) for (let x = ex; x < ex + el; x++) P(x, y, jour ? 'chene' : 'bache', (y === yt ? 4 : y === yb - 4 ? 1 : 2) + n);
+    for (let y = yt - 7; y < yt; y++) for (let x = ex; x < ex + el; x++) P(x, y, jour ? 'chene' : 'bache', (y === yt - 1 ? 5 : 4) + n);
+    if (jour) for (let x = ex + 2; x < ex + el - 2; x += 4) for (let r = 0; r < 2; r++) { const yy = yt - 6 + r * 3, m = S === 'semailles' ? ['fleurA', 'feuille', 'fleurB'][(x + r + i) % 3] : S === 'givre' ? ['pain', 'sapin'][(x + r) % 2] : S === 'brumes' ? ['citrouille', 'pomme', 'pain'][(x + r + i) % 3] : ['pain', 'ble', 'pomme'][(x + r + i) % 3];
+      P(x, yy, m, 4); P(x + 1, yy, m, 3); P(x, yy + 1, m, 3); P(x + 1, yy + 1, m, 2); }
+    for (let y = ya - 10; y < ya; y++) for (let x = ex - 2; x < ex + el + 2; x++) { const raye = Math.floor((x - ex + 2) / 4) % 2;
+      if (hiver && y < ya - 2) { P(x, y, 'neige', 5 + n / 2); continue; } P(x, y, !jour ? 'bache' : raye ? tissus[i] : 'parchemin', (y === ya - 10 ? 4 : 3) + (jour ? 0 : n / 2)); }
+    for (let x = ex - 2; x < ex + el + 2; x++) { const raye = Math.floor((x - ex + 2) / 4) % 2; P(x, ya, !jour ? 'bache' : raye ? tissus[i] : 'parchemin', 2 + n); if (x % 4 < 2) P(x, ya + 1, !jour ? 'bache' : raye ? tissus[i] : 'parchemin', 1 + n); }
+    for (let x = ex - 1; x < ex + el + 2; x++) { P(x, yb + 1, 'terre', 1 + n); P(x + 1, yb + 2, 'terre', 2 + n); }   // (son ombre au sol)
+  }
+  // 4. la fontaine de la place, au milieu : son bassin rond vu d'en haut (la margelle, l'eau, gelée l'hiver), sa paroi, la colonne,
+  //    la vasque ; son ombre au sol
+  { const fx = mx, fy = Y(66), rx = 15, ry = 11.25;
+    for (let x = Math.floor(fx - rx + 2); x <= fx + rx + 2; x++) for (let k = 0; k < 2; k++) P(x, fy + ry + 5 + k, 'terre', 1 + k + n);
+    for (let y = Math.floor(fy - ry - 1); y <= fy + ry + 6; y++) for (let x = Math.floor(fx - rx - 1); x <= fx + rx + 1; x++) {
+      const u = (x + 0.5 - fx) / rx, v = (y + 0.5 - fy) / ry, q = u * u + v * v, vb = (y - 5 + 0.5 - fy) / ry, qb = u * u + vb * vb;
+      if (q <= 1) { const eau = q < 0.6; P(x, y, eau ? 'eauP' : 'pierreP', eau ? 3 + (hachage(x, y, 7815) > 0.9 && !hiver ? 2 : 0) - (v < -0.4 ? 1 : 0) + n : (v < 0 ? 5 : 4) + n); }
+      else if (qb <= 1 && y > fy) P(x, y, 'pierreP', (u < -0.6 ? 4 : u > 0.6 ? 1 : 2) + n);
+    }
+    for (let y = fy - 18; y < fy; y++) { P(fx - 1, y, 'pierreP', 4 + n); P(fx, y, 'pierreP', 3 + n); P(fx + 1, y, 'pierreP', 1 + n); }
+    for (let y = fy - 21; y <= fy - 17; y++) for (let x = fx - 6; x <= fx + 6; x++) { const q = ((x + 0.5 - fx) / 6) ** 2 + ((y + 0.5 - (fy - 19)) / 2.3) ** 2; if (q <= 1) P(x, y, y < fy - 19 ? (hiver ? 'neige' : 'eauP') : 'pierreP', (y < fy - 19 ? 4 : 2) + n); }
+    if (jour && !hiver) for (const s of [-1, 1]) for (let k = 0; k < 7; k++) P(fx + s * (7 + k * 0.6), fy - 17 + k * 2, 'eauP', 5); }
+  // la nuit, un réverbère veille sur la place endormie
+  if (!jour) { const lx = mx - 26, ly = Y(76); for (let y = ly - 40; y <= ly; y++) { P(lx, y, 'fer', 2); P(lx + 1, y, 'fer', 1); } for (let y = ly - 48; y < ly - 40; y++) for (let x = lx - 2; x <= lx + 3; x++) P(x, y, x === lx - 2 || x === lx + 3 ? 'fer' : 'vitre', x === lx - 2 || x === lx + 3 ? 1 : 5); }
+}
+// Le porche de la piste choisie, pour la saison et l'heure : { porche, place, ombre } (trois textures : la place derrière, l'ombre
+// sur le seuil, le porche devant ; les passants vont et viennent entre la place et le porche)
+function porcheVolumeHD(scene, jour = true, PP = porchePiste()) {
+  const saison = (typeof saisonActuelle === 'function' && saisonActuelle()) || 'moissons';
+  const suf = PP.piste + '_' + saison + (jour ? '_jour' : '_nuit'), cle = 'porcheVolumeHD_' + suf, place = 'placePorcheV_' + suf, ombre = 'ombrePorcheV_' + PP.piste;
+  if (!scene.textures.exists(cle)) (PP.piste === 'B' ? porcheHalleHD : porcheArcheHD)(scene, PP, cle, place, jour, saison);
+  ombrePorche7b(scene, PP, ombre);
+  return { porche: cle, place, ombre };
+}
+// --- piste A : l'arche des Mastres ---
+function porcheArcheHD(s, PP, cle, place, jour, saison) {
+  const { L, H, sol, piliers, yI, toit: R, chaines } = PP, nuit = !jour, [o0, o1] = PP.ouverture;
+  const f = toileDecor(L, H); rampesPorche6b(f, saison); peindrePlaceVueHaute6b(f, o0, o1, yI, sol, jour, saison); f.texture(s, place);
+  const t = toileDecor(L, H); rampesPorche6b(t, saison); const { D, enDessus } = dessus6b(t);
+  // 1. les murets, de part et d'autre (leur chaperon vu par le dessus)
+  for (const [a, b] of [[0, 9], [166, L - 1]]) { for (let y = sol - 30; y <= sol; y++) for (let x = a; x <= b; x++) t.poser(x, y, 'pierre', 3);
+    enDessus(() => { for (let x = a; x <= b; x++) { t.poser(x, sol - 34, 'taille', 4); t.poser(x, sol - 33, 'taille', 5); } }); for (let x = a; x <= b; x++) { t.poser(x, sol - 32, 'taille', 3); t.poser(x, sol - 31, 'taille', 1); } }
+  // 2. les deux piliers de pierre : le fût (modelé ensuite), le soubassement qui avance (son dessus), le chapiteau
+  for (const [a, b] of piliers) {
+    for (let y = yI + 4; y <= sol - 9; y++) for (let x = a; x <= b; x++) t.poser(x, y, 'pierre', 3);
+    enDessus(() => { for (let x = a - 2; x <= b + 2; x++) { t.poser(x, sol - 10, 'taille', 4); t.poser(x, sol - 9, 'taille', 5); } });
+    for (let y = sol - 8; y <= sol; y++) for (let x = a - 2; x <= b + 2; x++) t.poser(x, y, 'taille', y === sol ? 1 : x === a - 2 ? 4 : x === b + 2 ? 2 : 3 - (y > sol - 3 ? 1 : 0));
+    for (let x = a - 2; x <= b + 2; x++) { t.poser(x, yI, 'taille', 5); t.poser(x, yI + 1, 'taille', 4); t.poser(x, yI + 2, 'taille', 2); t.poser(x, yI + 3, 'taille', 1); }   // le chapiteau
+    for (let x = a; x <= b; x++) for (let k = 0; k < 3; k++) teinterV(t, x, yI + 4 + k, k < 2 ? -2 : -1);   // (son ombre sur le fût)
+  }
+  // 3. les aisseliers de chêne, du haut des piliers au linteau
+  for (const [xp, sens] of [[piliers[0][1] + 1, 1], [piliers[1][0] - 1, -1]]) for (let k = 0; k < 20; k++) for (let e = 0; e < 4; e++) t.poser(xp + sens * k, yI + 19 - k + e, 'chene', e === 0 ? 5 : e === 3 ? 1 : 3);
+  // 4. le linteau de chêne massif (ses abouts dépassent du toit : leur dessus) ; l'ombre de la rive sur lui
+  planche(t, 0, yI - 9, L, 9, 'chene', { graine: 8216, noeuds: 3 });
+  for (let x = 0; x < L; x++) t.poser(x, yI - 1, 'cheneSombre', 1);
+  for (const [a, b] of [[0, R.xa - 1], [R.xb + 1, L - 1]]) enDessus(() => { for (let x = a; x <= b; x++) { t.poser(x, yI - 12, 'chene', 4); t.poser(x, yI - 11, 'chene', 4); t.poser(x, yI - 10, 'chene', 5); } });
+  let toit; enDessus(() => { toit = toitCroupeHD(t, { xa: R.xa, xb: R.xb, yEgout: yI - 12, montee: R.montee, prof: R.prof, mat: 'tuile', motif: 'tuile', g: 8217, bois: 'chene' }); });
+  for (let x = R.xa; x <= R.xb; x++) for (let k = 0; k < 5; k++) if (t.mat(x, yI - 9 + k) === 'chene') teinterV(t, x, yI - 9 + k, k < 3 ? -2 : -1);
+  // 5. les fanions sous le linteau, les chaînes de l'écriteau, les deux lanternes sur leur potence
+  fanions6b(t, piliers[0][1] + 1, piliers[1][0] - 1, yI + 9, 5, saison); fanions6b(t, piliers[0][1] + 1, piliers[1][0] - 1, yI + 19, 3, saison);
+  for (const x of chaines) for (let y = yI; y < yI + 6; y++) t.poser(x, y, 'fer', y % 2 ? 4 : 2);
+  for (const [lx, ly] of PP.lanternes) { const sens = lx < L / 2 ? -1 : 1, x0 = sens < 0 ? piliers[0][1] : piliers[1][0];
+    for (let x = Math.min(x0, lx); x <= Math.max(x0, lx); x++) t.poser(x, ly - 14, 'fer', 3); t.poser(x0, ly - 13, 'fer', 2); t.poser(lx, ly - 13, 'fer', 2);
+    lanterne6b(t, lx, ly - 12, nuit, enDessus); }
+  // 6. les bacs de fleurs, au pied des piliers
+  for (const [a, b] of piliers) bacFleurs6b(t, a, b, sol, saison, a + 8218, enDessus);
+  t.contour();
+  const C = toileCanvas6b(t);
+  pierresRondesDonnees(C.d, L, H, [...piliers.map(([a, b], i) => ({ r: [a, yI + 4, b, sol - 11], graine: 8219 + i })), { r: [0, sol - 30, 9, sol], graine: 8221 }, { r: [166, sol - 30, L - 1, sol], graine: 8222 }]);
+  for (let x = 0; x < L; x++) { C.mul(x, sol, 0.74); C.mul(x, sol - 1, 0.88); }
+  C.fin(s, cle);
+  s.textures.get(cle).toit89 = { haut: toit.yF - 2, bas: yI - 10, chem: null, lucarne: null, nu: null };
+  if (saison === 'givre') neigeDessus6b(s, cle, t, D);
+}
+// --- piste B : la halle des Mastres ---
+function porcheHalleHD(s, PP, cle, place, jour, saison) {
+  const { L, H, sol, poteaux, yB, toit: R, fond, chaines } = PP, nuit = !jour, yFd = sol - fond;
+  const f = toileDecor(L, H); rampesPorche6b(f, saison); peindrePlaceVueHaute6b(f, 0, L, yB + 6, sol, jour, saison);
+  f.texture(s, place);
+  const t = toileDecor(L, H); rampesPorche6b(t, saison); const { D, enDessus } = dessus6b(t);
+  // 1. le fond de la halle : ses poteaux du fond (dans l'ombre du toit), et le sol de grandes dalles qui s'enfonce dans l'ombre
+  for (const cx of poteaux) for (let y = yB + 7; y <= yFd; y++) for (let x = cx - 3; x <= cx + 3; x++) t.poser(x, y, 'chene', x === cx - 3 ? 2 : x === cx + 3 ? 0 : 1);
+  for (let y = yFd + 1; y <= sol; y++) { const r = Math.floor((sol - y) / 9), ty = (sol - y) % 9, v = (y - yFd) / fond, dec = (r % 2) * 11;
+    for (let x = 0; x < L; x++) { const tx = (x + dec) % 22; t.poser(x, y, 'gres', (ty === 8 || tx === 0 ? 0 : ty === 7 ? 3 : 2) - (v < 0.4 ? 1 : 0) + (v > 0.85 ? 1 : 0)); } }
+  // 2. les poteaux de devant sur leurs socles de pierre (le dessus des socles) ; les murets des travées de côté et leurs bacs
+  for (const cx of poteaux) {
+    for (let y = yB + 7; y <= sol - 9; y++) for (let x = cx - 4; x <= cx + 4; x++) t.poser(x, y, 'chene', x === cx - 4 ? 5 : x === cx + 4 ? 1 : x === cx ? 2 : 3);
+    enDessus(() => { for (let x = cx - 7; x <= cx + 7; x++) { t.poser(x, sol - 11, 'taille', 4); t.poser(x, sol - 10, 'taille', 5); } });
+    for (let x = cx - 4; x <= cx + 4; x++) t.poser(x, sol - 11, 'chene', 2);
+    for (let y = sol - 9; y <= sol; y++) for (let x = cx - 7; x <= cx + 7; x++) t.poser(x, y, 'taille', y === sol ? 1 : x === cx - 7 ? 4 : x === cx + 7 ? 2 : 3);
+  }
+  for (const [a, b] of [[poteaux[0] + 8, poteaux[1] - 8], [poteaux[2] + 8, poteaux[3] - 8]]) {
+    for (let y = sol - 26; y <= sol; y++) for (let x = a; x <= b; x++) t.poser(x, y, 'pierre', 3);
+    enDessus(() => { for (let x = a; x <= b; x++) { t.poser(x, sol - 30, 'taille', 4); t.poser(x, sol - 29, 'taille', 5); } });
+    for (let x = a; x <= b; x++) { t.poser(x, sol - 28, 'taille', 3); t.poser(x, sol - 27, 'taille', 1); }
+    bacFleurs6b(t, a + 3, b - 3, sol - 30, saison, a + 8231, enDessus);
+  }
+  // 3. les aisseliers, la sablière de devant, le grand toit en croupe, l'ombre de sa rive
+  for (const cx of poteaux) for (const sens of [-1, 1]) { if ((cx < 20 && sens < 0) || (cx > L - 20 && sens > 0)) continue;
+    for (let k = 0; k < 14; k++) for (let e = 0; e < 3; e++) t.poser(cx + sens * (4 + k), yB + 21 - k + e, 'chene', e === 0 ? 5 : e === 2 ? 1 : 3); }
+  planche(t, 0, yB, L, 8, 'chene', { graine: 8232, noeuds: 3 }); for (let x = 0; x < L; x++) t.poser(x, yB + 7, 'cheneSombre', 1);
+  let toit; enDessus(() => { toit = toitCroupeHD(t, { xa: R.xa, xb: R.xb, yEgout: yB - 3, montee: R.montee, prof: R.prof, mat: 'tuile', motif: 'tuile', g: 8233, bois: 'chene' }); });
+  for (let x = 0; x < L; x++) for (let k = 0; k < 4; k++) if (t.mat(x, yB + k) === 'chene') teinterV(t, x, yB + k, k < 2 ? -2 : -1);
+  //    l'ombre du toit sur le haut de la halle (le dessous est dans l'ombre)
+  for (let y = yB + 8; y < yB + 20; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'chene') teinterV(t, x, y, y < yB + 13 ? -1 : 0);
+  // 4. les fanions dans la travée du milieu, les chaînes de l'écriteau, les deux lanternes pendues à la sablière
+  fanions6b(t, poteaux[1] + 5, poteaux[2] - 5, yB + 26, 5, saison);
+  for (const x of chaines) for (let y = yB + 8; y < yB + 12; y++) t.poser(x, y, 'fer', y % 2 ? 4 : 2);
+  for (const [lx, ly] of PP.lanternes) { for (let y = yB + 8; y < ly - 12; y++) t.poser(lx, y, 'fer', y % 2 ? 3 : 1); lanterne6b(t, lx, ly - 12, nuit, enDessus); }
+  t.contour();
+  const C = toileCanvas6b(t);
+  pierresRondesDonnees(C.d, L, H, [{ r: [poteaux[0] + 8, sol - 26, poteaux[1] - 8, sol], graine: 8234 }, { r: [poteaux[2] + 8, sol - 26, poteaux[3] - 8, sol], graine: 8235 }]);
+  for (let x = 0; x < L; x++) { C.mul(x, sol, 0.74); C.mul(x, sol - 1, 0.88); }
+  C.fin(s, cle);
+  s.textures.get(cle).toit89 = { haut: toit.yF - 2, bas: yB - 1, chem: null, lucarne: null, nu: null };
+  if (saison === 'givre') neigeDessus6b(s, cle, t, D);
+}
+// L'ombre du porche : (A) sous le toit, sur le seuil couvert de la place ; devant, sur les dalles de la rue, la bande d'ombre du
+// débord du toit (un peu à droite : la lumière vient d'en haut à gauche), l'ombre des piliers, des poteaux, des murets
+function ombrePorche7b(scene, PP, cle) {
+  if (scene.textures.exists(cle)) return cle;
+  const { L, H, sol, toit: R, seuil } = PP, Hs = H + seuil, tex = scene.textures.createCanvas(cle, L, Hs), c = tex.getContext(), img = c.createImageData(L, Hs), q = img.data;
   const a = (x, y, v) => { if (x < 0 || y < 0 || x >= L || y >= Hs) return; const i = (y * L + x) * 4; q[i] = 14; q[i + 1] = 10; q[i + 2] = 22; q[i + 3] = Math.max(q[i + 3], Math.round(255 * v)); };
-  const cover = Math.round(R.prof * VOLUME_HD.prof);   // (12 rangs : la profondeur couverte par le toit)
-  for (let y = sol - cover; y <= sol; y++) for (let x = pg + 5; x < pd - 4; x++) { const v = (y - (sol - cover)) / cover; a(x, y, 0.16 + 0.22 * Math.min(1, v * 2.2)); }
-  for (let k = 1; k <= 6; k++) for (let x = R.xa + 3; x <= R.xb + 3; x++) { const bord = Math.min(1, Math.min(x - R.xa - 3, R.xb + 3 - x) / 5); a(x, sol + k, (k < 5 ? 0.3 : 0.18) * bord); }
-  for (const cx of [pg, pd]) for (let k = 1; k <= 5; k++) for (let x = cx - 7; x <= cx + 10; x++) a(x, sol + k, 0.42 - k * 0.05);
-  for (const [g, d] of [[0, pg - 8], [pd + 8, L - 1]]) for (let k = 1; k <= 4; k++) for (let x = g; x <= d; x++) a(x + 1, sol + k, 0.34 - k * 0.07);
-  for (const [xg, sens] of [[pg + 5, 1], [pd - 5, -1]]) for (let u = 0; u <= 14; u++) { const yb = sol - 2 - Math.round(u / 14 * 40); for (let k = 1; k <= 3; k++) a(xg + sens * u + k, yb + 1 - (sens < 0 ? 0 : 0), 0.3 - k * 0.07); }   // (l'ombre des battants, au pied)
+  if (PP.piste === 'A') { const [o0, o1] = PP.ouverture; for (let y = sol - PP.couvert; y <= sol; y++) for (let x = o0; x < o1; x++) { const v = (y - (sol - PP.couvert)) / PP.couvert; a(x, y, 0.14 + 0.24 * Math.min(1, v * 2.5)); } }
+  for (let k = 1; k <= 7; k++) for (let x = R.xa + 4; x <= R.xb + 4; x++) { const bord = Math.min(1, Math.min(x - R.xa - 4, R.xb + 4 - x) / 6); a(x, sol + k, (k < 5 ? 0.26 : 0.15) * bord); }
+  const pieds = PP.piste === 'A' ? PP.piliers.map(([a0, b0]) => [a0 - 2, b0 + 5]).concat([[0, 12], [166, L - 1]]) : PP.poteaux.map(cx => [cx - 7, cx + 10]);
+  for (const [g, d] of pieds) for (let k = 1; k <= 5; k++) for (let x = g; x <= d; x++) a(x, sol + k, 0.44 - k * 0.06);
   c.putImageData(img, 0, 0); tex.refresh(); return cle;
+}
+// Les passants de la place, vus au travers du porche : de vrais corps, à l'échelle de la rue (la projection : rien ne rapetisse
+// au loin), qui flânent d'un bout à l'autre de l'ouverture sur le sol de la place, s'arrêtent, repartent. Ils passent derrière
+// les piliers (le porche est posé par-dessus). foule : le conteneur ; cx, sol : le pied du porche dans le lot.
+function passantsPlace6b(scene, foule, PP, { hiver = false } = {}) {
+  const X = tx => (tx - PP.L / 2) * 2, Y = ty => 2 - (PP.H - ty) * 2, [o0, o1] = PP.ouverture, [p0, p1] = PP.passants;
+  const xa = X(o0 + 8), xb = X(o1 - 8), races = ['humain', 'hobbit', 'nain', 'elfe', 'hobbit'], ech = 4.5 / SOUCO.F;
+  [[0.15, 0.2], [0.5, 0.75], [0.82, 0.4], [0.35, 1], [0.65, 0]].forEach(([u, pr], i) => {
+    const quoi = { nom: 'Flâneur du porche ' + i, race: races[i % races.length], feminin: i % 2 === 1, niveau: 'novice' };
+    const p = imageCorps(scene, xa + (xb - xa) * u, Y(PP.sol - Math.round(p0 + (p1 - p0) * pr)), quoi, ech).setFlipX(i % 2 === 0);
+    foule.add(p); foule.sort('y');
+    const souffle = () => scene.tweens.add({ targets: p, scaleY: p.scaleY * 1.015, duration: 1300 + i * 170, yoyo: true, repeat: 1, ease: 'Sine.easeInOut' });
+    const suite = () => {
+      if (!p.active) return;
+      if (Math.random() < 0.45) { souffle(); scene.time.delayedCall(2600 + Math.random() * 3000, suite); return; }
+      const cible = Phaser.Math.Clamp(p.x + (Math.random() < 0.5 ? -1 : 1) * (40 + Math.random() * 90), xa, xb), duree = Math.abs(cible - p.x) / 0.03;
+      if (duree < 300) { scene.time.delayedCall(800, suite); return; }
+      p.setFlipX(cible < p.x); pasDeMarche(scene, p, duree, { poussiere: false });
+      scene.tweens.add({ targets: p, x: cible, duration: duree, onComplete: () => scene.time.delayedCall(600 + Math.random() * 2400, suite) });
+    };
+    scene.time.delayedCall(400 + i * 700, suite);
+  });
 }
 
 // ======================= 2. L'ATELIER DES MAGES-CHARPENTIERS =======================
@@ -144,9 +313,9 @@ function ombrePorcheVolumeHD(scene) {
 // les deux fenêtres éclairées, la cheminée de pierre, les ardoises bleu nuit, l'enseigne (un rabot et une baguette croisés).
 // Dans la projection : un toit en croupe d'ardoises bleu nuit (38 de montée, 26 de profondeur), la cheminée debout sur le pan ;
 // l'enseigne n'est plus peinte dans le pignon : c'est un panneau debout sur le pan avant, sur ses deux pieds de fer, son chant
-// du haut vu par le dessus, son ombre sur les ardoises ; l'ombre de la rive sur le haut du mur ; les poutres, leur dessus
-// éclairé et leur ombre sur l'enduit ; par les grandes portes, le plancher de l'atelier, vu par le dessus, qui s'enfonce
-// dans l'ombre ; le dessus de l'établi ; les appuis des fenêtres, leurs vitres en retrait ; le dessus du soubassement, la
+// du haut vu par le dessus, son ombre sur les ardoises ; son nom sur la façade, jour et nuit (Q274) ; l'ombre de la rive
+// sur le haut du mur ; les poutres, leur dessus éclairé et leur ombre sur l'enduit ; par les grandes portes, un vrai atelier vu
+// d'en haut (interieurMages7b) ; les appuis des fenêtres, leurs vitres en retrait ; le dessus du soubassement, la
 // pierre modelée, le pied du mur. Le chantier (avant l'ouverture) : la même maison, nue, dans la même projection.
 const MAGES_VOLUME = { L: 156, H: 156, oy: 6, yE: 63, toit: { xa: 4, xb: 151, montee: 38, prof: 26 }, enseigne: { x: 62, d: 9 } };
 function atelierMagesVolumeHD(s) {
@@ -165,17 +334,11 @@ function atelierMagesVolumeHD(s) {
   for (const y of [92 + O]) for (let x = 12; x < L - 12; x++) { if (t.mat(x, y) === 'cheneSombre') t.poser(x, y, 'cheneSombre', 5); if (t.mat(x, y + 5) === 'platre') teinterV(t, x, y + 5, -1); }
   for (const x of [14, 42, 118, 142]) for (let y = 66; y < 132 + O; y++) { if (t.mat(x - 2, y) === 'cheneSombre') t.poser(x - 2, y, 'cheneSombre', 4); if (t.mat(x + 4, y) === 'platre') teinterV(t, x + 4, y, -1); }
   for (let k = 0; k < 9; k++) { const x = 20 + k * 14; if (x > 38 && x < 116) continue; t.poser(x, 66, 'rune', 5); t.poser(x + 1, 67, 'rune', 4); }
-  // 3. les grandes portes de grange ouvertes : le noir de l'atelier ; son plancher vu par le dessus (16 rangs), plus clair vers
-  //    la rue ; les deux vantaux rabattus contre le mur (leur chant du haut au soleil) ; la patte géante sur ses tréteaux, l'établi
-  for (let y = 70 + O; y < 132 + O; y++) for (let x = 46; x < 110; x++) t.poser(x, y, 'cheneSombre', 0);
-  for (let y = 116 + O; y < 132 + O; y++) { const v = (y - 116 - O) / 15; for (let x = 46; x < 110; x++) t.poser(x, y, 'chene', (x - 46) % 8 === 0 ? 0 : v > 0.7 ? 2 : v > 0.35 ? 1 : 0); }
+  // 3. (Q274) les grandes portes de grange ouvertes sur un vrai atelier, vu d'en haut (interieurMages7b) ; les deux vantaux
+  //    rabattus contre le mur (leur chant du haut au soleil)
+  interieurMages7b(t, O);
   for (const [a, b] of [[34, 46], [110, 122]]) { for (let y = 70 + O; y < 132 + O; y++) for (let x = a; x < b; x++) t.poser(x, y, 'chene', (x - a) % 4 === 0 ? 1 : x === a + 1 ? 4 : 3);
     enDessus(() => { for (let x = a; x < b; x++) t.poser(x, 69 + O, 'chene', 5); }); }
-  for (const [a, b] of [[56, 62], [94, 100]]) segmentHD(t, [a, 126 + O], [b, 126 + O], 1, 'cheneClair');
-  segmentHD(t, [56, 126 + O], [58, 112 + O], 1, 'cheneClair'); segmentHD(t, [98, 126 + O], [96, 112 + O], 1, 'cheneClair');
-  segmentHD(t, [60, 110 + O], [78, 98 + O], 4.5, 'cheneClair', { bandes: 6, mat2: 'fer' }); segmentHD(t, [78, 98 + O], [96, 110 + O], 3.5, 'cheneClair', { bandes: 6, mat2: 'fer' });
-  disqueHD(t, 78, 98 + O, 4.5, 'laiton', 3); disqueHD(t, 78, 98 + O, 2, 'rune', 5);
-  for (let x = 50; x < 66; x++) { t.poser(x, 115 + O, 'chene', 4); t.poser(x, 116 + O, 'chene', 5); for (let y = 117; y < 122; y++) t.poser(x, y + O, 'chene', y === 121 ? 1 : 2); }   // l'établi : son dessus, sa face
   // 4. les fenêtres à petits carreaux, éclairées : leurs vitres en retrait, leur appui de pierre vu par le dessus
   for (const x0 of [18, 122]) {
     for (let y = 100; y < 120; y++) for (let x = x0; x < x0 + 16; x++) { const pl = (x - x0) % 8 === 0 || (y - 100) % 10 === 0; t.poser(x, y + O, pl ? 'cheneSombre' : 'laiton', pl ? 1 : 4); }
@@ -208,6 +371,85 @@ function atelierMagesVolumeHD(s) {
   const tex = s.textures.get(cle); tex.cheminee = [ch.cx, ch.haut - 2]; tex.volume89 = { enseigne: [ex, ey, 32, 20] };
   neigeDessus6b(s, cle, t, D);
   return cle;
+}
+// (Q274) L'intérieur de l'atelier, vu par les grandes portes (46..109 × 76..137) : plus jamais un trou noir. Un atelier de
+// charpentiers-mages, lisible vu d'en haut, à la lumière chaude d'une lanterne et à la lueur bleue des runes :
+//   - le plancher (ses lames vers le fond), qui s'enfonce de 34 rangs (45 de profondeur) et s'assombrit, semé de copeaux ;
+//   - le mur du fond, de planches : les plans cloués (une maison sur pattes, à l'encre), le râtelier des outils (la scie, le
+//     maillet, l'équerre, les ciseaux à bois), une étagère et ses pots ;
+//   - au milieu, la patte géante en cours, sur ses tréteaux (le dessin de l'atelier d'avant) ;
+//   - devant à gauche, l'établi (son dessus vu d'en haut, l'étau, un rabot) et sur lui la maquette d'une maison sur pattes ;
+//   - devant à droite, une poutre en cours sur deux tréteaux (son dessus, les traits de mesure), le ciseau enchanté posé
+//     dessus, qui luit bleu ; des copeaux en tas dessous ;
+//   - le chat de l'atelier, roulé en boule sur les copeaux ; la lanterne qui pend sous le linteau ; l'ombre du linteau.
+function interieurMages7b(t, O) {
+  Object.assign(t.rampes, { copeau: rampe(0xd8b070), chatA: rampe(0x8a7058), maquette: rampe(0xe8dcc0), terreCuite: rampe(0xb8603a) });
+  const x0 = 46, x1 = 109, yH = 70 + O, yS = 131 + O, yF = yS - 33, P = (x, y, m, k) => { if (x >= x0 && x <= x1 && y >= yH && y <= yS) t.poser(Math.round(x), Math.round(y), m, Math.max(0, Math.min(5, Math.round(k)))); };
+  // le mur du fond, de planches, et sa lisse
+  for (let y = yH; y < yF; y++) for (let x = x0; x <= x1; x++) P(x, y, 'chene', (x - x0) % 9 === 0 ? 0 : 1 + (hachage((x - x0) / 9 | 0, 3, 6431) > 0.6 ? 1 : 0) - (y < yH + 6 ? 1 : 0));
+  for (let x = x0; x <= x1; x++) { P(x, yF - 1, 'cheneSombre', 2); P(x, yF, 'cheneSombre', 0); }
+  // le plancher, vu par le dessus : ses lames vont vers le fond ; plus clair vers les portes (le jour qui entre)
+  for (let y = yF + 1; y <= yS; y++) { const v = (y - yF) / (yS - yF); for (let x = x0; x <= x1; x++) P(x, y, 'chene', (x - x0) % 8 === 0 ? 0 : 1 + (v > 0.45 ? 1 : 0) + (v > 0.8 ? 1 : 0) + (hachage((x - x0) / 8 | 0, y >> 2, 6432) > 0.85 ? 1 : 0)); }
+  // les plans cloués au mur : une maison sur pattes, à l'encre, sur le parchemin ; leurs clous
+  for (const [px, py, w, h] of [[49, yH + 9, 15, 12], [92, yH + 13, 14, 11]]) {
+    for (let y = py; y < py + h; y++) for (let x = px; x < px + w; x++) P(x, y, 'parchemin', y === py ? 4 : x === px + w - 1 || y === py + h - 1 ? 2 : 3);
+    const cx = px + (w >> 1);
+    for (let x = cx - 4; x <= cx + 3; x++) { P(x, py + 6, 'encre', 2); P(x, py + 3, 'encre', 2); }   // les murs, le toit
+    for (let y = py + 3; y <= py + 6; y++) { P(cx - 4, y, 'encre', 2); P(cx + 3, y, 'encre', 2); }
+    for (let k = 0; k < 3; k++) { P(cx - 3 + k, py + 2 - k, 'encre', 2); P(cx + 2 - k, py + 2 - k, 'encre', 2); }
+    for (const lx of [cx - 3, cx + 2]) for (let y = py + 7; y < py + h - 1; y++) P(lx + ((y - py) % 2), y, 'encre', 2);   // les pattes
+    for (const [nx, ny] of [[px, py], [px + w - 1, py], [px, py + h - 1], [px + w - 1, py + h - 1]]) P(nx, ny, 'fer', 4);
+  }
+  // le râtelier des outils (une lisse, la scie, le maillet, l'équerre, deux ciseaux) et l'étagère des pots
+  const yr = yH - 10;   // (le râtelier, haut sur le mur : la patte est devant, plus bas)
+  for (let x = 66; x <= 90; x++) { P(x, yr + 12, 'chene', 4); P(x, yr + 13, 'cheneSombre', 1); }
+  for (let k = 0; k < 9; k++) for (let y = 0; y <= Math.floor(k * 0.55); y++) P(67 + k, yr + 14 + y, 'fer', y === 0 ? 4 : 3);   // la scie
+  for (let y = yr + 14; y < yr + 17; y++) for (let x = 76; x <= 77; x++) P(x, y, 'chene', 3);
+  for (let y = yr + 14; y < yr + 20; y++) P(80, y, 'chene', 3); for (let x = 78; x <= 82; x++) for (let y = yr + 20; y < yr + 23; y++) P(x, y, 'chene', y === yr + 20 ? 5 : 3);   // le maillet
+  for (let y = yr + 14; y < yr + 24; y++) P(85, y, 'fer', 4); for (let x = 85; x <= 89; x++) P(x, yr + 24, 'fer', 4);   // l'équerre
+  for (const cx of [72, 75]) { for (let y = yr + 14; y < yr + 18; y++) P(cx, y, 'chene', 4); for (let y = yr + 18; y < yr + 22; y++) P(cx, y, 'fer', 3); }
+  // la patte géante en cours, au milieu, sur ses tréteaux (son dessin d'avant, un peu plus au fond)
+  const dy = O - 6;
+  for (const [a, b] of [[56, 62], [94, 100]]) segmentHD(t, [a, 124 + dy], [b, 124 + dy], 1, 'cheneClair');
+  segmentHD(t, [56, 124 + dy], [58, 110 + dy], 1, 'cheneClair'); segmentHD(t, [98, 124 + dy], [96, 110 + dy], 1, 'cheneClair');
+  for (const [a, b] of [[54, 64], [92, 102]]) for (let x = a; x <= b; x++) P(x, 109 + dy, 'cheneClair', 5);   // (le dessus des tréteaux)
+  segmentHD(t, [60, 108 + dy], [78, 96 + dy], 4.5, 'cheneClair', { bandes: 6, mat2: 'fer' }); segmentHD(t, [78, 96 + dy], [96, 108 + dy], 3.5, 'cheneClair', { bandes: 6, mat2: 'fer' });
+  disqueHD(t, 78, 96 + dy, 4.5, 'laiton', 3); disqueHD(t, 78, 96 + dy, 2, 'rune', 5);
+  // l'établi, devant à gauche : son dessus vu d'en haut, sa face, ses pieds ; l'étau, un rabot ; la maquette d'une maison sur pattes
+  const eb = yS - 2;
+  for (let y = eb - 9; y <= eb; y++) for (const lx of [48, 64]) P(lx, y, 'cheneSombre', 2);
+  for (let y = eb - 13; y < eb - 9; y++) for (let x = 47; x <= 66; x++) P(x, y, 'chene', y === eb - 10 ? 1 : 2);
+  for (let y = eb - 19; y < eb - 13; y++) for (let x = 47; x <= 66; x++) P(x, y, 'chene', y === eb - 14 ? 5 : 4 - ((x - 47) % 10 === 0 ? 1 : 0));
+  for (let y = eb - 15; y < eb - 9; y++) { P(66, y, 'fer', 3); P(67, y, 'fer', 1); }   // l'étau
+  for (let x = 60; x <= 64; x++) { P(x, eb - 18, 'chene', 5); P(x, eb - 17, 'cheneSombre', 2); } P(62, eb - 19, 'fer', 4);   // un rabot
+  { const mx = 52, my = eb - 18;   // la maquette : 4 pattes fines, le corps blanc, la fenêtre, le toit de tuile rouge
+    for (const lx of [mx, mx + 6]) for (let y = my - 4; y < my; y++) { P(lx, y, 'cheneClair', 3); P(lx + 1, y + 1, 'cheneClair', 2); }
+    for (let y = my - 10; y < my - 4; y++) for (let x = mx - 1; x <= mx + 7; x++) P(x, y, 'maquette', x === mx - 1 ? 5 : x === mx + 7 ? 2 : 4);
+    P(mx + 3, my - 8, 'vitre', 4); P(mx + 4, my - 8, 'vitre', 4);
+    for (let y = my - 14; y < my - 10; y++) for (let x = mx - 2 + (my - 11 - y) * 0.5; x <= mx + 8 - (my - 11 - y) * 0.5; x++) P(x, y, 'tuile', y === my - 14 ? 5 : 3); }
+  // la poutre en cours, devant à droite, sur deux tréteaux : son dessus (les traits de mesure), sa face ; le ciseau enchanté
+  for (const lx of [83, 104]) for (let y = eb - 8; y <= eb; y++) { P(lx, y, 'cheneClair', 3); P(lx + 1, y, 'cheneClair', 1); }
+  for (let y = eb - 11; y < eb - 8; y++) for (let x = 78; x <= 109; x++) P(x, y, 'cheneClair', y === eb - 9 ? 1 : 2);
+  for (let y = eb - 15; y < eb - 11; y++) for (let x = 78; x <= 109; x++) P(x, y, 'cheneClair', y === eb - 15 ? 5 : (x - 78) % 8 === 4 && y === eb - 13 ? 2 : 4);
+  for (let x = 90; x <= 97; x++) P(x, eb - 13, x < 93 ? 'chene' : 'fer', x < 93 ? 3 : 5);   // le ciseau à bois, posé
+  for (const [rx, ry] of [[95, eb - 16], [98, eb - 14], [93, eb - 17], [99, eb - 17], [96, eb - 19]]) P(rx, ry, 'rune', 5);   // sa lueur
+  for (let y = eb - 21; y <= eb - 10; y++) for (let x = 89; x <= 103; x++) if (Math.hypot(x - 95, (y - (eb - 14)) * 1.3) < 7 && t.mat(x, y) !== 'rune') teinterV(t, x, y, 1);
+  // les copeaux : des boucles claires sur le plancher, en tas sous la poutre et près de l'établi ; le chat roulé en boule dessus
+  for (let k = 0; k < 46; k++) { const cx = x0 + 2 + hachage(k, 1, 6433) * (x1 - x0 - 4), cy = yF + 3 + hachage(k, 2, 6433) * (yS - yF - 4), tas = (cx > 78 && cy > eb - 8) || (cx < 70 && cy > eb - 6);
+    if (!tas && hachage(k, 3, 6433) > 0.45) continue; P(cx, cy, 'copeau', 4); P(cx + 1, cy, 'copeau', 3); if (hachage(k, 4, 6433) > 0.5) P(cx, cy - 1, 'copeau', 5); }
+  for (let y = eb - 3; y <= eb + 1; y++) for (let x = 86; x <= 102; x++) if (((x - 94) / 8.5) ** 2 + ((y - eb + 1) / 2.6) ** 2 <= 1) P(x, y, 'copeau', y < eb - 1 ? 5 : 3);
+  { const cx = 70, cy = eb - 1;   // le chat : une boule tigrée, la tête posée sur la queue, une oreille
+    for (let y = cy - 4; y <= cy; y++) for (let x = cx - 5; x <= cx + 5; x++) { const q = ((x - cx) / 5.5) ** 2 + ((y - cy + 2) / 2.6) ** 2; if (q <= 1) P(x, y, 'chatA', (y < cy - 2 ? 4 : 3) - ((x + y) % 3 === 0 ? 1 : 0)); }
+    for (let y = cy - 4; y <= cy - 1; y++) for (let x = cx + 4; x <= cx + 7; x++) if (Math.hypot(x - cx - 5.5, y - cy + 2.5) < 2) P(x, y, 'chatA', 4);
+    P(cx + 7, cy - 5, 'chatA', 3); P(cx + 5, cy - 5, 'chatA', 3); P(cx + 6, cy - 3, 'fer', 0);
+    for (let x = cx - 4; x <= cx + 3; x++) P(x, cy + 1, 'chatA', 2); }
+  // la lanterne qui pend sous le linteau, et sa lumière chaude autour d'elle ; l'ombre du linteau sur le haut
+  const lx = 101; for (let y = yH; y < yH + 3; y++) P(lx, y, 'fer', 2);
+  for (let y = yH + 3; y < yH + 9; y++) for (let x = lx - 2; x <= lx + 2; x++) P(x, y, x === lx - 2 || x === lx + 2 ? 'fer' : 'vitre', x === lx - 2 || x === lx + 2 ? 2 : 5);
+  for (let y = yH; y <= yS; y++) for (let x = x0; x <= x1; x++) { const m = t.mat(x, y); if (!m || m === 'vitre' || m === 'rune') continue; const d = Math.hypot(x - lx, (y - yH - 6) * 1.2);
+    if (d < 22) teinterV(t, x, y, 1); else if (d > 50 && y < yF) teinterV(t, x, y, -1); }
+  for (let y = yH; y < yH + 3; y++) for (let x = x0; x <= x1; x++) if (t.mat(x, y) && t.mat(x, y) !== 'vitre') teinterV(t, x, y, -2);
+  for (let y = yH; y <= yS; y++) for (const x of [x0, x0 + 1]) if (t.mat(x, y)) teinterV(t, x, y, -1);
 }
 // Le chantier : l'assise de pierre, le plancher neuf (vu par le dessus, jusqu'au fond), le colombage nu de chêne clair (devant,
 // et celui du fond qu'on voit au travers), un mur de planches à moitié, la charpente du toit en croupe, nue (les arêtiers, le
