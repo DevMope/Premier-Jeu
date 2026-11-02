@@ -27,6 +27,11 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q291** — Au comptoir, pendant la visite de la Faucheuse, il existait déjà un halo rouge de terreur sur l'écran. Avec son nouveau dessin (ses yeux rouges, ses cendres), on le garde tel quel, on l'adoucit, ou on le retire ?
 
+- **Q292** — Le bout de la rue à taille réelle (étape 9b) : la rue débouche, entre la banque et le poids public, sur le vrai début de la place des Mastres, à sa vraie taille (le sol, la fontaine en partie cachée, des passants de la taille de JeuneGoy, la charrette d'un colporteur les jours de marché) ; on n'en voit qu'un morceau, et on entre sur la place en marchant. C'est ce que tu voulais ?
+- **Q293** — La cause, mesurée : la vue au bout de la rue était redessinée en réduction (étals à 40 %, fontaine à 33 %), et la scène de la place est filmée à 1,25 alors que la rue l'est à 1,0. On filme la place à 1,0 comme la rue ? Et on lui retire son porche du sud, en y montrant le bout de la rue à la place ?
+- **Q294** — Depuis le bout de la rue, on ne voit encore aucun étal (le coin des jeux, le plus proche, est caché par la banque). On décale le coin des jeux vers l'est dans la place pour qu'il se voie, ou on garde la place telle quelle ?
+- **Q295** — Le poids public (morceau 4 : loge de pierre et de chêne, balance à fléau, poids de fonte, ardoise des tarifs, registre, sacs à peser) : validé ? Le préposé y est environ deux jours sur trois : ça te va ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
