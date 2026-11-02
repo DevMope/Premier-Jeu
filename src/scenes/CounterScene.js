@@ -1736,10 +1736,10 @@ class CounterScene extends Phaser.Scene {
       this.tweens.add({
         targets: this.perso, x: FENETRE.x + FENETRE.w / 2, duration: 1200, ease: 'Sine.easeInOut',
         onComplete: () => this.tweens.add({ targets: this.perso, alpha: 0, duration: 260, onComplete: () => {
-          // (son buste : la Larme de Lune tient entière sous le haut du cadre, même quand elle flotte ; le bas de sa cape
-          // descend sous le comptoir : elle reste imposante)
+          // (son buste : la Larme de Lune tient entière dans le cadre, sa pointe sous les étiquettes du haut de la fenêtre
+          // (la file, l'heure), même quand elle flotte ; le bas de sa cape descend sous le comptoir : elle reste imposante)
           const grandeur = terreurFaucheuse(this.G, entree.partis.length).echelle / 9, cle = textureFaucheuseHD(this, 'buste');
-          const e = FH_ECHELLE_BUSTE * grandeur, yBuste = FENETRE.y + 12 + this.textures.get(cle).getSourceImage().height * e;
+          const e = FH_ECHELLE_BUSTE * (1 + (grandeur - 1) * 0.5), yBuste = FENETRE.y + FH_HAUT_BUSTE + this.textures.get(cle).getSourceImage().height * e;
           this.perso.setTexture(cle).setPosition(FENETRE.x + FENETRE.w / 2, yBuste + 26).setScale(e).setFlipX(false);
           this.tweens.add({ targets: this.perso, alpha: 1, y: yBuste, duration: 520, ease: 'Sine.easeOut', onComplete: () => {
             this.yeuxF = yeuxFaucheuse(this, this.perso, this.perso.depth);

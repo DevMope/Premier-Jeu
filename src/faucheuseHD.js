@@ -431,8 +431,10 @@ function cendresFaucheuse(scene, cible, { masque = null, cadence = 70, haut = 0.
     detruire: () => { minuterie.remove(); for (const c of vivantes.splice(0)) c.destroy(); },
   };
 }
-// Son buste à la fenêtre du comptoir : à cette échelle, la Larme de Lune tient entière dans le cadre
-const FH_ECHELLE_BUSTE = 1.7;
+// Son buste à la fenêtre du comptoir : à cette échelle, la Larme de Lune tient entière dans le cadre ; la pointe de sa
+// lame à FH_HAUT_BUSTE sous le haut de la fenêtre (les étiquettes de la file et de l'heure descendent jusqu'à 36 px
+// sous le haut, et elle flotte de 7 px)
+const FH_ECHELLE_BUSTE = 1.45, FH_HAUT_BUSTE = 52;
 // Une image de sa dissolution (planche validée) : le bas se défait en un bord effiloché, des rubans d'ombre s'en
 // détachent et montent ; d de 0 (entière) à 1. T : sa toile finie ; cy, k : le haut du corps et l'échelle de la toile.
 function fhDissoudreToile(T, d, { cy, k, graine = 11 }) {
