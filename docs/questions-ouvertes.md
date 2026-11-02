@@ -36,11 +36,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q336** — Le livre des deux voies, au bureau (étape 1 de la refonte) : le blason de la Confrérie (des rayons d'or de plus en plus nombreux) et la fleur de pommier des Bannis (des pétales qui s'ouvrent), avec une phrase et une page « Ce qu'on raconte ». Ça te va, ou des dessins plus travaillés (un vrai blason qui brille, une vraie fleur qui s'ouvre) ?
-- **Q337** — Avec la Clairvoyance, les ☀ ☾ des boutons arrivent vers le jour 36 à 69 (dans les parties simulées) au lieu du jour 5 environ avec le flair. Trop tard, ou bien comme ça ?
-- **Q338** — La bougie de chevet brille plus fort et prend un halo pâle quand la Clairvoyance grandit : assez visible ?
-- **Q339** — Dans le bandeau, la petite jauge n'a plus de chiffre ni de curseur net : une lueur floue qui ne bouge qu'une fois par jour. On la garde ainsi, ou on l'enlève complètement ?
-- **Q340** — Le Parrain compte maintenant (ses choix ne comptaient pas du tout, une erreur) : le dénoncer penche vers la Confrérie, baiser sa bague vers les Bannis. D'accord ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -50,6 +45,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q336 à Q340~~ Étape 1 validée ; livre des deux voies à embellir ; dénoncer le Parrain : des répercussions drôles et dangereuses (02/11).
 - ~~Q326 à Q335~~ Dépenses des trois camps toutes gardées ; cinq royaumes des Bannis ; Bannis au comptoir peu à peu ; Garrick pendant la guerre, dans l'esprit (02/11).
 - ~~Q317 à Q325~~ Dernier appel à la 7e pièce, spectateur validé, la Clairvoyance, armure aussi par les royaumes de l'Ombre ; dépenses par camp et apparition des Bannis à revoir (02/11).
 - ~~Q302, Q303, Q307 à Q316~~ Refonte Ombre/Lumière validée dans ses grandes lignes ; flair, avantages des camps et spectateur à retravailler ; dernier appel à calculer ; 8e pièce : le grand voyage à Cendrebourg (02/11).
