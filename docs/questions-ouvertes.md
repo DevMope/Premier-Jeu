@@ -9,17 +9,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q254** — Les noms : 1) Aube-Lame, l'arme légendaire des Hommes, paraît plat ; propositions : « Serment d'Aurore », « l'Aube Jurée », « Premier-Soleil ». 2) L'arme forgée par le joueur : son nom légendaire ne serait pas choisi d'avance, mais donné par le monde quand ses exploits deviennent connus de tous, selon ce qu'il a fait (par exemple « la Promesse » ou « l'Espérance » pour des exploits de Lumière, « la Rancune » ou « le Glas » pour l'Ombre, « la Sans-Maître » pour le neutre), avec la possibilité de la renommer. Ce principe te va ?
-
-- **Q255** — La Faucheuse v5 (morceau 1) : le manche (vertèbres sculptées, côtes enroulées, runes qui luisent, petite tête d'os à la jointure, pommeau en pointe) est assez riche à côté de la lame, ou trop chargé ?
-- **Q256** — Son aura (morceau 2) est assez noire maintenant ?
-- **Q257** — La traînée de fumée (morceau 2) : ce noir opaque, ou une fumée plus légère et plus transparente ? Et sa longueur (jusqu'à une fois et demie sa taille) ?
-
-- **Q258** — Vue de haut, étape 4 (morceaux 4 à 7) : ton comptoir (ses 4 niveaux et l'appartement), la forge de Thorgal et les Pommeroy dans la projection : validés ?
-- **Q259** — La banque (morceaux 1 et 2) : les ornements (denticules sur le fronton, rinceaux d'or autour du médaillon, cartouche mouluré sous l'écriture) sont le bon niveau de décor ? On ajoute un acrotère d'or aux deux coins du fronton ? Et la plaque « Rue Soucolline » : sur un petit poteau à l'angle est (B, conseillé, branché) ou pendue au réverbère à l'ouest (A) ?
-- **Q260** — La maison basse sans étage, toit plus bas (morceau 3) : ça va ?
-- **Q261** — La suite, dans cet ordre : la maison du paon (dans tous ses états), le porche, l'atelier des Mages (son enseigne peinte sur le toit remise sur le pan avant), l'impasse ; puis les styles de maison achetés à Pont-Royal pour ton comptoir. D'accord ?
-- **Q262** — Sur la chaumière du début, la plaque « Rue Soucolline » de ton comptoir est clouée sur le toit de chaume (comme dans la rue actuelle) : je la descends sur le mur, à côté de la porte ?
+- **Q263** — « La Promesse de l'Aube » en un seul mot, dans une autre langue : **Morgunheit** (vieux norrois : *morgun*, le matin, et *heit*, le serment, la promesse), **Dægbéot** (vieil anglais : le jour qui se lève, le vœu), **Auroravotum** (latin : le vœu de l'aurore), ou **Akatsuki** (japonais : l'aube). Lequel ?
+- **Q257** — (reportée) à redemander après la Faucheuse v6.
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -28,6 +19,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q254 à Q262~~ Réponses du 02/11 dans `docs/game-design.md` (la Promesse de l'Aube ; Faucheuse : jonction, cendres noires ; rue : dézoomer, rez-de-chaussée trop de face, forge à refaire).
 - ~~Q244 à Q253~~ Réponses du 02/11 dans `docs/game-design.md` (forge du joueur, Faucheuse : manche, noirceur, traînée de fumée ; banque, plaque, maisons basses ; ordre des bâtiments choisi par Claude).
 - ~~Q243~~ L'Absolution (bâton du Sage) et le Dévoreur de Noms (bâton transformé) (02/11).
 - ~~Q239 à Q242~~ Réponses du 02/11 : la Larme de Lune, Fleur de Diamant ; Faucheuse v3 superbe (capuche, cape et manche à reprendre) ; la faux ne luit que dévoilée.
