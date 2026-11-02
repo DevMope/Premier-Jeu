@@ -3911,6 +3911,14 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q304** : oui, la carte et le résumé de VieuxGoy peuvent nommer le chemin suivi, à ce moment-là.
   - **Q305** : il faudra une autre voie vers la 8e pièce, ou une autre mise en scène, en gardant la même ville des Bannis ; à réfléchir après la 298.
   - **Q306 — règle** : les propositions ne se présentent pas en fichier brouillon (.md) au joueur : sous une forme claire et lisible par un humain (images, planches, ou une page soignée).
+- **Réponses du 02/11 sur la refonte Ombre/Lumière (Q302 à Q316)** :
+  - **Q302/Q312** : la fin de mort (le duel où Garrick laisse JeuneGoy pour mort) seulement pour un joueur au dernier degré de la Lumière et très cruel ; ce joueur ne peut plus essayer de prévenir les Bannis sauf si un récit du doute le fait redescendre : validé. (Précision : dans la Lumière retournée, c'est bien JeuneGoy qui porte l'armure de Lumière, aux côtés de Garrick.)
+  - **Q303/Q313** : le neutre qui penche un peu d'un côté n'a pas les trois choix face au Sage (seulement celui de son côté et « la garder ») : validé.
+  - **Q307** : les trois mesures (l'allégeance cachée, le cœur caché, le regard du monde visible sans chiffre) : validé. **Q308** : « naissante » / « effleuré » / « penchant » à la place de « tiède » : parfait.
+  - **Q309** : plus aucun chiffre à l'écran, on garde les ☀ et ☾ des boutons ; mais **le flair est à retravailler** : peut-être un autre nom, et un mécanisme plus concret.
+  - **Q310** : des avantages différents de chaque côté, mais les différences sont trop simples : à enrichir ; l'Ombre doit toujours gagner moins que les deux autres côtés.
+  - **Q311** : le « dernier appel » du neutre une semaine avant la moyenne du moment du sceau sur toutes les parties (calcul à faire valider). Toutes les propositions de la question validées. **La partie « spectateur » du neutre est à travailler.**
+  - **Q314** : les récits de retour, validés pour l'instant. **Q315** : toutes les possibilités des villes fermées gardées, à peaufiner en jeu. **Q316** : la 8e pièce par un seul grand voyage à Cendrebourg (B).
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
