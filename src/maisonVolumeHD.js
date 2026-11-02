@@ -126,7 +126,7 @@ function barbierVolumeHD(scene) {
   // 8. les bords du mur tournent (une bande fine), et le pied du mur touche le trottoir
   for (let y = yE + 3; y < H; y++) { teinterV(t, 4 + ox, y, -1); teinterV(t, src.l - 5 + ox, y, -1); teinterV(t, src.l - 6 + ox, y, -1); }
   for (let x = 0; x < L; x++) { teinterV(t, x, H - 1, -2); teinterV(t, x, H - 2, -1); }
-  t.contour(); t.texture(scene, cle); noterVolumeHD(scene, cle, toit, yE, ch); return cle;
+  t.contour(); t.texture(scene, cle); reliefPierreTexture(scene, cle, [[4 + ox, 100 + oy, 119 + ox, H - 3, 0]]); noterVolumeHD(scene, cle, toit, yE, ch); return cle;
 }
 // L'ombre de contact d'une maison sur le trottoir : une bande qui s'estompe en descendant (à poser au pied, en (x, yBase))
 function ombreContactMaisonHD(scene, larg, h = 7) {
@@ -174,10 +174,10 @@ function maisonHauteVolumeHD(s) {
   // la porte verte (relevée de 4 : ses deux marches vues par le dessus descendent jusqu'au trottoir)
   const pl = 24, ph = 50, px = Math.round(L * 0.5 - pl / 2) + ox, py = bas - ph - 4;
   porte5(t, px, py, pl, ph, { peinte: 'porteVerte', g: graine + 3, marches: false });
-  retraitHD(t, px, py, px + pl - 1, py + ph - 1, (x, y) => { const m = t.mat(x, y); return x >= px && x < px + pl && y >= py && y < py + ph && m !== 'taille' && m !== 'fer' && m !== 'laiton'; });
+  retraitHD(t, px, py, px + pl - 1, py + ph - 1, (x, y) => { const m = t.mat(x, y); return x >= px && x < px + pl && y >= py && y < py + ph && m !== 'taille' && m !== 'fer' && m !== 'laiton'; }, 5);
   marcheHD(t, px - 5, px + pl + 4, bas - 4, 3, 1); marcheHD(t, px - 7, px + pl + 6, bas, 3, 2);
   for (const fx of [0.2, 0.8]) { const wx = Math.round(L * fx - 8) + ox, wy = yR + 18; fenetre5(t, wx, wy, 16, 22, { volet, g: graine + 5 });
-    retraitHD(t, wx + 1, wy + 1, wx + 14, wy + 20, (x, y) => t.mat(x, y) === 'vitreJ'); }
+    retraitHD(t, wx + 1, wy + 1, wx + 14, wy + 20, (x, y) => t.mat(x, y) === 'vitreJ', 5); }
   // les étages : encorbellement, enduit ocre, colombages, fenêtres (appuis vus par le dessus, linteaux en retrait), jardinières
   let y = yR; const fenetres = [[0.2, 0.8], [0.2, 0.5, 0.8]];
   etages.forEach((h, i) => {
@@ -204,6 +204,7 @@ function maisonHauteVolumeHD(s) {
   bordsMurHD(t, ox, L + ox - 1, yT + 3, H - 1);
   for (let x = 0; x < W; x++) { teinterV(t, x, H - 1, -2); teinterV(t, x, H - 2, -1); }
   t.contour(); t.texture(s, cle);
+  reliefPierreTexture(s, cle, [[x0, yR, x1 - 1, bas - 5, 7]]);   // (Q258) la pierre du bas, vue d'en haut
   noterVolumeHD(s, cle, toit, yT, ch); s.textures.get(cle).info89 = { L: W, H, yR, yT, bas };
   return cle;
 }
@@ -257,6 +258,7 @@ function banqueVolumeHD(s) {
   bordsMurHD(t, xm0, xm1, yC + 3, T - 1);
   for (let x = 0; x < W; x++) { teinterV(t, x, T - 1, -2); teinterV(t, x, T - 2, -1); }
   t.contour(); t.texture(s, cle);
+  reliefPierreTexture(s, cle, [[xm0, yC + 12, xm1, T - 17, 0]]);   // (Q258) la pierre, vue d'en haut
   noterVolumeHD(s, cle, toit, yC, ch, (x, y) => y >= 18 + oy && Math.abs(x - 100 - ox) <= (y - 18 - oy) * 3 + 2);   // (la neige : le toit, pas le fronton)
   return cle;
 }
@@ -344,7 +346,7 @@ function maisonVolume5(s, cle, o) {
   const toit = toitCroupeHD(t, { xa, xb, yEgout: yE, montee, prof, mat, motif, g: graine + 31 });
   ombreRiveHD(t, xa, xb, yE, m => !!m);
   // les fenêtres du rez-de-chaussée : l'appui vu par le dessus, le linteau en retrait
-  for (const fx of fenetresRdc) { const wx = Math.round(L * fx - 8) + ox, wy = yR + 18 + oy; appuiHD(t, wx - 4, wx + 19, wy + 23); retraitHD(t, wx + 1, wy + 1, wx + 14, wy + 20, (x, y) => t.mat(x, y) === 'vitreJ'); }
+  for (const fx of fenetresRdc) { const wx = Math.round(L * fx - 8) + ox, wy = yR + 18 + oy; appuiHD(t, wx - 4, wx + 19, wy + 23); retraitHD(t, wx + 1, wy + 1, wx + 14, wy + 20, (x, y) => t.mat(x, y) === 'vitreJ', 5); }
   // les étages : appuis, linteaux en retrait, la terre des jardinières vue par le dessus
   let y = yR; etages.forEach((h, i) => { const yEt = y - h, nf = fenetres ? fenetres[i] : [0.25, 0.75];
     for (const f of nf) { const fx = Math.round(L * f - 8) + ox, fy = yEt + 13 + oy;
@@ -359,14 +361,16 @@ function maisonVolume5(s, cle, o) {
   // la porte en retrait, ses deux marches vues par le dessus
   const basV = bas + oy;
   if (porte) { const pl = porte.l, px = Math.round(L * porte.x - pl / 2) + ox, py = basV - porte.h, m = porte.peinte || 'cheneSombre';
-    retraitHD(t, px, py, px + pl - 1, basV - 1, (x, y) => { const q = t.mat(x, y); return x >= px && x < px + pl && y >= py && y < basV && (q === m || q === 'vitreJ'); });
+    retraitHD(t, px, py, px + pl - 1, basV - 1, (x, y) => { const q = t.mat(x, y); return x >= px && x < px + pl && y >= py && y < basV && (q === m || q === 'vitreJ'); }, 5);
     if (porte.marches !== false) { marcheHD(t, px - 5, px + pl + 4, basV, 2, 1); marcheHD(t, px - 7, px + pl + 6, basV + 3, 1, 1); } }
   // la cheminée, la lucarne, debout sur le pan
   const ch = cheminee !== null ? chemineeVolumeHD(t, toit, Math.round(L * cheminee) - 7 + ox, 14, Math.round(prof * 0.45), 30, 'brique2') : null;
   const lu = lucarne !== null ? lucarneVolumeHD(t, toit, Math.round(L * lucarne) - 12 + ox, Math.round(prof * 0.3), motif, mat, graine + 41) : null;
+  for (let x = 4 + ox; x < L - 4 + ox; x++) if (/^taille/.test(t.mat(x, basV - 3) || '')) { t.poser(x, basV - 3, 'taille3', 5); t.poser(x, basV - 2, 'taille3', 4); teinterV(t, x, basV - 4, -1); }   // le soubassement qui avance : son dessus
   bordsMurHD(t, ox, L + ox - 1, yE + 3, H - 1);
   for (let x = 0; x < W; x++) { teinterV(t, x, H - 1, -2); teinterV(t, x, H - 2, -1); }
   t.contour(); t.texture(s, cle);
+  reliefPierreTexture(s, cle, [[4 + ox, yR + oy, L - 5 + ox, basV - 5, etages.length ? 7 : 0]]);   // (Q258) la pierre du bas, vue d'en haut
   noterVolumeHD(s, cle, toit, yE, ch, lu ? (x, y) => x >= lu.lx && x < lu.lx + lu.l && y >= lu.ly && y < lu.bas : null);
   s.textures.get(cle).info89 = { L: W, H, yR: yR + oy, yT: yE, bas: basV };
   return cle;
@@ -406,6 +410,7 @@ function revolumeHD(s, src, cle, o) {
       for (let y = y0; y <= y1; y++) for (const [x, f] of [[x0, 0.84], [x0 + 1, 0.9]]) if (!op.interieur || lum(x, y + oy) < 90) mul(x, y + oy, f); }
     if (op.d) { const [x0, x1, y] = op.d, n = op.n || 2; for (let x = x0; x <= x1; x++) { for (let j = 0; j < n; j++) eclaire(x, y + oy + j, j ? 0.14 : 0.28); mul(x, y + oy + n, 0.74); } }
   }
+  reliefPierreDonnees(d, Wd, H, ops.filter(op => op.pierre).map(op => [op.pierre[0], op.pierre[1] + oy, op.pierre[2], op.pierre[3] + oy, op.pierre[4] || 0]));   // (Q258) la pierre vue d'en haut
   for (let k = 0; k < 8; k++) for (let x = xa; x <= xb; x++) mul(x, Y + k, k < 5 ? 0.66 : 0.82);   // l'ombre de la rive
   for (let y = Y; y < H; y++) { mul(mur[0], y, 0.86); mul(mur[1], y, 0.8); mul(mur[1] - 1, y, 0.9); }   // les bords du mur
   for (let x = 0; x < Wd; x++) { mul(x, H - 1, 0.72); mul(x, H - 2, 0.86); }   // le pied du mur
@@ -420,7 +425,7 @@ const BARDEAU_COMPTOIR = [0x2a1a0e, 0x4a3018, 0x6a4626, 0x8a6036, 0xa87a4a, 0xc4
 function comptoirVolumeHD(s, n = 3, etage = false) {
   if (etage) creerEtageHD(s); else creerFacadeHD(s, n);
   const src = etage ? 'facadeHD_4' : 'facadeHD_' + n, dy = etage ? 50 : 0, haut = n >= 2;
-  const ops = [{ r: [31, 123 + dy, 88, 157 + dy] }, { d: [22, 97, 158 + dy], n: 2 }, { r: [124, 116 + dy, 157, 171 + dy], interieur: true }];
+  const ops = [{ pierre: [12, (haut ? 108 : n === 0 ? 116 : 113) + dy, 187, 175 + dy, haut ? 7 : 0] }, { r: [31, 123 + dy, 88, 157 + dy], k: 5 }, { d: [22, 97, 158 + dy], n: 2 }, { r: [124, 116 + dy, 157, 171 + dy], interieur: true, k: 5 }];
   if (haut) { for (const fy0 of etage ? [70, 120] : [70]) for (const fx0 of [47, 105, 163]) ops.push({ r: [fx0 + 1, fy0 + 1, fx0 + 16, fy0 + 22] }, { d: [fx0 - 2, fx0 + 19, fy0 + 24], n: 1 }); ops.push({ d: [8, 191, 102 + dy], n: 1 }); }
   return revolumeHD(s, src, 'comptoirVolumeHD_' + (etage ? 4 : n), { coupe: haut ? 58 : n === 0 ? 116 : 113, xa: haut ? 4 : 10, xb: haut ? 195 : 189, prof: haut ? 32 : 28, montee: haut ? 62 : 42,
     mat: n === 0 ? 'chaumeA' : n === 1 ? 'ardoiseToit' : n === 2 ? 'bardeau' : 'tuile', motif: n === 0 ? 'chaume' : n === 1 ? 'ardoise' : 'tuile', g: 707 + n, rampes: { bardeau: BARDEAU_COMPTOIR, brique: BRIQUE_COMPTOIR },
@@ -435,7 +440,7 @@ function forgeVolumeHD(s, jour) {
 // Les Pommeroy : leur toit de tuiles ; les fenêtres de l'étage et du rez-de-chaussée en retrait, leurs appuis, la porte
 function pommeroyVolumeHD(s) {
   return revolumeHD(s, 'rueMaisonHD_0', 'pommeroyVolumeHD', { coupe: 53, xa: 2, xb: 147, prof: 28, montee: 54, mat: 'tuile', motif: 'tuile', g: 815, mur: [9, 140],
-    ops: [{ r: [25, 61, 40, 77] }, { r: [107, 61, 122, 77] }, { d: [22, 43, 79], n: 1 }, { d: [104, 125, 79], n: 1 }, { r: [109, 115, 124, 131] }, { d: [106, 127, 133], n: 1 }, { r: [48, 116, 70, 159], interieur: true }] });
+    ops: [{ pierre: [9, 97, 140, 159, 6] }, { r: [25, 61, 40, 77] }, { r: [107, 61, 122, 77] }, { d: [22, 43, 79], n: 1 }, { d: [104, 125, 79], n: 1 }, { r: [109, 115, 124, 131], k: 5 }, { d: [106, 127, 133], n: 1 }, { r: [48, 116, 70, 159], interieur: true, k: 5 }] });
 }
 // (Q252) La potence de fer d'où pend une plaque de rue, fixée au poteau d'un réverbère (vers la gauche), et le petit poteau
 // de bois (son chapeau, son pied de pierre vu par le dessus) qui porte une plaque devant un perron
@@ -456,3 +461,168 @@ function poteauPlaqueHD(s) {
   for (let y = 44; y < 52; y++) for (let x = 0; x < 12; x++) t.poser(x, y, 'pierre', y < 47 ? 4 : y === 51 ? 1 : 2);   // le pied de pierre (son dessus, son chant)
   t.contour(); t.texture(s, cle); return cle;
 }
+
+// ======================= ÉTAPE 5 (Q258) : les rez-de-chaussée vus d'en haut =======================
+// Le défaut général : les bas de maisons, en pierre, paraissaient vus de face, à côté de toits vus d'en haut. Comme Stardew
+// (ses murs de pierre et de rondins de 136 et 137) : chaque assise montre son dessus éclairé (une ligne claire en haut de
+// chaque pierre, une plus douce en dessous) et son pied sombre (la ligne au-dessus du joint du bas), le côté droit de la
+// pierre un peu dans l'ombre ; le mur s'assombrit vers le sol (un dégradé vertical, jusqu'à l'ombre de contact) ; sous
+// l'avancée d'un étage en encorbellement, la sous-face jette une bande d'ombre sur le haut de la pierre. Sur les pixels
+// (pour toutes les textures : celles du moteur comme celles faites à la main) : zones [x0, y0, x1, y1, sousFace].
+function reliefPierreDonnees(d, W, H, zones) {
+  const L = (x, y) => { const i = (y * W + x) * 4; return 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]; };
+  const pierre = (x, y) => { if (x < 0 || y < 0 || x >= W || y >= H) return false; const i = (y * W + x) * 4; if (d[i + 3] < 128) return false; const r = d[i], g = d[i + 1], b = d[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b); return mx > 30 && (mx - mn) / mx < 0.3; };
+  for (const [x0, y0, x1, y1, sf = 0] of zones) {
+    let somme = 0, n = 0; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (pierre(x, y)) { somme += L(x, y); n++; }
+    if (!n) continue;
+    const moy = somme / n, joint = (x, y) => !pierre(x, y) || L(x, y) < moy * 0.72;
+    const f = new Float32Array((x1 - x0 + 1) * (y1 - y0 + 1)).fill(1), e = new Float32Array(f.length), at = (x, y) => (y - y0) * (x1 - x0 + 1) + (x - x0);
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const i = (y * W + x) * 4; if (d[i + 3] < 128) continue; const k = at(x, y), v = (y - y0) / Math.max(1, y1 - y0);
+      f[k] *= 1 - 0.24 * Math.pow(v, 1.4);                                   // le dégradé vers le sol
+      if (sf && y - y0 < sf) f[k] *= y - y0 < sf * 0.6 ? 0.66 : 0.82;           // la sous-face de l'encorbellement
+      if (!pierre(x, y) || joint(x, y)) continue;
+      if (joint(x, y - 1)) e[k] = 0.3; else if (joint(x, y - 2)) e[k] = 0.12;   // le dessus de la pierre, au soleil
+      if (joint(x, y + 1)) f[k] *= 0.78;                                         // son pied, dans l'ombre
+      if (joint(x + 1, y) && !joint(x, y - 1)) f[k] *= 0.9;                       // son côté droit
+    }
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const i = (y * W + x) * 4; if (d[i + 3] < 128) continue; const k = at(x, y);
+      for (let c = 0; c < 3; c++) { let v = d[i + c]; v += (255 - v) * e[k]; d[i + c] = Math.max(0, Math.min(255, v * f[k])); } }
+  }
+}
+function reliefPierreTexture(s, cle, zones) {
+  const tex = s.textures.get(cle), c = tex.getSourceImage(), ctx = c.getContext('2d'), D = ctx.getImageData(0, 0, c.width, c.height);
+  reliefPierreDonnees(D.data, c.width, c.height, zones); ctx.putImageData(D, 0, 0); if (tex.refresh) tex.refresh();
+}
+
+// ======================= ÉTAPE 5 (Q258) : la forge de Thorgal, refaite entièrement =======================
+// Ce n'est pas une maison : une halle de forge ouverte sur la rue, qu'on voit d'en haut. Le sol de terre battue, vu par le
+// dessus, s'enfonce jusqu'au mur du fond, de pierre ; contre lui, le foyer (un bloc de pierre, son dessus où rougeoient les
+// braises) sous sa grande hotte, qui monte en cheminée massive à travers le toit ; à côté, le soufflet de cuir ; au mur, le
+// râtelier des outils (pinces, marteaux, un fer à cheval) ; devant, l'enclume sur sa souche, le bac de trempe (son eau vue
+// par le dessus, une pince dedans), le tas de charbon ; au fond à droite, les bûches empilées. Deux pistes pour le toit :
+//   A (forgeAppentisHD) : un grand appentis de bardeaux, d'un seul pan qui monte vers le mur du fond, sur trois poteaux ;
+//   B (forgePignonHD) : un toit de tôle à deux pans, pignon sur rue (le pignon de planches, son oculus, l'emblème).
+// Les dimensions : 184 × 196 ; le sol de la rue au rang 195 ; l'égout (le bord avant du toit) à 80 au-dessus du sol ; la
+// halle profonde de 44 (le sol vu : 33 rangs) ; le foyer à (42, 151).
+const FORGE_VOLUME = { L: 184, H: 196, feu: [42, 151], ecriteau: [130, 120] };
+function rampesForge(t) {
+  Object.assign(t.rampes, RAMPES_RUE, typeof RAMPES_V2 !== 'undefined' ? RAMPES_V2 : {});
+  Object.assign(t.rampes, { sol: rampe(0x7a6650), charbon: rampe(0x3a3634), eau: rampe(0x3e6e8e), bardeau: BARDEAU_COMPTOIR, tole: rampe(0x8a9096), rouille: rampe(0xa0582a), cuirF: rampe(0x8a4a2a) });
+}
+function interieurForgeHD(t, g = 861) {
+  const Hb = 195, fond = Hb - 33, P = (x, y, m, k) => t.poser(Math.round(x), Math.round(y), m, Math.max(0, Math.min(5, k)));
+  // le sol de terre battue (plus sombre vers le fond, sous le toit ; noirci de charbon près du foyer)
+  for (let y = fond; y <= Hb; y++) for (let x = 2; x < 182; x++) { const n = fbm(x * 0.12, y * 0.2, g); P(x, y, 'sol', 3 + (n > 0.62 ? 1 : n < 0.36 ? -1 : 0) - (y < fond + 8 ? 1 : 0) - (Math.hypot(x - 40, (y - 170) * 1.6) < 30 && hachage(x, y, g) > 0.5 ? 1 : 0)); }
+  // le mur du fond, de pierre, dans l'ombre du toit : chaque assise son dessus clair, son joint sombre
+  for (let y = 100; y < fond; y++) { const r = Math.floor((fond - 1 - y) / 6), ty = (fond - 1 - y) % 6, dec = (r % 2) * 7; for (let x = 2; x < 182; x++) { const b = Math.floor((x + dec) / 14), jv = (x + dec) % 14 === 0;
+    P(x, y, 'pierre', ty === 0 || jv ? 0 : ty === 5 ? 3 : 2 + (hachage(b, r, g) > 0.7 ? 1 : 0) - (y < fond - 26 ? 1 : 0)); } }
+  // le râtelier et les outils pendus
+  for (let x = 100; x < 152; x++) { P(x, 130, 'chene', 4); P(x, 131, 'chene', 2); }
+  for (const [x, sorte] of [[104, 'pince'], [114, 'marteau'], [123, 'fer'], [133, 'marteau'], [143, 'pince']]) {
+    if (sorte === 'pince') for (let k = 0; k < 18; k++) { P(x + Math.floor(k / 9), 132 + k, 'fer', 4); P(x + 3 - Math.floor(k / 9), 132 + k, 'fer', 2); }
+    else if (sorte === 'marteau') { for (let k = 0; k < 14; k++) P(x + 1, 132 + k, 'chene', 3); for (let y = 146; y < 150; y++) for (let k = -2; k <= 4; k++) P(x + k, y, 'fer', y === 146 ? 5 : 3); }
+    else for (let a = 0; a < 26; a++) { const th = Math.PI * (0.15 + a / 26 * 1.7); P(x + 3 + Math.cos(th) * 5, 140 + Math.sin(th) * 6, 'fer', 4); }   // le fer à cheval
+  }
+  // les bûches empilées (leurs bouts : des cernes), au fond à droite
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3 - (r === 2 ? 1 : 0); c++) { const cx = 156 + c * 8 + r * 4, cy = 165 - r * 7;
+    for (let y = -4; y <= 4; y++) for (let x = -4; x <= 4; x++) { const q = Math.hypot(x, y); if (q > 4.2) continue; P(cx + x, cy + y, q > 3.3 ? 'cheneSombre' : 'chene', q > 3.3 ? 2 : q < 1 ? 3 : 4 + (Math.round(q) % 2 ? 0 : -1) - (x > 1 ? 1 : 0)); } }
+  // le foyer : un bloc de pierre (sa face, son dessus où rougeoient les braises)
+  const hx0 = 14, hx1 = 70;
+  for (let y = 156; y < 172; y++) for (let x = hx0; x <= hx1; x++) { const r = Math.floor((y - 156) / 5), ty = (y - 156) % 5, dec = (r % 2) * 6, jv = (x - hx0 + dec) % 12 === 0;
+    const cendrier = Math.abs(x - 42) < 9 && y > 161; P(x, y, cendrier ? 'charbon' : 'taille', cendrier ? (y < 164 ? 0 : 1) : ty === 4 || jv ? 1 : ty === 0 ? 4 : 3 - (x > hx1 - 3 ? 1 : 0)); }
+  for (let y = 148; y < 156; y++) for (let x = hx0; x <= hx1; x++) { const rebord = x < hx0 + 4 || x > hx1 - 4 || y < 150 || y > 153;
+    if (rebord) P(x, y, 'taille', y === 148 || x < hx0 + 2 ? 5 : 4); else { const q = Math.hypot((x - 42) / 22, (y - 151.5) / 2.5), n = hachage(x, y, g + 3); P(x, y, 'braise', 5 - Math.floor(q * 3) + (n > 0.8 ? 1 : n < 0.2 ? -1 : 0)); } }
+  // la hotte : sa lèvre au-dessus du feu, puis elle monte en se resserrant ; une frise naine de chevrons, l'emblème (l'enclume et le marteau)
+  for (let x = hx0 - 6; x <= hx1 + 6; x++) { P(x, 145, 'taille', 5); P(x, 146, 'taille', 3); P(x, 147, 'taille', 1); }
+  for (let y = 60; y < 145; y++) { const v = (145 - y) / 85, a = hx0 - 4 + v * 26, b = hx1 + 4 - v * 26; for (let x = Math.round(a); x <= Math.round(b); x++) { const r = Math.floor((145 - y) / 6), ty = (145 - y) % 6, jv = (x + (r % 2) * 7) % 14 === 0;
+    P(x, y, 'taille', ty === 0 || jv ? 1 : ty === 5 ? 4 : 3 + (x < a + 3 ? 1 : x > b - 3 ? -1 : 0)); } }
+  for (let x = 20; x <= 64; x++) { const z = Math.abs(((x - 20) % 8) - 4); P(x, 136 + z - 2, 'laiton', 4); P(x, 137 + z - 2, 'laiton', 2); }   // la frise de chevrons
+  for (let x = 36; x <= 48; x++) P(x, 128, 'fer', 4); for (let x = 39; x <= 45; x++) { P(x, 129, 'fer', 3); P(x, 130, 'fer', 2); } for (let x = 37; x <= 47; x++) P(x, 131, 'fer', 3);   // l'enclume de l'emblème
+  for (let k = 0; k < 7; k++) P(46 - k, 121 + k, 'chene', 4); for (let x = 44; x <= 49; x++) { P(x, 119, 'fer', 4); P(x, 120, 'fer', 3); }   // son marteau
+  // le soufflet de cuir, contre le mur, son bec vers le feu
+  for (let y = 154; y < 167; y++) { const v = (y - 154) / 13; for (let x = 74; x <= 94; x++) { const w = (x - 74) / 20; if (Math.abs(v - 0.5) > 0.5 - w * 0.35) continue;
+    P(x, y, y < 156 || y > 164 ? 'chene' : 'cuirF', y < 156 ? 4 : y > 164 ? 2 : 3 - ((y - 156) % 3 === 0 ? 1 : 0)); } }
+  for (let x = 68; x < 75; x++) P(x, 160, 'fer', 3);
+  // le tas de charbon, devant à gauche
+  for (let y = 178; y <= 193; y++) for (let x = 14; x <= 46; x++) { const q = Math.hypot((x - 30) / 16, (y - 193) / 15); if (q > 1) continue; const n = hachage(x, y, g + 5); P(x, y, 'charbon', 2 + (n > 0.85 ? 2 : n > 0.6 ? 1 : 0) + (y < 182 ? 1 : 0) - (x > 38 ? 1 : 0)); }
+  // l'enclume sur sa souche
+  for (let y = 176; y <= 186; y++) for (let x = 108; x <= 122; x++) P(x, y, 'chene', (x - 108) % 4 === 0 ? 2 : x < 111 ? 4 : 3);
+  for (let y = 172; y < 177; y++) for (let x = 107; x <= 123; x++) if (((x - 115) / 8.5) ** 2 + ((y - 174.5) / 2.6) ** 2 <= 1) P(x, y, 'chene', Math.hypot(x - 115, (y - 174.5) * 3) % 3 < 1 ? 3 : 5);
+  for (let y = 166; y < 172; y++) for (let x = 110 - (171 - y); x <= 120 + (171 - y); x++) P(x, y, 'fer', x < 112 ? 4 : 2);
+  for (let y = 161; y < 166; y++) for (let x = 102; x <= 128; x++) P(x, y, 'fer', y === 161 ? 5 : y === 162 ? 4 : y === 165 ? 1 : 3);   // la table de l'enclume, vue par le dessus
+  for (let y = 162; y <= 164; y++) for (let x = 94 + (y - 162) * 2; x < 102; x++) P(x, y, 'fer', y === 162 ? 4 : 2);   // la bigorne
+  for (let k = 0; k < 9; k++) P(112 + k, 160, 'chene', 4); for (let y = 158; y < 161; y++) for (let x = 120; x < 124; x++) P(x, y, 'fer', y === 158 ? 5 : 3);   // un marteau posé
+  // le bac de trempe : sa face de planches cerclées, son eau vue par le dessus, une pince dedans
+  for (let y = 180; y <= 191; y++) for (let x = 136; x <= 168; x++) P(x, y, 'chene', (y === 183 || y === 189) ? 1 : (x - 136) % 6 === 0 ? 2 : 3 + (x < 139 ? 1 : 0));
+  for (let x = 136; x <= 168; x++) for (const y of [183, 189]) P(x, y, 'fer', 3);
+  for (let y = 172; y < 180; y++) for (let x = 136; x <= 168; x++) { const rive = y < 174 || y > 178 || x < 139 || x > 165; P(x, y, rive ? 'chene' : 'eau', rive ? (y < 174 ? 5 : 3) : 3 + ((x + y * 2) % 11 === 0 ? 2 : 0) - (y > 177 ? 1 : 0)); }
+  for (let k = 0; k < 10; k++) { P(150 + k, 175 - Math.floor(k / 3), 'fer', 4); P(152 + k, 177 - Math.floor(k / 3), 'fer', 2); }
+  // la lueur du feu sur ce qui l'entoure
+  for (let y = 120; y <= Hb; y++) for (let x = 0; x < 120; x++) { const m = t.mat(x, y); if (!m || m === 'braise') continue; const q = Math.hypot(x - 42, (y - 151) * 1.3); if (q < 30 && (m === 'pierre' || m === 'sol')) teinterV(t, x, y, 1); }
+}
+// les poteaux de chêne (une base de pierre vue par le dessus, des jambes de force sous la poutre)
+function poteauxForgeHD(t, xs, y0, Hb) {
+  for (const x0 of xs) { for (let y = y0; y < Hb - 3; y++) for (let x = x0; x < x0 + 8; x++) t.poser(x, y, 'chene', x === x0 ? 5 : x === x0 + 7 ? 1 : (x - x0) === 3 ? 2 : 3);
+    for (let y = Hb - 3; y <= Hb; y++) for (let x = x0 - 2; x < x0 + 10; x++) t.poser(x, y, 'taille', y === Hb - 3 ? 5 : y === Hb ? 1 : 3);
+    for (let k = 0; k < 12; k++) for (const sg of [-1, 1]) { const x = sg < 0 ? x0 - k : x0 + 7 + k; if (x < 1 || x > 182) continue; t.poser(x, y0 + 12 - k, 'chene', sg < 0 ? 4 : 2); t.poser(x, y0 + 13 - k, 'chene', 2); } }
+}
+// la poutre de façade (son dessus clair), ses runes naines gravées
+function poutreForgeHD(t, xa, xb, y) {
+  for (let x = xa; x <= xb; x++) for (let k = 0; k < 6; k++) t.poser(x, y + k, 'chene', k === 0 ? 5 : k === 5 ? 1 : 3);
+  for (let x = xa + 6; x < xb - 6; x += 9) { for (const [a, b] of [[0, 1], [0, 2], [0, 3], [1, 1], [2, 2], [1, 3], [2, 4]]) t.poser(x + a, y + b, 'cheneSombre', 1); t.poser(x + 1, y + 4, 'chene', 4); }
+}
+// l'ombre sous le toit, sur le haut de l'intérieur (pas sur les poteaux, ni sur le feu)
+function ombreSousToitForge(t, y0, y1) { for (let y = y0; y < y1; y++) for (let x = 1; x < 183; x++) { const m = t.mat(x, y); if (m && m !== 'braise' && m !== 'chene') teinterV(t, x, y, y < y0 + 8 ? -2 : -1); } }
+// la cheminée massive de la hotte, au-dessus du toit (une face éclairée, son chapeau vu par le dessus, son conduit noir)
+function chemineeForgeHD(t, x0, x1, yBas, yHaut) {
+  for (let y = yHaut + 8; y <= yBas; y++) for (let x = x0; x <= x1; x++) { const r = Math.floor((yBas - y) / 6), ty = (yBas - y) % 6, jv = (x + (r % 2) * 6) % 12 === 0;
+    t.poser(x, y, 'taille', ty === 0 || jv ? 1 : ty === 5 ? 4 : 3 + (x < x0 + 3 ? 1 : x > x1 - 4 ? -1 : 0)); }
+  for (let y = yHaut; y < yHaut + 8; y++) for (let x = x0 - 2; x <= x1 + 2; x++) { const dedans = x > x0 + 4 && x < x1 - 4 && y > yHaut + 1 && y < yHaut + 6; t.poser(x, y, dedans ? 'charbon' : 'taille', dedans ? 0 : y === yHaut ? 5 : 4); }
+  for (let k = 1; k <= 3; k++) for (let y = yHaut + 10; y <= yBas + 3; y++) teinterV(t, x1 + k, y, -2);
+}
+function forgeAppentisHD(s) {
+  const cle = 'forgeAppentisHD'; if (s.textures.exists(cle)) return cle;
+  const { L, H } = FORGE_VOLUME, Hb = H - 1, t = toileDecor(L, H); rampesForge(t);
+  interieurForgeHD(t);
+  const yE = 115, P = 63, yT = yE - P;
+  for (let x = 2; x < 182; x++) for (let k = 0; k < 3; k++) t.poser(x, yT - 3 + k, 'pierre', k === 0 ? 5 : 3);   // le haut du mur du fond, où s'appuie le pan
+  for (let y = yT; y < yE; y++) for (let x = 2; x < 182; x++) {   // le pan de bardeaux, qui monte vers le fond
+    const r = Math.floor((yE - 1 - y) / 4), ty = (yE - 1 - y) % 4, dec = (r % 2) * 3, tx = ((x + dec) % 5 + 5) % 5, h = hachage(Math.floor((x + dec) / 5), r, 862), v = (yE - y) / P;
+    let k = 3 + (v > 0.6 ? 1 : 0) + (h > 0.85 ? 1 : h < 0.12 ? -1 : 0); if (ty === 0) k -= 2; else if (ty === 3) k++; if (tx === 4) k--; if (x < 5) k++; else if (x > 178) k--;
+    t.poser(x, y, 'bardeau', k); }
+  for (let y = yT - 3; y < yE; y++) { t.poser(1, y, 'chene', 4); t.poser(182, y, 'cheneSombre', 1); }   // les rives de côté
+  for (let x = 1; x <= 182; x++) { t.poser(x, yE, 'chene', 5); t.poser(x, yE + 1, 'chene', 3); t.poser(x, yE + 2, 'cheneSombre', 1); }   // la planche de rive
+  chemineeForgeHD(t, 28, 56, yT + 12, 16);
+  ombreSousToitForge(t, yE + 9, yE + 30);
+  poutreForgeHD(t, 1, 182, yE + 3); poteauxForgeHD(t, [4, 92, 172], yE + 9, Hb);
+  t.contour(); t.texture(s, cle); const tex = s.textures.get(cle); tex.cheminee = [42, 16]; tex.forge = FORGE_VOLUME;
+  tex.toit89 = { haut: yT - 2, bas: yE + 2, chem: { cx: 42, haut: 16, h: yT + 13 - 16 }, lucarne: null, nu: null };
+  return cle;
+}
+function forgePignonHD(s) {
+  const cle = 'forgePignonHD'; if (s.textures.exists(cle)) return cle;
+  const { L, H } = FORGE_VOLUME, Hb = H - 1, t = toileDecor(L, H); rampesForge(t);
+  interieurForgeHD(t);
+  const yE = 115, cx = 92, xa = 3, xb = 180, hP = 40, D = 33, yA = yE - hP;
+  const rake = x => x <= cx ? yE - (x - xa) / (cx - xa) * hP : yA + (x - cx) / (xb - cx) * hP;
+  for (let x = xa; x <= xb; x++) { const yr = rake(x), gauche = x <= cx;   // les deux pans de tôle, qui s'enfoncent vers le fond
+    for (let y = Math.round(yr - D); y < Math.round(yr); y++) { const o = Math.round(yr) - y, cote = o % 5, rouille = fbm(x * 0.08, y * 0.1, 863) > 0.66;
+      let k = (gauche ? 4 : 2) + (cote === 0 ? 1 : cote === 1 ? -1 : 0) - (o > D - 3 ? 1 : 0); t.poser(x, y, rouille ? 'rouille' : 'tole', k - (rouille ? 1 : 0)); } }
+  for (let y = yA - D; y <= yA; y++) { t.poser(cx, y, 'tole', 5); t.poser(cx + 1, y, 'tole', 1); }   // le faîtage, qui file vers le fond
+  for (let y = yE - D; y <= yE; y++) { t.poser(xa, y, 'fer', 2); t.poser(xb, y, 'fer', 1); }   // les égouts de côté
+  for (let x = xa + 2; x <= xb - 2; x++) { const yr = Math.round(rake(x)); for (let y = yr + 2; y < yE + 3; y++) { const pl = (x - xa) % 6 === 0; t.poser(x, y, 'chene', pl ? 1 : 3 + (x < cx ? 0 : -1) - (y < yr + 4 ? 1 : 0)); } }   // le pignon de planches
+  for (let x = xa; x <= xb; x++) { const yr = Math.round(rake(x)); t.poser(x, yr, 'chene', x <= cx ? 5 : 2); t.poser(x, yr + 1, 'chene', x <= cx ? 4 : 1); }   // les planches de rive, en V
+  for (let y = 84; y < 100; y++) for (let x = 84; x < 101; x++) { const q = Math.hypot(x + 0.5 - 92.5, y + 0.5 - 92); if (q < 6.5) t.poser(x, y, 'charbon', 0); else if (q < 8.5) t.poser(x, y, 'laiton', q < 7.5 ? 4 : 2); }   // l'oculus, son anneau de runes
+  for (let a = 0; a < 8; a++) { const th = a / 8 * Math.PI * 2; t.poser(Math.round(92.5 + Math.cos(th) * 7.5), Math.round(92 + Math.sin(th) * 7.5), 'or', 5); }
+  for (let x = 56; x <= 72; x++) { t.poser(x, 104, 'fer', 4); t.poser(x, 105, 'fer', 2); } for (let x = 60; x <= 68; x++) { t.poser(x, 106, 'fer', 3); t.poser(x, 107, 'fer', 2); } for (let x = 58; x <= 70; x++) t.poser(x, 108, 'fer', 3);   // l'emblème cloué : l'enclume
+  chemineeForgeHD(t, 28, 56, Math.round(rake(42) - 18), 18);
+  ombreSousToitForge(t, yE + 9, yE + 30);
+  poutreForgeHD(t, 1, 182, yE + 3); poteauxForgeHD(t, [4, 88, 172], yE + 9, Hb);
+  t.contour(); t.texture(s, cle); const tex = s.textures.get(cle); tex.cheminee = [42, 18]; tex.forge = FORGE_VOLUME;
+  tex.toit89 = { haut: yA - D - 2, bas: yE + 2, chem: { cx: 42, haut: 18, h: Math.round(rake(42) - 18) - 18 + 4 }, lucarne: null, nu: (x, y) => y > rake(x) + 1 };
+  return cle;
+}
+// (Q258) la piste conseillée, branchée dans la rue (window.FORGE_PISTE = 'A' ou 'B')
+const FORGE_PISTE = 'A';
+function forgeHalleHD(s) { return ((typeof window !== 'undefined' && window.FORGE_PISTE) || FORGE_PISTE) === 'B' ? forgePignonHD(s) : forgeAppentisHD(s); }

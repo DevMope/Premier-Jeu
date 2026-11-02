@@ -104,6 +104,9 @@ function texteDeLaRue(quoi, G, nuit) {
 
 // (Q252) où pend la plaque « Rue Soucolline » de la banque : 'poteau' (conseillé : à l'angle est, devant la palissade du porche, elle ne couvre rien) ou 'reverbere'
 const PLAQUE_BANQUE = 'poteau';
+// (Q258) le zoom de la rue : 1,25 avant (comme la place) ; la caméra recule pour qu'on voie les toits et les façades en marchant
+const ZOOM_RUE = 1.0;
+function zoomRue() { return (typeof window !== 'undefined' && window.ZOOM_RUE) || ZOOM_RUE; }
 function plaqueBanque() { return (typeof window !== 'undefined' && window.PLAQUE_BANQUE) || PLAQUE_BANQUE; }
 DECORS_QUARTIERS.soucolline = {
   sy: 320,             // (la caméra un peu plus basse que sur la place : on voit les façades, comme sur la planche 89 v7)
@@ -113,11 +116,12 @@ DECORS_QUARTIERS.soucolline = {
   // repères, on glisse d'une hauteur à l'autre (la caméra, elle, suit en douceur : jamais d'à-coup).
   cameraY(y) {
     const R = [[1060, 378], [1200, 318], [1330, 340], [1505, 378], [1600, 352], [1700, 312], [1790, 282], [1860, 268]];
-    const d = 0;
+    const d = zoomRue() < 1.2 ? 40 : 0;   // (Q258 : la caméra recule ; JeuneGoy se tient un peu plus bas à l'écran, on voit les toits)
     if (y <= R[0][0]) return R[0][1] + d;
     for (let i = 1; i < R.length; i++) if (y <= R[i][0]) { const [y0, a] = R[i - 1], [y1, b] = R[i], u = (y - y0) / (y1 - y0), w = u * u * (3 - 2 * u); return a + (b - a) * w + d; }
     return R[R.length - 1][1] + d;
   },
+  get zoom() { return zoomRue(); },
   passants: 5,
   // (par le plan : on arrive par le passage qui mène d'où l'on vient ; de chez soi, par sa porte)
   entrees: { place: 'arche', etang: 'arche', maison: 'comptoir', defaut: 'arche' },
@@ -233,14 +237,16 @@ DECORS_QUARTIERS.soucolline = {
     if (ouvertCeSoir) { ici.lumiere(L.impasse, YN - 53, 64, 0xff3020); ici.lumiere(L.impasse, YN - 53, 40, 0xff3020); }
     regarder('impasse', [L.impasse - 76, YN - 180, L.impasse + 76, YN + 4], [L.impasse, YN + 36]);
     // --- la forge de Thorgal : ouverte le jour (des étincelles jaillissent), ses braises la nuit ---
-    lot(L.forge, YN, () => { s.add.image(0, 2, forgeVolumeHD(s, jour)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, -128, -186, 'Forge de Thorgal', { taille: 10 }); });
-    ici.chem(forgeVolumeHD(s, jour), L.forge, YN + 2); contact(L.forge, 166);
+    // (Q258) refaite : une halle de forge ouverte, vue d'en haut (maisonVolumeHD.js, forgeHalleHD) ; l'écriteau sur sa poutre
+    const FV = FORGE_VOLUME, enLotF = (x, y) => [(x - FV.L / 2) * 2, 2 - (FV.H - y) * 2], [fxF, fyF] = enLotF(...FV.feu), [exF, eyF] = enLotF(...FV.ecriteau);
+    lot(L.forge, YN, () => { s.add.image(0, 2, forgeHalleHD(s)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, exF, eyF, 'Forge de Thorgal', { taille: 10 }); });
+    ici.chem(forgeHalleHD(s), L.forge, YN + 2); contact(L.forge, 182);
     if (jour) s.time.addEvent({ delay: 260, loop: true, callback: () => {
       if (!ici.C.active || s.planVille) return;
-      const e = s.add.rectangle(L.forge + (-40 + Math.random() * 30) * F, YN - 30 * F, 2, 2, Math.random() < 0.5 ? 0xffd060 : 0xff8020); e.yTri = YN + 1; ici.C.add(e);
+      const e = s.add.rectangle(L.forge + (fxF - 14 + Math.random() * 28) * F, YN + (fyF - 4) * F, 2, 2, Math.random() < 0.5 ? 0xffd060 : 0xff8020); e.yTri = YN + 1; ici.C.add(e);
       s.tweens.add({ targets: e, y: e.y - (20 + Math.random() * 30) * F, x: e.x + (Math.random() - 0.5) * 30 * F, alpha: 0, duration: 500 + Math.random() * 400, onComplete: () => e.destroy() });
     } });
-    ici.lumiere(L.forge - 24, YN - 16, 92, 0xff9040);
+    ici.lumiere(L.forge + fxF * F, YN + fyF * F, 92, 0xff9040);
     regarder('forge', [L.forge - 144, YN - 272, L.forge + 144, YN + 4], [L.forge, YN + 36]);
     // --- ton comptoir : sa façade (son niveau, son étage, son style), ses pattes repliées, ce que le mécénat y accroche ---
     let facade = null;
@@ -393,7 +399,9 @@ DECORS_QUARTIERS.soucolline = {
       }
     }
     // les plaques de la rue, clouées à l'angle des maisons
-    ici.plaqueSur(comptoir, 'gauche', 116, 'Rue Soucolline', { retrait: 10 }); ici.plaqueSur(barbier, barbierOuv && jour ? 'droite' : 'gauche', 112, 'Rue Soucolline', { retrait: 14 });   // (close, ou la nuit : son écriteau « Fermé » est à droite)
+    // (Q262) la chaumière et la maison d'ardoise : la plaque quitte le toit, sur le mur à droite de la porte (plus bas)
+    if (G && niveauFacade(G) < 2 && !(typeof styleDeMaison === 'function' && styleDeMaison(G))) ici.plaqueSur(comptoir, 'droite', 66, 'Rue Soucolline', { retrait: 58 });
+    else ici.plaqueSur(comptoir, 'gauche', 116, 'Rue Soucolline', { retrait: 10 }); ici.plaqueSur(barbier, barbierOuv && jour ? 'droite' : 'gauche', 112, 'Rue Soucolline', { retrait: 14 });   // (close, ou la nuit : son écriteau « Fermé » est à droite)
     ici.plaqueSur(paon, 'droite', 120, 'Placette de la Fontaine', { retrait: 12 });
     ici.plaqueSur(pommeroy, 'droite', 100, 'Montée du Four', { retrait: 8 });
     // (Q252) la plaque « Rue Soucolline » de la banque, à une place plus fluide : sur une potence de fer au réverbère qui garde
