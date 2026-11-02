@@ -260,6 +260,16 @@ function banqueVolumeHD(s) {
   t.contour(); t.texture(s, cle);
   pierresRondesTexture(s, cle, [{ r: [xm0 + 12, yC + 7, xm1 - 12, T - 17], regulier: true, graine: 853, sauf: [...[52 + ox, 148 + ox].map(cx => [cx - 11, yC, cx + 11, T]), ...[20 + ox, 162 + ox].map(fx => [fx - 3, 68 + oy, fx + 20, 121 + oy]), [80 + ox - 2, T - 66, 80 + ox + 41, T]] }]);   // (Q268) la pierre de taille
   noterVolumeHD(s, cle, toit, yC, ch, (x, y) => y >= 18 + oy && Math.abs(x - 100 - ox) <= (y - 18 - oy) * 3 + 2);   // (la neige : le toit, pas le fronton)
+  {   // (étape 7) un peu de neige sur le fronton : le dessus de ses rampants, du cartouche, des rinceaux, des chapiteaux, des appuis
+    const P = [];
+    for (let x = 4; x <= 196; x++) { const yt = Math.round(18 + Math.abs(x - 100) * 32 / 96); P.push([x + ox, yt + oy], [x + ox, yt + 1 + oy]); if (hachage(x, 3, 857) > 0.5) P.push([x + ox, yt + 2 + oy]); }
+    for (let x = 50; x <= 150; x++) P.push([x + ox, 43 + oy], [x + ox, 44 + oy]);
+    for (let y = 26 + oy; y < 44 + oy; y++) for (let x = 40 + ox; x <= 160 + ox; x++) if (t.mat(x, y) === 'or' && t.mat(x, y - 1) !== 'or') P.push([x, y]);
+    for (const cx of [52 + ox, 148 + ox]) for (let x = cx - 10; x <= cx + 10; x++) P.push([x, 53 + oy]);
+    for (const p0 of [xm0, xm1 - 10]) for (let x = p0 - 1; x <= p0 + 11; x++) P.push([x, 53 + oy]);
+    for (const fx of [20 + ox, 162 + ox]) for (let x = fx - 2; x <= fx + 19; x++) P.push([x, 116 + oy]);
+    s.textures.get(cle).toit89.poudre = P;
+  }
   return cle;
 }
 
@@ -418,6 +428,8 @@ function revolumeHD(s, src, cle, o) {
       for (let y = y0; y <= y1; y++) for (const [x, f] of [[x0, 0.84], [x0 + 1, 0.9]]) if (!op.interieur || lum(x, y + oy) < 90) mul(x, y + oy, f); }
     if (op.d) { const [x0, x1, y] = op.d, n = op.n || 2; for (let x = x0; x <= x1; x++) { for (let j = 0; j < n; j++) eclaire(x, y + oy + j, j ? 0.14 : 0.28); mul(x, y + oy + n, 0.74); } }
     if (op.m) { const [x0, y0, x1, y1, f] = op.m; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) mul(x, y + oy, f); }
+    if (op.efface) { const [x0, y0, x1, y1] = op.efface; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (x >= 0 && x < Wd) d[((y + oy) * Wd + x) * 4 + 3] = 0; }
+    if (op.trait) { const [x, y0, y1] = op.trait; for (let y = y0; y <= y1; y++) { const i = ((y + oy) * Wd + x) * 4; d[i] = 0x1a; d[i + 1] = 0x14; d[i + 2] = 0x10; d[i + 3] = 255; } }   // (un contour, là où l'on a rogné)
   }
   pierresRondesDonnees(d, Wd, H, ops.filter(op => op.pierre).map(op => ({ r: [op.pierre[0], op.pierre[1] + oy, op.pierre[2], op.pierre[3] + oy], sousFace: op.pierre[4] || 0, graine: g, sauf: (op.sauf || []).map(([a, b, c, e]) => [a, b + oy, c, e + oy]) })));   // (Q268) la pierre à la Stardew
   for (let k = 0; k < 8; k++) for (let x = xa; x <= xb; x++) mul(x, Y + k, k < 5 ? 0.66 : 0.82);   // l'ombre de la rive
@@ -450,12 +462,13 @@ function forgeVolumeHD(s, jour) {
 // (étape 6, le bas repris : il paraissait encore « de face ») comme les maisons validées : l'étage qui avance a son épaisseur
 // (la poutre éclairée par le dessus, sa sous-face très sombre, l'ombre portée sur le haut de la pierre) ; la pierre à la
 // Stardew ; le soubassement qui avance, son dessus éclairé et son chant ; la fenêtre du bas profonde, le dessus de son appui ;
-// la porte profonde, le dessus de sa marche ; une ombre de contact plus marquée au pied du mur
+// la porte profonde, le dessus de sa marche ; une ombre de contact plus marquée au pied du mur. (étape 7) Le rez-de-chaussée à
+// sa juste largeur : 3 pixels en retrait de l'étage de chaque côté (l'étage avance), le soubassement ne dépasse que de 2
 function pommeroyVolumeHD(s) {
   return revolumeHD(s, 'rueMaisonHD_0', 'pommeroyVolumeHD', { coupe: 53, xa: 2, xb: 147, prof: 28, montee: 54, mat: 'tuile', motif: 'tuile', g: 815, mur: [9, 140],
-    marches: [[7, 142, 152, 2, 4, 'pierre'], [42, 76, 156, 2, 2, 'pierre'], [105, 128, 132, 1, 2, 'pierre']],
-    ops: [{ pierre: [9, 99, 140, 151, 8], sauf: [[104, 111, 128, 136], [45, 112, 73, 160]] }, { r: [25, 61, 40, 77] }, { r: [107, 61, 122, 77] }, { d: [22, 43, 79], n: 1 }, { d: [104, 125, 79], n: 1 },
-      { d: [6, 143, 91], n: 2 }, { m: [9, 96, 140, 98, 0.5] }, { m: [9, 99, 140, 101, 0.72] },
+    marches: [[10, 139, 152, 2, 4, 'pierre'], [42, 76, 156, 2, 2, 'pierre'], [105, 128, 132, 1, 2, 'pierre']],
+    ops: [{ efface: [0, 97, 11, 151] }, { efface: [138, 97, 149, 151] }, { trait: [11, 97, 151] }, { trait: [138, 97, 151] }, { pierre: [12, 99, 137, 151, 8], sauf: [[104, 111, 128, 136], [45, 112, 73, 160]] }, { r: [25, 61, 40, 77] }, { r: [107, 61, 122, 77] }, { d: [22, 43, 79], n: 1 }, { d: [104, 125, 79], n: 1 },
+      { d: [6, 143, 91], n: 2 }, { m: [12, 96, 137, 98, 0.5] }, { m: [12, 99, 137, 101, 0.72] }, { m: [12, 97, 12, 151, 0.86] }, { m: [136, 97, 137, 151, 0.8] },
       { r: [109, 115, 124, 131], k: 6 }, { r: [48, 116, 70, 155], interieur: true, k: 7 }, { m: [0, 158, 149, 159, 0.7] }] });
 }
 // (Q252) La potence de fer d'où pend une plaque de rue, fixée au poteau d'un réverbère (vers la gauche), et le petit poteau

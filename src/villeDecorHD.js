@@ -843,6 +843,7 @@ const TOITS_NEIGE = { facadeHD_0: [40, 112, (x, y) => x >= 149 && x < 163 && y >
   // la chapelle (les deux pentes de son toit et son clocheton, pas son pignon)
   rueMaisonHD: [2, 50], rueImpasseHD: [0, 8], rueBanqueHD: [18, 44], porcheRueHD: [0, 22],
   rueHospiceHD: [2, 50, (x, y) => x >= 146 && x < 170 && y < 26], atelierMagesHD: [8, 56, (x, y) => x >= 106 && x < 128 && y < 32],
+  logoBanque: [0, 5],   // (le médaillon de la banque : un peu de neige sur son haut)
   rueChapelleHD: [0, 108, (x, y) => (y > 22 && y < 56 && Math.abs(x - 75) < 16) || (y >= 56 && Math.abs(x - 75) < 9 + (y - 56) * 1.05)] };
 // (Q198-3) la girouette de la banque : un mât de fer, sa flèche, son petit coq
 function girouetteHD(s) {
@@ -882,6 +883,10 @@ function neigeToitHD(s, cle) {
       mettre(x, y, y >= bord - 1 ? (ombre ? 0xc8d4e4 : 0xe4ecf6) : ombre ? (h > 0.9 ? 0xccd8e6 : 0xd9e3ef) : h > 0.92 ? 0xe6edf5 : h < 0.04 ? 0xffffff : 0xf4f8fc);
     }
   }
+  // (vue de haut) un saupoudrage sur ce qui n'est pas du toit mais retient la neige : T.poudre, des pixels [x, y] (le dessus
+  // des rampants d'un fronton, d'un cartouche, d'un chapiteau, d'un appui), un liseré blanc et son ombre bleutée dessous
+  if (T && T.poudre) { const deja = new Set(T.poudre.map(([x, y]) => y * L + x));
+    for (const [x, y] of T.poudre) { if (vide(x, y)) continue; mettre(x, y, hachage(x, y, 9416) > 0.85 ? 0xffffff : 0xf0f5fb); if (!vide(x, y + 1) && !deja.has((y + 1) * L + x)) mettre(x, y + 1, 0xc4d2e2); } }
   o.putImageData(img, 0, 0); out.refresh();
   return k;
 }
