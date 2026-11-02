@@ -25,6 +25,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q289** — Changement fait par l'agent, à valider : quand le joueur a juré à un camp opposé à sa balance, l'armure change maintenant tout de suite au sceau, et non plus le lendemain matin. D'accord ?
 - **Q290** — La pièce d'armure dessinée à plat (comme sur la planche) aussi dans le parchemin du messager, à la place de la petite icône agrandie ?
 
+- **Q291** — Au comptoir, pendant la visite de la Faucheuse, il existait déjà un halo rouge de terreur sur l'écran. Avec son nouveau dessin (ses yeux rouges, ses cendres), on le garde tel quel, on l'adoucit, ou on le retire ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
