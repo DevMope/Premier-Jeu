@@ -9,7 +9,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q263** — « La Promesse de l'Aube » en un seul mot, dans une autre langue : **Morgunheit** (vieux norrois : *morgun*, le matin, et *heit*, le serment, la promesse), **Dægbéot** (vieil anglais : le jour qui se lève, le vœu), **Auroravotum** (latin : le vœu de l'aurore), ou **Akatsuki** (japonais : l'aube). Lequel ?
 
 - **Q264** — La Faucheuse v6 (morceau 1) : la jonction (douille d'argent épaisse et rivetée, petite tête d'os enchâssée, tendons noirs qui s'enroulent et retombent en lanières) est assez massive ? Les tendons assez noirs ?
 - **Q257** — (redemandée) Les cendres (morceau 2) : leur densité et la longueur de la traînée (jusqu'à une fois et demie sa taille) conviennent ?
@@ -22,6 +21,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q263~~ Morgunheit, la Promesse de l'Aube (02/11).
 - ~~Q254 à Q262~~ Réponses du 02/11 dans `docs/game-design.md` (la Promesse de l'Aube ; Faucheuse : jonction, cendres noires ; rue : dézoomer, rez-de-chaussée trop de face, forge à refaire).
 - ~~Q244 à Q253~~ Réponses du 02/11 dans `docs/game-design.md` (forge du joueur, Faucheuse : manche, noirceur, traînée de fumée ; banque, plaque, maisons basses ; ordre des bâtiments choisi par Claude).
 - ~~Q243~~ L'Absolution (bâton du Sage) et le Dévoreur de Noms (bâton transformé) (02/11).
