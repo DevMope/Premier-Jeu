@@ -9,7 +9,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q254** — Les noms : 1) Aube-Lame, l'arme légendaire des Hommes, paraît plat ; propositions : « Serment d'Aurore », « l'Aube Jurée », « Premier-Soleil ». 2) L'arme forgée par le joueur : son nom légendaire ne serait pas choisi d'avance, mais donné par le monde quand ses exploits deviennent connus de tous, selon ce qu'il a fait (par exemple « la Promesse » ou « l'Espérance » pour des exploits de Lumière, « la Rancune » ou « le Glas » pour l'Ombre, « la Sans-Maître » pour le neutre), avec la possibilité de la renommer. Ce principe te va ?
+- **Q263** — « La Promesse de l'Aube » en un seul mot, dans une autre langue : **Morgunheit** (vieux norrois : *morgun*, le matin, et *heit*, le serment, la promesse), **Dægbéot** (vieil anglais : le jour qui se lève, le vœu), **Auroravotum** (latin : le vœu de l'aurore), ou **Akatsuki** (japonais : l'aube). Lequel ?
+- **Q257** — (reportée) à redemander après la Faucheuse v6.
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -18,6 +19,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q254 à Q262~~ Réponses du 02/11 dans `docs/game-design.md` (la Promesse de l'Aube ; Faucheuse : jonction, cendres noires ; rue : dézoomer, rez-de-chaussée trop de face, forge à refaire).
 - ~~Q244 à Q253~~ Réponses du 02/11 dans `docs/game-design.md` (forge du joueur, Faucheuse : manche, noirceur, traînée de fumée ; banque, plaque, maisons basses ; ordre des bâtiments choisi par Claude).
 - ~~Q243~~ L'Absolution (bâton du Sage) et le Dévoreur de Noms (bâton transformé) (02/11).
 - ~~Q239 à Q242~~ Réponses du 02/11 : la Larme de Lune, Fleur de Diamant ; Faucheuse v3 superbe (capuche, cape et manche à reprendre) ; la faux ne luit que dévoilée.
