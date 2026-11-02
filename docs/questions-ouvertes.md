@@ -11,19 +11,15 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q266** — Le zoom de la rue (étape 5, morceaux 1 et 2) : 1,0 (conseillé, branché : on voit toits et façades en marchant, les enseignes restent lisibles) ou 0,9 (on voit plus loin, les écriteaux deviennent petits) ?
-- **Q267** — La forge de Thorgal refaite (morceaux 6 à 8) : piste A, un grand appentis de bardeaux sur trois poteaux (conseillée, branchée), ou piste B, un toit de tôle rouillée à deux pans, pignon sur rue ? L'intérieur (foyer sous une grande hotte naine, soufflet, enclume, bac de trempe, outils) te va ?
-- **Q268** — La pierre vue d'en haut (morceaux 3 à 5 : dessus clair et pied sombre de chaque pierre, dégradé vers le sol, ombre sous l'étage, ouvertures plus profondes) : l'effet est discret ; on le pousse plus fort, avec des joints irréguliers et des pierres arrondies à la façon de Stardew ?
-- **Q269** — Ensuite, l'ordre validé : la maison du paon, le porche, l'atelier des Mages, l'impasse, les styles de Pont-Royal ?
 
 ## À venir de la part de Claude (pas des questions)
-- La plaque « Rue Soucolline » de la chaumière du comptoir déborde sur le haut de la porte (le mur est trop étroit) : à mettre sur un petit poteau à côté de la porte, comme celle de la banque (défaut, corrigé au prochain passage).
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
 
 
 ## Résolues
 
+- ~~Q266 à Q269~~ Zoom 1,0, forge A, pierre poussée, plaque du comptoir retirée, enseigne remodelée ; finir la ville des hobbits avant Pont-Royal (02/11).
 - ~~Q257, Q264, Q265~~ La Faucheuse v6 validée : jonction parfaite, cendres et traînée top ; un GIF demandé (02/11).
 - ~~Q263~~ Morgunheit, la Promesse de l'Aube (02/11).
 - ~~Q254 à Q262~~ Réponses du 02/11 dans `docs/game-design.md` (la Promesse de l'Aube ; Faucheuse : jonction, cendres noires ; rue : dézoomer, rez-de-chaussée trop de face, forge à refaire).
