@@ -3890,7 +3890,7 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q273** : le porche ne plaît « pas du tout » : à refaire, avec un nouveau design s'il le faut, pour qu'il s'accorde avec toutes les autres améliorations de bâtiments. La banque, en hiver : un peu de neige aussi sur la partie du logo et de l'écriture (sinon c'est décousu).
   - **Q274** : l'enseigne de l'atelier des Mages ne doit pas disparaître le jour (aucune raison logique ; c'était un reste de l'ancien code, pas un choix). L'intérieur de l'atelier est à refaire, il ne plaît absolument pas. **Règle** : ne plus jamais passer par une telle simplicité pour n'importe quel intérieur visible de l'extérieur.
   - **Q275** : l'impasse va côté Rempart (Q168) : ne pas faire son design maintenant ; elle sera faite avec le chantier du Rempart. En attendant, elle garde son ancien dessin.
-  - **Q276** : les Pommeroy : maintenant la partie en pierre est un peu trop large par rapport au haut, ce qui donne encore un effet bizarre.
+  - **Q276** : les Pommeroy : maintenant la partie en pierre est un peu trop large par rapport au haut, ce qui donne encore un effet bizarre. Précision du joueur : ce n'était pas tant la largeur que l'absence de démarcation nette aux coins de la partie en pierre : de très légers et humbles piliers d'angle. La banque en hiver est validée.
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
