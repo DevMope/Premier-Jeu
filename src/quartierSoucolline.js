@@ -295,7 +295,7 @@ DECORS_QUARTIERS.soucolline = {
     const ysmee = G && typeof ysmeeArrivee === 'function' && ysmeeArrivee(G);
     if (ysmee) {
       // (vue de haut) la tente : un cône posé sur son pied en ellipse (maisonVolumeHD.js), son ombre au sol
-      ombre(L.tente, YN + 4, 190); img(L.tente, YN + 6, tenteYsmeeVolumeHD(s), E); ici.obstacles.push([L.tente - 88, YN - 10, L.tente + 88, YN + 8]);
+      ombre(L.tente, YN + 4, 190); img(L.tente, YN + 6, tenteYsmeeVolumeHD(s), E); ici.obstacles.push([L.tente - 88, YN - 10, L.tente - 16, YN + 8], [L.tente + 16, YN - 10, L.tente + 88, YN + 8]);   // (l'entrée reste libre : on y entre)
       const ard = lot(L.ardoise, YN, () => { if (typeof ardoiseMeteo === 'function') ardoiseMeteo(s, 0, 8, G); }, YN + 8);
       for (const t of ard.list) if (t.type === 'Text') { let f = 10; while (t.width > 70 && f > 7) t.setFontSize(--f); }   // (le mot du temps tient sur l'ardoise, quelle que soit la police)
       ici.obstacles.push([L.ardoise - 34, YN - 4, L.ardoise + 34, YN + 12]);
