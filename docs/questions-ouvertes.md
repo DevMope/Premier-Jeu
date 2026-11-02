@@ -17,6 +17,10 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q282** — Le bout de la rue sur la place des Mastres (étape 8b) : solution 1 (pas de porche, le marché déborde dans la rue sous deux rangs de fanions), 2 (deux piliers bas de pierre avec lanterne et fleurs, guirlandes et écriteau « Place des Mastres », rien ne ferme ; conseillée) ou 3 (l'arche A en retrait, le marché qui déborde devant) ? En 2, faut-il aussi un étal qui déborde dans la rue, ou seulement les caisses ?
+- **Q283** — Pour cadrer l'ouverture, une maison voisine de la banque a été ajoutée (une maison de ville à étage, toit de tuiles, porte verte) : elle te va, ou une autre façade, voire une haie ?
+- **Q284** — L'atelier des Mages, les gens (morceaux 5 et 6) : le maître nain et un apprenti environ un jour sur cinq, deux apprentis un jour sur cinq, l'apprentie seule un jour sur six, seul le chat un jour sur cinq, vide sinon ; le soir, l'atelier dort. Ces fréquences te vont ? Le maître : le nain, ou la maîtresse-charpentière (aujourd'hui sur le seuil) ? Du monde le soir ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
