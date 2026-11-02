@@ -34,6 +34,16 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q299, Q300** — (anciennes, remplacées par le « dernier appel » et les récits de retour, à confirmer)
 
+- **Q317** — Le dernier appel du neutre : dans 84 parties simulées, le camp est scellé en moyenne au jour 178, mais entre le jour 69 et le jour 459 selon les parties. A : un jour fixe, le jour 171 ; B : dans chaque partie, le soir où arrive la 7e pièce, quand on prépare le voyage à Cendrebourg, environ une semaine avant le sceau (conseillé) ?
+- **Q318** — La vie du neutre spectateur : la gazette avec une carte du front, deux clients qui racontent la même bataille autrement, les réfugiés, le commerce de guerre, les lettres de remerciement du Sage pour ses taxes, Garrick qui blague, la Faucheuse qui compte les morts, le chat qui rapporte ce que disent les bêtes. Ça te va ? À enlever, à ajouter ?
+- **Q319** — Ses aides secrètes, qui sauvent des personnes sans jamais changer la guerre : cacher un blessé une nuit, porter le courrier entre familles séparées, une lanterne à la fenêtre pour les voyageurs, tenir le registre des noms des morts des deux camps. Lesquelles garder ?
+- **Q320** — Le neutre peut-il s'enrichir avec la guerre (tout se vend, et plus cher), et finir avec la carte de VieuxGoy « le Marchand de guerre » (ou « le Témoin », « l'Indécis ») ?
+- **Q321** — La faculté qui montre les ☀ et ☾ : « la Lucidité », « le Discernement » ou « la Clairvoyance » ? Et le flair reste-t-il à part, pour le commerce (estimer un prix, démasquer un menteur) ?
+- **Q322** — Comment elle marche : elle se gagne en ouvrant les yeux (découvrir la vraie conséquence d'un choix, démasquer un imposteur, repérer un faux présage, écouter un doyen jusqu'au bout, voir une fissure du Sage) ; elle montre peu à peu que le choix compte, puis son camp, puis s'il est bon ou cruel, puis une phrase de présage ; on ne la voit qu'à la lampe de chevet qui brille plus fort ; elle s'éteint en présence du Sage. D'accord ?
+- **Q323** — Les trois façons de tenir un comptoir (fiches 6 et 7) : la Lumière gagne l'argent et le confort, le neutre la liberté, l'Ombre la vérité et la fidélité. D'accord ? Une case à changer ?
+- **Q324** — Combien l'Ombre gagne-t-elle de moins ? Aujourd'hui, dans les parties simulées, environ la moitié de la Lumière. Proposition : Lumière 100, neutre 95, Ombre 80. D'accord, ou plus dur ?
+- **Q325** — Problème trouvé : un joueur de l'Ombre met en moyenne 259 jours pour réunir 7 pièces d'armure (contre 127 en Lumière), parce que ses clients bannis refusent d'aller dans les terres de la Confrérie alors que l'armure demande des royaumes de la Lumière. On corrige comment : A, les Bannis acceptent certaines missions en terres de Lumière (contrebande, sabotage) ; B, l'armure peut aussi venir de royaumes de l'Ombre ; C, on accepte que l'Ombre soit plus lente ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
