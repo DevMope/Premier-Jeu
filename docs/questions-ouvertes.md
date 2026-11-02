@@ -10,9 +10,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q264** — La Faucheuse v6 (morceau 1) : la jonction (douille d'argent épaisse et rivetée, petite tête d'os enchâssée, tendons noirs qui s'enroulent et retombent en lanières) est assez massive ? Les tendons assez noirs ?
-- **Q257** — (redemandée) Les cendres (morceau 2) : leur densité et la longueur de la traînée (jusqu'à une fois et demie sa taille) conviennent ?
-- **Q265** — Les cendres : plus « slime » (de grosses gouttes qui s'étirent) ou plus cendre (des flocons secs) ? Dévoilée, doivent-elles doubler (ici 1,3 fois plus denses) ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -21,6 +18,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q257, Q264, Q265~~ La Faucheuse v6 validée : jonction parfaite, cendres et traînée top ; un GIF demandé (02/11).
 - ~~Q263~~ Morgunheit, la Promesse de l'Aube (02/11).
 - ~~Q254 à Q262~~ Réponses du 02/11 dans `docs/game-design.md` (la Promesse de l'Aube ; Faucheuse : jonction, cendres noires ; rue : dézoomer, rez-de-chaussée trop de face, forge à refaire).
 - ~~Q244 à Q253~~ Réponses du 02/11 dans `docs/game-design.md` (forge du joueur, Faucheuse : manche, noirceur, traînée de fumée ; banque, plaque, maisons basses ; ordre des bâtiments choisi par Claude).
