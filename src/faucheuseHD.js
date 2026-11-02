@@ -389,7 +389,8 @@ function textureFaucheuseHD(scene, quoi = 'corps', { vue = 'troisQuarts', G = (t
   const cle = quoi === 'buste' ? 'busteHD_faucheuse_' + sig : 'corps_faucheuseHD_' + vue + (levitation ? '_lev_' : '_sol_') + sig;
   if (!scene.textures.exists(cle)) {
     const t = quoi === 'buste' ? faucheuseBusteHD({ visage: 'crane', souvenirs: sv }) : faucheuseCorpsHD(vue, { visage: 'crane', souvenirs: sv, ...(levitation ? { levitation: { hauteur: 48, phase: 0.25 } } : {}) });
-    t.texture(scene, cle); scene.textures.get(cle).reperesFaucheuse = t.reperes;
+    t.texture(scene, cle); const tex = scene.textures.get(cle); tex.reperesFaucheuse = t.reperes;
+    tex.toileFH = t; tex.geomFH = quoi === 'buste' ? { cy: 94, k: 2 } : { cy: 146, k: 2 };   // (pour sa dissolution)
   }
   return cle;
 }
@@ -430,14 +431,47 @@ function cendresFaucheuse(scene, cible, { masque = null, cadence = 70, haut = 0.
     detruire: () => { minuterie.remove(); for (const c of vivantes.splice(0)) c.destroy(); },
   };
 }
-// Elle se dissout dans l'ombre : son image s'efface du bas vers le haut (le bas se défait le premier), une rafale de cendres
-// monte, ses yeux s'éteignent les derniers. fin() quand elle a disparu.
+// Son buste à la fenêtre du comptoir : à cette échelle, la Larme de Lune tient entière dans le cadre
+const FH_ECHELLE_BUSTE = 1.7;
+// Une image de sa dissolution (planche validée) : le bas se défait en un bord effiloché, des rubans d'ombre s'en
+// détachent et montent ; d de 0 (entière) à 1. T : sa toile finie ; cy, k : le haut du corps et l'échelle de la toile.
+function fhDissoudreToile(T, d, { cy, k, graine = 11 }) {
+  const L = T.l, H = T.h, C = fhToile(L, H), sol = H;
+  C.rampes = { ...T.rampes }; C.c = T.c.slice(); C.m = T.m.slice(); C.k = T.k.slice();
+  const seuil = sol - d * 1.15 * (sol - cy + 16 * k);
+  for (let y = 0; y < H; y++) for (let x = 0; x < L; x++) { const i = y * L + x; if (C.c[i] === null) continue;
+    const bruit = (fbm(x * 0.07, y * 0.04, graine, 2) - 0.5) * 30 * k, ruban = Math.sin(x * 0.5 + y * 0.08) > 0.6 - d * 0.4;
+    if (y > seuil + bruit || (d > 0.3 && ruban && y > seuil - 14 * k * d)) { C.c[i] = null; C.m[i] = null; }
+    else if (y > seuil + bruit - 3 * k) C.poser(x, y, C.m[i] || 'robe', Math.min(C.k[i], 1));   // (le bord qui se défait s'assombrit)
+  }
+  const dev = fhToile(L, H), cx = L / 2;
+  for (let m = 0; m < 14 * d; m++) { const x = cx + (hachage(m, 5, 2) - 0.5) * 50 * k, y0 = Math.min(sol, seuil + hachage(m, 6, 2) * 20 * k), l = (10 + hachage(m, 7, 2) * 24) * k;
+    sfTubeForme(dev, m % 3 ? 'robe' : 'robeC', sfBezier([x, y0], [x + Math.sin(m) * 6 * k, y0 - l * 0.4], [x - Math.sin(m * 2) * 6 * k, y0 - l * 0.75], [x + Math.sin(m) * 3 * k, y0 - l], 10), u => (1.6 - u * 1.3) * k + 0.3, { decalage: 0.1, ombre: false }); }
+  sfColler(C, dev);
+  return C;
+}
+const FH_ETAPES_DISSOLUTION = [0.12, 0.24, 0.36, 0.48, 0.6, 0.72, 0.84, 0.95];
+// Les images de sa dissolution, pour une texture faite par textureFaucheuseHD (une fois chacune) ; [] sinon
+function texturesDissolutionFH(scene, cle) {
+  const tex = scene.textures.get(cle), T = tex && tex.toileFH; if (!T) return [];
+  return FH_ETAPES_DISSOLUTION.map((d, i) => { const c = cle + '_dis' + i;
+    if (!scene.textures.exists(c)) fhDissoudreToile(T, d, tex.geomFH).texture(scene, c);
+    return c; });
+}
+// Elle se dissout dans l'ombre (planche validée) : le bas se défait en rubans d'ombre au bord effiloché, une rafale de
+// cendres monte, ses yeux s'éteignent quand l'ombre les atteint, et le reste s'efface. fin() quand elle a disparu.
 function dissoudreFaucheuse(scene, img, { duree = 1600, cendres = null, yeux = [], fin = null } = {}) {
-  const w = img.width, h = img.height, etat = { p: 0 };
+  const images = texturesDissolutionFH(scene, img.texture.key), etat = { p: 0 }, w = img.width, h = img.height;
+  let eteints = false;
   if (cendres) cendres.rafale(40);
   scene.tweens.add({ targets: etat, p: 1, duration: duree, ease: 'Sine.easeIn',
-    onUpdate: () => { img.setCrop(0, 0, w, Math.max(1, h * (1 - etat.p * 0.92))); img.setAlpha(1 - Math.max(0, etat.p - 0.7) / 0.3); },
-    onComplete: () => { for (const o of yeux) scene.tweens.add({ targets: o, alpha: 0, duration: 300, onComplete: () => o.destroy() }); if (fin) fin(); } });
+    onUpdate: () => {
+      if (images.length) { const n = Math.min(images.length - 1, Math.floor(etat.p * images.length)); if (img.texture.key !== images[n]) img.setTexture(images[n]); }
+      else img.setCrop(0, 0, w, Math.max(1, h * (1 - etat.p * 0.92)));   // (une texture sans toile : simplement coupée)
+      img.setAlpha(1 - Math.max(0, etat.p - 0.75) / 0.25);
+      if (!eteints && etat.p > 0.55) { eteints = true; for (const o of yeux) scene.tweens.add({ targets: o, alpha: 0, duration: 260, onComplete: () => o.destroy() }); }
+    },
+    onComplete: () => { if (!eteints) for (const o of yeux) o.destroy(); if (fin) fin(); } });
 }
 // Les lueurs rouges de ses yeux, sur une image posée par le bas (origine 0.5, 1)
 function yeuxFaucheuse(scene, img, prof = null) {
