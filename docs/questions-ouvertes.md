@@ -13,11 +13,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q273** — Le porche de la place des Mastres (étape 6b) dans la projection : validé ? Ses battants, ouverts vers la place, montent maintenant en biais (la projection exacte) : on les garde ainsi, ou rabattus contre la palissade ? Et la vue sur la place derrière le porche : on la passe elle aussi dans la projection plus tard ?
-- **Q274** — L'atelier des Mages : validé ? Son enseigne est debout sur le pan avant du toit, sur deux pieds de fer : ou la préfères-tu sur la façade, pendue sous la sablière ? Et faut-il écrire « Les Mages-Charpentiers » le jour aussi (aujourd'hui le nom n'apparaît que le soir) ?
-- **Q275** — L'impasse du Corbeau : validée ? Son fond est volontairement très sombre, même en plein jour : trop noir, ou faut-il éclaircir le mur du fond ?
-
-- **Q276** — Le bas des Pommeroy, repris (étage qui avance avec sa sous-face sombre, soubassement, porte et fenêtre plus profondes, ombre au pied, un banc de pierre devant) : il ne paraît plus « de face » ? (La pierre est un peu plus claire et à plus petites pierres qu'à l'étape 6.)
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -26,6 +21,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q273 à Q276~~ Porche à refaire ; neige sur le fronton de la banque ; enseigne des Mages visible le jour et intérieur à refaire ; impasse reportée au Rempart ; Pommeroy : pierre trop large (02/11).
 - ~~Q270 à Q272~~ Faucheuse validée ; pierre validée sauf les Pommeroy ; enseigne du comptoir et maison du paon validées (02/11).
 - ~~Q266 à Q269~~ Zoom 1,0, forge A, pierre poussée, plaque du comptoir retirée, enseigne remodelée ; finir la ville des hobbits avant Pont-Royal (02/11).
 - ~~Q257, Q264, Q265~~ La Faucheuse v6 validée : jonction parfaite, cendres et traînée top ; un GIF demandé (02/11).
