@@ -17,6 +17,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q274** — L'atelier des Mages : validé ? Son enseigne est debout sur le pan avant du toit, sur deux pieds de fer : ou la préfères-tu sur la façade, pendue sous la sablière ? Et faut-il écrire « Les Mages-Charpentiers » le jour aussi (aujourd'hui le nom n'apparaît que le soir) ?
 - **Q275** — L'impasse du Corbeau : validée ? Son fond est volontairement très sombre, même en plein jour : trop noir, ou faut-il éclaircir le mur du fond ?
 
+- **Q276** — Le bas des Pommeroy, repris (étage qui avance avec sa sous-face sombre, soubassement, porte et fenêtre plus profondes, ombre au pied, un banc de pierre devant) : il ne paraît plus « de face » ? (La pierre est un peu plus claire et à plus petites pierres qu'à l'étape 6.)
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
