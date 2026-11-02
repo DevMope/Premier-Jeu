@@ -3896,6 +3896,7 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q278/Q279** : le porche A est préféré, mais ne pas voir le marché déborder derrière le porche fait bizarre, comme s'il fallait passer un portail pour aller au marché. Chercher un accès visuellement et logiquement plus naturel, en accord avec le monde. La place vue au travers convient.
   - **Q280** : certains jours, on voit des apprentis ou des maîtres travailler dans l'atelier des Mages.
   - **Idée pour plus tard** : les PNJ qui se baladent s'arrêtent devant les devantures, s'assoient (comme c'est déjà le cas), parlent entre eux : une petite vie pour rendre la ville plus vivante.
+- **Q281 (02/11)** : les Pommeroy en A+B+C (rez-de-chaussée plus bas et plus clair, auvent au-dessus de la porte, jardinière sous la fenêtre) : « parfait », validés.
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).

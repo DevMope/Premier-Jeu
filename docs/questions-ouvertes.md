@@ -16,7 +16,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q281** — Les Pommeroy, les trois remèdes (étape 8) : seuls et combinés, côte à côte. Claude conseille A+B+C (rez-de-chaussée plus bas et plus clair, auvent au-dessus de la porte, jardinière sous la fenêtre). Lequel préfères-tu ? L'effet « de face » a-t-il enfin disparu ? (Avec A, l'écriteau « Les Pommeroy » tombe sur la poutre de l'étage.)
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -25,6 +24,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q281~~ Les Pommeroy en A+B+C, validés (02/11).
 - ~~Q277 à Q280~~ Pommeroy : essayer les trois remèdes ; un accès au marché plus naturel que le porche ; apprentis aux Mages certains jours ; idée : la petite vie des PNJ (02/11).
 - ~~Q273 à Q276~~ Porche à refaire ; neige sur le fronton de la banque ; enseigne des Mages visible le jour et intérieur à refaire ; impasse reportée au Rempart ; Pommeroy : pierre trop large (02/11).
 - ~~Q270 à Q272~~ Faucheuse validée ; pierre validée sauf les Pommeroy ; enseigne du comptoir et maison du paon validées (02/11).
