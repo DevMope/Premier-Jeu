@@ -35,16 +35,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q299, Q300** — (anciennes, remplacées par le « dernier appel » et les récits de retour, à confirmer)
 
 
-- **Q326** — Les dépenses de la Lumière : des cierges pour bénir les départs ; une offrande chaque semaine (plus elle est grosse, moins la garde te contrôle) ; l'armurerie consacrée, des armes bénies contre les morts-vivants (20 000 p.) ; la loge des Gardiens, une grosse commande chaque mois (40 000 p.) ; les réquisitions de guerre (une part de ton stock prise pendant la guerre, payée en retard). Lesquelles garder ?
-- **Q327** — Les dépenses de l'Ombre : nourrir chaque nuit les Bannis cachés dans l'arrière-boutique ; le tunnel du Passeur pour la contrebande (10 000 p.) ; l'atelier du faussaire pour entrer déguisé dans une ville fermée (8 000 p.) ; la rançon d'un prisonnier banni qui reviendra se battre à tes côtés ; la maison à Cendrebourg ; et surtout le trésor de guerre du Drômmath (chaque don de 10 000 p. fait monter la préparation de la guerre, qui décide de la victoire ou de la défaite des Bannis). Lesquelles garder ?
-- **Q328** — Les dépenses du neutre : le sauf-conduit à renouveler chaque saison ; la part du Passeur (10 %) ; la grande forge de guerre pour les grosses commandes d'armes des deux camps (12 000, 20 000 puis 30 000 p.) ; le grenier pour stocker en paix et revendre en guerre ; le pigeonnier du courrier entre familles séparées. Lesquelles garder ?
-- **Q329** — Le grand but de chaque camp coûte environ un mois d'économies au milieu de la partie (Lumière 60 000 p., neutre 72 000, Ombre 48 000). D'accord ? Et la taxe de la Confrérie, qui mange aujourd'hui un tiers des recettes : on la revoit ?
-- **Q330** — Les terres des Bannis deviennent cinq royaumes, chacun avec sa pièce d'armure et son arme légendaire : les gobelins et les trolls, les orcs, les loups-garous, les vampires et le nécromancien, les momies. Les 7 premiers royaumes libérés, quels qu'ils soient, donnent une pièce ; la 8e reste au grand voyage à Cendrebourg. En simulation, l'Ombre réunit ses 7 pièces vers le jour 153 au lieu de 259. D'accord ?
-- **Q331** — Les noms des cinq nouvelles armes, tirés du nom que chaque peuple donne au Grand Oubli : la Massue des Ponts, la Hache du Serment Muet, les Griffes de la Nuit sans Lune, le Calice de l'An Sans Nom, le Sceptre de la Grande Marée. Lesquels garder ?
-- **Q332** — Un joueur de Lumière qui prend une terre des Bannis la « conquiert » : ses missions là-bas comptent pour la Confrérie (une campagne), pas pour les Bannis. D'accord ?
-- **Q333** — Les Bannis viennent au comptoir peu à peu : d'abord croisés au marché noir, puis la nuit par la porte de l'arrière-boutique, puis au crépuscule sous un grand manteau, enfin en plein jour ; chaque peuple vient quand tu as libéré sa terre ; un Banni déguisé croisé par un client de la Lumière fait partir une rumeur. D'accord ?
-- **Q334** — Aujourd'hui les pandas ne viennent que chez un joueur de Lumière. Les pandas et les hobbits viendraient chez tout le monde, sauf aux deux extrêmes ? Et chez un joueur très sombre, les clients de la Lumière partent dans cet ordre : paladins et pèlerins, puis nobles, puis humains ?
-- **Q335** — Garrick et le neutre pendant la guerre (propositions, pas encore validées) : si l'armure va à un Banni, Garrick vient la chercher la nuit et devient le champion qui tient la Grande Muraille ; si elle va à Sire Valdric, Garrick devient le chef de la résistance, et la nouvelle vague d'oubli le fait oublier à JeuneGoy ; si JeuneGoy la garde, Garrick lui dit « Tu l'avais, et tu l'as rangée » et part seul affronter ce qui sort de la Porte ; s'il a été dénoncé par Lucien et que le joueur ne l'a pas aidé, il est en prison, et le neutre l'apprend par son procès dans la gazette. D'accord ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -54,6 +44,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q326 à Q335~~ Dépenses des trois camps toutes gardées ; cinq royaumes des Bannis ; Bannis au comptoir peu à peu ; Garrick pendant la guerre, dans l'esprit (02/11).
 - ~~Q317 à Q325~~ Dernier appel à la 7e pièce, spectateur validé, la Clairvoyance, armure aussi par les royaumes de l'Ombre ; dépenses par camp et apparition des Bannis à revoir (02/11).
 - ~~Q302, Q303, Q307 à Q316~~ Refonte Ombre/Lumière validée dans ses grandes lignes ; flair, avantages des camps et spectateur à retravailler ; dernier appel à calculer ; 8e pièce : le grand voyage à Cendrebourg (02/11).
 - ~~Q296 à Q301, Q304~~ Jauge adoucie ; pas de « tiède » ; refonte complète du système de points (298) ; extrêmes sans retour sauf par les récits (02/11).
