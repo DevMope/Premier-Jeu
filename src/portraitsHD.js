@@ -3,6 +3,19 @@
 // lumière vient d'en haut à gauche, les contours sont colorés (plus clairs côté lumière),
 // et les yeux, sourcils et bouches sont dessinés à la main pour chaque expression.
 
+// (la fin du 16 px : portraits.js, le premier buste en 40×46, est retiré ; il ne restait que ce hasard)
+// Un petit générateur de hasard, toujours le même pour un même nom.
+function hasardDuNom(nom) {
+  let h = 2166136261;
+  for (const c of nom) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  return () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  };
+}
+
 const HD_L = 80;
 const HD_H = 100;
 

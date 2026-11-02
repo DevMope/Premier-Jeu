@@ -157,8 +157,9 @@ function specCorps(quoi, pose = null, vue = 'troisQuarts', armeForcee = undefine
 // (avec ses couleurs à elle et la tenue de son niveau).
 // `vue` : 'troisQuarts' (par défaut, il regarde vers la droite), 'face', 'profil' ou 'dos'.
 function corpsHD(scene, quoi, pose = null, vue = 'troisQuarts', armeForcee = undefined) {
-  if (quoi === 'faucheuse') return 'perso_faucheuse';
-  if (typeof quoi === 'string' && !FIGURANTS[quoi] && !PROPORTIONS[quoi]) return 'perso_' + quoi;   // (le joueur, etc.)
+  if (quoi === 'faucheuse' && typeof textureFaucheuseHD === 'function') return textureFaucheuseHD(scene, 'corps', { vue: vue === 'face' ? 'face' : 'troisQuarts', levitation: false });
+  // (la fin du 16 px) un nom inconnu n'a plus de vieux corps de 16 pixels où se replier : un humain HD à sa place
+  if (typeof quoi === 'string' && !FIGURANTS[quoi] && !PROPORTIONS[quoi]) { console.warn('corpsHD : corps inconnu', quoi); quoi = 'humain'; }
   // (planches 85 et 86) une pose du rig (posesHD.js : à genoux, au sol, il gît, il frappe...) : sa texture à elle
   if (pose && typeof POSES_HD !== 'undefined' && POSES_HD[pose]) return texturePose(scene, quoi, pose, { vue, arme: armeForcee });
   const { gene, tenue, costume, cle, options } = specCorps(quoi, pose, vue, armeForcee);
@@ -223,6 +224,7 @@ function pasDeMarche(scene, sprite, duree, { poussiere = true, sol = null, volum
 
 // L'échelle à appliquer à une texture de personnage (les anciennes gardent leur taille).
 function echelleCorps(cle) {
+  if (cle.startsWith('corps_faucheuseHD')) return ECHELLE_CORPS * FH_ECHELLE_FILE;   // (elle dépasse les hommes d'une tête, sa faux au-dessus)
   return cle.startsWith('corps_') ? ECHELLE_CORPS : 1;
 }
 

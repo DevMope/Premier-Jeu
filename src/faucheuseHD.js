@@ -1,4 +1,4 @@
-// Planche à valider : la Faucheuse en HD. CE FICHIER N'EST PAS CHARGÉ PAR LE JEU (ni index.html ni web/jeu.html).
+// La Faucheuse en HD (planches validées, v1 à v8). Chargée par le jeu, après sageFormesHD.js.
 // Il s'appuie sur sageFormesHD.js (sfToile, sfTubeForme, sfBezier, sfChemin, sfPoly, sfEll, sfMotifFourrure, sfContour,
 // sfColler) et sur le moteur du jeu (ToileHD, ellipsoide, fbm, hachage, rampeVive).
 //
@@ -245,7 +245,7 @@ function faucheuseCorpsHD(vue = 'face', { visage = 'crane', dissolution = 0, fau
   return T2;
 }
 // Le buste, à la taille des bustes du comptoir (80 × 100, affiché ×2,3 ; elle dépasse en haut comme les grands)
-function faucheuseBusteHD({ visage = 'crane', parle = false, devoilee = false } = {}) {
+function faucheuseBusteHD({ visage = 'crane', parle = false, devoilee = false, souvenirs = ['petale', 'sablier', 'plume'] } = {}) {
   // (v4) la toile monte au-dessus des 80 × 100 des bustes : la lame tient entière au-dessus de sa capuche (posé par le bas,
   // le buste reste à sa place dans la fenêtre)
   const k = 2, L = 120, H = 150, t = fhToile(L, H), fond = fhToile(L, H), dev = fhToile(L, H), cx = 60, cy = 94;
@@ -276,12 +276,12 @@ function faucheuseBusteHD({ visage = 'crane', parle = false, devoilee = false } 
   }
   for (let a = -2.2; a < 2.2; a += 0.06) { const x = Math.round(ox + Math.cos(a - 1.57) * (orx + 1 * k)), y = Math.round(oy + Math.sin(a - 1.57) * (ory + 1 * k)); t.poser(x, y, 'givre', 4); if (Math.round(a * 10) % 3 === 0) t.poser(x, y - 1, 'givre', 5); }
   const bx = ox, by = oy + 17 * k; t.forme('argentF', sfEll(bx, by, 1.8 * k, 1.8 * k), { decalage: 0.5 });
-  t.forme('petale', sfPoly([[bx, by - 0.6 * k], [bx + 3.2 * k, by + 1.4 * k], [bx + 1.6 * k, by + 5.2 * k], [bx - 1.4 * k, by + 4 * k]], [0.2, -0.3, 0.9]), { decalage: 0.4 });
+  if (souvenirs.includes('petale')) t.forme('petale', sfPoly([[bx, by - 0.6 * k], [bx + 3.2 * k, by + 1.4 * k], [bx + 1.6 * k, by + 5.2 * k], [bx - 1.4 * k, by + 4 * k]], [0.2, -0.3, 0.9]), { decalage: 0.4 });
   // la main pâle sur le manche, devant
   const mx = cx + 13 * k, my = cy + 10 * k, mat = visage === 'ombre' ? 'robeC' : 'osMain';
   t.forme(mat, sfEll(mx, my, 2.2 * k, 2.8 * k), { decalage: 0.3 }); for (let d = 0; d < 4; d++) sfTubeForme(t, mat, [[mx - 1.6 * k + d * 1.1 * k, my + 1 * k], [mx - 1.9 * k + d * 1.2 * k, my + 5.5 * k]], u => 0.55 * k, { decalage: 0.2 - d * 0.1, ombre: false });
   sfContour(fond, 1); sfContour(t, 2);
-  const T = fhToile(L, H); sfColler(T, fond); sfColler(T, t); sfColler(T, dev); T.reperes = { lame: fond.lameFaux || null }; return T;
+  const T = fhToile(L, H); sfColler(T, fond); sfColler(T, t); sfColler(T, dev); T.reperes = { lame: fond.lameFaux || null, yeux: [[cx - 3.2 * k, cy + 0.2 * k], [cx + 3.2 * k, cy + 0.2 * k]] }; return T;
 }
 
 // La fumée noire qu'elle laisse derrière elle (comme une silhouette qui vole) : des volutes tramées, d'un noir dense près
@@ -368,4 +368,82 @@ function fhCendresMonde(t, source, f, { parImage = 9, vie = 22, graine = 5, e = 
       else t.forme('cendre', sfEll(x, y, taille, taille * (0.4 + 0.4 * Math.abs(Math.sin(a * 6 + id))), a * 6 + id), { decalage: -0.3, ombre: false, bord: false });
       if (taille > 2.2 * e) t.poser(Math.round(x - taille * 0.3), Math.round(y - taille * 0.3), 'cendre', 5);
     } }
+}
+
+// =====================================================================================================================
+// Dans le jeu : ses textures (son buste à la fenêtre du comptoir, sa silhouette dans la file, en lévitation), ses
+// souvenirs portés (ceux qu'elle n'a pas encore donnés), ses cendres qui s'évaporent d'elle et restent derrière elle, et
+// sa dissolution dans l'ombre quand elle repart. Son aura et la lueur de la Larme de Lune ne s'allument pas ici (aucun
+// moment du jeu où elle se dévoile, pour l'instant).
+// =====================================================================================================================
+const FH_RELIQUES = { petale: 'petaleNoir', sablier: 'sablier', plume: 'plumeCorbeau' };
+// Les souvenirs qu'elle porte encore : ceux de ses reliques qu'elle ne t'a pas encore laissées
+function souvenirsFaucheuse(G) {
+  const donnes = (G && G.faucheuse && G.faucheuse.reliques) || [];
+  return Object.keys(FH_RELIQUES).filter(s => !donnes.includes(FH_RELIQUES[s]));
+}
+// Sa texture : quoi = 'buste' (la fenêtre du comptoir) ou 'corps' (en pied ; levitation : elle flotte au-dessus du sol).
+// Les corps portent le préfixe « corps_ » : ils prennent l'échelle des corps HD (echelleCorps).
+function textureFaucheuseHD(scene, quoi = 'corps', { vue = 'troisQuarts', G = (typeof GAME !== 'undefined' ? GAME : null), levitation = true } = {}) {
+  const sv = souvenirsFaucheuse(G), sig = sv.join('-') || 'aucun';
+  const cle = quoi === 'buste' ? 'busteHD_faucheuse_' + sig : 'corps_faucheuseHD_' + vue + (levitation ? '_lev_' : '_sol_') + sig;
+  if (!scene.textures.exists(cle)) {
+    const t = quoi === 'buste' ? faucheuseBusteHD({ visage: 'crane', souvenirs: sv }) : faucheuseCorpsHD(vue, { visage: 'crane', souvenirs: sv, ...(levitation ? { levitation: { hauteur: 48, phase: 0.25 } } : {}) });
+    t.texture(scene, cle); scene.textures.get(cle).reperesFaucheuse = t.reperes;
+  }
+  return cle;
+}
+// Sa taille dans la file, à côté des autres (elle les dépasse d'une tête, sa faux au-dessus) : un facteur de l'échelle des corps
+const FH_ECHELLE_FILE = 0.8;
+// Les petites cendres (quatre formes : trois flocons, une goutte), dessinées une fois
+function texturesCendresFH(scene) {
+  if (scene.textures.exists('fhCendre3')) return;
+  const formes = [[2, 1.4, 0], [3, 2, 0.6], [4.5, 2.6, 1.1], [3, 3, 0]];
+  formes.forEach(([rx, ry, ang], i) => { const t = fhToile(14, 18); t.rampes.cendre = FH_RAMPES.cendre;
+    t.forme('cendre', sfEll(7, 7, rx, ry, ang), { decalage: -0.2, ombre: false, bord: false });
+    if (i === 3) sfTubeForme(t, 'cendre', [[7, 9], [7.5, 15]], u => 1.4 * (1 - u * 0.8) + 0.3, { decalage: -0.6, ombre: false, bord: false });   // (la goutte et sa queue)
+    if (rx > 3) t.poser(6, 6, 'cendre', 5);
+    t.contour(); t.texture(scene, 'fhCendre' + i); });
+}
+// Ses cendres, dans une scène : elles se détachent de `cible` (une image posée par le bas), montent en tournoyant et se
+// dissolvent ; elles restent là où elles sont nées (quand elle glisse, elles font sa traînée). Rend { arreter, rafale }.
+function cendresFaucheuse(scene, cible, { masque = null, cadence = 70, haut = 0.88, bas = 0.15, large = 0.42 } = {}) {
+  texturesCendresFH(scene);
+  const vivantes = [];
+  const une = (dense = 1) => {
+    if (!cible.active || !cible.visible || cible.alpha < 0.05) return;
+    const h = cible.displayHeight, w = cible.displayWidth, e = Math.max(0.55, Math.min(1.1, cible.scaleX * 0.6));
+    const x = cible.x + (Math.random() - 0.5) * w * large, y = cible.y - h * (bas + Math.random() * (haut - bas));
+    const c = scene.add.image(x, y, 'fhCendre' + Math.floor(Math.random() * 4)).setScale(e * (0.5 + Math.random() * 0.7)).setDepth(cible.depth + (Math.random() < 0.3 ? 0.05 : -0.05)).setAngle(Math.random() * 360);
+    if (masque) c.setMask(masque);
+    vivantes.push(c);
+    const duree = 1600 + Math.random() * 1400, monte = (30 + Math.random() * 55) * e * dense, derive = (Math.random() - 0.5) * 30 * e;
+    scene.tweens.add({ targets: c, y: y - monte, duration: duree, ease: 'Sine.easeOut' });
+    scene.tweens.add({ targets: c, x: x + derive, duration: duree / 2, yoyo: true, ease: 'Sine.easeInOut' });
+    scene.tweens.add({ targets: c, angle: c.angle + (Math.random() - 0.5) * 540, scale: c.scale * 0.2, alpha: 0, duration: duree, ease: 'Quad.easeIn',
+      onComplete: () => { c.destroy(); const i = vivantes.indexOf(c); if (i >= 0) vivantes.splice(i, 1); } });
+  };
+  const minuterie = scene.time.addEvent({ delay: cadence, loop: true, callback: () => { une(); if (Math.random() < 0.5) une(); } });
+  return {
+    rafale: (n = 30) => { for (let i = 0; i < n; i++) scene.time.delayedCall(i * 25, () => une(1.4)); },
+    arreter: () => { minuterie.remove(); },
+    detruire: () => { minuterie.remove(); for (const c of vivantes.splice(0)) c.destroy(); },
+  };
+}
+// Elle se dissout dans l'ombre : son image s'efface du bas vers le haut (le bas se défait le premier), une rafale de cendres
+// monte, ses yeux s'éteignent les derniers. fin() quand elle a disparu.
+function dissoudreFaucheuse(scene, img, { duree = 1600, cendres = null, yeux = [], fin = null } = {}) {
+  const w = img.width, h = img.height, etat = { p: 0 };
+  if (cendres) cendres.rafale(40);
+  scene.tweens.add({ targets: etat, p: 1, duration: duree, ease: 'Sine.easeIn',
+    onUpdate: () => { img.setCrop(0, 0, w, Math.max(1, h * (1 - etat.p * 0.92))); img.setAlpha(1 - Math.max(0, etat.p - 0.7) / 0.3); },
+    onComplete: () => { for (const o of yeux) scene.tweens.add({ targets: o, alpha: 0, duration: 300, onComplete: () => o.destroy() }); if (fin) fin(); } });
+}
+// Les lueurs rouges de ses yeux, sur une image posée par le bas (origine 0.5, 1)
+function yeuxFaucheuse(scene, img, prof = null) {
+  const R = scene.textures.get(img.texture.key).reperesFaucheuse; if (!R || !R.yeux || typeof creerHalo !== 'function') return [];
+  creerHalo(scene);
+  return R.yeux.map(([ex, ey]) => { const x = img.x + (img.flipX ? img.width / 2 - ex : ex - img.width / 2) * img.scaleX, y = img.y - (img.height - ey) * img.scaleY;
+    const o = scene.add.image(x, y, 'halo').setScale(Math.max(0.06, img.scaleX * 0.07)).setTint(0xff3a2a).setAlpha(0.85).setBlendMode(Phaser.BlendModes.ADD).setDepth((prof ?? img.depth) + 0.1);
+    if (img.mask) o.setMask(img.mask); return o; });
 }
