@@ -162,3 +162,34 @@ Avec les poids de l'allégeance seule (la bonté et la cruauté retirées des de
 9. Les récits de retour : une fois chacun, un cran, sans changer de camp ?
 10. Les villes fermées : quelles possibilités garder ?
 11. La 8e pièce : A, B ou C ?
+
+---
+
+## 11. La suite (Q309 à Q311, le spectateur) ☆
+
+Validé le 02/11 ★ (Q302 à Q316) : les trois mesures ; « naissante » / « effleuré » / « penchant » ; les ☀ ☾ gardés ; la fin de mort réservée au dernier degré de la Lumière et à la grande cruauté ; le neutre qui penche n'a que le choix de son côté et « la garder » ; les récits de retour ; toutes les possibilités des villes fermées ; la 8e pièce par un seul grand voyage à Cendrebourg (piste B). Les fiches de la suite : `scratchpad/lot3/a_valider/ombre-lumiere/fiches2/` (9 fiches, `fiches2.js`, `rendre2.js`).
+
+### 11.1 Le dernier appel : le calcul (Q311)
+- **Parties simulées** (pas de relevé des vraies parties du joueur) : `sim_degres.js` avec `SCEAU=0.6` (le joueur vise, plus d'une fois sur deux, un royaume pas encore libéré, quel que soit son camp) et `STOP7=7`, 7 stratégies × 12 parties, jusqu'au jour 450 (`lancer3.sh`, `sceau.js`).
+- Règle de la piste B pour le calcul : le sceau = 7 royaumes libérés (n'importe lesquels, les terres des Bannis comprises) + le voyage à Cendrebourg (9 jours : 3 de préparatifs, 5 de route, 1 sur place).
+- Résultat : 51 parties arrivent à la 7e pièce (29 faillites dans les premières semaines, 4 bloquées à 6 pièces, hors calcul). **7e pièce au jour 169 en moyenne** (écart 95, médiane 145, du jour 60 au jour 450). Sceau au jour 178 ; le dernier appel, une semaine avant : **jour 171**.
+- Par stratégie : conquérant 94, Lumière 127, distrait 127, girouette 146, Main Noire 196, neutre 204, Ombre 259. **L'Ombre est bien plus lente** : ses clients bannis refusent les terres de la Confrérie, et l'armure demande des royaumes de la Lumière.
+- Proposition : plutôt qu'un jour fixe (option A, jour 171), le dernier appel vient dans chaque partie **le soir où arrive la 7e pièce**, quand on prépare le voyage (option B) : une semaine environ avant le sceau, quel que soit le rythme.
+
+### 11.2 Le spectateur
+- Sa vie : la gazette de guerre (une carte du front), deux clients qui racontent la même bataille autrement, les réfugiés des deux camps, le commerce de guerre (tout se vend, et plus cher), les lettres de remerciement du Sage pour les taxes et la plaque, Garrick blagueur qui raconte le front, la Faucheuse qui compte les morts de la semaine, le chat qui rapporte ce que disent les bêtes ; la musique qui s'amincit, les lueurs d'incendie à l'horizon ; la cave vide un matin (la Main Noire ★).
+- Ses quatre aides secrètes (le cœur, jamais l'allégeance) : une nuit à l'abri pour un blessé de n'importe quel camp ; le courrier des deux rives ; la lanterne à la fenêtre ; le registre des noms des morts des deux camps.
+- À la fin : la carte de VieuxGoy « le Témoin », « l'Indécis » ou « le Marchand de guerre ».
+
+### 11.3 La faculté qui montre les ☀ ☾ (Q309)
+- Noms : la Lucidité (préférée), le Discernement, la Clairvoyance. Le flair reste pour le commerce (estimations, imposteurs).
+- Elle se gagne en « ouvrant les yeux » (une lueur à chaque fois) : découvrir la vraie conséquence d'un choix, démasquer un imposteur, repérer un faux présage, écouter un doyen jusqu'au bout, remarquer une fissure du Sage, lire la berceuse. Visible sans chiffre : la lampe de chevet de la chambre.
+- Paliers : 3 lueurs, un liseré sur les choix qui comptent ; 8, ☀ ou ☾ ; 15, une feuille (bon) ou une goutte rouge (cruel) ; 25, une phrase de présage au survol.
+- Elle s'éteint en présence du Sage ; la Lumière ardente n'en gagne plus, sauf par un récit du doute.
+
+### 11.4 Les avantages des camps (Q310)
+- Tableau en 7 lignes (clients, objets, prix, lieux, événements, protections, risques) : la Lumière gagne l'argent et le confort, le neutre la liberté, l'Ombre la vérité et la fidélité (fiche 6 de la suite).
+- La règle « l'Ombre gagne toujours moins » : aujourd'hui (parties simulées, argent moyen au jour 120) Lumière ≈ 70 000, neutre ≈ 52 000, Ombre ≈ 35 000 ; proposé : Lumière 100, neutre ≈ 95, Ombre ≈ 80.
+
+### 11.5 Correction
+- La fiche des villes fermées précise que la foire des pandas est **hors** des terres des Bannis : aux Monts de Bambou, terrain neutre, où un joueur de Lumière peut encore croiser des marchands bannis.
