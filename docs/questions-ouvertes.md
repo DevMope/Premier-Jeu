@@ -17,9 +17,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q282** — Le bout de la rue sur la place des Mastres (étape 8b) : solution 1 (pas de porche, le marché déborde dans la rue sous deux rangs de fanions), 2 (deux piliers bas de pierre avec lanterne et fleurs, guirlandes et écriteau « Place des Mastres », rien ne ferme ; conseillée) ou 3 (l'arche A en retrait, le marché qui déborde devant) ? En 2, faut-il aussi un étal qui déborde dans la rue, ou seulement les caisses ?
-- **Q283** — Pour cadrer l'ouverture, une maison voisine de la banque a été ajoutée (une maison de ville à étage, toit de tuiles, porte verte) : elle te va, ou une autre façade, voire une haie ?
-- **Q284** — L'atelier des Mages, les gens (morceaux 5 et 6) : le maître nain et un apprenti environ un jour sur cinq, deux apprentis un jour sur cinq, l'apprentie seule un jour sur six, seul le chat un jour sur cinq, vide sinon ; le soir, l'atelier dort. Ces fréquences te vont ? Le maître : le nain, ou la maîtresse-charpentière (aujourd'hui sur le seuil) ? Du monde le soir ?
+
+- **Q285** — La petite construction voisine de la banque, à l'entrée de la place : quelle fonction ? Des bâtiments d'une ville médiévale qui manquent encore : A, **le poids public** (la grande balance où les marchands pèsent leurs marchandises et paient le droit de marché, avec son préposé : logique à l'entrée d'un marché ; conseillé) ; B, **le corps de garde** (le poste de la garde, près de la banque et du marché) ; C, **l'échoppe de l'écrivain public** (il écrit les lettres de ceux qui ne savent pas) ; D, **un cordonnier** ou **une boulangerie** (aucun dans la ville pour l'instant) ; E, une haie ou un petit jardin clos. Lequel ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -28,6 +27,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q282 à Q284~~ Bout de rue refusé (problème d'échelle du marché) ; chaque bâtiment a une fonction claire ; atelier des Mages parfait (02/11).
 - ~~Q281~~ Les Pommeroy en A+B+C, validés (02/11).
 - ~~Q277 à Q280~~ Pommeroy : essayer les trois remèdes ; un accès au marché plus naturel que le porche ; apprentis aux Mages certains jours ; idée : la petite vie des PNJ (02/11).
 - ~~Q273 à Q276~~ Porche à refaire ; neige sur le fronton de la banque ; enseigne des Mages visible le jour et intérieur à refaire ; impasse reportée au Rempart ; Pommeroy : pierre trop large (02/11).
