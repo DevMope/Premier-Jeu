@@ -380,13 +380,6 @@ function creerObjetsEvtHD(scene) {
     t.forme('carreaux', ellipsoide(19, 8, 6.5, 5.5), { motif: (x, y) => ((Math.floor(x / 2) + Math.floor(y / 2)) % 2 ? 0.7 : -0.3) });
     t.forme('carreaux', polygoneHD([[18, 2], [22, 0], [21, 4]]), { decalage: -0.2 });
   });
-  // La lettre de Garrick, au sceau de cire verte frappé d'une feuille de chêne
-  fabriquer('evt_lettreGarrick', 26, 18, t => {
-    t.rampes.cireVerte = rampe(0x3a6a2a);
-    for (let y = 0; y < 18; y++) for (let x = 0; x < 26; x++) t.poser(x, y, 'parchemin', x === 25 || y === 17 ? 2 : 4 - (Math.abs(y - 1 - x * 0.62) < 0.6 || Math.abs(y - 1 - (25 - x) * 0.62) < 0.6 ? 2 : 0));
-    t.forme('cireVerte', ellipsoide(13, 10, 3.6, 3.4), { decalage: 0.4 });
-    t.poser(13, 9, 'feuille', 5); t.poser(12, 10, 'feuille', 4); t.poser(14, 10, 'feuille', 4); t.poser(13, 11, 'feuille', 3);
-  });
   // La berceuse : une vieille page de musique pliée en quatre
   fabriquer('evt_berceuse', 26, 20, t => {
     for (let y = 0; y < 20; y++) for (let x = 0; x < 26; x++) t.poser(x, y, 'cire', x === 25 || y === 19 ? 2 : x === 13 ? 2 : 4);

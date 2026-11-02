@@ -475,7 +475,7 @@ class PecheScene extends Phaser.Scene {
       c.setTexture(this.cleChat + '_bond').setFlipX(false).setPosition(X - 40, SOL_PROMENADE - 20);
       Son.jouer('miaou');
       await new Promise(ok => this.tweens.add({ targets: c, x: lx + 30, y: ly + 20, duration: 260, ease: 'Quad.easeOut', onComplete: ok }));
-      qui = { x: c.x, y: c.y - 60, texte: '« Tu es fou ? Cent ans qu’elle nargue tout le monde ! »' };
+      qui = { x: c.x, y: c.y - 60, texte: `« Tu es fou${eJ(this.G)} ? Cent ans qu’elle nargue tout le monde ! »` };
       this.dire(`Tu la lâches au-dessus de l’eau... et ${nomChat(this.G)} jaillit du ponton : il la rattrape au vol avant même qu’elle effleure la surface.`, 'Une légende ne se relâche pas : il faut choisir.');
       await new Promise(ok => this.time.delayedCall(1600, ok));
       await new Promise(ok => this.tweens.add({ targets: [c, poisson], x: X + 50, y: SOL_PROMENADE - 40, duration: 400, onComplete: ok }));
