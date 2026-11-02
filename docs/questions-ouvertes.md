@@ -12,9 +12,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q270** — La pierre à la façon de Stardew (étape 6, morceaux 1 et 2 : assises de hauteurs variées, pierres arrondies de tailles variées, joints irréguliers, chaque pierre modelée) : le niveau est bon ? La banque a maintenant des joints un peu ondulés : on la garde plus lisse, comme une vraie pierre de taille ?
-- **Q271** — Ton comptoir (morceaux 3 et 4) : la plaque est retirée ; l'enseigne à ton nom est plus compacte et ne déborde plus sur la forge. Sur la chaumière, elle paraît petite et peu contrastée : on la grossit un peu (elle mordrait davantage sur la vitre) ?
-- **Q272** — La maison du paon (morceaux 5 et 6, dans tous ses états) : validée ? Son rez-de-chaussée blanc (vitrines, pilastres) reste lisse, sans la pierre : d'accord ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -23,6 +20,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q270 à Q272~~ Faucheuse validée ; pierre validée sauf les Pommeroy ; enseigne du comptoir et maison du paon validées (02/11).
 - ~~Q266 à Q269~~ Zoom 1,0, forge A, pierre poussée, plaque du comptoir retirée, enseigne remodelée ; finir la ville des hobbits avant Pont-Royal (02/11).
 - ~~Q257, Q264, Q265~~ La Faucheuse v6 validée : jonction parfaite, cendres et traînée top ; un GIF demandé (02/11).
 - ~~Q263~~ Morgunheit, la Promesse de l'Aube (02/11).
