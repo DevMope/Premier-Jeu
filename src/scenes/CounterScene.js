@@ -1839,7 +1839,7 @@ class CounterScene extends Phaser.Scene {
         this.dire(`Le capitaine baisse la voix : « On sait que ${nomBande(G)} te tient. Si tu parles, la Confrérie efface ta dette envers eux... et te protège. Enfin, on essaiera. »`, cap);
         this.choix([`Dénoncer ${nomBande(G)}`, () => {
           denoncerMafia(G); Son.jouer('cloche'); this.dessinerPieces();
-          this.dire(`Tu racontes tout. Le capitaine prend des notes, longtemps. « Demain, on frappe. Garde la tête basse quelque temps. » (Dette effacée, +2 de réputation. Mais la bande n'oublie pas...)`, cap);
+          this.dire(`Tu lui fais tout comprendre, un nom après l'autre. Le capitaine prend des notes, longtemps. « Demain, on frappe. Garde la tête basse quelque temps. » (Dette effacée, +2 de réputation. Mais la bande n'oublie pas...)`, cap);
           partir();
         }], ['Je n\'ai rien à dire', () => { this.dire('« Comme tu voudras. La porte de la Confrérie reste ouverte. »', cap); partir(); }]);
       });
