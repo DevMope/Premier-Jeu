@@ -629,11 +629,11 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   const tonneaux = scene.add.image(gauche + FACADE.L * 2 - 26, sol + 4, 'tonneauxHD').setOrigin(0, 1).setScale(2);
   // L'enseigne pend à son support, et se balance un peu
   // (v0.93) elle s'améliore avec la maison entière ; l'écriture et la couleur du fond se choisissent au bureau
-  // (Q269, la rue Soucolline) enseigneSurFacade : plus compacte (0,72), pendue sous l'égout au-dessus de la fenêtre-comptoir,
+  // (Q269, la rue Soucolline) enseigneSurFacade : plus compacte (0,8), pendue sous l'égout au-dessus de la fenêtre-comptoir,
   // toute sur la façade (elle ne déborde plus sur la maison voisine), à tous les niveaux
   const surF = enseigneSurFacade && !stylePR, ex = surF ? gauche + 60 * 2 : gauche + (FACADE.enseigne[0] + 6) * 2, ey = surF ? haut + (n >= 2 ? 108 : n === 0 ? 116 : 113) * 2 - 2 : haut + FACADE.enseigne[1] * 2;
   const enseigne = poserEnseigne(scene, ex, ey - (n === 3 && !surF ? 8 : 0), n, nomShop);
-  if (surF) enseigne.setScale(0.72);
+  if (surF) enseigne.setScale(0.8);
   scene.tweens.add({ targets: enseigne, angle: { from: -2.5, to: 2.5 }, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   // Un filet de fumée qui monte de la cheminée
   creerHalo(scene);
