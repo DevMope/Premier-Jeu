@@ -592,10 +592,10 @@ function pierresRondesDonnees(d, W, H, zones) {
     let sr = 0, sg = 0, sb = 0, n = 0; const masque = new Uint8Array((x1 - x0 + 1) * (y1 - y0 + 1)), at = (x, y) => (y - y0) * (x1 - x0 + 1) + (x - x0);
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (pierre(x, y) && !hors(x, y)) { masque[at(x, y)] = 1; const i = (y * W + x) * 4; if (lum(i) > 60) { sr += d[i]; sg += d[i + 1]; sb += d[i + 2]; n++; } }
     if (!n) continue;
-    const moy = [sr / n, sg / n, sb / n], TONS = [0.4, 0.56, 0.74, 0.9, 1.06, 1.22];
+    const moy = [sr / n, sg / n, sb / n], TONS = [0.5, 0.66, 0.84, 1.0, 1.12, 1.24];
     const poser = (x, y, k, t) => { if (x < x0 || x > x1 || y < y0 || y > y1 || !masque[at(x, y)]) return; const i = (y * W + x) * 4, f = TONS[Math.max(0, Math.min(5, k))] * t; for (let c = 0; c < 3; c++) d[i + c] = Math.max(0, Math.min(255, moy[c] * f)); masque[at(x, y)] = 2; };
     // le mortier, partout d'abord
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) poser(x, y, 0, 1), masque[at(x, y)] = masque[at(x, y)] ? 1 : 0;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) poser(x, y, z.regulier ? 1 : 0, 1), masque[at(x, y)] = masque[at(x, y)] ? 1 : 0;
     let y = y0 - Math.floor(hachage(1, 2, g) * 3), r = 0;
     while (y <= y1) {
       const h = z.regulier ? 7 : 5 + Math.floor(hachage(r, 7, g) * 4); let x = x0 - Math.floor(hachage(r, 3, g) * 12), c = 0;
@@ -612,7 +612,7 @@ function pierresRondesDonnees(d, W, H, zones) {
       y += h; r++;
     }
     // le dégradé vers le sol, la sous-face de l'étage qui avance
-    for (let yy = y0; yy <= y1; yy++) { const v = (yy - y0) / Math.max(1, y1 - y0), f = (1 - 0.24 * Math.pow(v, 1.4)) * (sf && yy - y0 < sf ? (yy - y0 < sf * 0.6 ? 0.66 : 0.82) : 1);
+    for (let yy = y0; yy <= y1; yy++) { const v = (yy - y0) / Math.max(1, y1 - y0), f = (1 - 0.18 * Math.pow(v, 1.4)) * (sf && yy - y0 < sf ? (yy - y0 < sf * 0.6 ? 0.66 : 0.82) : 1);
       for (let x = x0; x <= x1; x++) { const i = (yy * W + x) * 4; if (d[i + 3] < 128) continue; d[i] *= f; d[i + 1] *= f; d[i + 2] *= f; } }
   }
 }
