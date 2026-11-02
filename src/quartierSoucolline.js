@@ -286,6 +286,7 @@ DECORS_QUARTIERS.soucolline = {
         s.tweens.add({ targets: pa, angle: -3, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
     }, YN);
+    paonVolumeDansLot(s, paon); contact(L.paon, 176);   // (étape 6) la maison du paon, en volume, dans tous ses états
     s.lieuxRue.paon = paon;
     // (vue de haut, validée) la maison haute à colombages en un seul volume, sous son toit d'ardoises en croupe (maisonVolumeHD.js)
     { const k = maisonHauteVolumeHD(s); img(L.maisonHaute, YN + 2, k, E); ici.chem(k, L.maisonHaute, YN + 2); contact(L.maisonHaute, 140); }

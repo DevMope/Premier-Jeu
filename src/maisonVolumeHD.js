@@ -392,7 +392,7 @@ function revolumeHD(s, src, cle, o) {
   if (s.textures.exists(cle)) return cle;
   if (!s.textures.exists(src)) return src;
   const img = s.textures.get(src).getSourceImage(), Wd = img.width, Hs = img.height;
-  const { coupe, xa, xb, montee, prof, mat = 'tuile', motif = 'tuile', g = 1, bois = 'chene', cheminee = null, lucarne = null, ops = [], mur = [0, Wd - 1], rampes = {}, marches = [] } = o;
+  const { coupe, xa, xb, montee, prof, mat = 'tuile', motif = 'tuile', g = 1, bois = 'chene', cheminee = null, lucarne = null, ops = [], mur = [0, Wd - 1], rampes = {}, marches = [], garder = null } = o;
   const egout = coupe - 3, P = montee + Math.round(prof * VOLUME_HD.prof), oy = Math.max(0, P + (cheminee ? 44 : 10) - egout), H = Hs + oy;
   const t = toileDecor(Wd, H); Object.assign(t.rampes, RAMPES_RUE, typeof RAMPES_V2 !== 'undefined' ? RAMPES_V2 : {}, rampes);
   const toit = toitCroupeHD(t, { xa, xb, yEgout: egout + oy, montee, prof, mat, motif, g, bois });
@@ -404,6 +404,9 @@ function revolumeHD(s, src, cle, o) {
   ctx.drawImage(img, 0, coupe, Wd, Hs - coupe, 0, coupe + oy, Wd, Hs - coupe);
   const D = ctx.getImageData(0, 0, Wd, H), d = D.data;
   for (let i = 0; i < t.c.length; i++) { const c = t.c[i]; if (c === null) continue; d[i * 4] = c >> 16; d[i * 4 + 1] = (c >> 8) & 255; d[i * 4 + 2] = c & 255; d[i * 4 + 3] = 255; }
+  if (garder) {   // (étape 6) ce qui, au-dessus de la coupe, n'est pas du toit et reste devant lui : un fronton
+    const cs = document.createElement('canvas'); cs.width = Wd; cs.height = Hs; const cx2 = cs.getContext('2d'); cx2.drawImage(img, 0, 0); const sd = cx2.getImageData(0, 0, Wd, coupe).data;
+    for (let y = 0; y < coupe; y++) for (let x = 0; x < Wd; x++) { const j = (y * Wd + x) * 4; if (sd[j + 3] < 128 || !garder(x, y)) continue; const i = ((y + oy) * Wd + x) * 4; for (let c = 0; c < 4; c++) d[i + c] = sd[j + c]; } }
   const ok = (x, y) => x >= 0 && y >= 0 && x < Wd && y < H && d[(y * Wd + x) * 4 + 3] >= 128;
   const lum = (x, y) => { const i = (y * Wd + x) * 4; return 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]; };
   const mul = (x, y, f) => { if (!ok(x, y)) return; const i = (y * Wd + x) * 4; d[i] *= f; d[i + 1] *= f; d[i + 2] *= f; };
@@ -421,7 +424,7 @@ function revolumeHD(s, src, cle, o) {
   for (let x = 0; x < Wd; x++) { mul(x, H - 1, 0.72); mul(x, H - 2, 0.86); }   // le pied du mur
   ctx.putImageData(D, 0, 0);
   s.textures.addCanvas(cle, cv);
-  noterVolumeHD(s, cle, toit, egout + oy, ch, lu ? (x, y) => x >= lu.lx && x < lu.lx + lu.l && y >= lu.ly && y < lu.bas : null);
+  noterVolumeHD(s, cle, toit, egout + oy, ch, lu ? (x, y) => x >= lu.lx && x < lu.lx + lu.l && y >= lu.ly && y < lu.bas : garder ? (x, y) => y - oy < coupe && garder(x, y - oy) : null);
   s.textures.get(cle).volume89 = { oy, coupe };
   return cle;
 }
@@ -619,4 +622,19 @@ function pierresRondesDonnees(d, W, H, zones) {
 function pierresRondesTexture(s, cle, zones) {
   const tex = s.textures.get(cle), c = tex.getSourceImage(), ctx = c.getContext('2d'), D = ctx.getImageData(0, 0, c.width, c.height);
   pierresRondesDonnees(D.data, c.width, c.height, zones); ctx.putImageData(D, 0, 0); if (tex.refresh) tex.refresh();
+}
+
+// ======================= ÉTAPE 6 : la maison du paon, dans tous ses états =======================
+// Toutes ses façades (le paon ouvert, ou « fort », à vendre ou vide, le petit bar et ses trois styles, l'orphelinat) sortent
+// de creerFacadeRivalHD (rivalHD.js), la même géométrie repeinte : on les reprend toutes de la même façon. Le fronton blanc
+// (son médaillon, l'emblème du Conseil posé par la scène) reste devant ; derrière lui, le toit d'ardoises en croupe ; sa
+// corniche blanche sert de rive ; la porte en retrait, la corniche de l'étage éclairée par le dessus.
+function frontonPaon(x, y) { return (Math.abs(x - 100) < (y - 2) * 0.95 - 2) || (y < 10 && Math.abs(x - 100) < 4); }
+function paonVolumeHD(s, src) {
+  return revolumeHD(s, src, src + '_vol', { coupe: 50, xa: 2, xb: 197, prof: 34, montee: 50, mat: 'ardoiseToit', motif: 'ardoise', bois: 'taille', g: 870, mur: [12, 187], garder: frontonPaon,
+    ops: [{ r: [88, 124, 111, 175], interieur: true, k: 5 }, { d: [8, 191, 105], n: 1 }] });
+}
+// Dans un lot déjà posé (la maison du paon de la rue), chaque façade du paon prend son volume (même place, même pied)
+function paonVolumeDansLot(s, lot) {
+  for (const o of lot.list || []) if (o.type === 'Image' && /^facadeRivalHD_/.test(o.texture.key) && !/_vol$/.test(o.texture.key)) o.setTexture(paonVolumeHD(s, o.texture.key));
 }
