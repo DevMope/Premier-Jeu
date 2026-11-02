@@ -580,23 +580,22 @@ function ouvrirCarteMonde(scene) {
   scene.scene.pause();
   scene.scene.launch('Carte', { consultation: true, retour: scene.scene.key });
 }
-// Une petite carte roulée, dessinée en pixels (le bouton « La carte » des pages et des panneaux)
+// Une petite carte roulée (le bouton « La carte » des pages et des panneaux) ; (la fin du 16 px) en HD, à la même taille :
+// le parchemin ombré et ses plis, les bois, un lac, des montagnes, le chemin rouge et sa croix, les deux rouleaux
 function texCarteMonde(scene) {
   const cle = 'iconeCarteMonde';
   if (scene.textures.exists(cle)) return cle;
-  const g = scene.make.graphics({ add: false });
-  g.fillStyle(0x3b2410).fillRect(0, 2, 30, 20);                 // le contour
-  g.fillStyle(0xe8d4a0).fillRect(1, 3, 28, 18);                 // le parchemin
-  g.fillStyle(0xcdb27a).fillRect(10, 3, 1, 18).fillRect(20, 3, 1, 18);   // les plis
-  g.fillStyle(0x7aa05a).fillRect(3, 6, 6, 4).fillRect(13, 13, 5, 5);     // les bois
-  g.fillStyle(0x6a8ac0).fillRect(22, 5, 5, 3).fillRect(24, 8, 2, 6);     // un lac et sa rivière
-  g.fillStyle(0x8a6a4a).fillRect(4, 15, 2, 2).fillRect(17, 6, 2, 2);     // des montagnes
-  g.fillStyle(0xb82a20);
-  for (const [x, y] of [[5, 12], [8, 13], [11, 12], [14, 10], [17, 9], [20, 10], [23, 15]]) g.fillRect(x, y, 1, 1);   // le chemin
-  g.fillRect(22, 14, 3, 3);                                     // la croix
-  g.fillStyle(0x6b4a22).fillRect(0, 0, 3, 24).fillRect(27, 0, 3, 24);   // les rouleaux
-  g.fillStyle(0x9a7040).fillRect(1, 0, 1, 24).fillRect(28, 0, 1, 24);
-  g.generateTexture(cle, 30, 24); g.destroy();
+  const t = toileDecor(30, 24); t.rampes.bois = rampe(0x5a8a3a); t.rampes.lac = rampe(0x6a8ac0); t.rampes.mont = rampe(0x8a6a4a); t.rampes.rouleau = rampe(0x8a5a2a);
+  t.forme('parchemin', (x, y) => (x >= 2 && x <= 27 && y >= 3 && y <= 20 ? [0, (y - 11.5) / 14, 0.9] : null),
+    { motif: (x, y) => (x === 10 || x === 19 ? -1 : x === 11 || x === 20 ? 0.6 : fbm(x * 0.35, y * 0.35, 5851) > 0.64 ? -0.6 : 0) });
+  for (const [cx, cy, rx, ry] of [[6, 7.5, 2.6, 1.8], [8, 9, 1.8, 1.4], [15.5, 15, 2.6, 2]]) t.forme('bois', ellipsoide(cx, cy, rx, ry), { decalage: 0.2 });
+  t.forme('lac', ellipsoide(24, 6.5, 2.6, 1.6), { decalage: 0.1 });
+  for (let y = 8; y <= 13; y++) t.poser(24 + (y > 10 ? 1 : 0), y, 'lac', 3);
+  for (const [x0, y0] of [[4, 17], [17, 7]]) for (let k = 0; k < 3; k++) { t.poser(x0 + k, y0 - Math.min(k, 2 - k), 'mont', 4 - k % 2); t.poser(x0 + k, y0 + 1, 'mont', 1); }
+  for (const [x, y] of [[5, 13], [7, 13], [9, 12], [11, 12], [13, 11], [15, 10], [17, 10], [19, 11], [21, 12]]) t.poser(x, y, 'tissuRouge', 3);
+  for (const [x, y] of [[22, 14], [24, 14], [23, 15], [22, 16], [24, 16]]) t.poser(x, y, 'tissuRouge', 4);
+  for (const x0 of [0, 27]) t.forme('rouleau', (x, y) => (x >= x0 && x <= x0 + 2 && y >= 0 && y <= 23 ? [(x - x0 - 1) / 1.6, 0, 0.8] : null), { decalage: 0.2 });
+  t.contour(); t.texture(scene, cle);
   return cle;
 }
 // Le bouton « La carte » : l'icône et son nom, qui grandissent un peu au survol

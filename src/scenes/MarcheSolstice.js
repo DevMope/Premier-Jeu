@@ -3,16 +3,18 @@
 // de l'Union chez Marcelline (les atours, et la bénédiction du comptoir par Frère Anselme).
 Object.assign(MarcheScene.prototype, {
   // Un lampion de papier, ses deux chapeaux sombres et sa lueur
+  // (la fin du 16 px) un lampion de papier en HD, à la même taille (14 × 23) : ses côtes, sa lueur au cœur, ses deux
+  // viroles de bois sombre, son gland d'or
   texLampion(couleur) {
     const cle = 'lampion_' + couleur.toString(16);
     if (this.textures.exists(cle)) return cle;
-    const g = this.make.graphics({ add: false });
-    g.fillStyle(0x2a1a10).fillRect(4, 0, 6, 3).fillRect(4, 17, 6, 3);
-    g.fillStyle(couleur).fillEllipse(7, 10, 14, 15);
-    g.fillStyle(0xffffff, 0.35).fillEllipse(5, 8, 4, 8);
-    g.fillStyle(0x000000, 0.18); for (const y of [6, 10, 14]) g.fillRect(1, y, 12, 1);
-    g.fillStyle(0xf0c040).fillRect(6, 20, 2, 3);
-    g.generateTexture(cle, 14, 23); g.destroy();
+    const t = toileDecor(14, 23); t.rampes.papier = rampe(couleur); t.rampes.virole = rampe(0x3a2414);
+    t.forme('papier', (x, y) => { const dx = (x + 0.5 - 7) / 6.6, dy = (y + 0.5 - 10.5) / 7.6; return dx * dx + dy * dy <= 1 && y >= 3 && y <= 17 ? [dx, dy * 0.6, 0.8] : null; },
+      { motif: (x, y) => ((y === 6 || y === 10 || y === 14) ? -1 : Math.hypot(x + 0.5 - 6, y + 0.5 - 10) < 2.6 ? 0.9 : 0), ombre: false });
+    t.forme('virole', (x, y) => (x >= 4 && x <= 9 && ((y >= 1 && y <= 3) || (y >= 17 && y <= 19)) ? [(x + 0.5 - 7) / 3, 0, 0.8] : null), { decalage: 0.2 });
+    t.poser(6, 0, 'virole', 2); t.poser(7, 0, 'virole', 2);
+    for (let y = 20; y <= 22; y++) { t.poser(6, y, 'or', y === 22 ? 2 : 4); t.poser(7, y, 'or', y === 22 ? 2 : 3); }
+    t.texture(this, cle);
     return cle;
   },
 
