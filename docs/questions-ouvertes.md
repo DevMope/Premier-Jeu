@@ -19,6 +19,12 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q286** — Les trois armures (planche 93) sont dans le jeu : icônes des 8 pièces en trois versions, mannequin de la chambre, pièce qui s'élève à l'arrivée du messager, et « la Promesse de l'Aube » (Morgunheit gravé sur la lame). Tu valides (morceaux dans `a_valider/armures/morceaux/`) ?
+- **Q287** — L'armure portée par JeuneGoy (en pied et en buste) est prête, mais aucune scène ne le montre encore en armure : où et quand la porte-t-il (l'acte V, le comptoir confié, les fins, la grande bataille) ?
+- **Q288** — L'armure neutre garde le nom « Armure du Dernier Rempart » : un autre nom pour elle ? Et au sceau neutre, il n'y a qu'un éclair gris, sans phrase (les deux autres camps ont « L'armure s'assombrit... » / « L'armure se purifie... ») : quelle phrase pour le neutre ?
+- **Q289** — Changement fait par l'agent, à valider : quand le joueur a juré à un camp opposé à sa balance, l'armure change maintenant tout de suite au sceau, et non plus le lendemain matin. D'accord ?
+- **Q290** — La pièce d'armure dessinée à plat (comme sur la planche) aussi dans le parchemin du messager, à la place de la petite icône agrandie ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
