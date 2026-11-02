@@ -83,7 +83,7 @@ Object.assign(PORCHE_PISTES, {
   3: { piste: '3', L: 176, H: 205, sol: 204, ouvert: true, recul: 30, piliers: [[6, 27], [148, 169]], yI: 54, toit: { xa: 2, xb: 173, montee: 20, prof: 20 }, couvert: 30, seuil: 12, murets: false,
     lanternes: [[37, 98], [138, 98]], chaines: [68, 108], ecriteau: 66, passants: [2, 26], ouverture: [0, 176], debord: true },
 });
-const PORCHE_PISTE = '2';   // (conseillée ; window.PORCHE_PISTE = '1', '2', '3', 'A' ou 'B' pour comparer sur les captures)
+const PORCHE_PISTE = '4';   // (étape 9b : le vrai début de la place, à l'échelle de la rue ; window.PORCHE_PISTE = '1', '2', '3', '4', 'A' ou 'B' pour comparer)
 function porchePiste() { return PORCHE_PISTES[(typeof window !== 'undefined' && window.PORCHE_PISTE) || PORCHE_PISTE] || PORCHE_PISTES.A; }
 // Les couleurs du porche et de la place, selon la saison
 function rampesPorche6b(t, saison) {
@@ -724,4 +724,122 @@ function ouvriersMages(s, jour) {
     s.time.delayedCall(600, aller);
   }
   return quoi;
+}
+
+// ======================= ÉTAPE 9b : LE BOUT DE LA RUE À LA MÊME ÉCHELLE QUE LA PLACE (Q283), LE POIDS PUBLIC (Q285) =======================
+// Le marché vu au bout de la rue était une petite vue rapetissée (ses étals à 43 % de leur taille, sa fontaine à 33 %). La rue
+// et la place ont le même monde (les gens y sont à 4,5 ; un pixel du monde est le même) : la rue débouche donc directement sur
+// le vrai début de la place, posé dans le monde de la rue, à sa vraie place et à sa vraie taille : son sol (le même dessin que
+// la scène de la place : solPlaceHD), ses passants, le jour de marché la charrette d'un colporteur. On n'en voit qu'un morceau,
+// entre la banque et le poids public : le reste est hors cadre. On y entre en marchant.
+// Le point de la place qui fait face au bout de la rue (son entrée sud : LIEUX_PLACE.arche, 900 × 1040) est en (3640, YN) dans la rue.
+Object.assign(PORCHE_PISTES, { 4: { piste: '4', reel: true, ouvert: true, lanternes: [], L: 176, H: 205, sol: 204, seuil: 12, passants: [18, 46], ouverture: [0, 176] } });
+const PLACE_DANS_RUE = { X: 3640, x0: 3500, x1: 3772, profondeur: 560 };
+function placeReelleRue9b(s, ici, { jour, saison, YN }) {
+  const D = PLACE_DANS_RUE, A = typeof LIEUX_PLACE !== 'undefined' ? LIEUX_PLACE.arche : [900, 1040], enRue = (px, py) => [D.X + (px - A[0]), YN - (A[1] - py)];
+  // 1. le sol de la place, le même que dans sa scène : on en découpe le morceau qu'on voit par le bout de la rue
+  const pal = paletteSaisonComte(saison), cleSol = solPlaceHD(s, 'solPlace_' + saison, pal, PLACE_MARCHE.L / 2, 520, planSolPlace());
+  const k = 'solPlaceTranche_' + saison;
+  if (!s.textures.exists(k)) {
+    const src = s.textures.get(cleSol).getSourceImage(), px0 = A[0] + (D.x0 - D.X), py0 = A[1] - D.profondeur, l = (D.x1 - D.x0) / 2, h = D.profondeur / 2;
+    const cv = document.createElement('canvas'); cv.width = l; cv.height = h; const c = cv.getContext('2d'); c.imageSmoothingEnabled = false;
+    c.drawImage(src, px0 / 2, py0 / 2, l, h, 0, 0, l, h);
+    const I = c.getImageData(0, 0, l, h), d = I.data;   // (sous le bord de la rue, l'ombre des façades et du trottoir)
+    for (let y = h - 4; y < h; y++) for (let x = 0; x < l; x++) { const i = (y * l + x) * 4, f = 0.78 + (h - 1 - y) * 0.05; d[i] *= f; d[i + 1] *= f; d[i + 2] *= f; }
+    c.putImageData(I, 0, 0); s.textures.addCanvas(k, cv);
+  }
+  ici.img(D.x0, YN - D.profondeur, k, 2, YN - D.profondeur - 1, 0, 0);
+  // la fontaine de la place, à sa place (son pied à 378 du bord de la rue) et à sa taille : la banque et le poids public la cachent
+  // en partie, comme dans la réalité ; ses deux pots de fleurs
+  if (typeof fontaineLoinHD === 'function' && typeof FONTAINE_LOIN !== 'undefined') {
+    const F = FONTAINE_LOIN, [fx, fy] = enRue(900, 662), solF = fy - (F.H - F.sol) * 2;
+    ici.img(fx + 12, solF + 6, ombrePlaceHD(s), 1, solF - 60, 0.5, 0.5).setScale((F.ext.rx * 4 + 30) / 64, (F.ext.ry * 4 + 18) / 24);
+    ici.img(fx, fy, fontaineLoinHD(s), 2, solF);
+    if (typeof potFleursLoinHD === 'function') for (const sens of [-1, 1]) ici.img(fx + sens * 150, fy + 4, potFleursLoinHD(s), 2, fy + 4).setFlipX(sens > 0);
+  }
+  // 2. le jour de marché, la charrette d'un colporteur, juste à l'entrée de la place (le marché qui commence) et son colporteur
+  const G = window.GAME, marche = typeof jourDeMarche === 'function' && G && jourDeMarche(G);
+  if (marche && typeof charretteColporteurHD === 'function') {
+    const [cx, cy] = [3712, YN - 64]; ici.img(cx, cy, charretteColporteurHD(s), 2.2, cy).setFlipX(true);
+    if (jour) { const v = imageCorps(s, cx - 74, cy + 30, 'colporteur', 4.5); ici.poser(v, cy + 30); s.tweens.add({ targets: v, scaleY: v.scaleY * 1.015, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
+  }
+  // 3. les passants de la place, à l'échelle de la rue (le jour) : ils flânent sur la place, au bout de la rue
+  if (!jour) return;
+  const races = ['humain', 'hobbit', 'nain', 'elfe', 'hobbit'];
+  [[3540, YN - 46, 0], [3626, YN - 112, 1], [3690, YN - 28, 2], [3580, YN - 170, 3]].forEach(([x, y, i]) => {
+    const p = imageCorps(s, x, y, { nom: 'Flâneur de la place ' + i, race: races[i], feminin: i % 2 === 1, niveau: 'novice' }, 4.5).setFlipX(i % 2 === 0); ici.poser(p, y);
+    const suite = () => { if (!p.active) return;
+      if (Math.random() < 0.45) { s.tweens.add({ targets: p, scaleY: p.scaleY * 1.015, duration: 1300, yoyo: true, repeat: 1 }); s.time.delayedCall(2600 + Math.random() * 3000, suite); return; }
+      const cible = Phaser.Math.Clamp(p.x + (Math.random() < 0.5 ? -1 : 1) * (40 + Math.random() * 80), D.x0 + 24, D.x1 - 24), duree = Math.abs(cible - p.x) / 0.03;
+      if (duree < 300) { s.time.delayedCall(800, suite); return; }
+      p.setFlipX(cible < p.x); pasDeMarche(s, p, duree, { poussiere: false });
+      s.tweens.add({ targets: p, x: cible, duration: duree, onComplete: () => s.time.delayedCall(600 + Math.random() * 2400, suite) }); };
+    s.time.delayedCall(400 + i * 700, suite);
+  });
+}
+// --- (Q285) Le poids public, à l'angle est du bout de la rue, à l'entrée de la place : une petite loge ouverte sur la rue, son
+//     mur du fond de pierre modelée, deux poteaux de chêne sur leurs socles, sa sablière, son auvent de planches (son dessus vu
+//     d'en haut), un toit en croupe de tuiles ; dedans, la grande balance à fléau sur son portique de chêne, ses deux plateaux de
+//     laiton pendus à leurs chaînes (un sac sur l'un), les poids de fonte empilés, l'ardoise des tarifs au mur, le registre ouvert
+//     sur son pupitre ; devant, des sacs et une caisse à peser. Le préposé y pèse, certains jours (posé par la rue).
+const POIDS_PUBLIC = { L: 84, H: 150, X: 3838, yE: 58, ecriteau: [42, 64], prepose: [22, 142] };
+function poidsPublicHD(s, jour) {
+  const saison = (typeof saisonActuelle === 'function' && saisonActuelle()) || 'moissons', cle = 'poidsPublicHD_' + saison + (jour ? '_j' : '_n');
+  if (s.textures.exists(cle)) return cle;
+  const { L, H, yE } = POIDS_PUBLIC, sol = H - 1, t = toileDecor(L, H); rampesPorche6b(t, saison); const { D, enDessus } = dessus6b(t);
+  Object.assign(t.rampes, { ardoiseT: [0x14161a, 0x1e2228, 0x2a3038, 0x3a424c, 0x8a929a, 0xe8ecf0], sac: rampe(0xc8a878), bardeauP: rampe(0x8a6a44) });
+  const yF = sol - 18, yAuv = yE + 12;   // (le pied du mur du fond : la loge a 24 de profondeur ; l'auvent, sous la sablière)
+  // 1. le mur du fond (de pierre, dans l'ombre de la loge), le sol de dalles vu d'en haut
+  for (let y = yE + 3; y < yF; y++) for (let x = 2; x < L - 2; x++) t.poser(x, y, 'pierre', 3);
+  for (let y = yF; y <= sol; y++) { const r = Math.floor((sol - y) / 6), ty = (sol - y) % 6; for (let x = 2; x < L - 2; x++) t.poser(x, y, 'taille', (ty === 5 || (x + r * 7) % 14 === 0 ? 1 : ty === 4 ? 4 : 3) - (y < yF + 5 ? 1 : 0)); }
+  // 2. l'ardoise des tarifs, au mur : son cadre, ses lignes de craie
+  for (let y = yAuv + 12; y < yAuv + 30; y++) for (let x = 56; x < 74; x++) { const cadre = x === 56 || x === 73 || y === yAuv + 12 || y === yAuv + 29; t.poser(x, y, cadre ? 'chene' : 'ardoiseT', cadre ? (y === yAuv + 12 ? 5 : 2) : ((y - yAuv - 15) % 4 === 0 && x > 58 && x < 71 - ((y * 3) % 5) ? 5 : 2)); }
+  // 3. la balance à fléau : le portique de chêne, le fléau de fer (son dessus éclairé), les chaînes, les deux plateaux de laiton vus d'en haut
+  const bx = 40, yb = sol - 8;
+  for (const ux of [bx - 13, bx + 13]) for (let y = yAuv + 16; y <= yb; y++) { t.poser(ux, y, 'chene', 4); t.poser(ux + 1, y, 'chene', 2); }
+  enDessus(() => { for (let x = bx - 14; x <= bx + 15; x++) t.poser(x, yAuv + 15, 'chene', 5); }); for (let x = bx - 14; x <= bx + 15; x++) t.poser(x, yAuv + 16, 'chene', 2);
+  for (let y = yAuv + 17; y < yAuv + 21; y++) t.poser(bx, y, 'fer', 3);
+  for (let x = bx - 12; x <= bx + 12; x++) { t.poser(x, yAuv + 20, 'laiton', 5); t.poser(x, yAuv + 21, 'fer', 4); t.poser(x, yAuv + 22, 'fer', 2); } t.poser(bx, yAuv + 20, 'laiton', 5); t.poser(bx, yAuv + 23, 'laiton', 4);
+  for (const px of [bx - 11, bx + 11]) {
+    for (let y = yAuv + 23; y < yAuv + 38; y++) { t.poser(px - 3 + Math.round((y - yAuv - 23) * 0.1), y, 'fer', y % 2 ? 4 : 2); t.poser(px + 3 - Math.round((y - yAuv - 23) * 0.1), y, 'fer', y % 2 ? 2 : 1); }
+    for (let y = yAuv + 37; y <= yAuv + 42; y++) for (let x = px - 7; x <= px + 7; x++) { const q = ((x - px) / 7.5) ** 2 + ((y - yAuv - 39.5) / 2.6) ** 2; if (q <= 1) t.poser(x, y, 'laiton', y < yAuv + 39 ? 5 : y > yAuv + 41 ? 2 : 4); }
+  }
+  for (let y = yAuv + 29; y <= yAuv + 38; y++) for (let x = bx + 6; x <= bx + 16; x++) { const q = ((x - bx - 11) / 5.5) ** 2 + ((y - yAuv - 34) / 5) ** 2; if (q <= 1) t.poser(x, y, 'sac', (y < yAuv + 32 ? 4 : 3) - (x > bx + 13 ? 1 : 0)); }   // (un sac sur le plateau)
+  // 4. les poids de fonte empilés (leur dessus éclairé), le pupitre et son registre ouvert
+  for (const [cx, w, yy] of [[14, 6, sol - 6], [14, 5, sol - 11], [14, 4, sol - 15], [24, 4, sol - 5]]) { for (let y = yy - 4; y <= yy; y++) for (let x = cx - w; x <= cx + w; x++) t.poser(x, y, 'fer', x < cx - w + 2 ? 3 : 2 - (y === yy ? 1 : 0)); enDessus(() => { for (let x = cx - w; x <= cx + w; x++) { t.poser(x, yy - 5, 'fer', 4); t.poser(x, yy - 6, 'fer', 5); } }); }
+  for (let y = sol - 28; y <= sol - 4; y++) { t.poser(66, y, 'chene', 3); t.poser(67, y, 'chene', 1); }
+  for (let y = sol - 34; y < sol - 28; y++) for (let x = 59; x <= 74; x++) t.poser(x, y, 'chene', y === sol - 29 ? 1 : 3);
+  for (let y = sol - 37; y < sol - 33; y++) for (let x = 60; x <= 73; x++) t.poser(x, y, x === 66 ? 'chene' : 'parchemin', x === 66 ? 2 : y === sol - 37 ? 5 : (y + x) % 3 === 0 ? 2 : 4);   // (le registre ouvert, vu d'en haut)
+  // 5. la loge dans son ombre, puis ce qui est devant : les poteaux, les socles, la sablière, l'auvent, le toit
+  for (let y = yE + 3; y <= sol; y++) for (let x = 2; x < L - 2; x++) { const m = t.mat(x, y); if (m && m !== 'laiton' && m !== 'parchemin' && m !== 'fer' && (y < yAuv + 14 || m === 'pierre')) teinterV(t, x, y, y < yAuv + 8 ? -2 : -1); }
+  for (const px of [3, L - 10]) {
+    for (let y = yE + 3; y <= sol - 8; y++) for (let x = px; x < px + 7; x++) t.poser(x, y, 'chene', x === px ? 5 : x === px + 6 ? 1 : 3);
+    enDessus(() => { for (let x = px - 2; x < px + 9; x++) { t.poser(x, sol - 9, 'taille', 4); t.poser(x, sol - 8, 'taille', 5); } });
+    for (let y = sol - 7; y <= sol; y++) for (let x = px - 2; x < px + 9; x++) t.poser(x, y, 'taille', y === sol ? 1 : x === px - 2 ? 4 : 2);
+  }
+  planche(t, 0, yE + 3, L, 7, 'chene', { graine: 8261, noeuds: 1 }); for (let x = 0; x < L; x++) t.poser(x, yE + 9, 'cheneSombre', 1);
+  enDessus(() => { for (let y = yE + 10; y < yAuv + 3; y++) for (let x = 0; x < L; x++) t.poser(x, y, 'bardeauP', (x % 6 === 0 ? 2 : 4) + (y === yAuv + 2 ? 1 : 0)); });   // l'auvent de planches, vu par le dessus
+  for (let x = 0; x < L; x++) { t.poser(x, yAuv + 3, 'bardeauP', 2); t.poser(x, yAuv + 4, 'cheneSombre', 1); for (let k = 5; k < 9; k++) teinterV(t, x, yAuv + k, k < 7 ? -2 : -1); }
+  let toit; enDessus(() => { toit = toitCroupeHD(t, { xa: 0, xb: L - 1, yEgout: yE, montee: 18, prof: 18, mat: 'tuile', motif: 'tuile', g: 8262, bois: 'chene' }); });
+  for (let x = 0; x < L; x++) for (let k = 3; k < 6; k++) if (t.mat(x, yE + k) === 'chene') teinterV(t, x, yE + k, -1);
+  // 6. devant, sur le pavé : deux sacs et une caisse à peser
+  for (const [cx, cy] of [[30, sol], [38, sol - 1]]) for (let y = cy - 9; y <= cy; y++) for (let x = cx - 5; x <= cx + 5; x++) { const q = ((x - cx) / 5.5) ** 2 + ((y - cy + 4) / 5.2) ** 2; if (q <= 1) t.poser(x, y, 'sac', (y < cy - 6 ? 5 : 3) - (x > cx + 2 ? 1 : 0)); }
+  for (let y = sol - 9; y <= sol; y++) for (let x = 48; x < 60; x++) t.poser(x, y, 'chene', y === sol - 9 ? 5 : y === sol ? 1 : (y - sol) % 4 === 0 ? 2 : 3);
+  t.contour();
+  const C = toileCanvas6b(t);
+  pierresRondesDonnees(C.d, L, H, [{ r: [2, yAuv + 5, L - 3, yF - 1], graine: 8263 }]);
+  for (let x = 0; x < L; x++) { C.mul(x, sol, 0.74); C.mul(x, sol - 1, 0.88); }
+  C.fin(s, cle);
+  if (saison === 'givre') neigeDessus6b(s, cle, t, D);
+  return cle;
+}
+// Le préposé du poids public, certains jours (un tirage au jour) : il attend à côté de la balance, se tourne, écrit
+function preposePoidsPublic(s, ici, YN) {
+  const G = window.GAME, P = POIDS_PUBLIC, f = typeof window !== 'undefined' && window.PREPOSE_POIDS;
+  if (!(f !== undefined ? f : hachage(G ? G.jour : 0, 5, 7101) < 0.65)) return null;
+  const x = P.X + (P.prepose[0] - P.L / 2) * 1.6, y = YN + 2 - (P.H - P.prepose[1]) * 1.6;
+  const p = imageCorps(s, x, y, { nom: 'Le préposé au poids public', race: 'hobbit', niveau: 'aguerri' }, 4.5); ici.poser(p, YN + 1);
+  s.tweens.add({ targets: p, scaleY: p.scaleY * 1.012, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  s.time.addEvent({ delay: 3800, loop: true, callback: () => p.active && p.setFlipX(!p.flipX) });
+  return p;
 }

@@ -373,7 +373,14 @@ DECORS_QUARTIERS.soucolline = {
     // (étape 8b) le bout de la rue, sur la place des Mastres : trois solutions (volumes6bHD.js : PORCHE_PISTES 1, 2, 3 ; A et B, les
     // porches de l'étape 7b) ; la place au travers dans la projection, ses passants à l'échelle de la rue
     const PP0 = porchePiste();
-    lot(L.arche, YN, () => {
+    if (PP0.reel) {   // (étape 9b) le vrai début de la place, à l'échelle de la rue ; à l'angle est, le poids public (Q285)
+      placeReelleRue9b(s, ici, { jour, saison, YN });
+      const PO = POIDS_PUBLIC; lot(PO.X, YN, () => { s.add.image(0, 2, poidsPublicHD(s, jour)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, (PO.ecriteau[0] - PO.L / 2) * 2, 2 - (PO.H - PO.ecriteau[1]) * 2, 'Poids public', { taille: 10 }); });
+      contact(PO.X, PO.L); if (jour) preposePoidsPublic(s, ici, YN);
+      ici.regarder(PO.X - 66, YN - 230, PO.X + 66, YN + 4, jour ? 'Le poids public. Les marchands y pèsent ce qu’ils vendent et paient le droit de marché ; les tarifs sont à la craie sur l’ardoise.' : 'Le poids public est fermé pour la nuit. La grande balance attend les marchands du matin.', [PO.X - 40, YN + 36]);
+      ici.obstacles.push([PO.X - 66, YN - 4, PO.X + 66, YN + 6]);
+    }
+    else lot(L.arche, YN, () => {
       const PP = PP0, k = porcheVolumeHD(s, jour, PP), hiverP = (typeof saisonActuelle === 'function' && saisonActuelle()) === 'givre';
       s.add.image(0, 2, k.place).setOrigin(0.5, 1).setScale(2);
       const foule = s.add.container(0, 0);
@@ -384,7 +391,7 @@ DECORS_QUARTIERS.soucolline = {
       ecriteauRue(s, 0, PP.ecriteau ? 2 - (PP.H - PP.ecriteau) * 2 : -212, 'Place des Mastres', { taille: 12 });
     });
     if (nuit) for (const [lx, ly] of PP0.lanternes) ici.lumiere(L.arche + (lx - PP0.L / 2) * 2 * F, YN + (2 - (PP0.H - ly + 7) * 2) * F, 58);
-    if (PP0.ouvert) {
+    if (PP0.ouvert && !PP0.reel) {
       // la voisine de la banque, qui ferme l'angle est ; le marché qui déborde dans le bout de la rue ; les fanions entre les façades
       maison(3836, YN, 'mvP89', { L: 80, etages: [50], toitMat: 'tuile', crepi: 'enduitC', fenetres: [[0.5]], porte: { x: 0.32, l: 22, h: 48, peinte: 'porteVerte' }, graine: 71, volet: 'voletB', lucarne: null, cheminee: 0.72, fleur: 'fleurP2' });
       if (PP0.debord) { img(3748, YN + 46, etalRue7b(s, 1, jour), E, YN + 46); ici.obstacles.push([3718, YN + 30, 3778, YN + 48]); }
@@ -435,7 +442,7 @@ DECORS_QUARTIERS.soucolline = {
     }
     // (l'été) les bottes de paille, rangées contre la palissade du porche, du côté est, toujours au même endroit (jamais au
     // milieu du passage, ni devant une porte, une enseigne ou un réverbère)
-    if (saison === 'moissons' && typeof texturesPailleHD === 'function') { const bx = L.arche + (PP0.ouvert ? 232 : 190); texturesPailleHD(s); ombre(bx, YN + 14, 70); img(bx, YN + 16, 'bottesPailleRue', E * 0.8, YN + 16); ici.obstacles.push([bx - 34, YN + 2, bx + 34, YN + 18]); }
+    if (saison === 'moissons' && typeof texturesPailleHD === 'function') { const bx = L.arche + (PP0.reel ? 250 : PP0.ouvert ? 232 : 190); texturesPailleHD(s); ombre(bx, YN + 14, 70); img(bx, YN + 16, 'bottesPailleRue', E * 0.8, YN + 16); ici.obstacles.push([bx - 34, YN + 2, bx + 34, YN + 18]); }
 
     // ===================== 4. la rue Haute : les maisons du côté nord, la cour du Puits, le jardin du Pommier =====================
     maison(660, YH, 'mvL3', { L: 120, etages: [50], toitMat: 'ardoiseToit', crepi: 'enduitC', fenetres: [[0.3, 0.72]], porte: { x: 0.68, l: 22, h: 48, peinte: 'porteRouge' }, fenetresRdc: [0.28], volet: 'voletB', lucarne: null, graine: 51, fleur: 'fleurR2' });
@@ -619,7 +626,7 @@ DECORS_QUARTIERS.soucolline = {
     if (ysmee && jour) ici.passages.push({ id: 'ysmee', nom: 'Madame Ysmée', sous: 'sa tente, présages', verbe: 'entrer', type: 'porte', devant: [L.tente, YN + 26], dehors: [L.tente, YN - 6], page: 'Diseuse',
       cadre: [L.tente - 36, YN - 120, L.tente + 36, YN], zone: [L.tente - 60, YN + 8, L.tente + 60, YN + 64], pousser: [0, -1] });
     // le porche : le jour, la place des Mastres ; le soir, la place dort (sauf quand la nymphe attend : sa lueur)
-    if (jour) ici.passages.push({ id: 'arche', nom: 'La place des Mastres ▲', sous: { 1: 'au bout de la rue', 2: 'entre les piliers fleuris' }[PP0.piste] || 'par l’arche des Mastres', type: 'porche', devant: [L.arche, YN + 22], dehors: [L.arche, YN - 40], cadre: [L.arche - 70, YN - 150, L.arche + 70, YN],
+    if (jour) ici.passages.push({ id: 'arche', nom: 'La place des Mastres ▲', sous: { 1: 'au bout de la rue', 2: 'entre les piliers fleuris', 4: 'au bout de la rue' }[PP0.piste] || 'par l’arche des Mastres', type: 'porche', devant: [L.arche, YN + 22], dehors: [L.arche, YN - (PP0.reel ? 80 : 40)], cadre: [L.arche - 70, YN - 150, L.arche + 70, YN],
       zone: [L.arche - 70, YN, L.arche + 70, YN + 64], pousser: [0, -1], vers: { quartier: 'place', arrivee: 'arche' } });
     else if (nymphe) ici.passages.push({ id: 'nymphe', nom: 'La lueur de la fontaine', sous: PP0.ouvert ? 'au bout de la rue' : 'sous le porche de la place', verbe: 'y aller', type: 'porche', devant: [L.arche, YN + 22], dehors: [L.arche, YN - 40], cadre: [L.arche - 70, YN - 150, L.arche + 70, YN],
       zone: [L.arche - 70, YN, L.arche + 70, YN + 64], pousser: [0, -1], page: 'Nymphe',
