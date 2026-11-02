@@ -224,7 +224,7 @@ DECORS_QUARTIERS.soucolline = {
       s.lieuxRue.confrerie = cf;
     }
     // --- les Pommeroy ---
-    const pommeroy = lot(L.pommeroy, YN, () => { s.add.image(0, 2, pommeroyVolumeHD(s)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, 4, -112, 'Les Pommeroy', { taille: 10 }); });
+    const pommeroy = lot(L.pommeroy, YN, () => { s.add.image(0, 2, pommeroyVolumeHD(s)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, 4, -162, 'Les Pommeroy', { taille: 10 }); });   // (étape 8 : l'écriteau sur l'étage, entre les deux fenêtres, au-dessus de la poutre)
     contact(L.pommeroy, 132); contactA(L.pommeroy, YN + 1, 132);   // (étape 6 : une ombre de contact plus marquée)
     { const bx = L.pommeroy + 26, by = YN + 14; ombre(bx, by, 80); img(bx, by, bancPierreHD(s), E, by); ici.obstacles.push([bx - 36, by - 10, bx + 36, by + 2]); }   // un banc de pierre contre le mur, entre la porte et la fenêtre
     regarder('pommeroy', [L.pommeroy - 120, YN - 256, L.pommeroy + 120, YN + 4], [L.pommeroy, YN + 36]);
@@ -404,7 +404,9 @@ DECORS_QUARTIERS.soucolline = {
     // (Q269) ton comptoir n'a plus de plaque « Rue Soucolline » (le barbier et la banque la portent)
     ici.plaqueSur(barbier, barbierOuv && jour ? 'droite' : 'gauche', 112, 'Rue Soucolline', { retrait: 14 });   // (close, ou la nuit : son écriteau « Fermé » est à droite)
     ici.plaqueSur(paon, 'droite', 120, 'Placette de la Fontaine', { retrait: 12 });
-    ici.plaqueSur(pommeroy, 'droite', 100, 'Montée du Four', { retrait: 8 });
+    // (étape 8) la plaque de la montée du Four quitte le mur des Pommeroy (elle tombait sur la poutre de l'étage) : sur un petit
+    // poteau au pied de la montée (le même que celui de la banque ; la plaque ne mord ni sur les Pommeroy ni sur le réverbère)
+    { const px = RUES_SOUCO.FO.x0 + 42, py = YN + 22; img(px, py, poteauPlaqueHD(s), E, py); ici.obstacles.push([px - 8, py - 6, px + 8, py + 2]); ici.plaque(px, py - 76, 'Montée du Four', { yTri: py + 0.5 }); }
     // (Q252) la plaque « Rue Soucolline » de la banque, à une place plus fluide : sur une potence de fer au réverbère qui garde
     // l'angle ouest de la banque, ou (conseillé) sur un petit poteau à l'angle est, devant la palissade du porche (PLAQUE_BANQUE)
     if (plaqueBanque() === 'poteau') {

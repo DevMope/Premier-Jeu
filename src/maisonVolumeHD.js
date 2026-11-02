@@ -467,7 +467,7 @@ function forgeVolumeHD(s, jour) {
 // sa juste largeur : 3 pixels en retrait de l'étage de chaque côté (l'étage avance), le soubassement ne dépasse que de 2 ;
 // aux deux coins, une humble chaîne d'angle (des pierres plus grandes et plus claires, alternées en harpe, leur dessus éclairé,
 // leur côté dans l'ombre) ; sous l'étage, un léger filet de pierre (son dessus clair, son ombre dessous)
-// (étape 8) le bas paraissait encore « de face » : trois remèdes, seuls ou ensemble (variante : une chaîne de lettres) :
+// (étape 8, validé « parfait ») le bas paraissait encore « de face » : trois remèdes, ensemble :
 //   A : un rez-de-chaussée plus bas (10 rangs de pierre en moins, au-dessus de la porte et de la fenêtre), d'une pierre plus
 //       chaude et plus claire, comme celle des autres maisons ;
 //   B : un perron de deux marches devant la porte, et un petit auvent de bois au-dessus d'elle (son dessus de planches, son
@@ -495,8 +495,8 @@ function auventPorteHD(t, oy, x0, x1, y) {   // (B) le petit auvent de bois au-d
   for (let x = x0; x <= x1; x++) { t.poser(x, y + oy, 'chene', 3); t.poser(x, y + 1 + oy, 'cheneSombre', 1); }   // son chant
   for (const cx of [x0 + 3, x1 - 3]) for (let k = 0; k < 6; k++) for (let j = 0; j <= 5 - k; j++) t.poser(cx + (cx < (x0 + x1) / 2 ? j : -j), y + 2 + k + oy, 'chene', j === 0 ? 3 : 1);   // ses consoles
 }
-function pommeroyVolumeHD(s, variante = (typeof window !== 'undefined' && window.POMMEROY_VARIANTE) || POMMEROY_VARIANTE) {
-  const A = variante.includes('A'), B = variante.includes('B'), C = variante.includes('C'), d = A ? -10 : 0, bas = (A ? 149 : 159);
+function pommeroyVolumeHD(s) {
+  const A = true, B = true, C = true, d = -10, bas = 149;   // (A, B et C : validés ensemble)
   const src = A ? pommeroyPlusBas(s) : 'rueMaisonHD_0', yy = y => y >= 110 ? y + d : y;   // (A : tout ce qui est sous le rang 110 remonte de 10)
   const marches = [];
   if (!C) marches.push([10, 139, yy(152), 2, 4, 'pierre']);
@@ -509,12 +509,10 @@ function pommeroyVolumeHD(s, variante = (typeof window !== 'undefined' && window
     { r: [109, yy(115), 124, yy(131)], k: 6 }, { r: [48, yy(116), 70, bas - (B ? 7 : 4)], interieur: true, k: 7 }, { m: [0, bas - 1, 149, bas, C ? 0.55 : 0.7] }];
   if (C) ops.push({ m: [12, bas - 4, 137, bas - 2, 0.8] });
   if (B) ops.push({ m: [42, yy(116), 76, yy(122), 0.62] });   // l'ombre de l'auvent sur la porte et le mur
-  return revolumeHD(s, src, 'pommeroyVolumeHD' + variante, { coupe: 53, xa: 2, xb: 147, prof: 28, montee: 54, mat: 'tuile', motif: 'tuile', g: 815, mur: [9, 140],
+  return revolumeHD(s, src, 'pommeroyVolumeHD', { coupe: 53, xa: 2, xb: 147, prof: 28, montee: 54, mat: 'tuile', motif: 'tuile', g: 815, mur: [9, 140],
     dessiner: (t, oy) => { anglesPommeroy(t, oy, C ? bas : yy(151)); if (B) auventPorteHD(t, oy, 40, 78, yy(113)); if (C) jardiniere5(t, 104, yy(137) + oy, 25, 'fleurR2', 816); },
     marches, ops });
 }
-// (étape 8) la variante branchée dans la rue (window.POMMEROY_VARIANTE pour comparer)
-const POMMEROY_VARIANTE = 'ABC';   // (conseillée : les trois remèdes ensemble)
 // (Q252) La potence de fer d'où pend une plaque de rue, fixée au poteau d'un réverbère (vers la gauche), et le petit poteau
 // de bois (son chapeau, son pied de pierre vu par le dessus) qui porte une plaque devant un perron
 function potencePlaqueHD(s) {
