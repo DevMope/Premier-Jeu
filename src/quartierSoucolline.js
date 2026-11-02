@@ -229,13 +229,16 @@ DECORS_QUARTIERS.soucolline = {
     regarder('pommeroy', [L.pommeroy - 120, YN - 256, L.pommeroy + 120, YN + 4], [L.pommeroy, YN + 36]);
     // --- l'impasse du Corbeau : sa porte dérobée, au fond, s'ouvre certains soirs (le marché noir) ---
     const ouvertCeSoir = nuit && typeof marcheNoirCeSoir === 'function' && marcheNoirCeSoir(G);
+    // (vue de haut, étape 6b) la ruelle vue d'en haut (volumes6bHD.js) : le dessus des murs, le sol qui s'enfonce, la porte
+    // au fond et sa lanterne rouge, allumée les soirs où la porte dérobée s'ouvre
+    const IV = IMPASSE_VOLUME, enLotI = (x, y) => [(x - IV.L / 2) * 2, 2 - (IV.H - y) * 2], [lxI, lyI] = enLotI(...IV.lanterne);
     lot(L.impasse, YN, () => {
-      s.add.image(0, 2, 'rueImpasseHD').setOrigin(0.5, 1).setScale(2);
-      ecriteauRue(s, -13, -176, 'Impasse du Corbeau', { taille: 9, fond: '#a88a5a' });
-      if (ouvertCeSoir) s.add.rectangle(0, -66, 6, 9, 0xff4a2a);
+      s.add.image(0, 2, impasseVolumeHD(s)).setOrigin(0.5, 1).setScale(2);
+      ecriteauRue(s, ...enLotI(IV.ecriteau[0], IV.ecriteau[1]), 'Impasse du Corbeau', { taille: 9, fond: '#a88a5a' });
+      if (ouvertCeSoir) s.add.image(lxI, lyI + 2, lanterneCorbeauHD(s)).setOrigin(0.5, 1).setScale(2);
     });
-    if (ouvertCeSoir) { ici.lumiere(L.impasse, YN - 53, 64, 0xff3020); ici.lumiere(L.impasse, YN - 53, 40, 0xff3020); }
-    regarder('impasse', [L.impasse - 76, YN - 180, L.impasse + 76, YN + 4], [L.impasse, YN + 36]);
+    if (ouvertCeSoir) { ici.lumiere(L.impasse + lxI * F, YN + (lyI - 8) * F, 64, 0xff3020); ici.lumiere(L.impasse + lxI * F, YN + (lyI - 8) * F, 40, 0xff3020); }
+    regarder('impasse', [L.impasse - 76, YN - 208, L.impasse + 76, YN + 4], [L.impasse, YN + 36]);
     // --- la forge de Thorgal : ouverte le jour (des étincelles jaillissent), ses braises la nuit ---
     // (Q258) refaite : une halle de forge ouverte, vue d'en haut (maisonVolumeHD.js, forgeHalleHD) ; l'écriteau sur sa poutre
     const FV = FORGE_VOLUME, enLotF = (x, y) => [(x - FV.L / 2) * 2, 2 - (FV.H - y) * 2], [fxF, fyF] = enLotF(...FV.feu), [exF, eyF] = enLotF(...FV.ecriteau);
@@ -335,9 +338,11 @@ DECORS_QUARTIERS.soucolline = {
     // --- le lot des Mages-Charpentiers : d'abord un chantier (les poutres montent seules), puis l'atelier ---
     const magesOuv = G && typeof atelierMagesOuvert === 'function' && atelierMagesOuvert(G), magesChantier = !magesOuv && G && typeof chantierMages === 'function' && chantierMages(G);
     if (magesOuv || magesChantier) lot(L.mages, YN, () => {
-      if (magesOuv) { s.add.image(0, 2, atelierMagesHD(s)).setOrigin(0.5, 1).setScale(2); if (nuit) ecriteauRue(s, 6, -140, 'Les Mages-Charpentiers', { taille: 11 }); }
-      else { s.add.image(0, 2, chantierMagesHD(s)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, -6, -64, 'Ici bientôt :\nles Mages-Charpentiers', { taille: 10 }); }
+      // (vue de haut, étape 6b) en un seul volume, sous son toit en croupe ; l'enseigne debout sur le pan avant (volumes6bHD.js)
+      if (magesOuv) { s.add.image(0, 2, atelierMagesVolumeHD(s)).setOrigin(0.5, 1).setScale(2); if (nuit) ecriteauRue(s, 6, -140, 'Les Mages-Charpentiers', { taille: 11 }); }
+      else { s.add.image(0, 2, chantierMagesVolumeHD(s)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, -6, -64, 'Ici bientôt :\nles Mages-Charpentiers', { taille: 10 }); }
     });
+    if (magesOuv || magesChantier) contact(L.mages, 140);
     else { ici.arbre(L.mages - 40, YN - 60, 1); ici.buisson(L.mages + 66, YN - 26); }   // (un lot vide : de l'herbe, un arbre)
     if (magesOuv) {
       ici.lumiere(L.mages, YN - 96, 82);
@@ -367,12 +372,14 @@ DECORS_QUARTIERS.soucolline = {
     // --- le porche de la place des Mastres (planche 80, porche A) : la place au travers, ses passants, l'écriteau pendu ---
     const nymphe = nuit && G && typeof nympheAttend === 'function' && nympheAttend(G);
     lot(L.arche, YN, () => {
-      const k = porcheRueHD(s, jour), sz = k.split('_')[1];
-      s.add.image(0, 2, 'placePorche_' + sz + (jour ? '_jour' : '_nuit')).setOrigin(0.5, 1).setScale(2);
+      // (vue de haut, étape 6b) le porche dans la projection (volumes6bHD.js) ; son ombre sur le seuil couvert et sur les dalles
+      const PV = PORCHE_VOLUME, k = porcheVolumeHD(s, jour), sz = k.split('_')[1];
+      s.add.image(0, 2, 'placePorcheV_' + sz + (jour ? '_jour' : '_nuit')).setOrigin(0.5, 1).setScale(2);
       const foule = s.add.container(0, 0);
+      s.add.image(0, 2 + PV.seuil * 2, ombrePorcheVolumeHD(s)).setOrigin(0.5, 1).setScale(2);
       s.add.image(0, 2, k).setOrigin(0.5, 1).setScale(2);
       if (jour) passantsPorche(s, foule, 0, 0, { hiver: sz === 'givre' });
-      ecriteauRue(s, 0, -302 + 2 * (PORCHE_RUE.linteau + 13) + 10, 'Place des Mastres', { taille: 12 });
+      ecriteauRue(s, 0, 2 - PV.H * 2 + 2 * (PV.linteau + 13) + 10, 'Place des Mastres', { taille: 12 });
     });
     if (nymphe) {
       // (la nymphe attend) la place, au fond, baignée de bleu ; des gouttes de lumière montent par-dessus les toits
