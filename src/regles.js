@@ -1683,6 +1683,7 @@ function nuit(G) {
   sansPlanter('nuitDesMages', () => typeof nuitDesMages === 'function' && nuitDesMages(G));   // (v1.56) le chantier, puis l'atelier des Mages-Charpentiers
   sansPlanter('nuitDuVoyage', () => typeof nuitDuVoyage === 'function' && nuitDuVoyage(G));   // (v1.57) la lettre du duc, les taxes de Pont-Royal
   sansPlanter('nuitDesSucces', () => typeof nuitDesSucces === 'function' && nuitDesSucces(G));   // (v1.50) les séries, et les succès du jour
+  sansPlanter('nuitDesDegres', () => typeof nuitDesDegres === 'function' && nuitDesDegres(G));   // (les degrés cachés d'Ombre et de Lumière, degres.js)
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -3435,6 +3436,7 @@ function pencher(G, cle, { fois = 1, qui = null } = {}) {
   }
   lo.journal.unshift({ jour: G.jour, cle, n: b.n * fois, qui });
   if (lo.journal.length > 40) lo.journal.length = 40;
+  if (typeof noterDegre === 'function') sansPlanter('noterDegre', () => noterDegre(G, cle, fois));   // (les degrés cachés, degres.js)
   surveillerLO(G);
   return lo.points - avant;
 }
