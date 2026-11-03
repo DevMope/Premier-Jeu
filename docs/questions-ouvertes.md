@@ -44,6 +44,9 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q353** — Le mannequin et les armes accrochées au mur de la chambre descendent-ils dans la salle d'armes, ou la chambre garde-t-elle le mannequin ?
 - **Q354** — L'obtention d'une pièce : les sons (harpe et chœur en Lumière, bourdon et chœur mineur en Ombre, un choc de métal à la pose) te vont ? Et la pièce part-elle des mains du messager (comme maintenant) ou monte-t-elle du sol ?
 
+- **Q355** — L'étape 3 de la refonte Ombre/Lumière (4 fiches) : les doyens qu'on fait taire ou qu'on laisse finir ; les quatre fissures du Sage (la berceuse, les pommiers d'Ortie, la nuit au ciel orange, la médaille) ; les églises-relais, les convois, les dons au Drômmath ; et les suites quand on dénonce le Parrain (la gazette, la sardine dans un gant, la chorale de chats, la grève des chats, l'avocat Maître Fouine, le vol, la lettre « Je suis déçu. C'est pire. », la carte postale de la plage). Tu valides ? Attention, des personnages nouveaux, pas encore validés, y apparaissent : Sœur Clémence et Ysolde la vampire (les églises), le sergent Bourrel et Fenrir l'éclaireur loup-garou (les convois), Nekhet, la voix du Drômmath, et Maître Fouine.
+- **Q356** — La taxe par côté est réglée : au jour 120, environ 135 000 p. en Lumière, 88 000 en neutre, 51 000 en Ombre (au jour 200 : 372 000, 356 000, 98 000). L'Ombre reste au quart de la Lumière jusqu'à l'étape des dépenses, qui lui donnera ses recettes. D'accord ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
