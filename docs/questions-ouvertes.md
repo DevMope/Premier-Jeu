@@ -37,6 +37,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q341** — L'argent (fiches de l'argent) : avec le grand inventaire de dépenses (tout s'offrir demanderait d'aller jusqu'au jour 488 en neutre et 636 en Lumière, bien après la fin), garde-t-on la taxe progressive (douce au début, très lourde sur les grandes fortunes) ou revient-on à l'ancienne taxe, en comptant sur les dépenses pour absorber l'argent ? Et les taxes mises en scène (fiche 4 : la dîme du Rempart et son percepteur en tabard bleu, le prix de la paix et ses deux collecteurs, l'impôt des suspects et ses gardes qui fouillent) te vont ? (Une proposition de Claude dans la fiche 4 n'est pas validée : que la dîme finance aussi « le projet souterrain qui garde le dragon en vie ».)
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
