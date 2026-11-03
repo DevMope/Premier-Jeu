@@ -19,18 +19,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q286** — Les trois armures (planche 93) sont dans le jeu : icônes des 8 pièces en trois versions, mannequin de la chambre, pièce qui s'élève à l'arrivée du messager, et « la Promesse de l'Aube » (Morgunheit gravé sur la lame). Tu valides (morceaux dans `a_valider/armures/morceaux/`) ?
-- **Q287** — L'armure portée par JeuneGoy (en pied et en buste) est prête, mais aucune scène ne le montre encore en armure : où et quand la porte-t-il (l'acte V, le comptoir confié, les fins, la grande bataille) ?
-- **Q288** — L'armure neutre garde le nom « Armure du Dernier Rempart » : un autre nom pour elle ? Et au sceau neutre, il n'y a qu'un éclair gris, sans phrase (les deux autres camps ont « L'armure s'assombrit... » / « L'armure se purifie... ») : quelle phrase pour le neutre ?
-- **Q289** — Changement fait par l'agent, à valider : quand le joueur a juré à un camp opposé à sa balance, l'armure change maintenant tout de suite au sceau, et non plus le lendemain matin. D'accord ?
-- **Q290** — La pièce d'armure dessinée à plat (comme sur la planche) aussi dans le parchemin du messager, à la place de la petite icône agrandie ?
 
-- **Q291** — Au comptoir, pendant la visite de la Faucheuse, il existait déjà un halo rouge de terreur sur l'écran. Avec son nouveau dessin (ses yeux rouges, ses cendres), on le garde tel quel, on l'adoucit, ou on le retire ?
 
-- **Q292** — Le bout de la rue à taille réelle (étape 9b) : la rue débouche, entre la banque et le poids public, sur le vrai début de la place des Mastres, à sa vraie taille (le sol, la fontaine en partie cachée, des passants de la taille de JeuneGoy, la charrette d'un colporteur les jours de marché) ; on n'en voit qu'un morceau, et on entre sur la place en marchant. C'est ce que tu voulais ?
-- **Q293** — La cause, mesurée : la vue au bout de la rue était redessinée en réduction (étals à 40 %, fontaine à 33 %), et la scène de la place est filmée à 1,25 alors que la rue l'est à 1,0. On filme la place à 1,0 comme la rue ? Et on lui retire son porche du sud, en y montrant le bout de la rue à la place ?
-- **Q294** — Depuis le bout de la rue, on ne voit encore aucun étal (le coin des jeux, le plus proche, est caché par la banque). On décale le coin des jeux vers l'est dans la place pour qu'il se voie, ou on garde la place telle quelle ?
-- **Q295** — Le poids public (morceau 4 : loge de pierre et de chêne, balance à fléau, poids de fonte, ardoise des tarifs, registre, sacs à peser) : validé ? Le préposé y est environ deux jours sur trois : ça te va ?
 
 - **Q299, Q300** — (anciennes, remplacées par le « dernier appel » et les récits de retour, à confirmer)
 
@@ -46,6 +36,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q286 à Q295~~ Armures portées validées (parchemin, épée, animation et salle d'armes à revoir) ; Faucheuse aux yeux fauves à essayer ; PNJ sans vue de face ; place des Mastres à réorganiser avec une grande arche ; poids public pas mal (03/11).
 - ~~Q341~~ Taxe progressive pour la Lumière et le neutre, l'ancienne pour l'Ombre ; grand inventaire validé presque entièrement (03/11).
 - ~~Q336 à Q340~~ Étape 1 validée ; livre des deux voies à embellir ; dénoncer le Parrain : des répercussions drôles et dangereuses (02/11).
 - ~~Q326 à Q335~~ Dépenses des trois camps toutes gardées ; cinq royaumes des Bannis ; Bannis au comptoir peu à peu ; Garrick pendant la guerre, dans l'esprit (02/11).
