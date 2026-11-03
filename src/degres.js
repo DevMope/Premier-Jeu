@@ -268,6 +268,17 @@ function regardDe(G) {
   const R = etatRegard(G), nc = niveauRegard(R.confrerie), nb = niveauRegard(R.bannis);
   return { confrerie: R.confrerie, bannis: R.bannis, niveauConfrerie: nc, niveauBannis: nb, phraseConfrerie: PHRASES_REGARD.confrerie[nc], phraseBannis: PHRASES_REGARD.bannis[nb] };
 }
+// (étape 2) Le « palier » que voit le monde, de −3 à +3, d'après le regard des deux camps : la Lumière quand la
+// Confrérie t'estime ou que les Bannis te maudissent, l'Ombre dans l'autre cas ; 0 quand les deux se valent (le neutre
+// au sauf-conduit, bien vu des deux, reste entre les deux). C'est ce que lisent la garde, la banque, la taxe, les
+// clients, le Carrefour… (palierCamp, regles.js).
+function palierDuRegard(G) {
+  const r = regardDe(G), lum = Math.max(r.niveauConfrerie, -r.niveauBannis), omb = Math.max(r.niveauBannis, -r.niveauConfrerie);
+  if (lum === omb || Math.max(lum, omb) <= 0) return 0;
+  // (bien vu des deux : l'estime de l'un retranche celle de l'autre)
+  return lum > omb ? Math.min(3, lum - Math.max(0, omb)) : -Math.min(3, omb - Math.max(0, lum));
+}
+
 // Un mot pour le bilan du soir (court) : le regard le plus fort
 function motDuMonde(G) {
   const r = regardDe(G);
@@ -276,11 +287,12 @@ function motDuMonde(G) {
   return ['', 'on t’a vu à la cave', 'les Bannis te font confiance', 'un ami des Bannis', 'des leurs, disent les Bannis'][r.niveauBannis];
 }
 
-// --- La jauge d'avant, adoucie (Q296) : plus de chiffre, et elle ne bouge qu'une fois par jour, par grands pas ---
+// --- La jauge du bandeau, adoucie (Q296) : plus de chiffre, et elle ne bouge qu'une fois par jour, par grands pas ---
 function jaugeFloue(G) {
   if (!G || !G.lo) return 0;
   const v = G.jaugeVue;
-  if (!v || v.jour !== G.jour) G.jaugeVue = { jour: G.jour, j: Math.round(Math.max(-100, Math.min(100, G.lo.points)) / 20) * 20 };
+  // (étape 2) elle montre ce que voit le monde (le palier du regard), et non plus l'ancienne jauge
+  if (!v || v.jour !== G.jour) G.jaugeVue = { jour: G.jour, j: palierDuRegard(G) * 30 };
   return G.jaugeVue.j;
 }
 

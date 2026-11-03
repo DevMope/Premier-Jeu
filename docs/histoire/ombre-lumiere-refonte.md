@@ -237,3 +237,14 @@ Le plan en dix étapes : `scratchpad/lot3/a_valider/ombre-lumiere/plan/le-plan.p
 - La migration (sauvegarde.js) : l'allégeance d'après la jauge et le serment ; le cœur d'après les dons au mendiant et les âmes offertes ; le regard d'après la jauge ; la Clairvoyance à 8 lueurs pour qui voyait déjà les ☀ ☾ avec son flair.
 - Les effets du monde (taxes, banque, garde, Carrefour, sceau…) lisent encore la jauge : c'est l'étape 2.
 - Vérifié : smoke2, fuzz7 (graines 33, 230, 401), t_file, recit (succès, échec, mort), sim_coh (8 parties × 120 jours, aucun problème), t_formes (vieilles parties v1.20, v1.40, v1.60), 23 essais des règles (`test_degres.js`). En parties simulées, les ☀ ☾ apparaissent vers le jour 36 à 69 (avant : vers le jour 5, avec le flair).
+
+### Le livre des deux voies en HD (Q336)
+- `src/livreDeuxVoiesHD.js` (chargé dans `index.html` et `web/jeu.html` après `bureauHD.js`) : le blason ciselé de la Confrérie (double bordure d'or entaillée, filet d'argent, champ d'azur damassé, la tour crénelée et son soleil ; terni et fêlé quand la Confrérie se méfie) et ses huit rayons d'or, allumés deux par degré d'estime, qui s'allument un à un avec un éclat ; la fleur de pommier peinte des Bannis sur son médaillon de nuit (lune, étoiles, branche, feuilles), un bouton fermé, puis 1, 3, 4 et 5 pétales qui se déplient un par un, le cœur et ses étamines ; fanée quand les Bannis te maudissent. Halo et reflet quand l'estime est haute.
+
+### Étape 2, le monde lit le regard (faite, à valider)
+- `palierCamp` (regles.js) se calcule maintenant d'après le regard des deux camps (`palierDuRegard`, degres.js : l'estime de l'un retranche celle de l'autre) : tout ce qui lit `palierCamp` ou `coteCamp` suit le regard (la garde, la banque, la taxe, le marché noir, la Main Noire, les clients bannis et pandas, la Confrérie et le repaire, le mécénat, la menace, la gazette, les taxes du duc, la forge de l'ombre, l'armure donnée par l'un ou l'autre camp). La jauge floue du bandeau aussi.
+- Le Carrefour vient quand un camp te fait confiance (palier ±2) ; la dernière offre au palier ±3 ; le parjure quand le monde te voit servir l'autre camp (palier ±1 de l'autre côté).
+- Le sceau : sans serment, l'allégeance décide (0 : la fin neutre).
+- La taxe de la Confrérie : 10 / 14 / 20 % de ce que la fortune a gagné depuis la semaine d'avant (`G.baseTaxe`), au-delà de 100 p. ; rien la première semaine d'une vieille partie. Parties simulées (6 × 150 jours) : 7 % des recettes pour la Lumière et le neutre, 11 % pour l'Ombre (avant : 31, 24, 39 %).
+- Vérifié : smoke2, fuzz7 (33, 230, 401), t_file, recit (trois issues), sim_coh (8 × 120 jours), t_formes (v1.20, v1.40, v1.60), 29 essais des règles.
+- Reste pour l'étape des dépenses : l'Ombre encaisse 55 % de la Lumière (règle : 80 %).

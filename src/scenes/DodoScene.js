@@ -363,7 +363,7 @@ class DodoScene extends Cinematique {
     if (avertit && !scelle) {
       const serment = sermentDe(this.G), pal = palierCamp(this.G);
       message += `\nPlus qu'une pièce, et l'armure sera complète : ton camp sera scellé pour de bon. ` + (serment ? `Tu as juré ${serment === 'bien' ? 'à la Confrérie' : 'aux Bannis'} : c'est ce serment qui sera scellé.`
-        : pal > 0 ? "Aujourd'hui, ta balance penche vers la lumière." : pal < 0 ? "Aujourd'hui, ta balance penche vers l'ombre." : "Aujourd'hui, tu es entre les deux, sans serment : si tu le restes, ce ne sera ni la lumière, ni l'ombre...");
+        : pal > 0 ? "Aujourd'hui, le monde te voit du côté de la lumière. Mais c'est ce que tu es vraiment qui comptera." : pal < 0 ? "Aujourd'hui, le monde te voit du côté de l'ombre. Mais c'est ce que tu es vraiment qui comptera." : "Aujourd'hui, tu es entre les deux, sans serment : si tu le restes, ce ne sera ni la lumière, ni l'ombre...");
     }
     if (scelle) {
       message += scelle === 'mal' ? "\nL'armure est complète. Ton camp est scellé : l'ombre. Il n'y aura plus de retour en arrière."

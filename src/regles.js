@@ -1662,8 +1662,14 @@ function nuit(G) {
   if (G.jour > 0 && G.jour % 7 === 0) {
     const p = palierCamp(G);
     const dette = G.prets.reduce((s, x) => s + x.restant, 0);   // (audit v0.54 : l'argent emprunté n'est pas taxé)
-    taxe = Math.round(Math.max(0, G.argent - dette - TAXE_CONFRERIE.franchise) * TAXE_CONFRERIE.taux[p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre']);
+    // (02/11, refonte, étape 2 : la taxe revue) elle ne prend plus une part de toute la fortune chaque semaine (un
+    // tiers des recettes, dans les parties simulées), mais une part de ce que la fortune a gagné depuis la dernière
+    // fois : ce qu'on a dépensé, bâti ou donné n'est pas taxé. (La première semaine d'une vieille partie : rien.)
+    const fortune = G.argent - dette;
+    if (G.baseTaxe === undefined) G.baseTaxe = fortune;
+    taxe = Math.round(Math.max(0, fortune - G.baseTaxe - TAXE_CONFRERIE.franchise) * TAXE_CONFRERIE.taux[p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre']);
     if (taxe > 0) payer(G, taxe, 'taxe');
+    G.baseTaxe = fortune - taxe;
   }
   if (G.feu === G.jour) G.nuitAuChaud = G.jour + 1;   // (v0.66 : la nuit au chaud, pour le réveil)
   if (typeof nuitDuFoyer === 'function') nuitDuFoyer(G);   // (v1.05) le froid de l'hiver, la gamelle du chat
@@ -3381,7 +3387,11 @@ function recompenserZones(G) {
     if (G.armure.length === ARMURE.length && !G.camp) {
       // (v0.90) le serment l'emporte ; sans serment, dans la zone neutre, c'est la fin neutre
       const serment = sermentDe(G);
+      // (02/11, refonte) sans serment, c'est l'allégeance (ce que JeuneGoy est devenu, degres.js) qui scelle le camp,
+      // et non plus ce que croit le monde : le spectateur reste neutre, même si le monde le croit d'un camp (Q306)
+      const d = typeof degreDe === 'function' ? degreDe(G) : null;
       if (serment) G.camp = serment;
+      else if (d !== null) { if (d === 0) G.sceauNeutre = G.jour; else G.camp = d > 0 ? 'bien' : 'mal'; }
       else if (palierCamp(G) === 0) G.sceauNeutre = G.jour;
       else G.camp = coteArmure(G) === 'sombre' ? 'mal' : 'bien';
       n.scelle = G.camp || 'neutre';
@@ -3456,8 +3466,12 @@ function reprendreGeste(G, cle) {
 function surveillerLO(G) {
   const lo = etatLO(G), j = lo.points;
   if (G.camp || G.sceauNeutre) return;
+  // (02/11, étape 2) le Carrefour et le parjure suivent le regard du monde : le monde t'invite quand il te croit à
+  // lui (Q307) ; le parjure, quand il te voit servir l'autre camp
+  const p = typeof palierDuRegard === 'function' ? palierDuRegard(G) : null;
+  const parjure = p === null ? (lo.serment === 'bien' ? j <= -SERMENT.parjure : j >= SERMENT.parjure) : (lo.serment === 'bien' ? p <= -1 : p >= 1);
   // le parjure : on a juré à un camp, et l'on a passé le 1er palier de l'autre côté
-  if (lo.serment && (lo.serment === 'bien' ? j <= -SERMENT.parjure : j >= SERMENT.parjure)) {
+  if (lo.serment && parjure) {
     const c = lo.serment;
     lo.serment = null; lo.offres[c] = 'parjure'; lo.parjures++; lo.carrefour = null;
     lo.parjure = { camp: c, jour: G.jour };
@@ -3465,11 +3479,11 @@ function surveillerLO(G) {
     return;
   }
   if (lo.serment || lo.carrefour) return;
-  const camp = j >= SERMENT.palier ? 'bien' : j <= -SERMENT.palier ? 'mal' : null;
+  const camp = p === null ? (j >= SERMENT.palier ? 'bien' : j <= -SERMENT.palier ? 'mal' : null) : (p >= 2 ? 'bien' : p <= -2 ? 'mal' : null);
   if (!camp) return;
   const o = lo.offres[camp];
   if (!o) lo.carrefour = { camp, derniere: false };
-  else if (o === 'refusee' && Math.abs(j) >= SERMENT.derniere) lo.carrefour = { camp, derniere: true };
+  else if (o === 'refusee' && (p === null ? Math.abs(j) >= SERMENT.derniere : Math.abs(p) >= 3)) lo.carrefour = { camp, derniere: true };
 }
 
 // Au Carrefour : prêter serment au côté où penche la balance...
@@ -3523,9 +3537,12 @@ function texteGeste(e) {
 }
 
 // Le palier : de −3 (ombre épaisse) à +3 (lumière éclatante), 0 entre les deux.
+// (02/11, refonte, étape 2) ce que le monde voit de toi : le regard des deux camps (degres.js, palierDuRegard), et
+// non plus l'ancienne jauge. Tout ce qui lit palierCamp ou coteCamp (la garde, la banque, la taxe, le marché noir, les
+// clients, la Main Noire, la Confrérie et le repaire, le mécénat, la menace, la gazette...) suit donc le regard.
 function palierCamp(G) {
   const j = jaugeCamp(G);
-  const p = Math.sign(j) * PALIERS_JAUGE.filter(p => Math.abs(j) >= p).length;
+  const p = typeof palierDuRegard === 'function' ? palierDuRegard(G) : Math.sign(j) * PALIERS_JAUGE.filter(p => Math.abs(j) >= p).length;
   // (audit v0.54) une fois le camp scellé, on ne repasse plus de l'autre côté
   if (G.camp === 'bien') return Math.max(1, p);
   if (G.camp === 'mal') return Math.min(-1, p);

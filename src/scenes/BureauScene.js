@@ -1001,30 +1001,17 @@ class BureauScene extends Phaser.Scene {
     c.add(this.add.text(161, 70, 'Le livre des deux voies', style(16, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5));
     c.add(this.add.text(161, 90, 'Ce que les deux camps croient de toi', style(11, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5, 0));
     const blocs = [
-      { cle: 'confrerie', nom: 'La Confrérie', niveau: r.niveauConfrerie, phrase: r.phraseConfrerie, couleur: '#8a6a10', y: 112 },
-      { cle: 'bannis', nom: 'Les Bannis', niveau: r.niveauBannis, phrase: r.phraseBannis, couleur: '#5a3a8a', y: 222 },
+      { cle: 'confrerie', nom: 'La Confrérie', niveau: r.niveauConfrerie, phrase: r.phraseConfrerie, couleur: '#8a6a10', y: 106 },
+      { cle: 'bannis', nom: 'Les Bannis', niveau: r.niveauBannis, phrase: r.phraseBannis, couleur: '#5a3a8a', y: 218 },
     ];
     for (const b of blocs) {
-      c.add(this.add.rectangle(161, b.y + 48, 236, 100, 0xe8d6b0).setStrokeStyle(2, 0x8a6a40));
-      const ex = 84, ey = b.y + 48, n = b.niveau;
-      // les rayons du blason (la Confrérie) ou les pétales de la fleur (les Bannis) : deux de plus par degré de confiance
-      const g = this.add.graphics();
-      for (let k = 0; k < 8; k++) {
-        const visible = k < Math.max(0, n) * 2, a = -Math.PI / 2 + k * Math.PI / 4;
-        if (b.cle === 'confrerie') {
-          g.lineStyle(3, 0xe0b030, visible ? 0.9 : 0.12);
-          g.lineBetween(ex + Math.cos(a) * 33, ey + Math.sin(a) * 33, ex + Math.cos(a) * 45, ey + Math.sin(a) * 45);
-        } else {
-          g.fillStyle(0xf0c8d8, visible ? 0.9 : 0.12);
-          g.fillEllipse(ex + Math.cos(a) * 38, ey + Math.sin(a) * 38, 14, 10);
-        }
-      }
-      c.add(g);
-      const em = this.add.image(ex, ey, 'embleme_' + b.cle).setScale(0.85).setAlpha(n < 0 ? 0.45 : 0.6 + 0.1 * n);
-      if (n < 0) em.setTint(0x8a8078);
-      c.add(em);
-      c.add(this.add.text(132, b.y + 14, b.nom, style(14, b.couleur, { fontStyle: 'bold' })));
-      c.add(this.add.text(132, b.y + 36, b.phrase, style(11, '#3b2410', { fontStyle: 'italic', wordWrap: { width: 140 }, lineSpacing: 1 })));
+      c.add(this.add.rectangle(161, b.y + 53, 236, 106, 0xe8d6b0).setStrokeStyle(2, 0x8a6a40));
+      // (Q336) le blason ciselé, dont les rayons d'or s'allument un à un ; la fleur de pommier peinte, qui s'ouvre
+      // pétale après pétale (livreDeuxVoiesHD.js) : autant que ce que le camp croit de toi
+      if (b.cle === 'confrerie') poserBlasonConfrerie(this, c, 92, b.y + 53, b.niveau);
+      else poserFleurBannis(this, c, 92, b.y + 53, b.niveau);
+      c.add(this.add.text(150, b.y + 16, b.nom, style(14, b.couleur, { fontStyle: 'bold' })));
+      c.add(this.add.text(150, b.y + 38, b.phrase, style(11, '#3b2410', { fontStyle: 'italic', wordWrap: { width: 124 }, lineSpacing: 1 })));
     }
     const etat = G.camp ? `Ton camp est scellé : ${G.camp === 'mal' ? "l'ombre" : 'la lumière'}.`
       : G.sceauNeutre ? "Ni la lumière, ni l'ombre : l'armure attend quelqu'un d'autre."
