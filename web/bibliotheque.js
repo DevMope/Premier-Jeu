@@ -353,8 +353,8 @@ async function categories(scene) {
     place.push(sur(() => ({ cle: buissonPlaceHD(scene, pal), nom: `Buisson · ${pal.nom}` })));
   }
   place.push(sur(() => ({ cle: barrierePlaceHD(scene, 5), nom: 'La barrière' })), sur(() => ({ cle: barrierePlaceHD(scene, 2), nom: 'La barrière courte' })),
-    sur(() => ({ cle: ombrePlaceHD(scene), nom: "L'ombre au sol" })), sur(() => ({ cle: planchetteHD(scene, 60, 22), nom: 'La planchette des lieux' })));
-  await ajouter('place', 'La grand-place du marché', "La place, à la Stardew : herbe, terre battue sous les étals et sur les chemins, dalles au centre ; ses arbres et ses buissons dans les couleurs de chaque région.", place, true);
+    sur(() => ({ cle: ombrePlaceHD(scene), nom: "L'ombre au sol" })));   // (la planchette des lieux n'existe plus : les noms sont dans les étals)
+  await ajouter('place', 'La place des Mastres', "La place des Mastres (la grand-place du marché), à la Stardew : herbe, terre battue sous les étals et sur les chemins, dalles au centre ; ses arbres et ses buissons dans les couleurs de chaque région.", place, true);
 
   // La nymphe des fontaines
   await ajouter('nymphe', 'La nymphe', "La nymphe des fontaines, en cinq états : de l'eau qui jaillit à une femme presque humaine, dont le bas de la robe reste de l'eau.",
@@ -517,8 +517,143 @@ async function categories(scene) {
   }
   await ajouter('variantes', 'Les destinations des récits', 'Le ciel, le sol et les couleurs du royaume restent, mais chaque destination a ses arbres, son repère au loin, ses détails au premier plan et ses bêtes.', variantes, true);
 
+  // ============================================================================================================
+  // (novembre) Ce que la bibliothèque n'avait pas encore : la Faucheuse et le Grand Sage en HD, les auras, les gestes
+  // muets, les poses du rig, les objets tenus, les arbres des quatre saisons, la chambre et le coucher, le comptoir du
+  // matin, le bureau, l'atelier, les événements du comptoir, et les petits décors refaits
+  // ============================================================================================================
+  // une toile HD → une texture (une fois)
+  const toileEn = (cle, faire) => { if (!scene.textures.exists(cle)) faire().texture(scene, cle); return cle; };
+  // toutes les textures qu'une fonction crée, avec un nom tiré de leur clé
+  const creees = (f, nom = joli) => nouvelles(scene, f).map(cle => ({ cle, nom: nom(cle) }));
+
+  // La Faucheuse
+  const fau = [], SV = ['petale', 'sablier', 'plume'];
+  fau.push(sur(() => ({ cle: textureFaucheuseHD(scene, 'buste', { G: null }), nom: 'Son buste, à la fenêtre du comptoir' })));
+  fau.push(sur(() => ({ cle: toileEn('bib_fau_buste_ombre', () => faucheuseBusteHD({ visage: 'ombre' })), nom: 'Son buste, le visage tout d’ombre' })));
+  fau.push(sur(() => ({ cle: toileEn('bib_fau_buste_parle', () => faucheuseBusteHD({ parle: true })), nom: 'Son buste, elle parle' })));
+  fau.push(sur(() => ({ cle: toileEn('bib_fau_buste_devoilee', () => faucheuseBusteHD({ devoilee: true })), nom: 'Son buste, dévoilée (la Larme de Lune luit)' })));
+  for (const [vue, nom] of [['face', 'de face'], ['troisQuarts', 'de trois-quarts']]) {
+    fau.push(sur(() => ({ cle: textureFaucheuseHD(scene, 'corps', { vue, G: null, levitation: false }), nom: `En pied, ${nom}` })));
+    fau.push(sur(() => ({ cle: textureFaucheuseHD(scene, 'corps', { vue, G: null, levitation: true }), nom: `En lévitation, ${nom} (dans la file)` })));
+  }
+  fau.push(sur(() => ({ cle: toileEn('bib_fau_devoilee', () => faucheuseCorpsHD('troisQuarts', { devoilee: true })), nom: 'Dévoilée : la lueur de la Larme de Lune' })));
+  fau.push(sur(() => ({ cle: toileEn('bib_fau_sansFaux', () => faucheuseCorpsHD('face', { faux: false })), nom: 'Sans sa faux, les mains croisées' })));
+  fau.push(sur(() => ({ cle: toileEn('bib_fau_sansSouvenirs', () => faucheuseCorpsHD('face', { souvenirs: [] })), nom: 'Sans ses souvenirs (tous donnés)' })));
+  fau.push(sur(() => ({ cle: toileEn('bib_fau_fumee', () => faucheuseCorpsHD('troisQuarts', { fumee: { longueur: 1, dissip: 0.5 } })), nom: 'Sa traînée de fumée noire' })));
+  for (const ph of [0, 0.5]) fau.push(sur(() => ({ cle: toileEn('bib_fau_cendres' + ph, () => faucheuseCorpsHD('troisQuarts', { cendres: { phase: ph } })), nom: `Ses cendres qui s’évaporent (${ph ? 'deuxième' : 'première'} image)` })));
+  fau.push(sur(() => ({ cle: toileEn('bib_fau_vent', () => faucheuseCorpsHD('troisQuarts', { vent: 1, levitation: { hauteur: 48, phase: 0.25 } })), nom: 'Elle glisse : la cape traîne, la faux suit' })));
+  for (const d of [0.35, 0.7]) fau.push(sur(() => ({ cle: toileEn('bib_fau_dis' + d, () => faucheuseCorpsHD('face', { dissolution: d })), nom: `Elle se dissout dans l’ombre (${Math.round(d * 100)} %)` })));
+  const busteF = sur(() => textureFaucheuseHD(scene, 'buste', { G: null }));
+  if (busteF) (sur(() => texturesDissolutionFH(scene, busteF)) || []).forEach((cle, i) => fau.push({ cle, nom: `Au comptoir, elle se dissout (image ${i + 1} sur ${FH_ETAPES_DISSOLUTION.length})` }));
+  sur(() => texturesCendresFH(scene));
+  for (let i = 0; i < 4; i++) fau.push({ cle: 'fhCendre' + i, nom: i === 3 ? 'Une goutte de cendre' : `Un flocon de cendre (${i + 1})` });
+  await ajouter('faucheuse', 'La Faucheuse', "La Faucheuse en HD : son buste à la fenêtre du comptoir, en pied et en lévitation dans la file, ses souvenirs (pétale noir, sablier, plume), la Larme de Lune, ses cendres et sa traînée, sa dissolution dans l'ombre quand elle repart.", fau, true);
+
+  // Le Grand Sage
+  const sage = [], poserSage = (cle, f, vue, opts, nom) => sage.push(sur(() => { sageTransformeTexture(scene, cle, f, vue, opts); return { cle, nom }; }));
+  poserSage('bib_sage_h_face', 0, 'face', { exil: false, baton: 'serres' }, 'Forme humaine, de face, l’Absolution en main');
+  poserSage('bib_sage_h_3q', 0, 'troisQuarts', { exil: false, baton: 'serres' }, 'Forme humaine, de trois-quarts');
+  poserSage('bib_sage_t35', 0.35, 'face', { baton: 'serres' }, 'Il se transforme : ses yeux prennent le bleu du cristal');
+  poserSage('bib_sage_t70', 0.7, 'face', { baton: 'bois' }, 'Il se transforme : les cornes percent');
+  poserSage('bib_sage_md_face', 1, 'face', { baton: 'bois' }, 'Mi-dragon, de face, le Dévoreur de Noms en main');
+  poserSage('bib_sage_md_3q', 1, 'troisQuarts', { baton: 'bois' }, 'Mi-dragon, de trois-quarts');
+  poserSage('bib_sage_rage', 1, 'face', { baton: 'bois', rage: true }, 'Mi-dragon, dans sa rage');
+  sage.push(sur(() => ({ cle: toileEn('bib_sage_serpentin_face', () => { const t = sfToile(480, 270), e = 1.45;
+    sfCorpsEntier(t, [{ pts: sfBezier([520, 10], [420, 50], [400, 170], [500, 250], 30) }], u => 34, { e, ventre: 1 });
+    sfPatteDragon(t, [180, 150], [150, 196], [168, 238], 15, { e, decalage: -0.5, sens: 1 });
+    sfCorpsEntier(t, [{ pts: sfBezier([300, 100], [300, 40], [340, -20], [380, -80], 30), opts: { criniere: 1 } }], u => 36, { e, ventre: -1 });
+    sfPatteDragon(t, [404, 150], [432, 196], [420, 238], 17, { e, sens: -1 });
+    sfTeteDragonFace(t, 300, 94, e, { gueule: 0.45 }); sfContour(t, 2); return t; }), nom: 'Le dragon serpentin, de face' })));
+  sage.push(sur(() => ({ cle: toileEn('bib_sage_serpentin_3q', () => { const t = sfToile(480, 270), e = 1.5;
+    sfCorpsEntier(t, [{ pts: sfBezier([520, 130], [440, 220], [330, 240], [190, 262], 30) }], u => 30, { e, ventre: -1 });
+    sfPatteDragon(t, [436, 140], [468, 180], [455, 236], 15, { e, decalage: -0.5, sens: -1 });
+    sfCorpsEntier(t, [{ pts: sfBezier([360, 110], [420, 100], [456, 30], [486, -50], 30), opts: { criniere: 1 } }], u => 34, { e, ventre: 1 });
+    sfPatteDragon(t, [394, 156], [376, 202], [344, 238], 17, { e, sens: -1 });
+    sfTeteDragon3q(t, 336, 110, e, { dir: -1, gueule: 0.35 }); sfContour(t, 2); return t; }), nom: 'Le dragon serpentin, de trois-quarts' })));
+  for (const [modele, nom] of [['serres', 'L’Absolution, le bâton du Sage (ses serres d’or)'], ['bois', 'Le Dévoreur de Noms, le bâton transformé (ses bois d’argent)']])
+    sage.push(sur(() => ({ cle: toileEn('bib_sage_baton_' + modele, () => { const t = sfToile(64, 230); sfBatonMage(t, 32, 224, 10, 2, modele); sfContour(t, 1); return t; }), nom })));
+  await ajouter('sage', 'Le Grand Sage', "Le Grand Sage dans ses trois formes : l'homme, le mi-dragon, le dragon serpentin ; sa transformation, sa rage, et ses deux bâtons, l'Absolution et le Dévoreur de Noms.", sage, true);
+
+  // Les auras : les cinq paliers, puis celles des personnages (validées)
+  const auras = [], humainFace = sur(() => corpsHD(scene, 'humain', null, 'face'));
+  const photoAura = (cle, tex, ech, couleur, palier, nom, opts = {}) => auras.push(sur(() => { const S = scene.textures.get(tex).getSourceImage(), w = S.width * ech, h = S.height * ech, m = Math.round(h * 0.75);
+    photo(scene, cle, Math.round(w + 2 * m), Math.round(h + m), p => { p.add.rectangle(0, 0, w + 2 * m, h + m, 0x14101c).setOrigin(0).setDepth(-5); const im = p.add.image(m + w / 2, h + m * 0.8, tex).setOrigin(0.5, 1).setScale(ech).setDepth(5); auraHD(p, im, couleur, palier, opts); });
+    return { cle, nom }; }));
+  if (humainFace) for (let pal = 1; pal <= 5; pal++) photoAura('bib_aura_palier' + pal, humainFace, 1.2, 'or', pal, `Palier ${AURAS_PALIERS[pal].nom} — ${AURAS_PALIERS[pal].desc}`, { graine: 3 + pal });
+  const PERSOS_AURA = [
+    [() => corpsHD(scene, 'mentor', null, 'face'), 1.4, 'argentBleu', 2, 'Garrick : argent et bleu, palier 2'],
+    [() => textureJoueur(scene, G, 'deFace'), 1.4, 'bleuBlanc', 1, 'JeuneGoy : bleu et blanc, palier 1'],
+    [() => { sageTransformeTexture(scene, 'bib_sage_h_face', 0, 'face', { exil: false, baton: 'serres' }); return 'bib_sage_h_face'; }, 1.1, 'orViolet', 4, 'Le Grand Sage : l’or, le violet qui perce, palier 4'],
+    [() => { sageTransformeTexture(scene, 'bib_sage_md_face', 1, 'face', { baton: 'bois' }); return 'bib_sage_md_face'; }, 0.9, 'violet', 5, 'Le Sage mi-dragon : violet, palier 5'],
+    [() => corpsHD(scene, 'gardienneMages', null, 'face'), 1.3, 'violetNoir', 3, 'Séraphine : violet et noir, palier 3'],
+    [() => corpsHD(scene, 'gardienneElfes', null, 'face'), 1.3, 'vert', 3, 'Ilyriel : vert, palier 3'],
+    [() => textureChatDebout(scene, lookChat(G), { cigare: true }), 3.2, 'vertMarron', 2, 'Le chat : vert sombre et marron foncé, palier 2'],
+    [() => textureFaucheuseHD(scene, 'corps', { vue: 'face', G: null, levitation: false }), 0.6, 'noirBlanc', 4, 'La Faucheuse : noir et blanc enroulés, palier 4'],
+  ];
+  for (const [tex, ech, couleur, palier, nom] of PERSOS_AURA) { const t = sur(tex); if (t) photoAura('bib_aura_' + couleur + palier, t, ech, couleur, palier, nom, { graine: 20 + palier }); }
+  await ajouter('auras', 'Les auras', "L'aura est un voile qui épouse la silhouette (jamais des flammes) : cinq paliers, du halo au déchaînement, et la couleur de chacun (ce qu'elle dit de lui). Elle ne s'allume qu'au moment de se battre, chez ceux qui ont un don.", auras, true);
+
+  // Les gestes muets : JeuneGoy répond avec son corps
+  const gestes = [], NOMS_GESTES = { oui: 'oui (il hoche la tête)', non: 'non (il secoue la tête)', epaules: 'il hausse les épaules', tendreMain: 'il tend la main', montrer: 'il montre du doigt', salut: 'il salue',
+    incliner: 'il s’incline', brasCroises: 'les bras croisés', nuque: 'la main sur la nuque', coeur: 'la main sur le cœur', penche: 'il se penche', regardeBas: 'il baisse les yeux', mainsOuvertes: 'les mains ouvertes',
+    serre: 'il serre la main', offreMains: 'il offre ses mains', mainDessus: 'la main posée dessus' };
+  for (const [nom, g] of Object.entries(GESTES_HD)) g.images.forEach((_, i) => gestes.push(sur(() => ({ cle: textureGesteJoueur(scene, G, nom, i), nom: `${NOMS_GESTES[nom] || joli(nom)} (${i + 1}/${g.images.length})` }))));
+  await ajouter('gestes', 'Les gestes muets', "JeuneGoy ne parle pas : il répond avec son corps. Chaque geste, image par image (le moteur des corps les anime).", gestes);
+
+  // Les poses du rig (à genoux, au sol, il frappe...) et les objets tenus en main
+  const rig = [];
+  for (const nom of Object.keys(POSES_HD)) rig.push(sur(() => ({ cle: texturePose(scene, { nom: 'Aldric Montfort', race: 'humain', niveau: 'aguerri' }, nom), nom: `Aldric · ${joli(nom).toLowerCase()}` })));
+  for (const id of Object.keys(OBJETS_MAIN)) rig.push(sur(() => ({ cle: textureObjetMainHD(scene, id), nom: `Tenu en main : ${(ITEMS[id] && ITEMS[id].nom) || joli(id)}` })));
+  await ajouter('rig', 'Les poses du rig et les objets tenus', "Les poses des voyageurs dans les récits (à genoux, au sol, il gît, il frappe...) et les objets qu'ils tiennent vraiment en main.", rig);
+
+  // Les arbres des quatre saisons
+  const arbres = [], SAISONS_ARBRE = Object.keys((typeof FEUILLAGES_ARBRE !== 'undefined' && FEUILLAGES_ARBRE.chene) || {}), NOMS_ESPECES = { chene: 'Chêne', pommier: 'Pommier', bouleau: 'Bouleau', saule: 'Saule' };
+  for (const e of ESPECES_ARBRE) for (const sa of SAISONS_ARBRE) arbres.push(sur(() => ({ cle: arbreHD(scene, e, sa, 120, 3), nom: `${NOMS_ESPECES[e] || joli(e)} · ${(SAISONS && SAISONS[sa] && SAISONS[sa].nom) || joli(sa)}` })));
+  await ajouter('arbres', 'Les arbres', 'Tous les arbres du jeu sont peints de la même main, espèce par espèce, aux quatre saisons (la neige du Givre comprise).', arbres, true);
+
+  // La chambre et le coucher : l'armoire, le paravent, les pyjamas, les chats endormis
+  const chambre = [];
+  for (const n of [0, 1, 2]) chambre.push(sur(() => ({ cle: armoireHD(scene, { n }), nom: `L’armoire (${NIVEAUX(n)})` })));
+  chambre.push(sur(() => ({ cle: armoireHD(scene, { n: 1, ouverture: 1 }), nom: 'L’armoire ouverte' })));
+  for (const pli of [0, 2]) chambre.push(sur(() => ({ cle: paraventHD(scene, pli), nom: pli ? 'Le paravent déplié' : 'Le paravent plié' })));
+  for (const [id, py] of Object.entries(PYJAMAS)) chambre.push(...creees(() => textureJoueurPyjama(scene, G, id), () => `Toi, en ${py.nom.charAt(0).toLowerCase() + py.nom.slice(1)}`).slice(0, 1));
+  chambre.push(...creees(() => texturesSommeilChat(scene, lookChat(G)), k => 'Le chat endormi · ' + joli(k.split('_').pop()).toLowerCase()));
+  await ajouter('chambre', 'La chambre et le coucher', "L'armoire à deux onglets (habits et pyjamas), le paravent, les six pyjamas, et le chat qui dort où il veut.", chambre);
+
+  // Le comptoir du matin : ses six styles
+  const matin = [];
+  // (on pose d'abord le décor pour savoir où il tombe, puis on photographie juste ce coin-là)
+  const coinMatin = st => { const avant = new Set(scene.children.list); poserDecorMatin(scene, st); const neufs = scene.children.list.filter(o => !avant.has(o));
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const o of neufs) { if (!o.getBounds) continue; const b = o.getBounds(); x0 = Math.min(x0, b.left); y0 = Math.min(y0, b.top); x1 = Math.max(x1, b.right); y1 = Math.max(y1, b.bottom); }
+    for (const o of neufs) o.destroy(); return [Math.floor(x0), Math.floor(y0), Math.ceil(x1 - x0), Math.ceil(y1 - y0)]; };
+  for (const [st, S] of Object.entries(STYLES_COMPTOIR)) matin.push(sur(() => { const [x, y, l, h] = coinMatin(st);
+    return { cle: photo(scene, 'photoMatin_' + st, l, h, p => poserDecorMatin(p, st), { x, y }), nom: `${S.nom} · ${S.resume}` }; }));
+  await ajouter('matin', 'Le comptoir du matin', 'Le comptoir avant l’ouverture : le store à lames, l’écriteau, l’horloge, le tableau de la commande, et les six styles au choix.', matin, true);
+
+  // Le bureau, l'atelier, les événements du comptoir, la berceuse, les elfes
+  const pieces = [];
+  for (const g of Object.keys(GESTES_BUREAU)) pieces.push(sur(() => ({ cle: textureJoueurBureau(scene, G, g), nom: `Toi au bureau · ${g === 'repos' ? 'au repos' : 'il écrit (' + (+g.slice(-1) + 1) + ')'}` })));
+  for (const [id, A] of Object.entries(GESTES_ATELIER)) for (const e of A.images) pieces.push(sur(() => ({ cle: texturePosteAtelier(scene, id, e), nom: `L’atelier · ${joli(id)} : ${String(e).replace('@', ' ')}` })));
+  pieces.push(...creees(() => { creerPieceAtelierHD(scene); creerBraisesForgeHD(scene); }, k => 'L’atelier · ' + joli(k).toLowerCase()));
+  await ajouter('pieces', 'Le bureau et l’atelier', "Toi au bureau (vu de dos, assis de l'autre côté), et les quatre postes de l'atelier, geste par geste.", pieces);
+  const evts = [...creees(() => creerObjetsEvtHD(scene), k => joli(k.replace(/^evt_/, '')))];
+  evts.push(...creees(() => texBerceuse(scene), () => 'La page de la berceuse du lac'));
+  evts.push(...creees(() => texturesElfes(scene), k => 'Les elfes du val · ' + joli(k.replace(/^elfes_/, '')).toLowerCase()));
+  await ajouter('evenements', 'Les événements du comptoir', "Les objets des dix-sept événements du comptoir (le tonneau de Célestin, le bouton et la plume du chat, la note de la barde...), la berceuse du lac et les elfes du val.", evts);
+
+  // Les petits décors refaits en HD (la fin du 16 px), et le porche de la rue
+  const petits = [];
+  sur(() => IntroHistoireScene.prototype.texturesRiviere.call(scene));
+  petits.push({ cle: 'rondinRiviere', nom: 'Le rondin de la rivière (l’intro)' }, { cle: 'tonneauRiviere', nom: 'Le tonneau de la rivière (l’intro)' });
+  for (const c of [0xe8603a, 0xf0b040, 0xe84a5a, 0xf08a3a]) petits.push(sur(() => ({ cle: MarcheScene.prototype.texLampion.call(scene, c), nom: 'Un lampion du Solstice' })));
+  petits.push(sur(() => ({ cle: texCarteMonde(scene), nom: 'L’icône « La carte »' })));
+  for (const jour of [true, false]) petits.push(sur(() => ({ cle: porcheRueHD(scene, jour), nom: jour ? 'Le porche de la rue, le jour' : 'Le porche de la rue, la nuit' })));
+  for (const sa of ['moissons', 'givre']) petits.push(sur(() => ({ cle: poteauDeuxBrasHD(scene, sa), nom: sa === 'givre' ? 'Le poteau des Coteaux, sous la neige' : 'Le poteau des Coteaux' })));
+  await ajouter('petitsDecors', 'Les petits décors', "Les derniers décors tracés au trait, refaits en HD : le rondin et le tonneau de la rivière, les lampions du Solstice, l'icône de la carte ; le porche de la rue et le poteau des Coteaux.", petits);
+
   // L'ordre des onglets
-  const ORDRE = ['personnages', 'poses', 'coiffures', 'portraits', 'objets', 'armure', 'icones', 'pierres', 'mobilier', 'luxe', 'interieur', 'lieux', 'saisons', 'meteo', 'quotidien', 'cambrioleur',
+  const ORDRE = ['personnages', 'faucheuse', 'sage', 'auras', 'poses', 'gestes', 'rig', 'coiffures', 'portraits', 'objets', 'armure', 'icones', 'pierres', 'mobilier', 'luxe', 'chambre', 'interieur', 'pieces', 'matin', 'evenements', 'lieux', 'arbres', 'petitsDecors', 'saisons', 'meteo', 'quotidien', 'cambrioleur',
     'rue', 'enseigne', 'rival', 'bar', 'barbier', 'confrerie', 'mecenat', 'repaire', 'ville', 'place', 'nymphe', 'chats', 'chapeaux', 'parrain', 'moulin', 'peche', 'pattes', 'voyage', 'pontRoyal',
     'carte', 'menace', 'carrefour', 'emblemes', 'oiseaux', 'recits', 'epreuves', 'reperes', 'variantes', 'bivouac', 'baluchons'];
   const rang = c => (ORDRE.includes(c.id) ? ORDRE.indexOf(c.id) : ORDRE.length);
