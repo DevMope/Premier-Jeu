@@ -3931,6 +3931,7 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
 - **La Faucheuse au comptoir (02/11)** : son crâne est encore trop présent, pas assez enfoncé dans la capuche.
 - **Référence pour plus tard** : pour les déplacements des personnages dans le monde, s'inspirer aussi de *Graveyard Keeper*, très fluide dans ses animations.
 - **Réponses du 02/11, étape 1 de la refonte (Q336 à Q340)** : le livre des deux voies est un bon concept, mais les dessins doivent être plus beaux. **Règle** : si Claude demande s'il faut faire mieux, c'est qu'il le sait ; le faire directement. Les ☀ ☾ vers le jour 36 à 69 : bien, cela fait des façons de jouer différentes. La bougie de chevet : oui ; ne pas oublier qu'on ajoutera d'autres détails de ce genre. La lueur floue du bandeau, à côté de la lampe : bien comme ça. Le Parrain compte maintenant : oui ; et le dénoncer doit avoir des répercussions à la fois drôles et « dangereuses » pour le joueur, à la hauteur du personnage qu'est le chat.
+- **Étape 2 de la refonte (03/11)** : validée, sauf la taxe. Le joueur ne veut pas la baisser : avec un robot qui joue vraiment bien, on atteint déjà des sommes astronomiques (environ 100 000 p. au jour 120 depuis la v1.25, 107 000 en Lumière en v1.60) ; il pensait au contraire qu'on l'augmenterait. Demandé : un schéma de l'argent du joueur au jour 120 (par camp, bon joueur) et de tout ce dans quoi il peut le dépenser.
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
