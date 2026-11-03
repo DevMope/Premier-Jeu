@@ -803,8 +803,19 @@ const JOUR_SCEAU = 24;
 // (audit v0.53, constat 2) La taxe de la Confrérie, chaque fin de semaine (tous les 7 jours) : une
 // part de ce que tu as au-dessus de la franchise. « Pour la défense contre le dragon. » La
 // Confrérie taxe moins ceux qui penchent vers la lumière, et plus ceux qui penchent vers l'ombre.
-// (02/11, refonte) sur ce que la fortune a gagné dans la semaine, et non plus sur toute la fortune
-const TAXE_CONFRERIE = { franchise: 100, taux: { lumiere: 0.10, neutre: 0.14, ombre: 0.20 } };
+// (03/11, refonte : à régler avec l'étape des dépenses) trois façons de la calculer, chaque fin de semaine :
+// - 'fortune' : l'ancienne, une part de toute la fortune au-delà de la franchise (12 %, 16 % ou 22 %) ;
+// - 'gain' : une part de ce que la fortune a gagné depuis la semaine d'avant (10 %, 14 % ou 20 %) : trop douce,
+//   refusée par le joueur (le bon joueur accumule déjà des centaines de milliers de pièces) ;
+// - 'progressive' (proposée) : sur la fortune, par tranches. La première tranche paie la moitié de l'ancien taux
+//   (le début de partie respire), la suivante le taux d'avant, puis une fois et demie, puis le double : quand la
+//   richesse s'emballe, la taxe l'absorbe.
+const TAXE_CONFRERIE = {
+  mode: 'progressive',
+  franchise: 200, taux: { lumiere: 0.12, neutre: 0.16, ombre: 0.22 },
+  gain: { franchise: 100, taux: { lumiere: 0.10, neutre: 0.14, ombre: 0.20 } },
+  tranches: [[5000, 0.5], [20000, 1], [60000, 1.5], [Infinity, 2]],   // [jusqu'à cette fortune, × le taux]
+};
 // (constat 14) Le coup de pouce de Garrick quand tu n'as plus rien : des provisions sur le pas de la porte
 const COUP_DE_POUCE = { argent: 12, stock: 2, delai: 15, cadeau: { ration: 2, gourde: 1, torche: 1 } };
 // (v0.90) Lumière et ombre : le barème. Chaque geste fait pencher la balance de quelques points,

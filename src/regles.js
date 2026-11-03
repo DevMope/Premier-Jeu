@@ -1666,8 +1666,7 @@ function nuit(G) {
     // tiers des recettes, dans les parties simulées), mais une part de ce que la fortune a gagné depuis la dernière
     // fois : ce qu'on a dépensé, bâti ou donné n'est pas taxé. (La première semaine d'une vieille partie : rien.)
     const fortune = G.argent - dette;
-    if (G.baseTaxe === undefined) G.baseTaxe = fortune;
-    taxe = Math.round(Math.max(0, fortune - G.baseTaxe - TAXE_CONFRERIE.franchise) * TAXE_CONFRERIE.taux[p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre']);
+    taxe = taxeDeLaConfrerie(G, fortune, p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre');
     if (taxe > 0) payer(G, taxe, 'taxe');
     G.baseTaxe = fortune - taxe;
   }
@@ -3537,6 +3536,24 @@ function texteGeste(e) {
 }
 
 // Le palier : de −3 (ombre épaisse) à +3 (lumière éclatante), 0 entre les deux.
+// La taxe de la Confrérie de la semaine, selon sa façon de se calculer (TAXE_CONFRERIE.mode, data.js)
+function taxeDeLaConfrerie(G, fortune, cote) {
+  const T = TAXE_CONFRERIE, mode = T.mode || 'fortune';
+  if (mode === 'gain') {
+    if (G.baseTaxe === undefined) G.baseTaxe = fortune;   // (la première semaine d'une vieille partie : rien)
+    return Math.round(Math.max(0, fortune - G.baseTaxe - T.gain.franchise) * T.gain.taux[cote]);
+  }
+  const imposable = Math.max(0, fortune - T.franchise);
+  if (mode !== 'progressive') return Math.round(imposable * T.taux[cote]);
+  let reste = imposable, bas = 0, taxe = 0;
+  for (const [haut, mult] of T.tranches) {
+    const part = Math.min(reste, haut - bas);
+    if (part <= 0) break;
+    taxe += part * T.taux[cote] * mult; reste -= part; bas = haut;
+  }
+  return Math.round(taxe);
+}
+
 // (02/11, refonte, étape 2) ce que le monde voit de toi : le regard des deux camps (degres.js, palierDuRegard), et
 // non plus l'ancienne jauge. Tout ce qui lit palierCamp ou coteCamp (la garde, la banque, la taxe, le marché noir, les
 // clients, la Main Noire, la Confrérie et le repaire, le mécénat, la menace, la gazette...) suit donc le regard.
