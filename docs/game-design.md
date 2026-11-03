@@ -3774,6 +3774,25 @@ Le joueur demande plus d'événements, au hasard ou liés à son histoire, penda
   - **Q148** : la légende de l'armure reste telle quelle, dans l'esprit d'origine : que le joueur ignore que l'armure peut lui servir fera peut-être plus de joueurs neutres, et garde le suspense et le mystère.
   - **Q150, validé** : les boutons gardent leurs libellés de choix (à la Zelda), et JeuneGoy répond par des gestes visibles : hochements de tête, mouvements de bras, etc.
 
+## Où en est la feuille de route (point du 03/11)
+| Étape | État |
+|---|---|
+| 1. Gestes muets de JeuneGoy | ✅ fait et dans le jeu |
+| 2. La ville en quartiers | 🔨 la rue Soucolline en vue de haut (façon Stardew) presque validée : barbier, maison haute, banque, Pommeroy, comptoir, paon, maisons de ville, atelier des Mages et poids public validés ; restent l'accès à la place (Q292 à Q295), puis les autres quartiers (bas-quartier, Coteaux, Rempart et rivière) ; l'église, la Confrérie et l'impasse du Corbeau bougeront avec eux. Pas encore réunie au jeu (deux branches) |
+| 3. Les trois armures dans le jeu | 🔨 faites, en attente de validation (Q286 à Q290), pas encore réunies au jeu |
+| 4. Les degrés cachés d'Ombre et de Lumière | 🔨 devenue la refonte complète Ombre/Lumière, en 10 étapes : étapes 1 et 2 validées (pas encore réunies au jeu), étape 3 en cours |
+| 5. L'histoire acte par acte | ⏳ à venir (les décisions de récit Q173 à Q181 sont déjà dans le jeu) |
+| 6. Le Drômmath | ⏳ à venir (en partie dans l'étape 3 de la refonte) |
+| 7. Cendrebourg | ⏳ à venir (la 8e pièce y mène par un grand voyage) |
+| 8. Le Sage | ✅ ses trois formes validées (planche) ; ses entrées en scène à venir |
+| 9. La préparation de guerre | ⏳ à venir |
+| 10. La grande bataille | ⏳ à venir |
+| 11. Les fins | ⏳ à venir |
+| 12. La cinématique d'ouverture | ⏳ à venir |
+| 13. Les besaces des villes | ⏳ plus tard |
+| 14. La forge du joueur | ⏳ à venir |
+| Hors feuille de route | ✅ la Faucheuse en HD dans le jeu (03/11) ; ✅ plus aucun personnage en 16 px ; ✅ les auras (validées, pas encore branchées : elles attendent les combats) ; ✅ les noms des armes légendaires ; ✅ les deux grands balayages des 01 et 02/11 |
+
 ## La feuille de route (31/10) : ce qui reste à faire, dans l'ordre
 **Ordre validé par le joueur le 31/10.**
 L'histoire étant maintenant écrite, voici les chantiers restants, réorganisés. Un ou deux à la fois, captures avant fusion, rien sur Cloudflare sans accord.
