@@ -28,6 +28,13 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q342** — La Faucheuse : les yeux rouges ou fauves (jaune d'ambre) ? (capture côte à côte avec le nouveau crâne)
+- **Q343** — Le halo de terreur au comptoir : il n'apparaît qu'à partir de 3 morts annoncées le même jour, grandit à 7 puis à 15 ; c'est un vieux dessin en cercles rouges, qui ne ressemble pas aux auras validées. On le remplace par sa vraie aura (le voile noir et blanc) à un palier qui suit le nombre de morts ? Et dès sa première visite, ou seulement à partir de 3 morts ?
+- **Q344** — Les personnages comme leur portrait (planche d'essai, 4 morceaux) : voie A, la tête et les habits du portrait sur le corps d'aujourd'hui, qui garde ses vues, sa marche, ses gestes et ses armes (4 à 5 itérations, conseillée), ou voie B, un seul moteur pour tout (10 à 15 itérations, beaucoup de risques de casser) ?
+- **Q345** — Quand le portrait et le corps ne disent pas la même chose (Garrick : veste courte au comptoir, long manteau en pied ; Lindë rousse au comptoir, blonde dans la file), c'est toujours le portrait qui fait foi ? Ou, pour Garrick, on donne le long manteau au portrait ?
+- **Q346** — Le profil des personnages : un vrai profil, nez en silhouette (un dessin neuf), ou un trois-quarts appuyé suffit ?
+- **Q347** — Les proportions : le corps tiré du portrait est un peu plus grand (une tête de plus environ, une tunique plus longue). On garde, ou on le ramène à la taille d'aujourd'hui ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
