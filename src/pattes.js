@@ -103,8 +103,9 @@ function marcheDEssai(G) {
 }
 
 // Les Mages-Charpentiers (leurs noms viendront avec la banque de noms)
-const MAITRESSE_MAGES = { race: 'magicienne', nom: 'La maîtresse-charpentière', feminin: true, niveau: 'veteran' };
-const CHARPENTIER_NAIN = { race: 'nain', nom: 'Le charpentier', niveau: 'aguerri' };
+// (étape 10b) tout l'atelier en habits de Mages-Charpentiers : tablier de cuir, ceinture d'outils, manches brodées de runes
+const MAITRESSE_MAGES = { race: 'magicienne', nom: 'La maîtresse-charpentière', feminin: true, niveau: 'veteran', costume: 'mageCharpentier' };
+const CHARPENTIER_NAIN = { race: 'nain', nom: 'Le charpentier', niveau: 'aguerri', costume: 'mageCharpentier' };
 
 // La nuit : le chantier s'installe, puis l'atelier ouvre (le crieur l'annonce, une fois chacun)
 function nuitDesMages(G) {

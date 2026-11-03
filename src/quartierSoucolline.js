@@ -349,6 +349,14 @@ DECORS_QUARTIERS.soucolline = {
       if (jour) [[MAITRESSE_MAGES, L.mages - 72, false], [CHARPENTIER_NAIN, L.mages + 96, true]].forEach(([q, x, fl], i) => {
         const kq = corpsHD(s, q, null, 'face'), p = s.add.image(x, YN + 28, kq).setOrigin(0.5, 1).setScale(4.5 * echelleCorps(kq)); poser(p, YN + 28); ici.ombrePerso(x, YN + 28);   // (étape 10b : de face, sur le seuil)
         s.tweens.add({ targets: p, scaleY: p.scaleY * 1.012, duration: 1500 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        // (étape 10b) leurs gestes : la maîtresse accueille (les bras ouverts), une rune s'allume dans sa main, puis elle se tourne
+        // vers l'atelier ; le charpentier réfléchit (la main au menton), se tourne vers l'atelier, revient
+        const gestes = i === 0 ? [['accueil', 'face', 2600], [null, 'face', 3200], [null, 'profil', 1800], [null, 'face', 2400]] : [[null, 'face', 3000], ['pense', 'face', 2600], [null, 'profil', 1800], [null, 'face', 2200]];
+        const lueur = s.add.circle(p.x + (i === 0 ? 18 : -14), p.y - p.displayHeight * 0.45, 3, 0x58c8f0, 0.6).setBlendMode(Phaser.BlendModes.ADD).setVisible(false); poser(lueur, YN + 29);
+        s.tweens.add({ targets: lueur, alpha: 0.15, scale: 1.8, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        let g = 0; const geste = () => { if (!p.active) return; const [pose, vue, d] = gestes[g++ % gestes.length];
+          p.setTexture(corpsHD(s, q, pose, vue)).setFlipX(vue === 'profil' && i === 0); lueur.setVisible(!!pose); s.time.delayedCall(d, geste); };
+        s.time.delayedCall(1200 + i * 900, geste);
         ici.obstacles.push([x - 14, YN + 16, x + 14, YN + 34]);
       });
       else ici.regarder(L.mages - 125, YN - 240, L.mages + 125, YN + 4, "L'atelier des Mages-Charpentiers dort. Sur les poutres, les runes luisent encore un peu, bleu pâle.", [L.mages, YN + 36]);
