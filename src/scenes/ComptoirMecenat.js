@@ -27,6 +27,7 @@ Object.assign(CounterScene.prototype, {
   },
   visiteSage() {
     const G = this.G, m = G.mecenat || { donne: 0, paliers: [] };
+    G.sageIci = G.jour;   // (étape 3) en sa présence, la Clairvoyance s'éteint (degres.js, voitLesCamps)
     this.titreCommande.setText(''); this.sousTitre.setText(''); this.texteSac.setText(''); this.texteChance.setText('');
     this.aideCommande.setVisible(false); this.boutonEscorte.setVisible(false);
     this.cadrerSageEnPied();

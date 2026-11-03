@@ -76,6 +76,16 @@ const FAITS = {
   ame: { c: -2 },
   piege: { c: -3, cruel: 1 },
   denoncerInnocent: { c: -5, conf: 1, ban: -2, cruel: 1 },
+  // (03/11, étape 3) les faits qui manquaient (faitsHistoire.js), chacun avec son jumeau de même poids
+  ecouterDoyen: { a: -3, ban: 1 },
+  faireTaireDoyen: { a: 3, conf: 1, ban: -2 },
+  fissureGardee: { a: -3 },                      // (secret : personne ne le sait, que l'âme)
+  fissureChassee: { a: 3 },
+  protegerEglise: { a: 5, conf: 3, ban: -1 },
+  saboterEglise: { a: -5, ban: 3 },
+  escorterConvoi: { a: 5, conf: 3, ban: -1 },
+  pillerConvoi: { a: -5, ban: 3 },
+  donDrommath: { a: -3, ban: 3 },
 };
 // Les nouveaux gestes du barème (la jauge, en dessous) : on distingue enfin ce qui était mêlé sous « piège »
 if (typeof BAREME_CAMP !== 'undefined') Object.assign(BAREME_CAMP, {
@@ -86,6 +96,15 @@ if (typeof BAREME_CAMP !== 'undefined') Object.assign(BAREME_CAMP, {
   parrainTaire: { camp: 'mal', n: 1, texte: 'Taire le secret du Parrain' },
   parrainDenoncer: { camp: 'bien', n: 2, texte: 'Dénoncer le Parrain' },
   parrainBague: { camp: 'mal', n: 2, texte: 'Baiser la bague du Parrain' },
+  ecouterDoyen: { camp: 'mal', n: 1, texte: 'Écouter un doyen jusqu’au bout' },
+  faireTaireDoyen: { camp: 'bien', n: 1, texte: 'Faire taire un doyen' },
+  fissureGardee: { camp: 'mal', n: 1, texte: 'Garder une fissure du Sage en mémoire' },
+  fissureChassee: { camp: 'bien', n: 1, texte: 'Chasser une fissure du Sage' },
+  protegerEglise: { camp: 'bien', n: 2, texte: 'Protéger une église-relais du chant' },
+  saboterEglise: { camp: 'mal', n: 2, texte: 'Saboter une église-relais du chant' },
+  escorterConvoi: { camp: 'bien', n: 2, texte: 'Ravitailler un convoi de la Confrérie' },
+  pillerConvoi: { camp: 'mal', n: 2, texte: 'Donner la route d’un convoi aux Bannis' },
+  donDrommath: { camp: 'mal', n: 2, texte: 'Un don au trésor de guerre du Drômmath' },
 });
 
 // --- L'allégeance ---
@@ -319,6 +338,7 @@ function etatVuClairvoyance(G) {
   return {
     imposteurs: st.imposteurs || 0, arnaques: st.arnaques || 0, aines: (G.ainesRecits || []).length,
     berceuse: !!(G.evtComptoir && G.evtComptoir.berceuseLue), presage: p && !p.vrai && (p.indices || []).length ? p.jour : null,
+    fissures: (G.faitsHistoire && G.faitsHistoire.fissures && G.faitsHistoire.fissures.gardees) || 0,   // (étape 3)
   };
 }
 function lueursDe(G) { return etatClairvoyance(G).lueurs; }
@@ -342,6 +362,7 @@ function nuitDeLaClairvoyance(G) {
   if (now.aines > vu.aines) gagner(now.aines - vu.aines, 'le récit d’un doyen, écouté jusqu’au bout');
   if (now.berceuse && !vu.berceuse) gagner(1, 'la berceuse, lue');
   if (now.presage && now.presage !== vu.presage) gagner(1, 'un faux présage qui s’est trahi');
+  if (now.fissures > (vu.fissures || 0)) gagner(now.fissures - (vu.fissures || 0), 'une fissure du Sage, gardée en mémoire');
   const avant = C.lueurs, lues = C.attente.splice(0, CLAIRVOYANCE.maxNuit);
   for (const pourquoi of lues) C.journal.unshift({ jour: G.jour, pourquoi });
   if (C.attente.length > 30) C.attente.length = 30;

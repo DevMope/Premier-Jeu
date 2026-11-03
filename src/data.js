@@ -810,8 +810,13 @@ const JOUR_SCEAU = 24;
 // - 'progressive' (proposée) : sur la fortune, par tranches. La première tranche paie la moitié de l'ancien taux
 //   (le début de partie respire), la suivante le taux d'avant, puis une fois et demie, puis le double : quand la
 //   richesse s'emballe, la taxe l'absorbe.
+// (03/11, réponse du joueur) la taxe selon le côté où le monde te voit : progressive pour la Lumière et le neutre (la
+// moitié du taux jusqu'à 5 000 p., le taux jusqu'à 20 000, une fois et demie jusqu'à 60 000, le double au-delà) ;
+// l'ancienne pour l'Ombre (22 % de la fortune au-delà de 200 p.) : l'Ombre cache une partie de sa fortune, le
+// percepteur ne la voit pas toute, et l'impôt des suspects ne grimpe pas avec elle.
 const TAXE_CONFRERIE = {
-  mode: 'progressive',
+  mode: 'progressive',   // le mode par défaut, si un côté manque dans modeParCote
+  modeParCote: { lumiere: 'progressive', neutre: 'progressive', ombre: 'fortune' },
   franchise: 200, taux: { lumiere: 0.12, neutre: 0.16, ombre: 0.22 },
   gain: { franchise: 100, taux: { lumiere: 0.10, neutre: 0.14, ombre: 0.20 } },
   tranches: [[5000, 0.5], [20000, 1], [60000, 1.5], [Infinity, 2]],   // [jusqu'à cette fortune, × le taux]

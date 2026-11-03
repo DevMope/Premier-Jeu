@@ -406,8 +406,10 @@ class CounterScene extends Phaser.Scene {
     this.bouton(texteA, () => { this.actionB = null; this.majBoutonsService(); actionA(); }, dureeA, campA);
     this.actionB = () => { this.actionB = null; this.majBoutonsService(); actionB(); };
     this.boutonRefuser.setTexte(texteB);
-    marquerCamp(this, this.boutonRefuser, campB);
     this.majBoutonsService();
+    // (03/11, étape 3) le ☀ ou le ☾ du second bouton, une fois qu'il est visible (posé avant, il restait caché quand
+    // le bouton apparaissait avec ce choix)
+    marquerCamp(this, this.boutonRefuser, campB);
   }
 
   // Le bouton du bureau change selon la situation.
@@ -1826,15 +1828,18 @@ class CounterScene extends Phaser.Scene {
   }
 
   // --- (v0.56) Un aîné des Bannis : une phrase, et il repart (on le prend pour un vieux radoteur) ---
+  // (03/11, étape 3) on peut désormais l'écouter jusqu'au bout (ComptoirFaits.js), ou le faire taire
   visiteAine(entree) {
     const a = AINES[entree.race];
     this.titreCommande.setFontSize(17).setText('Un vieux voyageur');
     this.dire(a.phrase, a.nom);
-    this.bouton('« ... »', () => {
+    const radote = () => {
       this.dire(`${a.nom} repart à petits pas, appuyé${a.feminin ? 'e' : ''} sur sa canne. Dans la rue, quelqu'un rit : « Encore ${a.feminin ? 'une vieille' : 'un vieux'} qui radote. »`);
       this.bouton('...', null);
       this.time.delayedCall(2200, () => this.partirPar(FENETRE.x - 80));
-    });
+    };
+    if (typeof this.doyenAuComptoir === 'function' && this.doyenAuComptoir(entree, a, radote)) return;
+    this.bouton('« ... »', radote);
   }
 
   // --- Étape 9d : la garde de la Confrérie ---

@@ -1662,9 +1662,8 @@ function nuit(G) {
   if (G.jour > 0 && G.jour % 7 === 0) {
     const p = palierCamp(G);
     const dette = G.prets.reduce((s, x) => s + x.restant, 0);   // (audit v0.54 : l'argent emprunté n'est pas taxé)
-    // (02/11, refonte, étape 2 : la taxe revue) elle ne prend plus une part de toute la fortune chaque semaine (un
-    // tiers des recettes, dans les parties simulées), mais une part de ce que la fortune a gagné depuis la dernière
-    // fois : ce qu'on a dépensé, bâti ou donné n'est pas taxé. (La première semaine d'une vieille partie : rien.)
+    // (03/11) la taxe selon le côté : progressive pour la Lumière et le neutre, l'ancienne pour l'Ombre (data.js,
+    // TAXE_CONFRERIE.modeParCote ; taxeDeLaConfrerie plus bas)
     const fortune = G.argent - dette;
     taxe = taxeDeLaConfrerie(G, fortune, p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre');
     if (taxe > 0) payer(G, taxe, 'taxe');
@@ -1768,6 +1767,7 @@ function nuit(G) {
   sansPlanter('matinEvenementsComptoir', () => typeof matinEvenementsComptoir === 'function' && G.reveil.lignes.push(...matinEvenementsComptoir(G)));   // (v1.63) les suites des événements du comptoir
   sansPlanter('matinPilosite', () => typeof matinPilosite === 'function' && G.reveil.lignes.push(...matinPilosite(G)));   // (v1.48) le barbier ouvre, la barbe pousse   // (v1.35) la complicité, les rations des deux chats
   sansPlanter('matinDuParrain', () => typeof matinDuParrain === 'function' && G.reveil.lignes.push(...matinDuParrain(G)));   // (v1.39) la part de la Famille
+  sansPlanter('matinDesFaits', () => typeof matinDesFaits === 'function' && G.reveil.lignes.push(...matinDesFaits(G)));   // (03/11, étape 3) l'église, le convoi, les suites du Parrain dénoncé
   sansPlanter('matinDesRiches', () => typeof matinDesRiches === 'function' && G.reveil.lignes.push(...matinDesRiches(G)));   // (v1.32) le mécénat, la neutralité
   sansPlanter('matinDuVoyage', () => typeof matinDuVoyage === 'function' && G.reveil.lignes.push(...matinDuVoyage(G), ...matinDuDuc(G)));   // (v1.57) le départ, le percepteur du duc
   sansPlanter('voeuDeSaison', () => { const l = typeof voeuDeSaison === 'function' && voeuDeSaison(G); if (l) G.reveil.lignes.push(l); });   // (v1.23) les souvenirs de la nymphe au complet
@@ -1863,7 +1863,7 @@ function formatDuree(d) {
 }
 function heureDuComptoir(G) { if (typeof G.heure !== 'number') G.heure = heureOuverture(G); return G.heure; }
 // (v1.01) L'heure d'ouverture : une heure plus tard au lendemain de l'hydromel noir (la tête lourde)
-function heureOuverture(G, jour = G.jour) { return JOURNEE.ouverture - (typeof avanceOuverture === 'function' ? avanceOuverture(G) : 0) + (G.reveilDifficile === jour ? BRUMES.hydromel.retard : 0) + (typeof retardFroid === 'function' ? retardFroid(G, jour) : 0) + (typeof retardEvenements === 'function' ? retardEvenements(G, jour) : 0); }   // (v1.63 : une nuit blanche après l'ombre des Brumes)   // (v1.07 : aussi pour demain, dans la prévision)   // (v1.05 : malade, à midi)
+function heureOuverture(G, jour = G.jour) { return JOURNEE.ouverture - (typeof avanceOuverture === 'function' ? avanceOuverture(G) : 0) + (G.reveilDifficile === jour ? BRUMES.hydromel.retard : 0) + (typeof retardFroid === 'function' ? retardFroid(G, jour) : 0) + (typeof retardEvenements === 'function' ? retardEvenements(G, jour) : 0) + (typeof retardDesFaits === 'function' ? retardDesFaits(G, jour) : 0); }   // (v1.63 : une nuit blanche après l'ombre des Brumes)   // (v1.07 : aussi pour demain, dans la prévision)   // (v1.05 : malade, à midi)
 function avancerHeure(G, d) { G.heure = heureDuComptoir(G) + d; return G.heure; }
 // À la fermeture : ceux qui avaient écrit reviendront demain matin, en tête de file ; les imprévus
 // repartent (ils retenteront leur chance un autre jour). Le colporteur remballe. Ce qu'un client
@@ -3531,6 +3531,9 @@ function texteGeste(e) {
     serviceMafia: 'un service rendu à la Main Noire', corbeau: 'le corbeau de la Main Noire, envoyé en secours', aigle: 'l’aigle du Conseil, envoyé en secours', soudoyer: 'l’inspecteur, soudoyé',
     parrainTaire: 'le secret du Parrain, gardé', parrainDenoncer: 'le Parrain, dénoncé', parrainBague: 'la bague du Parrain, baisée', miseNoire: 'un pari contre un aventurier',
     routeAider: 'quelqu’un aidé sur la route', routeSergent: 'le sergent de la Porte, soudoyé', routeRancon: 'un blessé qui a dû payer ses soins',
+    ecouterDoyen: 'un vieux Banni, écouté jusqu’au bout', faireTaireDoyen: 'un vieux Banni, prié de se taire', fissureGardee: 'une pensée gardée pour soi',
+    fissureChassee: 'une pensée chassée', protegerEglise: 'la veille de la chapelle, éclairée', saboterEglise: 'un sac caché sous le comptoir',
+    escorterConvoi: 'un convoi de la Confrérie, ravitaillé', pillerConvoi: 'la route d’un convoi, soufflée à un éclaireur', donDrommath: 'un don au Drômmath',
   }[e.cle] || e.cle;
   return t;
 }
@@ -3538,7 +3541,7 @@ function texteGeste(e) {
 // Le palier : de −3 (ombre épaisse) à +3 (lumière éclatante), 0 entre les deux.
 // La taxe de la Confrérie de la semaine, selon sa façon de se calculer (TAXE_CONFRERIE.mode, data.js)
 function taxeDeLaConfrerie(G, fortune, cote) {
-  const T = TAXE_CONFRERIE, mode = T.mode || 'fortune';
+  const T = TAXE_CONFRERIE, mode = (T.modeParCote && T.modeParCote[cote]) || T.mode || 'fortune';
   if (mode === 'gain') {
     if (G.baseTaxe === undefined) G.baseTaxe = fortune;   // (la première semaine d'une vieille partie : rien)
     return Math.round(Math.max(0, fortune - G.baseTaxe - T.gain.franchise) * T.gain.taux[cote]);

@@ -68,7 +68,9 @@ function forceEscouade(G, zone, enPlus = null) {
   if (enPlus !== null && ds.length < MENACE.places) ds.push(enPlus);
   if (!ds.length) return 0;
   const moyenne = ds.reduce((a, b) => a + b, 0) / ds.length;
-  return Math.max(0, Math.round(moyenne * 100 * Math.sqrt(ds.length / MENACE.places) + soutienVoisines(G, zone).points));
+  // (03/11, étape 3) un convoi de la Confrérie ravitaillé (+) ou pillé grâce à toi (−) : faitsHistoire.js
+  const convoi = (menaceSur(G, zone) || {}).convoi || 0;
+  return Math.max(0, Math.round(moyenne * 100 * Math.sqrt(ds.length / MENACE.places) + soutienVoisines(G, zone).points + convoi));
 }
 const chanceDeTenir = (force, assaut) => Phaser.Math.Clamp(0.5 + (force - assaut) / 40, 0.05, 0.95);
 
