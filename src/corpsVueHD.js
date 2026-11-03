@@ -657,7 +657,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   const section = (ru, rz) => Math.sqrt((ru * c) ** 2 + (rz * s) ** 2);
 
   // --- Les membres ---
-  const forgeron = costume === 'forgeron' || costume === 'barbier';   // (v0.82) Aldo et Baba : tablier de cuir, manches retroussées (v1.48 : le barbier, tablier de lin blanc)
+  const forgeron = costume === 'forgeron' || costume === 'barbier' || costume === 'mageCharpentier';   // (étape 10b : les Mages-Charpentiers, tablier de cuir)   // (v0.82) Aldo et Baba : tablier de cuir, manches retroussées (v1.48 : le barbier, tablier de lin blanc)
   // (v1.61) les manches du buste (brasBuste) : de mailles pour le nain, de lin pour le hobbit (sa chemise), d'étoffe pour le garde
   const matBras = pyj ? 'habit' : T.os ? 'peau' : (race === 'nain' && costume !== 'banquier' && costume !== 'gardien' && costume !== 'givrin' && !forgeron) || costume === 'gardeRoyal' ? 'metal'
     : race === 'hobbit' && (voyageurBuste || costume === 'garde') ? 'lin' : 'habit';
@@ -1011,7 +1011,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   }
   // Le tablier de marchand du joueur : la bavette, la poche et son crayon, les bretelles, le cordon noué
   if ((joueur || forgeron) && !dos && !pyj) {
-    const matTab = costume === 'forgeron' ? 'cuir' : 'lin';   // (le tablier de cuir épais du forgeron)
+    const matTab = costume === 'forgeron' || costume === 'mageCharpentier' ? 'cuir' : 'lin';   // (le tablier de cuir épais du forgeron)
     const tab = (x, y) => { if (y < yT + 7 * k || y > yB + 6 * k) return null; const cxx = X(0, prof * 0.7); const demi = section((6.5 + (y - yT - 7 * k) / k * 0.12) * k, prof * 0.95) * 0.95; const nx = (x + 0.5 - cxx) / demi; return Math.abs(nx) > 1 || !torse(x, y) && y <= yB + 2 * k ? null : [nx * 0.7, 0, 0.9]; };
     t.forme(matTab, tab, { decalage: -0.1, motif: (x, y) => (y === yT + 7 * k || y === yB + 5 * k ? -0.8 : 0) });
     const px = X(-2 * k, prof);
@@ -2266,6 +2266,7 @@ function dessinerCorpsVue(g, tenue = 1, costume = null, pas = 0, pose = null, vu
   t.reperes2 = { cx, cy, yT, yB, sol, ep, H, L };
   if (pyj) pyjamaApres({ t, k, g, race, f, cx, cy, yT, yB, sol, ep, prof, P, X, Z, s, c, pres, loin, dos, segBras, segJambes, L, H, torse, assise, pyj, section });   // (planche 85 v2 : motif, col, ourlet, bonnet)
   if (typeof detailsCostumeElfe === 'function') detailsCostumeElfe(t, { costume, g, vue, dos, X, Z, cx, cy, yT, yB, sol, ep, prof, P, k, c, s, pres, loin, atours });   // (planche 91)
+  if (costume === 'mageCharpentier' && typeof detailsMageCharpentier === 'function') detailsMageCharpentier(t, { dos, X, cx, cy, yT, yB, sol, ep, prof, k, c, s, segBras, matBras });   // (étape 10b, volumes6bHD.js)
   t.margeArme = margeArmeH;   // (la place au-dessus de la tête, pour une lance tenue debout)   // (planches 85 et 86 : les articulations, pour le rig et les poses)
   contourEpais(t, CONTOUR_CORPS.tours);
   // Où sont les mains (depuis le sol), pour y accrocher le baluchon

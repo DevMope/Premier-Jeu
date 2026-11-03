@@ -347,7 +347,7 @@ DECORS_QUARTIERS.soucolline = {
       ici.lumiere(L.mages, YN - 96, 82);
       // (le jour) la maîtresse-charpentière se tient sur le seuil, le charpentier nain à côté
       if (jour) [[MAITRESSE_MAGES, L.mages - 72, false], [CHARPENTIER_NAIN, L.mages + 96, true]].forEach(([q, x, fl], i) => {
-        const p = imageCorps(s, x, YN + 28, q, 4.5).setFlipX(fl); poser(p, YN + 28); ici.ombrePerso(x, YN + 28);
+        const kq = corpsHD(s, q, null, 'face'), p = s.add.image(x, YN + 28, kq).setOrigin(0.5, 1).setScale(4.5 * echelleCorps(kq)); poser(p, YN + 28); ici.ombrePerso(x, YN + 28);   // (étape 10b : de face, sur le seuil)
         s.tweens.add({ targets: p, scaleY: p.scaleY * 1.012, duration: 1500 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         ici.obstacles.push([x - 14, YN + 16, x + 14, YN + 34]);
       });
@@ -375,6 +375,11 @@ DECORS_QUARTIERS.soucolline = {
     const PP0 = porchePiste();
     if (PP0.reel) {   // (étape 9b) le vrai début de la place, à l'échelle de la rue ; à l'angle est, le poids public (Q285)
       placeReelleRue9b(s, ici, { jour, saison, YN });
+      // (étape 10b) la grande arche des Mastres, au bout de la rue : la même qu'au bas de la place ; la place au travers
+      const GA = GRANDE_ARCHE;
+      lot(L.arche, YN, () => { s.add.image(0, 2, grandeArcheHD(s, jour)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, 0, 2 - (GA.H - GA.ecriteau[1]) * 2, 'Place des Mastres', { taille: 13, grave: true }); });
+      for (const [a, b] of GA.piles) ici.obstacles.push([L.arche + (a - GA.L / 2) * 1.6 - 4, YN - 6, L.arche + (b + 2 - GA.L / 2) * 1.6 + 4, YN + 4]);
+      if (nuit) for (const [lx, ly] of GA.lanternes) ici.lumiere(L.arche + (lx - GA.L / 2) * 1.6, YN + (2 - (GA.H - ly + 9) * 2) * F, 60);
       const PO = POIDS_PUBLIC; lot(PO.X, YN, () => { s.add.image(0, 2, poidsPublicHD(s, jour)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, (PO.ecriteau[0] - PO.L / 2) * 2, 2 - (PO.H - PO.ecriteau[1]) * 2, 'Poids public', { taille: 10 }); });
       contact(PO.X, PO.L); if (jour) preposePoidsPublic(s, ici, YN);
       ici.regarder(PO.X - 66, YN - 230, PO.X + 66, YN + 4, jour ? 'Le poids public. Les marchands y pèsent ce qu’ils vendent et paient le droit de marché ; les tarifs sont à la craie sur l’ardoise.' : 'Le poids public est fermé pour la nuit. La grande balance attend les marchands du matin.', [PO.X - 40, YN + 36]);
@@ -626,7 +631,7 @@ DECORS_QUARTIERS.soucolline = {
     if (ysmee && jour) ici.passages.push({ id: 'ysmee', nom: 'Madame Ysmée', sous: 'sa tente, présages', verbe: 'entrer', type: 'porte', devant: [L.tente, YN + 26], dehors: [L.tente, YN - 6], page: 'Diseuse',
       cadre: [L.tente - 36, YN - 120, L.tente + 36, YN], zone: [L.tente - 60, YN + 8, L.tente + 60, YN + 64], pousser: [0, -1] });
     // le porche : le jour, la place des Mastres ; le soir, la place dort (sauf quand la nymphe attend : sa lueur)
-    if (jour) ici.passages.push({ id: 'arche', nom: 'La place des Mastres ▲', sous: { 1: 'au bout de la rue', 2: 'entre les piliers fleuris', 4: 'au bout de la rue' }[PP0.piste] || 'par l’arche des Mastres', type: 'porche', devant: [L.arche, YN + 22], dehors: [L.arche, YN - (PP0.reel ? 80 : 40)], cadre: [L.arche - 70, YN - 150, L.arche + 70, YN],
+    if (jour) ici.passages.push({ id: 'arche', nom: 'La place des Mastres ▲', sous: { 1: 'au bout de la rue', 2: 'entre les piliers fleuris', 4: 'sous la grande arche' }[PP0.piste] || 'par l’arche des Mastres', type: 'porche', devant: [L.arche, YN + 22], dehors: [L.arche, YN - (PP0.reel ? 80 : 40)], cadre: [L.arche - 70, YN - 150, L.arche + 70, YN],
       zone: [L.arche - 70, YN, L.arche + 70, YN + 64], pousser: [0, -1], vers: { quartier: 'place', arrivee: 'arche' } });
     else if (nymphe) ici.passages.push({ id: 'nymphe', nom: 'La lueur de la fontaine', sous: PP0.ouvert ? 'au bout de la rue' : 'sous le porche de la place', verbe: 'y aller', type: 'porche', devant: [L.arche, YN + 22], dehors: [L.arche, YN - 40], cadre: [L.arche - 70, YN - 150, L.arche + 70, YN],
       zone: [L.arche - 70, YN, L.arche + 70, YN + 64], pousser: [0, -1], page: 'Nymphe',

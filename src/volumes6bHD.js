@@ -691,36 +691,47 @@ function ouvriersMages(s, jour) {
   if (!jour) { if (quoi === 'chat' || quoi === 'vide') s.add.image(0, 2, atelierMagesChatHD(s)).setOrigin(0.5, 1).setScale(2); return quoi; }
   if (quoi === 'chat') { s.add.image(0, 2, atelierMagesChatHD(s)).setOrigin(0.5, 1).setScale(2); return quoi; }
   if (quoi === 'vide') return quoi;
-  const corps = (q, x, y) => imageCorps(s, x, y, q, ech);
-  const apprenti = (k, fem) => ({ nom: 'Apprenti des Mages ' + k, race: 'hobbit', feminin: fem, niveau: 'novice' });
+  // (étape 10b) les Mages-Charpentiers en habits (FIGURANTS : apprentiMages1, apprentiMages2, maitreMages), leurs vues, leurs gestes
+  const vueDe = (q, pose, vue) => corpsHD(s, q, pose, vue);
+  const corps = (q, x, y, pose, vue) => { const k = vueDe(q, pose, vue); return s.add.image(x, y, k).setOrigin(0.5, 1).setScale(ech * echelleCorps(k)); };
+  const lueur = (o, dx, dy) => { const h = s.add.circle(o.x + dx, o.y + dy, 3, 0x58c8f0, 0.55).setBlendMode(Phaser.BlendModes.ADD); s.tweens.add({ targets: h, alpha: 0.15, scale: 1.8, duration: 700 + Math.random() * 400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); return h; };
   const raboteur = quoi === 'maitre' || quoi === 'deux';
   let r = null, m = null, p = null;
-  if (raboteur) r = corps(apprenti(1, false), X(57), Y(129)).setFlipX(true);
-  if (quoi === 'maitre') m = corps({ nom: 'Le maître-charpentier', race: 'nain', niveau: 'aguerri' }, X(96), Y(128)).setFlipX(true);
-  if (quoi === 'deux' || quoi === 'planche') p = corps(apprenti(2, true), X(74), Y(127));
-  const planche = p ? s.add.rectangle(p.x, p.y, 44, 5, 0xa8743c).setStrokeStyle(1, 0x4a2e18) : null;
+  if (raboteur) r = corps('apprentiMages1', X(57), Y(129), 'chauffe', 'face');
+  if (quoi === 'maitre') m = corps('maitreMages', X(95), Y(128), 'pense', 'face');
+  if (quoi === 'deux' || quoi === 'planche') p = corps('apprentiMages2', X(74), Y(127), 'porteur', 'profil');
+  const planche = p ? s.add.rectangle(p.x, p.y, 46, 5, 0xa8743c).setStrokeStyle(1, 0x4a2e18) : null;
   s.add.image(0, 2, atelierMagesAvantHD(s)).setOrigin(0.5, 1).setScale(2);   // (l'établi et la poutre, devant eux)
-  // le rabot : des allers-retours, des copeaux qui volent
+  // le rabot : il pousse le rabot des deux mains (il se penche en avant, il revient), les copeaux volent, ses runes luisent
   if (r) {
-    s.tweens.add({ targets: r, x: r.x + 7, duration: 360, yoyo: true, repeat: -1, repeatDelay: 260, ease: 'Sine.easeInOut' });
+    s.tweens.add({ targets: r, x: r.x + 6, angle: 4, duration: 380, yoyo: true, repeat: -1, repeatDelay: 240, ease: 'Sine.easeInOut' });
+    const h = lueur(r, 12, -r.displayHeight * 0.42); s.tweens.add({ targets: h, x: h.x + 6, duration: 380, yoyo: true, repeat: -1, repeatDelay: 240, ease: 'Sine.easeInOut' });
     const copeaux = [0, 1, 2, 3].map(() => s.add.rectangle(0, 0, 3, 2, 0xe0c080).setVisible(false));
     let k = 0; s.time.addEvent({ delay: 620, loop: true, callback: () => { const c = copeaux[k++ % copeaux.length]; if (!c.active || !r.active) return;
-      c.setPosition(r.x + 18, Y(114)).setVisible(true).setAlpha(1); s.tweens.add({ targets: c, x: c.x + 8 + Math.random() * 14, y: c.y - 6 - Math.random() * 6, angle: 200, duration: 380, yoyo: false, onComplete: () => s.tweens.add({ targets: c, y: Y(116), alpha: 0, duration: 420 }) }); } });
+      c.setPosition(r.x + 18, Y(114)).setVisible(true).setAlpha(1); s.tweens.add({ targets: c, x: c.x + 8 + Math.random() * 14, y: c.y - 6 - Math.random() * 6, angle: 200, duration: 380, onComplete: () => s.tweens.add({ targets: c, y: Y(116), alpha: 0, duration: 420 }) }); } });
   }
-  // le maître, penché sur le plan déroulé sur la poutre : il s'incline, trace ; la pointe court sur le parchemin
+  // le maître : il réfléchit (la main au menton), puis se penche et trace sur le plan déroulé sur la poutre ; la pointe court
+  // sur le parchemin, une rune s'allume au bout de son doigt
   if (m) {
-    s.tweens.add({ targets: m, angle: -5, duration: 1100, yoyo: true, repeat: -1, repeatDelay: 900, ease: 'Sine.easeInOut' });
     s.add.rectangle(X(97), Y(119), 30, 7, 0xe8d8b0).setStrokeStyle(1, 0x8a7050);
-    const trait = s.add.rectangle(X(91), Y(119), 2, 2, 0x2a3a6a);
+    const trait = s.add.rectangle(X(91), Y(119), 2, 2, 0x2a3a6a).setVisible(false), h = lueur(m, -10, -m.displayHeight * 0.4).setVisible(false);
+    let trace = false;
+    const basculer = () => { if (!m.active) return; trace = !trace;
+      m.setTexture(vueDe('maitreMages', trace ? 'chauffe' : 'pense', 'face')); trait.setVisible(trace); h.setVisible(trace);
+      if (trace) s.tweens.add({ targets: m, angle: -4, duration: 500, ease: 'Sine.easeOut' }); else s.tweens.add({ targets: m, angle: 0, duration: 500, ease: 'Sine.easeOut' });
+      s.time.delayedCall(trace ? 3400 : 2200, basculer); };
     s.tweens.add({ targets: trait, x: X(103), duration: 1700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', onYoyo: () => trait.setY(Y(119) + (Math.random() < 0.5 ? -2 : 2)) });
+    s.time.delayedCall(1500, basculer);
   }
-  // la planche portée sur l'épaule, d'un bout de l'atelier à l'autre (il marche, se retourne)
+  // la planche portée sur les épaules, d'un bout de l'atelier à l'autre : il marche de profil (ses pas), se retourne, la pose
+  // un instant de face
   if (p) {
-    const suivre = () => planche.setPosition(p.x + (p.flipX ? -6 : 6), p.y - p.displayHeight * 0.8);
-    suivre(); const xa = X(60), xb = X(98);
-    const aller = () => { if (!p.active) return; const cible = p.x < (xa + xb) / 2 ? xb : xa, duree = Math.abs(cible - p.x) / 0.03;
-      p.setFlipX(cible < p.x); pasDeMarche(s, p, duree, { poussiere: false });
-      s.tweens.add({ targets: p, x: cible, duration: duree, onUpdate: suivre, onComplete: () => { suivre(); s.time.delayedCall(900 + Math.random() * 1600, aller); } }); };
+    const suivre = () => planche.setPosition(p.x + (p.flipX ? -4 : 4), p.y - p.displayHeight * 0.86);
+    suivre(); const xa = X(60), xb = X(98), base = vueDe('apprentiMages2', 'porteur', 'profil'), face = vueDe('apprentiMages2', 'porteur', 'face');
+    const aller = () => { if (!p.active) return; const cible = p.x < (xa + xb) / 2 ? xb : xa, duree = Math.abs(cible - p.x) / 0.03, t0 = s.time.now;
+      p.setTexture(base).setFlipX(cible < p.x);
+      s.tweens.add({ targets: p, x: cible, duration: duree, onUpdate: () => { const f = Math.floor((s.time.now - t0) / 150) % 4; p.setTexture(f === 1 ? base + '_pas1' : f === 3 ? base + '_pas2' : base); suivre(); },
+        onComplete: () => { p.setTexture(face).setFlipX(false); suivre(); s.time.delayedCall(900 + Math.random() * 1600, aller); } }); };
     s.time.delayedCall(600, aller);
   }
   return quoi;
@@ -749,6 +760,7 @@ function placeReelleRue9b(s, ici, { jour, saison, YN }) {
     c.putImageData(I, 0, 0); s.textures.addCanvas(k, cv);
   }
   ici.img(D.x0, YN - D.profondeur, k, 2, YN - D.profondeur - 1, 0, 0);
+  ici.img(D.X, YN - GRANDE_ARCHE.couvert * 1.6, ombreGrandeArcheHD(s), 1.6, YN - 60, 0.5, 0);   // (l'ombre de la grande arche, sous sa voûte)
   // la fontaine de la place, à sa place (son pied à 378 du bord de la rue) et à sa taille : la banque et le poids public la cachent
   // en partie, comme dans la réalité ; ses deux pots de fleurs
   if (typeof fontaineLoinHD === 'function' && typeof FONTAINE_LOIN !== 'undefined') {
@@ -761,21 +773,16 @@ function placeReelleRue9b(s, ici, { jour, saison, YN }) {
   const G = window.GAME, marche = typeof jourDeMarche === 'function' && G && jourDeMarche(G);
   if (marche && typeof charretteColporteurHD === 'function') {
     const [cx, cy] = [3712, YN - 64]; ici.img(cx, cy, charretteColporteurHD(s), 2.2, cy).setFlipX(true);
-    if (jour) { const v = imageCorps(s, cx - 74, cy + 30, 'colporteur', 4.5); ici.poser(v, cy + 30); s.tweens.add({ targets: v, scaleY: v.scaleY * 1.015, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
+    if (jour) { const kc = corpsHD(s, 'colporteur', null, 'face'), v = s.add.image(cx - 74, cy + 30, kc).setOrigin(0.5, 1).setScale(4.5 * echelleCorps(kc)); ici.poser(v, cy + 30); ici.ombrePerso(cx - 74, cy + 30); s.tweens.add({ targets: v, scaleY: v.scaleY * 1.015, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
   }
   // 3. les passants de la place, à l'échelle de la rue (le jour) : ils flânent sur la place, au bout de la rue
   if (!jour) return;
+  // (étape 10b) de vrais promeneurs : de face quand ils attendent ou viennent vers nous, de dos quand ils s'en vont, de profil de
+  // côté, leurs pas, leur ombre
   const races = ['humain', 'hobbit', 'nain', 'elfe', 'hobbit'];
-  [[3540, YN - 46, 0], [3626, YN - 112, 1], [3690, YN - 28, 2], [3580, YN - 170, 3]].forEach(([x, y, i]) => {
-    const p = imageCorps(s, x, y, { nom: 'Flâneur de la place ' + i, race: races[i], feminin: i % 2 === 1, niveau: 'novice' }, 4.5).setFlipX(i % 2 === 0); ici.poser(p, y);
-    const suite = () => { if (!p.active) return;
-      if (Math.random() < 0.45) { s.tweens.add({ targets: p, scaleY: p.scaleY * 1.015, duration: 1300, yoyo: true, repeat: 1 }); s.time.delayedCall(2600 + Math.random() * 3000, suite); return; }
-      const cible = Phaser.Math.Clamp(p.x + (Math.random() < 0.5 ? -1 : 1) * (40 + Math.random() * 80), D.x0 + 24, D.x1 - 24), duree = Math.abs(cible - p.x) / 0.03;
-      if (duree < 300) { s.time.delayedCall(800, suite); return; }
-      p.setFlipX(cible < p.x); pasDeMarche(s, p, duree, { poussiere: false });
-      s.tweens.add({ targets: p, x: cible, duration: duree, onComplete: () => s.time.delayedCall(600 + Math.random() * 2400, suite) }); };
-    s.time.delayedCall(400 + i * 700, suite);
-  });
+  [[3580, YN - 46, 0], [3640, YN - 130, 1], [3690, YN - 40, 2], [3600, YN - 190, 3]].forEach(([x, y, i]) =>
+    promeneur6b(s, { nom: 'Flâneur de la place ' + i, race: races[i], feminin: i % 2 === 1, niveau: 'novice' }, x, y, [D.x0 + 70, YN - 230, D.x1 - 72, YN - 24],   // (dans l'ouverture de la grande arche)
+      { ajouter: (img, yy) => ici.poser(img, yy), ombre: ici.ombrePerso, vitesse: 0.045 }));
 }
 // --- (Q285) Le poids public, à l'angle est du bout de la rue, à l'entrée de la place : une petite loge ouverte sur la rue, son
 //     mur du fond de pierre modelée, deux poteaux de chêne sur leurs socles, sa sablière, son auvent de planches (son dessus vu
@@ -838,8 +845,120 @@ function preposePoidsPublic(s, ici, YN) {
   const G = window.GAME, P = POIDS_PUBLIC, f = typeof window !== 'undefined' && window.PREPOSE_POIDS;
   if (!(f !== undefined ? f : hachage(G ? G.jour : 0, 5, 7101) < 0.65)) return null;
   const x = P.X + (P.prepose[0] - P.L / 2) * 1.6, y = YN + 2 - (P.H - P.prepose[1]) * 1.6;
-  const p = imageCorps(s, x, y, { nom: 'Le préposé au poids public', race: 'hobbit', niveau: 'aguerri' }, 4.5); ici.poser(p, YN + 1);
+  const q = { nom: 'Le préposé au poids public', race: 'hobbit', niveau: 'aguerri' }, k0 = corpsHD(s, q, null, 'face'), p = s.add.image(x, y, k0).setOrigin(0.5, 1).setScale(4.5 * echelleCorps(k0)); ici.poser(p, YN + 1);
   s.tweens.add({ targets: p, scaleY: p.scaleY * 1.012, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-  s.time.addEvent({ delay: 3800, loop: true, callback: () => p.active && p.setFlipX(!p.flipX) });
+  // (étape 10b) de face, il se tourne de profil vers la balance, puis revient vers la rue
+  let vue = 'face'; s.time.addEvent({ delay: 3800, loop: true, callback: () => { if (!p.active) return; vue = vue === 'face' ? 'profil' : 'face'; p.setTexture(corpsHD(s, q, null, vue)).setFlipX(false); } });
   return p;
+}
+
+// ======================= ÉTAPE 10b =======================
+// (1) Les PNJ ont leurs vues : de face quand ils attendent ou viennent vers nous, de dos quand ils s'en vont, de profil quand ils
+//     vont de côté, et leurs pas (le même moteur que les passants de la rue : corpsHD, vueSelon). (2) Les Mages-Charpentiers ont
+//     leurs habits (le tablier de cuir, les outils à la ceinture, les manches brodées de runes qui luisent) et leurs gestes.
+//     (3) La grande arche des Mastres, au bout de la rue : la même vue de la rue et de la place.
+
+// --- (1) un promeneur : il attend (de face, parfois de dos ou de trois quarts), puis va à pied vers un point de son aire ---
+//     ajouter(img, y) : le pose dans le monde ; aire : [x0, y0, x1, y1] ; ombre(x, y) : son ombre au sol (ou null)
+function vueSelon6b(dx, dy) { return Math.abs(dy) > Math.abs(dx) * 0.8 ? (dy < 0 ? 'dos' : 'face') : 'profil'; }
+function promeneur6b(s, quoi, x, y, aire, { ech = 4.5, ajouter = null, ombre = null, vitesse = 0.05, pause = [1500, 5000] } = {}) {
+  const tex = vue => corpsHD(s, quoi, null, vue), img = s.add.image(x, y, tex('face')).setOrigin(0.5, 1);
+  img.setScale(ech * echelleCorps(img.texture.key)); if (ajouter) ajouter(img, y);
+  const om = ombre ? ombre(x, y) : null, suivre = () => { if (om) { om.setPosition(img.x, img.y - 1); om.yTri = img.y - 0.5; } img.yTri = img.y; };
+  const souffle = s.tweens.add({ targets: img, scaleY: img.scaleY * 1.012, duration: 1400 + Math.random() * 300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  const attendre = () => { if (!img.active) return; const v = Phaser.Utils.Array.GetRandom(['face', 'face', 'face', 'dos', 'troisQuarts']); img.setTexture(tex(v)).setFlipX(v === 'troisQuarts' && Math.random() < 0.5);
+    s.time.delayedCall(Phaser.Math.Between(...pause), aller); };
+  const aller = () => { if (!img.active) return;
+    const [x0, y0, x1, y1] = aire, cx = Phaser.Math.Between(x0, x1), cy = Phaser.Math.Between(y0, y1), dx = cx - img.x, dy = cy - img.y, d = Math.hypot(dx, dy);
+    if (d < 20) { attendre(); return; }
+    const v = vueSelon6b(dx, dy), base = tex(v); let t0 = s.time.now;
+    s.tweens.add({ targets: img, x: cx, y: cy, duration: d / vitesse, onUpdate: () => { if (!img.active) return; const f = Math.floor((s.time.now - t0) / 150) % 4, k = f === 1 ? base + '_pas1' : f === 3 ? base + '_pas2' : base;
+      img.setTexture(s.textures.exists(k) ? k : base).setFlipX(v === 'profil' && dx < 0); suivre(); }, onComplete: () => { suivre(); attendre(); } });
+  };
+  s.time.delayedCall(Phaser.Math.Between(300, 2500), attendre);
+  return img;
+}
+
+// --- (2) les habits des Mages-Charpentiers : le tablier de cuir (celui du forgeron, voir corpsVueHD.js), et par-dessus, les manches
+//     brodées (un revers bleu nuit et des runes qui luisent le long de l'avant-bras), la ceinture d'outils (un marteau, une règle) ---
+function detailsMageCharpentier(t, { dos, X, yT, yB, ep, prof, k, segBras, matBras }) {
+  t.rampes.rune = t.rampes.rune || rampe(0x58c8f0); t.rampes.reversMage = t.rampes.reversMage || rampe(0x2a3a6a);
+  t.rampes.outilB = t.rampes.outilB || rampe(0x8a5a2b); t.rampes.outilF = t.rampes.outilF || rampe(0x8a8a96); t.rampes.regle = t.rampes.regle || rampe(0xd8b048);
+  for (const sg of segBras) {
+    const [E, C, , r] = sg; if (!E || !C) continue;   // (la manche : de l'épaule au coude ; l'avant-bras est nu, retroussé)
+    const dx = C[0] - E[0], dy = C[1] - E[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+    for (let u = 0.15; u <= 1.05; u += 0.03) for (let w = -r - 1; w <= r + 1; w += 0.5) {
+      const px = Math.round(E[0] + dx * u + nx * w), py = Math.round(E[1] + dy * u + ny * w), m = t.mat(px, py);
+      if (m !== matBras && m !== 'habit') continue;
+      if (u > 0.78) t.poser(px, py, 'reversMage', w < 0 ? 4 : 2);   // (le revers brodé, au bout de la manche)
+      else if (Math.abs(w) < r * 0.5 && Math.round(u * 30) % 3 === 0) t.poser(px, py, 'rune', 5);   // (des runes qui luisent, brodées)
+    }
+  }
+  if (dos) return;
+  for (let x = 0; x < t.l; x++) for (let e = 0; e < k; e++) { const m = t.mat(x, Math.round(yB) - e); if (m === 'cuir' || m === 'habit') t.poser(x, Math.round(yB) - e, 'cuir', e ? 1 : 2); }   // la ceinture
+  const xm = Math.round(X(ep * 0.85, prof * 0.4)), xr = Math.round(X(-ep * 0.8, prof * 0.4)), y0 = Math.round(yB);
+  for (let j = 1; j <= 4 * k; j++) for (let e = 0; e < Math.max(1, k / 2); e++) t.poser(xm + e, y0 + j, 'outilB', 3);   // le marteau, pendu à la ceinture
+  for (let i = -Math.round(1.5 * k); i <= Math.round(1.5 * k); i++) for (let e = 0; e < k; e++) t.poser(xm + i, y0 + 4 * k + e, 'outilF', e ? 2 : 4);
+  for (let j = 1; j <= 3 * k; j++) for (let e = 0; e < k; e++) t.poser(xr + e, y0 + j, 'regle', j % k === 0 ? 2 : 4);   // la règle pliante
+}
+if (typeof FIGURANTS !== 'undefined') Object.assign(FIGURANTS, {
+  apprentiMages1: { race: 'hobbit', nom: 'Pépin, apprenti des Mages', costume: 'mageCharpentier', habit: 0x3a4a7a, cheveux: 0x7a4a24, niveau: 1 },
+  apprentiMages2: { race: 'hobbit', nom: 'Bruyère, apprentie des Mages', feminin: true, costume: 'mageCharpentier', habit: 0x4a3a6a, cheveux: 0xb8742a, coiffure: 'long', niveau: 1 },
+  maitreMages: { race: 'nain', nom: 'Maître Orgrim, mage-charpentier', costume: 'mageCharpentier', habit: 0x2a3a6a, cheveux: 0xd8d0c0, barbe: 'nain', niveau: 3 },
+});
+
+// --- (3) la grande arche des Mastres : deux grosses piles de pierre modelée (leur soubassement qui avance, leur imposte), un arc
+//     en plein cintre de claveaux et sa clé, le mur au-dessus, sa corniche, un toit en croupe de tuiles ; deux lanternes de fer
+//     pendues aux piles, deux bacs de fleurs à leur pied. L'ouverture est vide : on y voit la vraie place. La même texture au bout
+//     de la rue et au bas de la place (MarchePlace : poserPorchePlace). À l'échelle de la rue : 1,6 pixel du monde par pixel.
+const GRANDE_ARCHE = { L: 170, H: 184, piles: [[0, 35], [134, 169]], imposte: 76, rayon: 49, cx: 84.5, lanternes: [[45, 137], [124, 137]], ecriteau: [85, 74], chaines: [72, 97], couvert: 18 };   // (la hauteur : la rue en montre environ 300 pixels au-dessus du trottoir ; l'arche y tient, son nom compris)
+function grandeArcheHD(s, jour = true) {
+  const saison = (typeof saisonActuelle === 'function' && saisonActuelle()) || 'moissons', cle = 'grandeArcheHD_' + saison + (jour ? '_j' : '_n');
+  if (s.textures.exists(cle)) return cle;
+  const A = GRANDE_ARCHE, { L, H, rayon: R0, cx } = A, sol = H - 1, yImp = sol - A.imposte, t = toileDecor(L, H); rampesPorche6b(t, saison); const { D, enDessus } = dessus6b(t);
+  const dedans = (x, y) => x > A.piles[0][1] && x < A.piles[1][0] && (y > yImp || Math.hypot(x + 0.5 - cx, y + 0.5 - yImp) < R0);   // (l'ouverture)
+  const yCorn = yImp - R0 - 16;   // (la corniche, au-dessus de l'arc)
+  // 1. la maçonnerie : les piles et le mur au-dessus de l'arc (modelés ensuite) ; les claveaux de l'arc et sa clé
+  for (let y = yCorn + 4; y <= sol; y++) for (let x = 0; x < L; x++) if (!dedans(x, y)) t.poser(x, y, 'pierre', 3);
+  for (let y = yImp - R0 - 9; y <= yImp; y++) for (let x = 0; x < L; x++) {
+    const d = Math.hypot(x + 0.5 - cx, y + 0.5 - yImp); if (d < R0 || d > R0 + 9 || dedans(x, y)) continue;
+    const a = Math.atan2(yImp - y - 0.5, x + 0.5 - cx), n = Math.floor(a / Math.PI * 15), joint = Math.abs(a / Math.PI * 15 - Math.round(a / Math.PI * 15)) < 0.07, cle0 = n === 7;
+    t.poser(x, y, cle0 ? 'taille' : 'taille', joint ? 1 : (d > R0 + 7.5 ? 2 : d < R0 + 1.5 ? 4 : 3) + (cle0 ? 1 : 0) - (x > cx + 30 ? 1 : 0));
+  }
+  for (let y = yImp - R0 - 12; y <= yImp - R0 + 2; y++) for (let x = Math.round(cx) - 6; x <= Math.round(cx) + 6; x++) if (!dedans(x, y)) t.poser(x, y, 'taille', y === yImp - R0 - 12 ? 5 : x === Math.round(cx) - 6 ? 4 : x === Math.round(cx) + 6 ? 2 : 3);   // la clé
+  // 2. l'imposte (la moulure où naît l'arc), le soubassement qui avance : leur dessus vu d'en haut
+  for (const [a, b] of A.piles) {
+    enDessus(() => { for (let x = a; x <= b + 2; x++) { t.poser(x, yImp - 2, 'taille', 4); t.poser(x, yImp - 1, 'taille', 5); } });
+    for (let x = a; x <= b + 2; x++) { t.poser(x, yImp, 'taille', 3); t.poser(x, yImp + 1, 'taille', 1); teinterV(t, x, yImp + 2, -2); teinterV(t, x, yImp + 3, -1); }
+    enDessus(() => { for (let x = a; x <= b + 2; x++) { t.poser(x, sol - 12, 'taille', 4); t.poser(x, sol - 11, 'taille', 5); } });
+    for (let y = sol - 10; y <= sol; y++) for (let x = a; x <= b + 2; x++) t.poser(x, y, 'taille', y === sol ? 1 : x === a ? 4 : x >= b + 1 ? 2 : 3);
+  }
+  // 3. la corniche (son dessus vu d'en haut), le toit en croupe ; l'ombre de la rive et de la corniche sur le mur
+  enDessus(() => { for (let x = 0; x < L; x++) { t.poser(x, yCorn, 'taille', 4); t.poser(x, yCorn + 1, 'taille', 5); } });
+  for (let x = 0; x < L; x++) { t.poser(x, yCorn + 2, 'taille', 3); t.poser(x, yCorn + 3, 'taille', 1); for (let k = 4; k < 9; k++) teinterV(t, x, yCorn + k, k < 6 ? -2 : -1); }
+  let toit; enDessus(() => { toit = toitCroupeHD(t, { xa: 0, xb: L - 1, yEgout: yCorn - 3, montee: 22, prof: 22, mat: 'tuile', motif: 'tuile', g: 8271, bois: 'chene' }); });
+  // 4. l'intrados : l'épaisseur de l'arc, dans l'ombre, sur les jambages et sous l'arc
+  for (let y = 0; y <= sol; y++) for (let x = 0; x < L; x++) { if (dedans(x, y)) continue; if (dedans(x + 1, y) || dedans(x + 2, y)) teinterV(t, x, y, -1); if (dedans(x - 1, y) || dedans(x - 2, y) || dedans(x - 3, y)) teinterV(t, x, y, -2); if (dedans(x, y + 1) || dedans(x, y + 2)) teinterV(t, x, y, -2); }
+  // 5. les deux lanternes, pendues à leur potence de fer sur les piles ; les bacs de fleurs au pied des piles
+  for (const [lx, ly] of A.lanternes) { const x0 = lx < L / 2 ? A.piles[0][1] : A.piles[1][0];
+    for (let x = Math.min(x0, lx); x <= Math.max(x0, lx); x++) t.poser(x, ly - 16, 'fer', 3); for (let k = 0; k < 6; k++) t.poser(x0 + (lx < L / 2 ? k : -k), ly - 10 - k, 'fer', 2);
+    t.poser(lx, ly - 15, 'fer', 2); lanterne6b(t, lx, ly - 14, !jour, enDessus); }
+  for (const [a, b] of A.piles) bacFleurs6b(t, a + 1, b + 1, sol, saison, a + 8272, enDessus);
+  for (const x of A.chaines) for (let y = yImp - R0 + 1; y < yImp - R0 + 8; y++) t.poser(x, y, 'fer', y % 2 ? 4 : 2);   // (les chaînes de l'écriteau, sous la clé)
+  t.contour();
+  const C = toileCanvas6b(t);
+  pierresRondesDonnees(C.d, L, H, [...A.piles.map(([a, b], i) => ({ r: [a, yImp + 4, b, sol - 13], graine: 8273 + i })), { r: [0, yCorn + 4, L - 1, yImp - 1], graine: 8275, sauf: [[Math.round(cx) - R0 - 10, yImp - R0 - 13, Math.round(cx) + R0 + 10, yImp + 1]] }]);
+  for (let x = 0; x < L; x++) { C.mul(x, sol, 0.74); C.mul(x, sol - 1, 0.88); }
+  C.fin(s, cle);
+  if (saison === 'givre') neigeDessus6b(s, cle, t, D);
+  return cle;
+}
+// L'ombre de l'arche, sur le sol de la place juste derrière elle (sous la voûte) et, devant, au pied des piles
+function ombreGrandeArcheHD(s) {
+  const cle = 'ombreGrandeArcheHD'; if (s.textures.exists(cle)) return cle;
+  const A = GRANDE_ARCHE, L = A.L, Hs = A.couvert + 8, tex = s.textures.createCanvas(cle, L, Hs), c = tex.getContext(), img = c.createImageData(L, Hs), q = img.data;
+  const a = (x, y, v) => { if (x < 0 || y < 0 || x >= L || y >= Hs) return; const i = (y * L + x) * 4; q[i] = 14; q[i + 1] = 10; q[i + 2] = 22; q[i + 3] = Math.max(q[i + 3], Math.round(255 * v)); };
+  for (let y = 0; y < A.couvert; y++) for (let x = A.piles[0][1]; x <= A.piles[1][0]; x++) a(x, y, 0.32 * Math.min(1, (y + 2) / 8));   // (sous la voûte)
+  for (const [g, d] of A.piles) for (let k = 0; k < 6; k++) for (let x = g; x <= d + 4; x++) a(x + 2, A.couvert + k, 0.4 - k * 0.06);
+  c.putImageData(img, 0, 0); tex.refresh(); return cle;
 }

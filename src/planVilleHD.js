@@ -199,7 +199,7 @@ function* planVilleEtapes(s, cle = 'planVilleHD') {
   }
   for (let b = 0; b < 9; b++) for (let a = -b * 0.55; a <= b * 0.55; a++) P(MX(2370) + a, 168 + b, 'violet', 3 + (a < 0 ? 1 : 0) - (b % 3 === 2 ? 1 : 0));   // la tente d'Ysmée, et son fanion d'or
   P(MX(2370), 166, 'boisS', 2); P(MX(2370), 167, 'boisS', 2); P(MX(2370) + 1, 166, 'or', 5); P(MX(2370) + 2, 166, 'or', 4); P(MX(2370), 176, 'boisS', 0); P(MX(2370), 175, 'boisS', 0);
-  const PPV = typeof porchePiste === 'function' ? porchePiste() : null, ouvertV = PPV && PPV.ouvert && !PPV.recul;
+  const PPV = typeof porchePiste === 'function' ? porchePiste() : null, ouvertV = PPV && PPV.ouvert && !PPV.recul && !PPV.reel;
   if (PPV && PPV.ouvert) { const [x, l] = LOT(3836, 128); toitMini(x, 176, l, 'toitR', { chem: true }); }   // (étape 8b) la voisine de la banque
   if (ouvertV) { const ax = Math.round(MX(3640));   // (étape 8b) la rue débouche librement sur la place : ses pavés, un étal, les fanions (ou les deux piliers fleuris)
     for (let a = -8; a <= 8; a++) for (let b = 0; b < 4; b++) P(ax + a, 174 + b, 'paveK', 4 - ((a + b) % 3 === 0 ? 1 : 0));
