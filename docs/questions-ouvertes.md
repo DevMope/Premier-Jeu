@@ -37,7 +37,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q341** — L'argent (fiches de l'argent) : avec le grand inventaire de dépenses (tout s'offrir demanderait d'aller jusqu'au jour 488 en neutre et 636 en Lumière, bien après la fin), garde-t-on la taxe progressive (douce au début, très lourde sur les grandes fortunes) ou revient-on à l'ancienne taxe, en comptant sur les dépenses pour absorber l'argent ? Et les taxes mises en scène (fiche 4 : la dîme du Rempart et son percepteur en tabard bleu, le prix de la paix et ses deux collecteurs, l'impôt des suspects et ses gardes qui fouillent) te vont ? (Une proposition de Claude dans la fiche 4 n'est pas validée : que la dîme finance aussi « le projet souterrain qui garde le dragon en vie ».)
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -47,6 +46,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q341~~ Taxe progressive pour la Lumière et le neutre, l'ancienne pour l'Ombre ; grand inventaire validé presque entièrement (03/11).
 - ~~Q336 à Q340~~ Étape 1 validée ; livre des deux voies à embellir ; dénoncer le Parrain : des répercussions drôles et dangereuses (02/11).
 - ~~Q326 à Q335~~ Dépenses des trois camps toutes gardées ; cinq royaumes des Bannis ; Bannis au comptoir peu à peu ; Garrick pendant la guerre, dans l'esprit (02/11).
 - ~~Q317 à Q325~~ Dernier appel à la 7e pièce, spectateur validé, la Clairvoyance, armure aussi par les royaumes de l'Ombre ; dépenses par camp et apparition des Bannis à revoir (02/11).
