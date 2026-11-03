@@ -39,6 +39,11 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q349** — Les changements de la place des Mastres, pour qu'elle corresponde à la rue (rien n'est supprimé) : le zoom à 1,0 ; le porche du sud remplacé par la grande arche ; le coin des jeux et le mendiant un peu décalés pour laisser la place aux piles de l'arche ; la barrière ouest déplacée ; les trois chemins en éventail remplacés par une seule allée droite, plus large, de l'arche à la fontaine, que les lieux du bas rejoignent à angle droit ; l'invite du bas passée en haut. Tu valides ?
 - **Q350** — Depuis la rue, on ne voit encore aucun étal par l'arche (dans la vraie disposition, ils sont hors de l'axe). On en déplace un dans l'axe de l'allée pour qu'il se voie de la rue ?
 
+- **Q351** — Les armures v2 (le parchemin qui ne déborde plus, le Pavois de la planche 93 sur le parchemin, la Promesse de l'Aube redessinée, l'obtention d'une pièce en GIF) : tu valides ?
+- **Q352** — La salle d'armes (planche 94) : la vieille cave voûtée sous l'arrière-boutique et la chambre, rouverte par une trappe, plutôt qu'une 4e pièce de l'étage ? Elle se rouvrirait le matin où arrive la Promesse de l'Aube : gratuite, ou un chantier payant ?
+- **Q353** — Le mannequin et les armes accrochées au mur de la chambre descendent-ils dans la salle d'armes, ou la chambre garde-t-elle le mannequin ?
+- **Q354** — L'obtention d'une pièce : les sons (harpe et chœur en Lumière, bourdon et chœur mineur en Ombre, un choc de métal à la pose) te vont ? Et la pièce part-elle des mains du messager (comme maintenant) ou monte-t-elle du sol ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
