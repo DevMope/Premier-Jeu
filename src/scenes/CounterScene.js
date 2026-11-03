@@ -931,7 +931,7 @@ class CounterScene extends Phaser.Scene {
     this.paysage.setMask(masque);
 
     this.masqueFenetre = masque;
-    this.perso = this.add.image(-100, SOL_COMPTOIR, 'perso_hobbit').setOrigin(0.5, 1).setScale(9).setDepth(2);
+    this.perso = this.add.image(-100, SOL_COMPTOIR, corpsHD(this, 'hobbit')).setOrigin(0.5, 1).setScale(9 * ECHELLE_CORPS).setDepth(2);   // (une texture d'attente : la première entrée la remplace)
     this.perso.setMask(masque);
     // (v0.60) Ton reflet dans la vitre : à peine visible... et de plus en plus sombre à chaque âme offerte
     const ames = this.G.mal || 0;
@@ -979,6 +979,14 @@ class CounterScene extends Phaser.Scene {
     const sprite = this.add.image(FILE.x - i * FILE.ecart, FILE.y, cle)
       .setOrigin(0.5, 1).setScale(FILE.echelle * echelleCorps(cle)).setTint(0xd8d0c0).setDepth(1);
     sprite.setMask(this.masqueFenetre);
+    // (la Faucheuse HD) elle flotte au bout de la file, ondule doucement, et ses cendres s'évaporent d'elle
+    if (entree.type === 'faucheuse' && typeof cendresFaucheuse === 'function') {
+      sprite.estFaucheuse = true; sprite.clearTint();
+      const c = cendresFaucheuse(this, sprite, { masque: this.masqueFenetre, cadence: 90 });
+      sprite.once('destroy', () => c.arreter());
+      this.tweens.add({ targets: sprite, y: sprite.y - 4, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      return sprite;
+    }
     // (v1.61) en attendant, de temps en temps : un regard en arrière, ou un petit balancement d'un pied sur l'autre.
     // (avant, tout le monde sautait de 3 px sans s'arrêter : les magiciennes, sans jambes sous la robe, voltigeaient)
     this.time.delayedCall(1500 + Math.random() * 3000, () => this.attendreDansLaFile(sprite));
@@ -1025,7 +1033,7 @@ class CounterScene extends Phaser.Scene {
 
   texturePour(entree, pose = null) {
     if (this.textureSpeciale) { const c = this.textureSpeciale(entree, pose); if (c) return c; }   // (planche 91 : les elfes du val, elfesVal.js)
-    if (entree.type === 'faucheuse') return 'perso_faucheuse';
+    if (entree.type === 'faucheuse') return textureFaucheuseHD(this, 'corps');   // (en lévitation, ses souvenirs portés)
     if (entree.type === 'evenement') return corpsHD(this, typeof corpsEvenement === 'function' ? corpsEvenement(entree, this.G) : 'humain', pose);   // (v1.63)
     if (entree.type === 'sage' || entree.type === 'percepteur') return corpsHD(this, entree.type === 'sage' ? 'sage' : personneDuPercepteur(entree), pose);   // (v1.32, planche 58)
     if (entree.type === 'famille') return corpsHD(this, entree.visite.parent, pose);
@@ -1720,11 +1728,24 @@ class CounterScene extends Phaser.Scene {
     });
 
     if (faucheuse) {
-      // La Faucheuse ne marche pas : elle glisse jusqu'à la fenêtre.
+      // La Faucheuse ne marche pas : elle glisse jusqu'à la fenêtre, ses cendres restent derrière elle ; puis on la voit de
+      // près, en buste (un peu plus grande à mesure qu'elle a récolté d'âmes)
+      this.perso.clearTint();
+      if (this.cendresF) this.cendresF.detruire();
+      this.cendresF = cendresFaucheuse(this, this.perso, { masque: this.masqueFenetre, cadence: 60 });
       this.tweens.add({
-        targets: this.perso, x: FENETRE.x + FENETRE.w / 2, y: SOL_COMPTOIR, duration: 1200, ease: 'Sine.easeOut',
-        scale: terreurFaucheuse(this.G, entree.partis.length).echelle,
-        onComplete: () => this.arrivee(entree),
+        targets: this.perso, x: FENETRE.x + FENETRE.w / 2, duration: 1200, ease: 'Sine.easeInOut',
+        onComplete: () => this.tweens.add({ targets: this.perso, alpha: 0, duration: 260, onComplete: () => {
+          // (son buste : la Larme de Lune tient entière dans le cadre, sa pointe sous les étiquettes du haut de la fenêtre
+          // (la file, l'heure), même quand elle flotte ; le bas de sa cape descend sous le comptoir : elle reste imposante)
+          const grandeur = terreurFaucheuse(this.G, entree.partis.length).echelle / 9, cle = textureFaucheuseHD(this, 'buste');
+          const e = FH_ECHELLE_BUSTE * (1 + (grandeur - 1) * 0.5), yBuste = FENETRE.y + FH_HAUT_BUSTE + this.textures.get(cle).getSourceImage().height * e;
+          this.perso.setTexture(cle).setPosition(FENETRE.x + FENETRE.w / 2, yBuste + 26).setScale(e).setFlipX(false);
+          this.tweens.add({ targets: this.perso, alpha: 1, y: yBuste, duration: 520, ease: 'Sine.easeOut', onComplete: () => {
+            this.yeuxF = yeuxFaucheuse(this, this.perso, this.perso.depth);
+            this.arrivee(entree);
+          } });
+        } }),
       });
       return;
     }
@@ -2351,7 +2372,7 @@ class CounterScene extends Phaser.Scene {
     this.majStock();
     this.dessinerPieces();
     // Elle flotte, immobile, au-dessus du sol.
-    this.flottement = this.tweens.add({ targets: this.perso, y: SOL_COMPTOIR - 8, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.flottement = this.tweens.add({ targets: [this.perso, ...(this.yeuxF || [])], y: '-=7', duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
     const etapes = [];
     const elle = texte => etapes.push({ texte, nom: 'La Faucheuse' });
@@ -2457,8 +2478,9 @@ class CounterScene extends Phaser.Scene {
     if (this.battements) { this.battements.remove(); this.battements = null; }
     this.majStock();
     this.dessinerPieces();
-    const echelle = this.perso.scale;
-    this.tweens.add({ targets: this.perso, alpha: 0, scale: echelle + 1, duration: 1600, ease: 'Sine.easeIn' });
+    // (la Faucheuse HD) elle se dissout dans l'ombre : le bas se défait le premier, ses cendres montent, ses yeux s'éteignent
+    dissoudreFaucheuse(this, this.perso, { duree: 1600, cendres: this.cendresF, yeux: this.yeuxF || [] });
+    this.yeuxF = null;
     if (this.aura) this.tweens.add({ targets: this.aura, alpha: 0, duration: 1200 });
     this.tweens.add({
       targets: this.ombre, fillAlpha: 0, duration: 1600, ease: 'Sine.easeOut',
@@ -2466,7 +2488,8 @@ class CounterScene extends Phaser.Scene {
         this.ombre.destroy();
         this.ombre = null;
         if (this.aura) { this.aura.destroy(); this.aura = null; }
-        this.perso.setVisible(false).setAlpha(1).setScale(9).setDepth(2);
+        this.perso.setVisible(false).setAlpha(1).setScale(9).setDepth(2).setCrop();
+        if (this.cendresF) { this.cendresF.arreter(); this.cendresF = null; }
         for (const o of this.elementsDansLOmbre()) o.setDepth(0);
         // Les carnets passent en tête de file : on les lit un par un.
         this.G.file.unshift(...entree.partis.map(parti => ({ type: 'carnet', parti })));

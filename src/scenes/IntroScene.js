@@ -18,7 +18,8 @@ class IntroScene extends Phaser.Scene {
 
     // L'aperçu : toi, au début de l'aventure
     this.add.image(220, 250, panneauHD(this, 380, 330)).setScale(2);
-    this.apercu = this.add.image(220, 350, 'perso_heros').setOrigin(0.5, 1).setScale(echelleJoueur(13));
+    creerTexturesJoueur(this, this.ap, false);   // (en HD dès l'ouverture : l'ancien héros de 16 pixels ne se montre plus)
+    this.apercu = this.add.image(220, 350, 'joueur_petit').setOrigin(0.5, 1).setScale(echelleJoueur(13));
     this.nomApercu = this.add.text(220, 372, '', style(20, '#3b2410', { fontStyle: 'bold' })).setOrigin(0.5);
     // (v1.32) pour un garçon, on prévient : la barbe choisie ne pousse qu'à 18 ans
     this.texteAge = this.add.text(220, 396, `${AGE_DEPART} ans`, style(14, '#6b4a2a', { fontStyle: 'italic' })).setOrigin(0.5);
@@ -209,22 +210,26 @@ class IntroHistoireScene extends Cinematique {
 
   // --- (v1.08, planche 37 C) Garrick dans le courant : le rondin raté, puis le vieux tonneau ---
   // Le rondin (une bûche ronde qui flotte, sa mousse, ses cernes) et le vieux tonneau cerclé de fer
+  // (la fin du 16 px) le rondin et le tonneau de la rivière, en HD (toiles de 103 × 20 et 32 × 41, affichées ×2)
   texturesRiviere() {
     if (!this.textures.exists('rondinRiviere')) {
-      const t = this.make.graphics({ add: false });
-      t.fillStyle(0x4a2e18).fillRoundedRect(0, 6, 200, 30, 14).fillStyle(0x6a4424).fillRoundedRect(4, 8, 192, 12, 8);
-      for (let x = 14; x < 186; x += 22) t.fillStyle(0x3a2210).fillRect(x, 12 + (x % 3) * 4, 12, 2);
-      t.fillStyle(0xc8a070).fillEllipse(196, 21, 14, 28).lineStyle(2, 0x8a6030).strokeEllipse(196, 21, 8, 18);
-      t.fillStyle(0x3a6a2a).fillRect(60, 2, 3, 8).fillRect(58, 0, 8, 3);
-      t.generateTexture('rondinRiviere', 206, 40); t.destroy();
+      const t = toileDecor(103, 20); rampesBois(t); t.rampes.mousse = rampe(0x4f7a3a);
+      bucheSur(t, 2, 10, 96, 7.4, 'ecorce', 'coeurBois', 31);
+      for (let y = 0; y < 20; y++) for (let x = 0; x < 7; x++) if (Math.hypot((x + 0.5 - 7) / 5, (y + 0.5 - 10) / 7.6) > 1) { t.c[y * t.l + x] = null; t.m[y * t.l + x] = null; }   // (le bout arrondi)
+      for (let x = 12; x < 88; x += 15) for (let k = 0; k < 5; k++) t.poser(x + k, 6 + ((x >> 2) % 3) * 2 + (k > 2 ? 1 : 0), 'ecorce', 1);   // (les fentes de l'écorce)
+      for (let x = 4; x < 94; x++) if (hachage(x, 9, 311) > 0.55) t.poser(x, 16 + (hachage(x, 4, 311) > 0.7 ? 1 : 0), 'mousse', 2);   // (la ligne d'eau : un peu de mousse)
+      for (const [x, y, n] of [[30, 3, 2], [31, 2, 3], [32, 3, 4], [30, 1, 4], [33, 2, 2]]) t.poser(x, y, 'mousse', n);   // (la petite branche, ses deux feuilles)
+      t.contour(); t.texture(this, 'rondinRiviere');
     }
     if (!this.textures.exists('tonneauRiviere')) {
-      const t = this.make.graphics({ add: false });
-      t.fillStyle(0x7a4a22).fillRoundedRect(0, 0, 64, 80, 10);
-      for (let x = 6; x < 60; x += 11) t.fillStyle(0x5a3416).fillRect(x, 2, 2, 76);
-      t.fillStyle(0x3a3a40).fillRect(0, 12, 64, 6).fillRect(0, 62, 64, 6).fillStyle(0x8a8a90).fillRect(0, 12, 64, 2).fillRect(0, 62, 64, 2);
-      t.fillStyle(0x9a6a3a).fillEllipse(32, 4, 60, 10);
-      t.generateTexture('tonneauRiviere', 64, 82); t.destroy();
+      const t = toileDecor(32, 41);
+      t.forme('chene', (x, y) => (y >= 2 && y <= 40 && Math.abs(x + 0.5 - 16) <= 12.2 + Math.sin((y - 2) / 38 * Math.PI) * 2.6 ? [(x + 0.5 - 16) / 15.6, 0, 0.8] : null),
+        { motif: (x, y) => ((x + 1) % 5 === 0 ? -0.8 : hachage(x, y >> 2, 320) > 0.86 ? -0.4 : 0) });
+      for (const y0 of [7, 32]) for (let y = y0; y <= y0 + 2; y++) for (let x = 0; x < 32; x++) if (t.mat(x, y)) t.poser(x, y, 'fer', y === y0 ? 4 : y === y0 + 2 ? 1 : 3);
+      for (const y0 of [7, 32]) for (const x of [6, 16, 26]) t.poser(x, y0 + 1, 'fer', 5);   // (les rivets)
+      t.forme('cheneSombre', ellipsoide(16, 2.6, 12.4, 2.4), { decalage: 0.5, ombre: false });   // (le fond du tonneau, sa bonde)
+      t.poser(16, 2, 'chene', 1); t.poser(17, 2, 'chene', 1);
+      t.contour(); t.texture(this, 'tonneauRiviere');
     }
   }
 
@@ -253,7 +258,7 @@ class IntroHistoireScene extends Cinematique {
     this.tweens.add({ targets: g, angle: 8, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     // le rondin flotte devant lui, il tangue doucement
     // (plus loin que toi, au milieu de la rivière : on voit bien la scène)
-    const rondin = this.add.image(200, eau + 6, 'rondinRiviere').setScale(1.1);
+    const rondin = this.add.image(200, eau + 6, 'rondinRiviere').setScale(2.2);
     this.children.moveBelow(rondin, g);
     this.tweens.add({ targets: rondin, x: 470, duration: 2600, ease: 'Sine.easeOut' });
     const roulis = this.tweens.add({ targets: rondin, angle: { from: -4, to: 4 }, y: eau + 2, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -281,7 +286,7 @@ class IntroHistoireScene extends Cinematique {
     await this.animer({ targets: g, y: eau - 10, angle: -6, duration: 450, ease: 'Back.easeOut' });
     this.onomatopee(g.x + 40, eau - 80, 'KOF KOF !');
     this.tweens.add({ targets: g, angle: 8, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    const tonneau = this.tonneau = this.add.image(60, eau + 10, 'tonneauRiviere').setScale(1.15).setAngle(84);
+    const tonneau = this.tonneau = this.add.image(60, eau + 10, 'tonneauRiviere').setScale(2.3).setAngle(84);
     this.children.moveBelow(tonneau, this.eauDevant);
     this.tweens.add({ targets: tonneau, angle: { from: 78, to: 90 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     g.setFlipX(true);   // (il se retourne vers lui)

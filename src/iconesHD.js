@@ -290,6 +290,82 @@ const DESSINS_ICONES = {
       return dedans && y <= 14 ? [dx / 8, dy / 8, 0.8] : null;
     });
   },
+  // --- (la fin du 16 px) les dernières icônes de 8 pixels : les colis, le coffre, les bêtes, la lame ---
+  sac(t) { // un sac de toile de jute, ventru, noué d'une ficelle claire
+    t.rampes.jute = rampe(0xb8945a);
+    t.forme('jute', (x, y) => { const dx = x + 0.5 - 8, dy = y + 0.5 - 10; return y >= 5 && y <= 14 && Math.hypot(dx / 6, dy / 5) < 1 ? [dx / 7, dy / 6, 0.8] : null; },
+      { motif: (x, y) => ((x + y * 2) % 4 === 0 ? -0.5 : 0) });
+    t.forme('jute', (x, y) => (y >= 1 && y <= 5 && Math.abs(x + 0.5 - 8) < 1.4 + (5 - y) * 0.55 ? [(x + 0.5 - 8) / 3, 0, 0.8] : null), { decalage: 0.3 });   // le col froncé
+    for (let x = 6; x <= 10; x++) t.poser(x, 5, 'lin', x % 2 ? 4 : 3);
+    t.poser(11, 6, 'lin', 4); t.poser(11, 7, 'lin', 3);
+  },
+  colis(t) { // le colis ficelé qu'on remet à l'aventurier : papier kraft, ficelle en croix, un nœud
+    t.rampes.kraft = rampe(0xc9a46a);
+    t.forme('kraft', (x, y) => (x >= 1 && x <= 14 && y >= 3 && y <= 14 ? [(x - 7.5) / 9, (y - 8.5) / 10, 0.85] : null), { motif: (x, y) => (fbm(x * 0.5, y * 0.5, 1240) > 0.62 ? -0.6 : 0) });
+    for (let x = 1; x <= 14; x++) t.poser(x, 3, 'kraft', 5);
+    for (let y = 3; y <= 14; y++) { t.poser(8, y, 'lin', 4); t.poser(9, y, 'lin', 2); }
+    for (let x = 1; x <= 14; x++) { t.poser(x, 8, 'lin', 4); t.poser(x, 9, 'lin', 2); }
+    t.forme('lin', ellipsoide(6.5, 2.5, 1.6, 1.3), { decalage: 0.3 }); t.forme('lin', ellipsoide(10.5, 2.5, 1.6, 1.3), { decalage: 0.3 });
+    t.poser(8, 3, 'lin', 5); t.poser(9, 3, 'lin', 5);
+  },
+  colisOuvert(t) { // le même, ouvert : les rabats levés, le fond sombre
+    t.rampes.kraft = rampe(0xc9a46a);
+    t.forme('kraft', (x, y) => (x >= 2 && x <= 13 && y >= 7 && y <= 14 ? [(x - 7.5) / 9, (y - 10.5) / 8, 0.85] : null), { motif: (x, y) => (fbm(x * 0.5, y * 0.5, 1241) > 0.62 ? -0.6 : 0) });
+    for (let x = 3; x <= 12; x++) { t.poser(x, 7, 'encre', 1); t.poser(x, 8, 'cheneSombre', 1); }
+    for (let k = 0; k <= 4; k++) { t.poser(2 - Math.round(k * 0.4), 7 - k, 'kraft', 4); t.poser(3 - Math.round(k * 0.4), 7 - k, 'kraft', 3);
+      t.poser(13 + Math.round(k * 0.4), 7 - k, 'kraft', 2); t.poser(12 + Math.round(k * 0.4), 7 - k, 'kraft', 3); }
+    for (let x = 4; x <= 11; x++) t.poser(x, 5, 'kraft', 4);   // le rabat du fond, levé
+    t.poser(7, 11, 'lin', 3); t.poser(8, 11, 'lin', 3);
+  },
+  colisArmes(t) { // une caisse longue de planches cerclée de fer, deux lames qui dépassent
+    trait(t, 'metal', 4, 7, 13, 1, 0.8, { decalage: 0.4 }); trait(t, 'metal', 7, 7, 14, 3, 0.8, { decalage: 0.5 });
+    planche(t, 1, 7, 14, 4, 'chene', { graine: 1250, noeuds: 1 });
+    planche(t, 1, 11, 14, 3, 'chene', { graine: 1251, noeuds: 0 });
+    for (let y = 7; y <= 13; y++) { t.poser(3, y, 'fer', 3); t.poser(12, y, 'fer', 3); }
+    for (const [x, y] of [[3, 8], [12, 8], [3, 12], [12, 12]]) t.poser(x, y, 'fer', 5);
+  },
+  colisSoins(t) { // un ballot de lin blanc, une croix rouge cousue, une sangle de cuir
+    t.forme('lin', (x, y) => (x >= 2 && x <= 13 && y >= 3 && y <= 14 && !((x === 2 || x === 13) && (y === 3 || y === 14)) ? [(x - 7.5) / 8, (y - 8.5) / 9, 0.85] : null), { motif: (x, y) => ((x * 3 + y) % 5 === 0 ? -0.4 : 0) });
+    t.forme('tissuRouge', (x, y) => ((Math.abs(x + 0.5 - 8) < 1.6 && y >= 5 && y <= 12) || (Math.abs(y + 0.5 - 8.5) < 1.6 && x >= 4 && x <= 11) ? [0, 0, 1] : null), { decalage: 0.2, bord: false });
+    for (let y = 3; y <= 14; y++) t.poser(12, y, 'cuir', 3);
+    t.poser(12, 8, 'laiton', 4);
+  },
+  coffre(t) { // un coffre de chêne bombé, cerclé de fer, une serrure d'or
+    t.forme('chene', (x, y) => (x >= 1 && x <= 14 && y >= 3 && y <= 7 && Math.hypot((x + 0.5 - 8) / 7, (y - 7) / 4.2) < 1.05 ? [(x + 0.5 - 8) / 8, -0.6, 0.8] : null), { decalage: 0.2 });
+    planche(t, 1, 8, 14, 3, 'chene', { graine: 1260, noeuds: 0 }); planche(t, 1, 11, 14, 3, 'chene', { graine: 1261, noeuds: 1 });
+    for (let x = 1; x <= 14; x++) { t.poser(x, 7, 'fer', 3); t.poser(x, 14, 'fer', 2); }
+    for (let y = 3; y <= 14; y++) { t.poser(3, y, 'fer', y < 8 ? 4 : 3); t.poser(12, y, 'fer', y < 8 ? 4 : 3); }
+    t.forme('or', (x, y) => (x >= 7 && x <= 8 && y >= 7 && y <= 10 ? [0, 0, 1] : null), { decalage: 0.3 }); t.poser(7, 9, 'encre', 0);
+  },
+  araignee(t) { // une araignée noir-violet, huit pattes fines et coudées, des yeux rouges
+    t.rampes.chitine = rampe(0x5a4468); t.rampes.yeuxRouges = rampe(0xff3030);
+    const patte = (pts) => { for (let k = 0; k < pts.length - 1; k++) { const [x0, y0] = pts[k], [x1, y1] = pts[k + 1], n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+      for (let u = 0; u <= n; u++) t.poser(Math.round(x0 + (x1 - x0) * u / n), Math.round(y0 + (y1 - y0) * u / n), 'chitine', k ? 1 : 2); } };
+    for (const s of [-1, 1]) { const X = d => 8 + s * d - (s < 0 ? 1 : 0);
+      patte([[X(2), 8], [X(4), 4], [X(6), 1]]); patte([[X(2), 9], [X(5), 6], [X(7), 7]]);
+      patte([[X(2), 11], [X(5), 11], [X(7), 14]]); patte([[X(1), 12], [X(3), 15]]); }
+    t.forme('chitine', ellipsoide(8, 11, 2.4, 2.5), { decalage: 0.2, motif: (x, y) => (Math.abs(x + 0.5 - 8) < 0.8 && y >= 10 && y <= 12 ? 1 : 0) });
+    t.forme('chitine', ellipsoide(8, 7.6, 1.6, 1.4), { decalage: 0.35 });
+    t.poser(7, 7, 'yeuxRouges', 4); t.poser(8, 7, 'yeuxRouges', 4); t.poser(7, 6, 'yeuxRouges', 2); t.poser(8, 6, 'yeuxRouges', 2);
+  },
+  loup(t) { // un loup gris de profil, la queue basse, l'œil jaune
+    t.rampes.pelage = rampe(0x8a8e96); t.rampes.oeilJaune = rampe(0xffd040);
+    t.forme('pelage', ellipsoide(7, 8.8, 5.4, 2.4), { motif: (x, y) => (y >= 10 ? -0.6 : y <= 7 ? 0.5 : 0) });
+    t.forme('pelage', ellipsoide(12.2, 6.4, 2.1, 1.9), { decalage: 0.25 });
+    for (let x = 13; x <= 15; x++) t.poser(x, 7, 'pelage', 3); t.poser(14, 6, 'pelage', 4); t.poser(15, 8, 'pelage', 1);   // le museau
+    t.poser(11, 3, 'pelage', 3); t.poser(11, 4, 'pelage', 4); t.poser(12, 4, 'pelage', 3);   // l'oreille
+    for (const [x, y] of [[2, 8], [1, 9], [1, 10], [0, 11]]) t.poser(x, y, 'pelage', 2);   // la queue
+    for (const x of [2, 6, 9, 12]) for (let y = 11; y <= 14; y++) t.poser(x, y, 'pelage', y === 14 ? 1 : 2);
+    t.poser(12, 6, 'oeilJaune', 5); t.poser(15, 7, 'encre', 0);
+  },
+  lame(t) { // une lame d'acier clair au fil bleuté, garde d'or, poignée de cuir
+    t.rampes.filBleu = rampe(0x8ad0f0);
+    trait(t, 'metal', 6, 10, 15, 1, 1.2, { decalage: 0.4 });
+    for (let k = 0; k < 8; k++) t.poser(8 + k, 7 - k, 'filBleu', 4);
+    trait(t, 'or', 3, 8, 8, 13, 0.8, { decalage: 0.4 });
+    trait(t, 'cuir', 5, 11, 2, 14, 0.8);
+    t.forme('or', ellipsoide(1.6, 14.4, 1.1, 1.1), { decalage: 0.3 });
+  },
   // --- La caisse (la faillite) ---
   caisse(t) {
     planche(t, 1, 3, 14, 4, 'chene', { graine: 1210, noeuds: 1 });
