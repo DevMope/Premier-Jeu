@@ -45,6 +45,10 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q373** — Le nom des armes que le joueur collectionne : « les armes reliques » (ton nom), ou une variante : « les Reliques des Royaumes » (chacune vient d'un royaume), « les Reliques » tout court, « les armes héritées » ?
 
+- **Q374** — La salle d'armes v5 (un support fait exprès pour chaque arme relique, la gravité vérifiée, le tapis tissé, la salle agrandie à trois travées, plus aucun ancien design) : tu valides ?
+- **Q375** — La quête qui ouvre la salle d'armes selon tes choix : la poutre maîtresse (si tu as fait affaire avec les Mages-Charpentiers), sinon le soufflet de Thorgal (s'il a bâti sa forge chez toi), sinon ce qui gratte sous le plancher (tant que Garrick vient encore) ; et toujours Thorgal en dernier recours : ce système te va ?
+- **Q376** — Fleur de Diamant, l'épée de Garrick, rangée parmi les armes légendaires (portée par un autre, jamais collectionnée) : d'accord ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
