@@ -114,7 +114,7 @@ class QuartierScene extends Phaser.Scene {
   create() {
     const G = this.G = window.GAME, d = this.donnees || {}, R = this.R = reglesQuartier();
     // (Phaser réutilise la scène : on repart de zéro)
-    this.fini = false; this.allerEnCours = false; this.enPassage = null; this.arrivant = null;
+    this.fini = false; this.allerEnCours = false; this.enPassage = null; this.arrivant = null; this.pageOuverte = null;   // (Phaser garde l'objet de la scène : une page ouverte avant une relance ne doit pas replacer JeuneGoy à sa porte au premier « resume »)
     this.cible = null; this.chemin = null; this.apresMarche = null; this.courir = false; this.meilleur = null;
     this.pasHeros = 0; this.pasVuHeros = 0; this.vueHeros = 'dos'; this.versGauche = false; this.vuesEnCours = {};
     this.planVille = null; this.carteC = null; this.ecritsDecor = null; this.grilleQ = null; this.lieuProche = null; this.zoneCourante = undefined;
@@ -527,8 +527,12 @@ class QuartierScene extends Phaser.Scene {
   ouvrirPage(p) {
     const lourde = ['Banque', 'Mages', 'Forge'].includes(p.page), suite = () => {
       if (!this.sys.isActive()) return;
-      this.enPassage = null; this.pageOuverte = p;
-      if (p.action) return p.action(this);
+      this.pageOuverte = p;
+      if (p.action) { this.enPassage = null; return p.action(this); }
+      // (registre du 05/11, fuzzQ « JeuneGoy dans un mur » au seuil de la tente d'Ysmée) la pause n'a lieu qu'à l'image suivante
+      // (Phaser la met en file) : le passage reste donc en cours jusque-là, sinon, entre les deux, la rue tourne encore avec
+      // JeuneGoy sur le seuil, dans le mur de la maison, sans passage ni arrivée (un clic l'en ferait repartir de là).
+      // revenirDePage (au retour de la page) ou create (si la rue est relancée) l'achèvent.
       this.scene.pause(); this.scene.launch(p.page, { retour: this.scene.key, ...(p.donnees || {}) });
     };
     if (lourde) { for (const cam of this.cameras.cameras) cam.fadeOut(250, 0, 0, 0); this.cameras.main.once('camerafadeoutcomplete', suite); }
