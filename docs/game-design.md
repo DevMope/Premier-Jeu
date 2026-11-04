@@ -4019,6 +4019,7 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
 - **Q388 (04/11)** : le poids public en halle basse, son écriteau, les bacs du passage et la cour déplacée : validés. À faire : depuis le passage, devant l'arche du marché, on doit apercevoir par son ouverture ce qui l'entoure vraiment sur la place (le mendiant et son chien, le coin des jeux, la barrière, la cour, les détails qui commencent à apparaître), et pas seulement l'allée vide.
 - **Q389 (04/11), la chambre et la salle d'armes dans le jeu** : la chambre est validée, sauf **l'intérieur de l'armoire à vêtements de JeuneGoy**, horrible : à refaire entièrement. **La poussière de la salle d'armes** le premier jour se lit comme de la neige : la refaire mieux, ou montrer l'abandon autrement (toiles d'araignées dans les angles et sur les supports, poussière posée en couche sur les objets et le sol, draps sur les meubles, rayon de lumière où dansent quelques grains).
 - **Q390 (04/11)** : la place vue du passage par l'arche du marché : parfaite, validée.
+- **Q391 (04/11)** : les niveaux d'amélioration de la chambre, validés visuellement ; et encore mieux s'ils coïncident avec les autres améliorations de la maison (le même palier de richesse et de style d'une pièce à l'autre : comptoir, façade, arrière-boutique, bureau, chambre).
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).

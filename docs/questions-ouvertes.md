@@ -8,7 +8,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q391** — La chambre à chaque niveau d'amélioration, tirée de la planche validée (la paillasse, le lit de bois, le lit sculpté et son édredon, le lit à baldaquin, le lit royal étoilé ; cinq coffres, quatre tapis posés au sol ; trois armoires : le noyer simple, puis le fronton sculpté et les laitons, puis les dorures et la marqueterie) et Grand-Mère Écaille repeinte au-dessus de l'armoire : tu valides ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -18,6 +17,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q391~~ Niveaux de la chambre validés visuellement ; à faire coïncider avec les autres améliorations de la maison (04/11).
 - ~~Q389, Q390~~ Chambre validée sauf l'intérieur de l'armoire ; poussière de la salle à refaire (toiles d'araignées) ; la place par l'arche validée (04/11).
 - ~~Q299, Q300~~ Closes le 04/11 : déjà tranchées par les réponses suivantes. Q299 (le moment où le neutre doit choisir) → le dernier appel du neutre, le soir où arrive la 7e pièce (Q311, Q317). Q300 (revenir d'un extrême) → un extrême atteint est sans retour, sauf par les récits de retour (Q301, Q314).
 - ~~Q354~~ Les trois sons de l'obtention d'une pièce d'armure, validés (04/11).
