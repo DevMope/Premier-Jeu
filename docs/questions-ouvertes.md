@@ -11,6 +11,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q392** — Les personnages v7 : un visage propre à chacun (Borin bourru, tête carrée, sourcils broussailleux, gros nez ; Lindë au visage ovale et fin, grands yeux en amande ; Garrick au visage long et anguleux, regard plissé, un peu plus grand qu'Aldric ; Aldric rond et doux), la nuque de dos, Borin aux cheveux plus courts avec des tresses jusque dans la barbe et des jambes lisibles, l'épaule de Garrick reculée : est-ce mieux, et qu'est-ce qui ne va pas encore ?
 
+- **Q393** — L'intérieur de l'armoire refait (le noyer en profondeur, le linge plié en piles, la tringle de laiton et ses cintres, les habits qui tombent, les bottes au fond, la boîte et le sachet de lavande) et la salle d'armes le premier jour (toiles d'araignées, poussière posée, traces de pas, draps sur les supports vides, un rayon de lumière par un soupirail ; propre le lendemain) : tu valides ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
