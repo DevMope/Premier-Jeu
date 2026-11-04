@@ -43,7 +43,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q380** — Les personnages refaits d'un seul tenant (v5 : sans couture ni effet de masque, une seule chevelure, Borin petit et massif façon *Le Hobbit*, des têtes à environ un cinquième de la hauteur, un vrai aplomb et un léger déhanché, la marche de profil et de dos gardée) : est-ce la bonne base pour continuer ?
 
 - **Q382** — Le crâne de la Faucheuse presque englouti dans l'ombre de la capuche (orbites creuses, cavité nasale en cœur inversé, mâchoire suggérée ; seuls quelques reflets d'os très discrets autour des yeux jaunes) : tu valides ?
 
@@ -55,6 +54,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q380~~ Personnages v5 : bonne direction ; nain plus petit, jambes un peu plus courtes, corps un peu plus larges, tête du nain, barbe et pipe fumante de Garrick, cheveux façon Aragorn (04/11).
 - ~~Q378, Q379, Q381~~ Réponses du 04/11 (flammes qui naissent du bois des torches, plus de teintes dans la chambre ; le récit de Fleur de Diamant gardé comme base ; yeux validés, crâne moins visible et mieux dessiné).
 - ~~Q377~~ La Faucheuse : aura parfaite ; yeux jaunes à pupille en croissant (la version d'avant) ; crâne aussi gros, un peu plus opaque (04/11).
 - ~~Q367, Q373 à Q376~~ Réponses du 04/11 (arche validée ; « les Reliques des Royaumes » ; salle d'armes v5 validée sauf le feu ; quête selon les choix validée ; Fleur de Diamant légendaire, son récit à écrire).

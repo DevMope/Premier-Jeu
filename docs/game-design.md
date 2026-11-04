@@ -447,7 +447,8 @@ Chaque étape doit donner une version **jouable**.
 Des plus petits aux plus grands : hobbits et nains à peu près pareils (léger avantage aux nains),
 puis humains, elfes, magiciennes. Les pandas (à venir) seront les plus grands parmi les peuples du
 bien ; la liste des tailles des forces maléfiques sera donnée plus tard.
-Silhouettes : hobbit 13 px, nain 14, humain 16, elfe 17, magicienne 18. Au comptoir, le buste des
+Silhouettes : hobbit 13 px, nain 14, humain 16, elfe 17, magicienne 18.
+**(04/11, Q380) Pour les nouveaux corps en pied « comme leur portrait »** : le nain à 14 contre 16 est trop grand à côté des autres ; il passe à environ **3/4 d'un humain** (le hobbit un peu en dessous), en restant le plus large. Au comptoir, le buste des
 petits peuples apparaît plus bas dans la fenêtre, celui des grands plus haut.
 
 ## La chambre : ce qu'une bonne nuit apporte (décidé, construit)
@@ -4008,6 +4009,7 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q378** : les flammes des torches ne doivent plus déborder de la base de la torche : la ligne du bas des flammes est trop droite pour un feu, et elle dépasse des deux côtés du bois, alors que les flammes doivent naître de cette partie en bois. La chambre est beaucoup mieux, le mobilier aussi, mais tout est marron sur le même marron : plus de variété de teintes de bois et de couleurs (comme l'encadrement de la porte, d'un marron différent du reste de la porte : ça rend bien). La disposition des armes dans la chambre plaît beaucoup plus.
   - **Q379** : le joueur imaginait quelque chose d'épique, mais ce ton lié à la fleur de pommier lui plaît : on part sur cette base pour l'instant.
   - **Q381** : les yeux de la Faucheuse sont validés ; mais on voit encore trop le crâne, et plus il le regarde, moins il le trouve bien dessiné : à reprendre (moins visible, mieux dessiné).
+- **Q380 (04/11), les personnages v5** : on part vraiment dans la bonne direction. À corriger sur **les corps** d'abord (les habits sont tous à revoir, mais ils viendront quand les corps seront satisfaisants) : **le nain est trop grand** à côté des autres ; **les jambes**, chez tous, légèrement trop longues par rapport au haut du corps ; **les personnages**, sauf le nain, un petit poil trop fins et pas assez larges. **Les visages** ne satisfont pas encore entièrement : la tête du nain a trop rapetissé par rapport à son nouveau corps ; Garrick n'a plus sa **barbe emblématique** du portrait, et on ne voit pas du tout **sa pipe**, alors qu'on devrait la voir, **avec de la fumée** qui s'en échappe. **Les cheveux de Garrick** sont trop longs, comme ceux de l'elfe : les faire plus **façon Aragorn**, comme c'était prévu (mi-longs, aux épaules, ondulés, en mèches ; images de référence du joueur gardées dans le scratchpad).
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
