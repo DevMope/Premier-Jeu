@@ -41,7 +41,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q377** — La Faucheuse : les yeux en croissant de lune (sans pupille, leur lueur qui respire), le voile de terreur (le moteur des auras, sans anneaux, qui ondule et respire, plus haut et plus sombre à chaque palier), le crâne un peu plus grand dans la capuche, et dans la file elle se tient de face pour qu'on voie ses yeux : tu valides ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -51,6 +50,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q377~~ La Faucheuse : aura parfaite ; yeux jaunes à pupille en croissant (la version d'avant) ; crâne aussi gros, un peu plus opaque (04/11).
 - ~~Q367, Q373 à Q376~~ Réponses du 04/11 (arche validée ; « les Reliques des Royaumes » ; salle d'armes v5 validée sauf le feu ; quête selon les choix validée ; Fleur de Diamant légendaire, son récit à écrire).
 - ~~Q359, Q360, Q363~~ Réponses du 04/11 (personnages à refaire presque de A à Z : nains aux proportions normales façon *Le Hobbit*, vrai aplomb des jambes, cheveux d'un seul tenant, profils sans effet de masque ; marches de profil et de dos gardées ; manteau long de Garrick).
 - ~~Q365, Q366~~ Réponses du 04/11 (le poids public : perspective et objets des balances à refaire ; l'étal dans l'axe annulé, deux arches reliées par un chemin).

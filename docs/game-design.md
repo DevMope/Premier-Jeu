@@ -4003,6 +4003,7 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q374** : la salle d'armes v5, « bravo, beaucoup mieux » ; mais le feu des torches : reprendre ce qu'on a appris (le feu de belle qualité avec sa petite fumée).
   - **Q375** : le système de la quête de la salle d'armes selon les choix, validé (les Mages-Charpentiers, sinon Thorgal, sinon Garrick ; Thorgal en dernier recours).
   - **Q376** : Fleur de Diamant, l'épée de Garrick, est une arme légendaire ; il faudra scénariser ou écrire un petit récit qui raconte comment Garrick l'a obtenue (à faire, histoire à valider).
+- **Q377 (04/11), la Faucheuse** : l'aura (le voile de terreur par le moteur des auras) est **parfaite**, « pile comme je voulais ». Les yeux : finalement pas en croissant ; on garde la version d'avant, **les yeux jaunes avec une pupille en croissant de lune**. Le crâne : aussi gros que dans la dernière version, mais encore un peu plus opaque.
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
