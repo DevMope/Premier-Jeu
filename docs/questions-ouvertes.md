@@ -36,8 +36,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q365** — L'étal de maître Gédéon dans l'axe de l'allée, juste derrière la grande arche (on le voit par l'ouverture, de la rue comme de la place, l'allée le contourne) : on le garde (« avec ») ou on laisse l'allée libre jusqu'à la fontaine (« sans ») ?
-- **Q366** — Le poids public refait (la halle ouverte, la grande balance à fléau, les poids de fonte, le registre, le préposé, la file avec la charrette, le porteur entre l'arche et la balance, la cour de déchargement côté place) : on comprend sa fonction, tu valides ?
 
 - **Q359** — Les personnages comme leur portrait : les grandes épaulières d'armure de Borin lui font des épaules très larges en pied. A : on les garde telles quelles ; B : plus petites sur le corps seulement (le portrait ne change pas) ?
 - **Q360** — Le manteau de Garrick en pied. A : jusqu'aux genoux, ouvert sur ses jambes ; B : jusqu'aux chevilles, comme aujourd'hui ?
@@ -55,6 +53,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q365, Q366~~ Réponses du 04/11 (le poids public : perspective et objets des balances à refaire ; l'étal dans l'axe annulé, deux arches reliées par un chemin).
 - ~~Q362, Q371, Q372~~ Réponses du 04/11 dans `docs/game-design.md` (yeux en croissant sans pupille, vraie aura, crâne plus gros ; salle d'armes à supports par arme et gravité, chambre à refaire au niveau des armes ; armes reliques et armes légendaires séparées ; la quête de la salle selon les choix).
 - ~~Q358~~ La place des Mastres : validée en partie, les côtés de l'arche à refaire (04/11).
 - ~~Q342 à Q357~~ Réponses du 04/11 dans `docs/game-design.md` (yeux jaunes en croissant, halo à aligner, personnages voie A, arche plus naturelle, armures et armes validées, salle d'armes par une quête, étape 3 validée).
