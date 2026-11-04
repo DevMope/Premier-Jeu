@@ -912,59 +912,127 @@ if (typeof FIGURANTS !== 'undefined') Object.assign(FIGURANTS, {
 //     en plein cintre de claveaux et sa clé, le mur au-dessus, sa corniche, un toit en croupe de tuiles ; deux lanternes de fer
 //     pendues aux piles, deux bacs de fleurs à leur pied. L'ouverture est vide : on y voit la vraie place. La même texture au bout
 //     de la rue et au bas de la place (MarchePlace : poserPorchePlace). À l'échelle de la rue : 1,6 pixel du monde par pixel.
-const GRANDE_ARCHE = { L: 182, H: 184, piles: [[6, 41], [140, 175]], imposte: 76, rayon: 49, cx: 90.5, lanternes: [[51, 137], [130, 137]], ecriteau: [91, 74], chaines: [78, 103], couvert: 18 };   // (étape 11b : 6 de marge de chaque côté, où débordent les pierres des chaînes d'angle)   // (la hauteur : la rue en montre environ 300 pixels au-dessus du trottoir ; l'arche y tient, son nom compris)
+const GRANDE_ARCHE = { L: 206, H: 184, marge: 18, piles: [[18, 53], [152, 187]], imposte: 76, rayon: 49, cx: 102.5, lanternes: [[63, 137], [142, 137]], ecriteau: [103, 74], chaines: [90, 115], couvert: 18 };
+// (la hauteur : la rue en montre environ 300 pixels au-dessus du trottoir ; l'arche y tient, son nom compris)
+// (étape 11b-2, Q348/Q358) Les flancs ne sont plus tirés à la règle : de chaque côté, une chaîne d'angle de pierre de taille en
+// harpe (des pierres de 6 à 10 rangs, longues et courtes en alternance : de 6 à 12 de débord pour les longues), deux pierres
+// manquantes, des angles éclatés, et le fruit (la pile s'élargit de 5 vers le pied) ; un soubassement plus large qui s'enfonce
+// dans la terre, deux chasse-roues au pied de l'ouverture, des touffes d'herbe, des cailloux, une fougère ; du lierre des deux
+// côtés, de la mousse dans les joints ; en haut, des tuiles qui dépassent, quelques-unes qui manquent, une gouttière de zinc et sa
+// descente, de la mousse au bord du toit. La marge de 18 de chaque côté reçoit les pierres qui débordent.
+function flancsArche12(A, sol, yCorn) {
+  // les assises de la chaîne d'angle, du soubassement à la corniche, pour chaque pile : [haut, bas, débord] (débord négatif : manquante)
+  const res = [];
+  for (const [cote, g] of [[-1, 8301], [1, 8311]]) {
+    const ass = []; let y = sol - 15, r = 0; const manque = [3 + Math.floor(hachage(1, 2, g) * 4), 9 + Math.floor(hachage(2, 2, g) * 4)];
+    while (y > yCorn + 4) { const h = 6 + Math.floor(hachage(r, 1, g) * 5), longue = r % 2 === 0;
+      let p = longue ? 6 + Math.floor(hachage(r, 3, g) * 7) : 1 + Math.floor(hachage(r, 4, g) * 4);
+      if (manque.includes(r)) p = -4;
+      ass.push({ y0: Math.max(yCorn + 4, y - h + 1), y1: y, p, longue }); y -= h; r++; }
+    res.push(ass);
+  }
+  return res;
+}
 function grandeArcheHD(s, jour = true) {
   const saison = (typeof saisonActuelle === 'function' && saisonActuelle()) || 'moissons', cle = 'grandeArcheHD_' + saison + (jour ? '_j' : '_n');
   if (s.textures.exists(cle)) return cle;
   const A = GRANDE_ARCHE, { L, H, rayon: R0, cx } = A, sol = H - 1, yImp = sol - A.imposte, t = toileDecor(L, H); rampesPorche6b(t, saison); const { D, enDessus } = dessus6b(t);
-  const dedans = (x, y) => x > A.piles[0][1] && x < A.piles[1][0] && (y > yImp || Math.hypot(x + 0.5 - cx, y + 0.5 - yImp) < R0);   // (l'ouverture)
-  const yCorn = yImp - R0 - 16;   // (la corniche, au-dessus de l'arc)
-  // 1. la maçonnerie : les piles et le mur au-dessus de l'arc (modelés ensuite) ; les claveaux de l'arc et sa clé
-  // (étape 11b) les bords des piles ne sont plus des lignes droites : les pierres d'angle alternent, longues et courtes, en harpe
-  const deb = y => { const r = Math.floor((sol - y) / 7); return (r % 2 ? 4 : 1) + Math.floor(hachage(r, 3, 8290) * 2.99); };
-  for (let y = yCorn + 4; y <= sol; y++) for (let x = 0; x < L; x++) { if (dedans(x, y)) continue; const g0 = A.piles[0][0] - (y < sol - 12 ? deb(y) : 0), d0 = A.piles[1][1] + (y < sol - 12 ? deb(y + 3) : 0); if (x < g0 || x > d0) continue; t.poser(x, y, 'pierre', 3); }
+  Object.assign(t.rampes, { lierre: [0x1a2e14, 0x243e1a, 0x30521e, 0x3e6a26, 0x5a8a34, 0x7aa848], mousse: rampe(0x6a8a3a), herbeA: rampe(0x6a9a3a), zinc: rampe(0x8a96a0) });
+  const [pg, pd] = A.piles, dedans = (x, y) => x > pg[1] && x < pd[0] && (y > yImp || Math.hypot(x + 0.5 - cx, y + 0.5 - yImp) < R0);   // (l'ouverture)
+  const yCorn = yImp - R0 - 16, fruit = y => Math.round(5 * (y - yCorn) / (sol - yCorn)), [assG, assD] = flancsArche12(A, sol, yCorn);
+  const assise = (ass, y) => ass.find(a => y >= a.y0 && y <= a.y1);
+  // le bord de chaque côté, rang par rang : la chaîne d'angle (son débord, ses angles éclatés), le fruit
+  const bord = (ass, y, cote) => { const a = assise(ass, y), f = fruit(y); if (!a) return (cote < 0 ? pg[0] : pd[1]) - cote * f;
+    const ecl = a.longue && (y === a.y0 || y === a.y1) ? 2 : a.longue && (y === a.y0 + 1) ? 1 : 0;
+    return cote < 0 ? Math.max(0, pg[0] - f - a.p + ecl) : Math.min(L - 1, pd[1] + f + a.p - ecl); };
+  // 1. la maçonnerie : les piles et le mur au-dessus de l'arc (la pierre ronde, modelée ensuite) entre les deux chaînes d'angle
+  for (let y = yCorn + 4; y <= sol - 14; y++) { const xg = bord(assG, y, -1), xd = bord(assD, y, 1); for (let x = xg; x <= xd; x++) if (!dedans(x, y)) t.poser(x, y, 'pierre', 3); }
+  // 2. les chaînes d'angle : chaque pierre de taille, son dessus clair, son pied sombre, son joint
+  for (const [ass, cote] of [[assG, -1], [assD, 1]]) for (const a of ass) {
+    if (a.p < 0) { for (let y = a.y0; y <= a.y1; y++) { const x0 = cote < 0 ? bord(ass, y, -1) : bord(ass, y, 1); for (let k = 0; k < 3; k++) teinterV(t, x0 - cote * k, y, -2 + (k > 1 ? 1 : 0)); } continue; }   // (la pierre manquante : le creux dans l'ombre)
+    const long = a.longue ? 18 : 10;
+    for (let y = a.y0; y <= a.y1; y++) { const xb = cote < 0 ? bord(ass, y, -1) : bord(ass, y, 1), xi = cote < 0 ? pg[0] + long - (a.longue ? 0 : 0) : pd[1] - long;
+      for (let x = Math.min(xb, xi); x <= Math.max(xb, xi); x++) { if (dedans(x, y)) continue; const v = y - a.y0, fin = x === xi, bordExt = x === xb;
+        t.poser(x, y, 'taille', y === a.y1 ? 1 : fin ? 1 : v === 0 ? 4 : v === 1 ? 3 : bordExt ? (cote < 0 ? 3 : 1) : 2 + (hachage(x >> 1, y >> 1, 8320) > 0.8 ? 1 : 0) - (y > a.y1 - 2 ? 1 : 0)); } }
+  }
+  // 3. les claveaux de l'arc et sa clé
   for (let y = yImp - R0 - 9; y <= yImp; y++) for (let x = 0; x < L; x++) {
     const d = Math.hypot(x + 0.5 - cx, y + 0.5 - yImp); if (d < R0 || d > R0 + 9 || dedans(x, y)) continue;
-    const a = Math.atan2(yImp - y - 0.5, x + 0.5 - cx), n = Math.floor(a / Math.PI * 15), joint = Math.abs(a / Math.PI * 15 - Math.round(a / Math.PI * 15)) < 0.07, cle0 = n === 7;
-    t.poser(x, y, cle0 ? 'taille' : 'taille', joint ? 1 : (d > R0 + 7.5 ? 2 : d < R0 + 1.5 ? 4 : 3) + (cle0 ? 1 : 0) - (x > cx + 30 ? 1 : 0));
+    const a = Math.atan2(yImp - y - 0.5, x + 0.5 - cx), n = Math.floor(a / Math.PI * 15), joint = Math.abs(a / Math.PI * 15 - Math.round(a / Math.PI * 15)) < 0.07, irr = hachage(n, 5, 8321) > 0.6 ? 1 : 0;
+    if (d > R0 + 8 - irr) continue;   // (les claveaux ne sont pas tous de la même longueur)
+    t.poser(x, y, 'taille', joint ? 1 : (d > R0 + 6.5 ? 2 : d < R0 + 1.5 ? 4 : 3) + (n === 7 ? 1 : 0) - (x > cx + 30 ? 1 : 0));
   }
   for (let y = yImp - R0 - 12; y <= yImp - R0 + 2; y++) for (let x = Math.round(cx) - 6; x <= Math.round(cx) + 6; x++) if (!dedans(x, y)) t.poser(x, y, 'taille', y === yImp - R0 - 12 ? 5 : x === Math.round(cx) - 6 ? 4 : x === Math.round(cx) + 6 ? 2 : 3);   // la clé
-  // 2. l'imposte (la moulure où naît l'arc), le soubassement qui avance : leur dessus vu d'en haut
+  // 4. l'imposte (la moulure où naît l'arc), le soubassement plus large qui avance : leur dessus vu d'en haut
   for (const [a, b] of A.piles) {
-    enDessus(() => { for (let x = a; x <= b + 2; x++) { t.poser(x, yImp - 2, 'taille', 4); t.poser(x, yImp - 1, 'taille', 5); } });
-    for (let x = a; x <= b + 2; x++) { t.poser(x, yImp, 'taille', 3); t.poser(x, yImp + 1, 'taille', 1); teinterV(t, x, yImp + 2, -2); teinterV(t, x, yImp + 3, -1); }
-    enDessus(() => { for (let x = a; x <= b + 2; x++) { t.poser(x, sol - 12, 'taille', 4); t.poser(x, sol - 11, 'taille', 5); } });
-    for (let y = sol - 10; y <= sol; y++) for (let x = a; x <= b + 2; x++) t.poser(x, y, 'taille', y === sol ? 1 : x === a ? 4 : x >= b + 1 ? 2 : 3);
+    enDessus(() => { for (let x = a + 6; x <= b + 3; x++) { t.poser(x, yImp - 2, 'taille', 4); t.poser(x, yImp - 1, 'taille', 5); } });
+    for (let x = a + 6; x <= b + 3; x++) { t.poser(x, yImp, 'taille', 3); t.poser(x, yImp + 1, 'taille', 1); teinterV(t, x, yImp + 2, -2); teinterV(t, x, yImp + 3, -1); }
   }
-  // 3. la corniche (son dessus vu d'en haut), le toit en croupe ; l'ombre de la rive et de la corniche sur le mur
-  enDessus(() => { for (let x = 0; x < L; x++) { t.poser(x, yCorn, 'taille', 4); t.poser(x, yCorn + 1, 'taille', 5); } });
-  for (let x = 0; x < L; x++) { t.poser(x, yCorn + 2, 'taille', 3); t.poser(x, yCorn + 3, 'taille', 1); for (let k = 4; k < 9; k++) teinterV(t, x, yCorn + k, k < 6 ? -2 : -1); }
-  for (let x = 0; x < L; x++) if (hachage(x >> 2, 9, 8289) > 0.7) t.poser(x, yCorn + 3 + (x % 3 === 0 ? 1 : 0), 'taille', 1);   // (la corniche, usée par endroits)
-  let toit; enDessus(() => { toit = toitCroupeHD(t, { xa: 0, xb: L - 1, yEgout: yCorn - 3, montee: 22, prof: 22, mat: 'tuile', motif: 'tuile', g: 8271, bois: 'chene' }); });
-  // 4. l'intrados : l'épaisseur de l'arc, dans l'ombre, sur les jambages et sous l'arc
+  for (const [ass, cote, [a, b]] of [[assG, -1, pg], [assD, 1, pd]]) {
+    const xb = (cote < 0 ? bord(ass, sol - 16, -1) : bord(ass, sol - 16, 1)) + cote * 5, x0 = cote < 0 ? xb : a + 2, x1 = cote < 0 ? b + 4 : xb;
+    enDessus(() => { for (let x = Math.max(0, x0); x <= Math.min(L - 1, x1); x++) { t.poser(x, sol - 15, 'taille', 4); t.poser(x, sol - 14, 'taille', 5); } });
+    for (let y = sol - 13; y <= sol; y++) for (let x = Math.max(0, x0); x <= Math.min(L - 1, x1); x++) { const r = Math.floor((sol - y) / 7), j = (x + r * 9) % 17 === 0;
+      t.poser(x, y, 'taille', y === sol - 13 ? 3 : j ? 1 : x === x0 ? 4 : x === x1 ? 2 : 3 - (y > sol - 4 ? 1 : 0)); }
+  }
+  // 5. la corniche (son dessus vu d'en haut, usée par endroits), le toit en croupe, la gouttière ; l'ombre de la rive sur le mur
+  enDessus(() => { for (let x = 6; x < L - 6; x++) { t.poser(x, yCorn, 'taille', 4); t.poser(x, yCorn + 1, 'taille', 5); } });
+  for (let x = 6; x < L - 6; x++) { t.poser(x, yCorn + 2, 'taille', 3); t.poser(x, yCorn + 3, 'taille', 1); for (let k = 4; k < 9; k++) teinterV(t, x, yCorn + k, k < 6 ? -2 : -1); }
+  for (let x = 6; x < L - 6; x++) if (hachage(x >> 2, 9, 8289) > 0.7) t.poser(x, yCorn + 3 + (x % 3 === 0 ? 1 : 0), 'taille', 1);
+  let toit; enDessus(() => { toit = toitCroupeHD(t, { xa: 2, xb: L - 3, yEgout: yCorn - 3, montee: 22, prof: 22, mat: 'tuile', motif: 'tuile', g: 8271, bois: 'chene' }); });
+  for (let k = 0; k < 6; k++) { const x0 = 30 + Math.floor(hachage(k, 1, 8322) * (L - 70)), y0 = toit.yF + 6 + Math.floor(hachage(k, 2, 8322) * (yCorn - toit.yF - 16)); if (x0 < 2 + (yCorn - y0) * 0.6 || x0 > L - 8 - (yCorn - y0) * 0.6) continue;   // (des tuiles qui manquent : le lattis dessous)
+    for (let y = y0; y < y0 + 3; y++) for (let x = x0; x < x0 + 5; x++) t.poser(x, y, y === y0 ? 'cheneSombre' : 'chene', y === y0 ? 0 : (x - x0) % 2 ? 1 : 2); }
+  for (let x = 4; x < L - 4; x++) { t.poser(x, yCorn - 1, 'zinc', 3); t.poser(x, yCorn - 2, 'zinc', 4); }   // la gouttière
+  for (let k = 0; k < 9; k++) { const x0 = 8 + Math.floor(hachage(k, 3, 8323) * (L - 20)); for (let x = x0; x < x0 + 5; x++) { t.poser(x, yCorn - 3, 'tuile', 3); t.poser(x, yCorn - 2, 'tuile', 2); t.poser(x, yCorn - 1, 'tuile', 1); } }   // (des tuiles qui dépassent)
+  for (let y = toit.yF; y < yCorn - 3; y++) for (let x = 0; x < L; x++) if (t.mat(x, y) === 'tuile' && y > yCorn - 12 && fbm(x * 0.2, y * 0.5, 8324) > 0.6) t.poser(x, y, 'mousse', 3 + (hachage(x, y, 8325) > 0.6 ? 1 : 0));   // (la mousse au bord)
+  const xdesc = bord(assD, yCorn + 30, 1) - 5;
+  for (let y = yCorn; y <= sol - 15; y++) { t.poser(xdesc, y, 'zinc', 4); t.poser(xdesc + 1, y, 'zinc', 2); } for (const y of [yCorn + 30, yCorn + 70, sol - 30]) { t.poser(xdesc - 1, y, 'fer', 2); t.poser(xdesc + 2, y, 'fer', 1); }   // (sa descente, ses colliers)
+  // 6. l'intrados : l'épaisseur de l'arc, dans l'ombre, sur les jambages et sous l'arc
   for (let y = 0; y <= sol; y++) for (let x = 0; x < L; x++) { if (dedans(x, y)) continue; if (dedans(x + 1, y) || dedans(x + 2, y)) teinterV(t, x, y, -1); if (dedans(x - 1, y) || dedans(x - 2, y) || dedans(x - 3, y)) teinterV(t, x, y, -2); if (dedans(x, y + 1) || dedans(x, y + 2)) teinterV(t, x, y, -2); }
-  // 5. les deux lanternes, pendues à leur potence de fer sur les piles ; les bacs de fleurs au pied des piles
-  for (const [lx, ly] of A.lanternes) { const x0 = lx < L / 2 ? A.piles[0][1] : A.piles[1][0];
+  // 7. les deux lanternes sur leur potence de fer ; les bacs de fleurs ; les chaînes de l'écriteau sous la clé
+  for (const [lx, ly] of A.lanternes) { const x0 = lx < L / 2 ? pg[1] : pd[0];
     for (let x = Math.min(x0, lx); x <= Math.max(x0, lx); x++) t.poser(x, ly - 16, 'fer', 3); for (let k = 0; k < 6; k++) t.poser(x0 + (lx < L / 2 ? k : -k), ly - 10 - k, 'fer', 2);
     t.poser(lx, ly - 15, 'fer', 2); lanterne6b(t, lx, ly - 14, !jour, enDessus); }
-  for (const [a, b] of A.piles) bacFleurs6b(t, a + 1, b + 1, sol, saison, a + 8272, enDessus);
-  for (const x of A.chaines) for (let y = yImp - R0 + 1; y < yImp - R0 + 8; y++) t.poser(x, y, 'fer', y % 2 ? 4 : 2);   // (les chaînes de l'écriteau, sous la clé)
-  naturelArche11b(t, A, sol, yImp, yCorn);   // (étape 11b : le lierre, la mousse, l'herbe et les cailloux au pied)
+  for (const [a, b] of A.piles) bacFleurs6b(t, a + 8, b - 3, sol - 1, saison, a + 8272, enDessus);
+  for (const x of A.chaines) for (let y = yImp - R0 + 1; y < yImp - R0 + 8; y++) t.poser(x, y, 'fer', y % 2 ? 4 : 2);
+  // 8. les deux chasse-roues, au pied de l'ouverture (une borne ronde contre chaque pile)
+  for (const [x0, sens] of [[pg[1] + 1, 1], [pd[0] - 9, -1]]) for (let y = sol - 17; y <= sol; y++) { const v = (y - sol + 17) / 17, w = Math.round(3 + v * 1.6);
+    for (let x = x0 + 4 - w; x <= x0 + 4 + w; x++) { const top = y < sol - 14; enDessus(() => { if (top) t.poser(x, y, 'taille', 5); }); if (!top) t.poser(x, y, 'taille', x < x0 + 2 ? 4 : x > x0 + 6 ? 2 : 3); } }
+  // 9. le lierre des deux côtés, la terre où s'enfoncent les pierres basses, l'herbe, les cailloux, une fougère au pied
+  for (const [x0, h, gg] of [[pg[0] + 4, A.imposte + 30, 1], [pg[0] + 12, A.imposte - 6, 2], [pd[1] - 8, A.imposte - 18, 3], [pd[1] - 16, 40, 4]]) for (let k = 0; k < h; k++) {
+    const y = sol - 15 - k, x = Math.round(x0 + Math.sin(k / 7 + gg) * 2.5); t.poser(x, y, 'lierre', 1);
+    if (k % 3 === 0) for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [-1, -1], [1, 1], [-2, 0], [2, -1]]) if (hachage(k, dx * 3 + dy, 8293 + gg) > 0.25) t.poser(x + dx + (k % 6 ? 1 : -1), y + dy, 'lierre', 2 + Math.round(hachage(k, dx, 8294) * 3)); }
+  for (let k = 0; k < 8; k++) { const x = pg[0] + 8 + k * 3, y0 = yImp + 2; for (let j = 0; j < 3 + (k % 3) * 2; j++) t.poser(x + (j % 2), y0 + j, 'lierre', j === 0 ? 4 : 3); }
+  for (const [g0, d0] of [[0, pg[1] + 8], [pd[0] - 8, L - 1]]) for (let x = g0; x <= d0; x++) {
+    if (x > pg[1] + 8 && x < pd[0] - 8) continue;
+    for (let y = sol - 2 - Math.floor(fbm(x * 0.2, 1, 8326) * 3); y <= sol; y++) if (t.mat(x, y) || x < 8 || x > L - 9) t.poser(x, y, 'terre', 2 + (hachage(x, y, 8327) > 0.7 ? 1 : 0));   // (la terre, sur les pierres basses)
+    if (hachage(x, 1, 8295) > 0.42) for (let j = 0; j < 2 + Math.floor(hachage(x, 2, 8295) * 5); j++) t.poser(x, sol - 2 - j, 'herbeA', j === 0 ? 2 : 3 + (j > 2 ? 1 : 0));
+    if (hachage(x >> 1, 3, 8296) > 0.84) { t.poser(x, sol - 1, 'pierre', 4); t.poser(x + 1, sol - 1, 'pierre', 2); t.poser(x, sol - 2, 'pierre', 3); }
+  }
+  for (const fx of [Math.max(4, bord(assG, sol - 16, -1) + 2), Math.min(L - 5, bord(assD, sol - 16, 1) - 2)]) for (let k = 0; k < 7; k++) { const a = -1.4 + k * 0.47; for (let j = 0; j < 12; j++) { const x = Math.round(fx + Math.cos(a) * j * 0.9), y = Math.round(sol - 3 - Math.abs(Math.sin(a)) * j * 0.8 - j * 0.35); t.poser(x, y, 'lierre', j > 8 ? 5 : j % 3 ? 4 : 3); } }   // (une fougère)
   t.contour();
   const C = toileCanvas6b(t);
-  pierresRondesDonnees(C.d, L, H, [...A.piles.map(([a, b], i) => ({ r: [i ? a : 0, yImp + 4, i ? L - 1 : b, sol - 13], graine: 8273 + i })), { r: [0, yCorn + 4, L - 1, yImp - 1], graine: 8275, sauf: [[Math.round(cx) - R0 - 10, yImp - R0 - 13, Math.round(cx) + R0 + 10, yImp + 1]] }]);
+  // la pierre ronde d'un seul tenant (les piles et le mur au-dessus de l'arc) ; puis on remet tout ce qui n'est pas elle (les chaînes
+  // d'angle, les claveaux, l'imposte, la corniche, le lierre...) et l'ombre de l'intrados
+  pierresRondesDonnees(C.d, L, H, [{ r: [0, yCorn + 4, L - 1, sol - 16], graine: 8273 }]);
+  for (let y = yCorn + 4; y <= sol - 16; y++) for (let x = 0; x < L; x++) { const k = y * L + x, m = t.m[k], c = t.c[k]; if (c === null || m === 'pierre') continue; const i = k * 4; C.d[i] = c >> 16; C.d[i + 1] = (c >> 8) & 255; C.d[i + 2] = c & 255; C.d[i + 3] = 255; }
+  for (let y = yCorn + 4; y <= sol - 16; y++) for (let x = 0; x < L; x++) { if (t.m[y * L + x] !== 'pierre') continue;
+    if (dedans(x - 1, y) || dedans(x - 2, y) || dedans(x - 3, y) || dedans(x, y + 1) || dedans(x, y + 2)) C.mul(x, y, 0.66); else if (dedans(x + 1, y) || dedans(x + 2, y)) C.mul(x, y, 0.84); }
+  // la mousse dans les joints de la pierre ronde (là où l'ombre et l'humidité la gardent)
+  for (let y = yCorn + 4; y < sol - 14; y++) for (let x = 0; x < L; x++) { const i = (y * L + x) * 4; if (C.d[i + 3] < 128) continue; const l = 0.3 * C.d[i] + 0.59 * C.d[i + 1] + 0.11 * C.d[i + 2];
+    if (l < 58 && l > 18 && fbm(x * 0.12, y * 0.12, 8328) > 0.52) { C.d[i] = 58 + (x % 3) * 4; C.d[i + 1] = 78 + (y % 2) * 8; C.d[i + 2] = 36; } }
   for (let x = 0; x < L; x++) { C.mul(x, sol, 0.74); C.mul(x, sol - 1, 0.88); }
   C.fin(s, cle);
   if (saison === 'givre') neigeDessus6b(s, cle, t, D);
   return cle;
 }
-// L'ombre de l'arche, sur le sol de la place juste derrière elle (sous la voûte) et, devant, au pied des piles
+// L'ombre de l'arche : sous la voûte, sur le sol de la place ; au pied de chaque pile, portée vers la droite (la lumière vient
+// d'en haut à gauche), plus longue que la pile n'est large
 function ombreGrandeArcheHD(s) {
   const cle = 'ombreGrandeArcheHD'; if (s.textures.exists(cle)) return cle;
-  const A = GRANDE_ARCHE, L = A.L, Hs = A.couvert + 8, tex = s.textures.createCanvas(cle, L, Hs), c = tex.getContext(), img = c.createImageData(L, Hs), q = img.data;
+  const A = GRANDE_ARCHE, L = A.L, Hs = A.couvert + 10, tex = s.textures.createCanvas(cle, L, Hs), c = tex.getContext(), img = c.createImageData(L, Hs), q = img.data;
   const a = (x, y, v) => { if (x < 0 || y < 0 || x >= L || y >= Hs) return; const i = (y * L + x) * 4; q[i] = 14; q[i + 1] = 10; q[i + 2] = 22; q[i + 3] = Math.max(q[i + 3], Math.round(255 * v)); };
   for (let y = 0; y < A.couvert; y++) for (let x = A.piles[0][1]; x <= A.piles[1][0]; x++) a(x, y, 0.32 * Math.min(1, (y + 2) / 8));   // (sous la voûte)
-  for (const [g, d] of A.piles) for (let k = 0; k < 6; k++) for (let x = g; x <= d + 4; x++) a(x + 2, A.couvert + k, 0.4 - k * 0.06);
+  for (const [g, d] of A.piles) for (let k = 0; k < 8; k++) for (let x = g - 4; x <= d + 14 - k; x++) a(x + 4 + k, A.couvert + k, (0.42 - k * 0.045) * Math.min(1, (x - g + 6) / 8));
   c.putImageData(img, 0, 0); tex.refresh(); return cle;
 }
 
@@ -982,7 +1050,7 @@ function ombreGrandeArcheHD(s) {
 // et sa charrette à bras chargée de sacs ; un porteur fait la navette entre la place (par la grande arche) et la balance, un sac
 // sur les épaules à l'aller. Sur la place, la même halle (vue du sud comme tout le reste), à l'angle de la grande arche, et sa
 // cour de déchargement à côté : une charrette, des sacs, des caisses ; un chemin la relie à l'allée.
-const POIDS_PUBLIC2 = { L: 112, H: 176, X: 3862, yE: 58, baie: [14, 97, 97, 168], fleau: [56, 103], prepose: [86, 166], bandeau: [56, 94], file: [3900, 32], navette: [[3700, 26], [3816, 22]] };
+const POIDS_PUBLIC2 = { L: 112, H: 176, X: 3892, yE: 58, baie: [14, 97, 97, 168], fleau: [56, 103], prepose: [86, 166], bandeau: [56, 94], file: [3930, 32], navette: [[3700, 26], [3846, 22]] };   // (étape 11b-2 : 30 plus à l'est, l'arche s'est élargie)
 function poidsPublic2HD(s, jour) {
   const saison = (typeof saisonActuelle === 'function' && saisonActuelle()) || 'moissons', cle = 'poidsPublic2HD_' + saison + (jour ? '_j' : '_n');
   if (s.textures.exists(cle)) return cle;
@@ -1126,13 +1194,13 @@ function naturelArche11b(t, A, sol, yImp, yCorn) {
 // Le muret qui raccorde l'arche, côté place, à la barrière de l'ouest : de la pierre ronde, un chaperon irrégulier, du lierre
 function muretArcheHD(s, l = 95) {
   const saison = (typeof saisonActuelle === 'function' && saisonActuelle()) || 'moissons', cle = 'muretArcheHD_' + l + '_' + saison; if (s.textures.exists(cle)) return cle;
-  const H = 34, sol = H - 1, t = toileDecor(l, H); rampesPorche6b(t, saison); const { D, enDessus } = dessus6b(t);
+  const H = 74, sol = H - 1, t = toileDecor(l, H); rampesPorche6b(t, saison); const { D, enDessus } = dessus6b(t);   // (étape 11b-2 : son bout est monte en amorce de mur, contre l'arche)
   Object.assign(t.rampes, { lierre: [0x1a2e14, 0x243e1a, 0x30521e, 0x3e6a26, 0x5a8a34, 0x7aa848], herbeA: rampe(0x6a9a3a) });
-  const haut = x => 8 + Math.round(Math.sin(x / 9) * 1.5 + (hachage(x >> 2, 1, 8297) - 0.5) * 2) + Math.round(Math.max(0, x - l + 18) * 0.25);   // (il s'abaisse vers la barrière)
+  const haut = x => { const base = 48 + Math.round(Math.sin(x / 9) * 1.5 + (hachage(x >> 2, 1, 8297) - 0.5) * 2), e = l - 1 - x; return e < 10 ? 4 + Math.floor(hachage(x >> 1, 6, 8297) * 3) : e < 20 ? 18 + Math.floor(hachage(x >> 1, 7, 8297) * 3) : e < 30 ? 32 : base; };   // (l'amorce de mur, à gradins éboulés, puis le muret)
   for (let x = 0; x < l; x++) { for (let y = haut(x) + 3; y <= sol; y++) t.poser(x, y, 'pierre', 3); enDessus(() => { t.poser(x, haut(x), 'taille', 4); t.poser(x, haut(x) + 1, 'taille', 5); }); t.poser(x, haut(x) + 2, 'taille', 2); }
   for (let k = 0; k < l; k += 2) if (fbm(k * 0.12, 2, 8298) > 0.55) for (let j = 0; j < 8 + (k % 5); j++) t.poser(k + (j % 3 === 0 ? 1 : 0), haut(k) + 2 + j, 'lierre', 2 + ((j + k) % 3));
   for (let x = 0; x < l; x++) if (hachage(x, 4, 8299) > 0.4) for (let j = 0; j < 2 + Math.floor(hachage(x, 5, 8299) * 3); j++) t.poser(x, sol - j, 'herbeA', 3);
-  t.contour(); const C = toileCanvas6b(t); pierresRondesDonnees(C.d, l, H, [{ r: [0, 10, l - 1, sol - 1], graine: 8300 }]); C.fin(s, cle);
+  t.contour(); const C = toileCanvas6b(t); pierresRondesDonnees(C.d, l, H, [{ r: [0, 6, l - 1, sol - 1], graine: 8300 }]); C.fin(s, cle);
   if (saison === 'givre') neigeDessus6b(s, cle, t, D);
   return cle;
 }
