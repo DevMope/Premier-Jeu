@@ -1662,8 +1662,12 @@ function nuit(G) {
   if (G.jour > 0 && G.jour % 7 === 0) {
     const p = palierCamp(G);
     const dette = G.prets.reduce((s, x) => s + x.restant, 0);   // (audit v0.54 : l'argent emprunté n'est pas taxé)
-    taxe = Math.round(Math.max(0, G.argent - dette - TAXE_CONFRERIE.franchise) * TAXE_CONFRERIE.taux[p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre']);
+    // (03/11) la taxe selon le côté : progressive pour la Lumière et le neutre, l'ancienne pour l'Ombre (data.js,
+    // TAXE_CONFRERIE.modeParCote ; taxeDeLaConfrerie plus bas)
+    const fortune = G.argent - dette;
+    taxe = taxeDeLaConfrerie(G, fortune, p > 0 ? 'lumiere' : p < 0 ? 'ombre' : 'neutre');
     if (taxe > 0) payer(G, taxe, 'taxe');
+    G.baseTaxe = fortune - taxe;
   }
   if (G.feu === G.jour) G.nuitAuChaud = G.jour + 1;   // (v0.66 : la nuit au chaud, pour le réveil)
   if (typeof nuitDuFoyer === 'function') nuitDuFoyer(G);   // (v1.05) le froid de l'hiver, la gamelle du chat
@@ -1683,6 +1687,7 @@ function nuit(G) {
   sansPlanter('nuitDesMages', () => typeof nuitDesMages === 'function' && nuitDesMages(G));   // (v1.56) le chantier, puis l'atelier des Mages-Charpentiers
   sansPlanter('nuitDuVoyage', () => typeof nuitDuVoyage === 'function' && nuitDuVoyage(G));   // (v1.57) la lettre du duc, les taxes de Pont-Royal
   sansPlanter('nuitDesSucces', () => typeof nuitDesSucces === 'function' && nuitDesSucces(G));   // (v1.50) les séries, et les succès du jour
+  sansPlanter('nuitDesDegres', () => typeof nuitDesDegres === 'function' && nuitDesDegres(G));   // (les degrés cachés d'Ombre et de Lumière, degres.js)
   G.jour++;
   G.argentDebutJour = G.argent;
   G.journal = { servis: 0, retours: 0, morts: 0, echecs: 0 };
@@ -1762,6 +1767,7 @@ function nuit(G) {
   sansPlanter('matinEvenementsComptoir', () => typeof matinEvenementsComptoir === 'function' && G.reveil.lignes.push(...matinEvenementsComptoir(G)));   // (v1.63) les suites des événements du comptoir
   sansPlanter('matinPilosite', () => typeof matinPilosite === 'function' && G.reveil.lignes.push(...matinPilosite(G)));   // (v1.48) le barbier ouvre, la barbe pousse   // (v1.35) la complicité, les rations des deux chats
   sansPlanter('matinDuParrain', () => typeof matinDuParrain === 'function' && G.reveil.lignes.push(...matinDuParrain(G)));   // (v1.39) la part de la Famille
+  sansPlanter('matinDesFaits', () => typeof matinDesFaits === 'function' && G.reveil.lignes.push(...matinDesFaits(G)));   // (03/11, étape 3) l'église, le convoi, les suites du Parrain dénoncé
   sansPlanter('matinDesRiches', () => typeof matinDesRiches === 'function' && G.reveil.lignes.push(...matinDesRiches(G)));   // (v1.32) le mécénat, la neutralité
   sansPlanter('matinDuVoyage', () => typeof matinDuVoyage === 'function' && G.reveil.lignes.push(...matinDuVoyage(G), ...matinDuDuc(G)));   // (v1.57) le départ, le percepteur du duc
   sansPlanter('voeuDeSaison', () => { const l = typeof voeuDeSaison === 'function' && voeuDeSaison(G); if (l) G.reveil.lignes.push(l); });   // (v1.23) les souvenirs de la nymphe au complet
@@ -1857,7 +1863,7 @@ function formatDuree(d) {
 }
 function heureDuComptoir(G) { if (typeof G.heure !== 'number') G.heure = heureOuverture(G); return G.heure; }
 // (v1.01) L'heure d'ouverture : une heure plus tard au lendemain de l'hydromel noir (la tête lourde)
-function heureOuverture(G, jour = G.jour) { return JOURNEE.ouverture - (typeof avanceOuverture === 'function' ? avanceOuverture(G) : 0) + (G.reveilDifficile === jour ? BRUMES.hydromel.retard : 0) + (typeof retardFroid === 'function' ? retardFroid(G, jour) : 0) + (typeof retardEvenements === 'function' ? retardEvenements(G, jour) : 0); }   // (v1.63 : une nuit blanche après l'ombre des Brumes)   // (v1.07 : aussi pour demain, dans la prévision)   // (v1.05 : malade, à midi)
+function heureOuverture(G, jour = G.jour) { return JOURNEE.ouverture - (typeof avanceOuverture === 'function' ? avanceOuverture(G) : 0) + (G.reveilDifficile === jour ? BRUMES.hydromel.retard : 0) + (typeof retardFroid === 'function' ? retardFroid(G, jour) : 0) + (typeof retardEvenements === 'function' ? retardEvenements(G, jour) : 0) + (typeof retardDesFaits === 'function' ? retardDesFaits(G, jour) : 0); }   // (v1.63 : une nuit blanche après l'ombre des Brumes)   // (v1.07 : aussi pour demain, dans la prévision)   // (v1.05 : malade, à midi)
 function avancerHeure(G, d) { G.heure = heureDuComptoir(G) + d; return G.heure; }
 // À la fermeture : ceux qui avaient écrit reviendront demain matin, en tête de file ; les imprévus
 // repartent (ils retenteront leur chance un autre jour). Le colporteur remballe. Ce qu'un client
@@ -3380,7 +3386,11 @@ function recompenserZones(G) {
     if (G.armure.length === ARMURE.length && !G.camp) {
       // (v0.90) le serment l'emporte ; sans serment, dans la zone neutre, c'est la fin neutre
       const serment = sermentDe(G);
+      // (02/11, refonte) sans serment, c'est l'allégeance (ce que JeuneGoy est devenu, degres.js) qui scelle le camp,
+      // et non plus ce que croit le monde : le spectateur reste neutre, même si le monde le croit d'un camp (Q306)
+      const d = typeof degreDe === 'function' ? degreDe(G) : null;
       if (serment) G.camp = serment;
+      else if (d !== null) { if (d === 0) G.sceauNeutre = G.jour; else G.camp = d > 0 ? 'bien' : 'mal'; }
       else if (palierCamp(G) === 0) G.sceauNeutre = G.jour;
       else G.camp = coteArmure(G) === 'sombre' ? 'mal' : 'bien';
       n.scelle = G.camp || 'neutre';
@@ -3435,6 +3445,7 @@ function pencher(G, cle, { fois = 1, qui = null } = {}) {
   }
   lo.journal.unshift({ jour: G.jour, cle, n: b.n * fois, qui });
   if (lo.journal.length > 40) lo.journal.length = 40;
+  if (typeof noterDegre === 'function') sansPlanter('noterDegre', () => noterDegre(G, cle, fois));   // (les degrés cachés, degres.js)
   surveillerLO(G);
   return lo.points - avant;
 }
@@ -3454,8 +3465,12 @@ function reprendreGeste(G, cle) {
 function surveillerLO(G) {
   const lo = etatLO(G), j = lo.points;
   if (G.camp || G.sceauNeutre) return;
+  // (02/11, étape 2) le Carrefour et le parjure suivent le regard du monde : le monde t'invite quand il te croit à
+  // lui (Q307) ; le parjure, quand il te voit servir l'autre camp
+  const p = typeof palierDuRegard === 'function' ? palierDuRegard(G) : null;
+  const parjure = p === null ? (lo.serment === 'bien' ? j <= -SERMENT.parjure : j >= SERMENT.parjure) : (lo.serment === 'bien' ? p <= -1 : p >= 1);
   // le parjure : on a juré à un camp, et l'on a passé le 1er palier de l'autre côté
-  if (lo.serment && (lo.serment === 'bien' ? j <= -SERMENT.parjure : j >= SERMENT.parjure)) {
+  if (lo.serment && parjure) {
     const c = lo.serment;
     lo.serment = null; lo.offres[c] = 'parjure'; lo.parjures++; lo.carrefour = null;
     lo.parjure = { camp: c, jour: G.jour };
@@ -3463,11 +3478,11 @@ function surveillerLO(G) {
     return;
   }
   if (lo.serment || lo.carrefour) return;
-  const camp = j >= SERMENT.palier ? 'bien' : j <= -SERMENT.palier ? 'mal' : null;
+  const camp = p === null ? (j >= SERMENT.palier ? 'bien' : j <= -SERMENT.palier ? 'mal' : null) : (p >= 2 ? 'bien' : p <= -2 ? 'mal' : null);
   if (!camp) return;
   const o = lo.offres[camp];
   if (!o) lo.carrefour = { camp, derniere: false };
-  else if (o === 'refusee' && Math.abs(j) >= SERMENT.derniere) lo.carrefour = { camp, derniere: true };
+  else if (o === 'refusee' && (p === null ? Math.abs(j) >= SERMENT.derniere : Math.abs(p) >= 3)) lo.carrefour = { camp, derniere: true };
 }
 
 // Au Carrefour : prêter serment au côté où penche la balance...
@@ -3513,14 +3528,41 @@ function texteGeste(e) {
     decoClaire: 'une décoration de lumière', missionL: q ? `${q}, retour de mission` : 'une mission de lumière', denoncer: q ? `${e.qui} dénoncé` : 'un recherché dénoncé',
     denoncerMafia: 'la Main Noire livrée à la Confrérie', ame: q ? `l'âme ${dePersonne(e.qui)}, offerte` : 'une âme offerte', piege: q ? `un piège glissé à ${q}` : 'un service de la Main Noire',
     commande: q ? `une commande pour ${q}` : 'une commande des Bannis', decoSombre: "une décoration d'ombre", missionO: q ? `${q}, mission pour les Bannis` : 'une mission pour les Bannis', cacher: q ? `${e.qui} caché` : 'un recherché caché',
+    serviceMafia: 'un service rendu à la Main Noire', corbeau: 'le corbeau de la Main Noire, envoyé en secours', aigle: 'l’aigle du Conseil, envoyé en secours', soudoyer: 'l’inspecteur, soudoyé',
+    parrainTaire: 'le secret du Parrain, gardé', parrainDenoncer: 'le Parrain, dénoncé', parrainBague: 'la bague du Parrain, baisée', miseNoire: 'un pari contre un aventurier',
+    routeAider: 'quelqu’un aidé sur la route', routeSergent: 'le sergent de la Porte, soudoyé', routeRancon: 'un blessé qui a dû payer ses soins',
+    ecouterDoyen: 'un vieux Banni, écouté jusqu’au bout', faireTaireDoyen: 'un vieux Banni, prié de se taire', fissureGardee: 'une pensée gardée pour soi',
+    fissureChassee: 'une pensée chassée', protegerEglise: 'la veille de la chapelle, éclairée', saboterEglise: 'un sac caché sous le comptoir',
+    escorterConvoi: 'un convoi de la Confrérie, ravitaillé', pillerConvoi: 'la route d’un convoi, soufflée à un éclaireur', donDrommath: 'un don au Drômmath',
   }[e.cle] || e.cle;
   return t;
 }
 
 // Le palier : de −3 (ombre épaisse) à +3 (lumière éclatante), 0 entre les deux.
+// La taxe de la Confrérie de la semaine, selon sa façon de se calculer (TAXE_CONFRERIE.mode, data.js)
+function taxeDeLaConfrerie(G, fortune, cote) {
+  const T = TAXE_CONFRERIE, mode = (T.modeParCote && T.modeParCote[cote]) || T.mode || 'fortune';
+  if (mode === 'gain') {
+    if (G.baseTaxe === undefined) G.baseTaxe = fortune;   // (la première semaine d'une vieille partie : rien)
+    return Math.round(Math.max(0, fortune - G.baseTaxe - T.gain.franchise) * T.gain.taux[cote]);
+  }
+  const imposable = Math.max(0, fortune - T.franchise);
+  if (mode !== 'progressive') return Math.round(imposable * T.taux[cote]);
+  let reste = imposable, bas = 0, taxe = 0;
+  for (const [haut, mult] of T.tranches) {
+    const part = Math.min(reste, haut - bas);
+    if (part <= 0) break;
+    taxe += part * T.taux[cote] * mult; reste -= part; bas = haut;
+  }
+  return Math.round(taxe);
+}
+
+// (02/11, refonte, étape 2) ce que le monde voit de toi : le regard des deux camps (degres.js, palierDuRegard), et
+// non plus l'ancienne jauge. Tout ce qui lit palierCamp ou coteCamp (la garde, la banque, la taxe, le marché noir, les
+// clients, la Main Noire, la Confrérie et le repaire, le mécénat, la menace, la gazette...) suit donc le regard.
 function palierCamp(G) {
   const j = jaugeCamp(G);
-  const p = Math.sign(j) * PALIERS_JAUGE.filter(p => Math.abs(j) >= p).length;
+  const p = typeof palierDuRegard === 'function' ? palierDuRegard(G) : Math.sign(j) * PALIERS_JAUGE.filter(p => Math.abs(j) >= p).length;
   // (audit v0.54) une fois le camp scellé, on ne repasse plus de l'autre côté
   if (G.camp === 'bien') return Math.max(1, p);
   if (G.camp === 'mal') return Math.min(-1, p);
@@ -3840,6 +3882,7 @@ function denoncerRecherche(G, v) {
     return { juste: true, prime: part };
   }
   G.reputation -= RECHERCHE.erreur;
+  if (typeof noterFait === 'function') noterFait(G, 'denoncerInnocent');   // (le cœur : livrer un innocent est une cruauté)
   G.personnes[v.nom] = { ...(G.personnes[v.nom] || {}), banni: true };
   changerRelation(G, v.nom, -5);
   return { juste: false };

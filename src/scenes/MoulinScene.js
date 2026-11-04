@@ -383,7 +383,7 @@ class MoulinScene extends Phaser.Scene {
     this.fini = true;
     if (typeof Sauvegarde !== 'undefined') Sauvegarde.maintenant(G, 'Nuit');
     const bilan = { jour: G.jour, servis: G.journal.servis, retours: G.journal.retours, morts: G.journal.morts,
-      gain: G.argent - G.argentDebutJour, reputation: G.reputation, jauge: jaugeCamp(G), palier: nomPalierCamp(G) };
+      gain: G.argent - G.argentDebutJour, reputation: G.reputation, jauge: typeof jaugeFloue === 'function' ? jaugeFloue(G) : jaugeCamp(G), palier: typeof motDuMonde === 'function' ? motDuMonde(G) : nomPalierCamp(G) };   // (02/11 : sans chiffre)
     this.scene.start('Dodo', { bilan });
   }
 }

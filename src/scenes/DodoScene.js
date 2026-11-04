@@ -104,9 +104,11 @@ class DodoScene extends Cinematique {
 
     // La table de chevet, la bougie et sa lumière.
     this.chevet = this.add.image(CHAMBRE_PYJ.chevet, SOL_CHAMBRE, chevetHD(this, luxe)).setOrigin(0.5, 1).setScale(2).setDepth(2);
-    const b = bougie(this, CHAMBRE_PYJ.bougie[0], SOL_CHAMBRE - 62, { rayon: 230, profondeur: 2 });
+    // (02/11, Q321) la Clairvoyance se voit ici, et seulement ici : plus de lueurs, plus la bougie brille
+    const b = bougie(this, CHAMBRE_PYJ.bougie[0], SOL_CHAMBRE - 62, { rayon: typeof rayonChevet === 'function' ? rayonChevet(this.G) : 230, profondeur: 2 });
     this.flamme = b.flamme;
     this.lumiere = b.halo.setDepth(5);
+    this.lueurChevet = typeof eclairerChevet === 'function' ? eclairerChevet(this, CHAMBRE_PYJ.bougie[0], SOL_CHAMBRE - 96, this.G) : null;
 
     // Un tapis tressé, un coffre, et la vieille épée de Garrick accrochée au mur.
     this.tapis = this.add.image(440, SOL_CHAMBRE + 42, tapisHD(this, luxe)).setScale(2).setDepth(1.4);
@@ -234,7 +236,7 @@ class DodoScene extends Cinematique {
     // La jauge lumière ⟷ ombre, en petit : une barre, et le palier en mot
     if (b.jauge !== undefined) {
       const yj = 116 + lignes.length * 28 + 4;
-      c.add(this.add.text(618, yj, 'Lumière / ombre', style(17, '#4a2e18')));
+      c.add(this.add.text(618, yj, 'On dit de toi', style(17, '#4a2e18')));   // (02/11 : ce que dit le monde, sans chiffre)
       c.add(this.add.text(902, yj, b.palier, style(15, b.jauge > 0 ? '#9a7a10' : b.jauge < 0 ? '#5a3a8a' : '#5a3a20', { fontStyle: 'bold italic' })).setOrigin(1, 0));
       c.add(barreJauge(this, 760, yj + 30, 284, b.jauge));
     }
@@ -362,7 +364,7 @@ class DodoScene extends Cinematique {
     if (avertit && !scelle) {
       const serment = sermentDe(this.G), pal = palierCamp(this.G);
       message += `\nPlus qu'une pièce, et l'armure sera complète : ton camp sera scellé pour de bon. ` + (serment ? `Tu as juré ${serment === 'bien' ? 'à la Confrérie' : 'aux Bannis'} : c'est ce serment qui sera scellé.`
-        : pal > 0 ? "Aujourd'hui, ta balance penche vers la lumière." : pal < 0 ? "Aujourd'hui, ta balance penche vers l'ombre." : "Aujourd'hui, tu es entre les deux, sans serment : si tu le restes, ce ne sera ni la lumière, ni l'ombre...");
+        : pal > 0 ? "Aujourd'hui, le monde te voit du côté de la lumière. Mais c'est ce que tu es vraiment qui comptera." : pal < 0 ? "Aujourd'hui, le monde te voit du côté de l'ombre. Mais c'est ce que tu es vraiment qui comptera." : "Aujourd'hui, tu es entre les deux, sans serment : si tu le restes, ce ne sera ni la lumière, ni l'ombre...");
     }
     if (scelle) {
       message += scelle === 'mal' ? "\nL'armure est complète. Ton camp est scellé : l'ombre. Il n'y aura plus de retour en arrière."

@@ -364,6 +364,7 @@ class MarcheNoirScene extends Phaser.Scene {
       this.bouton(840, 503, 180, fin ? (a.feminin ? 'La remercier' : 'Le remercier') : 'Suite ▸', () => {
         if (!fin) { page++; Son.jouer('page'); montrer(); return; }
         G.ainesRecits = [...new Set([...(G.ainesRecits || []), race])];
+        if (typeof ecouterDoyen === 'function') ecouterDoyen(G, race);   // (03/11, étape 3) l'écouter jusqu'au bout, c'est le croire un peu
         this.sceneAine = null;   // (elle s'efface d'elle-même)
         this.tweens.add({ targets: scene, alpha: 0, duration: 900, onComplete: () => scene.forEach(o => o.destroy()) });
         if (this.aine) { this.tweens.add({ targets: this.aine, alpha: 0, duration: 1200 }); }

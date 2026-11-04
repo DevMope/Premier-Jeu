@@ -78,7 +78,7 @@ function rendreService(G, id, du = false) {
   const avant = rangMafia(G);
   if (!du) m.services++;
   G.reussites.mal = (G.reussites.mal || 0) + 1;
-  pencher(G, 'piege');
+  pencher(G, 'serviceMafia');   // (02/11 : un service de la bande, et non plus un « piège »)
   let reste = du ? 0 : s.efface;
   for (const p of G.prets.filter(x => x.preteur === 'La Main Noire')) { const k = Math.min(reste, p.restant); p.restant -= k; reste -= k; }
   G.prets = G.prets.filter(p => p.restant > 0);

@@ -143,7 +143,7 @@ class ParrainScene extends Phaser.Scene {
     if (this.fini) return; this.fini = true;
     if (typeof Sauvegarde !== 'undefined') Sauvegarde.maintenant(G, 'Nuit');
     const bilan = { jour: G.jour, servis: G.journal.servis, retours: G.journal.retours, morts: G.journal.morts,
-      gain: G.argent - G.argentDebutJour, reputation: G.reputation, jauge: jaugeCamp(G), palier: nomPalierCamp(G) };
+      gain: G.argent - G.argentDebutJour, reputation: G.reputation, jauge: typeof jaugeFloue === 'function' ? jaugeFloue(G) : jaugeCamp(G), palier: typeof motDuMonde === 'function' ? motDuMonde(G) : nomPalierCamp(G) };   // (02/11 : sans chiffre)
     this.cameras.main.fadeOut(700);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Dodo', { bilan }));
   }

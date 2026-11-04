@@ -201,7 +201,7 @@ class NightScene extends Phaser.Scene {
     if (typeof foyerVide === 'function' && foyerVide(G) && this.froidAccepte !== G.jour && !(typeof banquetDu === 'function' && banquetDu(G))) return this.confirmerFoyer();   // (v1.05, planche 24 B ; avant le verrou de transition)
     if (enTransition(this)) return;   // (v0.90) on ne s'endort pas avant d'avoir ouvert la porte
     const bilan = { jour: G.jour, servis: G.journal.servis, retours: G.journal.retours, morts: G.journal.morts,
-      gain: G.argent - G.argentDebutJour, reputation: G.reputation, jauge: jaugeCamp(G), palier: nomPalierCamp(G) };
+      gain: G.argent - G.argentDebutJour, reputation: G.reputation, jauge: typeof jaugeFloue === 'function' ? jaugeFloue(G) : jaugeCamp(G), palier: typeof motDuMonde === 'function' ? motDuMonde(G) : nomPalierCamp(G) };   // (02/11 : sans chiffre)
     this.cameras.main.fadeOut(500);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Dodo', { bilan }));
   }

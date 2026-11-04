@@ -51,6 +51,7 @@ function choisirParrain(G, choix) {
   p.fait = true; p.jour = G.jour; p.choix = choix; p.camp = p.camp || campDuParrain(G);
   if (choix === 'bague') {
     p.statut = 'famille'; p.borsalino = true;
+    if (typeof pencher === 'function') pencher(G, 'parrainBague');   // (02/11 : entrer dans la Famille compte, lui aussi)
     if (m) { m.engage = true; m.sorti = null; m.impayes = 0; m.represailles = null; }
     return `Tu embrasses la bague. ${nom} sourit : « Bienvenue dans la Famille, Consigliere. Plus jamais de pizzo pour toi. Et chaque semaine, ta part. »`;
   }
@@ -59,14 +60,14 @@ function choisirParrain(G, choix) {
   if (choix === 'refuser') { p.statut = 'refus'; return `${nom} hausse les épaules. « Comme tu veux. Ça ne change rien entre nous. Presque rien. »`; }
   if (choix === 'taire') {
     p.statut = 'secret'; if (m) { m.impayes = 0; m.represailles = null; }
-    if (typeof pencherCamp === 'function') pencherCamp(G, 'mal', 1);   // (le prix du silence)
+    if (typeof pencher === 'function') pencher(G, 'parrainTaire');   // (le prix du silence ; avant le 02/11, il écrivait dans un vieux compteur abandonné : il ne comptait pas)
     return `Tu ne diras rien. ${nom} souffle sa fumée : « Merci. Ton comptoir est sous ma patte, maintenant. »`;
   }
-  if (choix === 'changer') { p.statut = 'quete'; p.quete = 0; return `« Me changer, moi ? » Il rit, puis se tait longtemps. « ... D'accord. Montre-moi comment. On commence demain. »`; }
+  if (choix === 'changer') { p.statut = 'quete'; p.quete = 0; if (typeof noterFait === 'function') noterFait(G, 'parrainChanger'); return `« Me changer, moi ? » Il rit, puis se tait longtemps. « ... D'accord. Montre-moi comment. On commence demain. »`; }
   // Le dénoncer : il disparaît avec elle, cette nuit-là ; la bande se venge
   p.statut = 'denonce';
   if (m) { m.sorti = 'denonce'; m.vengeance = true; }
-  if (typeof pencherCamp === 'function') pencherCamp(G, 'bien', 2);
+  if (typeof pencher === 'function') pencher(G, 'parrainDenoncer');   // (de même : il compte enfin)
   if (typeof encaisser === 'function') encaisser(G, PARRAIN.primeDenonciation, 'denonciations');
   chat.lien = 0; chat.adopte = false; chat.coin = null; chat.parti = null;
   if (G.moulin) G.moulin.partie = true;

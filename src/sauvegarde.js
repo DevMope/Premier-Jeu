@@ -491,6 +491,16 @@ function mettreAJourPartie(G, brut = G) {
   // (v0.90) la balance devient un compteur de points : une vieille partie la reprend là où elle était
   if (!brut.lo) G.lo = { points: jaugeAncienne(G), journal: [], serment: null, offres: {}, parjures: 0, carrefour: null, parjure: null };
   G.lo = { journal: [], offres: {}, parjures: 0, ...G.lo };
+  // (les degrés cachés d'Ombre et de Lumière) une partie qui n'en a pas encore les déduit de ce qu'elle a vécu
+  if (!brut.degres && typeof degresDepuisLaPartie === 'function') G.degres = degresDepuisLaPartie(G);
+  // (02/11, refonte) le cœur, le regard du monde et la Clairvoyance : une vieille partie les déduit de ce qu'elle a
+  // vécu (les dons, les âmes offertes, la jauge d'avant, le flair qui montrait déjà les ☀ ☾)
+  if (typeof etatCoeur === 'function') {
+    if (!brut.coeur) G.coeur = coeurDepuisLaPartie(G);
+    if (!brut.regard) { G.regard = null; etatRegard(G); }
+    if (!brut.clairvoyance) { G.clairvoyance = null; etatClairvoyance(G); }
+    etatDegres(G);
+  }
   // (v1.00) la conquête demande une mission de plus par étoile : ce qui était déjà conquis le reste
   if (!G.conqueteV100) {
     for (const z of Object.keys(G.conquete || {})) if (ZONES[z] && G.conquete[z] >= CONQUETE_ZONE) G.conquete[z] = Math.max(G.conquete[z], conqueteZone(z));
