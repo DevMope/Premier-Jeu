@@ -124,6 +124,10 @@ class ToileHD {
     // place, sans la détruire sous les pieds des images qui s'en servent.
     let tex = scene.textures.exists(cle) ? scene.textures.get(cle) : null;
     if (!tex && window.diag && !(window.jeu && window.jeu.diagStable)) diag('texture ' + cle);
+    // D'une autre taille (le joueur repeint avec une coiffure plus haute) : on agrandit le canevas sur place au lieu de
+    // détruire la texture. Détruite, les images qui l'affichaient encore gardaient un cadre sans source, et le rendu
+    // plantait à chaque image (« Cannot read properties of null (reading 'glTexture') »)
+    if (tex && tex.getContext && tex.setSize && tex.getSourceImage && (tex.getSourceImage().width !== this.l || tex.getSourceImage().height !== this.h)) tex.setSize(this.l, this.h);
     if (tex && !(tex.getSourceImage && tex.getSourceImage().width === this.l && tex.getSourceImage().height === this.h && tex.getContext)) {
       scene.textures.remove(cle);
       tex = null;
