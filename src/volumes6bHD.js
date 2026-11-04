@@ -794,9 +794,10 @@ function passageMastres12b(s, ici, { jour, YN, lampe, archeRue = null }) {
   // le muret de la place, de part et d'autre de l'arche du marché ; son bout monte en amorce, sous la chaîne d'angle de l'arche
   const xm = X - GA.L / 2 * E, xr = X + GA.L / 2 * E;
   ici.img(xm + 24, YM, muretArcheHD(s, 112), E, YM - 1, 1, 1); ici.img(xr - 24, YM, muretArcheHD(s, 112), E, YM - 1, 0, 1).setFlipX(true);
-  // deux réverbères au pied des murs, deux bacs de fleurs (les mêmes que dans la rue)
+  // deux réverbères au pied des murs ; deux bacs de fleurs (les mêmes que dans la rue), contre les murs, au palier en haut de chaque
+  // volée de marches (Q384 : plus au milieu du chemin)
   for (const [x, y] of [[3605, 1446], [3676, 1150]]) { lampe(x, y); ici.obstacles.push([x - 10, y - 12, x + 10, y + 4]); }
-  for (const [x, y, k, f] of [[3676, 1446, 'bacFleurs89p1', 'fleurR2'], [3606, 1150, 'bacFleurs89p2', 'fleurJ2']]) { ici.img(x, y, bacFleurs89(s, k, f), E * 0.8, y); ici.obstacles.push([x - 14, y - 10, x + 14, y + 2]); }
+  for (const [x, y, k, f] of [[3604, 1322, 'bacFleurs89p1', 'fleurR2'], [3676, 1102, 'bacFleurs89p2', 'fleurJ2']]) { ici.img(x, y, bacFleurs89(s, k, f), E * 0.8, y); ici.obstacles.push([x - 14, y - 10, x + 14, y + 2]); }
   // par-dessus les murs : un arbre à l'ouest (l'autre, à l'est, est celui du jardin), deux buissons
   ici.arbre(3498, 1150, 0); ici.buisson(3542, 1156); ici.buisson(3738, 1152);
   // deux passants qui vont et viennent (de dos quand ils montent, de face quand ils descendent, leurs pas, leur ombre) : l'un dans
@@ -1120,7 +1121,9 @@ function ombreGrandeArcheHD(s) {
 // égout à 125 au-dessus du sol, comme la corniche de la banque ; son toit en croupe de la même profondeur (40) ; 8 plus large
 // pour la balance agrandie. Sur ses plateaux, des choses lisibles : le sac de grain de la place (sacsHD, noué), les poids de
 // fonte gradués ; au seuil, la meule de fromage de l'épicier (painsHD) sur la caisse et son panier de pommes (panierPommesHD).
-const POIDS_PUBLIC2 = { L: 120, H: 196, X: 3898, yE: 70, montee: 36, prof: 40, baie: [14, 117, 105, 188], fleau: [60, 123], ecart: 23, prepose: [100, 188], bandeau: [60, 114], file: [3944, 32], navette: [[3700, 26], [3852, 22]] };
+// (étape 12b-3, Q385) beaucoup trop haut pour ce qu'il est : plus d'étage de pierre ni de grand toit en croupe ; une halle basse,
+// la baie, son bandeau et un appentis de tuiles bas sur la façade. Le reste (la balance, ses plateaux, les sacs, le dedans) ne change pas.
+const POIDS_PUBLIC2 = { L: 120, H: 196, X: 3898, baie: [14, 117, 105, 188], fleau: [60, 123], ecart: 23, prepose: [100, 188], bandeau: [60, 114], file: [3944, 32], navette: [[3700, 26], [3852, 22]] };
 // Les pixels d'une image déjà faite (pour la poser dans une autre : une seule fois chaque dessin)
 function pixelsTexture6b(s, cle) {
   const src = s.textures.get(cle).getSourceImage(), cv = document.createElement('canvas'); cv.width = src.width; cv.height = src.height;
@@ -1157,11 +1160,11 @@ function poidsFonteHD(s) {
 function poidsPublic2HD(s, jour) {
   const saison = (typeof saisonActuelle === 'function' && saisonActuelle()) || 'moissons', cle = 'poidsPublic3HD_' + saison + (jour ? '_j' : '_n');
   if (s.textures.exists(cle)) return cle;
-  const P = POIDS_PUBLIC2, { L, H, yE } = P, sol = H - 1, [bx0, by0, bx1, by1] = P.baie, t = toileDecor(L, H); rampesPorche6b(t, saison); const { D, enDessus } = dessus6b(t);
+  const P = POIDS_PUBLIC2, { L, H } = P, sol = H - 1, [bx0, by0, bx1, by1] = P.baie, t = toileDecor(L, H); rampesPorche6b(t, saison); const { D, enDessus } = dessus6b(t);
   Object.assign(t.rampes, { ardoiseT: [0x14161a, 0x1e2228, 0x2a3038, 0x3a424c, 0x8a929a, 0xe8ecf0], bandeau: rampe(BOIS_CLAIR_NOM), mousse: rampe(0x6a8a3a) });
   const yFond = by0 + 44, yAuv = by0 - 17, [fx, fy] = P.fleau;   // (le pied du mur du fond, dans la halle ; le dessus de l'auvent ; le pivot du fléau)
   // 1. le mur de façade (pierre de taille, modelée ensuite), et la halle : son mur du fond dans l'ombre, son sol de dalles vu d'en haut
-  for (let y = yE + 3; y <= sol; y++) for (let x = 2; x < L - 2; x++) t.poser(x, y, 'taille', 3);
+  for (let y = yAuv; y <= sol; y++) for (let x = 2; x < L - 2; x++) t.poser(x, y, 'taille', 3);
   for (let y = by0; y < yFond; y++) for (let x = bx0; x <= bx1; x++) t.poser(x, y, 'pierre', 2);
   for (let y = yFond; y <= by1; y++) { const r = Math.floor((by1 - y) / 6), ty = (by1 - y) % 6; for (let x = bx0; x <= bx1; x++) t.poser(x, y, 'taille', (ty === 5 || (x + r * 9) % 18 === 0 ? 1 : ty === 4 ? 4 : 3) - (y < yFond + 6 ? 1 : 0)); }
   // 2. dedans : l'ardoise des tarifs au mur du fond, derrière la balance, entre ses deux plateaux (son cadre, la craie) ; le
@@ -1183,8 +1186,12 @@ function poidsPublic2HD(s, jour) {
   planche(t, 2, by0 - 9, L - 4, 9, 'chene', { graine: 8281, noeuds: 2 }); for (let x = 2; x < L - 2; x++) t.poser(x, by0 - 1, 'cheneSombre', 1);
   for (const [a, b] of [[2, bx0 - 1], [bx1 + 1, L - 3]]) for (let y = by0; y <= sol; y++) for (let x = a; x <= b; x++) t.poser(x, y, 'taille', 3);
   // 5. l'auvent de tuiles au-dessus de la baie (son dessus vu d'en haut), son bandeau de bois clair (le nom), ses deux poteaux
-  enDessus(() => { for (let y = yAuv; y < yAuv + 9; y++) { const r = Math.floor((yAuv + 8 - y) / 3), dec = (r % 2) * 3; for (let x = 0; x < L; x++) t.poser(x, y, 'tuile', ((x + dec) % 6 === 0 ? 2 : (yAuv + 8 - y) % 3 === 0 ? 2 : 4) + (y < yAuv + 2 ? 1 : 0)); } });
-  for (let y = yAuv + 9; y < yAuv + 16; y++) for (let x = 0; x < L; x++) t.poser(x, y, x < 3 || x > L - 4 ? 'chene' : 'bandeau', y === yAuv + 9 ? 5 : y === yAuv + 15 ? 1 : 3);
+  // (Q385) l'appentis : ses tuiles, vues d'en haut, montent de l'égout (sur le bandeau) jusqu'au chaperon du mur du fond ; ses rives
+  const yT = yAuv - 8;
+  enDessus(() => { for (let x = 1; x < L - 1; x++) { t.poser(x, yT - 3, 'taille', 5); t.poser(x, yT - 2, 'taille', 4); } }); for (let x = 1; x < L - 1; x++) t.poser(x, yT - 1, 'taille', 2);
+  enDessus(() => { for (let y = yT; y < yAuv + 9; y++) { const r = Math.floor((yAuv + 8 - y) / 3), dec = (r % 2) * 3; for (let x = 0; x < L; x++) t.poser(x, y, 'tuile', ((x + dec) % 6 === 0 ? 2 : (yAuv + 8 - y) % 3 === 0 ? 2 : 4) + (y < yT + 3 ? 1 : 0)); } });
+  for (let y = yT - 1; y < yAuv + 9; y++) { t.poser(0, y, 'chene', 4); t.poser(L - 1, y, 'cheneSombre', 1); }
+  for (let y = yAuv + 9; y < yAuv + 16; y++) for (let x = 0; x < L; x++) t.poser(x, y, 'chene', y === yAuv + 9 ? 5 : y === yAuv + 15 ? 1 : (x + 7) % 23 === 0 ? 2 : 3);   // (la sablière de chêne : l'écriteau y est cloué, posé par la scène)
   for (let x = 0; x < L; x++) for (let k = 1; k <= 6; k++) teinterV(t, x, yAuv + 15 + k, k < 4 ? -2 : -1);   // (l'ombre de l'auvent)
   for (const px of [3, L - 9]) { for (let y = yAuv + 16; y <= sol - 6; y++) for (let x = px; x < px + 6; x++) t.poser(x, y, 'chene', x === px ? 5 : x === px + 5 ? 1 : 3);
     enDessus(() => { for (let x = px - 2; x < px + 8; x++) { t.poser(x, sol - 7, 'taille', 4); t.poser(x, sol - 6, 'taille', 5); } }); for (let y = sol - 5; y <= sol; y++) for (let x = px - 2; x < px + 8; x++) t.poser(x, y, 'taille', y === sol ? 1 : 3); }
@@ -1194,15 +1201,13 @@ function poidsPublic2HD(s, jour) {
     for (let x = ex + 1; x <= ex + 11; x++) t.poser(x, ey + 4, 'laiton', 5); for (let y = ey + 2; y <= ey + 9; y++) t.poser(ex + 6, y, 'laiton', 4);
     for (const px of [ex + 2, ex + 10]) { for (let y = ey + 5; y <= ey + 7; y++) t.poser(px, y, 'laiton', 3); for (let x = px - 2; x <= px + 2; x++) t.poser(x, ey + 8, 'laiton', 4); }
     for (let x = ex + 4; x <= ex + 8; x++) t.poser(x, ey + 10, 'laiton', 3); }
-  // 7. le toit en croupe de tuiles (la même profondeur que celui de la banque), l'ombre de sa rive ; au seuil, la caisse à peser
-  enDessus(() => { toitCroupeHD(t, { xa: 0, xb: L - 1, yEgout: yE, montee: P.montee, prof: P.prof, mat: 'tuile', motif: 'tuile', g: 8282, bois: 'chene' }); });
-  ombreRiveHD(t, 0, L - 1, yE, m => m === 'taille');
+  // 7. au seuil, la caisse à peser
   const cx0 = bx0 + 47, cx1 = bx0 + 62;
   enDessus(() => { for (let x = cx0; x <= cx1; x++) t.poser(x, by1 - 5, 'chene', 5); });
   for (let y = by1 - 4; y <= by1 + 5; y++) for (let x = cx0; x <= cx1; x++) t.poser(x, y, 'chene', y === by1 + 5 ? 1 : (y - by1) % 4 === 0 ? 2 : x === cx0 ? 4 : 3);
   t.contour();
   const C = toileCanvas6b(t);
-  pierresRondesDonnees(C.d, L, H, [{ r: [2, yE + 3, L - 3, by0 - 10], regulier: true, graine: 8283 }, { r: [2, by0, bx0 - 1, sol - 1], regulier: true, graine: 8284 }, { r: [bx1 + 1, by0, L - 3, sol - 1], regulier: true, graine: 8285, sauf: [[L - 28, by0 + 1, L - 11, by0 + 17]] }, { r: [bx0, by0 + 1, bx1, yFond - 1], graine: 8286, sauf: [[ax0 - 1, ay0 - 1, ax0 + 19, ay0 + 16]] }]);
+  pierresRondesDonnees(C.d, L, H, [{ r: [2, by0, bx0 - 1, sol - 1], regulier: true, graine: 8284 }, { r: [bx1 + 1, by0, L - 3, sol - 1], regulier: true, graine: 8285, sauf: [[L - 28, by0 + 1, L - 11, by0 + 17]] }, { r: [bx0, by0 + 1, bx1, yFond - 1], graine: 8286, sauf: [[ax0 - 1, ay0 - 1, ax0 + 19, ay0 + 16]] }]);
   for (let x = 0; x < L; x++) { C.mul(x, sol, 0.74); C.mul(x, sol - 1, 0.88); }
   // 8. les dessins déjà faits, posés à leur place, sur leurs appuis : le tas de poids de fonte sur les dalles (à gauche) ; au seuil,
   //    le panier de pommes de l'épicier, posé sur les dalles, et sa meule de fromage à plat sur la caisse
@@ -1260,6 +1265,21 @@ function charretteBrasHD(s) {
   collerImage6b(s, C, L, H, 'sacsHD', 1, 24 - 18, { garder: (sx, sy, X, Y) => Y < 24 });   // (dans la caisse : son bord avant cache leur pied)
   C.fin(s, cle); return cle;
 }
+// (Q385) une patte de fer qui tient l'écriteau du poids public à sa sablière : un plat de fer, ses deux rivets
+function patteFerHD(s) {
+  const cle = 'patteFerHD'; if (s.textures.exists(cle)) return cle;
+  const t = toileDecor(4, 16); Object.assign(t.rampes, RAMPES_RUE);
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 4; x++) t.poser(x, y, 'fer', x === 0 ? 4 : x === 3 ? 1 : y === 0 ? 5 : 2);
+  for (const y of [2, 13]) { t.poser(1, y, 'fer', 5); t.poser(2, y, 'fer', 4); t.poser(2, y + 1, 'fer', 0); }
+  t.contour(); t.texture(s, cle); return cle;
+}
+// L'écriteau du poids public : une plaque de bois (celle des rues : son biseau, ses clous, le nom gravé), clouée au milieu de la
+// sablière au-dessus de la baie, tenue en plus par deux pattes de fer ; (x, y) : son milieu
+function ecriteauPoidsPublic(s, conteneur, x, y, texte) {
+  const [p, n] = poserPlaqueRue(s, conteneur, x, y, texte, { matiere: 'bois', taille: 13 }), dy = p.displayHeight / 2; p.y += dy; n.y += dy;
+  for (const sg of [-1, 1]) conteneur.add(s.add.image(x + sg * (p.displayWidth / 2 - 5), y, patteFerHD(s)).setScale(1.6));
+  return [p, n];
+}
 // Poser le poids public (la halle, son fléau qui bascule, ses plateaux qui pendent droit, son préposé qui pèse, regarde, écrit,
 // et son nom) dans un monde : ajouter(o, yTri) le pose ; X, Ysol : le milieu de sa façade au sol ; lettrer(x, y, texte) : son nom
 function poserPoidsPublic2(s, ajouter, X, Ysol, { jour = true, lettrer = null } = {}) {
@@ -1271,7 +1291,7 @@ function poserPoidsPublic2(s, ajouter, X, Ysol, { jour = true, lettrer = null } 
   suivre(); s.events.on('update', suivre); s.events.once('shutdown', () => s.events.off('update', suivre));
   const bercer = () => s.tweens.add({ targets: f, angle: { from: -1.2, to: 1.2 }, duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   bercer();
-  if (lettrer) lettrer(...en(...P.bandeau), 'Poids public');
+  if (lettrer) lettrer(...en(P.bandeau[0], P.bandeau[1] - 1.5), 'Poids public');   // (le milieu de la sablière)
   if (!jour) return { im, f };
   // le préposé : il regarde le fléau (de profil), pèse (les mains vers les plateaux : le fléau bascule plus fort), écrit au registre
   const q = { nom: 'Le préposé au poids public', race: 'hobbit', niveau: 'aguerri', costume: 'barbier' }, [qx, qy] = en(...P.prepose);

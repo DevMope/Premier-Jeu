@@ -528,8 +528,9 @@ Object.assign(MarcheScene.prototype, {
       for (const dx of [-54, 54]) { ombreP(X + dx, Y - 44, 26); ajout(this.add.image(X + dx, Y - 44, borneArcheHD(this)).setOrigin(0.5, 1).setScale(E), Y - 44); this.obstacles.push([X + dx - 9, Y - 52, X + dx + 9, Y - 42]); }
       const xr = X + A.L / 2 * E; ajout(this.add.image(xr - 24, Y, muretArcheHD(this, 112)).setOrigin(0, 1).setScale(E).setFlipX(true), Y - 1); this.obstacles.push([xr, Y - 24, xr + 156, Y]);
       const XP = xr + 87;   // (la cour de déchargement, au bout du muret)
-      ombreP(XP + 130, Y - 8, 90); ajout(this.add.image(XP + 130, Y - 8, charretteBrasHD(this)).setOrigin(0.5, 1).setScale(E).setFlipX(true), Y - 8); this.obstacles.push([XP + 92, Y - 26, XP + 172, Y - 4]);
-      ombreP(XP + 132, Y - 42, 70); ajout(this.add.image(XP + 132, Y - 42, caissesRue7b(this, true)).setOrigin(0.5, 1).setScale(E), Y - 42); this.obstacles.push([XP + 98, Y - 56, XP + 166, Y - 40]);
+      // (Q384 : rien au milieu d'un chemin) la cour est sur l'herbe, au nord du chemin qui mène à la carte du monde (y 982 à 1018)
+      ombreP(XP + 168, Y - 76, 90); ajout(this.add.image(XP + 168, Y - 76, charretteBrasHD(this)).setOrigin(0.5, 1).setScale(E).setFlipX(true), Y - 76); this.obstacles.push([XP + 130, Y - 94, XP + 210, Y - 72]);
+      ombreP(XP + 96, Y - 80, 70); ajout(this.add.image(XP + 96, Y - 80, caissesRue7b(this, true)).setOrigin(0.5, 1).setScale(E), Y - 80); this.obstacles.push([XP + 62, Y - 94, XP + 130, Y - 78]);
       for (const px of [xm + 4, XP + 186]) { const p = ajout(this.add.image(px, Y + 2, potFleursLoinHD(this)).setOrigin(0.5, 1).setScale(2), Y + 2); this.obstacles.push([px - 12, Y - 10, px + 12, Y + 2]); }
       if (typeof banc5 === 'function') { const [cx, cy] = LIEUX_PLACE.carte; ombreP(cx + 96, cy + 12, 90); ajout(this.add.image(cx + 96, cy + 12, banc5(this)).setOrigin(0.5, 1).setScale(1.6), cy + 12); this.obstacles.push([cx + 50, cy - 4, cx + 142, cy + 14]); }
       { const [ax, ay] = [1600, 985]; ombreP(ax + 10, ay, 120); const cle = arbrePlaceHD(this, this.palettePlace, 1, ax, ay); ajout(this.add.image(ax, ay, cle).setOrigin(0.5, origineArbre(this, cle)).setScale(2.2), ay); this.obstacles.push([ax - 16, ay - 16, ax + 16, ay + 2]); }

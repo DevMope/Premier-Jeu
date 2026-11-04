@@ -330,7 +330,7 @@ function planSolPlace() {
   pads.push([530, 500, 40, 20]);
   // (étape 10b) les lieux du bas de la place rejoignent l'allée de la grande arche à angle droit (vue du bout de la rue, une seule
   // allée droite monte de l'arche à la fontaine, au lieu de trois chemins en éventail) ; l'allée elle-même s'élargit
-  const chemins = [...pads.map(([x, y]) => y > 400 ? [[x, y], [450, y]] : [[450, 318], [x, y]]), [[450, 318], [450, 520], 15], [[690, 500], [450, 500], 9],   // (étape 11b : la cour du poids public rejoint l'allée)
+  const chemins = [...pads.map(([x, y]) => y > 400 ? [[x, y], [450, y]] : [[450, 318], [x, y]]), [[450, 318], [450, 520], 15], [[690, 500], [450, 500], 9],   // (étape 11b : la cour du poids public rejoint l'allée ; 12b : ce chemin mène à la carte du monde, la cour est sur l'herbe, au nord)
     [[450, 318], [900, 382], 8], [[740, 359], [900, 382], 10], [[0, 92], [900, 92], 11]];
   return { centre: [450, 318], rTerre: 150, rDalles: 104, pads, chemins, largeur: 8, pas: [[450, 432], [452, 452], [448, 472], [451, 492]],
     bordures: [[[748, 360], [900, 382], 10]] };

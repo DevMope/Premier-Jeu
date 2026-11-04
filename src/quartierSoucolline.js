@@ -402,10 +402,10 @@ DECORS_QUARTIERS.soucolline = {
       }
       passageMastres12b(s, ici, { jour, YN, lampe, archeRue: { X: L.arche, Y: YN + 1.6, cle: grandeArcheHD(s, jour), E: 1.6 } });
       // (étape 11b) le poids public refait : la halle et sa grande balance, le préposé, la file du marché (volumes6bHD.js)
-      const PO = POIDS_PUBLIC2, cN = s.add.container(0, 0); poser(cN, YN + 2.5);   // (le nom, par-dessus la halle)
-      poserPoidsPublic2(s, (o, yt) => poser(o, yt), PO.X, YN + 2, { jour, lettrer: (x, y, txt) => poserLettrage(s, cN, x, y, txt, { police: 'Alegreya', graisse: 900, taille: 13, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: 150, hauteur: 16, lignesMax: 1, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) }) });
+      const PO = POIDS_PUBLIC2, cN = s.add.container(0, 0); poser(cN, YN + 2.5);   // (l'écriteau, par-dessus la halle)
+      poserPoidsPublic2(s, (o, yt) => poser(o, yt), PO.X, YN + 2, { jour, lettrer: (x, y, txt) => ecriteauPoidsPublic(s, cN, x, y, txt) });   // (Q385 : un vrai écriteau, cloué à la sablière)
       contact(PO.X, PO.L); if (jour) fileDuPoidsPublic(s, ici, YN);
-      ici.regarder(PO.X - 90, YN - 260, PO.X + 90, YN + 4, jour ? 'Le poids public. Les marchands y pèsent ce qu’ils vendent sur la grande balance, et paient le droit de marché ; les tarifs sont à la craie sur l’ardoise, chaque pesée au registre.' : 'Le poids public est fermé pour la nuit. La grande balance attend les marchands du matin.', [PO.X - 60, YN + 40]);
+      ici.regarder(PO.X - 90, YN - 175, PO.X + 90, YN + 4, jour ? 'Le poids public. Les marchands y pèsent ce qu’ils vendent sur la grande balance, et paient le droit de marché ; les tarifs sont à la craie sur l’ardoise, chaque pesée au registre.' : 'Le poids public est fermé pour la nuit. La grande balance attend les marchands du matin.', [PO.X - 60, YN + 40]);
       ici.obstacles.push([PO.X - 90, YN - 4, PO.X + 90, YN + 6]);
     }
     else lot(L.arche, YN, () => {
