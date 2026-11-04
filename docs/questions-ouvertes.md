@@ -45,6 +45,9 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q378** — La chambre entière redessinée au niveau des armes (l'enduit, la cheminée et son vrai foyer, la panoplie des Reliques des Royaumes et sa plaque « Trophées des aventuriers », le lit, le coffre, l'armoire, la fenêtre, le paravent, le chevet, le mannequin, la porte), et le feu des torches et de la cheminée repris des feux déjà faits, avec sa petite fumée : tu valides ?
 - **Q379** — Le petit récit de Fleur de Diamant (Garrick réveillé il y a treize ans dans un verger, l'épée sur les genoux, une fleur de pommier taillée dans un diamant ; le vieux forgeron ; le lien avec son pendentif et l'orphelinat, laissé ouvert) : le ton te va ?
 
+- **Q380** — Les personnages refaits d'un seul tenant (v5 : sans couture ni effet de masque, une seule chevelure, Borin petit et massif façon *Le Hobbit*, des têtes à environ un cinquième de la hauteur, un vrai aplomb et un léger déhanché, la marche de profil et de dos gardée) : est-ce la bonne base pour continuer ?
+- **Q381** — La Faucheuse : les yeux jaunes à pupille en croissant revenus, le crâne aussi gros mais un peu plus opaque : tu valides ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
