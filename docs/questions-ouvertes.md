@@ -6,6 +6,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q299, Q300** — (anciennes, remplacées par le « dernier appel » et les récits de retour, à confirmer)
 
+- **Q354** (reposée, avec les fichiers à écouter) — L'obtention d'une pièce d'armure : en Lumière, un arpège de harpe qui monte, un chœur, des cordes et des notes de célesta ; en Ombre, un bourdon grave, un chœur en mineur qui descend et une cloche lointaine ; à la pose sur le mannequin, un choc de métal net. Ces sons te vont ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
