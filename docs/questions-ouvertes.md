@@ -10,7 +10,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q393** — L'intérieur de l'armoire refait (le noyer en profondeur, le linge plié en piles, la tringle de laiton et ses cintres, les habits qui tombent, les bottes au fond, la boîte et le sachet de lavande) et la salle d'armes le premier jour (toiles d'araignées, poussière posée, traces de pas, draps sur les supports vides, un rayon de lumière par un soupirail ; propre le lendemain) : tu valides ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -20,6 +19,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q393~~ Armoire validée ; les draps de la salle abandonnée à rendre lisibles (04/11).
 - ~~Q392~~ Personnages v7 : visages de face validés ; profils à accorder (Lindë, Aldric, Garrick), tresses de Borin de dos, écart des jambes (04/11).
 - ~~Q391~~ Niveaux de la chambre validés visuellement ; à faire coïncider avec les autres améliorations de la maison (04/11).
 - ~~Q389, Q390~~ Chambre validée sauf l'intérieur de l'armoire ; poussière de la salle à refaire (toiles d'araignées) ; la place par l'arche validée (04/11).
