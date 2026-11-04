@@ -11,6 +11,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q394** — Les personnages v8 : de profil, Lindë au visage fin (mâchoire fine, menton pointu, cou dégagé), Aldric avec son sourire, Garrick dont les cheveux rejoignent le sourcil et dont la moustache se voit ; Borin de dos avec des tresses qui partent du haut du crâne, quatre petites tresses en plus et une chevelure plus touffue ; un écart réaliste entre les jambes pour les quatre. Les faces validées n'ont pas bougé : tu valides ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
