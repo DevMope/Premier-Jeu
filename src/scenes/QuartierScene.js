@@ -452,7 +452,8 @@ class QuartierScene extends Phaser.Scene {
   cadrer(instantane = false) {
     const R = this.R, B = this.ici.bornes, m = this.monde, z = this.def.zoom || R.zoom, sy = this.def.cameraY ? this.def.cameraY(this.heros.y) : this.def.sy || 270;
     const fx = this.heros.x, fy = this.heros.y - 40;
-    const x = Phaser.Math.Clamp(480 - fx * z, 960 - B.x1 * z, -B.x0 * z), y = Phaser.Math.Clamp(sy - fy * z, 478 - B.y1 * z, -B.y0 * z);
+    const y0 = this.def.hautCamera ? Math.max(B.y0, this.def.hautCamera(fx)) : B.y0;   // (étape 12b : un quartier peut monter la caméra plus haut à certains endroits)
+    const x = Phaser.Math.Clamp(480 - fx * z, 960 - B.x1 * z, -B.x0 * z), y = Phaser.Math.Clamp(sy - fy * z, 478 - B.y1 * z, -y0 * z);
     if (instantane) { m.setScale(z).setPosition(x, y); return; }
     const k = R.douceur;
     m.setScale(m.scaleX + (z - m.scaleX) * k);

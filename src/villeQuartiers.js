@@ -22,7 +22,7 @@ const QUARTIERS_VILLE = {
 };
 // Les sept passages : entre deux quartiers, un passage visible ; sur le plan, un médaillon d'or numéroté
 const PASSAGES_VILLE = [
-  { n: 1, nom: (typeof porchePiste === 'function' && porchePiste().ouvert && !porchePiste().recul && !porchePiste().reel ? 'l’entrée de la place' : 'l’arche des Mastres'),   // (étape 8b : sans arche, l'entrée de la place)
+  { n: 1, nom: (typeof porchePiste === 'function' && porchePiste().reel ? 'le passage des Mastres' : typeof porchePiste === 'function' && porchePiste().ouvert && !porchePiste().recul ? 'l’entrée de la place' : 'l’arche des Mastres'),   // (étape 8b : sans arche, l'entrée de la place)
     entre: ['soucolline', 'place'], type: 'arche', plan: [MX_PLAN(3640) - 7, 143] },
   { n: 2, nom: 'la descente des Marches', entre: ['soucolline', 'basQuartier'], type: 'escalier', plan: [MX_PLAN(1510) + 6, 194] },
   { n: 3, nom: 'l’escalier des Coteaux', entre: ['soucolline', 'coteaux'], type: 'escalier', plan: [MX_PLAN(1615) + 7, 140] },
@@ -110,7 +110,7 @@ function ouvrirPlanVille(scene, { surFermer = null, commeCarte = false, profonde
   const ici = quartierDeLaScene(scene), [hx, hy] = ouEsTuSurLePlan(scene);
   // les noms des lieux, en italique, à côté de leur dessin (ceux de la planche 89 v7)
   const nom = (x, y, txt, ax = 0.5) => { const t = scene.add.text(X(x), Y(y), txt, style(10, '#2a1a0c', { fontStyle: 'italic bold', brut: true, stroke: '#f4ecd4', strokeThickness: 3 })).setOrigin(ax, 0.5); c.add(t); return t; };
-  [[94, 111, 'la chapelle', 0], [113, 133, 'la Confrérie', 0], [86, 220.5, 'l’hospice', 0.5], [56, 194, 'la Grand-Porte', 1], [318, 157.5, (typeof porchePiste === 'function' && porchePiste().ouvert && !porchePiste().recul && !porchePiste().reel ? 'l’entrée de la place' : 'l’arche des Mastres'), 0.5], [MX_PLAN(2780) + 4, 152, 'la rue Haute', 0],
+  [[94, 111, 'la chapelle', 0], [113, 133, 'la Confrérie', 0], [86, 220.5, 'l’hospice', 0.5], [56, 194, 'la Grand-Porte', 1], [...(typeof porchePiste === 'function' && porchePiste().reel ? [315, 160] : [318, 157.5]), (typeof porchePiste === 'function' && porchePiste().reel ? 'le passage des Mastres' : typeof porchePiste === 'function' && porchePiste().ouvert && !porchePiste().recul ? 'l’entrée de la place' : 'l’arche des Mastres'), typeof porchePiste === 'function' && porchePiste().reel ? 0 : 0.5], [MX_PLAN(2780) + 4, 152, 'la rue Haute', 0],
     [MX_PLAN(1615) + 4, 162.5, 'la ruelle du Pommier', 0], [MX_PLAN(1510) - 3, 193.5, 'la descente des Marches', 1], [203, 193.5, 'l’impasse du Corbeau', 0], [341, 221.5, 'le lavoir', 0], [454, 74, 'le Vieux Moulin', 0.5],
     [394, 172, 'l’étang de Barnabé', 0.5], [391, 124, 'la cabane de Barnabé', 0.5], [398, 99.5, 'la route du Vieux Moulin', 0.5], [303, 24, 'le chemin creux', 0], [192, 247, 'le pont du Sud', 1], [MX_PLAN(594) - 2, 163.5, 'la montée du Four', 1]].forEach(([x, y, t, a]) => nom(x, y, t, a));
   { const P3 = (typeof PLAN_VILLE_INFO !== 'undefined' && PLAN_VILLE_INFO.pommiers) || []; if (P3.length) nom(Math.min(...P3.map(p => p[0])) - 6, 184, 'les trois pommiers', 1); }

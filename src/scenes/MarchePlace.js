@@ -68,8 +68,6 @@ Object.assign(MarcheScene.prototype, {
 
   construirePlace() {
     const G = this.G, P = PLACE_MARCHE;
-    // (étape 11b, Q350, à comparer) l'étal de Gédéon dans l'axe de l'allée, ou à sa place du rang du nord
-    if (typeof ETAL_DANS_AXE !== 'undefined') LIEUX_PLACE[ETAL_DANS_AXE.cle] = [...(etalAxeActif() ? ETAL_DANS_AXE.place : ETAL_DANS_AXE.ancien)];
     // (v1.64) le brouhaha de la place, en fond (en attente du choix du joueur : voir sonAChoisir, src/sonsRefaits.js)
     if (typeof sonAChoisir === 'function') sonAChoisir('foule', { scene: this });
     // l'ancienne vue (la rue en demi-cercle) s'efface : tout se passe sur la place
@@ -522,14 +520,14 @@ Object.assign(MarcheScene.prototype, {
       poserLettrage(this, place, X, Y - (A.H - A.ecriteau[1]) * E, this.nomLieuPlace('arche')[0], { police: 'Alegreya', graisse: 900, taille: 16, couleur: '#f0c850', fond: 0x6a6a70, genre: 'dore', largeur: 180, hauteur: 21, lignesMax: 1, ...contrasteLettrage('#f0c850', 0x6a6a70) }).yTri = Y + 0.1;
       for (const [a, b] of A.piles) this.obstacles.push([X + (a - A.L / 2) * E - 2, Y - 40, X + (b + 2 - A.L / 2) * E + 2, Y]);
       // (étape 11b) autour de l'arche, côté place : le muret qui la raccorde à la barrière de l'ouest, deux bornes au départ de
-      // l'allée, le poids public à l'est (la même halle que dans la rue) et sa cour (une charrette à bras, des caisses), des pots,
-      // un banc près de la carte du monde, un arbre
+      // l'allée, des pots, un banc près de la carte du monde, un arbre. (étape 12b) Le poids public est resté dans la rue (au
+      // bout du passage des Mastres, l'arche du marché ne touche plus la halle) : à l'est de l'arche, le même muret, retourné,
+      // et la cour où l'on décharge (une charrette à bras, des caisses)
       const ajout = (o, yt) => { o.yTri = yt; place.add(o); return o; }, ombreP = (x, y, l) => ajout(this.add.image(x + l * 0.06, y - 2, ombrePlaceHD(this)).setScale(l / 64, l / 64 * 0.9), y - 0.5);
       const xm = X - A.L / 2 * E; ajout(this.add.image(xm + 24, Y, muretArcheHD(this, 112)).setOrigin(1, 1).setScale(E), Y - 1); this.obstacles.push([xm - 156, Y - 24, xm, Y]);   // (son bout monte en amorce de mur, pris sous la chaîne d'angle de l'arche)
       for (const dx of [-54, 54]) { ombreP(X + dx, Y - 44, 26); ajout(this.add.image(X + dx, Y - 44, borneArcheHD(this)).setOrigin(0.5, 1).setScale(E), Y - 44); this.obstacles.push([X + dx - 9, Y - 52, X + dx + 9, Y - 42]); }
-      const PO = POIDS_PUBLIC2, XP = 900 + (PO.X - PLACE_DANS_RUE.X);
-      poserPoidsPublic2(this, ajout, XP, Y, { jour: true, lettrer: (x, y, txt) => poserLettrage(this, place, x, y, txt, { police: 'Alegreya', graisse: 900, taille: 13, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: 150, hauteur: 16, lignesMax: 1, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) }).yTri = Y + 0.3 });
-      this.obstacles.push([XP - 90, Y - 70, XP + 90, Y]);
+      const xr = X + A.L / 2 * E; ajout(this.add.image(xr - 24, Y, muretArcheHD(this, 112)).setOrigin(0, 1).setScale(E).setFlipX(true), Y - 1); this.obstacles.push([xr, Y - 24, xr + 156, Y]);
+      const XP = xr + 87;   // (la cour de déchargement, au bout du muret)
       ombreP(XP + 130, Y - 8, 90); ajout(this.add.image(XP + 130, Y - 8, charretteBrasHD(this)).setOrigin(0.5, 1).setScale(E).setFlipX(true), Y - 8); this.obstacles.push([XP + 92, Y - 26, XP + 172, Y - 4]);
       ombreP(XP + 132, Y - 42, 70); ajout(this.add.image(XP + 132, Y - 42, caissesRue7b(this, true)).setOrigin(0.5, 1).setScale(E), Y - 42); this.obstacles.push([XP + 98, Y - 56, XP + 166, Y - 40]);
       for (const px of [xm + 4, XP + 186]) { const p = ajout(this.add.image(px, Y + 2, potFleursLoinHD(this)).setOrigin(0.5, 1).setScale(2), Y + 2); this.obstacles.push([px - 12, Y - 10, px + 12, Y + 2]); }

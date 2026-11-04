@@ -22,7 +22,7 @@
 // de la Confrérie.
 
 const SOUCO = { W: 4000, H: 2080, YN: 1500, YH: 1060, YA: 2012, E: 1.6, F: 0.8 };
-const BORNES_SOUCO = { x0: -330, y0: 880, x1: 4000, y1: 2080 };   // (étape 11b : 100 de plus à l'est, pour le poids public et sa file ; avant 3900)
+const BORNES_SOUCO = { x0: -330, y0: 660, x1: 4000, y1: 2080 };   // (étape 12b : le sol peint jusqu'à 660, pour le passage des Mastres ; la caméra reste à 880 ailleurs : hautCamera)   // (étape 11b : 100 de plus à l'est, pour le poids public et sa file ; avant 3900)
 const TRONCON_SOUCO = { x0: 1000, y0: 880, x1: 2860, y1: 2080 };   // (le tronçon du chantier 2, pour mémoire)
 // la placette, la ruelle du Pommier, l'escalier des Coteaux, la venelle (la descente des Marches), la montée du Four,
 // l'escalier du bout de la rue Haute
@@ -43,11 +43,17 @@ function rigoleSoucolline() { const r = (typeof window !== 'undefined' && window
 // Le plan du sol de la rue Soucolline (planche 89 v7) : un code de SOL_VILLE en chaque point du monde
 function planSolSoucolline() {
   const Q = SOUCO, YN = Q.YN, YH = Q.YH, { PL, RU, RH, VE, FO, RE } = RUES_SOUCO, ch = chausseeSoucolline(), rg = ch === 'grille' ? [1616, 1628] : rigoleSoucolline();
-  const ouvert = typeof porchePiste === 'function' && !!porchePiste().ouvert;
+  const ouvert = typeof porchePiste === 'function' && !!porchePiste().ouvert, PM = typeof porchePiste === 'function' && porchePiste().reel && typeof PASSAGE_MASTRES !== 'undefined' ? PASSAGE_MASTRES : null;
   const code = (X, Y) => {
     const n = (fbm(X * 0.01, Y * 0.01, 8911) - 0.5) * 40;
     if (X >= VE.x0 - 2 && X < VE.x1 + 2 && Y >= PL.y1 - 6 && Y < PL.y1 + 8) return 23;   // le seuil, entre la placette et le palier
     if (X >= PL.x0 && X < PL.x1 && Y >= 1546 && Y < PL.y1) return 20;                     // la placette : les dalles du trottoir, d'un bord à l'autre
+    if (PM && Y >= PM.YM - 30 && Y < YN && X >= PM.murs[0] && X < PM.murs[1] + 19) {   // (étape 12b) le passage des Mastres
+      if (X < PM.sol[0] || X >= PM.sol[1]) return 4;   // (sous les murs)
+      if (Y < PM.YM + 28 || Y >= YN - 26) return 20;   // (les dalles des deux seuils, sous les arches)
+      for (const [a, b] of PM.marches) if (Y >= a && Y < b) return 7;
+      return 17;
+    }
     if (Y >= YN && Y < 1745 && X > 330 + n) {
       if (ouvert && Math.abs(X - 3640) < 136 && Y < rg[0]) return 1;   // (étape 8b) la rue débouche sur la place : la chaussée va jusqu'à elle
       if (Y < 1540) return 4; if (Y < 1546) return 5;
@@ -68,7 +74,7 @@ function planSolSoucolline() {
     if (X >= FO.x0 && X < FO.x1 && Y >= 1196 && Y < YN) { if (Y < 1236 || (Y >= 1440 && Y < 1472)) return 7; return 17; }
     if (X >= RH.x0 && X < RH.x1 && Y >= 930 && Y < YH) return 7;   // l'escalier des Coteaux
     if (X >= RH.x0 - 20 && X < RH.x1 + 20 && Y >= 900 && Y < 930) return 4;
-    if (Math.abs(Y - (1176 - (X - 2780) * 0.25)) < 26 + n * 0.2 && X >= 2700 && X < 3900) return 9;   // le chemin de derrière
+    if (Math.abs(Y - (1176 - (X - 2780) * 0.25)) < 26 + n * 0.2 && X >= 2700 && X < (PM ? 3300 + n : 3900)) return 9;   // le chemin de derrière (étape 12b : il se perd dans l'herbe avant le muret de la place)
     if (X >= RE.x0 && X < RE.x1 && Y >= 900 && Y < YH) return 7;   // l'escalier du bout de la rue Haute
     const chemin = Math.abs(X - (1615 + Math.sin(Y / 90) * 26)) < 40 + n * 0.3 && Y < 940;
     const ch2 = Math.abs(X - (2685 + Math.sin(Y / 70) * 18)) < 30 && Y < 900 && Y > 700;
@@ -78,7 +84,7 @@ function planSolSoucolline() {
   };
   // là où l'on passe le plus (l'hiver, la neige y est tassée) : le milieu des chaussées, la traversée de la placette
   const bande = (v, c, l) => Math.exp(-(((v - c) / l) ** 2));
-  return { id: 'soucolline3' + ch + rg[0] + (ouvert ? 'o' : ''), code, options: {
+  return { id: 'soucolline3' + ch + rg[0] + (ouvert ? 'o' : '') + (PM ? 'p12' : ''), code, options: {
     pierre: PIERRES_QUARTIERS.soucolline, chaussee: ch, rigole: ch === 'grille' ? 'plate' : 'pierre',
     sauf: (X, Y) => X >= VE.x0 - 50 && X < VE.x1 + 50 && Y >= PL.y1 - 10,
     // (Q198-2, vue de haut) les trottoirs comme un plan : la bordure du nord jette une marche d'ombre sur la chaussée, le pied
@@ -124,6 +130,8 @@ DECORS_QUARTIERS.soucolline = {
     return R[R.length - 1][1] + d;
   },
   get zoom() { return zoomRue(); },
+  // (étape 12b) le haut de la caméra : 880, sauf au-dessus du passage des Mastres (on y voit l'arche du marché tout entière)
+  hautCamera(x) { const P = typeof PASSAGE_MASTRES !== 'undefined' && typeof porchePiste === 'function' && porchePiste().reel ? PASSAGE_MASTRES : null; return P && x > P.x0 && x < P.x1 ? P.haut : 880; },
   passants: 5,
   // (par le plan : on arrive par le passage qui mène d'où l'on vient ; de chez soi, par sa porte)
   entrees: { place: 'arche', etang: 'arche', maison: 'comptoir', defaut: 'arche' },
@@ -382,12 +390,17 @@ DECORS_QUARTIERS.soucolline = {
     // porches de l'étape 7b) ; la place au travers dans la projection, ses passants à l'échelle de la rue
     const PP0 = porchePiste();
     if (PP0.reel) {   // (étape 9b) le vrai début de la place, à l'échelle de la rue ; à l'angle est, le poids public (Q285)
-      placeReelleRue9b(s, ici, { jour, saison, YN });
-      // (étape 10b) la grande arche des Mastres, au bout de la rue : la même qu'au bas de la place ; la place au travers
-      const GA = GRANDE_ARCHE;
-      lot(L.arche, YN, () => { s.add.image(0, 2, grandeArcheHD(s, jour)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, 0, 2 - (GA.H - GA.ecriteau[1]) * 2, 'Place des Mastres', { taille: 13, grave: true }); }, YN + 0.5);   // (Q348/Q358 : par-dessus la banque et le poids public, ses pierres de bord débordent en harpe sur leurs murs)
-      for (const [a, b] of GA.piles) ici.obstacles.push([L.arche + (a - GA.L / 2) * 1.6 - 4, YN - 6, L.arche + (b + 2 - GA.L / 2) * 1.6 + 4, YN + 4]);
-      if (nuit) for (const [lx, ly] of GA.lanternes) ici.lumiere(L.arche + (lx - GA.L / 2) * 1.6, YN + (2 - (GA.H - ly + 9) * 2) * F, 60);
+      // (étape 12b) deux arches reliées par un chemin : l'arche de la rue s'ouvre sur le passage des Mastres, qui monte entre deux
+      // murs jusqu'à l'arche du marché (le même dessin, les mêmes flancs) ; au-delà, la place des Mastres (volumes6bHD.js)
+      const PM = PASSAGE_MASTRES, YM = PM.YM, GA = GRANDE_ARCHE;
+      placeReelleRue9b(s, ici, { jour, saison, YN: YM });
+      const arche = (Y, nom) => lot(L.arche, Y, () => { s.add.image(0, 2, grandeArcheHD(s, jour)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, 0, 2 - (GA.H - GA.ecriteau[1]) * 2, nom, { taille: 13, grave: true }); }, Y + 0.5);   // (Q348/Q358 : par-dessus la banque et le poids public, ses pierres de bord débordent en harpe sur leurs murs)
+      const archeRue = arche(YN, 'Passage des Mastres'); arche(YM, 'Place des Mastres');
+      for (const Y of [YN, YM]) {
+        for (const [a, b] of GA.piles) ici.obstacles.push([L.arche + (a - GA.L / 2) * 1.6 - 4, Y - 6, L.arche + (b + 2 - GA.L / 2) * 1.6 + 4, Y + 4]);
+        if (nuit) for (const [lx, ly] of GA.lanternes) ici.lumiere(L.arche + (lx - GA.L / 2) * 1.6, Y + (2 - (GA.H - ly + 9) * 2) * F, 60);
+      }
+      passageMastres12b(s, ici, { jour, YN, lampe, archeRue });
       // (étape 11b) le poids public refait : la halle et sa grande balance, le préposé, la file du marché (volumes6bHD.js)
       const PO = POIDS_PUBLIC2, cN = s.add.container(0, 0); poser(cN, YN + 2.5);   // (le nom, par-dessus la halle)
       poserPoidsPublic2(s, (o, yt) => poser(o, yt), PO.X, YN + 2, { jour, lettrer: (x, y, txt) => poserLettrage(s, cN, x, y, txt, { police: 'Alegreya', graisse: 900, taille: 13, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: 150, hauteur: 16, lignesMax: 1, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) }) });
@@ -492,7 +505,7 @@ DECORS_QUARTIERS.soucolline = {
     ici.plaqueSur(mD, 'gauche', 112, 'Rue Haute', { retrait: 12 }); ici.plaqueSur(mJ, 'droite', 104, 'Rue Haute', { retrait: 12 });
     ici.plaqueSur(mE, 'droite', 116, 'Carrefour du Puits', { retrait: 12 }); ici.plaqueSur(mM, 'gauche', 104, 'Rue Haute', { retrait: 12 });
     ici.arbre(2580, YH - 10, 0); ici.buisson(2780, YH + 10); ici.arbre(2840, YH - 30, 1);
-    for (const [x, y, v] of [[1040, 900, 1], [2300, 920, 0], [2860, 900, 1], [440, 980, 0], [250, 1180, 1], [-60, 1060, 0], [3000, 1020, 0], [3300, 1100, 1], [3560, 960, 0], [3760, 1120, 1]]) ici.arbre(x, y, v);
+    for (const [x, y, v] of [[1040, 900, 1], [2300, 920, 0], [2860, 900, 1], [440, 980, 0], [250, 1180, 1], [-60, 1060, 0], [3000, 1020, 0], [3300, 1100, 1], ...(PP0.reel ? [] : [[3560, 960, 0]]), [3760, 1120, 1]]) ici.arbre(x, y, v);
     for (const [x, y] of [[120, 1300], [3150, 1240], [3480, 1200]]) ici.buisson(x, y);
 
     // ===================== 5. la placette de la Fontaine, sa fontaine à la grenouille =====================
@@ -597,9 +610,11 @@ DECORS_QUARTIERS.soucolline = {
       (entre(x, RU.x0 + 8, RU.x1 - 8) && entre(y, 1190, YN + 10)) ||                                        // la ruelle du Pommier
       (entre(x, FO.x0 + 8, FO.x1 - 8) && entre(y, 1190, YN + 10)) ||                                        // la montée du Four
       (entre(y, YH + 10, 1194) && entre(x, FO.x0 + 6, 2790)) ||                                             // la rue Haute
-      (x >= 2700 && Math.abs(y - (1176 - (x - 2780) * 0.25)) < 22) ||                                       // le chemin de derrière
+      (x >= 2700 && x < (PP0.reel ? 3290 : 3900) && Math.abs(y - (1176 - (x - 2780) * 0.25)) < 22) ||       // le chemin de derrière
+      (PP0.reel && entre(x, PASSAGE_MASTRES.sol[0] + 10, PASSAGE_MASTRES.sol[1] - 10) && entre(y, PASSAGE_MASTRES.YM + 16, YN + 10)) ||   // (étape 12b) le passage des Mastres
       false;   // (les escaliers des Coteaux : fermés par leur barrière, tant que les Coteaux ne sont pas faits)
     ici.zones.push(
+      { nom: 'Le passage des Mastres', dedans: (x, y) => PP0.reel && entre(x, 3560, 3720) && entre(y, PASSAGE_MASTRES.YM - 20, YN - 8) },
       { nom: 'La placette de la Fontaine', dedans: (x, y) => entre(x, PL.x0, PL.x1) && entre(y, 1590, PL.y1 + 40) },
       { nom: 'Le carrefour du Puits', dedans: (x, y) => entre(x, 1500, 1990) && entre(y, YH, 1200) },
       { nom: 'La ruelle du Pommier', dedans: (x, y) => entre(x, RU.x0, RU.x1) && entre(y, 1200, YN) },
@@ -641,12 +656,13 @@ DECORS_QUARTIERS.soucolline = {
     if (ysmee && jour) ici.passages.push({ id: 'ysmee', nom: 'Madame Ysmée', sous: 'sa tente, présages', verbe: 'entrer', type: 'porte', devant: [L.tente, YN + 26], dehors: [L.tente, YN - 6], page: 'Diseuse',
       cadre: [L.tente - 36, YN - 120, L.tente + 36, YN], zone: [L.tente - 60, YN + 8, L.tente + 60, YN + 64], pousser: [0, -1] });
     // le porche : le jour, la place des Mastres ; le soir, la place dort (sauf quand la nymphe attend : sa lueur)
-    if (jour) ici.passages.push({ id: 'arche', nom: 'La place des Mastres ▲', sous: { 1: 'au bout de la rue', 2: 'entre les piliers fleuris', 4: 'sous la grande arche' }[PP0.piste] || 'par l’arche des Mastres', type: 'porche', devant: [L.arche, YN + 22], dehors: [L.arche, YN - (PP0.reel ? 80 : 40)], cadre: [L.arche - 70, YN - 150, L.arche + 70, YN],
-      zone: [L.arche - 70, YN, L.arche + 70, YN + 64], pousser: [0, -1], vers: { quartier: 'place', arrivee: 'arche' } });
-    else if (nymphe) ici.passages.push({ id: 'nymphe', nom: 'La lueur de la fontaine', sous: PP0.ouvert ? 'au bout de la rue' : 'sous le porche de la place', verbe: 'y aller', type: 'porche', devant: [L.arche, YN + 22], dehors: [L.arche, YN - 40], cadre: [L.arche - 70, YN - 150, L.arche + 70, YN],
-      zone: [L.arche - 70, YN, L.arche + 70, YN + 64], pousser: [0, -1], page: 'Nymphe',
+    const YA = PP0.reel ? PASSAGE_MASTRES.YM : YN;   // (étape 12b : l'arche du marché, au bout du passage des Mastres)
+    if (jour) ici.passages.push({ id: 'arche', nom: 'La place des Mastres ▲', sous: { 1: 'au bout de la rue', 2: 'entre les piliers fleuris', 4: 'sous la grande arche' }[PP0.piste] || 'par l’arche des Mastres', type: 'porche', devant: [L.arche, YA + 30], dehors: [L.arche, YA - (PP0.reel ? 60 : 40)], cadre: [L.arche - 70, YA - 150, L.arche + 70, YA],
+      zone: PP0.reel ? [L.arche - 46, YA + 14, L.arche + 46, YA + 70] : [L.arche - 70, YN, L.arche + 70, YN + 64], pousser: [0, -1], vers: { quartier: 'place', arrivee: 'arche' } });
+    else if (nymphe) ici.passages.push({ id: 'nymphe', nom: 'La lueur de la fontaine', sous: PP0.ouvert ? 'au bout de la rue' : 'sous le porche de la place', verbe: 'y aller', type: 'porche', devant: [L.arche, YA + 30], dehors: [L.arche, YA - 40], cadre: [L.arche - 70, YA - 150, L.arche + 70, YA],
+      zone: PP0.reel ? [L.arche - 46, YA + 14, L.arche + 46, YA + 70] : [L.arche - 70, YN, L.arche + 70, YN + 64], pousser: [0, -1], page: 'Nymphe',
       surRetour: sc => { if (typeof nympheAttend === 'function' && !nympheAttend(sc.G)) { if (sc.lueurNymphe) { sc.lueurNymphe.destroy(); sc.lueurNymphe = null; } const p = sc.passages.find(q => q.id === 'nymphe'); if (p) { p.page = null; p.regard = true; p.texte = "La lueur s'est éteinte. La place dort ; l'eau de la fontaine murmure encore un peu."; } } } });
-    else ici.regarder(L.arche - 120, YN - 240, L.arche + 120, YN + 4, (PP0.ouvert ? "La place des Mastres, au bout de la rue. Elle dort : les étals rouvriront à l'aube." : "Le porche de la place des Mastres. La place dort : les étals rouvriront à l'aube."), [L.arche, YN + 36]);
+    else ici.regarder(L.arche - 120, YA - 240, L.arche + 120, YA + 4, (PP0.reel ? "La place des Mastres, au bout du passage. Elle dort : les étals rouvriront à l'aube." : PP0.ouvert ? "La place des Mastres, au bout de la rue. Elle dort : les étals rouvriront à l'aube." : "Le porche de la place des Mastres. La place dort : les étals rouvriront à l'aube."), [L.arche, YN + 36]);
     // le soir de la porte dérobée : au fond de l'impasse du Corbeau
     if (ouvertCeSoir) ici.passages.push({ id: 'porteDerobee', nom: 'La porte dérobée', sous: 'au fond de l’impasse du Corbeau', verbe: 'frapper', type: 'porte', devant: [L.impasse, YN + 22], dehors: [L.impasse, YN - 10],
       cadre: [L.impasse - 30, YN - 120, L.impasse + 30, YN], zone: [L.impasse - 50, YN, L.impasse + 50, YN + 60], pousser: [0, -1], action: sc => sc.allerAuMarcheNoir && sc.allerAuMarcheNoir() });
