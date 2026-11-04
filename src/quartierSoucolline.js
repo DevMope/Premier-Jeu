@@ -293,11 +293,13 @@ DECORS_QUARTIERS.soucolline = {
         // sans enseigne, sans emblème, sans tapis ; un panneau « À vendre » se balance à sa porte
         s.add.image(0, 442, creerFacadeRivalHD(s, 1, MAISON_PAON_VIDE)).setOrigin(0.5, 1).setScale(2);
         const pa = s.add.container(0, 330).setAngle(-6);
-        pa.add(s.add.rectangle(0, 0, 130, 46, 0xe8d8b0).setStrokeStyle(3, 0x5a3a1a)); pa.add(s.add.text(0, -6, 'À VENDRE', style(19, '#8a1a14', { fontStyle: 'bold' })).setOrigin(0.5)); pa.add(s.add.text(0, 14, 'chez le notaire du Conseil', style(9, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5));
+        pa.add(s.add.rectangle(0, 0, 130, 46, 0xe8d8b0).setStrokeStyle(3, 0x5a3a1a)); pa.add(s.add.text(0, -8, 'À VENDRE', style(19, '#8a1a14', { fontStyle: 'bold' })).setOrigin(0.5)); pa.add(s.add.text(0, 15, 'chez le notaire du Conseil', style(9, '#3b2410', { fontStyle: 'italic' })).setOrigin(0.5));
         s.tweens.add({ targets: pa, angle: -3, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
     }, YN);
     paonVolumeDansLot(s, paon); contact(L.paon, 176);   // (étape 6) la maison du paon, en volume, dans tous ses états
+    // (étape 12b) le soir, les lampions de la brasserie s'allument : un petit halo sur chacun (sous le voile de la nuit, ils restaient pâles)
+    if (nuit) for (const o of paon.list || []) if (o.type === 'Arc' && o.radius === 4 && o.fillColor === 0xffe08a) ici.lumiere(paon.x + o.x * paon.scaleX, paon.y + o.y * paon.scaleY, 22, 0xffc860, 5);
     s.lieuxRue.paon = paon;
     // (vue de haut, validée) la maison haute à colombages en un seul volume, sous son toit d'ardoises en croupe (maisonVolumeHD.js)
     { const k = maisonHauteVolumeHD(s); img(L.maisonHaute, YN + 2, k, E); ici.chem(k, L.maisonHaute, YN + 2); contact(L.maisonHaute, 140); }

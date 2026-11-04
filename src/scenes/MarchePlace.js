@@ -61,6 +61,19 @@ Object.assign(MarcheScene.prototype, {
       garderobe: this.fete ? ["L'étal de l'Union", 'Atours de la fête'] : ['La garde-robe de Marcelline', 'Vêtements'], peche: ['La cabane de Barnabé', 'Pêche'] }[cle] || [cle, ''];
   },
 
+  // (étape 12b) Où poser l'invite sans qu'elle couvre un autre texte : en haut, elle descend sous les nouvelles du matin tant
+  // qu'elles se lisent, et sous le nom peint de l'estrade du crieur s'il est là ; en bas, elle remonte au-dessus de lui
+  yInvitePlace(y0) {
+    const inv = this.invitePlace, h = inv.height, w = inv.width, occ = [];
+    const nm = this.nouvellesMatin; if (nm && nm.active && nm.visible && nm.alpha > 0.02) { const b = nm.getBounds(); occ.push(b); }
+    const lc = this.lettrageCrieur; if (lc && lc.active && lc.visible) occ.push(lc.getBounds());
+    let y = y0; const haut = y0 < 270;
+    for (let k = 0; k < 6; k++) { const a = y - h / 2, b = y + h / 2, x0 = 480 - w / 2, x1 = 480 + w / 2;
+      const c = occ.find(r => a < r.bottom + 3 && b > r.y - 3 && x0 < r.right && x1 > r.x); if (!c) break;
+      y = haut ? c.bottom + 4 + h / 2 : c.y - 4 - h / 2; }
+    return Phaser.Math.Clamp(y, 40 + h / 2, 474 - h / 2);
+  },
+
   // Où se tenir pour parler à un lieu : devant lui, face à lui
   devantLieu(cle) {
     const [x, y] = LIEUX_PLACE[cle];
@@ -1042,7 +1055,7 @@ Object.assign(MarcheScene.prototype, {
     const montrer = proche && !this.bloquePlace() && !this.visiteEnCours() && !(this.banniereVisite && this.banniereVisite.active)
       && !(this.texteMessage && this.texteMessage.active && this.texteMessage.alpha > 0.05 && this.texteMessage.depth === 45);   // (v1.64 : la bulle d'un lieu ne se pose plus sur l'invite)
     this.invitePlace.setVisible(!!montrer);
-    if (montrer) { const hy = this.heros.y * this.place.scaleY + this.place.y; this.invitePlace.setY(hy > 330 ? 64 : 462);   // (étape 10b : en bas de la place, l'invite passe en haut, sous le titre : elle ne cache ni JeuneGoy, ni le mendiant, ni la carte)
+    if (montrer) { const hy = this.heros.y * this.place.scaleY + this.place.y; this.invitePlace.setY(this.yInvitePlace(hy > 330 ? 64 : 462));   // (étape 10b : en bas de la place, l'invite passe en haut, sous le titre : elle ne cache ni JeuneGoy, ni le mendiant, ni la carte)
       const [n, m] = this.nomLieuPlace(proche); this.invitePlace.setText(`${n}${m ? ' · ' + m : ''}   —   E ou clic : ${MARCHANDS[proche] ? 'faire tes courses' : proche === 'arche' ? 'rentrer' : proche === 'tableau' ? 'lire' : PETITS_LIEUX.includes(proche) ? 'parler' : proche === 'coteaux' || /^porte\d/.test(proche) ? 'regarder' : proche === 'moulin' ? 'y aller' : 'approcher'}`); }
     if (!this.carteC && !this.panneauOuvert) this.cadrerPlace();
     for (const o of this.place.list) o.yTriPlace = o.yTri !== undefined ? o.yTri : o.y;
