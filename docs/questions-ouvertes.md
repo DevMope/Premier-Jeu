@@ -47,6 +47,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
@@ -55,6 +57,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q388~~ Poids public, bacs et cour validés ; voir la place (le mendiant…) par l'arche du marché depuis le passage (04/11).
+- ~~Q386, Q387~~ Regard de la Faucheuse validé ; corps v6 à reprendre (cou de dos, tresses du nain, bras de Garrick, jambes du nain, visages différents par peuple) (04/11).
 - ~~Q384, Q385~~ Passage validé (sauf le pot au milieu du chemin) ; poids public trop haut, sans vrai toit ; sacs et intérieur validés (04/11).
 - ~~Q383~~ Flammes et chambre validées ; les bûches à montrer brûlées (04/11).
 - ~~Q382~~ Le crâne de la Faucheuse validé ; ses pupilles en croissant regardent de droite à gauche de temps en temps (04/11).
