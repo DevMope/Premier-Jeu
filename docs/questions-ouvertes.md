@@ -36,6 +36,9 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q362** — La Faucheuse : les yeux jaunes avec une pupille en croissant de lune, et le halo de terreur recentré sur son aura (milieu de sa silhouette, étiré dans l'axe du corps, qui flotte avec elle) : tu valides ?
 
+- **Q371** — Les armes v4 : la salle d'armes agrandie (armure à 1,7 fois, chaque arme à son échelle, la Promesse de l'Aube sur un haut support à droite de l'armure), la chambre (deux étagères sous celle des trophées, un râtelier mural, un petit établi d'entretien) et la silhouette fantôme « vue, jamais tenue » pour les armes qu'on voit seulement (avec l'Absolution dessinée) : tu valides ?
+- **Q372** — Laquelle des trois quêtes ouvre la salle d'armes : le soufflet de Thorgal, ce qui gratte sous le plancher (avec Garrick), la poutre maîtresse (avec les Mages-Charpentiers) ? Ou un mélange ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
