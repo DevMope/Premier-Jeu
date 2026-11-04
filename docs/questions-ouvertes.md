@@ -44,7 +44,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q382** — Le crâne de la Faucheuse presque englouti dans l'ombre de la capuche (orbites creuses, cavité nasale en cœur inversé, mâchoire suggérée ; seuls quelques reflets d'os très discrets autour des yeux jaunes) : tu valides ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -54,6 +53,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q382~~ Le crâne de la Faucheuse validé ; ses pupilles en croissant regardent de droite à gauche de temps en temps (04/11).
 - ~~Q380~~ Personnages v5 : bonne direction ; nain plus petit, jambes un peu plus courtes, corps un peu plus larges, tête du nain, barbe et pipe fumante de Garrick, cheveux façon Aragorn (04/11).
 - ~~Q378, Q379, Q381~~ Réponses du 04/11 (flammes qui naissent du bois des torches, plus de teintes dans la chambre ; le récit de Fleur de Diamant gardé comme base ; yeux validés, crâne moins visible et mieux dessiné).
 - ~~Q377~~ La Faucheuse : aura parfaite ; yeux jaunes à pupille en croissant (la version d'avant) ; crâne aussi gros, un peu plus opaque (04/11).
