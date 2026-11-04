@@ -39,6 +39,9 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q371** — Les armes v4 : la salle d'armes agrandie (armure à 1,7 fois, chaque arme à son échelle, la Promesse de l'Aube sur un haut support à droite de l'armure), la chambre (deux étagères sous celle des trophées, un râtelier mural, un petit établi d'entretien) et la silhouette fantôme « vue, jamais tenue » pour les armes qu'on voit seulement (avec l'Absolution dessinée) : tu valides ?
 - **Q372** — Laquelle des trois quêtes ouvre la salle d'armes : le soufflet de Thorgal, ce qui gratte sous le plancher (avec Garrick), la poutre maîtresse (avec les Mages-Charpentiers) ? Ou un mélange ?
 
+- **Q365** — L'étal de maître Gédéon dans l'axe de l'allée, juste derrière la grande arche (on le voit par l'ouverture, de la rue comme de la place, l'allée le contourne) : on le garde (« avec ») ou on laisse l'allée libre jusqu'à la fontaine (« sans ») ?
+- **Q366** — Le poids public refait (la halle ouverte, la grande balance à fléau, les poids de fonte, le registre, le préposé, la file avec la charrette, le porteur entre l'arche et la balance, la cour de déchargement côté place) : on comprend sa fonction, tu valides ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
