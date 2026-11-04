@@ -42,6 +42,10 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q365** — L'étal de maître Gédéon dans l'axe de l'allée, juste derrière la grande arche (on le voit par l'ouverture, de la rue comme de la place, l'allée le contourne) : on le garde (« avec ») ou on laisse l'allée libre jusqu'à la fontaine (« sans ») ?
 - **Q366** — Le poids public refait (la halle ouverte, la grande balance à fléau, les poids de fonte, le registre, le préposé, la file avec la charrette, le porteur entre l'arche et la balance, la cour de déchargement côté place) : on comprend sa fonction, tu valides ?
 
+- **Q359** — Les personnages comme leur portrait : les grandes épaulières d'armure de Borin lui font des épaules très larges en pied. A : on les garde telles quelles ; B : plus petites sur le corps seulement (le portrait ne change pas) ?
+- **Q360** — Le manteau de Garrick en pied. A : jusqu'aux genoux, ouvert sur ses jambes ; B : jusqu'aux chevilles, comme aujourd'hui ?
+- **Q363** — Les personnages comme leur portrait, v3 (de face, une vraie vue de dos, un vrai profil, les jambes, les bras et les mains, la cape et le manteau qui bougent dans la marche) : c'est la bonne direction pour tout le monde ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
