@@ -364,7 +364,7 @@ class PromenadeScene extends Cinematique {
     });
     if (G.medailleParents) this.add.image(64, 146, texMedailleParents(this)).setScale(1.3).setDepth(8.3);
     const armes = G.armesLegendaires || [];
-    if (armes.length) this.regarder(140, 88, 180, 88, `Tes armes reliques (${armes.length} / ${Object.keys(ARMES_LEGENDAIRES).length}) : ${armes.map(id => armeLegendaire(id).nom).join(', ')}. La ville en parle : un peu plus de curieux au comptoir.`);
+    if (armes.length) this.regarder(140, 88, 180, 88, `Tes Reliques des Royaumes (${armes.length} / ${Object.keys(ARMES_LEGENDAIRES).length}) : ${armes.map(id => armeLegendaire(id).nom).join(', ')}. La ville en parle : un peu plus de curieux au comptoir.`);
   }
 
   pieceArriere() {
