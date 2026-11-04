@@ -42,11 +42,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q378** — La chambre entière redessinée au niveau des armes (l'enduit, la cheminée et son vrai foyer, la panoplie des Reliques des Royaumes et sa plaque « Trophées des aventuriers », le lit, le coffre, l'armoire, la fenêtre, le paravent, le chevet, le mannequin, la porte), et le feu des torches et de la cheminée repris des feux déjà faits, avec sa petite fumée : tu valides ?
-- **Q379** — Le petit récit de Fleur de Diamant (Garrick réveillé il y a treize ans dans un verger, l'épée sur les genoux, une fleur de pommier taillée dans un diamant ; le vieux forgeron ; le lien avec son pendentif et l'orphelinat, laissé ouvert) : le ton te va ?
 
 - **Q380** — Les personnages refaits d'un seul tenant (v5 : sans couture ni effet de masque, une seule chevelure, Borin petit et massif façon *Le Hobbit*, des têtes à environ un cinquième de la hauteur, un vrai aplomb et un léger déhanché, la marche de profil et de dos gardée) : est-ce la bonne base pour continuer ?
-- **Q381** — La Faucheuse : les yeux jaunes à pupille en croissant revenus, le crâne aussi gros mais un peu plus opaque : tu valides ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -56,6 +53,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q378, Q379, Q381~~ Réponses du 04/11 (flammes qui naissent du bois des torches, plus de teintes dans la chambre ; le récit de Fleur de Diamant gardé comme base ; yeux validés, crâne moins visible et mieux dessiné).
 - ~~Q377~~ La Faucheuse : aura parfaite ; yeux jaunes à pupille en croissant (la version d'avant) ; crâne aussi gros, un peu plus opaque (04/11).
 - ~~Q367, Q373 à Q376~~ Réponses du 04/11 (arche validée ; « les Reliques des Royaumes » ; salle d'armes v5 validée sauf le feu ; quête selon les choix validée ; Fleur de Diamant légendaire, son récit à écrire).
 - ~~Q359, Q360, Q363~~ Réponses du 04/11 (personnages à refaire presque de A à Z : nains aux proportions normales façon *Le Hobbit*, vrai aplomb des jambes, cheveux d'un seul tenant, profils sans effet de masque ; marches de profil et de dos gardées ; manteau long de Garrick).

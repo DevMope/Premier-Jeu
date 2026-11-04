@@ -4004,6 +4004,10 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q375** : le système de la quête de la salle d'armes selon les choix, validé (les Mages-Charpentiers, sinon Thorgal, sinon Garrick ; Thorgal en dernier recours).
   - **Q376** : Fleur de Diamant, l'épée de Garrick, est une arme légendaire ; il faudra scénariser ou écrire un petit récit qui raconte comment Garrick l'a obtenue (à faire, histoire à valider).
 - **Q377 (04/11), la Faucheuse** : l'aura (le voile de terreur par le moteur des auras) est **parfaite**, « pile comme je voulais ». Les yeux : finalement pas en croissant ; on garde la version d'avant, **les yeux jaunes avec une pupille en croissant de lune**. Le crâne : aussi gros que dans la dernière version, mais encore un peu plus opaque.
+- **Réponses du 04/11, suite (Q378, Q379, Q381)** :
+  - **Q378** : les flammes des torches ne doivent plus déborder de la base de la torche : la ligne du bas des flammes est trop droite pour un feu, et elle dépasse des deux côtés du bois, alors que les flammes doivent naître de cette partie en bois. La chambre est beaucoup mieux, le mobilier aussi, mais tout est marron sur le même marron : plus de variété de teintes de bois et de couleurs (comme l'encadrement de la porte, d'un marron différent du reste de la porte : ça rend bien). La disposition des armes dans la chambre plaît beaucoup plus.
+  - **Q379** : le joueur imaginait quelque chose d'épique, mais ce ton lié à la fleur de pommier lui plaît : on part sur cette base pour l'instant.
+  - **Q381** : les yeux de la Faucheuse sont validés ; mais on voit encore trop le crâne, et plus il le regarde, moins il le trouve bien dessiné : à reprendre (moins visible, mieux dessiné).
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
