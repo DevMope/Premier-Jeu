@@ -3979,6 +3979,7 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q352** : la salle d'armes dans la cave ; débloquée par une petite quête secondaire obligatoire (par exemple : aider quelqu'un comme Thorgal, qui fournit les contacts pour de beaux râteliers d'armes personnalisés ; histoire non validée, c'est le ton) : des choses qui se débloquent pas seulement par l'argent. **Q353** : tant que la salle n'est pas débloquée, les armes restent en haut, mais sur un établi et des étagères faits et dessinés pour elles. **Q354** : les sons, à réécouter plus tard.
   - **Q355** : l'étape 3 de la refonte Ombre/Lumière, validée. **Q356** : la taxe par côté, validée pour l'instant.
   - **Q357** : tous les designs d'armes légendaires validés ; mais il y a deux sortes d'armes légendaires : celles que le joueur peut gagner, et celles qu'il peut seulement voir (le bâton du Sage, l'arme de Vorhal'Düm…) : il faut quelque chose pour les démarquer.
+  - **Q358** (la place des Mastres, reformulation de la Q349) : validée en partie : le zoom 1,0, l'arche à la place du porche, le coin des jeux et le mendiant décalés, l'allée droite et l'étiquette en haut sont gardés ; les côtés de l'arche restent à refaire, trop linéaires (voir Q348).
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).

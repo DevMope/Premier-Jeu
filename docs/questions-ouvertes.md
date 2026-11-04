@@ -33,7 +33,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q358** — (reformulation de la Q349) Les changements de la place des Mastres pour qu'elle corresponde à la rue (le zoom à 1,0 ; le porche du sud remplacé par la grande arche ; le coin des jeux et le mendiant un peu décalés pour laisser la place aux piles de l'arche ; une seule allée droite et plus large de l'arche à la fontaine, au lieu des trois chemins en éventail ; l'étiquette du bas passée en haut) : tu les valides ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -43,6 +42,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q358~~ La place des Mastres : validée en partie, les côtés de l'arche à refaire (04/11).
 - ~~Q342 à Q357~~ Réponses du 04/11 dans `docs/game-design.md` (yeux jaunes en croissant, halo à aligner, personnages voie A, arche plus naturelle, armures et armes validées, salle d'armes par une quête, étape 3 validée).
 - ~~Q286 à Q295~~ Armures portées validées (parchemin, épée, animation et salle d'armes à revoir) ; Faucheuse aux yeux fauves à essayer ; PNJ sans vue de face ; place des Mastres à réorganiser avec une grande arche ; poids public pas mal (03/11).
 - ~~Q341~~ Taxe progressive pour la Lumière et le neutre, l'ancienne pour l'Ombre ; grand inventaire validé presque entièrement (03/11).
