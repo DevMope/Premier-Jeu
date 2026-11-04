@@ -48,7 +48,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q388** — Le poids public en halle basse (plus d'étage ni de toit de maison : un appentis de tuiles bas), avec un vrai écriteau de bois cloué sur la sablière ; les bacs de fleurs du passage contre les murs, aux paliers ; la cour de déchargement de la place déplacée pour libérer le chemin de la carte du monde : tu valides ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -58,6 +57,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q388~~ Poids public, bacs et cour validés ; voir la place (le mendiant…) par l'arche du marché depuis le passage (04/11).
 - ~~Q386, Q387~~ Regard de la Faucheuse validé ; corps v6 à reprendre (cou de dos, tresses du nain, bras de Garrick, jambes du nain, visages différents par peuple) (04/11).
 - ~~Q384, Q385~~ Passage validé (sauf le pot au milieu du chemin) ; poids public trop haut, sans vrai toit ; sacs et intérieur validés (04/11).
 - ~~Q383~~ Flammes et chambre validées ; les bûches à montrer brûlées (04/11).
