@@ -17,6 +17,11 @@ const LIEUX_PLACE = { forge: [330, 340], apothicaire: [560, 310], encheres: [900
   // (étape 11b : la carte du monde laisse l'angle au poids public ; avant [1090, 1000])
   fontaine: [900, 660], carte: [1430, 1000], arche: [900, 1040], moulin: [1784, 740], coteaux: [1070, 176],
   ...Object.fromEntries(COTEAUX_PLACE.bas.map(([x], i) => ['porte' + i, [x, COTEAUX_PLACE.levre]])) };
+// (étape 12b) les arbres, les buissons et les barrières de la place : la scène de la place les pose, et la rue en reprend ce qu'on
+// voit par l'arche du marché (placeVueDuPassage12, volumes6bHD.js) : les mêmes données, ils ne divergent jamais
+const ARBRES_PLACE = [[70, 420, 0], [70, 760, 1], [1740, 420, 1], [1720, 1030, 0], [420, 740, 1], [1390, 760, 0], [560, 200, 0], [1250, 200, 1], [40, 1040, 0], [330, 1040, 1]];
+const BUISSONS_PLACE = [[250, 760], [1520, 760], [700, 760], [1100, 760]], BUISSONS_PLACE_HORS_MARCHE = [[460, 470], [1340, 470]];   // (les jours de marché, les charrettes des colporteurs prennent la place des deux derniers)
+const BARRIERES_PLACE = [[530, 1020], [1660, 1020]];
 // (v1.64) Ce qu'on devine derrière les portes rondes du bas des Coteaux
 const PORTES_COTEAUX = [
   'Une porte ronde, vert mousse, au bouton de laiton bien astiqué. Ça sent la tarte aux mûres jusque sur la place.',
@@ -144,11 +149,11 @@ Object.assign(MarcheScene.prototype, {
     this.actionsLieux.coteaux = () => this.message('Le chemin creux monte aux Coteaux entre ses deux murets : là-haut, les portes rondes des familles hobbites, leurs jardins, leurs cheminées. Une barrière ferme les premières marches, qu’on refait : on montera une autre fois.');
     COTEAUX_PLACE.bas.forEach((b, i) => { this.actionsLieux['porte' + i] = () => this.message(PORTES_COTEAUX[i % PORTES_COTEAUX.length]); });
     // les arbres, les buissons, les barrières : dans l'herbe, jamais sur les chemins
-    [[70, 420, 0], [70, 760, 1], [1740, 420, 1], [1720, 1030, 0], [420, 740, 1], [1390, 760, 0], [560, 200, 0], [1250, 200, 1], [40, 1040, 0], [330, 1040, 1]].forEach(([x, y, v]) => {
+    ARBRES_PLACE.forEach(([x, y, v]) => {   // (étape 12b : ces données servent aussi à la rue, qui voit le bas de la place par l'arche du marché)
       ombre(x + 10, y, 120); { const cle = arbrePlaceHD(this, pal, v, x, y); place.add(this.add.image(x, y, cle).setOrigin(0.5, origineArbre(this, cle)).setScale(2.2)); } this.obstacles.push([x - 16, y - 16, x + 16, y + 2]); });
     const marcheDuJour = typeof jourDeMarche === 'function' && jourDeMarche(G);   // (v1.54 : les jours de marché, les charrettes des colporteurs prennent la place de deux buissons)
-    [[250, 760], [1520, 760], [700, 760], [1100, 760], ...(marcheDuJour ? [] : [[460, 470], [1340, 470]])].forEach(([x, y]) => { ombre(x, y, 70); { const cle = buissonPlaceHD(this, pal, x, y); place.add(this.add.image(x, y, cle).setOrigin(0.5, origineArbre(this, cle)).setScale(2.2)); } this.obstacles.push([x - 26, y - 14, x + 26, y + 2]); });
-    [[530, 1020], [1660, 1020]].forEach(([x, y]) => { ombre(x, y, 100);   // (étape 11b : la barrière de l'est s'écarte du poids public ; avant 1160)
+    [...BUISSONS_PLACE, ...(marcheDuJour ? [] : BUISSONS_PLACE_HORS_MARCHE)].forEach(([x, y]) => { ombre(x, y, 70); { const cle = buissonPlaceHD(this, pal, x, y); place.add(this.add.image(x, y, cle).setOrigin(0.5, origineArbre(this, cle)).setScale(2.2)); } this.obstacles.push([x - 26, y - 14, x + 26, y + 2]); });
+    BARRIERES_PLACE.forEach(([x, y]) => { ombre(x, y, 100);   // (étape 11b : la barrière de l'est s'écarte du poids public ; avant 1160)
         // (étape 10b : la barrière ouest suit le mendiant ; avant [640, 1020])
       place.add(this.add.image(x, y, barrierePlaceHD(this, 5)).setOrigin(0.5, 1).setScale(2.2)); this.obstacles.push([x - 52, y - 12, x + 52, y + 2]); });
     // les jours de fête, des guirlandes au-dessus de la place
@@ -524,14 +529,15 @@ Object.assign(MarcheScene.prototype, {
       // bout du passage des Mastres, l'arche du marché ne touche plus la halle) : à l'est de l'arche, le même muret, retourné,
       // et la cour où l'on décharge (une charrette à bras, des caisses)
       const ajout = (o, yt) => { o.yTri = yt; place.add(o); return o; }, ombreP = (x, y, l) => ajout(this.add.image(x + l * 0.06, y - 2, ombrePlaceHD(this)).setScale(l / 64, l / 64 * 0.9), y - 0.5);
-      const xm = X - A.L / 2 * E; ajout(this.add.image(xm + 24, Y, muretArcheHD(this, 112)).setOrigin(1, 1).setScale(E), Y - 1); this.obstacles.push([xm - 156, Y - 24, xm, Y]);   // (son bout monte en amorce de mur, pris sous la chaîne d'angle de l'arche)
-      for (const dx of [-54, 54]) { ombreP(X + dx, Y - 44, 26); ajout(this.add.image(X + dx, Y - 44, borneArcheHD(this)).setOrigin(0.5, 1).setScale(E), Y - 44); this.obstacles.push([X + dx - 9, Y - 52, X + dx + 9, Y - 42]); }
-      const xr = X + A.L / 2 * E; ajout(this.add.image(xr - 24, Y, muretArcheHD(this, 112)).setOrigin(0, 1).setScale(E).setFlipX(true), Y - 1); this.obstacles.push([xr, Y - 24, xr + 156, Y]);
-      const XP = xr + 87;   // (la cour de déchargement, au bout du muret)
+      // (étape 12b) les places de ce décor viennent de decorArchePlace (volumes6bHD.js) : la rue les reprend telles quelles
+      const DA = decorArchePlace(X, Y), { xm, xr } = DA;
+      ajout(this.add.image(xm + 24, Y, muretArcheHD(this, 112)).setOrigin(1, 1).setScale(E), Y - 1); this.obstacles.push([xm - 156, Y - 24, xm, Y]);   // (son bout monte en amorce de mur, pris sous la chaîne d'angle de l'arche)
+      for (const [bx, by] of DA.bornes) { ombreP(bx, by, 26); ajout(this.add.image(bx, by, borneArcheHD(this)).setOrigin(0.5, 1).setScale(E), by); this.obstacles.push([bx - 9, by - 8, bx + 9, by + 2]); }
+      ajout(this.add.image(xr - 24, Y, muretArcheHD(this, 112)).setOrigin(0, 1).setScale(E).setFlipX(true), Y - 1); this.obstacles.push([xr, Y - 24, xr + 156, Y]);
       // (Q384 : rien au milieu d'un chemin) la cour est sur l'herbe, au nord du chemin qui mène à la carte du monde (y 982 à 1018)
-      ombreP(XP + 168, Y - 76, 90); ajout(this.add.image(XP + 168, Y - 76, charretteBrasHD(this)).setOrigin(0.5, 1).setScale(E).setFlipX(true), Y - 76); this.obstacles.push([XP + 130, Y - 94, XP + 210, Y - 72]);
-      ombreP(XP + 96, Y - 80, 70); ajout(this.add.image(XP + 96, Y - 80, caissesRue7b(this, true)).setOrigin(0.5, 1).setScale(E), Y - 80); this.obstacles.push([XP + 62, Y - 94, XP + 130, Y - 78]);
-      for (const px of [xm + 4, XP + 186]) { const p = ajout(this.add.image(px, Y + 2, potFleursLoinHD(this)).setOrigin(0.5, 1).setScale(2), Y + 2); this.obstacles.push([px - 12, Y - 10, px + 12, Y + 2]); }
+      { const [cx, cy] = DA.charrette; ombreP(cx, cy, 90); ajout(this.add.image(cx, cy, charretteBrasHD(this)).setOrigin(0.5, 1).setScale(E).setFlipX(true), cy); this.obstacles.push([cx - 38, cy - 18, cx + 42, cy + 4]); }
+      { const [cx, cy] = DA.caisses; ombreP(cx, cy, 70); ajout(this.add.image(cx, cy, caissesRue7b(this, true)).setOrigin(0.5, 1).setScale(E), cy); this.obstacles.push([cx - 34, cy - 14, cx + 34, cy + 2]); }
+      for (const [px, py] of DA.pots) { ajout(this.add.image(px, py, potFleursLoinHD(this)).setOrigin(0.5, 1).setScale(2), py); this.obstacles.push([px - 12, py - 12, px + 12, py]); }
       if (typeof banc5 === 'function') { const [cx, cy] = LIEUX_PLACE.carte; ombreP(cx + 96, cy + 12, 90); ajout(this.add.image(cx + 96, cy + 12, banc5(this)).setOrigin(0.5, 1).setScale(1.6), cy + 12); this.obstacles.push([cx + 50, cy - 4, cx + 142, cy + 14]); }
       { const [ax, ay] = [1600, 985]; ombreP(ax + 10, ay, 120); const cle = arbrePlaceHD(this, this.palettePlace, 1, ax, ay); ajout(this.add.image(ax, ay, cle).setOrigin(0.5, origineArbre(this, cle)).setScale(2.2), ay); this.obstacles.push([ax - 16, ay - 16, ax + 16, ay + 2]); }
       return;

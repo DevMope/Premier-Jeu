@@ -745,18 +745,18 @@ function ouvriersMages(s, jour) {
 // entre la banque et le poids public : le reste est hors cadre. On y entre en marchant.
 // Le point de la place qui fait face au bout de la rue (son entrée sud : LIEUX_PLACE.arche, 900 × 1040) est en (3640, YN) dans la rue.
 Object.assign(PORCHE_PISTES, { 4: { piste: '4', reel: true, ouvert: true, lanternes: [], L: 176, H: 205, sol: 204, seuil: 12, passants: [18, 46], ouverture: [0, 176] } });
-const PLACE_DANS_RUE = { X: 3640, x0: 3500, x1: 3772, profondeur: 340 };   // (étape 12b : la place commence derrière l'arche du marché, au bout du passage ; on n'en voit que ce que montre son ouverture)
+const PLACE_DANS_RUE = { X: 3640, x0: 3040, x1: 4000, profondeur: 340 };   // (étape 12b-4 : tout le bas de la place qu'on peut voir du passage, par l'arche et par-dessus ses murets)   // (étape 12b : la place commence derrière l'arche du marché, au bout du passage ; on n'en voit que ce que montre son ouverture)
 function placeReelleRue9b(s, ici, { jour, saison, YN }) {
   const D = PLACE_DANS_RUE, A = typeof LIEUX_PLACE !== 'undefined' ? LIEUX_PLACE.arche : [900, 1040], enRue = (px, py) => [D.X + (px - A[0]), YN - (A[1] - py)];
   // 1. le sol de la place, le même que dans sa scène : on en découpe le morceau qu'on voit par le bout de la rue
   const pal = paletteSaisonComte(saison), cleSol = solPlaceHD(s, 'solPlace_' + saison, pal, PLACE_MARCHE.L / 2, 520, planSolPlace());
-  const k = 'solPlaceTranche_' + saison;
+  const k = 'solPlaceTranche12_' + saison;
   if (!s.textures.exists(k)) {
     const src = s.textures.get(cleSol).getSourceImage(), px0 = A[0] + (D.x0 - D.X), py0 = A[1] - D.profondeur, l = (D.x1 - D.x0) / 2, h = D.profondeur / 2;
     const cv = document.createElement('canvas'); cv.width = l; cv.height = h; const c = cv.getContext('2d'); c.imageSmoothingEnabled = false;
     c.drawImage(src, px0 / 2, py0 / 2, l, h, 0, 0, l, h);
     const I = c.getImageData(0, 0, l, h), d = I.data;   // (sous le bord de la rue, l'ombre des façades et du trottoir)
-    for (let y = h - 4; y < h; y++) for (let x = 0; x < l; x++) { const i = (y * l + x) * 4, f = 0.78 + (h - 1 - y) * 0.05; d[i] *= f; d[i + 1] *= f; d[i + 2] *= f; }
+    for (let y = h - 4; y < h; y++) for (let x = Math.round((3320 - D.x0) / 2); x < Math.min(l, Math.round((3960 - D.x0) / 2)); x++) { const i = (y * l + x) * 4, f = 0.78 + (h - 1 - y) * 0.05; d[i] *= f; d[i + 1] *= f; d[i + 2] *= f; }   // (au pied de l'arche et des murets)
     c.putImageData(I, 0, 0); s.textures.addCanvas(k, cv);
   }
   ici.img(D.x0, YN - D.profondeur, k, 2, YN - D.profondeur - 1, 0, 0);
@@ -768,13 +768,16 @@ function placeReelleRue9b(s, ici, { jour, saison, YN }) {
     const [cx, cy] = [3712, YN - 64]; ici.img(cx, cy, charretteColporteurHD(s), 2.2, cy).setFlipX(true);
     if (jour) { const kc = corpsHD(s, 'colporteur', null, 'face'), v = s.add.image(cx - 74, cy + 30, kc).setOrigin(0.5, 1).setScale(4.5 * echelleCorps(kc)); ici.poser(v, cy + 30); ici.ombrePerso(cx - 74, cy + 30); s.tweens.add({ targets: v, scaleY: v.scaleY * 1.015, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); }
   }
+  // (étape 12b-4) ce qu'il y a vraiment sur le bas de la place : ses arbres, sa barrière, ses bornes, sa cour, le mendiant et son
+  // chien, le coin des jeux (placeVueDuPassage12)
+  placeVueDuPassage12(s, ici, { jour, saison, YM: YN });
   // 3. les passants de la place, à l'échelle de la rue (le jour) : ils flânent sur la place, au bout de la rue
   if (!jour) return;
   // (étape 10b) de vrais promeneurs : de face quand ils attendent ou viennent vers nous, de dos quand ils s'en vont, de profil de
   // côté, leurs pas, leur ombre
   const races = ['humain', 'hobbit', 'nain', 'elfe', 'hobbit'];
   [[3580, YN - 46, 0], [3640, YN - 130, 1], [3690, YN - 40, 2], [3600, YN - 190, 3]].forEach(([x, y, i]) =>
-    promeneur6b(s, { nom: 'Flâneur de la place ' + i, race: races[i], feminin: i % 2 === 1, niveau: 'novice' }, x, y, [D.x0 + 70, YN - 230, D.x1 - 72, YN - 24],   // (dans l'ouverture de la grande arche)
+    promeneur6b(s, { nom: 'Flâneur de la place ' + i, race: races[i], feminin: i % 2 === 1, niveau: 'novice' }, x, y, [3520, YN - 250, 3800, YN - 30],   // (dans l'ouverture de la grande arche)
       { ajouter: (img, yy) => ici.poser(img, yy), ombre: ici.ombrePerso, vitesse: 0.045 }));
 }
 // ======================= ÉTAPE 12b : DEUX ARCHES RELIÉES PAR UN CHEMIN (le passage des Mastres) =======================
@@ -810,6 +813,66 @@ function passageMastres12b(s, ici, { jour, YN, lampe, archeRue = null }) {
   // quand JeuneGoy (ou la passante du bas) passe derrière l'arche de la rue, l'arche reste entière ; on voit sa silhouette au
   // travers, là seulement où l'arche le cache : un contour clair, le dedans en ombre légère (silhouettesDerriere6b)
   if (archeRue) silhouettesDerriere6b(s, ici, archeRue, () => [s.heros, ...passants], { sombre: ici.saison === 'givre' });   // (sur la neige, le contour sombre)
+}
+// Le décor du bas de la place autour de l'arche du marché : où sont ses bornes, ses pots, sa cour (une charrette à bras, des
+// caisses). (X, Y) : le pied de l'arche au milieu, dans la place. La scène de la place et la rue lisent les mêmes places ici.
+function decorArchePlace(X = 900, Y = 1040) {
+  const A = GRANDE_ARCHE, E = 1.6, xm = X - A.L / 2 * E, xr = X + A.L / 2 * E, XP = xr + 87;
+  return { xm, xr, bornes: [[X - 54, Y - 44], [X + 54, Y - 44]], pots: [[xm + 4, Y + 2], [XP + 186, Y + 2]], charrette: [XP + 168, Y - 76], caisses: [XP + 96, Y - 80] };
+}
+// (étape 12b-4) Ce qu'on voit de la place depuis le passage, par l'ouverture de l'arche du marché et par-dessus ses murets : le
+// vrai bas de la place, posé dans la rue à sa place (la place décalée de 3640 - 900 en x, de YM - 1040 en y), avec les mêmes
+// données et les mêmes dessins que la scène de la place : ses arbres, ses buissons, sa barrière (ARBRES_PLACE...), les bornes,
+// les pots et la cour de l'arche (decorArchePlace), le mendiant et son chien sur leur tapis (LIEUX_PLACE.mendiant), le coin des
+// jeux et Grippesou (LIEUX_PLACE.jeux). Le soir, la place dort : le décor reste, sans personne.
+function placeVueDuPassage12(s, ici, { jour, saison, YM }) {
+  const G = window.GAME, DX = 3640 - 900, DY = YM - 1040, pal = ici.pal, B = ici.bornes;
+  const voit = (x, y, m = 160) => x + DX > B.x0 - m && x + DX < B.x1 + m && y + DY > B.y0 - 40 && y <= 1040 + 4;
+  const poser = (o, y) => ici.poser(o, y + DY), img = (k, x, y, sc, ox = 0.5, oy = 1, yT = y) => poser(s.add.image(x + DX, y + DY, k).setOrigin(ox, oy).setScale(sc), yT);
+  const ombre = (x, y, l) => ici.ombre(x + DX, y + DY, l);
+  // les arbres, les buissons, les barrières
+  for (const [x, y, v] of typeof ARBRES_PLACE !== 'undefined' ? ARBRES_PLACE : []) if (voit(x, y)) { ombre(x + 10, y, 120); const cle = arbrePlaceHD(s, pal, v, x, y); img(cle, x, y, 2.2, 0.5, origineArbre(s, cle)); }
+  const marche = typeof jourDeMarche === 'function' && G && jourDeMarche(G);
+  for (const [x, y] of typeof BUISSONS_PLACE !== 'undefined' ? [...BUISSONS_PLACE, ...(marche ? [] : BUISSONS_PLACE_HORS_MARCHE)] : []) if (voit(x, y)) { ombre(x, y, 70); const cle = buissonPlaceHD(s, pal, x, y); img(cle, x, y, 2.2, 0.5, origineArbre(s, cle)); }
+  for (const [x, y] of typeof BARRIERES_PLACE !== 'undefined' ? BARRIERES_PLACE : []) if (voit(x, y)) { ombre(x, y, 100); img(barrierePlaceHD(s, 5), x, y, 2.2); }
+  // le décor de l'arche, côté place : les deux bornes, la cour ; le pot de l'ouest, au pied du muret (côté passage)
+  const DA = decorArchePlace(900, 1040);
+  for (const [x, y] of DA.bornes) { ombre(x, y, 26); img(borneArcheHD(s), x, y, 1.6); ici.obstacles.push([x + DX - 9, y + DY - 8, x + DX + 9, y + DY + 2]); }
+  { const [x, y] = DA.caisses; ombre(x, y, 70); img(caissesRue7b(s, true), x, y, 1.6); }
+  { const [x, y] = DA.charrette; ombre(x, y, 90); img(charretteBrasHD(s), x, y, 1.6).setFlipX(true); }
+  for (const [x, y] of DA.pots) img(potFleursLoinHD(s), x, y, 2);
+  // le mendiant et son chien (le même groupe que sur la place : son tonneau, lui, Brisquet ; puis leur tapis, le baluchon, la
+  // gamelle, la bougie sur le tonneau) ; le soir, il n'est plus là
+  const lieu = k => typeof LIEUX_PLACE !== 'undefined' && LIEUX_PLACE[k];
+  if (jour && lieu('mendiant')) {
+    const [x, y] = lieu('mendiant'), g = s.add.container(x + DX, y + DY).setScale(0.9); poser(g, y);
+    ombre(x, y + 4, 90);
+    g.add(s.add.image(118 - 84, 0, 'tonneauxHD').setOrigin(0.5, 1).setScale(1.5));
+    const m = imageCorps(s, 96 - 84, 0, 'mendiant', 4.6); g.add(m);
+    const chien = s.add.image(42 - 84, 2, chienHD(s, 'profil', true)).setOrigin(0.5, 1).setScale(0.7); g.add(chien);
+    if (typeof tapisMendiantPlaceHD === 'function') {
+      img(tapisMendiantPlaceHD(s), x - 12, y + 2, 2, 0.5, 0.75, y - 1037);   // (à plat sur le sol, sous eux)
+      const cx = x + chien.x * 0.9, museau = cx + 22;
+      img(baluchonHD(s, 12), cx - 34, y - 4, 2); img(gamelleHD(s, 7, 0.4), museau - 6, y + 11, 2);
+      const tx = x + (118 - 84) * 0.9, sc = 1.5 * 0.9, lx = tx + 0.5 * sc, ly = y - 18 * sc + 1.5 * sc, pot = img(bougiePotHD(s, 4), lx, ly, 2, 0.5, 1, y + 0.3);
+      flammeBougie(s, ici.C, lx + DX, ly + DY - pot.displayHeight + 1, 4, y + DY + 0.31);
+    }
+    ici.obstacles.push([x + DX - 30, y + DY - 22, x + DX + 30, y + DY + 2]);
+  }
+  // le coin des jeux : son auvent violet et son nom peint en or, sa table, Grippesou derrière (le jour) ; son enseigne pendue
+  const fete = G && ((typeof solsticeActif === 'function' && solsticeActif(G)) || (typeof hiverActif === 'function' && hiverActif(G)));   // (les jours de fête, le tir à l'arc ou la grande roue prennent sa place : on ne le montre pas)
+  if (typeof creerLieuxMarcheHD === 'function') creerLieuxMarcheHD(s);   // (l'auvent et la table du coin des jeux)
+  if (lieu('jeux') && !fete && (typeof lieuOuvert !== 'function' || lieuOuvert(G, 'jeux')) && s.textures.exists('auventJeux')) {
+    const [x, y] = lieu('jeux'); if (voit(x, y, 200)) {
+      const g = s.add.container(x + DX, y + DY).setScale(0.9); poser(g, y); ombre(x, y + 4, 200);
+      const a = s.add.image(0, 2, typeof auventJeuxNomHD === 'function' ? auventJeuxNomHD(s) : 'auventJeux').setOrigin(0.5, 1).setScale(2); g.add(a);
+      if (jour) g.add(imageCorps(s, 0, -20, 'gobelin', 4.5));
+      g.add(s.add.image(0, 0, 'tableJeux').setOrigin(0.5, 1).setScale(2));
+      poserLettrage(s, g, 0, a.y - 192 + (7 + 6.5) * 2, 'Le coin des jeux', { police: 'Pirata One', graisse: 400, taille: 19, couleur: '#f0c850', fond: 0x5a3a8a, genre: 'dore', largeur: 168, hauteur: 24, lignesMax: 1, ...contrasteLettrage('#f0c850', 0x5a3a8a) });
+      if (typeof poserEnseignePendue === 'function') poserEnseignePendue(s, g, x < 900, 'Dés, bonneteau', a.y - 192 + 24 * 2, 92);
+      ici.obstacles.push([x + DX - 70, y + DY - 30, x + DX + 70, y + DY + 4]);
+    }
+  }
 }
 // La silhouette de ceux qu'une arche cache (comme dans les jeux vus de haut) : l'arche reste entière et opaque ; pour chaque
 // personnage passé derrière elle, une image de même taille que la sienne, posée juste devant l'arche, ne montre que ses pixels
