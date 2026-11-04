@@ -302,3 +302,14 @@ Deux sons synthétiques, dans `src/audio.js` (`SONS.auraMontee`, `SONS.auraTenue
 - **« auraMontee »**, l'apparition : elle doit se sentir comme une explosion d'énergie. Une montée grave qui gonfle (une sous-basse en dents de scie qui glisse de 55 à 110 Hz, un filtre qui s'ouvre avec elle, un souffle grave qui enfle, environ 0,9 s), puis un claquement d'énergie (un coup sec et grave, un éclat clair, aigu, un bref sifflement), et un souffle qui retombe sur une seconde. C'est M8 joué brut.
 - **« auraTenue »**, l'aura allumée : un bourdonnement doux en boucle (deux sous-basses légèrement désaccordées à 55 Hz, un harmonique à l'octave, un halo de souffle filtré qui respire toutes les quatre secondes), qui reste tant que dure le combat, jusqu'à l'épuisement ; `Son.eteindreAura(fondu)` l'efface en fondu.
 - Règle validée : l'aura (et ses sons) n'apparaît que quand un personnage doué s'apprête à se battre ou à se défendre, jamais en temps normal.
+
+## 6. L'obtention d'une pièce d'armure (validée le 04/11, Q354)
+
+Quand le messager apporte une pièce de l'armure du Dernier Rempart (chambre, `SONS_ARMURE` dans `armuresHD.js`) :
+
+| Moment | Lumière (et neutre) | Ombre |
+|---|---|---|
+| La pièce s'élève | un arpège de harpe qui monte sur deux octaves (ré majeur), un accord de chœur et de cordes tenu, quatre notes de célesta qui scintillent | un bourdon grave (ré), un chœur en mineur qui descend d'une seconde, une cloche lointaine (glas) |
+| La pièce se pose sur le mannequin | un choc de métal net (trois partiels, un souffle de bruit) | le même |
+
+Lien avec les thèmes : le ré de l'arpège et du bourdon est celui de **M7** (l'armure et le héros de la prophétie), en majeur pour la Lumière et en mineur pour l'Ombre, comme M7 lui-même.
