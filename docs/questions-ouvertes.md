@@ -34,10 +34,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q362** — La Faucheuse : les yeux jaunes avec une pupille en croissant de lune, et le halo de terreur recentré sur son aura (milieu de sa silhouette, étiré dans l'axe du corps, qui flotte avec elle) : tu valides ?
 
-- **Q371** — Les armes v4 : la salle d'armes agrandie (armure à 1,7 fois, chaque arme à son échelle, la Promesse de l'Aube sur un haut support à droite de l'armure), la chambre (deux étagères sous celle des trophées, un râtelier mural, un petit établi d'entretien) et la silhouette fantôme « vue, jamais tenue » pour les armes qu'on voit seulement (avec l'Absolution dessinée) : tu valides ?
-- **Q372** — Laquelle des trois quêtes ouvre la salle d'armes : le soufflet de Thorgal, ce qui gratte sous le plancher (avec Garrick), la poutre maîtresse (avec les Mages-Charpentiers) ? Ou un mélange ?
 
 - **Q365** — L'étal de maître Gédéon dans l'axe de l'allée, juste derrière la grande arche (on le voit par l'ouverture, de la rue comme de la place, l'allée le contourne) : on le garde (« avec ») ou on laisse l'allée libre jusqu'à la fontaine (« sans ») ?
 - **Q366** — Le poids public refait (la halle ouverte, la grande balance à fléau, les poids de fonte, le registre, le préposé, la file avec la charrette, le porteur entre l'arche et la balance, la cour de déchargement côté place) : on comprend sa fonction, tu valides ?
@@ -48,6 +45,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q367** — La grande arche aux flancs refaits (chaînes d'angle en harpe qui débordent franchement, pierres éclatées ou manquantes, base élargie et ancrée dans la terre, chasse-roues, lierre et mousse des deux côtés, tuiles qui dépassent et gouttière ; côté place, une amorce de mur éboulé vers le muret et le poids public qui la touche) : tu valides ?
 
+- **Q373** — Le nom des armes que le joueur collectionne : « les armes reliques » (ton nom), ou une variante : « les Reliques des Royaumes » (chacune vient d'un royaume), « les Reliques » tout court, « les armes héritées » ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
@@ -56,6 +55,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q362, Q371, Q372~~ Réponses du 04/11 dans `docs/game-design.md` (yeux en croissant sans pupille, vraie aura, crâne plus gros ; salle d'armes à supports par arme et gravité, chambre à refaire au niveau des armes ; armes reliques et armes légendaires séparées ; la quête de la salle selon les choix).
 - ~~Q358~~ La place des Mastres : validée en partie, les côtés de l'arche à refaire (04/11).
 - ~~Q342 à Q357~~ Réponses du 04/11 dans `docs/game-design.md` (yeux jaunes en croissant, halo à aligner, personnages voie A, arche plus naturelle, armures et armes validées, salle d'armes par une quête, étape 3 validée).
 - ~~Q286 à Q295~~ Armures portées validées (parchemin, épée, animation et salle d'armes à revoir) ; Faucheuse aux yeux fauves à essayer ; PNJ sans vue de face ; place des Mastres à réorganiser avec une grande arche ; poids public pas mal (03/11).
