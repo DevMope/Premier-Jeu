@@ -22,6 +22,7 @@
 - **La gravité, toujours** (rappel ferme du 04/11, salle d'armes v4) : un objet posé repose sur ses vrais points d'appui (un marteau couché touche par la tête ET par le manche ; rien ne flotte, rien ne tient sur une pointe sans support) ; un objet accroché pend comme il doit (un arc suspendu par la partie rigide, la corde vers le sol).
 - **Jamais un nouveau dessin d'une chose qui en a déjà un** (04/11, après l'Absolution redessinée par erreur) : avant de dessiner, chercher dans le dépôt et dans les planches validées ; un objet déjà dessiné (le bâton du Sage, ses deux formes : `src/sageFormesHD.js`) se reprend tel quel. **Aucun ancien design ne doit rester** à côté des nouveaux (les anciennes icônes d'armes, l'ancienne épée « Trophées des aventuriers ») : on remplace par le dessin HD, ou on retire en le signalant.
 - **Un seul niveau de dessin dans une même image** (04/11) : un meuble à côté d'une arme HD doit être dessiné au même niveau (même moteur, même modelé) ; sinon on a l'impression de deux jeux différents. La chambre entière est à remonter à ce niveau (étagères, armoire, lit, coffre…).
+- **Ne jamais oublier ce qu'on a appris à faire** (04/11, les torches de la salle d'armes) : un effet déjà réussi se reprend partout (le feu et sa petite fumée : les particules Kenney ramenées à notre grille, `assets/fx`, `docs/essais-assets` ; les feux HD déjà dessinés : `feuDeCampHD` dans `pontRoyalHD.js`, `sfFlammesHD` dans `sageFormesHD.js`) ; jamais un ancien dessin de feu à côté.
 - **La bibliothèque du Passage des Aventuriers se met à jour à chaque publication de l'artefact** (`web/bibliotheque.html` + `web/bibliotheque.js`, publiée à part) : tout ce qui a été validé depuis la dernière fois y entre en même temps que le jeu (23/10).
 - **Toujours parler français au joueur** : les résumés et tout ce qui s'adresse à lui sont en français (le travail interne peut être en anglais) (22/10).
 
@@ -3996,6 +3997,12 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
   - **Q359** : refaire les bases (rien ne va pour le nain).
   - **Ce qui va** : les animations de marche de profil et de dos, « super » : à garder.
   - **Q360** : sauf la tête de profil, Garrick est le personnage le mieux réussi ; de face, avec son **manteau long** (aux chevilles) qui cache en plus les jambes, il ne rend pas si mal, même s'il reste beaucoup à revoir : on garde le manteau long.
+- **Réponses du 04/11, fin (Q367, Q373 à Q376)** :
+  - **Q373** : les armes que le joueur collectionne s'appellent **« les Reliques des Royaumes »**.
+  - **Q367** : les flancs de l'arche, validés (« beaucoup mieux »).
+  - **Q374** : la salle d'armes v5, « bravo, beaucoup mieux » ; mais le feu des torches : reprendre ce qu'on a appris (le feu de belle qualité avec sa petite fumée).
+  - **Q375** : le système de la quête de la salle d'armes selon les choix, validé (les Mages-Charpentiers, sinon Thorgal, sinon Garrick ; Thorgal en dernier recours).
+  - **Q376** : Fleur de Diamant, l'épée de Garrick, est une arme légendaire ; il faudra scénariser ou écrire un petit récit qui raconte comment Garrick l'a obtenue (à faire, histoire à valider).
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
