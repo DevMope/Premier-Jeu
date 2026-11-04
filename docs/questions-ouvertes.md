@@ -6,9 +6,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q389** — La chambre et la salle d'armes dans le vrai jeu (captures de la vraie scène : le soir avec le feu, la nuit avec les braises, le matin ; l'armoire, le paravent et la couverture redessinés avec leurs gestes ; les bûches entamées selon l'heure ; une Relique qui vole jusqu'à sa place ; la salle d'armes poussiéreuse le premier jour, puis torches et tapis le lendemain) : tu valides ?
 
-- **Q390** — Depuis le passage, par l'arche du marché et par-dessus ses murets, on voit maintenant le vrai bas de la place (le mendiant et Brisquet, le coin des jeux et Grippesou, la barrière, les bornes, les caisses, les flâneurs), aux mêmes endroits que sur la place ; le soir la place dort, l'hiver elle est sous la neige : tu valides ?
 
 - **Q391** — La chambre à chaque niveau d'amélioration, tirée de la planche validée (la paillasse, le lit de bois, le lit sculpté et son édredon, le lit à baldaquin, le lit royal étoilé ; cinq coffres, quatre tapis posés au sol ; trois armoires : le noyer simple, puis le fronton sculpté et les laitons, puis les dorures et la marqueterie) et Grand-Mère Écaille repeinte au-dessus de l'armoire : tu valides ?
 
@@ -20,6 +18,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q389, Q390~~ Chambre validée sauf l'intérieur de l'armoire ; poussière de la salle à refaire (toiles d'araignées) ; la place par l'arche validée (04/11).
 - ~~Q299, Q300~~ Closes le 04/11 : déjà tranchées par les réponses suivantes. Q299 (le moment où le neutre doit choisir) → le dernier appel du neutre, le soir où arrive la 7e pièce (Q311, Q317). Q300 (revenir d'un extrême) → un extrême atteint est sans retour, sauf par les récits de retour (Q301, Q314).
 - ~~Q354~~ Les trois sons de l'obtention d'une pièce d'armure, validés (04/11).
 - ~~Q388~~ Poids public, bacs et cour validés ; voir la place (le mendiant…) par l'arche du marché depuis le passage (04/11).
