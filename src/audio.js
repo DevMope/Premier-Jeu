@@ -882,3 +882,50 @@ const THEME_PAR_SCENE = {
   Titre: 'titre', Peche: 'recitHeureux', Etang: 'recitHeureux', Intro: 'personnage', IntroHistoire: 'cinematique', Comptoir: 'comptoir', Nuit: 'nuit', Dodo: 'nuit', Recit: 'recitEtonne', Faillite: 'faillite',
   MarcheNoir: 'marcheNoir', Express: 'jeux', Banque: 'banque', Marche: 'marche', Atelier: 'comptoir', Bureau: 'comptoir', Carte: 'carte', Facade: 'marche', Arriere: 'comptoir', Renovation: 'cinematique', Promenade: 'nuit', Rue: 'marche', RuePont: 'marche', Nymphe: 'cinematique', Carrefour: 'cinematique', DiscoursSage: 'cinematique', Roue: 'marche', Banquet: 'cinematique', Diseuse: 'cinematique', Barbier: 'marche',
 };
+
+// (planche des auras, à valider : non branchés ailleurs) Les deux sons des auras.
+// 'auraMontee' : l'apparition, une explosion d'énergie : une montée grave qui gonfle (une sous-basse qui glisse vers le
+// haut avec un souffle qui s'ouvre), puis un claquement d'énergie (un coup sec, un éclat clair) et un souffle qui retombe.
+// 'auraTenue' : un bourdonnement doux en boucle (deux sous-basses légèrement désaccordées, un halo filtré qui respire),
+// allumé tout un combat ; Son.eteindreAura() le coupe en fondu (l'épuisement, ou la fin du combat).
+Object.assign(SONS, {
+  auraMontee(t, bus, o = {}) {
+    const ctx = this.ctx, force = o.force ?? 1, d = o.duree ?? 0.9;
+    // la montée : une sous-basse qui gonfle et glisse (55 → 110 Hz), un souffle grave qui s'ouvre avec elle
+    const osc = ctx.createOscillator(), g = ctx.createGain(); osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(55, t); osc.frequency.exponentialRampToValueAtTime(110, t + d);
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(120, t); f.frequency.exponentialRampToValueAtTime(900, t + d); f.Q.value = 4;
+    g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.5 * force, t + d); g.gain.exponentialRampToValueAtTime(0.0005, t + d + 0.25);
+    osc.connect(f); f.connect(g); g.connect(bus); osc.start(t); osc.stop(t + d + 0.3);
+    const souffle = this.bruit(d + 0.2, t, bus, 0.001, 300, 'lowpass');
+    // le claquement d'énergie : un coup sec et grave, un éclat clair, puis le souffle qui retombe
+    const tc = t + d;
+    const coup = ctx.createOscillator(), gc = ctx.createGain(); coup.type = 'sine'; coup.frequency.setValueAtTime(220, tc); coup.frequency.exponentialRampToValueAtTime(40, tc + 0.18);
+    gc.gain.setValueAtTime(0.9 * force, tc); gc.gain.exponentialRampToValueAtTime(0.0005, tc + 0.35); coup.connect(gc); gc.connect(bus); coup.start(tc); coup.stop(tc + 0.4);
+    this.bruit(0.08, tc, bus, 0.7 * force, 2600, 'highpass');
+    for (const [mult, v] of [[1, 0.25], [1.5, 0.12], [2.67, 0.08]]) { const e = ctx.createOscillator(), ge = ctx.createGain(); e.type = 'triangle'; e.frequency.value = 880 * mult;
+      ge.gain.setValueAtTime(v * force, tc + 0.01); ge.gain.exponentialRampToValueAtTime(0.0005, tc + 0.5); e.connect(ge); ge.connect(bus); e.start(tc); e.stop(tc + 0.55); }
+    this.bruit(1.2, tc + 0.05, bus, 0.35 * force, 700, 'lowpass');
+    return souffle;
+  },
+  auraTenue(t, bus, o = {}) {
+    const ctx = this.ctx, force = o.force ?? 1;
+    if (this.auraEnCours) this.eteindreAura(0.2);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0005, t); g.gain.exponentialRampToValueAtTime(0.22 * force, t + 0.6); g.connect(bus);
+    const oscs = [];
+    for (const [freq, type] of [[55, 'sine'], [55.6, 'sine'], [110.3, 'triangle']]) { const osc = ctx.createOscillator(); osc.type = type; osc.frequency.value = freq; const gg = ctx.createGain(); gg.gain.value = freq > 100 ? 0.35 : 1; osc.connect(gg); gg.connect(g); osc.start(t); oscs.push(osc); }
+    // le halo : un souffle filtré qui respire lentement
+    const n = Math.floor(ctx.sampleRate * 3), buf = ctx.createBuffer(1, n, ctx.sampleRate), dd = buf.getChannelData(0); for (let i = 0; i < n; i++) dd[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 420; f.Q.value = 2.5;
+    const gs = ctx.createGain(); gs.gain.value = 0.18; const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 0.23; lg.gain.value = 0.1; lfo.connect(lg); lg.connect(gs.gain);
+    src.connect(f); f.connect(gs); gs.connect(g); src.start(t); lfo.start(t);
+    this.auraEnCours = { g, arreter: () => { for (const osc of oscs) osc.stop(); src.stop(); lfo.stop(); } };
+    return src;
+  },
+});
+// L'aura s'éteint (l'épuisement, la fin du combat) : le bourdonnement s'efface en `fondu` secondes
+Son.eteindreAura = function (fondu = 1.2) {
+  const a = this.auraEnCours; if (!a) return; this.auraEnCours = null;
+  const t = this.ctx.currentTime; a.g.gain.cancelScheduledValues(t); a.g.gain.setValueAtTime(Math.max(0.0005, a.g.gain.value), t); a.g.gain.exponentialRampToValueAtTime(0.0005, t + fondu);
+  setTimeout(() => { try { a.arreter(); } catch (e) {} }, fondu * 1000 + 100);
+};

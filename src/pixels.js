@@ -165,108 +165,6 @@ const ICONES = {
   },
 };
 
-// Corps de base d'un personnage (10 x 16).
-// h = cheveux, s = peau, e = yeux, c = tunique, d = ceinture, p = pantalon, b = bottes
-const CORPS = [
-  '...hhhh...',
-  '..hhhhhh..',
-  '..hssssh..',
-  '..sesses..',
-  '..ssssss..',
-  '...ssss...',
-  '..cccccc..',
-  '.cccccccc.',
-  'sccccccccs',
-  's.dddddd.s',
-  '..cccccc..',
-  '..pppppp..',
-  '..pp..pp..',
-  '..pp..pp..',
-  '..bb..bb..',
-  '.bbb..bbb.',
-];
-
-// La taille des peuples, des plus petits aux plus grands : les hobbits (13 pixels), les nains
-// (14, un poil plus grands), les humains (16), les elfes (17), les magiciennes (18).
-// Les lignes sont celles de CORPS.
-const TAILLES_PEUPLES = {
-  hobbit: { retirer: [7, 10, 13] },
-  nain: { retirer: [10, 13] },
-  nainBanquier: { retirer: [10, 13] },
-  elfe: { doubler: [12] },
-  magicienne: { doubler: [8, 12] },
-};
-// La hauteur des mains au-dessus du sol, en pixels, pour chaque peuple (calculée plus bas).
-const MAINS_PEUPLES = {};
-
-const RACES = {
-  // Hobbit : cheveux bouclés, pieds nus.
-  hobbit: {
-    pal: { h: 0x6b3e1e, s: 0xf0c8a0, e: 0x2a1a10, c: 0x4f7a3a, d: 0x7a4a1e, p: 0x8a6a40, b: 0xf0c8a0 },
-    lignes: { 1: '.hhhhhhhh.' },
-  },
-  // Nain : grande barbe rousse, armure.
-  nain: {
-    pal: { h: 0xb5532a, s: 0xe8b890, e: 0x2a1a10, c: 0x6a6f78, d: 0x7a4a1e, p: 0x4a3a2a, b: 0x2a1a10 },
-    lignes: { 4: '..shhhhs..', 5: '..hhhhhh..', 6: '..chhhhc..', 7: '.ccchhccc.' },
-  },
-  // Humain : cheveux bruns, tunique rouge.
-  humain: {
-    pal: { h: 0x3a2a1a, s: 0xe8b890, e: 0x2a1a10, c: 0x9a3a2a, d: 0x5a3a1a, p: 0x4a4a5a, b: 0x3a2a1a },
-    lignes: {},
-  },
-  // Le colporteur qui rapporte les carnets : grand chapeau et cape brune.
-  colporteur: {
-    pal: { h: 0x4a3a2a, s: 0xe0b088, e: 0x2a1a10, c: 0x6a5a40, d: 0x3a2a1a, p: 0x5a4a3a, b: 0x2a1a10 },
-    lignes: { 0: '..hhhhhh..', 1: 'hhhhhhhhhh', 7: 'cccccccccc', 8: 'cccccccccc', 9: 'ccddddddcc', 10: '.cccccccc.' },
-  },
-  // Le banquier : haut-de-forme, costume noir, chaîne en or.
-  banquier: {
-    pal: { h: 0x1a1a20, s: 0xf0d0b0, e: 0x2a1a10, c: 0x2a2a34, d: 0xe8c040, p: 0x1a1a20, b: 0x101010 },
-    lignes: { 0: '..hhhhhh..', 1: '..hhhhhh..', 2: '.hhhhhhhh.', 4: '..sdssss..' },
-  },
-  // Les gardes : casque et armure.
-  garde: {
-    pal: { h: 0x8a909a, s: 0xe0b088, e: 0x2a1a10, c: 0x6a7080, d: 0x7a1a1a, p: 0x3a3a44, b: 0x2a2a30 },
-    lignes: { 0: '...hhhh...', 1: '..hhhhhh..', 2: '..hhhhhh..', 3: '..hehheh..' },
-  },
-  // Le mentor : l'aventurier sauvé de la rivière, barbe grise et cape verte.
-  mentor: {
-    pal: { h: 0x9a9a9a, s: 0xe8b890, e: 0x2a1a10, c: 0x2f5a3a, d: 0x7a4a1e, p: 0x4a3a2a, b: 0x3a2a1a },
-    lignes: { 4: '..shhhhs..', 5: '..hhhhhh..', 6: '..chhhhc..' },
-  },
-  // Toi : le jeune orphelin...
-  heros: {
-    pal: { h: 0x8a5a2a, s: 0xf0c8a0, e: 0x2a1a10, c: 0x3a5a8a, d: 0x7a4a1e, p: 0x6a5a40, b: 0x4a3020 },
-    lignes: {},
-  },
-  // ... ou la jeune orpheline.
-  heroine: {
-    pal: { h: 0xb0602a, s: 0xf0c8a0, e: 0x2a1a10, c: 0x8a3a5a, d: 0x7a4a1e, p: 0x6a5a40, b: 0x4a3020 },
-    lignes: { 6: '.hcccccch.', 7: '.hcccccch.' },
-  },
-  // Le vieux Grippesou : gobelin à capuche, grandes oreilles, sourire avide.
-  gobelin: {
-    pal: { h: 0x5a3a20, s: 0x7aa04a, e: 0xffd040, m: 0xf0f0d0, c: 0x6a5030, d: 0x3a2a1a, p: 0x5a4a30, b: 0x3a2a1a },
-    lignes: { 0: '...hhhh...', 1: '..hhhhhh..', 2: 'shhsssshhs', 3: '.ssessess.', 4: '..smmmms..' },
-  },
-  // Les banquiers nains : haut-de-forme, monocle, barbe blanche, costume noir.
-  nainBanquier: {
-    pal: { t: 0x1a1a20, h: 0xe0e0e0, s: 0xe8b890, e: 0x2a1a10, y: 0xe8c040, c: 0x2a2a34, d: 0xe8c040, p: 0x1a1a20, b: 0x101010 },
-    lignes: { 0: '..tttttt..', 1: '..tttttt..', 2: '.tttttttt.', 3: '..sesyes..', 4: '..shhhhs..', 5: '..hhhhhh..', 6: '..chhhhc..', 7: '.ccchhccc.' },
-  },
-  // Magicienne humaine : chapeau pointu et longue robe étoilée.
-  magicienne: {
-    pal: { h: 0x5a3a8a, s: 0xf0c8a0, e: 0x2a1a10, c: 0x6a4aa0, d: 0xe8c040, p: 0x6a4aa0, b: 0x3a2a50 },
-    lignes: { 0: '....hh....', 1: '...hhhh...', 2: '.hhhhhhhh.', 11: '..cccdcc..', 12: '..cccccc..', 13: '.cccccccc.' },
-  },
-  // Elfe : longs cheveux blonds, oreilles pointues.
-  elfe: {
-    pal: { h: 0xe8d890, s: 0xf5dcc0, e: 0x205a30, c: 0x2f6a5a, d: 0xc9a227, p: 0x3a4a3a, b: 0x5a3a20 },
-    lignes: { 2: '.shsssshs.', 6: '.hcccccch.', 7: '.hcccccch.' },
-  },
-};
-
 function creerTexture(scene, cle, lignes, palette) {
   const g = scene.make.graphics({ add: false });
   lignes.forEach((ligne, y) => {
@@ -279,34 +177,6 @@ function creerTexture(scene, cle, lignes, palette) {
   g.generateTexture(cle, lignes[0].length, lignes.length);
   g.destroy();
 }
-
-// La Faucheuse : grande robe noire en lambeaux, crâne aux yeux rouges, faux à la main.
-const FAUCHEUSE = {
-  px: [
-    '..lllllllllllw..',
-    '.ll.....kk..lw..',
-    'l.....kkkkk..w..',
-    '.....kkkkkkk.w..',
-    '....kkoooookkw..',
-    '....kxrooxrkkw..',
-    '....kkoooookkw..',
-    '....kkoxoxokkw..',
-    '...kkkkoookkkw..',
-    '..kkkgkkkkgkoo..',
-    '..kkgkkkkkkgkw..',
-    '.kkkgkkkkkkkkw..',
-    '.kkgkkkkkkkgkw..',
-    '.kkgkkkkkkkgkw..',
-    'kkkgkkkkkkkgkw..',
-    'kkgkkkkkkkkkgw..',
-    'kkgkkkkkkkkkgw..',
-    'kkkkkkkkkkkkkw..',
-    '.kkkkkkkkkkkkw..',
-    'kk.kk.kkk.kk.w..',
-    'k...k..k...k.w..',
-  ],
-  pal: { k: 0x0d0b10, g: 0x2c2836, o: 0xd8d4c4, x: 0x050405, r: 0xff2a1a, w: 0x4a3a2a, l: 0xc8d0dc },
-};
 
 // Les baluchons : un tissu noué au bout d'un bâton. Le motif du tissu dépend de ce qu'il
 // y a dedans : carreaux rouges (provisions), toile grise (armes), lin blanc à croix rouge
@@ -399,23 +269,8 @@ function creerToutesLesTextures(scene) {
     const pal = Object.fromEntries(Object.entries(ic.pal).map(([k, c]) => [k, TEINTES_SOMBRES[c] ?? c]));
     creerTexture(scene, p.id + '_sombre', ic.px, pal);
   }
-  creerTexture(scene, 'perso_faucheuse', FAUCHEUSE.px, FAUCHEUSE.pal);
   for (const [cle, ic] of Object.entries(ICONES)) {
     creerTexture(scene, cle, ic.px, ic.pal);
-  }
-  for (const [race, r] of Object.entries(RACES)) {
-    const base = CORPS.map((l, i) => r.lignes[i] || l);
-    // Chaque peuple sa taille : on retire ou on double quelques lignes du corps.
-    const t = TAILLES_PEUPLES[race] || {};
-    const lignes = [];
-    base.forEach((l, i) => {
-      if ((t.retirer || []).includes(i)) return;
-      lignes.push(l);
-      if ((t.doubler || []).includes(i)) lignes.push(l);
-      if (i === 9) MAINS_PEUPLES[race] = lignes.length; // la ligne des mains (pour porter le baluchon)
-    });
-    MAINS_PEUPLES[race] = lignes.length - MAINS_PEUPLES[race] + 1;
-    creerTexture(scene, 'perso_' + race, lignes, r.pal);
   }
 }
 

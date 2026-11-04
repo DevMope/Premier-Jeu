@@ -1284,7 +1284,7 @@ class MarcheScene extends Phaser.Scene {
     c.bringToTop(medaille);
     const ETAPES = [
       ['recit', 'Il fouille longtemps au fond de sa besace. Brisquet se redresse, les oreilles tendues.'],
-      ['parole', "Tu l'as perdue ce soir-là, dans la rue. Je l'ai ramassée, et gardée tout ce temps. Je ne savais plus pour qui... jusqu'à aujourd'hui."],
+      ['parole', "Tu l'as perdue ce soir-là, au village. Je l'ai ramassée, et gardée tout ce temps. Je ne savais plus pour qui... jusqu'à aujourd'hui."],
       ['medaille', "Une médaille d'or terni, deux épées croisées sous une étoile, au bout d'un ruban rouge usé."],
       ['parole', "Elle était à tes parents. Ils se battaient contre... contre... (il se frotte le front) Je ne sais plus. Mais ils se battaient pour nous tous."],
       ['parole', `Ils ne t'ont pas abandonné${eJ(this.G)}. Ça, j'en suis sûr. Garde-la près d'eux.`],

@@ -12,13 +12,64 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+
+
+
+
+
+
+
+
+
+
+- **Q299, Q300** — (anciennes, remplacées par le « dernier appel » et les récits de retour, à confirmer)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- **Q359** — Les personnages comme leur portrait : les grandes épaulières d'armure de Borin lui font des épaules très larges en pied. A : on les garde telles quelles ; B : plus petites sur le corps seulement (le portrait ne change pas) ?
+- **Q360** — Le manteau de Garrick en pied. A : jusqu'aux genoux, ouvert sur ses jambes ; B : jusqu'aux chevilles, comme aujourd'hui ?
+- **Q363** — Les personnages comme leur portrait, v3 (de face, une vraie vue de dos, un vrai profil, les jambes, les bras et les mains, la cape et le manteau qui bougent dans la marche) : c'est la bonne direction pour tout le monde ?
+
+- **Q367** — La grande arche aux flancs refaits (chaînes d'angle en harpe qui débordent franchement, pierres éclatées ou manquantes, base élargie et ancrée dans la terre, chasse-roues, lierre et mousse des deux côtés, tuiles qui dépassent et gouttière ; côté place, une amorce de mur éboulé vers le muret et le poids public qui la touche) : tu valides ?
+
+- **Q373** — Le nom des armes que le joueur collectionne : « les armes reliques » (ton nom), ou une variante : « les Reliques des Royaumes » (chacune vient d'un royaume), « les Reliques » tout court, « les armes héritées » ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
-- Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est à moitié caché sous le HUD : à corriger au prochain passage sur la place (phase 2 de la rue).
+- Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
+- Au comptoir, léger chevauchement entre « Dix heures sonnent au clocher… » et « Jour N » (à corriger quand CounterScene sera libre).
 
 
 ## Résolues
 
+- ~~Q365, Q366~~ Réponses du 04/11 (le poids public : perspective et objets des balances à refaire ; l'étal dans l'axe annulé, deux arches reliées par un chemin).
+- ~~Q362, Q371, Q372~~ Réponses du 04/11 dans `docs/game-design.md` (yeux en croissant sans pupille, vraie aura, crâne plus gros ; salle d'armes à supports par arme et gravité, chambre à refaire au niveau des armes ; armes reliques et armes légendaires séparées ; la quête de la salle selon les choix).
+- ~~Q358~~ La place des Mastres : validée en partie, les côtés de l'arche à refaire (04/11).
+- ~~Q342 à Q357~~ Réponses du 04/11 dans `docs/game-design.md` (yeux jaunes en croissant, halo à aligner, personnages voie A, arche plus naturelle, armures et armes validées, salle d'armes par une quête, étape 3 validée).
+- ~~Q286 à Q295~~ Armures portées validées (parchemin, épée, animation et salle d'armes à revoir) ; Faucheuse aux yeux fauves à essayer ; PNJ sans vue de face ; place des Mastres à réorganiser avec une grande arche ; poids public pas mal (03/11).
+- ~~Q341~~ Taxe progressive pour la Lumière et le neutre, l'ancienne pour l'Ombre ; grand inventaire validé presque entièrement (03/11).
+- ~~Q336 à Q340~~ Étape 1 validée ; livre des deux voies à embellir ; dénoncer le Parrain : des répercussions drôles et dangereuses (02/11).
+- ~~Q326 à Q335~~ Dépenses des trois camps toutes gardées ; cinq royaumes des Bannis ; Bannis au comptoir peu à peu ; Garrick pendant la guerre, dans l'esprit (02/11).
+- ~~Q317 à Q325~~ Dernier appel à la 7e pièce, spectateur validé, la Clairvoyance, armure aussi par les royaumes de l'Ombre ; dépenses par camp et apparition des Bannis à revoir (02/11).
+- ~~Q302, Q303, Q307 à Q316~~ Refonte Ombre/Lumière validée dans ses grandes lignes ; flair, avantages des camps et spectateur à retravailler ; dernier appel à calculer ; 8e pièce : le grand voyage à Cendrebourg (02/11).
+- ~~Q296 à Q301, Q304~~ Jauge adoucie ; pas de « tiède » ; refonte complète du système de points (298) ; extrêmes sans retour sauf par les récits (02/11).
+- ~~Q285~~ Le poids public à l'entrée de la place ; corps de garde, écrivain public, cordonnier, boulangerie gardés pour d'autres bâtiments (02/11).
+- ~~Q282 à Q284~~ Bout de rue refusé (problème d'échelle du marché) ; chaque bâtiment a une fonction claire ; atelier des Mages parfait (02/11).
+- ~~Q281~~ Les Pommeroy en A+B+C, validés (02/11).
+- ~~Q277 à Q280~~ Pommeroy : essayer les trois remèdes ; un accès au marché plus naturel que le porche ; apprentis aux Mages certains jours ; idée : la petite vie des PNJ (02/11).
+- ~~Q273 à Q276~~ Porche à refaire ; neige sur le fronton de la banque ; enseigne des Mages visible le jour et intérieur à refaire ; impasse reportée au Rempart ; Pommeroy : pierre trop large (02/11).
+- ~~Q270 à Q272~~ Faucheuse validée ; pierre validée sauf les Pommeroy ; enseigne du comptoir et maison du paon validées (02/11).
 - ~~Q266 à Q269~~ Zoom 1,0, forge A, pierre poussée, plaque du comptoir retirée, enseigne remodelée ; finir la ville des hobbits avant Pont-Royal (02/11).
 - ~~Q257, Q264, Q265~~ La Faucheuse v6 validée : jonction parfaite, cendres et traînée top ; un GIF demandé (02/11).
 - ~~Q263~~ Morgunheit, la Promesse de l'Aube (02/11).
