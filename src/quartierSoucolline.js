@@ -395,12 +395,12 @@ DECORS_QUARTIERS.soucolline = {
       const PM = PASSAGE_MASTRES, YM = PM.YM, GA = GRANDE_ARCHE;
       placeReelleRue9b(s, ici, { jour, saison, YN: YM });
       const arche = (Y, nom) => lot(L.arche, Y, () => { s.add.image(0, 2, grandeArcheHD(s, jour)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, 0, 2 - (GA.H - GA.ecriteau[1]) * 2, nom, { taille: 13, grave: true }); }, Y + 0.5);   // (Q348/Q358 : par-dessus la banque et le poids public, ses pierres de bord débordent en harpe sur leurs murs)
-      const archeRue = arche(YN, 'Passage des Mastres'); arche(YM, 'Place des Mastres');
+      arche(YN, 'Passage des Mastres'); arche(YM, 'Place des Mastres');
       for (const Y of [YN, YM]) {
         for (const [a, b] of GA.piles) ici.obstacles.push([L.arche + (a - GA.L / 2) * 1.6 - 4, Y - 6, L.arche + (b + 2 - GA.L / 2) * 1.6 + 4, Y + 4]);
         if (nuit) for (const [lx, ly] of GA.lanternes) ici.lumiere(L.arche + (lx - GA.L / 2) * 1.6, Y + (2 - (GA.H - ly + 9) * 2) * F, 60);
       }
-      passageMastres12b(s, ici, { jour, YN, lampe, archeRue });
+      passageMastres12b(s, ici, { jour, YN, lampe, archeRue: { X: L.arche, Y: YN + 1.6, cle: grandeArcheHD(s, jour), E: 1.6 } });
       // (étape 11b) le poids public refait : la halle et sa grande balance, le préposé, la file du marché (volumes6bHD.js)
       const PO = POIDS_PUBLIC2, cN = s.add.container(0, 0); poser(cN, YN + 2.5);   // (le nom, par-dessus la halle)
       poserPoidsPublic2(s, (o, yt) => poser(o, yt), PO.X, YN + 2, { jour, lettrer: (x, y, txt) => poserLettrage(s, cN, x, y, txt, { police: 'Alegreya', graisse: 900, taille: 13, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: 150, hauteur: 16, lignesMax: 1, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) }) });

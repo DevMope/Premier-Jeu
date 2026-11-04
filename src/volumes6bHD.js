@@ -787,7 +787,7 @@ function placeReelleRue9b(s, ici, { jour, saison, YN }) {
 // sur la place des Mastres : par elle, on voit la place ; on y passe dans la scène de la place. Le muret de la place (le même
 // que dans sa scène) court de part et d'autre de l'arche du marché.
 const PASSAGE_MASTRES = { YM: 1000, haut: 660, murs: [3567, 3694], sol: [3586, 3694], marches: [[1330, 1354], [1110, 1134]], x0: 3470, x1: 3810 };
-function passageMastres12b(s, ici, { jour, YN, lampe, archeRue }) {
+function passageMastres12b(s, ici, { jour, YN, lampe, archeRue = null }) {
   const P = PASSAGE_MASTRES, YM = P.YM, E = 1.6, GA = GRANDE_ARCHE, X = 3640, n = Math.ceil((YN - YM) / E);
   // les deux murs, de l'arche de la rue à celle du marché (le mur long de la placette : murLong89)
   for (const x of P.murs) ici.img(x, YM, murLong89(s, 'murPassage89_' + n, n), E, YM - 2, 0, 0);
@@ -802,14 +802,55 @@ function passageMastres12b(s, ici, { jour, YN, lampe, archeRue }) {
   // deux passants qui vont et viennent (de dos quand ils montent, de face quand ils descendent, leurs pas, leur ombre) : l'un dans
   // le haut du passage, l'autre dans le bas (on le voit de la rue, par l'arche) ; ni l'un ni l'autre ne s'arrête au ras du toit
   // de l'arche de la rue (on croirait qu'il marche dessus)
+  const passants = [];
   if (jour && typeof promeneur6b === 'function') for (const [q, x, y, aire] of [[{ nom: 'Un passant du passage', race: 'nain', feminin: false, niveau: 'novice' }, 3626, 1090, [3612, YM + 60, 3668, 1150]],
     [{ nom: 'Une passante du passage', race: 'hobbit', feminin: true, niveau: 'novice' }, 3650, 1420, [3612, 1290, 3668, YN - 30]]])
-    promeneur6b(s, q, x, y, aire, { ajouter: (img, yy) => ici.poser(img, yy), ombre: ici.ombrePerso, vitesse: 0.04 });
-  // quand JeuneGoy passe derrière l'arche de la rue (le haut de la voûte et le toit le cachent), elle s'efface à demi, en douceur
-  if (archeRue) { const fondu = () => { const h = s.heros; if (!h || !archeRue.active) return; const cache = h.y < YN - 140 && h.y > YN - 330 && Math.abs(h.x - X) < 175, a = cache ? 0.45 : 1;
-    if (Math.abs(archeRue.alpha - a) > 0.01) archeRue.setAlpha(archeRue.alpha + (a - archeRue.alpha) * 0.15); };
-    s.events.on('update', fondu); s.events.once('shutdown', () => s.events.off('update', fondu)); }
+    passants.push(promeneur6b(s, q, x, y, aire, { ajouter: (img, yy) => ici.poser(img, yy), ombre: ici.ombrePerso, vitesse: 0.04 }));
+  // quand JeuneGoy (ou la passante du bas) passe derrière l'arche de la rue, l'arche reste entière ; on voit sa silhouette au
+  // travers, là seulement où l'arche le cache : un contour clair, le dedans en ombre légère (silhouettesDerriere6b)
+  if (archeRue) silhouettesDerriere6b(s, ici, archeRue, () => [s.heros, ...passants], { sombre: ici.saison === 'givre' });   // (sur la neige, le contour sombre)
 }
+// La silhouette de ceux qu'une arche cache (comme dans les jeux vus de haut) : l'arche reste entière et opaque ; pour chaque
+// personnage passé derrière elle, une image de même taille que la sienne, posée juste devant l'arche, ne montre que ses pixels
+// cachés par la pierre (un contour clair, le dedans en ombre légère). A = { X, Y, cle, E } : le pied de l'arche au milieu, sa
+// texture, son échelle dans le monde ; qui() : les personnages à suivre.
+function silhouettesDerriere6b(s, ici, A, qui, { sombre = false } = {}) {
+  const [cr, cg, cb] = sombre ? [34, 28, 52] : [248, 240, 216], [fr0, fg0, fb0, fa0] = sombre ? [250, 246, 236, 90] : [22, 18, 40, 110];
+  const src = s.textures.get(A.cle).getSourceImage(), cv0 = document.createElement('canvas'); cv0.width = src.width; cv0.height = src.height;
+  const c0 = cv0.getContext('2d'); c0.drawImage(src, 0, 0); const aA = c0.getImageData(0, 0, src.width, src.height).data, LA = src.width, HA = src.height;
+  const cache = (wx, wy) => { const u = Math.floor((wx - A.X) / A.E + LA / 2), v = Math.floor(HA - (A.Y - wy) / A.E); return u >= 0 && v >= 0 && u < LA && v < HA && aA[(v * LA + u) * 4 + 3] > 128; };
+  // (les pixels de chaque image de personnage, et son contour : épais d'un pixel et demi à l'écran, quelle que soit son échelle)
+  const pix = {}, pixelsDe = img => { const fr = img.frame, r = Math.max(1, Math.round(1.5 / Math.abs(img.scaleX))), k = img.texture.key + '|' + fr.name + '|' + r; if (pix[k]) return pix[k];
+    const cv = document.createElement('canvas'); cv.width = fr.cutWidth; cv.height = fr.cutHeight; const c = cv.getContext('2d'); c.drawImage(fr.source.image, fr.cutX, fr.cutY, fr.cutWidth, fr.cutHeight, 0, 0, fr.cutWidth, fr.cutHeight);
+    const L = fr.cutWidth, H = fr.cutHeight, d = c.getImageData(0, 0, L, H).data, plein = (i, j) => i >= 0 && j >= 0 && i < L && j < H && d[(j * L + i) * 4 + 3] > 100, bord = new Uint8Array(L * H);
+    for (let j = 0; j < H; j++) for (let i = 0; i < L; i++) { if (!plein(i, j)) continue; let b = 0; for (let dj = -r; dj <= r && !b; dj++) for (let di = -r; di <= r; di++) if (di * di + dj * dj <= r * r + 1 && !plein(i + di, j + dj)) { b = 1; break; } bord[j * L + i] = b; }
+    return (pix[k] = { l: L, h: H, d, bord }); };
+  const sils = new Map(); let n = 0;
+  const maj = () => {
+    for (const img of qui()) {
+      if (!img) continue; let S = sils.get(img);
+      const loin = !img.active || !img.visible || img.y >= A.Y - 1 || img.y - img.displayHeight > A.Y || Math.abs(img.x - A.X) > LA * A.E / 2 + 20;
+      if (loin) { if (S) S.im.setVisible(false); continue; }
+      const P = pixelsDe(img), etat = [img.x, img.y, img.texture.key, img.frame.name, img.flipX, img.scaleX, img.scaleY].join('|');
+      if (!S) { const k = 'silhouette6b_' + (n++); S = { k, l: 0, h: 0, etat: '' }; sils.set(img, S); }
+      if (S.etat === etat) { S.im.setVisible(S.vu); continue; }
+      S.etat = etat;
+      if (S.l !== P.l || S.h !== P.h) { if (S.im) S.im.destroy(); if (s.textures.exists(S.k)) s.textures.remove(S.k); s.textures.createCanvas(S.k, P.l, P.h); S.l = P.l; S.h = P.h;
+        S.im = s.add.image(img.x, img.y, S.k); S.im.mobile = true; ici.poser(S.im, A.Y + 0.6); }
+      const tx = s.textures.get(S.k), ctx = tx.getContext(), I = ctx.createImageData(P.l, P.h), q = I.data, d = P.d, L = P.l, H = P.h;
+      const plein = (i, j) => i >= 0 && j >= 0 && i < L && j < H && d[(j * L + i) * 4 + 3] > 100;
+      let vu = false;
+      for (let j = 0; j < H; j++) for (let i = 0; i < L; i++) { if (!plein(i, j)) continue;
+        const col = img.flipX ? L - 1 - i : i, wx = img.x + (col + 0.5 - img.originX * L) * img.scaleX, wy = img.y + (j + 0.5 - img.originY * H) * img.scaleY;
+        if (!cache(wx, wy)) continue; vu = true; const o = (j * L + i) * 4;
+        if (P.bord[j * L + i]) { q[o] = cr; q[o + 1] = cg; q[o + 2] = cb; q[o + 3] = 240; } else { q[o] = fr0; q[o + 1] = fg0; q[o + 2] = fb0; q[o + 3] = fa0; } }
+      ctx.putImageData(I, 0, 0); tx.refresh(); S.vu = vu;
+      S.im.setPosition(img.x, img.y).setOrigin(img.originX, img.originY).setScale(img.scaleX, img.scaleY).setFlipX(img.flipX).setVisible(vu);
+    }
+  };
+  s.events.on('update', maj); s.events.once('shutdown', () => s.events.off('update', maj));
+}
+
 // --- (Q285) Le poids public, à l'angle est du bout de la rue, à l'entrée de la place : une petite loge ouverte sur la rue, son
 //     mur du fond de pierre modelée, deux poteaux de chêne sur leurs socles, sa sablière, son auvent de planches (son dessus vu
 //     d'en haut), un toit en croupe de tuiles ; dedans, la grande balance à fléau sur son portique de chêne, ses deux plateaux de
@@ -1095,14 +1136,10 @@ function collerImage6b(s, C, L, H, cle, x0, y0, { sx = 0, sy = 0, w = 0, h = 0, 
   }
   return P;
 }
-// Le sac de grain de la place, seul : le grand sac noué de sacsHD (creerDecorPlaceHD), le même dessin, à part
+// Le sac de grain de la place, seul : le même dessin que les sacs de la place (sacJuteHD), noué, pour la balance et le porteur
 function sacSeulHD(s) {
-  const cle = 'sacSeulHD'; if (s.textures.exists(cle)) return cle;
-  const t = toileDecor(21, 23), [cx, cy, rx, ry] = [10, 13, 9, 8.5]; t.rampes.jute = rampe(0xc0a070);   // (sacsHD : en 29, 15 ; décalé de 19, 2)
-  t.forme('jute', ellipsoide(cx, cy, rx, ry, (x, y) => y <= 21), { motif: (x, y) => ((x + 19 + y + 2) % 3 === 0 ? -0.4 : 0) });
-  // (seul, sans ses voisins, son nœud doit se lire : le col froncé qui dépasse, la ficelle de chanvre serrée autour)
-  const yc = Math.round(cy - ry); for (let x = cx - 2; x <= cx + 2; x++) { t.poser(x, yc - 3, 'jute', Math.abs(x - cx) === 2 ? 3 : 4); t.poser(x, yc - 2, 'jute', x === cx ? 3 : 2); }
-  for (let x = cx - 1; x <= cx + 1; x++) t.poser(x, yc, 'jute', 2); for (let x = cx - 2; x <= cx + 2; x++) t.poser(x, yc - 1, 'chanvre', x === cx - 2 ? 4 : 2);
+  const cle = 'sacJuteSeulHD'; if (s.textures.exists(cle)) return cle;
+  const t = toileDecor(21, 24); sacJuteHD(t, 10.5, 22, 18, 15, { g: 5 });
   t.contour(); t.texture(s, cle); return cle;
 }
 // Les poids de fonte gradués : trois cloches de fonte (une grande, une moyenne, une petite), leur dessus rond, leur anneau
@@ -1204,7 +1241,7 @@ function plateauPoidsHD(s, quoi) {
     else if (y > cy && y <= cy + 3.5 && Math.abs(nx) <= 1 - (y - cy) * 0.12) t.poser(x, y, 'laiton', y > cy + 2.5 ? 1 : 2); }   // (le ventre du plateau)
   t.contour();
   const C = toileCanvas6b(t);
-  if (quoi === 'sac') collerImage6b(s, C, L, H, sacSeulHD(s), cx - 10, 31 - 22);
+  if (quoi === 'sac') collerImage6b(s, C, L, H, sacSeulHD(s), cx - 10, 31 - 23);
   else collerImage6b(s, C, L, H, poidsFonteHD(s), cx - 11, 31 - 13);
   for (let y = Math.ceil(cy + 0.5); y < H; y++) for (let x = 0; x < L; x++) { const k = y * L + x, c = t.c[k]; if (c === null || t.m[k] !== 'laiton') continue; const i = k * 4; C.d[i] = c >> 16; C.d[i + 1] = (c >> 8) & 255; C.d[i + 2] = c & 255; C.d[i + 3] = 255; }   // (le bord avant du plateau, devant le pied de ce qu'il porte)
   C.fin(s, cle); return cle;
