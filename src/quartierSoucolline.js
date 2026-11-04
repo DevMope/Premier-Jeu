@@ -21,8 +21,8 @@
 // Les coordonnées sont celles de toute la rue Soucolline de la planche (3900 × 2080), prolongée à l'ouest jusqu'au terrain
 // de la Confrérie.
 
-const SOUCO = { W: 3900, H: 2080, YN: 1500, YH: 1060, YA: 2012, E: 1.6, F: 0.8 };
-const BORNES_SOUCO = { x0: -330, y0: 880, x1: 3900, y1: 2080 };
+const SOUCO = { W: 4000, H: 2080, YN: 1500, YH: 1060, YA: 2012, E: 1.6, F: 0.8 };
+const BORNES_SOUCO = { x0: -330, y0: 880, x1: 4000, y1: 2080 };   // (étape 11b : 100 de plus à l'est, pour le poids public et sa file ; avant 3900)
 const TRONCON_SOUCO = { x0: 1000, y0: 880, x1: 2860, y1: 2080 };   // (le tronçon du chantier 2, pour mémoire)
 // la placette, la ruelle du Pommier, l'escalier des Coteaux, la venelle (la descente des Marches), la montée du Four,
 // l'escalier du bout de la rue Haute
@@ -385,13 +385,15 @@ DECORS_QUARTIERS.soucolline = {
       placeReelleRue9b(s, ici, { jour, saison, YN });
       // (étape 10b) la grande arche des Mastres, au bout de la rue : la même qu'au bas de la place ; la place au travers
       const GA = GRANDE_ARCHE;
-      lot(L.arche, YN, () => { s.add.image(0, 2, grandeArcheHD(s, jour)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, 0, 2 - (GA.H - GA.ecriteau[1]) * 2, 'Place des Mastres', { taille: 13, grave: true }); });
+      lot(L.arche, YN, () => { s.add.image(0, 2, grandeArcheHD(s, jour)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, 0, 2 - (GA.H - GA.ecriteau[1]) * 2, 'Place des Mastres', { taille: 13, grave: true }); }, YN + 0.5);   // (Q348/Q358 : par-dessus la banque et le poids public, ses pierres de bord débordent en harpe sur leurs murs)
       for (const [a, b] of GA.piles) ici.obstacles.push([L.arche + (a - GA.L / 2) * 1.6 - 4, YN - 6, L.arche + (b + 2 - GA.L / 2) * 1.6 + 4, YN + 4]);
       if (nuit) for (const [lx, ly] of GA.lanternes) ici.lumiere(L.arche + (lx - GA.L / 2) * 1.6, YN + (2 - (GA.H - ly + 9) * 2) * F, 60);
-      const PO = POIDS_PUBLIC; lot(PO.X, YN, () => { s.add.image(0, 2, poidsPublicHD(s, jour)).setOrigin(0.5, 1).setScale(2); ecriteauRue(s, (PO.ecriteau[0] - PO.L / 2) * 2, 2 - (PO.H - PO.ecriteau[1]) * 2, 'Poids public', { taille: 10 }); });
-      contact(PO.X, PO.L); if (jour) preposePoidsPublic(s, ici, YN);
-      ici.regarder(PO.X - 66, YN - 230, PO.X + 66, YN + 4, jour ? 'Le poids public. Les marchands y pèsent ce qu’ils vendent et paient le droit de marché ; les tarifs sont à la craie sur l’ardoise.' : 'Le poids public est fermé pour la nuit. La grande balance attend les marchands du matin.', [PO.X - 40, YN + 36]);
-      ici.obstacles.push([PO.X - 66, YN - 4, PO.X + 66, YN + 6]);
+      // (étape 11b) le poids public refait : la halle et sa grande balance, le préposé, la file du marché (volumes6bHD.js)
+      const PO = POIDS_PUBLIC2, cN = s.add.container(0, 0); poser(cN, YN + 2.5);   // (le nom, par-dessus la halle)
+      poserPoidsPublic2(s, (o, yt) => poser(o, yt), PO.X, YN + 2, { jour, lettrer: (x, y, txt) => poserLettrage(s, cN, x, y, txt, { police: 'Alegreya', graisse: 900, taille: 13, couleur: '#1e1006', fond: BOIS_CLAIR_NOM, genre: 'grave', largeur: 150, hauteur: 16, lignesMax: 1, ...contrasteLettrage('#1e1006', BOIS_CLAIR_NOM) }) });
+      contact(PO.X, PO.L); if (jour) fileDuPoidsPublic(s, ici, YN);
+      ici.regarder(PO.X - 90, YN - 260, PO.X + 90, YN + 4, jour ? 'Le poids public. Les marchands y pèsent ce qu’ils vendent sur la grande balance, et paient le droit de marché ; les tarifs sont à la craie sur l’ardoise, chaque pesée au registre.' : 'Le poids public est fermé pour la nuit. La grande balance attend les marchands du matin.', [PO.X - 60, YN + 40]);
+      ici.obstacles.push([PO.X - 90, YN - 4, PO.X + 90, YN + 6]);
     }
     else lot(L.arche, YN, () => {
       const PP = PP0, k = porcheVolumeHD(s, jour, PP), hiverP = (typeof saisonActuelle === 'function' && saisonActuelle()) === 'givre';
@@ -455,7 +457,7 @@ DECORS_QUARTIERS.soucolline = {
     }
     // (l'été) les bottes de paille, rangées contre la palissade du porche, du côté est, toujours au même endroit (jamais au
     // milieu du passage, ni devant une porte, une enseigne ou un réverbère)
-    if (saison === 'moissons' && typeof texturesPailleHD === 'function') { const bx = L.arche + (PP0.reel ? 250 : PP0.ouvert ? 232 : 190); texturesPailleHD(s); ombre(bx, YN + 14, 70); img(bx, YN + 16, 'bottesPailleRue', E * 0.8, YN + 16); ici.obstacles.push([bx - 34, YN + 2, bx + 34, YN + 18]); }
+    if (saison === 'moissons' && typeof texturesPailleHD === 'function') { const bx = L.arche + (PP0.reel ? 330 : PP0.ouvert ? 232 : 190); texturesPailleHD(s); ombre(bx, YN + 14, 70); img(bx, YN + 16, 'bottesPailleRue', E * 0.8, YN + 16); ici.obstacles.push([bx - 34, YN + 2, bx + 34, YN + 18]); }
 
     // ===================== 4. la rue Haute : les maisons du côté nord, la cour du Puits, le jardin du Pommier =====================
     maison(660, YH, 'mvL3', { L: 120, etages: [50], toitMat: 'ardoiseToit', crepi: 'enduitC', fenetres: [[0.3, 0.72]], porte: { x: 0.68, l: 22, h: 48, peinte: 'porteRouge' }, fenetresRdc: [0.28], volet: 'voletB', lucarne: null, graine: 51, fleur: 'fleurR2' });
