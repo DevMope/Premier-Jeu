@@ -8,6 +8,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q389** — La chambre et la salle d'armes dans le vrai jeu (captures de la vraie scène : le soir avec le feu, la nuit avec les braises, le matin ; l'armoire, le paravent et la couverture redessinés avec leurs gestes ; les bûches entamées selon l'heure ; une Relique qui vole jusqu'à sa place ; la salle d'armes poussiéreuse le premier jour, puis torches et tapis le lendemain) : tu valides ?
 
+- **Q390** — Depuis le passage, par l'arche du marché et par-dessus ses murets, on voit maintenant le vrai bas de la place (le mendiant et Brisquet, le coin des jeux et Grippesou, la barrière, les bornes, les caisses, les flâneurs), aux mêmes endroits que sur la place ; le soir la place dort, l'hiver elle est sous la neige : tu valides ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
