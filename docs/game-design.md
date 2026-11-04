@@ -4013,7 +4013,7 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
 - **Q382 (04/11), la Faucheuse** : le crâne dans l'ombre, validé (« beaucoup mieux »). Animation en plus : ses pupilles noires en croissant de lune changent de côté de temps en temps, comme si elle regardait de droite à gauche.
 - **Q383 (04/11)** : les flammes sont bien corrigées et la chambre est validée (« bien »). Reste : les bûches de l'âtre ont un dessin intact alors qu'elles brûlent : les montrer entamées par le feu (écorce noircie, bois carbonisé, braises dans les fentes).
 - **Q384 (04/11), le passage des Mastres** : « super passage », tout est validé pour le moment, sauf le pot de fleurs posé en plein milieu du chemin, à un emplacement aléatoire et sans logique : à déplacer (contre un mur, à un endroit qui a un sens) ou à retirer.
-- **Q385 (04/11), le poids public** : beaucoup trop haut pour ce qu'il est : couper le haut pour rester à peu près sous la ligne dessinée par le joueur (capture gardée) ; ce bâtiment n'a pas besoin d'un « vrai toit » de maison. Les sacs et les nouveaux dessins de l'intérieur sont « top ».
+- **Q385 (04/11), le poids public** : beaucoup trop haut pour ce qu'il est : couper le haut pour rester à peu près sous la ligne dessinée par le joueur (capture gardée) ; ce bâtiment n'a pas besoin d'un « vrai toit » de maison. Les sacs et les nouveaux dessins de l'intérieur sont « top ». Le mot « Poids public » est mal placé, sans vrai support : lui donner un véritable écriteau (enseigne de bois ou plaque peinte, fixée), comme les autres bâtiments.
 
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
