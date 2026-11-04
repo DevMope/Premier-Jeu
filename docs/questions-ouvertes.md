@@ -28,26 +28,12 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q342** — La Faucheuse : les yeux rouges ou fauves (jaune d'ambre) ? (capture côte à côte avec le nouveau crâne)
-- **Q343** — Le halo de terreur au comptoir : il n'apparaît qu'à partir de 3 morts annoncées le même jour, grandit à 7 puis à 15 ; c'est un vieux dessin en cercles rouges, qui ne ressemble pas aux auras validées. On le remplace par sa vraie aura (le voile noir et blanc) à un palier qui suit le nombre de morts ? Et dès sa première visite, ou seulement à partir de 3 morts ?
-- **Q344** — Les personnages comme leur portrait (planche d'essai, 4 morceaux) : voie A, la tête et les habits du portrait sur le corps d'aujourd'hui, qui garde ses vues, sa marche, ses gestes et ses armes (4 à 5 itérations, conseillée), ou voie B, un seul moteur pour tout (10 à 15 itérations, beaucoup de risques de casser) ?
-- **Q345** — Quand le portrait et le corps ne disent pas la même chose (Garrick : veste courte au comptoir, long manteau en pied ; Lindë rousse au comptoir, blonde dans la file), c'est toujours le portrait qui fait foi ? Ou, pour Garrick, on donne le long manteau au portrait ?
-- **Q346** — Le profil des personnages : un vrai profil, nez en silhouette (un dessin neuf), ou un trois-quarts appuyé suffit ?
-- **Q347** — Les proportions : le corps tiré du portrait est un peu plus grand (une tête de plus environ, une tunique plus longue). On garde, ou on le ramène à la taille d'aujourd'hui ?
 
-- **Q348** — La grande arche des Mastres (étape 10b : deux grosses piles de pierre, un arc en plein cintre avec sa clé, un toit de tuiles, deux lanternes le soir, des bacs de fleurs, l'écriteau « Place des Mastres » ; la même vue de la rue et de la place) : c'est la belle grande arche que tu voulais ?
-- **Q349** — Les changements de la place des Mastres, pour qu'elle corresponde à la rue (rien n'est supprimé) : le zoom à 1,0 ; le porche du sud remplacé par la grande arche ; le coin des jeux et le mendiant un peu décalés pour laisser la place aux piles de l'arche ; la barrière ouest déplacée ; les trois chemins en éventail remplacés par une seule allée droite, plus large, de l'arche à la fontaine, que les lieux du bas rejoignent à angle droit ; l'invite du bas passée en haut. Tu valides ?
-- **Q350** — Depuis la rue, on ne voit encore aucun étal par l'arche (dans la vraie disposition, ils sont hors de l'axe). On en déplace un dans l'axe de l'allée pour qu'il se voie de la rue ?
 
-- **Q351** — Les armures v2 (le parchemin qui ne déborde plus, le Pavois de la planche 93 sur le parchemin, la Promesse de l'Aube redessinée, l'obtention d'une pièce en GIF) : tu valides ?
-- **Q352** — La salle d'armes (planche 94) : la vieille cave voûtée sous l'arrière-boutique et la chambre, rouverte par une trappe, plutôt qu'une 4e pièce de l'étage ? Elle se rouvrirait le matin où arrive la Promesse de l'Aube : gratuite, ou un chantier payant ?
-- **Q353** — Le mannequin et les armes accrochées au mur de la chambre descendent-ils dans la salle d'armes, ou la chambre garde-t-elle le mannequin ?
-- **Q354** — L'obtention d'une pièce : les sons (harpe et chœur en Lumière, bourdon et chœur mineur en Ombre, un choc de métal à la pose) te vont ? Et la pièce part-elle des mains du messager (comme maintenant) ou monte-t-elle du sol ?
 
-- **Q355** — L'étape 3 de la refonte Ombre/Lumière (4 fiches) : les doyens qu'on fait taire ou qu'on laisse finir ; les quatre fissures du Sage (la berceuse, les pommiers d'Ortie, la nuit au ciel orange, la médaille) ; les églises-relais, les convois, les dons au Drômmath ; et les suites quand on dénonce le Parrain (la gazette, la sardine dans un gant, la chorale de chats, la grève des chats, l'avocat Maître Fouine, le vol, la lettre « Je suis déçu. C'est pire. », la carte postale de la plage). Tu valides ? Attention, des personnages nouveaux, pas encore validés, y apparaissent : Sœur Clémence et Ysolde la vampire (les églises), le sergent Bourrel et Fenrir l'éclaireur loup-garou (les convois), Nekhet, la voix du Drômmath, et Maître Fouine.
-- **Q356** — La taxe par côté est réglée : au jour 120, environ 135 000 p. en Lumière, 88 000 en neutre, 51 000 en Ombre (au jour 200 : 372 000, 356 000, 98 000). L'Ombre reste au quart de la Lumière jusqu'à l'étape des dépenses, qui lui donnera ses recettes. D'accord ?
 
-- **Q357** — Les sept autres armes légendaires redessinées au niveau de la Promesse de l'Aube (Pique-Bourdon, Brise-Montagne, Chant-de-Lune, le Bâton des Sept Étoiles, Souffle-de-Bambou, Croc-de-Wyverne, la Lame sans Nom), en grand quand le messager les apporte et en petit sur le mur de la chambre : tu valides ?
+
+- **Q358** — (reformulation de la Q349) Les changements de la place des Mastres pour qu'elle corresponde à la rue (le zoom à 1,0 ; le porche du sud remplacé par la grande arche ; le coin des jeux et le mendiant un peu décalés pour laisser la place aux piles de l'arche ; une seule allée droite et plus large de l'arche à la fontaine, au lieu des trois chemins en éventail ; l'étiquette du bas passée en haut) : tu les valides ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -57,6 +43,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q342 à Q357~~ Réponses du 04/11 dans `docs/game-design.md` (yeux jaunes en croissant, halo à aligner, personnages voie A, arche plus naturelle, armures et armes validées, salle d'armes par une quête, étape 3 validée).
 - ~~Q286 à Q295~~ Armures portées validées (parchemin, épée, animation et salle d'armes à revoir) ; Faucheuse aux yeux fauves à essayer ; PNJ sans vue de face ; place des Mastres à réorganiser avec une grande arche ; poids public pas mal (03/11).
 - ~~Q341~~ Taxe progressive pour la Lumière et le neutre, l'ancienne pour l'Ombre ; grand inventaire validé presque entièrement (03/11).
 - ~~Q336 à Q340~~ Étape 1 validée ; livre des deux voies à embellir ; dénoncer le Parrain : des répercussions drôles et dangereuses (02/11).
