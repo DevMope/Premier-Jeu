@@ -47,8 +47,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q386** — Le regard de la Faucheuse qui va de droite à gauche (au centre 2 à 4 s, un glissement par une image intermédiaire, quelques secondes sur le côté ; la lueur des yeux un peu adoucie pour qu'on voie la pupille bouger) : tu valides ?
-- **Q387** — Les corps v6 (le nain à 3/4 d'un humain, tête agrandie ; jambes un peu plus courtes ; carrures un peu plus larges ; Garrick avec sa barbe du portrait, sa pipe fumante et ses cheveux façon Aragorn) : les corps te conviennent-ils, pour passer ensuite aux habits ?
 
 - **Q388** — Le poids public en halle basse (plus d'étage ni de toit de maison : un appentis de tuiles bas), avec un vrai écriteau de bois cloué sur la sablière ; les bacs de fleurs du passage contre les murs, aux paliers ; la cour de déchargement de la place déplacée pour libérer le chemin de la carte du monde : tu valides ?
 
@@ -60,6 +58,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q386, Q387~~ Regard de la Faucheuse validé ; corps v6 à reprendre (cou de dos, tresses du nain, bras de Garrick, jambes du nain, visages différents par peuple) (04/11).
 - ~~Q384, Q385~~ Passage validé (sauf le pot au milieu du chemin) ; poids public trop haut, sans vrai toit ; sacs et intérieur validés (04/11).
 - ~~Q383~~ Flammes et chambre validées ; les bûches à montrer brûlées (04/11).
 - ~~Q382~~ Le crâne de la Faucheuse validé ; ses pupilles en croissant regardent de droite à gauche de temps en temps (04/11).
