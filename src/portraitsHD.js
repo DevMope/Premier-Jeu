@@ -45,6 +45,7 @@ class ToileHD {
     this.cel = false;                       // true : trois tons francs (ombre, teinte, lumière) au lieu d'un dégradé
   }
   dans(x, y) { return x >= 0 && y >= 0 && x < this.l && y < this.h; }
+  effacer(x, y) { if (!this.dans(x, y)) return; const i = y * this.l + x; this.c[i] = null; this.m[i] = null; this.k[i] = 0; }   // (phase 4 : pour redessiner un toit)
   poser(x, y, mat, i) {
     if (!this.dans(x, y)) return;
     i = Math.max(0, Math.min(5, i));

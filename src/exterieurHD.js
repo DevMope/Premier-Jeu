@@ -612,7 +612,7 @@ function creerAccessoiresFacade(scene) {
 // (v1.31) l'appartement bâti : la façade est plus haute de tout un étage (les scènes en plan serré reculent la vue d'autant)
 function facadeAvecEtage(G) { return !!G && niveauFacade(G) === 3 && typeof etageA === 'function' && etageA(G, 'appartement') && !(typeof styleDeMaison === 'function' && styleDeMaison(G)); }
 const RECUL_ETAGE = 56;
-function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3, { fumee = true, etage: avecEtage = true, vent = 40 } = {}) {
+function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.nomShop) || NOM_SHOP_DEFAUT, n = window.GAME ? niveauFacade(window.GAME) : 3, { fumee = true, etage: avecEtage = true, vent = 40, volume = false, enseigneSurFacade = false } = {}) {
   creerFacadeHD(scene, n);
   // (v1.30, planche 54) l'appartement : la belle maison gagne un étage et un balcon (le toit et la cheminée montent d'autant)
   // (v1.57) un style de maison acheté chez l'architecte de Pont-Royal remplace la façade (la porte, la vitrine et l'enseigne restent à leur place)
@@ -621,14 +621,19 @@ function dessinerFacade(scene, cx, sol, nomShop = (window.GAME && window.GAME.no
   if (etage) creerEtageHD(scene);
   const monte = etage ? FACADE.etage[3] * 2 : 0;
   if (stylePR) fumee = false;   // (leurs cheminées ne sont pas au même endroit)
-  const image = scene.add.image(cx, sol + 2, stylePR ? maisonStylePR(scene, stylePR) : etage ? 'facadeHD_4' : 'facadeHD_' + n).setOrigin(0.5, 1).setScale(2);
+  // (vue de haut, la rue Soucolline) volume : la même façade sous son toit en croupe (maisonVolumeHD.js) ; pas encore les styles de Pont-Royal
+  const vol = volume && !stylePR && typeof comptoirVolumeHD === 'function';
+  const image = scene.add.image(cx, sol + 2, stylePR ? maisonStylePR(scene, stylePR) : vol ? comptoirVolumeHD(scene, n, etage) : etage ? 'facadeHD_4' : 'facadeHD_' + n).setOrigin(0.5, 1).setScale(2);
   const gauche = cx - FACADE.L, haut = sol + 2 - FACADE.H * 2;
   const ecran = ([x, y, l, h]) => [gauche + x * 2, haut + y * 2, l * 2, h * 2];
   const tonneaux = scene.add.image(gauche + FACADE.L * 2 - 26, sol + 4, 'tonneauxHD').setOrigin(0, 1).setScale(2);
   // L'enseigne pend à son support, et se balance un peu
   // (v0.93) elle s'améliore avec la maison entière ; l'écriture et la couleur du fond se choisissent au bureau
-  const ex = gauche + (FACADE.enseigne[0] + 6) * 2, ey = haut + FACADE.enseigne[1] * 2;
-  const enseigne = poserEnseigne(scene, ex, ey - (n === 3 ? 8 : 0), n, nomShop);
+  // (Q269, la rue Soucolline) enseigneSurFacade : plus compacte (0,8), pendue sous l'égout au-dessus de la fenêtre-comptoir,
+  // toute sur la façade (elle ne déborde plus sur la maison voisine), à tous les niveaux
+  const surF = enseigneSurFacade && !stylePR, ex = surF ? gauche + 60 * 2 : gauche + (FACADE.enseigne[0] + 6) * 2, ey = surF ? haut + (n >= 2 ? 108 : n === 0 ? 116 : 113) * 2 - 2 : haut + FACADE.enseigne[1] * 2;
+  const enseigne = poserEnseigne(scene, ex, ey - (n === 3 && !surF ? 8 : 0), n, nomShop);
+  if (surF) enseigne.setScale(0.8);
   scene.tweens.add({ targets: enseigne, angle: { from: -2.5, to: 2.5 }, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   // Un filet de fumée qui monte de la cheminée
   creerHalo(scene);
@@ -1724,6 +1729,38 @@ function creerComptoirCarteHD(scene) {
 // --- Le décor de la grand-place du marché ---
 
 // Une fontaine de pierre à deux vasques, des sacs de grain, une charrette à foin, des tonneaux.
+// (étape 12b) Un sac de toile de jute plein de grain, affaissé par son poids : son ventre qui s'élargit vers le bas, son fond
+// aplati, la trame de la toile, ses plis (du col vers les épaules, et celui où il s'affaisse), son col froncé noué d'une ficelle
+// de chanvre, des grains qui dépassent du col ouvert, un peu de farine sur ses épaules et à son pied. (cx, yb) : le milieu de
+// son fond ; w, h : sa largeur, la hauteur de son corps (le col en plus) ; ouvert : le col roulé, le blé à nu. Le même dessin
+// partout : les sacs de la place et de l'épicier (sacsHD), la charrette, la balance du poids public, le porteur (sacSeulHD).
+function sacJuteHD(t, cx, yb, w, h, { ouvert = false, g = 0 } = {}) {
+  if (!t.rampes.jute) t.rampes.jute = rampe(0xc0a070); if (!t.rampes.ble) t.rampes.ble = rampe(0xe8c050); if (!t.rampes.farine) t.rampes.farine = rampe(0xf2ecdc);
+  const W2 = w / 2, yT = yb - h + 1, K = k => Math.max(0, Math.min(5, k));
+  const hw = v => W2 * (v < 0.3 ? 0.42 + 0.5 * Math.sin(v / 0.3 * Math.PI / 2) : 0.92 + 0.08 * Math.sin(Math.min(1, (v - 0.3) / 0.55) * Math.PI / 2)) * (v > 0.86 ? 1 - ((v - 0.86) / 0.14) ** 2 * 0.12 : 1);
+  const pli = new Set(), clair = new Set(), cle = (x, y) => x + ',' + y;
+  for (const [d, n, p] of [[-1, 0.62, 0.55], [1, 0.3, 0.9]]) for (let k = 0; k < Math.round(h * n); k++) { const x = Math.round(cx - 0.5 + d * (1 + k * p)), y = yT + 1 + k; pli.add(cle(x, y)); clair.add(cle(x - 1, y)); }   // (les plis du col, inégaux)
+  const ya = yT + Math.round(h * 0.8); for (let x = Math.round(cx + W2 * 0.05); x <= Math.round(cx + W2 * 0.7); x++) { const y = ya - Math.round(((x - cx) / W2) * 2); pli.add(cle(x, y)); clair.add(cle(x, y - 1)); }   // (le pli où il s'affaisse, sur le côté)
+  for (let y = yT; y <= yb; y++) { const v = (y - yT) / Math.max(1, h - 1), r = hw(v);
+    for (let x = Math.round(cx - r); x < Math.round(cx + r); x++) { const nx = (x + 0.5 - cx) / r;
+      let k = 3 + (nx < -0.4 ? 1 : nx > 0.45 ? -1 : 0) + (v < 0.2 ? 1 : 0) - (v > 0.9 ? 1 : 0) - (nx > 0.8 ? 1 : 0);
+      if (y % 2 === 0 && (x + (y >> 1)) % 2 === 0) k -= 1;   // (la trame de la toile)
+      if (pli.has(cle(x, y))) k -= 2; else if (clair.has(cle(x, y))) k += 1;
+      t.poser(x, y, 'jute', K(k)); } }
+  const c = Math.round(cx - 0.5);
+  if (ouvert) {   // (le col roulé : un bourrelet de toile, le blé en tas au-dessus)
+    for (let x = c - 3; x <= c + 3; x++) { t.poser(x, yT - 1, 'jute', Math.abs(x - c) === 3 ? 2 : 4); t.poser(x, yT, 'jute', 2); }
+    for (let x = c - 2; x <= c + 2; x++) t.poser(x, yT - 2, 'ble', (x + g) % 2 ? 4 : 5); for (let x = c - 1; x <= c + 1; x++) t.poser(x, yT - 3, 'ble', x === c ? 5 : 4);
+  } else {   // (le col froncé, la ficelle et son nœud, la toile qui s'évase au-dessus, les grains qui en dépassent)
+    for (let x = c - 1; x <= c + 1; x++) t.poser(x, yT - 1, 'jute', x === c ? 3 : 2);
+    for (let x = c - 2; x <= c + 2; x++) t.poser(x, yT - 2, 'chanvre', x < c ? 4 : 2); t.poser(c + 3, yT - 2, 'chanvre', 3); t.poser(c + 3, yT - 1, 'chanvre', 2); t.poser(c + 4, yT, 'chanvre', 1);
+    for (let x = c - 2; x <= c + 2; x++) t.poser(x, yT - 3, 'jute', (x - c) % 2 ? 2 : 4);
+    for (let x = c - 3; x <= c + 3; x++) t.poser(x, yT - 4, 'jute', Math.abs(x - c) === 3 ? 3 : 2);
+    for (const x of [c - 1, c, c + 1]) t.poser(x, yT - 4, 'ble', x === c ? 5 : 4); t.poser(c, yT - 5, 'ble', 5); t.poser(c - 2 + (g % 2) * 3, yT - 5, 'ble', 4);
+  }
+  for (let n = 0; n < 6; n++) { const x = Math.round(cx - W2 * 0.7 + hachage(n, 1, 8400 + g) * W2 * 0.9), y = yT + 2 + Math.floor(hachage(n, 2, 8400 + g) * h * 0.3); if (t.mat(x, y) === 'jute') t.poser(x, y, 'farine', 3 + (n % 2)); }   // (la farine sur ses épaules)
+  for (const dx of [-W2 - 1, W2 + 0.5]) if (hachage(g, dx > 0 ? 1 : 2, 8401) > 0.3) { const x = Math.round(cx + dx); if (!t.mat(x, yb)) t.poser(x, yb, 'farine', 2); }   // (et à son pied)
+}
 function creerDecorPlaceHD(scene) {
   if (scene.textures.exists('fontaineHD')) return;
   // La fontaine (60×44) : un bassin octogonal, une colonne, une vasque haute
@@ -1756,15 +1793,11 @@ function creerDecorPlaceHD(scene) {
     }
     t.contour(); t.texture(scene, 'charretteHD');
   }
-  // Des sacs de grain (40×24) : trois sacs ventrus, noués, l'un ouvert sur le blé
+  // Des sacs de grain (40×24) : trois sacs de jute (étape 12b : sacJuteHD, affaissés, noués), celui du fond ouvert sur le blé
   {
     const t = toileDecor(40, 24);
-    t.rampes.jute = rampe(0xc0a070); t.rampes.ble = rampe(0xe8c050);
-    for (const [cx, cy, rx, ry] of [[10, 15, 8, 8], [29, 15, 9, 8.5], [20, 11, 7, 7]]) {
-      t.forme('jute', ellipsoide(cx, cy, rx, ry, (x, y) => y <= 23), { motif: (x, y) => ((x + y) % 3 === 0 ? -0.4 : 0) });
-      t.poser(cx, Math.round(cy - ry), 'chanvre', 2); t.poser(cx - 1, Math.round(cy - ry) - 1, 'jute', 3); t.poser(cx + 1, Math.round(cy - ry) - 1, 'jute', 3);
-    }
-    t.forme('ble', ellipsoide(20, 5, 4, 1.6), { decalage: 0.6 });
+    sacJuteHD(t, 20, 17, 14, 10, { ouvert: true, g: 3 });
+    sacJuteHD(t, 10, 23, 16, 13, { g: 1 }); sacJuteHD(t, 29, 23, 18, 14, { g: 2 });
     t.contour(); t.texture(scene, 'sacsHD');
   }
   // Des tonneaux (34×22) : deux couchés, un debout

@@ -6,15 +6,22 @@
 
 // (v1.64, planche 89 v4 b, chantier 1 : la place remise d'aplomb) Au-dessus de la place monte le pied des Coteaux (haut : la
 // bande des y négatifs, que la caméra montre quand on est en haut de la place)
-const PLACE_MARCHE = { L: 1800, H: 1040, haut: 140, zoom: 1.25, zoomPanneau: 0.95, vitesse: 0.3, course: 0.6, echelle: 4.5 };
+const PLACE_MARCHE = { L: 1800, H: 1040, haut: 140, zoom: 1.0,   // (étape 10b, Q-03/11 : zoom 1,0 validé, comme la rue ; avant 1,25)
+  zoomAvant: 1.25, zoomPanneau: 0.95, vitesse: 0.3, course: 0.6, echelle: 4.5 };
 // Où est chaque lieu (sa base, au sol), en pixels de la place
 //   (v1.64) la cabane de Barnabé a quitté la place : elle est au bord de l'étang, près du Vieux Moulin, au bout de la route
 //   qui part de la place vers l'est (le poteau, au bout de la route) ; le chemin creux monte aux Coteaux ; les portes rondes
 //   du bas des Coteaux donnent sur la place
 const LIEUX_PLACE = { forge: [330, 340], apothicaire: [560, 310], encheres: [900, 290], gedeon: [1240, 310], tailleuse: [1470, 340],
-  bazar: [170, 610], brocante: [170, 870], garderobe: [1630, 610], crieur: [660, 560], tableau: [1140, 560], jeux: [560, 920], mendiant: [770, 1000],
-  fontaine: [900, 660], carte: [1090, 1000], arche: [900, 1040], moulin: [1784, 740], coteaux: [1070, 176],
+  bazar: [170, 610], brocante: [170, 870], garderobe: [1630, 610], crieur: [660, 560], tableau: [1140, 560], jeux: [470, 905], mendiant: [620, 975],   // (étape 10b : le coin des jeux et le mendiant s'écartent de la grande arche ; avant [560, 920], [770, 1000])
+  // (étape 11b : la carte du monde laisse l'angle au poids public ; avant [1090, 1000])
+  fontaine: [900, 660], carte: [1430, 1000], arche: [900, 1040], moulin: [1784, 740], coteaux: [1070, 176],
   ...Object.fromEntries(COTEAUX_PLACE.bas.map(([x], i) => ['porte' + i, [x, COTEAUX_PLACE.levre]])) };
+// (étape 12b) les arbres, les buissons et les barrières de la place : la scène de la place les pose, et la rue en reprend ce qu'on
+// voit par l'arche du marché (placeVueDuPassage12, volumes6bHD.js) : les mêmes données, ils ne divergent jamais
+const ARBRES_PLACE = [[70, 420, 0], [70, 760, 1], [1740, 420, 1], [1720, 1030, 0], [420, 740, 1], [1390, 760, 0], [560, 200, 0], [1250, 200, 1], [40, 1040, 0], [330, 1040, 1]];
+const BUISSONS_PLACE = [[250, 760], [1520, 760], [700, 760], [1100, 760]], BUISSONS_PLACE_HORS_MARCHE = [[460, 470], [1340, 470]];   // (les jours de marché, les charrettes des colporteurs prennent la place des deux derniers)
+const BARRIERES_PLACE = [[530, 1020], [1660, 1020]];
 // (v1.64) Ce qu'on devine derrière les portes rondes du bas des Coteaux
 const PORTES_COTEAUX = [
   'Une porte ronde, vert mousse, au bouton de laiton bien astiqué. Ça sent la tarte aux mûres jusque sur la place.',
@@ -52,6 +59,19 @@ Object.assign(MarcheScene.prototype, {
     return { mendiant: ['Le mendiant', 'et son chien'], bazar: ['Le Bazar de Rosalie', 'Cadeaux'], encheres: ['Les enchères', 'Trouvailles à vendre'], jeux: ['Le coin des jeux', 'Dés, bonneteau'],
       crieur: ['Le crieur', 'Nouvelles du jour'], tableau: ['Le tableau d’affichage', 'Commandes, primes'], brocante: ['La brocante de Firmin', 'Décorations'],
       garderobe: this.fete ? ["L'étal de l'Union", 'Atours de la fête'] : ['La garde-robe de Marcelline', 'Vêtements'], peche: ['La cabane de Barnabé', 'Pêche'] }[cle] || [cle, ''];
+  },
+
+  // (étape 12b) Où poser l'invite sans qu'elle couvre un autre texte : en haut, elle descend sous les nouvelles du matin tant
+  // qu'elles se lisent, et sous le nom peint de l'estrade du crieur s'il est là ; en bas, elle remonte au-dessus de lui
+  yInvitePlace(y0) {
+    const inv = this.invitePlace, h = inv.height, w = inv.width, occ = [];
+    const nm = this.nouvellesMatin; if (nm && nm.active && nm.visible && nm.alpha > 0.02) { const b = nm.getBounds(); occ.push(b); }
+    const lc = this.lettrageCrieur; if (lc && lc.active && lc.visible) occ.push(lc.getBounds());
+    let y = y0; const haut = y0 < 270;
+    for (let k = 0; k < 6; k++) { const a = y - h / 2, b = y + h / 2, x0 = 480 - w / 2, x1 = 480 + w / 2;
+      const c = occ.find(r => a < r.bottom + 3 && b > r.y - 3 && x0 < r.right && x1 > r.x); if (!c) break;
+      y = haut ? c.bottom + 4 + h / 2 : c.y - 4 - h / 2; }
+    return Phaser.Math.Clamp(y, 40 + h / 2, 474 - h / 2);
   },
 
   // Où se tenir pour parler à un lieu : devant lui, face à lui
@@ -100,6 +120,8 @@ Object.assign(MarcheScene.prototype, {
       this.monde.remove(g);
       g.setPosition(x, y).setScale(0.9).setVisible(true).setAlpha(1);
       place.add(g); g.cle = k;
+      // (étape 10b-11b) le marchand derrière son étal nous fait face (plus de trois quarts)
+      if (MARCHANDS[k]) { const m = MARCHANDS[k], q = { nom: m.nom, race: m.race, feminin: /Mère|Hilda|Rosalie/.test(m.nom), niveau: 'aguerri' }; for (const o of g.list) if (o.texture && /^corps_/.test(o.texture.key) && !/_face$/.test(o.texture.key)) o.setTexture(corpsHD(this, q, null, 'face')); }
       // (v1.49 : un second groupe au même endroit, comme le décor de l'étal de l'Union, n'a ni ombre ni obstacle de plus)
       if (!poses.has(k)) { poses.add(k); ombre(x, y + 4, PETITS_LIEUX.includes(k) ? 90 : 200); this.obstacles.push(PETITS_LIEUX.includes(k) ? [x - 30, y - 22, x + 30, y + 2] : [x - 70, y - 30, x + 70, y + 4]); }   // (v1.61 : l'estrade du crieur, le tableau, le mendiant bloquent aussi)
       // un clic sur le lieu : JeuneGoy y va à pied, puis ce que le lieu faisait déjà
@@ -140,11 +162,13 @@ Object.assign(MarcheScene.prototype, {
     this.actionsLieux.coteaux = () => this.message('Le chemin creux monte aux Coteaux entre ses deux murets : là-haut, les portes rondes des familles hobbites, leurs jardins, leurs cheminées. Une barrière ferme les premières marches, qu’on refait : on montera une autre fois.');
     COTEAUX_PLACE.bas.forEach((b, i) => { this.actionsLieux['porte' + i] = () => this.message(PORTES_COTEAUX[i % PORTES_COTEAUX.length]); });
     // les arbres, les buissons, les barrières : dans l'herbe, jamais sur les chemins
-    [[70, 420, 0], [70, 760, 1], [1740, 420, 1], [1720, 1030, 0], [420, 740, 1], [1390, 760, 0], [560, 200, 0], [1250, 200, 1], [40, 1040, 0], [330, 1040, 1]].forEach(([x, y, v]) => {
+    ARBRES_PLACE.forEach(([x, y, v]) => {   // (étape 12b : ces données servent aussi à la rue, qui voit le bas de la place par l'arche du marché)
       ombre(x + 10, y, 120); { const cle = arbrePlaceHD(this, pal, v, x, y); place.add(this.add.image(x, y, cle).setOrigin(0.5, origineArbre(this, cle)).setScale(2.2)); } this.obstacles.push([x - 16, y - 16, x + 16, y + 2]); });
     const marcheDuJour = typeof jourDeMarche === 'function' && jourDeMarche(G);   // (v1.54 : les jours de marché, les charrettes des colporteurs prennent la place de deux buissons)
-    [[250, 760], [1520, 760], [700, 760], [1100, 760], ...(marcheDuJour ? [] : [[460, 470], [1340, 470]])].forEach(([x, y]) => { ombre(x, y, 70); { const cle = buissonPlaceHD(this, pal, x, y); place.add(this.add.image(x, y, cle).setOrigin(0.5, origineArbre(this, cle)).setScale(2.2)); } this.obstacles.push([x - 26, y - 14, x + 26, y + 2]); });
-    [[640, 1020], [1160, 1020]].forEach(([x, y]) => { ombre(x, y, 100); place.add(this.add.image(x, y, barrierePlaceHD(this, 5)).setOrigin(0.5, 1).setScale(2.2)); this.obstacles.push([x - 52, y - 12, x + 52, y + 2]); });
+    [...BUISSONS_PLACE, ...(marcheDuJour ? [] : BUISSONS_PLACE_HORS_MARCHE)].forEach(([x, y]) => { ombre(x, y, 70); { const cle = buissonPlaceHD(this, pal, x, y); place.add(this.add.image(x, y, cle).setOrigin(0.5, origineArbre(this, cle)).setScale(2.2)); } this.obstacles.push([x - 26, y - 14, x + 26, y + 2]); });
+    BARRIERES_PLACE.forEach(([x, y]) => { ombre(x, y, 100);   // (étape 11b : la barrière de l'est s'écarte du poids public ; avant 1160)
+        // (étape 10b : la barrière ouest suit le mendiant ; avant [640, 1020])
+      place.add(this.add.image(x, y, barrierePlaceHD(this, 5)).setOrigin(0.5, 1).setScale(2.2)); this.obstacles.push([x - 52, y - 12, x + 52, y + 2]); });
     // les jours de fête, des guirlandes au-dessus de la place
     if (this.fete || this.feteHiver) {
       const c = this.add.container(0, 0); c.yTri = 5000;
@@ -303,7 +327,7 @@ Object.assign(MarcheScene.prototype, {
       } else if (k === 'crieur') {   // « Nouvelles du jour » : peint sur le devant de l'estrade
         faits.add(k);
         g.list.filter(o => o.type === 'Text' && /NOUVELLES/.test(o.text)).forEach(o => o.destroy());
-        poserLettrage(this, g, 4, -20, 'NOUVELLES\nDU JOUR', { police: 'Alegreya', graisse: 900, taille: 12, couleur: '#f6e2a0', fond: 0x3a2414, genre: 'peint', largeur: 84, hauteur: 28, lignesMax: 2, ...contrasteLettrage('#f6e2a0', 0x3a2414) });
+        this.lettrageCrieur = poserLettrage(this, g, 4, -20, 'NOUVELLES\nDU JOUR', { police: 'Alegreya', graisse: 900, taille: 12, couleur: '#f6e2a0', fond: 0x3a2414, genre: 'peint', largeur: 84, hauteur: 28, lignesMax: 2, ...contrasteLettrage('#f6e2a0', 0x3a2414) });
       }
     }
     // (le tir à l'arc et la grande roue : leurs textes de la rue, devenus inutiles, sont détruits aussi)
@@ -505,6 +529,32 @@ Object.assign(MarcheScene.prototype, {
   // (v1.62, planche 80, système A validé) Le porche couvert, au bas de la place : deux poteaux de chêne, un petit toit de
   // tuiles, les battants ouverts ; le nom est sur le linteau. Seuls les poteaux (et les battants rabattus) bloquent.
   poserPorchePlace(X = 900, Y = 1040) {
+    // (étape 10b) la grande arche des Mastres (volumes6bHD.js), la même que vue du bout de la rue : on ne bute que sur ses piles
+    if (typeof grandeArcheHD === 'function') {
+      const place = this.place, A = GRANDE_ARCHE, E = 1.6;
+      const ombre = this.add.image(X, Y + 2, ombrePlaceHD(this)).setScale(300 / 64, 30 / 24).setAlpha(0.7); ombre.yTri = Y - 60; place.add(ombre);
+      const im = this.add.image(X, Y, grandeArcheHD(this, true)).setOrigin(0.5, 1).setScale(E).setInteractive({ useHandCursor: true, pixelPerfect: false }).on('pointerdown', () => this.allerVersLieu('arche'));
+      im.yTri = Y; place.add(im);
+      poserLettrage(this, place, X, Y - (A.H - A.ecriteau[1]) * E, this.nomLieuPlace('arche')[0], { police: 'Alegreya', graisse: 900, taille: 16, couleur: '#f0c850', fond: 0x6a6a70, genre: 'dore', largeur: 180, hauteur: 21, lignesMax: 1, ...contrasteLettrage('#f0c850', 0x6a6a70) }).yTri = Y + 0.1;
+      for (const [a, b] of A.piles) this.obstacles.push([X + (a - A.L / 2) * E - 2, Y - 40, X + (b + 2 - A.L / 2) * E + 2, Y]);
+      // (étape 11b) autour de l'arche, côté place : le muret qui la raccorde à la barrière de l'ouest, deux bornes au départ de
+      // l'allée, des pots, un banc près de la carte du monde, un arbre. (étape 12b) Le poids public est resté dans la rue (au
+      // bout du passage des Mastres, l'arche du marché ne touche plus la halle) : à l'est de l'arche, le même muret, retourné,
+      // et la cour où l'on décharge (une charrette à bras, des caisses)
+      const ajout = (o, yt) => { o.yTri = yt; place.add(o); return o; }, ombreP = (x, y, l) => ajout(this.add.image(x + l * 0.06, y - 2, ombrePlaceHD(this)).setScale(l / 64, l / 64 * 0.9), y - 0.5);
+      // (étape 12b) les places de ce décor viennent de decorArchePlace (volumes6bHD.js) : la rue les reprend telles quelles
+      const DA = decorArchePlace(X, Y), { xm, xr } = DA;
+      ajout(this.add.image(xm + 24, Y, muretArcheHD(this, 112)).setOrigin(1, 1).setScale(E), Y - 1); this.obstacles.push([xm - 156, Y - 24, xm, Y]);   // (son bout monte en amorce de mur, pris sous la chaîne d'angle de l'arche)
+      for (const [bx, by] of DA.bornes) { ombreP(bx, by, 26); ajout(this.add.image(bx, by, borneArcheHD(this)).setOrigin(0.5, 1).setScale(E), by); this.obstacles.push([bx - 9, by - 8, bx + 9, by + 2]); }
+      ajout(this.add.image(xr - 24, Y, muretArcheHD(this, 112)).setOrigin(0, 1).setScale(E).setFlipX(true), Y - 1); this.obstacles.push([xr, Y - 24, xr + 156, Y]);
+      // (Q384 : rien au milieu d'un chemin) la cour est sur l'herbe, au nord du chemin qui mène à la carte du monde (y 982 à 1018)
+      { const [cx, cy] = DA.charrette; ombreP(cx, cy, 90); ajout(this.add.image(cx, cy, charretteBrasHD(this)).setOrigin(0.5, 1).setScale(E).setFlipX(true), cy); this.obstacles.push([cx - 38, cy - 18, cx + 42, cy + 4]); }
+      { const [cx, cy] = DA.caisses; ombreP(cx, cy, 70); ajout(this.add.image(cx, cy, caissesRue7b(this, true)).setOrigin(0.5, 1).setScale(E), cy); this.obstacles.push([cx - 34, cy - 14, cx + 34, cy + 2]); }
+      for (const [px, py] of DA.pots) { ajout(this.add.image(px, py, potFleursLoinHD(this)).setOrigin(0.5, 1).setScale(2), py); this.obstacles.push([px - 12, py - 12, px + 12, py]); }
+      if (typeof banc5 === 'function') { const [cx, cy] = LIEUX_PLACE.carte; ombreP(cx + 96, cy + 12, 90); ajout(this.add.image(cx + 96, cy + 12, banc5(this)).setOrigin(0.5, 1).setScale(1.6), cy + 12); this.obstacles.push([cx + 50, cy - 4, cx + 142, cy + 14]); }
+      { const [ax, ay] = [1600, 985]; ombreP(ax + 10, ay, 120); const cle = arbrePlaceHD(this, this.palettePlace, 1, ax, ay); ajout(this.add.image(ax, ay, cle).setOrigin(0.5, origineArbre(this, cle)).setScale(2.2), ay); this.obstacles.push([ax - 16, ay - 16, ax + 16, ay + 2]); }
+      return;
+    }
     const place = this.place, Pm = PORCHE_MARCHE, E = 2, gauche = X - Pm.L;
     const ombre = this.add.image(X, Y + 2, ombrePlaceHD(this)).setScale(250 / 64, 30 / 24).setAlpha(0.8); ombre.yTri = Y - 60; place.add(ombre);
     const im = this.add.image(X, Y, porcheMarcheHD(this)).setOrigin(0.5, 1).setScale(E).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.allerVersLieu('arche'));
@@ -816,6 +866,12 @@ Object.assign(MarcheScene.prototype, {
       const BARRE = 478, haut = y + this.plancheCarteY[0] * z, bas = y + this.plancheCarteY[1] * z;
       if (haut < BARRE && bas > BARRE - 2) { const monter = bas - (BARRE - 4), descendre = BARRE + 2 - haut; y = Phaser.Math.Clamp(monter <= descendre ? y - monter : y + descendre, yMin, yMax); }
     }
+    // (registre du 01/11) le panneau « Nouvelles du jour » du crieur, en haut de la place, ne reste jamais à moitié sous la
+    // barre du haut : on cadre un peu plus bas (il se lit en entier) ou un peu plus haut (il passe tout entier dessous)
+    if (!cle && this.lettrageCrieur && this.lettrageCrieur.active) {
+      const HUD = 24, b = this.lettrageCrieur.getBounds(), hautP = (b.y - place.y) / place.scaleY, basP = (b.bottom - place.y) / place.scaleY, haut = y + hautP * z, bas = y + basP * z;
+      if (haut < HUD && bas > HUD - 2) { const monter = bas - (HUD - 4), descendre = HUD + 2 - haut; y = Phaser.Math.Clamp(descendre <= monter * 2 ? y + descendre : y - monter, yMin, yMax); }   // (de préférence, on le montre)
+    }
     if (cle) this.placerBoutonsPlace(x, y, z);   // (les boutons « La place » et « Ma liste » laissent libre le nom du lieu)
     if (instantane) { place.setScale(z).setPosition(x, y); return; }
     if (cle) { this.tweens.killTweensOf(place); this.tweens.add({ targets: place, x, y, scale: z, duration: 450, ease: 'Sine.easeInOut' }); return; }
@@ -999,7 +1055,8 @@ Object.assign(MarcheScene.prototype, {
     const montrer = proche && !this.bloquePlace() && !this.visiteEnCours() && !(this.banniereVisite && this.banniereVisite.active)
       && !(this.texteMessage && this.texteMessage.active && this.texteMessage.alpha > 0.05 && this.texteMessage.depth === 45);   // (v1.64 : la bulle d'un lieu ne se pose plus sur l'invite)
     this.invitePlace.setVisible(!!montrer);
-    if (montrer) { const [n, m] = this.nomLieuPlace(proche); this.invitePlace.setText(`${n}${m ? ' · ' + m : ''}   —   E ou clic : ${MARCHANDS[proche] ? 'faire tes courses' : proche === 'arche' ? 'rentrer' : proche === 'tableau' ? 'lire' : PETITS_LIEUX.includes(proche) ? 'parler' : proche === 'coteaux' || /^porte\d/.test(proche) ? 'regarder' : proche === 'moulin' ? 'y aller' : 'approcher'}`); }
+    if (montrer) { const hy = this.heros.y * this.place.scaleY + this.place.y; this.invitePlace.setY(this.yInvitePlace(hy > 330 ? 64 : 462));   // (étape 10b : en bas de la place, l'invite passe en haut, sous le titre : elle ne cache ni JeuneGoy, ni le mendiant, ni la carte)
+      const [n, m] = this.nomLieuPlace(proche); this.invitePlace.setText(`${n}${m ? ' · ' + m : ''}   —   E ou clic : ${MARCHANDS[proche] ? 'faire tes courses' : proche === 'arche' ? 'rentrer' : proche === 'tableau' ? 'lire' : PETITS_LIEUX.includes(proche) ? 'parler' : proche === 'coteaux' || /^porte\d/.test(proche) ? 'regarder' : proche === 'moulin' ? 'y aller' : 'approcher'}`); }
     if (!this.carteC && !this.panneauOuvert) this.cadrerPlace();
     for (const o of this.place.list) o.yTriPlace = o.yTri !== undefined ? o.yTri : o.y;
     this.place.sort('yTriPlace');

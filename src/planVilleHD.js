@@ -161,7 +161,8 @@ function* planVilleEtapes(s, cle = 'planVilleHD') {
   for (const [dx, dy, v] of [[-57, -22, 0], [-58, 12, 1], [58, -20, 1], [57, 20, 0], [-30, -38, 1], [34, -38, 0], [-34, 36, 0], [38, 36, 1]]) arbre(PCX + dx, PCY + dy, 3.4, v ? 'foretK2' : 'foretK');
   for (const [lx, ly] of [[250, 760], [1520, 760], [700, 760], [1100, 760], [460, 470], [1340, 470]]) { const [x, y] = ZP(lx, ly); t.forme('foretK2', ellipsoide(Math.round(x), Math.round(y), 2.4, 1.6), { decalage: 0.5, ombre: false }); P(x, y - 1, 'fleurR2', 4); P(x + 1, y, 'fleurJ2', 4); }
   // l'entrée sud de la place : deux piliers de pierre et leurs lanternes (la route vers l'arche des Mastres)
-  for (const dx of [-5, 4]) { for (let b = 0; b < 6; b++) for (let a = 0; a < 2; a++) P(PCX + dx + a, PCY + RY - 3 + b, 'murK', b === 0 ? 5 : a === 0 ? 4 : 2); P(PCX + dx, PCY + RY - 5, 'or', 5); P(PCX + dx + 1, PCY + RY - 5, 'or', 3); P(PCX + dx, PCY + RY - 6, 'fer', 3); }
+  const reelV = typeof porchePiste === 'function' && !!porchePiste().reel;   // (étape 12b : l'arche du marché, au bout du passage des Mastres, ferme la place au sud)
+  if (!reelV) for (const dx of [-5, 4]) { for (let b = 0; b < 6; b++) for (let a = 0; a < 2; a++) P(PCX + dx + a, PCY + RY - 3 + b, 'murK', b === 0 ? 5 : a === 0 ? 4 : 2); P(PCX + dx, PCY + RY - 5, 'or', 5); P(PCX + dx + 1, PCY + RY - 5, 'or', 3); P(PCX + dx, PCY + RY - 6, 'fer', 3); }
   boite(PCX - RX, PCY - RY - 12, PCX + RX, PCY + RY + 10, 'place');
   yield;
   // ---- 6. les maisons en miniature, vues d'en haut : le toit à deux pans (le pan nord dans l'ombre, le faîtage clair,
@@ -199,7 +200,23 @@ function* planVilleEtapes(s, cle = 'planVilleHD') {
   }
   for (let b = 0; b < 9; b++) for (let a = -b * 0.55; a <= b * 0.55; a++) P(MX(2370) + a, 168 + b, 'violet', 3 + (a < 0 ? 1 : 0) - (b % 3 === 2 ? 1 : 0));   // la tente d'Ysmée, et son fanion d'or
   P(MX(2370), 166, 'boisS', 2); P(MX(2370), 167, 'boisS', 2); P(MX(2370) + 1, 166, 'or', 5); P(MX(2370) + 2, 166, 'or', 4); P(MX(2370), 176, 'boisS', 0); P(MX(2370), 175, 'boisS', 0);
-  { const ax = Math.round(MX(3520)) - 2;   // l'arche des Mastres : deux tours à créneaux, un chemin de ronde, la baie en plein cintre, une bannière rouge
+  const PPV = typeof porchePiste === 'function' ? porchePiste() : null, ouvertV = PPV && PPV.ouvert && !PPV.recul && !PPV.reel;
+  if (PPV && PPV.ouvert) { const [x, l] = PPV.reel ? LOT(3898, 192) : LOT(3836, 128); toitMini(x, 176, l, 'toitR', { chem: !PPV.reel }); }   // (le poids public, ou la voisine de l'étape 8b)   // (étape 8b) la voisine de la banque
+  if (ouvertV) { const ax = Math.round(MX(3640));   // (étape 8b) la rue débouche librement sur la place : ses pavés, un étal, les fanions (ou les deux piliers fleuris)
+    for (let a = -8; a <= 8; a++) for (let b = 0; b < 4; b++) P(ax + a, 174 + b, 'paveK', 4 - ((a + b) % 3 === 0 ? 1 : 0));
+    for (let a = -7; a <= 7; a += 2) P(ax + a, 166 + Math.round(Math.sin((a + 7) / 14 * Math.PI) * 2), ['voletR', 'or', 'voletB'][((a + 7) / 2) % 3], 4);
+    if (PPV.piste === '2') for (const dx of [-8, 8]) { for (let b = 0; b < 4; b++) P(ax + dx, 177 - b, 'murK', b === 3 ? 5 : 3); P(ax + dx, 172, 'or', 5); }
+    else { for (let a = 4; a < 8; a++) P(ax + a, 172, 'voletR', 4); P(ax + 4, 173, 'bois', 2); P(ax + 7, 173, 'bois', 2); }
+  }
+  if (PPV && PPV.reel) { const ax = Math.round(MX(3640));   // (étape 12b) deux arches reliées par un chemin : l'arche de la rue, le passage des Mastres entre ses deux murs, l'arche du marché
+    const archeMini = yb => {   // (la grande arche en miniature : ses deux piles, l'arc, le toit de tuiles, ses deux lanternes)
+      for (let a = -10; a <= 10; a++) for (let b = 0; b < 9; b++) { if (Math.abs(a) <= 5 && (b < 3 || Math.hypot(a, b - 2) < 5.3)) continue; P(ax + a, yb - b, 'murK', b === 8 ? 5 : a === -10 ? 4 : a === 10 ? 2 : 3 - ((a + b) % 4 === 0 ? 1 : 0)); }
+      for (let a = -11; a <= 11; a++) { P(ax + a, yb - 9, 'toitR', 4); P(ax + a, yb - 10, 'toitR', Math.abs(a) < 9 ? 5 : 3); }
+      P(ax - 7, yb - 4, 'or', 5); P(ax + 7, yb - 4, 'or', 5); };
+    for (let y = 142; y < 167; y++) { P(ax - 7, y, 'murK', 4); P(ax - 6, y, 'murK', 2); P(ax + 6, y, 'murK', 4); P(ax + 7, y, 'murK', 2); }   // (les deux murs du passage)
+    for (const [dx, y] of [[-4, 160], [4, 148]]) P(ax + dx, y, 'or', 5);   // (ses deux réverbères)
+    archeMini(177); archeMini(141); }
+  else if (!ouvertV) { const ax = Math.round(MX(3520)) - 2;   // l'arche des Mastres : deux tours à créneaux, un chemin de ronde, la baie en plein cintre, une bannière rouge
     for (const dx of [0, 13]) { for (let b = 0; b < 12; b++) for (let a = 0; a < 5; a++) P(ax + dx + a, 177 - b, 'murK', b === 11 ? 5 : a === 0 ? 4 : a === 4 ? 2 : 3 - (b % 4 === 3 ? 1 : 0)); for (const a of [0, 2, 4]) P(ax + dx + a, 165 - 1, 'murK', 5); P(ax + dx + 2, 172, 'fer', 1); P(ax + dx + 2, 171, 'fer', 1); }
     for (let a = 5; a < 13; a++) for (let b = 0; b < 8; b++) P(ax + a, 177 - b, b === 7 ? 'toitA' : 'murK', b === 7 ? 4 : 3 - (a > 10 ? 1 : 0));
     for (let b = 0; b < 6; b++) for (let a = 6; a < 12; a++) { const dx = a - 8.5, dy = b - 3; if (b > 2 || Math.hypot(dx, dy) < 3) P(ax + a, 177 - b, 'boisS', 0); }

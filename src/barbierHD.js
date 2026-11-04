@@ -8,6 +8,11 @@ function rampesBarbier(t) {
 // La boutique : assise de pierre, colombages, grande vitrine (on voit le fauteuil et le miroir), porte, enseigne, enseigne-poteau
 function boutiqueBarbierHD(scene) {
   const cle = 'boutiqueBarbierHD'; if (scene.textures.exists(cle)) return cle;
+  const t = peindreBoutiqueBarbier();
+  t.contour(); t.texture(scene, cle); return cle;
+}
+// (chantier 3) le dessin de la boutique, sur sa toile (124 × 112) : la façade, que maisonVolumeHD.js reprend sous son toit en volume
+function peindreBoutiqueBarbier() {
   const L = 124, H = 112, t = toileDecor(L, H); rampesBarbier(t);
   // le toit d'ardoise
   for (let y = 4; y < 26; y++) for (let x = 2; x < L - 2; x++) { if (Math.abs(x - L / 2) > (y - 2) * 3 + 20) continue; const r = Math.floor((y - 4) / 4), dec = (r % 2) * 5, b = Math.floor((x + dec) / 10); t.poser(x, y, 'ardoise', (y - 4) % 4 === 3 ? 0 : 2 + Math.round(hachage(b, r, 7201) * 2)); }
@@ -37,7 +42,7 @@ function boutiqueBarbierHD(scene) {
   for (let y = 98; y < H; y++) for (let x = 4; x < L - 4; x++) { const r = Math.floor((y - 98) / 5), dec = (r % 2) * 7, b = Math.floor((x + dec) / 14); const joint = (y - 98) % 5 === 4 || (x + dec) % 14 === 0; t.poser(x, y, 'pierre', joint ? 0 : 2 + Math.round(hachage(b, r, 7203) * 2)); }
   // la marche devant la porte
   for (let y = 96; y < 100; y++) for (let x = 70; x < 106; x++) t.poser(x, y, 'pierre', y === 96 ? 4 : 2);
-  t.contour(); t.texture(scene, cle); return cle;
+  return t;
 }
 // Le poteau rayé (rouge, blanc, bleu) dans sa gaine de verre, sur sa potence ; deux images pour qu'il tourne
 function poteauBarbierHD(scene, phase = 0) {

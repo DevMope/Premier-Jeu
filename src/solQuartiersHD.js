@@ -55,7 +55,7 @@ const SOL_PAS = { 1: 'paves', 16: 'paves', 17: 'paves', 19: 'paves', 11: 'paves'
 //   manquent), sauf(x, y) (là où le bord reste net : une marche, un seuil), passage(x, y) → vrai là où l'on marche le
 //   plus (l'hiver, la neige y est tassée et repoussée sur les côtés).
 function* solQuartierEtapes(s, cle, L, H, code, { flaques = [], graine = 8900, saison = 'semailles', herbeJoints = null, marcheP = 7,
-  pierre = PIERRES_QUARTIERS.soucolline, module = [8, 5], dalleM = [16, 8], naturel = 3, manque = 0.22, sauf = null, passage = null } = {}) {
+  pierre = PIERRES_QUARTIERS.soucolline, module = [8, 5], dalleM = [16, 8], naturel = 3, manque = 0.22, sauf = null, passage = null, chaussee = 'grille', rigole = 'plate', ombreSol = null } = {}) {
   if (s.textures.exists(cle)) return cle;
   const t0 = performance.now();
   const pal = paletteSaisonComte(saison), t = toileDecor(L, H), R = t.rampes, hiver = saison === 'givre';
@@ -66,6 +66,10 @@ function* solQuartierEtapes(s, cle, L, H, code, { flaques = [], graine = 8900, s
     neigeS: [0x8a96a8, 0xa8b4c4, 0xc4ced8, 0xdce4ec, 0xeef2f6, 0xffffff], glaceS: [0x5a7088, 0x7890a8, 0x98b0c4, 0xb8cede, 0xd8e6f0, 0xf4faff],
   });
   if (hiver) R.herbeS = R.neigeS;   // (l'herbe du Givre est sous la neige : une seule rampe, celle de la neige)
+  // (retours du 01/11) la chaussée en pavés ronds et gris, comme la rue d'avant : trois pierres de teintes voisines, et la
+  // même pierre pour les pavés détachés qui traînent dans l'herbe
+  if (chaussee !== 'grille') { R.paveA = rampe(0x8a8478); R.paveB = rampe(0x7e7b76); R.paveC = rampe(0x958b7c); R.pave = R.paveA; }
+  const chausseePave = chaussee === 'grille' ? null : pavesRonds(L, H, chaussee, graine);
   const N = L * H, C0 = new Uint8Array(N), C = new Uint8Array(N);
   for (let y = 0; y < H; y++) { if (!(y & 15)) yield; for (let x = 0; x < L; x++) C0[y * L + x] = code(x, y) || 8; }
   const MOU = c => c === 8 || c === 9 || c === 14, DUR = c => c === 23 || c === 1 || c === 4 || c === 5 || c === 6 || c === 7 || c === 11 || c === 12 || c === 16 || c === 17 || c === 19 || c === 20 || c === 21 || c === 22;
@@ -100,6 +104,7 @@ function* solQuartierEtapes(s, cle, L, H, code, { flaques = [], graine = 8900, s
   for (let y = 0; y < H; y++) { if (!(y & 15)) yield; for (let x = 0; x < L; x++) {
     const i = y * L + x, c = C[i]; let r = null, sid = 0;
     if (c === 11 && pierre.vieux) { const q = rangs(x, y, 10, 6, 5, 4); if (q) { r = ['vieux', q[0]]; sid = q[1]; } else r = ['joint', 3]; }
+    else if (chausseePave && (c === 1 || c === 16 || c === 17 || c === 19)) { const q = chausseePave(x, y); r = [q[0], q[1]]; sid = q[2]; }
     else if (c === 1 || c === 11 || c === 16 || c === 17 || c === 19) { const q = rangs(x, y, module[0], module[1], 1, 4); if (q) { r = ['pave', q[0]]; sid = q[1]; } else r = ['joint', 3]; }
     else if (c === 4 || c === 20 || c === 21 || c === 22) { const q = rangs(x, y, dalleM[0], dalleM[1], 2, 3); if (q) { r = ['dalle', q[0]]; sid = q[1]; } else r = ['joint', 3]; }
     else if (c === 5) { const up = !(T(x, y - 1) === 5), dn = !(T(x, y + 1) === 5), id = cid(x), j = id !== cid(x - 1), af = H1(id, y >> 3, 75) > 0.7, ext = j || id !== cid(x + 1);
@@ -111,6 +116,20 @@ function* solQuartierEtapes(s, cle, L, H, code, { flaques = [], graine = 8900, s
       const id = Math.floor((x + 9) / 23), u = (x + 9 + Math.floor(H1(id, 0, 79) * 3)) % 23, j = u === 22 || v >= 6, us = fbm(x * 0.12, 3, graine + 79);
       r = j ? ['joint', 1] : ['bord7', v === 0 ? 5 : v === 5 ? 1 : v === 4 ? 2 : 3 + (u === 0 ? 1 : 0) - (v > 0 && v < 4 && us > 0.55 ? 1 : 0)];
       if (!j && (u === 0 || u === 21) && (v === 0 || v === 5) && H1(id, v, 78) < 0.6) r = ['joint', 2]; }   // les bouts ébréchés
+    else if (c === 6 && rigole === 'pierre') {   // (retours du 01/11) une vraie rigole de pierre : deux lèvres de grès taillé, la pente, l'eau au fond
+      let v = 0; while (v < 12 && T(x, y - v - 1) === 6) v++;
+      let n = 0; while (n < 12 && T(x, y + n + 1) === 6) n++;
+      const ht = v + n + 1, id = Math.floor((x + 5 + Math.floor(H1(Math.floor((x + 5) / 13), 6, 83) * 4)) / 13), jt = id !== Math.floor((x + 4 + Math.floor(H1(Math.floor((x + 4) / 13), 6, 83) * 4)) / 13);
+      const eau = hiver ? 'glaceS' : 'eauC', sc = H1(x >> 1, y, 84), fil = fbm(x * 0.08, y * 0.5, graine + 85);
+      if (v === 0) r = jt ? ['joint', 1] : ['dalle', 4 + (H1(id, 1, 86) > 0.7 ? 1 : 0)];                 // la lèvre du nord : son dessus éclairé,
+      else if (v === 1) r = jt ? ['joint', 1] : ['dalle', 3 - (H1(id, 2, 86) > 0.8 ? 1 : 0)];             // son arête,
+      else if (v === 2) r = ['dalle', 2];                                                                 // la pente qui descend vers l'eau,
+      else if (v === 3) r = ['dalle', 1];                                                                 // dans l'ombre de la lèvre
+      else if (n === 0) r = jt ? ['joint', 2] : ['dalle', 3 + (H1(id, 3, 86) > 0.75 ? 1 : 0)];            // la lèvre du sud, vue de dessus
+      else if (n === 1) r = jt ? ['joint', 1] : ['dalle', 2];                                             // et sa pente, de face
+      else if (n === 2) r = [eau, 1];                                                                     // l'eau, au pied de la pente du sud
+      else r = [eau, v === 4 ? (sc > 0.9 ? 5 : fil > 0.6 ? 4 : 3) : (fil > 0.66 && sc > 0.45 ? 3 : 2)];   // l'eau : le reflet du ciel en haut, plus sombre au fond
+      sid = 0; }
     else if (c === 6) { const up = T(x, y - 1) !== 6, dn = T(x, y + 1) !== 6;
       r = (x + (Math.floor(y / 3) % 2) * 5) % 11 === 0 ? ['joint', 1] : up ? ['dalle', 2] : dn ? ['dalle', 1] : [hiver ? 'glaceS' : 'eauC', (x + y) % 9 === 0 ? 4 : 2]; }
     else if (c === 7) { const P = marcheP, v = ((y % P) + P) % P, row = Math.floor(y / P), u = (x + row * 6) % 15;
@@ -210,6 +229,7 @@ function* solQuartierEtapes(s, cle, L, H, code, { flaques = [], graine = 8900, s
     else if (c === 9) { const p = bruitTerre(x, y); let k = p > 0.6 ? 4 : p < 0.24 ? 2 : 3; if (T(x, y - 1) === 8) k = 1; else if (T(x, y - 2) === 8) k = Math.min(k, 2); if (DUR(T(x, y - 1))) k = Math.min(k, 2); r = ['terreS', k]; }
     else { const p = bruitHerbe(x, y), q = hachage(x, y, graine + 22); let k = p > 0.6 ? 4 : 3; if (q > 0.97) k += 1; else if (q < 0.025) k -= 1;
       const b1 = T(x, y + 1), b2 = T(x, y + 2); if (b1 !== 8 && b1) k = 5; else if (b2 !== 8 && b2) k = 4; if (DUR(T(x, y - 1))) k = 2; r = ['herbeS', k]; }
+    if (ombreSol) { const d = ombreSol(x, y); if (d) r = [r[0], Math.max(0, Math.min(5, r[1] + d))]; }   // (phase 3 : la marche d'ombre des trottoirs)
     t.poser(x, y, r[0], r[1]);
   } }
   // 5. l'herbe mord sur la pierre : des brins qui débordent, des touffes dans les angles ; des pierres détachées dans l'herbe
@@ -251,6 +271,51 @@ function* solQuartierEtapes(s, cle, L, H, code, { flaques = [], graine = 8900, s
   const tex = s.textures.get(cle); tex.codes = C; tex.solL = L; tex.solH = H;
   if (window.diag && !(window.jeu && window.jeu.diagStable)) diag(`sol ${cle} : ${Math.round(performance.now() - t0)} ms`);
   return cle;
+}
+
+// (retours du 01/11) Des pavés ronds et gris, comme ceux de la rue d'avant : chaque pavé est un coussin de pierre (bombé,
+// éclairé en haut à gauche, dans l'ombre en bas à droite) posé dans des joints sombres, de tailles et de teintes variées ;
+// quelques pavés plus sombres, d'autres usés (plus plats), quelques-uns fendus ; un peu de mousse et de terre dans les joints.
+//   'rangs' : en rangées (comme la rue d'avant), les rangs de hauteurs inégales, les pavés de longueurs inégales ;
+//   'galets' : sans rangées, des pierres rondes posées au hasard, de tailles variées.
+// Renvoie (x, y) → [matière, ton, n° de pierre (0 pour un joint)].
+function pavesRonds(L, H, sorte, graine) {
+  const H1 = (a, b, g) => hachage(a, b, graine + g), mats = ['paveA', 'paveA', 'paveB', 'paveB', 'paveC'];
+  const rond = sorte === 'galets';
+  const pierre = (nx, ny, id, sx, sy) => {   // le coussin : sa forme, son relief, sa teinte
+    const p = (rond ? 2 : 2.4) + H1(id, 1, 120) * (rond ? 0.4 : 0.6), forme = Math.pow(Math.abs(nx), p) + Math.pow(Math.abs(ny), p) + (H1(sx, sy, 121) - 0.5) * 0.18;
+    if (forme > 1) return null;
+    const nz = Math.sqrt(Math.max(0, 1 - forme)), use = H1(id, 2, 122) < 0.14, sombre = H1(id, 3, 123) < 0.07, fendu = H1(id, 4, 124) < 0.05;
+    let ton = 2.5 + (-ny * 0.85 - nx * 0.45) * (1 - nz) * (use ? 1.1 : rond ? 2.4 : 1.9) + nz * (rond ? 0.55 : 0.7) + (fbm(sx * 0.35, sy * 0.35, graine + 125 + id % 17) - 0.5) * 0.9;
+    if (sombre) ton -= 1;
+    if (fendu && Math.abs(nx * 0.8 - ny + (H1(id, 5, 126) - 0.5) * 0.6) < 0.09 && forme < 0.7) ton = 1;
+    return [mats[Math.floor(H1(id, 6, 127) * mats.length)], Math.max(1, Math.min(5, Math.round(ton)))];
+  };
+  const joint = (x, y, id) => { const n = H1(x, y, 128), m = H1(id, 7, 129) < 0.12;   // la mousse s'installe dans les joints de quelques pavés
+    return m && n < 0.55 ? ['herbeS', 2] : n < 0.05 ? ['terreS', 1] : ['joint', n > 0.86 ? 3 : 2]; };
+  if (sorte === 'galets') {
+    const CX = 10, CY = 7;
+    const cell = (i, j) => { const id = (j * 4099 + i) & 0x7fffffff;
+      return { cx: i * CX + (j % 2) * (CX / 2) + (H1(i, j, 130) - 0.5) * 3.2, cy: j * CY + (H1(i, j, 131) - 0.5) * 1.8, rx: CX * (0.44 + H1(i, j, 132) * 0.14), ry: CY * (0.44 + H1(i, j, 133) * 0.12), id: 1 + id }; };
+    return (x, y) => {
+      const j0 = Math.floor(y / CY); let best = null, bf = 9;
+      for (let j = j0 - 1; j <= j0 + 1; j++) { const i0 = Math.floor((x - (j % 2) * (CX / 2)) / CX);
+        for (let i = i0 - 1; i <= i0 + 1; i++) { const c = cell(i, j), nx = (x + 0.5 - c.cx) / c.rx, ny = (y + 0.5 - c.cy) / c.ry, f = nx * nx + ny * ny; if (f < bf) { bf = f; best = [c, nx, ny]; } } }
+      const [c, nx, ny] = best, q = pierre(nx, ny, c.id, x, y);
+      return q ? [q[0], q[1], 200000 + c.id] : [...joint(x, y, c.id), 0];
+    };
+  }
+  // 'rangs' : les rangées (de 6 ou 7 de haut), et dans chaque rangée les pavés, de 0,95 à 1,85 fois leur hauteur de long
+  const debut = [], haut = [], rang = new Int16Array(H + 1);
+  for (let y = 0, r = 0; y <= H; r++) { const h = 6 + (H1(r, 0, 134) > 0.55 ? 1 : 0); debut.push(y); haut.push(h); for (let k = 0; k < h && y + k <= H; k++) rang[y + k] = r; y += h; }
+  const coupes = haut.map((h, r) => { const c = []; let x = -Math.floor(H1(r, 1, 135) * 8); while (x < L + 16) { c.push(x); x += Math.max(5, Math.round(h * (0.95 + H1(r, c.length, 136) * 0.9))); } c.push(x); return c; });
+  return (x, y) => {
+    const r = rang[Math.min(H, Math.max(0, y))], c = coupes[r], y0 = debut[r], h = haut[r];
+    let a = 0, b = c.length - 1; while (b - a > 1) { const m = (a + b) >> 1; if (c[m] <= x) a = m; else b = m; }
+    const x0 = c[a], w = c[a + 1] - x0, id = 1 + r * 1024 + a;
+    const nx = (x + 0.5 - x0 - w / 2) / (w / 2 - 0.4), ny = (y + 0.5 - y0 - h / 2) / (h / 2 - 0.3), q = pierre(nx, ny, id, x, y);
+    return q ? [q[0], q[1], 100000 + id] : [...joint(x, y, id), 0];
+  };
 }
 
 // Le sol d'un seul coup (dans la scène qui en a besoin tout de suite)

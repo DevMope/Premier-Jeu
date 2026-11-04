@@ -223,26 +223,8 @@ function creerRueHD(scene) {
   }
 
   // --- La Banque Centrale Goyenne : pierre de taille, deux colonnes, fronton à la pièce d'or ---
-  {
-    const L = 200, H = 176, t = toile(L, H);
-    moellons(t, 10, 50, L - 20, H - 50, 850, 'taille', 16);
-    // le fronton triangulaire et son médaillon d'or
-    for (let y = 18; y < 50; y++) { const v = (y - 18) / 32, xa = Math.round(100 - v * 96), xb = Math.round(100 + v * 96); for (let x = xa; x <= xb; x++) t.poser(x, y, 'taille', x < xa + 2 ? 5 : y > 46 ? 1 : 3); }
-    // (le médaillon du fronton : le logo de la banque, posé par-dessus — voir construireRue)
-    for (let x = 2; x < L - 2; x++) { t.poser(x, 50, 'taille', 5); t.poser(x, 51, 'taille', 2); t.poser(x, 52, 'taille', 1); }   // la corniche
-    // deux colonnes cannelées, leurs chapiteaux
-    for (const cx of [52, 148]) {
-      for (let y = 56; y < H - 10; y++) for (let x = cx - 7; x <= cx + 7; x++) t.poser(x, y, 'taille', (x - cx + 7) % 4 === 0 ? 2 : x < cx - 3 ? 5 : x > cx + 3 ? 2 : 4);
-      for (let x = cx - 10; x <= cx + 10; x++) for (const y of [54, 55]) t.poser(x, y, 'taille', y === 54 ? 5 : 2);
-    }
-    // les hautes fenêtres grillagées, et la lourde porte cloutée d'or
-    for (const fx of [20, 162]) { fenetreRue(t, fx, 70, 18, 46, true, false); for (let y = 70; y < 116; y += 6) for (let x = fx; x < fx + 18; x++) t.poser(x, y, 'fer', 2); }
-    porteRue(t, 80, H - 62, 40, 52, { arc: true, mat: 'cheneSombre', graine: 851 });
-    for (let y = H - 50; y < H - 12; y += 7) for (const x of [84, 96, 103, 115]) t.poser(x, y, 'or', 5);
-    // les trois marches
-    for (let k = 0; k < 3; k++) for (let x = 64 - k * 6; x < 136 + k * 6; x++) for (let y = H - 10 + k * 3; y < H - 7 + k * 3; y++) t.poser(x, y, 'taille', y === H - 10 + k * 3 ? 5 : 2);
-    t.contour(); t.texture(scene, 'rueBanqueHD');
-  }
+  { const t = peindreBanqueRue(); t.contour(); t.texture(scene, 'rueBanqueHD'); }
+
 
   // --- L'arche de la place des Mastres : deux piliers coiffés de pierre, un arc au faîte arrondi, une
   // bannière sous la clé ; la place se devine derrière (endormie la nuit, colorée le jour)
@@ -292,6 +274,28 @@ function creerRueHD(scene) {
     for (let x = 7; x < 17; x++) t.poser(x, 1, 'fer', 3);
     t.contour(); t.texture(scene, 'reverbereHD');
   }
+}
+
+// (chantier 3) le dessin de la banque, sur sa toile (200 × 176) : la façade du jeu
+function peindreBanqueRue() {
+  const L = 200, H = 176, t = toileDecor(L, H); Object.assign(t.rampes, RAMPES_RUE);
+    moellons(t, 10, 50, L - 20, H - 50, 850, 'taille', 16);
+    // le fronton triangulaire et son médaillon d'or
+    for (let y = 18; y < 50; y++) { const v = (y - 18) / 32, xa = Math.round(100 - v * 96), xb = Math.round(100 + v * 96); for (let x = xa; x <= xb; x++) t.poser(x, y, 'taille', x < xa + 2 ? 5 : y > 46 ? 1 : 3); }
+    // (le médaillon du fronton : le logo de la banque, posé par-dessus — voir construireRue)
+    for (let x = 2; x < L - 2; x++) { t.poser(x, 50, 'taille', 5); t.poser(x, 51, 'taille', 2); t.poser(x, 52, 'taille', 1); }   // la corniche
+    // deux colonnes cannelées, leurs chapiteaux
+    for (const cx of [52, 148]) {
+      for (let y = 56; y < H - 10; y++) for (let x = cx - 7; x <= cx + 7; x++) t.poser(x, y, 'taille', (x - cx + 7) % 4 === 0 ? 2 : x < cx - 3 ? 5 : x > cx + 3 ? 2 : 4);
+      for (let x = cx - 10; x <= cx + 10; x++) for (const y of [54, 55]) t.poser(x, y, 'taille', y === 54 ? 5 : 2);
+    }
+    // les hautes fenêtres grillagées, et la lourde porte cloutée d'or
+    for (const fx of [20, 162]) { fenetreRue(t, fx, 70, 18, 46, true, false); for (let y = 70; y < 116; y += 6) for (let x = fx; x < fx + 18; x++) t.poser(x, y, 'fer', 2); }
+    porteRue(t, 80, H - 62, 40, 52, { arc: true, mat: 'cheneSombre', graine: 851 });
+    for (let y = H - 50; y < H - 12; y += 7) for (const x of [84, 96, 103, 115]) t.poser(x, y, 'or', 5);
+    // les trois marches
+    for (let k = 0; k < 3; k++) for (let x = 64 - k * 6; x < 136 + k * 6; x++) for (let y = H - 10 + k * 3; y < H - 7 + k * 3; y++) t.poser(x, y, 'taille', y === H - 10 + k * 3 ? 5 : 2);
+  return t;
 }
 
 // Un petit écriteau de bois peint (ou des lettres gravées), pour qu'on reconnaisse chaque bâtiment
