@@ -46,8 +46,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q384** — Le passage des Mastres : l'arche de la rue (« Passage des Mastres ») ouvre sur un passage qu'on monte à pied (pavés, deux volées de marches, réverbères, bacs de fleurs, passants) jusqu'à l'arche du marché (« Place des Mastres ») ; quand JeuneGoy passe derrière l'arche, on voit sa silhouette en contour clair au travers : tu valides ?
-- **Q385** — Le poids public aligné sur la façade de la banque (même hauteur de toit, même profondeur), et le sac de grain refait partout (jute tramée, affaissé, col noué, grains qui dépassent) : tu valides ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -57,6 +55,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q384, Q385~~ Passage validé (sauf le pot au milieu du chemin) ; poids public trop haut, sans vrai toit ; sacs et intérieur validés (04/11).
 - ~~Q383~~ Flammes et chambre validées ; les bûches à montrer brûlées (04/11).
 - ~~Q382~~ Le crâne de la Faucheuse validé ; ses pupilles en croissant regardent de droite à gauche de temps en temps (04/11).
 - ~~Q380~~ Personnages v5 : bonne direction ; nain plus petit, jambes un peu plus courtes, corps un peu plus larges, tête du nain, barbe et pipe fumante de Garrick, cheveux façon Aragorn (04/11).
