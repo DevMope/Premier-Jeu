@@ -45,6 +45,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q380** — Les personnages refaits d'un seul tenant (v5 : sans couture ni effet de masque, une seule chevelure, Borin petit et massif façon *Le Hobbit*, des têtes à environ un cinquième de la hauteur, un vrai aplomb et un léger déhanché, la marche de profil et de dos gardée) : est-ce la bonne base pour continuer ?
 
+- **Q382** — Le crâne de la Faucheuse presque englouti dans l'ombre de la capuche (orbites creuses, cavité nasale en cœur inversé, mâchoire suggérée ; seuls quelques reflets d'os très discrets autour des yeux jaunes) : tu valides ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
