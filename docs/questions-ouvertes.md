@@ -9,7 +9,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q392** — Les personnages v7 : un visage propre à chacun (Borin bourru, tête carrée, sourcils broussailleux, gros nez ; Lindë au visage ovale et fin, grands yeux en amande ; Garrick au visage long et anguleux, regard plissé, un peu plus grand qu'Aldric ; Aldric rond et doux), la nuque de dos, Borin aux cheveux plus courts avec des tresses jusque dans la barbe et des jambes lisibles, l'épaule de Garrick reculée : est-ce mieux, et qu'est-ce qui ne va pas encore ?
 
 - **Q393** — L'intérieur de l'armoire refait (le noyer en profondeur, le linge plié en piles, la tringle de laiton et ses cintres, les habits qui tombent, les bottes au fond, la boîte et le sachet de lavande) et la salle d'armes le premier jour (toiles d'araignées, poussière posée, traces de pas, draps sur les supports vides, un rayon de lumière par un soupirail ; propre le lendemain) : tu valides ?
 
@@ -21,6 +20,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q392~~ Personnages v7 : visages de face validés ; profils à accorder (Lindë, Aldric, Garrick), tresses de Borin de dos, écart des jambes (04/11).
 - ~~Q391~~ Niveaux de la chambre validés visuellement ; à faire coïncider avec les autres améliorations de la maison (04/11).
 - ~~Q389, Q390~~ Chambre validée sauf l'intérieur de l'armoire ; poussière de la salle à refaire (toiles d'araignées) ; la place par l'arche validée (04/11).
 - ~~Q299, Q300~~ Closes le 04/11 : déjà tranchées par les réponses suivantes. Q299 (le moment où le neutre doit choisir) → le dernier appel du neutre, le soir où arrive la 7e pièce (Q311, Q317). Q300 (revenir d'un extrême) → un extrême atteint est sans retour, sauf par les récits de retour (Q301, Q314).
