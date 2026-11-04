@@ -45,6 +45,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q383** — Les flammes qui naissent du bois (la torche et son étoupe, cinq flammes plantées dans les bûches de l'âtre, la bougie fine qui naît de sa mèche) et la chambre aux bois variés (chêne clair, noyer sombre, pin miel, merisier, poutres presque noires), aux laitons, à la couverture tissée, au tapis, au géranium et aux livres : tu valides ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
