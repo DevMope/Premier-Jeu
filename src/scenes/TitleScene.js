@@ -166,6 +166,10 @@ class TitleScene extends Phaser.Scene {
   }
 
   charger(p) {
+    // (une seule sortie : pas de partie chargée pendant que « Nouvelle partie » s'en va vers la création, ni l'inverse)
+    if (this.enPartance) return;
+    this.enPartance = true;
+    this.events.once('shutdown', () => { this.enPartance = false; });
     const lieu = Sauvegarde.charger(p);
     if (lieu === 'Maison') this.scene.start('Nuit', { matin: true });
     else this.scene.start(lieu, lieu === 'Nuit' ? { matin: false } : {});

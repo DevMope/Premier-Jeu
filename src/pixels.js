@@ -769,10 +769,14 @@ function barreJauge(scene, x, y, l, valeur, { h = 10, textes = true } = {}) {
 // (v0.68) Changer de scène proprement : toutes les caméras (interface comprise) passent au noir,
 // puis la scène suivante démarre. Sinon, pendant qu'elle se prépare (les textures se dessinent),
 // l'écran figé gardait la case de dialogue de la scène d'avant pendant une demi-seconde.
+// La scène qui s'en va n'écoute plus les clics pendant son fondu : à l'écran titre, « Continuer » cliqué sur l'image où
+// s'achevait le fondu de « Nouvelle partie » démarrait la partie chargée en même temps que la création du personnage, et
+// les deux scènes tournaient ensemble (la partie chargée repeignait alors le joueur sous l'aperçu de la création)
 function allerA(scene, cle, donnees = {}, duree = 220) {
   if (scene.enPartance) return;
   scene.enPartance = true;
-  scene.events.once('shutdown', () => { scene.enPartance = false; });
+  if (scene.input) scene.input.enabled = false;
+  scene.events.once('shutdown', () => { scene.enPartance = false; if (scene.input) scene.input.enabled = true; });
   for (const cam of scene.cameras.cameras) cam.fadeOut(duree, 0, 0, 0);
   scene.cameras.main.once('camerafadeoutcomplete', () => scene.scene.start(cle, donnees));
 }
