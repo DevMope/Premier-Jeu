@@ -37,13 +37,15 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q359** — Les personnages comme leur portrait : les grandes épaulières d'armure de Borin lui font des épaules très larges en pied. A : on les garde telles quelles ; B : plus petites sur le corps seulement (le portrait ne change pas) ?
-- **Q360** — Le manteau de Garrick en pied. A : jusqu'aux genoux, ouvert sur ses jambes ; B : jusqu'aux chevilles, comme aujourd'hui ?
-- **Q363** — Les personnages comme leur portrait, v3 (de face, une vraie vue de dos, un vrai profil, les jambes, les bras et les mains, la cape et le manteau qui bougent dans la marche) : c'est la bonne direction pour tout le monde ?
 
-- **Q367** — La grande arche aux flancs refaits (chaînes d'angle en harpe qui débordent franchement, pierres éclatées ou manquantes, base élargie et ancrée dans la terre, chasse-roues, lierre et mousse des deux côtés, tuiles qui dépassent et gouttière ; côté place, une amorce de mur éboulé vers le muret et le poids public qui la touche) : tu valides ?
 
-- **Q373** — Le nom des armes que le joueur collectionne : « les armes reliques » (ton nom), ou une variante : « les Reliques des Royaumes » (chacune vient d'un royaume), « les Reliques » tout court, « les armes héritées » ?
+
+
+
+
+
+
+
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -53,6 +55,14 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q384, Q385~~ Passage validé (sauf le pot au milieu du chemin) ; poids public trop haut, sans vrai toit ; sacs et intérieur validés (04/11).
+- ~~Q383~~ Flammes et chambre validées ; les bûches à montrer brûlées (04/11).
+- ~~Q382~~ Le crâne de la Faucheuse validé ; ses pupilles en croissant regardent de droite à gauche de temps en temps (04/11).
+- ~~Q380~~ Personnages v5 : bonne direction ; nain plus petit, jambes un peu plus courtes, corps un peu plus larges, tête du nain, barbe et pipe fumante de Garrick, cheveux façon Aragorn (04/11).
+- ~~Q378, Q379, Q381~~ Réponses du 04/11 (flammes qui naissent du bois des torches, plus de teintes dans la chambre ; le récit de Fleur de Diamant gardé comme base ; yeux validés, crâne moins visible et mieux dessiné).
+- ~~Q377~~ La Faucheuse : aura parfaite ; yeux jaunes à pupille en croissant (la version d'avant) ; crâne aussi gros, un peu plus opaque (04/11).
+- ~~Q367, Q373 à Q376~~ Réponses du 04/11 (arche validée ; « les Reliques des Royaumes » ; salle d'armes v5 validée sauf le feu ; quête selon les choix validée ; Fleur de Diamant légendaire, son récit à écrire).
+- ~~Q359, Q360, Q363~~ Réponses du 04/11 (personnages à refaire presque de A à Z : nains aux proportions normales façon *Le Hobbit*, vrai aplomb des jambes, cheveux d'un seul tenant, profils sans effet de masque ; marches de profil et de dos gardées ; manteau long de Garrick).
 - ~~Q365, Q366~~ Réponses du 04/11 (le poids public : perspective et objets des balances à refaire ; l'étal dans l'axe annulé, deux arches reliées par un chemin).
 - ~~Q362, Q371, Q372~~ Réponses du 04/11 dans `docs/game-design.md` (yeux en croissant sans pupille, vraie aura, crâne plus gros ; salle d'armes à supports par arme et gravité, chambre à refaire au niveau des armes ; armes reliques et armes légendaires séparées ; la quête de la salle selon les choix).
 - ~~Q358~~ La place des Mastres : validée en partie, les côtés de l'arche à refaire (04/11).
