@@ -37,9 +37,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q359** — Les personnages comme leur portrait : les grandes épaulières d'armure de Borin lui font des épaules très larges en pied. A : on les garde telles quelles ; B : plus petites sur le corps seulement (le portrait ne change pas) ?
-- **Q360** — Le manteau de Garrick en pied. A : jusqu'aux genoux, ouvert sur ses jambes ; B : jusqu'aux chevilles, comme aujourd'hui ?
-- **Q363** — Les personnages comme leur portrait, v3 (de face, une vraie vue de dos, un vrai profil, les jambes, les bras et les mains, la cape et le manteau qui bougent dans la marche) : c'est la bonne direction pour tout le monde ?
 
 - **Q367** — La grande arche aux flancs refaits (chaînes d'angle en harpe qui débordent franchement, pierres éclatées ou manquantes, base élargie et ancrée dans la terre, chasse-roues, lierre et mousse des deux côtés, tuiles qui dépassent et gouttière ; côté place, une amorce de mur éboulé vers le muret et le poids public qui la touche) : tu valides ?
 
@@ -57,6 +54,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q359, Q360, Q363~~ Réponses du 04/11 (personnages à refaire presque de A à Z : nains aux proportions normales façon *Le Hobbit*, vrai aplomb des jambes, cheveux d'un seul tenant, profils sans effet de masque ; marches de profil et de dos gardées ; manteau long de Garrick).
 - ~~Q365, Q366~~ Réponses du 04/11 (le poids public : perspective et objets des balances à refaire ; l'étal dans l'axe annulé, deux arches reliées par un chemin).
 - ~~Q362, Q371, Q372~~ Réponses du 04/11 dans `docs/game-design.md` (yeux en croissant sans pupille, vraie aura, crâne plus gros ; salle d'armes à supports par arme et gravité, chambre à refaire au niveau des armes ; armes reliques et armes légendaires séparées ; la quête de la salle selon les choix).
 - ~~Q358~~ La place des Mastres : validée en partie, les côtés de l'arche à refaire (04/11).
