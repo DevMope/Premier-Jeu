@@ -47,6 +47,9 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
+- **Q386** — Le regard de la Faucheuse qui va de droite à gauche (au centre 2 à 4 s, un glissement par une image intermédiaire, quelques secondes sur le côté ; la lueur des yeux un peu adoucie pour qu'on voie la pupille bouger) : tu valides ?
+- **Q387** — Les corps v6 (le nain à 3/4 d'un humain, tête agrandie ; jambes un peu plus courtes ; carrures un peu plus larges ; Garrick avec sa barbe du portrait, sa pipe fumante et ses cheveux façon Aragorn) : les corps te conviennent-ils, pour passer ensuite aux habits ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
