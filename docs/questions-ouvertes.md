@@ -6,7 +6,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q299, Q300** — (anciennes, remplacées par le « dernier appel » et les récits de retour, à confirmer)
 
-- **Q354** (reposée, avec les fichiers à écouter) — L'obtention d'une pièce d'armure : en Lumière, un arpège de harpe qui monte, un chœur, des cordes et des notes de célesta ; en Ombre, un bourdon grave, un chœur en mineur qui descend et une cloche lointaine ; à la pose sur le mannequin, un choc de métal net. Ces sons te vont ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -16,6 +15,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q354~~ Les trois sons de l'obtention d'une pièce d'armure, validés (04/11).
 - ~~Q388~~ Poids public, bacs et cour validés ; voir la place (le mendiant…) par l'arche du marché depuis le passage (04/11).
 - ~~Q386, Q387~~ Regard de la Faucheuse validé ; corps v6 à reprendre (cou de dos, tresses du nain, bras de Garrick, jambes du nain, visages différents par peuple) (04/11).
 - ~~Q384, Q385~~ Passage validé (sauf le pot au milieu du chemin) ; poids public trop haut, sans vrai toit ; sacs et intérieur validés (04/11).
