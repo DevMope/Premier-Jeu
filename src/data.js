@@ -793,7 +793,9 @@ const RETOURS_POUR_ETOILE = { 3: 3, 4: 5, 5: 8 };
 // Les quêtes du bien : un peu plus de réputation. Celles du mal : plus d'or, et la jauge du mal.
 // Étape 9a. Les terres de lumière rapportent plus de réputation (bien plus si tu es du côté de la
 // lumière), les terres d'ombre plus de butin (bien plus si tu es du côté de l'ombre).
-const EFFETS_CAMP = { bien: { reputation: 1.2, reputationAllie: 1.5, butin: 1, mal: 0 }, mal: { reputation: 0.5, butin: 1.15, butinAllie: 1.25, mal: 0.5 } };
+// (04/11) le butin irrégulier des terres des Bannis, pour qui est de leur côté : [chance, multiplicateur] (moyenne 1)
+const FORTUNE_OMBRE = { tirages: [[0.3, 0.4], [0.45, 1], [0.25, 1.72]] };
+const EFFETS_CAMP = { bien: { reputation: 1.2, reputationAllie: 1.5, butin: 1, mal: 0 }, mal: { reputation: 0.5, reputationAllie: 0.8, butin: 1.15, butinAllie: 1.25, mal: 0.5 } };
 // La jauge lumière ⟷ ombre, de −100 (l'ombre) à +100 (la lumière) : ce que le monde pense de toi.
 // (Dans le monde, les deux camps s'appellent la Confrérie et les Bannis.)
 const NOMS_CAMPS = { bien: 'la Confrérie', mal: 'les Bannis' };
