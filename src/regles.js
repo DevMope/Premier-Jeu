@@ -2306,7 +2306,7 @@ function tresorsPourSoudoyer(G, garde) {
 }
 
 // Ce que l'aventurier te reverse vraiment, selon votre relation et la lanterne.
-function partDuButin(G, voyageur) {
+function partDuButin(G, voyageur, depart = G.jour) {
   const lanterne = aDecoration(G, 'lanterne') ? 1.1 : 1;
   const comptoir = 1 + 0.04 * niveauAmelioration(G, 'comptoir');
   // (le camp qui ne t'aime pas paie moins : un Banni chez un comptoir de la lumière, et l'inverse)
@@ -2315,7 +2315,18 @@ function partDuButin(G, voyageur) {
   // (v0.95) le serment : +10 % de butin dans les terres de son camp
   const zc = ZONES[voyageur.zone] && ZONES[voyageur.zone].camp, juré = sermentDe(G);
   const benie = juré && zc === juré ? 1 + AVANTAGES_SERMENT.butin : 1;
-  return Math.round(voyageur.butin * niveauRelation(G, voyageur.nom).butin * lanterne * comptoir * froid * benie);
+  return Math.round(voyageur.butin * niveauRelation(G, voyageur.nom).butin * lanterne * comptoir * froid * benie * aleaDeLOmbre(G, voyageur, depart));
+}
+// (04/11, l'argent de l'Ombre) dans les terres des Bannis, pour qui est de leur côté, le butin est ce qu'on trouve :
+// maigre parfois, énorme d'autres fois (en moyenne, le même). Tiré une fois par mission, sous le nom et le jour du
+// départ (recharger la partie ne le change pas).
+function aleaDeLOmbre(G, v, depart = G.jour) {
+  const zc = ZONES[v.zone] && ZONES[v.zone].camp;
+  if (zc !== 'mal' || coteCamp(G) !== 'mal') return 1;
+  const x = (typeof hachageNom === 'function' ? hachageNom(String(v.nom) + ':' + depart, 77) : Math.floor(Math.random() * 1e9)) % 1000 / 1000;
+  let a = 0;
+  for (const [p, m] of FORTUNE_OMBRE.tirages) { a += p; if (x < a) return m; }
+  return 1;
 }
 
 // Appelé à la fin du récit : on encaisse le butin, la réputation et la relation évoluent.
@@ -2341,7 +2352,7 @@ function terminerAventure(G, parti) {
     parti.malus = appliquerMalusEchec(G, parti, h);
     G.habitues.push(h);
   } else if (r.vivant) {
-    gain = partDuButin(G, v);
+    gain = partDuButin(G, v, parti.depart);
     encaisser(G, gain, 'butins');
     // (v1.32) au-delà d'une belle fortune : le mécénat du Grand Sage (lumière) ou le prix de la neutralité (neutre),
     // versé aussitôt et affiché sur la fiche du retour
@@ -3582,7 +3593,7 @@ function nomPalierCamp(G) { return NOMS_PALIERS_JAUGE[palierCamp(G)]; }
 function multReputationCamp(G, camp) {
   if (!camp) return 1;
   const e = EFFETS_CAMP[camp];
-  return camp === 'bien' && coteCamp(G) === 'bien' ? e.reputationAllie : e.reputation;
+  return camp === coteCamp(G) && e.reputationAllie ? e.reputationAllie : e.reputation;
 }
 
 // Le butin des terres d'ombre : plus si tu es de leur côté.
