@@ -12,7 +12,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q395** — Les personnages v9 : la mâchoire de Lindë un peu rembourrée (entre v7 et v8), le profil d'Aldric affiné sans être fin et son buste redressé, Borin avec ses tresses de profil, les bras de dos refaits (l'épaule qui part de l'omoplate, le coude, la main détendue, les plis de la manche) : tu valides ?
 
 - **Q396** — Les draps de la salle d'armes refaits (du lin écru qui épouse le support caché dessous, plus court que lui pour qu'on voie son pied, des plis, un coin relevé, la poussière et une toile d'araignée) : on les reconnaît maintenant ?
 
@@ -37,6 +36,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q395~~ Personnages v9 : le reste tient ; Aldric à reprendre : de profil, l'arrière de la tête mieux lié au cou ; de face et de dos, les bras (et les mains) trop reculés par rapport aux épaules, ils doivent pendre sur les côtés du corps, pas derrière (05/11).
 - ~~Q394~~ Personnages v8 presque parfaits ; mâchoire de Lindë, profil et buste d'Aldric, tresses de Borin de profil, bras de dos (04/11).
 - ~~Q393~~ Armoire validée ; les draps de la salle abandonnée à rendre lisibles (04/11).
 - ~~Q392~~ Personnages v7 : visages de face validés ; profils à accorder (Lindë, Aldric, Garrick), tresses de Borin de dos, écart des jambes (04/11).
