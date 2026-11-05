@@ -16,6 +16,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q396** — Les draps de la salle d'armes refaits (du lin écru qui épouse le support caché dessous, plus court que lui pour qu'on voie son pied, des plis, un coin relevé, la poussière et une toile d'araignée) : on les reconnaît maintenant ?
 
+- **Q397** — La Clairvoyance complète : à mesure que JeuneGoy ouvre les yeux, les boutons lui parlent (3 lueurs : un fil de lumière autour des choix qui comptent ; 8 : le soleil ou la lune ; 15 : une feuille pour la bonté, une goutte rouge pour la cruauté ; 25 : une phrase de présage au survol) ; la bonté ne sert plus aucun camp ; et quelques jours après certains choix, une nouvelle au réveil dit ce qu'ils ont vraiment fait (les neuf textes de la fiche 3) : tu valides le système, et le ton des textes ?
+
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
 - Sur la place des Mastres, au départ, le panneau « Nouvelles du jour » (en haut à gauche) est toujours à moitié caché sous le HUD (corrigé dans une branche de la rue, à fusionner avec elle).
