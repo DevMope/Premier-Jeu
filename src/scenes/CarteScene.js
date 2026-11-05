@@ -5,6 +5,15 @@
 // La carte montre aussi où sont tes aventuriers en mission et les clients qui t'ont écrit :
 // une vue d'ensemble de tes alentours et de ta progression.
 // Les zones dangereuses s'ouvrent avec la réputation, ou quand un aventurier les découvre.
+// (05/11) Les petits pas des noms de royaumes, de loin (« Tout voir ») et de près, pour qu'ils ne touchent rien :
+// calculés en essayant chaque zoom (les médaillons, leurs étoiles, les noms des contrées, les fanions, les autres noms).
+const NOMS_ROYAUMES_CARTE = {
+  loin: { gobelins: [0, 10], bambous: [-6, 0], humains: [-1, 0] },
+  pres: { loups: [14, 0], orcs: [-84, 16], gobelins: [0, 14], sables: [0, 2] },
+};
+// (05/11) un nom de contrée qui toucherait le médaillon voisin se plie plus tôt
+const LARGEUR_NOM_CARTE = { hautgarde: 100 };
+
 class CarteScene extends Phaser.Scene {
   constructor() { super('Carte'); }
 
@@ -83,7 +92,10 @@ class CarteScene extends Phaser.Scene {
         const etoiles = this.add.text(z.x, z.y + 30, '★'.repeat(z.danger), style(13, '#ffd860', { fontStyle: 'bold', stroke: '#3b2410', strokeThickness: 4 })).setOrigin(0.5).setAlpha(0);
         this.monde.add(etoiles); this.etiquettes.push({ o: etoiles, etiquette: true });
         const neuf = this.add.text(z.x, z.y - 44, '✦ Nouvelle contrée ! ✦', style(14, '#a0300a', { fontStyle: 'bold', stroke: '#fff4dc', strokeThickness: 4 })).setOrigin(0.5).setAlpha(0);
-        this.monde.add(neuf); this.etiquettes.push({ o: neuf, etiquette: true });
+        this.monde.add(neuf); const eNeuf = { o: neuf, etiquette: true, detail: true, nouveau: true }; this.etiquettes.push(eNeuf);   // (05/11 : de près seulement, comme les noms ; de loin il couvrait le nom d'un royaume)
+        // (05/11) il s'efface après quelques secondes ; tant qu'il est là, le nom d'un royaume qu'il toucherait s'efface (appliquerVue)
+        this.time.delayedCall(6000, () => this.tweens.add({ targets: neuf, alpha: 0, duration: 500, onComplete: () => {
+          this.etiquettes = this.etiquettes.filter(x => x !== eNeuf); neuf.destroy(); if (this.centre) this.appliquerVue(this.k, this.centre.x, this.centre.y); } }));
         this.appliquerVue(this.k, this.centre.x, this.centre.y);
         this.tweens.add({ targets: [p.nom, etoiles, neuf], alpha: 1, duration: 400 });
         this.tweens.add({ targets: neuf, alpha: 0.6, duration: 500, yoyo: true, repeat: -1, delay: 400 });
@@ -117,12 +129,15 @@ class CarteScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
       t.on('pointerup', () => { if (!this.aGlisse()) this.vue(1, r.x, r.y + 120); });
       const groupe = this.add.container(r.x, r.y, [t]);
-      if (EMBLEME_ROYAUME[cle]) groupe.add(this.add.image(-t.width / 2 - 10, 0, 'embleme_' + EMBLEME_ROYAUME[cle]).setScale(0.5));
+      let gauche = t.width / 2, demiH = t.height / 2;
+      if (EMBLEME_ROYAUME[cle]) { const e = this.add.image(-t.width / 2 - 10, 0, 'embleme_' + EMBLEME_ROYAUME[cle]).setScale(0.5); groupe.add(e);
+        gauche = t.width / 2 + 10 + e.displayWidth / 2; demiH = Math.max(demiH, e.displayHeight / 2); }
       this.monde.add(groupe);
-      this.etiquettes.push({ o: groupe, royaume: true });
+      // (05/11) son étendue, pour qu'il ne sorte jamais du parchemin (voir appliquerVue)
+      this.etiquettes.push({ o: groupe, royaume: true, cle, x: r.x, y: r.y, gauche, droite: t.width / 2, demiH });
     }
-    for (const [x, y, nom, angle] of [[60, 520, "Mer d'Opale", -80], [1440, 600, 'La Grande Muraille', 88], [300, 540, 'Le Grand Fleuve', -42],
-      [646, 196, 'Lac de Lune', 0], [872, 744, "L'étang du Moulin", 0], [240, 780, 'Baie des Brisants', 0], [936, 50, 'Lac gelé', 0], [1820, 300, 'Fleuve des Cendres', 88]]) {
+    for (const [x, y, nom, angle] of [[60, 520, "Mer d'Opale", -80], [1432, 240, 'La Grande Muraille', 88], [368, 496, 'Le Grand Fleuve', -42],
+      [646, 186, 'Lac de Lune', 0], [872, 744, "L'étang du Moulin", 0], [240, 780, 'Baie des Brisants', 0], [936, 50, 'Lac gelé', 0], [1832, 300, 'Fleuve des Cendres', 88]]) {
       const t = this.add.text(x, y, nom, style(12, '#3b2a4a', { fontStyle: 'italic', stroke: '#f0e2bc', strokeThickness: 3 })).setOrigin(0.5).setAngle(angle).setAlpha(0.8);
       this.monde.add(t);
       this.etiquettes.push({ o: t, detail: true });
@@ -131,7 +146,7 @@ class CarteScene extends Phaser.Scene {
     const depart = typeof positionComptoir === 'function' ? positionComptoir(this.G) : MONDE_CARTE.comptoir;   // (v1.57) à Pont-Royal, ta maison est sur le pont
     this.monde.add(this.add.image(depart.x, depart.y + 14, 'halo').setScale(0.9, 0.5).setTint(0xffe8a0).setAlpha(0.7));
     this.monde.add(this.add.image(depart.x, depart.y + 14, 'comptoirCarteHD').setOrigin(0.5, 1).setScale(2));
-    const ici = this.add.text(depart.x, depart.y + 16, 'Ton comptoir', style(12, '#3b2410', { fontStyle: 'bold', stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0);
+    const ici = this.add.text(depart.x, depart.y + 17, 'Ton comptoir', style(12, '#3b2410', { fontStyle: 'bold', stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0);
     this.monde.add(ici);
     this.etiquettes.push({ o: ici });
   }
@@ -157,7 +172,8 @@ class CarteScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true }));
       if (ouverte) ajouter(this.add.text(z.x, z.y + 30, '★'.repeat(z.danger), style(13, '#ffd860', { fontStyle: 'bold', stroke: '#3b2410', strokeThickness: 4 })).setOrigin(0.5), { etiquette: true });
       else p.point = ajouter(this.add.text(z.x, z.y, '?', style(26, '#8a7450', { fontStyle: 'bold' })).setOrigin(0.5));
-      p.nom = ajouter(this.add.text(z.x, z.y + 40, ouverte ? z.nom : '???', style(13, ouverte ? '#2a1808' : '#6a6458', { fontStyle: 'bold', align: 'center', wordWrap: { width: 190 }, stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0), { etiquette: true, detail: true });
+      // (05/11) le nom suit ses étoiles quand elles grossissent (voir appliquerVue), et se plie plus tôt : deux noms voisins ne se touchent plus
+      p.nom = ajouter(this.add.text(z.x, z.y + 40, ouverte ? z.nom : '???', style(13, ouverte ? '#2a1808' : '#6a6458', { fontStyle: 'bold', align: 'center', wordWrap: { width: LARGEUR_NOM_CARTE[cle] || 170 }, stroke: '#f0e2bc', strokeThickness: 4 })).setOrigin(0.5, 0), { etiquette: true, detail: true, sousEtoiles: z.y + 40 });
       pastille.on('pointerup', () => { if (!this.aGlisse() && !this.devoilement) this.choisirZone(cle); });
       // La conquête : un fanion avec le compte des missions réussies, doré une fois conquise
       if (ouverte) {
@@ -192,7 +208,8 @@ class CarteScene extends Phaser.Scene {
       });
     }
     const conquises = Object.keys(ZONES).filter(c => ((G.conquete || {})[c] || 0) >= conqueteZone(c)).length;
-    this.dessus.add(this.add.text(938, 402, `⚑ Contrées conquises : ${conquises} / ${Object.keys(ZONES).length} · royaumes libérés : ${Object.keys(ROYAUMES).filter(r => royaumeLibere(G, r)).length} / ${Object.keys(ROYAUMES).length}`, style(12, '#f3e6c8', { fontStyle: 'bold', backgroundColor: '#2a1a10cc', padding: { x: 5, y: 2 } })).setOrigin(1, 0.5));
+    // (05/11) dans la règle, au-dessus de la carte : il ne cache plus aucune contrée
+    this.dessus.add(this.add.text(940, 62, `⚑ Contrées conquises : ${conquises} / ${Object.keys(ZONES).length} · royaumes libérés : ${Object.keys(ROYAUMES).filter(r => royaumeLibere(G, r)).length} / ${Object.keys(ROYAUMES).length}`, style(12, '#f3e6c8', { fontStyle: 'bold', backgroundColor: '#2a1a10cc', padding: { x: 5, y: 2 } })).setOrigin(1, 0.5));
     G.zonesVuesCarte = zonesOuvertes(G);
   }
 
@@ -200,13 +217,16 @@ class CarteScene extends Phaser.Scene {
 
   creerCamera() {
     const Z = this.Z = this.cameras.main.zoom;
-    this.cadre = { x: 14, y: 50, l: 932, h: 368 };
+    // (05/11) la carte commence sous sa règle (les boutons et le compte des conquêtes) : rien ne se pose sur elle
+    this.cadre = { x: 14, y: 74, l: 932, h: 344 };
+    this.add.rectangle(480, 62, 932, 24, 0x2a1a10);
+    this.add.rectangle(480, 74, 932, 2, 0xc9a227, 0.7);
     this.kMax = 1.3;
     // Le monde connu : la carte ne montre que les contrées ouvertes (et un peu autour), zoomée
     // dessus ; elle se dézoome à mesure que de nouvelles contrées s'ouvrent.
     this.limiter(Object.keys(ZONES).filter(c => zoneOuverte(this.G, c) && !this.nouvelles.includes(c)));
-    this.camCarte = this.cameras.add(this.cadre.x * Z, this.cadre.y * Z, this.cadre.l * Z, this.cadre.h * Z)
-      .setBounds(0, 0, MONDE_CARTE.L, MONDE_CARTE.H).setBackgroundColor('#2a1a10');
+    // (sans bornes de caméra : appliquerVue borne le centre elle-même, et centre le monde quand il tient tout entier)
+    this.camCarte = this.cameras.add(this.cadre.x * Z, this.cadre.y * Z, this.cadre.l * Z, this.cadre.h * Z).setBackgroundColor('#2a1a10');
     this.camDessus = this.cameras.add(0, 0, 960 * Z, 540 * Z).setOrigin(0, 0).setZoom(Z);
     this.cameras.main.ignore([this.monde, this.dessus]);
     this.events.off('postupdate', this.filtrerCameras, this);   // (audit v0.59 : un seul écouteur, pas un de plus à chaque ouverture)
@@ -243,7 +263,7 @@ class CarteScene extends Phaser.Scene {
     // Les boutons : zoomer, dézoomer, voir tout le monde
     let xb = 24;
     const bouton = (texte, action) => {
-      const b = this.add.text(xb, 68, texte, style(15, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410cc', padding: { x: 7, y: 2 } }))
+      const b = this.add.text(xb, 62, texte, style(15, '#fff4dc', { fontStyle: 'bold', backgroundColor: '#3b2410cc', padding: { x: 7, y: 1 } }))
         .setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
       b.on('pointerdown', () => { Son.jouer('clic'); action(); });
       this.dessus.add(b);
@@ -268,7 +288,9 @@ class CarteScene extends Phaser.Scene {
     const l = Math.max(x1 - x0, this.cadre.l), h = Math.max(y1 - y0, this.cadre.h);
     const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
     this.limites = { x0: Math.max(0, cx - l / 2), x1: Math.min(MONDE_CARTE.L, cx + l / 2), y0: Math.max(0, cy - h / 2), y1: Math.min(MONDE_CARTE.H, cy + h / 2), cx, cy };
-    this.kMin = Math.max(this.cadre.l / (this.limites.x1 - this.limites.x0), this.cadre.h / (this.limites.y1 - this.limites.y0), this.cadre.l / MONDE_CARTE.L);
+    // (05/11) « Tout voir » montre tout le monde connu, en largeur ET en hauteur : rien n'est rogné par le cadre
+    // (quand le monde ne remplit pas le cadre, le bois sombre se voit de part et d'autre)
+    this.kMin = Math.min(this.cadre.l / (this.limites.x1 - this.limites.x0), this.cadre.h / (this.limites.y1 - this.limites.y0));
     this.kMin = Math.min(this.kMin, 1.1);
   }
 
@@ -298,8 +320,8 @@ class CarteScene extends Phaser.Scene {
     this.k = k;
     // (on borne nous-mêmes le centre : la caméra ne recalcule sa vue qu'à l'image suivante)
     const dx = this.cadre.l / 2 / k, dy = this.cadre.h / 2 / k, L = this.limites;
-    x = Phaser.Math.Clamp(x, L.x0 + dx, Math.max(L.x0 + dx, L.x1 - dx));
-    y = Phaser.Math.Clamp(y, L.y0 + dy, Math.max(L.y0 + dy, L.y1 - dy));
+    x = 2 * dx >= L.x1 - L.x0 ? (L.x0 + L.x1) / 2 : Phaser.Math.Clamp(x, L.x0 + dx, L.x1 - dx);
+    y = 2 * dy >= L.y1 - L.y0 ? (L.y0 + L.y1) / 2 : Phaser.Math.Clamp(y, L.y0 + dy, L.y1 - dy);
     this.centre = { x, y };
     this.camCarte.setZoom(this.Z * k);
     this.camCarte.centerOn(x, y);
@@ -307,8 +329,26 @@ class CarteScene extends Phaser.Scene {
     // n'apparaissent qu'en s'approchant.
     const proche = k >= 0.75;
     for (const e of this.etiquettes) {
-      e.o.setScale(Math.max(1, 1 / k) * (e.royaume ? (proche ? 0.85 : 1) : 1));
+      // (05/11) en s'éloignant, les textes rapetissent un peu à l'écran (k^-0,8 au lieu de 1/k ; les noms des royaumes k^-0,75 ;
+      // ceux des contrées et les fanions, qui ne se montrent que de près, k^-0,5) : la vue « Tout voir » respire
+      const s = Math.max(1, Math.pow(k, e.royaume ? -0.75 : e.detail ? -0.5 : -0.8)) * (e.royaume ? (proche ? 0.85 : 1) : 1);
+      e.o.setScale(s);
       if (e.detail) e.o.setVisible(proche);
+      if (e.sousEtoiles !== undefined) e.o.y = e.sousEtoiles + 10.5 * (s - 1);
+      // (05/11) le nom d'un royaume, grossi quand on s'éloigne, ne déborde jamais du parchemin
+      // (05/11) et il se pose là où il ne touche ni médaillon ni autre nom (de loin, puis de près : NOMS_ROYAUMES_CARTE)
+      if (e.royaume && e.gauche !== undefined) {
+        const m = 4 * s, d = (NOMS_ROYAUMES_CARTE[proche ? 'pres' : 'loin'][e.cle] || [0, 0]);
+        e.o.setPosition(Phaser.Math.Clamp(e.x + d[0], e.gauche * s + m, MONDE_CARTE.L - e.droite * s - m), Phaser.Math.Clamp(e.y + d[1], e.demiH * s + m, MONDE_CARTE.H - e.demiH * s - m));
+      }
+      // (05/11) en « Tout voir », quand le monde connu ne montre qu'une partie de la carte : le nom d'un royaume que le
+      // cadre couperait (une terre encore inconnue, au bord) ne se montre pas, plutôt qu'à moitié
+      if (e.royaume && e.gauche !== undefined) {
+        const tout = k <= this.kMin + 1e-3, X = e.o.x, Y = e.o.y;
+        const x0 = X - e.gauche * s, x1 = X + e.droite * s, y0 = Y - e.demiH * s, y1 = Y + e.demiH * s;
+        const sousUnNouveau = proche && this.etiquettes.some(n => n.nouveau && n.o.active && (() => { const b = n.o.getBounds(); return b.x < x1 && x0 < b.right && b.y < y1 && y0 < b.bottom; })());
+        e.o.setVisible(!sousUnNouveau && (!tout || (x0 >= x - dx && x1 <= x + dx && y0 >= y - dy && y1 <= y + dy)));
+      }
     }
     if (this.reperes) this.reperes.setVisible(true);
   }
