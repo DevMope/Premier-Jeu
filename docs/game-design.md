@@ -24,6 +24,7 @@
 - **Un seul niveau de dessin dans une même image** (04/11) : un meuble à côté d'une arme HD doit être dessiné au même niveau (même moteur, même modelé) ; sinon on a l'impression de deux jeux différents. La chambre entière est à remonter à ce niveau (étagères, armoire, lit, coffre…).
 - **Ne jamais oublier ce qu'on a appris à faire** (04/11, les torches de la salle d'armes) : un effet déjà réussi se reprend partout (le feu et sa petite fumée : les particules Kenney ramenées à notre grille, `assets/fx`, `docs/essais-assets` ; les feux HD déjà dessinés : `feuDeCampHD` dans `pontRoyalHD.js`, `sfFlammesHD` dans `sageFormesHD.js`) ; jamais un ancien dessin de feu à côté.
 - **Les achats suivent l'histoire** (06/11, Q405) : au fil de la conception, le joueur ne doit jamais pouvoir tout acheter d'un coup ; l'ordre dans lequel les achats apparaissent suit l'histoire et les besoins du joueur à ce moment-là ; à chaque nouvel achat, vérifier aussi ce à quoi on n'aurait pas pensé (un achat qui casse un autre, un prix qui saute une étape).
+- **Les trois carrures** (06/11, Q419) : chaque peuple a trois carrures, fin, musclé et gros, dans les limites de ses gènes (un nain n'est jamais vraiment fin). Chez les humains, le haut du corps d'Aldric est la référence du « musclé ». Les aventuriers et tous les personnages tirés au hasard reçoivent une carrure au hasard ; les personnages principaux et secondaires gardent la leur.
 - **La bibliothèque du Passage des Aventuriers se met à jour à chaque publication de l'artefact** (`web/bibliotheque.html` + `web/bibliotheque.js`, publiée à part) : tout ce qui a été validé depuis la dernière fois y entre en même temps que le jeu (23/10).
 - **Toujours parler français au joueur** : les résumés et tout ce qui s'adresse à lui sont en français (le travail interne peut être en anglais) (22/10).
 
@@ -4037,5 +4038,3 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
 - Le « flop » de cuir de la besace à chaque paiement (répétition sur une journée).
-
-- **Les trois carrures** (06/11, Q419) : chaque peuple a trois carrures, fin, musclé et gros, dans les limites de ses gènes (un nain n'est jamais vraiment fin). Chez les humains, le haut du corps d'Aldric est la référence du « musclé ». Les aventuriers et tous les personnages tirés au hasard reçoivent une carrure au hasard ; les personnages principaux et secondaires gardent la leur.
