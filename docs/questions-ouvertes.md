@@ -17,8 +17,6 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 - **Q397** — La feuille de la bonté refaite : une seule feuille simple, en amande, avec sa tige et sa nervure, éclairée comme la goutte rouge. Tu valides ?
 
 - **Q399** — L'armure de l'Ombre : les Terres des Bannis deviennent cinq royaumes (le Marais des Gobelins, les Terres des Orcs, les Hauts des Loups, la Nuit-Pourpre, les Sables), chacun avec son écu et sa Relique des Royaumes (la Massue des Ponts, la Hache du Serment Muet, les Griffes de la Nuit sans Lune, le Calice de l'An Sans Nom devenu une rapière, le Sceptre de la Grande Marée) ; les sept premiers royaumes libérés, quels qu'ils soient, donnent les sept premières pièces de l'armure, la huitième attend le voyage à Cendrebourg ; la carte corrigée pour tous (rien de coupé ni de caché) : tu valides ?
-- **Q400** — Les Hauts des Loups ont deux contrées : le Repaire des Loups-garous au nord, le Col des Hurlements au sud. Rien n'est enlevé : les deux restent des destinations, avec leurs missions. On laisse le Col où il est, ou on déplace seulement son médaillon près du Repaire, pour que le royaume soit d'un seul tenant ?
-- **Q409** — Aucune contrée des Bannis n'a 5 étoiles (la plus haute en a 4 : le Château de Nuit-Pourpre, la Tour du Nécromancien, le Col des Hurlements) ; les 5 étoiles sont chez les Mages (la Cité d'Opale, la Bibliothèque Interdite) et dans les Terres sauvages (l'Antre de la Bête). On donne aux Bannis leur sommet à 5 étoiles (par exemple le Château de Nuit-Pourpre, les vampires étant les derniers à venir au comptoir), ou on garde comme aujourd'hui ?
 - **Q410** — Les villes fermées, à l'Ombre profonde : JeuneGoy n'a pas d'étal au marché (c'était une erreur de la fiche : au marché, il achète). Ce que fait le prête-nom : Tobin ou Célestin va au marché acheter pour lui ses provisions, contre une part (comme le coursier de l'orphelinat, qui court déjà à l'étal), et les lettres portées par les pigeons de la Main Noire lui permettent de commander à distance. Ça te va ?
 - **Q411** — La nuit du comptoir : le crépuscule fond jusqu'à 19 h 30, et les étoiles et la lune n'apparaissent qu'à la nuit tombée ; la visite de la porte de derrière attend la nuit. Tu valides ?
 
@@ -30,6 +28,8 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q400~~ La carte un peu élargie à droite pour les Bannis ; le Col des Hurlements rapproché du Repaire (06/11).
+- ~~Q409~~ Les Bannis ont leur échelle jusqu'à 5 étoiles, avec deux peuples à 3 étoiles ; les vampires au sommet, riches, hautains, peu aimés, et les trolls qui les supportent mal (06/11).
 - ~~Q408~~ Personnages v10 : les bras d'Aldric de face et les écarts de profil validés ; à reprendre : le cou d'Aldric de profil un peu plus fin, et de dos, les bras de Borin et d'Aldric qui ont l'air derrière le dos (06/11).
 - ~~Q401~~ Le spectateur validé, base à peaufiner plus tard ; les visites « à la porte de derrière » doivent se voir à la porte de derrière, pas au comptoir (06/11).
 - ~~Q402~~ Garrick dit « viens du bon côté » (06/11).
