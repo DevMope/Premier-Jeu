@@ -17,8 +17,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 - **Q399** — L'armure de l'Ombre : les Terres des Bannis deviennent cinq royaumes (le Marais des Gobelins, les Terres des Orcs, les Hauts des Loups, la Nuit-Pourpre, les Sables), chacun avec son écu et sa Relique des Royaumes (la Massue des Ponts, la Hache du Serment Muet, les Griffes de la Nuit sans Lune, le Calice de l'An Sans Nom devenu une rapière, le Sceptre de la Grande Marée) ; les sept premiers royaumes libérés, quels qu'ils soient, donnent les sept premières pièces de l'armure, la huitième attend le voyage à Cendrebourg ; la carte corrigée pour tous (rien de coupé ni de caché) : tu valides ?
 - **Q413** — Reconnu au marché sous le déguisement : la garde l'arrête à la sortie (plus le panier est lourd, plus le risque monte ; un bon déguisement le fait baisser). Cinq réponses : payer l'amende (on garde ses provisions, ton portrait reste au poste) ; une pièce pour sa peine (il rit : amende doublée, panier saisi) ; de quoi boire à sa santé (une chance sur deux selon son humeur) ; le prix de son silence (il détourne les yeux, mais la prochaine fois il attend la même chose) ; une bourse bien pleine (il devient « ton » garde : un passage libre par saison, mais la Confrérie finit par entendre parler d'un garde acheté) ; ou filer avec le panier (plus il est lourd, moins on court vite). Tu valides ?
-- **Q416** — La carte de VieuxGoy en carte à collectionner : un cadre orné, le nom et l'écu du chemin en haut, un tableau peint à la manière de la Renaissance (le Témoin : la boutique au crépuscule et les blessés des deux camps ; le Boucher convaincu : la chapelle du Rempart en feu ; le Gardien de la paix : un matin devant l'hospice), le ruban du degré et du cœur, le texte, et les couleurs du cadre prises au tableau. Tu valides la formule ?
-- **Q417** — Deux détails des tableaux : sur la carte de l'Ombre, JeuneGoy porte encore son tablier de marchand sous la cape (on le garde, c'est ce qu'il est, ou on le lui retire pour cette scène ?) ; sur la carte de la Lumière, le ciel est un peu vert-gris (on le passe en bleu clair du matin ?).
+- **Q417** — (en attente, avec les dessins de la carte de VieuxGoy) Deux détails des tableaux : sur la carte de l'Ombre, JeuneGoy porte encore son tablier de marchand sous la cape ; sur la carte de la Lumière, le ciel est un peu vert-gris. À reprendre quand on reviendra aux dessins de la carte.
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -28,6 +27,7 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q416~~ La formule de la carte de VieuxGoy validée (carte à collectionner, tableau à la Renaissance, couleurs du cadre prises au tableau) ; les dessins eux-mêmes sont mis en attente, le temps des autres dessins en cours (06/11).
 - ~~Q414~~ Si tout tourne mal au marché : l'amende, le panier saisi, et une nuit au cachot (06/11).
 - ~~Q415~~ Le garde du marché revient : un hobbit qui se croit très important, jamais vu la guerre, très agaçant, étonnamment gentil dès qu'on le soudoie ; la Clairvoyance devine son prix (06/11).
 - ~~Q412~~ Personnages v11 : les bras de dos beaucoup mieux ; à reprendre : la petite bosse à l'arrière du cou d'Aldric, et son buste de dos un peu trop musclé (garder les morphologies fin, musclé, gros) (06/11).
