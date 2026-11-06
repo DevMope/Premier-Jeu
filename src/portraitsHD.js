@@ -938,7 +938,9 @@ function epaulieres(t, cx, ecart, y, cotes = [-1, 1]) {
     t.forme('metal', ellipsoide(ex, y, 14, 10, (x, yy) => yy <= y + 6), { decalage: -0.8 });
     t.forme('metal', ellipsoide(ex, y - 2, 9, 6, (x, yy) => yy <= y + 2), { decalage: -0.3, bord: false });
     t.forme('or', (x, yy) => (yy >= y + 4 && yy <= y + 7 && Math.abs(x + 0.5 - ex) < 13.5 - (yy - y - 4) * 0.8 ? [0, (yy - y - 5.5) / 2, 0.9] : null));
-    for (const k of [-7, 0, 7]) t.poser(ex + k, y + 2 - Math.abs(k) * 0.2, 'or', 5);
+    // (06/11) les trois rivets, sur une ligne entière : une hauteur à virgule faisait glisser le pixel dans la toile (jusqu'au
+    // bord opposé du buste, une ligne plus bas : le petit point d'or isolé au bord gauche des bustes de la garde)
+    for (const k of [-7, 0, 7]) t.poser(ex + k, Math.round(y + 2 - Math.abs(k) * 0.2), 'or', 5);
   }
 }
 
@@ -1489,6 +1491,19 @@ function nettoyerIlots(t, max = 12) {
         if (t.dans(nx, ny) && t.m[k] && !vu[k]) { vu[k] = 1; pile.push(k); }
       }
     }
-    if (comp.length < max) for (const j of comp) { t.m[j] = null; t.c[j] = null; t.k[j] = 0; }
+    if (comp.length < max) {
+      for (const j of comp) { t.m[j] = null; t.c[j] = null; t.k[j] = 0; }
+      // (06/11) ... et son contour, s'il ne borde plus rien : il restait un petit anneau de contour, seul, au bord du buste
+      for (const j of comp) {
+        const x = j % t.l, y = Math.floor(j / t.l);
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx, ny = y + dy, k = ny * t.l + nx;
+          if (!t.dans(nx, ny) || t.m[k] || t.c[k] === null) continue;
+          let borde = false;
+          for (let ey = -1; ey <= 1 && !borde; ey++) for (let ex = -1; ex <= 1; ex++) if (t.dans(nx + ex, ny + ey) && t.m[(ny + ey) * t.l + nx + ex]) { borde = true; break; }
+          if (!borde) t.c[k] = null;
+        }
+      }
+    }
   }
 }
