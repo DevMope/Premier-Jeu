@@ -170,3 +170,13 @@ Les noms ☆ ne sont pas encore écrits dans le jeu : aucun texte existant de ce
 - **Garrick** : après cette conversation, le joueur peut lui en parler. Garrick explique que cette personne est peut-être une des clés du mystère qui pèse sur ce monde ; il ne peut pas en dire plus ; mais si le joueur veut la vérité, il faudra **préparer une évasion**.
 - **Pour qui** : ce chemin s'ouvre seulement du côté des Bannis (l'Ombre). Le « fou de la tour » servira autrement pour un joueur de la Lumière.
 - **La forme** : une grande aventure annexe en plusieurs étapes, avec sa préparation. Tout est encore à peaufiner.
+
+### Tavagar, le frère du Sage (06/11, réponse du joueur à Q429)
+
+- **Son nom** : son surnom est « le vieux fou » ; son vrai nom, **Tavagar, le Juste**. Lui-même ne s'en souvient plus : pas à cause du sort d'oubli, mais à cause de l'usure du temps et de ce que son frère lui a fait subir.
+- **Les parents de JeuneGoy** : il n'en dit rien. Il ne fait pas le lien tout de suite (JeuneGoy a grandi, et la prison l'a usé).
+- **Ce qu'il laisse comprendre** : vaguement, que le « vrai » Sage a ruiné sa vie et qu'il ne perd rien pour attendre. Prononcer ces mots est normalement passible de graves sentences : un respect, et une légère peur, règnent pour quiconque doute de ce qui vient du Grand Sage, un peu comme pour Voldemort ou M le maudit. On peut introduire, subtilement, des choses qui ne se disent pas sur le Sage.
+- **Son but** : il sait où aller et quoi faire pour que « tout revienne comme avant », sans trop en dire ; pour réussir, il aura besoin de gens comme JeuneGoy, et il le recontactera quand ses recherches auront avancé.
+- **Son départ** : il ne récupère pas tout son pouvoir, juste assez pour se téléporter. Avant, il donne une lettre à Garrick (des éléments sur les églises de la Lumière, utiles à Garrick) et dit à JeuneGoy que, quand ils se reverront, il en apprendra bien plus sur le monde ; qu'ils doivent faire profil bas, ne rien dire à personne et surtout ne laisser aucune trace, car son frère est le Grand Sage, et c'est lui qui l'a enfermé ici. Puis : « Maintenant, vous devriez songer à sortir en vitesse. Bah-Bah-Bah-Bah-Bah ! », dit-il en riant. Le sort s'active dans un vacarme qui réveille toute la prison et les maisons alentour.
+- **L'évasion** : un enchaînement de choix où JeuneGoy doit s'échapper sans laisser de traces, pour que personne ne remonte jusqu'à eux. Il peut laisser s'échapper un ou deux prisonniers : d'autres conséquences, une diversion, ou au contraire un prisonnier qui se sert de JeuneGoy pour fuir lui-même s'il laisse des traces.
+- **Garrick se sacrifie** : il est enfermé, pour que JeuneGoy puisse continuer à faire vivre l'espoir, le temps que Garrick trouve une solution.
