@@ -14,12 +14,12 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 
 
-- **Q397** — La feuille de la bonté refaite : une seule feuille simple, en amande, avec sa tige et sa nervure, éclairée comme la goutte rouge. Tu valides ?
 
 - **Q399** — L'armure de l'Ombre : les Terres des Bannis deviennent cinq royaumes (le Marais des Gobelins, les Terres des Orcs, les Hauts des Loups, la Nuit-Pourpre, les Sables), chacun avec son écu et sa Relique des Royaumes (la Massue des Ponts, la Hache du Serment Muet, les Griffes de la Nuit sans Lune, le Calice de l'An Sans Nom devenu une rapière, le Sceptre de la Grande Marée) ; les sept premiers royaumes libérés, quels qu'ils soient, donnent les sept premières pièces de l'armure, la huitième attend le voyage à Cendrebourg ; la carte corrigée pour tous (rien de coupé ni de caché) : tu valides ?
-- **Q410** — Les villes fermées, à l'Ombre profonde : JeuneGoy n'a pas d'étal au marché (c'était une erreur de la fiche : au marché, il achète). Ce que fait le prête-nom : Tobin ou Célestin va au marché acheter pour lui ses provisions, contre une part (comme le coursier de l'orphelinat, qui court déjà à l'étal), et les lettres portées par les pigeons de la Main Noire lui permettent de commander à distance. Ça te va ?
-- **Q411** — La nuit du comptoir : le crépuscule fond jusqu'à 19 h 30, et les étoiles et la lune n'apparaissent qu'à la nuit tombée ; la visite de la porte de derrière attend la nuit. Tu valides ?
 - **Q412** — Les personnages v11 : de dos, les bras de Borin et d'Aldric pendent un peu en avant du dos (le dos passe devant leur bord intérieur, la main se voit à peine à côté de la hanche) ; le cou d'Aldric de profil un peu plus fin ; tout le reste identique : tu valides ?
+- **Q413** — Reconnu au marché sous le déguisement : la garde l'arrête à la sortie (plus le panier est lourd, plus le risque monte ; un bon déguisement le fait baisser). Cinq réponses : payer l'amende (on garde ses provisions, ton portrait reste au poste) ; une pièce pour sa peine (il rit : amende doublée, panier saisi) ; de quoi boire à sa santé (une chance sur deux selon son humeur) ; le prix de son silence (il détourne les yeux, mais la prochaine fois il attend la même chose) ; une bourse bien pleine (il devient « ton » garde : un passage libre par saison, mais la Confrérie finit par entendre parler d'un garde acheté) ; ou filer avec le panier (plus il est lourd, moins on court vite). Tu valides ?
+- **Q414** — Si tout tourne mal (filer et se faire rattraper, ou insulter le garde avec une pièce) : seulement l'amende et le panier saisi, ou aussi une nuit au cachot (le comptoir ouvre en retard le lendemain) ?
+- **Q415** — Le garde de l'entrée du marché devient-il un personnage qui revient, avec un nom, qui se souvient de tes pots-de-vin (et la Clairvoyance qui, à 15 lueurs, laisse deviner son prix) ?
 
 ## À venir de la part de Claude (pas des questions)
 - À la fusion des auras : le leitmotiv de l'aura doit prendre le numéro **M9** (M8 est déjà le Drômmath dans `fiche-musicale-humain.md`) et M8 Drômmath doit être recopié dans `fiche-musicale.md`.
@@ -29,6 +29,9 @@ Chaque question a un **numéro fixe**, qui ne change jamais, même quand d'autre
 
 ## Résolues
 
+- ~~Q397~~ La feuille simple de la bonté validée (06/11).
+- ~~Q410~~ Les provisions à l'Ombre profonde validées (prête-nom, lettres, déguisement) ; le risque du déguisement à détailler (Q413 à Q415) (06/11).
+- ~~Q411~~ La nuit à 19 h 30 validée (06/11).
 - ~~Q400~~ La carte un peu élargie à droite pour les Bannis ; le Col des Hurlements rapproché du Repaire (06/11).
 - ~~Q409~~ Les Bannis ont leur échelle jusqu'à 5 étoiles, avec deux peuples à 3 étoiles ; les vampires au sommet, riches, hautains, peu aimés, et les trolls qui les supportent mal (06/11).
 - ~~Q408~~ Personnages v10 : les bras d'Aldric de face et les écarts de profil validés ; à reprendre : le cou d'Aldric de profil un peu plus fin, et de dos, les bras de Borin et d'Aldric qui ont l'air derrière le dos (06/11).
