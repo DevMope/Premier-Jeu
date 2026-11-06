@@ -69,7 +69,7 @@ function gardeInterromptDoyen(G) { return palierFaits(G) >= FAITS_HISTOIRE.doyen
 // --- 2. Les fissures du Sage ---
 const FISSURES_SAGE = [
   { id: 'berceuse', connu: G => typeof berceuseConnue === 'function' && berceuseConnue(G), fredon: true,
-    sage: '« On m’a dit qu’un vieux fou t’avait laissé une chanson. Une berceuse, vraiment ? Il n’y a jamais eu de berceuse, mon enfant. Ces gens-là inventent des chansons pour qu’on les plaigne. »',
+    sage: '« On m’a dit qu’un vieux radoteur t’avait laissé une chanson. Une berceuse, vraiment ? Il n’y a jamais eu de berceuse, mon enfant. Ces gens-là inventent des chansons pour qu’on les plaigne. »',
     souvenir: 'La page pliée en quatre, l’écriture fine… Et dehors, au même instant, une petite fille fredonne l’air sous ta fenêtre, note pour note.' },
   { id: 'pommiers', connu: G => (G.ainesRecits || []).includes('gobelin') || (G.ainesVus || []).includes('gobelin'),
     sage: '« Les gobelins ? Ils ont toujours vécu sous la terre, dans le noir. Ils ne savent même pas ce qu’est un arbre. »',

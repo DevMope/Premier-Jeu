@@ -156,7 +156,7 @@ Object.assign(CounterScene.prototype, {
       this.evtDire("Encore moi. J'ai rêvé d'un lac, cette nuit. De la brume sur l'eau, et de quelqu'un qui chantait en reprisant. (Il fredonne un peu.) Pourquoi je te raconte ça ?", 'parents');
       this.evtPlus(700, () => this.evtFredon(7));
       const fin = t => { evtParents(G, e); this.evtDire(t, 'parents'); this.bouton('« À bientôt, monsieur. »', () => this.evtFin()); };
-      this.choix(['« Qui chantait ? »', () => { this.exprimer('inquiet'); fin("Je ne sais plus. La chanson s'arrêtait toujours au même endroit, je crois... (Il se frotte le front.) Pardonne un vieux fou."); }],
+      this.choix(['« Qui chantait ? »', () => { this.exprimer('inquiet'); fin("Je ne sais plus. La chanson s'arrêtait toujours au même endroit, je crois... (Il se frotte le front.) Pardonne un vieil homme."); }],
         ['« Je dois servir. »', () => fin("Bien sûr, bien sûr. (Il s'écarte de la fenêtre, sans cesser de fredonner.)")]);
       return;
     }

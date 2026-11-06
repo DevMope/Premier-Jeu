@@ -1907,7 +1907,7 @@ de loin (pas de fête manquée en silence).
   voulait que la guerre au lieu d'essayer de comprendre ce que Garrick essayait de lui dire (les révélations sur
   le monde, que Garrick ne connaît que par les récits des anciens doyens, un peu de fouille **en secret** dans les
   archives de la Confrérie, et ses **soupçons sur la Confrérie**). À tisser avec le grand retournement :
-  - ses piques visent Garrick (« le vieux fou qui écoute les radotages des doyens ») : des indices, jamais la vérité ;
+  - ses piques visent Garrick (« le vieux rêveur qui écoute les radotages des doyens ») : des indices, jamais la vérité ;
   - il a l'oreille du Conseil (fournisseur « agréé », prix cassés, faveurs) et il pourrait un jour **dénoncer
     Garrick** : une menace qui grandit avec lui ;
   - on le bat en réputation sur un mois ; alors on peut racheter sa boutique (les orphelins, ou le petit bar).
