@@ -4037,3 +4037,5 @@ En continu : la fiche musicale à maintenir ; les musiques composées à l'exté
 ## À peaufiner quand le jeu sera jouable de bout en bout
 - Le flot de pièces des grosses sommes (densité, durée).
 - Le « flop » de cuir de la besace à chaque paiement (répétition sur une journée).
+
+- **Les trois carrures** (06/11, Q419) : chaque peuple a trois carrures, fin, musclé et gros, dans les limites de ses gènes (un nain n'est jamais vraiment fin). Chez les humains, le haut du corps d'Aldric est la référence du « musclé ». Les aventuriers et tous les personnages tirés au hasard reçoivent une carrure au hasard ; les personnages principaux et secondaires gardent la leur.
