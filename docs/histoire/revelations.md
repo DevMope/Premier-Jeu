@@ -147,3 +147,13 @@ Les noms ☆ ne sont pas encore écrits dans le jeu : aucun texte existant de ce
 - ☆ Les absences du Sage servent d'horloge : chaque mois de jeu a sa semaine creuse, où il se passe quelque chose de pesant.
 - ☆ L'escale des Monts de Bambou tombe au milieu de l'Acte III : c'est la respiration avant la bascule.
 - ☆ La jauge de la Porte, qui s'entrouvre ★, suit les actes : presque fermée en I, de plus en plus d'yeux en IV, la marée en V.
+
+## Le cachot de la Comté et le frère du Grand Sage (06/11, idée du joueur, base à développer)
+
+- **Le cachot** : une prison dans le royaume des Hobbits. Elle sert aux mécaniques déjà là (la nuit au cachot quand tout tourne mal au marché, la garde, les dettes, la contrebande…) et ouvre des récits.
+- **Le vieux prisonnier oublié** : condamné à vie, dit dangereux pour les royaumes, « complotiste, rebelle, traître »… tout ce que le Sage a pu mettre sur lui. C'est **le frère du Grand Sage**.
+  - Autrefois plus puissant que le Sage. Il a su **résister au sort d'oubli**, même si ses pouvoirs n'étaient plus rien face à ceux du Sage.
+  - Le Sage a posé sur lui des **sceaux magiques** qui scellent une grande partie de sa magie, puis l'a enfermé dans la prison de la Comté, pensant que personne ne saurait jamais qui il est, ni n'irait le chercher là.
+  - Le temps passé au cachot l'a rendu un peu fou : ses phrases sont décousues, comme s'il était dans ses pensées en même temps que dans le moment présent. Il dévoile un peu de ce qu'il sait, mais trop flou.
+  - **Le libérer**, par une aventure à décider, ouvre un nouveau chemin. Il fait surtout comprendre à JeuneGoy qu'il n'a pas de temps à perdre et qu'il doit partir voir des gens : une nouvelle possibilité d'histoire commence.
+- Beaucoup reste à mettre en place (Q426 à Q429).
