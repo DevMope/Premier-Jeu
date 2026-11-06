@@ -157,3 +157,16 @@ Les noms ☆ ne sont pas encore écrits dans le jeu : aucun texte existant de ce
   - Le temps passé au cachot l'a rendu un peu fou : ses phrases sont décousues, comme s'il était dans ses pensées en même temps que dans le moment présent. Il dévoile un peu de ce qu'il sait, mais trop flou.
   - **Le libérer**, par une aventure à décider, ouvre un nouveau chemin. Il fait surtout comprendre à JeuneGoy qu'il n'a pas de temps à perdre et qu'il doit partir voir des gens : une nouvelle possibilité d'histoire commence.
 - Beaucoup reste à mettre en place (Q426 à Q429).
+
+### La vieille tour et la découverte du frère (06/11, réponses du joueur à Q426 à Q428)
+
+- **La tour** : le cachot de la Comté est une **vieille tour**. Plus on monte d'étages, plus les prisonniers sont jugés dangereux, et plus la tour est dégradée et négligée : moins aimés, plus craints, on les entretient de moins en moins. C'est la prison la plus « gentille » du monde, mais elle reste une prison.
+- **Ceux qu'on y retrouve** : des gens que le joueur a dénoncés à la garde, et d'autres liés à ses actions passées ou présentes.
+- **Y aller librement** : porter un repas, en soudoyant un garde, à quelqu'un qu'on aime bien ; payer la caution d'un aventurier arrêté ; visiter un prisonnier.
+- **Pas la même cellule** : avec l'échelle des dangers, le joueur enfermé une nuit n'est jamais à côté du frère du Sage ; il entend seulement des échos, des râles de quelque chose ou de quelqu'un tout en haut.
+- **Les indices** : en allant chercher un aventurier arrêté, des petites intrigues qui intriguent toujours plus (un garde qui a peur de monter porter un plat tout en haut ; deux gardes qui jouent à pierre-feuille-ciseaux pour savoir qui ira nourrir ceux d'en haut) ; une rumeur très vague, au comptoir, sur « le fou de la tour ».
+- **La découverte, digne d'un grand film** : le frère du Sage a laissé **aux Bannis des énigmes et des signes**, pour qu'un jour quelqu'un le libère. Ces signes, avec les trois autres pistes (les échos, les gardes, la rumeur), mènent le joueur, qui les suit, jusqu'à être convaincu de monter tout en haut de la tour.
+- **La rencontre** : avec ses mots et sa folie, il explique qu'il a des choses à faire et des gens à voir, qu'il ne devrait pas être enfermé là, qu'il doit absolument sortir. Il faut aller parler à « un Darrick, ou Farrick », il ne se rappelle plus le nom (c'est Garrick) : un ton de folie complotiste qui n'aide pas à le croire, mais assez pour semer le doute.
+- **Garrick** : après cette conversation, le joueur peut lui en parler. Garrick explique que cette personne est peut-être une des clés du mystère qui pèse sur ce monde ; il ne peut pas en dire plus ; mais si le joueur veut la vérité, il faudra **préparer une évasion**.
+- **Pour qui** : ce chemin s'ouvre seulement du côté des Bannis (l'Ombre). Le « fou de la tour » servira autrement pour un joueur de la Lumière.
+- **La forme** : une grande aventure annexe en plusieurs étapes, avec sa préparation. Tout est encore à peaufiner.
